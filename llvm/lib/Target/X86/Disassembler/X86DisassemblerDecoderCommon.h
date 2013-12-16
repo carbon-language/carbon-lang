@@ -478,6 +478,7 @@ struct ContextDecision {
   ENUM_ENTRY(TYPE_XMM128,     "16-byte")                                       \
   ENUM_ENTRY(TYPE_XMM256,     "32-byte")                                       \
   ENUM_ENTRY(TYPE_XMM512,     "64-byte")                                       \
+  ENUM_ENTRY(TYPE_VK1,        "1-bit")                                         \
   ENUM_ENTRY(TYPE_VK8,        "8-bit")                                         \
   ENUM_ENTRY(TYPE_VK16,       "16-bit")                                        \
   ENUM_ENTRY(TYPE_XMM0,       "Implicit use of XMM0")                          \

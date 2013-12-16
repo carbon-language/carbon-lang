@@ -1269,6 +1269,8 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("VR256",               TYPE_XMM256)
   TYPE("VR256X",              TYPE_XMM256)
   TYPE("VR512",               TYPE_XMM512)
+  TYPE("VK1",                 TYPE_VK1)
+  TYPE("VK1WM",               TYPE_VK1)
   TYPE("VK8",                 TYPE_VK8)
   TYPE("VK8WM",               TYPE_VK8)
   TYPE("VK16",                TYPE_VK16)
@@ -1340,6 +1342,7 @@ OperandEncoding RecognizableInstr::rmRegisterEncodingFromString
   ENCODING("VR256",           ENCODING_RM)
   ENCODING("VR256X",          ENCODING_RM)
   ENCODING("VR512",           ENCODING_RM)
+  ENCODING("VK1",             ENCODING_RM)
   ENCODING("VK8",             ENCODING_RM)
   ENCODING("VK16",            ENCODING_RM)
   errs() << "Unhandled R/M register encoding " << s << "\n";
@@ -1367,8 +1370,10 @@ OperandEncoding RecognizableInstr::roRegisterEncodingFromString
   ENCODING("FR64X",           ENCODING_REG)
   ENCODING("FR32X",           ENCODING_REG)
   ENCODING("VR512",           ENCODING_REG)
+  ENCODING("VK1",             ENCODING_REG)
   ENCODING("VK8",             ENCODING_REG)
   ENCODING("VK16",            ENCODING_REG)
+  ENCODING("VK1WM",           ENCODING_REG)
   ENCODING("VK8WM",           ENCODING_REG)
   ENCODING("VK16WM",          ENCODING_REG)
   errs() << "Unhandled reg/opcode register encoding " << s << "\n";
@@ -1389,6 +1394,7 @@ OperandEncoding RecognizableInstr::vvvvRegisterEncodingFromString
   ENCODING("VR128X",          ENCODING_VVVV)
   ENCODING("VR256X",          ENCODING_VVVV)
   ENCODING("VR512",           ENCODING_VVVV)
+  ENCODING("VK1",             ENCODING_VVVV)
   ENCODING("VK8",             ENCODING_VVVV)
   ENCODING("VK16",            ENCODING_VVVV)
   errs() << "Unhandled VEX.vvvv register encoding " << s << "\n";
@@ -1398,6 +1404,7 @@ OperandEncoding RecognizableInstr::vvvvRegisterEncodingFromString
 OperandEncoding RecognizableInstr::writemaskRegisterEncodingFromString
   (const std::string &s,
    bool hasOpSizePrefix) {
+  ENCODING("VK1WM",           ENCODING_WRITEMASK)
   ENCODING("VK8WM",           ENCODING_WRITEMASK)
   ENCODING("VK16WM",          ENCODING_WRITEMASK)
   errs() << "Unhandled mask register encoding " << s << "\n";

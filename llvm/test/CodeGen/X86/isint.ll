@@ -8,8 +8,8 @@ define i32 @isint_return(double %d) nounwind {
   %e = sitofp i32 %i to double
 ; CHECK: cmpeqsd
   %c = fcmp oeq double %d, %e
-; CHECK-NEXT: movd
-; CHECK-NEXT: andl
+; CHECK-NEXT: movq
+; CHECK-NEXT: andq
   %z = zext i1 %c to i32
   ret i32 %z
 }

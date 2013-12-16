@@ -59,8 +59,8 @@ def X86hadd    : SDNode<"X86ISD::HADD",      SDTIntBinOp>;
 def X86hsub    : SDNode<"X86ISD::HSUB",      SDTIntBinOp>;
 def X86comi    : SDNode<"X86ISD::COMI",      SDTX86CmpTest>;
 def X86ucomi   : SDNode<"X86ISD::UCOMI",     SDTX86CmpTest>;
-def X86cmpss   : SDNode<"X86ISD::FSETCCss",    SDTX86Cmpss>;
-def X86cmpsd   : SDNode<"X86ISD::FSETCCsd",    SDTX86Cmpsd>;
+def X86cmps    : SDNode<"X86ISD::FSETCC",     SDTX86Cmps>;
+//def X86cmpsd   : SDNode<"X86ISD::FSETCCsd",    SDTX86Cmpsd>;
 def X86pshufb  : SDNode<"X86ISD::PSHUFB",
                  SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                       SDTCisSameAs<0,2>]>>;
@@ -130,9 +130,14 @@ def X86IntCmpMask : SDTypeProfile<1, 2,
 def X86pcmpeqm  : SDNode<"X86ISD::PCMPEQM", X86IntCmpMask, [SDNPCommutative]>;
 def X86pcmpgtm  : SDNode<"X86ISD::PCMPGTM", X86IntCmpMask>;
 
-def X86CmpMaskCC : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<1, 2>, SDTCisVT<3, i8>]>;
+def X86CmpMaskCC :
+      SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<1, 2>, SDTCisVT<3, i8>]>;
+def X86CmpMaskCCScalar :
+      SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<1, 2>, SDTCisVT<3, i8>]>;
+
 def X86cmpm   : SDNode<"X86ISD::CMPM",    X86CmpMaskCC>;
 def X86cmpmu  : SDNode<"X86ISD::CMPMU",   X86CmpMaskCC>;
+def X86cmpms  : SDNode<"X86ISD::FSETCC",  X86CmpMaskCCScalar>;
 
 def X86vshl    : SDNode<"X86ISD::VSHL",
                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
@@ -155,10 +160,10 @@ def X86subus   : SDNode<"X86ISD::SUBUS", SDTIntBinOp>;
 def X86ptest   : SDNode<"X86ISD::PTEST", SDTX86CmpPTest>;
 def X86testp   : SDNode<"X86ISD::TESTP", SDTX86CmpPTest>;
 def X86kortest : SDNode<"X86ISD::KORTEST", SDTX86CmpPTest>;
-def X86ktest   : SDNode<"X86ISD::KTEST", SDTX86CmpPTest>;
-def X86testm  : SDNode<"X86ISD::TESTM", SDTypeProfile<1, 2, [SDTCisVec<0>,
+def X86testm   : SDNode<"X86ISD::TESTM", SDTypeProfile<1, 2, [SDTCisVec<0>,
                                           SDTCisVec<1>,
                                           SDTCisSameAs<2, 1>]>>;
+def X86select  : SDNode<"X86ISD::SELECT"     , SDTSelect>;
 
 def X86pmuludq : SDNode<"X86ISD::PMULUDQ",
                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,

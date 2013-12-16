@@ -2299,23 +2299,23 @@ multiclass sse12_cmp_scalar<RegisterClass RC, X86MemOperand x86memop,
   }
 }
 
-defm VCMPSS : sse12_cmp_scalar<FR32, f32mem, AVXCC, X86cmpss, f32, loadf32,
+defm VCMPSS : sse12_cmp_scalar<FR32, f32mem, AVXCC, X86cmps, f32, loadf32,
                  "cmp${cc}ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                  "cmpss\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
                  SSE_ALU_F32S>,
                  XS, VEX_4V, VEX_LIG;
-defm VCMPSD : sse12_cmp_scalar<FR64, f64mem, AVXCC, X86cmpsd, f64, loadf64,
+defm VCMPSD : sse12_cmp_scalar<FR64, f64mem, AVXCC, X86cmps, f64, loadf64,
                  "cmp${cc}sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                  "cmpsd\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
                  SSE_ALU_F32S>, // same latency as 32 bit compare
                  XD, VEX_4V, VEX_LIG;
 
 let Constraints = "$src1 = $dst" in {
-  defm CMPSS : sse12_cmp_scalar<FR32, f32mem, SSECC, X86cmpss, f32, loadf32,
+  defm CMPSS : sse12_cmp_scalar<FR32, f32mem, SSECC, X86cmps, f32, loadf32,
                   "cmp${cc}ss\t{$src2, $dst|$dst, $src2}",
                   "cmpss\t{$cc, $src2, $dst|$dst, $src2, $cc}", SSE_ALU_F32S>,
                   XS;
-  defm CMPSD : sse12_cmp_scalar<FR64, f64mem, SSECC, X86cmpsd, f64, loadf64,
+  defm CMPSD : sse12_cmp_scalar<FR64, f64mem, SSECC, X86cmps, f64, loadf64,
                   "cmp${cc}sd\t{$src2, $dst|$dst, $src2}",
                   "cmpsd\t{$cc, $src2, $dst|$dst, $src2, $cc}",
                   SSE_ALU_F64S>,

@@ -683,6 +683,42 @@ def : Pat<(v8i32 (vselect (v8i1 VK8WM:$mask), (v8i32 VR256X:$src1),
             (v16i32 (SUBREG_TO_REG (i32 0), VR256X:$src2, sub_ymm)),
             (v16i32 (SUBREG_TO_REG (i32 0), VR256X:$src1, sub_ymm)))), sub_ymm)>;
 }
+//===----------------------------------------------------------------------===//
+// Compare Instructions
+//===----------------------------------------------------------------------===//
+
+// avx512_cmp_scalar - AVX512 CMPSS and CMPSD
+multiclass avx512_cmp_scalar<RegisterClass RC, X86MemOperand x86memop,
+                            Operand CC, SDNode OpNode, ValueType VT,
+                            PatFrag ld_frag, string asm, string asm_alt> {
+  def rr : AVX512Ii8<0xC2, MRMSrcReg,
+                (outs VK1:$dst), (ins RC:$src1, RC:$src2, CC:$cc), asm,
+                [(set VK1:$dst, (OpNode (VT RC:$src1), RC:$src2, imm:$cc))],
+                IIC_SSE_ALU_F32S_RR>, EVEX_4V;
+  def rm : AVX512Ii8<0xC2, MRMSrcMem,
+                (outs VK1:$dst), (ins RC:$src1, x86memop:$src2, CC:$cc), asm,
+                [(set VK1:$dst, (OpNode (VT RC:$src1),
+                (ld_frag addr:$src2), imm:$cc))], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
+  let neverHasSideEffects = 1 in {
+    def rri_alt : AVX512Ii8<0xC2, MRMSrcReg,
+               (outs VK1:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
+               asm_alt, [], IIC_SSE_ALU_F32S_RR>, EVEX_4V;
+    def rmi_alt : AVX512Ii8<0xC2, MRMSrcMem,
+               (outs VK1:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
+               asm_alt, [], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
+  }
+}
+
+let Predicates = [HasAVX512] in {
+defm VCMPSSZ : avx512_cmp_scalar<FR32X, f32mem, AVXCC, X86cmpms, f32, loadf32,
+                 "vcmp${cc}ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                 "vcmpss\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}">,
+                 XS;
+defm VCMPSDZ : avx512_cmp_scalar<FR64X, f64mem, AVXCC, X86cmpms, f64, loadf64,
+                 "vcmp${cc}sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                 "vcmpsd\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}">,
+                 XD, VEX_W;
+}
 
 multiclass avx512_icmp_packed<bits<8> opc, string OpcodeStr, RegisterClass KRC, 
               RegisterClass RC, X86MemOperand x86memop, PatFrag memop_frag, 
@@ -734,10 +770,10 @@ multiclass avx512_icmp_cc<bits<8> opc, RegisterClass KRC,
   // Accept explicit immediate argument form instead of comparison code.
   let neverHasSideEffects = 1 in {
     def rri_alt : AVX512AIi8<opc, MRMSrcReg,
-               (outs RC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
+               (outs KRC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
                asm_alt, [], IIC_SSE_ALU_F32P_RR>, EVEX_4V;
     def rmi_alt : AVX512AIi8<opc, MRMSrcMem,
-               (outs RC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
+               (outs KRC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
                asm_alt, [], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
   }
 }
@@ -864,8 +900,14 @@ let Predicates = [HasAVX512] in {
   def : Pat<(store (v16i1 VK16:$src), addr:$dst),
             (KMOVWmk addr:$dst, VK16:$src)>;
 
-  def : Pat<(store (v8i1 VK8:$src), addr:$dst),
-            (KMOVWmk addr:$dst, (v16i1 (COPY_TO_REGCLASS VK8:$src, VK16)))>;
+  def : Pat<(store VK8:$src, addr:$dst),
+            (KMOVWmk addr:$dst, (COPY_TO_REGCLASS VK8:$src, VK16))>;
+
+  def : Pat<(i1 (load addr:$src)),
+            (COPY_TO_REGCLASS (KMOVWkm addr:$src), VK1)>;
+
+  def : Pat<(v8i1 (load addr:$src)),
+            (COPY_TO_REGCLASS (KMOVWkm addr:$src), VK8)>;
 }
 // With AVX-512 only, 8-bit mask is promoted to 16-bit mask.
 let Predicates = [HasAVX512] in {
@@ -878,6 +920,12 @@ let Predicates = [HasAVX512] in {
             (EXTRACT_SUBREG
               (KMOVWrk (COPY_TO_REGCLASS VK8:$src, VK16)),
               sub_8bit)>;
+
+  def : Pat<(i1 (extractelt VK16:$src, (iPTR 0))),
+            (COPY_TO_REGCLASS VK16:$src, VK1)>;
+  def : Pat<(i1 (extractelt VK8:$src, (iPTR 0))),
+            (COPY_TO_REGCLASS VK8:$src, VK1)>;
+
 }
 
 // Mask unary operation
@@ -944,6 +992,19 @@ let isCommutable = 1 in {
   defm KXNOR : avx512_mask_binop_w<0x46, "kxnor", xnor>;
   defm KXOR  : avx512_mask_binop_w<0x47, "kxor",  xor>;
 }
+
+def : Pat<(xor VK1:$src1, VK1:$src2),
+     (COPY_TO_REGCLASS (KXORWrr (COPY_TO_REGCLASS VK1:$src1, VK16),
+                                (COPY_TO_REGCLASS VK1:$src2, VK16)), VK1)>;
+
+def : Pat<(or VK1:$src1, VK1:$src2),
+     (COPY_TO_REGCLASS (KORWrr (COPY_TO_REGCLASS VK1:$src1, VK16),
+                               (COPY_TO_REGCLASS VK1:$src2, VK16)), VK1)>;
+
+def : Pat<(not VK1:$src),
+          (COPY_TO_REGCLASS (KXORWrr (COPY_TO_REGCLASS VK1:$src, VK16),
+           (COPY_TO_REGCLASS (VCMPSSZrr (f32 (IMPLICIT_DEF)),
+                              (f32 (IMPLICIT_DEF)), (i8 0)), VK16)), VK1)>;
 
 multiclass avx512_mask_binop_int<string IntName, string InstName> {
   let Predicates = [HasAVX512] in
@@ -1016,7 +1077,10 @@ multiclass avx512_mask_testop_w<bits<8> opc, string OpcodeStr, SDNode OpNode> {
 }
 
 defm KORTEST : avx512_mask_testop_w<0x98, "kortest", X86kortest>;
-defm KTEST   : avx512_mask_testop_w<0x99, "ktest", X86ktest>;
+
+def : Pat<(X86cmp VK1:$src1, VK1:$src2),
+          (KORTESTWrr (COPY_TO_REGCLASS VK1:$src1, VK16),
+           (COPY_TO_REGCLASS VK1:$src2, VK16))>;
 
 // Mask shift
 multiclass avx512_mask_shiftop<bits<8> opc, string OpcodeStr, RegisterClass KRC,
@@ -1034,8 +1098,8 @@ multiclass avx512_mask_shiftop_w<bits<8> opc1, bits<8> opc2, string OpcodeStr,
                              VEX, OpSize, TA, VEX_W;
 }
 
-defm KSHIFTL : avx512_mask_shiftop_w<0x32, 0x33, "kshiftl", shl>;
-defm KSHIFTR : avx512_mask_shiftop_w<0x30, 0x31, "kshiftr", srl>;
+defm KSHIFTL : avx512_mask_shiftop_w<0x32, 0x33, "kshiftl", X86vshli>;
+defm KSHIFTR : avx512_mask_shiftop_w<0x30, 0x31, "kshiftr", X86vsrli>;
 
 // Mask setting all 0s or 1s
 multiclass avx512_mask_setop<RegisterClass KRC, ValueType VT, PatFrag Val> {
@@ -1046,7 +1110,7 @@ multiclass avx512_mask_setop<RegisterClass KRC, ValueType VT, PatFrag Val> {
 }
 
 multiclass avx512_mask_setop_w<PatFrag Val> {
-  defm B : avx512_mask_setop<VK8,  v8i1, Val>;
+  defm B : avx512_mask_setop<VK8,   v8i1, Val>;
   defm W : avx512_mask_setop<VK16, v16i1, Val>;
 }
 
@@ -1341,6 +1405,12 @@ multiclass avx512_move_scalar <string asm, RegisterClass RC,
               [(set VR128X:$dst, (vt (OpNode VR128X:$src1,
                                       (scalar_to_vector RC:$src2))))],
               IIC_SSE_MOV_S_RR>, EVEX_4V, VEX_LIG;
+  let Constraints = "$src1 = $dst" in
+  def rrk : SI<0x10, MRMSrcReg, (outs VR128X:$dst),
+              (ins VR128X:$src1, VK1WM:$mask, RC:$src2, RC:$src3),
+              !strconcat(asm,
+                "\t{$src3, $src2, $dst {${mask}}|$dst {${mask}}, $src2, $src3}"),
+              [], IIC_SSE_MOV_S_RR>, EVEX_4V, VEX_LIG, EVEX_K;
   def rm : SI<0x10, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
               !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
               [(set RC:$dst, (mem_pat addr:$src))], IIC_SSE_MOV_S_RM>,
@@ -1359,6 +1429,13 @@ let ExeDomain = SSEPackedDouble in
 defm VMOVSDZ : avx512_move_scalar<"movsd", FR64X, X86Movsd, v2f64, f64mem,
                                  loadf64>, XD, VEX_W, EVEX_CD8<64, CD8VT1>;
 
+def : Pat<(f32 (X86select VK1WM:$mask, (f32 FR32X:$src1), (f32 FR32X:$src2))),
+          (COPY_TO_REGCLASS (VMOVSSZrrk (COPY_TO_REGCLASS FR32X:$src2, VR128X),
+           VK1WM:$mask, (f32 (IMPLICIT_DEF)), FR32X:$src1), FR32X)>;
+
+def : Pat<(f64 (X86select VK1WM:$mask, (f64 FR64X:$src1), (f64 FR64X:$src2))),
+          (COPY_TO_REGCLASS (VMOVSDZrrk (COPY_TO_REGCLASS FR64X:$src2, VR128X),
+           VK1WM:$mask, (f64 (IMPLICIT_DEF)), FR64X:$src1), FR64X)>;
 
 // For the disassembler
 let isCodeGenOnly = 1 in {

@@ -3015,6 +3015,11 @@ static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg,
   return 0;
 }
 
+inline static bool MaskRegClassContains(unsigned Reg) {
+  return X86::VK8RegClass.contains(Reg) ||
+         X86::VK16RegClass.contains(Reg) ||
+         X86::VK1RegClass.contains(Reg);
+}
 static
 unsigned copyPhysRegOpcode_AVX512(unsigned& DestReg, unsigned& SrcReg) {
   if (X86::VR128XRegClass.contains(DestReg, SrcReg) ||
@@ -3024,13 +3029,10 @@ unsigned copyPhysRegOpcode_AVX512(unsigned& DestReg, unsigned& SrcReg) {
      SrcReg = get512BitSuperRegister(SrcReg);
      return X86::VMOVAPSZrr;
   }
-  if ((X86::VK8RegClass.contains(DestReg) ||
-       X86::VK16RegClass.contains(DestReg)) &&
-      (X86::VK8RegClass.contains(SrcReg) ||
-       X86::VK16RegClass.contains(SrcReg)))
+  if (MaskRegClassContains(DestReg) &&
+      MaskRegClassContains(SrcReg))
     return X86::KMOVWkk;
-  if ((X86::VK8RegClass.contains(DestReg) ||
-       X86::VK16RegClass.contains(DestReg)) &&
+  if (MaskRegClassContains(DestReg) &&
       (X86::GR32RegClass.contains(SrcReg) ||
        X86::GR16RegClass.contains(SrcReg) ||
        X86::GR8RegClass.contains(SrcReg))) {
@@ -3040,8 +3042,7 @@ unsigned copyPhysRegOpcode_AVX512(unsigned& DestReg, unsigned& SrcReg) {
   if ((X86::GR32RegClass.contains(DestReg) ||
        X86::GR16RegClass.contains(DestReg) ||
        X86::GR8RegClass.contains(DestReg)) &&
-      (X86::VK8RegClass.contains(SrcReg) ||
-       X86::VK16RegClass.contains(SrcReg))) {
+       MaskRegClassContains(SrcReg)) {
     DestReg = getX86SubSuperRegister(DestReg, MVT::i32);
     return X86::KMOVWrk;
   }

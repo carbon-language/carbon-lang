@@ -99,27 +99,21 @@ define i32 @test10(<16 x i32> %x, i32 %ind) nounwind {
 }
 
 ;CHECK-LABEL: test11
-;CHECK: movl    $260
-;CHECK: bextrl
-;CHECK: movl    $268
-;CHECK: bextrl
+;CHECK: vpcmpltud
+;CKECK: kshiftlw $11
+;CKECK: kshiftrw $15
+;CHECK: kxorw
+;CHECK: kortestw
+;CHECK: jne
+;CHECK: ret
 ;CHECK: ret
 define <16 x i32> @test11(<16 x i32>%a, <16 x i32>%b) {
   %cmp_res = icmp ult <16 x i32> %a, %b
   %ia = extractelement <16 x i1> %cmp_res, i32 4
-  %ib = extractelement <16 x i1> %cmp_res, i32 12
-
   br i1 %ia, label %A, label %B
-
   A:
     ret <16 x i32>%b
   B:
    %c = add <16 x i32>%b, %a
-  br i1 %ib, label %C, label %D
-  C:
-   %c1 = sub <16 x i32>%c, %a
-   ret <16 x i32>%c1
-  D:
-   %c2 = mul <16 x i32>%c, %a
-   ret <16 x i32>%c2
+   ret <16 x i32>%c
 }
