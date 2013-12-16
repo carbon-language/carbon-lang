@@ -13,8 +13,7 @@
 /// Tables followed by raw section data.
 ///
 /// This writer is responsible for writing Core Linker results to an Windows
-/// executable file. Currently it can only output ".text" section; other
-/// sections including the symbol table are silently ignored.
+/// executable file.
 ///
 /// This writer currently supports 32 bit PE/COFF for x86 processor only.
 ///
