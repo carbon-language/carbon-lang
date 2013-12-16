@@ -1224,11 +1224,11 @@ public:
     if (getTriple().getOS() == llvm::Triple::FreeBSD) {
       LongDoubleWidth = LongDoubleAlign = 64;
       LongDoubleFormat = &llvm::APFloat::IEEEdouble;
-      DescriptionString = "E-p:64:64:64-"
+      DescriptionString = "E-"
                           "i64:64:64-"
                           "n32:64";
     } else
-      DescriptionString = "E-p:64:64:64-"
+      DescriptionString = "E-"
                           "i64:64:64-f128:128:128-"
                           "n32:64";
 
@@ -1268,7 +1268,7 @@ public:
       : DarwinTargetInfo<PPC64TargetInfo>(Triple) {
     HasAlignMac68kSupport = true;
     SuitableAlign = 128;
-    DescriptionString = "E-p:64:64:64-"
+    DescriptionString = "E-"
                         "i64:64:64-n32:64";
   }
 };
@@ -1388,7 +1388,7 @@ namespace {
       PointerWidth = PointerAlign = 64;
       SizeType     = PtrDiffType = IntPtrType = TargetInfo::UnsignedLongLong;
       DescriptionString
-        = "e-p:64:64:64-i64:64:64"
+        = "e-i64:64:64"
           "-v16:16:16-v32:32:32-"
           "n16:32:64";
   }
@@ -1424,7 +1424,7 @@ static const char *DescriptionStringR600DoubleOps =
 
 static const char *DescriptionStringSI =
   "e"
-  "-p:64:64:64"
+  ""
   "-p3:32:32:32"
   "-i64:64:64"
   "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v96:128:128"
@@ -3224,7 +3224,7 @@ public:
     Int64Type = SignedLong;
     RegParmMax = 6;
 
-    DescriptionString = "e-p:64:64:64-"
+    DescriptionString = "e-"
                         "i64:64:64-"
                         "s:64:64-f80:128:128-n8:16:32:64-S128";
 
@@ -4502,7 +4502,7 @@ class SparcV9TargetInfo : public SparcTargetInfo {
 public:
   SparcV9TargetInfo(const llvm::Triple &Triple) : SparcTargetInfo(Triple) {
     // FIXME: Support Sparc quad-precision long double?
-    DescriptionString = "E-p:64:64:64-"
+    DescriptionString = "E-"
                         "i64:64:64-n32:64-S128";
     // This is an LP64 platform.
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
@@ -4569,7 +4569,7 @@ namespace {
       LongDoubleAlign = 64;
       LongDoubleFormat = &llvm::APFloat::IEEEquad;
       MinGlobalAlign = 16;
-      DescriptionString = "E-p:64:64:64-i1:8:16-i8:8:16-i16:16-i32:32-i64:64"
+      DescriptionString = "E-i1:8:16-i8:8:16-i16:16-i32:32-i64:64"
        "-f32:32-f64:64-f128:64-a:8:16-n32:64";
       MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
     }
@@ -5246,7 +5246,7 @@ class Mips64EBTargetInfo : public Mips64TargetInfoBase {
                           "i64:64:64-f128:128:128-"
                           "n32:64-S128";
     else
-      DescriptionString = "E-p:64:64:64-i8:8:32-i16:16:32-"
+      DescriptionString = "E-i8:8:32-i16:16:32-"
                           "i64:64:64-f128:128:128-"
                           "n32:64-S128";
 
@@ -5270,7 +5270,7 @@ class Mips64ELTargetInfo : public Mips64TargetInfoBase {
                           "i64:64:64-f128:128:128"
                           "-n32:64-S128";
     else
-      DescriptionString = "e-p:64:64:64-i8:8:32-i16:16:32-"
+      DescriptionString = "e-i8:8:32-i16:16:32-"
                           "i64:64:64-f128:128:128-"
                           "n32:64-S128";
   }
@@ -5436,7 +5436,7 @@ namespace {
       SizeType     = TargetInfo::UnsignedLong;
       PtrDiffType = IntPtrType = TargetInfo::SignedLong;
       DescriptionString
-        = "e-p:64:64:64-i64:64:64"
+        = "e-i64:64:64"
           "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-"
           "v96:128:128-v192:256:256-v256:256:256-"
           "v512:512:512-v1024:1024:1024";
