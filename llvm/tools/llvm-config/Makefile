@@ -30,6 +30,14 @@ SUB_CPPFLAGS := ${CPP.BaseFlags}
 SUB_CFLAGS   := ${CPP.BaseFlags} ${C.Flags}
 SUB_CXXFLAGS := ${CPP.BaseFlags} ${CXX.Flags}
 
+# Override LIBS with TARGET's LIBS for cross compilation.
+# FIXME: Host's llvm-config is not generated. It's for target's.
+ifneq ($(TARGET_LIBS), )
+  LLVM_SYSTEM_LIBS := $(TARGET_LIBS)
+else
+  LLVM_SYSTEM_LIBS := $(LIBS)
+endif
+
 # This is blank for now.  We need to be careful about adding stuff here:
 # LDFLAGS tend not to be portable, and we don't currently require the
 # user to use libtool when linking against LLVM.
@@ -51,7 +59,7 @@ $(ObjDir)/BuildVariables.inc: $(BUILDVARIABLES_SRCPATH) Makefile $(ObjDir)/.dir
 	  >> temp.sed
 	$(Verb) $(ECHO) 's/@LLVM_BUILDMODE@/$(subst /,\/,$(BuildMode))/' \
 	  >> temp.sed
-	$(Verb) $(ECHO) 's/@LLVM_SYSTEM_LIBS@/$(subst /,\/,$(LIBS))/' \
+	$(Verb) $(ECHO) 's/@LLVM_SYSTEM_LIBS@/$(subst /,\/,$(LLVM_SYSTEM_LIBS))/' \
 	  >> temp.sed
 	$(Verb) $(ECHO) 's/@LLVM_TARGETS_BUILT@/$(subst /,\/,$(TARGETS_TO_BUILD))/' \
 	  >> temp.sed
