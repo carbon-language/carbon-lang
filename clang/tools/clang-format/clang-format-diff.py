@@ -43,9 +43,13 @@ def main():
                       help='apply edits to files instead of displaying a diff')
   parser.add_argument('-p', metavar='NUM', default=0,
                       help='strip the smallest prefix containing P slashes')
-  parser.add_argument('-regex', metavar='PATTERN', default=
-                      r'.*\.(cpp|cc|CPP|C|c\+\+|cxx|c|h|hpp|m|mm|inc|js)',
-                      help='custom pattern selecting file paths to reformat')
+  parser.add_argument('-regex', metavar='PATTERN', default='',
+                      help='custom pattern selecting file paths to reformat '
+                      '(case sensitive, override -iregex)')
+  parser.add_argument('-iregex', metavar='PATTERN', default=
+                      r'.*\.(cpp|cc|c\+\+|cxx|c|h|hpp|m|mm|inc|js)',
+                      help='custom pattern selecting file paths to reformat '
+                      '(case insensitive, override -regex)')
   parser.add_argument(
       '-style',
       help=
@@ -62,8 +66,12 @@ def main():
     if filename == None:
       continue
 
-    if not re.match(args.regex, filename):
-      continue
+    if args.regex != '':
+      if not re.match(args.regex, filename):
+        continue
+    else:
+      if not re.match(args.iregex, filename, re.IGNORECASE):
+        continue
 
     match = re.search('^@@.*\+(\d+)(,(\d+))?', line)
     if match:
