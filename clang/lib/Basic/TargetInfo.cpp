@@ -482,6 +482,9 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
                                          ConstraintInfo &Info) const {
   const char *Name = Info.ConstraintStr.c_str();
 
+  if (!*Name)
+    return false;
+
   while (*Name) {
     switch (*Name) {
     default:
