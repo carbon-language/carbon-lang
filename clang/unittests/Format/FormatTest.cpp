@@ -4241,6 +4241,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("auto a = [](int **&, int ***) {};");
   verifyFormat("auto PointerBinding = [](const char *S) {};");
   verifyFormat("typedef typeof(int(int, int)) *MyFunc;");
+  verifyIndependentOfContext("typedef void (*f)(int *a);");
 
   verifyIndependentOfContext("InvalidRegions[*R] = 0;");
 
