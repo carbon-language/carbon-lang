@@ -41,8 +41,8 @@ declare void @bar(i64) nounwind
 
 define void @test3(i64 %a, i64 %b, i1 %p) nounwind {
 ; CHECK-LABEL: test3:
-; CHECK:      cmovnel %edi, %esi
-; CHECK-NEXT: movl    %esi, %edi
+; CHECK:      cmov{{n?}}el %[[R1:e..]], %[[R2:e..]]
+; CHECK-NEXT: movl    %[[R2]], %[[R2]]
 
   %c = trunc i64 %a to i32
   %d = trunc i64 %b to i32

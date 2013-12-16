@@ -131,13 +131,18 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
     unsigned SrcReg = DefMI->getOperand(1).getReg();
     if (!TargetRegisterInfo::isVirtualRegister(SrcReg))
       continue;
-    if (DefMI->getOperand(0).getSubReg() || DefMI->getOperand(1).getSubReg())
+    if (DefMI->getOperand(0).getSubReg())
       continue;
-    if (!MRI->constrainRegClass(SrcReg, MRI->getRegClass(Reg)))
+    unsigned SrcSubReg = DefMI->getOperand(1).getSubReg();
+    const TargetRegisterClass *RC = MRI->getRegClass(Reg);
+    if (SrcSubReg)
+      RC = TRI->getMatchingSuperRegClass(MRI->getRegClass(SrcReg), RC,
+                                         SrcSubReg);
+    if (!MRI->constrainRegClass(SrcReg, RC))
       continue;
     DEBUG(dbgs() << "Coalescing: " << *DefMI);
     DEBUG(dbgs() << "***     to: " << *MI);
-    MO.setReg(SrcReg);
+    MO.substVirtReg(SrcReg, SrcSubReg, *TRI);
     MRI->clearKillFlags(SrcReg);
     DefMI->eraseFromParent();
     ++NumCoalesces;
