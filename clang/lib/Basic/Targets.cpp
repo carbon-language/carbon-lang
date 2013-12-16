@@ -3398,7 +3398,7 @@ public:
     LongDoubleWidth = LongDoubleAlign = 128;
     PointerWidth = PointerAlign = 64;
     SuitableAlign = 128;
-    DescriptionString = "e-p:64:64-"
+    DescriptionString = "e-"
                         "i64:64:64-i128:128:128-"
                         "f128:128:128-n32:64-S128";
 
