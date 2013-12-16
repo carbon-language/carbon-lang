@@ -1319,7 +1319,7 @@ def SI_END_CF : InstSI <
 def SI_KILL : InstSI <
   (outs),
   (ins VReg_32:$src),
-  "SI_KIL $src",
+  "SI_KILL $src",
   [(int_AMDGPU_kill f32:$src)]
 >;
 
