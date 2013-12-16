@@ -51,13 +51,13 @@ SchedCustomRegistry("r600", "Run R600's custom scheduler",
 
 static std::string computeDataLayout(const AMDGPUSubtarget &ST) {
   std::string DataLayout = std::string(
-   "e-i64:64:64-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v96:128:128"
-   "-v192:256:256-v256:256:256-v512:512:512-v1024:1024:1024-v2048:2048:2048"
+   "e-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
+   "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048"
    "-n32:64"
   );
 
   if (!ST.is64bit())
-    DataLayout.append("-p:32:32:32");
+    DataLayout.append("-p:32:32");
 
   if (ST.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS)
     DataLayout.append("-p3:32:32:32");

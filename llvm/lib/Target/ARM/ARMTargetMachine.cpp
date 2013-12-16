@@ -77,7 +77,7 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   if (ST.isAPCS_ABI())
     Ret += "-f64:32:64";
   else
-    Ret += "-i64:64:64";
+    Ret += "-i64:64";
 
   // On thumb, i16,i18 and i1 have natural aligment requirements, but we try to
   // align to 32.

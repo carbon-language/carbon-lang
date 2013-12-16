@@ -45,15 +45,15 @@ static std::string computeDataLayout(const X86Subtarget &ST) {
 
   // Some ABIs align 64 bit integers and doubles to 64 bits, others to 32.
   if (ST.is64Bit() || ST.isTargetCygMing() || ST.isTargetWindows())
-    Ret += "-i64:64:64";
+    Ret += "-i64:64";
   else
     Ret += "-f64:32:64";
 
   // Some ABIs align long double to 128 bits, others to 32.
   if (ST.is64Bit() || ST.isTargetDarwin())
-    Ret += "-f80:128:128";
+    Ret += "-f80:128";
   else
-    Ret += "-f80:32:32";
+    Ret += "-f80:32";
 
   // The registers can hold 8, 16, 32 or, in x86-64, 64 bits.
   if (ST.is64Bit())

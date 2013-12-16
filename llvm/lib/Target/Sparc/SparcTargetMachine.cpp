@@ -29,17 +29,17 @@ static std::string computeDataLayout(const SparcSubtarget &ST) {
 
   // Some ABIs have 32bit pointers.
   if (!ST.is64Bit())
-    Ret += "-p:32:32:32";
+    Ret += "-p:32:32";
 
   // Alignments for 64 bit integers.
-  Ret += "-i64:64:64";
+  Ret += "-i64:64";
 
   // On SparcV9 128 floats are aligned to 128 bits, on others only to 64.
   // On SparcV9 registers can hold 64 or 32 bits, on others only 32.
   if (ST.is64Bit())
     Ret += "-n32:64";
   else
-    Ret += "-f128:64:64-n32";
+    Ret += "-f128:64-n32";
 
   return Ret;
 }

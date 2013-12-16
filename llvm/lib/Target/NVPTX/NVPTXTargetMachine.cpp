@@ -67,9 +67,9 @@ static std::string computeDataLayout(const NVPTXSubtarget &ST) {
   std::string Ret = "e";
 
   if (!ST.is64Bit())
-    Ret += "-p:32:32:32";
+    Ret += "-p:32:32";
 
-  Ret += "-i64:64:64-v16:16:16-v32:32:32-n16:32:64";
+  Ret += "-i64:64-v16:16-v32:32-n16:32:64";
 
   return Ret;
 }
