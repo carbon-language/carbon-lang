@@ -740,9 +740,9 @@ std::vector<uint8_t> BaseRelocChunk::createBaseRelocBlock(
 
 } // end anonymous namespace
 
-class ExecutableWriter : public Writer {
+class PECOFFWriter : public Writer {
 public:
-  explicit ExecutableWriter(const PECOFFLinkingContext &context)
+  explicit PECOFFWriter(const PECOFFLinkingContext &context)
       : _PECOFFLinkingContext(context), _numSections(0),
         _imageSizeInMemory(PAGE_SIZE), _imageSizeOnDisk(0) {}
 
@@ -833,7 +833,7 @@ void groupAtoms(const PECOFFLinkingContext &ctx, const File &file,
 }
 
 // Create all chunks that consist of the output file.
-void ExecutableWriter::build(const File &linkedFile) {
+void PECOFFWriter::build(const File &linkedFile) {
   AtomVectorMap atoms;
   groupAtoms(_PECOFFLinkingContext, linkedFile, atoms);
 
@@ -900,7 +900,7 @@ void ExecutableWriter::build(const File &linkedFile) {
   peHeader->setSizeOfHeaders(sectionTable->fileOffset() + sectionTable->size());
 }
 
-error_code ExecutableWriter::writeFile(const File &linkedFile, StringRef path) {
+error_code PECOFFWriter::writeFile(const File &linkedFile, StringRef path) {
   this->build(linkedFile);
 
   uint64_t totalSize = _chunks.back()->fileOffset() + _chunks.back()->size();
@@ -921,7 +921,7 @@ error_code ExecutableWriter::writeFile(const File &linkedFile, StringRef path) {
 /// pass, we visit all atoms to create a map from atom to its virtual
 /// address. In the second pass, we visit all relocation references to fix
 /// up addresses in the buffer.
-void ExecutableWriter::applyAllRelocations(uint8_t *bufferStart) {
+void PECOFFWriter::applyAllRelocations(uint8_t *bufferStart) {
   std::map<const Atom *, uint64_t> atomRva;
   std::vector<uint64_t> sectionRva;
 
@@ -943,18 +943,18 @@ void ExecutableWriter::applyAllRelocations(uint8_t *bufferStart) {
 }
 
 /// Print atom VAs. Used only for debugging.
-void ExecutableWriter::printAllAtomAddresses() const {
+void PECOFFWriter::printAllAtomAddresses() const {
   for (auto &cp : _chunks)
     if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
       chunk->printAtomAddresses(_PECOFFLinkingContext.getBaseAddress());
 }
 
-void ExecutableWriter::addChunk(Chunk *chunk) {
+void PECOFFWriter::addChunk(Chunk *chunk) {
   _chunks.push_back(std::unique_ptr<Chunk>(chunk));
 }
 
-void ExecutableWriter::addSectionChunk(SectionChunk *chunk,
-                                       SectionHeaderTableChunk *table) {
+void PECOFFWriter::addSectionChunk(SectionChunk *chunk,
+                                   SectionHeaderTableChunk *table) {
   _chunks.push_back(std::unique_ptr<Chunk>(chunk));
   table->addSection(chunk);
   _numSections++;
@@ -967,7 +967,7 @@ void ExecutableWriter::addSectionChunk(SectionChunk *chunk,
       llvm::RoundUpToAlignment(_imageSizeInMemory + chunk->size(), PAGE_SIZE);
 }
 
-void ExecutableWriter::setImageSizeOnDisk() {
+void PECOFFWriter::setImageSizeOnDisk() {
   for (auto &chunk : _chunks) {
     // Compute and set the offset of the chunk in the output file.
     _imageSizeOnDisk =
@@ -977,8 +977,8 @@ void ExecutableWriter::setImageSizeOnDisk() {
   }
 }
 
-void ExecutableWriter::setAddressOfEntryPoint(AtomChunk *text,
-                                              PEHeaderChunk *peHeader) {
+void PECOFFWriter::setAddressOfEntryPoint(AtomChunk *text,
+                                          PEHeaderChunk *peHeader) {
   // Find the virtual address of the entry point symbol if any.
   // PECOFF spec says that entry point for dll images is optional, in which
   // case it must be set to 0.
@@ -993,7 +993,7 @@ void ExecutableWriter::setAddressOfEntryPoint(AtomChunk *text,
   }
 }
 
-uint64_t ExecutableWriter::calcSectionSize(
+uint64_t PECOFFWriter::calcSectionSize(
     llvm::COFF::SectionCharacteristics sectionType) const {
   uint64_t ret = 0;
   for (auto &cp : _chunks)
@@ -1006,7 +1006,7 @@ uint64_t ExecutableWriter::calcSectionSize(
 } // end namespace pecoff
 
 std::unique_ptr<Writer> createWriterPECOFF(const PECOFFLinkingContext &info) {
-  return std::unique_ptr<Writer>(new pecoff::ExecutableWriter(info));
+  return std::unique_ptr<Writer>(new pecoff::PECOFFWriter(info));
 }
 
 } // end namespace lld
