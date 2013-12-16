@@ -115,7 +115,7 @@ private:
   ///
   /// This includes implicitly concatenated strings, strings that will be broken
   /// by clang-format and string literals with escaped newlines.
-  bool NextIsMultilineString(const LineState &State);
+  bool nextIsMultilineString(const LineState &State);
 
   FormatStyle Style;
   SourceManager &SourceMgr;

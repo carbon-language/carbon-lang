@@ -6187,7 +6187,7 @@ TEST_F(FormatTest, DontSplitStringLiteralsWithEscapedNewlines) {
 
 TEST_F(FormatTest, CountsCharactersInMultilineRawStringLiterals) {
   EXPECT_EQ("f(g(R\"x(raw literal)x\", a), b);",
-            format("f(g(R\"x(raw literal)x\", a), b);", getGoogleStyle()));
+            format("f(g(R\"x(raw literal)x\",   a), b);", getGoogleStyle()));
   EXPECT_EQ("fffffffffff(g(R\"x(\n"
             "multiline raw string literal xxxxxxxxxxxxxx\n"
             ")x\",\n"
@@ -6220,6 +6220,16 @@ TEST_F(FormatTest, CountsCharactersInMultilineRawStringLiterals) {
             ")x\" +\n"
             "            bbbbbb);",
             format("fffffffffff(R\"x(\n"
+                   "multiline raw string literal xxxxxxxxxxxxxx\n"
+                   ")x\" + bbbbbb);",
+                   getGoogleStyleWithColumns(20)));
+  EXPECT_EQ("fffffffffff(\n"
+            "    R\"x(\n"
+            "multiline raw string literal xxxxxxxxxxxxxx\n"
+            ")x\" +\n"
+            "    bbbbbb);",
+            format("fffffffffff(\n"
+                   " R\"x(\n"
                    "multiline raw string literal xxxxxxxxxxxxxx\n"
                    ")x\" + bbbbbb);",
                    getGoogleStyleWithColumns(20)));

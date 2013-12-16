@@ -1412,6 +1412,12 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
   } else if (Right.is(tok::l_brace) && (Right.BlockKind == BK_Block)) {
     return Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
            Style.BreakBeforeBraces == FormatStyle::BS_GNU;
+  } else if (Right.is(tok::string_literal) &&
+             Right.TokenText.startswith("R\"")) {
+    // Raw string literals are special wrt. line breaks. The author has made a
+    // deliberate choice and might have aligned the contents of the string
+    // literal accordingly. Thus, we try keep existing line breaks.
+    return Right.NewlinesBefore > 0;
   }
   return false;
 }
