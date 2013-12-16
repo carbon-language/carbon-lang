@@ -1407,7 +1407,8 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
              Right.Previous->MatchingParen->NestingLevel == 0 &&
              Style.AlwaysBreakTemplateDeclarations) {
     return true;
-  } else if (Right.Type == TT_CtorInitializerComma &&
+  } else if ((Right.Type == TT_CtorInitializerComma ||
+              Right.Type == TT_CtorInitializerColon) &&
              Style.BreakConstructorInitializersBeforeComma &&
              !Style.ConstructorInitializerAllOnOneLineOrOnePerLine) {
     return true;

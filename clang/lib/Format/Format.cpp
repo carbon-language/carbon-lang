@@ -455,13 +455,12 @@ public:
 
   /// \brief Formats the line starting at \p State, simply keeping all of the
   /// input's line breaking decisions.
-  void format(unsigned FirstIndent, const AnnotatedLine *Line,
-              bool LineIsMerged) {
+  void format(unsigned FirstIndent, const AnnotatedLine *Line) {
     LineState State =
         Indenter->getInitialState(FirstIndent, Line, /*DryRun=*/false);
     while (State.NextToken != NULL) {
       bool Newline =
-          (!LineIsMerged && Indenter->mustBreak(State)) ||
+          Indenter->mustBreak(State) ||
           (Indenter->canBreak(State) && State.NextToken->NewlinesBefore > 0);
       Indenter->addTokenToState(State, Newline, /*DryRun=*/false);
     }
@@ -728,8 +727,7 @@ public:
           // FIXME: Implement nested blocks for ColumnLimit = 0.
           NoColumnLimitFormatter Formatter(Indenter);
           if (!DryRun)
-            Formatter.format(Indent, &TheLine,
-                             /*LineIsMerged=*/MergedLines > 0);
+            Formatter.format(Indent, &TheLine);
         } else {
           Penalty += format(TheLine, Indent, DryRun);
         }

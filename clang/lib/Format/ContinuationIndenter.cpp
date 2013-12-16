@@ -183,9 +183,12 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       Current.LongestObjCSelectorName == 0 &&
       State.Stack.back().BreakBeforeParameter)
     return true;
-  if ((Current.Type == TT_CtorInitializerColon ||
-       (Previous.ClosesTemplateDeclaration && State.ParenLevel == 0 &&
-        !Current.isTrailingComment())))
+  if (Current.Type == TT_CtorInitializerColon &&
+      (!Style.AllowShortFunctionsOnASingleLine ||
+       Style.BreakConstructorInitializersBeforeComma || Style.ColumnLimit != 0))
+    return true;
+  if (Previous.ClosesTemplateDeclaration && State.ParenLevel == 0 &&
+      !Current.isTrailingComment())
     return true;
 
   if ((Current.Type == TT_StartOfName || Current.is(tok::kw_operator)) &&
