@@ -17,6 +17,8 @@ add_llvm_library(LLVMSupport
   Debug.cpp
   DeltaAlgorithm.cpp
   DAGDeltaAlgorithm.cpp
+  DiagnosticInfo.cpp
+  DiagnosticPrinter.cpp
   Dwarf.cpp
   ErrorHandling.cpp
   FileUtilities.cpp
