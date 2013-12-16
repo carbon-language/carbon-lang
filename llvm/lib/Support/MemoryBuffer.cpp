@@ -131,9 +131,10 @@ MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
                                                   StringRef BufferName) {
   // Allocate space for the MemoryBuffer, the data and the name. It is important
   // that MemoryBuffer and data are aligned so PointerIntPair works with them.
+  // TODO: Is 16-byte alignment enough?  We copy small object files with large
+  // alignment expectations into this buffer.
   size_t AlignedStringLen =
-    RoundUpToAlignment(sizeof(MemoryBufferMem) + BufferName.size() + 1,
-                       sizeof(void*)); // TODO: Is sizeof(void*) enough?
+      RoundUpToAlignment(sizeof(MemoryBufferMem) + BufferName.size() + 1, 16);
   size_t RealLen = AlignedStringLen + Size + 1;
   char *Mem = static_cast<char*>(operator new(RealLen, std::nothrow));
   if (!Mem) return 0;
