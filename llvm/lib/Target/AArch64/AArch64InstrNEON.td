@@ -3252,6 +3252,21 @@ def : Pat<(store (v4i16 VPR64:$value), GPR64xsp:$addr),
 def : Pat<(store (v8i8 VPR64:$value), GPR64xsp:$addr),
           (ST1_8B GPR64xsp:$addr, VPR64:$value)>;
 
+// Match load/store of v1i8/v1i16/v1i32 type to FPR8/FPR16/FPR32 load/store.
+// FIXME: for now we have v1i8, v1i16, v1i32 legal types, if they are illegal,
+// these patterns are not needed any more.
+def : Pat<(v1i8 (load GPR64xsp:$addr)), (LSFP8_LDR $addr, 0)>;
+def : Pat<(v1i16 (load GPR64xsp:$addr)), (LSFP16_LDR $addr, 0)>;
+def : Pat<(v1i32 (load GPR64xsp:$addr)), (LSFP32_LDR $addr, 0)>;
+
+def : Pat<(store (v1i8 FPR8:$value), GPR64xsp:$addr),
+          (LSFP8_STR $value, $addr, 0)>;
+def : Pat<(store (v1i16 FPR16:$value), GPR64xsp:$addr),
+          (LSFP16_STR $value, $addr, 0)>;
+def : Pat<(store (v1i32 FPR32:$value), GPR64xsp:$addr),
+          (LSFP32_STR $value, $addr, 0)>;
+
+
 // End of vector load/store multiple N-element structure(class SIMD lselem)
 
 // The followings are post-index vector load/store multiple N-element

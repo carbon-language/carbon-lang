@@ -663,3 +663,44 @@ define <2 x i64> @scalar_to_vector.v2i64(i64 %a) {
   %b = insertelement <2 x i64> undef, i64 %a, i32 0
   ret <2 x i64> %b
 }
+
+define <8 x i8> @testDUP.v1i8(<1 x i8> %a) {
+; CHECK-LABEL: testDUP.v1i8:
+; CHECK: dup {{v[0-9]+}}.8b, {{w[0-9]+}}
+  %b = extractelement <1 x i8> %a, i32 0
+  %c = insertelement <8 x i8> undef, i8 %b, i32 0
+  %d = insertelement <8 x i8> %c, i8 %b, i32 1
+  %e = insertelement <8 x i8> %d, i8 %b, i32 2
+  %f = insertelement <8 x i8> %e, i8 %b, i32 3
+  %g = insertelement <8 x i8> %f, i8 %b, i32 4
+  %h = insertelement <8 x i8> %g, i8 %b, i32 5
+  %i = insertelement <8 x i8> %h, i8 %b, i32 6
+  %j = insertelement <8 x i8> %i, i8 %b, i32 7
+  ret <8 x i8> %j
+}
+
+define <8 x i16> @testDUP.v1i16(<1 x i16> %a) {
+; CHECK-LABEL: testDUP.v1i16:
+; CHECK: dup {{v[0-9]+}}.8h, {{w[0-9]+}}
+  %b = extractelement <1 x i16> %a, i32 0
+  %c = insertelement <8 x i16> undef, i16 %b, i32 0
+  %d = insertelement <8 x i16> %c, i16 %b, i32 1
+  %e = insertelement <8 x i16> %d, i16 %b, i32 2
+  %f = insertelement <8 x i16> %e, i16 %b, i32 3
+  %g = insertelement <8 x i16> %f, i16 %b, i32 4
+  %h = insertelement <8 x i16> %g, i16 %b, i32 5
+  %i = insertelement <8 x i16> %h, i16 %b, i32 6
+  %j = insertelement <8 x i16> %i, i16 %b, i32 7
+  ret <8 x i16> %j
+}
+
+define <4 x i32> @testDUP.v1i32(<1 x i32> %a) {
+; CHECK-LABEL: testDUP.v1i32:
+; CHECK: dup {{v[0-9]+}}.4s, {{w[0-9]+}}
+  %b = extractelement <1 x i32> %a, i32 0
+  %c = insertelement <4 x i32> undef, i32 %b, i32 0
+  %d = insertelement <4 x i32> %c, i32 %b, i32 1
+  %e = insertelement <4 x i32> %d, i32 %b, i32 2
+  %f = insertelement <4 x i32> %e, i32 %b, i32 3
+  ret <4 x i32> %f
+}

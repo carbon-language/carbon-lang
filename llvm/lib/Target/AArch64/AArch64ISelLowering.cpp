@@ -4053,8 +4053,12 @@ AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       // just use DUPLANE. We can only do this if the lane being extracted
       // is at a constant index, as the DUP from lane instructions only have
       // constant-index forms.
+      // FIXME: for now we have v1i8, v1i16, v1i32 legal vector types, if they
+      // are not legal any more, no need to check the type size in bits should
+      // be large than 64.
       if (Value->getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
-          isa<ConstantSDNode>(Value->getOperand(1))) {
+          isa<ConstantSDNode>(Value->getOperand(1)) &&
+          Value->getOperand(0).getValueType().getSizeInBits() >= 64) {
           N = DAG.getNode(AArch64ISD::NEON_VDUPLANE, DL, VT,
                         Value->getOperand(0), Value->getOperand(1));
       } else
