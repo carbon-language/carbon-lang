@@ -36,11 +36,13 @@ namespace pecoff {
 namespace edata {
 
 struct TableEntry {
-  TableEntry(StringRef exportName, int ordinal, const DefinedAtom *atom)
-      : exportName(exportName), ordinal(ordinal), atom(atom) {}
+  TableEntry(StringRef exportName, int ordinal, const DefinedAtom *atom,
+             bool noname)
+      : exportName(exportName), ordinal(ordinal), atom(atom), noname(noname) {}
   StringRef exportName;
   int ordinal;
   const DefinedAtom *atom;
+  bool noname;
 };
 
 /// The root class of all edata atoms.
@@ -71,7 +73,7 @@ public:
 
 private:
   edata::EdataAtom *
-  createExportDirectoryTable(const std::vector<edata::TableEntry> &entries,
+  createExportDirectoryTable(const std::vector<edata::TableEntry> &namedEntries,
                              int ordinalBase, int maxOrdinal);
 
   edata::EdataAtom *
