@@ -357,6 +357,10 @@ def CC_X86_64_WebKit_JS : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
+  // Only the first integer argument is passed in register.
+  CCIfType<[i32], CCAssignToReg<[EDI]>>,
+  CCIfType<[i64], CCAssignToReg<[RDI]>>,
+
   // Integer/FP values are always stored in stack slots that are 8 bytes in size
   // and 8-byte aligned.
   CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>

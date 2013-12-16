@@ -39,23 +39,23 @@ entry:
 }
 
 ; Test the webkit_jscc calling convention.
-; Two arguments will be pushed on the stack.
+; One argument will be passed in register, the other will be pushed on the stack.
 ; Return value in $rax.
 define void @jscall_patchpoint_codegen(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
 entry:
 ; CHECK-LABEL: jscall_patchpoint_codegen:
 ; CHECK:      Ltmp
-; CHECK:      movq %r{{.+}}, 8(%rsp)
 ; CHECK:      movq %r{{.+}}, (%rsp)
+; CHECK:      movq %r{{.+}}, %rdi
 ; CHECK:      Ltmp
 ; CHECK-NEXT: movabsq $-559038736, %r11
 ; CHECK-NEXT: callq *%r11
-; CHECK:      movq %rax, 8(%rsp)
+; CHECK:      movq %rax, (%rsp)
 ; CHECK:      callq
   %resolveCall2 = inttoptr i64 -559038736 to i8*
-  %result = tail call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 5, i32 15, i8* %resolveCall2, i32 2, i64 %p1, i64 %p2)
+  %result = tail call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 5, i32 15, i8* %resolveCall2, i32 2, i64 %p4, i64 %p2)
   %resolveCall3 = inttoptr i64 -559038737 to i8*
-  tail call webkit_jscc void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 6, i32 15, i8* %resolveCall3, i32 2, i64 %p1, i64 %result)
+  tail call webkit_jscc void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 6, i32 15, i8* %resolveCall3, i32 2, i64 %p4, i64 %result)
   ret void
 }
 
