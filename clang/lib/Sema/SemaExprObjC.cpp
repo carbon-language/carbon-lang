@@ -3431,7 +3431,7 @@ bool Sema::checkObjCBridgeRelatedComponents(SourceLocation Loc,
 bool
 Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
                                         QualType DestType, QualType SrcType,
-                                        Expr *SrcExpr) {
+                                        Expr *&SrcExpr) {
   ARCConversionTypeClass rhsExprACTC = classifyTypeForARCConversion(SrcType);
   ARCConversionTypeClass lhsExprACTC = classifyTypeForARCConversion(DestType);
   bool CfToNs = (rhsExprACTC == ACTC_coreFoundation && lhsExprACTC == ACTC_retainable);
@@ -3460,12 +3460,20 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
         << SrcType << DestType << ClassMethod->getSelector() << false
         << FixItHint::CreateInsertion(SrcExpr->getLocStart(), ExpressionString)
         << FixItHint::CreateInsertion(SrcExprEndLoc, "]");
+      Diag(RelatedClass->getLocStart(), diag::note_declared_at);
+      Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+      
+      QualType receiverType =
+        Context.getObjCInterfaceType(RelatedClass);
+      // Argument.
+      Expr *args[] = { SrcExpr };
+      ExprResult msg = BuildClassMessageImplicit(receiverType, false,
+                                      ClassMethod->getLocation(),
+                                      ClassMethod->getSelector(), ClassMethod,
+                                      MultiExprArg(args, 1));
+      SrcExpr = msg.take();
+      return true;
     }
-    else
-      Diag(Loc, diag::err_objc_bridged_related_unknown_method)
-        << SrcType << DestType;
-    Diag(RelatedClass->getLocStart(), diag::note_declared_at);
-    Diag(TDNDecl->getLocStart(), diag::note_declared_at);
   }
   else {
     // Implicit conversion from ObjC type to CF object is needed.
@@ -3492,15 +3500,19 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
         << FixItHint::CreateInsertion(SrcExpr->getLocStart(), "[")
         << FixItHint::CreateInsertion(SrcExprEndLoc, ExpressionString);
       }
+      Diag(RelatedClass->getLocStart(), diag::note_declared_at);
+      Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+      
+      ExprResult msg =
+        BuildInstanceMessageImplicit(SrcExpr, SrcType,
+                                     InstanceMethod->getLocation(),
+                                     InstanceMethod->getSelector(),
+                                     InstanceMethod, None);
+      SrcExpr = msg.take();
+      return true;
     }
-    else
-      Diag(Loc, diag::err_objc_bridged_related_unknown_method)
-        << SrcType << DestType;
-    Diag(RelatedClass->getLocStart(), diag::note_declared_at);
-    Diag(TDNDecl->getLocStart(), diag::note_declared_at);
   }
-  
-  return true;
+  return false;
 }
 
 Sema::ARCConversionResult

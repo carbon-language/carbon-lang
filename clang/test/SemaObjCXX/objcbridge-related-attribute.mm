@@ -15,17 +15,13 @@ typedef struct __attribute__((objc_bridge_related(NSColor,colorWithCGColor:,CGCo
 
 NSColor *Test1(NSColor *nsColor, CGColorRef newColor) {
   nsColor = newColor; // expected-error {{'CGColorRef' (aka 'CGColor *') must be explicitly converted to 'NSColor *'; use '+colorWithCGColor:' method for this conversion}}
-  NSColor *ns = newColor; // expected-error {{'CGColorRef' (aka 'CGColor *') must be explicitly converted to 'NSColor *'; use '+colorWithCGColor:' method for this conversion}} \
-			  // expected-error {{cannot initialize a variable of type 'NSColor *' with an lvalue of type 'CGColorRef' (aka 'CGColor *')}}
-  return newColor; // expected-error {{'CGColorRef' (aka 'CGColor *') must be explicitly converted to 'NSColor *'; use '+colorWithCGColor:' method for this conversion}} \
-		   // expected-error {{cannot initialize return object of type 'NSColor *' with an lvalue of type 'CGColorRef' (aka 'CGColor *')}}
+  NSColor *ns = newColor; // expected-error {{'CGColorRef' (aka 'CGColor *') must be explicitly converted to 'NSColor *'; use '+colorWithCGColor:' method for this conversion}} 
+  return newColor; // expected-error {{'CGColorRef' (aka 'CGColor *') must be explicitly converted to 'NSColor *'; use '+colorWithCGColor:' method for this conversion}} 
 }
 
 CGColorRef Test2(NSColor *newColor, CGColorRef cgColor) {
   cgColor = newColor; // expected-error {{'NSColor *' must be explicitly converted to 'CGColorRef' (aka 'CGColor *'); use '-CGColor' method for this conversion}}
-  CGColorRef cg = newColor; // expected-error {{'NSColor *' must be explicitly converted to 'CGColorRef' (aka 'CGColor *'); use '-CGColor' method for this conversion}} \
-			    // expected-error {{cannot initialize a variable of type 'CGColorRef' (aka 'CGColor *') with an lvalue of type 'NSColor *'}}
-  return newColor; // expected-error {{'NSColor *' must be explicitly converted to 'CGColorRef' (aka 'CGColor *'); use '-CGColor' method for this conversion}}\
-	    	   // expected-error {{cannot initialize return object of type 'CGColorRef' (aka 'CGColor *') with an lvalue of type 'NSColor *'}}
+  CGColorRef cg = newColor; // expected-error {{'NSColor *' must be explicitly converted to 'CGColorRef' (aka 'CGColor *'); use '-CGColor' method for this conversion}} 
+  return newColor; // expected-error {{'NSColor *' must be explicitly converted to 'CGColorRef' (aka 'CGColor *'); use '-CGColor' method for this conversion}}
 }
 

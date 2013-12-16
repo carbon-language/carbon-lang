@@ -2,10 +2,10 @@
 // rdar://15499111
 
 typedef struct __attribute__((objc_bridge_related(NSColor,colorWithCGColor:,CGColor))) CGColor *CGColorRef; // expected-note 5 {{declared here}}
-typedef struct __attribute__((objc_bridge_related(NSColor,,CGColor1))) CGColor1 *CGColorRef1; // expected-note 3 {{declared here}}
-typedef struct __attribute__((objc_bridge_related(NSColor,,))) CGColor2 *CGColorRef2; // expected-note 2 {{declared here}}
+typedef struct __attribute__((objc_bridge_related(NSColor,,CGColor1))) CGColor1 *CGColorRef1;
+typedef struct __attribute__((objc_bridge_related(NSColor,,))) CGColor2 *CGColorRef2;
 
-@interface NSColor // expected-note 10 {{declared here}}
+@interface NSColor // expected-note 5 {{declared here}}
 + (NSColor *)colorWithCGColor:(CGColorRef)cgColor;
 - (CGColorRef)CGColor;
 - (CGColorRef1)CGColor1;
@@ -16,7 +16,7 @@ typedef struct __attribute__((objc_bridge_related(NSColor,,))) CGColor2 *CGColor
 - (NSColor *)backgroundColor;
 @end
 
-void foo(NSColor*);
+void foo(NSColor*); // expected-note {{passing argument to parameter here}}
 
 NSColor * Test1(NSTextField *textField, CGColorRef newColor) {
   foo(newColor); // expected-error {{'CGColorRef' (aka 'struct CGColor *') must be explicitly converted to 'NSColor *'; use '+colorWithCGColor:' method for this conversion}}
@@ -25,9 +25,9 @@ NSColor * Test1(NSTextField *textField, CGColorRef newColor) {
 }
 
 NSColor * Test2(NSTextField *textField, CGColorRef1 newColor) {
-  foo(newColor); // expected-error {{'CGColorRef1' (aka 'struct CGColor1 *') cannot be directly converted to 'NSColor *'}}
-  textField.backgroundColor = newColor;  // expected-error {{'CGColorRef1' (aka 'struct CGColor1 *') cannot be directly converted to 'NSColor *'}}
-  return newColor;  // expected-error {{'CGColorRef1' (aka 'struct CGColor1 *') cannot be directly converted to 'NSColor *'}}
+  foo(newColor); // expected-warning {{incompatible pointer types passing 'CGColorRef1'}}
+  textField.backgroundColor = newColor; // expected-warning {{incompatible pointer types assigning}}
+  return newColor; // expected-warning {{incompatible pointer types returning}}
 }
 
 CGColorRef Test3(NSTextField *textField, CGColorRef newColor) {
@@ -36,6 +36,6 @@ CGColorRef Test3(NSTextField *textField, CGColorRef newColor) {
 }
 
 CGColorRef2 Test4(NSTextField *textField, CGColorRef2 newColor) {
-  newColor = textField.backgroundColor; // expected-error {{'NSColor *' cannot be directly converted to 'CGColorRef2' (aka 'struct CGColor2 *')}}
-  return textField.backgroundColor; // expected-error {{'NSColor *' cannot be directly converted to 'CGColorRef2' (aka 'struct CGColor2 *')}}
+  newColor = textField.backgroundColor; // expected-warning {{incompatible pointer types assigning}}
+  return textField.backgroundColor; // expected-warning {{incompatible pointer types returning}}
 }

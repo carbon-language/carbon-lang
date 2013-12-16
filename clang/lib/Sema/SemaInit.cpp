@@ -4462,6 +4462,11 @@ void InitializationSequence::InitializeFrom(Sema &S,
   Expr *Initializer = 0;
   if (Args.size() == 1) {
     Initializer = Args[0];
+    if (S.getLangOpts().ObjC1 &&
+        S.CheckObjCBridgeRelatedConversions(Initializer->getLocStart(),
+                                          DestType, Initializer->getType(),
+                                          Initializer))
+      Args[0] = Initializer;
     if (!isa<InitListExpr>(Initializer))
       SourceType = Initializer->getType();
   }
@@ -6482,9 +6487,6 @@ bool InitializationSequence::Diagnose(Sema &S,
 
   case FK_ConversionFailed: {
     QualType FromType = Args[0]->getType();
-    if (S.getLangOpts().ObjC1)
-        S.CheckObjCBridgeRelatedConversions(Kind.getLocation(),
-                                            DestType, FromType, Args[0]);
     PartialDiagnostic PDiag = S.PDiag(diag::err_init_conversion_failed)
       << (int)Entity.getKind()
       << DestType

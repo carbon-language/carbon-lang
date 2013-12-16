@@ -1298,7 +1298,9 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
   bool AllowObjCWritebackConversion
     = getLangOpts().ObjCAutoRefCount && 
       (Action == AA_Passing || Action == AA_Sending);
-
+  if (getLangOpts().ObjC1)
+    CheckObjCBridgeRelatedConversions(From->getLocStart(),
+                                      ToType, From->getType(), From);
   ICS = clang::TryImplicitConversion(*this, From, ToType,
                                      /*SuppressUserConversions=*/false,
                                      AllowExplicit,

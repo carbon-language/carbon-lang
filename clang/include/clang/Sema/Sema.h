@@ -6898,7 +6898,7 @@ public:
   
   bool CheckObjCBridgeRelatedConversions(SourceLocation Loc,
                                          QualType DestType, QualType SrcType,
-                                         Expr *SrcExpr);
+                                         Expr *&SrcExpr);
   
   bool checkInitMethod(ObjCMethodDecl *method, QualType receiverTypeIfCall);
 

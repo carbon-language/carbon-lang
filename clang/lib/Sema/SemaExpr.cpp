@@ -6612,6 +6612,13 @@ Sema::CheckSingleAssignmentConstraints(QualType LHSType, ExprResult &RHS,
     if (getLangOpts().ObjCAutoRefCount)
       CheckObjCARCConversion(SourceRange(), Ty, E, CCK_ImplicitConversion,
                              DiagnoseCFAudited);
+    if (getLangOpts().ObjC1 &&
+        CheckObjCBridgeRelatedConversions(E->getLocStart(),
+                                          LHSType, E->getType(), E)) {
+      RHS = Owned(E);
+      return Compatible;
+    }
+    
     RHS = ImpCastExprToType(E, Ty, Kind);
   }
   return result;
@@ -10648,9 +10655,6 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     MayHaveConvFixit = true;
     break;
   case IncompatiblePointer:
-    if (getLangOpts().ObjC1 &&
-        CheckObjCBridgeRelatedConversions(Loc, DstType, SrcType, SrcExpr))
-      return false;
     MakeObjCStringLiteralFixItHint(*this, DstType, SrcExpr, Hint, IsNSString);
       DiagKind =
         (Action == AA_Passing_CFAudited ?
@@ -10730,9 +10734,6 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     DiagKind = diag::err_arc_weak_unavailable_assign;
     break;
   case Incompatible:
-    if (getLangOpts().ObjC1 &&
-        CheckObjCBridgeRelatedConversions(Loc, DstType, SrcType, SrcExpr))
-      return true;
     DiagKind = diag::err_typecheck_convert_incompatible;
     ConvHints.tryToFixConversion(SrcExpr, SrcType, DstType, *this);
     MayHaveConvFixit = true;
