@@ -363,6 +363,7 @@ public:
   void setRunCount(uint32_t Runs) { RunCount = Runs; }
   void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }
   void print(StringRef GCNOFile, StringRef GCDAFile) const;
+private:
   void printFunctionSummary(raw_fd_ostream &OS,
                             const FunctionVector &Funcs) const;
   void printBlockInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
@@ -371,7 +372,7 @@ public:
                        uint32_t &EdgeNo) const;
   void printUncondBranchInfo(raw_fd_ostream &OS, uint32_t &EdgeNo,
                              uint64_t Count) const;
-private:
+
   const GCOVOptions &Options;
   StringMap<LineData> LineInfo;
   uint32_t RunCount;
