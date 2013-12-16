@@ -71,6 +71,11 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   // Little endian. Pointers are 32 bits and aligned to 32 bits.
   std::string Ret = "e-p:32:32";
 
+  // On thumb, i16,i18 and i1 have natural aligment requirements, but we try to
+  // align to 32.
+  if (ST.isThumb())
+    Ret += "-i1:8:32-i8:8:32-i16:16:32";
+
   // We have 64 bits floats and integers. The APCS ABI requires them to be
   // aligned s them to 32 bits, others to 64 bits. We always try to align to
   // 64 bits.
@@ -79,15 +84,10 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   else
     Ret += "-i64:64";
 
-  // On thumb, i16,i18 and i1 have natural aligment requirements, but we try to
-  // align to 32.
-  if (ST.isThumb())
-    Ret += "-i16:16:32-i8:8:32-i1:8:32";
-
   // We have 128 and 64 bit vectors. The APCS ABI aligns them to 32 bits, others
   // to 64. We always ty to give them natural alignment.
   if (ST.isAPCS_ABI())
-    Ret += "-v128:32:128-v64:32:64";
+    Ret += "-v64:32:64-v128:32:128";
   else
     Ret += "-v128:64:128";
 
