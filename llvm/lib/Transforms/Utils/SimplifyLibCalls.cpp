@@ -1100,6 +1100,49 @@ struct UnaryDoubleFPOpt : public LibCallOptimization {
   }
 };
 
+// Double -> Float Shrinking Optimizations for Binary Functions like 'fmin/fmax'
+struct BinaryDoubleFPOpt : public LibCallOptimization {
+  bool CheckRetType;
+  BinaryDoubleFPOpt(bool CheckReturnType): CheckRetType(CheckReturnType) {}
+  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    FunctionType *FT = Callee->getFunctionType();
+    // Just make sure this has 2 arguments of the same FP type, which match the
+    // result type.
+    if (FT->getNumParams() != 2 || FT->getReturnType() != FT->getParamType(0) ||
+        FT->getParamType(0) != FT->getParamType(1) ||
+        !FT->getParamType(0)->isFloatingPointTy())
+      return 0;
+
+    if (CheckRetType) {
+      // Check if all the uses for function like 'fmin/fmax' are converted to
+      // float.
+      for (Value::use_iterator UseI = CI->use_begin(); UseI != CI->use_end();
+          ++UseI) {
+        FPTruncInst *Cast = dyn_cast<FPTruncInst>(*UseI);
+        if (Cast == 0 || !Cast->getType()->isFloatTy())
+          return 0;
+      }
+    }
+
+    // If this is something like 'fmin((double)floatval1, (double)floatval2)',
+    // we convert it to fminf.
+    FPExtInst *Cast1 = dyn_cast<FPExtInst>(CI->getArgOperand(0));
+    FPExtInst *Cast2 = dyn_cast<FPExtInst>(CI->getArgOperand(1));
+    if (Cast1 == 0 || !Cast1->getOperand(0)->getType()->isFloatTy() ||
+        Cast2 == 0 || !Cast2->getOperand(0)->getType()->isFloatTy())
+      return 0;
+
+    // fmin((double)floatval1, (double)floatval2)
+    //                      -> (double)fmin(floatval1, floatval2)
+    Value *V = NULL;
+    Value *V1 = Cast1->getOperand(0);
+    Value *V2 = Cast2->getOperand(0);
+    V = EmitBinaryFloatFnCall(V1, V2, Callee->getName(), B,
+                              Callee->getAttributes());
+    return B.CreateFPExt(V, B.getDoubleTy());
+  }
+};
+
 struct UnsafeFPLibCallOptimization : public LibCallOptimization {
   bool UnsafeFPShrink;
   UnsafeFPLibCallOptimization(bool UnsafeFPShrink) {
@@ -1981,6 +2024,7 @@ static MemSetOpt MemSet;
 
 // Math library call optimizations.
 static UnaryDoubleFPOpt UnaryDoubleFP(false);
+static BinaryDoubleFPOpt BinaryDoubleFP(false);
 static UnaryDoubleFPOpt UnsafeUnaryDoubleFP(true);
 static SinCosPiOpt SinCosPi;
 
@@ -2149,6 +2193,11 @@ LibCallOptimization *LibCallSimplifierImpl::lookupOptimization(CallInst *CI) {
       case LibFunc::tanh:
         if (UnsafeFPShrink && hasFloatVersion(FuncName))
          return &UnsafeUnaryDoubleFP;
+        return 0;
+      case LibFunc::fmin:
+      case LibFunc::fmax:
+        if (hasFloatVersion(FuncName))
+          return &BinaryDoubleFP;
         return 0;
       case LibFunc::memcpy_chk:
         return &MemCpyChk;
