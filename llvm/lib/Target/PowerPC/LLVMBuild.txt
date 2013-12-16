@@ -22,6 +22,7 @@ subdirectories = AsmParser InstPrinter MCTargetDesc TargetInfo
 type = TargetGroup
 name = PowerPC
 parent = Target
+has_asmparser = 1
 has_asmprinter = 1
 has_jit = 1
 
