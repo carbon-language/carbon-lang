@@ -26,6 +26,7 @@ module XE {
 
 module XF {
   header "f.h"
+  header "missing.h"
   use XA
   use XB
 }

@@ -1,5 +1,7 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -x objective-c++ -fmodules-cache-path=%t -fmodules -fmodule-map-file=%S/Inputs/modular_maps/modulea.map -I %S/Inputs/modular_maps %s -verify
+// RUN: %clang_cc1 -fmodules -fmodule-maps -fmodules-cache-path=%t -fmodule-map-file=%S/Inputs/modular_maps/modulea.map -I %S/Inputs/modular_maps %s -verify
+
+// expected-warning@Inputs/modular_maps/modulea.map:4{{header 'doesnotexists.h' not found}}
 
 #include "common.h"
 #include "a.h"
