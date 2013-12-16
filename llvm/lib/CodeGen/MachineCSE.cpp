@@ -513,7 +513,7 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
     bool DoCSE = true;
     unsigned NumDefs = MI->getDesc().getNumDefs() +
                        MI->getDesc().getNumImplicitDefs();
-    
+
     for (unsigned i = 0, e = MI->getNumOperands(); NumDefs && i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg() || !MO.isDef())
