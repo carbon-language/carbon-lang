@@ -72,11 +72,11 @@ public:
 private:
   edata::EdataAtom *
   createExportDirectoryTable(const std::vector<edata::TableEntry> &entries,
-                             int maxOrdinal);
+                             int ordinalBase, int maxOrdinal);
 
   edata::EdataAtom *
   createAddressTable(const std::vector<edata::TableEntry> &entries,
-                     int maxOrdinal);
+                     int ordinalBase, int maxOrdinal);
 
   edata::EdataAtom *
   createNamePointerTable(const PECOFFLinkingContext &ctx,
@@ -84,7 +84,8 @@ private:
                          MutableFile *file);
 
   edata::EdataAtom *
-  createOrdinalTable(const std::vector<edata::TableEntry> &entries);
+  createOrdinalTable(const std::vector<edata::TableEntry> &entries,
+                     int ordinalBase);
 
   const PECOFFLinkingContext &_ctx;
   VirtualFile _file;

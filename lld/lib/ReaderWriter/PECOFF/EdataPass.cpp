@@ -16,7 +16,9 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
 
+#include <climits>
 #include <ctime>
+#include <utility>
 
 using lld::pecoff::edata::EdataAtom;
 using lld::pecoff::edata::TableEntry;
@@ -25,8 +27,6 @@ using llvm::object::export_directory_table_entry;
 
 namespace lld {
 namespace pecoff {
-
-static const int ORDINAL_BASE = 1;
 
 static bool compare(const TableEntry &a, const TableEntry &b) {
   return a.exportName.compare(b.exportName) < 0;
@@ -52,31 +52,38 @@ static bool getExportedAtoms(const PECOFFLinkingContext &ctx, MutableFile *file,
   return true;
 }
 
-static int assignOrdinals(std::vector<TableEntry> &entries) {
+static std::pair<int, int> assignOrdinals(std::vector<TableEntry> &entries) {
+  int ordinalBase = INT_MAX;
   int maxOrdinal = -1;
-  for (TableEntry &e : entries)
+  for (TableEntry &e : entries) {
+    if (e.ordinal > 0)
+      ordinalBase = std::min(ordinalBase, e.ordinal);
     maxOrdinal = std::max(maxOrdinal, e.ordinal);
+  }
+  if (ordinalBase == INT_MAX)
+    ordinalBase = 1;
 
   if (maxOrdinal == -1) {
     int ordinal = 0;
     for (TableEntry &e : entries)
       e.ordinal = ++ordinal;
-    return ordinal;
+    return std::pair<int, int>(ordinalBase, ordinal);
   }
   for (TableEntry &e : entries)
     if (e.ordinal == -1)
       e.ordinal = ++maxOrdinal;
-  return maxOrdinal;
+  return std::pair<int, int>(ordinalBase, maxOrdinal);
 }
 
 edata::EdataAtom *
 EdataPass::createAddressTable(const std::vector<TableEntry> &entries,
-                              int maxOrdinal) {
-  EdataAtom *addressTable = new (_alloc)
-      EdataAtom(_file, sizeof(export_address_table_entry) * maxOrdinal);
+                              int ordinalBase, int maxOrdinal) {
+  EdataAtom *addressTable =
+      new (_alloc) EdataAtom(_file, sizeof(export_address_table_entry) *
+                                        (maxOrdinal - ordinalBase + 1));
 
   for (const TableEntry &e : entries) {
-    int index = e.ordinal - ORDINAL_BASE;
+    int index = e.ordinal - ordinalBase;
     size_t offset = index * sizeof(export_address_table_entry);
     addDir32NBReloc(addressTable, e.atom, offset);
   }
@@ -102,25 +109,27 @@ EdataPass::createNamePointerTable(const PECOFFLinkingContext &ctx,
 }
 
 edata::EdataAtom *EdataPass::createExportDirectoryTable(
-    const std::vector<edata::TableEntry> &entries, int maxOrdinal) {
+    const std::vector<edata::TableEntry> &entries, int ordinalBase,
+    int maxOrdinal) {
   EdataAtom *ret =
       new (_alloc) EdataAtom(_file, sizeof(export_directory_table_entry));
   auto *data = ret->getContents<export_directory_table_entry>();
   data->TimeDateStamp = time(nullptr);
-  data->OrdinalBase = ORDINAL_BASE;
-  data->AddressTableEntries = maxOrdinal;
+  data->OrdinalBase = ordinalBase;
+  data->AddressTableEntries = maxOrdinal - ordinalBase + 1;
   data->NumberOfNamePointers = entries.size();
   return ret;
 }
 
 edata::EdataAtom *
-EdataPass::createOrdinalTable(const std::vector<TableEntry> &entries) {
+EdataPass::createOrdinalTable(const std::vector<TableEntry> &entries,
+                              int ordinalBase) {
   EdataAtom *ret =
       new (_alloc) EdataAtom(_file, sizeof(uint16_t) * entries.size());
   uint16_t *data = ret->getContents<uint16_t>();
   int i = 0;
   for (const TableEntry &e : entries)
-    data[i++] = e.ordinal - ORDINAL_BASE;
+    data[i++] = e.ordinal - ordinalBase;
   return ret;
 }
 
@@ -130,9 +139,12 @@ void EdataPass::perform(std::unique_ptr<MutableFile> &file) {
     return;
   if (entries.empty())
     return;
-  int maxOrdinal = assignOrdinals(entries);
 
-  EdataAtom *table = createExportDirectoryTable(entries, maxOrdinal);
+  int ordinalBase, maxOrdinal;
+  llvm::tie(ordinalBase, maxOrdinal) = assignOrdinals(entries);
+
+  EdataAtom *table =
+      createExportDirectoryTable(entries, ordinalBase, maxOrdinal);
   file->addAtom(*table);
 
   COFFStringAtom *dllName =
@@ -142,7 +154,8 @@ void EdataPass::perform(std::unique_ptr<MutableFile> &file) {
   addDir32NBReloc(table, dllName,
                   offsetof(export_directory_table_entry, NameRVA));
 
-  EdataAtom *addressTable = createAddressTable(entries, maxOrdinal);
+  EdataAtom *addressTable =
+      createAddressTable(entries, ordinalBase, maxOrdinal);
   file->addAtom(*addressTable);
   addDir32NBReloc(table, addressTable, offsetof(export_directory_table_entry,
                                                 ExportAddressTableRVA));
@@ -153,7 +166,7 @@ void EdataPass::perform(std::unique_ptr<MutableFile> &file) {
   addDir32NBReloc(table, namePointerTable,
                   offsetof(export_directory_table_entry, NamePointerRVA));
 
-  EdataAtom *ordinalTable = createOrdinalTable(entries);
+  EdataAtom *ordinalTable = createOrdinalTable(entries, ordinalBase);
   file->addAtom(*ordinalTable);
   addDir32NBReloc(table, ordinalTable,
                   offsetof(export_directory_table_entry, OrdinalTableRVA));
