@@ -36,6 +36,10 @@ AllBlocks("a", cl::init(false), cl::desc("display all block info"));
 static cl::opt<bool>
 BranchProb("b", cl::init(false), cl::desc("display branch info"));
 
+static cl::opt<bool>
+UncondBranch("u", cl::init(false), cl::desc("display unconditional branch info \
+                                             (only works with -b)"));
+
 //===----------------------------------------------------------------------===//
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
@@ -76,7 +80,7 @@ int main(int argc, char **argv) {
   if (DumpGCOV)
     GF.dump();
 
-  GCOVOptions Options(AllBlocks, BranchProb);
+  GCOVOptions Options(AllBlocks, BranchProb, UncondBranch);
   FileInfo FI(Options);
   GF.collectLineCounts(FI);
   FI.print(InputGCNO, InputGCDA);

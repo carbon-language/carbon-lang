@@ -36,9 +36,12 @@ namespace GCOV {
 
 /// GCOVOptions - A struct for passing gcov options between functions.
 struct GCOVOptions {
-  GCOVOptions(bool A, bool B): AllBlocks(A), BranchProb(B) {}
+  GCOVOptions(bool A, bool B, bool U) :
+    AllBlocks(A), BranchProb(B), UncondBranch(U) {}
+
   bool AllBlocks;
   bool BranchProb;
+  bool UncondBranch;
 };
 
 /// GCOVBuffer - A wrapper around MemoryBuffer to provide GCOV specific
@@ -365,7 +368,9 @@ public:
   void printBlockInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
                       uint32_t LineIndex, uint32_t &BlockNo) const;
   void printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
-                       uint32_t LineIndex, uint32_t &EdgeNo) const;
+                       uint32_t &EdgeNo) const;
+  void printUncondBranchInfo(raw_fd_ostream &OS, uint32_t &EdgeNo,
+                             uint64_t Count) const;
 private:
   const GCOVOptions &Options;
   StringMap<LineData> LineInfo;

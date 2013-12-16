@@ -481,8 +481,13 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
             continue;
           if (Options.AllBlocks)
             printBlockInfo(OS, *Block, LineIndex, BlockNo);
-          if (Options.BranchProb)
-            printBranchInfo(OS, *Block, LineIndex, EdgeNo);
+          if (Options.BranchProb) {
+            size_t NumEdges = Block->getNumDstEdges();
+            if (NumEdges > 1)
+              printBranchInfo(OS, *Block, EdgeNo);
+            else if (Options.UncondBranch && NumEdges == 1)
+              printUncondBranchInfo(OS, EdgeNo, (*Block->dst_begin())->Count);
+          }
         }
       }
     }
@@ -521,13 +526,9 @@ void FileInfo::printBlockInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
   OS << format("%5u-block %2u\n", LineIndex+1, BlockNo++);
 }
 
-/// printBranchInfo - Print branch probabilities for blocks that have
-/// conditional branches.
+/// printBranchInfo - Print conditional branch probabilities.
 void FileInfo::printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
-                               uint32_t LineIndex, uint32_t &EdgeNo) const {
-  if (Block.getNumDstEdges() < 2)
-    return;
-
+                               uint32_t &EdgeNo) const {
   SmallVector<uint64_t, 16> BranchCounts;
   uint64_t TotalCounts = 0;
   for (GCOVBlock::EdgeIterator I = Block.dst_begin(), E = Block.dst_end();
@@ -545,4 +546,13 @@ void FileInfo::printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
     else
       OS << format("branch %2u never executed\n", EdgeNo++);
   }
+}
+
+/// printUncondBranchInfo - Print unconditional branch probabilities.
+void FileInfo::printUncondBranchInfo(raw_fd_ostream &OS, uint32_t &EdgeNo,
+                                     uint64_t Count) const {
+  if (Count)
+    OS << format("unconditional %2u taken 100%%\n", EdgeNo++);
+  else
+    OS << format("unconditional %2u never executed\n", EdgeNo++);
 }
