@@ -1349,7 +1349,6 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
   unsigned LastCopiedReg = 0;
   SlotIndex LastCopyIdx;
   unsigned RegB = 0;
-  unsigned SubRegB = 0;
   for (unsigned tpi = 0, tpe = TiedPairs.size(); tpi != tpe; ++tpi) {
     unsigned SrcIdx = TiedPairs[tpi].first;
     unsigned DstIdx = TiedPairs[tpi].second;
@@ -1360,7 +1359,6 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
     // Grab RegB from the instruction because it may have changed if the
     // instruction was commuted.
     RegB = MI->getOperand(SrcIdx).getReg();
-    SubRegB = MI->getOperand(SrcIdx).getSubReg();
 
     if (RegA == RegB) {
       // The register is tied to multiple destinations (or else we would
@@ -1385,25 +1383,8 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
 #endif
 
     // Emit a copy.
-    MachineInstrBuilder MIB = BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
-                                      TII->get(TargetOpcode::COPY), RegA);
-    // If this operand is folding a truncation, the truncation now moves to the
-    // copy so that the register classes remain valid for the operands.
-    MIB.addReg(RegB, 0, SubRegB);
-    const TargetRegisterClass *RC = MRI->getRegClass(RegB);
-    if (SubRegB) {
-      if (TargetRegisterInfo::isVirtualRegister(RegA)) {
-        assert(TRI->getMatchingSuperRegClass(MRI->getRegClass(RegB),
-                                             MRI->getRegClass(RegA), SubRegB) &&
-               "tied subregister must be a truncation");
-        // The superreg class will not be used to constrain the subreg class.
-        RC = 0;
-      }
-      else {
-        assert(TRI->getMatchingSuperReg(RegA, SubRegB, MRI->getRegClass(RegB))
-               && "tied subregister must be a truncation");
-      }
-    }
+    BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
+            TII->get(TargetOpcode::COPY), RegA).addReg(RegB);
 
     // Update DistanceMap.
     MachineBasicBlock::iterator PrevMI = MI;
@@ -1423,7 +1404,7 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
       }
     }
 
-    DEBUG(dbgs() << "\t\tprepend:\t" << *MIB);
+    DEBUG(dbgs() << "\t\tprepend:\t" << *PrevMI);
 
     MachineOperand &MO = MI->getOperand(SrcIdx);
     assert(MO.isReg() && MO.getReg() == RegB && MO.isUse() &&
@@ -1436,9 +1417,9 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
     // Make sure regA is a legal regclass for the SrcIdx operand.
     if (TargetRegisterInfo::isVirtualRegister(RegA) &&
         TargetRegisterInfo::isVirtualRegister(RegB))
-      MRI->constrainRegClass(RegA, RC);
+      MRI->constrainRegClass(RegA, MRI->getRegClass(RegB));
+
     MO.setReg(RegA);
-    MO.setSubReg(0);
 
     // Propagate SrcRegMap.
     SrcRegMap[RegA] = RegB;
@@ -1450,14 +1431,12 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
       // Replace other (un-tied) uses of regB with LastCopiedReg.
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
-        if (MO.isReg() && MO.getReg() == RegB && MO.getSubReg() == SubRegB &&
-            MO.isUse()) {
+        if (MO.isReg() && MO.getReg() == RegB && MO.isUse()) {
           if (MO.isKill()) {
             MO.setIsKill(false);
             RemovedKillFlag = true;
           }
           MO.setReg(LastCopiedReg);
-          MO.setSubReg(0);
         }
       }
     }
