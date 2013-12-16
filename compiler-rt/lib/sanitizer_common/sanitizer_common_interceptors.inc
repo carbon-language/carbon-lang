@@ -1229,14 +1229,12 @@ INTERCEPTOR(int, gethostent_r, struct __sanitizer_hostent *ret, char *buf,
   COMMON_INTERCEPTOR_ENTER(ctx, gethostent_r, ret, buf, buflen, result,
                            h_errnop);
   int res = REAL(gethostent_r)(ret, buf, buflen, result, h_errnop);
-  if (res == 0) {
-    if (result) {
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
-      if (*result) write_hostent(ctx, *result);
-    }
-    if (h_errnop)
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
+  if (res == 0 && result) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+    if (*result) write_hostent(ctx, *result);
   }
+  if (h_errnop)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
   return res;
 }
 
@@ -1249,14 +1247,12 @@ INTERCEPTOR(int, gethostbyaddr_r, void *addr, int len, int type,
   COMMON_INTERCEPTOR_READ_RANGE(ctx, addr, len);
   int res = REAL(gethostbyaddr_r)(addr, len, type, ret, buf, buflen, result,
                                   h_errnop);
-  if (res == 0) {
-    if (result) {
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
-      if (*result) write_hostent(ctx, *result);
-    }
-    if (h_errnop)
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
+  if (res == 0 && result) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+    if (*result) write_hostent(ctx, *result);
   }
+  if (h_errnop)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
   return res;
 }
 
@@ -1267,14 +1263,12 @@ INTERCEPTOR(int, gethostbyname_r, char *name, struct __sanitizer_hostent *ret,
   COMMON_INTERCEPTOR_ENTER(ctx, gethostbyname_r, name, ret, buf, buflen, result,
                            h_errnop);
   int res = REAL(gethostbyname_r)(name, ret, buf, buflen, result, h_errnop);
-  if (res == 0) {
-    if (result) {
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
-      if (*result) write_hostent(ctx, *result);
-    }
-    if (h_errnop)
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
+  if (res == 0 && result) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+    if (*result) write_hostent(ctx, *result);
   }
+  if (h_errnop)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
   return res;
 }
 
@@ -1286,14 +1280,12 @@ INTERCEPTOR(int, gethostbyname2_r, char *name, int af,
                            result, h_errnop);
   int res =
       REAL(gethostbyname2_r)(name, af, ret, buf, buflen, result, h_errnop);
-  if (res == 0) {
-    if (result) {
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
-      if (*result) write_hostent(ctx, *result);
-    }
-    if (h_errnop)
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
+  if (res == 0 && result) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+    if (*result) write_hostent(ctx, *result);
   }
+  if (h_errnop)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
   return res;
 }
 #define INIT_GETHOSTBYNAME_R                  \

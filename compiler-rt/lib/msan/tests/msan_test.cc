@@ -1061,6 +1061,27 @@ TEST(MemorySanitizer, gethostbyname_r) {
   EXPECT_NOT_POISONED(err);
 }
 
+TEST(MemorySanitizer, gethostbyname_r_bad_host_name) {
+  char buf[2000];
+  struct hostent he;
+  struct hostent *result;
+  int err;
+  int res = gethostbyname_r("bad-host-name", &he, buf, sizeof(buf), &result, &err);
+  ASSERT_EQ(0, res);
+  ASSERT_EQ((struct hostent *)0, result);
+  EXPECT_NOT_POISONED(err);
+}
+
+TEST(MemorySanitizer, gethostbyname_r_erange) {
+  char buf[5];
+  struct hostent he;
+  struct hostent *result;
+  int err;
+  int res = gethostbyname_r("localhost", &he, buf, sizeof(buf), &result, &err);
+  ASSERT_EQ(ERANGE, res);
+  EXPECT_NOT_POISONED(err);
+}
+
 TEST(MemorySanitizer, gethostbyname2_r) {
   char buf[2000];
   struct hostent he;
