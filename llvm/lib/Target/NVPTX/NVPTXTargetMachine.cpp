@@ -66,9 +66,7 @@ extern "C" void LLVMInitializeNVPTXTarget() {
 static std::string computeDataLayout(const NVPTXSubtarget &ST) {
   std::string Ret = "e";
 
-  if (ST.is64Bit())
-    Ret += "-p:64:64:64";
-  else
+  if (!ST.is64Bit())
     Ret += "-p:32:32:32";
 
   Ret += "-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"

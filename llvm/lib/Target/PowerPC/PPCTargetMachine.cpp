@@ -38,10 +38,8 @@ static std::string getDataLayoutString(const PPCSubtarget &ST) {
   // PPC is big endian.
   std::string Ret = "E";
 
-  // PPC64 has 64 bit pointers, PPC32 has 32 bit pointers.
-  if (ST.isPPC64())
-    Ret += "-p:64:64";
-  else
+  // PPC32 has 32 bit pointers.
+  if (!ST.isPPC64())
     Ret += "-p:32:32";
 
   // Note, the alignment values for f64 and i64 on ppc64 in Darwin

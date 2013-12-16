@@ -27,10 +27,8 @@ static std::string computeDataLayout(const SparcSubtarget &ST) {
   // Sparc is big endian.
   std::string Ret = "E";
 
-  // V9 has 64 bit pointers, others have 32bit pointers.
-  if (ST.is64Bit())
-    Ret += "-p:64:64:64";
-  else
+  // Some ABIs have 32bit pointers.
+  if (!ST.is64Bit())
     Ret += "-p:32:32:32";
 
   // Alignments for 64 bit integers.

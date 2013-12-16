@@ -34,11 +34,9 @@ static std::string computeDataLayout(const X86Subtarget &ST) {
   // X86 is little endian
   std::string Ret = "e";
 
-  // X86 and x32 have 32 bit pointers, x86-64 has 64 bit pointers
+  // X86 and x32 have 32 bit pointers.
   if (ST.isTarget64BitILP32() || !ST.is64Bit())
     Ret += "-p:32:32";
-  else
-    Ret += "-p:64:64";
 
   // Objects on the stack ore aligned to 64 bits.
   // FIXME: of any size?

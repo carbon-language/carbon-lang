@@ -54,10 +54,8 @@ static std::string computeDataLayout(const MipsSubtarget &ST) {
   else
     Ret += "E";
 
-  // Pointers are 64 or 32 bit depending on the ABI.
-  if (ST.isABI_N64())
-    Ret += "-p:64:64:64";
-  else
+  // Pointers are 32 bit on some ABIs.
+  if (!ST.isABI_N64())
     Ret += "-p:32:32:32";
 
   // 8 and 16 bit integers only need no have natural alignment, but try to

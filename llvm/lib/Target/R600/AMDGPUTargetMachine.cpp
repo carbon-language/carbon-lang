@@ -61,9 +61,7 @@ static std::string computeDataLayout(const AMDGPUSubtarget &ST) {
   if (ST.hasHWFP64())
     DataLayout.append("-f64:64:64");
 
-  if (ST.is64bit())
-    DataLayout.append("-p:64:64:64");
-  else
+  if (!ST.is64bit())
     DataLayout.append("-p:32:32:32");
 
   if (ST.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS)
