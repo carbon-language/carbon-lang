@@ -79,6 +79,7 @@
 #define bit_ACPI        0x00400000
 #define bit_MMX         0x00800000
 #define bit_FXSR        0x01000000
+#define bit_FXSAVE      bit_FXSR    /* for gcc compat */
 #define bit_SSE         0x02000000
 #define bit_SSE2        0x04000000
 #define bit_SS          0x08000000
