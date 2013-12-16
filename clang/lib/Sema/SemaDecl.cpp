@@ -4398,14 +4398,8 @@ NamedDecl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   // tag type. Note that this does does not apply if we're declaring a
   // typedef (C++ [dcl.typedef]p4).
   if (Previous.isSingleTagDecl() &&
-      D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef) {
-    TagDecl *TD = Previous.getAsSingle<TagDecl>();
-    Diag(D.getIdentifierLoc(), diag::warn_declaration_shadows_tag_type)
-        << Name << TD->getKindName();
-    Diag(TD->getLocation(), diag::note_shadowed_tag_type_declaration)
-        << Name << TD->getKindName();
+      D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef)
     Previous.clear();
-  }
 
   // Check that there are no default arguments other than in the parameters
   // of a function declaration (C++ only).

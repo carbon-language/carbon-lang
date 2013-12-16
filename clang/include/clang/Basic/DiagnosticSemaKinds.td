@@ -3662,10 +3662,6 @@ def err_redefinition_different_type : Error<
   "redefinition of %0 with a different type%diff{: $ vs $|}1,2">;
 def err_redefinition_different_kind : Error<
   "redefinition of %0 as different kind of symbol">;
-def warn_declaration_shadows_tag_type : Warning<
-  "declaration of %0 shadows %1 %0; '%1' tag will be needed to refer to the %1">,
-  InGroup<Shadow>, DefaultIgnore;
-def note_shadowed_tag_type_declaration : Note<"%1 %0 declared here">;
 def warn_forward_class_redefinition : Warning<
   "redefinition of forward class %0 of a typedef name of an object type is ignored">,
   InGroup<DiagGroup<"objc-forward-class-redefinition">>;
