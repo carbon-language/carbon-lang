@@ -3110,7 +3110,6 @@ int32x4_t test_vqrdmulhq_s32(int32x4_t a, int32x4_t b) {
 // CHECK: sqrdmulh {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
 }
 
-
 float32x2_t test_vmulx_f32(float32x2_t a, float32x2_t b) {
 // CHECK: test_vmulx_f32
   return vmulx_f32(a, b);
@@ -5691,6 +5690,12 @@ float32_t test_vmulxs_f32(float32_t a, float32_t b) {
 float64_t test_vmulxd_f64(float64_t a, float64_t b) {
 // CHECK: test_vmulxd_f64
   return vmulxd_f64(a, b);
+// CHECK: fmulx {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+}
+
+float64x1_t test_vmulx_f64(float64x1_t a, float64x1_t b) {
+// CHECK: test_vmulx_f64
+  return vmulx_f64(a, b);
 // CHECK: fmulx {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
 }
 
