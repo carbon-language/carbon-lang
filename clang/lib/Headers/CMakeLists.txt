@@ -47,7 +47,7 @@ set(files
   module.map
   )
 
-set(output_dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/clang/${CLANG_VERSION}/include)
+set(output_dir ${CLANG_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION}/include)
 
 # If we are in an IDE that has a configuration directory, we need to
 # create a second copy of the headers so that 'clang' can find them if

@@ -61,11 +61,11 @@ if(UNIX)
   set(clang_binary "clang${CMAKE_EXECUTABLE_SUFFIX}")
 else()
   set(CLANGXX_LINK_OR_COPY copy)
-  set(clang_binary "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/clang${CMAKE_EXECUTABLE_SUFFIX}")
+  set(clang_binary "${CLANG_RUNTIME_OUTPUT_INTDIR}/clang${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 
 # Create the clang++ symlink in the build directory.
-set(clang_pp "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/clang++${CMAKE_EXECUTABLE_SUFFIX}")
+set(clang_pp "${CLANG_RUNTIME_OUTPUT_INTDIR}/clang++${CMAKE_EXECUTABLE_SUFFIX}")
 add_custom_command(TARGET clang POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E ${CLANGXX_LINK_OR_COPY} "${clang_binary}" "${clang_pp}")
 
@@ -73,7 +73,7 @@ set_property(DIRECTORY APPEND
   PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${clang_pp})
 
 # Create the clang-cl symlink in the build directory.
-set(clang_cl "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/clang-cl${CMAKE_EXECUTABLE_SUFFIX}")
+set(clang_cl "${CLANG_RUNTIME_OUTPUT_INTDIR}/clang-cl${CMAKE_EXECUTABLE_SUFFIX}")
 add_custom_command(TARGET clang POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E ${CLANGXX_LINK_OR_COPY} "${clang_binary}" "${clang_cl}")
 
