@@ -81,7 +81,7 @@ bool GCOVFile::readGCDA(GCOVBuffer &Buffer) {
     if (!Buffer.readInt(Length)) return false;
     if (!Buffer.readInt(Dummy)) return false; // checksum
     if (!Buffer.readInt(Dummy)) return false; // num
-    if (!Buffer.readInt(RunCount)) return false;;
+    if (!Buffer.readInt(RunCount)) return false;
     Buffer.advanceCursor(Length-3);
   }
   while (Buffer.readProgramTag()) {
