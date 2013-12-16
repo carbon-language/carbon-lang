@@ -94,6 +94,7 @@ set(LLVM_MAIN_INCLUDE_DIR ${LLVM_MAIN_SRC_DIR}/include)
 set(LLVM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(LLVM_TOOLS_BINARY_DIR ${LLVM_BINARY_DIR}/bin)
 set(LLVM_EXAMPLES_BINARY_DIR ${LLVM_BINARY_DIR}/examples)
+set(LLVM_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/include)
 set(LLVM_LIBDIR_SUFFIX "" CACHE STRING "Define suffix of library directory name (32/64)" )
 
 set(LLVM_ALL_TARGETS
@@ -165,8 +166,6 @@ set(LLVM_TARGETS_TO_BUILD
    ${LLVM_TARGETS_TO_BUILD}
    ${LLVM_EXPERIMENTAL_TARGETS_TO_BUILD})
 list(REMOVE_DUPLICATES LLVM_TARGETS_TO_BUILD)
-
-set(llvm_builded_incs_dir ${LLVM_BINARY_DIR}/include/llvm)
 
 include(AddLLVMDefinitions)
 
@@ -379,31 +378,31 @@ endforeach(t)
 # include various classes of targets.
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmPrinters.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/AsmPrinters.def
+  ${LLVM_INCLUDE_DIR}/llvm/Config/AsmPrinters.def
   )
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmParsers.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/AsmParsers.def
+  ${LLVM_INCLUDE_DIR}/llvm/Config/AsmParsers.def
   )
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/Disassemblers.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/Disassemblers.def
+  ${LLVM_INCLUDE_DIR}/llvm/Config/Disassemblers.def
   )
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/Targets.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/Targets.def
+  ${LLVM_INCLUDE_DIR}/llvm/Config/Targets.def
   )
 
 # Configure the three LLVM configuration header files.
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/config.h.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/Config/config.h)
+  ${LLVM_INCLUDE_DIR}/llvm/Config/config.h)
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/llvm-config.h.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/Config/llvm-config.h)
+  ${LLVM_INCLUDE_DIR}/llvm/Config/llvm-config.h)
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Support/DataTypes.h.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/Support/DataTypes.h)
+  ${LLVM_INCLUDE_DIR}/llvm/Support/DataTypes.h)
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR} )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
@@ -411,7 +410,7 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-include_directories( ${LLVM_BINARY_DIR}/include ${LLVM_MAIN_INCLUDE_DIR})
+include_directories( ${LLVM_INCLUDE_DIR} ${LLVM_MAIN_INCLUDE_DIR})
 
 if( ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD )
   # On FreeBSD, /usr/local/* is not used by default. In order to build LLVM
@@ -507,7 +506,7 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     PATTERN ".svn" EXCLUDE
     )
 
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
+  install(DIRECTORY ${LLVM_INCLUDE_DIR}/
     DESTINATION include
     FILES_MATCHING
     PATTERN "*.def"
