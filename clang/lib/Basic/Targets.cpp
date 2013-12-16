@@ -4569,8 +4569,8 @@ namespace {
       LongDoubleAlign = 64;
       LongDoubleFormat = &llvm::APFloat::IEEEquad;
       MinGlobalAlign = 16;
-      DescriptionString = "E-i1:8:16-i8:8:16-i16:16-i32:32-i64:64"
-       "-f32:32-f64:64-f128:64-a:8:16-n32:64";
+      DescriptionString = "E-i1:8:16-i8:8:16-i64:64"
+       "-f128:64-a:8:16-n32:64";
       MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
     }
     virtual void getTargetDefines(const LangOptions &Opts,

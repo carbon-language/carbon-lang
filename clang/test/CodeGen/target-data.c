@@ -130,7 +130,7 @@
 
 // RUN: %clang_cc1 -triple s390x-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=SYSTEMZ
-// SYSTEMZ: target datalayout = "E-i1:8:16-i8:8:16-i16:16-i32:32-i64:64-f32:32-f64:64-f128:64-a:8:16-n32:64"
+// SYSTEMZ: target datalayout = "E-i1:8:16-i8:8:16-i64:64-f128:64-a:8:16-n32:64"
 
 // RUN: %clang_cc1 -triple msp430-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=MSP430
