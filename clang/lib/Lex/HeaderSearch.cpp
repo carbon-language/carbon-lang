@@ -48,7 +48,7 @@ HeaderSearch::HeaderSearch(IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts,
                            const LangOptions &LangOpts, 
                            const TargetInfo *Target)
   : HSOpts(HSOpts), FileMgr(SourceMgr.getFileManager()), FrameworkMap(64),
-    ModMap(SourceMgr, Diags, LangOpts, Target, *this)
+    ModMap(SourceMgr, *Diags.getClient(), LangOpts, Target, *this)
 {
   AngledDirIdx = 0;
   SystemDirIdx = 0;

@@ -207,7 +207,6 @@ def MismatchedReturnTypes : DiagGroup<"mismatched-return-types">;
 def MismatchedTags : DiagGroup<"mismatched-tags">;
 def MissingFieldInitializers : DiagGroup<"missing-field-initializers">;
 def ModuleConflict : DiagGroup<"module-conflict">;
-def ModuleMapWarnings : DiagGroup<"module-map-warnings">;
 def NewlineEOF : DiagGroup<"newline-eof">;
 def NullArithmetic : DiagGroup<"null-arithmetic">;
 def NullCharacter : DiagGroup<"null-character">;
@@ -490,7 +489,6 @@ def Most : DiagGroup<"most", [
     Implicit,
     MismatchedTags,
     MissingBraces,
-    ModuleMapWarnings,
     MultiChar,
     Reorder,
     ReturnType,

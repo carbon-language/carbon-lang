@@ -59,7 +59,7 @@ Module *ModuleMap::resolveModuleId(const ModuleId &Id, Module *Mod,
   Module *Context = lookupModuleUnqualified(Id[0].first, Mod);
   if (!Context) {
     if (Complain)
-      Diags.Report(Id[0].second, diag::err_mmap_missing_module_unqualified)
+      Diags->Report(Id[0].second, diag::err_mmap_missing_module_unqualified)
       << Id[0].first << Mod->getFullModuleName();
 
     return 0;
@@ -70,7 +70,7 @@ Module *ModuleMap::resolveModuleId(const ModuleId &Id, Module *Mod,
     Module *Sub = lookupModuleQualified(Id[I].first, Context);
     if (!Sub) {
       if (Complain)
-        Diags.Report(Id[I].second, diag::err_mmap_missing_module_qualified)
+        Diags->Report(Id[I].second, diag::err_mmap_missing_module_qualified)
         << Id[I].first << Context->getFullModuleName()
         << SourceRange(Id[0].second, Id[I-1].second);
 
@@ -83,12 +83,19 @@ Module *ModuleMap::resolveModuleId(const ModuleId &Id, Module *Mod,
   return Context;
 }
 
-ModuleMap::ModuleMap(SourceManager &SourceMgr, DiagnosticsEngine &Diags,
+ModuleMap::ModuleMap(SourceManager &SourceMgr, DiagnosticConsumer &DC,
                      const LangOptions &LangOpts, const TargetInfo *Target,
                      HeaderSearch &HeaderInfo)
-    : SourceMgr(SourceMgr), Diags(Diags), LangOpts(LangOpts), Target(Target),
+    : SourceMgr(SourceMgr), LangOpts(LangOpts), Target(Target),
       HeaderInfo(HeaderInfo), BuiltinIncludeDir(0), CompilingModule(0),
-      SourceModule(0) {}
+      SourceModule(0) {
+  IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs(new DiagnosticIDs);
+  Diags = IntrusiveRefCntPtr<DiagnosticsEngine>(
+            new DiagnosticsEngine(DiagIDs, new DiagnosticOptions));
+  Diags->setClient(new ForwardingDiagnosticConsumer(DC),
+                   /*ShouldOwnClient=*/true);
+  Diags->setSourceManager(&SourceMgr);
+}
 
 ModuleMap::~ModuleMap() {
   for (llvm::StringMap<Module *>::iterator I = Modules.begin(), 
@@ -1571,11 +1578,9 @@ void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
   } else if (LeadingToken != MMToken::ExcludeKeyword) {
     // Ignore excluded header files. They're optional anyway.
     
-    // If we find a module that has a missing header, we mark this module as
-    // unavailable. Layering warnings like -fmodules-decluse can still be used.
-    ActiveModule->IsAvailable = false;
-    Diags.Report(FileNameLoc, diag::warn_mmap_header_not_found)
+    Diags.Report(FileNameLoc, diag::err_mmap_header_not_found)
       << (LeadingToken == MMToken::UmbrellaKeyword) << FileName;
+    HadError = true;
   }
 }
 
@@ -2114,9 +2119,11 @@ bool ModuleMap::parseModuleMapFile(const FileEntry *File, bool IsSystem) {
   
   // Parse this module map file.
   Lexer L(ID, SourceMgr.getBuffer(ID), SourceMgr, MMapLangOpts);
-  ModuleMapParser Parser(L, SourceMgr, Target, Diags, *this, File->getDir(),
+  Diags->getClient()->BeginSourceFile(MMapLangOpts);
+  ModuleMapParser Parser(L, SourceMgr, Target, *Diags, *this, File->getDir(),
                          BuiltinIncludeDir, IsSystem);
   bool Result = Parser.parseModuleMapFile();
+  Diags->getClient()->EndSourceFile();
   ParsedModuleMap[File] = Result;
   return Result;
 }

@@ -1,7 +1,6 @@
 module A {
   header "common.h"
   header "a.h"
-  header "doesnotexists.h"
 }
 
 extern module B "moduleb.map"
