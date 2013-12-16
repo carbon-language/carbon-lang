@@ -126,8 +126,11 @@ FakeStack *AsanThread::AsyncSignalSafeLazyInitFakeStack() {
       reinterpret_cast<atomic_uintptr_t *>(&fake_stack_), &old_val, 1UL,
       memory_order_relaxed)) {
     uptr stack_size_log = Log2(RoundUpToPowerOfTwo(stack_size));
-    if (flags()->uar_stack_size_log)
-      stack_size_log = static_cast<uptr>(flags()->uar_stack_size_log);
+    CHECK_LE(flags()->min_uar_stack_size_log, flags()->max_uar_stack_size_log);
+    stack_size_log =
+        Min(stack_size_log, static_cast<uptr>(flags()->max_uar_stack_size_log));
+    stack_size_log =
+        Max(stack_size_log, static_cast<uptr>(flags()->min_uar_stack_size_log));
     fake_stack_ = FakeStack::Create(stack_size_log);
     SetTLSFakeStack(fake_stack_);
     return fake_stack_;

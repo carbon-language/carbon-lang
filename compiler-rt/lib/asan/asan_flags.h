@@ -52,8 +52,9 @@ struct Flags {
   bool mac_ignore_invalid_free;
   // Enables stack-use-after-return checking at run-time.
   bool detect_stack_use_after_return;
-  // The minimal fake stack size log.
-  int uar_stack_size_log;
+  // The minimal and the maximal fake stack size log.
+  int min_uar_stack_size_log;
+  int max_uar_stack_size_log;
   // Use mmap with 'norserve' flag to allocate fake stack.
   bool uar_noreserve;
   // ASan allocator flag. max_malloc_fill_size is the maximal amount of bytes

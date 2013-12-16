@@ -16,10 +16,10 @@
 // RUN: %clangxx_asan  -DUseThread -O2 %s -o %t && \
 // RUN:   not %t 2>&1 | FileCheck --check-prefix=THREAD %s
 //
-// Test the uar_stack_size_log flag.
+// Test the max_uar_stack_size_log/min_uar_stack_size_log flag.
 //
-// RUN: ASAN_OPTIONS=$ASAN_OPTIONS:uar_stack_size_log=20:verbosity=1 not %t 2>&1 | FileCheck --check-prefix=CHECK-20 %s
-// RUN: ASAN_OPTIONS=$ASAN_OPTIONS:uar_stack_size_log=24:verbosity=1 not %t 2>&1 | FileCheck --check-prefix=CHECK-24 %s
+// RUN: ASAN_OPTIONS=$ASAN_OPTIONS:max_uar_stack_size_log=20:verbosity=1 not %t 2>&1 | FileCheck --check-prefix=CHECK-20 %s
+// RUN: ASAN_OPTIONS=$ASAN_OPTIONS:min_uar_stack_size_log=24:max_uar_stack_size_log=28:verbosity=1 not %t 2>&1 | FileCheck --check-prefix=CHECK-24 %s
 
 #include <stdio.h>
 #include <pthread.h>
