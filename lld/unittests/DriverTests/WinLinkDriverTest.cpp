@@ -183,6 +183,14 @@ TEST_F(WinLinkParserTest, ExportWithOptions) {
   EXPECT_TRUE(exports[1].isData);
 }
 
+TEST_F(WinLinkParserTest, ExportInvalid1) {
+  EXPECT_FALSE(parse("link.exe", "/export:foo,@0", "a.out", nullptr));
+}
+
+TEST_F(WinLinkParserTest, ExportInvalid2) {
+  EXPECT_FALSE(parse("link.exe", "/export:foo,@65536", "a.out", nullptr));
+}
+
 TEST_F(WinLinkParserTest, MachineX86) {
   EXPECT_TRUE(parse("link.exe", "/machine:x86", "a.obj", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_FILE_MACHINE_I386, _context.getMachineType());

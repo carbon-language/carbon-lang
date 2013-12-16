@@ -328,6 +328,8 @@ bool parseExport(StringRef option, PECOFFLinkingContext::ExportDesc &ret) {
       int ordinal;
       if (arg.substr(1).getAsInteger(0, ordinal))
         return false;
+      if (ordinal <= 0 || 65535 < ordinal)
+        return false;
       ret.ordinal = ordinal;
       continue;
     }
@@ -878,7 +880,8 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     case OPT_export: {
       PECOFFLinkingContext::ExportDesc desc;
       if (!parseExport(inputArg->getValue(), desc)) {
-        diagnostics << "Error: malformed /export option\n";
+        diagnostics << "Error: malformed /export option: "
+                    << inputArg->getValue() << "\n";
         return false;
       }
       ctx.addDllExport(desc);
