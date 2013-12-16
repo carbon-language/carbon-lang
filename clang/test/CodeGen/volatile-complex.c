@@ -5,9 +5,7 @@
 //
 // This test assumes that floats are 32-bit aligned and doubles are
 // 64-bit aligned, and uses x86-64 as a target that should have this
-// datalayout.
-
-// CHECK: target datalayout = "{{.*}}f32:32:32-f64:64:64{{.*}}"
+// property.
 
 volatile _Complex float cf;
 volatile _Complex double cd;

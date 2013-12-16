@@ -12,8 +12,7 @@ void copy(struct A *a, struct A *b) {
   *a = *b;
 }
 
-// CHECK: target datalayout = "{{.*}}p:[[P:64|32]]
-// CHECK: call void @llvm.memcpy.p0i8.p0i8.i[[P]](i8* %{{.*}}, i8* %{{.*}}, i[[P]] 16, i32 4, i1 false), !tbaa.struct [[TS:!.*]]
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.*}}, i8* %{{.*}}, i64 16, i32 4, i1 false), !tbaa.struct [[TS:!.*]]
 
 struct B {
   char c1;
@@ -25,7 +24,7 @@ void copy2(struct B *a, struct B *b) {
   *a = *b;
 }
 
-// CHECK: call void @llvm.memcpy.p0i8.p0i8.i[[P]](i8* %{{.*}}, i8* %{{.*}}, i[[P]] 24, i32 4, i1 false), !tbaa.struct [[TS2:!.*]]
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.*}}, i8* %{{.*}}, i64 24, i32 4, i1 false), !tbaa.struct [[TS2:!.*]]
 
 typedef _Complex int T2;
 typedef _Complex char T5;
@@ -37,7 +36,7 @@ void copy3 (T1 *a, T1 *b) {
   *a = *b;
 }
 
-// CHECK: call void @llvm.memcpy.p0i8.p0i8.i[[P]](i8* %{{.*}}, i8* %{{.*}}, i[[P]] 12, i32 4, i1 false), !tbaa.struct [[TS3:!.*]]
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.*}}, i8* %{{.*}}, i64 12, i32 4, i1 false), !tbaa.struct [[TS3:!.*]]
 
 // Make sure that zero-length bitfield works.
 #define ATTR __attribute__ ((ms_struct))
@@ -50,7 +49,7 @@ struct five {
 void copy4(struct five *a, struct five *b) {
   *a = *b;
 }
-// CHECK: call void @llvm.memcpy.p0i8.p0i8.i[[P]](i8* %{{.*}}, i8* %{{.*}}, i[[P]] 3, i32 1, i1 false), !tbaa.struct [[TS4:!.*]]
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.*}}, i8* %{{.*}}, i64 3, i32 1, i1 false), !tbaa.struct [[TS4:!.*]]
 
 struct six {
   char a;
@@ -61,7 +60,7 @@ struct six {
 void copy5(struct six *a, struct six *b) {
   *a = *b;
 }
-// CHECK: call void @llvm.memcpy.p0i8.p0i8.i[[P]](i8* %{{.*}}, i8* %{{.*}}, i[[P]] 6, i32 1, i1 false), !tbaa.struct [[TS5:!.*]]
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.*}}, i8* %{{.*}}, i64 6, i32 1, i1 false), !tbaa.struct [[TS5:!.*]]
 
 // CHECK: [[TS]] = metadata !{i64 0, i64 2, metadata !{{.*}}, i64 4, i64 4, metadata !{{.*}}, i64 8, i64 1, metadata !{{.*}}, i64 12, i64 4, metadata !{{.*}}}
 // CHECK: [[CHAR:!.*]] = metadata !{metadata !"omnipotent char", metadata !{{.*}}}
