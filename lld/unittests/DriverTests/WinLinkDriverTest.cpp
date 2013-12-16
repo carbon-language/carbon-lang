@@ -183,6 +183,11 @@ TEST_F(WinLinkParserTest, ExportWithOptions) {
   EXPECT_TRUE(exports[1].isData);
 }
 
+TEST_F(WinLinkParserTest, ExportDuplicates) {
+  EXPECT_FALSE(
+      parse("link.exe", "/export:foo,@1", "/export:bar,@1", "a.out", nullptr));
+}
+
 TEST_F(WinLinkParserTest, ExportInvalid1) {
   EXPECT_FALSE(parse("link.exe", "/export:foo,@0", "a.out", nullptr));
 }

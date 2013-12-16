@@ -53,6 +53,18 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     return false;
   }
 
+  // Check for duplicate export ordinals.
+  std::set<int> exports;
+  for (const PECOFFLinkingContext::ExportDesc &desc : getDllExports()) {
+    if (desc.ordinal == -1)
+      continue;
+    if (exports.count(desc.ordinal) == 1) {
+      diagnostics << "Duplicate export ordinals: " << desc.ordinal << "\n";
+      return false;
+    }
+    exports.insert(desc.ordinal);
+  }
+
   std::bitset<64> alignment(_sectionDefaultAlignment);
   if (alignment.count() != 1) {
     diagnostics << "Section alignment must be a power of 2, but got "
