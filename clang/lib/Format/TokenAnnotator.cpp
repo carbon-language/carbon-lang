@@ -367,7 +367,7 @@ private:
       if (!parseParens())
         return false;
       if (Line.MustBeDeclaration && Contexts.size() == 1 &&
-          !Contexts.back().IsExpression)
+          !Contexts.back().IsExpression && Line.First->Type != TT_ObjCProperty)
         Line.MightBeFunctionDecl = true;
       break;
     case tok::l_square:
@@ -715,6 +715,11 @@ private:
         if (PreviousNoComment &&
             PreviousNoComment->isOneOf(tok::comma, tok::l_brace))
           Current.Type = TT_DesignatedInitializerPeriod;
+      } else if (Current.isOneOf(tok::identifier, tok::kw_const) &&
+                 Line.MightBeFunctionDecl && Contexts.size() == 1) {
+        // Line.MightBeFunctionDecl can only be true after the parentheses of a
+        // function declaration have been found.
+        Current.Type = TT_TrailingAnnotation;
       }
     }
   }
@@ -1171,11 +1176,13 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 150;
   }
 
-  // Breaking before a trailing 'const' or not-function-like annotation is bad.
-  if (Left.is(tok::r_paren) && Line.Type != LT_ObjCProperty &&
-      (Right.is(tok::kw_const) || (Right.is(tok::identifier) && Right.Next &&
-                                   Right.Next->isNot(tok::l_paren))))
-    return 100;
+  if (Right.Type == TT_TrailingAnnotation && Right.Next &&
+      Right.Next->isNot(tok::l_paren)) {
+    // Breaking before a trailing annotation is bad unless it is function-like.
+    // Use a slightly higher penalty after ")" so that annotations like
+    // "const override" are kept together.
+    return Left.is(tok::r_paren) ? 100 : 120;
+  }
 
   // In for-loops, prefer breaking at ',' and ';'.
   if (Line.First->is(tok::kw_for) && Left.is(tok::equal))

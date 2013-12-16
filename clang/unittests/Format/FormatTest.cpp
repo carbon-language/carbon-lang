@@ -3066,6 +3066,11 @@ TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
                "                  aaaaa aaaaaaaaaaaaaaaaaaaa) OVERRIDE FINAL;");
   verifyFormat("void SomeFunction(aaaaa aaaaaaaaaaaaaaaaaaaa,\n"
                "                  aaaaa aaaaaaaaaaaaaaaaaaaa) override final;");
+  verifyFormat("virtual void aaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaa aaaa,\n"
+               "                   aaaaaaaaaaa aaaaa) const override;");
+  verifyGoogleFormat(
+      "virtual void aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()\n"
+      "    const override;");
 
   // Unless this would lead to the first parameter being broken.
   verifyFormat("void someLongFunction(int someLongParameter)\n"

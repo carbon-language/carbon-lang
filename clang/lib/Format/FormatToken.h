@@ -58,6 +58,7 @@ enum TokenType {
   TT_StartOfName,
   TT_TemplateCloser,
   TT_TemplateOpener,
+  TT_TrailingAnnotation,
   TT_TrailingReturnArrow,
   TT_TrailingUnaryOperator,
   TT_UnaryOperator,
