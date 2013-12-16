@@ -35,6 +35,14 @@ namespace lld {
 namespace pecoff {
 namespace edata {
 
+struct TableEntry {
+  TableEntry(StringRef exportName, int ordinal, const DefinedAtom *atom)
+      : exportName(exportName), ordinal(ordinal), atom(atom) {}
+  StringRef exportName;
+  int ordinal;
+  const DefinedAtom *atom;
+};
+
 /// The root class of all edata atoms.
 class EdataAtom : public COFFLinkerInternalAtom {
 public:
@@ -62,15 +70,21 @@ public:
   virtual void perform(std::unique_ptr<MutableFile> &file);
 
 private:
-  edata::EdataAtom *createExportDirectoryTable(size_t numEntries);
   edata::EdataAtom *
-  createAddressTable(const std::vector<const DefinedAtom *> &atoms);
+  createExportDirectoryTable(const std::vector<edata::TableEntry> &entries,
+                             int maxOrdinal);
+
+  edata::EdataAtom *
+  createAddressTable(const std::vector<edata::TableEntry> &entries,
+                     int maxOrdinal);
+
   edata::EdataAtom *
   createNamePointerTable(const PECOFFLinkingContext &ctx,
-                         const std::vector<const DefinedAtom *> &atoms,
+                         const std::vector<edata::TableEntry> &entries,
                          MutableFile *file);
+
   edata::EdataAtom *
-  createOrdinalTable(const std::vector<const DefinedAtom *> &atoms);
+  createOrdinalTable(const std::vector<edata::TableEntry> &entries);
 
   const PECOFFLinkingContext &_ctx;
   VirtualFile _file;
