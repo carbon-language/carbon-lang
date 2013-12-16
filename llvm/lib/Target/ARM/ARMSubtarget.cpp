@@ -190,6 +190,7 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   InstrItins = getInstrItineraryForCPU(CPUString);
 
   switch (TargetTriple.getEnvironment()) {
+  case Triple::Android:
   case Triple::EABI:
   case Triple::GNUEABI:
   case Triple::GNUEABIHF:
