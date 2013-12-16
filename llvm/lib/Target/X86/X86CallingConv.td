@@ -358,12 +358,15 @@ def CC_X86_64_WebKit_JS : CallingConv<[
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
   // Only the first integer argument is passed in register.
-  CCIfType<[i32], CCAssignToReg<[EDI]>>,
-  CCIfType<[i64], CCAssignToReg<[RDI]>>,
+  CCIfType<[i32], CCAssignToReg<[EAX]>>,
+  CCIfType<[i64], CCAssignToReg<[RAX]>>,
 
-  // Integer/FP values are always stored in stack slots that are 8 bytes in size
-  // and 8-byte aligned.
-  CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>
+  // The remaining integer arguments are passed on the stack. 32bit integer and
+  // floating-point arguments are aligned to 4 byte and stored in 4 byte slots.
+  // 64bit integer and floating-point arguments are aligned to 8 byte and stored
+  // in 8 byte stack slots.
+  CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
+  CCIfType<[i64, f64], CCAssignToStack<8, 8>>
 ]>;
 
 // No explicit register is specified for the AnyReg calling convention. The
