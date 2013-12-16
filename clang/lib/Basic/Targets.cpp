@@ -486,7 +486,7 @@ public:
     this->Int64Type = TargetInfo::SignedLongLong;
     this->SizeType = TargetInfo::UnsignedInt;
     this->DescriptionString = "E-p:32:32:32-"
-                              "i64:64:64-v128:128:128-n32";
+                              "i64:64:64-n32";
   }
 };
 
@@ -1180,7 +1180,7 @@ class PPC32TargetInfo : public PPCTargetInfo {
 public:
   PPC32TargetInfo(const llvm::Triple &Triple) : PPCTargetInfo(Triple) {
     DescriptionString = "E-p:32:32:32-"
-                        "i64:64:64-v128:128:128-n32";
+                        "i64:64:64-n32";
 
     switch (getTriple().getOS()) {
     case llvm::Triple::Linux:
@@ -1226,11 +1226,11 @@ public:
       LongDoubleFormat = &llvm::APFloat::IEEEdouble;
       DescriptionString = "E-p:64:64:64-"
                           "i64:64:64-"
-                          "v128:128:128-n32:64";
+                          "n32:64";
     } else
       DescriptionString = "E-p:64:64:64-"
                           "i64:64:64-f128:128:128-"
-                          "v128:128:128-n32:64";
+                          "n32:64";
 
     // PPC64 supports atomics up to 8 bytes.
     MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
@@ -1254,7 +1254,7 @@ public:
     LongLongAlign = 32;
     SuitableAlign = 128;
     DescriptionString = "E-p:32:32:32"
-                        "-v128:128:128-n32";
+                        "-n32";
   }
   virtual BuiltinVaListKind getBuiltinVaListKind() const {
     return TargetInfo::CharPtrBuiltinVaList;
@@ -1269,7 +1269,7 @@ public:
     HasAlignMac68kSupport = true;
     SuitableAlign = 128;
     DescriptionString = "E-p:64:64:64-"
-                        "i64:64:64-v128:128:128-n32:64";
+                        "i64:64:64-n32:64";
   }
 };
 } // end anonymous namespace.
@@ -1377,7 +1377,7 @@ namespace {
       SizeType     = PtrDiffType = IntPtrType = TargetInfo::UnsignedInt;
       DescriptionString
         = "e-p:32:32:32-i64:64:64"
-          "-v16:16:16-v32:32:32-v64:64:64-v128:128:128-"
+          "-v16:16:16-v32:32:32-"
           "n16:32:64";
   }
   };
@@ -1389,7 +1389,7 @@ namespace {
       SizeType     = PtrDiffType = IntPtrType = TargetInfo::UnsignedLongLong;
       DescriptionString
         = "e-p:64:64:64-i64:64:64"
-          "-v16:16:16-v32:32:32-v64:64:64-v128:128:128-"
+          "-v16:16:16-v32:32:32-"
           "n16:32:64";
   }
   };
@@ -1410,7 +1410,7 @@ static const char *DescriptionStringR600 =
   "e"
   "-p:32:32:32"
   "-i64:64:64"
-  "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v64:64:64-v96:128:128-v128:128:128"
+  "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v96:128:128"
   "-v192:256:256-v256:256:256-v512:512:512-v1024:1024:1024-v2048:2048:2048"
   "-n32:64";
 
@@ -1418,7 +1418,7 @@ static const char *DescriptionStringR600DoubleOps =
   "e"
   "-p:32:32:32"
   "-i64:64:64"
-  "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v64:64:64-v96:128:128-v128:128:128"
+  "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v96:128:128"
   "-v192:256:256-v256:256:256-v512:512:512-v1024:1024:1024-v2048:2048:2048"
   "-n32:64";
 
@@ -1427,7 +1427,7 @@ static const char *DescriptionStringSI =
   "-p:64:64:64"
   "-p3:32:32:32"
   "-i64:64:64"
-  "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v64:64:64-v96:128:128-v128:128:128"
+  "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v96:128:128"
   "-v192:256:256-v256:256:256-v512:512:512-v1024:1024:1024-v2048:2048:2048"
   "-n32:64";
 
@@ -2934,7 +2934,7 @@ public:
     LongDoubleAlign = 32;
     SuitableAlign = 128;
     DescriptionString = "e-p:32:32:32"
-                        "-f64:32:64-v64:64:64-v128:128:128-"
+                        "-f64:32:64-"
                         "a:0:64-f80:32:32-n8:16:32-S128";
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
@@ -3030,7 +3030,7 @@ public:
     SizeType = UnsignedLong;
     IntPtrType = SignedLong;
     DescriptionString = "e-p:32:32:32"
-                        "-f64:32:64-v64:64:64-v128:128:128-"
+                        "-f64:32:64-"
                         "a:0:64-f80:128:128-n8:16:32-S128";
     HasAlignMac68kSupport = true;
   }
@@ -3048,8 +3048,8 @@ public:
     WCharType = UnsignedShort;
     DoubleAlign = LongLongAlign = 64;
     DescriptionString = "e-p:32:32:32-"
-                        "i64:64:64-f80:128:128-v64:64:64-"
-                        "v128:128:128-a:0:64-f80:32:32-n8:16:32-S32";
+                        "i64:64:64-f80:128:128-"
+                        "a:0:64-f80:32:32-n8:16:32-S32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
@@ -3117,7 +3117,7 @@ public:
     WCharType = UnsignedShort;
     DoubleAlign = LongLongAlign = 64;
     DescriptionString = "e-p:32:32:32-"
-                        "i64:64:64-v64:64:64-v128:128:128-"
+                        "i64:64:64-"
                         "a:0:64-f80:32:32-n8:16:32-S32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
@@ -3225,7 +3225,7 @@ public:
     RegParmMax = 6;
 
     DescriptionString = "e-p:64:64:64-"
-                        "i64:64:64-v64:64:64-v128:128:128-"
+                        "i64:64:64-"
                         "a:0:64-s:64:64-f80:128:128-n8:16:32:64-S128";
 
     // Use fpret only for long double.
@@ -3715,11 +3715,11 @@ public:
       // so set preferred for small types to 32.
       DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-"
                            "i64:64:64-"
-                           "v64:64:64-v128:64:128-a:0:32-n32-S64");
+                           "v128:64:128-a:0:32-n32-S64");
     } else {
       DescriptionString = ("e-p:32:32:32-"
                            "i64:64:64-"
-                           "v64:64:64-v128:64:128-a:0:64-n32-S64");
+                           "v128:64:128-a:0:64-n32-S64");
     }
 
     // ARM targets default to using the ARM C++ ABI.
@@ -4487,7 +4487,7 @@ public:
   SparcV8TargetInfo(const llvm::Triple &Triple) : SparcTargetInfo(Triple) {
     // FIXME: Support Sparc quad-precision long double?
     DescriptionString = "E-p:32:32:32-"
-                        "i64:64:64-v64:64:64-n32-S64";
+                        "i64:64:64-n32-S64";
   }
 
   virtual void getTargetDefines(const LangOptions &Opts,
@@ -4503,7 +4503,7 @@ public:
   SparcV9TargetInfo(const llvm::Triple &Triple) : SparcTargetInfo(Triple) {
     // FIXME: Support Sparc quad-precision long double?
     DescriptionString = "E-p:64:64:64-"
-                        "i64:64:64-v64:64:64-n32:64-S128";
+                        "i64:64:64-n32:64-S128";
     // This is an LP64 platform.
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
 
@@ -5115,7 +5115,7 @@ public:
 class Mips32EBTargetInfo : public Mips32TargetInfoBase {
   virtual void setDescriptionString() {
     DescriptionString = "E-p:32:32:32-i8:8:32-i16:16:32-"
-                        "i64:64:64-v64:64:64-n32-S64";
+                        "i64:64:64-n32-S64";
   }
 
 public:
@@ -5133,7 +5133,7 @@ public:
 class Mips32ELTargetInfo : public Mips32TargetInfoBase {
   virtual void setDescriptionString() {
     DescriptionString = "e-p:32:32:32-i8:8:32-i16:16:32-"
-                        "i64:64:64-v64:64:64-n32-S64";
+                        "i64:64:64-n32-S64";
   }
 
 public:
@@ -5244,11 +5244,11 @@ class Mips64EBTargetInfo : public Mips64TargetInfoBase {
     if (ABI == "n32")
       DescriptionString = "E-p:32:32:32-i8:8:32-i16:16:32-"
                           "i64:64:64-f128:128:128-"
-                          "v64:64:64-n32:64-S128";
+                          "n32:64-S128";
     else
       DescriptionString = "E-p:64:64:64-i8:8:32-i16:16:32-"
                           "i64:64:64-f128:128:128-"
-                          "v64:64:64-n32:64-S128";
+                          "n32:64-S128";
 
   }
 
@@ -5268,11 +5268,11 @@ class Mips64ELTargetInfo : public Mips64TargetInfoBase {
     if (ABI == "n32")
       DescriptionString = "e-p:32:32:32-i8:8:32-i16:16:32-"
                           "i64:64:64-f128:128:128"
-                          "-v64:64:64-n32:64-S128";
+                          "-n32:64-S128";
     else
       DescriptionString = "e-p:64:64:64-i8:8:32-i16:16:32-"
                           "i64:64:64-f128:128:128-"
-                          "v64:64:64-n32:64-S128";
+                          "n32:64-S128";
   }
 public:
   Mips64ELTargetInfo(const llvm::Triple &Triple)
@@ -5420,7 +5420,7 @@ namespace {
       DescriptionString
         = "e-p:32:32:32-i64:64:64"
           "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-"
-          "v64:64:64-v96:128:128-v128:128:128-v192:256:256-v256:256:256-"
+          "v96:128:128-v192:256:256-v256:256:256-"
           "v512:512:512-v1024:1024:1024";
     }
     virtual void getTargetDefines(const LangOptions &Opts,
@@ -5438,7 +5438,7 @@ namespace {
       DescriptionString
         = "e-p:64:64:64-i64:64:64"
           "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-"
-          "v64:64:64-v96:128:128-v128:128:128-v192:256:256-v256:256:256-"
+          "v96:128:128-v192:256:256-v256:256:256-"
           "v512:512:512-v1024:1024:1024";
     }
     virtual void getTargetDefines(const LangOptions &Opts,
