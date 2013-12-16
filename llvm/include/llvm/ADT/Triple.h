@@ -121,6 +121,7 @@ public:
     GNUEABIHF,
     GNUX32,
     EABI,
+    EABIHF,
     MachO,
     Android,
     ELF

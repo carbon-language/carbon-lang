@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple armv7-none-eabi %s -o - | FileCheck %s --check-prefix=EABI
+; RUN: llc -mtriple armv7-none-eabihf %s -o - | FileCheck %s --check-prefix=EABI
 ; RUN: llc -mtriple armv7-linux-gnueabi %s -o - | FileCheck %s --check-prefix=GNU
 ; RUN: llc -mtriple armv7-apple-darwin %s -o - | FileCheck %s --check-prefix=DARWIN
 

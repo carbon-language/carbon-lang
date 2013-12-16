@@ -192,6 +192,7 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   switch (TargetTriple.getEnvironment()) {
   case Triple::Android:
   case Triple::EABI:
+  case Triple::EABIHF:
   case Triple::GNUEABI:
   case Triple::GNUEABIHF:
     TargetABI = ARM_ABI_AAPCS;

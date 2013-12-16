@@ -1,6 +1,7 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios -o - | FileCheck %s
 ; RUN: llc < %s -mtriple=thumbv7m-darwin-eabi -o - | FileCheck %s --check-prefix=DARWIN
 ; RUN: llc < %s -mtriple=arm-none-eabi -o - | FileCheck --check-prefix=EABI %s
+; RUN: llc < %s -mtriple=arm-none-eabihf -o - | FileCheck --check-prefix=EABI %s
 
 @from = common global [500 x i32] zeroinitializer, align 4
 @to = common global [500 x i32] zeroinitializer, align 4

@@ -317,7 +317,8 @@ public:
   // even for GNUEABI, so we can make a distinction here and still conform to
   // the EABI on GNU (and Android) mode. This requires change in Clang, too.
   bool isTargetAEABI() const {
-    return TargetTriple.getEnvironment() == Triple::EABI;
+    return TargetTriple.getEnvironment() == Triple::EABI ||
+      TargetTriple.getEnvironment() == Triple::EABIHF;
   }
 
   bool isAPCS_ABI() const { return TargetABI == ARM_ABI_APCS; }
