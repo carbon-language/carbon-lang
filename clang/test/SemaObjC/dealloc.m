@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -fsyntax-only -fobjc-arc -fblocks -verify %s
-// RUN: not %clang_cc1 -triple x86_64-apple-darwin11 -fsyntax-only -fobjc-arc -fblocks -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -fsyntax-only -fobjc-arc -fblocks -Wdealloc-in-category -verify %s
+// RUN: not %clang_cc1 -triple x86_64-apple-darwin11 -fsyntax-only -fobjc-arc -fblocks -Wdealloc-in-category -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
 // rdar://11987838
 
 @protocol NSObject
@@ -23,3 +23,19 @@
 
 @end
 
+// rdar://15397430
+@interface Base
+- (void)dealloc;
+@end
+
+@interface Subclass : Base
+@end 
+
+@interface Subclass (CAT)
+- (void)dealloc;
+@end
+
+@implementation Subclass (CAT) // expected-note {{declared here}}
+- (void)dealloc { // expected-warning {{decalloc is being overridden in category}}
+}
+@end
