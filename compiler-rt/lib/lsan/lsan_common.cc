@@ -52,7 +52,6 @@ static void InitializeFlags() {
   f->use_root_regions = true;
   f->use_unaligned = false;
   f->use_poisoned = false;
-  f->verbosity = 0;
   f->log_pointers = false;
   f->log_threads = false;
 
@@ -70,7 +69,6 @@ static void InitializeFlags() {
     CHECK_GE(&f->resolution, 0);
     ParseFlag(options, &f->max_leaks, "max_leaks");
     CHECK_GE(&f->max_leaks, 0);
-    ParseFlag(options, &f->verbosity, "verbosity");
     ParseFlag(options, &f->log_pointers, "log_pointers");
     ParseFlag(options, &f->log_threads, "log_threads");
     ParseFlag(options, &f->exitcode, "exitcode");
@@ -614,13 +612,13 @@ void __lsan_ignore_object(const void *p) {
   // locked.
   BlockingMutexLock l(&global_mutex);
   IgnoreObjectResult res = IgnoreObjectLocked(p);
-  if (res == kIgnoreObjectInvalid && flags()->verbosity >= 2)
-    Report("__lsan_ignore_object(): no heap object found at %p", p);
-  if (res == kIgnoreObjectAlreadyIgnored && flags()->verbosity >= 2)
-    Report("__lsan_ignore_object(): "
+  if (res == kIgnoreObjectInvalid)
+    VReport(1, "__lsan_ignore_object(): no heap object found at %p", p);
+  if (res == kIgnoreObjectAlreadyIgnored)
+    VReport(1, "__lsan_ignore_object(): "
            "heap object at %p is already being ignored\n", p);
-  if (res == kIgnoreObjectSuccess && flags()->verbosity >= 3)
-    Report("__lsan_ignore_object(): ignoring heap object at %p\n", p);
+  if (res == kIgnoreObjectSuccess)
+    VReport(1, "__lsan_ignore_object(): ignoring heap object at %p\n", p);
 #endif  // CAN_SANITIZE_LEAKS
 }
 
@@ -631,8 +629,7 @@ void __lsan_register_root_region(const void *begin, uptr size) {
   CHECK(root_regions);
   RootRegion region = {begin, size};
   root_regions->push_back(region);
-  if (flags()->verbosity)
-    Report("Registered root region at %p of size %llu\n", begin, size);
+  VReport(1, "Registered root region at %p of size %llu\n", begin, size);
 #endif  // CAN_SANITIZE_LEAKS
 }
 
@@ -649,8 +646,7 @@ void __lsan_unregister_root_region(const void *begin, uptr size) {
       uptr last_index = root_regions->size() - 1;
       (*root_regions)[i] = (*root_regions)[last_index];
       root_regions->pop_back();
-      if (flags()->verbosity)
-        Report("Unregistered root region at %p of size %llu\n", begin, size);
+      VReport(1, "Unregistered root region at %p of size %llu\n", begin, size);
       break;
     }
   }

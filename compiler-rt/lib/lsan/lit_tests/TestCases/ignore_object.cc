@@ -1,7 +1,7 @@
 // Test for __lsan_ignore_object().
-// RUN: LSAN_BASE="report_objects=1:use_registers=0:use_stacks=0:use_globals=0:use_tls=0:verbosity=3"
+// RUN: LSAN_BASE="report_objects=1:use_registers=0:use_stacks=0:use_globals=0:use_tls=0:verbosity=2"
 // RUN: %clangxx_lsan %s -o %t
-// RUN: LSAN_OPTIONS=$LSAN_BASE not %t 2>&1 | FileCheck %s
+// RUN: LSAN_OPTIONS=$LSAN_BASE ASAN_OPTIONS=$ASAN_OPTIONS:"verbosity=2" not %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,12 +9,6 @@
 #include "sanitizer/lsan_interface.h"
 
 int main() {
-  {
-    // The first malloc call can cause an allocation in libdl. Ignore it here so
-    // it doesn't show up in our output.
-    __lsan::ScopedDisabler d;
-    malloc(1);
-  }
   // Explicitly ignored object.
   void **p = new void *;
   // Transitively ignored object.

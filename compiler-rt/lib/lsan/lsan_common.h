@@ -73,9 +73,6 @@ struct Flags {
   // Consider pointers found in poisoned memory to be valid.
   bool use_poisoned;
 
-  // User-visible verbosity.
-  int verbosity;
-
   // Debug logging.
   bool log_pointers;
   bool log_threads;
