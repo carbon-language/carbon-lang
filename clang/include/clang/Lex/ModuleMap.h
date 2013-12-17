@@ -182,8 +182,7 @@ public:
   /// This source manager should be shared with the header-search mechanism,
   /// since they will refer to the same headers.
   ///
-  /// \param DC A diagnostic consumer that will be cloned for use in generating
-  /// diagnostics.
+  /// \param Diags A diagnostic engine used for diagnostics.
   ///
   /// \param LangOpts Language options for this translation unit.
   ///
