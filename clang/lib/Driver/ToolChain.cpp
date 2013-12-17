@@ -157,14 +157,13 @@ bool ToolChain::HasNativeLLVMSupport() const {
 bool ToolChain::isCrossCompiling() const {
   llvm::Triple HostTriple(LLVM_HOST_TRIPLE);
   switch (HostTriple.getArch()) {
-      // The A32/T32/T16 instruction sets are not seperate architectures in 
-      // this context.
-      case llvm::Triple::arm:
-      case llvm::Triple::thumb:
-          return getArch() != llvm::Triple::arm &&
-                 getArch() != llvm::Triple::thumb;
-      default:
-          return HostTriple.getArch() != getArch();
+  // The A32/T32/T16 instruction sets are not separate architectures in this
+  // context.
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    return getArch() != llvm::Triple::arm && getArch() != llvm::Triple::thumb;
+  default:
+    return HostTriple.getArch() != getArch();
   }
 }
 

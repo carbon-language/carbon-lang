@@ -2193,7 +2193,7 @@ MicrosoftRecordLayoutBuilder::getAdjustedFieldInfo(const FieldDecl *FD) {
                                  Layout.getRequiredAlignment());
     FieldInfo.second = std::max(FieldInfo.second,
                                 Layout.getRequiredAlignment());
-    // Track zero-sized subobjects here where it's already avaliable.
+    // Track zero-sized subobjects here where it's already available.
     if (Layout.hasZeroSizedSubObject())
       HasZeroSizedSubObject = true;
   }
