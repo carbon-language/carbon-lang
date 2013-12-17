@@ -54,6 +54,8 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
   OS << "\t.section\t" << getSectionName() << ",\"";
   if (getKind().isText())
     OS << 'x';
+  else if (getKind().isBSS())
+    OS << 'b';
   if (getKind().isWriteable())
     OS << 'w';
   else
