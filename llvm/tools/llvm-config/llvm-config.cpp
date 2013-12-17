@@ -184,6 +184,13 @@ int main(int argc, char **argv) {
   std::string CurrentExecPrefix;
   std::string ActiveObjRoot;
 
+  // If CMAKE_CFG_INTDIR is given, honor it as build mode.
+  char const *build_mode = LLVM_BUILDMODE;
+#if defined(CMAKE_CFG_INTDIR)
+  if (!(CMAKE_CFG_INTDIR[0] == '.' && CMAKE_CFG_INTDIR[1] == '\0'))
+    build_mode = CMAKE_CFG_INTDIR;
+#endif
+
   // Create an absolute path, and pop up one directory (we expect to be inside a
   // bin dir).
   sys::fs::make_absolute(CurrentPath);
@@ -239,8 +246,8 @@ int main(int argc, char **argv) {
       ActiveLibDir = ActiveObjRoot + "/lib";
       break;
     case CMakeBuildModeStyle:
-      ActiveBinDir = ActiveObjRoot + "/bin/" + LLVM_BUILDMODE;
-      ActiveLibDir = ActiveObjRoot + "/lib/" + LLVM_BUILDMODE;
+      ActiveBinDir = ActiveObjRoot + "/bin/" + build_mode;
+      ActiveLibDir = ActiveObjRoot + "/lib/" + build_mode;
       break;
     }
 
@@ -300,11 +307,6 @@ int main(int argc, char **argv) {
       } else if (Arg == "--host-target") {
         OS << LLVM_DEFAULT_TARGET_TRIPLE << '\n';
       } else if (Arg == "--build-mode") {
-        char const *build_mode = LLVM_BUILDMODE;
-#if defined(CMAKE_CFG_INTDIR)
-        if (!(CMAKE_CFG_INTDIR[0] == '.' && CMAKE_CFG_INTDIR[1] == '\0'))
-          build_mode = CMAKE_CFG_INTDIR;
-#endif
         OS << build_mode << '\n';
       } else if (Arg == "--assertion-mode") {
 #if defined(NDEBUG)
