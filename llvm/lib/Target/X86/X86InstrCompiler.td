@@ -72,7 +72,7 @@ def ADJCALLSTACKUP64   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
 
 
 // x86-64 va_start lowering magic.
-let usesCustomInserter = 1, Defs = [EFLAGS] in {
+let usesCustomInserter = 1 in {
 def VASTART_SAVE_XMM_REGS : I<0, Pseudo,
                               (outs),
                               (ins GR8:$al,
