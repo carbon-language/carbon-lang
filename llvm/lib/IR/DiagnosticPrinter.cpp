@@ -90,7 +90,7 @@ DiagnosticPrinter &DiagnosticPrinterRawOStream::operator<<(double N) {
 }
 
 DiagnosticPrinter &DiagnosticPrinterRawOStream::operator<<(const Twine &Str) {
-  Stream << Str.getSingleStringRef();
+  Str.print(Stream);
   return *this;
 }
 
