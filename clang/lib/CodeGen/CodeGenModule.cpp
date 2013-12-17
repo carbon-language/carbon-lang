@@ -2413,16 +2413,6 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   return GV;
 }
 
-static RecordDecl *
-CreateRecordDecl(const ASTContext &Ctx, RecordDecl::TagKind TK,
-                 DeclContext *DC, IdentifierInfo *Id) {
-  SourceLocation Loc;
-  if (Ctx.getLangOpts().CPlusPlus)
-    return CXXRecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
-  else
-    return RecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
-}
-
 llvm::Constant *
 CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   unsigned StringLength = 0;
@@ -2465,9 +2455,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
 
   if (!NSConstantStringType) {
     // Construct the type for a constant NSString.
-    RecordDecl *D = CreateRecordDecl(Context, TTK_Struct, 
-                                     Context.getTranslationUnitDecl(),
-                                   &Context.Idents.get("__builtin_NSString"));
+    RecordDecl *D = Context.buildImplicitRecord("__builtin_NSString");
     D->startDefinition();
       
     QualType FieldTypes[3];
@@ -2543,9 +2531,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
 
 QualType CodeGenModule::getObjCFastEnumerationStateType() {
   if (ObjCFastEnumerationStateType.isNull()) {
-    RecordDecl *D = CreateRecordDecl(Context, TTK_Struct, 
-                                     Context.getTranslationUnitDecl(),
-                      &Context.Idents.get("__objcFastEnumerationState"));
+    RecordDecl *D = Context.buildImplicitRecord("__objcFastEnumerationState");
     D->startDefinition();
     
     QualType FieldTypes[] = {
