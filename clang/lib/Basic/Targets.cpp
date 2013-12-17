@@ -3395,9 +3395,7 @@ public:
     LongDoubleWidth = LongDoubleAlign = 128;
     PointerWidth = PointerAlign = 64;
     SuitableAlign = 128;
-    DescriptionString = "e-"
-                        "i64:64-i128:128-"
-                        "n32:64-S128";
+    DescriptionString = "e-i64:64-i128:128-s:32-n32:64-S128";
 
     WCharType = UnsignedInt;
     LongDoubleFormat = &llvm::APFloat::IEEEquad;
