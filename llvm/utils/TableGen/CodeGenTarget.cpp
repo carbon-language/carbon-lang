@@ -357,6 +357,46 @@ bool CodeGenTarget::isLittleEndianEncoding() const {
   return getInstructionSet()->getValueAsBit("isLittleEndianEncoding");
 }
 
+/// reverseBitsForLittleEndianEncoding - For little-endian instruction bit
+/// encodings, reverse the bit order of all instructions.
+void CodeGenTarget::reverseBitsForLittleEndianEncoding() {
+  if (!isLittleEndianEncoding())
+    return;
+
+  std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
+  for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();
+       I != E; ++I) {
+    Record *R = *I;
+    if (R->getValueAsString("Namespace") == "TargetOpcode" ||
+        R->getValueAsBit("isPseudo"))
+      continue;
+
+    BitsInit *BI = R->getValueAsBitsInit("Inst");
+
+    unsigned numBits = BI->getNumBits();
+ 
+    SmallVector<Init *, 16> NewBits(numBits);
+ 
+    for (unsigned bit = 0, end = numBits / 2; bit != end; ++bit) {
+      unsigned bitSwapIdx = numBits - bit - 1;
+      Init *OrigBit = BI->getBit(bit);
+      Init *BitSwap = BI->getBit(bitSwapIdx);
+      NewBits[bit]        = BitSwap;
+      NewBits[bitSwapIdx] = OrigBit;
+    }
+    if (numBits % 2) {
+      unsigned middle = (numBits + 1) / 2;
+      NewBits[middle] = BI->getBit(middle);
+    }
+
+    BitsInit *NewBI = BitsInit::get(NewBits);
+
+    // Update the bits in reversed order so that emitInstrOpBits will get the
+    // correct endianness.
+    R->getValue("Inst")->setValue(NewBI);
+  }
+}
+
 /// guessInstructionProperties - Return true if it's OK to guess instruction
 /// properties instead of raising an error.
 ///

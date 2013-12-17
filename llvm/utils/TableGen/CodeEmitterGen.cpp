@@ -43,7 +43,6 @@ public:
 private:
   void emitMachineOpEmitter(raw_ostream &o, const std::string &Namespace);
   void emitGetValueBit(raw_ostream &o, const std::string &Namespace);
-  void reverseBits(std::vector<Record*> &Insts);
   int getVariableBit(const std::string &VarName, BitsInit *BI, int bit);
   std::string getInstructionCase(Record *R, CodeGenTarget &Target);
   void AddCodeToMergeInOperand(Record *R, BitsInit *BI,
@@ -52,40 +51,6 @@ private:
                                std::string &Case, CodeGenTarget &Target);
 
 };
-
-void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
-  for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();
-       I != E; ++I) {
-    Record *R = *I;
-    if (R->getValueAsString("Namespace") == "TargetOpcode" ||
-        R->getValueAsBit("isPseudo"))
-      continue;
-
-    BitsInit *BI = R->getValueAsBitsInit("Inst");
-
-    unsigned numBits = BI->getNumBits();
- 
-    SmallVector<Init *, 16> NewBits(numBits);
- 
-    for (unsigned bit = 0, end = numBits / 2; bit != end; ++bit) {
-      unsigned bitSwapIdx = numBits - bit - 1;
-      Init *OrigBit = BI->getBit(bit);
-      Init *BitSwap = BI->getBit(bitSwapIdx);
-      NewBits[bit]        = BitSwap;
-      NewBits[bitSwapIdx] = OrigBit;
-    }
-    if (numBits % 2) {
-      unsigned middle = (numBits + 1) / 2;
-      NewBits[middle] = BI->getBit(middle);
-    }
-
-    BitsInit *NewBI = BitsInit::get(NewBits);
-
-    // Update the bits in reversed order so that emitInstrOpBits will get the
-    // correct endianness.
-    R->getValue("Inst")->setValue(NewBI);
-  }
-}
 
 // If the VarBitInit at position 'bit' matches the specified variable then
 // return the variable bit position.  Otherwise return -1.
@@ -238,8 +203,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
 
   // For little-endian instruction bit encodings, reverse the bit order
-  if (Target.isLittleEndianEncoding()) reverseBits(Insts);
-
+  Target.reverseBitsForLittleEndianEncoding();
 
   const std::vector<const CodeGenInstruction*> &NumberedInstructions =
     Target.getInstructionsByEnumValue();

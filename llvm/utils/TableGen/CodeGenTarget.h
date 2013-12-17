@@ -177,6 +177,10 @@ public:
   ///
   bool isLittleEndianEncoding() const;
 
+  /// reverseBitsForLittleEndianEncoding - For little-endian instruction bit
+  /// encodings, reverse the bit order of all instructions.
+  void reverseBitsForLittleEndianEncoding();
+
   /// guessInstructionProperties - should we just guess unset instruction
   /// properties?
   bool guessInstructionProperties() const;
