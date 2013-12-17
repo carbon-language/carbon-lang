@@ -15338,6 +15338,12 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
     MBB->addSuccessor(EndMBB);
   }
 
+  // Make sure the last operand is EFLAGS, which gets clobbered by the branch
+  // that was just emitted, but clearly shouldn't be "saved".
+  assert((MI->getNumOperands() <= 3 ||
+          !MI->getOperand(MI->getNumOperands() - 1).isReg() ||
+          MI->getOperand(MI->getNumOperands() - 1).getReg() == X86::EFLAGS)
+         && "Expected last argument to be EFLAGS");
   unsigned MOVOpc = Subtarget->hasFp256() ? X86::VMOVAPSmr : X86::MOVAPSmr;
   // In the XMM save block, save all the XMM argument registers.
   for (int i = 3, e = MI->getNumOperands() - 1; i != e; ++i) {
