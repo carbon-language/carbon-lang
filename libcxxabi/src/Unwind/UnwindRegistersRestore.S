@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "assembly.h"
+
+  .text
 
 #if __i386__
-  .text
-  .globl __ZN9libunwind13Registers_x866jumptoEv
-  .private_extern __ZN9libunwind13Registers_x866jumptoEv
-__ZN9libunwind13Registers_x866jumptoEv:
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_x866jumptoEv)
 #
 # void libunwind::Registers_x86::jumpto()
 #
@@ -54,10 +54,7 @@ __ZN9libunwind13Registers_x866jumptoEv:
 
 #elif __x86_64__
 
-  .text
-  .globl __ZN9libunwind16Registers_x86_646jumptoEv
-  .private_extern __ZN9libunwind16Registers_x86_646jumptoEv
-__ZN9libunwind16Registers_x86_646jumptoEv:
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind16Registers_x86_646jumptoEv)
 #
 # void libunwind::Registers_x86_64::jumpto()
 #
@@ -98,10 +95,7 @@ __ZN9libunwind16Registers_x86_646jumptoEv:
 
 #elif __ppc__
 
-  .text
-  .globl __ZN9libunwind13Registers_ppc6jumptoEv
-  .private_extern __ZN9libunwind13Registers_ppc6jumptoEv
-__ZN9libunwind13Registers_ppc6jumptoEv:
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_ppc6jumptoEv)
 ;
 ; void libunwind::Registers_ppc::jumpto()
 ;
@@ -266,16 +260,13 @@ Lnovec:
 
 #elif __arm64__
 
-  .text
-  .globl __ZN9libunwind15Registers_arm646jumptoEv
-  .private_extern __ZN9libunwind15Registers_arm646jumptoEv
-__ZN9libunwind15Registers_arm646jumptoEv:
 ;
 ; void libunwind::Registers_arm64::jumpto()
 ;
 ; On entry:
 ;  thread_state pointer is in x0
 ;
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
   ; skip restore of x0,x1 for now
   ldp    x2, x3,  [x0, #0x010]
   ldp    x4, x5,  [x0, #0x020]
@@ -316,8 +307,4 @@ __ZN9libunwind15Registers_arm646jumptoEv:
   ldp    x0, x1,  [x0, #0x000]  ; restore x0,x1
   ret    lr            ; jump to pc
 
-
-
-
 #endif
-

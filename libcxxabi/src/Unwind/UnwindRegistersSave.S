@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "assembly.h"
 
     .text
 
@@ -24,8 +25,7 @@
 #   +-----------------------+   <-- SP
 #   +                       +
 #
-  .globl _unw_getcontext
-_unw_getcontext:
+DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   push  %eax
   movl  8(%esp), %eax
   movl  %ebx,  4(%eax)
@@ -60,8 +60,7 @@ _unw_getcontext:
 # On entry:
 #  thread_state pointer is in rdi
 #
-  .globl _unw_getcontext
-_unw_getcontext:
+DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   movq  %rax,   (%rdi)
   movq  %rbx,  8(%rdi)
   movq  %rcx, 16(%rdi)
@@ -96,8 +95,7 @@ _unw_getcontext:
 ; On entry:
 ;  thread_state pointer is in r3
 ;
-  .globl _unw_getcontext
-_unw_getcontext:
+DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   stw    r0,  8(r3)
   mflr  r0
   stw    r0,  0(r3)  ; store lr as ssr0
@@ -240,8 +238,7 @@ _unw_getcontext:
 ; On entry:
 ;  thread_state pointer is in x0
 ;
-  .globl _unw_getcontext
-_unw_getcontext:
+DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   stp    x0, x1,  [x0, #0x000]
   stp    x2, x3,  [x0, #0x010]
   stp    x4, x5,  [x0, #0x020]
@@ -283,4 +280,3 @@ _unw_getcontext:
   ret
 
 #endif
-
