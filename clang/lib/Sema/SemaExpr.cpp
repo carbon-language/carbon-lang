@@ -10587,22 +10587,23 @@ ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   return Owned(new (Context) GNUNullExpr(Ty, TokenLoc));
 }
 
-static void MakeObjCStringLiteralFixItHint(Sema& SemaRef, QualType DstType,
-                                           Expr *SrcExpr, FixItHint &Hint,
-                                           bool &IsNSString) {
-  if (!SemaRef.getLangOpts().ObjC1)
-    return;
+StringLiteral *
+Sema::ConversionToObjCStringLiteralCheck(QualType DstType,
+                                     Expr *SrcExpr, FixItHint &Hint,
+                                     bool &IsNSString) {
+  if (!getLangOpts().ObjC1)
+    return 0;
 
   const ObjCObjectPointerType *PT = DstType->getAs<ObjCObjectPointerType>();
   if (!PT)
-    return;
+    return 0;
 
   // Check if the destination is of type 'id'.
   if (!PT->isObjCIdType()) {
     // Check if the destination is the 'NSString' interface.
     const ObjCInterfaceDecl *ID = PT->getInterfaceDecl();
     if (!ID || !ID->getIdentifier()->isStr("NSString"))
-      return;
+      return 0;
     IsNSString = true;
   }
 
@@ -10616,9 +10617,9 @@ static void MakeObjCStringLiteralFixItHint(Sema& SemaRef, QualType DstType,
 
   StringLiteral *SL = dyn_cast<StringLiteral>(SrcExpr);
   if (!SL || !SL->isAscii())
-    return;
-
+    return 0;
   Hint = FixItHint::CreateInsertion(SL->getLocStart(), "@");
+  return SL;
 }
 
 bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
@@ -10655,7 +10656,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     MayHaveConvFixit = true;
     break;
   case IncompatiblePointer:
-    MakeObjCStringLiteralFixItHint(*this, DstType, SrcExpr, Hint, IsNSString);
+    ConversionToObjCStringLiteralCheck(DstType, SrcExpr, Hint, IsNSString);
       DiagKind =
         (Action == AA_Passing_CFAudited ?
           diag::err_arc_typecheck_convert_incompatible_pointer :
@@ -10670,7 +10671,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
       DstType = DstType.getUnqualifiedType();
     }
     else if (IsNSString && !Hint.isNull())
-      DiagKind = diag::warn_missing_atsign_prefix;
+      DiagKind = diag::err_missing_atsign_prefix;
     MayHaveConvFixit = true;
     break;
   case IncompatiblePointerSign:

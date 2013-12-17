@@ -6900,6 +6900,10 @@ public:
                                          QualType DestType, QualType SrcType,
                                          Expr *&SrcExpr);
   
+  StringLiteral * ConversionToObjCStringLiteralCheck(QualType DstType,
+                                          Expr *SrcExpr, FixItHint &Hint,
+                                          bool &IsNSString);
+  
   bool checkInitMethod(ObjCMethodDecl *method, QualType receiverTypeIfCall);
 
   /// \brief Check whether the given new method is a valid override of the
