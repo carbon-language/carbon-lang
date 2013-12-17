@@ -52,6 +52,8 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)
     f->malloc_context_size = 1;
+  if (!f->symbolize)
+    f->external_symbolizer_path = "";
 }
 
 static bool GetFlagValue(const char *env, const char *name,

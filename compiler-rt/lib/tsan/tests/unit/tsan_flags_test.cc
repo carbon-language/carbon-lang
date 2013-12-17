@@ -145,7 +145,7 @@ void VerifyOptions1(Flags *f) {
   EXPECT_EQ(f->io_sync, 1);
 
   EXPECT_EQ(f->symbolize, 0);
-  EXPECT_EQ(f->external_symbolizer_path, std::string("asdfgh"));
+  EXPECT_EQ(f->external_symbolizer_path, std::string(""));
   EXPECT_EQ(f->strip_path_prefix, std::string("zxcvb"));
   EXPECT_EQ(f->fast_unwind_on_fatal, 0);
   EXPECT_EQ(f->fast_unwind_on_malloc, 0);

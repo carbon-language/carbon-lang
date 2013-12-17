@@ -534,12 +534,7 @@ void __asan_init() {
   // fork() on Mac locks the allocator.
   InitializeAllocator();
 
-  // Start symbolizer process if necessary.
-  if (common_flags()->symbolize) {
-    Symbolizer::Init(common_flags()->external_symbolizer_path);
-  } else {
-    Symbolizer::Disable();
-  }
+  Symbolizer::Init(common_flags()->external_symbolizer_path);
 
   // On Linux AsanThread::ThreadStart() calls malloc() that's why asan_inited
   // should be set to 1 prior to initializing the threads.

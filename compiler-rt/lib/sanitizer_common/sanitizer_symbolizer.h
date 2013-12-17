@@ -79,8 +79,6 @@ class Symbolizer {
   /// reasons as this function will check $PATH for an external symbolizer.  Not
   /// thread safe.
   static Symbolizer *Init(const char* path_to_external = 0);
-  /// Initialize the symbolizer in a disabled state.  Not thread safe.
-  static Symbolizer *Disable();
   // Fills at most "max_frames" elements of "frames" with descriptions
   // for a given address (in all inlined functions). Returns the number
   // of descriptions actually filled.
@@ -121,6 +119,8 @@ class Symbolizer {
   /// Create a symbolizer and store it to symbolizer_ without checking if one
   /// already exists.  Not thread safe.
   static Symbolizer *CreateAndStore(const char *path_to_external);
+  /// Initialize the symbolizer in a disabled state.  Not thread safe.
+  static Symbolizer *Disable();
 
   static Symbolizer *symbolizer_;
   static StaticSpinMutex init_mu_;
