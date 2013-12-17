@@ -122,7 +122,7 @@ void Sema::checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment) {
     << (DiagSelect-1) << (DiagSelect-1)
     << Comment->getSourceRange();
 }
-  
+
 void Sema::checkContainerDeclVerbatimLine(const BlockCommandComment *Comment) {
   const CommandInfo *Info = Traits.getCommandInfo(Comment->getCommandID());
   if (!Info->IsRecordLikeDeclarationCommand)
@@ -586,7 +586,7 @@ void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
   }
   else if (isObjCPropertyDecl())
     return;
-  
+
   Diag(Command->getLocation(),
        diag::warn_doc_returns_not_attached_to_a_function_decl)
     << Command->getCommandMarker()
@@ -812,7 +812,7 @@ bool Sema::isFunctionPointerVarDecl() {
   }
   return false;
 }
-  
+
 bool Sema::isObjCPropertyDecl() {
   if (!ThisDeclInfo)
     return false;
@@ -834,8 +834,8 @@ bool Sema::isRecordLikeDecl() {
     return false;
   if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();
-  return isUnionDecl() || isClassOrStructDecl() 
-         || isObjCInterfaceDecl() || isObjCProtocolDecl();
+  return isUnionDecl() || isClassOrStructDecl() || isObjCInterfaceDecl() ||
+         isObjCProtocolDecl();
 }
 
 bool Sema::isUnionDecl() {
@@ -848,7 +848,7 @@ bool Sema::isUnionDecl() {
     return RD->isUnion();
   return false;
 }
-  
+
 bool Sema::isClassOrStructDecl() {
   if (!ThisDeclInfo)
     return false;
@@ -858,7 +858,7 @@ bool Sema::isClassOrStructDecl() {
          isa<RecordDecl>(ThisDeclInfo->CurrentDecl) &&
          !isUnionDecl();
 }
-  
+
 bool Sema::isClassTemplateDecl() {
   if (!ThisDeclInfo)
     return false;
@@ -874,7 +874,7 @@ bool Sema::isFunctionTemplateDecl() {
   if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();
   return ThisDeclInfo->CurrentDecl &&
-  (isa<FunctionTemplateDecl>(ThisDeclInfo->CurrentDecl));
+         (isa<FunctionTemplateDecl>(ThisDeclInfo->CurrentDecl));
 }
 
 bool Sema::isObjCInterfaceDecl() {
@@ -885,7 +885,7 @@ bool Sema::isObjCInterfaceDecl() {
   return ThisDeclInfo->CurrentDecl &&
          isa<ObjCInterfaceDecl>(ThisDeclInfo->CurrentDecl);
 }
-  
+
 bool Sema::isObjCProtocolDecl() {
   if (!ThisDeclInfo)
     return false;
@@ -894,7 +894,7 @@ bool Sema::isObjCProtocolDecl() {
   return ThisDeclInfo->CurrentDecl &&
          isa<ObjCProtocolDecl>(ThisDeclInfo->CurrentDecl);
 }
-  
+
 ArrayRef<const ParmVarDecl *> Sema::getParamVars() {
   if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();
