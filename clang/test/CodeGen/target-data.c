@@ -16,11 +16,11 @@
 
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=X86_64 %s
-// X86_64: target datalayout = "e-i64:64-s:64-f80:128-n8:16:32:64-S128"
+// X86_64: target datalayout = "e-i64:64-f80:128-s:64-n8:16:32:64-S128"
 
 // RUN: %clang_cc1 -triple xcore-unknown-unknown -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=XCORE %s
-// XCORE: target datalayout = "e-p:32:32-a:0:32-n32-i1:8:32-i8:8:32-i16:16:32-i64:32-f16:16:32-f64:32"
+// XCORE: target datalayout = "e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:32-f16:16:32-f64:32-a:0:32-n32"
 
 // RUN: %clang_cc1 -triple sparc-sun-solaris -emit-llvm -o - %s | \
 // RUN:     FileCheck %s --check-prefix=SPARC-V8
@@ -126,7 +126,7 @@
 
 // RUN: %clang_cc1 -triple hexagon-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=HEXAGON
-// HEXAGON: target datalayout = "e-p:32:32-i64:64-i1:32-a:0-n32"
+// HEXAGON: target datalayout = "e-p:32:32-i1:32-i64:64-a:0-n32"
 
 // RUN: %clang_cc1 -triple s390x-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=SYSTEMZ

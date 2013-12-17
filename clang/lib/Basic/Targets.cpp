@@ -3224,9 +3224,7 @@ public:
     Int64Type = SignedLong;
     RegParmMax = 6;
 
-    DescriptionString = "e-"
-                        "i64:64-"
-                        "s:64-f80:128-n8:16:32:64-S128";
+    DescriptionString = "e-i64:64-f80:128-s:64-n8:16:32:64-S128";
 
     // Use fpret only for long double.
     RealTypeUsesObjCFPRet = (1 << TargetInfo::LongDouble);
@@ -4228,9 +4226,7 @@ class HexagonTargetInfo : public TargetInfo {
 public:
   HexagonTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
     BigEndian = false;
-    DescriptionString = ("e-p:32:32-"
-                         "i64:64-i1:32"
-                         "-a:0-n32");
+    DescriptionString = ("e-p:32:32-i1:32-i64:64-a:0-n32");
 
     // {} in inline assembly are packet specifiers, not assembly variant
     // specifiers.
@@ -5464,9 +5460,8 @@ public:
     WCharType = UnsignedChar;
     WIntType = UnsignedInt;
     UseZeroLengthBitfieldAlignment = true;
-    DescriptionString = "e-p:32:32-a:0:32-n32"
-                        "-i1:8:32-i8:8:32-i16:16:32-i64:32"
-                        "-f16:16:32-f64:32";
+    DescriptionString = "e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:32"
+                        "-f16:16:32-f64:32-a:0:32-n32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
