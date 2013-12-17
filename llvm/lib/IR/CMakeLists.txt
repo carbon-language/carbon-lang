@@ -6,6 +6,8 @@ add_llvm_library(LLVMCore
   ConstantFold.cpp
   Constants.cpp
   Core.cpp
+  DiagnosticInfo.cpp
+  DiagnosticPrinter.cpp
   DIBuilder.cpp
   DataLayout.cpp
   DebugInfo.cpp
