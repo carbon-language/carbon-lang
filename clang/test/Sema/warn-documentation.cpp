@@ -275,6 +275,21 @@ int test_param21(int a);
 /// \param x2 Ccc.
 int test_param22(int x1, int x2, int x3);
 
+//===---
+// Test that we treat typedefs to some non-function types as functions for the
+// purposes of documentation comment parsing.
+//===---
+
+namespace foo {
+  inline namespace bar {
+    template<typename>
+    struct function_wrapper {};
+
+    template<unsigned>
+    struct not_a_function_wrapper {};
+  }
+};
+
 // expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
 /// \param aaa Meow.
 /// \param bbb Bbb.
@@ -299,6 +314,19 @@ typedef int (* const test_function_like_typedef3)(int aaa, int ccc);
 /// \returns aaa.
 typedef int (C::*test_function_like_typedef4)(int aaa, int ccc);
 
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
+/// \param aaa Meow.
+/// \param bbb Bbb.
+/// \returns aaa.
+typedef foo::function_wrapper<int (int aaa, int ccc)> test_function_like_typedef5;
+
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
+/// \param aaa Meow.
+/// \param bbb Bbb.
+/// \returns aaa.
+typedef foo::function_wrapper<int (int aaa, int ccc)> *test_function_like_typedef6;
+
+
 typedef int (*test_not_function_like_typedef1)(int aaa);
 
 // expected-warning@+1 {{'\param' command used in a comment that is not attached to a function declaration}}
@@ -311,6 +339,9 @@ typedef test_not_function_like_typedef1 test_not_function_like_typedef2;
 /// @param aaa Meow.
 typedef unsigned int test_not_function_like_typedef3;
 
+// expected-warning@+1 {{'\param' command used in a comment that is not attached to a function declaration}}
+/// \param aaa Meow.
+typedef foo::not_a_function_wrapper<1> test_not_function_like_typedef4;
 
 /// \param aaa Aaa
 /// \param ... Vararg
