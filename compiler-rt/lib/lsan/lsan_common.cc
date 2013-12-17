@@ -43,6 +43,7 @@ static void InitializeFlags() {
   f->resolution = 0;
   f->max_leaks = 0;
   f->exitcode = 23;
+  f->print_suppressions = true;
   f->suppressions="";
   f->use_registers = true;
   f->use_globals = true;
@@ -73,6 +74,7 @@ static void InitializeFlags() {
     ParseFlag(options, &f->log_pointers, "log_pointers");
     ParseFlag(options, &f->log_threads, "log_threads");
     ParseFlag(options, &f->exitcode, "exitcode");
+    ParseFlag(options, &f->print_suppressions, "print_suppressions");
     ParseFlag(options, &f->suppressions, "suppressions");
   }
 }
@@ -467,12 +469,13 @@ void DoLeakCheck() {
     Printf("%s", d.End());
     param.leak_report.PrintLargest(flags()->max_leaks);
   }
-  if (have_unsuppressed || (flags()->verbosity >= 1)) {
+  if (flags()->print_suppressions)
     PrintMatchedSuppressions();
+  if (have_unsuppressed) {
     param.leak_report.PrintSummary();
+    if (flags()->exitcode)
+      internal__exit(flags()->exitcode);
   }
-  if (have_unsuppressed && flags()->exitcode)
-    internal__exit(flags()->exitcode);
 }
 
 static Suppression *GetSuppressionForAddr(uptr addr) {

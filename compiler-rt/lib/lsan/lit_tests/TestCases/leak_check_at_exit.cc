@@ -1,15 +1,17 @@
 // Test for the leak_check_at_exit flag.
+// RUN: LSAN_BASE="use_stacks=0:use_registers=0"
 // RUN: %clangxx_lsan %s -o %t
-// RUN: LSAN_OPTIONS="verbosity=1" %t foo 2>&1 | FileCheck %s --check-prefix=CHECK-do
-// RUN: LSAN_OPTIONS="verbosity=1" %t 2>&1 | FileCheck %s --check-prefix=CHECK-do
-// RUN: LSAN_OPTIONS="verbosity=1:leak_check_at_exit=0" ASAN_OPTIONS="$ASAN_OPTIONS:leak_check_at_exit=0" %t foo 2>&1 | FileCheck %s --check-prefix=CHECK-do
-// RUN: LSAN_OPTIONS="verbosity=1:leak_check_at_exit=0" ASAN_OPTIONS="$ASAN_OPTIONS:leak_check_at_exit=0" %t 2>&1 | FileCheck %s --check-prefix=CHECK-dont
+// RUN: LSAN_OPTIONS=$LSAN_BASE not %t foo 2>&1 | FileCheck %s --check-prefix=CHECK-do
+// RUN: LSAN_OPTIONS=$LSAN_BASE not %t 2>&1 | FileCheck %s --check-prefix=CHECK-do
+// RUN: LSAN_OPTIONS=$LSAN_BASE:"leak_check_at_exit=0" ASAN_OPTIONS="$ASAN_OPTIONS:leak_check_at_exit=0" not %t foo 2>&1 | FileCheck %s --check-prefix=CHECK-do
+// RUN: LSAN_OPTIONS=%LSAN_BASE:"leak_check_at_exit=0" ASAN_OPTIONS="$ASAN_OPTIONS:leak_check_at_exit=0" %t 2>&1 | FileCheck %s --check-prefix=CHECK-dont
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sanitizer/lsan_interface.h>
 
 int main(int argc, char *argv[]) {
-  printf("printf to break optimization\n");
+  fprintf(stderr, "Test alloc: %p.\n", malloc(1337));
   if (argc > 1)
     __lsan_do_leak_check();
   return 0;

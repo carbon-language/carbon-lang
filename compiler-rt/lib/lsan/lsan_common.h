@@ -51,6 +51,8 @@ struct Flags {
   int max_leaks;
   // If nonzero kill the process with this exit code upon finding leaks.
   int exitcode;
+  // Print matched suppressions after leak checking.
+  bool print_suppressions;
   // Suppressions file name.
   const char* suppressions;
 
