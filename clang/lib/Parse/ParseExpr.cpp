@@ -269,10 +269,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
         Diag(Tok, diag::ext_gnu_conditional_expr);
       }
 
-      if (Tok.is(tok::colon)) {
-        // Eat the colon.
-        ColonLoc = ConsumeToken();
-      } else {
+      if (!TryConsumeToken(tok::colon, ColonLoc)) {
         // Otherwise, we're missing a ':'.  Assume that this was a typo that
         // the user forgot. If we're not in a macro expansion, we can suggest
         // a fixit hint. If there were two spaces before the current token,
@@ -1294,9 +1291,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
           LHS = ExprError();
         }
 
-        SourceLocation CloseLoc = Tok.getLocation();
-        if (Tok.is(tok::greatergreatergreater)) {
-          ConsumeToken();
+        SourceLocation CloseLoc;
+        if (TryConsumeToken(tok::greatergreatergreater, CloseLoc)) {
         } else if (LHS.isInvalid()) {
           SkipUntil(tok::greatergreatergreater, StopAtSemi);
         } else {
@@ -2229,7 +2225,7 @@ ExprResult Parser::ParseGenericSelectionExpression() {
   SourceLocation DefaultLoc;
   TypeVector Types;
   ExprVector Exprs;
-  while (1) {
+  do {
     ParsedType Ty;
     if (Tok.is(tok::kw_default)) {
       // C11 6.5.1.1p2 "A generic selection shall have no more than one default
@@ -2266,11 +2262,7 @@ ExprResult Parser::ParseGenericSelectionExpression() {
       return ExprError();
     }
     Exprs.push_back(ER.release());
-
-    if (Tok.isNot(tok::comma))
-      break;
-    ConsumeToken();
-  }
+  } while (TryConsumeToken(tok::comma));
 
   T.consumeClose();
   if (T.getCloseLocation().isInvalid())

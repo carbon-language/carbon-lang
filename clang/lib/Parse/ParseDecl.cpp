@@ -3535,18 +3535,19 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       ExpectAndConsume(tok::r_paren, diag::err_expected_rparen);
     }
 
-    if (Tok.is(tok::semi)) {
-      ConsumeToken();
-    } else if (Tok.is(tok::r_brace)) {
+    if (TryConsumeToken(tok::semi))
+      continue;
+
+    if (Tok.is(tok::r_brace)) {
       ExpectAndConsume(tok::semi, diag::ext_expected_semi_decl_list);
       break;
-    } else {
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_decl_list);
-      // Skip to end of block or statement to avoid ext-warning on extra ';'.
-      SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
-      // If we stopped at a ';', eat it.
-      if (Tok.is(tok::semi)) ConsumeToken();
     }
+
+    ExpectAndConsume(tok::semi, diag::err_expected_semi_decl_list);
+    // Skip to end of block or statement to avoid ext-warning on extra ';'.
+    SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
+    // If we stopped at a ';', eat it.
+    TryConsumeToken(tok::semi);
   }
 
   T.consumeClose();
@@ -3954,8 +3955,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     ExprResult AssignedVal;
     ParsingDeclRAIIObject PD(*this, ParsingDeclRAIIObject::NoParent);
 
-    if (Tok.is(tok::equal)) {
-      EqualLoc = ConsumeToken();
+    if (TryConsumeToken(tok::equal, EqualLoc)) {
       AssignedVal = ParseConstantExpression();
       if (AssignedVal.isInvalid())
         SkipUntil(tok::comma, tok::r_brace, StopAtSemi | StopBeforeMatch);
@@ -3980,9 +3980,9 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
       continue;
     }
 
-    if (Tok.isNot(tok::comma))
+    SourceLocation CommaLoc;
+    if (!TryConsumeToken(tok::comma, CommaLoc))
       break;
-    SourceLocation CommaLoc = ConsumeToken();
 
     if (Tok.isNot(tok::identifier)) {
       if (!getLangOpts().C99 && !getLangOpts().CPlusPlus11)
@@ -5409,7 +5409,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(
   // Maintain an efficient lookup of params we have seen so far.
   llvm::SmallSet<const IdentifierInfo*, 16> ParamsSoFar;
 
-  while (1) {
+  do {
     // If this isn't an identifier, report the error and skip until ')'.
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident);
@@ -5437,12 +5437,8 @@ void Parser::ParseFunctionDeclaratorIdentifierList(
 
     // Eat the identifier.
     ConsumeToken();
-
     // The list continues if we see a comma.
-    if (Tok.isNot(tok::comma))
-      break;
-    ConsumeToken();
-  }
+  } while (TryConsumeToken(tok::comma));
 }
 
 /// ParseParameterDeclarationClause - Parse a (possibly empty) parameter-list
@@ -5481,13 +5477,11 @@ void Parser::ParseParameterDeclarationClause(
        ParsedAttributes &FirstArgAttrs,
        SmallVectorImpl<DeclaratorChunk::ParamInfo> &ParamInfo,
        SourceLocation &EllipsisLoc) {
-  while (1) {
-    if (Tok.is(tok::ellipsis)) {
-      // FIXME: Issue a diagnostic if we parsed an attribute-specifier-seq
-      // before deciding this was a parameter-declaration-clause.
-      EllipsisLoc = ConsumeToken();     // Consume the ellipsis.
+  do {
+    // FIXME: Issue a diagnostic if we parsed an attribute-specifier-seq
+    // before deciding this was a parameter-declaration-clause.
+    if (TryConsumeToken(tok::ellipsis, EllipsisLoc))
       break;
-    }
 
     // Parse the declaration-specifiers.
     // Just use the ParsingDeclaration "scope" of the declarator.
@@ -5606,26 +5600,17 @@ void Parser::ParseParameterDeclarationClause(
                                           Param, DefArgToks));
     }
 
-    // If the next token is a comma, consume it and keep reading arguments.
-    if (Tok.isNot(tok::comma)) {
-      if (Tok.is(tok::ellipsis)) {
-        EllipsisLoc = ConsumeToken();     // Consume the ellipsis.
-
-        if (!getLangOpts().CPlusPlus) {
-          // We have ellipsis without a preceding ',', which is ill-formed
-          // in C. Complain and provide the fix.
-          Diag(EllipsisLoc, diag::err_missing_comma_before_ellipsis)
-            << FixItHint::CreateInsertion(EllipsisLoc, ", ");
-        }
-      }
-
+    if (TryConsumeToken(tok::ellipsis, EllipsisLoc) &&
+        !getLangOpts().CPlusPlus) {
+      // We have ellipsis without a preceding ',', which is ill-formed
+      // in C. Complain and provide the fix.
+      Diag(EllipsisLoc, diag::err_missing_comma_before_ellipsis)
+          << FixItHint::CreateInsertion(EllipsisLoc, ", ");
       break;
     }
 
-    // Consume the comma.
-    ConsumeToken();
-  }
-
+    // If the next token is a comma, consume it and keep reading arguments.
+  } while (TryConsumeToken(tok::comma));
 }
 
 /// [C90]   direct-declarator '[' constant-expression[opt] ']'
@@ -5676,8 +5661,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
 
   // If valid, this location is the position where we read the 'static' keyword.
   SourceLocation StaticLoc;
-  if (Tok.is(tok::kw_static))
-    StaticLoc = ConsumeToken();
+  TryConsumeToken(tok::kw_static, StaticLoc);
 
   // If there is a type-qualifier-list, read it now.
   // Type qualifiers in an array subscript are a C99 feature.
@@ -5686,8 +5670,8 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
 
   // If we haven't already read 'static', check to see if there is one after the
   // type-qualifier-list.
-  if (!StaticLoc.isValid() && Tok.is(tok::kw_static))
-    StaticLoc = ConsumeToken();
+  if (!StaticLoc.isValid())
+    TryConsumeToken(tok::kw_static, StaticLoc);
 
   // Handle "direct-declarator [ type-qual-list[opt] * ]".
   bool isStar = false;

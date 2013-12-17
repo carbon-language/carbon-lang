@@ -233,12 +233,13 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     DeclSpec DS(AttrFactory);
     SourceLocation DeclLoc = Tok.getLocation();
     SourceLocation EndLoc  = ParseDecltypeSpecifier(DS);
-    if (Tok.isNot(tok::coloncolon)) {
+
+    SourceLocation CCLoc;
+    if (!TryConsumeToken(tok::coloncolon, CCLoc)) {
       AnnotateExistingDecltypeSpecifier(DS, DeclLoc, EndLoc);
       return false;
     }
-    
-    SourceLocation CCLoc = ConsumeToken();
+
     if (Actions.ActOnCXXNestedNameSpecifierDecltype(SS, DS, CCLoc))
       SS.SetInvalid(SourceRange(DeclLoc, CCLoc));
 
@@ -818,8 +819,7 @@ Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro,
         // to save the necessary state, and restore it later.
         EnterExpressionEvaluationContext EC(Actions,
                                             Sema::PotentiallyEvaluated);
-        if (Tok.is(tok::equal))
-          ConsumeToken();
+        TryConsumeToken(tok::equal);
 
         if (!SkippedInits)
           Init = ParseInitializer();
@@ -868,8 +868,8 @@ Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro,
             ConsumeToken();
           }
         }
-      } else if (Tok.is(tok::ellipsis))
-        EllipsisLoc = ConsumeToken();
+      } else
+        TryConsumeToken(tok::ellipsis, EllipsisLoc);
     }
     // If this is an init capture, process the initialization expression
     // right away.  For lambda init-captures such as the following:
@@ -2770,15 +2770,8 @@ ExprResult Parser::ParseTypeTrait() {
     
     // Add this type to the list of arguments.
     Args.push_back(Ty.get());
-    
-    if (Tok.is(tok::comma)) {
-      ConsumeToken();
-      continue;
-    }
-    
-    break;
-  } while (true);
-  
+  } while (TryConsumeToken(tok::comma));
+
   if (Parens.consumeClose())
     return ExprError();
 

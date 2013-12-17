@@ -276,17 +276,33 @@ public:
   /// This does not work with all kinds of tokens: strings and specific other
   /// tokens must be consumed with custom methods below.  This returns the
   /// location of the consumed token.
-  SourceLocation ConsumeToken(bool ConsumeCodeCompletionTok = false) {
-    assert(!isTokenStringLiteral() && !isTokenParen() && !isTokenBracket() &&
-           !isTokenBrace() &&
+  SourceLocation ConsumeToken() {
+    assert(!isTokenSpecial() &&
            "Should consume special tokens with Consume*Token");
 
-    if (!ConsumeCodeCompletionTok && Tok.is(tok::code_completion))
+    if (LLVM_UNLIKELY(Tok.is(tok::code_completion)))
       return handleUnexpectedCodeCompletionToken();
 
     PrevTokLocation = Tok.getLocation();
     PP.Lex(Tok);
     return PrevTokLocation;
+  }
+
+  bool TryConsumeToken(tok::TokenKind Expected) {
+    if (Tok.isNot(Expected))
+      return false;
+    assert(!isTokenSpecial() &&
+           "Should consume special tokens with Consume*Token");
+    PrevTokLocation = Tok.getLocation();
+    PP.Lex(Tok);
+    return true;
+  }
+
+  bool TryConsumeToken(tok::TokenKind Expected, SourceLocation &Loc) {
+    if (!TryConsumeToken(Expected))
+      return false;
+    Loc = PrevTokLocation;
+    return true;
   }
 
 private:
@@ -306,11 +322,14 @@ private:
   bool isTokenBrace() const {
     return Tok.getKind() == tok::l_brace || Tok.getKind() == tok::r_brace;
   }
-
   /// isTokenStringLiteral - True if this token is a string-literal.
-  ///
   bool isTokenStringLiteral() const {
     return tok::isStringLiteral(Tok.getKind());
+  }
+  /// isTokenSpecial - True if this token requires special consumption methods.
+  bool isTokenSpecial() const {
+    return isTokenStringLiteral() || isTokenParen() || isTokenBracket() ||
+           isTokenBrace();
   }
 
   /// \brief Returns true if the current token is '=' or is a type of '='.
@@ -329,8 +348,10 @@ private:
       return ConsumeBrace();
     else if (isTokenStringLiteral())
       return ConsumeStringToken();
+    else if (ConsumeCodeCompletionTok && Tok.is(tok::code_completion))
+      return ConsumeCodeCompletionToken();
     else
-      return ConsumeToken(ConsumeCodeCompletionTok);
+      return ConsumeToken();
   }
 
   /// ConsumeParen - This consume method keeps the paren count up-to-date.
