@@ -111,3 +111,14 @@ define <8 x i32> @test11_unsigned(<8 x i32> %x, <8 x i32> %y) nounwind {
   %max = select <8 x i1> %mask, <8 x i32> %x, <8 x i32> %y
   ret <8 x i32> %max
 }
+
+; CHECK-LABEL: test12
+; CHECK: vpcmpeqq        %zmm2, %zmm0, [[LO:%k[0-7]]]
+; CHECK: vpcmpeqq        %zmm3, %zmm1, [[HI:%k[0-7]]]
+; CHECK: kunpckbw        [[LO]], [[HI]], {{%k[0-7]}}
+
+define i16 @test12(<16 x i64> %a, <16 x i64> %b) nounwind {
+  %res = icmp eq <16 x i64> %a, %b
+  %res1 = bitcast <16 x i1> %res to i16
+  ret i16 %res1
+}

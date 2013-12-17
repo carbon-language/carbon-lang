@@ -1356,7 +1356,7 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::FP_ROUND,           MVT::v8f32, Legal);
     setOperationAction(ISD::FP_EXTEND,          MVT::v8f32, Legal);
 
-    setOperationAction(ISD::TRUNCATE,           MVT::i1, Legal);
+    setOperationAction(ISD::TRUNCATE,           MVT::i1, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v16i8, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v8i32, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v8i1, Custom);
@@ -1374,6 +1374,7 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16f32,  Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16i32,  Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8i1,    Custom);
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16i1, Legal);
 
     setOperationAction(ISD::SETCC,              MVT::v16i1, Custom);
     setOperationAction(ISD::SETCC,              MVT::v8i1, Custom);
@@ -9066,6 +9067,17 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   MVT VT = Op.getSimpleValueType();
   SDValue In = Op.getOperand(0);
   MVT InVT = In.getSimpleValueType();
+
+  if (VT == MVT::i1) {
+    assert((InVT.isInteger() && (InVT.getSizeInBits() <= 64)) &&
+           "Invalid scalar TRUNCATE operation");
+    In = DAG.getNode(ISD::AND, DL, InVT, In, DAG.getConstant(1, InVT));
+    if (InVT.getSizeInBits() == 64)
+      In = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, MVT::i32, In);
+    else if (InVT.getSizeInBits() < 32)
+      In = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, In);
+    return DAG.getNode(X86ISD::TRUNC, DL, VT, In);
+  }
   assert(VT.getVectorNumElements() == InVT.getVectorNumElements() &&
          "Invalid TRUNCATE operation");
 

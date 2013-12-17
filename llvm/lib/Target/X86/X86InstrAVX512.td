@@ -908,6 +908,9 @@ let Predicates = [HasAVX512] in {
 
   def : Pat<(v8i1 (load addr:$src)),
             (COPY_TO_REGCLASS (KMOVWkm addr:$src), VK8)>;
+
+  def : Pat<(i1 (X86trunc (i32 GR32:$src))),
+            (COPY_TO_REGCLASS (KMOVWkr $src), VK1)>;
 }
 // With AVX-512 only, 8-bit mask is promoted to 16-bit mask.
 let Predicates = [HasAVX512] in {
@@ -1051,6 +1054,10 @@ multiclass avx512_mask_unpck_bw<bits<8> opc, string OpcodeStr> {
 }
 
 defm KUNPCK : avx512_mask_unpck_bw<0x4b, "kunpck">;
+def : Pat<(v16i1 (concat_vectors (v8i1 VK8:$src1), (v8i1 VK8:$src2))),
+          (KUNPCKBWrr (COPY_TO_REGCLASS VK8:$src2, VK16),
+                  (COPY_TO_REGCLASS VK8:$src1, VK16))>;
+
 
 multiclass avx512_mask_unpck_int<string IntName, string InstName> {
   let Predicates = [HasAVX512] in
