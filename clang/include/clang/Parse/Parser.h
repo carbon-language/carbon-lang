@@ -136,9 +136,10 @@ class Parser : public CodeCompletionHandler {
   mutable IdentifierInfo *Ident_final;
   mutable IdentifierInfo *Ident_override;
 
-  // C++ type trait keywords that can be reverted to identifiers and still be
-  // used as type traits.
-  llvm::SmallDenseMap<IdentifierInfo *, tok::TokenKind> RevertibleTypeTraits;
+  // Some token kinds such as C++ type traits can be reverted to identifiers and
+  // still get used as keywords depending on context.
+  llvm::SmallDenseMap<const IdentifierInfo *, tok::TokenKind>
+  ContextualKeywords;
 
   OwningPtr<PragmaHandler> AlignHandler;
   OwningPtr<PragmaHandler> GCCVisibilityHandler;
@@ -573,6 +574,12 @@ private:
   /// translation unit. This returns false if the token was not replaced,
   /// otherwise emits a diagnostic and returns true.
   bool TryKeywordIdentFallback(bool DisableKeyword);
+
+  /// TryIdentKeywordUpgrade - Convert the current identifier token back to
+  /// its original kind and return true if it was disabled by
+  /// TryKeywordIdentFallback(), otherwise return false. Use this to
+  /// contextually enable keywords.
+  bool TryIdentKeywordUpgrade();
 
   /// \brief Get the TemplateIdAnnotation from the token.
   TemplateIdAnnotation *takeTemplateIdAnnotation(const Token &tok);

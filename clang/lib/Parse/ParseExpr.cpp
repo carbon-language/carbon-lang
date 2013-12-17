@@ -715,48 +715,11 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       // If this identifier was reverted from a token ID, and the next token
       // is a parenthesis, this is likely to be a use of a type trait. Check
       // those tokens.
-      if (Next.is(tok::l_paren) &&
-          Tok.is(tok::identifier) &&
-          Tok.getIdentifierInfo()->hasRevertedTokenIDToIdentifier()) {
-        IdentifierInfo *II = Tok.getIdentifierInfo();
-        // Build up the mapping of revertible type traits, for future use.
-        if (RevertibleTypeTraits.empty()) {
-#define RTT_JOIN(X,Y) X##Y
-#define REVERTIBLE_TYPE_TRAIT(Name)                         \
-          RevertibleTypeTraits[PP.getIdentifierInfo(#Name)] \
-            = RTT_JOIN(tok::kw_,Name)
-
-          REVERTIBLE_TYPE_TRAIT(__is_arithmetic);
-          REVERTIBLE_TYPE_TRAIT(__is_convertible);
-          REVERTIBLE_TYPE_TRAIT(__is_empty);
-          REVERTIBLE_TYPE_TRAIT(__is_floating_point);
-          REVERTIBLE_TYPE_TRAIT(__is_function);
-          REVERTIBLE_TYPE_TRAIT(__is_fundamental);
-          REVERTIBLE_TYPE_TRAIT(__is_integral);
-          REVERTIBLE_TYPE_TRAIT(__is_member_function_pointer);
-          REVERTIBLE_TYPE_TRAIT(__is_member_pointer);
-          REVERTIBLE_TYPE_TRAIT(__is_pod);
-          REVERTIBLE_TYPE_TRAIT(__is_pointer);
-          REVERTIBLE_TYPE_TRAIT(__is_same);
-          REVERTIBLE_TYPE_TRAIT(__is_scalar);
-          REVERTIBLE_TYPE_TRAIT(__is_signed);
-          REVERTIBLE_TYPE_TRAIT(__is_unsigned);
-          REVERTIBLE_TYPE_TRAIT(__is_void);
-#undef REVERTIBLE_TYPE_TRAIT
-#undef RTT_JOIN
-        }
-
-        // If we find that this is in fact the name of a type trait,
-        // update the token kind in place and parse again to treat it as
-        // the appropriate kind of type trait.
-        llvm::SmallDenseMap<IdentifierInfo *, tok::TokenKind>::iterator Known
-          = RevertibleTypeTraits.find(II);
-        if (Known != RevertibleTypeTraits.end()) {
-          Tok.setKind(Known->second);
-          return ParseCastExpression(isUnaryExpression, isAddressOfOperand,
-                                     NotCastExpr, isTypeCast);
-        }
-      }
+      if (Next.is(tok::l_paren) && Tok.is(tok::identifier) &&
+          Tok.getIdentifierInfo()->hasRevertedTokenIDToIdentifier() &&
+          TryIdentKeywordUpgrade())
+        return ParseCastExpression(isUnaryExpression, isAddressOfOperand,
+                                   NotCastExpr, isTypeCast);
 
       if (Next.is(tok::coloncolon) ||
           (!ColonIsSacred && Next.is(tok::colon)) ||
