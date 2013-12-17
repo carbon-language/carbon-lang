@@ -38,7 +38,7 @@ class ModuleMapParser;
   
 class ModuleMap {
   SourceManager &SourceMgr;
-  IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
+  DiagnosticsEngine &Diags;
   const LangOptions &LangOpts;
   const TargetInfo *Target;
   HeaderSearch &HeaderInfo;
@@ -188,7 +188,7 @@ public:
   /// \param LangOpts Language options for this translation unit.
   ///
   /// \param Target The target for this translation unit.
-  ModuleMap(SourceManager &SourceMgr, DiagnosticConsumer &DC,
+  ModuleMap(SourceManager &SourceMgr, DiagnosticsEngine &Diags,
             const LangOptions &LangOpts, const TargetInfo *Target,
             HeaderSearch &HeaderInfo);
 

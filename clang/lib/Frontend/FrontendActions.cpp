@@ -247,10 +247,17 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
 
   // Check whether we can build this module at all.
   clang::Module::Requirement Requirement;
-  if (!Module->isAvailable(CI.getLangOpts(), CI.getTarget(), Requirement)) {
-    CI.getDiagnostics().Report(diag::err_module_unavailable)
-      << Module->getFullModuleName()
-      << Requirement.second << Requirement.first;
+  clang::Module::HeaderDirective MissingHeader;
+  if (!Module->isAvailable(CI.getLangOpts(), CI.getTarget(), Requirement,
+                           MissingHeader)) {
+    if (MissingHeader.FileNameLoc.isValid()) {
+      CI.getDiagnostics().Report(diag::err_module_header_missing)
+        << MissingHeader.IsUmbrella << MissingHeader.FileName;
+    } else {
+      CI.getDiagnostics().Report(diag::err_module_unavailable)
+        << Module->getFullModuleName()
+        << Requirement.second << Requirement.first;
+    }
 
     return false;
   }

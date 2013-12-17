@@ -69,11 +69,15 @@ static bool hasFeature(StringRef Feature, const LangOptions &LangOpts,
 
 bool
 Module::isAvailable(const LangOptions &LangOpts, const TargetInfo &Target,
-                    Requirement &Req) const {
+                    Requirement &Req, HeaderDirective &MissingHeader) const {
   if (IsAvailable)
     return true;
 
   for (const Module *Current = this; Current; Current = Current->Parent) {
+    if (!Current->MissingHeaders.empty()) {
+      MissingHeader = Current->MissingHeaders.front();
+      return false;
+    }
     for (unsigned I = 0, N = Current->Requirements.size(); I != N; ++I) {
       if (hasFeature(Current->Requirements[I].first, LangOpts, Target) !=
               Current->Requirements[I].second) {

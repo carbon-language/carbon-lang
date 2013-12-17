@@ -3,6 +3,6 @@
 // RUN: not %clang_cc1 -fmodules -I %S/Inputs/unnecessary-module-map-parsing -fsyntax-only %s 2>&1 | FileCheck %s
 // RUN: %clang_cc1 -I %S/Inputs/unnecessary-module-map-parsing -fsyntax-only %s
 
-// CHECK: error: header 'unknown.h' not found
+// CHECK: error: expected umbrella, header, submodule, or module export
 
 #include "a1.h"

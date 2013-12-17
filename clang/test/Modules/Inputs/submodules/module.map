@@ -10,3 +10,8 @@ module import_self {
   module c { header "import-self-c.h" }
   module d { header "import-self-d.h" }
 }
+
+module missing_headers {
+  module missing { header "missing.h" }
+  module not_missing { header "not_missing.h" }
+}
