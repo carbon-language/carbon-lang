@@ -63,6 +63,8 @@ struct Flags {
   bool use_registers;
   // TLS and thread-specific storage.
   bool use_tls;
+  // Regions added via __lsan_register_root_region().
+  bool use_root_regions;
 
   // Consider unaligned pointers valid.
   bool use_unaligned;

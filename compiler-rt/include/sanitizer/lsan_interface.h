@@ -23,13 +23,30 @@ extern "C" {
   // be treated as non-leaks. Disable/enable pairs may be nested.
   void __lsan_disable();
   void __lsan_enable();
+
   // The heap object into which p points will be treated as a non-leak.
   void __lsan_ignore_object(const void *p);
+
+  // Memory regions registered through this interface will be treated as sources
+  // of live pointers during leak checking. Useful if you store pointers in
+  // mapped memory.
+  // Points of note:
+  // - __lsan_unregister_root_region() must be called with the same pointer and
+  // size that have earlier been passed to __lsan_register_root_region()
+  // - LSan will skip any inaccessible memory when scanning a root region. E.g.,
+  // if you map memory within a larger region that you have mprotect'ed, you can
+  // register the entire large region.
+  // - the implementation is not optimized for performance. This interface is
+  // intended to be used for a small number of relatively static regions.
+  void __lsan_register_root_region(const void *p, size_t size);
+  void __lsan_unregister_root_region(const void *p, size_t size);
+
   // The user may optionally provide this function to disallow leak checking
   // for the program it is linked into (if the return value is non-zero). This
   // function must be defined as returning a constant value; any behavior beyond
   // that is unsupported.
   int __lsan_is_turned_off();
+
   // Calling this function makes LSan enter the leak checking phase immediately.
   // Use this if normal end-of-process leak checking happens too late (e.g. if
   // you have intentional memory leaks in your shutdown code). Calling this
