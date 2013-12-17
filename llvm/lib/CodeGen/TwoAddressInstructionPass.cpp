@@ -1317,13 +1317,14 @@ collectTiedOperands(MachineInstr *MI, TiedOperandMap &TiedOperands) {
     assert(SrcReg && SrcMO.isUse() && "two address instruction invalid");
 
     // Deal with <undef> uses immediately - simply rewrite the src operand.
-    if (SrcMO.isUndef()) {
+    if (SrcMO.isUndef() && !DstMO.getSubReg()) {
       // Constrain the DstReg register class if required.
       if (TargetRegisterInfo::isVirtualRegister(DstReg))
         if (const TargetRegisterClass *RC = TII->getRegClass(MCID, SrcIdx,
                                                              TRI, *MF))
           MRI->constrainRegClass(DstReg, RC);
       SrcMO.setReg(DstReg);
+      SrcMO.setSubReg(0);
       DEBUG(dbgs() << "\t\trewrite undef:\t" << *MI);
       continue;
     }
@@ -1349,6 +1350,7 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
   unsigned LastCopiedReg = 0;
   SlotIndex LastCopyIdx;
   unsigned RegB = 0;
+  unsigned SubRegB = 0;
   for (unsigned tpi = 0, tpe = TiedPairs.size(); tpi != tpe; ++tpi) {
     unsigned SrcIdx = TiedPairs[tpi].first;
     unsigned DstIdx = TiedPairs[tpi].second;
@@ -1359,6 +1361,7 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
     // Grab RegB from the instruction because it may have changed if the
     // instruction was commuted.
     RegB = MI->getOperand(SrcIdx).getReg();
+    SubRegB = MI->getOperand(SrcIdx).getSubReg();
 
     if (RegA == RegB) {
       // The register is tied to multiple destinations (or else we would
@@ -1383,8 +1386,25 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
 #endif
 
     // Emit a copy.
-    BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
-            TII->get(TargetOpcode::COPY), RegA).addReg(RegB);
+    MachineInstrBuilder MIB = BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
+                                      TII->get(TargetOpcode::COPY), RegA);
+    // If this operand is folding a truncation, the truncation now moves to the
+    // copy so that the register classes remain valid for the operands.
+    MIB.addReg(RegB, 0, SubRegB);
+    const TargetRegisterClass *RC = MRI->getRegClass(RegB);
+    if (SubRegB) {
+      if (TargetRegisterInfo::isVirtualRegister(RegA)) {
+        assert(TRI->getMatchingSuperRegClass(RC, MRI->getRegClass(RegA),
+                                             SubRegB) &&
+               "tied subregister must be a truncation");
+        // The superreg class will not be used to constrain the subreg class.
+        RC = 0;
+      }
+      else {
+        assert(TRI->getMatchingSuperReg(RegA, SubRegB, MRI->getRegClass(RegB))
+               && "tied subregister must be a truncation");
+      }
+    }
 
     // Update DistanceMap.
     MachineBasicBlock::iterator PrevMI = MI;
@@ -1404,7 +1424,7 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
       }
     }
 
-    DEBUG(dbgs() << "\t\tprepend:\t" << *PrevMI);
+    DEBUG(dbgs() << "\t\tprepend:\t" << *MIB);
 
     MachineOperand &MO = MI->getOperand(SrcIdx);
     assert(MO.isReg() && MO.getReg() == RegB && MO.isUse() &&
@@ -1417,9 +1437,12 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
     // Make sure regA is a legal regclass for the SrcIdx operand.
     if (TargetRegisterInfo::isVirtualRegister(RegA) &&
         TargetRegisterInfo::isVirtualRegister(RegB))
-      MRI->constrainRegClass(RegA, MRI->getRegClass(RegB));
-
+      MRI->constrainRegClass(RegA, RC);
     MO.setReg(RegA);
+    // The getMatchingSuper asserts guarantee that the register class projected
+    // by SubRegB is compatible with RegA with no subregister. So regardless of
+    // whether the dest oper writes a subreg, the source oper should not.
+    MO.setSubReg(0);
 
     // Propagate SrcRegMap.
     SrcRegMap[RegA] = RegB;
@@ -1431,12 +1454,14 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
       // Replace other (un-tied) uses of regB with LastCopiedReg.
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
-        if (MO.isReg() && MO.getReg() == RegB && MO.isUse()) {
+        if (MO.isReg() && MO.getReg() == RegB && MO.getSubReg() == SubRegB &&
+            MO.isUse()) {
           if (MO.isKill()) {
             MO.setIsKill(false);
             RemovedKillFlag = true;
           }
           MO.setReg(LastCopiedReg);
+          MO.setSubReg(0);
         }
       }
     }

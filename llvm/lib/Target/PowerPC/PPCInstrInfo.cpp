@@ -227,6 +227,8 @@ PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
   unsigned Reg0 = MI->getOperand(0).getReg();
   unsigned Reg1 = MI->getOperand(1).getReg();
   unsigned Reg2 = MI->getOperand(2).getReg();
+  unsigned SubReg1 = MI->getOperand(1).getSubReg();
+  unsigned SubReg2 = MI->getOperand(2).getSubReg();
   bool Reg1IsKill = MI->getOperand(1).isKill();
   bool Reg2IsKill = MI->getOperand(2).isKill();
   bool ChangeReg0 = false;
@@ -236,6 +238,7 @@ PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     // Must be two address instruction!
     assert(MI->getDesc().getOperandConstraint(0, MCOI::TIED_TO) &&
            "Expecting a two-address instruction!");
+    assert(MI->getOperand(0).getSubReg() == SubReg1 && "Tied subreg mismatch");
     Reg2IsKill = false;
     ChangeReg0 = true;
   }
@@ -256,10 +259,14 @@ PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
       .addImm((MB-1) & 31);
   }
 
-  if (ChangeReg0)
+  if (ChangeReg0) {
     MI->getOperand(0).setReg(Reg2);
+    MI->getOperand(0).setSubReg(SubReg2);
+  }
   MI->getOperand(2).setReg(Reg1);
   MI->getOperand(1).setReg(Reg2);
+  MI->getOperand(2).setSubReg(SubReg1);
+  MI->getOperand(1).setSubReg(SubReg2);
   MI->getOperand(2).setIsKill(Reg1IsKill);
   MI->getOperand(1).setIsKill(Reg2IsKill);
 
@@ -1591,4 +1598,3 @@ INITIALIZE_PASS(PPCEarlyReturn, DEBUG_TYPE,
 char PPCEarlyReturn::ID = 0;
 FunctionPass*
 llvm::createPPCEarlyReturnPass() { return new PPCEarlyReturn(); }
-

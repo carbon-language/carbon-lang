@@ -275,8 +275,10 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
       return 0;
 
     unsigned Reg = MI->getOperand(1).getReg();
+    unsigned SubReg = MI->getOperand(1).getSubReg();
     MI->getOperand(1).ChangeToImmediate(MI->getOperand(2).getImm());
     MI->getOperand(2).ChangeToRegister(Reg, false);
+    MI->getOperand(2).setSubReg(SubReg);
   } else {
     MI = TargetInstrInfo::commuteInstruction(MI, NewMI);
   }
