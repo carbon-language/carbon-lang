@@ -251,6 +251,11 @@ void DeclInfo::fill() {
         TL = PointerTL.getPointeeLoc().getUnqualifiedLoc();
         continue;
       }
+      // Look through reference types.
+      if (ReferenceTypeLoc ReferenceTL = TL.getAs<ReferenceTypeLoc>()) {
+        TL = ReferenceTL.getPointeeLoc().getUnqualifiedLoc();
+        continue;
+      }
       // Look through adjusted types.
       if (AdjustedTypeLoc ATL = TL.getAs<AdjustedTypeLoc>()) {
         TL = ATL.getOriginalLoc();

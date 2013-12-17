@@ -326,6 +326,18 @@ typedef foo::function_wrapper<int (int aaa, int ccc)> test_function_like_typedef
 /// \returns aaa.
 typedef foo::function_wrapper<int (int aaa, int ccc)> *test_function_like_typedef6;
 
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
+/// \param aaa Meow.
+/// \param bbb Bbb.
+/// \returns aaa.
+typedef foo::function_wrapper<int (int aaa, int ccc)> &test_function_like_typedef7;
+
+// expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
+/// \param aaa Meow.
+/// \param bbb Bbb.
+/// \returns aaa.
+typedef foo::function_wrapper<int (int aaa, int ccc)> &&test_function_like_typedef8;
+
 
 typedef int (*test_not_function_like_typedef1)(int aaa);
 
