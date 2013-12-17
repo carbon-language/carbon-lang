@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements the RegisterClassInfo class which provides dynamic
-// information about target register classes. Callee saved and reserved
+// information about target register classes. Callee saved and preserved
 // registers depends on calling conventions and other dynamic information, so
 // some things cannot be determined statically.
 //
