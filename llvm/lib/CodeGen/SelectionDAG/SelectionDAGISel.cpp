@@ -566,6 +566,9 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   // at this point.
   FuncInfo->clear();
 
+  DEBUG(dbgs() << "*** MachineFunction at end of ISel ***\n");
+  DEBUG(MF->print(dbgs()));
+
   return true;
 }
 
