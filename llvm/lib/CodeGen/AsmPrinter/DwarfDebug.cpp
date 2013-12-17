@@ -3015,35 +3015,18 @@ void DwarfDebug::emitDebugStrDWO() {
 
 void DwarfDebug::addDwarfTypeUnitType(uint16_t Language, DIE *RefDie,
                                       DICompositeType CTy) {
-  DenseMap<const MDNode *,
-           std::pair<uint64_t, SmallVectorImpl<DIE *> *> >::iterator I =
-      DwarfTypeUnits.find(CTy);
-  SmallVector<DIE *, 8> References;
-  References.push_back(RefDie);
-  if (I != DwarfTypeUnits.end()) {
-    if (I->second.second) {
-      I->second.second->push_back(RefDie);
-      return;
-    }
-  } else {
+  const DwarfTypeUnit *&TU = DwarfTypeUnits[CTy];
+  if (!TU) {
     DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
     DwarfTypeUnit *NewTU =
         new DwarfTypeUnit(InfoHolder.getUnits().size(), UnitDie, Language, Asm,
                           this, &InfoHolder);
+    TU = NewTU;
     InfoHolder.addUnit(NewTU);
 
     NewTU->addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                    Language);
 
-    // Register the type in the DwarfTypeUnits map with a vector of references
-    // to be
-    // populated whenever a reference is required.
-    I = DwarfTypeUnits.insert(std::make_pair(
-                                  CTy, std::make_pair(0, &References))).first;
-
-    // Construct the type, this may, recursively, require more type units that
-    // may in turn require this type again - in which case they will add DIEs to
-    // the References vector.
     DIE *Die = NewTU->createTypeDIE(CTy);
 
     if (GenerateODRHash && shouldAddODRHash(NewTU, Die))
@@ -3059,19 +3042,11 @@ void DwarfDebug::addDwarfTypeUnitType(uint16_t Language, DIE *RefDie,
     NewTU->setTypeSignature(Signature);
     NewTU->setType(Die);
 
-    // Remove the References vector and add the type hash.
-    I->second.first = Signature;
-    I->second.second = NULL;
-
     NewTU->initSection(
         useSplitDwarf()
             ? Asm->getObjFileLowering().getDwarfTypesDWOSection(Signature)
             : Asm->getObjFileLowering().getDwarfTypesSection(Signature));
   }
 
-  // Populate all the signatures.
-  for (unsigned i = 0, e = References.size(); i != e; ++i) {
-    CUMap.begin()->second->addUInt(References[i], dwarf::DW_AT_signature,
-                                   dwarf::DW_FORM_ref_sig8, I->second.first);
-  }
+  CUMap.begin()->second->addDIETypeSignature(RefDie, *TU);
 }

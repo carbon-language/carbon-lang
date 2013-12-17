@@ -319,6 +319,8 @@ public:
   /// addDIEEntry - Add a DIE attribute data and value.
   void addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIEEntry *Entry);
 
+  void addDIETypeSignature(DIE *Die, const DwarfTypeUnit &Type);
+
   /// addBlock - Add block data.
   void addBlock(DIE *Die, dwarf::Attribute Attribute, DIEBlock *Block);
 
@@ -524,6 +526,7 @@ public:
   virtual ~DwarfTypeUnit() LLVM_OVERRIDE;
 
   void setTypeSignature(uint64_t Signature) { TypeSignature = Signature; }
+  uint64_t getTypeSignature() const { return TypeSignature; }
   void setType(const DIE *Ty) { this->Ty = Ty; }
 
   uint16_t getLanguage() const LLVM_OVERRIDE { return Language; }

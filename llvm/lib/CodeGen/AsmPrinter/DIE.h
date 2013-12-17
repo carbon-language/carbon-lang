@@ -26,6 +26,7 @@ namespace llvm {
   class MCSymbol;
   class MCSymbolRefExpr;
   class raw_ostream;
+  class DwarfTypeUnit;
 
   //===--------------------------------------------------------------------===//
   /// DIEAbbrevData - Dwarf abbreviation data, describes one attribute of a
@@ -195,6 +196,7 @@ namespace llvm {
       isLabel,
       isDelta,
       isEntry,
+      isTypeSignature,
       isBlock
     };
   protected:
@@ -408,6 +410,33 @@ namespace llvm {
 
 #ifndef NDEBUG
     virtual void print(raw_ostream &O) const;
+#endif
+  };
+
+  //===--------------------------------------------------------------------===//
+  /// \brief A signature reference to a type unit.
+  class DIETypeSignature : public DIEValue {
+    const DwarfTypeUnit &Unit;
+  public:
+    explicit DIETypeSignature(const DwarfTypeUnit &Unit)
+        : DIEValue(isTypeSignature), Unit(Unit) {}
+
+    /// \brief Emit type unit signature.
+    virtual void EmitValue(AsmPrinter *Asm, dwarf::Form Form) const;
+
+    /// Returns size of a ref_sig8 entry.
+    virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
+      assert(Form == dwarf::DW_FORM_ref_sig8);
+      return 8;
+    }
+
+    // \brief Implement isa/cast/dyncast.
+    static bool classof(const DIEValue *E) {
+      return E->getType() == isTypeSignature;
+    }
+#ifndef NDEBUG
+    virtual void print(raw_ostream &O) const;
+    void dump() const;
 #endif
   };
 

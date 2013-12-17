@@ -322,6 +322,11 @@ void DwarfUnit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIE *Entry) {
   addDIEEntry(Die, Attribute, createDIEEntry(Entry));
 }
 
+void DwarfUnit::addDIETypeSignature(DIE *Die, const DwarfTypeUnit &Type) {
+  Die->addValue(dwarf::DW_AT_signature, dwarf::DW_FORM_ref_sig8,
+                new (DIEValueAllocator) DIETypeSignature(Type));
+}
+
 void DwarfUnit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute,
                             DIEEntry *Entry) {
   const DIE *DieCU = Die->getUnitOrNull();

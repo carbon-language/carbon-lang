@@ -13,6 +13,7 @@
 
 #include "DIE.h"
 #include "DwarfDebug.h"
+#include "DwarfUnit.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/IR/DataLayout.h"
@@ -401,6 +402,22 @@ unsigned DIEEntry::getRefAddrSize(AsmPrinter *AP) {
 void DIEEntry::print(raw_ostream &O) const {
   O << format("Die: 0x%lx", (long)(intptr_t)Entry);
 }
+#endif
+
+//===----------------------------------------------------------------------===//
+// DIETypeSignature Implementation
+//===----------------------------------------------------------------------===//
+void DIETypeSignature::EmitValue(AsmPrinter *Asm, dwarf::Form Form) const {
+  assert(Form == dwarf::DW_FORM_ref_sig8);
+  Asm->OutStreamer.EmitIntValue(Unit.getTypeSignature(), 8);
+}
+
+#ifndef NDEBUG
+void DIETypeSignature::print(raw_ostream &O) const {
+  O << format("Type Unit: 0x%lx", Unit.getTypeSignature());
+}
+
+void DIETypeSignature::dump() const { print(dbgs()); }
 #endif
 
 //===----------------------------------------------------------------------===//
