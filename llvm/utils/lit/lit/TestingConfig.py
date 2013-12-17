@@ -38,7 +38,7 @@ class TestingConfig:
         # The option to preserve TEMP, TMP, and TMPDIR.
         # This is intended to check how many temporary files would be generated
         # (and be not cleaned up) in automated builders.
-        if os.environ.has_key('LIT_PRESERVES_TMP'):
+        if 'LIT_PRESERVES_TMP' in os.environ:
             environment.update({
                     'TEMP' : os.environ.get('TEMP',''),
                     'TMP' : os.environ.get('TMP',''),
