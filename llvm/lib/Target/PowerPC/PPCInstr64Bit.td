@@ -80,14 +80,12 @@ def HI48_64 : SDNodeXForm<imm, [{
 // Calls.
 //
 
-let Interpretation64Bit = 1 in {
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in {
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
   let isBranch = 1, isIndirectBranch = 1, Uses = [CTR8] in {
     def BCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", IIC_BrB,
                              []>,
         Requires<[In64BitMode]>;
-
-    let isCodeGenOnly = 1 in
     def BCCTR8 : XLForm_2_br<19, 528, 0, (outs), (ins pred:$cond),
                              "b${cond:cc}ctr${cond:pm} ${cond:reg}", IIC_BrB,
                              []>,
@@ -157,6 +155,14 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
 }
 } // Interpretation64Bit
 
+// FIXME: Duplicating this for the asm parser should be unnecessary, but the
+// previous definition must be marked as CodeGen only to prevent decoding
+// conflicts.
+let Interpretation64Bit = 1, isAsmParserOnly = 1 in
+let isCall = 1, PPC970_Unit = 7, Defs = [LR8], Uses = [RM] in
+def BL8_TLS_ : IForm<18, 0, 1, (outs), (ins tlscall:$func),
+                     "bl $func", IIC_BrB, []>;
+
 // Calls
 def : Pat<(PPCcall (i64 tglobaladdr:$dst)),
           (BL8 tglobaladdr:$dst)>;
@@ -211,7 +217,7 @@ def STDCX : XForm_1<31, 214, (outs), (ins g8rc:$rS, memrr:$dst),
                    [(PPCstcx i64:$rS, xoaddr:$dst)]>,
                    isDOT;
 
-let Interpretation64Bit = 1 in {
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in {
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in
 def TCRETURNdi8 :Pseudo< (outs),
                         (ins calltarget:$dst, i32imm:$offset),
@@ -228,14 +234,11 @@ def TCRETURNri8 : Pseudo<(outs), (ins CTRRC8:$dst, i32imm:$offset),
                  "#TC_RETURNr8 $dst $offset",
                  []>;
 
-let isCodeGenOnly = 1 in {
-
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7, isBranch = 1,
     isIndirectBranch = 1, isCall = 1, isReturn = 1, Uses = [CTR8, RM] in
 def TAILBCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", IIC_BrB,
                              []>,
     Requires<[In64BitMode]>;
-
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,
     isBarrier = 1, isCall = 1, isReturn = 1, Uses = [RM] in
@@ -243,14 +246,11 @@ def TAILB8   : IForm<18, 0, 0, (outs), (ins calltarget:$dst),
                   "b $dst", IIC_BrB,
                   []>;
 
-
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,
     isBarrier = 1, isCall = 1, isReturn = 1, Uses = [RM] in
 def TAILBA8   : IForm<18, 0, 0, (outs), (ins abscalltarget:$dst),
                   "ba $dst", IIC_BrB,
                   []>;
-
-}
 } // Interpretation64Bit
 
 def : Pat<(PPCtc_return (i64 tglobaladdr:$dst),  imm:$imm),
@@ -264,7 +264,7 @@ def : Pat<(PPCtc_return CTRRC8:$dst, imm:$imm),
 
 
 // 64-bit CR instructions
-let Interpretation64Bit = 1 in {
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in {
 let neverHasSideEffects = 1 in {
 def MTOCRF8: XFXForm_5a<31, 144, (outs crbitm:$FXM), (ins g8rc:$ST),
                         "mtocrf $FXM, $ST", IIC_BrMCRX>,
@@ -310,14 +310,14 @@ def MTCTR8 : XFXForm_7_ext<31, 467, 9, (outs), (ins g8rc:$rS),
                            "mtctr $rS", IIC_SprMTSPR>,
              PPC970_DGroup_First, PPC970_Unit_FXU;
 }
-let hasSideEffects = 1, isCodeGenOnly = 1, Defs = [CTR8] in {
+let hasSideEffects = 1, Defs = [CTR8] in {
 let Pattern = [(int_ppc_mtctr i64:$rS)] in
 def MTCTR8loop : XFXForm_7_ext<31, 467, 9, (outs), (ins g8rc:$rS),
                                "mtctr $rS", IIC_SprMTSPR>,
                  PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 
-let isCodeGenOnly = 1, Pattern = [(set i64:$rT, readcyclecounter)] in
+let Pattern = [(set i64:$rT, readcyclecounter)] in
 def MFTB8 : XFXForm_1_ext<31, 339, 268, (outs g8rc:$rT), (ins),
                           "mfspr $rT, 268", IIC_SprMFTB>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
@@ -350,6 +350,7 @@ def MFLR8  : XFXForm_1_ext<31, 339, 8, (outs g8rc:$rT), (ins),
 let PPC970_Unit = 1 in {  // FXU Operations.
 let Interpretation64Bit = 1 in {
 let neverHasSideEffects = 1 in {
+let isCodeGenOnly = 1 in {
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in {
 def LI8  : DForm_2_r0<14, (outs g8rc:$rD), (ins s16imm64:$imm),
@@ -469,7 +470,14 @@ defm SUBFZE8 : XOForm_3rc<31, 200, 0, (outs g8rc:$rT), (ins g8rc:$rA),
                           "subfze", "$rT, $rA", IIC_IntGeneral,
                           [(set i64:$rT, (sube 0, i64:$rA))]>;
 }
+} // isCodeGenOnly
 
+// FIXME: Duplicating this for the asm parser should be unnecessary, but the
+// previous definition must be marked as CodeGen only to prevent decoding
+// conflicts.
+let isAsmParserOnly = 1 in
+def ADD8TLS_ : XOForm_1<31, 266, 0, (outs g8rc:$rT), (ins g8rc:$rA, tlsreg:$rB),
+                        "add $rT, $rA, $rB", IIC_IntSimple, []>;
 
 defm MULHD : XOForm_1r<31, 73, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                        "mulhd", "$rT, $rA, $rB", IIC_IntMulHW,
@@ -503,7 +511,7 @@ defm SRAD : XForm_6rc<31, 794, (outs g8rc:$rA), (ins g8rc:$rS, gprc:$rB),
                       "srad", "$rA, $rS, $rB", IIC_IntRotateD,
                       [(set i64:$rA, (PPCsra i64:$rS, i32:$rB))]>, isPPC64;
 
-let Interpretation64Bit = 1 in { 
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in { 
 defm EXTSB8 : XForm_11r<31, 954, (outs g8rc:$rA), (ins g8rc:$rS),
                         "extsb", "$rA, $rS", IIC_IntSimple,
                         [(set i64:$rA, (sext_inreg i64:$rS, i8))]>;
@@ -523,7 +531,7 @@ def EXTSH8_32_64 : XForm_11<31, 922, (outs g8rc:$rA), (ins gprc:$rS),
 defm EXTSW  : XForm_11r<31, 986, (outs g8rc:$rA), (ins g8rc:$rS),
                         "extsw", "$rA, $rS", IIC_IntSimple,
                         [(set i64:$rA, (sext_inreg i64:$rS, i32))]>, isPPC64;
-let Interpretation64Bit = 1 in
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in
 defm EXTSW_32_64 : XForm_11r<31, 986, (outs g8rc:$rA), (ins gprc:$rS),
                              "extsw", "$rA, $rS", IIC_IntSimple,
                              [(set i64:$rA, (sext i32:$rS))]>, isPPC64;
@@ -556,6 +564,7 @@ defm DIVDU : XOForm_1r<31, 457, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
 defm MULLD : XOForm_1r<31, 233, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                        "mulld", "$rT, $rA, $rB", IIC_IntMulHD,
                        [(set i64:$rT, (mul i64:$rA, i64:$rB))]>, isPPC64;
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in
 def MULLI8 : DForm_2<7, (outs g8rc:$rD), (ins g8rc:$rA, s16imm64:$imm),
                        "mulli $rD, $rA, $imm", IIC_IntMulLI,
                        [(set i64:$rD, (mul i64:$rA, imm64SExt16:$imm))]>;
@@ -600,7 +609,7 @@ defm RLDIC  : MDForm_1r<30, 2,
                         "rldic", "$rA, $rS, $SH, $MBE", IIC_IntRotateDI,
                         []>, isPPC64;
 
-let Interpretation64Bit = 1 in {
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in {
 defm RLWINM8 : MForm_2r<21, (outs g8rc:$rA),
                         (ins g8rc:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                         "rlwinm", "$rA, $rS, $SH, $MB, $ME", IIC_IntGeneral,
@@ -623,7 +632,7 @@ def ISEL8   : AForm_4<31, 15,
 
 // Sign extending loads.
 let canFoldAsLoad = 1, PPC970_Unit = 2 in {
-let Interpretation64Bit = 1 in
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in
 def LHA8: DForm_1<42, (outs g8rc:$rD), (ins memri:$src),
                   "lha $rD, $src", IIC_LdStLHA,
                   [(set i64:$rD, (sextloadi16 iaddr:$src))]>,
@@ -633,7 +642,7 @@ def LWA  : DSForm_1<58, 2, (outs g8rc:$rD), (ins memrix:$src),
                     [(set i64:$rD,
                           (aligned4sextloadi32 ixaddr:$src))]>, isPPC64,
                     PPC970_DGroup_Cracked;
-let Interpretation64Bit = 1 in
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in
 def LHAX8: XForm_1<31, 343, (outs g8rc:$rD), (ins memrr:$src),
                    "lhax $rD, $src", IIC_LdStLHA,
                    [(set i64:$rD, (sextloadi16 xaddr:$src))]>,
@@ -654,7 +663,7 @@ def LWAX_32 : XForm_1<31, 341, (outs gprc:$rD), (ins memrr:$src),
 
 // Update forms.
 let mayLoad = 1, neverHasSideEffects = 1 in {
-let Interpretation64Bit = 1 in
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in
 def LHAU8 : DForm_1<43, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
                     (ins memri:$addr),
                     "lhau $rD, $addr", IIC_LdStLHAU,
@@ -662,7 +671,7 @@ def LHAU8 : DForm_1<43, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
                     NoEncode<"$ea_result">;
 // NO LWAU!
 
-let Interpretation64Bit = 1 in
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in
 def LHAUX8 : XForm_1<31, 375, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
                     (ins memrr:$addr),
                     "lhaux $rD, $addr", IIC_LdStLHAUX,
@@ -676,7 +685,7 @@ def LWAUX : XForm_1<31, 373, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
 }
 }
 
-let Interpretation64Bit = 1 in {
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in {
 // Zero extending loads.
 let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LBZ8 : DForm_1<34, (outs g8rc:$rD), (ins memri:$src),
@@ -865,7 +874,7 @@ def ADDIdtprelL : Pseudo<(outs g8rc:$rD), (ins g8rc_nox0:$reg, s16imm64:$disp),
                   isPPC64;
 
 let PPC970_Unit = 2 in {
-let Interpretation64Bit = 1 in {
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in {
 // Truncating stores.                       
 def STB8 : DForm_1<38, (outs), (ins g8rc:$rS, memri:$src),
                    "stb $rS, $src", IIC_LdStStore,
@@ -906,7 +915,7 @@ def STDBRX: XForm_8<31, 660, (outs), (ins g8rc:$rS, memrr:$dst),
 
 // Stores with Update (pre-inc).
 let PPC970_Unit = 2, mayStore = 1 in {
-let Interpretation64Bit = 1 in {
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in {
 def STBU8 : DForm_1<39, (outs ptr_rc_nor0:$ea_res), (ins g8rc:$rS, memri:$dst),
                    "stbu $rS, $dst", IIC_LdStStoreUpd, []>,
                    RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
@@ -916,10 +925,6 @@ def STHU8 : DForm_1<45, (outs ptr_rc_nor0:$ea_res), (ins g8rc:$rS, memri:$dst),
 def STWU8 : DForm_1<37, (outs ptr_rc_nor0:$ea_res), (ins g8rc:$rS, memri:$dst),
                    "stwu $rS, $dst", IIC_LdStStoreUpd, []>,
                    RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">;
-def STDU : DSForm_1<62, 1, (outs ptr_rc_nor0:$ea_res), (ins g8rc:$rS, memrix:$dst),
-                   "stdu $rS, $dst", IIC_LdStSTDU, []>,
-                   RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">,
-                   isPPC64;
 
 def STBUX8: XForm_8<31, 247, (outs ptr_rc_nor0:$ea_res), (ins g8rc:$rS, memrr:$dst),
                     "stbux $rS, $dst", IIC_LdStStoreUpd, []>,
@@ -934,6 +939,11 @@ def STWUX8: XForm_8<31, 183, (outs ptr_rc_nor0:$ea_res), (ins g8rc:$rS, memrr:$d
                     RegConstraint<"$dst.ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     PPC970_DGroup_Cracked;
 } // Interpretation64Bit
+
+def STDU : DSForm_1<62, 1, (outs ptr_rc_nor0:$ea_res), (ins g8rc:$rS, memrix:$dst),
+                   "stdu $rS, $dst", IIC_LdStSTDU, []>,
+                   RegConstraint<"$dst.reg = $ea_res">, NoEncode<"$ea_res">,
+                   isPPC64;
 
 def STDUX : XForm_8<31, 181, (outs ptr_rc_nor0:$ea_res), (ins g8rc:$rS, memrr:$dst),
                     "stdux $rS, $dst", IIC_LdStSTDUX, []>,
