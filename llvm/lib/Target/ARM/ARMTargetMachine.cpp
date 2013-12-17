@@ -92,9 +92,9 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   else
     Ret += "-v128:64:128";
 
-  // An aggregate of size 0 is ABI aligned to 0.
-  // FIXME: explain better what this means.
-  if (ST.isThumb())
+  // On thumb and APCS, only try to align aggregates to 32 bits (the default is
+  // 64 bits).
+  if (ST.isThumb() || ST.isAPCS_ABI())
     Ret += "-a:0:32";
 
   // Integer registers are 32 bits.
