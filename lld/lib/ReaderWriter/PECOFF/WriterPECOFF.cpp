@@ -631,12 +631,9 @@ llvm::object::coff_section
 SectionHeaderTableChunk::createSectionHeader(SectionChunk *chunk) {
   llvm::object::coff_section header;
 
-  // Section name equal to or shorter than 8 byte fits in the section
-  // header. Longer names should be stored to string table, which is not
-  // implemented yet.
+  // Section name must be equal to or less than 8 characters in the
+  // executable. Longer names will be truncated.
   StringRef sectionName = chunk->getSectionName();
-  if (sizeof(header.Name) < sectionName.size())
-    llvm_unreachable("Cannot handle section name longer than 8 byte");
 
   // Name field must be NUL-padded. If the name is exactly 8 byte long,
   // there's no terminating NUL.

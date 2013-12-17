@@ -1,0 +1,7 @@
+# RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:start \
+# RUN:   /merge:.text=.longsectionname -- %t.obj
+# RUN: llvm-readobj -sections %t.exe | FileCheck %s
+
+CHECK: Name: .longsec (2E 6C 6F 6E 67 73 65 63)
