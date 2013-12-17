@@ -485,8 +485,7 @@ public:
     this->UIntMaxType = TargetInfo::UnsignedLongLong;
     this->Int64Type = TargetInfo::SignedLongLong;
     this->SizeType = TargetInfo::UnsignedInt;
-    this->DescriptionString = "E-p:32:32-"
-                              "i64:64-n32";
+    this->DescriptionString = "E-p:32:32-i64:64-n32:64";
   }
 };
 

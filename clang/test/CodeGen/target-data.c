@@ -56,7 +56,7 @@
 
 // RUN: %clang_cc1 -triple powerpc64-lv2 -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=PS3
-// PS3: target datalayout = "E-p:32:32-i64:64-n32"
+// PS3: target datalayout = "E-p:32:32-i64:64-n32:64"
 
 // RUN: %clang_cc1 -triple i686-nacl -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=NACL
