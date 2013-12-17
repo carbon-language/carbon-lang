@@ -15340,7 +15340,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
 
   unsigned MOVOpc = Subtarget->hasFp256() ? X86::VMOVAPSmr : X86::MOVAPSmr;
   // In the XMM save block, save all the XMM argument registers.
-  for (int i = 3, e = MI->getNumOperands(); i != e; ++i) {
+  for (int i = 3, e = MI->getNumOperands() - 1; i != e; ++i) {
     int64_t Offset = (i - 3) * 16 + VarArgsFPOffset;
     MachineMemOperand *MMO =
       F->getMachineMemOperand(
