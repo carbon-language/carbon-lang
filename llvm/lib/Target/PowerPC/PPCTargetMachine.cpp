@@ -35,11 +35,14 @@ extern "C" void LLVMInitializePowerPCTarget() {
 
 /// Return the datalayout string of a subtarget.
 static std::string getDataLayoutString(const PPCSubtarget &ST) {
+  const Triple &T = ST.getTargetTriple();
+
   // PPC is big endian.
   std::string Ret = "E";
 
-  // PPC32 has 32 bit pointers.
-  if (!ST.isPPC64())
+  // PPC32 has 32 bit pointers. The PS3 (OS Lv2) is a PPC64 machine with 32 bit
+  // pointers.
+  if (!ST.isPPC64() || T.getOS() == Triple::Lv2)
     Ret += "-p:32:32";
 
   // Note, the alignment values for f64 and i64 on ppc64 in Darwin
