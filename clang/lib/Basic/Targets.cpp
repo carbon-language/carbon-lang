@@ -1228,7 +1228,7 @@ public:
                           "n32:64";
     } else
       DescriptionString = "E-"
-                          "i64:64-f128:128-"
+                          "i64:64-"
                           "n32:64";
 
     // PPC64 supports atomics up to 8 bytes.
@@ -3397,7 +3397,7 @@ public:
     SuitableAlign = 128;
     DescriptionString = "e-"
                         "i64:64-i128:128-"
-                        "f128:128-n32:64-S128";
+                        "n32:64-S128";
 
     WCharType = UnsignedInt;
     LongDoubleFormat = &llvm::APFloat::IEEEquad;
@@ -5238,11 +5238,11 @@ class Mips64EBTargetInfo : public Mips64TargetInfoBase {
   virtual void setDescriptionString() {
     if (ABI == "n32")
       DescriptionString = "E-p:32:32-i8:8:32-i16:16:32-"
-                          "i64:64-f128:128-"
+                          "i64:64-"
                           "n32:64-S128";
     else
       DescriptionString = "E-i8:8:32-i16:16:32-"
-                          "i64:64-f128:128-"
+                          "i64:64-"
                           "n32:64-S128";
 
   }
@@ -5262,11 +5262,11 @@ class Mips64ELTargetInfo : public Mips64TargetInfoBase {
   virtual void setDescriptionString() {
     if (ABI == "n32")
       DescriptionString = "e-p:32:32-i8:8:32-i16:16:32-"
-                          "i64:64-f128:128"
+                          "i64:64"
                           "-n32:64-S128";
     else
       DescriptionString = "e-i8:8:32-i16:16:32-"
-                          "i64:64-f128:128-"
+                          "i64:64-"
                           "n32:64-S128";
   }
 public:

@@ -40,19 +40,19 @@
 
 // RUN: %clang_cc1 -triple mips64el-linux-gnu -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=MIPS-64EL
-// MIPS-64EL: target datalayout = "e-i8:8:32-i16:16:32-i64:64-f128:128-n32:64-S128"
+// MIPS-64EL: target datalayout = "e-i8:8:32-i16:16:32-i64:64-n32:64-S128"
 
 // RUN: %clang_cc1 -triple mips64el-linux-gnu -o - -emit-llvm -target-abi n32 \
 // RUN: %s | FileCheck %s -check-prefix=MIPS-64EL-N32
-// MIPS-64EL-N32: target datalayout = "e-p:32:32-i8:8:32-i16:16:32-i64:64-f128:128-n32:64-S128"
+// MIPS-64EL-N32: target datalayout = "e-p:32:32-i8:8:32-i16:16:32-i64:64-n32:64-S128"
 
 // RUN: %clang_cc1 -triple mips64-linux-gnu -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=MIPS-64EB
-// MIPS-64EB: target datalayout = "E-i8:8:32-i16:16:32-i64:64-f128:128-n32:64-S128"
+// MIPS-64EB: target datalayout = "E-i8:8:32-i16:16:32-i64:64-n32:64-S128"
 
 // RUN: %clang_cc1 -triple mips64-linux-gnu -o - -emit-llvm %s -target-abi n32 \
 // RUN: | FileCheck %s -check-prefix=MIPS-64EB-N32
-// MIPS-64EB-N32: target datalayout = "E-p:32:32-i8:8:32-i16:16:32-i64:64-f128:128-n32:64-S128"
+// MIPS-64EB-N32: target datalayout = "E-p:32:32-i8:8:32-i16:16:32-i64:64-n32:64-S128"
 
 // RUN: %clang_cc1 -triple powerpc64-lv2 -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=PS3
@@ -74,7 +74,7 @@
 
 // RUN: %clang_cc1 -triple powerpc64-linux -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=PPC64-LINUX
-// PPC64-LINUX: target datalayout = "E-i64:64-f128:128-n32:64"
+// PPC64-LINUX: target datalayout = "E-i64:64-n32:64"
 
 // RUN: %clang_cc1 -triple powerpc-darwin -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=PPC32-DARWIN
@@ -106,7 +106,7 @@
 
 // RUN: %clang_cc1 -triple aarch64-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=AARCH64
-// AARCH64: target datalayout = "e-i64:64-i128:128-f128:128-n32:64-S128"
+// AARCH64: target datalayout = "e-i64:64-i128:128-n32:64-S128"
 
 // RUN: %clang_cc1 -triple thumb-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=THUMB
