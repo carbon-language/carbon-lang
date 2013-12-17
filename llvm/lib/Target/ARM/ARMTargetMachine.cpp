@@ -76,13 +76,14 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   if (ST.isThumb())
     Ret += "-i1:8:32-i8:8:32-i16:16:32";
 
-  // We have 64 bits floats and integers. The APCS ABI requires them to be
-  // aligned s them to 32 bits, others to 64 bits. We always try to align to
-  // 64 bits.
+  // ABIs other than APC have 64 bit integers with natural alignment.
+  if (!ST.isAPCS_ABI())
+    Ret += "-i64:64";
+
+  // We have 64 bits floats. The APCS ABI requires them to be aligned to 32
+  // bits, others to 64 bits. We always try to align to 64 bits.
   if (ST.isAPCS_ABI())
     Ret += "-f64:32:64";
-  else
-    Ret += "-i64:64";
 
   // We have 128 and 64 bit vectors. The APCS ABI aligns them to 32 bits, others
   // to 64. We always ty to give them natural alignment.
