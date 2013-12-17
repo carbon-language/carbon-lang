@@ -839,7 +839,7 @@ Libdevice provides an ``__nv_powf`` function that we will use.
     %valB = load float addrspace(1)* %ptrB, align 4
 
     ; Compute C = pow(A, B)
-    %valC = call float @__nv_exp2f(float %valA, float %valB)
+    %valC = call float @__nv_powf(float %valA, float %valB)
 
     ; Store back to C
     store float %valC, float addrspace(1)* %ptrC, align 4
@@ -850,7 +850,7 @@ Libdevice provides an ``__nv_powf`` function that we will use.
   !nvvm.annotations = !{!0}
   !0 = metadata !{void (float addrspace(1)*,
                         float addrspace(1)*,
-                        float addrspace(1)*)* @kernel, metadata !"kernel", i32 1}%
+                        float addrspace(1)*)* @kernel, metadata !"kernel", i32 1}
 
 
 To compile this kernel, we perform the following steps:
