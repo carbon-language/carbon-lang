@@ -202,15 +202,16 @@ CodeGenTypes::arrangeCXXConstructorDeclaration(const CXXConstructorDecl *D,
   CanQualType resultType =
     TheCXXABI.HasThisReturn(GD) ? argTypes.front() : Context.VoidTy;
 
-  TheCXXABI.BuildConstructorSignature(D, ctorKind, resultType, argTypes);
-
   CanQual<FunctionProtoType> FTP = GetFormalType(D);
-
-  RequiredArgs required = RequiredArgs::forPrototypePlus(FTP, argTypes.size());
 
   // Add the formal parameters.
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
     argTypes.push_back(FTP->getArgType(i));
+
+  TheCXXABI.BuildConstructorSignature(D, ctorKind, resultType, argTypes);
+
+  RequiredArgs required =
+      (D->isVariadic() ? RequiredArgs(argTypes.size()) : RequiredArgs::All);
 
   FunctionType::ExtInfo extInfo = FTP->getExtInfo();
   return arrangeLLVMFunctionInfo(resultType, argTypes, extInfo, required);

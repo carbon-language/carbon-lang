@@ -67,11 +67,8 @@ protected:
     return CGF.CXXStructorImplicitParamValue;
   }
 
-  /// Build a parameter variable suitable for 'this'.
-  void BuildThisParam(CodeGenFunction &CGF, FunctionArgList &Params);
-
   /// Perform prolog initialization of the parameter variable suitable
-  /// for 'this' emitted by BuildThisParam.
+  /// for 'this' emitted by buildThisParam.
   void EmitThisParam(CodeGenFunction &CGF);
 
   ASTContext &getContext() const { return CGM.getContext(); }
@@ -270,16 +267,18 @@ public:
     return This;
   }
 
-  /// Build the ABI-specific portion of the parameter list for a
-  /// function.  This generally involves a 'this' parameter and
-  /// possibly some extra data for constructors and destructors.
+  /// Build a parameter variable suitable for 'this'.
+  void buildThisParam(CodeGenFunction &CGF, FunctionArgList &Params);
+
+  /// Insert any ABI-specific implicit parameters into the parameter list for a
+  /// function.  This generally involves extra data for constructors and
+  /// destructors.
   ///
   /// ABIs may also choose to override the return type, which has been
   /// initialized with the type of 'this' if HasThisReturn(CGF.CurGD) is true or
   /// the formal return type of the function otherwise.
-  virtual void BuildInstanceFunctionParams(CodeGenFunction &CGF,
-                                           QualType &ResTy,
-                                           FunctionArgList &Params) = 0;
+  virtual void addImplicitStructorParams(CodeGenFunction &CGF, QualType &ResTy,
+                                         FunctionArgList &Params) = 0;
 
   /// Perform ABI-specific "this" parameter adjustment in a virtual function
   /// prologue.
@@ -291,14 +290,14 @@ public:
   /// Emit the ABI-specific prolog for the function.
   virtual void EmitInstanceFunctionProlog(CodeGenFunction &CGF) = 0;
 
-  /// Emit the constructor call.
-  virtual void EmitConstructorCall(CodeGenFunction &CGF,
-                                   const CXXConstructorDecl *D,
-                                   CXXCtorType Type,
-                                   bool ForVirtualBase, bool Delegating,
-                                   llvm::Value *This,
-                                   CallExpr::const_arg_iterator ArgBeg,
-                                   CallExpr::const_arg_iterator ArgEnd) = 0;
+  /// Add any ABI-specific implicit arguments needed to call a constructor.
+  ///
+  /// \return The number of args added to the call, which is typically zero or
+  /// one.
+  virtual unsigned
+  addImplicitConstructorArgs(CodeGenFunction &CGF, const CXXConstructorDecl *D,
+                             CXXCtorType Type, bool ForVirtualBase,
+                             bool Delegating, CallArgList &Args) = 0;
 
   /// Emit the destructor call.
   virtual void EmitDestructorCall(CodeGenFunction &CGF,

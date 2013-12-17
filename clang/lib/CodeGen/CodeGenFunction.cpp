@@ -694,15 +694,18 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   QualType ResTy = FD->getResultType();
 
   CurGD = GD;
-  const CXXMethodDecl *MD;
-  if ((MD = dyn_cast<CXXMethodDecl>(FD)) && MD->isInstance()) {
+  const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
+  if (MD && MD->isInstance()) {
     if (CGM.getCXXABI().HasThisReturn(GD))
       ResTy = MD->getThisType(getContext());
-    CGM.getCXXABI().BuildInstanceFunctionParams(*this, ResTy, Args);
+    CGM.getCXXABI().buildThisParam(*this, Args);
   }
 
   for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i)
     Args.push_back(FD->getParamDecl(i));
+
+  if (MD && (isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD)))
+    CGM.getCXXABI().addImplicitStructorParams(*this, ResTy, Args);
 
   SourceRange BodyRange;
   if (Stmt *Body = FD->getBody()) BodyRange = Body->getSourceRange();

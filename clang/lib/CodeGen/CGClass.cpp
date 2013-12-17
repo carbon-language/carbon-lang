@@ -1682,9 +1682,32 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
     return;
   }
 
-  // Non-trivial constructors are handled in an ABI-specific manner.
-  CGM.getCXXABI().EmitConstructorCall(*this, D, Type, ForVirtualBase,
-                                      Delegating, This, ArgBeg, ArgEnd);
+  // C++11 [class.mfct.non-static]p2:
+  //   If a non-static member function of a class X is called for an object that
+  //   is not of type X, or of a type derived from X, the behavior is undefined.
+  // FIXME: Provide a source location here.
+  EmitTypeCheck(CodeGenFunction::TCK_ConstructorCall, SourceLocation(), This,
+                getContext().getRecordType(D->getParent()));
+
+  CallArgList Args;
+
+  // Push the this ptr.
+  Args.add(RValue::get(This), D->getThisType(getContext()));
+
+  // Add the rest of the user-supplied arguments.
+  const FunctionProtoType *FPT = D->getType()->castAs<FunctionProtoType>();
+  EmitCallArgs(Args, FPT, ArgBeg, ArgEnd);
+
+  // Insert any ABI-specific implicit constructor arguments.
+  unsigned ExtraArgs = CGM.getCXXABI().addImplicitConstructorArgs(
+      *this, D, Type, ForVirtualBase, Delegating, Args);
+
+  // Emit the call.
+  llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
+  RequiredArgs Required = RequiredArgs::forPrototypePlus(FPT, 1 + ExtraArgs);
+  const CGFunctionInfo &Info =
+      CGM.getTypes().arrangeCXXMethodCall(Args, FPT, Required);
+  EmitCall(Info, Callee, ReturnValueSlot(), Args, D);
 }
 
 void
