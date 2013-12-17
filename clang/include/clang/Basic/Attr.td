@@ -222,6 +222,7 @@ class IgnoredAttr : Attr {
 def AddressSpace : TypeAttr {
   let Spellings = [GNU<"address_space">];
   let Args = [IntArgument<"AddressSpace">];
+  let ASTNode = 0;
 }
 
 def Alias : Attr {
@@ -567,11 +568,13 @@ def Naked : InheritableAttr {
 def NeonPolyVectorType : TypeAttr {
   let Spellings = [GNU<"neon_polyvector_type">];
   let Args = [IntArgument<"NumElements">];
+  let ASTNode = 0;
 }
 
 def NeonVectorType : TypeAttr {
   let Spellings = [GNU<"neon_vector_type">];
   let Args = [IntArgument<"NumElements">];
+  let ASTNode = 0;
 }
 
 def ReturnsTwice : InheritableAttr {
@@ -861,6 +864,7 @@ def ArcWeakrefUnavailable : InheritableAttr {
 def ObjCGC : TypeAttr {
   let Spellings = [GNU<"objc_gc">];
   let Args = [IdentifierArgument<"Kind">];
+  let ASTNode = 0;
 }
 
 def ObjCOwnership : InheritableAttr {
@@ -892,6 +896,7 @@ def Uuid : InheritableAttr {
 def VectorSize : TypeAttr {
   let Spellings = [GNU<"vector_size">, CXX11<"gnu", "vector_size">];
   let Args = [ExprArgument<"NumBytes">];
+  let ASTNode = 0;
 }
 
 def VecTypeHint : InheritableAttr {
@@ -1242,18 +1247,22 @@ def Win64 : IgnoredAttr {
 
 def Ptr32 : TypeAttr {
   let Spellings = [Keyword<"__ptr32">];
+  let ASTNode = 0;
 }
 
 def Ptr64 : TypeAttr {
   let Spellings = [Keyword<"__ptr64">];
+  let ASTNode = 0;
 }
 
 def SPtr : TypeAttr {
   let Spellings = [Keyword<"__sptr">];
+  let ASTNode = 0;
 }
 
 def UPtr : TypeAttr {
   let Spellings = [Keyword<"__uptr">];
+  let ASTNode = 0;
 }
 
 class MSInheritanceAttr : InheritableAttr {
