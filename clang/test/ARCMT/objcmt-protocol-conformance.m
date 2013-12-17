@@ -112,3 +112,19 @@
 @implementation Test7
 @end
 
+// rdar://15515206
+@interface BTLEBrowser
+@end
+
+@protocol CBCentralManagerDelegate; 
+
+@protocol CBCentralManagerDelegate 
+- (id) Meth1: (double) arg;
+@end
+
+@interface BTLEBrowser() <CBCentralManagerDelegate> 
+@end
+
+@implementation BTLEBrowser
+- (id) Meth15515206: (double) arg { return 0; }
+@end

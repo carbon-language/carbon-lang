@@ -756,6 +756,8 @@ void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,
     if (!DropIt)
       MinimalConformingProtocols.push_back(TargetPDecl);
   }
+  if (MinimalConformingProtocols.empty())
+    return;
   edit::Commit commit(*Editor);
   rewriteToObjCInterfaceDecl(IDecl, MinimalConformingProtocols,
                              *NSAPIObj, commit);
@@ -1765,7 +1767,7 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
           migrateObjCInterfaceDecl(Ctx, CatDecl);
       }
       else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(*D))
-        ObjCProtocolDecls.insert(PDecl);
+        ObjCProtocolDecls.insert(PDecl->getCanonicalDecl());
       else if (const ObjCImplementationDecl *ImpDecl =
                dyn_cast<ObjCImplementationDecl>(*D)) {
         if ((ASTMigrateActions & FrontendOptions::ObjCMT_ProtocolConformance) &&
