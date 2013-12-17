@@ -167,7 +167,13 @@ int test_multiple_returns4(int);
 
 // expected-warning@+1 {{'\param' command used in a comment that is not attached to a function declaration}}
 /// \param a Blah blah.
-int test_param1;
+int test_param1_backslash;
+
+// rdar://13066276
+// Check that the diagnostic uses the same command marker as the comment.
+// expected-warning@+1 {{'@param' command used in a comment that is not attached to a function declaration}}
+/// @param a Blah blah.
+int test_param1_at;
 
 // expected-warning@+1 {{empty paragraph passed to '\param' command}}
 /// \param
@@ -273,36 +279,37 @@ int test_param22(int x1, int x2, int x3);
 /// \param aaa Meow.
 /// \param bbb Bbb.
 /// \returns aaa.
-typedef int test_param23(int aaa, int ccc);
+typedef int test_function_like_typedef1(int aaa, int ccc);
 
 // expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
 /// \param aaa Meow.
 /// \param bbb Bbb.
 /// \returns aaa.
-typedef int (*test_param24)(int aaa, int ccc);
+typedef int (*test_function_like_typedef2)(int aaa, int ccc);
 
 // expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
 /// \param aaa Meow.
 /// \param bbb Bbb.
 /// \returns aaa.
-typedef int (* const test_param25)(int aaa, int ccc);
+typedef int (* const test_function_like_typedef3)(int aaa, int ccc);
 
 // expected-warning@+2 {{parameter 'bbb' not found in the function declaration}} expected-note@+2 {{did you mean 'ccc'?}}
 /// \param aaa Meow.
 /// \param bbb Bbb.
 /// \returns aaa.
-typedef int (C::*test_param26)(int aaa, int ccc);
+typedef int (C::*test_function_like_typedef4)(int aaa, int ccc);
 
-typedef int (*test_param27)(int aaa);
+typedef int (*test_not_function_like_typedef1)(int aaa);
 
 // expected-warning@+1 {{'\param' command used in a comment that is not attached to a function declaration}}
 /// \param aaa Meow.
-typedef test_param27 test_param28;
+typedef test_not_function_like_typedef1 test_not_function_like_typedef2;
 
 // rdar://13066276
+// Check that the diagnostic uses the same command marker as the comment.
 // expected-warning@+1 {{'@param' command used in a comment that is not attached to a function declaration}}
 /// @param aaa Meow.
-typedef unsigned int test_param29;
+typedef unsigned int test_not_function_like_typedef3;
 
 
 /// \param aaa Aaa
@@ -503,7 +510,13 @@ T test_returns_right_decl_5(T aaa);
 
 // expected-warning@+1 {{'\returns' command used in a comment that is not attached to a function or method declaration}}
 /// \returns Aaa
-int test_returns_wrong_decl_1;
+int test_returns_wrong_decl_1_backslash;
+
+// rdar://13066276
+// Check that the diagnostic uses the same command marker as the comment.
+// expected-warning@+1 {{'@returns' command used in a comment that is not attached to a function or method declaration}}
+/// @returns Aaa
+int test_returns_wrong_decl_1_at;
 
 // expected-warning@+1 {{'\return' command used in a comment that is not attached to a function or method declaration}}
 /// \return Aaa
@@ -554,11 +567,6 @@ enum test_returns_wrong_decl_8 {
 // expected-warning@+1 {{'\returns' command used in a comment that is not attached to a function or method declaration}}
 /// \returns Aaa
 namespace test_returns_wrong_decl_10 { };
-
-// rdar://13066276
-// expected-warning@+1 {{'@returns' command used in a comment that is not attached to a function or method declaration}}
-/// @returns Aaa
-typedef unsigned int test_returns_wrong_decl_11;
 
 // rdar://13094352
 // expected-warning@+1 {{'@function' command should be used in a comment attached to a function declaration}}
