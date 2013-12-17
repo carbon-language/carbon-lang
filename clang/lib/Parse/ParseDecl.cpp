@@ -633,7 +633,6 @@ void Parser::ParseOpenCLQualifiers(DeclSpec &DS) {
   switch(Tok.getKind()) {
     // OpenCL qualifiers:
     case tok::kw___private:
-    case tok::kw_private:
       DS.getAttributes().addNewInteger(
           Actions.getASTContext(),
           PP.getIdentifierInfo("address_space"), Loc, 0);
@@ -3304,9 +3303,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       break;
 
     // OpenCL qualifiers:
-    case tok::kw_private:
-      if (!getLangOpts().OpenCL)
-        goto DoneWithDeclSpec;
     case tok::kw___private:
     case tok::kw___global:
     case tok::kw___local:
@@ -4030,12 +4026,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
 bool Parser::isTypeQualifier() const {
   switch (Tok.getKind()) {
   default: return false;
-
-    // type-qualifier only in OpenCL
-  case tok::kw_private:
-    return getLangOpts().OpenCL;
-
-    // type-qualifier
+  // type-qualifier
   case tok::kw_const:
   case tok::kw_volatile:
   case tok::kw_restrict:
@@ -4217,9 +4208,6 @@ bool Parser::isTypeSpecifierQualifier() {
 
     return true;
 
-  case tok::kw_private:
-    return getLangOpts().OpenCL;
-
   // C11 _Atomic
   case tok::kw__Atomic:
     return true;
@@ -4234,9 +4222,6 @@ bool Parser::isTypeSpecifierQualifier() {
 bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   switch (Tok.getKind()) {
   default: return false;
-
-  case tok::kw_private:
-    return getLangOpts().OpenCL;
 
   case tok::identifier:   // foo::bar
     // Unfortunate hack to support "Class.factoryMethod" notation.
@@ -4561,9 +4546,6 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
       break;
 
     // OpenCL qualifiers:
-    case tok::kw_private:
-      if (!getLangOpts().OpenCL)
-        goto DoneWithTypeQuals;
     case tok::kw___private:
     case tok::kw___global:
     case tok::kw___local:
