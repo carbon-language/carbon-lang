@@ -1486,7 +1486,7 @@ protected:
           if (J->getOpcode() == PPC::B) {
             if (J->getOperand(0).getMBB() == &ReturnMBB) {
               // This is an unconditional branch to the return. Replace the
-	      // branch with a blr.
+              // branch with a blr.
               BuildMI(**PI, J, J->getDebugLoc(), TII->get(PPC::BLR));
               MachineBasicBlock::iterator K = J--;
               K->eraseFromParent();
@@ -1528,7 +1528,7 @@ protected:
         if ((*PI)->canFallThrough() && (*PI)->isLayoutSuccessor(&ReturnMBB))
           OtherReference = true;
 
-	// Predecessors are stored in a vector and can't be removed here.
+        // Predecessors are stored in a vector and can't be removed here.
         if (!OtherReference && BlockChanged) {
           PredToRemove.push_back(*PI);
         }
@@ -1571,7 +1571,7 @@ public:
         return Changed;
 
       for (MachineFunction::iterator I = MF.begin(); I != MF.end();) {
-        MachineBasicBlock &B = *I++; 
+        MachineBasicBlock &B = *I++;
         if (processBlock(B))
           Changed = true;
       }
