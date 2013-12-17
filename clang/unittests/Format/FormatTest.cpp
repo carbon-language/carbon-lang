@@ -3149,7 +3149,7 @@ TEST_F(FormatTest, BreaksDesireably) {
       "                      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
       "                  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
-  // Indent consistently indenpendent of call expression.
+  // Indent consistently independent of call expression.
   verifyFormat("aaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccc(\n"
                "    dddddddddddddddddddddddddddddd));\n"
                "aaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(\n"
@@ -5959,6 +5959,29 @@ TEST_F(FormatTest, ReformatRegionAdjustsIndent) {
             format("  int a;\n"
                    "void ffffff() {}",
                    11, 0, getLLVMStyleWithColumns(11)));
+
+  EXPECT_EQ(" void f() {\n"
+            "#define A 1\n"
+            " }",
+            format(" void f() {\n"
+                   "     #define A 1\n" // Format this line.
+                   " }",
+                   20, 0, getLLVMStyle()));
+  EXPECT_EQ(" void f() {\n"
+            "    int i;\n"
+            "#define A \\\n"
+            "    int i;  \\\n"
+            "   int j;\n"
+            "    int k;\n"
+            " }",
+            format(" void f() {\n"
+                   "    int i;\n"
+                   "#define A \\\n"
+                   "    int i;  \\\n"
+                   "   int j;\n"
+                   "      int k;\n" // Format this line.
+                   " }",
+                   67, 0, getLLVMStyle()));
 }
 
 TEST_F(FormatTest, BreakStringLiterals) {
