@@ -190,7 +190,9 @@ static void AddLinkerInputs(const ToolChain &TC,
   }
 
   // LIBRARY_PATH - included following the user specified library paths.
-  addDirectoryList(Args, CmdArgs, "-L", "LIBRARY_PATH");
+  //                and only supported on native toolchains.
+  if (!TC.isCrossCompiling())
+    addDirectoryList(Args, CmdArgs, "-L", "LIBRARY_PATH");
 }
 
 /// \brief Determine whether Objective-C automated reference counting is

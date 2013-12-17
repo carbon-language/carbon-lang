@@ -4,3 +4,4 @@
 // GCC driver is used as linker on cygming. It should be aware of LIBRARY_PATH.
 // XFAIL: win32
 // REQUIRES: clang-driver
+// REQUIRES: native

@@ -154,6 +154,20 @@ bool ToolChain::HasNativeLLVMSupport() const {
   return false;
 }
 
+bool ToolChain::isCrossCompiling() const {
+  llvm::Triple HostTriple(LLVM_HOST_TRIPLE);
+  switch (HostTriple.getArch()) {
+      // The A32/T32/T16 instruction sets are not seperate architectures in 
+      // this context.
+      case llvm::Triple::arm:
+      case llvm::Triple::thumb:
+          return getArch() != llvm::Triple::arm &&
+                 getArch() != llvm::Triple::thumb;
+      default:
+          return HostTriple.getArch() != getArch();
+  }
+}
+
 ObjCRuntime ToolChain::getDefaultObjCRuntime(bool isNonFragile) const {
   return ObjCRuntime(isNonFragile ? ObjCRuntime::GNUstep : ObjCRuntime::GCC,
                      VersionTuple());
