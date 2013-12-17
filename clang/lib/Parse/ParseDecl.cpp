@@ -310,17 +310,15 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
       ConsumeToken();
 
     // Parse the non-empty comma-separated list of expressions.
-    while (1) {
+    do {
       ExprResult ArgExpr(ParseAssignmentExpression());
       if (ArgExpr.isInvalid()) {
         SkipUntil(tok::r_paren, StopAtSemi);
         return;
       }
       ArgExprs.push_back(ArgExpr.release());
-      if (Tok.isNot(tok::comma))
-        break;
-      ConsumeToken(); // Eat the comma, move to the next argument
-    }
+      // Eat the comma, move to the next argument
+    } while (TryConsumeToken(tok::comma));
   }
 
   SourceLocation RParen = Tok.getLocation();
@@ -469,9 +467,7 @@ void Parser::ParseComplexMicrosoftDeclSpec(IdentifierInfo *Ident,
       ConsumeToken();
 
       // Consume the '='.
-      if (Tok.is(tok::equal)) {
-        ConsumeToken();
-      } else {
+      if (!TryConsumeToken(tok::equal)) {
         Diag(Tok.getLocation(), diag::err_ms_property_expected_equal)
           << KindStr;
         break;
@@ -993,25 +989,23 @@ void Parser::ParseObjCBridgeRelatedAttribute(IdentifierInfo &ObjCBridgeRelated,
     return;
   }
   IdentifierLoc *RelatedClass = ParseIdentifierLoc();
-  if (Tok.isNot(tok::comma)) {
+  if (!TryConsumeToken(tok::comma)) {
     Diag(Tok, diag::err_expected_comma);
     SkipUntil(tok::r_paren, StopAtSemi);
     return;
   }
-  ConsumeToken();
-  
+
   // Parse optional class method name.
   IdentifierLoc *ClassMethod = 0;
   if (Tok.is(tok::identifier)) {
     ClassMethod = ParseIdentifierLoc();
-    if (Tok.isNot(tok::colon)) {
+    if (!TryConsumeToken(tok::colon)) {
       Diag(Tok, diag::err_objcbridge_related_selector_name);
       SkipUntil(tok::r_paren, StopAtSemi);
       return;
     }
-    ConsumeToken();
   }
-  if (Tok.isNot(tok::comma)) {
+  if (!TryConsumeToken(tok::comma)) {
     if (Tok.is(tok::colon))
       Diag(Tok, diag::err_objcbridge_related_selector_name);
     else
@@ -1019,7 +1013,6 @@ void Parser::ParseObjCBridgeRelatedAttribute(IdentifierInfo &ObjCBridgeRelated,
     SkipUntil(tok::r_paren, StopAtSemi);
     return;
   }
-  ConsumeToken();
   
   // Parse optional instance method name.
   IdentifierLoc *InstanceMethod = 0;
@@ -1255,9 +1248,9 @@ void Parser::ParseThreadSafetyAttribute(IdentifierInfo &AttrName,
     } else {
       ArgExprs.push_back(ArgExpr.release());
     }
-    if (Tok.isNot(tok::comma))
+    // Eat the comma, move to the next argument
+    if (!TryConsumeToken(tok::comma))
       break;
-    ConsumeToken(); // Eat the comma, move to the next argument
   }
   // Match the ')'.
   if (ArgExprsOk && !T.consumeClose()) {
@@ -1300,8 +1293,7 @@ void Parser::ParseTypeTagForDatatypeAttribute(IdentifierInfo &AttrName,
 
   bool LayoutCompatible = false;
   bool MustBeNull = false;
-  while (Tok.is(tok::comma)) {
-    ConsumeToken();
+  while (TryConsumeToken(tok::comma)) {
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident);
       T.skipToEnd();
@@ -1597,8 +1589,7 @@ void Parser::SkipMalformedDecl() {
         // This declaration isn't over yet. Keep skipping.
         continue;
       }
-      if (Tok.is(tok::semi))
-        ConsumeToken();
+      TryConsumeToken(tok::semi);
       return;
 
     case tok::l_square:
@@ -1741,9 +1732,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   // don't need to parse the container in advance.
   if (FRI && (Tok.is(tok::colon) || isTokIdentifier_in())) {
     bool IsForRangeLoop = false;
-    if (Tok.is(tok::colon)) {
+    if (TryConsumeToken(tok::colon, FRI->ColonLoc)) {
       IsForRangeLoop = true;
-      FRI->ColonLoc = ConsumeToken();
       if (Tok.is(tok::l_brace))
         FRI->RangeExpr = ParseBraceInitializer();
       else
@@ -1770,9 +1760,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   
   // If we don't have a comma, it is either the end of the list (a ';') or an
   // error, bail out.
-  while (Tok.is(tok::comma)) {
-    SourceLocation CommaLoc = ConsumeToken();
-
+  SourceLocation CommaLoc;
+  while (TryConsumeToken(tok::comma, CommaLoc)) {
     if (Tok.isAtStartOfLine() && ExpectSemi && !MightBeDeclarator(Context)) {
       // This comma was followed by a line-break and something which can't be
       // the start of a declarator. The comma was probably a typo for a
@@ -1817,8 +1806,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     // Otherwise things are very confused and we skip to recover.
     if (!isDeclarationSpecifier()) {
       SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
-      if (Tok.is(tok::semi))
-        ConsumeToken();
+      TryConsumeToken(tok::semi);
     }
   }
 
@@ -2375,8 +2363,8 @@ ExprResult Parser::ParseAlignArgument(SourceLocation Start,
   } else
     ER = ParseConstantExpression();
 
-  if (getLangOpts().CPlusPlus11 && Tok.is(tok::ellipsis))
-    EllipsisLoc = ConsumeToken();
+  if (getLangOpts().CPlusPlus11)
+    TryConsumeToken(tok::ellipsis, EllipsisLoc);
 
   return ER;
 }
@@ -3407,8 +3395,7 @@ ParseStructDeclaration(ParsingDeclSpec &DS, FieldCallback &Fields) {
       ParseDeclarator(DeclaratorInfo.D);
     }
 
-    if (Tok.is(tok::colon)) {
-      ConsumeToken();
+    if (TryConsumeToken(tok::colon)) {
       ExprResult Res(ParseConstantExpression());
       if (Res.isInvalid())
         SkipUntil(tok::semi, StopBeforeMatch);
@@ -3424,11 +3411,8 @@ ParseStructDeclaration(ParsingDeclSpec &DS, FieldCallback &Fields) {
 
     // If we don't have a comma, it is either the end of the list (a ';')
     // or an error, bail out.
-    if (Tok.isNot(tok::comma))
+    if (!TryConsumeToken(tok::comma, CommaLoc))
       return;
-
-    // Consume the comma.
-    CommaLoc = ConsumeToken();
 
     FirstDeclarator = false;
   }
