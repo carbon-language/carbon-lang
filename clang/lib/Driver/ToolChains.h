@@ -507,7 +507,12 @@ public:
   virtual void
   AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                                llvm::opt::ArgStringList &CC1Args) const;
-
+  virtual bool IsIntegratedAssemblerDefault() const {
+    if (getTriple().getArch() == llvm::Triple::ppc ||
+        getTriple().getArch() == llvm::Triple::ppc64)
+      return true;
+    return Generic_ELF::IsIntegratedAssemblerDefault();
+  }
 
   virtual bool UseSjLjExceptions() const;
 protected:
