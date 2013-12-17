@@ -12,8 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/Twine.h"
-#include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/DiagnosticPrinter.h"
 #include "llvm/Support/raw_ostream.h"
