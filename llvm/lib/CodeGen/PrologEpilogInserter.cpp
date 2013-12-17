@@ -30,11 +30,9 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/IR/InlineAsm.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/DiagnosticInfo.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -162,11 +160,10 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
 
   // Warn on stack size when we exceeds the given limit.
   MachineFrameInfo *MFI = Fn.getFrameInfo();
-  uint64_t StackSize = MFI->getStackSize();
-  if (WarnStackSize.getNumOccurrences() > 0 && WarnStackSize < StackSize) {
-    DiagnosticInfoStackSize DiagStackSize(*F, StackSize);
-    F->getContext().diagnose(DiagStackSize);
-  }
+  if (WarnStackSize.getNumOccurrences() > 0 &&
+      WarnStackSize < MFI->getStackSize())
+    errs() << "warning: Stack size limit exceeded (" << MFI->getStackSize()
+           << ") in " << Fn.getName()  << ".\n";
 
   delete RS;
   ReturnBlocks.clear();

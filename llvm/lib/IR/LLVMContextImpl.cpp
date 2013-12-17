@@ -37,8 +37,6 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
     Int64Ty(C, 64) {
   InlineAsmDiagHandler = 0;
   InlineAsmDiagContext = 0;
-  DiagnosticHandler = 0;
-  DiagnosticContext = 0;
   NamedStructTypesUniqueID = 0;
 }
 

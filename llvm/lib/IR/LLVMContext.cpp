@@ -17,8 +17,6 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Metadata.h"
-#include "llvm/Support/DiagnosticInfo.h"
-#include "llvm/Support/DiagnosticPrinter.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/SourceMgr.h"
 #include <cctype>
@@ -100,20 +98,6 @@ void *LLVMContext::getInlineAsmDiagnosticContext() const {
   return pImpl->InlineAsmDiagContext;
 }
 
-void LLVMContext::setDiagnosticHandler(DiagnosticHandlerTy DiagnosticHandler,
-                                       void *DiagnosticContext) {
-  pImpl->DiagnosticHandler = DiagnosticHandler;
-  pImpl->DiagnosticContext = DiagnosticContext;
-}
-
-LLVMContext::DiagnosticHandlerTy LLVMContext::getDiagnosticHandler() const {
-  return pImpl->DiagnosticHandler;
-}
-
-void *LLVMContext::getDiagnosticContext() const {
-  return pImpl->DiagnosticContext;
-}
-
 void LLVMContext::emitError(const Twine &ErrorStr) {
   emitError(0U, ErrorStr);
 }
@@ -126,31 +110,6 @@ void LLVMContext::emitError(const Instruction *I, const Twine &ErrorStr) {
         LocCookie = CI->getZExtValue();
   }
   return emitError(LocCookie, ErrorStr);
-}
-
-void LLVMContext::diagnose(const DiagnosticInfo &DI) {
-  // If there is a report handler, use it.
-  if (pImpl->DiagnosticHandler != 0) {
-    pImpl->DiagnosticHandler(DI, pImpl->DiagnosticContext);
-    return;
-  }
-  // Otherwise, print the message with a prefix based on the severity.
-  std::string MsgStorage;
-  raw_string_ostream Stream(MsgStorage);
-  DiagnosticPrinterRawOStream DP(Stream);
-  DI.print(DP);
-  Stream.flush();
-  switch (DI.getSeverity()) {
-  case DS_Error:
-    errs() << "error: " << MsgStorage << "\n";
-    exit(1);
-  case DS_Warning:
-    errs() << "warning: " << MsgStorage << "\n";
-    break;
-  case DS_Note:
-    errs() << "note: " << MsgStorage << "\n";
-    break;
-  }
 }
 
 void LLVMContext::emitError(unsigned LocCookie, const Twine &ErrorStr) {

@@ -238,12 +238,9 @@ public:
   
   LLVMContext::InlineAsmDiagHandlerTy InlineAsmDiagHandler;
   void *InlineAsmDiagContext;
-
-  LLVMContext::DiagnosticHandlerTy DiagnosticHandler;
-  void *DiagnosticContext;
-
-  typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt *,
-                   DenseMapAPIntKeyInfo> IntMapTy;
+  
+  typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*, 
+                         DenseMapAPIntKeyInfo> IntMapTy;
   IntMapTy IntConstants;
   
   typedef DenseMap<DenseMapAPFloatKeyInfo::KeyTy, ConstantFP*, 

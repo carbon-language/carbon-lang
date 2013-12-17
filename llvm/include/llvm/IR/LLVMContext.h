@@ -27,7 +27,6 @@ class Twine;
 class Instruction;
 class Module;
 class SMDiagnostic;
-class DiagnosticInfo;
 template <typename T> class SmallVectorImpl;
 
 /// This is an important class for using LLVM in a threaded context.  It
@@ -65,11 +64,6 @@ public:
   typedef void (*InlineAsmDiagHandlerTy)(const SMDiagnostic&, void *Context,
                                          unsigned LocCookie);
 
-  /// Defines the type of a diagnostic handler.
-  /// \see LLVMContext::setDiagnosticHandler.
-  /// \see LLVMContext::diagnose.
-  typedef void (*DiagnosticHandlerTy)(const DiagnosticInfo &DI, void *Context);
-
   /// setInlineAsmDiagnosticHandler - This method sets a handler that is invoked
   /// when problems with inline asm are detected by the backend.  The first
   /// argument is a function pointer and the second is a context pointer that
@@ -88,33 +82,6 @@ public:
   /// setInlineAsmDiagnosticHandler.
   void *getInlineAsmDiagnosticContext() const;
 
-  /// setDiagnosticHandler - This method sets a handler that is invoked
-  /// when the backend needs to report anything to the user.  The first
-  /// argument is a function pointer and the second is a context pointer that
-  /// gets passed into the DiagHandler.
-  ///
-  /// LLVMContext doesn't take ownership or interpret either of these
-  /// pointers.
-  void setDiagnosticHandler(DiagnosticHandlerTy DiagHandler,
-                            void *DiagContext = 0);
-
-  /// getDiagnosticHandler - Return the diagnostic handler set by
-  /// setDiagnosticHandler.
-  DiagnosticHandlerTy getDiagnosticHandler() const;
-
-  /// getDiagnosticContext - Return the diagnostic context set by
-  /// setDiagnosticContext.
-  void *getDiagnosticContext() const;
-
-  /// diagnose - Report a message to the currently installed diagnostic handler.
-  /// This function returns, in particular in the case of error reporting
-  /// (DI.Severity == RS_Error), so the caller should leave the compilation
-  /// process in a self-consistent state, even though the generated code
-  /// need not be correct.
-  /// The diagnostic message will be implicitly prefixed with a severity
-  /// keyword according to \p DI.getSeverity(), i.e., "error: "
-  /// for RS_Error, "warning: " for RS_Warning, and "note: " for RS_Note.
-  void diagnose(const DiagnosticInfo &DI);
 
   /// emitError - Emit an error message to the currently installed error handler
   /// with optional location information.  This function returns, so code should
