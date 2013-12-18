@@ -1113,15 +1113,6 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     return CurDAG->SelectNodeTo(Node, AArch64::ADDxxi_lsl0_s, PtrTy,
                                 TFI, CurDAG->getTargetConstant(0, PtrTy));
   }
-  case ISD::ConstantPool: {
-    // Constant pools are fine, just create a Target entry.
-    ConstantPoolSDNode *CN = cast<ConstantPoolSDNode>(Node);
-    const Constant *C = CN->getConstVal();
-    SDValue CP = CurDAG->getTargetConstantPool(C, CN->getValueType(0));
-
-    ReplaceUses(SDValue(Node, 0), CP);
-    return NULL;
-  }
   case ISD::Constant: {
     SDNode *ResNode = 0;
     if (cast<ConstantSDNode>(Node)->getZExtValue() == 0) {

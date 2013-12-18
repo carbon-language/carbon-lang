@@ -306,6 +306,8 @@ public:
   SDValue LowerGlobalAddressELFLarge(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalAddressELF(SDValue Op, SelectionDAG &DAG) const;
 
+  SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
+
   SDValue LowerTLSDescCall(SDValue SymAddr, SDValue DescAddr, SDLoc DL,
                            SelectionDAG &DAG) const;
   SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;

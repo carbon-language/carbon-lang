@@ -70,6 +70,50 @@ def assertsext : SDNode<"ISD::AssertSext", SDT_assertext>;
 def assertzext : SDNode<"ISD::AssertZext", SDT_assertext>;
 
 //===----------------------------------------------------------------------===//
+// Addressing-mode instantiations
+//===----------------------------------------------------------------------===//
+
+multiclass ls_64_pats<dag address, dag Base, dag Offset, ValueType Ty> {
+defm : ls_neutral_pats<LSFP64_LDR, LSFP64_STR, Base,
+                      !foreach(decls.pattern, Offset,
+                               !subst(OFFSET, dword_uimm12, decls.pattern)),
+                      !foreach(decls.pattern, address,
+                               !subst(OFFSET, dword_uimm12,
+                               !subst(ALIGN, min_align8, decls.pattern))),
+                      Ty>;
+}
+
+multiclass ls_128_pats<dag address, dag Base, dag Offset, ValueType Ty> {
+defm : ls_neutral_pats<LSFP128_LDR, LSFP128_STR, Base,
+                       !foreach(decls.pattern, Offset,
+                                !subst(OFFSET, qword_uimm12, decls.pattern)),
+                       !foreach(decls.pattern, address,
+                                !subst(OFFSET, qword_uimm12,
+                                !subst(ALIGN, min_align16, decls.pattern))),
+                      Ty>;
+}
+
+multiclass uimm12_neon_pats<dag address, dag Base, dag Offset> {
+  defm : ls_64_pats<address, Base, Offset, v8i8>;
+  defm : ls_64_pats<address, Base, Offset, v4i16>;
+  defm : ls_64_pats<address, Base, Offset, v2i32>;
+  defm : ls_64_pats<address, Base, Offset, v1i64>;
+  defm : ls_64_pats<address, Base, Offset, v2f32>;
+  defm : ls_64_pats<address, Base, Offset, v1f64>;
+
+  defm : ls_128_pats<address, Base, Offset, v16i8>;
+  defm : ls_128_pats<address, Base, Offset, v8i16>;
+  defm : ls_128_pats<address, Base, Offset, v4i32>;
+  defm : ls_128_pats<address, Base, Offset, v2i64>;
+  defm : ls_128_pats<address, Base, Offset, v4f32>;
+  defm : ls_128_pats<address, Base, Offset, v2f64>;
+}
+
+defm : uimm12_neon_pats<(A64WrapperSmall
+                          tconstpool:$Hi, tconstpool:$Lo12, ALIGN),
+                        (ADRPxi tconstpool:$Hi), (i64 tconstpool:$Lo12)>;
+
+//===----------------------------------------------------------------------===//
 // Multiclasses
 //===----------------------------------------------------------------------===//
 

@@ -140,6 +140,7 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   setOperationAction(ISD::VAARG, MVT::Other, Expand);
 
   setOperationAction(ISD::BlockAddress, MVT::i64, Custom);
+  setOperationAction(ISD::ConstantPool, MVT::i64, Custom);
 
   setOperationAction(ISD::ROTL, MVT::i32, Expand);
   setOperationAction(ISD::ROTL, MVT::i64, Expand);
@@ -2268,6 +2269,36 @@ AArch64TargetLowering::LowerGlobalAddressELF(SDValue Op,
   }
 }
 
+SDValue
+AArch64TargetLowering::LowerConstantPool(SDValue Op,
+                                         SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  EVT PtrVT = getPointerTy();
+  ConstantPoolSDNode *CN = cast<ConstantPoolSDNode>(Op);
+  const Constant *C = CN->getConstVal();
+
+  switch(getTargetMachine().getCodeModel()) {
+  case CodeModel::Small:
+    // The most efficient code is PC-relative anyway for the small memory model,
+    // so we don't need to worry about relocation model.
+    return DAG.getNode(AArch64ISD::WrapperSmall, DL, PtrVT,
+                       DAG.getTargetConstantPool(C, PtrVT, 0, 0,
+                                                 AArch64II::MO_NO_FLAG),
+                       DAG.getTargetConstantPool(C, PtrVT, 0, 0,
+                                                 AArch64II::MO_LO12),
+                       DAG.getConstant(CN->getAlignment(), MVT::i32));
+  case CodeModel::Large:
+    return DAG.getNode(
+      AArch64ISD::WrapperLarge, DL, PtrVT,
+      DAG.getTargetConstantPool(C, PtrVT, 0, 0, AArch64II::MO_ABS_G3),
+      DAG.getTargetConstantPool(C, PtrVT, 0, 0, AArch64II::MO_ABS_G2_NC),
+      DAG.getTargetConstantPool(C, PtrVT, 0, 0, AArch64II::MO_ABS_G1_NC),
+      DAG.getTargetConstantPool(C, PtrVT, 0, 0, AArch64II::MO_ABS_G0_NC));
+  default:
+    llvm_unreachable("Only small and large code models supported now");
+  }
+}
+
 SDValue AArch64TargetLowering::LowerTLSDescCall(SDValue SymAddr,
                                                 SDValue DescAddr,
                                                 SDLoc DL,
@@ -2898,6 +2929,7 @@ AArch64TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::BR_CC: return LowerBR_CC(Op, DAG);
   case ISD::GlobalAddress: return LowerGlobalAddressELF(Op, DAG);
+  case ISD::ConstantPool: return LowerConstantPool(Op, DAG);
   case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
   case ISD::JumpTable: return LowerJumpTable(Op, DAG);
   case ISD::SELECT: return LowerSELECT(Op, DAG);

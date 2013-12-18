@@ -210,7 +210,9 @@ define <2 x i32> @movi1d_1() {
 
 declare <2 x i32> @test_movi1d(<2 x i32>, <2 x i32>)
 define <2 x i32> @movi1d() {
-; CHECK: movi     d1, #0xffffffff0000
+; CHECK: adrp {{x[0-9]+}}, .{{[A-Z0-9_]+}}
+; CHECK-NEXT: ldr {{d[0-9]+}}, [{{x[0-9]+}}, #:lo12:.{{[A-Z0-9_]+}}]
+; CHECK-NEXT: movi     d1, #0xffffffff0000
   %1 = tail call <2 x i32> @test_movi1d(<2 x i32> <i32 -2147483648, i32 2147450880>, <2 x i32> <i32 -65536, i32 65535>)
   ret <2 x i32> %1
 }

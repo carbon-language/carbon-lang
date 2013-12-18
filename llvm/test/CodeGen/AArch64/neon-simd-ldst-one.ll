@@ -37,6 +37,87 @@
 %struct.float32x2x4_t = type { [4 x <2 x float>] }
 %struct.float64x1x4_t = type { [4 x <1 x double>] }
 
+define <16 x i8> @test_ld_from_poll_v16i8(<16 x i8> %a) {
+; CHECK-LABEL: test_ld_from_poll_v16i8
+; CHECK: adrp {{x[0-9]+}}, .{{[A-Z0-9_]+}}
+; CHECK-NEXT: ldr {{q[0-9]+}}, [{{x[0-9]+}}, #:lo12:.{{[A-Z0-9_]+}}]
+entry:
+  %b = add <16 x i8> %a, <i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 2, i8 13, i8 14, i8 15, i8 16>
+  ret <16 x i8> %b
+}
+
+define <8 x i16> @test_ld_from_poll_v8i16(<8 x i16> %a) {
+; CHECK-LABEL: test_ld_from_poll_v8i16
+; CHECK: adrp {{x[0-9]+}}, .{{[A-Z0-9_]+}}
+; CHECK-NEXT: ldr {{q[0-9]+}}, [{{x[0-9]+}}, #:lo12:.{{[A-Z0-9_]+}}]
+entry:
+  %b = add <8 x i16> %a, <i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7, i16 8>
+  ret <8 x i16> %b
+}
+
+define <4 x i32> @test_ld_from_poll_v4i32(<4 x i32> %a) {
+; CHECK-LABEL: test_ld_from_poll_v4i32
+; CHECK: adrp {{x[0-9]+}}, .{{[A-Z0-9_]+}}
+; CHECK-NEXT: ldr {{q[0-9]+}}, [{{x[0-9]+}}, #:lo12:.{{[A-Z0-9_]+}}]
+entry:
+  %b = add <4 x i32> %a, <i32 1, i32 2, i32 3, i32 4>
+  ret <4 x i32> %b
+}
+
+define <2 x i64> @test_ld_from_poll_v2i64(<2 x i64> %a) {
+; CHECK-LABEL: test_ld_from_poll_v2i64
+; CHECK: adrp {{x[0-9]+}}, .{{[A-Z0-9_]+}}
+; CHECK-NEXT: ldr {{q[0-9]+}}, [{{x[0-9]+}}, #:lo12:.{{[A-Z0-9_]+}}]
+entry:
+  %b = add <2 x i64> %a, <i64 1, i64 2>
+  ret <2 x i64> %b
+}
+
+define <4 x float> @test_ld_from_poll_v4f32(<4 x float> %a) {
+; CHECK-LABEL: test_ld_from_poll_v4f32
+; CHECK: adrp {{x[0-9]+}}, .{{[A-Z0-9_]+}}
+; CHECK-NEXT: ldr {{q[0-9]+}}, [{{x[0-9]+}}, #:lo12:.{{[A-Z0-9_]+}}]
+entry:
+  %b = fadd <4 x float> %a, <float 1.0, float 2.0, float 3.0, float 4.0>
+  ret <4 x float> %b
+}
+
+define <2 x double> @test_ld_from_poll_v2f64(<2 x double> %a) {
+; CHECK-LABEL: test_ld_from_poll_v2f64
+; CHECK: adrp {{x[0-9]+}}, .{{[A-Z0-9_]+}}
+; CHECK-NEXT: ldr {{q[0-9]+}}, [{{x[0-9]+}}, #:lo12:.{{[A-Z0-9_]+}}]
+entry:
+  %b = fadd <2 x double> %a, <double 1.0, double 2.0>
+  ret <2 x double> %b
+}
+
+define <8 x i8> @test_ld_from_poll_v8i8(<8 x i8> %a) {
+; CHECK-LABEL: test_ld_from_poll_v8i8
+; CHECK: adrp {{x[0-9]+}}, .{{[A-Z0-9_]+}}
+; CHECK-NEXT: ldr {{d[0-9]+}}, [{{x[0-9]+}}, #:lo12:.{{[A-Z0-9_]+}}]
+entry:
+  %b = add <8 x i8> %a, <i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8>
+  ret <8 x i8> %b
+}
+
+define <4 x i16> @test_ld_from_poll_v4i16(<4 x i16> %a) {
+; CHECK-LABEL: test_ld_from_poll_v4i16
+; CHECK: adrp {{x[0-9]+}}, .{{[A-Z0-9_]+}}
+; CHECK-NEXT: ldr {{d[0-9]+}}, [{{x[0-9]+}}, #:lo12:.{{[A-Z0-9_]+}}]
+entry:
+  %b = add <4 x i16> %a, <i16 1, i16 2, i16 3, i16 4>
+  ret <4 x i16> %b
+}
+
+define <2 x i32> @test_ld_from_poll_v2i32(<2 x i32> %a) {
+; CHECK-LABEL: test_ld_from_poll_v2i32
+; CHECK: adrp {{x[0-9]+}}, .{{[A-Z0-9_]+}}
+; CHECK-NEXT: ldr {{d[0-9]+}}, [{{x[0-9]+}}, #:lo12:.{{[A-Z0-9_]+}}]
+entry:
+  %b = add <2 x i32> %a, <i32 1, i32 2>
+  ret <2 x i32> %b
+}
+
 define <16 x i8> @test_vld1q_dup_s8(i8* %a) {
 ; CHECK-LABEL: test_vld1q_dup_s8
 ; CHECK: ld1r {{{v[0-9]+}}.16b}, [x0]

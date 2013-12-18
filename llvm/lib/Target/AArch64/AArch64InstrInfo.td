@@ -4539,6 +4539,7 @@ def : ADRP_ADD<A64WrapperSmall, texternalsym>;
 def : ADRP_ADD<A64WrapperSmall, tglobaladdr>;
 def : ADRP_ADD<A64WrapperSmall, tglobaltlsaddr>;
 def : ADRP_ADD<A64WrapperSmall, tjumptable>;
+def : ADRP_ADD<A64WrapperSmall, tconstpool>;
 
 //===----------------------------------------------------------------------===//
 // GOT access patterns
