@@ -307,4 +307,23 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
   ldp    x0, x1,  [x0, #0x000]  ; restore x0,x1
   ret    lr            ; jump to pc
 
+#elif __arm__
+
+@
+@ void libunwind::Registers_arm::jumpto()
+@
+@ On entry:
+@  thread_state pointer is in r0
+@
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm6jumptoEv)
+  @ Use lr as base so that r0 can be restored.
+  mov lr, r0
+  @ 32bit thumb-2 restrictions for ldm:
+  @ . the sp (r13) cannot be in the list
+  @ . the pc (r15) and lr (r14) cannot both be in the list in an LDM instruction
+  ldm lr, {r0-r12}
+  ldr sp, [lr, #52]
+  ldr lr, [lr, #60]  @ restore pc into lr
+  mov pc, lr
+
 #endif

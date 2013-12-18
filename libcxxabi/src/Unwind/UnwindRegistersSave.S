@@ -279,4 +279,23 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   ldr    x0, #0      ; return UNW_ESUCCESS
   ret
 
+#elif __arm__ && !__APPLE__
+
+@
+@ extern int unw_getcontext(unw_context_t* thread_state)
+@
+@ On entry:
+@  thread_state pointer is in r0
+@
+DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+  @ 32bit thumb-2 restrictions for stm:
+  @ . the sp (r13) cannot be in the list
+  @ . the pc (r15) cannot be in the list in an STM instruction
+  stm r0, {r0-r12}
+  str sp, [r0, #52]
+  str lr, [r0, #56]
+  str lr, [r0, #60]  @ store return address as pc
+  mov r0, #0      @ return UNW_ESUCCESS
+  mov pc, lr
+
 #endif
