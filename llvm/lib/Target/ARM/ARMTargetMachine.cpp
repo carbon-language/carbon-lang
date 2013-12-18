@@ -53,7 +53,8 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
     InstrItins(Subtarget.getInstrItineraryData()) {
   // Default to soft float ABI
   if (Options.FloatABIType == FloatABI::Default)
-    this->Options.FloatABIType = FloatABI::Soft;
+    this->Options.FloatABIType =
+        Subtarget.isTargetHardFloat() ? FloatABI::Hard : FloatABI::Soft;
 }
 
 void ARMBaseTargetMachine::addAnalysisPasses(PassManagerBase &PM) {

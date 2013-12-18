@@ -321,6 +321,11 @@ public:
       TargetTriple.getEnvironment() == Triple::EABIHF;
   }
 
+  bool isTargetHardFloat() const {
+    return TargetTriple.getEnvironment() == Triple::GNUEABIHF ||
+           TargetTriple.getEnvironment() == Triple::EABIHF;
+  }
+
   bool isAPCS_ABI() const { return TargetABI == ARM_ABI_APCS; }
   bool isAAPCS_ABI() const { return TargetABI == ARM_ABI_AAPCS; }
 
