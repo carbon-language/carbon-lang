@@ -244,7 +244,14 @@ void TargetInfo::setForcedLangOptions(LangOptions &Opts) {
     LongLongWidth = LongLongAlign = 128;
     HalfWidth = HalfAlign = 16;
     FloatWidth = FloatAlign = 32;
-    DoubleWidth = DoubleAlign = 64;
+    
+    // Embedded 32-bit targets (OpenCL EP) might have double C type 
+    // defined as float. Let's not override this as it might lead 
+    // to generating illegal code that uses 64bit doubles.
+    if (DoubleWidth != FloatWidth) {
+      DoubleWidth = DoubleAlign = 64;
+      DoubleFormat = &llvm::APFloat::IEEEdouble;
+    }
     LongDoubleWidth = LongDoubleAlign = 128;
 
     assert(PointerWidth == 32 || PointerWidth == 64);
@@ -259,7 +266,6 @@ void TargetInfo::setForcedLangOptions(LangOptions &Opts) {
 
     HalfFormat = &llvm::APFloat::IEEEhalf;
     FloatFormat = &llvm::APFloat::IEEEsingle;
-    DoubleFormat = &llvm::APFloat::IEEEdouble;
     LongDoubleFormat = &llvm::APFloat::IEEEquad;
   }
 }
