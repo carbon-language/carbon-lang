@@ -70,6 +70,10 @@
 // RUN: FileCheck %s -check-prefix=ARM-NACL
 // ARM-NACL: target datalayout = "e-p:32:32-i64:64-v128:32"
 
+// RUN: %clang_cc1 -triple mipsel-nacl -o - -emit-llvm %s | \
+// RUN: FileCheck %s -check-prefix=MIPS-NACL
+// MIPS-NACL: target datalayout = "e-p:32:32-i8:8:32-i16:16:32-i64:64-n32-S64"
+
 // RUN: %clang_cc1 -triple le32-nacl -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=LE32-NACL
 // LE32-NACL: target datalayout = "e-p:32:32-i64:64-v128:32"
