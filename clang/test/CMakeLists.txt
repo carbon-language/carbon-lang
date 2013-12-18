@@ -4,9 +4,6 @@
 # If this is a stand-alone Clang build, we fake up our own Lit support here
 # rather than relying on LLVM's.
 
-set(CLANG_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
-set(CLANG_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/..")
-
 if (CMAKE_CFG_INTDIR STREQUAL ".")
   set(LLVM_BUILD_MODE ".")
 else ()
