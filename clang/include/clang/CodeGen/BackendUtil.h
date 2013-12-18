@@ -21,7 +21,7 @@ namespace clang {
   class CodeGenOptions;
   class TargetOptions;
   class LangOptions;
-  
+
   enum BackendAction {
     Backend_EmitAssembly,  ///< Emit native assembly files
     Backend_EmitBC,        ///< Emit LLVM bitcode files
@@ -30,7 +30,7 @@ namespace clang {
     Backend_EmitMCNull,    ///< Run CodeGen, but don't emit anything
     Backend_EmitObj        ///< Emit native object files
   };
-  
+
   void EmitBackendOutput(DiagnosticsEngine &Diags, const CodeGenOptions &CGOpts,
                          const TargetOptions &TOpts, const LangOptions &LOpts,
                          llvm::Module *M,
