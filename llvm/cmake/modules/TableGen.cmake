@@ -79,8 +79,6 @@ if(CMAKE_CROSSCOMPILING)
 endif()
 
 macro(add_tablegen target project)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR})
-
   set(${target}_OLD_LLVM_LINK_COMPONENTS ${LLVM_LINK_COMPONENTS})
   set(LLVM_LINK_COMPONENTS ${LLVM_LINK_COMPONENTS} TableGen)
   add_llvm_utility(${target} ${ARGN})
