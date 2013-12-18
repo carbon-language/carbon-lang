@@ -3677,6 +3677,48 @@ class ARMTargetInfo : public TargetInfo {
     return Version >= 7;
   }
 
+  void setABIAAPCS() {
+    // FIXME: Enumerated types are variable width in straight AAPCS.
+
+    // size_t is unsigned long on Darwin.
+    if (getTriple().isOSDarwin())
+      SizeType = UnsignedLong;
+    IsAAPCS = true;
+  }
+
+  void setABIAPCS() {
+    DoubleAlign = LongLongAlign = LongDoubleAlign = SuitableAlign = 32;
+    // size_t is unsigned int on FreeBSD.
+    if (getTriple().getOS() != llvm::Triple::FreeBSD)
+      SizeType = UnsignedLong;
+
+    // Revert to using SignedInt on apcs-gnu to comply with existing behaviour.
+    WCharType = SignedInt;
+
+    // Do not respect the alignment of bit-field types when laying out
+    // structures. This corresponds to PCC_BITFIELD_TYPE_MATTERS in gcc.
+    UseBitFieldTypeAlignment = false;
+
+    /// gcc forces the alignment to 4 bytes, regardless of the type of the
+    /// zero length bitfield.  This corresponds to EMPTY_FIELD_BOUNDARY in
+    /// gcc.
+    ZeroLengthBitfieldBoundary = 32;
+
+    IsAAPCS = false;
+
+    if (IsThumb) {
+      // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
+      // so set preferred for small types to 32.
+      DescriptionString = "e-p:32:32-i1:8:32-i8:8:32-i16:16:32-f64:32:64"
+                          "-v64:32:64-v128:32:128-a:0:32-n32-S32";
+    } else {
+      DescriptionString =
+          "e-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32";
+    }
+
+    // FIXME: Override "preferred align" for double and long long.
+  }
+
 public:
   ARMTargetInfo(const llvm::Triple &Triple)
       : TargetInfo(Triple), ABI("aapcs-linux"), CPU("arm1136j-s"),
@@ -3737,50 +3779,14 @@ public:
     // FIXME: We need support for -meabi... we could just mangle it into the
     // name.
     if (Name == "apcs-gnu") {
-      DoubleAlign = LongLongAlign = LongDoubleAlign = SuitableAlign = 32;
-      // size_t is unsigned int on FreeBSD.
-      if (getTriple().getOS() != llvm::Triple::FreeBSD)
-        SizeType = UnsignedLong;
-
-      // Revert to using SignedInt on apcs-gnu to comply with existing behaviour.
-      WCharType = SignedInt;
-
-      // Do not respect the alignment of bit-field types when laying out
-      // structures. This corresponds to PCC_BITFIELD_TYPE_MATTERS in gcc.
-      UseBitFieldTypeAlignment = false;
-
-      /// gcc forces the alignment to 4 bytes, regardless of the type of the
-      /// zero length bitfield.  This corresponds to EMPTY_FIELD_BOUNDARY in
-      /// gcc.
-      ZeroLengthBitfieldBoundary = 32;
-
-      IsAAPCS = false;
-
-      if (IsThumb) {
-        // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
-        // so set preferred for small types to 32.
-        DescriptionString = ("e-p:32:32-i1:8:32-i8:8:32-i16:16:32"
-                             "-f64:32:64"
-                             "-v64:32:64-v128:32:128-a:0:32-n32-S32");
-      } else {
-        DescriptionString = ("e-p:32:32"
-                             "-f64:32:64"
-                             "-v64:32:64-v128:32:128-a:0:32-n32-S32");
-      }
-
-      // FIXME: Override "preferred align" for double and long long.
-    } else if (Name == "aapcs" || Name == "aapcs-vfp") {
-      // size_t is unsigned long on Darwin.
-      if (getTriple().isOSDarwin())
-        SizeType = UnsignedLong;
-      IsAAPCS = true;
-      // FIXME: Enumerated types are variable width in straight AAPCS.
-    } else if (Name == "aapcs-linux") {
-      IsAAPCS = true;
-    } else
-      return false;
-
-    return true;
+      setABIAPCS();
+      return true;
+    }
+    if (Name == "aapcs" || Name == "aapcs-vfp" || Name == "aapcs-linux") {
+      setABIAAPCS();
+      return true;
+    }
+    return false;
   }
 
   void getDefaultFeatures(llvm::StringMap<bool> &Features) const {
