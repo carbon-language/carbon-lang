@@ -62,7 +62,7 @@
 // RUN: FileCheck %s -check-prefix=NACL
 // RUN: %clang_cc1 -triple le32-nacl -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=NACL
-// NACL: target datalayout = "e-i64:64-p:32:32-v128:32"
+// NACL: target datalayout = "e-p:32:32-i64:64-v128:32"
 
 // RUN: %clang_cc1 -triple powerpc-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=PPC
