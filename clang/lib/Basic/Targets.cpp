@@ -3678,18 +3678,48 @@ class ARMTargetInfo : public TargetInfo {
   }
 
   void setABIAAPCS() {
-    // FIXME: Enumerated types are variable width in straight AAPCS.
-
-    // size_t is unsigned long on Darwin.
-    if (getTriple().isOSDarwin())
-      SizeType = UnsignedLong;
     IsAAPCS = true;
+
+    DoubleAlign = LongLongAlign = LongDoubleAlign = SuitableAlign = 64;
+
+    // size_t is unsigned long on Darwin and netbsd.
+    if (getTriple().isOSDarwin() || getTriple().getOS() == llvm::Triple::NetBSD)
+      SizeType = UnsignedLong;
+    else
+      SizeType = UnsignedInt;
+
+    if (getTriple().getOS() == llvm::Triple::NetBSD) {
+      WCharType = SignedInt;
+    } else {
+      // AAPCS 7.1.1, ARM-Linux ABI 2.4: type of wchar_t is unsigned int.
+      WCharType = UnsignedInt;
+    }
+
+    UseBitFieldTypeAlignment = true;
+
+    ZeroLengthBitfieldBoundary = 0;
+
+    if (IsThumb) {
+      // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
+      // so set preferred for small types to 32.
+      DescriptionString = ("e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
+                           "v128:64:128-a:0:32-n32-S64");
+    } else {
+      DescriptionString = ("e-p:32:32-i64:64-v128:64:128-n32-S64");
+    }
+
+    // FIXME: Enumerated types are variable width in straight AAPCS.
   }
 
   void setABIAPCS() {
+    IsAAPCS = false;
+
     DoubleAlign = LongLongAlign = LongDoubleAlign = SuitableAlign = 32;
+
     // size_t is unsigned int on FreeBSD.
-    if (getTriple().getOS() != llvm::Triple::FreeBSD)
+    if (getTriple().getOS() == llvm::Triple::FreeBSD)
+      SizeType = UnsignedInt;
+    else
       SizeType = UnsignedLong;
 
     // Revert to using SignedInt on apcs-gnu to comply with existing behaviour.
@@ -3703,8 +3733,6 @@ class ARMTargetInfo : public TargetInfo {
     /// zero length bitfield.  This corresponds to EMPTY_FIELD_BOUNDARY in
     /// gcc.
     ZeroLengthBitfieldBoundary = 32;
-
-    IsAAPCS = false;
 
     if (IsThumb) {
       // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
@@ -3721,19 +3749,14 @@ class ARMTargetInfo : public TargetInfo {
 
 public:
   ARMTargetInfo(const llvm::Triple &Triple)
-      : TargetInfo(Triple), ABI("aapcs-linux"), CPU("arm1136j-s"),
-        FPMath(FP_Default), IsAAPCS(true) {
+      : TargetInfo(Triple), CPU("arm1136j-s"), FPMath(FP_Default),
+        IsAAPCS(true) {
     BigEndian = false;
     switch (getTriple().getOS()) {
     case llvm::Triple::NetBSD:
-      SizeType = UnsignedLong;
       PtrDiffType = SignedLong;
-      WCharType = SignedInt;
       break;
     default:
-      // AAPCS 7.1.1, ARM-Linux ABI 2.4: type of wchar_t is unsigned int.
-      WCharType = UnsignedInt;
-      SizeType = UnsignedInt;
       PtrDiffType = SignedInt;
       break;
     }
@@ -3744,17 +3767,8 @@ public:
 
     // FIXME: Should we just treat this as a feature?
     IsThumb = getTriple().getArchName().startswith("thumb");
-    if (IsThumb) {
-      // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
-      // so set preferred for small types to 32.
-      DescriptionString = ("e-p:32:32-i1:8:32-i8:8:32-i16:16:32-"
-                           "i64:64-"
-                           "v128:64:128-a:0:32-n32-S64");
-    } else {
-      DescriptionString = ("e-p:32:32-"
-                           "i64:64-"
-                           "v128:64:128-n32-S64");
-    }
+
+    setABI("aapcs-linux");
 
     // ARM targets default to using the ARM C++ ABI.
     TheCXXABI.set(TargetCXXABI::GenericARM);
