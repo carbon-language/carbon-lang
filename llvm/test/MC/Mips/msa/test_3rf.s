@@ -1,6 +1,8 @@
-# RUN: llvm-mc %s -show-encoding -mcpu=mips32r2 -mattr=+msa -arch=mips | FileCheck %s
+# RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -show-encoding | FileCheck %s
 #
-# RUN: llvm-mc %s -mcpu=mips32r2 -mattr=+msa -arch=mips -filetype=obj -o - | llvm-objdump -d -mattr=+msa -arch=mips - | FileCheck %s -check-prefix=CHECKOBJDUMP
+# RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -filetype=obj -o - | \
+# RUN: llvm-objdump -d -arch=mips -mattr=+msa - | \
+# RUN: FileCheck %s -check-prefix=CHECKOBJDUMP
 #
 # CHECK:        fadd.w          $w28, $w19, $w28        # encoding: [0x78,0x1c,0x9f,0x1b]
 # CHECK:        fadd.d          $w13, $w2, $w29         # encoding: [0x78,0x3d,0x13,0x5b]

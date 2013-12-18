@@ -1,6 +1,8 @@
-# RUN: llvm-mc %s -show-encoding -mcpu=mips32r2 -mattr=+msa -arch=mips | FileCheck %s
+# RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -show-encoding | FileCheck %s
 #
-# RUN: llvm-mc %s -mcpu=mips32r2 -mattr=+msa -arch=mips -filetype=obj -o - | llvm-objdump -d -mattr=+msa -arch=mips - | FileCheck %s -check-prefix=CHECKOBJDUMP
+# RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -filetype=obj -o - | \
+# RUN: llvm-objdump -d -arch=mips -mattr=+msa - | \
+# RUN: FileCheck %s -check-prefix=CHECKOBJDUMP
 #
 # CHECK:        andi.b  $w2, $w29, 48           # encoding: [0x78,0x30,0xe8,0x80]
 # CHECK:        bmnzi.b $w6, $w22, 126          # encoding: [0x78,0x7e,0xb1,0x81]
