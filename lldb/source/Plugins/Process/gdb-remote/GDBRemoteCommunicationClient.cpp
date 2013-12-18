@@ -84,6 +84,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_async_mutex (Mutex::eMutexTypeRecursive),
     m_async_packet_predicate (false),
     m_async_packet (),
+    m_async_result (PacketResult::Success),
     m_async_response (),
     m_async_signal (-1),
     m_thread_id_to_used_usec_map (),
@@ -430,6 +431,7 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
                             // Swap the response buffer to avoid malloc and string copy
                             response.GetStringRef().swap (m_async_response.GetStringRef());
                             response_len = response.GetStringRef().size();
+                            packet_result = m_async_result;
                         }
                         else
                         {
@@ -742,11 +744,12 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                             Log * packet_log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
 
                             // We are supposed to send an asynchronous packet while
-                            // we are running. 
+                            // we are running.
                             m_async_response.Clear();
                             if (m_async_packet.empty())
                             {
-                                if (packet_log) 
+                                m_async_result = PacketResult::ErrorSendFailed;
+                                if (packet_log)
                                     packet_log->Printf ("async: error: empty async packet");                            
 
                             }
@@ -755,10 +758,10 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                                 if (packet_log) 
                                     packet_log->Printf ("async: sending packet");
                                 
-                                SendPacketAndWaitForResponse (&m_async_packet[0], 
-                                                              m_async_packet.size(),
-                                                              m_async_response,
-                                                              false);
+                                m_async_result = SendPacketAndWaitForResponse (&m_async_packet[0],
+                                                                               m_async_packet.size(),
+                                                                               m_async_response,
+                                                                               false);
                             }
                             // Let the other thread that was trying to send the async
                             // packet know that the packet has been sent and response is

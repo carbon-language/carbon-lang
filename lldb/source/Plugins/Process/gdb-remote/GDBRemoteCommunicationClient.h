@@ -516,6 +516,7 @@ protected:
     lldb_private::Mutex m_async_mutex;
     lldb_private::Predicate<bool> m_async_packet_predicate;
     std::string m_async_packet;
+    PacketResult m_async_result;
     StringExtractorGDBRemote m_async_response;
     int m_async_signal; // We were asked to deliver a signal to the inferior process.
     bool m_interrupt_sent;
