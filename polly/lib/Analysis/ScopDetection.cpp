@@ -167,9 +167,10 @@ private:
   unsigned EntryLine, ExitLine;
 
 public:
-  DiagnosticScopFound(Function &F, std::string FileName, unsigned EntryLine, unsigned ExitLine)
+  DiagnosticScopFound(Function &F, std::string FileName, unsigned EntryLine,
+                      unsigned ExitLine)
       : DiagnosticInfo(PluginDiagnosticKind, DS_Note), F(F), FileName(FileName),
-   EntryLine(EntryLine), ExitLine(ExitLine) {}
+        EntryLine(EntryLine), ExitLine(ExitLine) {}
 
   virtual void print(DiagnosticPrinter &DP) const;
 
@@ -180,15 +181,15 @@ public:
 
 int DiagnosticScopFound::PluginDiagnosticKind = 10;
 
-
 void DiagnosticScopFound::print(DiagnosticPrinter &DP) const {
 
-  DP << "Polly detected an optimizable loop region (scop) in function '" << F << "'\n";
+  DP << "Polly detected an optimizable loop region (scop) in function '" << F
+     << "'\n";
 
   if (FileName.empty()) {
     DP << "Scop location is unknown. Compile with debug info "
           "(-g) to get more precise information. ";
-      return;
+    return;
   }
 
   DP << FileName << ":" << EntryLine << ": Start of scop\n";
