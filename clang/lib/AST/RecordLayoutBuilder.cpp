@@ -1040,8 +1040,7 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
     if (I->isVirtual())
       continue;
 
-    const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
+    const CXXRecordDecl *BaseDecl = I->getType()->getAsCXXRecordDecl();
 
     // Skip the primary base, because we've already laid it out.  The
     // !PrimaryBaseIsVirtual check is required because we might have a
@@ -1123,8 +1122,7 @@ RecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
     assert(!I->getType()->isDependentType() &&
            "Cannot layout class with dependent bases.");
 
-    const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
+    const CXXRecordDecl *BaseDecl = I->getType()->getAsCXXRecordDecl();
 
     if (I->isVirtual()) {
       if (PrimaryBase != BaseDecl || !PrimaryBaseIsVirtual) {
@@ -2345,8 +2343,7 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBases(const CXXRecordDecl *RD) {
        i != e; ++i) {
     if (i->isVirtual())
       continue;
-    const CXXRecordDecl *BaseDecl =
-        cast<CXXRecordDecl>(i->getType()->castAs<RecordType>()->getDecl());
+    const CXXRecordDecl *BaseDecl = i->getType()->getAsCXXRecordDecl();
     if (BaseDecl == PrimaryBase)
       continue;
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(BaseDecl);
@@ -2532,8 +2529,7 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
   for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
                                                 e = RD->vbases_end();
        i != e; ++i) {
-    const CXXRecordDecl *BaseDecl =
-        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    const CXXRecordDecl *BaseDecl = i->getType()->getAsCXXRecordDecl();
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(BaseDecl);
     updateAlignment(getBaseAlignment(Layout));
   }
@@ -2546,8 +2542,7 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
   for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
                                                 e = RD->vbases_end();
        i != e; ++i) {
-    const CXXRecordDecl *BaseDecl =
-        cast<CXXRecordDecl>(i->getType()->castAs<RecordType>()->getDecl());
+    const CXXRecordDecl *BaseDecl = i->getType()->getAsCXXRecordDecl();
     // If the last field we laid out was a non-zero length bitfield then add
     // some extra padding for no obvious reason.
     if (LastFieldIsNonZeroWidthBitfield)
