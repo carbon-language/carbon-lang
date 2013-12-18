@@ -2327,6 +2327,16 @@ Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
     
     StateType state = eStateInvalid;
     
+    // Scope to temporarily get the process state in case someone has manually
+    // remotely connected already to a process and we can skip the platform
+    // launching.
+    {
+        ProcessSP process_sp (GetProcessSP());
+    
+        if (process_sp)
+            state = process_sp->GetState();
+    }
+
     launch_info.GetFlags().Set (eLaunchFlagDebug);
     
     // Get the value of synchronous execution here.  If you wait till after you have started to
