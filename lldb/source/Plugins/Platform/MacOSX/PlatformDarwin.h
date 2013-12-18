@@ -134,6 +134,13 @@ public:
     GetResumeCountForLaunchInfo (lldb_private::ProcessLaunchInfo &launch_info);
 
 protected:
+
+    lldb::addr_t
+    ReadLibdispatchOffsetsAddress (lldb_private::Process *process);
+
+    void
+    ReadLibdispatchOffsets (lldb_private::Process *process);
+
     virtual lldb_private::Error
     GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &module_spec,
                                    lldb::ModuleSP &module_sp,
@@ -141,9 +148,50 @@ protected:
                                    lldb::ModuleSP *old_module_sp_ptr,
                                    bool *did_create_ptr);
 
-    std::string m_developer_directory;
-    lldb::addr_t m_dispatch_queue_offsets_addr;
-    
+    // Based on libdispatch src/queue_private.h, struct dispatch_queue_offsets_s
+    // With dqo_version 1-3, the dqo_label field is a per-queue value and cannot be cached.
+    // With dqo_version 4 (Mac OS X 10.9 / iOS 7), dqo_label is a constant value that can be cached.
+    struct LibdispatchOffsets
+    {
+        uint16_t dqo_version;
+        uint16_t dqo_label;
+        uint16_t dqo_label_size;
+        uint16_t dqo_flags;
+        uint16_t dqo_flags_size;
+        uint16_t dqo_serialnum;
+        uint16_t dqo_serialnum_size;
+        uint16_t dqo_width;
+        uint16_t dqo_width_size;
+        uint16_t dqo_running;
+        uint16_t dqo_running_size;
+
+        LibdispatchOffsets ()
+        {
+            dqo_version = UINT16_MAX;
+            dqo_flags  = UINT16_MAX;
+            dqo_serialnum = UINT16_MAX;
+            dqo_label = UINT16_MAX;
+            dqo_width = UINT16_MAX;
+            dqo_running = UINT16_MAX;
+        };
+
+        bool
+        IsValid ()
+        {
+            return dqo_version != UINT16_MAX;
+        }
+
+        bool
+        LabelIsValid ()
+        {
+            return dqo_label != UINT16_MAX;
+        }
+    };
+
+    std::string                 m_developer_directory;
+    lldb::addr_t                m_dispatch_queue_offsets_addr;
+    struct LibdispatchOffsets   m_libdispatch_offsets;
+
     const char *
     GetDeveloperDirectory();
     
