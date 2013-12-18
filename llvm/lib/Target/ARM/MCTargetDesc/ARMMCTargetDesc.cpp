@@ -89,14 +89,11 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
   unsigned Idx = 0;
 
   // FIXME: Enhance Triple helper class to extract ARM version.
-  bool isThumb = false;
+  bool isThumb = triple.getArch() == Triple::thumb;
   if (Len >= 5 && TT.substr(0, 4) == "armv")
     Idx = 4;
-  else if (Len >= 6 && TT.substr(0, 5) == "thumb") {
-    isThumb = true;
-    if (Len >= 7 && TT[5] == 'v')
-      Idx = 6;
-  }
+  else if (Len >= 7 && TT.substr(0, 6) == "thumbv")
+    Idx = 6;
 
   bool NoCPU = CPU == "generic" || CPU.empty();
   std::string ARMArchFeature;
