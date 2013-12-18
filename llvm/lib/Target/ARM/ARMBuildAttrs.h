@@ -35,7 +35,7 @@ namespace ARMBuildAttrs {
     CPU_arch_profile          = 7,
     ARM_ISA_use               = 8,
     THUMB_ISA_use             = 9,
-    VFP_arch                  = 10,
+    FP_arch                   = 10,
     WMMX_arch                 = 11,
     Advanced_SIMD_arch        = 12,
     PCS_config                = 13,

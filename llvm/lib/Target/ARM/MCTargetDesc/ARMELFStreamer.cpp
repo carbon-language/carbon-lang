@@ -632,43 +632,43 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
   switch (FPU) {
   case ARM::VFP:
   case ARM::VFPV2:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv2,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::VFPV3:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv3A,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::VFPV3_D16:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv3B,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::VFPV4:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv4A,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::VFPV4_D16:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv4B,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::FP_ARMV8:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPARMv8A,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::NEON:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv3A,
                      /* OverwriteExisting= */ false);
     setAttributeItem(ARMBuildAttrs::Advanced_SIMD_arch,
@@ -677,7 +677,7 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
     break;
 
   case ARM::NEON_VFPV4:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv4A,
                      /* OverwriteExisting= */ false);
     setAttributeItem(ARMBuildAttrs::Advanced_SIMD_arch,
@@ -687,7 +687,7 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
 
   case ARM::NEON_FP_ARMV8:
   case ARM::CRYPTO_NEON_FP_ARMV8:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPARMv8A,
                      /* OverwriteExisting= */ false);
     setAttributeItem(ARMBuildAttrs::Advanced_SIMD_arch,
