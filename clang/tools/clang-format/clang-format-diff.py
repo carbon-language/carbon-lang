@@ -47,7 +47,7 @@ def main():
                       help='custom pattern selecting file paths to reformat '
                       '(case sensitive, override -iregex)')
   parser.add_argument('-iregex', metavar='PATTERN', default=
-                      r'.*\.(cpp|cc|c\+\+|cxx|c|h|hpp|m|mm|inc|js)',
+                      r'.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hpp|m|mm|inc|js)',
                       help='custom pattern selecting file paths to reformat '
                       '(case insensitive, override -regex)')
   parser.add_argument(
