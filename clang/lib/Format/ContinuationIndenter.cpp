@@ -546,6 +546,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     //       ParameterToInnerFunction));
     if (*I > prec::Unknown)
       NewParenState.LastSpace = std::max(NewParenState.LastSpace, State.Column);
+    NewParenState.StartOfFunctionCall = State.Column;
 
     // Always indent conditional expressions. Never indent expression where
     // the 'operator' is ',', ';' or an assignment (i.e. *I <=
@@ -573,7 +574,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
       if (Current.MatchingParen && Current.BlockKind == BK_Block) {
         // If this is an l_brace starting a nested block, we pretend (wrt. to
         // indentation) that we already consumed the corresponding r_brace.
-        // Thus, we remove all ParenStates caused bake fake parentheses that end
+        // Thus, we remove all ParenStates caused by fake parentheses that end
         // at the r_brace. The net effect of this is that we don't indent
         // relative to the l_brace, if the nested block is the last parameter of
         // a function. For example, this formats:
