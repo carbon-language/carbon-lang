@@ -111,7 +111,7 @@ ReportStack *SymbolizeCode(uptr addr) {
   InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
   for (uptr i = 0; i < kMaxAddrFrames; i++)
     new(&addr_frames[i]) AddressInfo();
-  uptr addr_frames_num = Symbolizer::Get()->SymbolizeCode(
+  uptr addr_frames_num = Symbolizer::Get()->SymbolizePC(
       addr, addr_frames.data(), kMaxAddrFrames);
   if (addr_frames_num == 0)
     return NewReportStackEntry(addr);

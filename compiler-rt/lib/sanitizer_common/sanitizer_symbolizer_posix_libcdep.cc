@@ -391,7 +391,7 @@ class POSIXSymbolizer : public Symbolizer {
         external_symbolizer_(external_symbolizer),
         internal_symbolizer_(internal_symbolizer) {}
 
-  uptr SymbolizeCode(uptr addr, AddressInfo *frames, uptr max_frames) {
+  uptr SymbolizePC(uptr addr, AddressInfo *frames, uptr max_frames) {
     BlockingMutexLock l(&mu_);
     if (max_frames == 0)
       return 0;

@@ -82,8 +82,7 @@ class Symbolizer {
   // Fills at most "max_frames" elements of "frames" with descriptions
   // for a given address (in all inlined functions). Returns the number
   // of descriptions actually filled.
-  virtual uptr SymbolizeCode(uptr address, AddressInfo *frames,
-                             uptr max_frames) {
+  virtual uptr SymbolizePC(uptr address, AddressInfo *frames, uptr max_frames) {
     return 0;
   }
   virtual bool SymbolizeData(uptr address, DataInfo *info) {

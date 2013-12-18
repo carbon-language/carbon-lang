@@ -34,7 +34,7 @@ Location __ubsan::getFunctionLocation(uptr Loc, const char **FName) {
     return Location();
 
   AddressInfo Info;
-  if (!Symbolizer::GetOrInit()->SymbolizeCode(Loc, &Info, 1) ||
+  if (!Symbolizer::GetOrInit()->SymbolizePC(Loc, &Info, 1) ||
       !Info.module || !*Info.module)
     return Location(Loc);
 
