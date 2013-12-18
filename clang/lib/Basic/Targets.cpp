@@ -1251,8 +1251,7 @@ public:
     PtrDiffType = SignedInt;    // for http://llvm.org/bugs/show_bug.cgi?id=15726
     LongLongAlign = 32;
     SuitableAlign = 128;
-    DescriptionString = "E-p:32:32"
-                        "-n32";
+    DescriptionString = "E-p:32:32-f64:32:64-n32";
   }
   virtual BuiltinVaListKind getBuiltinVaListKind() const {
     return TargetInfo::CharPtrBuiltinVaList;
@@ -1266,8 +1265,7 @@ public:
       : DarwinTargetInfo<PPC64TargetInfo>(Triple) {
     HasAlignMac68kSupport = true;
     SuitableAlign = 128;
-    DescriptionString = "E-"
-                        "i64:64-n32:64";
+    DescriptionString = "E-i64:64-n32:64";
   }
 };
 } // end anonymous namespace.
