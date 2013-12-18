@@ -777,7 +777,7 @@ def warn_arc_perform_selector_leaks : Warning<
   "performSelector may cause a leak because its selector is unknown">,
   InGroup<DiagGroup<"arc-performSelector-leaks">>;
 def warn_dealloc_in_category : Warning<
-"-dealloc in a category is being overridden">,
+"-dealloc is being overridden in a category">,
 InGroup<DeallocInCategory>;
 def err_gc_weak_property_strong_type : Error<
   "weak attribute declared on a __strong type property in GC mode">;

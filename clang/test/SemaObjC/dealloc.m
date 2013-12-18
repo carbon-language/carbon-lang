@@ -36,6 +36,6 @@
 @end
 
 @implementation Subclass (CAT)
-- (void)dealloc { // expected-warning {{-dealloc in a category is being overridden}}
+- (void)dealloc { // expected-warning {{-dealloc is being overridden in a category}}
 }
 @end
