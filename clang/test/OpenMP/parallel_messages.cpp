@@ -19,7 +19,8 @@ int main(int argc, char **argv) {
   #pragma omp parallel } // expected-warning {{extra tokens at the end of '#pragma omp parallel' are ignored}}
   foo();
   #pragma omp parallel
-  #pragma omp parallel unknown() // expected-warning {{extra tokens at the end of '#pragma omp parallel' are ignored}}
+  // expected-warning@+1 {{extra tokens at the end of '#pragma omp parallel' are ignored}}
+  #pragma omp parallel unknown()
   foo();
   L1:
     foo();

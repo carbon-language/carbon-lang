@@ -24,7 +24,8 @@ int foo() { // expected-note {{declared here}}
   return (a);
 }
 
-#pragma omp threadprivate (a) ( // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
+#pragma omp threadprivate (a) (
+// expected-error@-1 {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-warning@-1 {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
 #pragma omp threadprivate (a) [ // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
 #pragma omp threadprivate (a) { // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
 #pragma omp threadprivate (a) ) // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
@@ -35,8 +36,10 @@ int foo() { // expected-note {{declared here}}
 #pragma omp threadprivate(d)) // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'd'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
 int x, y;
 #pragma omp threadprivate(x)) // expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
-#pragma omp threadprivate(y)), // expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
-#pragma omp threadprivate(a,d)  // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-error {{'#pragma omp threadprivate' must precede all references to variable 'd'}}
+#pragma omp threadprivate(y)),
+// expected-warning@-1 {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
+#pragma omp threadprivate(a,d)
+// expected-error@-1 {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-error@-1 {{'#pragma omp threadprivate' must precede all references to variable 'd'}}
 #pragma omp threadprivate(d.a) // expected-error {{expected identifier}}
 #pragma omp threadprivate((float)a) // expected-error {{expected unqualified-id}}
 int foa; // expected-note {{'foa' declared here}}
