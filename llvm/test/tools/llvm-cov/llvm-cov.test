@@ -21,6 +21,10 @@ RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -a -b -u
 RUN: diff -aub test_-a_-b_-u.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a_-b_-u.h.gcov test.h.gcov
 
+RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -a -b -c -u
+RUN: diff -aub test_-a_-b_-c_-u.cpp.gcov test.cpp.gcov
+RUN: diff -aub test_-a_-b_-c_-u.h.gcov test.h.gcov
+
 RUN: not llvm-cov -gcno=test_read_fail.gcno -gcda=test.gcda
 
 RUN: not llvm-cov -gcno=test.gcno -gcda=test_file_checksum_fail.gcda

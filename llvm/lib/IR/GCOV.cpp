@@ -405,6 +405,30 @@ static uint32_t branchDiv(uint64_t Numerator, uint64_t Divisor) {
   return Res;
 }
 
+struct formatBranchInfo {
+  formatBranchInfo(const GCOVOptions &Options, uint64_t Count,
+                   uint64_t Total) :
+    Options(Options), Count(Count), Total(Total) {}
+
+  void print(raw_ostream &OS) const {
+    if (!Total)
+      OS << "never executed";
+    else if (Options.BranchCount)
+      OS << "taken " << Count;
+    else
+      OS << "taken " << branchDiv(Count, Total) << "%";
+  }
+
+  const GCOVOptions &Options;
+  uint64_t Count;
+  uint64_t Total;
+};
+
+static raw_ostream &operator<<(raw_ostream &OS, const formatBranchInfo &FBI) {
+  FBI.print(OS);
+  return OS;
+}
+
 /// print -  Print source files with collected line count information.
 void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
   for (StringMap<LineData>::const_iterator I = LineInfo.begin(),
@@ -431,7 +455,7 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
 
     const LineData &Line = I->second;
     for (uint32_t LineIndex = 0; !AllLines.empty(); ++LineIndex) {
-      if (Options.BranchProb) {
+      if (Options.BranchInfo) {
         FunctionLines::const_iterator FuncsIt = Line.Functions.find(LineIndex);
         if (FuncsIt != Line.Functions.end())
           printFunctionSummary(OS, FuncsIt->second);
@@ -481,7 +505,7 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
             continue;
           if (Options.AllBlocks)
             printBlockInfo(OS, *Block, LineIndex, BlockNo);
-          if (Options.BranchProb) {
+          if (Options.BranchInfo) {
             size_t NumEdges = Block->getNumDstEdges();
             if (NumEdges > 1)
               printBranchInfo(OS, *Block, EdgeNo);
@@ -540,19 +564,14 @@ void FileInfo::printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
 
   for (SmallVectorImpl<uint64_t>::const_iterator I = BranchCounts.begin(),
          E = BranchCounts.end(); I != E; ++I) {
-    if (TotalCounts)
-      OS << format("branch %2u taken %u%%\n", EdgeNo++,
-                   branchDiv(*I, TotalCounts));
-    else
-      OS << format("branch %2u never executed\n", EdgeNo++);
+    OS << format("branch %2u ", EdgeNo++)
+       << formatBranchInfo(Options, *I, TotalCounts) << "\n";
   }
 }
 
 /// printUncondBranchInfo - Print unconditional branch probabilities.
 void FileInfo::printUncondBranchInfo(raw_fd_ostream &OS, uint32_t &EdgeNo,
                                      uint64_t Count) const {
-  if (Count)
-    OS << format("unconditional %2u taken 100%%\n", EdgeNo++);
-  else
-    OS << format("unconditional %2u never executed\n", EdgeNo++);
+  OS << format("unconditional %2u ", EdgeNo++)
+     << formatBranchInfo(Options, Count, Count) << "\n";
 }

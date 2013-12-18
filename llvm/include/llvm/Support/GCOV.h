@@ -36,11 +36,12 @@ namespace GCOV {
 
 /// GCOVOptions - A struct for passing gcov options between functions.
 struct GCOVOptions {
-  GCOVOptions(bool A, bool B, bool U) :
-    AllBlocks(A), BranchProb(B), UncondBranch(U) {}
+  GCOVOptions(bool A, bool B, bool C, bool U) :
+    AllBlocks(A), BranchInfo(B), BranchCount(C), UncondBranch(U) {}
 
   bool AllBlocks;
-  bool BranchProb;
+  bool BranchInfo;
+  bool BranchCount;
   bool UncondBranch;
 };
 
