@@ -11,7 +11,7 @@ id foo(int x) {
     title = @"bar";
     break;
   default:
-    title = "@baz";
+    title = @"baz";
     break;
   }
   return title;

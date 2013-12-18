@@ -8,12 +8,12 @@
 @class NSString;
 
 @interface Test
-- (void)test:(NSString *)string; // expected-note{{passing argument to parameter 'string' here}}
+- (void)test:(NSString *)string;
 
 @property (copy) NSString *property;
 @end
 
-void g(NSString *a); // expected-note{{passing argument to parameter 'a' here}}
+void g(NSString *a);
 void h(id a);
 
 void f(Test *t) {

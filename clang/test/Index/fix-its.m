@@ -24,5 +24,3 @@ void _rdar_12584554_A (volatile const void * object, volatile const void * selec
 // CHECK: Number FIX-ITs = 0
 // CHECK: fix-its.m:7:77: note: expanded from macro '_rdar_12584554_B'
 // CHECK: Number FIX-ITs = 0
-// CHECK: fix-its.m:5:172: note: passing argument to parameter 'msgFormat' here
-// CHECK: Number FIX-ITs = 0

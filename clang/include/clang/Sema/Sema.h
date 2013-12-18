@@ -6902,9 +6902,7 @@ public:
                                          QualType DestType, QualType SrcType,
                                          Expr *&SrcExpr);
   
-  StringLiteral * ConversionToObjCStringLiteralCheck(QualType DstType,
-                                          Expr *SrcExpr, FixItHint &Hint,
-                                          bool &IsNSString);
+  bool ConversionToObjCStringLiteralCheck(QualType DstType, Expr *&SrcExpr);
   
   bool checkInitMethod(ObjCMethodDecl *method, QualType receiverTypeIfCall);
 

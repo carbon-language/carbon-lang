@@ -18,20 +18,20 @@ void foo() {
 @class NSString;
 
 @interface Test
-- (void)test:(NSString *)string; // expected-note{{passing argument to parameter 'string' here}}
+- (void)test:(NSString *)string;
 
 @property (copy) NSString *property;
 @end
 
-void g(NSString *a); // expected-note{{passing argument to parameter 'a' here}}
-void h(id a); // expected-note 2{{passing argument to parameter 'a' here}}
+void g(NSString *a);
+void h(id a);
 
 void f(Test *t) {
   NSString *a = "Foo"; // expected-error {{string literal must be prefixed by '@'}}
-  id b = "Foo"; // expected-warning {{incompatible pointer types initializing 'id' with an expression of type 'char [4]'}}
+  id b = "Foo"; // expected-error {{string literal must be prefixed by '@'}}
   g("Foo"); // expected-error {{string literal must be prefixed by '@'}}
-  h("Foo"); // expected-warning{{incompatible pointer types passing 'char [4]' to parameter of type 'id'}}
-  h(("Foo")); // expected-warning{{incompatible pointer types passing 'char [4]' to parameter of type 'id'}}
+  h("Foo"); // expected-error {{string literal must be prefixed by '@'}}
+  h(("Foo")); // expected-error {{string literal must be prefixed by '@'}}
   [t test:"Foo"]; // expected-error {{string literal must be prefixed by '@'}}
   t.property = "Foo"; // expected-error {{string literal must be prefixed by '@'}}
 
