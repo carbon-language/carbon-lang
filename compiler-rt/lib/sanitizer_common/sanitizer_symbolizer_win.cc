@@ -59,7 +59,7 @@ class WinSymbolizer : public Symbolizer {
     AddressInfo *info = &frames[0];
     info->Clear();
     info->function = internal_strdup(symbol->Name);
-    info->function_offset = offset;
+    info->function_offset = (uptr)offset;
     if (got_fileline) {
       info->file = internal_strdup(line_info.FileName);
       info->line = line_info.LineNumber;
@@ -70,7 +70,7 @@ class WinSymbolizer : public Symbolizer {
     mod_info.SizeOfStruct = sizeof(mod_info);
     if (SymGetModuleInfo64(GetCurrentProcess(), addr, &mod_info))
       info->FillAddressAndModuleInfo(addr, mod_info.ImageName,
-                                     addr - mod_info.BaseOfImage);
+                                     addr - (uptr)mod_info.BaseOfImage);
     return 1;
   }
 
