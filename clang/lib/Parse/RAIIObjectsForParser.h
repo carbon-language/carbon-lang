@@ -361,6 +361,7 @@ namespace clang {
     tok::TokenKind Kind, Close, FinalToken;
     SourceLocation (Parser::*Consumer)();
     SourceLocation LOpen, LClose;
+    bool NoCount;
     
     unsigned short &getDepth() {
       switch (Kind) {
@@ -378,9 +379,10 @@ namespace clang {
     
   public:
     BalancedDelimiterTracker(Parser& p, tok::TokenKind k,
-                             tok::TokenKind FinalToken = tok::semi)
+                             tok::TokenKind FinalToken = tok::semi,
+                             bool NoCount = false)
       : GreaterThanIsOperatorScope(p.GreaterThanIsOperator, true),
-        P(p), Kind(k), FinalToken(FinalToken)
+        P(p), Kind(k), FinalToken(FinalToken), NoCount(NoCount)
     {
       switch (Kind) {
         default: llvm_unreachable("Unexpected balanced token");

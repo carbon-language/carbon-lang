@@ -24,6 +24,12 @@ int foo() { // expected-note {{declared here}}
   return (a);
 }
 
+#pragma omp threadprivate (a) ( // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
+#pragma omp threadprivate (a) [ // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
+#pragma omp threadprivate (a) { // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
+#pragma omp threadprivate (a) ) // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
+#pragma omp threadprivate (a) ] // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
+#pragma omp threadprivate (a) } // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
 #pragma omp threadprivate a // expected-error {{expected '(' after 'threadprivate'}}
 #pragma omp threadprivate(d // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error {{'#pragma omp threadprivate' must precede all references to variable 'd'}}
 #pragma omp threadprivate(d)) // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'd'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
