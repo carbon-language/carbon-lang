@@ -66,7 +66,7 @@
 // RUN: FileCheck %s -check-prefix=X86_64-NACL
 // X86_64-NACL: target datalayout = "e-p:32:32-i64:64-v128:32"
 
-// RUN: %clang_cc1 -triple arm-nacl -o - -emit-llvm %s | \
+// RUN: %clang_cc1 -triple arm-nacl-gnueabi -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=ARM-NACL
 // ARM-NACL: target datalayout = "e-p:32:32-i64:64-v128:32"
 
