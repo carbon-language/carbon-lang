@@ -285,7 +285,8 @@ int main(int argc, char **argv) {
       } else if (Arg == "--cxxflags") {
         OS << ActiveIncludeOption << ' ' << LLVM_CXXFLAGS << '\n';
       } else if (Arg == "--ldflags") {
-        OS << "-L" << ActiveLibDir << ' ' << LLVM_LDFLAGS << '\n';
+        OS << "-L" << ActiveLibDir << ' ' << LLVM_LDFLAGS
+           << ' ' << LLVM_SYSTEM_LIBS << '\n';
       } else if (Arg == "--libs") {
         PrintLibs = true;
       } else if (Arg == "--libnames") {
@@ -359,13 +360,6 @@ int main(int argc, char **argv) {
         OS << ActiveLibDir << '/' << Lib;
       }
     }
-
-    // Print system libs in the next line.
-    // Assume LLVMSupport depends on system_libs.
-    // FIXME: LLVMBuild may take care of dependencies to system_libs.
-    if (PrintLibs)
-      OS << '\n' << LLVM_SYSTEM_LIBS;
-
     OS << '\n';
   } else if (!Components.empty()) {
     errs() << "llvm-config: error: components given, but unused\n\n";
