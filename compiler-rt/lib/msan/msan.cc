@@ -75,19 +75,7 @@ extern "C" SANITIZER_WEAK_ATTRIBUTE const int __msan_keep_going;
 namespace __msan {
 
 static bool IsRunningUnderDr() {
-  bool result = false;
-  MemoryMappingLayout proc_maps(/*cache_enabled*/true);
-  const sptr kBufSize = 4095;
-  char *filename = (char*)MmapOrDie(kBufSize, __FUNCTION__);
-  while (proc_maps.Next(/* start */0, /* end */0, /* file_offset */0,
-                        filename, kBufSize, /* protection */0)) {
-    if (internal_strstr(filename, "libdynamorio") != 0) {
-      result = true;
-      break;
-    }
-  }
-  UnmapOrDie(filename, kBufSize);
-  return result;
+  return false;
 }
 
 void EnterSymbolizer() { ++is_in_symbolizer; }
