@@ -3522,10 +3522,13 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
         if (ConvTemplate)
           S.AddTemplateConversionCandidate(ConvTemplate, I.getPair(),
                                            ActingDC, Initializer,
-                                           DestType, CandidateSet);
+                                           DestType, CandidateSet,
+                                           /*AllowObjCConversionOnExplicit=*/
+                                             false);
         else
           S.AddConversionCandidate(Conv, I.getPair(), ActingDC,
-                                   Initializer, DestType, CandidateSet);
+                                   Initializer, DestType, CandidateSet,
+                                   /*AllowObjCConversionOnExplicit=*/false);
       }
     }
   }
@@ -4145,10 +4148,11 @@ static void TryUserDefinedConversion(Sema &S,
           if (ConvTemplate)
             S.AddTemplateConversionCandidate(ConvTemplate, I.getPair(),
                                              ActingDC, Initializer, DestType,
-                                             CandidateSet);
+                                             CandidateSet, AllowExplicit);
           else
             S.AddConversionCandidate(Conv, I.getPair(), ActingDC,
-                                     Initializer, DestType, CandidateSet);
+                                     Initializer, DestType, CandidateSet,
+                                     AllowExplicit);
         }
       }
     }
