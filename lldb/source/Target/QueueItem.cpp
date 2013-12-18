@@ -14,10 +14,11 @@ using namespace lldb;
 using namespace lldb_private;
 
 QueueItem::QueueItem (QueueSP queue_sp) :
-    m_queue_wp (queue_sp),
+    m_queue_wp (),
     m_kind (eQueueItemKindUnknown),
     m_address ()
 {
+    m_queue_wp = queue_sp;
 }
 
 QueueItem::~QueueItem ()

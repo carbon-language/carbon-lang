@@ -38,12 +38,13 @@ namespace lldb_private
         }
 
         QueueImpl (const lldb::QueueSP &queue_sp) :
-            m_queue_wp(queue_sp),
+            m_queue_wp(),
             m_threads(),
             m_thread_list_fetched(false),
             m_items(),
             m_queue_items_fetched(false)
         {
+            m_queue_wp = queue_sp;
         }
 
         QueueImpl (const QueueImpl &rhs)
