@@ -53,23 +53,14 @@ namespace clang {
     BackendConsumer(BackendAction action, DiagnosticsEngine &_Diags,
                     const CodeGenOptions &compopts,
                     const TargetOptions &targetopts,
-                    const LangOptions &langopts,
-                    bool TimePasses,
-                    const std::string &infile,
-                    llvm::Module *LinkModule,
-                    raw_ostream *OS,
-                    LLVMContext &C) :
-      Diags(_Diags),
-      Action(action),
-      CodeGenOpts(compopts),
-      TargetOpts(targetopts),
-      LangOpts(langopts),
-      AsmOutStream(OS),
-      Context(), 
-      LLVMIRGeneration("LLVM IR Generation Time"),
-      Gen(CreateLLVMCodeGen(Diags, infile, compopts, targetopts, C)),
-      LinkModule(LinkModule)
-    {
+                    const LangOptions &langopts, bool TimePasses,
+                    const std::string &infile, llvm::Module *LinkModule,
+                    raw_ostream *OS, LLVMContext &C)
+        : Diags(_Diags), Action(action), CodeGenOpts(compopts),
+          TargetOpts(targetopts), LangOpts(langopts), AsmOutStream(OS),
+          Context(), LLVMIRGeneration("LLVM IR Generation Time"),
+          Gen(CreateLLVMCodeGen(Diags, infile, compopts, targetopts, C)),
+          LinkModule(LinkModule) {
       llvm::TimePassesIsEnabled = TimePasses;
     }
 
@@ -160,7 +151,7 @@ namespace clang {
 
       EmitBackendOutput(Diags, CodeGenOpts, TargetOpts, LangOpts,
                         TheModule.get(), Action, AsmOutStream);
-      
+
       Ctx.setInlineAsmDiagnosticHandler(OldHandler, OldContext);
     }
 
