@@ -25,7 +25,7 @@
 
 using namespace llvm;
 
-int getNextAvailablePluginDiagnosticKind() {
+int llvm::getNextAvailablePluginDiagnosticKind() {
   static sys::cas_flag PluginKindID = DK_FirstPluginKind;
   return (int)sys::AtomicIncrement(&PluginKindID);
 }
