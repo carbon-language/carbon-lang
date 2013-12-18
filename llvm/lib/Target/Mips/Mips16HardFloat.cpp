@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "mips16-hard-float"
 #include "Mips16HardFloat.h"
+#include "llvm/IR/Value.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -164,6 +165,11 @@ static bool needsFPStubFromParams(Function &F) {
 
 static bool needsFPReturnHelper(Function &F) {
   Type* RetType = F.getReturnType();
+  return whichFPReturnVariant(RetType) != NoFPRet;
+}
+
+static bool needsFPReturnHelper(const FunctionType &FT) {
+  Type* RetType = FT.getReturnType();
   return whichFPReturnVariant(RetType) != NoFPRet;
 }
 
@@ -400,7 +406,19 @@ static bool fixupFPReturnAndCall
         Value *F = (M->getOrInsertFunction(Name, A, MyVoid, T, NULL));
         CallInst::Create(F, Params, "", &Inst );
       } else if (const CallInst *CI = dyn_cast<CallInst>(I)) {
+          const Value* V = CI->getCalledValue();
+          const Type* T = 0;
+          if (V) T = V->getType();
+          const PointerType *PFT=0;
+          if (T) PFT = dyn_cast<PointerType>(T);
+          const FunctionType *FT=0;
+          if (PFT) FT = dyn_cast<FunctionType>(PFT->getElementType());
           Function *F_ =  CI->getCalledFunction();
+          if (FT && needsFPReturnHelper(*FT) &&
+              !(F_ && isIntrinsicInline(F_))) {
+            Modified=true;
+            F.addFnAttr("saveS2");
+          }
           if (F_ && !isIntrinsicInline(F_)) {
           // pic mode calls are handled by already defined
           // helper functions
