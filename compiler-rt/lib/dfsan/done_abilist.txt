@@ -154,8 +154,10 @@ fun:get_current_dir_name=custom
 fun:gethostname=custom
 fun:getrlimit=custom
 fun:getrusage=custom
+fun:nanosleep=custom
 fun:pread=custom
 fun:read=custom
+fun:socketpair=custom
 fun:stat=custom
 fun:time=custom
 
@@ -177,6 +179,7 @@ fun:strtoull=custom
 
 # Functions that produce an output that is computed from the input, but is not
 # necessarily data dependent.
+fun:memchr=custom
 fun:memcmp=custom
 fun:strcasecmp=custom
 fun:strchr=custom
@@ -184,6 +187,8 @@ fun:strcmp=custom
 fun:strlen=custom
 fun:strncasecmp=custom
 fun:strncmp=custom
+fun:strrchr=custom
+fun:strstr=custom
 
 # Functions that take a callback (wrap the callback manually).
 fun:dl_iterate_phdr=custom

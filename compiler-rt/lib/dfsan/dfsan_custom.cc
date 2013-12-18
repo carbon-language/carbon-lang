@@ -70,7 +70,8 @@ SANITIZER_INTERFACE_ATTRIBUTE char *__dfsw_strchr(const char *s, int c,
       if (flags().strict_data_dependencies) {
         *ret_label = s_label;
       } else {
-        *ret_label = dfsan_union(dfsan_read_label(s, i + 1), c_label);
+        *ret_label = dfsan_union(dfsan_read_label(s, i + 1),
+                                 dfsan_union(s_label, c_label));
       }
       return s[i] == 0 ? 0 : const_cast<char *>(s+i);
     }
@@ -258,7 +259,7 @@ __dfsw_strncpy(char *s1, const char *s2, size_t n, dfsan_label s1_label,
     dfsan_memcpy(s1, s2, n);
   }
 
-  *ret_label = 0;
+  *ret_label = s1_label;
   return s1;
 }
 
@@ -718,6 +719,85 @@ int __dfsw_gettimeofday(struct timeval *tv, struct timezone *tz,
     dfsan_set_label(0, tz, sizeof(struct timezone));
   }
   *ret_label = 0;
+  return ret;
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE void *__dfsw_memchr(void *s, int c, size_t n,
+                                                  dfsan_label s_label,
+                                                  dfsan_label c_label,
+                                                  dfsan_label n_label,
+                                                  dfsan_label *ret_label) {
+  void *ret = memchr(s, c, n);
+  if (flags().strict_data_dependencies) {
+    *ret_label = ret ? s_label : 0;
+  } else {
+    size_t len =
+        ret ? reinterpret_cast<char *>(ret) - reinterpret_cast<char *>(s) + 1
+            : n;
+    *ret_label =
+        dfsan_union(dfsan_read_label(s, len), dfsan_union(s_label, c_label));
+  }
+  return ret;
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE char *__dfsw_strrchr(char *s, int c,
+                                                   dfsan_label s_label,
+                                                   dfsan_label c_label,
+                                                   dfsan_label *ret_label) {
+  char *ret = strrchr(s, c);
+  if (flags().strict_data_dependencies) {
+    *ret_label = ret ? s_label : 0;
+  } else {
+    *ret_label =
+        dfsan_union(dfsan_read_label(s, strlen(s) + 1),
+                    dfsan_union(s_label, c_label));
+  }
+
+  return ret;
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE char *__dfsw_strstr(char *haystack, char *needle,
+                                                  dfsan_label haystack_label,
+                                                  dfsan_label needle_label,
+                                                  dfsan_label *ret_label) {
+  char *ret = strstr(haystack, needle);
+  if (flags().strict_data_dependencies) {
+    *ret_label = ret ? haystack_label : 0;
+  } else {
+    size_t len = ret ? ret + strlen(needle) - haystack : strlen(haystack) + 1;
+    *ret_label =
+        dfsan_union(dfsan_read_label(haystack, len),
+                    dfsan_union(dfsan_read_label(needle, strlen(needle) + 1),
+                                dfsan_union(haystack_label, needle_label)));
+  }
+
+  return ret;
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE int __dfsw_nanosleep(const struct timespec *req,
+                                                   struct timespec *rem,
+                                                   dfsan_label req_label,
+                                                   dfsan_label rem_label,
+                                                   dfsan_label *ret_label) {
+  int ret = nanosleep(req, rem);
+  *ret_label = 0;
+  if (ret == -1) {
+    // Interrupted by a signal, rem is filled with the remaining time.
+    dfsan_set_label(0, rem, sizeof(struct timespec));
+  }
+  return ret;
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE int
+__dfsw_socketpair(int domain, int type, int protocol, int sv[2],
+                  dfsan_label domain_label, dfsan_label type_label,
+                  dfsan_label protocol_label, dfsan_label sv_label,
+                  dfsan_label *ret_label) {
+  int ret = socketpair(domain, type, protocol, sv);
+  *ret_label = 0;
+  if (ret == 0) {
+    dfsan_set_label(0, sv, sizeof(sv));
+  }
   return ret;
 }
 }

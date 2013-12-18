@@ -605,6 +605,103 @@ void test_dl_iterate_phdr() {
   dl_iterate_phdr(dl_iterate_phdr_test_cb, (void *)3);
 }
 
+void test_strrchr() {
+  char str1[] = "str1str1";
+  dfsan_set_label(i_label, &str1[7], 1);
+
+  char *rv = strrchr(str1, 'r');
+  assert(rv == &str1[6]);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(rv);
+#else
+  ASSERT_LABEL(rv, i_label);
+#endif
+}
+
+void test_strstr() {
+  char str1[] = "str1str1";
+  dfsan_set_label(i_label, &str1[3], 1);
+  dfsan_set_label(j_label, &str1[5], 1);
+
+  char *rv = strstr(str1, "1s");
+  assert(rv == &str1[3]);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(rv);
+#else
+  ASSERT_LABEL(rv, i_label);
+#endif
+
+  rv = strstr(str1, "2s");
+  assert(rv == NULL);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(rv);
+#else
+  ASSERT_LABEL(rv, i_j_label);
+#endif
+}
+
+void test_memchr() {
+  char str1[] = "str1";
+  dfsan_set_label(i_label, &str1[3], 1);
+  dfsan_set_label(j_label, &str1[4], 1);
+
+  char *crv = memchr(str1, 'r', sizeof(str1));
+  assert(crv == &str1[2]);
+  ASSERT_ZERO_LABEL(crv);
+
+  crv = memchr(str1, '1', sizeof(str1));
+  assert(crv == &str1[3]);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(crv);
+#else
+  ASSERT_LABEL(crv, i_label);
+#endif
+
+  crv = memchr(str1, 'x', sizeof(str1));
+  assert(!crv);
+#ifdef STRICT_DATA_DEPENDENCIES
+  ASSERT_ZERO_LABEL(crv);
+#else
+  ASSERT_LABEL(crv, i_j_label);
+#endif
+}
+
+void alarm_handler(int unused) {
+  ;
+}
+
+void test_nanosleep() {
+  struct timespec req, rem;
+  req.tv_sec = 1;
+  req.tv_nsec = 0;
+  dfsan_set_label(i_label, &rem, sizeof(rem));
+
+  // non interrupted
+  int rv = nanosleep(&req, &rem);
+  assert(rv == 0);
+  ASSERT_ZERO_LABEL(rv);
+  ASSERT_READ_LABEL(&rem, 1, i_label);
+
+  // interrupted by an alarm
+  signal(SIGALRM, alarm_handler);
+  req.tv_sec = 3;
+  alarm(1);
+  rv = nanosleep(&req, &rem);
+  assert(rv == -1);
+  ASSERT_ZERO_LABEL(rv);
+  ASSERT_READ_ZERO_LABEL(&rem, sizeof(rem));
+}
+
+void test_socketpair() {
+  int fd[2];
+
+  dfsan_set_label(i_label, fd, sizeof(fd));
+  int rv = socketpair(PF_LOCAL, SOCK_STREAM, 0, fd);
+  assert(rv == 0);
+  ASSERT_ZERO_LABEL(rv);
+  ASSERT_READ_ZERO_LABEL(fd, sizeof(fd));
+}
+
 int main(void) {
   i_label = dfsan_create_label("i", 0);
   j_label = dfsan_create_label("j", 0);
@@ -612,47 +709,50 @@ int main(void) {
 
   test_calloc();
   test_clock_gettime();
+  test_ctime_r();
+  test_dl_iterate_phdr();
   test_dlopen();
+  test_fgets();
   test_fstat();
+  test_get_current_dir_name();
+  test_getcwd();
+  test_gethostname();
+  test_getpwuid_r();
+  test_getrlimit();
+  test_getrusage();
+  test_gettimeofday();
+  test_inet_pton();
+  test_localtime_r();
+  test_memchr();
   test_memcmp();
   test_memcpy();
   test_memset();
+  test_nanosleep();
+  test_poll();
   test_pread();
+  test_pthread_create();
   test_read();
+  test_sched_getaffinity();
+  test_select();
+  test_sigaction();
+  test_sigemptyset();
+  test_socketpair();
   test_stat();
   test_strcasecmp();
   test_strchr();
   test_strcmp();
+  test_strcpy();
   test_strdup();
   test_strlen();
   test_strncasecmp();
   test_strncmp();
   test_strncpy();
-
-  test_ctime_r();
-  test_fgets();
-  test_getcwd();
-  test_get_current_dir_name();
-  test_gethostname();
-  test_getrlimit();
-  test_getrusage();
-  test_strcpy();
+  test_strrchr();
+  test_strstr();
+  test_strtod();
   test_strtol();
   test_strtoll();
-  test_strtod();
   test_strtoul();
   test_strtoull();
   test_time();
-  test_inet_pton();
-  test_localtime_r();
-  test_getpwuid_r();
-  test_poll();
-  test_select();
-  test_sched_getaffinity();
-  test_sigemptyset();
-  test_sigaction();
-  test_gettimeofday();
-
-  test_pthread_create();
-  test_dl_iterate_phdr();
 }
