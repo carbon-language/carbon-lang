@@ -43,7 +43,7 @@ foo::foo (void*) : foo(4.0f) {
 }
 
 struct deleted_dtor {
-  ~deleted_dtor() = delete; // expected-note{{function has been explicitly marked deleted here}}
+  ~deleted_dtor() = delete; // expected-note{{'~deleted_dtor' has been explicitly marked deleted here}}
   deleted_dtor();
   deleted_dtor(int) : deleted_dtor() // expected-error{{attempt to use a deleted function}}
   {}

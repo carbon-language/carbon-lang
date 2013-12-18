@@ -112,32 +112,16 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
             
     case AR_Deprecated:
       if (S.getCurContextAvailability() != AR_Deprecated)
-        S.EmitDeprecationWarning(D, Message, Loc, UnknownObjCClass, ObjCPDecl);
+        S.EmitAvailabilityWarning(Sema::AD_Deprecation,
+                                  D, Message, Loc, UnknownObjCClass, ObjCPDecl);
       break;
-            
+
     case AR_Unavailable:
-      if (S.getCurContextAvailability() != AR_Unavailable) {
-        if (Message.empty()) {
-          if (!UnknownObjCClass) {
-            S.Diag(Loc, diag::err_unavailable) << D->getDeclName();
-            if (ObjCPDecl)
-              S.Diag(ObjCPDecl->getLocation(), diag::note_property_attribute)
-                << ObjCPDecl->getDeclName() << 1;
-          }
-          else
-            S.Diag(Loc, diag::warn_unavailable_fwdclass_message) 
-              << D->getDeclName();
-        }
-        else
-          S.Diag(Loc, diag::err_unavailable_message) 
-            << D->getDeclName() << Message;
-        S.Diag(D->getLocation(), diag::note_unavailable_here)
-                  << isa<FunctionDecl>(D) << false;
-        if (ObjCPDecl)
-          S.Diag(ObjCPDecl->getLocation(), diag::note_property_attribute)
-          << ObjCPDecl->getDeclName() << 1;
-      }
+      if (S.getCurContextAvailability() != AR_Unavailable)
+        S.EmitAvailabilityWarning(Sema::AD_Unavailable,
+                                  D, Message, Loc, UnknownObjCClass, ObjCPDecl);
       break;
+
     }
     return Result;
 }
@@ -177,8 +161,8 @@ void Sema::NoteDeletedFunction(FunctionDecl *Decl) {
     }
   }
 
-  Diag(Decl->getLocation(), diag::note_unavailable_here)
-    << 1 << true;
+  Diag(Decl->getLocation(), diag::note_availability_specified_here)
+    << Decl << true;
 }
 
 /// \brief Determine whether a FunctionDecl was ever declared with an

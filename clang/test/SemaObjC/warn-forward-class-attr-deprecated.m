@@ -4,7 +4,7 @@
 @class ABGroupImportFilesScope; // expected-note {{forward declaration of class here}}
 
 @interface I1
-- (id) filenames __attribute__((deprecated));
+- (id) filenames __attribute__((deprecated)); // expected-note {{'filenames' has been explicitly marked deprecated here}}
 @end
 
 @interface I2

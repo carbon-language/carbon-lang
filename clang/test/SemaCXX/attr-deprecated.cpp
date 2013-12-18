@@ -1,10 +1,10 @@
 // RUN: %clang_cc1 %s -verify -fexceptions
 class A {
-  void f() __attribute__((deprecated)); // expected-note 2 {{declared here}}
+  void f() __attribute__((deprecated)); // expected-note 2 {{'f' has been explicitly marked deprecated here}}
   void g(A* a);
   void h(A* a) __attribute__((deprecated));
 
-  int b __attribute__((deprecated)); // expected-note 2 {{declared here}}
+  int b __attribute__((deprecated)); // expected-note 2 {{'b' has been explicitly marked deprecated here}}
 };
 
 void A::g(A* a)
@@ -26,7 +26,7 @@ void A::h(A* a)
 }
 
 struct B {
-  virtual void f() __attribute__((deprecated)); // expected-note 4 {{declared here}}
+  virtual void f() __attribute__((deprecated)); // expected-note 4 {{'f' has been explicitly marked deprecated here}}
   void g();
 };
 
@@ -68,20 +68,20 @@ void f(D* d) {
 
 // Overloaded namespace members.
 namespace test1 {
-  void foo(int) __attribute__((deprecated)); // expected-note {{declared here}}
+  void foo(int) __attribute__((deprecated)); // expected-note {{'foo' has been explicitly marked deprecated here}}
   void test1() { foo(10); } // expected-warning {{deprecated}}
-  void foo(short) __attribute__((deprecated)); // expected-note {{declared here}}
+  void foo(short) __attribute__((deprecated)); // expected-note {{'foo' has been explicitly marked deprecated here}}
   void test2(short s) { foo(s); } // expected-warning {{deprecated}}
   void foo(long);
   void test3(long l) { foo(l); }
   struct A {
-    friend void foo(A*) __attribute__((deprecated)); // expected-note {{declared here}}
+    friend void foo(A*) __attribute__((deprecated)); // expected-note {{'foo' has been explicitly marked deprecated here}}
   };
   void test4(A *a) { foo(a); } // expected-warning {{deprecated}}
 
   namespace ns {
     struct Foo {};
-    void foo(const Foo &f) __attribute__((deprecated)); // expected-note {{declared here}}
+    void foo(const Foo &f) __attribute__((deprecated)); // expected-note {{'foo' has been explicitly marked deprecated here}}
   }
   void test5() {
     foo(ns::Foo()); // expected-warning {{deprecated}}
@@ -91,9 +91,9 @@ namespace test1 {
 // Overloaded class members.
 namespace test2 {
   struct A {
-    void foo(int) __attribute__((deprecated)); // expected-note 2 {{declared here}}
+    void foo(int) __attribute__((deprecated)); // expected-note 2 {{'foo' has been explicitly marked deprecated here}}
     void foo(long);
-    static void bar(int) __attribute__((deprecated)); // expected-note 3 {{declared here}}
+    static void bar(int) __attribute__((deprecated)); // expected-note 3 {{'bar' has been explicitly marked deprecated here}}
     static void bar(long);
 
     void test2(int i, long l);
@@ -120,12 +120,12 @@ namespace test2 {
 namespace test3 {
   struct A {
     void operator*(const A &);
-    void operator*(int) __attribute__((deprecated)); // expected-note {{declared here}}
+    void operator*(int) __attribute__((deprecated)); // expected-note {{'operator*' has been explicitly marked deprecated here}}
     void operator-(const A &) const;
   };
   void operator+(const A &, const A &);
-  void operator+(const A &, int) __attribute__((deprecated)); // expected-note {{declared here}}
-  void operator-(const A &, int) __attribute__((deprecated)); // expected-note {{declared here}}
+  void operator+(const A &, int) __attribute__((deprecated)); // expected-note {{'operator+' has been explicitly marked deprecated here}}
+  void operator-(const A &, int) __attribute__((deprecated)); // expected-note {{'operator-' has been explicitly marked deprecated here}}
 
   void test() {
     A a, b;
@@ -143,9 +143,9 @@ namespace test4 {
   struct A {
     typedef void (*intfn)(int);
     typedef void (*unintfn)(unsigned);
-    operator intfn() __attribute__((deprecated)); // expected-note {{declared here}}
+    operator intfn() __attribute__((deprecated)); // expected-note {{'operator void (*)(int)' has been explicitly marked deprecated here}}
     operator unintfn();
-    void operator ()(A &) __attribute__((deprecated)); // expected-note {{declared here}}
+    void operator ()(A &) __attribute__((deprecated)); // expected-note {{'operator()' has been explicitly marked deprecated here}}
     void operator ()(const A &);
   };
 
@@ -163,7 +163,7 @@ namespace test4 {
 
 namespace test5 {
   struct A {
-    operator int() __attribute__((deprecated)); // expected-note 3 {{declared here}}
+    operator int() __attribute__((deprecated)); // expected-note 3 {{'operator int' has been explicitly marked deprecated here}}
     operator long();
   };
   void test1(A a) {
@@ -193,8 +193,8 @@ namespace test5 {
 
 // rdar://problem/8518751
 namespace test6 {
-  enum __attribute__((deprecated)) A { // expected-note {{declared here}}
-    a0 // expected-note {{declared here}}
+  enum __attribute__((deprecated)) A { // expected-note {{'A' has been explicitly marked deprecated here}}
+    a0 // expected-note {{'a0' has been explicitly marked deprecated here}}
   };
   void testA() {
     A x; // expected-warning {{'A' is deprecated}}
@@ -202,7 +202,7 @@ namespace test6 {
   }
   
   enum B {
-    b0 __attribute__((deprecated)), // expected-note {{declared here}}
+    b0 __attribute__((deprecated)), // expected-note {{'b0' has been explicitly marked deprecated here}}
     b1
   };
   void testB() {
@@ -212,8 +212,8 @@ namespace test6 {
   }
 
   template <class T> struct C {
-    enum __attribute__((deprecated)) Enum { // expected-note {{declared here}}
-      c0 // expected-note {{declared here}}
+    enum __attribute__((deprecated)) Enum { // expected-note {{'Enum' has been explicitly marked deprecated here}}
+      c0 // expected-note {{'c0' has been explicitly marked deprecated here}}
     };
   };
   void testC() {
@@ -224,7 +224,7 @@ namespace test6 {
   template <class T> struct D {
     enum Enum {
       d0,
-      d1 __attribute__((deprecated)), // expected-note {{declared here}}
+      d1 __attribute__((deprecated)), // expected-note {{'d1' has been explicitly marked deprecated here}}
     };
   };
   void testD() {
@@ -236,8 +236,8 @@ namespace test6 {
 
 namespace test7 {
   struct X {
-    void* operator new(typeof(sizeof(void*))) __attribute__((deprecated));  // expected-note{{'operator new' declared here}}
-    void operator delete(void *) __attribute__((deprecated));  // expected-note{{'operator delete' declared here}}
+    void* operator new(typeof(sizeof(void*))) __attribute__((deprecated));  // expected-note{{'operator new' has been explicitly marked deprecated here}}
+    void operator delete(void *) __attribute__((deprecated));  // expected-note{{'operator delete' has been explicitly marked deprecated here}}
   };
 
   void test() {
@@ -247,6 +247,6 @@ namespace test7 {
 
 // rdar://problem/15044218
 typedef struct TDS {
-} TDS __attribute__((deprecated)); // expected-note {{'TDS' declared here}}
+} TDS __attribute__((deprecated)); // expected-note {{'TDS' has been explicitly marked deprecated here}}
 TDS tds; // expected-warning {{'TDS' is deprecated}}
 struct TDS tds2; // no warning, attribute only applies to the typedef.

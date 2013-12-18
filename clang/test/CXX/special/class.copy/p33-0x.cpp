@@ -27,7 +27,7 @@ namespace PR10142 {
   struct X {
     X();
     X(X&&);
-    X(const X&) = delete; // expected-note 2{{function has been explicitly marked deleted here}}
+    X(const X&) = delete; // expected-note 2{{'X' has been explicitly marked deleted here}}
   };
 
   void f(int i) {

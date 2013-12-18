@@ -6,7 +6,7 @@ namespace test0 {
     int x;
     int y;
 
-    A(const A&) = delete; // expected-note {{function has been explicitly marked deleted here}}
+    A(const A&) = delete; // expected-note {{'A' has been explicitly marked deleted here}}
   };
 
   void foo(...);

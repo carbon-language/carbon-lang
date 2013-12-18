@@ -2,10 +2,10 @@
 
 void f0(int) __attribute__((availability(macosx,introduced=10.4,deprecated=10.6)));
 void f1(int) __attribute__((availability(macosx,introduced=10.5)));
-void f2(int) __attribute__((availability(macosx,introduced=10.4,deprecated=10.5))); // expected-note {{'f2' declared here}}
+void f2(int) __attribute__((availability(macosx,introduced=10.4,deprecated=10.5))); // expected-note {{'f2' has been explicitly marked deprecated here}}
 void f3(int) __attribute__((availability(macosx,introduced=10.6)));
 void f4(int) __attribute__((availability(macosx,introduced=10.1,deprecated=10.3,obsoleted=10.5), availability(ios,introduced=2.0,deprecated=3.0))); // expected-note{{explicitly marked unavailable}}
-void f5(int) __attribute__((availability(ios,introduced=3.2), availability(macosx,unavailable))); // expected-note{{function has been explicitly marked unavailable here}}
+void f5(int) __attribute__((availability(ios,introduced=3.2), availability(macosx,unavailable))); // expected-note{{'f5' has been explicitly marked unavailable here}}
 
 void test() {
   f0(0);

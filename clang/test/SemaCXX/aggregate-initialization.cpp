@@ -49,7 +49,7 @@ struct A {
   A(int);
   ~A();
   
-  A(const A&) = delete; // expected-note 2 {{function has been explicitly marked deleted here}}
+  A(const A&) = delete; // expected-note 2 {{'A' has been explicitly marked deleted here}}
 };
 
 struct B {

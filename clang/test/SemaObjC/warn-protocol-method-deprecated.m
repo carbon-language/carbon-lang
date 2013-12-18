@@ -3,7 +3,7 @@
 
 @protocol TestProtocol 
 - (void)newProtocolMethod;
-- (void)deprecatedProtocolMethod __attribute__((deprecated)); // expected-note 2 {{method 'deprecatedProtocolMethod' declared here}}
+- (void)deprecatedProtocolMethod __attribute__((deprecated)); // expected-note 2 {{'deprecatedProtocolMethod' has been explicitly marked deprecated here}}
 @end
 
 @interface NSObject @end
@@ -11,7 +11,7 @@
 @interface TestClass : NSObject <TestProtocol>
 
 - (void)newInstanceMethod;
-- (void)deprecatedInstanceMethod __attribute__((deprecated)); // expected-note {{method 'deprecatedInstanceMethod' declared here}}
+- (void)deprecatedInstanceMethod __attribute__((deprecated)); // expected-note {{'deprecatedInstanceMethod' has been explicitly marked deprecated here}}
 
 @end
 

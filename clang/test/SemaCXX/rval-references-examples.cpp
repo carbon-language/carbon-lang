@@ -4,7 +4,7 @@ template<typename T>
 class unique_ptr {
   T *ptr;
 
-  unique_ptr(const unique_ptr&) = delete; // expected-note 3{{function has been explicitly marked deleted here}}
+  unique_ptr(const unique_ptr&) = delete; // expected-note 3{{'unique_ptr' has been explicitly marked deleted here}}
   unique_ptr &operator=(const unique_ptr&) = delete; // expected-note{{candidate function has been explicitly deleted}}
 public:
   unique_ptr() : ptr(0) { }

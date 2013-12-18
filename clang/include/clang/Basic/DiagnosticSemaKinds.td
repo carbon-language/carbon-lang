@@ -3527,8 +3527,8 @@ def err_unavailable : Error<"%0 is unavailable">;
 def err_unavailable_message : Error<"%0 is unavailable: %1">;
 def warn_unavailable_fwdclass_message : Warning<
     "%0 maybe unavailable because receiver type is unknown">;
-def note_unavailable_here : Note<
-  "%select{declaration|function}0 has been explicitly marked "
+def note_availability_specified_here : Note<
+  "%0 has been explicitly marked "
   "%select{unavailable|deleted|deprecated}1 here">;
 def note_implicitly_deleted : Note<
   "explicitly defaulted function was implicitly deleted here">;

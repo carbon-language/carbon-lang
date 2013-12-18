@@ -4,30 +4,30 @@
 @interface B
 - (void) depInA;
 - (void) unavailMeth __attribute__((unavailable)); // expected-note {{has been explicitly marked unavailable here}}
-- (void) depInA1 __attribute__((deprecated));
+- (void) depInA1 __attribute__((deprecated)); // expected-note {{'depInA1' has been explicitly marked deprecated here}}
 - (void) unavailMeth1;
-- (void) depInA2 __attribute__((deprecated));
+- (void) depInA2 __attribute__((deprecated)); // expected-note {{'depInA2' has been explicitly marked deprecated here}}
 - (void) unavailMeth2 __attribute__((unavailable)); // expected-note {{has been explicitly marked unavailable here}}
 - (void) depunavailInA;
 - (void) depunavailInA1 __attribute__((deprecated)) __attribute__((unavailable)); // expected-note {{has been explicitly marked unavailable here}}
-- (void)FuzzyMeth __attribute__((deprecated));
+- (void)FuzzyMeth __attribute__((deprecated)); // expected-note {{'FuzzyMeth' has been explicitly marked deprecated here}}
 - (void)FuzzyMeth1 __attribute__((unavailable));
 @end
 
 @interface A
 - (void) unavailMeth1 __attribute__((unavailable)); // expected-note {{has been explicitly marked unavailable here}}
-- (void) depInA __attribute__((deprecated));
+- (void) depInA __attribute__((deprecated)); // expected-note {{'depInA' has been explicitly marked deprecated here}}
 - (void) depInA2 __attribute__((deprecated));
 - (void) depInA1;
 - (void) unavailMeth2 __attribute__((unavailable)); 
 - (void) depunavailInA __attribute__((deprecated)) __attribute__((unavailable)); // expected-note {{has been explicitly marked unavailable here}}
 - (void) depunavailInA1;
 - (void)FuzzyMeth __attribute__((unavailable));
-- (void)FuzzyMeth1 __attribute__((deprecated));
+- (void)FuzzyMeth1 __attribute__((deprecated)); // expected-note {{'FuzzyMeth1' has been explicitly marked deprecated here}}
 @end
 
 
-@class C;	// expected-note 5 {{forward declaration of class here}}
+@class C;	// expected-note 10 {{forward declaration of class here}}
 
 void test(C *c) {
   [c depInA]; // expected-warning {{'depInA' maybe deprecated because receiver type is unknown}}
@@ -45,7 +45,7 @@ void test(C *c) {
 
 // rdar://10268422
 __attribute ((deprecated))
-@interface DEPRECATED // expected-note {{declared here}}
+@interface DEPRECATED // expected-note {{'DEPRECATED' has been explicitly marked deprecated here}}
 +(id)new;
 @end
 

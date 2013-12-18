@@ -4477,9 +4477,11 @@ void Sema::PopParsingDeclaration(ParsingDeclState state, Decl *decl) {
 
       switch (diag.Kind) {
       case DelayedDiagnostic::Deprecation:
-        // Don't bother giving deprecation diagnostics if the decl is invalid.
+      case DelayedDiagnostic::Unavailable:
+        // Don't bother giving deprecation/unavailable diagnostics if
+        // the decl is invalid.
         if (!decl->isInvalidDecl())
-          HandleDelayedDeprecationCheck(diag, decl);
+          HandleDelayedAvailabilityCheck(diag, decl);
         break;
 
       case DelayedDiagnostic::Access:
@@ -4514,61 +4516,124 @@ static bool isDeclDeprecated(Decl *D) {
   return false;
 }
 
+static bool isDeclUnavailable(Decl *D) {
+  do {
+    if (D->isUnavailable())
+      return true;
+    // A category implicitly has the availability of the interface.
+    if (const ObjCCategoryDecl *CatD = dyn_cast<ObjCCategoryDecl>(D))
+      return CatD->getClassInterface()->isUnavailable();
+  } while ((D = cast_or_null<Decl>(D->getDeclContext())));
+  return false;
+}
+
 static void
-DoEmitDeprecationWarning(Sema &S, const NamedDecl *D, StringRef Message,
-                         SourceLocation Loc,
-                         const ObjCInterfaceDecl *UnknownObjCClass,
-                         const ObjCPropertyDecl *ObjCPropery) {
+DoEmitAvailabilityWarning(Sema &S,
+                          DelayedDiagnostic::DDKind K,
+                          Decl *Ctx,
+                          const NamedDecl *D,
+                          StringRef Message,
+                          SourceLocation Loc,
+                          const ObjCInterfaceDecl *UnknownObjCClass,
+                          const ObjCPropertyDecl *ObjCProperty) {
+
+  // Diagnostics for deprecated or unavailable.
+  unsigned diag, diag_message, diag_fwdclass_message;
+
+  // Matches 'diag::note_property_attribute' options.
+  unsigned property_note_select;
+
+  // Matches diag::note_availability_specified_here.
+  unsigned available_here_select_kind;
+
+  // Don't warn if our current context is deprecated or unavailable.
+  switch (K) {
+    case DelayedDiagnostic::Deprecation:
+      if (isDeclDeprecated(Ctx))
+        return;
+      diag = diag::warn_deprecated;
+      diag_message = diag::warn_deprecated_message;
+      diag_fwdclass_message = diag::warn_deprecated_fwdclass_message;
+      property_note_select = /* deprecated */ 0;
+      available_here_select_kind = /* deprecated */ 2;
+      break;
+
+    case DelayedDiagnostic::Unavailable:
+      if (isDeclUnavailable(Ctx))
+        return;
+      diag = diag::err_unavailable;
+      diag_message = diag::err_unavailable_message;
+      diag_fwdclass_message = diag::warn_unavailable_fwdclass_message;
+      property_note_select = /* unavailable */ 1;
+      available_here_select_kind = /* unavailable */ 0;
+      break;
+
+    default:
+      llvm_unreachable("Neither a deprecation or unavailable kind");
+  }
+
   DeclarationName Name = D->getDeclName();
   if (!Message.empty()) {
-    S.Diag(Loc, diag::warn_deprecated_message) << Name << Message;
-    S.Diag(D->getLocation(),
-           isa<ObjCMethodDecl>(D) ? diag::note_method_declared_at
-                                  : diag::note_previous_decl) << Name;
-    if (ObjCPropery)
-      S.Diag(ObjCPropery->getLocation(), diag::note_property_attribute)
-        << ObjCPropery->getDeclName() << 0;
+    S.Diag(Loc, diag_message) << Name << Message;
+//    S.Diag(D->getLocation(), diag::note_availability_specified_here)
+//      << D << available_here_select_kind;
+    if (ObjCProperty)
+      S.Diag(ObjCProperty->getLocation(), diag::note_property_attribute)
+        << ObjCProperty->getDeclName() << property_note_select;
   } else if (!UnknownObjCClass) {
-    S.Diag(Loc, diag::warn_deprecated) << D->getDeclName();
-    S.Diag(D->getLocation(),
-           isa<ObjCMethodDecl>(D) ? diag::note_method_declared_at
-                                  : diag::note_previous_decl) << Name;
-    if (ObjCPropery)
-      S.Diag(ObjCPropery->getLocation(), diag::note_property_attribute)
-        << ObjCPropery->getDeclName() << 0;
+    S.Diag(Loc, diag) << Name;
+//    S.Diag(D->getLocation(), diag::note_availability_specified_here)
+//      << D << available_here_select_kind;
+    if (ObjCProperty)
+      S.Diag(ObjCProperty->getLocation(), diag::note_property_attribute)
+        << ObjCProperty->getDeclName() << property_note_select;
   } else {
-    S.Diag(Loc, diag::warn_deprecated_fwdclass_message) << Name;
+    S.Diag(Loc, diag_fwdclass_message) << Name;
     S.Diag(UnknownObjCClass->getLocation(), diag::note_forward_class);
   }
+
+  S.Diag(D->getLocation(), diag::note_availability_specified_here)
+    << D << available_here_select_kind;
 }
 
-void Sema::HandleDelayedDeprecationCheck(DelayedDiagnostic &DD,
-                                         Decl *Ctx) {
-  if (isDeclDeprecated(Ctx))
-    return;
-
+void Sema::HandleDelayedAvailabilityCheck(DelayedDiagnostic &DD,
+                                          Decl *Ctx) {
   DD.Triggered = true;
-  DoEmitDeprecationWarning(*this, DD.getDeprecationDecl(),
-                           DD.getDeprecationMessage(), DD.Loc,
-                           DD.getUnknownObjCClass(),
-                           DD.getObjCProperty());
+  DoEmitAvailabilityWarning(*this,
+                            (DelayedDiagnostic::DDKind) DD.Kind,
+                            Ctx,
+                            DD.getDeprecationDecl(),
+                            DD.getDeprecationMessage(),
+                            DD.Loc,
+                            DD.getUnknownObjCClass(),
+                            DD.getObjCProperty());
 }
 
-void Sema::EmitDeprecationWarning(NamedDecl *D, StringRef Message,
-                                  SourceLocation Loc,
-                                  const ObjCInterfaceDecl *UnknownObjCClass,
-                                  const ObjCPropertyDecl  *ObjCProperty) {
+void Sema::EmitAvailabilityWarning(AvailabilityDiagnostic AD,
+                                   NamedDecl *D, StringRef Message,
+                                   SourceLocation Loc,
+                                   const ObjCInterfaceDecl *UnknownObjCClass,
+                                   const ObjCPropertyDecl  *ObjCProperty) {
   // Delay if we're currently parsing a declaration.
   if (DelayedDiagnostics.shouldDelayDiagnostics()) {
-    DelayedDiagnostics.add(DelayedDiagnostic::makeDeprecation(Loc, D, 
-                                                              UnknownObjCClass,
-                                                              ObjCProperty,
-                                                              Message));
+    DelayedDiagnostics.add(DelayedDiagnostic::makeAvailability(AD, Loc, D,
+                                                               UnknownObjCClass,
+                                                               ObjCProperty,
+                                                               Message));
     return;
   }
 
-  // Otherwise, don't warn if our current context is deprecated.
-  if (isDeclDeprecated(cast<Decl>(getCurLexicalContext())))
-    return;
-  DoEmitDeprecationWarning(*this, D, Message, Loc, UnknownObjCClass, ObjCProperty);
+  Decl *Ctx = cast<Decl>(getCurLexicalContext());
+  DelayedDiagnostic::DDKind K;
+  switch (AD) {
+    case AD_Deprecation:
+      K = DelayedDiagnostic::Deprecation;
+      break;
+    case AD_Unavailable:
+      K = DelayedDiagnostic::Unavailable;
+      break;
+  }
+
+  DoEmitAvailabilityWarning(*this, K, Ctx, D, Message, Loc,
+                            UnknownObjCClass, ObjCProperty);
 }

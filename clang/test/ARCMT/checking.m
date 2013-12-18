@@ -44,9 +44,9 @@ struct UnsafeS {
 };
 
 @interface A : NSObject
-- (id)retain; // expected-note {{declaration has been explicitly marked unavailable here}}
-- (id)retainCount; // expected-note {{declaration has been explicitly marked unavailable here}}
-- (id)autorelease; // expected-note 2 {{declaration has been explicitly marked unavailable here}}
+- (id)retain; // expected-note {{'retain' has been explicitly marked unavailable here}}
+- (id)retainCount; // expected-note {{'retainCount' has been explicitly marked unavailable here}}
+- (id)autorelease; // expected-note 2 {{'autorelease' has been explicitly marked unavailable here}}
 - (id)init;
 - (oneway void)release;
 - (void)dealloc;

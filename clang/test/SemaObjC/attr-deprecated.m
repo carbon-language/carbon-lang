@@ -2,10 +2,10 @@
 // RUN: %clang_cc1 -x objective-c++ -fsyntax-only -verify -Wno-objc-root-class %s
 
 @interface A {
-  int X __attribute__((deprecated)); // expected-note 2 {{declared here}}
+  int X __attribute__((deprecated)); // expected-note 2 {{'X' has been explicitly marked deprecated here}}
 }
-+ (void)F __attribute__((deprecated)); // expected-note 2 {{declared here}}
-- (void)f __attribute__((deprecated)); // expected-note 4 {{declared here}}
++ (void)F __attribute__((deprecated)); // expected-note 2 {{'F' has been explicitly marked deprecated here}}
+- (void)f __attribute__((deprecated)); // expected-note 4 {{'f' has been explicitly marked deprecated here}}
 @end
 
 @implementation A
@@ -43,7 +43,7 @@
 @end
 
 @protocol P
-- (void)p __attribute__((deprecated)); // expected-note {{declared here}}
+- (void)p __attribute__((deprecated)); // expected-note {{'p' has been explicitly marked deprecated here}}
 @end
 
 void t1(A *a)
@@ -72,7 +72,7 @@ void t4(Class c)
 
 @interface Bar 
 
-@property (assign, setter = MySetter:) int FooBar __attribute__ ((deprecated)); // expected-note 2 {{declared here}}
+@property (assign, setter = MySetter:) int FooBar __attribute__ ((deprecated)); // expected-note 2 {{'FooBar' has been explicitly marked deprecated here}}
 - (void) MySetter : (int) value;
 @end
 
@@ -84,7 +84,7 @@ int t5() {
 
 
 __attribute ((deprecated))  
-@interface DEPRECATED { // expected-note 2 {{declared here}}
+@interface DEPRECATED { // expected-note 2 {{'DEPRECATED' has been explicitly marked deprecated here}}
   @public int ivar; 
   DEPRECATED *ivar2; // no warning.
 } 
@@ -108,8 +108,8 @@ __attribute ((deprecated))
 
 
 @interface Test2
-@property int test2 __attribute__((deprecated)); // expected-note 4 {{declared here}} \
-						 // expected-note 2 {{property 'test2' is declared deprecated here}}
+@property int test2 __attribute__((deprecated)); // expected-note 2 {{property 'test2' is declared deprecated here}} expected-note 3 {{'test2' has been explicitly marked deprecated here}} \
+						 // expected-note {{'setTest2:' has been explicitly marked deprecated here}}
 @end
 
 void test(Test2 *foo) {
@@ -127,7 +127,7 @@ __attribute__((deprecated))
 
 typedef struct {
 	int x;
-} footype __attribute((deprecated)); // expected-note 2 {{declared here}}
+} footype __attribute((deprecated)); // expected-note 2 {{'footype' has been explicitly marked deprecated here}}
 
 @interface foo {
 	footype a; // expected-warning {{'footype' is deprecated}}
@@ -142,7 +142,7 @@ typedef struct {
 +(void)cmeth;
 @end
 
-typedef NewI DeprI __attribute__((deprecated("blah"))); // expected-note 4 {{'DeprI' declared here}}
+typedef NewI DeprI __attribute__((deprecated("blah"))); // expected-note 4 {{'DeprI' has been explicitly marked deprecated here}}
 
 @interface SI : DeprI // expected-warning {{'DeprI' is deprecated: blah}}
 -(DeprI*)meth; // expected-warning {{'DeprI' is deprecated: blah}}

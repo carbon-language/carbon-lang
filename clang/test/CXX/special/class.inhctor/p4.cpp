@@ -43,8 +43,8 @@ FA fa2{X<2>{}}; // expected-error {{calling a private constructor}}
 
 // It is deleted if the corresponding constructor [...] is deleted.
 struct G {
-  G(int) = delete; // expected-note {{function has been explicitly marked deleted here}}
-  template<typename T> G(T*) = delete; // expected-note {{function has been explicitly marked deleted here}}
+  G(int) = delete; // expected-note {{'G' has been explicitly marked deleted here}}
+  template<typename T> G(T*) = delete; // expected-note {{'G<const char>' has been explicitly marked deleted here}}
 };
 struct H : G {
   using G::G; // expected-note 2{{deleted constructor was inherited here}}

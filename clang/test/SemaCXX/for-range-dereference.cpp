@@ -11,7 +11,7 @@ struct NoBegin {
 
 struct DeletedEnd : public T {
   Data *begin();
-  Data *end() = delete; //expected-note {{function has been explicitly marked deleted here}}
+  Data *end() = delete; //expected-note {{'end' has been explicitly marked deleted here}}
 };
 
 struct DeletedADLBegin { };

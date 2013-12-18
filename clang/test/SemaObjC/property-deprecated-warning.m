@@ -5,7 +5,7 @@
 typedef signed char BOOL;
 
 @protocol P
-@property(nonatomic,assign) id ptarget __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{property 'ptarget' is declared deprecated here}} expected-note {{method 'ptarget' declared here}}
+@property(nonatomic,assign) id ptarget __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{property 'ptarget' is declared deprecated here}} expected-note {{'ptarget' has been explicitly marked deprecated here}}
 @end
 
 @protocol P1<P>
@@ -14,7 +14,7 @@ typedef signed char BOOL;
 
 
 @interface UITableViewCell<P1>
-@property(nonatomic,assign) id target __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{property 'target' is declared deprecated here}} expected-note {{method 'setTarget:' declared here}}
+@property(nonatomic,assign) id target __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{property 'target' is declared deprecated here}} expected-note {{'setTarget:' has been explicitly marked deprecated here}}
 @end
 
 @interface PSTableCell : UITableViewCell
@@ -22,9 +22,9 @@ typedef signed char BOOL;
 @end
 
 @interface UITableViewCell(UIDeprecated)
-@property(nonatomic,assign) id dep_target  __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note 2 {{method 'dep_target' declared here}} \
+@property(nonatomic,assign) id dep_target  __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note 2 {{'dep_target' has been explicitly marked deprecated here}} \
                                                                                     // expected-note 4 {{property 'dep_target' is declared deprecated here}} \
-                                                                                    // expected-note 2 {{method 'setDep_target:' declared here}}
+                                                                                    // expected-note 2 {{'setDep_target:' has been explicitly marked deprecated here}}
 @end
 
 @implementation PSTableCell
@@ -55,9 +55,9 @@ typedef signed char BOOL;
 
 
 @interface CustomAccessorNames
-@property(getter=isEnabled,assign) BOOL enabled __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{method 'isEnabled' declared here}} expected-note {{property 'enabled' is declared deprecated here}}
+@property(getter=isEnabled,assign) BOOL enabled __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{'isEnabled' has been explicitly marked deprecated here}} expected-note {{property 'enabled' is declared deprecated here}}
 
-@property(setter=setNewDelegate:,assign) id delegate __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{method 'setNewDelegate:' declared here}} expected-note {{property 'delegate' is declared deprecated here}}
+@property(setter=setNewDelegate:,assign) id delegate __attribute__((availability(ios,introduced=2.0,deprecated=3.0))); // expected-note {{'setNewDelegate:' has been explicitly marked deprecated here}} expected-note {{property 'delegate' is declared deprecated here}}
 @end
 
 void testCustomAccessorNames(CustomAccessorNames *obj) {

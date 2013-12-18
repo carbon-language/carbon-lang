@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -triple i686-pc-win32 -cxx-abi microsoft -std=c++11 -verify %s
 
 struct S {
-  virtual ~S() = delete; // expected-note {{function has been explicitly marked deleted here}}
+  virtual ~S() = delete; // expected-note {{'~S' has been explicitly marked deleted here}}
   void operator delete(void*, int);
   void operator delete(void*, double);
 } s; // expected-error {{attempt to use a deleted function}}

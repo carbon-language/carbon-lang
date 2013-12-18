@@ -6,4 +6,4 @@ void f(A* a) {
   a->data.void_ptr = 0;
   a->data.a_b.b = 0; // expected-error{{'a_b' is unavailable: this system field has retaining ownership}}
 }
-// expected-note@arc-system-header.h:10{{declaration has been explicitly marked unavailable here}}
+// expected-note@arc-system-header.h:10{{'a_b' has been explicitly marked unavailable here}}

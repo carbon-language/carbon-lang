@@ -113,7 +113,7 @@ private:
 /// the complete parsing of the current declaration.
 class DelayedDiagnostic {
 public:
-  enum DDKind { Deprecation, Access, ForbiddenType };
+  enum DDKind { Deprecation, Unavailable, Access, ForbiddenType };
 
   unsigned char Kind; // actually a DDKind
   bool Triggered;
@@ -122,11 +122,13 @@ public:
 
   void Destroy();
 
-  static DelayedDiagnostic makeDeprecation(SourceLocation Loc,
-           const NamedDecl *D,
-           const ObjCInterfaceDecl *UnknownObjCClass,
-           const ObjCPropertyDecl  *ObjCProperty,
-           StringRef Msg);
+  static DelayedDiagnostic makeAvailability(Sema::AvailabilityDiagnostic AD,
+                                            SourceLocation Loc,
+                                            const NamedDecl *D,
+                                            const ObjCInterfaceDecl *UnknownObjCClass,
+                                            const ObjCPropertyDecl  *ObjCProperty,
+                                            StringRef Msg);
+
 
   static DelayedDiagnostic makeAccess(SourceLocation Loc,
                                       const AccessedEntity &Entity) {
@@ -162,12 +164,14 @@ public:
   }
 
   const NamedDecl *getDeprecationDecl() const {
-    assert(Kind == Deprecation && "Not a deprecation diagnostic.");
+    assert((Kind == Deprecation || Kind == Unavailable) &&
+           "Not a deprecation diagnostic.");
     return DeprecationData.Decl;
   }
 
   StringRef getDeprecationMessage() const {
-    assert(Kind == Deprecation && "Not a deprecation diagnostic.");
+    assert((Kind == Deprecation || Kind == Unavailable) &&
+           "Not a deprecation diagnostic.");
     return StringRef(DeprecationData.Message,
                            DeprecationData.MessageLen);
   }

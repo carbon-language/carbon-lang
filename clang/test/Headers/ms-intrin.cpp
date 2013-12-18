@@ -18,7 +18,7 @@ void bar() {
   _WriteBarrier();      // expected-warning {{is deprecated: use other intrinsics or C++11 atomics instead}}
   // FIXME: It'd be handy if we didn't have to hardcode the line number in
   // intrin.h.
-  // expected-note@Intrin.h:754 {{declared here}}
-  // expected-note@Intrin.h:759 {{declared here}}
-  // expected-note@Intrin.h:764 {{declared here}}
+  // expected-note@Intrin.h:754 {{'_ReadWriteBarrier' has been explicitly marked deprecated here}}
+  // expected-note@Intrin.h:759 {{'_ReadBarrier' has been explicitly marked deprecated here}}
+  // expected-note@Intrin.h:764 {{'_WriteBarrier' has been explicitly marked deprecated here}}
 }

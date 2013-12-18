@@ -3083,12 +3083,15 @@ public:
 
   void redelayDiagnostics(sema::DelayedDiagnosticPool &pool);
 
-  void EmitDeprecationWarning(NamedDecl *D, StringRef Message,
-                              SourceLocation Loc,
-                              const ObjCInterfaceDecl *UnknownObjCClass,
-                              const ObjCPropertyDecl  *ObjCProperty);
+  enum AvailabilityDiagnostic { AD_Deprecation, AD_Unavailable };
 
-  void HandleDelayedDeprecationCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
+  void EmitAvailabilityWarning(AvailabilityDiagnostic AD,
+                               NamedDecl *D, StringRef Message,
+                               SourceLocation Loc,
+                               const ObjCInterfaceDecl *UnknownObjCClass,
+                               const ObjCPropertyDecl  *ObjCProperty);
+
+  void HandleDelayedAvailabilityCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
 
   bool makeUnavailableInSystemHeader(SourceLocation loc,
                                      StringRef message);

@@ -38,7 +38,7 @@ void t4() {
   __attribute((cleanup(c4))) void* g;
 }
 
-void c5(void*) __attribute__((deprecated));  // expected-note{{'c5' declared here}}
+void c5(void*) __attribute__((deprecated));  // expected-note{{'c5' has been explicitly marked deprecated here}}
 void t5() {
   int i __attribute__((cleanup(c5)));  // expected-warning {{'c5' is deprecated}}
 }

@@ -1,11 +1,11 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9.0.0 -fsyntax-only -verify %s
 
 @protocol P
-- (void)proto_method __attribute__((availability(macosx,introduced=10.1,deprecated=10.2))); // expected-note 2 {{method 'proto_method' declared here}}
+- (void)proto_method __attribute__((availability(macosx,introduced=10.1,deprecated=10.2))); // expected-note 2 {{'proto_method' has been explicitly marked deprecated here}}
 @end
 
 @interface A <P>
-- (void)method __attribute__((availability(macosx,introduced=10.1,deprecated=10.2))); // expected-note {{method 'method' declared here}}
+- (void)method __attribute__((availability(macosx,introduced=10.1,deprecated=10.2))); // expected-note {{'method' has been explicitly marked deprecated here}}
 
 - (void)overridden __attribute__((availability(macosx,introduced=10.3))); // expected-note{{overridden method is here}}
 - (void)overridden2 __attribute__((availability(macosx,introduced=10.3)));
@@ -37,7 +37,7 @@ void f(A *a, B *b) {
 // using a deprecated method when that method is re-implemented in a
 // subclass where the redeclared method is not deprecated.
 @interface C
-- (void) method __attribute__((availability(macosx,introduced=10.1,deprecated=10.2))); // expected-note {{method 'method' declared here}}
+- (void) method __attribute__((availability(macosx,introduced=10.1,deprecated=10.2))); // expected-note {{'method' has been explicitly marked deprecated here}}
 @end
 
 @interface D : C
