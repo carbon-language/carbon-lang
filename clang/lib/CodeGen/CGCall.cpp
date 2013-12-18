@@ -123,7 +123,7 @@ CodeGenTypes::arrangeFreeFunctionType(CanQual<FunctionProtoType> FTP) {
   return ::arrangeFreeFunctionType(*this, argTypes, FTP);
 }
 
-static CallingConv getCallingConventionForDecl(const Decl *D) {
+static CallingConv getCallingConventionForDecl(const Decl *D, bool IsWindows) {
   // Set the appropriate calling convention for the Function.
   if (D->hasAttr<StdCallAttr>())
     return CC_X86StdCall;
@@ -145,6 +145,12 @@ static CallingConv getCallingConventionForDecl(const Decl *D) {
 
   if (D->hasAttr<IntelOclBiccAttr>())
     return CC_IntelOclBicc;
+
+  if (D->hasAttr<MSABIAttr>())
+    return IsWindows ? CC_C : CC_X86_64Win64;
+
+  if (D->hasAttr<SysVABIAttr>())
+    return IsWindows ? CC_X86_64SysV : CC_C;
 
   return CC_C;
 }
@@ -293,7 +299,8 @@ CodeGenTypes::arrangeObjCMessageSendSignature(const ObjCMethodDecl *MD,
   }
 
   FunctionType::ExtInfo einfo;
-  einfo = einfo.withCallingConv(getCallingConventionForDecl(MD));
+  bool IsWindows = getContext().getTargetInfo().getTriple().isOSWindows();
+  einfo = einfo.withCallingConv(getCallingConventionForDecl(MD, IsWindows));
 
   if (getContext().getLangOpts().ObjCAutoRefCount &&
       MD->hasAttr<NSReturnsRetainedAttr>())

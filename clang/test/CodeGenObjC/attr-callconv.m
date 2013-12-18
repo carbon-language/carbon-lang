@@ -5,7 +5,9 @@
 @end
 
 @implementation Test
-- (void)test __attribute__((stdcall)) {
+- (void)test __attribute__((stdcall)) {}
     // CHECK: define{{.*}}x86_stdcallcc{{.*}}Test test
-}
+    
+- (void)test2 __attribute__((ms_abi)) {}
+    // CHECK: define{{.*}}x86_64_win64cc{{.*}}Test test2
 @end
