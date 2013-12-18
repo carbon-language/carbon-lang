@@ -59,6 +59,8 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/DiagnosticPrinter.h"
 
 #define DEBUG_TYPE "polly-detect"
 #include "llvm/Support/Debug.h"
@@ -155,6 +157,43 @@ BADSCOP_STAT(AffFunc, "Expression not affine");
 BADSCOP_STAT(Alias, "Found base address alias");
 BADSCOP_STAT(SimpleLoop, "Loop not in -loop-simplify form");
 BADSCOP_STAT(Other, "Others");
+
+class DiagnosticScopFound : public DiagnosticInfo {
+private:
+  static int PluginDiagnosticKind;
+
+  Function &F;
+  std::string FileName;
+  unsigned EntryLine, ExitLine;
+
+public:
+  DiagnosticScopFound(Function &F, std::string FileName, unsigned EntryLine, unsigned ExitLine)
+      : DiagnosticInfo(PluginDiagnosticKind, DS_Note), F(F), FileName(FileName),
+   EntryLine(EntryLine), ExitLine(ExitLine) {}
+
+  virtual void print(DiagnosticPrinter &DP) const;
+
+  static bool classof(const DiagnosticInfo *DI) {
+    return DI->getKind() == PluginDiagnosticKind;
+  }
+};
+
+int DiagnosticScopFound::PluginDiagnosticKind = 10;
+
+
+void DiagnosticScopFound::print(DiagnosticPrinter &DP) const {
+
+  DP << "Polly detected an optimizable loop region (scop) in function '" << F << "'\n";
+
+  if (FileName.empty()) {
+    DP << "Scop location is unknown. Compile with debug info "
+          "(-g) to get more precise information. ";
+      return;
+  }
+
+  DP << FileName << ":" << EntryLine << ": Start of scop\n";
+  DP << FileName << ":" << ExitLine << ": End of scop";
+}
 
 //===----------------------------------------------------------------------===//
 // ScopDetection.
@@ -658,31 +697,17 @@ void ScopDetection::getDebugLocation(const Region *R, unsigned &LineBegin,
 
       LineBegin = std::min(LineBegin, NewLine);
       LineEnd = std::max(LineEnd, NewLine);
-      break;
     }
 }
 
 void ScopDetection::printLocations(llvm::Function &F) {
-  int NumberOfScops = std::distance(begin(), end());
-
-  if (NumberOfScops)
-    outs() << ":: Static control regions in " << F.getName() << "\n";
-
   for (iterator RI = begin(), RE = end(); RI != RE; ++RI) {
     unsigned LineEntry, LineExit;
     std::string FileName;
 
     getDebugLocation(*RI, LineEntry, LineExit, FileName);
-
-    if (FileName.empty()) {
-      outs() << "Scop detected at unknown location. Compile with debug info "
-                "(-g) to get more precise information. \n";
-      return;
-    }
-
-    outs() << FileName << ":" << LineEntry
-           << ": Start of static control region\n";
-    outs() << FileName << ":" << LineExit << ": End of static control region\n";
+    DiagnosticScopFound Diagnostic(F, FileName, LineEntry, LineExit);
+    F.getContext().diagnose(Diagnostic);
   }
 }
 
