@@ -506,7 +506,7 @@ namespace llvm {
     /// @param Ty          Variable Type
     /// @param AlwaysPreserve Boolean. Set to true if debug info for this
     ///                       variable should be preserved in optimized build.
-    /// @param Flags          Flags, e.g. artificial variable.
+    /// @param Flags       Flags, e.g. artificial variable.
     /// @param ArgNo       If this variable is an argument then this argument's
     ///                    number. 1 indicates 1st argument.
     DIVariable createLocalVariable(unsigned Tag, DIDescriptor Scope,
@@ -546,7 +546,7 @@ namespace llvm {
     /// @param isDefinition  True if this is a function definition.
     /// @param ScopeLine     Set to the beginning of the scope this starts
     /// @param Flags         e.g. is this function prototyped or not.
-    ///                      This flags are used to emit dwarf attributes.
+    ///                      These flags are used to emit dwarf attributes.
     /// @param isOptimized   True if optimization is ON.
     /// @param Fn            llvm::Function pointer.
     /// @param TParam        Function template parameters.
