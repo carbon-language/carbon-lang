@@ -624,7 +624,18 @@ public:
     this->IntPtrType = TargetInfo::SignedInt;
     // RegParmMax is inherited from the underlying architecture
     this->LongDoubleFormat = &llvm::APFloat::IEEEdouble;
-    this->DescriptionString = "e-p:32:32-i64:64-v128:32";
+    if (Triple.getArch() == llvm::Triple::arm) {
+      this->DescriptionString = "e-p:32:32-i64:64-v128:64:128-n32-S128";
+    } else if (Triple.getArch() == llvm::Triple::x86) {
+      this->DescriptionString = "e-p:32:32-i64:64-n8:16:32-S128";
+    } else if (Triple.getArch() == llvm::Triple::x86_64) {
+      this->DescriptionString = "e-p:32:32-i64:64-s:64-n8:16:32:64-S128";
+    } else if (Triple.getArch() == llvm::Triple::mipsel) {
+      // Handled on mips' setDescriptionString.
+    } else {
+      assert(Triple.getArch() == llvm::Triple::le32);
+      this->DescriptionString = "e-p:32:32-i64:64";
+    }
   }
   virtual typename Target::CallingConvCheckResult checkCallingConvention(
       CallingConv CC) const {
