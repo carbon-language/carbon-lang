@@ -306,16 +306,28 @@ ProcessMachCore::DoLoadCore ()
         }
     }
 
-    // If we find both a user process dyld and a mach kernel, prefer the
-    // user process dyld.  We may be looking at an lldb debug session were they were debugging
-    // a mach kernel when lldb coredumped.
-    if (m_dyld_addr != LLDB_INVALID_ADDRESS)
-    {
-        m_dyld_plugin_name = DynamicLoaderMacOSXDYLD::GetPluginNameStatic();
-    }
-    else if (m_mach_kernel_addr != LLDB_INVALID_ADDRESS)
+    // If we find both a user process dyld and a mach kernel, we need to pick which one to use.
+    // We're looking at one or two scenarios:
+    //
+    // 1 This is a core of a crashed user process (e.g. a debugger) which has a copy of 
+    //   a kernel in its memory.  lldb crashed while doing kernel debugging, leaving this 
+    //   core file behind.
+    //
+    // 2 This is a kernel core file that happens to have a user-land dyld macho image in
+    //   one of its vm pages.
+    //
+    // #2 is rare, but has happened.  #1 only happens to people debugging the debugger, so
+    // for now, they will be inconvenienced.  FIXME - we should have a ProcessMachCore 
+    // default setting to specify which dynamic loader to use so it can over-ridden without
+    // rebuilding the debugger for those rare occasions where it's needed.
+
+    if (m_mach_kernel_addr != LLDB_INVALID_ADDRESS)
     {
         m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
+    }
+    else if (m_dyld_addr != LLDB_INVALID_ADDRESS)
+    {
+        m_dyld_plugin_name = DynamicLoaderMacOSXDYLD::GetPluginNameStatic();
     }
 
     // Even if the architecture is set in the target, we need to override
