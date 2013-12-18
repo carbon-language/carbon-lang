@@ -684,13 +684,9 @@ private:
   /// If the input is malformed, this emits the specified diagnostic.  Next, if
   /// SkipToTok is specified, it calls SkipUntil(SkipToTok).  Finally, true is
   /// returned.
-  /// If NoCount is true, it ignores parens/brackets/braces as regular tokens
-  /// and does not count them. By default it recursively skips properly-nested
-  /// parens/brackets/braces.
   bool ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned Diag,
                         const char *DiagMsg = "",
-                        tok::TokenKind SkipToTok = tok::unknown,
-                        bool NoCount = false);
+                        tok::TokenKind SkipToTok = tok::unknown);
 
   /// \brief The parser expects a semicolon and, if present, will consume it.
   ///
@@ -793,9 +789,7 @@ public:
     StopAtSemi = 1 << 0,  ///< Stop skipping at semicolon
     /// \brief Stop skipping at specified token, but don't skip the token itself
     StopBeforeMatch = 1 << 1,
-    StopAtCodeCompletion = 1 << 2, ///< Stop at code completion
-    NoBracketsCount = 1 << 3 /// \brief Don't count braces/brackets/parens
-                             /// to skip balanced pairs
+    StopAtCodeCompletion = 1 << 2 ///< Stop at code completion
   };
 
   friend LLVM_CONSTEXPR SkipUntilFlags operator|(SkipUntilFlags L,

@@ -159,8 +159,7 @@ static bool IsCommonTypo(tok::TokenKind ExpectedTok, const Token &Tok) {
 /// SkipToTok is specified, it calls SkipUntil(SkipToTok).  Finally, true is
 /// returned.
 bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
-                              const char *Msg, tok::TokenKind SkipToTok,
-                              bool NoCount) {
+                              const char *Msg, tok::TokenKind SkipToTok) {
   if (Tok.is(ExpectedTok) || Tok.is(tok::code_completion)) {
     ConsumeAnyToken();
     return false;
@@ -190,12 +189,8 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
   } else
     Diag(Tok, DiagID) << Msg;
 
-  if (SkipToTok != tok::unknown) {
-    SkipUntilFlags Flags = StopAtSemi;
-    if (NoCount)
-      Flags = Flags | NoBracketsCount;
-    SkipUntil(SkipToTok, Flags);
-  }
+  if (SkipToTok != tok::unknown)
+    SkipUntil(SkipToTok, StopAtSemi);
   return true;
 }
 
@@ -319,32 +314,26 @@ bool Parser::SkipUntil(ArrayRef<tok::TokenKind> Toks, SkipUntilFlags Flags) {
     case tok::l_paren:
       // Recursively skip properly-nested parens.
       ConsumeParen();
-      if (!HasFlagsSet(Flags, NoBracketsCount)) {
-        if (HasFlagsSet(Flags, StopAtCodeCompletion))
-          SkipUntil(tok::r_paren, StopAtCodeCompletion);
-        else
-          SkipUntil(tok::r_paren);
-      }
+      if (HasFlagsSet(Flags, StopAtCodeCompletion))
+        SkipUntil(tok::r_paren, StopAtCodeCompletion);
+      else
+        SkipUntil(tok::r_paren);
       break;
     case tok::l_square:
       // Recursively skip properly-nested square brackets.
       ConsumeBracket();
-      if (!HasFlagsSet(Flags, NoBracketsCount)) {
-        if (HasFlagsSet(Flags, StopAtCodeCompletion))
-          SkipUntil(tok::r_square, StopAtCodeCompletion);
-        else
-          SkipUntil(tok::r_square);
-      }
+      if (HasFlagsSet(Flags, StopAtCodeCompletion))
+        SkipUntil(tok::r_square, StopAtCodeCompletion);
+      else
+        SkipUntil(tok::r_square);
       break;
     case tok::l_brace:
       // Recursively skip properly-nested braces.
       ConsumeBrace();
-      if (!HasFlagsSet(Flags, NoBracketsCount)) {
-        if (HasFlagsSet(Flags, StopAtCodeCompletion))
-          SkipUntil(tok::r_brace, StopAtCodeCompletion);
-        else
-          SkipUntil(tok::r_brace);
-      }
+      if (HasFlagsSet(Flags, StopAtCodeCompletion))
+        SkipUntil(tok::r_brace, StopAtCodeCompletion);
+      else
+        SkipUntil(tok::r_brace);
       break;
 
     // Okay, we found a ']' or '}' or ')', which we think should be balanced.
@@ -353,17 +342,17 @@ bool Parser::SkipUntil(ArrayRef<tok::TokenKind> Toks, SkipUntilFlags Flags) {
     // higher level, we will assume that this matches the unbalanced token
     // and return it.  Otherwise, this is a spurious RHS token, which we skip.
     case tok::r_paren:
-      if (!HasFlagsSet(Flags, NoBracketsCount) && ParenCount && !isFirstTokenSkipped)
+      if (ParenCount && !isFirstTokenSkipped)
         return false;  // Matches something.
       ConsumeParen();
       break;
     case tok::r_square:
-      if (!HasFlagsSet(Flags, NoBracketsCount) && BracketCount && !isFirstTokenSkipped)
+      if (BracketCount && !isFirstTokenSkipped)
         return false;  // Matches something.
       ConsumeBracket();
       break;
     case tok::r_brace:
-      if (!HasFlagsSet(Flags, NoBracketsCount) && BraceCount && !isFirstTokenSkipped)
+      if (BraceCount && !isFirstTokenSkipped)
         return false;  // Matches something.
       ConsumeBrace();
       break;
@@ -2042,7 +2031,7 @@ bool BalancedDelimiterTracker::expectAndConsume(unsigned DiagID,
                                             const char *Msg,
                                             tok::TokenKind SkipToToc ) {
   LOpen = P.Tok.getLocation();
-  if (P.ExpectAndConsume(Kind, DiagID, Msg, SkipToToc, NoCount))
+  if (P.ExpectAndConsume(Kind, DiagID, Msg, SkipToToc))
     return true;
   
   if (getDepth() < MaxDepth)
@@ -2067,21 +2056,16 @@ bool BalancedDelimiterTracker::diagnoseMissingClose() {
 
   // If we're not already at some kind of closing bracket, skip to our closing
   // token.
-  Parser::SkipUntilFlags Flags = Parser::StopAtSemi | Parser::StopBeforeMatch;
-  if (NoCount)
-    Flags = Flags | Parser::NoBracketsCount;
   if (P.Tok.isNot(tok::r_paren) && P.Tok.isNot(tok::r_brace) &&
       P.Tok.isNot(tok::r_square) &&
-      P.SkipUntil(Close, FinalToken, Flags) &&
+      P.SkipUntil(Close, FinalToken,
+                  Parser::StopAtSemi | Parser::StopBeforeMatch) &&
       P.Tok.is(Close))
     LClose = P.ConsumeAnyToken();
   return true;
 }
 
 void BalancedDelimiterTracker::skipToEnd() {
-  Parser::SkipUntilFlags Flags = Parser::StopBeforeMatch;
-  if (NoCount)
-    Flags = Flags | Parser::NoBracketsCount;
-  P.SkipUntil(Close, Flags);
+  P.SkipUntil(Close, Parser::StopBeforeMatch);
   consumeClose();
 }
