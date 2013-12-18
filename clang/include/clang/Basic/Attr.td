@@ -502,12 +502,17 @@ def GNUInline : InheritableAttr {
 def Hot : InheritableAttr {
   let Spellings = [GNU<"hot">, CXX11<"gnu", "hot">];
   let Subjects = SubjectList<[Function]>;
+  // An AST node is created for this attribute, but not actually used beyond
+  // semantic checking for mutual exclusion with the Cold attribute.
 }
 
 def IBAction : InheritableAttr {
   let Spellings = [GNU<"ibaction">];
   let Subjects = SubjectList<[ObjCInstanceMethod], WarnDiag,
                              "ExpectedObjCInstanceMethod">;
+  // An AST node is created for this attribute, but is not used by other parts
+  // of the compiler. However, this node needs to exist in the AST because
+  // external tools rely on it.
 }
 
 def IBOutlet : InheritableAttr {
