@@ -3215,11 +3215,9 @@ Decl *Sema::ActOnMethodDeclaration(
     }
     if (isa<ObjCCategoryImplDecl>(ImpDecl)) {
       ObjCMethodFamily family = ObjCMethod->getMethodFamily();
-      if (family == OMF_dealloc && IMD && IMD->isOverriding()) {
+      if (family == OMF_dealloc && IMD && IMD->isOverriding()) 
         Diag(ObjCMethod->getLocation(), diag::warn_dealloc_in_category)
           << ObjCMethod->getDeclName();
-        Diag(ImpDecl->getLocation(), diag::note_declared_at);
-      }
     }
   } else {
     cast<DeclContext>(ClassDecl)->addDecl(ObjCMethod);

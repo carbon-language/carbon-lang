@@ -35,7 +35,7 @@
 - (void)dealloc;
 @end
 
-@implementation Subclass (CAT) // expected-note {{declared here}}
-- (void)dealloc { // expected-warning {{decalloc is being overridden in category}}
+@implementation Subclass (CAT)
+- (void)dealloc { // expected-warning {{-dealloc in a category is being overridden}}
 }
 @end
