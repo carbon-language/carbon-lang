@@ -27,23 +27,30 @@ namespace __sanitizer {
 
 struct AddressInfo {
   uptr address;
+
   char *module;
   uptr module_offset;
+
+  static const uptr kUnknown = ~(uptr)0;
   char *function;
+  uptr function_offset;
+
   char *file;
   int line;
   int column;
 
   AddressInfo() {
     internal_memset(this, 0, sizeof(AddressInfo));
+    function_offset = kUnknown;
   }
 
-  // Deletes all strings and sets all fields to zero.
+  // Deletes all strings and resets all fields.
   void Clear() {
     InternalFree(module);
     InternalFree(function);
     InternalFree(file);
     internal_memset(this, 0, sizeof(AddressInfo));
+    function_offset = kUnknown;
   }
 
   void FillAddressAndModuleInfo(uptr addr, const char *mod_name,

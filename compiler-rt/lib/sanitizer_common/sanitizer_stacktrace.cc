@@ -79,6 +79,9 @@ void StackTrace::PrintStack(const uptr *addr, uptr size,
         PrintStackFramePrefix(&frame_desc, frame_num, pc);
         if (info.function) {
           frame_desc.append(" in %s", info.function);
+          // Print offset in function if we don't know the source file.
+          if (!info.file && info.function_offset != AddressInfo::kUnknown)
+            frame_desc.append("+0x%zx", info.function_offset);
         }
         if (info.file) {
           frame_desc.append(" ");
