@@ -8,6 +8,7 @@ config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.llvm_libs_dir = "@LLVM_LIBS_DIR@"
 config.lit_tools_dir = "@LLVM_LIT_TOOLS_DIR@"
 config.clang_obj_root = "@CLANG_BINARY_DIR@"
+config.clang_tools_dir = "@CLANG_TOOLS_DIR@"
 config.target_triple = "@TARGET_TRIPLE@"
 config.llvm_use_sanitizer = "@LLVM_USE_SANITIZER@"
 config.clang_arcmt = @ENABLE_CLANG_ARCMT@
