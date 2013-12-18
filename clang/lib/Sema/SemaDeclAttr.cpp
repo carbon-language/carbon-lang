@@ -4091,12 +4091,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Uuid:
     handleUuidAttr(S, D, Attr);
     break;
-  case AttributeList::AT_SingleInheritance:
-    handleSimpleAttribute<SingleInheritanceAttr>(S, D, Attr); break;
-  case AttributeList::AT_MultipleInheritance:
-    handleSimpleAttribute<MultipleInheritanceAttr>(S, D, Attr); break;
-  case AttributeList::AT_VirtualInheritance:
-    handleSimpleAttribute<VirtualInheritanceAttr>(S, D, Attr); break;
+  case AttributeList::AT_MSInheritance:
+    handleSimpleAttribute<MSInheritanceAttr>(S, D, Attr); break;
   case AttributeList::AT_ForceInline:
     handleSimpleAttribute<ForceInlineAttr>(S, D, Attr); break;
   case AttributeList::AT_SelectAny:

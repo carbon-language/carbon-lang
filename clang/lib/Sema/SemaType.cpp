@@ -1773,8 +1773,9 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
         // figure out the inheritance model.
         for (CXXRecordDecl::redecl_iterator I = RD->redecls_begin(),
              E = RD->redecls_end(); I != E; ++I) {
-          I->addAttr(::new (Context) UnspecifiedInheritanceAttr(
-              RD->getSourceRange(), Context));
+          I->addAttr(::new (Context) MSInheritanceAttr(RD->getSourceRange(),
+                                                       Context,
+                                 MSInheritanceAttr::UnspecifiedSpellingIndex));
         }
       }
     }

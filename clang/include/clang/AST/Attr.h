@@ -136,21 +136,6 @@ public:
   }
 };
 
-class MSInheritanceAttr : public InheritableAttr {
-  virtual void anchor();
-protected:
-  MSInheritanceAttr(attr::Kind AK, SourceRange R, unsigned SpellingListIndex = 0)
-    : InheritableAttr(AK, R, SpellingListIndex) {}
-
-public:
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) {
-    // Relies on relative order of enum emission with respect to param attrs.
-    return (A->getKind() <= attr::LAST_MS_INHERITANCE &&
-            A->getKind() > attr::LAST_INHERITABLE_PARAM);
-  }
-};
-
 #include "clang/AST/Attrs.inc"
 
 }  // end namespace clang

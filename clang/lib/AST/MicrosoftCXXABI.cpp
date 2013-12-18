@@ -92,19 +92,21 @@ static bool usesMultipleInheritanceModel(const CXXRecordDecl *RD) {
   return false;
 }
 
-static MSInheritanceModel MSInheritanceAttrToModel(attr::Kind Kind) {
-  switch (Kind) {
-  default: llvm_unreachable("expected MS inheritance attribute");
-  case attr::SingleInheritance:      return MSIM_Single;
-  case attr::MultipleInheritance:    return MSIM_Multiple;
-  case attr::VirtualInheritance:     return MSIM_Virtual;
-  case attr::UnspecifiedInheritance: return MSIM_Unspecified;
-  }
+static MSInheritanceModel MSInheritanceAttrToModel(MSInheritanceAttr *Attr) {
+  if (Attr->IsSingle())
+    return MSIM_Single;
+  else if (Attr->IsMultiple())
+    return MSIM_Multiple;
+  else if (Attr->IsVirtual())
+    return MSIM_Virtual;
+  
+  assert(Attr->IsUnspecified() && "Expected unspecified inheritance attr");
+  return MSIM_Unspecified;
 }
 
 MSInheritanceModel CXXRecordDecl::getMSInheritanceModel() const {
-  if (Attr *IA = this->getAttr<MSInheritanceAttr>())
-    return MSInheritanceAttrToModel(IA->getKind());
+  if (MSInheritanceAttr *IA = this->getAttr<MSInheritanceAttr>())
+    return MSInheritanceAttrToModel(IA);
   // If there was no explicit attribute, the record must be defined already, and
   // we can figure out the inheritance model from its other properties.
   if (this->getNumVBases() > 0)

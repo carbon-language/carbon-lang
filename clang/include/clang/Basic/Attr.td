@@ -1271,26 +1271,21 @@ def UPtr : TypeAttr {
   let ASTNode = 0;
 }
 
-class MSInheritanceAttr : InheritableAttr {
+def MSInheritance : InheritableAttr {
   let LangOpts = [MicrosoftExt];
-}
-
-def SingleInheritance : MSInheritanceAttr {
-  let Spellings = [Keyword<"__single_inheritance">];
-}
-
-def MultipleInheritance : MSInheritanceAttr {
-  let Spellings = [Keyword<"__multiple_inheritance">];
-}
-
-def VirtualInheritance : MSInheritanceAttr {
-  let Spellings = [Keyword<"__virtual_inheritance">];
-}
-
-// This attribute doesn't have any spellings, but we can apply it implicitly to
-// incomplete types that lack any of the other attributes.
-def UnspecifiedInheritance : MSInheritanceAttr {
-  let Spellings = [];
+  let Spellings = [Keyword<"__single_inheritance">,
+                   Keyword<"__multiple_inheritance">,
+                   Keyword<"__virtual_inheritance">,
+                   // We use an empty string to denote an unspecified
+                   // inheritance attribute.
+                   Keyword<"">];
+  let Accessors = [Accessor<"IsSingle", [Keyword<"__single_inheritance">]>,
+                   Accessor<"IsMultiple", [Keyword<"__multiple_inheritance">]>,
+                   Accessor<"IsVirtual", [Keyword<"__virtual_inheritance">]>,
+                   Accessor<"IsUnspecified", [Keyword<"">]>];
+  // This index is based off the Spellings list and corresponds to the empty
+  // keyword "spelling."
+  let AdditionalMembers = [{static const int UnspecifiedSpellingIndex = 3;}];
 }
 
 def Unaligned : IgnoredAttr {
