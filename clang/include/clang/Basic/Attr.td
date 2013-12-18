@@ -818,8 +818,9 @@ def InitPriority : InheritableAttr {
 def Section : InheritableAttr {
   let Spellings = [GNU<"section">, CXX11<"gnu", "section">];
   let Args = [StringArgument<"Name">];
-  let Subjects = SubjectList<[Function, GlobalVar], ErrorDiag,
-                             "ExpectedFunctionOrGlobalVar">;
+  let Subjects = SubjectList<[Function, GlobalVar, 
+                              ObjCMethod, ObjCProperty], ErrorDiag,
+                             "ExpectedFunctionGlobalVarMethodOrProperty">;
 }
 
 def Sentinel : InheritableAttr {
