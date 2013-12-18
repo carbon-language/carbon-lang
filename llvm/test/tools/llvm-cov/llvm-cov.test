@@ -5,7 +5,7 @@ RUN: mkdir %t
 RUN: cd %t
 RUN: cp %p/Inputs/test* .
 
-RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda
+RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda | diff test_no_options.output -
 RUN: diff -aub test_no_options.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_no_options.h.gcov test.h.gcov
 
@@ -13,7 +13,7 @@ RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -a
 RUN: diff -aub test_-a.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a.h.gcov test.h.gcov
 
-RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -a -b
+RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -a -b | diff test_-b.output -
 RUN: diff -aub test_-a_-b.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a_-b.h.gcov test.h.gcov
 

@@ -350,6 +350,19 @@ class FileInfo {
     BlockLines Blocks;
     FunctionLines Functions;
   };
+
+  struct GCOVCoverage {
+    GCOVCoverage() :
+      LogicalLines(0), LinesExec(0), Branches(0), BranchesExec(0),
+      BranchesTaken(0) {}
+
+    uint32_t LogicalLines;
+    uint32_t LinesExec;
+
+    uint32_t Branches;
+    uint32_t BranchesExec;
+    uint32_t BranchesTaken;
+  };
 public:
   FileInfo(const GCOVOptions &Options) :
     Options(Options), LineInfo(), RunCount(0), ProgramCount(0) {}
@@ -370,9 +383,10 @@ private:
   void printBlockInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
                       uint32_t LineIndex, uint32_t &BlockNo) const;
   void printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
-                       uint32_t &EdgeNo) const;
+                       GCOVCoverage &Coverage, uint32_t &EdgeNo) const;
   void printUncondBranchInfo(raw_fd_ostream &OS, uint32_t &EdgeNo,
                              uint64_t Count) const;
+  void printFileCoverage(StringRef Filename, GCOVCoverage &Coverage) const;
 
   const GCOVOptions &Options;
   StringMap<LineData> LineInfo;

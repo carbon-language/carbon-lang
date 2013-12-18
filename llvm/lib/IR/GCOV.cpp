@@ -454,6 +454,7 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
     OS << "        -:    0:Programs:" << ProgramCount << "\n";
 
     const LineData &Line = I->second;
+    GCOVCoverage Coverage;
     for (uint32_t LineIndex = 0; !AllLines.empty(); ++LineIndex) {
       if (Options.BranchInfo) {
         FunctionLines::const_iterator FuncsIt = Line.Functions.find(LineIndex);
@@ -485,10 +486,14 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
             LineCount += Block->getCount();
           }
         }
+
         if (LineCount == 0)
           OS << "    #####:";
-        else
+        else {
           OS << format("%9" PRIu64 ":", LineCount);
+          ++Coverage.LinesExec;
+        }
+        ++Coverage.LogicalLines;
 
         std::pair<StringRef, StringRef> P = AllLines.split('\n');
         OS << format("%5u:", LineIndex+1) << P.first << "\n";
@@ -508,13 +513,16 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
           if (Options.BranchInfo) {
             size_t NumEdges = Block->getNumDstEdges();
             if (NumEdges > 1)
-              printBranchInfo(OS, *Block, EdgeNo);
+              printBranchInfo(OS, *Block, Coverage, EdgeNo);
             else if (Options.UncondBranch && NumEdges == 1)
               printUncondBranchInfo(OS, EdgeNo, (*Block->dst_begin())->Count);
           }
         }
       }
     }
+
+    // FIXME: There is no way to detect calls given current instrumentation.
+    printFileCoverage(Filename, Coverage);
   }
 }
 
@@ -552,7 +560,7 @@ void FileInfo::printBlockInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
 
 /// printBranchInfo - Print conditional branch probabilities.
 void FileInfo::printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
-                               uint32_t &EdgeNo) const {
+                               GCOVCoverage &Coverage, uint32_t &EdgeNo) const {
   SmallVector<uint64_t, 16> BranchCounts;
   uint64_t TotalCounts = 0;
   for (GCOVBlock::EdgeIterator I = Block.dst_begin(), E = Block.dst_end();
@@ -560,6 +568,9 @@ void FileInfo::printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
     const GCOVEdge *Edge = *I;
     BranchCounts.push_back(Edge->Count);
     TotalCounts += Edge->Count;
+    if (Block.getCount()) ++Coverage.BranchesExec;
+    if (Edge->Count) ++Coverage.BranchesTaken;
+    ++Coverage.Branches;
   }
 
   for (SmallVectorImpl<uint64_t>::const_iterator I = BranchCounts.begin(),
@@ -574,4 +585,28 @@ void FileInfo::printUncondBranchInfo(raw_fd_ostream &OS, uint32_t &EdgeNo,
                                      uint64_t Count) const {
   OS << format("unconditional %2u ", EdgeNo++)
      << formatBranchInfo(Options, Count, Count) << "\n";
+}
+
+/// printFileCoverage - Print per-file coverage info.
+void FileInfo::printFileCoverage(StringRef Filename,
+                                 GCOVCoverage &Coverage) const {
+  outs() << "File '" << Filename << "'\n";
+  outs() << format("Lines executed:%.2lf%% of %u\n",
+                   double(Coverage.LinesExec)*100/Coverage.LogicalLines,
+                   Coverage.LogicalLines);
+  if (Options.BranchInfo) {
+    if (Coverage.Branches) {
+      outs() << format("Branches executed:%.2lf%% of %u\n",
+                       double(Coverage.BranchesExec)*100/Coverage.Branches,
+                       Coverage.Branches);
+      outs() << format("Taken at least once:%.2lf%% of %u\n",
+                       double(Coverage.BranchesTaken)*100/Coverage.Branches,
+                       Coverage.Branches);
+    } else {
+      outs() << "No branches\n";
+    }
+    outs() << "No calls\n"; // to be consistent with gcov
+  }
+  outs() << Filename << ":creating '" << Filename << ".gcov'\n";
+  outs() << "\n";
 }
