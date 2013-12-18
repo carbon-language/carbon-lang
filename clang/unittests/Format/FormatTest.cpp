@@ -5707,6 +5707,8 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("[self // break\n"
                "      a:a\n"
                "    aaa:aaa];");
+  verifyFormat("bool a = ([aaaaaaaa aaaaa] == aaaaaaaaaaaaaaaaa ||\n"
+               "          [aaaaaaaa aaaaa] == aaaaaaaaaaaaaaaaaaaa);");
 }
 
 TEST_F(FormatTest, ObjCAt) {

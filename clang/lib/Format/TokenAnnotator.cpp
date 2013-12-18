@@ -1144,7 +1144,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 0;
   if (Left.is(tok::comma))
     return 1;
-  if (Right.is(tok::l_square))
+  if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr)
     return 250;
 
   if (Right.Type == TT_StartOfName || Right.is(tok::kw_operator)) {
