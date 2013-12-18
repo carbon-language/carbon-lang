@@ -100,3 +100,12 @@ namespace rdar14468891 {
     [x]() {}(); // expected-error{{by-copy capture of value of abstract type 'rdar14468891::X'}}
   }
 }
+
+namespace rdar15560464 {
+  struct X; // expected-note{{forward declaration of 'rdar15560464::X'}}
+  void foo(const X& param) {
+    auto x = ([=]() {
+        auto& y = param; // expected-error{{by-copy capture of variable 'param' with incomplete type 'const rdar15560464::X'}}
+      });
+  }
+}

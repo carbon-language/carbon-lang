@@ -11617,6 +11617,15 @@ static ExprResult addAsFieldToClosureType(Sema &S,
                                   bool RefersToEnclosingLocal) {
   CXXRecordDecl *Lambda = LSI->Lambda;
 
+  // Make sure that by-copy captures are of a complete type.
+  if (!DeclRefType->isDependentType() &&
+      !DeclRefType->isReferenceType() &&
+      S.RequireCompleteType(Loc, DeclRefType,
+                            diag::err_capture_of_incomplete_type,
+                            Var->getDeclName())) {
+    return ExprError();
+  }
+
   // Build the non-static data member.
   FieldDecl *Field
     = FieldDecl::Create(S.Context, Lambda, Loc, Loc, 0, FieldType,
