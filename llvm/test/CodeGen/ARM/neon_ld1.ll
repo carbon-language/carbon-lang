@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -float-abi=soft -mattr=+neon | FileCheck %s
 
 ; CHECK: t1
 ; CHECK: vldr d

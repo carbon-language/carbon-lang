@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -float-abi=soft -mattr=+neon | FileCheck %s
 
 define <16 x i8> @vcombine8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ; CHECK: vcombine8
