@@ -358,7 +358,8 @@ private:
     DK_CFI_RESTORE, DK_CFI_ESCAPE, DK_CFI_SIGNAL_FRAME, DK_CFI_UNDEFINED,
     DK_CFI_REGISTER, DK_CFI_WINDOW_SAVE,
     DK_MACROS_ON, DK_MACROS_OFF, DK_MACRO, DK_ENDM, DK_ENDMACRO, DK_PURGEM,
-    DK_SLEB128, DK_ULEB128
+    DK_SLEB128, DK_ULEB128,
+    DK_END
   };
 
   /// \brief Maps directive name --> DirectiveKind enum, for
@@ -463,6 +464,9 @@ private:
 
   // "align"
   bool parseDirectiveMSAlign(SMLoc DirectiveLoc, ParseStatementInfo &Info);
+
+  // "end"
+  bool parseDirectiveEnd(SMLoc DirectiveLoc);
 
   void initializeDirectiveKindMap();
 };
@@ -1508,6 +1512,8 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info) {
       return parseDirectiveEndMacro(IDVal);
     case DK_PURGEM:
       return parseDirectivePurgeMacro(IDLoc);
+    case DK_END:
+      return parseDirectiveEnd(IDLoc);
     }
 
     return Error(IDLoc, "unknown directive");
@@ -3743,6 +3749,20 @@ bool AsmParser::parseDirectiveElse(SMLoc DirectiveLoc) {
   return false;
 }
 
+/// parseDirectiveEnd
+/// ::= .end
+bool AsmParser::parseDirectiveEnd(SMLoc DirectiveLoc) {
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.end' directive");
+
+  Lex();
+
+  while (Lexer.isNot(AsmToken::Eof))
+    Lex();
+
+  return false;
+}
+
 /// parseDirectiveEndIf
 /// ::= .endif
 bool AsmParser::parseDirectiveEndIf(SMLoc DirectiveLoc) {
@@ -3828,6 +3848,7 @@ void AsmParser::initializeDirectiveKindMap() {
   DirectiveKindMap[".ifnotdef"] = DK_IFNOTDEF;
   DirectiveKindMap[".elseif"] = DK_ELSEIF;
   DirectiveKindMap[".else"] = DK_ELSE;
+  DirectiveKindMap[".end"] = DK_END;
   DirectiveKindMap[".endif"] = DK_ENDIF;
   DirectiveKindMap[".skip"] = DK_SKIP;
   DirectiveKindMap[".space"] = DK_SPACE;
