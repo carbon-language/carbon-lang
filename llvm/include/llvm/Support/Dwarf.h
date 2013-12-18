@@ -41,7 +41,7 @@ namespace dwarf {
 
 //===----------------------------------------------------------------------===//
 // Dwarf constants as gleaned from the DWARF Debugging Information Format V.4
-// reference manual http://dwarf.freestandards.org.
+// reference manual http://www.dwarfstd.org/.
 //
 
 // Do not mix the following two enumerations sets.  DW_TAG_invalid changes the
@@ -129,6 +129,12 @@ enum Tag LLVM_ENUM_INT_TYPE(uint16_t) {
   DW_TAG_type_unit = 0x41,
   DW_TAG_rvalue_reference_type = 0x42,
   DW_TAG_template_alias = 0x43,
+
+  // New in DWARF 5:
+  DW_TAG_coarray_type = 0x44,
+  DW_TAG_generic_subrange = 0x45,
+  DW_TAG_dynamic_type = 0x46,
+
   DW_TAG_MIPS_loop = 0x4081,
   DW_TAG_format_label = 0x4101,
   DW_TAG_function_template = 0x4102,
@@ -263,6 +269,18 @@ enum Attribute LLVM_ENUM_INT_TYPE(uint16_t) {
   DW_AT_const_expr = 0x6c,
   DW_AT_enum_class = 0x6d,
   DW_AT_linkage_name = 0x6e,
+
+  // New in DWARF 5:
+  DW_AT_string_length_bit_size = 0x6f,
+  DW_AT_string_length_byte_size = 0x70,
+  DW_AT_rank = 0x71,
+  DW_AT_str_offsets_base = 0x72,
+  DW_AT_addr_base = 0x73,
+  DW_AT_ranges_base = 0x74,
+  DW_AT_dwo_id = 0x75,
+  DW_AT_dwo_name = 0x76,
+  DW_AT_reference = 0x77,
+  DW_AT_rvalue_reference = 0x78,
 
   DW_AT_lo_user = 0x2000,
   DW_AT_hi_user = 0x3fff,
@@ -605,7 +623,16 @@ enum SourceLanguage {
   DW_LANG_ObjC_plus_plus = 0x0011,
   DW_LANG_UPC = 0x0012,
   DW_LANG_D = 0x0013,
+  // New in DWARF 5:
   DW_LANG_Python = 0x0014,
+  DW_LANG_OpenCL = 0x0015,
+  DW_LANG_Go = 0x0016,
+  DW_LANG_Modula3 = 0x0017,
+  DW_LANG_Haskell = 0x0018,
+  DW_LANG_C_plus_plus_03 = 0x0019,
+  DW_LANG_C_plus_plus_11 = 0x001a,
+  DW_LANG_OCaml = 0x001b,
+
   DW_LANG_lo_user = 0x8000,
   DW_LANG_Mips_Assembler = 0x8001,
   DW_LANG_hi_user = 0xffff

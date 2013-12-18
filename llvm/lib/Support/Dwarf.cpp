@@ -84,6 +84,9 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
   case DW_TAG_arg_variable:              return "DW_TAG_arg_variable";
   case DW_TAG_rvalue_reference_type:     return "DW_TAG_rvalue_reference_type";
   case DW_TAG_template_alias:            return "DW_TAG_template_alias";
+  case DW_TAG_coarray_type:              return "DW_TAG_coarray_type";
+  case DW_TAG_generic_subrange:          return "DW_TAG_generic_subrange";
+  case DW_TAG_dynamic_type:              return "DW_TAG_generic_subrange";
   case DW_TAG_MIPS_loop:                 return "DW_TAG_MIPS_loop";
   case DW_TAG_type_unit:                 return "DW_TAG_type_unit";
   case DW_TAG_format_label:              return "DW_TAG_format_label";
@@ -206,6 +209,16 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_const_expr:                 return "DW_AT_const_expr";
   case DW_AT_enum_class:                 return "DW_AT_enum_class";
   case DW_AT_linkage_name:               return "DW_AT_linkage_name";
+  case DW_AT_string_length_bit_size:     return "DW_AT_string_length_bit_size";
+  case DW_AT_string_length_byte_size:    return "DW_AT_string_length_byte_size";
+  case DW_AT_rank:                       return "DW_AT_rank";
+  case DW_AT_str_offsets_base:           return "DW_AT_str_offsets_base";
+  case DW_AT_addr_base:                  return "DW_AT_addr_base";
+  case DW_AT_ranges_base:                return "DW_AT_ranges_base";
+  case DW_AT_dwo_id:                     return "DW_AT_dwo_id";
+  case DW_AT_dwo_name:                   return "DW_AT_dwo_name";
+  case DW_AT_reference:                  return "DW_AT_reference";
+  case DW_AT_rvalue_reference:           return "DW_AT_rvalue_reference";
   case DW_AT_MIPS_loop_begin:            return "DW_AT_MIPS_loop_begin";
   case DW_AT_MIPS_tail_loop_begin:       return "DW_AT_MIPS_tail_loop_begin";
   case DW_AT_MIPS_epilog_begin:          return "DW_AT_MIPS_epilog_begin";
@@ -576,6 +589,14 @@ const char *llvm::dwarf::LanguageString(unsigned Language) {
   case DW_LANG_ObjC_plus_plus:           return "DW_LANG_ObjC_plus_plus";
   case DW_LANG_UPC:                      return "DW_LANG_UPC";
   case DW_LANG_D:                        return "DW_LANG_D";
+  case DW_LANG_Python:                   return "DW_LANG_Python";
+  case DW_LANG_OpenCL:                   return "DW_LANG_OpenCL";
+  case DW_LANG_Go:                       return "DW_LANG_Go";
+  case DW_LANG_Modula3:                  return "DW_LANG_Modula3";
+  case DW_LANG_Haskell:                  return "DW_LANG_Haskell";
+  case DW_LANG_C_plus_plus_03:           return "DW_LANG_C_plus_plus_03";
+  case DW_LANG_C_plus_plus_11:           return "DW_LANG_C_plus_plus_11";
+  case DW_LANG_OCaml:                    return "DW_LANG_OCaml";
   case DW_LANG_lo_user:                  return "DW_LANG_lo_user";
   case DW_LANG_hi_user:                  return "DW_LANG_hi_user";
   }
