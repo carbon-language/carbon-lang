@@ -3232,7 +3232,7 @@ SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 static ISD::CondCode getInverseCCForVSEL(ISD::CondCode CC) {
   if (CC == ISD::SETNE)
     return ISD::SETEQ;
-  return ISD::getSetCCSwappedOperands(CC);
+  return ISD::getSetCCInverse(CC, true);
 }
 
 static void checkVSELConstraints(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
