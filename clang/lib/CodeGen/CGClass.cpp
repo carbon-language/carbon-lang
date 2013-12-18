@@ -1427,7 +1427,7 @@ namespace {
   };
 }
 
-/// EmitDtorEpilogue - Emit all code that comes at the end of class's
+/// \brief Emit all code that comes at the end of class's
 /// destructor. This is to call destructors on members and base classes
 /// in reverse order of their construction.
 void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
@@ -1439,7 +1439,7 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
   // operator delete that Sema picked up.
   if (DtorType == Dtor_Deleting) {
     assert(DD->getOperatorDelete() && 
-           "operator delete missing - EmitDtorEpilogue");
+           "operator delete missing - EnterDtorCleanups");
     if (CXXStructorImplicitParamValue) {
       // If there is an implicit param to the deleting dtor, it's a boolean
       // telling whether we should call delete at the end of the dtor.
