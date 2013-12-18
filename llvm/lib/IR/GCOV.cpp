@@ -525,18 +525,18 @@ void FileInfo::printFunctionSummary(raw_fd_ostream &OS,
          I != E; ++I) {
     const GCOVFunction *Func = *I;
     uint64_t EntryCount = Func->getEntryCount();
-    uint32_t BlocksExecuted = 0;
+    uint32_t BlocksExec = 0;
     for (GCOVFunction::BlockIterator I = Func->block_begin(),
            E = Func->block_end(); I != E; ++I) {
       const GCOVBlock *Block = *I;
       if (Block->getNumDstEdges() && Block->getCount())
-          ++BlocksExecuted;
+          ++BlocksExec;
     }
 
     OS << "function " << Func->getName() << " called " << EntryCount
        << " returned " << safeDiv(Func->getExitCount()*100, EntryCount)
        << "% blocks executed "
-       << safeDiv(BlocksExecuted*100, Func->getNumBlocks()-1) << "%\n";
+       << safeDiv(BlocksExec*100, Func->getNumBlocks()-1) << "%\n";
   }
 }
 
