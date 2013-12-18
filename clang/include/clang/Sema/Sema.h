@@ -856,6 +856,8 @@ public:
   typedef llvm::MCAsmParserSemaCallback::InlineAsmIdentifierInfo
     InlineAsmIdentifierInfo;
 
+  void addImplicitTypedef(StringRef Name, QualType T);
+
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
        TranslationUnitKind TUKind = TU_Complete,

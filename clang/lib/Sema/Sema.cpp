@@ -120,6 +120,12 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
   InitDataSharingAttributesStack();
 }
 
+void Sema::addImplicitTypedef(StringRef Name, QualType T) {
+  DeclarationName DN = &Context.Idents.get(Name);
+  if (IdResolver.begin(DN) == IdResolver.end())
+    PushOnScopeChains(Context.buildImplicitTypedef(T, Name), TUScope);
+}
+
 void Sema::Initialize() {
   // Tell the AST consumer about this Sema object.
   Consumer.Initialize(Context);
@@ -170,6 +176,18 @@ void Sema::Initialize() {
     DeclarationName Protocol = &Context.Idents.get("Protocol");
     if (IdResolver.begin(Protocol) == IdResolver.end())
       PushOnScopeChains(Context.getObjCProtocolDecl(), TUScope);
+  }
+
+  // Initialize predefined OpenCL types.
+  if (PP.getLangOpts().OpenCL) {
+    addImplicitTypedef("image1d_t", Context.OCLImage1dTy);
+    addImplicitTypedef("image1d_array_t", Context.OCLImage1dArrayTy);
+    addImplicitTypedef("image1d_buffer_t", Context.OCLImage1dBufferTy);
+    addImplicitTypedef("image2d_t", Context.OCLImage2dTy);
+    addImplicitTypedef("image2d_array_t", Context.OCLImage2dArrayTy);
+    addImplicitTypedef("image3d_t", Context.OCLImage3dTy);
+    addImplicitTypedef("sampler_t", Context.OCLSamplerTy);
+    addImplicitTypedef("event_t", Context.OCLEventTy);
   }
 
   DeclarationName BuiltinVaList = &Context.Idents.get("__builtin_va_list");

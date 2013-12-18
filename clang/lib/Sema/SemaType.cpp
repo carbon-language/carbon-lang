@@ -1058,38 +1058,6 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     }
     break;
 
-  case DeclSpec::TST_image1d_t:
-    Result = Context.OCLImage1dTy;
-    break;
-
-  case DeclSpec::TST_image1d_array_t:
-    Result = Context.OCLImage1dArrayTy;
-    break;
-
-  case DeclSpec::TST_image1d_buffer_t:
-    Result = Context.OCLImage1dBufferTy;
-    break;
-
-  case DeclSpec::TST_image2d_t:
-    Result = Context.OCLImage2dTy;
-    break;
-
-  case DeclSpec::TST_image2d_array_t:
-    Result = Context.OCLImage2dArrayTy;
-    break;
-
-  case DeclSpec::TST_image3d_t:
-    Result = Context.OCLImage3dTy;
-    break;
-
-  case DeclSpec::TST_sampler_t:
-    Result = Context.OCLSamplerTy;
-    break;
-
-  case DeclSpec::TST_event_t:
-    Result = Context.OCLEventTy;
-    break;
-
   case DeclSpec::TST_error:
     Result = Context.IntTy;
     declarator.setInvalidType(true);
