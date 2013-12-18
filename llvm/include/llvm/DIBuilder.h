@@ -415,10 +415,13 @@ namespace llvm {
         StringRef UniqueIdentifier = StringRef());
 
     /// createSubroutineType - Create subroutine type.
-    /// @param File           File in which this subroutine is defined.
-    /// @param ParameterTypes An array of subroutine parameter types. This
-    ///                       includes return type at 0th index.
-    DICompositeType createSubroutineType(DIFile File, DIArray ParameterTypes);
+    /// @param File            File in which this subroutine is defined.
+    /// @param ParameterTypes  An array of subroutine parameter types. This
+    ///                        includes return type at 0th index.
+    /// @param Flags           E.g.: LValueReference.
+    ///                        These flags are used to emit dwarf attributes.
+    DICompositeType createSubroutineType(DIFile File, DIArray ParameterTypes,
+                                         unsigned Flags = 0);
 
     /// createArtificialType - Create a new DIType with "artificial" flag set.
     DIType createArtificialType(DIType Ty);

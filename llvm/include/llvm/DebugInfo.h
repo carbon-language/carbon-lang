@@ -64,20 +64,22 @@ class DIDescriptor {
 
 public:
   enum {
-    FlagPrivate = 1 << 0,
-    FlagProtected = 1 << 1,
-    FlagFwdDecl = 1 << 2,
-    FlagAppleBlock = 1 << 3,
-    FlagBlockByrefStruct = 1 << 4,
-    FlagVirtual = 1 << 5,
-    FlagArtificial = 1 << 6,
-    FlagExplicit = 1 << 7,
-    FlagPrototyped = 1 << 8,
+    FlagPrivate           = 1 << 0,
+    FlagProtected         = 1 << 1,
+    FlagFwdDecl           = 1 << 2,
+    FlagAppleBlock        = 1 << 3,
+    FlagBlockByrefStruct  = 1 << 4,
+    FlagVirtual           = 1 << 5,
+    FlagArtificial        = 1 << 6,
+    FlagExplicit          = 1 << 7,
+    FlagPrototyped        = 1 << 8,
     FlagObjcClassComplete = 1 << 9,
-    FlagObjectPointer = 1 << 10,
-    FlagVector = 1 << 11,
-    FlagStaticMember = 1 << 12,
-    FlagIndirectVariable = 1 << 13
+    FlagObjectPointer     = 1 << 10,
+    FlagVector            = 1 << 11,
+    FlagStaticMember      = 1 << 12,
+    FlagIndirectVariable  = 1 << 13,
+    FlagLValueReference   = 1 << 14,
+    FlagRValueReference   = 1 << 15
   };
 
 protected:
@@ -313,6 +315,12 @@ public:
   }
   bool isVector() const { return (getFlags() & FlagVector) != 0; }
   bool isStaticMember() const { return (getFlags() & FlagStaticMember) != 0; }
+  bool isLValueReference() const {
+    return (getFlags() & FlagLValueReference) != 0;
+  }
+  bool isRValueReference() const {
+    return (getFlags() & FlagRValueReference) != 0;
+  }
   bool isValid() const { return DbgNode && isType(); }
 
   /// replaceAllUsesWith - Replace all uses of debug info referenced by
@@ -468,6 +476,19 @@ public:
   /// isPrototyped - Return true if this subprogram is prototyped.
   bool isPrototyped() const {
     return (getUnsignedField(13) & FlagPrototyped) != 0;
+  }
+
+  /// Return true if this subprogram is a C++11 reference-qualified
+  /// non-static member function (void foo() &).
+  unsigned isLValueReference() const {
+    return (getUnsignedField(13) & FlagLValueReference) != 0;
+  }
+
+  /// Return true if this subprogram is a C++11
+  /// rvalue-reference-qualified non-static member function
+  /// (void foo() &&).
+  unsigned isRValueReference() const {
+    return (getUnsignedField(13) & FlagRValueReference) != 0;
   }
 
   unsigned isOptimized() const;
