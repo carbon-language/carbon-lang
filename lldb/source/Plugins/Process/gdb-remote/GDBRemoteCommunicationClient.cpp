@@ -118,6 +118,14 @@ GDBRemoteCommunicationClient::HandshakeWithServer (Error *error_ptr)
     // fail to send the handshake ack, there is no reason to continue...
     if (SendAck())
     {
+        // Wait for any responses that might have been queued up in the remote
+        // GDB server and flush them all
+        StringExtractorGDBRemote response;
+        PacketResult packet_result = PacketResult::Success;
+        const uint32_t timeout_usec = 10 * 1000; // Wait for 10 ms for a response
+        while (packet_result == PacketResult::Success)
+            packet_result = WaitForPacketWithTimeoutMicroSecondsNoLock (response, timeout_usec);
+
         // The return value from QueryNoAckModeSupported() is true if the packet
         // was sent and _any_ response (including UNIMPLEMENTED) was received),
         // or false if no response was received. This quickly tells us if we have
