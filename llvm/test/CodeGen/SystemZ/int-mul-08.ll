@@ -1,6 +1,6 @@
 ; Test high-part i64->i128 multiplications.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
 declare i64 @foo()
 

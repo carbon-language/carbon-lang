@@ -1,6 +1,6 @@
 ; Testg 64-bit signed division and remainder.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
 declare i64 @foo()
 
