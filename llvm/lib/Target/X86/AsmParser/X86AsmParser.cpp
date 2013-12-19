@@ -1329,12 +1329,37 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
       }
       return Error(Tok.getLoc(), "Unexpected identifier!");
     }
-    case AsmToken::Integer:
+    case AsmToken::Integer: {
       if (isParsingInlineAsm() && SM.getAddImmPrefix())
         InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_ImmPrefix,
                                                     Tok.getLoc()));
-      SM.onInteger(Tok.getIntVal());
+      // Look for 'b' or 'f' following an Integer as a directional label
+      SMLoc Loc = getTok().getLoc();
+      int64_t IntVal = getTok().getIntVal();
+      End = consumeToken();
+      UpdateLocLex = false;
+      if (getLexer().getKind() == AsmToken::Identifier) {
+        StringRef IDVal = getTok().getString();
+        if (IDVal == "f" || IDVal == "b") {
+          MCSymbol *Sym =
+            getContext().GetDirectionalLocalSymbol(IntVal,
+                                                   IDVal == "f" ? 1 : 0);
+          MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+          const MCExpr *Val = 
+	    MCSymbolRefExpr::Create(Sym, Variant, getContext());
+          if (IDVal == "b" && Sym->isUndefined())
+            return Error(Loc, "invalid reference to undefined symbol");
+          StringRef Identifier = Sym->getName();
+          SM.onIdentifierExpr(Val, Identifier);
+          End = consumeToken();
+        } else {
+          SM.onInteger(IntVal);
+        }
+      } else {
+        SM.onInteger(IntVal);
+      }
       break;
+    }
     case AsmToken::Plus:    SM.onPlus(); break;
     case AsmToken::Minus:   SM.onMinus(); break;
     case AsmToken::Star:    SM.onStar(); break;
@@ -1684,6 +1709,13 @@ X86Operand *X86AsmParser::ParseIntelOperand() {
     }
 
     if (getLexer().isNot(AsmToken::LBrac)) {
+      // If a directional label (ie. 1f or 2b) was parsed above from
+      // ParseIntelExpression() then SM.getSym() was set to a pointer to
+      // to the MCExpr with the directional local symbol and this is a
+      // memory operand not an immediate operand.
+      if (SM.getSym())
+        return X86Operand::CreateMem(SM.getSym(), Start, End, Size);
+
       const MCExpr *ImmExpr = MCConstantExpr::Create(Imm, getContext());
       return X86Operand::CreateImm(ImmExpr, Start, End);
     }
