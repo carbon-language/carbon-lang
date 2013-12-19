@@ -3,13 +3,13 @@
 /***************/
 
 [id=menu] {
-	width:25ex;
+	width:30ex;
         float: left;
 }
 [id=content] {
 	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
 	position:absolute;
-  left:29ex;
+  left:35ex;
 	padding-right:4ex;
         max-width: 50em;
 }
@@ -19,22 +19,47 @@
 /**************/
 
 #menu .submenu {
-	padding-top:1em;
 	display:block;
+        padding-top: 0.2em;
+        font-bottom: 1.2em;
 }
+
+/*
+ * Color scheme
+ * darkblue: #313955
+ * blue: #556293
+ * red:  #931e24
+ * brown: #937155
+ * green: #24931e
+ */
 
 #menu label {
 	display:block;
+        color: white;
+        margin-bottom: 0.4em;
+        margin-top: 0.4em;
 	font-weight: bold;
+        font-size: 1.2em;
 	text-align: center;
-	background-color: rgb(192,192,192);
+	background-color: #3b4567;
+        -webkit-border-radius: 5px;
+        -moz-border-radius: 5px;
+
 }
 #menu a {
 	padding:0 .2em;
+        -webkit-border-radius: 5px;
+        -moz-border-radius: 5px;
+        font-size: 1.1em;
 	display:block;
-	text-align: center;
-	background-color: rgb(235,235,235);
+        font-weight: bold;
+	text-decoration: none;
+        color: #3b4567;
+}
+
+#menu a:hover {
+        background: #93aaff;
+
 }
 #menu a:visited {
-	color:rgb(100,50,100);
 }
