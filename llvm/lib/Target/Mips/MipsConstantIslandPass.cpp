@@ -1625,7 +1625,7 @@ MipsConstantIslands::fixupConditionalBr(ImmBranch &Br) {
   MachineBasicBlock *MBB = MI->getParent();
   MachineInstr *BMI = &MBB->back();
   bool NeedSplit = (BMI != MI) || !BBHasFallthrough(MBB);
-  unsigned OppositeBranchOpcode=TII->getOppositeBranchOpc(Opcode);
+  unsigned OppositeBranchOpcode = TII->getOppositeBranchOpc(Opcode);
  
   ++NumCBrFixed;
   if (BMI != MI) {
@@ -1674,9 +1674,9 @@ MipsConstantIslands::fixupConditionalBr(ImmBranch &Br) {
     BuildMI(MBB, DebugLoc(), TII->get(OppositeBranchOpcode))
            .addReg(MI->getOperand(0).getReg())
            .addMBB(NextBB);
-  }
-  else { BuildMI(MBB, DebugLoc(), TII->get(OppositeBranchOpcode))
-        .addMBB(NextBB);
+  } else {
+    BuildMI(MBB, DebugLoc(), TII->get(OppositeBranchOpcode))
+           .addMBB(NextBB);
   }
   Br.MI = &MBB->back();
   BBInfo[MBB->getNumber()].Size += TII->GetInstSizeInBytes(&MBB->back());
