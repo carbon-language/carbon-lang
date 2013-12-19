@@ -276,6 +276,66 @@ class BGEZAL_FM_MM<bits<5> funct> : MMArch {
   let Inst{15-0}  = offset;
 }
 
+class SYNC_FM_MM : MMArch {
+  bits<5> stype;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x00;
+  let Inst{25-21} = 0x0;
+  let Inst{20-16} = stype;
+  let Inst{15-6}  = 0x1ad;
+  let Inst{5-0}   = 0x3c;
+}
+
+class BRK_FM_MM : MMArch {
+  bits<10> code_1;
+  bits<10> code_2;
+  bits<32> Inst;
+  let Inst{31-26} = 0x0;
+  let Inst{25-16} = code_1;
+  let Inst{15-6}  = code_2;
+  let Inst{5-0}   = 0x07;
+}
+
+class SYS_FM_MM : MMArch {
+  bits<10> code_;
+  bits<32> Inst;
+  let Inst{31-26} = 0x0;
+  let Inst{25-16} = code_;
+  let Inst{15-6}  = 0x22b;
+  let Inst{5-0}   = 0x3c;
+}
+
+class WAIT_FM_MM : MMArch {
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x00;
+  let Inst{25-16} = 0x00;
+  let Inst{15-6}  = 0x24d;
+  let Inst{5-0}   = 0x3c;
+}
+
+class ER_FM_MM<bits<10> funct> : MMArch {
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x00;
+  let Inst{25-16} = 0x00;
+  let Inst{15-6}  = funct;
+  let Inst{5-0}   = 0x3c;
+}
+
+class EI_FM_MM<bits<10> funct> : MMArch {
+  bits<32> Inst;
+  bits<5> rt;
+
+  let Inst{31-26} = 0x00;
+  let Inst{25-21} = 0x00;
+  let Inst{20-16} = rt;
+  let Inst{15-6}  = funct;
+  let Inst{5-0}   = 0x3c;
+}
+
 class TEQ_FM_MM<bits<6> funct> : MMArch {
   bits<5> rs;
   bits<5> rt;

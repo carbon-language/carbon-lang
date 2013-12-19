@@ -643,36 +643,32 @@ class BAL_BR_Pseudo<Instruction RealInst> :
 // Syscall
 class SYS_FT<string opstr> :
   InstSE<(outs), (ins uimm20:$code_),
-         !strconcat(opstr, "\t$code_"), [], NoItinerary, FrmI>;
+         !strconcat(opstr, "\t$code_"), [], NoItinerary, FrmI, opstr>;
 // Break
 class BRK_FT<string opstr> :
   InstSE<(outs), (ins uimm10:$code_1, uimm10:$code_2),
-         !strconcat(opstr, "\t$code_1, $code_2"), [], NoItinerary, FrmOther>;
+         !strconcat(opstr, "\t$code_1, $code_2"), [], NoItinerary,
+         FrmOther, opstr>;
 
 // (D)Eret
 class ER_FT<string opstr> :
   InstSE<(outs), (ins),
-         opstr, [], NoItinerary, FrmOther>;
+         opstr, [], NoItinerary, FrmOther, opstr>;
 
 // Interrupts
 class DEI_FT<string opstr, RegisterOperand RO> :
   InstSE<(outs RO:$rt), (ins),
-         !strconcat(opstr, "\t$rt"), [], NoItinerary, FrmOther>;
+         !strconcat(opstr, "\t$rt"), [], NoItinerary, FrmOther, opstr>;
 
 // Wait
 class WAIT_FT<string opstr> :
-  InstSE<(outs), (ins), opstr, [], NoItinerary, FrmOther> {
-  let Inst{31-26} = 0x10;
-  let Inst{25}    = 1;
-  let Inst{24-6}  = 0;
-  let Inst{5-0}   = 0x20;
-}
+  InstSE<(outs), (ins), opstr, [], NoItinerary, FrmOther, opstr>;
 
 // Sync
 let hasSideEffects = 1 in
-class SYNC_FT :
+class SYNC_FT<string opstr> :
   InstSE<(outs), (ins i32imm:$stype), "sync $stype", [(MipsSync imm:$stype)],
-         NoItinerary, FrmOther>;
+         NoItinerary, FrmOther, opstr>;
 
 let hasSideEffects = 1 in
 class TEQ_FT<string opstr, RegisterOperand RO> :
@@ -984,7 +980,7 @@ def SWL : StoreLeftRight<"swl", MipsSWL, GPR32Opnd, IIStore>, LW_FM<0x2a>;
 def SWR : StoreLeftRight<"swr", MipsSWR, GPR32Opnd, IIStore>, LW_FM<0x2e>;
 }
 
-def SYNC : SYNC_FT, SYNC_FM;
+def SYNC : MMRel, SYNC_FT<"sync">, SYNC_FM;
 def TEQ : MMRel, TEQ_FT<"teq", GPR32Opnd>, TEQ_FM<0x34>;
 def TGE : MMRel, TEQ_FT<"tge", GPR32Opnd>, TEQ_FM<0x30>;
 def TGEU : MMRel, TEQ_FT<"tgeu", GPR32Opnd>, TEQ_FM<0x31>;
@@ -999,17 +995,17 @@ def TLTI : MMRel, TEQI_FT<"tlti", GPR32Opnd>, TEQI_FM<0xa>;
 def TTLTIU : MMRel, TEQI_FT<"tltiu", GPR32Opnd>, TEQI_FM<0xb>;
 def TNEI : MMRel, TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM<0xe>;
 
-def BREAK : BRK_FT<"break">, BRK_FM<0xd>;
-def SYSCALL : SYS_FT<"syscall">, SYS_FM<0xc>;
+def BREAK : MMRel, BRK_FT<"break">, BRK_FM<0xd>;
+def SYSCALL : MMRel, SYS_FT<"syscall">, SYS_FM<0xc>;
 def TRAP : TrapBase<BREAK>;
 
-def ERET : ER_FT<"eret">, ER_FM<0x18>;
-def DERET : ER_FT<"deret">, ER_FM<0x1f>;
+def ERET : MMRel, ER_FT<"eret">, ER_FM<0x18>;
+def DERET : MMRel, ER_FT<"deret">, ER_FM<0x1f>;
 
-def EI : DEI_FT<"ei", GPR32Opnd>, EI_FM<1>;
-def DI : DEI_FT<"di", GPR32Opnd>, EI_FM<0>;
+def EI : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM<1>;
+def DI : MMRel, DEI_FT<"di", GPR32Opnd>, EI_FM<0>;
 
-def WAIT : WAIT_FT<"wait">;
+def WAIT : MMRel, WAIT_FT<"wait">, WAIT_FM;
 
 /// Load-linked, Store-conditional
 let Predicates = [NotInMicroMips] in {

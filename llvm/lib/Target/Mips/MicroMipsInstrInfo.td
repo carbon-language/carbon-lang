@@ -213,6 +213,16 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def BLTZAL_MM : MMRel, BGEZAL_FT<"bltzal", brtarget_mm, GPR32Opnd>,
                   BGEZAL_FM_MM<0x01>;
 
+  /// Control Instructions
+  def SYNC_MM    : MMRel, SYNC_FT<"sync">, SYNC_FM_MM;
+  def BREAK_MM   : MMRel, BRK_FT<"break">, BRK_FM_MM;
+  def SYSCALL_MM : MMRel, SYS_FT<"syscall">, SYS_FM_MM;
+  def WAIT_MM    : MMRel, WAIT_FT<"wait">, WAIT_FM_MM;
+  def ERET_MM    : MMRel, ER_FT<"eret">, ER_FM_MM<0x3cd>;
+  def DERET_MM   : MMRel, ER_FT<"deret">, ER_FM_MM<0x38d>;
+  def EI_MM      : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM_MM<0x15d>;
+  def DI_MM      : MMRel, DEI_FT<"di", GPR32Opnd>, EI_FM_MM<0x11d>;
+
   /// Trap Instructions
   def TEQ_MM  : MMRel, TEQ_FT<"teq", GPR32Opnd>, TEQ_FM_MM<0x0>;
   def TGE_MM  : MMRel, TEQ_FT<"tge", GPR32Opnd>, TEQ_FM_MM<0x08>;

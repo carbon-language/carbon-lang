@@ -401,7 +401,7 @@ class BGEZAL_FM<bits<5> funct> : StdArch {
   let Inst{15-0}  = offset;
 }
 
-class SYNC_FM {
+class SYNC_FM : StdArch {
   bits<5> stype;
 
   bits<32> Inst;
@@ -479,11 +479,21 @@ class TEQI_FM<bits<5> funct> : StdArch {
   let Inst{20-16}   = funct;
   let Inst{15-0}  = imm16;
 }
+
+class WAIT_FM : StdArch {
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x10;
+  let Inst{25}    = 1;
+  let Inst{24-6}  = 0;
+  let Inst{5-0}   = 0x20;
+}
+
 //===----------------------------------------------------------------------===//
 //  System calls format <op|code_|funct>
 //===----------------------------------------------------------------------===//
 
-class SYS_FM<bits<6> funct>
+class SYS_FM<bits<6> funct> : StdArch
 {
   bits<20> code_;
   bits<32> Inst;
@@ -496,7 +506,7 @@ class SYS_FM<bits<6> funct>
 //  Break instruction format <op|code_1|funct>
 //===----------------------------------------------------------------------===//
 
-class BRK_FM<bits<6> funct>
+class BRK_FM<bits<6> funct> : StdArch
 {
   bits<10> code_1;
   bits<10> code_2;
@@ -511,7 +521,7 @@ class BRK_FM<bits<6> funct>
 //  Exception return format <Cop0|1|0|funct>
 //===----------------------------------------------------------------------===//
 
-class ER_FM<bits<6> funct>
+class ER_FM<bits<6> funct> : StdArch
 {
   bits<32> Inst;
   let Inst{31-26} = 0x10;
@@ -525,7 +535,7 @@ class ER_FM<bits<6> funct>
 //  Enable/disable interrupt instruction format <Cop0|MFMC0|rt|12|0|sc|0|0>
 //===----------------------------------------------------------------------===//
 
-class EI_FM<bits<1> sc>
+class EI_FM<bits<1> sc> : StdArch
 {
   bits<32> Inst;
   bits<5> rt;
