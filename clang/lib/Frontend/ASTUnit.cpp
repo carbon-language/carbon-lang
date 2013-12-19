@@ -1549,7 +1549,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
 
   // Save the preamble text for later; we'll need to compare against it for
   // subsequent reparses.
-  StringRef MainFilename = PreambleInvocation->getFrontendOpts().Inputs[0].getFile();
+  StringRef MainFilename = FrontendOpts.Inputs[0].getFile();
   Preamble.assign(FileMgr->getFile(MainFilename),
                   NewPreamble.first->getBufferStart(), 
                   NewPreamble.first->getBufferStart() 
