@@ -504,10 +504,9 @@ void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PInfo,
                                            SourceLocation BlameLoc) {
   assert(!PInfo.isTest());
   
-  if (!FunDecl->hasAttr<CallableWhenAttr>())
-    return;
-  
   const CallableWhenAttr *CWAttr = FunDecl->getAttr<CallableWhenAttr>();
+  if (!CWAttr)
+    return;
   
   if (PInfo.isVar()) {
     ConsumedState VarState = StateMap->getState(PInfo.getVar());
@@ -553,9 +552,8 @@ void ConsumedStmtVisitor::propagateReturnType(const Stmt *Call,
     
     ConsumedState ReturnState;
     
-    if (Fun->hasAttr<ReturnTypestateAttr>())
-      ReturnState = mapReturnTypestateAttrState(
-        Fun->getAttr<ReturnTypestateAttr>());
+    if (ReturnTypestateAttr *RTA = Fun->getAttr<ReturnTypestateAttr>())
+      ReturnState = mapReturnTypestateAttrState(RTA);
     else
       ReturnState = mapConsumableAttrState(ReturnType);
     
@@ -643,11 +641,9 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
       
       // Check that the parameter is in the correct state.
       
-      if (Param->hasAttr<ParamTypestateAttr>()) {
-        ConsumedState ParamState = PInfo.getAsState(StateMap);
-        
-        ConsumedState ExpectedState =
-          mapParamTypestateAttrState(Param->getAttr<ParamTypestateAttr>());
+      if (ParamTypestateAttr *PTA = Param->getAttr<ParamTypestateAttr>()) {
+        ConsumedState ParamState = PInfo.getAsState(StateMap);        
+        ConsumedState ExpectedState = mapParamTypestateAttrState(PTA);
         
         if (ParamState != ExpectedState)
           Analyzer.WarningsHandler.warnParamTypestateMismatch(
@@ -660,18 +656,13 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
       
       // Adjust state on the caller side.
       
-      if (isRValueRefish(ParamType)) {
+      if (isRValueRefish(ParamType))
         setStateForVarOrTmp(StateMap, PInfo, consumed::CS_Consumed);
-        
-      } else if (Param->hasAttr<ReturnTypestateAttr>()) {
-        setStateForVarOrTmp(StateMap, PInfo,
-          mapReturnTypestateAttrState(Param->getAttr<ReturnTypestateAttr>()));
-        
-      } else if (!isValueType(ParamType) &&
-                 !ParamType->getPointeeType().isConstQualified()) {
-        
+      else if (ReturnTypestateAttr *RT = Param->getAttr<ReturnTypestateAttr>())
+        setStateForVarOrTmp(StateMap, PInfo, mapReturnTypestateAttrState(RT));
+      else if (!isValueType(ParamType) &&
+               !ParamType->getPointeeType().isConstQualified())
         setStateForVarOrTmp(StateMap, PInfo, consumed::CS_Unknown);
-      }
     }
     
     QualType RetType = FunDecl->getCallResultType();
@@ -707,20 +698,14 @@ void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
     return;
   
   // FIXME: What should happen if someone annotates the move constructor?
-  if (Constructor->hasAttr<ReturnTypestateAttr>()) {
-    // TODO: Adjust state of args appropriately.
-    
-    ReturnTypestateAttr *RTAttr = Constructor->getAttr<ReturnTypestateAttr>();
-    ConsumedState RetState = mapReturnTypestateAttrState(RTAttr);
-    PropagationMap.insert(PairType(Call, PropagationInfo(RetState)));
-    
-  } else if (Constructor->isDefaultConstructor()) {
-    
+  if (ReturnTypestateAttr *RTA = Constructor->getAttr<ReturnTypestateAttr>()) {
+    // TODO: Adjust state of args appropriately.    
+    ConsumedState RetState = mapReturnTypestateAttrState(RTA);
+    PropagationMap.insert(PairType(Call, PropagationInfo(RetState)));    
+  } else if (Constructor->isDefaultConstructor()) {    
     PropagationMap.insert(PairType(Call,
       PropagationInfo(consumed::CS_Consumed)));
-    
-  } else if (Constructor->isMoveConstructor()) {
-    
+  } else if (Constructor->isMoveConstructor()) {    
     InfoEntry Entry = PropagationMap.find(Call->getArg(0));
     
     if (Entry != PropagationMap.end()) {
@@ -770,17 +755,15 @@ void ConsumedStmtVisitor::VisitCXXMemberCallExpr(
     
     checkCallability(PInfo, MethodDecl, Call->getExprLoc());
     
+    SetTypestateAttr *STA = MethodDecl->getAttr<SetTypestateAttr>();
     if (PInfo.isVar()) {
       if (isTestingFunction(MethodDecl))
         PropagationMap.insert(PairType(Call,
           PropagationInfo(PInfo.getVar(), testsFor(MethodDecl))));
-      else if (MethodDecl->hasAttr<SetTypestateAttr>())
-        StateMap->setState(PInfo.getVar(),
-          mapSetTypestateAttrState(MethodDecl->getAttr<SetTypestateAttr>()));
-    } else if (PInfo.isTmp() && MethodDecl->hasAttr<SetTypestateAttr>()) {
-      StateMap->setState(PInfo.getTmp(),
-        mapSetTypestateAttrState(MethodDecl->getAttr<SetTypestateAttr>()));
-    }
+      else if (STA)
+        StateMap->setState(PInfo.getVar(), mapSetTypestateAttrState(STA));
+    } else if (STA && PInfo.isTmp())
+      StateMap->setState(PInfo.getTmp(), mapSetTypestateAttrState(STA));
   }
 }
 
@@ -855,18 +838,15 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
       
       checkCallability(PInfo, FunDecl, Call->getExprLoc());
       
+      SetTypestateAttr *STA = FunDecl->getAttr<SetTypestateAttr>();
       if (PInfo.isVar()) {
         if (isTestingFunction(FunDecl))
           PropagationMap.insert(PairType(Call,
             PropagationInfo(PInfo.getVar(), testsFor(FunDecl))));
-        else if (FunDecl->hasAttr<SetTypestateAttr>())
-          StateMap->setState(PInfo.getVar(),
-            mapSetTypestateAttrState(FunDecl->getAttr<SetTypestateAttr>()));
-        
-      } else if (PInfo.isTmp() && FunDecl->hasAttr<SetTypestateAttr>()) {
-        StateMap->setState(PInfo.getTmp(),
-          mapSetTypestateAttrState(FunDecl->getAttr<SetTypestateAttr>()));
-    }
+        else if (STA)
+          StateMap->setState(PInfo.getVar(), mapSetTypestateAttrState(STA));        
+      } else if (STA && PInfo.isTmp())
+        StateMap->setState(PInfo.getTmp(), mapSetTypestateAttrState(STA));
     }
   }
 }
@@ -904,22 +884,16 @@ void ConsumedStmtVisitor::VisitParmVarDecl(const ParmVarDecl *Param) {
   QualType ParamType = Param->getType();
   ConsumedState ParamState = consumed::CS_None;
   
-  if (Param->hasAttr<ParamTypestateAttr>()) {
-    const ParamTypestateAttr *PTAttr = Param->getAttr<ParamTypestateAttr>();
-    ParamState = mapParamTypestateAttrState(PTAttr);
-    
-  } else if (isConsumableType(ParamType)) {
-    ParamState = mapConsumableAttrState(ParamType);
-    
-  } else if (isRValueRefish(ParamType) &&
-             isConsumableType(ParamType->getPointeeType())) {
-    
-    ParamState = mapConsumableAttrState(ParamType->getPointeeType());
-    
-  } else if (ParamType->isReferenceType() &&
-             isConsumableType(ParamType->getPointeeType())) {
+  if (const ParamTypestateAttr *PTA = Param->getAttr<ParamTypestateAttr>())
+    ParamState = mapParamTypestateAttrState(PTA);    
+  else if (isConsumableType(ParamType))
+    ParamState = mapConsumableAttrState(ParamType);    
+  else if (isRValueRefish(ParamType) &&
+             isConsumableType(ParamType->getPointeeType()))    
+    ParamState = mapConsumableAttrState(ParamType->getPointeeType());    
+  else if (ParamType->isReferenceType() &&
+             isConsumableType(ParamType->getPointeeType()))
     ParamState = consumed::CS_Unknown;
-  }
   
   if (ParamState != CS_None)
     StateMap->setState(Param, ParamState);
@@ -1170,24 +1144,21 @@ bool ConsumedBlockInfo::isBackEdgeTarget(const CFGBlock *Block) {
 void ConsumedStateMap::checkParamsForReturnTypestate(SourceLocation BlameLoc,
   ConsumedWarningsHandlerBase &WarningsHandler) const {
   
-  ConsumedState ExpectedState;
-  
   for (VarMapType::const_iterator DMI = VarMap.begin(), DME = VarMap.end();
        DMI != DME; ++DMI) {
     
     if (isa<ParmVarDecl>(DMI->first)) {
       const ParmVarDecl *Param = cast<ParmVarDecl>(DMI->first);
+      const ReturnTypestateAttr *RTA = Param->getAttr<ReturnTypestateAttr>();
       
-      if (!Param->hasAttr<ReturnTypestateAttr>()) continue;
+      if (!RTA)
+        continue;
       
-      ExpectedState =
-        mapReturnTypestateAttrState(Param->getAttr<ReturnTypestateAttr>());
-      
-      if (DMI->second != ExpectedState) {
+      ConsumedState ExpectedState = mapReturnTypestateAttrState(RTA);      
+      if (DMI->second != ExpectedState)
         WarningsHandler.warnParamReturnTypestateMismatch(BlameLoc,
           Param->getNameAsString(), stateToString(ExpectedState),
           stateToString(DMI->second));
-      }
     }
   }
 }
@@ -1298,9 +1269,7 @@ void ConsumedAnalyzer::determineExpectedReturnState(AnalysisDeclContext &AC,
   } else
     ReturnType = D->getCallResultType();
 
-  if (D->hasAttr<ReturnTypestateAttr>()) {
-    const ReturnTypestateAttr *RTSAttr = D->getAttr<ReturnTypestateAttr>();
-
+  if (const ReturnTypestateAttr *RTSAttr = D->getAttr<ReturnTypestateAttr>()) {
     const CXXRecordDecl *RD = ReturnType->getAsCXXRecordDecl();
     if (!RD || !RD->hasAttr<ConsumableAttr>()) {
       // FIXME: This should be removed when template instantiation propagates
