@@ -2083,8 +2083,8 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
       //
       // Note: If new cases are added here, DiagnoseUnusedExprResult should be
       // updated to match for QoI.
-      if (FD->getAttr<WarnUnusedResultAttr>() ||
-          FD->getAttr<PureAttr>() || FD->getAttr<ConstAttr>()) {
+      if (FD->hasAttr<WarnUnusedResultAttr>() ||
+          FD->hasAttr<PureAttr>() || FD->hasAttr<ConstAttr>()) {
         WarnE = this;
         Loc = CE->getCallee()->getLocStart();
         R1 = CE->getCallee()->getSourceRange();
@@ -2129,7 +2129,7 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     }
 
     const ObjCMethodDecl *MD = ME->getMethodDecl();
-    if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
+    if (MD && MD->hasAttr<WarnUnusedResultAttr>()) {
       WarnE = this;
       Loc = getExprLoc();
       return true;

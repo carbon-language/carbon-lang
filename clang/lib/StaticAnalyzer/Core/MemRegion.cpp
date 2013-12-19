@@ -1363,7 +1363,7 @@ BlockDataRegion::getCaptureRegions(const VarDecl *VD) {
   const VarRegion *VR = 0;
   const VarRegion *OriginalVR = 0;
 
-  if (!VD->getAttr<BlocksAttr>() && VD->hasLocalStorage()) {
+  if (!VD->hasAttr<BlocksAttr>() && VD->hasLocalStorage()) {
     VR = MemMgr.getVarRegion(VD, this);
     OriginalVR = MemMgr.getVarRegion(VD, LC);
   }

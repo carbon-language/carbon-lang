@@ -1102,7 +1102,7 @@ RetainSummaryManager::getFunctionSummary(const FunctionDecl *FD) {
         break;
       }
 
-      if (FD->getAttr<CFAuditedTransferAttr>()) {
+      if (FD->hasAttr<CFAuditedTransferAttr>()) {
         S = getCFCreateGetRuleSummary(FD);
         break;
       }
@@ -1214,21 +1214,21 @@ Optional<RetEffect>
 RetainSummaryManager::getRetEffectFromAnnotations(QualType RetTy,
                                                   const Decl *D) {
   if (cocoa::isCocoaObjectRef(RetTy)) {
-    if (D->getAttr<NSReturnsRetainedAttr>())
+    if (D->hasAttr<NSReturnsRetainedAttr>())
       return ObjCAllocRetE;
 
-    if (D->getAttr<NSReturnsNotRetainedAttr>() ||
-        D->getAttr<NSReturnsAutoreleasedAttr>())
+    if (D->hasAttr<NSReturnsNotRetainedAttr>() ||
+        D->hasAttr<NSReturnsAutoreleasedAttr>())
       return RetEffect::MakeNotOwned(RetEffect::ObjC);
 
   } else if (!RetTy->isPointerType()) {
     return None;
   }
 
-  if (D->getAttr<CFReturnsRetainedAttr>())
+  if (D->hasAttr<CFReturnsRetainedAttr>())
     return RetEffect::MakeOwned(RetEffect::CF, true);
 
-  if (D->getAttr<CFReturnsNotRetainedAttr>())
+  if (D->hasAttr<CFReturnsNotRetainedAttr>())
     return RetEffect::MakeNotOwned(RetEffect::CF);
 
   return None;
@@ -1248,9 +1248,9 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
   for (FunctionDecl::param_const_iterator pi = FD->param_begin(), 
          pe = FD->param_end(); pi != pe; ++pi, ++parm_idx) {
     const ParmVarDecl *pd = *pi;
-    if (pd->getAttr<NSConsumedAttr>())
+    if (pd->hasAttr<NSConsumedAttr>())
       Template->addArg(AF, parm_idx, DecRefMsg);
-    else if (pd->getAttr<CFConsumedAttr>())
+    else if (pd->hasAttr<CFConsumedAttr>())
       Template->addArg(AF, parm_idx, DecRef);      
   }
   
@@ -1269,7 +1269,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
   RetainSummaryTemplate Template(Summ, *this);
 
   // Effects on the receiver.
-  if (MD->getAttr<NSConsumesSelfAttr>())
+  if (MD->hasAttr<NSConsumesSelfAttr>())
     Template->setReceiverEffect(DecRefMsg);      
   
   // Effects on the parameters.
@@ -1278,9 +1278,9 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
          pi=MD->param_begin(), pe=MD->param_end();
        pi != pe; ++pi, ++parm_idx) {
     const ParmVarDecl *pd = *pi;
-    if (pd->getAttr<NSConsumedAttr>())
+    if (pd->hasAttr<NSConsumedAttr>())
       Template->addArg(AF, parm_idx, DecRefMsg);      
-    else if (pd->getAttr<CFConsumedAttr>()) {
+    else if (pd->hasAttr<CFConsumedAttr>()) {
       Template->addArg(AF, parm_idx, DecRef);      
     }   
   }
@@ -2212,9 +2212,9 @@ CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
     os << (isa<ObjCMethodDecl>(D) ? " is returned from a method "
                                   : " is returned from a function ");
     
-    if (D->getAttr<CFReturnsNotRetainedAttr>())
+    if (D->hasAttr<CFReturnsNotRetainedAttr>())
       os << "that is annotated as CF_RETURNS_NOT_RETAINED";
-    else if (D->getAttr<NSReturnsNotRetainedAttr>())
+    else if (D->hasAttr<NSReturnsNotRetainedAttr>())
       os << "that is annotated as NS_RETURNS_NOT_RETAINED";
     else {
       if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
@@ -3375,7 +3375,7 @@ void RetainCountChecker::checkBind(SVal loc, SVal val, const Stmt *S,
   // false positives.
   if (const VarRegion *LVR = dyn_cast_or_null<VarRegion>(loc.getAsRegion())) {
     const VarDecl *VD = LVR->getDecl();
-    if (VD->getAttr<CleanupAttr>()) {
+    if (VD->hasAttr<CleanupAttr>()) {
       escapes = true;
     }
   }

@@ -128,8 +128,8 @@ static void checkObjCUnusedIvar(const ObjCImplementationDecl *D,
     // (c) are iboutlets
     // (d) are unnamed bitfields
     if (ID->getAccessControl() != ObjCIvarDecl::Private ||
-        ID->getAttr<UnusedAttr>() || ID->getAttr<IBOutletAttr>() ||
-        ID->getAttr<IBOutletCollectionAttr>() ||
+        ID->hasAttr<UnusedAttr>() || ID->hasAttr<IBOutletAttr>() ||
+        ID->hasAttr<IBOutletCollectionAttr>() ||
         ID->isUnnamedBitfield())
       continue;
 

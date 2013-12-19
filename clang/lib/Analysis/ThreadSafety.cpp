@@ -1896,7 +1896,7 @@ void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK) {
   if (!D || !D->hasAttrs())
     return;
 
-  if (D->getAttr<GuardedVarAttr>() && FSet.isEmpty())
+  if (D->hasAttr<GuardedVarAttr>() && FSet.isEmpty())
     Analyzer->Handler.handleNoMutexHeld(D, POK_VarAccess, AK,
                                         Exp->getExprLoc());
 
@@ -1934,7 +1934,7 @@ void BuildLockset::checkPtAccess(const Expr *Exp, AccessKind AK) {
   if (!D || !D->hasAttrs())
     return;
 
-  if (D->getAttr<PtGuardedVarAttr>() && FSet.isEmpty())
+  if (D->hasAttr<PtGuardedVarAttr>() && FSet.isEmpty())
     Analyzer->Handler.handleNoMutexHeld(D, POK_VarDereference, AK,
                                         Exp->getExprLoc());
 
@@ -2054,7 +2054,7 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
   if (VD) {
     if (const CXXConstructorDecl *CD = dyn_cast<const CXXConstructorDecl>(D)) {
       const CXXRecordDecl* PD = CD->getParent();
-      if (PD && PD->getAttr<ScopedLockableAttr>())
+      if (PD && PD->hasAttr<ScopedLockableAttr>())
         isScopedVar = true;
     }
   }
@@ -2342,7 +2342,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
 
   if (!D)
     return;  // Ignore anonymous functions for now.
-  if (D->getAttr<NoThreadSafetyAnalysisAttr>())
+  if (D->hasAttr<NoThreadSafetyAnalysisAttr>())
     return;
   // FIXME: Do something a bit more intelligent inside constructor and
   // destructor code.  Constructors and destructors must assume unique access

@@ -421,9 +421,7 @@ static const RecordType *getRecordType(QualType QT) {
 static bool checkBaseClassIsLockableCallback(const CXXBaseSpecifier *Specifier,
                                              CXXBasePath &Path, void *Unused) {
   const RecordType *RT = Specifier->getType()->getAs<RecordType>();
-  if (RT->getDecl()->getAttr<LockableAttr>())
-    return true;
-  return false;
+  return RT->getDecl()->hasAttr<LockableAttr>();
 }
 
 
@@ -451,7 +449,7 @@ static void checkForLockableRecord(Sema &S, Decl *D, const AttributeList &Attr,
 
   // Check if the type is lockable.
   RecordDecl *RD = RT->getDecl();
-  if (RD->getAttr<LockableAttr>())
+  if (RD->hasAttr<LockableAttr>())
     return;
 
   // Else check if any base classes are lockable.
@@ -602,7 +600,7 @@ static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
   QualType QT = cast<ValueDecl>(D)->getType();
   if (!QT->isDependentType()) {
     const RecordType *RT = getRecordType(QT);
-    if (!RT || !RT->getDecl()->getAttr<LockableAttr>()) {
+    if (!RT || !RT->getDecl()->hasAttr<LockableAttr>()) {
       S.Diag(Attr.getLoc(), diag::warn_thread_attribute_decl_not_lockable)
         << Attr.getName();
       return false;
@@ -1607,7 +1605,7 @@ static void handleVecReturnAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return result; // This will be returned in a register
   }
 */
-  if (D->getAttr<VecReturnAttr>()) {
+  if (D->hasAttr<VecReturnAttr>()) {
     S.Diag(Attr.getLoc(), diag::err_repeat_attribute) << "vecreturn";
     return;
   }

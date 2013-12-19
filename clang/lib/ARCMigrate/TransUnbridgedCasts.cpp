@@ -133,11 +133,11 @@ private:
     Expr *inner = E->IgnoreParenCasts();
     if (CallExpr *callE = dyn_cast<CallExpr>(inner)) {
       if (FunctionDecl *FD = callE->getDirectCallee()) {
-        if (FD->getAttr<CFReturnsRetainedAttr>()) {
+        if (FD->hasAttr<CFReturnsRetainedAttr>()) {
           castToObjCObject(E, /*retained=*/true);
           return;
         }
-        if (FD->getAttr<CFReturnsNotRetainedAttr>()) {
+        if (FD->hasAttr<CFReturnsNotRetainedAttr>()) {
           castToObjCObject(E, /*retained=*/false);
           return;
         }
@@ -439,7 +439,7 @@ private:
         }
         if (i < callE->getNumArgs() && i < FD->getNumParams()) {
           ParmVarDecl *PD = FD->getParamDecl(i);
-          if (PD->getAttr<CFConsumedAttr>()) {
+          if (PD->hasAttr<CFConsumedAttr>()) {
             isConsumed = true;
             return true;
           }

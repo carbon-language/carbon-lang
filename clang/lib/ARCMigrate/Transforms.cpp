@@ -88,7 +88,7 @@ bool trans::isPlusOne(const Expr *E) {
   if (const CallExpr *
         callE = dyn_cast<CallExpr>(E->IgnoreParenCasts())) {
     if (const FunctionDecl *FD = callE->getDirectCallee()) {
-      if (FD->getAttr<CFReturnsRetainedAttr>())
+      if (FD->hasAttr<CFReturnsRetainedAttr>())
         return true;
 
       if (FD->isGlobal() &&

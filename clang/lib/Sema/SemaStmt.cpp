@@ -216,17 +216,17 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
     // is written in a macro body, only warn if it has the warn_unused_result
     // attribute.
     if (const Decl *FD = CE->getCalleeDecl()) {
-      if (FD->getAttr<WarnUnusedResultAttr>()) {
+      if (FD->hasAttr<WarnUnusedResultAttr>()) {
         Diag(Loc, diag::warn_unused_result) << R1 << R2;
         return;
       }
       if (ShouldSuppress)
         return;
-      if (FD->getAttr<PureAttr>()) {
+      if (FD->hasAttr<PureAttr>()) {
         Diag(Loc, diag::warn_unused_call) << R1 << R2 << "pure";
         return;
       }
-      if (FD->getAttr<ConstAttr>()) {
+      if (FD->hasAttr<ConstAttr>()) {
         Diag(Loc, diag::warn_unused_call) << R1 << R2 << "const";
         return;
       }
@@ -240,7 +240,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
       return;
     }
     const ObjCMethodDecl *MD = ME->getMethodDecl();
-    if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
+    if (MD && MD->hasAttr<WarnUnusedResultAttr>()) {
       Diag(Loc, diag::warn_unused_result) << R1 << R2;
       return;
     }

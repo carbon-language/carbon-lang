@@ -1374,13 +1374,13 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
        pe = FuncDecl->param_end(); pi != pe; ++pi, ++i) {
     const ParmVarDecl *pd = *pi;
     ArgEffect AE = AEArgs[i];
-    if (AE == DecRef && !pd->getAttr<CFConsumedAttr>() &&
+    if (AE == DecRef && !pd->hasAttr<CFConsumedAttr>() &&
         Ctx.Idents.get("CF_CONSUMED").hasMacroDefinition()) {
       edit::Commit commit(*Editor);
       commit.insertBefore(pd->getLocation(), "CF_CONSUMED ");
       Editor->commit(commit);
     }
-    else if (AE == DecRefMsg && !pd->getAttr<NSConsumedAttr>() &&
+    else if (AE == DecRefMsg && !pd->hasAttr<NSConsumedAttr>() &&
              Ctx.Idents.get("NS_CONSUMED").hasMacroDefinition()) {
       edit::Commit commit(*Editor);
       commit.insertBefore(pd->getLocation(), "NS_CONSUMED ");
@@ -1398,11 +1398,11 @@ ObjCMigrateASTConsumer::CF_BRIDGING_KIND
     return CF_BRIDGING_NONE;
     
   CallEffects CE  = CallEffects::getEffect(FuncDecl);
-  bool FuncIsReturnAnnotated = (FuncDecl->getAttr<CFReturnsRetainedAttr>() ||
-                                FuncDecl->getAttr<CFReturnsNotRetainedAttr>() ||
-                                FuncDecl->getAttr<NSReturnsRetainedAttr>() ||
-                                FuncDecl->getAttr<NSReturnsNotRetainedAttr>() ||
-                                FuncDecl->getAttr<NSReturnsAutoreleasedAttr>());
+  bool FuncIsReturnAnnotated = (FuncDecl->hasAttr<CFReturnsRetainedAttr>() ||
+                                FuncDecl->hasAttr<CFReturnsNotRetainedAttr>() ||
+                                FuncDecl->hasAttr<NSReturnsRetainedAttr>() ||
+                                FuncDecl->hasAttr<NSReturnsNotRetainedAttr>() ||
+                                FuncDecl->hasAttr<NSReturnsAutoreleasedAttr>());
   
   // Trivial case of when funciton is annotated and has no argument.
   if (FuncIsReturnAnnotated && FuncDecl->getNumParams() == 0)
@@ -1428,7 +1428,7 @@ ObjCMigrateASTConsumer::CF_BRIDGING_KIND
     const ParmVarDecl *pd = *pi;
     ArgEffect AE = AEArgs[i];
     if (AE == DecRef /*CFConsumed annotated*/ || AE == IncRef) {
-      if (AE == DecRef && !pd->getAttr<CFConsumedAttr>())
+      if (AE == DecRef && !pd->hasAttr<CFConsumedAttr>())
         ArgCFAudited = true;
       else if (AE == IncRef)
         ArgCFAudited = true;
@@ -1507,7 +1507,7 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
        pe = MethodDecl->param_end(); pi != pe; ++pi, ++i) {
     const ParmVarDecl *pd = *pi;
     ArgEffect AE = AEArgs[i];
-    if (AE == DecRef && !pd->getAttr<CFConsumedAttr>() &&
+    if (AE == DecRef && !pd->hasAttr<CFConsumedAttr>() &&
         Ctx.Idents.get("CF_CONSUMED").hasMacroDefinition()) {
       edit::Commit commit(*Editor);
       commit.insertBefore(pd->getLocation(), "CF_CONSUMED ");
@@ -1523,14 +1523,14 @@ void ObjCMigrateASTConsumer::migrateAddMethodAnnotation(
     return;
   
   CallEffects CE  = CallEffects::getEffect(MethodDecl);
-  bool MethodIsReturnAnnotated = (MethodDecl->getAttr<CFReturnsRetainedAttr>() ||
-                                  MethodDecl->getAttr<CFReturnsNotRetainedAttr>() ||
-                                  MethodDecl->getAttr<NSReturnsRetainedAttr>() ||
-                                  MethodDecl->getAttr<NSReturnsNotRetainedAttr>() ||
-                                  MethodDecl->getAttr<NSReturnsAutoreleasedAttr>());
+  bool MethodIsReturnAnnotated = (MethodDecl->hasAttr<CFReturnsRetainedAttr>() ||
+                                  MethodDecl->hasAttr<CFReturnsNotRetainedAttr>() ||
+                                  MethodDecl->hasAttr<NSReturnsRetainedAttr>() ||
+                                  MethodDecl->hasAttr<NSReturnsNotRetainedAttr>() ||
+                                  MethodDecl->hasAttr<NSReturnsAutoreleasedAttr>());
   
   if (CE.getReceiver() ==  DecRefMsg &&
-      !MethodDecl->getAttr<NSConsumesSelfAttr>() &&
+      !MethodDecl->hasAttr<NSConsumesSelfAttr>() &&
       MethodDecl->getMethodFamily() != OMF_init &&
       MethodDecl->getMethodFamily() != OMF_release &&
       Ctx.Idents.get("NS_CONSUMES_SELF").hasMacroDefinition()) {
@@ -1564,7 +1564,7 @@ void ObjCMigrateASTConsumer::migrateAddMethodAnnotation(
        pe = MethodDecl->param_end(); pi != pe; ++pi, ++i) {
     const ParmVarDecl *pd = *pi;
     ArgEffect AE = AEArgs[i];
-    if ((AE == DecRef && !pd->getAttr<CFConsumedAttr>()) || AE == IncRef ||
+    if ((AE == DecRef && !pd->hasAttr<CFConsumedAttr>()) || AE == IncRef ||
         !AuditedType(pd->getType())) {
       AddCFAnnotations(Ctx, CE, MethodDecl, MethodIsReturnAnnotated);
       return;

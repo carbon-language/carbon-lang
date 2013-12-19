@@ -214,7 +214,7 @@ public:
       return;
 
     if (!isLive(Live, VD) &&
-        !(VD->getAttr<UnusedAttr>() || VD->getAttr<BlocksAttr>())) {
+        !(VD->hasAttr<UnusedAttr>() || VD->hasAttr<BlocksAttr>())) {
 
       PathDiagnosticLocation ExLoc =
         PathDiagnosticLocation::createBegin(Ex, BR.getSourceManager(), AC);
@@ -340,7 +340,7 @@ public:
             // A dead initialization is a variable that is dead after it
             // is initialized.  We don't flag warnings for those variables
             // marked 'unused'.
-            if (!isLive(Live, V) && V->getAttr<UnusedAttr>() == 0) {
+            if (!isLive(Live, V) && !V->hasAttr<UnusedAttr>()) {
               // Special case: check for initializations with constants.
               //
               //  e.g. : int x = 0;

@@ -40,7 +40,7 @@ void NoReturnFunctionChecker::checkPostCall(const CallEvent &CE,
   bool BuildSinks = false;
 
   if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CE.getDecl()))
-    BuildSinks = FD->getAttr<AnalyzerNoReturnAttr>() || FD->isNoReturn();
+    BuildSinks = FD->hasAttr<AnalyzerNoReturnAttr>() || FD->isNoReturn();
 
   const Expr *Callee = CE.getOriginExpr();
   if (!BuildSinks && Callee)

@@ -119,8 +119,8 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
     QualType T = ID->getType();
 
     if (!T->isObjCObjectPointerType() ||
-        ID->getAttr<IBOutletAttr>() || // Skip IBOutlets.
-        ID->getAttr<IBOutletCollectionAttr>()) // Skip IBOutletCollections.
+        ID->hasAttr<IBOutletAttr>() || // Skip IBOutlets.
+        ID->hasAttr<IBOutletCollectionAttr>()) // Skip IBOutletCollections.
       continue;
 
     containsPointerIvar = true;
