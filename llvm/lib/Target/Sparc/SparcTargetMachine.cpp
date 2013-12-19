@@ -41,6 +41,11 @@ static std::string computeDataLayout(const SparcSubtarget &ST) {
   else
     Ret += "-f128:64-n32";
 
+  if (ST.is64Bit())
+    Ret += "-S128";
+  else
+    Ret += "-S64";
+
   return Ret;
 }
 
