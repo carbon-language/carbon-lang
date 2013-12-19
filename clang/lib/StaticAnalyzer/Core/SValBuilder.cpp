@@ -362,7 +362,7 @@ SVal SValBuilder::evalBinOp(ProgramStateRef state, BinaryOperator::Opcode op,
 DefinedOrUnknownSVal SValBuilder::evalEQ(ProgramStateRef state,
                                          DefinedOrUnknownSVal lhs,
                                          DefinedOrUnknownSVal rhs) {
-  return evalBinOp(state, BO_EQ, lhs, rhs, Context.IntTy)
+  return evalBinOp(state, BO_EQ, lhs, rhs, getConditionType())
       .castAs<DefinedOrUnknownSVal>();
 }
 

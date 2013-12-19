@@ -118,7 +118,7 @@ ProgramStateRef ExprEngine::getInitialState(const LocationContext *InitLoc) {
       SVal V = state->getSVal(loc::MemRegionVal(R));
       SVal Constraint_untested = evalBinOp(state, BO_GT, V,
                                            svalBuilder.makeZeroVal(T),
-                                           getContext().IntTy);
+                                           svalBuilder.getConditionType());
 
       Optional<DefinedOrUnknownSVal> Constraint =
           Constraint_untested.getAs<DefinedOrUnknownSVal>();

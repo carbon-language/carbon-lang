@@ -10,3 +10,10 @@ bool PR14634_implicit(int x) {
   double y = (double)x;
   return y;
 }
+
+void intAsBoolAsSwitchCondition(int c) {
+  switch ((bool)c) {
+  case 0:
+    break;
+  }
+}
