@@ -1,6 +1,18 @@
 ; Test (r)value qualifiers on C++11 non-static member functions.
 ; Generated from tools/clang/test/CodeGenCXX/debug-info-qualifiers.cpp
 ;
+; class A {
+; public:
+;   void l() const &;
+;   void r() const &&;
+; };
+;
+; void g() {
+;   A a;
+;   auto pl = &A::l;
+;   auto pr = &A::r;
+; }
+;
 ; RUN: llc -filetype=obj -O0 < %s | llvm-dwarfdump - | FileCheck %s
 ; CHECK: DW_TAG_subroutine_type     DW_CHILDREN_yes
 ; CHECK-NEXT: DW_AT_reference  DW_FORM_flag_present
