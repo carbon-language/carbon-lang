@@ -27,7 +27,6 @@ public:
                                      const Reference &) const;
 
 private:
-  const MipsLinkingContext &_context;
   const MipsTargetHandler &_targetHandler;
 
   typedef std::vector<const Reference *> PairedRelocationsT;

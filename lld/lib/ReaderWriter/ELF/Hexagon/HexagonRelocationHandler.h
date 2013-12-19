@@ -26,14 +26,13 @@ public:
   HexagonTargetRelocationHandler(
       const HexagonLinkingContext &context, const HexagonTargetHandler &tH,
       const HexagonTargetLayout<HexagonELFType> &layout)
-      : _context(context), _targetHandler(tH), _targetLayout(layout) {}
+      : _targetHandler(tH), _targetLayout(layout) {}
 
   virtual error_code
   applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                   const lld::AtomLayout &, const Reference &) const;
                   
  private:
-  const HexagonLinkingContext &_context;
   const HexagonTargetHandler &_targetHandler;
   const HexagonTargetLayout<HexagonELFType> &_targetLayout;
 };

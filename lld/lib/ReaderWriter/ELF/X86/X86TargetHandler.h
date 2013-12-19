@@ -24,8 +24,7 @@ class X86LinkingContext;
 class X86TargetRelocationHandler LLVM_FINAL
     : public TargetRelocationHandler<X86ELFType> {
 public:
-  X86TargetRelocationHandler(const X86LinkingContext &context)
-      : _context(context) {}
+  X86TargetRelocationHandler(const X86LinkingContext &context) {}
 
   virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                      const lld::AtomLayout &,
@@ -33,8 +32,6 @@ public:
                                      
   static const Registry::KindStrings kindStrings[];
 
-private:
-  const X86LinkingContext &_context;
 };
 
 class X86TargetHandler LLVM_FINAL

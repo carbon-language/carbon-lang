@@ -93,7 +93,7 @@ void relocCall16(uint8_t *location, uint64_t P, uint64_t S, int64_t A,
 
 MipsTargetRelocationHandler::MipsTargetRelocationHandler(
     const MipsLinkingContext &context, const MipsTargetHandler &handler)
-    : _context(context), _targetHandler(handler) {}
+    : _targetHandler(handler) {}
 
 void
 MipsTargetRelocationHandler::savePairedRelocation(const lld::AtomLayout &atom,
