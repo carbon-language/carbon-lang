@@ -17,6 +17,9 @@ html, body {
 	padding-left: 3em;
 }
 
+a:visited {
+  color: #931e24;
+}
 
 h1, h2, h3, tt { color: #000 }
 
