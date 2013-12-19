@@ -12,7 +12,7 @@
   <div class="submenu">
     <label>Development </label>
     <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits">
-      Mailing List (commits/patches)
+      Mailing List (patches)
     </a>
     <a href="http://groups.google.com/group/polly-dev">Mailing List (discussion)</a>
     <a href="/bugs.html">Bug Reports</a>
