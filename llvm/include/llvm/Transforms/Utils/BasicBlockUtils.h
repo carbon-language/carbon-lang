@@ -183,27 +183,27 @@ ReturnInst *FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
                                        BasicBlock *Pred);
 
 /// SplitBlockAndInsertIfThen - Split the containing block at the
-/// specified instruction - everything before and including Cmp stays
-/// in the old basic block, and everything after Cmp is moved to a
+/// specified instruction - everything before and including SplitBefore stays
+/// in the old basic block, and everything after SplitBefore is moved to a
 /// new block. The two blocks are connected by a conditional branch
 /// (with value of Cmp being the condition).
 /// Before:
 ///   Head
-///   Cmp
+///   SplitBefore
 ///   Tail
 /// After:
 ///   Head
-///   Cmp
-///   if (Cmp)
+///   if (Cond)
 ///     ThenBlock
+///   SplitBefore
 ///   Tail
 ///
 /// If Unreachable is true, then ThenBlock ends with
 /// UnreachableInst, otherwise it branches to Tail.
 /// Returns the NewBasicBlock's terminator.
-
-TerminatorInst *SplitBlockAndInsertIfThen(Instruction *Cmp,
-    bool Unreachable, MDNode *BranchWeights = 0);
+TerminatorInst *SplitBlockAndInsertIfThen(Value *Cond, Instruction *SplitBefore,
+                                          bool Unreachable,
+                                          MDNode *BranchWeights = 0);
 
 ///
 /// GetIfCondition - Check whether BB is the merge point of a if-region.
@@ -211,7 +211,6 @@ TerminatorInst *SplitBlockAndInsertIfThen(Instruction *Cmp,
 /// BB will be taken.  Also, return by references the block that will be
 /// entered from if the condition is true, and the block that will be
 /// entered if the condition is false.
-
 Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
 		      BasicBlock *&IfFalse);
 } // End llvm namespace

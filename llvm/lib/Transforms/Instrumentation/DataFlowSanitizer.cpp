@@ -735,10 +735,9 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
         while (isa<PHINode>(Pos) || isa<AllocaInst>(Pos))
           Pos = Pos->getNextNode();
         IRBuilder<> IRB(Pos);
-        Instruction *NeInst = cast<Instruction>(
-            IRB.CreateICmpNE(*i, DFSF.DFS.ZeroShadow));
+        Value *Ne = IRB.CreateICmpNE(*i, DFSF.DFS.ZeroShadow);
         BranchInst *BI = cast<BranchInst>(SplitBlockAndInsertIfThen(
-            NeInst, /*Unreachable=*/ false, ColdCallWeights));
+            Ne, Pos, /*Unreachable=*/false, ColdCallWeights));
         IRBuilder<> ThenIRB(BI);
         ThenIRB.CreateCall(DFSF.DFS.DFSanNonzeroLabelFn);
       }
@@ -838,10 +837,9 @@ Value *DataFlowSanitizer::combineShadows(Value *V1, Value *V2,
   IRBuilder<> IRB(Pos);
   BasicBlock *Head = Pos->getParent();
   Value *Ne = IRB.CreateICmpNE(V1, V2);
-  Instruction *NeInst = dyn_cast<Instruction>(Ne);
-  if (NeInst) {
+  if (Ne) {
     BranchInst *BI = cast<BranchInst>(SplitBlockAndInsertIfThen(
-        NeInst, /*Unreachable=*/ false, ColdCallWeights));
+        Ne, Pos, /*Unreachable=*/false, ColdCallWeights));
     IRBuilder<> ThenIRB(BI);
     CallInst *Call = ThenIRB.CreateCall2(DFSanUnionFn, V1, V2);
     Call->addAttribute(AttributeSet::ReturnIndex, Attribute::ZExt);
