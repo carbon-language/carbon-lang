@@ -404,8 +404,8 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
 
     // Get image access qualifier:
     if (ty->isImageType()) {
-      if (parm->hasAttr<OpenCLImageAccessAttr>() &&
-          parm->getAttr<OpenCLImageAccessAttr>()->getAccess() == CLIA_write_only)
+      const OpenCLImageAccessAttr *A = parm->getAttr<OpenCLImageAccessAttr>();
+      if (A && A->getAccess() == CLIA_write_only)
         accessQuals.push_back(llvm::MDString::get(Context, "write_only"));
       else
         accessQuals.push_back(llvm::MDString::get(Context, "read_only"));
@@ -438,16 +438,15 @@ void CodeGenFunction::EmitOpenCLKernelMetadata(const FunctionDecl *FD,
     GenOpenCLArgMetadata(FD, Fn, CGM, Context, kernelMDArgs,
                          Builder, getContext());
 
-  if (FD->hasAttr<VecTypeHintAttr>()) {
-    VecTypeHintAttr *attr = FD->getAttr<VecTypeHintAttr>();
-    QualType hintQTy = attr->getTypeHint();
+  if (const VecTypeHintAttr *A = FD->getAttr<VecTypeHintAttr>()) {
+    QualType hintQTy = A->getTypeHint();
     const ExtVectorType *hintEltQTy = hintQTy->getAs<ExtVectorType>();
     bool isSignedInteger =
         hintQTy->isSignedIntegerType() ||
         (hintEltQTy && hintEltQTy->getElementType()->isSignedIntegerType());
     llvm::Value *attrMDArgs[] = {
       llvm::MDString::get(Context, "vec_type_hint"),
-      llvm::UndefValue::get(CGM.getTypes().ConvertType(attr->getTypeHint())),
+      llvm::UndefValue::get(CGM.getTypes().ConvertType(A->getTypeHint())),
       llvm::ConstantInt::get(
           llvm::IntegerType::get(Context, 32),
           llvm::APInt(32, (uint64_t)(isSignedInteger ? 1 : 0)))
@@ -455,24 +454,22 @@ void CodeGenFunction::EmitOpenCLKernelMetadata(const FunctionDecl *FD,
     kernelMDArgs.push_back(llvm::MDNode::get(Context, attrMDArgs));
   }
 
-  if (FD->hasAttr<WorkGroupSizeHintAttr>()) {
-    WorkGroupSizeHintAttr *attr = FD->getAttr<WorkGroupSizeHintAttr>();
+  if (const WorkGroupSizeHintAttr *A = FD->getAttr<WorkGroupSizeHintAttr>()) {
     llvm::Value *attrMDArgs[] = {
       llvm::MDString::get(Context, "work_group_size_hint"),
-      Builder.getInt32(attr->getXDim()),
-      Builder.getInt32(attr->getYDim()),
-      Builder.getInt32(attr->getZDim())
+      Builder.getInt32(A->getXDim()),
+      Builder.getInt32(A->getYDim()),
+      Builder.getInt32(A->getZDim())
     };
     kernelMDArgs.push_back(llvm::MDNode::get(Context, attrMDArgs));
   }
 
-  if (FD->hasAttr<ReqdWorkGroupSizeAttr>()) {
-    ReqdWorkGroupSizeAttr *attr = FD->getAttr<ReqdWorkGroupSizeAttr>();
+  if (const ReqdWorkGroupSizeAttr *A = FD->getAttr<ReqdWorkGroupSizeAttr>()) {
     llvm::Value *attrMDArgs[] = {
       llvm::MDString::get(Context, "reqd_work_group_size"),
-      Builder.getInt32(attr->getXDim()),
-      Builder.getInt32(attr->getYDim()),
-      Builder.getInt32(attr->getZDim())
+      Builder.getInt32(A->getXDim()),
+      Builder.getInt32(A->getYDim()),
+      Builder.getInt32(A->getZDim())
     };
     kernelMDArgs.push_back(llvm::MDNode::get(Context, attrMDArgs));
   }
