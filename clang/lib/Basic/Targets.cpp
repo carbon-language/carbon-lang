@@ -4506,9 +4506,7 @@ void SparcTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
 class SparcV8TargetInfo : public SparcTargetInfo {
 public:
   SparcV8TargetInfo(const llvm::Triple &Triple) : SparcTargetInfo(Triple) {
-    // FIXME: Support Sparc quad-precision long double?
-    DescriptionString = "E-p:32:32-"
-                        "i64:64-n32-S64";
+    DescriptionString = "E-p:32:32-i64:64-f128:64-n32-S64";
   }
 
   virtual void getTargetDefines(const LangOptions &Opts,

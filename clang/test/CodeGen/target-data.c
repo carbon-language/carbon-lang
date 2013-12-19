@@ -24,7 +24,7 @@
 
 // RUN: %clang_cc1 -triple sparc-sun-solaris -emit-llvm -o - %s | \
 // RUN:     FileCheck %s --check-prefix=SPARC-V8
-// SPARC-V8: target datalayout = "E-p:32:32-i64:64-n32-S64"
+// SPARC-V8: target datalayout = "E-p:32:32-i64:64-f128:64-n32-S64"
 
 // RUN: %clang_cc1 -triple sparcv9-sun-solaris -emit-llvm -o - %s | \
 // RUN: FileCheck %s --check-prefix=SPARC-V9
