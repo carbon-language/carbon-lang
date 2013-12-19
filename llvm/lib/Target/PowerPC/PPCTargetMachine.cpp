@@ -52,10 +52,6 @@ static std::string getDataLayoutString(const PPCSubtarget &ST) {
   else
     Ret += "-f64:32:64";
 
-  // Set support for 128 floats depending on the ABI.
-  if (!ST.isPPC64() && ST.isSVR4ABI())
-    Ret += "-f128:64:128";
-
   // PPC64 has 32 and 64 bit registers, PPC32 has only 32 bit ones.
   if (ST.isPPC64())
     Ret += "-n32:64";
