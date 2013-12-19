@@ -322,15 +322,18 @@ endfunction()
 # A raw function to create a lit target. This is used to implement the testuite
 # management functions.
 function(add_lit_target target comment)
-  parse_arguments(ARG "PARAMS;DEPENDS;ARGS" "" ${ARGN})
+  parse_arguments(ARG "LIT;PARAMS;DEPENDS;ARGS" "" ${ARGN})
   set(LIT_ARGS "${ARG_ARGS} ${LLVM_LIT_ARGS}")
   separate_arguments(LIT_ARGS)
   if (NOT CMAKE_CFG_INTDIR STREQUAL ".")
     list(APPEND LIT_ARGS --param build_mode=${CMAKE_CFG_INTDIR})
   endif ()
+  if(NOT EXISTS ${ARG_LIT})
+    set(ARG_LIT ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+  endif()
   set(LIT_COMMAND
     ${PYTHON_EXECUTABLE}
-    ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py
+    ${ARG_LIT}
     ${LIT_ARGS}
     )
   foreach(param ${ARG_PARAMS})
