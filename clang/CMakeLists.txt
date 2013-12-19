@@ -4,78 +4,128 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   project(Clang)
   cmake_minimum_required(VERSION 2.8)
 
-  set(CLANG_PATH_TO_LLVM_SOURCE "" CACHE PATH
-    "Path to LLVM source code. Not necessary if using an installed LLVM.")
-  set(CLANG_PATH_TO_LLVM_BUILD "" CACHE PATH
-    "Path to the directory where LLVM was built or installed.")
-
-  if( CLANG_PATH_TO_LLVM_SOURCE )
-    if( NOT EXISTS "${CLANG_PATH_TO_LLVM_SOURCE}/cmake/config-ix.cmake" )
-      message(FATAL_ERROR "Please set CLANG_PATH_TO_LLVM_SOURCE to the root directory of LLVM source code.")
-    else()
-      get_filename_component(LLVM_MAIN_SRC_DIR ${CLANG_PATH_TO_LLVM_SOURCE}
-	ABSOLUTE)
-      list(APPEND CMAKE_MODULE_PATH "${LLVM_MAIN_SRC_DIR}/cmake/modules")
-    endif()
-  endif()
-
-  if (EXISTS "${CLANG_PATH_TO_LLVM_BUILD}/bin/llvm-config${CMAKE_EXECUTABLE_SUFFIX}")
-    set (PATH_TO_LLVM_CONFIG "${CLANG_PATH_TO_LLVM_BUILD}/bin/llvm-config${CMAKE_EXECUTABLE_SUFFIX}")
-  elseif (EXISTS "${CLANG_PATH_TO_LLVM_BUILD}/bin/Debug/llvm-config${CMAKE_EXECUTABLE_SUFFIX}")
-    # Looking for bin/Debug/llvm-config is a complete hack. How can we get
-    # around this?
-    set (PATH_TO_LLVM_CONFIG "${CLANG_PATH_TO_LLVM_BUILD}/bin/Debug/llvm-config${CMAKE_EXECUTABLE_SUFFIX}")
+  # Rely on llvm-config.
+  set(CONFIG_OUTPUT)
+  find_program(LLVM_CONFIG "llvm-config")
+  if(LLVM_CONFIG)
+    message(STATUS "Found LLVM_CONFIG as ${LLVM_CONFIG}")
+    execute_process(
+      COMMAND ${LLVM_CONFIG}
+      "--assertion-mode"
+      "--bindir"
+      "--libdir"
+      "--includedir"
+      "--prefix"
+      "--src-root"
+      OUTPUT_VARIABLE CONFIG_OUTPUT
+      )
+    string(REGEX REPLACE
+      "[ \t]*[\r\n]+[ \t]*" ";"
+      CONFIG_OUTPUT ${CONFIG_OUTPUT})
   else()
-    message(FATAL_ERROR "Please set CLANG_PATH_TO_LLVM_BUILD to a directory containing a LLVM build.")
+    message(FATAL_ERROR "llvm-config not found -- ${LLVM_CONFIG}")
   endif()
 
-  list(APPEND CMAKE_MODULE_PATH "${CLANG_PATH_TO_LLVM_BUILD}/share/llvm/cmake")
+  list(GET CONFIG_OUTPUT 0 ENABLE_ASSERTIONS)
+  list(GET CONFIG_OUTPUT 1 TOOLS_BINARY_DIR)
+  list(GET CONFIG_OUTPUT 2 LIBRARY_DIR)
+  list(GET CONFIG_OUTPUT 3 INCLUDE_DIR)
+  list(GET CONFIG_OUTPUT 4 LLVM_OBJ_ROOT)
+  list(GET CONFIG_OUTPUT 5 MAIN_SRC_DIR)
 
-  get_filename_component(PATH_TO_LLVM_BUILD ${CLANG_PATH_TO_LLVM_BUILD}
-    ABSOLUTE)
+  if(NOT MSVC_IDE)
+    set(LLVM_ENABLE_ASSERTIONS ${ENABLE_ASSERTIONS}
+      CACHE BOOL "Enable assertions")
+    # Assertions should follow llvm-config's.
+    mark_as_advanced(LLVM_ENABLE_ASSERTIONS)
+  endif()
 
-  set(LLVM_RUNTIME_OUTPUT_INTDIR ${PATH_TO_LLVM_BUILD}/bin/${CMAKE_CFG_INTDIR})
-  set(LLVM_LIBRARY_OUTPUT_INTDIR ${PATH_TO_LLVM_BUILD}/lib/${CMAKE_CFG_INTDIR})
+  set(LLVM_TOOLS_BINARY_DIR ${TOOLS_BINARY_DIR} CACHE PATH "Path to llvm/bin")
+  set(LLVM_LIBRARY_DIR ${LIBRARY_DIR} CACHE PATH "Path to llvm/lib")
+  set(LLVM_MAIN_INCLUDE_DIR ${INCLUDE_DIR} CACHE PATH "Path to llvm/include")
+  set(LLVM_BINARY_DIR ${LLVM_OBJ_ROOT} CACHE PATH "Path to LLVM build tree")
+  set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
+
+  find_program(LLVM_TABLEGEN_EXE "llvm-tblgen" ${LLVM_TOOLS_BINARY_DIR})
+
+  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/share/llvm/cmake")
+  set(LLVMCONFIG_FILE "${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
+  if(EXISTS ${LLVMCONFIG_FILE})
+    list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
+    include(${LLVMCONFIG_FILE})
+  else()
+    message(FATAL_ERROR "Not found: ${LLVMCONFIG_FILE}")
+  endif()
+
+  set(LLVM_RUNTIME_OUTPUT_INTDIR ${LLVM_TOOLS_BINARY_DIR})
+  set(LLVM_LIBRARY_OUTPUT_INTDIR ${LLVM_LIBRARY_DIR})
 
   option(LLVM_INSTALL_TOOLCHAIN_ONLY "Only include toolchain files in the 'install' target." OFF)
 
   include(AddLLVM)
   include(TableGen)
-  include("${CLANG_PATH_TO_LLVM_BUILD}/share/llvm/cmake/LLVMConfig.cmake")
   include(HandleLLVMOptions)
 
   set(PACKAGE_VERSION "${LLVM_PACKAGE_VERSION}")
-
-  set(LLVM_MAIN_INCLUDE_DIR "${LLVM_MAIN_SRC_DIR}/include")
-  set(LLVM_BINARY_DIR ${CMAKE_BINARY_DIR})
 
   if (NOT DEFINED LLVM_INCLUDE_TESTS)
     set(LLVM_INCLUDE_TESTS ON)
   endif()
 
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
-  include_directories("${PATH_TO_LLVM_BUILD}/include" "${LLVM_MAIN_INCLUDE_DIR}")
-  link_directories("${PATH_TO_LLVM_BUILD}/lib")
-
-  exec_program("${PATH_TO_LLVM_CONFIG} --bindir" OUTPUT_VARIABLE LLVM_TOOLS_BINARY_DIR)
-  set(LLVM_TABLEGEN_EXE "${LLVM_TOOLS_BINARY_DIR}/llvm-tblgen${CMAKE_EXECUTABLE_SUFFIX}")
-
-  # Define the default arguments to use with 'lit', and an option for the user
-  # to override.
-  set(LIT_ARGS_DEFAULT "-sv")
-  if (MSVC OR XCODE)
-    set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
-  endif()
-  set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
-
-  # On Win32 hosts, provide an option to specify the path to the GnuWin32 tools.
-  if( WIN32 AND NOT CYGWIN )
-    set(LLVM_LIT_TOOLS_DIR "" CACHE PATH "Path to GnuWin32 tools")
-  endif()
+  include_directories("${LLVM_BINARY_DIR}/include" "${LLVM_MAIN_INCLUDE_DIR}")
+  link_directories("${LLVM_LIBRARY_DIR}")
 
   set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
   set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
   set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+
+  if(LLVM_INCLUDE_TESTS)
+    # Check prebuilt llvm/utils.
+    if(EXISTS ${LLVM_TOOLS_BINARY_DIR}/FileCheck${CMAKE_EXECUTABLE_SUFFIX}
+	AND EXISTS ${LLVM_TOOLS_BINARY_DIR}/count${CMAKE_EXECUTABLE_SUFFIX}
+	AND EXISTS ${LLVM_TOOLS_BINARY_DIR}/not${CMAKE_EXECUTABLE_SUFFIX})
+      set(LLVM_UTILS_PROVIDED ON)
+    endif()
+
+    if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+      set(LLVM_LIT ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+      if(NOT LLVM_UTILS_PROVIDED)
+	add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/FileCheck utils/FileCheck)
+	add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/count utils/count)
+	add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/not utils/not)
+	set(LLVM_UTILS_PROVIDED ON)
+	set(CLANG_TEST_DEPS FileCheck count not)
+      endif()
+      set(UNITTEST_DIR ${LLVM_MAIN_SRC_DIR}/utils/unittest)
+      if(EXISTS ${UNITTEST_DIR}/googletest/include/gtest/gtest.h
+          AND NOT EXISTS ${LLVM_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}gtest${CMAKE_STATIC_LIBRARY_SUFFIX}
+	  AND EXISTS ${UNITTEST_DIR}/CMakeLists.txt)
+	add_subdirectory(${UNITTEST_DIR} utils/unittest)
+      endif()
+    else()
+      # Seek installed Lit.
+      find_program(LLVM_LIT "lit.py" ${LLVM_MAIN_SRC_DIR}/utils/lit
+	DOC "Path to lit.py")
+    endif()
+
+    if(LLVM_LIT)
+      # Define the default arguments to use with 'lit', and an option for the user
+      # to override.
+      set(LIT_ARGS_DEFAULT "-sv")
+      if (MSVC OR XCODE)
+	set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
+      endif()
+      set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
+
+      # On Win32 hosts, provide an option to specify the path to the GnuWin32 tools.
+      if( WIN32 AND NOT CYGWIN )
+	set(LLVM_LIT_TOOLS_DIR "" CACHE PATH "Path to GnuWin32 tools")
+      endif()
+    else()
+      set(LLVM_INCLUDE_TESTS OFF)
+    endif()
+  endif()
 
   set( CLANG_BUILT_STANDALONE 1 )
 

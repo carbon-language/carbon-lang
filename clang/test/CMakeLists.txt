@@ -1,8 +1,5 @@
 # Test runner infrastructure for Clang. This configures the Clang test trees
 # for use by Lit, and delegates to LLVM's lit test handlers.
-#
-# If this is a stand-alone Clang build, we fake up our own Lit support here
-# rather than relying on LLVM's.
 
 if (CMAKE_CFG_INTDIR STREQUAL ".")
   set(LLVM_BUILD_MODE ".")
@@ -43,51 +40,16 @@ if( NOT CLANG_BUILT_STANDALONE )
     llvm-config
     llc opt FileCheck count not llvm-symbolizer
     )
-
-  add_lit_testsuite(check-clang "Running the Clang regression tests"
-    ${CMAKE_CURRENT_BINARY_DIR}
-    PARAMS ${CLANG_TEST_PARAMS}
-    DEPENDS ${CLANG_TEST_DEPS}
-    ARGS ${CLANG_TEST_EXTRA_ARGS}
-    )
-  set_target_properties(check-clang PROPERTIES FOLDER "Clang tests")
-
-else()
-
-  include(FindPythonInterp)
-  if(PYTHONINTERP_FOUND)
-    if( LLVM_MAIN_SRC_DIR )
-      set(LIT "${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py")
-    else()
-      set(LIT "${PATH_TO_LLVM_BUILD}/bin/${CMAKE_CFG_INTDIR}/llvm-lit")
-      # Installed LLVM does not contain ${CMAKE_CFG_INTDIR} in paths.
-      if( NOT EXISTS ${LIT} )
-        set(LIT "${PATH_TO_LLVM_BUILD}/bin/llvm-lit")
-      endif()
-    endif()
-
-    set(LIT_ARGS "${CLANG_TEST_EXTRA_ARGS} ${LLVM_LIT_ARGS}")
-    separate_arguments(LIT_ARGS)
-    
-    list(APPEND CLANG_TEST_PARAMS build_mode=${CMAKE_CFG_INTDIR})
-
-    foreach(param ${CLANG_TEST_PARAMS})
-      list(APPEND LIT_ARGS --param ${param})
-    endforeach()
-
-    add_custom_target(check-clang
-      COMMAND ${PYTHON_EXECUTABLE}
-              ${LIT}
-              ${LIT_ARGS}
-              ${CMAKE_CURRENT_BINARY_DIR}
-              ${CLANG_TEST_EXTRA_ARGS}
-      COMMENT "Running Clang regression tests"
-      DEPENDS ${CLANG_TEST_DEPS}
-      )
-    set_target_properties(check-clang PROPERTIES FOLDER "Clang tests")
-  endif()
-
 endif()
+
+add_lit_testsuite(check-clang "Running the Clang regression tests"
+  ${CMAKE_CURRENT_BINARY_DIR}
+  LIT ${LLVM_LIT}
+  PARAMS ${CLANG_TEST_PARAMS}
+  DEPENDS ${CLANG_TEST_DEPS}
+  ARGS ${CLANG_TEST_EXTRA_ARGS}
+  )
+set_target_properties(check-clang PROPERTIES FOLDER "Clang tests")
 
 # Add a legacy target spelling: clang-test
 add_custom_target(clang-test)
