@@ -16,6 +16,7 @@
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMMCExpr.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -73,7 +74,9 @@ public:
   }
 
   // Emit the contents of the constant pool using the provided streamer.
-  void emitEntries(MCStreamer &Streamer) const {
+  void emitEntries(MCStreamer &Streamer) {
+    if (Entries.empty())
+      return;
     Streamer.EmitCodeAlignment(4); // align to 4-byte address
     Streamer.EmitDataRegion(MCDR_DataRegion);
     for (EntryVecTy::const_iterator I = Entries.begin(), E = Entries.end();
@@ -82,6 +85,12 @@ public:
       Streamer.EmitValue(I->second, 4);
     }
     Streamer.EmitDataRegion(MCDR_DataRegionEnd);
+    Entries.clear();
+  }
+
+  // Return true if the constant pool is empty
+  bool empty() {
+    return Entries.empty();
   }
 };
 
@@ -93,7 +102,13 @@ public:
 // an opcode to the ldr. After we have parsed all the user input we
 // output the (label, value) pairs in each constant pool at the end of the
 // section.
-typedef std::map<const MCSection *, ConstantPool> ConstantPoolMapTy;
+//
+// We use the MapVector for the map type to ensure stable iteration of
+// the sections at the end of the parse. We need to iterate over the
+// sections in a stable order to ensure that we have print the
+// constant pools in a deterministic order when printing an assembly
+// file.
+typedef MapVector<const MCSection *, ConstantPool> ConstantPoolMapTy;
 
 class ARMAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
@@ -113,10 +128,6 @@ class ARMAsmParser : public MCTargetAsmParser {
 
   ConstantPool &getOrCreateConstantPool(const MCSection *Section) {
     return ConstantPools[Section];
-  }
-
-  void destroyConstantPool(const MCSection *Section) {
-    ConstantPools.erase(Section);
   }
 
   ARMTargetStreamer &getTargetStreamer() {
@@ -8459,9 +8470,8 @@ bool ARMAsmParser::parseDirectiveLtorg(SMLoc L) {
   const MCSection *Section = Streamer.getCurrentSection().first;
 
   if (ConstantPool *CP = getConstantPool(Section)) {
-    CP->emitEntries(Streamer);
-    CP = 0;
-    destroyConstantPool(Section);
+    if (!CP->empty())
+      CP->emitEntries(Streamer);
   }
   return false;
 }
@@ -8504,8 +8514,10 @@ void ARMAsmParser::finishParse() {
     const MCSection *Section = CPI->first;
     ConstantPool &CP = CPI->second;
 
-    // Dump assembler constant pools at the end of the section.
-    Streamer.SwitchSection(Section);
-    CP.emitEntries(Streamer);
+    // Dump non-empty assembler constant pools at the end of the section.
+    if (!CP.empty()) {
+      Streamer.SwitchSection(Section);
+      CP.emitEntries(Streamer);
+    }
   }
 }
