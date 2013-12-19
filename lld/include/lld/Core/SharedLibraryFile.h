@@ -11,7 +11,6 @@
 #define LLD_CORE_SHARED_LIBRARY_FILE_H
 
 #include "lld/Core/File.h"
-#include "lld/Core/SharedLibraryAtom.h"
 
 namespace lld {
 

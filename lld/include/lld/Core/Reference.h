@@ -10,7 +10,8 @@
 #ifndef LLD_CORE_REFERENCES_H
 #define LLD_CORE_REFERENCES_H
 
-#include "llvm/Support/DataTypes.h"
+#include "lld/Core/LLVM.h"
+
 #include "llvm/ADT/StringSwitch.h"
 
 namespace lld {

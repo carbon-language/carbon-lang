@@ -10,11 +10,8 @@
 #ifndef LLD_PASSES_LAYOUT_PASS_H
 #define LLD_PASSES_LAYOUT_PASS_H
 
-#include "lld/Core/Atom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
-#include "lld/Core/range.h"
-#include "lld/Core/Reference.h"
 
 #include "llvm/ADT/DenseMap.h"
 
@@ -89,10 +86,8 @@ private:
   void undecorate(MutableFile::DefinedAtomRange &atomRange,
                   std::vector<SortKey> &keys) const;
 
-#ifndef NDEBUG
   // Check if the follow-on graph is a correct structure. For debugging only.
   void checkFollowonChain(MutableFile::DefinedAtomRange &range);
-#endif
 };
 
 } // namespace lld

@@ -10,10 +10,6 @@
 #ifndef LLD_READER_WRITER_PECOFF_LINKING_CONTEXT_H
 #define LLD_READER_WRITER_PECOFF_LINKING_CONTEXT_H
 
-#include <map>
-#include <set>
-#include <vector>
-
 #include "lld/Core/LinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
@@ -23,6 +19,10 @@
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileUtilities.h"
+
+#include <map>
+#include <set>
+#include <vector>
 
 using llvm::COFF::MachineTypes;
 using llvm::COFF::WindowsSubsystem;

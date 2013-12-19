@@ -101,7 +101,7 @@ private:
 /// \brief Represents a ELF control node
 class ELFGroup : public Group {
 public:
-  ELFGroup(ELFLinkingContext &ctx, int64_t ordinal)
+  ELFGroup(const ELFLinkingContext &ctx, int64_t ordinal)
       : Group(ordinal), _elfLinkingContext(ctx) {}
 
   static inline bool classof(const InputElement *a) {

@@ -14,7 +14,6 @@
 #include "lld/Core/LinkingContext.h"
 #include "lld/Core/Pass.h"
 
-#include <map>
 #include <vector>
 
 namespace lld {

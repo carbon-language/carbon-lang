@@ -49,7 +49,7 @@ private:
   atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
-  bool _isWholeArchive;
+  const bool _isWholeArchive;
   std::unordered_map<StringRef, llvm::object::Archive::child_iterator>
   _symbolMemberMap;
 };

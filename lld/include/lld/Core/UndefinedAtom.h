@@ -15,7 +15,7 @@
 namespace lld {
 
 /// An UndefinedAtom has no content.
-/// It exists as a place holder for a future atom.
+/// It exists as a placeholder for a future atom.
 class UndefinedAtom : public Atom {
 public:
   /// Whether this undefined symbol needs to be resolved,

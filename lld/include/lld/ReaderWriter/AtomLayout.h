@@ -10,8 +10,6 @@
 #ifndef LLD_READER_WRITER_ATOM_LAYOUT_H
 #define LLD_READER_WRITER_ATOM_LAYOUT_H
 
-#include <cstdint>
-
 namespace lld {
 class Atom;
 

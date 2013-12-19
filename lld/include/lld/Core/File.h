@@ -17,7 +17,6 @@
 #include "lld/Core/LinkingContext.h"
 #include "lld/Core/UndefinedAtom.h"
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorHandling.h"
 
 #include <vector>

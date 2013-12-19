@@ -17,7 +17,6 @@
 #define LLD_CORE_INPUT_GRAPH_H
 
 #include "lld/Core/File.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Option/ArgList.h"
 
 #include "llvm/Support/ErrorOr.h"
@@ -75,8 +74,8 @@ public:
 
   /// \brief Do postprocessing of the InputGraph if there is a need for the
   /// to provide additional information to the user, also rearranges
-  /// InputElements by their ordinals. If an user wants to place an input file
-  /// at the desired position, the user can do that
+  /// InputElements by their ordinals. If a user wants to place an input file
+  /// at the desired position, the user can do that.
   virtual void doPostProcess();
 
   range<InputElementIterT> inputElements() {
@@ -210,7 +209,7 @@ class ControlNode : public InputElement {
 public:
   /// A control node could be of several types supported by InputGraph
   /// Future kinds of Control node could be added
-  enum class ControlKind : uint8_t{
+  enum class ControlKind : uint8_t {
     Simple, // Represents a simple control node
     Group   // Represents a type associated with ControlNodes
   };
@@ -225,7 +224,7 @@ public:
   virtual ~ControlNode() {}
 
   /// \brief Return the kind of control node
-  virtual ControlNode::ControlKind controlKind() { return _controlKind; }
+  virtual ControlKind controlKind() { return _controlKind; }
 
   /// \brief Process control start/exit
   virtual bool processControlEnter() { return true; }
@@ -298,7 +297,7 @@ public:
     return make_range(_files.begin(), _files.end());
   }
 
-  /// \brief  number of files.
+  /// \brief number of files.
   size_t numFiles() const { return _files.size(); }
 
   /// \brief add a file to the list of files

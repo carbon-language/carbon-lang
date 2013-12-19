@@ -165,8 +165,6 @@ private:
   mutable std::unique_ptr<mach_o::KindHandler> _kindHandler;
   mutable std::unique_ptr<Reader> _machoReader;
   mutable std::unique_ptr<Writer> _writer;
-  
-
 };
 
 } // end namespace lld

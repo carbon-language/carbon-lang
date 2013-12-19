@@ -24,10 +24,6 @@
 #include <string>
 #include <vector>
 
-namespace llvm {
-class Triple;
-}
-
 namespace lld {
 class PassManager;
 class File;
@@ -40,14 +36,11 @@ class SharedLibraryFile;
 ///
 /// The base class LinkingContext contains the options needed by core linking.
 /// Subclasses of LinkingContext have additional options needed by specific
-/// Readers
-/// and Writers. For example, ELFLinkingContext has methods that supplies
-/// options
-/// to the ELF Reader and Writer.
+/// Readers and Writers. For example, ELFLinkingContext has methods that
+/// supplies options to the ELF Reader and Writer.
 class LinkingContext {
 public:
-  /// \brief The types of output file that the linker
-  /// creates.
+  /// \brief The types of output file that the linker creates.
   enum class OutputFileType : uint8_t {
     Default, // The default output type for this target
     YAML,    // The output type is set to YAML
@@ -82,6 +75,7 @@ public:
   /// reference). Only Atoms with scope scopeLinkageUnit or scopeGlobal can
   /// be kept live using this method.
   const std::vector<StringRef> &deadStripRoots() const {
+    assert(_deadStrip && "only applicable when deadstripping enabled");
     return _deadStripRoots;
   }
 
@@ -226,14 +220,14 @@ public:
 
   /// This method adds undefined symbols specified by the -u option to the to
   /// the list of undefined symbols known to the linker. This option essentially
-  /// forces an undefined symbol to be create. You may also need to call
+  /// forces an undefined symbol to be created. You may also need to call
   /// addDeadStripRoot() for the symbol if your platform supports dead
   /// stripping, so that the symbol will not be removed from the output.
   void addInitialUndefinedSymbol(StringRef symbolName) {
     _initialUndefinedSymbols.push_back(symbolName);
   }
 
-  /// Iterators for symbols that appear on the command line
+  /// Iterators for symbols that appear on the command line.
   typedef std::vector<StringRef> StringRefVector;
   typedef StringRefVector::iterator StringRefVectorIter;
   typedef StringRefVector::const_iterator StringRefVectorConstIter;
@@ -280,7 +274,7 @@ public:
     return true;
   }
 
-  /// Returns the output file that that the linker needs to create
+  /// Returns the output file type that that the linker needs to create.
   OutputFileType outputFileType() const { return _outputFileType; }
 
   /// Returns the YAML reader.
@@ -289,7 +283,7 @@ public:
   /// Returns the LLD Native file format reader.
   virtual Reader &getNativeReader() const { return *_nativeReader; }
 
-  /// Return the default reader for the target
+  /// Return the default reader for the target.
   virtual Reader &getDefaultReader() const = 0;
 
   /// This method is called by core linking to give the Writer a chance

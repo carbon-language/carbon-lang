@@ -12,14 +12,6 @@
 
 #include "lld/Core/LLVM.h"
 
-#include "llvm/Support/DataTypes.h"
-
-#include <cassert>
-
-namespace llvm {
-  class StringRef;
-}
-
 namespace lld {
 
 class File;

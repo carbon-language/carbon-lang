@@ -11,16 +11,11 @@
 #define LLD_CORE_DEFINED_ATOM_H
 
 #include "lld/Core/Atom.h"
-#include "lld/Core/Reference.h"
-
-namespace llvm {
-  template <typename T>
-  class ArrayRef;
-  class StringRef;
-}
+#include "lld/Core/LLVM.h"
 
 namespace lld {
 class File;
+class Reference;
 
 /// \brief The fundamental unit of linking.
 ///

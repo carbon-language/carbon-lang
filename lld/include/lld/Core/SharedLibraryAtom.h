@@ -12,10 +12,6 @@
 
 #include "lld/Core/Atom.h"
 
-namespace llvm {
-  class StringRef;
-}
-
 namespace lld {
 
 /// A SharedLibraryAtom has no content.

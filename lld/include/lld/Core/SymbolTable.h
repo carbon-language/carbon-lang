@@ -14,7 +14,6 @@
 
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringRef.h"
 
 #include <cstring>
 #include <map>

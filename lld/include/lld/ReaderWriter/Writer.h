@@ -16,8 +16,8 @@
 #include <vector>
 
 namespace lld {
-class ELFLinkingContext;
 class File;
+class ELFLinkingContext;
 class MachOLinkingContext;
 class PECOFFLinkingContext;
 class LinkingContext;
@@ -44,8 +44,8 @@ protected:
 
 std::unique_ptr<Writer> createWriterELF(const ELFLinkingContext &);
 std::unique_ptr<Writer> createWriterMachO(const MachOLinkingContext &);
-std::unique_ptr<Writer> createWriterNative(const LinkingContext &);
 std::unique_ptr<Writer> createWriterPECOFF(const PECOFFLinkingContext &);
+std::unique_ptr<Writer> createWriterNative(const LinkingContext &);
 std::unique_ptr<Writer> createWriterYAML(const LinkingContext &);
 } // end namespace lld
 
