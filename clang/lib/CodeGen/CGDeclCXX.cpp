@@ -281,9 +281,8 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
     // FIXME: We only need to register one __cxa_thread_atexit function for the
     // entire TU.
     CXXThreadLocalInits.push_back(Fn);
-  } else if (D->hasAttr<InitPriorityAttr>()) {
-    unsigned int order = D->getAttr<InitPriorityAttr>()->getPriority();
-    OrderGlobalInits Key(order, PrioritizedCXXGlobalInits.size());
+  } else if (const InitPriorityAttr *IPA = D->getAttr<InitPriorityAttr>()) {
+    OrderGlobalInits Key(IPA->getPriority(), PrioritizedCXXGlobalInits.size());
     PrioritizedCXXGlobalInits.push_back(std::make_pair(Key, Fn));
     DelayedCXXInitPosition.erase(D);
   } else if (D->getTemplateSpecializationKind() != TSK_ExplicitSpecialization &&
