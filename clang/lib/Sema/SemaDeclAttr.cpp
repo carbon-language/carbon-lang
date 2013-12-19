@@ -4545,15 +4545,11 @@ DoEmitAvailabilityWarning(Sema &S,
   DeclarationName Name = D->getDeclName();
   if (!Message.empty()) {
     S.Diag(Loc, diag_message) << Name << Message;
-//    S.Diag(D->getLocation(), diag::note_availability_specified_here)
-//      << D << available_here_select_kind;
     if (ObjCProperty)
       S.Diag(ObjCProperty->getLocation(), diag::note_property_attribute)
         << ObjCProperty->getDeclName() << property_note_select;
   } else if (!UnknownObjCClass) {
     S.Diag(Loc, diag) << Name;
-//    S.Diag(D->getLocation(), diag::note_availability_specified_here)
-//      << D << available_here_select_kind;
     if (ObjCProperty)
       S.Diag(ObjCProperty->getLocation(), diag::note_property_attribute)
         << ObjCProperty->getDeclName() << property_note_select;
