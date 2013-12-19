@@ -31,8 +31,6 @@ public:
   ~MachOLinkingContext();
 
   virtual void addPasses(PassManager &pm);
-  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
-  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
   virtual bool validateImpl(raw_ostream &diagnostics);
 
   uint32_t getCPUType() const;
@@ -65,6 +63,7 @@ public:
   };
 
   Arch arch() const { return _arch; }
+  StringRef archName() const { return nameFromArch(_arch); }
   OS os() const { return _os; }
 
   void setOutputFileType(HeaderFileType type) { _outputFileType = type; }
@@ -73,8 +72,6 @@ public:
   bool minOS(StringRef mac, StringRef iOS) const;
   void setDoNothing(bool value) { _doNothing = value; }
   bool doNothing() const { return _doNothing; }
-
-  virtual Reader &getDefaultReader() const { return *_machoReader; }
 
   /// \brief The dylib's binary compatibility version, in the raw uint32 format.
   ///
@@ -125,6 +122,7 @@ public:
 
   static Arch archFromCpuType(uint32_t cputype, uint32_t cpusubtype);
   static Arch archFromName(StringRef archName);
+  static StringRef nameFromArch(Arch arch);
   static uint32_t cpuTypeFromArch(Arch arch);
   static uint32_t cpuSubtypeFromArch(Arch arch);
   static bool is64Bit(Arch arch);
@@ -163,7 +161,6 @@ private:
   bool _deadStrippableDylib;
   StringRef _bundleLoader;
   mutable std::unique_ptr<mach_o::KindHandler> _kindHandler;
-  mutable std::unique_ptr<Reader> _machoReader;
   mutable std::unique_ptr<Writer> _writer;
 };
 

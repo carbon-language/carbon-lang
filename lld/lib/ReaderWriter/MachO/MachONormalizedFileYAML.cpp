@@ -19,6 +19,7 @@
 
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
+#include "lld/ReaderWriter/YamlContext.h"
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
@@ -40,7 +41,7 @@ using llvm::dyn_cast;
 using namespace llvm::yaml;
 using namespace llvm::MachO;
 using namespace lld::mach_o::normalized;
-
+using lld::YamlContext;
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(Segment);
 LLVM_YAML_IS_SEQUENCE_VECTOR(DependentDylib);
@@ -303,7 +304,9 @@ struct MappingTraits<Relocation> {
 template <>
 struct ScalarEnumerationTraits<RelocationInfoType> {
   static void enumeration(IO &io, RelocationInfoType &value) {
-    NormalizedFile *file = reinterpret_cast<NormalizedFile*>(io.getContext());
+    YamlContext *info = reinterpret_cast<YamlContext*>(io.getContext());
+    assert(info != nullptr);
+    NormalizedFile *file = info->_normalizeMachOFile;
     assert(file != nullptr);
     switch (file->arch) {
     case lld::MachOLinkingContext::arch_x86_64:
@@ -574,6 +577,9 @@ struct MappingTraits<NormalizedFile> {
     io.mapOptional("lazy-bindings",    file.lazyBindingInfo);
     io.mapOptional("exports",          file.exportInfo);
   }
+  static StringRef validate(IO &io, NormalizedFile &file) {
+    return StringRef();
+  }
 };
 
 } // namespace llvm
@@ -591,7 +597,9 @@ readYaml(std::unique_ptr<MemoryBuffer> &mb) {
   std::unique_ptr<NormalizedFile> f(new NormalizedFile());
 
   // Create YAML Input parser.
-  llvm::yaml::Input yin(mb->getBuffer(), f.get());
+  YamlContext yamlContext;
+  yamlContext._normalizeMachOFile = f.get();
+  llvm::yaml::Input yin(mb->getBuffer(), &yamlContext);
 
   // Fill NormalizedFile by parsing yaml.
   yin >> *f;
@@ -612,7 +620,9 @@ writeYaml(const NormalizedFile &file, raw_ostream &out) {
   NormalizedFile *f = const_cast<NormalizedFile*>(&file);
 
   // Create yaml Output writer, using yaml options for context.
-  llvm::yaml::Output yout(out, f);
+  YamlContext yamlContext;
+  yamlContext._normalizeMachOFile = f;
+  llvm::yaml::Output yout(out, &yamlContext);
 
   // Stream out yaml.
   yout << *f;

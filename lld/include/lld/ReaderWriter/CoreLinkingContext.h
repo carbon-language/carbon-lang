@@ -18,24 +18,28 @@
 
 namespace lld {
 
+
 class CoreLinkingContext : public LinkingContext {
 public:
   CoreLinkingContext();
 
+  enum {
+    TEST_RELOC_CALL32        = 1,
+    TEST_RELOC_PCREL32       = 2,
+    TEST_RELOC_GOT_LOAD32    = 3,
+    TEST_RELOC_GOT_USE32     = 4,
+    TEST_RELOC_LEA32_WAS_GOT = 5,
+  };
+  
   virtual bool validateImpl(raw_ostream &diagnostics);
   virtual void addPasses(PassManager &pm);
-  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
-  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
   void addPassNamed(StringRef name) { _passNames.push_back(name); }
-
-  virtual Reader &getDefaultReader() const { return *_reader; }
 
 protected:
   virtual Writer &writer() const;
 
 private:
-  std::unique_ptr<Reader> _reader;
   std::unique_ptr<Writer> _writer;
   std::vector<StringRef> _passNames;
 };

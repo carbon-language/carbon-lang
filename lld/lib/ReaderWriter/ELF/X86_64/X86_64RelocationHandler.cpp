@@ -47,8 +47,13 @@ static void reloc32S(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   // TODO: Make sure that the result sign extends to the 64bit value.
 }
 
+
+
 int64_t X86_64TargetRelocationHandler::relocAddend(const Reference &ref) const {
-  switch (ref.kind()) {
+  if (ref.kindNamespace() != Reference::KindNamespace::ELF)
+    return false;
+  assert(ref.kindArch() == Reference::KindArch::x86_64);
+  switch (ref.kindValue()) {
   case R_X86_64_PC32:
     return 4;
   default:
@@ -65,7 +70,10 @@ error_code X86_64TargetRelocationHandler::applyRelocation(
   uint64_t targetVAddress = writer.addressOfAtom(ref.target());
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
-  switch (ref.kind()) {
+  if (ref.kindNamespace() != Reference::KindNamespace::ELF)
+    return error_code::success();
+  assert(ref.kindArch() == Reference::KindArch::x86_64);
+  switch (ref.kindValue()) {
   case R_X86_64_NONE:
     break;
   case R_X86_64_64:
@@ -86,7 +94,8 @@ error_code X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_TPOFF32: {
     _tlsSize =
         _context.getTargetHandler<X86_64ELFType>().targetLayout().getTLSSize();
-    if (ref.kind() == R_X86_64_TPOFF32 || ref.kind() == R_X86_64_DTPOFF32) {
+    if (ref.kindValue() == R_X86_64_TPOFF32 || 
+        ref.kindValue() == R_X86_64_DTPOFF32) {
       int32_t result = (int32_t)(targetVAddress - _tlsSize);
       *reinterpret_cast<llvm::support::little32_t *>(location) = result;
     } else {
@@ -106,7 +115,7 @@ error_code X86_64TargetRelocationHandler::applyRelocation(
   case LLD_R_X86_64_GOTRELINDEX: {
     const DefinedAtom *target = cast<const DefinedAtom>(ref.target());
     for (const Reference *r : *target) {
-      if (r->kind() == R_X86_64_JUMP_SLOT) {
+      if (r->kindValue() == R_X86_64_JUMP_SLOT) {
         uint32_t index;
         if (!_context.getTargetHandler<X86_64ELFType>().targetLayout()
                 .getPLTRelocationTable()->getRelocationIndex(*r, index))
@@ -123,19 +132,12 @@ error_code X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_JUMP_SLOT:
   case R_X86_64_GLOB_DAT:
     break;
-
-  case lld::Reference::kindLayoutAfter:
-  case lld::Reference::kindLayoutBefore:
-  case lld::Reference::kindInGroup:
-    break;
-
   default: {
     std::string str;
     llvm::raw_string_ostream s(str);
-    auto name = _context.stringFromRelocKind(ref.kind());
     s << "Unhandled relocation: " << atom._atom->file().path() << ":"
       << atom._atom->name() << "@" << ref.offsetInAtom() << " "
-      << (name ? *name : "<unknown>") << " (" << ref.kind() << ")";
+      << "#" << ref.kindValue();
     s.flush();
     llvm_unreachable(str.c_str());
   }

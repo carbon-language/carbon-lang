@@ -20,6 +20,7 @@
 #include "ReferenceKinds.h"
 
 using llvm::makeArrayRef;
+using namespace llvm::MachO;
 
 namespace lld {
 namespace mach_o {
@@ -31,7 +32,9 @@ class X86_64StubAtom : public SimpleDefinedAtom {
 public:
   X86_64StubAtom(const File &file, const Atom &lazyPointer)
       : SimpleDefinedAtom(file) {
-    this->addReference(KindHandler_x86_64::ripRel32, 2, &lazyPointer, 0);
+    this->addReference(Reference::KindNamespace::mach_o, 
+                       Reference::KindArch::x86_64, 
+                       X86_64_RELOC_SIGNED, 2, &lazyPointer, 0);
   }
 
   virtual ContentType contentType() const {
@@ -62,8 +65,12 @@ public:
   X86_64StubHelperCommonAtom(const File &file, const Atom &cache,
                              const Atom &binder)
       : SimpleDefinedAtom(file) {
-    this->addReference(KindHandler_x86_64::ripRel32, 3,  &cache, 0);
-    this->addReference(KindHandler_x86_64::ripRel32, 11, &binder, 0);
+    this->addReference(Reference::KindNamespace::mach_o, 
+                       Reference::KindArch::x86_64, 
+                       X86_64_RELOC_SIGNED, 3,  &cache, 0);
+    this->addReference(Reference::KindNamespace::mach_o, 
+                       Reference::KindArch::x86_64, 
+                       X86_64_RELOC_SIGNED, 11, &binder, 0);
   }
 
   virtual ContentType contentType() const {
@@ -96,8 +103,12 @@ class X86_64StubHelperAtom : public SimpleDefinedAtom {
 public:
   X86_64StubHelperAtom(const File &file, const Atom &helperCommon)
       : SimpleDefinedAtom(file) {
-    this->addReference(KindHandler_x86_64::lazyImmediate, 1, this, 0);
-    this->addReference(KindHandler_x86_64::ripRel32, 6, &helperCommon, 0);
+    this->addReference(Reference::KindNamespace::mach_o, 
+                       Reference::KindArch::x86_64, 
+                       LLD_X86_64_RELOC_LAZY_IMMEDIATE, 1, this, 0);
+    this->addReference(Reference::KindNamespace::mach_o, 
+                       Reference::KindArch::x86_64, 
+                       X86_64_RELOC_SIGNED, 6, &helperCommon, 0);
   }
 
   virtual ContentType contentType() const {
@@ -129,8 +140,12 @@ public:
   X86_64LazyPointerAtom(const File &file, const Atom &helper,
                         const Atom &shlib)
       : SimpleDefinedAtom(file) {
-    this->addReference(KindHandler_x86_64::pointer64, 0, &helper, 0);
-    this->addReference(KindHandler_x86_64::lazyTarget, 0, &shlib, 0);
+    this->addReference(Reference::KindNamespace::mach_o, 
+                       Reference::KindArch::x86_64, 
+                       X86_64_RELOC_UNSIGNED, 0, &helper, 0);
+    this->addReference(Reference::KindNamespace::mach_o, 
+                       Reference::KindArch::x86_64, 
+                       LLD_X86_64_RELOC_LAZY_TARGET, 0, &shlib, 0);
   }
 
   virtual ContentType contentType() const {
@@ -166,7 +181,9 @@ public:
 
   X86_64NonLazyPointerAtom(const File &file, const Atom &shlib)
       : SimpleDefinedAtom(file) {
-    this->addReference(KindHandler_x86_64::pointer64, 0, &shlib, 0);
+    this->addReference(Reference::KindNamespace::mach_o, 
+                       Reference::KindArch::x86_64, 
+                       X86_64_RELOC_UNSIGNED, 0, &shlib, 0);
   }
 
   virtual ContentType contentType() const {

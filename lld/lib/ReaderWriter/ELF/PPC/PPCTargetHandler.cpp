@@ -43,22 +43,18 @@ error_code PPCTargetRelocationHandler::applyRelocation(
   uint64_t targetVAddress = writer.addressOfAtom(ref.target());
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
-  switch (ref.kind()) {
+  if (ref.kindNamespace() != Reference::KindNamespace::ELF)
+    return error_code::success();
+  assert(ref.kindArch() == Reference::KindArch::PowerPC);
+  switch (ref.kindValue()) {
   case R_PPC_REL24:
     relocB24PCREL(location, relocVAddress, targetVAddress, ref.addend());
-    break;
-
-  case lld::Reference::kindLayoutAfter:
-  case lld::Reference::kindLayoutBefore:
-  case lld::Reference::kindInGroup:
     break;
 
   default : {
     std::string str;
     llvm::raw_string_ostream s(str);
-    auto name = _context.stringFromRelocKind(ref.kind());
-    s << "Unhandled relocation: " << (name ? *name : "<unknown>") << " ("
-      << ref.kind() << ")";
+    s << "Unhandled PowerPC relocation: #" << ref.kindValue();
     s.flush();
     llvm_unreachable(str.c_str());
   }
@@ -70,3 +66,70 @@ error_code PPCTargetRelocationHandler::applyRelocation(
 PPCTargetHandler::PPCTargetHandler(PPCLinkingContext &targetInfo)
     : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo),
       _targetLayout(targetInfo) {}
+
+
+void PPCTargetHandler::registerRelocationNames(Registry &registry) {
+  registry.addKindTable(Reference::KindNamespace::ELF, 
+                        Reference::KindArch::PowerPC, 
+                        kindStrings);
+}
+
+const Registry::KindStrings PPCTargetHandler::kindStrings[] = {
+  LLD_KIND_STRING_ENTRY(R_PPC_NONE),
+  LLD_KIND_STRING_ENTRY(R_PPC_ADDR32),
+  LLD_KIND_STRING_ENTRY(R_PPC_ADDR24),
+  LLD_KIND_STRING_ENTRY(R_PPC_ADDR16),
+  LLD_KIND_STRING_ENTRY(R_PPC_ADDR16_LO),
+  LLD_KIND_STRING_ENTRY(R_PPC_ADDR16_HI),
+  LLD_KIND_STRING_ENTRY(R_PPC_ADDR16_HA),
+  LLD_KIND_STRING_ENTRY(R_PPC_ADDR14),
+  LLD_KIND_STRING_ENTRY(R_PPC_ADDR14_BRTAKEN),
+  LLD_KIND_STRING_ENTRY(R_PPC_ADDR14_BRNTAKEN),
+  LLD_KIND_STRING_ENTRY(R_PPC_REL24),
+  LLD_KIND_STRING_ENTRY(R_PPC_REL14),
+  LLD_KIND_STRING_ENTRY(R_PPC_REL14_BRTAKEN),
+  LLD_KIND_STRING_ENTRY(R_PPC_REL14_BRNTAKEN),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT16),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT16_LO),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT16_HI),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT16_HA),
+  LLD_KIND_STRING_ENTRY(R_PPC_REL32),
+  LLD_KIND_STRING_ENTRY(R_PPC_TLS),
+  LLD_KIND_STRING_ENTRY(R_PPC_DTPMOD32),
+  LLD_KIND_STRING_ENTRY(R_PPC_TPREL16),
+  LLD_KIND_STRING_ENTRY(R_PPC_TPREL16_LO),
+  LLD_KIND_STRING_ENTRY(R_PPC_TPREL16_HI),
+  LLD_KIND_STRING_ENTRY(R_PPC_TPREL16_HA),
+  LLD_KIND_STRING_ENTRY(R_PPC_TPREL32),
+  LLD_KIND_STRING_ENTRY(R_PPC_DTPREL16),
+  LLD_KIND_STRING_ENTRY(R_PPC_DTPREL16_LO),
+  LLD_KIND_STRING_ENTRY(R_PPC_DTPREL16_HI),
+  LLD_KIND_STRING_ENTRY(R_PPC_DTPREL16_HA),
+  LLD_KIND_STRING_ENTRY(R_PPC_DTPREL32),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TLSGD16),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TLSGD16_LO),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TLSGD16_HI),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TLSGD16_HA),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TLSLD16),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TLSLD16_LO),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TLSLD16_HI),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TLSLD16_HA),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TPREL16),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TPREL16_LO),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TPREL16_HI),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_TPREL16_HA),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_DTPREL16),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_DTPREL16_LO),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_DTPREL16_HI),
+  LLD_KIND_STRING_ENTRY(R_PPC_GOT_DTPREL16_HA),
+  LLD_KIND_STRING_ENTRY(R_PPC_TLSGD),
+  LLD_KIND_STRING_ENTRY(R_PPC_TLSLD),
+  LLD_KIND_STRING_ENTRY(R_PPC_REL16),
+  LLD_KIND_STRING_ENTRY(R_PPC_REL16_LO),
+  LLD_KIND_STRING_ENTRY(R_PPC_REL16_HI),
+  LLD_KIND_STRING_ENTRY(R_PPC_REL16_HA),
+  LLD_KIND_STRING_END
+};
+
+
+

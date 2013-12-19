@@ -43,7 +43,10 @@ public:
 
   virtual bool isDynamicRelocation(const DefinedAtom &,
                                    const Reference &r) const {
-    switch (r.kind()) {
+    if (r.kindNamespace() != Reference::KindNamespace::ELF)
+      return false;
+    assert(r.kindArch() == Reference::KindArch::x86_64);
+    switch (r.kindValue()) {
     case llvm::ELF::R_X86_64_RELATIVE:
     case llvm::ELF::R_X86_64_GLOB_DAT:
     case llvm::ELF::R_X86_64_COPY:
@@ -54,7 +57,10 @@ public:
   }
 
   virtual bool isPLTRelocation(const DefinedAtom &, const Reference &r) const {
-    switch (r.kind()) {
+    if (r.kindNamespace() != Reference::KindNamespace::ELF)
+      return false;
+    assert(r.kindArch() == Reference::KindArch::x86_64);
+    switch (r.kindValue()) {
     case llvm::ELF::R_X86_64_JUMP_SLOT:
     case llvm::ELF::R_X86_64_IRELATIVE:
       return true;
@@ -67,7 +73,10 @@ public:
   /// a) for supporting IFUNC - R_X86_64_IRELATIVE
   /// b) for supporting relative relocs - R_X86_64_RELATIVE
   virtual bool isRelativeReloc(const Reference &r) const {
-    switch (r.kind()) {
+    if (r.kindNamespace() != Reference::KindNamespace::ELF)
+      return false;
+    assert(r.kindArch() == Reference::KindArch::x86_64);
+    switch (r.kindValue()) {
     case llvm::ELF::R_X86_64_IRELATIVE:
     case llvm::ELF::R_X86_64_RELATIVE:
       return true;
@@ -79,8 +88,6 @@ public:
   /// \brief Create Internal files for Init/Fini
   bool createInternalFiles(std::vector<std::unique_ptr<File> > &) const;
 
-  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
-  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 };
 } // end namespace elf
 } // end namespace lld

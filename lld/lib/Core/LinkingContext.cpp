@@ -30,8 +30,6 @@ LinkingContext::LinkingContext()
 LinkingContext::~LinkingContext() {}
 
 bool LinkingContext::validate(raw_ostream &diagnostics) {
-  _yamlReader = createReaderYAML(*this);
-  _nativeReader = createReaderNative(*this);
   return validateImpl(diagnostics);
 }
 
@@ -48,7 +46,7 @@ std::unique_ptr<File> LinkingContext::createEntrySymbolFile() const {
   if (entrySymbolName().empty())
     return nullptr;
   std::unique_ptr<SimpleFile> entryFile(
-      new SimpleFile(*this, "command line option -entry"));
+      new SimpleFile("command line option -entry"));
   entryFile->addAtom(
       *(new (_allocator) SimpleUndefinedAtom(*entryFile, entrySymbolName())));
   return std::move(entryFile);
@@ -58,7 +56,7 @@ std::unique_ptr<File> LinkingContext::createUndefinedSymbolFile() const {
   if (_initialUndefinedSymbols.empty())
     return nullptr;
   std::unique_ptr<SimpleFile> undefinedSymFile(
-      new SimpleFile(*this, "command line option -u"));
+      new SimpleFile("command line option -u"));
   for (auto undefSymStr : _initialUndefinedSymbols)
     undefinedSymFile->addAtom(*(new (_allocator) SimpleUndefinedAtom(
                                    *undefinedSymFile, undefSymStr)));

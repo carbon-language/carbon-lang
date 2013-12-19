@@ -27,6 +27,8 @@ class X86_64TargetHandler LLVM_FINAL
 public:
   X86_64TargetHandler(X86_64LinkingContext &targetInfo);
 
+  virtual void registerRelocationNames(Registry &registry);
+
   virtual TargetLayout<X86_64ELFType> &targetLayout() {
     return _targetLayout;
   }
@@ -40,10 +42,11 @@ public:
 private:
   class GOTFile : public SimpleFile {
   public:
-    GOTFile(const ELFLinkingContext &eti) : SimpleFile(eti, "GOTFile") {}
+    GOTFile(const ELFLinkingContext &eti) : SimpleFile("GOTFile") {}
     llvm::BumpPtrAllocator _alloc;
   };
 
+  static const Registry::KindStrings kindStrings[];
   std::unique_ptr<GOTFile> _gotFile;
   X86_64TargetRelocationHandler _relocationHandler;
   TargetLayout<X86_64ELFType> _targetLayout;

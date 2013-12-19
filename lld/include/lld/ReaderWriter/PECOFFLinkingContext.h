@@ -73,8 +73,6 @@ public:
     IMAGE_DLL
   };
 
-  virtual Reader &getDefaultReader() const { return *_reader; }
-
   virtual Writer &writer() const;
   virtual bool validateImpl(raw_ostream &diagnostics);
 
@@ -198,6 +196,9 @@ public:
                           StringRef from, StringRef to);
 
   StringRef getAlternateName(StringRef def) const;
+  const std::map<std::string, std::string> &alternateNames() {
+    return _alternateNames;
+  }
   void setAlternateName(StringRef def, StringRef weak);
 
   void addNoDefaultLib(StringRef path) { _noDefaultLibs.insert(path); }
@@ -207,9 +208,6 @@ public:
 
   void setNoDefaultLibAll(bool val) { _noDefaultLibAll = val; }
   bool getNoDefaultLibAll() const { return _noDefaultLibAll; }
-
-  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
-  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
   void setSectionSetMask(StringRef sectionName, uint32_t flags);
   void setSectionClearMask(StringRef sectionName, uint32_t flags);
@@ -284,7 +282,6 @@ private:
   std::set<std::string> _noDefaultLibs;
 
   std::vector<StringRef> _inputSearchPaths;
-  std::unique_ptr<Reader> _reader;
   std::unique_ptr<Writer> _writer;
 
   // A map for weak aliases.

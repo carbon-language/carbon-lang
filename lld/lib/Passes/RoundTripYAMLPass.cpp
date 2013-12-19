@@ -45,8 +45,12 @@ void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
 
   if (buff->getBufferSize() < MAX_YAML_FILE_SIZE) {
     std::unique_ptr<MemoryBuffer> mb(buff.take());
-    _context.getYAMLReader().parseFile(mb, _yamlFile);
-    mergedFile.reset(new FileToMutable(_context, *_yamlFile[0].get()));
+    error_code ec = _context.registry().parseFile(mb, _yamlFile);
+    assert(!ec && "yaml reader not registered");
+    File *objFile =  _yamlFile[0].get();
+    const File *obj = dyn_cast<const File>(objFile);
+    assert(obj && "yaml generated file is not an relocatable file");
+    mergedFile.reset(new FileToMutable(_context, *obj));
   }
 
   llvm::sys::fs::remove(tmpYAMLFile.str());

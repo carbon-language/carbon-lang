@@ -29,7 +29,10 @@ public:
   /// a) for supporting IFUNC relocs - R_386_IRELATIVE
   /// b) for supporting relative relocs - R_386_RELATIVE
   virtual bool isRelativeReloc(const Reference &r) const {
-    switch (r.kind()) {
+    if (r.kindNamespace() != Reference::KindNamespace::ELF)
+      return false;
+    assert(r.kindArch() == Reference::KindArch::x86);
+    switch (r.kindValue()) {
     case llvm::ELF::R_386_IRELATIVE:
     case llvm::ELF::R_386_RELATIVE:
       return true;
@@ -37,8 +40,6 @@ public:
       return false;
     }
   }
-  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
-  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 };
 } // end namespace elf
 } // end namespace lld

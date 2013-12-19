@@ -23,8 +23,8 @@
 namespace lld {
 class SimpleFile : public MutableFile {
 public:
-  SimpleFile(const LinkingContext &context, StringRef path)
-      : MutableFile(context, path) {}
+  SimpleFile(StringRef path)
+      : MutableFile(path) {}
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom)) {
@@ -63,16 +63,16 @@ public:
   }
 
 protected:
-  atom_collection_vector<DefinedAtom> _definedAtoms;
-  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
+  atom_collection_vector<DefinedAtom>       _definedAtoms;
+  atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
+  atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
 };
 
 class FileToMutable : public SimpleFile {
 public:
-  FileToMutable(const LinkingContext &context, File &file)
-      : SimpleFile(context, file.path()) {
+  FileToMutable(const LinkingContext &context, const File &file)
+      : SimpleFile(file.path()) {
     for (auto definedAtom : file.defined())
       _definedAtoms._atoms.push_back(std::move(definedAtom));
     for (auto undefAtom : file.undefined())
@@ -86,10 +86,10 @@ public:
 
 class SimpleReference : public Reference {
 public:
-  SimpleReference(Reference::Kind k, uint64_t off, const Atom *t,
+  SimpleReference(Reference::KindNamespace ns, Reference::KindArch arch, 
+                  Reference::KindValue value, uint64_t off, const Atom *t,
                   Reference::Addend a)
-      : _target(t), _offsetInAtom(off), _addend(a) {
-    _kind = k;
+      : Reference(ns, arch, value), _target(t), _offsetInAtom(off), _addend(a) {
   }
 
   virtual uint64_t offsetInAtom() const { return _offsetInAtom; }
@@ -167,9 +167,10 @@ public:
     it = reinterpret_cast<const void *>(index);
   }
 
-  void addReference(Reference::Kind kind, uint64_t offset, const Atom *target,
-                    Reference::Addend addend) {
-    _references.push_back(SimpleReference(kind, offset, target, addend));
+  void addReference(Reference::KindNamespace ns, Reference::KindArch arch, 
+                    Reference::KindValue kindValue, uint64_t off, 
+                    const Atom *target, Reference::Addend a) {
+    _references.push_back(SimpleReference(ns, arch, kindValue, off, target, a));
   }
 
   void setOrdinal(uint64_t ord) { _ordinal = ord; }

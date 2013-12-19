@@ -70,8 +70,7 @@ static void showCycleDetectedError(AtomToAtomT &followOnNexts,
   do {
     llvm::dbgs() << "  " << atomToDebugString(atom) << "\n";
     for (const Reference *ref : *atom) {
-      llvm::dbgs() << "    " << ref->kindToString()
-                   << ": " << atomToDebugString(ref->target()) << "\n";
+      llvm::dbgs() << "  "  << atomToDebugString(ref->target()) << "\n";
     }
     atom = followOnNexts[atom];
   } while (atom != start);
@@ -324,7 +323,9 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
   _followOnNexts.resize(range.size());
   for (const DefinedAtom *ai : range) {
     for (const Reference *r : *ai) {
-      if (r->kind() != lld::Reference::kindLayoutAfter)
+      if (r->kindNamespace() != lld::Reference::KindNamespace::all)
+        continue;
+      if (r->kindValue() != lld::Reference::kindLayoutAfter)
         continue;
       const DefinedAtom *targetAtom = dyn_cast<DefinedAtom>(r->target());
       _followOnNexts[ai] = targetAtom;
@@ -385,7 +386,9 @@ void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
   // references so that we have only one table
   for (const DefinedAtom *ai : range) {
     for (const Reference *r : *ai) {
-      if (r->kind() == lld::Reference::kindInGroup) {
+      if (r->kindNamespace() != lld::Reference::KindNamespace::all)
+        continue;
+      if (r->kindValue() == lld::Reference::kindInGroup) {
         const DefinedAtom *rootAtom = dyn_cast<DefinedAtom>(r->target());
         // If the root atom is not part of any root
         // create a new root
@@ -455,7 +458,9 @@ void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
   // references so that we have only one table
   for (const DefinedAtom *ai : range) {
     for (const Reference *r : *ai) {
-      if (r->kind() == lld::Reference::kindLayoutBefore) {
+      if (r->kindNamespace() != lld::Reference::KindNamespace::all)
+        continue;
+      if (r->kindValue() == lld::Reference::kindLayoutBefore) {
         const DefinedAtom *targetAtom = dyn_cast<DefinedAtom>(r->target());
         // Is the targetAtom not chained
         if (_followOnRoots.count(targetAtom) == 0) {

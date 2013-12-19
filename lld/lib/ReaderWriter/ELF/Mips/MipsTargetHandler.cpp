@@ -173,3 +173,22 @@ void MipsTargetHandler::finalizeSymbolValues() {
         gotSection ? gotSection->virtualAddr() + 0x7FF0 : 0;
   }
 }
+
+void MipsTargetHandler::registerRelocationNames(Registry &registry) {
+  registry.addKindTable(Reference::KindNamespace::ELF, 
+                        Reference::KindArch::Mips, 
+                        kindStrings);
+}
+
+
+const Registry::KindStrings MipsTargetHandler::kindStrings[] = {
+  LLD_KIND_STRING_ENTRY(R_MIPS_NONE),
+  LLD_KIND_STRING_ENTRY(R_MIPS_32),
+  LLD_KIND_STRING_ENTRY(R_MIPS_HI16),
+  LLD_KIND_STRING_ENTRY(R_MIPS_LO16),
+  LLD_KIND_STRING_ENTRY(R_MIPS_GOT16),
+  LLD_KIND_STRING_ENTRY(R_MIPS_CALL16),
+  LLD_KIND_STRING_ENTRY(R_MIPS_JALR),
+  LLD_KIND_STRING_END
+};
+ 

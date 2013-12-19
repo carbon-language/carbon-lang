@@ -78,7 +78,6 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     return false;
   }
 
-  _reader = createReaderPECOFF(*this);
   _writer = createWriterPECOFF(*this);
   return true;
 }
@@ -87,7 +86,7 @@ std::unique_ptr<File> PECOFFLinkingContext::createEntrySymbolFile() const {
   if (entrySymbolName().empty())
     return nullptr;
   std::unique_ptr<SimpleFile> entryFile(
-      new SimpleFile(*this, "command line option /entry"));
+      new SimpleFile("command line option /entry"));
   entryFile->addAtom(
       *(new (_allocator) SimpleUndefinedAtom(*entryFile, entrySymbolName())));
   return std::move(entryFile);
@@ -97,7 +96,7 @@ std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() const {
   if (_initialUndefinedSymbols.empty())
     return nullptr;
   std::unique_ptr<SimpleFile> undefinedSymFile(
-      new SimpleFile(*this, "command line option /c (or) /include"));
+      new SimpleFile("command line option /c (or) /include"));
   for (auto undefSymStr : _initialUndefinedSymbols)
     undefinedSymFile->addAtom(*(new (_allocator) SimpleUndefinedAtom(
                                    *undefinedSymFile, undefSymStr)));
@@ -208,40 +207,6 @@ StringRef PECOFFLinkingContext::decorateSymbol(StringRef name) const {
 
 Writer &PECOFFLinkingContext::writer() const { return *_writer; }
 
-ErrorOr<Reference::Kind>
-PECOFFLinkingContext::relocKindFromString(StringRef str) const {
-#define LLD_CASE(name) .Case(#name, llvm::COFF::name)
-  int32_t ret = llvm::StringSwitch<int32_t>(str)
-        LLD_CASE(IMAGE_REL_I386_ABSOLUTE)
-        LLD_CASE(IMAGE_REL_I386_DIR32)
-        LLD_CASE(IMAGE_REL_I386_DIR32NB)
-        LLD_CASE(IMAGE_REL_I386_SECTION)
-        LLD_CASE(IMAGE_REL_I386_SECREL)
-        LLD_CASE(IMAGE_REL_I386_REL32)
-        .Default(-1);
-#undef LLD_CASE
-  if (ret == -1)
-    return make_error_code(YamlReaderError::illegal_value);
-  return ret;
-}
-
-ErrorOr<std::string>
-PECOFFLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
-  switch (kind) {
-#define LLD_CASE(name)                          \
-    case llvm::COFF::name:                      \
-      return std::string(#name);
-
-    LLD_CASE(IMAGE_REL_I386_ABSOLUTE)
-    LLD_CASE(IMAGE_REL_I386_DIR32)
-    LLD_CASE(IMAGE_REL_I386_DIR32NB)
-    LLD_CASE(IMAGE_REL_I386_SECTION)
-    LLD_CASE(IMAGE_REL_I386_SECREL)
-    LLD_CASE(IMAGE_REL_I386_REL32)
-#undef LLD_CASE
-  }
-  return make_error_code(YamlReaderError::illegal_value);
-}
 
 void PECOFFLinkingContext::setSectionSetMask(StringRef sectionName,
                                              uint32_t newFlags) {
@@ -270,7 +235,8 @@ uint32_t PECOFFLinkingContext::getSectionAttributes(StringRef sectionName,
   uint32_t clearMask = (ci == _sectionClearMask.end()) ? 0 : ci->second;
   return (flags | setMask) & ~clearMask;
 }
-
+ 
+ 
 void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::SetSubsystemPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::EdataPass(*this)));

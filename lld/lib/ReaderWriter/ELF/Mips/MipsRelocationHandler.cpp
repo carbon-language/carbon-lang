@@ -120,7 +120,10 @@ void MipsTargetRelocationHandler::applyPairedRelocations(
 
     int64_t ahl = calcAHL(ri->addend(), loAddend);
 
-    switch (ri->kind()) {
+    if (ri->kindNamespace() != lld::Reference::KindNamespace::ELF)
+      continue;
+    assert(ri->kindArch() == Reference::KindArch::Mips);
+    switch (ri->kindValue()) {
     case R_MIPS_HI16:
       relocHi16(location, relocVAddress, targetVAddress, ahl,
                 _targetHandler.getGPDispSymAddr(),
@@ -146,7 +149,10 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   uint64_t targetVAddress = writer.addressOfAtom(ref.target());
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
-  switch (ref.kind()) {
+  if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
+    return error_code::success();
+  assert(ref.kindArch() == Reference::KindArch::Mips);
+  switch (ref.kindValue()) {
   case R_MIPS_NONE:
     break;
   case R_MIPS_32:
@@ -171,16 +177,10 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   case R_MIPS_JALR:
     // We do not do JALR optimization now.
     break;
-  case lld::Reference::kindLayoutAfter:
-  case lld::Reference::kindLayoutBefore:
-  case lld::Reference::kindInGroup:
-    break;
   default: {
     std::string str;
     llvm::raw_string_ostream s(str);
-    auto name = _context.stringFromRelocKind(ref.kind());
-    s << "Unhandled relocation: "
-      << (name ? *name : "<unknown>") << " (" << ref.kind() << ")";
+    s << "Unhandled Mips relocation: " << ref.kindValue();
     llvm_unreachable(s.str().c_str());
   }
   }

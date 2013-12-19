@@ -125,6 +125,7 @@
 #include "lld/Core/File.h"
 #include "lld/Core/Error.h"
 #include "lld/Core/SharedLibraryAtom.h"
+#include "lld/ReaderWriter/PECOFFLinkingContext.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
@@ -143,16 +144,15 @@
 #include <cstring>
 
 using namespace lld;
+using namespace lld::pecoff;
 using namespace llvm;
 
 namespace lld {
-namespace pecoff {
 
 namespace {
 
-uint8_t FuncAtomContent[] = {
-  0xff, 0x25, 0x00, 0x00, 0x00, 0x00,  // jmp *0x0
-  0xcc, 0xcc                           // int 3; int 3
+uint8_t FuncAtomContent[] = { 0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *0x0
+                              0xcc, 0xcc // int 3; int 3
 };
 
 /// The defined atom for jump table.
@@ -174,15 +174,14 @@ public:
 
 class FileImportLibrary : public File {
 public:
-  FileImportLibrary(const LinkingContext &context,
-                    std::unique_ptr<MemoryBuffer> mb, error_code &ec)
-      : File(mb->getBufferIdentifier(), kindSharedLibrary), _context(context) {
+  FileImportLibrary(std::unique_ptr<MemoryBuffer> mb, error_code &ec)
+      : File(mb->getBufferIdentifier(), kindSharedLibrary) {
     const char *buf = mb->getBufferStart();
     const char *end = mb->getBufferEnd();
 
     // The size of the string that follows the header.
     uint32_t dataSize = *reinterpret_cast<const support::ulittle32_t *>(
-                             buf + offsetof(COFF::ImportHeader, SizeOfData));
+        buf + offsetof(COFF::ImportHeader, SizeOfData));
 
     // Check if the total size is valid.
     if (end - buf != sizeof(COFF::ImportHeader) + dataSize) {
@@ -191,14 +190,14 @@ public:
     }
 
     uint16_t hint = *reinterpret_cast<const support::ulittle16_t *>(
-                         buf + offsetof(COFF::ImportHeader, OrdinalHint));
+        buf + offsetof(COFF::ImportHeader, OrdinalHint));
     StringRef symbolName(buf + sizeof(COFF::ImportHeader));
     StringRef dllName(buf + sizeof(COFF::ImportHeader) + symbolName.size() + 1);
 
     // TypeInfo is a bitfield. The least significant 2 bits are import
     // type, followed by 3 bit import name type.
     uint16_t typeInfo = *reinterpret_cast<const support::ulittle16_t *>(
-                             buf + offsetof(COFF::ImportHeader, TypeInfo));
+        buf + offsetof(COFF::ImportHeader, TypeInfo));
     int type = typeInfo & 0x3;
     int nameType = (typeInfo >> 2) & 0x7;
 
@@ -231,8 +230,6 @@ public:
     return _noAbsoluteAtoms;
   }
 
-  virtual const LinkingContext &getLinkingContext() const { return _context; }
-
 private:
   const COFFSharedLibraryAtom *addSharedLibraryAtom(uint16_t hint,
                                                     StringRef symbolName,
@@ -256,7 +253,6 @@ private:
 
   atom_collection_vector<DefinedAtom> _definedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  const LinkingContext &_context;
   mutable llvm::BumpPtrAllocator _alloc;
 
   // Does the same thing as StringRef::ltrim() but removes at most one
@@ -294,7 +290,31 @@ private:
   }
 };
 
+class COFFImportLibraryReader : public Reader {
+public:
+  virtual bool canParse(file_magic magic, StringRef,
+                        const MemoryBuffer &mb) const {
+    if (mb.getBufferSize() < sizeof(COFF::ImportHeader))
+      return false;
+    return (magic == llvm::sys::fs::file_magic::coff_import_library);
+  }
+
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
+            std::vector<std::unique_ptr<File> > &result) const {
+    error_code ec;
+    auto file = std::unique_ptr<File>(new FileImportLibrary(std::move(mb), ec));
+    if (ec)
+      return ec;
+    result.push_back(std::move(file));
+    return error_code::success();
+  }
+
+};
+
 } // end anonymous namespace
+
+namespace pecoff {
 
 error_code parseCOFFImportLibrary(const LinkingContext &targetInfo,
                                   std::unique_ptr<MemoryBuffer> &mb,
@@ -308,8 +328,7 @@ error_code parseCOFFImportLibrary(const LinkingContext &targetInfo,
     return make_error_code(NativeReaderError::unknown_file_format);
 
   error_code ec;
-  auto file = std::unique_ptr<File>(
-      new FileImportLibrary(targetInfo, std::move(mb), ec));
+  auto file = std::unique_ptr<File>(new FileImportLibrary(std::move(mb), ec));
   if (ec)
     return ec;
   result.push_back(std::move(file));
@@ -317,4 +336,9 @@ error_code parseCOFFImportLibrary(const LinkingContext &targetInfo,
 }
 
 } // end namespace pecoff
+
+void Registry::addSupportCOFFImportLibraries() {
+  add(std::unique_ptr<Reader>(new COFFImportLibraryReader()));
+}
+
 } // end namespace lld

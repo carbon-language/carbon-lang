@@ -214,8 +214,9 @@ private:
 class NativeReferenceV1 : public Reference {
 public:
   NativeReferenceV1(const File& f, const NativeReferenceIvarsV1* ivarData)
-      : _file(&f), _ivarData(ivarData) {
-    setKind(ivarData->kind);
+      : Reference((KindNamespace)ivarData->kindNamespace, 
+                  (KindArch)ivarData->kindArch, ivarData->kindValue), 
+        _file(&f), _ivarData(ivarData) {
   }
 
   virtual uint64_t offsetInAtom() const {
@@ -240,8 +241,9 @@ private:
 class NativeReferenceV2 : public Reference {
 public:
   NativeReferenceV2(const File& f, const NativeReferenceIvarsV2* ivarData)
-      : _file(&f), _ivarData(ivarData) {
-    setKind(ivarData->kind);
+      : Reference((KindNamespace)ivarData->kindNamespace, 
+                  (KindArch)ivarData->kindArch, ivarData->kindValue), 
+        _file(&f), _ivarData(ivarData) {
   }
 
   virtual uint64_t offsetInAtom() const {
@@ -267,8 +269,7 @@ public:
 
   /// Instantiates a File object from a native object file.  Ownership
   /// of the MemoryBuffer is transferred to the resulting File object.
-  static error_code make(const LinkingContext &context,
-                         std::unique_ptr<MemoryBuffer> mb,
+  static error_code make(std::unique_ptr<MemoryBuffer> mb,
                          std::vector<std::unique_ptr<lld::File> > &result) {
     const uint8_t *const base =
         reinterpret_cast<const uint8_t *>(mb->getBufferStart());
@@ -293,7 +294,7 @@ public:
                                  << header->chunkCount << "\n");
 
     // instantiate NativeFile object and add values to it as found
-    std::unique_ptr<File> file(new File(context, std::move(mb), path));
+    std::unique_ptr<File> file(new File(std::move(mb), path));
 
     // process each chunk
     for (uint32_t i = 0; i < header->chunkCount; ++i) {
@@ -360,7 +361,7 @@ public:
         for (const Reference *r : *a) {
           llvm::dbgs() << "        offset="
                        << llvm::format("0x%03X", r->offsetInAtom())
-                       << ", kind=" << r->kind()
+                       << ", kind=" << r->kindValue()
                        << ", target=" << r->target() << "\n";
         }
       }
@@ -397,7 +398,6 @@ public:
   virtual const atom_collection<AbsoluteAtom> &absolute() const {
     return _absoluteAtoms;
   }
-  virtual const LinkingContext &getLinkingContext() const { return _context; }
 
 private:
   friend NativeDefinedAtomV1;
@@ -792,14 +792,12 @@ private:
   }
 
   // private constructor, only called by make()
-  File(const LinkingContext &context, std::unique_ptr<MemoryBuffer> mb,
-       StringRef path)
+  File(std::unique_ptr<MemoryBuffer> mb, StringRef path)
       : lld::File(path, kindObject),
         _buffer(std::move(mb)), // Reader now takes ownership of buffer
         _header(nullptr), _targetsTable(nullptr), _targetsTableCount(0),
         _strings(nullptr), _stringsMaxOffset(0), _addends(nullptr),
-        _addendsMaxIndex(0), _contentStart(nullptr), _contentEnd(nullptr),
-        _context(context) {
+        _addendsMaxIndex(0), _contentStart(nullptr), _contentEnd(nullptr) {
     _header =
         reinterpret_cast<const NativeFileHeader *>(_buffer->getBufferStart());
   }
@@ -845,7 +843,7 @@ private:
   };
 
 
-  std::unique_ptr<MemoryBuffer> _buffer;
+  std::unique_ptr<MemoryBuffer>   _buffer;
   const NativeFileHeader*         _header;
   AtomArray<DefinedAtom>          _definedAtoms;
   AtomArray<UndefinedAtom>        _undefinedAtoms;
@@ -862,10 +860,9 @@ private:
   const char*                     _strings;
   uint32_t                        _stringsMaxOffset;
   const Reference::Addend*        _addends;
-  uint32_t _addendsMaxIndex;
-  const uint8_t *_contentStart;
-  const uint8_t *_contentEnd;
-  const LinkingContext &_context;
+  uint32_t                        _addendsMaxIndex;
+  const uint8_t                  *_contentStart;
+  const uint8_t                  *_contentEnd;
 };
 
 inline const lld::File &NativeDefinedAtomV1::file() const {
@@ -1002,19 +999,34 @@ inline void NativeReferenceV2::setAddend(Addend a) {
   llvm_unreachable("setAddend() not supported");
 }
 
-class Reader : public lld::Reader {
-public:
-  Reader(const LinkingContext &context) : lld::Reader(context) {}
-
-  virtual error_code
-  parseFile(std::unique_ptr<MemoryBuffer> &mb,
-            std::vector<std::unique_ptr<lld::File> > &result) const {
-    return File::make(_context, std::move(mb), result);
-  }
-};
 } // end namespace native
 
-std::unique_ptr<Reader> createReaderNative(const LinkingContext &context) {
-  return std::unique_ptr<Reader>(new lld::native::Reader(context));
+
+namespace {
+
+class NativeReader : public Reader {
+public:
+  virtual bool canParse(file_magic magic, StringRef, 
+                                                const MemoryBuffer& mb) const {
+    const NativeFileHeader *const header =
+            reinterpret_cast<const NativeFileHeader *>(mb.getBufferStart());
+    return (memcmp(header->magic, NATIVE_FILE_HEADER_MAGIC, 
+                                                  sizeof(header->magic)) == 0);
+  }
+  
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
+            std::vector<std::unique_ptr<File>> &result) const {
+    return lld::native::File::make(std::move(mb), result);
+    return error_code::success();
+  }
+};
+
+
 }
+
+void Registry::addSupportNativeObjects() {
+  add(std::unique_ptr<Reader>(new NativeReader())); 
+}
+
 } // end namespace lld

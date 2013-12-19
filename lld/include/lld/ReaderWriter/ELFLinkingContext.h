@@ -36,7 +36,10 @@ template <typename ELFT> class TargetHandler;
 class TargetHandlerBase {
 public:
   virtual ~TargetHandlerBase() {}
+  virtual void registerRelocationNames(Registry &) = 0;
 };
+
+
 
 class ELFLinkingContext : public LinkingContext {
 public:
@@ -115,8 +118,6 @@ public:
     return getDefaultInterpreter();
   }
 
-  virtual Reader &getDefaultReader() const { return *_elfReader; }
-
   /// \brief Does the output have dynamic sections.
   virtual bool isDynamic() const;
 
@@ -129,6 +130,9 @@ public:
     return static_cast<lld::elf::TargetHandler<ELFT> &>(*_targetHandler.get());
   }
 
+  TargetHandlerBase *targetHandler() const {
+    return _targetHandler.get();
+  }
   virtual void addPasses(PassManager &pm);
 
   void setTriple(llvm::Triple trip) { _triple = trip; }
@@ -248,7 +252,6 @@ protected:
   bool _noAllowDynamicLibraries;
   OutputMagic _outputMagic;
   StringRefVector _inputSearchPaths;
-  std::unique_ptr<Reader> _elfReader;
   std::unique_ptr<Writer> _writer;
   StringRef _dynamicLinkerPath;
   StringRefVector _initFunctions;

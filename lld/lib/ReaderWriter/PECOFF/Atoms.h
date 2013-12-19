@@ -27,13 +27,11 @@ class COFFDefinedAtom;
 /// to be fixed up so that the address points to atom Y's address.
 class COFFReference LLVM_FINAL : public Reference {
 public:
-  explicit COFFReference(Kind kind) : _target(nullptr), _offsetInAtom(0) {
-    _kind = kind;
-  }
-
-  COFFReference(const Atom *target, uint32_t offsetInAtom, uint16_t relocType)
-      : _target(target), _offsetInAtom(offsetInAtom) {
-    setKind(static_cast<Reference::Kind>(relocType));
+  COFFReference(const Atom *target, uint32_t offsetInAtom, uint16_t relocType,
+               Reference::KindNamespace ns=Reference::KindNamespace::COFF,
+               Reference::KindArch arch=Reference::KindArch::x86)
+      : Reference(ns, arch, relocType), 
+        _target(target), _offsetInAtom(offsetInAtom) {
   }
 
   virtual const Atom *target() const { return _target; }
@@ -326,7 +324,7 @@ private:
 class VirtualFile : public SimpleFile {
 public:
   VirtualFile(const LinkingContext &ctx)
-      : SimpleFile(ctx, "<virtual-file>"), _nextOrdinal(0) {
+      : SimpleFile("<virtual-file>"), _nextOrdinal(0) {
     setOrdinal(ctx.getNextOrdinalAndIncrement());
   }
 
@@ -343,8 +341,9 @@ private:
 //===----------------------------------------------------------------------===//
 
 template <typename T, typename U>
-void addLayoutEdge(T *a, U *b, lld::Reference::Kind kind) {
-  auto ref = new COFFReference(kind);
+void addLayoutEdge(T *a, U *b, uint32_t which) {
+  auto ref = new COFFReference(nullptr, 0, which, Reference::KindNamespace::all,
+                                                  Reference::KindArch::all);
   ref->setTarget(b);
   a->addReference(std::unique_ptr<COFFReference>(ref));
 }

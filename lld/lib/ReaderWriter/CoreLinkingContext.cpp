@@ -12,7 +12,6 @@
 #include "lld/Core/Pass.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Passes/LayoutPass.h"
-#include "lld/Passes/RoundTripNativePass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
 #include "lld/ReaderWriter/Simple.h"
 
@@ -155,7 +154,7 @@ private:
 class TestingPassFile : public SimpleFile {
 public:
   TestingPassFile(const LinkingContext &ctx)
-      : SimpleFile(ctx, "Testing pass") {}
+      : SimpleFile("Testing pass") {}
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
@@ -189,25 +188,6 @@ private:
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 };
 
-struct TestingKindMapping {
-  const char *string;
-  int32_t value;
-  bool isBranch;
-  bool isGotLoad;
-  bool isGotUse;
-};
-
-//
-// Table of fixup kinds in YAML documents used for testing
-//
-const TestingKindMapping sKinds[] = {
-  { "in-group", -3, false, false, false },
-  { "layout-after", -2, false, false, false },
-  { "layout-before", -1, false, false, false },
-  { "call32", 2, true, false, false }, { "pcrel32", 3, false, false, false },
-  { "gotLoad32", 7, false, true, true }, { "gotUse32", 9, false, false, true },
-  { "lea32wasGot", 8, false, false, false }, { nullptr, 0, false, false, false }
-};
 
 class TestingStubsPass : public StubsPass {
 public:
@@ -215,12 +195,10 @@ public:
 
   virtual bool noTextRelocs() { return true; }
 
-  virtual bool isCallSite(int32_t kind) {
-    for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
-      if (kind == p->value)
-        return p->isBranch;
-    }
-    return false;
+  virtual bool isCallSite(const Reference &ref) {
+    if (ref.kindNamespace() != Reference::KindNamespace::testing)
+      return false;
+    return (ref.kindValue() == CoreLinkingContext::TEST_RELOC_CALL32);
   }
 
   virtual const DefinedAtom *getStub(const Atom &target) {
@@ -245,22 +223,25 @@ public:
 
   virtual bool noTextRelocs() { return true; }
 
-  virtual bool isGOTAccess(int32_t kind, bool &canBypassGOT) {
-    for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
-      if (kind == p->value) {
-        canBypassGOT = p->isGotLoad;
-        return p->isGotUse || p->isGotLoad;
-      }
+  virtual bool isGOTAccess(const Reference &ref, bool &canBypassGOT) {
+    if (ref.kindNamespace() != Reference::KindNamespace::testing)
+      return false;
+    switch (ref.kindValue()) {
+    case CoreLinkingContext::TEST_RELOC_GOT_LOAD32:
+      canBypassGOT = true;
+      return true;
+    case CoreLinkingContext::TEST_RELOC_GOT_USE32:
+      canBypassGOT = false;
+      return true;
     }
     return false;
   }
 
   virtual void updateReferenceToGOT(const Reference *ref, bool targetIsNowGOT) {
-    if (targetIsNowGOT)
-      const_cast<Reference *>(ref)->setKind(3); // pcrel32
-    else
-      const_cast<Reference *>(ref)->setKind(8); // lea32wasGot
-  }
+    const_cast<Reference *>(ref)->setKindValue(targetIsNowGOT ?
+                                  CoreLinkingContext::TEST_RELOC_PCREL32 : 
+                                  CoreLinkingContext::TEST_RELOC_LEA32_WAS_GOT);
+   }
 
   virtual const DefinedAtom *makeGOTEntry(const Atom &target) {
     return new TestingGOTAtom(_file, target);
@@ -275,7 +256,6 @@ private:
 CoreLinkingContext::CoreLinkingContext() {}
 
 bool CoreLinkingContext::validateImpl(raw_ostream &) {
-  _reader = createReaderYAML(*this);
   _writer = createWriterYAML(*this);
   return true;
 }
@@ -295,20 +275,3 @@ void CoreLinkingContext::addPasses(PassManager &pm) {
 
 Writer &CoreLinkingContext::writer() const { return *_writer; }
 
-ErrorOr<Reference::Kind>
-CoreLinkingContext::relocKindFromString(StringRef str) const {
-  for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
-    if (str.equals(p->string))
-      return p->value;
-  }
-  return make_error_code(YamlReaderError::illegal_value);
-}
-
-ErrorOr<std::string>
-CoreLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
-  for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
-    if (kind == p->value)
-      return std::string(p->string);
-  }
-  return make_error_code(YamlReaderError::illegal_value);
-}

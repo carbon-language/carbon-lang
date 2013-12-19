@@ -37,6 +37,8 @@ class PPCTargetHandler LLVM_FINAL
 public:
   PPCTargetHandler(PPCLinkingContext &targetInfo);
 
+  virtual void registerRelocationNames(Registry &registry);
+  
   virtual TargetLayout<PPCELFType> &targetLayout() {
     return _targetLayout;
   }
@@ -46,6 +48,8 @@ public:
   }
 
 private:
+  static const Registry::KindStrings kindStrings[];
+  
   PPCTargetRelocationHandler _relocationHandler;
   TargetLayout<PPCELFType> _targetLayout;
 };

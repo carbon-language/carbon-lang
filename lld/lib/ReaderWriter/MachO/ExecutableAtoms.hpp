@@ -30,7 +30,7 @@ namespace mach_o {
 class CRuntimeFile : public SimpleFile {
 public:
     CRuntimeFile(const MachOLinkingContext &context)
-      : SimpleFile(context, "C runtime"),
+      : SimpleFile("C runtime"),
         _undefMain(*this, context.entrySymbolName()) {
       // only main executables need _main
       if (context.outputFileType() == llvm::MachO::MH_EXECUTE) {

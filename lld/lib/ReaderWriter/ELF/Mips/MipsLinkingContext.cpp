@@ -55,7 +55,7 @@ public:
 class MipsGOTPassFile : public SimpleFile {
 public:
   MipsGOTPassFile(const ELFLinkingContext &ctx)
-      : SimpleFile(ctx, "MipsGOTPassFile") {
+      : SimpleFile("MipsGOTPassFile") {
     setOrdinal(ctx.getNextOrdinalAndIncrement());
   }
 
@@ -113,7 +113,10 @@ private:
 
   /// \brief Handle a specific reference.
   void handleReference(const DefinedAtom &atom, const Reference &ref) {
-    switch (ref.kind()) {
+    if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
+      return;
+    assert(ref.kindArch() == Reference::KindArch::Mips);
+    switch (ref.kindValue()) {
     case R_MIPS_GOT16:
     case R_MIPS_CALL16:
       handleGOT(ref);
@@ -139,9 +142,9 @@ private:
       _localGotVector.push_back(ga);
     else {
       if (da)
-        ga->addReference(R_MIPS_32, 0, a, 0);
+        ga->addReferenceELF_Mips(R_MIPS_32, 0, a, 0);
       else
-        ga->addReference(R_MIPS_NONE, 0, a, 0);
+        ga->addReferenceELF_Mips(R_MIPS_NONE, 0, a, 0);
       _globalGotVector.push_back(ga);
     }
 
@@ -175,46 +178,6 @@ MipsLinkingContext::getTargetLayout() const {
 
 bool MipsLinkingContext::isLittleEndian() const {
   return Mips32ElELFType::TargetEndianness == llvm::support::little;
-}
-
-#undef LLD_CASE
-#define LLD_CASE(name) .Case(#name, llvm::ELF::name)
-
-ErrorOr<Reference::Kind>
-MipsLinkingContext::relocKindFromString(StringRef str) const {
-  int32_t ret = llvm::StringSwitch<int32_t>(str)
-    LLD_CASE(R_MIPS_NONE)
-    LLD_CASE(R_MIPS_32)
-    LLD_CASE(R_MIPS_HI16)
-    LLD_CASE(R_MIPS_LO16)
-    LLD_CASE(R_MIPS_GOT16)
-    LLD_CASE(R_MIPS_CALL16)
-    LLD_CASE(R_MIPS_JALR)
-    .Default(-1);
-
-  if (ret == -1)
-    return make_error_code(YamlReaderError::illegal_value);
-  return ret;
-}
-
-#undef LLD_CASE
-#define LLD_CASE(name)                                                         \
-  case llvm::ELF::name:                                                        \
-    return std::string(#name);
-
-ErrorOr<std::string>
-MipsLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
-  switch (kind) {
-    LLD_CASE(R_MIPS_NONE)
-    LLD_CASE(R_MIPS_32)
-    LLD_CASE(R_MIPS_HI16)
-    LLD_CASE(R_MIPS_LO16)
-    LLD_CASE(R_MIPS_GOT16)
-    LLD_CASE(R_MIPS_CALL16)
-    LLD_CASE(R_MIPS_JALR)
-  }
-
-  return make_error_code(YamlReaderError::illegal_value);
 }
 
 void MipsLinkingContext::addPasses(PassManager &pm) {

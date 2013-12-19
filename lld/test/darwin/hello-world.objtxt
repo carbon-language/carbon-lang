@@ -4,7 +4,7 @@
 # Test that hello-world can be linked into a mach-o executable
 #
 
----
+--- !atoms
 defined-atoms:
     - name:              _main
       type:              code
@@ -14,10 +14,10 @@ defined-atoms:
                            31, C0, 5D, C3 ]
       references:
       - offset:          7
-        kind:            ripRel32
+        kind:            X86_64_RELOC_SIGNED
         target:          LC1
       - offset:          12
-        kind:            branch32
+        kind:            X86_64_RELOC_BRANCH
         target:          _printf
 
     - ref-name:          LC1

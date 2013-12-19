@@ -27,8 +27,6 @@ public:
 
   // ELFLinkingContext
   virtual bool isLittleEndian() const;
-  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
-  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
   virtual void addPasses(PassManager &pm);
 };
 

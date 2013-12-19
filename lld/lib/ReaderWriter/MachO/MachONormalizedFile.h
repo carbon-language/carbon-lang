@@ -260,7 +260,7 @@ writeYaml(const NormalizedFile &file, raw_ostream &out);
 
 /// Takes in-memory normalized dylib or object and parses it into lld::File
 ErrorOr<std::unique_ptr<lld::File>> 
-normalizedToAtoms(const NormalizedFile &normalizedFile);
+normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path);
 
 /// Takes atoms and generates a normalized macho-o view.
 ErrorOr<std::unique_ptr<NormalizedFile>> 

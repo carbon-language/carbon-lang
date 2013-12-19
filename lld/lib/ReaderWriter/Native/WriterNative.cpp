@@ -155,7 +155,9 @@ private:
     for (const NativeReferenceIvarsV2 &v2 : _referencesV2) {
       NativeReferenceIvarsV1 v1;
       v1.offsetInAtom = v2.offsetInAtom;
-      v1.kind = v2.kind;
+      v1.kindNamespace = v2.kindNamespace;
+      v1.kindArch = v2.kindArch;
+      v1.kindValue = v2.kindValue;
       v1.targetIndex = (v2.targetIndex == NativeReferenceIvarsV2::noTarget) ?
           NativeReferenceIvarsV1::noTarget : v2.targetIndex;
       v1.addendIndex = this->getAddendIndex(v2.addend);
@@ -431,7 +433,9 @@ private:
     for (const Reference *ref : atom) {
       NativeReferenceIvarsV2 nref;
       nref.offsetInAtom = ref->offsetInAtom();
-      nref.kind = ref->kind();
+      nref.kindNamespace = (uint8_t)ref->kindNamespace();
+      nref.kindArch = (uint8_t)ref->kindArch();
+      nref.kindValue = ref->kindValue();
       nref.targetIndex = this->getTargetIndex(ref->target());
       nref.addend = ref->addend();
       _referencesV2.push_back(nref);

@@ -51,8 +51,11 @@ public:
 
     const Atom *ta = nullptr;
     for (const auto &r : *da) {
-      if (r->kind() == llvm::ELF::R_MIPS_32 ||
-          r->kind() == llvm::ELF::R_MIPS_NONE) {
+      if (r->kindNamespace() != lld::Reference::KindNamespace::ELF)
+        continue;
+      assert(r->kindArch() == Reference::KindArch::Mips);
+      if (r->kindValue() == llvm::ELF::R_MIPS_32 ||
+          r->kindValue() == llvm::ELF::R_MIPS_NONE) {
         ta = r->target();
         break;
       }

@@ -31,7 +31,8 @@ public:
   virtual error_code
   applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                   const lld::AtomLayout &, const Reference &) const;
-private:
+                  
+ private:
   const HexagonLinkingContext &_context;
   const HexagonTargetHandler &_targetHandler;
   const HexagonTargetLayout<HexagonELFType> &_targetLayout;

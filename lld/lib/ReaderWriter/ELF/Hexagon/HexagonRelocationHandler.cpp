@@ -219,7 +219,10 @@ error_code HexagonTargetRelocationHandler::applyRelocation(
   uint64_t targetVAddress = writer.addressOfAtom(ref.target());
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
-  switch (ref.kind()) {
+  if (ref.kindNamespace() != Reference::KindNamespace::ELF)
+    return error_code::success();
+  assert(ref.kindArch() == Reference::KindArch::Hexagon);
+  switch (ref.kindValue()) {
   case R_HEX_B22_PCREL:
     relocBNPCREL(location, relocVAddress, targetVAddress, ref.addend(), 21);
     break;
@@ -334,16 +337,10 @@ error_code HexagonTargetRelocationHandler::applyRelocation(
                    _targetHandler.getGOTSymAddr());
     break;
 
-  case lld::Reference::kindLayoutAfter:
-  case lld::Reference::kindLayoutBefore:
-  case lld::Reference::kindInGroup:
-    break;
   default : {
     std::string str;
     llvm::raw_string_ostream s(str);
-    auto name = _context.stringFromRelocKind(ref.kind());
-    s << "Unhandled relocation: " << (name ? *name : "<unknown>") << " ("
-      << ref.kind() << ")";
+    s << "Unhandled Hexagon relocation: #" << ref.kindValue();
     s.flush();
     llvm_unreachable(str.c_str());
   }
@@ -351,3 +348,5 @@ error_code HexagonTargetRelocationHandler::applyRelocation(
 
   return error_code::success();
 }
+
+ 

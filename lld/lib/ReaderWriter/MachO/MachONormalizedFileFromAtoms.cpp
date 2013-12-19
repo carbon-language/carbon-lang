@@ -436,7 +436,8 @@ void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
       if ( ref->target() != nullptr )
         targetAddress = _atomToAddress[ref->target()];
       uint64_t fixupAddress = _atomToAddress[ai.atom] + offset;
-      _context.kindHandler().applyFixup(ref->kind(), ref->addend(),
+      _context.kindHandler().applyFixup(ref->kindNamespace(), ref->kindArch(), 
+                                       ref->kindValue(), ref->addend(),
                                        &atomContent[offset], fixupAddress,
                                        targetAddress);
     }
@@ -578,7 +579,7 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
 
 const Atom *Util::targetOfLazyPointer(const DefinedAtom *lpAtom) {
   for (const Reference *ref : *lpAtom) {
-    if (_context.kindHandler().isLazyTarget(ref->kind())) {
+    if (_context.kindHandler().isLazyTarget(*ref)) {
       return ref->target();
     }
   }
@@ -736,7 +737,7 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
         uint64_t segmentOffset = _atomToAddress[atom] + ref->offsetInAtom() 
                                 - segmentStartAddr;
         const Atom* targ = ref->target();
-        if (_context.kindHandler().isPointer(ref->kind())) {
+        if (_context.kindHandler().isPointer(*ref)) {
           // A pointer to a DefinedAtom requires rebasing.
           if (dyn_cast<DefinedAtom>(targ)) {
             RebaseLocation rebase;
@@ -758,7 +759,7 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
             nFile.bindingInfo.push_back(bind);
           }
         }
-        if (_context.kindHandler().isLazyTarget(ref->kind())) {
+        if (_context.kindHandler().isLazyTarget(*ref)) {
             BindLocation bind;
             bind.segIndex = segmentIndex;
             bind.segOffset = segmentOffset;

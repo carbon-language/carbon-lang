@@ -41,8 +41,8 @@ public:
     return true;
   }
 
-  virtual bool isCallSite(int32_t kind) {
-    return _kindHandler.isCallSite(kind);
+  virtual bool isCallSite(const Reference &ref) {
+    return _kindHandler.isCallSite(ref);
   }
 
   virtual const DefinedAtom* getStub(const Atom& target) {
@@ -150,10 +150,10 @@ private:
   class File : public SimpleFile {
   public:
     File(const MachOLinkingContext &context)
-        : SimpleFile(context, "MachO Stubs pass") {}
+        : SimpleFile("MachO Stubs pass") {}
   };
 
-  const MachOLinkingContext                       &_context;
+  const MachOLinkingContext                      &_context;
   mach_o::KindHandler                            &_kindHandler;
   File                                            _file;
   llvm::DenseMap<const Atom*, const DefinedAtom*> _targetToStub;

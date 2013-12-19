@@ -18,6 +18,7 @@
 #define LLD_DRIVER_DARWIN_INPUT_GRAPH_H
 
 #include "lld/Core/InputGraph.h"
+#include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 
 #include <map>
@@ -48,11 +49,24 @@ public:
     if (ctx.logInputFiles())
       diagnostics << *filePath << "\n";
 
-    if (filePath->endswith(".objtxt"))
-      return ctx.getYAMLReader().parseFile(_buffer, _files);
-
-    (void) (_isWholeArchive);
-    return error_code::success();
+    if (_isWholeArchive) {
+      std::vector<std::unique_ptr<File>> parsedFiles;
+      error_code ec = ctx.registry().parseFile(_buffer, parsedFiles);
+      if (ec)
+        return ec;
+      assert(parsedFiles.size() == 1);
+      std::unique_ptr<File> f(parsedFiles[0].release());
+      if (auto archive = reinterpret_cast<const ArchiveLibraryFile*>(f.get())) {
+        // FIXME: something needs to own archive File
+        //_files.push_back(std::move(archive));
+        return archive->parseAllMembers(_files);
+      } else {
+        // if --whole-archive is around non-archive, just use it as normal.
+        _files.push_back(std::move(f));
+        return error_code::success();
+      }
+    }
+    return ctx.registry().parseFile(_buffer, _files);
   }
 
   /// \brief Return the file that has to be processed by the resolver

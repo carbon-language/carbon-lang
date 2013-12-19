@@ -26,14 +26,13 @@ public:
       : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
                                       new HexagonTargetHandler(*this))) {}
 
-  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
-  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
-
   virtual void addPasses(PassManager &);
 
   virtual bool isDynamicRelocation(const DefinedAtom &,
                                    const Reference &r) const {
-    switch (r.kind()) {
+    if (r.kindNamespace() != Reference::KindNamespace::ELF)
+      return false;
+    switch (r.kindValue()) {
     case llvm::ELF::R_HEX_RELATIVE:
     case llvm::ELF::R_HEX_GLOB_DAT:
       return true;
@@ -43,7 +42,9 @@ public:
   }
 
   virtual bool isPLTRelocation(const DefinedAtom &, const Reference &r) const {
-    switch (r.kind()) {
+    if (r.kindNamespace() != Reference::KindNamespace::ELF)
+      return false;
+    switch (r.kindValue()) {
     case llvm::ELF::R_HEX_JMP_SLOT:
       return true;
     default:
@@ -54,7 +55,9 @@ public:
   /// \brief Hexagon has only one relative relocation
   /// a) for supporting relative relocs - R_HEX_RELATIVE
   virtual bool isRelativeReloc(const Reference &r) const {
-    switch (r.kind()) {
+    if (r.kindNamespace() != Reference::KindNamespace::ELF)
+      return false;
+    switch (r.kindValue()) {
     case llvm::ELF::R_HEX_RELATIVE:
       return true;
     default:

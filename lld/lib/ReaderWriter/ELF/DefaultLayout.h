@@ -331,7 +331,7 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
   switch (contentType) {
   case DefinedAtom::typeResolver:
   case DefinedAtom::typeCode:
-    return llvm::StringSwitch<Reference::Kind>(name)
+    return llvm::StringSwitch<Layout::SectionOrder>(name)
       .StartsWith(".eh_frame_hdr", ORDER_EH_FRAMEHDR)
       .StartsWith(".eh_frame", ORDER_EH_FRAME)
       .StartsWith(".init", ORDER_INIT)
@@ -344,7 +344,7 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
 
   case DefinedAtom::typeData:
   case DefinedAtom::typeDataFast:
-    return llvm::StringSwitch<Reference::Kind>(name)
+    return llvm::StringSwitch<Layout::SectionOrder>(name)
         .StartsWith(".init_array", ORDER_INIT_ARRAY)
         .StartsWith(".fini_array", ORDER_FINI_ARRAY)
         .Default(ORDER_DATA);
@@ -354,7 +354,7 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
     return ORDER_BSS;
 
   case DefinedAtom::typeGOT:
-    return llvm::StringSwitch<Reference::Kind>(name)
+    return llvm::StringSwitch<Layout::SectionOrder>(name)
       .StartsWith(".got.plt", ORDER_GOT_PLT)
       .Default(ORDER_GOT);
 

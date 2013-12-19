@@ -110,6 +110,16 @@ bool GnuLdDriver::linkELF(int argc, const char *argv[],
   if (!options)
     return true;
 
+  // Register possible input file parsers.
+  options->registry().addSupportELFObjects(options->mergeCommonStrings(), 
+                                           options->targetHandler());
+  options->registry().addSupportArchives(options->logInputFiles());
+  options->registry().addSupportYamlFiles();
+  options->registry().addSupportNativeObjects();
+  if (options->allowLinkWithDynamicLibraries())
+    options->registry().addSupportELFDynamicSharedObjects(
+                                                options->useShlibUndefines());
+
   return link(*options, diagnostics);
 }
 
@@ -326,6 +336,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         }
         resolvedInputPath = resolvedPath->str();
       }
+      // FIXME: Calling getFileMagic() is expensive.  It would be better to
+      // wire up the LdScript parser into the registry.
       llvm::sys::fs::file_magic magic = llvm::sys::fs::file_magic::unknown;
       error_code ec = getFileMagic(*ctx, resolvedInputPath, magic);
       if (ec) {
@@ -336,7 +348,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       if ((!userPath.endswith(".objtxt")) &&
           (magic == llvm::sys::fs::file_magic::unknown))
         isELFFileNode = false;
-
       FileNode *inputNode = nullptr;
       if (isELFFileNode)
         inputNode = new ELFFileNode(*ctx, userPath, index++, isWholeArchive,

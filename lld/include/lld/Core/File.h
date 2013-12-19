@@ -155,8 +155,6 @@ public:
   /// all AbsoluteAtoms in this File.
   virtual const atom_collection<AbsoluteAtom> &absolute() const = 0;
 
-  virtual const LinkingContext &getLinkingContext() const = 0;
-
 protected:
   /// \brief only subclasses of File can be instantiated
   File(StringRef p, Kind kind) : _path(p), _kind(kind), _ordinal(UINT64_MAX) {}
@@ -234,15 +232,10 @@ public:
   typedef range<std::vector<const DefinedAtom *>::iterator> DefinedAtomRange;
   virtual DefinedAtomRange definedAtoms() = 0;
 
-  virtual const LinkingContext &getLinkingContext() const { return _context; }
-
 protected:
   /// \brief only subclasses of MutableFile can be instantiated
-  MutableFile(const LinkingContext &ctx, StringRef p)
-      : File(p, kindObject), _context(ctx) {}
-
-private:
-  const LinkingContext &_context;
+  MutableFile(StringRef p)
+      : File(p, kindObject){}
 };
 } // end namespace lld
 

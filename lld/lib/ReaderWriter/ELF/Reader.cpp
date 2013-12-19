@@ -19,13 +19,14 @@
 #include "CreateELF.h"
 #include "DynamicFile.h"
 #include "File.h"
+#include "X86/X86TargetHandler.h"
+#include "X86_64/X86_64TargetHandler.h"
+#include "Hexagon/HexagonTargetHandler.h"
 
 #include "lld/Core/Reference.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-#include "lld/ReaderWriter/FileArchive.h"
+#include "lld/ReaderWriter/Reader.h"
 
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Object/ObjectFile.h"
@@ -48,14 +49,16 @@
 using llvm::support::endianness;
 using namespace llvm::object;
 
+namespace lld {
 namespace {
+
 struct DynamicFileCreateELFTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
 
   template <class ELFT>
-  static result_type create(const lld::ELFLinkingContext &ctx,
-                            std::unique_ptr<llvm::MemoryBuffer> mb) {
-    return lld::elf::DynamicFile<ELFT>::create(ctx, std::move(mb));
+  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb, 
+                                                            bool useUndefines) {
+    return lld::elf::DynamicFile<ELFT>::create(std::move(mb), useUndefines);
   }
 };
 
@@ -63,74 +66,89 @@ struct ELFFileCreateELFTraits {
   typedef std::unique_ptr<lld::File> result_type;
 
   template <class ELFT>
-  static result_type create(const lld::ELFLinkingContext &ctx,
-                            std::unique_ptr<llvm::MemoryBuffer> mb,
+  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
+                            bool atomizeStrings,
+                            TargetHandlerBase *handler,
                             lld::error_code &ec) {
     return std::unique_ptr<lld::File>(
-        new lld::elf::ELFFile<ELFT>(ctx, std::move(mb), ec));
+        new lld::elf::ELFFile<ELFT>(std::move(mb), atomizeStrings, handler,ec));
   }
 };
-}
 
-namespace lld {
-namespace elf {
-/// \brief A reader object that will instantiate correct File by examining the
-/// memory buffer for ELF class and bit width
-class ELFReader : public Reader {
+class ELFObjectReader : public Reader {
 public:
-  ELFReader(const ELFLinkingContext &ctx)
-      : lld::Reader(ctx), _elfLinkingContext(ctx) {}
+  ELFObjectReader(bool atomizeStrings, TargetHandlerBase* handler) 
+    : _atomizeStrings(atomizeStrings), _handler(handler) { }
 
-  error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                       std::vector<std::unique_ptr<File> > &result) const {
-    using llvm::object::ELFType;
-    llvm::sys::fs::file_magic FileType =
-        llvm::sys::fs::identify_magic(mb->getBuffer());
-
-    std::size_t MaxAlignment =
-        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-
+  virtual bool canParse(file_magic magic, StringRef,const MemoryBuffer&) const {
+    return (magic == llvm::sys::fs::file_magic::elf_relocatable);
+  }
+  
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
+            std::vector<std::unique_ptr<File>> &result) const {
     error_code ec;
-    switch (FileType) {
-    case llvm::sys::fs::file_magic::elf_relocatable: {
-      std::unique_ptr<File> f(createELF<ELFFileCreateELFTraits>(
-          getElfArchType(&*mb), MaxAlignment, _elfLinkingContext, std::move(mb),
-          ec));
-      if (ec)
-        return ec;
-      result.push_back(std::move(f));
-      break;
-    }
-    case llvm::sys::fs::file_magic::elf_shared_object: {
-      // If the link doesn't allow dynamic libraries to be present during the
-      // link, let's not parse the file and just return
-      if (!_elfLinkingContext.allowLinkWithDynamicLibraries())
-        return llvm::make_error_code(llvm::errc::executable_format_error);
-      auto f = createELF<DynamicFileCreateELFTraits>(
-          getElfArchType(&*mb), MaxAlignment, _elfLinkingContext,
-          std::move(mb));
-      if (!f)
-        return f;
-      result.push_back(std::move(*f));
-      break;
-    }
-    default:
-      return llvm::make_error_code(llvm::errc::executable_format_error);
-      break;
-    }
-
+    std::size_t maxAlignment =
+              1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
+    std::unique_ptr<File> f(createELF<ELFFileCreateELFTraits>(
+                       getElfArchType(&*mb), maxAlignment, std::move(mb), 
+                       _atomizeStrings, _handler, ec));
     if (ec)
       return ec;
-
+    result.push_back(std::move(f));
     return error_code::success();
   }
-
 private:
-  const ELFLinkingContext &_elfLinkingContext;
+  bool               _atomizeStrings;
+  TargetHandlerBase *_handler;
 };
-} // end namespace elf
 
-std::unique_ptr<Reader> createReaderELF(const ELFLinkingContext &context) {
-  return std::unique_ptr<Reader>(new elf::ELFReader(context));
+
+class ELFDSOReader : public Reader {
+public:
+  ELFDSOReader(bool useUndefines) : _useUndefines(useUndefines) { }
+
+  virtual bool canParse(file_magic magic, StringRef, const MemoryBuffer&) const{
+    return (magic == llvm::sys::fs::file_magic::elf_shared_object);
+  }
+  
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
+            std::vector<std::unique_ptr<File>> &result) const {
+    std::size_t maxAlignment =
+              1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
+    auto f = createELF<DynamicFileCreateELFTraits>( 
+                                            getElfArchType(&*mb), maxAlignment, 
+                                            std::move(mb), _useUndefines);
+    if (!f)
+      return f;   
+    result.push_back(std::move(*f));
+    return error_code::success();
+  }
+private:
+  bool _useUndefines;
+};
+
+} // anonymous
+
+
+// This dynamic registration of a handler causes support for all ELF 
+// architectures to be pulled into the linker.  If we want to support making a 
+// linker that only supports one ELF architecture, we'd need to change this
+// to have a different registration method for each architecture.
+void Registry::addSupportELFObjects(bool atomizeStrings, 
+                                                 TargetHandlerBase *handler) {
+
+  // Tell registry about the ELF object file parser.
+  add(std::unique_ptr<Reader>(new ELFObjectReader(atomizeStrings, handler)));
+  
+  // Tell registry about the relocation name to number mapping for this arch.
+  handler->registerRelocationNames(*this);
 }
+
+void Registry::addSupportELFDynamicSharedObjects(bool useShlibUndefines) {
+  add(std::unique_ptr<Reader>(new ELFDSOReader(useShlibUndefines)));
+}
+
+
 } // end namespace lld

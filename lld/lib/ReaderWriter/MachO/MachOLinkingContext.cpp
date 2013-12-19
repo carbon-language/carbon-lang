@@ -16,7 +16,6 @@
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 #include "lld/Passes/LayoutPass.h"
-#include "lld/Passes/RoundTripNativePass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
 
 #include "llvm/ADT/StringExtras.h"
@@ -92,6 +91,15 @@ MachOLinkingContext::archFromName(StringRef archName) {
   }
   return arch_unknown;
 }
+
+StringRef MachOLinkingContext::nameFromArch(Arch arch) {
+  for (ArchInfo *info = _s_archInfos; !info->archName.empty(); ++info) {
+    if (info->arch == arch)
+      return info->archName;
+  }
+  return "<unknown>";
+}
+
 
 uint32_t MachOLinkingContext::cpuTypeFromArch(Arch arch) {
   assert(arch != arch_unknown);
@@ -293,14 +301,5 @@ KindHandler &MachOLinkingContext::kindHandler() const {
   return *_kindHandler;
 }
 
-ErrorOr<Reference::Kind>
-MachOLinkingContext::relocKindFromString(StringRef str) const {
-  return kindHandler().stringToKind(str);
-}
-
-ErrorOr<std::string>
-MachOLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
-  return std::string(kindHandler().kindToString(kind));
-}
 
 } // end namespace lld

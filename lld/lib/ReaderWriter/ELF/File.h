@@ -14,8 +14,8 @@
 
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
+
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-#include "lld/ReaderWriter/FileArchive.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"
@@ -118,47 +118,66 @@ template <class ELFT> class ELFFile : public File {
   typedef typename MergedSectionMapT::iterator MergedSectionMapIterT;
 
 public:
-  ELFFile(const ELFLinkingContext &context, StringRef name)
-      : File(name, kindObject), _elfLinkingContext(context) {}
+  ELFFile(StringRef name)
+      : File(name, kindObject), _ordinal(0), 
+          _doStringsMerge(false), _targetHandler(nullptr) {}
 
-  ELFFile(const ELFLinkingContext &context,
-          std::unique_ptr<MemoryBuffer> MB, error_code &EC)
-      : File(MB->getBufferIdentifier(), kindObject),
-        _elfLinkingContext(context), _ordinal(0), _doStringsMerge(false) {
-    _objFile.reset(new llvm::object::ELFFile<ELFT>(MB.release(), EC));
+  ELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
+          TargetHandlerBase *handler, error_code &ec)
+      : File(mb->getBufferIdentifier(), kindObject),
+        _ordinal(0), _doStringsMerge(atomizeStrings), 
+        _targetHandler(reinterpret_cast<TargetHandler<ELFT>*>(handler)) {
+    _objFile.reset(new llvm::object::ELFFile<ELFT>(mb.release(), ec));
 
-    if (EC)
+    if (ec)
       return;
-
-    _doStringsMerge = _elfLinkingContext.mergeCommonStrings();
 
     // Read input sections from the input file that need to be converted to
     // atoms
     if (auto err = createAtomizableSections()) {
-      EC = err;
+      ec = err;
       return;
     }
 
     // For mergeable strings, we would need to split the section into various
     // atoms
     if (auto err = createMergeableAtoms()) {
-      EC = err;
+      ec = err;
       return;
     }
 
     // Create the necessary symbols that are part of the section that we
     // created in createAtomizableSections function
     if (auto err = createSymbolsFromAtomizableSections()) {
-      EC = err;
+      ec = err;
       return;
     }
 
     // Create the appropriate atoms from the file
     if (auto err = createAtoms()) {
-      EC = err;
+      ec = err;
       return;
     }
   }
+
+  Reference::KindArch kindArch() {
+    switch (_objFile->getHeader()->e_machine) {
+      case llvm::ELF::EM_X86_64:
+        return Reference::KindArch::x86_64;
+      case llvm::ELF::EM_386:
+        return Reference::KindArch::x86;
+      case llvm::ELF::EM_ARM:
+        return Reference::KindArch::ARM;
+      case llvm::ELF::EM_PPC:
+        return Reference::KindArch::PowerPC;
+      case llvm::ELF::EM_HEXAGON:
+        return Reference::KindArch::Hexagon;
+      case llvm::ELF::EM_MIPS:
+        return Reference::KindArch::Mips;
+    }
+    llvm_unreachable("unsupported e_machine value");
+  }
+
 
   /// \brief Read input sections and populate necessary data structures
   /// to read them later and create atoms
@@ -446,7 +465,7 @@ public:
         // If the atom was a weak symbol, let's create a followon reference to
         // the anonymous atom that we created.
         if (anonAtom)
-          createEdge(newAtom, anonAtom, lld::Reference::kindLayoutAfter);
+          createEdge(newAtom, anonAtom, Reference::kindLayoutAfter);
 
         if (previousAtom) {
           // Set the followon atom to the weak atom that we have created, so
@@ -491,8 +510,8 @@ public:
     return _absoluteAtoms;
   }
 
-  virtual const ELFLinkingContext &getLinkingContext() const {
-    return _elfLinkingContext;
+  TargetHandler<ELFT> *targetHandler() const {
+    return _targetHandler;
   }
 
   Atom *findAtom(const Elf_Sym *symbol) {
@@ -516,11 +535,10 @@ private:
             symbol->st_value + content.size() <= rai.r_offset)
           continue;
         bool isMips64EL = _objFile->isMips64EL();
-        Reference::Kind kind = (Reference::Kind) rai.getType(isMips64EL);
         uint32_t symbolIndex = rai.getSymbol(isMips64EL);
         auto *ERef = new (_readerStorage)
             ELFReference<ELFT>(&rai, rai.r_offset - symbol->st_value,
-                               kind, symbolIndex);
+                              kindArch(), rai.getType(isMips64EL), symbolIndex);
         _references.push_back(ERef);
       }
     }
@@ -533,11 +551,10 @@ private:
             symbol->st_value + content.size() <= ri.r_offset)
           continue;
         bool isMips64EL = _objFile->isMips64EL();
-        Reference::Kind kind = (Reference::Kind) ri.getType(isMips64EL);
         uint32_t symbolIndex = ri.getSymbol(isMips64EL);
         auto *ERef = new (_readerStorage)
             ELFReference<ELFT>(&ri, ri.r_offset - symbol->st_value,
-                               kind, symbolIndex);
+                               kindArch(), ri.getType(isMips64EL), symbolIndex);
         // Read the addend from the section contents
         // TODO : We should move the way lld reads relocations totally from
         // ELFFile
@@ -557,12 +574,12 @@ private:
   /// Reference's target with the Atom pointer it refers to.
   void updateReferences() {
     /// cached value of target relocation handler
-    const TargetRelocationHandler<ELFT> &_targetRelocationHandler =
-        _elfLinkingContext.template getTargetHandler<ELFT>()
-            .getRelocationHandler();
+    assert(_targetHandler);
+    const TargetRelocationHandler<ELFT> &targetRelocationHandler =
+                                        _targetHandler->getRelocationHandler();
 
     for (auto &ri : _references) {
-      if (ri->kind() >= lld::Reference::kindTargetLow) {
+      if (ri->kindNamespace() == lld::Reference::KindNamespace::ELF) {
         const Elf_Sym *symbol = _objFile->getSymbol(ri->targetSymbolIndex());
         const Elf_Shdr *shdr = _objFile->getSection(symbol);
 
@@ -576,7 +593,7 @@ private:
         // If the target atom is mergeable string atom, the atom might have been
         // merged with other atom having the same contents. Try to find the
         // merged one if that's the case.
-        int64_t relocAddend = _targetRelocationHandler.relocAddend(*ri);
+        int64_t relocAddend = targetRelocationHandler.relocAddend(*ri);
         uint64_t addend = ri->addend() + relocAddend;
         const MergeSectionKey ms(shdr, addend);
         auto msec = _mergedSectionMap.find(ms);
@@ -671,11 +688,9 @@ private:
     // whether an architecture dependent section is for common symbols or
     // not. Let the TargetHandler to make a decision if that's the case.
     if (isTargetSpecificAtom(nullptr, symbol)) {
-      TargetHandler<ELFT> &targetHandler =
-          _elfLinkingContext.template getTargetHandler<ELFT>();
-      TargetAtomHandler<ELFT> &targetAtomHandler =
-          targetHandler.targetAtomHandler();
-      return targetAtomHandler.getType(symbol) == llvm::ELF::STT_COMMON;
+      assert(_targetHandler);
+      TargetAtomHandler<ELFT> &atomHandler = _targetHandler->targetAtomHandler();
+      return atomHandler.getType(symbol) == llvm::ELF::STT_COMMON;
     }
     return symbol->getType() == llvm::ELF::STT_COMMON ||
         symbol->st_shndx == llvm::ELF::SHN_COMMON;
@@ -692,8 +707,8 @@ private:
   }
 
   void createEdge(ELFDefinedAtom<ELFT> *from, ELFDefinedAtom<ELFT> *to,
-                  lld::Reference::Kind kind) {
-    auto reference = new (_readerStorage) ELFReference<ELFT>(kind);
+                  uint32_t edgeKind) {
+    auto reference = new (_readerStorage) ELFReference<ELFT>(edgeKind);
     reference->setTarget(to);
     from->addReference(reference);
   }
@@ -721,7 +736,6 @@ private:
   _relocationReferences;
   std::vector<ELFReference<ELFT> *> _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
-  const ELFLinkingContext &_elfLinkingContext;
 
   /// \brief Atoms that are created for a section that has the merge property
   /// set
@@ -738,6 +752,7 @@ private:
 
   /// \brief the cached options relevant while reading the ELF File
   bool _doStringsMerge;
+  TargetHandler<ELFT> *_targetHandler;
 };
 
 /// \brief All atoms are owned by a File. To add linker specific atoms
@@ -749,7 +764,7 @@ template <class ELFT> class CRuntimeFile : public ELFFile<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
   CRuntimeFile(const ELFLinkingContext &context, StringRef name = "C runtime")
-      : ELFFile<ELFT>(context, name) {}
+      : ELFFile<ELFT>(name) {}
 
   /// \brief add a global absolute atom
   virtual Atom *addAbsoluteAtom(StringRef symbolName) {

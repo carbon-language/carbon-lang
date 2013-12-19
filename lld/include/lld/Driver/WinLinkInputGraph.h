@@ -19,7 +19,6 @@
 
 #include "lld/Core/InputGraph.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
-#include "lld/ReaderWriter/FileArchive.h"
 
 #include <map>
 

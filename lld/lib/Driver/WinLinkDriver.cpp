@@ -645,6 +645,14 @@ bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
     if (!createManifest(context, diagnostics))
       return false;
 
+  // Register possible input file parsers.
+  context.registry().addSupportCOFFObjects(context);
+  context.registry().addSupportCOFFImportLibraries();
+  context.registry().addSupportWindowsResourceFiles();
+  context.registry().addSupportArchives(context.logInputFiles());
+  context.registry().addSupportNativeObjects();
+  context.registry().addSupportYamlFiles();
+
   return link(context, diagnostics);
 }
 

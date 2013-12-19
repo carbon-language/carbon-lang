@@ -29,7 +29,7 @@ public:
     return true;
   }
 
-  virtual bool isGOTAccess(int32_t, bool& canBypassGOT) {
+  virtual bool isGOTAccess(const Reference&, bool& canBypassGOT) {
     return false;
   }
 

@@ -59,8 +59,10 @@ public:
   createDynamicSymbolTable();
   virtual bool createImplicitFiles(std::vector<std::unique_ptr<File>> &result);
   virtual void finalizeSymbolValues();
+  virtual void registerRelocationNames(Registry &registry);
 
 private:
+  static const Registry::KindStrings kindStrings[];
   llvm::BumpPtrAllocator _alloc;
   MipsTargetLayout<Mips32ElELFType> _targetLayout;
   MipsTargetRelocationHandler _relocationHandler;

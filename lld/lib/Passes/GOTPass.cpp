@@ -75,7 +75,7 @@ void GOTPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
     for (const Reference *ref : *atom) {
       // Look at instructions accessing the GOT.
       bool canBypassGOT;
-      if (!isGOTAccess(ref->kind(), canBypassGOT))
+      if (!isGOTAccess(*ref, canBypassGOT))
         continue;
       const Atom *target = ref->target();
       assert(target != nullptr);

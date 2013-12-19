@@ -17,10 +17,10 @@
 #ifndef LLD_DRIVER_GNU_LD_INPUT_GRAPH_H
 #define LLD_DRIVER_GNU_LD_INPUT_GRAPH_H
 
+#include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/InputGraph.h"
 #include "lld/Core/Resolver.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-#include "lld/ReaderWriter/FileArchive.h"
 #include "lld/ReaderWriter/LinkerScript.h"
 
 namespace lld {
@@ -91,7 +91,7 @@ private:
   bool _isWholeArchive;
   bool _asNeeded;
   bool _isDashlPrefix;
-  std::unique_ptr<FileArchive> _archiveFile;
+  std::unique_ptr<const ArchiveLibraryFile> _archiveFile;
 };
 
 /// \brief Represents a ELF control node

@@ -21,7 +21,7 @@ namespace pecoff {
 class LinkerGeneratedSymbolFile : public SimpleFile {
 public:
   LinkerGeneratedSymbolFile(const PECOFFLinkingContext &ctx)
-      : SimpleFile(ctx, "<linker-internal-file>"),
+      : SimpleFile("<linker-internal-file>"),
         _imageBaseAtom(*this, ctx.decorateSymbol("__ImageBase"),
                        Atom::scopeGlobal, ctx.getBaseAddress()) {
     addAtom(_imageBaseAtom);

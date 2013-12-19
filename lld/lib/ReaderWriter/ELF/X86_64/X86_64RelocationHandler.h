@@ -30,6 +30,8 @@ public:
 
   virtual int64_t relocAddend(const Reference &) const;
 
+  static const Registry::KindStrings kindStrings[];
+
 private:
   // Cached size of the TLS segment.
   mutable uint64_t _tlsSize;

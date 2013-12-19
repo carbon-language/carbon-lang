@@ -36,8 +36,8 @@ class SharedLibraryFile;
 ///
 /// The base class LinkingContext contains the options needed by core linking.
 /// Subclasses of LinkingContext have additional options needed by specific
-/// Readers and Writers. For example, ELFLinkingContext has methods that
-/// supplies options to the ELF Reader and Writer.
+/// Writers. For example, ELFLinkingContext has methods that supplies
+/// options to the ELF Writer and ELF Passes.
 class LinkingContext {
 public:
   /// \brief The types of output file that the linker creates.
@@ -277,14 +277,9 @@ public:
   /// Returns the output file type that that the linker needs to create.
   OutputFileType outputFileType() const { return _outputFileType; }
 
-  /// Returns the YAML reader.
-  virtual Reader &getYAMLReader() const { return *_yamlReader; }
-
-  /// Returns the LLD Native file format reader.
-  virtual Reader &getNativeReader() const { return *_nativeReader; }
-
-  /// Return the default reader for the target.
-  virtual Reader &getDefaultReader() const = 0;
+  /// Accessor for Register object embedded in LinkingContext.
+  const Registry &registry() const { return _registry; }
+  Registry &registry() { return _registry; }
 
   /// This method is called by core linking to give the Writer a chance
   /// to add file format specific "files" to set of files to be linked. This is
@@ -317,23 +312,9 @@ public:
 
   /// Return the next ordinal and Increment it.
   virtual uint64_t getNextOrdinalAndIncrement() const { return _nextOrdinal++; }
-
+  
   /// @}
-
-  /// \name Methods needed by YAML I/O and error messages to convert Kind values
-  /// to and from strings.
-  /// @{
-
-  /// Abstract method to parse a kind name string into an integral
-  /// Reference::Kind
-  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const = 0;
-
-  /// Abstract method to return the name for a given integral
-  /// Reference::Kind.
-  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind k) const = 0;
-
-  /// @}
-
+  
 protected:
   LinkingContext(); // Must be subclassed
 
@@ -361,18 +342,18 @@ protected:
   OutputFileType _outputFileType;
   std::vector<StringRef> _deadStripRoots;
   std::vector<const char *> _llvmOptions;
-  std::unique_ptr<Reader> _yamlReader;
-  std::unique_ptr<Reader> _nativeReader;
   StringRefVector _initialUndefinedSymbols;
   std::unique_ptr<InputGraph> _inputGraph;
   mutable llvm::BumpPtrAllocator _allocator;
   InputElement *_currentInputElement;
   mutable uint64_t _nextOrdinal;
+  Registry  _registry;
 
 private:
   /// Validate the subclass bits. Only called by validate.
   virtual bool validateImpl(raw_ostream &diagnostics) = 0;
 };
+
 } // end namespace lld
 
 #endif

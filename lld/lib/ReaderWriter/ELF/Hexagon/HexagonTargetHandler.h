@@ -150,6 +150,8 @@ class HexagonTargetHandler LLVM_FINAL :
 public:
   HexagonTargetHandler(HexagonLinkingContext &targetInfo);
 
+  virtual void registerRelocationNames(Registry &registry);
+
   bool doesOverrideELFHeader() { return true; }
 
   void setELFHeader(ELFHeader<HexagonELFType> *elfHeader) {
@@ -215,6 +217,8 @@ public:
   }
 
 private:
+  static const Registry::KindStrings kindStrings[];
+
   HexagonTargetLayout<HexagonELFType> _targetLayout;
   HexagonTargetRelocationHandler _relocationHandler;
   HexagonTargetAtomHandler<HexagonELFType> _targetAtomHandler;

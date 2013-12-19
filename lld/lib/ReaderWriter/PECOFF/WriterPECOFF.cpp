@@ -72,7 +72,7 @@ public:
   };
 
   explicit Chunk(Kind kind) : _kind(kind), _size(0) {}
-  virtual ~Chunk() {};
+  virtual ~Chunk() {}
   virtual void write(uint8_t *buffer) = 0;
   virtual uint64_t size() const { return _size; }
   virtual uint64_t align() const { return 1; }
@@ -106,7 +106,7 @@ public:
       : HeaderChunk(), _context(ctx) {
     // Minimum size of DOS stub is 64 bytes. The next block (PE header) needs to
     // be aligned on 8 byte boundary.
-    size_t size = std::max(_context.getDosStub().size(), (size_t)64);
+    size_t size = std::max(_context.getDosStub().size(), (size_t) 64);
     _size = llvm::RoundUpToAlignment(size, 8);
   }
 
@@ -303,8 +303,8 @@ private:
 
   // Create the content of a relocation block.
   std::vector<uint8_t>
-  createBaseRelocBlock(uint64_t pageAddr,
-                       const std::vector<uint16_t> &offsets) const;
+      createBaseRelocBlock(uint64_t pageAddr,
+                           const std::vector<uint16_t> &offsets) const;
 
   std::vector<uint8_t> _contents;
 };
@@ -454,10 +454,9 @@ void AtomChunk::applyRelocations(uint8_t *buffer,
   for (const auto *layout : _atomLayouts) {
     const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
     for (const Reference *ref : *atom) {
-      // Skip if this reference is not for relocation.
-      if (ref->kind() < lld::Reference::kindTargetLow)
+      // Skip if this reference is not for COFF relocation.
+      if (ref->kindNamespace() != Reference::KindNamespace::COFF)
         continue;
-
       auto relocSite32 = reinterpret_cast<ulittle32_t *>(
           buffer + layout->_fileOffset + ref->offsetInAtom());
       auto relocSite16 = reinterpret_cast<ulittle16_t *>(relocSite32);
@@ -465,8 +464,7 @@ void AtomChunk::applyRelocations(uint8_t *buffer,
       // Also account for whatever offset is already stored at the relocation
       // site.
       targetAddr += *relocSite32;
-
-      switch (ref->kind()) {
+      switch (ref->kindValue()) {
       case llvm::COFF::IMAGE_REL_I386_ABSOLUTE:
         // This relocation is no-op.
         break;
@@ -539,7 +537,8 @@ void AtomChunk::addBaseRelocations(std::vector<uint64_t> &relocSites) const {
   for (const auto *layout : _atomLayouts) {
     const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
     for (const Reference *ref : *atom)
-      if (ref->kind() == llvm::COFF::IMAGE_REL_I386_DIR32)
+      if ((ref->kindNamespace() == Reference::KindNamespace::COFF) &&
+          (ref->kindValue() == llvm::COFF::IMAGE_REL_I386_DIR32))
         relocSites.push_back(layout->_virtualAddr + ref->offsetInAtom());
   }
 }
@@ -753,7 +752,7 @@ private:
   void setImageSizeOnDisk();
   void setAddressOfEntryPoint(AtomChunk *text, PEHeaderChunk *peHeader);
   uint64_t
-  calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) const;
+      calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) const;
 
   uint64_t calcSizeOfInitializedData() const {
     return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA);

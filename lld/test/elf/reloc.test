@@ -1,4 +1,4 @@
-RUN: lld -flavor gnu -target x86_64 --merge-strings -r --output-filetype=yaml \
+RUN: lld -flavor gnu -target i386 --merge-strings -r --output-filetype=yaml \
 RUN:   %p/Inputs/reloc-test.elf-i386 | FileCheck %s -check-prefix ELF-i386
 
 ELF-i386: defined-atoms:   
@@ -23,10 +23,10 @@ ELF-i386:     alignment:       2^4
 ELF-i386:     section-choice:  custom-required
 ELF-i386:     section-name:    .text.startup
 ELF-i386:     references:      
-ELF-i386:       - kind:            R_X86_64_64
+ELF-i386:       - kind:            R_386_32
 ELF-i386:         offset:          12
 ELF-i386:         target:          [[STRNAMEA]]
-ELF-i386:       - kind:            R_X86_64_PC32
+ELF-i386:       - kind:            R_386_PC32
 ELF-i386:         offset:          17
 ELF-i386:         target:          puts
 ELF-i386:         addend:          252

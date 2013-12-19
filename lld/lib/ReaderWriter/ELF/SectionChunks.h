@@ -31,13 +31,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
 
-static LLVM_ATTRIBUTE_UNUSED std::string
-kindOrUnknown(llvm::ErrorOr<std::string> k) {
-  if (k)
-    return *k;
-  return "<unknown>";
-}
-
 namespace lld {
 namespace elf {
 template <class> class MergedSections;
@@ -49,7 +42,7 @@ template <class ELFT> class Section : public Chunk<ELFT> {
 public:
   Section(const ELFLinkingContext &context, StringRef name,
           typename Chunk<ELFT>::Kind k = Chunk<ELFT>::Kind::ELFSection)
-      : Chunk<ELFT>(name, k, context), _parent(nullptr), _flags(0), _entSize(0),
+      : Chunk<ELFT>(name, k, context), _parent(nullptr), _flags(0), _entSize(0), 
         _type(0), _link(0), _info(0), _segmentType(SHT_NULL) {}
 
   /// \brief Modify the section contents before assigning virtual addresses
@@ -959,7 +952,7 @@ public:
       uint32_t index =
           _symbolTable ? _symbolTable->getSymbolTableIndex(rel.second->target())
                        : (uint32_t) STN_UNDEF;
-      r->setSymbolAndType(index, rel.second->kind());
+      r->setSymbolAndType(index, rel.second->kindValue());
       r->r_offset =
           writer->addressOfAtom(rel.first) + rel.second->offsetInAtom();
       r->r_addend = 0;
@@ -969,12 +962,11 @@ public:
             writer->addressOfAtom(rel.second->target()) + rel.second->addend();
       dest += sizeof(Elf_Rela);
       DEBUG_WITH_TYPE(
-          "ELFRelocationTable",
-          llvm::dbgs() << kindOrUnknown(this->_context.stringFromRelocKind(
-                              rel.second->kind())) << " relocation at "
+          "ELFRelocationTable", 
+          llvm::dbgs() << rel.second->kindValue() << " relocation at "
                        << rel.first->name() << "@" << r->r_offset << " to "
                        << rel.second->target()->name() << "@" << r->r_addend
-                       << "\n");
+                       << "\n";);
     }
   }
 

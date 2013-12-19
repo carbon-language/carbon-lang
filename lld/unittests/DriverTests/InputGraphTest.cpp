@@ -26,15 +26,6 @@ namespace {
 
 class MyLinkingContext : public LinkingContext {
 public:
-  virtual Reader &getDefaultReader() const { return *_yamlReader; }
-
-  virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const {
-    return make_error_code(YamlReaderError::illegal_value);
-  }
-
-  virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind k) const {
-    return make_error_code(YamlReaderError::illegal_value);
-  }
 
   virtual Writer &writer() const { llvm_unreachable("no writer!"); }
 
@@ -126,7 +117,7 @@ private:
 class MyObjFile : public SimpleFile {
 public:
   MyObjFile(LinkingContext &context, StringRef path)
-      : SimpleFile(context, path) {}
+      : SimpleFile(path) {}
 };
 
 class InputGraphTest : public testing::Test {

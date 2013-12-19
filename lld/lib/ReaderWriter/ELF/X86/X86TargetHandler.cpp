@@ -31,6 +31,59 @@ static int relocPC32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   return 0;
 }
 
+
+
+const Registry::KindStrings X86TargetHandler::kindStrings[] = {
+  LLD_KIND_STRING_ENTRY(R_386_NONE),
+  LLD_KIND_STRING_ENTRY(R_386_32),
+  LLD_KIND_STRING_ENTRY(R_386_PC32),
+  LLD_KIND_STRING_ENTRY(R_386_GOT32),
+  LLD_KIND_STRING_ENTRY(R_386_PLT32),
+  LLD_KIND_STRING_ENTRY(R_386_COPY),
+  LLD_KIND_STRING_ENTRY(R_386_GLOB_DAT),
+  LLD_KIND_STRING_ENTRY(R_386_JUMP_SLOT),
+  LLD_KIND_STRING_ENTRY(R_386_RELATIVE),
+  LLD_KIND_STRING_ENTRY(R_386_GOTOFF),
+  LLD_KIND_STRING_ENTRY(R_386_GOTPC),
+  LLD_KIND_STRING_ENTRY(R_386_32PLT),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_TPOFF),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_IE),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_GOTIE),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_LE),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_GD),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_LDM),
+  LLD_KIND_STRING_ENTRY(R_386_16),
+  LLD_KIND_STRING_ENTRY(R_386_PC16),
+  LLD_KIND_STRING_ENTRY(R_386_8),
+  LLD_KIND_STRING_ENTRY(R_386_PC8),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_GD_32),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_GD_PUSH),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_GD_CALL),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_GD_POP),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_LDM_32),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_LDM_PUSH),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_LDM_CALL),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_LDM_POP),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_LDO_32),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_IE_32),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_LE_32),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_DTPMOD32),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_DTPOFF32),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_TPOFF32),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_GOTDESC),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_DESC_CALL),
+  LLD_KIND_STRING_ENTRY(R_386_TLS_DESC),
+  LLD_KIND_STRING_ENTRY(R_386_IRELATIVE),
+  LLD_KIND_STRING_ENTRY(R_386_NUM),
+  LLD_KIND_STRING_END
+};
+
+void X86TargetHandler::registerRelocationNames(Registry &registry) {
+  registry.addKindTable(Reference::KindNamespace::ELF, 
+                        Reference::KindArch::x86, 
+                        kindStrings);
+}
+
 error_code X86TargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
@@ -39,23 +92,20 @@ error_code X86TargetRelocationHandler::applyRelocation(
   uint64_t targetVAddress = writer.addressOfAtom(ref.target());
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
-  switch (ref.kind()) {
+  if (ref.kindNamespace() != Reference::KindNamespace::ELF)
+    return error_code::success();
+  assert(ref.kindArch() == Reference::KindArch::x86);
+  switch (ref.kindValue()) {
   case R_386_32:
     reloc32(location, relocVAddress, targetVAddress, ref.addend());
     break;
   case R_386_PC32:
     relocPC32(location, relocVAddress, targetVAddress, ref.addend());
     break;
-  case lld::Reference::kindLayoutAfter:
-  case lld::Reference::kindLayoutBefore:
-  case lld::Reference::kindInGroup:
-    break;
   default : {
     std::string str;
     llvm::raw_string_ostream s(str);
-    auto name = _context.stringFromRelocKind(ref.kind());
-    s << "Unhandled relocation: " << (name ? *name : "<unknown>") << " ("
-      << ref.kind() << ")";
+    s << "Unhandled I386 relocation # " << ref.kindValue();
     s.flush();
     llvm_unreachable(str.c_str());
   }

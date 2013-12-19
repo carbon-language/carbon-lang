@@ -11,6 +11,7 @@ add_lld_library(lldReaderWriter
   LinkerScript.cpp
   Reader.cpp
   Writer.cpp
+  FileArchive.cpp
   )
 
 target_link_libraries(lldReaderWriter

@@ -18,6 +18,7 @@
 #define LLD_DRIVER_CORE_INPUT_GRAPH_H
 
 #include "lld/Core/InputGraph.h"
+#include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/CoreLinkingContext.h"
 
 #include <map>
@@ -50,7 +51,7 @@ public:
 
     std::unique_ptr<MemoryBuffer> mb(opmb.take());
     _buffer = std::move(mb);
-    return _ctx.getDefaultReader().parseFile(_buffer, _files);
+    return ctx.registry().parseFile(_buffer, _files);
   }
 
   /// \brief Return the file that has to be processed by the resolver

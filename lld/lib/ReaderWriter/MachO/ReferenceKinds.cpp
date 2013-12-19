@@ -17,6 +17,8 @@
 
 #include "llvm/Support/ErrorHandling.h"
 
+using namespace llvm::MachO;
+
 namespace lld {
 namespace mach_o {
 
@@ -46,7 +48,6 @@ KindHandler::create(MachOLinkingContext::Arch arch) {
   }
 }
 
-
 //===----------------------------------------------------------------------===//
 //  KindHandler_x86_64
 //===----------------------------------------------------------------------===//
@@ -54,133 +55,88 @@ KindHandler::create(MachOLinkingContext::Arch arch) {
 KindHandler_x86_64::~KindHandler_x86_64() {
 }
 
-Reference::Kind KindHandler_x86_64::stringToKind(StringRef str) {
-  return llvm::StringSwitch<Reference::Kind>(str)
-    .Case("none",                  none)
-    .Case("branch32",              branch32)
-    .Case("ripRel32",              ripRel32)
-    .Case("ripRel32_1",            ripRel32_1)
-    .Case("ripRel32_2",            ripRel32_2)
-    .Case("ripRel32_4",            ripRel32_4)
-    .Case("gotLoadRipRel32",       gotLoadRipRel32)
-    .Case("gotLoadRipRel32NowLea", gotLoadRipRel32NowLea)
-    .Case("gotUseRipRel32",        gotUseRipRel32)
-    .Case("tlvLoadRipRel32",       tlvLoadRipRel32)
-    .Case("tlvLoadRipRel32NowLea", tlvLoadRipRel32NowLea)
-    .Case("pointer64",             pointer64)
-    .Case("pointerRel32",          pointerRel32)
-    .Case("lazyTarget",            lazyTarget)
-    .Case("lazyImmediate",         lazyImmediate)
-    .Case("subordinateFDE",        subordinateFDE)
-    .Case("subordinateLSDA",       subordinateLSDA)
-    .Default(invalid);
 
-  llvm_unreachable("invalid x86_64 Reference kind");
+const Registry::KindStrings KindHandler_x86_64::kindStrings[] = {
+    LLD_KIND_STRING_ENTRY(X86_64_RELOC_UNSIGNED),
+    LLD_KIND_STRING_ENTRY(X86_64_RELOC_BRANCH),
+    LLD_KIND_STRING_ENTRY(X86_64_RELOC_SIGNED),
+    LLD_KIND_STRING_ENTRY(X86_64_RELOC_SIGNED_1),
+    LLD_KIND_STRING_ENTRY(X86_64_RELOC_SIGNED_2),
+    LLD_KIND_STRING_ENTRY(X86_64_RELOC_SIGNED_4),
+    LLD_KIND_STRING_ENTRY(X86_64_RELOC_GOT_LOAD),
+    LLD_KIND_STRING_ENTRY(X86_64_RELOC_GOT),
+    LLD_KIND_STRING_ENTRY(X86_64_RELOC_TLV),
+    LLD_KIND_STRING_ENTRY(LLD_X86_64_RELOC_GOT_LOAD_NOW_LEA),
+    LLD_KIND_STRING_ENTRY(LLD_X86_64_RELOC_TLV_NOW_LEA),
+    LLD_KIND_STRING_ENTRY(LLD_X86_64_RELOC_LAZY_TARGET),
+    LLD_KIND_STRING_ENTRY(LLD_X86_64_RELOC_LAZY_IMMEDIATE),
+    LLD_KIND_STRING_END
+};
+
+bool KindHandler_x86_64::isCallSite(const Reference &ref) {
+  return (ref.kindValue() == X86_64_RELOC_BRANCH);
 }
 
-StringRef KindHandler_x86_64::kindToString(Reference::Kind kind) {
-  switch ( (Kinds)kind ) {
-    case invalid:
-      return StringRef("invalid");
-    case none:
-      return StringRef("none");
-    case branch32:
-      return StringRef("branch32");
-    case ripRel32:
-      return StringRef("ripRel32");
-    case ripRel32_1:
-      return StringRef("ripRel32_1");
-    case ripRel32_2:
-      return StringRef("ripRel32_2");
-    case ripRel32_4:
-      return StringRef("ripRel32_4");
-    case gotLoadRipRel32:
-      return StringRef("gotLoadRipRel32");
-    case gotLoadRipRel32NowLea:
-      return StringRef("gotLoadRipRel32NowLea");
-    case gotUseRipRel32:
-      return StringRef("gotUseRipRel32");
-    case tlvLoadRipRel32:
-      return StringRef("tlvLoadRipRel32");
-    case tlvLoadRipRel32NowLea:
-      return StringRef("tlvLoadRipRel32NowLea");
-    case pointer64:
-      return StringRef("pointer64");
-    case pointerRel32:
-      return StringRef("pointerRel32");
-    case lazyTarget:
-      return StringRef("lazyTarget");
-    case lazyImmediate:
-      return StringRef("lazyImmediate");
-    case subordinateFDE:
-      return StringRef("subordinateFDE");
-    case subordinateLSDA:
-      return StringRef("subordinateLSDA");
-  }
-  llvm_unreachable("invalid x86_64 Reference kind");
+bool KindHandler_x86_64::isPointer(const Reference &ref) {
+  return (ref.kindValue() == X86_64_RELOC_UNSIGNED);
 }
 
-bool KindHandler_x86_64::isCallSite(Kind kind) {
-  return (kind == branch32);
+bool KindHandler_x86_64::isLazyImmediate(const Reference &ref) {
+  return (ref.kindValue() == LLD_X86_64_RELOC_LAZY_IMMEDIATE);
 }
 
-bool KindHandler_x86_64::isPointer(Kind kind) {
-  return (kind == pointer64);
-}
-
-bool KindHandler_x86_64::isLazyImmediate(Kind kind) {
-  return (kind == lazyImmediate);
-}
-
-bool KindHandler_x86_64::isLazyTarget(Kind kind) {
-  return (kind == lazyTarget);
+bool KindHandler_x86_64::isLazyTarget(const Reference &ref) {
+  return (ref.kindValue() == LLD_X86_64_RELOC_LAZY_TARGET);
 }
 
 
-void KindHandler_x86_64::applyFixup(Kind kind, uint64_t addend,
+void KindHandler_x86_64::applyFixup(Reference::KindNamespace ns, 
+                                    Reference::KindArch arch, 
+                                    Reference::KindValue kindValue, 
+                                    uint64_t addend,
                                     uint8_t *location, uint64_t fixupAddress,
                                     uint64_t targetAddress) {
+  if (ns != Reference::KindNamespace::mach_o)
+    return;
+  assert(arch == Reference::KindArch::x86_64);
   int32_t *loc32 = reinterpret_cast<int32_t*>(location);
   uint64_t* loc64 = reinterpret_cast<uint64_t*>(location);
-  switch ( (Kinds)kind ) {
-    case branch32:
-    case ripRel32:
-    case gotLoadRipRel32:
-    case gotUseRipRel32:
-    case tlvLoadRipRel32:
+  switch ( kindValue ) {
+    case X86_64_RELOC_BRANCH:
+    case X86_64_RELOC_SIGNED:
+    case X86_64_RELOC_GOT_LOAD:
+    case X86_64_RELOC_GOT:
+    case X86_64_RELOC_TLV:
       *loc32 = (targetAddress - (fixupAddress+4)) + addend;
       break;
-    case pointer64:
+    case X86_64_RELOC_UNSIGNED:
       *loc64 = targetAddress + addend;
       break;
-    case ripRel32_1:
+    case X86_64_RELOC_SIGNED_1:
       *loc32 = (targetAddress - (fixupAddress+5)) + addend;
       break;
-    case ripRel32_2:
+    case X86_64_RELOC_SIGNED_2:
       *loc32 = (targetAddress - (fixupAddress+6)) + addend;
       break;
-    case ripRel32_4:
+    case X86_64_RELOC_SIGNED_4:
       *loc32 = (targetAddress - (fixupAddress+8)) + addend;
       break;
-    case pointerRel32:
+    case LLD_X86_64_RELOC_SIGNED_32:
       *loc32 = (targetAddress - fixupAddress) + addend;
       break;
-    case gotLoadRipRel32NowLea:
-    case tlvLoadRipRel32NowLea:
+    case LLD_X86_64_RELOC_GOT_LOAD_NOW_LEA:
+    case LLD_X86_64_RELOC_TLV_NOW_LEA:
       // Change MOVQ to LEA
       assert(location[-2] == 0x8B);
       location[-2] = 0x8D;
       *loc32 = (targetAddress - (fixupAddress+4)) + addend;
       break;
-    case none:
-    case lazyTarget:
-    case lazyImmediate:
-    case subordinateFDE:
-    case subordinateLSDA:
+    case LLD_X86_64_RELOC_LAZY_TARGET:
+    case LLD_X86_64_RELOC_LAZY_IMMEDIATE:
       // do nothing
       break;
-    case invalid:
-      assert(0 && "invalid Reference Kind");
+    default:
+      llvm_unreachable("invalid x86_64 Reference Kind");
       break;
   }
 }
@@ -193,88 +149,62 @@ void KindHandler_x86_64::applyFixup(Kind kind, uint64_t addend,
 KindHandler_x86::~KindHandler_x86() {
 }
 
-Reference::Kind KindHandler_x86::stringToKind(StringRef str) {
-  return llvm::StringSwitch<Reference::Kind>(str)
-    .Case("none",                  none)
-    .Case("branch32",              branch32)
-    .Case("abs32",                 abs32)
-    .Case("funcRel32",             funcRel32)
-    .Case("pointer32",             pointer32)
-    .Case("lazyTarget",            lazyTarget)
-    .Case("lazyImmediate",         lazyImmediate)
-    .Default(invalid);
+const Registry::KindStrings KindHandler_x86::kindStrings[] = {
+    LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_BRANCH32),
+    LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_ABS32),
+    LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_FUNC_REL32),
+    LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_POINTER32),
+    LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_LAZY_TARGET),
+    LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_LAZY_IMMEDIATE),
+    LLD_KIND_STRING_END
+};
 
-  llvm_unreachable("invalid x86 Reference kind");
+bool KindHandler_x86::isCallSite(const Reference &ref) {
+  return (ref.kindValue() == LLD_X86_RELOC_BRANCH32);
 }
 
-StringRef KindHandler_x86::kindToString(Reference::Kind kind) {
-  switch ( (Kinds)kind ) {
-    case invalid:
-      return StringRef("invalid");
-    case none:
-      return StringRef("none");
-    case branch32:
-      return StringRef("branch32");
-    case abs32:
-      return StringRef("abs32");
-    case funcRel32:
-      return StringRef("funcRel32");
-    case pointer32:
-      return StringRef("pointer32");
-    case lazyTarget:
-      return StringRef("lazyTarget");
-    case lazyImmediate:
-      return StringRef("lazyImmediate");
-    case subordinateFDE:
-      return StringRef("subordinateFDE");
-    case subordinateLSDA:
-      return StringRef("subordinateLSDA");
-  }
-  llvm_unreachable("invalid x86 Reference kind");
-}
-
-bool KindHandler_x86::isCallSite(Kind kind) {
-  return (kind == branch32);
-}
-
-bool KindHandler_x86::isPointer(Kind kind) {
-  return (kind == pointer32);
+bool KindHandler_x86::isPointer(const Reference &ref) {
+  return (ref.kindValue() == LLD_X86_RELOC_POINTER32);
 }
 
 
-bool KindHandler_x86::isLazyImmediate(Kind kind) {
-  return (kind == lazyImmediate);
+bool KindHandler_x86::isLazyImmediate(const Reference &ref) {
+  return (ref.kindValue() == LLD_X86_RELOC_LAZY_TARGET);
 }
 
 
-bool KindHandler_x86::isLazyTarget(Kind kind) {
-  return (kind == lazyTarget);
+bool KindHandler_x86::isLazyTarget(const Reference &ref) {
+  return (ref.kindValue() == LLD_X86_RELOC_LAZY_TARGET);
 }
 
 
-void KindHandler_x86::applyFixup(Kind kind, uint64_t addend, uint8_t *location,
-                  uint64_t fixupAddress, uint64_t targetAddress) {
+void KindHandler_x86::applyFixup(Reference::KindNamespace ns, 
+                                 Reference::KindArch arch, 
+                                 Reference::KindValue kindValue, 
+                                 uint64_t addend, uint8_t *location,
+                                 uint64_t fixupAddress, 
+                                 uint64_t targetAddress) {
+  if (ns != Reference::KindNamespace::mach_o)
+    return;
+  assert(arch == Reference::KindArch::x86);
   int32_t *loc32 = reinterpret_cast<int32_t*>(location);
-  switch ( (Kinds)kind ) {
-    case branch32:
+  switch (kindValue) {
+    case LLD_X86_RELOC_BRANCH32:
       *loc32 = (targetAddress - (fixupAddress+4)) + addend;
       break;
-    case pointer32:
-    case abs32:
+    case LLD_X86_RELOC_POINTER32:
+    case LLD_X86_RELOC_ABS32:
       *loc32 = targetAddress + addend;
       break;
-    case funcRel32:
+    case LLD_X86_RELOC_FUNC_REL32:
       *loc32 = targetAddress + addend;
       break;
-    case none:
-    case lazyTarget:
-    case lazyImmediate:
-    case subordinateFDE:
-    case subordinateLSDA:
+    case LLD_X86_RELOC_LAZY_TARGET:
+    case LLD_X86_RELOC_LAZY_IMMEDIATE:
       // do nothing
       break;
-    case invalid:
-      assert(0 && "invalid Reference Kind");
+    default:
+      llvm_unreachable("invalid x86 Reference Kind");
       break;
   }
 }
@@ -287,112 +217,81 @@ void KindHandler_x86::applyFixup(Kind kind, uint64_t addend, uint8_t *location,
 KindHandler_arm::~KindHandler_arm() {
 }
 
-Reference::Kind KindHandler_arm::stringToKind(StringRef str) {
- return llvm::StringSwitch<Reference::Kind>(str)
-    .Case("none",               none)
-    .Case("thumbBranch22",      thumbBranch22)
-    .Case("armBranch24",        armBranch24)
-    .Case("thumbAbsLow16",      thumbAbsLow16)
-    .Case("thumbAbsHigh16",     thumbAbsHigh16)
-    .Case("thumbPcRelLow16",    thumbPcRelLow16)
-    .Case("thumbPcRelHigh16",   thumbPcRelHigh16)
-    .Case("abs32",              abs32)
-    .Case("pointer32",          pointer32)
-    .Case("lazyTarget",         lazyTarget)
-    .Case("lazyImmediate",      lazyImmediate)
-    .Case("subordinateLSDA",    subordinateLSDA)
-    .Default(invalid);
+const Registry::KindStrings KindHandler_arm::kindStrings[] = {
+    LLD_KIND_STRING_ENTRY(ARM_RELOC_BR24),
+    LLD_KIND_STRING_ENTRY(ARM_THUMB_RELOC_BR22),
+    LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_THUMB_ABS_LO16),
+    LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_THUMB_ABS_HI16),
+    LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_THUMB_REL_LO16),
+    LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_THUMB_REL_HI16),
+    LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_ABS32),
+    LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_POINTER32),
+    LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_LAZY_TARGET),
+    LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_LAZY_IMMEDIATE),
+    LLD_KIND_STRING_END
+};
 
-  llvm_unreachable("invalid ARM Reference kind");
+bool KindHandler_arm::isCallSite(const Reference &ref) {
+  return (ref.kindValue() == ARM_THUMB_RELOC_BR22) || 
+         (ref.kindValue() == ARM_RELOC_BR24);
 }
 
-StringRef KindHandler_arm::kindToString(Reference::Kind kind) {
-  switch ( (Kinds)kind ) {
-    case invalid:
-      return StringRef("invalid");
-    case none:
-      return StringRef("none");
-    case thumbBranch22:
-      return StringRef("thumbBranch22");
-    case armBranch24:
-      return StringRef("armBranch24");
-    case thumbAbsLow16:
-      return StringRef("thumbAbsLow16");
-    case thumbAbsHigh16:
-      return StringRef("thumbAbsHigh16");
-    case thumbPcRelLow16:
-      return StringRef("thumbPcRelLow16");
-    case thumbPcRelHigh16:
-      return StringRef("thumbPcRelHigh16");
-    case abs32:
-      return StringRef("abs32");
-    case pointer32:
-      return StringRef("pointer32");
-    case lazyTarget:
-      return StringRef("lazyTarget");
-    case lazyImmediate:
-      return StringRef("lazyImmediate");
-    case subordinateLSDA:
-      return StringRef("subordinateLSDA");
-  }
-  llvm_unreachable("invalid ARM Reference kind");
-}
-
-bool KindHandler_arm::isCallSite(Kind kind) {
-  return (kind == thumbBranch22) || (kind == armBranch24);
-}
-
-bool KindHandler_arm::isPointer(Kind kind) {
-  return (kind == pointer32);
+bool KindHandler_arm::isPointer(const Reference &ref) {
+  return (ref.kindValue() == LLD_ARM_RELOC_POINTER32);
 }
 
 
-bool KindHandler_arm::isLazyImmediate(Kind kind) {
-  return (kind == lazyImmediate);
+bool KindHandler_arm::isLazyImmediate(const Reference &ref) {
+  return (ref.kindValue() == LLD_ARM_RELOC_LAZY_IMMEDIATE);
 }
 
 
-bool KindHandler_arm::isLazyTarget(Kind kind) {
-  return (kind == lazyTarget);
+bool KindHandler_arm::isLazyTarget(const Reference &ref) {
+  return (ref.kindValue() == LLD_ARM_RELOC_LAZY_TARGET);
 }
 
 
-void KindHandler_arm::applyFixup(Kind kind, uint64_t addend, uint8_t *location,
-                  uint64_t fixupAddress, uint64_t targetAddress) {
+void KindHandler_arm::applyFixup(Reference::KindNamespace ns, 
+                                 Reference::KindArch arch, 
+                                 Reference::KindValue kindValue, 
+                                 uint64_t addend, uint8_t *location,
+                                 uint64_t fixupAddress, 
+                                 uint64_t targetAddress) {
+  if (ns != Reference::KindNamespace::mach_o)
+    return;
+  assert(arch == Reference::KindArch::ARM);
   //int32_t *loc32 = reinterpret_cast<int32_t*>(location);
-  switch ( (Kinds)kind ) {
-    case thumbBranch22:
+  switch ( kindValue ) {
+    case ARM_THUMB_RELOC_BR22:
       // FIXME
       break;
-    case armBranch24:
+    case ARM_RELOC_BR24:
       // FIXME
       break;
-    case thumbAbsLow16:
+    case LLD_ARM_RELOC_THUMB_ABS_LO16:
       // FIXME
       break;
-    case thumbAbsHigh16:
+    case LLD_ARM_RELOC_THUMB_ABS_HI16:
       // FIXME
       break;
-    case thumbPcRelLow16:
+    case LLD_ARM_RELOC_THUMB_REL_LO16:
       // FIXME
       break;
-    case thumbPcRelHigh16:
+    case LLD_ARM_RELOC_THUMB_REL_HI16:
       // FIXME
       break;
-    case abs32:
+    case LLD_ARM_RELOC_ABS32:
       // FIXME
       break;
-    case pointer32:
+    case LLD_ARM_RELOC_POINTER32:
       // FIXME
       break;
-    case none:
-    case lazyTarget:
-    case lazyImmediate:
-    case subordinateLSDA:
+    case LLD_ARM_RELOC_LAZY_TARGET:
+    case LLD_ARM_RELOC_LAZY_IMMEDIATE:
       // do nothing
       break;
-    case invalid:
-      assert(0 && "invalid Reference Kind");
+    default:
+      llvm_unreachable("invalid ARM Reference Kind");
       break;
   }
 }

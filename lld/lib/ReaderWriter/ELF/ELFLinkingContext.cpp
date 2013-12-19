@@ -16,7 +16,6 @@
 
 #include "lld/Core/Instrumentation.h"
 #include "lld/Passes/LayoutPass.h"
-#include "lld/Passes/RoundTripNativePass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
 
 #include "llvm/ADT/Triple.h"
@@ -36,8 +35,8 @@ public:
   }
 };
 
-ELFLinkingContext::ELFLinkingContext(
-    llvm::Triple triple, std::unique_ptr<TargetHandlerBase> targetHandler)
+ELFLinkingContext::ELFLinkingContext(llvm::Triple triple, 
+                               std::unique_ptr<TargetHandlerBase> targetHandler)
     : _outputELFType(elf::ET_EXEC), _triple(triple),
       _targetHandler(std::move(targetHandler)), _baseAddress(0),
       _isStaticExecutable(false), _noInhibitExec(false),
@@ -83,7 +82,6 @@ StringRef ELFLinkingContext::entrySymbolName() const {
 }
 
 bool ELFLinkingContext::validateImpl(raw_ostream &diagnostics) {
-  _elfReader = createReaderELF(*this);
   switch (outputFileType()) {
   case LinkingContext::OutputFileType::YAML:
     _writer = createWriterYAML(*this);
@@ -185,7 +183,7 @@ std::unique_ptr<File> ELFLinkingContext::createUndefinedSymbolFile() const {
   if (_initialUndefinedSymbols.empty())
     return nullptr;
   std::unique_ptr<SimpleFile> undefinedSymFile(
-      new SimpleFile(*this, "command line option -u"));
+      new SimpleFile("command line option -u"));
   for (auto undefSymStr : _initialUndefinedSymbols)
     undefinedSymFile->addAtom(*(new (_allocator) CommandLineUndefinedAtom(
                                    *undefinedSymFile, undefSymStr)));

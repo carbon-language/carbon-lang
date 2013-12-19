@@ -83,7 +83,7 @@ public:
 
 class ELFPassFile : public SimpleFile {
 public:
-  ELFPassFile(const ELFLinkingContext &eti) : SimpleFile(eti, "ELFPassFile") {
+  ELFPassFile(const ELFLinkingContext &eti) : SimpleFile("ELFPassFile") {
     setOrdinal(eti.getNextOrdinalAndIncrement());
   }
 
@@ -94,7 +94,10 @@ public:
 template <class Derived> class RelocationPass : public Pass {
   /// \brief Handle a specific reference.
   void handleReference(const DefinedAtom &atom, const Reference &ref) {
-    switch (ref.kind()) {
+    if (ref.kindNamespace() != Reference::KindNamespace::ELF)
+      return;
+    assert(ref.kindArch() == Reference::KindArch::x86_64);
+    switch (ref.kindValue()) {
     case R_X86_64_32:
     case R_X86_64_32S:
     case R_X86_64_64:
@@ -126,9 +129,9 @@ protected:
     if (plt != _pltMap.end())
       return plt->second;
     auto ga = new (_file._alloc) X86_64GOTAtom(_file, ".got.plt");
-    ga->addReference(R_X86_64_IRELATIVE, 0, da, 0);
+    ga->addReferenceELF_x86_64(R_X86_64_IRELATIVE, 0, da, 0);
     auto pa = new (_file._alloc) X86_64PLTAtom(_file, ".plt");
-    pa->addReference(R_X86_64_PC32, 2, ga, -4);
+    pa->addReferenceELF_x86_64(R_X86_64_PC32, 2, ga, -4);
 #ifndef NDEBUG
     ga->_name = "__got_ifunc_";
     ga->_name += da->name();
@@ -158,7 +161,7 @@ protected:
     auto got = _gotMap.find(atom);
     if (got == _gotMap.end()) {
       auto g = new (_file._alloc) X86_64GOTAtom(_file, ".got");
-      g->addReference(R_X86_64_TPOFF64, 0, atom, 0);
+      g->addReferenceELF_x86_64(R_X86_64_TPOFF64, 0, atom, 0);
 #ifndef NDEBUG
       g->_name = "__got_tls_";
       g->_name += atom->name();
@@ -174,7 +177,7 @@ protected:
   /// the GOT.
   void handleGOTTPOFF(const Reference &ref) {
     const_cast<Reference &>(ref).setTarget(getGOTTPOFF(ref.target()));
-    const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
+    const_cast<Reference &>(ref).setKindValue(R_X86_64_PC32);
   }
 
   /// \brief Create a GOT entry containing 0.
@@ -192,7 +195,7 @@ protected:
     auto got = _gotMap.find(da);
     if (got == _gotMap.end()) {
       auto g = new (_file._alloc) X86_64GOTAtom(_file, ".got");
-      g->addReference(R_X86_64_64, 0, da, 0);
+      g->addReferenceELF_x86_64(R_X86_64_64, 0, da, 0);
 #ifndef NDEBUG
       g->_name = "__got_";
       g->_name += da->name();
@@ -302,11 +305,11 @@ public:
   error_code handlePLT32(const Reference &ref) {
     // __tls_get_addr is handled elsewhere.
     if (ref.target() && ref.target()->name() == "__tls_get_addr") {
-      const_cast<Reference &>(ref).setKind(R_X86_64_NONE);
+      const_cast<Reference &>(ref).setKindValue(R_X86_64_NONE);
       return error_code::success();
     } else
       // Static code doesn't need PLTs.
-      const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
+      const_cast<Reference &>(ref).setKindValue(R_X86_64_PC32);
     // Handle IFUNC.
     if (const DefinedAtom *da =
             dyn_cast_or_null<const DefinedAtom>(ref.target()))
@@ -338,8 +341,8 @@ public:
     _PLT0 = new (_file._alloc) X86_64PLT0Atom(_file);
     _got0 = new (_file._alloc) X86_64GOTAtom(_file, ".got.plt");
     _got1 = new (_file._alloc) X86_64GOTAtom(_file, ".got.plt");
-    _PLT0->addReference(R_X86_64_PC32, 2, _got0, -4);
-    _PLT0->addReference(R_X86_64_PC32, 8, _got1, -4);
+    _PLT0->addReferenceELF_x86_64(R_X86_64_PC32, 2, _got0, -4);
+    _PLT0->addReferenceELF_x86_64(R_X86_64_PC32, 8, _got1, -4);
 #ifndef NDEBUG
     _got0->_name = "__got0";
     _got1->_name = "__got1";
@@ -352,14 +355,14 @@ public:
     if (plt != _pltMap.end())
       return plt->second;
     auto ga = new (_file._alloc) X86_64GOTAtom(_file, ".got.plt");
-    ga->addReference(R_X86_64_JUMP_SLOT, 0, a, 0);
+    ga->addReferenceELF_x86_64(R_X86_64_JUMP_SLOT, 0, a, 0);
     auto pa = new (_file._alloc) X86_64PLTAtom(_file, ".plt");
-    pa->addReference(R_X86_64_PC32, 2, ga, -4);
-    pa->addReference(LLD_R_X86_64_GOTRELINDEX, 7, ga, 0);
-    pa->addReference(R_X86_64_PC32, 12, getPLT0(), -4);
+    pa->addReferenceELF_x86_64(R_X86_64_PC32, 2, ga, -4);
+    pa->addReferenceELF_x86_64(LLD_R_X86_64_GOTRELINDEX, 7, ga, 0);
+    pa->addReferenceELF_x86_64(R_X86_64_PC32, 12, getPLT0(), -4);
     // Set the starting address of the got entry to the second instruction in
     // the plt entry.
-    ga->addReference(R_X86_64_64, 0, pa, 6);
+    ga->addReferenceELF_x86_64(R_X86_64_64, 0, pa, 6);
 #ifndef NDEBUG
     ga->_name = "__got_";
     ga->_name += a->name();
@@ -380,7 +383,7 @@ public:
 
     auto oa = new (_file._alloc) ObjectAtom(_file);
     // This needs to point to the atom that we just created.
-    oa->addReference(R_X86_64_COPY, 0, oa, 0);
+    oa->addReferenceELF_x86_64(R_X86_64_COPY, 0, oa, 0);
 
     oa->_name = a->name();
     oa->_size = a->size();
@@ -405,7 +408,7 @@ public:
 
   error_code handlePLT32(const Reference &ref) {
     // Turn this into a PC32 to the PLT entry.
-    const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
+    const_cast<Reference &>(ref).setKindValue(R_X86_64_PC32);
     // Handle IFUNC.
     if (const DefinedAtom *da =
             dyn_cast_or_null<const DefinedAtom>(ref.target()))
@@ -420,7 +423,7 @@ public:
     auto got = _gotMap.find(sla);
     if (got == _gotMap.end()) {
       auto g = new (_file._alloc) X86_64GOTAtom(_file, ".got.dyn");
-      g->addReference(R_X86_64_GLOB_DAT, 0, sla, 0);
+      g->addReferenceELF_x86_64(R_X86_64_GLOB_DAT, 0, sla, 0);
 #ifndef NDEBUG
       g->_name = "__got_";
       g->_name += sla->name();

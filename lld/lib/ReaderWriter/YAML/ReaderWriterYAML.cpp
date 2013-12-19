@@ -10,6 +10,7 @@
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
+#include "lld/ReaderWriter/YamlContext.h"
 
 #include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/DefinedAtom.h"
@@ -46,18 +47,6 @@ using namespace lld;
 /// how the mapping is done to and from YAML.
 
 namespace {
-/// Most of the traits are context-free and always do the same transformation.
-/// But, there are some traits that need some contextual information to properly
-/// do their transform.  This struct is available via io.getContext() and
-/// supplies contextual information.
-class ContextInfo {
-public:
-  ContextInfo(const LinkingContext &context)
-      : _currentFile(nullptr), _context(context) {}
-
-  lld::File *_currentFile;
-  const LinkingContext &_context;
-};
 
 /// Used when writing yaml files.
 /// In most cases, atoms names are unambiguous, so references can just
@@ -260,9 +249,13 @@ LLVM_YAML_STRONG_TYPEDEF(uint8_t, ImplicitHex8)
 // more readable than just true/false.
 LLVM_YAML_STRONG_TYPEDEF(bool, ShlibCanBeNull)
 
-// lld::Reference::Kind is a typedef of int32.  We need a stronger
-// type to make template matching work, so invent RefKind.
-LLVM_YAML_STRONG_TYPEDEF(lld::Reference::Kind, RefKind)
+// lld::Reference::Kind is a tuple of <namespace, arch, value>.
+// For yaml, we just want one string that encapsulates the tuple.
+struct RefKind {
+  Reference::KindNamespace ns;
+  Reference::KindArch      arch;
+  uint16_t                 value;
+};
 
 } // namespace anon
 
@@ -276,49 +269,26 @@ namespace yaml {
 
 // This is a custom formatter for RefKind
 template <> struct ScalarTraits<RefKind> {
-  static void output(const RefKind &value, void *ctxt, raw_ostream &out) {
+  static void output(const RefKind &kind, void *ctxt, raw_ostream &out) {
     assert(ctxt != nullptr);
-    ContextInfo *info = reinterpret_cast<ContextInfo *>(ctxt);
-    switch (value) {
-    case lld::Reference::kindLayoutAfter:
-      out << "layout-after";
-      break;
-    case lld::Reference::kindLayoutBefore:
-      out << "layout-before";
-      break;
-    case lld::Reference::kindInGroup:
-      out << "in-group";
-      break;
-    default:
-      if (auto relocStr = info->_context.stringFromRelocKind(value))
-        out << *relocStr;
-      else
-        out << "<unknown>";
-      break;
-    }
+    YamlContext *info = reinterpret_cast<YamlContext *>(ctxt);
+    assert(info->_registry);
+    StringRef str;
+    if (info->_registry->referenceKindToString(kind.ns, kind.arch, kind.value, 
+                                                                           str)) 
+      out << str;
+    else
+      out << (int)(kind.ns) << "-" << (int)(kind.arch) << "-" << kind.value;
   }
 
-  static StringRef input(StringRef scalar, void *ctxt, RefKind &value) {
+  static StringRef input(StringRef scalar, void *ctxt, RefKind &kind) {
     assert(ctxt != nullptr);
-    ContextInfo *info = reinterpret_cast<ContextInfo *>(ctxt);
-    auto relocKind = info->_context.relocKindFromString(scalar);
-    if (!relocKind) {
-      if (scalar.equals("layout-after")) {
-        value = lld::Reference::kindLayoutAfter;
-        return StringRef();
-      }
-      if (scalar.equals("layout-before")) {
-        value = lld::Reference::kindLayoutBefore;
-        return StringRef();
-      }
-      if (scalar.equals("in-group")) {
-        value = lld::Reference::kindInGroup;
-        return StringRef();
-      }
-      return "Invalid relocation kind";
-    }
-    value = *relocKind;
-    return StringRef();
+    YamlContext *info = reinterpret_cast<YamlContext *>(ctxt);
+    assert(info->_registry);
+    if (info->_registry->referenceKindFromString(scalar, kind.ns, kind.arch, 
+                                                                  kind.value)) 
+      return StringRef();
+    return StringRef("unknown reference kind");
   }
 };
 
@@ -595,12 +565,9 @@ template <> struct MappingTraits<const lld::File *> {
   class NormArchiveFile : public lld::ArchiveLibraryFile {
   public:
     NormArchiveFile(IO &io)
-        : ArchiveLibraryFile(((ContextInfo *)io.getContext())->_context, ""),
-          _path() {}
+        : ArchiveLibraryFile(""), _path() {}
     NormArchiveFile(IO &io, const lld::File *file)
-        : ArchiveLibraryFile(((ContextInfo *)io.getContext())->_context,
-                             file->path()),
-          _path(file->path()) {
+        : ArchiveLibraryFile(file->path()), _path(file->path()) {
       // If we want to support writing archives, this constructor would
       // need to populate _members.
     }
@@ -639,15 +606,20 @@ template <> struct MappingTraits<const lld::File *> {
       return nullptr;
     }
 
+    virtual error_code parseAllMembers(
+                          std::vector<std::unique_ptr<File>> &result) const {
+      return error_code::success();
+    }
+    
     StringRef _path;
     std::vector<ArchMember> _members;
   };
 
   class NormalizedFile : public lld::File {
   public:
-    NormalizedFile(IO &io) : File("", kindObject), _IO(io), _rnb(nullptr) {}
+    NormalizedFile(IO &io) : File("", kindObject), _io(io), _rnb(nullptr) {}
     NormalizedFile(IO &io, const lld::File *file)
-        : File(file->path(), kindObject), _IO(io),
+        : File(file->path(), kindObject), _io(io),
           _rnb(new RefNameBuilder(*file)), _path(file->path()) {
       for (const lld::DefinedAtom *a : file->defined())
         _definedAtoms.push_back(a);
@@ -674,10 +646,6 @@ template <> struct MappingTraits<const lld::File *> {
       return _absoluteAtoms;
     }
 
-    virtual const LinkingContext &getLinkingContext() const {
-      return ((ContextInfo *)_IO.getContext())->_context;
-    }
-
     // Allocate a new copy of this string and keep track of allocations
     // in _stringCopies, so they can be freed when File is destroyed.
     StringRef copyString(StringRef str) {
@@ -691,7 +659,7 @@ template <> struct MappingTraits<const lld::File *> {
       return r;
     }
 
-    IO &_IO;
+    IO &_io;
     RefNameBuilder *_rnb;
     StringRef _path;
     AtomList<lld::DefinedAtom> _definedAtoms;
@@ -706,7 +674,6 @@ template <> struct MappingTraits<const lld::File *> {
     FileKinds kind = fileKindObjectAtoms;
     // If reading, peek ahead to see what kind of file this is.
     io.mapOptional("kind", kind, fileKindObjectAtoms);
-    //
     switch (kind) {
     case fileKindObjectAtoms:
       mappingAtoms(io, file);
@@ -725,9 +692,9 @@ template <> struct MappingTraits<const lld::File *> {
 
   static void mappingAtoms(IO &io, const lld::File *&file) {
     MappingNormalizationHeap<NormalizedFile, const lld::File *> keys(io, file);
-    ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+    YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
     assert(info != nullptr);
-    info->_currentFile = keys.operator->();
+    info->_file = keys.operator->();
 
     io.mapOptional("path", keys->_path);
     io.mapOptional("defined-atoms", keys->_definedAtoms);
@@ -750,19 +717,26 @@ template <> struct MappingTraits<const lld::Reference *> {
   class NormalizedReference : public lld::Reference {
   public:
     NormalizedReference(IO &io)
-        : _target(nullptr), _targetName(), _offset(0), _addend(0) {}
+        : lld::Reference(lld::Reference::KindNamespace::all, 
+                         lld::Reference::KindArch::all, 0),
+         _target(nullptr), _targetName(), _offset(0), _addend(0) {}
 
     NormalizedReference(IO &io, const lld::Reference *ref)
-        : _target(nullptr), _targetName(targetName(io, ref)),
-          _offset(ref->offsetInAtom()), _addend(ref->addend()),
-          _mappedKind(ref->kind()) {}
+        : lld::Reference(ref->kindNamespace(), ref->kindArch(), 
+                                              ref->kindValue()),
+          _target(nullptr), _targetName(targetName(io, ref)),
+          _offset(ref->offsetInAtom()), _addend(ref->addend()) {
+      _mappedKind.ns = ref->kindNamespace();
+      _mappedKind.arch = ref->kindArch();
+      _mappedKind.value = ref->kindValue();
+    }
 
     const lld::Reference *denormalize(IO &io) {
-      ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
       typedef MappingTraits<const lld::File *>::NormalizedFile NormalizedFile;
       NormalizedFile *f =
-          reinterpret_cast<NormalizedFile *>(info->_currentFile);
+          reinterpret_cast<NormalizedFile *>(info->_file);
       if (!_targetName.empty())
         _targetName = f->copyString(_targetName);
       DEBUG_WITH_TYPE("WriterYAML", llvm::dbgs()
@@ -770,7 +744,9 @@ template <> struct MappingTraits<const lld::Reference *> {
                                         << _targetName << "' ("
                                         << (void *)_targetName.data() << ", "
                                         << _targetName.size() << ")\n");
-      setKind(_mappedKind);
+      setKindNamespace(_mappedKind.ns);
+      setKindArch(_mappedKind.arch);
+      setKindValue(_mappedKind.value);
       return this;
     }
     void bind(const RefNameResolver &);
@@ -830,11 +806,11 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
         _content.push_back(x);
     }
     const lld::DefinedAtom *denormalize(IO &io) {
-      ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
       typedef MappingTraits<const lld::File *>::NormalizedFile NormalizedFile;
       NormalizedFile *f =
-          reinterpret_cast<NormalizedFile *>(info->_currentFile);
+          reinterpret_cast<NormalizedFile *>(info->_file);
       if (!_name.empty())
         _name = f->copyString(_name);
       if (!_refName.empty())
@@ -850,10 +826,10 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     void bind(const RefNameResolver &);
     // Extract current File object from YAML I/O parsing context
     const lld::File &fileFromContext(IO &io) {
-      ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
-      assert(info->_currentFile != nullptr);
-      return *info->_currentFile;
+      assert(info->_file != nullptr);
+      return *info->_file;
     }
 
     virtual const lld::File &file() const { return _file; }
@@ -927,10 +903,10 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     if (io.outputting()) {
       // If writing YAML, check if atom needs a ref-name.
       typedef MappingTraits<const lld::File *>::NormalizedFile NormalizedFile;
-      ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
       NormalizedFile *f =
-          reinterpret_cast<NormalizedFile *>(info->_currentFile);
+          reinterpret_cast<NormalizedFile *>(info->_file);
       assert(f);
       assert(f->_rnb);
       if (f->_rnb->hasRefName(atom)) {
@@ -980,11 +956,11 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
           _canBeNull(atom->canBeNull()), _fallback(atom->fallback()) {}
 
     const lld::UndefinedAtom *denormalize(IO &io) {
-      ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
       typedef MappingTraits<const lld::File *>::NormalizedFile NormalizedFile;
       NormalizedFile *f =
-          reinterpret_cast<NormalizedFile *>(info->_currentFile);
+          reinterpret_cast<NormalizedFile *>(info->_file);
       if (!_name.empty())
         _name = f->copyString(_name);
 
@@ -997,10 +973,10 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
 
     // Extract current File object from YAML I/O parsing context
     const lld::File &fileFromContext(IO &io) {
-      ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
-      assert(info->_currentFile != nullptr);
-      return *info->_currentFile;
+      assert(info->_file != nullptr);
+      return *info->_file;
     }
 
     virtual const lld::File &file() const { return _file; }
@@ -1040,11 +1016,11 @@ template <> struct MappingTraits<const lld::SharedLibraryAtom *> {
           _type(atom->type()), _size(atom->size()) {}
 
     const lld::SharedLibraryAtom *denormalize(IO &io) {
-      ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
       typedef MappingTraits<const lld::File *>::NormalizedFile NormalizedFile;
       NormalizedFile *f =
-          reinterpret_cast<NormalizedFile *>(info->_currentFile);
+          reinterpret_cast<NormalizedFile *>(info->_file);
       if (!_name.empty())
         _name = f->copyString(_name);
       if (!_loadName.empty())
@@ -1059,10 +1035,10 @@ template <> struct MappingTraits<const lld::SharedLibraryAtom *> {
 
     // Extract current File object from YAML I/O parsing context
     const lld::File &fileFromContext(IO &io) {
-      ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
-      assert(info->_currentFile != nullptr);
-      return *info->_currentFile;
+      assert(info->_file != nullptr);
+      return *info->_file;
     }
 
     virtual const lld::File &file() const { return _file; }
@@ -1104,11 +1080,11 @@ template <> struct MappingTraits<const lld::AbsoluteAtom *> {
         : _file(fileFromContext(io)), _name(atom->name()),
           _scope(atom->scope()), _value(atom->value()) {}
     const lld::AbsoluteAtom *denormalize(IO &io) {
-      ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
       typedef MappingTraits<const lld::File *>::NormalizedFile NormalizedFile;
       NormalizedFile *f =
-          reinterpret_cast<NormalizedFile *>(info->_currentFile);
+          reinterpret_cast<NormalizedFile *>(info->_file);
       if (!_name.empty())
         _name = f->copyString(_name);
 
@@ -1120,10 +1096,10 @@ template <> struct MappingTraits<const lld::AbsoluteAtom *> {
     }
     // Extract current File object from YAML I/O parsing context
     const lld::File &fileFromContext(IO &io) {
-      ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
-      assert(info->_currentFile != nullptr);
-      return *info->_currentFile;
+      assert(info->_file != nullptr);
+      return *info->_file;
     }
 
     virtual const lld::File &file() const { return _file; }
@@ -1144,10 +1120,10 @@ template <> struct MappingTraits<const lld::AbsoluteAtom *> {
 
     if (io.outputting()) {
       typedef MappingTraits<const lld::File *>::NormalizedFile NormalizedFile;
-      ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
       assert(info != nullptr);
       NormalizedFile *f =
-          reinterpret_cast<NormalizedFile *>(info->_currentFile);
+          reinterpret_cast<NormalizedFile *>(info->_file);
       assert(f);
       assert(f->_rnb);
       if (f->_rnb->hasRefName(atom)) {
@@ -1226,10 +1202,10 @@ MappingTraits<const lld::Reference *>::NormalizedReference::targetName(
     IO &io, const lld::Reference *ref) {
   if (ref->target() == nullptr)
     return StringRef();
-  ContextInfo *info = reinterpret_cast<ContextInfo *>(io.getContext());
+  YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
   assert(info != nullptr);
   typedef MappingTraits<const lld::File *>::NormalizedFile NormalizedFile;
-  NormalizedFile *f = reinterpret_cast<NormalizedFile *>(info->_currentFile);
+  NormalizedFile *f = reinterpret_cast<NormalizedFile *>(info->_file);
   RefNameBuilder *rnb = f->_rnb;
   if (rnb->hasRefName(ref->target()))
     return rnb->refName(ref->target());
@@ -1251,8 +1227,10 @@ public:
       return llvm::make_error_code(llvm::errc::no_such_file_or_directory);
 
     // Create yaml Output writer, using yaml options for context.
-    ContextInfo context(_context);
-    llvm::yaml::Output yout(out, &context);
+    YamlContext yamlContext;
+    yamlContext._linkingContext = &_context;
+    yamlContext._registry = &_context.registry();
+    llvm::yaml::Output yout(out, &yamlContext);
 
     // Write yaml output.
     const lld::File *fileRef = &file;
@@ -1265,12 +1243,21 @@ private:
   const LinkingContext &_context;
 };
 
-class ReaderYAML : public Reader {
-public:
-  ReaderYAML(const LinkingContext &context) : Reader(context) {}
+} // end namespace yaml
 
-  error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                       std::vector<std::unique_ptr<File> > &result) const {
+namespace {
+
+class YAMLReader : public Reader {
+public:
+  YAMLReader(const Registry &registry) : _registry(registry) { }
+
+  virtual bool canParse(file_magic, StringRef ext, const MemoryBuffer&) const {
+    return (ext.equals(".objtxt") || ext.equals(".yaml"));
+  }
+  
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
+            std::vector<std::unique_ptr<File>> &result) const {
     // Note: we do not take ownership of the MemoryBuffer.  That is
     // because yaml may produce multiple File objects, so there is no
     // *one* File to take ownership.  Therefore, the yaml File objects
@@ -1278,15 +1265,16 @@ public:
     // Otherwise the strings will become invalid when this MemoryBuffer
     // is deallocated.
 
-    // Create YAML Input parser.
-    ContextInfo context(_context);
-    llvm::yaml::Input yin(mb->getBuffer(), &context);
+    // Create YAML Input Reader.
+    YamlContext yamlContext;
+    yamlContext._registry = &_registry;
+    llvm::yaml::Input yin(mb->getBuffer(), &yamlContext);
 
     // Fill vector with File objects created by parsing yaml.
     std::vector<const lld::File *> createdFiles;
     yin >> createdFiles;
 
-    // Quit now if there were parsing errors.
+    // Error out now if there were parsing errors.
     if (yin.error())
       return make_error_code(lld::YamlReaderError::illegal_value);
 
@@ -1297,14 +1285,20 @@ public:
     }
     return make_error_code(lld::YamlReaderError::success);
   }
-};
-} // end namespace yaml
+private:
+  const Registry &_registry;
+};  
+
+
+} // anonymous namespace
+
+void Registry::addSupportYamlFiles() {
+  add(std::unique_ptr<Reader>(new YAMLReader(*this)));
+}
+
 
 std::unique_ptr<Writer> createWriterYAML(const LinkingContext &context) {
   return std::unique_ptr<Writer>(new lld::yaml::Writer(context));
 }
 
-std::unique_ptr<Reader> createReaderYAML(const LinkingContext &context) {
-  return std::unique_ptr<Reader>(new lld::yaml::ReaderYAML(context));
-}
 } // end namespace lld

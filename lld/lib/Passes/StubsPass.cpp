@@ -32,7 +32,7 @@ void StubsPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   for (const DefinedAtom *atom : mergedFile->defined()) {
     for (const Reference *ref : *atom) {
       // Look at call-sites.
-      if (!this->isCallSite(ref->kind()))
+      if (!this->isCallSite(*ref))
         continue;
       const Atom *target = ref->target();
       assert(target != nullptr);
