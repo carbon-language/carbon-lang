@@ -320,7 +320,7 @@ int main(int argc, char **argv) {
         OS << "ON\n";
 #endif
       } else if (Arg == "--obj-root") {
-        OS << LLVM_OBJ_ROOT << '\n';
+        OS << ActivePrefix << '\n';
       } else if (Arg == "--src-root") {
         OS << LLVM_SRC_ROOT << '\n';
       } else {
