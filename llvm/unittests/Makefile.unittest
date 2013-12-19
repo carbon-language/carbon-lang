@@ -11,12 +11,22 @@
 #
 ##===----------------------------------------------------------------------===##
 
-# Set up variables for building a unit test.
-ifdef TESTNAME
-
 ifndef MAKEFILE_UNITTEST_NO_INCLUDE_COMMON
 include $(LEVEL)/Makefile.common
 endif
+
+# Clean up out-of-tree stray unittests for Lit not to pick one up.
+.PHONY: cleanup-local
+cleanup-local:
+	$(Verb) $(FIND) $(filter-out $(PARALLEL_DIRS), $(wildcard *)) -type f \
+	  -path '*/$(BuildMode)/*Tests$(EXEEXT)' \
+	  -exec rm -f '{}' \;
+
+all:: cleanup-local
+clean:: cleanup-local
+
+# Set up variables for building a unit test.
+ifdef TESTNAME
 
 LLVMUnitTestExe = $(BuildMode)/$(TESTNAME)Tests$(EXEEXT)
 
