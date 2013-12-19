@@ -31,10 +31,6 @@ public:
   PECOFFFileNode(PECOFFLinkingContext &ctx, StringRef path)
       : FileNode(path), _ctx(ctx) {}
 
-  static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::File;
-  }
-
   virtual ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
 
   /// \brief Parse the input file to lld::File.
@@ -65,10 +61,6 @@ public:
 class PECOFFGroup : public Group {
 public:
   PECOFFGroup() : Group(0) {}
-
-  static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::Control;
-  }
 
   virtual bool validate() { return true; }
   virtual bool dump(raw_ostream &) { return true; }

@@ -30,10 +30,6 @@ public:
   COREFileNode(CoreLinkingContext &ctx, StringRef path)
       : FileNode(path), _ctx(ctx) {}
 
-  static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::File;
-  }
-
   /// \brief validates the Input Element
   virtual bool validate() {
     (void)_ctx;

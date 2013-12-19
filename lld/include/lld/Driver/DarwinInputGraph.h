@@ -30,10 +30,6 @@ public:
   MachOFileNode(MachOLinkingContext &ctx, StringRef path, bool isWholeArchive)
       : FileNode(path), _ctx(ctx), _isWholeArchive(isWholeArchive) {}
 
-  static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::File;
-  }
-
   /// \brief validates the Input Element
   virtual bool validate() {
     (void)_ctx;

@@ -35,10 +35,6 @@ public:
         _isWholeArchive(isWholeArchive), _asNeeded(asNeeded),
         _isDashlPrefix(dashlPrefix) {}
 
-  static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::File;
-  }
-
   virtual ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
 
   /// \brief validates the Input Element
@@ -104,10 +100,6 @@ public:
   ELFGroup(const ELFLinkingContext &ctx, int64_t ordinal)
       : Group(ordinal), _elfLinkingContext(ctx) {}
 
-  static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::Control;
-  }
-
   /// \brief Validate the options
   virtual bool validate() {
     (void)_elfLinkingContext;
@@ -136,10 +128,6 @@ public:
       : FileNode(userPath, ordinal), _elfLinkingContext(ctx),
         _linkerScript(nullptr)
   {}
-
-  static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::File;
-  }
 
   /// \brief Is this node part of resolution ?
   virtual bool isHidden() const { return true; }
