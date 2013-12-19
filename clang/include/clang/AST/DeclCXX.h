@@ -1692,9 +1692,9 @@ public:
     CXXMethodDecl *CD =
       cast<CXXMethodDecl>(const_cast<CXXMethodDecl*>(this)->getCanonicalDecl());
 
-    // Methods declared in interfaces are automatically (pure) virtual.
-    if (CD->isVirtualAsWritten() ||
-          (CD->getParent()->isInterface() && CD->isUserProvided()))
+    // Member function is virtual if it is marked explicitly so, or if it is
+    // declared in __interface -- then it is automatically pure virtual.
+    if (CD->isVirtualAsWritten() || CD->isPure())
       return true;
 
     return (CD->begin_overridden_methods() != CD->end_overridden_methods());
