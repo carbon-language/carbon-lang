@@ -177,8 +177,7 @@ void ControlNode::setResolveState(uint32_t resolveState) {
 /// SimpleFileNode
 
 SimpleFileNode::SimpleFileNode(StringRef path, int64_t ordinal)
-    : InputElement(InputElement::Kind::SimpleFile, ordinal), _path(path),
-      _nextFileIndex(0), _resolveState(Resolver::StateNoChange) {}
+    : FileNode(path, ordinal) {}
 
 /// Group
 

@@ -129,7 +129,6 @@ public:
   /// Each input element in the graph can be a File or a control
   enum class Kind : uint8_t {
     Control,    // Represents a type associated with ControlNodes
-    SimpleFile, // Represents a type reserved for internal files
     File        // Represents a type associated with File Nodes
   };
 
@@ -354,42 +353,15 @@ public:
 };
 
 /// \brief Represents Internal Input files
-class SimpleFileNode : public InputElement {
+class SimpleFileNode : public FileNode {
 public:
   SimpleFileNode(StringRef path, int64_t ordinal = -1);
 
-  virtual ErrorOr<StringRef> path(const LinkingContext &) const {
-    return _path;
-  }
-
-  // The saved input path thats used when a file is not found while
-  // trying to parse a file
-  StringRef getUserPath() const { return _path; }
-
   virtual ~SimpleFileNode() {}
-
-  /// \brief Casting support
-  static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::SimpleFile;
-  }
-
-  /// \brief Get the list of files
-  range<InputGraph::FileIterT> files() {
-    return make_range(_files.begin(), _files.end());
-  }
-
-  /// \brief  number of files.
-  size_t numFiles() const { return _files.size(); }
 
   /// \brief add a file to the list of files
   virtual void appendInputFile(std::unique_ptr<File> f) {
     _files.push_back(std::move(f));
-  }
-
-  /// \brief add a file to the list of files
-  virtual void appendInputFiles(InputGraph::FileVectorT files) {
-    for (auto &ai : files)
-      _files.push_back(std::move(ai));
   }
 
   /// \brief validates the Input Element
@@ -411,23 +383,8 @@ public:
     return *_files[_nextFileIndex++];
   }
 
-  /// \brief Set the resolver state.
-  virtual void setResolveState(uint32_t resolveState) {
-    _resolveState = resolveState;
-  }
-
-  /// \brief Retrieve the resolve state.
-  virtual uint32_t getResolveState() const { return _resolveState; }
-
   // Do nothing here.
   virtual void resetNextIndex() {}
-
-protected:
-  StringRef _path;                // A string associated with this file.
-  InputGraph::FileVectorT _files; // Vector of lld::File objects
-  uint32_t _nextFileIndex; // The next file that would be processed by the
-                           // resolver
-  uint32_t _resolveState;  // The resolve state associated with this Node
 };
 } // namespace lld
 
