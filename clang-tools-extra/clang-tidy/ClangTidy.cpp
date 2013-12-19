@@ -35,6 +35,7 @@
 #include "clang/Tooling/Refactoring.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Signals.h"
+#include <algorithm>
 #include <vector>
 
 using namespace clang::ast_matchers;
@@ -78,6 +79,17 @@ private:
   llvm::OwningPtr<ASTConsumer> Consumer2;
 };
 
+static StringRef StaticAnalyzerCheckers[] = {
+#define GET_CHECKERS
+#define CHECKER(FULLNAME, CLASS, DESCFILE, HELPTEXT, GROUPINDEX, HIDDEN)       \
+  FULLNAME,
+#include "../../../lib/StaticAnalyzer/Checkers/Checkers.inc"
+#undef CHECKER
+#undef GET_CHECKERS
+};
+
+static const char *AnalyzerCheckerNamePrefix = "clang-analyzer-";
+
 /// \brief Action that runs clang-tidy and static analyzer checks.
 ///
 /// FIXME: Note that this inherits from \c AnalysisAction as this is the only
@@ -86,37 +98,45 @@ private:
 /// checkers in clang-tidy, but that needs some preparation work first.
 class ClangTidyAction : public ento::AnalysisAction {
 public:
-  ClangTidyAction(StringRef CheckRegexString,
+  ClangTidyAction(ChecksFilter &Filter,
                   SmallVectorImpl<ClangTidyCheck *> &Checks,
                   ClangTidyContext &Context, MatchFinder &Finder)
-      : CheckRegexString(CheckRegexString), Checks(Checks), Context(Context),
-        Finder(Finder) {}
+      : Filter(Filter), Checks(Checks), Context(Context), Finder(Finder) {}
+
+  typedef std::vector<std::pair<std::string, bool> > CheckersList;
+  void fillCheckersControlList(CheckersList &List) {
+    ArrayRef<StringRef> Checkers(StaticAnalyzerCheckers);
+
+    bool AnalyzerChecksEnabled = false;
+    for (unsigned i = 0; i < Checkers.size(); ++i) {
+      std::string Checker((AnalyzerCheckerNamePrefix + Checkers[i]).str());
+      AnalyzerChecksEnabled |=
+          Filter.IsCheckEnabled(Checker) && !Checkers[i].startswith("debug");
+    }
+
+    if (!AnalyzerChecksEnabled)
+      return;
+
+    // Run our regex against all possible static analyzer checkers.
+    // Note that debug checkers print values / run programs to visualize the CFG
+    // and are thus not applicable to clang-tidy in general.
+    // Always add all core checkers if any other static analyzer checks are
+    // enabled. This is currently necessary, as other path sensitive checks rely
+    // on the core checkers.
+    for (unsigned i = 0; i < Checkers.size(); ++i) {
+      std::string Checker((AnalyzerCheckerNamePrefix + Checkers[i]).str());
+
+      if (Checkers[i].startswith("core") ||
+          (!Checkers[i].startswith("debug") && Filter.IsCheckEnabled(Checker)))
+        List.push_back(std::make_pair(Checkers[i], true));
+    }
+  }
 
 private:
   clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &Compiler,
                                         StringRef File) LLVM_OVERRIDE {
     AnalyzerOptionsRef Options = Compiler.getAnalyzerOpts();
-    llvm::Regex CheckRegex(CheckRegexString);
-
-    // Always add all core checkers if any other static analyzer checks are
-    // enabled. This is currently necessary, as other path sensitive checks rely
-    // on the core checkers.
-    if (CheckRegex.match("clang-analyzer-"))
-      Options->CheckersControlList.push_back(std::make_pair("core", true));
-
-// Run our regex against all possible static analyzer checkers.
-// Note that debug checkers print values / run programs to visualize the CFG
-// and are thus not applicable to clang-tidy in general.
-#define GET_CHECKERS
-#define CHECKER(FULLNAME, CLASS, DESCFILE, HELPTEXT, GROUPINDEX, HIDDEN)       \
-  if (!StringRef(FULLNAME).startswith("core") &&                               \
-      !StringRef(FULLNAME).startswith("debug") &&                              \
-      CheckRegex.match("clang-analyzer-" FULLNAME))                            \
-    Options->CheckersControlList.push_back(std::make_pair(FULLNAME, true));
-#include "../../../lib/StaticAnalyzer/Checkers/Checkers.inc"
-#undef CHECKER
-#undef GET_CHECKERS
-
+    fillCheckersControlList(Options->CheckersControlList);
     Options->AnalysisStoreOpt = RegionStoreModel;
     Options->AnalysisDiagOpt = PD_TEXT;
     Options->AnalyzeNestedBlocks = true;
@@ -138,7 +158,7 @@ private:
     return true;
   }
 
-  std::string CheckRegexString;
+  ChecksFilter &Filter;
   SmallVectorImpl<ClangTidyCheck *> &Checks;
   ClangTidyContext &Context;
   MatchFinder &Finder;
@@ -146,9 +166,10 @@ private:
 
 class ClangTidyActionFactory : public FrontendActionFactory {
 public:
-  ClangTidyActionFactory(StringRef CheckRegexString, ClangTidyContext &Context)
-      : CheckRegexString(CheckRegexString), Context(Context) {
-    ClangTidyCheckFactories CheckFactories;
+  ClangTidyActionFactory(StringRef EnableChecksRegex,
+                         StringRef DisableChecksRegex,
+                         ClangTidyContext &Context)
+      : Filter(EnableChecksRegex, DisableChecksRegex), Context(Context) {
     for (ClangTidyModuleRegistry::iterator I = ClangTidyModuleRegistry::begin(),
                                            E = ClangTidyModuleRegistry::end();
          I != E; ++I) {
@@ -157,7 +178,7 @@ public:
     }
 
     SmallVector<ClangTidyCheck *, 16> Checks;
-    CheckFactories.createChecks(CheckRegexString, Checks);
+    CheckFactories.createChecks(Filter, Checks);
 
     for (SmallVectorImpl<ClangTidyCheck *>::iterator I = Checks.begin(),
                                                      E = Checks.end();
@@ -168,17 +189,49 @@ public:
   }
 
   virtual FrontendAction *create() {
-    return new ClangTidyAction(CheckRegexString, Checks, Context, Finder);
+    return new ClangTidyAction(Filter, Checks, Context, Finder);
+  }
+
+  std::vector<std::string> getCheckNames() {
+    std::vector<std::string> CheckNames;
+    for (ClangTidyCheckFactories::FactoryMap::const_iterator
+             I = CheckFactories.begin(),
+             E = CheckFactories.end();
+         I != E; ++I) {
+      if (Filter.IsCheckEnabled(I->first))
+        CheckNames.push_back(I->first);
+    }
+
+    ClangTidyAction Action(Filter, Checks, Context, Finder);
+    ClangTidyAction::CheckersList AnalyzerChecks;
+    Action.fillCheckersControlList(AnalyzerChecks);
+    for (ClangTidyAction::CheckersList::const_iterator
+             I = AnalyzerChecks.begin(),
+             E = AnalyzerChecks.end();
+         I != E; ++I)
+      CheckNames.push_back(AnalyzerCheckerNamePrefix + I->first);
+
+    std::sort(CheckNames.begin(), CheckNames.end());
+    return CheckNames;
   }
 
 private:
-  std::string CheckRegexString;
+  ChecksFilter Filter;
   SmallVector<ClangTidyCheck *, 8> Checks;
   ClangTidyContext &Context;
   MatchFinder Finder;
+  ClangTidyCheckFactories CheckFactories;
 };
 
 } // namespace
+
+ChecksFilter::ChecksFilter(StringRef EnableChecksRegex,
+                           StringRef DisableChecksRegex)
+    : EnableChecks(EnableChecksRegex), DisableChecks(DisableChecksRegex) {}
+
+bool ChecksFilter::IsCheckEnabled(StringRef Name) {
+  return EnableChecks.match(Name) && !DisableChecks.match(Name);
+}
 
 ClangTidyMessage::ClangTidyMessage(StringRef Message) : Message(Message) {}
 
@@ -217,12 +270,24 @@ void ClangTidyCheck::run(const ast_matchers::MatchFinder::MatchResult &Result) {
   check(Result);
 }
 
-FrontendActionFactory *createClangTidyActionFactory(StringRef CheckRegexString,
-                                                    ClangTidyContext &Context) {
-  return new ClangTidyActionFactory(CheckRegexString, Context);
+FrontendActionFactory *
+createClangTidyActionFactory(StringRef EnableChecksRegex,
+                             StringRef DisableChecksRegex,
+                             ClangTidyContext &Context) {
+  return new ClangTidyActionFactory(EnableChecksRegex, DisableChecksRegex,
+                                    Context);
 }
 
-void runClangTidy(StringRef CheckRegexString,
+std::vector<std::string> getCheckNames(StringRef EnableChecksRegex,
+                                       StringRef DisableChecksRegex) {
+  SmallVector<ClangTidyError, 8> Errors;
+  clang::tidy::ClangTidyContext Context(&Errors);
+  ClangTidyActionFactory Factory(EnableChecksRegex, DisableChecksRegex,
+                                 Context);
+  return Factory.getCheckNames();
+}
+
+void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
                   const tooling::CompilationDatabase &Compilations,
                   ArrayRef<std::string> Ranges,
                   SmallVectorImpl<ClangTidyError> *Errors) {
@@ -233,7 +298,8 @@ void runClangTidy(StringRef CheckRegexString,
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
 
   Tool.setDiagnosticConsumer(&DiagConsumer);
-  Tool.run(createClangTidyActionFactory(CheckRegexString, Context));
+  Tool.run(createClangTidyActionFactory(EnableChecksRegex, DisableChecksRegex,
+                                        Context));
 }
 
 static void reportDiagnostic(const ClangTidyMessage &Message,

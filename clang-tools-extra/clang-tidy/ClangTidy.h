@@ -85,13 +85,30 @@ private:
   virtual void run(const ast_matchers::MatchFinder::MatchResult &Result);
 };
 
+/// \brief Filters checks by name.
+class ChecksFilter {
+public:
+  ChecksFilter(StringRef EnableChecksRegex, StringRef DisableChecksRegex);
+  bool IsCheckEnabled(StringRef Name);
+
+private:
+  llvm::Regex EnableChecks;
+  llvm::Regex DisableChecks;
+};
+
+/// \brief Fills the list of check names that are enabled when the provided
+/// filters are applied.
+std::vector<std::string> getCheckNames(StringRef EnableChecksRegex,
+                                       StringRef DisableChecksRegex);
+
 /// \brief Returns an action factory that runs the specified clang-tidy checks.
 tooling::FrontendActionFactory *
-createClangTidyActionFactory(StringRef CheckRegexString,
+createClangTidyActionFactory(StringRef EnableChecksRegex,
+                             StringRef DisableChecksRegex,
                              ClangTidyContext &Context);
 
 /// \brief Run a set of clang-tidy checks on a set of files.
-void runClangTidy(StringRef CheckRegexString,
+void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
                   const tooling::CompilationDatabase &Compilations,
                   ArrayRef<std::string> Ranges,
                   SmallVectorImpl<ClangTidyError> *Errors);

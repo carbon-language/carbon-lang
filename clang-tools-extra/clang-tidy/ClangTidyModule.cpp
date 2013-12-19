@@ -12,18 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangTidyModule.h"
-#include "llvm/Support/Regex.h"
 
 namespace clang {
 namespace tidy {
 
-CheckFactoryBase::~CheckFactoryBase() {}
-
 ClangTidyCheckFactories::~ClangTidyCheckFactories() {
-  for (std::map<std::string, CheckFactoryBase *>::iterator
-           I = Factories.begin(),
-           E = Factories.end();
-       I != E; ++I) {
+  for (FactoryMap::iterator I = Factories.begin(), E = Factories.end(); I != E;
+       ++I) {
     delete I->second;
   }
 }
@@ -34,13 +29,10 @@ void ClangTidyCheckFactories::addCheckFactory(StringRef Name,
 }
 
 void ClangTidyCheckFactories::createChecks(
-    StringRef CheckRegexString, SmallVectorImpl<ClangTidyCheck *> &Checks) {
-  llvm::Regex CheckRegex(CheckRegexString);
-  for (std::map<std::string, CheckFactoryBase *>::iterator
-           I = Factories.begin(),
-           E = Factories.end();
-       I != E; ++I) {
-    if (CheckRegex.match(I->first))
+    ChecksFilter &Filter, SmallVectorImpl<ClangTidyCheck *> &Checks) {
+  for (FactoryMap::iterator I = Factories.begin(), E = Factories.end(); I != E;
+       ++I) {
+    if (Filter.IsCheckEnabled(I->first))
       Checks.push_back(I->second->createCheck());
   }
 }

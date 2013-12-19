@@ -26,7 +26,7 @@ namespace tidy {
 /// this subclass in \c ClangTidyModule::addCheckFactories().
 class CheckFactoryBase {
 public:
-  virtual ~CheckFactoryBase();
+  virtual ~CheckFactoryBase() {}
   virtual ClangTidyCheck *createCheck() = 0;
 };
 
@@ -84,12 +84,15 @@ public:
   /// store them in \p Checks.
   ///
   /// The caller takes ownership of the return \c ClangTidyChecks.
-  void createChecks(StringRef CheckRegexString,
+  void createChecks(ChecksFilter &Filter,
                     SmallVectorImpl<ClangTidyCheck *> &Checks);
 
+  typedef std::map<std::string, CheckFactoryBase *> FactoryMap;
+  FactoryMap::const_iterator begin() const { return Factories.begin(); }
+  FactoryMap::const_iterator end() const { return Factories.end(); }
+
 private:
-  StringRef FilterRegex;
-  std::map<std::string, CheckFactoryBase *> Factories;
+  FactoryMap Factories;
 };
 
 } // end namespace tidy

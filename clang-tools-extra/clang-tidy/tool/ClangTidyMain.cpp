@@ -17,7 +17,6 @@
 
 #include "../ClangTidy.h"
 #include "clang/Tooling/CommonOptionsParser.h"
-#include <vector>
 
 using namespace clang::ast_matchers;
 using namespace clang::driver;
@@ -32,16 +31,34 @@ static cl::opt<std::string> Checks(
     "checks",
     cl::desc("Regular expression matching the names of the checks to be run."),
     cl::init(".*"), cl::cat(ClangTidyCategory));
+static cl::opt<std::string> DisableChecks(
+    "disable-checks",
+    cl::desc("Regular expression matching the names of the checks to disable."),
+    cl::init("clang-analyzer-alpha.*"), cl::cat(ClangTidyCategory));
 static cl::opt<bool> Fix("fix", cl::desc("Fix detected errors if possible."),
                          cl::init(false), cl::cat(ClangTidyCategory));
 
-// FIXME: Add option to list name/description of all checks.
+static cl::opt<bool> ListChecks("list-checks",
+                                cl::desc("List all enabled checks and exit."),
+                                cl::init(false), cl::cat(ClangTidyCategory));
 
 int main(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
 
+  // FIXME: Allow using --list-checks without positional arguments.
+  if (ListChecks) {
+    std::vector<std::string> CheckNames =
+        clang::tidy::getCheckNames(Checks, DisableChecks);
+    llvm::outs() << "Enabled checks:";
+    for (unsigned i = 0; i < CheckNames.size(); ++i)
+      llvm::outs() << "\n    " << CheckNames[i];
+    llvm::outs() << "\n\n";
+    return 0;
+  }
+
   SmallVector<clang::tidy::ClangTidyError, 16> Errors;
-  clang::tidy::runClangTidy(Checks, OptionsParser.getCompilations(),
+  clang::tidy::runClangTidy(Checks, DisableChecks,
+                            OptionsParser.getCompilations(),
                             OptionsParser.getSourcePathList(), &Errors);
   clang::tidy::handleErrors(Errors, Fix);
 
