@@ -685,6 +685,18 @@ class InstrInfo {
   //
   // This option is a temporary migration help. It will go away.
   bit guessInstructionProperties = 1;
+
+  // TableGen's instruction encoder generator has support for matching operands
+  // to bit-field variables both by name and by position. While matching by
+  // name is preferred, this is currently not possible for complex operands,
+  // and some targets still reply on the positional encoding rules. When
+  // generating a decoder for such targets, the positional encoding rules must
+  // be used by the decoder generator as well.
+  //
+  // This option is temporary; it will go away once the TableGen decoder
+  // generator has better support for complex operands and targets have
+  // migrated away from using positionally encoded operands.
+  bit decodePositionallyEncodedOperands = 0;
 }
 
 // Standard Pseudo Instructions.
