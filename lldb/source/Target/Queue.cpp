@@ -18,9 +18,12 @@ using namespace lldb_private;
 Queue::Queue (ProcessSP process_sp, lldb::queue_id_t queue_id, const char *queue_name) :
     m_process_wp (),
     m_queue_id (queue_id),
-    m_queue_name (queue_name),
+    m_queue_name (),
     m_enqueued_items()
 {
+    if (queue_name)
+        m_queue_name = queue_name;
+
     m_process_wp = process_sp;
     m_index_id = process_sp->AssignIndexIDToQueue (queue_id);
 }
