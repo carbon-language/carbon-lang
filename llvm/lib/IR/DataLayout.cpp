@@ -18,6 +18,7 @@
 
 #include "llvm/IR/DataLayout.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Module.h"
@@ -151,6 +152,21 @@ DataLayout::InvalidPointerElem = { 0U, 0U, 0U, ~0U };
 //                       DataLayout Class Implementation
 //===----------------------------------------------------------------------===//
 
+static LayoutAlignElem DefaultAlignments[] = {
+  { INTEGER_ALIGN, 1, 1, 1 },    // i1
+  { INTEGER_ALIGN, 8, 1, 1 },    // i8
+  { INTEGER_ALIGN, 16, 2, 2 },   // i16
+  { INTEGER_ALIGN, 32, 4, 4 },   // i32
+  { INTEGER_ALIGN, 64, 4, 8 },   // i64
+  { FLOAT_ALIGN, 16, 2, 2 },     // half
+  { FLOAT_ALIGN, 32, 4, 4 },     // float
+  { FLOAT_ALIGN, 64, 8, 8 },     // double
+  { FLOAT_ALIGN, 128, 16, 16 },  // ppcf128, quad, ...
+  { VECTOR_ALIGN, 64, 8, 8 },    // v2i32, v1i64, ...
+  { VECTOR_ALIGN, 128, 16, 16 }, // v16i8, v8i16, v4i32, ...
+  { AGGREGATE_ALIGN, 0, 0, 8 }   // struct
+};
+
 void DataLayout::init(StringRef Desc) {
   initializeDataLayoutPass(*PassRegistry::getPassRegistry());
 
@@ -159,18 +175,11 @@ void DataLayout::init(StringRef Desc) {
   StackNaturalAlign = 0;
 
   // Default alignments
-  setAlignment(INTEGER_ALIGN,   1,  1, 1);   // i1
-  setAlignment(INTEGER_ALIGN,   1,  1, 8);   // i8
-  setAlignment(INTEGER_ALIGN,   2,  2, 16);  // i16
-  setAlignment(INTEGER_ALIGN,   4,  4, 32);  // i32
-  setAlignment(INTEGER_ALIGN,   4,  8, 64);  // i64
-  setAlignment(FLOAT_ALIGN,     2,  2, 16);  // half
-  setAlignment(FLOAT_ALIGN,     4,  4, 32);  // float
-  setAlignment(FLOAT_ALIGN,     8,  8, 64);  // double
-  setAlignment(FLOAT_ALIGN,    16, 16, 128); // ppcf128, quad, ...
-  setAlignment(VECTOR_ALIGN,    8,  8, 64);  // v2i32, v1i64, ...
-  setAlignment(VECTOR_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
-  setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct
+  for (int I = 0, N = array_lengthof(DefaultAlignments); I < N; ++I) {
+    LayoutAlignElem &E = DefaultAlignments[I];
+    setAlignment((AlignTypeEnum)E.AlignType, E.ABIAlign, E.PrefAlign,
+                 E.TypeBitWidth);
+  }
   setPointerAlignment(0, 8, 8, 8);
 
   parseSpecifier(Desc);
@@ -483,19 +492,34 @@ std::string DataLayout::getStringRepresentation() const {
   for (SmallVectorImpl<unsigned>::iterator asb = addrSpaces.begin(),
       ase = addrSpaces.end(); asb != ase; ++asb) {
     const PointerAlignElem &PI = Pointers.find(*asb)->second;
+
+    // Skip default.
+    if (PI.AddressSpace == 0 && PI.ABIAlign == 8 && PI.PrefAlign == 8 &&
+        PI.TypeByteWidth == 8)
+      continue;
+
     OS << "-p";
     if (PI.AddressSpace) {
       OS << PI.AddressSpace;
     }
-     OS << ":" << PI.TypeByteWidth*8 << ':' << PI.ABIAlign*8
-        << ':' << PI.PrefAlign*8;
+    OS << ":" << PI.TypeByteWidth*8 << ':' << PI.ABIAlign*8;
+    if (PI.PrefAlign != PI.ABIAlign)
+      OS << ':' << PI.PrefAlign*8;
   }
-  OS << "-S" << StackNaturalAlign*8;
 
+  LayoutAlignElem *DefaultStart = DefaultAlignments;
+  LayoutAlignElem *DefaultEnd =
+      DefaultStart + array_lengthof(DefaultAlignments);
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
     const LayoutAlignElem &AI = Alignments[i];
-    OS << '-' << (char)AI.AlignType << AI.TypeBitWidth << ':'
-       << AI.ABIAlign*8 << ':' << AI.PrefAlign*8;
+    if (std::find(DefaultStart, DefaultEnd, AI) != DefaultEnd)
+      continue;
+    OS << '-' << (char)AI.AlignType;
+    if (AI.TypeBitWidth)
+      OS << AI.TypeBitWidth;
+    OS << ':' << AI.ABIAlign*8;
+    if (AI.ABIAlign != AI.PrefAlign)
+      OS << ':' << AI.PrefAlign*8;
   }
 
   if (!LegalIntWidths.empty()) {
@@ -504,6 +528,10 @@ std::string DataLayout::getStringRepresentation() const {
     for (unsigned i = 1, e = LegalIntWidths.size(); i != e; ++i)
       OS << ':' << (unsigned)LegalIntWidths[i];
   }
+
+  if (StackNaturalAlign)
+    OS << "-S" << StackNaturalAlign*8;
+
   return OS.str();
 }
 
