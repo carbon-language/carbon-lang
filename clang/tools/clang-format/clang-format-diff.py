@@ -45,11 +45,11 @@ def main():
                       help='strip the smallest prefix containing P slashes')
   parser.add_argument('-regex', metavar='PATTERN', default=None,
                       help='custom pattern selecting file paths to reformat '
-                      '(case sensitive, override -iregex)')
+                      '(case sensitive, overrides -iregex)')
   parser.add_argument('-iregex', metavar='PATTERN', default=
                       r'.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hpp|m|mm|inc|js)',
                       help='custom pattern selecting file paths to reformat '
-                      '(case insensitive, override -regex)')
+                      '(case insensitive, overridden by -regex)')
   parser.add_argument(
       '-style',
       help=
