@@ -7,6 +7,7 @@
 #define __global__ __attribute__((global))
 #define __host__ __attribute__((host))
 #define __shared__ __attribute__((shared))
+#define __launch_bounds__(...) __attribute__((launch_bounds(__VA_ARGS__)))
 
 struct dim3 {
   unsigned x, y, z;

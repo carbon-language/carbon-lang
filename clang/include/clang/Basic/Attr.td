@@ -414,6 +414,9 @@ def CUDALaunchBounds : InheritableAttr {
   let Spellings = [GNU<"launch_bounds">];
   let Args = [IntArgument<"MaxThreads">, DefaultIntArgument<"MinBlocks", 0>];
   let LangOpts = [CUDA];
+  // An AST node is created for this attribute, but is not used by other parts
+  // of the compiler. However, this node needs to exist in the AST because
+  // non-LLVM backends may be relying on the attribute's presence.
 }
 
 def CUDAShared : InheritableAttr {

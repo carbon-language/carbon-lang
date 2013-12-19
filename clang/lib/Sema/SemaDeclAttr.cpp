@@ -3352,7 +3352,8 @@ bool Sema::CheckRegparmAttr(const AttributeList &Attr, unsigned &numParams) {
   return false;
 }
 
-static void handleLaunchBoundsAttr(Sema &S, Decl *D, const AttributeList &Attr){
+static void handleLaunchBoundsAttr(Sema &S, Decl *D,
+                                   const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1 && Attr.getNumArgs() != 2) {
     // FIXME: 0 is not okay.
@@ -3366,9 +3367,12 @@ static void handleLaunchBoundsAttr(Sema &S, Decl *D, const AttributeList &Attr){
     return;
   }
 
-  uint32_t MaxThreads, MinBlocks;
-  if (!checkUInt32Argument(S, Attr, Attr.getArgAsExpr(0), MaxThreads, 1) ||
-      !checkUInt32Argument(S, Attr, Attr.getArgAsExpr(1), MinBlocks, 2))
+  uint32_t MaxThreads, MinBlocks = 0;
+  if (!checkUInt32Argument(S, Attr, Attr.getArgAsExpr(0), MaxThreads, 1))
+    return;
+  if (Attr.getNumArgs() > 1 && !checkUInt32Argument(S, Attr,
+                                                    Attr.getArgAsExpr(1),
+                                                    MinBlocks, 2))
     return;
 
   D->addAttr(::new (S.Context)
