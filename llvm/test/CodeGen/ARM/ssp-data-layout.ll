@@ -1,4 +1,4 @@
-; RUN: llc < %s -disable-fp-elim -march=arm -o - | FileCheck %s
+; RUN: llc < %s -disable-fp-elim -mtriple=arm-linux -o - | FileCheck %s
 ;  This test is fairly fragile.  The goal is to ensure that "large" stack
 ;  objects are allocated closest to the stack protector (i.e., farthest away 
 ;  from the Stack Pointer.)  In standard SSP mode this means that large (>=
