@@ -12,9 +12,9 @@
   <div class="submenu">
     <label>Development </label>
     <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits">
-      llvm-commits Mailing List
+      Mailing List (commits/patches)
     </a>
-    <a href="http://groups.google.com/group/polly-dev">polly-dev Mailing List</a>
+    <a href="http://groups.google.com/group/polly-dev">Mailing List (discussion)</a>
     <a href="/bugs.html">Bug Reports</a>
     <a href="http://lab.llvm.org:8011/console?category=polly">Buildbot</a>
     <a href="http://buildd-clang.debian.net/coverage/">Code Coverage</a>
