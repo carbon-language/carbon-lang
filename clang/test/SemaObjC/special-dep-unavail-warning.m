@@ -30,16 +30,16 @@
 @class C;	// expected-note 10 {{forward declaration of class here}}
 
 void test(C *c) {
-  [c depInA]; // expected-warning {{'depInA' maybe deprecated because receiver type is unknown}}
-  [c unavailMeth]; // expected-warning {{'unavailMeth' maybe unavailable because receiver type is unknown}}
-  [c depInA1]; // expected-warning {{'depInA1' maybe deprecated because receiver type is unknown}}
-  [c unavailMeth1]; // expected-warning {{'unavailMeth1' maybe unavailable because receiver type is unknown}}
-  [c depInA2]; // expected-warning {{'depInA2' maybe deprecated because receiver type is unknown}}
-  [c unavailMeth2]; // expected-warning {{'unavailMeth2' maybe unavailable because receiver type is unknown}}
-  [c depunavailInA]; // expected-warning {{'depunavailInA' maybe unavailable because receiver type is unknown}} 
-  [c depunavailInA1];// expected-warning {{'depunavailInA1' maybe unavailable because receiver type is unknown}}
-  [c FuzzyMeth];      // expected-warning {{'FuzzyMeth' maybe deprecated because receiver type is unknown}}
-  [c FuzzyMeth1]; // expected-warning {{'FuzzyMeth1' maybe deprecated because receiver type is unknown}}
+  [c depInA]; // expected-warning {{'depInA' may be deprecated because the receiver type is unknown}}
+  [c unavailMeth]; // expected-warning {{'unavailMeth' may be unavailable because the receiver type is unknown}}
+  [c depInA1]; // expected-warning {{'depInA1' may be deprecated because the receiver type is unknown}}
+  [c unavailMeth1]; // expected-warning {{'unavailMeth1' may be unavailable because the receiver type is unknown}}
+  [c depInA2]; // expected-warning {{'depInA2' may be deprecated because the receiver type is unknown}}
+  [c unavailMeth2]; // expected-warning {{'unavailMeth2' may be unavailable because the receiver type is unknown}}
+  [c depunavailInA]; // expected-warning {{'depunavailInA' may be unavailable because the receiver type is unknown}} 
+  [c depunavailInA1];// expected-warning {{'depunavailInA1' may be unavailable because the receiver type is unknown}}
+  [c FuzzyMeth];      // expected-warning {{'FuzzyMeth' may be deprecated because the receiver type is unknown}}
+  [c FuzzyMeth1]; // expected-warning {{'FuzzyMeth1' may be deprecated because the receiver type is unknown}}
 
 }
 

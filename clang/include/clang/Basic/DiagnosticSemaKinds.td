@@ -3515,7 +3515,7 @@ def warn_deprecated : Warning<"%0 is deprecated">,
 def warn_deprecated_message : Warning<"%0 is deprecated: %1">,
     InGroup<DeprecatedDeclarations>;
 def warn_deprecated_fwdclass_message : Warning<
-    "%0 maybe deprecated because receiver type is unknown">,
+    "%0 may be deprecated because the receiver type is unknown">,
     InGroup<DeprecatedDeclarations>;
 def warn_deprecated_def : Warning<
     "Implementing deprecated %select{method|class|category}0">,
@@ -3523,7 +3523,8 @@ def warn_deprecated_def : Warning<
 def err_unavailable : Error<"%0 is unavailable">;
 def err_unavailable_message : Error<"%0 is unavailable: %1">;
 def warn_unavailable_fwdclass_message : Warning<
-    "%0 maybe unavailable because receiver type is unknown">;
+    "%0 may be unavailable because the receiver type is unknown">,
+    InGroup<UnavailableDeclarations>;
 def note_availability_specified_here : Note<
   "%0 has been explicitly marked "
   "%select{unavailable|deleted|deprecated}1 here">;

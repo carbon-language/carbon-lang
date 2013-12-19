@@ -16,7 +16,7 @@
 @implementation I2
 - (id) Meth : (ABGroupImportFilesScope*) scope
 {
-  id p =  [self initWithAccount : 0 filenames :[scope filenames]]; // expected-warning {{'filenames' maybe deprecated because receiver type is unknown}}
+  id p =  [self initWithAccount : 0 filenames :[scope filenames]]; // expected-warning {{'filenames' may be deprecated because the receiver type is unknown}}
   return 0;
 }
 - (id) filenames { return 0; }
