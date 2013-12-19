@@ -996,14 +996,14 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
             format("// A comment before a macro definition\n"
                    "#define a b",
                    getLLVMStyleWithColumns(20)));
-  EXPECT_EQ("void ffffff(int aaaaaaaaa,  // wwww\n"
-            "            int a, int bbb, // xxxxxxx\n"
-            "                            // yyyyyyyyy\n"
-            "            int c, int d, int e) {}",
+  EXPECT_EQ("void\n"
+            "ffffff(int aaaaaaaaa,  // wwww\n"
+            "       int bbbbbbbbbb, // xxxxxxx\n"
+            "                       // yyyyyyyyyy\n"
+            "       int c, int d, int e) {}",
             format("void ffffff(\n"
                    "    int aaaaaaaaa, // wwww\n"
-                   "    int a,\n"
-                   "    int bbb, // xxxxxxx yyyyyyyyy\n"
+                   "    int bbbbbbbbbb, // xxxxxxx yyyyyyyyyy\n"
                    "    int c, int d, int e) {}",
                    getLLVMStyleWithColumns(40)));
   EXPECT_EQ("//\t aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -1067,9 +1067,9 @@ TEST_F(FormatTest, PriorityOfCommentBreaking) {
             format("if (xxxxxxxxxx && yyy || // aaaaaa bbbbbbbb cccc\n"
                    "    zzz) q();",
                    getLLVMStyleWithColumns(40)));
-  EXPECT_EQ("fffffffff(&xxx, // aaaaaaaaaaaa\n"
-            "                // bbbbbbbbbbb\n"
-            "          zzz);",
+  EXPECT_EQ("fffffffff(\n"
+            "    &xxx, // aaaaaaaaaaaa bbbbbbbbbbb\n"
+            "    zzz);",
             format("fffffffff(&xxx, // aaaaaaaaaaaa bbbbbbbbbbb\n"
                    " zzz);",
                    getLLVMStyleWithColumns(40)));
