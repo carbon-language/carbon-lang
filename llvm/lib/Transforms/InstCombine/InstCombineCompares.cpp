@@ -1210,8 +1210,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           // We can also fold a signed comparison if the mask value and
           // comparison value are not negative. These constraints may not be
           // obvious, but we can prove that they are correct using an SMT
-          // solver such as "Z3" :
-          // http://rise4fun.com/Z3/DyMp
+          // solver.
           if (!ICI.isSigned() || (!AndCst->isNegative() && !RHS->isNegative()))
             CanFold = true;
         } else if (ShiftOpcode == Instruction::LShr) {
@@ -1219,8 +1218,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           // signed. We can also fold a signed comparison if the shifted mask
           // value and the shifted comparison value are not negative.
           // These constraints may not be obvious, but we can prove that they
-          // are correct using an SMT solver such as "Z3" :
-          // http://rise4fun.com/Z3/Tslfh
+          // are correct using an SMT solver.
           if (!ICI.isSigned())
             CanFold = true;
           else {
