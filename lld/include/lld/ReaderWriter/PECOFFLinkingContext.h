@@ -100,7 +100,6 @@ public:
   StringRef searchLibraryFile(StringRef path) const;
 
   StringRef decorateSymbol(StringRef name) const;
-  StringRef undecorateSymbol(StringRef name) const;
 
   void setEntrySymbolName(StringRef name) {
     if (!name.empty())
