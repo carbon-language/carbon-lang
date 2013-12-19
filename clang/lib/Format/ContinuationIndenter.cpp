@@ -338,7 +338,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
   // short. Also always add the penalty if the LHS is split over mutliple lines
   // to avoid unncessary line breaks that just work around this penalty.
   if (Current.is(tok::lessless) && State.Stack.back().FirstLessLess == 0 &&
-      (State.Column <= Style.ColumnLimit / 2 ||
+      (State.Column <= Style.ColumnLimit / 3 ||
        State.Stack.back().BreakBeforeParameter))
     Penalty += Style.PenaltyBreakFirstLessLess;
 
