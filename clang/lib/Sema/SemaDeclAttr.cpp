@@ -3649,31 +3649,6 @@ static void handleCFUnknownTransferAttr(Sema &S, Decl *D,
              Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleNSBridgedAttr(Sema &S, Scope *Sc, Decl *D,
-                                const AttributeList &Attr) {
-  IdentifierLoc *Parm = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
-
-  // In Objective-C, verify that the type names an Objective-C type.
-  // We don't want to check this outside of ObjC because people sometimes
-  // do crazy C declarations of Objective-C types.
-  if (Parm && S.getLangOpts().ObjC1) {
-    // Check for an existing type with this name.
-    LookupResult R(S, DeclarationName(Parm->Ident), Parm->Loc,
-                   Sema::LookupOrdinaryName);
-    if (S.LookupName(R, Sc)) {
-      NamedDecl *Target = R.getFoundDecl();
-      if (Target && !isa<ObjCInterfaceDecl>(Target)) {
-        S.Diag(D->getLocStart(), diag::err_ns_bridged_not_interface);
-        S.Diag(Target->getLocStart(), diag::note_declared_at);
-      }
-    }
-  }
-
-  D->addAttr(::new (S.Context)
-             NSBridgedAttr(Attr.getRange(), S.Context, Parm ? Parm->Ident : 0,
-                           Attr.getAttributeSpellingListIndex()));
-}
-
 static void handleObjCBridgeAttr(Sema &S, Scope *Sc, Decl *D,
                                 const AttributeList &Attr) {
   IdentifierLoc * Parm = Attr.isArgIdent(0) ? Attr.getArgAsIdent(0) : 0;
@@ -3969,9 +3944,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
 
   case AttributeList::AT_ObjCRequiresSuper:
       handleObjCRequiresSuperAttr(S, D, Attr); break;
-      
-  case AttributeList::AT_NSBridged:
-    handleNSBridgedAttr(S, scope, D, Attr); break;
       
   case AttributeList::AT_ObjCBridge:
     handleObjCBridgeAttr(S, scope, D, Attr); break;

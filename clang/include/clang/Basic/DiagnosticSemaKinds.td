@@ -2451,9 +2451,6 @@ def warn_objc_implementation_missing_designated_init_override : Warning<
   "method override for the designated initializer of the superclass %objcinstance0 not found">,
   InGroup<ObjCDesignatedInit>;
 
-def err_ns_bridged_not_interface : Error<
-  "parameter of 'ns_bridged' attribute does not name an Objective-C class">;
-  
 // objc_bridge attribute diagnostics.
 def err_objc_attr_not_id : Error<
   "parameter of %0 attribute must be a single name of an Objective-C %select{class|protocol}1">;

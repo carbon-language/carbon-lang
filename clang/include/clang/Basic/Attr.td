@@ -634,12 +634,6 @@ def NoThrow : InheritableAttr {
   let Spellings = [GNU<"nothrow">, CXX11<"gnu", "nothrow">];
 }
 
-def NSBridged : InheritableAttr {
-  let Spellings = [GNU<"ns_bridged">];
-  let Subjects = SubjectList<[Struct], ErrorDiag, "ExpectedStruct">;
-  let Args = [IdentifierArgument<"BridgedType", 1>];
-}
-
 def ObjCBridge : InheritableAttr {
   let Spellings = [GNU<"objc_bridge">];
   let Subjects = SubjectList<[Record], ErrorDiag>;
