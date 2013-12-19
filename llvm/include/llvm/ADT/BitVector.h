@@ -267,7 +267,8 @@ public:
       Bits[I / BITWORD_SIZE] = ~0UL;
 
     BitWord PostfixMask = (1UL << (E % BITWORD_SIZE)) - 1;
-    Bits[I / BITWORD_SIZE] |= PostfixMask;
+    if (I < E)
+      Bits[I / BITWORD_SIZE] |= PostfixMask;
 
     return *this;
   }
@@ -305,7 +306,8 @@ public:
       Bits[I / BITWORD_SIZE] = 0UL;
 
     BitWord PostfixMask = (1UL << (E % BITWORD_SIZE)) - 1;
-    Bits[I / BITWORD_SIZE] &= ~PostfixMask;
+    if (I < E)
+      Bits[I / BITWORD_SIZE] &= ~PostfixMask;
 
     return *this;
   }

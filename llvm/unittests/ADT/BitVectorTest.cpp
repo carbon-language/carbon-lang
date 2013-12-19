@@ -356,6 +356,12 @@ TYPED_TEST(BitVectorTest, RangeOps) {
   EXPECT_TRUE( E.test(1));
   EXPECT_TRUE( E.test(32));
   EXPECT_FALSE(E.test(33));
+
+  TypeParam BufferOverrun;
+  unsigned size = sizeof(unsigned long) * 8;
+  BufferOverrun.resize(size);
+  BufferOverrun.reset(0, size);
+  BufferOverrun.set(0, size);
 }
 
 TYPED_TEST(BitVectorTest, CompoundTestReset) {
