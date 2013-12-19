@@ -74,7 +74,7 @@ void ReportUMR(StackTrace *stack, u32 origin) {
   Printf("%s", d.Warning());
   Report(" WARNING: MemorySanitizer: use-of-uninitialized-value\n");
   Printf("%s", d.End());
-  StackTrace::PrintStack(stack->trace, stack->size);
+  stack->Print();
   if (origin) {
     DescribeOrigin(origin);
   }
@@ -85,7 +85,7 @@ void ReportExpectedUMRNotFound(StackTrace *stack) {
   SpinMutexLock l(&CommonSanitizerReportMutex);
 
   Printf(" WARNING: Expected use of uninitialized value not found\n");
-  StackTrace::PrintStack(stack->trace, stack->size);
+  stack->Print();
 }
 
 void ReportAtExitStatistics() {

@@ -348,7 +348,7 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   alloca_stack.trace[0] = frame_pc + 16;
   alloca_stack.size = 1;
   Printf("%s", d.EndLocation());
-  PrintStack(&alloca_stack);
+  alloca_stack.Print();
   // Report the number of stack objects.
   char *p;
   uptr n_objects = (uptr)internal_simple_strtoll(frame_descr, &p, 10);
@@ -441,7 +441,7 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
            d.EndAllocation());
     StackTrace free_stack;
     chunk.GetFreeStack(&free_stack);
-    PrintStack(&free_stack);
+    free_stack.Print();
     Printf("%spreviously allocated by thread T%d%s here:%s\n",
            d.Allocation(), alloc_thread->tid,
            ThreadNameWithParenthesis(alloc_thread, tname, sizeof(tname)),
@@ -452,7 +452,7 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
            ThreadNameWithParenthesis(alloc_thread, tname, sizeof(tname)),
            d.EndAllocation());
   }
-  PrintStack(&alloc_stack);
+  alloc_stack.Print();
   DescribeThread(GetCurrentThread());
   if (free_thread)
     DescribeThread(free_thread);
@@ -491,7 +491,7 @@ void DescribeThread(AsanThreadContext *context) {
                                    tname, sizeof(tname)));
   uptr stack_size;
   const uptr *stack_trace = StackDepotGet(context->stack_id, &stack_size);
-  PrintStack(stack_trace, stack_size);
+  StackTrace::PrintStack(stack_trace, stack_size);
   // Recursively described parent thread if needed.
   if (flags()->print_full_thread_history) {
     AsanThreadContext *parent_context =
@@ -562,7 +562,7 @@ void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
              GetCurrentTidOrInvalid());
   Printf("%s", d.EndWarning());
   GET_STACK_TRACE_FATAL(pc, bp);
-  PrintStack(&stack);
+  stack.Print();
   Printf("AddressSanitizer can not provide additional info.\n");
   ReportErrorSummary("SEGV", &stack);
 }
@@ -580,7 +580,7 @@ void ReportDoubleFree(uptr addr, StackTrace *free_stack) {
   Printf("%s", d.EndWarning());
   CHECK_GT(free_stack->size, 0);
   GET_STACK_TRACE_FATAL(free_stack->trace[0], free_stack->top_frame_bp);
-  PrintStack(&stack);
+  stack.Print();
   DescribeHeapAddress(addr, 1);
   ReportErrorSummary("double-free", &stack);
 }
@@ -597,7 +597,7 @@ void ReportFreeNotMalloced(uptr addr, StackTrace *free_stack) {
   Printf("%s", d.EndWarning());
   CHECK_GT(free_stack->size, 0);
   GET_STACK_TRACE_FATAL(free_stack->trace[0], free_stack->top_frame_bp);
-  PrintStack(&stack);
+  stack.Print();
   DescribeHeapAddress(addr, 1);
   ReportErrorSummary("bad-free", &stack);
 }
@@ -618,7 +618,7 @@ void ReportAllocTypeMismatch(uptr addr, StackTrace *free_stack,
   Printf("%s", d.EndWarning());
   CHECK_GT(free_stack->size, 0);
   GET_STACK_TRACE_FATAL(free_stack->trace[0], free_stack->top_frame_bp);
-  PrintStack(&stack);
+  stack.Print();
   DescribeHeapAddress(addr, 1);
   ReportErrorSummary("alloc-dealloc-mismatch", &stack);
   Report("HINT: if you don't care about these warnings you may set "
@@ -633,7 +633,7 @@ void ReportMallocUsableSizeNotOwned(uptr addr, StackTrace *stack) {
              "malloc_usable_size() for pointer which is "
              "not owned: %p\n", addr);
   Printf("%s", d.EndWarning());
-  PrintStack(stack);
+  stack->Print();
   DescribeHeapAddress(addr, 1);
   ReportErrorSummary("bad-malloc_usable_size", stack);
 }
@@ -646,7 +646,7 @@ void ReportAsanGetAllocatedSizeNotOwned(uptr addr, StackTrace *stack) {
              "__asan_get_allocated_size() for pointer which is "
              "not owned: %p\n", addr);
   Printf("%s", d.EndWarning());
-  PrintStack(stack);
+  stack->Print();
   DescribeHeapAddress(addr, 1);
   ReportErrorSummary("bad-__asan_get_allocated_size", stack);
 }
@@ -663,7 +663,7 @@ void ReportStringFunctionMemoryRangesOverlap(
              "memory ranges [%p,%p) and [%p, %p) overlap\n", \
              bug_type, offset1, offset1 + length1, offset2, offset2 + length2);
   Printf("%s", d.EndWarning());
-  PrintStack(stack);
+  stack->Print();
   DescribeAddress((uptr)offset1, length1);
   DescribeAddress((uptr)offset2, length2);
   ReportErrorSummary(bug_type, stack);
@@ -678,7 +678,7 @@ void WarnMacFreeUnallocated(
              "AddressSanitizer is ignoring this error on Mac OS now.\n",
              addr);
   PrintZoneForPointer(addr, zone_ptr, zone_name);
-  PrintStack(stack);
+  stack->Print();
   DescribeHeapAddress(addr, 1);
 }
 
@@ -689,7 +689,7 @@ void ReportMacMzReallocUnknown(
              "This is an unrecoverable problem, exiting now.\n",
              addr);
   PrintZoneForPointer(addr, zone_ptr, zone_name);
-  PrintStack(stack);
+  stack->Print();
   DescribeHeapAddress(addr, 1);
 }
 
@@ -700,7 +700,7 @@ void ReportMacCfReallocUnknown(
              "This is an unrecoverable problem, exiting now.\n",
              addr);
   PrintZoneForPointer(addr, zone_ptr, zone_name);
-  PrintStack(stack);
+  stack->Print();
   DescribeHeapAddress(addr, 1);
 }
 
@@ -776,7 +776,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
          d.EndAccess());
 
   GET_STACK_TRACE_FATAL(pc, bp);
-  PrintStack(&stack);
+  stack.Print();
 
   DescribeAddress(addr, access_size);
   ReportErrorSummary(bug_descr, &stack);

@@ -39,6 +39,9 @@ struct StackTrace {
 
   // Prints a symbolized stacktrace, followed by an empty line.
   static void PrintStack(const uptr *addr, uptr size);
+  void Print() const {
+    PrintStack(trace, size);
+  }
 
   void CopyFrom(const uptr *src, uptr src_size) {
     top_frame_bp = 0;

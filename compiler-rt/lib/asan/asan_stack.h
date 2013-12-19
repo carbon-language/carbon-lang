@@ -19,13 +19,6 @@
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 
-namespace __asan {
-
-void PrintStack(StackTrace *stack);
-void PrintStack(const uptr *trace, uptr size);
-
-}  // namespace __asan
-
 // Get the stack trace with the given pc and bp.
 // The pc will be in the position 0 of the resulting stack trace.
 // The bp may refer to the current frame or to the caller's frame.
@@ -80,7 +73,7 @@ void PrintStack(const uptr *trace, uptr size);
 #define PRINT_CURRENT_STACK()   \
   {                             \
     GET_STACK_TRACE_FATAL_HERE; \
-    PrintStack(&stack);         \
+    stack.Print();              \
   }
 
 #endif  // ASAN_STACK_H

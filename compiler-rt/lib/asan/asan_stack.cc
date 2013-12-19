@@ -12,21 +12,7 @@
 // Code for ASan stack trace.
 //===----------------------------------------------------------------------===//
 #include "asan_internal.h"
-#include "asan_flags.h"
 #include "asan_stack.h"
-#include "sanitizer_common/sanitizer_flags.h"
-
-namespace __asan {
-
-void PrintStack(const uptr *trace, uptr size) {
-  StackTrace::PrintStack(trace, size);
-}
-
-void PrintStack(StackTrace *stack) {
-  PrintStack(stack->trace, stack->size);
-}
-
-}  // namespace __asan
 
 // ------------------ Interface -------------- {{{1
 
