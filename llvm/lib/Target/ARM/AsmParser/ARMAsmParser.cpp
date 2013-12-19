@@ -19,6 +19,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -150,6 +151,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveSetFP(SMLoc L);
   bool parseDirectivePad(SMLoc L);
   bool parseDirectiveRegSave(SMLoc L, bool IsVector);
+  bool parseDirectiveInst(SMLoc L, char Suffix = '\0');
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -7809,6 +7811,12 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveRegSave(DirectiveID.getLoc(), false);
   else if (IDVal == ".vsave")
     return parseDirectiveRegSave(DirectiveID.getLoc(), true);
+  else if (IDVal == ".inst")
+    return parseDirectiveInst(DirectiveID.getLoc());
+  else if (IDVal == ".inst.n")
+    return parseDirectiveInst(DirectiveID.getLoc(), 'n');
+  else if (IDVal == ".inst.w")
+    return parseDirectiveInst(DirectiveID.getLoc(), 'w');
   return true;
 }
 
@@ -8285,6 +8293,78 @@ bool ARMAsmParser::parseDirectiveRegSave(SMLoc L, bool IsVector) {
     return Error(L, ".vsave expects DPR registers");
 
   getTargetStreamer().emitRegSave(Op->getRegList(), IsVector);
+  return false;
+}
+
+/// parseDirectiveInst
+///  ::= .inst opcode [, ...]
+///  ::= .inst.n opcode [, ...]
+///  ::= .inst.w opcode [, ...]
+bool ARMAsmParser::parseDirectiveInst(SMLoc Loc, char Suffix) {
+  int Width;
+
+  if (isThumb()) {
+    switch (Suffix) {
+    case 'n':
+      Width = 2;
+      break;
+    case 'w':
+      Width = 4;
+      break;
+    default:
+      Parser.eatToEndOfStatement();
+      return Error(Loc, "cannot determine Thumb instruction size, "
+                        "use inst.n/inst.w instead");
+    }
+  } else {
+    if (Suffix) {
+      Parser.eatToEndOfStatement();
+      return Error(Loc, "width suffixes are invalid in ARM mode");
+    }
+    Width = 4;
+  }
+
+  if (getLexer().is(AsmToken::EndOfStatement)) {
+    Parser.eatToEndOfStatement();
+    return Error(Loc, "expected expression following directive");
+  }
+
+  for (;;) {
+    const MCExpr *Expr;
+
+    if (getParser().parseExpression(Expr))
+      return Error(Loc, "expected expression");
+
+    const MCConstantExpr *Value = dyn_cast_or_null<MCConstantExpr>(Expr);
+    if (!Value)
+      return Error(Loc, "expected constant expression");
+
+    switch (Width) {
+    case 2:
+      if (Value->getValue() > 0xffff)
+        return Error(Loc, "inst.n operand is too big, use inst.w instead");
+      break;
+    case 4:
+      if (Value->getValue() > 0xffffffff)
+        return Error(Loc,
+                 StringRef(Suffix ? "inst.w" : "inst") + " operand is too big");
+      break;
+    default:
+      llvm_unreachable("only supported widths are 2 and 4");
+    }
+
+    getTargetStreamer().emitInst(Value->getValue(), Suffix);
+
+    if (getLexer().is(AsmToken::EndOfStatement))
+      break;
+
+    if (getLexer().isNot(AsmToken::Comma))
+      return Error(Loc, "unexpected token in directive");
+
+    Parser.Lex();
+  }
+
+  Parser.Lex();
   return false;
 }
 

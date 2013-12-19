@@ -95,6 +95,7 @@ public:
   virtual void emitFPU(unsigned FPU) = 0;
   virtual void emitArch(unsigned Arch) = 0;
   virtual void finishAttributeSection() = 0;
+  virtual void emitInst(uint32_t Inst, char Suffix = '\0') = 0;
 };
 
 /// MCStreamer - Streaming machine code generation interface.  This interface
