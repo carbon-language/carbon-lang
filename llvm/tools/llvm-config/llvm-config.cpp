@@ -248,6 +248,7 @@ int main(int argc, char **argv) {
       ActiveLibDir = ActiveObjRoot + "/lib";
       break;
     case CMakeBuildModeStyle:
+      ActivePrefix = ActiveObjRoot;
       ActiveBinDir = ActiveObjRoot + "/bin/" + build_mode;
       ActiveLibDir = ActiveObjRoot + "/lib/" + build_mode;
       break;
