@@ -38,8 +38,7 @@ struct StackTrace {
   uptr trace[kStackTraceMax];
 
   // Prints a symbolized stacktrace, followed by an empty line.
-  static void PrintStack(const uptr *addr, uptr size,
-                         SymbolizeCallback symbolize_callback = 0);
+  static void PrintStack(const uptr *addr, uptr size);
 
   void CopyFrom(const uptr *src, uptr src_size) {
     top_frame_bp = 0;
