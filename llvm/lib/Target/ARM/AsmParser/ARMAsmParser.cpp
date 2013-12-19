@@ -115,6 +115,10 @@ class ARMAsmParser : public MCTargetAsmParser {
     return ConstantPools[Section];
   }
 
+  void destroyConstantPool(const MCSection *Section) {
+    ConstantPools.erase(Section);
+  }
+
   ARMTargetStreamer &getTargetStreamer() {
     MCTargetStreamer &TS = getParser().getStreamer().getTargetStreamer();
     return static_cast<ARMTargetStreamer &>(TS);
@@ -211,6 +215,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectivePad(SMLoc L);
   bool parseDirectiveRegSave(SMLoc L, bool IsVector);
   bool parseDirectiveInst(SMLoc L, char Suffix = '\0');
+  bool parseDirectiveLtorg(SMLoc L);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -7894,6 +7899,8 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveInst(DirectiveID.getLoc(), 'n');
   else if (IDVal == ".inst.w")
     return parseDirectiveInst(DirectiveID.getLoc(), 'w');
+  else if (IDVal == ".ltorg")
+    return parseDirectiveLtorg(DirectiveID.getLoc());
   return true;
 }
 
@@ -8442,6 +8449,20 @@ bool ARMAsmParser::parseDirectiveInst(SMLoc Loc, char Suffix) {
   }
 
   Parser.Lex();
+  return false;
+}
+
+/// parseDirectiveLtorg
+///  ::= .ltorg
+bool ARMAsmParser::parseDirectiveLtorg(SMLoc L) {
+  MCStreamer &Streamer = getParser().getStreamer();
+  const MCSection *Section = Streamer.getCurrentSection().first;
+
+  if (ConstantPool *CP = getConstantPool(Section)) {
+    CP->emitEntries(Streamer);
+    CP = 0;
+    destroyConstantPool(Section);
+  }
   return false;
 }
 
