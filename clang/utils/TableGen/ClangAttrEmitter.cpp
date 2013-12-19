@@ -892,45 +892,41 @@ namespace {
           getType(), "SA->get" + std::string(getUpperName()) + "Loc()");
     }
   };
-
-  typedef OwningPtr<Argument> OwnedArgument;
 }
 
-static OwnedArgument createArgument(Record &Arg, StringRef Attr,
-                                    Record *Search = 0) {
+static Argument *createArgument(Record &Arg, StringRef Attr,
+                                Record *Search = 0) {
   if (!Search)
     Search = &Arg;
 
-  OwnedArgument Ptr;
+  Argument *Ptr = 0;
   llvm::StringRef ArgName = Search->getName();
 
-  if (ArgName == "AlignedArgument") Ptr.reset(new AlignedArgument(Arg, Attr));
-  else if (ArgName == "EnumArgument") Ptr.reset(new EnumArgument(Arg, Attr));
-  else if (ArgName == "ExprArgument") Ptr.reset(new ExprArgument(Arg, Attr));
+  if (ArgName == "AlignedArgument") Ptr = new AlignedArgument(Arg, Attr);
+  else if (ArgName == "EnumArgument") Ptr = new EnumArgument(Arg, Attr);
+  else if (ArgName == "ExprArgument") Ptr = new ExprArgument(Arg, Attr);
   else if (ArgName == "FunctionArgument")
-    Ptr.reset(new SimpleArgument(Arg, Attr, "FunctionDecl *"));
+    Ptr = new SimpleArgument(Arg, Attr, "FunctionDecl *");
   else if (ArgName == "IdentifierArgument")
-    Ptr.reset(new SimpleArgument(Arg, Attr, "IdentifierInfo *"));
-  else if (ArgName == "BoolArgument") Ptr.reset(new SimpleArgument(Arg, Attr, 
-                                                                   "bool"));
+    Ptr = new SimpleArgument(Arg, Attr, "IdentifierInfo *");
+  else if (ArgName == "BoolArgument") Ptr = new SimpleArgument(Arg, Attr, 
+                                                               "bool");
   else if (ArgName == "DefaultIntArgument")
-    Ptr.reset(new DefaultSimpleArgument(Arg, Attr, "int",
-                                        Arg.getValueAsInt("Default")));
-  else if (ArgName == "IntArgument")
-    Ptr.reset(new SimpleArgument(Arg, Attr, "int"));
-  else if (ArgName == "StringArgument")
-    Ptr.reset(new StringArgument(Arg, Attr));
-  else if (ArgName == "TypeArgument") Ptr.reset(new TypeArgument(Arg, Attr));
+    Ptr = new DefaultSimpleArgument(Arg, Attr, "int",
+                                    Arg.getValueAsInt("Default"));
+  else if (ArgName == "IntArgument") Ptr = new SimpleArgument(Arg, Attr, "int");
+  else if (ArgName == "StringArgument") Ptr = new StringArgument(Arg, Attr);
+  else if (ArgName == "TypeArgument") Ptr = new TypeArgument(Arg, Attr);
   else if (ArgName == "UnsignedArgument")
-    Ptr.reset(new SimpleArgument(Arg, Attr, "unsigned"));
+    Ptr = new SimpleArgument(Arg, Attr, "unsigned");
   else if (ArgName == "VariadicUnsignedArgument")
-    Ptr.reset(new VariadicArgument(Arg, Attr, "unsigned"));
+    Ptr = new VariadicArgument(Arg, Attr, "unsigned");
   else if (ArgName == "VariadicEnumArgument")
-    Ptr.reset(new VariadicEnumArgument(Arg, Attr));
+    Ptr = new VariadicEnumArgument(Arg, Attr);
   else if (ArgName == "VariadicExprArgument")
-    Ptr.reset(new VariadicExprArgument(Arg, Attr));
+    Ptr = new VariadicExprArgument(Arg, Attr);
   else if (ArgName == "VersionArgument")
-    Ptr.reset(new VersionArgument(Arg, Attr));
+    Ptr = new VersionArgument(Arg, Attr);
 
   if (!Ptr) {
     // Search in reverse order so that the most-derived type is handled first.
@@ -1121,8 +1117,7 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
                                         re = ArgRecords.end();
          ri != re; ++ri) {
       Record &ArgRecord = **ri;
-      // FIXME: when C++11 is allowed, the .take() can disappear.
-      Argument *Arg = createArgument(ArgRecord, R.getName()).take();
+      Argument *Arg = createArgument(ArgRecord, R.getName());
       assert(Arg);
       Args.push_back(Arg);
 
@@ -1229,11 +1224,6 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
        << LateParsed << "; }\n";
 
     OS << "};\n\n";
-
-    // FIXME: when C++11 is allowed, the delete can disappear along with the
-    // take().
-    for (ai = Args.begin(), ae = Args.end(); ai != ae; ++ai)
-      delete *ai;
   }
 
   OS << "#endif\n";
@@ -1323,8 +1313,7 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     std::vector<Record*> ArgRecords = R.getValueAsListOfDefs("Args");
     std::vector<Argument*> Args;
     for (ri = ArgRecords.begin(), re = ArgRecords.end(); ri != re; ++ri)
-      // FIXME: when C++11 is allowed, the .take() can disappear.
-      Args.push_back(createArgument(**ri, R.getName()).take());
+      Args.push_back(createArgument(**ri, R.getName()));
 
     for (ai = Args.begin(), ae = Args.end(); ai != ae; ++ai)
       (*ai)->writeAccessorDefinitions(OS);
@@ -1339,11 +1328,6 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     OS << ", getSpellingListIndex());\n}\n\n";
 
     writePrettyPrintFunction(R, Args, OS);
-
-    // FIXME: when C++11 is allowed, the delete can disappear along with the
-    // take().
-    for (ai = Args.begin(), ae = Args.end(); ai != ae; ++ai)
-      delete *ai;
   }
 }
 
@@ -1447,8 +1431,7 @@ void EmitClangAttrPCHRead(RecordKeeper &Records, raw_ostream &OS) {
     ArgRecords = R.getValueAsListOfDefs("Args");
     Args.clear();
     for (ai = ArgRecords.begin(), ae = ArgRecords.end(); ai != ae; ++ai) {
-      // FIXME: when C++11 is allowed, the .take() can disappear.
-      Argument *A = createArgument(**ai, R.getName()).take();
+      Argument *A = createArgument(**ai, R.getName());
       Args.push_back(A);
       A->writePCHReadDecls(OS);
     }
@@ -1462,11 +1445,6 @@ void EmitClangAttrPCHRead(RecordKeeper &Records, raw_ostream &OS) {
       OS << "    cast<InheritableAttr>(New)->setInherited(isInherited);\n";
     OS << "    break;\n";
     OS << "  }\n";
-
-    // FIXME: when C++11 is allowed, the delete can disappear along with the
-    // take().
-    for (ri = Args.begin(), re = Args.end(); ri != re; ++ri)
-      delete *ri;
   }
   OS << "  }\n";
 }
@@ -1643,8 +1621,7 @@ void EmitClangAttrTemplateInstantiate(RecordKeeper &Records, raw_ostream &OS) {
                                         re = ArgRecords.end();
          ri != re; ++ri) {
       Record &ArgRecord = **ri;
-      // FIXME: when C++11 is allowed, the .take() can disappear.
-      Argument *Arg = createArgument(ArgRecord, R.getName()).take();
+      Argument *Arg = createArgument(ArgRecord, R.getName());
       assert(Arg);
       Args.push_back(Arg);
     }
@@ -1659,11 +1636,6 @@ void EmitClangAttrTemplateInstantiate(RecordKeeper &Records, raw_ostream &OS) {
       (*ai)->writeTemplateInstantiationArgs(OS);
     }
     OS << ");\n    }\n";
-
-    // FIXME: when C++11 is allowed, the delete can disappear along with the
-    // take().
-    for (ai = Args.begin(), ae = Args.end(); ai != ae; ++ai)
-      delete *ai;
   }
   OS << "  } // end switch\n"
      << "  llvm_unreachable(\"Unknown attribute!\");\n"
