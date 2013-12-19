@@ -1195,33 +1195,43 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       ConstantInt *ShAmt;
       ShAmt = Shift ? dyn_cast<ConstantInt>(Shift->getOperand(1)) : 0;
 
-      // We can fold this as long as we can't shift unknown bits
-      // into the mask. This can happen with signed shift
-      // rights, as they sign-extend. With logical shifts,
-      // we must still make sure the comparison is not signed
-      // because we are effectively changing the
-      // position of the sign bit (PR17827).
-      // TODO: We can relax these constraints a bit more.
+      // This seemingly simple opportunity to fold away a shift turns out to
+      // be rather complicated. See PR17827
+      // ( http://llvm.org/bugs/show_bug.cgi?id=17827 ) for details.
       if (ShAmt) {
         bool CanFold = false;
         unsigned ShiftOpcode = Shift->getOpcode();
         if (ShiftOpcode == Instruction::AShr) {
-          // To test for the bad case of the signed shr, see if any
-          // of the bits shifted in could be tested after the mask.
-          Type *ShiftType = Shift->getType();
-          Type *AndType = AndCst->getType();
- 
-          unsigned ShiftBitWidth = ShiftType->getPrimitiveSizeInBits();
-          unsigned AndBitWidth = AndType->getPrimitiveSizeInBits();
-
-          int ShAmtVal = ShiftBitWidth - ShAmt->getLimitedValue(ShiftBitWidth);
-
-          if ((APInt::getHighBitsSet(AndBitWidth, AndBitWidth - ShAmtVal) &
-               AndCst->getValue()) == 0)
+          // There may be some constraints that make this possible,
+          // but nothing simple has been discovered yet.
+          CanFold = false;
+        } else if (ShiftOpcode == Instruction::Shl) {
+          // For a left shift, we can fold if the comparison is not signed.
+          // We can also fold a signed comparison if the mask value and
+          // comparison value are not negative. These constraints may not be
+          // obvious, but we can prove that they are correct using an SMT
+          // solver such as "Z3" :
+          // http://rise4fun.com/Z3/DyMp
+          if (!ICI.isSigned() || (!AndCst->isNegative() && !RHS->isNegative()))
             CanFold = true;
-        } else if (ShiftOpcode == Instruction::Shl ||
-                   ShiftOpcode == Instruction::LShr) {
-          CanFold = !ICI.isSigned();
+        } else if (ShiftOpcode == Instruction::LShr) {
+          // For a logical right shift, we can fold if the comparison is not
+          // signed. We can also fold a signed comparison if the shifted mask
+          // value and the shifted comparison value are not negative.
+          // These constraints may not be obvious, but we can prove that they
+          // are correct using an SMT solver such as "Z3" :
+          // http://rise4fun.com/Z3/Tslfh
+          if (!ICI.isSigned())
+            CanFold = true;
+          else {
+            ConstantInt *ShiftedAndCst =
+              cast<ConstantInt>(ConstantExpr::getShl(AndCst, ShAmt));
+            ConstantInt *ShiftedRHSCst =
+              cast<ConstantInt>(ConstantExpr::getShl(RHS, ShAmt));
+            
+            if (!ShiftedAndCst->isNegative() && !ShiftedRHSCst->isNegative())
+              CanFold = true;
+          }
         }
 
         if (CanFold) {
