@@ -36,12 +36,14 @@
 	background-color: #3b4567;
         -webkit-border-radius: 5px;
         -moz-border-radius: 5px;
-
+        border-radius: 5px;
 }
+
 #menu a {
 	padding:0 .2em;
         -webkit-border-radius: 5px;
         -moz-border-radius: 5px;
+        border-radius: 5px;
         font-size: 1.1em;
 	display:block;
         font-weight: bold;

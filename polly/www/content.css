@@ -67,7 +67,51 @@ tr { vertical-align:top }
   padding-bottom: 0em;
   margin-bottom: 0em;
   padding-left: .5em;
+
   color: #3b4567;
   font-size: 5em;
 }
 
+#head h1 span {
+  background: white;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  background: white;
+  box-shadow: 1px 2px 5px 1px rgba(0, 0, 0, 0.7),
+              -1px 2px 20px rgba(255, 255, 255, 0.6) inset; 
+}
+
+#head h1 span:before {
+  content: "\00a0 ";
+}
+#head h1 span:after {
+  content: "\00a0 ";
+}
+
+#head h2 {
+  color: #3b4567;
+  margin-left: 10em;
+  padding-top: 0em;
+  margin-top: 0em;
+  padding-left: .5em;
+}
+
+#head h2 span {
+  background: white;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  background: white;
+  box-shadow: 1px 2px 5px 1px rgba(0, 0, 0, 0.7),
+              -1px 2px 20px rgba(255, 255, 255, 0.6) inset; 
+  padding-top: 0.2em;
+  padding-bottom: 0.2em;
+}
+
+#head h2 span:before {
+  content: "\00a0\00a0\00a0";
+}
+#head h2 span:after {
+  content: "\00a0\00a0\00a0";
+}

@@ -1,5 +1,7 @@
 <div id="head">
-<h1>Polly</h1>
+<h1><span>Polly</span></h1>
+<h2><span>LLVM Framework for High-Level Loop and Data-Locality
+Optimizations</span></h2>
 </div>
 <div id="menu">
   <div class="submenu">
