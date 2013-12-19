@@ -636,15 +636,15 @@ void FileInfo::printUncondBranchInfo(raw_fd_ostream &OS, uint32_t &EdgeNo,
 // printCoverage - Print generic coverage info used by both printFuncCoverage
 // and printFileCoverage.
 void FileInfo::printCoverage(const GCOVCoverage &Coverage) const {
-  outs() << format("Lines executed:%.2lf%% of %u\n",
+  outs() << format("Lines executed:%.2f%% of %u\n",
                    double(Coverage.LinesExec)*100/Coverage.LogicalLines,
                    Coverage.LogicalLines);
   if (Options.BranchInfo) {
     if (Coverage.Branches) {
-      outs() << format("Branches executed:%.2lf%% of %u\n",
+      outs() << format("Branches executed:%.2f%% of %u\n",
                        double(Coverage.BranchesExec)*100/Coverage.Branches,
                        Coverage.Branches);
-      outs() << format("Taken at least once:%.2lf%% of %u\n",
+      outs() << format("Taken at least once:%.2f%% of %u\n",
                        double(Coverage.BranchesTaken)*100/Coverage.Branches,
                        Coverage.Branches);
     } else {
