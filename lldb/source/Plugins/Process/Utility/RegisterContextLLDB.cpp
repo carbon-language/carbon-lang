@@ -393,18 +393,35 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     if (m_sym_ctx_valid == false)
        decr_pc_and_recompute_addr_range = true;
 
-    // Or if we're in the middle of the stack (and not "above" an asynchronous event like sigtramp), and
-    // our "current" pc is the start of a function or our "current" pc is one past the end of a function...
+    // Or if we're in the middle of the stack (and not "above" an asynchronous event like sigtramp),
+    // and our "current" pc is the start of a function...
     if (m_sym_ctx_valid
         && GetNextFrame()->m_frame_type != eSigtrampFrame
         && GetNextFrame()->m_frame_type != eDebuggerFrame
         && addr_range.GetBaseAddress().IsValid()
-        && addr_range.GetBaseAddress().GetSection() == m_current_pc.GetSection())
+        && addr_range.GetBaseAddress().GetSection() == m_current_pc.GetSection()
+        && addr_range.GetBaseAddress().GetOffset() == m_current_pc.GetOffset())
     {
-        if (addr_range.GetBaseAddress().GetOffset() == m_current_pc.GetOffset() ||
-            addr_range.GetBaseAddress().GetOffset() + addr_range.GetByteSize() == m_current_pc.GetOffset())
+        decr_pc_and_recompute_addr_range = true;
+    }
+
+    // We need to back up the pc by 1 byte and re-search for the Symbol to handle the case where the "saved pc"
+    // value is pointing to the next function, e.g. if a function ends with a CALL instruction.
+    // FIXME this may need to be an architectural-dependent behavior; if so we'll need to add a member function
+    // to the ABI plugin and consult that.
+    if (decr_pc_and_recompute_addr_range)
+    {
+        Address temporary_pc(m_current_pc);
+        temporary_pc.SetOffset(m_current_pc.GetOffset() - 1);
+        m_sym_ctx.Clear(false);
+        m_sym_ctx_valid = false;
+        if ((pc_module_sp->ResolveSymbolContextForAddress (temporary_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
         {
-            decr_pc_and_recompute_addr_range = true;
+            m_sym_ctx_valid = true;
+        }
+        if (!m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false,  addr_range))
+        {
+            m_sym_ctx_valid = false;
         }
     }
 
