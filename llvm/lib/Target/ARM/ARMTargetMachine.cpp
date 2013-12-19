@@ -102,8 +102,11 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   // Integer registers are 32 bits.
   Ret += "-n32";
 
-  // The stack is 64 bit aligned on AAPCS and 32 bit aligned everywhere else.
-  if (ST.isAAPCS_ABI())
+  // The stack is 128 bit aligned on NaCl, 64 bit aligned on AAPCS and 32 bit
+  // aligned everywhere else.
+  if (ST.isTargetNaCl())
+    Ret += "-S128";
+  else if (ST.isAAPCS_ABI())
     Ret += "-S64";
   else
     Ret += "-S32";

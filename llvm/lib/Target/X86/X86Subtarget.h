@@ -246,7 +246,8 @@ public:
 
   /// Is this x86_64 with the ILP32 programming model (x32 ABI)?
   bool isTarget64BitILP32() const {
-    return In64BitMode && (TargetTriple.getEnvironment() == Triple::GNUX32);
+    return In64BitMode && (TargetTriple.getEnvironment() == Triple::GNUX32 ||
+                           TargetTriple.getOS() == Triple::NaCl);
   }
 
   /// Is this x86_64 with the LP64 programming model (standard AMD64, no x32)?
