@@ -80,8 +80,9 @@ R600
 SPARC
 -----
 
-* `SPARC resources <http://www.sparc.org/resource.htm>`_
-* `SPARC standards <http://www.sparc.org/standards.html>`_
+* `SPARC standards <http://sparc.org/standards>`_
+* `SPARC V9 ABI <http://sparc.org/standards/64.psabi.1.35.ps.Z>`_
+* `SPARC V8 ABI <http://sparc.org/standards/psABI3rd.pdf>`_
 
 SystemZ
 -------
