@@ -128,6 +128,10 @@ namespace opts {
   // -expand-relocs
   cl::opt<bool> ExpandRelocs("expand-relocs",
     cl::desc("Expand each shown relocation to multiple lines"));
+
+  // -codeview-linetables
+  cl::opt<bool> CodeViewLineTables("codeview-linetables",
+    cl::desc("Display CodeView line table information"));
 } // namespace opts
 
 static int ReturnValue = EXIT_SUCCESS;

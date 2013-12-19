@@ -24,6 +24,8 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/COFF.h"
+#include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Win64EH.h"
@@ -75,6 +77,8 @@ private:
     const std::vector<RelocationRef> &Rels);
 
   void printUnwindCode(const Win64EH::UnwindInfo& UI, ArrayRef<UnwindCode> UCs);
+
+  void printCodeViewLineTables(section_iterator SecI);
 
   void cacheRelocations();
 
@@ -648,6 +652,164 @@ void COFFDumper::printFileHeaders() {
   }
 }
 
+void COFFDumper::printCodeViewLineTables(section_iterator SecI) {
+  StringRef Data;
+  if (error(SecI->getContents(Data))) return;
+
+  SmallVector<StringRef, 10> FunctionNames;
+  StringMap<StringRef> FunctionLineTables;
+  StringRef FileIndexToStringOffsetTable;
+  StringRef StringTable;
+
+  ListScope D(W, "CodeViewLineTables");
+  {
+    DataExtractor DE(Data, true, 4);
+    uint32_t Offset = 0,
+             Magic = DE.getU32(&Offset);
+    W.printHex("Magic", Magic);
+    if (Magic != COFF::DEBUG_SECTION_MAGIC) {
+      error(object_error::parse_failed);
+      return;
+    }
+
+    bool Finished = false;
+    while (DE.isValidOffset(Offset) && !Finished) {
+      // The section consists of a number of subsection in the following format:
+      // |Type|PayloadSize|Payload...|
+      uint32_t SubSectionType = DE.getU32(&Offset),
+               PayloadSize = DE.getU32(&Offset);
+      ListScope S(W, "Subsection");
+      W.printHex("Type", SubSectionType);
+      W.printHex("PayloadSize", PayloadSize);
+      if (PayloadSize > Data.size() - Offset) {
+        error(object_error::parse_failed);
+        return;
+      }
+
+      // Print the raw contents to simplify debugging if anything goes wrong
+      // afterwards.
+      StringRef Contents = Data.substr(Offset, PayloadSize);
+      W.printBinaryBlock("Contents", Contents);
+
+      switch (SubSectionType) {
+      case COFF::DEBUG_LINE_TABLE_SUBSECTION: {
+        // Holds a PC to file:line table.  Some data to parse this subsection is
+        // stored in the other subsections, so just check sanity and store the
+        // pointers for deferred processing.
+
+        if (PayloadSize < 12) {
+          // There should be at least three words to store two function
+          // relocations and size of the code.
+          error(object_error::parse_failed);
+          return;
+        }
+
+        StringRef FunctionName;
+        if (error(resolveSymbolName(RelocMap[Obj->getCOFFSection(SecI)], Offset,
+                                    FunctionName)))
+          return;
+        W.printString("FunctionName", FunctionName);
+        if (FunctionLineTables.count(FunctionName) != 0) {
+          // Saw debug info for this function already?
+          error(object_error::parse_failed);
+          return;
+        }
+
+        FunctionLineTables[FunctionName] = Contents;
+        FunctionNames.push_back(FunctionName);
+        break;
+      }
+      case COFF::DEBUG_STRING_TABLE_SUBSECTION:
+        if (PayloadSize == 0 || StringTable.data() != 0 ||
+            Contents.back() != '\0') {
+          // Empty or duplicate or non-null-terminated subsection.
+          error(object_error::parse_failed);
+          return;
+        }
+        StringTable = Contents;
+        break;
+      case COFF::DEBUG_INDEX_SUBSECTION:
+        // Holds the translation table from file indices
+        // to offsets in the string table.
+
+        if (PayloadSize == 0 || FileIndexToStringOffsetTable.data() != 0) {
+          // Empty or duplicate subsection.
+          error(object_error::parse_failed);
+          return;
+        }
+        FileIndexToStringOffsetTable = Contents;
+        break;
+      }
+      Offset += PayloadSize;
+
+      // Align the reading pointer by 4.
+      Offset += (-Offset) % 4;
+    }
+  }
+
+  // Dump the line tables now that we've read all the subsections and know all
+  // the required information.
+  for (unsigned I = 0, E = FunctionNames.size(); I != E; ++I) {
+    StringRef Name = FunctionNames[I];
+    ListScope S(W, "FunctionLineTable");
+    W.printString("FunctionName", Name);
+
+    DataExtractor DE(FunctionLineTables[Name], true, 4);
+    uint32_t Offset = 8;  // Skip relocations.
+    uint32_t FunctionSize = DE.getU32(&Offset);
+    W.printHex("CodeSize", FunctionSize);
+    while (DE.isValidOffset(Offset)) {
+      // For each range of lines with the same filename, we have a segment
+      // in the line table.  The filename string is accessed using double
+      // indirection to the string table subsection using the index subsection.
+      uint32_t OffsetInIndex = DE.getU32(&Offset),
+               SegmentLength   = DE.getU32(&Offset),
+               FullSegmentSize = DE.getU32(&Offset);
+      if (FullSegmentSize != 12 + 8 * SegmentLength) {
+        error(object_error::parse_failed);
+        return;
+      }
+
+      uint32_t FilenameOffset;
+      {
+        DataExtractor SDE(FileIndexToStringOffsetTable, true, 4);
+        uint32_t OffsetInSDE = OffsetInIndex;
+        if (!SDE.isValidOffset(OffsetInSDE)) {
+          error(object_error::parse_failed);
+          return;
+        }
+        FilenameOffset = SDE.getU32(&OffsetInSDE);
+      }
+
+      if (FilenameOffset == 0 || FilenameOffset + 1 >= StringTable.size() ||
+          StringTable.data()[FilenameOffset - 1] != '\0') {
+        // Each string in an F3 subsection should be preceded by a null
+        // character.
+        error(object_error::parse_failed);
+        return;
+      }
+
+      StringRef Filename(StringTable.data() + FilenameOffset);
+      ListScope S(W, "FilenameSegment");
+      W.printString("Filename", Filename);
+      for (unsigned J = 0; J != SegmentLength && DE.isValidOffset(Offset);
+           ++J) {
+        // Then go the (PC, LineNumber) pairs.  The line number is stored in the
+        // least significant 31 bits of the respective word in the table.
+        uint32_t PC = DE.getU32(&Offset),
+                 LineNumber = DE.getU32(&Offset) & 0x7fffffff;
+        if (PC >= FunctionSize) {
+          error(object_error::parse_failed);
+          return;
+        }
+        char Buffer[32];
+        format("+0x%X", PC).snprint(Buffer, 32);
+        W.printNumber(Buffer, LineNumber);
+      }
+    }
+  }
+}
+
 void COFFDumper::printSections() {
   error_code EC;
 
@@ -706,6 +868,9 @@ void COFFDumper::printSections() {
         printSymbol(SymI);
       }
     }
+
+    if (Name == ".debug$S" && opts::CodeViewLineTables)
+      printCodeViewLineTables(SecI);
 
     if (opts::SectionData) {
       StringRef Data;

@@ -1,0 +1,282 @@
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj.coff-2012-i368 \
+RUN:   | FileCheck %s -check-prefix MFUN32
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj.coff-2012-x86_64 \
+RUN:   | FileCheck %s -check-prefix MFUN64
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2012-i368 \
+RUN:   | FileCheck %s -check-prefix MFILE32
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2012-x86_64 \
+RUN:   | FileCheck %s -check-prefix MFILE64
+
+MFUN32:      CodeViewLineTables [
+MFUN32-NEXT:   Magic: 0x4
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF1
+MFUN32-NEXT:     PayloadSize: 0x52
+MFUN32:        ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF5
+MFUN32-NEXT:     PayloadSize: 0x24
+MFUN32:        ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF1
+MFUN32-NEXT:     PayloadSize: 0x4B
+MFUN32:        ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF2
+MFUN32-NEXT:     PayloadSize: 0x30
+MFUN32:          FunctionName: _x
+MFUN32-NEXT:   ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF5
+MFUN32-NEXT:     PayloadSize: 0x24
+MFUN32:        ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF1
+MFUN32-NEXT:     PayloadSize: 0x4B
+MFUN32:        ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF2
+MFUN32-NEXT:     PayloadSize: 0x30
+MFUN32:          FunctionName: _y
+MFUN32-NEXT:   ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF5
+MFUN32-NEXT:     PayloadSize: 0x24
+MFUN32:        ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF1
+MFUN32-NEXT:     PayloadSize: 0x4B
+MFUN32:        ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF2
+MFUN32-NEXT:     PayloadSize: 0x40
+MFUN32:          FunctionName: _f
+MFUN32-NEXT:   ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF4
+MFUN32-NEXT:     PayloadSize: 0x18
+MFUN32:        ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF3
+MFUN32-NEXT:     PayloadSize: 0x46
+MFUN32:        ]
+MFUN32-NEXT:   Subsection [
+MFUN32-NEXT:     Type: 0xF1
+MFUN32-NEXT:     PayloadSize: 0x8
+MFUN32:        ]
+MFUN32-NEXT:   FunctionLineTable [
+MFUN32-NEXT:     FunctionName: _x
+MFUN32-NEXT:     CodeSize: 0xA
+MFUN32-NEXT:     FilenameSegment [
+MFUN32-NEXT:       Filename: d:\source.c
+MFUN32-NEXT:       +0x0: 3
+MFUN32-NEXT:       +0x3: 4
+MFUN32-NEXT:       +0x8: 5
+MFUN32-NEXT:     ]
+MFUN32-NEXT:   ]
+MFUN32-NEXT:   FunctionLineTable [
+MFUN32-NEXT:     FunctionName: _y
+MFUN32-NEXT:     CodeSize: 0xA
+MFUN32-NEXT:     FilenameSegment [
+MFUN32-NEXT:       Filename: d:\source.c
+MFUN32-NEXT:       +0x0: 7
+MFUN32-NEXT:       +0x3: 8
+MFUN32-NEXT:       +0x8: 9
+MFUN32-NEXT:     ]
+MFUN32-NEXT:   ]
+MFUN32-NEXT:   FunctionLineTable [
+MFUN32-NEXT:     FunctionName: _f
+MFUN32-NEXT:     CodeSize: 0x14
+MFUN32-NEXT:     FilenameSegment [
+MFUN32-NEXT:       Filename: d:\source.c
+MFUN32-NEXT:       +0x0: 11
+MFUN32-NEXT:       +0x3: 12
+MFUN32-NEXT:       +0x8: 13
+MFUN32-NEXT:       +0xD: 14
+MFUN32-NEXT:       +0x12: 15
+MFUN32-NEXT:     ]
+MFUN32-NEXT:   ]
+MFUN32-NEXT: ]
+
+MFUN64:      CodeViewLineTables [
+MFUN64-NEXT:   Magic: 0x4
+MFUN64-NEXT:   Subsection [
+MFUN64-NEXT:     Type: 0xF1
+MFUN64-NEXT:     PayloadSize: 0x52
+MFUN64:        ]
+MFUN64-NEXT:   Subsection [
+MFUN64-NEXT:     Type: 0xF1
+MFUN64-NEXT:     PayloadSize: 0x4B
+MFUN64:        ]
+MFUN64-NEXT:   Subsection [
+MFUN64-NEXT:     Type: 0xF2
+MFUN64-NEXT:     PayloadSize: 0x30
+MFUN64:          FunctionName: x
+MFUN64-NEXT:   ]
+MFUN64-NEXT:   Subsection [
+MFUN64-NEXT:     Type: 0xF1
+MFUN64-NEXT:     PayloadSize: 0x4B
+MFUN64:        ]
+MFUN64-NEXT:   Subsection [
+MFUN64-NEXT:     Type: 0xF2
+MFUN64-NEXT:     PayloadSize: 0x30
+MFUN64:          FunctionName: y
+MFUN64-NEXT:   ]
+MFUN64-NEXT:   Subsection [
+MFUN64-NEXT:     Type: 0xF1
+MFUN64-NEXT:     PayloadSize: 0x4B
+MFUN64:        ]
+MFUN64-NEXT:   Subsection [
+MFUN64-NEXT:     Type: 0xF2
+MFUN64-NEXT:     PayloadSize: 0x40
+MFUN64:          FunctionName: f
+MFUN64-NEXT:   ]
+MFUN64-NEXT:   Subsection [
+MFUN64-NEXT:     Type: 0xF4
+MFUN64-NEXT:     PayloadSize: 0x18
+MFUN64:        ]
+MFUN64-NEXT:   Subsection [
+MFUN64-NEXT:     Type: 0xF3
+MFUN64-NEXT:     PayloadSize: 0xD
+MFUN64:        ]
+MFUN64-NEXT:   Subsection [
+MFUN64-NEXT:     Type: 0xF1
+MFUN64-NEXT:     PayloadSize: 0x8
+MFUN64:        ]
+MFUN64-NEXT:   FunctionLineTable [
+MFUN64-NEXT:     FunctionName: x
+MFUN64-NEXT:     CodeSize: 0xE
+MFUN64-NEXT:     FilenameSegment [
+MFUN64-NEXT:       Filename: d:\source.c
+MFUN64-NEXT:       +0x0: 3
+MFUN64-NEXT:       +0x4: 4
+MFUN64-NEXT:       +0x9: 5
+MFUN64-NEXT:     ]
+MFUN64-NEXT:   ]
+MFUN64-NEXT:   FunctionLineTable [
+MFUN64-NEXT:     FunctionName: y
+MFUN64-NEXT:     CodeSize: 0xE
+MFUN64-NEXT:     FilenameSegment [
+MFUN64-NEXT:       Filename: d:\source.c
+MFUN64-NEXT:       +0x0: 7
+MFUN64-NEXT:       +0x4: 8
+MFUN64-NEXT:       +0x9: 9
+MFUN64-NEXT:     ]
+MFUN64-NEXT:   ]
+MFUN64-NEXT:   FunctionLineTable [
+MFUN64-NEXT:     FunctionName: f
+MFUN64-NEXT:     CodeSize: 0x18
+MFUN64-NEXT:     FilenameSegment [
+MFUN64-NEXT:       Filename: d:\source.c
+MFUN64-NEXT:       +0x0: 11
+MFUN64-NEXT:       +0x4: 12
+MFUN64-NEXT:       +0x9: 13
+MFUN64-NEXT:       +0xE: 14
+MFUN64-NEXT:       +0x13: 15
+MFUN64-NEXT:     ]
+MFUN64-NEXT:   ]
+MFUN64-NEXT: ]
+
+MFILE32:      CodeViewLineTables [
+MFILE32-NEXT:   Magic: 0x4
+MFILE32-NEXT:   Subsection [
+MFILE32-NEXT:     Type: 0xF1
+MFILE32-NEXT:     PayloadSize: 0x51
+MFILE32:        ]
+MFILE32-NEXT:   Subsection [
+MFILE32-NEXT:     Type: 0xF5
+MFILE32-NEXT:     PayloadSize: 0x24
+MFILE32:        ]
+MFILE32-NEXT:   Subsection [
+MFILE32-NEXT:     Type: 0xF1
+MFILE32-NEXT:     PayloadSize: 0x4B
+MFILE32:        ]
+MFILE32-NEXT:   Subsection [
+MFILE32-NEXT:     Type: 0xF2
+MFILE32-NEXT:     PayloadSize: 0x64
+MFILE32:          FunctionName: _f
+MFILE32-NEXT:   ]
+MFILE32-NEXT:   Subsection [
+MFILE32-NEXT:     Type: 0xF4
+MFILE32-NEXT:     PayloadSize: 0x28
+MFILE32:        ]
+MFILE32-NEXT:   Subsection [
+MFILE32-NEXT:     Type: 0xF3
+MFILE32-NEXT:     PayloadSize: 0x57
+MFILE32:        ]
+MFILE32-NEXT:   Subsection [
+MFILE32-NEXT:     Type: 0xF1
+MFILE32-NEXT:     PayloadSize: 0x8
+MFILE32:        ]
+MFILE32-NEXT:   FunctionLineTable [
+MFILE32-NEXT:     FunctionName: _f
+MFILE32-NEXT:     CodeSize: 0x14
+MFILE32-NEXT:     FilenameSegment [
+MFILE32-NEXT:       Filename: d:\input.c
+MFILE32-NEXT:       +0x0: 3
+MFILE32-NEXT:     ]
+MFILE32-NEXT:     FilenameSegment [
+MFILE32-NEXT:       Filename: d:\one.c
+MFILE32-NEXT:       +0x3: 1
+MFILE32-NEXT:     ]
+MFILE32-NEXT:     FilenameSegment [
+MFILE32-NEXT:       Filename: d:\two.c
+MFILE32-NEXT:       +0x8: 2
+MFILE32-NEXT:     ]
+MFILE32-NEXT:     FilenameSegment [
+MFILE32-NEXT:       Filename: d:\one.c
+MFILE32-NEXT:       +0xD: 7
+MFILE32-NEXT:       +0x12: 8
+MFILE32-NEXT:     ]
+MFILE32-NEXT:   ]
+MFILE32-NEXT: ]
+
+MFILE64:      CodeViewLineTables [
+MFILE64-NEXT:   Magic: 0x4
+MFILE64-NEXT:   Subsection [
+MFILE64-NEXT:     Type: 0xF1
+MFILE64-NEXT:     PayloadSize: 0x51
+MFILE64:        ]
+MFILE64-NEXT:   Subsection [
+MFILE64-NEXT:     Type: 0xF1
+MFILE64-NEXT:     PayloadSize: 0x4B
+MFILE64:        ]
+MFILE64-NEXT:   Subsection [
+MFILE64-NEXT:     Type: 0xF2
+MFILE64-NEXT:     PayloadSize: 0x64
+MFILE64:          FunctionName: f
+MFILE64-NEXT:   ]
+MFILE64-NEXT:   Subsection [
+MFILE64-NEXT:     Type: 0xF4
+MFILE64-NEXT:     PayloadSize: 0x28
+MFILE64:        ]
+MFILE64-NEXT:   Subsection [
+MFILE64-NEXT:     Type: 0xF3
+MFILE64-NEXT:     PayloadSize: 0x1E
+MFILE64:        ]
+MFILE64-NEXT:   Subsection [
+MFILE64-NEXT:     Type: 0xF1
+MFILE64-NEXT:     PayloadSize: 0x8
+MFILE64:        ]
+MFILE64-NEXT:   FunctionLineTable [
+MFILE64-NEXT:     FunctionName: f
+MFILE64-NEXT:     CodeSize: 0x18
+MFILE64-NEXT:     FilenameSegment [
+MFILE64-NEXT:       Filename: d:\input.c
+MFILE64-NEXT:       +0x0: 3
+MFILE64-NEXT:     ]
+MFILE64-NEXT:     FilenameSegment [
+MFILE64-NEXT:       Filename: d:\one.c
+MFILE64-NEXT:       +0x4: 1
+MFILE64-NEXT:     ]
+MFILE64-NEXT:     FilenameSegment [
+MFILE64-NEXT:       Filename: d:\two.c
+MFILE64-NEXT:       +0x9: 2
+MFILE64-NEXT:     ]
+MFILE64-NEXT:     FilenameSegment [
+MFILE64-NEXT:       Filename: d:\one.c
+MFILE64-NEXT:       +0xE: 7
+MFILE64-NEXT:       +0x13: 8
+MFILE64-NEXT:     ]
+MFILE64-NEXT:   ]
+MFILE64-NEXT: ]

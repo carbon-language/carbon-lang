@@ -611,6 +611,13 @@ namespace COFF {
     }
   };
 
+  enum CodeViewLineTableIdentifiers {
+    DEBUG_SECTION_MAGIC           = 0x4,
+    DEBUG_LINE_TABLE_SUBSECTION   = 0xF2,
+    DEBUG_STRING_TABLE_SUBSECTION = 0xF3,
+    DEBUG_INDEX_SUBSECTION        = 0xF4
+  };
+
 } // End namespace COFF.
 } // End namespace llvm.
 
