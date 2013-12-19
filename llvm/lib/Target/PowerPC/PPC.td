@@ -283,6 +283,9 @@ include "PPCCallingConv.td"
 
 def PPCInstrInfo : InstrInfo {
   let isLittleEndianEncoding = 1;
+
+  // FIXME: Unset this when no longer needed!
+  let decodePositionallyEncodedOperands = 1;
 }
 
 def PPCAsmParser : AsmParser {

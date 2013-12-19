@@ -411,6 +411,7 @@ def PPCS5ImmAsmOperand : AsmOperandClass {
 def s5imm   : Operand<i32> {
   let PrintMethod = "printS5ImmOperand";
   let ParserMatchClass = PPCS5ImmAsmOperand;
+  let DecoderMethod = "decodeSImmOperand<5>";
 }
 def PPCU5ImmAsmOperand : AsmOperandClass {
   let Name = "U5Imm"; let PredicateMethod = "isU5Imm";
@@ -419,6 +420,7 @@ def PPCU5ImmAsmOperand : AsmOperandClass {
 def u5imm   : Operand<i32> {
   let PrintMethod = "printU5ImmOperand";
   let ParserMatchClass = PPCU5ImmAsmOperand;
+  let DecoderMethod = "decodeUImmOperand<5>";
 }
 def PPCU6ImmAsmOperand : AsmOperandClass {
   let Name = "U6Imm"; let PredicateMethod = "isU6Imm";
@@ -427,6 +429,7 @@ def PPCU6ImmAsmOperand : AsmOperandClass {
 def u6imm   : Operand<i32> {
   let PrintMethod = "printU6ImmOperand";
   let ParserMatchClass = PPCU6ImmAsmOperand;
+  let DecoderMethod = "decodeUImmOperand<6>";
 }
 def PPCS16ImmAsmOperand : AsmOperandClass {
   let Name = "S16Imm"; let PredicateMethod = "isS16Imm";
@@ -436,6 +439,7 @@ def s16imm  : Operand<i32> {
   let PrintMethod = "printS16ImmOperand";
   let EncoderMethod = "getImm16Encoding";
   let ParserMatchClass = PPCS16ImmAsmOperand;
+  let DecoderMethod = "decodeSImmOperand<16>";
 }
 def PPCU16ImmAsmOperand : AsmOperandClass {
   let Name = "U16Imm"; let PredicateMethod = "isU16Imm";
@@ -445,6 +449,7 @@ def u16imm  : Operand<i32> {
   let PrintMethod = "printU16ImmOperand";
   let EncoderMethod = "getImm16Encoding";
   let ParserMatchClass = PPCU16ImmAsmOperand;
+  let DecoderMethod = "decodeUImmOperand<16>";
 }
 def PPCS17ImmAsmOperand : AsmOperandClass {
   let Name = "S17Imm"; let PredicateMethod = "isS17Imm";
@@ -457,6 +462,7 @@ def s17imm  : Operand<i32> {
   let PrintMethod = "printS16ImmOperand";
   let EncoderMethod = "getImm16Encoding";
   let ParserMatchClass = PPCS17ImmAsmOperand;
+  let DecoderMethod = "decodeSImmOperand<16>";
 }
 def PPCDirectBrAsmOperand : AsmOperandClass {
   let Name = "DirectBr"; let PredicateMethod = "isDirectBr";
@@ -502,6 +508,7 @@ def PPCCRBitMaskOperand : AsmOperandClass {
 def crbitm: Operand<i8> {
   let PrintMethod = "printcrbitm";
   let EncoderMethod = "get_crbitm_encoding";
+  let DecoderMethod = "decodeCRBitMOperand";
   let ParserMatchClass = PPCCRBitMaskOperand;
 }
 // Address operands
@@ -539,6 +546,7 @@ def memri : Operand<iPTR> {
   let PrintMethod = "printMemRegImm";
   let MIOperandInfo = (ops dispRI:$imm, ptr_rc_nor0:$reg);
   let EncoderMethod = "getMemRIEncoding";
+  let DecoderMethod = "decodeMemRIOperands";
 }
 def memrr : Operand<iPTR> {
   let PrintMethod = "printMemRegReg";
@@ -548,6 +556,7 @@ def memrix : Operand<iPTR> {   // memri where the imm is 4-aligned.
   let PrintMethod = "printMemRegImm";
   let MIOperandInfo = (ops dispRIX:$imm, ptr_rc_nor0:$reg);
   let EncoderMethod = "getMemRIXEncoding";
+  let DecoderMethod = "decodeMemRIXOperands";
 }
 
 // A single-register address. This is used with the SjLj
