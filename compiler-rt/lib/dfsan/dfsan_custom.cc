@@ -796,7 +796,7 @@ __dfsw_socketpair(int domain, int type, int protocol, int sv[2],
   int ret = socketpair(domain, type, protocol, sv);
   *ret_label = 0;
   if (ret == 0) {
-    dfsan_set_label(0, sv, sizeof(sv));
+    dfsan_set_label(0, sv, sizeof(*sv) * 2);
   }
   return ret;
 }
