@@ -38,13 +38,6 @@ set(CLANG_TEST_PARAMS
   clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
   )
 
-if(CLANG_INCLUDE_TESTS)  
-  list(APPEND CLANG_TEST_DEPS ClangUnitTests)
-  list(APPEND CLANG_TEST_PARAMS
-    clang_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
-    )
-endif()
-
 if( NOT CLANG_BUILT_STANDALONE )
   list(APPEND CLANG_TEST_DEPS
     llvm-config
