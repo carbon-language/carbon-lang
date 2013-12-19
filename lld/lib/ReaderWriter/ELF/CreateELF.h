@@ -99,6 +99,15 @@ typename Traits::result_type createELF(
   LLVM_CREATE_ELF_IMPL(std::forward<T1>(t1), std::forward<T2>(t2),
                        std::forward<T3>(t3))
 }
+                     
+template <class Traits, class T1, class T2, class T3, class T4>
+typename Traits::result_type createELF(
+    std::pair<unsigned char, unsigned char> ident, std::size_t maxAlignment,
+    T1 &&t1, T2 &&t2, T3 &&t3, T4 &&t4) {
+  LLVM_CREATE_ELF_IMPL(std::forward<T1>(t1), std::forward<T2>(t2),
+                       std::forward<T3>(t3), std::forward<T4>(t4))
+}
+
 #endif // LLVM_HAS_VARIADIC_TEMPLATES
 } // end anon namespace
 
