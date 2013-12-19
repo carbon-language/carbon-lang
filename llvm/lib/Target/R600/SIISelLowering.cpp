@@ -137,7 +137,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setTruncStoreAction(MVT::v16i32, MVT::v16i16, Expand);
 
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
-  setOperationAction(ISD::FrameIndex, MVT::i64, Custom);
+  setOperationAction(ISD::FrameIndex, MVT::i32, Custom);
 
   setTargetDAGCombine(ISD::SELECT_CC);
 
@@ -704,9 +704,7 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   if (Load->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS)
     return SDValue();
 
-  SDValue TruncPtr = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32,
-                                 Load->getBasePtr(), DAG.getConstant(0, MVT::i32));
-  SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, TruncPtr,
+  SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Load->getBasePtr(),
                             DAG.getConstant(2, MVT::i32));
 
   SDValue Ret = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op.getValueType(),
@@ -793,8 +791,7 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   if (Store->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS)
     return SDValue();
 
-  SDValue TruncPtr = DAG.getZExtOrTrunc(Store->getBasePtr(), DL, MVT::i32);
-  SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, TruncPtr,
+  SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Store->getBasePtr(),
                             DAG.getConstant(2, MVT::i32));
   SDValue Chain = Store->getChain();
   SmallVector<SDValue, 8> Values;

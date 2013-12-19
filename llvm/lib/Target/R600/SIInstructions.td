@@ -1328,13 +1328,13 @@ def SI_KILL : InstSI <
 
 let Uses = [EXEC], Defs = [EXEC,VCC,M0] in {
 
-//defm SI_ : RegisterLoadStore <VReg_32, FRAMEri64, ADDRIndirect>;
+//defm SI_ : RegisterLoadStore <VReg_32, FRAMEri, ADDRIndirect>;
 
 let UseNamedOperandTable = 1 in {
 
 def SI_RegisterLoad : AMDGPUShaderInst <
   (outs VReg_32:$dst, SReg_64:$temp),
-  (ins FRAMEri64:$addr, i32imm:$chan),
+  (ins FRAMEri32:$addr, i32imm:$chan),
   "", []
 > {
   let isRegisterLoad = 1;
@@ -1343,7 +1343,7 @@ def SI_RegisterLoad : AMDGPUShaderInst <
 
 class SIRegStore<dag outs> : AMDGPUShaderInst <
   outs,
-  (ins VReg_32:$val, FRAMEri64:$addr, i32imm:$chan),
+  (ins VReg_32:$val, FRAMEri32:$addr, i32imm:$chan),
   "", []
 > {
   let isRegisterStore = 1;
