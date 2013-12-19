@@ -2181,9 +2181,9 @@ static void mergeParamDeclAttributes(ParmVarDecl *newDecl,
   //   The first declaration of a function shall specify the
   //   carries_dependency attribute for its declarator-id if any declaration
   //   of the function specifies the carries_dependency attribute.
-  if (newDecl->hasAttr<CarriesDependencyAttr>() &&
-      !oldDecl->hasAttr<CarriesDependencyAttr>()) {
-    S.Diag(newDecl->getAttr<CarriesDependencyAttr>()->getLocation(),
+  const CarriesDependencyAttr *CDA = newDecl->getAttr<CarriesDependencyAttr>();
+  if (CDA && !oldDecl->hasAttr<CarriesDependencyAttr>()) {
+    S.Diag(CDA->getLocation(),
            diag::err_carries_dependency_missing_on_first_decl) << 1/*Param*/;
     // Find the first declaration of the parameter.
     // FIXME: Should we build redeclaration chains for function parameters?
@@ -2597,10 +2597,9 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
     //   The first declaration of a function shall specify the noreturn
     //   attribute if any declaration of that function specifies the noreturn
     //   attribute.
-    if (New->hasAttr<CXX11NoReturnAttr>() &&
-        !Old->hasAttr<CXX11NoReturnAttr>()) {
-      Diag(New->getAttr<CXX11NoReturnAttr>()->getLocation(),
-           diag::err_noreturn_missing_on_first_decl);
+    const CXX11NoReturnAttr *NRA = New->getAttr<CXX11NoReturnAttr>();
+    if (NRA && !Old->hasAttr<CXX11NoReturnAttr>()) {
+      Diag(NRA->getLocation(), diag::err_noreturn_missing_on_first_decl);
       Diag(Old->getFirstDecl()->getLocation(),
            diag::note_noreturn_missing_first_decl);
     }
@@ -2609,9 +2608,9 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
     //   The first declaration of a function shall specify the
     //   carries_dependency attribute for its declarator-id if any declaration
     //   of the function specifies the carries_dependency attribute.
-    if (New->hasAttr<CarriesDependencyAttr>() &&
-        !Old->hasAttr<CarriesDependencyAttr>()) {
-      Diag(New->getAttr<CarriesDependencyAttr>()->getLocation(),
+    const CarriesDependencyAttr *CDA = New->getAttr<CarriesDependencyAttr>();
+    if (CDA && !Old->hasAttr<CarriesDependencyAttr>()) {
+      Diag(CDA->getLocation(),
            diag::err_carries_dependency_missing_on_first_decl) << 0/*Function*/;
       Diag(Old->getFirstDecl()->getLocation(),
            diag::note_carries_dependency_missing_first_decl) << 0/*Function*/;
