@@ -430,7 +430,7 @@ static raw_ostream &operator<<(raw_ostream &OS, const formatBranchInfo &FBI) {
 }
 
 /// print -  Print source files with collected line count information.
-void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
+void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) {
   for (StringMap<LineData>::const_iterator I = LineInfo.begin(),
          E = LineInfo.end(); I != E; ++I) {
     StringRef Filename = I->first();
@@ -454,7 +454,7 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
     OS << "        -:    0:Programs:" << ProgramCount << "\n";
 
     const LineData &Line = I->second;
-    GCOVCoverage Coverage;
+    GCOVCoverage FileCoverage(Filename);
     for (uint32_t LineIndex = 0; !AllLines.empty(); ++LineIndex) {
       if (Options.BranchInfo) {
         FunctionLines::const_iterator FuncsIt = Line.Functions.find(LineIndex);
@@ -473,6 +473,7 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
         const BlockVector &Blocks = BlocksIt->second;
 
         // Add up the block counts to form line counts.
+        DenseMap<const GCOVFunction *, bool> LineExecs;
         uint64_t LineCount = 0;
         for (BlockVector::const_iterator I = Blocks.begin(), E = Blocks.end();
                I != E; ++I) {
@@ -485,15 +486,49 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
             // Sum up all of the block counts.
             LineCount += Block->getCount();
           }
+
+          if (Options.FuncCoverage) {
+            // This is a slightly convoluted way to most accurately gather line
+            // statistics for functions. Basically what is happening is that we
+            // don't want to count a single line with multiple blocks more than
+            // once. However, we also don't simply want to give the total line
+            // count to every function that starts on the line. Thus, what is
+            // happening here are two things:
+            // 1) Ensure that the number of logical lines is only incremented
+            //    once per function.
+            // 2) If there are multiple blocks on the same line, ensure that the
+            //    number of lines executed is incremented as long as at least
+            //    one of the blocks are executed.
+            const GCOVFunction *Function = &Block->getParent();
+            if (FuncCoverages.find(Function) == FuncCoverages.end()) {
+              std::pair<const GCOVFunction *, GCOVCoverage>
+                KeyValue(Function, GCOVCoverage(Function->getName()));
+              FuncCoverages.insert(KeyValue);
+            }
+            GCOVCoverage &FuncCoverage = FuncCoverages.find(Function)->second;
+
+            if (LineExecs.find(Function) == LineExecs.end()) {
+              if (Block->getCount()) {
+                ++FuncCoverage.LinesExec;
+                LineExecs[Function] = true;
+              } else {
+                LineExecs[Function] = false;
+              }
+              ++FuncCoverage.LogicalLines;
+            } else if (!LineExecs[Function] && Block->getCount()) {
+              ++FuncCoverage.LinesExec;
+              LineExecs[Function] = true;
+            }
+          }
         }
 
         if (LineCount == 0)
           OS << "    #####:";
         else {
           OS << format("%9" PRIu64 ":", LineCount);
-          ++Coverage.LinesExec;
+          ++FileCoverage.LinesExec;
         }
-        ++Coverage.LogicalLines;
+        ++FileCoverage.LogicalLines;
 
         std::pair<StringRef, StringRef> P = AllLines.split('\n');
         OS << format("%5u:", LineIndex+1) << P.first << "\n";
@@ -513,17 +548,20 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) const {
           if (Options.BranchInfo) {
             size_t NumEdges = Block->getNumDstEdges();
             if (NumEdges > 1)
-              printBranchInfo(OS, *Block, Coverage, EdgeNo);
+              printBranchInfo(OS, *Block, FileCoverage, EdgeNo);
             else if (Options.UncondBranch && NumEdges == 1)
               printUncondBranchInfo(OS, EdgeNo, (*Block->dst_begin())->Count);
           }
         }
       }
     }
-
-    // FIXME: There is no way to detect calls given current instrumentation.
-    printFileCoverage(Filename, Coverage);
+    FileCoverages.push_back(FileCoverage);
   }
+
+  // FIXME: There is no way to detect calls given current instrumentation.
+  if (Options.FuncCoverage)
+    printFuncCoverage();
+  printFileCoverage();
 }
 
 /// printFunctionSummary - Print function and block summary.
@@ -560,7 +598,7 @@ void FileInfo::printBlockInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
 
 /// printBranchInfo - Print conditional branch probabilities.
 void FileInfo::printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
-                               GCOVCoverage &Coverage, uint32_t &EdgeNo) const {
+                               GCOVCoverage &Coverage, uint32_t &EdgeNo) {
   SmallVector<uint64_t, 16> BranchCounts;
   uint64_t TotalCounts = 0;
   for (GCOVBlock::EdgeIterator I = Block.dst_begin(), E = Block.dst_end();
@@ -571,6 +609,14 @@ void FileInfo::printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
     if (Block.getCount()) ++Coverage.BranchesExec;
     if (Edge->Count) ++Coverage.BranchesTaken;
     ++Coverage.Branches;
+
+    if (Options.FuncCoverage) {
+      const GCOVFunction *Function = &Block.getParent();
+      GCOVCoverage &FuncCoverage = FuncCoverages.find(Function)->second;
+      if (Block.getCount()) ++FuncCoverage.BranchesExec;
+      if (Edge->Count) ++FuncCoverage.BranchesTaken;
+      ++FuncCoverage.Branches;
+    }
   }
 
   for (SmallVectorImpl<uint64_t>::const_iterator I = BranchCounts.begin(),
@@ -587,10 +633,9 @@ void FileInfo::printUncondBranchInfo(raw_fd_ostream &OS, uint32_t &EdgeNo,
      << formatBranchInfo(Options, Count, Count) << "\n";
 }
 
-/// printFileCoverage - Print per-file coverage info.
-void FileInfo::printFileCoverage(StringRef Filename,
-                                 GCOVCoverage &Coverage) const {
-  outs() << "File '" << Filename << "'\n";
+// printCoverage - Print generic coverage info used by both printFuncCoverage
+// and printFileCoverage.
+void FileInfo::printCoverage(const GCOVCoverage &Coverage) const {
   outs() << format("Lines executed:%.2lf%% of %u\n",
                    double(Coverage.LinesExec)*100/Coverage.LogicalLines,
                    Coverage.LogicalLines);
@@ -607,6 +652,27 @@ void FileInfo::printFileCoverage(StringRef Filename,
     }
     outs() << "No calls\n"; // to be consistent with gcov
   }
-  outs() << Filename << ":creating '" << Filename << ".gcov'\n";
-  outs() << "\n";
+}
+
+// printFuncCoverage - Print per-function coverage info.
+void FileInfo::printFuncCoverage() const {
+  for (MapVector<const GCOVFunction *, GCOVCoverage>::const_iterator I =
+         FuncCoverages.begin(), E = FuncCoverages.end(); I != E; ++I) {
+    const GCOVCoverage &Coverage = I->second;
+    outs() << "Function '" << Coverage.Name << "'\n";
+    printCoverage(Coverage);
+    outs() << "\n";
+  }
+}
+
+// printFileCoverage - Print per-file coverage info.
+void FileInfo::printFileCoverage() const {
+  for (SmallVectorImpl<GCOVCoverage>::const_iterator I =
+         FileCoverages.begin(), E = FileCoverages.end(); I != E; ++I) {
+    const GCOVCoverage &Coverage = *I;
+    outs() << "File '" << Coverage.Name << "'\n";
+    printCoverage(Coverage);
+    outs() << Coverage.Name << ":creating '" << Coverage.Name
+           << ".gcov'\n\n";
+  }
 }

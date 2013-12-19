@@ -16,6 +16,7 @@
 #define LLVM_SUPPORT_GCOV_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -36,12 +37,14 @@ namespace GCOV {
 
 /// GCOVOptions - A struct for passing gcov options between functions.
 struct GCOVOptions {
-  GCOVOptions(bool A, bool B, bool C, bool U) :
-    AllBlocks(A), BranchInfo(B), BranchCount(C), UncondBranch(U) {}
+  GCOVOptions(bool A, bool B, bool C, bool F, bool U) :
+    AllBlocks(A), BranchInfo(B), BranchCount(C), FuncCoverage(F), UncondBranch(U)
+  {}
 
   bool AllBlocks;
   bool BranchInfo;
   bool BranchCount;
+  bool FuncCoverage;
   bool UncondBranch;
 };
 
@@ -300,6 +303,7 @@ public:
   GCOVBlock(GCOVFunction &P, uint32_t N) : Parent(P), Number(N), Counter(0),
     DstEdgesAreSorted(true), SrcEdges(), DstEdges(), Lines() {}
   ~GCOVBlock();
+  const GCOVFunction &getParent() const { return Parent; }
   void addLine(uint32_t N) { Lines.push_back(N); }
   uint32_t getLastLine() const { return Lines.back(); }
   void addCount(size_t DstEdgeNo, uint64_t N);
@@ -352,9 +356,11 @@ class FileInfo {
   };
 
   struct GCOVCoverage {
-    GCOVCoverage() :
-      LogicalLines(0), LinesExec(0), Branches(0), BranchesExec(0),
+    GCOVCoverage(StringRef Name) :
+      Name(Name), LogicalLines(0), LinesExec(0), Branches(0), BranchesExec(0),
       BranchesTaken(0) {}
+
+    StringRef Name;
 
     uint32_t LogicalLines;
     uint32_t LinesExec;
@@ -376,22 +382,27 @@ public:
   }
   void setRunCount(uint32_t Runs) { RunCount = Runs; }
   void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }
-  void print(StringRef GCNOFile, StringRef GCDAFile) const;
+  void print(StringRef GCNOFile, StringRef GCDAFile);
 private:
   void printFunctionSummary(raw_fd_ostream &OS,
                             const FunctionVector &Funcs) const;
   void printBlockInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
                       uint32_t LineIndex, uint32_t &BlockNo) const;
   void printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
-                       GCOVCoverage &Coverage, uint32_t &EdgeNo) const;
+                       GCOVCoverage &Coverage, uint32_t &EdgeNo);
   void printUncondBranchInfo(raw_fd_ostream &OS, uint32_t &EdgeNo,
                              uint64_t Count) const;
-  void printFileCoverage(StringRef Filename, GCOVCoverage &Coverage) const;
+
+  void printCoverage(const GCOVCoverage &Coverage) const;
+  void printFuncCoverage() const;
+  void printFileCoverage() const;
 
   const GCOVOptions &Options;
   StringMap<LineData> LineInfo;
   uint32_t RunCount;
   uint32_t ProgramCount;
+  SmallVector<GCOVCoverage, 4> FileCoverages;
+  MapVector<const GCOVFunction *, GCOVCoverage> FuncCoverages;
 };
 
 }

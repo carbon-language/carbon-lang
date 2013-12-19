@@ -41,6 +41,9 @@ BranchCount("c", cl::init(false), cl::desc("display branch counts instead of \
                                             probabilities (requires -b)"));
 
 static cl::opt<bool>
+FuncCoverage("f", cl::init(false), cl::desc("output function coverage"));
+
+static cl::opt<bool>
 UncondBranch("u", cl::init(false), cl::desc("display unconditional branch info \
                                              (requires -b)"));
 
@@ -84,7 +87,8 @@ int main(int argc, char **argv) {
   if (DumpGCOV)
     GF.dump();
 
-  GCOVOptions Options(AllBlocks, BranchInfo, BranchCount, UncondBranch);
+  GCOVOptions Options(AllBlocks, BranchInfo, BranchCount, FuncCoverage,
+                      UncondBranch);
   FileInfo FI(Options);
   GF.collectLineCounts(FI);
   FI.print(InputGCNO, InputGCDA);
