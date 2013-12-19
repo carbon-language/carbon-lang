@@ -99,10 +99,6 @@ extern "C" {
   SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
   /* OPTIONAL */ void __asan_on_error();
 
-  SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
-  /* OPTIONAL */ bool __asan_symbolize(const void *pc, char *out_buffer,
-                                       int out_size);
-
   SANITIZER_INTERFACE_ATTRIBUTE
   uptr __asan_get_estimated_allocated_size(uptr size);
 

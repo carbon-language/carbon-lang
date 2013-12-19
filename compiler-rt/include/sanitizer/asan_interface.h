@@ -82,14 +82,6 @@ extern "C" {
   // the program crashes before ASan report is printed.
   void __asan_on_error();
 
-  // User may provide its own implementation for symbolization function.
-  // It should print the description of instruction at address "pc" to
-  // "out_buffer". Description should be at most "out_size" bytes long.
-  // User-specified function should return true if symbolization was
-  // successful.
-  bool __asan_symbolize(const void *pc, char *out_buffer,
-                                       int out_size);
-
   // Returns the estimated number of bytes that will be reserved by allocator
   // for request of "size" bytes. If ASan allocator can't allocate that much
   // memory, returns the maximal possible allocation size, otherwise returns
