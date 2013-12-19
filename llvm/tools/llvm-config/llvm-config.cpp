@@ -147,6 +147,7 @@ Options:\n\
   --cflags          C compiler flags for files that include LLVM headers.\n\
   --cxxflags        C++ compiler flags for files that include LLVM headers.\n\
   --ldflags         Print Linker flags.\n\
+  --system-libs     Sytem Libraries needed to link against LLVM components.\n\
   --libs            Libraries needed to link against LLVM components.\n\
   --libnames        Bare library names for in-tree builds.\n\
   --libfiles        Fully qualified library filenames for makefile depends.\n\
@@ -172,6 +173,7 @@ std::string GetExecutablePath(const char *Argv0) {
 int main(int argc, char **argv) {
   std::vector<StringRef> Components;
   bool PrintLibs = false, PrintLibNames = false, PrintLibFiles = false;
+  bool PrintSystemLibs = false;
   bool HasAnyOption = false;
 
   // llvm-config is designed to support being run both from a development tree
@@ -285,8 +287,9 @@ int main(int argc, char **argv) {
       } else if (Arg == "--cxxflags") {
         OS << ActiveIncludeOption << ' ' << LLVM_CXXFLAGS << '\n';
       } else if (Arg == "--ldflags") {
-        OS << "-L" << ActiveLibDir << ' ' << LLVM_LDFLAGS
-           << ' ' << LLVM_SYSTEM_LIBS << '\n';
+        OS << "-L" << ActiveLibDir << ' ' << LLVM_LDFLAGS << '\n';
+      } else if (Arg == "--system-libs") {
+        PrintSystemLibs = true;
       } else if (Arg == "--libs") {
         PrintLibs = true;
       } else if (Arg == "--libnames") {
@@ -330,7 +333,7 @@ int main(int argc, char **argv) {
   if (!HasAnyOption)
     usage();
 
-  if (PrintLibs || PrintLibNames || PrintLibFiles) {
+  if (PrintLibs || PrintLibNames || PrintLibFiles || PrintSystemLibs) {
     // If no components were specified, default to "all".
     if (Components.empty())
       Components.push_back("all");
@@ -361,6 +364,11 @@ int main(int argc, char **argv) {
       }
     }
     OS << '\n';
+
+    // Print SYSTEM_LIBS after --libs.
+    // FIXME: Each LLVM component may have its dependent system libs.
+    if (PrintSystemLibs)
+      OS << LLVM_SYSTEM_LIBS << '\n';
   } else if (!Components.empty()) {
     errs() << "llvm-config: error: components given, but unused\n\n";
     usage();
