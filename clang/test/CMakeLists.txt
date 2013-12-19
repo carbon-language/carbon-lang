@@ -24,10 +24,6 @@ configure_lit_site_cfg(
   ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
   )
 
-if( PATH_TO_LLVM_BUILD )
-  set(CLANG_TEST_EXTRA_ARGS "--path=${CLANG_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}")
-endif()
-
 option(CLANG_TEST_USE_VG "Run Clang tests under Valgrind" OFF)
 if(CLANG_TEST_USE_VG)
   set(CLANG_TEST_EXTRA_ARGS ${CLANG_TEST_EXTRA_ARGS} "--vg")
