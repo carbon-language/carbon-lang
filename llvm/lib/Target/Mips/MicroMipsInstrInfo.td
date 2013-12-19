@@ -45,6 +45,21 @@ class StoreLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
   let DecoderMethod = "DecodeMemMMImm12";
 }
 
+class LLBaseMM<string opstr, RegisterOperand RO> :
+  InstSE<(outs RO:$rt), (ins mem_mm_12:$addr),
+         !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMem";
+  let mayLoad = 1;
+}
+
+class SCBaseMM<string opstr, RegisterOperand RO> :
+  InstSE<(outs RO:$dst), (ins RO:$rt, mem_mm_12:$addr),
+         !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMem";
+  let mayStore = 1;
+  let Constraints = "$rt = $dst";
+}
+
 let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   /// Arithmetic Instructions (ALU Immediate)
   def ADDiu_MM : MMRel, ArithLogicI<"addiu", simm16, GPR32Opnd>,
@@ -212,4 +227,8 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def TLTI_MM  : MMRel, TEQI_FT<"tlti", GPR32Opnd>, TEQI_FM_MM<0x08>;
   def TLTIU_MM : MMRel, TEQI_FT<"tltiu", GPR32Opnd>, TEQI_FM_MM<0x0a>;
   def TNEI_MM  : MMRel, TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM_MM<0x0c>;
+
+  /// Load-linked, Store-conditional
+  def LL_MM : LLBaseMM<"ll", GPR32Opnd>, LL_FM_MM<0x3>;
+  def SC_MM : SCBaseMM<"sc", GPR32Opnd>, LL_FM_MM<0xb>;
 }

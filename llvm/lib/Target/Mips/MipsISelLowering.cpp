@@ -392,6 +392,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setExceptionSelectorRegister(IsN64 ? Mips::A1_64 : Mips::A1);
 
   MaxStoresPerMemcpy = 16;
+
+  isMicroMips = Subtarget->inMicroMipsMode();
 }
 
 const MipsTargetLowering *MipsTargetLowering::create(MipsTargetMachine &TM) {
@@ -931,8 +933,8 @@ MipsTargetLowering::emitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   unsigned LL, SC, AND, NOR, ZERO, BEQ;
 
   if (Size == 4) {
-    LL = Mips::LL;
-    SC = Mips::SC;
+    LL = isMicroMips ? Mips::LL_MM : Mips::LL;
+    SC = isMicroMips ? Mips::SC_MM : Mips::SC;
     AND = Mips::AND;
     NOR = Mips::NOR;
     ZERO = Mips::ZERO;
@@ -1174,8 +1176,8 @@ MachineBasicBlock * MipsTargetLowering::emitAtomicCmpSwap(MachineInstr *MI,
   unsigned LL, SC, ZERO, BNE, BEQ;
 
   if (Size == 4) {
-    LL = Mips::LL;
-    SC = Mips::SC;
+    LL = isMicroMips ? Mips::LL_MM : Mips::LL;
+    SC = isMicroMips ? Mips::SC_MM : Mips::SC;
     ZERO = Mips::ZERO;
     BNE = Mips::BNE;
     BEQ = Mips::BEQ;

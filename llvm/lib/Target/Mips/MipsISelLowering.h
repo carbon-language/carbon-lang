@@ -209,6 +209,7 @@ namespace llvm {
   class MipsFunctionInfo;
 
   class MipsTargetLowering : public TargetLowering  {
+    bool isMicroMips;
   public:
     explicit MipsTargetLowering(MipsTargetMachine &TM);
 

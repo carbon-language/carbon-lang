@@ -302,3 +302,16 @@ class TEQI_FM_MM<bits<5> funct> : MMArch {
   let Inst{20-16} = rs;
   let Inst{15-0}  = imm16;
 }
+
+class LL_FM_MM<bits<4> funct> {
+  bits<5> rt;
+  bits<21> addr;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x18;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = addr{20-16};
+  let Inst{15-12} = funct;
+  let Inst{11-0}  = addr{11-0};
+}

@@ -1012,8 +1012,10 @@ def DI : DEI_FT<"di", GPR32Opnd>, EI_FM<0>;
 def WAIT : WAIT_FT<"wait">;
 
 /// Load-linked, Store-conditional
+let Predicates = [NotInMicroMips] in {
 def LL : LLBase<"ll", GPR32Opnd>, LW_FM<0x30>;
 def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>;
+}
 
 /// Jump and Branch Instructions
 def J       : MMRel, JumpFJ<jmptarget, "j", br, bb, "j">, FJ<2>,
