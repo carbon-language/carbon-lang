@@ -1728,29 +1728,18 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
 }
 
 static bool
-ShouldLaunchUsingXPC(const char *exe_path, ProcessLaunchInfo &launch_info)
+ShouldLaunchUsingXPC(ProcessLaunchInfo &launch_info)
 {
     bool result = false;
 
 #if !NO_XPC_SERVICES    
-    const char *debugserver = "/debugserver";
-    int len = strlen(debugserver);
-    int exe_len = strlen(exe_path);
-    if (exe_len >= len)
+    bool launchingAsRoot = launch_info.GetUserID() == 0;
+    bool currentUserIsRoot = Host::GetEffectiveUserID() == 0;
+    
+    if (launchingAsRoot && !currentUserIsRoot)
     {
-        const char *part = exe_path + (exe_len - len);
-        if (strcmp(part, debugserver) == 0)
-        {
-            // We are dealing with debugserver.
-            bool launchingAsRoot = launch_info.GetUserID() == 0;
-            bool currentUserIsRoot = Host::GetEffectiveUserID() == 0;
-            
-            if (launchingAsRoot && !currentUserIsRoot)
-            {
-                // If current user is already root, we don't need XPC's help.
-                result = true;
-            }
-        }
+        // If current user is already root, we don't need XPC's help.
+        result = true;
     }
 #endif
     
@@ -1807,7 +1796,7 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     
     ::pid_t pid = LLDB_INVALID_PROCESS_ID;
     
-    if (ShouldLaunchUsingXPC(exe_path, launch_info))
+    if (ShouldLaunchUsingXPC(launch_info))
     {
         error = LaunchProcessXPC(exe_path, launch_info, pid);
     }
