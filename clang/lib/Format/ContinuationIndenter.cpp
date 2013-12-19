@@ -268,7 +268,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   }
 
   if (Previous.opensScope() && Previous.Type != TT_ObjCMethodExpr &&
-      Current.Type != TT_LineComment)
+      (Current.Type != TT_LineComment || Previous.BlockKind == BK_BracedInit))
     State.Stack.back().Indent = State.Column + Spaces;
   if (State.Stack.back().AvoidBinPacking && startsNextParameter(Current, Style))
     State.Stack.back().NoLineBreak = true;
@@ -596,9 +596,11 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         NewIndent = State.Stack.back().LastSpace;
         if (Current.opensBlockTypeList(Style)) {
           NewIndent += Style.IndentWidth;
+          NewIndent = std::min(State.Column + 2, NewIndent);
           ++NewIndentLevel;
         } else {
           NewIndent += Style.ContinuationIndentWidth;
+          NewIndent = std::min(State.Column + 1, NewIndent);
         }
       }
       const FormatToken *NextNoComment = Current.getNextNonComment();

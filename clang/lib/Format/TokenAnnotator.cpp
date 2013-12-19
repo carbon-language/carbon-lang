@@ -1072,11 +1072,15 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
   FormatToken *Current = Line.First->Next;
   bool InFunctionDecl = Line.MightBeFunctionDecl;
   while (Current != NULL) {
-    if (Current->Type == TT_LineComment)
-      Current->SpacesRequiredBefore = Style.SpacesBeforeTrailingComments;
-    else if (Current->SpacesRequiredBefore == 0 &&
-             spaceRequiredBefore(Line, *Current))
+    if (Current->Type == TT_LineComment) {
+      if (Current->Previous->BlockKind == BK_BracedInit)
+        Current->SpacesRequiredBefore = Style.Cpp11BracedListStyle ? 0 : 1;
+      else
+        Current->SpacesRequiredBefore = Style.SpacesBeforeTrailingComments;
+    } else if (Current->SpacesRequiredBefore == 0 && 
+             spaceRequiredBefore(Line, *Current)) {
       Current->SpacesRequiredBefore = 1;
+    }
 
     Current->MustBreakBefore =
         Current->MustBreakBefore || mustBreakBefore(Line, *Current);
@@ -1398,7 +1402,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
 bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
                                      const FormatToken &Right) {
   if (Right.is(tok::comment)) {
-    return Right.NewlinesBefore > 0;
+    return Right.Previous->BlockKind != BK_BracedInit &&
+           Right.NewlinesBefore > 0;
   } else if (Right.Previous->isTrailingComment() ||
              (Right.is(tok::string_literal) &&
               Right.Previous->is(tok::string_literal))) {
@@ -1445,7 +1450,10 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Right.isTrailingComment())
     // We rely on MustBreakBefore being set correctly here as we should not
     // change the "binding" behavior of a comment.
-    return false;
+    // The first comment in a braced lists is always interpreted as belonging to
+    // the first list element. Otherwise, it should be placed outside of the
+    // list.
+    return Left.BlockKind == BK_BracedInit;
   if (Left.is(tok::question) && Right.is(tok::colon))
     return false;
   if (Right.Type == TT_ConditionalExpr || Right.is(tok::question))
