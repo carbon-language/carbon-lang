@@ -9,19 +9,27 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   find_program(LLVM_CONFIG "llvm-config")
   if(LLVM_CONFIG)
     message(STATUS "Found LLVM_CONFIG as ${LLVM_CONFIG}")
-    execute_process(
-      COMMAND ${LLVM_CONFIG}
+    set(CONFIG_COMMAND ${LLVM_CONFIG}
       "--assertion-mode"
       "--bindir"
       "--libdir"
       "--includedir"
       "--prefix"
-      "--src-root"
+      "--src-root")
+    execute_process(
+      COMMAND ${CONFIG_COMMAND}
+      RESULT_VARIABLE HAD_ERROR
       OUTPUT_VARIABLE CONFIG_OUTPUT
-      )
-    string(REGEX REPLACE
-      "[ \t]*[\r\n]+[ \t]*" ";"
-      CONFIG_OUTPUT ${CONFIG_OUTPUT})
+    )
+    if(NOT HAD_ERROR)
+      string(REGEX REPLACE
+        "[ \t]*[\r\n]+[ \t]*" ";"
+        CONFIG_OUTPUT ${CONFIG_OUTPUT})
+    else()
+      string(REPLACE ";" " " CONFIG_COMMAND_STR "${CONFIG_COMMAND}")
+      message(STATUS "${CONFIG_COMMAND_STR}")
+      message(FATAL_ERROR "llvm-config failed with status ${HAD_ERROR}")
+    endif()
   else()
     message(FATAL_ERROR "llvm-config not found -- ${LLVM_CONFIG}")
   endif()
@@ -46,7 +54,8 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   set(LLVM_BINARY_DIR ${LLVM_OBJ_ROOT} CACHE PATH "Path to LLVM build tree")
   set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
 
-  find_program(LLVM_TABLEGEN_EXE "llvm-tblgen" ${LLVM_TOOLS_BINARY_DIR})
+  find_program(LLVM_TABLEGEN_EXE "llvm-tblgen" ${LLVM_TOOLS_BINARY_DIR}
+    NO_DEFAULT_PATH)
 
   set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/share/llvm/cmake")
   set(LLVMCONFIG_FILE "${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
