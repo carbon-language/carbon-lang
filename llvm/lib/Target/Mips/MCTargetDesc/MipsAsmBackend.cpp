@@ -222,6 +222,8 @@ public:
       { "fixup_MICROMIPS_GOT_DISP",        0,     16,   0 },
       { "fixup_MICROMIPS_GOT_PAGE",        0,     16,   0 },
       { "fixup_MICROMIPS_GOT_OFST",        0,     16,   0 },
+      { "fixup_MICROMIPS_TLS_GD",          0,     16,   0 },
+      { "fixup_MICROMIPS_TLS_LDM",         0,     16,   0 },
       { "fixup_MICROMIPS_TLS_DTPREL_HI16", 0,     16,   0 },
       { "fixup_MICROMIPS_TLS_DTPREL_LO16", 0,     16,   0 },
       { "fixup_MICROMIPS_TLS_TPREL_HI16",  0,     16,   0 },

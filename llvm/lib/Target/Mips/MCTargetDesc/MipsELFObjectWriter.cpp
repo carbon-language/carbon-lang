@@ -210,6 +210,12 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
   case Mips::fixup_MICROMIPS_GOT_OFST:
     Type = ELF::R_MICROMIPS_GOT_OFST;
     break;
+  case Mips::fixup_MICROMIPS_TLS_GD:
+    Type = ELF::R_MICROMIPS_TLS_GD;
+    break;
+  case Mips::fixup_MICROMIPS_TLS_LDM:
+    Type = ELF::R_MICROMIPS_TLS_LDM;
+    break;
   case Mips::fixup_MICROMIPS_TLS_DTPREL_HI16:
     Type = ELF::R_MICROMIPS_TLS_DTPREL_HI16;
     break;

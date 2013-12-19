@@ -155,6 +155,12 @@ namespace Mips {
     // resulting in - R_MICROMIPS_GOT_OFST
     fixup_MICROMIPS_GOT_OFST,
 
+    // resulting in - R_MICROMIPS_TLS_GD
+    fixup_MICROMIPS_TLS_GD,
+
+    // resulting in - R_MICROMIPS_TLS_LDM
+    fixup_MICROMIPS_TLS_LDM,
+
     // resulting in - R_MICROMIPS_TLS_DTPREL_HI16
     fixup_MICROMIPS_TLS_DTPREL_HI16,
 

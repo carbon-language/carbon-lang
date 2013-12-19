@@ -67,6 +67,14 @@
 # CHECK-FIXUP:        # fixup A - offset: 0,
 # CHECK-FIXUP:          value: _gp_disp@TPREL_LO,
 # CHECK-FIXUP:          kind: fixup_MICROMIPS_TLS_TPREL_LO16
+# CHECK-FIXUP: addiu $4, $gp, %tlsgd(a)
+# CHECK-FIXUP:        # encoding: [0x9c'A',0x30'A',0x00,0x00]
+# CHECK-FIXUP:        # fixup A - offset: 0,
+# CHECK-FIXUP:          value: a@TLSGD, kind: fixup_MICROMIPS_TLS_GD
+# CHECK-FIXUP: addiu $4, $gp, %tlsldm(f.i)
+# CHECK-FIXUP:        # encoding: [0x9c'A',0x30'A',0x00,0x00]
+# CHECK-FIXUP:        # fixup A - offset: 0,
+# CHECK-FIXUP:          value: f.i@TLSLDM, kind: fixup_MICROMIPS_TLS_LDM
 #------------------------------------------------------------------------------
 # Check that the appropriate relocations were created.
 #------------------------------------------------------------------------------
@@ -83,6 +91,8 @@
 # CHECK-ELF:     0x{{[0-9,A-F]+}} R_MICROMIPS_GOT_OFST
 # CHECK-ELF:     0x{{[0-9,A-F]+}} R_MICROMIPS_TLS_TPREL_HI16
 # CHECK-ELF:     0x{{[0-9,A-F]+}} R_MICROMIPS_TLS_TPREL_LO16
+# CHECK-ELF:     0x{{[0-9,A-F]+}} R_MICROMIPS_TLS_GD
+# CHECK-ELF:     0x{{[0-9,A-F]+}} R_MICROMIPS_TLS_LDM
 # CHECK-ELF: ]
 
     lui    $2, %hi(_gp_disp)
@@ -97,3 +107,5 @@
     lw     $6, %got_ofst(loop_4)($5)
     lui    $2, %tprel_hi(_gp_disp)
     addiu  $2, $2, %tprel_lo(_gp_disp)
+    addiu  $4, $gp, %tlsgd(a)
+    addiu  $4, $gp, %tlsldm(f.i)
