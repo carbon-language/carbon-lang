@@ -1696,6 +1696,8 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     const Value *Op1 = I.getArgOperand(0); // The guard's value.
     const AllocaInst *Slot = cast<AllocaInst>(I.getArgOperand(1));
 
+    MFI.setStackProtectorIndex(FuncInfo.StaticAllocaMap[Slot]);
+
     // Grab the frame index.
     X86AddressMode AM;
     if (!X86SelectAddress(Slot, AM)) return false;

@@ -42,6 +42,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<MachineFunctionAnalysis>();
       AU.addPreserved<MachineFunctionAnalysis>();
+      AU.addPreserved("stack-protector");
       FunctionPass::getAnalysisUsage(AU);
     }
   };

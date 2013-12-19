@@ -499,14 +499,13 @@ static inline unsigned clampStackAlignment(bool ShouldClamp, unsigned Align,
 /// a nonnegative identifier to represent it.
 ///
 int MachineFrameInfo::CreateStackObject(uint64_t Size, unsigned Alignment,
-                      bool isSS, bool MayNeedSP, const AllocaInst *Alloca) {
+                      bool isSS, const AllocaInst *Alloca) {
   assert(Size != 0 && "Cannot allocate zero size stack objects!");
   Alignment =
     clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
                           !RealignOption,
                         Alignment, getFrameLowering()->getStackAlignment());
-  Objects.push_back(StackObject(Size, Alignment, 0, false, isSS, MayNeedSP,
-                                Alloca));
+  Objects.push_back(StackObject(Size, Alignment, 0, false, isSS, Alloca));
   int Index = (int)Objects.size() - NumFixedObjects - 1;
   assert(Index >= 0 && "Bad frame index!");
   ensureMaxAlignment(Alignment);
@@ -523,7 +522,7 @@ int MachineFrameInfo::CreateSpillStackObject(uint64_t Size,
     clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
                           !RealignOption,
                         Alignment, getFrameLowering()->getStackAlignment()); 
-  CreateStackObject(Size, Alignment, true, false);
+  CreateStackObject(Size, Alignment, true);
   int Index = (int)Objects.size() - NumFixedObjects - 1;
   ensureMaxAlignment(Alignment);
   return Index;
@@ -534,13 +533,14 @@ int MachineFrameInfo::CreateSpillStackObject(uint64_t Size,
 /// variable sized object is created, whether or not the index returned is
 /// actually used.
 ///
-int MachineFrameInfo::CreateVariableSizedObject(unsigned Alignment) {
+int MachineFrameInfo::CreateVariableSizedObject(unsigned Alignment,
+                                                const AllocaInst *Alloca) {
   HasVarSizedObjects = true;
   Alignment =
     clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
                           !RealignOption,
                         Alignment, getFrameLowering()->getStackAlignment()); 
-  Objects.push_back(StackObject(0, Alignment, 0, false, false, true, 0));
+  Objects.push_back(StackObject(0, Alignment, 0, false, false, Alloca));
   ensureMaxAlignment(Alignment);
   return (int)Objects.size()-NumFixedObjects-1;
 }
@@ -565,7 +565,6 @@ int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
                         Align, getFrameLowering()->getStackAlignment()); 
   Objects.insert(Objects.begin(), StackObject(Size, Align, SPOffset, Immutable,
                                               /*isSS*/   false,
-                                              /*NeedSP*/ false,
                                               /*Alloca*/ 0));
   return -++NumFixedObjects;
 }

@@ -17,12 +17,14 @@
 #define DEBUG_TYPE "localstackalloc"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/StackProtector.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
@@ -60,18 +62,27 @@ namespace {
 
   class LocalStackSlotPass: public MachineFunctionPass {
     SmallVector<int64_t,16> LocalOffsets;
+    /// StackObjSet - A set of stack object indexes
+    typedef SmallSetVector<int, 8> StackObjSet;
 
     void AdjustStackOffset(MachineFrameInfo *MFI, int FrameIdx, int64_t &Offset,
                            bool StackGrowsDown, unsigned &MaxAlign);
+    void AssignProtectedObjSet(const StackObjSet &UnassignedObjs,
+                               SmallSet<int, 16> &ProtectedObjs,
+                               MachineFrameInfo *MFI, bool StackGrowsDown,
+                               int64_t &Offset, unsigned &MaxAlign);
     void calculateFrameObjectOffsets(MachineFunction &Fn);
     bool insertFrameReferenceRegisters(MachineFunction &Fn);
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit LocalStackSlotPass() : MachineFunctionPass(ID) { }
+    explicit LocalStackSlotPass() : MachineFunctionPass(ID) { 
+      initializeLocalStackSlotPassPass(*PassRegistry::getPassRegistry());
+    }
     bool runOnMachineFunction(MachineFunction &MF);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequired<StackProtector>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
@@ -81,8 +92,12 @@ namespace {
 
 char LocalStackSlotPass::ID = 0;
 char &llvm::LocalStackSlotAllocationID = LocalStackSlotPass::ID;
-INITIALIZE_PASS(LocalStackSlotPass, "localstackalloc",
-                "Local Stack Slot Allocation", false, false)
+INITIALIZE_PASS_BEGIN(LocalStackSlotPass, "localstackalloc",
+                      "Local Stack Slot Allocation", false, false)
+INITIALIZE_PASS_DEPENDENCY(StackProtector)
+INITIALIZE_PASS_END(LocalStackSlotPass, "localstackalloc",
+                    "Local Stack Slot Allocation", false, false)
+
 
 bool LocalStackSlotPass::runOnMachineFunction(MachineFunction &MF) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -145,6 +160,22 @@ void LocalStackSlotPass::AdjustStackOffset(MachineFrameInfo *MFI,
   ++NumAllocations;
 }
 
+/// AssignProtectedObjSet - Helper function to assign large stack objects (i.e.,
+/// those required to be close to the Stack Protector) to stack offsets.
+void LocalStackSlotPass::AssignProtectedObjSet(const StackObjSet &UnassignedObjs,
+                                           SmallSet<int, 16> &ProtectedObjs,
+                                           MachineFrameInfo *MFI,
+                                           bool StackGrowsDown, int64_t &Offset,
+                                           unsigned &MaxAlign) {
+
+  for (StackObjSet::const_iterator I = UnassignedObjs.begin(),
+        E = UnassignedObjs.end(); I != E; ++I) {
+    int i = *I;
+    AdjustStackOffset(MFI, i, Offset, StackGrowsDown, MaxAlign);
+    ProtectedObjs.insert(i);
+  }
+}
+
 /// calculateFrameObjectOffsets - Calculate actual frame offsets for all of the
 /// abstract stack objects.
 ///
@@ -156,11 +187,13 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
     TFI.getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;
   int64_t Offset = 0;
   unsigned MaxAlign = 0;
+  StackProtector *SP = &getAnalysis<StackProtector>();
 
   // Make sure that the stack protector comes before the local variables on the
   // stack.
-  SmallSet<int, 16> LargeStackObjs;
+  SmallSet<int, 16> ProtectedObjs;
   if (MFI->getStackProtectorIndex() >= 0) {
+    StackObjSet LargeArrayObjs;
     AdjustStackOffset(MFI, MFI->getStackProtectorIndex(), Offset,
                       StackGrowsDown, MaxAlign);
 
@@ -170,12 +203,21 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
         continue;
       if (MFI->getStackProtectorIndex() == (int)i)
         continue;
-      if (!MFI->MayNeedStackProtector(i))
-        continue;
 
-      AdjustStackOffset(MFI, i, Offset, StackGrowsDown, MaxAlign);
-      LargeStackObjs.insert(i);
+      switch (SP->getSSPLayout(MFI->getObjectAllocation(i))) {
+      case StackProtector::SSPLK_None:
+      case StackProtector::SSPLK_SmallArray:
+      case StackProtector::SSPLK_AddrOf:
+        continue;
+      case StackProtector::SSPLK_LargeArray:
+        LargeArrayObjs.insert(i);
+        continue;
+      }
+      llvm_unreachable("Unexpected SSPLayoutKind.");
     }
+
+    AssignProtectedObjSet(LargeArrayObjs, ProtectedObjs, MFI, StackGrowsDown,
+                          Offset, MaxAlign);
   }
 
   // Then assign frame offsets to stack objects that are not used to spill
@@ -185,7 +227,7 @@ void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
       continue;
     if (MFI->getStackProtectorIndex() == (int)i)
       continue;
-    if (LargeStackObjs.count(i))
+    if (ProtectedObjs.count(i))
       continue;
 
     AdjustStackOffset(MFI, i, Offset, StackGrowsDown, MaxAlign);

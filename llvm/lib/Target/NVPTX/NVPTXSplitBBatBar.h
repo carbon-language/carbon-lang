@@ -26,6 +26,7 @@ struct NVPTXSplitBBatBar : public FunctionPass {
 
   NVPTXSplitBBatBar() : FunctionPass(ID) {}
   void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addPreserved("stack-protector");
     AU.addPreserved<MachineFunctionAnalysis>();
   }
   virtual bool runOnFunction(Function &F);

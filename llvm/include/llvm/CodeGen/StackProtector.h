@@ -20,11 +20,11 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/ValueMap.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
-class DominatorTree;
 class Function;
 class Module;
 class PHINode;

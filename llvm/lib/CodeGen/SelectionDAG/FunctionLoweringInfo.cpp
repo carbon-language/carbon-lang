@@ -85,16 +85,8 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
         TySize *= CUI->getZExtValue();   // Get total allocated size.
         if (TySize == 0) TySize = 1; // Don't create zero-sized stack objects.
 
-        // The object may need to be placed onto the stack near the stack
-        // protector if one exists. Determine here if this object is a suitable
-        // candidate. I.e., it would trigger the creation of a stack protector.
-        bool MayNeedSP =
-          (AI->isArrayAllocation() ||
-           (TySize >= 8 && isa<ArrayType>(Ty) &&
-            cast<ArrayType>(Ty)->getElementType()->isIntegerTy(8)));
         StaticAllocaMap[AI] =
-          MF->getFrameInfo()->CreateStackObject(TySize, Align, false,
-                                                MayNeedSP, AI);
+          MF->getFrameInfo()->CreateStackObject(TySize, Align, false, AI);
       }
 
   for (; BB != EB; ++BB)

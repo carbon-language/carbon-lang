@@ -101,11 +101,6 @@ class MachineFrameInfo {
     // cannot alias any other memory objects.
     bool isSpillSlot;
 
-    // MayNeedSP - If true the stack object triggered the creation of the stack
-    // protector. We should allocate this object right after the stack
-    // protector.
-    bool MayNeedSP;
-
     /// Alloca - If this stack object is originated from an Alloca instruction
     /// this value saves the original IR allocation. Can be NULL.
     const AllocaInst *Alloca;
@@ -115,9 +110,9 @@ class MachineFrameInfo {
     bool PreAllocated;
 
     StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM,
-                bool isSS, bool NSP, const AllocaInst *Val)
+                bool isSS, const AllocaInst *Val)
       : SPOffset(SP), Size(Sz), Alignment(Al), isImmutable(IM),
-        isSpillSlot(isSS), MayNeedSP(NSP), Alloca(Val), PreAllocated(false) {}
+        isSpillSlot(isSS), Alloca(Val), PreAllocated(false) {}
   };
 
   const TargetMachine &TM;
@@ -406,14 +401,6 @@ public:
     return Objects[ObjectIdx+NumFixedObjects].Alloca;
   }
 
-  /// NeedsStackProtector - Returns true if the object may need stack
-  /// protectors.
-  bool MayNeedStackProtector(int ObjectIdx) const {
-    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
-           "Invalid Object Idx!");
-    return Objects[ObjectIdx+NumFixedObjects].MayNeedSP;
-  }
-
   /// getObjectOffset - Return the assigned stack offset of the specified object
   /// from the incoming stack pointer.
   ///
@@ -531,7 +518,7 @@ public:
   /// a nonnegative identifier to represent it.
   ///
   int CreateStackObject(uint64_t Size, unsigned Alignment, bool isSS,
-                        bool MayNeedSP = false, const AllocaInst *Alloca = 0);
+                        const AllocaInst *Alloca = 0);
 
   /// CreateSpillStackObject - Create a new statically sized stack object that
   /// represents a spill slot, returning a nonnegative identifier to represent
@@ -551,7 +538,7 @@ public:
   /// variable sized object is created, whether or not the index returned is
   /// actually used.
   ///
-  int CreateVariableSizedObject(unsigned Alignment);
+  int CreateVariableSizedObject(unsigned Alignment, const AllocaInst *Alloca);
 
   /// getCalleeSavedInfo - Returns a reference to call saved info vector for the
   /// current function.

@@ -32,6 +32,7 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired<DataLayout>();
+    AU.addPreserved("stack-protector");
     AU.addPreserved<MachineFunctionAnalysis>();
   }
 
