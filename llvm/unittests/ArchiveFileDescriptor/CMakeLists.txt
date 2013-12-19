@@ -3,6 +3,6 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_llvm_unittest(ArchiveFileDescriptor
+add_llvm_unittest(ArchiveFileDescriptorTests
   ArchiveFileDescriptor.cpp
   )
