@@ -1,3 +1,4 @@
+; REQUIRES: asserts
 ; XFAIL: *
 ; RUN: llc < %s -march=r600 -mcpu=redwood -o %t
 

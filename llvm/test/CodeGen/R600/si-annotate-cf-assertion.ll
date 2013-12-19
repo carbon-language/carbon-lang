@@ -1,3 +1,4 @@
+; REQUIRES: asserts
 ; XFAIL: *
 ; RUN: llc -march=r600 -mcpu=SI -asm-verbose=false < %s | FileCheck %s
 
