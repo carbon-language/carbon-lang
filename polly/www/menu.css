@@ -3,17 +3,10 @@
 /***************/
 
 [id=menu] {
-	width:30ex;
+	width:15em;
         float: left;
+        margin-right: 3em;
 }
-[id=content] {
-	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
-	position:absolute;
-  left:35ex;
-	padding-right:4ex;
-        max-width: 50em;
-}
-
 /**************/
 /* menu style */
 /**************/
@@ -26,7 +19,6 @@
 
 /*
  * Color scheme
- * darkblue: #313955
  * blue: #556293
  * red:  #931e24
  * brown: #937155

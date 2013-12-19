@@ -6,6 +6,18 @@ html, body {
   line-height:1.5;
 }
 
+#box {
+  margin-left: auto;
+  margin-right: auto;
+  width: 80em;
+}
+[id=content] {
+	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
+        margin-left: 15em;
+	padding-left: 3em;
+}
+
+
 h1, h2, h3, tt { color: #000 }
 
 h1 { padding-top:0px; margin-top:0px;}
@@ -36,4 +48,23 @@ span.caret { color:green; font-weight:bold }
 /* Tables */
 tr { vertical-align:top }
 #news P {padding: 0px; margin: 0px; border: 0px}
+
+#head {
+    height: 15em;
+    background-image:url(images/header-background.png);
+    background-repeat:no-repeat;
+    background-position: right;
+    max-width: 89em;
+    margin-bottom: 1em
+
+
+}
+
+#head h1 {
+  padding-bottom: 0em;
+  margin-bottom: 0em;
+  padding-left: .5em;
+  color: #3b4567;
+  font-size: 5em;
+}
 
