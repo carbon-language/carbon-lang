@@ -166,6 +166,8 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
     return "builtin";
   if (hasAttribute(Attribute::ByVal))
     return "byval";
+  if (hasAttribute(Attribute::InAlloca))
+    return "inalloca";
   if (hasAttribute(Attribute::InlineHint))
     return "inlinehint";
   if (hasAttribute(Attribute::InReg))
@@ -388,6 +390,7 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::Cold:            return 1ULL << 40;
   case Attribute::Builtin:         return 1ULL << 41;
   case Attribute::OptimizeNone:    return 1ULL << 42;
+  case Attribute::InAlloca:        return 1ULL << 43;
   }
   llvm_unreachable("Unsupported attribute type");
 }
@@ -1174,7 +1177,8 @@ AttributeSet AttributeFuncs::typeIncompatible(Type *Ty, uint64_t Index) {
       .addAttribute(Attribute::NoCapture)
       .addAttribute(Attribute::ReadNone)
       .addAttribute(Attribute::ReadOnly)
-      .addAttribute(Attribute::StructRet);
+      .addAttribute(Attribute::StructRet)
+      .addAttribute(Attribute::InAlloca);
 
   return AttributeSet::get(Ty->getContext(), Index, Incompatible);
 }

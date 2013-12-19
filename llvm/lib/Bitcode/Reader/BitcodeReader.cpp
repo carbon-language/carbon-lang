@@ -522,6 +522,8 @@ static Attribute::AttrKind GetAttrFromCode(uint64_t Code) {
     return Attribute::Builtin;
   case bitc::ATTR_KIND_BY_VAL:
     return Attribute::ByVal;
+  case bitc::ATTR_KIND_IN_ALLOCA:
+    return Attribute::InAlloca;
   case bitc::ATTR_KIND_COLD:
     return Attribute::Cold;
   case bitc::ATTR_KIND_INLINE_HINT:

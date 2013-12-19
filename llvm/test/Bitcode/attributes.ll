@@ -213,6 +213,11 @@ define void @f35() optnone noinline
         ret void;
 }
 
+define void @f36(i8* inalloca) {
+; CHECK: define void @f36(i8* inalloca) {
+        ret void
+}
+
 ; CHECK: attributes #0 = { noreturn }
 ; CHECK: attributes #1 = { nounwind }
 ; CHECK: attributes #2 = { readnone }

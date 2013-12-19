@@ -491,6 +491,7 @@ void CppWriter::printAttributes(const AttributeSet &PAL,
       HANDLE_ATTR(NoUnwind);
       HANDLE_ATTR(NoAlias);
       HANDLE_ATTR(ByVal);
+      HANDLE_ATTR(InAlloca);
       HANDLE_ATTR(Nest);
       HANDLE_ATTR(ReadNone);
       HANDLE_ATTR(ReadOnly);

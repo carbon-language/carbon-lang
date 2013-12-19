@@ -99,6 +99,7 @@ namespace lltok {
     kw_sanitize_address,
     kw_builtin,
     kw_byval,
+    kw_inalloca,
     kw_cold,
     kw_inlinehint,
     kw_inreg,

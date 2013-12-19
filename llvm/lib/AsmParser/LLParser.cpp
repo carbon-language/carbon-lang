@@ -944,6 +944,7 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
               "invalid use of attribute on a function");
       break;
     case lltok::kw_byval:
+    case lltok::kw_inalloca:
     case lltok::kw_nest:
     case lltok::kw_noalias:
     case lltok::kw_nocapture:
@@ -1156,6 +1157,7 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
       continue;
     }
     case lltok::kw_byval:           B.addAttribute(Attribute::ByVal); break;
+    case lltok::kw_inalloca:        B.addAttribute(Attribute::InAlloca); break;
     case lltok::kw_inreg:           B.addAttribute(Attribute::InReg); break;
     case lltok::kw_nest:            B.addAttribute(Attribute::Nest); break;
     case lltok::kw_noalias:         B.addAttribute(Attribute::NoAlias); break;
@@ -1218,6 +1220,7 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
     // Error handling.
     case lltok::kw_align:
     case lltok::kw_byval:
+    case lltok::kw_inalloca:
     case lltok::kw_nest:
     case lltok::kw_nocapture:
     case lltok::kw_returned:

@@ -59,7 +59,7 @@ public:
   /// containing function.
   bool hasByValAttr() const;
 
-  /// \brief If this is a byval argument, return its alignment.
+  /// \brief If this is a byval or inalloca argument, return its alignment.
   unsigned getParamAlignment() const;
 
   /// \brief Return true if this argument has the nest attribute on it in its
@@ -86,6 +86,9 @@ public:
   /// on it in its containing function.
   bool onlyReadsMemory() const;
 
+  /// \brief Return true if this argument has the inalloca attribute on it in
+  /// its containing function.
+  bool hasInAllocaAttr() const;
 
   /// \brief Add a Attribute to an argument.
   void addAttr(AttributeSet AS);

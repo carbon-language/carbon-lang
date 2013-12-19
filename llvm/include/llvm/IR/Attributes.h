@@ -71,6 +71,7 @@ public:
     Builtin,               ///< Callee is recognized as a builtin, despite
                            ///< nobuiltin attribute on its declaration.
     ByVal,                 ///< Pass structure by value
+    InAlloca,              ///< Pass structure in an alloca
     Cold,                  ///< Marks function as being in a cold path.
     InlineHint,            ///< Source said inlining was desirable
     InReg,                 ///< Force argument to be passed in register

@@ -257,6 +257,22 @@ public:
     return paramHasAttr(ArgNo + 1, Attribute::ByVal);
   }
 
+  /// @brief Determine whether this argument is passed in an alloca.
+  bool isInAllocaArgument(unsigned ArgNo) const {
+    return paramHasAttr(ArgNo + 1, Attribute::InAlloca);
+  }
+
+  /// @brief Determine whether this argument is passed by value or in an alloca.
+  bool isByValOrInAllocaArgument(unsigned ArgNo) const {
+    return paramHasAttr(ArgNo + 1, Attribute::ByVal) ||
+           paramHasAttr(ArgNo + 1, Attribute::InAlloca);
+  }
+
+  /// @brief Determine if there are any inalloca arguments.
+  bool hasInAllocaArgument() const {
+    return getAttributes().hasAttrSomewhere(Attribute::InAlloca);
+  }
+
   bool doesNotAccessMemory(unsigned ArgNo) const {
     return paramHasAttr(ArgNo + 1, Attribute::ReadNone);
   }

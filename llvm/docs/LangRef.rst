@@ -697,6 +697,39 @@ Currently, only the following parameter attributes are defined:
     site. If the alignment is not specified, then the code generator
     makes a target-specific assumption.
 
+.. _attr_inalloca:
+
+``inalloca``
+
+.. Warning:: This feature is unstable and not fully implemented.
+
+    The ``inalloca`` argument attribute allows the caller to get the
+    address of an outgoing argument to a ``call`` or ``invoke`` before
+    it executes.  It is similar to ``byval`` in that it is used to pass
+    arguments by value, but it guarantees that the argument will not be
+    copied.
+
+    To be :ref:`well formed <wellformed>`, the caller must pass in an
+    alloca value into an ``inalloca`` parameter, and an alloca may be
+    used as an ``inalloca`` argument at most once.  The attribute can
+    only be applied to parameters that would be passed in memory and not
+    registers.  The ``inalloca`` attribute cannot be used in conjunction
+    with other attributes that affect argument storage, like ``inreg``,
+    ``nest``, ``sret``, or ``byval``.  The ``inalloca`` stack space is
+    considered to be clobbered by any call that uses it, so any
+    ``inalloca`` parameters cannot be marked ``readonly``.
+
+    Allocas passed with ``inalloca`` to a call must be in the opposite
+    order of the parameter list, meaning that the rightmost argument
+    must be allocated first.  If a call has inalloca arguments, no other
+    allocas can occur between the first alloca used by the call and the
+    call site, unless they are are cleared by calls to
+    :ref:`llvm.stackrestore <int_stackrestore>`.  Violating these rules
+    results in undefined behavior at runtime.
+
+    See :doc:`InAlloca` for more information on how to use this
+    attribute.
+
 ``sret``
     This indicates that the pointer parameter specifies the address of a
     structure that is the return value of the function in the source
@@ -8419,6 +8452,8 @@ Memory Use Markers
 This class of intrinsics exists to information about the lifetime of
 memory objects and ranges where variables are immutable.
 
+.. _int_lifestart:
+
 '``llvm.lifetime.start``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -8449,6 +8484,8 @@ This intrinsic indicates that before this point in the code, the value
 of the memory pointed to by ``ptr`` is dead. This means that it is known
 to never be used and has an undefined value. A load from the pointer
 that precedes this intrinsic can be replaced with ``'undef'``.
+
+.. _int_lifeend:
 
 '``llvm.lifetime.end``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
