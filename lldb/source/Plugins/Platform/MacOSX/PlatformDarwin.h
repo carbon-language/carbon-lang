@@ -135,7 +135,7 @@ public:
 
 protected:
 
-    lldb::addr_t
+    void
     ReadLibdispatchOffsetsAddress (lldb_private::Process *process);
 
     void
