@@ -44,7 +44,7 @@ endif()
 
 add_lit_testsuite(check-clang "Running the Clang regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
-  LIT ${LLVM_LIT}
+  #LIT ${LLVM_LIT}
   PARAMS ${CLANG_TEST_PARAMS}
   DEPENDS ${CLANG_TEST_DEPS}
   ARGS ${CLANG_TEST_EXTRA_ARGS}
