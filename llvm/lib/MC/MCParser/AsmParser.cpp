@@ -677,6 +677,10 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     }
   }
 
+  // Callback to the target parser in case it needs to do anything.
+  if (!HadError)
+    getTargetParser().finishParse();
+
   // Finalize the output stream if there are no errors and if the client wants
   // us to.
   if (!HadError && !NoFinalize)
