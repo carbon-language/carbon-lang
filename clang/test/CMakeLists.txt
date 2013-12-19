@@ -29,7 +29,7 @@ if(CLANG_TEST_USE_VG)
   set(CLANG_TEST_EXTRA_ARGS ${CLANG_TEST_EXTRA_ARGS} "--vg")
 endif ()
 
-set(CLANG_TEST_DEPS
+list(APPEND CLANG_TEST_DEPS
   clang clang-headers
   c-index-test diagtool arcmt-test c-arcmt-test
   clang-check clang-format
