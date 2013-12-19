@@ -311,3 +311,50 @@ namespace local_extern {
     return sizeof(arr);
   }
 }
+
+namespace rdar15468709a {
+  template<typename> struct decay {};
+
+  template<typename FooParamTy> auto foo(FooParamTy fooParam) -> decltype(fooParam);
+  template<typename BarParamTy> auto bar(BarParamTy barParam) -> decay<decltype(barParam)>;
+
+  struct B {};
+
+  void crash() {
+    B some;
+    bar(some);
+  }
+}
+
+namespace rdar15468709b {
+  template<typename> struct decay {};
+
+  template<typename... Foos> int returnsInt(Foos... foos);
+
+  template<typename... FooParamTy> auto foo(FooParamTy... fooParam) -> decltype(returnsInt(fooParam...));
+  template<typename... BarParamTy> auto bar(BarParamTy... barParam) -> decay<decltype(returnsInt(barParam...))>;
+
+  struct B {};
+
+  void crash() {
+    B some;
+    bar(some);
+  }
+}
+
+namespace rdar15468709c {
+  template<typename> struct decay {};
+
+  template<class... Foos> int returnsInt(Foos... foos);
+
+  template<typename FooParamTy> void foo(FooParamTy fooParam) { decltype(fooParam) a; }
+  template<typename BarParamTy> auto bar(BarParamTy barParam) -> decay<decltype(barParam)>;
+
+  struct B {};
+
+  void crash() {
+    B some;
+    bar(some);
+  }
+}
+
