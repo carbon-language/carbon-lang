@@ -53,7 +53,6 @@ static std::string ReadPCHRecord(StringRef type) {
     .Case("TypeSourceInfo *", "GetTypeSourceInfo(F, Record, Idx)")
     .Case("Expr *", "ReadExpr(F)")
     .Case("IdentifierInfo *", "GetIdentifierInfo(F, Record, Idx)")
-    .Case("SourceLocation", "ReadSourceLocation(F, Record, Idx)")
     .Default("Record[Idx++]");
 }
 
@@ -67,8 +66,6 @@ static std::string WritePCHRecord(StringRef type, StringRef name) {
     .Case("Expr *", "AddStmt(" + std::string(name) + ");\n")
     .Case("IdentifierInfo *", 
           "AddIdentifierRef(" + std::string(name) + ", Record);\n")
-    .Case("SourceLocation", 
-          "AddSourceLocation(" + std::string(name) + ", Record);\n")
     .Default("Record.push_back(" + std::string(name) + ");\n");
 }
 
@@ -224,8 +221,6 @@ namespace {
         OS << "\" << get" << getUpperName() << "()->getName() << \"";
       } else if (type == "TypeSourceInfo *") {
         OS << "\" << get" << getUpperName() << "().getAsString() << \"";
-      } else if (type == "SourceLocation") {
-        OS << "\" << get" << getUpperName() << "().getRawEncoding() << \"";
       } else {
         OS << "\" << get" << getUpperName() << "() << \"";
       }
@@ -240,9 +235,6 @@ namespace {
       } else if (type == "TypeSourceInfo *") {
         OS << "    OS << \" \" << SA->get" << getUpperName()
            << "().getAsString();\n";
-      } else if (type == "SourceLocation") {
-        OS << "    OS << \" \";\n";
-        OS << "    SA->get" << getUpperName() << "().print(OS, *SM);\n";
       } else if (type == "bool") {
         OS << "    if (SA->get" << getUpperName() << "()) OS << \" "
            << getUpperName() << "\";\n";
@@ -927,8 +919,6 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
   else if (ArgName == "TypeArgument") Ptr = new TypeArgument(Arg, Attr);
   else if (ArgName == "UnsignedArgument")
     Ptr = new SimpleArgument(Arg, Attr, "unsigned");
-  else if (ArgName == "SourceLocArgument")
-    Ptr = new SimpleArgument(Arg, Attr, "SourceLocation");
   else if (ArgName == "VariadicUnsignedArgument")
     Ptr = new VariadicArgument(Arg, Attr, "unsigned");
   else if (ArgName == "VariadicEnumArgument")

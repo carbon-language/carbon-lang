@@ -70,7 +70,6 @@ class ExprArgument<string name, bit opt = 0> : Argument<name, opt>;
 class FunctionArgument<string name, bit opt = 0> : Argument<name, opt>;
 class TypeArgument<string name, bit opt = 0> : Argument<name, opt>;
 class UnsignedArgument<string name, bit opt = 0> : Argument<name, opt>;
-class SourceLocArgument<string name, bit opt = 0> : Argument<name, opt>;
 class VariadicUnsignedArgument<string name> : Argument<name, 1>;
 class VariadicExprArgument<string name> : Argument<name, 1>;
 
