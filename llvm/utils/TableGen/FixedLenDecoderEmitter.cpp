@@ -1771,6 +1771,10 @@ static bool populateInstruction(const CodeGenInstruction &CGI, unsigned Opc,
     if (TypeRecord->isSubClassOf("RegisterClass")) {
       Decoder = "Decode" + TypeRecord->getName() + "RegisterClass";
       isReg = true;
+    } else if (TypeRecord->isSubClassOf("PointerLikeRegClass")) {
+      Decoder = "DecodePointerLikeRegClass" +
+                utostr(TypeRecord->getValueAsInt("RegClassKind"));
+      isReg = true;
     }
 
     RecordVal *DecoderString = TypeRecord->getValue("DecoderMethod");
