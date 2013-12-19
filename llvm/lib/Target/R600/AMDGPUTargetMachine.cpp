@@ -50,7 +50,7 @@ SchedCustomRegistry("r600", "Run R600's custom scheduler",
                     createR600MachineScheduler);
 
 static std::string computeDataLayout(const AMDGPUSubtarget &ST) {
-  std::string Ret = "e-p0:32:32";
+  std::string Ret = "e-p:32:32";
 
   if (ST.is64bit()) {
     // 32-bit private, local, and region pointers. 64-bit global and constant.
