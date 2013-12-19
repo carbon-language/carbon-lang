@@ -163,8 +163,46 @@ CT::~CT(){}
 // CHECK-X64:      | [sizeof=16, align=8
 // CHECK-X64:      |  nvsize=8, nvalign=8]
 
+struct XA {
+	XA() { printf("XA"); }
+	long long ll;
+};
+struct XB : XA {
+	XB() { printf("XB"); }
+	virtual void foo() {}
+	int b;
+};
+struct XC : virtual XB {
+	XC() { printf("XC"); }
+	virtual void foo() {}
+};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK:    0 | struct XC
+// CHECK:    0 |   (XC vbtable pointer)
+// CHECK:    4 |   (vtordisp for vbase XB)
+// CHECK:    8 |   struct XB (virtual base)
+// CHECK:    8 |     (XB vftable pointer)
+// CHECK:   16 |     struct XA (base)
+// CHECK:   16 |       long long ll
+// CHECK:   24 |     int b
+// CHECK:      | [sizeof=32, align=8
+// CHECK:      |  nvsize=4, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:    0 | struct XC
+// CHECK-X64:    0 |   (XC vbtable pointer)
+// CHECK-X64:   12 |   (vtordisp for vbase XB)
+// CHECK-X64:   16 |   struct XB (virtual base)
+// CHECK-X64:   16 |     (XB vftable pointer)
+// CHECK-X64:   24 |     struct XA (base)
+// CHECK-X64:   24 |       long long ll
+// CHECK-X64:   32 |     int b
+// CHECK-X64:      | [sizeof=40, align=8
+// CHECK-X64:      |  nvsize=8, nvalign=8]
+
 int a[
 sizeof(A)+
 sizeof(C)+
 sizeof(D)+
-sizeof(CT)];
+sizeof(CT)+
+sizeof(XC)];

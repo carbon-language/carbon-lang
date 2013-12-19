@@ -2525,14 +2525,6 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
   if (!HasVBPtr)
     return;
 
-  // Update the alignment 
-  for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
-                                                e = RD->vbases_end();
-       i != e; ++i) {
-    const CXXRecordDecl *BaseDecl = i->getType()->getAsCXXRecordDecl();
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(BaseDecl);
-    updateAlignment(getBaseAlignment(Layout));
-  }
   PreviousBaseLayout = 0;
 
   llvm::SmallPtrSet<const CXXRecordDecl *, 2> HasVtordisp =
@@ -2569,6 +2561,8 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBase(const CXXRecordDecl *RD,
 
   // Insert the base here.
   Size = Size.RoundUpToAlignment(getBaseAlignment(Layout));
+  // Update the alignment 
+  updateAlignment(getBaseAlignment(Layout));
   VBases.insert(
       std::make_pair(RD, ASTRecordLayout::VBaseInfo(Size, HasVtordisp)));
   Size += Layout.getNonVirtualSize();
