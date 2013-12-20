@@ -63,6 +63,9 @@
 #include <clc/math/native_sqrt.h>
 #include <clc/math/rsqrt.h>
 
+/* 6.11.2.1 Floating-point macros */
+#include <clc/float/definitions.h>
+
 /* 6.11.3 Integer Functions */
 #include <clc/integer/abs.h>
 #include <clc/integer/abs_diff.h>
