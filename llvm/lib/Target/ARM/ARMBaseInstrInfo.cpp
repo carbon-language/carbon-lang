@@ -283,7 +283,7 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
 
   // Walk backwards from the end of the basic block until the branch is
   // analyzed or we give up.
-  while (isPredicated(I) || I->isTerminator()) {
+  while (isPredicated(I) || I->isTerminator() || I->isDebugValue()) {
 
     // Flag to be raised on unanalyzeable instructions. This is useful in cases
     // where we want to clean up on the end of the basic block before we bail
