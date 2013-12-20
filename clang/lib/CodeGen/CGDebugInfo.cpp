@@ -2365,7 +2365,6 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
       llvm::DICompositeType T(S);
       llvm::DISubprogram SP =
           CreateCXXMemberFunction(MD, getOrCreateFile(MD->getLocation()), T);
-      T.addMember(SP);
       return SP;
     }
   }
@@ -3098,7 +3097,6 @@ CGDebugInfo::getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D) {
   llvm::DICompositeType Ctxt(
       getContextDescriptor(cast<Decl>(D->getDeclContext())));
   llvm::DIDerivedType T = CreateRecordStaticField(D, Ctxt);
-  Ctxt.addMember(T);
   return T;
 }
 

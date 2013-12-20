@@ -102,13 +102,9 @@ int main(int argc, char **argv) {
 // CHECK: [[C_S]] = {{.*}} ; [ DW_TAG_member ] [s] {{.*}} [static] [from int]
 // CHECK: [[C_DTOR]] = {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [~C]
 
-// CHECK: metadata [[D_MEM:![0-9]*]], i32 0, null, null, metadata !"_ZTS1D"} ; [ DW_TAG_structure_type ] [D] {{.*}} [decl]
-// CHECK: [[D_MEM]] = metadata !{metadata [[D_FUNC:![0-9]*]]}
-// CHECK: [[D_FUNC]] = {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [func]
+// CHECK: null, i32 0, null, null, metadata !"_ZTS1D"} ; [ DW_TAG_structure_type ] [D] {{.*}} [decl]
 // CHECK: null, i32 0, null, null, metadata !"_ZTS1E"} ; [ DW_TAG_structure_type ] [E] {{.*}} [decl]
-// CHECK: [[F:![0-9]*]] = {{.*}} metadata [[F_MEM:![0-9]*]], i32 0, null, null, metadata !"_ZTS1F"} ; [ DW_TAG_structure_type ] [F] {{.*}} [decl]
-// CHECK: [[F_MEM]] = metadata !{metadata [[F_I:![0-9]*]]}
-// CHECK: [[F_I]] = {{.*}} ; [ DW_TAG_member ] [i]
+// CHECK: [[F:![0-9]*]] = {{.*}} null, i32 0, null, null, metadata !"_ZTS1F"} ; [ DW_TAG_structure_type ] [F] {{.*}} [decl]
 
 // CHECK: null, i32 0, null, null, metadata !"_ZTS1G"} ; [ DW_TAG_structure_type ] [G] {{.*}} [decl]
 // CHECK: metadata [[G_INNER_MEM:![0-9]*]], i32 0, null, null, metadata !"_ZTSN1G5innerE"} ; [ DW_TAG_structure_type ] [inner] [line 50, {{.*}} [def]
@@ -118,8 +114,13 @@ int main(int argc, char **argv) {
 // CHECK: ; [ DW_TAG_structure_type ] [A]
 // CHECK: HdrSize
 // CHECK: ; [ DW_TAG_structure_type ] [I] {{.*}} [def]
+//
+// CHECK: metadata !"_ZTS1D", {{.*}}, metadata [[D_FUNC_DECL:![0-9]*]], metadata {{![0-9]*}}, i32 {{[0-9]*}}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
+// CHECK: [[D_FUNC_DECL]] = {{.*}}, metadata !"_ZTS1D", {{.*}}, i32 0, metadata {{![0-9]*}}, i32 {{[0-9]*}}} ; [ DW_TAG_subprogram ] {{.*}} [func]
 
-// CHECK: [[F_I_DEF:![0-9]*]] = {{.*}}, metadata [[F_I]]} ; [ DW_TAG_variable ] [i]
+// CHECK: [[F_I_DEF:![0-9]*]] = {{.*}}, metadata [[F_I:![0-9]*]]} ; [ DW_TAG_variable ] [i]
+
+// CHECK: [[F_I]] = {{.*}}, metadata !"_ZTS1F", {{.*}} ; [ DW_TAG_member ] [i]
 
 // CHECK: ![[EXCEPTLOC]] = metadata !{i32 84,
 // CHECK: ![[RETLOC]] = metadata !{i32 83,
