@@ -301,6 +301,7 @@ MCSymbol *PPCAsmPrinter::lookUpOrCreateTOCEntry(MCSymbol *Sym) {
 ///
 void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MCInst TmpInst;
+  bool isPPC64 = Subtarget.isPPC64();
   
   // Lower multi-instruction pseudo operations.
   switch (MI->getOpcode()) {
@@ -494,12 +495,13 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                                 .addExpr(SymGotTprel));
     return;
   }
-  case PPC::LDgotTprelL: {
+  case PPC::LDgotTprelL:
+  case PPC::LDgotTprelL32: {
     // Transform %Xd = LDgotTprelL <ga:@sym>, %Xs
     LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
 
     // Change the opcode to LD.
-    TmpInst.setOpcode(PPC::LD);
+    TmpInst.setOpcode(isPPC64 ? PPC::LD : PPC::LWZ);
     const MachineOperand &MO = MI->getOperand(1);
     const GlobalValue *GValue = MO.getGlobal();
     MCSymbol *MOSymbol = getSymbol(GValue);
@@ -508,6 +510,24 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                               OutContext);
     TmpInst.getOperand(1) = MCOperand::CreateExpr(Exp);
     OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
+
+  case PPC::PPC32GOT: {
+    MCSymbol *GOTSymbol = OutContext.GetOrCreateSymbol(StringRef("_GLOBAL_OFFSET_TABLE_"));
+    const MCExpr *SymGotTlsL =
+      MCSymbolRefExpr::Create(GOTSymbol, MCSymbolRefExpr::VK_PPC_LO,
+                              OutContext);
+    const MCExpr *SymGotTlsHA =                               
+      MCSymbolRefExpr::Create(GOTSymbol, MCSymbolRefExpr::VK_PPC_HA,
+                              OutContext);
+    OutStreamer.EmitInstruction(MCInstBuilder(PPC::LI)
+                                .addReg(MI->getOperand(0).getReg())
+                                .addExpr(SymGotTlsL));
+    OutStreamer.EmitInstruction(MCInstBuilder(PPC::ADDIS)
+                                .addReg(MI->getOperand(0).getReg())
+                                .addReg(MI->getOperand(0).getReg())
+                                .addExpr(SymGotTlsHA));
     return;
   }
   case PPC::ADDIStlsgdHA: {

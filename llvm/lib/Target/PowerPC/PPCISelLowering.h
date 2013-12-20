@@ -177,6 +177,8 @@ namespace llvm {
       CR6SET,
       CR6UNSET,
 
+      PPC32_GOT,
+
       /// G8RC = ADDIS_GOT_TPREL_HA %X2, Symbol - Used by the initial-exec
       /// TLS model, produces an ADDIS8 instruction that adds the GOT
       /// base to sym\@got\@tprel\@ha.

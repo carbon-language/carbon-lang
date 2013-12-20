@@ -99,6 +99,8 @@ def PPCtoc_entry: SDNode<"PPCISD::TOC_ENTRY", SDTIntBinOp, [SDNPMayLoad]>;
 def PPCvmaddfp  : SDNode<"PPCISD::VMADDFP", SDTFPTernaryOp, []>;
 def PPCvnmsubfp : SDNode<"PPCISD::VNMSUBFP", SDTFPTernaryOp, []>;
 
+def PPCppc32GOT : SDNode<"PPCISD::PPC32_GOT", SDTIntLeaf, []>;
+
 def PPCaddisGotTprelHA : SDNode<"PPCISD::ADDIS_GOT_TPREL_HA", SDTIntBinOp>;
 def PPCldGotTprelL : SDNode<"PPCISD::LD_GOT_TPREL_L", SDTIntBinOp,
                             [SDNPMayLoad]>;
@@ -563,6 +565,14 @@ def memrix : Operand<iPTR> {   // memri where the imm is 4-aligned.
 // pseudo-instructions.
 def memr : Operand<iPTR> {
   let MIOperandInfo = (ops ptr_rc:$ptrreg);
+}
+def PPCTLSRegOperand : AsmOperandClass {
+  let Name = "TLSReg"; let PredicateMethod = "isTLSReg";
+  let RenderMethod = "addTLSRegOperands";
+}
+def tlsreg32 : Operand<i32> {
+  let EncoderMethod = "getTLSRegEncoding";
+  let ParserMatchClass = PPCTLSRegOperand;
 }
 
 // PowerPC Predicate operand.
@@ -1994,6 +2004,10 @@ let PPC970_Unit = 1, neverHasSideEffects = 1 in {  // FXU Operations.
 defm ADD4  : XOForm_1r<31, 266, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                        "add", "$rT, $rA, $rB", IIC_IntSimple,
                        [(set i32:$rT, (add i32:$rA, i32:$rB))]>;
+let isCodeGenOnly = 1 in
+def ADD4TLS  : XOForm_1<31, 266, 0, (outs gprc:$rT), (ins gprc:$rA, tlsreg32:$rB),
+                       "add $rT, $rA, $rB", IIC_IntSimple,
+                       [(set i32:$rT, (add i32:$rA, tglobaltlsaddr:$rB))]>;
 defm ADDC  : XOForm_1rc<31, 10, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                         "addc", "$rT, $rA, $rB", IIC_IntGeneral,
                         [(set i32:$rT, (addc i32:$rA, i32:$rB))]>,
@@ -2258,6 +2272,17 @@ def : Pat<(add i32:$in, (PPChi tjumptable:$g, 0)),
           (ADDIS $in, tjumptable:$g)>;
 def : Pat<(add i32:$in, (PPChi tblockaddress:$g, 0)),
           (ADDIS $in, tblockaddress:$g)>;
+
+// Support for thread-local storage.
+def PPC32GOT: Pseudo<(outs gprc:$rD), (ins), "#PPC32GOT", 
+                [(set i32:$rD, (PPCppc32GOT))]>;
+
+def LDgotTprelL32: Pseudo<(outs gprc:$rD), (ins s16imm:$disp, gprc_nor0:$reg),
+                        "#LDgotTprelL32",
+                        [(set i32:$rD,
+                          (PPCldGotTprelL tglobaltlsaddr:$disp, i32:$reg))]>;
+def : Pat<(PPCaddTls i32:$in, tglobaltlsaddr:$g),
+          (ADD4TLS $in, tglobaltlsaddr:$g)>;
 
 // Standard shifts.  These are represented separately from the real shifts above
 // so that we can distinguish between shifts that allow 5-bit and 6-bit shift

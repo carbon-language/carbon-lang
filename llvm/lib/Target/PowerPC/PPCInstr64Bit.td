@@ -39,10 +39,6 @@ def s17imm64 : Operand<i64> {
 def tocentry : Operand<iPTR> {
   let MIOperandInfo = (ops i64imm:$imm);
 }
-def PPCTLSRegOperand : AsmOperandClass {
-  let Name = "TLSReg"; let PredicateMethod = "isTLSReg";
-  let RenderMethod = "addTLSRegOperands";
-}
 def tlsreg : Operand<i64> {
   let EncoderMethod = "getTLSRegEncoding";
   let ParserMatchClass = PPCTLSRegOperand;
