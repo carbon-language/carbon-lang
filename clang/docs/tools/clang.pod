@@ -310,8 +310,7 @@ Currently equivalent to B<-O3>
 =item B<-g>
 
 Generate debug information.  Note that Clang debug information works best at
-B<-O0>.  At higher optimization levels, only line number information is
-currently available.
+B<-O0>.
 
 =item B<-flimit-debug-info> B<-fno-limit-debug-info>
 
