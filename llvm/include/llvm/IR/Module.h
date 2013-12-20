@@ -143,10 +143,10 @@ public:
   typedef NamedMDListType::const_iterator const_named_metadata_iterator;
 
   /// An enumeration for describing the endianess of the target machine.
-  enum Endianness  { AnyEndianness, LittleEndian, BigEndian };
+  enum Endianness { LittleEndian, BigEndian };
 
   /// An enumeration for describing the size of a pointer on the target machine.
-  enum PointerSize { AnyPointerSize, Pointer32, Pointer64 };
+  enum PointerSize { Pointer32, Pointer64 };
 
   /// This enumeration defines the supported behaviors of module flags.
   enum ModFlagBehavior {
