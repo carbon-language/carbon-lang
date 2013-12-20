@@ -528,6 +528,9 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
     
     auto instance_method_func = [log, interface_decl, this](const char *name, const char *types) -> bool
     {        
+        if (!name || !types)
+            return false; // skip this one
+
         ObjCRuntimeMethodType method_type(types);
         
         clang::ObjCMethodDecl *method_decl = method_type.BuildMethod (interface_decl, name, true);
@@ -543,6 +546,9 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
     
     auto class_method_func = [log, interface_decl, this](const char *name, const char *types) -> bool
     {
+        if (!name || !types)
+            return false; // skip this one
+        
         ObjCRuntimeMethodType method_type(types);
         
         clang::ObjCMethodDecl *method_decl = method_type.BuildMethod (interface_decl, name, false);
