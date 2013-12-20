@@ -2938,14 +2938,12 @@ void DwarfDebug::emitDebugRanges() {
                RE = List.getRanges().end();
            RI != RE; ++RI) {
         const RangeSpan &Range = *RI;
-        // We occasionally have ranges without begin/end labels.
-        // FIXME: Verify and fix.
         const MCSymbol *Begin = Range.getStart();
         const MCSymbol *End = Range.getEnd();
-        Begin ? Asm->OutStreamer.EmitSymbolValue(Begin, Size)
-              : Asm->OutStreamer.EmitIntValue(0, Size);
-        End ? Asm->OutStreamer.EmitSymbolValue(End, Size)
-            : Asm->OutStreamer.EmitIntValue(0, Size);
+        assert(Begin && "Range without a begin symbol?");
+        assert(End && "Range without an end symbol?");
+        Asm->OutStreamer.EmitSymbolValue(Begin, Size);
+        Asm->OutStreamer.EmitSymbolValue(End, Size);
       }
 
       // And terminate the list with two 0 values.
@@ -2960,15 +2958,12 @@ void DwarfDebug::emitDebugRanges() {
       const SmallVectorImpl<RangeSpan> &Ranges = TheCU->getRanges();
       for (uint32_t i = 0, e = Ranges.size(); i != e; ++i) {
         RangeSpan Range = Ranges[i];
-
-        // We occasionally have ranges without begin/end labels.
-        // FIXME: Verify and fix.
         const MCSymbol *Begin = Range.getStart();
         const MCSymbol *End = Range.getEnd();
-        Begin ? Asm->OutStreamer.EmitSymbolValue(Begin, Size)
-              : Asm->OutStreamer.EmitIntValue(0, Size);
-        End ? Asm->OutStreamer.EmitSymbolValue(End, Size)
-            : Asm->OutStreamer.EmitIntValue(0, Size);
+        assert(Begin && "Range without a begin symbol?");
+        assert(End && "Range without an end symbol?");
+        Asm->OutStreamer.EmitSymbolValue(Begin, Size);
+        Asm->OutStreamer.EmitSymbolValue(End, Size);
       }
       // And terminate the list with two 0 values.
       Asm->OutStreamer.EmitIntValue(0, Size);
