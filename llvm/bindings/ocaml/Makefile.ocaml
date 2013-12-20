@@ -37,7 +37,7 @@ OcamlDir := $(LibDir)/ocaml
 # Info from llvm-config and similar
 ifndef IS_CLEANING_TARGET
 ifdef UsedComponents
-UsedLibs = $(shell $(LLVM_CONFIG) --libs $(UsedComponents))
+UsedLibs = $(shell $(LLVM_CONFIG) --libs --system-libs $(UsedComponents))
 UsedLibNames = $(shell $(LLVM_CONFIG) --libnames $(UsedComponents))
 endif
 endif
