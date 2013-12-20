@@ -123,7 +123,7 @@ flags.
 The instruction selector sometimes misses folding a load into a compare.  The
 pattern is written as (cmp reg, (load p)).  Because the compare isn't 
 commutative, it is not matched with the load on both sides.  The dag combiner
-should be made smart enough to cannonicalize the load into the RHS of a compare
+should be made smart enough to canonicalize the load into the RHS of a compare
 when it can invert the result of the compare for free.
 
 //===---------------------------------------------------------------------===//

@@ -315,7 +315,7 @@ the properties which are associated with that component.
 
    ``BuildTool`` components are like ``Tool`` components, except that the
    tool is supposed to be built for the platform where the build is running
-   (instead of that platform being targetted). Build systems are expected
+   (instead of that platform being targeted). Build systems are expected
    to handle the fact that required libraries may need to be built for
    multiple platforms in order to be able to link this tool.
 

@@ -256,7 +256,7 @@ E: sylvestre@debian.org
 W: http://sylvestre.ledru.info/
 W: http://llvm.org/apt/
 D: Debian and Ubuntu packaging
-D: Continous integration with jenkins
+D: Continuous integration with jenkins
 
 N: Andrew Lenharth
 E: alenhar2@cs.uiuc.edu

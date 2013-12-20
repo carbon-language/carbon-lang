@@ -152,7 +152,7 @@ endmacro(add_llvm_target)
 # Add external project that may want to be built as part of llvm such as Clang,
 # lld, and Polly. This adds two options. One for the source directory of the
 # project, which defaults to ${CMAKE_CURRENT_SOURCE_DIR}/${name}. Another to
-# enable or disable building it with everthing else.
+# enable or disable building it with everything else.
 # Additional parameter can be specified as the name of directory.
 macro(add_llvm_external_project name)
   set(add_llvm_external_dir "${ARGN}")
@@ -248,7 +248,7 @@ function(add_unittest test_suite test_name)
 endfunction()
 
 # This function provides an automatic way to 'configure'-like generate a file
-# based on a set of common and custom variables, specifically targetting the
+# based on a set of common and custom variables, specifically targeting the
 # variables needed for the 'lit.site.cfg' files. This function bundles the
 # common variables that any Lit instance is likely to need, and custom
 # variables can be passed in.

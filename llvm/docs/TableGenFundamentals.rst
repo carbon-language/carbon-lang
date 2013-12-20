@@ -601,7 +601,7 @@ the classes multiple times yourself, e.g. by writing:
   ...
 
 A ``defm`` can also be used inside a multiclass providing several levels of
-multiclass instanciations.
+multiclass instantiations.
 
 .. code-block:: llvm
 
@@ -727,7 +727,7 @@ opened, as in the case with the ``CALL*`` instructions above.
 
 It's also possible to use "let" expressions inside multiclasses, providing more
 ways to factor out commonality from the records, specially if using several
-levels of multiclass instanciations. This also avoids the need of using "let"
+levels of multiclass instantiations. This also avoids the need of using "let"
 expressions within subsequent records inside a multiclass.
 
 .. code-block:: llvm

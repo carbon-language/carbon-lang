@@ -12,7 +12,7 @@
     This interface provides an OCaml API for LLVM scalar transforms, the
     classes in the [LLVMScalarOpts] library. *)
 
-(** See the [llvm::createConstantPropogationPass] function. *)
+(** See the [llvm::createConstantPropagationPass] function. *)
 external add_constant_propagation : [<Llvm.PassManager.any] Llvm.PassManager.t
                                     -> unit
                                   = "llvm_add_constant_propagation"

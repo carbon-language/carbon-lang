@@ -273,7 +273,7 @@ there is a separate version for each compute architecture.
 For a list of all math functions implemented in libdevice, see
 `libdevice Users Guide <http://docs.nvidia.com/cuda/libdevice-users-guide/index.html>`_.
 
-To accomodate various math-related compiler flags that can affect code
+To accommodate various math-related compiler flags that can affect code
 generation of libdevice code, the library code depends on a special LLVM IR
 pass (``NVVMReflect``) to handle conditional compilation within LLVM IR. This
 pass looks for calls to the ``@__nvvm_reflect`` function and replaces them
