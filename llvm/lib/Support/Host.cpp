@@ -620,6 +620,17 @@ StringRef sys::getHostCPUName() {
           .Case("0xc24", "cortex-m4")
           .Default("generic");
 
+  if (Implementer == "0x51") // Qualcomm Technologies, Inc.
+    // Look for the CPU part line.
+    for (unsigned I = 0, E = Lines.size(); I != E; ++I)
+      if (Lines[I].startswith("CPU part"))
+        // The CPU part is a 3 digit hexadecimal number with a 0x prefix. The
+        // values correspond to the "Part number" in the CP15/c0 register. The
+        // contents are specified in the various processor manuals.
+        return StringSwitch<const char *>(Lines[I].substr(8).ltrim("\t :"))
+          .Case("0x06f", "krait") // APQ8064
+          .Default("generic");
+
   return "generic";
 }
 #elif defined(__linux__) && defined(__s390x__)
