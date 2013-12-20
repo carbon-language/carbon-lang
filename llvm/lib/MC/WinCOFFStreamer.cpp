@@ -250,25 +250,19 @@ void WinCOFFStreamer::EndCOFFSymbolDef() {
   CurSymbol = NULL;
 }
 
-void WinCOFFStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol)
-{
+void WinCOFFStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
   MCDataFragment *DF = getOrCreateDataFragment();
-
-  DF->getFixups().push_back(
-      MCFixup::Create(DF->getContents().size(),
-                      MCSymbolRefExpr::Create (Symbol, getContext ()),
-                      FK_SecRel_2));
+  DF->getFixups().push_back(MCFixup::Create(
+      DF->getContents().size(), MCSymbolRefExpr::Create(Symbol, getContext()),
+      FK_SecRel_2));
   DF->getContents().resize(DF->getContents().size() + 4, 0);
 }
 
-void WinCOFFStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol)
-{
+void WinCOFFStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol) {
   MCDataFragment *DF = getOrCreateDataFragment();
-
-  DF->getFixups().push_back(
-      MCFixup::Create(DF->getContents().size(),
-                      MCSymbolRefExpr::Create (Symbol, getContext ()),
-                      FK_SecRel_4));
+  DF->getFixups().push_back(MCFixup::Create(
+      DF->getContents().size(), MCSymbolRefExpr::Create(Symbol, getContext()),
+      FK_SecRel_4));
   DF->getContents().resize(DF->getContents().size() + 4, 0);
 }
 
