@@ -152,7 +152,7 @@ DataLayout::InvalidPointerElem = { 0U, 0U, 0U, ~0U };
 //                       DataLayout Class Implementation
 //===----------------------------------------------------------------------===//
 
-static LayoutAlignElem DefaultAlignments[] = {
+static const LayoutAlignElem DefaultAlignments[] = {
   { INTEGER_ALIGN, 1, 1, 1 },    // i1
   { INTEGER_ALIGN, 8, 1, 1 },    // i8
   { INTEGER_ALIGN, 16, 2, 2 },   // i16
@@ -176,7 +176,7 @@ void DataLayout::init(StringRef Desc) {
 
   // Default alignments
   for (int I = 0, N = array_lengthof(DefaultAlignments); I < N; ++I) {
-    LayoutAlignElem &E = DefaultAlignments[I];
+    const LayoutAlignElem &E = DefaultAlignments[I];
     setAlignment((AlignTypeEnum)E.AlignType, E.ABIAlign, E.PrefAlign,
                  E.TypeBitWidth);
   }
@@ -507,8 +507,8 @@ std::string DataLayout::getStringRepresentation() const {
       OS << ':' << PI.PrefAlign*8;
   }
 
-  LayoutAlignElem *DefaultStart = DefaultAlignments;
-  LayoutAlignElem *DefaultEnd =
+  const LayoutAlignElem *DefaultStart = DefaultAlignments;
+  const LayoutAlignElem *DefaultEnd =
       DefaultStart + array_lengthof(DefaultAlignments);
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
     const LayoutAlignElem &AI = Alignments[i];
