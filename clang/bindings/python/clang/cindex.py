@@ -2607,6 +2607,14 @@ class CompilationDatabase(ClangObject):
         return conf.lib.clang_CompilationDatabase_getCompileCommands(self,
                                                                      filename)
 
+    def getAllCompileCommands(self):
+        """
+        Get an iterable object providing all the CompileCommands available from
+        the database.
+        """
+        return conf.lib.clang_CompilationDatabase_getAllCompileCommands(self)
+
+
 class Token(Structure):
     """Represents a single token from the preprocessor.
 
@@ -2672,6 +2680,11 @@ functionList = [
    [c_char_p, POINTER(c_uint)],
    c_object_p,
    CompilationDatabase.from_result),
+
+  ("clang_CompilationDatabase_getAllCompileCommands",
+   [c_object_p],
+   c_object_p,
+   CompileCommands.from_result),
 
   ("clang_CompilationDatabase_getCompileCommands",
    [c_object_p, c_char_p],

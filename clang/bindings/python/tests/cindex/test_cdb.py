@@ -32,6 +32,27 @@ def test_lookup_succeed():
     cmds = cdb.getCompileCommands('/home/john.doe/MyProject/project.cpp')
     assert len(cmds) != 0
 
+def test_all_compilecommand():
+    """Check we get all results from the db"""
+    cdb = CompilationDatabase.fromDirectory(kInputsDir)
+    cmds = cdb.getAllCompileCommands()
+    assert len(cmds) == 3
+    expected = [
+        { 'wd': '/home/john.doe/MyProjectA',
+          'line': ['clang++', '-o', 'project2.o', '-c',
+                   '/home/john.doe/MyProject/project2.cpp']},
+        { 'wd': '/home/john.doe/MyProjectB',
+          'line': ['clang++', '-DFEATURE=1', '-o', 'project2-feature.o', '-c',
+                   '/home/john.doe/MyProject/project2.cpp']},
+        { 'wd': '/home/john.doe/MyProject',
+          'line': ['clang++', '-o', 'project.o', '-c',
+                   '/home/john.doe/MyProject/project.cpp']}
+        ]
+    for i in range(len(cmds)):
+        assert cmds[i].directory == expected[i]['wd']
+        for arg, exp in zip(cmds[i].arguments, expected[i]['line']):
+            assert arg == exp
+
 def test_1_compilecommand():
     """Check file with single compile command"""
     cdb = CompilationDatabase.fromDirectory(kInputsDir)
