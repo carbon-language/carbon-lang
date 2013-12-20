@@ -1,3 +1,4 @@
+; REQUIRES: object-emission
 ; RUN: llc -O0 -filetype=obj -generate-dwarf-cu-ranges %s -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
