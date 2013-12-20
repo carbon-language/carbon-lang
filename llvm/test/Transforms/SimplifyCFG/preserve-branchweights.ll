@@ -301,7 +301,9 @@ entry:
     i32 1, label %sw.bb
   ], !prof !9
 ; CHECK-LABEL: @test12(
-; CHECK-NOT: switch
+; CHECK-NEXT: entry:
+; CHECK-NEXT: call void @helper
+; CHECK-NEXT: ret void
 
 sw.bb:
   call void @helper(i32 0)
