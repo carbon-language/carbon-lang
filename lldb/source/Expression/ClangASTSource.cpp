@@ -318,6 +318,10 @@ ClangASTSource::CompleteType (clang::ObjCInterfaceDecl *interface_decl)
     
     m_ast_importer->CompleteObjCInterfaceDecl (interface_decl);
     
+    if (interface_decl->getSuperClass() &&
+        interface_decl->getSuperClass() != interface_decl)
+        CompleteType(interface_decl->getSuperClass());
+    
     if (log)
     {
         log->Printf("      [COID] After:");
