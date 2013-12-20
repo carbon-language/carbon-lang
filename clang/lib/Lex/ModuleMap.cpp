@@ -159,20 +159,114 @@ static bool isBuiltinHeader(StringRef FileName) {
            .Default(false);
 }
 
-ModuleMap::KnownHeader
-ModuleMap::findModuleForHeader(const FileEntry *File,
-                               Module *RequestingModule,
-                               bool *FoundInModule) {
+ModuleMap::HeadersMap::iterator
+ModuleMap::findKnownHeader(const FileEntry *File) {
   HeadersMap::iterator Known = Headers.find(File);
-
-  // If we've found a builtin header within Clang's builtin include directory,
-  // load all of the module maps to see if it will get associated with a
-  // specific module (e.g., in /usr/include).
   if (Known == Headers.end() && File->getDir() == BuiltinIncludeDir &&
       isBuiltinHeader(llvm::sys::path::filename(File->getName()))) {
     HeaderInfo.loadTopLevelSystemModules();
-    Known = Headers.find(File);
+    return Headers.find(File);
   }
+  return Known;
+}
+
+// Returns 'true' if 'RequestingModule directly uses 'RequestedModule'.
+static bool directlyUses(const Module *RequestingModule,
+                         const Module *RequestedModule) {
+  return std::find(RequestingModule->DirectUses.begin(),
+                   RequestingModule->DirectUses.end(),
+                   RequestedModule) != RequestingModule->DirectUses.end();
+}
+
+static bool violatesPrivateInclude(Module *RequestingModule,
+                                   const FileEntry *IncFileEnt,
+                                   ModuleMap::ModuleHeaderRole Role,
+                                   Module *RequestedModule) {
+  #ifndef NDEBUG
+  // Check for consistency between the module header role
+  // as obtained from the lookup and as obtained from the module.
+  // This check is not cheap, so enable it only for debugging.
+  SmallVectorImpl<const FileEntry *> &PvtHdrs
+      = RequestedModule->PrivateHeaders;
+  SmallVectorImpl<const FileEntry *>::iterator Look
+      = std::find(PvtHdrs.begin(), PvtHdrs.end(), IncFileEnt);
+  bool IsPrivate = Look != PvtHdrs.end();
+  assert((IsPrivate && Role == ModuleMap::PrivateHeader)
+               || (!IsPrivate && Role != ModuleMap::PrivateHeader));
+  #endif
+  return Role == ModuleMap::PrivateHeader &&
+         RequestedModule->getTopLevelModule() != RequestingModule;
+}
+
+void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
+                                        SourceLocation FilenameLoc,
+                                        StringRef Filename,
+                                        const FileEntry *File) {
+  // No errors for indirect modules. This may be a bit of a problem for modules
+  // with no source files.
+  if (RequestingModule != SourceModule)
+    return;
+
+  if (RequestingModule)
+    resolveUses(RequestingModule, /*Complain=*/false);
+
+  HeadersMap::iterator Known = findKnownHeader(File);
+  if (Known == Headers.end())
+    return;
+
+  Module *Private = NULL;
+  Module *NotUsed = NULL;
+  for (SmallVectorImpl<KnownHeader>::iterator I = Known->second.begin(),
+                                              E = Known->second.end();
+       I != E; ++I) {
+    // Excluded headers don't really belong to a module.
+    if (I->getRole() == ModuleMap::ExcludedHeader)
+      continue;
+
+    // If 'File' is part of 'RequestingModule' we can definitely include it.
+    if (I->getModule() == RequestingModule)
+      return;
+
+    // Remember private headers for later printing of a diagnostic.
+    if (violatesPrivateInclude(RequestingModule, File, I->getRole(),
+                               I->getModule())) {
+      Private = I->getModule();
+      continue;
+    }
+
+    // If uses need to be specified explicitly, we are only allowed to return
+    // modules that are explicitly used by the requesting module.
+    if (RequestingModule && LangOpts.ModulesDeclUse &&
+        !directlyUses(RequestingModule, I->getModule())) {
+      NotUsed = I->getModule();
+      continue;
+    }
+
+    // We have found a module that we can happily use.
+    return;
+  }
+
+  // We have found a header, but it is private.
+  if (Private != NULL) {
+    Diags.Report(FilenameLoc, diag::error_use_of_private_header_outside_module)
+        << Filename;
+    return;
+  }
+
+  // We have found a module, but we don't use it.
+  if (NotUsed != NULL) {
+    Diags.Report(FilenameLoc, diag::error_undeclared_use_of_module)
+        << RequestingModule->getFullModuleName() << Filename;
+    return;
+  }
+
+  // Headers for which we have not found a module are fine to include.
+}
+
+ModuleMap::KnownHeader
+ModuleMap::findModuleForHeader(const FileEntry *File,
+                               Module *RequestingModule) {
+  HeadersMap::iterator Known = findKnownHeader(File);
 
   if (Known != Headers.end()) {
     ModuleMap::KnownHeader Result = KnownHeader();
@@ -184,9 +278,6 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
       // Cannot use a module if the header is excluded in it.
       if (I->getRole() == ModuleMap::ExcludedHeader)
         continue;
-
-      if (FoundInModule)
-        *FoundInModule = true;
 
       // Cannot use a module if it is unavailable.
       if (!I->getModule()->isAvailable())
@@ -200,9 +291,7 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
       // If uses need to be specified explicitly, we are only allowed to return
       // modules that are explicitly used by the requesting module.
       if (RequestingModule && LangOpts.ModulesDeclUse &&
-          std::find(RequestingModule->DirectUses.begin(),
-                    RequestingModule->DirectUses.end(),
-                    I->getModule()) == RequestingModule->DirectUses.end())
+          !directlyUses(RequestingModule, I->getModule()))
         continue;
 
       Result = *I;

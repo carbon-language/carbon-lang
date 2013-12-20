@@ -175,6 +175,13 @@ private:
   /// resolved.
   Module *resolveModuleId(const ModuleId &Id, Module *Mod, bool Complain) const;
 
+  /// \brief Looks up the modules that \p File corresponds to.
+  ///
+  /// If \p File represents a builtin header within Clang's builtin include
+  /// directory, this also loads all of the module maps to see if it will get
+  /// associated with a specific module (e.g. in /usr/include).
+  HeadersMap::iterator findKnownHeader(const FileEntry *File);
+
 public:
   /// \brief Construct a new module map.
   ///
@@ -212,15 +219,24 @@ public:
   /// used from.  Used to disambiguate if a header is present in multiple
   /// modules.
   ///
-  /// \param FoundInModule If not null will be set to \c true if the header was
-  /// found in non-exclude header declaration of a module.
-  ///
   /// \returns The module KnownHeader, which provides the module that owns the
   /// given header file.  The KnownHeader is default constructed to indicate
   /// that no module owns this header file.
   KnownHeader findModuleForHeader(const FileEntry *File,
-                                  Module *RequestingModule = NULL,
-                                  bool *FoundInModule = NULL);
+                                  Module *RequestingModule = NULL);
+
+  /// \brief Reports errors if a module must not include a specific file.
+  ///
+  /// \param RequestingModule The module including a file.
+  ///
+  /// \param FilenameLoc The location of the inclusion's filename.
+  ///
+  /// \param Filename The included filename as written.
+  ///
+  /// \param File The included file.
+  void diagnoseHeaderInclusion(Module *RequestingModule,
+                               SourceLocation FilenameLoc, StringRef Filename,
+                               const FileEntry *File);
 
   /// \brief Determine whether the given header is part of a module
   /// marked 'unavailable'.
