@@ -32,14 +32,13 @@ error_code ELFFileNode::parse(const LinkingContext &ctx,
       return ec;
     assert(parsedFiles.size() == 1);
     std::unique_ptr<File> f(parsedFiles[0].release());
-    if (auto archive = reinterpret_cast<const ArchiveLibraryFile*>(f.get())) {
+    if (auto archive = reinterpret_cast<const ArchiveLibraryFile *>(f.get())) {
       // Have this node own the FileArchive object.
       _archiveFile.reset(archive);
       f.release();
       // Add all members to _files vector
       return archive->parseAllMembers(_files);
-    }
-    else {
+    } else {
       // if --whole-archive is around non-archive, just use it as normal.
       _files.push_back(std::move(f));
       return error_code::success();

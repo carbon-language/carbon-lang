@@ -77,7 +77,8 @@ public:
     Atom *finiFunctionAtom = new (_allocator) SimpleUndefinedAtom(*this, name);
     HexagonFiniAtom *finiAtom =
            (new (_allocator) HexagonFiniAtom(*this, name));
-    finiAtom->addReferenceELF_Hexagon(llvm::ELF::R_HEX_32, 0, finiFunctionAtom, 0);
+    finiAtom->addReferenceELF_Hexagon(llvm::ELF::R_HEX_32, 0, finiFunctionAtom,
+                                      0);
     finiAtom->setOrdinal(_ordinal++);
     addAtom(*finiFunctionAtom);
     addAtom(*finiAtom);

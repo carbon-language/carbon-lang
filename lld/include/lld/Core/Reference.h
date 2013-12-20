@@ -31,52 +31,54 @@ class Atom;
 /// another), marking data-in-code (jump tables or ARM constants), etc.
 ///
 /// The "kind" of a reference is a tuple of <namespace, arch, value>.  This
-/// enable us to re-use existing relocation types definded for various 
+/// enable us to re-use existing relocation types definded for various
 /// file formats and architectures.  For instance, in ELF the relocation type 10
-/// means R_X86_64_32 for x86_64, and R_386_GOTPC for i386. For PE/COFF 
-/// relocation 10 means IMAGE_REL_AMD64_SECTION. 
+/// means R_X86_64_32 for x86_64, and R_386_GOTPC for i386. For PE/COFF
+/// relocation 10 means IMAGE_REL_AMD64_SECTION.
 ///
 class Reference {
 public:
-  /// Which universe defines the kindValue(). 
-  enum class KindNamespace { 
-    all     = 0,
+  /// Which universe defines the kindValue().
+  enum class KindNamespace {
+    all = 0,
     testing = 1,
-    ELF     = 2,
-    COFF    = 3,
-    mach_o  = 4,
+    ELF = 2,
+    COFF = 3,
+    mach_o = 4,
   };
 
   KindNamespace kindNamespace() const { return (KindNamespace)_kindNamespace; }
   void setKindNamespace(KindNamespace ns) { _kindNamespace = (uint8_t)ns; }
 
-  // Which architecture the kind value is for.  
-  enum class KindArch { 
-    all      = 0,
-    x86_64   = 1,
-    x86      = 2,
-    ARM      = 3,
-    PowerPC  = 4,
-    Hexagon  = 5,
-    Mips     = 6
+  // Which architecture the kind value is for.
+  enum class KindArch {
+    all = 0,
+    x86_64 = 1,
+    x86 = 2,
+    ARM = 3,
+    PowerPC = 4,
+    Hexagon = 5,
+    Mips = 6
   };
-  
+
   KindArch kindArch() const { return (KindArch)_kindArch; }
   void setKindArch(KindArch a) { _kindArch = (uint8_t)a; }
 
   typedef uint16_t KindValue;
-  
+
   KindValue kindValue() const { return _kindValue; }
-  
-  /// setKindValue() is needed because during linking, some optimizations may 
+
+  /// setKindValue() is needed because during linking, some optimizations may
   /// change the codegen and hence the reference kind.
-  void setKindValue(KindValue value) { _kindValue = value; };
+  void setKindValue(KindValue value) {
+    _kindValue = value;
+  };
 
   /// KindValues used with KindNamespace::all and KindArch::all.
   enum {
-    kindInGroup       = 1,
-    kindLayoutAfter   = 2,
-    kindLayoutBefore  = 3
+    kindInGroup = 1,
+    kindLayoutAfter = 2,
+    kindLayoutBefore = 3
   };
 
   // A value to be added to the value of a target
@@ -102,8 +104,8 @@ public:
 
 protected:
   /// Reference is an abstract base class.  Only subclasses can use constructor.
-  Reference(KindNamespace ns, KindArch a, KindValue value) 
-    : _kindValue(value), _kindNamespace((uint8_t)ns), _kindArch((uint8_t)a) {}
+  Reference(KindNamespace ns, KindArch a, KindValue value)
+      : _kindValue(value), _kindNamespace((uint8_t)ns), _kindArch((uint8_t)a) {}
 
   /// The memory for Reference objects is always managed by the owning File
   /// object.  Therefore, no one but the owning File object should call
@@ -112,8 +114,8 @@ protected:
   virtual ~Reference() {}
 
   KindValue _kindValue;
-  uint8_t  _kindNamespace;
-  uint8_t  _kindArch;
+  uint8_t _kindNamespace;
+  uint8_t _kindArch;
 };
 
 } // namespace lld

@@ -304,7 +304,7 @@ struct MappingTraits<Relocation> {
 template <>
 struct ScalarEnumerationTraits<RelocationInfoType> {
   static void enumeration(IO &io, RelocationInfoType &value) {
-    YamlContext *info = reinterpret_cast<YamlContext*>(io.getContext());
+    YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
     assert(info != nullptr);
     NormalizedFile *file = info->_normalizeMachOFile;
     assert(file != nullptr);

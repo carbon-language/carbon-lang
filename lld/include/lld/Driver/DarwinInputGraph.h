@@ -56,7 +56,8 @@ public:
         return ec;
       assert(parsedFiles.size() == 1);
       std::unique_ptr<File> f(parsedFiles[0].release());
-      if (auto archive = reinterpret_cast<const ArchiveLibraryFile*>(f.get())) {
+      if (auto archive =
+              reinterpret_cast<const ArchiveLibraryFile *>(f.get())) {
         // FIXME: something needs to own archive File
         //_files.push_back(std::move(archive));
         return archive->parseAllMembers(_files);

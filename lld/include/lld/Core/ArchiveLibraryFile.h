@@ -33,14 +33,12 @@ public:
   /// specified name and return the File object for that member, or nullptr.
   virtual const File *find(StringRef name, bool dataSymbolOnly) const = 0;
 
-  virtual error_code parseAllMembers(
-                          std::vector<std::unique_ptr<File>> &result) const = 0;
+  virtual error_code
+  parseAllMembers(std::vector<std::unique_ptr<File>> &result) const = 0;
 
 protected:
   /// only subclasses of ArchiveLibraryFile can be instantiated
-  ArchiveLibraryFile(StringRef path)
-      : File(path, kindArchiveLibrary) {}
-
+  ArchiveLibraryFile(StringRef path) : File(path, kindArchiveLibrary) {}
 };
 
 } // namespace lld

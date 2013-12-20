@@ -23,8 +23,7 @@
 namespace lld {
 class SimpleFile : public MutableFile {
 public:
-  SimpleFile(StringRef path)
-      : MutableFile(path) {}
+  SimpleFile(StringRef path) : MutableFile(path) {}
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom)) {
@@ -63,10 +62,10 @@ public:
   }
 
 protected:
-  atom_collection_vector<DefinedAtom>       _definedAtoms;
-  atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
+  atom_collection_vector<DefinedAtom> _definedAtoms;
+  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
+  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 };
 
 class FileToMutable : public SimpleFile {
@@ -86,7 +85,7 @@ public:
 
 class SimpleReference : public Reference {
 public:
-  SimpleReference(Reference::KindNamespace ns, Reference::KindArch arch, 
+  SimpleReference(Reference::KindNamespace ns, Reference::KindArch arch,
                   Reference::KindValue value, uint64_t off, const Atom *t,
                   Reference::Addend a)
       : Reference(ns, arch, value), _target(t), _offsetInAtom(off), _addend(a) {
@@ -167,8 +166,8 @@ public:
     it = reinterpret_cast<const void *>(index);
   }
 
-  void addReference(Reference::KindNamespace ns, Reference::KindArch arch, 
-                    Reference::KindValue kindValue, uint64_t off, 
+  void addReference(Reference::KindNamespace ns, Reference::KindArch arch,
+                    Reference::KindValue kindValue, uint64_t off,
                     const Atom *target, Reference::Addend a) {
     _references.push_back(SimpleReference(ns, arch, kindValue, off, target, a));
   }

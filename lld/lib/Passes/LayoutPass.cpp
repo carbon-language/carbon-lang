@@ -70,7 +70,7 @@ static void showCycleDetectedError(AtomToAtomT &followOnNexts,
   do {
     llvm::dbgs() << "  " << atomToDebugString(atom) << "\n";
     for (const Reference *ref : *atom) {
-      llvm::dbgs() << "  "  << atomToDebugString(ref->target()) << "\n";
+      llvm::dbgs() << "  " << atomToDebugString(ref->target()) << "\n";
     }
     atom = followOnNexts[atom];
   } while (atom != start);

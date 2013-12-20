@@ -234,8 +234,7 @@ public:
 
 protected:
   /// \brief only subclasses of MutableFile can be instantiated
-  MutableFile(StringRef p)
-      : File(p, kindObject){}
+  MutableFile(StringRef p) : File(p, kindObject) {}
 };
 } // end namespace lld
 

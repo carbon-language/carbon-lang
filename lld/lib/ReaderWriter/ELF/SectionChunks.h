@@ -42,7 +42,7 @@ template <class ELFT> class Section : public Chunk<ELFT> {
 public:
   Section(const ELFLinkingContext &context, StringRef name,
           typename Chunk<ELFT>::Kind k = Chunk<ELFT>::Kind::ELFSection)
-      : Chunk<ELFT>(name, k, context), _parent(nullptr), _flags(0), _entSize(0), 
+      : Chunk<ELFT>(name, k, context), _parent(nullptr), _flags(0), _entSize(0),
         _type(0), _link(0), _info(0), _segmentType(SHT_NULL) {}
 
   /// \brief Modify the section contents before assigning virtual addresses
@@ -961,12 +961,12 @@ public:
         r->r_addend =
             writer->addressOfAtom(rel.second->target()) + rel.second->addend();
       dest += sizeof(Elf_Rela);
-      DEBUG_WITH_TYPE(
-          "ELFRelocationTable", 
-          llvm::dbgs() << rel.second->kindValue() << " relocation at "
-                       << rel.first->name() << "@" << r->r_offset << " to "
-                       << rel.second->target()->name() << "@" << r->r_addend
-                       << "\n";);
+      DEBUG_WITH_TYPE("ELFRelocationTable",
+                      llvm::dbgs() << rel.second->kindValue()
+                                   << " relocation at " << rel.first->name()
+                                   << "@" << r->r_offset << " to "
+                                   << rel.second->target()->name() << "@"
+                                   << r->r_addend << "\n";);
     }
   }
 

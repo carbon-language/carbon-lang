@@ -312,20 +312,17 @@ void Registry::addSupportMachOObjects(StringRef archName) {
   MachOLinkingContext::Arch arch = MachOLinkingContext::archFromName(archName);
   switch (arch) {
   case MachOLinkingContext::arch_x86_64:
-    addKindTable(Reference::KindNamespace::mach_o, 
-                 Reference::KindArch::x86_64, 
+    addKindTable(Reference::KindNamespace::mach_o, Reference::KindArch::x86_64,
                  mach_o::KindHandler_x86_64::kindStrings);
     break;
   case MachOLinkingContext::arch_x86:
-    addKindTable(Reference::KindNamespace::mach_o, 
-                 Reference::KindArch::x86, 
+    addKindTable(Reference::KindNamespace::mach_o, Reference::KindArch::x86,
                  mach_o::KindHandler_x86::kindStrings);
     break;
   case MachOLinkingContext::arch_armv6:
   case MachOLinkingContext::arch_armv7:
   case MachOLinkingContext::arch_armv7s:
-    addKindTable(Reference::KindNamespace::mach_o, 
-                 Reference::KindArch::ARM, 
+    addKindTable(Reference::KindNamespace::mach_o, Reference::KindArch::ARM,
                  mach_o::KindHandler_arm::kindStrings);
     break;
   default:

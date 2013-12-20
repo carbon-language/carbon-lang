@@ -37,9 +37,8 @@ public:
   };
 
   Resolver(LinkingContext &context)
-      : _context(context), _symbolTable(context),
-        _result(new MergedFile()), _haveLLVMObjs(false),
-        _addToFinalSection(false) {}
+      : _context(context), _symbolTable(context), _result(new MergedFile()),
+        _haveLLVMObjs(false), _addToFinalSection(false) {}
 
   virtual ~Resolver() {}
 
@@ -84,9 +83,8 @@ private:
 
   class MergedFile : public MutableFile {
   public:
-    MergedFile()
-        : MutableFile("<linker-internal>") {}
-    
+    MergedFile() : MutableFile("<linker-internal>") {}
+
     virtual const atom_collection<DefinedAtom> &defined() const {
       return _definedAtoms;
     }

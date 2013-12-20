@@ -58,8 +58,8 @@ private:
   typedef vector<const coff_symbol *> SymbolVectorT;
   typedef std::map<const coff_section *, SymbolVectorT> SectionToSymbolsT;
   typedef std::map<const StringRef, Atom *> SymbolNameToAtomT;
-  typedef std::map<const coff_section *, vector<COFFDefinedFileAtom *> >
-      SectionToAtomsT;
+  typedef std::map<const coff_section *, vector<COFFDefinedFileAtom *>>
+  SectionToAtomsT;
 
 public:
   typedef const std::map<std::string, std::string> StringMap;
@@ -86,7 +86,6 @@ public:
   StringRef getLinkerDirectives() const { return _directives; }
 
 private:
-
   error_code readSymbolTable(vector<const coff_symbol *> &result);
 
   void createAbsoluteAtoms(const SymbolVectorT &symbols,
@@ -102,10 +101,10 @@ private:
   error_code cacheSectionAttributes();
 
   error_code
-      AtomizeDefinedSymbolsInSection(const coff_section *section,
-                                     StringMap &altNames,
-                                     vector<const coff_symbol *> &symbols,
-                                     vector<COFFDefinedFileAtom *> &atoms);
+  AtomizeDefinedSymbolsInSection(const coff_section *section,
+                                 StringMap &altNames,
+                                 vector<const coff_symbol *> &symbols,
+                                 vector<COFFDefinedFileAtom *> &atoms);
 
   error_code AtomizeDefinedSymbols(SectionToSymbolsT &definedSymbols,
                                    StringMap &altNames,
@@ -156,8 +155,8 @@ private:
   // A sorted map to find an atom from a section and an offset within
   // the section.
   std::map<const coff_section *,
-           std::map<uint32_t, std::vector<COFFDefinedAtom *> > >
-      _definedAtomLocations;
+           std::map<uint32_t, std::vector<COFFDefinedAtom *>>>
+  _definedAtomLocations;
 
   mutable llvm::BumpPtrAllocator _alloc;
   uint64_t _ordinal;
@@ -530,16 +529,15 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
                                          StringMap &altNames,
                                          vector<const coff_symbol *> &symbols,
                                          vector<COFFDefinedFileAtom *> &atoms) {
-    // Sort symbols by position.
+  // Sort symbols by position.
   std::stable_sort(
       symbols.begin(), symbols.end(),
       // For some reason MSVC fails to allow the lambda in this context with a
       // "illegal use of local type in type instantiation". MSVC is clearly
       // wrong here. Force a conversion to function pointer to work around.
-      static_cast<bool(*)(const coff_symbol *, const coff_symbol *)>(
-          [](const coff_symbol * a, const coff_symbol * b)->bool {
-    return a->Value < b->Value;
-  }));
+      static_cast<bool (*)(const coff_symbol *, const coff_symbol *)>([](
+          const coff_symbol * a,
+          const coff_symbol * b)->bool { return a->Value < b->Value; }));
 
   StringRef sectionName;
   if (error_code ec = _obj->getSectionName(section, sectionName))
@@ -808,7 +806,7 @@ public:
 
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File> > &result) const {
+            std::vector<std::unique_ptr<File>> &result) const {
     // Convert RC file to COFF
     ErrorOr<std::string> coffPath = convertResourceFileToCOFF(std::move(mb));
     if (!coffPath)
@@ -909,7 +907,7 @@ public:
 
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
-            std::vector<std::unique_ptr<File> > &result) const {
+            std::vector<std::unique_ptr<File>> &result) const {
     // Parse the memory buffer as PECOFF file.
     error_code ec;
     std::unique_ptr<FileCOFF> file(
@@ -982,7 +980,8 @@ const Registry::KindStrings kindStringsI386[] = {
   LLD_KIND_STRING_ENTRY(IMAGE_REL_I386_SECREL),
   LLD_KIND_STRING_ENTRY(IMAGE_REL_I386_TOKEN),
   LLD_KIND_STRING_ENTRY(IMAGE_REL_I386_SECREL7),
-  LLD_KIND_STRING_ENTRY(IMAGE_REL_I386_REL32), LLD_KIND_STRING_END
+  LLD_KIND_STRING_ENTRY(IMAGE_REL_I386_REL32),
+  LLD_KIND_STRING_END
 };
 
 const Registry::KindStrings kindStringsAMD64[] = {
@@ -1002,7 +1001,8 @@ const Registry::KindStrings kindStringsAMD64[] = {
   LLD_KIND_STRING_ENTRY(IMAGE_REL_AMD64_TOKEN),
   LLD_KIND_STRING_ENTRY(IMAGE_REL_AMD64_SREL32),
   LLD_KIND_STRING_ENTRY(IMAGE_REL_AMD64_PAIR),
-  LLD_KIND_STRING_ENTRY(IMAGE_REL_AMD64_SSPAN32), LLD_KIND_STRING_END
+  LLD_KIND_STRING_ENTRY(IMAGE_REL_AMD64_SSPAN32),
+  LLD_KIND_STRING_END
 };
 
 } // end namespace anonymous
@@ -1020,5 +1020,4 @@ void Registry::addSupportCOFFObjects(PECOFFLinkingContext &ctx) {
 void Registry::addSupportWindowsResourceFiles() {
   add(std::unique_ptr<Reader>(new ResourceFileReader()));
 }
-
 }

@@ -116,8 +116,7 @@ private:
 
 class MyObjFile : public SimpleFile {
 public:
-  MyObjFile(LinkingContext &context, StringRef path)
-      : SimpleFile(path) {}
+  MyObjFile(LinkingContext &context, StringRef path) : SimpleFile(path) {}
 };
 
 class InputGraphTest : public testing::Test {

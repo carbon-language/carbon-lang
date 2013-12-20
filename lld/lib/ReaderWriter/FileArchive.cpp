@@ -34,20 +34,19 @@ namespace {
 /// \brief The FileArchive class represents an Archive Library file
 class FileArchive : public lld::ArchiveLibraryFile {
 public:
-
-  virtual ~FileArchive() { }
+  virtual ~FileArchive() {}
 
   /// \brief Check if any member of the archive contains an Atom with the
   /// specified name and return the File object for that member, or nullptr.
   virtual const File *find(StringRef name, bool dataSymbolOnly) const {
     auto member = _symbolMemberMap.find(name);
-    if (member == _symbolMemberMap.end()) 
+    if (member == _symbolMemberMap.end())
       return nullptr;
     Archive::child_iterator ci = member->second;
 
-   // Don't return a member already returned
+    // Don't return a member already returned
     const char *memberStart = ci->getBuffer().data();
-    if (_membersInstantiated.count(memberStart)) 
+    if (_membersInstantiated.count(memberStart))
       return nullptr;
 
     if (dataSymbolOnly) {
@@ -72,10 +71,10 @@ public:
 
   /// \brief parse each member
   virtual error_code
-    parseAllMembers(std::vector<std::unique_ptr<File>> &result) const {
-    for (auto mf = _archive->begin_children(),
-              me = _archive->end_children(); mf != me; ++mf) {
-      if (error_code ec=instantiateMember(mf, result))
+  parseAllMembers(std::vector<std::unique_ptr<File>> &result) const {
+    for (auto mf = _archive->begin_children(), me = _archive->end_children();
+         mf != me; ++mf) {
+      if (error_code ec = instantiateMember(mf, result))
         return ec;
     }
     return error_code::success();
@@ -98,10 +97,11 @@ public:
   }
 
 protected:
-  error_code instantiateMember(Archive::child_iterator member,
-                             std::vector<std::unique_ptr<File>> &result) const {
+  error_code
+  instantiateMember(Archive::child_iterator member,
+                    std::vector<std::unique_ptr<File>> &result) const {
     OwningPtr<MemoryBuffer> buff;
-    if (error_code ec=member->getMemoryBuffer(buff, true))
+    if (error_code ec = member->getMemoryBuffer(buff, true))
       return ec;
     if (_logLoading)
       llvm::outs() << buff->getBufferIdentifier() << "\n";
@@ -112,10 +112,8 @@ protected:
     return error_code::success();
   }
 
-
   error_code isDataSymbol(MemoryBuffer *mb, StringRef symbol) const {
-    std::unique_ptr<ObjectFile>
-                    obj(ObjectFile::createObjectFile(mb));
+    std::unique_ptr<ObjectFile> obj(ObjectFile::createObjectFile(mb));
     error_code ec;
     SymbolRef::Type symtype;
     uint32_t symflags;
@@ -124,22 +122,26 @@ protected:
     StringRef symbolname;
 
     for (symbol_iterator i = ibegin; i != iend; i.increment(ec)) {
-      if (ec) return ec;
+      if (ec)
+        return ec;
 
       // Get symbol name
-      if ((ec = (i->getName(symbolname)))) return ec;
+      if ((ec = (i->getName(symbolname))))
+        return ec;
 
       if (symbolname != symbol)
-          continue;
+        continue;
 
       // Get symbol flags
-      if ((ec = (i->getFlags(symflags)))) return ec;
+      if ((ec = (i->getFlags(symflags))))
+        return ec;
 
       if (symflags <= SymbolRef::SF_Undefined)
-          continue;
+        continue;
 
       // Get Symbol Type
-      if ((ec = (i->getType(symtype)))) return ec;
+      if ((ec = (i->getType(symtype))))
+        return ec;
 
       if (symtype == SymbolRef::ST_Data) {
         return error_code::success();
@@ -149,40 +151,34 @@ protected:
   }
 
 private:
-  typedef std::unordered_map<StringRef,Archive::child_iterator> MemberMap;
-  typedef std::set<const char*> InstantiatedSet;
+  typedef std::unordered_map<StringRef, Archive::child_iterator> MemberMap;
+  typedef std::set<const char *> InstantiatedSet;
 
-  const Registry                           &_registry;
-  std::unique_ptr<Archive>                  _archive;
-  mutable MemberMap                         _symbolMemberMap;
-  mutable InstantiatedSet                   _membersInstantiated;
-  atom_collection_vector<DefinedAtom>       _definedAtoms;
-  atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
+  const Registry &_registry;
+  std::unique_ptr<Archive> _archive;
+  mutable MemberMap _symbolMemberMap;
+  mutable InstantiatedSet _membersInstantiated;
+  atom_collection_vector<DefinedAtom> _definedAtoms;
+  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
-  bool                                      _isWholeArchive;
-  bool                                      _logLoading;
+  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
+  bool _isWholeArchive;
+  bool _logLoading;
 
 public:
   /// only subclasses of ArchiveLibraryFile can be instantiated
-  FileArchive(const Registry &registry,
-              Archive* archive,
-              StringRef path,
-              bool isWholeArchive,
-              bool logLoading)
-      : ArchiveLibraryFile(path),
-        _registry(registry),
-        _archive(std::move(archive)),
-        _isWholeArchive(isWholeArchive),
-        _logLoading(logLoading) {
-  }
+  FileArchive(const Registry &registry, Archive *archive, StringRef path,
+              bool isWholeArchive, bool logLoading)
+      : ArchiveLibraryFile(path), _registry(registry),
+        _archive(std::move(archive)), _isWholeArchive(isWholeArchive),
+        _logLoading(logLoading) {}
 
   error_code buildTableOfContents() {
-    DEBUG_WITH_TYPE("FileArchive",
-                    llvm::dbgs() << "Table of contents for archive '"
-                                 << _archive->getFileName() << "':\n");
+    DEBUG_WITH_TYPE("FileArchive", llvm::dbgs()
+                                       << "Table of contents for archive '"
+                                       << _archive->getFileName() << "':\n");
     for (auto i = _archive->begin_symbols(), e = _archive->end_symbols();
-              i != e; ++i) {
+         i != e; ++i) {
       StringRef name;
       error_code ec;
       Archive::child_iterator member;
@@ -190,55 +186,54 @@ public:
         return ec;
       if ((ec = i->getMember(member)))
         return ec;
-      DEBUG_WITH_TYPE("FileArchive",
-           llvm::dbgs() << llvm::format("0x%08llX ", member->getBuffer().data())
-                        << "'" << name << "'\n");
+      DEBUG_WITH_TYPE(
+          "FileArchive",
+          llvm::dbgs() << llvm::format("0x%08llX ", member->getBuffer().data())
+                       << "'" << name << "'\n");
       _symbolMemberMap[name] = member;
     }
-    return error_code::success();  
+    return error_code::success();
   }
 
 }; // class FileArchive
 
-
-
 class ArchiveReader : public Reader {
 public:
-  ArchiveReader(bool logLoading) : _logLoading(logLoading) { }
-  
-  virtual bool canParse(file_magic magic, StringRef, const MemoryBuffer&) const{
+  ArchiveReader(bool logLoading) : _logLoading(logLoading) {}
+
+  virtual bool canParse(file_magic magic, StringRef,
+                        const MemoryBuffer &) const {
     return (magic == llvm::sys::fs::file_magic::archive);
   }
-  
+
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &reg,
             std::vector<std::unique_ptr<File>> &result) const {
     // Make Archive object which will be owned by FileArchive object.
     error_code ec;
-    Archive* archive = new Archive(mb.get(), ec);
+    Archive *archive = new Archive(mb.get(), ec);
     if (ec)
       return ec;
     StringRef path = mb->getBufferIdentifier();
     // Construct FileArchive object.
-    std::unique_ptr<FileArchive> file(new FileArchive(reg, archive, 
-                                                     path, false, _logLoading));
+    std::unique_ptr<FileArchive> file(
+        new FileArchive(reg, archive, path, false, _logLoading));
     ec = file->buildTableOfContents();
     if (ec)
       return ec;
-      
+
     // Transfer ownership of memory buffer to Archive object.
     mb.release();
-    
+
     result.push_back(std::move(file));
-    return error_code::success();     
+    return error_code::success();
   }
+
 private:
-  bool  _logLoading;
+  bool _logLoading;
 };
 
-
 } // anonymous namespace
-
 
 void Registry::addSupportArchives(bool logLoading) {
   add(std::unique_ptr<Reader>(new ArchiveReader(logLoading)));

@@ -25,9 +25,9 @@ void Registry::add(std::unique_ptr<Reader> reader) {
   _readers.push_back(std::move(reader));
 }
 
-error_code 
+error_code
 Registry::parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                          std::vector<std::unique_ptr<File>> &result) const {
+                    std::vector<std::unique_ptr<File>> &result) const {
   // Get file type.
   StringRef content(mb->getBufferStart(), mb->getBufferSize());
   llvm::sys::fs::file_magic fileType = llvm::sys::fs::identify_magic(content);
@@ -39,36 +39,36 @@ Registry::parseFile(std::unique_ptr<MemoryBuffer> &mb,
     if (reader->canParse(fileType, extension, *mb))
       return reader->parseFile(mb, *this, result);
   }
-  
-  // No Reader could parse this file.     
+
+  // No Reader could parse this file.
   return llvm::make_error_code(llvm::errc::executable_format_error);
 }
 
 static const Registry::KindStrings kindStrings[] = {
-  { Reference::kindInGroup,       "in-group" },
-  { Reference::kindLayoutAfter,   "layout-after" },
-  { Reference::kindLayoutBefore,  "layout-before" },
+  { Reference::kindInGroup, "in-group" },
+  { Reference::kindLayoutAfter, "layout-after" },
+  { Reference::kindLayoutBefore, "layout-before" },
   LLD_KIND_STRING_END
 };
 
 Registry::Registry() {
-  addKindTable(Reference::KindNamespace::all, Reference::KindArch::all, 
-                                                                  kindStrings);
+  addKindTable(Reference::KindNamespace::all, Reference::KindArch::all,
+               kindStrings);
 }
 
-void Registry::addKindTable(Reference::KindNamespace ns, 
+void Registry::addKindTable(Reference::KindNamespace ns,
                             Reference::KindArch arch,
                             const KindStrings array[]) {
-  KindEntry entry = {ns, arch, array};
+  KindEntry entry = { ns, arch, array };
   _kindEntries.push_back(entry);
 }
 
-bool Registry::referenceKindFromString(StringRef inputStr, 
+bool Registry::referenceKindFromString(StringRef inputStr,
                                        Reference::KindNamespace &ns,
-                                       Reference::KindArch &arch, 
+                                       Reference::KindArch &arch,
                                        Reference::KindValue &value) const {
   for (const KindEntry &entry : _kindEntries) {
-    for (const KindStrings *pair=entry.array; !pair->name.empty(); ++pair) {
+    for (const KindStrings *pair = entry.array; !pair->name.empty(); ++pair) {
       if (!inputStr.equals(pair->name))
         continue;
       ns = entry.ns;
@@ -80,17 +80,16 @@ bool Registry::referenceKindFromString(StringRef inputStr,
   return false;
 }
 
-
-bool Registry::referenceKindToString(Reference::KindNamespace ns, 
-                                     Reference::KindArch arch, 
-                                     Reference::KindValue value, 
+bool Registry::referenceKindToString(Reference::KindNamespace ns,
+                                     Reference::KindArch arch,
+                                     Reference::KindValue value,
                                      StringRef &str) const {
   for (const KindEntry &entry : _kindEntries) {
     if (entry.ns != ns)
       continue;
     if (entry.arch != arch)
       continue;
-    for (const KindStrings *pair=entry.array; !pair->name.empty(); ++pair) {
+    for (const KindStrings *pair = entry.array; !pair->name.empty(); ++pair) {
       if (pair->value != value)
         continue;
       str = pair->name;
@@ -99,6 +98,5 @@ bool Registry::referenceKindToString(Reference::KindNamespace ns,
   }
   return false;
 }
-
 
 } // end namespace lld

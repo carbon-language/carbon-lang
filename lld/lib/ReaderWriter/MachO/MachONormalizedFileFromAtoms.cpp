@@ -436,10 +436,9 @@ void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
       if ( ref->target() != nullptr )
         targetAddress = _atomToAddress[ref->target()];
       uint64_t fixupAddress = _atomToAddress[ai.atom] + offset;
-      _context.kindHandler().applyFixup(ref->kindNamespace(), ref->kindArch(), 
-                                       ref->kindValue(), ref->addend(),
-                                       &atomContent[offset], fixupAddress,
-                                       targetAddress);
+      _context.kindHandler().applyFixup(
+          ref->kindNamespace(), ref->kindArch(), ref->kindValue(),
+          ref->addend(), &atomContent[offset], fixupAddress, targetAddress);
     }
   }
 }

@@ -235,8 +235,7 @@ uint32_t PECOFFLinkingContext::getSectionAttributes(StringRef sectionName,
   uint32_t clearMask = (ci == _sectionClearMask.end()) ? 0 : ci->second;
   return (flags | setMask) & ~clearMask;
 }
- 
- 
+
 void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::SetSubsystemPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::EdataPass(*this)));

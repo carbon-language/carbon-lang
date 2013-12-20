@@ -213,11 +213,10 @@ private:
 //
 class NativeReferenceV1 : public Reference {
 public:
-  NativeReferenceV1(const File& f, const NativeReferenceIvarsV1* ivarData)
-      : Reference((KindNamespace)ivarData->kindNamespace, 
-                  (KindArch)ivarData->kindArch, ivarData->kindValue), 
-        _file(&f), _ivarData(ivarData) {
-  }
+  NativeReferenceV1(const File &f, const NativeReferenceIvarsV1 *ivarData)
+      : Reference((KindNamespace)ivarData->kindNamespace,
+                  (KindArch)ivarData->kindArch, ivarData->kindValue),
+        _file(&f), _ivarData(ivarData) {}
 
   virtual uint64_t offsetInAtom() const {
     return _ivarData->offsetInAtom;
@@ -240,11 +239,10 @@ private:
 //
 class NativeReferenceV2 : public Reference {
 public:
-  NativeReferenceV2(const File& f, const NativeReferenceIvarsV2* ivarData)
-      : Reference((KindNamespace)ivarData->kindNamespace, 
-                  (KindArch)ivarData->kindArch, ivarData->kindValue), 
-        _file(&f), _ivarData(ivarData) {
-  }
+  NativeReferenceV2(const File &f, const NativeReferenceIvarsV2 *ivarData)
+      : Reference((KindNamespace)ivarData->kindNamespace,
+                  (KindArch)ivarData->kindArch, ivarData->kindValue),
+        _file(&f), _ivarData(ivarData) {}
 
   virtual uint64_t offsetInAtom() const {
     return _ivarData->offsetInAtom;
@@ -270,7 +268,7 @@ public:
   /// Instantiates a File object from a native object file.  Ownership
   /// of the MemoryBuffer is transferred to the resulting File object.
   static error_code make(std::unique_ptr<MemoryBuffer> mb,
-                         std::vector<std::unique_ptr<lld::File> > &result) {
+                         std::vector<std::unique_ptr<lld::File>> &result) {
     const uint8_t *const base =
         reinterpret_cast<const uint8_t *>(mb->getBufferStart());
     StringRef path(mb->getBufferIdentifier());
@@ -842,8 +840,7 @@ private:
     uint32_t           elementCount;
   };
 
-
-  std::unique_ptr<MemoryBuffer>   _buffer;
+  std::unique_ptr<MemoryBuffer> _buffer;
   const NativeFileHeader*         _header;
   AtomArray<DefinedAtom>          _definedAtoms;
   AtomArray<UndefinedAtom>        _undefinedAtoms;
@@ -860,9 +857,9 @@ private:
   const char*                     _strings;
   uint32_t                        _stringsMaxOffset;
   const Reference::Addend*        _addends;
-  uint32_t                        _addendsMaxIndex;
-  const uint8_t                  *_contentStart;
-  const uint8_t                  *_contentEnd;
+  uint32_t _addendsMaxIndex;
+  const uint8_t *_contentStart;
+  const uint8_t *_contentEnd;
 };
 
 inline const lld::File &NativeDefinedAtomV1::file() const {
@@ -1001,19 +998,18 @@ inline void NativeReferenceV2::setAddend(Addend a) {
 
 } // end namespace native
 
-
 namespace {
 
 class NativeReader : public Reader {
 public:
-  virtual bool canParse(file_magic magic, StringRef, 
-                                                const MemoryBuffer& mb) const {
+  virtual bool canParse(file_magic magic, StringRef,
+                        const MemoryBuffer &mb) const {
     const NativeFileHeader *const header =
-            reinterpret_cast<const NativeFileHeader *>(mb.getBufferStart());
-    return (memcmp(header->magic, NATIVE_FILE_HEADER_MAGIC, 
-                                                  sizeof(header->magic)) == 0);
+        reinterpret_cast<const NativeFileHeader *>(mb.getBufferStart());
+    return (memcmp(header->magic, NATIVE_FILE_HEADER_MAGIC,
+                   sizeof(header->magic)) == 0);
   }
-  
+
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const {
@@ -1021,12 +1017,10 @@ public:
     return error_code::success();
   }
 };
-
-
 }
 
 void Registry::addSupportNativeObjects() {
-  add(std::unique_ptr<Reader>(new NativeReader())); 
+  add(std::unique_ptr<Reader>(new NativeReader()));
 }
 
 } // end namespace lld

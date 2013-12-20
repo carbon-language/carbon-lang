@@ -35,10 +35,8 @@ public:
   PPCTargetHandler(PPCLinkingContext &targetInfo);
 
   virtual void registerRelocationNames(Registry &registry);
-  
-  virtual TargetLayout<PPCELFType> &targetLayout() {
-    return _targetLayout;
-  }
+
+  virtual TargetLayout<PPCELFType> &targetLayout() { return _targetLayout; }
 
   virtual const PPCTargetRelocationHandler &getRelocationHandler() const {
     return _relocationHandler;

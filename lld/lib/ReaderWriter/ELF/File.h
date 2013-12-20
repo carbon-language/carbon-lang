@@ -119,14 +119,14 @@ template <class ELFT> class ELFFile : public File {
 
 public:
   ELFFile(StringRef name)
-      : File(name, kindObject), _ordinal(0), 
-          _doStringsMerge(false), _targetHandler(nullptr) {}
+      : File(name, kindObject), _ordinal(0), _doStringsMerge(false),
+        _targetHandler(nullptr) {}
 
   ELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
           TargetHandlerBase *handler, error_code &ec)
-      : File(mb->getBufferIdentifier(), kindObject),
-        _ordinal(0), _doStringsMerge(atomizeStrings), 
-        _targetHandler(reinterpret_cast<TargetHandler<ELFT>*>(handler)) {
+      : File(mb->getBufferIdentifier(), kindObject), _ordinal(0),
+        _doStringsMerge(atomizeStrings),
+        _targetHandler(reinterpret_cast<TargetHandler<ELFT> *>(handler)) {
     _objFile.reset(new llvm::object::ELFFile<ELFT>(mb.release(), ec));
 
     if (ec)
@@ -162,22 +162,21 @@ public:
 
   Reference::KindArch kindArch() {
     switch (_objFile->getHeader()->e_machine) {
-      case llvm::ELF::EM_X86_64:
-        return Reference::KindArch::x86_64;
-      case llvm::ELF::EM_386:
-        return Reference::KindArch::x86;
-      case llvm::ELF::EM_ARM:
-        return Reference::KindArch::ARM;
-      case llvm::ELF::EM_PPC:
-        return Reference::KindArch::PowerPC;
-      case llvm::ELF::EM_HEXAGON:
-        return Reference::KindArch::Hexagon;
-      case llvm::ELF::EM_MIPS:
-        return Reference::KindArch::Mips;
+    case llvm::ELF::EM_X86_64:
+      return Reference::KindArch::x86_64;
+    case llvm::ELF::EM_386:
+      return Reference::KindArch::x86;
+    case llvm::ELF::EM_ARM:
+      return Reference::KindArch::ARM;
+    case llvm::ELF::EM_PPC:
+      return Reference::KindArch::PowerPC;
+    case llvm::ELF::EM_HEXAGON:
+      return Reference::KindArch::Hexagon;
+    case llvm::ELF::EM_MIPS:
+      return Reference::KindArch::Mips;
     }
     llvm_unreachable("unsupported e_machine value");
   }
-
 
   /// \brief Read input sections and populate necessary data structures
   /// to read them later and create atoms
@@ -510,9 +509,7 @@ public:
     return _absoluteAtoms;
   }
 
-  TargetHandler<ELFT> *targetHandler() const {
-    return _targetHandler;
-  }
+  TargetHandler<ELFT> *targetHandler() const { return _targetHandler; }
 
   Atom *findAtom(const Elf_Sym *symbol) {
     return _symbolToAtomMapping.lookup(symbol);
@@ -536,9 +533,9 @@ private:
           continue;
         bool isMips64EL = _objFile->isMips64EL();
         uint32_t symbolIndex = rai.getSymbol(isMips64EL);
-        auto *ERef = new (_readerStorage)
-            ELFReference<ELFT>(&rai, rai.r_offset - symbol->st_value,
-                              kindArch(), rai.getType(isMips64EL), symbolIndex);
+        auto *ERef = new (_readerStorage) ELFReference<ELFT>(
+            &rai, rai.r_offset - symbol->st_value, kindArch(),
+            rai.getType(isMips64EL), symbolIndex);
         _references.push_back(ERef);
       }
     }
@@ -552,9 +549,9 @@ private:
           continue;
         bool isMips64EL = _objFile->isMips64EL();
         uint32_t symbolIndex = ri.getSymbol(isMips64EL);
-        auto *ERef = new (_readerStorage)
-            ELFReference<ELFT>(&ri, ri.r_offset - symbol->st_value,
-                               kindArch(), ri.getType(isMips64EL), symbolIndex);
+        auto *ERef = new (_readerStorage) ELFReference<ELFT>(
+            &ri, ri.r_offset - symbol->st_value, kindArch(),
+            ri.getType(isMips64EL), symbolIndex);
         // Read the addend from the section contents
         // TODO : We should move the way lld reads relocations totally from
         // ELFFile
@@ -576,7 +573,7 @@ private:
     /// cached value of target relocation handler
     assert(_targetHandler);
     const TargetRelocationHandler<ELFT> &targetRelocationHandler =
-                                        _targetHandler->getRelocationHandler();
+        _targetHandler->getRelocationHandler();
 
     for (auto &ri : _references) {
       if (ri->kindNamespace() == lld::Reference::KindNamespace::ELF) {
@@ -689,7 +686,8 @@ private:
     // not. Let the TargetHandler to make a decision if that's the case.
     if (isTargetSpecificAtom(nullptr, symbol)) {
       assert(_targetHandler);
-      TargetAtomHandler<ELFT> &atomHandler = _targetHandler->targetAtomHandler();
+      TargetAtomHandler<ELFT> &atomHandler =
+          _targetHandler->targetAtomHandler();
       return atomHandler.getType(symbol) == llvm::ELF::STT_COMMON;
     }
     return symbol->getType() == llvm::ELF::STT_COMMON ||

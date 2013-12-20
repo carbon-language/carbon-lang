@@ -332,12 +332,12 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
   case DefinedAtom::typeResolver:
   case DefinedAtom::typeCode:
     return llvm::StringSwitch<Layout::SectionOrder>(name)
-      .StartsWith(".eh_frame_hdr", ORDER_EH_FRAMEHDR)
-      .StartsWith(".eh_frame", ORDER_EH_FRAME)
-      .StartsWith(".init", ORDER_INIT)
-      .StartsWith(".fini", ORDER_FINI)
-      .StartsWith(".hash", ORDER_HASH)
-      .Default(ORDER_TEXT);
+        .StartsWith(".eh_frame_hdr", ORDER_EH_FRAMEHDR)
+        .StartsWith(".eh_frame", ORDER_EH_FRAME)
+        .StartsWith(".init", ORDER_INIT)
+        .StartsWith(".fini", ORDER_FINI)
+        .StartsWith(".hash", ORDER_HASH)
+        .Default(ORDER_TEXT);
 
   case DefinedAtom::typeConstant:
     return ORDER_RODATA;
@@ -355,8 +355,8 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
 
   case DefinedAtom::typeGOT:
     return llvm::StringSwitch<Layout::SectionOrder>(name)
-      .StartsWith(".got.plt", ORDER_GOT_PLT)
-      .Default(ORDER_GOT);
+        .StartsWith(".got.plt", ORDER_GOT_PLT)
+        .Default(ORDER_GOT);
 
   case DefinedAtom::typeStub:
     return ORDER_PLT;

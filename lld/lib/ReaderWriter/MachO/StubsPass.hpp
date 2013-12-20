@@ -149,11 +149,10 @@ private:
 
   class File : public SimpleFile {
   public:
-    File(const MachOLinkingContext &context)
-        : SimpleFile("MachO Stubs pass") {}
+    File(const MachOLinkingContext &context) : SimpleFile("MachO Stubs pass") {}
   };
 
-  const MachOLinkingContext                      &_context;
+  const MachOLinkingContext &_context;
   mach_o::KindHandler                            &_kindHandler;
   File                                            _file;
   llvm::DenseMap<const Atom*, const DefinedAtom*> _targetToStub;

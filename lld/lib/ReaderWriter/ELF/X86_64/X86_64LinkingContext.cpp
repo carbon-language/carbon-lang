@@ -69,7 +69,7 @@ public:
     Atom *initFunctionAtom = new (_allocator) SimpleUndefinedAtom(*this, name);
     X86_64InitAtom *initAtom =
            (new (_allocator) X86_64InitAtom(*this, name));
-    initAtom->addReferenceELF_x86_64(llvm::ELF::R_X86_64_64, 0, 
+    initAtom->addReferenceELF_x86_64(llvm::ELF::R_X86_64_64, 0,
                                      initFunctionAtom, 0);
     initAtom->setOrdinal(_ordinal++);
     addAtom(*initFunctionAtom);
@@ -80,8 +80,8 @@ public:
     Atom *finiFunctionAtom = new (_allocator) SimpleUndefinedAtom(*this, name);
     X86_64FiniAtom *finiAtom =
            (new (_allocator) X86_64FiniAtom(*this, name));
-    finiAtom->addReferenceELF_x86_64(llvm::ELF::R_X86_64_64, 0, 
-                                    finiFunctionAtom, 0);
+    finiAtom->addReferenceELF_x86_64(llvm::ELF::R_X86_64_64, 0,
+                                     finiFunctionAtom, 0);
     finiAtom->setOrdinal(_ordinal++);
     addAtom(*finiFunctionAtom);
     addAtom(*finiAtom);

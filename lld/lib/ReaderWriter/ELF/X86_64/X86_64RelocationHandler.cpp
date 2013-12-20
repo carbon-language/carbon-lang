@@ -47,8 +47,6 @@ static void reloc32S(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   // TODO: Make sure that the result sign extends to the 64bit value.
 }
 
-
-
 int64_t X86_64TargetRelocationHandler::relocAddend(const Reference &ref) const {
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
     return false;
@@ -94,7 +92,7 @@ error_code X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_TPOFF32: {
     _tlsSize =
         _context.getTargetHandler<X86_64ELFType>().targetLayout().getTLSSize();
-    if (ref.kindValue() == R_X86_64_TPOFF32 || 
+    if (ref.kindValue() == R_X86_64_TPOFF32 ||
         ref.kindValue() == R_X86_64_DTPOFF32) {
       int32_t result = (int32_t)(targetVAddress - _tlsSize);
       *reinterpret_cast<llvm::support::little32_t *>(location) = result;

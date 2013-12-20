@@ -35,8 +35,8 @@ public:
   }
 };
 
-ELFLinkingContext::ELFLinkingContext(llvm::Triple triple, 
-                               std::unique_ptr<TargetHandlerBase> targetHandler)
+ELFLinkingContext::ELFLinkingContext(
+    llvm::Triple triple, std::unique_ptr<TargetHandlerBase> targetHandler)
     : _outputELFType(elf::ET_EXEC), _triple(triple),
       _targetHandler(std::move(targetHandler)), _baseAddress(0),
       _isStaticExecutable(false), _noInhibitExec(false),

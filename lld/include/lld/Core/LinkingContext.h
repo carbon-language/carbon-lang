@@ -312,9 +312,9 @@ public:
 
   /// Return the next ordinal and Increment it.
   virtual uint64_t getNextOrdinalAndIncrement() const { return _nextOrdinal++; }
-  
+
   /// @}
-  
+
 protected:
   LinkingContext(); // Must be subclassed
 
@@ -347,7 +347,7 @@ protected:
   mutable llvm::BumpPtrAllocator _allocator;
   InputElement *_currentInputElement;
   mutable uint64_t _nextOrdinal;
-  Registry  _registry;
+  Registry _registry;
 
 private:
   /// Validate the subclass bits. Only called by validate.

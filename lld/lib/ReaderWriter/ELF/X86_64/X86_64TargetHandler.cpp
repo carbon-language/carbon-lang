@@ -29,9 +29,8 @@ bool X86_64TargetHandler::createImplicitFiles(
 }
 
 void X86_64TargetHandler::registerRelocationNames(Registry &registry) {
-  registry.addKindTable(Reference::KindNamespace::ELF, 
-                        Reference::KindArch::x86_64, 
-                        kindStrings);
+  registry.addKindTable(Reference::KindNamespace::ELF,
+                        Reference::KindArch::x86_64, kindStrings);
 }
 
 const Registry::KindStrings X86_64TargetHandler::kindStrings[] = {
@@ -76,4 +75,3 @@ const Registry::KindStrings X86_64TargetHandler::kindStrings[] = {
   LLD_KIND_STRING_ENTRY(LLD_R_X86_64_GOTRELINDEX),
   LLD_KIND_STRING_END
 };
-

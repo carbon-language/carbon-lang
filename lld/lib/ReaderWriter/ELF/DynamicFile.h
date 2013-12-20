@@ -24,7 +24,7 @@ namespace lld {
 namespace elf {
 template <class ELFT> class DynamicFile LLVM_FINAL : public SharedLibraryFile {
 public:
-  static ErrorOr<std::unique_ptr<DynamicFile> >
+  static ErrorOr<std::unique_ptr<DynamicFile>>
   create(std::unique_ptr<llvm::MemoryBuffer> mb, bool useShlibUndefines) {
     std::unique_ptr<DynamicFile> file(
         new DynamicFile(mb->getBufferIdentifier()));
@@ -104,8 +104,7 @@ public:
   }
 
 private:
-  DynamicFile(StringRef name)
-      : SharedLibraryFile(name) {}
+  DynamicFile(StringRef name) : SharedLibraryFile(name) {}
 
   mutable llvm::BumpPtrAllocator _alloc;
   std::unique_ptr<llvm::object::ELFFile<ELFT>> _objFile;

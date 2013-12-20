@@ -67,11 +67,9 @@ PPCTargetHandler::PPCTargetHandler(PPCLinkingContext &targetInfo)
     : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo),
       _targetLayout(targetInfo) {}
 
-
 void PPCTargetHandler::registerRelocationNames(Registry &registry) {
-  registry.addKindTable(Reference::KindNamespace::ELF, 
-                        Reference::KindArch::PowerPC, 
-                        kindStrings);
+  registry.addKindTable(Reference::KindNamespace::ELF,
+                        Reference::KindArch::PowerPC, kindStrings);
 }
 
 const Registry::KindStrings PPCTargetHandler::kindStrings[] = {
@@ -130,6 +128,3 @@ const Registry::KindStrings PPCTargetHandler::kindStrings[] = {
   LLD_KIND_STRING_ENTRY(R_PPC_REL16_HA),
   LLD_KIND_STRING_END
 };
-
-
-

@@ -39,8 +39,6 @@ public:
   virtual void registerRelocationNames(Registry &) = 0;
 };
 
-
-
 class ELFLinkingContext : public LinkingContext {
 public:
 
@@ -130,9 +128,7 @@ public:
     return static_cast<lld::elf::TargetHandler<ELFT> &>(*_targetHandler.get());
   }
 
-  TargetHandlerBase *targetHandler() const {
-    return _targetHandler.get();
-  }
+  TargetHandlerBase *targetHandler() const { return _targetHandler.get(); }
   virtual void addPasses(PassManager &pm);
 
   void setTriple(llvm::Triple trip) { _triple = trip; }

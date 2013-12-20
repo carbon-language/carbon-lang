@@ -40,27 +40,22 @@ template <class ELFT> class ELFReference LLVM_FINAL : public Reference {
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 public:
+  ELFReference(const Elf_Rela *rela, uint64_t off, Reference::KindArch arch,
+               uint16_t relocType, uint32_t idx)
+      : Reference(Reference::KindNamespace::ELF, arch, relocType),
+        _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),
+        _addend(rela->r_addend) {}
 
-  ELFReference(const Elf_Rela *rela, uint64_t off, Reference::KindArch arch, 
-                                              uint16_t relocType, uint32_t idx)
-      : Reference(Reference::KindNamespace::ELF, arch, relocType), 
-        _target(nullptr), _targetSymbolIndex(idx),
-        _offsetInAtom(off), _addend(rela->r_addend) {
-  }
-
-  ELFReference(const Elf_Rel *rel, uint64_t off, Reference::KindArch arch, 
-                                              uint16_t relocType, uint32_t idx)
-      : Reference(Reference::KindNamespace::ELF, arch, relocType), 
-        _target(nullptr), _targetSymbolIndex(idx),
-        _offsetInAtom(off), _addend(0) {
-  }
+  ELFReference(const Elf_Rel *rel, uint64_t off, Reference::KindArch arch,
+               uint16_t relocType, uint32_t idx)
+      : Reference(Reference::KindNamespace::ELF, arch, relocType),
+        _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),
+        _addend(0) {}
 
   ELFReference(uint32_t edgeKind)
-      : Reference(Reference::KindNamespace::all, 
-                  Reference::KindArch::all, edgeKind), 
-        _target(nullptr), _targetSymbolIndex(0), 
-        _offsetInAtom(0), _addend(0) {
-  }
+      : Reference(Reference::KindNamespace::all, Reference::KindArch::all,
+                  edgeKind),
+        _target(nullptr), _targetSymbolIndex(0), _offsetInAtom(0), _addend(0) {}
 
   virtual uint64_t offsetInAtom() const { return _offsetInAtom; }
 
@@ -169,33 +164,19 @@ class ELFDefinedAtom LLVM_FINAL : public DefinedAtom {
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
 public:
-  ELFDefinedAtom(const ELFFile<ELFT> &file,
-                 StringRef symbolName,
-                 StringRef sectionName,
-                 const Elf_Sym *symbol,
-                 const Elf_Shdr *section,
-                 ArrayRef<uint8_t> contentData,
-                 unsigned int referenceStart,
-                 unsigned int referenceEnd,
-                 std::vector<ELFReference<ELFT>*> &referenceList)
+  ELFDefinedAtom(const ELFFile<ELFT> &file, StringRef symbolName,
+                 StringRef sectionName, const Elf_Sym *symbol,
+                 const Elf_Shdr *section, ArrayRef<uint8_t> contentData,
+                 unsigned int referenceStart, unsigned int referenceEnd,
+                 std::vector<ELFReference<ELFT> *> &referenceList)
+      : _owningFile(file), _symbolName(symbolName), _sectionName(sectionName),
+        _symbol(symbol), _section(section), _contentData(contentData),
+        _referenceStartIndex(referenceStart), _referenceEndIndex(referenceEnd),
+        _referenceList(referenceList), _targetAtomHandler(nullptr),
+        _contentType(typeUnknown), _permissions(permUnknown) {}
 
-    : _owningFile(file)
-    , _symbolName(symbolName)
-    , _sectionName(sectionName)
-    , _symbol(symbol)
-    , _section(section)
-    , _contentData(contentData)
-    , _referenceStartIndex(referenceStart)
-    , _referenceEndIndex(referenceEnd)
-    , _referenceList(referenceList)
-    , _targetAtomHandler(nullptr)
-    , _contentType(typeUnknown)
-    , _permissions(permUnknown) {
-    }
+  ~ELFDefinedAtom() {}
 
-  ~ELFDefinedAtom() {
-  }
-  
   virtual const ELFFile<ELFT> &file() const {
     return _owningFile;
   }
@@ -219,7 +200,7 @@ public:
     // Treat target defined common symbols
     if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
          _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
-      if (!_targetAtomHandler) 
+      if (!_targetAtomHandler)
         _targetAtomHandler = &_owningFile.targetHandler()->targetAtomHandler();
       if (_targetAtomHandler->getType(_symbol) == llvm::ELF::STT_COMMON)
         return (uint64_t) _symbol->st_size;
@@ -255,7 +236,7 @@ public:
     // mergeTentative
     if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
          _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
-      if (!_targetAtomHandler) 
+      if (!_targetAtomHandler)
         _targetAtomHandler = &_owningFile.targetHandler()->targetAtomHandler();
       if (_targetAtomHandler->getType(_symbol) == llvm::ELF::STT_COMMON)
         return mergeAsTentative;
@@ -664,8 +645,8 @@ public:
   virtual ContentType contentType() const {
     if (_symbol->st_shndx >= llvm::ELF::SHN_LORESERVE &&
         _symbol->st_shndx <= llvm::ELF::SHN_HIOS)
-      return _owningFile.targetHandler()->targetAtomHandler().
-                                                  contentType(nullptr, _symbol);
+      return _owningFile.targetHandler()->targetAtomHandler().contentType(
+          nullptr, _symbol);
     return typeZeroFill;
   }
 
@@ -788,40 +769,37 @@ private:
   const Elf_Sym *_symbol;
 };
 
-
 class SimpleELFDefinedAtom : public SimpleDefinedAtom {
 public:
-  SimpleELFDefinedAtom(const File &f) : SimpleDefinedAtom(f) { } 
+  SimpleELFDefinedAtom(const File &f) : SimpleDefinedAtom(f) {}
 
-  void addReferenceELF(Reference::KindArch arch, 
-                    uint16_t kindValue, uint64_t off, const Atom *target,
-                    Reference::Addend addend) {
-    this->addReference(Reference::KindNamespace::ELF, arch, kindValue,
-                       off, target, addend);
+  void addReferenceELF(Reference::KindArch arch, uint16_t kindValue,
+                       uint64_t off, const Atom *target,
+                       Reference::Addend addend) {
+    this->addReference(Reference::KindNamespace::ELF, arch, kindValue, off,
+                       target, addend);
   }
-  
+
   void addReferenceELF_Hexagon(uint16_t relocType, uint64_t off, const Atom *t,
-                                Reference::Addend a) {
+                               Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::Hexagon, relocType, off, t, a);
   }
-  
+
   void addReferenceELF_x86_64(uint16_t relocType, uint64_t off, const Atom *t,
                               Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::x86_64, relocType, off, t, a);
   }
-  
+
   void addReferenceELF_PowerPC(uint16_t relocType, uint64_t off, const Atom *t,
                                Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::PowerPC, relocType, off, t, a);
   }
-  
+
   void addReferenceELF_Mips(uint16_t relocType, uint64_t off, const Atom *t,
-                               Reference::Addend a) {
+                            Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::Mips, relocType, off, t, a);
   }
 };
-
-
 
 /// \brief Atom which represents an object for which a COPY relocation will be
 ///   generated.
@@ -861,8 +839,7 @@ class GOTAtom : public SimpleELFDefinedAtom {
 
 public:
   GOTAtom(const File &f, StringRef secName)
-      : SimpleELFDefinedAtom(f), _section(secName) {
-  }
+      : SimpleELFDefinedAtom(f), _section(secName) {}
 
   virtual Scope scope() const { return scopeTranslationUnit; }
 
@@ -897,8 +874,7 @@ class PLTAtom : public SimpleELFDefinedAtom {
 
 public:
   PLTAtom(const File &f, StringRef secName)
-      : SimpleELFDefinedAtom(f), _section(secName) {
-  }
+      : SimpleELFDefinedAtom(f), _section(secName) {}
 
   virtual Scope scope() const { return scopeTranslationUnit; }
 
@@ -1020,8 +996,7 @@ class InitFiniAtom : public SimpleELFDefinedAtom {
 
 public:
   InitFiniAtom(const File &f, StringRef secName)
-      : SimpleELFDefinedAtom(f), _section(secName) {
-  }
+      : SimpleELFDefinedAtom(f), _section(secName) {}
 
   virtual Scope scope() const { return scopeGlobal; }
 

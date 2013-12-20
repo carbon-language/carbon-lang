@@ -28,7 +28,6 @@ class LinkingContext;
 class PECOFFLinkingContext;
 class TargetHandlerBase;
 
-
 /// \brief An abstract class for reading object files, library files, and
 /// executable files.
 ///
@@ -42,7 +41,7 @@ public:
   /// The method is called with:
   /// 1) the file_magic enumeration returned by identify_magic()
   /// 2) the file extension (e.g. ".obj")
-  /// 3) the whole file content buffer if the above is not enough. 
+  /// 3) the whole file content buffer if the above is not enough.
   virtual bool canParse(file_magic magic, StringRef fileExtension,
                         const MemoryBuffer &mb) const = 0;
 
@@ -52,36 +51,35 @@ public:
   /// The resulting File object may take ownership of the MemoryBuffer.
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File> > &result) const = 0;
+            std::vector<std::unique_ptr<File>> &result) const = 0;
 };
-
 
 /// A registry to hold the list of currently registered Readers and
 /// tables which map Reference kind values to strings.
 /// The linker does not directly invoke Readers.  Instead, it registers
 /// Readers based on it configuration and command line options, then calls
-/// the Registry object to parse files. 
+/// the Registry object to parse files.
 class Registry {
 public:
   Registry();
-  
+
   /// Walk the list of registered Readers and find one that can parse the
   /// supplied file and parse it.
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File>> &result) const;
-  
+
   /// Walk the list of registered kind tables to convert a Reference Kind
   /// name to a value.
   bool referenceKindFromString(StringRef inputStr, Reference::KindNamespace &ns,
-                               Reference::KindArch &a, 
+                               Reference::KindArch &a,
                                Reference::KindValue &value) const;
-                                 
+
   /// Walk the list of registered kind tables to convert a Reference Kind
   /// value to a string.
-  bool referenceKindToString(Reference::KindNamespace ns, Reference::KindArch a, 
+  bool referenceKindToString(Reference::KindNamespace ns, Reference::KindArch a,
                              Reference::KindValue value, StringRef &) const;
-  
-  // These methods are called to dynamically add support for various file 
+
+  // These methods are called to dynamically add support for various file
   // formats. The methods are also implemented in the appropriate lib*.a
   // library, so that the code for handling a format is only linked in, if this
   // method is used.  Any options that a Reader might need must be passed
@@ -98,26 +96,29 @@ public:
 
   /// To convert between kind values and names, the registry walks the list
   /// of registered kind tables. Each table is a zero terminated array of
-  /// KindStrings elements.  
-  struct KindStrings { Reference::KindValue value; StringRef name; };
+  /// KindStrings elements.
+  struct KindStrings {
+    Reference::KindValue value;
+    StringRef name;
+  };
 
-  /// A Reference Kind value is a tuple of <namespace, arch, value>.  All 
+  /// A Reference Kind value is a tuple of <namespace, arch, value>.  All
   /// entries in a conversion table have the same <namespace, arch>.  The
   /// array then contains the value/name pairs.
   void addKindTable(Reference::KindNamespace ns, Reference::KindArch arch,
                     const KindStrings array[]);
 
 private:
-  struct KindEntry {  
-    Reference::KindNamespace  ns;
-    Reference::KindArch       arch;
-    const KindStrings        *array;
+  struct KindEntry {
+    Reference::KindNamespace ns;
+    Reference::KindArch arch;
+    const KindStrings *array;
   };
-  
+
   void add(std::unique_ptr<Reader>);
-                                   
-  std::vector<std::unique_ptr<Reader>>    _readers;
-  std::vector<KindEntry>                  _kindEntries;
+
+  std::vector<std::unique_ptr<Reader>> _readers;
+  std::vector<KindEntry> _kindEntries;
 };
 
 // Utilities for building a KindString table.  For instance:
@@ -126,9 +127,10 @@ private:
 //      LLD_KIND_STRING_ENTRY(R_VAX_DATA16),
 //      LLD_KIND_STRING_END
 //   };
-#define LLD_KIND_STRING_ENTRY(name) { name, #name }
-#define LLD_KIND_STRING_END {0, ""}
-
+#define LLD_KIND_STRING_ENTRY(name)                                            \
+  { name, #name }
+#define LLD_KIND_STRING_END                                                    \
+  { 0, "" }
 
 } // end namespace lld
 

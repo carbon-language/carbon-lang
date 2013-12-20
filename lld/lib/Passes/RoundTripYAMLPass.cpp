@@ -48,7 +48,7 @@ void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
     error_code ec = _context.registry().parseFile(mb, _yamlFile);
     if (ec) {
       // Note: we need a way for Passes to report errors.
-      llvm_unreachable("yaml reader not registered or read error"); 
+      llvm_unreachable("yaml reader not registered or read error");
     }
     File *objFile = _yamlFile[0].get();
     mergedFile.reset(new FileToMutable(_context, *objFile));

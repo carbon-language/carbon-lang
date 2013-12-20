@@ -31,8 +31,6 @@ static int relocPC32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   return 0;
 }
 
-
-
 const Registry::KindStrings X86TargetHandler::kindStrings[] = {
   LLD_KIND_STRING_ENTRY(R_386_NONE),
   LLD_KIND_STRING_ENTRY(R_386_32),
@@ -79,8 +77,7 @@ const Registry::KindStrings X86TargetHandler::kindStrings[] = {
 };
 
 void X86TargetHandler::registerRelocationNames(Registry &registry) {
-  registry.addKindTable(Reference::KindNamespace::ELF, 
-                        Reference::KindArch::x86, 
+  registry.addKindTable(Reference::KindNamespace::ELF, Reference::KindArch::x86,
                         kindStrings);
 }
 

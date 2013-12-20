@@ -108,8 +108,7 @@ public:
 
 class ELFPassFile : public SimpleFile {
 public:
-  ELFPassFile(const ELFLinkingContext &eti) 
-    : SimpleFile("ELFPassFile") {
+  ELFPassFile(const ELFLinkingContext &eti) : SimpleFile("ELFPassFile") {
     setOrdinal(eti.getNextOrdinalAndIncrement());
   }
 
@@ -291,8 +290,8 @@ public:
 
   error_code handlePLT32(const Reference &ref) {
     // Turn this into a PC32 to the PLT entry.
-    assert(ref.kindNamespace() ==  Reference::KindNamespace::ELF);
-    assert(ref.kindArch() ==  Reference::KindArch::Hexagon);
+    assert(ref.kindNamespace() == Reference::KindNamespace::ELF);
+    assert(ref.kindArch() == Reference::KindArch::Hexagon);
     const_cast<Reference &>(ref).setKindValue(R_HEX_B22_PCREL);
     const_cast<Reference &>(ref).setTarget(getPLTEntry(ref.target()));
     return error_code::success();
@@ -307,9 +306,8 @@ void elf::HexagonLinkingContext::addPasses(PassManager &pm) {
 }
 
 void HexagonTargetHandler::registerRelocationNames(Registry &registry) {
-  registry.addKindTable(Reference::KindNamespace::ELF, 
-                        Reference::KindArch::Hexagon, 
-                        kindStrings);
+  registry.addKindTable(Reference::KindNamespace::ELF,
+                        Reference::KindArch::Hexagon, kindStrings);
 }
 
 const Registry::KindStrings HexagonTargetHandler::kindStrings[] = {
@@ -407,4 +405,3 @@ const Registry::KindStrings HexagonTargetHandler::kindStrings[] = {
   LLD_KIND_STRING_ENTRY(R_HEX_TPREL_11_X),
   LLD_KIND_STRING_END
 };
-

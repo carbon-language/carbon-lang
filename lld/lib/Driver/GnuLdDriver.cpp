@@ -111,14 +111,14 @@ bool GnuLdDriver::linkELF(int argc, const char *argv[],
     return true;
 
   // Register possible input file parsers.
-  options->registry().addSupportELFObjects(options->mergeCommonStrings(), 
+  options->registry().addSupportELFObjects(options->mergeCommonStrings(),
                                            options->targetHandler());
   options->registry().addSupportArchives(options->logInputFiles());
   options->registry().addSupportYamlFiles();
   options->registry().addSupportNativeObjects();
   if (options->allowLinkWithDynamicLibraries())
     options->registry().addSupportELFDynamicSharedObjects(
-                                                options->useShlibUndefines());
+        options->useShlibUndefines());
 
   return link(*options, diagnostics);
 }

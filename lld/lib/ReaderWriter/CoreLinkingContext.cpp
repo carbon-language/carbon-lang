@@ -153,8 +153,7 @@ private:
 
 class TestingPassFile : public SimpleFile {
 public:
-  TestingPassFile(const LinkingContext &ctx)
-      : SimpleFile("Testing pass") {}
+  TestingPassFile(const LinkingContext &ctx) : SimpleFile("Testing pass") {}
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
@@ -238,10 +237,10 @@ public:
   }
 
   virtual void updateReferenceToGOT(const Reference *ref, bool targetIsNowGOT) {
-    const_cast<Reference *>(ref)->setKindValue(targetIsNowGOT ?
-                                  CoreLinkingContext::TEST_RELOC_PCREL32 : 
-                                  CoreLinkingContext::TEST_RELOC_LEA32_WAS_GOT);
-   }
+    const_cast<Reference *>(ref)->setKindValue(
+        targetIsNowGOT ? CoreLinkingContext::TEST_RELOC_PCREL32
+                       : CoreLinkingContext::TEST_RELOC_LEA32_WAS_GOT);
+  }
 
   virtual const DefinedAtom *makeGOTEntry(const Atom &target) {
     return new TestingGOTAtom(_file, target);

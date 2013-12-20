@@ -77,7 +77,7 @@ bool DarwinLdDriver::linkMachO(int argc, const char *argv[],
     return false;
   if (ctx.doNothing())
     return true;
-    
+
   // Register possible input file parsers.
   ctx.registry().addSupportMachOObjects(ctx.archName());
   ctx.registry().addSupportArchives(ctx.logInputFiles());

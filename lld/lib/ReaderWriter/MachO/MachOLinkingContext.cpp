@@ -100,7 +100,6 @@ StringRef MachOLinkingContext::nameFromArch(Arch arch) {
   return "<unknown>";
 }
 
-
 uint32_t MachOLinkingContext::cpuTypeFromArch(Arch arch) {
   assert(arch != arch_unknown);
   for (ArchInfo *info = _s_archInfos; !info->archName.empty(); ++info) {

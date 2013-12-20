@@ -181,7 +181,7 @@ public:
 
     // The size of the string that follows the header.
     uint32_t dataSize = *reinterpret_cast<const support::ulittle32_t *>(
-        buf + offsetof(COFF::ImportHeader, SizeOfData));
+                             buf + offsetof(COFF::ImportHeader, SizeOfData));
 
     // Check if the total size is valid.
     if (end - buf != sizeof(COFF::ImportHeader) + dataSize) {
@@ -190,14 +190,14 @@ public:
     }
 
     uint16_t hint = *reinterpret_cast<const support::ulittle16_t *>(
-        buf + offsetof(COFF::ImportHeader, OrdinalHint));
+                         buf + offsetof(COFF::ImportHeader, OrdinalHint));
     StringRef symbolName(buf + sizeof(COFF::ImportHeader));
     StringRef dllName(buf + sizeof(COFF::ImportHeader) + symbolName.size() + 1);
 
     // TypeInfo is a bitfield. The least significant 2 bits are import
     // type, followed by 3 bit import name type.
     uint16_t typeInfo = *reinterpret_cast<const support::ulittle16_t *>(
-        buf + offsetof(COFF::ImportHeader, TypeInfo));
+                             buf + offsetof(COFF::ImportHeader, TypeInfo));
     int type = typeInfo & 0x3;
     int nameType = (typeInfo >> 2) & 0x7;
 
@@ -301,7 +301,7 @@ public:
 
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File> > &result) const {
+            std::vector<std::unique_ptr<File>> &result) const {
     error_code ec;
     auto file = std::unique_ptr<File>(new FileImportLibrary(std::move(mb), ec));
     if (ec)
@@ -309,7 +309,6 @@ public:
     result.push_back(std::move(file));
     return error_code::success();
   }
-
 };
 
 } // end anonymous namespace

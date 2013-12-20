@@ -106,7 +106,7 @@ public:
       : HeaderChunk(), _context(ctx) {
     // Minimum size of DOS stub is 64 bytes. The next block (PE header) needs to
     // be aligned on 8 byte boundary.
-    size_t size = std::max(_context.getDosStub().size(), (size_t) 64);
+    size_t size = std::max(_context.getDosStub().size(), (size_t)64);
     _size = llvm::RoundUpToAlignment(size, 8);
   }
 
@@ -303,8 +303,8 @@ private:
 
   // Create the content of a relocation block.
   std::vector<uint8_t>
-      createBaseRelocBlock(uint64_t pageAddr,
-                           const std::vector<uint16_t> &offsets) const;
+  createBaseRelocBlock(uint64_t pageAddr,
+                       const std::vector<uint16_t> &offsets) const;
 
   std::vector<uint8_t> _contents;
 };
@@ -752,7 +752,7 @@ private:
   void setImageSizeOnDisk();
   void setAddressOfEntryPoint(AtomChunk *text, PEHeaderChunk *peHeader);
   uint64_t
-      calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) const;
+  calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) const;
 
   uint64_t calcSizeOfInitializedData() const {
     return calcSectionSize(llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA);

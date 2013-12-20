@@ -29,9 +29,8 @@ public:
   virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                      const lld::AtomLayout &,
                                      const Reference &) const;
-                                     
-  static const Registry::KindStrings kindStrings[];
 
+  static const Registry::KindStrings kindStrings[];
 };
 
 class X86TargetHandler LLVM_FINAL
@@ -41,9 +40,7 @@ public:
 
   virtual void registerRelocationNames(Registry &registry);
 
-  virtual TargetLayout<X86ELFType> &targetLayout() {
-    return _targetLayout;
-  }
+  virtual TargetLayout<X86ELFType> &targetLayout() { return _targetLayout; }
 
   virtual const X86TargetRelocationHandler &getRelocationHandler() const {
     return _relocationHandler;

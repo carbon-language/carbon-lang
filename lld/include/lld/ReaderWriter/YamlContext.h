@@ -17,14 +17,14 @@
 #include <vector>
 
 namespace lld {
-  class File;
-  class LinkingContext;
-  namespace mach_o {
-    namespace normalized {
-      struct NormalizedFile;
-    }
-  }
-  
+class File;
+class LinkingContext;
+namespace mach_o {
+namespace normalized {
+struct NormalizedFile;
+}
+}
+
 using lld::mach_o::normalized::NormalizedFile;
 
 /// When YAML I/O is used in lld, the yaml context always holds a YamlContext
@@ -32,17 +32,15 @@ using lld::mach_o::normalized::NormalizedFile;
 /// different context info.  This struct supports all clients.
 struct YamlContext {
   YamlContext()
-      : _linkingContext(nullptr), _registry(nullptr), _file(nullptr), 
-        _normalizeMachOFile(nullptr){}
+      : _linkingContext(nullptr), _registry(nullptr), _file(nullptr),
+        _normalizeMachOFile(nullptr) {}
 
-  const LinkingContext  *_linkingContext;
-  const Registry        *_registry;
-  File                  *_file;
-  NormalizedFile        *_normalizeMachOFile;
+  const LinkingContext *_linkingContext;
+  const Registry *_registry;
+  File *_file;
+  NormalizedFile *_normalizeMachOFile;
 };
 
 } // end namespace lld
 
 #endif // LLD_READER_WRITER_YAML_CONTEXT_H
-
-
