@@ -27,9 +27,20 @@
 #include "llvm/Support/Path.h"
 
 #include <bitset>
+#include <climits>
 #include <set>
 
 namespace lld {
+
+static void assignOrdinals(PECOFFLinkingContext &ctx) {
+  int maxOrdinal = -1;
+  for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports())
+    maxOrdinal = std::max(maxOrdinal, desc.ordinal);
+  int nextOrdinal = (maxOrdinal == -1) ? 1 : (maxOrdinal + 1);
+  for (PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports())
+    if (desc.ordinal == -1)
+      desc.ordinal = nextOrdinal++;
+}
 
 bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   if (_stackReserve < _stackCommit) {
@@ -77,6 +88,9 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     diagnostics << "Machine type other than x86 is not supported.\n";
     return false;
   }
+
+  // Assign default ordinals to export symbols.
+  assignOrdinals(*this);
 
   _writer = createWriterPECOFF(*this);
   return true;

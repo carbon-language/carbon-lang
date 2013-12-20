@@ -162,7 +162,7 @@ TEST_F(WinLinkParserTest, Export) {
       _context.getDllExports();
   EXPECT_TRUE(exports.size() == 1);
   EXPECT_EQ("foo", exports[0].name);
-  EXPECT_EQ(-1, exports[0].ordinal);
+  EXPECT_EQ(1, exports[0].ordinal);
   EXPECT_FALSE(exports[0].noname);
   EXPECT_FALSE(exports[0].isData);
 }

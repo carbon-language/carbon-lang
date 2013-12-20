@@ -52,26 +52,13 @@ static bool getExportedAtoms(const PECOFFLinkingContext &ctx, MutableFile *file,
   return true;
 }
 
-static std::pair<int, int> assignOrdinals(std::vector<TableEntry> &entries) {
+static std::pair<int, int> getOrdinalBase(std::vector<TableEntry> &entries) {
   int ordinalBase = INT_MAX;
   int maxOrdinal = -1;
   for (TableEntry &e : entries) {
-    if (e.ordinal > 0)
-      ordinalBase = std::min(ordinalBase, e.ordinal);
+    ordinalBase = std::min(ordinalBase, e.ordinal);
     maxOrdinal = std::max(maxOrdinal, e.ordinal);
   }
-  if (ordinalBase == INT_MAX)
-    ordinalBase = 1;
-
-  if (maxOrdinal == -1) {
-    int ordinal = 0;
-    for (TableEntry &e : entries)
-      e.ordinal = ++ordinal;
-    return std::pair<int, int>(ordinalBase, ordinal);
-  }
-  for (TableEntry &e : entries)
-    if (e.ordinal == -1)
-      e.ordinal = ++maxOrdinal;
   return std::pair<int, int>(ordinalBase, maxOrdinal);
 }
 
@@ -141,7 +128,7 @@ void EdataPass::perform(std::unique_ptr<MutableFile> &file) {
     return;
 
   int ordinalBase, maxOrdinal;
-  llvm::tie(ordinalBase, maxOrdinal) = assignOrdinals(entries);
+  llvm::tie(ordinalBase, maxOrdinal) = getOrdinalBase(entries);
 
   std::vector<TableEntry> namedEntries;
   for (TableEntry &e : entries)

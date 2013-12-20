@@ -217,6 +217,7 @@ public:
   ArrayRef<uint8_t> getDosStub() const { return _dosStub; }
 
   void addDllExport(ExportDesc &desc) { _dllExports.push_back(desc); }
+  std::vector<ExportDesc> &getDllExports() { return _dllExports; }
   const std::vector<ExportDesc> &getDllExports() const { return _dllExports; }
 
   StringRef allocate(StringRef ref) const {
