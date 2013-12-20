@@ -127,7 +127,7 @@ MC supports passing the information in ``.linkonce`` at the end of
   Symbol1:
   .long 1
 
-Note that in the combined form the COMDAT symbol is explict. This
+Note that in the combined form the COMDAT symbol is explicit. This
 extension exits to support multiple sections with the same name in
 different comdats:
 
