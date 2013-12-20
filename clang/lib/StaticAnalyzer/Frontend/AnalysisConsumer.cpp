@@ -19,7 +19,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ParentMap.h"
-#include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/AST/DataRecursiveASTVisitor.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/CallGraph.h"
@@ -158,7 +158,7 @@ public:
 namespace {
 
 class AnalysisConsumer : public ASTConsumer,
-                         public RecursiveASTVisitor<AnalysisConsumer> {
+                         public DataRecursiveASTVisitor<AnalysisConsumer> {
   enum {
     AM_None = 0,
     AM_Syntax = 0x1,
