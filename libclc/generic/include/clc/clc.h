@@ -51,6 +51,7 @@
 #include <clc/math/round.h>
 #include <clc/math/sin.h>
 #include <clc/math/sqrt.h>
+#include <clc/math/trunc.h>
 #include <clc/math/native_cos.h>
 #include <clc/math/native_divide.h>
 #include <clc/math/native_exp.h>
