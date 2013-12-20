@@ -1434,3 +1434,4 @@ include "MipsMSAInstrInfo.td"
 // Micromips
 include "MicroMipsInstrFormats.td"
 include "MicroMipsInstrInfo.td"
+include "MicroMipsInstrFPU.td"

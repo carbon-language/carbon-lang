@@ -375,3 +375,110 @@ class LL_FM_MM<bits<4> funct> {
   let Inst{15-12} = funct;
   let Inst{11-0}  = addr{11-0};
 }
+
+class ADDS_FM_MM<bits<2> fmt, bits<8> funct> : MMArch {
+  bits<5> ft;
+  bits<5> fs;
+  bits<5> fd;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x15;
+  let Inst{25-21} = ft;
+  let Inst{20-16} = fs;
+  let Inst{15-11} = fd;
+  let Inst{10}    = 0;
+  let Inst{9-8}   = fmt;
+  let Inst{7-0}   = funct;
+
+  list<dag> Pattern = [];
+}
+
+class LWXC1_FM_MM<bits<9> funct> : MMArch {
+  bits<5> fd;
+  bits<5> base;
+  bits<5> index;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x15;
+  let Inst{25-21} = index;
+  let Inst{20-16} = base;
+  let Inst{15-11} = fd;
+  let Inst{10-9}  = 0x0;
+  let Inst{8-0}   = funct;
+}
+
+class SWXC1_FM_MM<bits<9> funct> : MMArch {
+  bits<5> fs;
+  bits<5> base;
+  bits<5> index;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x15;
+  let Inst{25-21} = index;
+  let Inst{20-16} = base;
+  let Inst{15-11} = fs;
+  let Inst{10-9}  = 0x0;
+  let Inst{8-0}   = funct;
+}
+
+class CEQS_FM_MM<bits<2> fmt> : MMArch {
+  bits<5> fs;
+  bits<5> ft;
+  bits<4> cond;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x15;
+  let Inst{25-21} = ft;
+  let Inst{20-16} = fs;
+  let Inst{15-13} = 0x0;  // cc
+  let Inst{12}    = 0;
+  let Inst{11-10} = fmt;
+  let Inst{9-6}   = cond;
+  let Inst{5-0}   = 0x3c;
+}
+
+class BC1F_FM_MM<bits<5> tf> : MMArch {
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x10;
+  let Inst{25-21} = tf;
+  let Inst{20-18} = 0x0; // cc
+  let Inst{17-16} = 0x0;
+  let Inst{15-0}  = offset;
+}
+
+class ROUND_W_FM_MM<bits<1> fmt, bits<8> funct> : MMArch {
+  bits<5> fd;
+  bits<5> fs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x15;
+  let Inst{25-21} = fd;
+  let Inst{20-16} = fs;
+  let Inst{15}    = 0;
+  let Inst{14}    = fmt;
+  let Inst{13-6}  = funct;
+  let Inst{5-0}   = 0x3b;
+}
+
+class ABS_FM_MM<bits<2> fmt, bits<7> funct> : MMArch {
+  bits<5> fd;
+  bits<5> fs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x15;
+  let Inst{25-21} = fd;
+  let Inst{20-16} = fs;
+  let Inst{15}    = 0;
+  let Inst{14-13} = fmt;
+  let Inst{12-6}  = funct;
+  let Inst{5-0}   = 0x3b;
+}

@@ -579,7 +579,7 @@ class FFI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>:
   let Inst{15-0}  = imm16;
 }
 
-class ADDS_FM<bits<6> funct, bits<5> fmt> {
+class ADDS_FM<bits<6> funct, bits<5> fmt> : StdArch {
   bits<5> fd;
   bits<5> fs;
   bits<5> ft;
@@ -594,7 +594,7 @@ class ADDS_FM<bits<6> funct, bits<5> fmt> {
   let Inst{5-0}   = funct;
 }
 
-class ABSS_FM<bits<6> funct, bits<5> fmt> {
+class ABSS_FM<bits<6> funct, bits<5> fmt> : StdArch {
   bits<5> fd;
   bits<5> fs;
 
@@ -633,7 +633,7 @@ class LW_FM<bits<6> op> : StdArch {
   let Inst{15-0}  = addr{15-0};
 }
 
-class MADDS_FM<bits<3> funct, bits<3> fmt> {
+class MADDS_FM<bits<3> funct, bits<3> fmt> : StdArch {
   bits<5> fd;
   bits<5> fr;
   bits<5> fs;
@@ -650,7 +650,7 @@ class MADDS_FM<bits<3> funct, bits<3> fmt> {
   let Inst{2-0}   = fmt;
 }
 
-class LWXC1_FM<bits<6> funct> {
+class LWXC1_FM<bits<6> funct> : StdArch {
   bits<5> fd;
   bits<5> base;
   bits<5> index;
@@ -665,7 +665,7 @@ class LWXC1_FM<bits<6> funct> {
   let Inst{5-0}   = funct;
 }
 
-class SWXC1_FM<bits<6> funct> {
+class SWXC1_FM<bits<6> funct> : StdArch {
   bits<5> fs;
   bits<5> base;
   bits<5> index;
@@ -680,7 +680,7 @@ class SWXC1_FM<bits<6> funct> {
   let Inst{5-0}   = funct;
 }
 
-class BC1F_FM<bit nd, bit tf> {
+class BC1F_FM<bit nd, bit tf> : StdArch {
   bits<3>  fcc;
   bits<16> offset;
 
@@ -694,7 +694,7 @@ class BC1F_FM<bit nd, bit tf> {
   let Inst{15-0} = offset;
 }
 
-class CEQS_FM<bits<5> fmt> {
+class CEQS_FM<bits<5> fmt> : StdArch {
   bits<5> fs;
   bits<5> ft;
   bits<4> cond;
