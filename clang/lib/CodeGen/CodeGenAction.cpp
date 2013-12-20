@@ -419,9 +419,18 @@ void CodeGenAction::ExecuteAction() {
       CI.getDiagnostics().Report(Loc, DiagID);
       return;
     }
+    const TargetOptions &TargetOpts = CI.getTargetOpts();
+    if (TheModule->getTargetTriple() != TargetOpts.Triple) {
+      unsigned DiagID = CI.getDiagnostics().getCustomDiagID(
+          DiagnosticsEngine::Warning,
+          "overriding the module target triple with %0");
+
+      CI.getDiagnostics().Report(SourceLocation(), DiagID) << TargetOpts.Triple;
+      TheModule->setTargetTriple(TargetOpts.Triple);
+    }
 
     EmitBackendOutput(CI.getDiagnostics(), CI.getCodeGenOpts(),
-                      CI.getTargetOpts(), CI.getLangOpts(),
+                      TargetOpts, CI.getLangOpts(),
                       TheModule.get(),
                       BA, OS);
     return;
