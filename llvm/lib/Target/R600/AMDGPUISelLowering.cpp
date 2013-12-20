@@ -60,6 +60,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FFLOOR, MVT::f32, Legal);
   setOperationAction(ISD::FRINT,  MVT::f32, Legal);
   setOperationAction(ISD::FROUND, MVT::f32, Legal);
+  setOperationAction(ISD::FTRUNC, MVT::f32, Legal);
 
   // The hardware supports ROTR, but not ROTL
   setOperationAction(ISD::ROTL, MVT::i32, Expand);
@@ -184,6 +185,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FADD, VT, Expand);
     setOperationAction(ISD::FDIV, VT, Expand);
     setOperationAction(ISD::FFLOOR, VT, Expand);
+    setOperationAction(ISD::FTRUNC, VT, Expand);
     setOperationAction(ISD::FMUL, VT, Expand);
     setOperationAction(ISD::FRINT, VT, Expand);
     setOperationAction(ISD::FSQRT, VT, Expand);
