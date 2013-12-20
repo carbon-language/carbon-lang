@@ -313,6 +313,14 @@ Generate debug information.  Note that Clang debug information works best at
 B<-O0>.  At higher optimization levels, only line number information is
 currently available.
 
+=item B<-flimit-debug-info> B<-fno-limit-debug-info>
+
+By default Clang does not emit type definitions for types that are not
+needed by the module and could be replaced with a forward
+declaration. By specifying B<-fno-limit-debug-info> this optimization
+can be turned off. Note that Clang will never emit type information
+for types that are not referenced at all by the program.
+
 =item B<-fexceptions>
 
 Enable generation of unwind information, this allows exceptions to be thrown
