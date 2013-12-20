@@ -1,3 +1,4 @@
+; REQUIRES: object-emission
 ; Test (r)value qualifiers on C++11 non-static member functions.
 ; Generated from tools/clang/test/CodeGenCXX/debug-info-qualifiers.cpp
 ;
@@ -32,10 +33,6 @@
 ; CHECK:   DW_AT_name {{.*}}"r"
 ; CHECK-NOT: DW_TAG_subprogram
 ; CHECK:   DW_AT_rvalue_reference [DW_FORM_flag_present] (true)
-
-
-target datalayout = "e-i64:64-f80:128-s:64-n8:16:32:64-S128"
-target triple = "x86_64-apple-darwin"
 
 %class.A = type { i8 }
 
