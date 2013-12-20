@@ -413,7 +413,7 @@ public:
 
   /// EmitCOFFSecRel32 - Emits a COFF section relative relocation.
   ///
-  /// @param Symbol - Symbol the section relative realocation should point to.
+  /// @param Symbol - Symbol the section relative relocation should point to.
   virtual void EmitCOFFSecRel32(MCSymbol const *Symbol);
 
   /// EmitELFSize - Emit an ELF .size directive.
