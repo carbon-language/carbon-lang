@@ -96,6 +96,7 @@ RegisterContextLLDB::InitializeZerothFrame()
     if (reg_ctx_sp.get() == NULL)
     {
         m_frame_type = eNotAValidFrame;
+        UnwindLogMsg ("frame does not have a register context");
         return;
     }
 
@@ -104,6 +105,7 @@ RegisterContextLLDB::InitializeZerothFrame()
     if (current_pc == LLDB_INVALID_ADDRESS)
     {
         m_frame_type = eNotAValidFrame;
+        UnwindLogMsg ("frame does not have a pc");
         return;
     }
 
@@ -198,6 +200,7 @@ RegisterContextLLDB::InitializeZerothFrame()
 
     if (!active_row.get())
     {
+        UnwindLogMsg ("could not find an unwindplan row for this frame's pc");
         m_frame_type = eNotAValidFrame;
         return;
     }
@@ -206,6 +209,7 @@ RegisterContextLLDB::InitializeZerothFrame()
     addr_t cfa_regval = LLDB_INVALID_ADDRESS;
     if (!ReadGPRValue (row_register_kind, active_row->GetCFARegister(), cfa_regval))
     {
+        UnwindLogMsg ("could not read CFA register for this frame.");
         m_frame_type = eNotAValidFrame;
         return;
     }
@@ -230,17 +234,20 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     if (IsFrameZero ())
     {
         m_frame_type = eNotAValidFrame;
+        UnwindLogMsg ("non-zeroth frame tests positive for IsFrameZero -- that shouldn't happen.");
         return;
     }
 
     if (!GetNextFrame().get() || !GetNextFrame()->IsValid())
     {
         m_frame_type = eNotAValidFrame;
+        UnwindLogMsg ("Could not get next frame, marking this frame as invalid.");
         return;
     }
     if (!m_thread.GetRegisterContext())
     {
         m_frame_type = eNotAValidFrame;
+        UnwindLogMsg ("Could not get register context for this thread, marking this frame as invalid.");
         return;
     }
 
@@ -266,6 +273,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     if (pc == 0)
     {
         m_frame_type = eNotAValidFrame;
+        UnwindLogMsg ("this frame has a pc of 0x0");
         return;
     }
 
@@ -305,6 +313,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
             {
                 // anywhere other than the second frame, a non-executable pc means we're off in the weeds -- stop now.
                 m_frame_type = eNotAValidFrame;
+                UnwindLogMsg ("pc is in a non-executable section of memory and this isn't the 2nd frame in the stack walk.");
                 return;
             }
         }
@@ -353,6 +362,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
                     && (permissions & ePermissionsReadable) == 0)
                 {
                     m_frame_type = eNotAValidFrame;
+                    UnwindLogMsg ("the CFA points to a region of memory that is not readable");
                     return;
                 }
             }
@@ -367,10 +377,15 @@ RegisterContextLLDB::InitializeNonZerothFrame()
             return;
         }
         m_frame_type = eNotAValidFrame;
+        UnwindLogMsg ("could not find any symbol for this pc, or a default unwind plan, to continue unwind.");
         return;
     }
 
     bool resolve_tail_call_address = true; // m_current_pc can be one past the address range of the function...
+                                           // This will handle the case where the saved pc does not point to 
+                                           // a function/symbol because it is beyond the bounds of the correct
+                                           // function and there's no symbol there.  ResolveSymbolContextForAddress
+                                           // will fail to find a symbol, back up the pc by 1 and re-search.
     uint32_t resolved_scope = pc_module_sp->ResolveSymbolContextForAddress (m_current_pc,
                                                                             eSymbolContextFunction | eSymbolContextSymbol,
                                                                             m_sym_ctx, resolve_tail_call_address);
@@ -501,6 +516,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     if (!active_row.get())
     {
         m_frame_type = eNotAValidFrame;
+        UnwindLogMsg ("could not find unwind row for this pc");
         return;
     }
 

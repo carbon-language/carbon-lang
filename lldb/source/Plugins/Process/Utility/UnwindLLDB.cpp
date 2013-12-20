@@ -95,7 +95,13 @@ UnwindLLDB::AddFirstFrame ()
     first_cursor_sp->reg_ctx_lldb_sp = reg_ctx_sp;
     m_frames.push_back (first_cursor_sp);
     return true;
+
 unwind_done:
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+    if (log)
+    {
+        log->Printf ("th%d Unwind of this thread is complete.", m_thread.GetIndexID());
+    }
     m_unwind_complete = true;
     return false;
 }
@@ -138,7 +144,12 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
     }
 
     if (reg_ctx_sp.get() == NULL)
+    {
+        if (log)
+            log->Printf ("%*sFrame %d did not get a RegisterContext, stopping.",
+                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
         goto unwind_done;
+    }
 
     if (!reg_ctx_sp->IsValid())
     {
@@ -185,12 +196,26 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
         }
         goto unwind_done;
     }
+    if (!m_frames.empty())
+    {
+        // Infinite loop where the current cursor is the same as the previous one...
+        if (m_frames.back()->start_pc == cursor_sp->start_pc && m_frames.back()->cfa == cursor_sp->cfa)
+        {
+            if (log)
+                log->Printf ("th%d pc of this frame is the same as the previous frame and CFAs for both frames are identical -- stopping unwind", m_thread.GetIndexID());
+            goto unwind_done; 
+        }
+    }
 
     cursor_sp->reg_ctx_lldb_sp = reg_ctx_sp;
     m_frames.push_back (cursor_sp);
     return true;
     
 unwind_done:
+    if (log)
+    {
+        log->Printf ("th%d Unwind of this thread is complete.", m_thread.GetIndexID());
+    }
     m_unwind_complete = true;
     return false;
 }
