@@ -23,10 +23,10 @@ public:
   CoreLinkingContext();
 
   enum {
-    TEST_RELOC_CALL32 = 1,
-    TEST_RELOC_PCREL32 = 2,
-    TEST_RELOC_GOT_LOAD32 = 3,
-    TEST_RELOC_GOT_USE32 = 4,
+    TEST_RELOC_CALL32        = 1,
+    TEST_RELOC_PCREL32       = 2,
+    TEST_RELOC_GOT_LOAD32    = 3,
+    TEST_RELOC_GOT_USE32     = 4,
     TEST_RELOC_LEA32_WAS_GOT = 5,
   };
 
@@ -39,8 +39,8 @@ protected:
   virtual Writer &writer() const;
 
 private:
-  std::unique_ptr<Writer> _writer;
-  std::vector<StringRef> _passNames;
+  std::unique_ptr<Writer>  _writer;
+  std::vector<StringRef>   _passNames;
 };
 
 } // end namespace lld

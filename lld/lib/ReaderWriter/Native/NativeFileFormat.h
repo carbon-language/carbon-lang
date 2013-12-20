@@ -202,10 +202,10 @@ struct NativeReferenceIvarsV1 {
   enum {
     noTarget = UINT16_MAX
   };
-  uint32_t offsetInAtom;
-  uint16_t kindValue;
-  uint8_t kindNamespace;
-  uint8_t kindArch;
+  uint32_t  offsetInAtom;
+  uint16_t  kindValue;
+  uint8_t   kindNamespace;
+  uint8_t   kindArch;
   uint16_t  targetIndex;
   uint16_t  addendIndex;
 };
@@ -220,9 +220,9 @@ struct NativeReferenceIvarsV2 {
   };
   uint64_t  offsetInAtom;
   int64_t   addend;
-  uint16_t kindValue;
-  uint8_t kindNamespace;
-  uint8_t kindArch;
+  uint16_t  kindValue;
+  uint8_t   kindNamespace;
+  uint8_t   kindArch;
   uint32_t  targetIndex;
 };
 

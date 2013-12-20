@@ -40,11 +40,11 @@ class Reference {
 public:
   /// Which universe defines the kindValue().
   enum class KindNamespace {
-    all = 0,
+    all     = 0,
     testing = 1,
-    ELF = 2,
-    COFF = 3,
-    mach_o = 4,
+    ELF     = 2,
+    COFF    = 3,
+    mach_o  = 4,
   };
 
   KindNamespace kindNamespace() const { return (KindNamespace)_kindNamespace; }
@@ -52,13 +52,13 @@ public:
 
   // Which architecture the kind value is for.
   enum class KindArch {
-    all = 0,
-    x86_64 = 1,
-    x86 = 2,
-    ARM = 3,
+    all     = 0,
+    x86_64  = 1,
+    x86     = 2,
+    ARM     = 3,
     PowerPC = 4,
     Hexagon = 5,
-    Mips = 6
+    Mips    = 6
   };
 
   KindArch kindArch() const { return (KindArch)_kindArch; }
@@ -76,8 +76,8 @@ public:
 
   /// KindValues used with KindNamespace::all and KindArch::all.
   enum {
-    kindInGroup = 1,
-    kindLayoutAfter = 2,
+    kindInGroup      = 1,
+    kindLayoutAfter  = 2,
     kindLayoutBefore = 3
   };
 
@@ -113,9 +113,9 @@ protected:
   /// an array of References, so they cannot be individually deleted by anyone.
   virtual ~Reference() {}
 
-  KindValue _kindValue;
-  uint8_t _kindNamespace;
-  uint8_t _kindArch;
+  KindValue  _kindValue;
+  uint8_t    _kindNamespace;
+  uint8_t    _kindArch;
 };
 
 } // namespace lld

@@ -163,11 +163,11 @@ private:
     return r;
   }
 
-  unsigned int _collisionCount;
-  unsigned int _unnamedCounter;
-  NameToAtom _nameMap;
-  AtomToRefName _refNames;
-  std::vector<std::unique_ptr<char[]> > _stringCopies;
+  unsigned int                         _collisionCount;
+  unsigned int                         _unnamedCounter;
+  NameToAtom                           _nameMap;
+  AtomToRefName                        _refNames;
+  std::vector<std::unique_ptr<char[]>> _stringCopies;
 };
 
 /// Used when reading yaml files to find the target of a reference
@@ -236,9 +236,9 @@ enum FileKinds {
 };
 
 struct ArchMember {
-  FileKinds _kind;
-  StringRef _name;
-  const lld::File *_content;
+  FileKinds         _kind;
+  StringRef         _name;
+  const lld::File  *_content;
 };
 
 // The content bytes in a DefinedAtom are just uint8_t but we want
@@ -252,9 +252,9 @@ LLVM_YAML_STRONG_TYPEDEF(bool, ShlibCanBeNull)
 // lld::Reference::Kind is a tuple of <namespace, arch, value>.
 // For yaml, we just want one string that encapsulates the tuple.
 struct RefKind {
-  Reference::KindNamespace ns;
-  Reference::KindArch arch;
-  uint16_t value;
+  Reference::KindNamespace  ns;
+  Reference::KindArch       arch;
+  uint16_t                  value;
 };
 
 } // namespace anon
@@ -294,7 +294,7 @@ template <> struct ScalarTraits<RefKind> {
 
 template <> struct ScalarEnumerationTraits<lld::File::Kind> {
   static void enumeration(IO &io, lld::File::Kind &value) {
-    io.enumCase(value, "object", lld::File::kindObject);
+    io.enumCase(value, "object",         lld::File::kindObject);
     io.enumCase(value, "shared-library", lld::File::kindSharedLibrary);
     io.enumCase(value, "static-library", lld::File::kindArchiveLibrary);
   }
@@ -311,9 +311,9 @@ template <> struct ScalarEnumerationTraits<lld::Atom::Scope> {
 template <> struct ScalarEnumerationTraits<lld::DefinedAtom::SectionChoice> {
   static void enumeration(IO &io, lld::DefinedAtom::SectionChoice &value) {
     io.enumCase(value, "content", lld::DefinedAtom::sectionBasedOnContent);
-    io.enumCase(value, "custom", lld::DefinedAtom::sectionCustomPreferred);
+    io.enumCase(value, "custom",  lld::DefinedAtom::sectionCustomPreferred);
     io.enumCase(value, "custom-required",
-                lld::DefinedAtom::sectionCustomRequired);
+                                 lld::DefinedAtom::sectionCustomRequired);
   }
 };
 
@@ -321,35 +321,34 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::SectionPosition> {
   static void enumeration(IO &io, lld::DefinedAtom::SectionPosition &value) {
     io.enumCase(value, "start", lld::DefinedAtom::sectionPositionStart);
     io.enumCase(value, "early", lld::DefinedAtom::sectionPositionEarly);
-    io.enumCase(value, "any", lld::DefinedAtom::sectionPositionAny);
-    io.enumCase(value, "end", lld::DefinedAtom::sectionPositionEnd);
+    io.enumCase(value, "any",   lld::DefinedAtom::sectionPositionAny);
+    io.enumCase(value, "end",   lld::DefinedAtom::sectionPositionEnd);
   }
 };
 
 template <> struct ScalarEnumerationTraits<lld::DefinedAtom::Interposable> {
   static void enumeration(IO &io, lld::DefinedAtom::Interposable &value) {
-    io.enumCase(value, "no", lld::DefinedAtom::interposeNo);
-    io.enumCase(value, "yes", lld::DefinedAtom::interposeYes);
-    io.enumCase(value, "yes-and-weak",
-                lld::DefinedAtom::interposeYesAndRuntimeWeak);
+    io.enumCase(value, "no",           DefinedAtom::interposeNo);
+    io.enumCase(value, "yes",          DefinedAtom::interposeYes);
+    io.enumCase(value, "yes-and-weak", DefinedAtom::interposeYesAndRuntimeWeak);
   }
 };
 
 template <> struct ScalarEnumerationTraits<lld::DefinedAtom::Merge> {
   static void enumeration(IO &io, lld::DefinedAtom::Merge &value) {
-    io.enumCase(value, "no", lld::DefinedAtom::mergeNo);
+    io.enumCase(value, "no",           lld::DefinedAtom::mergeNo);
     io.enumCase(value, "as-tentative", lld::DefinedAtom::mergeAsTentative);
-    io.enumCase(value, "as-weak", lld::DefinedAtom::mergeAsWeak);
+    io.enumCase(value, "as-weak",      lld::DefinedAtom::mergeAsWeak);
     io.enumCase(value, "as-addressed-weak",
-                lld::DefinedAtom::mergeAsWeakAndAddressUsed);
-    io.enumCase(value, "by-content", lld::DefinedAtom::mergeByContent);
+                                   lld::DefinedAtom::mergeAsWeakAndAddressUsed);
+    io.enumCase(value, "by-content",  lld::DefinedAtom::mergeByContent);
   }
 };
 
 template <> struct ScalarEnumerationTraits<lld::DefinedAtom::DeadStripKind> {
   static void enumeration(IO &io, lld::DefinedAtom::DeadStripKind &value) {
     io.enumCase(value, "normal", lld::DefinedAtom::deadStripNormal);
-    io.enumCase(value, "never", lld::DefinedAtom::deadStripNever);
+    io.enumCase(value, "never",  lld::DefinedAtom::deadStripNever);
     io.enumCase(value, "always", lld::DefinedAtom::deadStripAlways);
   }
 };
@@ -364,84 +363,80 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::DynamicExport> {
 template <>
 struct ScalarEnumerationTraits<lld::DefinedAtom::ContentPermissions> {
   static void enumeration(IO &io, lld::DefinedAtom::ContentPermissions &value) {
-    io.enumCase(value, "---", lld::DefinedAtom::perm___);
-    io.enumCase(value, "r--", lld::DefinedAtom::permR__);
-    io.enumCase(value, "r-x", lld::DefinedAtom::permR_X);
-    io.enumCase(value, "rw-", lld::DefinedAtom::permRW_);
-    io.enumCase(value, "rwx", lld::DefinedAtom::permRWX);
-    io.enumCase(value, "rw-l", lld::DefinedAtom::permRW_L);
+    io.enumCase(value, "---",     lld::DefinedAtom::perm___);
+    io.enumCase(value, "r--",     lld::DefinedAtom::permR__);
+    io.enumCase(value, "r-x",     lld::DefinedAtom::permR_X);
+    io.enumCase(value, "rw-",     lld::DefinedAtom::permRW_);
+    io.enumCase(value, "rwx",     lld::DefinedAtom::permRWX);
+    io.enumCase(value, "rw-l",    lld::DefinedAtom::permRW_L);
     io.enumCase(value, "unknown", lld::DefinedAtom::permUnknown);
   }
 };
 
 template <> struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
   static void enumeration(IO &io, lld::DefinedAtom::ContentType &value) {
-    io.enumCase(value, "unknown", lld::DefinedAtom::typeUnknown);
-    io.enumCase(value, "code", lld::DefinedAtom::typeCode);
-    io.enumCase(value, "stub", lld::DefinedAtom::typeStub);
-    io.enumCase(value, "constant", lld::DefinedAtom::typeConstant);
-    io.enumCase(value, "data", lld::DefinedAtom::typeData);
-    io.enumCase(value, "quick-data", lld::DefinedAtom::typeDataFast);
-    io.enumCase(value, "zero-fill", lld::DefinedAtom::typeZeroFill);
-    io.enumCase(value, "zero-fill-quick", lld::DefinedAtom::typeZeroFillFast);
-    io.enumCase(value, "const-data", lld::DefinedAtom::typeConstData);
-    io.enumCase(value, "got", lld::DefinedAtom::typeGOT);
-    io.enumCase(value, "resolver", lld::DefinedAtom::typeResolver);
-    io.enumCase(value, "branch-island", lld::DefinedAtom::typeBranchIsland);
-    io.enumCase(value, "branch-shim", lld::DefinedAtom::typeBranchShim);
-    io.enumCase(value, "stub-helper", lld::DefinedAtom::typeStubHelper);
-    io.enumCase(value, "c-string", lld::DefinedAtom::typeCString);
-    io.enumCase(value, "utf16-string", lld::DefinedAtom::typeUTF16String);
-    io.enumCase(value, "unwind-cfi", lld::DefinedAtom::typeCFI);
-    io.enumCase(value, "unwind-lsda", lld::DefinedAtom::typeLSDA);
-    io.enumCase(value, "const-4-byte", lld::DefinedAtom::typeLiteral4);
-    io.enumCase(value, "const-8-byte", lld::DefinedAtom::typeLiteral8);
-    io.enumCase(value, "const-16-byte", lld::DefinedAtom::typeLiteral16);
-    io.enumCase(value, "lazy-pointer", lld::DefinedAtom::typeLazyPointer);
+    io.enumCase(value, "unknown",         DefinedAtom::typeUnknown);
+    io.enumCase(value, "code",            DefinedAtom::typeCode);
+    io.enumCase(value, "stub",            DefinedAtom::typeStub);
+    io.enumCase(value, "constant",        DefinedAtom::typeConstant);
+    io.enumCase(value, "data",            DefinedAtom::typeData);
+    io.enumCase(value, "quick-data",      DefinedAtom::typeDataFast);
+    io.enumCase(value, "zero-fill",       DefinedAtom::typeZeroFill);
+    io.enumCase(value, "zero-fill-quick", DefinedAtom::typeZeroFillFast);
+    io.enumCase(value, "const-data",      DefinedAtom::typeConstData);
+    io.enumCase(value, "got",             DefinedAtom::typeGOT);
+    io.enumCase(value, "resolver",        DefinedAtom::typeResolver);
+    io.enumCase(value, "branch-island",   DefinedAtom::typeBranchIsland);
+    io.enumCase(value, "branch-shim",     DefinedAtom::typeBranchShim);
+    io.enumCase(value, "stub-helper",     DefinedAtom::typeStubHelper);
+    io.enumCase(value, "c-string",        DefinedAtom::typeCString);
+    io.enumCase(value, "utf16-string",    DefinedAtom::typeUTF16String);
+    io.enumCase(value, "unwind-cfi",      DefinedAtom::typeCFI);
+    io.enumCase(value, "unwind-lsda",     DefinedAtom::typeLSDA);
+    io.enumCase(value, "const-4-byte",    DefinedAtom::typeLiteral4);
+    io.enumCase(value, "const-8-byte",    DefinedAtom::typeLiteral8);
+    io.enumCase(value, "const-16-byte",   DefinedAtom::typeLiteral16);
+    io.enumCase(value, "lazy-pointer",    DefinedAtom::typeLazyPointer);
     io.enumCase(value, "lazy-dylib-pointer",
-                lld::DefinedAtom::typeLazyDylibPointer);
-    io.enumCase(value, "cfstring", lld::DefinedAtom::typeCFString);
+                                          DefinedAtom::typeLazyDylibPointer);
+    io.enumCase(value, "cfstring",        DefinedAtom::typeCFString);
     io.enumCase(value, "initializer-pointer",
-                lld::DefinedAtom::typeInitializerPtr);
+                                          DefinedAtom::typeInitializerPtr);
     io.enumCase(value, "terminator-pointer",
-                lld::DefinedAtom::typeTerminatorPtr);
-    io.enumCase(value, "c-string-pointer", lld::DefinedAtom::typeCStringPtr);
+                                          DefinedAtom::typeTerminatorPtr);
+    io.enumCase(value, "c-string-pointer",DefinedAtom::typeCStringPtr);
     io.enumCase(value, "objc-class-pointer",
-                lld::DefinedAtom::typeObjCClassPtr);
+                                          DefinedAtom::typeObjCClassPtr);
     io.enumCase(value, "objc-category-list",
-                lld::DefinedAtom::typeObjC2CategoryList);
-    io.enumCase(value, "objc-class1", lld::DefinedAtom::typeObjC1Class);
-    io.enumCase(value, "dtraceDOF", lld::DefinedAtom::typeDTraceDOF);
-    io.enumCase(value, "lto-temp", lld::DefinedAtom::typeTempLTO);
-    io.enumCase(value, "compact-unwind",
-                lld::DefinedAtom::typeCompactUnwindInfo);
-    io.enumCase(value, "tlv-thunk", lld::DefinedAtom::typeThunkTLV);
-    io.enumCase(value, "tlv-data", lld::DefinedAtom::typeTLVInitialData);
-    io.enumCase(value, "tlv-zero-fill",
-                lld::DefinedAtom::typeTLVInitialZeroFill);
+                                          DefinedAtom::typeObjC2CategoryList);
+    io.enumCase(value, "objc-class1",     DefinedAtom::typeObjC1Class);
+    io.enumCase(value, "dtraceDOF",       DefinedAtom::typeDTraceDOF);
+    io.enumCase(value, "lto-temp",        DefinedAtom::typeTempLTO);
+    io.enumCase(value, "compact-unwind",  DefinedAtom::typeCompactUnwindInfo);
+    io.enumCase(value, "tlv-thunk",       DefinedAtom::typeThunkTLV);
+    io.enumCase(value, "tlv-data",        DefinedAtom::typeTLVInitialData);
+    io.enumCase(value, "tlv-zero-fill",   DefinedAtom::typeTLVInitialZeroFill);
     io.enumCase(value, "tlv-initializer-ptr",
-                lld::DefinedAtom::typeTLVInitializerPtr);
-    io.enumCase(value, "thread-data", lld::DefinedAtom::typeThreadData);
-    io.enumCase(value, "thread-zero-fill",
-                lld::DefinedAtom::typeThreadZeroFill);
-    io.enumCase(value, "ro-note", lld::DefinedAtom::typeRONote);
-    io.enumCase(value, "rw-note", lld::DefinedAtom::typeRWNote);
-    io.enumCase(value, "no-alloc", lld::DefinedAtom::typeNoAlloc);
+                                          DefinedAtom::typeTLVInitializerPtr);
+    io.enumCase(value, "thread-data",     DefinedAtom::typeThreadData);
+    io.enumCase(value, "thread-zero-fill",DefinedAtom::typeThreadZeroFill);
+    io.enumCase(value, "ro-note",         DefinedAtom::typeRONote);
+    io.enumCase(value, "rw-note",         DefinedAtom::typeRWNote);
+    io.enumCase(value, "no-alloc",        DefinedAtom::typeNoAlloc);
   }
 };
 
 template <> struct ScalarEnumerationTraits<lld::UndefinedAtom::CanBeNull> {
   static void enumeration(IO &io, lld::UndefinedAtom::CanBeNull &value) {
-    io.enumCase(value, "never", lld::UndefinedAtom::canBeNullNever);
-    io.enumCase(value, "at-runtime", lld::UndefinedAtom::canBeNullAtRuntime);
-    io.enumCase(value, "at-buildtime",
-                lld::UndefinedAtom::canBeNullAtBuildtime);
+    io.enumCase(value, "never",       lld::UndefinedAtom::canBeNullNever);
+    io.enumCase(value, "at-runtime",  lld::UndefinedAtom::canBeNullAtRuntime);
+    io.enumCase(value, "at-buildtime",lld::UndefinedAtom::canBeNullAtBuildtime);
   }
 };
 
 template <> struct ScalarEnumerationTraits<ShlibCanBeNull> {
   static void enumeration(IO &io, ShlibCanBeNull &value) {
-    io.enumCase(value, "never", false);
+    io.enumCase(value, "never",      false);
     io.enumCase(value, "at-runtime", true);
   }
 };
@@ -449,8 +444,8 @@ template <> struct ScalarEnumerationTraits<ShlibCanBeNull> {
 template <>
 struct ScalarEnumerationTraits<lld::SharedLibraryAtom::Type> {
   static void enumeration(IO &io, lld::SharedLibraryAtom::Type &value) {
-    io.enumCase(value, "code", lld::SharedLibraryAtom::Type::Code);
-    io.enumCase(value, "data", lld::SharedLibraryAtom::Type::Data);
+    io.enumCase(value, "code",    lld::SharedLibraryAtom::Type::Code);
+    io.enumCase(value, "data",    lld::SharedLibraryAtom::Type::Data);
     io.enumCase(value, "unknown", lld::SharedLibraryAtom::Type::Unknown);
   }
 };
@@ -502,17 +497,17 @@ template <> struct ScalarTraits<lld::DefinedAtom::Alignment> {
 
 template <> struct ScalarEnumerationTraits<FileKinds> {
   static void enumeration(IO &io, FileKinds &value) {
-    io.enumCase(value, "object", fileKindObjectAtoms);
-    io.enumCase(value, "archive", fileKindArchive);
-    io.enumCase(value, "object-elf", fileKindObjectELF);
+    io.enumCase(value, "object",        fileKindObjectAtoms);
+    io.enumCase(value, "archive",       fileKindArchive);
+    io.enumCase(value, "object-elf",    fileKindObjectELF);
     io.enumCase(value, "object-mach-o", fileKindObjectMachO);
   }
 };
 
 template <> struct MappingTraits<ArchMember> {
   static void mapping(IO &io, ArchMember &member) {
-    io.mapOptional("kind", member._kind, fileKindObjectAtoms);
-    io.mapOptional("name", member._name);
+    io.mapOptional("kind",    member._kind, fileKindObjectAtoms);
+    io.mapOptional("name",    member._name);
     io.mapRequired("content", member._content);
   }
 };
@@ -610,7 +605,7 @@ template <> struct MappingTraits<const lld::File *> {
       return error_code::success();
     }
 
-    StringRef _path;
+    StringRef               _path;
     std::vector<ArchMember> _members;
   };
 
@@ -658,14 +653,14 @@ template <> struct MappingTraits<const lld::File *> {
       return r;
     }
 
-    IO &_io;
-    RefNameBuilder *_rnb;
-    StringRef _path;
-    AtomList<lld::DefinedAtom> _definedAtoms;
-    AtomList<lld::UndefinedAtom> _undefinedAtoms;
-    AtomList<lld::SharedLibraryAtom> _sharedLibraryAtoms;
-    AtomList<lld::AbsoluteAtom> _absoluteAtoms;
-    std::vector<std::unique_ptr<char[]> > _stringCopies;
+    IO                                  &_io;
+    RefNameBuilder                      *_rnb;
+    StringRef                            _path;
+    AtomList<lld::DefinedAtom>           _definedAtoms;
+    AtomList<lld::UndefinedAtom>         _undefinedAtoms;
+    AtomList<lld::SharedLibraryAtom>     _sharedLibraryAtoms;
+    AtomList<lld::AbsoluteAtom>          _absoluteAtoms;
+    std::vector<std::unique_ptr<char[]>> _stringCopies;
   };
 
   static void mapping(IO &io, const lld::File *&file) {
@@ -695,17 +690,17 @@ template <> struct MappingTraits<const lld::File *> {
     assert(info != nullptr);
     info->_file = keys.operator->();
 
-    io.mapOptional("path", keys->_path);
-    io.mapOptional("defined-atoms", keys->_definedAtoms);
-    io.mapOptional("undefined-atoms", keys->_undefinedAtoms);
+    io.mapOptional("path",                 keys->_path);
+    io.mapOptional("defined-atoms",        keys->_definedAtoms);
+    io.mapOptional("undefined-atoms",      keys->_undefinedAtoms);
     io.mapOptional("shared-library-atoms", keys->_sharedLibraryAtoms);
-    io.mapOptional("absolute-atoms", keys->_absoluteAtoms);
+    io.mapOptional("absolute-atoms",       keys->_absoluteAtoms);
   }
 
   static void mappingArchive(IO &io, const lld::File *&file) {
     MappingNormalizationHeap<NormArchiveFile, const lld::File *> keys(io, file);
 
-    io.mapOptional("path", keys->_path);
+    io.mapOptional("path",    keys->_path);
     io.mapOptional("members", keys->_members);
   }
 };
@@ -757,17 +752,17 @@ template <> struct MappingTraits<const lld::Reference *> {
     virtual void setTarget(const lld::Atom *a) { _target = a; }
 
     const lld::Atom *_target;
-    StringRef _targetName;
-    uint32_t _offset;
-    Addend _addend;
-    RefKind _mappedKind;
+    StringRef        _targetName;
+    uint32_t         _offset;
+    Addend           _addend;
+    RefKind          _mappedKind;
   };
 
   static void mapping(IO &io, const lld::Reference *&ref) {
     MappingNormalizationHeap<NormalizedReference, const lld::Reference *> keys(
         io, ref);
 
-    io.mapRequired("kind", keys->_mappedKind);
+    io.mapRequired("kind",   keys->_mappedKind);
     io.mapOptional("offset", keys->_offset);
     io.mapOptional("target", keys->_targetName);
     io.mapOptional("addend", keys->_addend, (lld::Reference::Addend)0);
@@ -874,23 +869,23 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
       it = reinterpret_cast<const void *>(index);
     }
 
-    const lld::File &_file;
-    StringRef _name;
-    StringRef _refName;
-    Scope _scope;
-    Interposable _interpose;
-    Merge _merge;
-    ContentType _contentType;
-    Alignment _alignment;
-    SectionChoice _sectionChoice;
-    SectionPosition _sectionPosition;
-    DeadStripKind _deadStrip;
-    DynamicExport _dynamicExport;
-    ContentPermissions _permissions;
-    uint32_t _ordinal;
-    std::vector<ImplicitHex8> _content;
-    uint64_t _size;
-    StringRef _sectionName;
+    const lld::File                    &_file;
+    StringRef                           _name;
+    StringRef                           _refName;
+    Scope                               _scope;
+    Interposable                        _interpose;
+    Merge                               _merge;
+    ContentType                         _contentType;
+    Alignment                           _alignment;
+    SectionChoice                       _sectionChoice;
+    SectionPosition                     _sectionPosition;
+    DeadStripKind                       _deadStrip;
+    DynamicExport                       _dynamicExport;
+    ContentPermissions                  _permissions;
+    uint32_t                            _ordinal;
+    std::vector<ImplicitHex8>           _content;
+    uint64_t                            _size;
+    StringRef                           _sectionName;
     std::vector<const lld::Reference *> _references;
   };
 
@@ -910,31 +905,33 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
       }
     }
 
-    io.mapOptional("name", keys->_name, StringRef());
-    io.mapOptional("ref-name", keys->_refName, StringRef());
-    io.mapOptional("scope", keys->_scope,
-                   lld::DefinedAtom::scopeTranslationUnit);
-    io.mapOptional("type", keys->_contentType, lld::DefinedAtom::typeCode);
-    io.mapOptional("content", keys->_content);
-    io.mapOptional("size", keys->_size, (uint64_t)keys->_content.size());
-    io.mapOptional("interposable", keys->_interpose,
-                   lld::DefinedAtom::interposeNo);
-    io.mapOptional("merge", keys->_merge, lld::DefinedAtom::mergeNo);
-    io.mapOptional("alignment", keys->_alignment,
-                   lld::DefinedAtom::Alignment(0));
-    io.mapOptional("section-choice", keys->_sectionChoice,
-                   lld::DefinedAtom::sectionBasedOnContent);
-    io.mapOptional("section-name", keys->_sectionName, StringRef());
+    io.mapOptional("name",             keys->_name,    StringRef());
+    io.mapOptional("ref-name",         keys->_refName, StringRef());
+    io.mapOptional("scope",            keys->_scope,
+                                         DefinedAtom::scopeTranslationUnit);
+    io.mapOptional("type",             keys->_contentType, 
+                                         DefinedAtom::typeCode);
+    io.mapOptional("content",          keys->_content);
+    io.mapOptional("size",             keys->_size, (uint64_t)keys->_content.size());
+    io.mapOptional("interposable",     keys->_interpose,
+                                         DefinedAtom::interposeNo);
+    io.mapOptional("merge",            keys->_merge, DefinedAtom::mergeNo);
+    io.mapOptional("alignment",        keys->_alignment,
+                                         DefinedAtom::Alignment(0));
+    io.mapOptional("section-choice",   keys->_sectionChoice,
+                                         DefinedAtom::sectionBasedOnContent);
+    io.mapOptional("section-name",     keys->_sectionName, StringRef());
     io.mapOptional("section-position", keys->_sectionPosition,
-                   lld::DefinedAtom::sectionPositionAny);
-    io.mapOptional("dead-strip", keys->_deadStrip,
-                   lld::DefinedAtom::deadStripNormal);
-    io.mapOptional("dynamic-export", keys->_dynamicExport,
-                   lld::DefinedAtom::dynamicExportNormal);
+                                         DefinedAtom::sectionPositionAny);
+    io.mapOptional("dead-strip",       keys->_deadStrip,
+                                         DefinedAtom::deadStripNormal);
+    io.mapOptional("dynamic-export",   keys->_dynamicExport,
+                                         DefinedAtom::dynamicExportNormal);
     // default permissions based on content type
-    io.mapOptional("permissions", keys->_permissions,
-                   lld::DefinedAtom::permissions(keys->_contentType));
-    io.mapOptional("references", keys->_references);
+    io.mapOptional("permissions",      keys->_permissions,
+                                         DefinedAtom::permissions(
+                                                          keys->_contentType));
+    io.mapOptional("references",       keys->_references);
   }
 };
 
@@ -979,9 +976,9 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
     virtual CanBeNull canBeNull() const { return _canBeNull; }
     virtual const UndefinedAtom *fallback() const { return _fallback; }
 
-    const lld::File &_file;
-    StringRef _name;
-    CanBeNull _canBeNull;
+    const lld::File     &_file;
+    StringRef            _name;
+    CanBeNull            _canBeNull;
     const UndefinedAtom *_fallback;
   };
 
@@ -989,11 +986,11 @@ template <> struct MappingTraits<const lld::UndefinedAtom *> {
     MappingNormalizationHeap<NormalizedAtom, const lld::UndefinedAtom *> keys(
         io, atom);
 
-    io.mapRequired("name", keys->_name);
+    io.mapRequired("name",        keys->_name);
     io.mapOptional("can-be-null", keys->_canBeNull,
-                   lld::UndefinedAtom::canBeNullNever);
-    io.mapOptional("fallback", keys->_fallback,
-                   (const lld::UndefinedAtom *)nullptr);
+                                  lld::UndefinedAtom::canBeNullNever);
+    io.mapOptional("fallback",    keys->_fallback,
+                                  (const lld::UndefinedAtom *)nullptr);
   }
 };
 
@@ -1043,11 +1040,11 @@ template <> struct MappingTraits<const lld::SharedLibraryAtom *> {
     virtual uint64_t size() const { return _size; }
 
     const lld::File &_file;
-    StringRef _name;
-    StringRef _loadName;
-    ShlibCanBeNull _canBeNull;
-    Type _type;
-    uint64_t _size;
+    StringRef        _name;
+    StringRef        _loadName;
+    ShlibCanBeNull   _canBeNull;
+    Type             _type;
+    uint64_t         _size;
   };
 
   static void mapping(IO &io, const lld::SharedLibraryAtom *&atom) {
@@ -1055,11 +1052,11 @@ template <> struct MappingTraits<const lld::SharedLibraryAtom *> {
     MappingNormalizationHeap<NormalizedAtom, const lld::SharedLibraryAtom *>
     keys(io, atom);
 
-    io.mapRequired("name", keys->_name);
-    io.mapOptional("load-name", keys->_loadName);
+    io.mapRequired("name",        keys->_name);
+    io.mapOptional("load-name",   keys->_loadName);
     io.mapOptional("can-be-null", keys->_canBeNull, (ShlibCanBeNull) false);
-    io.mapOptional("type", keys->_type, SharedLibraryAtom::Type::Code);
-    io.mapOptional("size", keys->_size, uint64_t(0));
+    io.mapOptional("type",        keys->_type, SharedLibraryAtom::Type::Code);
+    io.mapOptional("size",        keys->_size, uint64_t(0));
   }
 };
 
@@ -1101,10 +1098,10 @@ template <> struct MappingTraits<const lld::AbsoluteAtom *> {
     virtual Scope scope() const { return _scope; }
 
     const lld::File &_file;
-    StringRef _name;
-    StringRef _refName;
-    Scope _scope;
-    Hex64 _value;
+    StringRef        _name;
+    StringRef        _refName;
+    Scope            _scope;
+    Hex64            _value;
   };
 
   static void mapping(IO &io, const lld::AbsoluteAtom *&atom) {
@@ -1123,10 +1120,10 @@ template <> struct MappingTraits<const lld::AbsoluteAtom *> {
       }
     }
 
-    io.mapRequired("name", keys->_name);
+    io.mapRequired("name",     keys->_name);
     io.mapOptional("ref-name", keys->_refName, StringRef());
-    io.mapOptional("scope", keys->_scope);
-    io.mapRequired("value", keys->_value);
+    io.mapOptional("scope",    keys->_scope);
+    io.mapRequired("value",    keys->_value);
   }
 };
 

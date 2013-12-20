@@ -62,10 +62,10 @@ public:
   }
 
 protected:
-  atom_collection_vector<DefinedAtom> _definedAtoms;
-  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
+  atom_collection_vector<DefinedAtom>        _definedAtoms;
+  atom_collection_vector<UndefinedAtom>      _undefinedAtoms;
+  atom_collection_vector<SharedLibraryAtom>  _sharedLibraryAtoms;
+  atom_collection_vector<AbsoluteAtom>       _absoluteAtoms;
 };
 
 class FileToMutable : public SimpleFile {
@@ -175,9 +175,9 @@ public:
   void setOrdinal(uint64_t ord) { _ordinal = ord; }
 
 private:
-  const File &_file;
-  uint64_t _ordinal;
-  std::vector<SimpleReference> _references;
+  const File                   &_file;
+  uint64_t                      _ordinal;
+  std::vector<SimpleReference>  _references;
 };
 
 class SimpleUndefinedAtom : public UndefinedAtom {

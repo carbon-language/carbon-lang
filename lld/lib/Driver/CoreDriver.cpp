@@ -67,10 +67,10 @@ public:
 namespace lld {
 
 static const Registry::KindStrings coreKindStrings[] = {
-  { CoreLinkingContext::TEST_RELOC_CALL32, "call32" },
-  { CoreLinkingContext::TEST_RELOC_PCREL32, "pcrel32" },
-  { CoreLinkingContext::TEST_RELOC_GOT_LOAD32, "gotLoad32" },
-  { CoreLinkingContext::TEST_RELOC_GOT_USE32, "gotUse32" },
+  { CoreLinkingContext::TEST_RELOC_CALL32,        "call32" },
+  { CoreLinkingContext::TEST_RELOC_PCREL32,       "pcrel32" },
+  { CoreLinkingContext::TEST_RELOC_GOT_LOAD32,    "gotLoad32" },
+  { CoreLinkingContext::TEST_RELOC_GOT_USE32,     "gotUse32" },
   { CoreLinkingContext::TEST_RELOC_LEA32_WAS_GOT, "lea32wasGot" },
   LLD_KIND_STRING_END
 };

@@ -840,7 +840,7 @@ private:
     uint32_t           elementCount;
   };
 
-  std::unique_ptr<MemoryBuffer> _buffer;
+  std::unique_ptr<MemoryBuffer>   _buffer;
   const NativeFileHeader*         _header;
   AtomArray<DefinedAtom>          _definedAtoms;
   AtomArray<UndefinedAtom>        _undefinedAtoms;
@@ -857,9 +857,9 @@ private:
   const char*                     _strings;
   uint32_t                        _stringsMaxOffset;
   const Reference::Addend*        _addends;
-  uint32_t _addendsMaxIndex;
-  const uint8_t *_contentStart;
-  const uint8_t *_contentEnd;
+  uint32_t                        _addendsMaxIndex;
+  const uint8_t                  *_contentStart;
+  const uint8_t                  *_contentEnd;
 };
 
 inline const lld::File &NativeDefinedAtomV1::file() const {

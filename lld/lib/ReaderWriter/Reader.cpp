@@ -45,8 +45,8 @@ Registry::parseFile(std::unique_ptr<MemoryBuffer> &mb,
 }
 
 static const Registry::KindStrings kindStrings[] = {
-  { Reference::kindInGroup, "in-group" },
-  { Reference::kindLayoutAfter, "layout-after" },
+  { Reference::kindInGroup,      "in-group" },
+  { Reference::kindLayoutAfter,  "layout-after" },
   { Reference::kindLayoutBefore, "layout-before" },
   LLD_KIND_STRING_END
 };

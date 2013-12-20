@@ -98,8 +98,8 @@ public:
   /// of registered kind tables. Each table is a zero terminated array of
   /// KindStrings elements.
   struct KindStrings {
-    Reference::KindValue value;
-    StringRef name;
+    Reference::KindValue  value;
+    StringRef             name;
   };
 
   /// A Reference Kind value is a tuple of <namespace, arch, value>.  All
@@ -110,15 +110,15 @@ public:
 
 private:
   struct KindEntry {
-    Reference::KindNamespace ns;
-    Reference::KindArch arch;
-    const KindStrings *array;
+    Reference::KindNamespace  ns;
+    Reference::KindArch       arch;
+    const KindStrings        *array;
   };
 
   void add(std::unique_ptr<Reader>);
 
-  std::vector<std::unique_ptr<Reader>> _readers;
-  std::vector<KindEntry> _kindEntries;
+  std::vector<std::unique_ptr<Reader>>  _readers;
+  std::vector<KindEntry>                _kindEntries;
 };
 
 // Utilities for building a KindString table.  For instance:
@@ -127,10 +127,8 @@ private:
 //      LLD_KIND_STRING_ENTRY(R_VAX_DATA16),
 //      LLD_KIND_STRING_END
 //   };
-#define LLD_KIND_STRING_ENTRY(name)                                            \
-  { name, #name }
-#define LLD_KIND_STRING_END                                                    \
-  { 0, "" }
+#define LLD_KIND_STRING_ENTRY(name) { name, #name }
+#define LLD_KIND_STRING_END         { 0,    "" }
 
 } // end namespace lld
 
