@@ -265,11 +265,12 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   // FIXME: Is there some better way to check for In64BitMode?
   std::vector<Record*> Predicates = Rec->getValueAsListOfDefs("Predicates");
   for (unsigned i = 0, e = Predicates.size(); i != e; ++i) {
-    if (Predicates[i]->getName().find("32Bit") != Name.npos) {
+    if (Predicates[i]->getName().find("Not64Bit") != Name.npos ||
+	Predicates[i]->getName().find("In32Bit") != Name.npos) {
       Is32Bit = true;
       break;
     }
-    if (Predicates[i]->getName().find("64Bit") != Name.npos) {
+    if (Predicates[i]->getName().find("In64Bit") != Name.npos) {
       Is64Bit = true;
       break;
     }

@@ -784,7 +784,7 @@ class MMXI<bits<8> o, Format F, dag outs, dag ins, string asm,
       : I<o, F, outs, ins, asm, pattern, itin>, TB, Requires<[HasMMX]>;
 class MMXI32<bits<8> o, Format F, dag outs, dag ins, string asm, 
              list<dag> pattern, InstrItinClass itin = NoItinerary>
-      : I<o, F, outs, ins, asm, pattern, itin>, TB, Requires<[HasMMX,In32BitMode]>;
+      : I<o, F, outs, ins, asm, pattern, itin>, TB, Requires<[HasMMX,Not64BitMode]>;
 class MMXI64<bits<8> o, Format F, dag outs, dag ins, string asm, 
              list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin>, TB, Requires<[HasMMX,In64BitMode]>;

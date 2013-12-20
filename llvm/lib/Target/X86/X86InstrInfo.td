@@ -692,8 +692,8 @@ def HasPrefetchW : Predicate<"Subtarget->hasPRFCHW()">;
 def FPStackf32   : Predicate<"!Subtarget->hasSSE1()">;
 def FPStackf64   : Predicate<"!Subtarget->hasSSE2()">;
 def HasCmpxchg16b: Predicate<"Subtarget->hasCmpxchg16b()">;
-def In32BitMode  : Predicate<"!Subtarget->is64Bit()">,
-                             AssemblerPredicate<"!Mode64Bit", "32-bit mode">;
+def Not64BitMode : Predicate<"!Subtarget->is64Bit()">,
+                             AssemblerPredicate<"!Mode64Bit", "Not 64-bit mode">;
 def In64BitMode  : Predicate<"Subtarget->is64Bit()">,
                              AssemblerPredicate<"Mode64Bit", "64-bit mode">;
 def IsWin64      : Predicate<"Subtarget->isTargetWin64()">;
@@ -861,7 +861,7 @@ let SchedRW = [WriteALU] in {
 let Defs = [EBP, ESP], Uses = [EBP, ESP], mayLoad = 1, neverHasSideEffects=1 in
 def LEAVE    : I<0xC9, RawFrm,
                  (outs), (ins), "leave", [], IIC_LEAVE>,
-                 Requires<[In32BitMode]>;
+                 Requires<[Not64BitMode]>;
 
 let Defs = [RBP,RSP], Uses = [RBP,RSP], mayLoad = 1, neverHasSideEffects = 1 in
 def LEAVE64  : I<0xC9, RawFrm,
@@ -890,7 +890,7 @@ def POP32rmm: I<0x8F, MRM0m, (outs), (ins i32mem:$dst), "pop{l}\t$dst", [],
 
 def POPF16   : I<0x9D, RawFrm, (outs), (ins), "popf{w}", [], IIC_POP_F>, OpSize;
 def POPF32   : I<0x9D, RawFrm, (outs), (ins), "popf{l|d}", [], IIC_POP_FD>,
-               Requires<[In32BitMode]>;
+               Requires<[Not64BitMode]>;
 } // mayLoad, SchedRW
 
 let mayStore = 1, SchedRW = [WriteStore] in {
@@ -918,7 +918,7 @@ def PUSHi32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm),
 def PUSHF16  : I<0x9C, RawFrm, (outs), (ins), "pushf{w}", [], IIC_PUSH_F>,
                  OpSize;
 def PUSHF32  : I<0x9C, RawFrm, (outs), (ins), "pushf{l|d}", [], IIC_PUSH_F>,
-               Requires<[In32BitMode]>;
+               Requires<[Not64BitMode]>;
 
 } // mayStore, SchedRW
 }
@@ -962,12 +962,12 @@ def PUSHF64    : I<0x9C, RawFrm, (outs), (ins), "pushfq", [], IIC_PUSH_F>,
 let Defs = [EDI, ESI, EBP, EBX, EDX, ECX, EAX, ESP], Uses = [ESP],
     mayLoad = 1, neverHasSideEffects = 1, SchedRW = [WriteLoad] in {
 def POPA32   : I<0x61, RawFrm, (outs), (ins), "popa{l}", [], IIC_POP_A>,
-               Requires<[In32BitMode]>;
+               Requires<[Not64BitMode]>;
 }
 let Defs = [ESP], Uses = [EDI, ESI, EBP, EBX, EDX, ECX, EAX, ESP],
     mayStore = 1, neverHasSideEffects = 1, SchedRW = [WriteStore] in {
 def PUSHA32  : I<0x60, RawFrm, (outs), (ins), "pusha{l}", [], IIC_PUSH_A>,
-               Requires<[In32BitMode]>;
+               Requires<[Not64BitMode]>;
 }
 
 let Constraints = "$src = $dst", SchedRW = [WriteALU] in {
@@ -1126,24 +1126,24 @@ let SchedRW = [WriteALU] in {
 let mayLoad = 1 in {
 def MOV8o8a : Ii32 <0xA0, RawFrm, (outs), (ins offset8:$src),
                    "mov{b}\t{$src, %al|al, $src}", [], IIC_MOV_MEM>,
-                   Requires<[In32BitMode]>;
+                   Requires<[Not64BitMode]>;
 def MOV16o16a : Ii32 <0xA1, RawFrm, (outs), (ins offset16:$src),
                       "mov{w}\t{$src, %ax|ax, $src}", [], IIC_MOV_MEM>, OpSize,
-                     Requires<[In32BitMode]>;
+                     Requires<[Not64BitMode]>;
 def MOV32o32a : Ii32 <0xA1, RawFrm, (outs), (ins offset32:$src),
                       "mov{l}\t{$src, %eax|eax, $src}", [], IIC_MOV_MEM>,
-                     Requires<[In32BitMode]>;
+                     Requires<[Not64BitMode]>;
 }
 let mayStore = 1 in {
 def MOV8ao8 : Ii32 <0xA2, RawFrm, (outs offset8:$dst), (ins),
                    "mov{b}\t{%al, $dst|$dst, al}", [], IIC_MOV_MEM>,
-                  Requires<[In32BitMode]>;
+                  Requires<[Not64BitMode]>;
 def MOV16ao16 : Ii32 <0xA3, RawFrm, (outs offset16:$dst), (ins),
                       "mov{w}\t{%ax, $dst|$dst, ax}", [], IIC_MOV_MEM>, OpSize,
-                     Requires<[In32BitMode]>;
+                     Requires<[Not64BitMode]>;
 def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs offset32:$dst), (ins),
                       "mov{l}\t{%eax, $dst|$dst, eax}", [], IIC_MOV_MEM>,
-                     Requires<[In32BitMode]>;
+                     Requires<[Not64BitMode]>;
 }
 }
 
@@ -1514,7 +1514,7 @@ def XCHG16ar : I<0x90, AddRegFrm, (outs), (ins GR16:$src),
                   "xchg{w}\t{$src, %ax|ax, $src}", [], IIC_XCHG_REG>, OpSize;
 def XCHG32ar : I<0x90, AddRegFrm, (outs), (ins GR32:$src),
                   "xchg{l}\t{$src, %eax|eax, $src}", [], IIC_XCHG_REG>,
-                  Requires<[In32BitMode]>;
+                  Requires<[Not64BitMode]>;
 // Uses GR32_NOAX in 64-bit mode to prevent encoding using the 0x90 NOP encoding.
 // xchg %eax, %eax needs to clear upper 32-bits of RAX so is not a NOP.
 def XCHG32ar64 : I<0x90, AddRegFrm, (outs), (ins GR32_NOAX:$src),
@@ -1645,50 +1645,50 @@ let SchedRW = [WriteMicrocoded] in {
 // ASCII Adjust After Addition
 // sets AL, AH and CF and AF of EFLAGS and uses AL and AF of EFLAGS
 def AAA : I<0x37, RawFrm, (outs), (ins), "aaa", [], IIC_AAA>,
-            Requires<[In32BitMode]>;
+            Requires<[Not64BitMode]>;
 
 // ASCII Adjust AX Before Division
 // sets AL, AH and EFLAGS and uses AL and AH
 def AAD8i8 : Ii8<0xD5, RawFrm, (outs), (ins i8imm:$src),
-                 "aad\t$src", [], IIC_AAD>, Requires<[In32BitMode]>;
+                 "aad\t$src", [], IIC_AAD>, Requires<[Not64BitMode]>;
 
 // ASCII Adjust AX After Multiply
 // sets AL, AH and EFLAGS and uses AL
 def AAM8i8 : Ii8<0xD4, RawFrm, (outs), (ins i8imm:$src),
-                 "aam\t$src", [], IIC_AAM>, Requires<[In32BitMode]>;
+                 "aam\t$src", [], IIC_AAM>, Requires<[Not64BitMode]>;
 
 // ASCII Adjust AL After Subtraction - sets
 // sets AL, AH and CF and AF of EFLAGS and uses AL and AF of EFLAGS
 def AAS : I<0x3F, RawFrm, (outs), (ins), "aas", [], IIC_AAS>,
-            Requires<[In32BitMode]>;
+            Requires<[Not64BitMode]>;
 
 // Decimal Adjust AL after Addition
 // sets AL, CF and AF of EFLAGS and uses AL, CF and AF of EFLAGS
 def DAA : I<0x27, RawFrm, (outs), (ins), "daa", [], IIC_DAA>,
-            Requires<[In32BitMode]>;
+            Requires<[Not64BitMode]>;
 
 // Decimal Adjust AL after Subtraction
 // sets AL, CF and AF of EFLAGS and uses AL, CF and AF of EFLAGS
 def DAS : I<0x2F, RawFrm, (outs), (ins), "das", [], IIC_DAS>,
-            Requires<[In32BitMode]>;
+            Requires<[Not64BitMode]>;
 } // SchedRW
 
 let SchedRW = [WriteSystem] in {
 // Check Array Index Against Bounds
 def BOUNDS16rm : I<0x62, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                    "bound\t{$src, $dst|$dst, $src}", [], IIC_BOUND>, OpSize,
-                   Requires<[In32BitMode]>;
+                   Requires<[Not64BitMode]>;
 def BOUNDS32rm : I<0x62, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                    "bound\t{$src, $dst|$dst, $src}", [], IIC_BOUND>,
-                   Requires<[In32BitMode]>;
+                   Requires<[Not64BitMode]>;
 
 // Adjust RPL Field of Segment Selector
 def ARPL16rr : I<0x63, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
                  "arpl\t{$src, $dst|$dst, $src}", [], IIC_ARPL_REG>,
-                 Requires<[In32BitMode]>;
+                 Requires<[Not64BitMode]>;
 def ARPL16mr : I<0x63, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
                  "arpl\t{$src, $dst|$dst, $src}", [], IIC_ARPL_MEM>,
-                 Requires<[In32BitMode]>;
+                 Requires<[Not64BitMode]>;
 } // SchedRW
 
 //===----------------------------------------------------------------------===//
@@ -2089,7 +2089,7 @@ include "X86InstrCompiler.td"
 // Assembler Mnemonic Aliases
 //===----------------------------------------------------------------------===//
 
-def : MnemonicAlias<"call", "calll", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"call", "calll", "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"call", "callq", "att">, Requires<[In64BitMode]>;
 
 def : MnemonicAlias<"cbw",  "cbtw", "att">;
@@ -2102,35 +2102,35 @@ def : MnemonicAlias<"cqo",  "cqto", "att">;
 // lret maps to lretl, it is not ambiguous with lretq.
 def : MnemonicAlias<"lret", "lretl", "att">;
 
-def : MnemonicAlias<"leavel", "leave", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"leavel", "leave", "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"leaveq", "leave", "att">, Requires<[In64BitMode]>;
 
 def : MnemonicAlias<"loopz",  "loope",  "att">;
 def : MnemonicAlias<"loopnz", "loopne", "att">;
 
-def : MnemonicAlias<"pop",   "popl",  "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"pop",   "popl",  "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"pop",   "popq",  "att">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"popf",  "popfl", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"popf",  "popfl", "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"popf",  "popfq", "att">, Requires<[In64BitMode]>;
 def : MnemonicAlias<"popfd", "popfl", "att">;
 
 // FIXME: This is wrong for "push reg".  "push %bx" should turn into pushw in
 // all modes.  However: "push (addr)" and "push $42" should default to
 // pushl/pushq depending on the current mode.  Similar for "pop %bx"
-def : MnemonicAlias<"push",   "pushl",  "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"push",   "pushl",  "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"push",   "pushq",  "att">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"pushf",  "pushfl", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"pushf",  "pushfl", "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"pushf",  "pushfq", "att">, Requires<[In64BitMode]>;
 def : MnemonicAlias<"pushfd", "pushfl", "att">;
 
-def : MnemonicAlias<"popad",   "popa", "intel">, Requires<[In32BitMode]>;
-def : MnemonicAlias<"pushad",  "pusha", "intel">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"popad",   "popa", "intel">, Requires<[Not64BitMode]>;
+def : MnemonicAlias<"pushad",  "pusha", "intel">, Requires<[Not64BitMode]>;
 
 def : MnemonicAlias<"repe",  "rep",   "att">;
 def : MnemonicAlias<"repz",  "rep",   "att">;
 def : MnemonicAlias<"repnz", "repne", "att">;
 
-def : MnemonicAlias<"retl", "ret", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"retl", "ret", "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"retq", "ret", "att">, Requires<[In64BitMode]>;
 
 def : MnemonicAlias<"salb", "shlb", "att">;
@@ -2151,13 +2151,13 @@ def : MnemonicAlias<"iret",    "iretl",    "att">;
 def : MnemonicAlias<"sysret",  "sysretl",  "att">;
 def : MnemonicAlias<"sysexit", "sysexitl", "att">;
 
-def : MnemonicAlias<"lgdtl", "lgdt", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"lgdtl", "lgdt", "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"lgdtq", "lgdt", "att">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"lidtl", "lidt", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"lidtl", "lidt", "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"lidtq", "lidt", "att">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"sgdtl", "sgdt", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"sgdtl", "sgdt", "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"sgdtq", "sgdt", "att">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"sidtl", "sidt", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"sidtl", "sidt", "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"sidtq", "sidt", "att">, Requires<[In64BitMode]>;
 
 
@@ -2463,6 +2463,6 @@ def : InstAlias<"xchg{q}\t{$mem, $val|$val, $mem}", (XCHG64rm GR64:$val, i64mem:
 
 // xchg: We accept "xchgX <reg>, %eax" and "xchgX %eax, <reg>" as synonyms.
 def : InstAlias<"xchg{w}\t{%ax, $src|$src, ax}", (XCHG16ar GR16:$src)>;
-def : InstAlias<"xchg{l}\t{%eax, $src|$src, eax}", (XCHG32ar GR32:$src)>, Requires<[In32BitMode]>;
+def : InstAlias<"xchg{l}\t{%eax, $src|$src, eax}", (XCHG32ar GR32:$src)>, Requires<[Not64BitMode]>;
 def : InstAlias<"xchg{l}\t{%eax, $src|$src, eax}", (XCHG32ar64 GR32_NOAX:$src)>, Requires<[In64BitMode]>;
 def : InstAlias<"xchg{q}\t{%rax, $src|$src, rax}", (XCHG64ar GR64:$src)>;

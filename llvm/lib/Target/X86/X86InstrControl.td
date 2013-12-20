@@ -94,10 +94,10 @@ let isBranch = 1, isTerminator = 1, hasSideEffects = 0, SchedRW = [WriteJump] in
   // jecxz.
   let Uses = [CX] in
     def JCXZ : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                        "jcxz\t$dst", [], IIC_JCXZ>, AdSize, Requires<[In32BitMode]>;
+                        "jcxz\t$dst", [], IIC_JCXZ>, AdSize, Requires<[Not64BitMode]>;
   let Uses = [ECX] in
     def JECXZ_32 : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                           "jecxz\t$dst", [], IIC_JCXZ>, Requires<[In32BitMode]>;
+                           "jecxz\t$dst", [], IIC_JCXZ>, Requires<[Not64BitMode]>;
 
   // J*CXZ instruction: 64-bit versions of this instruction for the asmparser.
   // In 64-bit mode, the address size prefix is jecxz and the unprefixed version
@@ -113,11 +113,11 @@ let isBranch = 1, isTerminator = 1, hasSideEffects = 0, SchedRW = [WriteJump] in
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def JMP32r     : I<0xFF, MRM4r, (outs), (ins GR32:$dst), "jmp{l}\t{*}$dst",
-                     [(brind GR32:$dst)], IIC_JMP_REG>, Requires<[In32BitMode]>,
+                     [(brind GR32:$dst)], IIC_JMP_REG>, Requires<[Not64BitMode]>,
                    Sched<[WriteJump]>;
   def JMP32m     : I<0xFF, MRM4m, (outs), (ins i32mem:$dst), "jmp{l}\t{*}$dst",
                      [(brind (loadi32 addr:$dst))], IIC_JMP_MEM>,
-                   Requires<[In32BitMode]>, Sched<[WriteJumpLd]>;
+                   Requires<[Not64BitMode]>, Sched<[WriteJumpLd]>;
 
   def JMP64r     : I<0xFF, MRM4r, (outs), (ins GR64:$dst), "jmp{q}\t{*}$dst",
                      [(brind GR64:$dst)], IIC_JMP_REG>, Requires<[In64BitMode]>,
@@ -166,14 +166,14 @@ let isCall = 1 in
     def CALLpcrel32 : Ii32PCRel<0xE8, RawFrm,
                            (outs), (ins i32imm_pcrel:$dst),
                            "call{l}\t$dst", [], IIC_CALL_RI>,
-                      Requires<[In32BitMode]>, Sched<[WriteJump]>;
+                      Requires<[Not64BitMode]>, Sched<[WriteJump]>;
     def CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst),
                         "call{l}\t{*}$dst", [(X86call GR32:$dst)], IIC_CALL_RI>,
-                      Requires<[In32BitMode]>, Sched<[WriteJump]>;
+                      Requires<[Not64BitMode]>, Sched<[WriteJump]>;
     def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst),
                         "call{l}\t{*}$dst", [(X86call (loadi32 addr:$dst))],
                         IIC_CALL_MEM>,
-                      Requires<[In32BitMode,FavorMemIndirectCall]>,
+                      Requires<[Not64BitMode,FavorMemIndirectCall]>,
                       Sched<[WriteJumpLd]>;
 
     def FARCALL16i  : Iseg16<0x9A, RawFrmImm16, (outs),

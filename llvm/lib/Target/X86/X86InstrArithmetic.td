@@ -24,7 +24,7 @@ def LEA32r   : I<0x8D, MRMSrcMem,
                  (outs GR32:$dst), (ins i32mem:$src),
                  "lea{l}\t{$src|$dst}, {$dst|$src}",
                  [(set GR32:$dst, lea32addr:$src)], IIC_LEA>,
-                 Requires<[In32BitMode]>;
+                 Requires<[Not64BitMode]>;
 
 def LEA64_32r : I<0x8D, MRMSrcMem,
                   (outs GR32:$dst), (ins lea64_32mem:$src),
@@ -460,12 +460,12 @@ let isConvertibleToThreeAddress = 1, CodeSize = 1 in {  // Can xform into LEA.
 def INC16r : I<0x40, AddRegFrm, (outs GR16:$dst), (ins GR16:$src1),
                "inc{w}\t$dst",
                [(set GR16:$dst, EFLAGS, (X86inc_flag GR16:$src1))], IIC_UNARY_REG>,
-             OpSize, Requires<[In32BitMode]>;
+             OpSize, Requires<[Not64BitMode]>;
 def INC32r : I<0x40, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1),
                "inc{l}\t$dst",
                [(set GR32:$dst, EFLAGS, (X86inc_flag GR32:$src1))],
                IIC_UNARY_REG>,
-             Requires<[In32BitMode]>;
+             Requires<[Not64BitMode]>;
 def INC64r : RI<0xFF, MRM0r, (outs GR64:$dst), (ins GR64:$src1), "inc{q}\t$dst",
                 [(set GR64:$dst, EFLAGS, (X86inc_flag GR64:$src1))],
                 IIC_UNARY_REG>;
@@ -500,16 +500,16 @@ def DEC64_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src1),
 let isCodeGenOnly = 1, CodeSize = 2 in {
 def INC32_16r : I<0xFF, MRM0r, (outs GR16:$dst), (ins GR16:$src1),
                   "inc{w}\t$dst", [], IIC_UNARY_REG>,
-                OpSize, Requires<[In32BitMode]>;
+                OpSize, Requires<[Not64BitMode]>;
 def INC32_32r : I<0xFF, MRM0r, (outs GR32:$dst), (ins GR32:$src1),
                   "inc{l}\t$dst", [], IIC_UNARY_REG>,
-                Requires<[In32BitMode]>;
+                Requires<[Not64BitMode]>;
 def DEC32_16r : I<0xFF, MRM1r, (outs GR16:$dst), (ins GR16:$src1),
                   "dec{w}\t$dst", [], IIC_UNARY_REG>,
-                OpSize, Requires<[In32BitMode]>;
+                OpSize, Requires<[Not64BitMode]>;
 def DEC32_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src1),
                   "dec{l}\t$dst", [], IIC_UNARY_REG>,
-                Requires<[In32BitMode]>;
+                Requires<[Not64BitMode]>;
 } // isCodeGenOnly = 1, CodeSize = 2
 
 } // Constraints = "$src1 = $dst", SchedRW
@@ -521,11 +521,11 @@ let CodeSize = 2, SchedRW = [WriteALULd, WriteRMW] in {
   def INC16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst), "inc{w}\t$dst",
                [(store (add (loadi16 addr:$dst), 1), addr:$dst),
                 (implicit EFLAGS)], IIC_UNARY_MEM>,
-               OpSize, Requires<[In32BitMode]>;
+               OpSize, Requires<[Not64BitMode]>;
   def INC32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst), "inc{l}\t$dst",
                [(store (add (loadi32 addr:$dst), 1), addr:$dst),
                 (implicit EFLAGS)], IIC_UNARY_MEM>,
-               Requires<[In32BitMode]>;
+               Requires<[Not64BitMode]>;
   def INC64m : RI<0xFF, MRM0m, (outs), (ins i64mem:$dst), "inc{q}\t$dst",
                   [(store (add (loadi64 addr:$dst), 1), addr:$dst),
                    (implicit EFLAGS)], IIC_UNARY_MEM>;
@@ -562,12 +562,12 @@ def DEC16r : I<0x48, AddRegFrm, (outs GR16:$dst), (ins GR16:$src1),
                "dec{w}\t$dst",
                [(set GR16:$dst, EFLAGS, (X86dec_flag GR16:$src1))],
                IIC_UNARY_REG>,
-             OpSize, Requires<[In32BitMode]>;
+             OpSize, Requires<[Not64BitMode]>;
 def DEC32r : I<0x48, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1),
                "dec{l}\t$dst",
                [(set GR32:$dst, EFLAGS, (X86dec_flag GR32:$src1))],
                IIC_UNARY_REG>,
-             Requires<[In32BitMode]>;
+             Requires<[Not64BitMode]>;
 def DEC64r : RI<0xFF, MRM1r, (outs GR64:$dst), (ins GR64:$src1), "dec{q}\t$dst",
                 [(set GR64:$dst, EFLAGS, (X86dec_flag GR64:$src1))],
                 IIC_UNARY_REG>;
@@ -582,11 +582,11 @@ let CodeSize = 2, SchedRW = [WriteALULd, WriteRMW] in {
   def DEC16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst), "dec{w}\t$dst",
                [(store (add (loadi16 addr:$dst), -1), addr:$dst),
                 (implicit EFLAGS)], IIC_UNARY_MEM>,
-               OpSize, Requires<[In32BitMode]>;
+               OpSize, Requires<[Not64BitMode]>;
   def DEC32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst), "dec{l}\t$dst",
                [(store (add (loadi32 addr:$dst), -1), addr:$dst),
                 (implicit EFLAGS)], IIC_UNARY_MEM>,
-               Requires<[In32BitMode]>;
+               Requires<[Not64BitMode]>;
   def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
                   [(store (add (loadi64 addr:$dst), -1), addr:$dst),
                    (implicit EFLAGS)], IIC_UNARY_MEM>;

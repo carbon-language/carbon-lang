@@ -1079,7 +1079,7 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
     RegNo = MatchRegisterName(Tok.getString().lower());
 
   if (!is64BitMode()) {
-    // FIXME: This should be done using Requires<In32BitMode> and
+    // FIXME: This should be done using Requires<Not64BitMode> and
     // Requires<In64BitMode> so "eiz" usage in 64-bit instructions can be also
     // checked.
     // FIXME: Check AH, CH, DH, BH cannot be used in an instruction requiring a
