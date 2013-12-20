@@ -30,6 +30,7 @@ namespace llvm {
     class GlobalValue;
     class GlobalVariable;
     class Instruction;
+    class IntegerType;
     class Module;
     class StoreInst;
     class DataLayout;
@@ -650,6 +651,7 @@ private:
     StaticDataAllocator                     m_data_allocator;           ///< The allocator to use for constant strings
     llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
     llvm::Constant                         *m_sel_registerName;         ///< The address of the function sel_registerName, cast to the appropriate function pointer type
+    llvm::IntegerType                      *m_intptr_ty;                ///< The type of an integer large enough to hold a pointer.
     lldb_private::Stream                   *m_error_stream;             ///< If non-NULL, the stream on which errors should be printed
     
     llvm::StoreInst                        *m_result_store;             ///< If non-NULL, the store instruction that writes to the result variable.  If m_has_side_effects is true, this is NULL.
