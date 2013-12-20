@@ -63,7 +63,7 @@ Module::~Module() {
 /// Target endian information.
 Module::Endianness Module::getEndianness() const {
   StringRef temp = DataLayout;
-  Module::Endianness ret = AnyEndianness;
+  Module::Endianness ret = BigEndian;
 
   while (!temp.empty()) {
     std::pair<StringRef, StringRef> P = getToken(temp, "-");
