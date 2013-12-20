@@ -9,7 +9,7 @@ html, body {
 #box {
   margin-left: auto;
   margin-right: auto;
-  width: 80em;
+  max-width: 80em;
 }
 [id=content] {
 	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
@@ -53,7 +53,7 @@ tr { vertical-align:top }
 #news P {padding: 0px; margin: 0px; border: 0px}
 
 #head {
-    height: 15em;
+    min-height: 15em;
     background-image:url(images/header-background.png);
     background-repeat:no-repeat;
     background-position: right;
@@ -94,10 +94,11 @@ tr { vertical-align:top }
 
 #head h2 {
   color: #3b4567;
-  margin-left: 10em;
+  text-align: center;
   padding-top: 0em;
   margin-top: 0em;
   padding-left: .5em;
+  padding-bottom: .5em;
 }
 
 #head h2 span {
