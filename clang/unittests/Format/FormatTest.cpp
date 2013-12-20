@@ -3680,6 +3680,13 @@ TEST_F(FormatTest, AlignsStringLiterals) {
   verifyFormat("#define A \"def\"\n"
                "f(\"abc\" A \"ghi\"\n"
                "  \"jkl\");");
+
+  verifyFormat("f(L\"a\"\n"
+               "  L\"b\")");
+  verifyFormat("#define A(X)            \\\n"
+               "  L\"aaaaa\" #X L\"bbbbbb\" \\\n"
+               "  L\"ccccc\"",
+               getLLVMStyleWithColumns(25));
 }
 
 TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
@@ -3707,6 +3714,10 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
   verifyFormat("aaaa(qqq,\n"
                "     \"bbbb\"\n"
                "     \"cccc\");",
+               Break);
+  verifyFormat("aaaa(qqq,\n"
+               "     L\"bbbb\"\n"
+               "     L\"cccc\");",
                Break);
 
   // Don't break if there is no column gain.
