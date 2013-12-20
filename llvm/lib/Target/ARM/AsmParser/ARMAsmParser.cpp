@@ -7910,7 +7910,7 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveInst(DirectiveID.getLoc(), 'n');
   else if (IDVal == ".inst.w")
     return parseDirectiveInst(DirectiveID.getLoc(), 'w');
-  else if (IDVal == ".ltorg")
+  else if (IDVal == ".ltorg" || IDVal == ".pool")
     return parseDirectiveLtorg(DirectiveID.getLoc());
   return true;
 }
@@ -8464,7 +8464,7 @@ bool ARMAsmParser::parseDirectiveInst(SMLoc Loc, char Suffix) {
 }
 
 /// parseDirectiveLtorg
-///  ::= .ltorg
+///  ::= .ltorg | .pool
 bool ARMAsmParser::parseDirectiveLtorg(SMLoc L) {
   MCStreamer &Streamer = getParser().getStreamer();
   const MCSection *Section = Streamer.getCurrentSection().first;
