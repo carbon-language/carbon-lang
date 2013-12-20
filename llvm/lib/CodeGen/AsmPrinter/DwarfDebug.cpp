@@ -108,6 +108,11 @@ static cl::opt<unsigned>
 DwarfVersionNumber("dwarf-version", cl::Hidden,
                    cl::desc("Generate DWARF for dwarf version."), cl::init(0));
 
+static cl::opt<bool>
+DwarfCURanges("generate-dwarf-cu-ranges", cl::Hidden,
+              cl::desc("Generate DW_AT_ranges for compile units"),
+              cl::init(false));
+
 static const char *const DWARFGroupName = "DWARF Emission";
 static const char *const DbgTimerName = "DWARF Debug Writer";
 
@@ -425,6 +430,10 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit *SPCU,
 
   SPCU->addLabelAddress(SPDie, dwarf::DW_AT_low_pc, FunctionBeginSym);
   SPCU->addLabelAddress(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym);
+
+  // Add this range to the list of ranges for the CU.
+  RangeSpan Span(FunctionBeginSym, FunctionEndSym);
+  SPCU->addRange(llvm_move(Span));
 
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   MachineLocation Location(RI->getFrameRegister(*Asm->MF));
@@ -1070,24 +1079,32 @@ void DwarfDebug::finalizeModuleInfo() {
     // vtable holding type.
     TheU->constructContainingTypeDIEs();
 
-    // If we're splitting the dwarf out now that we've got the entire
-    // CU then construct a skeleton CU based upon it.
-    if (useSplitDwarf() &&
-        TheU->getUnitDie()->getTag() == dwarf::DW_TAG_compile_unit) {
-      uint64_t ID = 0;
-      if (GenerateCUHash) {
-        DIEHash CUHash;
-        ID = CUHash.computeCUSignature(*TheU->getUnitDie());
+    // Add CU specific attributes if we need to add any.
+    if (TheU->getUnitDie()->getTag() == dwarf::DW_TAG_compile_unit) {
+      // If we're splitting the dwarf out now that we've got the entire
+      // CU then construct a skeleton CU based upon it.
+      if (useSplitDwarf()) {
+        // This should be a unique identifier when we want to build .dwp files.
+        uint64_t ID = 0;
+        if (GenerateCUHash) {
+          DIEHash CUHash;
+          ID = CUHash.computeCUSignature(*TheU->getUnitDie());
+        }
+        TheU->addUInt(TheU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
+                      dwarf::DW_FORM_data8, ID);
+        // Now construct the skeleton CU associated.
+        DwarfCompileUnit *SkCU =
+            constructSkeletonCU(static_cast<DwarfCompileUnit *>(TheU));
+        SkCU->addUInt(SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
+                      dwarf::DW_FORM_data8, ID);
+      } else {
+        // Attribute if we've emitted a range list for the compile unit, this
+        // will get constructed for the skeleton CU separately if we have one.
+        if (DwarfCURanges && TheU->getRanges().size())
+          addSectionLabel(Asm, TheU, TheU->getUnitDie(), dwarf::DW_AT_ranges,
+                          Asm->GetTempSymbol("cu_ranges", TheU->getUniqueID()),
+                          DwarfDebugRangeSectionSym);
       }
-      // This should be a unique identifier when we want to build .dwp files.
-      TheU->addUInt(TheU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
-                    dwarf::DW_FORM_data8, ID);
-      // Now construct the skeleton CU associated.
-      DwarfCompileUnit *SkCU =
-          constructSkeletonCU(static_cast<DwarfCompileUnit *>(TheU));
-      // This should be a unique identifier when we want to build .dwp files.
-      SkCU->addUInt(SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
-                    dwarf::DW_FORM_data8, ID);
     }
   }
 
@@ -2935,6 +2952,28 @@ void DwarfDebug::emitDebugRanges() {
       Asm->OutStreamer.EmitIntValue(0, Size);
       Asm->OutStreamer.EmitIntValue(0, Size);
     }
+
+    // Now emit a range for the CU itself.
+    if (DwarfCURanges) {
+      Asm->OutStreamer.EmitLabel(
+          Asm->GetTempSymbol("cu_ranges", TheCU->getUniqueID()));
+      const SmallVectorImpl<RangeSpan> &Ranges = TheCU->getRanges();
+      for (uint32_t i = 0, e = Ranges.size(); i != e; ++i) {
+        RangeSpan Range = Ranges[i];
+
+        // We occasionally have ranges without begin/end labels.
+        // FIXME: Verify and fix.
+        const MCSymbol *Begin = Range.getStart();
+        const MCSymbol *End = Range.getEnd();
+        Begin ? Asm->OutStreamer.EmitSymbolValue(Begin, Size)
+              : Asm->OutStreamer.EmitIntValue(0, Size);
+        End ? Asm->OutStreamer.EmitSymbolValue(End, Size)
+            : Asm->OutStreamer.EmitIntValue(0, Size);
+      }
+      // And terminate the list with two 0 values.
+      Asm->OutStreamer.EmitIntValue(0, Size);
+      Asm->OutStreamer.EmitIntValue(0, Size);
+    }
   }
 }
 
@@ -2963,9 +3002,14 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
   else
     NewCU->addSectionOffset(Die, dwarf::DW_AT_GNU_addr_base, 0);
 
-  // 2.17.1 requires that we use DW_AT_low_pc for a single entry point
-  // into an entity. We're using 0, or a NULL label for this.
-  NewCU->addUInt(Die, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, 0);
+  // Attribute if we've emitted a range list for the compile unit, this
+  // will get constructed for the skeleton CU separately if we have one.
+  if (DwarfCURanges && CU->getRanges().size())
+    addSectionLabel(Asm, NewCU, Die, dwarf::DW_AT_ranges,
+                    Asm->GetTempSymbol("cu_ranges", CU->getUniqueID()),
+                    DwarfDebugRangeSectionSym);
+  else
+    NewCU->addUInt(Die, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, 0);
 
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section.

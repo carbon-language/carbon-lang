@@ -118,6 +118,9 @@ protected:
   /// corresponds to the MDNode mapped with the subprogram DIE.
   DenseMap<DIE *, const MDNode *> ContainingTypeMap;
 
+  // List of ranges for a given compile unit.
+  SmallVector<RangeSpan, 1> CURanges;
+
   // List of range lists for a given compile unit, separate from the ranges for
   // the CU itself.
   SmallVector<RangeSpanList, 1> CURangeLists;
@@ -215,6 +218,13 @@ public:
 
   /// hasContent - Return true if this compile unit has something to write out.
   bool hasContent() const { return !UnitDie->getChildren().empty(); }
+
+  /// addRange - Add an address range to the list of ranges for this unit.
+  void addRange(RangeSpan Range) { CURanges.push_back(Range); }
+
+  /// getRanges - Get the list of ranges for this unit.
+  const SmallVectorImpl<RangeSpan> &getRanges() const { return CURanges; }
+  SmallVectorImpl<RangeSpan> &getRanges() { return CURanges; }
 
   /// addRangeList - Add an address range list to the list of range lists.
   void addRangeList(RangeSpanList Ranges) { CURangeLists.push_back(Ranges); }
