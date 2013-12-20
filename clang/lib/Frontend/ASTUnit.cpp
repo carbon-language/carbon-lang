@@ -1480,8 +1480,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
              REnd = PreprocessorOpts.remapped_file_buffer_end();
            !AnyFileChanged && R != REnd;
            ++R) {
-        // FIXME: Should we actually compare the contents of file->buffer
-        // remappings?
         OverriddenFiles[R->first] =
             PreambleFileHash::createForMemoryBuffer(R->second);
       }
