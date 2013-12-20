@@ -18,7 +18,7 @@ endif
 # Clean up out-of-tree stray unittests for Lit not to pick one up.
 .PHONY: cleanup-local
 cleanup-local:
-	$(Verb) $(FIND) $(filter-out $(PARALLEL_DIRS), $(wildcard *)) -type f \
+	-$(Verb) $(FIND) $(filter-out $(PARALLEL_DIRS), $(wildcard *)) -type f \
 	  -path '*/$(BuildMode)/*Tests$(EXEEXT)' \
 	  -exec rm -f '{}' \;
 
