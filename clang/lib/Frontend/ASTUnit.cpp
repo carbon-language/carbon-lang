@@ -1364,7 +1364,7 @@ ASTUnit::PreambleFileHash::createForFile(off_t Size, time_t ModTime) {
   PreambleFileHash Result;
   Result.Size = Size;
   Result.ModTime = ModTime;
-  memset(Result.MD5, 0, sizeof(Result.MD5[0]) * sizeof(Result.MD5));
+  memset(Result.MD5, 0, sizeof(Result.MD5));
   return Result;
 }
 
@@ -1385,7 +1385,7 @@ namespace clang {
 bool operator==(const ASTUnit::PreambleFileHash &LHS,
                 const ASTUnit::PreambleFileHash &RHS) {
   return LHS.Size == RHS.Size && LHS.ModTime == RHS.ModTime &&
-         memcmp(LHS.MD5, RHS.MD5, sizeof(LHS.MD5[0]) * sizeof(LHS.MD5)) == 0;
+         memcmp(LHS.MD5, RHS.MD5, sizeof(LHS.MD5)) == 0;
 }
 } // namespace clang
 
