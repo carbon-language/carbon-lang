@@ -202,7 +202,7 @@ int main(int argc, char **argv) {
   // Check to see if we are inside a development tree by comparing to possible
   // locations (prefix style or CMake style).
   if (sys::fs::equivalent(CurrentExecPrefix,
-                          Twine(LLVM_OBJ_ROOT) + "/" + LLVM_BUILDMODE)) {
+                          Twine(LLVM_OBJ_ROOT) + "/" + build_mode)) {
     IsInDevelopmentTree = true;
     DevelopmentTreeLayout = MakefileStyle;
 
@@ -240,8 +240,8 @@ int main(int argc, char **argv) {
     // layout.
     switch (DevelopmentTreeLayout) {
     case MakefileStyle:
-      ActiveBinDir = ActiveObjRoot + "/" + LLVM_BUILDMODE + "/bin";
-      ActiveLibDir = ActiveObjRoot + "/" + LLVM_BUILDMODE + "/lib";
+      ActiveBinDir = ActiveObjRoot + "/" + build_mode + "/bin";
+      ActiveLibDir = ActiveObjRoot + "/" + build_mode + "/lib";
       break;
     case CMakeStyle:
       ActiveBinDir = ActiveObjRoot + "/bin";
