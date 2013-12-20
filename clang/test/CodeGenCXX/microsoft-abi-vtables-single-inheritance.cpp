@@ -14,6 +14,7 @@
 // RUN: FileCheck --check-prefix=CHECK-L %s < %t
 // RUN: FileCheck --check-prefix=CHECK-M %s < %t
 // RUN: FileCheck --check-prefix=CHECK-N %s < %t
+// RUN: FileCheck --check-prefix=CHECK-O %s < %t
 
 struct A {
   // CHECK-A: VFTable for 'A' (3 entries)
@@ -250,3 +251,13 @@ struct N {
 };
 
 N n;
+
+typedef int int_type;
+struct O { virtual int f(); };
+struct P : O { virtual int_type f(); };
+P p;
+// CHECK-O: VFTable for 'O' in 'P' (1 entries)
+// CHECK-O-NEXT: 0 | int_type P::f()
+
+// CHECK-O: VFTable for 'O' (1 entries)
+// CHECK-O-NEXT: 0 | int O::f()

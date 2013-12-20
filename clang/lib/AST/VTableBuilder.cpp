@@ -2888,7 +2888,8 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
         AddThunk(MD, VTableThunks[OverriddenMethodInfo.VFTableIndex]);
       }
 
-      if (MD->getResultType() == OverriddenMD->getResultType()) {
+      if (Context.hasSameType(MD->getResultType(),
+                              OverriddenMD->getResultType())) {
         // No return adjustment needed - just replace the overridden method info
         // with the current info.
         MethodInfo MI(OverriddenMethodInfo.VBTableIndex,
