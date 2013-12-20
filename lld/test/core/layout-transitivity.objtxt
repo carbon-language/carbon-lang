@@ -1,4 +1,4 @@
-# REQUIRES: debug
+# REQUIRES: asserts
 # RUN: lld -core --add-pass layout -mllvm -debug %s 2> /dev/null | FileCheck %s
 
 ---

@@ -1,4 +1,4 @@
-# REQUIRES: debug
+# REQUIRES: asserts
 # Verify that entry atom will not be dead-stripped.
 
 # RUN: yaml2obj %p/Inputs/main.obj.yaml > %t.obj
