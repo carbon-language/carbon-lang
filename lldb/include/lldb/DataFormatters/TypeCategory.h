@@ -21,54 +21,77 @@
 #include "lldb/DataFormatters/FormatClasses.h"
 #include "lldb/DataFormatters/FormattersContainer.h"
 
-namespace lldb_private {    
+namespace lldb_private {
+    
+    template <typename FormatterImpl>
+    class FormatterContainerPair
+    {
+    public:
+        typedef FormattersContainer<ConstString, FormatterImpl> ExactMatchContainer;
+        typedef FormattersContainer<lldb::RegularExpressionSP, FormatterImpl> RegexMatchContainer;
+        
+        typedef typename ExactMatchContainer::MapType ExactMatchMap;
+        typedef typename RegexMatchContainer::MapType RegexMatchMap;
+
+        typedef typename ExactMatchContainer::MapValueType MapValueType;
+        
+        typedef typename ExactMatchContainer::SharedPointer ExactMatchContainerSP;
+        typedef typename RegexMatchContainer::SharedPointer RegexMatchContainerSP;
+        
+        FormatterContainerPair (const char* exact_name,
+                                const char* regex_name,
+                                IFormatChangeListener* clist) :
+            m_exact_sp(new ExactMatchContainer(std::string(exact_name),clist)),
+            m_regex_sp(new RegexMatchContainer(std::string(regex_name),clist))
+        {
+        }
+        
+        ~FormatterContainerPair () = default;
+        
+        ExactMatchContainerSP
+        GetExactMatch () const
+        {
+            return m_exact_sp;
+        }
+        
+        RegexMatchContainerSP
+        GetRegexMatch () const
+        {
+            return m_regex_sp;
+        }
+        
+    private:
+        ExactMatchContainerSP m_exact_sp;
+        RegexMatchContainerSP m_regex_sp;
+    };
+
     class TypeCategoryImpl
     {
     private:
-        typedef FormattersContainer<ConstString, TypeFormatImpl> FormatContainer;
-        typedef FormattersContainer<lldb::RegularExpressionSP, TypeFormatImpl> RegexFormatContainer;
-        
-        typedef FormattersContainer<ConstString, TypeSummaryImpl> SummaryContainer;
-        typedef FormattersContainer<lldb::RegularExpressionSP, TypeSummaryImpl> RegexSummaryContainer;
-        
-        typedef FormattersContainer<ConstString, TypeFilterImpl> FilterContainer;
-        typedef FormattersContainer<lldb::RegularExpressionSP, TypeFilterImpl> RegexFilterContainer;
+        typedef FormatterContainerPair<TypeFormatImpl> FormatContainer;
+        typedef FormatterContainerPair<TypeSummaryImpl> SummaryContainer;
+        typedef FormatterContainerPair<TypeFilterImpl> FilterContainer;
         
 #ifndef LLDB_DISABLE_PYTHON
-        typedef FormattersContainer<ConstString, ScriptedSyntheticChildren> SynthContainer;
-        typedef FormattersContainer<lldb::RegularExpressionSP, ScriptedSyntheticChildren> RegexSynthContainer;
+        typedef FormatterContainerPair<ScriptedSyntheticChildren> SynthContainer;
 #endif // #ifndef LLDB_DISABLE_PYTHON
 
-        typedef FormatContainer::MapType FormatMap;
-        typedef RegexFormatContainer::MapType RegexFormatMap;
-
-        typedef SummaryContainer::MapType SummaryMap;
-        typedef RegexSummaryContainer::MapType RegexSummaryMap;
-        
-        typedef FilterContainer::MapType FilterMap;
-        typedef RegexFilterContainer::MapType RegexFilterMap;
-
-#ifndef LLDB_DISABLE_PYTHON
-        typedef SynthContainer::MapType SynthMap;
-        typedef RegexSynthContainer::MapType RegexSynthMap;
-#endif // #ifndef LLDB_DISABLE_PYTHON
-        
     public:
         
         typedef uint16_t FormatCategoryItems;
         static const uint16_t ALL_ITEM_TYPES = UINT16_MAX;
 
-        typedef FormatContainer::SharedPointer FormatContainerSP;
-        typedef RegexFormatContainer::SharedPointer RegexFormatContainerSP;
+        typedef FormatContainer::ExactMatchContainerSP FormatContainerSP;
+        typedef FormatContainer::RegexMatchContainerSP RegexFormatContainerSP;
         
-        typedef SummaryContainer::SharedPointer SummaryContainerSP;
-        typedef RegexSummaryContainer::SharedPointer RegexSummaryContainerSP;
+        typedef SummaryContainer::ExactMatchContainerSP SummaryContainerSP;
+        typedef SummaryContainer::RegexMatchContainerSP RegexSummaryContainerSP;
 
-        typedef FilterContainer::SharedPointer FilterContainerSP;
-        typedef RegexFilterContainer::SharedPointer RegexFilterContainerSP;
+        typedef FilterContainer::ExactMatchContainerSP FilterContainerSP;
+        typedef FilterContainer::RegexMatchContainerSP RegexFilterContainerSP;
 #ifndef LLDB_DISABLE_PYTHON
-        typedef SynthContainer::SharedPointer SynthContainerSP;
-        typedef RegexSynthContainer::SharedPointer RegexSynthContainerSP;
+        typedef SynthContainer::ExactMatchContainerSP SynthContainerSP;
+        typedef SynthContainer::RegexMatchContainerSP RegexSynthContainerSP;
 #endif // #ifndef LLDB_DISABLE_PYTHON
         
         TypeCategoryImpl (IFormatChangeListener* clist,
@@ -77,37 +100,37 @@ namespace lldb_private {
         FormatContainerSP
         GetTypeFormatsContainer ()
         {
-            return FormatContainerSP(m_format_cont);
+            return m_format_cont.GetExactMatch();
         }
         
         RegexFormatContainerSP
         GetRegexTypeFormatsContainer ()
         {
-            return RegexFormatContainerSP(m_regex_format_cont);
+            return m_format_cont.GetRegexMatch();
         }
         
         SummaryContainerSP
         GetTypeSummariesContainer ()
         {
-            return SummaryContainerSP(m_summary_cont);
+            return m_summary_cont.GetExactMatch();
         }
         
         RegexSummaryContainerSP
         GetRegexTypeSummariesContainer ()
         {
-            return RegexSummaryContainerSP(m_regex_summary_cont);
+            return m_summary_cont.GetRegexMatch();
         }
         
         FilterContainerSP
         GetTypeFiltersContainer ()
         {
-            return FilterContainerSP(m_filter_cont);
+            return m_filter_cont.GetExactMatch();
         }
         
         RegexFilterContainerSP
         GetRegexTypeFiltersContainer ()
         {
-            return RegexFilterContainerSP(m_regex_filter_cont);
+            return m_filter_cont.GetRegexMatch();
         }
 
         FormatContainer::MapValueType
@@ -146,13 +169,13 @@ namespace lldb_private {
         SynthContainerSP
         GetTypeSyntheticsContainer ()
         {
-            return SynthContainerSP(m_synth_cont);
+            return m_synth_cont.GetExactMatch();
         }
         
         RegexSynthContainerSP
         GetRegexTypeSyntheticsContainer ()
         {
-            return RegexSynthContainerSP(m_regex_synth_cont);
+            return m_synth_cont.GetRegexMatch();
         }
         
         SynthContainer::MapValueType
@@ -222,18 +245,14 @@ namespace lldb_private {
         typedef std::shared_ptr<TypeCategoryImpl> SharedPointer;
         
     private:
-        FormatContainer::SharedPointer m_format_cont;
-        RegexFormatContainer::SharedPointer m_regex_format_cont;
+        FormatContainer m_format_cont;
         
-        SummaryContainer::SharedPointer m_summary_cont;
-        RegexSummaryContainer::SharedPointer m_regex_summary_cont;
+        SummaryContainer m_summary_cont;
 
-        FilterContainer::SharedPointer m_filter_cont;
-        RegexFilterContainer::SharedPointer m_regex_filter_cont;
+        FilterContainer m_filter_cont;
 
 #ifndef LLDB_DISABLE_PYTHON
-        SynthContainer::SharedPointer m_synth_cont;
-        RegexSynthContainer::SharedPointer m_regex_synth_cont;
+        SynthContainer m_synth_cont;
 #endif // #ifndef LLDB_DISABLE_PYTHON
         
         bool m_enabled;
