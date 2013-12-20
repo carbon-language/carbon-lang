@@ -1,12 +1,12 @@
 <div id="head">
-<h1><span>Polly</span></h1>
+<h1><span><a href="/">Polly</a></span></h1>
 <h2><span>LLVM Framework for High-Level Loop and Data-Locality
 Optimizations</span></h2>
 </div>
 <div id="menu">
   <div class="submenu">
     <label>Information</label>
-    <a href="/index.html">About</a>
+    <a href="/index.html">About Polly</a>
     <a href="/documentation.html">Documentation</a>
     <a href="/performance.html">Performance</a>
     <a href="/publications.html">Publications</a>
