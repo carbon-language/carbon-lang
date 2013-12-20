@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "msan.h"
+#include "sanitizer_common/sanitizer_interception.h"
 
 #if MSAN_REPLACE_OPERATORS_NEW_AND_DELETE
 
@@ -37,18 +38,26 @@ namespace std {
   GET_MALLOC_STACK_TRACE; \
   return MsanReallocate(&stack, 0, size, sizeof(u64), false)
 
+INTERCEPTOR_ATTRIBUTE
 void *operator new(size_t size) { OPERATOR_NEW_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void *operator new[](size_t size) { OPERATOR_NEW_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void *operator new(size_t size, std::nothrow_t const&) { OPERATOR_NEW_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void *operator new[](size_t size, std::nothrow_t const&) { OPERATOR_NEW_BODY; }
 
 #define OPERATOR_DELETE_BODY \
   GET_MALLOC_STACK_TRACE; \
   if (ptr) MsanDeallocate(&stack, ptr)
 
+INTERCEPTOR_ATTRIBUTE
 void operator delete(void *ptr) { OPERATOR_DELETE_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void operator delete[](void *ptr) { OPERATOR_DELETE_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void operator delete(void *ptr, std::nothrow_t const&) { OPERATOR_DELETE_BODY; }
+INTERCEPTOR_ATTRIBUTE
 void operator delete[](void *ptr, std::nothrow_t const&) {
   OPERATOR_DELETE_BODY;
 }
