@@ -160,6 +160,7 @@ public:
   virtual void EmitCOFFSymbolStorageClass(int StorageClass);
   virtual void EmitCOFFSymbolType(int Type);
   virtual void EndCOFFSymbolDef();
+  virtual void EmitCOFFSectionIndex(MCSymbol const *Symbol);
   virtual void EmitCOFFSecRel32(MCSymbol const *Symbol);
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
@@ -505,8 +506,13 @@ void MCAsmStreamer::EndCOFFSymbolDef() {
   EmitEOL();
 }
 
+void MCAsmStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
+  OS << "\t.secidx\t" << *Symbol;
+  EmitEOL();
+}
+
 void MCAsmStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol) {
-  OS << "\t.secrel32\t" << *Symbol << '\n';
+  OS << "\t.secrel32\t" << *Symbol;
   EmitEOL();
 }
 

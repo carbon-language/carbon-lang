@@ -411,6 +411,11 @@ public:
   /// EndCOFFSymbolDef - Marks the end of the symbol definition.
   virtual void EndCOFFSymbolDef() = 0;
 
+  /// EmitCOFFSectionIndex - Emits a COFF section index.
+  ///
+  /// @param Symbol - Symbol the section number relocation should point to.
+  virtual void EmitCOFFSectionIndex(MCSymbol const *Symbol);
+
   /// EmitCOFFSecRel32 - Emits a COFF section relative relocation.
   ///
   /// @param Symbol - Symbol the section relative relocation should point to.

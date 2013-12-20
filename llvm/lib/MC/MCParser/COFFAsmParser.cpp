@@ -55,6 +55,7 @@ class COFFAsmParser : public MCAsmParserExtension {
     addDirectiveHandler<&COFFAsmParser::ParseDirectiveType>(".type");
     addDirectiveHandler<&COFFAsmParser::ParseDirectiveEndef>(".endef");
     addDirectiveHandler<&COFFAsmParser::ParseDirectiveSecRel32>(".secrel32");
+    addDirectiveHandler<&COFFAsmParser::ParseDirectiveSecIdx>(".secidx");
     addDirectiveHandler<&COFFAsmParser::ParseDirectiveLinkOnce>(".linkonce");
 
     // Win64 EH directives.
@@ -115,6 +116,7 @@ class COFFAsmParser : public MCAsmParserExtension {
   bool ParseDirectiveType(StringRef, SMLoc);
   bool ParseDirectiveEndef(StringRef, SMLoc);
   bool ParseDirectiveSecRel32(StringRef, SMLoc);
+  bool ParseDirectiveSecIdx(StringRef, SMLoc);
   bool parseCOMDATTypeAndAssoc(COFF::COMDATType &Type,
                                const MCSectionCOFF *&Assoc);
   bool ParseDirectiveLinkOnce(StringRef, SMLoc);
@@ -432,7 +434,7 @@ bool COFFAsmParser::ParseDirectiveEndef(StringRef, SMLoc) {
 bool COFFAsmParser::ParseDirectiveSecRel32(StringRef, SMLoc) {
   StringRef SymbolID;
   if (getParser().parseIdentifier(SymbolID))
-    return true;
+    return TokError("expected identifier in directive");
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in directive");
@@ -441,6 +443,21 @@ bool COFFAsmParser::ParseDirectiveSecRel32(StringRef, SMLoc) {
 
   Lex();
   getStreamer().EmitCOFFSecRel32(Symbol);
+  return false;
+}
+
+bool COFFAsmParser::ParseDirectiveSecIdx(StringRef, SMLoc) {
+  StringRef SymbolID;
+  if (getParser().parseIdentifier(SymbolID))
+    return TokError("expected identifier in directive");
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in directive");
+
+  MCSymbol *Symbol = getContext().GetOrCreateSymbol(SymbolID);
+
+  Lex();
+  getStreamer().EmitCOFFSectionIndex(Symbol);
   return false;
 }
 

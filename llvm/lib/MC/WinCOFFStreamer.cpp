@@ -61,6 +61,7 @@ public:
   virtual void EmitCOFFSymbolStorageClass(int StorageClass);
   virtual void EmitCOFFSymbolType(int Type);
   virtual void EndCOFFSymbolDef();
+  virtual void EmitCOFFSectionIndex(MCSymbol const *Symbol);
   virtual void EmitCOFFSecRel32(MCSymbol const *Symbol);
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
@@ -247,6 +248,17 @@ void WinCOFFStreamer::EmitCOFFSymbolType(int Type) {
 void WinCOFFStreamer::EndCOFFSymbolDef() {
   assert(CurSymbol != NULL && "BeginCOFFSymbolDef must be called first!");
   CurSymbol = NULL;
+}
+
+void WinCOFFStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol)
+{
+  MCDataFragment *DF = getOrCreateDataFragment();
+
+  DF->getFixups().push_back(
+      MCFixup::Create(DF->getContents().size(),
+                      MCSymbolRefExpr::Create (Symbol, getContext ()),
+                      FK_SecRel_2));
+  DF->getContents().resize(DF->getContents().size() + 4, 0);
 }
 
 void WinCOFFStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol)
