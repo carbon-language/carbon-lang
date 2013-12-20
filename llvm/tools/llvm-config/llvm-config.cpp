@@ -240,6 +240,7 @@ int main(int argc, char **argv) {
     // layout.
     switch (DevelopmentTreeLayout) {
     case MakefileStyle:
+      ActivePrefix = ActiveObjRoot;
       ActiveBinDir = ActiveObjRoot + "/" + build_mode + "/bin";
       ActiveLibDir = ActiveObjRoot + "/" + build_mode + "/lib";
       break;
