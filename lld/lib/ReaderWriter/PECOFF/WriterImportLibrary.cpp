@@ -41,8 +41,14 @@ createModuleDefinitionFile(const PECOFFLinkingContext &ctx,
   os << "LIBRARY \"" << llvm::sys::path::filename(ctx.outputPath()) << "\"\n"
      << "EXPORTS\n";
 
-  for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports())
-    os << "  " << desc.name << " @" << desc.ordinal << "\n";
+  for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports()) {
+    os << "  " << desc.name << " @" << desc.ordinal;
+    if (desc.noname)
+      os << " NONAME";
+    if (desc.isData)
+      os << " DATA";
+    os << "\n";
+  }
   return defFile.str();
 }
 
