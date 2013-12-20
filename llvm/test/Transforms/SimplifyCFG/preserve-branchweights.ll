@@ -313,6 +313,31 @@ sw.epilog:
   ret void
 }
 
+;; If every case is dead, make sure they are all removed. This used to
+;; crash trying to merge the metadata.
+define void @test13(i32 %x) nounwind {
+entry:
+  %i = shl i32 %x, 1
+  switch i32 %i, label %a [
+    i32 21, label %b
+    i32 25, label %c
+  ], !prof !8
+; CHECK-LABEL: @test13(
+; CHECK-NEXT: entry:
+; CHECK-NEXT: call void @helper
+; CHECK-NEXT: ret void
+
+a:
+ call void @helper(i32 0) nounwind
+ ret void
+b:
+ call void @helper(i32 1) nounwind
+ ret void
+c:
+ call void @helper(i32 2) nounwind
+ ret void
+}
+
 !0 = metadata !{metadata !"branch_weights", i32 3, i32 5}
 !1 = metadata !{metadata !"branch_weights", i32 1, i32 1}
 !2 = metadata !{metadata !"branch_weights", i32 1, i32 2}

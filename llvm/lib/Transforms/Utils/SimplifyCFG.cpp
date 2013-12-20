@@ -3222,7 +3222,7 @@ static bool EliminateDeadSwitchCases(SwitchInst *SI) {
     Case.getCaseSuccessor()->removePredecessor(SI->getParent());
     SI->removeCase(Case);
   }
-  if (HasWeight) {
+  if (HasWeight && Weights.size() >= 2) {
     SmallVector<uint32_t, 8> MDWeights(Weights.begin(), Weights.end());
     SI->setMetadata(LLVMContext::MD_prof,
                     MDBuilder(SI->getParent()->getContext()).
