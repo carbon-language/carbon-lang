@@ -55,7 +55,7 @@ class EmitAssemblyHelper {
   mutable FunctionPassManager *PerFunctionPasses;
 
 private:
-  PassManager *getCodeGenPasses(TargetMachine *TM) const {
+  PassManager *getCodeGenPasses() const {
     if (!CodeGenPasses) {
       CodeGenPasses = new PassManager();
       CodeGenPasses->add(new DataLayout(TheModule));
@@ -65,7 +65,7 @@ private:
     return CodeGenPasses;
   }
 
-  PassManager *getPerModulePasses(TargetMachine *TM) const {
+  PassManager *getPerModulePasses() const {
     if (!PerModulePasses) {
       PerModulePasses = new PassManager();
       PerModulePasses->add(new DataLayout(TheModule));
@@ -75,7 +75,7 @@ private:
     return PerModulePasses;
   }
 
-  FunctionPassManager *getPerFunctionPasses(TargetMachine *TM) const {
+  FunctionPassManager *getPerFunctionPasses() const {
     if (!PerFunctionPasses) {
       PerFunctionPasses = new FunctionPassManager(TheModule);
       PerFunctionPasses->add(new DataLayout(TheModule));
@@ -85,8 +85,7 @@ private:
     return PerFunctionPasses;
   }
 
-
-  void CreatePasses(TargetMachine *TM);
+  void CreatePasses();
 
   /// CreateTargetMachine - Generates the TargetMachine.
   /// Returns Null if it is unable to create the target machine.
@@ -101,8 +100,7 @@ private:
   /// AddEmitPasses - Add passes necessary to emit assembly or LLVM IR.
   ///
   /// \return True on success.
-  bool AddEmitPasses(BackendAction Action, formatted_raw_ostream &OS,
-                     TargetMachine *TM);
+  bool AddEmitPasses(BackendAction Action, formatted_raw_ostream &OS);
 
 public:
   EmitAssemblyHelper(DiagnosticsEngine &_Diags,
@@ -118,7 +116,11 @@ public:
     delete CodeGenPasses;
     delete PerModulePasses;
     delete PerFunctionPasses;
+    if (CodeGenOpts.DisableFree)
+      TM.take();
   }
+
+  llvm::OwningPtr<TargetMachine> TM;
 
   void EmitAssembly(BackendAction Action, raw_ostream *OS);
 };
@@ -222,7 +224,7 @@ static void addDataFlowSanitizerPass(const PassManagerBuilder &Builder,
   PM.add(createDataFlowSanitizerPass(CGOpts.SanitizerBlacklistFile));
 }
 
-void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
+void EmitAssemblyHelper::CreatePasses() {
   unsigned OptLevel = CodeGenOpts.OptimizationLevel;
   CodeGenOptions::InliningMethod Inlining = CodeGenOpts.getInlining();
 
@@ -324,13 +326,13 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
   }
 
   // Set up the per-function pass manager.
-  FunctionPassManager *FPM = getPerFunctionPasses(TM);
+  FunctionPassManager *FPM = getPerFunctionPasses();
   if (CodeGenOpts.VerifyModule)
     FPM->add(createVerifierPass());
   PMBuilder.populateFunctionPassManager(*FPM);
 
   // Set up the per-module pass manager.
-  PassManager *MPM = getPerModulePasses(TM);
+  PassManager *MPM = getPerModulePasses();
 
   if (!CodeGenOpts.DisableGCov &&
       (CodeGenOpts.EmitGcovArcs || CodeGenOpts.EmitGcovNotes)) {
@@ -503,11 +505,10 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
 }
 
 bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
-                                       formatted_raw_ostream &OS,
-                                       TargetMachine *TM) {
+                                       formatted_raw_ostream &OS) {
 
   // Create the code generator passes.
-  PassManager *PM = getCodeGenPasses(TM);
+  PassManager *PM = getCodeGenPasses();
 
   // Add LibraryInfo.
   llvm::Triple TargetTriple(TheModule->getTargetTriple());
@@ -552,27 +553,28 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action, raw_ostream *OS) {
   bool UsesCodeGen = (Action != Backend_EmitNothing &&
                       Action != Backend_EmitBC &&
                       Action != Backend_EmitLL);
-  TargetMachine *TM = CreateTargetMachine(UsesCodeGen);
+  if (!TM)
+    TM.reset(CreateTargetMachine(UsesCodeGen));
+
   if (UsesCodeGen && !TM) return;
-  llvm::OwningPtr<TargetMachine> TMOwner(CodeGenOpts.DisableFree ? 0 : TM);
-  CreatePasses(TM);
+  CreatePasses();
 
   switch (Action) {
   case Backend_EmitNothing:
     break;
 
   case Backend_EmitBC:
-    getPerModulePasses(TM)->add(createBitcodeWriterPass(*OS));
+    getPerModulePasses()->add(createBitcodeWriterPass(*OS));
     break;
 
   case Backend_EmitLL:
     FormattedOS.setStream(*OS, formatted_raw_ostream::PRESERVE_STREAM);
-    getPerModulePasses(TM)->add(createPrintModulePass(&FormattedOS));
+    getPerModulePasses()->add(createPrintModulePass(&FormattedOS));
     break;
 
   default:
     FormattedOS.setStream(*OS, formatted_raw_ostream::PRESERVE_STREAM);
-    if (!AddEmitPasses(Action, FormattedOS, TM))
+    if (!AddEmitPasses(Action, FormattedOS))
       return;
   }
 
