@@ -285,8 +285,7 @@ llvm::Constant *
 IRForTarget::BuildFunctionPointer (llvm::Type *type,
                                    uint64_t ptr)
 {
-    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(), 64);
     PointerType *fun_ptr_ty = PointerType::getUnqual(type);
     Constant *fun_addr_int = ConstantInt::get(intptr_ty, ptr, false);
     return ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
@@ -726,9 +725,7 @@ IRForTarget::RewriteObjCConstString (llvm::GlobalVariable *ns_str,
     Type *ns_str_ty = ns_str->getType();
     
     Type *i8_ptr_ty = Type::getInt8PtrTy(m_module->getContext());
-    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                                   (m_module->getPointerSize()
-                                                    == Module::Pointer64) ? 64 : 32);
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(), 64);
     Type *i32_ty = Type::getInt32Ty(m_module->getContext());
     Type *i8_ty = Type::getInt8Ty(m_module->getContext());
     
@@ -1149,8 +1146,7 @@ IRForTarget::RewriteObjCSelector (Instruction* selector_load)
         llvm::Type *srN_type = FunctionType::get(sel_ptr_type, srN_arg_types, false);
         
         // Build the constant containing the pointer to the function
-        IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                                 (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+        IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(), 64);
         PointerType *srN_ptr_ty = PointerType::getUnqual(srN_type);
         Constant *srN_addr_int = ConstantInt::get(intptr_ty, sel_registerName_addr, false);
         m_sel_registerName = ConstantExpr::getIntToPtr(srN_addr_int, srN_ptr_ty);
@@ -1599,8 +1595,7 @@ IRForTarget::HandleSymbol (Value *symbol)
         log->Printf("Found \"%s\" at 0x%" PRIx64, name.GetCString(), symbol_addr);
     
     Type *symbol_type = symbol->getType();
-    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(), 64);
     
     Constant *symbol_addr_int = ConstantInt::get(intptr_ty, symbol_addr, false);
     
@@ -1680,9 +1675,7 @@ IRForTarget::HandleObjCClass(Value *classlist_reference)
     if (load_instructions.empty())
         return false;
     
-    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                             (m_module->getPointerSize()
-                                              == Module::Pointer64) ? 64 : 32);
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(), 64);
     
     Constant *class_addr = ConstantInt::get(intptr_ty, (uint64_t)class_ptr);
     
@@ -2499,8 +2492,7 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
 llvm::Constant *
 IRForTarget::BuildRelocation(llvm::Type *type, uint64_t offset)
 {
-    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(), 64);
     
     llvm::Constant *offset_int = ConstantInt::get(intptr_ty, offset);
     
@@ -2537,8 +2529,7 @@ IRForTarget::CompleteDataAllocation ()
     if (!allocation || allocation == LLDB_INVALID_ADDRESS)
         return false;
     
-    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(), 64);
     
     Constant *relocated_addr = ConstantInt::get(intptr_ty, (uint64_t)allocation);
     Constant *relocated_bitcast = ConstantExpr::getIntToPtr(relocated_addr, llvm::Type::getInt8PtrTy(m_module->getContext()));

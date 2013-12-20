@@ -279,8 +279,7 @@ protected:
     //------------------------------------------------------------------
     llvm::Value *BuildPointerValidatorFunc(lldb::addr_t start_address)
     {
-        IntegerType *intptr_ty = llvm::Type::getIntNTy(m_module.getContext(),
-                                                             (m_module.getPointerSize() == llvm::Module::Pointer64) ? 64 : 32);
+        IntegerType *intptr_ty = llvm::Type::getIntNTy(m_module.getContext(), 64);
         
         llvm::Type *param_array[1];
         
@@ -306,8 +305,7 @@ protected:
     //------------------------------------------------------------------
     llvm::Value *BuildObjectCheckerFunc(lldb::addr_t start_address)
     {
-        IntegerType *intptr_ty = llvm::Type::getIntNTy(m_module.getContext(),
-                                                       (m_module.getPointerSize() == llvm::Module::Pointer64) ? 64 : 32);
+        IntegerType *intptr_ty = llvm::Type::getIntNTy(m_module.getContext(), 64);
         
         llvm::Type *param_array[2];
         
