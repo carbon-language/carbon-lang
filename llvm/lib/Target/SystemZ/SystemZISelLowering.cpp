@@ -1339,6 +1339,27 @@ static void adjustForLTGFR(Comparison &C) {
   }
 }
 
+// If C compares the truncation of an extending load, try to compare
+// the untruncated value instead.  This exposes more opportunities to
+// reuse CC.
+static void adjustICmpTruncate(SelectionDAG &DAG, Comparison &C) {
+  if (C.Op0.getOpcode() == ISD::TRUNCATE &&
+      C.Op0.getOperand(0).getOpcode() == ISD::LOAD &&
+      C.Op1.getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(C.Op1)->getZExtValue() == 0) {
+    LoadSDNode *L = cast<LoadSDNode>(C.Op0.getOperand(0));
+    if (L->getMemoryVT().getStoreSizeInBits()
+        <= C.Op0.getValueType().getSizeInBits()) {
+      unsigned Type = L->getExtensionType();
+      if ((Type == ISD::ZEXTLOAD && C.ICmpType != SystemZICMP::SignedOnly) ||
+          (Type == ISD::SEXTLOAD && C.ICmpType != SystemZICMP::UnsignedOnly)) {
+        C.Op0 = C.Op0.getOperand(0);
+        C.Op1 = DAG.getConstant(0, C.Op0.getValueType());
+      }
+    }
+  }
+}
+
 // Return true if shift operation N has an in-range constant shift value.
 // Store it in ShiftVal if so.
 static bool isSimpleShift(SDValue N, unsigned &ShiftVal) {
@@ -1541,6 +1562,7 @@ static Comparison getCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
   if (C.Op0.getValueType().isFloatingPoint()) {
     C.CCValid = SystemZ::CCMASK_FCMP;
     C.Opcode = SystemZISD::FCMP;
+    adjustForFNeg(C);
   } else {
     C.CCValid = SystemZ::CCMASK_ICMP;
     C.Opcode = SystemZISD::ICMP;
@@ -1561,6 +1583,8 @@ static Comparison getCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
     adjustZeroCmp(DAG, C);
     adjustSubwordCmp(DAG, C);
     adjustForSubtraction(DAG, C);
+    adjustForLTGFR(C);
+    adjustICmpTruncate(DAG, C);
   }
 
   if (shouldSwapCmpOperands(C)) {
@@ -1569,8 +1593,6 @@ static Comparison getCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
   }
 
   adjustForTestUnderMask(DAG, C);
-  adjustForFNeg(C);
-  adjustForLTGFR(C);
   return C;
 }
 

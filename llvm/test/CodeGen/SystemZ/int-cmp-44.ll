@@ -865,3 +865,25 @@ store:
 exit:
   ret i32 %res
 }
+
+; A version of f32 that tests the unextended value.
+define i64 @f42(i64 %base, i64 %index, i64 *%dest) {
+; CHECK-LABEL: f42:
+; CHECK: ltgf %r2, 0({{%r2,%r3|%r3,%r2}})
+; CHECK-NEXT: jh .L{{.*}}
+; CHECK: br %r14
+entry:
+  %add = add i64 %base, %index
+  %ptr = inttoptr i64 %add to i32 *
+  %val = load i32 *%ptr
+  %res = sext i32 %val to i64
+  %cmp = icmp sgt i32 %val, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i64 %res, i64 *%dest
+  br label %exit
+
+exit:
+  ret i64 %res
+}
