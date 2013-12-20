@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// zzz
+// Common macro definitions for interceptors.
+// Always use this headers instead of interception/interception.h.
 //
 //===----------------------------------------------------------------------===//
 #ifndef SANITIZER_INTERCEPTION_H
