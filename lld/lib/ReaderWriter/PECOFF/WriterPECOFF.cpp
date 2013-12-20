@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "Atoms.h"
+#include "WriterImportLibrary.h"
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
@@ -909,6 +910,10 @@ error_code PECOFFWriter::writeFile(const File &linkedFile, StringRef path) {
     chunk->write(buffer->getBufferStart() + chunk->fileOffset());
   applyAllRelocations(buffer->getBufferStart());
   DEBUG(printAllAtomAddresses());
+
+  if (_PECOFFLinkingContext.getImageType() == PECOFFLinkingContext::IMAGE_DLL)
+    writeImportLibrary(_PECOFFLinkingContext);
+
   return buffer->commit();
 }
 

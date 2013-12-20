@@ -5,6 +5,7 @@ add_lld_library(lldPECOFF
   Pass.cpp
   ReaderCOFF.cpp
   ReaderImportHeader.cpp
+  WriterImportLibrary.cpp
   WriterPECOFF.cpp
   )
 
