@@ -8,14 +8,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "IndexingContext.h"
-#include "RecursiveASTVisitor.h"
+#include "clang/AST/DataRecursiveASTVisitor.h"
 
 using namespace clang;
 using namespace cxindex;
 
 namespace {
 
-class TypeIndexer : public cxindex::RecursiveASTVisitor<TypeIndexer> {
+class TypeIndexer : public DataRecursiveASTVisitor<TypeIndexer> {
   IndexingContext &IndexCtx;
   const NamedDecl *Parent;
   const DeclContext *ParentDC;
