@@ -84,7 +84,7 @@ Module::Endianness Module::getEndianness() const {
 /// Target Pointer Size information.
 Module::PointerSize Module::getPointerSize() const {
   StringRef temp = DataLayout;
-  Module::PointerSize ret = AnyPointerSize;
+  Module::PointerSize ret = Pointer64;
 
   while (!temp.empty()) {
     std::pair<StringRef, StringRef> TmpP = getToken(temp, "-");
