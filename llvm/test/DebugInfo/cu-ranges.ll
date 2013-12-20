@@ -11,7 +11,6 @@
 ; CHECK: .debug_ranges contents:
 ; FIXME: When we get better dumping facilities we'll want to elaborate here.
 ; CHECK: 00000000 <End of list>
-; CHECK: 00000010 <End of list>
 
 ; Function Attrs: nounwind uwtable
 define i32 @f(i32 %a) #0 {
