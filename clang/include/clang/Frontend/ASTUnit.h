@@ -30,6 +30,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Support/MD5.h"
 #include "llvm/Support/Path.h"
 #include <cassert>
 #include <map>
@@ -205,8 +206,35 @@ public:
     return Preamble;
   }
 
-private:
+  /// Data that allows us to tell if a file that was used in a preambule was
+  /// changed.
+  struct PreambleFileHash {
+    /// All files have size set.
+    off_t Size;
 
+    /// Modification time is set for files that are on disk.  For memory
+    /// buffers it is zero.
+    time_t ModTime;
+
+    /// Memory buffers have MD5 instead of modification time.  We don't
+    /// compute MD5 for on-disk files because we hope that modification time is
+    /// enough to tell if the file was changed.
+    llvm::MD5::MD5Result MD5;
+
+    static PreambleFileHash createForFile(off_t Size, time_t ModTime);
+    static PreambleFileHash
+    createForMemoryBuffer(const llvm::MemoryBuffer *Buffer);
+
+    friend bool operator==(const PreambleFileHash &LHS,
+                           const PreambleFileHash &RHS);
+
+    friend bool operator!=(const PreambleFileHash &LHS,
+                           const PreambleFileHash &RHS) {
+      return !(LHS == RHS);
+    }
+  };
+
+private:
   /// \brief The contents of the preamble that has been precompiled to
   /// \c PreambleFile.
   PreambleData Preamble;
@@ -226,7 +254,7 @@ private:
   ///
   /// If any of the files have changed from one compile to the next,
   /// the preamble must be thrown away.
-  llvm::StringMap<std::pair<off_t, time_t> > FilesInPreamble;
+  llvm::StringMap<PreambleFileHash> FilesInPreamble;
 
   /// \brief When non-NULL, this is the buffer used to store the contents of
   /// the main file when it has been padded for use with the precompiled

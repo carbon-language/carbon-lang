@@ -1359,6 +1359,36 @@ static llvm::MemoryBuffer *CreatePaddedMainFileBuffer(llvm::MemoryBuffer *Old,
   return Result;
 }
 
+ASTUnit::PreambleFileHash
+ASTUnit::PreambleFileHash::createForFile(off_t Size, time_t ModTime) {
+  PreambleFileHash Result;
+  Result.Size = Size;
+  Result.ModTime = ModTime;
+  memset(Result.MD5, 0, sizeof(Result.MD5[0]) * sizeof(Result.MD5));
+  return Result;
+}
+
+ASTUnit::PreambleFileHash ASTUnit::PreambleFileHash::createForMemoryBuffer(
+    const llvm::MemoryBuffer *Buffer) {
+  PreambleFileHash Result;
+  Result.Size = Buffer->getBufferSize();
+  Result.ModTime = 0;
+
+  llvm::MD5 MD5Ctx;
+  MD5Ctx.update(Buffer->getBuffer().data());
+  MD5Ctx.final(Result.MD5);
+
+  return Result;
+}
+
+namespace clang {
+bool operator==(const ASTUnit::PreambleFileHash &LHS,
+                const ASTUnit::PreambleFileHash &RHS) {
+  return LHS.Size == RHS.Size && LHS.ModTime == RHS.ModTime &&
+         memcmp(LHS.MD5, RHS.MD5, sizeof(LHS.MD5[0]) * sizeof(LHS.MD5)) == 0;
+}
+} // namespace clang
+
 /// \brief Attempt to build or re-use a precompiled preamble when (re-)parsing
 /// the source file.
 ///
@@ -1428,7 +1458,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
           
       // First, make a record of those files that have been overridden via
       // remapping or unsaved_files.
-      llvm::StringMap<std::pair<off_t, time_t> > OverriddenFiles;
+      llvm::StringMap<PreambleFileHash> OverriddenFiles;
       for (PreprocessorOptions::remapped_file_iterator
                 R = PreprocessorOpts.remapped_file_begin(),
              REnd = PreprocessorOpts.remapped_file_end();
@@ -1442,7 +1472,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
           break;
         }
 
-        OverriddenFiles[R->first] = std::make_pair(
+        OverriddenFiles[R->first] = PreambleFileHash::createForFile(
             Status.getSize(), Status.getLastModificationTime().toEpochTime());
       }
       for (PreprocessorOptions::remapped_file_buffer_iterator
@@ -1452,16 +1482,16 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
            ++R) {
         // FIXME: Should we actually compare the contents of file->buffer
         // remappings?
-        OverriddenFiles[R->first] = std::make_pair(R->second->getBufferSize(), 
-                                                   0);
+        OverriddenFiles[R->first] =
+            PreambleFileHash::createForMemoryBuffer(R->second);
       }
        
       // Check whether anything has changed.
-      for (llvm::StringMap<std::pair<off_t, time_t> >::iterator 
+      for (llvm::StringMap<PreambleFileHash>::iterator 
              F = FilesInPreamble.begin(), FEnd = FilesInPreamble.end();
            !AnyFileChanged && F != FEnd; 
            ++F) {
-        llvm::StringMap<std::pair<off_t, time_t> >::iterator Overridden
+        llvm::StringMap<PreambleFileHash>::iterator Overridden
           = OverriddenFiles.find(F->first());
         if (Overridden != OverriddenFiles.end()) {
           // This file was remapped; check whether the newly-mapped file 
@@ -1476,9 +1506,9 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
         if (FileMgr->getNoncachedStatValue(F->first(), Status)) {
           // If we can't stat the file, assume that something horrible happened.
           AnyFileChanged = true;
-        } else if (Status.getSize() != uint64_t(F->second.first) ||
+        } else if (Status.getSize() != uint64_t(F->second.Size) ||
                    Status.getLastModificationTime().toEpochTime() !=
-                       uint64_t(F->second.second))
+                       uint64_t(F->second.ModTime))
           AnyFileChanged = true;
       }
           
@@ -1678,11 +1708,20 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
        F != FEnd;
        ++F) {
     const FileEntry *File = F->second->OrigEntry;
-    if (!File || F->second->getRawBuffer() == MainFileBuffer)
+    if (!File)
       continue;
-    
-    FilesInPreamble[File->getName()]
-      = std::make_pair(F->second->getSize(), File->getModificationTime());
+    const llvm::MemoryBuffer *Buffer = F->second->getRawBuffer();
+    if (Buffer == MainFileBuffer)
+      continue;
+
+    if (time_t ModTime = File->getModificationTime()) {
+      FilesInPreamble[File->getName()] = PreambleFileHash::createForFile(
+          F->second->getSize(), ModTime);
+    } else {
+      assert(F->second->getSize() == Buffer->getBufferSize());
+      FilesInPreamble[File->getName()] =
+          PreambleFileHash::createForMemoryBuffer(Buffer);
+    }
   }
   
   PreambleRebuildCounter = 1;
