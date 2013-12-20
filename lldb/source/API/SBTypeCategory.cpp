@@ -87,7 +87,7 @@ SBTypeCategory::GetNumFormats ()
     if (!IsValid())
         return 0;
     
-    return m_opaque_sp->GetValueNavigator()->GetCount() + m_opaque_sp->GetRegexValueNavigator()->GetCount();
+    return m_opaque_sp->GetTypeFormatsContainer()->GetCount() + m_opaque_sp->GetRegexTypeFormatsContainer()->GetCount();
 }
 
 uint32_t
@@ -95,7 +95,7 @@ SBTypeCategory::GetNumSummaries ()
 {
     if (!IsValid())
         return 0;
-    return m_opaque_sp->GetSummaryNavigator()->GetCount() + m_opaque_sp->GetRegexSummaryNavigator()->GetCount();
+    return m_opaque_sp->GetTypeSummariesContainer()->GetCount() + m_opaque_sp->GetRegexTypeSummariesContainer()->GetCount();
 }
 
 uint32_t
@@ -103,7 +103,7 @@ SBTypeCategory::GetNumFilters ()
 {
     if (!IsValid())
         return 0;
-    return m_opaque_sp->GetFilterNavigator()->GetCount() + m_opaque_sp->GetRegexFilterNavigator()->GetCount();
+    return m_opaque_sp->GetTypeFiltersContainer()->GetCount() + m_opaque_sp->GetRegexTypeFiltersContainer()->GetCount();
 }
 
 #ifndef LLDB_DISABLE_PYTHON
@@ -112,7 +112,7 @@ SBTypeCategory::GetNumSynthetics ()
 {
     if (!IsValid())
         return 0;
-    return m_opaque_sp->GetSyntheticNavigator()->GetCount() + m_opaque_sp->GetRegexSyntheticNavigator()->GetCount();
+    return m_opaque_sp->GetTypeSyntheticsContainer()->GetCount() + m_opaque_sp->GetRegexTypeSyntheticsContainer()->GetCount();
 }
 #endif
 
@@ -162,9 +162,9 @@ SBTypeCategory::GetFilterForType (SBTypeNameSpecifier spec)
     lldb::SyntheticChildrenSP children_sp;
     
     if (spec.IsRegex())
-        m_opaque_sp->GetRegexFilterNavigator()->GetExact(ConstString(spec.GetName()), children_sp);
+        m_opaque_sp->GetRegexTypeFiltersContainer()->GetExact(ConstString(spec.GetName()), children_sp);
     else
-        m_opaque_sp->GetFilterNavigator()->GetExact(ConstString(spec.GetName()), children_sp);
+        m_opaque_sp->GetTypeFiltersContainer()->GetExact(ConstString(spec.GetName()), children_sp);
         
     if (!children_sp)
         return lldb::SBTypeFilter();
@@ -186,9 +186,9 @@ SBTypeCategory::GetFormatForType (SBTypeNameSpecifier spec)
     lldb::TypeFormatImplSP format_sp;
     
     if (spec.IsRegex())
-        m_opaque_sp->GetRegexValueNavigator()->GetExact(ConstString(spec.GetName()), format_sp);
+        m_opaque_sp->GetRegexTypeFormatsContainer()->GetExact(ConstString(spec.GetName()), format_sp);
     else
-        m_opaque_sp->GetValueNavigator()->GetExact(ConstString(spec.GetName()), format_sp);
+        m_opaque_sp->GetTypeFormatsContainer()->GetExact(ConstString(spec.GetName()), format_sp);
     
     if (!format_sp)
         return lldb::SBTypeFormat();
@@ -209,9 +209,9 @@ SBTypeCategory::GetSummaryForType (SBTypeNameSpecifier spec)
     lldb::TypeSummaryImplSP summary_sp;
     
     if (spec.IsRegex())
-        m_opaque_sp->GetRegexSummaryNavigator()->GetExact(ConstString(spec.GetName()), summary_sp);
+        m_opaque_sp->GetRegexTypeSummariesContainer()->GetExact(ConstString(spec.GetName()), summary_sp);
     else
-        m_opaque_sp->GetSummaryNavigator()->GetExact(ConstString(spec.GetName()), summary_sp);
+        m_opaque_sp->GetTypeSummariesContainer()->GetExact(ConstString(spec.GetName()), summary_sp);
     
     if (!summary_sp)
         return lldb::SBTypeSummary();
@@ -233,9 +233,9 @@ SBTypeCategory::GetSyntheticForType (SBTypeNameSpecifier spec)
     lldb::SyntheticChildrenSP children_sp;
     
     if (spec.IsRegex())
-        m_opaque_sp->GetRegexSyntheticNavigator()->GetExact(ConstString(spec.GetName()), children_sp);
+        m_opaque_sp->GetRegexTypeSyntheticsContainer()->GetExact(ConstString(spec.GetName()), children_sp);
     else
-        m_opaque_sp->GetSyntheticNavigator()->GetExact(ConstString(spec.GetName()), children_sp);
+        m_opaque_sp->GetTypeSyntheticsContainer()->GetExact(ConstString(spec.GetName()), children_sp);
     
     if (!children_sp)
         return lldb::SBTypeSynthetic();
@@ -312,9 +312,9 @@ SBTypeCategory::AddTypeFormat (SBTypeNameSpecifier type_name,
         return false;
     
     if (type_name.IsRegex())
-        m_opaque_sp->GetRegexValueNavigator()->Add(lldb::RegularExpressionSP(new RegularExpression(type_name.GetName())), format.GetSP());
+        m_opaque_sp->GetRegexTypeFormatsContainer()->Add(lldb::RegularExpressionSP(new RegularExpression(type_name.GetName())), format.GetSP());
     else
-        m_opaque_sp->GetValueNavigator()->Add(ConstString(type_name.GetName()), format.GetSP());
+        m_opaque_sp->GetTypeFormatsContainer()->Add(ConstString(type_name.GetName()), format.GetSP());
     
     return true;
 }
@@ -329,9 +329,9 @@ SBTypeCategory::DeleteTypeFormat (SBTypeNameSpecifier type_name)
         return false;
     
     if (type_name.IsRegex())
-        return m_opaque_sp->GetRegexValueNavigator()->Delete(ConstString(type_name.GetName()));
+        return m_opaque_sp->GetRegexTypeFormatsContainer()->Delete(ConstString(type_name.GetName()));
     else
-        return m_opaque_sp->GetValueNavigator()->Delete(ConstString(type_name.GetName()));
+        return m_opaque_sp->GetTypeFormatsContainer()->Delete(ConstString(type_name.GetName()));
 }
 
 #ifndef LLDB_DISABLE_PYTHON
@@ -383,9 +383,9 @@ SBTypeCategory::AddTypeSummary (SBTypeNameSpecifier type_name,
     }
     
     if (type_name.IsRegex())
-        m_opaque_sp->GetRegexSummaryNavigator()->Add(lldb::RegularExpressionSP(new RegularExpression(type_name.GetName())), summary.GetSP());
+        m_opaque_sp->GetRegexTypeSummariesContainer()->Add(lldb::RegularExpressionSP(new RegularExpression(type_name.GetName())), summary.GetSP());
     else
-        m_opaque_sp->GetSummaryNavigator()->Add(ConstString(type_name.GetName()), summary.GetSP());
+        m_opaque_sp->GetTypeSummariesContainer()->Add(ConstString(type_name.GetName()), summary.GetSP());
     
     return true;
 }
@@ -401,9 +401,9 @@ SBTypeCategory::DeleteTypeSummary (SBTypeNameSpecifier type_name)
         return false;
     
     if (type_name.IsRegex())
-        return m_opaque_sp->GetRegexSummaryNavigator()->Delete(ConstString(type_name.GetName()));
+        return m_opaque_sp->GetRegexTypeSummariesContainer()->Delete(ConstString(type_name.GetName()));
     else
-        return m_opaque_sp->GetSummaryNavigator()->Delete(ConstString(type_name.GetName()));
+        return m_opaque_sp->GetTypeSummariesContainer()->Delete(ConstString(type_name.GetName()));
 }
 
 bool
@@ -420,9 +420,9 @@ SBTypeCategory::AddTypeFilter (SBTypeNameSpecifier type_name,
         return false;
     
     if (type_name.IsRegex())
-        m_opaque_sp->GetRegexFilterNavigator()->Add(lldb::RegularExpressionSP(new RegularExpression(type_name.GetName())), filter.GetSP());
+        m_opaque_sp->GetRegexTypeFiltersContainer()->Add(lldb::RegularExpressionSP(new RegularExpression(type_name.GetName())), filter.GetSP());
     else
-        m_opaque_sp->GetFilterNavigator()->Add(ConstString(type_name.GetName()), filter.GetSP());
+        m_opaque_sp->GetTypeFiltersContainer()->Add(ConstString(type_name.GetName()), filter.GetSP());
     
     return true;
 }
@@ -437,9 +437,9 @@ SBTypeCategory::DeleteTypeFilter (SBTypeNameSpecifier type_name)
         return false;
     
     if (type_name.IsRegex())
-        return m_opaque_sp->GetRegexFilterNavigator()->Delete(ConstString(type_name.GetName()));
+        return m_opaque_sp->GetRegexTypeFiltersContainer()->Delete(ConstString(type_name.GetName()));
     else
-        return m_opaque_sp->GetFilterNavigator()->Delete(ConstString(type_name.GetName()));
+        return m_opaque_sp->GetTypeFiltersContainer()->Delete(ConstString(type_name.GetName()));
 }
 
 #ifndef LLDB_DISABLE_PYTHON
@@ -491,9 +491,9 @@ SBTypeCategory::AddTypeSynthetic (SBTypeNameSpecifier type_name,
     }
     
     if (type_name.IsRegex())
-        m_opaque_sp->GetRegexSyntheticNavigator()->Add(lldb::RegularExpressionSP(new RegularExpression(type_name.GetName())), synth.GetSP());
+        m_opaque_sp->GetRegexTypeSyntheticsContainer()->Add(lldb::RegularExpressionSP(new RegularExpression(type_name.GetName())), synth.GetSP());
     else
-        m_opaque_sp->GetSyntheticNavigator()->Add(ConstString(type_name.GetName()), synth.GetSP());
+        m_opaque_sp->GetTypeSyntheticsContainer()->Add(ConstString(type_name.GetName()), synth.GetSP());
     
     return true;
 }
@@ -508,9 +508,9 @@ SBTypeCategory::DeleteTypeSynthetic (SBTypeNameSpecifier type_name)
         return false;
     
     if (type_name.IsRegex())
-        return m_opaque_sp->GetRegexSyntheticNavigator()->Delete(ConstString(type_name.GetName()));
+        return m_opaque_sp->GetRegexTypeSyntheticsContainer()->Delete(ConstString(type_name.GetName()));
     else
-        return m_opaque_sp->GetSyntheticNavigator()->Delete(ConstString(type_name.GetName()));
+        return m_opaque_sp->GetTypeSyntheticsContainer()->Delete(ConstString(type_name.GetName()));
 }
 #endif // LLDB_DISABLE_PYTHON
 

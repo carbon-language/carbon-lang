@@ -540,11 +540,11 @@ protected:
                         result.SetStatus(eReturnStatusFailed);
                         return false;
                     }
-                    category_sp->GetRegexSummaryNavigator()->Delete(typeCS);
-                    category_sp->GetRegexValueNavigator()->Add(typeRX, entry);
+                    category_sp->GetRegexTypeSummariesContainer()->Delete(typeCS);
+                    category_sp->GetRegexTypeFormatsContainer()->Add(typeRX, entry);
                 }
                 else
-                    category_sp->GetValueNavigator()->Add(typeCS, entry);
+                    category_sp->GetTypeFormatsContainer()->Add(typeCS, entry);
             }
             else
             {
@@ -817,8 +817,8 @@ private:
     PerCategoryCallback(void* param,
                         const lldb::TypeCategoryImplSP& cate)
     {
-        cate->GetValueNavigator()->Clear();
-        cate->GetRegexValueNavigator()->Clear();
+        cate->GetTypeFormatsContainer()->Clear();
+        cate->GetRegexTypeFormatsContainer()->Clear();
         return true;
         
     }
@@ -1029,12 +1029,12 @@ private:
                                          cate_name,
                                          (cate->IsEnabled() ? "enabled" : "disabled"));
         
-        cate->GetValueNavigator()->LoopThrough(CommandObjectTypeFormatList_LoopCallback, param_vp);
+        cate->GetTypeFormatsContainer()->LoopThrough(CommandObjectTypeFormatList_LoopCallback, param_vp);
         
-        if (cate->GetRegexSummaryNavigator()->GetCount() > 0)
+        if (cate->GetRegexTypeSummariesContainer()->GetCount() > 0)
         {
             result->GetOutputStream().Printf("Regex-based summaries (slower):\n");
-            cate->GetRegexValueNavigator()->LoopThrough(CommandObjectTypeRXFormatList_LoopCallback, param_vp);
+            cate->GetRegexTypeFormatsContainer()->LoopThrough(CommandObjectTypeRXFormatList_LoopCallback, param_vp);
         }
         return true;
     }
@@ -1720,8 +1720,8 @@ CommandObjectTypeSummaryAdd::AddSummary(ConstString type_name,
             return false;
         }
         
-        category->GetRegexSummaryNavigator()->Delete(type_name);
-        category->GetRegexSummaryNavigator()->Add(typeRX, entry);
+        category->GetRegexTypeSummariesContainer()->Delete(type_name);
+        category->GetRegexTypeSummariesContainer()->Add(typeRX, entry);
         
         return true;
     }
@@ -1733,7 +1733,7 @@ CommandObjectTypeSummaryAdd::AddSummary(ConstString type_name,
     }
     else
     {
-        category->GetSummaryNavigator()->Add(type_name, entry);
+        category->GetTypeSummariesContainer()->Add(type_name, entry);
         return true;
     }
 }    
@@ -1994,8 +1994,8 @@ private:
     PerCategoryCallback(void* param,
                         const lldb::TypeCategoryImplSP& cate)
     {
-        cate->GetSummaryNavigator()->Clear();
-        cate->GetRegexSummaryNavigator()->Clear();
+        cate->GetTypeSummariesContainer()->Clear();
+        cate->GetRegexTypeSummariesContainer()->Clear();
         return true;
         
     }
@@ -2226,12 +2226,12 @@ private:
                                          cate_name,
                                          (cate->IsEnabled() ? "enabled" : "disabled"));
                 
-        cate->GetSummaryNavigator()->LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param_vp);
+        cate->GetTypeSummariesContainer()->LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param_vp);
         
-        if (cate->GetRegexSummaryNavigator()->GetCount() > 0)
+        if (cate->GetRegexTypeSummariesContainer()->GetCount() > 0)
         {
             result->GetOutputStream().Printf("Regex-based summaries (slower):\n");
-            cate->GetRegexSummaryNavigator()->LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, param_vp);
+            cate->GetRegexTypeSummariesContainer()->LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, param_vp);
         }
         return true;
     }
@@ -2774,12 +2774,12 @@ private:
                                          cate_name,
                                          (cate->IsEnabled() ? "enabled" : "disabled"));
         
-        cate->GetFilterNavigator()->LoopThrough(CommandObjectTypeFilterList_LoopCallback, param_vp);
+        cate->GetTypeFiltersContainer()->LoopThrough(CommandObjectTypeFilterList_LoopCallback, param_vp);
         
-        if (cate->GetRegexFilterNavigator()->GetCount() > 0)
+        if (cate->GetRegexTypeFiltersContainer()->GetCount() > 0)
         {
             result->GetOutputStream().Printf("Regex-based filters (slower):\n");
-            cate->GetRegexFilterNavigator()->LoopThrough(CommandObjectTypeFilterRXList_LoopCallback, param_vp);
+            cate->GetRegexTypeFiltersContainer()->LoopThrough(CommandObjectTypeFilterRXList_LoopCallback, param_vp);
         }
         
         return true;
@@ -2988,12 +2988,12 @@ private:
                                          cate_name,
                                          (cate->IsEnabled() ? "enabled" : "disabled"));
         
-        cate->GetSyntheticNavigator()->LoopThrough(CommandObjectTypeSynthList_LoopCallback, param_vp);
+        cate->GetTypeSyntheticsContainer()->LoopThrough(CommandObjectTypeSynthList_LoopCallback, param_vp);
         
-        if (cate->GetRegexSyntheticNavigator()->GetCount() > 0)
+        if (cate->GetRegexTypeSyntheticsContainer()->GetCount() > 0)
         {
             result->GetOutputStream().Printf("Regex-based synthetic providers (slower):\n");
-            cate->GetRegexSyntheticNavigator()->LoopThrough(CommandObjectTypeSynthRXList_LoopCallback, param_vp);
+            cate->GetRegexTypeSyntheticsContainer()->LoopThrough(CommandObjectTypeSynthRXList_LoopCallback, param_vp);
         }
         
         return true;
@@ -3179,8 +3179,8 @@ protected:
         lldb::TypeCategoryImplSP category;
         DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
         
-        bool delete_category = category->GetFilterNavigator()->Delete(typeCS);
-        delete_category = category->GetRegexFilterNavigator()->Delete(typeCS) || delete_category;
+        bool delete_category = category->GetTypeFiltersContainer()->Delete(typeCS);
+        delete_category = category->GetRegexTypeFiltersContainer()->Delete(typeCS) || delete_category;
         
         if (delete_category)
         {
@@ -3345,8 +3345,8 @@ protected:
         lldb::TypeCategoryImplSP category;
         DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
         
-        bool delete_category = category->GetSyntheticNavigator()->Delete(typeCS);
-        delete_category = category->GetRegexSyntheticNavigator()->Delete(typeCS) || delete_category;
+        bool delete_category = category->GetTypeSyntheticsContainer()->Delete(typeCS);
+        delete_category = category->GetRegexTypeSyntheticsContainer()->Delete(typeCS) || delete_category;
         
         if (delete_category)
         {
@@ -3484,8 +3484,8 @@ protected:
             }
             else
                 DataVisualization::Categories::GetCategory(ConstString(NULL), category);
-            category->GetFilterNavigator()->Clear();
-            category->GetRegexFilterNavigator()->Clear();
+            category->GetTypeFiltersContainer()->Clear();
+            category->GetRegexTypeFiltersContainer()->Clear();
         }
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -3613,8 +3613,8 @@ protected:
             }
             else
                 DataVisualization::Categories::GetCategory(ConstString(NULL), category);
-            category->GetSyntheticNavigator()->Clear();
-            category->GetRegexSyntheticNavigator()->Clear();
+            category->GetTypeSyntheticsContainer()->Clear();
+            category->GetRegexTypeSyntheticsContainer()->Clear();
         }
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -3979,14 +3979,14 @@ CommandObjectTypeSynthAdd::AddSynth(ConstString type_name,
             return false;
         }
         
-        category->GetRegexSyntheticNavigator()->Delete(type_name);
-        category->GetRegexSyntheticNavigator()->Add(typeRX, entry);
+        category->GetRegexTypeSyntheticsContainer()->Delete(type_name);
+        category->GetRegexTypeSyntheticsContainer()->Add(typeRX, entry);
         
         return true;
     }
     else
     {
-        category->GetSyntheticNavigator()->Add(type_name, entry);
+        category->GetTypeSyntheticsContainer()->Add(type_name, entry);
         return true;
     }
 }
@@ -4173,14 +4173,14 @@ private:
                 return false;
             }
             
-            category->GetRegexFilterNavigator()->Delete(type_name);
-            category->GetRegexFilterNavigator()->Add(typeRX, entry);
+            category->GetRegexTypeFiltersContainer()->Delete(type_name);
+            category->GetRegexTypeFiltersContainer()->Add(typeRX, entry);
             
             return true;
         }
         else
         {
-            category->GetFilterNavigator()->Add(type_name, entry);
+            category->GetTypeFiltersContainer()->Add(type_name, entry);
             return true;
         }
     }

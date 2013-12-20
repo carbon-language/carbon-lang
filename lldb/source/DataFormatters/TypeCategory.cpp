@@ -21,15 +21,15 @@ using namespace lldb_private;
 
 TypeCategoryImpl::TypeCategoryImpl(IFormatChangeListener* clist,
                                    ConstString name) :
-m_value_nav(new ValueNavigator("format",clist)),
-m_regex_value_nav(new RegexValueNavigator("regex-format",clist)),
-m_summary_nav(new SummaryNavigator("summary",clist)),
-m_regex_summary_nav(new RegexSummaryNavigator("regex-summary",clist)),
-m_filter_nav(new FilterNavigator("filter",clist)),
-m_regex_filter_nav(new RegexFilterNavigator("regex-filter",clist)),
+m_format_cont(new FormatContainer("format",clist)),
+m_regex_format_cont(new RegexFormatContainer("regex-format",clist)),
+m_summary_cont(new SummaryContainer("summary",clist)),
+m_regex_summary_cont(new RegexSummaryContainer("regex-summary",clist)),
+m_filter_cont(new FilterContainer("filter",clist)),
+m_regex_filter_cont(new RegexFilterContainer("regex-filter",clist)),
 #ifndef LLDB_DISABLE_PYTHON
-m_synth_nav(new SynthNavigator("synth",clist)),
-m_regex_synth_nav(new RegexSynthNavigator("regex-synth",clist)),
+m_synth_cont(new SynthContainer("synth",clist)),
+m_regex_synth_cont(new RegexSynthContainer("regex-synth",clist)),
 #endif
 m_enabled(false),
 m_change_listener(clist),
@@ -45,9 +45,9 @@ TypeCategoryImpl::Get (ValueObject& valobj,
 {
     if (!IsEnabled())
         return false;
-    if (GetValueNavigator()->Get(candidates, entry, reason))
+    if (GetTypeFormatsContainer()->Get(candidates, entry, reason))
         return true;
-    bool regex = GetRegexValueNavigator()->Get(candidates, entry, reason);
+    bool regex = GetRegexTypeFormatsContainer()->Get(candidates, entry, reason);
     if (regex && reason)
         *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionSummary;
     return regex;
@@ -61,9 +61,9 @@ TypeCategoryImpl::Get (ValueObject& valobj,
 {
     if (!IsEnabled())
         return false;
-    if (GetSummaryNavigator()->Get(candidates, entry, reason))
+    if (GetTypeSummariesContainer()->Get(candidates, entry, reason))
         return true;
-    bool regex = GetRegexSummaryNavigator()->Get(candidates, entry, reason);
+    bool regex = GetRegexTypeSummariesContainer()->Get(candidates, entry, reason);
     if (regex && reason)
         *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionSummary;
     return regex;
@@ -82,16 +82,16 @@ TypeCategoryImpl::Get (ValueObject& valobj,
     bool regex_filter = false;
     // first find both Filter and Synth, and then check which is most recent
     
-    if (!GetFilterNavigator()->Get(candidates, filter_sp, &reason_filter))
-        regex_filter = GetRegexFilterNavigator()->Get (candidates, filter_sp, &reason_filter);
+    if (!GetTypeFiltersContainer()->Get(candidates, filter_sp, &reason_filter))
+        regex_filter = GetRegexTypeFiltersContainer()->Get (candidates, filter_sp, &reason_filter);
     
 #ifndef LLDB_DISABLE_PYTHON
     bool regex_synth = false;
     uint32_t reason_synth = 0;
     bool pick_synth = false;
     ScriptedSyntheticChildren::SharedPointer synth;
-    if (!GetSyntheticNavigator()->Get(candidates, synth, &reason_synth))
-        regex_synth = GetRegexSyntheticNavigator()->Get (candidates, synth, &reason_synth);
+    if (!GetTypeSyntheticsContainer()->Get(candidates, synth, &reason_synth))
+        regex_synth = GetRegexTypeSyntheticsContainer()->Get (candidates, synth, &reason_synth);
     if (!filter_sp.get() && !synth.get())
         return false;
     else if (!filter_sp.get() && synth.get())
@@ -137,25 +137,25 @@ void
 TypeCategoryImpl::Clear (FormatCategoryItems items)
 {
     if ( (items & eFormatCategoryItemValue)  == eFormatCategoryItemValue )
-        m_value_nav->Clear();
+        m_format_cont->Clear();
     if ( (items & eFormatCategoryItemRegexValue) == eFormatCategoryItemRegexValue )
-        m_regex_value_nav->Clear();
+        m_regex_format_cont->Clear();
 
     if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
-        m_summary_nav->Clear();
+        m_summary_cont->Clear();
     if ( (items & eFormatCategoryItemRegexSummary) == eFormatCategoryItemRegexSummary )
-        m_regex_summary_nav->Clear();
+        m_regex_summary_cont->Clear();
 
     if ( (items & eFormatCategoryItemFilter)  == eFormatCategoryItemFilter )
-        m_filter_nav->Clear();
+        m_filter_cont->Clear();
     if ( (items & eFormatCategoryItemRegexFilter) == eFormatCategoryItemRegexFilter )
-        m_regex_filter_nav->Clear();
+        m_regex_filter_cont->Clear();
 
 #ifndef LLDB_DISABLE_PYTHON
     if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
-        m_synth_nav->Clear();
+        m_synth_cont->Clear();
     if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
-        m_regex_synth_nav->Clear();
+        m_regex_synth_cont->Clear();
 #endif
 }
 
@@ -166,25 +166,25 @@ TypeCategoryImpl::Delete (ConstString name,
     bool success = false;
     
     if ( (items & eFormatCategoryItemValue)  == eFormatCategoryItemValue )
-        success = m_value_nav->Delete(name) || success;
+        success = m_format_cont->Delete(name) || success;
     if ( (items & eFormatCategoryItemRegexValue) == eFormatCategoryItemRegexValue )
-        success = m_regex_value_nav->Delete(name) || success;
+        success = m_regex_format_cont->Delete(name) || success;
 
     if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
-        success = m_summary_nav->Delete(name) || success;
+        success = m_summary_cont->Delete(name) || success;
     if ( (items & eFormatCategoryItemRegexSummary) == eFormatCategoryItemRegexSummary )
-        success = m_regex_summary_nav->Delete(name) || success;
+        success = m_regex_summary_cont->Delete(name) || success;
 
     if ( (items & eFormatCategoryItemFilter)  == eFormatCategoryItemFilter )
-        success = m_filter_nav->Delete(name) || success;
+        success = m_filter_cont->Delete(name) || success;
     if ( (items & eFormatCategoryItemRegexFilter) == eFormatCategoryItemRegexFilter )
-        success = m_regex_filter_nav->Delete(name) || success;
+        success = m_regex_filter_cont->Delete(name) || success;
 
 #ifndef LLDB_DISABLE_PYTHON
     if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
-        success = m_synth_nav->Delete(name) || success;
+        success = m_synth_cont->Delete(name) || success;
     if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
-        success = m_regex_synth_nav->Delete(name) || success;
+        success = m_regex_synth_cont->Delete(name) || success;
 #endif
     return success;
 }
@@ -195,25 +195,25 @@ TypeCategoryImpl::GetCount (FormatCategoryItems items)
     uint32_t count = 0;
 
     if ( (items & eFormatCategoryItemValue) == eFormatCategoryItemValue )
-        count += m_value_nav->GetCount();
+        count += m_format_cont->GetCount();
     if ( (items & eFormatCategoryItemRegexValue) == eFormatCategoryItemRegexValue )
-        count += m_regex_value_nav->GetCount();
+        count += m_regex_format_cont->GetCount();
     
     if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
-        count += m_summary_nav->GetCount();
+        count += m_summary_cont->GetCount();
     if ( (items & eFormatCategoryItemRegexSummary) == eFormatCategoryItemRegexSummary )
-        count += m_regex_summary_nav->GetCount();
+        count += m_regex_summary_cont->GetCount();
 
     if ( (items & eFormatCategoryItemFilter)  == eFormatCategoryItemFilter )
-        count += m_filter_nav->GetCount();
+        count += m_filter_cont->GetCount();
     if ( (items & eFormatCategoryItemRegexFilter) == eFormatCategoryItemRegexFilter )
-        count += m_regex_filter_nav->GetCount();
+        count += m_regex_filter_cont->GetCount();
 
 #ifndef LLDB_DISABLE_PYTHON
     if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
-        count += m_synth_nav->GetCount();
+        count += m_synth_cont->GetCount();
     if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
-        count += m_regex_synth_nav->GetCount();
+        count += m_regex_synth_cont->GetCount();
 #endif
     return count;
 }
@@ -237,7 +237,7 @@ TypeCategoryImpl::AnyMatches(ConstString type_name,
     
     if ( (items & eFormatCategoryItemValue) == eFormatCategoryItemValue )
     {
-        if (m_value_nav->Get(type_name, format_sp))
+        if (m_format_cont->Get(type_name, format_sp))
         {
             if (matching_category)
                 *matching_category = m_name.GetCString();
@@ -248,7 +248,7 @@ TypeCategoryImpl::AnyMatches(ConstString type_name,
     }
     if ( (items & eFormatCategoryItemRegexValue) == eFormatCategoryItemRegexValue )
     {
-        if (m_regex_value_nav->Get(type_name, format_sp))
+        if (m_regex_format_cont->Get(type_name, format_sp))
         {
             if (matching_category)
                 *matching_category = m_name.GetCString();
@@ -260,7 +260,7 @@ TypeCategoryImpl::AnyMatches(ConstString type_name,
     
     if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
     {
-        if (m_summary_nav->Get(type_name, summary_sp))
+        if (m_summary_cont->Get(type_name, summary_sp))
         {
             if (matching_category)
                 *matching_category = m_name.GetCString();
@@ -271,7 +271,7 @@ TypeCategoryImpl::AnyMatches(ConstString type_name,
     }
     if ( (items & eFormatCategoryItemRegexSummary) == eFormatCategoryItemRegexSummary )
     {
-        if (m_regex_summary_nav->Get(type_name, summary_sp))
+        if (m_regex_summary_cont->Get(type_name, summary_sp))
         {
             if (matching_category)
                 *matching_category = m_name.GetCString();
@@ -283,7 +283,7 @@ TypeCategoryImpl::AnyMatches(ConstString type_name,
     
     if ( (items & eFormatCategoryItemFilter)  == eFormatCategoryItemFilter )
     {
-        if (m_filter_nav->Get(type_name, filter_sp))
+        if (m_filter_cont->Get(type_name, filter_sp))
         {
             if (matching_category)
                 *matching_category = m_name.GetCString();
@@ -294,7 +294,7 @@ TypeCategoryImpl::AnyMatches(ConstString type_name,
     }
     if ( (items & eFormatCategoryItemRegexFilter) == eFormatCategoryItemRegexFilter )
     {
-        if (m_regex_filter_nav->Get(type_name, filter_sp))
+        if (m_regex_filter_cont->Get(type_name, filter_sp))
         {
             if (matching_category)
                 *matching_category = m_name.GetCString();
@@ -307,7 +307,7 @@ TypeCategoryImpl::AnyMatches(ConstString type_name,
 #ifndef LLDB_DISABLE_PYTHON
     if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
     {
-        if (m_synth_nav->Get(type_name, synth_sp))
+        if (m_synth_cont->Get(type_name, synth_sp))
         {
             if (matching_category)
                 *matching_category = m_name.GetCString();
@@ -318,7 +318,7 @@ TypeCategoryImpl::AnyMatches(ConstString type_name,
     }
     if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
     {
-        if (m_regex_synth_nav->Get(type_name, synth_sp))
+        if (m_regex_synth_cont->Get(type_name, synth_sp))
         {
             if (matching_category)
                 *matching_category = m_name.GetCString();
@@ -331,66 +331,66 @@ TypeCategoryImpl::AnyMatches(ConstString type_name,
     return false;
 }
 
-TypeCategoryImpl::ValueNavigator::MapValueType
+TypeCategoryImpl::FormatContainer::MapValueType
 TypeCategoryImpl::GetFormatForType (lldb::TypeNameSpecifierImplSP type_sp)
 {
-    ValueNavigator::MapValueType retval;
+    FormatContainer::MapValueType retval;
     
     if (type_sp)
     {
         if (type_sp->IsRegex())
-            m_regex_value_nav->GetExact(ConstString(type_sp->GetName()),retval);
+            m_regex_format_cont->GetExact(ConstString(type_sp->GetName()),retval);
         else
-            m_value_nav->GetExact(ConstString(type_sp->GetName()),retval);
+            m_format_cont->GetExact(ConstString(type_sp->GetName()),retval);
     }
     
     return retval;
 }
 
-TypeCategoryImpl::SummaryNavigator::MapValueType
+TypeCategoryImpl::SummaryContainer::MapValueType
 TypeCategoryImpl::GetSummaryForType (lldb::TypeNameSpecifierImplSP type_sp)
 {
-    SummaryNavigator::MapValueType retval;
+    SummaryContainer::MapValueType retval;
     
     if (type_sp)
     {
         if (type_sp->IsRegex())
-            m_regex_summary_nav->GetExact(ConstString(type_sp->GetName()),retval);
+            m_regex_summary_cont->GetExact(ConstString(type_sp->GetName()),retval);
         else
-            m_summary_nav->GetExact(ConstString(type_sp->GetName()),retval);
+            m_summary_cont->GetExact(ConstString(type_sp->GetName()),retval);
     }
     
     return retval;
 }
 
-TypeCategoryImpl::FilterNavigator::MapValueType
+TypeCategoryImpl::FilterContainer::MapValueType
 TypeCategoryImpl::GetFilterForType (lldb::TypeNameSpecifierImplSP type_sp)
 {
-    FilterNavigator::MapValueType retval;
+    FilterContainer::MapValueType retval;
     
     if (type_sp)
     {
         if (type_sp->IsRegex())
-            m_regex_filter_nav->GetExact(ConstString(type_sp->GetName()),retval);
+            m_regex_filter_cont->GetExact(ConstString(type_sp->GetName()),retval);
         else
-            m_filter_nav->GetExact(ConstString(type_sp->GetName()),retval);
+            m_filter_cont->GetExact(ConstString(type_sp->GetName()),retval);
     }
     
     return retval;
 }
 
 #ifndef LLDB_DISABLE_PYTHON
-TypeCategoryImpl::SynthNavigator::MapValueType
+TypeCategoryImpl::SynthContainer::MapValueType
 TypeCategoryImpl::GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp)
 {
-    SynthNavigator::MapValueType retval;
+    SynthContainer::MapValueType retval;
     
     if (type_sp)
     {
         if (type_sp->IsRegex())
-            m_regex_synth_nav->GetExact(ConstString(type_sp->GetName()),retval);
+            m_regex_synth_cont->GetExact(ConstString(type_sp->GetName()),retval);
         else
-            m_synth_nav->GetExact(ConstString(type_sp->GetName()),retval);
+            m_synth_cont->GetExact(ConstString(type_sp->GetName()),retval);
     }
     
     return retval;
@@ -400,74 +400,74 @@ TypeCategoryImpl::GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp)
 lldb::TypeNameSpecifierImplSP
 TypeCategoryImpl::GetTypeNameSpecifierForSummaryAtIndex (size_t index)
 {
-    if (index < m_summary_nav->GetCount())
-        return m_summary_nav->GetTypeNameSpecifierAtIndex(index);
+    if (index < m_summary_cont->GetCount())
+        return m_summary_cont->GetTypeNameSpecifierAtIndex(index);
     else
-        return m_regex_summary_nav->GetTypeNameSpecifierAtIndex(index-m_summary_nav->GetCount());
+        return m_regex_summary_cont->GetTypeNameSpecifierAtIndex(index-m_summary_cont->GetCount());
 }
 
-TypeCategoryImpl::ValueNavigator::MapValueType
+TypeCategoryImpl::FormatContainer::MapValueType
 TypeCategoryImpl::GetFormatAtIndex (size_t index)
 {
-    if (index < m_value_nav->GetCount())
-        return m_value_nav->GetAtIndex(index);
+    if (index < m_format_cont->GetCount())
+        return m_format_cont->GetAtIndex(index);
     else
-        return m_regex_value_nav->GetAtIndex(index-m_value_nav->GetCount());
+        return m_regex_format_cont->GetAtIndex(index-m_format_cont->GetCount());
 }
 
-TypeCategoryImpl::SummaryNavigator::MapValueType
+TypeCategoryImpl::SummaryContainer::MapValueType
 TypeCategoryImpl::GetSummaryAtIndex (size_t index)
 {
-    if (index < m_summary_nav->GetCount())
-        return m_summary_nav->GetAtIndex(index);
+    if (index < m_summary_cont->GetCount())
+        return m_summary_cont->GetAtIndex(index);
     else
-        return m_regex_summary_nav->GetAtIndex(index-m_summary_nav->GetCount());
+        return m_regex_summary_cont->GetAtIndex(index-m_summary_cont->GetCount());
 }
 
-TypeCategoryImpl::FilterNavigator::MapValueType
+TypeCategoryImpl::FilterContainer::MapValueType
 TypeCategoryImpl::GetFilterAtIndex (size_t index)
 {
-    if (index < m_filter_nav->GetCount())
-        return m_filter_nav->GetAtIndex(index);
+    if (index < m_filter_cont->GetCount())
+        return m_filter_cont->GetAtIndex(index);
     else
-        return m_regex_filter_nav->GetAtIndex(index-m_filter_nav->GetCount());
+        return m_regex_filter_cont->GetAtIndex(index-m_filter_cont->GetCount());
 }
 
 lldb::TypeNameSpecifierImplSP
 TypeCategoryImpl::GetTypeNameSpecifierForFormatAtIndex (size_t index)
 {
-    if (index < m_value_nav->GetCount())
-        return m_value_nav->GetTypeNameSpecifierAtIndex(index);
+    if (index < m_format_cont->GetCount())
+        return m_format_cont->GetTypeNameSpecifierAtIndex(index);
     else
-        return m_regex_value_nav->GetTypeNameSpecifierAtIndex(index-m_value_nav->GetCount());
+        return m_regex_format_cont->GetTypeNameSpecifierAtIndex(index-m_format_cont->GetCount());
 }
 
 lldb::TypeNameSpecifierImplSP
 TypeCategoryImpl::GetTypeNameSpecifierForFilterAtIndex (size_t index)
 {
-    if (index < m_filter_nav->GetCount())
-        return m_filter_nav->GetTypeNameSpecifierAtIndex(index);
+    if (index < m_filter_cont->GetCount())
+        return m_filter_cont->GetTypeNameSpecifierAtIndex(index);
     else
-        return m_regex_filter_nav->GetTypeNameSpecifierAtIndex(index-m_filter_nav->GetCount());
+        return m_regex_filter_cont->GetTypeNameSpecifierAtIndex(index-m_filter_cont->GetCount());
 }
 
 #ifndef LLDB_DISABLE_PYTHON
-TypeCategoryImpl::SynthNavigator::MapValueType
+TypeCategoryImpl::SynthContainer::MapValueType
 TypeCategoryImpl::GetSyntheticAtIndex (size_t index)
 {
-    if (index < m_synth_nav->GetCount())
-        return m_synth_nav->GetAtIndex(index);
+    if (index < m_synth_cont->GetCount())
+        return m_synth_cont->GetAtIndex(index);
     else
-        return m_regex_synth_nav->GetAtIndex(index-m_synth_nav->GetCount());
+        return m_regex_synth_cont->GetAtIndex(index-m_synth_cont->GetCount());
 }
 
 lldb::TypeNameSpecifierImplSP
 TypeCategoryImpl::GetTypeNameSpecifierForSyntheticAtIndex (size_t index)
 {
-    if (index < m_synth_nav->GetCount())
-        return m_synth_nav->GetTypeNameSpecifierAtIndex(index);
+    if (index < m_synth_cont->GetCount())
+        return m_synth_cont->GetTypeNameSpecifierAtIndex(index);
     else
-        return m_regex_synth_nav->GetTypeNameSpecifierAtIndex(index - m_synth_nav->GetCount());
+        return m_regex_synth_cont->GetTypeNameSpecifierAtIndex(index - m_synth_cont->GetCount());
 }
 #endif
 

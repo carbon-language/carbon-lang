@@ -20,7 +20,7 @@
 
 #include "lldb/DataFormatters/FormatCache.h"
 #include "lldb/DataFormatters/FormatClasses.h"
-#include "lldb/DataFormatters/FormatNavigator.h"
+#include "lldb/DataFormatters/FormattersContainer.h"
 #include "lldb/DataFormatters/TypeCategory.h"
 #include "lldb/DataFormatters/TypeCategoryMap.h"
 
@@ -44,7 +44,7 @@ public:
     FormatManager ();
     
     NamedSummariesMap&
-    GetNamedSummaryNavigator ()
+    GetNamedSummaryContainer ()
     {
         return m_named_summaries_map;
     }

@@ -1,4 +1,4 @@
-//===-- FormatNavigator.h ----------------------------------------*- C++ -*-===//
+//===-- FormattersContainer.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef lldb_FormatNavigator_h_
-#define lldb_FormatNavigator_h_
+#ifndef lldb_FormattersContainer_h_
+#define lldb_FormattersContainer_h_
 
 // C Includes
 // C++ Includes
@@ -104,7 +104,7 @@ GetValidTypeName_Impl (const ConstString& type)
 }
     
 template<typename KeyType, typename ValueType>
-class FormatNavigator;
+class FormattersContainer;
 
 template<typename KeyType, typename ValueType>
 class FormatMap
@@ -243,13 +243,13 @@ protected:
         return m_map_mutex;
     }
     
-    friend class FormatNavigator<KeyType, ValueType>;
+    friend class FormattersContainer<KeyType, ValueType>;
     friend class FormatManager;
     
 };
     
 template<typename KeyType, typename ValueType>
-class FormatNavigator
+class FormattersContainer
 {
 protected:
     typedef FormatMap<KeyType,ValueType> BackEndType;
@@ -260,11 +260,11 @@ public:
     typedef typename MapType::key_type MapKeyType;
     typedef typename MapType::mapped_type MapValueType;
     typedef typename BackEndType::CallbackType CallbackType;
-    typedef typename std::shared_ptr<FormatNavigator<KeyType, ValueType> > SharedPointer;
+    typedef typename std::shared_ptr<FormattersContainer<KeyType, ValueType> > SharedPointer;
     
     friend class TypeCategoryImpl;
 
-    FormatNavigator(std::string name,
+    FormattersContainer(std::string name,
                     IFormatChangeListener* lst) :
     m_format_map(lst),
     m_name(name),
@@ -350,7 +350,7 @@ protected:
     
     std::string m_name;
     
-    DISALLOW_COPY_AND_ASSIGN(FormatNavigator);
+    DISALLOW_COPY_AND_ASSIGN(FormattersContainer);
     
     ConstString m_id_cs;
                            
@@ -491,4 +491,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif	// lldb_FormatNavigator_h_
+#endif	// lldb_FormattersContainer_h_

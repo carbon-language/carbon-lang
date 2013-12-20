@@ -204,35 +204,35 @@ DataVisualization::Categories::GetCategoryAtIndex (size_t index)
 bool
 DataVisualization::NamedSummaryFormats::GetSummaryFormat (const ConstString &type, lldb::TypeSummaryImplSP &entry)
 {
-    return GetFormatManager().GetNamedSummaryNavigator().Get(type,entry);
+    return GetFormatManager().GetNamedSummaryContainer().Get(type,entry);
 }
 
 void
 DataVisualization::NamedSummaryFormats::Add (const ConstString &type, const lldb::TypeSummaryImplSP &entry)
 {
-    GetFormatManager().GetNamedSummaryNavigator().Add(FormatManager::GetValidTypeName(type),entry);
+    GetFormatManager().GetNamedSummaryContainer().Add(FormatManager::GetValidTypeName(type),entry);
 }
 
 bool
 DataVisualization::NamedSummaryFormats::Delete (const ConstString &type)
 {
-    return GetFormatManager().GetNamedSummaryNavigator().Delete(type);
+    return GetFormatManager().GetNamedSummaryContainer().Delete(type);
 }
 
 void
 DataVisualization::NamedSummaryFormats::Clear ()
 {
-    GetFormatManager().GetNamedSummaryNavigator().Clear();
+    GetFormatManager().GetNamedSummaryContainer().Clear();
 }
 
 void
 DataVisualization::NamedSummaryFormats::LoopThrough (TypeSummaryImpl::SummaryCallback callback, void* callback_baton)
 {
-    GetFormatManager().GetNamedSummaryNavigator().LoopThrough(callback, callback_baton);
+    GetFormatManager().GetNamedSummaryContainer().LoopThrough(callback, callback_baton);
 }
 
 uint32_t
 DataVisualization::NamedSummaryFormats::GetCount ()
 {
-    return GetFormatManager().GetNamedSummaryNavigator().GetCount();
+    return GetFormatManager().GetNamedSummaryContainer().GetCount();
 }
