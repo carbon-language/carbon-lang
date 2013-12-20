@@ -87,7 +87,7 @@ entry:
     i32 2, label %sw.bb
     i32 3, label %sw.bb1
   ], !prof !3
-; CHECK: test5
+; CHECK-LABEL: @test5(
 ; CHECK: switch i32 %N, label %sw2 [
 ; CHECK: i32 3, label %sw.bb1
 ; CHECK: i32 2, label %sw.bb
@@ -119,7 +119,7 @@ entry:
     i32 2, label %sw.bb
     i32 3, label %sw.bb1
   ], !prof !4
-; CHECK: test6
+; CHECK-LABEL: @test6(
 ; CHECK: switch i32 %N, label %sw.epilog
 ; CHECK: i32 3, label %sw.bb1
 ; CHECK: i32 2, label %sw.bb
@@ -266,7 +266,7 @@ lor.end:
  call void @helper(i32 0) nounwind
  ret void
 
-; CHECK: test10
+; CHECK-LABEL: @test10(
 ; CHECK: %x.off = add i32 %x, -1
 ; CHECK: %switch = icmp ult i32 %x.off, 3
 ; CHECK: br i1 %switch, label %lor.end, label %lor.rhs, !prof !8
@@ -279,6 +279,7 @@ define void @test11(i32 %x) nounwind {
     i32 21, label %b
     i32 24, label %c
   ], !prof !8
+; CHECK-LABEL: @test11(
 ; CHECK: %cond = icmp eq i32 %i, 24
 ; CHECK: br i1 %cond, label %c, label %a, !prof !9
 
@@ -299,7 +300,7 @@ entry:
   switch i32 %N, label %sw.bb [
     i32 1, label %sw.bb
   ], !prof !9
-; CHECK: test12
+; CHECK-LABEL: @test12(
 ; CHECK-NOT: switch
 
 sw.bb:
