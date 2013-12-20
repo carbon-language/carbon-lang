@@ -21,7 +21,6 @@
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
-#include "interception/interception.h"
 
 // ACHTUNG! No system header includes in this file.
 

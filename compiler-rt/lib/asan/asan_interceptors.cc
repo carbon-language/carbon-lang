@@ -21,7 +21,6 @@
 #include "asan_report.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
-#include "interception/interception.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 namespace __asan {

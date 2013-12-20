@@ -19,7 +19,7 @@
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_stack.h"
-#include "interception/interception.h"
+#include "sanitizer_common/sanitizer_interception.h"
 
 #include <stddef.h>
 

@@ -16,6 +16,8 @@
 #include "asan_internal.h"
 #include "asan_stack.h"
 
+#include "sanitizer_common/sanitizer_interception.h"
+
 #include <stddef.h>
 
 namespace __asan {

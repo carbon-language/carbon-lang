@@ -15,7 +15,7 @@
 #define ASAN_INTERCEPTORS_H
 
 #include "asan_internal.h"
-#include "interception/interception.h"
+#include "sanitizer_common/sanitizer_interception.h"
 
 DECLARE_REAL(int, memcmp, const void *a1, const void *a2, uptr size)
 DECLARE_REAL(void*, memcpy, void *to, const void *from, uptr size)
