@@ -31,7 +31,7 @@
         margin-bottom: 0.4em;
         margin-top: 0.4em;
 	font-weight: bold;
-        font-size: 1.2em;
+        font-size: 1.1em;
 	text-align: center;
 	background-color: #3b4567;
         -webkit-border-radius: 5px;
@@ -44,7 +44,6 @@
         -webkit-border-radius: 5px;
         -moz-border-radius: 5px;
         border-radius: 5px;
-        font-size: 1.1em;
 	display:block;
         font-weight: bold;
 	text-decoration: none;

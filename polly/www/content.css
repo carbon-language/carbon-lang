@@ -2,7 +2,7 @@ html { margin: 0px; } body { margin: 8px; }
 
 html, body {
   padding:0px;
-  font-size:small; font-family:"Lucida Grande", "Lucida Sans Unicode", Arial, Verdana, Helvetica, sans-serif; background-color: #fff; color: #222;
+  font-family:"Lucida Grande", "Lucida Sans Unicode", Arial, Verdana, Helvetica, sans-serif; background-color: #fff; color: #222;
   line-height:1.5;
 }
 
@@ -66,8 +66,9 @@ tr { vertical-align:top }
 #head h1 {
   padding-bottom: 0em;
   margin-bottom: 0em;
-  padding-left: .5em;
-  font-size: 5em;
+  padding-top: 1em;
+  padding-left: 2em;
+  font-size: 3em;
 }
 
 #head h1 span {
