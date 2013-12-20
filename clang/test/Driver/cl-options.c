@@ -14,6 +14,10 @@
 // RUN: %clang_cl /D foo=bar -### -- %s 2>&1 | FileCheck -check-prefix=D %s
 // D: "-D" "foo=bar"
 
+// RUN: %clang_cl /E -### -- %s 2>&1 | FileCheck -check-prefix=E %s
+// E: "-E"
+// E: "-o" "-"
+
 // RTTI is on by default; just check that we don't error.
 // RUN: %clang_cl /Zs /GR -- %s 2>&1
 
@@ -55,9 +59,6 @@
 
 // RUN: %clang_cl /Oy- -### -- %s 2>&1 | FileCheck -check-prefix=Oy_ %s
 // Oy_: -mdisable-fp-elim
-
-// RUN: %clang_cl /P -### -- %s 2>&1 | FileCheck -check-prefix=P %s
-// P: -E
 
 // RUN: %clang_cl /showIncludes -### -- %s 2>&1 | FileCheck -check-prefix=showIncludes %s
 // showIncludes: --show-includes
@@ -140,7 +141,6 @@
 // RUN:     /arch:sse2 \
 // RUN:     /clr:pure \
 // RUN:     /docname \
-// RUN:     /E \
 // RUN:     /EHsc \
 // RUN:     /EP \
 // RUN:     /F \

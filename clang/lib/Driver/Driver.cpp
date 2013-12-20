@@ -159,10 +159,11 @@ const {
   Arg *PhaseArg = 0;
   phases::ID FinalPhase;
 
-  // -{E,M,MM} only run the preprocessor.
+  // -{E,M,MM} and /P only run the preprocessor.
   if (CCCIsCPP() ||
       (PhaseArg = DAL.getLastArg(options::OPT_E)) ||
-      (PhaseArg = DAL.getLastArg(options::OPT_M, options::OPT_MM))) {
+      (PhaseArg = DAL.getLastArg(options::OPT_M, options::OPT_MM)) ||
+      (PhaseArg = DAL.getLastArg(options::OPT__SLASH_P))) {
     FinalPhase = phases::Preprocess;
 
     // -{fsyntax-only,-analyze,emit-ast,S} only run up to the compiler.
@@ -1625,6 +1626,14 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
       !isa<VerifyJobAction>(JA)) {
     if (Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o))
       return C.addResultFile(FinalOutput->getValue(), &JA);
+  }
+
+  // For /P, preprocess to file named after BaseInput.
+  if (C.getArgs().hasArg(options::OPT__SLASH_P)) {
+    assert(AtTopLevel && isa<PreprocessJobAction>(JA));
+    StringRef BaseName = llvm::sys::path::filename(BaseInput);
+    return C.addResultFile(MakeCLOutputFilename(C.getArgs(), "", BaseName,
+                                                types::TY_PP_C), &JA);
   }
 
   // Default to writing to stdout?
