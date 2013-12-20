@@ -59,6 +59,8 @@ public:
   // BB and print it to OS.
   raw_ostream &printBlockFreq(raw_ostream &OS, const BasicBlock *BB) const;
 
+  uint64_t getEntryFreq() const;
+
 };
 
 }

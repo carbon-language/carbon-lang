@@ -170,3 +170,7 @@ BlockFrequencyInfo::printBlockFreq(raw_ostream &OS,
                                    const BasicBlock *BB) const {
   return BFI->printBlockFreq(OS, BB);
 }
+
+uint64_t BlockFrequencyInfo::getEntryFreq() const {
+  return BFI->getEntryFreq();
+}
