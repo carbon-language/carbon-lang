@@ -357,6 +357,8 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
 uptr indirect_call_wrapper;
 
 void SetIndirectCallWrapper(uptr wrapper) {
+  CHECK(!indirect_call_wrapper);
+  CHECK(wrapper);
   indirect_call_wrapper = wrapper;
 }
 #endif
