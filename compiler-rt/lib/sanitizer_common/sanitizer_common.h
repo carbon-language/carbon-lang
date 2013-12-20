@@ -487,7 +487,7 @@ typedef void (*RangeIteratorCallback)(uptr begin, uptr end, void *arg);
 
 #if SANITIZER_LINUX && !defined(SANITIZER_GO)
 extern uptr indirect_call_wrapper;
-void InitializeIndirectCallWrapping(const char *wrapper_name);
+void SetIndirectCallWrapper(uptr wrapper);
 
 template <typename F>
 F IndirectExternCall(F f) {
@@ -495,7 +495,7 @@ F IndirectExternCall(F f) {
   return indirect_call_wrapper ? ((WrapF)indirect_call_wrapper)(f) : f;
 }
 #else
-inline void InitializeIndirectCallWrapping(const char *wrapper_name) {}
+inline void SetIndirectCallWrapper(uptr wrapper) {}
 template <typename F>
 F IndirectExternCall(F f) {
   return f;

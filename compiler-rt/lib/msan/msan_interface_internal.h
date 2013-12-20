@@ -170,6 +170,15 @@ SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 /* OPTIONAL */ void __msan_free_hook(void *ptr);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_dr_is_initialized();
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void *__msan_wrap_indirect_call(void *target);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_set_indirect_call_wrapper(uptr wrapper);
 }  // extern "C"
 
 #endif  // MSAN_INTERFACE_INTERNAL_H

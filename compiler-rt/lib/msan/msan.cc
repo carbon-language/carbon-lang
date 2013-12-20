@@ -31,7 +31,7 @@ using namespace __sanitizer;
 static THREADLOCAL int msan_expect_umr = 0;
 static THREADLOCAL int msan_expected_umr_found = 0;
 
-static int msan_running_under_dr = 0;
+static bool msan_running_under_dr;
 
 // Function argument shadow. Each argument starts at the next available 8-byte
 // aligned address.
@@ -73,10 +73,6 @@ int __msan_get_track_origins() {
 extern "C" SANITIZER_WEAK_ATTRIBUTE const int __msan_keep_going;
 
 namespace __msan {
-
-static bool IsRunningUnderDr() {
-  return false;
-}
 
 void EnterSymbolizer() { ++is_in_symbolizer; }
 void ExitSymbolizer()  { --is_in_symbolizer; }
@@ -122,7 +118,6 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   }
   ParseFlag(str, &f->report_umrs, "report_umrs");
   ParseFlag(str, &f->wrap_signals, "wrap_signals");
-  ParseFlag(str, &f->wrap_indirect_calls, "wrap_indirect_calls");
 
   // keep_going is an old name for halt_on_error,
   // and it has inverse meaning.
@@ -147,7 +142,6 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->exit_code = 77;
   f->report_umrs = true;
   f->wrap_signals = true;
-  f->wrap_indirect_calls = "dr_app_handle_mbr_target";
   f->halt_on_error = !&__msan_keep_going;
 
   // Override from user-specified string.
@@ -292,7 +286,6 @@ void __msan_init() {
 
   VPrintf(1, "MSAN_OPTIONS: %s\n", msan_options ? msan_options : "<empty>");
 
-  msan_running_under_dr = IsRunningUnderDr();
   __msan_clear_on_return();
   if (__msan_get_track_origins())
     VPrintf(1, "msan_track_origins\n");
@@ -324,8 +317,6 @@ void __msan_init() {
 
   msan_init_is_running = 0;
   msan_inited = 1;
-
-  InitializeIndirectCallWrapping(flags()->wrap_indirect_calls);
 }
 
 void __msan_set_exit_code(int exit_code) {
@@ -542,10 +533,21 @@ void __sanitizer_unaligned_store64(uu64 *p, u64 x) {
   *p = x;
 }
 
+void *__msan_wrap_indirect_call(void *target) {
+  return IndirectExternCall(target);
+}
+
+void __msan_dr_is_initialized() {
+  msan_running_under_dr = true;
+}
+
+void __msan_set_indirect_call_wrapper(uptr wrapper) {
+  SetIndirectCallWrapper(wrapper);
+}
+
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 const char* __msan_default_options() { return ""; }
 }  // extern "C"
 #endif
-
