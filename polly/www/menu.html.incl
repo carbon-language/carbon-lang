@@ -1,7 +1,11 @@
-<div id="head">
+<div id="head" style="position: relative">
 <h1><span><a href="/">Polly</a></span></h1>
 <h2><span>LLVM Framework for High-Level Loop and Data-Locality
 Optimizations</span></h2>
+
+
+<p> Hexagonal tiling in 3D</p>
+
 </div>
 <div id="menu">
   <div class="submenu">

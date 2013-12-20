@@ -117,3 +117,20 @@ tr { vertical-align:top }
 #head h2 span:after {
   content: "\00a0\00a0\00a0";
 }
+
+#head p:before {
+  content: "\00a0\00a0\00a0";
+}
+#head p:after {
+  content: "\00a0\00a0\00a0";
+}
+
+#head p {
+  padding:0.1em;
+  background: rgba(0,0,0,0.3);
+  color: white;
+  position: absolute;
+  top: -1em; right: 0.5em;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+}
