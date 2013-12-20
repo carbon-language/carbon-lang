@@ -31,10 +31,8 @@ namespace CodeGen {
 class CodeGenVTables {
   CodeGenModule &CGM;
 
-  // FIXME: Consider moving ItaniumVTContext and MicrosoftVTContext into
-  // respective CXXABI classes?
-  ItaniumVTableContext ItaniumVTContext;
-  OwningPtr<MicrosoftVTableContext> MicrosoftVTContext;
+  // FIXME: Consider moving VTContext into respective CXXABI classes?
+  OwningPtr<VTableContextBase> VTContext;
   
   /// VTableAddressPointsMapTy - Address points for a single vtable.
   typedef llvm::DenseMap<BaseSubobject, uint64_t> VTableAddressPointsMapTy;
@@ -72,10 +70,12 @@ public:
 
   CodeGenVTables(CodeGenModule &CGM);
 
-  ItaniumVTableContext &getItaniumVTableContext() { return ItaniumVTContext; }
+  ItaniumVTableContext &getItaniumVTableContext() {
+    return *cast<ItaniumVTableContext>(VTContext.get());
+  }
 
   MicrosoftVTableContext &getMicrosoftVTableContext() {
-    return *MicrosoftVTContext.get();
+    return *cast<MicrosoftVTableContext>(VTContext.get());
   }
 
   /// getSubVTTIndex - Return the index of the sub-VTT for the base class of the

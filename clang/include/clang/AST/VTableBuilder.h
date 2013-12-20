@@ -270,6 +270,10 @@ class VTableContextBase {
 public:
   typedef SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
 
+  bool isMicrosoft() const { return IsMicrosoftABI; }
+
+  virtual ~VTableContextBase() {}
+
 protected:
   typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
 
@@ -280,7 +284,7 @@ protected:
   /// offset offsets, thunks etc) for the given record decl.
   virtual void computeVTableRelatedInformation(const CXXRecordDecl *RD) = 0;
 
-  virtual ~VTableContextBase() {}
+  VTableContextBase(bool MS) : IsMicrosoftABI(MS) {}
 
 public:
   virtual const ThunkInfoVectorTy *getThunkInfo(GlobalDecl GD) {
@@ -297,11 +301,12 @@ public:
 
     return &I->second;
   }
+
+  bool IsMicrosoftABI;
 };
 
 class ItaniumVTableContext : public VTableContextBase {
 private:
-  bool IsMicrosoftABI;
 
   /// \brief Contains the index (relative to the vtable address point)
   /// where the function pointer for a virtual function is stored.
@@ -355,6 +360,10 @@ public:
   /// Base must be a virtual base class or an unambiguous base.
   CharUnits getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
                                        const CXXRecordDecl *VBase);
+
+  static bool classof(const VTableContextBase *VT) {
+    return !VT->isMicrosoft();
+  }
 };
 
 struct VFPtrInfo {
@@ -481,7 +490,8 @@ private:
   void computeVBTableRelatedInformation(const CXXRecordDecl *RD);
 
 public:
-  MicrosoftVTableContext(ASTContext &Context) : Context(Context) {}
+  MicrosoftVTableContext(ASTContext &Context)
+      : VTableContextBase(/*MS=*/true), Context(Context) {}
 
   ~MicrosoftVTableContext() { llvm::DeleteContainerSeconds(VFTableLayouts); }
 
@@ -512,6 +522,8 @@ public:
            "VBase must be a vbase of Derived");
     return VBTableIndices[Pair];
   }
+
+  static bool classof(const VTableContextBase *VT) { return VT->isMicrosoft(); }
 };
 }
 

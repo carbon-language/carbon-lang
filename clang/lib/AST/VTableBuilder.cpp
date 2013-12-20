@@ -2282,8 +2282,7 @@ VTableLayout::VTableLayout(uint64_t NumVTableComponents,
 VTableLayout::~VTableLayout() { }
 
 ItaniumVTableContext::ItaniumVTableContext(ASTContext &Context)
-  : IsMicrosoftABI(Context.getTargetInfo().getCXXABI().isMicrosoft()) {
-}
+    : VTableContextBase(/*MS=*/false) {}
 
 ItaniumVTableContext::~ItaniumVTableContext() {
   llvm::DeleteContainerSeconds(VTableLayouts);
@@ -2348,8 +2347,6 @@ static VTableLayout *CreateVTableLayout(const ItaniumVTableBuilder &Builder) {
 
 void
 ItaniumVTableContext::computeVTableRelatedInformation(const CXXRecordDecl *RD) {
-  assert(!IsMicrosoftABI && "Shouldn't be called in this ABI!");
-
   const VTableLayout *&Entry = VTableLayouts[RD];
 
   // Check if we've computed this information before.
