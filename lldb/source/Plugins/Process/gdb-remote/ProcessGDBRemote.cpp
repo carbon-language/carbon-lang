@@ -619,10 +619,17 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
         GetThreadList();
         if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, m_last_stop_packet, false) == GDBRemoteCommunication::PacketResult::Success)
         {
-            if (!m_target.GetArchitecture().IsValid()) { // Make sure we have an architecture
-               m_target.SetArchitecture(m_gdb_comm.GetProcessArchitecture());
+            if (!m_target.GetArchitecture().IsValid()) 
+            {
+                if (m_gdb_comm.GetProcessArchitecture().IsValid())
+                {
+                    m_target.SetArchitecture(m_gdb_comm.GetProcessArchitecture());
+                }
+                else
+                {
+                    m_target.SetArchitecture(m_gdb_comm.GetHostArchitecture());
+                }
             }
-
 
             const StateType state = SetThreadStopInfo (m_last_stop_packet);
             if (state == eStateStopped)
@@ -809,8 +816,16 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
 
             if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, m_last_stop_packet, false) == GDBRemoteCommunication::PacketResult::Success)
             {
-                if (!m_target.GetArchitecture().IsValid()) { // Make sure we have an architecture
-                   m_target.SetArchitecture(m_gdb_comm.GetProcessArchitecture());
+                if (!m_target.GetArchitecture().IsValid()) 
+                {
+                    if (m_gdb_comm.GetProcessArchitecture().IsValid())
+                    {
+                        m_target.SetArchitecture(m_gdb_comm.GetProcessArchitecture());
+                    }
+                    else
+                    {
+                        m_target.SetArchitecture(m_gdb_comm.GetHostArchitecture());
+                    }
                 }
 
                 SetPrivateState (SetThreadStopInfo (m_last_stop_packet));
