@@ -111,29 +111,78 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   }
 
   // Figure out output kind ( -dylib, -r, -bundle, -preload, or -static )
+  llvm::MachO::HeaderFileType fileType = llvm::MachO::MH_EXECUTE;
   if ( llvm::opt::Arg *kind = parsedArgs->getLastArg(OPT_dylib, OPT_relocatable,
                                       OPT_bundle, OPT_static, OPT_preload)) {
     switch (kind->getOption().getID()) {
     case OPT_dylib:
-      ctx.setOutputFileType(llvm::MachO::MH_DYLIB);
-      ctx.setGlobalsAreDeadStripRoots(true);
+      fileType = llvm::MachO::MH_DYLIB;
       break;
     case OPT_relocatable:
-      ctx.setPrintRemainingUndefines(false);
-      ctx.setAllowRemainingUndefines(true);
-      ctx.setOutputFileType(llvm::MachO::MH_OBJECT);
+      fileType = llvm::MachO::MH_OBJECT;
       break;
     case OPT_bundle:
-      ctx.setOutputFileType(llvm::MachO::MH_BUNDLE);
+      fileType = llvm::MachO::MH_BUNDLE;
       break;
     case OPT_static:
-      ctx.setOutputFileType(llvm::MachO::MH_EXECUTE);
+      fileType = llvm::MachO::MH_EXECUTE;
       break;
     case OPT_preload:
-      ctx.setOutputFileType(llvm::MachO::MH_PRELOAD);
+      fileType = llvm::MachO::MH_PRELOAD;
       break;
     }
   }
+
+  // Handle -arch xxx
+  MachOLinkingContext::Arch arch = MachOLinkingContext::arch_unknown;
+  if (llvm::opt::Arg *archStr = parsedArgs->getLastArg(OPT_arch)) {
+    arch = MachOLinkingContext::archFromName(archStr->getValue());
+    if (arch == MachOLinkingContext::arch_unknown) {
+      diagnostics << "error: unknown arch named '" << archStr->getValue()
+                  << "'\n";
+      return false;
+    }
+  }
+
+  // Handle -macosx_version_min or -ios_version_min
+  MachOLinkingContext::OS os = MachOLinkingContext::OS::macOSX;
+  uint32_t minOSVersion = 0;
+  if (llvm::opt::Arg *minOS =
+          parsedArgs->getLastArg(OPT_macosx_version_min, OPT_ios_version_min,
+                                 OPT_ios_simulator_version_min)) {
+    switch (minOS->getOption().getID()) {
+    case OPT_macosx_version_min:
+      os = MachOLinkingContext::OS::macOSX;
+      if (MachOLinkingContext::parsePackedVersion(minOS->getValue(),
+                                                  minOSVersion)) {
+        diagnostics << "error: malformed macosx_version_min value\n";
+        return false;
+      }
+      break;
+    case OPT_ios_version_min:
+      os = MachOLinkingContext::OS::iOS;
+      if (MachOLinkingContext::parsePackedVersion(minOS->getValue(),
+                                                  minOSVersion)) {
+        diagnostics << "error: malformed ios_version_min value\n";
+        return false;
+      }
+      break;
+    case OPT_ios_simulator_version_min:
+      os = MachOLinkingContext::OS::iOS_simulator;
+      if (MachOLinkingContext::parsePackedVersion(minOS->getValue(),
+                                                  minOSVersion)) {
+        diagnostics << "error: malformed ios_simulator_version_min value\n";
+        return false;
+      }
+      break;
+    }
+  } else {
+    // No min-os version on command line, check environment variables
+  }
+
+  // Now that there's enough information parsed in, let the linking context
+  // set up default values.
+  ctx.configure(fileType, arch, os, minOSVersion);
 
   // Handle -e xxx
   if (llvm::opt::Arg *entry = parsedArgs->getLastArg(OPT_entry))
@@ -191,47 +240,6 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   // Handle -bundle_loader
   if (llvm::opt::Arg *loader = parsedArgs->getLastArg(OPT_bundle_loader))
     ctx.setBundleLoader(loader->getValue());
-
-  // Handle -arch xxx
-  if (llvm::opt::Arg *archStr = parsedArgs->getLastArg(OPT_arch)) {
-    ctx.setArch(MachOLinkingContext::archFromName(archStr->getValue()));
-    if (ctx.arch() == MachOLinkingContext::arch_unknown) {
-      diagnostics << "error: unknown arch named '" << archStr->getValue()
-                  << "'\n";
-      return false;
-    }
-  }
-
-  // Handle -macosx_version_min or -ios_version_min
-  if (llvm::opt::Arg *minOS = parsedArgs->getLastArg(
-                                               OPT_macosx_version_min,
-                                               OPT_ios_version_min,
-                                               OPT_ios_simulator_version_min)) {
-    switch (minOS->getOption().getID()) {
-    case OPT_macosx_version_min:
-      if (ctx.setOS(MachOLinkingContext::OS::macOSX, minOS->getValue())) {
-        diagnostics << "error: malformed macosx_version_min value\n";
-        return false;
-      }
-      break;
-    case OPT_ios_version_min:
-      if (ctx.setOS(MachOLinkingContext::OS::iOS, minOS->getValue())) {
-        diagnostics << "error: malformed ios_version_min value\n";
-        return false;
-      }
-      break;
-    case OPT_ios_simulator_version_min:
-      if (ctx.setOS(MachOLinkingContext::OS::iOS_simulator,
-                    minOS->getValue())) {
-        diagnostics << "error: malformed ios_simulator_version_min value\n";
-        return false;
-      }
-      break;
-    }
-  }
-  else {
-    // No min-os version on command line, check environment variables
-  }
 
   // Handle -help
   if (parsedArgs->getLastArg(OPT_help)) {

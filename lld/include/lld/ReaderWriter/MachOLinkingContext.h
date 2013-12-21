@@ -30,6 +30,28 @@ public:
   MachOLinkingContext();
   ~MachOLinkingContext();
 
+  enum Arch {
+    arch_unknown,
+    arch_ppc,
+    arch_x86,
+    arch_x86_64,
+    arch_armv6,
+    arch_armv7,
+    arch_armv7s,
+  };
+
+  enum class OS {
+    unknown,
+    macOSX,
+    iOS,
+    iOS_simulator
+  };
+
+  /// Initializes the context to sane default values given the specified output
+  /// file type, arch, os, and minimum os version.  This should be called before
+  /// other setXXX() methods.
+  void configure(HeaderFileType type, Arch arch, OS os, uint32_t minOSVersion);
+
   virtual void addPasses(PassManager &pm);
   virtual bool validateImpl(raw_ostream &diagnostics);
 
@@ -48,27 +70,10 @@ public:
 
   HeaderFileType outputFileType() const { return _outputFileType; }
 
-  enum Arch {
-    arch_unknown,
-    arch_ppc,
-    arch_x86,
-    arch_x86_64,
-    arch_armv6,
-    arch_armv7,
-    arch_armv7s,
-  };
-
-  enum class OS {
-    unknown, macOSX, iOS, iOS_simulator
-  };
-
   Arch arch() const { return _arch; }
   StringRef archName() const { return nameFromArch(_arch); }
   OS os() const { return _os; }
 
-  void setOutputFileType(HeaderFileType type) { _outputFileType = type; }
-  void setArch(Arch arch) { _arch = arch; }
-  bool setOS(OS os, StringRef minOSVersion);
   bool minOS(StringRef mac, StringRef iOS) const;
   void setDoNothing(bool value) { _doNothing = value; }
   bool doNothing() const { return _doNothing; }
@@ -145,7 +150,6 @@ private:
   };
 
   static ArchInfo _s_archInfos[];
-  static const uint64_t unspecifiedPageZeroSize = UINT64_MAX;
 
   HeaderFileType _outputFileType;   // e.g MH_EXECUTE
   bool _outputFileTypeStatic; // Disambiguate static vs dynamic prog
