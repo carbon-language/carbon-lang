@@ -265,9 +265,6 @@ public:
     bool
     PrintValueObject ();
     
-    bool
-    PrintChildrenOneLiner (bool hide_names);
-    
 protected:
     
     // only this class (and subclasses, if any) should ever be concerned with
@@ -366,6 +363,9 @@ protected:
     PrintChildrenIfNeeded (bool value_printed,
                            bool summary_printed);
     
+    bool
+    PrintChildrenOneLiner (bool hide_names);
+    
 private:
     
     ValueObject *m_orig_valobj;
@@ -385,6 +385,8 @@ private:
     std::string m_value;
     std::string m_summary;
     std::string m_error;
+    
+    friend class StringSummaryFormat;
     
     DISALLOW_COPY_AND_ASSIGN(ValueObjectPrinter);
 };
