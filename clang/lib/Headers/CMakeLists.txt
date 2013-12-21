@@ -57,7 +57,7 @@ if(MSVC_IDE OR XCODE)
 endif()
 
 # Generate arm_neon.h
-clang_tablegen(arm_neon.h.inc -gen-arm-neon
+clang_tablegen(arm_neon.h -gen-arm-neon
   SOURCE ${CLANG_SOURCE_DIR}/include/clang/Basic/arm_neon.td)
 
 set(out_files)
@@ -81,16 +81,16 @@ foreach( f ${files} )
 endforeach( f )
 
 add_custom_command(OUTPUT ${output_dir}/arm_neon.h 
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h.inc
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h.inc ${output_dir}/arm_neon.h
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h ${output_dir}/arm_neon.h
   COMMENT "Copying clang's arm_neon.h...")
 list(APPEND out_files ${output_dir}/arm_neon.h)
 
 if (other_output_dir)
     set(other_dst ${other_output_dir}/arm_neon.h)
     add_custom_command(OUTPUT ${other_dst}
-      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h.inc
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h.inc ${other_dst}
+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h ${other_dst}
       COMMENT "Copying clang's arm_neon.h...")
     list(APPEND out_files ${other_dst})
 endif ()
@@ -106,6 +106,7 @@ if (other_output_dir)
   endif()
 endif ()
 
-install(FILES ${files} ${output_dir}/arm_neon.h
+install(
+  FILES ${files} ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
   DESTINATION lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}/include)
