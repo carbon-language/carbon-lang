@@ -88,7 +88,7 @@ class SimpleREPL(code.InteractiveConsole):
       line = self.process_input (input)
       more = self.push(line)
       if more:
-         self.write ("Input not a complete line.")
+         self.write ("Input not a complete line.\n")
          self.resetbuffer()
          more = 0
 
