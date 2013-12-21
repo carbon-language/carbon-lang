@@ -7176,12 +7176,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       if (!NewFD->isInvalidDecl() && NewFD->isMSVCRTEntryPoint())
         CheckMSVCRTEntryPoint(NewFD);
 
-      if (NewFD->isInvalidDecl()) {
-        // If this is a class member, mark the class invalid immediately.
-        // This avoids some consistency errors later.
-        if (CXXMethodDecl* methodDecl = dyn_cast<CXXMethodDecl>(NewFD))
-          methodDecl->getParent()->setInvalidDecl();
-      } else
+      if (!NewFD->isInvalidDecl())
         D.setRedeclaration(CheckFunctionDeclaration(S, NewFD, Previous,
                                                     isExplicitSpecialization));
     }

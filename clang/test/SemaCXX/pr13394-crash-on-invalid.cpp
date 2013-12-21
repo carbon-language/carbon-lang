@@ -8,12 +8,12 @@ namespace stretch_v1 {
 }
 namespace gatekeeper_v1 {
   namespace gatekeeper_factory_v1 {
-    struct closure_t { // expected-note {{'closure_t' declared here}}
+    struct closure_t { // expected-note {{'closure_t' declared here}} expected-note {{'gatekeeper_factory_v1::closure_t' declared here}}
       gatekeeper_v1::closure_t* create(); // expected-error {{no type named 'closure_t' in namespace 'gatekeeper_v1'; did you mean simply 'closure_t'?}}
     };
   }
   // FIXME: Typo correction should remove the 'gatekeeper_v1::' name specifier
-  gatekeeper_v1::closure_t *x; // expected-error-re {{no type named 'closure_t' in namespace 'gatekeeper_v1'{{$}}}}
+  gatekeeper_v1::closure_t *x; // expected-error {{no type named 'closure_t' in namespace 'gatekeeper_v1'; did you mean 'gatekeeper_factory_v1::closure_t'}}
 }
 
 namespace Foo {
