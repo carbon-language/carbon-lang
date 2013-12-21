@@ -832,10 +832,17 @@ PrivateAutoComplete (StackFrame *frame,
                     
                     VariableList *variable_list = frame->GetVariableList(get_file_globals);
                     
+                    if (!variable_list)
+                        break;
+                    
                     const size_t num_variables = variable_list->GetSize();
                     for (size_t i=0; i<num_variables; ++i)
                     {
                         Variable *variable = variable_list->GetVariableAtIndex(i).get();
+                        
+                        if (!variable)
+                            continue;
+                        
                         const char *variable_name = variable->GetName().AsCString();
                         if (strstr(variable_name, token.c_str()) == variable_name)
                         {
