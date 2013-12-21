@@ -69,6 +69,8 @@ class TGParser {
   // Record tracker
   RecordKeeper &Records;
 
+  unsigned AnonCounter;
+
   // A "named boolean" indicating how to parse identifiers.  Usually
   // identifiers map to some existing object but in special cases
   // (e.g. parsing def names) no such object exists yet because we are
@@ -82,8 +84,8 @@ class TGParser {
   };
 
 public:
-  TGParser(SourceMgr &SrcMgr, RecordKeeper &records) :
-    Lex(SrcMgr), CurMultiClass(0), Records(records) {}
+  TGParser(SourceMgr &SrcMgr, RecordKeeper &records)
+      : Lex(SrcMgr), CurMultiClass(0), Records(records), AnonCounter(0) {}
 
   /// ParseFile - Main entrypoint for parsing a tblgen file.  These parser
   /// routines return true on error, or false on success.
@@ -111,6 +113,8 @@ private:  // Semantic analysis methods.
   bool AddSubClass(Record *Rec, SubClassReference &SubClass);
   bool AddSubMultiClass(MultiClass *CurMC,
                         SubMultiClassReference &SubMultiClass);
+
+  std::string GetNewAnonymousName();
 
   // IterRecord: Map an iterator name to a value.
   struct IterRecord {

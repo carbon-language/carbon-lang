@@ -380,10 +380,11 @@ static bool isObjectStart(tgtok::TokKind K) {
          K == tgtok::MultiClass || K == tgtok::Foreach;
 }
 
-static std::string GetNewAnonymousName() {
-  static unsigned AnonCounter = 0;
+/// GetNewAnonymousName - Generate a unique anonymous name that can be used as
+/// an identifier.
+std::string TGParser::GetNewAnonymousName() {
   unsigned Tmp = AnonCounter++; // MSVC2012 ICEs without this.
-  return "anonymous." + utostr(Tmp);
+  return "anonymous_" + utostr(Tmp);
 }
 
 /// ParseObjectName - If an object name is specified, return it.  Otherwise,
@@ -1215,10 +1216,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     SMLoc EndLoc = Lex.getLoc();
 
     // Create the new record, set it as CurRec temporarily.
-    static unsigned AnonCounter = 0;
-    Record *NewRec = new Record("anonymous.val."+utostr(AnonCounter++),
-                                NameLoc,
-                                Records,
+    Record *NewRec = new Record(GetNewAnonymousName(), NameLoc, Records,
                                 /*IsAnonymous=*/true);
     SubClassReference SCRef;
     SCRef.RefRange = SMRange(NameLoc, EndLoc);
