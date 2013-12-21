@@ -19,8 +19,6 @@ void aliasa [[gnu::alias("_Z6alias1v")]] ();
 void aligned_fn [[gnu::aligned(32)]] ();
 struct [[gnu::aligned(8)]] aligned_struct {};
 
-[[gnu::malloc, gnu::alloc_size(1,2)]] void *alloc_size(int a, int b);
-
 void always_inline [[gnu::always_inline]] ();
 
 __thread int tls_model [[gnu::tls_model("local-exec")]];

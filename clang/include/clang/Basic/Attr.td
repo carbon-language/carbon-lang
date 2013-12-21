@@ -246,11 +246,6 @@ def AlignMac68k : InheritableAttr {
   let SemaHandler = 0;
 }
 
-def AllocSize : InheritableAttr {
-  let Spellings = [GNU<"alloc_size">, CXX11<"gnu", "alloc_size">];
-  let Args = [VariadicUnsignedArgument<"Args">];
-}
-
 def AlwaysInline : InheritableAttr {
   let Spellings = [GNU<"always_inline">, CXX11<"gnu", "always_inline">];
   let Subjects = SubjectList<[Function]>;
