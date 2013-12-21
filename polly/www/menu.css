@@ -2,7 +2,7 @@
 /* page layout */
 /***************/
 
-[id=menu] {
+#menu {
 	width:15em;
         float: left;
         margin-right: 3em;
