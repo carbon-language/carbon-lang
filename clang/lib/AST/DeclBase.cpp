@@ -85,6 +85,7 @@ const char *Decl::getDeclKindName() const {
 
 void Decl::setInvalidDecl(bool Invalid) {
   InvalidDecl = Invalid;
+  assert(!isa<TagDecl>(this) || !cast<TagDecl>(this)->isCompleteDefinition());
   if (Invalid && !isa<ParmVarDecl>(this)) {
     // Defensive maneuver for ill-formed code: we're likely not to make it to
     // a point where we set the access specifier, so default it to "public"
