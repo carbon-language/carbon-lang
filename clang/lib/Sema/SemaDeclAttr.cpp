@@ -2354,28 +2354,6 @@ static void handleSectionAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 
-static void handleNothrowAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (NoThrowAttr *Existing = D->getAttr<NoThrowAttr>()) {
-    if (Existing->getLocation().isInvalid())
-      Existing->setRange(Attr.getRange());
-  } else {
-    D->addAttr(::new (S.Context)
-               NoThrowAttr(Attr.getRange(), S.Context,
-                           Attr.getAttributeSpellingListIndex()));
-  }
-}
-
-static void handleConstAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (ConstAttr *Existing = D->getAttr<ConstAttr>()) {
-   if (Existing->getLocation().isInvalid())
-     Existing->setRange(Attr.getRange());
-  } else {
-    D->addAttr(::new (S.Context)
-               ConstAttr(Attr.getRange(), S.Context,
-                         Attr.getAttributeSpellingListIndex() ));
-  }
-}
-
 static void handleCleanupAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   VarDecl *VD = cast<VarDecl>(D);
   if (!VD->hasLocalStorage()) {
@@ -3929,7 +3907,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Naked:
     handleSimpleAttribute<NakedAttr>(S, D, Attr); break;
   case AttributeList::AT_NoReturn:    handleNoReturnAttr    (S, D, Attr); break;
-  case AttributeList::AT_NoThrow:     handleNothrowAttr     (S, D, Attr); break;
+  case AttributeList::AT_NoThrow:
+    handleSimpleAttribute<NoThrowAttr>(S, D, Attr); break;
   case AttributeList::AT_CUDAShared:
     handleSimpleAttribute<CUDASharedAttr>(S, D, Attr); break;
   case AttributeList::AT_VecReturn:   handleVecReturnAttr   (S, D, Attr); break;
@@ -4027,7 +4006,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_ObjCNSObject:handleObjCNSObject    (S, D, Attr); break;
   case AttributeList::AT_Blocks:      handleBlocksAttr      (S, D, Attr); break;
   case AttributeList::AT_Sentinel:    handleSentinelAttr    (S, D, Attr); break;
-  case AttributeList::AT_Const:       handleConstAttr       (S, D, Attr); break;
+  case AttributeList::AT_Const:
+    handleSimpleAttribute<ConstAttr>(S, D, Attr); break;
   case AttributeList::AT_Pure:
     handleSimpleAttribute<PureAttr>(S, D, Attr); break;
   case AttributeList::AT_Cleanup:     handleCleanupAttr     (S, D, Attr); break;
