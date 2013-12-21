@@ -594,10 +594,11 @@ namespace lldb_private {
             virtual
             ~LibcxxVectorBoolSyntheticFrontEnd ();
         private:
+            ClangASTType m_bool_type;
             ExecutionContextRef m_exe_ctx_ref;
             uint64_t m_count;
             lldb::addr_t m_base_data_address;
-            EvaluateExpressionOptions m_options;
+            std::map<size_t,lldb::ValueObjectSP> m_children;
         };
         
         SyntheticChildrenFrontEnd* LibcxxVectorBoolSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);

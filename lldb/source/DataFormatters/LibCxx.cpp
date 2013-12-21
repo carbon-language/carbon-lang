@@ -28,17 +28,17 @@ using namespace lldb_private::formatters;
 
 lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::LibcxxVectorBoolSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
 SyntheticChildrenFrontEnd(*valobj_sp.get()),
+m_bool_type(),
 m_exe_ctx_ref(),
 m_count(0),
 m_base_data_address(0),
-m_options()
+m_children()
 {
     if (valobj_sp)
+    {
         Update();
-    m_options.SetCoerceToId(false);
-    m_options.SetUnwindOnError(true);
-    m_options.SetKeepInMemory(true);
-    m_options.SetUseDynamic(lldb::eDynamicCanRunTarget);
+        m_bool_type = valobj_sp->GetClangType().GetBasicTypeFromAST(lldb::eBasicTypeBool);
+    }
 }
 
 size_t
@@ -50,9 +50,15 @@ lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::CalculateNumChildre
 lldb::ValueObjectSP
 lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
+    auto iter = m_children.find(idx),
+        end = m_children.end();
+    if (iter != end)
+        return iter->second;
     if (idx >= m_count)
         return ValueObjectSP();
     if (m_base_data_address == 0 || m_count == 0)
+        return ValueObjectSP();
+    if (!m_bool_type)
         return ValueObjectSP();
     size_t byte_idx = (idx >> 3); // divide by 8 to get byte index
     size_t bit_index = (idx & 7); // efficient idx % 8 for bit index
@@ -88,15 +94,15 @@ lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::GetChildAtIndex (si
             return ValueObjectSP();
     }
     bool bit_set = ((byte & mask) != 0);
-    Target& target(process_sp->GetTarget());
     ValueObjectSP retval_sp;
-    if (bit_set)
-        target.EvaluateExpression("(bool)true", NULL, retval_sp);
-    else
-        target.EvaluateExpression("(bool)false", NULL, retval_sp);
+    DataBufferSP buffer_sp(new DataBufferHeap(m_bool_type.GetByteSize(),0));
+    if (bit_set && buffer_sp && buffer_sp->GetBytes())
+        *(buffer_sp->GetBytes()) = 1; // regardless of endianness, anything non-zero is true
     StreamString name; name.Printf("[%zu]",idx);
+    DataExtractor data(buffer_sp, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
+    retval_sp = ValueObject::CreateValueObjectFromData(name.GetData(), data, m_exe_ctx_ref, m_bool_type);
     if (retval_sp)
-        retval_sp->SetName(ConstString(name.GetData()));
+        m_children[idx] = retval_sp;
     return retval_sp;
 }
 
@@ -113,6 +119,7 @@ lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::GetChildAtIndex (si
 bool
 lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::Update()
 {
+    m_children.clear();
     ValueObjectSP valobj_sp = m_backend.GetSP();
     if (!valobj_sp)
         return false;
