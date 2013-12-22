@@ -1389,87 +1389,20 @@ ValueObject::GetObjectDescription ()
 }
 
 bool
+ValueObject::GetValueAsCString (const lldb_private::TypeFormatImpl& format,
+                                std::string& destination)
+{
+    if (UpdateValueIfNeeded(false))
+        return format.FormatObject(this,destination);
+    else
+        return false;
+}
+
+bool
 ValueObject::GetValueAsCString (lldb::Format format,
                                 std::string& destination)
 {
-    if (GetClangType().IsAggregateType () == false && UpdateValueIfNeeded(false))
-    {
-        const Value::ContextType context_type = m_value.GetContextType();
-        
-        if (context_type == Value::eContextTypeRegisterInfo)
-        {
-            const RegisterInfo *reg_info = m_value.GetRegisterInfo();
-            if (reg_info)
-            {
-                ExecutionContext exe_ctx (GetExecutionContextRef());
-                
-                StreamString reg_sstr;
-                m_data.Dump (&reg_sstr,
-                             0,
-                             format,
-                             reg_info->byte_size,
-                             1,
-                             UINT32_MAX,
-                             LLDB_INVALID_ADDRESS,
-                             0,
-                             0,
-                             exe_ctx.GetBestExecutionContextScope());
-                destination.swap(reg_sstr.GetString());
-            }
-        }
-        else
-        {
-            ClangASTType clang_type = GetClangType ();
-            if (clang_type)
-            {
-                 // put custom bytes to display in this DataExtractor to override the default value logic
-                lldb_private::DataExtractor special_format_data;
-                if (format == eFormatCString)
-                {
-                    Flags type_flags(clang_type.GetTypeInfo(NULL));
-                    if (type_flags.Test(ClangASTType::eTypeIsPointer) && !type_flags.Test(ClangASTType::eTypeIsObjC))
-                    {
-                        // if we are dumping a pointer as a c-string, get the pointee data as a string
-                        TargetSP target_sp(GetTargetSP());
-                        if (target_sp)
-                        {
-                            size_t max_len = target_sp->GetMaximumSizeOfStringSummary();
-                            Error error;
-                            DataBufferSP buffer_sp(new DataBufferHeap(max_len+1,0));
-                            Address address(GetPointerValue());
-                            if (target_sp->ReadCStringFromMemory(address, (char*)buffer_sp->GetBytes(), max_len, error) && error.Success())
-                                special_format_data.SetData(buffer_sp);
-                        }
-                    }
-                }
-                
-                StreamString sstr;
-                ExecutionContext exe_ctx (GetExecutionContextRef());
-                clang_type.DumpTypeValue (&sstr,                         // The stream to use for display
-                                          format,                        // Format to display this type with
-                                          special_format_data.GetByteSize() ?
-                                          special_format_data: m_data,   // Data to extract from
-                                          0,                             // Byte offset into "m_data"
-                                          GetByteSize(),                 // Byte size of item in "m_data"
-                                          GetBitfieldBitSize(),          // Bitfield bit size
-                                          GetBitfieldBitOffset(),        // Bitfield bit offset
-                                          exe_ctx.GetBestExecutionContextScope());
-                // Don't set the m_error to anything here otherwise
-                // we won't be able to re-format as anything else. The
-                // code for ClangASTType::DumpTypeValue() should always
-                // return something, even if that something contains
-                // an error messsage. "m_error" is used to detect errors
-                // when reading the valid object, not for formatting errors.
-                if (sstr.GetString().empty())
-                    destination.clear();
-                else
-                    destination.swap(sstr.GetString());
-            }
-        }
-        return !destination.empty();
-    }
-    else
-        return false;
+    return GetValueAsCString(TypeFormatImpl(format),destination);
 }
 
 const char *
@@ -1477,11 +1410,12 @@ ValueObject::GetValueAsCString ()
 {
     if (UpdateValueIfNeeded(true))
     {
+        lldb::TypeFormatImplSP format_sp;
         lldb::Format my_format = GetFormat();
         if (my_format == lldb::eFormatDefault)
         {
             if (m_type_format_sp)
-                my_format = m_type_format_sp->GetFormat();
+                format_sp = m_type_format_sp;
             else
             {
                 if (m_is_bitfield_for_scalar)
@@ -1504,7 +1438,9 @@ ValueObject::GetValueAsCString ()
         if (my_format != m_last_format || m_value_str.empty())
         {
             m_last_format = my_format;
-            if (GetValueAsCString(my_format, m_value_str))
+            if (!format_sp)
+                format_sp.reset(new TypeFormatImpl(my_format));
+            if (GetValueAsCString(*format_sp.get(), m_value_str))
             {
                 if (!m_value_did_change && m_old_value_valid)
                 {

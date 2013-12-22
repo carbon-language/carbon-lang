@@ -499,6 +499,10 @@ public:
     GetValueAsCString ();
     
     virtual bool
+    GetValueAsCString (const lldb_private::TypeFormatImpl& format,
+                       std::string& destination);
+
+    bool
     GetValueAsCString (lldb::Format format,
                        std::string& destination);
     

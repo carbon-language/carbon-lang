@@ -204,6 +204,13 @@ namespace lldb_private {
             return m_my_revision;
         }
         
+        // we are using a ValueObject* instead of a ValueObjectSP because we do not need to hold on to this for
+        // extended periods of time and we trust the ValueObject to stay around for as long as it is required
+        // for us to generate its value
+        bool
+        FormatObject (ValueObject *valobj,
+                      std::string& dest) const;
+        
         std::string
         GetDescription();
         
