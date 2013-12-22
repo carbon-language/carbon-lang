@@ -1313,6 +1313,8 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::BR_CC,              MVT::i1,    Expand);
     setOperationAction(ISD::SETCC,              MVT::i1,    Custom);
     setOperationAction(ISD::XOR,                MVT::i1,    Legal);
+    setOperationAction(ISD::OR,                 MVT::i1,    Legal);
+    setOperationAction(ISD::AND,                MVT::i1,    Legal);
     setLoadExtAction(ISD::EXTLOAD,              MVT::v8f32, Legal);
     setOperationAction(ISD::LOAD,               MVT::v16f32, Legal);
     setOperationAction(ISD::LOAD,               MVT::v8f64, Legal);
@@ -10239,8 +10241,9 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, DAG);
   EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
-  return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
-                     DAG.getConstant(X86CC, MVT::i8), EFLAGS);
+  MVT SetCCVT = Subtarget->hasAVX512() ? MVT::i1 : MVT::i8;
+  return DAG.getNode(X86ISD::SETCC, dl, SetCCVT,
+                      DAG.getConstant(X86CC, MVT::i8), EFLAGS);
 }
 
 // isX86LogicalCmp - Return true if opcode is a X86 logical comparison.
@@ -17656,6 +17659,12 @@ static SDValue CMPEQCombine(SDNode *N, SelectionDAG &DAG,
           // FIXME: need symbolic constants for these magic numbers.
           // See X86ATTInstPrinter.cpp:printSSECC().
           unsigned x86cc = (cc0 == X86::COND_E) ? 0 : 4;
+          if (Subtarget->hasAVX512()) {
+            // SETCC type in AVX-512 is MVT::i1
+            assert(N->getValueType(0) == MVT::i1 && "Unexpected AND node type");
+            return DAG.getNode(X86ISD::FSETCC, DL, MVT::i1, CMP00, CMP01,
+                               DAG.getConstant(x86cc, MVT::i8));
+          }
           SDValue OnesOrZeroesF = DAG.getNode(X86ISD::FSETCC, DL, CMP00.getValueType(), CMP00, CMP01,
                                               DAG.getConstant(x86cc, MVT::i8));
           MVT IntVT = (is64BitFP ? MVT::i64 : MVT::i32); 
