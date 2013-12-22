@@ -86,7 +86,7 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
   case DW_TAG_template_alias:            return "DW_TAG_template_alias";
   case DW_TAG_coarray_type:              return "DW_TAG_coarray_type";
   case DW_TAG_generic_subrange:          return "DW_TAG_generic_subrange";
-  case DW_TAG_dynamic_type:              return "DW_TAG_generic_subrange";
+  case DW_TAG_dynamic_type:              return "DW_TAG_dynamic_type";
   case DW_TAG_MIPS_loop:                 return "DW_TAG_MIPS_loop";
   case DW_TAG_type_unit:                 return "DW_TAG_type_unit";
   case DW_TAG_format_label:              return "DW_TAG_format_label";
