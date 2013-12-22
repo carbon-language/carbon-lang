@@ -1,13 +1,16 @@
-// Ensure that anonymous names are valid identifiers via the ctags index
-// RUN: llvm-tblgen -gen-ctags %s | grep -v '^!' | not grep -viE '^[a-z_][a-z0-9_]*\s'
-// Test validation
-// RUN: llvm-tblgen -gen-ctags %s | grep '^anonymous' > /dev/null
+// RUN: llvm-tblgen -gen-ctags %s | FileCheck %s
 // XFAIL: vg_leak
 
+// Ensure that generated names for anonymous records are valid identifiers via the ctags index.
+
 class foo<int X> { int THEVAL = X; }
+// CHECK: {{^X }}
 
 def : foo<2>;
+// CHECK: {{^anonymous_0 }}
 
 def X {
   foo Y = foo<1>;
 }
+// CHECK: {{^anonymous_1 }}
+// CHECK: {{^foo }}
