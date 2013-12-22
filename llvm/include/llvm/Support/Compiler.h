@@ -397,10 +397,13 @@
 /// with MSVC.
 #if __has_feature(cxx_strong_enums)
 # define LLVM_ENUM_INT_TYPE(intty) : intty
+#define LLVM_HAS_STRONG_ENUMS 1
 #elif defined(_MSC_VER) && _MSC_VER >= 1600  // Added in MSVC 2010.
 # define LLVM_ENUM_INT_TYPE(intty) : intty
+#define LLVM_HAS_STRONG_ENUMS 1
 #else
 # define LLVM_ENUM_INT_TYPE(intty)
+#define LLVM_HAS_STRONG_ENUMS 0
 #endif
 
 /// \brief Does the compiler support generalized initializers (using braced
