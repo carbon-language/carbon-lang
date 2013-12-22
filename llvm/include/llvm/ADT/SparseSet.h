@@ -227,10 +227,11 @@ public:
     return const_cast<SparseSet*>(this)->findIndex(KeyIndexOf(Key));
   }
 
-  /// count - Returns true if this set contains an element identified by Key.
+  /// count - Returns 1 if this set contains an element identified by Key,
+  /// 0 otherwise.
   ///
-  bool count(const KeyT &Key) const {
-    return find(Key) != end();
+  unsigned count(const KeyT &Key) const {
+    return find(Key) == end() ? 0 : 1;
   }
 
   /// insert - Attempts to insert a new element.

@@ -313,6 +313,7 @@ public:
     return GetOrCreateValue(Key).getValue();
   }
 
+  /// count - Return 1 if the element is in the map, 0 otherwise.
   size_type count(StringRef Key) const {
     return find(Key) == end() ? 0 : 1;
   }

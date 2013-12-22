@@ -271,9 +271,9 @@ public:
     return erase_imp(PtrTraits::getAsVoidPointer(Ptr));
   }
 
-  /// count - Return true if the specified pointer is in the set.
-  bool count(PtrType Ptr) const {
-    return count_imp(PtrTraits::getAsVoidPointer(Ptr));
+  /// count - Return 1 if the specified pointer is in the set, 0 otherwise.
+  unsigned count(PtrType Ptr) const {
+    return count_imp(PtrTraits::getAsVoidPointer(Ptr)) ? 1 : 0;
   }
 
   template <typename IterT>
