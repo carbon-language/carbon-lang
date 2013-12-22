@@ -8,6 +8,9 @@
 // REQUIRES: clang-driver
 //
 // RUN: %clang -### -fno-honor-infinities -c %s 2>&1 \
+// RUN:   FileCheck --check-prefix=CHECK-NO-INFS %s
+// infinites [sic] is a supported alternative spelling of infinities.
+// RUN: %clang -### -fno-honor-infinites -c %s 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NO-INFS %s
 // CHECK-NO-INFS: "-cc1"
 // CHECK-NO-INFS: "-menable-no-infs"
