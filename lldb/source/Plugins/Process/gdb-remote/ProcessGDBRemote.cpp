@@ -1063,7 +1063,7 @@ ProcessGDBRemote::AttachInputReaderCallback
 }
 
 Error
-ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait_for_launch, const ProcessAttachInfo &attach_info)
+ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, const ProcessAttachInfo &attach_info)
 {
     Error error;
     // Clear out and clean up from any current state
@@ -1090,7 +1090,7 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
         {
             StreamString packet;
             
-            if (wait_for_launch)
+            if (attach_info.GetWaitForLaunch())
             {
                 if (!m_gdb_comm.GetVAttachOrWaitSupported())
                 {

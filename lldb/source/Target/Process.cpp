@@ -3212,7 +3212,7 @@ Process::Attach (ProcessAttachInfo &attach_info)
                         const bool restarted = false;
                         SetPublicState (eStateAttaching, restarted);
                         // Now attach using these arguments.
-                        error = DoAttachToProcessWithName (process_name, wait_for_launch, attach_info);
+                        error = DoAttachToProcessWithName (process_name, attach_info);
                     }
                     else
                     {

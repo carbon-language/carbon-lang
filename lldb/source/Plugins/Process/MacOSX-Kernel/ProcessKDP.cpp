@@ -385,7 +385,7 @@ ProcessKDP::DoAttachToProcessWithID (lldb::pid_t attach_pid, const ProcessAttach
 }
 
 Error
-ProcessKDP::DoAttachToProcessWithName (const char *process_name, bool wait_for_launch, const ProcessAttachInfo &attach_info)
+ProcessKDP::DoAttachToProcessWithName (const char *process_name, const ProcessAttachInfo &attach_info)
 {
     Error error;
     error.SetErrorString ("attach to process by name is not suppported in kdp remote debugging");

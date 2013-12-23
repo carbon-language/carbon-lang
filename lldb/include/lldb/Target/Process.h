@@ -2113,21 +2113,15 @@ public:
     /// @param[in] process_name
     ///     The name of the process to attach to.
     ///
-    /// @param[in] wait_for_launch
-    ///     If \b true, wait for the process to be launched and attach
-    ///     as soon as possible after it does launch. If \b false, then
-    ///     search for a matching process the currently exists.
-    ///
     /// @param[in] attach_info
     ///     Information on how to do the attach. For example, GetUserID()
     ///     will return the uid to attach as.
     ///
     /// @return
-    ///     Returns \a pid if attaching was successful, or
-    ///     LLDB_INVALID_PROCESS_ID if attaching fails.
+    ///     Returns an error object.
     //------------------------------------------------------------------
     virtual Error
-    DoAttachToProcessWithName (const char *process_name, bool wait_for_launch, const ProcessAttachInfo &attach_info) 
+    DoAttachToProcessWithName (const char *process_name, const ProcessAttachInfo &attach_info)
     {
         Error error;
         error.SetErrorString("attach by name is not supported");

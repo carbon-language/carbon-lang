@@ -111,7 +111,6 @@ public:
     
     virtual lldb_private::Error
     DoAttachToProcessWithName (const char *process_name,
-                               bool wait_for_launch,
                                const lldb_private::ProcessAttachInfo &attach_info);
 
     virtual void
