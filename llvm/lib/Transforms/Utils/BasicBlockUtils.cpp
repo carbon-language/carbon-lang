@@ -670,6 +670,39 @@ TerminatorInst *llvm::SplitBlockAndInsertIfThen(Value *Cond,
   return CheckTerm;
 }
 
+/// SplitBlockAndInsertIfThenElse is similar to SplitBlockAndInsertIfThen,
+/// but also creates the ElseBlock.
+/// Before:
+///   Head
+///   SplitBefore
+///   Tail
+/// After:
+///   Head
+///   if (Cond)
+///     ThenBlock
+///   else
+///     ElseBlock
+///   SplitBefore
+///   Tail
+void llvm::SplitBlockAndInsertIfThenElse(Value *Cond, Instruction *SplitBefore,
+                                         TerminatorInst **ThenTerm,
+                                         TerminatorInst **ElseTerm,
+                                         MDNode *BranchWeights) {
+  BasicBlock *Head = SplitBefore->getParent();
+  BasicBlock *Tail = Head->splitBasicBlock(SplitBefore);
+  TerminatorInst *HeadOldTerm = Head->getTerminator();
+  LLVMContext &C = Head->getContext();
+  BasicBlock *ThenBlock = BasicBlock::Create(C, "", Head->getParent(), Tail);
+  BasicBlock *ElseBlock = BasicBlock::Create(C, "", Head->getParent(), Tail);
+  *ThenTerm = BranchInst::Create(Tail, ThenBlock);
+  *ElseTerm = BranchInst::Create(Tail, ElseBlock);
+  BranchInst *HeadNewTerm =
+    BranchInst::Create(/*ifTrue*/ThenBlock, /*ifFalse*/ElseBlock, Cond);
+  HeadNewTerm->setMetadata(LLVMContext::MD_prof, BranchWeights);
+  ReplaceInstWithInst(HeadOldTerm, HeadNewTerm);
+}
+
+
 /// GetIfCondition - Given a basic block (BB) with two predecessors,
 /// check to see if the merge at this block is due
 /// to an "if condition".  If so, return the boolean condition that determines

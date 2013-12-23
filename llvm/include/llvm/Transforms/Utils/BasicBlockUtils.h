@@ -205,6 +205,26 @@ TerminatorInst *SplitBlockAndInsertIfThen(Value *Cond, Instruction *SplitBefore,
                                           bool Unreachable,
                                           MDNode *BranchWeights = 0);
 
+
+/// SplitBlockAndInsertIfThenElse is similar to SplitBlockAndInsertIfThen,
+/// but also creates the ElseBlock.
+/// Before:
+///   Head
+///   SplitBefore
+///   Tail
+/// After:
+///   Head
+///   if (Cond)
+///     ThenBlock
+///   else
+///     ElseBlock
+///   SplitBefore
+///   Tail
+void SplitBlockAndInsertIfThenElse(Value *Cond, Instruction *SplitBefore,
+                                   TerminatorInst **ThenTerm,
+                                   TerminatorInst **ElseTerm,
+                                   MDNode *BranchWeights = 0);
+
 ///
 /// GetIfCondition - Check whether BB is the merge point of a if-region.
 /// If so, return the boolean condition that determines which entry into

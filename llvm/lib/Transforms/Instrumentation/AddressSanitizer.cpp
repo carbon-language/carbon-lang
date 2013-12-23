@@ -1508,27 +1508,31 @@ void FunctionStackPoisoner::poisonStack() {
   Value *ShadowBase = ASan.memToShadow(LocalStackBase, IRB);
   poisonRedZones(L.ShadowBytes, IRB, ShadowBase, true);
 
-  // Unpoison the stack before all ret instructions.
+  // (Un)poison the stack before all ret instructions.
   for (size_t i = 0, n = RetVec.size(); i < n; i++) {
     Instruction *Ret = RetVec[i];
     IRBuilder<> IRBRet(Ret);
     // Mark the current frame as retired.
     IRBRet.CreateStore(ConstantInt::get(IntptrTy, kRetiredStackFrameMagic),
                        BasePlus0);
-    // Unpoison the stack.
-    poisonRedZones(L.ShadowBytes, IRBRet, ShadowBase, false);
     if (DoStackMalloc) {
       assert(StackMallocIdx >= 0);
-      // In use-after-return mode, mark the whole stack frame unaddressable.
+      // if LocalStackBase != OrigStackBase:
+      //     // In use-after-return mode, poison the whole stack frame.
+      //     if StackMallocIdx <= 4
+      //         // For small sizes inline the whole thing:
+      //         memset(ShadowBase, kAsanStackAfterReturnMagic, ShadowSize);
+      //         **SavedFlagPtr(LocalStackBase) = 0
+      //     else
+      //         __asan_stack_free_N(LocalStackBase, OrigStackBase)
+      // else
+      //     <This is not a fake stack; unpoison the redzones>
+      Value *Cmp = IRBRet.CreateICmpNE(LocalStackBase, OrigStackBase);
+      TerminatorInst *ThenTerm, *ElseTerm;
+      SplitBlockAndInsertIfThenElse(Cmp, Ret, &ThenTerm, &ElseTerm);
+
+      IRBuilder<> IRBPoison(ThenTerm);
       if (StackMallocIdx <= 4) {
-        // For small sizes inline the whole thing:
-        // if LocalStackBase != OrigStackBase:
-        //     memset(ShadowBase, kAsanStackAfterReturnMagic, ShadowSize);
-        //     **SavedFlagPtr(LocalStackBase) = 0
-        // FIXME: if LocalStackBase != OrigStackBase don't call poisonRedZones.
-        Value *Cmp = IRBRet.CreateICmpNE(LocalStackBase, OrigStackBase);
-        TerminatorInst *PoisonTerm = SplitBlockAndInsertIfThen(Cmp, Ret, false);
-        IRBuilder<> IRBPoison(PoisonTerm);
         int ClassSize = kMinStackMallocSize << StackMallocIdx;
         SetShadowToStackAfterReturnInlined(IRBPoison, ShadowBase,
                                            ClassSize >> Mapping.Scale);
@@ -1542,15 +1546,20 @@ void FunctionStackPoisoner::poisonStack() {
             IRBPoison.CreateIntToPtr(SavedFlagPtr, IRBPoison.getInt8PtrTy()));
       } else {
         // For larger frames call __asan_stack_free_*.
-        IRBRet.CreateCall3(AsanStackFreeFunc[StackMallocIdx], LocalStackBase,
-                           ConstantInt::get(IntptrTy, LocalStackSize),
-                           OrigStackBase);
+        IRBPoison.CreateCall3(AsanStackFreeFunc[StackMallocIdx], LocalStackBase,
+                              ConstantInt::get(IntptrTy, LocalStackSize),
+                              OrigStackBase);
       }
+
+      IRBuilder<> IRBElse(ElseTerm);
+      poisonRedZones(L.ShadowBytes, IRBElse, ShadowBase, false);
     } else if (HavePoisonedAllocas) {
       // If we poisoned some allocas in llvm.lifetime analysis,
       // unpoison whole stack frame now.
       assert(LocalStackBase == OrigStackBase);
       poisonAlloca(LocalStackBase, LocalStackSize, IRBRet, false);
+    } else {
+      poisonRedZones(L.ShadowBytes, IRBRet, ShadowBase, false);
     }
   }
 
