@@ -12,6 +12,7 @@ class ConnectRemoteTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @expectedFailureFreeBSD('llvm.org/pr18313')
     def test_connect_remote(self):
         """Test "process connect connect:://localhost:12345"."""
 
