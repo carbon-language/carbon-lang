@@ -421,7 +421,8 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     //                        }];
     // Thus, we set LastSpace of the next higher ParenLevel, to which we move
     // when we consume all of the "}"'s FakeRParens at the "{".
-    State.Stack[State.Stack.size() - 2].LastSpace = ContinuationIndent;
+    if (State.Stack.size() > 1)
+      State.Stack[State.Stack.size() - 2].LastSpace = ContinuationIndent;
   } else if (Current.Type == TT_CtorInitializerColon) {
     State.Column = State.FirstIndent + Style.ConstructorInitializerIndentWidth;
   } else if (Current.Type == TT_CtorInitializerComma) {
