@@ -271,7 +271,7 @@ define <1 x i64> @test_vceqz_s64(<1 x i64> %a) #0 {
 ; CHECK: test_vceqz_s64
 ; CHECK: cmeq {{d[0-9]}}, {{d[0-9]}}, #0x0
   %1 = icmp eq <1 x i64> %a, zeroinitializer
-  %vceqz.i = zext <1 x i1> %1 to <1 x i64>
+  %vceqz.i = sext <1 x i1> %1 to <1 x i64>
   ret <1 x i64> %vceqz.i
 }
 
@@ -279,7 +279,7 @@ define <1 x i64> @test_vceqz_u64(<1 x i64> %a) #0 {
 ; CHECK: test_vceqz_u64
 ; CHECK: cmeq {{d[0-9]}}, {{d[0-9]}}, #0x0
   %1 = icmp eq <1 x i64> %a, zeroinitializer
-  %vceqz.i = zext <1 x i1> %1 to <1 x i64>
+  %vceqz.i = sext <1 x i1> %1 to <1 x i64>
   ret <1 x i64> %vceqz.i
 }
 
@@ -287,7 +287,7 @@ define <1 x i64> @test_vceqz_p64(<1 x i64> %a) #0 {
 ; CHECK: test_vceqz_p64
 ; CHECK: cmeq {{d[0-9]}}, {{d[0-9]}}, #0x0
   %1 = icmp eq <1 x i64> %a, zeroinitializer
-  %vceqz.i = zext <1 x i1> %1 to <1 x i64>
+  %vceqz.i = sext <1 x i1> %1 to <1 x i64>
   ret <1 x i64> %vceqz.i
 }
 
@@ -295,7 +295,7 @@ define <2 x i64> @test_vceqzq_p64(<2 x i64> %a) #0 {
 ; CHECK: test_vceqzq_p64
 ; CHECK: cmeq  {{v[0-9]}}.2d, {{v[0-9]}}.2d, #0
   %1 = icmp eq <2 x i64> %a, zeroinitializer
-  %vceqz.i = zext <2 x i1> %1 to <2 x i64>
+  %vceqz.i = sext <2 x i1> %1 to <2 x i64>
   ret <2 x i64> %vceqz.i
 }
 
@@ -303,7 +303,7 @@ define <1 x i64> @test_vcgez_s64(<1 x i64> %a) #0 {
 ; CHECK: test_vcgez_s64
 ; CHECK: cmge {{d[0-9]}}, {{d[0-9]}}, #0x0
   %1 = icmp sge <1 x i64> %a, zeroinitializer
-  %vcgez.i = zext <1 x i1> %1 to <1 x i64>
+  %vcgez.i = sext <1 x i1> %1 to <1 x i64>
   ret <1 x i64> %vcgez.i
 }
 
@@ -311,7 +311,7 @@ define <1 x i64> @test_vclez_s64(<1 x i64> %a) #0 {
 ; CHECK: test_vclez_s64
 ; CHECK: cmle {{d[0-9]}}, {{d[0-9]}}, #0x0
   %1 = icmp sle <1 x i64> %a, zeroinitializer
-  %vclez.i = zext <1 x i1> %1 to <1 x i64>
+  %vclez.i = sext <1 x i1> %1 to <1 x i64>
   ret <1 x i64> %vclez.i
 }
 
@@ -319,7 +319,7 @@ define <1 x i64> @test_vcgtz_s64(<1 x i64> %a) #0 {
 ; CHECK: test_vcgtz_s64
 ; CHECK: cmgt {{d[0-9]}}, {{d[0-9]}}, #0x0
   %1 = icmp sgt <1 x i64> %a, zeroinitializer
-  %vcgtz.i = zext <1 x i1> %1 to <1 x i64>
+  %vcgtz.i = sext <1 x i1> %1 to <1 x i64>
   ret <1 x i64> %vcgtz.i
 }
 
@@ -327,7 +327,7 @@ define <1 x i64> @test_vcltz_s64(<1 x i64> %a) #0 {
 ; CHECK: test_vcltz_s64
 ; CHECK: cmlt {{d[0-9]}}, {{d[0-9]}}, #0
   %1 = icmp slt <1 x i64> %a, zeroinitializer
-  %vcltz.i = zext <1 x i1> %1 to <1 x i64>
+  %vcltz.i = sext <1 x i1> %1 to <1 x i64>
   ret <1 x i64> %vcltz.i
 }
 

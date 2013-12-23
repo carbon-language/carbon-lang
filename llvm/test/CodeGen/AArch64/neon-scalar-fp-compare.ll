@@ -25,7 +25,7 @@ define <1 x i64> @test_vceqz_f64(<1 x double> %a) {
 ; CHECK: fcmeq  {{d[0-9]+}}, {{d[0-9]+}}, #0.0
 entry:
   %0 = fcmp oeq <1 x double> %a, zeroinitializer
-  %vceqz.i = zext <1 x i1> %0 to <1 x i64>
+  %vceqz.i = sext <1 x i1> %0 to <1 x i64>
   ret <1 x i64> %vceqz.i
 }
 
