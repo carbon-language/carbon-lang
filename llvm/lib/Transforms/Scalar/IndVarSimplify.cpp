@@ -63,6 +63,9 @@ static cl::opt<bool> VerifyIndvars(
   "verify-indvars", cl::Hidden,
   cl::desc("Verify the ScalarEvolution result after running indvars"));
 
+static cl::opt<bool> ReduceLiveIVs("liv-reduce", cl::Hidden,
+  cl::desc("Reduce live induction variables."));
+
 namespace {
   class IndVarSimplify : public LoopPass {
     LoopInfo        *LI;
@@ -643,8 +646,11 @@ namespace {
     WideIVInfo WI;
 
     WideIVVisitor(PHINode *NarrowIV, ScalarEvolution *SCEV,
-                  const DataLayout *TData) :
-      SE(SCEV), TD(TData) { WI.NarrowIV = NarrowIV; }
+                  const DataLayout *TData, const DominatorTree *DTree):
+      SE(SCEV), TD(TData) {
+      DT = DTree;
+      WI.NarrowIV = NarrowIV;
+    }
 
     // Implement the interface used by simplifyUsersOfIV.
     virtual void visitCast(CastInst *Cast);
@@ -1114,7 +1120,9 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
       PHINode *CurrIV = LoopPhis.pop_back_val();
 
       // Information about sign/zero extensions of CurrIV.
-      WideIVVisitor WIV(CurrIV, SE, TD);
+      WideIVVisitor WIV(CurrIV, SE, TD, DT);
+      if (ReduceLiveIVs)
+        WIV.setSplitOverflowIntrinsics();
 
       Changed |= simplifyUsersOfIV(CurrIV, SE, &LPM, DeadInsts, &WIV);
 

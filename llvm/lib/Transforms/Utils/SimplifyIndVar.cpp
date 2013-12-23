@@ -18,12 +18,16 @@
 #include "llvm/Transforms/Utils/SimplifyIndVar.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/IVUsers.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -75,6 +79,9 @@ namespace {
     void eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand);
     void eliminateIVRemainder(BinaryOperator *Rem, Value *IVOperand,
                               bool IsSigned);
+
+    Instruction *splitOverflowIntrinsic(Instruction *IVUser,
+                                        const DominatorTree *DT);
   };
 }
 
@@ -263,6 +270,71 @@ bool SimplifyIndvar::eliminateIVUser(Instruction *UseInst,
   return true;
 }
 
+/// \brief Split sadd.with.overflow into add + sadd.with.overflow to allow
+/// analysis and optimization.
+///
+/// \return A new value representing the non-overflowing add if possible,
+/// otherwise return the original value.
+Instruction *SimplifyIndvar::splitOverflowIntrinsic(Instruction *IVUser,
+                                                    const DominatorTree *DT) {
+  IntrinsicInst *II = dyn_cast<IntrinsicInst>(IVUser);
+  if (!II || II->getIntrinsicID() != Intrinsic::sadd_with_overflow)
+    return IVUser;
+
+  // Find a branch guarded by the overflow check.
+  BranchInst *Branch = 0;
+  Instruction *AddVal = 0;
+  for (Value::use_iterator UI = II->use_begin(), E = II->use_end();
+       UI != E; ++UI) {
+    if (ExtractValueInst *ExtractInst = dyn_cast<ExtractValueInst>(*UI)) {
+      if (ExtractInst->getNumIndices() != 1)
+        continue;
+      if (ExtractInst->getIndices()[0] == 0)
+        AddVal = ExtractInst;
+      else if (ExtractInst->getIndices()[0] == 1 && ExtractInst->hasOneUse())
+        Branch = dyn_cast<BranchInst>(ExtractInst->use_back());
+    }
+  }
+  if (!AddVal || !Branch)
+    return IVUser;
+
+  BasicBlock *ContinueBB = Branch->getSuccessor(1);
+  if (llvm::next(pred_begin(ContinueBB)) != pred_end(ContinueBB))
+    return IVUser;
+
+  // Check if all users of the add are provably NSW.
+  bool AllNSW = true;
+  for (Value::use_iterator UI = AddVal->use_begin(), E = AddVal->use_end();
+       UI != E; ++UI) {
+    if (Instruction *UseInst = dyn_cast<Instruction>(*UI)) {
+      BasicBlock *UseBB = UseInst->getParent();
+      if (PHINode *PHI = dyn_cast<PHINode>(UseInst))
+        UseBB = PHI->getIncomingBlock(UI);
+      if (!DT->dominates(ContinueBB, UseBB)) {
+        AllNSW = false;
+        break;
+      }
+    }
+  }
+  if (!AllNSW)
+    return IVUser;
+
+  // Go for it...
+  IRBuilder<> Builder(IVUser);
+  Instruction *AddInst = dyn_cast<Instruction>(
+    Builder.CreateNSWAdd(II->getOperand(0), II->getOperand(1)));
+
+  // The caller expects the new add to have the same form as the intrinsic. The
+  // IV operand position must be the same.
+  assert((AddInst->getOpcode() == Instruction::Add &&
+          AddInst->getOperand(0) == II->getOperand(0)) &&
+         "Bad add instruction created from overflow intrinsic.");
+
+  AddVal->replaceAllUsesWith(AddInst);
+  DeadInsts.push_back(AddVal);
+  return AddInst;
+}
+
 /// pushIVUsers - Add all uses of Def to the current IV's worklist.
 ///
 static void pushIVUsers(
@@ -334,8 +406,16 @@ void SimplifyIndvar::simplifyUsers(PHINode *CurrIV, IVVisitor *V) {
   while (!SimpleIVUsers.empty()) {
     std::pair<Instruction*, Instruction*> UseOper =
       SimpleIVUsers.pop_back_val();
+    Instruction *UseInst = UseOper.first;
+
     // Bypass back edges to avoid extra work.
-    if (UseOper.first == CurrIV) continue;
+    if (UseInst == CurrIV) continue;
+
+    if (V && V->shouldSplitOverflowInstrinsics()) {
+      UseInst = splitOverflowIntrinsic(UseInst, V->getDomTree());
+      if (!UseInst)
+        continue;
+    }
 
     Instruction *IVOperand = UseOper.second;
     for (unsigned N = 0; IVOperand; ++N) {
