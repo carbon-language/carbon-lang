@@ -254,19 +254,13 @@ void
 swap(unique_lock<_Mutex>& __x, unique_lock<_Mutex>& __y) _NOEXCEPT
     {__x.swap(__y);}
 
-struct _LIBCPP_TYPE_VIS cv_status
+//enum class cv_status
+_LIBCPP_DECLARE_STRONG_ENUM(cv_status)
 {
-    enum __lx {
-        no_timeout,
-        timeout
-    };
-
-    __lx __v_;
-
-    _LIBCPP_INLINE_VISIBILITY cv_status(__lx __v) : __v_(__v) {}
-    _LIBCPP_INLINE_VISIBILITY operator int() const {return __v_;}
-
+    no_timeout,
+    timeout
 };
+_LIBCPP_DECLARE_STRONG_ENUM_EPILOG(cv_status)
 
 class _LIBCPP_TYPE_VIS condition_variable
 {
