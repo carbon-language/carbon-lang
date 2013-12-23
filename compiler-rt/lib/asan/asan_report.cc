@@ -669,6 +669,21 @@ void ReportStringFunctionMemoryRangesOverlap(
   ReportErrorSummary(bug_type, stack);
 }
 
+void ReportBadParamsToAnnotateContiguousContainer(uptr beg, uptr end,
+                                                  uptr old_mid, uptr new_mid,
+                                                  StackTrace *stack) {
+  ScopedInErrorReport in_report;
+  Report("ERROR: AddressSanitizer: bad parameters to "
+         "__sanitizer_annotate_contiguous_container:\n"
+         "      beg     : %p\n"
+         "      end     : %p\n"
+         "      old_mid : %p\n"
+         "      new_mid : %p\n",
+         beg, end, old_mid, new_mid);
+  stack->Print();
+  ReportErrorSummary("bad-__sanitizer_annotate_contiguous_container", stack);
+}
+
 // ----------------------- Mac-specific reports ----------------- {{{1
 
 void WarnMacFreeUnallocated(

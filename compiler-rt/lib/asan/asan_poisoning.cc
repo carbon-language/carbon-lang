@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "asan_poisoning.h"
+#include "asan_report.h"
+#include "asan_stack.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_flags.h"
 
@@ -270,8 +272,12 @@ void __sanitizer_annotate_contiguous_container(const void *beg_p,
   uptr old_mid = reinterpret_cast<uptr>(old_mid_p);
   uptr new_mid = reinterpret_cast<uptr>(new_mid_p);
   uptr granularity = SHADOW_GRANULARITY;
-  CHECK(beg <= old_mid && beg <= new_mid && old_mid <= end && new_mid <= end &&
-        IsAligned(beg, granularity));
+  if (!(beg <= old_mid && beg <= new_mid && old_mid <= end && new_mid <= end &&
+        IsAligned(beg, granularity))) {
+    GET_STACK_TRACE_FATAL_HERE;
+    ReportBadParamsToAnnotateContiguousContainer(beg, end, old_mid, new_mid,
+                                                 &stack);
+  }
   CHECK_LE(end - beg,
            FIRST_32_SECOND_64(1UL << 30, 1UL << 34)); // Sanity check.
 
