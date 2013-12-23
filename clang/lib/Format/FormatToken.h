@@ -217,6 +217,9 @@ struct FormatToken {
 
   /// \brief If this is the first ObjC selector name in an ObjC method
   /// definition or call, this contains the length of the longest name.
+  ///
+  /// This being set to 0 means that the selectors should not be colon-aligned,
+  /// e.g. because several of them are block-type.
   unsigned LongestObjCSelectorName;
 
   /// \brief Stores the number of required fake parentheses and the

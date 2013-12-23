@@ -177,10 +177,8 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       State.Stack.back().FirstLessLess == 0)
     return true;
 
-  // FIXME: Comparing LongestObjCSelectorName to 0 is a hacky way of finding
-  // out whether it is the first parameter. Clean this up.
   if (Current.Type == TT_ObjCSelectorName &&
-      Current.LongestObjCSelectorName == 0 &&
+      State.Stack.back().ObjCSelectorNameFound &&
       State.Stack.back().BreakBeforeParameter)
     return true;
   if (Current.Type == TT_CtorInitializerColon &&
@@ -258,9 +256,12 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
     Whitespaces.replaceWhitespace(Current, /*Newlines=*/0, /*IndentLevel=*/0,
                                   Spaces, State.Column + Spaces);
 
-  if (Current.Type == TT_ObjCSelectorName && State.Stack.back().ColonPos == 0) {
-    if (State.Stack.back().Indent + Current.LongestObjCSelectorName >
-        State.Column + Spaces + Current.ColumnWidth)
+  if (Current.Type == TT_ObjCSelectorName &&
+      !State.Stack.back().ObjCSelectorNameFound) {
+    if (Current.LongestObjCSelectorName == 0)
+      State.Stack.back().AlignColons = false;
+    else if (State.Stack.back().Indent + Current.LongestObjCSelectorName >
+             State.Column + Spaces + Current.ColumnWidth)
       State.Stack.back().ColonPos =
           State.Stack.back().Indent + Current.LongestObjCSelectorName;
     else
@@ -280,7 +281,9 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
     // Treat the condition inside an if as if it was a second function
     // parameter, i.e. let nested calls have a continuation indent.
     State.Stack.back().LastSpace = State.Column + 1; // 1 is length of "(".
-  else if (Previous.is(tok::comma) || Previous.Type == TT_ObjCMethodExpr)
+  else if (Current.isNot(tok::comment) &&
+           (Previous.is(tok::comma) ||
+            (Previous.is(tok::colon) && Previous.Type == TT_ObjCMethodExpr)))
     State.Stack.back().LastSpace = State.Column;
   else if ((Previous.Type == TT_BinaryOperator ||
             Previous.Type == TT_ConditionalExpr ||
@@ -381,10 +384,17 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     State.Column =
         std::max(State.Stack.back().LastSpace, State.Stack.back().Indent);
   } else if (Current.Type == TT_ObjCSelectorName) {
-    if (State.Stack.back().ColonPos == 0) {
-      State.Stack.back().ColonPos =
-          State.Stack.back().Indent + Current.LongestObjCSelectorName;
-      State.Column = State.Stack.back().ColonPos - Current.ColumnWidth;
+    if (!State.Stack.back().ObjCSelectorNameFound) {
+      if (Current.LongestObjCSelectorName == 0) {
+        State.Column = State.Stack.back().Indent;
+        State.Stack.back().AlignColons = false;
+      } else {
+        State.Stack.back().ColonPos =
+            State.Stack.back().Indent + Current.LongestObjCSelectorName;
+        State.Column = State.Stack.back().ColonPos - Current.ColumnWidth;
+      }
+    } else if (!State.Stack.back().AlignColons) {
+      State.Column = State.Stack.back().Indent;
     } else if (State.Stack.back().ColonPos > Current.ColumnWidth) {
       State.Column = State.Stack.back().ColonPos - Current.ColumnWidth;
     } else {
@@ -397,9 +407,21 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     else
       State.Column = ContinuationIndent;
   } else if (Current.Type == TT_StartOfName ||
-             Previous.isOneOf(tok::coloncolon, tok::equal) ||
-             Previous.Type == TT_ObjCMethodExpr) {
+             Previous.isOneOf(tok::coloncolon, tok::equal)) {
     State.Column = ContinuationIndent;
+  } else if (PreviousNonComment &&
+             PreviousNonComment->Type == TT_ObjCMethodExpr) {
+    State.Column = ContinuationIndent;
+    // FIXME: This is hacky, find a better way. The problem is that in an ObjC
+    // method expression, the block should be aligned to the line starting it,
+    // e.g.:
+    //   [aaaaaaaaaaaaaaa aaaaaaaaa: \\ break for some reason
+    //                        ^(int *i) {
+    //                            // ...
+    //                        }];
+    // Thus, we set LastSpace of the next higher ParenLevel, to which we move
+    // when we consume all of the "}"'s FakeRParens at the "{".
+    State.Stack[State.Stack.size() - 2].LastSpace = ContinuationIndent;
   } else if (Current.Type == TT_CtorInitializerColon) {
     State.Column = State.FirstIndent + Style.ConstructorInitializerIndentWidth;
   } else if (Current.Type == TT_CtorInitializerComma) {
@@ -449,7 +471,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
       !PreviousNonComment->isOneOf(tok::comma, tok::semi) &&
       PreviousNonComment->Type != TT_TemplateCloser &&
       PreviousNonComment->Type != TT_BinaryOperator &&
-      Current.Type != TT_BinaryOperator && 
+      Current.Type != TT_BinaryOperator &&
       !PreviousNonComment->opensScope())
     State.Stack.back().BreakBeforeParameter = true;
 
@@ -494,6 +516,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   if (Current.isMemberAccess())
     State.Stack.back().StartOfFunctionCall =
         Current.LastInChainOfCalls ? 0 : State.Column + Current.ColumnWidth;
+  if (Current.Type == TT_ObjCSelectorName)
+    State.Stack.back().ObjCSelectorNameFound = true;
   if (Current.Type == TT_CtorInitializerColon) {
     // Indent 2 from the column, so:
     // SomeClass::SomeClass()
@@ -588,7 +612,16 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         //                   });
         for (unsigned i = 0; i != Current.MatchingParen->FakeRParens; ++i)
           State.Stack.pop_back();
-        NewIndent = State.Stack.back().LastSpace + Style.IndentWidth;
+        bool IsObjCBlock =
+            Previous &&
+            (Previous->is(tok::caret) ||
+             (Previous->is(tok::r_paren) && Previous->MatchingParen &&
+              Previous->MatchingParen->Previous &&
+              Previous->MatchingParen->Previous->is(tok::caret)));
+        // For some reason, ObjC blocks are indented like continuations.
+        NewIndent =
+            State.Stack.back().LastSpace +
+            (IsObjCBlock ? Style.ContinuationIndentWidth : Style.IndentWidth);
         ++NewIndentLevel;
         BreakBeforeParameter = true;
       } else {

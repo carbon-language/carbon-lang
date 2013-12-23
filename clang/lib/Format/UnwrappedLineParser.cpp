@@ -740,7 +740,7 @@ void UnwrappedLineParser::parseStructuralElement() {
       }
       break;
     case tok::l_square:
-      tryToParseLambda();
+      parseSquare();
       break;
     default:
       nextToken();
@@ -749,18 +749,18 @@ void UnwrappedLineParser::parseStructuralElement() {
   } while (!eof());
 }
 
-void UnwrappedLineParser::tryToParseLambda() {
+bool UnwrappedLineParser::tryToParseLambda() {
   // FIXME: This is a dirty way to access the previous token. Find a better
   // solution.
   if (!Line->Tokens.empty() &&
       Line->Tokens.back().Tok->isOneOf(tok::identifier, tok::kw_operator)) {
     nextToken();
-    return;
+    return false;
   }
   assert(FormatTok->is(tok::l_square));
   FormatToken &LSquare = *FormatTok;
   if (!tryToParseLambdaIntroducer())
-    return;
+    return false;
 
   while (FormatTok->isNot(tok::l_brace)) {
     switch (FormatTok->Tok.getKind()) {
@@ -774,11 +774,12 @@ void UnwrappedLineParser::tryToParseLambda() {
       nextToken();
       break;
     default:
-      return;
+      return true;
     }
   }
   LSquare.Type = TT_LambdaLSquare;
   parseChildBlock();
+  return true;
 }
 
 bool UnwrappedLineParser::tryToParseLambdaIntroducer() {
@@ -931,6 +932,43 @@ void UnwrappedLineParser::parseParens() {
       return;
     case tok::l_square:
       tryToParseLambda();
+      break;
+    case tok::l_brace: {
+      if (!tryToParseBracedList()) {
+        parseChildBlock();
+      }
+      break;
+    }
+    case tok::at:
+      nextToken();
+      if (FormatTok->Tok.is(tok::l_brace))
+        parseBracedList();
+      break;
+    default:
+      nextToken();
+      break;
+    }
+  } while (!eof());
+}
+
+void UnwrappedLineParser::parseSquare() {
+  assert(FormatTok->Tok.is(tok::l_square) && "'[' expected.");
+  if (tryToParseLambda())
+    return;
+  do {
+    // llvm::errs() << FormatTok->Tok.getName() << "\n";
+    switch (FormatTok->Tok.getKind()) {
+    case tok::l_paren:
+      parseParens();
+      break;
+    case tok::r_square:
+      nextToken();
+      return;
+    case tok::r_brace:
+      // A "}" inside parenthesis is an error if there wasn't a matching "{".
+      return;
+    case tok::l_square:
+      parseSquare();
       break;
     case tok::l_brace: {
       if (!tryToParseBracedList()) {

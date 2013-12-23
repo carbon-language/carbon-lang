@@ -84,6 +84,7 @@ private:
   bool parseBracedList(bool ContinueOnSemicolons = false);
   void parseReturn();
   void parseParens();
+  void parseSquare();
   void parseIfThenElse();
   void parseForOrWhileLoop();
   void parseDoWhile();
@@ -98,7 +99,7 @@ private:
   void parseObjCUntilAtEnd();
   void parseObjCInterfaceOrImplementation();
   void parseObjCProtocol();
-  void tryToParseLambda();
+  bool tryToParseLambda();
   bool tryToParseLambdaIntroducer();
   void addUnwrappedLine();
   bool eof() const;

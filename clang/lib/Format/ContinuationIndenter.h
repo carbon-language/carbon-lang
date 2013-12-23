@@ -133,7 +133,8 @@ struct ParenState {
         NoLineBreak(NoLineBreak), ColonPos(0), StartOfFunctionCall(0),
         StartOfArraySubscripts(0), NestedNameSpecifierContinuation(0),
         CallContinuation(0), VariablePos(0), ContainsLineBreak(false),
-        ContainsUnwrappedBuilder(0) {}
+        ContainsUnwrappedBuilder(0), AlignColons(true),
+        ObjCSelectorNameFound(false) {}
 
   /// \brief The position to which a specific parenthesis level needs to be
   /// indented.
@@ -209,6 +210,20 @@ struct ParenState {
   /// \brief \c true if this \c ParenState contains multiple segments of a
   /// builder-type call on one line.
   bool ContainsUnwrappedBuilder;
+
+  /// \brief \c true if the colons of the curren ObjC method expression should
+  /// be aligned.
+  ///
+  /// Not considered for memoization as it will always have the same value at
+  /// the same token.
+  bool AlignColons;
+
+  /// \brief \c true if at least one selector name was found in the current
+  /// ObjC method expression.
+  ///
+  /// Not considered for memoization as it will always have the same value at
+  /// the same token.
+  bool ObjCSelectorNameFound;
 
   bool operator<(const ParenState &Other) const {
     if (Indent != Other.Indent)
