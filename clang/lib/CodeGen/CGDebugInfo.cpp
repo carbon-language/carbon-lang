@@ -1470,7 +1470,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
        !RD->isCompleteDefinitionRequired() && CGM.getLangOpts().CPlusPlus) ||
       // If the class is dynamic, only emit a declaration. A definition will be
       // emitted whenever the vtable is emitted.
-      (CXXDecl && CXXDecl->hasDefinition() && CXXDecl->isDynamicClass()) || T) {
+      (CXXDecl && CXXDecl->hasDefinition() && CXXDecl->isDynamicClass())) {
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
     if (!T)
