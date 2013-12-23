@@ -591,6 +591,9 @@ public:
   ///
   /// If this is the first request for this diagnostic, it is registered and
   /// created, otherwise the existing ID is returned.
+  ///
+  /// \param Message A fixed diagnostic format string that will be hashed and
+  /// mapped to a unique DiagID.
   unsigned getCustomDiagID(Level L, StringRef Message) {
     return Diags->getCustomDiagID((DiagnosticIDs::Level)L, Message);
   }

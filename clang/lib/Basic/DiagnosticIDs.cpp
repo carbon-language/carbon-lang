@@ -311,6 +311,9 @@ DiagnosticIDs::~DiagnosticIDs() {
 /// getCustomDiagID - Return an ID for a diagnostic with the specified message
 /// and level.  If this is the first request for this diagnostic, it is
 /// registered and created, otherwise the existing ID is returned.
+///
+/// \param Message A fixed diagnostic format string that will be hashed and
+/// mapped to a unique DiagID.
 unsigned DiagnosticIDs::getCustomDiagID(Level L, StringRef Message) {
   if (CustomDiagInfo == 0)
     CustomDiagInfo = new diag::CustomDiagInfo();
