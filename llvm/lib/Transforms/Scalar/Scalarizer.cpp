@@ -638,8 +638,11 @@ bool Scalarizer::finish() {
       // InsertElements.
       Type *Ty = Op->getType();
       Value *Res = UndefValue::get(Ty);
+      BasicBlock *BB = Op->getParent();
       unsigned Count = Ty->getVectorNumElements();
-      IRBuilder<> Builder(Op->getParent(), Op);
+      IRBuilder<> Builder(BB, Op);
+      if (isa<PHINode>(Op))
+        Builder.SetInsertPoint(BB, BB->getFirstInsertionPt());
       for (unsigned I = 0; I < Count; ++I)
         Res = Builder.CreateInsertElement(Res, CV[I], Builder.getInt32(I),
                                           Op->getName() + ".upto" + Twine(I));

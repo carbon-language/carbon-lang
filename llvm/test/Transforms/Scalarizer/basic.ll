@@ -414,6 +414,35 @@ define void @f13(<4 x float *> *%dest, <4 x [4 x float] *> %ptr, <4 x i32> %i,
   ret void
 }
 
+; Test combinations of vector and non-vector PHIs.
+define <4 x float> @f14(<4 x float> %acc, i32 %count) {
+; CHECK-LABEL: @f14(
+; CHECK: %this_acc.i0 = phi float [ %acc.i0, %entry ], [ %next_acc.i0, %loop ]
+; CHECK: %this_acc.i1 = phi float [ %acc.i1, %entry ], [ %next_acc.i1, %loop ]
+; CHECK: %this_acc.i2 = phi float [ %acc.i2, %entry ], [ %next_acc.i2, %loop ]
+; CHECK: %this_acc.i3 = phi float [ %acc.i3, %entry ], [ %next_acc.i3, %loop ]
+; CHECK: %this_count = phi i32 [ %count, %entry ], [ %next_count, %loop ]
+; CHECK: %this_acc.upto0 = insertelement <4 x float> undef, float %this_acc.i0, i32 0
+; CHECK: %this_acc.upto1 = insertelement <4 x float> %this_acc.upto0, float %this_acc.i1, i32 1
+; CHECK: %this_acc.upto2 = insertelement <4 x float> %this_acc.upto1, float %this_acc.i2, i32 2
+; CHECK: %this_acc = insertelement <4 x float> %this_acc.upto2, float %this_acc.i3, i32 3
+; CHECK: ret <4 x float> %next_acc
+entry:
+  br label %loop
+
+loop:
+  %this_acc = phi <4 x float> [ %acc, %entry ], [ %next_acc, %loop ]
+  %this_count = phi i32 [ %count, %entry ], [ %next_count, %loop ]
+  %foo = call <4 x float> @ext(<4 x float> %this_acc)
+  %next_acc = fadd <4 x float> %this_acc, %foo
+  %next_count = sub i32 %this_count, 1
+  %cmp = icmp eq i32 %next_count, 0
+  br i1 %cmp, label %loop, label %exit
+
+exit:
+  ret <4 x float> %next_acc
+}
+
 !0 = metadata !{ metadata !"root" }
 !1 = metadata !{ metadata !"set1", metadata !0 }
 !2 = metadata !{ metadata !"set2", metadata !0 }
