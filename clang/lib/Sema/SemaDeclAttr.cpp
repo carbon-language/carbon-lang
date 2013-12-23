@@ -2989,7 +2989,7 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // FIXME: Make sure floating-point mappings are accurate
   // FIXME: Support XF and TF types
   if (!DestWidth) {
-    S.Diag(Attr.getLoc(), diag::err_unknown_machine_mode) << Name;
+    S.Diag(Attr.getLoc(), diag::err_machine_mode) << 0 /*Unknown*/ << Name;
     return;
   }
 
@@ -3002,7 +3002,7 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     NewTy = S.Context.getRealTypeForBitwidth(DestWidth);
 
   if (NewTy.isNull()) {
-    S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
+    S.Diag(Attr.getLoc(), diag::err_machine_mode) << 1 /*Unsupported*/ << Name;
     return;
   }
 

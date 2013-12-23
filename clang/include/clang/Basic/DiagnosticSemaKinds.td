@@ -2354,8 +2354,7 @@ def warn_attribute_protected_visibility :
   InGroup<DiagGroup<"unsupported-visibility">>;
 def err_mismatched_visibility: Error<"visibility does not match previous declaration">;
 def note_previous_attribute : Note<"previous attribute is here">;
-def err_unknown_machine_mode : Error<"unknown machine mode %0">;
-def err_unsupported_machine_mode : Error<"unsupported machine mode %0">;
+def err_machine_mode : Error<"%select{unknown|unsupported}0 machine mode %1">;
 def err_mode_not_primitive : Error<
   "mode attribute only supported for integer and floating-point types">;
 def err_mode_wrong_type : Error<
