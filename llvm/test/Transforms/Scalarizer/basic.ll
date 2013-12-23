@@ -382,6 +382,38 @@ define void @f12(<4 x i32> *%dest, <4 x i32> *%src, i32 %index) {
   ret void
 }
 
+; Test vector GEPs with more than one index.
+define void @f13(<4 x float *> *%dest, <4 x [4 x float] *> %ptr, <4 x i32> %i,
+                 float *%other) {
+; CHECK-LABEL: @f13(
+; CHECK: %dest.i0 = bitcast <4 x float*>* %dest to float**
+; CHECK: %dest.i1 = getelementptr float** %dest.i0, i32 1
+; CHECK: %dest.i2 = getelementptr float** %dest.i0, i32 2
+; CHECK: %dest.i3 = getelementptr float** %dest.i0, i32 3
+; CHECK: %i.i0 = extractelement <4 x i32> %i, i32 0
+; CHECK: %ptr.i0 = extractelement <4 x [4 x float]*> %ptr, i32 0
+; CHECK: %val.i0 = getelementptr inbounds [4 x float]* %ptr.i0, i32 0, i32 %i.i0
+; CHECK: %i.i1 = extractelement <4 x i32> %i, i32 1
+; CHECK: %ptr.i1 = extractelement <4 x [4 x float]*> %ptr, i32 1
+; CHECK: %val.i1 = getelementptr inbounds [4 x float]* %ptr.i1, i32 1, i32 %i.i1
+; CHECK: %i.i2 = extractelement <4 x i32> %i, i32 2
+; CHECK: %ptr.i2 = extractelement <4 x [4 x float]*> %ptr, i32 2
+; CHECK: %val.i2 = getelementptr inbounds [4 x float]* %ptr.i2, i32 2, i32 %i.i2
+; CHECK: %i.i3 = extractelement <4 x i32> %i, i32 3
+; CHECK: %ptr.i3 = extractelement <4 x [4 x float]*> %ptr, i32 3
+; CHECK: %val.i3 = getelementptr inbounds [4 x float]* %ptr.i3, i32 3, i32 %i.i3
+; CHECK: store float* %val.i0, float** %dest.i0, align 32
+; CHECK: store float* %val.i1, float** %dest.i1, align 8
+; CHECK: store float* %val.i2, float** %dest.i2, align 16
+; CHECK: store float* %val.i3, float** %dest.i3, align 8
+; CHECK: ret void
+  %val = getelementptr inbounds <4 x [4 x float] *> %ptr,
+                                <4 x i32> <i32 0, i32 1, i32 2, i32 3>,
+                                <4 x i32> %i
+  store <4 x float *> %val, <4 x float *> *%dest
+  ret void
+}
+
 !0 = metadata !{ metadata !"root" }
 !1 = metadata !{ metadata !"set1", metadata !0 }
 !2 = metadata !{ metadata !"set2", metadata !0 }

@@ -42,6 +42,8 @@ typedef SmallVector<std::pair<Instruction *, ValueVector *>, 16> GatherList;
 // component of a scattered vector or vector pointer.
 class Scatterer {
 public:
+  Scatterer() {}
+
   // Scatter V into Size components.  If new instructions are needed,
   // insert them before BBI in BB.  If Cache is nonnull, use it to cache
   // the results.
@@ -95,16 +97,6 @@ struct BinarySplitter {
     return Builder.CreateBinOp(BO.getOpcode(), Op0, Op1, Name);
   }
   BinaryOperator &BO;
-};
-
-// GEPSpliiter()(Builder, X, Y, Name) uses Builder to create
-// a single GEP called Name with operands X and Y.
-struct GEPSplitter {
-  GEPSplitter() {}
-  Value *operator()(IRBuilder<> &Builder, Value *Op0, Value *Op1,
-                    const Twine &Name) const {
-    return Builder.CreateGEP(Op0, Op1, Name);
-  }
 };
 
 // Information about a load or store that we're scalarizing.
@@ -429,7 +421,36 @@ bool Scalarizer::visitBinaryOperator(BinaryOperator &BO) {
 }
 
 bool Scalarizer::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
-  return splitBinary(GEPI, GEPSplitter());
+  VectorType *VT = dyn_cast<VectorType>(GEPI.getType());
+  if (!VT)
+    return false;
+
+  IRBuilder<> Builder(GEPI.getParent(), &GEPI);
+  unsigned NumElems = VT->getNumElements();
+  unsigned NumIndices = GEPI.getNumIndices();
+
+  Scatterer Base = scatter(&GEPI, GEPI.getOperand(0));
+
+  SmallVector<Scatterer, 8> Ops;
+  Ops.resize(NumIndices);
+  for (unsigned I = 0; I < NumIndices; ++I)
+    Ops[I] = scatter(&GEPI, GEPI.getOperand(I + 1));
+
+  ValueVector Res;
+  Res.resize(NumElems);
+  for (unsigned I = 0; I < NumElems; ++I) {
+    SmallVector<Value *, 8> Indices;
+    Indices.resize(NumIndices);
+    for (unsigned J = 0; J < NumIndices; ++J)
+      Indices[J] = Ops[J][I];
+    Res[I] = Builder.CreateGEP(Base[I], Indices,
+                               GEPI.getName() + ".i" + Twine(I));
+    if (GEPI.isInBounds())
+      if (GetElementPtrInst *NewGEPI = dyn_cast<GetElementPtrInst>(Res[I]))
+        NewGEPI->setIsInBounds();
+  }
+  gather(&GEPI, Res);
+  return true;
 }
 
 bool Scalarizer::visitCastInst(CastInst &CI) {
