@@ -45,16 +45,13 @@ void TextDiagnosticBuffer::HandleDiagnostic(DiagnosticsEngine::Level Level,
 void TextDiagnosticBuffer::FlushDiagnostics(DiagnosticsEngine &Diags) const {
   // FIXME: Flush the diagnostics in order.
   for (const_iterator it = err_begin(), ie = err_end(); it != ie; ++it)
-    Diags.Report(it->first,
-                 Diags.getCustomDiagID(DiagnosticsEngine::Error, "%0"))
+    Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Error, "%0"))
         << it->second;
   for (const_iterator it = warn_begin(), ie = warn_end(); it != ie; ++it)
-    Diags.Report(it->first,
-                 Diags.getCustomDiagID(DiagnosticsEngine::Warning, "%0"))
+    Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Warning, "%0"))
         << it->second;
   for (const_iterator it = note_begin(), ie = note_end(); it != ie; ++it)
-    Diags.Report(it->first,
-                 Diags.getCustomDiagID(DiagnosticsEngine::Note, "%0"))
+    Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Note, "%0"))
         << it->second;
 }
 
