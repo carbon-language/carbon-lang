@@ -300,6 +300,8 @@ def tBKPT : T1I<(outs), (ins imm0_255:$val), NoItinerary, "bkpt\t$val",
   bits<8> val;
   let Inst{7-0} = val;
 }
+// default immediate for breakpoint mnemonic
+def : InstAlias<"bkpt", (tBKPT 0)>, Requires<[IsThumb]>;
 
 def tHLT : T1I<(outs), (ins imm0_63:$val), NoItinerary, "hlt\t$val",
                 []>, T1Encoding<0b101110>, Requires<[IsThumb, HasV8]> {
