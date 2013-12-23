@@ -1,7 +1,7 @@
 /*
  * kmp_alloc.c -- private/shared dyanmic memory allocation and management
- * $Revision: 42613 $
- * $Date: 2013-08-23 13:29:50 -0500 (Fri, 23 Aug 2013) $
+ * $Revision: 42810 $
+ * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
  */
 
 
@@ -31,7 +31,7 @@ typedef void  (*bget_release_t)(void *);
 /* NOTE: bufsize must be a signed datatype */
 
 #if KMP_OS_WINDOWS
-# if KMP_ARCH_X86
+# if KMP_ARCH_X86 || KMP_ARCH_ARM
    typedef kmp_int32 bufsize;
 # else
    typedef kmp_int64 bufsize;
@@ -74,7 +74,7 @@ static int     bpoolv( kmp_info_t *th, void *pool);
                                          malloc() does not
                                          ensure 16 byte alignmnent */
 
-#if KMP_ARCH_X86
+#if KMP_ARCH_X86 || !KMP_HAVE_QUAD
 
 #define SizeQuant   8
 #define AlignType   double

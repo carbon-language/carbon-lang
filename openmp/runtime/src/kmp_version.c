@@ -1,7 +1,7 @@
 /*
  * kmp_version.c
- * $Revision: 42594 $
- * $Date: 2013-08-16 04:14:33 -0500 (Fri, 16 Aug 2013) $
+ * $Revision: 42806 $
+ * $Date: 2013-11-05 16:16:45 -0600 (Tue, 05 Nov 2013) $
  */
 
 
@@ -27,7 +27,7 @@
 #define stringer( x )  _stringer( x )
 
 // Detect compiler.
-#ifdef __INTEL_COMPILER
+#if KMP_COMPILER_ICC
     #if   __INTEL_COMPILER == 1010
         #define KMP_COMPILER "Intel C++ Compiler 10.1"
     #elif __INTEL_COMPILER == 1100
@@ -49,7 +49,9 @@
     #elif __INTEL_COMPILER == 9999
         #define KMP_COMPILER "Intel C++ Compiler mainline"
     #endif
-#elif defined( __GNUC__ )
+#elif KMP_COMPILER_CLANG
+    #define KMP_COMPILER "Clang " stringer( __clang_major__ ) "." stringer( __clang_minor__ )
+#elif KMP_COMPILER_GCC
     #define KMP_COMPILER "GCC " stringer( __GNUC__ ) "." stringer( __GNUC_MINOR__ )
 #endif
 #ifndef KMP_COMPILER

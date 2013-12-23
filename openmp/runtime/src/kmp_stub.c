@@ -1,7 +1,7 @@
 /*
  * kmp_stub.c -- stub versions of user-callable OpenMP RT functions.
- * $Revision: 42150 $
- * $Date: 2013-03-15 15:40:38 -0500 (Fri, 15 Mar 2013) $
+ * $Revision: 42826 $
+ * $Date: 2013-11-20 03:39:45 -0600 (Wed, 20 Nov 2013) $
  */
 
 
@@ -29,11 +29,32 @@
     #include <sys/time.h>
 #endif
 
+#include "omp.h"                // Function renamings.
 #include "kmp.h"                // KMP_DEFAULT_STKSIZE
 #include "kmp_version.h"
 
-#include "omp.h"                // Function renamings.
+// Moved from omp.h
+#if OMP_30_ENABLED
 
+#define omp_set_max_active_levels    ompc_set_max_active_levels
+#define omp_set_schedule             ompc_set_schedule
+#define omp_get_ancestor_thread_num  ompc_get_ancestor_thread_num
+#define omp_get_team_size            ompc_get_team_size
+
+#endif // OMP_30_ENABLED
+
+#define omp_set_num_threads          ompc_set_num_threads
+#define omp_set_dynamic              ompc_set_dynamic
+#define omp_set_nested               ompc_set_nested
+#define kmp_set_stacksize            kmpc_set_stacksize
+#define kmp_set_stacksize_s          kmpc_set_stacksize_s
+#define kmp_set_blocktime            kmpc_set_blocktime
+#define kmp_set_library              kmpc_set_library
+#define kmp_set_defaults             kmpc_set_defaults
+#define kmp_malloc                   kmpc_malloc
+#define kmp_calloc                   kmpc_calloc
+#define kmp_realloc                  kmpc_realloc
+#define kmp_free                     kmpc_free
 
 static double frequency = 0.0;
 
@@ -242,30 +263,6 @@ double __kmps_get_wtick( void ) {
     #endif
     return wtick;
 }; // __kmps_get_wtick
-
-
-/*
-    These functions are exported from libraries, but not declared in omp,h and omp_lib.f:
-
-        // omalyshe: eight entries below removed from the library (2011-11-22)
-        kmpc_get_banner
-        kmpc_get_poolmode
-        kmpc_get_poolsize
-        kmpc_get_poolstat
-        kmpc_poolprint
-        kmpc_print_banner
-        kmpc_set_poolmode
-        kmpc_set_poolsize
-
-        kmpc_set_affinity
-        kmp_threadprivate_insert
-        kmp_threadprivate_insert_private_data
-        VT_getthid
-        vtgthid
-
-    The list is collected on lin_32.
-
-*/
 
 // end of file //
 

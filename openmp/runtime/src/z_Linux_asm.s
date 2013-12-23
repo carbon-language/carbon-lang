@@ -1,7 +1,7 @@
 //  z_Linux_asm.s:  - microtasking routines specifically
 //                    written for Intel platforms running Linux* OS
-// $Revision: 42582 $
-// $Date: 2013-08-09 06:30:22 -0500 (Fri, 09 Aug 2013) $
+// $Revision: 42810 $
+// $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
 
 //
 ////===----------------------------------------------------------------------===//
@@ -77,7 +77,7 @@ KMP_PREFIX_UNDERSCORE($0):
 KMP_PREFIX_UNDERSCORE(\proc):
 .endm
 # endif // defined __APPLE__ && defined __MACH__
-#endif // __i386 || defined __x86_64
+#endif // KMP_ARCH_X86 || KMP_ARCH_x86_64
 
 
 // -----------------------------------------------------------------------
@@ -1573,3 +1573,19 @@ L_kmp_1_exit:
 	
 // -----------------------------------------------------------------------
 #endif /* KMP_ARCH_X86_64 */
+
+#if KMP_ARCH_ARM
+    .data
+    .comm .gomp_critical_user_,32,8
+    .data
+    .align 4
+    .global __kmp_unnamed_critical_addr
+__kmp_unnamed_critical_addr:
+    .4byte .gomp_critical_user_
+    .size __kmp_unnamed_critical_addr,4
+#endif /* KMP_ARCH_ARM */
+
+
+#if defined(__linux__)
+.section .note.GNU-stack,"",@progbits
+#endif

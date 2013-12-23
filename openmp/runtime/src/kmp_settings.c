@@ -1,7 +1,7 @@
 /*
  * kmp_settings.c -- Initialize environment variables
- * $Revision: 42642 $
- * $Date: 2013-09-06 01:57:24 -0500 (Fri, 06 Sep 2013) $
+ * $Revision: 42816 $
+ * $Date: 2013-11-11 15:33:37 -0600 (Mon, 11 Nov 2013) $
  */
 
 
@@ -25,9 +25,6 @@
 #include "kmp_i18n.h"
 #include "kmp_io.h"
 
-
-#define KMP_MAX( x, y ) ( (x) > (y) ? (x) : (y) )
-#define KMP_MIN( x, y ) ( (x) < (y) ? (x) : (y) )
 
 static int __kmp_env_isDefined( char const * name );
 static int __kmp_env_toPrint( char const * name, int flag );
@@ -3915,7 +3912,7 @@ __kmp_stg_parse_lock_kind( char const * name, char const * value, void * data ) 
       || __kmp_str_match( "testandset", 2, value ) ) {
         __kmp_user_lock_kind = lk_tas;
     }
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
     else if ( __kmp_str_match( "futex", 1, value ) ) {
         if ( __kmp_futex_determine_capable() ) {
             __kmp_user_lock_kind = lk_futex;
@@ -4322,6 +4319,16 @@ __kmp_stg_print_omp_display_env( kmp_str_buf_t * buffer, char const * name, void
     }
 } // __kmp_stg_print_omp_display_env
 
+static void
+__kmp_stg_parse_omp_cancellation( char const * name, char const * value, void * data ) {
+    __kmp_stg_parse_bool( name, value, & __kmp_omp_cancellation );
+} // __kmp_stg_parse_omp_cancellation
+
+static void
+__kmp_stg_print_omp_cancellation( kmp_str_buf_t * buffer, char const * name, void * data ) {
+    __kmp_stg_print_bool( buffer, name, __kmp_omp_cancellation );
+} // __kmp_stg_print_omp_cancellation
+
 #endif
 
 // -------------------------------------------------------------------------------------------------
@@ -4476,6 +4483,7 @@ static kmp_setting_t __kmp_stg_table[] = {
 
 # if OMP_40_ENABLED
     { "OMP_DISPLAY_ENV",                   __kmp_stg_parse_omp_display_env,    __kmp_stg_print_omp_display_env,    NULL, 0, 0 },
+    { "OMP_CANCELLATION",                  __kmp_stg_parse_omp_cancellation,   __kmp_stg_print_omp_cancellation,   NULL, 0, 0 },
 #endif
     { "",                                  NULL,                               NULL,                               NULL, 0, 0 }
 }; // settings

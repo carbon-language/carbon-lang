@@ -47,12 +47,18 @@
 #  define ITT_PLATFORM_POSIX 2
 #endif /* ITT_PLATFORM_POSIX */
 
+#ifndef ITT_PLATFORM_MAC
+#  define ITT_PLATFORM_MAC 3
+#endif /* ITT_PLATFORM_MAC */
+
 #ifndef ITT_PLATFORM
 #  if ITT_OS==ITT_OS_WIN
 #    define ITT_PLATFORM ITT_PLATFORM_WIN
+#  elif ITT_OS==ITT_OS_MAC
+#    define ITT_PLATFORM ITT_PLATFORM_MAC
 #  else
 #    define ITT_PLATFORM ITT_PLATFORM_POSIX
-#  endif /* _WIN32 */
+#  endif
 #endif /* ITT_PLATFORM */
 
 #if defined(_UNICODE) && !defined(UNICODE)
@@ -73,11 +79,11 @@
 #  if ITT_PLATFORM==ITT_PLATFORM_WIN
 #    define CDECL __cdecl
 #  else /* ITT_PLATFORM==ITT_PLATFORM_WIN */
-#    if defined _M_X64 || defined _M_AMD64 || defined __x86_64__
-#      define CDECL /* not actual on x86_64 platform */
-#    else  /* _M_X64 || _M_AMD64 || __x86_64__ */
+#    if defined _M_IX86 || defined __i386__
 #      define CDECL __attribute__ ((cdecl))
-#    endif /* _M_X64 || _M_AMD64 || __x86_64__ */
+#    else  /* _M_IX86 || __i386__ */
+#      define CDECL /* actual only on x86 platform */
+#    endif /* _M_IX86 || __i386__ */
 #  endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #endif /* CDECL */
 
@@ -85,11 +91,11 @@
 #  if ITT_PLATFORM==ITT_PLATFORM_WIN
 #    define STDCALL __stdcall
 #  else /* ITT_PLATFORM==ITT_PLATFORM_WIN */
-#    if defined _M_X64 || defined _M_AMD64 || defined __x86_64__
-#      define STDCALL /* not supported on x86_64 platform */
-#    else  /* _M_X64 || _M_AMD64 || __x86_64__ */
+#    if defined _M_IX86 || defined __i386__
 #      define STDCALL __attribute__ ((stdcall))
-#    endif /* _M_X64 || _M_AMD64 || __x86_64__ */
+#    else  /* _M_IX86 || __i386__ */
+#      define STDCALL /* supported only on x86 platform */
+#    endif /* _M_IX86 || __i386__ */
 #  endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #endif /* STDCALL */
 
@@ -102,8 +108,8 @@
 
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 /* use __forceinline (VC++ specific) */
-#define INLINE           __forceinline
-#define INLINE_ATTRIBUTE /* nothing */
+#define ITT_INLINE           __forceinline
+#define ITT_INLINE_ATTRIBUTE /* nothing */
 #else  /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 /*
  * Generally, functions are not inlined unless optimization is specified.
@@ -111,11 +117,11 @@
  * if no optimization level was specified.
  */
 #ifdef __STRICT_ANSI__
-#define INLINE           static
+#define ITT_INLINE           static
 #else  /* __STRICT_ANSI__ */
-#define INLINE           static inline
+#define ITT_INLINE           static inline
 #endif /* __STRICT_ANSI__ */
-#define INLINE_ATTRIBUTE __attribute__ ((always_inline))
+#define ITT_INLINE_ATTRIBUTE __attribute__ ((always_inline, unused))
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 /** @endcond */
 

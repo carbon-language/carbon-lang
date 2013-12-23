@@ -1,7 +1,7 @@
 /*
  * kmp_affinity.cpp -- affinity management
- * $Revision: 42613 $
- * $Date: 2013-08-23 13:29:50 -0500 (Fri, 23 Aug 2013) $
+ * $Revision: 42810 $
+ * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
  */
 
 
@@ -1885,7 +1885,19 @@ __kmp_affinity_create_cpuinfo_map(AddrUnsPair **address2os, int *line,
                 if ((p == NULL) || (sscanf(p + 1, "%u\n", &val) != 1)) goto no_val;
                 if (threadInfo[num_avail][osIdIndex] != UINT_MAX) goto dup_field;
                 threadInfo[num_avail][osIdIndex] = val;
+#if KMP_OS_LINUX && USE_SYSFS_INFO
+                char path[256];
+                snprintf(path, sizeof(path),
+                    "/sys/devices/system/cpu/cpu%u/topology/physical_package_id",
+                    threadInfo[num_avail][osIdIndex]);
+                __kmp_read_from_file(path, "%u", &threadInfo[num_avail][pkgIdIndex]);
+
+                snprintf(path, sizeof(path),
+                    "/sys/devices/system/cpu/cpu%u/topology/core_id",
+                    threadInfo[num_avail][osIdIndex]);
+                __kmp_read_from_file(path, "%u", &threadInfo[num_avail][coreIdIndex]);
                 continue;
+#else
             }
             char s2[] = "physical id";
             if (strncmp(buf, s2, sizeof(s2) - 1) == 0) {
@@ -1906,6 +1918,7 @@ __kmp_affinity_create_cpuinfo_map(AddrUnsPair **address2os, int *line,
                 if (threadInfo[num_avail][coreIdIndex] != UINT_MAX) goto dup_field;
                 threadInfo[num_avail][coreIdIndex] = val;
                 continue;
+#endif // KMP_OS_LINUX && USE_SYSFS_INFO
             }
             char s4[] = "thread id";
             if (strncmp(buf, s4, sizeof(s4) - 1) == 0) {
@@ -3058,8 +3071,6 @@ __kmp_affinity_process_placelist(kmp_affin_mask_t **out_masks,
     int setSize = 0;
 
     for (;;) {
-        int start, count, stride;
-
         __kmp_process_place(&scan, osId2Mask, maxOsId, tempMask, &setSize);
 
         //
@@ -3090,7 +3101,7 @@ __kmp_affinity_process_placelist(kmp_affin_mask_t **out_masks,
           "bad explicit places list");
         next = scan;
         SKIP_DIGITS(next);
-        count = __kmp_str_to_int(scan, *next);
+        int count = __kmp_str_to_int(scan, *next);
         KMP_ASSERT(count >= 0);
         scan = next;
 
@@ -3112,7 +3123,7 @@ __kmp_affinity_process_placelist(kmp_affin_mask_t **out_masks,
                     // Use a temp var in case macro is changed to evaluate
                     // args multiple times.
                     //
-                    if (KMP_CPU_ISSET(j - stride, tempMask)) {
+                    if (KMP_CPU_ISSET(j - 1, tempMask)) {
                         KMP_CPU_SET(j, tempMask);
                         setSize++;
                     }
@@ -3159,7 +3170,7 @@ __kmp_affinity_process_placelist(kmp_affin_mask_t **out_masks,
           "bad explicit places list");
         next = scan;
         SKIP_DIGITS(next);
-        stride = __kmp_str_to_int(scan, *next);
+        int stride = __kmp_str_to_int(scan, *next);
         KMP_DEBUG_ASSERT(stride >= 0);
         scan = next;
         stride *= sign;

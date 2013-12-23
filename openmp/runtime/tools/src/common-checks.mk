@@ -19,17 +19,27 @@
 # Check tools versions.
 #
 ifeq "$(clean)" ""    # Do not check tools if clean goal specified.
-    ifeq "$(c)" "gcc"
-        curr_tools := $(strip $(shell $(perl) $(tools_dir)check-tools.pl $(oa-opts) --no-intel --gnu-fortran --make))
-        ifneq "$(findstring N/A,$(curr_tools))" ""
-            curr_tools := $(strip $(shell $(perl) $(tools_dir)check-tools.pl $(oa-opts) --make))
-            fort = ifort
-        else
-            fort = gfortran
-        endif
+
+    check_tools_flags = --make
+
+    # determine if fortran check is required from goals
+    # MAKECMDGOALS is like argv for gnu make
+    ifneq "$(filter mod all,$(MAKECMDGOALS))" ""
+        check_tools_flags += --fortran
     else
-        curr_tools := $(strip $(shell $(perl) $(tools_dir)check-tools.pl $(oa-opts) --make))
+        ifeq "$(MAKECMDGOALS)" "" # will default to all if no goals specified on command line
+            check_tools_flags += --fortran
+        endif
     endif
+    ifneq "$(filter gcc clang,$(c))" "" # if build compiler is gcc or clang
+        check_tools_flags += --no-intel
+    endif
+    ifeq "$(c)" "clang"
+        check_tools_flags += --clang
+    endif
+
+    curr_tools := $(strip $(shell $(perl) $(tools_dir)check-tools.pl $(oa-opts) $(check_tools_flags)))
+
     ifeq "$(curr_tools)" ""
         $(error check-tools.pl failed)
     endif

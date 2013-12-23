@@ -33,6 +33,10 @@
 # on Windows* OS generates such a dependency: "kmp_runtime.obj: .\kmp_i18n.inc", and make complains
 # "No rule to build .\kmp_i18n.inc". Using "./" solves the problem.
 cpp-flags += -I ./
+# For non-x86 architecture
+ifeq "$(filter 32 32e 64,$(arch))" ""
+    cpp-flags += $(shell pkg-config --cflags libffi)
+endif
 # Add all VPATH directories to path for searching include files.
 cpp-flags += $(foreach i,$(VPATH),-I $(i))
 
@@ -60,6 +64,9 @@ ifneq "$(filter lin lrb mac,$(os))" ""
     ifeq "$(c)" "gcc"
         cxx = g++
     endif
+    ifeq "$(c)" "clang"
+        cxx = clang++
+    endif
     # Output file flag.
     c-out   = -o$(space)
     cxx-out = -o$(space)
@@ -70,7 +77,9 @@ ifneq "$(filter lin lrb mac,$(os))" ""
     c-flags-m   += -M -MG
     cxx-flags-m += -M -MG
     # Enable C99 language.
-    c-flags += -std=c99
+    ifneq "$(CPLUSPLUS)" "on"
+        c-flags += -std=gnu99
+    endif
     # Generate position-independent code (a must for shared objects).
     ifeq "$(LINK_TYPE)" "dyna"
         c-flags   += -fPIC
@@ -118,12 +127,24 @@ ifneq "$(filter lin lrb mac,$(os))" ""
     ifeq "$(c)" "gcc"
         as        = gcc
     endif
+    ifeq "$(c)" "clang"
+        as        = clang
+    endif
     as-out    = -o$(space)
     as-flags += $(cpp-flags)
     # Compile only, no link.
     as-flags += -c
     as-flags += -x assembler-with-cpp
     # --- Fortran ---
+    ifeq "$(c)" "icc"
+        fort = ifort
+    endif
+    ifeq "$(c)" "gcc"
+        fort = gfortran
+    endif
+    ifeq "$(c)" "clang"
+        fort = gfortran
+    endif
     ifeq "$(fort)" ""
         fort = ifort
     endif
@@ -146,6 +167,11 @@ ifeq "$(os)" "lin"
         ifeq "$(arch)" "32"
             c-flags   += -mia32
             cxx-flags += -mia32
+        endif
+    endif
+    ifeq "$(c)" "gcc"
+        ifeq "$(arch)" "arm"
+            c-flags   += -marm
         endif
     endif
     # --- Librarian ---
@@ -298,7 +324,9 @@ ifeq "$(os)" "win"
     c-flags-m   += -QM -QMM -QMG
     cxx-flags-m += -QM -QMM -QMG
     # Enable C99 language.
-    c-flags   += -Qstd=c99
+    ifneq "$(CPLUSPLUS)" "on"
+    	c-flags   += -Qstd=gnu99
+    endif
     # Enable C++ exception handling.
     # ??? Why we disable it on Linux* OS?
     cxx-flags += -EHsc

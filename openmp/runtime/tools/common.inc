@@ -56,10 +56,14 @@ endif
 # Setting defaults
 mode?=release
 
-ifeq "$(omp_os)" "windows"
-    compiler?=icl
+ifeq "$(filter 32 32e 64,$(arch))" ""
+    compiler?=gcc
 else
-    compiler?=icc
+    ifeq "$(omp_os)" "windows"
+        compiler?=icl
+    else
+        compiler?=icc
+    endif
 endif
 
 ifneq "$(mic)" "no"

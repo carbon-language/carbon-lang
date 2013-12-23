@@ -1,8 +1,8 @@
 #if USE_ITT_BUILD
 /*
  * kmp_itt.inl -- Inline functions of ITT Notify.
- * $Revision: 42616 $
- * $Date: 2013-08-26 11:47:32 -0500 (Mon, 26 Aug 2013) $
+ * $Revision: 42866 $
+ * $Date: 2013-12-10 15:15:58 -0600 (Tue, 10 Dec 2013) $
  */
 
 
@@ -49,6 +49,20 @@
 # define LINKAGE static inline
 #endif
 
+// ZCA interface used by Intel(R) Inspector. Intel(R) Parallel Amplifier uses this
+// API to support user-defined synchronization primitives, but does not use ZCA;
+// it would be safe to turn this off until wider support becomes available.
+#if USE_ITT_ZCA
+#ifdef __INTEL_COMPILER
+#   if __INTEL_COMPILER >= 1200
+#       undef __itt_sync_acquired
+#       undef __itt_sync_releasing
+#       define __itt_sync_acquired(addr)    __notify_zc_intrinsic((char *)"sync_acquired", addr)
+#       define __itt_sync_releasing(addr)   __notify_intrinsic((char *)"sync_releasing", addr)
+#   endif
+#endif
+#endif
+
 /*
     ------------------------------------------------------------------------------------------------
     Parallel region reporting.
@@ -79,10 +93,6 @@ __kmp_itt_region_forking( int gtid, int serialized ) {
 #if USE_ITT_NOTIFY
     kmp_team_t *      team = __kmp_team_from_gtid( gtid );
 #if OMP_30_ENABLED
-    KMP_ITT_DEBUG_LOCK();
-    KMP_ITT_DEBUG_PRINT( "[frm beg] gtid=%d, idx=%d, serialized:%d, empty:%d\n", gtid,
-                         __kmp_threads[gtid]->th.th_ident->reserved_2 - 1, serialized,
-                         (team->t.t_active_level + serialized > 1) );
     if (team->t.t_active_level + serialized > 1)
 #endif
     {
@@ -116,16 +126,67 @@ __kmp_itt_region_forking( int gtid, int serialized ) {
                                         str_loc.line, str_loc.col);
                 __kmp_str_loc_free( &str_loc );
 
+                __itt_suppress_push(__itt_suppress_memory_errors);
                 __kmp_itt_domains[ frm ] = __itt_domain_create( buff );
+                __itt_suppress_pop();
+
                 __kmp_str_free( &buff );
                 __itt_frame_begin_v3(__kmp_itt_domains[ frm ], NULL);
             }
         } else { // if it is not 0 then it should be <= KMP_MAX_FRAME_DOMAINS
             __itt_frame_begin_v3(__kmp_itt_domains[loc->reserved_2 - 1], NULL);
         }
+        KMP_ITT_DEBUG_LOCK();
+        KMP_ITT_DEBUG_PRINT( "[frm beg] gtid=%d, idx=%d, serialized:%d, loc:%p\n",
+                         gtid, loc->reserved_2 - 1, serialized, loc );
     }
 #endif
 } // __kmp_itt_region_forking
+
+// -------------------------------------------------------------------------------------------------
+
+LINKAGE void
+__kmp_itt_frame_submit( int gtid, __itt_timestamp begin, __itt_timestamp end, int imbalance, ident_t * loc ) {
+#if USE_ITT_NOTIFY
+        if (loc) {
+            if (loc->reserved_2 == 0) {
+                if (__kmp_frame_domain_count < KMP_MAX_FRAME_DOMAINS) {
+                    int frm = KMP_TEST_THEN_INC32( & __kmp_frame_domain_count ); // get "old" value
+                    if (frm >= KMP_MAX_FRAME_DOMAINS) {
+                        KMP_TEST_THEN_DEC32( & __kmp_frame_domain_count );       // revert the count
+                        return;                      // loc->reserved_2 is still 0
+                    }
+                    // Should it be synchronized? See the comment in __kmp_itt_region_forking
+                    loc->reserved_2 = frm + 1;                                   // save "new" value
+
+                    // Transform compiler-generated region location into the format
+                    // that the tools more or less standardized on:
+                    //                               "<func>$omp$frame@[file:]<line>[:<col>]"
+                    const char * buff = NULL;
+                    kmp_str_loc_t str_loc = __kmp_str_loc_init( loc->psource, 1 );
+                    if( imbalance ) {
+                        buff = __kmp_str_format("%s$omp$barrier-imbalance@%s:%d",
+                                                str_loc.func, str_loc.file, str_loc.col);
+                    } else {
+                        buff = __kmp_str_format("%s$omp$barrier@%s:%d",
+                                                str_loc.func, str_loc.file, str_loc.col);
+                    }
+                    __kmp_str_loc_free( &str_loc );
+
+                    __itt_suppress_push(__itt_suppress_memory_errors);
+                    __kmp_itt_domains[ frm ] = __itt_domain_create( buff );
+                    __itt_suppress_pop();
+
+                    __kmp_str_free( &buff );
+                    __itt_frame_submit_v3(__kmp_itt_domains[ frm ], NULL, begin, end );
+                }
+            } else { // if it is not 0 then it should be <= KMP_MAX_FRAME_DOMAINS
+                __itt_frame_submit_v3(__kmp_itt_domains[loc->reserved_2 - 1], NULL, begin, end );
+            }
+    }
+
+#endif
+} // __kmp_itt_frame_submit
 
 // -------------------------------------------------------------------------------------------------
 
@@ -150,10 +211,6 @@ __kmp_itt_region_joined( int gtid, int serialized ) {
 #if USE_ITT_NOTIFY
     kmp_team_t *      team = __kmp_team_from_gtid( gtid );
 #if OMP_30_ENABLED
-    KMP_ITT_DEBUG_LOCK();
-    KMP_ITT_DEBUG_PRINT( "[frm end] gtid=%d, idx=%d, serialized:%d, empty:%d\n", gtid,
-                         __kmp_threads[gtid]->th.th_ident->reserved_2 - 1, serialized,
-                         (team->t.t_active_level + serialized > 1) );
     if (team->t.t_active_level + serialized > 1)
 #endif
     {
@@ -162,7 +219,10 @@ __kmp_itt_region_joined( int gtid, int serialized ) {
     }
     ident_t *         loc  = __kmp_thread_from_gtid( gtid )->th.th_ident;
     if (loc && loc->reserved_2 && loc->reserved_2 <= KMP_MAX_FRAME_DOMAINS) {
+        KMP_ITT_DEBUG_LOCK();
         __itt_frame_end_v3(__kmp_itt_domains[loc->reserved_2 - 1], NULL);
+        KMP_ITT_DEBUG_PRINT( "[frm end] gtid=%d, idx=%d, serialized:%d, loc:%p\n",
+                         gtid, loc->reserved_2 - 1, serialized, loc );
     }
 #endif
 } // __kmp_itt_region_joined
@@ -577,7 +637,7 @@ __kmp_itt_critical_destroyed( kmp_user_lock_p lock ) {
 void
 __kmp_itt_single_start( int gtid ) {
 #if USE_ITT_NOTIFY
-    if ( __itt_mark_create_ptr ) {
+    if ( __itt_mark_create_ptr || KMP_ITT_DEBUG ) {
         kmp_info_t *   thr = __kmp_thread_from_gtid( (gtid) );
         ident_t *      loc = thr->th.th_ident;
         char const *   src = ( loc == NULL ? NULL : loc->psource );

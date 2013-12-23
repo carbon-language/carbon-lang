@@ -1,8 +1,8 @@
 #if USE_ITT_BUILD
 /*
  * kmp_itt.h -- ITT Notify interface.
- * $Revision: 42616 $
- * $Date: 2013-08-26 11:47:32 -0500 (Mon, 26 Aug 2013) $
+ * $Revision: 42829 $
+ * $Date: 2013-11-21 05:44:01 -0600 (Thu, 21 Nov 2013) $
  */
 
 
@@ -58,6 +58,9 @@ void __kmp_itt_destroy();
 __kmp_inline void __kmp_itt_region_forking(  int gtid, int serialized = 0 ); // Master only, before forking threads.
 __kmp_inline void __kmp_itt_region_joined(   int gtid, int serialized = 0 ); // Master only, after joining threads.
     // (*) Note: A thread may execute tasks after this point, though.
+
+// --- Frame reporting ---
+__kmp_inline void __kmp_itt_frame_submit( int gtid, __itt_timestamp begin, __itt_timestamp end, int imbalance, ident_t *loc );
 
 // --- Barrier reporting ---
 __kmp_inline void * __kmp_itt_barrier_object( int gtid, int bt, int set_name = 0, int delta = 0 );
@@ -265,6 +268,6 @@ __kmp_inline void __kmp_itt_stack_callee_leave(__itt_caller);
 
 # define KMP_ITT_IGNORE(stmt ) do { stmt } while (0)
 
-# define USE_ITT_BUILD_ARG(x) 
+# define USE_ITT_BUILD_ARG(x)
 
 #endif /* USE_ITT_BUILD */

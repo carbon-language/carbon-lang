@@ -1,7 +1,7 @@
 /*
  * kmp_str.c -- String manipulation routines.
- * $Revision: 42613 $
- * $Date: 2013-08-23 13:29:50 -0500 (Fri, 23 Aug 2013) $
+ * $Revision: 42810 $
+ * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
  */
 
 
@@ -329,9 +329,9 @@ void
 __kmp_str_fname_free(
     kmp_str_fname_t * fname
 ) {
-    __kmp_str_free( const_cast< char const ** >( & fname->path ) );
-    __kmp_str_free( const_cast< char const ** >( & fname->dir  ) );
-    __kmp_str_free( const_cast< char const ** >( & fname->base ) );
+    __kmp_str_free( (char const **)( & fname->path ) );
+    __kmp_str_free( (char const **)( & fname->dir  ) );
+    __kmp_str_free( (char const **)( & fname->base ) );
 } // kmp_str_fname_free
 
 

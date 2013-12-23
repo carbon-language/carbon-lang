@@ -82,6 +82,16 @@
     extern void   __KAI_KMPC_CONVENTION  kmp_set_warnings_on(void);
     extern void   __KAI_KMPC_CONVENTION  kmp_set_warnings_off(void);
 
+    /* schedule kind constants */
+    typedef enum kmp_cancel_kind_t {
+        kmp_cancel_parallel  = 1,
+        kmp_cancel_loop = 2,
+        kmp_cancel_sections  = 3,
+        kmp_cancel_taskgroup = 4
+    } kmp_cancel_kind_t;
+
+    extern int    __KAI_KMPC_CONVENTION  kmp_get_cancellation_status(kmp_cancel_kind_t);
+    
 #   undef __KAI_KMPC_CONVENTION
 
     /* Warning:

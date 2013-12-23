@@ -1,7 +1,7 @@
 /*
  * kmp_dispatch.cpp: dynamic scheduling - iteration initialization and dispatch.
- * $Revision: 42624 $
- * $Date: 2013-08-27 10:53:11 -0500 (Tue, 27 Aug 2013) $
+ * $Revision: 42674 $
+ * $Date: 2013-09-18 11:12:49 -0500 (Wed, 18 Sep 2013) $
  */
 
 
@@ -916,7 +916,8 @@ __kmp_dispatch_init(
                     */
                     // save original FPCW and set precision to 64-bit, as
                     // Windows* OS on IA-32 architecture defaults to 53-bit
-                    unsigned int oldFpcw = _control87(0,0x30000);
+                    unsigned int oldFpcw = _control87(0,0);
+                    _control87(_PC_64,_MCW_PC); // 0,0x30000
                     #endif
                     /* value used for comparison in solver for cross-over point */
                     long double target = ((long double)chunk * 2 + 1) * nproc / tc;
@@ -995,7 +996,7 @@ __kmp_dispatch_init(
                     pr->u.p.count = tc - __kmp_dispatch_guided_remaining(tc, GUIDED_ANALYTICAL_WORKAROUND, cross) - cross * chunk;
                     #if KMP_OS_WINDOWS && KMP_ARCH_X86
                         // restore FPCW
-                        _control87(oldFpcw,0x30000);
+                        _control87(oldFpcw,_MCW_PC);
                     #endif
                 } // if
             } else {
@@ -1836,7 +1837,7 @@ __kmp_dispatch_next(
                     /* for storing original FPCW value for Windows* OS on
 		       IA-32 architecture 8-byte version */
                     unsigned int oldFpcw;
-                    int fpcwSet = 0;
+                    unsigned int fpcwSet = 0;
     #endif
                     KD_TRACE(100, ("__kmp_dispatch_next: T#%d kmp_sch_guided_chunked analytical case\n",
                                    gtid ) );
@@ -1870,7 +1871,8 @@ __kmp_dispatch_next(
 			       FPCW and set precision to 64-bit, as Windows* OS
 			       on IA-32 architecture defaults to 53-bit */
                             if ( !fpcwSet ) {
-                                oldFpcw = _control87(0,0x30000);
+                                oldFpcw = _control87(0,0);
+                                _control87(_PC_64,_MCW_PC);
                                 fpcwSet = 0x30000;
                             }
     #endif
@@ -1893,9 +1895,11 @@ __kmp_dispatch_next(
                         } // if
                     } // while (1)
     #if KMP_OS_WINDOWS && KMP_ARCH_X86
-                    /* restore FPCW if necessary */
-                    if ( oldFpcw & fpcwSet != 0 )
-                        _control87(oldFpcw,0x30000);
+                    /* restore FPCW if necessary
+                       AC: check fpcwSet flag first because oldFpcw can be uninitialized here
+                    */
+                    if ( fpcwSet && ( oldFpcw & fpcwSet ) )
+                        _control87(oldFpcw,_MCW_PC);
     #endif
                     if ( status != 0 ) {
                         start = pr->u.p.lb;

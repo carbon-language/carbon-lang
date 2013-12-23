@@ -1,7 +1,7 @@
 /*
  * kmp_atomic.h - ATOMIC header file
- * $Revision: 42195 $
- * $Date: 2013-03-27 16:10:35 -0500 (Wed, 27 Mar 2013) $
+ * $Revision: 42810 $
+ * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
  */
 
 
@@ -29,10 +29,6 @@
 // The decision is: to use compiler supported _Complex type on lin and mac,
 //                  to use typedef'ed types on win.
 // Condition for WIN64 was modified in anticipation of 10.1 build compiler.
-
-#if defined( __GNUC__ ) && !defined( __INTEL_COMPILER )
-typedef __float128 _Quad;
-#endif
 
 #if defined( __cplusplus ) && ( KMP_OS_WINDOWS )
     // create shortcuts for c99 complex types
@@ -173,6 +169,7 @@ typedef __float128 _Quad;
     typedef KMP_DO_ALIGN( 16 )  struct __kmp_cmplx80_t kmp_cmplx80;
 
     // complex16
+    #if KMP_HAVE_QUAD
     struct __kmp_cmplx128_t : std::complex< _Quad > {
 
             __kmp_cmplx128_t() : std::complex< _Quad > () {}
@@ -192,6 +189,7 @@ typedef __float128 _Quad;
 
     };
     typedef struct __kmp_cmplx128_t kmp_cmplx128;
+    #endif /* KMP_HAVE_QUAD */
 
     #ifdef _DEBUG_TEMPORARILY_UNSET_
         #undef _DEBUG_TEMPORARILY_UNSET_
@@ -204,19 +202,22 @@ typedef __float128 _Quad;
     typedef float _Complex       kmp_cmplx32;
     typedef double _Complex      kmp_cmplx64;
     typedef long double _Complex kmp_cmplx80;
+    #if KMP_HAVE_QUAD
     typedef _Quad _Complex       kmp_cmplx128;
+    #endif
 #endif
 
 // Compiler 12.0 changed alignment of 16 and 32-byte arguments (like _Quad
 // and kmp_cmplx128) on IA-32 architecture. The following aligned structures
 // are implemented to support the old alignment in 10.1, 11.0, 11.1 and 
 // introduce the new alignment in 12.0. See CQ88405.
-#if ( KMP_ARCH_X86 )
+#if KMP_ARCH_X86 && KMP_HAVE_QUAD
 
     // 4-byte aligned structures for backward compatibility.
 
     #pragma pack( push, 4 )
 
+    
     struct KMP_DO_ALIGN( 4 ) Quad_a4_t {
         _Quad q;
 
@@ -364,31 +365,31 @@ extern int __kmp_atomic_mode;
 
 typedef kmp_queuing_lock_t kmp_atomic_lock_t;
 
-inline void
+static inline void
 __kmp_acquire_atomic_lock( kmp_atomic_lock_t *lck, kmp_int32 gtid )
 {
     __kmp_acquire_queuing_lock( lck, gtid );
 }
 
-inline int
+static inline int
 __kmp_test_atomic_lock( kmp_atomic_lock_t *lck, kmp_int32 gtid )
 {
     return __kmp_test_queuing_lock( lck, gtid );
 }
 
-inline void
+static inline void
 __kmp_release_atomic_lock( kmp_atomic_lock_t *lck, kmp_int32 gtid )
 {
     __kmp_release_queuing_lock( lck, gtid );
 }
 
-inline void
+static inline void
 __kmp_init_atomic_lock( kmp_atomic_lock_t *lck )
 {
     __kmp_init_queuing_lock( lck );
 }
 
-inline void
+static inline void
 __kmp_destroy_atomic_lock( kmp_atomic_lock_t *lck )
 {
     __kmp_destroy_queuing_lock( lck );
@@ -498,12 +499,14 @@ void __kmpc_atomic_float4_max(  ident_t *id_ref, int gtid, kmp_real32 * lhs, kmp
 void __kmpc_atomic_float4_min(  ident_t *id_ref, int gtid, kmp_real32 * lhs, kmp_real32 rhs );
 void __kmpc_atomic_float8_max(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real64 rhs );
 void __kmpc_atomic_float8_min(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real64 rhs );
+#if KMP_HAVE_QUAD
 void __kmpc_atomic_float16_max( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs );
 void __kmpc_atomic_float16_min( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs );
 #if ( KMP_ARCH_X86 )
     // Routines with 16-byte arguments aligned to 16-byte boundary; IA-32 architecture only
     void __kmpc_atomic_float16_max_a16( ident_t * id_ref, int gtid, Quad_a16_t * lhs, Quad_a16_t rhs );
     void __kmpc_atomic_float16_min_a16( ident_t * id_ref, int gtid, Quad_a16_t * lhs, Quad_a16_t rhs );
+#endif
 #endif
 // .NEQV. (same as xor)
 void __kmpc_atomic_fixed1_neqv( ident_t *id_ref, int gtid, char * lhs, char rhs );
@@ -521,6 +524,7 @@ void __kmpc_atomic_float10_sub( ident_t *id_ref, int gtid, long double * lhs, lo
 void __kmpc_atomic_float10_mul( ident_t *id_ref, int gtid, long double * lhs, long double rhs );
 void __kmpc_atomic_float10_div( ident_t *id_ref, int gtid, long double * lhs, long double rhs );
 // _Quad type
+#if KMP_HAVE_QUAD
 void __kmpc_atomic_float16_add( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs );
 void __kmpc_atomic_float16_sub( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs );
 void __kmpc_atomic_float16_mul( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs );
@@ -531,6 +535,7 @@ void __kmpc_atomic_float16_div( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QU
     void __kmpc_atomic_float16_sub_a16( ident_t * id_ref, int gtid, Quad_a16_t * lhs, Quad_a16_t rhs );
     void __kmpc_atomic_float16_mul_a16( ident_t * id_ref, int gtid, Quad_a16_t * lhs, Quad_a16_t rhs );
     void __kmpc_atomic_float16_div_a16( ident_t * id_ref, int gtid, Quad_a16_t * lhs, Quad_a16_t rhs );
+#endif
 #endif
 // routines for complex types
 void __kmpc_atomic_cmplx4_add(  ident_t *id_ref, int gtid, kmp_cmplx32 * lhs, kmp_cmplx32 rhs );
@@ -545,6 +550,7 @@ void __kmpc_atomic_cmplx10_add( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, km
 void __kmpc_atomic_cmplx10_sub( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs );
 void __kmpc_atomic_cmplx10_mul( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs );
 void __kmpc_atomic_cmplx10_div( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs );
+#if KMP_HAVE_QUAD
 void __kmpc_atomic_cmplx16_add( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs );
 void __kmpc_atomic_cmplx16_sub( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs );
 void __kmpc_atomic_cmplx16_mul( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs );
@@ -555,6 +561,7 @@ void __kmpc_atomic_cmplx16_div( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CP
     void __kmpc_atomic_cmplx16_sub_a16( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs );
     void __kmpc_atomic_cmplx16_mul_a16( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs );
     void __kmpc_atomic_cmplx16_div_a16( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs );
+#endif
 #endif
 
 #if OMP_40_ENABLED
@@ -593,14 +600,17 @@ void __kmpc_atomic_float8_sub_rev(  ident_t *id_ref, int gtid, double * lhs, dou
 void __kmpc_atomic_float8_div_rev(  ident_t *id_ref, int gtid, double * lhs, double rhs );
 void __kmpc_atomic_float10_sub_rev( ident_t *id_ref, int gtid, long double * lhs, long double rhs );
 void __kmpc_atomic_float10_div_rev( ident_t *id_ref, int gtid, long double * lhs, long double rhs );
+#if KMP_HAVE_QUAD
 void __kmpc_atomic_float16_sub_rev( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs );
 void __kmpc_atomic_float16_div_rev( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs );
+#endif
 void __kmpc_atomic_cmplx4_sub_rev(  ident_t *id_ref, int gtid, kmp_cmplx32 * lhs, kmp_cmplx32 rhs );
 void __kmpc_atomic_cmplx4_div_rev(  ident_t *id_ref, int gtid, kmp_cmplx32 * lhs, kmp_cmplx32 rhs );
 void __kmpc_atomic_cmplx8_sub_rev(  ident_t *id_ref, int gtid, kmp_cmplx64 * lhs, kmp_cmplx64 rhs );
 void __kmpc_atomic_cmplx8_div_rev(  ident_t *id_ref, int gtid, kmp_cmplx64 * lhs, kmp_cmplx64 rhs );
 void __kmpc_atomic_cmplx10_sub_rev( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs );
 void __kmpc_atomic_cmplx10_div_rev( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs );
+#if KMP_HAVE_QUAD
 void __kmpc_atomic_cmplx16_sub_rev( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs );
 void __kmpc_atomic_cmplx16_div_rev( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs );
 #if ( KMP_ARCH_X86 )
@@ -610,6 +620,7 @@ void __kmpc_atomic_cmplx16_div_rev( ident_t *id_ref, int gtid, CPLX128_LEG * lhs
     void __kmpc_atomic_cmplx16_sub_a16_rev( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs );
     void __kmpc_atomic_cmplx16_div_a16_rev( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs );
 #endif
+#endif // KMP_HAVE_QUAD
 
 #endif //KMP_ARCH_X86 || KMP_ARCH_X86_64
 
@@ -632,6 +643,7 @@ void __kmpc_atomic_float4_mul_float8( ident_t *id_ref, int gtid, kmp_real32 * lh
 void __kmpc_atomic_float4_div_float8( ident_t *id_ref, int gtid, kmp_real32 * lhs, kmp_real64 rhs );
 
 // RHS=float16 (deprecated, to be removed when we are sure the compiler does not use them)
+#if KMP_HAVE_QUAD
 void __kmpc_atomic_fixed1_add_fp(  ident_t *id_ref, int gtid, char * lhs, _Quad rhs );
 void __kmpc_atomic_fixed1_sub_fp(  ident_t *id_ref, int gtid, char * lhs, _Quad rhs );
 void __kmpc_atomic_fixed1_mul_fp(  ident_t *id_ref, int gtid, char * lhs, _Quad rhs );
@@ -670,6 +682,7 @@ void __kmpc_atomic_float10_add_fp( ident_t *id_ref, int gtid, long double * lhs,
 void __kmpc_atomic_float10_sub_fp( ident_t *id_ref, int gtid, long double * lhs, _Quad rhs );
 void __kmpc_atomic_float10_mul_fp( ident_t *id_ref, int gtid, long double * lhs, _Quad rhs );
 void __kmpc_atomic_float10_div_fp( ident_t *id_ref, int gtid, long double * lhs, _Quad rhs );
+#endif // KMP_HAVE_QUAD
 
 // RHS=cmplx8
 void __kmpc_atomic_cmplx4_add_cmplx8( ident_t *id_ref, int gtid, kmp_cmplx32 * lhs, kmp_cmplx64 rhs );
@@ -701,7 +714,9 @@ kmp_int64    __kmpc_atomic_fixed8_rd(  ident_t *id_ref, int gtid, kmp_int64   * 
 kmp_real32   __kmpc_atomic_float4_rd(  ident_t *id_ref, int gtid, kmp_real32  * loc );
 kmp_real64   __kmpc_atomic_float8_rd(  ident_t *id_ref, int gtid, kmp_real64  * loc );
 long double  __kmpc_atomic_float10_rd( ident_t *id_ref, int gtid, long double * loc );
+#if KMP_HAVE_QUAD
 QUAD_LEGACY  __kmpc_atomic_float16_rd( ident_t *id_ref, int gtid, QUAD_LEGACY * loc );
+#endif
 // Fix for CQ220361: cmplx4 READ will return void on Windows* OS; read value will be
 // returned through an additional parameter
 #if ( KMP_OS_WINDOWS )
@@ -711,11 +726,13 @@ QUAD_LEGACY  __kmpc_atomic_float16_rd( ident_t *id_ref, int gtid, QUAD_LEGACY * 
 #endif
 kmp_cmplx64  __kmpc_atomic_cmplx8_rd(  ident_t *id_ref, int gtid, kmp_cmplx64 * loc );
 kmp_cmplx80  __kmpc_atomic_cmplx10_rd( ident_t *id_ref, int gtid, kmp_cmplx80 * loc );
+#if KMP_HAVE_QUAD
 CPLX128_LEG  __kmpc_atomic_cmplx16_rd( ident_t *id_ref, int gtid, CPLX128_LEG * loc );
 #if ( KMP_ARCH_X86 )
     // Routines with 16-byte arguments aligned to 16-byte boundary
     Quad_a16_t         __kmpc_atomic_float16_a16_rd( ident_t * id_ref, int gtid, Quad_a16_t         * loc );
     kmp_cmplx128_a16_t __kmpc_atomic_cmplx16_a16_rd( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * loc );
+#endif
 #endif
 
 
@@ -730,17 +747,20 @@ void __kmpc_atomic_fixed8_wr(  ident_t *id_ref, int gtid, kmp_int64   * lhs, kmp
 void __kmpc_atomic_float4_wr(  ident_t *id_ref, int gtid, kmp_real32  * lhs, kmp_real32  rhs );
 void __kmpc_atomic_float8_wr(  ident_t *id_ref, int gtid, kmp_real64  * lhs, kmp_real64  rhs );
 void __kmpc_atomic_float10_wr( ident_t *id_ref, int gtid, long double * lhs, long double rhs );
+#if KMP_HAVE_QUAD
 void __kmpc_atomic_float16_wr( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs );
+#endif
 void __kmpc_atomic_cmplx4_wr(  ident_t *id_ref, int gtid, kmp_cmplx32 * lhs, kmp_cmplx32 rhs );
 void __kmpc_atomic_cmplx8_wr(  ident_t *id_ref, int gtid, kmp_cmplx64 * lhs, kmp_cmplx64 rhs );
 void __kmpc_atomic_cmplx10_wr( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs );
+#if KMP_HAVE_QUAD
 void __kmpc_atomic_cmplx16_wr( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs );
 #if ( KMP_ARCH_X86 )
     // Routines with 16-byte arguments aligned to 16-byte boundary
     void __kmpc_atomic_float16_a16_wr( ident_t * id_ref, int gtid, Quad_a16_t         * lhs, Quad_a16_t         rhs );
     void __kmpc_atomic_cmplx16_a16_wr( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs );
 #endif
-
+#endif
 
 //
 //  Below routines for atomic CAPTURE are listed
@@ -830,8 +850,10 @@ kmp_real32  __kmpc_atomic_float4_max_cpt(  ident_t *id_ref, int gtid, kmp_real32
 kmp_real32  __kmpc_atomic_float4_min_cpt(  ident_t *id_ref, int gtid, kmp_real32 * lhs, kmp_real32 rhs, int flag);
 kmp_real64  __kmpc_atomic_float8_max_cpt(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real64 rhs, int flag);
 kmp_real64  __kmpc_atomic_float8_min_cpt(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real64 rhs, int flag);
+#if KMP_HAVE_QUAD
 QUAD_LEGACY __kmpc_atomic_float16_max_cpt( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs, int flag);
 QUAD_LEGACY __kmpc_atomic_float16_min_cpt( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs, int flag);
+#endif
 // .NEQV. (same as xor)
 char      __kmpc_atomic_fixed1_neqv_cpt( ident_t *id_ref, int gtid, char      * lhs, char      rhs, int flag);
 short     __kmpc_atomic_fixed2_neqv_cpt( ident_t *id_ref, int gtid, short     * lhs, short     rhs, int flag);
@@ -847,11 +869,13 @@ long double __kmpc_atomic_float10_add_cpt( ident_t *id_ref, int gtid, long doubl
 long double __kmpc_atomic_float10_sub_cpt( ident_t *id_ref, int gtid, long double * lhs, long double rhs, int flag);
 long double __kmpc_atomic_float10_mul_cpt( ident_t *id_ref, int gtid, long double * lhs, long double rhs, int flag);
 long double __kmpc_atomic_float10_div_cpt( ident_t *id_ref, int gtid, long double * lhs, long double rhs, int flag);
+#if KMP_HAVE_QUAD
 // _Quad type
 QUAD_LEGACY __kmpc_atomic_float16_add_cpt( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs, int flag);
 QUAD_LEGACY __kmpc_atomic_float16_sub_cpt( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs, int flag);
 QUAD_LEGACY __kmpc_atomic_float16_mul_cpt( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs, int flag);
 QUAD_LEGACY __kmpc_atomic_float16_div_cpt( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs, int flag);
+#endif
 // routines for complex types
 // Workaround for cmplx4 routines - return void; captured value is returned via the argument
 void __kmpc_atomic_cmplx4_add_cpt(  ident_t *id_ref, int gtid, kmp_cmplx32 * lhs, kmp_cmplx32 rhs, kmp_cmplx32 * out, int flag);
@@ -867,6 +891,7 @@ kmp_cmplx80 __kmpc_atomic_cmplx10_add_cpt( ident_t *id_ref, int gtid, kmp_cmplx8
 kmp_cmplx80 __kmpc_atomic_cmplx10_sub_cpt( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs, int flag);
 kmp_cmplx80 __kmpc_atomic_cmplx10_mul_cpt( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs, int flag);
 kmp_cmplx80 __kmpc_atomic_cmplx10_div_cpt( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs, int flag);
+#if KMP_HAVE_QUAD
 CPLX128_LEG __kmpc_atomic_cmplx16_add_cpt( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs, int flag);
 CPLX128_LEG __kmpc_atomic_cmplx16_sub_cpt( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs, int flag);
 CPLX128_LEG __kmpc_atomic_cmplx16_mul_cpt( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs, int flag);
@@ -883,6 +908,7 @@ CPLX128_LEG __kmpc_atomic_cmplx16_div_cpt( ident_t *id_ref, int gtid, CPLX128_LE
     kmp_cmplx128_a16_t __kmpc_atomic_cmplx16_sub_a16_cpt( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs, int flag);
     kmp_cmplx128_a16_t __kmpc_atomic_cmplx16_mul_a16_cpt( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs, int flag);
     kmp_cmplx128_a16_t __kmpc_atomic_cmplx16_div_a16_cpt( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs, int flag);
+#endif
 #endif
 
 void __kmpc_atomic_start(void);
@@ -922,8 +948,10 @@ double 		__kmpc_atomic_float8_sub_cpt_rev(  ident_t *id_ref, int gtid, double * 
 double 		__kmpc_atomic_float8_div_cpt_rev(  ident_t *id_ref, int gtid, double * lhs, double rhs, int flag );
 long double 	__kmpc_atomic_float10_sub_cpt_rev( ident_t *id_ref, int gtid, long double * lhs, long double rhs, int flag );
 long double 	__kmpc_atomic_float10_div_cpt_rev( ident_t *id_ref, int gtid, long double * lhs, long double rhs, int flag );
+#if KMP_HAVE_QUAD
 QUAD_LEGACY	__kmpc_atomic_float16_sub_cpt_rev( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs, int flag );
 QUAD_LEGACY	__kmpc_atomic_float16_div_cpt_rev( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs, int flag );
+#endif
 // Workaround for cmplx4 routines - return void; captured value is returned via the argument
 void     	__kmpc_atomic_cmplx4_sub_cpt_rev(  ident_t *id_ref, int gtid, kmp_cmplx32 * lhs, kmp_cmplx32 rhs, kmp_cmplx32 * out, int flag );
 void 	        __kmpc_atomic_cmplx4_div_cpt_rev(  ident_t *id_ref, int gtid, kmp_cmplx32 * lhs, kmp_cmplx32 rhs, kmp_cmplx32 * out, int flag );
@@ -931,6 +959,7 @@ kmp_cmplx64 	__kmpc_atomic_cmplx8_sub_cpt_rev(  ident_t *id_ref, int gtid, kmp_c
 kmp_cmplx64 	__kmpc_atomic_cmplx8_div_cpt_rev(  ident_t *id_ref, int gtid, kmp_cmplx64 * lhs, kmp_cmplx64 rhs, int flag );
 kmp_cmplx80 	__kmpc_atomic_cmplx10_sub_cpt_rev( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs, int flag );
 kmp_cmplx80 	__kmpc_atomic_cmplx10_div_cpt_rev( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs, int flag );
+#if KMP_HAVE_QUAD
 CPLX128_LEG  	__kmpc_atomic_cmplx16_sub_cpt_rev( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs, int flag );
 CPLX128_LEG  	__kmpc_atomic_cmplx16_div_cpt_rev( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs, int flag );
 #if ( KMP_ARCH_X86 )
@@ -938,6 +967,7 @@ CPLX128_LEG  	__kmpc_atomic_cmplx16_div_cpt_rev( ident_t *id_ref, int gtid, CPLX
     Quad_a16_t		__kmpc_atomic_float16_div_a16_cpt_rev( ident_t * id_ref, int gtid, Quad_a16_t * lhs, Quad_a16_t rhs, int flag );
     kmp_cmplx128_a16_t 	__kmpc_atomic_cmplx16_sub_a16_cpt_rev( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs, int flag );
     kmp_cmplx128_a16_t 	__kmpc_atomic_cmplx16_div_a16_cpt_rev( ident_t * id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs, int flag );
+#endif
 #endif
 
 //   OpenMP 4.0 Capture-write (swap): {v = x; x = expr;}
@@ -948,17 +978,21 @@ kmp_int64 	__kmpc_atomic_fixed8_swp(  ident_t *id_ref, int gtid, kmp_int64   * l
 float 		__kmpc_atomic_float4_swp(  ident_t *id_ref, int gtid, float       * lhs, float  rhs );
 double		__kmpc_atomic_float8_swp(  ident_t *id_ref, int gtid, double      * lhs, double  rhs );
 long double	__kmpc_atomic_float10_swp( ident_t *id_ref, int gtid, long double * lhs, long double rhs );
+#if KMP_HAVE_QUAD
 QUAD_LEGACY    	__kmpc_atomic_float16_swp( ident_t *id_ref, int gtid, QUAD_LEGACY * lhs, QUAD_LEGACY rhs );
+#endif
 // !!! TODO: check if we need a workaround here
 void        	__kmpc_atomic_cmplx4_swp(  ident_t *id_ref, int gtid, kmp_cmplx32 * lhs, kmp_cmplx32 rhs, kmp_cmplx32 * out );
 //kmp_cmplx32   	__kmpc_atomic_cmplx4_swp(  ident_t *id_ref, int gtid, kmp_cmplx32 * lhs, kmp_cmplx32 rhs );
 
 kmp_cmplx64 	__kmpc_atomic_cmplx8_swp(  ident_t *id_ref, int gtid, kmp_cmplx64 * lhs, kmp_cmplx64 rhs );
 kmp_cmplx80	__kmpc_atomic_cmplx10_swp( ident_t *id_ref, int gtid, kmp_cmplx80 * lhs, kmp_cmplx80 rhs );
+#if KMP_HAVE_QUAD
 CPLX128_LEG 	__kmpc_atomic_cmplx16_swp( ident_t *id_ref, int gtid, CPLX128_LEG * lhs, CPLX128_LEG rhs );
 #if ( KMP_ARCH_X86 )
     Quad_a16_t		__kmpc_atomic_float16_a16_swp( ident_t *id_ref, int gtid, Quad_a16_t * lhs, Quad_a16_t rhs );
     kmp_cmplx128_a16_t 	__kmpc_atomic_cmplx16_a16_swp( ident_t *id_ref, int gtid, kmp_cmplx128_a16_t * lhs, kmp_cmplx128_a16_t rhs );
+#endif
 #endif
 
 // End of OpenMP 4.0 capture

@@ -1,7 +1,7 @@
 /*
  * kmp_global.c -- KPTS global variables for runtime support library
- * $Revision: 42642 $
- * $Date: 2013-09-06 01:57:24 -0500 (Fri, 06 Sep 2013) $
+ * $Revision: 42816 $
+ * $Date: 2013-11-11 15:33:37 -0600 (Mon, 11 Nov 2013) $
  */
 
 
@@ -24,7 +24,6 @@ char __kmp_setversion_string[] = VERSION_STRING;
 kmp_key_t __kmp_gtid_threadprivate_key;
 
 kmp_cpuinfo_t   __kmp_cpuinfo = { 0 }; // Not initialized
-kmp_uint64      __kmp_cpu_frequency = 0;
 
 
 /* ----------------------------------------------------- */
@@ -181,6 +180,7 @@ char * __kmp_speculative_statsfile = "-";
 #if OMP_40_ENABLED
 int __kmp_display_env           = FALSE;
 int __kmp_display_env_verbose   = FALSE;
+int __kmp_omp_cancellation      = FALSE;
 #endif
 
 /* map OMP 3.0 schedule types with our internal schedule types */
@@ -266,9 +266,6 @@ int     __kmp_duplicate_library_ok = 0;
 #if USE_ITT_BUILD
 int     __kmp_forkjoin_frames = 1;
 int     __kmp_forkjoin_frames_mode = 0;
-FILE * __kmp_itt_csv_file;
-kmp_str_buf_t __kmp_itt_frame_buffer;
-
 #endif
 PACKED_REDUCTION_METHOD_T __kmp_force_reduction_method = reduction_method_not_defined;
 int     __kmp_determ_red = FALSE;

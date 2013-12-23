@@ -1,7 +1,7 @@
 /*
  * z_Linux_util.c -- platform specific routines.
- * $Revision: 42582 $
- * $Date: 2013-08-09 06:30:22 -0500 (Fri, 09 Aug 2013) $
+ * $Revision: 42847 $
+ * $Date: 2013-11-26 09:10:01 -0600 (Tue, 26 Nov 2013) $
  */
 
 
@@ -32,7 +32,7 @@
 
 #if KMP_OS_LINUX
 # include <sys/sysinfo.h>
-# if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+# if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 // We should really include <futex.h>, but that causes compatibility problems on different
 // Linux* OS distributions that either require that you include (or break when you try to include)
 // <pci/types.h>.
@@ -54,6 +54,12 @@
 #include <dirent.h>
 #include <ctype.h>
 #include <fcntl.h>
+
+// For non-x86 architecture
+#if KMP_COMPILER_GCC && !(KMP_ARCH_X86 || KMP_ARCH_X86_64)
+# include <stdbool.h>
+# include <ffi.h>
+#endif
 
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
@@ -112,7 +118,7 @@ __kmp_print_cond( char *buffer, kmp_cond_align_t *cond )
  * stone forever.
  */
 
-#  if KMP_ARCH_X86
+#  if KMP_ARCH_X86 || KMP_ARCH_ARM
 #   ifndef __NR_sched_setaffinity
 #    define __NR_sched_setaffinity  241
 #   elif __NR_sched_setaffinity != 241
@@ -434,7 +440,7 @@ __kmp_change_thread_affinity_mask( int gtid, kmp_affin_mask_t *new_mask,
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 
 int
 __kmp_futex_determine_capable()
@@ -451,7 +457,7 @@ __kmp_futex_determine_capable()
     return retval;
 }
 
-#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
@@ -2004,43 +2010,21 @@ __kmp_get_xproc( void ) {
 
 } // __kmp_get_xproc
 
-/*
-    Parse /proc/cpuinfo file for processor frequency, return frequency in Hz, or ~ 0 in case of
-    error.
-*/
-static
-kmp_uint64
-__kmp_get_frequency_from_proc(
-) {
+int
+__kmp_read_from_file( char const *path, char const *format, ... )
+{
+    int result;
+    va_list args;
 
-    kmp_uint64 result = ~ 0;
-    FILE *     file   = NULL;
-    double     freq   = HUGE_VAL;
-    int        rc;
+    va_start(args, format);
+    FILE *f = fopen(path, "rb");
+    if ( f == NULL )
+        return 0;
+    result = vfscanf(f, format, args);
+    fclose(f);
 
-    //
-    // FIXME - use KMP_CPUINFO_FILE here if it is set!!!
-    //
-    file = fopen( "/proc/cpuinfo", "r" );
-    if ( file == NULL ) {
-        return result;
-    }; // if
-    for ( ; ; ) {
-        rc = fscanf( file, "cpu MHz : %lf\n", & freq );  // Try to scan frequency.
-        if ( rc == 1 ) {                                 // Success.
-            break;
-        }; // if
-        fscanf( file, "%*[^\n]\n" );                     // Failure -- skip line.
-    }; // for
-    fclose( file );
-    if ( freq == HUGE_VAL || freq <= 0 ) {
-        return result;
-    }; // if
-    result = (kmp_uint64)( freq * 1.0E+6 );
-    KA_TRACE( 5, ( "cpu frequency from /proc/cpuinfo: %" KMP_UINT64_SPEC "\n", result ) );
     return result;
-} // func __kmp_get_frequency_from_proc
-
+}
 
 void
 __kmp_runtime_initialize( void )
@@ -2058,15 +2042,6 @@ __kmp_runtime_initialize( void )
             __kmp_query_cpuid( &__kmp_cpuinfo );
         }; // if
     #endif /* KMP_ARCH_X86 || KMP_ARCH_X86_64 */
-
-    if ( __kmp_cpu_frequency == 0 ) {
-        // First try nominal frequency.
-        __kmp_cpu_frequency = __kmp_cpuinfo.frequency;
-        if ( __kmp_cpu_frequency == 0 || __kmp_cpu_frequency == ~ 0 ) {
-            // Next Try to get CPU frequency from /proc/cpuinfo.
-            __kmp_cpu_frequency = __kmp_get_frequency_from_proc();
-        }; // if
-    }; // if
 
     __kmp_xproc = __kmp_get_xproc();
 
@@ -2535,6 +2510,43 @@ __kmp_get_load_balance( int max )
 # endif // KMP_OS_DARWIN
 
 #endif // USE_LOAD_BALANCE
+
+
+#if KMP_COMPILER_GCC && !(KMP_ARCH_X86 || KMP_ARCH_X86_64)
+
+int __kmp_invoke_microtask( microtask_t pkfn, int gtid, int tid, int argc,
+        void *p_argv[] )
+{
+    int argc_full = argc + 2;
+    int i;
+    ffi_cif cif;
+    ffi_type *types[argc_full];
+    void *args[argc_full];
+    void *idp[2];
+
+    /* We're only passing pointers to the target. */
+    for (i = 0; i < argc_full; i++)
+        types[i] = &ffi_type_pointer;
+
+    /* Ugly double-indirection, but that's how it goes... */
+    idp[0] = &gtid;
+    idp[1] = &tid;
+    args[0] = &idp[0];
+    args[1] = &idp[1];
+
+    for (i = 0; i < argc; i++)
+        args[2 + i] = &p_argv[i];
+
+    if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argc_full,
+                &ffi_type_void, types) != FFI_OK)
+        abort();
+
+    ffi_call(&cif, (void (*)(void))pkfn, NULL, args);
+
+    return 1;
+}
+
+#endif // KMP_COMPILER_GCC && !(KMP_ARCH_X86 || KMP_ARCH_X86_64)
 
 // end of file //
 

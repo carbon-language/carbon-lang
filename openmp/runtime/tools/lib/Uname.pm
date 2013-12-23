@@ -145,6 +145,8 @@ if ( 0 ) {
         $values{ hardware_platform } = "i386";
     } elsif ( $values{ machine } =~ m{\Ax86_64\z} ) {
         $values{ hardware_platform } = "x86_64";
+    } elsif ( $values{ machine } =~ m{\Aarmv7\D*\z} ) {
+        $values{ hardware_platform } = "arm";
     } else {
         die "Unsupported machine (\"$values{ machine }\") returned by POSIX::uname(); stopped";
     }; # if
@@ -276,7 +278,7 @@ if ( 0 ) {
                     or runtime_error( "$release: Cannot find the first line:", $bulk, "(eof)" );
                 my $first_line = $1;
                 $values{ operating_system_description } = $first_line;
-                $first_line =~ m{\A(.*?)\s+release\s+(.*?)\s+\((.*?)(?:\s+Update\s+(.*?))?\)\s*$}
+                $first_line =~ m{\A(.*?)\s+release\s+(.*?)(?:\s+\((.*?)(?:\s+Update\s+(.*?))?\))?\s*$}
                     or runtime_error( "$release:1: Cannot parse line:", $first_line );
                 $values{ operating_system_name    }  = $1;
                 $values{ operating_system_release }  = $2 . ( defined( $4 ) ? ".$4" : "" );

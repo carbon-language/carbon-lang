@@ -48,6 +48,8 @@ sub canon_arch($) {
             $arch = "32";
         } elsif ( $arch =~ m{\A\s*(?:48|(?:ia)?32e|Intel\s*64|Intel\(R\)\s*64|x86[_-]64|x64|AMD64)\s*\z}i ) {
             $arch = "32e";
+        } elsif ( $arch =~ m{\Aarm(?:v7\D*)?\z} ) {
+            $arch = "arm";
         } else {
             $arch = undef;
         }; # if
@@ -59,6 +61,7 @@ sub canon_arch($) {
     my %legal = (
         "32"  => "IA-32 architecture",
         "32e" => "Intel(R) 64",
+        "arm" => "ARM",
     );
 
     sub legal_arch($) {
@@ -76,6 +79,7 @@ sub canon_arch($) {
         "32"  => "ia32",
         "32e" => "intel64",
         "64"  => "ia64",
+        "arm" => "arm",
     );
 
     sub arch_opt($) {
@@ -153,6 +157,8 @@ sub target_options() {
         $_host_arch = "64";
     } elsif ( $hardware_platform eq "x86_64" ) {
         $_host_arch = "32e";
+    } elsif ( $hardware_platform eq "arm" ) {
+        $_host_arch = "arm";
     } else {
         die "Unsupported host hardware platform: \"$hardware_platform\"; stopped";
     }; # if
@@ -178,7 +184,7 @@ if ( defined( $ENV{ LIBOMP_ARCH } ) ) {
     # Use arch specified in LIBOMP_ARCH.
     $_target_arch = canon_arch( $ENV{ LIBOMP_ARCH } );
     if ( not defined( $_target_arch ) ) {
-        die "Uknown architecture specified in LIBOMP_ARCH environment variable: \"$ENV{ LIBOMP_ARCH }\"";
+        die "Unknown architecture specified in LIBOMP_ARCH environment variable: \"$ENV{ LIBOMP_ARCH }\"";
     }; # if
 } else {
     # Otherwise use host architecture.
@@ -191,7 +197,7 @@ if ( defined( $ENV{ LIBOMP_OS } ) ) {
     # Use OS specified in LIBOMP_OS.
     $_target_os = canon_os( $ENV{ LIBOMP_OS } );
     if ( not defined( $_target_os ) ) {
-        die "Uknown OS specified in LIBOMP_OS environment variable: \"$ENV{ LIBOMP_OS }\"";
+        die "Unknown OS specified in LIBOMP_OS environment variable: \"$ENV{ LIBOMP_OS }\"";
     }; # if
 } else {
     # Otherwise use host OS.

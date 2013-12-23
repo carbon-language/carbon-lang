@@ -1,6 +1,6 @@
 # makefile.mk #
-# $Revision: 42661 $
-# $Date: 2013-09-12 11:37:13 -0500 (Thu, 12 Sep 2013) $
+# $Revision: 42820 $
+# $Date: 2013-11-13 16:53:44 -0600 (Wed, 13 Nov 2013) $
 
 #
 #//===----------------------------------------------------------------------===//
@@ -37,7 +37,7 @@ inc_dir      = $(LIBOMP_WORK)src/include/$(OMP_VERSION)/
 # --------------------------------------------------------------------------------------------------
 
 # Build compiler
-BUILD_COMPILER := $(call check_variable,BUILD_COMPILER,icc gcc icl icl.exe)
+BUILD_COMPILER := $(call check_variable,BUILD_COMPILER,icc gcc clang icl icl.exe)
 # Distribution type: com (commercial) or oss (open-source)
 DISTRIBUTION  := $(call check_variable,DISTRIBUTION,com oss)
 
@@ -161,6 +161,18 @@ ifeq "$(c)" "gcc"
     endif
 endif
 
+ifeq "$(c)" "clang"
+    c-flags += -Wno-unused-value -Wno-switch
+    cxx-flags += -Wno-unused-value -Wno-switch
+    ifeq "$(arch)" "32"
+        c-flags += -m32 -msse
+        cxx-flags += -m32 -msse
+        fort-flags += -m32 -msse
+        ld-flags += -m32 -msse
+        as-flags += -m32 -msse
+    endif
+endif
+
 ifeq "$(LINK_TYPE)" "dyna"
 # debug-info
     ifeq "$(os)" "win"
@@ -186,7 +198,7 @@ ifeq "$(os)" "win"
 endif
 
 # Enable saving compiler options and version in object files and libraries.
-ifneq "$(c)" "gcc"
+ifeq "$(filter gcc clang,$(c))" ""
     ifeq "$(os)" "win"
         # Newer MS linker issues warnings if -Qsox is used:
         # "warning LNK4224: /COMMENT is no longer supported;  ignored"
@@ -231,15 +243,8 @@ endif
 # Disable use of EBP as general purpose register.
 ifeq "$(os)" "win"
     ifeq "$(arch)" "32"
-        # ??? In original makefile, this option was specified only in debug builds.
-        # Compare with Linux* OS/OS X* -fno-omit-frame-pointer, which defined always.
         c-flags   += -Oy-
         cxx-flags += -Oy-
-    endif
-else
-    ifneq "$(arch)" "64"
-        c-flags   += -fno-omit-frame-pointer
-        cxx-flags += -fno-omit-frame-pointer
     endif
 endif
 
@@ -247,8 +252,8 @@ ifeq "$(os)" "lin"
     c-flags   += -Wsign-compare
     cxx-flags += -Wsign-compare
     ld-flags  += -Wsign-compare
-    ifneq "$(c)" "gcc"	
-	c-flags   += -Werror	
+    ifeq "$(filter gcc clang,$(c))" ""
+        c-flags   += -Werror
         cxx-flags += -Werror
         ld-flags  += -Werror
     endif
@@ -306,7 +311,7 @@ ifeq "$(CPLUSPLUS)" "on"
     ifeq "$(os)" "win"
         c-flags   += -TP
     else
-        ifeq "$(c)" "gcc"
+        ifneq "$(filter gcc clang,$(c))" ""
             c-flags   += -x c++ -std=c++0x
         else
             c-flags   += -Kc++
@@ -352,11 +357,17 @@ ifeq "$(os)" "lin"
             ld-flags-dll += -static-libgcc
             ld-flags-extra += -Wl,-ldl
         endif
+        ifeq "$(c)" "clang"
+            ld-flags-extra += -Wl,-ldl
+        endif
         ifeq "$(arch)" "32"
-            ifneq "$(c)" "gcc"
+            ifeq "$(filter gcc clang,$(c))" ""
             # to workaround CQ215229 link libirc_pic manually
             ld-flags-extra += -lirc_pic
             endif
+        endif
+        ifeq "$(filter 32 32e 64,$(arch))" ""
+            ld-flags-extra += $(shell pkg-config --libs libffi)
         endif
     else
         ifeq "$(arch)" "32e"
@@ -452,13 +463,13 @@ cpp-flags += -D KMP_VERSION_MAJOR=$(VERSION)
 cpp-flags += -D CACHE_LINE=64
 cpp-flags += -D KMP_ADJUST_BLOCKTIME=1
 cpp-flags += -D BUILD_PARALLEL_ORDERED
+cpp-flags += -D KMP_ASM_INTRINS
 ifneq "$(os)" "lrb"
     cpp-flags += -D USE_LOAD_BALANCE
 endif
 ifneq "$(os)" "win"
     cpp-flags += -D USE_CBLKDATA
     # ??? Windows* OS: USE_CBLKDATA defined in kmp.h.
-    cpp-flags += -D KMP_ASM_INTRINS
 endif
 ifeq "$(os)" "win"
     cpp-flags += -D KMP_WIN_CDECL
@@ -477,22 +488,42 @@ else # 5
     endif
 endif
 
+ifneq "$(filter 32 32e,$(arch))" ""
 cpp-flags += -D KMP_USE_ADAPTIVE_LOCKS=1 -D KMP_DEBUG_ADAPTIVE_LOCKS=0
-
-# define compatibility with OMP 3.0
-ifeq "$(OMP_VERSION)" "40"
-    cpp-flags += -D OMP_40_ENABLED=1
-    cpp-flags += -D OMP_30_ENABLED=1
-else
-    ifeq "$(OMP_VERSION)" "30"
-        cpp-flags += -D OMP_40_ENABLED=0
-        cpp-flags += -D OMP_30_ENABLED=1
-    else
-        cpp-flags += -D OMP_40_ENABLED=0
-        cpp-flags += -D OMP_30_ENABLED=0
-    # TODO: Check OMP_30_ENABLED == 0 is processed correctly.
-    endif
 endif
+
+# define compatibility with different OpenMP versions
+have_omp_50=0
+have_omp_41=0
+have_omp_40=0
+have_omp_30=0
+ifeq "$(OMP_VERSION)" "50"
+	have_omp_50=1
+	have_omp_41=1
+	have_omp_40=1
+	have_omp_30=1
+endif
+ifeq "$(OMP_VERSION)" "41"
+	have_omp_50=0
+	have_omp_41=1
+	have_omp_40=1
+	have_omp_30=1
+endif
+ifeq "$(OMP_VERSION)" "40"
+	have_omp_50=0
+	have_omp_41=0
+	have_omp_40=1
+	have_omp_30=1
+endif
+ifeq "$(OMP_VERSION)" "30"
+	have_omp_50=0
+	have_omp_41=0
+	have_omp_40=0
+	have_omp_30=1
+endif
+cpp-flags += -D OMP_50_ENABLED=$(have_omp_50) -D OMP_41_ENABLED=$(have_omp_41)
+cpp-flags += -D OMP_40_ENABLED=$(have_omp_40) -D OMP_30_ENABLED=$(have_omp_30)
+
 
 # Using ittnotify is enabled by default.
 USE_ITT_NOTIFY = 1
@@ -541,8 +572,13 @@ endif
 # only one, target architecture). So we cannot autodetect target architecture
 # within the file, and have to pass target architecture from command line.
 ifneq "$(os)" "win"
-    z_Linux_asm$(obj) : \
-        cpp-flags += -D KMP_ARCH_X86$(if $(filter 32e,$(arch)),_64)
+    ifeq "$(arch)" "arm"
+        z_Linux_asm$(obj) : \
+		    cpp-flags += -D KMP_ARCH_ARM
+    else
+        z_Linux_asm$(obj) : \
+            cpp-flags += -D KMP_ARCH_X86$(if $(filter 32e,$(arch)),_64)
+    endif
 endif
 
 # Defining KMP_BUILD_DATE for all files leads to warning "incompatible redefinition", because the
@@ -606,7 +642,6 @@ ld-flags   += $(LDFLAGS)
 lib_c_items :=      \
     kmp_ftn_cdecl   \
     kmp_ftn_extra   \
-    kmp_ftn_stdcall \
     kmp_version     \
     $(empty)
 lib_cpp_items :=
@@ -653,6 +688,7 @@ else # norm or prof
 
 ifeq "$(OMP_VERSION)" "40"
     lib_cpp_items += kmp_taskdeps
+    lib_cpp_items += kmp_cancel
 endif
 
     # OS-specific files.
@@ -1214,7 +1250,9 @@ ifneq "$(os)" "lrb"
             tt-c-flags  += -pthread
         endif
         tt-c-flags += -o $(tt-exe-file)
-        tt-c-flags += $(if $(filter 64,$(arch)),,$(if $(filter 32,$(arch)),-m32,-m64))
+        ifneq "$(filter 32 32e 64,$(arch))" ""
+            tt-c-flags += $(if $(filter 64,$(arch)),,$(if $(filter 32,$(arch)),-m32,-m64))
+        endif
         tt-libs    += $(lib_file)
         ifeq "$(os)-$(COVERAGE)-$(LINK_TYPE)" "lin-on-stat"
             # Static coverage build on Linux* OS fails due to unresolved symbols dlopen, dlsym, dlclose.
@@ -1343,8 +1381,16 @@ ifneq "$(filter %-dyna win-%,$(os)-$(LINK_TYPE))" ""
         ifeq "$(arch)" "64"
             td_exp += libc.so.6.1
         endif
+        ifeq "$(arch)" "arm"
+            td_exp += libc.so.6
+            td_exp += ld-linux-armhf.so.3
+        endif
         td_exp += libdl.so.2
         td_exp += libgcc_s.so.1
+        ifeq "$(filter 32 32e 64,$(arch))" ""
+            td_exp += libffi.so.6
+            td_exp += libffi.so.5
+        endif
         ifneq "$(LIB_TYPE)" "stub"
             td_exp += libpthread.so.0
         endif

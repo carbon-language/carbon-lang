@@ -32,6 +32,7 @@
         integer, parameter :: kmp_pointer_kind       = int_ptr_kind()
         integer, parameter :: kmp_size_t_kind        = int_ptr_kind()
         integer, parameter :: kmp_affinity_mask_kind = int_ptr_kind()
+        integer, parameter :: kmp_cancel_kind        = omp_integer_kind
 
       end module omp_lib_kinds
 
@@ -55,6 +56,11 @@
         integer (kind=omp_proc_bind_kind), parameter :: omp_proc_bind_master = 2
         integer (kind=omp_proc_bind_kind), parameter :: omp_proc_bind_close = 3
         integer (kind=omp_proc_bind_kind), parameter :: omp_proc_bind_spread = 4
+
+        integer (kind=kmp_cancel_kind), parameter :: kmp_cancel_parallel = 1
+        integer (kind=kmp_cancel_kind), parameter :: kmp_cancel_loop = 2
+        integer (kind=kmp_cancel_kind), parameter :: kmp_cancel_sections = 3
+        integer (kind=kmp_cancel_kind), parameter :: kmp_cancel_taskgroup = 4
 
         interface
 
@@ -198,6 +204,11 @@
             use omp_lib_kinds
             integer (kind=omp_integer_kind) omp_get_team_num
           end function omp_get_team_num
+
+          function omp_get_cancellation()
+            use omp_lib_kinds
+            integer (kind=omp_integer_kind) omp_get_cancellation
+          end function omp_get_cancellation
 
           subroutine omp_init_lock(lockvar)
 !DIR$ IF(__INTEL_COMPILER.GE.1400)
@@ -417,6 +428,11 @@
           subroutine kmp_set_warnings_off()
           end subroutine kmp_set_warnings_off
 
+          function kmp_get_cancellation_status(cancelkind)
+            use omp_lib_kinds
+            integer (kind=kmp_cancel_kind) cancelkind
+            logical (kind=omp_logical_kind) kmp_get_cancellation_status
+          end function kmp_get_cancellation_status
         end interface
 
 !dec$ if defined(_WIN32)
@@ -459,6 +475,7 @@
 !dec$ attributes alias:'OMP_GET_NUM_DEVICES' :: omp_get_num_devices
 !dec$ attributes alias:'OMP_GET_NUM_TEAMS' :: omp_get_num_teams
 !dec$ attributes alias:'OMP_GET_TEAM_NUM' :: omp_get_team_num
+!dec$ attributes alias:'OMP_GET_CANCELLATION' :: omp_get_cancellation
 
 !dec$ attributes alias:'omp_init_lock' :: omp_init_lock
 !dec$ attributes alias:'omp_destroy_lock' :: omp_destroy_lock
@@ -498,6 +515,8 @@
 !dec$ attributes alias:'KMP_SET_WARNINGS_ON'::kmp_set_warnings_on
 !dec$ attributes alias:'KMP_SET_WARNINGS_OFF'::kmp_set_warnings_off
 
+!dec$ attributes alias:'KMP_GET_CANCELLATION_STATUS' :: kmp_get_cancellation_status
+
 !dec$   else
 
 !***
@@ -531,6 +550,7 @@
 !dec$ attributes alias:'_OMP_GET_NUM_DEVICES' :: omp_get_num_devices
 !dec$ attributes alias:'_OMP_GET_NUM_TEAMS' :: omp_get_num_teams
 !dec$ attributes alias:'_OMP_GET_TEAM_NUM' :: omp_get_team_num
+!dec$ attributes alias:'_OMP_GET_CANCELLATION' :: omp_get_cancellation
 
 !dec$ attributes alias:'_omp_init_lock' :: omp_init_lock
 !dec$ attributes alias:'_omp_destroy_lock' :: omp_destroy_lock
@@ -570,6 +590,8 @@
 !dec$ attributes alias:'_KMP_SET_WARNINGS_ON'::kmp_set_warnings_on
 !dec$ attributes alias:'_KMP_SET_WARNINGS_OFF'::kmp_set_warnings_off
 
+!dec$ attributes alias:'_KMP_GET_CANCELLATION_STATUS' :: kmp_get_cancellation_status
+
 !dec$   endif
 !dec$ endif
 
@@ -606,6 +628,7 @@
 !dec$ attributes alias:'omp_get_num_devices_'::omp_get_num_devices
 !dec$ attributes alias:'omp_get_num_teams_'::omp_get_num_teams
 !dec$ attributes alias:'omp_get_team_num_'::omp_get_team_num
+!dec$ attributes alias:'omp_get_cancellation_'::omp_get_cancellation
 
 !dec$ attributes alias:'omp_init_lock_'::omp_init_lock
 !dec$ attributes alias:'omp_destroy_lock_'::omp_destroy_lock
@@ -644,6 +667,7 @@
 
 !dec$ attributes alias:'kmp_set_warnings_on_'::kmp_set_warnings_on
 !dec$ attributes alias:'kmp_set_warnings_off_'::kmp_set_warnings_off
+!dec$ attributes alias:'kmp_get_cancellation_status_'::kmp_get_cancellation_status
 
 !dec$ endif
 
@@ -678,6 +702,7 @@
 !dec$ attributes alias:'_omp_get_wtick_'::omp_get_wtick
 !dec$ attributes alias:'_omp_get_num_teams_'::omp_get_num_teams
 !dec$ attributes alias:'_omp_get_team_num_'::omp_get_team_num
+!dec$ attributes alias:'_omp_get_cancellation_'::omp_get_cancellation
 
 !dec$ attributes alias:'_omp_init_lock_'::omp_init_lock
 !dec$ attributes alias:'_omp_destroy_lock_'::omp_destroy_lock
@@ -716,6 +741,8 @@
 
 !dec$ attributes alias:'_kmp_set_warnings_on_'::kmp_set_warnings_on
 !dec$ attributes alias:'_kmp_set_warnings_off_'::kmp_set_warnings_off
+
+!dec$ attributes alias:'_kmp_get_cancellation_status_'::kmp_get_cancellation_status
 
 !dec$ endif
 

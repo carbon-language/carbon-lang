@@ -1,7 +1,7 @@
 /*
  * kmp_gsupport.c
- * $Revision: 42181 $
- * $Date: 2013-03-26 15:04:45 -0500 (Tue, 26 Mar 2013) $
+ * $Revision: 42810 $
+ * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
  */
 
 
@@ -28,9 +28,10 @@
 #define MKLOC(loc,routine) \
     static ident_t (loc) = {0, KMP_IDENT_KMPC, 0, 0, ";unknown;unknown;0;0;;" };
 
+#include "kmp_ftn_os.h"
 
 void
-GOMP_barrier(void)
+xexpand(KMP_API_NAME_GOMP_BARRIER)(void)
 {
     int gtid = __kmp_entry_gtid();
     MKLOC(loc, "GOMP_barrier");
@@ -58,7 +59,7 @@ extern kmp_critical_name *__kmp_unnamed_critical_addr;
 
 
 void
-GOMP_critical_start(void)
+xexpand(KMP_API_NAME_GOMP_CRITICAL_START)(void)
 {
     int gtid = __kmp_entry_gtid();
     MKLOC(loc, "GOMP_critical_start");
@@ -68,7 +69,7 @@ GOMP_critical_start(void)
 
 
 void
-GOMP_critical_end(void)
+xexpand(KMP_API_NAME_GOMP_CRITICAL_END)(void)
 {
     int gtid = __kmp_get_gtid();
     MKLOC(loc, "GOMP_critical_end");
@@ -78,7 +79,7 @@ GOMP_critical_end(void)
 
 
 void
-GOMP_critical_name_start(void **pptr)
+xexpand(KMP_API_NAME_GOMP_CRITICAL_NAME_START)(void **pptr)
 {
     int gtid = __kmp_entry_gtid();
     MKLOC(loc, "GOMP_critical_name_start");
@@ -88,7 +89,7 @@ GOMP_critical_name_start(void **pptr)
 
 
 void
-GOMP_critical_name_end(void **pptr)
+xexpand(KMP_API_NAME_GOMP_CRITICAL_NAME_END)(void **pptr)
 {
     int gtid = __kmp_get_gtid();
     MKLOC(loc, "GOMP_critical_name_end");
@@ -104,7 +105,7 @@ GOMP_critical_name_end(void **pptr)
 //
 
 void
-GOMP_atomic_start(void)
+xexpand(KMP_API_NAME_GOMP_ATOMIC_START)(void)
 {
     int gtid = __kmp_entry_gtid();
     KA_TRACE(20, ("GOMP_atomic_start: T#%d\n", gtid));
@@ -113,7 +114,7 @@ GOMP_atomic_start(void)
 
 
 void
-GOMP_atomic_end(void)
+xexpand(KMP_API_NAME_GOMP_ATOMIC_END)(void)
 {
     int gtid = __kmp_get_gtid();
     KA_TRACE(20, ("GOMP_atomic_start: T#%d\n", gtid));
@@ -122,7 +123,7 @@ GOMP_atomic_end(void)
 
 
 int
-GOMP_single_start(void)
+xexpand(KMP_API_NAME_GOMP_SINGLE_START)(void)
 {
     int gtid = __kmp_entry_gtid();
     MKLOC(loc, "GOMP_single_start");
@@ -141,7 +142,7 @@ GOMP_single_start(void)
 
 
 void *
-GOMP_single_copy_start(void)
+xexpand(KMP_API_NAME_GOMP_SINGLE_COPY_START)(void)
 {
     void *retval;
     int gtid = __kmp_entry_gtid();
@@ -176,7 +177,7 @@ GOMP_single_copy_start(void)
 
 
 void
-GOMP_single_copy_end(void *data)
+xexpand(KMP_API_NAME_GOMP_SINGLE_COPY_END)(void *data)
 {
     int gtid = __kmp_get_gtid();
     MKLOC(loc, "GOMP_single_copy_end");
@@ -196,7 +197,7 @@ GOMP_single_copy_end(void *data)
 
 
 void
-GOMP_ordered_start(void)
+xexpand(KMP_API_NAME_GOMP_ORDERED_START)(void)
 {
     int gtid = __kmp_entry_gtid();
     MKLOC(loc, "GOMP_ordered_start");
@@ -206,7 +207,7 @@ GOMP_ordered_start(void)
 
 
 void
-GOMP_ordered_end(void)
+xexpand(KMP_API_NAME_GOMP_ORDERED_END)(void)
 {
     int gtid = __kmp_get_gtid();
     MKLOC(loc, "GOMP_ordered_end");
@@ -223,7 +224,7 @@ GOMP_ordered_end(void)
 // (IA-32 architecture) or 64-bit signed (Intel(R) 64).
 //
 
-#if KMP_ARCH_X86
+#if KMP_ARCH_X86 || KMP_ARCH_ARM
 # define KMP_DISPATCH_INIT              __kmp_aux_dispatch_init_4
 # define KMP_DISPATCH_FINI_CHUNK        __kmp_aux_dispatch_fini_chunk_4
 # define KMP_DISPATCH_NEXT              __kmpc_dispatch_next_4
@@ -287,7 +288,7 @@ __kmp_GOMP_fork_call(ident_t *loc, int gtid, microtask_t wrapper, int argc,...)
     va_start(ap, argc);
 
     rc = __kmp_fork_call(loc, gtid, FALSE, argc, wrapper, __kmp_invoke_task_func,
-#if KMP_ARCH_X86_64 && KMP_OS_LINUX
+#if (KMP_ARCH_X86_64 || KMP_ARCH_ARM) && KMP_OS_LINUX
       &ap
 #else
       ap
@@ -305,7 +306,7 @@ __kmp_GOMP_fork_call(ident_t *loc, int gtid, microtask_t wrapper, int argc,...)
 
 
 void
-GOMP_parallel_start(void (*task)(void *), void *data, unsigned num_threads)
+xexpand(KMP_API_NAME_GOMP_PARALLEL_START)(void (*task)(void *), void *data, unsigned num_threads)
 {
     int gtid = __kmp_entry_gtid();
     MKLOC(loc, "GOMP_parallel_start");
@@ -325,7 +326,7 @@ GOMP_parallel_start(void (*task)(void *), void *data, unsigned num_threads)
 
 
 void
-GOMP_parallel_end(void)
+xexpand(KMP_API_NAME_GOMP_PARALLEL_END)(void)
 {
     int gtid = __kmp_get_gtid();
     MKLOC(loc, "GOMP_parallel_end");
@@ -457,31 +458,31 @@ GOMP_parallel_end(void)
     }
 
 
-LOOP_START(GOMP_loop_static_start, kmp_sch_static)
-LOOP_NEXT(GOMP_loop_static_next, {})
-LOOP_START(GOMP_loop_dynamic_start, kmp_sch_dynamic_chunked)
-LOOP_NEXT(GOMP_loop_dynamic_next, {})
-LOOP_START(GOMP_loop_guided_start, kmp_sch_guided_chunked)
-LOOP_NEXT(GOMP_loop_guided_next, {})
-LOOP_RUNTIME_START(GOMP_loop_runtime_start, kmp_sch_runtime)
-LOOP_NEXT(GOMP_loop_runtime_next, {})
+LOOP_START(xexpand(KMP_API_NAME_GOMP_LOOP_STATIC_START), kmp_sch_static)
+LOOP_NEXT(xexpand(KMP_API_NAME_GOMP_LOOP_STATIC_NEXT), {})
+LOOP_START(xexpand(KMP_API_NAME_GOMP_LOOP_DYNAMIC_START), kmp_sch_dynamic_chunked)
+LOOP_NEXT(xexpand(KMP_API_NAME_GOMP_LOOP_DYNAMIC_NEXT), {})
+LOOP_START(xexpand(KMP_API_NAME_GOMP_LOOP_GUIDED_START), kmp_sch_guided_chunked)
+LOOP_NEXT(xexpand(KMP_API_NAME_GOMP_LOOP_GUIDED_NEXT), {})
+LOOP_RUNTIME_START(xexpand(KMP_API_NAME_GOMP_LOOP_RUNTIME_START), kmp_sch_runtime)
+LOOP_NEXT(xexpand(KMP_API_NAME_GOMP_LOOP_RUNTIME_NEXT), {})
 
-LOOP_START(GOMP_loop_ordered_static_start, kmp_ord_static)
-LOOP_NEXT(GOMP_loop_ordered_static_next, \
+LOOP_START(xexpand(KMP_API_NAME_GOMP_LOOP_ORDERED_STATIC_START), kmp_ord_static)
+LOOP_NEXT(xexpand(KMP_API_NAME_GOMP_LOOP_ORDERED_STATIC_NEXT), \
     { KMP_DISPATCH_FINI_CHUNK(&loc, gtid); })
-LOOP_START(GOMP_loop_ordered_dynamic_start, kmp_ord_dynamic_chunked)
-LOOP_NEXT(GOMP_loop_ordered_dynamic_next, \
+LOOP_START(xexpand(KMP_API_NAME_GOMP_LOOP_ORDERED_DYNAMIC_START), kmp_ord_dynamic_chunked)
+LOOP_NEXT(xexpand(KMP_API_NAME_GOMP_LOOP_ORDERED_DYNAMIC_NEXT), \
     { KMP_DISPATCH_FINI_CHUNK(&loc, gtid); })
-LOOP_START(GOMP_loop_ordered_guided_start, kmp_ord_guided_chunked)
-LOOP_NEXT(GOMP_loop_ordered_guided_next, \
+LOOP_START(xexpand(KMP_API_NAME_GOMP_LOOP_ORDERED_GUIDED_START), kmp_ord_guided_chunked)
+LOOP_NEXT(xexpand(KMP_API_NAME_GOMP_LOOP_ORDERED_GUIDED_NEXT), \
     { KMP_DISPATCH_FINI_CHUNK(&loc, gtid); })
-LOOP_RUNTIME_START(GOMP_loop_ordered_runtime_start, kmp_ord_runtime)
-LOOP_NEXT(GOMP_loop_ordered_runtime_next, \
+LOOP_RUNTIME_START(xexpand(KMP_API_NAME_GOMP_LOOP_ORDERED_RUNTIME_START), kmp_ord_runtime)
+LOOP_NEXT(xexpand(KMP_API_NAME_GOMP_LOOP_ORDERED_RUNTIME_NEXT), \
     { KMP_DISPATCH_FINI_CHUNK(&loc, gtid); })
 
 
 void
-GOMP_loop_end(void)
+xexpand(KMP_API_NAME_GOMP_LOOP_END)(void)
 {
     int gtid = __kmp_get_gtid();
     KA_TRACE(20, ("GOMP_loop_end: T#%d\n", gtid))
@@ -493,7 +494,7 @@ GOMP_loop_end(void)
 
 
 void
-GOMP_loop_end_nowait(void)
+xexpand(KMP_API_NAME_GOMP_LOOP_END_NOWAIT)(void)
 {
     KA_TRACE(20, ("GOMP_loop_end_nowait: T#%d\n", __kmp_get_gtid()))
 }
@@ -598,26 +599,26 @@ GOMP_loop_end_nowait(void)
     }
 
 
-LOOP_START_ULL(GOMP_loop_ull_static_start, kmp_sch_static)
-LOOP_NEXT_ULL(GOMP_loop_ull_static_next, {})
-LOOP_START_ULL(GOMP_loop_ull_dynamic_start, kmp_sch_dynamic_chunked)
-LOOP_NEXT_ULL(GOMP_loop_ull_dynamic_next, {})
-LOOP_START_ULL(GOMP_loop_ull_guided_start, kmp_sch_guided_chunked)
-LOOP_NEXT_ULL(GOMP_loop_ull_guided_next, {})
-LOOP_RUNTIME_START_ULL(GOMP_loop_ull_runtime_start, kmp_sch_runtime)
-LOOP_NEXT_ULL(GOMP_loop_ull_runtime_next, {})
+LOOP_START_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_STATIC_START), kmp_sch_static)
+LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_STATIC_NEXT), {})
+LOOP_START_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_DYNAMIC_START), kmp_sch_dynamic_chunked)
+LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_DYNAMIC_NEXT), {})
+LOOP_START_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_GUIDED_START), kmp_sch_guided_chunked)
+LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_GUIDED_NEXT), {})
+LOOP_RUNTIME_START_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_RUNTIME_START), kmp_sch_runtime)
+LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_RUNTIME_NEXT), {})
 
-LOOP_START_ULL(GOMP_loop_ull_ordered_static_start, kmp_ord_static)
-LOOP_NEXT_ULL(GOMP_loop_ull_ordered_static_next, \
+LOOP_START_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_STATIC_START), kmp_ord_static)
+LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_STATIC_NEXT), \
     { KMP_DISPATCH_FINI_CHUNK_ULL(&loc, gtid); })
-LOOP_START_ULL(GOMP_loop_ull_ordered_dynamic_start, kmp_ord_dynamic_chunked)
-LOOP_NEXT_ULL(GOMP_loop_ull_ordered_dynamic_next, \
+LOOP_START_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_DYNAMIC_START), kmp_ord_dynamic_chunked)
+LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_DYNAMIC_NEXT), \
     { KMP_DISPATCH_FINI_CHUNK_ULL(&loc, gtid); })
-LOOP_START_ULL(GOMP_loop_ull_ordered_guided_start, kmp_ord_guided_chunked)
-LOOP_NEXT_ULL(GOMP_loop_ull_ordered_guided_next, \
+LOOP_START_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_GUIDED_START), kmp_ord_guided_chunked)
+LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_GUIDED_NEXT), \
     { KMP_DISPATCH_FINI_CHUNK_ULL(&loc, gtid); })
-LOOP_RUNTIME_START_ULL(GOMP_loop_ull_ordered_runtime_start, kmp_ord_runtime)
-LOOP_NEXT_ULL(GOMP_loop_ull_ordered_runtime_next, \
+LOOP_RUNTIME_START_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_RUNTIME_START), kmp_ord_runtime)
+LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_RUNTIME_NEXT), \
     { KMP_DISPATCH_FINI_CHUNK_ULL(&loc, gtid); })
 
 
@@ -659,10 +660,10 @@ LOOP_NEXT_ULL(GOMP_loop_ull_ordered_runtime_next, \
     }
 
 
-PARALLEL_LOOP_START(GOMP_parallel_loop_static_start, kmp_sch_static)
-PARALLEL_LOOP_START(GOMP_parallel_loop_dynamic_start, kmp_sch_dynamic_chunked)
-PARALLEL_LOOP_START(GOMP_parallel_loop_guided_start, kmp_sch_guided_chunked)
-PARALLEL_LOOP_START(GOMP_parallel_loop_runtime_start, kmp_sch_runtime)
+PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_STATIC_START), kmp_sch_static)
+PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_DYNAMIC_START), kmp_sch_dynamic_chunked)
+PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_GUIDED_START), kmp_sch_guided_chunked)
+PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_RUNTIME_START), kmp_sch_runtime)
 
 
 #if OMP_30_ENABLED
@@ -674,7 +675,7 @@ PARALLEL_LOOP_START(GOMP_parallel_loop_runtime_start, kmp_sch_runtime)
 //
 
 void
-GOMP_task(void (*func)(void *), void *data, void (*copy_func)(void *, void *),
+xexpand(KMP_API_NAME_GOMP_TASK)(void (*func)(void *), void *data, void (*copy_func)(void *, void *),
   long arg_size, long arg_align, int if_cond, unsigned gomp_flags)
 {
     MKLOC(loc, "GOMP_task");
@@ -728,7 +729,7 @@ GOMP_task(void (*func)(void *), void *data, void (*copy_func)(void *, void *),
 
 
 void
-GOMP_taskwait(void)
+xexpand(KMP_API_NAME_GOMP_TASKWAIT)(void)
 {
     MKLOC(loc, "GOMP_taskwait");
     int gtid = __kmp_entry_gtid();
@@ -759,7 +760,7 @@ GOMP_taskwait(void)
 //
 
 unsigned
-GOMP_sections_start(unsigned count)
+xexpand(KMP_API_NAME_GOMP_SECTIONS_START)(unsigned count)
 {
     int status;
     kmp_int lb, ub, stride;
@@ -786,7 +787,7 @@ GOMP_sections_start(unsigned count)
 
 
 unsigned
-GOMP_sections_next(void)
+xexpand(KMP_API_NAME_GOMP_SECTIONS_NEXT)(void)
 {
     int status;
     kmp_int lb, ub, stride;
@@ -811,7 +812,7 @@ GOMP_sections_next(void)
 
 
 void
-GOMP_parallel_sections_start(void (*task) (void *), void *data,
+xexpand(KMP_API_NAME_GOMP_PARALLEL_SECTIONS_START)(void (*task) (void *), void *data,
   unsigned num_threads, unsigned count)
 {
     int gtid = __kmp_entry_gtid();
@@ -839,7 +840,7 @@ GOMP_parallel_sections_start(void (*task) (void *), void *data,
 
 
 void
-GOMP_sections_end(void)
+xexpand(KMP_API_NAME_GOMP_SECTIONS_END)(void)
 {
     int gtid = __kmp_get_gtid();
     KA_TRACE(20, ("GOMP_sections_end: T#%d\n", gtid))
@@ -851,10 +852,174 @@ GOMP_sections_end(void)
 
 
 void
-GOMP_sections_end_nowait(void)
+xexpand(KMP_API_NAME_GOMP_SECTIONS_END_NOWAIT)(void)
 {
     KA_TRACE(20, ("GOMP_sections_end_nowait: T#%d\n", __kmp_get_gtid()))
 }
+
+// libgomp has an empty function for GOMP_taskyield as of 2013-10-10
+void
+xexpand(KMP_API_NAME_GOMP_TASKYIELD)(void)
+{
+
+}
+
+/*
+    The following sections of code create aliases for the GOMP_* functions,
+    then create versioned symbols using the assembler directive .symver.
+    This is only pertinent for ELF .so library
+    xaliasify and xversionify are defined in kmp_ftn_os.h
+*/
+
+#if KMP_OS_LINUX
+
+// GOMP_1.0 aliases
+xaliasify(KMP_API_NAME_GOMP_ATOMIC_END, 10);
+xaliasify(KMP_API_NAME_GOMP_ATOMIC_START, 10);
+xaliasify(KMP_API_NAME_GOMP_BARRIER, 10);
+xaliasify(KMP_API_NAME_GOMP_CRITICAL_END, 10);
+xaliasify(KMP_API_NAME_GOMP_CRITICAL_NAME_END, 10);
+xaliasify(KMP_API_NAME_GOMP_CRITICAL_NAME_START, 10);
+xaliasify(KMP_API_NAME_GOMP_CRITICAL_START, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_DYNAMIC_NEXT, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_DYNAMIC_START, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_END, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_END_NOWAIT, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_GUIDED_NEXT, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_GUIDED_START, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ORDERED_DYNAMIC_NEXT, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ORDERED_DYNAMIC_START, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ORDERED_GUIDED_NEXT, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ORDERED_GUIDED_START, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ORDERED_RUNTIME_NEXT, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ORDERED_RUNTIME_START, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ORDERED_STATIC_NEXT, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ORDERED_STATIC_START, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_RUNTIME_NEXT, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_RUNTIME_START, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_STATIC_NEXT, 10);
+xaliasify(KMP_API_NAME_GOMP_LOOP_STATIC_START, 10);
+xaliasify(KMP_API_NAME_GOMP_ORDERED_END, 10);
+xaliasify(KMP_API_NAME_GOMP_ORDERED_START, 10);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_END, 10);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_LOOP_DYNAMIC_START, 10);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_LOOP_GUIDED_START, 10);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_LOOP_RUNTIME_START, 10);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_LOOP_STATIC_START, 10);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_SECTIONS_START, 10);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_START, 10);
+xaliasify(KMP_API_NAME_GOMP_SECTIONS_END, 10);
+xaliasify(KMP_API_NAME_GOMP_SECTIONS_END_NOWAIT, 10);
+xaliasify(KMP_API_NAME_GOMP_SECTIONS_NEXT, 10);
+xaliasify(KMP_API_NAME_GOMP_SECTIONS_START, 10);
+xaliasify(KMP_API_NAME_GOMP_SINGLE_COPY_END, 10);
+xaliasify(KMP_API_NAME_GOMP_SINGLE_COPY_START, 10);
+xaliasify(KMP_API_NAME_GOMP_SINGLE_START, 10);
+
+// GOMP_2.0 aliases
+#if OMP_30_ENABLED
+xaliasify(KMP_API_NAME_GOMP_TASK, 20);
+xaliasify(KMP_API_NAME_GOMP_TASKWAIT, 20);
+#endif
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_DYNAMIC_NEXT, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_DYNAMIC_START, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_GUIDED_NEXT, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_GUIDED_START, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_DYNAMIC_NEXT, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_DYNAMIC_START, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_GUIDED_NEXT, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_GUIDED_START, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_RUNTIME_NEXT, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_RUNTIME_START, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_STATIC_NEXT, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_STATIC_START, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_RUNTIME_NEXT, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_RUNTIME_START, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_STATIC_NEXT, 20);
+xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_STATIC_START, 20);
+
+// GOMP_3.0 aliases
+xaliasify(KMP_API_NAME_GOMP_TASKYIELD, 30);
+
+// GOMP_4.0 aliases
+/* TODO: add GOMP_4.0 aliases when corresponding
+         GOMP_* functions are implemented
+*/
+
+// GOMP_1.0 versioned symbols
+xversionify(KMP_API_NAME_GOMP_ATOMIC_END, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_ATOMIC_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_BARRIER, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_CRITICAL_END, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_CRITICAL_NAME_END, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_CRITICAL_NAME_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_CRITICAL_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_DYNAMIC_NEXT, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_DYNAMIC_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_END, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_END_NOWAIT, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_GUIDED_NEXT, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_GUIDED_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ORDERED_DYNAMIC_NEXT, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ORDERED_DYNAMIC_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ORDERED_GUIDED_NEXT, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ORDERED_GUIDED_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ORDERED_RUNTIME_NEXT, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ORDERED_RUNTIME_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ORDERED_STATIC_NEXT, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ORDERED_STATIC_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_RUNTIME_NEXT, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_RUNTIME_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_STATIC_NEXT, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_STATIC_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_ORDERED_END, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_ORDERED_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_END, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_LOOP_DYNAMIC_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_LOOP_GUIDED_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_LOOP_RUNTIME_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_LOOP_STATIC_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_SECTIONS_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_SECTIONS_END, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_SECTIONS_END_NOWAIT, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_SECTIONS_NEXT, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_SECTIONS_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_SINGLE_COPY_END, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_SINGLE_COPY_START, 10, "GOMP_1.0");
+xversionify(KMP_API_NAME_GOMP_SINGLE_START, 10, "GOMP_1.0");
+
+// GOMP_2.0 versioned symbols
+#if OMP_30_ENABLED
+xversionify(KMP_API_NAME_GOMP_TASK, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_TASKWAIT, 20, "GOMP_2.0");
+#endif
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_DYNAMIC_NEXT, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_DYNAMIC_START, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_GUIDED_NEXT, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_GUIDED_START, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_DYNAMIC_NEXT, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_DYNAMIC_START, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_GUIDED_NEXT, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_GUIDED_START, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_RUNTIME_NEXT, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_RUNTIME_START, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_STATIC_NEXT, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_STATIC_START, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_RUNTIME_NEXT, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_RUNTIME_START, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_STATIC_NEXT, 20, "GOMP_2.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_ULL_STATIC_START, 20, "GOMP_2.0");
+
+// GOMP_3.0 versioned symbols
+xversionify(KMP_API_NAME_GOMP_TASKYIELD, 30, "GOMP_3.0");
+
+// GOMP_4.0 versioned symbols
+/* TODO: add GOMP_4.0 versioned symbols when corresponding
+         GOMP_* functions are implemented
+*/
+
+#endif /* KMP_OS_LINUX */
 
 #ifdef __cplusplus
     } //extern "C"

@@ -28,6 +28,7 @@
         integer, parameter :: kmp_pointer_kind       = c_intptr_t
         integer, parameter :: kmp_size_t_kind        = c_size_t
         integer, parameter :: kmp_affinity_mask_kind = c_intptr_t
+        integer, parameter :: kmp_cancel_kind        = omp_integer_kind
 
       end module omp_lib_kinds
 
@@ -47,11 +48,17 @@
         integer(kind=omp_sched_kind), parameter :: omp_sched_guided  = 3
         integer(kind=omp_sched_kind), parameter :: omp_sched_auto    = 4
 
+
         integer (kind=omp_proc_bind_kind), parameter :: omp_proc_bind_false = 0
         integer (kind=omp_proc_bind_kind), parameter :: omp_proc_bind_true = 1
         integer (kind=omp_proc_bind_kind), parameter :: omp_proc_bind_master = 2
         integer (kind=omp_proc_bind_kind), parameter :: omp_proc_bind_close = 3
         integer (kind=omp_proc_bind_kind), parameter :: omp_proc_bind_spread = 4
+
+        integer (kind=kmp_cancel_kind), parameter :: kmp_cancel_parallel = 1
+        integer (kind=kmp_cancel_kind), parameter :: kmp_cancel_loop = 2
+        integer (kind=kmp_cancel_kind), parameter :: kmp_cancel_sections = 3
+        integer (kind=kmp_cancel_kind), parameter :: kmp_cancel_taskgroup = 4
 
         interface
 
@@ -197,6 +204,11 @@
             use omp_lib_kinds
             integer (kind=omp_integer_kind) omp_get_team_num
           end function omp_get_team_num
+
+          function omp_get_cancellation() bind(c)
+            use omp_lib_kinds
+            integer (kind=omp_integer_kind) omp_get_cancellation
+          end function omp_get_cancellation
 
           subroutine omp_init_lock(lockvar) bind(c)
 !DIR$ IF(__INTEL_COMPILER.GE.1400)
@@ -416,6 +428,12 @@
 
           subroutine kmp_set_warnings_off() bind(c)
           end subroutine kmp_set_warnings_off
+
+          function kmp_get_cancellation_status(cancelkind) bind(c)
+            use omp_lib_kinds
+            integer (kind=kmp_cancel_kind), value :: cancelkind
+            logical (kind=omp_logical_kind) kmp_get_cancellation_status
+          end function kmp_get_cancellation_status
 
         end interface
 

@@ -1,7 +1,7 @@
 /*
  * kmp_i18n.c
- * $Revision: 42181 $
- * $Date: 2013-03-26 15:04:45 -0500 (Tue, 26 Mar 2013) $
+ * $Revision: 42810 $
+ * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
  */
 
 
@@ -668,7 +668,7 @@ __kmp_i18n_catgets(
 
 void
 __kmp_i18n_dump_catalog(
-    kmp_str_buf_t & buffer
+    kmp_str_buf_t * buffer
 ) {
 
     struct kmp_i18n_id_range_t {
@@ -676,7 +676,7 @@ __kmp_i18n_dump_catalog(
         kmp_i18n_id_t  last;
     }; // struct kmp_i18n_id_range_t
 
-    static kmp_i18n_id_range_t ranges[] = {
+    static struct kmp_i18n_id_range_t ranges[] = {
         { kmp_i18n_prp_first, kmp_i18n_prp_last },
         { kmp_i18n_str_first, kmp_i18n_str_last },
         { kmp_i18n_fmt_first, kmp_i18n_fmt_last },
@@ -684,18 +684,20 @@ __kmp_i18n_dump_catalog(
         { kmp_i18n_hnt_first, kmp_i18n_hnt_last }
     }; // ranges
 
-    int           num_of_ranges = sizeof( ranges ) / sizeof( kmp_i18n_id_range_t );
+    int           num_of_ranges = sizeof( ranges ) / sizeof( struct kmp_i18n_id_range_t );
     int           range;
     kmp_i18n_id_t id;
 
     for ( range = 0; range < num_of_ranges; ++ range ) {
-        __kmp_str_buf_print( & buffer, "*** Set #%d ***\n", range + 1 );
-        for ( id = kmp_i18n_id_t( ranges[ range ].first + 1 ); id < ranges[ range ].last; id = kmp_i18n_id_t( id + 1 ) ) {
-             __kmp_str_buf_print( & buffer, "%d: <<%s>>\n", id, __kmp_i18n_catgets( id ) );
+        __kmp_str_buf_print( buffer, "*** Set #%d ***\n", range + 1 );
+        for ( id = (kmp_i18n_id_t)( ranges[ range ].first + 1 );
+              id < ranges[ range ].last;
+              id = (kmp_i18n_id_t)( id + 1 ) ) {
+             __kmp_str_buf_print( buffer, "%d: <<%s>>\n", id, __kmp_i18n_catgets( id ) );
         }; // for id
     }; // for range
 
-    __kmp_printf( "%s", buffer.str );
+    __kmp_printf( "%s", buffer->str );
 
 } // __kmp_i18n_dump_catalog
 

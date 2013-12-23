@@ -80,4 +80,26 @@ VERSION {
 
 }; # VERSION
 
+# sets up GCC OMP_ version dependency chain
+OMP_1.0 {
+};
+OMP_2.0 {
+} OMP_1.0;
+OMP_3.0 {
+} OMP_2.0;
+OMP_3.1 {
+} OMP_3.0;
+OMP_4.0 {
+} OMP_3.1;
+
+# sets up GCC GOMP_ version dependency chain
+GOMP_1.0 {
+};
+GOMP_2.0 {
+} GOMP_1.0;
+GOMP_3.0 {
+} GOMP_2.0;
+GOMP_4.0 {
+} GOMP_3.0;
+
 # end of file #

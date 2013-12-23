@@ -1,7 +1,7 @@
 /*
  * kmp_lock.h -- lock header file
- * $Revision: 42590 $
- * $Date: 2013-08-13 20:55:19 -0500 (Tue, 13 Aug 2013) $
+ * $Revision: 42810 $
+ * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
  */
 
 
@@ -174,7 +174,7 @@ extern void __kmp_init_nested_tas_lock( kmp_tas_lock_t *lck );
 extern void __kmp_destroy_nested_tas_lock( kmp_tas_lock_t *lck );
 
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 
 // ----------------------------------------------------------------------------
 // futex locks.  futex locks are only available on Linux* OS.
@@ -224,7 +224,7 @@ extern void __kmp_release_nested_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gt
 extern void __kmp_init_nested_futex_lock( kmp_futex_lock_t *lck );
 extern void __kmp_destroy_nested_futex_lock( kmp_futex_lock_t *lck );
 
-#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 
 
 // ----------------------------------------------------------------------------
@@ -479,31 +479,31 @@ typedef kmp_ticket_lock_t kmp_bootstrap_lock_t;
 
 #define KMP_BOOTSTRAP_LOCK_INITIALIZER( lock ) KMP_TICKET_LOCK_INITIALIZER( (lock) )
 
-inline void
+static inline void
 __kmp_acquire_bootstrap_lock( kmp_bootstrap_lock_t *lck )
 {
     __kmp_acquire_ticket_lock( lck, KMP_GTID_DNE );
 }
 
-inline int
+static inline int
 __kmp_test_bootstrap_lock( kmp_bootstrap_lock_t *lck )
 {
     return __kmp_test_ticket_lock( lck, KMP_GTID_DNE );
 }
 
-inline void
+static inline void
 __kmp_release_bootstrap_lock( kmp_bootstrap_lock_t *lck )
 {
     __kmp_release_ticket_lock( lck, KMP_GTID_DNE );
 }
 
-inline void
+static inline void
 __kmp_init_bootstrap_lock( kmp_bootstrap_lock_t *lck )
 {
     __kmp_init_ticket_lock( lck );
 }
 
-inline void
+static inline void
 __kmp_destroy_bootstrap_lock( kmp_bootstrap_lock_t *lck )
 {
     __kmp_destroy_ticket_lock( lck );
@@ -524,31 +524,31 @@ __kmp_destroy_bootstrap_lock( kmp_bootstrap_lock_t *lck )
 
 typedef kmp_ticket_lock_t kmp_lock_t;
 
-inline void
+static inline void
 __kmp_acquire_lock( kmp_lock_t *lck, kmp_int32 gtid )
 {
     __kmp_acquire_ticket_lock( lck, gtid );
 }
 
-inline int
+static inline int
 __kmp_test_lock( kmp_lock_t *lck, kmp_int32 gtid )
 {
     return __kmp_test_ticket_lock( lck, gtid );
 }
 
-inline void
+static inline void
 __kmp_release_lock( kmp_lock_t *lck, kmp_int32 gtid )
 {
     __kmp_release_ticket_lock( lck, gtid );
 }
 
-inline void
+static inline void
 __kmp_init_lock( kmp_lock_t *lck )
 {
     __kmp_init_ticket_lock( lck );
 }
 
-inline void
+static inline void
 __kmp_destroy_lock( kmp_lock_t *lck )
 {
     __kmp_destroy_ticket_lock( lck );
@@ -570,7 +570,7 @@ __kmp_destroy_lock( kmp_lock_t *lck )
 enum kmp_lock_kind {
     lk_default = 0,
     lk_tas,
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
     lk_futex,
 #endif
     lk_ticket,
@@ -587,7 +587,7 @@ extern kmp_lock_kind_t __kmp_user_lock_kind;
 
 union kmp_user_lock {
     kmp_tas_lock_t     tas;
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
     kmp_futex_lock_t   futex;
 #endif
     kmp_ticket_lock_t  ticket;
@@ -606,7 +606,7 @@ extern size_t __kmp_user_lock_size;
 
 extern kmp_int32 ( *__kmp_get_user_lock_owner_ )( kmp_user_lock_p lck );
 
-inline kmp_int32
+static inline kmp_int32
 __kmp_get_user_lock_owner( kmp_user_lock_p lck )
 {
     KMP_DEBUG_ASSERT( __kmp_get_user_lock_owner_ != NULL );
@@ -615,7 +615,7 @@ __kmp_get_user_lock_owner( kmp_user_lock_p lck )
 
 extern void ( *__kmp_acquire_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid );
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 
 #define __kmp_acquire_user_lock_with_checks(lck,gtid)                                           \
     if (__kmp_user_lock_kind == lk_tas) {                                                       \
@@ -655,7 +655,7 @@ extern void ( *__kmp_acquire_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_
     }
 
 #else
-inline void
+static inline void
 __kmp_acquire_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( __kmp_acquire_user_lock_with_checks_ != NULL );
@@ -665,11 +665,11 @@ __kmp_acquire_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 
 extern int ( *__kmp_test_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid );
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 
 #include "kmp_i18n.h"                       /* AC: KMP_FATAL definition */
 extern int __kmp_env_consistency_check;     /* AC: copy from kmp.h here */
-inline int
+static inline int
 __kmp_test_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 {
     if ( __kmp_user_lock_kind == lk_tas ) {
@@ -688,7 +688,7 @@ __kmp_test_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
     }
 }
 #else
-inline int
+static inline int
 __kmp_test_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( __kmp_test_user_lock_with_checks_ != NULL );
@@ -698,7 +698,7 @@ __kmp_test_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 
 extern void ( *__kmp_release_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid );
 
-inline void
+static inline void
 __kmp_release_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( __kmp_release_user_lock_with_checks_ != NULL );
@@ -707,7 +707,7 @@ __kmp_release_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 
 extern void ( *__kmp_init_user_lock_with_checks_ )( kmp_user_lock_p lck );
 
-inline void
+static inline void
 __kmp_init_user_lock_with_checks( kmp_user_lock_p lck )
 {
     KMP_DEBUG_ASSERT( __kmp_init_user_lock_with_checks_ != NULL );
@@ -720,7 +720,7 @@ __kmp_init_user_lock_with_checks( kmp_user_lock_p lck )
 //
 extern void ( *__kmp_destroy_user_lock_ )( kmp_user_lock_p lck );
 
-inline void
+static inline void
 __kmp_destroy_user_lock( kmp_user_lock_p lck )
 {
     KMP_DEBUG_ASSERT( __kmp_destroy_user_lock_ != NULL );
@@ -729,7 +729,7 @@ __kmp_destroy_user_lock( kmp_user_lock_p lck )
 
 extern void ( *__kmp_destroy_user_lock_with_checks_ )( kmp_user_lock_p lck );
 
-inline void
+static inline void
 __kmp_destroy_user_lock_with_checks( kmp_user_lock_p lck )
 {
     KMP_DEBUG_ASSERT( __kmp_destroy_user_lock_with_checks_ != NULL );
@@ -780,7 +780,7 @@ extern void ( *__kmp_acquire_nested_user_lock_with_checks_ )( kmp_user_lock_p lc
     }
 
 #else
-inline void
+static inline void
 __kmp_acquire_nested_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( __kmp_acquire_nested_user_lock_with_checks_ != NULL );
@@ -791,7 +791,7 @@ __kmp_acquire_nested_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid 
 extern int ( *__kmp_test_nested_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid );
 
 #if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
-inline int
+static inline int
 __kmp_test_nested_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 {
     if ( __kmp_user_lock_kind == lk_tas ) {
@@ -820,7 +820,7 @@ __kmp_test_nested_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
     }
 }
 #else
-inline int
+static inline int
 __kmp_test_nested_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( __kmp_test_nested_user_lock_with_checks_ != NULL );
@@ -830,7 +830,7 @@ __kmp_test_nested_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 
 extern void ( *__kmp_release_nested_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid );
 
-inline void
+static inline void
 __kmp_release_nested_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( __kmp_release_nested_user_lock_with_checks_ != NULL );
@@ -839,7 +839,7 @@ __kmp_release_nested_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid 
 
 extern void ( *__kmp_init_nested_user_lock_with_checks_ )( kmp_user_lock_p lck );
 
-inline void __kmp_init_nested_user_lock_with_checks( kmp_user_lock_p lck )
+static inline void __kmp_init_nested_user_lock_with_checks( kmp_user_lock_p lck )
 {
     KMP_DEBUG_ASSERT( __kmp_init_nested_user_lock_with_checks_ != NULL );
     ( *__kmp_init_nested_user_lock_with_checks_ )( lck );
@@ -847,7 +847,7 @@ inline void __kmp_init_nested_user_lock_with_checks( kmp_user_lock_p lck )
 
 extern void ( *__kmp_destroy_nested_user_lock_with_checks_ )( kmp_user_lock_p lck );
 
-inline void
+static inline void
 __kmp_destroy_nested_user_lock_with_checks( kmp_user_lock_p lck )
 {
     KMP_DEBUG_ASSERT( __kmp_destroy_nested_user_lock_with_checks_ != NULL );
@@ -875,7 +875,7 @@ extern int ( *__kmp_is_user_lock_initialized_ )( kmp_user_lock_p lck );
 
 extern const ident_t * ( *__kmp_get_user_lock_location_ )( kmp_user_lock_p lck );
 
-inline const ident_t *
+static inline const ident_t *
 __kmp_get_user_lock_location( kmp_user_lock_p lck )
 {
     if ( __kmp_get_user_lock_location_  != NULL ) {
@@ -888,7 +888,7 @@ __kmp_get_user_lock_location( kmp_user_lock_p lck )
 
 extern void ( *__kmp_set_user_lock_location_ )( kmp_user_lock_p lck, const ident_t *loc );
 
-inline void
+static inline void
 __kmp_set_user_lock_location( kmp_user_lock_p lck, const ident_t *loc )
 {
     if ( __kmp_set_user_lock_location_  != NULL ) {
@@ -900,7 +900,7 @@ extern kmp_lock_flags_t ( *__kmp_get_user_lock_flags_ )( kmp_user_lock_p lck );
 
 extern void ( *__kmp_set_user_lock_flags_ )( kmp_user_lock_p lck, kmp_lock_flags_t flags );
 
-inline void
+static inline void
 __kmp_set_user_lock_flags( kmp_user_lock_p lck, kmp_lock_flags_t flags )
 {
     if ( __kmp_set_user_lock_flags_  != NULL ) {
@@ -962,7 +962,7 @@ typedef struct kmp_block_of_locks kmp_block_of_locks_t;
 extern kmp_block_of_locks_t *__kmp_lock_blocks;
 extern int __kmp_num_locks_in_block;
 
-extern kmp_user_lock_p __kmp_user_lock_allocate( void **user_lock, kmp_int32 gtid, kmp_lock_flags_t flags = 0 );
+extern kmp_user_lock_p __kmp_user_lock_allocate( void **user_lock, kmp_int32 gtid, kmp_lock_flags_t flags );
 extern void __kmp_user_lock_free( void **user_lock, kmp_int32 gtid, kmp_user_lock_p lck );
 extern kmp_user_lock_p __kmp_lookup_user_lock( void **user_lock, char const *func );
 extern void __kmp_cleanup_user_locks();

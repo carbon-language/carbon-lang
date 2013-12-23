@@ -29,6 +29,8 @@ typedef enum ___itt_group_id
     __itt_group_heap      = 1<<11,
     __itt_group_splitter_max = 1<<12,
     __itt_group_structure = 1<<12,
+    __itt_group_suppress = 1<<13,
+    __itt_group_arrays    = 1<<14,
     __itt_group_all       = -1
 } __itt_group_id;
 
@@ -57,6 +59,8 @@ typedef struct ___itt_group_list
         { __itt_group_stitch,    "stitch"    }, \
         { __itt_group_heap,      "heap"      }, \
         { __itt_group_structure, "structure" }, \
+        { __itt_group_suppress,  "suppress"  }, \
+        { __itt_group_arrays,    "arrays"    }, \
         { __itt_group_none,      NULL        }  \
     }
 

@@ -1,7 +1,7 @@
 /*
  * kmp_lock.cpp -- lock-related functions
- * $Revision: 42613 $
- * $Date: 2013-08-23 13:29:50 -0500 (Fri, 23 Aug 2013) $
+ * $Revision: 42810 $
+ * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
  */
 
 
@@ -23,7 +23,7 @@
 #include "kmp_lock.h"
 #include "kmp_io.h"
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 # include <unistd.h>
 # include <sys/syscall.h>
 // We should really include <futex.h>, but that causes compatibility problems on different
@@ -398,7 +398,7 @@ __kmp_destroy_nested_tas_lock_with_checks( kmp_tas_lock_t *lck )
 }
 
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 
 /* ------------------------------------------------------------------------ */
 /* futex locks */
@@ -755,7 +755,7 @@ __kmp_destroy_nested_futex_lock_with_checks( kmp_futex_lock_t *lck )
     __kmp_destroy_nested_futex_lock( lck );
 }
 
-#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 
 
 /* ------------------------------------------------------------------------ */
@@ -2199,10 +2199,10 @@ __kmp_is_unlocked_queuing_lock( kmp_queuing_lock_t *lck )
 
     // We need a fence here, since we must ensure that no memory operations
     // from later in this thread float above that read.
-#if defined( __GNUC__ ) && !defined( __INTEL_COMPILER )
-    __sync_synchronize();
-#else
+#if KMP_COMPILER_ICC
     _mm_mfence();
+#else
+    __sync_synchronize();
 #endif
 
     return res;
@@ -3167,7 +3167,7 @@ void __kmp_set_user_lock_vptrs( kmp_lock_kind_t user_lock_kind )
         }
         break;
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 
         case lk_futex: {
             __kmp_base_user_lock_size = sizeof( kmp_base_futex_lock_t );
@@ -3238,7 +3238,7 @@ void __kmp_set_user_lock_vptrs( kmp_lock_kind_t user_lock_kind )
         }
         break;
 
-#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 
         case lk_ticket: {
             __kmp_base_user_lock_size = sizeof( kmp_base_ticket_lock_t );

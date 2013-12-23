@@ -1,7 +1,7 @@
 /*
  * z_Windows_NT_util.c -- platform specific routines.
- * $Revision: 42518 $
- * $Date: 2013-07-15 11:12:26 -0500 (Mon, 15 Jul 2013) $
+ * $Revision: 42816 $
+ * $Date: 2013-11-11 15:33:37 -0600 (Mon, 11 Nov 2013) $
  */
 
 
@@ -391,14 +391,14 @@ __kmp_suspend( int th_gtid, volatile kmp_uint *spinner, kmp_uint checker )
     /* TODO: shouldn't this use release semantics to ensure that __kmp_suspend_initialize_thread
        gets called first?
     */
-    old_spin = __kmp_test_then_or32( (volatile kmp_int32 *) spinner,
+    old_spin = KMP_TEST_THEN_OR32( (volatile kmp_int32 *) spinner,
                                      KMP_BARRIER_SLEEP_STATE );
 
     KF_TRACE( 5, ( "__kmp_suspend: T#%d set sleep bit for spin(%p)==%d\n",
                                    th_gtid, spinner, *spinner ) );
 
     if ( old_spin == checker ) {
-        __kmp_test_then_and32( (volatile kmp_int32 *) spinner, ~(KMP_BARRIER_SLEEP_STATE) );
+        KMP_TEST_THEN_AND32( (volatile kmp_int32 *) spinner, ~(KMP_BARRIER_SLEEP_STATE) );
 
         KF_TRACE( 5, ( "__kmp_suspend: T#%d false alarm, reset sleep bit for spin(%p)\n",
                        th_gtid, spinner) );
@@ -501,7 +501,7 @@ __kmp_resume( int target_gtid, volatile kmp_uint *spin )
     }
 
     TCW_PTR(th->th.th_sleep_loc, NULL);
-    old_spin = __kmp_test_then_and32( (kmp_int32 volatile *) spin, ~( KMP_BARRIER_SLEEP_STATE ) );
+    old_spin = KMP_TEST_THEN_AND32( (kmp_int32 volatile *) spin, ~( KMP_BARRIER_SLEEP_STATE ) );
 
     if ( ( old_spin & KMP_BARRIER_SLEEP_STATE ) == 0 ) {
         KF_TRACE( 5, ( "__kmp_resume: T#%d exiting, thread T#%d already awake - spin(%p): "
@@ -873,24 +873,6 @@ __kmp_runtime_initialize( void )
             __kmp_query_cpuid( & __kmp_cpuinfo );
         }; // if
     #endif /* KMP_ARCH_X86 || KMP_ARCH_X86_64 */
-
-    if ( __kmp_cpu_frequency == 0 ) {
-        // __kmp_hardware_timestamp() calls to QueryPerformanceCounter(). If
-        // __kmp_hardware_timestamp() rewritten to use RDTSC instruction (or its 64 analog),
-        // probably we should try to get frequency from __kmp_cpuinfo.frequency first (see
-        // z_Linux_util.c).
-        LARGE_INTEGER freq;
-        BOOL          rc;
-        rc = QueryPerformanceFrequency( & freq );
-        if ( rc ) {
-            KMP_DEBUG_ASSERT( sizeof( __kmp_cpu_frequency ) >= sizeof( freq.QuadPart ) );
-            KMP_DEBUG_ASSERT( freq.QuadPart >= 0 );
-            __kmp_cpu_frequency = freq.QuadPart;
-            KA_TRACE( 5, ( "cpu frequency: %" KMP_UINT64_SPEC "\n", __kmp_cpu_frequency ) );
-        } else {
-            __kmp_cpu_frequency = ~ 0;
-        }; // if
-    }; // if
 
     /* Set up minimum number of threads to switch to TLS gtid */
     #if KMP_OS_WINDOWS && ! defined GUIDEDLL_EXPORTS 

@@ -1,7 +1,7 @@
 /*
  * kmp_ftn_cdecl.c -- Fortran __cdecl linkage support for OpenMP.
- * $Revision: 42061 $
- * $Date: 2013-02-28 16:36:24 -0600 (Thu, 28 Feb 2013) $
+ * $Revision: 42757 $
+ * $Date: 2013-10-18 08:20:57 -0500 (Fri, 18 Oct 2013) $
  */
 
 
@@ -17,21 +17,21 @@
 
 #include "kmp.h"
 
-// Note: This string is not printed when KMP_VERSION=1.
-char const __kmp_version_ftncdecl[] = KMP_VERSION_PREFIX "Fortran __cdecl OMP support: "
-#ifdef USE_FTN_CDECL
-    "yes";
-#else
-    "no";
+#if KMP_OS_WINDOWS
+#   if defined  KMP_WIN_CDECL ||  !defined GUIDEDLL_EXPORTS
+#       define KMP_FTN_ENTRIES      KMP_FTN_UPPER
+#   endif
+#elif KMP_OS_UNIX
+#   define KMP_FTN_ENTRIES  KMP_FTN_PLAIN
 #endif
 
-#ifdef USE_FTN_CDECL
-
-#define FTN_STDCALL 	/* no stdcall */
-#define KMP_FTN_ENTRIES	USE_FTN_CDECL
-
-#include "kmp_ftn_os.h"
-#include "kmp_ftn_entry.h"
-
-#endif /* USE_FTN_CDECL */
-
+// Note: This string is not printed when KMP_VERSION=1.
+char const __kmp_version_ftncdecl[] = KMP_VERSION_PREFIX "Fortran __cdecl OMP support: "
+#ifdef KMP_FTN_ENTRIES
+    "yes";
+#   define FTN_STDCALL 	/* no stdcall */
+#   include "kmp_ftn_os.h"
+#   include "kmp_ftn_entry.h"
+#else
+    "no";
+#endif /* KMP_FTN_ENTRIES */

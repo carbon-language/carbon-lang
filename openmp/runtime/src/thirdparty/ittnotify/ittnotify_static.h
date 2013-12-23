@@ -60,6 +60,8 @@ ITT_STUB(LIBITTAPI, int,  thr_name_set,  (const char    *name, int namelen), (IT
 ITT_STUBV(LIBITTAPI, void, thr_ignore,   (void),                             (ITT_NO_PARAMS),            thr_ignore,    __itt_group_thread | __itt_group_legacy, "no args")
 #endif /* __ITT_INTERNAL_BODY */
 
+ITT_STUBV(ITTAPI, void, enable_attach, (void), (ITT_NO_PARAMS), enable_attach, __itt_group_all, "no args")
+
 #else  /* __ITT_INTERNAL_INIT */
 
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
@@ -78,6 +80,11 @@ ITT_STUBV(ITTAPI, void, sync_cancel,     (void *addr), (ITT_FORMAT addr), sync_c
 ITT_STUBV(ITTAPI, void, sync_acquired,   (void *addr), (ITT_FORMAT addr), sync_acquired,  __itt_group_sync,  "%p")
 ITT_STUBV(ITTAPI, void, sync_releasing,  (void* addr), (ITT_FORMAT addr), sync_releasing, __itt_group_sync,  "%p")
 
+ITT_STUBV(ITTAPI, void, suppress_push,       (unsigned int mask),                             (ITT_FORMAT mask), suppress_push,  __itt_group_suppress,  "%p")
+ITT_STUBV(ITTAPI, void, suppress_pop,        (void),                                          (ITT_NO_PARAMS),   suppress_pop,   __itt_group_suppress,  "no args")
+ITT_STUBV(ITTAPI, void, suppress_mark_range, (__itt_suppress_mode_t mode, unsigned int mask, void * address, size_t size),(ITT_FORMAT mode, mask, address, size), suppress_mark_range, __itt_group_suppress, "%d, %p, %p, %d")
+ITT_STUBV(ITTAPI, void, suppress_clear_range,(__itt_suppress_mode_t mode, unsigned int mask, void * address, size_t size),(ITT_FORMAT mode, mask, address, size), suppress_clear_range,__itt_group_suppress, "%d, %p, %p, %d")
+
 ITT_STUBV(ITTAPI, void, fsync_prepare,   (void* addr), (ITT_FORMAT addr), sync_prepare,   __itt_group_fsync, "%p")
 ITT_STUBV(ITTAPI, void, fsync_cancel,    (void *addr), (ITT_FORMAT addr), sync_cancel,    __itt_group_fsync, "%p")
 ITT_STUBV(ITTAPI, void, fsync_acquired,  (void *addr), (ITT_FORMAT addr), sync_acquired,  __itt_group_fsync, "%p")
@@ -95,16 +102,26 @@ ITT_STUBV(ITTAPI, void, model_induction_uses,      (void* addr, size_t size), (I
 ITT_STUBV(ITTAPI, void, model_reduction_uses,      (void* addr, size_t size), (ITT_FORMAT addr, size), model_reduction_uses,      __itt_group_model, "%p, %d")
 ITT_STUBV(ITTAPI, void, model_observe_uses,        (void* addr, size_t size), (ITT_FORMAT addr, size), model_observe_uses,        __itt_group_model, "%p, %d")
 ITT_STUBV(ITTAPI, void, model_clear_uses,          (void* addr),              (ITT_FORMAT addr),       model_clear_uses,          __itt_group_model, "%p")
-ITT_STUBV(ITTAPI, void, model_disable_push,        (__itt_model_disable x),   (ITT_FORMAT x),          model_disable_push,        __itt_group_model, "%p")
-ITT_STUBV(ITTAPI, void, model_disable_pop,         (void),                    (ITT_NO_PARAMS),         model_disable_pop,         __itt_group_model, "no args")
 
 #ifndef __ITT_INTERNAL_BODY
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
 ITT_STUBV(ITTAPI, void, model_site_beginW,         (const wchar_t *name), (ITT_FORMAT name), model_site_beginW, __itt_group_model, "\"%s\"")
 ITT_STUBV(ITTAPI, void, model_task_beginW,         (const wchar_t *name), (ITT_FORMAT name), model_task_beginW, __itt_group_model, "\"%s\"")
+ITT_STUBV(ITTAPI, void, model_iteration_taskW,     (const wchar_t *name),     (ITT_FORMAT name),       model_iteration_taskW,     __itt_group_model, "\"%s\"")
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
+ITT_STUBV(ITTAPI, void, model_site_beginA,         (const char *name),        (ITT_FORMAT name),       model_site_beginA,         __itt_group_model, "\"%s\"")
 ITT_STUBV(ITTAPI, void, model_site_beginAL,        (const char *name, size_t len), (ITT_FORMAT name, len), model_site_beginAL, __itt_group_model, "\"%s\", %d")
+ITT_STUBV(ITTAPI, void, model_task_beginA,         (const char *name),        (ITT_FORMAT name),       model_task_beginA,         __itt_group_model, "\"%s\"")
 ITT_STUBV(ITTAPI, void, model_task_beginAL,        (const char *name, size_t len), (ITT_FORMAT name, len), model_task_beginAL, __itt_group_model, "\"%s\", %d")
+ITT_STUBV(ITTAPI, void, model_iteration_taskA,     (const char *name),        (ITT_FORMAT name),       model_iteration_taskA,     __itt_group_model, "\"%s\"")
+ITT_STUBV(ITTAPI, void, model_iteration_taskAL,    (const char *name, size_t len), (ITT_FORMAT name, len), model_iteration_taskAL, __itt_group_model, "\"%s\", %d")
+ITT_STUBV(ITTAPI, void, model_site_end_2,          (void),                    (ITT_NO_PARAMS),         model_site_end_2,          __itt_group_model, "no args")
+ITT_STUBV(ITTAPI, void, model_task_end_2,          (void),                    (ITT_NO_PARAMS),         model_task_end_2,          __itt_group_model, "no args")
+ITT_STUBV(ITTAPI, void, model_lock_acquire_2,      (void *lock),              (ITT_FORMAT lock),       model_lock_acquire_2,      __itt_group_model, "%p")
+ITT_STUBV(ITTAPI, void, model_lock_release_2,      (void *lock),              (ITT_FORMAT lock),       model_lock_release_2,      __itt_group_model, "%p")
+ITT_STUBV(ITTAPI, void, model_aggregate_task,      (size_t count),            (ITT_FORMAT count),      model_aggregate_task,      __itt_group_model, "%d")
+ITT_STUBV(ITTAPI, void, model_disable_push,        (__itt_model_disable x),   (ITT_FORMAT x),          model_disable_push,        __itt_group_model, "%p")
+ITT_STUBV(ITTAPI, void, model_disable_pop,         (void),                    (ITT_NO_PARAMS),         model_disable_pop,         __itt_group_model, "no args")
 #endif /* __ITT_INTERNAL_BODY */
 
 #ifndef __ITT_INTERNAL_BODY
@@ -123,9 +140,15 @@ ITT_STUBV(ITTAPI, void, heap_reallocate_begin, (__itt_heap_function h, void*  ad
 ITT_STUBV(ITTAPI, void, heap_reallocate_end,   (__itt_heap_function h, void*  addr, void** new_addr, size_t new_size, int initialized), (ITT_FORMAT h, addr, new_addr, new_size, initialized), heap_reallocate_end,   __itt_group_heap, "%p, %p, %p, %lu, %d")
 ITT_STUBV(ITTAPI, void, heap_internal_access_begin, (void), (ITT_NO_PARAMS), heap_internal_access_begin, __itt_group_heap, "no args")
 ITT_STUBV(ITTAPI, void, heap_internal_access_end,   (void), (ITT_NO_PARAMS), heap_internal_access_end,   __itt_group_heap, "no args")
+ITT_STUBV(ITTAPI, void, heap_record_memory_growth_begin, (void), (ITT_NO_PARAMS), heap_record_memory_growth_begin, __itt_group_heap, "no args")
+ITT_STUBV(ITTAPI, void, heap_record_memory_growth_end,   (void), (ITT_NO_PARAMS), heap_record_memory_growth_end,   __itt_group_heap, "no args")
+ITT_STUBV(ITTAPI, void, heap_reset_detection, (unsigned int reset_mask),  (ITT_FORMAT reset_mask), heap_reset_detection, __itt_group_heap, "%u")
+ITT_STUBV(ITTAPI, void, heap_record,          (unsigned int record_mask), (ITT_FORMAT record_mask),  heap_record,        __itt_group_heap, "%u")
 
 ITT_STUBV(ITTAPI, void, id_create,  (const __itt_domain *domain, __itt_id id), (ITT_FORMAT domain, id), id_create,  __itt_group_structure, "%p, %lu")
 ITT_STUBV(ITTAPI, void, id_destroy, (const __itt_domain *domain, __itt_id id), (ITT_FORMAT domain, id), id_destroy, __itt_group_structure, "%p, %lu")
+
+ITT_STUB(ITTAPI, __itt_timestamp, get_timestamp, (void), (ITT_NO_PARAMS), get_timestamp,  __itt_group_structure, "no args")
 
 ITT_STUBV(ITTAPI, void, region_begin, (const __itt_domain *domain, __itt_id id, __itt_id parent, __itt_string_handle *name), (ITT_FORMAT domain, id, parent, name), region_begin, __itt_group_structure, "%p, %lu, %lu, %p")
 ITT_STUBV(ITTAPI, void, region_end,   (const __itt_domain *domain, __itt_id id),                                             (ITT_FORMAT domain, id),               region_end,   __itt_group_structure, "%p, %lu")
@@ -133,6 +156,7 @@ ITT_STUBV(ITTAPI, void, region_end,   (const __itt_domain *domain, __itt_id id),
 #ifndef __ITT_INTERNAL_BODY
 ITT_STUBV(ITTAPI, void, frame_begin_v3, (const __itt_domain *domain, __itt_id *id), (ITT_FORMAT domain, id), frame_begin_v3, __itt_group_structure, "%p, %p")
 ITT_STUBV(ITTAPI, void, frame_end_v3,   (const __itt_domain *domain, __itt_id *id), (ITT_FORMAT domain, id), frame_end_v3,   __itt_group_structure, "%p, %p")
+ITT_STUBV(ITTAPI, void, frame_submit_v3, (const __itt_domain *domain, __itt_id *id, __itt_timestamp begin, __itt_timestamp end), (ITT_FORMAT domain, id, begin, end), frame_submit_v3, __itt_group_structure, "%p, %p, %lu, %lu")
 #endif /* __ITT_INTERNAL_BODY */
 
 ITT_STUBV(ITTAPI, void, task_group,   (const __itt_domain *domain, __itt_id id, __itt_id parent, __itt_string_handle *name), (ITT_FORMAT domain, id, parent, name), task_group,  __itt_group_structure, "%p, %lu, %lu, %p")
@@ -278,6 +302,15 @@ ITT_STUBV(ITTAPI, void,               set_track,          (__itt_track *track), 
 
 #ifndef __ITT_INTERNAL_BODY
 ITT_STUB(ITTAPI, const char*, api_version, (void), (ITT_NO_PARAMS), api_version, __itt_group_all & ~__itt_group_legacy, "no args")
+#endif /* __ITT_INTERNAL_BODY */
+
+#ifndef __ITT_INTERNAL_BODY
+#if ITT_PLATFORM==ITT_PLATFORM_WIN
+ITT_STUB(ITTAPI, int, av_saveA, (void *data, int rank, const int *dimensions, int type, const char *filePath, int columnOrder), (ITT_FORMAT data, rank, dimensions, type, filePath, columnOrder), av_saveA, __itt_group_arrays, "%p, %d, %p, %d, \"%s\", %d")
+ITT_STUB(ITTAPI, int, av_saveW, (void *data, int rank, const int *dimensions, int type, const wchar_t *filePath, int columnOrder), (ITT_FORMAT data, rank, dimensions, type, filePath, columnOrder), av_saveW, __itt_group_arrays, "%p, %d, %p, %d, \"%S\", %d")
+#else  /* ITT_PLATFORM!=ITT_PLATFORM_WIN */
+ITT_STUB(ITTAPI, int, av_save,  (void *data, int rank, const int *dimensions, int type, const char *filePath, int columnOrder), (ITT_FORMAT data, rank, dimensions, type, filePath, columnOrder), av_save,  __itt_group_arrays, "%p, %d, %p, %d, \"%s\", %d")
+#endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #endif /* __ITT_INTERNAL_BODY */
 
 #endif /* __ITT_INTERNAL_INIT */

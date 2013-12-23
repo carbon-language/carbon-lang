@@ -268,6 +268,9 @@ sub get_gnu_compiler_version($) {
             } elsif ( $stdout =~ m{^.*? \(SUSE Linux\) (\d+\.\d+\.\d+)\s+\[.*? (\d+)\]}m ) {
                 # gcc (SUSE Linux) 4.3.2 [gcc-4_3-branch revision 141291]
                 ( $ver, $bld ) = ( $1, $2 );
+            } elsif ( $stdout =~ m{^.*? \(SUSE Linux\) (\d+\.\d+\.\d+)\s+\d+\s+\[.*? (\d+)\]}m ) {
+                # gcc (SUSE Linux) 4.7.2 20130108 [gcc-4_7-branch revision 195012]
+                ( $ver, $bld ) = ( $1, $2 );
             } elsif ( $stdout =~ m{^.*? \((Debian|Ubuntu).*?\) (\d+\.\d+\.\d+)}m ) {
                 # gcc (Debian 4.7.2-22) 4.7.2
                 # Debian support from Sylvestre Ledru 
@@ -279,6 +282,35 @@ sub get_gnu_compiler_version($) {
             $version = $ver . ( defined( $bld ) ? " ($bld)" : "" );
         } else {
             warning( "Cannot parse GNU compiler version:", $stdout, "(eof)" );
+        }; # if
+    }; # if
+    push( @ret, $version );
+    return @ret;
+}; # sub get_gnu_compiler_version
+
+
+sub get_clang_compiler_version($) {
+    my ( $tool ) = @_;
+    my ( @ret ) = ( $tool );
+    my ( $rc, $stdout, $stderr, $version );
+    $rc = run( [ $tool, "--version" ], $stdout, $stderr );
+    if ( $rc >= 0 ) {
+        my ( $ver, $bld );
+        if ( $target_os eq "mac" ) {
+            # Apple LLVM version 4.2 (clang-425.0.28) (based on LLVM 3.2svn)
+            $stdout =~ m{^.*? (\d+\.\d+) \(.*-(\d+\.\d+\.\d+)\)}m;
+            ( $ver, $bld ) = ( $1, $2 );
+        } else {
+            if ( 0 ) {
+            } elsif ( $stdout =~ m{^.*? (\d+\.\d+) \((.*)\)}m ) {
+                # clang version 3.3 (tags/RELEASE_33/final)
+                ( $ver, $bld ) = ( $1, $2 );
+            } 
+        }; # if
+        if ( defined( $ver ) ) {
+            $version = $ver . ( defined( $bld ) ? " ($bld)" : "" );
+        } else {
+            warning( "Cannot parse Clang compiler version:", $stdout, "(eof)" );
         }; # if
     }; # if
     push( @ret, $version );
@@ -349,18 +381,30 @@ sub get_ms_linker_version() {
 
 my $make;
 my $intel       = 1;             # Check Intel compilers.
-my $gnu_fortran = 0;             # Check GNU Fortran.
+my $fortran     = 0;             # Check for corresponding Fortran compiler, ifort for intel 
+                                 #                                           gfortran for gnu 
+                                 #                                           gfortran for clang 
+my $clang       = 0;             # Check Clang Compilers.
 my $intel_compilers = {
     "lin" => { c => "icc", cpp => "icpc", f => "ifort" },
     "lrb" => { c => "icc", cpp => "icpc", f => "ifort" },
     "mac" => { c => "icc", cpp => "icpc", f => "ifort" },
     "win" => { c => "icl", cpp => undef,  f => "ifort" },
 };
+my $gnu_compilers = {
+    "lin" => { c => "gcc", cpp =>  "g++", f => "gfortran" },
+    "mac" => { c => "gcc", cpp =>  "g++", f => "gfortran" },
+};
+my $clang_compilers = {
+    "lin" => { c => "clang", cpp =>  "clang++" },
+    "mac" => { c => "clang", cpp =>  "clang++" },
+};
 
 get_options(
     Platform::target_options(),
     "intel!"         => \$intel,
-    "gnu-fortran!"   => \$gnu_fortran,
+    "fortran"        => \$fortran,
+    "clang"          => \$clang,
     "make"           => \$make,
     "pedantic"       => \$pedantic,
 );
@@ -375,21 +419,32 @@ if ( $intel ) {
         # If Intel C++ compiler has a name different from C compiler, check it as well.
         push( @versions, [ "Intel C++ Compiler", get_intel_compiler_version( $ic->{ cpp } ) ] );
     }; # if
-    if ( defined( $ic->{ f } ) ) {
-        push( @versions, [ "Intel Fortran Compiler", get_intel_compiler_version( $ic->{ f } ) ] );
-    }; # if
+    # fortran check must be explicitly specified on command line with --fortran
+    if ( $fortran ) {
+        if ( defined( $ic->{ f } ) ) {
+            push( @versions, [ "Intel Fortran Compiler", get_intel_compiler_version( $ic->{ f } ) ] );
+        }; # if
+    };
 }; # if
 if ( $target_os eq "lin" or $target_os eq "mac" ) {
-    push( @versions, [ "GNU C Compiler",     get_gnu_compiler_version( "gcc" ) ] );
-    push( @versions, [ "GNU C++ Compiler",   get_gnu_compiler_version( "g++" ) ] );
-    if ( $gnu_fortran ) {
-        push( @versions, [ "GNU Fortran Compiler", get_gnu_compiler_version( "gfortran" ) ] );
-    }; # if
-}; # if
+    # check for gnu tools by default because touch-test.c is compiled with them.
+    push( @versions, [ "GNU C Compiler",     get_gnu_compiler_version( $gnu_compilers->{ $target_os }->{ c   } ) ] );
+    push( @versions, [ "GNU C++ Compiler",   get_gnu_compiler_version( $gnu_compilers->{ $target_os }->{ cpp } ) ] );
+    if ( $clang ) {
+        push( @versions, [ "Clang C Compiler",     get_clang_compiler_version( $clang_compilers->{ $target_os }->{ c   } ) ] );
+        push( @versions, [ "Clang C++ Compiler",   get_clang_compiler_version( $clang_compilers->{ $target_os }->{ cpp } ) ] );
+    }; 
+    # if intel fortran has been checked then gnu fortran is unnecessary
+    # also, if user specifies clang as build compiler, then gfortran is assumed fortran compiler
+    if ( $fortran and not $intel ) {
+        push( @versions, [ "GNU Fortran Compiler", get_gnu_compiler_version( $gnu_compilers->{ $target_os }->{ f } ) ] );
+    }; 
+}; 
 if ( $target_os eq "win" ) {
     push( @versions, [ "MS C/C++ Compiler",  get_ms_compiler_version() ] );
     push( @versions, [ "MS Linker",          get_ms_linker_version() ] );
 }; # if
+
 my $count = 0;
 foreach my $item ( @versions ) {
     my ( $title, $tool, $version ) = @$item;

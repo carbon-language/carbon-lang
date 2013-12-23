@@ -357,6 +357,9 @@ kmpc_set_defaults                           224
         __kmpc_fork_teams                   241
         __kmpc_omp_task_with_deps           242
         __kmpc_omp_wait_deps                243
+        __kmpc_cancel                       244
+        __kmpc_cancellationpoint            245
+        __kmpc_cancel_barrier               246
     %endif # OMP_40
 %endif
 
@@ -455,6 +458,8 @@ kmp_set_warnings_off                        780
    #omp_curr_proc_bind                      864
     omp_get_num_teams                       865
     omp_get_team_num                        866
+    omp_get_cancellation                    867
+    kmp_get_cancellation_status             868
 %endif # OMP_40
 
 %ifndef stub
