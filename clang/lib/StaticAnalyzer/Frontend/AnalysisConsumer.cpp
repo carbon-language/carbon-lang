@@ -103,35 +103,25 @@ public:
     IncludePath = true;
   }
 
-  void emitDiag(SourceLocation L, unsigned DiagID,
-                ArrayRef<SourceRange> Ranges) {
-    DiagnosticBuilder DiagBuilder = Diag.Report(L, DiagID);
-
+  const DiagnosticBuilder &addRanges(const DiagnosticBuilder &DB,
+                                     ArrayRef<SourceRange> Ranges) {
     for (ArrayRef<SourceRange>::iterator I = Ranges.begin(), E = Ranges.end();
-         I != E; ++I) {
-      DiagBuilder << *I;
-    }
+         I != E; ++I)
+      DB << *I;
+    return DB;
   }
 
   void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
                             FilesMade *filesMade) {
+    unsigned WarnID = Diag.getCustomDiagID(DiagnosticsEngine::Warning, "%0");
+    unsigned NoteID = Diag.getCustomDiagID(DiagnosticsEngine::Note, "%0");
+
     for (std::vector<const PathDiagnostic*>::iterator I = Diags.begin(),
          E = Diags.end(); I != E; ++I) {
       const PathDiagnostic *PD = *I;
-      StringRef desc = PD->getShortDescription();
-      SmallString<512> TmpStr;
-      llvm::raw_svector_ostream Out(TmpStr);
-      for (StringRef::iterator I=desc.begin(), E=desc.end(); I!=E; ++I) {
-        if (*I == '%')
-          Out << "%%";
-        else
-          Out << *I;
-      }
-      Out.flush();
-      unsigned ErrorDiag = Diag.getCustomDiagID(DiagnosticsEngine::Warning,
-                                                TmpStr);
-      SourceLocation L = PD->getLocation().asLocation();
-      emitDiag(L, ErrorDiag, PD->path.back()->getRanges());
+      SourceLocation WarnLoc = PD->getLocation().asLocation();
+      addRanges(Diag.Report(WarnLoc, WarnID) << PD->getShortDescription(),
+                PD->path.back()->getRanges());
 
       if (!IncludePath)
         continue;
@@ -140,11 +130,9 @@ public:
       for (PathPieces::const_iterator PI = FlatPath.begin(),
                                       PE = FlatPath.end();
            PI != PE; ++PI) {
-        unsigned NoteID = Diag.getCustomDiagID(DiagnosticsEngine::Note,
-                                               (*PI)->getString());
-
         SourceLocation NoteLoc = (*PI)->getLocation().asLocation();
-        emitDiag(NoteLoc, NoteID, (*PI)->getRanges());
+        addRanges(Diag.Report(NoteLoc, NoteID) << (*PI)->getString(),
+                  (*PI)->getRanges());
       }
     }
   }
