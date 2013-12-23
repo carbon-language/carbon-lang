@@ -1351,27 +1351,26 @@ FunctionStackPoisoner::poisonRedZones(const ArrayRef<uint8_t> ShadowBytes,
                                       IRBuilder<> &IRB, Value *ShadowBase,
                                       bool DoPoison) {
   size_t n = ShadowBytes.size();
-  size_t LargeStoreSize = ASan.LongSize / 8;
-  size_t i;
-  for (i = 0; i + LargeStoreSize - 1 < n; i += LargeStoreSize) {
-    uint64_t Val = 0;
-    for (size_t j = 0; j < LargeStoreSize; j++) {
-      if (ASan.TD->isLittleEndian())
-        Val |= (uint64_t)ShadowBytes[i + j] << (8 * j);
-      else
-        Val = (Val << 8) | ShadowBytes[i + j];
+  size_t i = 0;
+  // We need to (un)poison n bytes of stack shadow. Poison as many as we can
+  // using 64-bit stores (if we are on 64-bit arch), then poison the rest
+  // with 32-bit stores, then with 16-byte stores, then with 8-byte stores.
+  for (size_t LargeStoreSizeInBytes = ASan.LongSize / 8;
+       LargeStoreSizeInBytes != 0; LargeStoreSizeInBytes /= 2) {
+    for (; i + LargeStoreSizeInBytes - 1 < n; i += LargeStoreSizeInBytes) {
+      uint64_t Val = 0;
+      for (size_t j = 0; j < LargeStoreSizeInBytes; j++) {
+        if (ASan.TD->isLittleEndian())
+          Val |= (uint64_t)ShadowBytes[i + j] << (8 * j);
+        else
+          Val = (Val << 8) | ShadowBytes[i + j];
+      }
+      if (!Val) continue;
+      Value *Ptr = IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i));
+      Type *StoreTy = Type::getIntNTy(*C, LargeStoreSizeInBytes * 8);
+      Value *Poison = ConstantInt::get(StoreTy, DoPoison ? Val : 0);
+      IRB.CreateStore(Poison, IRB.CreateIntToPtr(Ptr, StoreTy->getPointerTo()));
     }
-    if (!Val) continue;
-    Value *Ptr = IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i));
-    Value *Poison = ConstantInt::get(IntptrTy, DoPoison ? Val : 0);
-    IRB.CreateStore(Poison, IRB.CreateIntToPtr(Ptr, IntptrPtrTy));
-  }
-  for (; i < n; i++) {
-    uint8_t Val =  ShadowBytes[i];
-    if (!Val) continue;
-    Value *Ptr = IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i));
-    Value *Poison = ConstantInt::get(IRB.getInt8Ty(), DoPoison ? Val : 0);
-    IRB.CreateStore(Poison, IRB.CreateIntToPtr(Ptr, IRB.getInt8PtrTy()));
   }
 }
 
