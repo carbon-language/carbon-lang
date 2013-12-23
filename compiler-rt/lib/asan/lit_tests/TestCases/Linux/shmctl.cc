@@ -14,4 +14,5 @@ int main() {
   assert(res > -1);
   printf("shm_segsz: %zd\n", ds.shm_segsz);
   assert(ds.shm_segsz == 4096);
+  assert(-1 != shmctl(id, IPC_RMID, 0));
 }
