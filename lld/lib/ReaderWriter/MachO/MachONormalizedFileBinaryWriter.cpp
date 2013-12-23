@@ -54,9 +54,9 @@ namespace normalized {
 /// normalized file.  
 class MachOFileLayout {
 public:
-              /// All layout computation is done in the constructor.
-              MachOFileLayout(const NormalizedFile &file);
-              
+  /// All layout computation is done in the constructor.
+  MachOFileLayout(const NormalizedFile &file);
+
   /// Returns the final file size as computed in the constructor.
   size_t      size() const;
 
