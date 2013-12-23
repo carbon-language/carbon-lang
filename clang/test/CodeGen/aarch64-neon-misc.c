@@ -126,6 +126,18 @@ uint32x4_t test_vceqzq_f32(float32x4_t a) {
   return vceqzq_f32(a);
 }
 
+// CHECK: test_vceqz_p8
+// CHECK: cmeq  {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #0x0
+uint8x8_t test_vceqz_p8(poly8x8_t a) {
+  return vceqz_p8(a);
+}
+
+// CHECK: test_vceqzq_p8
+// CHECK: cmeq  {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #0x0
+uint8x16_t test_vceqzq_p8(poly8x16_t a) {
+  return vceqzq_p8(a);
+}
+
 // CHECK: test_vceqz_p16
 // CHECK: cmeq  {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, #0x0
 uint16x4_t test_vceqz_p16(poly16x4_t a) {
@@ -367,49 +379,49 @@ uint64x2_t test_vcgtzq_f64(float64x2_t a) {
 }
 
 // CHECK: test_vcltz_s8
-// CHECK: cmlt  {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #0
+// CHECK: sshr  {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #7
 uint8x8_t test_vcltz_s8(int8x8_t a) {
   return vcltz_s8(a);
 }
 
 // CHECK: test_vcltz_s16
-// CHECK: cmlt  {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, #0
+// CHECK: sshr  {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, #15
 uint16x4_t test_vcltz_s16(int16x4_t a) {
   return vcltz_s16(a);
 }
 
 // CHECK: test_vcltz_s32
-// CHECK: cmlt  {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #0
+// CHECK: sshr  {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #31
 uint32x2_t test_vcltz_s32(int32x2_t a) {
   return vcltz_s32(a);
 }
 
 // CHECK: test_vcltz_s64
-// CHECK: cmlt {{d[0-9]+}}, {{d[0-9]+}}, #0
+// CHECK: sshr {{d[0-9]+}}, {{d[0-9]+}}, #63
 uint64x1_t test_vcltz_s64(int64x1_t a) {
   return vcltz_s64(a);
 }
 
 // CHECK: test_vcltzq_s8
-// CHECK: cmlt  {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #0
+// CHECK: sshr  {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #7
 uint8x16_t test_vcltzq_s8(int8x16_t a) {
   return vcltzq_s8(a);
 }
 
 // CHECK: test_vcltzq_s16
-// CHECK: cmlt  {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, #0
+// CHECK: sshr  {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, #15
 uint16x8_t test_vcltzq_s16(int16x8_t a) {
   return vcltzq_s16(a);
 }
 
 // CHECK: test_vcltzq_s32
-// CHECK: cmlt  {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #0
+// CHECK: sshr  {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #31
 uint32x4_t test_vcltzq_s32(int32x4_t a) {
   return vcltzq_s32(a);
 }
 
 // CHECK: test_vcltzq_s64
-// CHECK: cmlt  {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #0
+// CHECK: sshr  {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #63
 uint64x2_t test_vcltzq_s64(int64x2_t a) {
   return vcltzq_s64(a);
 }
