@@ -8662,6 +8662,61 @@ def SHA1C : NeonI_Cryptosha3_qsv<0b00, 0b000, "sha1c", int_aarch64_neon_sha1c>;
 def SHA1P : NeonI_Cryptosha3_qsv<0b00, 0b001, "sha1p", int_aarch64_neon_sha1p>;
 def SHA1M : NeonI_Cryptosha3_qsv<0b00, 0b010, "sha1m", int_aarch64_neon_sha1m>;
 
+// Additional patterns to match shl to USHL.
+def : Pat<(v8i8 (shl (v8i8 VPR64:$Rn), (v8i8 VPR64:$Rm))),
+          (USHLvvv_8B $Rn, $Rm)>;
+def : Pat<(v4i16 (shl (v4i16 VPR64:$Rn), (v4i16 VPR64:$Rm))),
+          (USHLvvv_4H $Rn, $Rm)>;
+def : Pat<(v2i32 (shl (v2i32 VPR64:$Rn), (v2i32 VPR64:$Rm))),
+          (USHLvvv_2S $Rn, $Rm)>;
+def : Pat<(v1i64 (shl (v1i64 FPR64:$Rn), (v1i64 FPR64:$Rm))),
+          (USHLddd $Rn, $Rm)>;
+def : Pat<(v16i8 (shl (v16i8 VPR128:$Rn), (v16i8 VPR128:$Rm))),
+          (USHLvvv_16B $Rn, $Rm)>;
+def : Pat<(v8i16 (shl (v8i16 VPR128:$Rn), (v8i16 VPR128:$Rm))),
+          (USHLvvv_8H $Rn, $Rm)>;
+def : Pat<(v4i32 (shl (v4i32 VPR128:$Rn), (v4i32 VPR128:$Rm))),
+          (USHLvvv_4S $Rn, $Rm)>;
+def : Pat<(v2i64 (shl (v2i64 VPR128:$Rn), (v2i64 VPR128:$Rm))),
+          (USHLvvv_2D $Rn, $Rm)>;
+
+// Additional patterns to match sra, srl.
+// For a vector right shift by vector, the shift amounts of SSHL/USHL are
+// negative. Negate the vector of shift amount first.
+def : Pat<(v8i8 (srl (v8i8 VPR64:$Rn), (v8i8 VPR64:$Rm))),
+          (USHLvvv_8B $Rn, (NEG8b $Rm))>;
+def : Pat<(v4i16 (srl (v4i16 VPR64:$Rn), (v4i16 VPR64:$Rm))),
+          (USHLvvv_4H $Rn, (NEG4h $Rm))>;
+def : Pat<(v2i32 (srl (v2i32 VPR64:$Rn), (v2i32 VPR64:$Rm))),
+          (USHLvvv_2S $Rn, (NEG2s $Rm))>;
+def : Pat<(v1i64 (srl (v1i64 FPR64:$Rn), (v1i64 FPR64:$Rm))),
+          (USHLddd $Rn, (NEGdd $Rm))>;
+def : Pat<(v16i8 (srl (v16i8 VPR128:$Rn), (v16i8 VPR128:$Rm))),
+          (USHLvvv_16B $Rn, (NEG16b $Rm))>;
+def : Pat<(v8i16 (srl (v8i16 VPR128:$Rn), (v8i16 VPR128:$Rm))),
+          (USHLvvv_8H $Rn, (NEG8h $Rm))>;
+def : Pat<(v4i32 (srl (v4i32 VPR128:$Rn), (v4i32 VPR128:$Rm))),
+          (USHLvvv_4S $Rn, (NEG4s $Rm))>;
+def : Pat<(v2i64 (srl (v2i64 VPR128:$Rn), (v2i64 VPR128:$Rm))),
+          (USHLvvv_2D $Rn, (NEG2d $Rm))>;
+
+def : Pat<(v8i8 (sra (v8i8 VPR64:$Rn), (v8i8 VPR64:$Rm))),
+          (SSHLvvv_8B $Rn, (NEG8b $Rm))>;
+def : Pat<(v4i16 (sra (v4i16 VPR64:$Rn), (v4i16 VPR64:$Rm))),
+          (SSHLvvv_4H $Rn, (NEG4h $Rm))>;
+def : Pat<(v2i32 (sra (v2i32 VPR64:$Rn), (v2i32 VPR64:$Rm))),
+          (SSHLvvv_2S $Rn, (NEG2s $Rm))>;
+def : Pat<(v1i64 (sra (v1i64 FPR64:$Rn), (v1i64 FPR64:$Rm))),
+          (SSHLddd $Rn, (NEGdd $Rm))>;
+def : Pat<(v16i8 (sra (v16i8 VPR128:$Rn), (v16i8 VPR128:$Rm))),
+          (SSHLvvv_16B $Rn, (NEG16b $Rm))>;
+def : Pat<(v8i16 (sra (v8i16 VPR128:$Rn), (v8i16 VPR128:$Rm))),
+          (SSHLvvv_8H $Rn, (NEG8h $Rm))>;
+def : Pat<(v4i32 (sra (v4i32 VPR128:$Rn), (v4i32 VPR128:$Rm))),
+          (SSHLvvv_4S $Rn, (NEG4s $Rm))>;
+def : Pat<(v2i64 (sra (v2i64 VPR128:$Rn), (v2i64 VPR128:$Rm))),
+          (SSHLvvv_2D $Rn, (NEG2d $Rm))>;
+
 //
 // Patterns for handling half-precision values
 //
