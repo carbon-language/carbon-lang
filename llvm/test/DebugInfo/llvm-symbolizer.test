@@ -57,3 +57,12 @@ RUN: llvm-symbolizer < %t.input3 | FileCheck %s --check-prefix=UNKNOWN-ARCH
 UNKNOWN-ARCH-NOT: main
 UNKNOWN-ARCH: ??
 UNKNOWN-ARCH-NOT: main
+
+RUN: echo "0x400559" > %t.input4
+RUN: echo "0x400436" >> %t.input4
+RUN: llvm-symbolizer --obj %p/Inputs/dwarfdump-test.elf-x86-64 < %t.input4 \
+RUN:   | FileCheck %s --check-prefix=BINARY
+
+BINARY:       main
+BINARY-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16
+BINARY:      _start
