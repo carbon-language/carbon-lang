@@ -880,7 +880,9 @@ TSAN_INTERCEPTOR(int, pthread_create,
   {
     // Otherwise we see false positives in pthread stack manipulation.
     ScopedIgnoreInterceptors ignore;
+    ThreadIgnoreBegin(thr, pc);
     res = REAL(pthread_create)(th, attr, __tsan_thread_start_func, &p);
+    ThreadIgnoreEnd(thr, pc);
   }
   if (res == 0) {
     int tid = ThreadCreate(thr, pc, *(uptr*)th, detached);
@@ -897,7 +899,9 @@ TSAN_INTERCEPTOR(int, pthread_create,
 TSAN_INTERCEPTOR(int, pthread_join, void *th, void **ret) {
   SCOPED_INTERCEPTOR_RAW(pthread_join, th, ret);
   int tid = ThreadTid(thr, pc, (uptr)th);
+  ThreadIgnoreBegin(thr, pc);
   int res = BLOCK_REAL(pthread_join)(th, ret);
+  ThreadIgnoreEnd(thr, pc);
   if (res == 0) {
     ThreadJoin(thr, pc, tid);
   }
