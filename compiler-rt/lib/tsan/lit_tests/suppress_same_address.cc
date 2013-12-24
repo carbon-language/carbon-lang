@@ -1,9 +1,11 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && not %t 2>&1 | FileCheck %s
 #include <pthread.h>
+#include <unistd.h>
 
-int X;
+volatile int X;
 
 void *Thread1(void *x) {
+  sleep(1);
   X = 42;
   X = 66;
   X = 78;
