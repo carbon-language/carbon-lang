@@ -2271,7 +2271,7 @@ SDValue SystemZTargetLowering::lowerATOMIC_LOAD_OP(SDValue Op,
 }
 
 // Op is an ATOMIC_LOAD_SUB operation.  Lower 8- and 16-bit operations
-// two into ATOMIC_LOADW_SUBs and decide whether to convert 32- and 64-bit
+// into ATOMIC_LOADW_SUBs and decide whether to convert 32- and 64-bit
 // operations into additions.
 SDValue SystemZTargetLowering::lowerATOMIC_LOAD_SUB(SDValue Op,
                                                     SelectionDAG &DAG) const {
