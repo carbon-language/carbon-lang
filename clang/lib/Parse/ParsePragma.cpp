@@ -130,7 +130,7 @@ StmtResult Parser::HandlePragmaCaptured()
   ConsumeToken();
 
   if (Tok.isNot(tok::l_brace)) {
-    PP.Diag(Tok, diag::err_expected_lbrace);
+    PP.Diag(Tok, diag::err_expected) << tok::l_brace;
     return StmtError();
   }
 
@@ -815,7 +815,7 @@ void PragmaDetectMismatchHandler::HandlePragma(Preprocessor &PP,
   SourceLocation CommentLoc = Tok.getLocation();
   PP.Lex(Tok);
   if (Tok.isNot(tok::l_paren)) {
-    PP.Diag(CommentLoc, diag::err_expected_lparen);
+    PP.Diag(CommentLoc, diag::err_expected) << tok::l_paren;
     return;
   }
 
@@ -838,7 +838,7 @@ void PragmaDetectMismatchHandler::HandlePragma(Preprocessor &PP,
     return;
 
   if (Tok.isNot(tok::r_paren)) {
-    PP.Diag(Tok.getLocation(), diag::err_expected_rparen);
+    PP.Diag(Tok.getLocation(), diag::err_expected) << tok::r_paren;
     return;
   }
   PP.Lex(Tok);  // Eat the r_paren.

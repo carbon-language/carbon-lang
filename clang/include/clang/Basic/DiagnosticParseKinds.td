@@ -149,18 +149,10 @@ def err_expected_expression : Error<"expected expression">;
 def err_expected_type : Error<"expected a type">;
 def err_expected_external_declaration : Error<"expected external declaration">;
 def err_extraneous_closing_brace : Error<"extraneous closing brace ('}')">;
-def err_expected_ident : Error<"expected identifier">;
-def err_expected_ident_lparen : Error<"expected identifier or '('">;
-def err_expected_ident_lbrace : Error<"expected identifier or '{'">;
-def err_expected_lbrace : Error<"expected '{'">;
 def err_expected_lparen : Error<"expected '('">;
-def err_expected_lparen_or_lbrace : Error<"expected '(' or '{'">;
 def err_expected_rparen : Error<"expected ')'">;
-def err_expected_lsquare : Error<"expected '['">;
 def err_expected_rsquare : Error<"expected ']'">;
-def err_expected_rbrace : Error<"expected '}'">;
 def err_expected_greater : Error<"expected '>'">;
-def err_expected_ggg : Error<"expected '>>>'">;
 def err_expected_semi_declaration : Error<
   "expected ';' at end of declaration">;
 def err_expected_semi_decl_list : Error<
@@ -186,12 +178,10 @@ def err_expected_method_body : Error<"expected method body">;
 def err_invalid_token_after_toplevel_declarator : Error<
   "expected ';' after top level declarator">;
 def err_invalid_token_after_declarator_suggest_equal : Error<
-  "invalid '%0' at end of declaration; did you mean '='?">;
+  "invalid %0 at end of declaration; did you mean '='?">;
 def err_expected_statement : Error<"expected statement">;
 def err_expected_lparen_after : Error<"expected '(' after '%0'">;
-def err_expected_lparen_after_id : Error<"expected '(' after %0">;
 def err_expected_less_after : Error<"expected '<' after '%0'">;
-def err_expected_equal_after : Error<"expected '=' after %0">;
 def err_expected_comma : Error<"expected ','">;
 def err_expected_lbrace_in_compound_literal : Error<
   "expected '{' in compound literal">;
@@ -218,7 +208,6 @@ def err_expected_semi_after_attribute_list : Error<
 def err_expected_semi_after_static_assert : Error<
   "expected ';' after static_assert">;
 def err_expected_semi_for : Error<"expected ';' in 'for' statement specifier">;
-def err_expected_colon_after : Error<"expected ':' after %0">;
 def warn_missing_selector_name : Warning<
   "%0 used as the name of the previous parameter rather than as part "
   "of the selector">,
@@ -481,9 +470,6 @@ def warn_cxx98_compat_noexcept_decl : Warning<
   "noexcept specifications are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_expected_catch : Error<"expected catch">;
-def err_expected_lbrace_or_comma : Error<"expected '{' or ','">;
-def err_expected_rbrace_or_comma : Error<"expected '}' or ','">;
-def err_expected_rsquare_or_comma : Error<"expected ']' or ','">;
 def err_using_namespace_in_class : Error<
   "'using namespace' is not allowed in classes">;
 def err_constructor_bad_name : Error<

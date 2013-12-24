@@ -15,12 +15,14 @@
 #ifndef LLVM_CLANG_TOKENKINDS_H
 #define LLVM_CLANG_TOKENKINDS_H
 
+#include "llvm/Support/Compiler.h"
+
 namespace clang {
 
 namespace tok {
 
 /// \brief Provides a simple uniform namespace for tokens from all C languages.
-enum TokenKind {
+enum TokenKind LLVM_ENUM_INT_TYPE(unsigned) {
 #define TOK(X) X,
 #include "clang/Basic/TokenKinds.def"
   NUM_TOKENS

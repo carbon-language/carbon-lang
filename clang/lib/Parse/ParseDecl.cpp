@@ -813,7 +813,7 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
   // Opening '('.
   BalancedDelimiterTracker T(*this, tok::l_paren);
   if (T.consumeOpen()) {
-    Diag(Tok, diag::err_expected_lparen);
+    Diag(Tok, diag::err_expected) << tok::l_paren;
     return;
   }
 
@@ -865,8 +865,7 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
     }
 
     if (Tok.isNot(tok::equal)) {
-      Diag(Tok, diag::err_expected_equal_after)
-        << Keyword;
+      Diag(Tok, diag::err_expected_after) << Keyword << tok::equal;
       SkipUntil(tok::r_paren, StopAtSemi);
       return;
     }
@@ -978,7 +977,7 @@ void Parser::ParseObjCBridgeRelatedAttribute(IdentifierInfo &ObjCBridgeRelated,
   // Opening '('.
   BalancedDelimiterTracker T(*this, tok::l_paren);
   if (T.consumeOpen()) {
-    Diag(Tok, diag::err_expected_lparen);
+    Diag(Tok, diag::err_expected) << tok::l_paren;
     return;
   }
   
@@ -990,7 +989,7 @@ void Parser::ParseObjCBridgeRelatedAttribute(IdentifierInfo &ObjCBridgeRelated,
   }
   IdentifierLoc *RelatedClass = ParseIdentifierLoc();
   if (!TryConsumeToken(tok::comma)) {
-    Diag(Tok, diag::err_expected_comma);
+    Diag(Tok, diag::err_expected) << tok::comma;
     SkipUntil(tok::r_paren, StopAtSemi);
     return;
   }
@@ -1009,7 +1008,7 @@ void Parser::ParseObjCBridgeRelatedAttribute(IdentifierInfo &ObjCBridgeRelated,
     if (Tok.is(tok::colon))
       Diag(Tok, diag::err_objcbridge_related_selector_name);
     else
-      Diag(Tok, diag::err_expected_comma);
+      Diag(Tok, diag::err_expected) << tok::comma;
     SkipUntil(tok::r_paren, StopAtSemi);
     return;
   }
@@ -1019,7 +1018,7 @@ void Parser::ParseObjCBridgeRelatedAttribute(IdentifierInfo &ObjCBridgeRelated,
   if (Tok.is(tok::identifier))
     InstanceMethod = ParseIdentifierLoc();
   else if (Tok.isNot(tok::r_paren)) {
-    Diag(Tok, diag::err_expected_rparen);
+    Diag(Tok, diag::err_expected) << tok::r_paren;
     SkipUntil(tok::r_paren, StopAtSemi);
     return;
   }
@@ -1271,14 +1270,14 @@ void Parser::ParseTypeTagForDatatypeAttribute(IdentifierInfo &AttrName,
   T.consumeOpen();
 
   if (Tok.isNot(tok::identifier)) {
-    Diag(Tok, diag::err_expected_ident);
+    Diag(Tok, diag::err_expected) << tok::identifier;
     T.skipToEnd();
     return;
   }
   IdentifierLoc *ArgumentKind = ParseIdentifierLoc();
 
   if (Tok.isNot(tok::comma)) {
-    Diag(Tok, diag::err_expected_comma);
+    Diag(Tok, diag::err_expected) << tok::comma;
     T.skipToEnd();
     return;
   }
@@ -1295,7 +1294,7 @@ void Parser::ParseTypeTagForDatatypeAttribute(IdentifierInfo &AttrName,
   bool MustBeNull = false;
   while (TryConsumeToken(tok::comma)) {
     if (Tok.isNot(tok::identifier)) {
-      Diag(Tok, diag::err_expected_ident);
+      Diag(Tok, diag::err_expected) << tok::identifier;
       T.skipToEnd();
       return;
     }
@@ -3471,7 +3470,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       ConsumeToken();
       ExpectAndConsume(tok::l_paren, diag::err_expected_lparen);
       if (!Tok.is(tok::identifier)) {
-        Diag(Tok, diag::err_expected_ident);
+        Diag(Tok, diag::err_expected) << tok::identifier;
         SkipUntil(tok::semi);
         continue;
       }
@@ -3612,7 +3611,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       return;
 
     if (SS.isSet() && Tok.isNot(tok::identifier)) {
-      Diag(Tok, diag::err_expected_ident);
+      Diag(Tok, diag::err_expected) << tok::identifier;
       if (Tok.isNot(tok::l_brace)) {
         // Has no name and is not a definition.
         // Skip the rest of this declarator, up until the comma or semicolon.
@@ -3625,7 +3624,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   // Must have either 'enum name' or 'enum {...}'.
   if (Tok.isNot(tok::identifier) && Tok.isNot(tok::l_brace) &&
       !(AllowFixedUnderlyingType && Tok.is(tok::colon))) {
-    Diag(Tok, diag::err_expected_ident_lbrace);
+    Diag(Tok, diag::err_expected_either) << tok::identifier << tok::l_brace;
 
     // Skip the rest of this declarator, up until the comma or semicolon.
     SkipUntil(tok::comma, StopAtSemi);
@@ -4924,7 +4923,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
               << getLangOpts().CPlusPlus;
       }
     } else
-      Diag(Tok, diag::err_expected_ident_lparen);
+      Diag(Tok, diag::err_expected_either) << tok::identifier << tok::l_paren;
     D.SetIdentifier(0, Tok.getLocation());
     D.setInvalidType(true);
   }
@@ -5316,7 +5315,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(
   do {
     // If this isn't an identifier, report the error and skip until ')'.
     if (Tok.isNot(tok::identifier)) {
-      Diag(Tok, diag::err_expected_ident);
+      Diag(Tok, diag::err_expected) << tok::identifier;
       SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
       // Forget we parsed anything.
       ParamInfo.clear();

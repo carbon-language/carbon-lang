@@ -131,7 +131,7 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
 
     if (PeekTok.isNot(tok::r_paren)) {
       PP.Diag(PeekTok.getLocation(), diag::err_pp_missing_rparen) << "defined";
-      PP.Diag(LParenLoc, diag::note_matching) << "(";
+      PP.Diag(LParenLoc, diag::note_matching) << tok::l_paren;
       return true;
     }
     // Consume the ).
@@ -342,7 +342,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
       if (PeekTok.isNot(tok::r_paren)) {
         PP.Diag(PeekTok.getLocation(), diag::err_pp_expected_rparen)
           << Result.getRange();
-        PP.Diag(Start, diag::note_matching) << "(";
+        PP.Diag(Start, diag::note_matching) << tok::l_paren;
         return true;
       }
       DT.State = DefinedTracker::Unknown;
@@ -682,7 +682,7 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       if (PeekTok.isNot(tok::colon)) {
         PP.Diag(PeekTok.getLocation(), diag::err_expected_colon)
           << LHS.getRange(), RHS.getRange();
-        PP.Diag(OpLoc, diag::note_matching) << "?";
+        PP.Diag(OpLoc, diag::note_matching) << tok::question;
         return true;
       }
       // Consume the :.

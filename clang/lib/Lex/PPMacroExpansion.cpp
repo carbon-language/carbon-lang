@@ -1144,7 +1144,7 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
   if (Tok.isNot(tok::r_paren)) {
     PP.Diag(PP.getLocForEndOfToken(FilenameLoc), diag::err_pp_missing_rparen)
         << II->getName();
-    PP.Diag(LParenLoc, diag::note_matching) << "(";
+    PP.Diag(LParenLoc, diag::note_matching) << tok::l_paren;
     return false;
   }
 
@@ -1226,7 +1226,7 @@ static bool EvaluateBuildingModule(Token &Tok,
   // Ensure we have a trailing ).
   if (Tok.isNot(tok::r_paren)) {
     PP.Diag(Tok.getLocation(), diag::err_pp_missing_rparen) << II->getName();
-    PP.Diag(LParenLoc, diag::note_matching) << "(";
+    PP.Diag(LParenLoc, diag::note_matching) << tok::l_paren;
     return false;
   }
 

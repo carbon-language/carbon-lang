@@ -493,7 +493,7 @@ bool Parser::ParseMicrosoftIfExistsBraceInitializer(ExprVector &InitExprs,
   
   BalancedDelimiterTracker Braces(*this, tok::l_brace);
   if (Braces.consumeOpen()) {
-    Diag(Tok, diag::err_expected_lbrace);
+    Diag(Tok, diag::err_expected) << tok::l_brace;
     return false;
   }
 

@@ -342,16 +342,16 @@ private:
   SourceLocation ConsumeAnyToken(bool ConsumeCodeCompletionTok = false) {
     if (isTokenParen())
       return ConsumeParen();
-    else if (isTokenBracket())
+    if (isTokenBracket())
       return ConsumeBracket();
-    else if (isTokenBrace())
+    if (isTokenBrace())
       return ConsumeBrace();
-    else if (isTokenStringLiteral())
+    if (isTokenStringLiteral())
       return ConsumeStringToken();
-    else if (ConsumeCodeCompletionTok && Tok.is(tok::code_completion))
-      return ConsumeCodeCompletionToken();
-    else
-      return ConsumeToken();
+    if (Tok.is(tok::code_completion))
+      return ConsumeCodeCompletionTok ? ConsumeCodeCompletionToken()
+                                      : handleUnexpectedCodeCompletionToken();
+    return ConsumeToken();
   }
 
   /// ConsumeParen - This consume method keeps the paren count up-to-date.

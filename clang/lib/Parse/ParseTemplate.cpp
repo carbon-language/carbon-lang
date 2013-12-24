@@ -496,7 +496,7 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
     // Unnamed template parameter. Don't have to do anything here, just
     // don't consume this token.
   } else {
-    Diag(Tok.getLocation(), diag::err_expected_ident);
+    Diag(Tok.getLocation(), diag::err_expected) << tok::identifier;
     return 0;
   }
 
@@ -577,7 +577,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     // Unnamed template parameter. Don't have to do anything here, just
     // don't consume this token.
   } else {
-    Diag(Tok.getLocation(), diag::err_expected_ident);
+    Diag(Tok.getLocation(), diag::err_expected) << tok::identifier;
     return 0;
   }
 

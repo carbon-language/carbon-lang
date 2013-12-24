@@ -1699,7 +1699,8 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
     }
     
     if (IFace == 0) {
-      Diag(receiverNameLoc, diag::err_expected_ident_or_lparen);
+      Diag(receiverNameLoc, diag::err_expected_either) << tok::identifier
+                                                       << tok::l_paren;
       return ExprError();
     }
   }

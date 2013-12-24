@@ -225,8 +225,9 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
       IsCorrect = false;
       SkipUntil(tok::comma, tok::r_paren, tok::annot_pragma_openmp_end,
                 StopBeforeMatch);
-      Diag(PrevTok.getLocation(), diag::err_expected_ident)
-        << SourceRange(PrevTok.getLocation(), PrevTokLocation);
+      Diag(PrevTok.getLocation(), diag::err_expected)
+          << tok::identifier
+          << SourceRange(PrevTok.getLocation(), PrevTokLocation);
     } else {
       DeclarationNameInfo NameInfo = Actions.GetNameFromUnqualifiedId(Name);
       ExprResult Res = Actions.ActOnOpenMPIdExpression(getCurScope(), SS,
@@ -241,7 +242,7 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
   }
 
   if (NoIdentIsFound) {
-    Diag(Tok, diag::err_expected_ident);
+    Diag(Tok, diag::err_expected) << tok::identifier;
     IsCorrect = false;
   }
 

@@ -5752,7 +5752,6 @@ def err_incomplete_type_used_in_type_trait_expr : Error<
   
 def err_dimension_expr_not_constant_integer : Error<
   "dimension expression does not evaluate to a constant unsigned int">;
-def err_expected_ident_or_lparen : Error<"expected identifier or '('">;
 
 def err_typecheck_cond_incompatible_operands_null : Error<
   "non-pointer operand type %0 incompatible with %select{NULL|nullptr}1">;

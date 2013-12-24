@@ -91,7 +91,7 @@ Decl *Parser::ParseNamespace(unsigned Context,
 
   if (Tok.is(tok::equal)) {
     if (Ident == 0) {
-      Diag(Tok, diag::err_expected_ident);
+      Diag(Tok, diag::err_expected) << tok::identifier;
       // Skip to end of the definition and eat the ';'.
       SkipUntil(tok::semi);
       return 0;
@@ -111,8 +111,12 @@ Decl *Parser::ParseNamespace(unsigned Context,
       Diag(ExtraNamespaceLoc[0], diag::err_nested_namespaces_with_double_colon)
           << SourceRange(ExtraNamespaceLoc.front(), ExtraIdentLoc.back());
     }
-    Diag(Tok, Ident ? diag::err_expected_lbrace :
-         diag::err_expected_ident_lbrace);
+
+    if (Ident)
+      Diag(Tok, diag::err_expected) << tok::l_brace;
+    else
+      Diag(Tok, diag::err_expected_either) << tok::identifier << tok::l_brace;
+
     return 0;
   }
 
@@ -649,7 +653,7 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
 
   BalancedDelimiterTracker T(*this, tok::l_paren);
   if (T.consumeOpen()) {
-    Diag(Tok, diag::err_expected_lparen);
+    Diag(Tok, diag::err_expected) << tok::l_paren;
     SkipMalformedDecl();
     return 0;
   }
@@ -1202,7 +1206,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       DS.SetTypeSpecError();
     if (SS.isSet())
       if (Tok.isNot(tok::identifier) && Tok.isNot(tok::annot_template_id))
-        Diag(Tok, diag::err_expected_ident);
+        Diag(Tok, diag::err_expected) << tok::identifier;
   }
 
   TemplateParameterLists *TemplateParams = TemplateInfo.TemplateParams;
@@ -2798,7 +2802,8 @@ void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
         << FixItHint::CreateInsertion(Loc, ", ");
     } else {
       // Skip over garbage, until we get to '{'.  Don't eat the '{'.
-      Diag(Tok.getLocation(), diag::err_expected_lbrace_or_comma);
+      Diag(Tok.getLocation(), diag::err_expected_either) << tok::l_brace
+                                                         << tok::comma;
       SkipUntil(tok::l_brace, StopAtSemi | StopBeforeMatch);
       break;
     }
@@ -2896,9 +2901,10 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
                                        T.getCloseLocation(), EllipsisLoc);
   }
 
-  Diag(Tok, getLangOpts().CPlusPlus11 ? diag::err_expected_lparen_or_lbrace
-                                  : diag::err_expected_lparen);
-  return true;
+  if (getLangOpts().CPlusPlus11)
+    return Diag(Tok, diag::err_expected_either) << tok::l_paren << tok::l_brace;
+  else
+    return Diag(Tok, diag::err_expected) << tok::l_paren;
 }
 
 /// \brief Parse a C++ exception-specification if present (C++0x [except.spec]).
@@ -3261,7 +3267,7 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
 
       AttrName = TryParseCXX11AttributeIdentifier(AttrLoc);
       if (!AttrName) {
-        Diag(Tok.getLocation(), diag::err_expected_ident);
+        Diag(Tok.getLocation(), diag::err_expected) << tok::identifier;
         SkipUntil(tok::r_square, tok::comma, StopAtSemi | StopBeforeMatch);
         continue;
       }
@@ -3393,7 +3399,7 @@ void Parser::ParseMicrosoftIfExistsClassDeclaration(DeclSpec::TST TagType,
   
   BalancedDelimiterTracker Braces(*this, tok::l_brace);
   if (Braces.consumeOpen()) {
-    Diag(Tok, diag::err_expected_lbrace);
+    Diag(Tok, diag::err_expected) << tok::l_brace;
     return;
   }
 
