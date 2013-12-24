@@ -42,7 +42,7 @@ createModuleDefinitionFile(const PECOFFLinkingContext &ctx,
      << "EXPORTS\n";
 
   for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports()) {
-    os << "  " << desc.name << " @" << desc.ordinal;
+    os << "  " << ctx.undecorateSymbol(desc.name) << " @" << desc.ordinal;
     if (desc.noname)
       os << " NONAME";
     if (desc.isData)

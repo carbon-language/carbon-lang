@@ -892,6 +892,15 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
                     << inputArg->getValue() << "\n";
         return false;
       }
+
+      // Mangle the symbol name only if it is reading user-supplied command line
+      // arguments. Because the symbol name in the .drectve section is already
+      // mangled by the compiler, we shouldn't add a leading undescore here.
+      // It's odd that the command line option has different semantics in the
+      // .drectve section, but this behavior is needed for compatibility with
+      // MSVC's link.exe.
+      if (!isReadingDirectiveSection)
+        desc.name = ctx.decorateSymbol(desc.name);
       ctx.addDllExport(desc);
       break;
     }
