@@ -320,10 +320,10 @@ def MLSvvv_4S:  NeonI_3VSame_Constraint_impl<"mls", ".4s",  VPR128, v4i32,
 // Vector Multiply-accumulate and Multiply-subtract (Floating Point)
 
 def Neon_fmla : PatFrag<(ops node:$Ra, node:$Rn, node:$Rm),
-                        (fadd node:$Ra, (fmul node:$Rn, node:$Rm))>;
+                        (fadd node:$Ra, (fmul_su node:$Rn, node:$Rm))>;
 
 def Neon_fmls : PatFrag<(ops node:$Ra, node:$Rn, node:$Rm),
-                        (fsub node:$Ra, (fmul node:$Rn, node:$Rm))>;
+                        (fsub node:$Ra, (fmul_su node:$Rn, node:$Rm))>;
 
 let Predicates = [HasNEON, UseFusedMAC] in {
 def FMLAvvv_2S: NeonI_3VSame_Constraint_impl<"fmla", ".2s",  VPR64,  v2f32,

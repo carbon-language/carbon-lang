@@ -135,3 +135,29 @@ define float @test_fnmsub_unfused(float %a, float %b, float %c) {
   ret float %sum
 }
 
+; Another set of tests that check for multiply single use
+
+define float @test_fmadd_unfused_su(float %a, float %b, float %c) {
+; CHECK-LABEL: test_fmadd_unfused_su:
+  %prod = fmul float %b, %c
+  %sum = fadd float %a, %prod
+  %res = fadd float %sum, %prod
+; CHECK-NOT: fmadd {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK: fmul {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK: fadd {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK: fadd {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+  ret float %res
+}
+
+define float @test_fmsub_unfused_su(float %a, float %b, float %c) {
+; CHECK-LABEL: test_fmsub_unfused_su:
+  %prod = fmul float %b, %c
+  %diff = fsub float %a, %prod
+  %res = fsub float %diff, %prod
+; CHECK-NOT: fmsub {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK: fmul {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK: fsub {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK: fsub {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
+  ret float %res
+}
+

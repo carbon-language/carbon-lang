@@ -111,3 +111,22 @@ define <2 x double> @fmuladd2xdouble_fused(<2 x double> %A, <2 x double> %B, <2 
 	ret <2 x double> %val
 }
 
+
+; Another set of tests that check for multiply single use
+
+define <2 x float> @fmla2xfloati_su(<2 x float> %A, <2 x float> %B, <2 x float> %C) {
+;CHECK-NOT: fmla {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+  %tmp1 = fmul <2 x float> %A, %B;
+  %tmp2 = fadd <2 x float> %C, %tmp1;
+  %tmp3 = fadd <2 x float> %tmp2, %tmp1;
+  ret <2 x float> %tmp3
+}
+
+define <2 x double> @fmls2xdouble_su(<2 x double> %A, <2 x double> %B, <2 x double> %C) {
+;CHECK-NOT: fmls {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
+        %tmp1 = fmul <2 x double> %A, %B;
+        %tmp2 = fsub <2 x double> %C, %tmp1;
+        %tmp3 = fsub <2 x double> %tmp2, %tmp1;
+        ret <2 x double> %tmp3
+}
+
