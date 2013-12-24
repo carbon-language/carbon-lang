@@ -382,7 +382,8 @@ static void CollectLeaksCb(uptr chunk, void *arg) {
     } else {
       stack_trace_id = m.stack_trace_id();
     }
-    leak_report->Add(chunk, stack_trace_id, m.requested_size(), m.tag());
+    leak_report->AddLeakedChunk(chunk, stack_trace_id, m.requested_size(),
+                                m.tag());
   }
 }
 
@@ -411,7 +412,6 @@ static void DoLeakCheckCallback(const SuspendedThreadsList &suspended_threads,
   DoLeakCheckParam *param = reinterpret_cast<DoLeakCheckParam *>(arg);
   CHECK(param);
   CHECK(!param->success);
-  CHECK(param->leak_report.IsEmpty());
   ClassifyAllChunks(suspended_threads);
   ForEachChunk(CollectLeaksCb, &param->leak_report);
   param->success = true;
@@ -438,8 +438,9 @@ void DoLeakCheck() {
     Report("LeakSanitizer has encountered a fatal error.\n");
     Die();
   }
-  uptr have_unsuppressed = param.leak_report.ApplySuppressions();
-  if (have_unsuppressed) {
+  param.leak_report.ApplySuppressions();
+  uptr unsuppressed_count = param.leak_report.UnsuppressedLeakCount();
+  if (unsuppressed_count > 0) {
     Decorator d;
     Printf("\n"
            "================================================================="
@@ -447,11 +448,11 @@ void DoLeakCheck() {
     Printf("%s", d.Error());
     Report("ERROR: LeakSanitizer: detected memory leaks\n");
     Printf("%s", d.End());
-    param.leak_report.PrintLargest(flags()->max_leaks);
+    param.leak_report.ReportTopLeaks(flags()->max_leaks);
   }
   if (flags()->print_suppressions)
     PrintMatchedSuppressions();
-  if (have_unsuppressed) {
+  if (unsuppressed_count > 0) {
     param.leak_report.PrintSummary();
     if (flags()->exitcode)
       internal__exit(flags()->exitcode);
@@ -488,14 +489,14 @@ static Suppression *GetSuppressionForStack(u32 stack_trace_id) {
 ///// LeakReport implementation. /////
 
 // A hard limit on the number of distinct leaks, to avoid quadratic complexity
-// in LeakReport::Add(). We don't expect to ever see this many leaks in
-// real-world applications.
+// in LeakReport::AddLeakedChunk(). We don't expect to ever see this many leaks
+// in real-world applications.
 // FIXME: Get rid of this limit by changing the implementation of LeakReport to
 // use a hash table.
 const uptr kMaxLeaksConsidered = 5000;
 
-void LeakReport::Add(uptr chunk, u32 stack_trace_id, uptr leaked_size,
-                     ChunkTag tag) {
+void LeakReport::AddLeakedChunk(uptr chunk, u32 stack_trace_id,
+                                uptr leaked_size, ChunkTag tag) {
   CHECK(tag == kDirectlyLeaked || tag == kIndirectlyLeaked);
   bool is_directly_leaked = (tag == kDirectlyLeaked);
   uptr i;
@@ -526,7 +527,7 @@ static bool LeakComparator(const Leak &leak1, const Leak &leak2) {
     return leak1.is_directly_leaked;
 }
 
-void LeakReport::PrintLargest(uptr num_leaks_to_print) {
+void LeakReport::ReportTopLeaks(uptr num_leaks_to_report) {
   CHECK(leaks_.size() <= kMaxLeaksConsidered);
   Printf("\n");
   if (leaks_.size() == kMaxLeaksConsidered)
@@ -534,39 +535,46 @@ void LeakReport::PrintLargest(uptr num_leaks_to_print) {
            "reported.\n",
            kMaxLeaksConsidered);
 
-  uptr unsuppressed_count = 0;
-  for (uptr i = 0; i < leaks_.size(); i++)
-    if (!leaks_[i].is_suppressed) unsuppressed_count++;
-  if (num_leaks_to_print > 0 && num_leaks_to_print < unsuppressed_count)
-    Printf("The %zu largest leak(s):\n", num_leaks_to_print);
+  uptr unsuppressed_count = UnsuppressedLeakCount();
+  if (num_leaks_to_report > 0 && num_leaks_to_report < unsuppressed_count)
+    Printf("The %zu top leak(s):\n", num_leaks_to_report);
   InternalSort(&leaks_, leaks_.size(), LeakComparator);
-  uptr leaks_printed = 0;
-  Decorator d;
+  uptr leaks_reported = 0;
   for (uptr i = 0; i < leaks_.size(); i++) {
     if (leaks_[i].is_suppressed) continue;
-    Printf("%s", d.Leak());
-    Printf("%s leak of %zu byte(s) in %zu object(s) allocated from:\n",
-           leaks_[i].is_directly_leaked ? "Direct" : "Indirect",
-           leaks_[i].total_size, leaks_[i].hit_count);
-    Printf("%s", d.End());
-    PrintStackTraceById(leaks_[i].stack_trace_id);
-
-    if (flags()->report_objects) {
-      Printf("Objects leaked above:\n");
-      for (uptr j = 0; j < leaked_objects_.size(); j++) {
-        if (leaked_objects_[j].id == leaks_[i].id)
-          Printf("%p (%zu bytes)\n", leaked_objects_[j].addr,
-                 leaked_objects_[j].size);
-      }
-      Printf("\n");
-    }
-
-    leaks_printed++;
-    if (leaks_printed == num_leaks_to_print) break;
+    PrintReportForLeak(i);
+    leaks_reported++;
+    if (leaks_reported == num_leaks_to_report) break;
   }
-  if (leaks_printed < unsuppressed_count) {
-    uptr remaining = unsuppressed_count - leaks_printed;
+  if (leaks_reported < unsuppressed_count) {
+    uptr remaining = unsuppressed_count - leaks_reported;
     Printf("Omitting %zu more leak(s).\n", remaining);
+  }
+}
+
+void LeakReport::PrintReportForLeak(uptr index) {
+  Decorator d;
+  Printf("%s", d.Leak());
+  Printf("%s leak of %zu byte(s) in %zu object(s) allocated from:\n",
+         leaks_[index].is_directly_leaked ? "Direct" : "Indirect",
+         leaks_[index].total_size, leaks_[index].hit_count);
+  Printf("%s", d.End());
+
+  PrintStackTraceById(leaks_[index].stack_trace_id);
+
+  if (flags()->report_objects) {
+    Printf("Objects leaked above:\n");
+    PrintLeakedObjectsForLeak(index);
+    Printf("\n");
+  }
+}
+
+void LeakReport::PrintLeakedObjectsForLeak(uptr index) {
+  u32 leak_id = leaks_[index].id;
+  for (uptr j = 0; j < leaked_objects_.size(); j++) {
+    if (leaked_objects_[j].leak_id == leak_id)
+      Printf("%p (%zu bytes)\n", leaked_objects_[j].addr,
+             leaked_objects_[j].size);
   }
 }
 
@@ -585,20 +593,24 @@ void LeakReport::PrintSummary() {
   ReportErrorSummary(summary.data());
 }
 
-uptr LeakReport::ApplySuppressions() {
-  uptr unsuppressed_count = 0;
+void LeakReport::ApplySuppressions() {
   for (uptr i = 0; i < leaks_.size(); i++) {
     Suppression *s = GetSuppressionForStack(leaks_[i].stack_trace_id);
     if (s) {
       s->weight += leaks_[i].total_size;
       s->hit_count += leaks_[i].hit_count;
       leaks_[i].is_suppressed = true;
-    } else {
-    unsuppressed_count++;
     }
   }
-  return unsuppressed_count;
 }
+
+uptr LeakReport::UnsuppressedLeakCount() {
+  uptr result = 0;
+  for (uptr i = 0; i < leaks_.size(); i++)
+    if (!leaks_[i].is_suppressed) result++;
+  return result;
+}
+
 }  // namespace __lsan
 #endif  // CAN_SANITIZE_LEAKS
 
