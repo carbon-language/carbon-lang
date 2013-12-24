@@ -30,7 +30,7 @@ using namespace lld;
 
 namespace {
 
-// Create enum with OPT_xxx values for each option in DarwinOptions.td
+// Create enum with OPT_xxx values for each option in CoreOptions.td
 enum {
   OPT_INVALID = 0,
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
