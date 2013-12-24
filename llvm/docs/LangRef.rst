@@ -366,6 +366,18 @@ added in the future:
     accessed runtime components pinned to specific hardware registers.
     At the moment only X86 supports this convention (both 32 and 64
     bit).
+"``webkit_jscc``" - WebKit's JavaScript calling convention
+    This calling convention has been implemented for `WebKit FTL JIT
+    <https://trac.webkit.org/wiki/FTLJIT>`_. It passes arguments on the
+    stack right to left (as cdecl does), and returns a value in the
+    platform's customary return register.
+"``anyregcc``" - Dynamic calling convention for code patching
+    This is a special convention that supports patching an arbitrary code
+    sequence in place of a call site. This convention forces the call
+    arguments into registers but allows them to be dynamcially
+    allocated. This can currently only be used with calls to
+    llvm.experimental.patchpoint because only this intrinsic records
+    the location of its arguments in a side table. See :doc:`StackMaps`.
 "``cc <n>``" - Numbered convention
     Any calling convention may be specified by number, allowing
     target-specific calling conventions to be used. Target specific
@@ -8912,3 +8924,10 @@ Semantics:
 
 This intrinsic does nothing, and it's removed by optimizers and ignored
 by codegen.
+
+Stack Map Intrinsics
+--------------------
+
+LLVM provides experimental intrinsics to support runtime patching
+mechanisms commonly desired in dynamic language JITs. These intrinsics
+are described in :doc:`StackMaps`.

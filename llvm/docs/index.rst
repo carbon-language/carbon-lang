@@ -234,6 +234,7 @@ For API clients and LLVM developers.
    TableGen/LangRef
    HowToUseAttributes
    NVPTXUsage
+   StackMaps
 
 :doc:`WritingAnLLVMPass`
    Information on how to write LLVM transformations and analyses.
@@ -308,6 +309,9 @@ For API clients and LLVM developers.
 :doc:`NVPTXUsage`
    This document describes using the NVPTX back-end to compile GPU kernels.
 
+:doc:`StackMaps`
+  LLVM support for mapping instruction addresses to the location of
+  values and allowing code to be patched.
 
 Development Process Documentation
 =================================
