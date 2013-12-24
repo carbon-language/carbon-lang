@@ -38,3 +38,22 @@ define i32 @test3(float %a, float %b) {
   %conv11.i = zext i1 %cmp10.i to i32
   ret i32 %conv11.i
 }
+
+; CHECK-LABEL: test4
+; CHECK: kortestw
+; CHECK: jne
+; CHECK: ret
+declare i32 @llvm.x86.avx512.kortestz.w(i16, i16)
+
+define i16 @test4(i16 %a, i16 %b) {
+  %kortz = call i32 @llvm.x86.avx512.kortestz.w(i16 %a, i16 %b)
+  %t1 = and i32 %kortz, 1
+  %res = icmp eq i32 %t1, 0
+  br i1 %res, label %A, label %B
+
+ A: ret i16 %a
+ B:
+ %b1 = add i16 %a, %b
+ ret i16 %b1
+
+}

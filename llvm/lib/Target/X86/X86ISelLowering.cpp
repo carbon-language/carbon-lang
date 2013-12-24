@@ -9080,12 +9080,13 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   if (VT == MVT::i1) {
     assert((InVT.isInteger() && (InVT.getSizeInBits() <= 64)) &&
            "Invalid scalar TRUNCATE operation");
-    In = DAG.getNode(ISD::AND, DL, InVT, In, DAG.getConstant(1, InVT));
+    if (InVT == MVT::i32)
+      return SDValue();
     if (InVT.getSizeInBits() == 64)
       In = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, MVT::i32, In);
     else if (InVT.getSizeInBits() < 32)
       In = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, In);
-    return DAG.getNode(X86ISD::TRUNC, DL, VT, In);
+    return DAG.getNode(ISD::TRUNCATE, DL, VT, In);
   }
   assert(VT.getVectorNumElements() == InVT.getVectorNumElements() &&
          "Invalid TRUNCATE operation");
@@ -9558,11 +9559,14 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
   // See if we can use the EFLAGS value from the operand instead of
   // doing a separate TEST. TEST always sets OF and CF to 0, so unless
   // we prove that the arithmetic won't overflow, we can't use OF or CF.
-  if (Op.getResNo() != 0 || NeedOF || NeedCF)
+  if (Op.getResNo() != 0 || NeedOF || NeedCF) {
     // Emit a CMP with 0, which is the TEST pattern.
+    if (Op.getValueType() == MVT::i1)
+      return DAG.getNode(X86ISD::CMP, dl, MVT::i1, Op,
+                         DAG.getConstant(0, MVT::i1));
     return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op,
                        DAG.getConstant(0, Op.getValueType()));
-
+  }
   unsigned Opcode = 0;
   unsigned NumOperands = 0;
 
@@ -9753,8 +9757,10 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
       return EmitTest(Op0, X86CC, DAG);
 
      if (Op0.getValueType() == MVT::i1) {
-      Op0 = DAG.getNode(ISD::XOR, dl, MVT::i1, Op0, DAG.getConstant(-1, MVT::i1));
-      return DAG.getNode(X86ISD::CMP, dl, MVT::i1, Op0, Op0);
+      Op0 = DAG.getNode(ISD::XOR, dl, MVT::i1, Op0,
+                        DAG.getConstant(-1, MVT::i1));
+      return DAG.getNode(X86ISD::CMP, dl, MVT::i1, Op0,
+                         DAG.getConstant(0, MVT::i1));
      }
   }
  
@@ -11583,7 +11589,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     SDValue RHS = DAG.getNode(ISD::BITCAST, dl, MVT::v16i1, Op.getOperand(2));
     SDValue CC = DAG.getConstant(X86CC, MVT::i8);
     SDValue Test = DAG.getNode(X86ISD::KORTEST, dl, MVT::i32, LHS, RHS);
-    SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8, CC, Test);
+    SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i1, CC, Test);
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
 
@@ -18946,6 +18952,17 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
     }
   }
 
+  if (N0.getOpcode() == ISD::TRUNCATE &&
+      N0.hasOneUse() &&
+      N0.getOperand(0).hasOneUse()) {
+    SDValue N00 = N0.getOperand(0);
+    if (N00.getOpcode() == X86ISD::SETCC_CARRY) {
+      return DAG.getNode(ISD::AND, dl, VT,
+                         DAG.getNode(X86ISD::SETCC_CARRY, dl, VT,
+                                     N00.getOperand(0), N00.getOperand(1)),
+                         DAG.getConstant(1, VT));
+    }
+  }
   if (VT.is256BitVector()) {
     SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget);
     if (R.getNode())
@@ -18984,11 +19001,17 @@ static SDValue PerformISDSETCCCombine(SDNode *N, SelectionDAG &DAG) {
 // Helper function of PerformSETCCCombine. It is to materialize "setb reg"
 // as "sbb reg,reg", since it can be extended without zext and produces
 // an all-ones bit which is more useful than 0/1 in some cases.
-static SDValue MaterializeSETB(SDLoc DL, SDValue EFLAGS, SelectionDAG &DAG) {
-  return DAG.getNode(ISD::AND, DL, MVT::i8,
+static SDValue MaterializeSETB(SDLoc DL, SDValue EFLAGS, SelectionDAG &DAG,
+                               MVT VT) {
+  if (VT == MVT::i8)
+    return DAG.getNode(ISD::AND, DL, VT,
+                       DAG.getNode(X86ISD::SETCC_CARRY, DL, MVT::i8,
+                                   DAG.getConstant(X86::COND_B, MVT::i8), EFLAGS),
+                       DAG.getConstant(1, VT));
+  assert (VT == MVT::i1 && "Unexpected type for SECCC node");
+  return DAG.getNode(ISD::TRUNCATE, DL, MVT::i1,
                      DAG.getNode(X86ISD::SETCC_CARRY, DL, MVT::i8,
-                                 DAG.getConstant(X86::COND_B, MVT::i8), EFLAGS),
-                     DAG.getConstant(1, MVT::i8));
+                                 DAG.getConstant(X86::COND_B, MVT::i8), EFLAGS));
 }
 
 // Optimize  RES = X86ISD::SETCC CONDCODE, EFLAG_INPUT
@@ -19013,7 +19036,7 @@ static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG,
                                    EFLAGS.getNode()->getVTList(),
                                    EFLAGS.getOperand(1), EFLAGS.getOperand(0));
       SDValue NewEFLAGS = SDValue(NewSub.getNode(), EFLAGS.getResNo());
-      return MaterializeSETB(DL, NewEFLAGS, DAG);
+      return MaterializeSETB(DL, NewEFLAGS, DAG, N->getSimpleValueType(0));
     }
   }
 
@@ -19021,7 +19044,7 @@ static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG,
   // a zext and produces an all-ones bit which is more useful than 0/1 in some
   // cases.
   if (CC == X86::COND_B)
-    return MaterializeSETB(DL, EFLAGS, DAG);
+    return MaterializeSETB(DL, EFLAGS, DAG, N->getSimpleValueType(0));
 
   SDValue Flags;
 

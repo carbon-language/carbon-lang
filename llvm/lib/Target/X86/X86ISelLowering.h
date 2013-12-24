@@ -260,9 +260,6 @@ namespace llvm {
       // VTRUNC - Vector integer truncate.
       VTRUNC,
 
-      // TRUNC - Integer truncate
-      TRUNC,
-
       // VTRUNC - Vector integer truncate with mask.
       VTRUNCM,
 

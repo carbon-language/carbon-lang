@@ -909,10 +909,17 @@ let Predicates = [HasAVX512] in {
   def : Pat<(v8i1 (load addr:$src)),
             (COPY_TO_REGCLASS (KMOVWkm addr:$src), VK8)>;
 
-  def : Pat<(i1 (X86trunc (i32 GR32:$src))),
+  def : Pat<(i1 (trunc (i32 GR32:$src))),
             (COPY_TO_REGCLASS (KMOVWkr $src), VK1)>;
+
+  def : Pat<(i1 (trunc (i8 GR8:$src))),
+            (COPY_TO_REGCLASS
+             (KMOVWkr (SUBREG_TO_REG (i32 0), GR8:$src, sub_8bit)), VK1)>;
             
   def : Pat<(i32 (zext VK1:$src)), (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16))>;
+  def : Pat<(i8 (zext VK1:$src)),
+            (EXTRACT_SUBREG
+             (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16)), sub_8bit)>;
 }
 // With AVX-512 only, 8-bit mask is promoted to 16-bit mask.
 let Predicates = [HasAVX512] in {
@@ -1087,9 +1094,9 @@ multiclass avx512_mask_testop_w<bits<8> opc, string OpcodeStr, SDNode OpNode> {
 
 defm KORTEST : avx512_mask_testop_w<0x98, "kortest", X86kortest>;
 
-def : Pat<(X86cmp VK1:$src1, VK1:$src2),
+def : Pat<(X86cmp VK1:$src1, (i1 0)),
           (KORTESTWrr (COPY_TO_REGCLASS VK1:$src1, VK16),
-           (COPY_TO_REGCLASS VK1:$src2, VK16))>;
+           (COPY_TO_REGCLASS VK1:$src1, VK16))>;
 
 // Mask shift
 multiclass avx512_mask_shiftop<bits<8> opc, string OpcodeStr, RegisterClass KRC,
