@@ -113,6 +113,116 @@
 	fixbra	%f2, 0, %f0, 0
 
 #CHECK: error: invalid operand
+#CHECK: laa	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: laa	%r0, %r0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: laa	%r0, %r0, 0(%r1,%r2)
+
+	laa	%r0, %r0, -524289
+	laa	%r0, %r0, 524288
+	laa	%r0, %r0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: laag	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: laag	%r0, %r0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: laag	%r0, %r0, 0(%r1,%r2)
+
+	laag	%r0, %r0, -524289
+	laag	%r0, %r0, 524288
+	laag	%r0, %r0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: laal	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: laal	%r0, %r0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: laal	%r0, %r0, 0(%r1,%r2)
+
+	laal	%r0, %r0, -524289
+	laal	%r0, %r0, 524288
+	laal	%r0, %r0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: laalg	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: laalg	%r0, %r0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: laalg	%r0, %r0, 0(%r1,%r2)
+
+	laalg	%r0, %r0, -524289
+	laalg	%r0, %r0, 524288
+	laalg	%r0, %r0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: lan	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: lan	%r0, %r0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: lan	%r0, %r0, 0(%r1,%r2)
+
+	lan	%r0, %r0, -524289
+	lan	%r0, %r0, 524288
+	lan	%r0, %r0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: lang	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: lang	%r0, %r0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: lang	%r0, %r0, 0(%r1,%r2)
+
+	lang	%r0, %r0, -524289
+	lang	%r0, %r0, 524288
+	lang	%r0, %r0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: lao	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: lao	%r0, %r0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: lao	%r0, %r0, 0(%r1,%r2)
+
+	lao	%r0, %r0, -524289
+	lao	%r0, %r0, 524288
+	lao	%r0, %r0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: laog	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: laog	%r0, %r0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: laog	%r0, %r0, 0(%r1,%r2)
+
+	laog	%r0, %r0, -524289
+	laog	%r0, %r0, 524288
+	laog	%r0, %r0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: lax	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: lax	%r0, %r0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: lax	%r0, %r0, 0(%r1,%r2)
+
+	lax	%r0, %r0, -524289
+	lax	%r0, %r0, 524288
+	lax	%r0, %r0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: laxg	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: laxg	%r0, %r0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: laxg	%r0, %r0, 0(%r1,%r2)
+
+	laxg	%r0, %r0, -524289
+	laxg	%r0, %r0, 524288
+	laxg	%r0, %r0, 0(%r1,%r2)
+
+#CHECK: error: invalid operand
 #CHECK: lbh	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: lbh	%r0, 524288

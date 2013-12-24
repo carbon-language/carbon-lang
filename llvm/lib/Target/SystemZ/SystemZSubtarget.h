@@ -33,6 +33,7 @@ protected:
   bool HasHighWord;
   bool HasFPExtension;
   bool HasFastSerialization;
+  bool HasInterlockedAccess1;
 
 private:
   Triple TargetTriple;
@@ -61,6 +62,9 @@ public:
 
   // Return true if the target has the fast-serialization facility.
   bool hasFastSerialization() const { return HasFastSerialization; }
+
+  // Return true if the target has interlocked-access facility 1.
+  bool hasInterlockedAccess1() const { return HasInterlockedAccess1; }
 
   // Return true if GV can be accessed using LARL for reloc model RM
   // and code model CM.

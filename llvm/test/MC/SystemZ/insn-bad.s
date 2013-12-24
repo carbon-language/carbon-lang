@@ -1393,6 +1393,46 @@
 	la	%r0, -1
 	la	%r0, 4096
 
+#CHECK: error: {{(instruction requires: interlocked-access1)?}}
+#CHECK: laa	%r1, %r2, 100(%r3)
+	laa	%r1, %r2, 100(%r3)
+
+#CHECK: error: {{(instruction requires: interlocked-access1)?}}
+#CHECK: laag	%r1, %r2, 100(%r3)
+	laag	%r1, %r2, 100(%r3)
+
+#CHECK: error: {{(instruction requires: interlocked-access1)?}}
+#CHECK: laal	%r1, %r2, 100(%r3)
+	laal	%r1, %r2, 100(%r3)
+
+#CHECK: error: {{(instruction requires: interlocked-access1)?}}
+#CHECK: laalg	%r1, %r2, 100(%r3)
+	laalg	%r1, %r2, 100(%r3)
+
+#CHECK: error: {{(instruction requires: interlocked-access1)?}}
+#CHECK: lan	%r1, %r2, 100(%r3)
+	lan	%r1, %r2, 100(%r3)
+
+#CHECK: error: {{(instruction requires: interlocked-access1)?}}
+#CHECK: lang	%r1, %r2, 100(%r3)
+	lang	%r1, %r2, 100(%r3)
+
+#CHECK: error: {{(instruction requires: interlocked-access1)?}}
+#CHECK: lao	%r1, %r2, 100(%r3)
+	lao	%r1, %r2, 100(%r3)
+
+#CHECK: error: {{(instruction requires: interlocked-access1)?}}
+#CHECK: laog	%r1, %r2, 100(%r3)
+	laog	%r1, %r2, 100(%r3)
+
+#CHECK: error: {{(instruction requires: interlocked-access1)?}}
+#CHECK: lax	%r1, %r2, 100(%r3)
+	lax	%r1, %r2, 100(%r3)
+
+#CHECK: error: {{(instruction requires: interlocked-access1)?}}
+#CHECK: laxg	%r1, %r2, 100(%r3)
+	laxg	%r1, %r2, 100(%r3)
+
 #CHECK: error: offset out of range
 #CHECK: larl	%r0, -0x1000000002
 #CHECK: error: offset out of range

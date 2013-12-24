@@ -1203,6 +1203,19 @@ def PFDRL : PrefetchRILPC<"pfdrl", 0xC62, z_prefetch>;
 
 def Serialize : Alias<2, (outs), (ins), [(z_serialize)]>;
 
+let Predicates = [FeatureInterlockedAccess1], Defs = [CC] in {
+  def LAA   : LoadAndOpRSY<"laa",   0xEBF8, null_frag, GR32>;
+  def LAAG  : LoadAndOpRSY<"laag",  0xEBE8, null_frag, GR64>;
+  def LAAL  : LoadAndOpRSY<"laal",  0xEBFA, null_frag, GR32>;
+  def LAALG : LoadAndOpRSY<"laalg", 0xEBEA, null_frag, GR64>;
+  def LAN   : LoadAndOpRSY<"lan",   0xEBF4, null_frag, GR32>;
+  def LANG  : LoadAndOpRSY<"lang",  0xEBE4, null_frag, GR64>;
+  def LAO   : LoadAndOpRSY<"lao",   0xEBF6, null_frag, GR32>;
+  def LAOG  : LoadAndOpRSY<"laog",  0xEBE6, null_frag, GR64>;
+  def LAX   : LoadAndOpRSY<"lax",   0xEBF7, null_frag, GR32>;
+  def LAXG  : LoadAndOpRSY<"laxg",  0xEBE7, null_frag, GR64>;
+}
+
 def ATOMIC_SWAPW        : AtomicLoadWBinaryReg<z_atomic_swapw>;
 def ATOMIC_SWAP_32      : AtomicLoadBinaryReg32<atomic_swap_32>;
 def ATOMIC_SWAP_64      : AtomicLoadBinaryReg64<atomic_swap_64>;

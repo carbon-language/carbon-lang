@@ -531,6 +531,10 @@ class InstSS<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
 //   Ternary:
 //     One register output operand and three register input operands.
 //
+//   LoadAndOp:
+//     One output operand and two input operands.  The first input operand
+//     is a register and the second is an address.
+//
 //   CmpSwap:
 //     One output operand and three input operands.  The first two
 //     operands are registers and the third is an address.  The instruction
@@ -1265,6 +1269,15 @@ class TernaryRXF<string mnemonic, bits<16> opcode, SDPatternOperator operator,
   let DisableEncoding = "$R1src";
   let mayLoad = 1;
   let AccessBytes = bytes;
+}
+
+class LoadAndOpRSY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
+                  RegisterOperand cls, AddressingMode mode = bdaddr20only>
+  : InstRSY<opcode, (outs cls:$R1), (ins cls:$R3, mode:$BD2),
+            mnemonic#"\t$R1, $R3, $BD2",
+            [(set cls:$R1, (operator mode:$BD2, cls:$R3))]> {
+  let mayLoad = 1;
+  let mayStore = 1;
 }
 
 class CmpSwapRS<string mnemonic, bits<8> opcode, SDPatternOperator operator,
