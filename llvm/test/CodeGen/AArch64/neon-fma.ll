@@ -110,3 +110,4 @@ define <2 x double> @fmuladd2xdouble_fused(<2 x double> %A, <2 x double> %B, <2 
         %val = call <2 x double> @llvm.fmuladd.v2f64(<2 x double> %A, <2 x double> %B, <2 x double> %C)
 	ret <2 x double> %val
 }
+

@@ -2172,9 +2172,9 @@ defm FSUB : A64I_fpdp2sizes<0b0011, "fsub", fsub>;
 
 def fmsub : PatFrag<(ops node:$Rn, node:$Rm, node:$Ra),
                     (fma (fneg node:$Rn),  node:$Rm, node:$Ra)>;
-def fnmadd : PatFrag<(ops node:$Rn, node:$Rm, node:$Ra),
-                     (fma node:$Rn,  node:$Rm, (fneg node:$Ra))>;
 def fnmsub : PatFrag<(ops node:$Rn, node:$Rm, node:$Ra),
+                     (fma node:$Rn,  node:$Rm, (fneg node:$Ra))>;
+def fnmadd : PatFrag<(ops node:$Rn, node:$Rm, node:$Ra),
                      (fma (fneg node:$Rn),  node:$Rm, (fneg node:$Ra))>;
 
 class A64I_fpdp3Impl<string asmop, RegisterClass FPR, ValueType VT,
@@ -2202,18 +2202,18 @@ def : Pat<(f32 (fadd FPR32:$Ra, (f32 (fmul FPR32:$Rn, FPR32:$Rm)))),
           (FMADDssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
 def : Pat<(f32 (fsub FPR32:$Ra, (f32 (fmul FPR32:$Rn, FPR32:$Rm)))),
           (FMSUBssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
-def : Pat<(f32 (fsub (f32 (fmul FPR32:$Rn, FPR32:$Rm)), FPR32:$Ra)),
-          (FNMADDssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
 def : Pat<(f32 (fsub (f32 (fneg FPR32:$Ra)), (f32 (fmul FPR32:$Rn, FPR32:$Rm)))),
+          (FNMADDssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
+def : Pat<(f32 (fsub (f32 (fmul FPR32:$Rn, FPR32:$Rm)), FPR32:$Ra)),
           (FNMSUBssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
 
 def : Pat<(f64 (fadd FPR64:$Ra, (f64 (fmul FPR64:$Rn, FPR64:$Rm)))),
           (FMADDdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
 def : Pat<(f64 (fsub FPR64:$Ra, (f64 (fmul FPR64:$Rn, FPR64:$Rm)))),
           (FMSUBdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
-def : Pat<(f64 (fsub (f64 (fmul FPR64:$Rn, FPR64:$Rm)), FPR64:$Ra)),
-          (FNMADDdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
 def : Pat<(f64 (fsub (f64 (fneg FPR64:$Ra)), (f64 (fmul FPR64:$Rn, FPR64:$Rm)))),
+          (FNMADDdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
+def : Pat<(f64 (fsub (f64 (fmul FPR64:$Rn, FPR64:$Rm)), FPR64:$Ra)),
           (FNMSUBdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
 }
 
