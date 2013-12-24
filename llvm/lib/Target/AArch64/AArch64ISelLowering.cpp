@@ -3957,7 +3957,10 @@ bool AArch64TargetLowering::isKnownShuffleVector(SDValue Op, SelectionDAG &DAG,
   if (V1.getNode() && NumElts == V0NumElts &&
       V0NumElts == V1.getValueType().getVectorNumElements()) {
     SDValue Shuffle = DAG.getVectorShuffle(VT, DL, V0, V1, Mask);
-    Res = LowerVECTOR_SHUFFLE(Shuffle, DAG);
+    if(Shuffle.getOpcode() != ISD::VECTOR_SHUFFLE)
+      Res = Shuffle;
+    else
+      Res = LowerVECTOR_SHUFFLE(Shuffle, DAG);
     return true;
   } else
     return false;

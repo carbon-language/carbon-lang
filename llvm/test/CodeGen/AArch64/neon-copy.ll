@@ -704,3 +704,25 @@ define <4 x i32> @testDUP.v1i32(<1 x i32> %a) {
   %f = insertelement <4 x i32> %e, i32 %b, i32 3
   ret <4 x i32> %f
 }
+
+define <8 x i8> @getl(<16 x i8> %x) #0 {
+; CHECK-LABEL: getl:
+; CHECK: ret
+  %vecext = extractelement <16 x i8> %x, i32 0
+  %vecinit = insertelement <8 x i8> undef, i8 %vecext, i32 0
+  %vecext1 = extractelement <16 x i8> %x, i32 1
+  %vecinit2 = insertelement <8 x i8> %vecinit, i8 %vecext1, i32 1
+  %vecext3 = extractelement <16 x i8> %x, i32 2
+  %vecinit4 = insertelement <8 x i8> %vecinit2, i8 %vecext3, i32 2
+  %vecext5 = extractelement <16 x i8> %x, i32 3
+  %vecinit6 = insertelement <8 x i8> %vecinit4, i8 %vecext5, i32 3
+  %vecext7 = extractelement <16 x i8> %x, i32 4
+  %vecinit8 = insertelement <8 x i8> %vecinit6, i8 %vecext7, i32 4
+  %vecext9 = extractelement <16 x i8> %x, i32 5
+  %vecinit10 = insertelement <8 x i8> %vecinit8, i8 %vecext9, i32 5
+  %vecext11 = extractelement <16 x i8> %x, i32 6
+  %vecinit12 = insertelement <8 x i8> %vecinit10, i8 %vecext11, i32 6
+  %vecext13 = extractelement <16 x i8> %x, i32 7
+  %vecinit14 = insertelement <8 x i8> %vecinit12, i8 %vecext13, i32 7
+  ret <8 x i8> %vecinit14
+}
