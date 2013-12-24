@@ -34,7 +34,10 @@ static ReportStack *SymbolizeStack(const StackTrace& trace);
 
 void TsanCheckFailed(const char *file, int line, const char *cond,
                      u64 v1, u64 v2) {
-  ScopedInRtl in_rtl;
+  // There is high probability that interceptors will check-fail as well,
+  // on the other hand there is no sense in processing interceptors
+  // since we are going to die soon.
+  ScopedIgnoreInterceptors ignore;
   Printf("FATAL: ThreadSanitizer CHECK failed: "
          "%s:%d \"%s\" (0x%zx, 0x%zx)\n",
          file, line, cond, (uptr)v1, (uptr)v2);
@@ -605,10 +608,12 @@ static bool RaceBetweenAtomicAndFree(ThreadState *thr) {
 }
 
 void ReportRace(ThreadState *thr) {
+  // Symbolizer makes lots of intercepted calls. If we try to process them,
+  // at best it will cause deadlocks on internal mutexes.
+  ScopedIgnoreInterceptors ignore;
+
   if (!flags()->report_bugs)
     return;
-  ScopedInRtl in_rtl;
-
   if (!flags()->report_atomic_races && !RaceBetweenAtomicAndFree(thr))
     return;
 

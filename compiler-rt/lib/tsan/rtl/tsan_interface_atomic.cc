@@ -66,15 +66,11 @@ class ScopedAtomic {
   ScopedAtomic(ThreadState *thr, uptr pc, const volatile void *a,
                morder mo, const char *func)
       : thr_(thr) {
-    CHECK_EQ(thr_->in_rtl, 0);
     ProcessPendingSignals(thr);
     FuncEntry(thr_, pc);
     DPrintf("#%d: %s(%p, %d)\n", thr_->tid, func, a, mo);
-    thr_->in_rtl++;
   }
   ~ScopedAtomic() {
-    thr_->in_rtl--;
-    CHECK_EQ(thr_->in_rtl, 0);
     FuncExit(thr_);
   }
  private:

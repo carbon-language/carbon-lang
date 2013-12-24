@@ -17,7 +17,6 @@
 namespace __tsan {
 
 TEST(Clock, VectorBasic) {
-  ScopedInRtl in_rtl;
   ThreadClock clk;
   CHECK_EQ(clk.size(), 0);
   clk.tick(0);
@@ -34,7 +33,6 @@ TEST(Clock, VectorBasic) {
 }
 
 TEST(Clock, ChunkedBasic) {
-  ScopedInRtl in_rtl;
   ThreadClock vector;
   SyncClock chunked;
   CHECK_EQ(vector.size(), 0);
@@ -51,7 +49,6 @@ TEST(Clock, ChunkedBasic) {
 }
 
 TEST(Clock, AcquireRelease) {
-  ScopedInRtl in_rtl;
   ThreadClock vector1;
   vector1.tick(100);
   SyncClock chunked;
@@ -67,7 +64,6 @@ TEST(Clock, AcquireRelease) {
 }
 
 TEST(Clock, ManyThreads) {
-  ScopedInRtl in_rtl;
   SyncClock chunked;
   for (int i = 0; i < 100; i++) {
     ThreadClock vector;
@@ -85,7 +81,6 @@ TEST(Clock, ManyThreads) {
 }
 
 TEST(Clock, DifferentSizes) {
-  ScopedInRtl in_rtl;
   {
     ThreadClock vector1;
     vector1.tick(10);

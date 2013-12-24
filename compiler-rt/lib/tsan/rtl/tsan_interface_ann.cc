@@ -33,22 +33,16 @@ class ScopedAnnotation {
  public:
   ScopedAnnotation(ThreadState *thr, const char *aname, const char *f, int l,
                    uptr pc)
-      : thr_(thr)
-      , in_rtl_(thr->in_rtl) {
-    CHECK_EQ(thr_->in_rtl, 0);
+      : thr_(thr) {
     FuncEntry(thr_, pc);
-    thr_->in_rtl++;
     DPrintf("#%d: annotation %s() %s:%d\n", thr_->tid, aname, f, l);
   }
 
   ~ScopedAnnotation() {
-    thr_->in_rtl--;
-    CHECK_EQ(in_rtl_, thr_->in_rtl);
     FuncExit(thr_);
   }
  private:
   ThreadState *const thr_;
-  const int in_rtl_;
 };
 
 #define SCOPED_ANNOTATION(typ) \

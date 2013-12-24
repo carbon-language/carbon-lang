@@ -18,7 +18,6 @@
 namespace __tsan {
 
 TEST(Flags, Basic) {
-  ScopedInRtl in_rtl;
   // At least should not crash.
   Flags f;
   InitializeFlags(&f, 0);
@@ -26,7 +25,6 @@ TEST(Flags, Basic) {
 }
 
 TEST(Flags, DefaultValues) {
-  ScopedInRtl in_rtl;
   Flags f;
 
   f.enable_annotations = false;
@@ -206,7 +204,6 @@ extern "C" const char *__tsan_default_options() {
 }
 
 TEST(Flags, ParseDefaultOptions) {
-  ScopedInRtl in_rtl;
   Flags f;
 
   test_default_options = options1;
@@ -219,7 +216,6 @@ TEST(Flags, ParseDefaultOptions) {
 }
 
 TEST(Flags, ParseEnvOptions) {
-  ScopedInRtl in_rtl;
   Flags f;
 
   InitializeFlags(&f, options1);
@@ -230,7 +226,6 @@ TEST(Flags, ParseEnvOptions) {
 }
 
 TEST(Flags, ParsePriority) {
-  ScopedInRtl in_rtl;
   Flags f;
 
   test_default_options = options2;

@@ -25,7 +25,6 @@ TEST(Sync, Table) {
   const uintptr_t kIters = 512*1024;
   const uintptr_t kRange = 10000;
 
-  ScopedInRtl in_rtl;
   ThreadState *thr = cur_thread();
   uptr pc = 0;
 

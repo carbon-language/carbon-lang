@@ -88,17 +88,13 @@ static ThreadState *AllocGoroutine() {
 void __tsan_init(ThreadState **thrp) {
   ThreadState *thr = AllocGoroutine();
   main_thr = *thrp = thr;
-  thr->in_rtl++;
   Initialize(thr);
-  thr->in_rtl--;
 }
 
 void __tsan_fini() {
   // FIXME: Not necessary thread 0.
   ThreadState *thr = main_thr;
-  thr->in_rtl++;
   int res = Finalize(thr);
-  thr->in_rtl--;
   exit(res);
 }
 
@@ -137,9 +133,7 @@ void __tsan_func_exit(ThreadState *thr) {
 void __tsan_malloc(ThreadState *thr, void *p, uptr sz, void *pc) {
   if (thr == 0)  // probably before __tsan_init()
     return;
-  thr->in_rtl++;
   MemoryResetRange(thr, (uptr)pc, (uptr)p, sz);
-  thr->in_rtl--;
 }
 
 void __tsan_free(void *p) {
@@ -149,37 +143,25 @@ void __tsan_free(void *p) {
 void __tsan_go_start(ThreadState *parent, ThreadState **pthr, void *pc) {
   ThreadState *thr = AllocGoroutine();
   *pthr = thr;
-  thr->in_rtl++;
-  parent->in_rtl++;
   int goid = ThreadCreate(parent, (uptr)pc, 0, true);
   ThreadStart(thr, goid, 0);
-  parent->in_rtl--;
-  thr->in_rtl--;
 }
 
 void __tsan_go_end(ThreadState *thr) {
-  thr->in_rtl++;
   ThreadFinish(thr);
-  thr->in_rtl--;
   internal_free(thr);
 }
 
 void __tsan_acquire(ThreadState *thr, void *addr) {
-  thr->in_rtl++;
   Acquire(thr, 0, (uptr)addr);
-  thr->in_rtl--;
 }
 
 void __tsan_release(ThreadState *thr, void *addr) {
-  thr->in_rtl++;
   ReleaseStore(thr, 0, (uptr)addr);
-  thr->in_rtl--;
 }
 
 void __tsan_release_merge(ThreadState *thr, void *addr) {
-  thr->in_rtl++;
   Release(thr, 0, (uptr)addr);
-  thr->in_rtl--;
 }
 
 void __tsan_finalizer_goroutine(ThreadState *thr) {

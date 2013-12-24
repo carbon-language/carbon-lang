@@ -46,13 +46,11 @@ static void TestStackTrace(StackTrace *trace) {
 }
 
 TEST(StackTrace, Basic) {
-  ScopedInRtl in_rtl;
   StackTrace trace;
   TestStackTrace(&trace);
 }
 
 TEST(StackTrace, StaticBasic) {
-  ScopedInRtl in_rtl;
   uptr buf[10];
   StackTrace trace1(buf, 10);
   TestStackTrace(&trace1);
@@ -61,7 +59,6 @@ TEST(StackTrace, StaticBasic) {
 }
 
 TEST(StackTrace, StaticTrim) {
-  ScopedInRtl in_rtl;
   uptr buf[2];
   StackTrace trace(buf, 2);
 

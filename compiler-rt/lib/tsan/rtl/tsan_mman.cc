@@ -102,7 +102,6 @@ static void SignalUnsafeCall(ThreadState *thr, uptr pc) {
 }
 
 void *user_alloc(ThreadState *thr, uptr pc, uptr sz, uptr align) {
-  CHECK_GT(thr->in_rtl, 0);
   if ((sz >= (1ull << 40)) || (align >= (1ull << 40)))
     return AllocatorReturnNull();
   void *p = allocator()->Allocate(&thr->alloc_cache, sz, align);
@@ -122,7 +121,6 @@ void *user_alloc(ThreadState *thr, uptr pc, uptr sz, uptr align) {
 }
 
 void user_free(ThreadState *thr, uptr pc, void *p) {
-  CHECK_GT(thr->in_rtl, 0);
   CHECK_NE(p, (void*)0);
   DPrintf("#%d: free(%p)\n", thr->tid, p);
   MBlock *b = (MBlock*)allocator()->GetMetaData(p);
@@ -138,7 +136,7 @@ void user_free(ThreadState *thr, uptr pc, void *p) {
     }
     b->ListReset();
   }
-  if (CTX() && CTX()->initialized && thr->in_rtl == 1) {
+  if (CTX() && CTX()->initialized) {
     if (thr->ignore_reads_and_writes == 0)
       MemoryRangeFreed(thr, pc, (uptr)p, b->Size());
   }
@@ -147,7 +145,6 @@ void user_free(ThreadState *thr, uptr pc, void *p) {
 }
 
 void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz) {
-  CHECK_GT(thr->in_rtl, 0);
   void *p2 = 0;
   // FIXME: Handle "shrinking" more efficiently,
   // it seems that some software actually does this.
@@ -167,7 +164,6 @@ void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz) {
 }
 
 uptr user_alloc_usable_size(ThreadState *thr, uptr pc, void *p) {
-  CHECK_GT(thr->in_rtl, 0);
   if (p == 0)
     return 0;
   MBlock *b = (MBlock*)allocator()->GetMetaData(p);
@@ -186,7 +182,7 @@ MBlock *user_mblock(ThreadState *thr, void *p) {
 void invoke_malloc_hook(void *ptr, uptr size) {
   Context *ctx = CTX();
   ThreadState *thr = cur_thread();
-  if (ctx == 0 || !ctx->initialized || thr->in_rtl)
+  if (ctx == 0 || !ctx->initialized || thr->ignore_interceptors)
     return;
   __tsan_malloc_hook(ptr, size);
 }
@@ -194,14 +190,13 @@ void invoke_malloc_hook(void *ptr, uptr size) {
 void invoke_free_hook(void *ptr) {
   Context *ctx = CTX();
   ThreadState *thr = cur_thread();
-  if (ctx == 0 || !ctx->initialized || thr->in_rtl)
+  if (ctx == 0 || !ctx->initialized || thr->ignore_interceptors)
     return;
   __tsan_free_hook(ptr);
 }
 
 void *internal_alloc(MBlockType typ, uptr sz) {
   ThreadState *thr = cur_thread();
-  CHECK_GT(thr->in_rtl, 0);
   CHECK_LE(sz, InternalSizeClassMap::kMaxSize);
   if (thr->nomalloc) {
     thr->nomalloc = 0;  // CHECK calls internal_malloc().
@@ -212,7 +207,6 @@ void *internal_alloc(MBlockType typ, uptr sz) {
 
 void internal_free(void *p) {
   ThreadState *thr = cur_thread();
-  CHECK_GT(thr->in_rtl, 0);
   if (thr->nomalloc) {
     thr->nomalloc = 0;  // CHECK calls internal_malloc().
     CHECK(0);

@@ -189,7 +189,6 @@ static void ThreadCheckIgnore(ThreadState *thr) {}
 #endif
 
 void ThreadFinalize(ThreadState *thr) {
-  CHECK_GT(thr->in_rtl, 0);
   ThreadCheckIgnore(thr);
 #ifndef TSAN_GO
   if (!flags()->report_thread_leaks)
@@ -208,7 +207,6 @@ void ThreadFinalize(ThreadState *thr) {
 }
 
 int ThreadCount(ThreadState *thr) {
-  CHECK_GT(thr->in_rtl, 0);
   Context *ctx = CTX();
   uptr result;
   ctx->thread_registry->GetNumberOfThreads(0, 0, &result);
@@ -216,7 +214,6 @@ int ThreadCount(ThreadState *thr) {
 }
 
 int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
-  CHECK_GT(thr->in_rtl, 0);
   StatInc(thr, StatThreadCreate);
   Context *ctx = CTX();
   OnCreatedArgs args = { thr, pc };
@@ -228,7 +225,6 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
 
 void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
   Context *ctx = CTX();
-  CHECK_GT(thr->in_rtl, 0);
   uptr stk_addr = 0;
   uptr stk_size = 0;
   uptr tls_addr = 0;
@@ -264,7 +260,6 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
 }
 
 void ThreadFinish(ThreadState *thr) {
-  CHECK_GT(thr->in_rtl, 0);
   ThreadCheckIgnore(thr);
   StatInc(thr, StatThreadFinish);
   if (thr->stk_addr && thr->stk_size)
@@ -286,7 +281,6 @@ static bool FindThreadByUid(ThreadContextBase *tctx, void *arg) {
 }
 
 int ThreadTid(ThreadState *thr, uptr pc, uptr uid) {
-  CHECK_GT(thr->in_rtl, 0);
   Context *ctx = CTX();
   int res = ctx->thread_registry->FindThread(FindThreadByUid, (void*)uid);
   DPrintf("#%d: ThreadTid uid=%zu tid=%d\n", thr->tid, uid, res);
@@ -294,7 +288,6 @@ int ThreadTid(ThreadState *thr, uptr pc, uptr uid) {
 }
 
 void ThreadJoin(ThreadState *thr, uptr pc, int tid) {
-  CHECK_GT(thr->in_rtl, 0);
   CHECK_GT(tid, 0);
   CHECK_LT(tid, kMaxTid);
   DPrintf("#%d: ThreadJoin tid=%d\n", thr->tid, tid);
@@ -303,7 +296,6 @@ void ThreadJoin(ThreadState *thr, uptr pc, int tid) {
 }
 
 void ThreadDetach(ThreadState *thr, uptr pc, int tid) {
-  CHECK_GT(thr->in_rtl, 0);
   CHECK_GT(tid, 0);
   CHECK_LT(tid, kMaxTid);
   Context *ctx = CTX();
@@ -311,7 +303,6 @@ void ThreadDetach(ThreadState *thr, uptr pc, int tid) {
 }
 
 void ThreadSetName(ThreadState *thr, const char *name) {
-  CHECK_GT(thr->in_rtl, 0);
   CTX()->thread_registry->SetThreadName(thr->tid, name);
 }
 

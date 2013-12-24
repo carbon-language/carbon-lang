@@ -28,7 +28,6 @@ uptr __tsan_get_allocated_size(void *p);
 namespace __tsan {
 
 TEST(Mman, Internal) {
-  ScopedInRtl in_rtl;
   char *p = (char*)internal_alloc(MBlockScopedBuf, 10);
   EXPECT_NE(p, (char*)0);
   char *p2 = (char*)internal_alloc(MBlockScopedBuf, 20);
@@ -45,7 +44,6 @@ TEST(Mman, Internal) {
 }
 
 TEST(Mman, User) {
-  ScopedInRtl in_rtl;
   ThreadState *thr = cur_thread();
   uptr pc = 0;
   char *p = (char*)user_alloc(thr, pc, 10);
@@ -72,7 +70,6 @@ TEST(Mman, User) {
 }
 
 TEST(Mman, UserRealloc) {
-  ScopedInRtl in_rtl;
   ThreadState *thr = cur_thread();
   uptr pc = 0;
   {
@@ -118,7 +115,6 @@ TEST(Mman, UserRealloc) {
 }
 
 TEST(Mman, UsableSize) {
-  ScopedInRtl in_rtl;
   ThreadState *thr = cur_thread();
   uptr pc = 0;
   char *p = (char*)user_alloc(thr, pc, 10);
@@ -131,7 +127,6 @@ TEST(Mman, UsableSize) {
 }
 
 TEST(Mman, Stats) {
-  ScopedInRtl in_rtl;
   ThreadState *thr = cur_thread();
 
   uptr alloc0 = __tsan_get_current_allocated_bytes();

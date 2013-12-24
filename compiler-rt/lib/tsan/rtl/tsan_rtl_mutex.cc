@@ -23,7 +23,6 @@ namespace __tsan {
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
                  bool rw, bool recursive, bool linker_init) {
   Context *ctx = CTX();
-  CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexCreate %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexCreate);
   if (!linker_init && IsAppMem(addr)) {
@@ -41,7 +40,6 @@ void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
 
 void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   Context *ctx = CTX();
-  CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexDestroy %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexDestroy);
 #ifndef TSAN_GO
@@ -80,7 +78,6 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
 }
 
 void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
-  CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexLock %zx rec=%d\n", thr->tid, addr, rec);
   CHECK_GT(rec, 0);
   if (IsAppMem(addr))
@@ -111,7 +108,6 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
 }
 
 int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
-  CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexUnlock %zx all=%d\n", thr->tid, addr, all);
   if (IsAppMem(addr))
     MemoryReadAtomic(thr, pc, addr, kSizeLog1);
@@ -149,7 +145,6 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
 }
 
 void MutexReadLock(ThreadState *thr, uptr pc, uptr addr) {
-  CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexReadLock %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexReadLock);
   if (IsAppMem(addr))
@@ -169,7 +164,6 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr) {
 }
 
 void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
-  CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexReadUnlock %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexReadUnlock);
   if (IsAppMem(addr))
@@ -188,7 +182,6 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
 }
 
 void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
-  CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexReadOrWriteUnlock %zx\n", thr->tid, addr);
   if (IsAppMem(addr))
     MemoryReadAtomic(thr, pc, addr, kSizeLog1);
@@ -226,7 +219,6 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
 
 void MutexRepair(ThreadState *thr, uptr pc, uptr addr) {
   Context *ctx = CTX();
-  CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexRepair %zx\n", thr->tid, addr);
   SyncVar *s = ctx->synctab.GetOrCreateAndLock(thr, pc, addr, true);
   s->owner_tid = SyncVar::kInvalidTid;
@@ -235,7 +227,6 @@ void MutexRepair(ThreadState *thr, uptr pc, uptr addr) {
 }
 
 void Acquire(ThreadState *thr, uptr pc, uptr addr) {
-  CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: Acquire %zx\n", thr->tid, addr);
   if (thr->ignore_sync)
     return;
@@ -263,7 +254,6 @@ void AcquireGlobal(ThreadState *thr, uptr pc) {
 }
 
 void Release(ThreadState *thr, uptr pc, uptr addr) {
-  CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: Release %zx\n", thr->tid, addr);
   if (thr->ignore_sync)
     return;
@@ -276,7 +266,6 @@ void Release(ThreadState *thr, uptr pc, uptr addr) {
 }
 
 void ReleaseStore(ThreadState *thr, uptr pc, uptr addr) {
-  CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: ReleaseStore %zx\n", thr->tid, addr);
   if (thr->ignore_sync)
     return;

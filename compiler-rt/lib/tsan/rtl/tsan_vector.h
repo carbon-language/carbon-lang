@@ -58,10 +58,18 @@ class Vector {
     return begin_[i];
   }
 
-  T *PushBack(T v = T()) {
+  T *PushBack() {
     EnsureSize(Size() + 1);
-    end_[-1] = v;
-    return &end_[-1];
+    T *p = &end_[-1];
+    internal_memset(p, 0, sizeof(*p));
+    return p;
+  }
+
+  T *PushBack(const T& v) {
+    EnsureSize(Size() + 1);
+    T *p = &end_[-1];
+    internal_memcpy(p, &v, sizeof(*p));
+    return p;
   }
 
   void PopBack() {

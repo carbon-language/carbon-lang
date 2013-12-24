@@ -433,11 +433,11 @@ struct ThreadState {
   AllocatorCache alloc_cache;
   InternalAllocatorCache internal_alloc_cache;
   Vector<JmpBuf> jmp_bufs;
+  int ignore_interceptors;
 #endif
   u64 stat[StatCnt];
   const int tid;
   const int unique_id;
-  int in_rtl;
   bool in_symbolizer;
   bool in_ignored_lib;
   bool is_alive;
@@ -551,14 +551,18 @@ struct Context {
   u64 int_alloc_siz[MBlockTypeCount];
 };
 
-class ScopedInRtl {
- public:
-  ScopedInRtl();
-  ~ScopedInRtl();
- private:
-  ThreadState*thr_;
-  int in_rtl_;
-  int errno_;
+struct ScopedIgnoreInterceptors {
+  ScopedIgnoreInterceptors() {
+#ifndef TSAN_GO
+    cur_thread()->ignore_interceptors++;
+#endif
+  }
+
+  ~ScopedIgnoreInterceptors() {
+#ifndef TSAN_GO
+    cur_thread()->ignore_interceptors--;
+#endif
+  }
 };
 
 class ScopedReport {
@@ -580,6 +584,9 @@ class ScopedReport {
  private:
   Context *ctx_;
   ReportDesc *rep_;
+  // Symbolizer makes lots of intercepted calls. If we try to process them,
+  // at best it will cause deadlocks on internal mutexes.
+  ScopedIgnoreInterceptors ignore_interceptors_;
 
   void AddMutex(u64 id);
 

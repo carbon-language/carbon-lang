@@ -61,27 +61,6 @@ namespace __tsan {
 
 const uptr kPageSize = 4096;
 
-#ifndef TSAN_GO
-ScopedInRtl::ScopedInRtl()
-    : thr_(cur_thread()) {
-  in_rtl_ = thr_->in_rtl;
-  thr_->in_rtl++;
-  errno_ = errno;
-}
-
-ScopedInRtl::~ScopedInRtl() {
-  thr_->in_rtl--;
-  errno = errno_;
-  CHECK_EQ(in_rtl_, thr_->in_rtl);
-}
-#else
-ScopedInRtl::ScopedInRtl() {
-}
-
-ScopedInRtl::~ScopedInRtl() {
-}
-#endif
-
 void FillProfileCallback(uptr start, uptr rss, bool file,
                          uptr *mem, uptr stats_size) {
   CHECK_EQ(7, stats_size);
@@ -135,7 +114,6 @@ void FlushShadowMemory() {
 
 #ifndef TSAN_GO
 static void ProtectRange(uptr beg, uptr end) {
-  ScopedInRtl in_rtl;
   CHECK_LE(beg, end);
   if (beg == end)
     return;

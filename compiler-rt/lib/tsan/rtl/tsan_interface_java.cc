@@ -79,13 +79,9 @@ class ScopedJavaFunc {
       : thr_(thr) {
     Initialize(thr_);
     FuncEntry(thr, pc);
-    CHECK_EQ(thr_->in_rtl, 0);
-    thr_->in_rtl++;
   }
 
   ~ScopedJavaFunc() {
-    thr_->in_rtl--;
-    CHECK_EQ(thr_->in_rtl, 0);
     FuncExit(thr_);
     // FIXME(dvyukov): process pending signals.
   }
