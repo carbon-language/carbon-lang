@@ -480,7 +480,7 @@ public:
                            SmallVectorImpl<AnnotatedLine *>::const_iterator I,
                            SmallVectorImpl<AnnotatedLine *>::const_iterator E) {
     // We can never merge stuff if there are trailing line comments.
-    AnnotatedLine *TheLine = *I;
+    const AnnotatedLine *TheLine = *I;
     if (TheLine->Last->Type == TT_LineComment)
       return 0;
 
@@ -498,7 +498,8 @@ public:
     if (I + 1 == E || I[1]->Type == LT_Invalid)
       return 0;
 
-    if (TheLine->Last->Type == TT_FunctionLBrace) {
+    if (TheLine->Last->Type == TT_FunctionLBrace &&
+        TheLine->First != TheLine->Last) {
       return Style.AllowShortFunctionsOnASingleLine
                  ? tryMergeSimpleBlock(I, E, Limit)
                  : 0;
@@ -510,9 +511,11 @@ public:
     }
     if (I[1]->First->Type == TT_FunctionLBrace &&
         Style.BreakBeforeBraces != FormatStyle::BS_Attach) {
-      // Reduce the column limit by the number of spaces we need to insert
-      // around braces.
-      Limit = Limit > 3 ? Limit - 3 : 0;
+      // Check for Limit <= 2 to accomodate for the " {".
+      if (Limit <= 2 || (Style.ColumnLimit == 0 && containsMustBreak(TheLine)))
+        return 0;
+      Limit -= 2;
+
       unsigned MergedLines = 0;
       if (Style.AllowShortFunctionsOnASingleLine) {
         MergedLines = tryMergeSimpleBlock(I + 1, E, Limit);
@@ -639,6 +642,14 @@ private:
   bool nextTwoLinesFitInto(SmallVectorImpl<AnnotatedLine *>::const_iterator I,
                            unsigned Limit) {
     return 1 + I[1]->Last->TotalLength + 1 + I[2]->Last->TotalLength <= Limit;
+  }
+
+  bool containsMustBreak(const AnnotatedLine *Line) {
+    for (const FormatToken *Tok = Line->First; Tok; Tok = Tok->Next) {
+      if (Tok->MustBreakBefore)
+        return true;
+    }
+    return false;
   }
 
   const FormatStyle &Style;

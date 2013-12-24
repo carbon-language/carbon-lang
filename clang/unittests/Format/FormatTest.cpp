@@ -6997,6 +6997,16 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
                "}\n",
                BreakBeforeBrace);
 
+  BreakBeforeBrace.ColumnLimit = 19;
+  verifyFormat("void f() { int i; }", BreakBeforeBrace);
+  BreakBeforeBrace.ColumnLimit = 18;
+  verifyFormat("void f()\n"
+               "{\n"
+               "  int i;\n"
+               "}",
+               BreakBeforeBrace);
+  BreakBeforeBrace.ColumnLimit = 80;
+
   FormatStyle BreakBeforeBraceShortIfs = BreakBeforeBrace;
   BreakBeforeBraceShortIfs.AllowShortIfStatementsOnASingleLine = true;
   BreakBeforeBraceShortIfs.AllowShortLoopsOnASingleLine = true;
@@ -7716,16 +7726,26 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
                "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
                "    , aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaa, // break\n"
                "                               aaaaaaaaaaaaaa)\n"
-               "    , aaaaaaaaaaaaaaaaaaaaaaa() {}",
-               Style);
-  verifyFormat("SomeClass::Constructor()\n"
-               "    : a(a) {}",
+               "    , aaaaaaaaaaaaaaaaaaaaaaa()\n"
+               "{\n"
+               "}",
                Style);
   verifyFormat("SomeClass::Constructor()\n"
                "    : a(a)\n"
-               "    , b(b)\n"
-               "    , c(c) {}",
+               "{\n"
+               "}",
                Style);
+  EXPECT_EQ("SomeClass::Constructor()\n"
+            "    : a(a)\n"
+            "{\n"
+            "}",
+            format("SomeClass::Constructor():a(a){}", Style));
+  verifyFormat("SomeClass::Constructor()\n"
+               "    : a(a)\n"
+               "    , b(b)\n"
+               "    , c(c)\n"
+               "{\n"
+               "}", Style);
   verifyFormat("SomeClass::Constructor()\n"
                "    : a(a)\n"
                "{\n"
