@@ -1204,70 +1204,86 @@ def PFDRL : PrefetchRILPC<"pfdrl", 0xC62, z_prefetch>;
 def Serialize : Alias<2, (outs), (ins), [(z_serialize)]>;
 
 let Predicates = [FeatureInterlockedAccess1], Defs = [CC] in {
-  def LAA   : LoadAndOpRSY<"laa",   0xEBF8, null_frag, GR32>;
-  def LAAG  : LoadAndOpRSY<"laag",  0xEBE8, null_frag, GR64>;
+  def LAA   : LoadAndOpRSY<"laa",   0xEBF8, atomic_load_add_32, GR32>;
+  def LAAG  : LoadAndOpRSY<"laag",  0xEBE8, atomic_load_add_64, GR64>;
   def LAAL  : LoadAndOpRSY<"laal",  0xEBFA, null_frag, GR32>;
   def LAALG : LoadAndOpRSY<"laalg", 0xEBEA, null_frag, GR64>;
-  def LAN   : LoadAndOpRSY<"lan",   0xEBF4, null_frag, GR32>;
-  def LANG  : LoadAndOpRSY<"lang",  0xEBE4, null_frag, GR64>;
-  def LAO   : LoadAndOpRSY<"lao",   0xEBF6, null_frag, GR32>;
-  def LAOG  : LoadAndOpRSY<"laog",  0xEBE6, null_frag, GR64>;
-  def LAX   : LoadAndOpRSY<"lax",   0xEBF7, null_frag, GR32>;
-  def LAXG  : LoadAndOpRSY<"laxg",  0xEBE7, null_frag, GR64>;
+  def LAN   : LoadAndOpRSY<"lan",   0xEBF4, atomic_load_and_32, GR32>;
+  def LANG  : LoadAndOpRSY<"lang",  0xEBE4, atomic_load_and_64, GR64>;
+  def LAO   : LoadAndOpRSY<"lao",   0xEBF6, atomic_load_or_32, GR32>;
+  def LAOG  : LoadAndOpRSY<"laog",  0xEBE6, atomic_load_or_64, GR64>;
+  def LAX   : LoadAndOpRSY<"lax",   0xEBF7, atomic_load_xor_32, GR32>;
+  def LAXG  : LoadAndOpRSY<"laxg",  0xEBE7, atomic_load_xor_64, GR64>;
 }
 
-def ATOMIC_SWAPW        : AtomicLoadWBinaryReg<z_atomic_swapw>;
-def ATOMIC_SWAP_32      : AtomicLoadBinaryReg32<atomic_swap_32>;
-def ATOMIC_SWAP_64      : AtomicLoadBinaryReg64<atomic_swap_64>;
+def ATOMIC_SWAPW   : AtomicLoadWBinaryReg<z_atomic_swapw>;
+def ATOMIC_SWAP_32 : AtomicLoadBinaryReg32<atomic_swap_32>;
+def ATOMIC_SWAP_64 : AtomicLoadBinaryReg64<atomic_swap_64>;
 
-def ATOMIC_LOADW_AR     : AtomicLoadWBinaryReg<z_atomic_loadw_add>;
-def ATOMIC_LOADW_AFI    : AtomicLoadWBinaryImm<z_atomic_loadw_add, simm32>;
-def ATOMIC_LOAD_AR      : AtomicLoadBinaryReg32<atomic_load_add_32>;
-def ATOMIC_LOAD_AHI     : AtomicLoadBinaryImm32<atomic_load_add_32, imm32sx16>;
-def ATOMIC_LOAD_AFI     : AtomicLoadBinaryImm32<atomic_load_add_32, simm32>;
-def ATOMIC_LOAD_AGR     : AtomicLoadBinaryReg64<atomic_load_add_64>;
-def ATOMIC_LOAD_AGHI    : AtomicLoadBinaryImm64<atomic_load_add_64, imm64sx16>;
-def ATOMIC_LOAD_AGFI    : AtomicLoadBinaryImm64<atomic_load_add_64, imm64sx32>;
+def ATOMIC_LOADW_AR  : AtomicLoadWBinaryReg<z_atomic_loadw_add>;
+def ATOMIC_LOADW_AFI : AtomicLoadWBinaryImm<z_atomic_loadw_add, simm32>;
+let Predicates = [FeatureNoInterlockedAccess1] in {
+  def ATOMIC_LOAD_AR   : AtomicLoadBinaryReg32<atomic_load_add_32>;
+  def ATOMIC_LOAD_AHI  : AtomicLoadBinaryImm32<atomic_load_add_32, imm32sx16>;
+  def ATOMIC_LOAD_AFI  : AtomicLoadBinaryImm32<atomic_load_add_32, simm32>;
+  def ATOMIC_LOAD_AGR  : AtomicLoadBinaryReg64<atomic_load_add_64>;
+  def ATOMIC_LOAD_AGHI : AtomicLoadBinaryImm64<atomic_load_add_64, imm64sx16>;
+  def ATOMIC_LOAD_AGFI : AtomicLoadBinaryImm64<atomic_load_add_64, imm64sx32>;
+}
 
-def ATOMIC_LOADW_SR     : AtomicLoadWBinaryReg<z_atomic_loadw_sub>;
-def ATOMIC_LOAD_SR      : AtomicLoadBinaryReg32<atomic_load_sub_32>;
-def ATOMIC_LOAD_SGR     : AtomicLoadBinaryReg64<atomic_load_sub_64>;
+def ATOMIC_LOADW_SR : AtomicLoadWBinaryReg<z_atomic_loadw_sub>;
+def ATOMIC_LOAD_SR  : AtomicLoadBinaryReg32<atomic_load_sub_32>;
+def ATOMIC_LOAD_SGR : AtomicLoadBinaryReg64<atomic_load_sub_64>;
 
-def ATOMIC_LOADW_NR     : AtomicLoadWBinaryReg<z_atomic_loadw_and>;
-def ATOMIC_LOADW_NILH   : AtomicLoadWBinaryImm<z_atomic_loadw_and, imm32lh16c>;
-def ATOMIC_LOAD_NR      : AtomicLoadBinaryReg32<atomic_load_and_32>;
-def ATOMIC_LOAD_NILL    : AtomicLoadBinaryImm32<atomic_load_and_32, imm32ll16c>;
-def ATOMIC_LOAD_NILH    : AtomicLoadBinaryImm32<atomic_load_and_32, imm32lh16c>;
-def ATOMIC_LOAD_NILF    : AtomicLoadBinaryImm32<atomic_load_and_32, uimm32>;
-def ATOMIC_LOAD_NGR     : AtomicLoadBinaryReg64<atomic_load_and_64>;
-def ATOMIC_LOAD_NILL64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64ll16c>;
-def ATOMIC_LOAD_NILH64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64lh16c>;
-def ATOMIC_LOAD_NIHL64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hl16c>;
-def ATOMIC_LOAD_NIHH64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hh16c>;
-def ATOMIC_LOAD_NILF64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64lf32c>;
-def ATOMIC_LOAD_NIHF64  : AtomicLoadBinaryImm64<atomic_load_and_64, imm64hf32c>;
+def ATOMIC_LOADW_NR   : AtomicLoadWBinaryReg<z_atomic_loadw_and>;
+def ATOMIC_LOADW_NILH : AtomicLoadWBinaryImm<z_atomic_loadw_and, imm32lh16c>;
+let Predicates = [FeatureNoInterlockedAccess1] in {
+  def ATOMIC_LOAD_NR     : AtomicLoadBinaryReg32<atomic_load_and_32>;
+  def ATOMIC_LOAD_NILL   : AtomicLoadBinaryImm32<atomic_load_and_32,
+                                                 imm32ll16c>;
+  def ATOMIC_LOAD_NILH   : AtomicLoadBinaryImm32<atomic_load_and_32,
+                                                 imm32lh16c>;
+  def ATOMIC_LOAD_NILF   : AtomicLoadBinaryImm32<atomic_load_and_32, uimm32>;
+  def ATOMIC_LOAD_NGR    : AtomicLoadBinaryReg64<atomic_load_and_64>;
+  def ATOMIC_LOAD_NILL64 : AtomicLoadBinaryImm64<atomic_load_and_64,
+                                                 imm64ll16c>;
+  def ATOMIC_LOAD_NILH64 : AtomicLoadBinaryImm64<atomic_load_and_64,
+                                                 imm64lh16c>;
+  def ATOMIC_LOAD_NIHL64 : AtomicLoadBinaryImm64<atomic_load_and_64,
+                                                 imm64hl16c>;
+  def ATOMIC_LOAD_NIHH64 : AtomicLoadBinaryImm64<atomic_load_and_64,
+                                                 imm64hh16c>;
+  def ATOMIC_LOAD_NILF64 : AtomicLoadBinaryImm64<atomic_load_and_64,
+                                                 imm64lf32c>;
+  def ATOMIC_LOAD_NIHF64 : AtomicLoadBinaryImm64<atomic_load_and_64,
+                                                 imm64hf32c>;
+}
 
 def ATOMIC_LOADW_OR     : AtomicLoadWBinaryReg<z_atomic_loadw_or>;
 def ATOMIC_LOADW_OILH   : AtomicLoadWBinaryImm<z_atomic_loadw_or, imm32lh16>;
-def ATOMIC_LOAD_OR      : AtomicLoadBinaryReg32<atomic_load_or_32>;
-def ATOMIC_LOAD_OILL    : AtomicLoadBinaryImm32<atomic_load_or_32, imm32ll16>;
-def ATOMIC_LOAD_OILH    : AtomicLoadBinaryImm32<atomic_load_or_32, imm32lh16>;
-def ATOMIC_LOAD_OILF    : AtomicLoadBinaryImm32<atomic_load_or_32, uimm32>;
-def ATOMIC_LOAD_OGR     : AtomicLoadBinaryReg64<atomic_load_or_64>;
-def ATOMIC_LOAD_OILL64  : AtomicLoadBinaryImm64<atomic_load_or_64, imm64ll16>;
-def ATOMIC_LOAD_OILH64  : AtomicLoadBinaryImm64<atomic_load_or_64, imm64lh16>;
-def ATOMIC_LOAD_OIHL64  : AtomicLoadBinaryImm64<atomic_load_or_64, imm64hl16>;
-def ATOMIC_LOAD_OIHH64  : AtomicLoadBinaryImm64<atomic_load_or_64, imm64hh16>;
-def ATOMIC_LOAD_OILF64  : AtomicLoadBinaryImm64<atomic_load_or_64, imm64lf32>;
-def ATOMIC_LOAD_OIHF64  : AtomicLoadBinaryImm64<atomic_load_or_64, imm64hf32>;
+let Predicates = [FeatureNoInterlockedAccess1] in {
+  def ATOMIC_LOAD_OR     : AtomicLoadBinaryReg32<atomic_load_or_32>;
+  def ATOMIC_LOAD_OILL   : AtomicLoadBinaryImm32<atomic_load_or_32, imm32ll16>;
+  def ATOMIC_LOAD_OILH   : AtomicLoadBinaryImm32<atomic_load_or_32, imm32lh16>;
+  def ATOMIC_LOAD_OILF   : AtomicLoadBinaryImm32<atomic_load_or_32, uimm32>;
+  def ATOMIC_LOAD_OGR    : AtomicLoadBinaryReg64<atomic_load_or_64>;
+  def ATOMIC_LOAD_OILL64 : AtomicLoadBinaryImm64<atomic_load_or_64, imm64ll16>;
+  def ATOMIC_LOAD_OILH64 : AtomicLoadBinaryImm64<atomic_load_or_64, imm64lh16>;
+  def ATOMIC_LOAD_OIHL64 : AtomicLoadBinaryImm64<atomic_load_or_64, imm64hl16>;
+  def ATOMIC_LOAD_OIHH64 : AtomicLoadBinaryImm64<atomic_load_or_64, imm64hh16>;
+  def ATOMIC_LOAD_OILF64 : AtomicLoadBinaryImm64<atomic_load_or_64, imm64lf32>;
+  def ATOMIC_LOAD_OIHF64 : AtomicLoadBinaryImm64<atomic_load_or_64, imm64hf32>;
+}
 
 def ATOMIC_LOADW_XR     : AtomicLoadWBinaryReg<z_atomic_loadw_xor>;
 def ATOMIC_LOADW_XILF   : AtomicLoadWBinaryImm<z_atomic_loadw_xor, uimm32>;
-def ATOMIC_LOAD_XR      : AtomicLoadBinaryReg32<atomic_load_xor_32>;
-def ATOMIC_LOAD_XILF    : AtomicLoadBinaryImm32<atomic_load_xor_32, uimm32>;
-def ATOMIC_LOAD_XGR     : AtomicLoadBinaryReg64<atomic_load_xor_64>;
-def ATOMIC_LOAD_XILF64  : AtomicLoadBinaryImm64<atomic_load_xor_64, imm64lf32>;
-def ATOMIC_LOAD_XIHF64  : AtomicLoadBinaryImm64<atomic_load_xor_64, imm64hf32>;
+let Predicates = [FeatureNoInterlockedAccess1] in {
+  def ATOMIC_LOAD_XR     : AtomicLoadBinaryReg32<atomic_load_xor_32>;
+  def ATOMIC_LOAD_XILF   : AtomicLoadBinaryImm32<atomic_load_xor_32, uimm32>;
+  def ATOMIC_LOAD_XGR    : AtomicLoadBinaryReg64<atomic_load_xor_64>;
+  def ATOMIC_LOAD_XILF64 : AtomicLoadBinaryImm64<atomic_load_xor_64, imm64lf32>;
+  def ATOMIC_LOAD_XIHF64 : AtomicLoadBinaryImm64<atomic_load_xor_64, imm64hf32>;
+}
 
 def ATOMIC_LOADW_NRi    : AtomicLoadWBinaryReg<z_atomic_loadw_nand>;
 def ATOMIC_LOADW_NILHi  : AtomicLoadWBinaryImm<z_atomic_loadw_nand,

@@ -160,6 +160,10 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
       setOperationAction(ISD::ATOMIC_LOAD,  VT, Custom);
       setOperationAction(ISD::ATOMIC_STORE, VT, Custom);
 
+      // Lower ATOMIC_LOAD_SUB into ATOMIC_LOAD_ADD if LAA and LAAG are
+      // available, or if the operand is constant.
+      setOperationAction(ISD::ATOMIC_LOAD_SUB, VT, Custom);
+
       // No special instructions for these.
       setOperationAction(ISD::CTPOP,           VT, Expand);
       setOperationAction(ISD::CTTZ,            VT, Expand);
@@ -2266,6 +2270,44 @@ SDValue SystemZTargetLowering::lowerATOMIC_LOAD_OP(SDValue Op,
   return DAG.getMergeValues(RetOps, 2, DL);
 }
 
+// Op is an ATOMIC_LOAD_SUB operation.  Lower 8- and 16-bit operations
+// two into ATOMIC_LOADW_SUBs and decide whether to convert 32- and 64-bit
+// operations into additions.
+SDValue SystemZTargetLowering::lowerATOMIC_LOAD_SUB(SDValue Op,
+                                                    SelectionDAG &DAG) const {
+  AtomicSDNode *Node = cast<AtomicSDNode>(Op.getNode());
+  EVT MemVT = Node->getMemoryVT();
+  if (MemVT == MVT::i32 || MemVT == MVT::i64) {
+    // A full-width operation.
+    assert(Op.getValueType() == MemVT && "Mismatched VTs");
+    SDValue Src2 = Node->getVal();
+    SDValue NegSrc2;
+    SDLoc DL(Src2);
+
+    if (ConstantSDNode *Op2 = dyn_cast<ConstantSDNode>(Src2)) {
+      // Use an addition if the operand is constant and either LAA(G) is
+      // available or the negative value is in the range of A(G)FHI.
+      int64_t Value = (-Op2->getAPIntValue()).getSExtValue();
+      if (isInt<32>(Value) || TM.getSubtargetImpl()->hasInterlockedAccess1())
+        NegSrc2 = DAG.getConstant(Value, MemVT);
+    } else if (TM.getSubtargetImpl()->hasInterlockedAccess1())
+      // Use LAA(G) if available.
+      NegSrc2 = DAG.getNode(ISD::SUB, DL, MemVT, DAG.getConstant(0, MemVT),
+                            Src2);
+
+    if (NegSrc2.getNode())
+      return DAG.getAtomic(ISD::ATOMIC_LOAD_ADD, DL, MemVT,
+                           Node->getChain(), Node->getBasePtr(), NegSrc2,
+                           Node->getMemOperand(), Node->getOrdering(),
+                           Node->getSynchScope());
+
+    // Use the node as-is.
+    return Op;
+  }
+
+  return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_SUB);
+}
+
 // Node is an 8- or 16-bit ATOMIC_CMP_SWAP operation.  Lower the first two
 // into a fullword ATOMIC_CMP_SWAPW operation.
 SDValue SystemZTargetLowering::lowerATOMIC_CMP_SWAP(SDValue Op,
@@ -2394,7 +2436,7 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
   case ISD::ATOMIC_LOAD_ADD:
     return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_ADD);
   case ISD::ATOMIC_LOAD_SUB:
-    return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_SUB);
+    return lowerATOMIC_LOAD_SUB(Op, DAG);
   case ISD::ATOMIC_LOAD_AND:
     return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_LOADW_AND);
   case ISD::ATOMIC_LOAD_OR:

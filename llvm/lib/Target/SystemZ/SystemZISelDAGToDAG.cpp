@@ -1093,20 +1093,6 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
     }
     break;
 
-  case ISD::ATOMIC_LOAD_SUB:
-    // Try to convert subtractions of constants to additions.
-    if (ConstantSDNode *Op2 = dyn_cast<ConstantSDNode>(Node->getOperand(2))) {
-      uint64_t Value = -Op2->getZExtValue();
-      EVT VT = Node->getValueType(0);
-      if (VT == MVT::i32 || isInt<32>(Value)) {
-        SDValue Ops[] = { Node->getOperand(0), Node->getOperand(1),
-                          CurDAG->getConstant(int32_t(Value), VT) };
-        Node = CurDAG->MorphNodeTo(Node, ISD::ATOMIC_LOAD_ADD,
-                                   Node->getVTList(), Ops, array_lengthof(Ops));
-      }
-    }
-    break;
-
   case SystemZISD::SELECT_CCMASK: {
     SDValue Op0 = Node->getOperand(0);
     SDValue Op1 = Node->getOperand(1);
