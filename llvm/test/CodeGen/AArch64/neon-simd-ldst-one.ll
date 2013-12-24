@@ -236,6 +236,31 @@ entry:
   ret <1 x double> %1
 }
 
+define <1 x i64> @testDUP.v1i64(i64* %a, i64* %b) #0 {
+; As there is a store operation depending on %1, LD1R pattern can't be selected.
+; So LDR and FMOV should be emitted.
+; CHECK-LABEL: testDUP.v1i64
+; CHECK: ldr {{x[0-9]+}}, [{{x[0-9]+}}]
+; CHECK: fmov {{d[0-9]+}}, {{x[0-9]+}}
+; CHECK: str {{x[0-9]+}}, [{{x[0-9]+}}]
+  %1 = load i64* %a, align 8
+  store i64 %1, i64* %b, align 8
+  %vecinit.i = insertelement <1 x i64> undef, i64 %1, i32 0
+  ret <1 x i64> %vecinit.i
+}
+
+define <1 x double> @testDUP.v1f64(double* %a, double* %b) #0 {
+; As there is a store operation depending on %1, LD1R pattern can't be selected.
+; So LDR and FMOV should be emitted.
+; CHECK-LABEL: testDUP.v1f64
+; CHECK: ldr {{d[0-9]+}}, [{{x[0-9]+}}]
+; CHECK: str {{d[0-9]+}}, [{{x[0-9]+}}]
+  %1 = load double* %a, align 8
+  store double %1, double* %b, align 8
+  %vecinit.i = insertelement <1 x double> undef, double %1, i32 0
+  ret <1 x double> %vecinit.i
+}
+
 define %struct.int8x16x2_t @test_vld2q_dup_s8(i8* %a) {
 ; CHECK-LABEL: test_vld2q_dup_s8
 ; CHECK: ld2r {{{v[0-9]+}}.16b, {{v[0-9]+}}.16b}, [x0]

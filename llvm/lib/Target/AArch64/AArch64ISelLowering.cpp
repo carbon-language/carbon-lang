@@ -4070,9 +4070,7 @@ AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
   if (ValueCounts.size() == 0)
     return DAG.getUNDEF(VT);
 
-  // Loads are better lowered with insert_vector_elt.
-  // Keep going if we are hitting this case.
-  if (isOnlyLowElement && !ISD::isNormalLoad(Value.getNode()))
+  if (isOnlyLowElement)
     return DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VT, Value);
 
   unsigned EltSize = VT.getVectorElementType().getSizeInBits();

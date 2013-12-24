@@ -3690,12 +3690,16 @@ def : LD1R_pattern<v2f32, f32, load, LD1R_2S>;
 def : LD1R_pattern<v4i32, i32, load, LD1R_4S>;
 def : LD1R_pattern<v4f32, f32, load, LD1R_4S>;
 
-def : LD1R_pattern<v1i64, i64, load, LD1R_1D>;
-def : LD1R_pattern<v1f64, f64, load, LD1R_1D>;
-
 def : LD1R_pattern<v2i64, i64, load, LD1R_2D>;
 def : LD1R_pattern<v2f64, f64, load, LD1R_2D>;
 
+class LD1R_pattern_v1 <ValueType VTy, ValueType DTy, PatFrag LoadOp,
+                       Instruction INST>
+  : Pat<(VTy (scalar_to_vector (DTy (LoadOp GPR64xsp:$Rn)))),
+        (VTy (INST GPR64xsp:$Rn))>;
+
+def : LD1R_pattern_v1<v1i64, i64, load, LD1R_1D>;
+def : LD1R_pattern_v1<v1f64, f64, load, LD1R_1D>;
 
 multiclass VectorList_Bare_BHSD<string PREFIX, int Count,
                                 RegisterClass RegList> {
