@@ -82,6 +82,7 @@ extern Flags lsan_flags;
 inline Flags *flags() { return &lsan_flags; }
 
 struct Leak {
+  u32 id;
   uptr hit_count;
   uptr total_size;
   u32 stack_trace_id;
@@ -89,17 +90,25 @@ struct Leak {
   bool is_suppressed;
 };
 
+struct LeakedObject {
+  u32 id;
+  uptr addr;
+  uptr size;
+};
+
 // Aggregates leaks by stack trace prefix.
 class LeakReport {
  public:
-  LeakReport() : leaks_(1) {}
-  void Add(u32 stack_trace_id, uptr leaked_size, ChunkTag tag);
+  LeakReport() : next_id_(0), leaks_(1), leaked_objects_(1) {}
+  void Add(uptr chunk, u32 stack_trace_id, uptr leaked_size, ChunkTag tag);
   void PrintLargest(uptr max_leaks);
   void PrintSummary();
   bool IsEmpty() { return leaks_.size() == 0; }
   uptr ApplySuppressions();
  private:
+  u32 next_id_;
   InternalMmapVector<Leak> leaks_;
+  InternalMmapVector<LeakedObject> leaked_objects_;
 };
 
 typedef InternalMmapVector<uptr> Frontier;

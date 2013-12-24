@@ -42,4 +42,4 @@ int main() {
   return 0;
 }
 // CHECK: Test alloc: [[ADDR:.*]].
-// CHECK: leaked 1337 byte object at [[ADDR]]
+// CHECK: [[ADDR]] (1337 bytes)

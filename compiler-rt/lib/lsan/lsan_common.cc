@@ -373,26 +373,16 @@ static void CollectLeaksCb(uptr chunk, void *arg) {
   if (!m.allocated()) return;
   if (m.tag() == kDirectlyLeaked || m.tag() == kIndirectlyLeaked) {
     uptr resolution = flags()->resolution;
+    u32 stack_trace_id = 0;
     if (resolution > 0) {
       uptr size = 0;
       const uptr *trace = StackDepotGet(m.stack_trace_id(), &size);
       size = Min(size, resolution);
-      leak_report->Add(StackDepotPut(trace, size), m.requested_size(), m.tag());
+      stack_trace_id = StackDepotPut(trace, size);
     } else {
-      leak_report->Add(m.stack_trace_id(), m.requested_size(), m.tag());
+      stack_trace_id = m.stack_trace_id();
     }
-  }
-}
-
-// ForEachChunkCallback. Prints addresses of unreachable chunks.
-static void PrintLeakedCb(uptr chunk, void *arg) {
-  chunk = GetUserBegin(chunk);
-  LsanMetadata m(chunk);
-  if (!m.allocated()) return;
-  if (m.tag() == kDirectlyLeaked || m.tag() == kIndirectlyLeaked) {
-    Printf("%s leaked %zu byte object at %p.\n",
-           m.tag() == kDirectlyLeaked ? "Directly" : "Indirectly",
-           m.requested_size(), chunk);
+    leak_report->Add(chunk, stack_trace_id, m.requested_size(), m.tag());
   }
 }
 
@@ -411,12 +401,6 @@ static void PrintMatchedSuppressions() {
   Printf("%s\n\n", line);
 }
 
-static void PrintLeaked() {
-  Printf("\n");
-  Printf("Reporting individual objects:\n");
-  ForEachChunk(PrintLeakedCb, 0 /* arg */);
-}
-
 struct DoLeakCheckParam {
   bool success;
   LeakReport leak_report;
@@ -430,8 +414,6 @@ static void DoLeakCheckCallback(const SuspendedThreadsList &suspended_threads,
   CHECK(param->leak_report.IsEmpty());
   ClassifyAllChunks(suspended_threads);
   ForEachChunk(CollectLeaksCb, &param->leak_report);
-  if (!param->leak_report.IsEmpty() && flags()->report_objects)
-    PrintLeaked();
   param->success = true;
 }
 
@@ -512,20 +494,29 @@ static Suppression *GetSuppressionForStack(u32 stack_trace_id) {
 // use a hash table.
 const uptr kMaxLeaksConsidered = 5000;
 
-void LeakReport::Add(u32 stack_trace_id, uptr leaked_size, ChunkTag tag) {
+void LeakReport::Add(uptr chunk, u32 stack_trace_id, uptr leaked_size,
+                     ChunkTag tag) {
   CHECK(tag == kDirectlyLeaked || tag == kIndirectlyLeaked);
   bool is_directly_leaked = (tag == kDirectlyLeaked);
-  for (uptr i = 0; i < leaks_.size(); i++)
+  uptr i;
+  for (i = 0; i < leaks_.size(); i++) {
     if (leaks_[i].stack_trace_id == stack_trace_id &&
         leaks_[i].is_directly_leaked == is_directly_leaked) {
       leaks_[i].hit_count++;
       leaks_[i].total_size += leaked_size;
-      return;
+      break;
     }
-  if (leaks_.size() == kMaxLeaksConsidered) return;
-  Leak leak = { /* hit_count */ 1, leaked_size, stack_trace_id,
-                is_directly_leaked, /* is_suppressed */ false };
-  leaks_.push_back(leak);
+  }
+  if (i == leaks_.size()) {
+    if (leaks_.size() == kMaxLeaksConsidered) return;
+    Leak leak = { next_id_++, /* hit_count */ 1, leaked_size, stack_trace_id,
+                  is_directly_leaked, /* is_suppressed */ false };
+    leaks_.push_back(leak);
+  }
+  if (flags()->report_objects) {
+    LeakedObject obj = {leaks_[i].id, chunk, leaked_size};
+    leaked_objects_.push_back(obj);
+  }
 }
 
 static bool LeakComparator(const Leak &leak1, const Leak &leak2) {
@@ -559,6 +550,17 @@ void LeakReport::PrintLargest(uptr num_leaks_to_print) {
            leaks_[i].total_size, leaks_[i].hit_count);
     Printf("%s", d.End());
     PrintStackTraceById(leaks_[i].stack_trace_id);
+
+    if (flags()->report_objects) {
+      Printf("Objects leaked above:\n");
+      for (uptr j = 0; j < leaked_objects_.size(); j++) {
+        if (leaked_objects_[j].id == leaks_[i].id)
+          Printf("%p (%zu bytes)\n", leaked_objects_[j].addr,
+                 leaked_objects_[j].size);
+      }
+      Printf("\n");
+    }
+
     leaks_printed++;
     if (leaks_printed == num_leaks_to_print) break;
   }

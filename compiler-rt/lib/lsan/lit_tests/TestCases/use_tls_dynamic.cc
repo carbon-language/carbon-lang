@@ -28,6 +28,6 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 // CHECK: Test alloc: [[ADDR:.*]].
-// CHECK: leaked 1337 byte object at [[ADDR]]
 // CHECK: LeakSanitizer: detected memory leaks
+// CHECK: [[ADDR]] (1337 bytes)
 // CHECK: SUMMARY: {{(Leak|Address)}}Sanitizer:

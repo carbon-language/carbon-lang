@@ -13,6 +13,6 @@ int main() {
   fprintf(stderr, "Test alloc: %p.\n", p);
 }
 // CHECK: Test alloc: [[ADDR:.*]].
-// CHECK: Directly leaked 1337 byte object at [[ADDR]]
 // CHECK: LeakSanitizer: detected memory leaks
+// CHECK: [[ADDR]] (1337 bytes)
 // CHECK: SUMMARY: {{(Leak|Address)}}Sanitizer:
