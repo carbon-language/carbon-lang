@@ -900,6 +900,36 @@ poly64x1_t test_vld1_lane_p64(poly64_t  *a, poly64x1_t b) {
   // CHECK: ld1r {v{{[0-9]+}}.1d}, [{{x[0-9]+|sp}}]
 }
 
+int8x16x2_t test_vld2q_lane_s8(int8_t const * ptr, int8x16x2_t src) {
+  // CHECK-LABEL: test_vld2q_lane_s8
+  return vld2q_lane_s8(ptr, src, 15); 
+  // CHECK: ld2 {{{v[0-9]+}}.b, {{v[0-9]+}}.b}[15], [x0]
+}
+
+uint8x16x2_t test_vld2q_lane_u8(uint8_t const * ptr, uint8x16x2_t src) {
+  // CHECK-LABEL: test_vld2q_lane_u8
+  return vld2q_lane_u8(ptr, src, 15); 
+  // CHECK: ld2 {{{v[0-9]+}}.b, {{v[0-9]+}}.b}[15], [x0]
+}
+
+poly8x16x2_t test_vld2q_lane_p8(poly8_t const * ptr, poly8x16x2_t src) {
+  // CHECK-LABEL: test_vld2q_lane_p8
+  return vld2q_lane_p8(ptr, src, 15); 
+  // CHECK: ld2 {{{v[0-9]+}}.b, {{v[0-9]+}}.b}[15], [x0]
+}
+
+int8x16x3_t test_vld3q_lane_s8(int8_t const * ptr, int8x16x3_t src) {
+  // CHECK-LABEL: test_vld3q_lane_s8
+  return vld3q_lane_s8(ptr, src, 15);
+  // CHECK: ld3 {{{v[0-9]+}}.b, {{v[0-9]+}}.b, {{v[0-9]+}}.b}[15], [x0]
+}
+
+uint8x16x3_t test_vld3q_lane_u8(uint8_t const * ptr, uint8x16x3_t src) {
+  // CHECK-LABEL: test_vld3q_lane_u8
+  return vld3q_lane_u8(ptr, src, 15);
+  // CHECK: ld3 {{{v[0-9]+}}.b, {{v[0-9]+}}.b, {{v[0-9]+}}.b}[15], [x0]
+}
+
 uint16x8x2_t test_vld2q_lane_u16(uint16_t  *a, uint16x8x2_t b) {
   // CHECK-LABEL: test_vld2q_lane_u16
   return vld2q_lane_u16(a, b, 7);
