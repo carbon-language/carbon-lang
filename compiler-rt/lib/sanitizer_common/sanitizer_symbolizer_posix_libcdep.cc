@@ -473,12 +473,8 @@ class POSIXSymbolizer : public Symbolizer {
     return true;
   }
 
-  bool IsAvailable() {
+  bool CanReturnFileLineInfo() {
     return internal_symbolizer_ != 0 || external_symbolizer_ != 0;
-  }
-
-  bool IsExternalAvailable() {
-    return external_symbolizer_ != 0;
   }
 
   void Flush() {

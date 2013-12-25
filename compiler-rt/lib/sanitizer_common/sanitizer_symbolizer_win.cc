@@ -74,7 +74,7 @@ class WinSymbolizer : public Symbolizer {
     return 1;
   }
 
-  bool IsAvailable() {
+  bool CanReturnFileLineInfo() {
     return true;
   }
 

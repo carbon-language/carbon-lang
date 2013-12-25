@@ -105,7 +105,7 @@ ReportStack *SymbolizeCode(uptr addr) {
     ent->col = col;
     return ent;
   }
-  if (!Symbolizer::Get()->IsAvailable())
+  if (!Symbolizer::Get()->CanReturnFileLineInfo())
     return SymbolizeCodeAddr2Line(addr);
   static const uptr kMaxAddrFrames = 16;
   InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
@@ -131,8 +131,6 @@ ReportStack *SymbolizeCode(uptr addr) {
 }
 
 ReportLocation *SymbolizeData(uptr addr) {
-  if (!Symbolizer::Get()->IsAvailable())
-    return 0;
   DataInfo info;
   if (!Symbolizer::Get()->SymbolizeData(addr, &info))
     return 0;
@@ -150,8 +148,6 @@ ReportLocation *SymbolizeData(uptr addr) {
 }
 
 void SymbolizeFlush() {
-  if (!Symbolizer::Get()->IsAvailable())
-    return;
   Symbolizer::Get()->Flush();
 }
 

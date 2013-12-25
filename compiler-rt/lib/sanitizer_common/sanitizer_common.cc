@@ -202,7 +202,7 @@ void ReportErrorSummary(const char *error_type, StackTrace *stack) {
     return;
   AddressInfo ai;
 #if !SANITIZER_GO
-  if (stack->size > 0 && Symbolizer::Get()->IsAvailable()) {
+  if (stack->size > 0 && Symbolizer::Get()->CanReturnFileLineInfo()) {
     // Currently, we include the first stack frame into the report summary.
     // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
     uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);

@@ -241,16 +241,7 @@ void Initialize(ThreadState *thr) {
   InitializeSuppressions();
 #ifndef TSAN_GO
   InitializeLibIgnore();
-  // Initialize external symbolizer before internal threads are started.
-  const char *external_symbolizer = flags()->external_symbolizer_path;
-  bool external_symbolizer_started =
-      Symbolizer::Init(external_symbolizer)->IsExternalAvailable();
-  if (external_symbolizer != 0 && external_symbolizer[0] != '\0' &&
-      !external_symbolizer_started) {
-    Printf("Failed to start external symbolizer: '%s'\n",
-           external_symbolizer);
-    Die();
-  }
+  Symbolizer::Init(common_flags()->external_symbolizer_path);
   Symbolizer::Get()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 #endif
   internal_start_thread(&BackgroundThread, 0);

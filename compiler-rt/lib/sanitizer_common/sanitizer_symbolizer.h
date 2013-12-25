@@ -95,10 +95,7 @@ class Symbolizer {
   virtual bool SymbolizeData(uptr address, DataInfo *info) {
     return false;
   }
-  virtual bool IsAvailable() {
-    return false;
-  }
-  virtual bool IsExternalAvailable() {
+  virtual bool CanReturnFileLineInfo() {
     return false;
   }
   // Release internal caches (if any).
