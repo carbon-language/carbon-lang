@@ -83,6 +83,7 @@ static int ProcessGlobalRegionsCallback(struct dl_phdr_info *info, size_t size,
 
 // Scans global variables for heap pointers.
 void ProcessGlobalRegions(Frontier *frontier) {
+  if (!flags()->use_globals) return;
   // FIXME: dl_iterate_phdr acquires a linker lock, so we run a risk of
   // deadlocking by running this under StopTheWorld. However, the lock is
   // reentrant, so we should be able to fix this by acquiring the lock before

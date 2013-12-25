@@ -77,6 +77,16 @@ static void InitializeFlags() {
   }
 }
 
+#define LOG_POINTERS(...)                           \
+  do {                                              \
+    if (flags()->log_pointers) Report(__VA_ARGS__); \
+  } while (0);
+
+#define LOG_THREADS(...)                           \
+  do {                                             \
+    if (flags()->log_threads) Report(__VA_ARGS__); \
+  } while (0);
+
 SuppressionContext *suppression_ctx;
 
 void InitializeSuppressions() {
@@ -152,8 +162,7 @@ void ScanRangeForPointers(uptr begin, uptr end,
                           Frontier *frontier,
                           const char *region_type, ChunkTag tag) {
   const uptr alignment = flags()->pointer_alignment();
-  if (flags()->log_pointers)
-    Report("Scanning %s range %p-%p.\n", region_type, begin, end);
+  LOG_POINTERS("Scanning %s range %p-%p.\n", region_type, begin, end);
   uptr pp = begin;
   if (pp % alignment)
     pp = pp + alignment - pp % alignment;
@@ -171,18 +180,16 @@ void ScanRangeForPointers(uptr begin, uptr end,
 
     // Do this check relatively late so we can log only the interesting cases.
     if (!flags()->use_poisoned && WordIsPoisoned(pp)) {
-      if (flags()->log_pointers)
-        Report(
-            "%p is poisoned: ignoring %p pointing into chunk %p-%p of size "
-            "%zu.\n",
-            pp, p, chunk, chunk + m.requested_size(), m.requested_size());
+      LOG_POINTERS(
+          "%p is poisoned: ignoring %p pointing into chunk %p-%p of size "
+          "%zu.\n",
+          pp, p, chunk, chunk + m.requested_size(), m.requested_size());
       continue;
     }
 
     m.set_tag(tag);
-    if (flags()->log_pointers)
-      Report("%p: found %p pointing into chunk %p-%p of size %zu.\n", pp, p,
-             chunk, chunk + m.requested_size(), m.requested_size());
+    LOG_POINTERS("%p: found %p pointing into chunk %p-%p of size %zu.\n", pp, p,
+                 chunk, chunk + m.requested_size(), m.requested_size());
     if (frontier)
       frontier->push_back(chunk);
   }
@@ -201,7 +208,7 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
   uptr registers_end = registers_begin + registers.size();
   for (uptr i = 0; i < suspended_threads.thread_count(); i++) {
     uptr os_id = static_cast<uptr>(suspended_threads.GetThreadID(i));
-    if (flags()->log_threads) Report("Processing thread %d.\n", os_id);
+    LOG_THREADS("Processing thread %d.\n", os_id);
     uptr stack_begin, stack_end, tls_begin, tls_end, cache_begin, cache_end;
     bool thread_found = GetThreadRangesLocked(os_id, &stack_begin, &stack_end,
                                               &tls_begin, &tls_end,
@@ -209,8 +216,7 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
     if (!thread_found) {
       // If a thread can't be found in the thread registry, it's probably in the
       // process of destruction. Log this event and move on.
-      if (flags()->log_threads)
-        Report("Thread %d not found in registry.\n", os_id);
+      LOG_THREADS("Thread %d not found in registry.\n", os_id);
       continue;
     }
     uptr sp;
@@ -227,14 +233,12 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
                            "REGISTERS", kReachable);
 
     if (flags()->use_stacks) {
-      if (flags()->log_threads)
-        Report("Stack at %p-%p, SP = %p.\n", stack_begin, stack_end, sp);
+      LOG_THREADS("Stack at %p-%p (SP = %p).\n", stack_begin, stack_end, sp);
       if (sp < stack_begin || sp >= stack_end) {
         // SP is outside the recorded stack range (e.g. the thread is running a
         // signal handler on alternate stack). Again, consider the entire stack
         // range to be reachable.
-        if (flags()->log_threads)
-          Report("WARNING: stack pointer not in stack range.\n");
+        LOG_THREADS("WARNING: stack pointer not in stack range.\n");
       } else {
         // Shrink the stack range to ignore out-of-scope values.
         stack_begin = sp;
@@ -245,7 +249,7 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
     }
 
     if (flags()->use_tls) {
-      if (flags()->log_threads) Report("TLS at %p-%p.\n", tls_begin, tls_end);
+      LOG_THREADS("TLS at %p-%p.\n", tls_begin, tls_end);
       if (cache_begin == cache_end) {
         ScanRangeForPointers(tls_begin, tls_end, frontier, "TLS", kReachable);
       } else {
@@ -274,10 +278,9 @@ static void ProcessRootRegion(Frontier *frontier, uptr root_begin,
     uptr intersection_end = Min(end, root_end);
     if (intersection_begin >= intersection_end) continue;
     bool is_readable = prot & MemoryMappingLayout::kProtectionRead;
-    if (flags()->log_pointers)
-      Report("Root region %p-%p intersects with mapped region %p-%p (%s)\n",
-             root_begin, root_end, begin, end,
-             is_readable ? "readable" : "unreadable");
+    LOG_POINTERS("Root region %p-%p intersects with mapped region %p-%p (%s)\n",
+                 root_begin, root_end, begin, end,
+                 is_readable ? "readable" : "unreadable");
     if (is_readable)
       ScanRangeForPointers(intersection_begin, intersection_end, frontier,
                            "ROOT", kReachable);
@@ -329,31 +332,27 @@ static void CollectIgnoredCb(uptr chunk, void *arg) {
 // Sets the appropriate tag on each chunk.
 static void ClassifyAllChunks(SuspendedThreadsList const &suspended_threads) {
   // Holds the flood fill frontier.
-  Frontier frontier(GetPageSizeCached());
+  Frontier frontier(1);
 
-  if (flags()->use_globals)
-    ProcessGlobalRegions(&frontier);
+  ProcessGlobalRegions(&frontier);
   ProcessThreads(suspended_threads, &frontier);
   ProcessRootRegions(&frontier);
   FloodFillTag(&frontier, kReachable);
   // The check here is relatively expensive, so we do this in a separate flood
   // fill. That way we can skip the check for chunks that are reachable
   // otherwise.
-  if (flags()->log_pointers)
-    Report("Processing platform-specific allocations.\n");
+  LOG_POINTERS("Processing platform-specific allocations.\n");
   ProcessPlatformSpecificAllocations(&frontier);
   FloodFillTag(&frontier, kReachable);
 
-  if (flags()->log_pointers)
-    Report("Scanning ignored chunks.\n");
+  LOG_POINTERS("Scanning ignored chunks.\n");
   CHECK_EQ(0, frontier.size());
   ForEachChunk(CollectIgnoredCb, &frontier);
   FloodFillTag(&frontier, kIgnored);
 
   // Iterate over leaked chunks and mark those that are reachable from other
   // leaked chunks.
-  if (flags()->log_pointers)
-    Report("Scanning leaked chunks.\n");
+  LOG_POINTERS("Scanning leaked chunks.\n");
   ForEachChunk(MarkIndirectlyLeakedCb, 0 /* arg */);
 }
 
@@ -364,7 +363,8 @@ static void PrintStackTraceById(u32 stack_trace_id) {
   StackTrace::PrintStack(trace, size);
 }
 
-// ForEachChunk callback. Aggregates unreachable chunks into a LeakReport.
+// ForEachChunk callback. Aggregates information about unreachable chunks into
+// a LeakReport.
 static void CollectLeaksCb(uptr chunk, void *arg) {
   CHECK(arg);
   LeakReport *leak_report = reinterpret_cast<LeakReport *>(arg);
