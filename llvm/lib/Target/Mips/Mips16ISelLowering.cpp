@@ -429,8 +429,7 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
   const char* Mips16HelperFunction = 0;
   bool NeedMips16Helper = false;
 
-  if (getTargetMachine().Options.UseSoftFloat &&
-      Subtarget->inMips16HardFloat()) {
+  if (Subtarget->inMips16HardFloat()) {
     //
     // currently we don't have symbols tagged with the mips16 or mips32
     // qualifier so we will assume that we don't know what kind it is.
