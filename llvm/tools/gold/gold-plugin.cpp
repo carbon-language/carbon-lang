@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h" // plugin-api.h requires HAVE_STDINT_H
-#include "plugin-api.h"
+#include <plugin-api.h>
 #include "llvm-c/lto.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/OwningPtr.h"
