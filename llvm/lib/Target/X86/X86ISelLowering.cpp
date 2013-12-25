@@ -1557,14 +1557,13 @@ void X86TargetLowering::resetOperationActions() {
 
 EVT X86TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
   if (!VT.isVector())
-    return MVT::i8;
+    return Subtarget->hasAVX512() ? MVT::i1: MVT::i8;
 
-  const TargetMachine &TM = getTargetMachine();
-  if (!TM.Options.UseSoftFloat && Subtarget->hasAVX512())
+  if (Subtarget->hasAVX512())
     switch(VT.getVectorNumElements()) {
     case  8: return MVT::v8i1;
     case 16: return MVT::v16i1;
-    }
+  }
 
   return VT.changeVectorElementTypeToInteger();
 }
@@ -10199,7 +10198,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   if (VT.isVector()) return LowerVSETCC(Op, Subtarget, DAG);
 
-  assert((VT == MVT::i8 || (Subtarget->hasAVX512() && VT == MVT::i1))
+  assert(((!Subtarget->hasAVX512() && VT == MVT::i8) || (VT == MVT::i1))
          && "SetCC type must be 8-bit or 1-bit integer");
   SDValue Op0 = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1);
@@ -10235,7 +10234,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
       if (!Invert) return Op0;
 
       CCode = X86::GetOppositeBranchCondition(CCode);
-      return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+      return DAG.getNode(X86ISD::SETCC, dl, VT,
                          DAG.getConstant(CCode, MVT::i8), Op0.getOperand(1));
     }
   }
@@ -10247,8 +10246,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, DAG);
   EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
-  MVT SetCCVT = Subtarget->hasAVX512() ? MVT::i1 : MVT::i8;
-  return DAG.getNode(X86ISD::SETCC, dl, SetCCVT,
+  return DAG.getNode(X86ISD::SETCC, dl, VT,
                       DAG.getConstant(X86CC, MVT::i8), EFLAGS);
 }
 
