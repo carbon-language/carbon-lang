@@ -153,14 +153,6 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
   return false;
 }
 
-bool MemoryMappingLayout::GetObjectNameAndOffset(uptr addr, uptr *offset,
-                                                 char filename[],
-                                                 uptr filename_size,
-                                                 uptr *protection) {
-  return IterateForObjectNameAndOffset(addr, offset, filename, filename_size,
-                                       protection);
-}
-
 uptr MemoryMappingLayout::DumpListOfModules(LoadedModule *modules,
                                             uptr max_modules,
                                             string_predicate_t filter) {

@@ -191,24 +191,15 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
   return true;
 }
 
-// Gets the object name and the offset by walking MemoryMappingLayout.
-bool MemoryMappingLayout::GetObjectNameAndOffset(uptr addr, uptr *offset,
-                                                 char filename[],
-                                                 uptr filename_size,
-                                                 uptr *protection) {
-  return IterateForObjectNameAndOffset(addr, offset, filename, filename_size,
-                                       protection);
-}
-
 uptr MemoryMappingLayout::DumpListOfModules(LoadedModule *modules,
                                             uptr max_modules,
                                             string_predicate_t filter) {
   Reset();
-  uptr cur_beg, cur_end;
+  uptr cur_beg, cur_end, cur_offset;
   InternalScopedBuffer<char> module_name(kMaxPathLength);
   uptr n_modules = 0;
   for (uptr i = 0; n_modules < max_modules &&
-                       Next(&cur_beg, &cur_end, 0, module_name.data(),
+                       Next(&cur_beg, &cur_end, &cur_offset, module_name.data(),
                             module_name.size(), 0);
        i++) {
     const char *cur_name = module_name.data();
@@ -217,7 +208,19 @@ uptr MemoryMappingLayout::DumpListOfModules(LoadedModule *modules,
     if (filter && !filter(cur_name))
       continue;
     void *mem = &modules[n_modules];
-    LoadedModule *cur_module = new(mem) LoadedModule(cur_name, cur_beg);
+    // Don't subtract 'cur_beg' from the first entry:
+    // * If a binary is compiled w/o -pie, then the first entry in
+    //   process maps is likely the binary itself (all dynamic libs
+    //   are mapped higher in address space). For such a binary,
+    //   instruction offset in binary coincides with the actual
+    //   instruction address in virtual memory (as code section
+    //   is mapped to a fixed memory range).
+    // * If a binary is compiled with -pie, all the modules are
+    //   mapped high at address space (in particular, higher than
+    //   shadow memory of the tool), so the module can't be the
+    //   first entry.
+    uptr base_address = (i ? cur_beg : 0) - cur_offset;
+    LoadedModule *cur_module = new(mem) LoadedModule(cur_name, base_address);
     cur_module->addAddressRange(cur_beg, cur_end);
     n_modules++;
   }
