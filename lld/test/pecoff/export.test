@@ -1,6 +1,6 @@
 # RUN: yaml2obj %p/Inputs/export.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1.dll /dll /subsystem:console /entry:_init \
+# RUN: lld -flavor link /out:%t1.dll /dll /entry:_init \
 # RUN:   /export:exportfn1 /export:exportfn2 -- %t.obj
 # RUN: llvm-objdump -s %t1.dll | FileCheck -check-prefix=CHECK1 %s
 

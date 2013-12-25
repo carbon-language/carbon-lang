@@ -41,6 +41,10 @@ public:
         return;
       }
     }
+    if (_ctx.getImageType() == PECOFFLinkingContext::IMAGE_DLL) {
+      _ctx.setSubsystem(WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI);
+      return;
+    }
     llvm_unreachable("Failed to infer the subsystem.");
   }
 
