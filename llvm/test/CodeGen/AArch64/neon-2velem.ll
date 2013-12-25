@@ -466,6 +466,49 @@ entry:
   ret <2 x double> %0
 }
 
+define float @test_vfmas_laneq_f32(float %a, float %b, <4 x float> %v) {
+; CHECK-LABEL: test_vfmas_laneq_f32
+; CHECK: fmla {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[3]
+entry:
+  %extract = extractelement <4 x float> %v, i32 3
+  %0 = tail call float @llvm.fma.f32(float %b, float %extract, float %a)
+  ret float %0
+}
+
+declare float @llvm.fma.f32(float, float, float)
+
+define double @test_vfmsd_lane_f64(double %a, double %b, <1 x double> %v) {
+; CHECK-LABEL: test_vfmsd_lane_f64
+; CHECK: fmls {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[0]
+entry:
+  %extract.rhs = extractelement <1 x double> %v, i32 0
+  %extract = fsub double -0.000000e+00, %extract.rhs
+  %0 = tail call double @llvm.fma.f64(double %b, double %extract, double %a)
+  ret double %0
+}
+
+declare double @llvm.fma.f64(double, double, double)
+
+define float @test_vfmss_laneq_f32(float %a, float %b, <4 x float> %v) {
+; CHECK: test_vfmss_laneq_f32
+; CHECK: fmls {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[3]
+entry:
+  %extract.rhs = extractelement <4 x float> %v, i32 3
+  %extract = fsub float -0.000000e+00, %extract.rhs
+  %0 = tail call float @llvm.fma.f32(float %b, float %extract, float %a)
+  ret float %0
+}
+
+define double @test_vfmsd_laneq_f64(double %a, double %b, <2 x double> %v) {
+; CHECK-LABEL: test_vfmsd_laneq_f64
+; CHECK: fmls {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[1]
+entry:
+  %extract.rhs = extractelement <2 x double> %v, i32 1
+  %extract = fsub double -0.000000e+00, %extract.rhs
+  %0 = tail call double @llvm.fma.f64(double %b, double %extract, double %a)
+  ret double %0
+}
+
 define <4 x i32> @test_vmlal_lane_s16(<4 x i32> %a, <4 x i16> %b, <4 x i16> %v) {
 ; CHECK: test_vmlal_lane_s16:
 ; CHECK: mlal {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, {{v[0-9]+}}.h[3]
