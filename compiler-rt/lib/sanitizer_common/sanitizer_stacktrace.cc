@@ -13,9 +13,7 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
-#include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
-#include "sanitizer_symbolizer.h"
 
 namespace __sanitizer {
 
@@ -29,74 +27,6 @@ uptr StackTrace::GetPreviousInstructionPc(uptr pc) {
 #else
   return pc - 1;
 #endif
-}
-
-static void PrintStackFramePrefix(InternalScopedString *buffer, uptr frame_num,
-                                  uptr pc) {
-  buffer->append("    #%zu 0x%zx", frame_num, pc);
-}
-
-void StackTrace::PrintStack(const uptr *addr, uptr size) {
-  if (addr == 0 || size == 0) {
-    Printf("    <empty stack>\n\n");
-    return;
-  }
-  MemoryMappingLayout proc_maps(/*cache_enabled*/true);
-  InternalScopedBuffer<char> buff(GetPageSizeCached() * 2);
-  InternalScopedBuffer<AddressInfo> addr_frames(64);
-  InternalScopedString frame_desc(GetPageSizeCached() * 2);
-  uptr frame_num = 0;
-  for (uptr i = 0; i < size && addr[i]; i++) {
-    // PCs in stack traces are actually the return addresses, that is,
-    // addresses of the next instructions after the call.
-    uptr pc = GetPreviousInstructionPc(addr[i]);
-    uptr addr_frames_num = 0;  // The number of stack frames for current
-                               // instruction address.
-    if (common_flags()->symbolize && addr_frames_num == 0) {
-      // Use our own (online) symbolizer, if necessary.
-      if (Symbolizer *sym = Symbolizer::GetOrNull())
-        addr_frames_num =
-            sym->SymbolizePC(pc, addr_frames.data(), addr_frames.size());
-      for (uptr j = 0; j < addr_frames_num; j++) {
-        AddressInfo &info = addr_frames[j];
-        frame_desc.clear();
-        PrintStackFramePrefix(&frame_desc, frame_num, pc);
-        if (info.function) {
-          frame_desc.append(" in %s", info.function);
-          // Print offset in function if we don't know the source file.
-          if (!info.file && info.function_offset != AddressInfo::kUnknown)
-            frame_desc.append("+0x%zx", info.function_offset);
-        }
-        if (info.file) {
-          frame_desc.append(" ");
-          PrintSourceLocation(&frame_desc, info.file, info.line, info.column);
-        } else if (info.module) {
-          frame_desc.append(" ");
-          PrintModuleAndOffset(&frame_desc, info.module, info.module_offset);
-        }
-        Printf("%s\n", frame_desc.data());
-        frame_num++;
-        info.Clear();
-      }
-    }
-    if (addr_frames_num == 0) {
-      // If online symbolization failed, try to output at least module and
-      // offset for instruction.
-      frame_desc.clear();
-      PrintStackFramePrefix(&frame_desc, frame_num, pc);
-      uptr offset;
-      if (proc_maps.GetObjectNameAndOffset(pc, &offset,
-                                           buff.data(), buff.size(),
-                                           /* protection */0)) {
-        frame_desc.append(" ");
-        PrintModuleAndOffset(&frame_desc, buff.data(), offset);
-      }
-      Printf("%s\n", frame_desc.data());
-      frame_num++;
-    }
-  }
-  // Always print a trailing empty line after stack trace.
-  Printf("\n");
 }
 
 uptr StackTrace::GetCurrentPc() {
