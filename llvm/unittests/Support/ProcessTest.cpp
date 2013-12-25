@@ -11,7 +11,7 @@
 #include "gtest/gtest.h"
 
 #ifdef LLVM_ON_WIN32
-#include "windows.h"
+#include <windows.h>
 #endif
 
 namespace {
