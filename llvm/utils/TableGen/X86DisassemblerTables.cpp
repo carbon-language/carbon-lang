@@ -636,14 +636,36 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
 }
 
 void DisassemblerTables::emitContextTable(raw_ostream &o, unsigned &i) const {
+  const unsigned int tableSize = 16384;
   o.indent(i * 2) << "static const uint8_t " CONTEXTS_STR
-                     "[256] = {\n";
+                     "[" << tableSize << "] = {\n";
   i++;
 
-  for (unsigned index = 0; index < 256; ++index) {
+  for (unsigned index = 0; index < tableSize; ++index) {
     o.indent(i * 2);
 
-    if ((index & ATTR_VEXL) && (index & ATTR_REXW) && (index & ATTR_OPSIZE))
+    if (index & ATTR_EVEX) {
+      o << "IC_EVEX";
+      if (index & ATTR_EVEXL2)
+        o << "_L2";
+      else if (index & ATTR_EVEXL)
+        o << "_L";
+      if (index & ATTR_REXW)
+        o << "_W";
+      if (index & ATTR_OPSIZE)
+        o << "_OPSIZE";
+      else if (index & ATTR_XD)
+        o << "_XD";
+      else if (index & ATTR_XS)
+        o << "_XS";
+      if (index & ATTR_EVEXKZ)
+        o << "_KZ";
+      else if (index & ATTR_EVEXK)
+        o << "_K";
+      if (index & ATTR_EVEXB)
+        o << "_B";
+    }
+    else if ((index & ATTR_VEXL) && (index & ATTR_REXW) && (index & ATTR_OPSIZE))
       o << "IC_VEX_L_W_OPSIZE";
     else if ((index & ATTR_VEXL) && (index & ATTR_REXW) && (index & ATTR_XD))
       o << "IC_VEX_L_W_XD";
@@ -713,7 +735,7 @@ void DisassemblerTables::emitContextTable(raw_ostream &o, unsigned &i) const {
     else
       o << "IC";
 
-    if (index < 255)
+    if (index < tableSize - 1)
       o << ",";
     else
       o << " ";

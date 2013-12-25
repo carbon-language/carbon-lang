@@ -2067,6 +2067,7 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
           return true;
         }
       }
+      // TODO: add parsing of broadcasts {1to8}, {1to16}
       // Parse "zeroing non-masked" semantic {z}
       if (getLexer().is(AsmToken::LCurly)) {
         Operands.push_back(X86Operand::CreateToken("{z}", consumeToken()));

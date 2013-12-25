@@ -45,6 +45,21 @@ extern "C" {
 #define xFromREX(rex)        (((rex) & 0x2) >> 1)
 #define bFromREX(rex)        ((rex) & 0x1)
 
+#define rFromEVEX2of4(evex)     (((~(evex)) & 0x80) >> 7)
+#define xFromEVEX2of4(evex)     (((~(evex)) & 0x40) >> 6)
+#define bFromEVEX2of4(evex)     (((~(evex)) & 0x20) >> 5)
+#define r2FromEVEX2of4(evex)    (((~(evex)) & 0x10) >> 4)
+#define mmFromEVEX2of4(evex)    ((evex) & 0x3)
+#define wFromEVEX3of4(evex)     (((evex) & 0x80) >> 7)
+#define vvvvFromEVEX3of4(evex)  (((~(evex)) & 0x78) >> 3)
+#define ppFromEVEX3of4(evex)    ((evex) & 0x3)
+#define zFromEVEX4of4(evex)     (((evex) & 0x80) >> 7)
+#define l2FromEVEX4of4(evex)    (((evex) & 0x40) >> 6)
+#define lFromEVEX4of4(evex)     (((evex) & 0x20) >> 5)
+#define bFromEVEX4of4(evex)     (((evex) & 0x10) >> 4)
+#define v2FromEVEX4of4(evex)    (((~evex) & 0x8) >> 3)
+#define aaaFromEVEX4of4(evex)   ((evex) & 0x7)
+
 #define rFromVEX2of3(vex)       (((~(vex)) & 0x80) >> 7)
 #define xFromVEX2of3(vex)       (((~(vex)) & 0x40) >> 6)
 #define bFromVEX2of3(vex)       (((~(vex)) & 0x20) >> 5)
@@ -314,6 +329,16 @@ extern "C" {
   ENTRY(ZMM30)    \
   ENTRY(ZMM31)
 
+#define REGS_MASKS \
+  ENTRY(K0)        \
+  ENTRY(K1)        \
+  ENTRY(K2)        \
+  ENTRY(K3)        \
+  ENTRY(K4)        \
+  ENTRY(K5)        \
+  ENTRY(K6)        \
+  ENTRY(K7)
+
 #define REGS_SEGMENT \
   ENTRY(ES)          \
   ENTRY(CS)          \
@@ -361,6 +386,7 @@ extern "C" {
   REGS_XMM            \
   REGS_YMM            \
   REGS_ZMM            \
+  REGS_MASKS          \
   REGS_SEGMENT        \
   REGS_DEBUG          \
   REGS_CONTROL        \
@@ -463,7 +489,7 @@ typedef enum {
 } XOPMapSelect;
 
 /*
- * VEXPrefixCode - Possible values for the VEX.pp field
+ * VEXPrefixCode - Possible values for the VEX.pp/EVEX.pp field
  */
 
 typedef enum {
@@ -474,11 +500,12 @@ typedef enum {
 } VEXPrefixCode;
 
 typedef enum {
-  TYPE_NO_VEX_XOP = 0x0,
-  TYPE_VEX_2B = 0x1,
-  TYPE_VEX_3B = 0x2,
-  TYPE_XOP = 0x3
-} VEXXOPType;
+  TYPE_NO_VEX_XOP   = 0x0,
+  TYPE_VEX_2B       = 0x1,
+  TYPE_VEX_3B       = 0x2,
+  TYPE_EVEX         = 0x3,
+  TYPE_XOP          = 0x4
+} VectorExtensionType;
 
 typedef uint8_t BOOL;
 
@@ -536,10 +563,10 @@ struct InternalInstruction {
   uint8_t prefixPresent[0x100];
   /* contains the location (for use with the reader) of the prefix byte */
   uint64_t prefixLocations[0x100];
-  /* The value of the VEX/XOP prefix, if present */
-  uint8_t vexXopPrefix[3];
-  /* The length of the VEX prefix (0 if not present) */
-  VEXXOPType vexXopType;
+  /* The value of the vector extention prefix(EVEX/VEX/XOP), if present */
+  uint8_t vectorExtensionPrefix[4];
+  /* The type of the vector extension prefix */
+  VectorExtensionType vectorExtensionType;
   /* The value of the REX prefix, if present */
   uint8_t rexPrefix;
   /* The location where a mandatory prefix would have to be (i.e., right before
@@ -584,6 +611,9 @@ struct InternalInstruction {
   /* The VEX.vvvv field, which contains a third register operand for some AVX
      instructions */
   Reg                           vvvv;
+
+  /* The writemask for AVX-512 instructions which is contained in EVEX.aaa */
+  Reg                           writemask;
 
   /* The ModR/M byte, which contains most register operands and some portion of
      all memory operands */
