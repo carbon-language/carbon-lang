@@ -14,6 +14,9 @@ set(SANITIZER_SOURCES
   sanitizer_platform_limits_posix.cc
   sanitizer_posix.cc
   sanitizer_printf.cc
+  sanitizer_procmaps_linux.cc
+  sanitizer_procmaps_mac.cc
+  sanitizer_procmaps_posix.cc
   sanitizer_stackdepot.cc
   sanitizer_stacktrace.cc
   sanitizer_suppressions.cc
