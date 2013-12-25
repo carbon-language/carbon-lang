@@ -7258,7 +7258,7 @@ class NI_2VEswap_laneq<Instruction INST, Operand OpImm, SDPatternOperator op,
                        ValueType ResTy, ValueType OpTy,
                        SDPatternOperator coreop>
   : Pat<(ResTy (op (ResTy (coreop (OpTy OpVPR:$Re), (i64 OpImm:$Index))),
-                   (ResTy ResVPR:$src), (ResTy ResVPR:$Rn))),
+                   (ResTy ResVPR:$Rn), (ResTy ResVPR:$src))),
         (INST ResVPR:$src, ResVPR:$Rn, OpVPR:$Re, OpImm:$Index)>;
 
 // Pattern for lane 0
