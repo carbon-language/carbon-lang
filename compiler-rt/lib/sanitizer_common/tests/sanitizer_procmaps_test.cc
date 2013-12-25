@@ -17,7 +17,7 @@
 
 namespace __sanitizer {
 
-#ifdef SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 TEST(MemoryMappingLayout, CodeRange) {
   uptr start, end;
   bool res = GetCodeRangeForFile("[vdso]", &start, &end);
