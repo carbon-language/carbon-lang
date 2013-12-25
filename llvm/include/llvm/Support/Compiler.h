@@ -397,12 +397,19 @@
 /// with MSVC.
 #if __has_feature(cxx_strong_enums)
 # define LLVM_ENUM_INT_TYPE(intty) : intty
-#define LLVM_HAS_STRONG_ENUMS 1
 #elif defined(_MSC_VER) && _MSC_VER >= 1600  // Added in MSVC 2010.
 # define LLVM_ENUM_INT_TYPE(intty) : intty
-#define LLVM_HAS_STRONG_ENUMS 1
 #else
 # define LLVM_ENUM_INT_TYPE(intty)
+#endif
+
+/// \brief Does the compiler support C++11 semantics for strongly typed forward
+/// declared enums?
+#if __has_feature(cxx_strong_enums)
+#define LLVM_HAS_STRONG_ENUMS 1
+#elif defined(_MSC_VER) && _MSC_VER >= 1700 // Added in MSVC 2012.
+#define LLVM_HAS_STRONG_ENUMS 1
+#else
 #define LLVM_HAS_STRONG_ENUMS 0
 #endif
 
