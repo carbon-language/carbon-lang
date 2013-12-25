@@ -147,7 +147,7 @@ Options:\n\
   --cflags          C compiler flags for files that include LLVM headers.\n\
   --cxxflags        C++ compiler flags for files that include LLVM headers.\n\
   --ldflags         Print Linker flags.\n\
-  --system-libs     Sytem Libraries needed to link against LLVM components.\n\
+  --system-libs     System Libraries needed to link against LLVM components.\n\
   --libs            Libraries needed to link against LLVM components.\n\
   --libnames        Bare library names for in-tree builds.\n\
   --libfiles        Fully qualified library filenames for makefile depends.\n\
