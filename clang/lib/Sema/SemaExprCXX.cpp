@@ -3707,16 +3707,7 @@ static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
 ExprResult Sema::BuildTypeTrait(TypeTrait Kind, SourceLocation KWLoc, 
                                 ArrayRef<TypeSourceInfo *> Args, 
                                 SourceLocation RParenLoc) {
-  QualType ResultType = Context.BoolTy;
-  // __builtin_types_compatible_p is a GNU C extension, not a C++ type trait.
-  if (Kind == BTT_TypeCompatible) {
-    ResultType = Context.IntTy;
-    if (getLangOpts().CPlusPlus) {
-      Diag(KWLoc, diag::err_types_compatible_p_in_cplusplus)
-          << SourceRange(KWLoc, RParenLoc);
-      return ExprError();
-    }
-  }
+  QualType ResultType = Context.getLogicalOperationType();
 
   bool Dependent = false;
   for (unsigned I = 0, N = Args.size(); I != N; ++I) {
