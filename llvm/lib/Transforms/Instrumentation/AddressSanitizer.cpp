@@ -558,12 +558,22 @@ static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
 }
 
 // \brief Create a constant for Str so that we can pass it to the run-time lib.
-static GlobalVariable *createPrivateGlobalForString(Module &M, StringRef Str) {
+static GlobalVariable *createPrivateGlobalForString(
+    Module &M, StringRef Str, bool AllowMerging) {
   Constant *StrConst = ConstantDataArray::getString(M.getContext(), Str);
-  GlobalVariable *GV = new GlobalVariable(M, StrConst->getType(), true,
-                            GlobalValue::InternalLinkage, StrConst,
-                            kAsanGenPrefix);
-  GV->setUnnamedAddr(true);  // Ok to merge these.
+  // For module-local strings that can be merged with another one we set the
+  // internal linkage and the unnamed_addr attribute.
+  // Non-mergeable strings are made linker_private to remove them from the
+  // symbol table. "private" linkage doesn't work for Darwin, where the
+  // "L"-prefixed globals  end up in __TEXT,__const section
+  // (see http://llvm.org/bugs/show_bug.cgi?id=17976 for more info).
+  GlobalValue::LinkageTypes linkage =
+      AllowMerging ? GlobalValue::InternalLinkage
+                   : GlobalValue::LinkerPrivateLinkage;
+  GlobalVariable *GV =
+      new GlobalVariable(M, StrConst->getType(), true,
+                         linkage, StrConst, kAsanGenPrefix);
+  if (AllowMerging) GV->setUnnamedAddr(true);
   GV->setAlignment(1);  // Strings may not be merged w/o setting align 1.
   return GV;
 }
@@ -950,11 +960,10 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
 
   bool HasDynamicallyInitializedGlobals = false;
 
-  GlobalVariable *ModuleName = createPrivateGlobalForString(
-      M, M.getModuleIdentifier());
   // We shouldn't merge same module names, as this string serves as unique
   // module ID in runtime.
-  ModuleName->setUnnamedAddr(false);
+  GlobalVariable *ModuleName = createPrivateGlobalForString(
+      M, M.getModuleIdentifier(), /*AllowMerging*/false);
 
   for (size_t i = 0; i < n; i++) {
     static const uint64_t kMaxGlobalRedzone = 1 << 18;
@@ -985,7 +994,8 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
         NewTy, G->getInitializer(),
         Constant::getNullValue(RightRedZoneTy), NULL);
 
-    GlobalVariable *Name = createPrivateGlobalForString(M, G->getName());
+    GlobalVariable *Name =
+        createPrivateGlobalForString(M, G->getName(), /*AllowMerging*/true);
 
     // Create a new global variable with enough space for a redzone.
     GlobalValue::LinkageTypes Linkage = G->getLinkage();
@@ -1493,7 +1503,8 @@ void FunctionStackPoisoner::poisonStack() {
     IRB.CreateAdd(LocalStackBase, ConstantInt::get(IntptrTy, ASan.LongSize/8)),
     IntptrPtrTy);
   GlobalVariable *StackDescriptionGlobal =
-      createPrivateGlobalForString(*F.getParent(), L.DescriptionString);
+      createPrivateGlobalForString(*F.getParent(), L.DescriptionString,
+                                   /*AllowMerging*/true);
   Value *Description = IRB.CreatePointerCast(StackDescriptionGlobal,
                                              IntptrTy);
   IRB.CreateStore(Description, BasePlus1);
