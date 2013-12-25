@@ -608,7 +608,7 @@ class ABSS_FM<bits<6> funct, bits<5> fmt> : StdArch {
   let Inst{5-0}   = funct;
 }
 
-class MFC1_FM<bits<5> funct> {
+class MFC1_FM<bits<5> funct> : StdArch {
   bits<5> rt;
   bits<5> fs;
 
@@ -714,7 +714,7 @@ class C_COND_FM<bits<5> fmt, bits<4> c> : CEQS_FM<fmt> {
   let cond = c;
 }
 
-class CMov_I_F_FM<bits<6> funct, bits<5> fmt> {
+class CMov_I_F_FM<bits<6> funct, bits<5> fmt> : StdArch {
   bits<5> fd;
   bits<5> fs;
   bits<5> rt;
@@ -746,7 +746,7 @@ class CMov_F_I_FM<bit tf> : StdArch {
   let Inst{5-0} = 1;
 }
 
-class CMov_F_F_FM<bits<5> fmt, bit tf> {
+class CMov_F_F_FM<bits<5> fmt, bit tf> : StdArch {
   bits<5> fd;
   bits<5> fs;
   bits<3> fcc;

@@ -96,4 +96,53 @@ def FNEG_MM : MMRel, ABSS_FT<"neg.d", AFGR64Opnd, AFGR64Opnd, IIFcvt, fneg>,
 
 def FMOV_D32_MM : MMRel, ABSS_FT<"mov.d", AFGR64Opnd, AFGR64Opnd, IIFmove>,
                   ABS_FM_MM<1, 0x1>, Requires<[NotFP64bit, HasStdEnc]>;
+
+def MOVZ_I_S_MM : MMRel, CMov_I_F_FT<"movz.s", GPR32Opnd, FGR32Opnd, IIFmove>,
+                  CMov_I_F_FM_MM<0x78, 0>;
+def MOVN_I_S_MM : MMRel, CMov_I_F_FT<"movn.s", GPR32Opnd, FGR32Opnd, IIFmove>,
+                  CMov_I_F_FM_MM<0x38, 0>;
+def MOVZ_I_D32_MM : MMRel, CMov_I_F_FT<"movz.d", GPR32Opnd, AFGR64Opnd,
+                    IIFmove>, CMov_I_F_FM_MM<0x78, 1>;
+def MOVN_I_D32_MM : MMRel, CMov_I_F_FT<"movn.d", GPR32Opnd, AFGR64Opnd,
+                    IIFmove>, CMov_I_F_FM_MM<0x38, 1>;
+
+def MOVT_S_MM : MMRel, CMov_F_F_FT<"movt.s", FGR32Opnd, IIFmove, MipsCMovFP_T>,
+                CMov_F_F_FM_MM<0x60, 0>;
+def MOVF_S_MM : MMRel, CMov_F_F_FT<"movf.s", FGR32Opnd, IIFmove, MipsCMovFP_F>,
+                CMov_F_F_FM_MM<0x20, 0>;
+def MOVT_D32_MM : MMRel, CMov_F_F_FT<"movt.d", AFGR64Opnd,
+                  IIFmove, MipsCMovFP_T>, CMov_F_F_FM_MM<0x60, 1>;
+def MOVF_D32_MM : MMRel, CMov_F_F_FT<"movf.d", AFGR64Opnd,
+                  IIFmove, MipsCMovFP_F>, CMov_F_F_FM_MM<0x20, 1>;
+
+def CFC1_MM : MMRel, MFC1_FT<"cfc1", GPR32Opnd, CCROpnd, IIFmove>,
+              MFC1_FM_MM<0x40>;
+def CTC1_MM : MMRel, MTC1_FT<"ctc1", CCROpnd, GPR32Opnd, IIFmove>,
+              MFC1_FM_MM<0x60>;
+def MFC1_MM : MMRel, MFC1_FT<"mfc1", GPR32Opnd, FGR32Opnd,
+                             IIFmoveC1, bitconvert>, MFC1_FM_MM<0x80>;
+def MTC1_MM : MMRel, MTC1_FT<"mtc1", FGR32Opnd, GPR32Opnd,
+                             IIFmoveC1, bitconvert>, MFC1_FM_MM<0xa0>;
+def MFHC1_MM : MMRel, MFC1_FT<"mfhc1", GPR32Opnd, FGRH32Opnd, IIFmoveC1>,
+               MFC1_FM_MM<3>;
+def MTHC1_MM : MMRel, MTC1_FT<"mthc1", FGRH32Opnd, GPR32Opnd, IIFmoveC1>,
+               MFC1_FM_MM<7>;
+
+def MADD_S_MM : MMRel, MADDS_FT<"madd.s", FGR32Opnd, IIFmulSingle, fadd>,
+                MADDS_FM_MM<0x1>;
+def MSUB_S_MM : MMRel, MADDS_FT<"msub.s", FGR32Opnd, IIFmulSingle, fsub>,
+                MADDS_FM_MM<0x21>;
+def NMADD_S_MM : MMRel, NMADDS_FT<"nmadd.s", FGR32Opnd, IIFmulSingle, fadd>,
+                 MADDS_FM_MM<0x2>;
+def NMSUB_S_MM : MMRel, NMADDS_FT<"nmsub.s", FGR32Opnd, IIFmulSingle, fsub>,
+                 MADDS_FM_MM<0x22>;
+
+def MADD_D32_MM  : MMRel, MADDS_FT<"madd.d", AFGR64Opnd, IIFmulDouble, fadd>,
+                   MADDS_FM_MM<0x9>;
+def MSUB_D32_MM  : MMRel, MADDS_FT<"msub.d", AFGR64Opnd, IIFmulDouble, fsub>,
+                   MADDS_FM_MM<0x29>;
+def NMADD_D32_MM : MMRel, NMADDS_FT<"nmadd.d", AFGR64Opnd, IIFmulDouble,
+                                    fadd>, MADDS_FM_MM<0xa>;
+def NMSUB_D32_MM : MMRel, NMADDS_FT<"nmsub.d", AFGR64Opnd, IIFmulDouble,
+                                    fsub>, MADDS_FM_MM<0x2a>;
 }

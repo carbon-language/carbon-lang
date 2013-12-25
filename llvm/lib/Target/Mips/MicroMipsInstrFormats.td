@@ -482,3 +482,63 @@ class ABS_FM_MM<bits<2> fmt, bits<7> funct> : MMArch {
   let Inst{12-6}  = funct;
   let Inst{5-0}   = 0x3b;
 }
+
+class CMov_F_F_FM_MM<bits<9> func, bits<2> fmt> : MMArch {
+  bits<5> fd;
+  bits<5> fs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x15;
+  let Inst{25-21} = fd;
+  let Inst{20-16} = fs;
+  let Inst{15-13} = 0x0; //cc
+  let Inst{12-11} = 0x0;
+  let Inst{10-9}  = fmt;
+  let Inst{8-0}   = func;
+}
+
+class CMov_I_F_FM_MM<bits<8> funct, bits<2> fmt> : MMArch {
+  bits<5> fd;
+  bits<5> fs;
+  bits<5> rt;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x15;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = fs;
+  let Inst{15-11} = fd;
+  let Inst{9-8}   = fmt;
+  let Inst{7-0}   = funct;
+}
+
+class MFC1_FM_MM<bits<8> funct> : MMArch {
+  bits<5> rt;
+  bits<5> fs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x15;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = fs;
+  let Inst{15-14} = 0x0;
+  let Inst{13-6}  = funct;
+  let Inst{5-0}   = 0x3b;
+}
+
+class MADDS_FM_MM<bits<6> funct>: MMArch {
+  bits<5> ft;
+  bits<5> fs;
+  bits<5> fd;
+  bits<5> fr;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x15;
+  let Inst{25-21} = ft;
+  let Inst{20-16} = fs;
+  let Inst{15-11} = fd;
+  let Inst{10-6}  = fr;
+  let Inst{5-0}   = funct;
+}

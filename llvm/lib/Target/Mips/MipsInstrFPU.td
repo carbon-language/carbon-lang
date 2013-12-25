@@ -136,12 +136,12 @@ multiclass ROUND_M<string opstr, InstrItinClass Itin> {
 class MFC1_FT<string opstr, RegisterOperand DstRC, RegisterOperand SrcRC,
               InstrItinClass Itin, SDPatternOperator OpNode= null_frag> :
   InstSE<(outs DstRC:$rt), (ins SrcRC:$fs), !strconcat(opstr, "\t$rt, $fs"),
-         [(set DstRC:$rt, (OpNode SrcRC:$fs))], Itin, FrmFR>;
+         [(set DstRC:$rt, (OpNode SrcRC:$fs))], Itin, FrmFR, opstr>;
 
 class MTC1_FT<string opstr, RegisterOperand DstRC, RegisterOperand SrcRC,
               InstrItinClass Itin, SDPatternOperator OpNode= null_frag> :
   InstSE<(outs DstRC:$fs), (ins SrcRC:$rt), !strconcat(opstr, "\t$rt, $fs"),
-         [(set DstRC:$fs, (OpNode SrcRC:$rt))], Itin, FrmFR>;
+         [(set DstRC:$fs, (OpNode SrcRC:$rt))], Itin, FrmFR, opstr>;
 
 class LW_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
             SDPatternOperator OpNode= null_frag> :
@@ -163,14 +163,15 @@ class MADDS_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
                SDPatternOperator OpNode = null_frag> :
   InstSE<(outs RC:$fd), (ins RC:$fr, RC:$fs, RC:$ft),
          !strconcat(opstr, "\t$fd, $fr, $fs, $ft"),
-         [(set RC:$fd, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr))], Itin, FrmFR>;
+         [(set RC:$fd, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr))], Itin,
+         FrmFR, opstr>;
 
 class NMADDS_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
                 SDPatternOperator OpNode = null_frag> :
   InstSE<(outs RC:$fd), (ins RC:$fr, RC:$fs, RC:$ft),
          !strconcat(opstr, "\t$fd, $fr, $fs, $ft"),
          [(set RC:$fd, (fsub fpimm0, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr)))],
-         Itin, FrmFR>;
+         Itin, FrmFR, opstr>;
 
 class LWXC1_FT<string opstr, RegisterOperand DRC,
                InstrItinClass Itin, SDPatternOperator OpNode = null_frag> :
@@ -337,15 +338,15 @@ defm FSQRT : ABSS_M<"sqrt.d", IIFsqrtDouble, fsqrt>, ABSS_FM<0x4, 17>;
 // regardless of register aliasing.
 
 /// Move Control Registers From/To CPU Registers
-def CFC1 : MFC1_FT<"cfc1", GPR32Opnd, CCROpnd, IIFmove>, MFC1_FM<2>;
-def CTC1 : MTC1_FT<"ctc1", CCROpnd, GPR32Opnd, IIFmove>, MFC1_FM<6>;
-def MFC1 : MFC1_FT<"mfc1", GPR32Opnd, FGR32Opnd, IIFmoveC1, bitconvert>,
-           MFC1_FM<0>;
-def MTC1 : MTC1_FT<"mtc1", FGR32Opnd, GPR32Opnd, IIFmoveC1, bitconvert>,
-           MFC1_FM<4>;
-def MFHC1 : MFC1_FT<"mfhc1", GPR32Opnd, FGRH32Opnd, IIFmoveC1>,
+def CFC1 : MMRel, MFC1_FT<"cfc1", GPR32Opnd, CCROpnd, IIFmove>, MFC1_FM<2>;
+def CTC1 : MMRel, MTC1_FT<"ctc1", CCROpnd, GPR32Opnd, IIFmove>, MFC1_FM<6>;
+def MFC1 : MMRel, MFC1_FT<"mfc1", GPR32Opnd, FGR32Opnd, IIFmoveC1,
+                          bitconvert>, MFC1_FM<0>;
+def MTC1 : MMRel, MTC1_FT<"mtc1", FGR32Opnd, GPR32Opnd, IIFmoveC1,
+                          bitconvert>, MFC1_FM<4>;
+def MFHC1 : MMRel, MFC1_FT<"mfhc1", GPR32Opnd, FGRH32Opnd, IIFmoveC1>,
             MFC1_FM<3>;
-def MTHC1 : MTC1_FT<"mthc1", FGRH32Opnd, GPR32Opnd, IIFmoveC1>,
+def MTHC1 : MMRel, MTC1_FT<"mthc1", FGRH32Opnd, GPR32Opnd, IIFmoveC1>,
             MFC1_FM<7>;
 def DMFC1 : MFC1_FT<"dmfc1", GPR64Opnd, FGR64Opnd, IIFmoveC1,
             bitconvert>, MFC1_FM<1>;
@@ -429,30 +430,30 @@ def FSUB_S : MMRel, ADDS_FT<"sub.s", FGR32Opnd, IIFadd, 0, fsub>,
 defm FSUB :  ADDS_M<"sub.d", IIFadd, 0, fsub>, ADDS_FM<0x01, 17>;
 
 let Predicates = [HasMips32r2, HasStdEnc] in {
-  def MADD_S : MADDS_FT<"madd.s", FGR32Opnd, IIFmulSingle, fadd>,
+  def MADD_S : MMRel, MADDS_FT<"madd.s", FGR32Opnd, IIFmulSingle, fadd>,
                MADDS_FM<4, 0>;
-  def MSUB_S : MADDS_FT<"msub.s", FGR32Opnd, IIFmulSingle, fsub>,
+  def MSUB_S : MMRel, MADDS_FT<"msub.s", FGR32Opnd, IIFmulSingle, fsub>,
                MADDS_FM<5, 0>;
 }
 
 let Predicates = [HasMips32r2, NoNaNsFPMath, HasStdEnc] in {
-  def NMADD_S : NMADDS_FT<"nmadd.s", FGR32Opnd, IIFmulSingle, fadd>,
+  def NMADD_S : MMRel, NMADDS_FT<"nmadd.s", FGR32Opnd, IIFmulSingle, fadd>,
                 MADDS_FM<6, 0>;
-  def NMSUB_S : NMADDS_FT<"nmsub.s", FGR32Opnd, IIFmulSingle, fsub>,
+  def NMSUB_S : MMRel, NMADDS_FT<"nmsub.s", FGR32Opnd, IIFmulSingle, fsub>,
                 MADDS_FM<7, 0>;
 }
 
 let Predicates = [HasMips32r2, NotFP64bit, HasStdEnc] in {
-  def MADD_D32 : MADDS_FT<"madd.d", AFGR64Opnd, IIFmulDouble, fadd>,
+  def MADD_D32 : MMRel, MADDS_FT<"madd.d", AFGR64Opnd, IIFmulDouble, fadd>,
                  MADDS_FM<4, 1>;
-  def MSUB_D32 : MADDS_FT<"msub.d", AFGR64Opnd, IIFmulDouble, fsub>,
+  def MSUB_D32 : MMRel, MADDS_FT<"msub.d", AFGR64Opnd, IIFmulDouble, fsub>,
                  MADDS_FM<5, 1>;
 }
 
 let Predicates = [HasMips32r2, NotFP64bit, NoNaNsFPMath, HasStdEnc] in {
-  def NMADD_D32 : NMADDS_FT<"nmadd.d", AFGR64Opnd, IIFmulDouble, fadd>,
+  def NMADD_D32 : MMRel, NMADDS_FT<"nmadd.d", AFGR64Opnd, IIFmulDouble, fadd>,
                   MADDS_FM<6, 1>;
-  def NMSUB_D32 : NMADDS_FT<"nmsub.d", AFGR64Opnd, IIFmulDouble, fsub>,
+  def NMSUB_D32 : MMRel, NMADDS_FT<"nmsub.d", AFGR64Opnd, IIFmulDouble, fsub>,
                   MADDS_FM<7, 1>;
 }
 

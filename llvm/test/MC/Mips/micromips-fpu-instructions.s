@@ -1,7 +1,7 @@
 # RUN: llvm-mc %s -triple=mipsel -show-encoding -mattr=micromips \
-# RUN: | FileCheck -check-prefix=CHECK-EL %s
+# RUN: -mcpu=mips32r2 | FileCheck -check-prefix=CHECK-EL %s
 # RUN: llvm-mc %s -triple=mips -show-encoding -mattr=micromips \
-# RUN: | FileCheck -check-prefix=CHECK-EB %s
+# RUN: -mcpu=mips32r2 | FileCheck -check-prefix=CHECK-EB %s
 # Check that the assembler can handle the documented syntax
 # for fpu instructions
 #------------------------------------------------------------------------------
@@ -49,6 +49,26 @@
 # CHECK-EL: cvt.d.w    $f6, $f8         # encoding: [0xc8,0x54,0x7b,0x33]
 # CHECK-EL: cvt.s.d    $f6, $f8         # encoding: [0xc8,0x54,0x7b,0x1b]
 # CHECK-EL: cvt.s.w    $f6, $f8         # encoding: [0xc8,0x54,0x7b,0x3b]
+# CHECK-EL: cfc1    $6, $0              # encoding: [0xc0,0x54,0x3b,0x10]
+# CHECK-EL: ctc1    $6, $0              # encoding: [0xc0,0x54,0x3b,0x18]
+# CHECK-EL: mfc1    $6, $f8             # encoding: [0xc8,0x54,0x3b,0x20]
+# CHECK-EL: mtc1    $6, $f8             # encoding: [0xc8,0x54,0x3b,0x28]
+# CHECK-EL: movz.s  $f4, $f6, $7        # encoding: [0xe6,0x54,0x78,0x20]
+# CHECK-EL: movz.d  $f4, $f6, $7        # encoding: [0xe6,0x54,0x78,0x21]
+# CHECK-EL: movn.s  $f4, $f6, $7        # encoding: [0xe6,0x54,0x38,0x20]
+# CHECK-EL: movn.d  $f4, $f6, $7        # encoding: [0xe6,0x54,0x38,0x21]
+# CHECK-EL: movt.s  $f4, $f6, $fcc0     # encoding: [0x86,0x54,0x60,0x00]
+# CHECK-EL: movt.d  $f4, $f6, $fcc0     # encoding: [0x86,0x54,0x60,0x02]
+# CHECK-EL: movf.s  $f4, $f6, $fcc0     # encoding: [0x86,0x54,0x20,0x00]
+# CHECK-EL: movf.d  $f4, $f6, $fcc0     # encoding: [0x86,0x54,0x20,0x02]
+# CHECK-EL: madd.s  $f2, $f4, $f6, $f8  # encoding: [0x06,0x55,0x01,0x11]
+# CHECK-EL: madd.d  $f2, $f4, $f6, $f8  # encoding: [0x06,0x55,0x09,0x11]
+# CHECK-EL: msub.s  $f2, $f4, $f6, $f8  # encoding: [0x06,0x55,0x21,0x11]
+# CHECK-EL: msub.d  $f2, $f4, $f6, $f8  # encoding: [0x06,0x55,0x29,0x11]
+# CHECK-EL: nmadd.s $f2, $f4, $f6, $f8  # encoding: [0x06,0x55,0x02,0x11]
+# CHECK-EL: nmadd.d $f2, $f4, $f6, $f8  # encoding: [0x06,0x55,0x0a,0x11]
+# CHECK-EL: nmsub.s $f2, $f4, $f6, $f8  # encoding: [0x06,0x55,0x22,0x11]
+# CHECK-EL: nmsub.d $f2, $f4, $f6, $f8  # encoding: [0x06,0x55,0x2a,0x11]
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
@@ -92,6 +112,26 @@
 # CHECK-EB: cvt.d.w $f6, $f8            # encoding: [0x54,0xc8,0x33,0x7b]
 # CHECK-EB: cvt.s.d $f6, $f8            # encoding: [0x54,0xc8,0x1b,0x7b]
 # CHECK-EB: cvt.s.w $f6, $f8            # encoding: [0x54,0xc8,0x3b,0x7b]
+# CHECK-EB: cfc1    $6, $0              # encoding: [0x54,0xc0,0x10,0x3b]
+# CHECK-EB: ctc1    $6, $0              # encoding: [0x54,0xc0,0x18,0x3b]
+# CHECK-EB: mfc1    $6, $f8             # encoding: [0x54,0xc8,0x20,0x3b]
+# CHECK-EB: mtc1    $6, $f8             # encoding: [0x54,0xc8,0x28,0x3b]
+# CHECK-EB: movz.s  $f4, $f6, $7        # encoding: [0x54,0xe6,0x20,0x78]
+# CHECK-EB: movz.d  $f4, $f6, $7        # encoding: [0x54,0xe6,0x21,0x78]
+# CHECK-EB: movn.s  $f4, $f6, $7        # encoding: [0x54,0xe6,0x20,0x38]
+# CHECK-EB: movn.d  $f4, $f6, $7        # encoding: [0x54,0xe6,0x21,0x38]
+# CHECK-EB: movt.s  $f4, $f6, $fcc0     # encoding: [0x54,0x86,0x00,0x60]
+# CHECK-EB: movt.d  $f4, $f6, $fcc0     # encoding: [0x54,0x86,0x02,0x60]
+# CHECK-EB: movf.s  $f4, $f6, $fcc0     # encoding: [0x54,0x86,0x00,0x20]
+# CHECK-EB: movf.d  $f4, $f6, $fcc0     # encoding: [0x54,0x86,0x02,0x20]
+# CHECK-EB: madd.s  $f2, $f4, $f6, $f8  # encoding: [0x55,0x06,0x11,0x01]
+# CHECK-EB: madd.d  $f2, $f4, $f6, $f8  # encoding: [0x55,0x06,0x11,0x09]
+# CHECK-EB: msub.s  $f2, $f4, $f6, $f8  # encoding: [0x55,0x06,0x11,0x21]
+# CHECK-EB: msub.d  $f2, $f4, $f6, $f8  # encoding: [0x55,0x06,0x11,0x29]
+# CHECK-EB: nmadd.s $f2, $f4, $f6, $f8  # encoding: [0x55,0x06,0x11,0x02]
+# CHECK-EB: nmadd.d $f2, $f4, $f6, $f8  # encoding: [0x55,0x06,0x11,0x0a]
+# CHECK-EB: nmsub.s $f2, $f4, $f6, $f8  # encoding: [0x55,0x06,0x11,0x22]
+# CHECK-EB: nmsub.d $f2, $f4, $f6, $f8  # encoding: [0x55,0x06,0x11,0x2a]
 
     add.s      $f4, $f6, $f8
     add.d      $f4, $f6, $f8
@@ -131,3 +171,23 @@
     cvt.d.w    $f6, $f8
     cvt.s.d    $f6, $f8
     cvt.s.w    $f6, $f8
+    cfc1       $6, $0
+    ctc1       $6, $0
+    mfc1       $6, $f8
+    mtc1       $6, $f8
+    movz.s     $f4, $f6, $7
+    movz.d     $f4, $f6, $7
+    movn.s     $f4, $f6, $7
+    movn.d     $f4, $f6, $7
+    movt.s     $f4, $f6, $fcc0
+    movt.d     $f4, $f6, $fcc0
+    movf.s     $f4, $f6, $fcc0
+    movf.d     $f4, $f6, $fcc0
+    madd.s     $f2, $f4, $f6, $f8
+    madd.d     $f2, $f4, $f6, $f8
+    msub.s     $f2, $f4, $f6, $f8
+    msub.d     $f2, $f4, $f6, $f8
+    nmadd.s    $f2, $f4, $f6, $f8
+    nmadd.d    $f2, $f4, $f6, $f8
+    nmsub.s    $f2, $f4, $f6, $f8
+    nmsub.d    $f2, $f4, $f6, $f8
