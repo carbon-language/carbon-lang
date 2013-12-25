@@ -14,6 +14,7 @@
 #ifndef SANITIZER_PROCMAPS_H
 #define SANITIZER_PROCMAPS_H
 
+#include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_mutex.h"
 
@@ -44,6 +45,7 @@ struct ProcSelfMapsBuff {
 class MemoryMappingLayout {
  public:
   explicit MemoryMappingLayout(bool cache_enabled);
+  ~MemoryMappingLayout();
   bool Next(uptr *start, uptr *end, uptr *offset,
             char filename[], uptr filename_size, uptr *protection);
   void Reset();
@@ -56,7 +58,10 @@ class MemoryMappingLayout {
   // to obtain the memory mappings. It should fall back to pre-cached data
   // instead of aborting.
   static void CacheMemoryMappings();
-  ~MemoryMappingLayout();
+
+  // Stores the list of mapped objects into an array.
+  uptr DumpListOfModules(LoadedModule *modules, uptr max_modules,
+                         string_predicate_t filter);
 
   // Memory protection masks.
   static const uptr kProtectionRead = 1;

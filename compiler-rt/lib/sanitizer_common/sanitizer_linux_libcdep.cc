@@ -299,7 +299,8 @@ void AdjustStackSizeLinux(void *attr_) {
 #if SANITIZER_ANDROID
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter) {
-  return 0;
+  MemoryMappingLayout memory_mapping(false);
+  return memory_mapping.DumpListOfModules(modules, max_modules, filter);
 }
 #else  // SANITIZER_ANDROID
 typedef ElfW(Phdr) Elf_Phdr;

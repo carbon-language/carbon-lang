@@ -12,6 +12,8 @@
 
 #include "sanitizer_platform.h"
 #if SANITIZER_POSIX
+#include "sanitizer_common.h"
+#include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
 
 namespace __sanitizer {
@@ -44,6 +46,36 @@ bool MemoryMappingLayout::IterateForObjectNameAndOffset(uptr addr, uptr *offset,
   if (filename_size)
     filename[0] = '\0';
   return false;
+}
+
+uptr MemoryMappingLayout::DumpListOfModules(LoadedModule *modules,
+                                            uptr max_modules,
+                                            string_predicate_t filter) {
+  Reset();
+  uptr cur_beg, cur_end, cur_offset;
+  InternalScopedBuffer<char> module_name(kMaxPathLength);
+  uptr n_modules = 0;
+  for (uptr i = 0; n_modules < max_modules &&
+                       Next(&cur_beg, &cur_end, &cur_offset, module_name.data(),
+                            module_name.size(), 0);
+       i++) {
+    const char *cur_name = module_name.data();
+    if (cur_name[0] == '\0')
+      continue;
+    if (filter && !filter(cur_name))
+      continue;
+    LoadedModule *cur_module = 0;
+    if (n_modules > 0 &&
+        0 == internal_strcmp(cur_name, modules[n_modules - 1].full_name())) {
+      cur_module = &modules[n_modules - 1];
+    } else {
+      void *mem = &modules[n_modules];
+      cur_module = new(mem) LoadedModule(cur_name, cur_beg);
+      n_modules++;
+    }
+    cur_module->addAddressRange(cur_beg, cur_end);
+  }
+  return n_modules;
 }
 
 }  // namespace __sanitizer
