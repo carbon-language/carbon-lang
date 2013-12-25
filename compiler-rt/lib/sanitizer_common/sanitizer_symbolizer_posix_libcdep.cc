@@ -395,11 +395,10 @@ class POSIXSymbolizer : public Symbolizer {
     BlockingMutexLock l(&mu_);
     if (max_frames == 0)
       return 0;
-    LoadedModule *module = FindModuleForAddress(addr);
-    if (module == 0)
+    const char *module_name;
+    uptr module_offset;
+    if (!FindModuleNameAndOffsetForAddress(addr, &module_name, &module_offset))
       return 0;
-    const char *module_name = module->full_name();
-    uptr module_offset = addr - module->base_address();
     const char *str = SendCommand(false, module_name, module_offset);
     if (str == 0) {
       // External symbolizer was not initialized or failed. Fill only data
@@ -471,6 +470,12 @@ class POSIXSymbolizer : public Symbolizer {
     str = ExtractUptr(str, "\n", &info->size);
     info->start += module->base_address();
     return true;
+  }
+
+  bool GetModuleNameAndOffsetForPC(uptr pc, const char **module_name,
+                                   uptr *module_address) {
+    BlockingMutexLock l(&mu_);
+    return FindModuleNameAndOffsetForAddress(pc, module_name, module_address);
   }
 
   bool CanReturnFileLineInfo() {
@@ -550,6 +555,17 @@ class POSIXSymbolizer : public Symbolizer {
       return FindModuleForAddress(address);
     }
     return 0;
+  }
+
+  bool FindModuleNameAndOffsetForAddress(uptr address, const char **module_name,
+                                         uptr *module_offset) {
+    mu_.CheckLocked();
+    LoadedModule *module = FindModuleForAddress(address);
+    if (module == 0)
+      return false;
+    *module_name = module->full_name();
+    *module_offset = address - module->base_address();
+    return true;
   }
 
   // 16K loaded modules should be enough for everyone.

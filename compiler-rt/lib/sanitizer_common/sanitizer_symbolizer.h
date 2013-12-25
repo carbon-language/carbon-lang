@@ -95,6 +95,10 @@ class Symbolizer {
   virtual bool SymbolizeData(uptr address, DataInfo *info) {
     return false;
   }
+  virtual bool GetModuleNameAndOffsetForPC(uptr pc, const char **module_name,
+                                           uptr *module_address) {
+    return false;
+  }
   virtual bool CanReturnFileLineInfo() {
     return false;
   }

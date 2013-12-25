@@ -460,16 +460,25 @@ void DoLeakCheck() {
 }
 
 static Suppression *GetSuppressionForAddr(uptr addr) {
+  Suppression *s;
+
+  // Suppress by module name.
+  const char *module_name;
+  uptr module_offset;
+  if (Symbolizer::Get()->GetModuleNameAndOffsetForPC(addr, &module_name,
+                                                     &module_offset) &&
+      suppression_ctx->Match(module_name, SuppressionLeak, &s))
+    return s;
+
+  // Suppress by file or function name.
   static const uptr kMaxAddrFrames = 16;
   InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
   for (uptr i = 0; i < kMaxAddrFrames; i++) new (&addr_frames[i]) AddressInfo();
   uptr addr_frames_num = Symbolizer::Get()->SymbolizePC(
       addr, addr_frames.data(), kMaxAddrFrames);
   for (uptr i = 0; i < addr_frames_num; i++) {
-    Suppression* s;
     if (suppression_ctx->Match(addr_frames[i].function, SuppressionLeak, &s) ||
-        suppression_ctx->Match(addr_frames[i].file, SuppressionLeak, &s) ||
-        suppression_ctx->Match(addr_frames[i].module, SuppressionLeak, &s))
+        suppression_ctx->Match(addr_frames[i].file, SuppressionLeak, &s))
       return s;
   }
   return 0;

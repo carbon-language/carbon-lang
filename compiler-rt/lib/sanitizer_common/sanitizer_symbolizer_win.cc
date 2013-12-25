@@ -78,6 +78,8 @@ class WinSymbolizer : public Symbolizer {
     return true;
   }
 
+  // FIXME: Implement GetModuleNameAndOffsetForPC().
+
  private:
   // All DbgHelp functions are single threaded, so we should use a mutex to
   // serialize accesses.
