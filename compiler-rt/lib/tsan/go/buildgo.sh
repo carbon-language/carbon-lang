@@ -32,6 +32,8 @@ if [ "`uname -a | grep Linux`" != "" ]; then
 		../rtl/tsan_platform_linux.cc
 		../../sanitizer_common/sanitizer_posix.cc
 		../../sanitizer_common/sanitizer_posix_libcdep.cc
+		../../sanitizer_common/sanitizer_procmaps_linux.cc
+		../../sanitizer_common/sanitizer_procmaps_posix.cc
 		../../sanitizer_common/sanitizer_linux.cc
 		../../sanitizer_common/sanitizer_linux_libcdep.cc
 		../../sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc
@@ -42,9 +44,11 @@ elif [ "`uname -a | grep Darwin`" != "" ]; then
 	OSLDFLAGS="-lpthread -fPIC -fpie"
 	SRCS+="
 		../rtl/tsan_platform_mac.cc
-		../../sanitizer_common/sanitizer_posix.cc
 		../../sanitizer_common/sanitizer_mac.cc
+		../../sanitizer_common/sanitizer_posix.cc
 		../../sanitizer_common/sanitizer_posix_libcdep.cc
+		../../sanitizer_common/sanitizer_procmaps_mac.cc
+		../../sanitizer_common/sanitizer_procmaps_posix.cc
 	"
 elif [ "`uname -a | grep MINGW`" != "" ]; then
 	SUFFIX="windows_amd64"
