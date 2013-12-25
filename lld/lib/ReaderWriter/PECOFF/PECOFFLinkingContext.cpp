@@ -257,6 +257,16 @@ uint32_t PECOFFLinkingContext::getSectionAttributes(StringRef sectionName,
   return (flags | setMask) & ~clearMask;
 }
 
+void PECOFFLinkingContext::addDllExport(ExportDesc &desc) {
+  if (_dllExportSet.count(desc.name)) {
+    llvm::errs() << "Export symbol '" << desc.name
+                 << "' specified more than once.";
+    return;
+  }
+  _dllExports.push_back(desc);
+  _dllExportSet.insert(desc.name);
+}
+
 void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::SetSubsystemPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::EdataPass(*this)));

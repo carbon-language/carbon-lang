@@ -183,7 +183,17 @@ TEST_F(WinLinkParserTest, ExportWithOptions) {
   EXPECT_TRUE(exports[1].isData);
 }
 
-TEST_F(WinLinkParserTest, ExportDuplicates) {
+TEST_F(WinLinkParserTest, ExportDuplicateExports) {
+  EXPECT_TRUE(
+      parse("link.exe", "/export:foo,@1", "/export:foo,@2", "a.out", nullptr));
+  const std::vector<PECOFFLinkingContext::ExportDesc> &exports =
+      _context.getDllExports();
+  EXPECT_EQ(1U, exports.size());
+  EXPECT_EQ("_foo", exports[0].name);
+  EXPECT_EQ(1, exports[0].ordinal);
+}
+
+TEST_F(WinLinkParserTest, ExportDuplicateOrdinals) {
   EXPECT_FALSE(
       parse("link.exe", "/export:foo,@1", "/export:bar,@1", "a.out", nullptr));
 }

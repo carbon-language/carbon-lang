@@ -217,7 +217,7 @@ public:
   void setDosStub(ArrayRef<uint8_t> data) { _dosStub = data; }
   ArrayRef<uint8_t> getDosStub() const { return _dosStub; }
 
-  void addDllExport(ExportDesc &desc) { _dllExports.push_back(desc); }
+  void addDllExport(ExportDesc &desc);
   std::vector<ExportDesc> &getDllExports() { return _dllExports; }
   const std::vector<ExportDesc> &getDllExports() const { return _dllExports; }
 
@@ -300,6 +300,7 @@ private:
 
   // DLLExport'ed symbols.
   std::vector<ExportDesc> _dllExports;
+  std::set<StringRef> _dllExportSet;
 
   // List of files that will be removed on destruction.
   std::vector<std::unique_ptr<llvm::FileRemover> > _tempFiles;
