@@ -45,6 +45,9 @@ int run_tests(int argc, char **argv) {
   return res;
 }
 
+const char *argv0;
+
 int main(int argc, char **argv) {
+  argv0 = argv[0];
   return run_tests(argc, argv);
 }
