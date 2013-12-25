@@ -16,5 +16,5 @@ declare void @_Z3fooPi(i32*)
 ; We create one global string constant for the stack frame above.
 ; It should have unnamed_addr and align 1.
 ; Make sure we don't create any other global constants.
-; CHECK: = internal unnamed_addr constant{{.*}}align 1
-; CHECK-NOT: = internal unnamed_addr constant
+; CHECK: = private unnamed_addr constant{{.*}}align 1
+; CHECK-NOT: = private unnamed_addr constant

@@ -7,9 +7,9 @@ target triple = "x86_64-unknown-linux-gnu"
 
 declare void @Use(i8*)
 
-; CHECK: internal unnamed_addr constant{{.*}}3 32 10 3 XXX 64 20 3 YYY 128 30 3 ZZZ
-; CHECK: internal unnamed_addr constant{{.*}}3 32 5 3 AAA 64 55 3 BBB 160 555 3 CCC
-; CHECK: internal unnamed_addr constant{{.*}}3 256 128 3 CCC 448 128 3 BBB 608 128 3 AAA
+; CHECK: private unnamed_addr constant{{.*}}3 32 10 3 XXX 64 20 3 YYY 128 30 3 ZZZ
+; CHECK: private unnamed_addr constant{{.*}}3 32 5 3 AAA 64 55 3 BBB 160 555 3 CCC
+; CHECK: private unnamed_addr constant{{.*}}3 256 128 3 CCC 448 128 3 BBB 608 128 3 AAA
 
 define void @Func1() sanitize_address {
 entry:
