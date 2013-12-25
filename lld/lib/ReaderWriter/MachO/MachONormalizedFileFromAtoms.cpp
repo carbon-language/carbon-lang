@@ -133,15 +133,15 @@ private:
   static uint64_t alignTo(uint64_t value, uint8_t align2);
   typedef llvm::DenseMap<const Atom*, uint32_t> AtomToIndex;
   struct AtomAndIndex { const Atom *atom; uint32_t index; };
-	struct AtomSorter {	
-		bool operator()(const AtomAndIndex &left, const AtomAndIndex &right);
+  struct AtomSorter {
+    bool operator()(const AtomAndIndex &left, const AtomAndIndex &right);
   };
-	struct SegmentSorter {	
-		bool operator()(const SegmentInfo *left, const SegmentInfo *right);
+  struct SegmentSorter {
+    bool operator()(const SegmentInfo *left, const SegmentInfo *right);
     static unsigned weight(const SegmentInfo *);
   };
-	struct TextSectionSorter {	
-		bool operator()(const SectionInfo *left, const SectionInfo *right);
+  struct TextSectionSorter {
+    bool operator()(const SectionInfo *left, const SectionInfo *right);
     static unsigned weight(const SectionInfo *);
   };
 
