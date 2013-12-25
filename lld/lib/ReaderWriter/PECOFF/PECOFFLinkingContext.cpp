@@ -264,7 +264,7 @@ void PECOFFLinkingContext::addDllExport(ExportDesc &desc) {
     return;
   }
   _dllExports.push_back(desc);
-  _dllExportSet.insert(desc.name);
+  _dllExportSet.insert(_dllExports.back().name);
 }
 
 void PECOFFLinkingContext::addPasses(PassManager &pm) {
