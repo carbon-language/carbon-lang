@@ -747,7 +747,8 @@ class MoveToLOHI<string opstr, RegisterOperand RO, list<Register> DefRegs>:
 
 class EffectiveAddress<string opstr, RegisterOperand RO> :
   InstSE<(outs RO:$rt), (ins mem_ea:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(set RO:$rt, addr:$addr)], NoItinerary, FrmI> {
+         [(set RO:$rt, addr:$addr)], NoItinerary, FrmI,
+         !strconcat(opstr, "_lea")> {
   let isCodeGenOnly = 1;
   let DecoderMethod = "DecodeMem";
 }
@@ -1094,7 +1095,7 @@ def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;
 // instructions. The same not happens for stack address copies, so an
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
-def LEA_ADDiu : EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>;
+def LEA_ADDiu : MMRel, EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>;
 
 // MADD*/MSUB*
 def MADD  : MMRel, MArithR<"madd", 1>, MULT_FM<0x1c, 0>;
