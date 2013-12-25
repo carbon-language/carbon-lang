@@ -160,7 +160,7 @@ TEST_F(WinLinkParserTest, Export) {
   EXPECT_TRUE(parse("link.exe", "/export:foo", "a.out", nullptr));
   const std::vector<PECOFFLinkingContext::ExportDesc> &exports =
       _context.getDllExports();
-  EXPECT_TRUE(exports.size() == 1);
+  EXPECT_EQ(1U, exports.size());
   EXPECT_EQ("_foo", exports[0].name);
   EXPECT_EQ(1, exports[0].ordinal);
   EXPECT_FALSE(exports[0].noname);
@@ -172,7 +172,7 @@ TEST_F(WinLinkParserTest, ExportWithOptions) {
                     "/export:bar,@10,data", "a.out", nullptr));
   const std::vector<PECOFFLinkingContext::ExportDesc> &exports =
       _context.getDllExports();
-  EXPECT_TRUE(exports.size() == 2);
+  EXPECT_EQ(2U, exports.size());
   EXPECT_EQ("_foo", exports[0].name);
   EXPECT_EQ(8, exports[0].ordinal);
   EXPECT_TRUE(exports[0].noname);
