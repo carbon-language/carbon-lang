@@ -260,7 +260,7 @@ uint32_t PECOFFLinkingContext::getSectionAttributes(StringRef sectionName,
 void PECOFFLinkingContext::addDllExport(ExportDesc &desc) {
   if (_dllExportSet.count(desc.name)) {
     llvm::errs() << "Export symbol '" << desc.name
-                 << "' specified more than once.";
+                 << "' specified more than once.\n";
     return;
   }
   _dllExports.push_back(desc);
