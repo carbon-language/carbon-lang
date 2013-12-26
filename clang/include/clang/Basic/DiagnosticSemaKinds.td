@@ -2137,7 +2137,7 @@ def warn_thread_attribute_decl_not_lockable : Warning<
   "with 'lockable' attribute">,
   InGroup<ThreadSafetyAttributes>, DefaultIgnore;
 def warn_thread_attribute_decl_not_pointer : Warning<
-  "'%0' only applies to pointer types; type here is %1">,
+  "%0 only applies to pointer types; type here is %1">,
   InGroup<ThreadSafetyAttributes>, DefaultIgnore;
 def err_attribute_argument_out_of_range : Error<
   "%0 attribute parameter %1 is out of bounds: "

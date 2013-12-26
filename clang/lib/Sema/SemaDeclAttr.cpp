@@ -396,7 +396,7 @@ static bool threadSafetyCheckIsPointer(Sema &S, const Decl *D,
   }
 
   S.Diag(Attr.getLoc(), diag::warn_thread_attribute_decl_not_pointer)
-    << Attr.getName()->getName() << QT;
+    << Attr.getName() << QT;
   return false;
 }
 
