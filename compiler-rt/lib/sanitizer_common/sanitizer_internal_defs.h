@@ -34,12 +34,6 @@
 # define SANITIZER_SUPPORTS_WEAK_HOOKS 0
 #endif
 
-#if __LP64__ || defined(_WIN64)
-#  define SANITIZER_WORDSIZE 64
-#else
-#  define SANITIZER_WORDSIZE 32
-#endif
-
 // GCC does not understand __has_feature
 #if !defined(__has_feature)
 # define __has_feature(x) 0

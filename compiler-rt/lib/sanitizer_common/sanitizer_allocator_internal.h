@@ -24,14 +24,13 @@ namespace __sanitizer {
 typedef CompactSizeClassMap InternalSizeClassMap;
 
 static const uptr kInternalAllocatorSpace = 0;
+static const u64 kInternalAllocatorSize = SANITIZER_MMAP_RANGE_SIZE;
 #if SANITIZER_WORDSIZE == 32
-static const u64 kInternalAllocatorSize = (1ULL << 32);
 static const uptr kInternalAllocatorRegionSizeLog = 20;
 static const uptr kInternalAllocatorNumRegions =
     kInternalAllocatorSize >> kInternalAllocatorRegionSizeLog;
 typedef FlatByteMap<kInternalAllocatorNumRegions> ByteMap;
 #else
-static const u64 kInternalAllocatorSize = (1ULL << 47);
 static const uptr kInternalAllocatorRegionSizeLog = 24;
 static const uptr kInternalAllocatorNumRegions =
     kInternalAllocatorSize >> kInternalAllocatorRegionSizeLog;
