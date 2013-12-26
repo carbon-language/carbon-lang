@@ -23,12 +23,18 @@ namespace llvm {
   class FunctionPass;
   class SparcTargetMachine;
   class formatted_raw_ostream;
+  class AsmPrinter;
+  class MCInst;
+  class MachineInstr;
 
   FunctionPass *createSparcISelDag(SparcTargetMachine &TM);
   FunctionPass *createSparcDelaySlotFillerPass(TargetMachine &TM);
   FunctionPass *createSparcJITCodeEmitterPass(SparcTargetMachine &TM,
                                               JITCodeEmitter &JCE);
 
+  void LowerSparcMachineInstrToMCInst(const MachineInstr *MI,
+                                      MCInst &OutMI,
+                                      AsmPrinter &AP);
 } // end namespace llvm;
 
 namespace llvm {

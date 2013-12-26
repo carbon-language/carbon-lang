@@ -23,6 +23,7 @@ add_llvm_target(SparcCodeGen
   SparcSelectionDAGInfo.cpp
   SparcJITInfo.cpp
   SparcCodeEmitter.cpp
+  SparcMCInstLower.cpp
   )
 
 add_subdirectory(TargetInfo)

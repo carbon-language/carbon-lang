@@ -13,6 +13,8 @@
 
 #include "SparcMCTargetDesc.h"
 #include "SparcMCAsmInfo.h"
+#include "SparcTargetStreamer.h"
+#include "InstPrinter/SparcInstPrinter.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -86,6 +88,28 @@ static MCCodeGenInfo *createSparcV9MCCodeGenInfo(StringRef TT, Reloc::Model RM,
   X->InitMCCodeGenInfo(RM, CM, OL);
   return X;
 }
+
+static MCStreamer *
+createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
+                    bool isVerboseAsm, bool useLoc, bool useCFI,
+                    bool useDwarfDirectory, MCInstPrinter *InstPrint,
+                    MCCodeEmitter *CE, MCAsmBackend *TAB, bool ShowInst) {
+  SparcTargetAsmStreamer *S = new SparcTargetAsmStreamer(OS);
+
+  return llvm::createAsmStreamer(Ctx, S, OS, isVerboseAsm, useLoc, useCFI,
+                                 useDwarfDirectory, InstPrint, CE, TAB,
+                                 ShowInst);
+}
+
+static MCInstPrinter *createSparcMCInstPrinter(const Target &T,
+                                              unsigned SyntaxVariant,
+                                              const MCAsmInfo &MAI,
+                                              const MCInstrInfo &MII,
+                                              const MCRegisterInfo &MRI,
+                                              const MCSubtargetInfo &STI) {
+  return new SparcInstPrinter(MAI, MII, MRI);
+}
+
 extern "C" void LLVMInitializeSparcTargetMC() {
   // Register the MC asm info.
   RegisterMCAsmInfo<SparcELFMCAsmInfo> X(TheSparcTarget);
@@ -106,4 +130,15 @@ extern "C" void LLVMInitializeSparcTargetMC() {
   // Register the MC subtarget info.
   TargetRegistry::RegisterMCSubtargetInfo(TheSparcTarget,
                                           createSparcMCSubtargetInfo);
+
+  TargetRegistry::RegisterAsmStreamer(TheSparcTarget,
+                                      createMCAsmStreamer);
+  TargetRegistry::RegisterAsmStreamer(TheSparcV9Target,
+                                      createMCAsmStreamer);
+
+  // Register the MCInstPrinter
+  TargetRegistry::RegisterMCInstPrinter(TheSparcTarget,
+                                        createSparcMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheSparcV9Target,
+                                        createSparcMCInstPrinter);
 }

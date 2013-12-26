@@ -11,7 +11,7 @@
 
 ; CHECK-LABEL: main:
 ; CHECK:       .cfi_startproc
-; CHECK:       .cfi_def_cfa_register 30
+; CHECK:       .cfi_def_cfa_register {{30|%fp}}
 ; CHECK:       .cfi_window_save
 ; CHECK:       .cfi_register 15, 31
 

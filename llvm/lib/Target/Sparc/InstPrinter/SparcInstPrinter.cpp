@@ -23,8 +23,7 @@
 using namespace llvm;
 
 #define GET_INSTRUCTION_NAME
-// Uncomment the following line once we are ready to use MCAsmWriter.
-//#include "SparcGenAsmWriter.inc"
+#include "SparcGenAsmWriter.inc"
 
 void SparcInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const
 {
