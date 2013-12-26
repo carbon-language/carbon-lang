@@ -261,8 +261,7 @@ static bool checkAttrMutualExclusion(Sema &S, Decl *D,
 ///
 /// \returns true if IdxExpr is a valid index.
 static bool checkFunctionOrMethodArgumentIndex(Sema &S, const Decl *D,
-                                               StringRef AttrName,
-                                               SourceLocation AttrLoc,
+                                               const AttributeList &Attr,
                                                unsigned AttrArgNum,
                                                const Expr *IdxExpr,
                                                uint64_t &Idx)
@@ -280,24 +279,24 @@ static bool checkFunctionOrMethodArgumentIndex(Sema &S, const Decl *D,
   llvm::APSInt IdxInt;
   if (IdxExpr->isTypeDependent() || IdxExpr->isValueDependent() ||
       !IdxExpr->isIntegerConstantExpr(IdxInt, S.Context)) {
-    std::string Name = std::string("'") + AttrName.str() + std::string("'");
-    S.Diag(AttrLoc, diag::err_attribute_argument_n_type) << Name.c_str()
-      << AttrArgNum << AANT_ArgumentIntegerConstant << IdxExpr->getSourceRange();
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
+      << Attr.getName() << AttrArgNum << AANT_ArgumentIntegerConstant
+      << IdxExpr->getSourceRange();
     return false;
   }
 
   Idx = IdxInt.getLimitedValue();
   if (Idx < 1 || (!IV && Idx > NumArgs)) {
-    S.Diag(AttrLoc, diag::err_attribute_argument_out_of_bounds)
-      << AttrName << AttrArgNum << IdxExpr->getSourceRange();
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
+      << Attr.getName() << AttrArgNum << IdxExpr->getSourceRange();
     return false;
   }
   Idx--; // Convert to zero-based.
   if (HasImplicitThisParam) {
     if (Idx == 0) {
-      S.Diag(AttrLoc,
+      S.Diag(Attr.getLoc(),
              diag::err_attribute_invalid_implicit_this_argument)
-        << AttrName << IdxExpr->getSourceRange();
+        << Attr.getName() << IdxExpr->getSourceRange();
       return false;
     }
     --Idx;
@@ -1186,8 +1185,7 @@ static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   for (unsigned i = 0; i < Attr.getNumArgs(); ++i) {
     Expr *Ex = Attr.getArgAsExpr(i);
     uint64_t Idx;
-    if (!checkFunctionOrMethodArgumentIndex(S, D, Attr.getName()->getName(),
-                                            Attr.getLoc(), i + 1, Ex, Idx))
+    if (!checkFunctionOrMethodArgumentIndex(S, D, Attr, i + 1, Ex, Idx))
       return;
 
     // Is the function argument a pointer type?
@@ -1298,8 +1296,7 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
   for (unsigned i = 1; i < AL.getNumArgs(); ++i) {
     Expr *Ex = AL.getArgAsExpr(i);
     uint64_t Idx;
-    if (!checkFunctionOrMethodArgumentIndex(S, D, AL.getName()->getName(),
-                                            AL.getLoc(), i, Ex, Idx))
+    if (!checkFunctionOrMethodArgumentIndex(S, D, AL, i, Ex, Idx))
       return;
 
     // Is the function argument a pointer type?
@@ -2383,8 +2380,7 @@ static void handleFormatArgAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   Expr *IdxExpr = Attr.getArgAsExpr(0);
   uint64_t ArgIdx;
-  if (!checkFunctionOrMethodArgumentIndex(S, D, Attr.getName()->getName(),
-                                          Attr.getLoc(), 1, IdxExpr, ArgIdx))
+  if (!checkFunctionOrMethodArgumentIndex(S, D, Attr, 1, IdxExpr, ArgIdx))
     return;
 
   // make sure the format string is really a string
@@ -2567,7 +2563,7 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   if (Idx < 1 || Idx > NumArgs) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
-      << "format" << 2 << IdxExpr->getSourceRange();
+      << Attr.getName() << 2 << IdxExpr->getSourceRange();
     return;
   }
 
@@ -2637,7 +2633,7 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // if 0 it disables parameter checking (to use with e.g. va_list)
   } else if (FirstArg != 0 && FirstArg != NumArgs) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
-      << "format" << 3 << FirstArgExpr->getSourceRange();
+      << Attr.getName() << 3 << FirstArgExpr->getSourceRange();
     return;
   }
 
@@ -3323,7 +3319,6 @@ static void handleArgumentWithTypeTagAttr(Sema &S, Decl *D,
   if (!checkAttributeNumArgs(S, Attr, 3))
     return;
 
-  StringRef AttrName = Attr.getName()->getName();
   IdentifierInfo *ArgumentKind = Attr.getArgAsIdent(0)->Ident;
 
   if (!isFunctionOrMethod(D) || !hasFunctionProto(D)) {
@@ -3333,18 +3328,16 @@ static void handleArgumentWithTypeTagAttr(Sema &S, Decl *D,
   }
 
   uint64_t ArgumentIdx;
-  if (!checkFunctionOrMethodArgumentIndex(S, D, AttrName,
-                                          Attr.getLoc(), 2,
-                                          Attr.getArgAsExpr(1), ArgumentIdx))
+  if (!checkFunctionOrMethodArgumentIndex(S, D, Attr, 2, Attr.getArgAsExpr(1),
+                                          ArgumentIdx))
     return;
 
   uint64_t TypeTagIdx;
-  if (!checkFunctionOrMethodArgumentIndex(S, D, AttrName,
-                                          Attr.getLoc(), 3,
-                                          Attr.getArgAsExpr(2), TypeTagIdx))
+  if (!checkFunctionOrMethodArgumentIndex(S, D, Attr, 3, Attr.getArgAsExpr(2),
+                                          TypeTagIdx))
     return;
 
-  bool IsPointer = (AttrName == "pointer_with_type_tag");
+  bool IsPointer = (Attr.getName()->getName() == "pointer_with_type_tag");
   if (IsPointer) {
     // Ensure that buffer has a pointer type.
     QualType BufferTy = getFunctionOrMethodArgType(D, ArgumentIdx);

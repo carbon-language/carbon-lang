@@ -97,7 +97,7 @@ static void HandleMSP430InterruptAttr(Decl *d,
   unsigned Num = NumParams.getLimitedValue(255);
   if ((Num & 1) || Num > 30) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
-      << "interrupt" << (int)NumParams.getSExtValue()
+      << Attr.getName() << (int)NumParams.getSExtValue()
       << NumParamsExpr->getSourceRange();
     return;
   }

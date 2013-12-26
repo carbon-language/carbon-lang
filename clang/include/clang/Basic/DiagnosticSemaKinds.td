@@ -1835,7 +1835,7 @@ def err_init_priority_object_attr : Error<
 def err_attribute_argument_vec_type_hint : Error<
   "invalid attribute argument %0 - expecting a vector or vectorizable scalar type">;
 def err_attribute_argument_out_of_bounds : Error<
-  "'%0' attribute parameter %1 is out of bounds">;
+  "%0 attribute parameter %1 is out of bounds">;
 def err_attribute_uuid_malformed_guid : Error<
   "uuid attribute contains a malformed GUID">;
 def warn_nonnull_pointers_only : Warning<
@@ -1845,7 +1845,7 @@ def err_attribute_pointers_only : Error<
 def err_attribute_no_member_pointers : Error<
   "%0 attribute cannot be used with pointers to members">;
 def err_attribute_invalid_implicit_this_argument : Error<
-  "'%0' attribute is invalid for the implicit this argument">;
+  "%0 attribute is invalid for the implicit this argument">;
 def err_ownership_type : Error<
   "%0 attribute only applies to %select{pointer|integer}1 arguments">;
 def err_format_strftime_third_parameter : Error<
