@@ -1194,8 +1194,8 @@ static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     
     if (!T->isAnyPointerType() && !T->isBlockPointerType()) {
       // FIXME: Should also highlight argument in decl.
-      S.Diag(Attr.getLoc(), diag::warn_nonnull_pointers_only)
-        << "nonnull" << Ex->getSourceRange();
+      S.Diag(Attr.getLoc(), diag::warn_attribute_pointers_only)
+        << Attr.getName() << Ex->getSourceRange();
       continue;
     }
 
