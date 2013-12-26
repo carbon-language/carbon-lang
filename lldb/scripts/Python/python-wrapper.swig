@@ -354,9 +354,7 @@ LLDBSwigPythonCallTypeScript
                     *pyfunct_wrapper = pfunc_impl;
             }
         }
-        /*else
-            printf("caching works!!!!\n");*/
-        
+
         PyCallable pfunc = PyCallable::FindWithPythonObject(pfunc_impl);
         
         if (!pfunc)

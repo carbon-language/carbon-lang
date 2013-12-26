@@ -470,6 +470,7 @@ protected:
     {
         for (const FormattersMatchCandidate& candidate : candidates)
         {
+            // FIXME: could we do the IsMatch() check first?
             if (Get(candidate.GetTypeName(),entry))
             {
                 if (candidate.IsMatch(entry) == false)
