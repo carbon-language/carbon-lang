@@ -4,5 +4,5 @@
 # RUN:   /include:sym1 /include:sym2 -- %t.obj 2> %t1
 # RUN: FileCheck %s < %t1
 
-CHECK: Undefined Symbol: command line option /c (or) /include : sym1
-CHECK: Undefined Symbol: command line option /c (or) /include : sym2
+CHECK: Undefined Symbol: command line option /include : sym1
+CHECK: Undefined Symbol: command line option /include : sym2
