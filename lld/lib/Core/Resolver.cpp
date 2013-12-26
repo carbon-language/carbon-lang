@@ -308,16 +308,14 @@ void Resolver::updateReferences() {
   }
 }
 
-// for dead code stripping, recursively mark atoms "live"
+// For dead code stripping, recursively mark atoms "live"
 void Resolver::markLive(const Atom &atom) {
-  // if already marked live, then done (stop recursion)
-  if (_liveAtoms.count(&atom))
+  // Mark the atom is live. If it's already marked live, then stop recursion.
+  auto exists = _liveAtoms.insert(&atom);
+  if (!exists.second)
     return;
 
-  // mark this atom is live
-  _liveAtoms.insert(&atom);
-
-  // mark all atoms it references as live
+  // Mark all atoms it references as live
   if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
     for (const Reference *ref : *defAtom)
       if (const Atom *target = ref->target())
