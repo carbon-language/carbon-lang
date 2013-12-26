@@ -49,7 +49,6 @@ def manifestdependency : P<"manifestdependency",
 // a reserved keyword in tablegen.
 def incl : Joined<["/", "-"], "include:">,
     HelpText<"Force symbol to be added to symbol table as undefined one">;
-def incl_c : Separate<["/", "-"], "include">, Alias<incl>;
 
 def nodefaultlib_all : F<"nodefaultlib">;
 def noentry : F<"noentry">;
