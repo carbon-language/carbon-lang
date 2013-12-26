@@ -318,13 +318,10 @@ void Resolver::markLive(const Atom &atom) {
   _liveAtoms.insert(&atom);
 
   // mark all atoms it references as live
-  if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom)) {
-    for (const Reference *ref : *defAtom) {
-      const Atom *target = ref->target();
-      if (target != nullptr)
+  if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
+    for (const Reference *ref : *defAtom)
+      if (const Atom *target = ref->target())
         this->markLive(*target);
-    }
-  }
 }
 
 // remove all atoms not actually used
