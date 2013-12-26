@@ -1950,9 +1950,9 @@ def err_anonymous_property: Error<
   "anonymous property is not supported">;
 def err_property_is_variably_modified: Error<
   "property '%0' has a variably modified type">;
-def err_no_getter_setter_for_property : Error<
+def err_no_accessor_for_property : Error<
   "no %select{getter|setter}0 defined for property '%1'">;
-def error_cannot_find_suitable_getter_setter : Error<
+def error_cannot_find_suitable_accessor : Error<
   "cannot find suitable %select{getter|setter}0 for property '%1'">;
 
 def err_attribute_aligned_not_power_of_two : Error<

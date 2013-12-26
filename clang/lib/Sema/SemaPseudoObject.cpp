@@ -1393,7 +1393,7 @@ Expr *MSPropertyOpBuilder::rebuildAndCaptureObject(Expr *syntacticBase) {
 
 ExprResult MSPropertyOpBuilder::buildGet() {
   if (!RefExpr->getPropertyDecl()->hasGetter()) {
-    S.Diag(RefExpr->getMemberLoc(), diag::err_no_getter_setter_for_property)
+    S.Diag(RefExpr->getMemberLoc(), diag::err_no_accessor_for_property)
       << 0 /* getter */ << RefExpr->getPropertyDecl()->getName();
     return ExprError();
   }
@@ -1409,7 +1409,7 @@ ExprResult MSPropertyOpBuilder::buildGet() {
     GetterName, 0, true);
   if (GetterExpr.isInvalid()) {
     S.Diag(RefExpr->getMemberLoc(),
-           diag::error_cannot_find_suitable_getter_setter) << 0 /* getter */
+           diag::error_cannot_find_suitable_accessor) << 0 /* getter */
       << RefExpr->getPropertyDecl()->getName();
     return ExprError();
   }
@@ -1423,7 +1423,7 @@ ExprResult MSPropertyOpBuilder::buildGet() {
 ExprResult MSPropertyOpBuilder::buildSet(Expr *op, SourceLocation sl,
                                          bool captureSetValueAsResult) {
   if (!RefExpr->getPropertyDecl()->hasSetter()) {
-    S.Diag(RefExpr->getMemberLoc(), diag::err_no_getter_setter_for_property)
+    S.Diag(RefExpr->getMemberLoc(), diag::err_no_accessor_for_property)
       << 1 /* setter */ << RefExpr->getPropertyDecl()->getName();
     return ExprError();
   }
@@ -1439,7 +1439,7 @@ ExprResult MSPropertyOpBuilder::buildSet(Expr *op, SourceLocation sl,
     SetterName, 0, true);
   if (SetterExpr.isInvalid()) {
     S.Diag(RefExpr->getMemberLoc(),
-           diag::error_cannot_find_suitable_getter_setter) << 1 /* setter */
+           diag::error_cannot_find_suitable_accessor) << 1 /* setter */
       << RefExpr->getPropertyDecl()->getName();
     return ExprError();
   }
