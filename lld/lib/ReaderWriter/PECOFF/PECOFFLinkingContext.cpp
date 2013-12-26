@@ -97,24 +97,11 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
 }
 
 std::unique_ptr<File> PECOFFLinkingContext::createEntrySymbolFile() const {
-  if (entrySymbolName().empty())
-    return nullptr;
-  std::unique_ptr<SimpleFile> entryFile(
-      new SimpleFile("command line option /entry"));
-  entryFile->addAtom(
-      *(new (_allocator) SimpleUndefinedAtom(*entryFile, entrySymbolName())));
-  return std::move(entryFile);
+  return LinkingContext::createEntrySymbolFile("command line option /entry");
 }
 
 std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() const {
-  if (_initialUndefinedSymbols.empty())
-    return nullptr;
-  std::unique_ptr<SimpleFile> undefinedSymFile(
-      new SimpleFile("command line option /include"));
-  for (auto undefSymStr : _initialUndefinedSymbols)
-    undefinedSymFile->addAtom(*(new (_allocator) SimpleUndefinedAtom(
-                                   *undefinedSymFile, undefSymStr)));
-  return std::move(undefinedSymFile);
+  return LinkingContext::createUndefinedSymbolFile("command line option /include");
 }
 
 bool PECOFFLinkingContext::createImplicitFiles(

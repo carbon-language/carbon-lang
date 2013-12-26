@@ -323,9 +323,11 @@ protected:
 
   /// Method to create a internal file for the entry symbol
   virtual std::unique_ptr<File> createEntrySymbolFile() const;
+  std::unique_ptr<File> createEntrySymbolFile(StringRef filename) const;
 
   /// Method to create a internal file for an undefined symbol
   virtual std::unique_ptr<File> createUndefinedSymbolFile() const;
+  std::unique_ptr<File> createUndefinedSymbolFile(StringRef filename) const;
 
   StringRef _outputPath;
   StringRef _entrySymbolName;

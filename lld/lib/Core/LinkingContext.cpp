@@ -43,20 +43,28 @@ bool LinkingContext::createImplicitFiles(
 }
 
 std::unique_ptr<File> LinkingContext::createEntrySymbolFile() const {
+  return createEntrySymbolFile("command line option -u");
+}
+
+std::unique_ptr<File>
+LinkingContext::createEntrySymbolFile(StringRef filename) const {
   if (entrySymbolName().empty())
     return nullptr;
-  std::unique_ptr<SimpleFile> entryFile(
-      new SimpleFile("command line option -entry"));
+  std::unique_ptr<SimpleFile> entryFile(new SimpleFile(filename));
   entryFile->addAtom(
       *(new (_allocator) SimpleUndefinedAtom(*entryFile, entrySymbolName())));
   return std::move(entryFile);
 }
 
 std::unique_ptr<File> LinkingContext::createUndefinedSymbolFile() const {
+  return createUndefinedSymbolFile("command line option -u");
+}
+
+std::unique_ptr<File>
+LinkingContext::createUndefinedSymbolFile(StringRef filename) const {
   if (_initialUndefinedSymbols.empty())
     return nullptr;
-  std::unique_ptr<SimpleFile> undefinedSymFile(
-      new SimpleFile("command line option -u"));
+  std::unique_ptr<SimpleFile> undefinedSymFile(new SimpleFile(filename));
   for (auto undefSymStr : _initialUndefinedSymbols)
     undefinedSymFile->addAtom(*(new (_allocator) SimpleUndefinedAtom(
                                    *undefinedSymFile, undefSymStr)));
