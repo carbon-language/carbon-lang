@@ -603,7 +603,7 @@ namespace ISD {
     /// This corresponds to "load atomic" instruction.
     ATOMIC_LOAD,
 
-    /// OUTCHAIN = ATOMIC_LOAD(INCHAIN, ptr, val)
+    /// OUTCHAIN = ATOMIC_STORE(INCHAIN, ptr, val)
     /// This corresponds to "store atomic" instruction.
     ATOMIC_STORE,
 
