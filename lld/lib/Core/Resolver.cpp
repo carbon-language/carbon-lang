@@ -49,7 +49,7 @@ public:
   }
 
 private:
-  const llvm::DenseSet<const Atom *> _liveAtoms;
+  const llvm::DenseSet<const Atom *> &_liveAtoms;
 };
 
 /// This is used as a filter function to std::remove_if to coalesced atoms.
