@@ -31,6 +31,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
@@ -227,6 +228,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveRegSave(SMLoc L, bool IsVector);
   bool parseDirectiveInst(SMLoc L, char Suffix = '\0');
   bool parseDirectiveLtorg(SMLoc L);
+  bool parseDirectiveEven(SMLoc L);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -7912,6 +7914,8 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveInst(DirectiveID.getLoc(), 'w');
   else if (IDVal == ".ltorg" || IDVal == ".pool")
     return parseDirectiveLtorg(DirectiveID.getLoc());
+  else if (IDVal == ".even")
+    return parseDirectiveEven(DirectiveID.getLoc());
   return true;
 }
 
@@ -8473,6 +8477,27 @@ bool ARMAsmParser::parseDirectiveLtorg(SMLoc L) {
     if (!CP->empty())
       CP->emitEntries(Streamer);
   }
+  return false;
+}
+
+bool ARMAsmParser::parseDirectiveEven(SMLoc L) {
+  const MCSection *Section = getStreamer().getCurrentSection().first;
+
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    TokError("unexpected token in directive");
+    return false;
+  }
+
+  if (!Section) {
+    getStreamer().InitToTextSection();
+    Section = getStreamer().getCurrentSection().first;
+  }
+
+  if (Section->UseCodeAlign())
+    getStreamer().EmitCodeAlignment(2, 0);
+  else
+    getStreamer().EmitValueToAlignment(2, 0, 1, 0);
+
   return false;
 }
 
