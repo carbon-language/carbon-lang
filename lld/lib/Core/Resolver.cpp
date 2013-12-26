@@ -345,10 +345,6 @@ void Resolver::deadStripOptimize() {
   for (const StringRef &name : _context.deadStripRoots()) {
     const Atom *symAtom = _symbolTable.findByName(name);
     assert(symAtom);
-    if (symAtom->definition() == Atom::definitionUndefined)
-      // Dead-strip root atoms can be undefined at this point only when
-      // allowUndefines flag is on. Skip such undefines.
-      continue;
     _deadStripRoots.insert(symAtom);
   }
 

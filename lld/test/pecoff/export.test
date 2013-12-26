@@ -1,6 +1,6 @@
 # RUN: yaml2obj %p/Inputs/export.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1.dll /dll /entry:_init \
+# RUN: lld -flavor link /out:%t1.dll /dll /entry:init \
 # RUN:   /export:exportfn1 /export:exportfn2 -- %t.obj
 # RUN: llvm-objdump -s %t1.dll | FileCheck -check-prefix=CHECK1 %s
 
@@ -13,7 +13,7 @@ CHECK1-NEXT:  1040 72742e74 6573742e 746d7031 2e646c6c
 CHECK1-NEXT:  1050 00657870 6f727466 6e310065 78706f72
 CHECK1-NEXT:  1060 74666e32 00
 
-# RUN: lld -flavor link /out:%t2.dll /dll /subsystem:console /entry:_init \
+# RUN: lld -flavor link /out:%t2.dll /dll /subsystem:console /entry:init \
 # RUN:   /export:exportfn1,@5 /export:exportfn2 -- %t.obj
 # RUN: llvm-objdump -s %t2.dll | FileCheck -check-prefix=CHECK2 %s
 
@@ -26,7 +26,7 @@ CHECK2-NEXT:  1040 72742e74 6573742e 746d7032 2e646c6c
 CHECK2-NEXT:  1050 00657870 6f727466 6e310065 78706f72
 CHECK2-NEXT:  1060 74666e32 00
 
-# RUN: lld -flavor link /out:%t3.dll /dll /subsystem:console /entry:_init \
+# RUN: lld -flavor link /out:%t3.dll /dll /subsystem:console /entry:init \
 # RUN:   /export:exportfn1,@5,noname /export:exportfn2 -- %t.obj
 # RUN: llvm-objdump -s %t3.dll | FileCheck -check-prefix=CHECK3 %s
 
