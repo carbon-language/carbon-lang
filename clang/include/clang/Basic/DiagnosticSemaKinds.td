@@ -390,11 +390,18 @@ def warn_sizeof_pointer_type_memaccess : Warning<
   "%select{destination|source}2; expected %3 or an explicit length">,
   InGroup<SizeofPointerMemaccess>;
 def warn_strlcpycat_wrong_size : Warning<
-  "size argument in %0 call appears to be size of the source; expected the size of "
-  "the destination">,
+  "size argument in %0 call appears to be size of the source; "
+  "expected the size of the destination">,
   InGroup<DiagGroup<"strlcpy-strlcat-size">>;
 def note_strlcpycat_wrong_size : Note<
   "change size argument to be the size of the destination">;
+def warn_memsize_comparison : Warning<
+  "size argument in %0 call is a comparison">,
+  InGroup<DiagGroup<"memsize-comparison">>;
+def warn_memsize_comparison_paren_note : Note<
+  "did you mean to compare the result of %0 instead?">;
+def warn_memsize_comparison_cast_note : Note<
+  "explicitly cast the argument to size_t to silence this warning">;
   
 def warn_strncat_large_size : Warning<
   "the value of the size argument in 'strncat' is too large, might lead to a " 

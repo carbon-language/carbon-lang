@@ -622,7 +622,7 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
                                  RHS.get(), AA_Assigning))
       return true;
   }
-  
+
   // For NEON intrinsics which take an immediate value as part of the 
   // instruction, range check them here.
   unsigned i = 0, l = 0, u = 0;
@@ -3560,6 +3560,40 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
 
 //===--- CHECK: Standard memory functions ---------------------------------===//
 
+/// \brief Takes the expression passed to the size_t parameter of functions
+/// such as memcmp, strncat, etc and warns if it's a comparison.
+///
+/// This is to catch typos like `if (memcmp(&a, &b, sizeof(a) > 0))`.
+static bool CheckMemorySizeofForComparison(Sema &S, const Expr *E,
+                                           IdentifierInfo *FnName,
+                                           SourceLocation FnLoc,
+                                           SourceLocation RParenLoc) {
+  const BinaryOperator *Size = dyn_cast<BinaryOperator>(E);
+  if (!Size)
+    return false;
+
+  // if E is binop and op is >, <, >=, <=, ==, &&, ||:
+  if (!Size->isComparisonOp() && !Size->isEqualityOp() && !Size->isLogicalOp())
+    return false;
+
+  Preprocessor &PP = S.getPreprocessor();
+  SourceRange SizeRange = Size->getSourceRange();
+  S.Diag(Size->getOperatorLoc(), diag::warn_memsize_comparison)
+      << SizeRange << FnName;
+  S.Diag(FnLoc, diag::warn_memsize_comparison_paren_note)
+      << FnName
+      << FixItHint::CreateInsertion(
+             PP.getLocForEndOfToken(Size->getLHS()->getLocEnd()),
+             ")")
+      << FixItHint::CreateRemoval(RParenLoc);
+  S.Diag(SizeRange.getBegin(), diag::warn_memsize_comparison_cast_note)
+      << FixItHint::CreateInsertion(SizeRange.getBegin(), "(size_t)(")
+      << FixItHint::CreateInsertion(
+             PP.getLocForEndOfToken(SizeRange.getEnd()), ")");
+
+  return true;
+}
+
 /// \brief Determine whether the given type is a dynamic class type (e.g.,
 /// whether it has a vtable).
 static bool isDynamicClassType(QualType T) {
@@ -3614,6 +3648,10 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
                       BId == Builtin::BIstrndup ? 1 : 2);
   unsigned LenArg = (BId == Builtin::BIstrndup ? 1 : 2);
   const Expr *LenExpr = Call->getArg(LenArg)->IgnoreParenImpCasts();
+
+  if (CheckMemorySizeofForComparison(*this, LenExpr, FnName,
+                                     Call->getLocStart(), Call->getRParenLoc()))
+    return;
 
   // We have special checking when the length is a sizeof expression.
   QualType SizeOfArgTy = getSizeOfArgType(LenExpr);
@@ -3798,6 +3836,10 @@ void Sema::CheckStrlcpycatArguments(const CallExpr *Call,
   const Expr *SrcArg = ignoreLiteralAdditions(Call->getArg(1), Context);
   const Expr *SizeArg = ignoreLiteralAdditions(Call->getArg(2), Context);
   const Expr *CompareWithSrc = NULL;
+
+  if (CheckMemorySizeofForComparison(*this, SizeArg, FnName,
+                                     Call->getLocStart(), Call->getRParenLoc()))
+    return;
   
   // Look for 'strlcpy(dst, x, sizeof(x))'
   if (const Expr *Ex = getSizeOfExprArg(SizeArg))
@@ -3879,6 +3921,10 @@ void Sema::CheckStrncatArguments(const CallExpr *CE,
   const Expr *DstArg = CE->getArg(0)->IgnoreParenCasts();
   const Expr *SrcArg = CE->getArg(1)->IgnoreParenCasts();
   const Expr *LenArg = CE->getArg(2)->IgnoreParenCasts();
+
+  if (CheckMemorySizeofForComparison(*this, LenArg, FnName, CE->getLocStart(),
+                                     CE->getRParenLoc()))
+    return;
 
   // Identify common expressions, which are wrongly used as the size argument
   // to strncat and may lead to buffer overflows.
@@ -5235,7 +5281,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   if (Target->isSpecificBuiltinType(BuiltinType::Bool)) {
     if (isa<StringLiteral>(E))
       // Warn on string literal to bool.  Checks for string literals in logical
-      // expressions, for instances, assert(0 && "error here"), is prevented
+      // expressions, for instances, assert(0 && "error here"), are prevented
       // by a check in AnalyzeImplicitConversions().
       return DiagnoseImpCast(S, E, T, CC,
                              diag::warn_impcast_string_literal_to_bool);
