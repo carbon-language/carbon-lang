@@ -2555,7 +2555,7 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   
   if (Kind == InvalidFormat) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
-      << "format" << II->getName();
+      << Attr.getName() << II->getName();
     return;
   }
 
