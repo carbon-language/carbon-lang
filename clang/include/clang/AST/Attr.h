@@ -85,6 +85,7 @@ public:
   }
   
   unsigned getSpellingListIndex() const { return SpellingListIndex; }
+  virtual const char *getSpelling() const = 0;
 
   SourceLocation getLocation() const { return Range.getBegin(); }
   SourceRange getRange() const { return Range; }
@@ -138,6 +139,19 @@ public:
 
 #include "clang/AST/Attrs.inc"
 
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           const Attr *At) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(At),
+                  DiagnosticsEngine::ak_attr);
+  return DB;
+}
+
+inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                           const Attr *At) {
+  PD.AddTaggedVal(reinterpret_cast<intptr_t>(At),
+                  DiagnosticsEngine::ak_attr);
+  return PD;
+}
 }  // end namespace clang
 
 #endif

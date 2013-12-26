@@ -37,11 +37,11 @@ class B : public A {
 // MSVC allows type definition in anonymous union and struct
 struct A
 {
-  union 
+  union
   {
     int a;
     struct B  // expected-warning {{types declared in an anonymous union are a Microsoft extension}}
-    { 
+    {
       int c;
     } d;
 
@@ -63,7 +63,7 @@ struct A
     {
       int c2;
     } d2;
-    
+
 	union C2  // expected-warning {{types declared in an anonymous struct are a Microsoft extension}}
     {
       int e2;
@@ -78,7 +78,7 @@ struct A
 // __stdcall handling
 struct M {
     int __stdcall addP();
-    float __stdcall subtractP(); 
+    float __stdcall subtractP();
 };
 
 // __unaligned handling
@@ -90,7 +90,7 @@ template<typename T> void h1(T (__stdcall M::* const )()) { }
 void m1() {
   h1<int>(&M::addP);
   h1(&M::subtractP);
-} 
+}
 
 
 
@@ -98,7 +98,7 @@ void m1() {
 
 void f(long long);
 void f(int);
- 
+
 int main()
 {
   // This is an ambiguous call in standard C++.
@@ -126,7 +126,7 @@ __declspec(dllimport) void f(void) { }
 void f2(void);
 };
 
-__declspec(dllimport) void AAA::f2(void) { // expected-error {{dllimport attribute can be applied only to symbol}}
+__declspec(dllimport) void AAA::f2(void) { // expected-error {{'dllimport' attribute can be applied only to symbol}}
 
 }
 
@@ -368,18 +368,18 @@ struct StructWithUnnamedMember {
 
 namespace rdar14250378 {
   class Bar {};
-  
+
   namespace NyNamespace {
     class Foo {
     public:
       Bar* EnsureBar();
     };
-    
+
     class Baz : public Foo {
     public:
       friend class Bar;
     };
-    
+
     Bar* Foo::EnsureBar() {
       return 0;
     }

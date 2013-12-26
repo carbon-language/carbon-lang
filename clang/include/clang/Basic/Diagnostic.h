@@ -166,7 +166,8 @@ public:
     ak_nameddecl,       ///< NamedDecl *
     ak_nestednamespec,  ///< NestedNameSpecifier *
     ak_declcontext,     ///< DeclContext *
-    ak_qualtype_pair    ///< pair<QualType, QualType>
+    ak_qualtype_pair,   ///< pair<QualType, QualType>
+    ak_attr             ///< Attr *
   };
 
   /// \brief Represents on argument value, which is a union discriminated

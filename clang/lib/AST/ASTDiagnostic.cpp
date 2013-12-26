@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
@@ -359,6 +360,14 @@ void clang::FormatASTNodeDiagnosticArgument(
       NeedQuotes = false;
       break;
     }
+    case DiagnosticsEngine::ak_attr: {
+      const Attr *At = reinterpret_cast<Attr *>(Val);
+      assert(At && "Received null Attr object!");
+      OS << '\'' << At->getSpelling() << '\'';
+      NeedQuotes = false;
+      break;
+    }
+
   }
 
   OS.flush();

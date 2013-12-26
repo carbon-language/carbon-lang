@@ -954,6 +954,29 @@ static void writeAvailabilityValue(raw_ostream &OS) {
      << "  OS << \"";
 }
 
+static void writeGetSpellingFunction(Record &R, raw_ostream &OS) {
+  std::vector<Record *> Spellings = R.getValueAsListOfDefs("Spellings");
+
+  OS << "const char *" << R.getName() << "Attr::getSpelling() const {\n";
+  if (Spellings.empty()) {
+    OS << "  return \"(No spelling)\";\n}\n\n";
+    return;
+  }
+
+  OS << "  switch (SpellingListIndex) {\n"
+        "  default:\n"
+        "    llvm_unreachable(\"Unknown attribute spelling!\");\n"
+        "    return \"(No spelling)\";\n";
+
+  for (unsigned I = 0; I < Spellings.size(); ++I)
+    OS << "  case " << I << ":\n"
+          "    return \"" << Spellings[I]->getValueAsString("Name") << "\";\n";
+  // End of the switch statement.
+  OS << "  }\n";
+  // End of the getSpelling function.
+  OS << "}\n\n";
+}
+
 static void writePrettyPrintFunction(Record &R, std::vector<Argument*> &Args,
                                      raw_ostream &OS) {
   std::vector<Record*> Spellings = R.getValueAsListOfDefs("Spellings");
@@ -1197,6 +1220,7 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     OS << "  virtual " << R.getName() << "Attr *clone (ASTContext &C) const;\n";
     OS << "  virtual void printPretty(raw_ostream &OS,\n"
        << "                           const PrintingPolicy &Policy) const;\n";
+    OS << "  virtual const char *getSpelling() const;\n";
 
     writeAttrAccessorDefinition(R, OS);
 
@@ -1328,6 +1352,7 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     OS << ", getSpellingListIndex());\n}\n\n";
 
     writePrettyPrintFunction(R, Args, OS);
+    writeGetSpellingFunction(R, OS);
   }
 }
 
