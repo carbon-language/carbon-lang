@@ -379,28 +379,24 @@ static bool threadSafetyCheckIsSmartPointer(Sema &S, const RecordType* RT) {
 /// \return true if the Decl is a pointer type; false otherwise
 static bool threadSafetyCheckIsPointer(Sema &S, const Decl *D,
                                        const AttributeList &Attr) {
-  if (const ValueDecl *vd = dyn_cast<ValueDecl>(D)) {
-    QualType QT = vd->getType();
-    if (QT->isAnyPointerType())
+  const ValueDecl *vd = cast<ValueDecl>(D);
+  QualType QT = vd->getType();
+  if (QT->isAnyPointerType())
+    return true;
+
+  if (const RecordType *RT = QT->getAs<RecordType>()) {
+    // If it's an incomplete type, it could be a smart pointer; skip it.
+    // (We don't want to force template instantiation if we can avoid it,
+    // since that would alter the order in which templates are instantiated.)
+    if (RT->isIncompleteType())
       return true;
 
-    if (const RecordType *RT = QT->getAs<RecordType>()) {
-      // If it's an incomplete type, it could be a smart pointer; skip it.
-      // (We don't want to force template instantiation if we can avoid it,
-      // since that would alter the order in which templates are instantiated.)
-      if (RT->isIncompleteType())
-        return true;
-
-      if (threadSafetyCheckIsSmartPointer(S, RT))
-        return true;
-    }
-
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_decl_not_pointer)
-      << Attr.getName()->getName() << QT;
-  } else {
-    S.Diag(Attr.getLoc(), diag::err_attribute_can_be_applied_only_to_value_decl)
-      << Attr.getName();
+    if (threadSafetyCheckIsSmartPointer(S, RT))
+      return true;
   }
+
+  S.Diag(Attr.getLoc(), diag::warn_thread_attribute_decl_not_pointer)
+    << Attr.getName()->getName() << QT;
   return false;
 }
 
