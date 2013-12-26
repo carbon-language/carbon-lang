@@ -328,9 +328,7 @@ void Resolver::deadStripOptimize() {
   // only do this optimization with -dead_strip
   if (!_context.deadStrip())
     return;
-
-  // clear liveness on all atoms
-  _liveAtoms.clear();
+  assert(_liveAtoms.empty());
 
   // By default, shared libraries are built with all globals as dead strip roots
   if (_context.globalsAreDeadStripRoots()) {
