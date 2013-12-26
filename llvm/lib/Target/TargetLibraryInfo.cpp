@@ -407,37 +407,6 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setAvailableWithName(LibFunc::fputs, "fputs$UNIX2003");
   }
 
-  // exp10 and exp10f are not available on OS X until 10.9 and iOS until 7.0
-  // and their names are __exp10 and __exp10f. exp10l is not available on
-  // OS X or iOS.
-  if (T.isMacOSX()) {
-    TLI.setUnavailable(LibFunc::exp10l);
-    if (T.isMacOSXVersionLT(10, 9)) {
-      TLI.setUnavailable(LibFunc::exp10);
-      TLI.setUnavailable(LibFunc::exp10f);
-    } else {
-      TLI.setAvailableWithName(LibFunc::exp10, "__exp10");
-      TLI.setAvailableWithName(LibFunc::exp10f, "__exp10f");
-    }
-  }
-
-  if (T.getOS() == Triple::IOS) {
-    TLI.setUnavailable(LibFunc::exp10l);
-    if (T.isOSVersionLT(7, 0)) {
-      TLI.setUnavailable(LibFunc::exp10);
-      TLI.setUnavailable(LibFunc::exp10f);
-    } else {
-      TLI.setAvailableWithName(LibFunc::exp10, "__exp10");
-      TLI.setAvailableWithName(LibFunc::exp10f, "__exp10f");
-    }
-  }
-
-  if (T.getOS() == Triple::NetBSD) {
-    TLI.setUnavailable(LibFunc::exp10l);
-    TLI.setUnavailable(LibFunc::exp10);
-    TLI.setUnavailable(LibFunc::exp10f);
-  }
-
   // iprintf and friends are only available on XCore and TCE.
   if (T.getArch() != Triple::xcore && T.getArch() != Triple::tce) {
     TLI.setUnavailable(LibFunc::iprintf);
@@ -485,9 +454,6 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::cbrt);
     TLI.setUnavailable(LibFunc::cbrtf);
     TLI.setUnavailable(LibFunc::cbrtl);
-    TLI.setUnavailable(LibFunc::exp10);
-    TLI.setUnavailable(LibFunc::exp10f);
-    TLI.setUnavailable(LibFunc::exp10l);
     TLI.setUnavailable(LibFunc::exp2);
     TLI.setUnavailable(LibFunc::exp2f);
     TLI.setUnavailable(LibFunc::exp2l);
@@ -606,6 +572,39 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::atoll);
     TLI.setUnavailable(LibFunc::frexpf);
     TLI.setUnavailable(LibFunc::llabs);
+  }
+
+  // exp10, exp10f, exp10l is available on at least Linux (GLIBC)
+  // exp10 and exp10f are not available on OS X until 10.9 and iOS until 7.0
+  // and their names are __exp10 and __exp10f. exp10l is not available on
+  // OS X or iOS.
+  switch (T.getOS()) {
+  case Triple::Linux:
+    break;
+  case Triple::MacOSX:
+    TLI.setUnavailable(LibFunc::exp10l);
+    if (T.isMacOSXVersionLT(10, 9)) {
+      TLI.setUnavailable(LibFunc::exp10);
+      TLI.setUnavailable(LibFunc::exp10f);
+    } else {
+      TLI.setAvailableWithName(LibFunc::exp10, "__exp10");
+      TLI.setAvailableWithName(LibFunc::exp10f, "__exp10f");
+    }
+    break;
+  case Triple::IOS:
+    TLI.setUnavailable(LibFunc::exp10l);
+    if (T.isOSVersionLT(7, 0)) {
+      TLI.setUnavailable(LibFunc::exp10);
+      TLI.setUnavailable(LibFunc::exp10f);
+    } else {
+      TLI.setAvailableWithName(LibFunc::exp10, "__exp10");
+      TLI.setAvailableWithName(LibFunc::exp10f, "__exp10f");
+    }
+    break;
+  default:
+    TLI.setUnavailable(LibFunc::exp10);
+    TLI.setUnavailable(LibFunc::exp10f);
+    TLI.setUnavailable(LibFunc::exp10l);
   }
 
   // ffsl is available on at least Darwin, Mac OS X, iOS, FreeBSD, and
