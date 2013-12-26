@@ -14,7 +14,6 @@
 #include "asan_interceptors.h"
 
 #include "asan_allocator.h"
-#include "asan_intercepted_functions.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
 #include "asan_poisoning.h"

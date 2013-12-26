@@ -385,7 +385,6 @@ INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
 
 #if !defined(MISSING_BLOCKS_SUPPORT)
 extern "C" {
-// FIXME: consolidate these declarations with asan_intercepted_functions.h.
 void dispatch_async(dispatch_queue_t dq, void(^work)(void));
 void dispatch_group_async(dispatch_group_t dg, dispatch_queue_t dq,
                           void(^work)(void));

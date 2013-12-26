@@ -16,6 +16,67 @@
 
 #include "asan_internal.h"
 #include "sanitizer_common/sanitizer_interception.h"
+#include "sanitizer_common/sanitizer_platform_interceptors.h"
+
+// Use macro to describe if specific function should be
+// intercepted on a given platform.
+#if !SANITIZER_WINDOWS
+# define ASAN_INTERCEPT_ATOLL_AND_STRTOLL 1
+# define ASAN_INTERCEPT__LONGJMP 1
+# define ASAN_INTERCEPT_STRDUP 1
+# define ASAN_INTERCEPT_INDEX 1
+# define ASAN_INTERCEPT_PTHREAD_CREATE 1
+# define ASAN_INTERCEPT_MLOCKX 1
+#else
+# define ASAN_INTERCEPT_ATOLL_AND_STRTOLL 0
+# define ASAN_INTERCEPT__LONGJMP 0
+# define ASAN_INTERCEPT_STRDUP 0
+# define ASAN_INTERCEPT_INDEX 0
+# define ASAN_INTERCEPT_PTHREAD_CREATE 0
+# define ASAN_INTERCEPT_MLOCKX 0
+#endif
+
+#if SANITIZER_LINUX
+# define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 1
+#else
+# define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 0
+#endif
+
+#if !SANITIZER_MAC
+# define ASAN_INTERCEPT_STRNLEN 1
+#else
+# define ASAN_INTERCEPT_STRNLEN 0
+#endif
+
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
+# define ASAN_INTERCEPT_SWAPCONTEXT 1
+#else
+# define ASAN_INTERCEPT_SWAPCONTEXT 0
+#endif
+
+#if !SANITIZER_ANDROID && !SANITIZER_WINDOWS
+# define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 1
+#else
+# define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 0
+#endif
+
+#if !SANITIZER_WINDOWS
+# define ASAN_INTERCEPT_SIGLONGJMP 1
+#else
+# define ASAN_INTERCEPT_SIGLONGJMP 0
+#endif
+
+#if ASAN_HAS_EXCEPTIONS && !SANITIZER_WINDOWS
+# define ASAN_INTERCEPT___CXA_THROW 1
+#else
+# define ASAN_INTERCEPT___CXA_THROW 0
+#endif
+
+#if !SANITIZER_WINDOWS
+# define ASAN_INTERCEPT___CXA_ATEXIT 1
+#else
+# define ASAN_INTERCEPT___CXA_ATEXIT 0
+#endif
 
 DECLARE_REAL(int, memcmp, const void *a1, const void *a2, uptr size)
 DECLARE_REAL(void*, memcpy, void *to, const void *from, uptr size)
