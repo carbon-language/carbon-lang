@@ -119,6 +119,7 @@ struct A1 { long long a; };
 struct B1 : virtual A1 { char a; };
 #pragma pack(pop)
 struct C1 : B1 {};
+
 // CHECK: *** Dumping AST Record Layout
 // CHECK:    0 | struct C1
 // CHECK:    0 |   struct B1 (base)
@@ -138,8 +139,41 @@ struct C1 : B1 {};
 // CHECK-X64:      | [sizeof=24, align=8
 // CHECK-X64:      |  nvsize=9, nvalign=1]
 
+struct CA0 {
+	CA0() {}
+};
+struct CA1 : virtual CA0 {
+	CA1() {}
+};
+#pragma pack(push, 1)
+struct CA2 : public CA1, public CA0 {
+	virtual void CA2Method() {}
+	CA2() {}
+};
+#pragma pack(pop)
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK:    0 | struct CA2
+// CHECK:    0 |   (CA2 vftable pointer)
+// CHECK:    4 |   struct CA1 (base)
+// CHECK:    4 |     (CA1 vbtable pointer)
+// CHECK:    9 |   struct CA0 (base) (empty)
+// CHECK:    9 |   struct CA0 (virtual base) (empty)
+// CHECK:      | [sizeof=9, align=1
+// CHECK:      |  nvsize=9, nvalign=1]
+// CHECK-C64: *** Dumping AST Record Layout
+// CHECK-C64:    0 | struct CA2
+// CHECK-C64:    0 |   (CA2 vftable pointer)
+// CHECK-C64:    8 |   struct CA1 (base)
+// CHECK-C64:    8 |     (CA1 vbtable pointer)
+// CHECK-C64:   17 |   struct CA0 (base) (empty)
+// CHECK-C64:   17 |   struct CA0 (virtual base) (empty)
+// CHECK-C64:      | [sizeof=17, align=1
+// CHECK-C64:      |  nvsize=17, nvalign=1]
+
 int a[
 sizeof(X)+
 sizeof(Y)+
 sizeof(Z)+
-sizeof(C1)];
+sizeof(C1)+
+sizeof(CA2)];

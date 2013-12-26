@@ -2316,15 +2316,14 @@ void MicrosoftRecordLayoutBuilder::layoutVFPtr(const CXXRecordDecl *RD) {
   if (!HasExtendableVFPtr)
     return;
 
+  updateAlignment(PointerAlignment);
+  Size = Size.RoundUpToAlignment(PointerAlignment) + PointerSize;
   // MSVC 32 (but not 64) potentially over-aligns the vf-table pointer by giving
   // it the max alignment of all the non-virtual data in the class.  The
   // resulting layout is essentially { vftbl, { nvdata } }.  This is completely
   // unnecessary, but we're not here to pass judgment.
-  updateAlignment(PointerAlignment);
-  if (Is64BitMode)
-    Size = Size.RoundUpToAlignment(PointerAlignment) + PointerSize;
-  else
-    Size = Size.RoundUpToAlignment(PointerAlignment) + Alignment;
+  if (!Is64BitMode && Alignment > PointerSize)
+    Size += Alignment - PointerSize;
 }
 
 void
