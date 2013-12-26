@@ -36,10 +36,15 @@ ARM_ARCH_NAME("armv6zk", ARMV6ZK, "6ZK",     v6KZ)
 ARM_ARCH_NAME("armv6-m", ARMV6M,  "6-M",     v6_M)
 ARM_ARCH_NAME("armv7",   ARMV7,   "7",       v7)
 ARM_ARCH_NAME("armv7-a", ARMV7A,  "7-A",     v7)
+ARM_ARCH_ALIAS("armv7a", ARMV7A)
 ARM_ARCH_NAME("armv7-r", ARMV7R,  "7-R",     v7)
+ARM_ARCH_ALIAS("armv7r", ARMV7R)
 ARM_ARCH_NAME("armv7-m", ARMV7M,  "7-M",     v7)
+ARM_ARCH_ALIAS("armv7m", ARMV7M)
 ARM_ARCH_NAME("armv8-a", ARMV8A,  "8-A",     v8)
+ARM_ARCH_ALIAS("armv8a", ARMV8A)
 ARM_ARCH_NAME("iwmmxt",  IWMMXT,  "iwmmxt",  v5TE)
 ARM_ARCH_NAME("iwmmxt2", IWMMXT2, "iwmmxt2", v5TE)
 
 #undef ARM_ARCH_NAME
+#undef ARM_ARCH_ALIAS

@@ -71,6 +71,7 @@ static const char *GetArchName(unsigned ID) {
     break;
 #define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
   case ARM::ID: return NAME;
+#define ARM_ARCH_ALIAS(NAME, ID) /* empty */
 #include "ARMArchName.def"
   }
   return NULL;
@@ -83,6 +84,7 @@ static const char *GetArchDefaultCPUName(unsigned ID) {
     break;
 #define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
   case ARM::ID: return DEFAULT_CPU_NAME;
+#define ARM_ARCH_ALIAS(NAME, ID) /* empty */
 #include "ARMArchName.def"
   }
   return NULL;
@@ -95,6 +97,7 @@ static unsigned GetArchDefaultCPUArch(unsigned ID) {
     break;
 #define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
   case ARM::ID: return ARMBuildAttrs::DEFAULT_CPU_ARCH;
+#define ARM_ARCH_ALIAS(NAME, ID) /* empty */
 #include "ARMArchName.def"
   }
   return 0;

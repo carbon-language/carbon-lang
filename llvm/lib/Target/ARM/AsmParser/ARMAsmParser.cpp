@@ -8119,6 +8119,8 @@ bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
   unsigned ID = StringSwitch<unsigned>(Arch)
 #define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
     .Case(NAME, ARM::ID)
+#define ARM_ARCH_ALIAS(NAME, ID) \
+    .Case(NAME, ARM::ID)
 #include "MCTargetDesc/ARMArchName.def"
     .Default(ARM::INVALID_ARCH);
 

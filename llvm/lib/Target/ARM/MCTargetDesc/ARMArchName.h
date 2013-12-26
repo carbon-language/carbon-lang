@@ -17,6 +17,7 @@ enum ArchKind {
   INVALID_ARCH = 0
 
 #define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) , ID
+#define ARM_ARCH_ALIAS(NAME, ID) /* empty */
 #include "ARMArchName.def"
 };
 
