@@ -8934,7 +8934,7 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
 
   if (UsedAttr *Attr = VD->getAttr<UsedAttr>()) {
     if (!Attr->isInherited() && !VD->isThisDeclarationADefinition()) {
-      Diag(Attr->getLocation(), diag::warn_attribute_ignored) << "used";
+      Diag(Attr->getLocation(), diag::warn_attribute_ignored) << "'used'";
       VD->dropAttr<UsedAttr>();
     }
   }

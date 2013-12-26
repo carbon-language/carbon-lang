@@ -1622,7 +1622,7 @@ static void handleUnusedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleUsedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (VD->hasLocalStorage()) {
-      S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "used";
+      S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
       return;
     }
   } else if (!isFunctionOrMethod(D)) {
