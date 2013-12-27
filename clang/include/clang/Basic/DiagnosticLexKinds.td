@@ -300,6 +300,9 @@ def ext_pp_import_directive : Extension<"#import is a language extension">,
   InGroup<DiagGroup<"import-preprocessor-directive-pedantic">>;
 def err_pp_import_directive_ms : Error<
   "#import of type library is an unsupported Microsoft feature">;
+def ext_pp_include_search_ms : ExtWarn<
+  "#include resolved using non-portable MSVC search rules as: %0">,
+  InGroup<DiagGroup<"msvc-include">>;
 
 def ext_pp_ident_directive : Extension<"#ident is a language extension">;
 def ext_pp_include_next_directive : Extension<

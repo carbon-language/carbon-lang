@@ -12,12 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/HeaderSearch.h"
-#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Lex/HeaderMap.h"
 #include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Lex/Lexer.h"
+#include "clang/Lex/LexDiagnostic.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Capacity.h"
 #include "llvm/Support/FileSystem.h"
@@ -45,11 +45,11 @@ ExternalHeaderFileInfoSource::~ExternalHeaderFileInfoSource() {}
 
 HeaderSearch::HeaderSearch(IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts,
                            SourceManager &SourceMgr, DiagnosticsEngine &Diags,
-                           const LangOptions &LangOpts, 
+                           const LangOptions &LangOpts,
                            const TargetInfo *Target)
-  : HSOpts(HSOpts), FileMgr(SourceMgr.getFileManager()), FrameworkMap(64),
-    ModMap(SourceMgr, Diags, LangOpts, Target, *this)
-{
+    : HSOpts(HSOpts), Diags(Diags), SourceMgr(SourceMgr),
+      FileMgr(SourceMgr.getFileManager()), FrameworkMap(64),
+      ModMap(SourceMgr, Diags, LangOpts, Target, *this) {
   AngledDirIdx = 0;
   SystemDirIdx = 0;
   NoCurDirSearch = false;
@@ -493,20 +493,15 @@ void HeaderSearch::setTarget(const TargetInfo &Target) {
 
 /// LookupFile - Given a "foo" or \<foo> reference, look up the indicated file,
 /// return null on failure.  isAngled indicates whether the file reference is
-/// for system \#include's or not (i.e. using <> instead of "").  CurFileEnt, if
-/// non-null, indicates where the \#including file is, in case a relative search
-/// is needed.
+/// for system \#include's or not (i.e. using <> instead of ""). Includers, if
+/// non-empty, indicates where the \#including file(s) are, in case a relative
+/// search is needed. Microsoft mode will pass all \#including files.
 const FileEntry *HeaderSearch::LookupFile(
-    StringRef Filename,
-    bool isAngled,
-    const DirectoryLookup *FromDir,
-    const DirectoryLookup *&CurDir,
-    const FileEntry *CurFileEnt,
-    SmallVectorImpl<char> *SearchPath,
+    StringRef Filename, SourceLocation IncludeLoc, bool isAngled,
+    const DirectoryLookup *FromDir, const DirectoryLookup *&CurDir,
+    ArrayRef<const FileEntry *> Includers, SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    ModuleMap::KnownHeader *SuggestedModule,
-    bool SkipCache)
-{
+    ModuleMap::KnownHeader *SuggestedModule, bool SkipCache) {
   if (!HSOpts->ModuleMapFiles.empty()) {
     // Preload all explicitly specified module map files. This enables modules
     // map files lying in a directory structure separate from the header files
@@ -546,44 +541,53 @@ const FileEntry *HeaderSearch::LookupFile(
   }
 
   // Unless disabled, check to see if the file is in the #includer's
-  // directory.  This has to be based on CurFileEnt, not CurDir, because
-  // CurFileEnt could be a #include of a subdirectory (#include "foo/bar.h") and
-  // a subsequent include of "baz.h" should resolve to "whatever/foo/baz.h".
+  // directory.  This cannot be based on CurDir, because each includer could be
+  // a #include of a subdirectory (#include "foo/bar.h") and a subsequent
+  // include of "baz.h" should resolve to "whatever/foo/baz.h".
   // This search is not done for <> headers.
-  if (CurFileEnt && !isAngled && !NoCurDirSearch) {
+  if (!Includers.empty() && !isAngled && !NoCurDirSearch) {
     SmallString<1024> TmpDir;
-    // Concatenate the requested file onto the directory.
-    // FIXME: Portability.  Filename concatenation should be in sys::Path.
-    TmpDir += CurFileEnt->getDir()->getName();
-    TmpDir.push_back('/');
-    TmpDir.append(Filename.begin(), Filename.end());
-    if (const FileEntry *FE = FileMgr.getFile(TmpDir.str(),/*openFile=*/true)) {
-      // Leave CurDir unset.
-      // This file is a system header or C++ unfriendly if the old file is.
-      //
-      // Note that we only use one of FromHFI/ToHFI at once, due to potential
-      // reallocation of the underlying vector potentially making the first
-      // reference binding dangling.
-      HeaderFileInfo &FromHFI = getFileInfo(CurFileEnt);
-      unsigned DirInfo = FromHFI.DirInfo;
-      bool IndexHeaderMapHeader = FromHFI.IndexHeaderMapHeader;
-      StringRef Framework = FromHFI.Framework;
+    for (ArrayRef<const FileEntry *>::iterator I(Includers.begin()),
+         E(Includers.end());
+         I != E; ++I) {
+      const FileEntry *Includer = *I;
+      // Concatenate the requested file onto the directory.
+      // FIXME: Portability.  Filename concatenation should be in sys::Path.
+      TmpDir = Includer->getDir()->getName();
+      TmpDir.push_back('/');
+      TmpDir.append(Filename.begin(), Filename.end());
+      if (const FileEntry *FE =
+              FileMgr.getFile(TmpDir.str(), /*openFile=*/true)) {
+        // Leave CurDir unset.
+        // This file is a system header or C++ unfriendly if the old file is.
+        //
+        // Note that we only use one of FromHFI/ToHFI at once, due to potential
+        // reallocation of the underlying vector potentially making the first
+        // reference binding dangling.
+        HeaderFileInfo &FromHFI = getFileInfo(Includer);
+        unsigned DirInfo = FromHFI.DirInfo;
+        bool IndexHeaderMapHeader = FromHFI.IndexHeaderMapHeader;
+        StringRef Framework = FromHFI.Framework;
 
-      HeaderFileInfo &ToHFI = getFileInfo(FE);
-      ToHFI.DirInfo = DirInfo;
-      ToHFI.IndexHeaderMapHeader = IndexHeaderMapHeader;
-      ToHFI.Framework = Framework;
+        HeaderFileInfo &ToHFI = getFileInfo(FE);
+        ToHFI.DirInfo = DirInfo;
+        ToHFI.IndexHeaderMapHeader = IndexHeaderMapHeader;
+        ToHFI.Framework = Framework;
 
-      if (SearchPath != NULL) {
-        StringRef SearchPathRef(CurFileEnt->getDir()->getName());
-        SearchPath->clear();
-        SearchPath->append(SearchPathRef.begin(), SearchPathRef.end());
+        if (SearchPath != NULL) {
+          StringRef SearchPathRef(Includer->getDir()->getName());
+          SearchPath->clear();
+          SearchPath->append(SearchPathRef.begin(), SearchPathRef.end());
+        }
+        if (RelativePath != NULL) {
+          RelativePath->clear();
+          RelativePath->append(Filename.begin(), Filename.end());
+        }
+        if (I != Includers.begin())
+          Diags.Report(IncludeLoc, diag::ext_pp_include_search_ms)
+              << FE->getName();
+        return FE;
       }
-      if (RelativePath != NULL) {
-        RelativePath->clear();
-        RelativePath->append(Filename.begin(), Filename.end());
-      }
-      return FE;
     }
   }
 
@@ -667,18 +671,18 @@ const FileEntry *HeaderSearch::LookupFile(
   // a header in a framework that is currently being built, and we couldn't
   // resolve "foo.h" any other way, change the include to <Foo/foo.h>, where
   // "Foo" is the name of the framework in which the including header was found.
-  if (CurFileEnt && !isAngled && Filename.find('/') == StringRef::npos) {
-    HeaderFileInfo &IncludingHFI = getFileInfo(CurFileEnt);
+  if (!Includers.empty() && !isAngled &&
+      Filename.find('/') == StringRef::npos) {
+    HeaderFileInfo &IncludingHFI = getFileInfo(Includers.front());
     if (IncludingHFI.IndexHeaderMapHeader) {
       SmallString<128> ScratchFilename;
       ScratchFilename += IncludingHFI.Framework;
       ScratchFilename += '/';
       ScratchFilename += Filename;
-      
-      const FileEntry *Result = LookupFile(ScratchFilename, /*isAngled=*/true,
-                                           FromDir, CurDir, CurFileEnt, 
-                                           SearchPath, RelativePath,
-                                           SuggestedModule);
+
+      const FileEntry *Result = LookupFile(
+          ScratchFilename, IncludeLoc, /*isAngled=*/true, FromDir, CurDir,
+          Includers.front(), SearchPath, RelativePath, SuggestedModule);
       std::pair<unsigned, unsigned> &CacheLookup 
         = LookupFileCache.GetOrCreateValue(Filename).getValue();
       CacheLookup.second

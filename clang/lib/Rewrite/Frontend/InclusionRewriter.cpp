@@ -335,7 +335,7 @@ bool InclusionRewriter::HandleHasInclude(
   bool isAngled = PP.GetIncludeFilenameSpelling(Tok.getLocation(), Filename);
   const DirectoryLookup *CurDir;
   const FileEntry *File = PP.getHeaderSearchInfo().LookupFile(
-      Filename, isAngled, 0, CurDir,
+      Filename, SourceLocation(), isAngled, 0, CurDir,
       PP.getSourceManager().getFileEntryForID(FileId), 0, 0, 0, false);
 
   FileExists = File != 0;
