@@ -666,19 +666,6 @@ void DICompositeType::setTypeArray(DIArray Elements, DIArray TParams) {
   DbgNode = N;
 }
 
-void DICompositeType::addMember(DIDescriptor D) {
-  SmallVector<llvm::Value *, 16> M;
-  DIArray OrigM = getTypeArray();
-  unsigned Elements = OrigM.getNumElements();
-  if (Elements == 1 && !OrigM.getElement(0))
-    Elements = 0;
-  M.reserve(Elements + 1);
-  for (unsigned i = 0; i != Elements; ++i)
-    M.push_back(OrigM.getElement(i));
-  M.push_back(D);
-  setTypeArray(DIArray(MDNode::get(DbgNode->getContext(), M)));
-}
-
 /// Generate a reference to this DIType. Uses the type identifier instead
 /// of the actual MDNode if possible, to help type uniquing.
 DIScopeRef DIScope::getRef() const {

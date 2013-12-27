@@ -385,7 +385,6 @@ public:
 
   DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
   void setTypeArray(DIArray Elements, DIArray TParams = DIArray());
-  void addMember(DIDescriptor D);
   unsigned getRunTimeLang() const { return getUnsignedField(11); }
   DITypeRef getContainingType() const { return getFieldAs<DITypeRef>(12); }
   void setContainingType(DICompositeType ContainingType);
