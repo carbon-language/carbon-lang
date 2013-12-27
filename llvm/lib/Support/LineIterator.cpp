@@ -29,15 +29,14 @@ void line_iterator::advance() {
 
   const char *Pos = CurrentLine.end();
   assert(Pos == Buffer->getBufferStart() || *Pos == '\n' || *Pos == '\0');
-  size_t Length = 0;
 
   if (CommentMarker == '\0') {
     // If we're not stripping comments, this is simpler.
-    while (Pos[Length] == '\n')
-      ++Length;
-    Pos += Length;
-    LineNumber += Length;
-    Length = 0;
+    size_t Blanks = 0;
+    while (Pos[Blanks] == '\n')
+      ++Blanks;
+    Pos += Blanks;
+    LineNumber += Blanks;
   } else {
     // Skip comments and count line numbers, which is a bit more complex.
     for (;;) {
@@ -60,6 +59,7 @@ void line_iterator::advance() {
   }
 
   // Measure the line.
+  size_t Length = 0;
   do {
     ++Length;
   } while (Pos[Length] != '\0' && Pos[Length] != '\n');
