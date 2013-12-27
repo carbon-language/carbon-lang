@@ -30,6 +30,7 @@ add_llvm_library(LLVMSupport
   IntrusiveRefCntPtr.cpp
   IsInf.cpp
   IsNAN.cpp
+  LineIterator.cpp
   Locale.cpp
   LockFileManager.cpp
   ManagedStatic.cpp
