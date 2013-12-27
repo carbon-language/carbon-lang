@@ -2916,30 +2916,30 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
                "Should not have method info for this method yet!");
         MethodInfoMap.insert(std::make_pair(MD, MI));
         continue;
-      } else {
-        // In case we need a return adjustment, we'll add a new slot for
-        // the overrider and put a return-adjusting thunk where the overridden
-        // method was in the vftable.
-        // For now, just mark the overriden method as shadowed by a new slot.
-        OverriddenMethodInfo.Shadowed = true;
-        ForceThunk = true;
+      }
 
-        // Also apply this adjustment to the shadowed slots.
-        if (!ThisAdjustmentOffset.isEmpty()) {
-          // FIXME: this is O(N^2), can be O(N).
-          const CXXMethodDecl *SubOverride = OverriddenMD;
-          while ((SubOverride =
-                      FindNearestOverriddenMethod(SubOverride, VisitedBases))) {
-            MethodInfoMapTy::iterator SubOverrideIterator =
-                MethodInfoMap.find(SubOverride);
-            if (SubOverrideIterator == MethodInfoMap.end())
-              break;
-            MethodInfo &SubOverrideMI = SubOverrideIterator->second;
-            assert(SubOverrideMI.Shadowed);
-            VTableThunks[SubOverrideMI.VFTableIndex].This =
-                ThisAdjustmentOffset;
-            AddThunk(MD, VTableThunks[SubOverrideMI.VFTableIndex]);
-          }
+      // In case we need a return adjustment, we'll add a new slot for
+      // the overrider and put a return-adjusting thunk where the overridden
+      // method was in the vftable.
+      // For now, just mark the overriden method as shadowed by a new slot.
+      OverriddenMethodInfo.Shadowed = true;
+      ForceThunk = true;
+
+      // Also apply this adjustment to the shadowed slots.
+      if (!ThisAdjustmentOffset.isEmpty()) {
+        // FIXME: this is O(N^2), can be O(N).
+        const CXXMethodDecl *SubOverride = OverriddenMD;
+        while ((SubOverride =
+                    FindNearestOverriddenMethod(SubOverride, VisitedBases))) {
+          MethodInfoMapTy::iterator SubOverrideIterator =
+              MethodInfoMap.find(SubOverride);
+          if (SubOverrideIterator == MethodInfoMap.end())
+            break;
+          MethodInfo &SubOverrideMI = SubOverrideIterator->second;
+          assert(SubOverrideMI.Shadowed);
+          VTableThunks[SubOverrideMI.VFTableIndex].This =
+              ThisAdjustmentOffset;
+          AddThunk(MD, VTableThunks[SubOverrideMI.VFTableIndex]);
         }
       }
     } else if (Base.getBaseOffset() != WhichVFPtr.VFPtrFullOffset ||
