@@ -28,6 +28,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
+#include "llvm/Support/Atomic.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -1826,5 +1827,20 @@ int getLastArgIntValue(const ArgList &Args, OptSpecifier Id, int Default,
     }
   }
   return Res;
+}
+
+void BuryPointer(const void *Ptr) {
+  // This function may be called only a small fixed amount of times per each
+  // invocation, otherwise we do actually have a leak which we want to report.
+  // If this function is called more than kGraveYardMaxSize times, the pointers
+  // will not be properly buried and a leak detector will report a leak, which
+  // is what we want in such case.
+  static const size_t kGraveYardMaxSize = 16;
+  static const void *GraveYard[kGraveYardMaxSize];
+  static llvm::sys::cas_flag GraveYardSize;
+  llvm::sys::cas_flag Idx = llvm::sys::AtomicIncrement(&GraveYardSize) - 1;
+  if (Idx >= kGraveYardMaxSize)
+    return;
+  GraveYard[Idx] = Ptr;
 }
 }

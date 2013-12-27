@@ -17,6 +17,7 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "clang/Frontend/LayoutOverrideSource.h"
+#include "clang/Frontend/Utils.h"
 #include "clang/Frontend/MultiplexConsumer.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
@@ -403,9 +404,9 @@ void FrontendAction::EndSourceFile() {
   //
   // FIXME: There is more per-file stuff we could just drop here?
   if (CI.getFrontendOpts().DisableFree) {
-    CI.takeASTConsumer();
+    BuryPointer(CI.takeASTConsumer());
     if (!isCurrentFileAST()) {
-      CI.takeSema();
+      BuryPointer(CI.takeSema());
       CI.resetAndLeakASTContext();
     }
   } else {

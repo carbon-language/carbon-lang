@@ -21,6 +21,7 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Frontend/Utils.h"
 #include "clang/FrontendTool/Utils.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/LinkAllPasses.h"
@@ -112,7 +113,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   if (Clang->getFrontendOpts().DisableFree) {
     if (llvm::AreStatisticsEnabled() || Clang->getFrontendOpts().ShowStats)
       llvm::PrintStatistics();
-    Clang.take();
+    BuryPointer(Clang.take());
     return !Success;
   }
 

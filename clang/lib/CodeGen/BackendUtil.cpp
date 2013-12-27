@@ -13,6 +13,7 @@
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/Utils.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -117,7 +118,7 @@ public:
     delete PerModulePasses;
     delete PerFunctionPasses;
     if (CodeGenOpts.DisableFree)
-      TM.take();
+      BuryPointer(TM.take());
   }
 
   llvm::OwningPtr<TargetMachine> TM;
