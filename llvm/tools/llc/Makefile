@@ -11,5 +11,8 @@ LEVEL := ../..
 TOOLNAME := llc
 LINK_COMPONENTS := all-targets bitreader asmparser irreader
 
+# Support plugins.
+NO_DEAD_STRIP := 1
+
 include $(LEVEL)/Makefile.common
 

@@ -49,9 +49,6 @@ ifeq ($(HOST_OS),Darwin)
     endif
     # Include everything from the .a's into the shared library.
     LLVMLibsOptions    := $(LLVMLibsOptions) -all_load
-    # extra options to override libtool defaults 
-    LLVMLibsOptions    := $(LLVMLibsOptions)  \
-                         -Wl,-dead_strip
 
     # Mac OS X 10.4 and earlier tools do not allow a second -install_name on command line
     DARWIN_VERS := $(shell echo $(TARGET_TRIPLE) | sed 's/.*darwin\([0-9]*\).*/\1/')

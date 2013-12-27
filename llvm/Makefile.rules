@@ -608,6 +608,22 @@ ifndef KEEP_SYMBOLS
   Install.StripFlag += -s
 endif
 
+# By default, strip dead symbols at link time
+ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+ifneq ($(HOST_OS),Darwin)
+  CXX.Flags += -ffunction-sections -fdata-sections
+endif
+endif
+ifndef NO_DEAD_STRIP
+  ifeq ($(HOST_OS),Darwin)
+    LD.Flags += -Wl,-dead_strip
+  else
+    ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+      LD.Flags += -Wl,--gc-sections
+    endif
+  endif
+endif
+
 # Adjust linker flags for building an executable
 ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
   ifndef TOOL_NO_EXPORTS
