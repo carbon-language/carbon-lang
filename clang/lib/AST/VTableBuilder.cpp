@@ -2541,6 +2541,8 @@ private:
     }
   }
 
+  bool VFTableBuilder::NeedsReturnAdjustingThunk(const CXXMethodDecl *MD);
+
   /// AddMethods - Add the methods of this base subobject and the relevant
   /// subbases to the vftable we're currently laying out.
   void AddMethods(BaseSubobject Base, unsigned BaseDepth,
@@ -2800,6 +2802,24 @@ static void GroupNewVirtualOverloads(
     VirtualMethods.append(Groups[I].rbegin(), Groups[I].rend());
 }
 
+/// We need a return adjusting thunk for this method if its return type is
+/// not trivially convertible to the return type of any of its overridden
+/// methods.
+bool VFTableBuilder::NeedsReturnAdjustingThunk(const CXXMethodDecl *MD) {
+  OverriddenMethodsSetTy OverriddenMethods;
+  ComputeAllOverriddenMethods(MD, OverriddenMethods);
+  for (OverriddenMethodsSetTy::iterator I = OverriddenMethods.begin(),
+                                        E = OverriddenMethods.end();
+       I != E; ++I) {
+    const CXXMethodDecl *OverriddenMD = *I;
+    BaseOffset Adjustment =
+        ComputeReturnAdjustmentBaseOffset(Context, MD, OverriddenMD);
+    if (!Adjustment.isEmpty())
+      return true;
+  }
+  return false;
+}
+
 void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
                                 const CXXRecordDecl *LastVBase,
                                 BasesSetVectorTy &VisitedBases) {
@@ -2885,8 +2905,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
         AddThunk(MD, VTableThunks[OverriddenMethodInfo.VFTableIndex]);
       }
 
-      if (Context.hasSameType(MD->getResultType(),
-                              OverriddenMD->getResultType())) {
+      if (!NeedsReturnAdjustingThunk(MD)) {
         // No return adjustment needed - just replace the overridden method info
         // with the current info.
         MethodInfo MI(OverriddenMethodInfo.VBTableIndex,
@@ -3049,6 +3068,8 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
     case VTableComponent::CK_FunctionPointer: {
       const CXXMethodDecl *MD = Component.getFunctionDecl();
 
+      // FIXME: Figure out how to print the real thunk type, since they can
+      // differ in the return type.
       std::string Str = PredefinedExpr::ComputeName(
           PredefinedExpr::PrettyFunctionNoVirtual, MD);
       Out << Str;
