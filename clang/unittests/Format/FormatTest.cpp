@@ -3031,6 +3031,10 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
   verifyGoogleFormat(
       "SomeLoooooooooooooooooooooooooooooogType operator<<(\n"
       "    const SomeLooooooooogType &a, const SomeLooooooooogType &b);");
+  verifyFormat("void aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "    int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = 1);");
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaa\n"
+               "aaaaaaaaaaaaaaaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaa = 1);");
 }
 
 TEST_F(FormatTest, TrailingReturnType) {
