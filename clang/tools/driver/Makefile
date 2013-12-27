@@ -24,6 +24,9 @@ endif
 # Include tool version information on OS X.
 TOOL_INFO_PLIST := Info.plist
 
+# Support plugins.
+NO_DEAD_STRIP := 1
+
 # Include this here so we can get the configuration of the targets that have
 # been configured for construction. We have to do this early so we can set up
 # LINK_COMPONENTS before including Makefile.rules
