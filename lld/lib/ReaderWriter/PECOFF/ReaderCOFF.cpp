@@ -121,7 +121,7 @@ private:
 
   error_code addRelocationReferenceToAtoms();
   error_code findSection(StringRef name, const coff_section *&result);
-  std::string ArrayRefToString(ArrayRef<uint8_t> array);
+  StringRef ArrayRefToString(ArrayRef<uint8_t> array);
   error_code maybeReadLinkerDirectives();
 
   std::unique_ptr<const llvm::object::COFFObjectFile> _obj;
@@ -131,7 +131,7 @@ private:
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 
   // The contents of .drectve section.
-  std::string _directives;
+  StringRef _directives;
 
   // A map from symbol to its name. All symbols should be in this map except
   // unnamed ones.
@@ -754,7 +754,7 @@ error_code FileCOFF::findSection(StringRef name, const coff_section *&result) {
 
 // Convert ArrayRef<uint8_t> to std::string. The array contains a string which
 // may not be terminated by NUL.
-std::string FileCOFF::ArrayRefToString(ArrayRef<uint8_t> array) {
+StringRef FileCOFF::ArrayRefToString(ArrayRef<uint8_t> array) {
   // Skip the UTF-8 byte marker if exists. The contents of .drectve section
   // is, according to the Microsoft PE/COFF spec, encoded as ANSI or UTF-8
   // with the BOM marker.
@@ -773,7 +773,9 @@ std::string FileCOFF::ArrayRefToString(ArrayRef<uint8_t> array) {
   size_t e = array.size();
   while (len < e && array[len] != '\0')
     ++len;
-  return std::string(reinterpret_cast<const char *>(&array[0]), len);
+  std::string *contents = new (_alloc)
+    std::string(reinterpret_cast<const char *>(&array[0]), len);
+  return StringRef(*contents).trim();
 }
 
 // Read .drectve section contents if exists, and store it to _directives.
@@ -785,7 +787,7 @@ error_code FileCOFF::maybeReadLinkerDirectives() {
     ArrayRef<uint8_t> contents;
     if (error_code ec = _obj->getSectionContents(section, contents))
       return ec;
-    _directives = std::move(ArrayRefToString(contents));
+    _directives = ArrayRefToString(contents);
   }
   return error_code::success();
 }
