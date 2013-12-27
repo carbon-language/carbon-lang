@@ -2541,7 +2541,7 @@ private:
     }
   }
 
-  bool VFTableBuilder::NeedsReturnAdjustingThunk(const CXXMethodDecl *MD);
+  bool NeedsReturnAdjustingThunk(const CXXMethodDecl *MD);
 
   /// AddMethods - Add the methods of this base subobject and the relevant
   /// subbases to the vftable we're currently laying out.
