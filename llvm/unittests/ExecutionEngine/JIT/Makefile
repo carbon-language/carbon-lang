@@ -11,6 +11,9 @@ LEVEL = ../../..
 TESTNAME = JIT
 LINK_COMPONENTS := asmparser bitreader bitwriter jit native
 
+# The JIT tests need to dlopen things.
+NO_DEAD_STRIP := 1
+
 include $(LEVEL)/Makefile.config
 
 SOURCES := JITEventListenerTest.cpp JITMemoryManagerTest.cpp JITTest.cpp MultiJITTest.cpp
