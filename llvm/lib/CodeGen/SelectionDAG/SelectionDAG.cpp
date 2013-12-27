@@ -179,6 +179,22 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
   return true;
 }
 
+/// \brief Return true if the specified node is a BUILD_VECTOR node of
+/// all ConstantSDNode or undef.
+bool ISD::isBuildVectorOfConstantSDNodes(const SDNode *N) {
+  if (N->getOpcode() != ISD::BUILD_VECTOR)
+    return false;
+
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    SDValue Op = N->getOperand(i);
+    if (Op.getOpcode() == ISD::UNDEF)
+      continue;
+    if (!isa<ConstantSDNode>(Op))
+      return false;
+  }
+  return true;
+}
+
 /// isScalarToVector - Return true if the specified node is a
 /// ISD::SCALAR_TO_VECTOR node or a BUILD_VECTOR node where only the low
 /// element is not an undef.

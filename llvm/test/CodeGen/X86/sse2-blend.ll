@@ -1,9 +1,9 @@
 ; RUN: llc < %s -march=x86 -mcpu=yonah -mattr=+sse2,-sse4.1 | FileCheck %s
 
 ; CHECK: vsel_float
-; CHECK: pandn
-; CHECK: pand
-; CHECK: por
+; CHECK: xorps
+; CHECK: movss
+; CHECK: orps
 ; CHECK: ret
 define void@vsel_float(<4 x float>* %v1, <4 x float>* %v2) {
   %A = load <4 x float>* %v1
@@ -14,9 +14,9 @@ define void@vsel_float(<4 x float>* %v1, <4 x float>* %v2) {
 }
 
 ; CHECK: vsel_i32
-; CHECK: pandn
-; CHECK: pand
-; CHECK: por
+; CHECK: xorps
+; CHECK: movss
+; CHECK: orps
 ; CHECK: ret
 define void@vsel_i32(<4 x i32>* %v1, <4 x i32>* %v2) {
   %A = load <4 x i32>* %v1
