@@ -159,7 +159,6 @@ class HeaderSearch {
   IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts;
 
   DiagnosticsEngine &Diags;
-  SourceManager &SourceMgr;
   FileManager &FileMgr;
   /// \#include search path information.  Requests for \#include "x" search the
   /// directory of the \#including file first, then each directory in SearchDirs

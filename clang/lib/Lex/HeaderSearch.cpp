@@ -47,9 +47,8 @@ HeaderSearch::HeaderSearch(IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts,
                            SourceManager &SourceMgr, DiagnosticsEngine &Diags,
                            const LangOptions &LangOpts,
                            const TargetInfo *Target)
-    : HSOpts(HSOpts), Diags(Diags), SourceMgr(SourceMgr),
-      FileMgr(SourceMgr.getFileManager()), FrameworkMap(64),
-      ModMap(SourceMgr, Diags, LangOpts, Target, *this) {
+    : HSOpts(HSOpts), Diags(Diags), FileMgr(SourceMgr.getFileManager()),
+      FrameworkMap(64), ModMap(SourceMgr, Diags, LangOpts, Target, *this) {
   AngledDirIdx = 0;
   SystemDirIdx = 0;
   NoCurDirSearch = false;
