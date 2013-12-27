@@ -1848,8 +1848,7 @@ def err_attribute_uuid_malformed_guid : Error<
 def warn_attribute_pointers_only : Warning<
   "%0 attribute only applies to pointer arguments">,
   InGroup<IgnoredAttributes>;
-def err_attribute_pointers_only : Error<
-  "%0 attribute only applies to pointer arguments">;
+def err_attribute_pointers_only : Error<warn_attribute_pointers_only.Text>;
 def err_attribute_no_member_pointers : Error<
   "%0 attribute cannot be used with pointers to members">;
 def err_attribute_invalid_implicit_this_argument : Error<
@@ -2045,19 +2044,7 @@ def warn_attribute_wrong_decl_type : Warning<
   "variables, functions and classes|Objective-C protocols|"
   "functions and global variables}1">,
   InGroup<IgnoredAttributes>;
-def err_attribute_wrong_decl_type : Error<
-  "%0 attribute only applies to %select{functions|unions|"
-  "variables and functions|functions and methods|parameters|"
-  "functions, methods and blocks|functions, methods, and classes|"
-  "functions, methods, and parameters|classes|variables|methods|"
-  "variables, functions and labels|fields and global variables|structs|"
-  "variables, functions and tag types|thread-local variables|"
-  "variables and fields|variables, data members and tag types|"
-  "types and namespaces|Objective-C interfaces|methods and properties|"
-  "struct or union|struct, union or class|types|"
-  "Objective-C instance methods|init methods of interface declarations|"
-  "variables, functions and classes|Objective-C protocols|"
-  "functions and global variables}1">;
+def err_attribute_wrong_decl_type : Error<warn_attribute_wrong_decl_type.Text>;
 def warn_type_attribute_wrong_type : Warning<
   "'%0' only applies to %select{function|pointer|"
   "Objective-C object or block pointer}1 types; type here is %2">,
