@@ -1,5 +1,6 @@
-# RUN: lld -flavor link /out:%t /subsystem:console /force \
-# RUN:    -- %p/Inputs/bss.obj && llvm-readobj -sections %t | FileCheck %s
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force \
+# RUN:   -- %p/Inputs/bss.obj
+# RUN: llvm-readobj -sections %t.exe | FileCheck %s
 
 CHECK:       Section {
 CHECK:         Number: 1

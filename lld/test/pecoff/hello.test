@@ -1,15 +1,15 @@
 # RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t.obj
 
-# RUN: lld -flavor link /out:%t1 /subsystem:console /force -- %t.obj
-# RUN: llvm-readobj -file-headers %t1 | FileCheck -check-prefix=FILE %s
+# RUN: lld -flavor link /out:%t1.exe /subsystem:console /force -- %t.obj
+# RUN: llvm-readobj -file-headers %t1.exe | FileCheck -check-prefix=FILE %s
 
 FILE: ImageOptionalHeader {
 FILE:   SizeOfInitializedData: 30
 FILE:   SizeOfHeaders: 512
 FILE: }
 
-# RUN: lld -flavor link /out:%t1 /subsystem:console /force -- %t.obj
-# RUN: llvm-readobj -sections %t1 | FileCheck -check-prefix=SECTIONS %s
+# RUN: lld -flavor link /out:%t2.exe /subsystem:console /force -- %t.obj
+# RUN: llvm-readobj -sections %t2.exe | FileCheck -check-prefix=SECTIONS %s
 
 SECTIONS:      Format: COFF-i386
 SECTIONS-NEXT: Arch: i386

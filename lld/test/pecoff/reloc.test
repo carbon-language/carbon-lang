@@ -1,7 +1,8 @@
 # RUN: yaml2obj %p/Inputs/reloc.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /force /opt:noref \
-# RUN:   -- %t.obj && llvm-objdump -d %t1 | FileCheck %s
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force /opt:noref \
+# RUN:   -- %t.obj
+# RUN: llvm-objdump -d %t.exe | FileCheck %s
 
 CHECK: .text:
 CHECK:    2000: 68 02 00 00 00

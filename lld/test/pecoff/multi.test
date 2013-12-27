@@ -4,8 +4,9 @@
 # RUN: yaml2obj %p/Inputs/static-data1.obj.yaml > %t2.obj
 # RUN: yaml2obj %p/Inputs/static-data2.obj.yaml > %t3.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:main /opt:noref \
-# RUN:   -- %t1.obj %t2.obj %t3.obj && llvm-objdump -d %t1 | FileCheck %s
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:main /opt:noref \
+# RUN:   -- %t1.obj %t2.obj %t3.obj
+# RUN: llvm-objdump -d %t.exe | FileCheck %s
 
 CHECK: Disassembly of section .text:
 CHECK: .text:

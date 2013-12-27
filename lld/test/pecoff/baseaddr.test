@@ -1,17 +1,16 @@
 # RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /opt:noref /subsystem:console /force \
-# RUN:   -- %t.obj \
-# RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=DEFAULT %s
+# RUN: lld -flavor link /out:%t1.exe /opt:noref /subsystem:console /force \
+# RUN:   -- %t.obj
+# RUN: llvm-readobj -file-headers %t1.exe | FileCheck -check-prefix=DEFAULT %s
 #
-# RUN: lld -flavor link /out:%t1 /opt:noref /base:8388608 /subsystem:console \
-# RUN:   /force -- %t.obj \
-# RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=BASE %s
+# RUN: lld -flavor link /out:%t2.exe /opt:noref /base:8388608 \
+# RUN:   /subsystem:console /force -- %t.obj
+# RUN: llvm-readobj -file-headers %t2.exe | FileCheck -check-prefix=BASE %s
 
 DEFAULT: ImageBase: 0x400000
 
 BASE: ImageBase: 0x800000
-
 
 # RUN: not lld -flavor link /base:3 /subsystem:console -- %t.obj >& %t.log
 # RUN: FileCheck -check-prefix=ERROR %s < %t.log

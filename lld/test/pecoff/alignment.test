@@ -1,7 +1,8 @@
 # RUN: yaml2obj %p/Inputs/alignment.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /force /entry:start \
-# RUN:   -- %t.obj && llvm-readobj -sections %t1 | FileCheck %s
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force /entry:start \
+# RUN:   -- %t.obj
+# RUN: llvm-readobj -sections %t.exe | FileCheck %s
 
 CHECK:      Name: .data (2E 64 61 74 61 00 00 00)
 CHECK-NEXT: VirtualSize: 0x6

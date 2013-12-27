@@ -2,31 +2,27 @@
 #
 # RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
 
-# RUN: lld -flavor link /align:8192 /out:%t.exe /entry:start \
-# RUN:   /subsystem:console -- %t.obj \
-# RUN:   && llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=ALIGN %s
+# RUN: lld -flavor link /align:8192 /out:%t1.exe /entry:start \
+# RUN:   /subsystem:console -- %t.obj
+# RUN: llvm-readobj -file-headers %t1.exe | FileCheck -check-prefix=ALIGN %s
 ALIGN: SectionAlignment: 8192
 
-# RUN: lld -flavor link /allowbind:no /out:%t.exe /entry:start \
-# RUN:   /subsystem:console -- %t.obj \
-# RUN:   && llvm-readobj -file-headers %t.exe \
-# RUN:   | FileCheck -check-prefix=NOBIND %s
+# RUN: lld -flavor link /allowbind:no /out:%t2.exe /entry:start \
+# RUN:   /subsystem:console -- %t.obj
+# RUN: llvm-readobj -file-headers %t2.exe | FileCheck -check-prefix=NOBIND %s
 NOBIND: IMAGE_DLL_CHARACTERISTICS_NO_BIND
 
-# RUN: lld -flavor link /allowisolation:no /out:%t.exe /entry:start \
-# RUN:   /subsystem:console -- %t.obj \
-# RUN:   && llvm-readobj -file-headers %t.exe \
-# RUN:   | FileCheck -check-prefix=NOISOLATION %s
-NOISOLATION: IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION
+# RUN: lld -flavor link /allowisolation:no /out:%t3.exe /entry:start \
+# RUN:   /subsystem:console -- %t.obj
+# RUN: llvm-readobj -file-headers %t3.exe | FileCheck -check-prefix=NOISO %s
+NOISO: IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION
 
-# RUN: lld -flavor link /swaprun:cd /out:%t.exe /entry:start \
-# RUN:   /subsystem:console -- %t.obj \
-# RUN:   && llvm-readobj -file-headers %t.exe \
-# RUN:   | FileCheck -check-prefix=SWAPRUNCD %s
-SWAPRUNCD: IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP
+# RUN: lld -flavor link /swaprun:cd /out:%t4.exe /entry:start \
+# RUN:   /subsystem:console -- %t.obj
+# RUN: llvm-readobj -file-headers %t4.exe | FileCheck -check-prefix=RUNCD %s
+RUNCD: IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP
 
-# RUN: lld -flavor link /swaprun:net /out:%t.exe /entry:start \
-# RUN:   /subsystem:console -- %t.obj \
-# RUN:   && llvm-readobj -file-headers %t.exe \
-# RUN:   | FileCheck -check-prefix=SWAPRUNNET %s
-SWAPRUNNET: IMAGE_FILE_NET_RUN_FROM_SWAP
+# RUN: lld -flavor link /swaprun:net /out:%t5.exe /entry:start \
+# RUN:   /subsystem:console -- %t.obj
+# RUN: llvm-readobj -file-headers %t5.exe | FileCheck -check-prefix=RUNNET %s
+RUNNET: IMAGE_FILE_NET_RUN_FROM_SWAP

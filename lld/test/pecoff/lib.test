@@ -2,8 +2,9 @@
 #
 # RUN: yaml2obj %p/Inputs/main.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:main /opt:noref \
-# RUN:   -- %t.obj %p/Inputs/static.lib && llvm-objdump -d %t1 | FileCheck %s
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:main /opt:noref \
+# RUN:   -- %t.obj %p/Inputs/static.lib
+# RUN: llvm-objdump -d %t.exe | FileCheck %s
 
 CHECK:      Disassembly of section .text:
 CHECK-NEXT: .text:

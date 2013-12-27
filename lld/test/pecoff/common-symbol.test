@@ -1,7 +1,8 @@
 # RUN: yaml2obj %p/Inputs/common-symbol.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t /subsystem:console /force /opt:noref \
-# RUN:    -- %t.obj %t.obj && llvm-readobj -sections %t | FileCheck %s
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force /opt:noref \
+# RUN:    -- %t.obj %t.obj
+# RUN: llvm-readobj -sections %t.exe | FileCheck %s
 
 CHECK:       Section {
 CHECK:         Number: 1

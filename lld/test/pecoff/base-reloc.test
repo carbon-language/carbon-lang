@@ -1,12 +1,12 @@
 # RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /force /opt:noref \
-# RUN:   -- %t.obj \
-# RUN:   && llvm-objdump -s %t1 | FileCheck %s --check-prefix=BASEREL-SECTION
+# RUN: lld -flavor link /out:%t1.exe /subsystem:console /force /opt:noref \
+# RUN:   -- %t.obj
+# RUN: llvm-objdump -s %t1.exe | FileCheck %s --check-prefix=BASEREL-SECTION
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /force /fixed /opt:noref \
-# RUN:    -- %t.obj \
-# RUN:   && llvm-objdump -s %t1 | FileCheck %s --check-prefix=NOBASEREL-SECTION
+# RUN: lld -flavor link /out:%t2.exe /subsystem:console /force /fixed \
+# RUN:   /opt:noref -- %t.obj
+# RUN: llvm-objdump -s %t2.exe | FileCheck %s --check-prefix=NOBASEREL-SECTION
 
 # Because llvm-objdump cannot pretty-print the contents of .reloc section, we
 # have no choice other than comparing the result with this binary blob.
@@ -19,13 +19,15 @@ BASEREL-SECTION-NEXT:  3000 00200000 0c000000 07300c30
 
 NOBASEREL-SECTION-NOT: Contents of section .reloc:
 
-# RUN: lld -flavor link /out:%t1 /subsystem:console /force /opt:noref \
-# RUN:   -- %t.obj && llvm-readobj -file-headers -sections %t1 \
-# RUN:   | FileCheck %s --check-prefix=BASEREL-HEADER
+# RUN: lld -flavor link /out:%t3.exe /subsystem:console /force /opt:noref \
+# RUN:   -- %t.obj
+# RUN: llvm-readobj -file-headers -sections %t3.exe | FileCheck %s \
+# RUN:   --check-prefix=BASEREL-HEADER
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /force /opt:noref /fixed \
-# RUN:   -- %t.obj && llvm-readobj -file-headers %t1 \
-# RUN:   | FileCheck %s --check-prefix=NOBASEREL-HEADER
+# RUN: lld -flavor link /out:%t4.exe /subsystem:console /force /opt:noref \
+# RUN:   /fixed -- %t.obj
+# RUN: llvm-readobj -file-headers %t4.exe | FileCheck %s \
+# RUN:   --check-prefix=NOBASEREL-HEADER
 
 BASEREL-HEADER-NOT: IMAGE_FILE_RELOCS_STRIPPED
 

@@ -1,13 +1,13 @@
 # RUN: yaml2obj %p/Inputs/imagebase.obj.yaml > %t.obj
-#
-# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:_start /opt:noref \
-# RUN:   -- %t.obj \
-# RUN:   && llvm-objdump -disassemble %t1 | FileCheck -check-prefix=DEFAULT %s
-#
-# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:_start /base:65536 \
-# RUN:   /opt:noref -- %t.obj \
-# RUN:   && llvm-objdump -disassemble %t1 | FileCheck -check-prefix=BASE %s
+
+# RUN: lld -flavor link /out:%t1.exe /subsystem:console /entry:_start \
+# RUN:   /opt:noref -- %t.obj
+# RUN: llvm-objdump -disassemble %t1.exe | FileCheck -check-prefix=DEFAULT %s
 
 DEFAULT: a1 00 00 40 00    movl    4194304, %eax
+
+# RUN: lld -flavor link /out:%t2.exe /subsystem:console /entry:_start \
+# RUN:   /base:65536 /opt:noref -- %t.obj
+# RUN: llvm-objdump -disassemble %t2.exe | FileCheck -check-prefix=BASE %s
 
 BASE:    a1 00 00 01 00    movl    65536, %eax

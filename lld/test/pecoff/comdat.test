@@ -1,12 +1,12 @@
 # RUN: yaml2obj %p/Inputs/comdat.obj.yaml > %t1.obj
 # RUN: yaml2obj %p/Inputs/comdat.obj.yaml > %t2.obj
 #
-# RUN: lld -flavor link /out:%t3.exe /subsystem:console /opt:noref /force \
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /opt:noref /force \
 # RUN:   -- %t1.obj %t2.obj 2>&1 > %t.log
 #
 # FileCheck complains if the input files is empty, so add a dummy line.
 # RUN: echo foo >> %t.log
 #
-# RUN:   FileCheck %s < %t.log
+# RUN: FileCheck %s < %t.log
 
 CHECK-NOT: duplicate symbol error

@@ -1,8 +1,8 @@
 # RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
 #
-# RUN: not lld -flavor link /out:%t1 /include:sym1 /include:sym2 \
-# RUN:   /subsystem:console -- %t.obj 2> %t1
-# RUN: FileCheck %s < %t1
+# RUN: not lld -flavor link /out:%t.exe /include:sym1 /include:sym2 \
+# RUN:   /subsystem:console -- %t.obj 2> %t.log
+# RUN: FileCheck %s < %t.log
 
 CHECK: Undefined Symbol: command line option /include : sym1
 CHECK: Undefined Symbol: command line option /include : sym2

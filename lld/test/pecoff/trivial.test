@@ -4,13 +4,13 @@
 #
 # RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console,3.11 /version:1.25 \
-# RUN:   /entry:start /opt:noref -- %t.obj && llvm-readobj -file-headers %t1 \
-# RUN:   | FileCheck -check-prefix=FILE %s
+# RUN: lld -flavor link /out:%t1.exe /subsystem:console,3.11 /version:1.25 \
+# RUN:   /entry:start /opt:noref -- %t.obj
+# RUN: llvm-readobj -file-headers %t1.exe | FileCheck -check-prefix=FILE %s
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:start /opt:noref \
-# RUN:   -- %t.obj \
-# RUN:   && llvm-readobj -sections %t1 | FileCheck -check-prefix=SECTIONS %s
+# RUN: lld -flavor link /out:%t2.exe /subsystem:console /entry:start \
+# RUN:   /opt:noref -- %t.obj
+# RUN: llvm-readobj -sections %t2.exe | FileCheck -check-prefix=SECTIONS %s
 
 FILE:      Format: COFF-i386
 FILE-NEXT: Arch: i386

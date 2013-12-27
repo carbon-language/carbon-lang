@@ -1,7 +1,8 @@
 # RUN: yaml2obj %p/Inputs/vars-main.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1 /subsystem:console /entry:main /opt:noref \
-# RUN:    -- %t.obj %p/Inputs/vars.lib && llvm-objdump -p %t1 | FileCheck %s
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:main /opt:noref \
+# RUN:    -- %t.obj %p/Inputs/vars.lib
+# RUN: llvm-objdump -p %t.exe | FileCheck %s
 
 CHECK:      DLL Name: vars.dll
 CHECK-NEXT: Hint/Ord  Name
