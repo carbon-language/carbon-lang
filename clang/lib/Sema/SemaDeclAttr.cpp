@@ -2959,7 +2959,7 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     OldTy = VD->getType();
   else {
     S.Diag(D->getLocation(), diag::err_attr_wrong_decl)
-      << "mode" << Attr.getRange();
+      << Attr.getName() << Attr.getRange();
     return;
   }
 
