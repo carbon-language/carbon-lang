@@ -574,14 +574,11 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::llabs);
   }
 
-  // exp10, exp10f, exp10l is available on at least Linux (GLIBC)
-  // exp10 and exp10f are not available on OS X until 10.9 and iOS until 7.0
-  // and their names are __exp10 and __exp10f. exp10l is not available on
-  // OS X or iOS.
   switch (T.getOS()) {
-  case Triple::Linux:
-    break;
   case Triple::MacOSX:
+    // exp10 and exp10f are not available on OS X until 10.9 and iOS until 7.0
+    // and their names are __exp10 and __exp10f. exp10l is not available on
+    // OS X or iOS.
     TLI.setUnavailable(LibFunc::exp10l);
     if (T.isMacOSXVersionLT(10, 9)) {
       TLI.setUnavailable(LibFunc::exp10);
@@ -601,6 +598,13 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
       TLI.setAvailableWithName(LibFunc::exp10f, "__exp10f");
     }
     break;
+  case Triple::Linux:
+    // exp10, exp10f, exp10l is available on Linux (GLIBC) but are extremely
+    // buggy prior to glibc version 2.18. Until this version is widely deployed
+    // or we have a reasonable detection strategy, we cannot use exp10 reliably
+    // on Linux.
+    //
+    // Fall through to disable all of them.
   default:
     TLI.setUnavailable(LibFunc::exp10);
     TLI.setUnavailable(LibFunc::exp10f);

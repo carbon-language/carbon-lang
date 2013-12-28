@@ -157,7 +157,10 @@ define float @exp10_test(float %f) nounwind readnone {
    %call = call double @exp10(double %conv)
    %conv1 = fptrunc double %call to float
    ret float %conv1
-; CHECK: call float @exp10f(float %f)
+; FIXME: Re-enable this when Linux allows transforming this again, or when we
+; can use builtin attributes to test the transform regardless of OS.
+; DISABLED-CHECK: call float @exp10f(float %f)
+; CHECK: call double @exp10(double %conv)
 }
 
 define double @exp10_test2(float %f) nounwind readnone {
