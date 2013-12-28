@@ -920,7 +920,7 @@ public:
     }
     case Expr::CallExprClass: {
       CallExpr* CE = cast<CallExpr>(E);
-      unsigned builtin = CE->isBuiltinCall();
+      unsigned builtin = CE->getBuiltinCallee();
       if (builtin !=
             Builtin::BI__builtin___CFStringMakeConstantString &&
           builtin !=
