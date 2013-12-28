@@ -22,6 +22,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/Mangler.h"
@@ -198,7 +199,7 @@ void DwarfUnit::addString(DIE *Die, dwarf::Attribute Attribute,
   dwarf::Form Form;
   if (!DD->useSplitDwarf()) {
     MCSymbol *Symb = DU->getStringPoolEntry(String);
-    if (Asm->needsRelocationsForDwarfStringPool())
+    if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
       Value = new (DIEValueAllocator) DIELabel(Symb);
     else {
       MCSymbol *StringPool = DU->getStringPoolSym();
@@ -220,7 +221,7 @@ void DwarfUnit::addLocalString(DIE *Die, dwarf::Attribute Attribute,
                                StringRef String) {
   MCSymbol *Symb = DU->getStringPoolEntry(String);
   DIEValue *Value;
-  if (Asm->needsRelocationsForDwarfStringPool())
+  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
     Value = new (DIEValueAllocator) DIELabel(Symb);
   else {
     MCSymbol *StringPool = DU->getStringPoolSym();

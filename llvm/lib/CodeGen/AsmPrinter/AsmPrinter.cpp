@@ -661,10 +661,6 @@ bool AsmPrinter::needsSEHMoves() {
     MF->getFunction()->needsUnwindTableEntry();
 }
 
-bool AsmPrinter::needsRelocationsForDwarfStringPool() const {
-  return MAI->doesDwarfUseRelocationsAcrossSections();
-}
-
 void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
   const MCSymbol *Label = MI.getOperand(0).getMCSymbol();
 
