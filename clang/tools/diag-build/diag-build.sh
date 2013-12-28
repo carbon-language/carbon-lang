@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# diag-build: a tool showing enabled warnings in a project.
+#
+# diag-build acts as a wrapper for 'diagtool show-enabled', in the same way
+# that scan-build acts as a wrapper for the static analyzer. The common case is
+# simple: use 'diag-build make' or 'diag-build xcodebuild' to list the warnings
+# enabled for the first compilation command we see. Other build systems require
+# you to manually specify "dry-run" and "use $CC and $CXX"; if there is a build
+# system you are interested in, please add it to the switch statement.
+
 print_usage () {
     echo 'Usage: diag-build.sh [-v] xcodebuild [flags]'
     echo '       diag-build.sh [-v] make [flags]'
