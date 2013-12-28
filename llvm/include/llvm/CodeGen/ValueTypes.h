@@ -892,7 +892,7 @@ namespace llvm {
     bool isExtended1024BitVector() const LLVM_READONLY;
     EVT getExtendedVectorElementType() const;
     unsigned getExtendedVectorNumElements() const LLVM_READONLY;
-    unsigned getExtendedSizeInBits() const LLVM_READONLY;
+    unsigned getExtendedSizeInBits() const;
   };
 
 } // End llvm namespace
