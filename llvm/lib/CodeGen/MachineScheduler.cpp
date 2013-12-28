@@ -49,6 +49,11 @@ static cl::opt<bool> ViewMISchedDAGs("view-misched-dags", cl::Hidden,
 
 static cl::opt<unsigned> MISchedCutoff("misched-cutoff", cl::Hidden,
   cl::desc("Stop scheduling after N instructions"), cl::init(~0U));
+
+static cl::opt<std::string> SchedOnlyFunc("misched-only-func", cl::Hidden,
+  cl::desc("Only schedule this function"));
+static cl::opt<unsigned> SchedOnlyBlock("misched-only-block", cl::Hidden,
+  cl::desc("Only schedule this MBB#"));
 #else
 static bool ViewMISchedDAGs = false;
 #endif // NDEBUG
@@ -376,6 +381,14 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler) {
        MBB != MBBEnd; ++MBB) {
 
     Scheduler.startBlock(MBB);
+
+#ifndef NDEBUG
+    if (SchedOnlyFunc.getNumOccurrences() && SchedOnlyFunc != MF->getName())
+      continue;
+    if (SchedOnlyBlock.getNumOccurrences()
+        && (int)SchedOnlyBlock != MBB->getNumber())
+      continue;
+#endif
 
     // Break the block into scheduling regions [I, RegionEnd), and schedule each
     // region as soon as it is discovered. RegionEnd points the scheduling
