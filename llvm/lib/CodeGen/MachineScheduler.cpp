@@ -2248,7 +2248,7 @@ void GenericSchedulerBase::setPolicy(CandPolicy &Policy,
                         CurrZone.findMaxLatency(CurrZone.Pending.elements()));
 
   // Compute the critical resource outside the zone.
-  unsigned OtherCritIdx;
+  unsigned OtherCritIdx = 0;
   unsigned OtherCount =
     OtherZone ? OtherZone->getOtherResourceCount(OtherCritIdx) : 0;
 
