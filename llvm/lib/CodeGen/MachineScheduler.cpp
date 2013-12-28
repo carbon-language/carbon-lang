@@ -116,6 +116,21 @@ public:
 protected:
   ScheduleDAGInstrs *createMachineScheduler();
 };
+
+/// PostMachineScheduler runs after shortly before code emission.
+class PostMachineScheduler : public MachineSchedulerBase {
+public:
+  PostMachineScheduler();
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+
+  virtual bool runOnMachineFunction(MachineFunction&);
+
+  static char ID; // Class identification, replacement for typeinfo
+
+protected:
+  ScheduleDAGInstrs *createPostMachineScheduler();
+};
 } // namespace
 
 char MachineScheduler::ID = 0;
@@ -145,6 +160,26 @@ void MachineScheduler::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<SlotIndexes>();
   AU.addRequired<LiveIntervals>();
   AU.addPreserved<LiveIntervals>();
+  MachineFunctionPass::getAnalysisUsage(AU);
+}
+
+char PostMachineScheduler::ID = 0;
+
+char &llvm::PostMachineSchedulerID = PostMachineScheduler::ID;
+
+INITIALIZE_PASS(PostMachineScheduler, "postmisched",
+                "PostRA Machine Instruction Scheduler", false, false);
+
+PostMachineScheduler::PostMachineScheduler()
+: MachineSchedulerBase(ID) {
+  initializePostMachineSchedulerPass(*PassRegistry::getPassRegistry());
+}
+
+void PostMachineScheduler::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesCFG();
+  AU.addRequiredID(MachineDominatorsID);
+  AU.addRequired<MachineLoopInfo>();
+  AU.addRequired<TargetPassConfig>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -232,6 +267,20 @@ ScheduleDAGInstrs *MachineScheduler::createMachineScheduler() {
   return createGenericSched(this);
 }
 
+/// Instantiate a ScheduleDAGInstrs for PostRA scheduling that will be owned by
+/// the caller. We don't have a command line option to override the postRA
+/// scheduler. The Target must configure it.
+ScheduleDAGInstrs *PostMachineScheduler::createPostMachineScheduler() {
+  // Get the postRA scheduler set by the target for this function.
+  ScheduleDAGInstrs *Scheduler = PassConfig->createPostMachineScheduler(this);
+  if (Scheduler)
+    return Scheduler;
+
+  // Default to GenericScheduler.
+  // return createRawGenericSched(this);
+  return NULL;
+}
+
 /// Top-level MachineScheduler pass driver.
 ///
 /// Visit blocks in function order. Divide each block into scheduling regions
@@ -274,6 +323,26 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   DEBUG(LIS->dump());
   if (VerifyScheduling)
     MF->verify(this, "After machine scheduling.");
+  return true;
+}
+
+bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
+  DEBUG(dbgs() << "Before post-MI-sched:\n"; mf.print(dbgs()));
+
+  // Initialize the context of the pass.
+  MF = &mf;
+  PassConfig = &getAnalysis<TargetPassConfig>();
+
+  if (VerifyScheduling)
+    MF->verify(this, "Before post machine scheduling.");
+
+  // Instantiate the selected scheduler for this target, function, and
+  // optimization level.
+  OwningPtr<ScheduleDAGInstrs> Scheduler(createPostMachineScheduler());
+  scheduleRegions(*Scheduler);
+
+  if (VerifyScheduling)
+    MF->verify(this, "After post machine scheduling.");
   return true;
 }
 
