@@ -1,0 +1,16 @@
+# RUN: yaml2obj %p/Inputs/export.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /out:%t1.dll /dll /entry:init \
+# RUN:   /export:exportfn1 /export:exportfn1 -- %t.obj 2> t1.log
+# RUN: FileCheck -check-prefix=CHECK1 %s < t1.log
+CHECK1-NOT: Export symbol '_exportfn1' specified more than once.
+
+# RUN: lld -flavor link /out:%t2.dll /dll /entry:init \
+# RUN:   /export:exportfn1 /export:exportfn1,@5 -- %t.obj 2> t2.log
+# RUN: FileCheck -check-prefix=CHECK2 %s < t2.log
+CHECK2-NOT: Export symbol '_exportfn1' specified more than once.
+
+# RUN: lld -flavor link /out:%t3.dll /dll /entry:init \
+# RUN:   /export:exportfn1,@8 /export:exportfn1,@5 -- %t.obj 2> t3.log
+# RUN: FileCheck -check-prefix=CHECK3 %s < t3.log
+CHECK3: Export symbol '_exportfn1' specified more than once.
