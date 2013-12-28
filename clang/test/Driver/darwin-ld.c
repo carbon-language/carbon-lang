@@ -143,4 +143,8 @@
 // LINK_EXPORT_DYNAMIC: {{ld(.exe)?"}}
 // LINK_EXPORT_DYNAMIC: "-export_dynamic"
 
-
+// RUN: %clang -target x86_64h-apple-darwin -### %t.o 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_X86_64H_ARCH %s < %t.log
+//
+// LINK_X86_64H_ARCH: {{ld(.exe)?"}}
+// LINK_X86_64H_ARCH: "x86_64h"
