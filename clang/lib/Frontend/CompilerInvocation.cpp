@@ -1836,7 +1836,7 @@ void BuryPointer(const void *Ptr) {
   // will not be properly buried and a leak detector will report a leak, which
   // is what we want in such case.
   static const size_t kGraveYardMaxSize = 16;
-  static const void *GraveYard[kGraveYardMaxSize];
+  LLVM_ATTRIBUTE_UNUSED static const void *GraveYard[kGraveYardMaxSize];
   static llvm::sys::cas_flag GraveYardSize;
   llvm::sys::cas_flag Idx = llvm::sys::AtomicIncrement(&GraveYardSize) - 1;
   if (Idx >= kGraveYardMaxSize)
