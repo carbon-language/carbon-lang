@@ -32,6 +32,20 @@ static bool compare(const TableEntry &a, const TableEntry &b) {
   return a.exportName.compare(b.exportName) < 0;
 }
 
+static void assignOrdinals(PECOFFLinkingContext &ctx) {
+  std::set<PECOFFLinkingContext::ExportDesc> exports;
+  int maxOrdinal = -1;
+  for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports())
+    maxOrdinal = std::max(maxOrdinal, desc.ordinal);
+  int nextOrdinal = (maxOrdinal == -1) ? 1 : (maxOrdinal + 1);
+  for (PECOFFLinkingContext::ExportDesc desc : ctx.getDllExports()) {
+    if (desc.ordinal == -1)
+      desc.ordinal = nextOrdinal++;
+    exports.insert(desc);
+  }
+  ctx.getDllExports().swap(exports);
+}
+
 static bool getExportedAtoms(const PECOFFLinkingContext &ctx, MutableFile *file,
                              std::vector<TableEntry> &ret) {
   std::map<StringRef, const DefinedAtom *> definedAtoms;
@@ -121,6 +135,8 @@ EdataPass::createOrdinalTable(const std::vector<TableEntry> &entries,
 }
 
 void EdataPass::perform(std::unique_ptr<MutableFile> &file) {
+  assignOrdinals(_ctx);
+
   std::vector<TableEntry> entries;
   if (!getExportedAtoms(_ctx, file.get(), entries))
     return;

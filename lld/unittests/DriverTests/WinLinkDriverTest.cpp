@@ -164,7 +164,7 @@ TEST_F(WinLinkParserTest, Export) {
   EXPECT_EQ(1U, exports.size());
   auto it = exports.begin();
   EXPECT_EQ("_foo", it->name);
-  EXPECT_EQ(1, it->ordinal);
+  EXPECT_EQ(-1, it->ordinal);
   EXPECT_FALSE(it->noname);
   EXPECT_FALSE(it->isData);
 }
