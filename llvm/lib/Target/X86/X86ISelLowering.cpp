@@ -12033,15 +12033,15 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
   case Intrinsic::x86_avx512_gather_dpi_512: {
     unsigned Opc;
     switch (IntNo) {
-      default: llvm_unreachable("Unexpected intrinsic!");
-      case Intrinsic::x86_avx512_gather_qps_512: Opc = X86::VGATHERQPSZrm; break;
-      case Intrinsic::x86_avx512_gather_qpd_512: Opc = X86::VGATHERQPDZrm; break;
-      case Intrinsic::x86_avx512_gather_dpd_512: Opc = X86::VGATHERDPDZrm; break;
-      case Intrinsic::x86_avx512_gather_dps_512: Opc = X86::VGATHERDPSZrm; break;
-      case Intrinsic::x86_avx512_gather_qpi_512: Opc = X86::VPGATHERQDZrm; break;
-      case Intrinsic::x86_avx512_gather_qpq_512: Opc = X86::VPGATHERQQZrm; break;
-      case Intrinsic::x86_avx512_gather_dpi_512: Opc = X86::VPGATHERDDZrm; break;
-      case Intrinsic::x86_avx512_gather_dpq_512: Opc = X86::VPGATHERDQZrm; break;
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
+    case Intrinsic::x86_avx512_gather_qps_512: Opc = X86::VGATHERQPSZrm; break;
+    case Intrinsic::x86_avx512_gather_qpd_512: Opc = X86::VGATHERQPDZrm; break;
+    case Intrinsic::x86_avx512_gather_dpd_512: Opc = X86::VGATHERDPDZrm; break;
+    case Intrinsic::x86_avx512_gather_dps_512: Opc = X86::VGATHERDPSZrm; break;
+    case Intrinsic::x86_avx512_gather_qpi_512: Opc = X86::VPGATHERQDZrm; break;
+    case Intrinsic::x86_avx512_gather_qpq_512: Opc = X86::VPGATHERQQZrm; break;
+    case Intrinsic::x86_avx512_gather_dpi_512: Opc = X86::VPGATHERDDZrm; break;
+    case Intrinsic::x86_avx512_gather_dpq_512: Opc = X86::VPGATHERDQZrm; break;
     }
     SDValue Chain = Op.getOperand(0);
     SDValue Index = Op.getOperand(2);
@@ -12060,23 +12060,23 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
   case Intrinsic::x86_avx512_gather_dpq_mask_512: {
     unsigned Opc;
     switch (IntNo) {
-      default: llvm_unreachable("Unexpected intrinsic!");
-      case Intrinsic::x86_avx512_gather_qps_mask_512:
-        Opc = X86::VGATHERQPSZrm; break;
-      case Intrinsic::x86_avx512_gather_qpd_mask_512:
-        Opc = X86::VGATHERQPDZrm; break;
-      case Intrinsic::x86_avx512_gather_dpd_mask_512:
-        Opc = X86::VGATHERDPDZrm; break;
-      case Intrinsic::x86_avx512_gather_dps_mask_512:
-        Opc = X86::VGATHERDPSZrm; break;
-      case Intrinsic::x86_avx512_gather_qpi_mask_512:
-        Opc = X86::VPGATHERQDZrm; break;
-      case Intrinsic::x86_avx512_gather_qpq_mask_512:
-        Opc = X86::VPGATHERQQZrm; break;
-      case Intrinsic::x86_avx512_gather_dpi_mask_512:
-        Opc = X86::VPGATHERDDZrm; break;
-      case Intrinsic::x86_avx512_gather_dpq_mask_512:
-        Opc = X86::VPGATHERDQZrm; break;
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
+    case Intrinsic::x86_avx512_gather_qps_mask_512:
+      Opc = X86::VGATHERQPSZrm; break;
+    case Intrinsic::x86_avx512_gather_qpd_mask_512:
+      Opc = X86::VGATHERQPDZrm; break;
+    case Intrinsic::x86_avx512_gather_dpd_mask_512:
+      Opc = X86::VGATHERDPDZrm; break;
+    case Intrinsic::x86_avx512_gather_dps_mask_512:
+      Opc = X86::VGATHERDPSZrm; break;
+    case Intrinsic::x86_avx512_gather_qpi_mask_512:
+      Opc = X86::VPGATHERQDZrm; break;
+    case Intrinsic::x86_avx512_gather_qpq_mask_512:
+      Opc = X86::VPGATHERQQZrm; break;
+    case Intrinsic::x86_avx512_gather_dpi_mask_512:
+      Opc = X86::VPGATHERDDZrm; break;
+    case Intrinsic::x86_avx512_gather_dpq_mask_512:
+      Opc = X86::VPGATHERDQZrm; break;
     }
     SDValue Chain = Op.getOperand(0);
     SDValue Src   = Op.getOperand(2);
@@ -12098,23 +12098,23 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
   case Intrinsic::x86_avx512_scatter_dpi_512: {
     unsigned Opc;
     switch (IntNo) {
-      default: llvm_unreachable("Unexpected intrinsic!");
-      case Intrinsic::x86_avx512_scatter_qpd_512:
-        Opc = X86::VSCATTERQPDZmr; break;
-      case Intrinsic::x86_avx512_scatter_qps_512:
-        Opc = X86::VSCATTERQPSZmr; break;
-      case Intrinsic::x86_avx512_scatter_dpd_512:
-        Opc = X86::VSCATTERDPDZmr; break;
-      case Intrinsic::x86_avx512_scatter_dps_512:
-        Opc = X86::VSCATTERDPSZmr; break;
-      case Intrinsic::x86_avx512_scatter_qpi_512:
-        Opc = X86::VPSCATTERQDZmr; break;
-      case Intrinsic::x86_avx512_scatter_qpq_512:
-        Opc = X86::VPSCATTERQQZmr; break;
-      case Intrinsic::x86_avx512_scatter_dpq_512:
-        Opc = X86::VPSCATTERDQZmr; break;
-      case Intrinsic::x86_avx512_scatter_dpi_512:
-        Opc = X86::VPSCATTERDDZmr; break;
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
+    case Intrinsic::x86_avx512_scatter_qpd_512:
+      Opc = X86::VSCATTERQPDZmr; break;
+    case Intrinsic::x86_avx512_scatter_qps_512:
+      Opc = X86::VSCATTERQPSZmr; break;
+    case Intrinsic::x86_avx512_scatter_dpd_512:
+      Opc = X86::VSCATTERDPDZmr; break;
+    case Intrinsic::x86_avx512_scatter_dps_512:
+      Opc = X86::VSCATTERDPSZmr; break;
+    case Intrinsic::x86_avx512_scatter_qpi_512:
+      Opc = X86::VPSCATTERQDZmr; break;
+    case Intrinsic::x86_avx512_scatter_qpq_512:
+      Opc = X86::VPSCATTERQQZmr; break;
+    case Intrinsic::x86_avx512_scatter_dpq_512:
+      Opc = X86::VPSCATTERDQZmr; break;
+    case Intrinsic::x86_avx512_scatter_dpi_512:
+      Opc = X86::VPSCATTERDDZmr; break;
     }
     SDValue Chain = Op.getOperand(0);
     SDValue Base  = Op.getOperand(2);
@@ -12134,23 +12134,23 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
   case Intrinsic::x86_avx512_scatter_dpq_mask_512: {
     unsigned Opc;
     switch (IntNo) {
-      default: llvm_unreachable("Unexpected intrinsic!");
-      case Intrinsic::x86_avx512_scatter_qpd_mask_512:
-        Opc = X86::VSCATTERQPDZmr; break;
-      case Intrinsic::x86_avx512_scatter_qps_mask_512:
-        Opc = X86::VSCATTERQPSZmr; break;
-      case Intrinsic::x86_avx512_scatter_dpd_mask_512:
-        Opc = X86::VSCATTERDPDZmr; break;
-      case Intrinsic::x86_avx512_scatter_dps_mask_512:
-        Opc = X86::VSCATTERDPSZmr; break;
-      case Intrinsic::x86_avx512_scatter_qpi_mask_512:
-        Opc = X86::VPSCATTERQDZmr; break;
-      case Intrinsic::x86_avx512_scatter_qpq_mask_512:
-        Opc = X86::VPSCATTERQQZmr; break;
-      case Intrinsic::x86_avx512_scatter_dpq_mask_512:
-        Opc = X86::VPSCATTERDQZmr; break;
-      case Intrinsic::x86_avx512_scatter_dpi_mask_512:
-        Opc = X86::VPSCATTERDDZmr; break;
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
+    case Intrinsic::x86_avx512_scatter_qpd_mask_512:
+      Opc = X86::VSCATTERQPDZmr; break;
+    case Intrinsic::x86_avx512_scatter_qps_mask_512:
+      Opc = X86::VSCATTERQPSZmr; break;
+    case Intrinsic::x86_avx512_scatter_dpd_mask_512:
+      Opc = X86::VSCATTERDPDZmr; break;
+    case Intrinsic::x86_avx512_scatter_dps_mask_512:
+      Opc = X86::VSCATTERDPSZmr; break;
+    case Intrinsic::x86_avx512_scatter_qpi_mask_512:
+      Opc = X86::VPSCATTERQDZmr; break;
+    case Intrinsic::x86_avx512_scatter_qpq_mask_512:
+      Opc = X86::VPSCATTERQQZmr; break;
+    case Intrinsic::x86_avx512_scatter_dpq_mask_512:
+      Opc = X86::VPSCATTERDQZmr; break;
+    case Intrinsic::x86_avx512_scatter_dpi_mask_512:
+      Opc = X86::VPSCATTERDDZmr; break;
     }
     SDValue Chain = Op.getOperand(0);
     SDValue Base  = Op.getOperand(2);
