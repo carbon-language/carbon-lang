@@ -30,7 +30,6 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
@@ -121,9 +120,6 @@ namespace {
     /// AA - AliasAnalysis for making memory reference queries.
     AliasAnalysis *AA;
 
-    /// LiveRegs - true if the register is live.
-    BitVector LiveRegs;
-
     /// The schedule. Null SUnit*'s represent noop instructions.
     std::vector<SUnit*> Sequence;
 
@@ -174,22 +170,12 @@ namespace {
     ///
     void finishBlock();
 
-    /// FixupKills - Fix register kill flags that have been made
-    /// invalid due to scheduling
-    ///
-    void FixupKills(MachineBasicBlock *MBB);
-
   private:
     void ReleaseSucc(SUnit *SU, SDep *SuccEdge);
     void ReleaseSuccessors(SUnit *SU);
     void ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle);
     void ListScheduleTopDown();
     void StartBlockForKills(MachineBasicBlock *BB);
-
-    // ToggleKillFlag - Toggle a register operand kill flag. Other
-    // adjustments may be made to the instruction if necessary. Return
-    // true if the operand has been deleted, false if not.
-    bool ToggleKillFlag(MachineInstr *MI, MachineOperand &MO);
 
     void dumpSchedule() const;
     void emitNoop(unsigned CurCycle);
@@ -206,9 +192,8 @@ SchedulePostRATDList::SchedulePostRATDList(
   AliasAnalysis *AA, const RegisterClassInfo &RCI,
   TargetSubtargetInfo::AntiDepBreakMode AntiDepMode,
   SmallVectorImpl<const TargetRegisterClass*> &CriticalPathRCs)
-  : ScheduleDAGInstrs(MF, MLI, MDT, /*IsPostRA=*/true), AA(AA),
-    LiveRegs(TRI->getNumRegs()), EndIndex(0)
-{
+  : ScheduleDAGInstrs(MF, MLI, MDT, /*IsPostRA=*/true), AA(AA), EndIndex(0) {
+
   const TargetMachine &TM = MF.getTarget();
   const InstrItineraryData *InstrItins = TM.getInstrItineraryData();
   HazardRec =
@@ -353,7 +338,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     Scheduler.finishBlock();
 
     // Update register kills
-    Scheduler.FixupKills(MBB);
+    Scheduler.fixupKills(MBB);
   }
 
   return true;
@@ -422,148 +407,6 @@ void SchedulePostRATDList::finishBlock() {
 
   // Call the superclass.
   ScheduleDAGInstrs::finishBlock();
-}
-
-/// StartBlockForKills - Initialize register live-range state for updating kills
-///
-void SchedulePostRATDList::StartBlockForKills(MachineBasicBlock *BB) {
-  // Start with no live registers.
-  LiveRegs.reset();
-
-  // Examine the live-in regs of all successors.
-  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
-       SE = BB->succ_end(); SI != SE; ++SI) {
-    for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
-         E = (*SI)->livein_end(); I != E; ++I) {
-      unsigned Reg = *I;
-      // Repeat, for reg and all subregs.
-      for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
-           SubRegs.isValid(); ++SubRegs)
-        LiveRegs.set(*SubRegs);
-    }
-  }
-}
-
-bool SchedulePostRATDList::ToggleKillFlag(MachineInstr *MI,
-                                          MachineOperand &MO) {
-  // Setting kill flag...
-  if (!MO.isKill()) {
-    MO.setIsKill(true);
-    return false;
-  }
-
-  // If MO itself is live, clear the kill flag...
-  if (LiveRegs.test(MO.getReg())) {
-    MO.setIsKill(false);
-    return false;
-  }
-
-  // If any subreg of MO is live, then create an imp-def for that
-  // subreg and keep MO marked as killed.
-  MO.setIsKill(false);
-  bool AllDead = true;
-  const unsigned SuperReg = MO.getReg();
-  MachineInstrBuilder MIB(MF, MI);
-  for (MCSubRegIterator SubRegs(SuperReg, TRI); SubRegs.isValid(); ++SubRegs) {
-    if (LiveRegs.test(*SubRegs)) {
-      MIB.addReg(*SubRegs, RegState::ImplicitDefine);
-      AllDead = false;
-    }
-  }
-
-  if(AllDead)
-    MO.setIsKill(true);
-  return false;
-}
-
-/// FixupKills - Fix the register kill flags, they may have been made
-/// incorrect by instruction reordering.
-///
-void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
-  DEBUG(dbgs() << "Fixup kills for BB#" << MBB->getNumber() << '\n');
-
-  BitVector killedRegs(TRI->getNumRegs());
-
-  StartBlockForKills(MBB);
-
-  // Examine block from end to start...
-  unsigned Count = MBB->size();
-  for (MachineBasicBlock::iterator I = MBB->end(), E = MBB->begin();
-       I != E; --Count) {
-    MachineInstr *MI = --I;
-    if (MI->isDebugValue())
-      continue;
-
-    // Update liveness.  Registers that are defed but not used in this
-    // instruction are now dead. Mark register and all subregs as they
-    // are completely defined.
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
-      if (MO.isRegMask())
-        LiveRegs.clearBitsNotInMask(MO.getRegMask());
-      if (!MO.isReg()) continue;
-      unsigned Reg = MO.getReg();
-      if (Reg == 0) continue;
-      if (!MO.isDef()) continue;
-      // Ignore two-addr defs.
-      if (MI->isRegTiedToUseOperand(i)) continue;
-
-      // Repeat for reg and all subregs.
-      for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
-           SubRegs.isValid(); ++SubRegs)
-        LiveRegs.reset(*SubRegs);
-    }
-
-    // Examine all used registers and set/clear kill flag. When a
-    // register is used multiple times we only set the kill flag on
-    // the first use. Don't set kill flags on undef operands.
-    killedRegs.reset();
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg() || !MO.isUse() || MO.isUndef()) continue;
-      unsigned Reg = MO.getReg();
-      if ((Reg == 0) || MRI.isReserved(Reg)) continue;
-
-      bool kill = false;
-      if (!killedRegs.test(Reg)) {
-        kill = true;
-        // A register is not killed if any subregs are live...
-        for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
-          if (LiveRegs.test(*SubRegs)) {
-            kill = false;
-            break;
-          }
-        }
-
-        // If subreg is not live, then register is killed if it became
-        // live in this instruction
-        if (kill)
-          kill = !LiveRegs.test(Reg);
-      }
-
-      if (MO.isKill() != kill) {
-        DEBUG(dbgs() << "Fixing " << MO << " in ");
-        // Warning: ToggleKillFlag may invalidate MO.
-        ToggleKillFlag(MI, MO);
-        DEBUG(MI->dump());
-      }
-
-      killedRegs.set(Reg);
-    }
-
-    // Mark any used register (that is not using undef) and subregs as
-    // now live...
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg() || !MO.isUse() || MO.isUndef()) continue;
-      unsigned Reg = MO.getReg();
-      if ((Reg == 0) || MRI.isReserved(Reg)) continue;
-
-      for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
-           SubRegs.isValid(); ++SubRegs)
-        LiveRegs.set(*SubRegs);
-    }
-  }
 }
 
 //===----------------------------------------------------------------------===//

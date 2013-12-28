@@ -88,6 +88,10 @@ namespace llvm {
     /// isPostRA flag indicates vregs cannot be present.
     bool IsPostRA;
 
+    /// True if the DAG builder should remove kill flags (in preparation for
+    /// rescheduling).
+    bool RemoveKillFlags;
+
     /// The standard DAG builder does not normally include terminators as DAG
     /// nodes because it does not create the necessary dependencies to prevent
     /// reordering. A specialized scheduler can overide
@@ -145,14 +149,20 @@ namespace llvm {
     DbgValueVector DbgValues;
     MachineInstr *FirstDbgValue;
 
+    /// Set of live physical registers for updating kill flags.
+    BitVector LiveRegs;
+
   public:
     explicit ScheduleDAGInstrs(MachineFunction &mf,
                                const MachineLoopInfo &mli,
                                const MachineDominatorTree &mdt,
                                bool IsPostRAFlag,
+                               bool RemoveKillFlags = false,
                                LiveIntervals *LIS = 0);
 
     virtual ~ScheduleDAGInstrs() {}
+
+    bool isPostRA() const { return IsPostRA; }
 
     /// \brief Expose LiveIntervals for use in DAG mutators and such.
     LiveIntervals *getLIS() const { return LIS; }
@@ -227,12 +237,23 @@ namespace llvm {
     /// Return a label for the region of code covered by the DAG.
     virtual std::string getDAGName() const;
 
+    /// \brief Fix register kill flags that scheduling has made invalid.
+    void fixupKills(MachineBasicBlock *MBB);
   protected:
     void initSUnits();
     void addPhysRegDataDeps(SUnit *SU, unsigned OperIdx);
     void addPhysRegDeps(SUnit *SU, unsigned OperIdx);
     void addVRegDefDeps(SUnit *SU, unsigned OperIdx);
     void addVRegUseDeps(SUnit *SU, unsigned OperIdx);
+
+    /// \brief PostRA helper for rewriting kill flags.
+    void startBlockForKills(MachineBasicBlock *BB);
+
+    /// \brief Toggle a register operand kill flag.
+    ///
+    /// Other adjustments may be made to the instruction if necessary. Return
+    /// true if the operand has been deleted, false if not.
+    bool toggleKillFlag(MachineInstr *MI, MachineOperand &MO);
   };
 
   /// newSUnit - Creates a new SUnit and return a ptr to it.

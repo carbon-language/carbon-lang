@@ -246,11 +246,11 @@ protected:
   unsigned NumInstrsScheduled;
 #endif
 public:
-  ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S,
-                     bool IsPostRA):
-    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, IsPostRA, C->LIS), AA(C->AA),
-    SchedImpl(S), Topo(SUnits, &ExitSU), CurrentTop(), CurrentBottom(),
-    NextClusterPred(NULL), NextClusterSucc(NULL) {
+  ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S, bool IsPostRA):
+    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, IsPostRA,
+                      /*RemoveKillFlags=*/IsPostRA, C->LIS),
+    AA(C->AA), SchedImpl(S), Topo(SUnits, &ExitSU), CurrentTop(),
+    CurrentBottom(), NextClusterPred(NULL), NextClusterSucc(NULL) {
 #ifndef NDEBUG
     NumInstrsScheduled = 0;
 #endif
