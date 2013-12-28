@@ -42,7 +42,7 @@ extern "C" void LLVMInitializeR600Target() {
 }
 
 static ScheduleDAGInstrs *createR600MachineScheduler(MachineSchedContext *C) {
-  return new ScheduleDAGMI(C, new R600SchedStrategy());
+  return new ScheduleDAGMILive(C, new R600SchedStrategy());
 }
 
 static MachineSchedRegistry

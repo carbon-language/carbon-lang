@@ -23,7 +23,7 @@
 //   return new CustomMachineScheduler(C);
 // }
 //
-// The default scheduler, ScheduleDAGMI, builds the DAG and drives list
+// The default scheduler, ScheduleDAGMILive, builds the DAG and drives list
 // scheduling while updating the instruction stream, register pressure, and live
 // intervals. Most targets don't need to override the DAG builder and list
 // schedulier, but subtargets that require custom scheduling heuristics may
@@ -155,8 +155,8 @@ struct MachineSchedPolicy {
   bool OnlyTopDown;
   bool OnlyBottomUp;
 
-  MachineSchedPolicy():
-    ShouldTrackPressure(false), OnlyTopDown(false), OnlyBottomUp(false) {}
+  MachineSchedPolicy(): ShouldTrackPressure(false), OnlyTopDown(false),
+    OnlyBottomUp(false) {}
 };
 
 /// MachineSchedStrategy - Interface to the scheduling algorithm used by
@@ -214,18 +214,14 @@ public:
   virtual void apply(ScheduleDAGMI *DAG) = 0;
 };
 
-/// ScheduleDAGMI is an implementation of ScheduleDAGInstrs that schedules
-/// machine instructions while updating LiveIntervals and tracking regpressure.
+/// ScheduleDAGMI is an implementation of ScheduleDAGInstrs that simply
+/// schedules machine instructions according to the given MachineSchedStrategy
+/// without much extra book-keeping. This is the common functionality between
+/// PreRA and PostRA MachineScheduler.
 class ScheduleDAGMI : public ScheduleDAGInstrs {
 protected:
   AliasAnalysis *AA;
-  RegisterClassInfo *RegClassInfo;
   MachineSchedStrategy *SchedImpl;
-
-  /// Information about DAG subtrees. If DFSResult is NULL, then SchedulerTrees
-  /// will be empty.
-  SchedDFSResult *DFSResult;
-  BitVector ScheduledTrees;
 
   /// Topo - A topological ordering for SUnits which permits fast IsReachable
   /// and similar queries.
@@ -234,32 +230,11 @@ protected:
   /// Ordered list of DAG postprocessing steps.
   std::vector<ScheduleDAGMutation*> Mutations;
 
-  MachineBasicBlock::iterator LiveRegionEnd;
-
-  // Map each SU to its summary of pressure changes. This array is updated for
-  // liveness during bottom-up scheduling. Top-down scheduling may proceed but
-  // has no affect on the pressure diffs.
-  PressureDiffs SUPressureDiffs;
-
-  /// Register pressure in this region computed by initRegPressure.
-  bool ShouldTrackPressure;
-  IntervalPressure RegPressure;
-  RegPressureTracker RPTracker;
-
-  /// List of pressure sets that exceed the target's pressure limit before
-  /// scheduling, listed in increasing set ID order. Each pressure set is paired
-  /// with its max pressure in the currently scheduled regions.
-  std::vector<PressureChange> RegionCriticalPSets;
-
   /// The top of the unscheduled zone.
   MachineBasicBlock::iterator CurrentTop;
-  IntervalPressure TopPressure;
-  RegPressureTracker TopRPTracker;
 
   /// The bottom of the unscheduled zone.
   MachineBasicBlock::iterator CurrentBottom;
-  IntervalPressure BotPressure;
-  RegPressureTracker BotRPTracker;
 
   /// Record the next node in a scheduled cluster.
   const SUnit *NextClusterPred;
@@ -270,14 +245,11 @@ protected:
   /// scheduler at the point determined by misched-cutoff.
   unsigned NumInstrsScheduled;
 #endif
-
 public:
-  ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S):
-    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
-    AA(C->AA), RegClassInfo(C->RegClassInfo), SchedImpl(S), DFSResult(0),
-    Topo(SUnits, &ExitSU), ShouldTrackPressure(false),
-    RPTracker(RegPressure), CurrentTop(), TopRPTracker(TopPressure),
-    CurrentBottom(), BotRPTracker(BotPressure),
+  ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S,
+                     bool IsPostRA):
+    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, IsPostRA, C->LIS), AA(C->AA),
+    SchedImpl(S), Topo(SUnits, &ExitSU), CurrentTop(), CurrentBottom(),
     NextClusterPred(NULL), NextClusterSucc(NULL) {
 #ifndef NDEBUG
     NumInstrsScheduled = 0;
@@ -286,8 +258,8 @@ public:
 
   virtual ~ScheduleDAGMI();
 
-  /// \brief Return true if register pressure tracking is enabled.
-  bool isTrackingPressure() const { return ShouldTrackPressure; }
+  /// Return true if this DAG supports VReg liveness and RegPressure.
+  virtual bool hasVRegLiveness() const { return false; }
 
   /// Add a postprocessing step to the DAG builder.
   /// Mutations are applied in the order that they are added after normal DAG
@@ -328,6 +300,95 @@ public:
   /// live ranges and region boundary iterators.
   void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
 
+  const SUnit *getNextClusterPred() const { return NextClusterPred; }
+
+  const SUnit *getNextClusterSucc() const { return NextClusterSucc; }
+
+  void viewGraph(const Twine &Name, const Twine &Title) LLVM_OVERRIDE;
+  void viewGraph() LLVM_OVERRIDE;
+
+protected:
+  // Top-Level entry points for the schedule() driver...
+
+  /// Apply each ScheduleDAGMutation step in order. This allows different
+  /// instances of ScheduleDAGMI to perform custom DAG postprocessing.
+  void postprocessDAG();
+
+  /// Release ExitSU predecessors and setup scheduler queues.
+  void initQueues(ArrayRef<SUnit*> TopRoots, ArrayRef<SUnit*> BotRoots);
+
+  /// Update scheduler DAG and queues after scheduling an instruction.
+  void updateQueues(SUnit *SU, bool IsTopNode);
+
+  /// Reinsert debug_values recorded in ScheduleDAGInstrs::DbgValues.
+  void placeDebugValues();
+
+  /// \brief dump the scheduled Sequence.
+  void dumpSchedule() const;
+
+  // Lesser helpers...
+  bool checkSchedLimit();
+
+  void findRootsAndBiasEdges(SmallVectorImpl<SUnit*> &TopRoots,
+                             SmallVectorImpl<SUnit*> &BotRoots);
+
+  void releaseSucc(SUnit *SU, SDep *SuccEdge);
+  void releaseSuccessors(SUnit *SU);
+  void releasePred(SUnit *SU, SDep *PredEdge);
+  void releasePredecessors(SUnit *SU);
+};
+
+/// ScheduleDAGMILive is an implementation of ScheduleDAGInstrs that schedules
+/// machine instructions while updating LiveIntervals and tracking regpressure.
+class ScheduleDAGMILive : public ScheduleDAGMI {
+protected:
+  RegisterClassInfo *RegClassInfo;
+
+  /// Information about DAG subtrees. If DFSResult is NULL, then SchedulerTrees
+  /// will be empty.
+  SchedDFSResult *DFSResult;
+  BitVector ScheduledTrees;
+
+  MachineBasicBlock::iterator LiveRegionEnd;
+
+  // Map each SU to its summary of pressure changes. This array is updated for
+  // liveness during bottom-up scheduling. Top-down scheduling may proceed but
+  // has no affect on the pressure diffs.
+  PressureDiffs SUPressureDiffs;
+
+  /// Register pressure in this region computed by initRegPressure.
+  bool ShouldTrackPressure;
+  IntervalPressure RegPressure;
+  RegPressureTracker RPTracker;
+
+  /// List of pressure sets that exceed the target's pressure limit before
+  /// scheduling, listed in increasing set ID order. Each pressure set is paired
+  /// with its max pressure in the currently scheduled regions.
+  std::vector<PressureChange> RegionCriticalPSets;
+
+  /// The top of the unscheduled zone.
+  IntervalPressure TopPressure;
+  RegPressureTracker TopRPTracker;
+
+  /// The bottom of the unscheduled zone.
+  IntervalPressure BotPressure;
+  RegPressureTracker BotRPTracker;
+
+public:
+  ScheduleDAGMILive(MachineSchedContext *C, MachineSchedStrategy *S):
+    ScheduleDAGMI(C, S, /*IsPostRA=*/false), RegClassInfo(C->RegClassInfo),
+    DFSResult(0), ShouldTrackPressure(false), RPTracker(RegPressure),
+    TopRPTracker(TopPressure), BotRPTracker(BotPressure)
+  {}
+
+  virtual ~ScheduleDAGMILive();
+
+  /// Return true if this DAG supports VReg liveness and RegPressure.
+  virtual bool hasVRegLiveness() const { return true; }
+
+  /// \brief Return true if register pressure tracking is enabled.
+  bool isTrackingPressure() const { return ShouldTrackPressure; }
+
   /// Get current register pressure for the top scheduled instructions.
   const IntervalPressure &getTopPressure() const { return TopPressure; }
   const RegPressureTracker &getTopRPTracker() const { return TopRPTracker; }
@@ -347,10 +408,6 @@ public:
     return SUPressureDiffs[SU->NodeNum];
   }
 
-  const SUnit *getNextClusterPred() const { return NextClusterPred; }
-
-  const SUnit *getNextClusterSucc() const { return NextClusterSucc; }
-
   /// Compute a DFSResult after DAG building is complete, and before any
   /// queue comparisons.
   void computeDFSResult();
@@ -360,11 +417,20 @@ public:
 
   BitVector &getScheduledTrees() { return ScheduledTrees; }
 
+  /// Implement the ScheduleDAGInstrs interface for handling the next scheduling
+  /// region. This covers all instructions in a block, while schedule() may only
+  /// cover a subset.
+  void enterRegion(MachineBasicBlock *bb,
+                   MachineBasicBlock::iterator begin,
+                   MachineBasicBlock::iterator end,
+                   unsigned regioninstrs) LLVM_OVERRIDE;
+
+  /// Implement ScheduleDAGInstrs interface for scheduling a sequence of
+  /// reorderable instructions.
+  virtual void schedule();
+
   /// Compute the cyclic critical path through the DAG.
   unsigned computeCyclicCriticalPath();
-
-  void viewGraph(const Twine &Name, const Twine &Title) LLVM_OVERRIDE;
-  void viewGraph() LLVM_OVERRIDE;
 
 protected:
   // Top-Level entry points for the schedule() driver...
@@ -375,24 +441,8 @@ protected:
   /// bottom of the DAG region without covereing any unscheduled instruction.
   void buildDAGWithRegPressure();
 
-  /// Apply each ScheduleDAGMutation step in order. This allows different
-  /// instances of ScheduleDAGMI to perform custom DAG postprocessing.
-  void postprocessDAG();
-
-  /// Release ExitSU predecessors and setup scheduler queues.
-  void initQueues(ArrayRef<SUnit*> TopRoots, ArrayRef<SUnit*> BotRoots);
-
   /// Move an instruction and update register pressure.
   void scheduleMI(SUnit *SU, bool IsTopNode);
-
-  /// Update scheduler DAG and queues after scheduling an instruction.
-  void updateQueues(SUnit *SU, bool IsTopNode);
-
-  /// Reinsert debug_values recorded in ScheduleDAGInstrs::DbgValues.
-  void placeDebugValues();
-
-  /// \brief dump the scheduled Sequence.
-  void dumpSchedule() const;
 
   // Lesser helpers...
 
@@ -402,16 +452,6 @@ protected:
 
   void updateScheduledPressure(const SUnit *SU,
                                const std::vector<unsigned> &NewMaxPressure);
-
-  bool checkSchedLimit();
-
-  void findRootsAndBiasEdges(SmallVectorImpl<SUnit*> &TopRoots,
-                             SmallVectorImpl<SUnit*> &BotRoots);
-
-  void releaseSucc(SUnit *SU, SDep *SuccEdge);
-  void releaseSuccessors(SUnit *SU);
-  void releasePred(SUnit *SU, SDep *PredEdge);
-  void releasePredecessors(SUnit *SU);
 };
 
 //===----------------------------------------------------------------------===//

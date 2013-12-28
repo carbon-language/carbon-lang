@@ -26,7 +26,7 @@ namespace llvm {
 
 class R600SchedStrategy : public MachineSchedStrategy {
 
-  const ScheduleDAGMI *DAG;
+  const ScheduleDAGMILive *DAG;
   const R600InstrInfo *TII;
   const R600RegisterInfo *TRI;
   MachineRegisterInfo *MRI;

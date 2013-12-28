@@ -186,6 +186,9 @@ void VLIWMachineScheduler::schedule() {
     scheduleMI(SU, IsTopNode);
 
     updateQueues(SU, IsTopNode);
+
+    // Notify the scheduling strategy after updating the DAG.
+    SchedImpl->schedNode(SU, IsTopNode);
   }
   assert(CurrentTop == CurrentBottom && "Nonempty unscheduled zone.");
 
@@ -266,7 +269,7 @@ void ConvergingVLIWScheduler::releaseBottomNode(SUnit *SU) {
 /// can dispatch per cycle.
 ///
 /// TODO: Also check whether the SU must start a new group.
-bool ConvergingVLIWScheduler::SchedBoundary::checkHazard(SUnit *SU) {
+bool ConvergingVLIWScheduler::VLIWSchedBoundary::checkHazard(SUnit *SU) {
   if (HazardRec->isEnabled())
     return HazardRec->getHazardType(SU) != ScheduleHazardRecognizer::NoHazard;
 
@@ -277,7 +280,7 @@ bool ConvergingVLIWScheduler::SchedBoundary::checkHazard(SUnit *SU) {
   return false;
 }
 
-void ConvergingVLIWScheduler::SchedBoundary::releaseNode(SUnit *SU,
+void ConvergingVLIWScheduler::VLIWSchedBoundary::releaseNode(SUnit *SU,
                                                      unsigned ReadyCycle) {
   if (ReadyCycle < MinReadyCycle)
     MinReadyCycle = ReadyCycle;
@@ -292,7 +295,7 @@ void ConvergingVLIWScheduler::SchedBoundary::releaseNode(SUnit *SU,
 }
 
 /// Move the boundary of scheduled code by one cycle.
-void ConvergingVLIWScheduler::SchedBoundary::bumpCycle() {
+void ConvergingVLIWScheduler::VLIWSchedBoundary::bumpCycle() {
   unsigned Width = SchedModel->getIssueWidth();
   IssueCount = (IssueCount <= Width) ? 0 : IssueCount - Width;
 
@@ -318,7 +321,7 @@ void ConvergingVLIWScheduler::SchedBoundary::bumpCycle() {
 }
 
 /// Move the boundary of scheduled code by one SUnit.
-void ConvergingVLIWScheduler::SchedBoundary::bumpNode(SUnit *SU) {
+void ConvergingVLIWScheduler::VLIWSchedBoundary::bumpNode(SUnit *SU) {
   bool startNewCycle = false;
 
   // Update the reservation table.
@@ -348,7 +351,7 @@ void ConvergingVLIWScheduler::SchedBoundary::bumpNode(SUnit *SU) {
 
 /// Release pending ready nodes in to the available queue. This makes them
 /// visible to heuristics.
-void ConvergingVLIWScheduler::SchedBoundary::releasePending() {
+void ConvergingVLIWScheduler::VLIWSchedBoundary::releasePending() {
   // If the available queue is empty, it is safe to reset MinReadyCycle.
   if (Available.empty())
     MinReadyCycle = UINT_MAX;
@@ -376,7 +379,7 @@ void ConvergingVLIWScheduler::SchedBoundary::releasePending() {
 }
 
 /// Remove SU from the ready set for this boundary.
-void ConvergingVLIWScheduler::SchedBoundary::removeReady(SUnit *SU) {
+void ConvergingVLIWScheduler::VLIWSchedBoundary::removeReady(SUnit *SU) {
   if (Available.isInQueue(SU))
     Available.remove(Available.find(SU));
   else {
@@ -388,7 +391,7 @@ void ConvergingVLIWScheduler::SchedBoundary::removeReady(SUnit *SU) {
 /// If this queue only has one ready candidate, return it. As a side effect,
 /// advance the cycle until at least one node is ready. If multiple instructions
 /// are ready, return NULL.
-SUnit *ConvergingVLIWScheduler::SchedBoundary::pickOnlyChoice() {
+SUnit *ConvergingVLIWScheduler::VLIWSchedBoundary::pickOnlyChoice() {
   if (CheckPending)
     releasePending();
 

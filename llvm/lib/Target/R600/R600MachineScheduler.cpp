@@ -24,8 +24,8 @@
 using namespace llvm;
 
 void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
-
-  DAG = dag;
+  assert(dag->hasVRegLiveness() && "R600SchedStrategy needs vreg liveness");
+  DAG = static_cast<ScheduleDAGMILive*>(dag);
   TII = static_cast<const R600InstrInfo*>(DAG->TII);
   TRI = static_cast<const R600RegisterInfo*>(DAG->TRI);
   VLIW5 = !DAG->MF.getTarget().getSubtarget<AMDGPUSubtarget>().hasCaymanISA();
@@ -72,7 +72,7 @@ SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
     // OpenCL Programming Guide :
     // The approx. number of WF that allows TEX inst to hide ALU inst is :
     // 500 (cycles for TEX) / (AluFetchRatio * 8 (cycles for ALU))
-    float ALUFetchRationEstimate = 
+    float ALUFetchRationEstimate =
         (AluInstCount + AvailablesAluCount() + Pending[IDAlu].size()) /
         (FetchInstCount + Available[IDFetch].size());
     unsigned NeededWF = 62.5f / ALUFetchRationEstimate;
@@ -464,4 +464,3 @@ SUnit* R600SchedStrategy::pickOther(int QID) {
   }
   return SU;
 }
-
