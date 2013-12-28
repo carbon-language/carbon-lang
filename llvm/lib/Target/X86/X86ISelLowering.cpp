@@ -11103,17 +11103,68 @@ static SDValue LowerVACOPY(SDValue Op, const X86Subtarget *Subtarget,
 static SDValue getTargetVShiftByConstNode(unsigned Opc, SDLoc dl, EVT VT,
                                           SDValue SrcOp, uint64_t ShiftAmt,
                                           SelectionDAG &DAG) {
+  EVT ElementType = VT.getVectorElementType();
 
   // Check for ShiftAmt >= element width
-  if (ShiftAmt >= VT.getVectorElementType().getSizeInBits()) {
+  if (ShiftAmt >= ElementType.getSizeInBits()) {
     if (Opc == X86ISD::VSRAI)
-      ShiftAmt = VT.getVectorElementType().getSizeInBits() - 1;
+      ShiftAmt = ElementType.getSizeInBits() - 1;
     else
       return DAG.getConstant(0, VT);
   }
 
   assert((Opc == X86ISD::VSHLI || Opc == X86ISD::VSRLI || Opc == X86ISD::VSRAI)
          && "Unknown target vector shift-by-constant node");
+
+  // Fold this packed vector shift into a build vector if SrcOp is a
+  // vector of ConstantSDNodes or UNDEFs.
+  if (ISD::isBuildVectorOfConstantSDNodes(SrcOp.getNode())) {
+    SmallVector<SDValue, 8> Elts;
+    unsigned NumElts = SrcOp->getNumOperands();
+    ConstantSDNode *ND;
+
+    switch(Opc) {
+    default: llvm_unreachable(0);
+    case X86ISD::VSHLI:
+      for (unsigned i=0; i!=NumElts; ++i) {
+        SDValue CurrentOp = SrcOp->getOperand(i);
+        if (CurrentOp->getOpcode() == ISD::UNDEF) {
+          Elts.push_back(CurrentOp);
+          continue;
+        }
+        ND = cast<ConstantSDNode>(CurrentOp);
+        const APInt &C = ND->getAPIntValue();
+        Elts.push_back(DAG.getConstant(C.shl(ShiftAmt), ElementType));
+      }
+      break;
+    case X86ISD::VSRLI:
+      for (unsigned i=0; i!=NumElts; ++i) {
+        SDValue CurrentOp = SrcOp->getOperand(i);
+        if (CurrentOp->getOpcode() == ISD::UNDEF) {
+          Elts.push_back(CurrentOp);
+          continue;
+        }
+        ND = cast<ConstantSDNode>(CurrentOp);
+        const APInt &C = ND->getAPIntValue();
+        Elts.push_back(DAG.getConstant(C.lshr(ShiftAmt), ElementType));
+      }
+      break;
+    case X86ISD::VSRAI:
+      for (unsigned i=0; i!=NumElts; ++i) {
+        SDValue CurrentOp = SrcOp->getOperand(i);
+        if (CurrentOp->getOpcode() == ISD::UNDEF) {
+          Elts.push_back(CurrentOp);
+          continue;
+        }
+        ND = cast<ConstantSDNode>(CurrentOp);
+        const APInt &C = ND->getAPIntValue();
+        Elts.push_back(DAG.getConstant(C.ashr(ShiftAmt), ElementType));
+      }
+      break;
+    }
+
+    return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Elts[0], NumElts);
+  }
 
   return DAG.getNode(Opc, dl, VT, SrcOp, DAG.getConstant(ShiftAmt, MVT::i8));
 }
