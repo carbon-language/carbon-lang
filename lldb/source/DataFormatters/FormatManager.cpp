@@ -741,7 +741,7 @@ AddFormat (TypeCategoryImpl::SharedPointer category_sp,
            TypeFormatImpl::Flags flags,
            bool regex = false)
 {
-    lldb::TypeFormatImplSP format_sp(new TypeFormatImpl(format, flags));
+    lldb::TypeFormatImplSP format_sp(new TypeFormatImpl_Format(format, flags));
     
     if (regex)
         category_sp->GetRegexTypeFormatsContainer()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),format_sp);

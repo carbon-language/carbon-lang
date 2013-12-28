@@ -1402,7 +1402,7 @@ bool
 ValueObject::GetValueAsCString (lldb::Format format,
                                 std::string& destination)
 {
-    return GetValueAsCString(TypeFormatImpl(format),destination);
+    return GetValueAsCString(TypeFormatImpl_Format(format),destination);
 }
 
 const char *
@@ -1439,7 +1439,7 @@ ValueObject::GetValueAsCString ()
         {
             m_last_format = my_format;
             if (!format_sp)
-                format_sp.reset(new TypeFormatImpl(my_format));
+                format_sp.reset(new TypeFormatImpl_Format(my_format));
             if (GetValueAsCString(*format_sp.get(), m_value_str))
             {
                 if (!m_value_did_change && m_old_value_valid)

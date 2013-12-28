@@ -130,15 +130,12 @@ namespace lldb_private {
             uint32_t m_flags;
         };
         
-        TypeFormatImpl (lldb::Format f = lldb::eFormatInvalid,
-                        const Flags& flags = Flags());
+        TypeFormatImpl (const Flags& flags = Flags());
         
         typedef std::shared_ptr<TypeFormatImpl> SharedPointer;
         typedef bool(*ValueCallback)(void*, ConstString, const lldb::TypeFormatImplSP&);
         
-        ~TypeFormatImpl ()
-        {
-        }
+        virtual ~TypeFormatImpl () = default;
         
         bool
         Cascades () const
@@ -173,19 +170,7 @@ namespace lldb_private {
         {
             m_flags.SetSkipReferences(value);
         }
-        
-        lldb::Format
-        GetFormat () const
-        {
-            return m_format;
-        }
-        
-        void
-        SetFormat (lldb::Format fmt)
-        {
-            m_format = fmt;
-        }
-        
+
         uint32_t
         GetOptions ()
         {
@@ -204,24 +189,123 @@ namespace lldb_private {
             return m_my_revision;
         }
         
+        enum class Type
+        {
+            eTypeUnknown,
+            eTypeFormat,
+            eTypeEnum
+        };
+        
+        virtual Type
+        GetType ()
+        {
+            return Type::eTypeUnknown;
+        }
+        
         // we are using a ValueObject* instead of a ValueObjectSP because we do not need to hold on to this for
         // extended periods of time and we trust the ValueObject to stay around for as long as it is required
         // for us to generate its value
-        bool
+        virtual bool
         FormatObject (ValueObject *valobj,
-                      std::string& dest) const;
+                      std::string& dest) const = 0;
         
-        std::string
-        GetDescription();
+        virtual std::string
+        GetDescription() = 0;
         
     protected:
         Flags m_flags;
-        lldb::Format m_format;
         uint32_t m_my_revision;
         
     private:
         DISALLOW_COPY_AND_ASSIGN(TypeFormatImpl);
-    };    
+    };
+    
+    class TypeFormatImpl_Format : public TypeFormatImpl
+    {
+    public:
+        TypeFormatImpl_Format (lldb::Format f = lldb::eFormatInvalid,
+                               const TypeFormatImpl::Flags& flags = Flags());
+        
+        typedef std::shared_ptr<TypeFormatImpl_Format> SharedPointer;
+        typedef bool(*ValueCallback)(void*, ConstString, const TypeFormatImpl_Format::SharedPointer&);
+        
+        virtual ~TypeFormatImpl_Format () = default;
+        
+        lldb::Format
+        GetFormat () const
+        {
+            return m_format;
+        }
+        
+        void
+        SetFormat (lldb::Format fmt)
+        {
+            m_format = fmt;
+        }
+        
+        virtual TypeFormatImpl::Type
+        GetType ()
+        {
+            return TypeFormatImpl::Type::eTypeFormat;
+        }
+        
+        virtual bool
+        FormatObject (ValueObject *valobj,
+                      std::string& dest) const;
+        
+        virtual std::string
+        GetDescription();
+        
+    protected:
+        lldb::Format m_format;
+        
+    private:
+        DISALLOW_COPY_AND_ASSIGN(TypeFormatImpl_Format);
+    };
+    
+    class TypeFormatImpl_EnumType : public TypeFormatImpl
+    {
+    public:
+        TypeFormatImpl_EnumType (ConstString type_name = ConstString(""),
+                                 const TypeFormatImpl::Flags& flags = Flags());
+        
+        typedef std::shared_ptr<TypeFormatImpl_EnumType> SharedPointer;
+        typedef bool(*ValueCallback)(void*, ConstString, const TypeFormatImpl_EnumType::SharedPointer&);
+        
+        ~TypeFormatImpl_EnumType () = default;
+        
+        ConstString
+        GetTypeName ()
+        {
+            return m_enum_type;
+        }
+        
+        void
+        SetTypeName (ConstString enum_type)
+        {
+            m_enum_type = enum_type;
+        }
+        
+        virtual TypeFormatImpl::Type
+        GetType ()
+        {
+            return TypeFormatImpl::Type::eTypeEnum;
+        }
+        
+        virtual bool
+        FormatObject (ValueObject *valobj,
+                      std::string& dest) const;
+        
+        virtual std::string
+        GetDescription();
+        
+    protected:
+        ConstString m_enum_type;
+        mutable std::map<void*,ClangASTType> m_types;
+        
+    private:
+        DISALLOW_COPY_AND_ASSIGN(TypeFormatImpl_EnumType);
+    };
 } // namespace lldb_private
 
 #endif	// lldb_TypeFormat_h_

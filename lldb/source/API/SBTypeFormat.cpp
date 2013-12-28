@@ -25,7 +25,13 @@ m_opaque_sp()
 
 SBTypeFormat::SBTypeFormat (lldb::Format format,
                             uint32_t options)
-: m_opaque_sp(TypeFormatImplSP(new TypeFormatImpl(format,options)))
+: m_opaque_sp(TypeFormatImplSP(new TypeFormatImpl_Format(format,options)))
+{
+}
+
+SBTypeFormat::SBTypeFormat (const char* type,
+                            uint32_t options)
+: m_opaque_sp(TypeFormatImplSP(new TypeFormatImpl_EnumType(ConstString(type ? type : ""),options)))
 {
 }
 
@@ -47,9 +53,17 @@ SBTypeFormat::IsValid() const
 lldb::Format
 SBTypeFormat::GetFormat ()
 {
-    if (IsValid())
-        return m_opaque_sp->GetFormat();
+    if (IsValid() && m_opaque_sp->GetType() == TypeFormatImpl::Type::eTypeFormat)
+        return ((TypeFormatImpl_Format*)m_opaque_sp.get())->GetFormat();
     return lldb::eFormatInvalid;
+}
+
+const char*
+SBTypeFormat::GetTypeName ()
+{
+    if (IsValid() && m_opaque_sp->GetType() == TypeFormatImpl::Type::eTypeEnum)
+        return ((TypeFormatImpl_EnumType*)m_opaque_sp.get())->GetTypeName().AsCString("");
+    return "";
 }
 
 uint32_t
@@ -63,14 +77,21 @@ SBTypeFormat::GetOptions()
 void
 SBTypeFormat::SetFormat (lldb::Format fmt)
 {
-    if (CopyOnWrite_Impl())
-        m_opaque_sp->SetFormat(fmt);
+    if (CopyOnWrite_Impl(Type::eTypeFormat))
+        ((TypeFormatImpl_Format*)m_opaque_sp.get())->SetFormat(fmt);
+}
+
+void
+SBTypeFormat::SetTypeName (const char* type)
+{
+    if (CopyOnWrite_Impl(Type::eTypeEnum))
+        ((TypeFormatImpl_EnumType*)m_opaque_sp.get())->SetTypeName(ConstString(type ? type : ""));
 }
 
 void
 SBTypeFormat::SetOptions (uint32_t value)
 {
-    if (CopyOnWrite_Impl())
+    if (CopyOnWrite_Impl(Type::eTypeKeepSame))
         m_opaque_sp->SetOptions(value);
 }
 
@@ -143,13 +164,30 @@ SBTypeFormat::SBTypeFormat (const lldb::TypeFormatImplSP &typeformat_impl_sp) :
 }
 
 bool
-SBTypeFormat::CopyOnWrite_Impl()
+SBTypeFormat::CopyOnWrite_Impl(Type type)
 {
     if (!IsValid())
         return false;
-    if (m_opaque_sp.unique())
+    
+    if (m_opaque_sp.unique() &&
+        ((type == Type::eTypeKeepSame) ||
+         (type == Type::eTypeFormat && m_opaque_sp->GetType() == TypeFormatImpl::Type::eTypeFormat) ||
+         (type == Type::eTypeEnum && m_opaque_sp->GetType() == TypeFormatImpl::Type::eTypeEnum))
+        )
         return true;
 
-    SetSP(TypeFormatImplSP(new TypeFormatImpl(GetFormat(),GetOptions())));
+    if (type == Type::eTypeKeepSame)
+    {
+        if (m_opaque_sp->GetType() == TypeFormatImpl::Type::eTypeFormat)
+            type = Type::eTypeFormat;
+        else
+            type = Type::eTypeEnum;
+    }
+    
+    if (type == Type::eTypeFormat)
+        SetSP(TypeFormatImplSP(new TypeFormatImpl_Format(GetFormat(),GetOptions())));
+    else
+        SetSP(TypeFormatImplSP(new TypeFormatImpl_EnumType(ConstString(GetTypeName()),GetOptions())));
+    
     return true;
 }

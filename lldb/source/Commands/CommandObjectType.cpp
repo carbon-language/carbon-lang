@@ -371,6 +371,7 @@ private:
             m_skip_references = false;
             m_regex = false;
             m_category.assign("default");
+            m_custom_type_name.clear();
         }
         virtual Error
         SetOptionValue (CommandInterpreter &interpreter,
@@ -400,6 +401,9 @@ private:
                 case 'x':
                     m_regex = true;
                     break;
+                case 't':
+                    m_custom_type_name.assign(option_value);
+                    break;
                 default:
                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
@@ -419,6 +423,7 @@ private:
         bool m_skip_pointers;
         bool m_regex;
         std::string m_category;
+        std::string m_custom_type_name;
     };
     
     OptionGroupOptions m_option_group;
@@ -480,7 +485,7 @@ public:
                     );
     
         // Add the "--format" to all options groups
-        m_option_group.Append (&m_format_options, OptionGroupFormat::OPTION_GROUP_FORMAT, LLDB_OPT_SET_ALL);
+        m_option_group.Append (&m_format_options, OptionGroupFormat::OPTION_GROUP_FORMAT, LLDB_OPT_SET_1);
         m_option_group.Append (&m_command_options);
         m_option_group.Finalize();
 
@@ -504,7 +509,7 @@ protected:
         }
         
         const Format format = m_format_options.GetFormat();
-        if (format == eFormatInvalid)
+        if (format == eFormatInvalid && m_command_options.m_custom_type_name.empty())
         {
             result.AppendErrorWithFormat ("%s needs a valid format.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
@@ -513,10 +518,16 @@ protected:
         
         TypeFormatImplSP entry;
         
-        entry.reset(new TypeFormatImpl(format,
-                                    TypeFormatImpl::Flags().SetCascades(m_command_options.m_cascade).
-                                    SetSkipPointers(m_command_options.m_skip_pointers).
-                                    SetSkipReferences(m_command_options.m_skip_references)));
+        if (m_command_options.m_custom_type_name.empty())
+            entry.reset(new TypeFormatImpl_Format(format,
+                                                  TypeFormatImpl::Flags().SetCascades(m_command_options.m_cascade).
+                                                  SetSkipPointers(m_command_options.m_skip_pointers).
+                                                  SetSkipReferences(m_command_options.m_skip_references)));
+        else
+            entry.reset(new TypeFormatImpl_EnumType(ConstString(m_command_options.m_custom_type_name.c_str()),
+                                                    TypeFormatImpl::Flags().SetCascades(m_command_options.m_cascade).
+                                                    SetSkipPointers(m_command_options.m_skip_pointers).
+                                                    SetSkipReferences(m_command_options.m_skip_references)));
 
         // now I have a valid format, let's add it to every type
         
@@ -562,11 +573,12 @@ protected:
 OptionDefinition
 CommandObjectTypeFormatAdd::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "category", 'w', OptionParser::eRequiredArgument, NULL, 0, eArgTypeName,    "Add this to the given category instead of the default one."},
-    { LLDB_OPT_SET_ALL, false, "cascade", 'C', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean,    "If true, cascade through typedef chains."},
-    { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,         "Don't use this format for pointers-to-type objects."},
-    { LLDB_OPT_SET_ALL, false, "skip-references", 'r', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,         "Don't use this format for references-to-type objects."},
+    { LLDB_OPT_SET_ALL, false,  "category", 'w', OptionParser::eRequiredArgument, NULL, 0, eArgTypeName,    "Add this to the given category instead of the default one."},
+    { LLDB_OPT_SET_ALL, false,  "cascade", 'C', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean,    "If true, cascade through typedef chains."},
+    { LLDB_OPT_SET_ALL, false,  "skip-pointers", 'p', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,         "Don't use this format for pointers-to-type objects."},
+    { LLDB_OPT_SET_ALL, false,  "skip-references", 'r', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,         "Don't use this format for references-to-type objects."},
     { LLDB_OPT_SET_ALL, false,  "regex", 'x', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,    "Type names are actually regular expressions."},
+    { LLDB_OPT_SET_2,   false,  "type", 't', OptionParser::eRequiredArgument, NULL, 0, eArgTypeName,    "Format variables as if they were of this type."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 

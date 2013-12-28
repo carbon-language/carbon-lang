@@ -25,22 +25,30 @@
 #include "lldb/DataFormatters/TypeFormat.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/TypeList.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
-TypeFormatImpl::TypeFormatImpl (lldb::Format f,
-                                const Flags& flags) :
+TypeFormatImpl::TypeFormatImpl (const Flags& flags) :
 m_flags(flags),
+m_my_revision(0)
+{
+}
+
+
+TypeFormatImpl_Format::TypeFormatImpl_Format (lldb::Format f,
+                                              const TypeFormatImpl::Flags& flags) :
+TypeFormatImpl(flags),
 m_format (f)
 {
 }
 
 bool
-TypeFormatImpl::FormatObject (ValueObject *valobj,
-                              std::string& dest) const
+TypeFormatImpl_Format::FormatObject (ValueObject *valobj,
+                                     std::string& dest) const
 {
     if (!valobj)
         return false;
@@ -127,7 +135,7 @@ TypeFormatImpl::FormatObject (ValueObject *valobj,
 }
 
 std::string
-TypeFormatImpl::GetDescription()
+TypeFormatImpl_Format::GetDescription()
 {
     StreamString sstr;
     sstr.Printf ("%s%s%s%s",
@@ -138,3 +146,87 @@ TypeFormatImpl::GetDescription()
     return sstr.GetString();
 }
 
+TypeFormatImpl_EnumType::TypeFormatImpl_EnumType (ConstString type_name,
+                                                  const TypeFormatImpl::Flags& flags) :
+TypeFormatImpl(flags),
+m_enum_type(type_name),
+m_types()
+{
+}
+
+bool
+TypeFormatImpl_EnumType::FormatObject (ValueObject *valobj,
+                                       std::string& dest) const
+{
+    dest.clear();
+    if (!valobj)
+        return false;
+    if (valobj->GetClangType().IsAggregateType ())
+        return false;
+    ProcessSP process_sp;
+    TargetSP target_sp;
+    void* valobj_key = (process_sp = valobj->GetProcessSP()).get();
+    if (!valobj_key)
+        valobj_key = (target_sp = valobj->GetTargetSP()).get();
+    else
+        target_sp = process_sp->GetTarget().shared_from_this();
+    if (!valobj_key)
+        return false;
+    auto iter = m_types.find(valobj_key),
+    end = m_types.end();
+    ClangASTType valobj_enum_type;
+    if (iter == end)
+    {
+        // probably a redundant check
+        if (!target_sp)
+            return false;
+        const ModuleList& images(target_sp->GetImages());
+        SymbolContext sc;
+        TypeList types;
+        images.FindTypes(sc, m_enum_type, false, UINT32_MAX, types);
+        if (types.GetSize() == 0)
+            return false;
+        for (lldb::TypeSP type_sp : types.Types())
+        {
+            if (!type_sp)
+                continue;
+            if ( (type_sp->GetClangForwardType().GetTypeInfo() & ClangASTType::eTypeIsEnumeration) == ClangASTType::eTypeIsEnumeration)
+            {
+                valobj_enum_type = type_sp->GetClangFullType();
+                m_types.emplace(valobj_key,valobj_enum_type);
+                break;
+            }
+        }
+    }
+    else
+        valobj_enum_type = iter->second;
+    if (valobj_enum_type.IsValid() == false)
+        return false;
+    DataExtractor data;
+    valobj->GetData(data);
+    ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
+    StreamString sstr;
+    valobj_enum_type.DumpTypeValue(&sstr,
+                                   lldb::eFormatEnum,
+                                   data,
+                                   0,
+                                   data.GetByteSize(),
+                                   0,
+                                   0,
+                                   exe_ctx.GetBestExecutionContextScope());
+    if (!sstr.GetString().empty())
+        dest.swap(sstr.GetString());
+    return !dest.empty();
+}
+
+std::string
+TypeFormatImpl_EnumType::GetDescription()
+{
+    StreamString sstr;
+    sstr.Printf ("as type %s%s%s%s",
+                 m_enum_type.AsCString("<invalid type>"),
+                 Cascades() ? "" : " (not cascading)",
+                 SkipsPointers() ? " (skip pointers)" : "",
+                 SkipsReferences() ? " (skip references)" : "");
+    return sstr.GetString();
+}

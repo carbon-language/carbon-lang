@@ -22,6 +22,9 @@ public:
     
     SBTypeFormat (lldb::Format format,
                   uint32_t options = 0); // see lldb::eTypeOption values
+
+    SBTypeFormat (const char* type,
+                  uint32_t options = 0); // see lldb::eTypeOption values
     
     SBTypeFormat (const lldb::SBTypeFormat &rhs);
     
@@ -33,11 +36,17 @@ public:
     lldb::Format
     GetFormat ();
     
+    const char*
+    GetTypeName ();
+    
     uint32_t
     GetOptions();
     
     void
     SetFormat (lldb::Format);
+    
+    void
+    SetTypeName (const char*);
     
     void
     SetOptions (uint32_t);
@@ -73,8 +82,15 @@ protected:
     
     SBTypeFormat (const lldb::TypeFormatImplSP &);
     
+    enum class Type
+    {
+        eTypeKeepSame,
+        eTypeFormat,
+        eTypeEnum
+    };
+    
     bool
-    CopyOnWrite_Impl();
+    CopyOnWrite_Impl(Type);
     
 };
 

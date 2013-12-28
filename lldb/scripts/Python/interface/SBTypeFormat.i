@@ -21,6 +21,8 @@ namespace lldb {
         
         SBTypeFormat (lldb::Format format, uint32_t options = 0);
         
+        SBTypeFormat (const char* type, uint32_t options = 0);
+        
         SBTypeFormat (const lldb::SBTypeFormat &rhs);
         
         ~SBTypeFormat ();
@@ -34,11 +36,17 @@ namespace lldb {
         lldb::Format
         GetFormat ();
         
+        const char*
+        GetTypeName ();
+        
         uint32_t
         GetOptions();
         
         void
         SetFormat (lldb::Format);
+        
+        void
+        SetTypeName (const char*);
         
         void
         SetOptions (uint32_t);        
