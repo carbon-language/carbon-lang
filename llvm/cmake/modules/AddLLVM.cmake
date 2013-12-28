@@ -19,7 +19,7 @@ function(add_llvm_symbol_exports target_name export_file)
     add_custom_command(OUTPUT symbol.exports
       COMMAND echo "{" > symbol.exports
       COMMAND grep -q "[[:alnum:]]" ${export_file} && echo "  global:" >> symbol.exports || :
-      COMMAND sed -e "s/$$/;/" -e "s/^/    /" < ${export_file} >> symbol.exports
+      COMMAND sed -e "s/$/;/" -e "s/^/    /" < ${export_file} >> symbol.exports
       COMMAND echo "  local: *;" >> symbol.exports
       COMMAND echo "};" >> symbol.exports
       DEPENDS ${export_file}
