@@ -43,12 +43,12 @@ using namespace llvm::MachO;
 using namespace lld::mach_o::normalized;
 using lld::YamlContext;
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(Segment);
-LLVM_YAML_IS_SEQUENCE_VECTOR(DependentDylib);
-LLVM_YAML_IS_SEQUENCE_VECTOR(RebaseLocation);
-LLVM_YAML_IS_SEQUENCE_VECTOR(BindLocation);
-LLVM_YAML_IS_SEQUENCE_VECTOR(Export);
-LLVM_YAML_IS_SEQUENCE_VECTOR(StringRef);
+LLVM_YAML_IS_SEQUENCE_VECTOR(Segment)
+LLVM_YAML_IS_SEQUENCE_VECTOR(DependentDylib)
+LLVM_YAML_IS_SEQUENCE_VECTOR(RebaseLocation)
+LLVM_YAML_IS_SEQUENCE_VECTOR(BindLocation)
+LLVM_YAML_IS_SEQUENCE_VECTOR(Export)
+LLVM_YAML_IS_SEQUENCE_VECTOR(StringRef)
 
 
 // for compatibility with gcc-4.7 in C++11 mode, add extra namespace
