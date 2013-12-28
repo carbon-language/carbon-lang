@@ -1902,14 +1902,20 @@ def CortexA9Model : SchedMachineModel {
 
 //===----------------------------------------------------------------------===//
 // Define each kind of processor resource and number available.
+//
+// The AGU unit has BufferSize=1 so that the latency between operations
+// that use it are considered to stall other operations.
+//
+// The FP unit has BufferSize=0 so that it is a hard dispatch
+// hazard. No instruction may be dispatched while the unit is reserved.
 
 let SchedModel = CortexA9Model in {
 
 def A9UnitALU : ProcResource<2>;
 def A9UnitMul : ProcResource<1> { let Super = A9UnitALU; }
-def A9UnitAGU : ProcResource<1>;
+def A9UnitAGU : ProcResource<1> { let BufferSize = 1; }
 def A9UnitLS  : ProcResource<1>;
-def A9UnitFP  : ProcResource<1> { let BufferSize = 1; }
+def A9UnitFP  : ProcResource<1> { let BufferSize = 0; }
 def A9UnitB   : ProcResource<1>;
 
 //===----------------------------------------------------------------------===//

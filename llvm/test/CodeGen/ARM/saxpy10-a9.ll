@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mtriple=thumbv7-apple-ios7.0.0 -float-abi=hard -mcpu=cortex-a9 -disable-post-ra -misched-bench -scheditins=false | FileCheck %s
+; RUN: llc < %s -march=arm -mtriple=thumbv7-apple-ios7.0.0 -float-abi=hard -mcpu=cortex-a9 -misched-postra -misched-bench -scheditins=false | FileCheck %s
 ;
 ; Test MI-Sched suppory latency based stalls on in in-order pipeline
 ; using the new machine model.
@@ -15,43 +15,43 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-
 ; CHECK: vldr
 ; CHECK: vldr
 ; CHECK: vldr
+; CHECK-NEXT: vadd
+; CHECK-NEXT: vadd
+; CHECK-NEXT: vldr
+; CHECK-NEXT: vldr
+; CHECK-NEXT: vldr
+; CHECK-NEXT: vadd
 ; CHECK-NEXT: vmul
+; CHECK-NEXT: vldr
 ; CHECK-NEXT: vadd
 ; CHECK-NEXT: vadd
-; CHECK-NEXT: vldr
-; CHECK-NEXT: vldr
 ; CHECK-NEXT: vmul
-; CHECK-NEXT: vadd
-; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
-; CHECK-NEXT: vldr
-; CHECK-NEXT: vmul
 ; CHECK-NEXT: vadd
 ; CHECK-NEXT: vadd
-; CHECK-NEXT: vldr
-; CHECK-NEXT: vldr
-; CHECK-NEXT: vmul
-; CHECK-NEXT: vadd
-; CHECK-NEXT: vadd
-; CHECK-NEXT: vldr
 ; CHECK-NEXT: vldr
 ; CHECK-NEXT: vmul
 ; CHECK-NEXT: vadd
-; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
+; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
 ; CHECK-NEXT: vmul
 ; CHECK-NEXT: vadd
-; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
+; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
 ; CHECK-NEXT: vmul
 ; CHECK-NEXT: vadd
-; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
+; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
 ; CHECK-NEXT: vmul
 ; CHECK-NEXT: vadd
+; CHECK-NEXT: vldr
+; CHECK-NEXT: vmul
+; CHECK-NEXT: vadd
+; CHECK-NEXT: vldr
+; CHECK-NEXT: vmul
 ; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
 ; CHECK-NEXT: vadd
