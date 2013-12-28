@@ -236,7 +236,7 @@ class CodeGenModule : public CodeGenTypeCache {
   DiagnosticsEngine &Diags;
   const llvm::DataLayout &TheDataLayout;
   const TargetInfo &Target;
-  CGCXXABI &ABI;
+  llvm::OwningPtr<CGCXXABI> ABI;
   llvm::LLVMContext &VMContext;
 
   CodeGenTBAA *TBAA;
@@ -535,7 +535,7 @@ public:
   DiagnosticsEngine &getDiags() const { return Diags; }
   const llvm::DataLayout &getDataLayout() const { return TheDataLayout; }
   const TargetInfo &getTarget() const { return Target; }
-  CGCXXABI &getCXXABI() { return ABI; }
+  CGCXXABI &getCXXABI() const { return *ABI; }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }
   
   bool shouldUseTBAA() const { return TBAA != 0; }

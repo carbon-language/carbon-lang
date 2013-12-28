@@ -55,15 +55,15 @@ using namespace CodeGen;
 
 static const char AnnotationSection[] = "llvm.metadata";
 
-static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
+static CGCXXABI *createCXXABI(CodeGenModule &CGM) {
   switch (CGM.getTarget().getCXXABI().getKind()) {
   case TargetCXXABI::GenericAArch64:
   case TargetCXXABI::GenericARM:
   case TargetCXXABI::iOS:
   case TargetCXXABI::GenericItanium:
-    return *CreateItaniumCXXABI(CGM);
+    return CreateItaniumCXXABI(CGM);
   case TargetCXXABI::Microsoft:
-    return *CreateMicrosoftCXXABI(CGM);
+    return CreateMicrosoftCXXABI(CGM);
   }
 
   llvm_unreachable("invalid C++ ABI kind");
@@ -117,7 +117,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
   if (SanOpts.Thread ||
       (!CodeGenOpts.RelaxedAliasing && CodeGenOpts.OptimizationLevel > 0))
     TBAA = new CodeGenTBAA(Context, VMContext, CodeGenOpts, getLangOpts(),
-                           ABI.getMangleContext());
+                           getCXXABI().getMangleContext());
 
   // If debug info or coverage generation is enabled, create the CGDebugInfo
   // object.
@@ -138,7 +138,6 @@ CodeGenModule::~CodeGenModule() {
   delete OpenCLRuntime;
   delete CUDARuntime;
   delete TheTargetCodeGenInfo;
-  delete &ABI;
   delete TBAA;
   delete DebugInfo;
   delete ARCData;
