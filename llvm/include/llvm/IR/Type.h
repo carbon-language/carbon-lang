@@ -290,12 +290,12 @@ public:
   /// instance of the type is stored to memory. The DataLayout class provides
   /// additional query functions to provide this information.
   ///
-  unsigned getPrimitiveSizeInBits() const;
+  unsigned getPrimitiveSizeInBits() const LLVM_READONLY;
 
   /// getScalarSizeInBits - If this is a vector type, return the
   /// getPrimitiveSizeInBits value for the element type. Otherwise return the
   /// getPrimitiveSizeInBits value for this type.
-  unsigned getScalarSizeInBits();
+  unsigned getScalarSizeInBits() const LLVM_READONLY;
 
   /// getFPMantissaWidth - Return the width of the mantissa of this type.  This
   /// is only valid on floating point types.  If the FP type does not
@@ -304,8 +304,8 @@ public:
 
   /// getScalarType - If this is a vector type, return the element type,
   /// otherwise return 'this'.
-  const Type *getScalarType() const;
-  Type *getScalarType();
+  const Type *getScalarType() const LLVM_READONLY;
+  Type *getScalarType() LLVM_READONLY;
 
   //===--------------------------------------------------------------------===//
   // Type Iteration support.

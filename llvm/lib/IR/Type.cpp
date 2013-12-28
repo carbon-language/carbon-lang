@@ -132,7 +132,7 @@ unsigned Type::getPrimitiveSizeInBits() const {
 /// getScalarSizeInBits - If this is a vector type, return the
 /// getPrimitiveSizeInBits value for the element type. Otherwise return the
 /// getPrimitiveSizeInBits value for this type.
-unsigned Type::getScalarSizeInBits() {
+unsigned Type::getScalarSizeInBits() const {
   return getScalarType()->getPrimitiveSizeInBits();
 }
 

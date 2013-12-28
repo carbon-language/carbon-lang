@@ -880,19 +880,19 @@ namespace llvm {
     static EVT getExtendedIntegerVT(LLVMContext &C, unsigned BitWidth);
     static EVT getExtendedVectorVT(LLVMContext &C, EVT VT,
                                    unsigned NumElements);
-    bool isExtendedFloatingPoint() const;
-    bool isExtendedInteger() const;
-    bool isExtendedVector() const;
-    bool isExtended16BitVector() const;
-    bool isExtended32BitVector() const;
-    bool isExtended64BitVector() const;
-    bool isExtended128BitVector() const;
-    bool isExtended256BitVector() const;
-    bool isExtended512BitVector() const;
-    bool isExtended1024BitVector() const;
+    bool isExtendedFloatingPoint() const LLVM_READONLY;
+    bool isExtendedInteger() const LLVM_READONLY;
+    bool isExtendedVector() const LLVM_READONLY;
+    bool isExtended16BitVector() const LLVM_READONLY;
+    bool isExtended32BitVector() const LLVM_READONLY;
+    bool isExtended64BitVector() const LLVM_READONLY;
+    bool isExtended128BitVector() const LLVM_READONLY;
+    bool isExtended256BitVector() const LLVM_READONLY;
+    bool isExtended512BitVector() const LLVM_READONLY;
+    bool isExtended1024BitVector() const LLVM_READONLY;
     EVT getExtendedVectorElementType() const;
-    unsigned getExtendedVectorNumElements() const;
-    unsigned getExtendedSizeInBits() const;
+    unsigned getExtendedVectorNumElements() const LLVM_READONLY;
+    unsigned getExtendedSizeInBits() const LLVM_READONLY;
   };
 
 } // End llvm namespace
