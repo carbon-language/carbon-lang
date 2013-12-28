@@ -3958,12 +3958,19 @@ void AsmParser::instantiateMacroLikeBody(MCAsmMacro *M, SMLoc DirectiveLoc,
 /// parseDirectiveRept
 ///   ::= .rep | .rept count
 bool AsmParser::parseDirectiveRept(SMLoc DirectiveLoc, StringRef Dir) {
+  const MCExpr *CountExpr;
+  SMLoc CountLoc = getTok().getLoc();
+  if (parseExpression(CountExpr))
+    return true;
+
   int64_t Count;
-  if (parseAbsoluteExpression(Count))
-    return TokError("unexpected token in '" + Dir + "' directive");
+  if (!CountExpr->EvaluateAsAbsolute(Count)) {
+    eatToEndOfStatement();
+    return Error(CountLoc, "unexpected token in '" + Dir + "' directive");
+  }
 
   if (Count < 0)
-    return TokError("Count is negative");
+    return Error(CountLoc, "Count is negative");
 
   if (Lexer.isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '" + Dir + "' directive");
