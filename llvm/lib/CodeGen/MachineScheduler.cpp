@@ -173,7 +173,7 @@ char PostMachineScheduler::ID = 0;
 char &llvm::PostMachineSchedulerID = PostMachineScheduler::ID;
 
 INITIALIZE_PASS(PostMachineScheduler, "postmisched",
-                "PostRA Machine Instruction Scheduler", false, false);
+                "PostRA Machine Instruction Scheduler", false, false)
 
 PostMachineScheduler::PostMachineScheduler()
 : MachineSchedulerBase(ID) {
