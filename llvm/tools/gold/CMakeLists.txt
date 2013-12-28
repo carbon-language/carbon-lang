@@ -1,6 +1,8 @@
 set(LLVM_BINUTILS_INCDIR "" CACHE PATH
   "PATH to binutils/include containing plugin-api.h for gold plugin.")
 
+set(LLVM_EXPORTED_SYMBOL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/gold.exports)
+
 if( NOT LLVM_BINUTILS_INCDIR )
   # Nothing to say.
 elseif( NOT EXISTS "${LLVM_BINUTILS_INCDIR}/plugin-api.h" )
@@ -17,30 +19,4 @@ else()
   add_llvm_loadable_module(LLVMgold
     gold-plugin.cpp
     )
-
-  # Makefile.rules contains a special cases for OpenBSD, Darwin and
-  # Windows. We restrict ourselves to Linux for the time being.
-  set(srcexp ${CMAKE_CURRENT_SOURCE_DIR}/gold.exports)
-  add_custom_command(OUTPUT exportsfile
-    COMMAND echo "{" > exportsfile
-    COMMAND grep -q "\\<" ${srcexp} && echo "  global:" >> exportsfile || :
-    COMMAND sed -e "s/$/;/" -e "s/^/    /" < ${srcexp} >> exportsfile
-    COMMAND echo "  local: *;" >> exportsfile
-    COMMAND echo "};" >> exportsfile
-    DEPENDS ${srcexp}
-    VERBATIM
-    COMMENT "Creating export file for gold plugin")
-  add_custom_target(gold_exports DEPENDS exportsfile)
-  set_property(DIRECTORY APPEND
-    PROPERTY ADDITIONAL_MAKE_CLEAN_FILES exportsfile)
-
-  # Force re-linking when the exports file changes. Actually, it
-  # forces recompilation of gold-plugin.cpp. The LINK_DEPENDS target
-  # property only works for makefile-based generators.
-  set_property(SOURCE gold-plugin.cpp APPEND PROPERTY
-    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/exportsfile)
-
-  target_link_libraries(LLVMgold LTO
-                   -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/exportsfile)
-  add_dependencies(LLVMgold gold_exports)
 endif()

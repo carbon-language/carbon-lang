@@ -2,6 +2,72 @@ include(LLVMParseArguments)
 include(LLVMProcessSources)
 include(LLVM-Config)
 
+function(add_llvm_symbol_exports target_name export_file)
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(native_export_file "symbol.exports")
+    add_custom_command(OUTPUT symbol.exports
+      COMMAND sed -e "s/^/_/" < ${export_file} > symbol.exports
+      DEPENDS ${export_file}
+      VERBATIM
+      COMMENT "Creating export file for ${target_name}")
+    set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                 LINK_FLAGS " -Wl,-exported_symbols_list,${CMAKE_CURRENT_BINARY_DIR}/symbol.exports")
+  elseif(LLVM_HAVE_LINK_VERSION_SCRIPT)
+    # Gold and BFD ld require a version script rather than a plain list.
+    set(native_export_file "symbol.exports")
+    # FIXME: Don't write the "local:" line on OpenBSD.
+    add_custom_command(OUTPUT symbol.exports
+      COMMAND echo "{" > symbol.exports
+      COMMAND grep -q "[[:alnum:]]" ${export_file} && echo "  global:" >> symbol.exports || :
+      COMMAND sed -e "s/$$/;/" -e "s/^/    /" < ${export_file} >> symbol.exports
+      COMMAND echo "  local: *;" >> symbol.exports
+      COMMAND echo "};" >> symbol.exports
+      DEPENDS ${export_file}
+      VERBATIM
+      COMMENT "Creating export file for ${target_name}")
+    set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                 LINK_FLAGS " -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/symbol.exports")
+  else()
+    set(native_export_file "symbol.def")
+
+    set(CAT "type")
+    if(CYGWIN)
+      set(CAT "cat")
+    endif()
+
+    add_custom_command(OUTPUT symbol.def
+      COMMAND cmake -E echo "EXPORTS" > symbol.def
+      COMMAND ${CAT} < ${export_file} >> symbol.def
+      DEPENDS ${export_file}
+      VERBATIM
+      COMMENT "Creating export file for ${target_name}")
+    set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                 LINK_FLAGS " ${CMAKE_CURRENT_BINARY_DIR}/symbol.def")
+  endif()
+
+  add_custom_target(${target_name}_exports DEPENDS ${native_export_file})
+
+  get_property(srcs TARGET ${target_name} PROPERTY SOURCES)
+  foreach(src ${srcs})
+    get_filename_component(extension ${src} EXT)
+    if(extension STREQUAL ".cpp")
+      set(first_source_file ${src})
+      break()
+    endif()
+  endforeach()
+
+  # Force re-linking when the exports file changes. Actually, it
+  # forces recompilation of the source file. The LINK_DEPENDS target
+  # property only works for makefile-based generators.
+  set_property(SOURCE ${first_source_file} APPEND PROPERTY
+    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${native_export_file})
+
+  set_property(DIRECTORY APPEND
+    PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${native_export_file})
+
+  add_dependencies(${target_name} ${target_name}_exports)
+endfunction(add_llvm_symbol_exports)
+
 macro(add_llvm_library name)
   llvm_process_sources( ALL_FILES ${ARGN} )
   add_library( ${name} ${ALL_FILES} )
@@ -17,6 +83,10 @@ macro(add_llvm_library name)
         PROPERTIES
         IMPORT_SUFFIX ".imp")
     endif ()
+  endif()
+
+  if (LLVM_EXPORTED_SYMBOL_FILE)
+    add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
   endif()
 
   # Ensure that the system libraries always comes last on the
@@ -57,6 +127,10 @@ ${name} ignored.")
       set(libkind SHARED)
     endif()
 
+    if (LLVM_EXPORTED_SYMBOL_FILE)
+      add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
+    endif(LLVM_EXPORTED_SYMBOL_FILE)
+
     add_library( ${name} ${libkind} ${ALL_FILES} )
     set_target_properties( ${name} PROPERTIES PREFIX "" )
 
@@ -91,6 +165,11 @@ macro(add_llvm_executable name)
   else()
     add_executable(${name} ${ALL_FILES})
   endif()
+
+  if (LLVM_EXPORTED_SYMBOL_FILE)
+    add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
+  endif(LLVM_EXPORTED_SYMBOL_FILE)
+
   set(EXCLUDE_FROM_ALL OFF)
   llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
   if( LLVM_COMMON_DEPENDS )
