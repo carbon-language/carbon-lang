@@ -18,6 +18,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/COFF.h"
 
+#include <set>
 #include <vector>
 
 using namespace llvm;
@@ -158,39 +159,43 @@ TEST_F(WinLinkParserTest, AlternateName) {
 
 TEST_F(WinLinkParserTest, Export) {
   EXPECT_TRUE(parse("link.exe", "/export:foo", "a.out", nullptr));
-  const std::vector<PECOFFLinkingContext::ExportDesc> &exports =
+  const std::set<PECOFFLinkingContext::ExportDesc> &exports =
       _context.getDllExports();
   EXPECT_EQ(1U, exports.size());
-  EXPECT_EQ("_foo", exports[0].name);
-  EXPECT_EQ(1, exports[0].ordinal);
-  EXPECT_FALSE(exports[0].noname);
-  EXPECT_FALSE(exports[0].isData);
+  auto it = exports.begin();
+  EXPECT_EQ("_foo", it->name);
+  EXPECT_EQ(1, it->ordinal);
+  EXPECT_FALSE(it->noname);
+  EXPECT_FALSE(it->isData);
 }
 
 TEST_F(WinLinkParserTest, ExportWithOptions) {
   EXPECT_TRUE(parse("link.exe", "/export:foo,@8,noname,data",
                     "/export:bar,@10,data", "a.out", nullptr));
-  const std::vector<PECOFFLinkingContext::ExportDesc> &exports =
+  const std::set<PECOFFLinkingContext::ExportDesc> &exports =
       _context.getDllExports();
   EXPECT_EQ(2U, exports.size());
-  EXPECT_EQ("_foo", exports[0].name);
-  EXPECT_EQ(8, exports[0].ordinal);
-  EXPECT_TRUE(exports[0].noname);
-  EXPECT_TRUE(exports[0].isData);
-  EXPECT_EQ("_bar", exports[1].name);
-  EXPECT_EQ(10, exports[1].ordinal);
-  EXPECT_FALSE(exports[1].noname);
-  EXPECT_TRUE(exports[1].isData);
+  auto it = exports.begin();
+  EXPECT_EQ("_bar", it->name);
+  EXPECT_EQ(10, it->ordinal);
+  EXPECT_FALSE(it->noname);
+  EXPECT_TRUE(it->isData);
+  ++it;
+  EXPECT_EQ("_foo", it->name);
+  EXPECT_EQ(8, it->ordinal);
+  EXPECT_TRUE(it->noname);
+  EXPECT_TRUE(it->isData);
 }
 
 TEST_F(WinLinkParserTest, ExportDuplicateExports) {
   EXPECT_TRUE(
       parse("link.exe", "/export:foo,@1", "/export:foo,@2", "a.out", nullptr));
-  const std::vector<PECOFFLinkingContext::ExportDesc> &exports =
+  const std::set<PECOFFLinkingContext::ExportDesc> &exports =
       _context.getDllExports();
   EXPECT_EQ(1U, exports.size());
-  EXPECT_EQ("_foo", exports[0].name);
-  EXPECT_EQ(1, exports[0].ordinal);
+  auto it = exports.begin();
+  EXPECT_EQ("_foo", it->name);
+  EXPECT_EQ(1, it->ordinal);
 }
 
 TEST_F(WinLinkParserTest, ExportDuplicateOrdinals) {

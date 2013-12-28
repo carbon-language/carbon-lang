@@ -33,13 +33,17 @@
 namespace lld {
 
 static void assignOrdinals(PECOFFLinkingContext &ctx) {
+  std::set<PECOFFLinkingContext::ExportDesc> exports;
   int maxOrdinal = -1;
   for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports())
     maxOrdinal = std::max(maxOrdinal, desc.ordinal);
   int nextOrdinal = (maxOrdinal == -1) ? 1 : (maxOrdinal + 1);
-  for (PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports())
+  for (PECOFFLinkingContext::ExportDesc desc : ctx.getDllExports()) {
     if (desc.ordinal == -1)
       desc.ordinal = nextOrdinal++;
+    exports.insert(desc);
+  }
+  ctx.getDllExports().swap(exports);
 }
 
 bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
@@ -245,13 +249,12 @@ uint32_t PECOFFLinkingContext::getSectionAttributes(StringRef sectionName,
 }
 
 void PECOFFLinkingContext::addDllExport(ExportDesc &desc) {
-  if (_dllExportSet.count(desc.name)) {
+  auto exists = _dllExports.insert(desc);
+  if (!exists.second) {
     llvm::errs() << "Export symbol '" << desc.name
                  << "' specified more than once.\n";
     return;
   }
-  _dllExports.push_back(desc);
-  _dllExportSet.insert(_dllExports.back().name);
 }
 
 void PECOFFLinkingContext::addPasses(PassManager &pm) {

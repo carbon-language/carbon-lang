@@ -59,6 +59,10 @@ public:
 
   struct ExportDesc {
     ExportDesc() : ordinal(-1), noname(false), isData(false) {}
+    bool operator<(const ExportDesc &other) const {
+      return name.compare(other.name) < 0;
+    }
+
     std::string name;
     int ordinal;
     bool noname;
@@ -218,8 +222,8 @@ public:
   ArrayRef<uint8_t> getDosStub() const { return _dosStub; }
 
   void addDllExport(ExportDesc &desc);
-  std::vector<ExportDesc> &getDllExports() { return _dllExports; }
-  const std::vector<ExportDesc> &getDllExports() const { return _dllExports; }
+  std::set<ExportDesc> &getDllExports() { return _dllExports; }
+  const std::set<ExportDesc> &getDllExports() const { return _dllExports; }
 
   StringRef allocate(StringRef ref) const {
     char *x = _allocator.Allocate<char>(ref.size() + 1);
@@ -299,8 +303,7 @@ private:
   std::map<std::string, uint32_t> _sectionClearMask;
 
   // DLLExport'ed symbols.
-  std::vector<ExportDesc> _dllExports;
-  std::set<StringRef> _dllExportSet;
+  std::set<ExportDesc> _dllExports;
 
   // List of files that will be removed on destruction.
   std::vector<std::unique_ptr<llvm::FileRemover> > _tempFiles;
