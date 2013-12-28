@@ -235,13 +235,8 @@ uint32_t PECOFFLinkingContext::getSectionAttributes(StringRef sectionName,
 // e.g. different export ordinals.
 static bool exportConflicts(const PECOFFLinkingContext::ExportDesc &a,
                             const PECOFFLinkingContext::ExportDesc &b) {
-  if (a.ordinal > 0 && b.ordinal > 0 && a.ordinal != b.ordinal)
-    return true;
-  if (a.noname != b.noname)
-    return true;
-  if (a.isData != b.isData)
-    return true;
-  return false;
+  return (a.ordinal > 0 && b.ordinal > 0 && a.ordinal != b.ordinal) ||
+         a.noname != b.noname || a.isData != b.isData;
 }
 
 void PECOFFLinkingContext::addDllExport(ExportDesc &desc) {
