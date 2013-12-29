@@ -118,16 +118,13 @@ def update_incremental_cache(test):
     fname = test.getFilePath()
     os.utime(fname, None)
 
-def sort_by_incremental_cache(run, litConfig):
+def sort_by_incremental_cache(run):
     def sortIndex(test):
-        index = 0
         fname = test.getFilePath()
         try:
-            index = -os.path.getmtime(fname)
-        except OSError as e:
-            if litConfig.debug:
-                litConfig.note(e)
-        return index
+            return -os.path.getmtime(fname)
+        except:
+            return 0
     run.tests.sort(key = lambda t: sortIndex(t))
 
 def main(builtinParameters = {}):
@@ -319,7 +316,7 @@ def main(builtinParameters = {}):
     if opts.shuffle:
         random.shuffle(run.tests)
     elif opts.incremental:
-        sort_by_incremental_cache(run, litConfig)
+        sort_by_incremental_cache(run)
     else:
         run.tests.sort(key = lambda t: t.getFullName())
 
