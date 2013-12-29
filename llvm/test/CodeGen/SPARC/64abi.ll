@@ -440,4 +440,25 @@ entry:
   ret i64 %0
 }
 
+; CHECK-LABEL: test_call_libfunc
+; CHECK:       st %f1, [%fp+[[Offset0:[0-9]+]]]
+; CHECK:       fmovs %f3, %f1
+; CHECK:       call cosf
+; CHECK:       st %f0, [%fp+[[Offset1:[0-9]+]]]
+; CHECK:       ld [%fp+[[Offset0]]], %f1
+; CHECK:       call sinf
+; CHECK:       ld [%fp+[[Offset1]]], %f1
+; CHECK:       fmuls %f1, %f0, %f0
+
+define inreg float @test_call_libfunc(float %arg0, float %arg1) {
+entry:
+  %0 = tail call inreg float @cosf(float %arg1)
+  %1 = tail call inreg float @sinf(float %arg0)
+  %2 = fmul float %0, %1
+  ret float %2
+}
+
+declare inreg float @cosf(float %arg) readnone nounwind
+declare inreg float @sinf(float %arg) readnone nounwind
+
 

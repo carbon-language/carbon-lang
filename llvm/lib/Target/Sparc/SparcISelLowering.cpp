@@ -1252,6 +1252,12 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<CCValAssign, 16> RVLocs;
   CCState RVInfo(CLI.CallConv, CLI.IsVarArg, DAG.getMachineFunction(),
                  DAG.getTarget(), RVLocs, *DAG.getContext());
+
+  // Set inreg flag manually for codegen generated library calls that
+  // return float.
+  if (CLI.Ins.size() == 1 && CLI.Ins[0].VT == MVT::f32 && CLI.CS == 0)
+    CLI.Ins[0].Flags.setInReg();
+
   RVInfo.AnalyzeCallResult(CLI.Ins, CC_Sparc64);
 
   // Copy all of the result registers out of their specified physreg.
