@@ -36,7 +36,7 @@ function(add_llvm_symbol_exports target_name export_file)
     endif()
 
     add_custom_command(OUTPUT symbol.def
-      COMMAND cmake -E echo "EXPORTS" > symbol.def
+      COMMAND ${CMAKE_COMMAND} -E echo "EXPORTS" > symbol.def
       COMMAND ${CAT} ${export_file} >> symbol.def
       DEPENDS ${export_file}
       VERBATIM
@@ -423,7 +423,7 @@ function(add_lit_target target comment)
     add_dependencies(${target} ${ARG_DEPENDS})
   else()
     add_custom_target(${target}
-      COMMAND cmake -E echo "${target} does nothing, no tools built.")
+      COMMAND ${CMAKE_COMMAND} -E echo "${target} does nothing, no tools built.")
     message(STATUS "${target} does nothing.")
   endif()
 
