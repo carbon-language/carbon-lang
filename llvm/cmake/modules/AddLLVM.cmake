@@ -35,9 +35,12 @@ function(add_llvm_symbol_exports target_name export_file)
       set(CAT "cat")
     endif()
 
+    # Using ${export_file} in add_custom_command directly confuses cmd.exe.
+    file(TO_NATIVE_PATH ${export_file} export_file_backslashes)
+
     add_custom_command(OUTPUT symbol.def
       COMMAND ${CMAKE_COMMAND} -E echo "EXPORTS" > symbol.def
-      COMMAND ${CAT} "\"${export_file}\"" >> symbol.def
+      COMMAND ${CAT} ${export_file_backslashes} >> symbol.def
       DEPENDS ${export_file}
       VERBATIM
       COMMENT "Creating export file for ${target_name}")
