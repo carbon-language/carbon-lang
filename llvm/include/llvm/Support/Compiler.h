@@ -40,12 +40,20 @@
 # endif
 #endif
 
+/// \macro LLVM_MSC_PREREQ
+/// \brief Is the compiler MSVC of at least the specified version?
+/// The common \param version values to check for are:
+///  * 1600: Microsoft Visual Studio 2010
+///  * 1700: Microsoft Visual Studio 2012
+///  * 1800: Microsoft Visual Studio 2013
+#define LLVM_MSC_PREREQ(version) \
+  (defined(_MSC_VER) && _MSC_VER >= (version))
+
 /// \brief Does the compiler support r-value references?
 /// This implies that <utility> provides the one-argument std::move;  it
 /// does not imply the existence of any other C++ library features.
-#if (__has_feature(cxx_rvalue_references)   \
-     || defined(__GXX_EXPERIMENTAL_CXX0X__) \
-     || (defined(_MSC_VER) && _MSC_VER >= 1600))
+#if __has_feature(cxx_rvalue_references) || \
+    defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1600)
 #define LLVM_HAS_RVALUE_REFERENCES 1
 #else
 #define LLVM_HAS_RVALUE_REFERENCES 0
@@ -72,8 +80,7 @@
 /// * {true,false}_type
 /// * is_constructible
 /// * etc...
-#if defined(__GXX_EXPERIMENTAL_CXX0X__) \
-    || (defined(_MSC_VER) && _MSC_VER >= 1700)
+#if defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1700)
 #define LLVM_HAS_CXX11_TYPETRAITS 1
 #else
 #define LLVM_HAS_CXX11_TYPETRAITS 0
@@ -83,8 +90,7 @@
 /// \brief Does the compiler have the C++11 standard library.
 ///
 /// Implies LLVM_HAS_RVALUE_REFERENCES, LLVM_HAS_CXX11_TYPETRAITS
-#if defined(__GXX_EXPERIMENTAL_CXX0X__) \
-    || (defined(_MSC_VER) && _MSC_VER >= 1700)
+#if defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1700)
 #define LLVM_HAS_CXX11_STDLIB 1
 #else
 #define LLVM_HAS_CXX11_STDLIB 0
@@ -139,8 +145,7 @@
 
 /// LLVM_FINAL - Expands to 'final' if the compiler supports it.
 /// Use to mark classes or virtual methods as final.
-#if __has_feature(cxx_override_control) \
-    || (defined(_MSC_VER) && _MSC_VER >= 1700)
+#if __has_feature(cxx_override_control) || LLVM_MSC_PREREQ(1700)
 #define LLVM_FINAL final
 #else
 #define LLVM_FINAL
@@ -148,8 +153,7 @@
 
 /// LLVM_OVERRIDE - Expands to 'override' if the compiler supports it.
 /// Use to mark virtual methods as overriding a base class method.
-#if __has_feature(cxx_override_control) \
-    || (defined(_MSC_VER) && _MSC_VER >= 1700)
+#if __has_feature(cxx_override_control) || LLVM_MSC_PREREQ(1700)
 #define LLVM_OVERRIDE override
 #else
 #define LLVM_OVERRIDE
@@ -395,9 +399,7 @@
 /// \brief Expands to colon followed by the given integral type on compilers
 /// which support C++11 strong enums.  This can be used to make enums unsigned
 /// with MSVC.
-#if __has_feature(cxx_strong_enums)
-# define LLVM_ENUM_INT_TYPE(intty) : intty
-#elif defined(_MSC_VER) && _MSC_VER >= 1600  // Added in MSVC 2010.
+#if __has_feature(cxx_strong_enums) || LLVM_MSC_PREREQ(1600)
 # define LLVM_ENUM_INT_TYPE(intty) : intty
 #else
 # define LLVM_ENUM_INT_TYPE(intty)
@@ -405,9 +407,7 @@
 
 /// \brief Does the compiler support C++11 semantics for strongly typed forward
 /// declared enums?
-#if __has_feature(cxx_strong_enums)
-#define LLVM_HAS_STRONG_ENUMS 1
-#elif defined(_MSC_VER) && _MSC_VER >= 1700 // Added in MSVC 2012.
+#if __has_feature(cxx_strong_enums) || LLVM_MSC_PREREQ(1700)
 #define LLVM_HAS_STRONG_ENUMS 1
 #else
 #define LLVM_HAS_STRONG_ENUMS 0
