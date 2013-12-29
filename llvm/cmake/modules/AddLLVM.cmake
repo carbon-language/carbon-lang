@@ -26,7 +26,7 @@ function(add_llvm_symbol_exports target_name export_file)
       VERBATIM
       COMMENT "Creating export file for ${target_name}")
     set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                 LINK_FLAGS " -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
+                 LINK_FLAGS "  -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
   else()
     set(native_export_file "${target_name}.def")
 
@@ -46,10 +46,10 @@ function(add_llvm_symbol_exports target_name export_file)
       COMMENT "Creating export file for ${target_name}")
     if(CYGWIN OR MINGW)
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                   LINK_FLAGS "${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
+                   LINK_FLAGS " ${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
     else()
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                   LINK_FLAGS "/DEF:${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
+                   LINK_FLAGS " /DEF:${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
     endif()
   endif()
 
@@ -147,8 +147,8 @@ ${name} ignored.")
 
     if (APPLE)
       # Darwin-specific linker flags for loadable modules.
-      set_target_properties(${name} PROPERTIES
-        LINK_FLAGS "-Wl,-flat_namespace -Wl,-undefined -Wl,suppress")
+      set_property(TARGET ${name} APPEND_STRING PROPERTY
+        LINK_FLAGS " -Wl,-flat_namespace -Wl,-undefined -Wl,suppress")
     endif()
 
     if( EXCLUDE_FROM_ALL )
