@@ -136,8 +136,7 @@
 ///   ...
 /// };
 #if (__has_feature(cxx_deleted_functions) \
-     || defined(__GXX_EXPERIMENTAL_CXX0X__))
-     // No version of MSVC currently supports this.
+     || defined(__GXX_EXPERIMENTAL_CXX0X__)) || LLVM_MSC_PREREQ(1800)
 #define LLVM_DELETED_FUNCTION = delete
 #else
 #define LLVM_DELETED_FUNCTION
@@ -379,7 +378,7 @@
 /// \brief Expands to explicit on compilers which support explicit conversion
 /// operators. Otherwise expands to nothing.
 #if (__has_feature(cxx_explicit_conversions) \
-     || defined(__GXX_EXPERIMENTAL_CXX0X__))
+     || defined(__GXX_EXPERIMENTAL_CXX0X__)) || LLVM_MSC_PREREQ(1800)
 #define LLVM_EXPLICIT explicit
 #else
 #define LLVM_EXPLICIT
@@ -387,7 +386,7 @@
 
 /// \macro LLVM_STATIC_ASSERT
 /// \brief Expands to C/C++'s static_assert on compilers which support it.
-#if __has_feature(cxx_static_assert)
+#if __has_feature(cxx_static_assert) || LLVM_MSC_PREREQ(1600)
 # define LLVM_STATIC_ASSERT(expr, msg) static_assert(expr, msg)
 #elif __has_feature(c_static_assert)
 # define LLVM_STATIC_ASSERT(expr, msg) _Static_assert(expr, msg)
