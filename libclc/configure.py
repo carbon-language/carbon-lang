@@ -156,6 +156,7 @@ for target in targets:
   for device in available_targets[target]['devices']:
     # The rule for building a .bc file for the specified architecture using clang.
     clang_bc_flags = "-target %s -I`dirname $in` %s " \
+                     "-fno-builtin " \
                      "-Dcl_clang_storage_class_specifiers " \
                      "-Dcl_khr_fp64 " \
                      "-Dcles_khr_int64 " \
