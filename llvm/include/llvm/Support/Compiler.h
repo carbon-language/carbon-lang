@@ -135,8 +135,8 @@
 /// public:
 ///   ...
 /// };
-#if (__has_feature(cxx_deleted_functions) \
-     || defined(__GXX_EXPERIMENTAL_CXX0X__)) || LLVM_MSC_PREREQ(1800)
+#if __has_feature(cxx_deleted_functions) || \
+    defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1800)
 #define LLVM_DELETED_FUNCTION = delete
 #else
 #define LLVM_DELETED_FUNCTION
@@ -377,8 +377,8 @@
 /// \macro LLVM_EXPLICIT
 /// \brief Expands to explicit on compilers which support explicit conversion
 /// operators. Otherwise expands to nothing.
-#if (__has_feature(cxx_explicit_conversions) \
-     || defined(__GXX_EXPERIMENTAL_CXX0X__)) || LLVM_MSC_PREREQ(1800)
+#if __has_feature(cxx_explicit_conversions) || \
+    defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1800)
 #define LLVM_EXPLICIT explicit
 #else
 #define LLVM_EXPLICIT
