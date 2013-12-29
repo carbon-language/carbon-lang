@@ -227,7 +227,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     if (MI->getOpcode() == SP::CALL)
       assert(TF == SPII::MO_NO_FLAG &&
              "Cannot handle target flags on call address");
-    else if (MI->getOpcode() == SP::SETHIi)
+    else if (MI->getOpcode() == SP::SETHIi || MI->getOpcode() == SP::SETHIXi)
       assert((TF == SPII::MO_HI || TF == SPII::MO_H44 || TF == SPII::MO_HH
               || TF == SPII::MO_TLS_GD_HI22
               || TF == SPII::MO_TLS_LDM_HI22
@@ -250,7 +250,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     else if (MI->getOpcode() == SP::TLS_LDXrr)
       assert(TF == SPII::MO_TLS_IE_LDX &&
              "Cannot handle target flags on ldx for TLS");
-    else if (MI->getOpcode() == SP::XORri)
+    else if (MI->getOpcode() == SP::XORri || MI->getOpcode() == SP::XORXri)
       assert((TF == SPII::MO_TLS_LDO_LOX10 || TF == SPII::MO_TLS_LE_LOX10) &&
              "Cannot handle target flags on xor for TLS");
     else

@@ -141,31 +141,35 @@ def : Pat<(i64 imm:$val),
 let Predicates = [Is64Bit] in {
 
 // Register-register instructions.
+defm ANDX    : F3_12<"and", 0b000001, and, I64Regs, i64, i64imm>;
+defm ORX     : F3_12<"or",  0b000010, or,  I64Regs, i64, i64imm>;
+defm XORX    : F3_12<"xor", 0b000011, xor, I64Regs, i64, i64imm>;
 
-def : Pat<(and i64:$a, i64:$b), (ANDrr $a, $b)>;
-def : Pat<(or  i64:$a, i64:$b), (ORrr  $a, $b)>;
-def : Pat<(xor i64:$a, i64:$b), (XORrr $a, $b)>;
+def ANDXNrr  : F3_1<2, 0b000101,
+                 (outs I64Regs:$dst), (ins I64Regs:$b, I64Regs:$c),
+                 "andn $b, $c, $dst",
+                 [(set i64:$dst, (and i64:$b, (not i64:$c)))]>;
+def ORXNrr   : F3_1<2, 0b000110,
+                 (outs I64Regs:$dst), (ins I64Regs:$b, I64Regs:$c),
+                 "orn $b, $c, $dst",
+                 [(set i64:$dst, (or i64:$b, (not i64:$c)))]>;
+def XNORXrr  : F3_1<2, 0b000111,
+                   (outs I64Regs:$dst), (ins I64Regs:$b, I64Regs:$c),
+                   "xnor $b, $c, $dst",
+                   [(set i64:$dst, (not (xor i64:$b, i64:$c)))]>;
 
-def : Pat<(and i64:$a, (not i64:$b)), (ANDNrr $a, $b)>;
-def : Pat<(or  i64:$a, (not i64:$b)), (ORNrr  $a, $b)>;
-def : Pat<(xor i64:$a, (not i64:$b)), (XNORrr $a, $b)>;
-
-def : Pat<(add i64:$a, i64:$b), (ADDrr $a, $b)>;
-def : Pat<(sub i64:$a, i64:$b), (SUBrr $a, $b)>;
+defm ADDX    : F3_12<"add", 0b000000, add, I64Regs, i64, i64imm>;
+defm SUBX    : F3_12<"sub", 0b000100, sub, I64Regs, i64, i64imm>;
 
 def : Pat<(SPcmpicc i64:$a, i64:$b), (CMPrr $a, $b)>;
 
-def : Pat<(tlsadd i64:$a, i64:$b, tglobaltlsaddr:$sym),
-          (TLS_ADDrr $a, $b, $sym)>;
+def TLS_ADDXrr : F3_1<2, 0b000000, (outs I64Regs:$rd),
+                   (ins I64Regs:$rs1, I64Regs:$rs2, TLSSym:$sym),
+                   "add $rs1, $rs2, $rd, $sym",
+                   [(set i64:$rd,
+                       (tlsadd i64:$rs1, i64:$rs2, tglobaltlsaddr:$sym))]>;
 
 // Register-immediate instructions.
-
-def : Pat<(and i64:$a, (i64 simm13:$b)), (ANDri $a, (as_i32imm $b))>;
-def : Pat<(or  i64:$a, (i64 simm13:$b)), (ORri  $a, (as_i32imm $b))>;
-def : Pat<(xor i64:$a, (i64 simm13:$b)), (XORri $a, (as_i32imm $b))>;
-
-def : Pat<(add i64:$a, (i64 simm13:$b)), (ADDri $a, (as_i32imm $b))>;
-def : Pat<(sub i64:$a, (i64 simm13:$b)), (SUBri $a, (as_i32imm $b))>;
 
 def : Pat<(SPcmpicc i64:$a, (i64 simm13:$b)), (CMPri $a, (as_i32imm $b))>;
 
@@ -402,3 +406,38 @@ def : Pat<(SPselectfcc (i64 simm11:$t), i64:$f, imm:$cond),
           (MOVFCCri (as_i32imm $t), $f, imm:$cond)>;
 
 } // Predicates = [Is64Bit]
+
+
+// 64 bit SETHI
+let Predicates = [Is64Bit] in {
+def SETHIXi : F2_1<0b100,
+                   (outs IntRegs:$rd), (ins i64imm:$imm22),
+                   "sethi $imm22, $rd",
+                   [(set i64:$rd, SETHIimm:$imm22)]>;
+}
+// Global addresses, constant pool entries
+let Predicates = [Is64Bit] in {
+
+def : Pat<(SPhi tglobaladdr:$in), (SETHIi tglobaladdr:$in)>;
+def : Pat<(SPlo tglobaladdr:$in), (ORXri (i64 G0), tglobaladdr:$in)>;
+def : Pat<(SPhi tconstpool:$in), (SETHIi tconstpool:$in)>;
+def : Pat<(SPlo tconstpool:$in), (ORXri (i64 G0), tconstpool:$in)>;
+
+// GlobalTLS addresses
+def : Pat<(SPhi tglobaltlsaddr:$in), (SETHIi tglobaltlsaddr:$in)>;
+def : Pat<(SPlo tglobaltlsaddr:$in), (ORXri (i64 G0), tglobaltlsaddr:$in)>;
+def : Pat<(add (SPhi tglobaltlsaddr:$in1), (SPlo tglobaltlsaddr:$in2)),
+          (ADDXri (SETHIXi tglobaltlsaddr:$in1), (tglobaltlsaddr:$in2))>;
+def : Pat<(xor (SPhi tglobaltlsaddr:$in1), (SPlo tglobaltlsaddr:$in2)),
+          (XORXri  (SETHIXi tglobaltlsaddr:$in1), (tglobaltlsaddr:$in2))>;
+
+// Blockaddress
+def : Pat<(SPhi tblockaddress:$in), (SETHIi tblockaddress:$in)>;
+def : Pat<(SPlo tblockaddress:$in), (ORXri (i64 G0), tblockaddress:$in)>;
+
+// Add reg, lo.  This is used when taking the addr of a global/constpool entry.
+def : Pat<(add iPTR:$r, (SPlo tglobaladdr:$in)), (ADDXri $r, tglobaladdr:$in)>;
+def : Pat<(add iPTR:$r, (SPlo tconstpool:$in)),  (ADDXri $r, tconstpool:$in)>;
+def : Pat<(add iPTR:$r, (SPlo tblockaddress:$in)),
+                        (ADDXri $r, tblockaddress:$in)>;
+}
