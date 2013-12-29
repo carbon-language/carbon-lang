@@ -273,41 +273,6 @@ function(clang_tablegen)
   endif()
 endfunction(clang_tablegen)
 
-# FIXME: Generalize and move to llvm.
-function(add_clang_symbol_exports target_name export_file)
-  # Makefile.rules contains special cases for different platforms.
-  # We restrict ourselves to Darwin for the time being.
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_custom_command(OUTPUT symbol.exports
-      COMMAND sed -e "s/^/_/" < ${export_file} > symbol.exports
-      DEPENDS ${export_file}
-      VERBATIM
-      COMMENT "Creating export file for ${target_name}")
-    add_custom_target(${target_name}_exports DEPENDS symbol.exports)
-    set_property(DIRECTORY APPEND
-      PROPERTY ADDITIONAL_MAKE_CLEAN_FILES symbol.exports)
-
-    get_property(srcs TARGET ${target_name} PROPERTY SOURCES)
-    foreach(src ${srcs})
-      get_filename_component(extension ${src} EXT)
-      if(extension STREQUAL ".cpp")
-        set(first_source_file ${src})
-        break()
-      endif()
-    endforeach()
-  
-    # Force re-linking when the exports file changes. Actually, it
-    # forces recompilation of the source file. The LINK_DEPENDS target
-    # property only works for makefile-based generators.
-    set_property(SOURCE ${first_source_file} APPEND PROPERTY
-      OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/symbol.exports)
-  
-    set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                 LINK_FLAGS " -Wl,-exported_symbols_list,${CMAKE_CURRENT_BINARY_DIR}/symbol.exports")
-    add_dependencies(${target_name} ${target_name}_exports)
-  endif()
-endfunction(add_clang_symbol_exports)
-
 macro(add_clang_library name)
   llvm_process_sources(srcs ${ARGN})
   if(MSVC_IDE OR XCODE)
@@ -348,8 +313,8 @@ macro(add_clang_library name)
   target_link_libraries( ${name} ${LLVM_COMMON_LIBS} )
   link_system_libs( ${name} )
   
-  if (SHARED_LIBRARY AND EXPORTED_SYMBOL_FILE)
-    add_clang_symbol_exports( ${name} ${EXPORTED_SYMBOL_FILE} ) 
+  if (SHARED_LIBRARY AND LLVM_EXPORTED_SYMBOL_FILE)
+    add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
   endif()
 
   if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "libclang")
