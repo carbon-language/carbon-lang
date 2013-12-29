@@ -81,8 +81,8 @@ public:
   // getBranchJumpOpValue - Return binary encoding of the jump
   // target operand. If the machine operand requires relocation,
   // record the relocation and return zero.
-   unsigned getJumpTargetOpValue(const MCInst &MI, unsigned OpNo,
-                                 SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getJumpTargetOpValue(const MCInst &MI, unsigned OpNo,
+                                SmallVectorImpl<MCFixup> &Fixups) const;
 
   // getBranchJumpOpValueMM - Return binary encoding of the microMIPS jump
   // target operand. If the machine operand requires relocation,
