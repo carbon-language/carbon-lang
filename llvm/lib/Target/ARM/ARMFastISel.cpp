@@ -77,6 +77,7 @@ class ARMFastISel : public FastISel {
 
   /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
   /// make the right decision when generating code for different targets.
+  Module &M;
   const ARMSubtarget *Subtarget;
   const TargetMachine &TM;
   const TargetInstrInfo &TII;
@@ -91,6 +92,7 @@ class ARMFastISel : public FastISel {
     explicit ARMFastISel(FunctionLoweringInfo &funcInfo,
                          const TargetLibraryInfo *libInfo)
     : FastISel(funcInfo, libInfo),
+      M(const_cast<Module&>(*funcInfo.Fn->getParent())),
       TM(funcInfo.MF->getTarget()),
       TII(*TM.getInstrInfo()),
       TLI(*TM.getTargetLowering()) {
@@ -2244,7 +2246,7 @@ unsigned ARMFastISel::getLibcallReg(const Twine &Name) {
   EVT LCREVT = TLI.getValueType(GVTy);
   if (!LCREVT.isSimple()) return 0;
 
-  GlobalValue *GV = new GlobalVariable(Type::getInt32Ty(*Context), false,
+  GlobalValue *GV = new GlobalVariable(M, Type::getInt32Ty(*Context), false,
                                        GlobalValue::ExternalLinkage, 0, Name);
   assert(GV->getType() == GVTy && "We miscomputed the type for the global!");
   return ARMMaterializeGV(GV, LCREVT.getSimpleVT());
