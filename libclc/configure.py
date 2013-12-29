@@ -10,6 +10,7 @@ version_patch = 1;
 
 from optparse import OptionParser
 import os
+import string
 from subprocess import *
 import sys
 
@@ -62,8 +63,13 @@ def llvm_config(args):
     print "Please ensure that llvm-config is in your $PATH, or use --with-llvm-config."
     sys.exit(1)
 
+llvm_version = string.split(string.replace(llvm_config(['--version']), 'svn', ''), '.')
+llvm_system_libs = ''
+if (int(llvm_version[0]) == 3 and int(llvm_version[1]) >= 5) or int(llvm_version[0]) > 3:
+    llvm_system_libs = llvm_config(['--system-libs'])
 llvm_bindir = llvm_config(['--bindir'])
 llvm_core_libs = llvm_config(['--libs', 'core', 'bitreader', 'bitwriter']) + ' ' + \
+                 llvm_system_libs + ' ' + \
                  llvm_config(['--ldflags'])
 llvm_cxxflags = llvm_config(['--cxxflags']) + ' -fno-exceptions -fno-rtti'
 
