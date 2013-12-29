@@ -134,12 +134,12 @@ ${name} ignored.")
       set(libkind SHARED)
     endif()
 
+    add_library( ${name} ${libkind} ${ALL_FILES} )
+    set_target_properties( ${name} PROPERTIES PREFIX "" )
+
     if (LLVM_EXPORTED_SYMBOL_FILE)
       add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
     endif(LLVM_EXPORTED_SYMBOL_FILE)
-
-    add_library( ${name} ${libkind} ${ALL_FILES} )
-    set_target_properties( ${name} PROPERTIES PREFIX "" )
 
     llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
     link_system_libs( ${name} )
