@@ -5112,13 +5112,13 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                     SMLoc NameLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // FIXME: Can this be done via tablegen in some fashion?
-  bool HasPrecisionRestrictions;
+  bool RequireVFPRegisterList;
   bool AcceptDoublePrecisionOnly;
   bool AcceptSinglePrecisionOnly;
-  HasPrecisionRestrictions = Name.startswith("fldm") || Name.startswith("fstm");
+  RequireVFPRegisterList = Name.startswith("fldm") || Name.startswith("fstm");
   AcceptDoublePrecisionOnly =
-    HasPrecisionRestrictions && (Name.back() == 'd' || Name.back() == 'x');
-  AcceptSinglePrecisionOnly = HasPrecisionRestrictions && Name.back() == 's';
+    RequireVFPRegisterList && (Name.back() == 'd' || Name.back() == 'x');
+  AcceptSinglePrecisionOnly = RequireVFPRegisterList && Name.back() == 's';
 
   // Apply mnemonic aliases before doing anything else, as the destination
   // mnemonic may include suffices and we want to handle them normally.
@@ -5288,24 +5288,14 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
   Parser.Lex(); // Consume the EndOfStatement
 
-  if (HasPrecisionRestrictions) {
+  if (RequireVFPRegisterList) {
     ARMOperand *Op = static_cast<ARMOperand*>(Operands.back());
-    assert(Op->isRegList());
-    const SmallVectorImpl<unsigned> &RegList = Op->getRegList();
-    for (SmallVectorImpl<unsigned>::const_iterator RLI = RegList.begin(),
-                                                   RLE = RegList.end();
-         RLI != RLE; ++RLI) {
-      if (AcceptSinglePrecisionOnly &&
-          !ARMMCRegisterClasses[ARM::SPRRegClassID].contains(*RLI))
-        return Error(Op->getStartLoc(),
-                     "VFP/Neon single precision register expected");
-      else if (AcceptDoublePrecisionOnly &&
-               !ARMMCRegisterClasses[ARM::DPRRegClassID].contains(*RLI))
-        return Error(Op->getStartLoc(),
-                     "VFP/Neon double precision register expected");
-      else
-        llvm_unreachable("must have single or double precision restrictions");
-    }
+    if (AcceptSinglePrecisionOnly && !Op->isSPRRegList())
+      return Error(Op->getStartLoc(),
+                   "VFP/Neon single precision register expected");
+    if (AcceptDoublePrecisionOnly && !Op->isDPRRegList())
+      return Error(Op->getStartLoc(),
+                   "VFP/Neon double precision register expected");
   }
 
   // Some instructions, mostly Thumb, have forms for the same mnemonic that
