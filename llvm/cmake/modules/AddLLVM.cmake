@@ -5,28 +5,28 @@ include(LLVM-Config)
 function(add_llvm_symbol_exports target_name export_file)
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(native_export_file "symbol.exports")
-    add_custom_command(OUTPUT symbol.exports
-      COMMAND sed -e "s/^/_/" < ${export_file} > symbol.exports
+    add_custom_command(OUTPUT ${native_export_file}
+      COMMAND sed -e "s/^/_/" < ${export_file} > ${native_export_file}
       DEPENDS ${export_file}
       VERBATIM
       COMMENT "Creating export file for ${target_name}")
     set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                 LINK_FLAGS " -Wl,-exported_symbols_list,${CMAKE_CURRENT_BINARY_DIR}/symbol.exports")
+                 LINK_FLAGS " -Wl,-exported_symbols_list,${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
   elseif(LLVM_HAVE_LINK_VERSION_SCRIPT)
     # Gold and BFD ld require a version script rather than a plain list.
     set(native_export_file "symbol.exports")
     # FIXME: Don't write the "local:" line on OpenBSD.
-    add_custom_command(OUTPUT symbol.exports
-      COMMAND echo "{" > symbol.exports
-      COMMAND grep -q "[[:alnum:]]" ${export_file} && echo "  global:" >> symbol.exports || :
-      COMMAND sed -e "s/$/;/" -e "s/^/    /" < ${export_file} >> symbol.exports
-      COMMAND echo "  local: *;" >> symbol.exports
-      COMMAND echo "};" >> symbol.exports
+    add_custom_command(OUTPUT ${native_export_file}
+      COMMAND echo "{" > ${native_export_file}
+      COMMAND grep -q "[[:alnum:]]" ${export_file} && echo "  global:" >> ${native_export_file} || :
+      COMMAND sed -e "s/$/;/" -e "s/^/    /" < ${export_file} >> ${native_export_file}
+      COMMAND echo "  local: *;" >> ${native_export_file}
+      COMMAND echo "};" >> ${native_export_file}
       DEPENDS ${export_file}
       VERBATIM
       COMMENT "Creating export file for ${target_name}")
     set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                 LINK_FLAGS " -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/symbol.exports")
+                 LINK_FLAGS " -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
   else()
     set(native_export_file "symbol.def")
 
@@ -38,19 +38,18 @@ function(add_llvm_symbol_exports target_name export_file)
     # Using ${export_file} in add_custom_command directly confuses cmd.exe.
     file(TO_NATIVE_PATH ${export_file} export_file_backslashes)
 
-    add_custom_command(OUTPUT symbol.def
-      COMMAND ${CMAKE_COMMAND} -E echo "EXPORTS" > symbol.def
-      COMMAND ${CAT} ${export_file_backslashes} >> symbol.def
+    add_custom_command(OUTPUT ${native_export_file}
+      COMMAND ${CMAKE_COMMAND} -E echo "EXPORTS" > ${native_export_file}
+      COMMAND ${CAT} ${export_file_backslashes} >> ${native_export_file}
       DEPENDS ${export_file}
       VERBATIM
       COMMENT "Creating export file for ${target_name}")
     if(CYGWIN OR MINGW)
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                   LINK_FLAGS "${CMAKE_CURRENT_BINARY_DIR}/symbol.def")
+                   LINK_FLAGS "${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
     else()
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                   LINK_FLAGS "/DEF:${CMAKE_CURRENT_BINARY_DIR}/symbol.def")
-    endif()
+                   LINK_FLAGS " ${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
   endif()
 
   add_custom_target(${target_name}_exports DEPENDS ${native_export_file})
