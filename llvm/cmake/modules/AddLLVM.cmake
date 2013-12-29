@@ -50,6 +50,7 @@ function(add_llvm_symbol_exports target_name export_file)
     else()
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
                    LINK_FLAGS " ${CMAKE_CURRENT_BINARY_DIR}/${native_export_file}")
+    endif()
   endif()
 
   add_custom_target(${target_name}_exports DEPENDS ${native_export_file})
