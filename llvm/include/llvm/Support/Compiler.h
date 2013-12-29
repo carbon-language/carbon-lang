@@ -43,11 +43,14 @@
 /// \macro LLVM_MSC_PREREQ
 /// \brief Is the compiler MSVC of at least the specified version?
 /// The common \param version values to check for are:
-///  * 1600: Microsoft Visual Studio 2010
-///  * 1700: Microsoft Visual Studio 2012
-///  * 1800: Microsoft Visual Studio 2013
-#define LLVM_MSC_PREREQ(version) \
-  (defined(_MSC_VER) && _MSC_VER >= (version))
+///  * 1600: Microsoft Visual Studio 2010 / 10.0
+///  * 1700: Microsoft Visual Studio 2012 / 11.0
+///  * 1800: Microsoft Visual Studio 2013 / 12.0
+#ifdef _MSC_VER
+#define LLVM_MSC_PREREQ(version) (_MSC_VER >= (version))
+#else
+#define LLVM_MSC_PREREQ(version) 0
+#endif
 
 /// \brief Does the compiler support r-value references?
 /// This implies that <utility> provides the one-argument std::move;  it
