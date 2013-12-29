@@ -128,10 +128,11 @@ class TestSuite:
 class Test:
     """Test - Information on a single test instance."""
 
-    def __init__(self, suite, path_in_suite, config):
+    def __init__(self, suite, path_in_suite, config, file_path = None):
         self.suite = suite
         self.path_in_suite = path_in_suite
         self.config = config
+        self.file_path = file_path
         # A list of conditions under which this test is expected to fail. These
         # can optionally be provided by test format handlers, and will be
         # honored when the test result is supplied.
@@ -156,6 +157,11 @@ class Test:
         
     def getFullName(self):
         return self.suite.config.name + ' :: ' + '/'.join(self.path_in_suite)
+
+    def getFilePath(self):
+        if self.file_path:
+            return self.file_path
+        return self.getSourcePath()
 
     def getSourcePath(self):
         return self.suite.getSourcePath(self.path_in_suite)
