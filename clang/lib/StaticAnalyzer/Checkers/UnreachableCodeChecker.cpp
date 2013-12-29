@@ -242,7 +242,7 @@ bool UnreachableCodeChecker::isInvalidPath(const CFGBlock *CB,
 bool UnreachableCodeChecker::isEmptyCFGBlock(const CFGBlock *CB) {
   return CB->getLabel() == 0       // No labels
       && CB->size() == 0           // No statements
-      && CB->getTerminator() == 0; // No terminator
+      && !CB->getTerminator();     // No terminator
 }
 
 void ento::registerUnreachableCodeChecker(CheckerManager &mgr) {
