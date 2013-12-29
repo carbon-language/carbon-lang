@@ -37,7 +37,7 @@ function(add_llvm_symbol_exports target_name export_file)
 
     add_custom_command(OUTPUT symbol.def
       COMMAND ${CMAKE_COMMAND} -E echo "EXPORTS" > symbol.def
-      COMMAND ${CAT} "${export_file}" >> symbol.def
+      COMMAND ${CAT} "\"${export_file}\"" >> symbol.def
       DEPENDS ${export_file}
       VERBATIM
       COMMENT "Creating export file for ${target_name}")
