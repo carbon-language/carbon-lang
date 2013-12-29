@@ -86,10 +86,10 @@ macro(add_llvm_library name)
         PROPERTIES
         IMPORT_SUFFIX ".imp")
     endif ()
-  endif()
 
-  if (LLVM_EXPORTED_SYMBOL_FILE)
-    add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
+    if (LLVM_EXPORTED_SYMBOL_FILE)
+      add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
+    endif()
   endif()
 
   # Ensure that the system libraries always comes last on the
