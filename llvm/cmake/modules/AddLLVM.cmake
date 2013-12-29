@@ -44,7 +44,7 @@ function(add_llvm_symbol_exports target_name export_file)
       DEPENDS ${export_file}
       VERBATIM
       COMMENT "Creating export file for ${target_name}")
-    if(CYGWIN)
+    if(CYGWIN OR MINGW)
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
                    LINK_FLAGS "${CMAKE_CURRENT_BINARY_DIR}/symbol.def")
     else()
