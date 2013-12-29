@@ -411,3 +411,33 @@ entry:
 }
 
 declare i32 @use_buf(i32, i8*)
+
+; CHECK-LABEL: test_fp128_args
+; CHECK-DAG:   std %f0, [%fp+{{.+}}]
+; CHECK-DAG:   std %f2, [%fp+{{.+}}]
+; CHECK-DAG:   std %f6, [%fp+{{.+}}]
+; CHECK-DAG:   std %f4, [%fp+{{.+}}]
+; CHECK:       add %fp, [[Offset:[0-9]+]], %o0
+; CHECK:       call _Qp_add
+; CHECK:       ldd [%fp+[[Offset]]], %f0
+define fp128 @test_fp128_args(fp128 %a, fp128 %b) {
+entry:
+  %0 = fadd fp128 %a, %b
+  ret fp128 %0
+}
+
+declare i64 @receive_fp128(i64 %a, ...)
+
+; CHECK-LABEL: test_fp128_variable_args
+; CHECK-DAG:   std %f4, [%sp+[[Offset0:[0-9]+]]]
+; CHECK-DAG:   std %f6, [%sp+[[Offset1:[0-9]+]]]
+; CHECK-DAG:   ldx [%sp+[[Offset0]]], %o2
+; CHECK-DAG:   ldx [%sp+[[Offset1]]], %o3
+; CHECK:       call receive_fp128
+define i64 @test_fp128_variable_args(i64 %a, fp128 %b) {
+entry:
+  %0 = call i64 (i64, ...)* @receive_fp128(i64 %a, fp128 %b)
+  ret i64 %0
+}
+
+
