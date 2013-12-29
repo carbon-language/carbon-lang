@@ -1008,6 +1008,7 @@ protected:
             param = new CommandObjectTypeFormatList_LoopCallbackParam(this,&result,NULL,cate_regex);
         
         DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
+        delete param;
 
         if (cate_regex)
             delete cate_regex;
@@ -2190,7 +2191,8 @@ protected:
             param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result,NULL,cate_regex);
         
         DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
-                
+        delete param;
+
         if (DataVisualization::NamedSummaryFormats::GetCount() > 0)
         {
             result.GetOutputStream().Printf("Named summaries:\n");
@@ -2753,6 +2755,7 @@ protected:
             param = new CommandObjectTypeFilterList_LoopCallbackParam(this,&result,NULL,cate_regex);
         
         DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
+        delete param;
         
         if (cate_regex)
             delete cate_regex;
@@ -2967,7 +2970,8 @@ protected:
             param = new CommandObjectTypeSynthList_LoopCallbackParam(this,&result,NULL,cate_regex);
         
         DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
-                
+        delete param;
+
         if (cate_regex)
             delete cate_regex;
         
