@@ -8504,7 +8504,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 
 /// LowerShiftParts - Lower SRA_PARTS and friends, which return two i32 values
 /// and take a 2 x i32 value to shift plus a shift amount.
-SDValue X86TargetLowering::LowerShiftParts(SDValue Op, SelectionDAG &DAG) const{
+static SDValue LowerShiftParts(SDValue Op, SelectionDAG &DAG) {
   assert(Op.getNumOperands() == 3 && "Not a double-shift!");
   MVT VT = Op.getSimpleValueType();
   unsigned VTBits = VT.getSizeInBits();
@@ -9278,7 +9278,7 @@ static SDValue LowerFP_EXTEND(SDValue Op, SelectionDAG &DAG) {
                                  In, DAG.getUNDEF(SVT)));
 }
 
-SDValue X86TargetLowering::LowerFABS(SDValue Op, SelectionDAG &DAG) const {
+static SDValue LowerFABS(SDValue Op, SelectionDAG &DAG) {
   LLVMContext *Context = DAG.getContext();
   SDLoc dl(Op);
   MVT VT = Op.getSimpleValueType();
@@ -9296,7 +9296,8 @@ SDValue X86TargetLowering::LowerFABS(SDValue Op, SelectionDAG &DAG) const {
     C = ConstantFP::get(*Context, APFloat(APFloat::IEEEsingle,
                                           APInt(32, ~(1U << 31))));
   C = ConstantVector::getSplat(NumElts, C);
-  SDValue CPIdx = DAG.getConstantPool(C, getPointerTy());
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  SDValue CPIdx = DAG.getConstantPool(C, TLI.getPointerTy());
   unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   SDValue Mask = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                              MachinePointerInfo::getConstantPool(),
@@ -9312,7 +9313,7 @@ SDValue X86TargetLowering::LowerFABS(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(X86ISD::FAND, dl, VT, Op.getOperand(0), Mask);
 }
 
-SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) const {
+static SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG) {
   LLVMContext *Context = DAG.getContext();
   SDLoc dl(Op);
   MVT VT = Op.getSimpleValueType();
@@ -9330,7 +9331,8 @@ SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) const {
     C = ConstantFP::get(*Context, APFloat(APFloat::IEEEsingle,
                                           APInt(32, 1U << 31)));
   C = ConstantVector::getSplat(NumElts, C);
-  SDValue CPIdx = DAG.getConstantPool(C, getPointerTy());
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  SDValue CPIdx = DAG.getConstantPool(C, TLI.getPointerTy());
   unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   SDValue Mask = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                              MachinePointerInfo::getConstantPool(),
@@ -9347,7 +9349,8 @@ SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(X86ISD::FXOR, dl, VT, Op.getOperand(0), Mask);
 }
 
-SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
+static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   LLVMContext *Context = DAG.getContext();
   SDValue Op0 = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1);
@@ -9383,7 +9386,7 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
     CV.push_back(ConstantFP::get(*Context, APFloat(Sem, APInt(32, 0))));
   }
   Constant *C = ConstantVector::get(CV);
-  SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
+  SDValue CPIdx = DAG.getConstantPool(C, TLI.getPointerTy(), 16);
   SDValue Mask1 = DAG.getLoad(SrcVT, dl, DAG.getEntryNode(), CPIdx,
                               MachinePointerInfo::getConstantPool(),
                               false, false, false, 16);
@@ -9416,7 +9419,7 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
     CV.push_back(ConstantFP::get(*Context, APFloat(Sem, APInt(32, 0))));
   }
   C = ConstantVector::get(CV);
-  CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
+  CPIdx = DAG.getConstantPool(C, TLI.getPointerTy(), 16);
   SDValue Mask2 = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                               MachinePointerInfo::getConstantPool(),
                               false, false, false, 16);
