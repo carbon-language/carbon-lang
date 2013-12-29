@@ -44,8 +44,13 @@ function(add_llvm_symbol_exports target_name export_file)
       DEPENDS ${export_file}
       VERBATIM
       COMMENT "Creating export file for ${target_name}")
-    set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                 LINK_FLAGS "/DEF:${CMAKE_CURRENT_BINARY_DIR}/symbol.def")
+    if(CYGWIN)
+      set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                   LINK_FLAGS "${CMAKE_CURRENT_BINARY_DIR}/symbol.def")
+    else()
+      set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                   LINK_FLAGS "/DEF:${CMAKE_CURRENT_BINARY_DIR}/symbol.def")
+    endif()
   endif()
 
   add_custom_target(${target_name}_exports DEPENDS ${native_export_file})
