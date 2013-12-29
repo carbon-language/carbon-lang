@@ -124,7 +124,7 @@ def sort_by_incremental_cache(run, litConfig):
         fname = test.getFilePath()
         try:
             index = -os.path.getmtime(fname)
-        except os.error as e:
+        except OSError as e:
             if litConfig.debug:
                 litConfig.note(e)
         return index
