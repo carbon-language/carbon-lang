@@ -1639,7 +1639,7 @@ def FCONSTS : VFPAI<(outs SPR:$Sd), (ins vfp_f32imm:$imm),
 //===----------------------------------------------------------------------===//
 // Assembler aliases.
 //
-// A few mnemnoic aliases for pre-unifixed syntax. We don't guarantee to
+// A few mnemonic aliases for pre-unifixed syntax. We don't guarantee to
 // support them all, but supporting at least some of the basics is
 // good to be friendly.
 def : VFP2MnemonicAlias<"flds", "vldr">;
