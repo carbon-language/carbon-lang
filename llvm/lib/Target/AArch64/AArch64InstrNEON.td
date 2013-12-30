@@ -5954,23 +5954,28 @@ def DUPdv_D : NeonI_Scalar_DUP<"dup", "d", FPR64, VPR128, neon_uimm1_bare> {
   let Inst{20-16} = {Imm, 0b1, 0b0, 0b0, 0b0};
 }
 
-multiclass NeonI_Scalar_DUP_Elt_pattern<Instruction DUPI, ValueType ResTy,
-  ValueType OpTy, Operand OpImm,
-  ValueType OpNTy, ValueType ExTy, Operand OpNImm> {
-  def : Pat<(ResTy (vector_extract (OpTy VPR128:$Rn), OpImm:$Imm)),
-            (ResTy (DUPI (OpTy VPR128:$Rn), OpImm:$Imm))>;
+def : Pat<(f32 (vector_extract (v4f32 VPR128:$Rn), 0)),
+          (f32 (EXTRACT_SUBREG (v4f32 VPR128:$Rn), sub_32))>;
+def : Pat<(f32 (vector_extract (v4f32 VPR128:$Rn), 1)),
+          (f32 (DUPsv_S (v4f32 VPR128:$Rn), 1))>;
+def : Pat<(f32 (vector_extract (v4f32 VPR128:$Rn), 2)),
+          (f32 (DUPsv_S (v4f32 VPR128:$Rn), 2))>;
+def : Pat<(f32 (vector_extract (v4f32 VPR128:$Rn), 3)),
+          (f32 (DUPsv_S (v4f32 VPR128:$Rn), 3))>;
 
-  def : Pat<(ResTy (vector_extract (OpNTy VPR64:$Rn), OpNImm:$Imm)),
-            (ResTy (DUPI
-              (ExTy (SUBREG_TO_REG (i64 0), VPR64:$Rn, sub_64)),
-                OpNImm:$Imm))>;
-}
+def : Pat<(f64 (vector_extract (v2f64 VPR128:$Rn), 0)),
+          (f64 (EXTRACT_SUBREG (v2f64 VPR128:$Rn), sub_64))>;
+def : Pat<(f64 (vector_extract (v2f64 VPR128:$Rn), 1)),
+          (f64 (DUPdv_D (v2f64 VPR128:$Rn), 1))>;
 
-// Patterns for vector extract of FP data using scalar DUP instructions
-defm : NeonI_Scalar_DUP_Elt_pattern<DUPsv_S, f32,
-  v4f32, neon_uimm2_bare, v2f32, v4f32, neon_uimm1_bare>;
-defm : NeonI_Scalar_DUP_Elt_pattern<DUPdv_D, f64,
-  v2f64, neon_uimm1_bare, v1f64, v2f64, neon_uimm0_bare>;
+def : Pat<(f32 (vector_extract (v2f32 VPR64:$Rn), 0)),
+          (f32 (EXTRACT_SUBREG (v2f32 VPR64:$Rn), sub_32))>;
+def : Pat<(f32 (vector_extract (v2f32 VPR64:$Rn), 1)),
+          (f32 (DUPsv_S (v4f32 (SUBREG_TO_REG (i64 0), VPR64:$Rn, sub_64)),
+            1))>;
+
+def : Pat<(f64 (vector_extract (v1f64 VPR64:$Rn), 0)),
+          (f64 (EXTRACT_SUBREG (v1f64 VPR64:$Rn), sub_64))>;
 
 multiclass NeonI_Scalar_DUP_Ext_Vec_pattern<Instruction DUPI,
   ValueType ResTy, ValueType OpTy,Operand OpLImm,
