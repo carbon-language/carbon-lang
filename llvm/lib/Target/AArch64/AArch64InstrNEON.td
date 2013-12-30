@@ -4637,7 +4637,13 @@ multiclass Neon_ScalarShiftLImm_D_size_patterns<SDPatternOperator opnode,
                 (INSTD FPR64:$Rn, imm:$Imm)>;
 }
 
-class Neon_ScalarShiftImm_V1_D_size_patterns<SDPatternOperator opnode,
+class Neon_ScalarShiftLImm_V1_D_size_patterns<SDPatternOperator opnode,
+                                             Instruction INSTD>
+  : Pat<(v1i64 (opnode (v1i64 FPR64:$Rn),
+            (v1i64 (Neon_vdup (i32 shl_imm64:$Imm))))),
+        (INSTD FPR64:$Rn, imm:$Imm)>;
+
+class Neon_ScalarShiftRImm_V1_D_size_patterns<SDPatternOperator opnode,
                                              Instruction INSTD>
   : Pat<(v1i64 (opnode (v1i64 FPR64:$Rn),
             (v1i64 (Neon_vdup (i32 shr_imm64:$Imm))))),
@@ -4704,13 +4710,13 @@ multiclass Neon_ScalarShiftImm_fcvts_SD_size_patterns<SDPatternOperator opnode,
 defm SSHR : NeonI_ScalarShiftRightImm_D_size<0b0, 0b00000, "sshr">;
 defm : Neon_ScalarShiftRImm_D_size_patterns<int_aarch64_neon_vshrds_n, SSHRddi>;
 // Pattern to match llvm.arm.* intrinsic.
-def : Neon_ScalarShiftImm_V1_D_size_patterns<sra, SSHRddi>;
+def : Neon_ScalarShiftRImm_V1_D_size_patterns<sra, SSHRddi>;
 
 // Scalar Unsigned Shift Right (Immediate)
 defm USHR : NeonI_ScalarShiftRightImm_D_size<0b1, 0b00000, "ushr">;
 defm : Neon_ScalarShiftRImm_D_size_patterns<int_aarch64_neon_vshrdu_n, USHRddi>;
 // Pattern to match llvm.arm.* intrinsic.
-def : Neon_ScalarShiftImm_V1_D_size_patterns<srl, USHRddi>;
+def : Neon_ScalarShiftRImm_V1_D_size_patterns<srl, USHRddi>;
 
 // Scalar Signed Rounding Shift Right (Immediate)
 defm SRSHR : NeonI_ScalarShiftRightImm_D_size<0b0, 0b00100, "srshr">;
@@ -4744,7 +4750,7 @@ def : Neon_ScalarShiftRImm_accum_D_size_patterns
 defm SHL : NeonI_ScalarShiftLeftImm_D_size<0b0, 0b01010, "shl">;
 defm : Neon_ScalarShiftLImm_D_size_patterns<int_aarch64_neon_vshld_n, SHLddi>;
 // Pattern to match llvm.arm.* intrinsic.
-def : Neon_ScalarShiftImm_V1_D_size_patterns<shl, SHLddi>;
+def : Neon_ScalarShiftLImm_V1_D_size_patterns<shl, SHLddi>;
 
 // Signed Saturating Shift Left (Immediate)
 defm SQSHL : NeonI_ScalarShiftLeftImm_BHSD_size<0b0, 0b01110, "sqshl">;
