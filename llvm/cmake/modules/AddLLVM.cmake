@@ -77,7 +77,7 @@ function(add_llvm_symbol_exports target_name export_file)
 endfunction(add_llvm_symbol_exports)
 
 function(add_dead_strip target_name)
-  if(NOT CYGWIN AND NOT MINGW)
+  if(NOT CYGWIN AND NOT MINGW AND NOT MSVC)
     if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
        SET(CMAKE_CXX_FLAGS
            "${CMAKE_CXX_FLAGS}  -ffunction-sections -fdata-sections"
