@@ -293,23 +293,6 @@ void DwarfCompileUnit::addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
   }
 }
 
-/// addLocalLabelAddress - Add a dwarf label attribute data and value using
-/// DW_FORM_addr.
-void DwarfCompileUnit::addLocalLabelAddress(DIE *Die,
-                                            dwarf::Attribute Attribute,
-                                            MCSymbol *Label) {
-  if (Label)
-    DD->addArangeLabel(SymbolCU(this, Label));
-
-  if (Label != NULL) {
-    DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
-    Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
-  } else {
-    DIEValue *Value = new (DIEValueAllocator) DIEInteger(0);
-    Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
-  }
-}
-
 /// addOpAddress - Add a dwarf op address data and value using the
 /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
