@@ -95,3 +95,20 @@ aliases:
 @ CHECK:	fldmeax sp!, {s0}
 @ CHECK:                     ^
 
+	fstmiaxcs r0, {s0}
+	fstmiaxhs r0, {s0}
+	fstmiaxls r0, {s0}
+	fstmiaxvs r0, {s0}
+@ CHECK: error: VFP/Neon double precision register expected
+@ CHECK: 	fstmiaxcs r0, {s0}
+@ CHECK:                      ^
+@ CHECK: error: VFP/Neon double precision register expected
+@ CHECK: 	fstmiaxhs r0, {s0}
+@ CHECK:                      ^
+@ CHECK: error: VFP/Neon double precision register expected
+@ CHECK: 	fstmiaxls r0, {s0}
+@ CHECK:                      ^
+@ CHECK: error: VFP/Neon double precision register expected
+@ CHECK: 	fstmiaxvs r0, {s0}
+@ CHECK:                      ^
+

@@ -5107,18 +5107,37 @@ static bool doesIgnoreDataTypeSuffix(StringRef Mnemonic, StringRef DT) {
 }
 static void applyMnemonicAliases(StringRef &Mnemonic, unsigned Features,
                                  unsigned VariantID);
+
+static bool RequiresVFPRegListValidation(StringRef Inst,
+                                         bool &AcceptSinglePrecisionOnly,
+                                         bool &AcceptDoublePrecisionOnly) {
+  if (Inst.size() < 7)
+    return false;
+
+  if (Inst.startswith("fldm") || Inst.startswith("fstm")) {
+    StringRef AddressingMode = Inst.substr(4, 2);
+    if (AddressingMode == "ia" || AddressingMode == "db" ||
+        AddressingMode == "ea" || AddressingMode == "fd") {
+      AcceptSinglePrecisionOnly = Inst[6] == 's';
+      AcceptDoublePrecisionOnly = Inst[6] == 'd' || Inst[6] == 'x';
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /// Parse an arm instruction mnemonic followed by its operands.
 bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                     SMLoc NameLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // FIXME: Can this be done via tablegen in some fashion?
-  bool RequireVFPRegisterList;
-  bool AcceptDoublePrecisionOnly;
+  bool RequireVFPRegisterListCheck;
   bool AcceptSinglePrecisionOnly;
-  RequireVFPRegisterList = Name.startswith("fldm") || Name.startswith("fstm");
-  AcceptDoublePrecisionOnly =
-    RequireVFPRegisterList && (Name.back() == 'd' || Name.back() == 'x');
-  AcceptSinglePrecisionOnly = RequireVFPRegisterList && Name.back() == 's';
+  bool AcceptDoublePrecisionOnly;
+  RequireVFPRegisterListCheck =
+    RequiresVFPRegListValidation(Name, AcceptSinglePrecisionOnly,
+                                 AcceptDoublePrecisionOnly);
 
   // Apply mnemonic aliases before doing anything else, as the destination
   // mnemonic may include suffices and we want to handle them normally.
@@ -5288,7 +5307,7 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
   Parser.Lex(); // Consume the EndOfStatement
 
-  if (RequireVFPRegisterList) {
+  if (RequireVFPRegisterListCheck) {
     ARMOperand *Op = static_cast<ARMOperand*>(Operands.back());
     if (AcceptSinglePrecisionOnly && !Op->isSPRRegList())
       return Error(Op->getStartLoc(),
