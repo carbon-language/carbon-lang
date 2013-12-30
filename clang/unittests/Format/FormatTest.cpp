@@ -7433,25 +7433,27 @@ TEST_F(FormatTest, ParsesConfigurationWithLanguages) {
   EXPECT_EQ(FormatStyle::LK_Cpp, Style.Language);
 }
 
+#undef CHECK_PARSE
+#undef CHECK_PARSE_BOOL
+
 TEST_F(FormatTest, UsesLanguageForBasedOnStyle) {
   FormatStyle Style = {};
   Style.Language = FormatStyle::LK_JavaScript;
   Style.BreakBeforeTernaryOperators = true;
-  CHECK_PARSE("BasedOnStyle: Google", BreakBeforeTernaryOperators, false);
+  EXPECT_EQ(0, parseConfiguration("BasedOnStyle: Google", &Style).value());
+  EXPECT_FALSE(Style.BreakBeforeTernaryOperators);
+
   Style.BreakBeforeTernaryOperators = true;
-  CHECK_PARSE("---\n"
+  EXPECT_EQ(0, parseConfiguration("---\n"
               "BasedOnStyle: Google\n"
               "---\n"
               "Language: JavaScript\n"
               "IndentWidth: 76\n"
-              "...\n",
-              BreakBeforeTernaryOperators, false);
+              "...\n", &Style).value());
+  EXPECT_FALSE(Style.BreakBeforeTernaryOperators);
   EXPECT_EQ(76u, Style.IndentWidth);
   EXPECT_EQ(FormatStyle::LK_JavaScript, Style.Language);
 }
-
-#undef CHECK_PARSE
-#undef CHECK_PARSE_BOOL
 
 TEST_F(FormatTest, ConfigurationRoundTripTest) {
   FormatStyle Style = getLLVMStyle();
