@@ -1620,7 +1620,7 @@ void EmitClangAttrASTVisitor(RecordKeeper &Records, raw_ostream &OS) {
       continue;
 
     OS << "template <typename Derived>\n"
-       << "bool RecursiveASTVisitor<Derived>::Traverse"
+       << "bool VISITORCLASS<Derived>::Traverse"
        << R.getName() << "Attr(" << R.getName() << "Attr *A) {\n"
        << "  if (!getDerived().VisitAttr(A))\n"
        << "    return false;\n"
@@ -1643,7 +1643,7 @@ void EmitClangAttrASTVisitor(RecordKeeper &Records, raw_ostream &OS) {
 
   // Write generic Traverse routine
   OS << "template <typename Derived>\n"
-     << "bool RecursiveASTVisitor<Derived>::TraverseAttr(Attr *A) {\n"
+     << "bool VISITORCLASS<Derived>::TraverseAttr(Attr *A) {\n"
      << "  if (!A)\n"
      << "    return true;\n"
      << "\n"
