@@ -1124,34 +1124,28 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::A7:  // 0F A7
     Need0FPrefix = true;
     break;
+  case X86II::XS:   // F3 0F
   case X86II::T8XS: // F3 0F 38
     EmitByte(0xF3, CurByte, OS);
     Need0FPrefix = true;
     break;
+  case X86II::XD:   // F2 0F
   case X86II::T8XD: // F2 0F 38
-    EmitByte(0xF2, CurByte, OS);
-    Need0FPrefix = true;
-    break;
   case X86II::TAXD: // F2 0F 3A
     EmitByte(0xF2, CurByte, OS);
     Need0FPrefix = true;
     break;
-  case X86II::XS:   // F3 0F
-    EmitByte(0xF3, CurByte, OS);
-    Need0FPrefix = true;
+  case X86II::D8:
+  case X86II::D9:
+  case X86II::DA:
+  case X86II::DB:
+  case X86II::DC:
+  case X86II::DD:
+  case X86II::DE:
+  case X86II::DF:
+    EmitByte(0xD8+(((TSFlags & X86II::Op0Mask) - X86II::D8) >> X86II::Op0Shift),
+             CurByte, OS);
     break;
-  case X86II::XD:   // F2 0F
-    EmitByte(0xF2, CurByte, OS);
-    Need0FPrefix = true;
-    break;
-  case X86II::D8: EmitByte(0xD8, CurByte, OS); break;
-  case X86II::D9: EmitByte(0xD9, CurByte, OS); break;
-  case X86II::DA: EmitByte(0xDA, CurByte, OS); break;
-  case X86II::DB: EmitByte(0xDB, CurByte, OS); break;
-  case X86II::DC: EmitByte(0xDC, CurByte, OS); break;
-  case X86II::DD: EmitByte(0xDD, CurByte, OS); break;
-  case X86II::DE: EmitByte(0xDE, CurByte, OS); break;
-  case X86II::DF: EmitByte(0xDF, CurByte, OS); break;
   }
 
   // Handle REX prefix.
