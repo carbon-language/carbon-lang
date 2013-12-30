@@ -77,8 +77,8 @@ class ARMFastISel : public FastISel {
 
   /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
   /// make the right decision when generating code for different targets.
-  Module &M;
   const ARMSubtarget *Subtarget;
+  Module &M;
   const TargetMachine &TM;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
