@@ -43,7 +43,7 @@ GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,
 DwarfUnit::DwarfUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
                      DwarfDebug *DW, DwarfFile *DWU)
     : UniqueID(UID), Node(Node), UnitDie(D), DebugInfoOffset(0), Asm(A), DD(DW),
-      DU(DWU), IndexTyDie(0), Section(0) {
+      DU(DWU), IndexTyDie(0), Section(0), Skeleton(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 
@@ -290,6 +290,23 @@ void DwarfCompileUnit::addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
     unsigned idx = DU->getAddrPoolIndex(Label);
     DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
     Die->addValue(Attribute, dwarf::DW_FORM_GNU_addr_index, Value);
+  }
+}
+
+/// addLocalLabelAddress - Add a dwarf label attribute data and value using
+/// DW_FORM_addr.
+void DwarfCompileUnit::addLocalLabelAddress(DIE *Die,
+                                            dwarf::Attribute Attribute,
+                                            MCSymbol *Label) {
+  if (Label)
+    DD->addArangeLabel(SymbolCU(this, Label));
+
+  if (Label != NULL) {
+    DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
+    Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
+  } else {
+    DIEValue *Value = new (DIEValueAllocator) DIEInteger(0);
+    Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
   }
 }
 

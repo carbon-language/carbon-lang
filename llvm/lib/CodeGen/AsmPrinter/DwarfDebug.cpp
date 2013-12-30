@@ -773,12 +773,6 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
                  DIUnit.getLanguage());
   NewCU->addString(Die, dwarf::DW_AT_name, FN);
 
-  // 2.17.1 requires that we use DW_AT_low_pc for a single entry point
-  // into an entity. We're using 0 (or a NULL label) for this. For
-  // split dwarf it's in the skeleton CU so omit it here.
-  if (!useSplitDwarf())
-    NewCU->addLabelAddress(Die, dwarf::DW_AT_low_pc, NULL);
-
   // Define start line table label for each Compile Unit.
   MCSymbol *LineTableStartSym =
       Asm->GetTempSymbol("line_table_start", NewCU->getUniqueID());
@@ -836,6 +830,10 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
       // current arange code - ideally it should iterate
       // skeleton units, not full units, if it's going to reference skeletons
       DwarfInfoSectionSym);
+
+  // If we're splitting the dwarf then construct the skeleton CU now.
+  if (useSplitDwarf())
+    NewCU->setSkeleton(constructSkeletonCU(NewCU));
 
   CUMap.insert(std::make_pair(DIUnit, NewCU));
   CUDieMap.insert(std::make_pair(Die, NewCU));
@@ -1082,7 +1080,9 @@ void DwarfDebug::finalizeModuleInfo() {
     // Add CU specific attributes if we need to add any.
     if (TheU->getUnitDie()->getTag() == dwarf::DW_TAG_compile_unit) {
       // If we're splitting the dwarf out now that we've got the entire
-      // CU then construct a skeleton CU based upon it.
+      // CU then add the dwo id to it.
+      DwarfCompileUnit *SkCU =
+          static_cast<DwarfCompileUnit *>(TheU->getSkeleton());
       if (useSplitDwarf()) {
         // This should be a unique identifier when we want to build .dwp files.
         uint64_t ID = 0;
@@ -1092,19 +1092,22 @@ void DwarfDebug::finalizeModuleInfo() {
         }
         TheU->addUInt(TheU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                       dwarf::DW_FORM_data8, ID);
-        // Now construct the skeleton CU associated.
-        DwarfCompileUnit *SkCU =
-            constructSkeletonCU(static_cast<DwarfCompileUnit *>(TheU));
         SkCU->addUInt(SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                       dwarf::DW_FORM_data8, ID);
-      } else {
-        // Attribute if we've emitted a range list for the compile unit, this
-        // will get constructed for the skeleton CU separately if we have one.
-        if (DwarfCURanges && TheU->getRanges().size())
-          addSectionLabel(Asm, TheU, TheU->getUnitDie(), dwarf::DW_AT_ranges,
-                          Asm->GetTempSymbol("cu_ranges", TheU->getUniqueID()),
-                          DwarfDebugRangeSectionSym);
       }
+
+      // If we've requested ranges and have them emit a DW_AT_ranges attribute
+      // on the unit that will remain in the .o file, otherwise add a DW_AT_low_pc.
+      // FIXME: Also add a high pc if we can.
+      // FIXME: We should use ranges if we have multiple compile units.
+      DwarfCompileUnit *U = SkCU ? SkCU : static_cast<DwarfCompileUnit *>(TheU);
+      if (DwarfCURanges && TheU->getRanges().size())
+        addSectionLabel(Asm, U, U->getUnitDie(), dwarf::DW_AT_ranges,
+                        Asm->GetTempSymbol("cu_ranges", U->getUniqueID()),
+                        DwarfDebugRangeSectionSym);
+      else
+        U->addLocalLabelAddress(U->getUnitDie(), dwarf::DW_AT_low_pc,
+                                TextSectionSym);
     }
   }
 
@@ -2996,15 +2999,6 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
                            DwarfAddrSectionSym);
   else
     NewCU->addSectionOffset(Die, dwarf::DW_AT_GNU_addr_base, 0);
-
-  // Attribute if we've emitted a range list for the compile unit, this
-  // will get constructed for the skeleton CU separately if we have one.
-  if (DwarfCURanges && CU->getRanges().size())
-    addSectionLabel(Asm, NewCU, Die, dwarf::DW_AT_ranges,
-                    Asm->GetTempSymbol("cu_ranges", CU->getUniqueID()),
-                    DwarfDebugRangeSectionSym);
-  else
-    NewCU->addUInt(Die, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, 0);
 
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section.
