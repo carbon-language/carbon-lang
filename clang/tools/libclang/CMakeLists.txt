@@ -84,8 +84,7 @@ if( LLVM_ENABLE_PIC )
   endif()
 
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(LIBCLANG_LINK_FLAGS
-      " -Wl,-compatibility_version -Wl,1 -Wl,-dead_strip")
+    set(LIBCLANG_LINK_FLAGS " -Wl,-compatibility_version -Wl,1")
     if (DEFINED ${LLVM_SUBMIT_VERSION})
       set(LIBCLANG_LINK_FLAGS
         "${LIBCLANG_LINK_FLAGS} -Wl,-current_version -Wl,${LLVM_SUBMIT_VERSION}.${LLVM_SUBMIT_SUBVERSION}")

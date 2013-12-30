@@ -16,6 +16,9 @@ set( LLVM_LINK_COMPONENTS
   Vectorize
   )
 
+# Support plugins.
+set(LLVM_NO_DEAD_STRIP 1)
+
 add_clang_executable(clang
   driver.cpp
   cc1_main.cpp
