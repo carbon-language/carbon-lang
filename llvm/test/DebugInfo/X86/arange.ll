@@ -1,6 +1,7 @@
 ; REQUIRES: object-emission
 
 ; RUN: llc -mtriple=x86_64-linux -O0 -filetype=obj < %s | llvm-dwarfdump -debug-dump=aranges - | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux -O0 -filetype=obj < %s | llvm-readobj --relocations - | FileCheck --check-prefix=OBJ %s
 
 ; extern int i;
 ; template<int *x>
@@ -14,6 +15,10 @@
 ; CHECK: Address Range Header
 ; CHECK-NEXT: [0x
 ; CHECK-NOT: [0x
+
+; Check that we have a relocation back to the debug_info section from the debug_aranges section
+; OBJ: debug_aranges
+; OBJ-NEXT: R_X86_64_32 .debug_info 0x0
 
 %struct.foo = type { i8 }
 
