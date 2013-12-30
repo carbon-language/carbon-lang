@@ -1528,9 +1528,6 @@ static int readOpcodeModifier(struct InternalInstruction* insn) {
   case MODIFIER_OPCODE:
     insn->opcodeModifier = insn->opcode - insn->spec->modifierBase;
     return 0;
-  case MODIFIER_MODRM:
-    insn->opcodeModifier = insn->modRM - insn->spec->modifierBase;
-    return 0;
   }
 }
 
