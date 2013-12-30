@@ -195,24 +195,14 @@ void DwarfUnit::addSInt(DIEBlock *Die, Optional<dwarf::Form> Form,
 /// table.
 void DwarfUnit::addString(DIE *Die, dwarf::Attribute Attribute,
                           StringRef String) {
-  DIEValue *Value;
-  dwarf::Form Form;
-  if (!DD->useSplitDwarf()) {
-    MCSymbol *Symb = DU->getStringPoolEntry(String);
-    if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-      Value = new (DIEValueAllocator) DIELabel(Symb);
-    else {
-      MCSymbol *StringPool = DU->getStringPoolSym();
-      Value = new (DIEValueAllocator) DIEDelta(Symb, StringPool);
-    }
-    Form = dwarf::DW_FORM_strp;
-  } else {
-    unsigned idx = DU->getStringPoolIndex(String);
-    Value = new (DIEValueAllocator) DIEInteger(idx);
-    Form = dwarf::DW_FORM_GNU_str_index;
-  }
+
+  if (!DD->useSplitDwarf())
+    return addLocalString(Die, Attribute, String);
+
+  unsigned idx = DU->getStringPoolIndex(String);
+  DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
   DIEValue *Str = new (DIEValueAllocator) DIEString(Value, String);
-  Die->addValue(Attribute, Form, Str);
+  Die->addValue(Attribute, dwarf::DW_FORM_GNU_str_index, Str);
 }
 
 /// addLocalString - Add a string attribute data and value. This is guaranteed
@@ -227,7 +217,8 @@ void DwarfUnit::addLocalString(DIE *Die, dwarf::Attribute Attribute,
     MCSymbol *StringPool = DU->getStringPoolSym();
     Value = new (DIEValueAllocator) DIEDelta(Symb, StringPool);
   }
-  Die->addValue(Attribute, dwarf::DW_FORM_strp, Value);
+  DIEValue *Str = new (DIEValueAllocator) DIEString(Value, String);
+  Die->addValue(Attribute, dwarf::DW_FORM_strp, Str);
 }
 
 /// addExpr - Add a Dwarf expression attribute data and value.
