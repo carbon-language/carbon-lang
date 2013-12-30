@@ -825,11 +825,7 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   NewCU->initSection(
       useSplitDwarf() ? Asm->getObjFileLowering().getDwarfInfoDWOSection()
                       : Asm->getObjFileLowering().getDwarfInfoSection(),
-      // FIXME: This is subtle (using the info section even when
-      // this CU is in the dwo section) and necessary for the
-      // current arange code - ideally it should iterate
-      // skeleton units, not full units, if it's going to reference skeletons
-      DwarfInfoSectionSym);
+      useSplitDwarf() ? DwarfInfoDWOSectionSym : DwarfInfoSectionSym);
 
   // If we're splitting the dwarf then construct the skeleton CU now.
   if (useSplitDwarf())
@@ -2010,6 +2006,9 @@ void DwarfDebug::emitSectionLabels() {
   // Dwarf sections base addresses.
   DwarfInfoSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfInfoSection(), "section_info");
+  if (useSplitDwarf())
+    DwarfInfoDWOSectionSym =
+        emitSectionSym(Asm, TLOF.getDwarfInfoDWOSection(), "section_info_dwo");
   DwarfAbbrevSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfAbbrevSection(), "section_abbrev");
   if (useSplitDwarf())
@@ -2875,7 +2874,7 @@ void DwarfDebug::emitDebugARanges() {
     Asm->OutStreamer.AddComment("DWARF Arange version number");
     Asm->EmitInt16(dwarf::DW_ARANGES_VERSION);
     Asm->OutStreamer.AddComment("Offset Into Debug Info Section");
-    Asm->EmitSectionOffset(CU->getLabelBegin(), CU->getSectionSym());
+    Asm->EmitSectionOffset(CU->getLocalLabelBegin(), CU->getLocalSectionSym());
     Asm->OutStreamer.AddComment("Address Size (in bytes)");
     Asm->EmitInt8(PtrSize);
     Asm->OutStreamer.AddComment("Segment Size (in bytes)");
