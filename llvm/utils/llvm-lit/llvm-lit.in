@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(llvm_source_root, 'utils', 'lit'))
 # Set up some builtin parameters, so that by default the LLVM test suite
 # configuration file knows how to find the object tree.
 builtin_parameters = {
-    'build_mode' : "@CMAKE_CFG_INTDIR@",
+    'build_mode' : "@BUILD_MODE@",
     'llvm_site_config' : os.path.join(llvm_obj_root, 'test', 'lit.site.cfg'),
     'llvm_unit_site_config' : os.path.join(llvm_obj_root, 'test', 'Unit',
                                            'lit.site.cfg')
