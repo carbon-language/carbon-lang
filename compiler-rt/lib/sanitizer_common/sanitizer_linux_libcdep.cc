@@ -34,9 +34,15 @@
 #endif
 
 // This function is defined elsewhere if we intercepted pthread_attr_getstack.
-SANITIZER_WEAK_ATTRIBUTE
-int __sanitizer_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
-  return pthread_attr_getstack((pthread_attr_t*)attr, addr, size);
+extern "C" SANITIZER_WEAK_ATTRIBUTE int
+__sanitizer_pthread_attr_getstack(void *attr, void **addr, size_t *size);
+
+static int my_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
+  if (__sanitizer_pthread_attr_getstack)
+    return __sanitizer_pthread_attr_getstack((pthread_attr_t *)attr, addr,
+                                             size);
+
+  return pthread_attr_getstack((pthread_attr_t *)attr, addr, size);
 }
 
 namespace __sanitizer {
@@ -80,7 +86,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   CHECK_EQ(pthread_getattr_np(pthread_self(), &attr), 0);
   uptr stacksize = 0;
   void *stackaddr = 0;
-  __sanitizer_pthread_attr_getstack(&attr, &stackaddr, (size_t*)&stacksize);
+  my_pthread_attr_getstack(&attr, &stackaddr, (size_t*)&stacksize);
   pthread_attr_destroy(&attr);
 
   CHECK_LE(stacksize, kMaxThreadStackSize);  // Sanity check.
@@ -276,7 +282,7 @@ void AdjustStackSizeLinux(void *attr_) {
   pthread_attr_t *attr = (pthread_attr_t *)attr_;
   uptr stackaddr = 0;
   size_t stacksize = 0;
-  __sanitizer_pthread_attr_getstack(attr, (void**)&stackaddr, &stacksize);
+  my_pthread_attr_getstack(attr, (void**)&stackaddr, &stacksize);
   // GLibC will return (0 - stacksize) as the stack address in the case when
   // stacksize is set, but stackaddr is not.
   bool stack_set = (stackaddr != 0) && (stackaddr + stacksize != 0);
