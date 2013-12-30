@@ -291,9 +291,9 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
             }
           }
         }
-        
-        Diag(Tok, diag::err_expected_colon)
-          << FixItHint::CreateInsertion(FILoc, FIText);
+
+        Diag(Tok, diag::err_expected)
+            << tok::colon << FixItHint::CreateInsertion(FILoc, FIText);
         Diag(OpToken, diag::note_matching) << tok::question;
         ColonLoc = Tok.getLocation();
       }

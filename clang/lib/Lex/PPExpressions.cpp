@@ -681,8 +681,8 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
     case tok::question: {
       // Parse the : part of the expression.
       if (PeekTok.isNot(tok::colon)) {
-        PP.Diag(PeekTok.getLocation(), diag::err_expected_colon)
-          << LHS.getRange(), RHS.getRange();
+        PP.Diag(PeekTok.getLocation(), diag::err_expected)
+            << tok::colon << LHS.getRange() << RHS.getRange();
         PP.Diag(OpLoc, diag::note_matching) << tok::question;
         return true;
       }

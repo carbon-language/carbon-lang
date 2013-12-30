@@ -2085,9 +2085,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->data() : 0,
       TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->size() : 0);
 
-  if (Tok.is(tok::semi)) {
-    ConsumeToken();
-
+  if (TryConsumeToken(tok::semi)) {
     if (DS.isFriendSpecified())
       ProhibitAttributes(FnAttrs);
 
@@ -2175,8 +2173,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         SkipUntil(tok::r_brace);
 
         // Consume the optional ';'
-        if (Tok.is(tok::semi))
-          ConsumeToken();
+        TryConsumeToken(tok::semi);
+
         return;
       }
 
@@ -2401,7 +2399,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // Skip to end of block or statement.
     SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
     // If we stopped at a ';', eat it.
-    if (Tok.is(tok::semi)) ConsumeToken();
+    TryConsumeToken(tok::semi);
     return;
   }
 
@@ -2645,18 +2643,14 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
         MaybeParseGNUAttributes(AccessAttrs);
 
         SourceLocation EndLoc;
-        if (Tok.is(tok::colon)) {
-          EndLoc = Tok.getLocation();
-          ConsumeToken();
-        } else if (Tok.is(tok::semi)) {
-          EndLoc = Tok.getLocation();
-          ConsumeToken();
-          Diag(EndLoc, diag::err_expected_colon) 
-            << FixItHint::CreateReplacement(EndLoc, ":");
+        if (TryConsumeToken(tok::colon, EndLoc)) {
+        } else if (TryConsumeToken(tok::semi, EndLoc)) {
+          Diag(EndLoc, diag::err_expected)
+              << tok::colon << FixItHint::CreateReplacement(EndLoc, ":");
         } else {
           EndLoc = ASLoc.getLocWithOffset(TokLength);
-          Diag(EndLoc, diag::err_expected_colon) 
-            << FixItHint::CreateInsertion(EndLoc, ":");
+          Diag(EndLoc, diag::err_expected)
+              << tok::colon << FixItHint::CreateInsertion(EndLoc, ":");
         }
 
         // The Microsoft extension __interface does not permit non-public
@@ -3440,7 +3434,7 @@ void Parser::ParseMicrosoftIfExistsClassDeclaration(DeclSpec::TST TagType,
       if (Tok.is(tok::colon))
         Actions.ActOnAccessSpecifier(AS, ASLoc, Tok.getLocation());
       else
-        Diag(Tok, diag::err_expected_colon);
+        Diag(Tok, diag::err_expected) << tok::colon;
       ConsumeToken();
       continue;
     }

@@ -1058,7 +1058,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
     // Each iteration parses a single keyword argument.
     if (Tok.isNot(tok::colon)) {
-      Diag(Tok, diag::err_expected_colon);
+      Diag(Tok, diag::err_expected) << tok::colon;
       break;
     }
     ConsumeToken(); // Eat the ':'.
@@ -2486,7 +2486,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
       KeyLocs.push_back(Loc);
 
       if (Tok.isNot(tok::colon)) {
-        Diag(Tok, diag::err_expected_colon);
+        Diag(Tok, diag::err_expected) << tok::colon;
         // We must manually skip to a ']', otherwise the expression skipper will
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
@@ -2589,10 +2589,8 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
   }
     
   if (Tok.isNot(tok::r_square)) {
-    if (Tok.is(tok::identifier))
-      Diag(Tok, diag::err_expected_colon);
-    else
-      Diag(Tok, diag::err_expected_rsquare);
+    Diag(Tok, diag::err_expected)
+        << (Tok.is(tok::identifier) ? tok::colon : tok::r_square);
     // We must manually skip to a ']', otherwise the expression skipper will
     // stop at the ']' when it skips to the ';'.  We want it to skip beyond
     // the enclosing expression.
@@ -2886,7 +2884,7 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
         ++nColons;
         KeyIdents.push_back(0);
       } else if (Tok.isNot(tok::colon))
-        return ExprError(Diag(Tok, diag::err_expected_colon));
+        return ExprError(Diag(Tok, diag::err_expected) << tok::colon);
 
       ++nColons;
       ConsumeToken(); // Eat the ':' or '::'.
