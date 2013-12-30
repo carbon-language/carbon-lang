@@ -84,35 +84,6 @@ public:
   }
 };
 
-/// EscapeFilter - Filters escape opcodes, which are classified in two ways.  If
-///   the ModR/M byte is between 0xc0 and 0xff, then there is one slot for each
-///   possible value.  Otherwise, there is one instruction for each value of the
-///   nnn field [bits 5-3], known elsewhere as the reg field.
-class EscapeFilter : public ModRMFilter {
-  virtual void anchor();
-  bool C0_FF;
-  uint8_t NNN_or_ModRM;
-public:
-  /// Constructor
-  ///
-  /// \param c0_ff True if the ModR/M byte must fall between 0xc0 and 0xff;
-  ///              false otherwise.
-  ///
-  /// \param nnn_or_modRM If c0_ff is true, the required value of the entire
-  ///                     ModR/M byte.  If c0_ff is false, the required value
-  ///                     of the nnn field.
-  EscapeFilter(bool c0_ff, uint8_t nnn_or_modRM) :
-    ModRMFilter(),
-    C0_FF(c0_ff),
-    NNN_or_ModRM(nnn_or_modRM) {
-  }
-
-  bool accepts(uint8_t modRM) const {
-    return ((C0_FF && modRM >= 0xc0 && (modRM == NNN_or_ModRM)) ||
-            (!C0_FF && modRM < 0xc0  && ((modRM & 0x38) >> 3) == NNN_or_ModRM));
-  }
-};
-
 /// AddRegEscapeFilter - Some escape opcodes have one of the register operands
 ///   added to the ModR/M byte, meaning that a range of eight ModR/M values
 ///   maps to a single instruction.  Such instructions require the ModR/M byte

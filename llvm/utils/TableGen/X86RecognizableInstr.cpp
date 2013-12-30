@@ -1081,7 +1081,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
       Spec->modifierBase = Opcode;
       filter = new AddRegEscapeFilter(Opcode);
     } else {
-      filter = new EscapeFilter(true, Opcode);
+      filter = new ExactFilter(Opcode);
     }
     opcodeToSet = 0xd8 + (Prefix - X86Local::D8);
     break;
@@ -1127,7 +1127,20 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     case 0xdd:
     case 0xde:
     case 0xdf:
-      filter = new EscapeFilter(false, Form - X86Local::MRM0m);
+      switch (Form) {
+      default:
+        llvm_unreachable("Unhandled escape opcode form");
+      case X86Local::MRM0m:
+      case X86Local::MRM1m:
+      case X86Local::MRM2m:
+      case X86Local::MRM3m:
+      case X86Local::MRM4m:
+      case X86Local::MRM5m:
+      case X86Local::MRM6m:
+      case X86Local::MRM7m:
+        filter = new ExtendedFilter(false, Form - X86Local::MRM0m);
+        break;
+      } // switch (Form)
       break;
     default:
       if (needsModRMForDecode(Form))
