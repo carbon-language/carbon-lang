@@ -1317,3 +1317,51 @@ float16x8_t test_vsetq_lane_f16_4(float16x8_t v1, float b, float c) {
 // CHECK: ins {{v[0-9]+}}.h[7],  {{w[0-9]+}}
 }
 
+// CHECK-LABEL: test_vdup_laneq_p64:
+poly64x1_t test_vdup_laneq_p64(poly64x2_t vec) {
+  return vdup_laneq_p64(vec, 0);
+// CHECK-NEXT: ret
+}
+
+// CHECK-LABEL: test_vdup_laneq_p64_1
+poly64x1_t test_vdup_laneq_p64_1(poly64x2_t vec) {
+  return vdup_laneq_p64(vec, 1);
+// CHECK: dup {{d[0-9]+}}, {{v[0-9]+}}.d[1]
+}
+
+// CHECK-LABEL: test_vget_lane_f32
+float32_t test_vget_lane_f32_1(float32x2_t v) {
+  return vget_lane_f32(v, 1);
+// CHECK: dup {{s[0-9]+}}, {{v[0-9]+}}.s[1]
+}
+
+// CHECK-LABEL: test_vget_lane_f64:
+float64_t test_vget_lane_f64(float64x1_t v) {
+  return vget_lane_f64(v, 0);
+// CHECK-NEXT: ret
+}
+
+// CHECK-LABEL: test_vgetq_lane_f64_1
+float64_t test_vgetq_lane_f64_1(float64x2_t v) {
+  return vgetq_lane_f64(v, 1);
+// CHECK: dup {{d[0-9]+}}, {{v[0-9]+}}.d[1]
+}
+
+// CHECK-LABEL: test_vget_lane_f32:
+float32_t test_vget_lane_f32(float32x2_t v) {
+  return vget_lane_f32(v, 0);
+// CHECK-NEXT: ret
+}
+
+// CHECK-LABEL: test_vgetq_lane_f32:
+float32_t test_vgetq_lane_f32(float32x4_t v) {
+  return vgetq_lane_f32(v, 0);
+// CHECK-NEXT: ret
+}
+
+// CHECK-LABEL: test_vgetq_lane_f64:
+float64_t test_vgetq_lane_f64(float64x2_t v) {
+  return vgetq_lane_f64(v, 0);
+// CHECK-NEXT: ret
+}
+
