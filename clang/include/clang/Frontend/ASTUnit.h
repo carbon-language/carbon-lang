@@ -206,8 +206,7 @@ public:
     return Preamble;
   }
 
-  /// Data that allows us to tell if a file that was used in a preambule was
-  /// changed.
+  /// Data used to determine if a file used in the preamble has been changed.
   struct PreambleFileHash {
     /// All files have size set.
     off_t Size;

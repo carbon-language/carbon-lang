@@ -511,7 +511,7 @@ public:
     }
     if (I[1]->First->Type == TT_FunctionLBrace &&
         Style.BreakBeforeBraces != FormatStyle::BS_Attach) {
-      // Check for Limit <= 2 to accomodate for the " {".
+      // Check for Limit <= 2 to account for the " {".
       if (Limit <= 2 || (Style.ColumnLimit == 0 && containsMustBreak(TheLine)))
         return 0;
       Limit -= 2;
