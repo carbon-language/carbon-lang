@@ -385,6 +385,18 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
           setTruncStoreAction(VT, VT1, Expand);
       }
     }
+
+    // There is no v1i64/v2i64 multiply, expand v1i64/v2i64 to GPR i64 multiply.
+    // FIXME: For a v2i64 multiply, we copy VPR to GPR and do 2 i64 multiplies,
+    // and then copy back to VPR. This solution may be optimized by Following 3
+    // NEON instructions:
+    //        pmull  v2.1q, v0.1d, v1.1d
+    //        pmull2 v3.1q, v0.2d, v1.2d
+    //        ins    v2.d[1], v3.d[0]
+    // As currently we can't verify the correctness of such assumption, we can
+    // do such optimization in the future.
+    setOperationAction(ISD::MUL, MVT::v1i64, Expand);
+    setOperationAction(ISD::MUL, MVT::v2i64, Expand);
   }
 }
 

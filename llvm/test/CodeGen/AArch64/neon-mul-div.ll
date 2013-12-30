@@ -37,6 +37,21 @@ define <4 x i32> @mul4x32(<4 x i32> %A, <4 x i32> %B) {
 	ret <4 x i32> %tmp3
 }
 
+define <1 x i64> @mul1xi64(<1 x i64> %A, <1 x i64> %B) {
+;CHECK-LABEL: mul1xi64:
+;CHECK: mul x{{[0-9]+}}, x{{[0-9]+}}, x{{[0-9]+}}
+  %tmp3 = mul <1 x i64> %A, %B;
+  ret <1 x i64> %tmp3
+}
+
+define <2 x i64> @mul2xi64(<2 x i64> %A, <2 x i64> %B) {
+;CHECK-LABEL: mul2xi64:
+;CHECK: mul x{{[0-9]+}}, x{{[0-9]+}}, x{{[0-9]+}}
+;CHECK: mul x{{[0-9]+}}, x{{[0-9]+}}, x{{[0-9]+}}
+  %tmp3 = mul <2 x i64> %A, %B;
+  ret <2 x i64> %tmp3
+}
+
  define <2 x float> @mul2xfloat(<2 x float> %A, <2 x float> %B) {
 ;CHECK: fmul {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
 	%tmp3 = fmul <2 x float> %A, %B;
