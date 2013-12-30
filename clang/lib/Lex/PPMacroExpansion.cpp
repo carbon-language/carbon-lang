@@ -1080,7 +1080,7 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
   if (Tok.isNot(tok::l_paren)) {
     // No '(', use end of last token.
     LParenLoc = PP.getLocForEndOfToken(LParenLoc);
-    PP.Diag(LParenLoc, diag::err_pp_missing_lparen) << II->getName();
+    PP.Diag(LParenLoc, diag::err_pp_expected_after) << II << tok::l_paren;
     // If the next token looks like a filename or the start of one,
     // assume it is and process it as such.
     if (!Tok.is(tok::angle_string_literal) && !Tok.is(tok::string_literal) &&
@@ -1142,8 +1142,8 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
 
   // Ensure we have a trailing ).
   if (Tok.isNot(tok::r_paren)) {
-    PP.Diag(PP.getLocForEndOfToken(FilenameLoc), diag::err_pp_missing_rparen)
-        << II->getName();
+    PP.Diag(PP.getLocForEndOfToken(FilenameLoc), diag::err_pp_expected_after)
+        << II << tok::r_paren;
     PP.Diag(LParenLoc, diag::note_matching) << tok::l_paren;
     return false;
   }
@@ -1201,7 +1201,8 @@ static bool EvaluateBuildingModule(Token &Tok,
 
   // Ensure we have a '('.
   if (Tok.isNot(tok::l_paren)) {
-    PP.Diag(Tok.getLocation(), diag::err_pp_missing_lparen) << II->getName();
+    PP.Diag(Tok.getLocation(), diag::err_pp_expected_after) << II
+                                                            << tok::l_paren;
     return false;
   }
 
@@ -1225,7 +1226,8 @@ static bool EvaluateBuildingModule(Token &Tok,
 
   // Ensure we have a trailing ).
   if (Tok.isNot(tok::r_paren)) {
-    PP.Diag(Tok.getLocation(), diag::err_pp_missing_rparen) << II->getName();
+    PP.Diag(Tok.getLocation(), diag::err_pp_expected_after) << II
+                                                            << tok::r_paren;
     PP.Diag(LParenLoc, diag::note_matching) << tok::l_paren;
     return false;
   }

@@ -130,7 +130,8 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     PP.LexUnexpandedNonComment(PeekTok);
 
     if (PeekTok.isNot(tok::r_paren)) {
-      PP.Diag(PeekTok.getLocation(), diag::err_pp_missing_rparen) << "defined";
+      PP.Diag(PeekTok.getLocation(), diag::err_pp_expected_after)
+          << "'defined'" << tok::r_paren;
       PP.Diag(LParenLoc, diag::note_matching) << tok::l_paren;
       return true;
     }
