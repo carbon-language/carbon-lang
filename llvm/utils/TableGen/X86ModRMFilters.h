@@ -78,12 +78,9 @@ public:
     ModRMFilter(),
     R(r) {
   }
-    
+
   bool accepts(uint8_t modRM) const {
-    if (R == ((modRM & 0xc0) == 0xc0))
-      return true;
-    else
-      return false;
+    return (R == ((modRM & 0xc0) == 0xc0));
   }
 };
 
@@ -109,13 +106,10 @@ public:
     C0_FF(c0_ff),
     NNN_or_ModRM(nnn_or_modRM) {
   }
-    
+
   bool accepts(uint8_t modRM) const {
-    if ((C0_FF && modRM >= 0xc0 && (modRM == NNN_or_ModRM)) ||
-        (!C0_FF && modRM < 0xc0  && ((modRM & 0x38) >> 3) == NNN_or_ModRM))
-      return true;
-    else
-      return false;
+    return ((C0_FF && modRM >= 0xc0 && (modRM == NNN_or_ModRM)) ||
+            (!C0_FF && modRM < 0xc0  && ((modRM & 0x38) >> 3) == NNN_or_ModRM));
   }
 };
 
@@ -133,12 +127,9 @@ public:
   ///              refers to the first register in the register set.
   AddRegEscapeFilter(uint8_t modRM) : ModRM(modRM) {
   }
-  
+
   bool accepts(uint8_t modRM) const {
-    if (modRM >= ModRM && modRM < ModRM + 8)
-      return true;
-    else
-      return false;
+    return (modRM >= ModRM && modRM < ModRM + 8);
   }
 };
 
@@ -159,14 +150,11 @@ public:
     R(r),
     NNN(nnn) {
   }
-    
+
   bool accepts(uint8_t modRM) const {
-    if (((R  && ((modRM & 0xc0) == 0xc0)) ||
-        (!R && ((modRM & 0xc0) != 0xc0))) &&
-        (((modRM & 0x38) >> 3) == NNN))
-      return true;
-    else
-      return false;
+    return (((R  && ((modRM & 0xc0) == 0xc0)) ||
+             (!R && ((modRM & 0xc0) != 0xc0))) &&
+            (((modRM & 0x38) >> 3) == NNN));
   }
 };
 
@@ -183,12 +171,9 @@ public:
     ModRMFilter(),
     ModRM(modRM) {
   }
-    
+
   bool accepts(uint8_t modRM) const {
-    if (ModRM == modRM)
-      return true;
-    else
-      return false;
+    return (ModRM == modRM);
   }
 };
 
