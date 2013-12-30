@@ -76,10 +76,30 @@ function(add_llvm_symbol_exports target_name export_file)
   add_dependencies(${target_name} ${target_name}_exports)
 endfunction(add_llvm_symbol_exports)
 
+function(add_dead_strip target_name)
+  if(NOT CYGWIN AND NOT MINGW)
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+       SET(CMAKE_CXX_FLAGS
+           "${CMAKE_CXX_FLAGS}  -ffunction-sections -fdata-sections"
+           PARENT_SCOPE)
+    endif()
+  endif()
+  if(NOT LLVM_NO_DEAD_STRIP)
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+      set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                   LINK_FLAGS " -Wl,-dead_strip")
+    elseif(NOT WIN32)
+      set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                   LINK_FLAGS " -Wl,--gc-sections")
+    endif()
+  endif()
+endfunction(add_dead_strip)
+
 macro(add_llvm_library name)
   llvm_process_sources( ALL_FILES ${ARGN} )
   add_library( ${name} ${ALL_FILES} )
   set_property( GLOBAL APPEND PROPERTY LLVM_LIBS ${name} )
+  add_dead_strip( ${name} )
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
@@ -137,6 +157,7 @@ ${name} ignored.")
 
     add_library( ${name} ${libkind} ${ALL_FILES} )
     set_target_properties( ${name} PROPERTIES PREFIX "" )
+    add_dead_strip( ${name} )
 
     if (LLVM_EXPORTED_SYMBOL_FILE)
       add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
@@ -173,6 +194,7 @@ macro(add_llvm_executable name)
   else()
     add_executable(${name} ${ALL_FILES})
   endif()
+  add_dead_strip( ${name} )
 
   if (LLVM_EXPORTED_SYMBOL_FILE)
     add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
