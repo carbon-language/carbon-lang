@@ -146,11 +146,20 @@ protected:
   /// The label for the start of the range sets for the elements of this unit.
   MCSymbol *LabelRange;
 
+  /// Skeleton unit associated with this unit.
+  DwarfUnit *Skeleton;
+
   DwarfUnit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A,
             DwarfDebug *DW, DwarfFile *DWU);
 
 public:
   virtual ~DwarfUnit();
+
+  /// Set the skeleton unit associated with this unit.
+  void setSkeleton(DwarfUnit *Skel) { Skeleton = Skel; }
+
+  /// Get the skeleton unit associated with this unit.
+  DwarfUnit *getSkeleton() const { return Skeleton; }
 
   /// Pass in the SectionSym even though we could recreate it in every compile
   /// unit (type units will have actually distinct symbols once they're in
@@ -520,6 +529,11 @@ public:
   /// addLabelAddress - Add a dwarf label attribute data and value using
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
   void addLabelAddress(DIE *Die, dwarf::Attribute Attribute, MCSymbol *Label);
+
+  /// addLocalLabelAddress - Add a dwarf label attribute data and value using
+  /// DW_FORM_addr.
+  void addLocalLabelAddress(DIE *Die, dwarf::Attribute Attribute,
+                            MCSymbol *Label);
 
   uint16_t getLanguage() const LLVM_OVERRIDE { return getNode().getLanguage(); }
 };
