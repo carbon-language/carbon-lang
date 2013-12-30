@@ -191,3 +191,13 @@ define <2 x i64> @test_ushll2_shl0_v4i32(<4 x i32> %a) {
   %tmp = zext <2 x i32> %1 to <2 x i64>
   ret <2 x i64> %tmp
 }
+
+define <8 x i16> @test_ushll_cmp(<8 x i8> %a, <8 x i8> %b) #0 {
+; CHECK: test_ushll_cmp:
+; CHECK: cmeq	{{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: ushll	{{v[0-9]+}}.8h, {{v[0-9]+}}.8b, #0
+  %cmp.i = icmp eq <8 x i8> %a, %b
+  %vcgtz.i.i = sext <8 x i1> %cmp.i to <8 x i8>
+  %vmovl.i.i.i = zext <8 x i8> %vcgtz.i.i to <8 x i16>
+  ret <8 x i16> %vmovl.i.i.i
+}
