@@ -32,6 +32,7 @@ enum ActionType {
   GenClangAttrPCHWrite,
   GenClangAttrSpellingList,
   GenClangAttrSpellingListIndex,
+  GenClangAttrASTVisitor,
   GenClangAttrLateParsedList,
   GenClangAttrTemplateInstantiate,
   GenClangAttrParsedAttrList,
@@ -82,6 +83,9 @@ cl::opt<ActionType> Action(
         clEnumValN(GenClangAttrSpellingListIndex,
                    "gen-clang-attr-spelling-index",
                    "Generate a clang attribute spelling index"),
+        clEnumValN(GenClangAttrASTVisitor,
+                   "gen-clang-attr-ast-visitor",
+                   "Generate a recursive AST visitor for clang attributes"),
         clEnumValN(GenClangAttrLateParsedList,
                    "gen-clang-attr-late-parsed-list",
                    "Generate a clang attribute LateParsed list"),
@@ -170,6 +174,9 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
     break;
   case GenClangAttrSpellingListIndex:
     EmitClangAttrSpellingListIndex(Records, OS);
+    break;
+  case GenClangAttrASTVisitor:
+    EmitClangAttrASTVisitor(Records, OS);
     break;
   case GenClangAttrLateParsedList:
     EmitClangAttrLateParsedList(Records, OS);

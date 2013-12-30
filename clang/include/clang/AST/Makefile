@@ -1,6 +1,6 @@
 CLANG_LEVEL := ../../..
 TD_SRC_DIR = $(PROJ_SRC_DIR)/../Basic
-BUILT_SOURCES = Attrs.inc AttrImpl.inc AttrDump.inc \
+BUILT_SOURCES = Attrs.inc AttrImpl.inc AttrDump.inc AttrVisitor.inc \
                 StmtNodes.inc DeclNodes.inc \
                 CommentNodes.inc CommentHTMLTags.inc \
                 CommentHTMLTagsProperties.inc \
@@ -28,6 +28,12 @@ $(ObjDir)/AttrDump.inc.tmp : $(TD_SRC_DIR)/Attr.td $(CLANG_TBLGEN) \
                               $(ObjDir)/.dir
 	$(Echo) "Building Clang attribute dumper with tblgen"
 	$(Verb) $(ClangTableGen) -gen-clang-attr-dump -o $(call SYSPATH, $@) \
+		-I $(PROJ_SRC_DIR)/../../ $<
+
+$(ObjDir)/AttrVisitor.inc.tmp : $(TD_SRC_DIR)/Attr.td $(CLANG_TBLGEN) \
+                                $(ObjDir)/.dir
+	$(Echo) "Building Clang attribute AST visitor with tblgen"
+	$(Verb) $(ClangTableGen) -gen-clang-attr-ast-visitor -o $(call SYSPATH, $@) \
 		-I $(PROJ_SRC_DIR)/../../ $<
 
 $(ObjDir)/StmtNodes.inc.tmp : $(TD_SRC_DIR)/StmtNodes.td $(CLANG_TBLGEN) \
