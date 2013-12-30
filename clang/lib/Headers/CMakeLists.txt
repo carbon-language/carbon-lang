@@ -47,14 +47,7 @@ set(files
   module.map
   )
 
-set(output_dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/clang/${CLANG_VERSION}/include)
-
-# If we are in an IDE that has a configuration directory, we need to
-# create a second copy of the headers so that 'clang' can find them if
-# it's run from the build directory.
-if(MSVC_IDE OR XCODE)
-   set(other_output_dir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib/clang/${CLANG_VERSION}/include)
-endif()
+set(output_dir ${CLANG_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION}/include)
 
 # Generate arm_neon.h
 clang_tablegen(arm_neon.h -gen-arm-neon
@@ -69,15 +62,6 @@ foreach( f ${files} )
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${src} ${dst}
     COMMENT "Copying clang's ${f}...")
   list(APPEND out_files ${dst})
-
-  if(other_output_dir)
-   set(other_dst ${other_output_dir}/${f})
-    add_custom_command(OUTPUT ${other_dst}
-      DEPENDS ${src}
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${src} ${other_dst}
-      COMMENT "Copying clang's ${f}...")    
-    list(APPEND out_files ${other_dst})
-  endif()
 endforeach( f )
 
 add_custom_command(OUTPUT ${output_dir}/arm_neon.h 
@@ -86,25 +70,8 @@ add_custom_command(OUTPUT ${output_dir}/arm_neon.h
   COMMENT "Copying clang's arm_neon.h...")
 list(APPEND out_files ${output_dir}/arm_neon.h)
 
-if (other_output_dir)
-    set(other_dst ${other_output_dir}/arm_neon.h)
-    add_custom_command(OUTPUT ${other_dst}
-      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h ${other_dst}
-      COMMENT "Copying clang's arm_neon.h...")
-    list(APPEND out_files ${other_dst})
-endif ()
-
 add_custom_target(clang-headers ALL DEPENDS ${out_files})
 set_target_properties(clang-headers PROPERTIES FOLDER "Misc")
-
-if (other_output_dir)
-  if(UNIX)
-    add_custom_command(TARGET clang-headers POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}"
-    COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib/clang" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/clang")
-  endif()
-endif ()
 
 install(
   FILES ${files} ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h

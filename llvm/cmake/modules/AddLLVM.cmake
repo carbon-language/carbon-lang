@@ -95,9 +95,30 @@ function(add_dead_strip target_name)
   endif()
 endfunction(add_dead_strip)
 
+# Set each output directory according to ${CMAKE_CONFIGURATION_TYPES}.
+# Note: Don't set variables CMAKE_*_OUTPUT_DIRECTORY any more,
+# or a certain builder, for eaxample, msbuild.exe, would be confused.
+function(set_output_directory target bindir libdir)
+  if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+    foreach(build_mode ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${build_mode}" CONFIG_SUFFIX)
+      string(REPLACE ${CMAKE_CFG_INTDIR} ${build_mode} bi ${bindir})
+      string(REPLACE ${CMAKE_CFG_INTDIR} ${build_mode} li ${libdir})
+      set_target_properties(${target} PROPERTIES "RUNTIME_OUTPUT_DIRECTORY_${CONFIG_SUFFIX}" ${bi})
+      set_target_properties(${target} PROPERTIES "ARCHIVE_OUTPUT_DIRECTORY_${CONFIG_SUFFIX}" ${li})
+      set_target_properties(${target} PROPERTIES "LIBDIR__OUTPUT_DIRECTORY_${CONFIG_SUFFIX}" ${li})
+    endforeach()
+  else()
+    set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${bindir})
+    set_target_properties(${target} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${libdir})
+    set_target_properties(${target} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${libdir})
+  endif()
+endfunction()
+
 macro(add_llvm_library name)
   llvm_process_sources( ALL_FILES ${ARGN} )
   add_library( ${name} ${ALL_FILES} )
+  set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
   set_property( GLOBAL APPEND PROPERTY LLVM_LIBS ${name} )
   add_dead_strip( ${name} )
   if( LLVM_COMMON_DEPENDS )
@@ -201,6 +222,7 @@ macro(add_llvm_executable name)
   endif(LLVM_EXPORTED_SYMBOL_FILE)
 
   set(EXCLUDE_FROM_ALL OFF)
+  set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
   llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
@@ -313,12 +335,13 @@ endfunction(add_llvm_implicit_external_projects)
 
 # Generic support for adding a unittest.
 function(add_unittest test_suite test_name)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if( NOT LLVM_BUILD_TESTS )
     set(EXCLUDE_FROM_ALL ON)
   endif()
 
   add_llvm_executable(${test_name} ${ARGN})
+  set(outdir ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
+  set_output_directory(${test_name} ${outdir} ${outdir})
   target_link_libraries(${test_name}
     gtest
     gtest_main

@@ -174,8 +174,8 @@ set(CLANG_VENDOR_UTI "org.llvm.clang" CACHE STRING
 set(CLANG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CLANG_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-set(CLANG_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR})
-set(CLANG_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/lib/${CMAKE_CFG_INTDIR})
+set(CLANG_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
+set(CLANG_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib)
 
 if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE )
   message(FATAL_ERROR "In-source builds are not allowed. CMake would overwrite "
@@ -306,6 +306,7 @@ macro(add_clang_library name)
   endif()
   add_library( ${name} ${libkind} ${srcs} )
   add_dead_strip( ${name} )
+  set_output_directory(${name} ${CLANG_RUNTIME_OUTPUT_INTDIR} ${CLANG_LIBRARY_OUTPUT_INTDIR})
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
