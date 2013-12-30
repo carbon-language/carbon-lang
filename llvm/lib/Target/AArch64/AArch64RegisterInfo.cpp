@@ -76,6 +76,12 @@ AArch64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
+static bool hasFrameOffset(int opcode) {
+  return opcode != AArch64::LD1x2_16B && opcode != AArch64::LD1x3_16B &&
+         opcode != AArch64::LD1x4_16B && opcode != AArch64::ST1x2_16B &&
+         opcode != AArch64::ST1x3_16B && opcode != AArch64::ST1x4_16B;
+}
+
 void
 AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
                                          int SPAdj,
@@ -110,8 +116,10 @@ AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
   int64_t Offset;
   Offset = TFI->resolveFrameIndexReference(MF, FrameIndex, FrameReg, SPAdj,
                                            IsCalleeSaveOp);
-
-  Offset += MI.getOperand(FIOperandNum + 1).getImm();
+  // A vector load/store instruction doesn't have an offset operand.
+  bool HasOffsetOp = hasFrameOffset(MI.getOpcode());
+  if (HasOffsetOp)
+    Offset += MI.getOperand(FIOperandNum + 1).getImm();
 
   // DBG_VALUE instructions have no real restrictions so they can be handled
   // easily.
@@ -124,7 +132,7 @@ AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
   const AArch64InstrInfo &TII =
     *static_cast<const AArch64InstrInfo*>(MF.getTarget().getInstrInfo());
   int MinOffset, MaxOffset, OffsetScale;
-  if (MI.getOpcode() == AArch64::ADDxxi_lsl0_s) {
+  if (MI.getOpcode() == AArch64::ADDxxi_lsl0_s || !HasOffsetOp) {
     MinOffset = 0;
     MaxOffset = 0xfff;
     OffsetScale = 1;
@@ -133,10 +141,12 @@ AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
     TII.getAddressConstraints(MI, OffsetScale, MinOffset, MaxOffset);
   }
 
-  // The frame lowering has told us a base and offset it thinks we should use to
-  // access this variable, but it's still up to us to make sure the values are
-  // legal for the instruction in question.
-  if (Offset % OffsetScale != 0 || Offset < MinOffset || Offset > MaxOffset) {
+  // There are two situations we don't use frame + offset directly in the
+  // instruction:
+  // (1) The offset can't really be scaled
+  // (2) Can't encode offset as it doesn't have an offset operand
+  if ((Offset % OffsetScale != 0 || Offset < MinOffset || Offset > MaxOffset) ||
+      (!HasOffsetOp && Offset != 0)) {
     unsigned BaseReg =
       MF.getRegInfo().createVirtualRegister(&AArch64::GPR64RegClass);
     emitRegUpdate(MBB, MBBI, MBBI->getDebugLoc(), TII,
@@ -150,7 +160,8 @@ AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
   assert(Offset >= 0 && "Unexpected negative offset from SP");
 
   MI.getOperand(FIOperandNum).ChangeToRegister(FrameReg, false, false, true);
-  MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset / OffsetScale);
+  if (HasOffsetOp)
+    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset / OffsetScale);
 }
 
 unsigned

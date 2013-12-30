@@ -418,10 +418,8 @@ AArch64InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     default:
       llvm_unreachable("Unknown size for regclass");
     }
-  } else {
-    assert((RC->hasType(MVT::f32) || RC->hasType(MVT::f64) ||
-            RC->hasType(MVT::f128))
-           && "Expected integer or floating type for store");
+  } else if (RC->hasType(MVT::f32) || RC->hasType(MVT::f64) ||
+             RC->hasType(MVT::f128)) {
     switch (RC->getSize()) {
     case 4: StoreOp = AArch64::LSFP32_STR; break;
     case 8: StoreOp = AArch64::LSFP64_STR; break;
@@ -429,6 +427,22 @@ AArch64InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     default:
       llvm_unreachable("Unknown size for regclass");
     }
+  } else { // The spill of D tuples is implemented by Q tuples
+    if (RC == &AArch64::QPairRegClass)
+      StoreOp = AArch64::ST1x2_16B;
+    else if (RC == &AArch64::QTripleRegClass)
+      StoreOp = AArch64::ST1x3_16B;
+    else if (RC == &AArch64::QQuadRegClass)
+      StoreOp = AArch64::ST1x4_16B;
+    else
+      llvm_unreachable("Unknown reg class");
+
+    MachineInstrBuilder NewMI = BuildMI(MBB, MBBI, DL, get(StoreOp));
+    // Vector store has different operands from other store instructions.
+    NewMI.addFrameIndex(FrameIdx)
+         .addReg(SrcReg, getKillRegState(isKill))
+         .addMemOperand(MMO);
+    return;
   }
 
   MachineInstrBuilder NewMI = BuildMI(MBB, MBBI, DL, get(StoreOp));
@@ -464,10 +478,8 @@ AArch64InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     default:
       llvm_unreachable("Unknown size for regclass");
     }
-  } else {
-    assert((RC->hasType(MVT::f32) || RC->hasType(MVT::f64)
-            || RC->hasType(MVT::f128))
-           && "Expected integer or floating type for store");
+  } else if (RC->hasType(MVT::f32) || RC->hasType(MVT::f64) ||
+             RC->hasType(MVT::f128)) {
     switch (RC->getSize()) {
     case 4: LoadOp = AArch64::LSFP32_LDR; break;
     case 8: LoadOp = AArch64::LSFP64_LDR; break;
@@ -475,6 +487,21 @@ AArch64InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     default:
       llvm_unreachable("Unknown size for regclass");
     }
+  } else { // The spill of D tuples is implemented by Q tuples
+    if (RC == &AArch64::QPairRegClass)
+      LoadOp = AArch64::LD1x2_16B;
+    else if (RC == &AArch64::QTripleRegClass)
+      LoadOp = AArch64::LD1x3_16B;
+    else if (RC == &AArch64::QQuadRegClass)
+      LoadOp = AArch64::LD1x4_16B;
+    else
+      llvm_unreachable("Unknown reg class");
+
+    MachineInstrBuilder NewMI = BuildMI(MBB, MBBI, DL, get(LoadOp), DestReg);
+    // Vector load has different operands from other load instructions.
+    NewMI.addFrameIndex(FrameIdx)
+         .addMemOperand(MMO);
+    return;
   }
 
   MachineInstrBuilder NewMI = BuildMI(MBB, MBBI, DL, get(LoadOp), DestReg);
@@ -571,6 +598,21 @@ void AArch64InstrInfo::getAddressConstraints(const MachineInstr &MI,
     AccessScale = 16;
     MinOffset = -0x40 * AccessScale;
     MaxOffset = 0x3f * AccessScale;
+    return;
+  case AArch64::LD1x2_16B: case AArch64::ST1x2_16B:
+    AccessScale = 32;
+    MinOffset = 0;
+    MaxOffset = 0xfff * AccessScale;
+    return;
+  case AArch64::LD1x3_16B: case AArch64::ST1x3_16B:
+    AccessScale = 48;
+    MinOffset = 0;
+    MaxOffset = 0xfff * AccessScale;
+    return;
+  case AArch64::LD1x4_16B: case AArch64::ST1x4_16B:
+    AccessScale = 64;
+    MinOffset = 0;
+    MaxOffset = 0xfff * AccessScale;
     return;
   }
 }
