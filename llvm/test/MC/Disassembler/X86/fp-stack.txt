@@ -421,6 +421,9 @@
 # CHECK: fcmovu %st(7), %st(0)
 0xda,0xdf
 
+# CHECK: fucompp
+0xda,0xe9
+
 # CHECK: fcmovnb %st(0), %st(0)
 0xdb,0xc0
 
@@ -882,6 +885,9 @@
 
 # CHECK: fmulp %st(7)
 0xde,0xcf
+
+# CHECK: fcompp
+0xde,0xd9
 
 # CHECK: fsubp %st(0)
 0xde,0xe0
