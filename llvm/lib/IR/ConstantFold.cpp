@@ -705,12 +705,21 @@ Constant *llvm::ConstantFoldSelectInstruction(Constant *Cond,
     SmallVector<Constant*, 16> Result;
     Type *Ty = IntegerType::get(CondV->getContext(), 32);
     for (unsigned i = 0, e = V1->getType()->getVectorNumElements(); i != e;++i){
-      ConstantInt *Cond = dyn_cast<ConstantInt>(CondV->getOperand(i));
-      if (Cond == 0) break;
-      
-      Constant *V = Cond->isNullValue() ? V2 : V1;
-      Constant *Res = ConstantExpr::getExtractElement(V, ConstantInt::get(Ty, i));
-      Result.push_back(Res);
+      Constant *V;
+      Constant *V1Element = ConstantExpr::getExtractElement(V1,
+                                                    ConstantInt::get(Ty, i));
+      Constant *V2Element = ConstantExpr::getExtractElement(V2,
+                                                    ConstantInt::get(Ty, i));
+      Constant *Cond = dyn_cast<Constant>(CondV->getOperand(i));
+      if (V1Element == V2Element) {
+        V = V1Element;
+      } else if (isa<UndefValue>(Cond)) {
+        V = isa<UndefValue>(V1Element) ? V1Element : V2Element;
+      } else {
+        if (!isa<ConstantInt>(Cond)) break;
+        V = Cond->isNullValue() ? V2Element : V1Element;
+      }
+      Result.push_back(V);
     }
     
     // If we were able to build the vector, return it.
