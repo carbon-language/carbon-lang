@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ThreadLocal.h"
 
 //===----------------------------------------------------------------------===//
@@ -26,7 +27,7 @@ using namespace sys;
 ThreadLocalImpl::ThreadLocalImpl() : data() { }
 ThreadLocalImpl::~ThreadLocalImpl() { }
 void ThreadLocalImpl::setInstance(const void* d) {
-  typedef int SIZE_TOO_BIG[sizeof(d) <= sizeof(data) ? 1 : -1];
+  LLVM_STATIC_ASSERT(sizeof(d) <= sizeof(data), "size too big");
   void **pd = reinterpret_cast<void**>(&data);
   *pd = const_cast<void*>(d);
 }
@@ -50,7 +51,7 @@ namespace llvm {
 using namespace sys;
 
 ThreadLocalImpl::ThreadLocalImpl() : data() {
-  typedef int SIZE_TOO_BIG[sizeof(pthread_key_t) <= sizeof(data) ? 1 : -1];
+  LLVM_STATIC_ASSERT(sizeof(pthread_key_t) <= sizeof(data), "size too big");
   pthread_key_t* key = reinterpret_cast<pthread_key_t*>(&data);
   int errorcode = pthread_key_create(key, NULL);
   assert(errorcode == 0);
