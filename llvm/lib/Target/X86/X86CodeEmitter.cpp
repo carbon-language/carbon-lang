@@ -186,10 +186,6 @@ static unsigned determineREX(const MachineInstr &MI) {
     }
 
     switch (Desc.TSFlags & X86II::FormMask) {
-      case X86II::MRMInitReg:
-        if (X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0)))
-          REX |= (1 << 0) | (1 << 2);
-        break;
       case X86II::MRMSrcReg: {
         if (X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0)))
           REX |= 1 << 2;
@@ -941,18 +937,6 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
   }
 
   switch (TSFlags & X86II::FormMask) {
-    case X86II::MRMInitReg:
-      // Duplicate register.
-      if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
-        VEX_R = 0x0;
-
-      if (HasVEX_4V)
-        VEX_4V = getVEXRegisterEncoding(MI, CurOp);
-      if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
-        VEX_B = 0x0;
-      if (HasVEX_4VOp3)
-        VEX_4V = getVEXRegisterEncoding(MI, CurOp);
-      break;
     case X86II::MRMDestMem: {
       // MRMDestMem instructions forms:
       //  MemAddr, src1(ModR/M)
@@ -1431,14 +1415,6 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
       emitJumpTableAddress(MO.getIndex(), rt);
     break;
   }
-
-  case X86II::MRMInitReg:
-    MCE.emitByte(BaseOpcode);
-    // Duplicate register, used by things like MOV8r0 (aka xor reg,reg).
-    emitRegModRMByte(MI.getOperand(CurOp).getReg(),
-                     getX86RegNum(MI.getOperand(CurOp).getReg()));
-    ++CurOp;
-    break;
 
   case X86II::MRM_C1:
     MCE.emitByte(BaseOpcode);

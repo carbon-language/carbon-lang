@@ -694,7 +694,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     ++CurOp;
 
   switch (TSFlags & X86II::FormMask) {
-  case X86II::MRMInitReg: llvm_unreachable("FIXME: Remove this!");
   case X86II::MRMDestMem: {
     // MRMDestMem instructions forms:
     //  MemAddr, src1(ModR/M)
@@ -974,7 +973,6 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
   }
 
   switch (TSFlags & X86II::FormMask) {
-  case X86II::MRMInitReg: llvm_unreachable("FIXME: Remove this!");
   case X86II::MRMSrcReg:
     if (MI.getOperand(0).isReg() &&
         X86II::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
@@ -1225,8 +1223,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
   unsigned SrcRegNum = 0;
   switch (TSFlags & X86II::FormMask) {
-  case X86II::MRMInitReg:
-    llvm_unreachable("FIXME: Remove this form when the JIT moves to MCCodeEmitter!");
   default: errs() << "FORM: " << (TSFlags & X86II::FormMask) << "\n";
     llvm_unreachable("Unknown FormMask value in X86MCCodeEmitter!");
   case X86II::Pseudo:

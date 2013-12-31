@@ -268,10 +268,6 @@ namespace X86II {
     MRM0m = 24,  MRM1m = 25,  MRM2m = 26,  MRM3m = 27, // Format /0 /1 /2 /3
     MRM4m = 28,  MRM5m = 29,  MRM6m = 30,  MRM7m = 31, // Format /4 /5 /6 /7
 
-    // MRMInitReg - This form is used for instructions whose source and
-    // destinations are the same register.
-    MRMInitReg = 32,
-
     //// MRM_XX - A mod/rm byte of exactly 0xXX.
     MRM_C1 = 33, MRM_C2 = 34, MRM_C3 = 35, MRM_C4 = 36,
     MRM_C8 = 37, MRM_C9 = 38, MRM_CA = 39, MRM_CB = 40,
@@ -596,9 +592,6 @@ namespace X86II {
   ///
   inline int getMemoryOperandNo(uint64_t TSFlags, unsigned Opcode) {
     switch (TSFlags & X86II::FormMask) {
-    case X86II::MRMInitReg:
-        // FIXME: Remove this form.
-        return -1;
     default: llvm_unreachable("Unknown FormMask value in getMemoryOperandNo!");
     case X86II::Pseudo:
     case X86II::RawFrm:

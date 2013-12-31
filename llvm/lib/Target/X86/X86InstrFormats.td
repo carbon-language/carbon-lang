@@ -28,7 +28,6 @@ def MRM6r  : Format<22>; def MRM7r  : Format<23>;
 def MRM0m  : Format<24>; def MRM1m  : Format<25>; def MRM2m  : Format<26>;
 def MRM3m  : Format<27>; def MRM4m  : Format<28>; def MRM5m  : Format<29>;
 def MRM6m  : Format<30>; def MRM7m  : Format<31>;
-def MRMInitReg : Format<32>;
 def MRM_C1 : Format<33>;
 def MRM_C2 : Format<34>;
 def MRM_C3 : Format<35>;
