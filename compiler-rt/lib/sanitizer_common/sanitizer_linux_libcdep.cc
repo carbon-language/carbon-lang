@@ -33,20 +33,24 @@
 #include <link.h>
 #endif
 
+#ifndef SANITIZER_GO
 // This function is defined elsewhere if we intercepted pthread_attr_getstack.
 extern "C" SANITIZER_WEAK_ATTRIBUTE int
 __sanitizer_pthread_attr_getstack(void *attr, void **addr, size_t *size);
 
 static int my_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
+#
   if (__sanitizer_pthread_attr_getstack)
     return __sanitizer_pthread_attr_getstack((pthread_attr_t *)attr, addr,
                                              size);
 
   return pthread_attr_getstack((pthread_attr_t *)attr, addr, size);
 }
+#endif  // #ifndef SANITIZER_GO
 
 namespace __sanitizer {
 
+#ifndef SANITIZER_GO
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom) {
   static const uptr kMaxThreadStackSize = 1 << 30;  // 1Gb
@@ -93,6 +97,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   *stack_top = (uptr)stackaddr + stacksize;
   *stack_bottom = (uptr)stackaddr;
 }
+#endif  // #ifndef SANITIZER_GO
 
 // Does not compile for Go because dlsym() requires -ldl
 #ifndef SANITIZER_GO
@@ -278,6 +283,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 #endif  // SANITIZER_GO
 }
 
+#ifndef SANITIZER_GO
 void AdjustStackSizeLinux(void *attr_) {
   pthread_attr_t *attr = (pthread_attr_t *)attr_;
   uptr stackaddr = 0;
@@ -301,6 +307,7 @@ void AdjustStackSizeLinux(void *attr_) {
     }
   }
 }
+#endif  // SANITIZER_GO
 
 #if SANITIZER_ANDROID
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
