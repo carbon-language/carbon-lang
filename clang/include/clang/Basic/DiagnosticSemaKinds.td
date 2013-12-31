@@ -4243,6 +4243,8 @@ def ext_sizeof_alignof_function_type : Extension<
 def ext_sizeof_alignof_void_type : Extension<
   "invalid application of '%select{sizeof|alignof|vec_step}0' to a void "
   "type">, InGroup<PointerArith>;
+def err_opencl_sizeof_alignof_type : Error<
+  "invalid application of '%select{sizeof|alignof|vec_step}0' to a void type">;
 def err_sizeof_alignof_incomplete_type : Error<
   "invalid application of '%select{sizeof|alignof|vec_step}0' to an "
   "incomplete type %1">;
