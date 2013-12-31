@@ -236,7 +236,7 @@ public:
   /// during link. Flavors can override this function in their LinkingContext
   /// to add more internal files. These internal files are positioned before
   /// the actual input files.
-  virtual bool createInternalFiles(std::vector<std::unique_ptr<File> > &) const;
+  virtual void createInternalFiles(std::vector<std::unique_ptr<File> > &) const;
 
   /// Return the list of undefined symbols that are specified in the
   /// linker command line, using the -u option.

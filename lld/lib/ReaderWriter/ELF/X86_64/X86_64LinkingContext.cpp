@@ -101,7 +101,7 @@ void elf::X86_64LinkingContext::addPasses(PassManager &pm) {
   ELFLinkingContext::addPasses(pm);
 }
 
-bool elf::X86_64LinkingContext::createInternalFiles(
+void elf::X86_64LinkingContext::createInternalFiles(
     std::vector<std::unique_ptr<File> > &result) const {
   ELFLinkingContext::createInternalFiles(result);
   std::unique_ptr<X86_64InitFiniFile> initFiniFile(
@@ -111,6 +111,5 @@ bool elf::X86_64LinkingContext::createInternalFiles(
   for (auto ai:finiFunctions())
     initFiniFile->addFiniFunction(ai);
   result.push_back(std::move(initFiniFile));
-  return true;
 }
 

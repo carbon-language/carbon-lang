@@ -90,7 +90,7 @@ private:
 };
 }
 
-bool elf::HexagonLinkingContext::createInternalFiles(
+void elf::HexagonLinkingContext::createInternalFiles(
     std::vector<std::unique_ptr<File> > &result) const {
   ELFLinkingContext::createInternalFiles(result);
   std::unique_ptr<HexagonInitFiniFile> initFiniFile(
@@ -100,5 +100,4 @@ bool elf::HexagonLinkingContext::createInternalFiles(
   for (auto ai:finiFunctions())
     initFiniFile->addFiniFunction(ai);
   result.push_back(std::move(initFiniFile));
-  return true;
 }

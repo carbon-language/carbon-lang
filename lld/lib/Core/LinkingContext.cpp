@@ -71,7 +71,7 @@ LinkingContext::createUndefinedSymbolFile(StringRef filename) const {
   return std::move(undefinedSymFile);
 }
 
-bool LinkingContext::createInternalFiles(
+void LinkingContext::createInternalFiles(
     std::vector<std::unique_ptr<File> > &result) const {
   std::unique_ptr<File> internalFile;
   internalFile = createEntrySymbolFile();
@@ -80,7 +80,6 @@ bool LinkingContext::createInternalFiles(
   internalFile = createUndefinedSymbolFile();
   if (internalFile)
     result.push_back(std::move(internalFile));
-  return true;
 }
 
 void LinkingContext::setResolverState(uint32_t state) {

@@ -86,7 +86,7 @@ public:
   }
 
   /// \brief Create Internal files for Init/Fini
-  bool createInternalFiles(std::vector<std::unique_ptr<File> > &) const;
+  void createInternalFiles(std::vector<std::unique_ptr<File> > &) const;
 
 };
 } // end namespace elf
