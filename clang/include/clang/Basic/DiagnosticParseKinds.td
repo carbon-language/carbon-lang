@@ -354,6 +354,8 @@ def err_paren_after_colon_colon : Error<
   "unexpected parenthesis after '::'">;
 def err_function_definition_not_allowed : Error<
   "function definition is not allowed here">;
+def err_expected_end_of_enumerator : Error<
+  "expected '= constant-expression' or end of enumerator definition">;
 
 /// Objective-C parser diagnostics
 def err_expected_minus_or_plus : Error<

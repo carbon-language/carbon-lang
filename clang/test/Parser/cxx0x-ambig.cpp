@@ -48,7 +48,7 @@ namespace bitfield {
   };
   // This could be a bit-field.
   struct S2 {
-    enum E : T { a = 1, b = 2, c = 3, 4 }; // expected-error {{non-integral type}} expected-error {{expected '}'}} expected-note {{to match}}
+    enum E : T { a = 1, b = 2, c = 3, 4 }; // expected-error {{non-integral type}} expected-error {{expected identifier}}
   };
   struct S3 {
     enum E : int { a = 1, b = 2, c = 3, d }; // ok, defines an enum
@@ -64,7 +64,7 @@ namespace bitfield {
   };
   // This could be a bit-field.
   struct S6 {
-    enum E : int { 1 }; // expected-error {{expected '}'}} expected-note {{to match}}
+    enum E : int { 1 }; // expected-error {{expected identifier}}
   };
 
   struct U {
