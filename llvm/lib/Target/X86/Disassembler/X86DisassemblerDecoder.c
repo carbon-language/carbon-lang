@@ -1506,8 +1506,6 @@ static int fixupReg(struct InternalInstruction *insn,
  *   instruction.  Handles AddRegFrm instructions.
  *
  * @param insn    - The instruction whose opcode field is to be read.
- * @param inModRM - Indicates that the opcode field is to be read from the
- *                  ModR/M extension; useful for escape opcodes
  * @return        - 0 on success; nonzero otherwise.
  */
 static int readOpcodeModifier(struct InternalInstruction* insn) {
