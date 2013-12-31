@@ -3854,6 +3854,8 @@ bool X86InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
   MachineInstrBuilder MIB(*MI->getParent()->getParent(), MI);
   switch (MI->getOpcode()) {
+  case X86::MOV32r0:
+    return Expand2AddrUndef(MIB, get(X86::XOR32rr));
   case X86::SETB_C8r:
     return Expand2AddrUndef(MIB, get(X86::SBB8rr));
   case X86::SETB_C16r:
