@@ -52,9 +52,9 @@
 namespace clang {
 namespace ast_matchers {
 
-/// FIXME: Move into the llvm support library.
+/// TODO: Use LLVM_STATIC_ASSERT() instead of this.
 template <bool> struct CompileAssert {};
-#define TOOLING_COMPILE_ASSERT(Expr, Msg) \
+#define TOOLING_COMPILE_ASSERT(Expr, Msg) LLVM_ATTRIBUTE_UNUSED \
   typedef CompileAssert<(bool(Expr))> Msg[bool(Expr) ? 1 : -1]
 
 class BoundNodes;
