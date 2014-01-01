@@ -72,7 +72,7 @@ public:
   /// change the codegen and hence the reference kind.
   void setKindValue(KindValue value) {
     _kindValue = value;
-  };
+  }
 
   /// KindValues used with KindNamespace::all and KindArch::all.
   enum {
