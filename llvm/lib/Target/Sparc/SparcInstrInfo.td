@@ -975,6 +975,33 @@ let rs1 = 0 in
 def : Pat<(ctpop i32:$src),
           (POPCrr (SRLri $src, 0))>;
 
+// Atomic swap.
+let hasSideEffects =1, rd = 0, rs1 = 0b01111, rs2 = 0 in
+  def STBAR : F3_1<2, 0b101000, (outs), (ins), "stbar", []>;
+
+let Predicates = [HasV9], hasSideEffects = 1, rd = 0, rs1 = 0b01111 in
+ def MEMBARi : F3_2<2, 0b101000, (outs), (ins i32imm:$simm13),
+                    "membar $simm13", []>;
+
+let Constraints = "$val = $rd" in {
+  def SWAPrr : F3_1<3, 0b001111,
+                 (outs IntRegs:$rd), (ins IntRegs:$val, MEMrr:$addr),
+                 "swap [$addr], $rd",
+                 [(set i32:$rd, (atomic_swap_32 ADDRrr:$addr, i32:$val))]>;
+  def SWAPri : F3_2<3, 0b001111,
+                 (outs IntRegs:$rd), (ins IntRegs:$val, MEMri:$addr),
+                 "swap [$addr], $rd",
+                 [(set i32:$rd, (atomic_swap_32 ADDRri:$addr, i32:$val))]>;
+}
+
+let Predicates = [HasV9], Constraints = "$swap = $rd" in
+  def CASrr: F3_1<3, 0b111100,
+                (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2,
+                                     IntRegs:$swap),
+                 "cas [$rs1], $rs2, $rd",
+                 [(set i32:$rd,
+                     (atomic_cmp_swap iPTR:$rs1, i32:$rs2, i32:$swap))]>;
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
@@ -1035,5 +1062,18 @@ def : Pat<(i32 (zextloadi1 ADDRri:$src)), (LDUBri ADDRri:$src)>;
 // store 0, addr -> store %g0, addr
 def : Pat<(store (i32 0), ADDRrr:$dst), (STrr ADDRrr:$dst, (i32 G0))>;
 def : Pat<(store (i32 0), ADDRri:$dst), (STri ADDRri:$dst, (i32 G0))>;
+
+// store bar for all atomic_fence in V8.
+let Predicates = [HasNoV9] in
+  def : Pat<(atomic_fence imm, imm), (STBAR)>;
+
+// atomic_load_32 addr -> load addr
+def : Pat<(i32 (atomic_load ADDRrr:$src)), (LDrr ADDRrr:$src)>;
+def : Pat<(i32 (atomic_load ADDRri:$src)), (LDri ADDRri:$src)>;
+
+// atomic_store_32 val, addr -> store val, addr
+def : Pat<(atomic_store ADDRrr:$dst, i32:$val), (STrr ADDRrr:$dst, $val)>;
+def : Pat<(atomic_store ADDRri:$dst, i32:$val), (STri ADDRri:$dst, $val)>;
+
 
 include "SparcInstr64Bit.td"

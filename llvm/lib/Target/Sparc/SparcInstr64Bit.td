@@ -415,6 +415,32 @@ def SETHIXi : F2_1<0b100,
                    "sethi $imm22, $rd",
                    [(set i64:$rd, SETHIimm:$imm22)]>;
 }
+
+// ATOMICS.
+let Predicates = [Is64Bit], Constraints = "$swap = $rd" in {
+  def CASXrr: F3_1<3, 0b111110,
+                (outs I64Regs:$rd), (ins I64Regs:$rs1, I64Regs:$rs2,
+                                     I64Regs:$swap),
+                 "casx [$rs1], $rs2, $rd",
+                 [(set i64:$rd,
+                     (atomic_cmp_swap i64:$rs1, i64:$rs2, i64:$swap))]>;
+
+} // Predicates = [Is64Bit], Constraints = ...
+
+let Predicates = [Is64Bit] in {
+
+def : Pat<(atomic_fence imm, imm), (MEMBARi 0xf)>;
+
+// atomic_load_64 addr -> load addr
+def : Pat<(i64 (atomic_load ADDRrr:$src)), (LDXrr ADDRrr:$src)>;
+def : Pat<(i64 (atomic_load ADDRri:$src)), (LDXri ADDRri:$src)>;
+
+// atomic_store_64 val, addr -> store val, addr
+def : Pat<(atomic_store ADDRrr:$dst, i64:$val), (STXrr ADDRrr:$dst, $val)>;
+def : Pat<(atomic_store ADDRri:$dst, i64:$val), (STXri ADDRri:$dst, $val)>;
+
+} // Predicates = [Is64Bit]
+
 // Global addresses, constant pool entries
 let Predicates = [Is64Bit] in {
 
