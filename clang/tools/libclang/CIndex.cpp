@@ -1839,7 +1839,6 @@ public:
   void VisitStmt(const Stmt *S);
   void VisitSwitchStmt(const SwitchStmt *S);
   void VisitWhileStmt(const WhileStmt *W);
-  void VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E);
   void VisitTypeTraitExpr(const TypeTraitExpr *E);
   void VisitArrayTypeTraitExpr(const ArrayTypeTraitExpr *E);
   void VisitExpressionTraitExpr(const ExpressionTraitExpr *E);
@@ -2182,10 +2181,6 @@ void EnqueueVisitor::VisitWhileStmt(const WhileStmt *W) {
   AddStmt(W->getBody());
   AddStmt(W->getCond());
   AddDecl(W->getConditionVariable());
-}
-
-void EnqueueVisitor::VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
-  AddTypeLoc(E->getQueriedTypeSourceInfo());
 }
 
 void EnqueueVisitor::VisitTypeTraitExpr(const TypeTraitExpr *E) {

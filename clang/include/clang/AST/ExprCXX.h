@@ -2110,68 +2110,12 @@ public:
   child_range children() { return child_range(&Base, &Base + 1); }
 };
 
-/// \brief Represents a GCC or MS unary type trait, as used in the
-/// implementation of TR1/C++11 type trait templates.
-///
-/// Example:
-/// \code
-///   __is_pod(int) == true
-///   __is_enum(std::string) == false
-/// \endcode
-class UnaryTypeTraitExpr : public Expr {
-  /// \brief The trait. A UnaryTypeTrait enum in MSVC compatible unsigned.
-  unsigned UTT : 31;
-  /// The value of the type trait. Unspecified if dependent.
-  bool Value : 1;
-
-  /// \brief The location of the type trait keyword.
-  SourceLocation Loc;
-
-  /// \brief The location of the closing paren.
-  SourceLocation RParen;
-
-  /// \brief The type being queried.
-  TypeSourceInfo *QueriedType;
-
-public:
-  UnaryTypeTraitExpr(SourceLocation loc, UnaryTypeTrait utt,
-                     TypeSourceInfo *queried, bool value,
-                     SourceLocation rparen, QualType ty)
-    : Expr(UnaryTypeTraitExprClass, ty, VK_RValue, OK_Ordinary,
-           false,  queried->getType()->isDependentType(),
-           queried->getType()->isInstantiationDependentType(),
-           queried->getType()->containsUnexpandedParameterPack()),
-      UTT(utt), Value(value), Loc(loc), RParen(rparen), QueriedType(queried) { }
-
-  explicit UnaryTypeTraitExpr(EmptyShell Empty)
-    : Expr(UnaryTypeTraitExprClass, Empty), UTT(0), Value(false),
-      QueriedType() { }
-
-  SourceLocation getLocStart() const LLVM_READONLY { return Loc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParen; }
-
-  UnaryTypeTrait getTrait() const { return static_cast<UnaryTypeTrait>(UTT); }
-
-  QualType getQueriedType() const { return QueriedType->getType(); }
-
-  TypeSourceInfo *getQueriedTypeSourceInfo() const { return QueriedType; }
-
-  bool getValue() const { return Value; }
-
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == UnaryTypeTraitExprClass;
-  }
-
-  // Iterators
-  child_range children() { return child_range(); }
-
-  friend class ASTStmtReader;
-};
-
 /// \brief A type trait used in the implementation of various C++11 and
 /// Library TR1 trait templates.
 ///
 /// \code
+///   __is_pod(int) == true
+///   __is_enum(std::string) == false
 ///   __is_trivially_constructible(vector<int>, int*, int*)
 /// \endcode
 class TypeTraitExpr : public Expr {

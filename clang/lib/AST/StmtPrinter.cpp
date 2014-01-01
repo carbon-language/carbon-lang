@@ -1682,17 +1682,10 @@ void StmtPrinter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *Node) {
         OS, Node->getTemplateArgs(), Node->getNumTemplateArgs(), Policy);
 }
 
-static const char *getTypeTraitName(UnaryTypeTrait UTT) {
-  switch (UTT) {
-#define TYPE_TRAIT_1(Spelling, Name, Key) \
-  case clang::UTT_##Name: return #Spelling;
-#include "clang/Basic/TokenKinds.def"
-  }
-  llvm_unreachable("Type trait not covered by switch statement");
-}
-
 static const char *getTypeTraitName(TypeTrait TT) {
   switch (TT) {
+#define TYPE_TRAIT_1(Spelling, Name, Key) \
+case clang::UTT_##Name: return #Spelling;
 #define TYPE_TRAIT_2(Spelling, Name, Key) \
 case clang::BTT_##Name: return #Spelling;
 #define TYPE_TRAIT_N(Spelling, Name, Key) \
@@ -1716,12 +1709,6 @@ static const char *getExpressionTraitName(ExpressionTrait ET) {
   case ET_IsRValueExpr:      return "__is_rvalue_expr";
   }
   llvm_unreachable("Expression type trait not covered by switch");
-}
-
-void StmtPrinter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
-  OS << getTypeTraitName(E->getTrait()) << '(';
-  E->getQueriedType().print(OS, Policy);
-  OS << ')';
 }
 
 void StmtPrinter::VisitTypeTraitExpr(TypeTraitExpr *E) {

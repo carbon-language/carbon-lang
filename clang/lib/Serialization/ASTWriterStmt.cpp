@@ -1486,15 +1486,6 @@ void ASTStmtWriter::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
   Code = serialization::EXPR_CXX_UNRESOLVED_LOOKUP;
 }
 
-void ASTStmtWriter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
-  VisitExpr(E);
-  Record.push_back(E->getTrait());
-  Record.push_back(E->getValue());
-  Writer.AddSourceRange(E->getSourceRange(), Record);
-  Writer.AddTypeSourceInfo(E->getQueriedTypeSourceInfo(), Record);
-  Code = serialization::EXPR_CXX_UNARY_TYPE_TRAIT;
-}
-
 void ASTStmtWriter::VisitTypeTraitExpr(TypeTraitExpr *E) {
   VisitExpr(E);
   Record.push_back(E->TypeTraitExprBits.NumArgs);

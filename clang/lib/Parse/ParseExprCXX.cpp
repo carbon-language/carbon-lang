@@ -2684,18 +2684,11 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
   return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete, Operand.take());
 }
 
-static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
-  switch(kind) {
-  default: llvm_unreachable("Not a known unary type trait.");
-#define TYPE_TRAIT_1(Spelling, Name, Key) \
-  case tok::kw_ ## Spelling: return UTT_ ## Name;
-#include "clang/Basic/TokenKinds.def"
-  }
-}
-
 static TypeTrait TypeTraitFromTokKind(tok::TokenKind kind) {
   switch (kind) {
   default: llvm_unreachable("Not a known type trait");
+#define TYPE_TRAIT_1(Spelling, Name, Key) \
+case tok::kw_ ## Spelling: return UTT_ ## Name;
 #define TYPE_TRAIT_2(Spelling, Name, Key) \
 case tok::kw_ ## Spelling: return BTT_ ## Name;
 #include "clang/Basic/TokenKinds.def"
@@ -2788,10 +2781,6 @@ ExprResult Parser::ParseTypeTrait() {
       << 1 << 1 << 1 << (int)Args.size() << SourceRange(Loc);
     return ExprError();
   }
-
-  if (Arity == 1)
-    return Actions.ActOnUnaryTypeTrait(UnaryTypeTraitFromTokKind(Kind), Loc,
-                                       Args[0], EndLoc);
 
   return Actions.ActOnTypeTrait(TypeTraitFromTokKind(Kind), Loc, Args, EndLoc);
 }

@@ -3082,26 +3082,13 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
   return Owned(From);
 }
 
-ExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait UTT,
-                                     SourceLocation KWLoc,
-                                     ParsedType Ty,
-                                     SourceLocation RParen) {
-  TypeSourceInfo *TSInfo;
-  QualType T = GetTypeFromParser(Ty, &TSInfo);
-
-  if (!TSInfo)
-    TSInfo = Context.getTrivialTypeSourceInfo(T);
-  return BuildUnaryTypeTrait(UTT, KWLoc, TSInfo, RParen);
-}
-
 /// \brief Check the completeness of a type in a unary type trait.
 ///
 /// If the particular type trait requires a complete type, tries to complete
 /// it. If completing the type fails, a diagnostic is emitted and false
 /// returned. If completing the type succeeds or no completion was required,
 /// returns true.
-static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
-                                                UnaryTypeTrait UTT,
+static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S, TypeTrait UTT,
                                                 SourceLocation Loc,
                                                 QualType ArgTy) {
   // C++0x [meta.unary.prop]p3:
@@ -3114,6 +3101,7 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
   // these class templates. We also try to follow any GCC documented behavior
   // in these expressions to ensure portability of standard libraries.
   switch (UTT) {
+  default: llvm_unreachable("not a UTT");
     // is_complete_type somewhat obviously cannot require a complete type.
   case UTT_IsCompleteType:
     // Fall-through
@@ -3200,7 +3188,6 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
     return !S.RequireCompleteType(
       Loc, ElTy, diag::err_incomplete_type_used_in_type_trait_expr);
   }
-  llvm_unreachable("Type trait not handled by switch");
 }
 
 static bool HasNoThrowOperator(const RecordType *RT, OverloadedOperatorKind Op,
@@ -3239,12 +3226,13 @@ static bool HasNoThrowOperator(const RecordType *RT, OverloadedOperatorKind Op,
   return false;
 }
 
-static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
+static bool EvaluateUnaryTypeTrait(Sema &Self, TypeTrait UTT,
                                    SourceLocation KeyLoc, QualType T) {
   assert(!T->isDependentType() && "Cannot evaluate traits of dependent type");
 
   ASTContext &C = Self.Context;
   switch(UTT) {
+  default: llvm_unreachable("not a UTT");
     // Type trait expressions corresponding to the primary type category
     // predicates in C++0x [meta.unary.cat].
   case UTT_IsVoid:
@@ -3576,23 +3564,6 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   function call.
     return !T->isIncompleteType();
   }
-  llvm_unreachable("Type trait not covered by switch");
-}
-
-ExprResult Sema::BuildUnaryTypeTrait(UnaryTypeTrait UTT,
-                                     SourceLocation KWLoc,
-                                     TypeSourceInfo *TSInfo,
-                                     SourceLocation RParen) {
-  QualType T = TSInfo->getType();
-  if (!CheckUnaryTypeTraitTypeCompleteness(*this, UTT, KWLoc, T))
-    return ExprError();
-
-  bool Value = false;
-  if (!T->isDependentType())
-    Value = EvaluateUnaryTypeTrait(*this, UTT, KWLoc, T);
-
-  return Owned(new (Context) UnaryTypeTraitExpr(KWLoc, UTT, TSInfo, Value,
-                                                RParen, Context.BoolTy));
 }
 
 /// \brief Determine whether T has a non-trivial Objective-C lifetime in
@@ -3620,6 +3591,9 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, TypeTrait BTT, QualType LhsT,
 static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
                               ArrayRef<TypeSourceInfo *> Args,
                               SourceLocation RParenLoc) {
+  if (Kind <= UTT_Last)
+    return EvaluateUnaryTypeTrait(S, Kind, KWLoc, Args[0]->getType());
+
   if (Kind <= BTT_Last)
     return EvaluateBinaryTypeTrait(S, Kind, Args[0]->getType(),
                                    Args[1]->getType(), RParenLoc);
@@ -3708,6 +3682,10 @@ ExprResult Sema::BuildTypeTrait(TypeTrait Kind, SourceLocation KWLoc,
                                 ArrayRef<TypeSourceInfo *> Args, 
                                 SourceLocation RParenLoc) {
   QualType ResultType = Context.getLogicalOperationType();
+
+  if (Kind <= UTT_Last && !CheckUnaryTypeTraitTypeCompleteness(
+                               *this, Kind, KWLoc, Args[0]->getType()))
+    return ExprError();
 
   bool Dependent = false;
   for (unsigned I = 0, N = Args.size(); I != N; ++I) {

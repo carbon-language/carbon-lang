@@ -1302,7 +1302,6 @@ namespace clang {
       EXPR_CXX_UNRESOLVED_MEMBER,        // UnresolvedMemberExpr
       EXPR_CXX_UNRESOLVED_LOOKUP,        // UnresolvedLookupExpr
 
-      EXPR_CXX_UNARY_TYPE_TRAIT,  // UnaryTypeTraitExpr
       EXPR_CXX_EXPRESSION_TRAIT,  // ExpressionTraitExpr
       EXPR_CXX_NOEXCEPT,          // CXXNoexceptExpr
 

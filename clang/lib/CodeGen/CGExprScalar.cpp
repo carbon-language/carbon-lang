@@ -367,9 +367,6 @@ public:
     CGF.EmitCXXDeleteExpr(E);
     return 0;
   }
-  Value *VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
-    return Builder.getInt1(E->getValue());
-  }
 
   Value *VisitTypeTraitExpr(const TypeTraitExpr *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());

@@ -5727,10 +5727,6 @@ public:
     return ZeroInitialization(E);
   }
 
-  bool VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
-    return Success(E->getValue(), E);
-  }
-
   bool VisitTypeTraitExpr(const TypeTraitExpr *E) {
     return Success(E->getValue(), E);
   }
@@ -8323,7 +8319,6 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   case Expr::ObjCBoolLiteralExprClass:
   case Expr::CXXBoolLiteralExprClass:
   case Expr::CXXScalarValueInitExprClass:
-  case Expr::UnaryTypeTraitExprClass:
   case Expr::TypeTraitExprClass:
   case Expr::ArrayTypeTraitExprClass:
   case Expr::ExpressionTraitExprClass:
