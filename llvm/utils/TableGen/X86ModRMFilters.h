@@ -84,26 +84,6 @@ public:
   }
 };
 
-/// AddRegEscapeFilter - Some escape opcodes have one of the register operands
-///   added to the ModR/M byte, meaning that a range of eight ModR/M values
-///   maps to a single instruction.  Such instructions require the ModR/M byte
-///   to fall between 0xc0 and 0xff.
-class AddRegEscapeFilter : public ModRMFilter {
-  virtual void anchor();
-  uint8_t ModRM;
-public:
-  /// Constructor
-  ///
-  /// \param modRM The value of the ModR/M byte when the register operand
-  ///              refers to the first register in the register set.
-  AddRegEscapeFilter(uint8_t modRM) : ModRM(modRM) {
-  }
-
-  bool accepts(uint8_t modRM) const {
-    return (modRM >= ModRM && modRM < ModRM + 8);
-  }
-};
-
 /// ExtendedFilter - Extended opcodes are classified based on the value of the
 ///   mod field [bits 7-6] and the value of the nnn field [bits 5-3]. 
 class ExtendedFilter : public ModRMFilter {

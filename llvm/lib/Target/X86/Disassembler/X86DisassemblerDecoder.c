@@ -1526,9 +1526,6 @@ static int readOpcodeModifier(struct InternalInstruction* insn) {
   case MODIFIER_OPCODE:
     insn->opcodeModifier = insn->opcode - insn->spec->modifierBase;
     return 0;
-  case MODIFIER_MODRM:
-    insn->opcodeModifier = insn->modRM - insn->spec->modifierBase;
-    return 0;
   }
 }
 
@@ -1783,9 +1780,7 @@ static int readOperands(struct InternalInstruction* insn) {
       if (readOpcodeRegister(insn, 0))
         return -1;
       break;
-    case ENCODING_I:
-      if (readOpcodeModifier(insn))
-        return -1;
+    case ENCODING_FP:
       break;
     case ENCODING_VVVV:
       needVVVV = 0; /* Mark that we have found a VVVV operand. */

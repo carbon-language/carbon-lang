@@ -401,8 +401,8 @@ struct ContextDecision {
   ENUM_ENTRY(ENCODING_RW,     "(AX..DI, R8W..R15W)")                           \
   ENUM_ENTRY(ENCODING_RD,     "(EAX..EDI, R8D..R15D)")                         \
   ENUM_ENTRY(ENCODING_RO,     "(RAX..RDI, R8..R15)")                           \
-  ENUM_ENTRY(ENCODING_I,      "Position on floating-point stack added to the " \
-                              "opcode byte")                                   \
+  ENUM_ENTRY(ENCODING_FP,     "Position on floating-point stack in ModR/M "    \
+                              "byte.")                                         \
                                                                                \
   ENUM_ENTRY(ENCODING_Iv,     "Immediate of operand size")                     \
   ENUM_ENTRY(ENCODING_Ia,     "Immediate of address size")                     \
@@ -526,8 +526,7 @@ struct OperandSpecifier {
 
 #define MODIFIER_TYPES        \
   ENUM_ENTRY(MODIFIER_NONE)   \
-  ENUM_ENTRY(MODIFIER_OPCODE) \
-  ENUM_ENTRY(MODIFIER_MODRM)
+  ENUM_ENTRY(MODIFIER_OPCODE)
 
 #define ENUM_ENTRY(n) n,
 typedef enum {

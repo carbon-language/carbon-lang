@@ -685,8 +685,8 @@ static bool translateOperand(MCInst &mcInst, const OperandSpecifier &operand,
   case ENCODING_RO:
     translateRegister(mcInst, insn.opcodeRegister);
     return false;
-  case ENCODING_I:
-    return translateFPRegister(mcInst, insn.opcodeModifier);
+  case ENCODING_FP:
+    return translateFPRegister(mcInst, insn.modRM & 7);
   case ENCODING_Rv:
     translateRegister(mcInst, insn.opcodeRegister);
     return false;

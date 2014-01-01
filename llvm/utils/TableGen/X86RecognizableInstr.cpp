@@ -1075,14 +1075,9 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::DE:
   case X86Local::DF:
     assert(Opcode >= 0xc0 && "Unexpected opcode for an escape opcode");
+    assert(Form == X86Local::RawFrm);
     opcodeType = ONEBYTE;
-    if (Form == X86Local::AddRegFrm) {
-      Spec->modifierType = MODIFIER_MODRM;
-      Spec->modifierBase = Opcode;
-      filter = new AddRegEscapeFilter(Opcode);
-    } else {
-      filter = new ExactFilter(Opcode);
-    }
+    filter = new ExactFilter(Opcode);
     opcodeToSet = 0xd8 + (Prefix - X86Local::D8);
     break;
   case X86Local::REP:
@@ -1130,6 +1125,16 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
       switch (Form) {
       default:
         llvm_unreachable("Unhandled escape opcode form");
+      case X86Local::MRM0r:
+      case X86Local::MRM1r:
+      case X86Local::MRM2r:
+      case X86Local::MRM3r:
+      case X86Local::MRM4r:
+      case X86Local::MRM5r:
+      case X86Local::MRM6r:
+      case X86Local::MRM7r:
+        filter = new ExtendedFilter(true, Form - X86Local::MRM0r);
+        break;
       case X86Local::MRM0m:
       case X86Local::MRM1m:
       case X86Local::MRM2m:
@@ -1157,31 +1162,22 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   assert(filter && "Filter not set");
 
   if (Form == X86Local::AddRegFrm) {
-    if(Spec->modifierType != MODIFIER_MODRM) {
-      assert(opcodeToSet < 0xf9 &&
-             "Not enough room for all ADDREG_FRM operands");
+    assert(opcodeToSet < 0xf9 &&
+           "Not enough room for all ADDREG_FRM operands");
 
-      uint8_t currentOpcode;
+    uint8_t currentOpcode;
 
-      for (currentOpcode = opcodeToSet;
-           currentOpcode < opcodeToSet + 8;
-           ++currentOpcode)
-        tables.setTableFields(opcodeType,
-                              insnContext(),
-                              currentOpcode,
-                              *filter,
-                              UID, Is32Bit, IgnoresVEX_L);
-
-      Spec->modifierType = MODIFIER_OPCODE;
-      Spec->modifierBase = opcodeToSet;
-    } else {
-      // modifierBase was set where MODIFIER_MODRM was set
+    for (currentOpcode = opcodeToSet;
+         currentOpcode < opcodeToSet + 8;
+         ++currentOpcode)
       tables.setTableFields(opcodeType,
                             insnContext(),
-                            opcodeToSet,
+                            currentOpcode,
                             *filter,
                             UID, Is32Bit, IgnoresVEX_L);
-    }
+
+    Spec->modifierType = MODIFIER_OPCODE;
+    Spec->modifierBase = opcodeToSet;
   } else {
     tables.setTableFields(opcodeType,
                           insnContext(),
@@ -1341,6 +1337,7 @@ OperandEncoding RecognizableInstr::immediateEncodingFromString
 OperandEncoding RecognizableInstr::rmRegisterEncodingFromString
   (const std::string &s,
    bool hasOpSizePrefix) {
+  ENCODING("RST",             ENCODING_FP)
   ENCODING("GR16",            ENCODING_RM)
   ENCODING("GR32",            ENCODING_RM)
   ENCODING("GR32orGR64",      ENCODING_RM)
@@ -1493,7 +1490,6 @@ OperandEncoding RecognizableInstr::relocationEncodingFromString
 OperandEncoding RecognizableInstr::opcodeModifierEncodingFromString
   (const std::string &s,
    bool hasOpSizePrefix) {
-  ENCODING("RST",             ENCODING_I)
   ENCODING("GR32",            ENCODING_Rv)
   ENCODING("GR64",            ENCODING_RO)
   ENCODING("GR16",            ENCODING_Rv)
