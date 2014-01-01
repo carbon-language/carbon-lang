@@ -608,7 +608,6 @@ static bool translateRM(MCInst &mcInst, const OperandSpecifier &operand,
 ///
 /// @param mcInst       - The MCInst to append to.
 /// @param stackPos     - The stack position to translate.
-/// @return             - false on success; true otherwise.
 static void translateFPRegister(MCInst &mcInst,
                                 uint8_t stackPos) {
   mcInst.addOperand(MCOperand::CreateReg(X86::ST0 + stackPos));
