@@ -449,7 +449,7 @@ StmtResult Parser::ParseSEHExceptBlock(SourceLocation ExceptLoc) {
     raii2(Ident___exception_code, false),
     raii3(Ident_GetExceptionCode, false);
 
-  if(ExpectAndConsume(tok::l_paren,diag::err_expected_lparen))
+  if (ExpectAndConsume(tok::l_paren))
     return StmtError();
 
   ParseScope ExpectScope(this, Scope::DeclScope | Scope::ControlScope);
@@ -470,7 +470,7 @@ StmtResult Parser::ParseSEHExceptBlock(SourceLocation ExceptLoc) {
   if(FilterExpr.isInvalid())
     return StmtError();
 
-  if(ExpectAndConsume(tok::r_paren,diag::err_expected_rparen))
+  if (ExpectAndConsume(tok::r_paren))
     return StmtError();
 
   StmtResult Block(ParseCompoundStatement());
@@ -543,7 +543,7 @@ StmtResult Parser::ParseLabeledStatement(ParsedAttributesWithRange &attrs) {
         SubStmt = Actions.ProcessStmtAttributes(
             SubStmt.get(), TempAttrs.getList(), TempAttrs.Range);
     } else {
-      Diag(Tok, diag::err_expected_semi_after) << "__attribute__";
+      Diag(Tok, diag::err_expected_after) << "__attribute__" << tok::semi;
     }
   }
 
@@ -2627,7 +2627,7 @@ StmtResult Parser::ParseCXXCatchBlock(bool FnCatch) {
   SourceLocation CatchLoc = ConsumeToken();
 
   BalancedDelimiterTracker T(*this, tok::l_paren);
-  if (T.expectAndConsume(diag::err_expected_lparen))
+  if (T.expectAndConsume())
     return StmtError();
 
   // C++ 3.3.2p3:

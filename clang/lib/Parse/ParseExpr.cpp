@@ -1296,7 +1296,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         }
 
         if (!LHS.isInvalid()) {
-          if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen, ""))
+          if (ExpectAndConsume(tok::l_paren))
             LHS = ExprError();
           else
             Loc = PrevTokLocation;
@@ -1698,8 +1698,10 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
   case tok::kw___builtin_va_arg: {
     ExprResult Expr(ParseAssignmentExpression());
 
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
+    if (ExpectAndConsume(tok::comma)) {
+      SkipUntil(tok::r_paren, StopAtSemi);
       Expr = ExprError();
+    }
 
     TypeResult Ty = ParseTypeName();
 
@@ -1722,8 +1724,10 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
       return ExprError();
     }
 
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
+    if (ExpectAndConsume(tok::comma)) {
+      SkipUntil(tok::r_paren, StopAtSemi);
       return ExprError();
+    }
 
     // We must have at least one identifier here.
     if (Tok.isNot(tok::identifier)) {
@@ -1798,16 +1802,20 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
       SkipUntil(tok::r_paren, StopAtSemi);
       return Cond;
     }
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
+    if (ExpectAndConsume(tok::comma)) {
+      SkipUntil(tok::r_paren, StopAtSemi);
       return ExprError();
+    }
 
     ExprResult Expr1(ParseAssignmentExpression());
     if (Expr1.isInvalid()) {
       SkipUntil(tok::r_paren, StopAtSemi);
       return Expr1;
     }
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
+    if (ExpectAndConsume(tok::comma)) {
+      SkipUntil(tok::r_paren, StopAtSemi);
       return ExprError();
+    }
 
     ExprResult Expr2(ParseAssignmentExpression());
     if (Expr2.isInvalid()) {
@@ -1829,11 +1837,12 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
       SkipUntil(tok::r_paren, StopAtSemi);
       return ExprError();
     }
-    
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "", 
-                         tok::r_paren))
+
+    if (ExpectAndConsume(tok::comma)) {
+      SkipUntil(tok::r_paren, StopAtSemi);
       return ExprError();
-    
+    }
+
     // Second argument is the type to bitcast to.
     TypeResult DestTy = ParseTypeName();
     if (DestTy.isInvalid())
@@ -1857,11 +1866,12 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
       SkipUntil(tok::r_paren, StopAtSemi);
       return ExprError();
     }
-    
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "", 
-                         tok::r_paren))
+
+    if (ExpectAndConsume(tok::comma)) {
+      SkipUntil(tok::r_paren, StopAtSemi);
       return ExprError();
-    
+    }
+
     // Second argument is the type to bitcast to.
     TypeResult DestTy = ParseTypeName();
     if (DestTy.isInvalid())
@@ -1938,7 +1948,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
                       Tok.is(tok::kw___bridge_retained) ||
                       Tok.is(tok::kw___bridge_retain)));
   if (BridgeCast && !getLangOpts().ObjCAutoRefCount) {
-    if (Tok.isNot(tok::kw___bridge)) {
+    if (!TryConsumeToken(tok::kw___bridge)) {
       StringRef BridgeCastName = Tok.getName();
       SourceLocation BridgeKeywordLoc = ConsumeToken();
       if (!PP.getSourceManager().isInSystemHeader(BridgeKeywordLoc))
@@ -1946,8 +1956,6 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
           << BridgeCastName
           << FixItHint::CreateReplacement(BridgeKeywordLoc, "");
     }
-    else
-      ConsumeToken(); // consume __bridge
     BridgeCast = false;
   }
   
@@ -2195,7 +2203,7 @@ ExprResult Parser::ParseGenericSelectionExpression() {
     Diag(KeyLoc, diag::ext_c11_generic_selection);
 
   BalancedDelimiterTracker T(*this, tok::l_paren);
-  if (T.expectAndConsume(diag::err_expected_lparen))
+  if (T.expectAndConsume())
     return ExprError();
 
   ExprResult ControllingExpr;
@@ -2210,7 +2218,7 @@ ExprResult Parser::ParseGenericSelectionExpression() {
     }
   }
 
-  if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "")) {
+  if (ExpectAndConsume(tok::comma)) {
     SkipUntil(tok::r_paren, StopAtSemi);
     return ExprError();
   }
@@ -2242,7 +2250,7 @@ ExprResult Parser::ParseGenericSelectionExpression() {
     }
     Types.push_back(Ty);
 
-    if (ExpectAndConsume(tok::colon, diag::err_expected_colon, "")) {
+    if (ExpectAndConsume(tok::colon)) {
       SkipUntil(tok::r_paren, StopAtSemi);
       return ExprError();
     }

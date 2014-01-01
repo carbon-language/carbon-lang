@@ -152,14 +152,8 @@ static bool IsCommonTypo(tok::TokenKind ExpectedTok, const Token &Tok) {
   }
 }
 
-/// ExpectAndConsume - The parser expects that 'ExpectedTok' is next in the
-/// input.  If so, it is consumed and false is returned.
-///
-/// If the input is malformed, this emits the specified diagnostic.  Next, if
-/// SkipToTok is specified, it calls SkipUntil(SkipToTok).  Finally, true is
-/// returned.
 bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
-                              const char *Msg, tok::TokenKind SkipToTok) {
+                              const char *Msg) {
   if (Tok.is(ExpectedTok) || Tok.is(tok::code_completion)) {
     ConsumeAnyToken();
     return false;
@@ -168,29 +162,37 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
   // Detect common single-character typos and resume.
   if (IsCommonTypo(ExpectedTok, Tok)) {
     SourceLocation Loc = Tok.getLocation();
-    Diag(Loc, DiagID)
-      << Msg
-      << FixItHint::CreateReplacement(SourceRange(Loc),
-                                      getTokenSimpleSpelling(ExpectedTok));
+    DiagnosticBuilder DB = Diag(Loc, DiagID);
+    DB << FixItHint::CreateReplacement(SourceRange(Loc),
+                                       getTokenSimpleSpelling(ExpectedTok));
+    if (DiagID == diag::err_expected)
+      DB << ExpectedTok;
+    else if (DiagID == diag::err_expected_after)
+      DB << Msg << ExpectedTok;
+    else
+      DB << Msg;
     ConsumeAnyToken();
 
     // Pretend there wasn't a problem.
     return false;
   }
 
-  const char *Spelling = 0;
   SourceLocation EndLoc = PP.getLocForEndOfToken(PrevTokLocation);
-  if (EndLoc.isValid() &&
-      (Spelling = tok::getTokenSimpleSpelling(ExpectedTok))) {
-    // Show what code to insert to fix this problem.
-    Diag(EndLoc, DiagID)
-      << Msg
-      << FixItHint::CreateInsertion(EndLoc, Spelling);
-  } else
-    Diag(Tok, DiagID) << Msg;
+  const char *Spelling = 0;
+  if (EndLoc.isValid())
+    Spelling = tok::getTokenSimpleSpelling(ExpectedTok);
 
-  if (SkipToTok != tok::unknown)
-    SkipUntil(SkipToTok, StopAtSemi);
+  DiagnosticBuilder DB =
+      Spelling
+          ? Diag(EndLoc, DiagID) << FixItHint::CreateInsertion(EndLoc, Spelling)
+          : Diag(Tok, DiagID);
+  if (DiagID == diag::err_expected)
+    DB << ExpectedTok;
+  else if (DiagID == diag::err_expected_after)
+    DB << Msg << ExpectedTok;
+  else
+    DB << Msg;
+
   return true;
 }
 
@@ -725,7 +727,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     SourceLocation EndLoc;
     ExprResult Result(ParseSimpleAsm(&EndLoc));
 
-    ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
+    ExpectAndConsume(tok::semi, diag::err_expected_after,
                      "top-level asm block");
 
     if (Result.isInvalid())
@@ -1127,28 +1129,22 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
   // safe because we're always the sole owner.
   D.getMutableDeclSpec().abort();
 
-  if (Tok.is(tok::equal)) {
+  if (TryConsumeToken(tok::equal)) {
     assert(getLangOpts().CPlusPlus && "Only C++ function definitions have '='");
-    ConsumeToken();
-
     Actions.ActOnFinishFunctionBody(Res, 0, false);
  
     bool Delete = false;
     SourceLocation KWLoc;
-    if (Tok.is(tok::kw_delete)) {
-      Diag(Tok, getLangOpts().CPlusPlus11 ?
-           diag::warn_cxx98_compat_deleted_function :
-           diag::ext_deleted_function);
-
-      KWLoc = ConsumeToken();
+    if (TryConsumeToken(tok::kw_delete, KWLoc)) {
+      Diag(KWLoc, getLangOpts().CPlusPlus11
+                      ? diag::warn_cxx98_compat_deleted_function
+                      : diag::ext_deleted_function);
       Actions.SetDeclDeleted(Res, KWLoc);
       Delete = true;
-    } else if (Tok.is(tok::kw_default)) {
-      Diag(Tok, getLangOpts().CPlusPlus11 ?
-           diag::warn_cxx98_compat_defaulted_function :
-           diag::ext_defaulted_function);
-
-      KWLoc = ConsumeToken();
+    } else if (TryConsumeToken(tok::kw_default, KWLoc)) {
+      Diag(KWLoc, getLangOpts().CPlusPlus11
+                      ? diag::warn_cxx98_compat_defaulted_function
+                      : diag::ext_defaulted_function);
       Actions.SetDeclDefaulted(Res, KWLoc);
     } else {
       llvm_unreachable("function definition after = not 'delete' or 'default'");
@@ -1158,9 +1154,9 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
       Diag(KWLoc, diag::err_default_delete_in_multiple_declaration)
         << Delete;
       SkipUntil(tok::semi);
-    } else {
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
-                       Delete ? "delete" : "default", tok::semi);
+    } else if (ExpectAndConsume(tok::semi, diag::err_expected_after,
+                                Delete ? "delete" : "default")) {
+      SkipUntil(tok::semi);
     }
 
     return Res;
@@ -2033,12 +2029,15 @@ bool BalancedDelimiterTracker::diagnoseOverflow() {
 }
 
 bool BalancedDelimiterTracker::expectAndConsume(unsigned DiagID,
-                                            const char *Msg,
-                                            tok::TokenKind SkipToToc ) {
+                                                const char *Msg,
+                                                tok::TokenKind SkipToTok) {
   LOpen = P.Tok.getLocation();
-  if (P.ExpectAndConsume(Kind, DiagID, Msg, SkipToToc))
+  if (P.ExpectAndConsume(Kind, DiagID, Msg)) {
+    if (SkipToTok != tok::unknown)
+      P.SkipUntil(SkipToTok, Parser::StopAtSemi);
     return true;
-  
+  }
+
   if (getDepth() < MaxDepth)
     return false;
     

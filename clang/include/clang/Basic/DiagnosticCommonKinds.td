@@ -40,7 +40,6 @@ def note_also_found : Note<"also found">;
 
 let CategoryName = "Lexical or Preprocessor Issue" in {
 
-def err_expected_colon : Error<"expected ':'">;
 def err_expected_colon_after_setter_name : Error<
   "method name referenced in property setter attribute "
   "must end with ':'">;

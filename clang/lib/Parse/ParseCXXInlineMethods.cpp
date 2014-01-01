@@ -96,9 +96,9 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
       Diag(KWLoc, diag::err_default_delete_in_multiple_declaration)
         << Delete;
       SkipUntil(tok::semi);
-    } else {
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
-                       Delete ? "delete" : "default", tok::semi);
+    } else if (ExpectAndConsume(tok::semi, diag::err_expected_after,
+                                Delete ? "delete" : "default")) {
+      SkipUntil(tok::semi);
     }
 
     return FnD;

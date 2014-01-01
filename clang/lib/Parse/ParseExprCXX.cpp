@@ -1186,7 +1186,7 @@ ExprResult Parser::ParseCXXCasts() {
 
   SourceLocation RAngleBracketLoc = Tok.getLocation();
 
-  if (ExpectAndConsume(tok::greater, diag::err_expected_greater))
+  if (ExpectAndConsume(tok::greater))
     return ExprError(Diag(LAngleBracketLoc, diag::note_matching) << tok::less);
 
   SourceLocation LParenLoc, RParenLoc;
@@ -2747,7 +2747,7 @@ ExprResult Parser::ParseTypeTrait() {
   SourceLocation Loc = ConsumeToken();
   
   BalancedDelimiterTracker Parens(*this, tok::l_paren);
-  if (Parens.expectAndConsume(diag::err_expected_lparen))
+  if (Parens.expectAndConsume())
     return ExprError();
 
   SmallVector<ParsedType, 2> Args;
@@ -2808,7 +2808,7 @@ ExprResult Parser::ParseArrayTypeTrait() {
   SourceLocation Loc = ConsumeToken();
 
   BalancedDelimiterTracker T(*this, tok::l_paren);
-  if (T.expectAndConsume(diag::err_expected_lparen))
+  if (T.expectAndConsume())
     return ExprError();
 
   TypeResult Ty = ParseTypeName();
@@ -2825,7 +2825,7 @@ ExprResult Parser::ParseArrayTypeTrait() {
                                        T.getCloseLocation());
   }
   case ATT_ArrayExtent: {
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma)) {
+    if (ExpectAndConsume(tok::comma)) {
       SkipUntil(tok::r_paren, StopAtSemi);
       return ExprError();
     }
@@ -2851,7 +2851,7 @@ ExprResult Parser::ParseExpressionTrait() {
   SourceLocation Loc = ConsumeToken();
 
   BalancedDelimiterTracker T(*this, tok::l_paren);
-  if (T.expectAndConsume(diag::err_expected_lparen))
+  if (T.expectAndConsume())
     return ExprError();
 
   ExprResult Expr = ParseExpression();

@@ -316,10 +316,8 @@ bool Parser::ParseTemplateParameters(unsigned Depth,
     Tok.setKind(tok::greater);
     RAngleLoc = Tok.getLocation();
     Tok.setLocation(Tok.getLocation().getLocWithOffset(1));
-  } else if (Tok.is(tok::greater))
-    RAngleLoc = ConsumeToken();
-  else if (Failed) {
-    Diag(Tok.getLocation(), diag::err_expected_greater);
+  } else if (!TryConsumeToken(tok::greater, RAngleLoc) && Failed) {
+    Diag(Tok.getLocation(), diag::err_expected) << tok::greater;
     return true;
   }
   return false;
@@ -675,7 +673,7 @@ bool Parser::ParseGreaterThanInTemplateList(SourceLocation &RAngleLoc,
 
   switch (Tok.getKind()) {
   default:
-    Diag(Tok.getLocation(), diag::err_expected_greater);
+    Diag(Tok.getLocation(), diag::err_expected) << tok::greater;
     return true;
 
   case tok::greater:

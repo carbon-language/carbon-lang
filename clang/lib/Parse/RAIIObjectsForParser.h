@@ -415,8 +415,8 @@ namespace clang {
       
       return diagnoseOverflow();
     }
-    
-    bool expectAndConsume(unsigned DiagID,
+
+    bool expectAndConsume(unsigned DiagID = diag::err_expected,
                           const char *Msg = "",
                           tok::TokenKind SkipToTok = tok::unknown);
     bool consumeClose() {

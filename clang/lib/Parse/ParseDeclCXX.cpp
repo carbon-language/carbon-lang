@@ -263,8 +263,8 @@ Decl *Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
 
   // Eat the ';'.
   DeclEnd = Tok.getLocation();
-  ExpectAndConsume(tok::semi, diag::err_expected_semi_after_namespace_name,
-                   "", tok::semi);
+  if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after_namespace_name))
+    SkipUntil(tok::semi);
 
   return Actions.ActOnNamespaceAliasDef(getCurScope(), NamespaceLoc, AliasLoc, Alias,
                                         SS, IdentLoc, Ident);
@@ -428,10 +428,10 @@ Decl *Parser::ParseUsingDirective(unsigned Context,
 
   // Eat ';'.
   DeclEnd = Tok.getLocation();
-  ExpectAndConsume(tok::semi,
-                   GNUAttr ? diag::err_expected_semi_after_attribute_list
-                           : diag::err_expected_semi_after_namespace_name, 
-                   "", tok::semi);
+  if (ExpectAndConsume(tok::semi,
+                       GNUAttr ? diag::err_expected_semi_after_attribute_list
+                               : diag::err_expected_semi_after_namespace_name))
+    SkipUntil(tok::semi);
 
   return Actions.ActOnUsingDirective(getCurScope(), UsingLoc, NamespcLoc, SS,
                                      IdentLoc, NamespcName, attrs.getList());
@@ -588,10 +588,11 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
 
   // Eat ';'.
   DeclEnd = Tok.getLocation();
-  ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
-                   !Attrs.empty() ? "attributes list" :
-                   IsAliasDecl ? "alias declaration" : "using declaration",
-                   tok::semi);
+  if (ExpectAndConsume(tok::semi, diag::err_expected_after,
+                       !Attrs.empty() ? "attributes list"
+                                      : IsAliasDecl ? "alias declaration"
+                                                    : "using declaration"))
+    SkipUntil(tok::semi);
 
   // Diagnose an attempt to declare a templated using-declaration.
   // In C++11, alias-declarations can be templates:
@@ -664,8 +665,10 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
     return 0;
   }
 
-  if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "", tok::semi))
+  if (ExpectAndConsume(tok::comma)) {
+    SkipUntil(tok::semi);
     return 0;
+  }
 
   if (!isTokenStringLiteral()) {
     Diag(Tok, diag::err_expected_string_literal)
@@ -1373,8 +1376,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     TUK = DS.isFriendSpecified() ? Sema::TUK_Friend : Sema::TUK_Declaration;
     if (Tok.isNot(tok::semi)) {
       // A semicolon was missing after this declaration. Diagnose and recover.
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
-        DeclSpec::getSpecifierName(TagType));
+      ExpectAndConsume(tok::semi, diag::err_expected_after,
+                       DeclSpec::getSpecifierName(TagType));
       PP.EnterToken(Tok);
       Tok.setKind(tok::semi);
     }
@@ -1637,8 +1640,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (TUK == Sema::TUK_Definition &&
       (TemplateInfo.Kind || !isValidAfterTypeSpecifier(false))) {
     if (Tok.isNot(tok::semi)) {
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
-        DeclSpec::getSpecifierName(TagType));
+      ExpectAndConsume(tok::semi, diag::err_expected_after,
+                       DeclSpec::getSpecifierName(TagType));
       // Push this token back into the preprocessor and change our current token
       // to ';' so that the rest of the code recovers as though there were an
       // ';' after the definition.
@@ -1985,11 +1988,11 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       }
 
       // TODO: recover from mistakenly-qualified operator declarations.
-      if (ExpectAndConsume(tok::semi,
-                           diag::err_expected_semi_after,
-                           "access declaration",
-                           tok::semi))
+      if (ExpectAndConsume(tok::semi, diag::err_expected_after,
+                           "access declaration")) {
+        SkipUntil(tok::semi);
         return;
+      }
 
       Actions.ActOnUsingDeclaration(getCurScope(), AS,
                                     /* HasUsingKeyword */ false,
@@ -3306,11 +3309,11 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
     }
   }
 
-  if (ExpectAndConsume(tok::r_square, diag::err_expected_rsquare))
+  if (ExpectAndConsume(tok::r_square))
     SkipUntil(tok::r_square);
   if (endLoc)
     *endLoc = Tok.getLocation();
-  if (ExpectAndConsume(tok::r_square, diag::err_expected_rsquare))
+  if (ExpectAndConsume(tok::r_square))
     SkipUntil(tok::r_square);
 }
 
@@ -3381,7 +3384,7 @@ void Parser::ParseMicrosoftAttributes(ParsedAttributes &attrs,
     ConsumeBracket();
     SkipUntil(tok::r_square, StopAtSemi | StopBeforeMatch);
     if (endLoc) *endLoc = Tok.getLocation();
-    ExpectAndConsume(tok::r_square, diag::err_expected_rsquare);
+    ExpectAndConsume(tok::r_square);
   }
 }
 

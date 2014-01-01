@@ -171,10 +171,10 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
                      AttributeList::AS_GNU);
       }
     }
-    if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
+    if (ExpectAndConsume(tok::r_paren))
       SkipUntil(tok::r_paren, StopAtSemi);
     SourceLocation Loc = Tok.getLocation();
-    if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
+    if (ExpectAndConsume(tok::r_paren))
       SkipUntil(tok::r_paren, StopAtSemi);
     if (endLoc)
       *endLoc = Loc;
@@ -322,7 +322,7 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
   }
 
   SourceLocation RParen = Tok.getLocation();
-  if (!ExpectAndConsume(tok::r_paren, diag::err_expected_rparen)) {
+  if (!ExpectAndConsume(tok::r_paren)) {
     SourceLocation AttrLoc = ScopeLoc.isValid() ? ScopeLoc : AttrNameLoc;
     Attrs.addNew(AttrName, SourceRange(AttrLoc, RParen), ScopeName, ScopeLoc,
                  ArgExprs.data(), ArgExprs.size(), Syntax);
@@ -826,8 +826,10 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
   IdentifierLoc *Platform = ParseIdentifierLoc();
 
   // Parse the ',' following the platform name.
-  if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "", tok::r_paren))
+  if (ExpectAndConsume(tok::comma)) {
+    SkipUntil(tok::r_paren, StopAtSemi);
     return;
+  }
 
   // If we haven't grabbed the pointers for the identifiers
   // "introduced", "deprecated", and "obsoleted", do so now.
@@ -857,11 +859,9 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
       }
       UnavailableLoc = KeywordLoc;
 
-      if (Tok.isNot(tok::comma))
-        break;
-
-      ConsumeToken();
-      continue;
+      if (TryConsumeToken(tok::comma))
+        continue;
+      break;
     }
 
     if (Tok.isNot(tok::equal)) {
@@ -2385,7 +2385,7 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
   SourceLocation KWLoc = ConsumeToken();
 
   BalancedDelimiterTracker T(*this, tok::l_paren);
-  if (T.expectAndConsume(diag::err_expected_lparen))
+  if (T.expectAndConsume())
     return;
 
   SourceLocation EllipsisLoc;
@@ -2496,8 +2496,8 @@ Parser::DiagnoseMissingSemiAfterTagDefinition(DeclSpec &DS, AccessSpecifier AS,
     return false;
 
   Diag(PP.getLocForEndOfToken(DS.getRepAsDecl()->getLocEnd()),
-       diag::err_expected_semi_after_tagdecl)
-    << DeclSpec::getSpecifierName(DS.getTypeSpecType());
+       diag::err_expected_after)
+      << DeclSpec::getSpecifierName(DS.getTypeSpecType()) << tok::semi;
 
   // Try to recover from the typo, by dropping the tag definition and parsing
   // the problematic tokens as a type.
@@ -3468,7 +3468,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
         continue;
       }
       ConsumeToken();
-      ExpectAndConsume(tok::l_paren, diag::err_expected_lparen);
+      ExpectAndConsume(tok::l_paren);
       if (!Tok.is(tok::identifier)) {
         Diag(Tok, diag::err_expected) << tok::identifier;
         SkipUntil(tok::semi);
@@ -3479,7 +3479,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
                         Tok.getIdentifierInfo(), Fields);
       FieldDecls.insert(FieldDecls.end(), Fields.begin(), Fields.end());
       ConsumeToken();
-      ExpectAndConsume(tok::r_paren, diag::err_expected_rparen);
+      ExpectAndConsume(tok::r_paren);
     }
 
     if (TryConsumeToken(tok::semi))
@@ -3757,8 +3757,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     TUK = DS.isFriendSpecified() ? Sema::TUK_Friend : Sema::TUK_Declaration;
     if (Tok.isNot(tok::semi)) {
       // A semicolon was missing after this declaration. Diagnose and recover.
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
-                       "enum");
+      ExpectAndConsume(tok::semi, diag::err_expected_after, "enum");
       PP.EnterToken(Tok);
       Tok.setKind(tok::semi);
     }
@@ -3987,7 +3986,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
   // was probably forgotten.
   bool CanBeBitfield = getCurScope()->getFlags() & Scope::ClassScope;
   if (!isValidAfterTypeSpecifier(CanBeBitfield)) {
-    ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl, "enum");
+    ExpectAndConsume(tok::semi, diag::err_expected_after, "enum");
     // Push this token back into the preprocessor and change our current token
     // to ';' so that the rest of the code recovers as though there were an
     // ';' after the definition.
