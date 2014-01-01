@@ -362,22 +362,6 @@ static const char* stringForDecisionType(ModRMDecisionType dt) {
 #undef ENUM_ENTRY
 }
 
-/// stringForModifierType - Returns a statically-allocated string corresponding
-///   to an opcode modifier type.
-///
-/// @param mt - The modifier type.
-/// @return   - A pointer to the statically-allocated string (e.g.,
-///             "MODIFIER_NONE" for MODIFIER_NONE).
-static const char* stringForModifierType(ModifierType mt) {
-#define ENUM_ENTRY(n) case n: return #n;
-  switch(mt) {
-    default:
-      llvm_unreachable("Unknown modifier type");
-    MODIFIER_TYPES
-  };
-#undef ENUM_ENTRY
-}
-
 DisassemblerTables::DisassemblerTables() {
   unsigned i;
 
@@ -602,14 +586,6 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
   for (unsigned index = 0; index < NumInstructions; ++index) {
     o.indent(i * 2) << "{ /* " << index << " */" << "\n";
     i++;
-
-    o.indent(i * 2) << stringForModifierType(
-                       (ModifierType)InstructionSpecifiers[index].modifierType);
-    o << ",\n";
-
-    o.indent(i * 2) << "0x";
-    o << format("%02hhx", (uint16_t)InstructionSpecifiers[index].modifierBase);
-    o << ",\n";
 
     OperandListTy OperandList;
     for (unsigned OperandIndex = 0; OperandIndex < X86_MAX_OPERANDS;

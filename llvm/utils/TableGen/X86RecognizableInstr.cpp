@@ -1182,8 +1182,6 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
                           *filter,
                           UID, Is32Bit, IgnoresVEX_L);
   }
-  Spec->modifierType = MODIFIER_NONE;
-  Spec->modifierBase = opcodeToSet;
 
   delete filter;
 

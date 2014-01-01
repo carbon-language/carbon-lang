@@ -23,8 +23,6 @@
     filtered = false;                      \
     insnContext = IC;                      \
     name = "";                             \
-    modifierType = MODIFIER_NONE;          \
-    modifierBase = 0;                      \
     memset(operands, 0, sizeof(operands)); \
   }
 
