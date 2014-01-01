@@ -967,13 +967,13 @@ let Predicates = [HasV9] in {
 }
 
 // POPCrr - This does a ctpop of a 64-bit register.  As such, we have to clear
-// the top 32-bits before using it.  To do this clearing, we use a SLLri X,0.
+// the top 32-bits before using it.  To do this clearing, we use a SRLri X,0.
 let rs1 = 0 in
   def POPCrr : F3_1<2, 0b101110,
                     (outs IntRegs:$dst), (ins IntRegs:$src),
                     "popc $src, $dst", []>, Requires<[HasV9]>;
 def : Pat<(ctpop i32:$src),
-          (POPCrr (SLLri $src, 0))>;
+          (POPCrr (SRLri $src, 0))>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
