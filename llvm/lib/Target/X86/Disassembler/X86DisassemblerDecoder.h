@@ -634,8 +634,6 @@ struct InternalInstruction {
   uint64_t                      immediates[2];
 
   /* A register or immediate operand encoded into the opcode */
-  BOOL                          consumedOpcodeModifier;
-  uint8_t                       opcodeModifier;
   Reg                           opcodeRegister;
 
   /* Portions of the ModR/M byte */

@@ -1162,8 +1162,8 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   assert(filter && "Filter not set");
 
   if (Form == X86Local::AddRegFrm) {
-    assert(opcodeToSet < 0xf9 &&
-           "Not enough room for all ADDREG_FRM operands");
+    assert(((opcodeToSet & 7) == 0) &&
+           "ADDREG_FRM opcode not aligned");
 
     uint8_t currentOpcode;
 
@@ -1175,19 +1175,15 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
                             currentOpcode,
                             *filter,
                             UID, Is32Bit, IgnoresVEX_L);
-
-    Spec->modifierType = MODIFIER_OPCODE;
-    Spec->modifierBase = opcodeToSet;
   } else {
     tables.setTableFields(opcodeType,
                           insnContext(),
                           opcodeToSet,
                           *filter,
                           UID, Is32Bit, IgnoresVEX_L);
-
-    Spec->modifierType = MODIFIER_NONE;
-    Spec->modifierBase = opcodeToSet;
   }
+  Spec->modifierType = MODIFIER_NONE;
+  Spec->modifierBase = opcodeToSet;
 
   delete filter;
 

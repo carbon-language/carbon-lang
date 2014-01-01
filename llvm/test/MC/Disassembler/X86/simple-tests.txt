@@ -359,6 +359,18 @@
 # CHECK: xchgq %r8, %rax
 0x49 0x90
 
+# CHECK: xchgl %r9d, %eax
+0x41 0x91
+
+# CHECK: xchgq %r9, %rax
+0x49 0x91
+
+# CHECK: xchgl %ecx, %eax
+0x91
+
+# CHECK: xchgq %rcx, %rax
+0x48 0x91
+
 # CHECK: addb $0, %al
 0x04 0x00
 

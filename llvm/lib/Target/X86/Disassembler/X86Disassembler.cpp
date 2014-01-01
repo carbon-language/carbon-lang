@@ -609,16 +609,9 @@ static bool translateRM(MCInst &mcInst, const OperandSpecifier &operand,
 /// @param mcInst       - The MCInst to append to.
 /// @param stackPos     - The stack position to translate.
 /// @return             - false on success; true otherwise.
-static bool translateFPRegister(MCInst &mcInst,
-                               uint8_t stackPos) {
-  if (stackPos >= 8) {
-    debug("Invalid FP stack position");
-    return true;
-  }
-  
+static void translateFPRegister(MCInst &mcInst,
+                                uint8_t stackPos) {
   mcInst.addOperand(MCOperand::CreateReg(X86::ST0 + stackPos));
-
-  return false;
 }
 
 /// translateMaskRegister - Translates a 3-bit mask register number to
@@ -683,12 +676,11 @@ static bool translateOperand(MCInst &mcInst, const OperandSpecifier &operand,
   case ENCODING_RW:
   case ENCODING_RD:
   case ENCODING_RO:
+  case ENCODING_Rv:
     translateRegister(mcInst, insn.opcodeRegister);
     return false;
   case ENCODING_FP:
-    return translateFPRegister(mcInst, insn.modRM & 7);
-  case ENCODING_Rv:
-    translateRegister(mcInst, insn.opcodeRegister);
+    translateFPRegister(mcInst, insn.modRM & 7);
     return false;
   case ENCODING_VVVV:
     translateRegister(mcInst, insn.vvvv);

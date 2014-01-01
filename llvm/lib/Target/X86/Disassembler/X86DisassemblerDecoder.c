@@ -1502,39 +1502,11 @@ static int fixupReg(struct InternalInstruction *insn,
 }
 
 /*
- * readOpcodeModifier - Reads an operand from the opcode field of an
- *   instruction.  Handles AddRegFrm instructions.
- *
- * @param insn    - The instruction whose opcode field is to be read.
- * @return        - 0 on success; nonzero otherwise.
- */
-static int readOpcodeModifier(struct InternalInstruction* insn) {
-  dbgprintf(insn, "readOpcodeModifier()");
-
-  if (insn->consumedOpcodeModifier)
-    return 0;
-
-  insn->consumedOpcodeModifier = TRUE;
-
-  switch (insn->spec->modifierType) {
-  default:
-    debug("Unknown modifier type.");
-    return -1;
-  case MODIFIER_NONE:
-    debug("No modifier but an operand expects one.");
-    return -1;
-  case MODIFIER_OPCODE:
-    insn->opcodeModifier = insn->opcode - insn->spec->modifierBase;
-    return 0;
-  }
-}
-
-/*
  * readOpcodeRegister - Reads an operand from the opcode field of an
  *   instruction and interprets it appropriately given the operand width.
  *   Handles AddRegFrm instructions.
  *
- * @param insn  - See readOpcodeModifier().
+ * @param insn  - the instruction whose opcode field is to be read.
  * @param size  - The width (in bytes) of the register being specified.
  *                1 means AL and friends, 2 means AX, 4 means EAX, and 8 means
  *                RAX.
@@ -1543,16 +1515,13 @@ static int readOpcodeModifier(struct InternalInstruction* insn) {
 static int readOpcodeRegister(struct InternalInstruction* insn, uint8_t size) {
   dbgprintf(insn, "readOpcodeRegister()");
 
-  if (readOpcodeModifier(insn))
-    return -1;
-
   if (size == 0)
     size = insn->registerSize;
 
   switch (size) {
   case 1:
     insn->opcodeRegister = (Reg)(MODRM_REG_AL + ((bFromREX(insn->rexPrefix) << 3)
-                                                  | insn->opcodeModifier));
+                                                  | (insn->opcode & 7)));
     if (insn->rexPrefix &&
         insn->opcodeRegister >= MODRM_REG_AL + 0x4 &&
         insn->opcodeRegister < MODRM_REG_AL + 0x8) {
@@ -1564,17 +1533,17 @@ static int readOpcodeRegister(struct InternalInstruction* insn, uint8_t size) {
   case 2:
     insn->opcodeRegister = (Reg)(MODRM_REG_AX
                                  + ((bFromREX(insn->rexPrefix) << 3)
-                                    | insn->opcodeModifier));
+                                    | (insn->opcode & 7)));
     break;
   case 4:
     insn->opcodeRegister = (Reg)(MODRM_REG_EAX
                                  + ((bFromREX(insn->rexPrefix) << 3)
-                                    | insn->opcodeModifier));
+                                    | (insn->opcode & 7)));
     break;
   case 8:
     insn->opcodeRegister = (Reg)(MODRM_REG_RAX
                                  + ((bFromREX(insn->rexPrefix) << 3)
-                                    | insn->opcodeModifier));
+                                    | (insn->opcode & 7)));
     break;
   }
 

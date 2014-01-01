@@ -525,8 +525,7 @@ struct OperandSpecifier {
  */
 
 #define MODIFIER_TYPES        \
-  ENUM_ENTRY(MODIFIER_NONE)   \
-  ENUM_ENTRY(MODIFIER_OPCODE)
+  ENUM_ENTRY(MODIFIER_NONE)
 
 #define ENUM_ENTRY(n) n,
 typedef enum {
