@@ -510,6 +510,10 @@ def GR32orGR64 : RegisterOperand<GR32> {
   let ParserMatchClass = X86GR32orGR64AsmOperand;
 }
 
+def AVX512RC : Operand<i32> {
+  let PrintMethod = "printRoundingControl";
+  let OperandType = "OPERAND_IMMEDIATE";
+}
 // Sign-extended immediate classes. We don't need to define the full lattice
 // here because there is no instruction with an ambiguity between ImmSExti64i32
 // and ImmSExti32i8.

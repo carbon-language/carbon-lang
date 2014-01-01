@@ -25,6 +25,49 @@
 using namespace llvm;
 using namespace X86Disassembler;
 
+/// stringForContext - Returns a string containing the name of a particular
+///   InstructionContext, usually for diagnostic purposes.
+///
+/// @param insnContext  - The instruction class to transform to a string.
+/// @return           - A statically-allocated string constant that contains the
+///                     name of the instruction class.
+static inline const char* stringForContext(InstructionContext insnContext) {
+  switch (insnContext) {
+  default:
+    llvm_unreachable("Unhandled instruction class");
+#define ENUM_ENTRY(n, r, d)   case n: return #n; break;
+#define ENUM_ENTRY_K_B(n, r, d) ENUM_ENTRY(n, r, d) ENUM_ENTRY(n##_K_B, r, d)\
+        ENUM_ENTRY(n##_KZ, r, d) ENUM_ENTRY(n##_K, r, d) ENUM_ENTRY(n##_B, r, d)\
+        ENUM_ENTRY(n##_KZ_B, r, d)
+  INSTRUCTION_CONTEXTS
+#undef ENUM_ENTRY
+#undef ENUM_ENTRY_K_B
+  }
+}
+
+/// stringForOperandType - Like stringForContext, but for OperandTypes.
+static inline const char* stringForOperandType(OperandType type) {
+  switch (type) {
+  default:
+    llvm_unreachable("Unhandled type");
+#define ENUM_ENTRY(i, d) case i: return #i;
+  TYPES
+#undef ENUM_ENTRY
+  }
+}
+
+/// stringForOperandEncoding - like stringForContext, but for
+///   OperandEncodings.
+static inline const char* stringForOperandEncoding(OperandEncoding encoding) {
+  switch (encoding) {
+  default:
+    llvm_unreachable("Unhandled encoding");
+#define ENUM_ENTRY(i, d) case i: return #i;
+  ENCODINGS
+#undef ENUM_ENTRY
+  }
+}
+
 /// inheritsFrom - Indicates whether all instructions in one class also belong
 ///   to another class.
 ///
@@ -198,6 +241,8 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_EVEX_L2_K:
   case IC_EVEX_L2_B:
   case IC_EVEX_L2_XS_K:
+  case IC_EVEX_L2_XS_B:
+  case IC_EVEX_L2_XD_B:
   case IC_EVEX_L2_XD_K:
   case IC_EVEX_L2_OPSIZE_K:
   case IC_EVEX_L2_OPSIZE_B:
@@ -212,6 +257,7 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_EVEX_L2_W_B:
   case IC_EVEX_L2_W_XS_K:
   case IC_EVEX_L2_W_XD_K:
+  case IC_EVEX_L2_W_XD_B:
   case IC_EVEX_L2_W_OPSIZE_K:
   case IC_EVEX_L2_W_OPSIZE_B:
   case IC_EVEX_L2_W_OPSIZE_K_B:
@@ -222,6 +268,8 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_EVEX_L2_W_OPSIZE_KZ_B:
     return false;
   default:
+    errs() << "Unknown instruction class: " <<
+      stringForContext((InstructionContext)parent) << "\n";
     llvm_unreachable("Unknown instruction class");
   }
 }
@@ -249,49 +297,6 @@ static inline bool outranks(InstructionContext upper,
 #undef ENUM_ENTRY_K_B
 
   return (ranks[upper] > ranks[lower]);
-}
-
-/// stringForContext - Returns a string containing the name of a particular
-///   InstructionContext, usually for diagnostic purposes.
-///
-/// @param insnContext  - The instruction class to transform to a string.
-/// @return           - A statically-allocated string constant that contains the
-///                     name of the instruction class.
-static inline const char* stringForContext(InstructionContext insnContext) {
-  switch (insnContext) {
-  default:
-    llvm_unreachable("Unhandled instruction class");
-#define ENUM_ENTRY(n, r, d)   case n: return #n; break;
-#define ENUM_ENTRY_K_B(n, r, d) ENUM_ENTRY(n, r, d) ENUM_ENTRY(n##_K_B, r, d)\
-        ENUM_ENTRY(n##_KZ, r, d) ENUM_ENTRY(n##_K, r, d) ENUM_ENTRY(n##_B, r, d)\
-        ENUM_ENTRY(n##_KZ_B, r, d)
-  INSTRUCTION_CONTEXTS
-#undef ENUM_ENTRY
-#undef ENUM_ENTRY_K_B
-  }
-}
-
-/// stringForOperandType - Like stringForContext, but for OperandTypes.
-static inline const char* stringForOperandType(OperandType type) {
-  switch (type) {
-  default:
-    llvm_unreachable("Unhandled type");
-#define ENUM_ENTRY(i, d) case i: return #i;
-  TYPES
-#undef ENUM_ENTRY
-  }
-}
-
-/// stringForOperandEncoding - like stringForContext, but for
-///   OperandEncodings.
-static inline const char* stringForOperandEncoding(OperandEncoding encoding) {
-  switch (encoding) {
-  default:
-    llvm_unreachable("Unhandled encoding");
-#define ENUM_ENTRY(i, d) case i: return #i;
-  ENCODINGS
-#undef ENUM_ENTRY
-  }
 }
 
 /// getDecisionType - Determines whether a ModRM decision with 255 entries can

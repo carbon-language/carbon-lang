@@ -74,21 +74,21 @@ define <8 x double> @test_rcp28_pd_512(<8 x double> %a0) {
 }
 declare <8 x double> @llvm.x86.avx512.rcp28.pd.512(<8 x double>) nounwind readnone
 
-define <8 x double> @test_rndscale_pd_512(<8 x double> %a0) {
-  ; CHECK: vrndscale
-  %res = call <8 x double> @llvm.x86.avx512.rndscale.pd.512(<8 x double> %a0, i32 7) ; <<8 x double>> [#uses=1]
-  ret <8 x double> %res
+declare <8 x double> @llvm.x86.avx512.mask.rndscale.pd.512(<8 x double>, i32, <8 x double>, i8, i32)
+
+define <8 x double> @test7(<8 x double> %a) {
+; CHECK: vrndscalepd {{.*}}encoding: [0x62,0xf3,0xfd,0x48,0x09,0xc0,0x0b]
+  %res = call <8 x double> @llvm.x86.avx512.mask.rndscale.pd.512(<8 x double> %a, i32 11, <8 x double> zeroinitializer, i8 -1, i32 4)
+  ret <8 x double>%res
 }
-declare <8 x double> @llvm.x86.avx512.rndscale.pd.512(<8 x double>, i32) nounwind readnone
 
+declare <16 x float> @llvm.x86.avx512.mask.rndscale.ps.512(<16 x float>, i32, <16 x float>, i16, i32)
 
-define <16 x float> @test_rndscale_ps_512(<16 x float> %a0) {
-  ; CHECK: vrndscale
-  %res = call <16 x float> @llvm.x86.avx512.rndscale.ps.512(<16 x float> %a0, i32 7) ; <<16 x float>> [#uses=1]
-  ret <16 x float> %res
+define <16 x float> @test8(<16 x float> %a) {
+; CHECK: vrndscaleps {{.*}}encoding: [0x62,0xf3,0x7d,0x48,0x08,0xc0,0x0b]
+  %res = call <16 x float> @llvm.x86.avx512.mask.rndscale.ps.512(<16 x float> %a, i32 11, <16 x float> zeroinitializer, i16 -1, i32 4)
+  ret <16 x float>%res
 }
-declare <16 x float> @llvm.x86.avx512.rndscale.ps.512(<16 x float>, i32) nounwind readnone
-
 
 define <16 x float> @test_rsqrt_ps_512(<16 x float> %a0) {
   ; CHECK: vrsqrt14ps
@@ -420,3 +420,31 @@ define <8 x i64> @test_x86_mask_blend_q_512(i8 %a0, <8 x i64> %a1, <8 x i64> %a2
   ret <8 x i64> %res
 }
 declare <8 x i64> @llvm.x86.avx512.mask.blend.q.512(<8 x i1> %a0, <8 x i64> %a1, <8 x i64> %a2) nounwind readonly
+
+ define <8 x i32> @test_cvtpd2udq(<8 x double> %a) {
+ ;CHECK: vcvtpd2udq {ru-sae}{{.*}}encoding: [0x62,0xf1,0xfc,0x58,0x79,0xc0]
+  %res = call <8 x i32> @llvm.x86.avx512.mask.cvtpd2udq.512(<8 x double> %a, <8 x i32>zeroinitializer, i8 -1, i32 2)
+  ret <8 x i32>%res
+ }
+ declare <8 x i32> @llvm.x86.avx512.mask.cvtpd2udq.512(<8 x double>, <8 x i32>, i8, i32)
+ 
+ define <16 x i32> @test_cvtps2udq(<16 x float> %a) {
+ ;CHECK: vcvtps2udq {rd-sae}{{.*}}encoding: [0x62,0xf1,0x7c,0x38,0x79,0xc0]
+  %res = call <16 x i32> @llvm.x86.avx512.mask.cvtps2udq.512(<16 x float> %a, <16 x i32>zeroinitializer, i16 -1, i32 1)
+  ret <16 x i32>%res
+ }
+ declare <16 x i32> @llvm.x86.avx512.mask.cvtps2udq.512(<16 x float>, <16 x i32>, i16, i32)
+
+ define i16 @test_cmpps(<16 x float> %a, <16 x float> %b) {
+ ;CHECK: vcmpleps {sae}{{.*}}encoding: [0x62,0xf1,0x7c,0x18,0xc2,0xc1,0x02]
+   %res = call i16 @llvm.x86.avx512.mask.cmp.ps.512(<16 x float> %a, <16 x float> %b, i32 2, i16 -1, i32 8)
+   ret i16 %res
+ }
+ declare i16 @llvm.x86.avx512.mask.cmp.ps.512(<16 x float> , <16 x float> , i32, i16, i32)
+
+ define i8 @test_cmppd(<8 x double> %a, <8 x double> %b) {
+ ;CHECK: vcmpneqpd %zmm{{.*}}encoding: [0x62,0xf1,0xfd,0x48,0xc2,0xc1,0x04]
+   %res = call i8 @llvm.x86.avx512.mask.cmp.pd.512(<8 x double> %a, <8 x double> %b, i32 4, i8 -1, i32 4)
+   ret i8 %res
+ }
+ declare i8 @llvm.x86.avx512.mask.cmp.pd.512(<8 x double> , <8 x double> , i32, i8, i32)

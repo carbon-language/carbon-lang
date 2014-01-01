@@ -40,6 +40,7 @@ public:
   void printAVXCC(const MCInst *MI, unsigned Op, raw_ostream &O);
   void printPCRelImm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printMemOffset(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printRoundingControl(const MCInst *MI, unsigned Op, raw_ostream &OS);
 
   void printopaquemem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     O << "opaque ptr ";

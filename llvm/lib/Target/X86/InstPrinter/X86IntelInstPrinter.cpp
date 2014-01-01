@@ -113,6 +113,19 @@ void X86IntelInstPrinter::printAVXCC(const MCInst *MI, unsigned Op,
   }
 }
 
+void X86IntelInstPrinter::printRoundingControl(const MCInst *MI, unsigned Op,
+                                   raw_ostream &O) {
+  int64_t Imm = MI->getOperand(Op).getImm() & 0x1f;
+  switch (Imm) {
+  case 0: O << "{rn-sae}"; break;
+  case 1: O << "{rd-sae}"; break;
+  case 2: O << "{ru-sae}"; break;
+  case 3: O << "{rz-sae}"; break;
+
+  default: llvm_unreachable("Invalid AVX-512 rounding control argument!");
+  }
+}
+
 /// printPCRelImm - This is used to print an immediate value that ends up
 /// being encoded as a pc-relative value.
 void X86IntelInstPrinter::printPCRelImm(const MCInst *MI, unsigned OpNo,

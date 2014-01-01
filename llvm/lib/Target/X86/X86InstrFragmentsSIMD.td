@@ -470,6 +470,8 @@ def bc_v4i64 : PatFrag<(ops node:$in), (v4i64 (bitconvert node:$in))>;
 // 512-bit bitconvert pattern fragments
 def bc_v16i32 : PatFrag<(ops node:$in), (v16i32 (bitconvert node:$in))>;
 def bc_v8i64 : PatFrag<(ops node:$in), (v8i64 (bitconvert node:$in))>;
+def bc_v8f64 : PatFrag<(ops node:$in), (v8f64 (bitconvert node:$in))>;
+def bc_v16f32 : PatFrag<(ops node:$in), (v16f32 (bitconvert node:$in))>;
 
 def vzmovl_v2i64 : PatFrag<(ops node:$src),
                            (bitconvert (v2i64 (X86vzmovl
@@ -485,6 +487,14 @@ def vzload_v2i64 : PatFrag<(ops node:$src),
 def fp32imm0 : PatLeaf<(f32 fpimm), [{
   return N->isExactlyValue(+0.0);
 }]>;
+
+def I8Imm : SDNodeXForm<imm, [{
+  // Transformation function: get the low 8 bits.
+  return getI8Imm((uint8_t)N->getZExtValue());
+}]>;
+
+def FROUND_NO_EXC : ImmLeaf<i32, [{ return Imm == 8; }]>;
+def FROUND_CURRENT : ImmLeaf<i32, [{ return Imm == 4; }]>;
 
 // BYTE_imm - Transform bit immediates into byte immediates.
 def BYTE_imm  : SDNodeXForm<imm, [{
