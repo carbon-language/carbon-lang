@@ -1285,7 +1285,7 @@ void llvm::GetReturnInfo(Type* ReturnType, AttributeSet attr,
 /// function arguments in the caller parameter area.  This is the actual
 /// alignment, not its logarithm.
 unsigned TargetLoweringBase::getByValTypeAlignment(Type *Ty) const {
-  return TD->getCallFrameTypeAlignment(Ty);
+  return TD->getABITypeAlignment(Ty);
 }
 
 //===----------------------------------------------------------------------===//

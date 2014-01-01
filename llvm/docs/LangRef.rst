@@ -1160,9 +1160,6 @@ as follows:
 ``a<size>:<abi>:<pref>``
     This specifies the alignment for an aggregate type of a given bit
     ``<size>``.
-``s<size>:<abi>:<pref>``
-    This specifies the alignment for a stack object of a given bit
-    ``<size>``.
 ``n<size1>:<size2>:<size3>...``
     This specifies a set of native integer widths for the target CPU in
     bits. For example, it might contain ``n32`` for 32-bit PowerPC,

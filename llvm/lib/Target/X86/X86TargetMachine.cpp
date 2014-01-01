@@ -53,10 +53,6 @@ static std::string computeDataLayout(const X86Subtarget &ST) {
   else
     Ret += "-f80:32";
 
-  // Objects on the stack ore aligned to 64 bits.
-  if (ST.is64Bit())
-    Ret += "-s:64";
-
   // The registers can hold 8, 16, 32 or, in x86-64, 64 bits.
   if (ST.is64Bit())
     Ret += "-n8:16:32:64";

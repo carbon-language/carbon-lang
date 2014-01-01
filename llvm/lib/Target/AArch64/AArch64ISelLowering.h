@@ -221,6 +221,8 @@ public:
                       const SmallVectorImpl<SDValue> &OutVals,
                       SDLoc dl, SelectionDAG &DAG) const;
 
+  virtual unsigned getByValTypeAlignment(Type *Ty) const LLVM_OVERRIDE;
+
   SDValue LowerCall(CallLoweringInfo &CLI,
                     SmallVectorImpl<SDValue> &InVals) const;
 

@@ -113,7 +113,7 @@ unsigned LLVMABIAlignmentOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty) {
 }
 
 unsigned LLVMCallFrameAlignmentOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty) {
-  return unwrap(TD)->getCallFrameTypeAlignment(unwrap(Ty));
+  return unwrap(TD)->getABITypeAlignment(unwrap(Ty));
 }
 
 unsigned LLVMPreferredAlignmentOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty) {

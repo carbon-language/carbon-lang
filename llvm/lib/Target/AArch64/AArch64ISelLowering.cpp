@@ -1346,6 +1346,12 @@ AArch64TargetLowering::LowerReturn(SDValue Chain,
                      &RetOps[0], RetOps.size());
 }
 
+unsigned AArch64TargetLowering::getByValTypeAlignment(Type *Ty) const {
+  // This is a new backend. For anything more precise than this a FE should
+  // set an explicit alignment.
+  return 4;
+}
+
 SDValue
 AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
                                  SmallVectorImpl<SDValue> &InVals) const {

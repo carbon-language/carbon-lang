@@ -225,6 +225,10 @@ void DataLayout::parseSpecifier(StringRef Desc) {
     Tok = Tok.substr(1);
 
     switch (Specifier) {
+    case 's':
+      // Ignored for backward compatibility.
+      // FIXME: remove this on LLVM 4.0.
+      break;
     case 'E':
       LittleEndian = false;
       break;
@@ -259,8 +263,7 @@ void DataLayout::parseSpecifier(StringRef Desc) {
     case 'i':
     case 'v':
     case 'f':
-    case 'a':
-    case 's': {
+    case 'a': {
       AlignTypeEnum AlignType;
       switch (Specifier) {
       default:
@@ -268,7 +271,6 @@ void DataLayout::parseSpecifier(StringRef Desc) {
       case 'v': AlignType = VECTOR_ALIGN; break;
       case 'f': AlignType = FLOAT_ALIGN; break;
       case 'a': AlignType = AGGREGATE_ALIGN; break;
-      case 's': AlignType = STACK_ALIGN; break;
       }
 
       // Bit size.
@@ -615,14 +617,6 @@ unsigned DataLayout::getABITypeAlignment(Type *Ty) const {
 /// an integer type of the specified bitwidth.
 unsigned DataLayout::getABIIntegerTypeAlignment(unsigned BitWidth) const {
   return getAlignmentInfo(INTEGER_ALIGN, BitWidth, true, 0);
-}
-
-unsigned DataLayout::getCallFrameTypeAlignment(Type *Ty) const {
-  for (unsigned i = 0, e = Alignments.size(); i != e; ++i)
-    if (Alignments[i].AlignType == STACK_ALIGN)
-      return Alignments[i].ABIAlign;
-
-  return getABITypeAlignment(Ty);
 }
 
 unsigned DataLayout::getPrefTypeAlignment(Type *Ty) const {
