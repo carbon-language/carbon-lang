@@ -128,6 +128,7 @@ bool PPCDispatchGroupSBHazardRecognizer::mustComeFirst(const MCInstrDesc *MCID,
   default:
     // All multi-slot instructions must come first.
     return NSlots > 1;
+  case PPC::Sched::IIC_BrCR: // cr logicals
   case PPC::Sched::IIC_SprMFCR:
   case PPC::Sched::IIC_SprMFCRF:
   case PPC::Sched::IIC_SprMTSPR:
