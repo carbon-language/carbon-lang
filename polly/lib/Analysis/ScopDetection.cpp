@@ -714,12 +714,12 @@ void ScopDetection::printLocations(llvm::Function &F) {
 
 bool ScopDetection::runOnFunction(llvm::Function &F) {
   LI = &getAnalysis<LoopInfo>();
+  RI = &getAnalysis<RegionInfo>();
   if (!DetectScopsWithoutLoops && LI->empty())
     return false;
 
   AA = &getAnalysis<AliasAnalysis>();
   SE = &getAnalysis<ScalarEvolution>();
-  RI = &getAnalysis<RegionInfo>();
   Region *TopRegion = RI->getTopLevelRegion();
 
   releaseMemory();
