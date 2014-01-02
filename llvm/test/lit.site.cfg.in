@@ -26,6 +26,7 @@ config.have_zlib = "@HAVE_LIBZ@"
 # used when we can't determine the tool dir at configuration time.
 try:
     config.llvm_tools_dir = config.llvm_tools_dir % lit_config.params
+    config.llvm_shlib_dir = config.llvm_shlib_dir % lit_config.params
 except KeyError:
     e = sys.exc_info()[1]
     key, = e.args

@@ -177,6 +177,7 @@ ${name} ignored.")
     endif()
 
     add_library( ${name} ${libkind} ${ALL_FILES} )
+    set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
     set_target_properties( ${name} PROPERTIES PREFIX "" )
     add_dead_strip( ${name} )
 
@@ -391,7 +392,6 @@ function(configure_lit_site_cfg input output)
   set(TARGETS_TO_BUILD ${TARGETS_BUILT})
 
   set(SHLIBEXT "${LTDL_SHLIB_EXT}")
-  set(SHLIBDIR "${LLVM_LIBRARY_OUTPUT_INTDIR}")
 
   if(BUILD_SHARED_LIBS)
     set(LLVM_SHARED_LIBS_ENABLED "1")
@@ -419,6 +419,7 @@ function(configure_lit_site_cfg input output)
   set(LLVM_BINARY_DIR ${LLVM_BINARY_DIR})
   string(REPLACE ${CMAKE_CFG_INTDIR} ${LLVM_BUILD_MODE} LLVM_TOOLS_DIR ${LLVM_RUNTIME_OUTPUT_INTDIR})
   string(REPLACE ${CMAKE_CFG_INTDIR} ${LLVM_BUILD_MODE} LLVM_LIBS_DIR  ${LLVM_LIBRARY_OUTPUT_INTDIR})
+  string(REPLACE ${CMAKE_CFG_INTDIR} ${LLVM_BUILD_MODE} SHLIBDIR  ${LLVM_LIBRARY_OUTPUT_INTDIR})
   set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE})
   set(ENABLE_SHARED ${LLVM_SHARED_LIBS_ENABLED})
   set(SHLIBPATH_VAR ${SHLIBPATH_VAR})
