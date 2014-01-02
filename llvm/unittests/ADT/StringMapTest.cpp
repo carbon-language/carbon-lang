@@ -183,23 +183,6 @@ TEST_F(StringMapTest, IterationTest) {
   }
 }
 
-} // end anonymous namespace
-
-namespace llvm {
-
-template <>
-class StringMapEntryInitializer<uint32_t> {
-public:
-  template <typename InitTy>
-  static void Initialize(StringMapEntry<uint32_t> &T, InitTy InitVal) {
-    T.second = InitVal;
-  }
-};
-
-} // end llvm namespace
-
-namespace {
-
 // Test StringMapEntry::Create() method.
 TEST_F(StringMapTest, StringMapEntryTest) {
   StringMap<uint32_t>::value_type* entry =
