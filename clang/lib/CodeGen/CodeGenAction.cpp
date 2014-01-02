@@ -150,6 +150,7 @@ namespace clang {
       Ctx.setInlineAsmDiagnosticHandler(InlineAsmDiagHandler, this);
 
       EmitBackendOutput(Diags, CodeGenOpts, TargetOpts, LangOpts,
+                        C.getTargetInfo().getTargetDescription(),
                         TheModule.get(), Action, AsmOutStream);
 
       Ctx.setInlineAsmDiagnosticHandler(OldHandler, OldContext);
@@ -420,10 +421,9 @@ void CodeGenAction::ExecuteAction() {
       TheModule->setTargetTriple(TargetOpts.Triple);
     }
 
-    EmitBackendOutput(CI.getDiagnostics(), CI.getCodeGenOpts(),
-                      TargetOpts, CI.getLangOpts(),
-                      TheModule.get(),
-                      BA, OS);
+    EmitBackendOutput(CI.getDiagnostics(), CI.getCodeGenOpts(), TargetOpts,
+                      CI.getLangOpts(), CI.getTarget().getTargetDescription(),
+                      TheModule.get(), BA, OS);
     return;
   }
 

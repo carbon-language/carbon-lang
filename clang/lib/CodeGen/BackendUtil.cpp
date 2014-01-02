@@ -610,10 +610,23 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action, raw_ostream *OS) {
 void clang::EmitBackendOutput(DiagnosticsEngine &Diags,
                               const CodeGenOptions &CGOpts,
                               const clang::TargetOptions &TOpts,
-                              const LangOptions &LOpts,
-                              Module *M,
-                              BackendAction Action, raw_ostream *OS) {
+                              const LangOptions &LOpts, StringRef TDesc,
+                              Module *M, BackendAction Action,
+                              raw_ostream *OS) {
   EmitAssemblyHelper AsmHelper(Diags, CGOpts, TOpts, LOpts, M);
 
   AsmHelper.EmitAssembly(Action, OS);
+
+  // If an optional clang TargetInfo description string was passed in, use it to
+  // verify the LLVM TargetMachine's DataLayout.
+  if (AsmHelper.TM && !TDesc.empty()) {
+    std::string DLDesc =
+        AsmHelper.TM->getDataLayout()->getStringRepresentation();
+    if (DLDesc != TDesc) {
+      unsigned DiagID = Diags.getCustomDiagID(
+          DiagnosticsEngine::Error, "backend data layout '%0' does not match "
+                                    "expected target description '%1'");
+      Diags.Report(DiagID) << DLDesc << TDesc;
+    }
+  }
 }
