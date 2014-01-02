@@ -28,5 +28,6 @@ ARM_FPU_NAME("neon", NEON)
 ARM_FPU_NAME("neon-vfpv4", NEON_VFPV4)
 ARM_FPU_NAME("neon-fp-armv8", NEON_FP_ARMV8)
 ARM_FPU_NAME("crypto-neon-fp-armv8", CRYPTO_NEON_FP_ARMV8)
+ARM_FPU_NAME("softvfp", SOFTVFP)
 
 #undef ARM_FPU_NAME

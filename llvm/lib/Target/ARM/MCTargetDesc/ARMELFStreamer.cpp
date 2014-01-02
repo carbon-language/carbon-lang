@@ -747,6 +747,9 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
                      /* OverwriteExisting= */ false);
     break;
 
+  case ARM::SOFTVFP:
+    break;
+
   default:
     report_fatal_error("Unknown FPU: " + Twine(FPU));
     break;
