@@ -503,10 +503,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   // Filter out artificial instructions but leave in the LOCK_PREFIX so it is
   // printed as a separate "instruction".
 
-  if (Name.find("_Int") != Name.npos       ||
-      Name.find("Int_") != Name.npos)
-    return FILTER_STRONG;
-
   // Filter out instructions with segment override prefixes.
   // They're too messy to handle now and we'll special case them if needed.
 

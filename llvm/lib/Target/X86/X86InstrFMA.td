@@ -138,19 +138,21 @@ multiclass fma3s_rm<bits<8> opc, string OpcodeStr, X86MemOperand x86memop,
 multiclass fma3s_rm_int<bits<8> opc, string OpcodeStr, Operand memop,
                         ComplexPattern mem_cpat, Intrinsic IntId,
                         RegisterClass RC> {
-  let isCommutable = 1 in
-  def r_Int : FMA3<opc, MRMSrcReg, (outs VR128:$dst),
-                   (ins VR128:$src1, VR128:$src2, VR128:$src3),
-                   !strconcat(OpcodeStr,
-                              "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst, (IntId VR128:$src2, VR128:$src1,
-                     VR128:$src3))]>;
-  def m_Int : FMA3<opc, MRMSrcMem, (outs VR128:$dst),
-                   (ins VR128:$src1, VR128:$src2, memop:$src3),
-                   !strconcat(OpcodeStr,
-                              "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst,
-                     (IntId VR128:$src2, VR128:$src1, mem_cpat:$src3))]>;
+  let isCodeGenOnly = 1 in {
+    let isCommutable = 1 in
+    def r_Int : FMA3<opc, MRMSrcReg, (outs VR128:$dst),
+                     (ins VR128:$src1, VR128:$src2, VR128:$src3),
+                     !strconcat(OpcodeStr,
+                                "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                     [(set VR128:$dst, (IntId VR128:$src2, VR128:$src1,
+                       VR128:$src3))]>;
+    def m_Int : FMA3<opc, MRMSrcMem, (outs VR128:$dst),
+                     (ins VR128:$src1, VR128:$src2, memop:$src3),
+                     !strconcat(OpcodeStr,
+                                "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                     [(set VR128:$dst,
+                       (IntId VR128:$src2, VR128:$src1, mem_cpat:$src3))]>;
+  } // isCodeGenOnly
 }
 } // Constraints = "$src1 = $dst"
 
@@ -230,6 +232,7 @@ let isCodeGenOnly = 1, hasSideEffects = 0 in
 
 multiclass fma4s_int<bits<8> opc, string OpcodeStr, Operand memop,
                      ComplexPattern mem_cpat, Intrinsic Int> {
+let isCodeGenOnly = 1 in {
   let isCommutable = 1 in
   def rr_Int : FMA4<opc, MRMSrcReg, (outs VR128:$dst),
                (ins VR128:$src1, VR128:$src2, VR128:$src3),
@@ -249,6 +252,7 @@ multiclass fma4s_int<bits<8> opc, string OpcodeStr, Operand memop,
                "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
                [(set VR128:$dst,
                  (Int VR128:$src1, mem_cpat:$src2, VR128:$src3))]>, VEX_LIG;
+} // isCodeGenOnly = 1
 }
 
 multiclass fma4p<bits<8> opc, string OpcodeStr, SDNode OpNode,
