@@ -16,7 +16,7 @@
 
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=X86_64 %s
-// X86_64: target datalayout = "e-i64:64-f80:128-s:64-n8:16:32:64-S128"
+// X86_64: target datalayout = "e-i64:64-f80:128-n8:16:32:64-S128"
 
 // RUN: %clang_cc1 -triple xcore-unknown-unknown -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=XCORE %s
@@ -64,7 +64,7 @@
 
 // RUN: %clang_cc1 -triple x86_64-nacl -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=X86_64-NACL
-// X86_64-NACL: target datalayout = "e-p:32:32-i64:64-s:64-n8:16:32:64-S128"
+// X86_64-NACL: target datalayout = "e-p:32:32-i64:64-n8:16:32:64-S128"
 
 // RUN: %clang_cc1 -triple arm-nacl-gnueabi -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=ARM-NACL
@@ -120,7 +120,7 @@
 
 // RUN: %clang_cc1 -triple aarch64-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=AARCH64
-// AARCH64: target datalayout = "e-i64:64-i128:128-s:32-n32:64-S128"
+// AARCH64: target datalayout = "e-i64:64-i128:128-n32:64-S128"
 
 // RUN: %clang_cc1 -triple thumb-unknown-gnueabi -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=THUMB
