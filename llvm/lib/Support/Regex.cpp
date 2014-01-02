@@ -33,8 +33,10 @@ Regex::Regex(StringRef regex, unsigned Flags) {
 }
 
 Regex::~Regex() {
-  llvm_regfree(preg);
-  delete preg;
+  if (preg) {
+    llvm_regfree(preg);
+    delete preg;
+  }
 }
 
 bool Regex::isValid(std::string &Error) {
