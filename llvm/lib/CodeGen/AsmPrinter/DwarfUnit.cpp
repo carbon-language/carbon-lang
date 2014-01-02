@@ -270,7 +270,7 @@ void DwarfCompileUnit::addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
     DD->addArangeLabel(SymbolCU(this, Label));
 
   if (!DD->useSplitDwarf()) {
-    if (Label != NULL) {
+    if (Label) {
       DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
       Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
     } else {
