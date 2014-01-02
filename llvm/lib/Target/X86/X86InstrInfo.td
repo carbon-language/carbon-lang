@@ -1599,7 +1599,8 @@ def CMPXCHG16B : RI<0xC7, MRM1m, (outs), (ins i128mem:$dst),
 def LOCK_PREFIX : I<0xF0, RawFrm, (outs),  (ins), "lock", []>;
 
 // Rex64 instruction prefix
-def REX64_PREFIX : I<0x48, RawFrm, (outs),  (ins), "rex64", []>;
+def REX64_PREFIX : I<0x48, RawFrm, (outs),  (ins), "rex64", []>,
+                     Requires<[In64BitMode]>;
 
 // Data16 instruction prefix
 def DATA16_PREFIX : I<0x66, RawFrm, (outs),  (ins), "data16", []>;
