@@ -297,8 +297,9 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
         if (Init)
           SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
         Changed |= CleanupConstantGlobalUsers(CE, SubInit, TD, TLI);
-      } else if (CE->getOpcode() == Instruction::BitCast &&
-                 CE->getType()->isPointerTy()) {
+      } else if ((CE->getOpcode() == Instruction::BitCast &&
+                  CE->getType()->isPointerTy()) ||
+                 CE->getOpcode() == Instruction::AddrSpaceCast) {
         // Pointer cast, delete any stores and memsets to the global.
         Changed |= CleanupConstantGlobalUsers(CE, 0, TD, TLI);
       }
