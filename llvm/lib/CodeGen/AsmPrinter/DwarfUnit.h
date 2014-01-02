@@ -185,7 +185,7 @@ public:
   MCSymbol *getLocalSectionSym() const {
     if (Skeleton)
       return Skeleton->getSectionSym();
-    return SectionSym;
+    return getSectionSym();
   }
 
   MCSymbol *getSectionSym() const {
@@ -198,7 +198,7 @@ public:
   MCSymbol *getLocalLabelBegin() const {
     if (Skeleton)
       return Skeleton->getLabelBegin();
-    return LabelBegin;
+    return getLabelBegin();
   }
 
   MCSymbol *getLabelBegin() const {

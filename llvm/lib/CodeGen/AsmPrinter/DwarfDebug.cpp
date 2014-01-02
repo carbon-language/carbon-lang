@@ -822,14 +822,14 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   if (!FirstCU)
     FirstCU = NewCU;
 
-  NewCU->initSection(
-      useSplitDwarf() ? Asm->getObjFileLowering().getDwarfInfoDWOSection()
-                      : Asm->getObjFileLowering().getDwarfInfoSection(),
-      useSplitDwarf() ? DwarfInfoDWOSectionSym : DwarfInfoSectionSym);
-
-  // If we're splitting the dwarf then construct the skeleton CU now.
-  if (useSplitDwarf())
+  if (useSplitDwarf()) {
+    NewCU->initSection(Asm->getObjFileLowering().getDwarfInfoDWOSection(),
+                       DwarfInfoDWOSectionSym);
+    // If we're splitting the dwarf then construct the skeleton CU now.
     NewCU->setSkeleton(constructSkeletonCU(NewCU));
+  } else
+    NewCU->initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
+                       DwarfInfoSectionSym);
 
   CUMap.insert(std::make_pair(DIUnit, NewCU));
   CUDieMap.insert(std::make_pair(Die, NewCU));
