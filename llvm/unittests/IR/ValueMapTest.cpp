@@ -117,8 +117,8 @@ TYPED_TEST(ValueMapTest, OperationsWork) {
 
 template<typename ExpectedType, typename VarType>
 void CompileAssertHasType(VarType) {
-  LLVM_ATTRIBUTE_UNUSED typedef char
-  NOT_SAME[is_same<ExpectedType, VarType>::value ? 1 : -1];
+  LLVM_STATIC_ASSERT((is_same<ExpectedType, VarType>::value),
+                     "Not the same type");
 }
 
 TYPED_TEST(ValueMapTest, Iteration) {
