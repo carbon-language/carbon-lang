@@ -550,9 +550,11 @@ void Verifier::visitGlobalAlias(GlobalAlias &GA) {
     ConstantExpr *CE = dyn_cast<ConstantExpr>(Aliasee);
     Assert1(CE &&
             (CE->getOpcode() == Instruction::BitCast ||
+             CE->getOpcode() == Instruction::AddrSpaceCast ||
              CE->getOpcode() == Instruction::GetElementPtr) &&
             isa<GlobalValue>(CE->getOperand(0)),
-            "Aliasee should be either GlobalValue or bitcast of GlobalValue",
+            "Aliasee should be either GlobalValue, bitcast or "
+             "addrspacecast of GlobalValue",
             &GA);
 
     if (CE->getOpcode() == Instruction::BitCast) {

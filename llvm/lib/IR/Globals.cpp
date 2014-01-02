@@ -237,7 +237,8 @@ GlobalValue *GlobalAlias::getAliasedGlobal() {
     return GV;
 
   ConstantExpr *CE = cast<ConstantExpr>(C);
-  assert((CE->getOpcode() == Instruction::BitCast || 
+  assert((CE->getOpcode() == Instruction::BitCast ||
+          CE->getOpcode() == Instruction::AddrSpaceCast ||
           CE->getOpcode() == Instruction::GetElementPtr) &&
          "Unsupported aliasee");
   
