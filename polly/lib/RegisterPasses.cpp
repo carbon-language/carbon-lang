@@ -311,9 +311,6 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
 }
 
 static bool shouldEnablePolly(unsigned OptLevel) {
-  if (OptLevel == 0)
-    return false;
-
   if (PollyOnlyPrinter || PollyPrinter || PollyOnlyViewer || PollyViewer)
     PollyTrackFailures = true;
 
@@ -343,22 +340,6 @@ registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
 
   registerPollyPasses(PM);
 }
-
-static void
-registerPollyOptLevel0Passes(const llvm::PassManagerBuilder &Builder,
-                             llvm::PassManagerBase &PM) {
-  if (shouldEnablePolly(Builder.OptLevel))
-    registerCanonicalicationPasses(PM);
-}
-
-/// @brief Register Polly canonicalization passes at opt level '0'
-///
-/// At '-O0' we schedule the Polly canonicalization passes. This allows us
-/// to easily get the canonicalized IR of a program which can then be used
-/// with the Polly passes of the 'opt' optimizer.
-static llvm::RegisterStandardPasses
-RegisterPollyCanonicalizer(llvm::PassManagerBuilder::EP_EnabledOnOptLevel0,
-                           registerPollyOptLevel0Passes);
 
 /// @brief Register Polly to be available as an optimizer
 ///
