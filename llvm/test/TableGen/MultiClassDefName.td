@@ -29,3 +29,13 @@ multiclass MC<string name> {
 
 defm : MC<"foo">;
 
+multiclass MC2<string name> {
+  def there : Outer<C<name> >;
+}
+
+// Ensure that we've correctly captured the reference to name from the implicit
+// anonymous C def in the template parameter list of Outer.
+// CHECK-NOT: MC2::name
+
+defm : MC2<"bar">;
+
