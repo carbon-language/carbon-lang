@@ -2046,7 +2046,6 @@ void DwarfDebug::emitSectionLabels() {
       emitSectionSym(Asm, TLOF.getDwarfLocSection(), "section_debug_loc");
 
   TextSectionSym = emitSectionSym(Asm, TLOF.getTextSection(), "text_begin");
-  emitSectionSym(Asm, TLOF.getDataSection());
 }
 
 // Recursively emits a debug information entry.
