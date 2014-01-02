@@ -438,6 +438,7 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Record.push_back(D->isDefined());
   Record.push_back(D->IsOverriding);
   Record.push_back(D->HasSkippedBody);
+  Record.push_back(D->MethodCallsMethod);
 
   Record.push_back(D->IsRedeclaration);
   Record.push_back(D->HasRedeclaration);

@@ -702,6 +702,7 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setDefined(Record[Idx++]);
   MD->IsOverriding = Record[Idx++];
   MD->HasSkippedBody = Record[Idx++];
+  MD->MethodCallsMethod = Record[Idx++];
 
   MD->IsRedeclaration = Record[Idx++];
   MD->HasRedeclaration = Record[Idx++];

@@ -3521,8 +3521,13 @@ void Sema::DiagnoseUnusedBackingIvarInAccessor(Scope *S) {
   const ObjCPropertyDecl *PDecl;
   const ObjCIvarDecl *IV = GetIvarBackingPropertyAccessor(CurMethod, PDecl);
   if (IV && !IV->getBackingIvarReferencedInAccessor()) {
-    Diag(getCurMethodDecl()->getLocation(), diag::warn_unused_property_backing_ivar)
-    << IV->getDeclName();
-    Diag(PDecl->getLocation(), diag::note_property_declare);
+    // Do not issue this warning if backing ivar is used somewhere and accessor
+    // implementation makes a call to a method. This is to prevent false positive in
+    // some corner cases.
+    if (!IV->isReferenced() || !CurMethod->getMethodCallsMethod()) {
+      Diag(getCurMethodDecl()->getLocation(), diag::warn_unused_property_backing_ivar)
+        << IV->getDeclName();
+      Diag(PDecl->getLocation(), diag::note_property_declare);
+    }
   }
 }

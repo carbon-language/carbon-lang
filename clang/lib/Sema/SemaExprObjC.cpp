@@ -2643,7 +2643,9 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       }
     }
   }
-      
+  if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
+    CurMeth->setMethodCallsMethod(true);
+  
   return MaybeBindToTemporary(Result);
 }
 

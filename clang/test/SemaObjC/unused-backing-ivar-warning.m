@@ -104,3 +104,23 @@ typedef char BOOL;
     return 0;
 }
 @end
+
+// rdar://15727327
+@interface Radar15727327 : NSObject
+@property (assign, readonly) long p;
+@property (assign) long q; // expected-note 2 {{property declared here}}
+@property (assign, readonly) long r; // expected-note {{property declared here}}
+- (long)Meth;
+@end
+
+@implementation Radar15727327
+@synthesize p;
+@synthesize q;
+@synthesize r;
+- (long)Meth { return p; }
+- (long) p { [self Meth]; return 0;  }
+- (long) q { return 0; } // expected-warning {{ivar 'q' which backs the property is not referenced in this property's accessor}}
+- (void) setQ : (long) val { } // expected-warning {{ivar 'q' which backs the property is not referenced in this property's accessor}}
+- (long) r { [self Meth]; return p; } // expected-warning {{ivar 'r' which backs the property is not referenced in this property's accessor}}
+@end
+

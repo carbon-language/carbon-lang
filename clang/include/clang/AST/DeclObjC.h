@@ -161,6 +161,9 @@ private:
 
   /// \brief Indicates if the method was a definition but its body was skipped.
   unsigned HasSkippedBody : 1;
+  
+  /// \brief True if method body makes a method call.
+  unsigned MethodCallsMethod : 1;
 
   // Result type of this method.
   QualType MethodDeclType;
@@ -242,7 +245,7 @@ private:
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     RelatedResultType(HasRelatedResultType),
     SelLocsKind(SelLoc_StandardNoSpace), IsOverriding(0), HasSkippedBody(0),
-    MethodDeclType(T), ResultTInfo(ResultTInfo),
+    MethodCallsMethod(0), MethodDeclType(T), ResultTInfo(ResultTInfo),
     ParamsAndSelLocs(0), NumParams(0),
     DeclEndLoc(endLoc), Body(), SelfDecl(0), CmdDecl(0) {
     setImplicit(isImplicitlyDeclared);
@@ -435,6 +438,9 @@ public:
   /// \brief True if the method was a definition but its body was skipped.
   bool hasSkippedBody() const { return HasSkippedBody; }
   void setHasSkippedBody(bool Skipped = true) { HasSkippedBody = Skipped; }
+
+  bool getMethodCallsMethod() const { return MethodCallsMethod; }
+  void setMethodCallsMethod(bool val = true) { MethodCallsMethod = val; }
 
   /// \brief Returns the property associated with this method's selector.
   ///
