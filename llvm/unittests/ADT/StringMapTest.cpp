@@ -203,4 +203,19 @@ TEST_F(StringMapTest, InsertTest) {
   assertSingleItemMap();
 }
 
+// Create a non-default constructable value
+TEST_F(StringMapTest, NonDefaultConstructable) {
+  struct StringMapTestStruct {
+    StringMapTestStruct(int i) : i(i) {}
+    StringMapTestStruct() LLVM_DELETED_FUNCTION;
+    int i;
+  };
+
+  StringMap<StringMapTestStruct> t;
+  t.GetOrCreateValue("Test", StringMapTestStruct(123));
+  StringMap<StringMapTestStruct>::iterator iter = t.find("Test");
+  ASSERT_NE(iter, t.end());
+  ASSERT_EQ(iter->second.i, 123);
+}
+
 } // end anonymous namespace
