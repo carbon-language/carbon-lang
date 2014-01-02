@@ -217,6 +217,7 @@ protected:
 
  public:
   enum {
+    ARM_ABI_UNKNOWN,
     ARM_ABI_APCS,
     ARM_ABI_AAPCS // ARM EABI
   } TargetABI;
@@ -326,8 +327,14 @@ public:
            TargetTriple.getEnvironment() == Triple::EABIHF;
   }
 
-  bool isAPCS_ABI() const { return TargetABI == ARM_ABI_APCS; }
-  bool isAAPCS_ABI() const { return TargetABI == ARM_ABI_AAPCS; }
+  bool isAPCS_ABI() const {
+    assert(TargetABI != ARM_ABI_UNKNOWN);
+    return TargetABI == ARM_ABI_APCS;
+  }
+  bool isAAPCS_ABI() const {
+    assert(TargetABI != ARM_ABI_UNKNOWN);
+    return TargetABI == ARM_ABI_AAPCS;
+  }
 
   bool isThumb() const { return InThumbMode; }
   bool isThumb1Only() const { return InThumbMode && !HasThumb2; }

@@ -255,6 +255,14 @@ def ProcKrait   : SubtargetFeature<"krait", "ARMProcFamily", "Krait",
                                     FeatureHWDiv,
                                     FeatureHWDivARM]>;
 
+
+def FeatureAPCS  : SubtargetFeature<"apcs", "TargetABI", "ARM_ABI_APCS",
+                                   "Use the APCS ABI">;
+
+def FeatureAAPCS : SubtargetFeature<"aapcs", "TargetABI", "ARM_ABI_AAPCS",
+                                   "Use the AAPCS ABI">;
+
+
 class ProcNoItin<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 

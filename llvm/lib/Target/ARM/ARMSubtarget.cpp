@@ -83,7 +83,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , CPUString(CPU)
   , TargetTriple(TT)
   , Options(Options)
-  , TargetABI(ARM_ABI_APCS) {
+  , TargetABI(ARM_ABI_UNKNOWN) {
   initializeEnvironment();
   resetSubtargetFeatures(CPU, FS);
 }
@@ -189,18 +189,22 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUString);
 
-  switch (TargetTriple.getEnvironment()) {
-  case Triple::Android:
-  case Triple::EABI:
-  case Triple::EABIHF:
-  case Triple::GNUEABI:
-  case Triple::GNUEABIHF:
-    TargetABI = ARM_ABI_AAPCS;
-    break;
-  default:
-    if (isTargetIOS() && isMClass())
+  if (TargetABI == ARM_ABI_UNKNOWN) {
+    switch (TargetTriple.getEnvironment()) {
+    case Triple::Android:
+    case Triple::EABI:
+    case Triple::EABIHF:
+    case Triple::GNUEABI:
+    case Triple::GNUEABIHF:
       TargetABI = ARM_ABI_AAPCS;
-    break;
+      break;
+    default:
+      if (isTargetIOS() && isMClass())
+        TargetABI = ARM_ABI_AAPCS;
+      else
+        TargetABI = ARM_ABI_APCS;
+      break;
+    }
   }
 
   if (isAAPCS_ABI())
