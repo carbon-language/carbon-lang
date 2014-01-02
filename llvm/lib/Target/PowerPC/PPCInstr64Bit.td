@@ -388,25 +388,25 @@ defm XOR8 : XForm_6r<31, 316, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
 
 // Logical ops with immediate.
 let Defs = [CR0] in {
-def ANDIo8  : DForm_4<28, (outs g8rc:$dst), (ins g8rc:$src1, u16imm:$src2),
+def ANDIo8  : DForm_4<28, (outs g8rc:$dst), (ins g8rc:$src1, u16imm64:$src2),
                       "andi. $dst, $src1, $src2", IIC_IntGeneral,
                       [(set i64:$dst, (and i64:$src1, immZExt16:$src2))]>,
                       isDOT;
-def ANDISo8 : DForm_4<29, (outs g8rc:$dst), (ins g8rc:$src1, u16imm:$src2),
+def ANDISo8 : DForm_4<29, (outs g8rc:$dst), (ins g8rc:$src1, u16imm64:$src2),
                      "andis. $dst, $src1, $src2", IIC_IntGeneral,
                     [(set i64:$dst, (and i64:$src1, imm16ShiftedZExt:$src2))]>,
                      isDOT;
 }
-def ORI8    : DForm_4<24, (outs g8rc:$dst), (ins g8rc:$src1, u16imm:$src2),
+def ORI8    : DForm_4<24, (outs g8rc:$dst), (ins g8rc:$src1, u16imm64:$src2),
                       "ori $dst, $src1, $src2", IIC_IntSimple,
                       [(set i64:$dst, (or i64:$src1, immZExt16:$src2))]>;
-def ORIS8   : DForm_4<25, (outs g8rc:$dst), (ins g8rc:$src1, u16imm:$src2),
+def ORIS8   : DForm_4<25, (outs g8rc:$dst), (ins g8rc:$src1, u16imm64:$src2),
                       "oris $dst, $src1, $src2", IIC_IntSimple,
                     [(set i64:$dst, (or i64:$src1, imm16ShiftedZExt:$src2))]>;
-def XORI8   : DForm_4<26, (outs g8rc:$dst), (ins g8rc:$src1, u16imm:$src2),
+def XORI8   : DForm_4<26, (outs g8rc:$dst), (ins g8rc:$src1, u16imm64:$src2),
                       "xori $dst, $src1, $src2", IIC_IntSimple,
                       [(set i64:$dst, (xor i64:$src1, immZExt16:$src2))]>;
-def XORIS8  : DForm_4<27, (outs g8rc:$dst), (ins g8rc:$src1, u16imm:$src2),
+def XORIS8  : DForm_4<27, (outs g8rc:$dst), (ins g8rc:$src1, u16imm64:$src2),
                       "xoris $dst, $src1, $src2", IIC_IntSimple,
                    [(set i64:$dst, (xor i64:$src1, imm16ShiftedZExt:$src2))]>;
 
@@ -492,9 +492,9 @@ let isCompare = 1, neverHasSideEffects = 1 in {
                             "cmpd $crD, $rA, $rB", IIC_IntCompare>, isPPC64;
   def CMPLD  : XForm_16_ext<31, 32, (outs crrc:$crD), (ins g8rc:$rA, g8rc:$rB),
                             "cmpld $crD, $rA, $rB", IIC_IntCompare>, isPPC64;
-  def CMPDI  : DForm_5_ext<11, (outs crrc:$crD), (ins g8rc:$rA, s16imm:$imm),
+  def CMPDI  : DForm_5_ext<11, (outs crrc:$crD), (ins g8rc:$rA, s16imm64:$imm),
                            "cmpdi $crD, $rA, $imm", IIC_IntCompare>, isPPC64;
-  def CMPLDI : DForm_6_ext<10, (outs crrc:$dst), (ins g8rc:$src1, u16imm:$src2),
+  def CMPLDI : DForm_6_ext<10, (outs crrc:$dst), (ins g8rc:$src1, u16imm64:$src2),
                            "cmpldi $dst, $src1, $src2",
                            IIC_IntCompare>, isPPC64;
 }

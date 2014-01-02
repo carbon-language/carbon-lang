@@ -2705,18 +2705,18 @@ def : InstAlias<"cmpwi $rA, $imm", (CMPWI CR0, gprc:$rA, s16imm:$imm)>;
 def : InstAlias<"cmpw $rA, $rB", (CMPW CR0, gprc:$rA, gprc:$rB)>;
 def : InstAlias<"cmplwi $rA, $imm", (CMPLWI CR0, gprc:$rA, u16imm:$imm)>;
 def : InstAlias<"cmplw $rA, $rB", (CMPLW CR0, gprc:$rA, gprc:$rB)>;
-def : InstAlias<"cmpdi $rA, $imm", (CMPDI CR0, g8rc:$rA, s16imm:$imm)>;
+def : InstAlias<"cmpdi $rA, $imm", (CMPDI CR0, g8rc:$rA, s16imm64:$imm)>;
 def : InstAlias<"cmpd $rA, $rB", (CMPD CR0, g8rc:$rA, g8rc:$rB)>;
-def : InstAlias<"cmpldi $rA, $imm", (CMPLDI CR0, g8rc:$rA, u16imm:$imm)>;
+def : InstAlias<"cmpldi $rA, $imm", (CMPLDI CR0, g8rc:$rA, u16imm64:$imm)>;
 def : InstAlias<"cmpld $rA, $rB", (CMPLD CR0, g8rc:$rA, g8rc:$rB)>;
 
 def : InstAlias<"cmpi $bf, 0, $rA, $imm", (CMPWI crrc:$bf, gprc:$rA, s16imm:$imm)>;
 def : InstAlias<"cmp $bf, 0, $rA, $rB", (CMPW crrc:$bf, gprc:$rA, gprc:$rB)>;
 def : InstAlias<"cmpli $bf, 0, $rA, $imm", (CMPLWI crrc:$bf, gprc:$rA, u16imm:$imm)>;
 def : InstAlias<"cmpl $bf, 0, $rA, $rB", (CMPLW crrc:$bf, gprc:$rA, gprc:$rB)>;
-def : InstAlias<"cmpi $bf, 1, $rA, $imm", (CMPDI crrc:$bf, g8rc:$rA, s16imm:$imm)>;
+def : InstAlias<"cmpi $bf, 1, $rA, $imm", (CMPDI crrc:$bf, g8rc:$rA, s16imm64:$imm)>;
 def : InstAlias<"cmp $bf, 1, $rA, $rB", (CMPD crrc:$bf, g8rc:$rA, g8rc:$rB)>;
-def : InstAlias<"cmpli $bf, 1, $rA, $imm", (CMPLDI crrc:$bf, g8rc:$rA, u16imm:$imm)>;
+def : InstAlias<"cmpli $bf, 1, $rA, $imm", (CMPLDI crrc:$bf, g8rc:$rA, u16imm64:$imm)>;
 def : InstAlias<"cmpl $bf, 1, $rA, $rB", (CMPLD crrc:$bf, g8rc:$rA, g8rc:$rB)>;
 
 multiclass TrapExtendedMnemonic<string name, int to> {
