@@ -897,15 +897,24 @@ const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
   return AddRec;
 }
 
+/// This IV user cannot be widen. Replace this use of the original narrow IV
+/// with a truncation of the new wide IV to isolate and eliminate the narrow IV.
+static void truncateIVUse(NarrowIVDefUse DU, DominatorTree *DT) {
+  IRBuilder<> Builder(getInsertPointForUses(DU.NarrowUse, DU.NarrowDef, DT));
+  Value *Trunc = Builder.CreateTrunc(DU.WideDef, DU.NarrowDef->getType());
+  DU.NarrowUse->replaceUsesOfWith(DU.NarrowDef, Trunc);
+}
+
 /// WidenIVUse - Determine whether an individual user of the narrow IV can be
 /// widened. If so, return the wide clone of the user.
 Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
 
   // Stop traversing the def-use chain at inner-loop phis or post-loop phis.
   if (isa<PHINode>(DU.NarrowUse) &&
-      LI->getLoopFor(DU.NarrowUse->getParent()) != L)
+      LI->getLoopFor(DU.NarrowUse->getParent()) != L) {
+    truncateIVUse(DU, DT);
     return 0;
-
+  }
   // Our raison d'etre! Eliminate sign and zero extension.
   if (IsSigned ? isa<SExtInst>(DU.NarrowUse) : isa<ZExtInst>(DU.NarrowUse)) {
     Value *NewDef = DU.WideDef;
@@ -953,9 +962,7 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
     // This user does not evaluate to a recurence after widening, so don't
     // follow it. Instead insert a Trunc to kill off the original use,
     // eventually isolating the original narrow IV so it can be removed.
-    IRBuilder<> Builder(getInsertPointForUses(DU.NarrowUse, DU.NarrowDef, DT));
-    Value *Trunc = Builder.CreateTrunc(DU.WideDef, DU.NarrowDef->getType());
-    DU.NarrowUse->replaceUsesOfWith(DU.NarrowDef, Trunc);
+    truncateIVUse(DU, DT);
     return 0;
   }
   // Assume block terminators cannot evaluate to a recurrence. We can't to
