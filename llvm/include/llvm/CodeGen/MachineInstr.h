@@ -830,6 +830,37 @@ public:
                         const TargetInstrInfo *TII,
                         const TargetRegisterInfo *TRI) const;
 
+  /// \brief Applies the constraints (def/use) implied by this MI on \p Reg to
+  /// the given \p CurRC.
+  /// If \p ExploreBundle is set and MI is part of a bundle, all the
+  /// instructions inside the bundle will be taken into account. In other words,
+  /// this method accumulates all the constrains of the operand of this MI and
+  /// the related bundle if MI is a bundle or inside a bundle.
+  ///
+  /// Returns the register class that statisfies both \p CurRC and the
+  /// constraints set by MI. Returns NULL if such a register class does not
+  /// exist.
+  ///
+  /// \pre CurRC must not be NULL.
+  const TargetRegisterClass *getRegClassConstraintEffectForVReg(
+      unsigned Reg, const TargetRegisterClass *CurRC,
+      const TargetInstrInfo *TII, const TargetRegisterInfo *TRI,
+      bool ExploreBundle = false) const;
+
+  /// \brief Applies the constraints (def/use) implied by the \p OpIdx operand
+  /// to the given \p CurRC.
+  ///
+  /// Returns the register class that statisfies both \p CurRC and the
+  /// constraints set by \p OpIdx MI. Returns NULL if such a register class
+  /// does not exist.
+  ///
+  /// \pre CurRC must not be NULL.
+  /// \pre The operand at \p OpIdx must be a register.
+  const TargetRegisterClass *
+  getRegClassConstraintEffect(unsigned OpIdx, const TargetRegisterClass *CurRC,
+                              const TargetInstrInfo *TII,
+                              const TargetRegisterInfo *TRI) const;
+
   /// tieOperands - Add a tie between the register operands at DefIdx and
   /// UseIdx. The tie will cause the register allocator to ensure that the two
   /// operands are assigned the same physical register.
@@ -1038,6 +1069,13 @@ private:
   /// hasPropertyInBundle - Slow path for hasProperty when we're dealing with a
   /// bundle.
   bool hasPropertyInBundle(unsigned Mask, QueryType Type) const;
+
+  /// \brief Implements the logic of getRegClassConstraintEffectForVReg for the
+  /// this MI and the given operand index \p OpIdx.
+  /// If the related operand does not constrained Reg, this returns CurRC.
+  const TargetRegisterClass *getRegClassConstraintEffectForVRegImpl(
+      unsigned OpIdx, unsigned Reg, const TargetRegisterClass *CurRC,
+      const TargetInstrInfo *TII, const TargetRegisterInfo *TRI) const;
 };
 
 /// MachineInstrExpressionTrait - Special DenseMapInfo traits to compare

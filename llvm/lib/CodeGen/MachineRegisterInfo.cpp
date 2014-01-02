@@ -79,17 +79,9 @@ MachineRegisterInfo::recomputeRegClass(unsigned Reg, const TargetMachine &TM) {
   // Accumulate constraints from all uses.
   for (reg_nodbg_iterator I = reg_nodbg_begin(Reg), E = reg_nodbg_end(); I != E;
        ++I) {
-    const TargetRegisterClass *OpRC =
-      I->getRegClassConstraint(I.getOperandNo(), TII,
-                               getTargetRegisterInfo());
-    if (unsigned SubIdx = I.getOperand().getSubReg()) {
-      if (OpRC)
-        NewRC = getTargetRegisterInfo()->getMatchingSuperRegClass(NewRC, OpRC,
-                                                                  SubIdx);
-      else
-        NewRC = getTargetRegisterInfo()->getSubClassWithSubReg(NewRC, SubIdx);
-    } else if (OpRC)
-      NewRC = getTargetRegisterInfo()->getCommonSubClass(NewRC, OpRC);
+    // Apply the effect of the given operand to NewRC.
+    NewRC = I->getRegClassConstraintEffect(I.getOperandNo(), NewRC, TII,
+                                           getTargetRegisterInfo());
     if (!NewRC || NewRC == OldRC)
       return false;
   }

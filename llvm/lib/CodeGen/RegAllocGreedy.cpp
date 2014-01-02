@@ -35,6 +35,7 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
+#include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/Support/CommandLine.h"
@@ -69,6 +70,11 @@ class RAGreedy : public MachineFunctionPass,
 
   // context
   MachineFunction *MF;
+
+  // Shortcuts to some useful interface.
+  const TargetInstrInfo *TII;
+  const TargetRegisterInfo *TRI;
+  RegisterClassInfo RCI;
 
   // analyses
   SlotIndexes *Indexes;
@@ -1368,6 +1374,22 @@ unsigned RAGreedy::tryBlockSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 //                         Per-Instruction Splitting
 //===----------------------------------------------------------------------===//
 
+/// Get the number of allocatable registers that match the constraints of \p Reg
+/// on \p MI and that are also in \p SuperRC.
+static unsigned getNumAllocatableRegsForConstraints(
+    const MachineInstr *MI, unsigned Reg, const TargetRegisterClass *SuperRC,
+    const TargetInstrInfo *TII, const TargetRegisterInfo *TRI,
+    const RegisterClassInfo &RCI) {
+  assert(SuperRC && "Invalid register class");
+
+  const TargetRegisterClass *ConstrainedRC =
+      MI->getRegClassConstraintEffectForVReg(Reg, SuperRC, TII, TRI,
+                                             /* ExploreBundle */ true);
+  if (!ConstrainedRC)
+    return 0;
+  return RCI.getNumAllocatableRegs(ConstrainedRC);
+}
+
 /// tryInstructionSplit - Split a live range around individual instructions.
 /// This is normally not worthwhile since the spiller is doing essentially the
 /// same thing. However, when the live range is in a constrained register
@@ -1378,8 +1400,9 @@ unsigned RAGreedy::tryBlockSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 unsigned
 RAGreedy::tryInstructionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
                               SmallVectorImpl<unsigned> &NewVRegs) {
+  const TargetRegisterClass *CurRC = MRI->getRegClass(VirtReg.reg);
   // There is no point to this if there are no larger sub-classes.
-  if (!RegClassInfo.isProperSubClass(MRI->getRegClass(VirtReg.reg)))
+  if (!RegClassInfo.isProperSubClass(CurRC))
     return 0;
 
   // Always enable split spill mode, since we're effectively spilling to a
@@ -1393,10 +1416,18 @@ RAGreedy::tryInstructionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
   DEBUG(dbgs() << "Split around " << Uses.size() << " individual instrs.\n");
 
-  // Split around every non-copy instruction.
+  const TargetRegisterClass *SuperRC = TRI->getLargestLegalSuperClass(CurRC);
+  unsigned SuperRCNumAllocatableRegs = RCI.getNumAllocatableRegs(SuperRC);
+  // Split around every non-copy instruction if this split will relax
+  // the constraints on the virtual register.
+  // Otherwise, splitting just inserts uncoalescable copies that do not help
+  // the allocation.
   for (unsigned i = 0; i != Uses.size(); ++i) {
     if (const MachineInstr *MI = Indexes->getInstructionFromIndex(Uses[i]))
-      if (MI->isFullCopy()) {
+      if (MI->isFullCopy() ||
+          SuperRCNumAllocatableRegs ==
+              getNumAllocatableRegsForConstraints(MI, VirtReg.reg, SuperRC, TII,
+                                                  TRI, RCI)) {
         DEBUG(dbgs() << "    skip:\t" << Uses[i] << '\t' << *MI);
         continue;
       }
@@ -1843,6 +1874,9 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
                << "********** Function: " << mf.getName() << '\n');
 
   MF = &mf;
+  TRI = MF->getTarget().getRegisterInfo();
+  TII = MF->getTarget().getInstrInfo();
+  RCI.runOnMachineFunction(mf);
   if (VerifyEnabled)
     MF->verify(this, "Before greedy register allocator");
 
