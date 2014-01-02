@@ -2856,12 +2856,14 @@ static void setUsedInitializer(GlobalVariable &V,
     return;
   }
 
-  SmallVector<llvm::Constant *, 8> UsedArray;
-  PointerType *Int8PtrTy = Type::getInt8PtrTy(V.getContext());
+  // Type of pointer to the array of pointers.
+  PointerType *Int8PtrTy = Type::getInt8PtrTy(V.getContext(), 0);
 
+  SmallVector<llvm::Constant *, 8> UsedArray;
   for (SmallPtrSet<GlobalValue *, 8>::iterator I = Init.begin(), E = Init.end();
        I != E; ++I) {
-    Constant *Cast = llvm::ConstantExpr::getBitCast(*I, Int8PtrTy);
+    Constant *Cast
+      = ConstantExpr::getPointerBitCastOrAddrSpaceCast(*I, Int8PtrTy);
     UsedArray.push_back(Cast);
   }
   // Sort to get deterministic order.
