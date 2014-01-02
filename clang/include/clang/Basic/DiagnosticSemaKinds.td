@@ -2019,9 +2019,9 @@ def warn_attribute_invalid_on_definition : Warning<
 def err_attribute_weakref_not_static : Error<
   "weakref declaration must have internal linkage">;
 def err_attribute_weakref_not_global_context : Error<
-  "weakref declaration of '%0' must be in a global context">;
+  "weakref declaration of %0 must be in a global context">;
 def err_attribute_weakref_without_alias : Error<
-  "weakref declaration of '%0' must also have an alias attribute">;
+  "weakref declaration of %0 must also have an alias attribute">;
 def err_alias_not_supported_on_darwin : Error <
   "only weak aliases are supported on darwin">;
 def err_alias_to_undefined : Error<
