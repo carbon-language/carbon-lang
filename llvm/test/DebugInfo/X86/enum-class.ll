@@ -1,17 +1,6 @@
 ; RUN: llc -O0 -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
-; Also test that the enumerators show up in the __apple_names accelerator table.
-; RUN: llc -O0 -mtriple=x86_64-apple-darwin -filetype=asm < %s -o - | FileCheck --check-prefix=ACCEL-CHECK %s
-; ACCEL-CHECK: .section        __DWARF,__apple_names,regular,debug
-; ACCEL-CHECK-NOT: .section
-; ACCEL-CHECK: A1
-; ACCEL-CHECK-NOT: .section
-; ACCEL-CHECK: C1
-; ACCEL-CHECK-NOT: .section
-; ACCEL-CHECK: B1
-
-
 @a = global i32 0, align 4
 @b = global i64 0, align 8
 @c = global i32 0, align 4

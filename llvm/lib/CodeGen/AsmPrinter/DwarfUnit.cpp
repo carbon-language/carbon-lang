@@ -1765,9 +1765,6 @@ void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy) {
       int64_t Value = Enum.getEnumValue();
       addSInt(Enumerator, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata,
               Value);
-
-      // Add the enumerator to the __apple_names accelerator table.
-      addAccelName(Name, Enumerator);
     }
   }
   DIType DTy = resolve(CTy.getTypeDerivedFrom());
