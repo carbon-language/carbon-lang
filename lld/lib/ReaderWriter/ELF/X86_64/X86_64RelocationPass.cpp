@@ -307,9 +307,9 @@ public:
     if (ref.target() && ref.target()->name() == "__tls_get_addr") {
       const_cast<Reference &>(ref).setKindValue(R_X86_64_NONE);
       return error_code::success();
-    } else
-      // Static code doesn't need PLTs.
-      const_cast<Reference &>(ref).setKindValue(R_X86_64_PC32);
+    }
+    // Static code doesn't need PLTs.
+    const_cast<Reference &>(ref).setKindValue(R_X86_64_PC32);
     // Handle IFUNC.
     if (const DefinedAtom *da =
             dyn_cast_or_null<const DefinedAtom>(ref.target()))
