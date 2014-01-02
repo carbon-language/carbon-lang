@@ -211,7 +211,8 @@ static bool checkAttributeNumArgs(Sema &S, const AttributeList &Attr,
 static bool checkAttributeAtLeastNumArgs(Sema &S, const AttributeList &Attr,
                                          unsigned Num) {
   if (getNumAttributeArgs(Attr) < Num) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_few_arguments) << Num;
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_few_arguments)
+      << Attr.getName() << Num;
     return false;
   }
 
@@ -1264,13 +1265,15 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
   case OwnershipAttr::Takes:
   case OwnershipAttr::Holds:
     if (AL.getNumArgs() < 2) {
-      S.Diag(AL.getLoc(), diag::err_attribute_too_few_arguments) << 2;
+      S.Diag(AL.getLoc(), diag::err_attribute_too_few_arguments)
+        << AL.getName() << 2;
       return;
     }
     break;
   case OwnershipAttr::Returns:
     if (AL.getNumArgs() > 2) {
-      S.Diag(AL.getLoc(), diag::err_attribute_too_many_arguments) << 1;
+      S.Diag(AL.getLoc(), diag::err_attribute_too_many_arguments)
+        << AL.getName() << 1;
       return;
     }
     break;
@@ -1639,7 +1642,8 @@ static void handleUsedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleConstructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
+      << Attr.getName() << 1;
     return;
   }
 
@@ -1656,7 +1660,8 @@ static void handleConstructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleDestructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
+      << Attr.getName() << 1;
     return;
   }
 
@@ -1675,7 +1680,8 @@ static void handleAttrWithMessage(Sema &S, Decl *D,
                                   const AttributeList &Attr) {
   unsigned NumArgs = Attr.getNumArgs();
   if (NumArgs > 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
+      << Attr.getName() << 1;
     return;
   }
 
@@ -2079,7 +2085,8 @@ static void handleBlocksAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 2) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 2;
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
+      << Attr.getName() << 2;
     return;
   }
 
@@ -3284,7 +3291,8 @@ static void handleLaunchBoundsAttr(Sema &S, Decl *D,
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1 && Attr.getNumArgs() != 2) {
     // FIXME: 0 is not okay.
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 2;
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
+      << Attr.getName() << 2;
     return;
   }
 

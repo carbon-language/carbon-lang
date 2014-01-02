@@ -13,7 +13,7 @@
 - (void) foo8 : (int)x, ... __attribute__ ((__sentinel__("a")));  // expected-error {{'__sentinel__' attribute requires parameter 1 to be an integer constant}}
 - (void) foo9 : (int)x, ... __attribute__ ((__sentinel__(-1)));  // expected-error {{'sentinel' parameter 1 less than zero}}
 - (void) foo10 : (int)x, ... __attribute__ ((__sentinel__(1,1)));
-- (void) foo11 : (int)x, ... __attribute__ ((__sentinel__(1,1,3)));  // expected-error {{attribute takes no more than 2 arguments}}
+- (void) foo11 : (int)x, ... __attribute__ ((__sentinel__(1,1,3)));  // expected-error {{'__sentinel__' attribute takes no more than 2 arguments}}
 - (void) foo12 : (int)x, ... ATTR; // expected-note {{method has been explicitly marked sentinel here}}
 
 // rdar://7975788

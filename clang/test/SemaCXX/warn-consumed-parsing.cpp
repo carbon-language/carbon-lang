@@ -17,9 +17,9 @@ int returnTypestateForUnconsumable() {
 }
 
 class AttrTester0 {
-  void consumes()       __attribute__ ((set_typestate())); // expected-error {{attribute takes one argument}}
-  bool testUnconsumed() __attribute__ ((test_typestate())); // expected-error {{attribute takes one argument}}
-  void callableWhen()   __attribute__ ((callable_when())); // expected-error {{attribute takes at least 1 argument}}
+  void consumes()       __attribute__ ((set_typestate())); // expected-error {{'set_typestate' attribute takes one argument}}
+  bool testUnconsumed() __attribute__ ((test_typestate())); // expected-error {{'test_typestate' attribute takes one argument}}
+  void callableWhen()   __attribute__ ((callable_when())); // expected-error {{'callable_when' attribute takes at least 1 argument}}
 };
 
 int var0 SET_TYPESTATE(consumed); // expected-warning {{'set_typestate' attribute only applies to methods}}

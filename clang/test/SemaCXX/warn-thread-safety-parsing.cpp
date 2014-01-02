@@ -446,12 +446,12 @@ int * pgb_var_arg_bad_4 PT_GUARDED_BY(umu); // \
 Mutex mu_aa ACQUIRED_AFTER(mu1);
 
 Mutex aa_var_noargs __attribute__((acquired_after)); // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'acquired_after' attribute takes at least 1 argument}}
 
 class AAFoo {
  private:
   Mutex aa_field_noargs __attribute__((acquired_after)); // \
-    // expected-error {{attribute takes at least 1 argument}}
+    // expected-error {{'acquired_after' attribute takes at least 1 argument}}
   Mutex aa_field_args ACQUIRED_AFTER(mu1);
 };
 
@@ -506,12 +506,12 @@ UnlockableMu aa_var_arg_bad_5 ACQUIRED_AFTER(mu_aa); // \
 Mutex mu_ab ACQUIRED_BEFORE(mu1);
 
 Mutex ab_var_noargs __attribute__((acquired_before)); // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'acquired_before' attribute takes at least 1 argument}}
 
 class ABFoo {
  private:
   Mutex ab_field_noargs __attribute__((acquired_before)); // \
-    // expected-error {{attribute takes at least 1 argument}}
+    // expected-error {{'acquired_before' attribute takes at least 1 argument}}
   Mutex ab_field_args ACQUIRED_BEFORE(mu1);
 };
 
@@ -715,7 +715,7 @@ int slf_function_bad_7() SHARED_LOCK_FUNCTION(0); // \
 // plus an optional list of locks (vars/fields)
 
 void etf_function() __attribute__((exclusive_trylock_function));  // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'exclusive_trylock_function' attribute takes at least 1 argument}}
 
 void etf_function_args() EXCLUSIVE_TRYLOCK_FUNCTION(1, mu2);
 
@@ -788,7 +788,7 @@ int etf_function_bad_6() EXCLUSIVE_TRYLOCK_FUNCTION(1, umu); // \
 // plus an optional list of locks (vars/fields)
 
 void stf_function() __attribute__((shared_trylock_function));  // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'shared_trylock_function' attribute takes at least 1 argument}}
 
 void stf_function_args() SHARED_TRYLOCK_FUNCTION(1, mu2);
 
@@ -1001,7 +1001,7 @@ int lr_function_bad_4() LOCK_RETURNED(umu); // \
 // takes one or more arguments, all locks (vars/fields)
 
 void le_function() __attribute__((locks_excluded)); // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'locks_excluded' attribute takes at least 1 argument}}
 
 void le_function_arg() LOCKS_EXCLUDED(mu1);
 
@@ -1068,7 +1068,7 @@ int le_function_bad_4() LOCKS_EXCLUDED(umu); // \
 // takes one or more arguments, all locks (vars/fields)
 
 void elr_function() __attribute__((exclusive_locks_required)); // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'exclusive_locks_required' attribute takes at least 1 argument}}
 
 void elr_function_arg() EXCLUSIVE_LOCKS_REQUIRED(mu1);
 
@@ -1136,7 +1136,7 @@ int elr_function_bad_4() EXCLUSIVE_LOCKS_REQUIRED(umu); // \
 // takes one or more arguments, all locks (vars/fields)
 
 void slr_function() __attribute__((shared_locks_required)); // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'shared_locks_required' attribute takes at least 1 argument}}
 
 void slr_function_arg() SHARED_LOCKS_REQUIRED(mu1);
 

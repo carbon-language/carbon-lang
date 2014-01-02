@@ -31,7 +31,7 @@ static void HandleARMInterruptAttr(Decl *d,
   // Check the attribute arguments.
   if (Attr.getNumArgs() > 1) {
     S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
-        << 1;
+      << Attr.getName() << 1;
     return;
   }
 
