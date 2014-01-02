@@ -2269,7 +2269,7 @@ bool TGParser::ParseMultiClass() {
 Record *TGParser::
 InstantiateMulticlassDef(MultiClass &MC,
                          Record *DefProto,
-                         Init *DefmPrefix,
+                         Init *&DefmPrefix,
                          SMRange DefmPrefixRange) {
   // We need to preserve DefProto so it can be reused for later
   // instantiations, so create a new Record to inherit from it.

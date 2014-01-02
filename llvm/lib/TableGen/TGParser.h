@@ -137,7 +137,7 @@ private:  // Parser methods.
   bool ParseMultiClass();
   Record *InstantiateMulticlassDef(MultiClass &MC,
                                    Record *DefProto,
-                                   Init *DefmPrefix,
+                                   Init *&DefmPrefix,
                                    SMRange DefmPrefixRange);
   bool ResolveMulticlassDefArgs(MultiClass &MC,
                                 Record *DefProto,
