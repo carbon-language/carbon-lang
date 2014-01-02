@@ -1579,7 +1579,7 @@ def warn_abstract_final_class : Warning<
   "abstract class is marked '%select{final|sealed}0'">, InGroup<AbstractFinalClass>;
 
 // C++11 attributes
-def err_repeat_attribute : Error<"'%0' attribute cannot be repeated">;
+def err_repeat_attribute : Error<"%0 attribute cannot be repeated">;
 
 // C++11 final
 def err_final_function_overridden : Error<
