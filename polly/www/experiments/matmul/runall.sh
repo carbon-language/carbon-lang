@@ -8,7 +8,7 @@ export PATH_TO_POLLY_LIB="~/polly/build/lib/"
 alias opt="opt -load ${PATH_TO_POLLY_LIB}/LLVMPolly.so"
 
 echo "--> 3. Prepare the LLVM-IR for Polly"
-opt -S -mem2reg -loop-simplify -polly-indvars matmul.s > matmul.preopt.ll
+opt -S -polly-canonicalize matmul.s > matmul.preopt.ll
 
 echo "--> 4. Show the SCoPs detected by Polly"
 opt -basicaa -polly-cloog -analyze -q matmul.preopt.ll

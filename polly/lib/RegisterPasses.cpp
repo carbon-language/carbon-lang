@@ -20,6 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/RegisterPasses.h"
+#include "polly/Canonicalization.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/Cloog.h"
 #include "polly/CodeGen/CodeGeneration.h"
@@ -172,6 +173,7 @@ static void initializePollyPasses(PassRegistry &Registry) {
   initializePoccPass(Registry);
 #endif
   initializePollyIndVarSimplifyPass(Registry);
+  initializePollyCanonicalizePass(Registry);
   initializeScopDetectionPass(Registry);
   initializeScopInfoPass(Registry);
   initializeTempScopInfoPass(Registry);
@@ -190,29 +192,6 @@ public:
   }
 };
 static StaticInitializer InitializeEverything;
-
-/// @brief Schedule a set of canonicalization passes to prepare for Polly
-///
-/// The set of optimization passes was partially taken/copied from the
-/// set of default optimization passes in LLVM. It is used to bring the code
-/// into a canonical form that simplifies the analysis and optimization passes
-/// of Polly. The set of optimization passes scheduled here is probably not yet
-/// optimal. TODO: Optimize the set of canonicalization passes.
-static void registerCanonicalicationPasses(llvm::PassManagerBase &PM) {
-  PM.add(llvm::createPromoteMemoryToRegisterPass());
-  PM.add(llvm::createInstructionCombiningPass());
-  PM.add(llvm::createCFGSimplificationPass());
-  PM.add(llvm::createTailCallEliminationPass());
-  PM.add(llvm::createCFGSimplificationPass());
-  PM.add(llvm::createReassociatePass());
-  PM.add(llvm::createLoopRotatePass());
-  PM.add(llvm::createInstructionCombiningPass());
-
-  if (!SCEVCodegen)
-    PM.add(polly::createIndVarSimplifyPass());
-
-  PM.add(polly::createCodePreparationPass());
-}
 
 /// @brief Register Polly passes such that they form a polyhedral optimizer.
 ///
@@ -245,7 +224,7 @@ static void registerCanonicalicationPasses(llvm::PassManagerBase &PM) {
 /// code generator. For the moment, the CLooG code generator is enabled by
 /// default.
 static void registerPollyPasses(llvm::PassManagerBase &PM) {
-  registerCanonicalicationPasses(PM);
+  registerCanonicalicationPasses(PM, SCEVCodegen);
 
   PM.add(polly::createScopInfoPass());
 

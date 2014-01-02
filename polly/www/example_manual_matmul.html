@@ -54,11 +54,9 @@ alias opt="opt -load ${PATH_TO_POLLY_LIB}/LLVMPolly.so"</pre>
 <li><h4>Prepare the LLVM-IR for Polly</h4>
 
 Polly is only able to work with code that matches a canonical form. To translate
-the LLVM-IR into this form we use a set of canonicalication passes. For this
-example only three passes are necessary. To get good coverage on more
-complicated input files often more canonicalization passes are needed. pollycc
-contains a list of passes that have shown to be beneficial.
-<pre class="code">opt -S -mem2reg -loop-simplify -polly-indvars matmul.s &gt; matmul.preopt.ll</pre></li>
+the LLVM-IR into this form we use a set of canonicalication passes. They are
+scheduled by using '-polly-canonicalize'.
+<pre class="code">opt -S -polly-canonicalize matmul.s &gt; matmul.preopt.ll</pre></li>
 
 <li><h4>Show the SCoPs detected by Polly (optional)</h4>
 

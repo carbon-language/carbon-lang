@@ -24,6 +24,7 @@ set(LLVM_USED_LIBS
   )
 
 add_polly_loadable_module(LLVMPolly
+  Canonicalization.cpp
   CodePreparation.cpp
   DeadCodeElimination.cpp
   IndependentBlocks.cpp
