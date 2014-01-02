@@ -531,9 +531,8 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
     NewMI = foldPatchpoint(MF, MI, Ops, FrameIndex, *this);
   } else {
     // Ask the target to do the actual folding.
-    NewMI =foldMemoryOperandImpl(MF, MI, Ops, LoadMI);
+    NewMI = foldMemoryOperandImpl(MF, MI, Ops, LoadMI);
   }
-  foldMemoryOperandImpl(MF, MI, Ops, LoadMI);
 
   if (!NewMI) return 0;
 
