@@ -3814,6 +3814,11 @@ public:
   }
 
   void getDefaultFeatures(llvm::StringMap<bool> &Features) const {
+    if (IsAAPCS)
+      Features["aapcs"] = true;
+    else
+      Features["apcs"] = true;
+
     StringRef ArchName = getTriple().getArchName();
     if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
       Features["vfp2"] = true;
