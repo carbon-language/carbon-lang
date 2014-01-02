@@ -21,6 +21,10 @@
 # define __has_feature(x) 0
 #endif
 
+#ifndef __has_extension
+# define __has_extension(x) 0
+#endif
+
 #ifndef __has_attribute
 # define __has_attribute(x) 0
 #endif
@@ -394,6 +398,8 @@
 # define LLVM_STATIC_ASSERT(expr, msg) static_assert(expr, msg)
 #elif __has_feature(c_static_assert)
 # define LLVM_STATIC_ASSERT(expr, msg) _Static_assert(expr, msg)
+#elif __has_extension(c_static_assert)
+# define LLVM_STATIC_ASSERT(expr, msg) LLVM_EXTENSION _Static_assert(expr, msg)
 #else
 # define LLVM_STATIC_ASSERT(expr, msg)
 #endif
