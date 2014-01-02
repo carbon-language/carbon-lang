@@ -3489,7 +3489,8 @@ void Sema::DiagnoseUseOfUnimplementedSelectors() {
 ObjCIvarDecl *
 Sema::GetIvarBackingPropertyAccessor(const ObjCMethodDecl *Method,
                                      const ObjCPropertyDecl *&PDecl) const {
-  
+  if (Method->isClassMethod())
+    return 0;
   const ObjCInterfaceDecl *IDecl = Method->getClassInterface();
   if (!IDecl)
     return 0;

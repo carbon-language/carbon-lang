@@ -91,3 +91,16 @@ typedef char BOOL;
 }
 @end
 
+// rdar://15728901
+@interface GATTOperation : NSObject {
+    long operation;
+}
+@property(assign) long operation;
+@end
+
+@implementation GATTOperation
+@synthesize operation;
++ (id) operation {
+    return 0;
+}
+@end
