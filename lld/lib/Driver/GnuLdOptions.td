@@ -54,8 +54,8 @@ def target : Separate<["-"], "target">, MetaVarName<"<triple>">,
 def output : Separate<["-"], "o">, MetaVarName<"<path>">,
      HelpText<"Path to file to write output">,
      Group<grp_general>;
-def m : Separate<["-"], "m">,
-     HelpText<"Emulate the emulation linker">,
+def m : Separate<["-"], "m">, MetaVarName<"<emulation>">,
+     HelpText<"Select target emulation">,
      Group<grp_general>;
 def build_id : Flag<["--"], "build-id">,
      HelpText<"Request creation of \".note.gnu.build-id\" ELF note section">,
@@ -94,6 +94,9 @@ def whole_archive: Flag<["--"], "whole-archive">,
      Group<grp_main>;
 def no_whole_archive: Flag<["--"], "no-whole-archive">,
      HelpText<"Restores the default behavior of loading archive members">,
+     Group<grp_main>;
+def nostdlib : Flag<["-"], "nostdlib">,
+     HelpText<"Disable default search path for libraries">,
      Group<grp_main>;
 
 //===----------------------------------------------------------------------===//

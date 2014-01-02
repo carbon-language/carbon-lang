@@ -73,6 +73,12 @@ public:
 
 private:
   static llvm::Triple getDefaultTarget(const char *progName);
+  static bool applyEmulation(llvm::Triple &triple,
+                             llvm::opt::InputArgList &args,
+                             raw_ostream &diagnostics);
+  static void addPlatformSearchDirs(ELFLinkingContext &ctx,
+                                    llvm::Triple &triple,
+                                    llvm::Triple &baseTriple);
 
   GnuLdDriver() LLVM_DELETED_FUNCTION;
 };
