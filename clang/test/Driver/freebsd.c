@@ -111,3 +111,7 @@
 // RUN: %clang -target x86_64-pc-freebsd8 %s -### -flto -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-LTO %s
 // CHECK-LTO: ld{{.*}}" "-plugin{{.*}}LLVMgold.so
+
+// RUN: %clang -target sparc-unkown-freebsd8 %s -### -fpic -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-SPARC-PIE %s
+// CHECK-SPARC-PIE: as{{.*}}" "-KPIC
