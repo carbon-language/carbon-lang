@@ -2793,15 +2793,14 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
       if (FD->isBitField())
         DiagKind = 3;
     } else if (!isa<TagDecl>(D)) {
-      Diag(AttrLoc, diag::err_attribute_wrong_decl_type)
-        << (TmpAttr.isC11() ? "'_Alignas'" : "'alignas'")
+      Diag(AttrLoc, diag::err_attribute_wrong_decl_type) << &TmpAttr
         << (TmpAttr.isC11() ? ExpectedVariableOrField
                             : ExpectedVariableFieldOrTag);
       return;
     }
     if (DiagKind != -1) {
       Diag(AttrLoc, diag::err_alignas_attribute_wrong_decl_type)
-        << TmpAttr.isC11() << DiagKind;
+        << &TmpAttr << DiagKind;
       return;
     }
   }

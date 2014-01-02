@@ -1815,14 +1815,11 @@ def err_attribute_unsupported : Error<
 def err_aligned_attribute_argument_not_int : Error<
   "'aligned' attribute requires integer constant">;
 def err_alignas_attribute_wrong_decl_type : Error<
-  "'%select{alignas|_Alignas}0' attribute cannot be applied to a %select{"
-  "function parameter|variable with 'register' storage class|"
-  "'catch' variable|bit-field}1">;
+  "%0 attribute cannot be applied to a %select{function parameter|"
+  "variable with 'register' storage class|'catch' variable|bit-field}1">;
 def err_alignas_missing_on_definition : Error<
-  "'%select{alignas|_Alignas}0' must be specified on definition if it is "
-  "specified on any declaration">;
-def note_alignas_on_declaration : Note<
-  "declared with '%select{alignas|_Alignas}0' attribute here">;
+  "%0 must be specified on definition if it is specified on any declaration">;
+def note_alignas_on_declaration : Note<"declared with %0 attribute here">;
 def err_alignas_mismatch : Error<
   "redeclaration has different alignment requirement (%1 vs %0)">;
 def err_alignas_underaligned : Error<
