@@ -1795,7 +1795,7 @@ def warn_auto_var_is_id : Warning<
 
 // Attributes
 def err_nsobject_attribute : Error<
-  "__attribute ((NSObject)) is for pointer types only">;
+  "'NSObject' attribute is for pointer types only">;
 def err_attribute_can_be_applied_only_to_symbol_declaration : Error<
   "%0 attribute can be applied only to symbol declaration">;
 def err_attributes_are_not_compatible : Error<
@@ -2001,8 +2001,8 @@ def warn_gc_attribute_weak_on_local : Warning<
   "Objective-C GC does not allow weak variables on the stack">,
   InGroup<IgnoredAttributes>;
 def warn_nsobject_attribute : Warning<
-  "__attribute ((NSObject)) may be put on a typedef only, "
-  "attribute is ignored">, InGroup<NSobjectAttribute>;
+  "'NSObject' attribute may be put on a typedef only; attribute is ignored">,
+  InGroup<NSobjectAttribute>;
 def warn_attribute_weak_on_local : Warning<
   "__weak attribute cannot be specified on an automatic variable when ARC "
   "is not enabled">,
