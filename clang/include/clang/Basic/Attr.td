@@ -432,6 +432,7 @@ def CXX11NoReturn : InheritableAttr {
 
 def OpenCLKernel : InheritableAttr {
   let Spellings = [Keyword<"__kernel">, Keyword<"kernel">];
+  let Subjects = SubjectList<[Function], ErrorDiag>;
 }
 
 def OpenCLImageAccess : Attr {

@@ -25,3 +25,8 @@ constant  int foo1 __attribute__((reqd_work_group_size(8,16,32))); // expected-e
 constant int foo2 __attribute__((work_group_size_hint(8,16,32))); // expected-error {{'work_group_size_hint' attribute only applies to functions}}
 
 constant int foo3 __attribute__((vec_type_hint(char))); // expected-error {{'vec_type_hint' attribute only applies to functions}}
+
+void f_kernel_image2d_t( kernel image2d_t image ) { // expected-error {{'kernel' attribute only applies to functions}}
+  int __kernel x; // expected-error {{'__kernel' attribute only applies to functions}}
+
+}
