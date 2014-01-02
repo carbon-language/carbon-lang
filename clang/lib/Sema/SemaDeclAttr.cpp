@@ -430,7 +430,7 @@ static void checkForLockableRecord(Sema &S, Decl *D, const AttributeList &Attr,
   // Warn if could not get record type for this argument.
   if (!RT) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_argument_not_class)
-      << Attr.getName() << Ty.getAsString();
+      << Attr.getName() << Ty;
     return;
   }
 
@@ -456,7 +456,7 @@ static void checkForLockableRecord(Sema &S, Decl *D, const AttributeList &Attr,
   }
 
   S.Diag(Attr.getLoc(), diag::warn_thread_attribute_argument_not_lockable)
-    << Attr.getName() << Ty.getAsString();
+    << Attr.getName() << Ty;
 }
 
 /// \brief Thread Safety Analysis: Checks that all attribute arguments, starting

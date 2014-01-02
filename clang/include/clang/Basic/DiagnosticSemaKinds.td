@@ -2115,11 +2115,11 @@ def warn_thread_attribute_ignored : Warning<
   InGroup<ThreadSafetyAttributes>, DefaultIgnore;
 def warn_thread_attribute_argument_not_lockable : Warning<
   "%0 attribute requires arguments whose type is annotated "
-  "with 'lockable' attribute; type here is '%1'">,
+  "with 'lockable' attribute; type here is %1">,
   InGroup<ThreadSafetyAttributes>, DefaultIgnore;
 def warn_thread_attribute_argument_not_class : Warning<
   "%0 attribute requires arguments that are class type or point to"
-  " class type; type here is '%1'">,
+  " class type; type here is %1">,
   InGroup<ThreadSafetyAttributes>, DefaultIgnore;  
 def warn_thread_attribute_decl_not_lockable : Warning<
   "%0 attribute can only be applied in a context annotated "
