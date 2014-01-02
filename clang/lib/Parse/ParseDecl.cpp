@@ -1123,7 +1123,7 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
     // FIXME: Do not warn on C++11 attributes, once we start supporting
     // them here.
     Diag(Tok, diag::warn_attribute_on_function_definition)
-      << LA.AttrName.getName();
+      << &LA.AttrName;
   }
 
   ParsedAttributes Attrs(AttrFactory);

@@ -1053,7 +1053,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
       if (!IsThreadSafetyAttribute(DtorAttrs->getName()->getName()) &&
           !DtorAttrs->isCXX11Attribute()) {
         Diag(DtorAttrs->getLoc(), diag::warn_attribute_on_function_definition)
-          << DtorAttrs->getName()->getName();
+          << DtorAttrs->getName();
       }
       DtorAttrs = DtorAttrs->getNext();
     }

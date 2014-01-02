@@ -65,27 +65,27 @@ int __attribute__((format(printf, 0 aligned(16) )) missing_rparen_3; // expected
 
 
 int testFundef1(int *a) __attribute__((nonnull(1))) { // \
-    // expected-warning {{GCC does not allow nonnull attribute in this position on a function definition}}
+    // expected-warning {{GCC does not allow 'nonnull' attribute in this position on a function definition}}
   return *a;
 }
 
 // noreturn is lifted to type qualifier
 void testFundef2() __attribute__((noreturn)) { // \
-    // expected-warning {{GCC does not allow noreturn attribute in this position on a function definition}}
+    // expected-warning {{GCC does not allow 'noreturn' attribute in this position on a function definition}}
   testFundef2();
 }
 
 int testFundef3(int *a) __attribute__((nonnull(1), // \
-    // expected-warning {{GCC does not allow nonnull attribute in this position on a function definition}}
+    // expected-warning {{GCC does not allow 'nonnull' attribute in this position on a function definition}}
                                      pure)) { // \
-    // expected-warning {{GCC does not allow pure attribute in this position on a function definition}}
+    // expected-warning {{GCC does not allow 'pure' attribute in this position on a function definition}}
   return *a;
 }
 
 int testFundef4(int *a) __attribute__((nonnull(1))) // \
-    // expected-warning {{GCC does not allow nonnull attribute in this position on a function definition}}
+    // expected-warning {{GCC does not allow 'nonnull' attribute in this position on a function definition}}
                       __attribute((pure)) { // \
-    // expected-warning {{GCC does not allow pure attribute in this position on a function definition}}
+    // expected-warning {{GCC does not allow 'pure' attribute in this position on a function definition}}
   return *a;
 }
 
