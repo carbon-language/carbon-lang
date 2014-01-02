@@ -18,6 +18,7 @@
 
 #include "Encoding.h"
 #include "clang/Format/Format.h"
+#include "llvm/Support/Regex.h"
 
 namespace clang {
 class SourceManager;
@@ -122,6 +123,7 @@ private:
   WhitespaceManager &Whitespaces;
   encoding::Encoding Encoding;
   bool BinPackInconclusiveFunctions;
+  llvm::Regex CommentPragmasRegex;
 };
 
 struct ParenState {

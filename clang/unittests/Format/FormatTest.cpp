@@ -1045,6 +1045,17 @@ TEST_F(FormatTest, DontSplitLineCommentsWithEscapedNewlines) {
                    getLLVMStyleWithColumns(49)));
 }
 
+TEST_F(FormatTest, DontSplitLineCommentsWithPragmas) {
+  FormatStyle Pragmas = getLLVMStyleWithColumns(30);
+  Pragmas.CommentPragmas = "^ IWYU pragma:";
+  EXPECT_EQ(
+      "// IWYU pragma: aaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbb",
+      format("// IWYU pragma: aaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbb", Pragmas));
+  EXPECT_EQ(
+      "/* IWYU pragma: aaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbb */",
+      format("/* IWYU pragma: aaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbb */", Pragmas));
+}
+
 TEST_F(FormatTest, PriorityOfCommentBreaking) {
   EXPECT_EQ("if (xxx ==\n"
             "        yyy && // aaaaaaaaaaaa bbbbbbbbb\n"

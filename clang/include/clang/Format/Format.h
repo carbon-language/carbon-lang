@@ -283,6 +283,10 @@ struct FormatStyle {
   /// \brief Indent width for line continuations.
   unsigned ContinuationIndentWidth;
 
+  /// \brief A regular expression that describes comments with special meaning,
+  /// which should not be split into lines or otherwise changed.
+  std::string CommentPragmas;
+
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            ConstructorInitializerIndentWidth ==
@@ -334,7 +338,8 @@ struct FormatStyle {
            SpacesInCStyleCastParentheses == R.SpacesInCStyleCastParentheses &&
            SpaceBeforeParens == R.SpaceBeforeParens &&
            SpaceBeforeAssignmentOperators == R.SpaceBeforeAssignmentOperators &&
-           ContinuationIndentWidth == R.ContinuationIndentWidth;
+           ContinuationIndentWidth == R.ContinuationIndentWidth &&
+           CommentPragmas == R.CommentPragmas;
   }
 };
 

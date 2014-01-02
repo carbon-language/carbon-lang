@@ -63,7 +63,8 @@ ContinuationIndenter::ContinuationIndenter(const FormatStyle &Style,
                                            bool BinPackInconclusiveFunctions)
     : Style(Style), SourceMgr(SourceMgr), Whitespaces(Whitespaces),
       Encoding(Encoding),
-      BinPackInconclusiveFunctions(BinPackInconclusiveFunctions) {}
+      BinPackInconclusiveFunctions(BinPackInconclusiveFunctions),
+      CommentPragmasRegex(Style.CommentPragmas) {}
 
 LineState ContinuationIndenter::getInitialState(unsigned FirstIndent,
                                                 const AnnotatedLine *Line,
@@ -810,12 +811,16 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
       return 0;
     }
   } else if (Current.Type == TT_BlockComment && Current.isTrailingComment()) {
+    if (CommentPragmasRegex.match(Current.TokenText.substr(2)))
+      return 0;
     Token.reset(new BreakableBlockComment(
         Current, State.Line->Level, StartColumn, Current.OriginalColumn,
         !Current.Previous, State.Line->InPPDirective, Encoding, Style));
   } else if (Current.Type == TT_LineComment &&
              (Current.Previous == NULL ||
               Current.Previous->Type != TT_ImplicitStringLiteral)) {
+    if (CommentPragmasRegex.match(Current.TokenText.substr(2)))
+      return 0;
     Token.reset(new BreakableLineComment(Current, State.Line->Level,
                                          StartColumn, /*InPPDirective=*/false,
                                          Encoding, Style));
