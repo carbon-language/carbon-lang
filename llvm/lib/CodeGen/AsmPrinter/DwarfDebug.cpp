@@ -825,10 +825,6 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   if (useSplitDwarf()) {
     NewCU->initSection(Asm->getObjFileLowering().getDwarfInfoDWOSection(),
                        DwarfInfoDWOSectionSym);
-    // If we're splitting the dwarf then construct the skeleton CU now
-    // since we'll need to be able to reference the symbols in the skeleton
-    // CU during various emission passes - in particular aranges need
-    // to reference the skeleton CU.
     NewCU->setSkeleton(constructSkeletonCU(NewCU));
   } else
     NewCU->initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
