@@ -1396,7 +1396,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
   return SelectCode(N);
 }
 
-/// PostProcessISelDAG - Perform some late peephole optimizations
+/// PostprocessISelDAG - Perform some late peephole optimizations
 /// on the DAG representation.
 void PPCDAGToDAGISel::PostprocessISelDAG() {
 
