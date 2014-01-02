@@ -1116,6 +1116,9 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
   if (Operator->isSubClassOf("SDNodeXForm"))
     return 1;  // FIXME: Generalize SDNodeXForm
 
+  if (Operator->isSubClassOf("ValueType"))
+    return 1;  // A type-cast of one result.
+
   Operator->dump();
   errs() << "Unhandled node in GetNumNodeResults\n";
   exit(1);
