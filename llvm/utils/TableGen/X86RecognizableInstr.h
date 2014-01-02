@@ -92,9 +92,6 @@ private:
   
   /// Indicates whether the instruction is SSE
   bool IsSSE;
-  /// Indicates whether the instruction has FR operands - MOVs with FR operands
-  /// are typically ignored
-  bool HasFROperands;
   /// Indicates whether the instruction should be emitted into the decode
   /// tables; regardless, it will be emitted into the instruction info table
   bool ShouldBeEmitted;
