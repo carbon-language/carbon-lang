@@ -9687,7 +9687,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
       // emitted.
       Diag(FD->getLocation(),
            diag::warn_redeclaration_without_attribute_prev_attribute_ignored)
-        << FD->getName() << DA;
+        << FD << DA;
     }
   }
   // We want to attach documentation to original Decl (which might be
