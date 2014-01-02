@@ -981,6 +981,17 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
         Comparison.Qualifiers = ParamMoreQualified;
       else if (ArgQuals.isStrictSupersetOf(ParamQuals))
         Comparison.Qualifiers = ArgMoreQualified;
+      else if (ArgQuals.getObjCLifetime() != ParamQuals.getObjCLifetime() &&
+               ArgQuals.withoutObjCLifetime()
+                 == ParamQuals.withoutObjCLifetime()) {
+        // Prefer binding to non-__unsafe_autoretained parameters.
+        if (ArgQuals.getObjCLifetime() == Qualifiers::OCL_ExplicitNone &&
+            ParamQuals.getObjCLifetime())
+          Comparison.Qualifiers = ParamMoreQualified;
+        else if (ParamQuals.getObjCLifetime() == Qualifiers::OCL_ExplicitNone &&
+                 ArgQuals.getObjCLifetime())
+          Comparison.Qualifiers = ArgMoreQualified;
+      }
       RefParamComparisons->push_back(Comparison);
     }
 
