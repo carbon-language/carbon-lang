@@ -232,9 +232,7 @@ private:
   /// emitInstructionSpecifier - Loads the instruction specifier for the current
   ///   instruction into a DisassemblerTables.
   ///
-  /// \param tables The DisassemblerTables to populate with the specifier for
-  ///               the current instruction.
-  void emitInstructionSpecifier(DisassemblerTables &tables);
+  void emitInstructionSpecifier();
   
   /// emitDecodePath - Populates the proper fields in the decode tables
   ///   corresponding to the decode paths for this instruction.

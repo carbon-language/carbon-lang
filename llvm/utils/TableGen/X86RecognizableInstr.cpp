@@ -300,7 +300,7 @@ void RecognizableInstr::processInstr(DisassemblerTables &tables,
 
   RecognizableInstr recogInstr(tables, insn, uid);
 
-  recogInstr.emitInstructionSpecifier(tables);
+  recogInstr.emitInstructionSpecifier();
 
   if (recogInstr.shouldBeEmitted())
     recogInstr.emitDecodePath(tables);
@@ -595,7 +595,7 @@ void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
   ++physicalOperandIndex;
 }
 
-void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
+void RecognizableInstr::emitInstructionSpecifier() {
   Spec->name       = Name;
 
   if (!ShouldBeEmitted)
