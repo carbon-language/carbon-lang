@@ -672,6 +672,7 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
   UseUnderscoreSetJmp = false;
   UseUnderscoreLongJmp = false;
   SelectIsExpensive = false;
+  HasMultipleConditionRegisters = false;
   IntDivIsCheap = false;
   Pow2DivIsCheap = false;
   JumpIsExpensive = false;

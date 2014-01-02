@@ -173,6 +173,11 @@ public:
     return true;
   }
 
+  /// Return true if multiple condition registers are available.
+  bool hasMultipleConditionRegisters() const {
+    return HasMultipleConditionRegisters;
+  }
+
   /// Return true if a vector of the given type should be split
   /// (TypeSplitVector) instead of promoted (TypePromoteInteger) during type
   /// legalization.
@@ -926,6 +931,15 @@ protected:
     SelectIsExpensive = isExpensive;
   }
 
+  /// Tells the code generator that the target has multiple (allocatable)
+  /// condition registers that can be used to store the results of comparisons
+  /// for use by selects and conditional branches. With multiple condition
+  /// registers, the code generator will not aggressively sink comparisons into
+  /// the blocks of their users.
+  void setHasMultipleConditionRegisters(bool hasManyRegs = true) {
+    HasMultipleConditionRegisters = hasManyRegs;
+  }
+
   /// Tells the code generator not to expand sequence of operations into a
   /// separate sequences that increases the amount of flow control.
   void setJumpIsExpensive(bool isExpensive = true) {
@@ -1320,6 +1334,13 @@ private:
   /// Tells the code generator not to expand operations into sequences that use
   /// the select operations if possible.
   bool SelectIsExpensive;
+
+  /// Tells the code generator that the target has multiple (allocatable)
+  /// condition registers that can be used to store the results of comparisons
+  /// for use by selects and conditional branches. With multiple condition
+  /// registers, the code generator will not aggressively sink comparisons into
+  /// the blocks of their users.
+  bool HasMultipleConditionRegisters;
 
   /// Tells the code generator not to expand integer divides by constants into a
   /// sequence of muls, adds, and shifts.  This is a hack until a real cost

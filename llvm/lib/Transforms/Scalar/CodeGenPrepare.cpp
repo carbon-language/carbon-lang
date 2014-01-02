@@ -1916,7 +1916,8 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
   }
 
   if (CmpInst *CI = dyn_cast<CmpInst>(I))
-    return OptimizeCmpExpression(CI);
+    if (!TLI || !TLI->hasMultipleConditionRegisters())
+      return OptimizeCmpExpression(CI);
 
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     if (TLI)
