@@ -1507,6 +1507,11 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   //   as for NSWindow objects.
   addClassMethSummary("NSPanel", "alloc", NoTrackYet);
 
+  // For NSNull, objects returned by +null are singletons that ignore
+  // retain/release semantics.  Just don't track them.
+  // <rdar://problem/12858915>
+  addClassMethSummary("NSNull", "null", NoTrackYet);
+
   // Don't track allocated autorelease pools, as it is okay to prematurely
   // exit a method.
   addClassMethSummary("NSAutoreleasePool", "alloc", NoTrackYet);
