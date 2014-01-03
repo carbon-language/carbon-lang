@@ -3742,15 +3742,14 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
 //===----------------------------------------------------------------------===//
 namespace {
 
-// FIXME: RetTy is always bool. Remove it.
-template <class Derived, typename RetTy=bool>
+template <class Derived>
 class ExprEvaluatorBase
-  : public ConstStmtVisitor<Derived, RetTy> {
+  : public ConstStmtVisitor<Derived, bool> {
 private:
-  RetTy DerivedSuccess(const APValue &V, const Expr *E) {
+  bool DerivedSuccess(const APValue &V, const Expr *E) {
     return static_cast<Derived*>(this)->Success(V, E);
   }
-  RetTy DerivedZeroInitialization(const Expr *E) {
+  bool DerivedZeroInitialization(const Expr *E) {
     return static_cast<Derived*>(this)->ZeroInitialization(E);
   }
 
@@ -3795,14 +3794,14 @@ private:
 
 protected:
   EvalInfo &Info;
-  typedef ConstStmtVisitor<Derived, RetTy> StmtVisitorTy;
+  typedef ConstStmtVisitor<Derived, bool> StmtVisitorTy;
   typedef ExprEvaluatorBase ExprEvaluatorBaseTy;
 
   OptionalDiagnostic CCEDiag(const Expr *E, diag::kind D) {
     return Info.CCEDiag(E, D);
   }
 
-  RetTy ZeroInitialization(const Expr *E) { return Error(E); }
+  bool ZeroInitialization(const Expr *E) { return Error(E); }
 
 public:
   ExprEvaluatorBase(EvalInfo &Info) : Info(Info) {}
@@ -3819,28 +3818,28 @@ public:
     return Error(E, diag::note_invalid_subexpr_in_const_expr);
   }
 
-  RetTy VisitStmt(const Stmt *) {
+  bool VisitStmt(const Stmt *) {
     llvm_unreachable("Expression evaluator should not be called on stmts");
   }
-  RetTy VisitExpr(const Expr *E) {
+  bool VisitExpr(const Expr *E) {
     return Error(E);
   }
 
-  RetTy VisitParenExpr(const ParenExpr *E)
+  bool VisitParenExpr(const ParenExpr *E)
     { return StmtVisitorTy::Visit(E->getSubExpr()); }
-  RetTy VisitUnaryExtension(const UnaryOperator *E)
+  bool VisitUnaryExtension(const UnaryOperator *E)
     { return StmtVisitorTy::Visit(E->getSubExpr()); }
-  RetTy VisitUnaryPlus(const UnaryOperator *E)
+  bool VisitUnaryPlus(const UnaryOperator *E)
     { return StmtVisitorTy::Visit(E->getSubExpr()); }
-  RetTy VisitChooseExpr(const ChooseExpr *E)
+  bool VisitChooseExpr(const ChooseExpr *E)
     { return StmtVisitorTy::Visit(E->getChosenSubExpr()); }
-  RetTy VisitGenericSelectionExpr(const GenericSelectionExpr *E)
+  bool VisitGenericSelectionExpr(const GenericSelectionExpr *E)
     { return StmtVisitorTy::Visit(E->getResultExpr()); }
-  RetTy VisitSubstNonTypeTemplateParmExpr(const SubstNonTypeTemplateParmExpr *E)
+  bool VisitSubstNonTypeTemplateParmExpr(const SubstNonTypeTemplateParmExpr *E)
     { return StmtVisitorTy::Visit(E->getReplacement()); }
-  RetTy VisitCXXDefaultArgExpr(const CXXDefaultArgExpr *E)
+  bool VisitCXXDefaultArgExpr(const CXXDefaultArgExpr *E)
     { return StmtVisitorTy::Visit(E->getExpr()); }
-  RetTy VisitCXXDefaultInitExpr(const CXXDefaultInitExpr *E) {
+  bool VisitCXXDefaultInitExpr(const CXXDefaultInitExpr *E) {
     // The initializer may not have been parsed yet, or might be erroneous.
     if (!E->getExpr())
       return Error(E);
@@ -3848,19 +3847,19 @@ public:
   }
   // We cannot create any objects for which cleanups are required, so there is
   // nothing to do here; all cleanups must come from unevaluated subexpressions.
-  RetTy VisitExprWithCleanups(const ExprWithCleanups *E)
+  bool VisitExprWithCleanups(const ExprWithCleanups *E)
     { return StmtVisitorTy::Visit(E->getSubExpr()); }
 
-  RetTy VisitCXXReinterpretCastExpr(const CXXReinterpretCastExpr *E) {
+  bool VisitCXXReinterpretCastExpr(const CXXReinterpretCastExpr *E) {
     CCEDiag(E, diag::note_constexpr_invalid_cast) << 0;
     return static_cast<Derived*>(this)->VisitCastExpr(E);
   }
-  RetTy VisitCXXDynamicCastExpr(const CXXDynamicCastExpr *E) {
+  bool VisitCXXDynamicCastExpr(const CXXDynamicCastExpr *E) {
     CCEDiag(E, diag::note_constexpr_invalid_cast) << 1;
     return static_cast<Derived*>(this)->VisitCastExpr(E);
   }
 
-  RetTy VisitBinaryOperator(const BinaryOperator *E) {
+  bool VisitBinaryOperator(const BinaryOperator *E) {
     switch (E->getOpcode()) {
     default:
       return Error(E);
@@ -3882,7 +3881,7 @@ public:
     }
   }
 
-  RetTy VisitBinaryConditionalOperator(const BinaryConditionalOperator *E) {
+  bool VisitBinaryConditionalOperator(const BinaryConditionalOperator *E) {
     // Evaluate and cache the common expression. We treat it as a temporary,
     // even though it's not quite the same thing.
     if (!Evaluate(Info.CurrentCall->createTemporary(E->getOpaqueValue(), false),
@@ -3892,7 +3891,7 @@ public:
     return HandleConditionalOperator(E);
   }
 
-  RetTy VisitConditionalOperator(const ConditionalOperator *E) {
+  bool VisitConditionalOperator(const ConditionalOperator *E) {
     bool IsBcpCall = false;
     // If the condition (ignoring parens) is a __builtin_constant_p call,
     // the result is a constant expression if it can be folded without
@@ -3917,7 +3916,7 @@ public:
     return true;
   }
 
-  RetTy VisitOpaqueValueExpr(const OpaqueValueExpr *E) {
+  bool VisitOpaqueValueExpr(const OpaqueValueExpr *E) {
     if (APValue *Value = Info.CurrentCall->getTemporary(E))
       return DerivedSuccess(*Value, E);
 
@@ -3931,7 +3930,7 @@ public:
     return StmtVisitorTy::Visit(Source);
   }
 
-  RetTy VisitCallExpr(const CallExpr *E) {
+  bool VisitCallExpr(const CallExpr *E) {
     const Expr *Callee = E->getCallee()->IgnoreParens();
     QualType CalleeType = Callee->getType();
 
@@ -4016,28 +4015,28 @@ public:
     return DerivedSuccess(Result, E);
   }
 
-  RetTy VisitCompoundLiteralExpr(const CompoundLiteralExpr *E) {
+  bool VisitCompoundLiteralExpr(const CompoundLiteralExpr *E) {
     return StmtVisitorTy::Visit(E->getInitializer());
   }
-  RetTy VisitInitListExpr(const InitListExpr *E) {
+  bool VisitInitListExpr(const InitListExpr *E) {
     if (E->getNumInits() == 0)
       return DerivedZeroInitialization(E);
     if (E->getNumInits() == 1)
       return StmtVisitorTy::Visit(E->getInit(0));
     return Error(E);
   }
-  RetTy VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
+  bool VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
     return DerivedZeroInitialization(E);
   }
-  RetTy VisitCXXScalarValueInitExpr(const CXXScalarValueInitExpr *E) {
+  bool VisitCXXScalarValueInitExpr(const CXXScalarValueInitExpr *E) {
     return DerivedZeroInitialization(E);
   }
-  RetTy VisitCXXNullPtrLiteralExpr(const CXXNullPtrLiteralExpr *E) {
+  bool VisitCXXNullPtrLiteralExpr(const CXXNullPtrLiteralExpr *E) {
     return DerivedZeroInitialization(E);
   }
 
   /// A member expression where the object is a prvalue is itself a prvalue.
-  RetTy VisitMemberExpr(const MemberExpr *E) {
+  bool VisitMemberExpr(const MemberExpr *E) {
     assert(!E->isArrow() && "missing call to bound member function?");
 
     APValue Val;
@@ -4061,7 +4060,7 @@ public:
            DerivedSuccess(Result, E);
   }
 
-  RetTy VisitCastExpr(const CastExpr *E) {
+  bool VisitCastExpr(const CastExpr *E) {
     switch (E->getCastKind()) {
     default:
       break;
@@ -4093,13 +4092,13 @@ public:
     return Error(E);
   }
 
-  RetTy VisitUnaryPostInc(const UnaryOperator *UO) {
+  bool VisitUnaryPostInc(const UnaryOperator *UO) {
     return VisitUnaryPostIncDec(UO);
   }
-  RetTy VisitUnaryPostDec(const UnaryOperator *UO) {
+  bool VisitUnaryPostDec(const UnaryOperator *UO) {
     return VisitUnaryPostIncDec(UO);
   }
-  RetTy VisitUnaryPostIncDec(const UnaryOperator *UO) {
+  bool VisitUnaryPostIncDec(const UnaryOperator *UO) {
     if (!Info.getLangOpts().CPlusPlus1y && !Info.keepEvaluatingAfterFailure())
       return Error(UO);
 
@@ -4113,7 +4112,7 @@ public:
     return DerivedSuccess(RVal, UO);
   }
 
-  RetTy VisitStmtExpr(const StmtExpr *E) {
+  bool VisitStmtExpr(const StmtExpr *E) {
     // We will have checked the full-expressions inside the statement expression
     // when they were completed, and don't need to check them again now.
     if (Info.checkingForOverflow())
@@ -4162,11 +4161,11 @@ public:
 namespace {
 template<class Derived>
 class LValueExprEvaluatorBase
-  : public ExprEvaluatorBase<Derived, bool> {
+  : public ExprEvaluatorBase<Derived> {
 protected:
   LValue &Result;
   typedef LValueExprEvaluatorBase LValueExprEvaluatorBaseTy;
-  typedef ExprEvaluatorBase<Derived, bool> ExprEvaluatorBaseTy;
+  typedef ExprEvaluatorBase<Derived> ExprEvaluatorBaseTy;
 
   bool Success(APValue::LValueBase B) {
     Result.set(B);
@@ -4584,7 +4583,7 @@ bool LValueExprEvaluator::VisitBinAssign(const BinaryOperator *E) {
 
 namespace {
 class PointerExprEvaluator
-  : public ExprEvaluatorBase<PointerExprEvaluator, bool> {
+  : public ExprEvaluatorBase<PointerExprEvaluator> {
   LValue &Result;
 
   bool Success(const Expr *E) {
@@ -4784,7 +4783,7 @@ bool PointerExprEvaluator::VisitCallExpr(const CallExpr *E) {
 
 namespace {
 class MemberPointerExprEvaluator
-  : public ExprEvaluatorBase<MemberPointerExprEvaluator, bool> {
+  : public ExprEvaluatorBase<MemberPointerExprEvaluator> {
   MemberPtr &Result;
 
   bool Success(const ValueDecl *D) {
@@ -4872,7 +4871,7 @@ bool MemberPointerExprEvaluator::VisitUnaryAddrOf(const UnaryOperator *E) {
 
 namespace {
   class RecordExprEvaluator
-  : public ExprEvaluatorBase<RecordExprEvaluator, bool> {
+  : public ExprEvaluatorBase<RecordExprEvaluator> {
     const LValue &This;
     APValue &Result;
   public:
@@ -5235,7 +5234,7 @@ static bool EvaluateTemporary(const Expr *E, LValue &Result, EvalInfo &Info) {
 
 namespace {
   class VectorExprEvaluator
-  : public ExprEvaluatorBase<VectorExprEvaluator, bool> {
+  : public ExprEvaluatorBase<VectorExprEvaluator> {
     APValue &Result;
   public:
 
@@ -5416,7 +5415,7 @@ bool VectorExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
 
 namespace {
   class ArrayExprEvaluator
-  : public ExprEvaluatorBase<ArrayExprEvaluator, bool> {
+  : public ExprEvaluatorBase<ArrayExprEvaluator> {
     const LValue &This;
     APValue &Result;
   public:
@@ -5621,7 +5620,7 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E,
 
 namespace {
 class IntExprEvaluator
-  : public ExprEvaluatorBase<IntExprEvaluator, bool> {
+  : public ExprEvaluatorBase<IntExprEvaluator> {
   APValue &Result;
 public:
   IntExprEvaluator(EvalInfo &info, APValue &result)
@@ -7251,7 +7250,7 @@ bool IntExprEvaluator::VisitCXXNoexceptExpr(const CXXNoexceptExpr *E) {
 
 namespace {
 class FloatExprEvaluator
-  : public ExprEvaluatorBase<FloatExprEvaluator, bool> {
+  : public ExprEvaluatorBase<FloatExprEvaluator> {
   APFloat &Result;
 public:
   FloatExprEvaluator(EvalInfo &info, APFloat &result)
@@ -7467,7 +7466,7 @@ bool FloatExprEvaluator::VisitCastExpr(const CastExpr *E) {
 
 namespace {
 class ComplexExprEvaluator
-  : public ExprEvaluatorBase<ComplexExprEvaluator, bool> {
+  : public ExprEvaluatorBase<ComplexExprEvaluator> {
   ComplexValue &Result;
 
 public:
@@ -7852,7 +7851,7 @@ bool ComplexExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
 namespace {
 class AtomicExprEvaluator :
-    public ExprEvaluatorBase<AtomicExprEvaluator, bool> {
+    public ExprEvaluatorBase<AtomicExprEvaluator> {
   APValue &Result;
 public:
   AtomicExprEvaluator(EvalInfo &Info, APValue &Result)
@@ -7892,7 +7891,7 @@ static bool EvaluateAtomic(const Expr *E, APValue &Result, EvalInfo &Info) {
 
 namespace {
 class VoidExprEvaluator
-  : public ExprEvaluatorBase<VoidExprEvaluator, bool> {
+  : public ExprEvaluatorBase<VoidExprEvaluator> {
 public:
   VoidExprEvaluator(EvalInfo &Info) : ExprEvaluatorBaseTy(Info) {}
 
