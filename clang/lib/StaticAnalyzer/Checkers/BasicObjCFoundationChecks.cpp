@@ -170,10 +170,13 @@ void NilArgChecker::warnIfNilArg(CheckerContext &C,
           assert(Arg == 1);
           os << "Key argument ";
         }
-        os << "to '" << msg.getSelector().getAsString() << "' cannot be nil";
+        os << "to '";
+        msg.getSelector().print(os);
+        os << "' cannot be nil";
       } else {
-        os << "Argument to '" << GetReceiverInterfaceName(msg) << "' method '"
-        << msg.getSelector().getAsString() << "' cannot be nil";
+        os << "Argument to '" << GetReceiverInterfaceName(msg) << "' method '";
+        msg.getSelector().print(os);
+        os << "' cannot be nil";
       }
     }
     
@@ -620,7 +623,9 @@ void ClassReleaseChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
     SmallString<200> buf;
     llvm::raw_svector_ostream os(buf);
 
-    os << "The '" << S.getAsString() << "' message should be sent to instances "
+    os << "The '";
+    S.print(os);
+    os << "' message should be sent to instances "
           "of class '" << Class->getName()
        << "' and not the class directly";
   
@@ -771,8 +776,8 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
     else
       os << "Argument to method '";
 
-    os << msg.getSelector().getAsString() 
-       << "' should be an Objective-C pointer type, not '";
+    msg.getSelector().print(os);
+    os << "' should be an Objective-C pointer type, not '";
     ArgTy.print(os, C.getLangOpts());
     os << "'";
 

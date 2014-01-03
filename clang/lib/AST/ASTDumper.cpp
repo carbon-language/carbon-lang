@@ -1838,7 +1838,8 @@ void ASTDumper::dumpCXXTemporary(const CXXTemporary *Temporary) {
 
 void ASTDumper::VisitObjCMessageExpr(const ObjCMessageExpr *Node) {
   VisitExpr(Node);
-  OS << " selector=" << Node->getSelector().getAsString();
+  OS << " selector=";
+  Node->getSelector().print(OS);
   switch (Node->getReceiverKind()) {
   case ObjCMessageExpr::Instance:
     break;
@@ -1860,7 +1861,8 @@ void ASTDumper::VisitObjCMessageExpr(const ObjCMessageExpr *Node) {
 
 void ASTDumper::VisitObjCBoxedExpr(const ObjCBoxedExpr *Node) {
   VisitExpr(Node);
-  OS << " selector=" << Node->getBoxingMethod()->getSelector().getAsString();
+  OS << " selector=";
+  Node->getBoxingMethod()->getSelector().print(OS);
 }
 
 void ASTDumper::VisitObjCAtCatchStmt(const ObjCAtCatchStmt *Node) {
@@ -1879,7 +1881,8 @@ void ASTDumper::VisitObjCEncodeExpr(const ObjCEncodeExpr *Node) {
 void ASTDumper::VisitObjCSelectorExpr(const ObjCSelectorExpr *Node) {
   VisitExpr(Node);
 
-  OS << " " << Node->getSelector().getAsString();
+  OS << " ";
+  Node->getSelector().print(OS);
 }
 
 void ASTDumper::VisitObjCProtocolExpr(const ObjCProtocolExpr *Node) {
@@ -1893,13 +1896,13 @@ void ASTDumper::VisitObjCPropertyRefExpr(const ObjCPropertyRefExpr *Node) {
   if (Node->isImplicitProperty()) {
     OS << " Kind=MethodRef Getter=\"";
     if (Node->getImplicitPropertyGetter())
-      OS << Node->getImplicitPropertyGetter()->getSelector().getAsString();
+      Node->getImplicitPropertyGetter()->getSelector().print(OS);
     else
       OS << "(null)";
 
     OS << "\" Setter=\"";
     if (ObjCMethodDecl *Setter = Node->getImplicitPropertySetter())
-      OS << Setter->getSelector().getAsString();
+      Setter->getSelector().print(OS);
     else
       OS << "(null)";
     OS << "\"";
@@ -1926,7 +1929,7 @@ void ASTDumper::VisitObjCSubscriptRefExpr(const ObjCSubscriptRefExpr *Node) {
   else
     OS << " Kind=DictionarySubscript GetterForDictionary=\"";
   if (Node->getAtIndexMethodDecl())
-    OS << Node->getAtIndexMethodDecl()->getSelector().getAsString();
+    Node->getAtIndexMethodDecl()->getSelector().print(OS);
   else
     OS << "(null)";
 
@@ -1935,7 +1938,7 @@ void ASTDumper::VisitObjCSubscriptRefExpr(const ObjCSubscriptRefExpr *Node) {
   else
     OS << "\" SetterForDictionary=\"";
   if (Node->setAtIndexMethodDecl())
-    OS << Node->setAtIndexMethodDecl()->getSelector().getAsString();
+    Node->setAtIndexMethodDecl()->getSelector().print(OS);
   else
     OS << "(null)";
 }

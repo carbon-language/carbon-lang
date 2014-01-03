@@ -722,7 +722,7 @@ void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   }
 
   if (Node->isImplicitProperty())
-    OS << Node->getImplicitPropertyGetter()->getSelector().getAsString();
+    Node->getImplicitPropertyGetter()->getSelector().print(OS);
   else
     OS << Node->getExplicitProperty()->getName();
 }
@@ -1815,7 +1815,9 @@ void StmtPrinter::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
 }
 
 void StmtPrinter::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
-  OS << "@selector(" << Node->getSelector().getAsString() << ')';
+  OS << "@selector(";
+  Node->getSelector().print(OS);
+  OS << ')';
 }
 
 void StmtPrinter::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {

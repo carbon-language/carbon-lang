@@ -143,7 +143,8 @@ raw_ostream &operator<<(raw_ostream &OS, DeclarationName N) {
   case DeclarationName::ObjCZeroArgSelector:
   case DeclarationName::ObjCOneArgSelector:
   case DeclarationName::ObjCMultiArgSelector:
-    return OS << N.getObjCSelector().getAsString();
+    N.getObjCSelector().print(OS);
+    return OS;
 
   case DeclarationName::CXXConstructorName: {
     QualType ClassType = N.getCXXNameType();

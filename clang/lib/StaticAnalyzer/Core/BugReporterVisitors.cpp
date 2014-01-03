@@ -1087,7 +1087,9 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   llvm::raw_svector_ostream OS(Buf);
 
   if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S)) {
-    OS << "'" << ME->getSelector().getAsString() << "' not called";
+    OS << "'";
+    ME->getSelector().print(OS);
+    OS << "' not called";
   }
   else {
     OS << "No method is called";

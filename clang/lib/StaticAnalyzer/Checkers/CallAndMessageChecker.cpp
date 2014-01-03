@@ -426,8 +426,9 @@ void CallAndMessageChecker::emitNilReceiverBug(CheckerContext &C,
 
   SmallString<200> buf;
   llvm::raw_svector_ostream os(buf);
-  os << "The receiver of message '" << ME->getSelector().getAsString()
-     << "' is nil";
+  os << "The receiver of message '";
+  ME->getSelector().print(os);
+  os << "' is nil";
   if (ResTy->isReferenceType()) {
     os << ", which results in forming a null reference";
   } else {

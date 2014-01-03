@@ -909,7 +909,7 @@ bool MallocChecker::printAllocDeallocName(raw_ostream &os, CheckerContext &C,
       os << "-";
     else
       os << "+";
-    os << Msg->getSelector().getAsString();
+    Msg->getSelector().print(os);
     return true;
   }
 

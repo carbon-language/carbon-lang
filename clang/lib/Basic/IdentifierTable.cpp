@@ -398,6 +398,10 @@ std::string Selector::getAsString() const {
   return getMultiKeywordSelector()->getName();
 }
 
+void Selector::print(llvm::raw_ostream &OS) const {
+  OS << getAsString();
+}
+
 /// Interpreting the given string using the normal CamelCase
 /// conventions, determine whether the given string starts with the
 /// given "word", which is assumed to end in a lowercase letter.

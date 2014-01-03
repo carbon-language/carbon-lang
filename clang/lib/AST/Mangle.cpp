@@ -246,7 +246,9 @@ void MangleContext::mangleObjCMethodName(const ObjCMethodDecl *MD,
   OS << (MD->isInstanceMethod() ? '-' : '+') << '[' << CD->getName();
   if (const ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(CD))
     OS << '(' << *CID << ')';
-  OS << ' ' << MD->getSelector().getAsString() << ']';
+  OS << ' ';
+  MD->getSelector().print(OS);
+  OS << ']';
   
   Out << OS.str().size() << OS.str();
 }
