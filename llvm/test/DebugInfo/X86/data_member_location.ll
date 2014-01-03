@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=x86_64-linux -O0 -o - -filetype=obj < %s | llvm-dwarfdump -debug-dump=info -| FileCheck %s
+; RUN: llc -mtriple=x86_64-linux -dwarf-version=2 -O0 -o - -filetype=obj < %s | llvm-dwarfdump -debug-dump=info -| FileCheck -check-prefix=DWARF2 %s
 
 ; Generated from Clang with the following source:
 ;
@@ -11,11 +12,19 @@
 
 ; CHECK: DW_AT_name {{.*}} "c"
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_data_member_location {{.*}} (<0x02> 23 00 )
+; CHECK: DW_AT_data_member_location {{.*}} (0x00)
 
 ; CHECK: DW_AT_name {{.*}} "i"
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_data_member_location {{.*}} (<0x02> 23 04 )
+; CHECK: DW_AT_data_member_location {{.*}} (0x04)
+
+; DWARF2: DW_AT_name {{.*}} "c"
+; DWARF2-NOT: DW_TAG
+; DWARF2: DW_AT_data_member_location {{.*}} (<0x02> 23 00 )
+
+; DWARF2: DW_AT_name {{.*}} "i"
+; DWARF2-NOT: DW_TAG
+; DWARF2: DW_AT_data_member_location {{.*}} (<0x02> 23 04 )
 
 %struct.foo = type { i8, i32 }
 

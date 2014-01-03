@@ -1920,10 +1920,14 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
       // This is not a bitfield.
       OffsetInBytes = DT.getOffsetInBits() >> 3;
 
-    DIEBlock *MemLocationDie = new (DIEValueAllocator) DIEBlock();
-    addUInt(MemLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
-    addUInt(MemLocationDie, dwarf::DW_FORM_udata, OffsetInBytes);
-    addBlock(MemberDie, dwarf::DW_AT_data_member_location, MemLocationDie);
+    if (DD->getDwarfVersion() <= 2) {
+      DIEBlock *MemLocationDie = new (DIEValueAllocator) DIEBlock();
+      addUInt(MemLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
+      addUInt(MemLocationDie, dwarf::DW_FORM_udata, OffsetInBytes);
+      addBlock(MemberDie, dwarf::DW_AT_data_member_location, MemLocationDie);
+    } else
+      addUInt(MemberDie, dwarf::DW_AT_data_member_location, None,
+              OffsetInBytes);
   }
 
   if (DT.isProtected())
