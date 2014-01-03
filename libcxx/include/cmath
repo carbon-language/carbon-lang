@@ -419,12 +419,25 @@ __libcpp_isnan(_A1 __x) _NOEXCEPT
 
 #undef isnan
 
-template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-typename std::enable_if<std::is_arithmetic<_A1>::value, bool>::type
-isnan(_A1 __x) _NOEXCEPT
+bool
+isnan(float __x) _NOEXCEPT
 {
-    return __libcpp_isnan((typename std::__promote<_A1>::type)__x);
+    return __libcpp_isnan(__x);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+isnan(double __x) _NOEXCEPT
+{
+    return __libcpp_isnan(__x);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+isnan(long double __x) _NOEXCEPT
+{
+    return __libcpp_isnan(__x);
 }
 
 #endif  // isnan
@@ -651,6 +664,26 @@ using ::isunordered;
 
 using ::float_t;
 using ::double_t;
+
+// isnan
+
+template <class _A1>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if<__promote<_A1>::value, bool>::type
+#ifdef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+isnan(_A1 __x)
+#else
+isnan(_A1&& __x)
+    _NOEXCEPT_
+    (
+        _NOEXCEPT_(__promote<_A1>::__does_not_throw)
+    )
+#endif
+{
+    typedef typename __promote<_A1>::type type;
+    static_assert(!(is_same<typename remove_reference<_A1>::type, type>::value), "");
+    return __libcpp_isnan(static_cast<type>(_VSTD::forward<_A1>(__x)));
+}
 
 // abs
 
@@ -952,20 +985,26 @@ inline _LIBCPP_INLINE_VISIBILITY long double pow(long double __x, long double __
 
 template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    is_arithmetic<_A1>::value &&
-    is_arithmetic<_A2>::value,
-    typename __promote<_A1, _A2>::type
->::type
-pow(_A1 __x, _A2 __y) _NOEXCEPT
+typename __promote<_A1, _A2>::type
+#ifdef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+pow(_A1 __x, _A2 __y)
+#else
+pow(_A1&& __x, _A2&& __y)
+    _NOEXCEPT_
+    (
+        _NOEXCEPT_(__promote<_A1>::__does_not_throw) &&
+        _NOEXCEPT_(__promote<_A2>::__does_not_throw)
+    )
+#endif
 {
-    typedef typename __promote<_A1, _A2>::type __result_type;
-    static_assert((!(is_same<_A1, __result_type>::value &&
-                      is_same<_A2, __result_type>::value)), "");
-    return pow((__result_type)__x, (__result_type)__y);
+    typedef typename __promote<_A1>::type _D1;
+    typedef typename __promote<_A2>::type _D2;
+    typedef typename __promote<_D1, _D2>::type type;
+    static_assert((!(is_same<typename remove_reference<_A1>::type, type>::value &&
+                     is_same<typename remove_reference<_A2>::type, type>::value)), "");
+    return pow(static_cast<type>(static_cast<_D1>(_VSTD::forward<_A1>(__x))),
+               static_cast<type>(static_cast<_D2>(_VSTD::forward<_A2>(__y))));
 }
-
 
 // sin
 

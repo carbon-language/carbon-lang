@@ -326,9 +326,11 @@ typedef __char32_t char32_t;
 #if (__has_feature(cxx_noexcept))
 #  define _NOEXCEPT noexcept
 #  define _NOEXCEPT_(x) noexcept(x)
+#  define _NOEXCEPT_OR_FALSE(x) noexcept(x)
 #else
 #  define _NOEXCEPT throw()
 #  define _NOEXCEPT_(x)
+#  define _NOEXCEPT_OR_FALSE(x) false
 #endif
 
 #if __has_feature(underlying_type)
@@ -361,6 +363,7 @@ namespace std {
 
 #define _NOEXCEPT throw()
 #define _NOEXCEPT_(x)
+#define _NOEXCEPT_OR_FALSE(x) false
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
 
@@ -433,6 +436,7 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 
 #define _NOEXCEPT throw()
 #define _NOEXCEPT_(x)
+#define _NOEXCEPT_OR_FALSE(x) false
 
 #define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {
 #define _LIBCPP_END_NAMESPACE_STD  }
@@ -451,6 +455,7 @@ namespace std {
 
 #define _NOEXCEPT throw()
 #define _NOEXCEPT_(x)
+#define _NOEXCEPT_OR_FALSE(x) false
 
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 #define _LIBCPP_HAS_NO_ADVANCED_SFINAE
