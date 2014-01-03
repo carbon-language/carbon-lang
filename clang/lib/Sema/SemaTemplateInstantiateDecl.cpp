@@ -476,7 +476,7 @@ Decl *TemplateDeclInstantiator::VisitMSPropertyDecl(MSPropertyDecl *D) {
 
   if (DI->getType()->isVariablyModifiedType()) {
     SemaRef.Diag(D->getLocation(), diag::err_property_is_variably_modified)
-    << D->getName();
+      << D;
     Invalid = true;
   } else if (DI->getType()->isInstantiationDependentType())  {
     DI = SemaRef.SubstType(DI, TemplateArgs,
