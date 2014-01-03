@@ -2198,6 +2198,17 @@ TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
                    "  IPC_END_MESSAGE_MAP()\n"
                    "}"));
 
+  // Same inside macros.
+  EXPECT_EQ("#define LIST(L) \\\n"
+            "  L(A)          \\\n"
+            "  L(B)          \\\n"
+            "  L(C)",
+            format("#define LIST(L) \\\n"
+                   "  L(A) \\\n"
+                   "  L(B) \\\n"
+                   "  L(C)",
+                   getGoogleStyle()));
+
   // These must not be recognized as macros.
   EXPECT_EQ("int q() {\n"
             "  f(x);\n"

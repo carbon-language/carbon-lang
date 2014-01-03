@@ -719,7 +719,7 @@ void UnwrappedLineParser::parseStructuralElement() {
         // Recognize function-like macro usages without trailing semicolon.
         if (FormatTok->Tok.is(tok::l_paren)) {
           parseParens();
-          if (FormatTok->HasUnescapedNewline &&
+          if (FormatTok->NewlinesBefore > 0 &&
               tokenCanStartNewLine(FormatTok->Tok)) {
             addUnwrappedLine();
             return;
