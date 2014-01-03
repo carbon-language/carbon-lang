@@ -154,8 +154,6 @@
 #if __has_feature(cxx_override_control) || \
     defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1700)
 #define LLVM_FINAL final
-#elif LLVM_MSC_PREREQ(1600)
-#define LLVM_FINAL sealed
 #else
 #define LLVM_FINAL
 #endif
@@ -163,7 +161,7 @@
 /// LLVM_OVERRIDE - Expands to 'override' if the compiler supports it.
 /// Use to mark virtual methods as overriding a base class method.
 #if __has_feature(cxx_override_control) || \
-    defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1600)
+    defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1700)
 #define LLVM_OVERRIDE override
 #else
 #define LLVM_OVERRIDE
