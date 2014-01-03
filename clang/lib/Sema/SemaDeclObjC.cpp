@@ -3510,7 +3510,8 @@ Sema::GetIvarBackingPropertyAccessor(const ObjCMethodDecl *Method,
 namespace {
   /// Used by Sema::DiagnoseUnusedBackingIvarInAccessor to check if a property
   /// accessor references the backing ivar.
-  class UnusedBackingIvarChecker : public DataRecursiveASTVisitor<UnusedBackingIvarChecker> {
+  class UnusedBackingIvarChecker :
+      public DataRecursiveASTVisitor<UnusedBackingIvarChecker> {
   public:
     Sema &S;
     const ObjCMethodDecl *Method;
