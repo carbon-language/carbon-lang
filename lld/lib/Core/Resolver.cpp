@@ -341,7 +341,7 @@ void Resolver::deadStripOptimize() {
     }
   }
 
-  // Or, use list of names that are dead stip roots.
+  // Or, use list of names that are dead strip roots.
   for (const StringRef &name : _context.deadStripRoots()) {
     const Atom *symAtom = _symbolTable.findByName(name);
     assert(symAtom);
