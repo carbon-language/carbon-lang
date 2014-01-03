@@ -146,7 +146,7 @@ def ext_flexible_array_init : Extension<
 def err_bad_variable_name : Error<
   "%0 cannot be the name of a variable or data member">;
 def err_bad_parameter_name : Error<
-  "'%0' cannot be the name of a parameter">;
+  "%0 cannot be the name of a parameter">;
 def err_parameter_name_omitted : Error<"parameter name omitted">;
 def warn_unused_parameter : Warning<"unused parameter %0">,
   InGroup<UnusedParameter>, DefaultIgnore;

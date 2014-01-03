@@ -9169,7 +9169,7 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
     II = D.getIdentifier();
     if (!II) {
       Diag(D.getIdentifierLoc(), diag::err_bad_parameter_name)
-        << GetNameForDeclarator(D).getName().getAsString();
+        << GetNameForDeclarator(D).getName();
       D.setInvalidType(true);
     }
   }
