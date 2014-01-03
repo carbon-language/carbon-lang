@@ -47,8 +47,11 @@
 
 @implementation AppDelegate : NSObject
 
+// CHECK: ![[TESTNOSIDEEFFECT:.*]] = {{.*}}[ DW_TAG_subprogram ] [line [[@LINE+1]]] [local] [def] [-[AppDelegate testNoSideEffect:]]
 - (int)testNoSideEffect:(NSString *)foo {
-  // CHECK: ![[ARC1]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
+  // CHECK: ![[COMPOUND_STMT:.*]] = metadata !{i32 786443, metadata !{{.*}}, metadata ![[TESTNOSIDEEFFECT]], i32 [[@LINE-1]], i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+  int x = 1;
+  // CHECK: ![[ARC1]] = metadata !{i32 [[@LINE+1]], i32 0, metadata ![[COMPOUND_STMT]], null}
   return 1; // Return expression
   // CHECK: ![[RET1]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
 }           // Cleanup + Ret

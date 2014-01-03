@@ -211,11 +211,17 @@ public:
   /// getLocation - Return the current source location.
   SourceLocation getLocation() const { return CurLoc; }
 
+  /// getScope() - Return the current scope.
+  llvm::MDNode *getScope() const { return LexicalBlockStack.back(); }
+
   /// EmitLocation - Emit metadata to indicate a change in line/column
   /// information in the source file.
   /// \param ForceColumnInfo  Assume DebugColumnInfo option is true.
+  /// \param ForceScope       Force the location to be in a specific lexical
+  ///                         scope rather than the top of LexicalBlockStack.
   void EmitLocation(CGBuilderTy &Builder, SourceLocation Loc,
-                    bool ForceColumnInfo = false);
+                    bool ForceColumnInfo = false,
+                    llvm::MDNode *ForceScope = 0);
 
   /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
   /// start of a new function.
