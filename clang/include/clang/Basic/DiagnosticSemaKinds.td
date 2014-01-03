@@ -713,11 +713,11 @@ def warn_auto_synthesizing_protocol_property :Warning<
   InGroup<DiagGroup<"objc-protocol-property-synthesis">>;
 def warn_no_autosynthesis_shared_ivar_property : Warning <
   "auto property synthesis will not synthesize property "
-  "'%0' because it cannot share an ivar with another synthesized property">,
+  "%0 because it cannot share an ivar with another synthesized property">,
   InGroup<ObjCNoPropertyAutoSynthesis>;
 def warn_no_autosynthesis_property : Warning<
   "auto property synthesis will not synthesize property "
-  "'%0' because it is 'readwrite' but it will be synthesized 'readonly' "
+  "%0 because it is 'readwrite' but it will be synthesized 'readonly' "
   "via another property">,
   InGroup<ObjCNoPropertyAutoSynthesis>;
 def warn_autosynthesis_property_ivar_match :Warning<
