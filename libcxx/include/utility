@@ -465,13 +465,13 @@ swap(pair<_T1, _T2>& __x, pair<_T1, _T2>& __y)
 template <class _Tp> class _LIBCPP_TYPE_VIS_ONLY reference_wrapper;
 
 template <class _Tp>
-struct ___make_pair_return
+struct __make_pair_return_impl
 {
     typedef _Tp type;
 };
 
 template <class _Tp>
-struct ___make_pair_return<reference_wrapper<_Tp>>
+struct __make_pair_return_impl<reference_wrapper<_Tp>>
 {
     typedef _Tp& type;
 };
@@ -479,7 +479,7 @@ struct ___make_pair_return<reference_wrapper<_Tp>>
 template <class _Tp>
 struct __make_pair_return
 {
-    typedef typename ___make_pair_return<typename decay<_Tp>::type>::type type;
+    typedef typename __make_pair_return_impl<typename decay<_Tp>::type>::type type;
 };
 
 template <class _T1, class _T2>

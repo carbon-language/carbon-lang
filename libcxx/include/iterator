@@ -364,10 +364,10 @@ public:
     static const bool value = sizeof(__test<_Tp>(0)) == 1;
 };
 
-template <class _Iter, bool> struct ____iterator_traits {};
+template <class _Iter, bool> struct __iterator_traits_impl {};
 
 template <class _Iter>
-struct ____iterator_traits<_Iter, true>
+struct __iterator_traits_impl<_Iter, true>
 {
     typedef typename _Iter::difference_type   difference_type;
     typedef typename _Iter::value_type        value_type;
@@ -380,7 +380,7 @@ template <class _Iter, bool> struct __iterator_traits {};
 
 template <class _Iter>
 struct __iterator_traits<_Iter, true>
-    :  ____iterator_traits
+    :  __iterator_traits_impl
       <
         _Iter,
         is_convertible<typename _Iter::iterator_category, input_iterator_tag>::value ||

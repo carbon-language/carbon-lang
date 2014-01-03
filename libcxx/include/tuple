@@ -816,13 +816,13 @@ namespace { const __ignore_t<unsigned char> ignore = __ignore_t<unsigned char>()
 template <class _Tp> class _LIBCPP_TYPE_VIS_ONLY reference_wrapper;
 
 template <class _Tp>
-struct ___make_tuple_return
+struct __make_tuple_return_impl
 {
     typedef _Tp type;
 };
 
 template <class _Tp>
-struct ___make_tuple_return<reference_wrapper<_Tp> >
+struct __make_tuple_return_impl<reference_wrapper<_Tp> >
 {
     typedef _Tp& type;
 };
@@ -830,7 +830,7 @@ struct ___make_tuple_return<reference_wrapper<_Tp> >
 template <class _Tp>
 struct __make_tuple_return
 {
-    typedef typename ___make_tuple_return<typename decay<_Tp>::type>::type type;
+    typedef typename __make_tuple_return_impl<typename decay<_Tp>::type>::type type;
 };
 
 template <class... _Tp>
