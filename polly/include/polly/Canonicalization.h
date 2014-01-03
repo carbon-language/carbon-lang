@@ -1,4 +1,4 @@
-//===--- Canonicalization.h - The set of canonicalization passes------*- C++ -*-===//
+//===--- Canonicalization.h - The set of canonicalization passes -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -23,8 +23,6 @@ namespace polly {
 /// optimal. TODO: Optimize the set of canonicalization passes.
 void registerCanonicalicationPasses(llvm::PassManagerBase &PM,
                                     bool SCEVCodegen = false);
-
 }
-
 
 #endif
