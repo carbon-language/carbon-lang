@@ -695,7 +695,8 @@ public:
 
   /// \brief Add a DIE to the set of types that we're going to pull into
   /// type units.
-  void addDwarfTypeUnitType(uint16_t Language, DIE *Die, DICompositeType CTy);
+  void addDwarfTypeUnitType(uint16_t Language, StringRef Identifier, DIE *Die,
+                            DICompositeType CTy);
 
   /// \brief Add a label so that arange data can be generated for it.
   void addArangeLabel(SymbolCU SCU) { ArangeLabels.push_back(SCU); }

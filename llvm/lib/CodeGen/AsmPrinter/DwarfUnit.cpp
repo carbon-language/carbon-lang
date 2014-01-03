@@ -928,41 +928,6 @@ DIE *DwarfUnit::createTypeDIE(DICompositeType Ty) {
   return TyDIE;
 }
 
-/// Return true if the type is appropriately scoped to be contained inside
-/// its own type unit.
-static bool isDwarfTypeUnitScoped(DIType Ty, const DwarfDebug *DD) {
-  DIScope Parent = DD->resolve(Ty.getContext());
-  while (Parent) {
-    // Don't generate a hash for anything scoped inside a function.
-    if (Parent.isSubprogram())
-      return false;
-    Parent = DD->resolve(Parent.getContext());
-  }
-  return true;
-}
-
-/// Return true if the type should be split out into a type unit.
-static bool shouldCreateDwarfTypeUnit(DICompositeType CTy,
-                                      const DwarfDebug *DD) {
-  if (!GenerateDwarfTypeUnits)
-    return false;
-
-  uint16_t Tag = CTy.getTag();
-
-  switch (Tag) {
-  case dwarf::DW_TAG_structure_type:
-  case dwarf::DW_TAG_union_type:
-  case dwarf::DW_TAG_enumeration_type:
-  case dwarf::DW_TAG_class_type:
-    // If this is a class, structure, union, or enumeration type
-    // that is a definition (not a declaration), and not scoped
-    // inside a function then separate this out as a type unit.
-    return !CTy.isForwardDecl() && isDwarfTypeUnitScoped(CTy, DD);
-  default:
-    return false;
-  }
-}
-
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
 /// given DIType.
 DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
@@ -989,11 +954,13 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     constructTypeDIE(*TyDIE, DIBasicType(Ty));
   else if (Ty.isCompositeType()) {
     DICompositeType CTy(Ty);
-    if (shouldCreateDwarfTypeUnit(CTy, DD)) {
-      DD->addDwarfTypeUnitType(getLanguage(), TyDIE, CTy);
-      // Skip updating the accellerator tables since this is not the full type
-      return TyDIE;
-    }
+    if (GenerateDwarfTypeUnits && !Ty.isForwardDecl())
+      if (MDString *TypeId = CTy.getIdentifier()) {
+        DD->addDwarfTypeUnitType(getLanguage(), TypeId->getString(), TyDIE,
+                                 CTy);
+        // Skip updating the accellerator tables since this is not the full type
+        return TyDIE;
+      }
     constructTypeDIE(*TyDIE, CTy);
   } else {
     assert(Ty.isDerivedType() && "Unknown kind of DIType");

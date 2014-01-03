@@ -58,11 +58,6 @@ static cl::opt<bool> UnknownLocations(
     cl::desc("Make an absence of debug location information explicit."),
     cl::init(false));
 
-static cl::opt<bool>
-GenerateODRHash("generate-odr-hash", cl::Hidden,
-                cl::desc("Add an ODR hash to external type DIEs."),
-                cl::init(false));
-
 static cl::opt<bool> GenerateCUHash("generate-cu-hash", cl::Hidden,
                                     cl::desc("Add the CU hash as the dwo_id."),
                                     cl::init(false));
@@ -1017,41 +1012,6 @@ void DwarfDebug::collectDeadVariables() {
       }
     }
   }
-}
-
-// Type Signature [7.27] and ODR Hash code.
-
-/// \brief Grabs the string in whichever attribute is passed in and returns
-/// a reference to it. Returns "" if the attribute doesn't exist.
-static StringRef getDIEStringAttr(DIE *Die, unsigned Attr) {
-  DIEValue *V = Die->findAttribute(Attr);
-
-  if (DIEString *S = dyn_cast_or_null<DIEString>(V))
-    return S->getString();
-
-  return StringRef("");
-}
-
-/// Return true if the current DIE is contained within an anonymous namespace.
-static bool isContainedInAnonNamespace(DIE *Die) {
-  DIE *Parent = Die->getParent();
-
-  while (Parent) {
-    if (Parent->getTag() == dwarf::DW_TAG_namespace &&
-        getDIEStringAttr(Parent, dwarf::DW_AT_name) == "")
-      return true;
-    Parent = Parent->getParent();
-  }
-
-  return false;
-}
-
-/// Test if the current CU language is C++ and that we have
-/// a named type that is not contained in an anonymous namespace.
-static bool shouldAddODRHash(DwarfTypeUnit *CU, DIE *Die) {
-  return CU->getLanguage() == dwarf::DW_LANG_C_plus_plus &&
-         getDIEStringAttr(Die, dwarf::DW_AT_name) != "" &&
-         !isContainedInAnonNamespace(Die);
 }
 
 void DwarfDebug::finalizeModuleInfo() {
@@ -3041,8 +3001,8 @@ void DwarfDebug::emitDebugStrDWO() {
                          OffSec, StrSym);
 }
 
-void DwarfDebug::addDwarfTypeUnitType(uint16_t Language, DIE *RefDie,
-                                      DICompositeType CTy) {
+void DwarfDebug::addDwarfTypeUnitType(uint16_t Language, StringRef Identifier,
+                                      DIE *RefDie, DICompositeType CTy) {
   const DwarfTypeUnit *&TU = DwarfTypeUnits[CTy];
   if (!TU) {
     DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
@@ -3057,16 +3017,14 @@ void DwarfDebug::addDwarfTypeUnitType(uint16_t Language, DIE *RefDie,
 
     DIE *Die = NewTU->createTypeDIE(CTy);
 
-    if (GenerateODRHash && shouldAddODRHash(NewTU, Die))
-      NewTU->addUInt(UnitDie, dwarf::DW_AT_GNU_odr_signature,
-                     dwarf::DW_FORM_data8,
-                     DIEHash().computeDIEODRSignature(*Die));
-    // FIXME: This won't handle circularly referential structures, as the DIE
-    // may have references to other DIEs still under construction and missing
-    // their signature. Hashing should walk through the signatures to their
-    // referenced type, or possibly walk the precomputed hashes of related types
-    // at the end.
-    uint64_t Signature = DIEHash().computeTypeSignature(*Die);
+    MD5 Hash;
+    Hash.update(Identifier);
+    // ... take the least significant 8 bytes and return those. Our MD5
+    // implementation always returns its results in little endian, swap bytes
+    // appropriately.
+    MD5::MD5Result Result;
+    Hash.final(Result);
+    uint64_t Signature = *reinterpret_cast<support::ulittle64_t *>(Result + 8);
     NewTU->setTypeSignature(Signature);
     NewTU->setType(Die);
 
