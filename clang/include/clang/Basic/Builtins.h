@@ -177,6 +177,10 @@ private:
   /// \brief Is this builtin supported according to the given language options?
   bool BuiltinIsSupported(const Builtin::Info &BuiltinInfo,
                           const LangOptions &LangOpts);
+
+  /// \brief Helper function for isPrintfLike and isScanfLike.
+  bool isLike(unsigned ID, unsigned &FormatIdx, bool &HasVAListArg,
+              const char *Fmt) const;
 };
 
 }
