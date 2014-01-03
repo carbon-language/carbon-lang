@@ -1875,9 +1875,6 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
 
   addSourceLine(MemberDie, DT);
 
-  DIEBlock *MemLocationDie = new (DIEValueAllocator) DIEBlock();
-  addUInt(MemLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
-
   if (DT.getTag() == dwarf::DW_TAG_inheritance && DT.isVirtual()) {
 
     // For C++, virtual base classes are not at fixed offset. Use following
@@ -1922,7 +1919,11 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
     } else
       // This is not a bitfield.
       OffsetInBytes = DT.getOffsetInBits() >> 3;
-    addUInt(MemberDie, dwarf::DW_AT_data_member_location, None, OffsetInBytes);
+
+    DIEBlock *MemLocationDie = new (DIEValueAllocator) DIEBlock();
+    addUInt(MemLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
+    addUInt(MemLocationDie, dwarf::DW_FORM_udata, OffsetInBytes);
+    addBlock(MemberDie, dwarf::DW_AT_data_member_location, MemLocationDie);
   }
 
   if (DT.isProtected())
