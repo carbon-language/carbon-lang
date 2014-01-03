@@ -6714,6 +6714,8 @@ def err_opencl_global_invalid_addr_space : Error<
 def err_opencl_no_main : Error<"%select{function|kernel}0 cannot be called 'main'">;
 def err_opencl_kernel_attr :
   Error<"attribute %0 can only be applied to a kernel function">;
+def err_opencl_constant_no_init : Error<
+  "variable in constant address space must be initialized">;
 } // end of sema category
 
 let CategoryName = "OpenMP Issue" in {

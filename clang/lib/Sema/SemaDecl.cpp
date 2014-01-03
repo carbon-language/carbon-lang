@@ -8589,6 +8589,16 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       return;
     }
 
+    // OpenCL v1.1 s6.5.3: variables declared in the constant address space must
+    // be initialized.
+    if (!Var->isInvalidDecl() &&
+        Var->getType().getAddressSpace() == LangAS::opencl_constant &&
+        !Var->getInit()) {
+      Diag(Var->getLocation(), diag::err_opencl_constant_no_init);
+      Var->setInvalidDecl();
+      return;
+    }
+
     switch (Var->isThisDeclarationADefinition()) {
     case VarDecl::Definition:
       if (!Var->isStaticDataMember() || !Var->getAnyInitializer())
