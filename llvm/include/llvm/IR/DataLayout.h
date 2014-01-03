@@ -257,6 +257,7 @@ public:
     case MM_COFF:
       return '_';
     }
+    llvm_unreachable("invalid mangling mode");
   }
 
   const char *getPrivateGlobalPrefix() const {
@@ -271,6 +272,7 @@ public:
     case MM_COFF:
       return "L";
     }
+    llvm_unreachable("invalid mangling mode");
   }
 
   static const char *getManglingComponent(const Triple &T);
