@@ -2640,13 +2640,10 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
 
     if (BaseType.isNull()) {
       BaseType = Context.getTypeDeclType(TyD);
-      if (SS.isSet()) {
-        NestedNameSpecifier *Qualifier =
-          static_cast<NestedNameSpecifier*>(SS.getScopeRep());
-
+      if (SS.isSet())
         // FIXME: preserve source range information
-        BaseType = Context.getElaboratedType(ETK_None, Qualifier, BaseType);
-      }
+        BaseType = Context.getElaboratedType(ETK_None, SS.getScopeRep(),
+                                             BaseType);
     }
   }
 
@@ -6976,7 +6973,7 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
   UsingDirectiveDecl *UDir = 0;
   NestedNameSpecifier *Qualifier = 0;
   if (SS.isSet())
-    Qualifier = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+    Qualifier = SS.getScopeRep();
   
   // Lookup namespace name.
   LookupResult R(*this, NamespcName, IdentLoc, LookupNamespaceName);
@@ -7624,8 +7621,7 @@ bool Sema::CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
   if (!CurContext->getRedeclContext()->isRecord())
     return false;
 
-  NestedNameSpecifier *Qual
-    = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+  NestedNameSpecifier *Qual = SS.getScopeRep();
 
   for (LookupResult::iterator I = Prev.begin(), E = Prev.end(); I != E; ++I) {
     NamedDecl *D = *I;
@@ -7733,7 +7729,7 @@ bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
 
       Diag(SS.getRange().getBegin(),
            diag::err_using_decl_nested_name_specifier_is_not_base_class)
-        << (NestedNameSpecifier*) SS.getScopeRep()
+        << SS.getScopeRep()
         << cast<CXXRecordDecl>(CurContext)
         << SS.getRange();
       return true;
@@ -7793,7 +7789,7 @@ bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
 
   Diag(SS.getRange().getBegin(),
        diag::err_using_decl_nested_name_specifier_is_not_base_class)
-    << (NestedNameSpecifier*) SS.getScopeRep()
+    << SS.getScopeRep()
     << cast<CXXRecordDecl>(CurContext)
     << SS.getRange();
 

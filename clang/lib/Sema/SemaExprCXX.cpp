@@ -117,7 +117,7 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
     SearchType = GetTypeFromParser(ObjectTypePtr);
 
   if (SS.isSet()) {
-    NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
+    NestedNameSpecifier *NNS = SS.getScopeRep();
 
     bool AlreadySearched = false;
     bool LookAtPrefix = true;

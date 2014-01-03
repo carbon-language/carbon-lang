@@ -1628,8 +1628,7 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
   bool IsArrow = (OpKind == tok::arrow);
 
   NamedDecl *FirstQualifierInScope
-    = (!SS.isSet() ? 0 : FindFirstQualifierInScope(S,
-                       static_cast<NestedNameSpecifier*>(SS.getScopeRep())));
+    = (!SS.isSet() ? 0 : FindFirstQualifierInScope(S, SS.getScopeRep()));
 
   // This is a postfix expression, so get rid of ParenListExprs.
   ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Base);

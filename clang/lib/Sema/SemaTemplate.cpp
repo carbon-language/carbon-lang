@@ -193,8 +193,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     TemplateDecl *TD = cast<TemplateDecl>((*R.begin())->getUnderlyingDecl());
 
     if (SS.isSet() && !SS.isInvalid()) {
-      NestedNameSpecifier *Qualifier
-        = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+      NestedNameSpecifier *Qualifier = SS.getScopeRep();
       Template = Context.getQualifiedTemplateName(Qualifier,
                                                   hasTemplateKeyword, TD);
     } else {
@@ -2826,7 +2825,7 @@ Sema::BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
 
   if (ClassTemplateDecl *Temp = R.getAsSingle<ClassTemplateDecl>()) {
     Diag(NameInfo.getLoc(), diag::err_template_kw_refers_to_class_template)
-      << (NestedNameSpecifier*) SS.getScopeRep()
+      << SS.getScopeRep()
       << NameInfo.getName() << SS.getRange();
     Diag(Temp->getLocation(), diag::note_referenced_class_template);
     return ExprError();
@@ -2900,8 +2899,7 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
     }
   }
 
-  NestedNameSpecifier *Qualifier
-    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  NestedNameSpecifier *Qualifier = SS.getScopeRep();
 
   switch (Name.getKind()) {
   case UnqualifiedId::IK_Identifier:
@@ -6878,8 +6876,8 @@ static bool ScopeSpecifierHasTemplateId(const CXXScopeSpec &SS) {
   //   name shall be a simple-template-id.
   //
   // C++98 has the same restriction, just worded differently.
-  for (NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
-       NNS; NNS = NNS->getPrefix())
+  for (NestedNameSpecifier *NNS = SS.getScopeRep(); NNS;
+       NNS = NNS->getPrefix())
     if (const Type *T = NNS->getAsType())
       if (isa<TemplateSpecializationType>(T))
         return true;
@@ -7555,8 +7553,7 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // This has to hold, because SS is expected to be defined.
   assert(Name && "Expected a name in a dependent tag");
 
-  NestedNameSpecifier *NNS
-    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  NestedNameSpecifier *NNS = SS.getScopeRep();
   if (!NNS)
     return true;
 
@@ -7642,8 +7639,7 @@ Sema::ActOnTypenameType(Scope *S,
   if (DependentTemplateName *DTN = Template.getAsDependentTemplateName()) {
     // Construct a dependent template specialization type.
     assert(DTN && "dependent template has non-dependent name?");
-    assert(DTN->getQualifier()
-           == static_cast<NestedNameSpecifier*>(SS.getScopeRep()));
+    assert(DTN->getQualifier() == SS.getScopeRep());
     QualType T = Context.getDependentTemplateSpecializationType(ETK_Typename,
                                                           DTN->getQualifier(),
                                                           DTN->getIdentifier(),

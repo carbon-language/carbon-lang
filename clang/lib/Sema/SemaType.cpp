@@ -3011,8 +3011,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         D.setInvalidType(true);
       } else if (S.isDependentScopeSpecifier(SS) ||
                  dyn_cast_or_null<CXXRecordDecl>(S.computeDeclContext(SS))) {
-        NestedNameSpecifier *NNS
-          = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+        NestedNameSpecifier *NNS = SS.getScopeRep();
         NestedNameSpecifier *NNSPrefix = NNS->getPrefix();
         switch (NNS->getKind()) {
         case NestedNameSpecifier::Identifier:
@@ -5345,7 +5344,7 @@ QualType Sema::getElaboratedType(ElaboratedTypeKeyword Keyword,
     return T;
   NestedNameSpecifier *NNS;
   if (SS.isValid())
-    NNS = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+    NNS = SS.getScopeRep();
   else {
     if (Keyword == ETK_None)
       return T;

@@ -4270,7 +4270,7 @@ NamedDecl *Sema::HandleDeclarator(Scope *S, Declarator &D,
       // and return early, to avoid the coming semantic disaster.
       Diag(D.getIdentifierLoc(),
            diag::err_template_qualified_declarator_no_match)
-        << (NestedNameSpecifier*)D.getCXXScopeSpec().getScopeRep()
+        << D.getCXXScopeSpec().getScopeRep()
         << D.getCXXScopeSpec().getRange();
       return 0;
     }

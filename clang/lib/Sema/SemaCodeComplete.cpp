@@ -4080,7 +4080,7 @@ void Sema::CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
   
   // The "template" keyword can follow "::" in the grammar, but only
   // put it into the grammar if the nested-name-specifier is dependent.
-  NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
+  NestedNameSpecifier *NNS = SS.getScopeRep();
   if (!Results.empty() && NNS->isDependent())
     Results.AddResult("template");
 
