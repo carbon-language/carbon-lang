@@ -73,6 +73,9 @@ public:
     IsValid () const;
 
     bool
+    IsSigtrampFrame () const;
+
+    bool
     GetCFA (lldb::addr_t& cfa);
 
     bool

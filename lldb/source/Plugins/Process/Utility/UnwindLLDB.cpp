@@ -171,12 +171,18 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
     }
     if (abi && !abi->CallFrameAddressIsValid(cursor_sp->cfa))
     {
-        if (log)
+        // On Mac OS X, the _sigtramp asynchronous signal trampoline frame may not have
+        // its (constructed) CFA aligned correctly -- don't do the abi alignment check for
+        // these.
+        if (reg_ctx_sp->IsSigtrampFrame() == false)
         {
-            log->Printf("%*sFrame %d did not get a valid CFA for this frame, stopping stack walk",
-                        cur_idx < 100 ? cur_idx : 100, "", cur_idx);
+            if (log)
+            {
+                log->Printf("%*sFrame %d did not get a valid CFA for this frame, stopping stack walk",
+                            cur_idx < 100 ? cur_idx : 100, "", cur_idx);
+            }
+            goto unwind_done;
         }
-        goto unwind_done;
     }
     if (!reg_ctx_sp->ReadPC (cursor_sp->start_pc))
     {

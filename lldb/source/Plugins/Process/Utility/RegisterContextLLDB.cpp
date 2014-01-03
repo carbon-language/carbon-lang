@@ -949,6 +949,12 @@ RegisterContextLLDB::IsValid () const
     return m_frame_type != eNotAValidFrame;
 }
 
+bool
+RegisterContextLLDB::IsSigtrampFrame () const
+{
+    return m_frame_type == eSigtrampFrame;
+}
+
 // A skip frame is a bogus frame on the stack -- but one where we're likely to find a real frame farther
 // up the stack if we keep looking.  It's always the second frame in an unwind (i.e. the first frame after
 // frame zero) where unwinding can be the trickiest.  Ideally we'll mark up this frame in some way so the
