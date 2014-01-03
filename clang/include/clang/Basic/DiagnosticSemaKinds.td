@@ -2442,7 +2442,7 @@ def warn_objc_implementation_missing_designated_init_override : Warning<
 def err_objc_attr_not_id : Error<
   "parameter of %0 attribute must be a single name of an Objective-C %select{class|protocol}1">;
 def err_objc_cf_bridged_not_interface : Error<
-  "CF object of type %0 is bridged to '%1', which is not an Objective-C class">;
+  "CF object of type %0 is bridged to %1, which is not an Objective-C class">;
 def err_objc_ns_bridged_invalid_cfobject : Error<
   "ObjectiveC object of type %0 is bridged to %1, which is not valid CF object">;
 def warn_objc_invalid_bridge : Warning<

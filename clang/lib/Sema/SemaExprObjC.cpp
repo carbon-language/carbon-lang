@@ -3283,7 +3283,7 @@ static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
           }
         }
         S.Diag(castExpr->getLocStart(), diag::err_objc_cf_bridged_not_interface)
-        << castExpr->getType() << Parm->getName();
+          << castExpr->getType() << Parm;
         S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
         if (Target)
           S.Diag(Target->getLocStart(), diag::note_declared_at);
