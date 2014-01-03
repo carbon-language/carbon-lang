@@ -731,7 +731,7 @@ def warn_property_getter_owning_mismatch : Warning<
   "property declared as returning non-retained objects"
   "; getter returning retained objects">;
 def error_property_setter_ambiguous_use : Error<
-  "synthesized properties '%0' and '%1' both claim setter %2 -"
+  "synthesized properties %0 and %1 both claim setter %2 -"
   " use of this setter will cause unexpected behavior">;
 def err_ownin_getter_rule : Error<
   "property's synthesized getter follows Cocoa naming"
@@ -848,7 +848,7 @@ def warn_implicit_atomic_property : Warning<
 def note_auto_readonly_iboutlet_fixup_suggest : Note<
   "property should be changed to be readwrite">;
 def warn_auto_readonly_iboutlet_property : Warning<
-  "readonly IBOutlet property '%0' when auto-synthesized may "
+  "readonly IBOutlet property %0 when auto-synthesized may "
   "not work correctly with 'nib' loader">,
   InGroup<DiagGroup<"readonly-iboutlet-property">>;
 def warn_auto_implicit_atomic_property : Warning<
