@@ -397,7 +397,9 @@ void FinalOverriders::dump(raw_ostream &Out, BaseSubobject Base,
     dump(Out, BaseSubobject(BaseDecl, BaseOffset), VisitedVirtualBases);
   }
 
-  Out << "Final overriders for (" << RD->getQualifiedNameAsString() << ", ";
+  Out << "Final overriders for (";
+  RD->printQualifiedName(Out);
+  Out << ", ";
   Out << Base.getBaseOffset().getQuantity() << ")\n";
 
   // Now dump the overriders for this base subobject.
@@ -410,8 +412,10 @@ void FinalOverriders::dump(raw_ostream &Out, BaseSubobject Base,
   
     OverriderInfo Overrider = getOverrider(MD, Base.getBaseOffset());
 
-    Out << "  " << MD->getQualifiedNameAsString() << " - (";
-    Out << Overrider.Method->getQualifiedNameAsString();
+    Out << "  ";
+    MD->printQualifiedName(Out);
+    Out << " - (";
+    Overrider.Method->printQualifiedName(Out);
     Out << ", " << Overrider.Offset.getQuantity() << ')';
 
     BaseOffset Offset;
@@ -420,8 +424,10 @@ void FinalOverriders::dump(raw_ostream &Out, BaseSubobject Base,
 
     if (!Offset.isEmpty()) {
       Out << " [ret-adj: ";
-      if (Offset.VirtualBase)
-        Out << Offset.VirtualBase->getQualifiedNameAsString() << " vbase, ";
+      if (Offset.VirtualBase) {
+        Offset.VirtualBase->printQualifiedName(Out);
+        Out << " vbase, ";
+      }
              
       Out << Offset.NonVirtualOffset.getQuantity() << " nv]";
     }
@@ -1922,12 +1928,13 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
 
   if (isBuildingConstructorVTable()) {
     Out << "Construction vtable for ('";
-    Out << MostDerivedClass->getQualifiedNameAsString() << "', ";
+    MostDerivedClass->printQualifiedName(Out);
+    Out << "', ";
     Out << MostDerivedClassOffset.getQuantity() << ") in '";
-    Out << LayoutClass->getQualifiedNameAsString();
+    LayoutClass->printQualifiedName(Out);
   } else {
     Out << "Vtable for '";
-    Out << MostDerivedClass->getQualifiedNameAsString();
+    MostDerivedClass->printQualifiedName(Out);
   }
   Out << "' (" << Components.size() << " entries).\n";
 
@@ -1973,7 +1980,8 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
       break;
     
     case VTableComponent::CK_RTTI:
-      Out << Component.getRTTIDecl()->getQualifiedNameAsString() << " RTTI";
+      Component.getRTTIDecl()->printQualifiedName(Out);
+      Out << " RTTI";
       break;
     
     case VTableComponent::CK_FunctionPointer: {
@@ -2028,7 +2036,7 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
       
       const CXXDestructorDecl *DD = Component.getDestructorDecl();
       
-      Out << DD->getQualifiedNameAsString();
+      DD->printQualifiedName(Out);
       if (IsComplete)
         Out << "() [complete]";
       else
@@ -2078,7 +2086,8 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
         const BaseSubobject &Base = 
           AddressPointsByIndex.find(NextIndex)->second;
         
-        Out << "       -- (" << Base.getBase()->getQualifiedNameAsString();
+        Out << "       -- (";
+        Base.getBase()->printQualifiedName(Out);
         Out << ", " << Base.getBaseOffset().getQuantity();
         Out << ") vtable address --\n";
       } else {
@@ -2124,7 +2133,8 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
     }
     
     Out << "Virtual base offset offsets for '";
-    Out << MostDerivedClass->getQualifiedNameAsString() << "' (";
+    MostDerivedClass->printQualifiedName(Out);
+    Out << "' (";
     Out << ClassNamesAndOffsets.size();
     Out << (ClassNamesAndOffsets.size() == 1 ? " entry" : " entries") << ").\n";
 
@@ -2230,7 +2240,7 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
   // Print the vtable indices for all the member functions.
   if (!IndicesMap.empty()) {
     Out << "VTable indices for '";
-    Out << MostDerivedClass->getQualifiedNameAsString();
+    MostDerivedClass->printQualifiedName(Out);
     Out << "' (" << IndicesMap.size() << " entries).\n";
 
     for (std::map<uint64_t, std::string>::const_iterator I = IndicesMap.begin(),
@@ -2995,7 +3005,9 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
 void PrintBasePath(const VFPtrInfo::BasePath &Path, raw_ostream &Out) {
   for (VFPtrInfo::BasePath::const_reverse_iterator I = Path.rbegin(),
        E = Path.rend(); I != E; ++I) {
-    Out << "'" << (*I)->getQualifiedNameAsString() << "' in ";
+    Out << "'";
+    (*I)->printQualifiedName(Out);
+    Out << "' in ";
   }
 }
 
@@ -3055,7 +3067,8 @@ static void dumpMicrosoftThunkAdjustment(const ThunkInfo &TI, raw_ostream &Out,
 void VFTableBuilder::dumpLayout(raw_ostream &Out) {
   Out << "VFTable for ";
   PrintBasePath(WhichVFPtr.PathToBaseWithVFPtr, Out);
-  Out << "'" << MostDerivedClass->getQualifiedNameAsString();
+  Out << "'";
+  MostDerivedClass->printQualifiedName(Out);
   Out << "' (" << Components.size() << " entries).\n";
 
   for (unsigned I = 0, E = Components.size(); I != E; ++I) {
@@ -3066,7 +3079,8 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
     // Dump the component.
     switch (Component.getKind()) {
     case VTableComponent::CK_RTTI:
-      Out << Component.getRTTIDecl()->getQualifiedNameAsString() << " RTTI";
+      Component.getRTTIDecl()->printQualifiedName(Out);
+      Out << " RTTI";
       break;
 
     case VTableComponent::CK_FunctionPointer: {
@@ -3095,7 +3109,7 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
     case VTableComponent::CK_DeletingDtorPointer: {
       const CXXDestructorDecl *DD = Component.getDestructorDecl();
 
-      Out << DD->getQualifiedNameAsString();
+      DD->printQualifiedName(Out);
       Out << "() [scalar deleting]";
 
       if (DD->isPure())
@@ -3561,7 +3575,8 @@ void MicrosoftVTableContext::dumpMethodLocations(
   // Print the vtable indices for all the member functions.
   if (!IndicesMap.empty()) {
     Out << "VFTable indices for ";
-    Out << "'" << RD->getQualifiedNameAsString();
+    Out << "'";
+    RD->printQualifiedName(Out);
     Out << "' (" << IndicesMap.size() << " entries).\n";
 
     CharUnits LastVFPtrOffset = CharUnits::fromQuantity(-1);
