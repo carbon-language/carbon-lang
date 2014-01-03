@@ -107,7 +107,7 @@
 /// \brief Does this compiler support variadic templates.
 ///
 /// Implies LLVM_HAS_RVALUE_REFERENCES and the existence of std::forward.
-#if __has_feature(cxx_variadic_templates)
+#if __has_feature(cxx_variadic_templates) || LLVM_MSC_PREREQ(1800)
 # define LLVM_HAS_VARIADIC_TEMPLATES 1
 #else
 # define LLVM_HAS_VARIADIC_TEMPLATES 0
@@ -151,15 +151,19 @@
 
 /// LLVM_FINAL - Expands to 'final' if the compiler supports it.
 /// Use to mark classes or virtual methods as final.
-#if __has_feature(cxx_override_control) || LLVM_MSC_PREREQ(1700)
+#if __has_feature(cxx_override_control) || \
+    defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1700)
 #define LLVM_FINAL final
+#elif LLVM_MSC_PREREQ(1600)
+#define LLVM_FINAL sealed
 #else
 #define LLVM_FINAL
 #endif
 
 /// LLVM_OVERRIDE - Expands to 'override' if the compiler supports it.
 /// Use to mark virtual methods as overriding a base class method.
-#if __has_feature(cxx_override_control) || LLVM_MSC_PREREQ(1700)
+#if __has_feature(cxx_override_control) || \
+    defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1600)
 #define LLVM_OVERRIDE override
 #else
 #define LLVM_OVERRIDE
