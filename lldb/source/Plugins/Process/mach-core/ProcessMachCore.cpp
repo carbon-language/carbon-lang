@@ -474,7 +474,7 @@ ProcessMachCore::GetImageInfoAddress()
     // which to prefer.
     if (GetCorefilePreference() == eKernelCorefile)
     {
-        if (m_mach_kernel_addr)
+        if (m_mach_kernel_addr != LLDB_INVALID_ADDRESS)
         {
             return m_mach_kernel_addr;
         }
@@ -482,7 +482,7 @@ ProcessMachCore::GetImageInfoAddress()
     }
     else
     {
-        if (m_dyld_addr)
+        if (m_dyld_addr != LLDB_INVALID_ADDRESS)
         {
             return m_dyld_addr;
         }
