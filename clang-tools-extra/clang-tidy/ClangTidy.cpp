@@ -31,14 +31,13 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Rewrite/Frontend/FixItRewriter.h"
 #include "clang/Rewrite/Frontend/FrontendActions.h"
+#include "clang/StaticAnalyzer/Frontend/AnalysisConsumer.h"
 #include "clang/Tooling/Tooling.h"
 #include "clang/Tooling/Refactoring.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Signals.h"
 #include <algorithm>
 #include <vector>
-// FIXME: Move AnalysisConsumer to include/clang/StaticAnalyzer/Frontend.
-#include "../lib/StaticAnalyzer/Frontend/AnalysisConsumer.h"
 
 using namespace clang::ast_matchers;
 using namespace clang::driver;
