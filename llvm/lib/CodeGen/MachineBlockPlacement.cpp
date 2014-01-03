@@ -152,7 +152,7 @@ public:
 
 #ifndef NDEBUG
   /// \brief Dump the blocks in this chain.
-  void dump() LLVM_ATTRIBUTE_USED {
+  LLVM_DUMP_METHOD void dump() {
     for (iterator I = begin(), E = end(); I != E; ++I)
       (*I)->dump();
   }

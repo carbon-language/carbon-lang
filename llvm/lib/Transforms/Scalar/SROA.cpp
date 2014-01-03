@@ -244,8 +244,8 @@ public:
   void printUse(raw_ostream &OS, const_iterator I,
                 StringRef Indent = "  ") const;
   void print(raw_ostream &OS) const;
-  void LLVM_ATTRIBUTE_NOINLINE LLVM_ATTRIBUTE_USED dump(const_iterator I) const;
-  void LLVM_ATTRIBUTE_NOINLINE LLVM_ATTRIBUTE_USED dump() const;
+  LLVM_DUMP_METHOD void dump(const_iterator I) const;
+  LLVM_DUMP_METHOD void dump() const;
 #endif
 
 private:

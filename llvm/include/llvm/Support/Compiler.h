@@ -434,4 +434,13 @@
 #define LLVM_HAS_INITIALIZER_LISTS 0
 #endif
 
+/// \brief Mark debug helper function definitions like dump() that should not be
+/// stripped from debug builds.
+// FIXME: Move this to a private config.h as it's not usable in public headers.
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+#define LLVM_DUMP_METHOD LLVM_ATTRIBUTE_NOINLINE LLVM_ATTRIBUTE_USED
+#else
+#define LLVM_DUMP_METHOD LLVM_ATTRIBUTE_NOINLINE
+#endif
+
 #endif
