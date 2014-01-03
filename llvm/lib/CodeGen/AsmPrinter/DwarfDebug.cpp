@@ -187,8 +187,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
       InfoHolder(A, "info_string", DIEValueAllocator),
       SkeletonHolder(A, "skel_string", DIEValueAllocator) {
 
-  DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
-  DwarfStrSectionSym = TextSectionSym = 0;
+  DwarfInfoSectionSym = DwarfAbbrevSectionSym = DwarfStrSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = DwarfLineSectionSym = 0;
   DwarfAddrSectionSym = 0;
   DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = 0;
@@ -2043,8 +2042,6 @@ void DwarfDebug::emitSectionLabels() {
 
   DwarfDebugLocSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfLocSection(), "section_debug_loc");
-
-  TextSectionSym = emitSectionSym(Asm, TLOF.getTextSection(), "text_begin");
 }
 
 // Recursively emits a debug information entry.
