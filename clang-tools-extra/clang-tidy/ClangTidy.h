@@ -19,9 +19,6 @@
 namespace clang {
 
 class CompilerInstance;
-namespace ast_matchers {
-class MatchFinder;
-}
 namespace tooling {
 class CompilationDatabase;
 }
@@ -96,16 +93,37 @@ private:
   llvm::Regex DisableChecks;
 };
 
+class ClangTidyCheckFactories;
+
+class ClangTidyASTConsumerFactory {
+public:
+  ClangTidyASTConsumerFactory(StringRef EnableChecksRegex,
+                              StringRef DisableChecksRegex,
+                              ClangTidyContext &Context);
+  ~ClangTidyASTConsumerFactory();
+
+  /// \brief Returns an ASTConsumer that runs the specified clang-tidy checks.
+  clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &Compiler,
+                                        StringRef File);
+
+  /// \brief Get the list of enabled checks.
+  std::vector<std::string> getCheckNames();
+
+private:
+  typedef std::vector<std::pair<std::string, bool> > CheckersList;
+  CheckersList getCheckersControlList();
+
+  ChecksFilter Filter;
+  SmallVector<ClangTidyCheck *, 8> Checks;
+  ClangTidyContext &Context;
+  ast_matchers::MatchFinder Finder;
+  OwningPtr<ClangTidyCheckFactories> CheckFactories;
+};
+
 /// \brief Fills the list of check names that are enabled when the provided
 /// filters are applied.
 std::vector<std::string> getCheckNames(StringRef EnableChecksRegex,
                                        StringRef DisableChecksRegex);
-
-/// \brief Returns an action factory that runs the specified clang-tidy checks.
-tooling::FrontendActionFactory *
-createClangTidyActionFactory(StringRef EnableChecksRegex,
-                             StringRef DisableChecksRegex,
-                             ClangTidyContext &Context);
 
 /// \brief Run a set of clang-tidy checks on a set of files.
 void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,

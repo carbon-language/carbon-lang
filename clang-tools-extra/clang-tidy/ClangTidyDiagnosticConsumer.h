@@ -65,7 +65,8 @@ struct ClangTidyError {
 /// \endcode
 class ClangTidyContext {
 public:
-  ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors) : Errors(Errors) {}
+  ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors)
+      : Errors(Errors), DiagEngine(0) {}
 
   /// \brief Report any errors detected using this method.
   ///
