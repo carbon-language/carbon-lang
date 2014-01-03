@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Frontend/FrontendActions.h"
-#include "AnalysisConsumer.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/StaticAnalyzer/Frontend/AnalysisConsumer.h"
 using namespace clang;
 using namespace ento;
 

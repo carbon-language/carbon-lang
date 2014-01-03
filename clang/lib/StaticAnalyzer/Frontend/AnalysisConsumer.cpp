@@ -13,7 +13,7 @@
 
 #define DEBUG_TYPE "AnalysisConsumer"
 
-#include "AnalysisConsumer.h"
+#include "clang/StaticAnalyzer/Frontend/AnalysisConsumer.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
