@@ -113,7 +113,7 @@ struct Section {
   SectionAttr     attributes;
   uint32_t        alignment;
   Hex64           address;
-  ContentBytes    content;
+  std::vector<uint8_t> content;
   Relocations     relocations;
   IndirectSymbols indirectSymbols;
 };
@@ -273,7 +273,3 @@ normalizedFromAtoms(const lld::File &atomFile, const MachOLinkingContext &ctxt);
 } // namespace lld
 
 #endif // LLD_READER_WRITER_MACHO_NORMALIZE_FILE_H
-
-
-
-

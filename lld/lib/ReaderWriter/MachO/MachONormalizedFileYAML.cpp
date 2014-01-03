@@ -269,6 +269,7 @@ struct ScalarBitSetTraits<SymbolDesc> {
 
 template <>
 struct MappingTraits<Section> {
+  struct NormalizedContentBytes;
   static void mapping(IO &io, Section &sect) {
     io.mapRequired("segment",         sect.segmentName);
     io.mapRequired("section",         sect.sectionName);
@@ -276,10 +277,31 @@ struct MappingTraits<Section> {
     io.mapOptional("attributes",      sect.attributes);
     io.mapOptional("alignment",       sect.alignment, 0U);
     io.mapRequired("address",         sect.address);
-    io.mapOptional("content",         sect.content);
+    MappingNormalization<NormalizedContent, std::vector<uint8_t>> content(
+        io, sect.content);
+    io.mapOptional("content",         content->normalizedContent);
     io.mapOptional("relocations",     sect.relocations);
     io.mapOptional("indirect-syms",   sect.indirectSymbols);
   }
+
+  // FIXME: It would be good if we could remove this, so we don't need to copy
+  // the content data.
+  struct NormalizedContent {
+    NormalizedContent(IO &) {}
+    NormalizedContent(IO &, std::vector<uint8_t> content) {
+      for (auto &c : content) {
+        normalizedContent.push_back(c);
+      }
+    }
+    std::vector<uint8_t> denormalize(IO &) {
+      std::vector<uint8_t> content;
+      for (auto &c : normalizedContent) {
+        content.push_back(c);
+      }
+      return content;
+    }
+    ContentBytes normalizedContent;
+  };
 };
 
 

@@ -423,7 +423,7 @@ void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
   // Copy content from atoms to content buffer for section.
   // FIXME: zerofill atoms/sections should not take up content space.
   normSect->content.resize(si->size);
-  Hex8 *sectionContent = normSect->content.data();
+  uint8_t *sectionContent = normSect->content.data();
   for (AtomInfo &ai : si->atomsAndOffsets) {
     // Copy raw bytes.
     uint8_t *atomContent = reinterpret_cast<uint8_t*>
