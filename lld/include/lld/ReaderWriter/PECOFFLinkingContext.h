@@ -46,7 +46,7 @@ public:
         _terminalServerAware(true), _dynamicBaseEnabled(true),
         _createManifest(true), _embedManifest(false), _manifestId(1),
         _manifestLevel("'asInvoker'"), _manifestUiAccess("'false'"),
-        _imageType(ImageType::IMAGE_EXE),
+        _imageType(ImageType::exe),
         _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
     setDeadStripping(true);
   }
@@ -72,9 +72,9 @@ public:
   /// \brief Casting support
   static inline bool classof(const LinkingContext *info) { return true; }
 
-  enum ImageType {
-    IMAGE_EXE,
-    IMAGE_DLL
+  enum class ImageType {
+    exe,
+    dll
   };
 
   virtual Writer &writer() const;

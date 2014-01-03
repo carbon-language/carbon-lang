@@ -46,7 +46,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_TRUE(_context.getInputSearchPaths().empty());
 
   // Unspecified flags will have default values.
-  EXPECT_EQ(PECOFFLinkingContext::IMAGE_EXE, _context.getImageType());
+  EXPECT_EQ(PECOFFLinkingContext::ImageType::exe, _context.getImageType());
   EXPECT_EQ(6, _context.getMinOSVersion().majorVersion);
   EXPECT_EQ(0, _context.getMinOSVersion().minorVersion);
   EXPECT_EQ(0x400000U, _context.getBaseAddress());
@@ -426,7 +426,7 @@ TEST_F(WinLinkParserTest, DisallowLib) {
 
 TEST_F(WinLinkParserTest, NoEntry) {
   EXPECT_TRUE(parse("link.exe", "/noentry", "/dll", "a.obj", nullptr));
-  EXPECT_EQ(PECOFFLinkingContext::IMAGE_DLL, _context.getImageType());
+  EXPECT_EQ(PECOFFLinkingContext::ImageType::dll, _context.getImageType());
   EXPECT_EQ(0x10000000U, _context.getBaseAddress());
   EXPECT_EQ("", _context.entrySymbolName());
 }
