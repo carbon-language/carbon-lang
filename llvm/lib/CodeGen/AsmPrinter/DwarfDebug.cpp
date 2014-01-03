@@ -1091,7 +1091,8 @@ void DwarfDebug::finalizeModuleInfo() {
       }
 
       // If we've requested ranges and have them emit a DW_AT_ranges attribute
-      // on the unit that will remain in the .o file, otherwise add a DW_AT_low_pc.
+      // on the unit that will remain in the .o file, otherwise add a
+      // DW_AT_low_pc.
       // FIXME: Also add a high pc if we can.
       // FIXME: We should use ranges if we have multiple compile units.
       DwarfCompileUnit *U = SkCU ? SkCU : static_cast<DwarfCompileUnit *>(TheU);
@@ -1100,7 +1101,8 @@ void DwarfDebug::finalizeModuleInfo() {
                         Asm->GetTempSymbol("cu_ranges", U->getUniqueID()),
                         DwarfDebugRangeSectionSym);
       else
-        U->addUInt(U->getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, 0);
+        U->addUInt(U->getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
+                   0);
     }
   }
 
