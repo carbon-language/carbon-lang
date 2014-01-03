@@ -38,7 +38,7 @@
 #include <algorithm>
 #include <vector>
 // FIXME: Move AnalysisConsumer to include/clang/StaticAnalyzer/Frontend.
-#include "lib/StaticAnalyzer/Frontend/AnalysisConsumer.h"
+#include "../../../lib/StaticAnalyzer/Frontend/AnalysisConsumer.h"
 
 using namespace clang::ast_matchers;
 using namespace clang::driver;
@@ -55,7 +55,7 @@ static StringRef StaticAnalyzerCheckers[] = {
 #define GET_CHECKERS
 #define CHECKER(FULLNAME, CLASS, DESCFILE, HELPTEXT, GROUPINDEX, HIDDEN)       \
   FULLNAME,
-#include "lib/StaticAnalyzer/Checkers/Checkers.inc"
+#include "../../../lib/StaticAnalyzer/Checkers/Checkers.inc"
 #undef CHECKER
 #undef GET_CHECKERS
 };

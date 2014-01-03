@@ -3,8 +3,8 @@ set(LLVM_LINK_COMPONENTS
   )
 
 # FIXME: Get rid of private headers in other modules.
-# It is for convenience of clang/lib/StaticAnalyzer.
-include_directories(${CLANG_BINARY_DIR} ${CLANG_SOURCE_DIR})
+# It is hack to find "../../../lib/StaticAnalyzer".
+include_directories(${CLANG_SOURCE_DIR}/lib/StaticAnalyzer/Core)
 
 add_clang_library(clangTidy
   ClangTidy.cpp
