@@ -892,12 +892,9 @@ public:
 /// This class is inheritedly privately by different kinds of template
 /// parameters and is not part of the Decl hierarchy. Just a facility.
 class TemplateParmPosition {
-protected:
-  // FIXME: This should probably never be called, but it's here as
-  TemplateParmPosition()
-    : Depth(0), Position(0)
-  { /* llvm_unreachable("Cannot create positionless template parameter"); */ }
+  TemplateParmPosition() LLVM_DELETED_FUNCTION;
 
+protected:
   TemplateParmPosition(unsigned D, unsigned P)
     : Depth(D), Position(P)
   { }
