@@ -245,13 +245,10 @@ static bool checkUInt32Argument(Sema &S, const AttributeList &Attr,
 /// declaration. Returns true if diagnosed.
 template <typename AttrTy>
 static bool checkAttrMutualExclusion(Sema &S, Decl *D,
-                                     const AttributeList &Attr,
-                                     const char *OtherName) {
-  // FIXME: it would be nice if OtherName did not have to be passed in, but was
-  // instead determined based on the AttrTy template parameter.
-  if (D->hasAttr<AttrTy>()) {
+                                     const AttributeList &Attr) {
+  if (AttrTy *A = D->getAttr<AttrTy>()) {
     S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
-      << Attr.getName() << OtherName;
+      << Attr.getName() << A;
     return true;
   }
   return false;
@@ -1428,7 +1425,7 @@ static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleColdAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (checkAttrMutualExclusion<HotAttr>(S, D, Attr, "hot"))
+  if (checkAttrMutualExclusion<HotAttr>(S, D, Attr))
     return;
 
   D->addAttr(::new (S.Context) ColdAttr(Attr.getRange(), S.Context,
@@ -1436,7 +1433,7 @@ static void handleColdAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleHotAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (checkAttrMutualExclusion<ColdAttr>(S, D, Attr, "cold"))
+  if (checkAttrMutualExclusion<ColdAttr>(S, D, Attr))
     return;
 
   D->addAttr(::new (S.Context) HotAttr(Attr.getRange(), S.Context,
@@ -3562,8 +3559,7 @@ static void handleObjCRequiresSuperAttr(Sema &S, Decl *D,
 
 static void handleCFAuditedTransferAttr(Sema &S, Decl *D,
                                         const AttributeList &Attr) {
-  if (checkAttrMutualExclusion<CFUnknownTransferAttr>(S, D, Attr,
-                                                      "cf_unknown_transfer"))
+  if (checkAttrMutualExclusion<CFUnknownTransferAttr>(S, D, Attr))
     return;
 
   D->addAttr(::new (S.Context)
@@ -3573,8 +3569,7 @@ static void handleCFAuditedTransferAttr(Sema &S, Decl *D,
 
 static void handleCFUnknownTransferAttr(Sema &S, Decl *D,
                                         const AttributeList &Attr) {
-  if (checkAttrMutualExclusion<CFAuditedTransferAttr>(S, D, Attr,
-                                                      "cf_audited_transfer"))
+  if (checkAttrMutualExclusion<CFAuditedTransferAttr>(S, D, Attr))
     return;
 
   D->addAttr(::new (S.Context)
