@@ -1737,13 +1737,13 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
   //   with reference type, or "cv void."
   if (T->isReferenceType()) {
     Diag(Loc, diag::err_illegal_decl_mempointer_to_reference)
-      << (Entity? Entity.getAsString() : "type name") << T;
+      << getPrintableNameForEntity(Entity) << T;
     return QualType();
   }
 
   if (T->isVoidType()) {
     Diag(Loc, diag::err_illegal_decl_mempointer_to_void)
-      << (Entity? Entity.getAsString() : "type name");
+      << getPrintableNameForEntity(Entity);
     return QualType();
   }
 
