@@ -115,19 +115,23 @@ public:
   // more generic and should be pulled out into a more useful Diagnostics
   // library.
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const Diagnostic &Info) {
+                                const Diagnostic &Info) LLVM_OVERRIDE {
     if (DiagLevel != DiagnosticsEngine::Note) {
       Errors.push_back(ClangTidyError(getMessage(Info)));
     } else {
+      assert(!Errors.empty() &&
+             "A diagnostic note can only be appended to a message.");
       Errors.back().Notes.push_back(getMessage(Info));
     }
     addFixes(Info, Errors.back());
   }
 
-  virtual void finish() {
+  // Flushes the internal diagnostics buffer to the ClangTidyContext.
+  virtual void finish() LLVM_OVERRIDE {
     for (unsigned i = 0, e = Errors.size(); i != e; ++i) {
       Context.storeError(Errors[i]);
     }
+    Errors.clear();
   }
 
 private:
