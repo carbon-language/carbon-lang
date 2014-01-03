@@ -154,7 +154,7 @@ private:
   /// (right after the opening sequence).
   /// \return offset of the closing sequence within Str, or npos if it was not
   /// found.
-  size_t FindRegexVarEnd(StringRef Str);
+  size_t FindRegexVarEnd(StringRef Str, SourceMgr &SM);
 };
 
 
@@ -227,7 +227,7 @@ bool Pattern::ParsePattern(StringRef PatternStr,
     if (PatternStr.startswith("[[")) {
       // Find the closing bracket pair ending the match.  End is going to be an
       // offset relative to the beginning of the match string.
-      size_t End = FindRegexVarEnd(PatternStr.substr(2));
+      size_t End = FindRegexVarEnd(PatternStr.substr(2), SM);
 
       if (End == StringRef::npos) {
         SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
@@ -532,7 +532,7 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
   }
 }
 
-size_t Pattern::FindRegexVarEnd(StringRef Str) {
+size_t Pattern::FindRegexVarEnd(StringRef Str, SourceMgr &SM) {
   // Offset keeps track of the current offset within the input Str
   size_t Offset = 0;
   // [...] Nesting depth
@@ -553,7 +553,12 @@ size_t Pattern::FindRegexVarEnd(StringRef Str) {
           BracketDepth++;
           break;
         case ']':
-          assert(BracketDepth > 0 && "Invalid regex");
+          if (BracketDepth == 0) {
+            SM.PrintMessage(SMLoc::getFromPointer(Str.data()),
+                            SourceMgr::DK_Error,
+                            "missing closing \"]\" for regex variable");
+            exit(1);
+          }
           BracketDepth--;
           break;
       }
