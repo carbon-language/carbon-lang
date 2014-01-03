@@ -6269,7 +6269,7 @@ def warn_type_tag_for_datatype_wrong_kind : Warning<
   "this type tag was not designed to be used with this function">,
   InGroup<TypeSafety>;
 def warn_type_safety_type_mismatch : Warning<
-  "argument type %0 doesn't match specified '%1' type tag "
+  "argument type %0 doesn't match specified %1 type tag "
   "%select{that requires %3|}2">, InGroup<TypeSafety>;
 def warn_type_safety_null_pointer_required : Warning<
   "specified %0 type tag requires a null pointer">, InGroup<TypeSafety>;
