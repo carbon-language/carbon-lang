@@ -3572,7 +3572,7 @@ void Sema::DiagnoseUnusedBackingIvarInAccessor(Scope *S,
     // cases where the ivar is accessed by another method that the accessor
     // delegates to.
     if (!IV->isReferenced() || !Checker.InvokedSelfMethod) {
-      Diag(Loc, DIAG) << IV->getDeclName();
+      Diag(Loc, DIAG) << IV;
       Diag(PDecl->getLocation(), diag::note_property_declare);
     }
   }
