@@ -7849,7 +7849,7 @@ void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
   }
   
   if (!FD->isInvalidDecl() && FD->getDescribedFunctionTemplate()) {
-    Diag(FD->getLocation(), diag::err_mainlike_template_decl) << FD->getName();
+    Diag(FD->getLocation(), diag::err_mainlike_template_decl) << FD;
     FD->setInvalidDecl();
   }
 }
@@ -7869,7 +7869,7 @@ void Sema::CheckMSVCRTEntryPoint(FunctionDecl *FD) {
       FD->setHasImplicitReturnZero(true);
 
   if (!FD->isInvalidDecl() && FD->getDescribedFunctionTemplate()) {
-    Diag(FD->getLocation(), diag::err_mainlike_template_decl) << FD->getName();
+    Diag(FD->getLocation(), diag::err_mainlike_template_decl) << FD;
     FD->setInvalidDecl();
   }
 }
