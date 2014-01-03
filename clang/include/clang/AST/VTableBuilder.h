@@ -412,31 +412,54 @@ struct VFPtrInfo {
 /// Holds information for a virtual base table for a single subobject.  A record
 /// may contain as many vbptrs as there are base subobjects.
 struct VBTableInfo {
-  VBTableInfo(const CXXRecordDecl *ReusingBase, BaseSubobject VBPtrSubobject)
-    : ReusingBase(ReusingBase), VBPtrSubobject(VBPtrSubobject) { }
+  VBTableInfo(const CXXRecordDecl *RD)
+      : ReusingBase(RD), BaseWithVBPtr(RD), NextBaseToMangle(RD) {}
+
+  // Copy constructor.
+  // FIXME: Uncomment when we've moved to C++11.
+  //VBTableInfo(const VBTableInfo &) = default;
 
   /// The vbtable will hold all of the virtual bases of ReusingBase.  This may
   /// or may not be the same class as VBPtrSubobject.Base.  A derived class will
   /// reuse the vbptr of the first non-virtual base subobject that has one.
   const CXXRecordDecl *ReusingBase;
 
+  /// BaseWithVBPtr is at this offset from its containing complete object or
+  /// virtual base.
+  CharUnits NonVirtualOffset;
+
   /// The vbptr is stored inside this subobject.
-  BaseSubobject VBPtrSubobject;
+  const CXXRecordDecl *BaseWithVBPtr;
 
   /// The bases from the inheritance path that got used to mangle the vbtable
   /// name.  This is not really a full path like a CXXBasePath.  It holds the
   /// subset of records that need to be mangled into the vbtable symbol name in
   /// order to get a unique name.
-  llvm::SmallVector<const CXXRecordDecl *, 1> MangledPath;
+  SmallVector<const CXXRecordDecl *, 1> MangledPath;
+
+  /// The next base to push onto the mangled path if this path is ambiguous in a
+  /// derived class.  If it's null, then it's already been pushed onto the path.
+  const CXXRecordDecl *NextBaseToMangle;
+
+  /// The set of possibly indirect vbases that contain this vbtable.  When a
+  /// derived class indirectly inherits from the same vbase twice, we only keep
+  /// vbtables and their paths from the first instance.
+  SmallVector<const CXXRecordDecl *, 1> ContainingVBases;
+
+  /// The vbptr is stored inside the non-virtual component of this virtual base.
+  const CXXRecordDecl *getVBaseWithVBPtr() const {
+    return ContainingVBases.empty() ? 0 : ContainingVBases.front();
+  }
 };
 
-// FIXME: Don't store these by value, they contain vectors.
-typedef SmallVector<VBTableInfo, 2> VBTableVector;
+typedef SmallVector<VBTableInfo *, 2> VBTableVector;
 
 /// All virtual base related information about a given record decl.  Includes
 /// information on all virtual base tables and the path components that are used
 /// to mangle them.
 struct VirtualBaseInfo {
+  ~VirtualBaseInfo() { llvm::DeleteContainerPointers(VBTables); }
+
   /// A map from virtual base to vbtable index for doing a conversion from the
   /// the derived class to the a base.
   llvm::DenseMap<const CXXRecordDecl *, unsigned> VBTableIndices;
@@ -523,6 +546,8 @@ private:
 
   const VirtualBaseInfo *
   computeVBTableRelatedInformation(const CXXRecordDecl *RD);
+
+  void computeVBTablePaths(const CXXRecordDecl *RD, VBTableVector &Paths);
 
 public:
   MicrosoftVTableContext(ASTContext &Context)

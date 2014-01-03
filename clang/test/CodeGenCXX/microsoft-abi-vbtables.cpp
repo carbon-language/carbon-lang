@@ -477,3 +477,44 @@ F f;
 // CHECK-DAG: @"\01??_8F@Test26@@7BD@1@@" = linkonce_odr unnamed_addr constant [4 x i32] [i32 0, i32 16, i32 12, i32 20]
 // CHECK-DAG: @"\01??_8F@Test26@@7BE@1@@" = linkonce_odr unnamed_addr constant [2 x i32] [i32 -4, i32 28]
 }
+
+namespace Test27 {
+// PR17748
+struct A {};
+struct B : virtual A {};
+struct C : virtual B {};
+struct D : C, B {};
+struct E : D {};
+struct F : C, E {};
+struct G : F, D, C, B {};
+G x;
+
+// CHECK-DAG: @"\01??_8G@Test27@@7BB@1@@" =
+// CHECK-DAG: @"\01??_8G@Test27@@7BB@1@F@1@@" =
+// CHECK-DAG: @"\01??_8G@Test27@@7BC@1@@" =
+// CHECK-DAG: @"\01??_8G@Test27@@7BC@1@D@1@@" =
+// CHECK-DAG: @"\01??_8G@Test27@@7BC@1@E@1@@" =
+// CHECK-DAG: @"\01??_8G@Test27@@7BC@1@F@1@@" =
+// CHECK-DAG: @"\01??_8G@Test27@@7BD@1@@" =
+// CHECK-DAG: @"\01??_8G@Test27@@7BF@1@@" =
+}
+
+namespace Test28 {
+// PR17748
+struct A {};
+struct B : virtual A {};
+struct C : virtual B {};
+struct D : C, B {};
+struct E : C, D {};
+struct F : virtual E, virtual D, virtual C {};
+F x;
+
+// CHECK-DAG: @"\01??_8F@Test28@@7B01@@" =
+// CHECK-DAG: @"\01??_8F@Test28@@7BB@1@@" =
+// CHECK-DAG: @"\01??_8F@Test28@@7BC@1@@" =
+// CHECK-DAG: @"\01??_8F@Test28@@7BC@1@D@1@@" =
+// CHECK-DAG: @"\01??_8F@Test28@@7BC@1@D@1@E@1@@" =
+// CHECK-DAG: @"\01??_8F@Test28@@7BC@1@E@1@@" =
+// CHECK-DAG: @"\01??_8F@Test28@@7BD@1@@" =
+// CHECK-DAG: @"\01??_8F@Test28@@7BE@1@@" =
+}

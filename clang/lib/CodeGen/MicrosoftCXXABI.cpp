@@ -564,19 +564,22 @@ void MicrosoftCXXABI::EmitVBPtrStores(CodeGenFunction &CGF,
                                       const CXXRecordDecl *RD) {
   llvm::Value *ThisInt8Ptr =
     CGF.Builder.CreateBitCast(getThisValue(CGF), CGM.Int8PtrTy, "this.int8");
+  const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
 
   const VBTableGlobals &VBGlobals = enumerateVBTables(RD);
   for (unsigned I = 0, E = VBGlobals.VBTables->size(); I != E; ++I) {
-    const VBTableInfo &VBT = (*VBGlobals.VBTables)[I];
+    const VBTableInfo *VBT = (*VBGlobals.VBTables)[I];
     llvm::GlobalVariable *GV = VBGlobals.Globals[I];
     const ASTRecordLayout &SubobjectLayout =
-        CGM.getContext().getASTRecordLayout(VBT.VBPtrSubobject.getBase());
-    uint64_t Offs = (VBT.VBPtrSubobject.getBaseOffset() +
-                     SubobjectLayout.getVBPtrOffset()).getQuantity();
+        CGM.getContext().getASTRecordLayout(VBT->BaseWithVBPtr);
+    CharUnits Offs = VBT->NonVirtualOffset;
+    Offs += SubobjectLayout.getVBPtrOffset();
+    if (VBT->getVBaseWithVBPtr())
+      Offs += Layout.getVBaseClassOffset(VBT->getVBaseWithVBPtr());
     llvm::Value *VBPtr =
-        CGF.Builder.CreateConstInBoundsGEP1_64(ThisInt8Ptr, Offs);
+        CGF.Builder.CreateConstInBoundsGEP1_64(ThisInt8Ptr, Offs.getQuantity());
     VBPtr = CGF.Builder.CreateBitCast(VBPtr, GV->getType()->getPointerTo(0),
-                                      "vbptr." + VBT.ReusingBase->getName());
+                                      "vbptr." + VBT->ReusingBase->getName());
     CGF.Builder.CreateStore(GV, VBPtr);
   }
 }
@@ -1019,7 +1022,7 @@ MicrosoftCXXABI::enumerateVBTables(const CXXRecordDecl *RD) {
   for (VBTableVector::const_iterator I = VBGlobals.VBTables->begin(),
                                      E = VBGlobals.VBTables->end();
        I != E; ++I) {
-    VBGlobals.Globals.push_back(getAddrOfVBTable(*I, RD, Linkage));
+    VBGlobals.Globals.push_back(getAddrOfVBTable(**I, RD, Linkage));
   }
 
   return VBGlobals;
@@ -1064,9 +1067,9 @@ MicrosoftCXXABI::EmitVirtualMemPtrThunk(const CXXMethodDecl *MD,
 void MicrosoftCXXABI::emitVirtualInheritanceTables(const CXXRecordDecl *RD) {
   const VBTableGlobals &VBGlobals = enumerateVBTables(RD);
   for (unsigned I = 0, E = VBGlobals.VBTables->size(); I != E; ++I) {
-    const VBTableInfo &VBT = (*VBGlobals.VBTables)[I];
+    const VBTableInfo *VBT = (*VBGlobals.VBTables)[I];
     llvm::GlobalVariable *GV = VBGlobals.Globals[I];
-    emitVBTableDefinition(VBT, RD, GV);
+    emitVBTableDefinition(*VBT, RD, GV);
   }
 }
 
@@ -1102,7 +1105,7 @@ void MicrosoftCXXABI::emitVBTableDefinition(const VBTableInfo &VBT,
          "should only emit vbtables for classes with vbtables");
 
   const ASTRecordLayout &BaseLayout =
-    CGM.getContext().getASTRecordLayout(VBT.VBPtrSubobject.getBase());
+    CGM.getContext().getASTRecordLayout(VBT.BaseWithVBPtr);
   const ASTRecordLayout &DerivedLayout =
     CGM.getContext().getASTRecordLayout(RD);
 
@@ -1119,8 +1122,14 @@ void MicrosoftCXXABI::emitVBTableDefinition(const VBTableInfo &VBT,
     const CXXRecordDecl *VBase = I->getType()->getAsCXXRecordDecl();
     CharUnits Offset = DerivedLayout.getVBaseClassOffset(VBase);
     assert(!Offset.isNegative());
+
     // Make it relative to the subobject vbptr.
-    Offset -= VBT.VBPtrSubobject.getBaseOffset() + VBPtrOffset;
+    CharUnits CompleteVBPtrOffset = VBT.NonVirtualOffset + VBPtrOffset;
+    if (VBT.getVBaseWithVBPtr())
+      CompleteVBPtrOffset +=
+          DerivedLayout.getVBaseClassOffset(VBT.getVBaseWithVBPtr());
+    Offset -= CompleteVBPtrOffset;
+
     unsigned VBIndex = Context.getVBTableIndex(ReusingBase, VBase);
     assert(Offsets[VBIndex] == 0 && "The same vbindex seen twice?");
     Offsets[VBIndex] = llvm::ConstantInt::get(CGM.IntTy, Offset.getQuantity());

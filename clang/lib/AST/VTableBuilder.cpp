@@ -16,6 +16,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -3179,22 +3180,22 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
   }
 }
 
-namespace {
+static bool setsIntersect(const llvm::SmallPtrSet<const CXXRecordDecl *, 4> &A,
+                          const llvm::ArrayRef<const CXXRecordDecl *> &B) {
+  for (llvm::ArrayRef<const CXXRecordDecl *>::iterator I = B.begin(),
+                                                       E = B.end();
+       I != E; ++I) {
+    if (A.count(*I))
+      return true;
+  }
+  return false;
+}
 
-struct VBTablePath;
-typedef llvm::SmallVector<VBTablePath *, 6> VBTablePathVector;
+static bool rebucketPaths(VBTableVector &Paths);
 
-/// Produces MSVC-compatible vbtable data.  The symbols produced by this builder
-/// match those produced by MSVC 2012, which is different from MSVC 2010.
-///
-/// Unlike Itanium, which uses only one vtable per class, MSVC uses a different
-/// symbol for every "address point" installed in base subobjects.  As a result,
-/// we have to compute unique symbols for every table.  Since there can be
-/// multiple non-virtual base subobjects of the same class, combining the most
-/// derived class with the base containing the vtable is insufficient.  The most
-/// trivial algorithm would be to mangle in the entire path from base to most
-/// derived, but that would be too easy and would create unnecessarily large
-/// symbols.  ;)
+/// Produces MSVC-compatible vbtable data.  The symbols produced by this
+/// algorithm match those produced by MSVC 2012 and newer, which is different
+/// from MSVC 2010.
 ///
 /// MSVC 2012 appears to minimize the vbtable names using the following
 /// algorithm.  First, walk the class hierarchy in the usual order, depth first,
@@ -3212,181 +3213,114 @@ typedef llvm::SmallVector<VBTablePath *, 6> VBTablePathVector;
 /// unambiguous set of paths, MSVC doesn't need to extend any path more than once
 /// to produce an unambiguous set of paths.
 ///
-/// The VBTableBuilder class attempts to implement this algorithm by repeatedly
-/// bucketing paths together by sorting them.
-///
 /// TODO: Presumably vftables use the same algorithm.
-///
-/// TODO: Implement the MSVC 2010 name mangling scheme to avoid emitting
-/// duplicate vbtables with different symbols.
+void
+MicrosoftVTableContext::computeVBTablePaths(const CXXRecordDecl *RD,
+                                            VBTableVector &Paths) {
+  assert(Paths.empty());
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
-class VBTableBuilder {
-public:
-  VBTableBuilder(ASTContext &Context, const CXXRecordDecl *MostDerived);
+  // Base case: this subobject has its own vbptr.
+  if (Layout.hasOwnVBPtr())
+    Paths.push_back(new VBTableInfo(RD));
 
-  void enumerateVBTables(VBTableVector &VBTables);
-
-private:
-  bool hasVBPtr(const CXXRecordDecl *RD);
-
-  /// Enumerates paths to bases with vbptrs.  The paths elements are compressed
-  /// to contain only the classes necessary to form an unambiguous path.
-  void findUnambiguousPaths(const CXXRecordDecl *ReusingBase,
-                            BaseSubobject CurSubobject,
-                            VBTablePathVector &Paths);
-
-  void extendPath(VBTablePath *Info, bool SecondPass);
-
-  bool rebucketPaths(VBTablePathVector &Paths, size_t PathsStart,
-                     bool SecondPass = false);
-
-  ASTContext &Context;
-
-  const CXXRecordDecl *MostDerived;
-
-  /// Caches the layout of the most derived class.
-  const ASTRecordLayout &DerivedLayout;
-
-  /// Set of vbases to avoid re-visiting the same vbases.
+  // Recursive case: get all the vbtables from our bases and remove anything
+  // that shares a virtual base.
   llvm::SmallPtrSet<const CXXRecordDecl*, 4> VBasesSeen;
-};
-
-/// Holds intermediate data about a path to a vbptr inside a base subobject.
-struct VBTablePath {
-  VBTablePath(const VBTableInfo &VBInfo)
-    : VBInfo(VBInfo), NextBase(VBInfo.VBPtrSubobject.getBase()) { }
-
-  /// All the data needed to build a vbtable, minus the GlobalVariable whose
-  /// name we haven't computed yet.
-  VBTableInfo VBInfo;
-
-  /// Next base to use for disambiguation.  Can be null if we've already
-  /// disambiguated this path once.
-  const CXXRecordDecl *NextBase;
-};
-
-} // end namespace
-
-VBTableBuilder::VBTableBuilder(ASTContext &Context,
-                               const CXXRecordDecl *MostDerived)
-    : Context(Context), MostDerived(MostDerived),
-      DerivedLayout(Context.getASTRecordLayout(MostDerived)) {}
-
-void VBTableBuilder::enumerateVBTables(VBTableVector &VBTables) {
-  VBTablePathVector Paths;
-  findUnambiguousPaths(MostDerived, BaseSubobject(MostDerived,
-                                                  CharUnits::Zero()), Paths);
-  for (VBTablePathVector::iterator I = Paths.begin(), E = Paths.end();
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+                                                E = RD->bases_end();
        I != E; ++I) {
-    VBTablePath *P = *I;
-    VBTables.push_back(P->VBInfo);
-  }
-}
-
-
-void VBTableBuilder::findUnambiguousPaths(const CXXRecordDecl *ReusingBase,
-                                          BaseSubobject CurSubobject,
-                                          VBTablePathVector &Paths) {
-  size_t PathsStart = Paths.size();
-  bool ReuseVBPtrFromBase = true;
-  const CXXRecordDecl *CurBase = CurSubobject.getBase();
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(CurBase);
-
-  // If this base has a vbptr, then we've found a path.  These are not full
-  // paths, so we don't use CXXBasePath.
-  if (Layout.hasOwnVBPtr()) {
-    ReuseVBPtrFromBase = false;
-    VBTablePath *Info = new VBTablePath(VBTableInfo(ReusingBase, CurSubobject));
-    Paths.push_back(Info);
-  }
-
-  // Recurse onto any bases which themselves have virtual bases.
-  for (CXXRecordDecl::base_class_const_iterator I = CurBase->bases_begin(),
-       E = CurBase->bases_end(); I != E; ++I) {
     const CXXRecordDecl *Base = I->getType()->getAsCXXRecordDecl();
-    if (!Base->getNumVBases())
-      continue;  // Bases without virtual bases have no vbptrs.
-    CharUnits NextOffset;
-    const CXXRecordDecl *NextReusingBase = Base;
-    if (I->isVirtual()) {
-      if (!VBasesSeen.insert(Base))
-        continue;  // Don't visit virtual bases twice.
-      NextOffset = DerivedLayout.getVBaseClassOffset(Base);
-    } else {
-      NextOffset = (CurSubobject.getBaseOffset() +
-                    Layout.getBaseClassOffset(Base));
+    if (I->isVirtual() && VBasesSeen.count(Base))
+      continue;
 
-      // If CurBase didn't have a vbptr, then ReusingBase will reuse the vbptr
-      // from the first non-virtual base with vbases for its vbptr.
-      if (ReuseVBPtrFromBase) {
-        NextReusingBase = ReusingBase;
-        ReuseVBPtrFromBase = false;
-      }
+    const VBTableVector &BasePaths = enumerateVBTables(Base);
+
+    for (VBTableVector::const_iterator II = BasePaths.begin(),
+                                       EE = BasePaths.end();
+         II != EE; ++II) {
+      VBTableInfo *BasePath = *II;
+
+      // Don't include the path if it goes through a virtual base that we've
+      // already included.
+      if (setsIntersect(VBasesSeen, BasePath->ContainingVBases))
+        continue;
+
+      // Copy the path and adjust it as necessary.
+      VBTableInfo *P = new VBTableInfo(*BasePath);
+
+      // We mangle Base into the path if the path would've been ambiguous and it
+      // wasn't already extended with Base.
+      if (P->MangledPath.empty() || P->MangledPath.back() != Base)
+        P->NextBaseToMangle = Base;
+
+      // Keep track of which derived class ultimately uses the vbtable, and what
+      // the full adjustment is from the MDC to this vbtable.  The adjustment is
+      // captured by an optional vbase and a non-virtual offset.
+      if (Base == Layout.getBaseSharingVBPtr())
+        P->ReusingBase = RD;
+      if (I->isVirtual())
+        P->ContainingVBases.push_back(Base);
+      else if (P->ContainingVBases.empty())
+        P->NonVirtualOffset += Layout.getBaseClassOffset(Base);
+
+      Paths.push_back(P);
     }
 
-    size_t NumPaths = Paths.size();
-    findUnambiguousPaths(NextReusingBase, BaseSubobject(Base, NextOffset),
-                         Paths);
-
-    // Tag paths through this base with the base itself.  We might use it to
-    // disambiguate.
-    for (size_t I = NumPaths, E = Paths.size(); I != E; ++I)
-      Paths[I]->NextBase = Base;
+    // After visiting any direct base, we've transitively visited all of its
+    // morally virtual bases.
+    for (CXXRecordDecl::base_class_const_iterator II = Base->vbases_begin(),
+                                                  EE = Base->vbases_end();
+         II != EE; ++II)
+      VBasesSeen.insert(II->getType()->getAsCXXRecordDecl());
   }
 
-  bool AmbiguousPaths = rebucketPaths(Paths, PathsStart);
-  if (AmbiguousPaths)
-    rebucketPaths(Paths, PathsStart, /*SecondPass=*/true);
+  // Sort the paths into buckets, and if any of them are ambiguous, extend all
+  // paths in ambiguous buckets.
+  bool Changed = true;
+  while (Changed)
+    Changed = rebucketPaths(Paths);
+}
 
-#ifndef NDEBUG
-  // Check that the paths are in fact unique.
-  for (size_t I = PathsStart + 1, E = Paths.size(); I != E; ++I) {
-    assert(Paths[I]->VBInfo.MangledPath != Paths[I - 1]->VBInfo.MangledPath &&
-           "vbtable paths are not unique");
+static bool pathCompare(const VBTableInfo *LHS, const VBTableInfo *RHS) {
+  return LHS->MangledPath < RHS->MangledPath;
+}
+
+static bool extendPath(VBTableInfo *P) {
+  if (P->NextBaseToMangle) {
+    P->MangledPath.push_back(P->NextBaseToMangle);
+    P->NextBaseToMangle = 0;  // Prevent the path from being extended twice.
+    return true;
   }
-#endif
+  return false;
 }
 
-static bool pathCompare(VBTablePath *LHS, VBTablePath *RHS) {
-  return LHS->VBInfo.MangledPath < RHS->VBInfo.MangledPath;
-}
-
-void VBTableBuilder::extendPath(VBTablePath *P, bool SecondPass) {
-  assert(P->NextBase || SecondPass);
-  if (P->NextBase) {
-    P->VBInfo.MangledPath.push_back(P->NextBase);
-    P->NextBase = 0;  // Prevent the path from being extended twice.
-  }
-}
-
-bool VBTableBuilder::rebucketPaths(VBTablePathVector &Paths, size_t PathsStart,
-                                   bool SecondPass) {
+static bool rebucketPaths(VBTableVector &Paths) {
   // What we're essentially doing here is bucketing together ambiguous paths.
   // Any bucket with more than one path in it gets extended by NextBase, which
   // is usually the direct base of the inherited the vbptr.  This code uses a
   // sorted vector to implement a multiset to form the buckets.  Note that the
   // ordering is based on pointers, but it doesn't change our output order.  The
   // current algorithm is designed to match MSVC 2012's names.
-  // TODO: Implement MSVC 2010 or earlier names to avoid extra vbtable cruft.
-  VBTablePathVector PathsSorted(&Paths[PathsStart], &Paths.back() + 1);
+  VBTableVector PathsSorted(Paths);
   std::sort(PathsSorted.begin(), PathsSorted.end(), pathCompare);
-  bool AmbiguousPaths = false;
+  bool Changed = false;
   for (size_t I = 0, E = PathsSorted.size(); I != E;) {
     // Scan forward to find the end of the bucket.
     size_t BucketStart = I;
     do {
       ++I;
-    } while (I != E && PathsSorted[BucketStart]->VBInfo.MangledPath ==
-                           PathsSorted[I]->VBInfo.MangledPath);
+    } while (I != E && PathsSorted[BucketStart]->MangledPath ==
+                           PathsSorted[I]->MangledPath);
 
     // If this bucket has multiple paths, extend them all.
     if (I - BucketStart > 1) {
-      AmbiguousPaths = true;
       for (size_t II = BucketStart; II != I; ++II)
-        extendPath(PathsSorted[II], SecondPass);
+        Changed |= extendPath(PathsSorted[II]);
+      assert(Changed && "no paths were extended to fix ambiguity");
     }
   }
-  return AmbiguousPaths;
+  return Changed;
 }
 
 MicrosoftVTableContext::~MicrosoftVTableContext() {
@@ -3608,13 +3542,18 @@ void MicrosoftVTableContext::dumpMethodLocations(
 
 const VirtualBaseInfo *MicrosoftVTableContext::computeVBTableRelatedInformation(
     const CXXRecordDecl *RD) {
-  VirtualBaseInfo *&Entry = VBaseInfo[RD];
-  if (Entry)
-    return Entry;
+  VirtualBaseInfo *VBI;
 
-  Entry = new VirtualBaseInfo();
+  {
+    // Get or create a VBI for RD.  Don't hold a reference to the DenseMap cell,
+    // as it may be modified and rehashed under us.
+    VirtualBaseInfo *&Entry = VBaseInfo[RD];
+    if (Entry)
+      return Entry;
+    Entry = VBI = new VirtualBaseInfo();
+  }
 
-  VBTableBuilder(Context, RD).enumerateVBTables(Entry->VBTables);
+  computeVBTablePaths(RD, VBI->VBTables);
 
   // First, see if the Derived class shared the vbptr with a non-virtual base.
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
@@ -3623,22 +3562,22 @@ const VirtualBaseInfo *MicrosoftVTableContext::computeVBTableRelatedInformation(
     // virtual bases come first so that the layout is the same.
     const VirtualBaseInfo *BaseInfo =
         computeVBTableRelatedInformation(VBPtrBase);
-    Entry->VBTableIndices.insert(BaseInfo->VBTableIndices.begin(),
-                                 BaseInfo->VBTableIndices.end());
+    VBI->VBTableIndices.insert(BaseInfo->VBTableIndices.begin(),
+                               BaseInfo->VBTableIndices.end());
   }
 
   // New vbases are added to the end of the vbtable.
   // Skip the self entry and vbases visited in the non-virtual base, if any.
-  unsigned VBTableIndex = 1 + Entry->VBTableIndices.size();
+  unsigned VBTableIndex = 1 + VBI->VBTableIndices.size();
   for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
                                                 E = RD->vbases_end();
        I != E; ++I) {
     const CXXRecordDecl *CurVBase = I->getType()->getAsCXXRecordDecl();
-    if (!Entry->VBTableIndices.count(CurVBase))
-      Entry->VBTableIndices[CurVBase] = VBTableIndex++;
+    if (!VBI->VBTableIndices.count(CurVBase))
+      VBI->VBTableIndices[CurVBase] = VBTableIndex++;
   }
 
-  return Entry;
+  return VBI;
 }
 
 unsigned MicrosoftVTableContext::getVBTableIndex(const CXXRecordDecl *Derived,
