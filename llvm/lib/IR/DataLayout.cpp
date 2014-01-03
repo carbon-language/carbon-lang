@@ -19,6 +19,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Module.h"
@@ -152,6 +153,15 @@ DataLayout::InvalidPointerElem = { 0U, 0U, 0U, ~0U };
 //                       DataLayout Class Implementation
 //===----------------------------------------------------------------------===//
 
+const char *DataLayout::getManglingComponent(const Triple &T) {
+  if (T.isOSBinFormatMachO())
+    return "-m:o";
+  if (T.isOSBinFormatELF() || T.isArch64Bit())
+    return "-m:e";
+  assert(T.isOSBinFormatCOFF());
+  return "-m:c";
+}
+
 static const LayoutAlignElem DefaultAlignments[] = {
   { INTEGER_ALIGN, 1, 1, 1 },    // i1
   { INTEGER_ALIGN, 8, 1, 1 },    // i8
@@ -173,6 +183,7 @@ void DataLayout::init(StringRef Desc) {
   LayoutMap = 0;
   LittleEndian = false;
   StackNaturalAlign = 0;
+  ManglingMode = MM_None;
 
   // Default alignments
   for (int I = 0, N = array_lengthof(DefaultAlignments); I < N; ++I) {
@@ -305,6 +316,26 @@ void DataLayout::parseSpecifier(StringRef Desc) {
       StackNaturalAlign = inBytes(getInt(Tok));
       break;
     }
+    case 'm':
+      assert(Tok.empty());
+      assert(Rest.size() == 1);
+      switch(Rest[0]) {
+      default:
+        llvm_unreachable("Unknown mangling in datalayout string");
+      case 'e':
+        ManglingMode = MM_ELF;
+        break;
+      case 'o':
+        ManglingMode = MM_MachO;
+        break;
+      case 'm':
+        ManglingMode = MM_Mips;
+        break;
+      case 'c':
+        ManglingMode = MM_COFF;
+        break;
+      }
+      break;
     default:
       llvm_unreachable("Unknown specifier in datalayout string");
       break;
@@ -481,6 +512,24 @@ std::string DataLayout::getStringRepresentation() const {
   raw_string_ostream OS(Result);
 
   OS << (LittleEndian ? "e" : "E");
+
+  switch (ManglingMode) {
+  case MM_None:
+    break;
+  case MM_ELF:
+    OS << "-m:e";
+    break;
+  case MM_MachO:
+    OS << "-m:o";
+    break;
+  case MM_COFF:
+    OS << "-m:c";
+    break;
+  case MM_Mips:
+    OS << "-m:m";
+    break;
+  }
+
   SmallVector<unsigned, 8> addrSpaces;
   // Lets get all of the known address spaces and sort them
   // into increasing order so that we can emit the string

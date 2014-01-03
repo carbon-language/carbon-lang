@@ -23,8 +23,6 @@ void MCAsmInfoDarwin::anchor() { }
 MCAsmInfoDarwin::MCAsmInfoDarwin() {
   // Common settings for all Darwin targets.
   // Syntax:
-  GlobalPrefix = '_';
-  LinkerPrivateGlobalPrefix = "l";
   HasSingleParameterDotFile = false;
   HasSubsectionsViaSymbols = true;
 

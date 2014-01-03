@@ -19,11 +19,13 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Target/Mangler.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 static MachineModuleInfoMachO &getMachOMMI(AsmPrinter &AP) {
@@ -32,6 +34,7 @@ static MachineModuleInfoMachO &getMachOMMI(AsmPrinter &AP) {
 
 
 static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
+  const DataLayout *DL = AP.TM.getDataLayout();
   MCContext &Ctx = AP.OutContext;
 
   SmallString<128> Name;
@@ -42,7 +45,7 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
     Suffix = "$non_lazy_ptr";
 
   if (!Suffix.empty())
-    Name += AP.MAI->getPrivateGlobalPrefix();
+    Name += DL->getPrivateGlobalPrefix();
 
   unsigned PrefixLen = Name.size();
 

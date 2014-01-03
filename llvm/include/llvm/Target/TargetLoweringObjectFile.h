@@ -34,6 +34,7 @@ namespace llvm {
   
 class TargetLoweringObjectFile : public MCObjectFileInfo {
   MCContext *Ctx;
+  const DataLayout *DL;
 
   TargetLoweringObjectFile(
     const TargetLoweringObjectFile&) LLVM_DELETED_FUNCTION;
@@ -42,7 +43,7 @@ class TargetLoweringObjectFile : public MCObjectFileInfo {
 public:
   MCContext &getContext() const { return *Ctx; }
 
-  TargetLoweringObjectFile() : MCObjectFileInfo(), Ctx(0) {}
+  TargetLoweringObjectFile() : MCObjectFileInfo(), Ctx(0), DL(0) {}
   
   virtual ~TargetLoweringObjectFile();
   

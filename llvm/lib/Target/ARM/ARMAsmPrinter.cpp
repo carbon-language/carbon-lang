@@ -223,16 +223,18 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 
 MCSymbol *ARMAsmPrinter::
 GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
+  const DataLayout *DL = TM.getDataLayout();
   SmallString<60> Name;
-  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "JTI"
+  raw_svector_ostream(Name) << DL->getPrivateGlobalPrefix() << "JTI"
     << getFunctionNumber() << '_' << uid << '_' << uid2;
   return OutContext.GetOrCreateSymbol(Name.str());
 }
 
 
 MCSymbol *ARMAsmPrinter::GetARMSJLJEHLabel() const {
+  const DataLayout *DL = TM.getDataLayout();
   SmallString<60> Name;
-  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "SJLJEH"
+  raw_svector_ostream(Name) << DL->getPrivateGlobalPrefix() << "SJLJEH"
     << getFunctionNumber();
   return OutContext.GetOrCreateSymbol(Name.str());
 }
@@ -802,6 +804,7 @@ MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV,
 
 void ARMAsmPrinter::
 EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
+  const DataLayout *DL = TM.getDataLayout();
   int Size = TM.getDataLayout()->getTypeAllocSize(MCPV->getType());
 
   ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
@@ -810,7 +813,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   if (ACPV->isLSDA()) {
     SmallString<128> Str;
     raw_svector_ostream OS(Str);
-    OS << MAI->getPrivateGlobalPrefix() << "_LSDA_" << getFunctionNumber();
+    OS << DL->getPrivateGlobalPrefix() << "_LSDA_" << getFunctionNumber();
     MCSym = OutContext.GetOrCreateSymbol(OS.str());
   } else if (ACPV->isBlockAddress()) {
     const BlockAddress *BA =
@@ -838,7 +841,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
                             OutContext);
 
   if (ACPV->getPCAdjustment()) {
-    MCSymbol *PCLabel = getPICLabel(MAI->getPrivateGlobalPrefix(),
+    MCSymbol *PCLabel = getPICLabel(DL->getPrivateGlobalPrefix(),
                                     getFunctionNumber(),
                                     ACPV->getLabelId(),
                                     OutContext);
@@ -1117,6 +1120,8 @@ extern cl::opt<bool> EnableARMEHABI;
 #include "ARMGenMCPseudoLowering.inc"
 
 void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  const DataLayout *DL = TM.getDataLayout();
+
   // If we just ended a constant pool, mark it as such.
   if (InConstantPool && MI->getOpcode() != ARM::CONSTPOOL_ENTRY) {
     OutStreamer.EmitDataRegion(MCDR_DataRegionEnd);
@@ -1254,7 +1259,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCSymbol *GVSym = GetARMGVSymbol(GV, TF);
     const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
 
-    MCSymbol *LabelSym = getPICLabel(MAI->getPrivateGlobalPrefix(),
+    MCSymbol *LabelSym = getPICLabel(DL->getPrivateGlobalPrefix(),
                                      getFunctionNumber(),
                                      MI->getOperand(2).getImm(), OutContext);
     const MCExpr *LabelSymExpr= MCSymbolRefExpr::Create(LabelSym, OutContext);
@@ -1287,7 +1292,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCSymbol *GVSym = GetARMGVSymbol(GV, TF);
     const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
 
-    MCSymbol *LabelSym = getPICLabel(MAI->getPrivateGlobalPrefix(),
+    MCSymbol *LabelSym = getPICLabel(DL->getPrivateGlobalPrefix(),
                                      getFunctionNumber(),
                                      MI->getOperand(3).getImm(), OutContext);
     const MCExpr *LabelSymExpr= MCSymbolRefExpr::Create(LabelSym, OutContext);
@@ -1313,7 +1318,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // This adds the address of LPC0 to r0.
 
     // Emit the label.
-    OutStreamer.EmitLabel(getPICLabel(MAI->getPrivateGlobalPrefix(),
+    OutStreamer.EmitLabel(getPICLabel(DL->getPrivateGlobalPrefix(),
                           getFunctionNumber(), MI->getOperand(2).getImm(),
                           OutContext));
 
@@ -1334,7 +1339,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // This adds the address of LPC0 to r0.
 
     // Emit the label.
-    OutStreamer.EmitLabel(getPICLabel(MAI->getPrivateGlobalPrefix(),
+    OutStreamer.EmitLabel(getPICLabel(DL->getPrivateGlobalPrefix(),
                           getFunctionNumber(), MI->getOperand(2).getImm(),
                           OutContext));
 
@@ -1365,7 +1370,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // a PC-relative address at the ldr instruction.
 
     // Emit the label.
-    OutStreamer.EmitLabel(getPICLabel(MAI->getPrivateGlobalPrefix(),
+    OutStreamer.EmitLabel(getPICLabel(DL->getPrivateGlobalPrefix(),
                           getFunctionNumber(), MI->getOperand(2).getImm(),
                           OutContext));
 

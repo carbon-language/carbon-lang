@@ -40,6 +40,8 @@ static std::string getDataLayoutString(const PPCSubtarget &ST) {
   // PPC is big endian.
   std::string Ret = "E";
 
+  Ret += DataLayout::getManglingComponent(T);
+
   // PPC32 has 32 bit pointers. The PS3 (OS Lv2) is a PPC64 machine with 32 bit
   // pointers.
   if (!ST.isPPC64() || T.getOS() == Triple::Lv2)

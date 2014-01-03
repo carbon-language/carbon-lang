@@ -34,6 +34,7 @@ static std::string computeDataLayout(const X86Subtarget &ST) {
   // X86 is little endian
   std::string Ret = "e";
 
+  Ret += DataLayout::getManglingComponent(ST.getTargetTriple());
   // X86 and x32 have 32 bit pointers.
   if (ST.isTarget64BitILP32() || !ST.is64Bit())
     Ret += "-p:32:32";

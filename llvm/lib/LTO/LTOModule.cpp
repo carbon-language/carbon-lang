@@ -44,7 +44,7 @@ using namespace llvm;
 LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)
   : _module(m), _target(t),
     _context(_target->getMCAsmInfo(), _target->getRegisterInfo(), &ObjFileInfo),
-    _mangler(t) {
+    _mangler(t->getDataLayout()) {
   ObjFileInfo.InitMCObjectFileInfo(t->getTargetTriple(),
                                    t->getRelocationModel(), t->getCodeModel(),
                                    _context);

@@ -232,7 +232,7 @@ void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
 }
 
 uint64_t MCJIT::getExistingSymbolAddress(const std::string &Name) {
-  Mangler Mang(TM);
+  Mangler Mang(TM->getDataLayout());
   SmallString<128> FullName;
   Mang.getNameWithPrefix(FullName, Name);
   return Dyld.getSymbolLoadAddress(FullName);
@@ -323,7 +323,7 @@ void *MCJIT::getPointerToFunction(Function *F) {
   //
   // This is the accessor for the target address, so make sure to check the
   // load address of the symbol, not the local address.
-  Mangler Mang(TM);
+  Mangler Mang(TM->getDataLayout());
   SmallString<128> Name;
   Mang.getNameWithPrefix(Name, F);
   return (void*)Dyld.getSymbolLoadAddress(Name);

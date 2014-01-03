@@ -41,6 +41,7 @@ using namespace llvm;
 void TargetLoweringObjectFile::Initialize(MCContext &ctx,
                                           const TargetMachine &TM) {
   Ctx = &ctx;
+  DL = TM.getDataLayout();
   InitMCObjectFileInfo(TM.getTargetTriple(),
                        TM.getRelocationModel(), TM.getCodeModel(), *Ctx);
 }
@@ -114,9 +115,8 @@ MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
   assert(!GV->hasLinkerPrivateLinkage());
   assert(!GV->hasLinkerPrivateWeakLinkage());
 
-  const MCAsmInfo *MAI = Ctx->getAsmInfo();
   SmallString<60> NameStr;
-  NameStr += MAI->getPrivateGlobalPrefix();
+  NameStr += DL->getPrivateGlobalPrefix();
   M.getNameWithPrefix(NameStr, GV);
   NameStr.append(Suffix.begin(), Suffix.end());
   return Ctx->GetOrCreateSymbol(NameStr.str());

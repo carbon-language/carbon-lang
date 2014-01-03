@@ -25,7 +25,7 @@ extern "C" void LLVMInitializeSparcTarget() {
 
 static std::string computeDataLayout(const SparcSubtarget &ST) {
   // Sparc is big endian.
-  std::string Ret = "E";
+  std::string Ret = "E-m:e";
 
   // Some ABIs have 32bit pointers.
   if (!ST.is64Bit())

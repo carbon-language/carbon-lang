@@ -139,6 +139,7 @@ static const char *stripRegisterPrefix(const char *RegName) {
 
 void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                  raw_ostream &O) {
+  const DataLayout *DL = TM.getDataLayout();
   const MachineOperand &MO = MI->getOperand(OpNo);
   
   switch (MO.getType()) {
@@ -158,7 +159,7 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     O << *MO.getMBB()->getSymbol();
     return;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
+    O << DL->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
       << '_' << MO.getIndex();
     return;
   case MachineOperand::MO_BlockAddress:
@@ -281,12 +282,12 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 /// exists for it.  If not, create one.  Then return a symbol that references
 /// the TOC entry.
 MCSymbol *PPCAsmPrinter::lookUpOrCreateTOCEntry(MCSymbol *Sym) {
-
+  const DataLayout *DL = TM.getDataLayout();
   MCSymbol *&TOCEntry = TOC[Sym];
 
   // To avoid name clash check if the name already exists.
   while (TOCEntry == 0) {
-    if (OutContext.LookupSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
+    if (OutContext.LookupSymbol(Twine(DL->getPrivateGlobalPrefix()) +
                                 "C" + Twine(TOCLabelID++)) == 0) {
       TOCEntry = GetTempSymbol("C", TOCLabelID);
     }

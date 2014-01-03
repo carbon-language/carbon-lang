@@ -70,8 +70,13 @@ void ARMBaseTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
 void ARMTargetMachine::anchor() { }
 
 static std::string computeDataLayout(ARMSubtarget &ST) {
-  // Little endian. Pointers are 32 bits and aligned to 32 bits.
-  std::string Ret = "e-p:32:32";
+  // Little endian.
+  std::string Ret = "e";
+
+  Ret += DataLayout::getManglingComponent(ST.getTargetTriple());
+
+  // Pointers are 32 bits and aligned to 32 bits.
+  Ret += "-p:32:32";
 
   // On thumb, i16,i18 and i1 have natural aligment requirements, but we try to
   // align to 32.

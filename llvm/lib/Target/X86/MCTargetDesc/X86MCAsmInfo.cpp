@@ -131,11 +131,8 @@ getNonexecutableStackSection(MCContext &Ctx) const {
 void X86MCAsmInfoMicrosoft::anchor() { }
 
 X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
-  if (Triple.getArch() == Triple::x86_64) {
-    GlobalPrefix = '\0';
+  if (Triple.getArch() == Triple::x86_64)
     PrivateGlobalPrefix = ".L";
-    HasMicrosoftFastStdCallMangling = false;
-  }
 
   AssemblerDialect = AsmWriterFlavor;
 
@@ -147,11 +144,8 @@ X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
 void X86MCAsmInfoGNUCOFF::anchor() { }
 
 X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
-  if (Triple.getArch() == Triple::x86_64) {
-    GlobalPrefix = '\0';
+  if (Triple.getArch() == Triple::x86_64)
     PrivateGlobalPrefix = ".L";
-    HasMicrosoftFastStdCallMangling = false;
-  }
 
   AssemblerDialect = AsmWriterFlavor;
 

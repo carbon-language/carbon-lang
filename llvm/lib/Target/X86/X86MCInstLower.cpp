@@ -70,6 +70,7 @@ MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
 /// operand to an MCSymbol.
 MCSymbol *X86MCInstLower::
 GetSymbolFromOperand(const MachineOperand &MO) const {
+  const DataLayout *DL = TM.getDataLayout();
   assert((MO.isGlobal() || MO.isSymbol() || MO.isMBB()) && "Isn't a symbol reference");
 
   SmallString<128> Name;
@@ -91,7 +92,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   }
 
   if (!Suffix.empty())
-    Name += MAI.getPrivateGlobalPrefix();
+    Name += DL->getPrivateGlobalPrefix();
 
   unsigned PrefixLen = Name.size();
 

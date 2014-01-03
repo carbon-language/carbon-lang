@@ -34,6 +34,7 @@ class Type;
 class IntegerType;
 class StructType;
 class StructLayout;
+class Triple;
 class GlobalVariable;
 class LLVMContext;
 template<typename T>
@@ -98,6 +99,15 @@ class DataLayout : public ImmutablePass {
 private:
   bool          LittleEndian;          ///< Defaults to false
   unsigned      StackNaturalAlign;     ///< Stack natural alignment
+
+  enum ManglingModeT {
+    MM_None,
+    MM_ELF,
+    MM_MachO,
+    MM_COFF,
+    MM_Mips
+  };
+  ManglingModeT ManglingMode;
 
   SmallVector<unsigned char, 8> LegalIntWidths; ///< Legal Integers.
 
@@ -174,6 +184,7 @@ public:
     ImmutablePass(ID),
     LittleEndian(DL.isLittleEndian()),
     StackNaturalAlign(DL.StackNaturalAlign),
+    ManglingMode(DL.ManglingMode),
     LegalIntWidths(DL.LegalIntWidths),
     Alignments(DL.Alignments),
     Pointers(DL.Pointers),
@@ -221,6 +232,48 @@ public:
   bool exceedsNaturalStackAlignment(unsigned Align) const {
     return (StackNaturalAlign != 0) && (Align > StackNaturalAlign);
   }
+
+  bool hasMicrosoftFastStdCallMangling() const {
+    return ManglingMode == MM_COFF;
+  }
+
+  bool hasLinkerPrivateGlobalPrefix() const {
+    return ManglingMode == MM_MachO;
+  }
+
+  const char *getLinkerPrivateGlobalPrefix() const {
+    if (ManglingMode == MM_MachO)
+      return "l";
+    return getPrivateGlobalPrefix();
+  }
+
+  char getGlobalPrefix() const {
+    switch (ManglingMode) {
+    case MM_None:
+    case MM_ELF:
+    case MM_Mips:
+      return '\0';
+    case MM_MachO:
+    case MM_COFF:
+      return '_';
+    }
+  }
+
+  const char *getPrivateGlobalPrefix() const {
+    switch (ManglingMode) {
+    case MM_None:
+      return "";
+    case MM_ELF:
+      return ".L";
+    case MM_Mips:
+      return "$";
+    case MM_MachO:
+    case MM_COFF:
+      return "L";
+    }
+  }
+
+  static const char *getManglingComponent(const Triple &T);
 
   /// fitsInLegalInteger - This function returns true if the specified type fits
   /// in a native integer type supported by the CPU.  For example, if the CPU

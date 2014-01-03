@@ -54,6 +54,8 @@ static std::string computeDataLayout(const MipsSubtarget &ST) {
   else
     Ret += "E";
 
+  Ret += "-m:m";
+
   // Pointers are 32 bit on some ABIs.
   if (!ST.isABI_N64())
     Ret += "-p:32:32";

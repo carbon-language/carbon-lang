@@ -115,21 +115,10 @@ namespace llvm {
     /// LabelSuffix - This is appended to emitted labels.
     const char *DebugLabelSuffix;                 // Defaults to ":"
 
-    /// If this is set to anything other than '\0', it is prepended
-    /// onto all global symbols.  This is often used for '_'.
-    char GlobalPrefix;                // Defaults to '\0'
-
     /// This prefix is used for globals like constant pool entries that are
     /// completely private to the .s file and should not have names in the .o
     /// file.
     const char *PrivateGlobalPrefix;         // Defaults to "L"
-
-    /// This prefix is used for symbols that should be passed through the
-    /// assembler but be removed by the linker.  This is 'l' on Darwin,
-    /// currently used for some ObjC metadata.
-    /// The default of "" meast that for this system a plain private symbol
-    /// should be used.
-    const char *LinkerPrivateGlobalPrefix;    // Defaults to "".
 
     /// InlineAsmStart/End - If these are nonempty, they contain a directive to
     /// emit before and after an inline assembly statement.
@@ -199,11 +188,6 @@ namespace llvm {
     /// '.section' directive before the '.bss' one. It's used for PPC/Linux
     /// which doesn't support the '.bss' directive only.
     bool UsesELFSectionDirectiveForBSS;      // Defaults to false.
-
-    /// HasMicrosoftFastStdCallMangling - True if this target uses microsoft
-    /// style mangling for functions with X86_StdCall/X86_FastCall calling
-    /// convention.
-    bool HasMicrosoftFastStdCallMangling;    // Defaults to false.
 
     bool NeedsDwarfSectionOffsetDirective;
 
@@ -393,10 +377,6 @@ namespace llvm {
       return UsesELFSectionDirectiveForBSS;
     }
 
-    bool hasMicrosoftFastStdCallMangling() const {
-      return HasMicrosoftFastStdCallMangling;
-    }
-
     bool needsDwarfSectionOffsetDirective() const {
       return NeedsDwarfSectionOffsetDirective;
     }
@@ -436,20 +416,8 @@ namespace llvm {
     const char *getDebugLabelSuffix() const {
       return DebugLabelSuffix;
     }
-
-    char getGlobalPrefix() const {
-      return GlobalPrefix;
-    }
     const char *getPrivateGlobalPrefix() const {
       return PrivateGlobalPrefix;
-    }
-    bool hasLinkerPrivateGlobalPrefix() const {
-      return LinkerPrivateGlobalPrefix[0] != '\0';
-    }
-    const char *getLinkerPrivateGlobalPrefix() const {
-      if (hasLinkerPrivateGlobalPrefix())
-        return LinkerPrivateGlobalPrefix;
-      return getPrivateGlobalPrefix();
     }
     const char *getInlineAsmStart() const {
       return InlineAsmStart;
