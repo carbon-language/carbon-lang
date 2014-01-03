@@ -1,4 +1,4 @@
-//===--- Canonicalization.h - The set of canonicalization passes -*- C++ -*-===//
+//===--- Canonicalization.h - Set of canonicalization passes ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
