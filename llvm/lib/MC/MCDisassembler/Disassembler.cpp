@@ -298,7 +298,6 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
       emitLatency(DC, Inst);
 
     emitComments(DC, FormattedOS);
-    OS.flush();
 
     assert(OutStringSize != 0 && "Output buffer cannot be zero size");
     size_t OutputSize = std::min(OutStringSize-1, InsnStr.size());

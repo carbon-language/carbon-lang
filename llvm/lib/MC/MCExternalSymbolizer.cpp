@@ -13,7 +13,6 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstring>
-#include <cxxabi.h>
 
 using namespace llvm;
 
@@ -57,14 +56,6 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
     if (Name) {
       SymbolicOp.AddSymbol.Name = Name;
       SymbolicOp.AddSymbol.Present = true;
-      // If Name is a C++ symbol name put the human readable name in a comment.
-      if (strncmp(Name, "__Z", 3) == 0) {
-        char *demangled = abi::__cxa_demangle(Name + 1, 0, 0, 0);
-	if (demangled) {
-          cStream << demangled;
-          free(demangled);
-        }
-      }
     }
     // For branches always create an MCExpr so it gets printed as hex address.
     else if (IsBranch) {
