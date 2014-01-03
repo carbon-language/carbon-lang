@@ -5,9 +5,8 @@
 ; struct foo {
 ; } f;
 
-; no known LLVM frontends produce appropriate unique identifiers for C types, 
-; so we don't produce type units for them
-; CHECK-NOT: DW_TAG_type_unit
+; CHECK: DW_TAG_type_unit
+; CHECK-NEXT: DW_AT_language [DW_FORM_data2]    (0x000c)
 
 %struct.foo = type {}
 
