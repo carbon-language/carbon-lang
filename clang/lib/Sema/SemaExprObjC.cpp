@@ -1380,10 +1380,14 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
   return IsError;
 }
 
-bool Sema::isSelfExpr(Expr *receiver) {
+bool Sema::isSelfExpr(Expr *RExpr) {
   // 'self' is objc 'self' in an objc method only.
-  ObjCMethodDecl *method =
-    dyn_cast_or_null<ObjCMethodDecl>(CurContext->getNonClosureAncestor());
+  ObjCMethodDecl *Method =
+      dyn_cast_or_null<ObjCMethodDecl>(CurContext->getNonClosureAncestor());
+  return isSelfExpr(RExpr, Method);
+}
+
+bool Sema::isSelfExpr(Expr *receiver, const ObjCMethodDecl *method) {
   if (!method) return false;
 
   receiver = receiver->IgnoreParenLValueCasts();
@@ -2643,8 +2647,6 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       }
     }
   }
-  if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
-    CurMeth->setMethodCallsMethod(true);
   
   return MaybeBindToTemporary(Result);
 }

@@ -2248,15 +2248,7 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
         return ExprError();
 
       MarkAnyDeclReferenced(Loc, IV, true);
-      if (!IV->getBackingIvarReferencedInAccessor()) {
-        // Mark this ivar 'referenced' in this method, if it is a backing ivar
-        // of a property and current method is one of its property accessor.
-        const ObjCPropertyDecl *PDecl;
-        const ObjCIvarDecl *BIV = GetIvarBackingPropertyAccessor(CurMethod, PDecl);
-        if (BIV && BIV == IV)
-          IV->setBackingIvarReferencedInAccessor(true);
-      }
-      
+
       ObjCMethodFamily MF = CurMethod->getMethodFamily();
       if (MF != OMF_init && MF != OMF_dealloc && MF != OMF_finalize &&
           !IvarBacksCurrentMethodAccessor(IFace, CurMethod, IV))

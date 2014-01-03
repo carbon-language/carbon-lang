@@ -161,9 +161,6 @@ private:
 
   /// \brief Indicates if the method was a definition but its body was skipped.
   unsigned HasSkippedBody : 1;
-  
-  /// \brief True if method body makes a method call.
-  unsigned MethodCallsMethod : 1;
 
   // Result type of this method.
   QualType MethodDeclType;
@@ -245,7 +242,7 @@ private:
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     RelatedResultType(HasRelatedResultType),
     SelLocsKind(SelLoc_StandardNoSpace), IsOverriding(0), HasSkippedBody(0),
-    MethodCallsMethod(0), MethodDeclType(T), ResultTInfo(ResultTInfo),
+    MethodDeclType(T), ResultTInfo(ResultTInfo),
     ParamsAndSelLocs(0), NumParams(0),
     DeclEndLoc(endLoc), Body(), SelfDecl(0), CmdDecl(0) {
     setImplicit(isImplicitlyDeclared);
@@ -438,9 +435,6 @@ public:
   /// \brief True if the method was a definition but its body was skipped.
   bool hasSkippedBody() const { return HasSkippedBody; }
   void setHasSkippedBody(bool Skipped = true) { HasSkippedBody = Skipped; }
-
-  bool getMethodCallsMethod() const { return MethodCallsMethod; }
-  void setMethodCallsMethod(bool val = true) { MethodCallsMethod = val; }
 
   /// \brief Returns the property associated with this method's selector.
   ///
@@ -1326,12 +1320,10 @@ private:
   ObjCIvarDecl(ObjCContainerDecl *DC, SourceLocation StartLoc,
                SourceLocation IdLoc, IdentifierInfo *Id,
                QualType T, TypeSourceInfo *TInfo, AccessControl ac, Expr *BW,
-               bool synthesized,
-               bool backingIvarReferencedInAccessor)
+               bool synthesized)
     : FieldDecl(ObjCIvar, DC, StartLoc, IdLoc, Id, T, TInfo, BW,
                 /*Mutable=*/false, /*HasInit=*/ICIS_NoInit),
-      NextIvar(0), DeclAccess(ac), Synthesized(synthesized),
-      BackingIvarReferencedInAccessor(backingIvarReferencedInAccessor) {}
+      NextIvar(0), DeclAccess(ac), Synthesized(synthesized) {}
 
 public:
   static ObjCIvarDecl *Create(ASTContext &C, ObjCContainerDecl *DC,
@@ -1339,8 +1331,7 @@ public:
                               IdentifierInfo *Id, QualType T,
                               TypeSourceInfo *TInfo,
                               AccessControl ac, Expr *BW = NULL,
-                              bool synthesized=false,
-                              bool backingIvarReferencedInAccessor=false);
+                              bool synthesized=false);
 
   static ObjCIvarDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
@@ -1362,13 +1353,6 @@ public:
     return DeclAccess == None ? Protected : AccessControl(DeclAccess);
   }
 
-  void setBackingIvarReferencedInAccessor(bool val) {
-    BackingIvarReferencedInAccessor = val;
-  }
-  bool getBackingIvarReferencedInAccessor() const {
-    return BackingIvarReferencedInAccessor;
-  }
-  
   void setSynthesize(bool synth) { Synthesized = synth; }
   bool getSynthesize() const { return Synthesized; }
 
@@ -1383,7 +1367,6 @@ private:
   // NOTE: VC++ treats enums as signed, avoid using the AccessControl enum
   unsigned DeclAccess : 3;
   unsigned Synthesized : 1;
-  unsigned BackingIvarReferencedInAccessor : 1;
 };
 
 

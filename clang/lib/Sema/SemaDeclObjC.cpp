@@ -15,6 +15,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTMutationListener.h"
+#include "clang/AST/DataRecursiveASTVisitor.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
@@ -2693,6 +2694,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *> allMethods,
       ImplMethodsVsClassMethods(S, IC, IDecl);
       AtomicPropertySetterGetterRules(IC, IDecl);
       DiagnoseOwningPropertyGetterSynthesis(IC);
+      DiagnoseUnusedBackingIvarInAccessor(S, IC);
       if (IDecl->hasDesignatedInitializers())
         DiagnoseMissingDesignatedInitOverrides(IC, IDecl);
 
@@ -3494,39 +3496,83 @@ Sema::GetIvarBackingPropertyAccessor(const ObjCMethodDecl *Method,
   const ObjCInterfaceDecl *IDecl = Method->getClassInterface();
   if (!IDecl)
     return 0;
-  Method = IDecl->lookupMethod(Method->getSelector(), true);
+  Method = IDecl->lookupMethod(Method->getSelector(), /*isInstance=*/true,
+                               /*shallowCategoryLookup=*/false,
+                               /*followSuper=*/false);
   if (!Method || !Method->isPropertyAccessor())
     return 0;
-  if ((PDecl = Method->findPropertyDecl())) {
-    if (!PDecl->getDeclContext())
-      return 0;
-    // Make sure property belongs to accessor's class and not to
-    // one of its super classes.
-    if (const ObjCInterfaceDecl *CID =
-        dyn_cast<ObjCInterfaceDecl>(PDecl->getDeclContext()))
-      if (CID != IDecl)
-        return 0;
+  if ((PDecl = Method->findPropertyDecl()))
     return PDecl->getPropertyIvarDecl();
-  }
+
   return 0;
 }
 
-void Sema::DiagnoseUnusedBackingIvarInAccessor(Scope *S) {
-  if (S->hasUnrecoverableErrorOccurred() || !S->isInObjcMethodOuterScope())
+namespace {
+  /// Used by Sema::DiagnoseUnusedBackingIvarInAccessor to check if a property
+  /// accessor references the backing ivar.
+  class UnusedBackingIvarChecker : public DataRecursiveASTVisitor<UnusedBackingIvarChecker> {
+  public:
+    Sema &S;
+    const ObjCMethodDecl *Method;
+    const ObjCIvarDecl *IvarD;
+    bool AccessedIvar;
+    bool InvokedSelfMethod;
+
+    UnusedBackingIvarChecker(Sema &S, const ObjCMethodDecl *Method,
+                             const ObjCIvarDecl *IvarD)
+      : S(S), Method(Method), IvarD(IvarD),
+        AccessedIvar(false), InvokedSelfMethod(false) {
+      assert(IvarD);
+    }
+
+    bool VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
+      if (E->getDecl() == IvarD) {
+        AccessedIvar = true;
+        return false;
+      }
+      return true;
+    }
+
+    bool VisitObjCMessageExpr(ObjCMessageExpr *E) {
+      if (E->getReceiverKind() == ObjCMessageExpr::Instance &&
+          S.isSelfExpr(E->getInstanceReceiver(), Method)) {
+        InvokedSelfMethod = true;
+      }
+      return true;
+    }
+  };
+}
+
+void Sema::DiagnoseUnusedBackingIvarInAccessor(Scope *S,
+                                          const ObjCImplementationDecl *ImplD) {
+  if (S->hasUnrecoverableErrorOccurred())
     return;
-  
-  const ObjCMethodDecl *CurMethod = getCurMethodDecl();
-  if (!CurMethod)
-    return;
-  const ObjCPropertyDecl *PDecl;
-  const ObjCIvarDecl *IV = GetIvarBackingPropertyAccessor(CurMethod, PDecl);
-  if (IV && !IV->getBackingIvarReferencedInAccessor()) {
+
+  for (ObjCImplementationDecl::instmeth_iterator
+         MI = ImplD->instmeth_begin(),
+         ME = ImplD->instmeth_end(); MI != ME; ++MI) {
+    const ObjCMethodDecl *CurMethod = *MI;
+    unsigned DIAG = diag::warn_unused_property_backing_ivar;
+    SourceLocation Loc = CurMethod->getLocation();
+    if (Diags.getDiagnosticLevel(DIAG, Loc) == DiagnosticsEngine::Ignored)
+      continue;
+
+    const ObjCPropertyDecl *PDecl;
+    const ObjCIvarDecl *IV = GetIvarBackingPropertyAccessor(CurMethod, PDecl);
+    if (!IV)
+      continue;
+
+    UnusedBackingIvarChecker Checker(*this, CurMethod, IV);
+    Checker.TraverseStmt(CurMethod->getBody());
+    if (Checker.AccessedIvar)
+      continue;
+
     // Do not issue this warning if backing ivar is used somewhere and accessor
-    // implementation makes a call to a method. This is to prevent false positive in
-    // some corner cases.
-    if (!IV->isReferenced() || !CurMethod->getMethodCallsMethod()) {
-      Diag(getCurMethodDecl()->getLocation(), diag::warn_unused_property_backing_ivar)
-        << IV->getDeclName();
+    // implementation makes a self call. This is to prevent false positive in
+    // cases where the ivar is accessed by another method that the accessor
+    // delegates to.
+    if (!IV->isReferenced() || !Checker.InvokedSelfMethod) {
+      Diag(Loc, DIAG) << IV->getDeclName();
       Diag(PDecl->getLocation(), diag::note_property_declare);
     }
   }
