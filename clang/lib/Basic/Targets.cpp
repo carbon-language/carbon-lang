@@ -1188,8 +1188,7 @@ namespace {
 class PPC32TargetInfo : public PPCTargetInfo {
 public:
   PPC32TargetInfo(const llvm::Triple &Triple) : PPCTargetInfo(Triple) {
-    DescriptionString = "E-p:32:32-"
-                        "i64:64-n32";
+    DescriptionString = "E-p:32:32-i64:64-n32";
 
     switch (getTriple().getOS()) {
     case llvm::Triple::Linux:
@@ -1233,13 +1232,9 @@ public:
     if (getTriple().getOS() == llvm::Triple::FreeBSD) {
       LongDoubleWidth = LongDoubleAlign = 64;
       LongDoubleFormat = &llvm::APFloat::IEEEdouble;
-      DescriptionString = "E-"
-                          "i64:64-"
-                          "n32:64";
+      DescriptionString = "E-i64:64-n32:64";
     } else
-      DescriptionString = "E-"
-                          "i64:64-"
-                          "n32:64";
+      DescriptionString = "E-i64:64-n32:64";
 
     // PPC64 supports atomics up to 8 bytes.
     MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
@@ -1382,10 +1377,7 @@ namespace {
     NVPTX32TargetInfo(const llvm::Triple &Triple) : NVPTXTargetInfo(Triple) {
       PointerWidth = PointerAlign = 32;
       SizeType     = PtrDiffType = IntPtrType = TargetInfo::UnsignedInt;
-      DescriptionString
-        = "e-p:32:32-i64:64"
-          "-v16:16-v32:32-"
-          "n16:32:64";
+      DescriptionString = "e-p:32:32-i64:64-v16:16-v32:32-n16:32:64";
   }
   };
 
@@ -1394,10 +1386,7 @@ namespace {
     NVPTX64TargetInfo(const llvm::Triple &Triple) : NVPTXTargetInfo(Triple) {
       PointerWidth = PointerAlign = 64;
       SizeType     = PtrDiffType = IntPtrType = TargetInfo::UnsignedLongLong;
-      DescriptionString
-        = "e-i64:64"
-          "-v16:16-v32:32-"
-          "n16:32:64";
+      DescriptionString = "e-i64:64-v16:16-v32:32-n16:32:64";
   }
   };
 }
@@ -1414,28 +1403,17 @@ static const unsigned R600AddrSpaceMap[] = {
 };
 
 static const char *DescriptionStringR600 =
-  "e"
-  "-p:32:32"
-  "-i64:64"
-  "-v16:16-v24:32-v32:32-v48:64-v96:128"
-  "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048"
-  "-n32:64";
+  "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
+  "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
 
 static const char *DescriptionStringR600DoubleOps =
-  "e"
-  "-p:32:32"
-  "-i64:64"
-  "-v16:16-v24:32-v32:32-v48:64-v96:128"
-  "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048"
-  "-n32:64";
+  "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
+  "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
 
 static const char *DescriptionStringSI =
-  "e"
-  "-p:32:32-p1:64:64-p2:64:64-p3:32:32-p4:32:32-p5:64:64"
-  "-i64:64"
-  "-v16:16-v24:32-v32:32-v48:64-v96:128"
-  "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048"
-  "-n32:64";
+  "e-p:32:32-p1:64:64-p2:64:64-p3:32:32-p4:32:32-p5:64:64"
+  "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
+  "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
 
 class R600TargetInfo : public TargetInfo {
   /// \brief The GPU profiles supported by the R600 target.
@@ -2939,9 +2917,7 @@ public:
     LongDoubleWidth = 96;
     LongDoubleAlign = 32;
     SuitableAlign = 128;
-    DescriptionString = "e-p:32:32"
-                        "-f64:32:64-"
-                        "f80:32-n8:16:32-S128";
+    DescriptionString = "e-p:32:32-f64:32:64-f80:32-n8:16:32-S128";
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
     IntPtrType = SignedInt;
@@ -3035,9 +3011,7 @@ public:
     MaxVectorAlign = 256;
     SizeType = UnsignedLong;
     IntPtrType = SignedLong;
-    DescriptionString = "e-p:32:32"
-                        "-f64:32:64-"
-                        "f80:128-n8:16:32-S128";
+    DescriptionString = "e-p:32:32-f64:32:64-f80:128-n8:16:32-S128";
     HasAlignMac68kSupport = true;
   }
 
@@ -3053,9 +3027,7 @@ public:
     TLSSupported = false;
     WCharType = UnsignedShort;
     DoubleAlign = LongLongAlign = 64;
-    DescriptionString = "e-p:32:32-"
-                        "i64:64-"
-                        "f80:32-n8:16:32-S32";
+    DescriptionString = "e-p:32:32-i64:64-f80:32-n8:16:32-S32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
@@ -3122,9 +3094,7 @@ public:
     TLSSupported = false;
     WCharType = UnsignedShort;
     DoubleAlign = LongLongAlign = 64;
-    DescriptionString = "e-p:32:32-"
-                        "i64:64-"
-                        "f80:32-n8:16:32-S32";
+    DescriptionString = "e-p:32:32-i64:64-f80:32-n8:16:32-S32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
@@ -3712,10 +3682,10 @@ class ARMTargetInfo : public TargetInfo {
     if (IsThumb) {
       // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
       // so set preferred for small types to 32.
-      DescriptionString = ("e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
-                           "v128:64:128-a:0:32-n32-S64");
+      DescriptionString = "e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
+                          "v128:64:128-a:0:32-n32-S64";
     } else {
-      DescriptionString = ("e-p:32:32-i64:64-v128:64:128-n32-S64");
+      DescriptionString = "e-p:32:32-i64:64-v128:64:128-n32-S64";
     }
 
     // FIXME: Enumerated types are variable width in straight AAPCS.
@@ -4255,7 +4225,7 @@ class HexagonTargetInfo : public TargetInfo {
 public:
   HexagonTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
     BigEndian = false;
-    DescriptionString = ("e-p:32:32-i1:32-i64:64-a:0-n32");
+    DescriptionString = "e-p:32:32-i1:32-i64:64-a:0-n32";
 
     // {} in inline assembly are packet specifiers, not assembly variant
     // specifiers.
@@ -4525,8 +4495,7 @@ class SparcV9TargetInfo : public SparcTargetInfo {
 public:
   SparcV9TargetInfo(const llvm::Triple &Triple) : SparcTargetInfo(Triple) {
     // FIXME: Support Sparc quad-precision long double?
-    DescriptionString = "E-"
-                        "i64:64-n32:64-S128";
+    DescriptionString = "E-i64:64-n32:64-S128";
     // This is an LP64 platform.
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
 
@@ -4797,10 +4766,8 @@ namespace {
       FloatFormat = &llvm::APFloat::IEEEsingle;
       DoubleFormat = &llvm::APFloat::IEEEsingle;
       LongDoubleFormat = &llvm::APFloat::IEEEsingle;
-      DescriptionString = "E-p:32:32-i8:8:32-"
-                          "i16:16:32-i64:32"
-                          "-f64:32-v64:32-"
-                          "v128:32-a:0:32-n32";
+      DescriptionString = "E-p:32:32-i8:8:32-i16:16:32-i64:32"
+                          "-f64:32-v64:32-v128:32-a:0:32-n32";
       AddrSpaceMap = &TCEOpenCLAddrSpaceMap;
       UseAddrSpaceMapMangling = true;
     }
@@ -5137,8 +5104,7 @@ public:
 
 class Mips32EBTargetInfo : public Mips32TargetInfoBase {
   virtual void setDescriptionString() {
-    DescriptionString = "E-p:32:32-i8:8:32-i16:16:32-"
-                        "i64:64-n32-S64";
+    DescriptionString = "E-p:32:32-i8:8:32-i16:16:32-i64:64-n32-S64";
   }
 
 public:
@@ -5155,8 +5121,7 @@ public:
 
 class Mips32ELTargetInfo : public Mips32TargetInfoBase {
   virtual void setDescriptionString() {
-    DescriptionString = "e-p:32:32-i8:8:32-i16:16:32-"
-                        "i64:64-n32-S64";
+    DescriptionString = "e-p:32:32-i8:8:32-i16:16:32-i64:64-n32-S64";
   }
 
 public:
@@ -5265,13 +5230,9 @@ public:
 class Mips64EBTargetInfo : public Mips64TargetInfoBase {
   virtual void setDescriptionString() {
     if (ABI == "n32")
-      DescriptionString = "E-p:32:32-i8:8:32-i16:16:32-"
-                          "i64:64-"
-                          "n32:64-S128";
+      DescriptionString = "E-p:32:32-i8:8:32-i16:16:32-i64:64-n32:64-S128";
     else
-      DescriptionString = "E-i8:8:32-i16:16:32-"
-                          "i64:64-"
-                          "n32:64-S128";
+      DescriptionString = "E-i8:8:32-i16:16:32-i64:64-n32:64-S128";
 
   }
 
@@ -5289,13 +5250,9 @@ public:
 class Mips64ELTargetInfo : public Mips64TargetInfoBase {
   virtual void setDescriptionString() {
     if (ABI == "n32")
-      DescriptionString = "e-p:32:32-i8:8:32-i16:16:32-"
-                          "i64:64"
-                          "-n32:64-S128";
+      DescriptionString = "e-p:32:32-i8:8:32-i16:16:32-i64:64-n32:64-S128";
     else
-      DescriptionString = "e-i8:8:32-i16:16:32-"
-                          "i64:64-"
-                          "n32:64-S128";
+      DescriptionString = "e-i8:8:32-i16:16:32-i64:64-n32:64-S128";
   }
 public:
   Mips64ELTargetInfo(const llvm::Triple &Triple)
@@ -5441,10 +5398,8 @@ namespace {
       SizeType     = TargetInfo::UnsignedInt;
       PtrDiffType = IntPtrType = TargetInfo::SignedInt;
       DescriptionString
-        = "e-p:32:32-i64:64"
-          "-v16:16-v24:32-v32:32-v48:64-"
-          "v96:128-v192:256-v256:256-"
-          "v512:512-v1024:1024";
+        = "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-"
+          "v96:128-v192:256-v256:256-v512:512-v1024:1024";
     }
     virtual void getTargetDefines(const LangOptions &Opts,
                                   MacroBuilder &Builder) const {
@@ -5458,11 +5413,8 @@ namespace {
       PointerWidth = PointerAlign = 64;
       SizeType     = TargetInfo::UnsignedLong;
       PtrDiffType = IntPtrType = TargetInfo::SignedLong;
-      DescriptionString
-        = "e-i64:64"
-          "-v16:16-v24:32-v32:32-v48:64-"
-          "v96:128-v192:256-v256:256-"
-          "v512:512-v1024:1024";
+      DescriptionString = "e-i64:64-v16:16-v24:32-v32:32-v48:64-"
+                          "v96:128-v192:256-v256:256-v512:512-v1024:1024";
     }
     virtual void getTargetDefines(const LangOptions &Opts,
                                   MacroBuilder &Builder) const {
