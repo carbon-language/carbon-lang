@@ -611,7 +611,9 @@ endif
 # By default, strip dead symbols at link time
 ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
 ifneq ($(HOST_OS),Darwin)
+ifneq ($(HOST_ARCH),Mips)
   CXX.Flags += -ffunction-sections -fdata-sections
+endif
 endif
 endif
 ifndef NO_DEAD_STRIP
