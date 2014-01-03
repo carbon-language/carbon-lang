@@ -38,7 +38,7 @@
 #include <algorithm>
 #include <vector>
 // FIXME: Move AnalysisConsumer to include/clang/StaticAnalyzer/Frontend.
-#include "../../../lib/StaticAnalyzer/Frontend/AnalysisConsumer.h"
+#include "../lib/StaticAnalyzer/Frontend/AnalysisConsumer.h"
 
 using namespace clang::ast_matchers;
 using namespace clang::driver;
