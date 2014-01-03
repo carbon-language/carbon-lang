@@ -7708,7 +7708,7 @@ bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
     // but we don't have that level of source info.
     Diag(SS.getRange().getBegin(),
          diag::err_using_decl_nested_name_specifier_is_not_class)
-      << (NestedNameSpecifier*) SS.getScopeRep() << SS.getRange();
+      << SS.getScopeRep() << SS.getRange();
     return true;
   }
 
