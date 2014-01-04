@@ -120,7 +120,7 @@ RegisterContextLLDB::InitializeZerothFrame()
         current_pc = abi->FixCodeAddress(current_pc);
 
     // Initialize m_current_pc, an Address object, based on current_pc, an addr_t.
-    process->GetTarget().GetSectionLoadList().ResolveLoadAddress (current_pc, m_current_pc);
+    m_current_pc.SetLoadAddress (current_pc, &process->GetTarget());
 
     // If we don't have a Module for some reason, we're not going to find symbol/function information - just
     // stick in some reasonable defaults and hope we can unwind past this frame.
@@ -285,7 +285,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     if (abi)
         pc = abi->FixCodeAddress(pc);
 
-    process->GetTarget().GetSectionLoadList().ResolveLoadAddress (pc, m_current_pc);
+    m_current_pc.SetLoadAddress (pc, &process->GetTarget());
 
     // If we don't have a Module for some reason, we're not going to find symbol/function information - just
     // stick in some reasonable defaults and hope we can unwind past this frame.
@@ -682,7 +682,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
         uint32_t permissions;
         addr_t current_pc_addr = m_current_pc.GetLoadAddress (exe_ctx.GetTargetPtr());
         if (current_pc_addr == 0
-            || (process->GetLoadAddressPermissions(current_pc_addr, permissions)
+            || (process->GetLoadAddressPermissions (current_pc_addr, permissions)
                 && (permissions & ePermissionsExecutable) == 0))
         {
             unwind_plan_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
