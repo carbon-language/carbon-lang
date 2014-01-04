@@ -17,6 +17,14 @@
 
 #include <wchar.h>  // mbstate_t
 #include <cstdarg> // va_ macros
+// "builtins" not implemented here for Clang or GCC as they provide implementations.
+// Assuming required for elsewhere else, certainly MSVC.
+#if defined(_LIBCPP_MSVC)
+#include <intrin.h>
+#endif
+#if defined(_LIBCPP_MSVCRT)
+#include <xlocinfo.h>
+#endif
 #define swprintf _snwprintf
 #define vswprintf _vsnwprintf
 
@@ -36,7 +44,6 @@ size_t wcsnrtombs( char *__restrict dst, const wchar_t **__restrict src,
 
 #if defined(_LIBCPP_MSVCRT)
 #define snprintf _snprintf
-#include <xlocinfo.h>
 #define atoll _atoi64
 #define strtoll _strtoi64
 #define strtoull _strtoui64
@@ -50,9 +57,15 @@ _LIBCPP_ALWAYS_INLINE long double strtold( const char *nptr, char **endptr )
 { return _Stold(nptr, endptr, 0); }
 
 #define _Exit _exit
+#endif
 
-#ifndef __clang__ // MSVC-based Clang also defines _MSC_VER
-#include <intrin.h>
+#if defined(_LIBCPP_MSVC)
+
+// Bit builtin's make these assumptions when calling _BitScanForward/Reverse etc.
+// These assumptions are expected to be true for Win32/Win64 which this file supports.
+static_assert(sizeof(unsigned long long)==8,"");
+static_assert(sizeof(unsigned long)==4,"");
+static_assert(sizeof(unsigned int)==4,"");
 
 _LIBCPP_ALWAYS_INLINE int __builtin_popcount(unsigned int x) {
    static const unsigned int m1 = 0x55555555; //binary: 0101...
@@ -80,39 +93,87 @@ _LIBCPP_ALWAYS_INLINE int __builtin_popcountll(unsigned long long x) {
    return static_cast<int>((x * h01)>>56);  //returns left 8 bits of x + (x<<8) + (x<<16) + (x<<24) + ...
 }
 
-_LIBCPP_ALWAYS_INLINE int __builtin_ctz( unsigned int x )
+// Returns the number of trailing 0-bits in x,
+// starting at the least significant bit position.
+// If x is 0, the result is undefined. 
+_LIBCPP_ALWAYS_INLINE int __builtin_ctzll( unsigned long long mask )
 {
-   DWORD r = 0;
-   _BitScanReverse(&r, x);
-   return static_cast<int>(r);
+    unsigned long where;
+    // Search from LSB to MSB for first set bit.
+    // Returns zero if no set bit is found.
+#if defined(_WIN64)
+    if (_BitScanForward64(&where, mask))
+        return static_cast<int>(where);
+#elif defined(_WIN32)
+    // Win32 doesn't have _BitScanForward64 so emulate it with two 32 bit calls. 
+    // Scan the Low Word
+    if (_BitScanForward(&where, static_cast<unsigned long>(mask)))
+        return static_cast<int>(where);
+    // Scan the High Word
+    if (_BitScanForward(&where, static_cast<unsigned long>(mask >> 32)))
+        return static_cast<int>(where+32); // Create a bit offset from the LSB.
+#else
+#   error "Implementation of __builtin_ctzll required"
+#endif
+    return 64;
 }
 
-// sizeof(long) == sizeof(int) on Windows
-_LIBCPP_ALWAYS_INLINE int __builtin_ctzl( unsigned long x )
-{ return __builtin_ctz( static_cast<int>(x) ); }
-
-_LIBCPP_ALWAYS_INLINE int __builtin_ctzll( unsigned long long x )
+_LIBCPP_ALWAYS_INLINE int __builtin_ctzl( unsigned long mask )
 {
-    DWORD r = 0;
-    _BitScanReverse64(&r, x);
-    return static_cast<int>(r);
+    unsigned long where;
+    // Search from LSB to MSB for first set bit.
+    // Returns zero if no set bit is found.
+    if (_BitScanForward(&where, mask))
+        return static_cast<int>(where);
+    return 32;
 }
+
+_LIBCPP_ALWAYS_INLINE int __builtin_ctz( unsigned int mask )
+{
+    // Win32 and Win64 expectations.
+    static_assert(sizeof(mask)==4,"");
+    static_assert(sizeof(unsigned long)==4,"");
+    return __builtin_ctzl(static_cast<unsigned long>(mask));
+}
+
+// Returns the number of leading 0-bits in x,
+// starting at the most significant bit position.
+// If x is 0, the result is undefined.
+_LIBCPP_ALWAYS_INLINE int __builtin_clzll( unsigned long long mask )
+{
+    unsigned long where;
+    // BitScanReverse scans from MSB to LSB for first set bit.
+    // Returns 0 if no set bit is found.
+#if defined(_WIN64)
+    if (_BitScanReverse64(&where, mask))
+        return static_cast<int>(63-where);
+#elif defined(_WIN32)
+    // Scan the high 32 bits.
+    if (_BitScanReverse(&where, static_cast<unsigned long>(mask >> 32)))
+        return static_cast<int>(63-(where+32)); // Create a bit offset from the MSB.
+    // Scan the low 32 bits.
+    if (_BitScanReverse(&where, static_cast<unsigned long>(mask)))
+        return static_cast<int>(63-where);
+#else
+#   error "Implementation of __builtin_clzll required"
+#endif
+    return 64; // Undefined Behavior.
+}
+
+_LIBCPP_ALWAYS_INLINE int __builtin_clzl( unsigned long mask )
+{
+    unsigned long where;
+    // Search from LSB to MSB for first set bit.
+    // Returns zero if no set bit is found.
+    if (_BitScanReverse(&where, mask))
+        return static_cast<int>(31-where);
+    return 32; // Undefined Behavior.
+}
+
 _LIBCPP_ALWAYS_INLINE int __builtin_clz( unsigned int x )
 {
-   DWORD r = 0;
-   _BitScanForward(&r, x);
-   return static_cast<int>(r);
+    return __builtin_clzl(x);
 }
-// sizeof(long) == sizeof(int) on Windows
-_LIBCPP_ALWAYS_INLINE int __builtin_clzl( unsigned long x )
-{ return __builtin_clz( static_cast<int>(x) ); }
-_LIBCPP_ALWAYS_INLINE int __builtin_clzll( unsigned long long x )
-{
-    DWORD r = 0;
-    _BitScanForward64(&r, x);
-    return static_cast<int>(r);
-}
-#endif // !__clang__
-#endif // _LIBCPP_MSVCRT
+#endif // _LIBCPP_MSVC
 
 #endif // _LIBCPP_SUPPORT_WIN32_SUPPORT_H
