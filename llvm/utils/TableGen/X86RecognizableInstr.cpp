@@ -275,8 +275,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
     }
   }
   // FIXME: These instructions aren't marked as 64-bit in any way
-  Is64Bit |= Rec->getName() == "JMP64pcrel32" ||
-             Rec->getName().find("MOV64") != Name.npos ||
+  Is64Bit |= Rec->getName().find("MOV64") != Name.npos ||
              Rec->getName().find("PUSH64") != Name.npos ||
              Rec->getName().find("POP64") != Name.npos;
 

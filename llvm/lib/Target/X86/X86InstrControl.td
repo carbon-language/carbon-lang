@@ -52,11 +52,6 @@ let isBarrier = 1, isBranch = 1, isTerminator = 1, SchedRW = [WriteJump] in {
   let hasSideEffects = 0 in
   def JMP_1 : Ii8PCRel<0xEB, RawFrm, (outs), (ins brtarget8:$dst),
                        "jmp\t$dst", [], IIC_JMP_REL>;
-  // FIXME : Intel syntax for JMP64pcrel32 such that it is not ambiguious
-  // with JMP_1.
-  let hasSideEffects = 0 in
-  def JMP64pcrel32 : I<0xE9, RawFrm, (outs), (ins brtarget:$dst),
-                       "jmpq\t$dst", [], IIC_JMP_REL>;
 }
 
 // Conditional Branches.
