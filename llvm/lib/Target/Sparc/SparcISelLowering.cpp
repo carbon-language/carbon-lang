@@ -2415,39 +2415,57 @@ static SDValue getFLUSHW(SDValue Op, SelectionDAG &DAG) {
   return Chain;
 }
 
-static SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
+static SDValue getFRAMEADDR(uint64_t depth, SDValue Op, SelectionDAG &DAG,
+                            const SparcSubtarget *Subtarget) {
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   MFI->setFrameAddressIsTaken(true);
 
   EVT VT = Op.getValueType();
   SDLoc dl(Op);
   unsigned FrameReg = SP::I6;
-
-  uint64_t depth = Op.getConstantOperandVal(0);
+  unsigned stackBias = Subtarget->getStackPointerBias();
 
   SDValue FrameAddr;
-  if (depth == 0)
-    FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, VT);
-  else {
-    // flush first to make sure the windowed registers' values are in stack
-    SDValue Chain = getFLUSHW(Op, DAG);
-    FrameAddr = DAG.getCopyFromReg(Chain, dl, FrameReg, VT);
 
-    for (uint64_t i = 0; i != depth; ++i) {
-      SDValue Ptr = DAG.getNode(ISD::ADD,
-                                dl, MVT::i32,
-                                FrameAddr, DAG.getIntPtrConstant(56));
-      FrameAddr = DAG.getLoad(MVT::i32, dl,
-                              Chain,
-                              Ptr,
-                              MachinePointerInfo(), false, false, false, 0);
-    }
+  if (depth == 0) {
+    FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, VT);
+    if (Subtarget->is64Bit())
+      FrameAddr = DAG.getNode(ISD::ADD, dl, VT, FrameAddr,
+                              DAG.getIntPtrConstant(stackBias));
+    return FrameAddr;
   }
+
+  // flush first to make sure the windowed registers' values are in stack
+  SDValue Chain = getFLUSHW(Op, DAG);
+  FrameAddr = DAG.getCopyFromReg(Chain, dl, FrameReg, VT);
+
+  unsigned Offset = (Subtarget->is64Bit()) ? (stackBias + 112) : 56;
+
+  while (depth--) {
+    SDValue Ptr = DAG.getNode(ISD::ADD, dl, VT, FrameAddr,
+                              DAG.getIntPtrConstant(Offset));
+    FrameAddr = DAG.getLoad(VT, dl, Chain, Ptr, MachinePointerInfo(),
+                            false, false, false, 0);
+  }
+  if (Subtarget->is64Bit())
+    FrameAddr = DAG.getNode(ISD::ADD, dl, VT, FrameAddr,
+                            DAG.getIntPtrConstant(stackBias));
   return FrameAddr;
 }
 
+
+static SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG,
+                              const SparcSubtarget *Subtarget) {
+
+  uint64_t depth = Op.getConstantOperandVal(0);
+
+  return getFRAMEADDR(depth, Op, DAG, Subtarget);
+
+}
+
 static SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG,
-                               const SparcTargetLowering &TLI) {
+                               const SparcTargetLowering &TLI,
+                               const SparcSubtarget *Subtarget) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MFI->setReturnAddressIsTaken(true);
@@ -2461,25 +2479,20 @@ static SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG,
     unsigned RetReg = MF.addLiveIn(SP::I7,
                                    TLI.getRegClassFor(TLI.getPointerTy()));
     RetAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, RetReg, VT);
-  } else {
-    // Need frame address to find return address of the caller.
-    MFI->setFrameAddressIsTaken(true);
-
-    // flush first to make sure the windowed registers' values are in stack
-    SDValue Chain = getFLUSHW(Op, DAG);
-    RetAddr = DAG.getCopyFromReg(Chain, dl, SP::I6, VT);
-
-    for (uint64_t i = 0; i != depth; ++i) {
-      SDValue Ptr = DAG.getNode(ISD::ADD,
-                                dl, MVT::i32,
-                                RetAddr,
-                                DAG.getIntPtrConstant((i == depth-1)?60:56));
-      RetAddr = DAG.getLoad(MVT::i32, dl,
-                            Chain,
-                            Ptr,
-                            MachinePointerInfo(), false, false, false, 0);
-    }
+    return RetAddr;
   }
+
+  // Need frame address to find return address of the caller.
+  SDValue FrameAddr = getFRAMEADDR(depth - 1, Op, DAG, Subtarget);
+
+  unsigned Offset = (Subtarget->is64Bit()) ? 120 : 60;
+  SDValue Ptr = DAG.getNode(ISD::ADD,
+                            dl, VT,
+                            FrameAddr,
+                            DAG.getIntPtrConstant(Offset));
+  RetAddr = DAG.getLoad(VT, dl, DAG.getEntryNode(), Ptr,
+                        MachinePointerInfo(), false, false, false, 0);
+
   return RetAddr;
 }
 
@@ -2763,8 +2776,10 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Should not custom lower this!");
 
-  case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG, *this);
-  case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
+  case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG, *this,
+                                                       Subtarget);
+  case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG,
+                                                      Subtarget);
   case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
   case ISD::BlockAddress:       return LowerBlockAddress(Op, DAG);
