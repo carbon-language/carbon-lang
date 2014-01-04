@@ -167,7 +167,7 @@ void Decl::printGroup(Decl** Begin, unsigned NumDecls,
   }
 }
 
-void DeclContext::dumpDeclContext() const {
+LLVM_DUMP_METHOD void DeclContext::dumpDeclContext() const {
   // Get the translation unit
   const DeclContext *DC = this;
   while (!DC->isTranslationUnit())

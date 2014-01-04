@@ -423,7 +423,7 @@ public:
     return Result;
   }
 
-  LLVM_ATTRIBUTE_USED void dump() const;
+  void dump() const;
 };
 
 class PathDiagnosticSpotPiece : public PathDiagnosticPiece {

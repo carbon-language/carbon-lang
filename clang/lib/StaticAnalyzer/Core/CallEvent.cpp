@@ -209,9 +209,7 @@ SVal CallEvent::getReturnValue() const {
   return getSVal(E);
 }
 
-void CallEvent::dump() const {
-  dump(llvm::errs());
-}
+LLVM_DUMP_METHOD void CallEvent::dump() const { dump(llvm::errs()); }
 
 void CallEvent::dump(raw_ostream &Out) const {
   ASTContext &Ctx = getState()->getStateManager().getContext();

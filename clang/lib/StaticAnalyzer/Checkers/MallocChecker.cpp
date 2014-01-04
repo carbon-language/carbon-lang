@@ -108,9 +108,7 @@ public:
     OS << Table[(unsigned) K];
   }
 
-  LLVM_ATTRIBUTE_USED void dump() const {
-    dump(llvm::errs());
-  }
+  LLVM_DUMP_METHOD void dump() const { dump(llvm::errs()); }
 };
 
 enum ReallocPairKind {

@@ -1423,13 +1423,10 @@ void QualType::dump(const char *msg) const {
   print(llvm::errs(), PrintingPolicy(LO), "identifier");
   llvm::errs() << '\n';
 }
-void QualType::dump() const {
-  dump(0);
-}
 
-void Type::dump() const {
-  QualType(this, 0).dump();
-}
+LLVM_DUMP_METHOD void QualType::dump() const { dump(0); }
+
+LLVM_DUMP_METHOD void Type::dump() const { QualType(this, 0).dump(); }
 
 std::string Qualifiers::getAsString() const {
   LangOptions LO;

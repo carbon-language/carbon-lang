@@ -2096,27 +2096,25 @@ void ASTDumper::visitVerbatimLineComment(const VerbatimLineComment *C) {
 // Decl method implementations
 //===----------------------------------------------------------------------===//
 
-void Decl::dump() const {
-  dump(llvm::errs());
-}
+LLVM_DUMP_METHOD void Decl::dump() const { dump(llvm::errs()); }
 
-void Decl::dump(raw_ostream &OS) const {
+LLVM_DUMP_METHOD void Decl::dump(raw_ostream &OS) const {
   ASTDumper P(OS, &getASTContext().getCommentCommandTraits(),
               &getASTContext().getSourceManager());
   P.dumpDecl(this);
 }
 
-void Decl::dumpColor() const {
+LLVM_DUMP_METHOD void Decl::dumpColor() const {
   ASTDumper P(llvm::errs(), &getASTContext().getCommentCommandTraits(),
               &getASTContext().getSourceManager(), /*ShowColors*/true);
   P.dumpDecl(this);
 }
 
-void DeclContext::dumpLookups() const {
+LLVM_DUMP_METHOD void DeclContext::dumpLookups() const {
   dumpLookups(llvm::errs());
 }
 
-void DeclContext::dumpLookups(raw_ostream &OS) const {
+LLVM_DUMP_METHOD void DeclContext::dumpLookups(raw_ostream &OS) const {
   const DeclContext *DC = this;
   while (!DC->isTranslationUnit())
     DC = DC->getParent();
@@ -2129,21 +2127,21 @@ void DeclContext::dumpLookups(raw_ostream &OS) const {
 // Stmt method implementations
 //===----------------------------------------------------------------------===//
 
-void Stmt::dump(SourceManager &SM) const {
+LLVM_DUMP_METHOD void Stmt::dump(SourceManager &SM) const {
   dump(llvm::errs(), SM);
 }
 
-void Stmt::dump(raw_ostream &OS, SourceManager &SM) const {
+LLVM_DUMP_METHOD void Stmt::dump(raw_ostream &OS, SourceManager &SM) const {
   ASTDumper P(OS, 0, &SM);
   P.dumpStmt(this);
 }
 
-void Stmt::dump() const {
+LLVM_DUMP_METHOD void Stmt::dump() const {
   ASTDumper P(llvm::errs(), 0, 0);
   P.dumpStmt(this);
 }
 
-void Stmt::dumpColor() const {
+LLVM_DUMP_METHOD void Stmt::dumpColor() const {
   ASTDumper P(llvm::errs(), 0, 0, /*ShowColors*/true);
   P.dumpStmt(this);
 }
@@ -2152,11 +2150,9 @@ void Stmt::dumpColor() const {
 // Comment method implementations
 //===----------------------------------------------------------------------===//
 
-void Comment::dump() const {
-  dump(llvm::errs(), 0, 0);
-}
+LLVM_DUMP_METHOD void Comment::dump() const { dump(llvm::errs(), 0, 0); }
 
-void Comment::dump(const ASTContext &Context) const {
+LLVM_DUMP_METHOD void Comment::dump(const ASTContext &Context) const {
   dump(llvm::errs(), &Context.getCommentCommandTraits(),
        &Context.getSourceManager());
 }
@@ -2168,7 +2164,7 @@ void Comment::dump(raw_ostream &OS, const CommandTraits *Traits,
   D.dumpFullComment(FC);
 }
 
-void Comment::dumpColor() const {
+LLVM_DUMP_METHOD void Comment::dumpColor() const {
   const FullComment *FC = dyn_cast<FullComment>(this);
   ASTDumper D(llvm::errs(), 0, 0, /*ShowColors*/true);
   D.dumpFullComment(FC);

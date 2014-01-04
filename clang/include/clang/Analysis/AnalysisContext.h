@@ -252,7 +252,7 @@ public:
   virtual void Profile(llvm::FoldingSetNodeID &ID) = 0;
 
   void dumpStack(raw_ostream &OS, StringRef Indent = "") const;
-  LLVM_ATTRIBUTE_USED void dumpStack() const;
+  void dumpStack() const;
 
 public:
   static void ProfileCommon(llvm::FoldingSetNodeID &ID,

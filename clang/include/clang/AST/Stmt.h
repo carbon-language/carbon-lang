@@ -371,12 +371,12 @@ public:
 
   /// \brief Dumps the specified AST fragment and all subtrees to
   /// \c llvm::errs().
-  LLVM_ATTRIBUTE_USED void dump() const;
-  LLVM_ATTRIBUTE_USED void dump(SourceManager &SM) const;
+  void dump() const;
+  void dump(SourceManager &SM) const;
   void dump(raw_ostream &OS, SourceManager &SM) const;
 
   /// dumpColor - same as dump(), but forces color highlighting.
-  LLVM_ATTRIBUTE_USED void dumpColor() const;
+  void dumpColor() const;
 
   /// dumpPretty/printPretty - These two methods do a "pretty print" of the AST
   /// back to its original source language syntax.

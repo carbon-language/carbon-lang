@@ -172,7 +172,7 @@ public:
   }
 
   void print(raw_ostream &OS, const SourceManager &SM) const;
-  LLVM_ATTRIBUTE_USED std::string printToString(const SourceManager &SM) const;
+  std::string printToString(const SourceManager &SM) const;
   void dump(const SourceManager &SM) const;
 };
 
@@ -331,7 +331,7 @@ public:
   /// \brief Prints information about this FullSourceLoc to stderr.
   ///
   /// This is useful for debugging.
-  LLVM_ATTRIBUTE_USED void dump() const;
+  void dump() const;
 
   friend inline bool
   operator==(const FullSourceLoc &LHS, const FullSourceLoc &RHS) {

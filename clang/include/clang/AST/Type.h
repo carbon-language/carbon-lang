@@ -1797,7 +1797,7 @@ public:
     return CanonicalType;
   }
   CanQualType getCanonicalTypeUnqualified() const; // in CanonicalType.h
-  LLVM_ATTRIBUTE_USED void dump() const;
+  void dump() const;
 
   friend class ASTReader;
   friend class ASTWriter;

@@ -938,9 +938,9 @@ public:
                          raw_ostream &Out, const PrintingPolicy &Policy,
                          unsigned Indentation = 0);
   // Debuggers don't usually respect default arguments.
-  LLVM_ATTRIBUTE_USED void dump() const;
+  void dump() const;
   // Same as dump(), but forces color printing.
-  LLVM_ATTRIBUTE_USED void dumpColor() const;
+  void dumpColor() const;
   void dump(raw_ostream &Out) const;
 
 private:
@@ -1616,9 +1616,9 @@ public:
   static bool classof(const Decl *D);
   static bool classof(const DeclContext *D) { return true; }
 
-  LLVM_ATTRIBUTE_USED void dumpDeclContext() const;
-  LLVM_ATTRIBUTE_USED void dumpLookups() const;
-  LLVM_ATTRIBUTE_USED void dumpLookups(llvm::raw_ostream &OS) const;
+  void dumpDeclContext() const;
+  void dumpLookups() const;
+  void dumpLookups(llvm::raw_ostream &OS) const;
 
 private:
   void reconcileExternalVisibleStorage();
