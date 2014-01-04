@@ -784,13 +784,6 @@ namespace llvm {
     /// disconnect it from a def-use chain linking it to a loop.
     void forgetValue(Value *V);
 
-    /// \brief Called when the client has changed the disposition of values in
-    /// this loop.
-    ///
-    /// We don't have a way to invalidate per-loop dispositions. Clear and
-    /// recompute is simpler.
-    void forgetLoopDispositions(const Loop *L) { LoopDispositions.clear(); }
-
     /// GetMinTrailingZeros - Determine the minimum number of zero bits that S
     /// is guaranteed to end in (at every loop iteration).  It is, at the same
     /// time, the minimum number of times S is divisible by 2.  For example,
