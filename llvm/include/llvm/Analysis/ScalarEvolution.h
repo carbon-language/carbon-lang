@@ -880,13 +880,13 @@ namespace llvm {
     const SCEV *computeBECount(const SCEV *Delta, const SCEV *Stride,
                                bool Equality);
 
-    /// Verify if an linear IV with positive stride can overflow when in a 
+    /// Verify if an linear IV with positive stride can overflow when in a
     /// less-than comparison, knowing the invariant term of the comparison,
     /// the stride and the knowledge of NSW/NUW flags on the recurrence.
     bool doesIVOverflowOnLT(const SCEV *RHS, const SCEV *Stride,
                             bool IsSigned, bool NoWrap);
 
-    /// Verify if an linear IV with negative stride can overflow when in a 
+    /// Verify if an linear IV with negative stride can overflow when in a
     /// greater-than comparison, knowing the invariant term of the comparison,
     /// the stride and the knowledge of NSW/NUW flags on the recurrence.
     bool doesIVOverflowOnGT(const SCEV *RHS, const SCEV *Stride,
