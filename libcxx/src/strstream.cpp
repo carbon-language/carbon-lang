@@ -61,7 +61,7 @@ strstreambuf::strstreambuf(const char* __gnext, streamsize __n)
       __palloc_(nullptr),
       __pfree_(nullptr)
 {
-    __init((char*)__gnext, __n, nullptr);
+    __init(const_cast<char *>(__gnext), __n, nullptr);
 }
 
 strstreambuf::strstreambuf(signed char* __gnext, streamsize __n, signed char* __pbeg)
@@ -70,7 +70,7 @@ strstreambuf::strstreambuf(signed char* __gnext, streamsize __n, signed char* __
       __palloc_(nullptr),
       __pfree_(nullptr)
 {
-    __init((char*)__gnext, __n, (char*)__pbeg);
+    __init(const_cast<char *>(reinterpret_cast<const char*>(__gnext)), __n, reinterpret_cast<char*>(__pbeg));
 }
 
 strstreambuf::strstreambuf(const signed char* __gnext, streamsize __n)
@@ -79,7 +79,7 @@ strstreambuf::strstreambuf(const signed char* __gnext, streamsize __n)
       __palloc_(nullptr),
       __pfree_(nullptr)
 {
-    __init((char*)__gnext, __n, nullptr);
+    __init(const_cast<char *>(reinterpret_cast<const char*>(__gnext)), __n, nullptr);
 }
 
 strstreambuf::strstreambuf(unsigned char* __gnext, streamsize __n, unsigned char* __pbeg)
@@ -88,7 +88,7 @@ strstreambuf::strstreambuf(unsigned char* __gnext, streamsize __n, unsigned char
       __palloc_(nullptr),
       __pfree_(nullptr)
 {
-    __init((char*)__gnext, __n, (char*)__pbeg);
+    __init(const_cast<char *>(reinterpret_cast<const char*>(__gnext)), __n, reinterpret_cast<char*>(__pbeg));
 }
 
 strstreambuf::strstreambuf(const unsigned char* __gnext, streamsize __n)
@@ -97,7 +97,7 @@ strstreambuf::strstreambuf(const unsigned char* __gnext, streamsize __n)
       __palloc_(nullptr),
       __pfree_(nullptr)
 {
-    __init((char*)__gnext, __n, nullptr);
+    __init(const_cast<char *>(reinterpret_cast<const char*>(__gnext)), __n, nullptr);
 }
 
 strstreambuf::~strstreambuf()
@@ -186,7 +186,7 @@ strstreambuf::overflow(int_type __c)
     }
     *pptr() = static_cast<char>(__c);
     pbump(1);
-    return int_type((unsigned char)__c);
+    return int_type(static_cast<unsigned char>(__c));
 }
 
 strstreambuf::int_type
@@ -222,7 +222,7 @@ strstreambuf::underflow()
             return EOF;
         setg(eback(), gptr(), pptr());
     }
-    return int_type((unsigned char)*gptr());
+    return int_type(static_cast<unsigned char>(*gptr()));
 }
 
 strstreambuf::pos_type

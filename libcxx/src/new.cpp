@@ -167,7 +167,7 @@ set_new_handler(new_handler handler) _NOEXCEPT
 new_handler
 get_new_handler() _NOEXCEPT
 {
-    return __sync_fetch_and_add(&__new_handler, (new_handler)0);
+    return __sync_fetch_and_add(&__new_handler, nullptr);
 }
 
 #endif // !__GLIBCXX__

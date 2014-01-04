@@ -144,7 +144,7 @@ public:
     
     T* allocate(size_t __n)
         {return static_cast<T*>(::operator new(__n * sizeof(T)));}
-    void deallocate(T* __p, size_t) {::operator delete((void*)__p);}
+    void deallocate(T* __p, size_t) {::operator delete(static_cast<void*>(__p));}
 
     size_t max_size() const {return size_t(~0) / sizeof(T);}
 };
