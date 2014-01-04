@@ -1,6 +1,6 @@
 // NOTE: Use '-fobjc-gc' to test the analysis being run twice, and multiple reports are not issued.
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,alpha.deadcode.IdempotentOperations,alpha.core,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=range -verify -fblocks -Wno-unreachable-code -Wno-null-dereference -Wno-objc-root-class %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,alpha.deadcode.IdempotentOperations,alpha.core,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=range -verify -fblocks -Wno-unreachable-code -Wno-null-dereference -Wno-objc-root-class %s
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,alpha.core,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=range -verify -fblocks -Wno-unreachable-code -Wno-null-dereference -Wno-objc-root-class %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,alpha.core,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=range -verify -fblocks -Wno-unreachable-code -Wno-null-dereference -Wno-objc-root-class %s
 
 #ifndef __clang_analyzer__
 #error __clang_analyzer__ not defined
@@ -80,11 +80,11 @@ unsigned r6268365Aux();
 
 void r6268365() {
   unsigned x = 0;
-  x &= r6268365Aux(); // expected-warning{{The left operand to '&=' is always 0}}
+  x &= r6268365Aux();
   unsigned j = 0;
     
   if (x == 0) ++j;
-  if (x == 0) x = x / j; // expected-warning{{Assigned value is always the same as the existing value}} expected-warning{{The right operand to '/' is always 1}}
+  if (x == 0) x = x / j;
 }
 
 void divzeroassume(unsigned x, unsigned j) {  
@@ -412,14 +412,14 @@ void test_trivial_symbolic_comparison(int *x) {
   int test_trivial_symbolic_comparison_aux();
   int a = test_trivial_symbolic_comparison_aux();
   int b = a;
-  if (a != b) { // expected-warning{{Both operands to '!=' always have the same value}}
+  if (a != b) {
     int *p = 0;
     *p = 0xDEADBEEF;     // no-warning
   }
   
   a = a == 1;
   b = b == 1;
-  if (a != b) { // expected-warning{{Both operands to '!=' always have the same value}}
+  if (a != b) {
     int *p = 0;
     *p = 0xDEADBEEF;     // no-warning
   }

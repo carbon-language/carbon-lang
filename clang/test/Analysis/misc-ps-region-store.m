@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,alpha.deadcode.IdempotentOperations,alpha.core.CastToStruct,alpha.security.ReturnPtrRange,alpha.security.ArrayBound -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks -Wno-objc-root-class %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -DTEST_64 -analyze -analyzer-checker=core,alpha.deadcode.IdempotentOperations,alpha.core.CastToStruct,alpha.security.ReturnPtrRange,alpha.security.ArrayBound -analyzer-store=region -verify -fblocks   -analyzer-opt-analyze-nested-blocks -Wno-objc-root-class %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,alpha.core.CastToStruct,alpha.security.ReturnPtrRange,alpha.security.ArrayBound -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks -Wno-objc-root-class %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -DTEST_64 -analyze -analyzer-checker=core,alpha.core.CastToStruct,alpha.security.ReturnPtrRange,alpha.security.ArrayBound -analyzer-store=region -verify -fblocks   -analyzer-opt-analyze-nested-blocks -Wno-objc-root-class %s
 
 typedef long unsigned int size_t;
 void *memcpy(void *, const void *, size_t);
@@ -253,7 +253,7 @@ void rdar_7249327(unsigned int A[2*32]) {
   a = A;
   b = B;
   
-  n = *a++; // expected-warning{{Assigned value is always the same as the existing value}}
+  n = *a++;
   if (n)
     x += *b++; // no-warning
 }
@@ -1115,7 +1115,7 @@ void pr8015_D_FIXME() {
   int number = pr8015_A();
   const char *numbers[] = { "zero" };
   if (number == 0) {
-    if (numbers[number] == numbers[0]) // expected-warning{{Both operands to '==' always have the same value}}
+    if (numbers[number] == numbers[0])
       return;
     // Unreachable.
     int *p = 0;

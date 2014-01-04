@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-checker=core,alpha.deadcode.IdempotentOperations -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-checker=core -verify %s
 
 struct s {
   int data;
@@ -42,7 +42,7 @@ void test_uninit_pos_3() {
 void test_uninit_neg() {
   struct TestUninit v1 = { 0, 0 };
   struct TestUninit v2 = test_uninit_aux();
-  test_unit_aux2(v2.x + v1.y); // expected-warning{{The right operand to '+' is always 0}}
+  test_unit_aux2(v2.x + v1.y);
 }
 
 extern void test_uninit_struct_arg_aux(struct TestUninit arg);

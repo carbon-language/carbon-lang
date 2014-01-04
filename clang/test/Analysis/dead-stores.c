@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=core,deadcode.DeadStores,alpha.deadcode.IdempotentOperations -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
-// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=core,deadcode.DeadStores,alpha.deadcode.IdempotentOperations -analyzer-store=region -analyzer-constraints=range -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=core,deadcode.DeadStores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=core,deadcode.DeadStores -analyzer-store=region -analyzer-constraints=range -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
 
 void f1() {
   int k, y; // expected-warning{{unused variable 'k'}} expected-warning{{unused variable 'y'}}
@@ -152,7 +152,7 @@ void f15(unsigned x, unsigned y) {
 // to see a real bug in this scenario.
 int f16(int x) {
   x = x * 2;
-  x = sizeof(int [x = (x || x + 1) * 2]) // expected-warning{{The left operand to '+' is always 0}} expected-warning{{The left operand to '*' is always 1}}
+  x = sizeof(int [x = (x || x + 1) * 2])
       ? 5 : 8;
   return x;
 }
@@ -484,7 +484,7 @@ void rdar8014335() {
     // Note that the next value stored to 'i' is never executed
     // because the next statement to be executed is the 'break'
     // in the increment code of the first loop.
-    i = i * 3; // expected-warning{{Value stored to 'i' is never read}} expected-warning{{The left operand to '*' is always 1}}
+    i = i * 3; // expected-warning{{Value stored to 'i' is never read}}
   }
 }
 

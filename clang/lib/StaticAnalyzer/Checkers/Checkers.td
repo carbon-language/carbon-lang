@@ -203,10 +203,6 @@ def DeadStoresChecker : Checker<"DeadStores">,
 
 let ParentPackage = DeadCodeAlpha in {
 
-def IdempotentOperationChecker : Checker<"IdempotentOperations">,
-  HelpText<"Warn about idempotent operations">,
-  DescFile<"IdempotentOperationChecker.cpp">;
-
 def UnreachableCodeChecker : Checker<"UnreachableCode">,
   HelpText<"Check unreachable code">,
   DescFile<"UnreachableCodeChecker.cpp">;
