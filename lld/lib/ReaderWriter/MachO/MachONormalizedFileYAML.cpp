@@ -244,6 +244,8 @@ struct ScalarEnumerationTraits<NListType> {
     io.enumCase(value, "N_UNDF",  llvm::MachO::N_UNDF);
     io.enumCase(value, "N_ABS",   llvm::MachO::N_ABS);
     io.enumCase(value, "N_SECT",  llvm::MachO::N_SECT);
+    io.enumCase(value, "N_PBUD",  llvm::MachO::N_PBUD);
+    io.enumCase(value, "N_INDR",  llvm::MachO::N_INDR);
   }
 };
 
