@@ -125,14 +125,18 @@ def IN32 : I<0x6D, RawFrm, (outs), (ins), "ins{l}", [], IIC_INS>;
 
 let SchedRW = [WriteSystem] in {
 def MOV32rd : I<0x21, MRMDestReg, (outs GR32:$dst), (ins DEBUG_REG:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_REG_DR>, TB;
+                "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_REG_DR>, TB,
+                Requires<[Not64BitMode]>;
 def MOV64rd : I<0x21, MRMDestReg, (outs GR64:$dst), (ins DEBUG_REG:$src),
-                "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV_REG_DR>, TB;
-                
+                "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV_REG_DR>, TB,
+                Requires<[In64BitMode]>;
+
 def MOV32dr : I<0x23, MRMSrcReg, (outs DEBUG_REG:$dst), (ins GR32:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_DR_REG>, TB;
+                "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_DR_REG>, TB,
+                Requires<[Not64BitMode]>;
 def MOV64dr : I<0x23, MRMSrcReg, (outs DEBUG_REG:$dst), (ins GR64:$src),
-                "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV_DR_REG>, TB;
+                "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV_DR_REG>, TB,
+                Requires<[In64BitMode]>;
 } // SchedRW
 
 //===----------------------------------------------------------------------===//
@@ -140,14 +144,18 @@ def MOV64dr : I<0x23, MRMSrcReg, (outs DEBUG_REG:$dst), (ins GR64:$src),
 
 let SchedRW = [WriteSystem] in {
 def MOV32rc : I<0x20, MRMDestReg, (outs GR32:$dst), (ins CONTROL_REG:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_REG_CR>, TB;
+                "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_REG_CR>, TB,
+                Requires<[Not64BitMode]>;
 def MOV64rc : I<0x20, MRMDestReg, (outs GR64:$dst), (ins CONTROL_REG:$src),
-                "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV_REG_CR>, TB;
-                
+                "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV_REG_CR>, TB,
+                Requires<[In64BitMode]>;
+
 def MOV32cr : I<0x22, MRMSrcReg, (outs CONTROL_REG:$dst), (ins GR32:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_CR_REG>, TB;
+                "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV_CR_REG>, TB,
+                Requires<[Not64BitMode]>;
 def MOV64cr : I<0x22, MRMSrcReg, (outs CONTROL_REG:$dst), (ins GR64:$src),
-                "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV_CR_REG>, TB;
+                "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV_CR_REG>, TB,
+                Requires<[In64BitMode]>;
 } // SchedRW
 
 //===----------------------------------------------------------------------===//
