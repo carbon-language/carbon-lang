@@ -21,6 +21,7 @@ static void test() {
     int i;
 
     vec3 += vec2; // expected-error {{can't convert between vector values of different size}}
+    vec4 += vec3; // expected-error {{can't convert between vector values of different size}}
     
     vec4 = 5.0f;
     vec4 = (float4)5.0f;
