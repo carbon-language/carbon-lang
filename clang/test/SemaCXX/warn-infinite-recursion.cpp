@@ -127,3 +127,26 @@ int DoStuff() {
   return 0;
 }
 int stuff = DoStuff<0, 1>();
+
+template<int x>
+struct Wrapper {
+  static int run() {
+    // Similar to the above, Wrapper<0>::run() will discard the if statement.
+    if (x == 1)
+      return 0;
+    return Wrapper<x/2>::run();
+  }
+  static int run2() {  // expected-warning{{call itself}}
+    return run2();
+  }
+};
+
+template <int x>
+int test_wrapper() {
+  if (x != 0)
+    return Wrapper<x>::run() +
+           Wrapper<x>::run2();  // expected-note{{instantiation}}
+  return 0;
+}
+
+int wrapper_sum = test_wrapper<2>();  // expected-note{{instantiation}}

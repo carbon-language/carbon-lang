@@ -116,6 +116,18 @@ static void checkForFunctionCall(Sema &S, const FunctionDecl *FD,
       const CallExpr *CE = dyn_cast<CallExpr>(I->getAs<CFGStmt>()->getStmt());
       if (CE && CE->getCalleeDecl() &&
           CE->getCalleeDecl()->getCanonicalDecl() == FD) {
+
+        // Skip function calls which are qualified with a templated class.
+        if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
+                CE->getCallee()->IgnoreParenImpCasts())) {
+          if (NestedNameSpecifier *NNS = DRE->getQualifier()) {
+            if (NNS->getKind() == NestedNameSpecifier::TypeSpec &&
+                isa<TemplateSpecializationType>(NNS->getAsType())) {
+               continue;
+            }
+          }
+        }
+
         if (const CXXMemberCallExpr *MCE = dyn_cast<CXXMemberCallExpr>(CE)) {
           if (isa<CXXThisExpr>(MCE->getImplicitObjectArgument()) ||
               !MCE->getMethodDecl()->isVirtual()) {
