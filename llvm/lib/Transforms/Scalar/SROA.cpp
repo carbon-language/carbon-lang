@@ -244,8 +244,8 @@ public:
   void printUse(raw_ostream &OS, const_iterator I,
                 StringRef Indent = "  ") const;
   void print(raw_ostream &OS) const;
-  LLVM_DUMP_METHOD void dump(const_iterator I) const;
-  LLVM_DUMP_METHOD void dump() const;
+  void dump(const_iterator I) const;
+  void dump() const;
 #endif
 
 private:
@@ -712,8 +712,10 @@ void AllocaSlices::print(raw_ostream &OS) const {
     print(OS, I);
 }
 
-void AllocaSlices::dump(const_iterator I) const { print(dbgs(), I); }
-void AllocaSlices::dump() const { print(dbgs()); }
+LLVM_DUMP_METHOD void AllocaSlices::dump(const_iterator I) const {
+  print(dbgs(), I);
+}
+LLVM_DUMP_METHOD void AllocaSlices::dump() const { print(dbgs()); }
 
 #endif // !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 
