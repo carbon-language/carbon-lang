@@ -1,4 +1,4 @@
-;===- ./lib/Target/Sparc/LLVMBuild.txt -------------------------*- Conf -*--===;
+;===- ./lib/Target/Sparc/AsmParser/LLVMBuild.txt ---------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,20 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = AsmParser InstPrinter MCTargetDesc TargetInfo
-
 [component_0]
-type = TargetGroup
-name = Sparc
-parent = Target
-has_asmprinter = 1
-has_jit = 1
-
-[component_1]
 type = Library
-name = SparcCodeGen
+name = SparcAsmParser
 parent = Sparc
-required_libraries = AsmPrinter CodeGen Core MC SelectionDAG SparcAsmPrinter
-                     SparcDesc SparcInfo Support Target
+required_libraries = MC MCParser Support SparcDesc SparcInfo
 add_to_library_groups = Sparc

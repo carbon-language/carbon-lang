@@ -13,11 +13,12 @@ TARGET = Sparc
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = SparcGenRegisterInfo.inc SparcGenInstrInfo.inc \
-		SparcGenAsmWriter.inc SparcGenDAGISel.inc \
+		SparcGenAsmWriter.inc SparcGenAsmMatcher.inc \
+		SparcGenDAGISel.inc \
 		SparcGenSubtargetInfo.inc SparcGenCallingConv.inc \
 		SparcGenCodeEmitter.inc
 
-DIRS = InstPrinter TargetInfo MCTargetDesc
+DIRS = InstPrinter AsmParser TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common
 

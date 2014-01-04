@@ -123,12 +123,17 @@ extern "C" void LLVMInitializeSparcTargetMC() {
 
   // Register the MC instruction info.
   TargetRegistry::RegisterMCInstrInfo(TheSparcTarget, createSparcMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheSparcV9Target, createSparcMCInstrInfo);
 
   // Register the MC register info.
   TargetRegistry::RegisterMCRegInfo(TheSparcTarget, createSparcMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheSparcV9Target,
+                                    createSparcMCRegisterInfo);
 
   // Register the MC subtarget info.
   TargetRegistry::RegisterMCSubtargetInfo(TheSparcTarget,
+                                          createSparcMCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheSparcV9Target,
                                           createSparcMCSubtargetInfo);
 
   TargetRegistry::RegisterAsmStreamer(TheSparcTarget,

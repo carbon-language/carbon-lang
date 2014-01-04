@@ -44,6 +44,10 @@ include "SparcInstrInfo.td"
 
 def SparcInstrInfo : InstrInfo;
 
+def SparcAsmParser : AsmParser {
+  bit ShouldEmitMatchRegisterName = 0;
+}
+
 //===----------------------------------------------------------------------===//
 // SPARC processors supported.
 //===----------------------------------------------------------------------===//
@@ -73,4 +77,5 @@ def : Proc<"ultrasparc3-vis", [FeatureV9, FeatureV8Deprecated, FeatureVIS]>;
 def Sparc : Target {
   // Pull in Instruction Info:
   let InstructionSet = SparcInstrInfo;
+  let AssemblyParsers  = [SparcAsmParser];
 }

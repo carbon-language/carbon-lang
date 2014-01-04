@@ -76,13 +76,25 @@ def ADDRrr : ComplexPattern<iPTR, 2, "SelectADDRrr", [], []>;
 def ADDRri : ComplexPattern<iPTR, 2, "SelectADDRri", [frameindex], []>;
 
 // Address operands
+def SparcMEMrrAsmOperand : AsmOperandClass {
+  let Name = "MEMrr";
+  let ParserMethod = "parseMEMrrOperand";
+}
+
+def SparcMEMriAsmOperand : AsmOperandClass {
+  let Name = "MEMri";
+  let ParserMethod = "parseMEMriOperand";
+}
+
 def MEMrr : Operand<iPTR> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops ptr_rc, ptr_rc);
+  let ParserMatchClass = SparcMEMrrAsmOperand;
 }
 def MEMri : Operand<iPTR> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops ptr_rc, i32imm);
+  let ParserMatchClass = SparcMEMriAsmOperand;
 }
 
 def TLSSym : Operand<iPTR>;
@@ -239,7 +251,10 @@ multiclass F3_12np<string OpcStr, bits<6> Op3Val> {
 
 // Pseudo instructions.
 class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
-   : InstSP<outs, ins, asmstr, pattern>;
+   : InstSP<outs, ins, asmstr, pattern> {
+  let isCodeGenOnly = 1;
+  let isPseudo = 1;
+}
 
 // GETPCX for PIC
 let Defs = [O7] in {
@@ -503,7 +518,7 @@ defm SRA : F3_12<"sra", 0b100111, sra, IntRegs, i32, i32imm>;
 defm ADD   : F3_12<"add", 0b000000, add, IntRegs, i32, i32imm>;
 
 // "LEA" forms of add (patterns to make tblgen happy)
-let Predicates = [Is32Bit] in
+let Predicates = [Is32Bit], isCodeGenOnly = 1 in
   def LEA_ADDri   : F3_2<2, 0b000000,
                      (outs IntRegs:$dst), (ins MEMri:$addr),
                      "add ${addr:arith}, $dst",
