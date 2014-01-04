@@ -518,7 +518,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     if (LangOpts.CPlusPlus) {
       // FIXME: Support Microsoft's __identifier extension in the lexer.
       Builder.append("#define __identifier(x) x");
-      Builder.append("class type_info;");
     }
   }
 
