@@ -6612,6 +6612,42 @@ QualType Sema::InvalidOperands(SourceLocation Loc, ExprResult &LHS,
   return QualType();
 }
 
+static bool areVectorOperandsLaxBitCastable(ASTContext &Ctx,
+                                            QualType LHSType, QualType RHSType){
+  if (!Ctx.getLangOpts().LaxVectorConversions)
+    return false;
+
+  unsigned LHSSize = Ctx.getTypeSize(LHSType);
+  unsigned RHSSize = Ctx.getTypeSize(RHSType);
+  if (LHSSize != RHSSize)
+    return false;
+
+  // For a non-power-of-2 vector ASTContext::getTypeSize returns the size
+  // rounded to the next power-of-2, but the LLVM IR type that we create
+  // is considered to have num-of-elements*width-of-element width.
+  // Make sure such width is the same between the types, otherwise we may end
+  // up with an invalid bitcast.
+  unsigned LHSIRSize, RHSIRSize;
+  if (LHSType->isVectorType()) {
+    const VectorType *Vec = LHSType->getAs<VectorType>();
+    LHSIRSize = Vec->getNumElements() *
+        Ctx.getTypeSize(Vec->getElementType());
+  } else {
+    LHSIRSize = LHSSize;
+  }
+  if (RHSType->isVectorType()) {
+    const VectorType *Vec = RHSType->getAs<VectorType>();
+    RHSIRSize = Vec->getNumElements() *
+        Ctx.getTypeSize(Vec->getElementType());
+  } else {
+    RHSIRSize = RHSSize;
+  }
+  if (LHSIRSize != RHSIRSize)
+    return false;
+
+  return true;
+}
+
 QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
                                    SourceLocation Loc, bool IsCompAssign) {
   if (!IsCompAssign) {
@@ -6647,8 +6683,7 @@ QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
     return RHSType;
   }
 
-  if (getLangOpts().LaxVectorConversions &&
-      Context.getTypeSize(LHSType) == Context.getTypeSize(RHSType)) {
+  if (areVectorOperandsLaxBitCastable(Context, LHSType, RHSType)) {
     // If we are allowing lax vector conversions, and LHS and RHS are both
     // vectors, the total size only needs to be the same. This is a
     // bitcast; no bits are changed but the result type is different.

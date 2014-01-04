@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -triple x86_64-apple-macos10.7.0 -fsyntax-only -verify -fno-lax-vector-conversions %s
 
 typedef __attribute__(( ext_vector_type(2) )) float float2;
+typedef __attribute__(( ext_vector_type(3) )) float float3;
 typedef __attribute__(( ext_vector_type(4) )) int int4;
 typedef __attribute__(( ext_vector_type(8) )) short short8;
 typedef __attribute__(( ext_vector_type(4) )) float float4;
@@ -11,12 +12,15 @@ typedef size_t stride4 __attribute__((ext_vector_type(4)));
 
 static void test() {
     float2 vec2;
+    float3 vec3;
     float4 vec4, vec4_2;
     int4 ivec4;
     short8 ish8;
     t3 vec4_3;
     int *ptr;
     int i;
+
+    vec3 += vec2; // expected-error {{can't convert between vector values of different size}}
     
     vec4 = 5.0f;
     vec4 = (float4)5.0f;
