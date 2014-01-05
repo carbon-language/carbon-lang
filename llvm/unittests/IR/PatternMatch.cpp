@@ -13,253 +13,192 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Support/NoFolder.h"
 #include "llvm/Support/PatternMatch.h"
 #include "gtest/gtest.h"
 
+using namespace llvm;
 using namespace llvm::PatternMatch;
 
-namespace llvm {
 namespace {
 
-/// Ordered floating point minimum/maximum tests.
+struct PatternMatchTest : ::testing::Test {
+  LLVMContext Ctx;
+  OwningPtr<Module> M;
+  Function *F;
+  BasicBlock *BB;
+  IRBuilder<true, NoFolder> Builder;
 
-static void m_OrdFMin_expect_match_and_delete(Value *Cmp, Value *Select,
-                                              Value *L, Value *R) {
-  Value *MatchL, *MatchR;
-  EXPECT_TRUE(m_OrdFMin(m_Value(MatchL), m_Value(MatchR)).match(Select));
-  EXPECT_EQ(L, MatchL);
-  EXPECT_EQ(R, MatchR);
-  delete Select;
-  delete Cmp;
-}
+  PatternMatchTest()
+      : M(new Module("PatternMatchTestModule", Ctx)),
+        F(Function::Create(
+            FunctionType::get(Type::getVoidTy(Ctx), /* IsVarArg */ false),
+            Function::ExternalLinkage, "f", M.get())),
+        BB(BasicBlock::Create(Ctx, "entry", F)), Builder(BB) {}
+};
 
-static void m_OrdFMin_expect_nomatch_and_delete(Value *Cmp, Value *Select,
-                                                Value *L, Value *R) {
-  Value *MatchL, *MatchR;
-  EXPECT_FALSE(m_OrdFMin(m_Value(MatchL), m_Value(MatchR)).match(Select));
-  delete Select;
-  delete Cmp;
-}
-
-static void m_OrdFMax_expect_match_and_delete(Value *Cmp, Value *Select,
-                                              Value *L, Value *R) {
-  Value *MatchL, *MatchR;
-  EXPECT_TRUE(m_OrdFMax(m_Value(MatchL), m_Value(MatchR)).match(Select));
-  EXPECT_EQ(L, MatchL);
-  EXPECT_EQ(R, MatchR);
-  delete Select;
-  delete Cmp;
-}
-
-static void m_OrdFMax_expect_nomatch_and_delete(Value *Cmp, Value *Select,
-                                                Value *L, Value *R) {
-  Value *MatchL, *MatchR;
-  EXPECT_FALSE(m_OrdFMax(m_Value(MatchL), m_Value(MatchR)).match(Select));
-  delete Select;
-  delete Cmp;
-}
-
-
-
-TEST(PatternMatchTest, FloatingPointOrderedMin) {
-  LLVMContext &C(getGlobalContext());
-  IRBuilder<true, NoFolder> Builder(C);
-
+TEST_F(PatternMatchTest, FloatingPointOrderedMin) {
   Type *FltTy = Builder.getFloatTy();
   Value *L = ConstantFP::get(FltTy, 1.0);
   Value *R = ConstantFP::get(FltTy, 2.0);
+  Value *MatchL, *MatchR;
 
   // Test OLT.
-  Value *Cmp = Builder.CreateFCmpOLT(L, R);
-  Value *Select = Builder.CreateSelect(Cmp, L, R);
-  m_OrdFMin_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_OrdFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpOLT(L, R), L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test OLE.
-  Cmp = Builder.CreateFCmpOLE(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_OrdFMin_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_OrdFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpOLE(L, R), L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test no match on OGE.
-  Cmp = Builder.CreateFCmpOGE(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_OrdFMin_expect_nomatch_and_delete(Cmp, Select, L, R);
+  EXPECT_FALSE(m_OrdFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpOGE(L, R), L, R)));
 
   // Test no match on OGT.
-  Cmp = Builder.CreateFCmpOGT(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_OrdFMin_expect_nomatch_and_delete(Cmp, Select, L, R);
+  EXPECT_FALSE(m_OrdFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpOGT(L, R), L, R)));
 
   // Test match on OGE with inverted select.
-  Cmp = Builder.CreateFCmpOGE(L, R);
-  Select = Builder.CreateSelect(Cmp, R, L);
-  m_OrdFMin_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_OrdFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpOGE(L, R), R, L)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test match on OGT with inverted select.
-  Cmp = Builder.CreateFCmpOGT(L, R);
-  Select = Builder.CreateSelect(Cmp, R, L);
-  m_OrdFMin_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_OrdFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpOGT(L, R), R, L)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 }
 
-TEST(PatternMatchTest, FloatingPointOrderedMax) {
-  LLVMContext &C(getGlobalContext());
-  IRBuilder<true, NoFolder> Builder(C);
-
+TEST_F(PatternMatchTest, FloatingPointOrderedMax) {
   Type *FltTy = Builder.getFloatTy();
   Value *L = ConstantFP::get(FltTy, 1.0);
   Value *R = ConstantFP::get(FltTy, 2.0);
+  Value *MatchL, *MatchR;
 
   // Test OGT.
-  Value *Cmp = Builder.CreateFCmpOGT(L, R);
-  Value *Select = Builder.CreateSelect(Cmp, L, R);
-  m_OrdFMax_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_OrdFMax(m_Value(MatchL), m_Value(MatchR)).match(
+  Builder.CreateSelect(Builder.CreateFCmpOGT(L, R), L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test OGE.
-  Cmp = Builder.CreateFCmpOGE(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_OrdFMax_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_OrdFMax(m_Value(MatchL), m_Value(MatchR)).match(
+  Builder.CreateSelect(Builder.CreateFCmpOGE(L, R), L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test no match on OLE.
-  Cmp = Builder.CreateFCmpOLE(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_OrdFMax_expect_nomatch_and_delete(Cmp, Select, L, R);
+  EXPECT_FALSE(m_OrdFMax(m_Value(MatchL), m_Value(MatchR)).match(
+  Builder.CreateSelect(Builder.CreateFCmpOLE(L, R), L, R)));
 
   // Test no match on OLT.
-  Cmp = Builder.CreateFCmpOLT(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_OrdFMax_expect_nomatch_and_delete(Cmp, Select, L, R);
+  EXPECT_FALSE(m_OrdFMax(m_Value(MatchL), m_Value(MatchR)).match(
+  Builder.CreateSelect(Builder.CreateFCmpOLT(L, R), L, R)));
 
   // Test match on OLE with inverted select.
-  Cmp = Builder.CreateFCmpOLE(L, R);
-  Select = Builder.CreateSelect(Cmp, R, L);
-  m_OrdFMax_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_OrdFMax(m_Value(MatchL), m_Value(MatchR)).match(
+  Builder.CreateSelect(Builder.CreateFCmpOLE(L, R), R, L)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test match on OLT with inverted select.
-  Cmp = Builder.CreateFCmpOLT(L, R);
-  Select = Builder.CreateSelect(Cmp, R, L);
-  m_OrdFMax_expect_match_and_delete(Cmp, Select, L, R);
-}
-
-/// Unordered floating point minimum/maximum tests.
-
-static void m_UnordFMin_expect_match_and_delete(Value *Cmp, Value *Select,
-                                              Value *L, Value *R) {
-  Value *MatchL, *MatchR;
-  EXPECT_TRUE(m_UnordFMin(m_Value(MatchL), m_Value(MatchR)).match(Select));
+  EXPECT_TRUE(m_OrdFMax(m_Value(MatchL), m_Value(MatchR)).match(
+  Builder.CreateSelect(Builder.CreateFCmpOLT(L, R), R, L)));
   EXPECT_EQ(L, MatchL);
   EXPECT_EQ(R, MatchR);
-  delete Select;
-  delete Cmp;
 }
 
-static void m_UnordFMin_expect_nomatch_and_delete(Value *Cmp, Value *Select,
-                                                Value *L, Value *R) {
-  Value *MatchL, *MatchR;
-  EXPECT_FALSE(m_UnordFMin(m_Value(MatchL), m_Value(MatchR)).match(Select));
-  delete Select;
-  delete Cmp;
-}
-
-static void m_UnordFMax_expect_match_and_delete(Value *Cmp, Value *Select,
-                                              Value *L, Value *R) {
-  Value *MatchL, *MatchR;
-  EXPECT_TRUE(m_UnordFMax(m_Value(MatchL), m_Value(MatchR)).match(Select));
-  EXPECT_EQ(L, MatchL);
-  EXPECT_EQ(R, MatchR);
-  delete Select;
-  delete Cmp;
-}
-
-static void m_UnordFMax_expect_nomatch_and_delete(Value *Cmp, Value *Select,
-                                                Value *L, Value *R) {
-  Value *MatchL, *MatchR;
-  EXPECT_FALSE(m_UnordFMax(m_Value(MatchL), m_Value(MatchR)).match(Select));
-  delete Select;
-  delete Cmp;
-}
-
-TEST(PatternMatchTest, FloatingPointUnorderedMin) {
-  LLVMContext &C(getGlobalContext());
-  IRBuilder<true, NoFolder> Builder(C);
-
+TEST_F(PatternMatchTest, FloatingPointUnorderedMin) {
   Type *FltTy = Builder.getFloatTy();
   Value *L = ConstantFP::get(FltTy, 1.0);
   Value *R = ConstantFP::get(FltTy, 2.0);
+  Value *MatchL, *MatchR;
 
   // Test ULT.
-  Value *Cmp = Builder.CreateFCmpULT(L, R);
-  Value *Select = Builder.CreateSelect(Cmp, L, R);
-  m_UnordFMin_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_UnordFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpULT(L, R), L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test ULE.
-  Cmp = Builder.CreateFCmpULE(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_UnordFMin_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_UnordFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpULE(L, R), L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test no match on UGE.
-  Cmp = Builder.CreateFCmpUGE(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_UnordFMin_expect_nomatch_and_delete(Cmp, Select, L, R);
+  EXPECT_FALSE(m_UnordFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpUGE(L, R), L, R)));
 
   // Test no match on UGT.
-  Cmp = Builder.CreateFCmpUGT(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_UnordFMin_expect_nomatch_and_delete(Cmp, Select, L, R);
+  EXPECT_FALSE(m_UnordFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpUGT(L, R), L, R)));
 
   // Test match on UGE with inverted select.
-  Cmp = Builder.CreateFCmpUGE(L, R);
-  Select = Builder.CreateSelect(Cmp, R, L);
-  m_UnordFMin_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_UnordFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpUGE(L, R), R, L)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test match on UGT with inverted select.
-  Cmp = Builder.CreateFCmpUGT(L, R);
-  Select = Builder.CreateSelect(Cmp, R, L);
-  m_UnordFMin_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_UnordFMin(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpUGT(L, R), R, L)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 }
 
-TEST(PatternMatchTest, FloatingPointUnorderedMax) {
-  LLVMContext &C(getGlobalContext());
-  IRBuilder<true, NoFolder> Builder(C);
-
+TEST_F(PatternMatchTest, FloatingPointUnorderedMax) {
   Type *FltTy = Builder.getFloatTy();
   Value *L = ConstantFP::get(FltTy, 1.0);
   Value *R = ConstantFP::get(FltTy, 2.0);
+  Value *MatchL, *MatchR;
 
   // Test UGT.
-  Value *Cmp = Builder.CreateFCmpUGT(L, R);
-  Value *Select = Builder.CreateSelect(Cmp, L, R);
-  m_UnordFMax_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_UnordFMax(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpUGT(L, R), L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test UGE.
-  Cmp = Builder.CreateFCmpUGE(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_UnordFMax_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_UnordFMax(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpUGE(L, R), L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test no match on ULE.
-  Cmp = Builder.CreateFCmpULE(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_UnordFMax_expect_nomatch_and_delete(Cmp, Select, L, R);
+  EXPECT_FALSE(m_UnordFMax(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpULE(L, R), L, R)));
 
   // Test no match on ULT.
-  Cmp = Builder.CreateFCmpULT(L, R);
-  Select = Builder.CreateSelect(Cmp, L, R);
-  m_UnordFMax_expect_nomatch_and_delete(Cmp, Select, L, R);
+  EXPECT_FALSE(m_UnordFMax(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpULT(L, R), L, R)));
 
   // Test match on ULE with inverted select.
-  Cmp = Builder.CreateFCmpULE(L, R);
-  Select = Builder.CreateSelect(Cmp, R, L);
-  m_UnordFMax_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_UnordFMax(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpULE(L, R), R, L)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 
   // Test match on ULT with inverted select.
-  Cmp = Builder.CreateFCmpULT(L, R);
-  Select = Builder.CreateSelect(Cmp, R, L);
-  m_UnordFMax_expect_match_and_delete(Cmp, Select, L, R);
+  EXPECT_TRUE(m_UnordFMax(m_Value(MatchL), m_Value(MatchR)).match(
+      Builder.CreateSelect(Builder.CreateFCmpULT(L, R), R, L)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
 }
 
 } // anonymous namespace.
-} // llvm namespace.
