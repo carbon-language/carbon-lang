@@ -72,6 +72,11 @@ private:
   unsigned getMachineOpValue(const MachineInstr &MI,
                              const MachineOperand &MO) const;
 
+  unsigned getCallTargetOpValue(const MachineInstr &MI,
+                                unsigned) const;
+  unsigned getBranchTargetOpValue(const MachineInstr &MI,
+                                  unsigned) const;
+
   void emitWord(unsigned Word);
 
   unsigned getRelocation(const MachineInstr &MI,
@@ -181,6 +186,18 @@ unsigned SparcCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     llvm_unreachable("Unable to encode MachineOperand!");
   return 0;
 }
+unsigned SparcCodeEmitter::getCallTargetOpValue(const MachineInstr &MI,
+                                                unsigned opIdx) const {
+  const MachineOperand MO = MI.getOperand(opIdx);
+  return getMachineOpValue(MI, MO);
+}
+
+unsigned SparcCodeEmitter::getBranchTargetOpValue(const MachineInstr &MI,
+                                                  unsigned opIdx) const {
+  const MachineOperand MO = MI.getOperand(opIdx);
+  return getMachineOpValue(MI, MO);
+}
+
 unsigned SparcCodeEmitter::getRelocation(const MachineInstr &MI,
                                          const MachineOperand &MO) const {
 

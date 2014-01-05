@@ -136,6 +136,18 @@ extern "C" void LLVMInitializeSparcTargetMC() {
   TargetRegistry::RegisterMCSubtargetInfo(TheSparcV9Target,
                                           createSparcMCSubtargetInfo);
 
+  // Register the MC Code Emitter.
+  TargetRegistry::RegisterMCCodeEmitter(TheSparcTarget,
+                                        createSparcMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheSparcV9Target,
+                                        createSparcMCCodeEmitter);
+
+  //Register the asm backend.
+  TargetRegistry::RegisterMCAsmBackend(TheSparcTarget,
+                                       createSparcAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheSparcV9Target,
+                                       createSparcAsmBackend);
+
   TargetRegistry::RegisterAsmStreamer(TheSparcTarget,
                                       createMCAsmStreamer);
   TargetRegistry::RegisterAsmStreamer(TheSparcV9Target,

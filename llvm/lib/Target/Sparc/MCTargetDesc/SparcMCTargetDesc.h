@@ -15,10 +15,26 @@
 #define SPARCMCTARGETDESC_H
 
 namespace llvm {
+class MCAsmBackend;
+class MCCodeEmitter;
+class MCContext;
+class MCInstrInfo;
+class MCRegisterInfo;
+class MCSubtargetInfo;
 class Target;
+class StringRef;
 
 extern Target TheSparcTarget;
 extern Target TheSparcV9Target;
+
+MCCodeEmitter *createSparcMCCodeEmitter(const MCInstrInfo &MCII,
+                                        const MCRegisterInfo &MRI,
+                                        const MCSubtargetInfo &STI,
+                                        MCContext &Ctx);
+MCAsmBackend *createSparcAsmBackend(const Target &T,
+                                    const MCRegisterInfo &MRI,
+                                    StringRef TT,
+                                    StringRef CPU);
 
 } // End llvm namespace
 

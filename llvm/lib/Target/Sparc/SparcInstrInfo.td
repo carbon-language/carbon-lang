@@ -100,8 +100,13 @@ def MEMri : Operand<iPTR> {
 def TLSSym : Operand<iPTR>;
 
 // Branch targets have OtherVT type.
-def brtarget : Operand<OtherVT>;
-def calltarget : Operand<i32>;
+def brtarget : Operand<OtherVT> {
+  let EncoderMethod = "getBranchTargetOpValue";
+}
+
+def calltarget : Operand<i32> {
+  let EncoderMethod = "getCallTargetOpValue";
+}
 
 // Operand for printing out a condition code.
 let PrintMethod = "printCCOperand" in

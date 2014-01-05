@@ -1,6 +1,8 @@
 add_llvm_library(LLVMSparcDesc
-  SparcMCTargetDesc.cpp
+  SparcAsmBackend.cpp
   SparcMCAsmInfo.cpp
+  SparcMCCodeEmitter.cpp
+  SparcMCTargetDesc.cpp
   SparcMCExpr.cpp
   SparcTargetStreamer.cpp
   )
