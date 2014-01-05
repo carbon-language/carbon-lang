@@ -117,9 +117,10 @@ void EmitDisassembler(RecordKeeper &Records, raw_ostream &OS) {
     for (unsigned i = 0, e = numberedInstructions.size(); i != e; ++i)
       RecognizableInstr::processInstr(Tables, *numberedInstructions[i], i);
 
-    if (Tables.hasConflicts())
-      PrintFatalError(Target.getTargetRecord()->getLoc(),
-                      "Primary decode conflict");
+    if (Tables.hasConflicts()) {
+      PrintError(Target.getTargetRecord()->getLoc(), "Primary decode conflict");
+      return;
+    }
 
     Tables.emit(OS);
     return;
