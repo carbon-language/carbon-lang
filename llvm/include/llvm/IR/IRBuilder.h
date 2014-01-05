@@ -638,7 +638,7 @@ public:
                    bool HasNUW = false, bool HasNSW = false) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Insert(Folder.CreateSub(LC, RC), Name);
+        return Insert(Folder.CreateSub(LC, RC, HasNUW, HasNSW), Name);
     return CreateInsertNUWNSWBinOp(Instruction::Sub, LHS, RHS, Name,
                                    HasNUW, HasNSW);
   }
@@ -660,7 +660,7 @@ public:
                    bool HasNUW = false, bool HasNSW = false) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Insert(Folder.CreateMul(LC, RC), Name);
+        return Insert(Folder.CreateMul(LC, RC, HasNUW, HasNSW), Name);
     return CreateInsertNUWNSWBinOp(Instruction::Mul, LHS, RHS, Name,
                                    HasNUW, HasNSW);
   }

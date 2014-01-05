@@ -16,6 +16,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/NoFolder.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -188,6 +189,56 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   FDiv->copyFastMathFlags(FAdd);
   EXPECT_TRUE(FDiv->hasNoNaNs());
 
+}
+
+TEST_F(IRBuilderTest, WrapFlags) {
+  IRBuilder<true, NoFolder> Builder(BB);
+
+  // Test instructions.
+  GlobalVariable *G = new GlobalVariable(*M, Builder.getInt32Ty(), true,
+                                         GlobalValue::ExternalLinkage, 0);
+  Value *V = Builder.CreateLoad(G);
+  EXPECT_TRUE(
+      cast<BinaryOperator>(Builder.CreateNSWAdd(V, V))->hasNoSignedWrap());
+  EXPECT_TRUE(
+      cast<BinaryOperator>(Builder.CreateNSWMul(V, V))->hasNoSignedWrap());
+  EXPECT_TRUE(
+      cast<BinaryOperator>(Builder.CreateNSWSub(V, V))->hasNoSignedWrap());
+  EXPECT_TRUE(cast<BinaryOperator>(
+                  Builder.CreateShl(V, V, "", /* NUW */ false, /* NSW */ true))
+                  ->hasNoSignedWrap());
+
+  EXPECT_TRUE(
+      cast<BinaryOperator>(Builder.CreateNUWAdd(V, V))->hasNoUnsignedWrap());
+  EXPECT_TRUE(
+      cast<BinaryOperator>(Builder.CreateNUWMul(V, V))->hasNoUnsignedWrap());
+  EXPECT_TRUE(
+      cast<BinaryOperator>(Builder.CreateNUWSub(V, V))->hasNoUnsignedWrap());
+  EXPECT_TRUE(cast<BinaryOperator>(
+                  Builder.CreateShl(V, V, "", /* NUW */ true, /* NSW */ false))
+                  ->hasNoUnsignedWrap());
+
+  // Test operators created with constants.
+  Constant *C = Builder.getInt32(42);
+  EXPECT_TRUE(cast<OverflowingBinaryOperator>(Builder.CreateNSWAdd(C, C))
+                  ->hasNoSignedWrap());
+  EXPECT_TRUE(cast<OverflowingBinaryOperator>(Builder.CreateNSWSub(C, C))
+                  ->hasNoSignedWrap());
+  EXPECT_TRUE(cast<OverflowingBinaryOperator>(Builder.CreateNSWMul(C, C))
+                  ->hasNoSignedWrap());
+  EXPECT_TRUE(cast<OverflowingBinaryOperator>(
+                  Builder.CreateShl(C, C, "", /* NUW */ false, /* NSW */ true))
+                  ->hasNoSignedWrap());
+
+  EXPECT_TRUE(cast<OverflowingBinaryOperator>(Builder.CreateNUWAdd(C, C))
+                  ->hasNoUnsignedWrap());
+  EXPECT_TRUE(cast<OverflowingBinaryOperator>(Builder.CreateNUWSub(C, C))
+                  ->hasNoUnsignedWrap());
+  EXPECT_TRUE(cast<OverflowingBinaryOperator>(Builder.CreateNUWMul(C, C))
+                  ->hasNoUnsignedWrap());
+  EXPECT_TRUE(cast<OverflowingBinaryOperator>(
+                  Builder.CreateShl(C, C, "", /* NUW */ true, /* NSW */ false))
+                  ->hasNoUnsignedWrap());
 }
 
 TEST_F(IRBuilderTest, RAIIHelpersTest) {
