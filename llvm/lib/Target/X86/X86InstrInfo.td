@@ -915,7 +915,8 @@ def PUSH32rmm: I<0xFF, MRM6m, (outs), (ins i32mem:$src), "push{l}\t$src",[],
 def PUSHi8   : Ii8<0x6a, RawFrm, (outs), (ins i32i8imm:$imm),
                    "push{l}\t$imm", [], IIC_PUSH_IMM>, Requires<[Not64BitMode]>;
 def PUSHi16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm),
-                      "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize;
+                   "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize,
+                   Requires<[Not64BitMode]>;
 def PUSHi32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm),
                    "push{l}\t$imm", [], IIC_PUSH_IMM>, Requires<[Not64BitMode]>;
 
@@ -951,7 +952,8 @@ let Defs = [RSP], Uses = [RSP], neverHasSideEffects = 1, mayStore = 1,
 def PUSH64i8   : Ii8<0x6a, RawFrm, (outs), (ins i64i8imm:$imm),
                     "push{q}\t$imm", [], IIC_PUSH_IMM>, Requires<[In64BitMode]>;
 def PUSH64i16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm),
-                      "push{q}\t$imm", [], IIC_PUSH_IMM>;
+                    "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize,
+                    Requires<[In64BitMode]>;
 def PUSH64i32  : Ii32<0x68, RawFrm, (outs), (ins i64i32imm:$imm),
                     "push{q}\t$imm", [], IIC_PUSH_IMM>, Requires<[In64BitMode]>;
 }
