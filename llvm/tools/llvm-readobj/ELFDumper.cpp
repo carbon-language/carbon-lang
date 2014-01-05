@@ -693,6 +693,8 @@ static const char *getTypeString(uint64_t Type) {
   LLVM_READOBJ_TYPE_CASE(MIPS_SYMTABNO);
   LLVM_READOBJ_TYPE_CASE(MIPS_UNREFEXTNO);
   LLVM_READOBJ_TYPE_CASE(MIPS_GOTSYM);
+  LLVM_READOBJ_TYPE_CASE(MIPS_RLD_MAP);
+  LLVM_READOBJ_TYPE_CASE(MIPS_PLTGOT);
   default: return "unknown";
   }
 }
@@ -731,6 +733,8 @@ static void printValue(const ELFFile<ELFT> *O, uint64_t Type, uint64_t Value,
   case DT_MIPS_FLAGS:
   case DT_MIPS_BASE_ADDRESS:
   case DT_MIPS_GOTSYM:
+  case DT_MIPS_RLD_MAP:
+  case DT_MIPS_PLTGOT:
     OS << format("0x%" PRIX64, Value);
     break;
   case DT_VERNEEDNUM:
