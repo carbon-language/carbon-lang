@@ -4876,6 +4876,15 @@ def MOVPQI2QImr : S2I<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
                                     IIC_SSE_MOVDQ>;
 } // SchedRW
 
+// For disassembler only
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0,
+    SchedRW = [WriteVecLogic] in {
+def VMOVPQI2QIrr : VS2I<0xD6, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
+                     "movq\t{$src, $dst|$dst, $src}", [], IIC_SSE_MOVQ_RR>, VEX;
+def MOVPQI2QIrr : S2I<0xD6, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
+                      "movq\t{$src, $dst|$dst, $src}", [], IIC_SSE_MOVQ_RR>;
+}
+
 //===---------------------------------------------------------------------===//
 // Store / copy lower 64-bits of a XMM register.
 //
