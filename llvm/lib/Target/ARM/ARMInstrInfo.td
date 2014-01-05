@@ -2274,11 +2274,10 @@ def LDRSB : AI3ld<0b1101, 1, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
                    [(set GPR:$Rt, (sextloadi8 addrmode3:$addr))]>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
-// Load doubleword
-def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rd, GPR:$dst2),
-                 (ins addrmode3:$addr), LdMiscFrm,
-                 IIC_iLoad_d_r, "ldrd", "\t$Rd, $dst2, $addr",
-                 []>, Requires<[IsARM, HasV5TE]>;
+  // Load doubleword
+  def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rt, GPR:$Rt2), (ins addrmode3:$addr),
+                   LdMiscFrm, IIC_iLoad_d_r, "ldrd", "\t$Rt, $Rt2, $addr", []>,
+             Requires<[IsARM, HasV5TE]>;
 }
 
 def LDA : AIldracq<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr),
@@ -2535,12 +2534,11 @@ def STRH : AI3str<0b1011, (outs), (ins GPR:$Rt, addrmode3:$addr), StMiscFrm,
 
 // Store doubleword
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
-def STRD : AI3str<0b1111, (outs), (ins GPR:$Rt, GPR:$src2, addrmode3:$addr),
-               StMiscFrm, IIC_iStore_d_r,
-               "strd", "\t$Rt, $src2, $addr", []>,
-           Requires<[IsARM, HasV5TE]> {
-  let Inst{21} = 0;
-}
+  def STRD : AI3str<0b1111, (outs), (ins GPR:$Rt, GPR:$Rt2, addrmode3:$addr),
+                    StMiscFrm, IIC_iStore_d_r, "strd", "\t$Rt, $Rt2, $addr", []>,
+             Requires<[IsARM, HasV5TE]> {
+    let Inst{21} = 0;
+  }
 
 // Indexed stores
 multiclass AI2_stridx<bit isByte, string opc,
