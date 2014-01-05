@@ -201,4 +201,78 @@ TEST_F(PatternMatchTest, FloatingPointUnorderedMax) {
   EXPECT_EQ(R, MatchR);
 }
 
+TEST_F(PatternMatchTest, OverflowingBinOps) {
+  Value *L = IRB.getInt32(1);
+  Value *R = IRB.getInt32(2);
+  Value *MatchL, *MatchR;
+
+  EXPECT_TRUE(
+      m_NSWAdd(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNSWAdd(L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
+  MatchL = MatchR = 0;
+  EXPECT_TRUE(
+      m_NSWSub(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNSWSub(L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
+  MatchL = MatchR = 0;
+  EXPECT_TRUE(
+      m_NSWMul(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNSWMul(L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
+  MatchL = MatchR = 0;
+  EXPECT_TRUE(m_NSWShl(m_Value(MatchL), m_Value(MatchR)).match(
+      IRB.CreateShl(L, R, "", /* NUW */ false, /* NSW */ true)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
+
+  EXPECT_TRUE(
+      m_NUWAdd(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNUWAdd(L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
+  MatchL = MatchR = 0;
+  EXPECT_TRUE(
+      m_NUWSub(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNUWSub(L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
+  MatchL = MatchR = 0;
+  EXPECT_TRUE(
+      m_NUWMul(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNUWMul(L, R)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
+  MatchL = MatchR = 0;
+  EXPECT_TRUE(m_NUWShl(m_Value(MatchL), m_Value(MatchR)).match(
+      IRB.CreateShl(L, R, "", /* NUW */ true, /* NSW */ false)));
+  EXPECT_EQ(L, MatchL);
+  EXPECT_EQ(R, MatchR);
+
+  EXPECT_FALSE(m_NSWAdd(m_Value(), m_Value()).match(IRB.CreateAdd(L, R)));
+  EXPECT_FALSE(m_NSWAdd(m_Value(), m_Value()).match(IRB.CreateNUWAdd(L, R)));
+  EXPECT_FALSE(m_NSWAdd(m_Value(), m_Value()).match(IRB.CreateNSWSub(L, R)));
+  EXPECT_FALSE(m_NSWSub(m_Value(), m_Value()).match(IRB.CreateSub(L, R)));
+  EXPECT_FALSE(m_NSWSub(m_Value(), m_Value()).match(IRB.CreateNUWSub(L, R)));
+  EXPECT_FALSE(m_NSWSub(m_Value(), m_Value()).match(IRB.CreateNSWAdd(L, R)));
+  EXPECT_FALSE(m_NSWMul(m_Value(), m_Value()).match(IRB.CreateMul(L, R)));
+  EXPECT_FALSE(m_NSWMul(m_Value(), m_Value()).match(IRB.CreateNUWMul(L, R)));
+  EXPECT_FALSE(m_NSWMul(m_Value(), m_Value()).match(IRB.CreateNSWAdd(L, R)));
+  EXPECT_FALSE(m_NSWShl(m_Value(), m_Value()).match(IRB.CreateShl(L, R)));
+  EXPECT_FALSE(m_NSWShl(m_Value(), m_Value()).match(
+      IRB.CreateShl(L, R, "", /* NUW */ true, /* NSW */ false)));
+  EXPECT_FALSE(m_NSWShl(m_Value(), m_Value()).match(IRB.CreateNSWAdd(L, R)));
+
+  EXPECT_FALSE(m_NUWAdd(m_Value(), m_Value()).match(IRB.CreateAdd(L, R)));
+  EXPECT_FALSE(m_NUWAdd(m_Value(), m_Value()).match(IRB.CreateNSWAdd(L, R)));
+  EXPECT_FALSE(m_NUWAdd(m_Value(), m_Value()).match(IRB.CreateNUWSub(L, R)));
+  EXPECT_FALSE(m_NUWSub(m_Value(), m_Value()).match(IRB.CreateSub(L, R)));
+  EXPECT_FALSE(m_NUWSub(m_Value(), m_Value()).match(IRB.CreateNSWSub(L, R)));
+  EXPECT_FALSE(m_NUWSub(m_Value(), m_Value()).match(IRB.CreateNUWAdd(L, R)));
+  EXPECT_FALSE(m_NUWMul(m_Value(), m_Value()).match(IRB.CreateMul(L, R)));
+  EXPECT_FALSE(m_NUWMul(m_Value(), m_Value()).match(IRB.CreateNSWMul(L, R)));
+  EXPECT_FALSE(m_NUWMul(m_Value(), m_Value()).match(IRB.CreateNUWAdd(L, R)));
+  EXPECT_FALSE(m_NUWShl(m_Value(), m_Value()).match(IRB.CreateShl(L, R)));
+  EXPECT_FALSE(m_NUWShl(m_Value(), m_Value()).match(
+      IRB.CreateShl(L, R, "", /* NUW */ false, /* NSW */ true)));
+  EXPECT_FALSE(m_NUWShl(m_Value(), m_Value()).match(IRB.CreateNUWAdd(L, R)));
+}
+
 } // anonymous namespace.

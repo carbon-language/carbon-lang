@@ -498,6 +498,96 @@ m_AShr(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::AShr>(L, R);
 }
 
+template<typename LHS_t, typename RHS_t, unsigned Opcode, unsigned WrapFlags = 0>
+struct OverflowingBinaryOp_match {
+  LHS_t L;
+  RHS_t R;
+
+  OverflowingBinaryOp_match(const LHS_t &LHS, const RHS_t &RHS) : L(LHS), R(RHS) {}
+
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    if (OverflowingBinaryOperator *Op = dyn_cast<OverflowingBinaryOperator>(V)) {
+      if (Op->getOpcode() != Opcode)
+        return false;
+      if (WrapFlags & OverflowingBinaryOperator::NoUnsignedWrap &&
+          !Op->hasNoUnsignedWrap())
+        return false;
+      if (WrapFlags & OverflowingBinaryOperator::NoSignedWrap &&
+          !Op->hasNoSignedWrap())
+        return false;
+      return L.match(Op->getOperand(0)) && R.match(Op->getOperand(1));
+    }
+    return false;
+  }
+};
+
+template <typename LHS, typename RHS>
+inline OverflowingBinaryOp_match<LHS, RHS, Instruction::Add,
+                                 OverflowingBinaryOperator::NoSignedWrap>
+m_NSWAdd(const LHS &L, const RHS &R) {
+  return OverflowingBinaryOp_match<LHS, RHS, Instruction::Add,
+                                   OverflowingBinaryOperator::NoSignedWrap>(
+      L, R);
+}
+template <typename LHS, typename RHS>
+inline OverflowingBinaryOp_match<LHS, RHS, Instruction::Sub,
+                                 OverflowingBinaryOperator::NoSignedWrap>
+m_NSWSub(const LHS &L, const RHS &R) {
+  return OverflowingBinaryOp_match<LHS, RHS, Instruction::Sub,
+                                   OverflowingBinaryOperator::NoSignedWrap>(
+      L, R);
+}
+template <typename LHS, typename RHS>
+inline OverflowingBinaryOp_match<LHS, RHS, Instruction::Mul,
+                                 OverflowingBinaryOperator::NoSignedWrap>
+m_NSWMul(const LHS &L, const RHS &R) {
+  return OverflowingBinaryOp_match<LHS, RHS, Instruction::Mul,
+                                   OverflowingBinaryOperator::NoSignedWrap>(
+      L, R);
+}
+template <typename LHS, typename RHS>
+inline OverflowingBinaryOp_match<LHS, RHS, Instruction::Shl,
+                                 OverflowingBinaryOperator::NoSignedWrap>
+m_NSWShl(const LHS &L, const RHS &R) {
+  return OverflowingBinaryOp_match<LHS, RHS, Instruction::Shl,
+                                   OverflowingBinaryOperator::NoSignedWrap>(
+      L, R);
+}
+
+template <typename LHS, typename RHS>
+inline OverflowingBinaryOp_match<LHS, RHS, Instruction::Add,
+                                 OverflowingBinaryOperator::NoUnsignedWrap>
+m_NUWAdd(const LHS &L, const RHS &R) {
+  return OverflowingBinaryOp_match<LHS, RHS, Instruction::Add,
+                                   OverflowingBinaryOperator::NoUnsignedWrap>(
+      L, R);
+}
+template <typename LHS, typename RHS>
+inline OverflowingBinaryOp_match<LHS, RHS, Instruction::Sub,
+                                 OverflowingBinaryOperator::NoUnsignedWrap>
+m_NUWSub(const LHS &L, const RHS &R) {
+  return OverflowingBinaryOp_match<LHS, RHS, Instruction::Sub,
+                                   OverflowingBinaryOperator::NoUnsignedWrap>(
+      L, R);
+}
+template <typename LHS, typename RHS>
+inline OverflowingBinaryOp_match<LHS, RHS, Instruction::Mul,
+                                 OverflowingBinaryOperator::NoUnsignedWrap>
+m_NUWMul(const LHS &L, const RHS &R) {
+  return OverflowingBinaryOp_match<LHS, RHS, Instruction::Mul,
+                                   OverflowingBinaryOperator::NoUnsignedWrap>(
+      L, R);
+}
+template <typename LHS, typename RHS>
+inline OverflowingBinaryOp_match<LHS, RHS, Instruction::Shl,
+                                 OverflowingBinaryOperator::NoUnsignedWrap>
+m_NUWShl(const LHS &L, const RHS &R) {
+  return OverflowingBinaryOp_match<LHS, RHS, Instruction::Shl,
+                                   OverflowingBinaryOperator::NoUnsignedWrap>(
+      L, R);
+}
+
 //===----------------------------------------------------------------------===//
 // Class that matches two different binary ops.
 //
