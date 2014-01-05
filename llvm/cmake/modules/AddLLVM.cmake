@@ -77,6 +77,9 @@ function(add_llvm_symbol_exports target_name export_file)
 endfunction(add_llvm_symbol_exports)
 
 function(add_dead_strip target_name)
+  # FIXME: With MSVS, consider compiling with /Gy and linking with /OPT:REF?
+  # But MinSizeRel seems to add that automatically, so maybe disable these
+  # flags instead if LLVM_NO_DEAD_STRIP is set.
   if(NOT CYGWIN AND NOT MINGW AND NOT MSVC)
     if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
        SET(CMAKE_CXX_FLAGS
