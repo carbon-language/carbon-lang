@@ -17,6 +17,7 @@
 #define DEBUG_TYPE "x86-vzeroupper"
 #include "X86.h"
 #include "X86InstrInfo.h"
+#include "X86Subtarget.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -105,28 +106,20 @@ FunctionPass *llvm::createX86IssueVZeroUpperPass() {
 }
 
 static bool isYmmReg(unsigned Reg) {
-  return (Reg >= X86::YMM0 && Reg <= X86::YMM31);
-}
-
-static bool isZmmReg(unsigned Reg) {
-  return (Reg >= X86::ZMM0 && Reg <= X86::ZMM31);
+  return (Reg >= X86::YMM0 && Reg <= X86::YMM15);
 }
 
 static bool checkFnHasLiveInYmm(MachineRegisterInfo &MRI) {
   for (MachineRegisterInfo::livein_iterator I = MRI.livein_begin(),
        E = MRI.livein_end(); I != E; ++I)
-    if (isYmmReg(I->first) || isZmmReg(I->first))
+    if (isYmmReg(I->first))
       return true;
 
   return false;
 }
 
 static bool clobbersAllYmmRegs(const MachineOperand &MO) {
-  for (unsigned reg = X86::YMM0; reg <= X86::YMM31; ++reg) {
-    if (!MO.clobbersPhysReg(reg))
-      return false;
-  }
-  for (unsigned reg = X86::ZMM0; reg <= X86::ZMM31; ++reg) {
+  for (unsigned reg = X86::YMM0; reg <= X86::YMM15; ++reg) {
     if (!MO.clobbersPhysReg(reg))
       return false;
   }
@@ -155,11 +148,7 @@ static bool clobbersAnyYmmReg(MachineInstr *MI) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isRegMask())
       continue;
-    for (unsigned reg = X86::YMM0; reg <= X86::YMM31; ++reg) {
-      if (MO.clobbersPhysReg(reg))
-        return true;
-    }
-    for (unsigned reg = X86::ZMM0; reg <= X86::ZMM31; ++reg) {
+    for (unsigned reg = X86::YMM0; reg <= X86::YMM15; ++reg) {
       if (MO.clobbersPhysReg(reg))
         return true;
     }
@@ -170,6 +159,8 @@ static bool clobbersAnyYmmReg(MachineInstr *MI) {
 /// runOnMachineFunction - Loop over all of the basic blocks, inserting
 /// vzero upper instructions before function calls.
 bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
+  if (MF.getTarget().getSubtarget<X86Subtarget>().hasAVX512())
+    return false;
   TII = MF.getTarget().getInstrInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();
   bool EverMadeChange = false;

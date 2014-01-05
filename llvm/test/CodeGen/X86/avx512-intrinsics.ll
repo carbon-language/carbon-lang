@@ -448,3 +448,69 @@ declare <8 x i64> @llvm.x86.avx512.mask.blend.q.512(<8 x i1> %a0, <8 x i64> %a1,
    ret i8 %res
  }
  declare i8 @llvm.x86.avx512.mask.cmp.pd.512(<8 x double> , <8 x double> , i32, i8, i32)
+
+ ; cvt intrinsics
+ define <16 x float> @test_cvtdq2ps(<16 x i32> %a) {
+ ;CHECK: vcvtdq2ps {rd-sae}{{.*}}encoding: [0x62,0xf1,0x7c,0x38,0x5b,0xc0]
+  %res = call <16 x float> @llvm.x86.avx512.mask.cvtdq2ps.512(<16 x i32> %a, <16 x float>zeroinitializer, i16 -1, i32 1)
+  ret <16 x float>%res
+ }
+ declare <16 x float> @llvm.x86.avx512.mask.cvtdq2ps.512(<16 x i32>, <16 x float>, i16, i32)
+
+ define <16 x float> @test_cvtudq2ps(<16 x i32> %a) {
+ ;CHECK: vcvtudq2ps {rd-sae}{{.*}}encoding: [0x62,0xf1,0x7f,0x38,0x7a,0xc0]
+  %res = call <16 x float> @llvm.x86.avx512.mask.cvtudq2ps.512(<16 x i32> %a, <16 x float>zeroinitializer, i16 -1, i32 1)
+  ret <16 x float>%res
+ }
+ declare <16 x float> @llvm.x86.avx512.mask.cvtudq2ps.512(<16 x i32>, <16 x float>, i16, i32)
+
+ define <8 x double> @test_cvtdq2pd(<8 x i32> %a) {
+ ;CHECK: vcvtdq2pd {{.*}}encoding: [0x62,0xf1,0x7e,0x48,0xe6,0xc0]
+  %res = call <8 x double> @llvm.x86.avx512.mask.cvtdq2pd.512(<8 x i32> %a, <8 x double>zeroinitializer, i8 -1)
+  ret <8 x double>%res
+ }
+ declare <8 x double> @llvm.x86.avx512.mask.cvtdq2pd.512(<8 x i32>, <8 x double>, i8)
+
+ define <8 x double> @test_cvtudq2pd(<8 x i32> %a) {
+ ;CHECK: vcvtudq2pd {{.*}}encoding: [0x62,0xf1,0x7e,0x48,0x7a,0xc0]
+  %res = call <8 x double> @llvm.x86.avx512.mask.cvtudq2pd.512(<8 x i32> %a, <8 x double>zeroinitializer, i8 -1)
+  ret <8 x double>%res
+ }
+ declare <8 x double> @llvm.x86.avx512.mask.cvtudq2pd.512(<8 x i32>, <8 x double>, i8)
+
+ ; fp min - max
+define <16 x float> @test_vmaxps(<16 x float> %a0, <16 x float> %a1) {
+  ; CHECK: vmaxps
+  %res = call <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float> %a0, <16 x float> %a1,
+                    <16 x float>zeroinitializer, i16 -1, i32 4)
+  ret <16 x float> %res
+}
+declare <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float>, <16 x float>,
+                    <16 x float>, i16, i32)
+
+define <8 x double> @test_vmaxpd(<8 x double> %a0, <8 x double> %a1) {
+  ; CHECK: vmaxpd
+  %res = call <8 x double> @llvm.x86.avx512.mask.max.pd.512(<8 x double> %a0, <8 x double> %a1,
+                    <8 x double>zeroinitializer, i8 -1, i32 4)
+  ret <8 x double> %res
+}
+declare <8 x double> @llvm.x86.avx512.mask.max.pd.512(<8 x double>, <8 x double>,
+                    <8 x double>, i8, i32)
+
+define <16 x float> @test_vminps(<16 x float> %a0, <16 x float> %a1) {
+  ; CHECK: vminps
+  %res = call <16 x float> @llvm.x86.avx512.mask.min.ps.512(<16 x float> %a0, <16 x float> %a1,
+                    <16 x float>zeroinitializer, i16 -1, i32 4)
+  ret <16 x float> %res
+}
+declare <16 x float> @llvm.x86.avx512.mask.min.ps.512(<16 x float>, <16 x float>,
+                    <16 x float>, i16, i32)
+
+define <8 x double> @test_vminpd(<8 x double> %a0, <8 x double> %a1) {
+  ; CHECK: vminpd
+  %res = call <8 x double> @llvm.x86.avx512.mask.min.pd.512(<8 x double> %a0, <8 x double> %a1,
+                    <8 x double>zeroinitializer, i8 -1, i32 4)
+  ret <8 x double> %res
+}
+declare <8 x double> @llvm.x86.avx512.mask.min.pd.512(<8 x double>, <8 x double>,
+                    <8 x double>, i8, i32)
