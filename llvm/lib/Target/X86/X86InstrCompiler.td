@@ -220,10 +220,9 @@ def MORESTACK_RET_RESTORE_R10 : I<0, Pseudo, (outs), (ins),
 
 // Alias instruction mapping movr0 to xor.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-// FIXME: Set encoding to pseudo.
 let Defs = [EFLAGS], isReMaterializable = 1, isAsCheapAsAMove = 1,
     isPseudo = 1 in
-def MOV32r0  : I<0x31, Pseudo, (outs GR32:$dst), (ins), "",
+def MOV32r0  : I<0, Pseudo, (outs GR32:$dst), (ins), "",
                  [(set GR32:$dst, 0)], IIC_ALU_NONMEM>, Sched<[WriteZero]>;
 
 // Other widths can also make use of the 32-bit xor, which may have a smaller
