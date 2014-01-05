@@ -31,6 +31,7 @@
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -1844,6 +1845,12 @@ lowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue MipsTargetLowering::lowerRETURNADDR(SDValue Op,
                                             SelectionDAG &DAG) const {
+  if (!isa<ConstantSDNode>(Op.getOperand(0))) {
+    DAG.getContext()->emitError("argument to '__builtin_return_address' must "
+                                "be a constant integer");
+    return SDValue();
+  }
+
   // check the depth
   assert((cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() == 0) &&
          "Return address can be determined only for current frame.");
