@@ -186,6 +186,10 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   //
   // Attributes specific to X86 instructions...
   //
+  bit ForceDisassemble = 0; // Force instruction to disassemble even though it's
+                            // isCodeGenonly. Needed to hide an ambiguous
+                            // AsmString from the parser, but still disassemble.
+
   bit hasOpSizePrefix = 0;  // Does this inst have a 0x66 prefix?
   bit hasAdSizePrefix = 0;  // Does this inst have a 0x67 prefix?
 

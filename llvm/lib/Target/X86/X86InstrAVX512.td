@@ -1490,7 +1490,7 @@ def : Pat<(f64 (X86select VK1WM:$mask, (f64 FR64X:$src1), (f64 FR64X:$src2))),
            VK1WM:$mask, (f64 (IMPLICIT_DEF)), FR64X:$src1), FR64X)>;
 
 // For the disassembler
-let isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in {
   def VMOVSSZrr_REV : SI<0x11, MRMDestReg, (outs VR128X:$dst),
                         (ins VR128X:$src1, FR32X:$src2),
                         "movss\t{$src2, $src1, $dst|$dst, $src1, $src2}", [],

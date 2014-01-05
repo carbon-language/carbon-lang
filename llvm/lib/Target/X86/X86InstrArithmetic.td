@@ -752,6 +752,7 @@ class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
     Sched<[WriteALU]> {
   // The disassembler should know about this, but not the asmparser.
   let isCodeGenOnly = 1;
+  let ForceDisassemble = 1;
   let hasSideEffects = 0;
 }
 
@@ -767,6 +768,7 @@ class BinOpRR_F_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
     Sched<[WriteALU]> {
   // The disassembler should know about this, but not the asmparser.
   let isCodeGenOnly = 1;
+  let ForceDisassemble = 1;
   let hasSideEffects = 0;
 }
 

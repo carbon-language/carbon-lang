@@ -502,7 +502,7 @@ multiclass sse12_move_rr<RegisterClass RC, SDNode OpNode, ValueType vt,
               IIC_SSE_MOV_S_RR>, Sched<[WriteMove]>;
 
   // For the disassembler
-  let isCodeGenOnly = 1, hasSideEffects = 0 in
+  let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in
   def rr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
                   (ins VR128:$src1, RC:$src2),
                   !strconcat(base_opc, asm_opr),
@@ -884,7 +884,8 @@ def VMOVUPDYmr : VPDI<0x11, MRMDestMem, (outs), (ins f256mem:$dst, VR256:$src),
 } // SchedRW
 
 // For disassembler
-let isCodeGenOnly = 1, hasSideEffects = 0, SchedRW = [WriteMove] in {
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0,
+    SchedRW = [WriteMove] in {
   def VMOVAPSrr_REV : VPSI<0x29, MRMDestReg, (outs VR128:$dst),
                           (ins VR128:$src),
                           "movaps\t{$src, $dst|$dst, $src}", [],
@@ -960,7 +961,8 @@ def MOVUPDmr : PDI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
 } // SchedRW
 
 // For disassembler
-let isCodeGenOnly = 1, hasSideEffects = 0, SchedRW = [WriteMove] in {
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0,
+    SchedRW = [WriteMove] in {
   def MOVAPSrr_REV : PSI<0x29, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
                          "movaps\t{$src, $dst|$dst, $src}", [],
                          IIC_SSE_MOVA_P_RR>;
@@ -3792,7 +3794,8 @@ def VMOVDQUYrr : VSSI<0x6F, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
 }
 
 // For Disassembler
-let isCodeGenOnly = 1, hasSideEffects = 0, SchedRW = [WriteMove] in {
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0,
+    SchedRW = [WriteMove] in {
 def VMOVDQArr_REV  : VPDI<0x7F, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
                         "movdqa\t{$src, $dst|$dst, $src}", [],
                         IIC_SSE_MOVA_P_RR>,
@@ -3856,7 +3859,7 @@ def MOVDQUrr :   I<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    [], IIC_SSE_MOVU_P_RR>, XS, Requires<[UseSSE2]>;
 
 // For Disassembler
-let isCodeGenOnly = 1, hasSideEffects = 0 in {
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in {
 def MOVDQArr_REV : PDI<0x7F, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
                        "movdqa\t{$src, $dst|$dst, $src}", [],
                        IIC_SSE_MOVA_P_RR>;
@@ -6258,7 +6261,7 @@ defm PEXTRB      : SS41I_extract8<0x14, "pextrb">;
 
 /// SS41I_extract16 - SSE 4.1 extract 16 bits to memory destination
 multiclass SS41I_extract16<bits<8> opc, string OpcodeStr> {
-  let isCodeGenOnly = 1, hasSideEffects = 0 in
+  let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in
   def rr_REV : SS4AIi8<opc, MRMDestReg, (outs GR32orGR64:$dst),
                    (ins VR128:$src1, i32i8imm:$src2),
                    !strconcat(OpcodeStr,

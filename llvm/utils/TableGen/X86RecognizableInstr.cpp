@@ -248,6 +248,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasEVEX_B        = Rec->getValueAsBit("hasEVEX_B");
   HasLockPrefix    = Rec->getValueAsBit("hasLockPrefix");
   IsCodeGenOnly    = Rec->getValueAsBit("isCodeGenOnly");
+  ForceDisassemble = Rec->getValueAsBit("ForceDisassemble");
 
   Name      = Rec->getName();
   AsmString = Rec->getValueAsString("AsmString");
@@ -483,7 +484,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   assert(Rec->isSubClassOf("X86Inst") && "Can only filter X86 instructions");
 
   if (Form == X86Local::Pseudo ||
-      (IsCodeGenOnly && Name.find("_REV") == Name.npos &&
+      (IsCodeGenOnly && !ForceDisassemble &&
        Name.find("INC32") == Name.npos && Name.find("DEC32") == Name.npos))
     return FILTER_STRONG;
 

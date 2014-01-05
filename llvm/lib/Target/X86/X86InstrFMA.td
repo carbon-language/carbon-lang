@@ -222,7 +222,7 @@ multiclass fma4s<bits<8> opc, string OpcodeStr, RegisterClass RC,
            [(set RC:$dst,
              (OpNode RC:$src1, (mem_frag addr:$src2), RC:$src3))]>, VEX_LIG;
 // For disassembler
-let isCodeGenOnly = 1, hasSideEffects = 0 in
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in
   def rr_REV : FMA4<opc, MRMSrcReg, (outs RC:$dst),
                (ins RC:$src1, RC:$src2, RC:$src3),
                !strconcat(OpcodeStr,
@@ -299,7 +299,7 @@ multiclass fma4p<bits<8> opc, string OpcodeStr, SDNode OpNode,
            [(set VR256:$dst, (OpNode VR256:$src1,
                               (ld_frag256 addr:$src2), VR256:$src3))]>, VEX_L;
 // For disassembler
-let isCodeGenOnly = 1, hasSideEffects = 0 in {
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in {
   def rr_REV : FMA4<opc, MRMSrcReg, (outs VR128:$dst),
                (ins VR128:$src1, VR128:$src2, VR128:$src3),
                !strconcat(OpcodeStr,

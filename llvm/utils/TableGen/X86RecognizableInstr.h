@@ -78,8 +78,10 @@ private:
   bool HasEVEX_B;
   /// The hasLockPrefix field from the record
   bool HasLockPrefix;
-  /// The isCodeGenOnly filed from the record
+  /// The isCodeGenOnly field from the record
   bool IsCodeGenOnly;
+  /// The ForceDisassemble field from the record
+  bool ForceDisassemble;
   // Whether the instruction has the predicate "In64BitMode"
   bool Is64Bit;
   // Whether the instruction has the predicate "In32BitMode"
