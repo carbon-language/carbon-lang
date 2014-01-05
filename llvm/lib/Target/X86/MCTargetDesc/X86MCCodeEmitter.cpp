@@ -402,6 +402,66 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
 
   unsigned BaseRegNo = BaseReg ? GetX86RegNum(Base) : -1U;
 
+  // 16-bit addressing forms of the ModR/M byte have a different encoding for
+  // the R/M field and are far more limited in which registers can be used.
+  if (Is16BitMemOperand(MI, Op)) {
+    if (BaseReg) {
+      // For 32-bit addressing, the row and column values in Table 2-2 are
+      // basically the same. It's AX/CX/DX/BX/SP/BP/SI/DI in that order, with
+      // some special cases. And GetX86RegNum reflects that numbering.
+      // For 16-bit addressing it's more fun, as shown in the SDM Vol 2A,
+      // Table 2-1 "16-Bit Addressing Forms with the ModR/M byte". We can only
+      // use SI/DI/BP/BX, which have "row" values 4-7 in no particular order,
+      // while values 0-3 indicate the allowed combinations (base+index) of
+      // those: 0 for BX+SI, 1 for BX+DI, 2 for BP+SI, 3 for BP+DI.
+      //
+      // R16Table[] is a lookup from the normal RegNo, to the row values from
+      // Table 2-1 for 16-bit addressing modes. Where zero means disallowed.
+      static const unsigned R16Table[] = { 0, 0, 0, 7, 0, 6, 4, 5 };
+      unsigned RMfield = R16Table[BaseRegNo];
+
+      assert(RMfield && "invalid 16-bit base register");
+
+      if (IndexReg.getReg()) {
+        unsigned IndexReg16 = R16Table[GetX86RegNum(IndexReg)];
+
+        assert(IndexReg16 && "invalid 16-bit index register");
+        // We must have one of SI/DI (4,5), and one of BP/BX (6,7).
+        assert(((IndexReg16 ^ RMfield) & 2) &&
+               "invalid 16-bit base/index register combination");
+        assert(Scale.getImm() == 1 &&
+               "invalid scale for 16-bit memory reference");
+
+        // Allow base/index to appear in either order (although GAS doesn't).
+        if (IndexReg16 & 2)
+          RMfield = (RMfield & 1) | ((7 - IndexReg16) << 1);
+        else
+          RMfield = (IndexReg16 & 1) | ((7 - RMfield) << 1);
+      }
+
+      if (Disp.isImm() && isDisp8(Disp.getImm())) {
+        if (Disp.getImm() == 0 && BaseRegNo != N86::EBP) {
+          // There is no displacement; just the register.
+          EmitByte(ModRMByte(0, RegOpcodeField, RMfield), CurByte, OS);
+          return;
+        }
+        // Use the [REG]+disp8 form, including for [BP] which cannot be encoded.
+        EmitByte(ModRMByte(1, RegOpcodeField, RMfield), CurByte, OS);
+        EmitImmediate(Disp, MI.getLoc(), 1, FK_Data_1, CurByte, OS, Fixups);
+        return;
+      }
+      // This is the [REG]+disp16 case.
+      EmitByte(ModRMByte(2, RegOpcodeField, RMfield), CurByte, OS);
+    } else {
+      // There is no BaseReg; this is the plain [disp16] case.
+      EmitByte(ModRMByte(0, RegOpcodeField, 6), CurByte, OS);
+    }
+
+    // Emit 16-bit displacement for plain disp16 or [REG]+disp16 cases.
+    EmitImmediate(Disp, MI.getLoc(), 2, FK_Data_2, CurByte, OS, Fixups);
+    return;
+  }
+
   // Determine whether a SIB byte is needed.
   // If no BaseReg, issue a RIP relative instruction only if the MCE can
   // resolve addresses on-the-fly, otherwise use SIB (Intel Manual 2A, table
