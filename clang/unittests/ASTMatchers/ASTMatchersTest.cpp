@@ -1479,7 +1479,7 @@ TEST(HasAnyParameter, DoesNotMatchThisPointer) {
           recordDecl(hasName("X"))))))));
 }
 
-TEST(HasName, MatchesParameterVariableDeclartions) {
+TEST(HasName, MatchesParameterVariableDeclarations) {
   EXPECT_TRUE(matches("class Y {}; class X { void x(int x) {} };",
       methodDecl(hasAnyParameter(hasName("x")))));
   EXPECT_TRUE(notMatches("class Y {}; class X { void x(int) {} };",

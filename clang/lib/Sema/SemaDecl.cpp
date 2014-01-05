@@ -2530,8 +2530,8 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
       NewMethod->setTrivial(OldMethod->isTrivial());
 
       // MSVC allows explicit template specialization at class scope:
-      // 2 CXMethodDecls referring to the same function will be injected.
-      // We don't want a redeclartion error.
+      // 2 CXXMethodDecls referring to the same function will be injected.
+      // We don't want a redeclaration error.
       bool IsClassScopeExplicitSpecialization =
                               OldMethod->isFunctionTemplateSpecialization() &&
                               NewMethod->isFunctionTemplateSpecialization();

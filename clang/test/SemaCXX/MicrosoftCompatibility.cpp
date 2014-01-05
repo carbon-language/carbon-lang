@@ -22,7 +22,7 @@ void test()
 
 
 namespace ms_predefined_types {
-  // ::type_info is predeclared with forward class declartion
+  // ::type_info is a built-in forward class declaration.
   void f(const type_info &a);
 }
 
