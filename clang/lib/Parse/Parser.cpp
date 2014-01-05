@@ -1285,12 +1285,9 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
       ParseDeclarator(ParmDeclarator);
     }
 
-    if (ExpectAndConsumeSemi(diag::err_expected_semi_declaration)) {
-      // Skip to end of block or statement
-      SkipUntil(tok::semi);
-      if (Tok.is(tok::semi))
-        ConsumeToken();
-    }
+    // Consume ';' or recover by skipping to the mandatory function body.
+    if (ExpectAndConsumeSemi(diag::err_expected_semi_declaration))
+      SkipUntil(tok::l_brace, StopBeforeMatch);
   }
 
   // The actions module must verify that all arguments were declared.
