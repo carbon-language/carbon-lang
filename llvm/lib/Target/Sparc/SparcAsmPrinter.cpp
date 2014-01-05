@@ -130,8 +130,8 @@ static void EmitOR(MCStreamer &OutStreamer, MCOperand &RS1,
   OutStreamer.EmitInstruction(ORInst);
 }
 
-void EmitADD(MCStreamer &OutStreamer,
-             MCOperand &RS1, MCOperand &RS2, MCOperand &RD)
+static void EmitADD(MCStreamer &OutStreamer,
+                    MCOperand &RS1, MCOperand &RS2, MCOperand &RD)
 {
   MCInst ADDInst;
   ADDInst.setOpcode(SP::ADDrr);
