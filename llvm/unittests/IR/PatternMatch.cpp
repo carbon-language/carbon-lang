@@ -45,6 +45,26 @@ struct PatternMatchTest : ::testing::Test {
         BB(BasicBlock::Create(Ctx, "entry", F)), IRB(BB) {}
 };
 
+TEST_F(PatternMatchTest, OneUse) {
+  // Build up a little tree of values:
+  //
+  //   One  = (1 + 2) + 42
+  //   Two  = One + 42
+  //   Leaf = (Two + 8) + (Two + 13)
+  Value *One = IRB.CreateAdd(IRB.CreateAdd(IRB.getInt32(1), IRB.getInt32(2)),
+                             IRB.getInt32(42));
+  Value *Two = IRB.CreateAdd(One, IRB.getInt32(42));
+  Value *Leaf = IRB.CreateAdd(IRB.CreateAdd(Two, IRB.getInt32(8)),
+                              IRB.CreateAdd(Two, IRB.getInt32(13)));
+  Value *V;
+
+  EXPECT_TRUE(m_OneUse(m_Value(V)).match(One));
+  EXPECT_EQ(One, V);
+
+  EXPECT_FALSE(m_OneUse(m_Value()).match(Two));
+  EXPECT_FALSE(m_OneUse(m_Value()).match(Leaf));
+}
+
 TEST_F(PatternMatchTest, FloatingPointOrderedMin) {
   Type *FltTy = IRB.getFloatTy();
   Value *L = ConstantFP::get(FltTy, 1.0);
