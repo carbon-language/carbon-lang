@@ -1654,6 +1654,7 @@ TEST_F(FormatTest, FormatsEnum) {
                getLLVMStyleWithColumns(30));
 
   verifyFormat("enum ShortEnum { A, B, C };");
+  verifyGoogleFormat("enum ShortEnum { A, B, C };");
 }
 
 TEST_F(FormatTest, FormatsEnumsWithErrors) {
