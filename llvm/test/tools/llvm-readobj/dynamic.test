@@ -1,4 +1,5 @@
-RUN: llvm-readobj -dynamic-table %p/Inputs/dynamic-table.mips \
+// Check dynamic section tags in case of shared library file.
+RUN: llvm-readobj -dynamic-table %p/Inputs/dynamic-table-so.mips \
 RUN:     | FileCheck %s -check-prefix ELF-MIPS
 
 ELF-MIPS: Format: ELF32-mips
