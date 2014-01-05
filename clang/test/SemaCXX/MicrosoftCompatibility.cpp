@@ -21,6 +21,11 @@ void test()
 }
 
 
+namespace ms_predefined_types {
+  // ::type_info is predeclared with forward class declartion
+  void f(const type_info &a);
+}
+
 
 namespace ms_protected_scope {
   struct C { C(); };

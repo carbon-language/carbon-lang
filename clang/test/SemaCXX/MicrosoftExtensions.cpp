@@ -1,10 +1,6 @@
 // RUN: %clang_cc1 %s -triple i686-pc-win32 -fsyntax-only -Wmicrosoft -Wc++11-extensions -Wno-long-long -verify -fms-extensions -fexceptions -fcxx-exceptions
 
 
-// ::type_info is predeclared with forward class declartion
-void f(const type_info &a);
-
-
 // Microsoft doesn't validate exception specification.
 namespace microsoft_exception_spec {
 

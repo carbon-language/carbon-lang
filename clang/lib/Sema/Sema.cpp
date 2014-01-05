@@ -179,7 +179,7 @@ void Sema::Initialize() {
   }
 
   // Initialize Microsoft "predefined C++ types".
-  if (PP.getLangOpts().MicrosoftExt && PP.getLangOpts().CPlusPlus) {
+  if (PP.getLangOpts().MicrosoftMode && PP.getLangOpts().CPlusPlus) {
     if (IdResolver.begin(&Context.Idents.get("type_info")) == IdResolver.end())
       PushOnScopeChains(Context.buildImplicitRecord("type_info", TTK_Class),
                         TUScope);
