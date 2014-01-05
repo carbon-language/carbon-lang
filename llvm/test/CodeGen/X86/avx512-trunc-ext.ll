@@ -116,7 +116,7 @@ define i8 @trunc_8i16_to_8i1(<8 x i16> %a) {
   ret i8 %mask
 }
 
-; CHECK: sext_8i1_8i32
+; CHECK-LABEL: sext_8i1_8i32
 ; CHECK: vpbroadcastq  LCP{{.*}}(%rip), %zmm0 {%k1} {z}
 ; CHECK: ret
 define <8 x i32> @sext_8i1_8i32(<8 x i32> %a1, <8 x i32> %a2) nounwind {
@@ -124,4 +124,12 @@ define <8 x i32> @sext_8i1_8i32(<8 x i32> %a1, <8 x i32> %a2) nounwind {
   %x1 = xor <8 x i1>%x, <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true>
   %y = sext <8 x i1> %x1 to <8 x i32>
   ret <8 x i32> %y
+}
+
+; CHECK-LABEL: trunc_v16i32_to_v16i16
+; CHECK: vpmovdw
+; CHECK: ret
+define <16 x i16> @trunc_v16i32_to_v16i16(<16 x i32> %x) {
+  %1 = trunc <16 x i32> %x to <16 x i16>
+  ret <16 x i16> %1
 }
