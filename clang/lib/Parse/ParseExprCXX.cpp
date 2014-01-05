@@ -1008,10 +1008,8 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
 
     // Parse 'mutable'[opt].
     SourceLocation MutableLoc;
-    if (Tok.is(tok::kw_mutable)) {
-      MutableLoc = ConsumeToken();
+    if (TryConsumeToken(tok::kw_mutable, MutableLoc))
       DeclEndLoc = MutableLoc;
-    }
 
     // Parse exception-specification[opt].
     ExceptionSpecificationType ESpecType = EST_None;

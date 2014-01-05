@@ -1210,9 +1210,8 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
     // NOTE: GCC just makes this an ext-warn.  It's not clear what it does with
     // the declarations though.  It's trivial to ignore them, really hard to do
     // anything else with them.
-    if (Tok.is(tok::semi)) {
+    if (TryConsumeToken(tok::semi)) {
       Diag(DSStart, diag::err_declaration_does_not_declare_param);
-      ConsumeToken();
       continue;
     }
 

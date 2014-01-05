@@ -132,45 +132,50 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
       return;
     }
     // Parse the attribute-list. e.g. __attribute__(( weak, alias("__f") ))
-    while (Tok.is(tok::identifier) || isDeclarationSpecifier() ||
-           Tok.is(tok::comma)) {
-      if (Tok.is(tok::comma)) {
-        // allows for empty/non-empty attributes. ((__vector_size__(16),,,,))
-        ConsumeToken();
+    while (true) {
+      // Allow empty/non-empty attributes. ((__vector_size__(16),,,,))
+      if (TryConsumeToken(tok::comma))
         continue;
-      }
-      // we have an identifier or declaration specifier (const, int, etc.)
+
+      // Expect an identifier or declaration specifier (const, int, etc.)
+      if (Tok.isNot(tok::identifier) && !isDeclarationSpecifier())
+        break;
+
       IdentifierInfo *AttrName = Tok.getIdentifierInfo();
       SourceLocation AttrNameLoc = ConsumeToken();
 
-      if (Tok.is(tok::l_paren)) {
-        // handle "parameterized" attributes
-        if (LateAttrs && isAttributeLateParsed(*AttrName)) {
-          LateParsedAttribute *LA =
-            new LateParsedAttribute(this, *AttrName, AttrNameLoc);
-          LateAttrs->push_back(LA);
-
-          // Attributes in a class are parsed at the end of the class, along
-          // with other late-parsed declarations.
-          if (!ClassStack.empty() && !LateAttrs->parseSoon())
-            getCurrentClass().LateParsedDeclarations.push_back(LA);
-
-          // consume everything up to and including the matching right parens
-          ConsumeAndStoreUntil(tok::r_paren, LA->Toks, true, false);
-
-          Token Eof;
-          Eof.startToken();
-          Eof.setLocation(Tok.getLocation());
-          LA->Toks.push_back(Eof);
-        } else {
-          ParseGNUAttributeArgs(AttrName, AttrNameLoc, attrs, endLoc,
-                                0, SourceLocation(), AttributeList::AS_GNU);
-        }
-      } else {
+      if (Tok.isNot(tok::l_paren)) {
         attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0, 0,
                      AttributeList::AS_GNU);
+        continue;
       }
+
+      // Handle "parameterized" attributes
+      if (!LateAttrs || !isAttributeLateParsed(*AttrName)) {
+        ParseGNUAttributeArgs(AttrName, AttrNameLoc, attrs, endLoc, 0,
+                              SourceLocation(), AttributeList::AS_GNU);
+        continue;
+      }
+
+      // Handle attributes with arguments that require late parsing.
+      LateParsedAttribute *LA =
+          new LateParsedAttribute(this, *AttrName, AttrNameLoc);
+      LateAttrs->push_back(LA);
+
+      // Attributes in a class are parsed at the end of the class, along
+      // with other late-parsed declarations.
+      if (!ClassStack.empty() && !LateAttrs->parseSoon())
+        getCurrentClass().LateParsedDeclarations.push_back(LA);
+
+      // consume everything up to and including the matching right parens
+      ConsumeAndStoreUntil(tok::r_paren, LA->Toks, true, false);
+
+      Token Eof;
+      Eof.startToken();
+      Eof.setLocation(Tok.getLocation());
+      LA->Toks.push_back(Eof);
     }
+
     if (ExpectAndConsume(tok::r_paren))
       SkipUntil(tok::r_paren, StopAtSemi);
     SourceLocation Loc = Tok.getLocation();
@@ -491,17 +496,15 @@ void Parser::ParseComplexMicrosoftDeclSpec(IdentifierInfo *Ident,
 
     next_property_accessor:
       // Keep processing accessors until we run out.
-      if (Tok.is(tok::comma)) {
-        ConsumeAnyToken();
+      if (TryConsumeToken(tok::comma))
         continue;
 
       // If we run into the ')', stop without consuming it.
-      } else if (Tok.is(tok::r_paren)) {
+      if (Tok.is(tok::r_paren))
         break;
-      } else {
-        Diag(Tok.getLocation(), diag::err_ms_property_expected_comma_or_rparen);
-        break;
-      }
+
+      Diag(Tok.getLocation(), diag::err_ms_property_expected_comma_or_rparen);
+      break;
     }
 
     // Only add the property attribute if it was well-formed.
@@ -1276,12 +1279,10 @@ void Parser::ParseTypeTagForDatatypeAttribute(IdentifierInfo &AttrName,
   }
   IdentifierLoc *ArgumentKind = ParseIdentifierLoc();
 
-  if (Tok.isNot(tok::comma)) {
-    Diag(Tok, diag::err_expected) << tok::comma;
+  if (ExpectAndConsume(tok::comma)) {
     T.skipToEnd();
     return;
   }
-  ConsumeToken();
 
   SourceRange MatchingCTypeRange;
   TypeResult MatchingCType = ParseTypeName(&MatchingCTypeRange);

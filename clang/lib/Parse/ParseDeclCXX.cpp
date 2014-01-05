@@ -2365,11 +2365,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     // If we don't have a comma, it is either the end of the list (a ';')
     // or an error, bail out.
-    if (Tok.isNot(tok::comma))
+    SourceLocation CommaLoc;
+    if (!TryConsumeToken(tok::comma, CommaLoc))
       break;
-
-    // Consume the comma.
-    SourceLocation CommaLoc = ConsumeToken();
 
     if (Tok.isAtStartOfLine() &&
         !MightBeDeclarator(Declarator::MemberContext)) {
@@ -2439,8 +2437,7 @@ ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
   EnterExpressionEvaluationContext Context(Actions, 
                                            Sema::PotentiallyEvaluated,
                                            D);
-  if (Tok.is(tok::equal)) {
-    EqualLoc = ConsumeToken();
+  if (TryConsumeToken(tok::equal, EqualLoc)) {
     if (Tok.is(tok::kw_delete)) {
       // In principle, an initializer of '= delete p;' is legal, but it will
       // never type-check. It's better to diagnose it as an ill-formed expression
@@ -2868,8 +2865,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
       return true;
 
     SourceLocation EllipsisLoc;
-    if (Tok.is(tok::ellipsis))
-      EllipsisLoc = ConsumeToken();
+    TryConsumeToken(tok::ellipsis, EllipsisLoc);
 
     return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
                                        TemplateTypeTy, DS, IdLoc, 

@@ -1023,11 +1023,9 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
       UnqualifiedId Name;
       Name.setIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
       ConsumeToken(); // the identifier
-      
-      // Parse the ellipsis.
-      if (Tok.is(tok::ellipsis))
-        EllipsisLoc = ConsumeToken();
-      
+
+      TryConsumeToken(tok::ellipsis, EllipsisLoc);
+
       // If the next token signals the end of a template argument,
       // then we have a dependent template name that could be a template
       // template argument.
