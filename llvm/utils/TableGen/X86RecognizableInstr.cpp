@@ -509,9 +509,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
 
   // Special cases.
 
-  if (Name == "MOVPQI2QImr"       ||
-      Name == "VMOVPQI2QImr"      ||
-      Name == "VMASKMOVDQU64")
+  if (Name == "VMASKMOVDQU64")
     return FILTER_WEAK;
 
   // XACQUIRE and XRELEASE reuse REPNE and REP respectively.

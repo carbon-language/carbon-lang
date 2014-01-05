@@ -4879,14 +4879,12 @@ def MOVPQI2QImr : S2I<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
 //===---------------------------------------------------------------------===//
 // Store / copy lower 64-bits of a XMM register.
 //
-def VMOVLQ128mr : VS2I<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
-                     "movq\t{$src, $dst|$dst, $src}",
-                     [(int_x86_sse2_storel_dq addr:$dst, VR128:$src)]>, VEX,
-                  Sched<[WriteStore]>;
-def MOVLQ128mr : S2I<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
-                     "movq\t{$src, $dst|$dst, $src}",
-                     [(int_x86_sse2_storel_dq addr:$dst, VR128:$src)],
-                     IIC_SSE_MOVDQ>, Sched<[WriteStore]>;
+let Predicates = [UseAVX] in
+def : Pat<(int_x86_sse2_storel_dq addr:$dst, VR128:$src),
+          (VMOVPQI2QImr addr:$dst, VR128:$src)>;
+let Predicates = [UseSSE2] in
+def : Pat<(int_x86_sse2_storel_dq addr:$dst, VR128:$src),
+          (MOVPQI2QImr addr:$dst, VR128:$src)>;
 
 let isCodeGenOnly = 1, AddedComplexity = 20 in {
 def VMOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
