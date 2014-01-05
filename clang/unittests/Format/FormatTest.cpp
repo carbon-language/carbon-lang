@@ -1650,18 +1650,21 @@ TEST_F(FormatTest, FormatsEnum) {
   verifyFormat("enum X f() {\n  a();\n  return 42;\n}");
   verifyFormat("enum {\n"
                "  Bar = Foo<int, int>::value\n"
-               "};");
+               "};",
+               getLLVMStyleWithColumns(30));
+
+  verifyFormat("enum ShortEnum { A, B, C };");
 }
 
 TEST_F(FormatTest, FormatsEnumsWithErrors) {
   verifyFormat("enum Type {\n"
-               "  One = 0;\n" // These semicolons should be commas.
+               "  One = 0; // These semicolons should be commas.\n"
                "  Two = 1;\n"
                "};");
   verifyFormat("namespace n {\n"
                "enum Type {\n"
                "  One,\n"
-               "  Two,\n" // missing };
+               "  Two, // missing };\n"
                "  int i;\n"
                "}\n"
                "void g() {}");
@@ -1703,13 +1706,11 @@ TEST_F(FormatTest, FormatsEnumClass) {
 
 TEST_F(FormatTest, FormatsEnumTypes) {
   verifyFormat("enum X : int {\n"
-               "  A,\n"
+               "  A, // Force multiple lines.\n"
                "  B\n"
                "};");
-  verifyFormat("enum X : std::uint32_t {\n"
-               "  A,\n"
-               "  B\n"
-               "};");
+  verifyFormat("enum X : int { A, B };");
+  verifyFormat("enum X : std::uint32_t { A, B };");
 }
 
 TEST_F(FormatTest, FormatsBitfields) {
@@ -6605,7 +6606,7 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                "};",
                Tab);
   verifyFormat("enum A {\n"
-               "\ta1,\n"
+               "\ta1, // Force multiple lines\n"
                "\ta2,\n"
                "\ta3\n"
                "};",

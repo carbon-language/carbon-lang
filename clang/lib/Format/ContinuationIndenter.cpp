@@ -182,10 +182,6 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       State.Stack.back().ObjCSelectorNameFound &&
       State.Stack.back().BreakBeforeParameter)
     return true;
-  if (Current.Type == TT_CtorInitializerColon &&
-      (!Style.AllowShortFunctionsOnASingleLine ||
-       Style.BreakConstructorInitializersBeforeComma || Style.ColumnLimit != 0))
-    return true;
   if (Previous.ClosesTemplateDeclaration && State.ParenLevel == 0 &&
       !Current.isTrailingComment())
     return true;
@@ -199,6 +195,18 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
        (State.Stack.back().BreakBeforeParameter &&
         State.Stack.back().ContainsUnwrappedBuilder)))
     return true;
+
+  // The following could be precomputed as they do not depend on the state.
+  // However, as they should take effect only if the UnwrappedLine does not fit
+  // into the ColumnLimit, they are checked here in the ContinuationIndenter.
+  if (Previous.BlockKind == BK_Block && Previous.is(tok::l_brace) &&
+      !Current.isOneOf(tok::r_brace, tok::comment))
+    return true;
+  if (Current.Type == TT_CtorInitializerColon &&
+      (!Style.AllowShortFunctionsOnASingleLine ||
+       Style.BreakConstructorInitializersBeforeComma || Style.ColumnLimit != 0))
+    return true;
+
   return false;
 }
 
