@@ -882,15 +882,15 @@ let mayLoad = 1, SchedRW = [WriteLoad] in {
 def POP16r  : I<0x58, AddRegFrm, (outs GR16:$reg), (ins), "pop{w}\t$reg", [],
                 IIC_POP_REG16>, OpSize;
 def POP32r  : I<0x58, AddRegFrm, (outs GR32:$reg), (ins), "pop{l}\t$reg", [],
-                IIC_POP_REG>;
+                IIC_POP_REG>, Requires<[Not64BitMode]>;
 def POP16rmr: I<0x8F, MRM0r, (outs GR16:$reg), (ins), "pop{w}\t$reg", [],
                 IIC_POP_REG>, OpSize;
 def POP16rmm: I<0x8F, MRM0m, (outs), (ins i16mem:$dst), "pop{w}\t$dst", [],
                 IIC_POP_MEM>, OpSize;
 def POP32rmr: I<0x8F, MRM0r, (outs GR32:$reg), (ins), "pop{l}\t$reg", [],
-                IIC_POP_REG>;
+                IIC_POP_REG>, Requires<[Not64BitMode]>;
 def POP32rmm: I<0x8F, MRM0m, (outs), (ins i32mem:$dst), "pop{l}\t$dst", [],
-                IIC_POP_MEM>;
+                IIC_POP_MEM>, Requires<[Not64BitMode]>;
 
 def POPF16   : I<0x9D, RawFrm, (outs), (ins), "popf{w}", [], IIC_POP_F>, OpSize;
 def POPF32   : I<0x9D, RawFrm, (outs), (ins), "popf{l|d}", [], IIC_POP_FD>,
@@ -901,23 +901,23 @@ let mayStore = 1, SchedRW = [WriteStore] in {
 def PUSH16r  : I<0x50, AddRegFrm, (outs), (ins GR16:$reg), "push{w}\t$reg",[],
                  IIC_PUSH_REG>, OpSize;
 def PUSH32r  : I<0x50, AddRegFrm, (outs), (ins GR32:$reg), "push{l}\t$reg",[],
-                 IIC_PUSH_REG>;
+                 IIC_PUSH_REG>, Requires<[Not64BitMode]>;
 def PUSH16rmr: I<0xFF, MRM6r, (outs), (ins GR16:$reg), "push{w}\t$reg",[],
                  IIC_PUSH_REG>, OpSize;
 def PUSH16rmm: I<0xFF, MRM6m, (outs), (ins i16mem:$src), "push{w}\t$src",[],
                  IIC_PUSH_MEM>,
   OpSize;
 def PUSH32rmr: I<0xFF, MRM6r, (outs), (ins GR32:$reg), "push{l}\t$reg",[],
-                 IIC_PUSH_REG>;
+                 IIC_PUSH_REG>, Requires<[Not64BitMode]>;
 def PUSH32rmm: I<0xFF, MRM6m, (outs), (ins i32mem:$src), "push{l}\t$src",[],
-                 IIC_PUSH_MEM>;
+                 IIC_PUSH_MEM>, Requires<[Not64BitMode]>;
 
 def PUSHi8   : Ii8<0x6a, RawFrm, (outs), (ins i32i8imm:$imm),
-                      "push{l}\t$imm", [], IIC_PUSH_IMM>;
+                   "push{l}\t$imm", [], IIC_PUSH_IMM>, Requires<[Not64BitMode]>;
 def PUSHi16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm),
                       "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize;
 def PUSHi32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm),
-                      "push{l}\t$imm", [], IIC_PUSH_IMM>;
+                   "push{l}\t$imm", [], IIC_PUSH_IMM>, Requires<[Not64BitMode]>;
 
 def PUSHF16  : I<0x9C, RawFrm, (outs), (ins), "pushf{w}", [], IIC_PUSH_F>,
                  OpSize;
@@ -929,31 +929,31 @@ def PUSHF32  : I<0x9C, RawFrm, (outs), (ins), "pushf{l|d}", [], IIC_PUSH_F>,
 
 let Defs = [RSP], Uses = [RSP], neverHasSideEffects=1 in {
 let mayLoad = 1, SchedRW = [WriteLoad] in {
-def POP64r   : I<0x58, AddRegFrm,
-                 (outs GR64:$reg), (ins), "pop{q}\t$reg", [], IIC_POP_REG>;
+def POP64r   : I<0x58, AddRegFrm, (outs GR64:$reg), (ins), "pop{q}\t$reg", [],
+                 IIC_POP_REG>, Requires<[In64BitMode]>;
 def POP64rmr: I<0x8F, MRM0r, (outs GR64:$reg), (ins), "pop{q}\t$reg", [],
-                IIC_POP_REG>;
+                IIC_POP_REG>, Requires<[In64BitMode]>;
 def POP64rmm: I<0x8F, MRM0m, (outs), (ins i64mem:$dst), "pop{q}\t$dst", [],
-                IIC_POP_MEM>;
+                IIC_POP_MEM>, Requires<[In64BitMode]>;
 } // mayLoad, SchedRW
 let mayStore = 1, SchedRW = [WriteStore] in {
-def PUSH64r  : I<0x50, AddRegFrm,
-                 (outs), (ins GR64:$reg), "push{q}\t$reg", [], IIC_PUSH_REG>;
+def PUSH64r  : I<0x50, AddRegFrm, (outs), (ins GR64:$reg), "push{q}\t$reg", [],
+                 IIC_PUSH_REG>, Requires<[In64BitMode]>;
 def PUSH64rmr: I<0xFF, MRM6r, (outs), (ins GR64:$reg), "push{q}\t$reg", [],
-                 IIC_PUSH_REG>;
+                 IIC_PUSH_REG>, Requires<[In64BitMode]>;
 def PUSH64rmm: I<0xFF, MRM6m, (outs), (ins i64mem:$src), "push{q}\t$src", [],
-                 IIC_PUSH_MEM>;
+                 IIC_PUSH_MEM>, Requires<[In64BitMode]>;
 } // mayStore, SchedRW
 }
 
 let Defs = [RSP], Uses = [RSP], neverHasSideEffects = 1, mayStore = 1,
     SchedRW = [WriteStore] in {
 def PUSH64i8   : Ii8<0x6a, RawFrm, (outs), (ins i64i8imm:$imm),
-                     "push{q}\t$imm", [], IIC_PUSH_IMM>;
+                    "push{q}\t$imm", [], IIC_PUSH_IMM>, Requires<[In64BitMode]>;
 def PUSH64i16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm),
                       "push{q}\t$imm", [], IIC_PUSH_IMM>;
 def PUSH64i32  : Ii32<0x68, RawFrm, (outs), (ins i64i32imm:$imm),
-                      "push{q}\t$imm", [], IIC_PUSH_IMM>;
+                    "push{q}\t$imm", [], IIC_PUSH_IMM>, Requires<[In64BitMode]>;
 }
 
 let Defs = [RSP, EFLAGS], Uses = [RSP], mayLoad = 1, neverHasSideEffects=1 in

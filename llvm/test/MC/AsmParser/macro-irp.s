@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple x86_64-unknown-unknown %s | FileCheck %s
+// RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
 
 .irp reg,%eax,%ebx
         pushl \reg
