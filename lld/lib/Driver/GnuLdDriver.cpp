@@ -17,6 +17,7 @@
 #include "lld/Driver/GnuLdInputGraph.h"
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
@@ -123,38 +124,38 @@ bool GnuLdDriver::linkELF(int argc, const char *argv[],
   return link(*options, diagnostics);
 }
 
+static llvm::Optional<llvm::Triple::ArchType>
+getArchType(const llvm::Triple &triple, StringRef value) {
+  if (triple.getOS() != llvm::Triple::NetBSD)
+    return llvm::None;
+  switch (triple.getArch()) {
+  case llvm::Triple::x86:
+  case llvm::Triple::x86_64:
+    if (value == "elf_i386")
+      return llvm::Triple::x86;
+    if (value == "elf_x86_64")
+      return llvm::Triple::x86_64;
+    return llvm::None;
+  default:
+    return llvm::None;
+  }
+}
+
 bool GnuLdDriver::applyEmulation(llvm::Triple &triple,
                                  llvm::opt::InputArgList &args,
                                  raw_ostream &diagnostics) {
   llvm::opt::Arg *arg = args.getLastArg(OPT_m);
   if (!arg)
     return true;
-  std::string value(arg->getValue());
-
-  switch (triple.getOS()) {
-  case llvm::Triple::NetBSD:
-    switch (triple.getArch()) {
-    case llvm::Triple::x86:
-    case llvm::Triple::x86_64:
-      if (value == "elf_i386") {
-        triple.setArch(llvm::Triple::x86);
-        return true;
-      }
-      if (value == "elf_x86_64") {
-        triple.setArch(llvm::Triple::x86_64);
-        return true;
-      }
-      break;
-    default:
-      break;
-    }
-    break;
-  default:
-    break;
+  llvm::Optional<llvm::Triple::ArchType> arch =
+      getArchType(triple, arg->getValue());
+  if (!arch) {
+    diagnostics << "error: unsupported emulation '" << arg->getValue()
+                << "'.\n";
+    return false;
   }
-
-  diagnostics << "error: unsupported emulation '" << value << "'.\n";
-  return false;
+  triple.setArch(*arch);
+  return true;
 }
 
 void GnuLdDriver::addPlatformSearchDirs(ELFLinkingContext &ctx,
