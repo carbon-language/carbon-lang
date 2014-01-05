@@ -701,7 +701,7 @@ multiclass avx512_cmp_scalar<RegisterClass RC, X86MemOperand x86memop,
                 (outs VK1:$dst), (ins RC:$src1, x86memop:$src2, CC:$cc), asm,
                 [(set VK1:$dst, (OpNode (VT RC:$src1),
                 (ld_frag addr:$src2), imm:$cc))], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
-  let neverHasSideEffects = 1 in {
+  let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def rri_alt : AVX512Ii8<0xC2, MRMSrcReg,
                (outs VK1:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
                asm_alt, [], IIC_SSE_ALU_F32S_RR>, EVEX_4V;
@@ -770,7 +770,7 @@ multiclass avx512_icmp_cc<bits<8> opc, RegisterClass KRC,
              [(set KRC:$dst, (OpNode (vt RC:$src1), (memop_frag addr:$src2),
                               imm:$cc))], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
   // Accept explicit immediate argument form instead of comparison code.
-  let neverHasSideEffects = 1 in {
+  let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def rri_alt : AVX512AIi8<opc, MRMSrcReg,
                (outs KRC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
                asm_alt, [], IIC_SSE_ALU_F32P_RR>, EVEX_4V;
@@ -824,7 +824,7 @@ multiclass avx512_cmp_packed<RegisterClass KRC, RegisterClass RC,
               (X86cmpm (vt RC:$src1), (memop addr:$src2), imm:$cc))], d>;
 
   // Accept explicit immediate argument form instead of comparison code.
-  let neverHasSideEffects = 1 in {
+  let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def rri_alt : AVX512PIi8<0xC2, MRMSrcReg,
                (outs RC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
               !strconcat("vcmp", suffix,

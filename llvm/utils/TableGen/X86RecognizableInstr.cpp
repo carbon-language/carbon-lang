@@ -508,8 +508,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
     return FILTER_WEAK;
 
   // Filter out alternate forms of AVX instructions
-  if (Name.find("_alt") != Name.npos ||
-      (Name.find("r64r") != Name.npos && Name.find("r64r64") == Name.npos && Name.find("r64r8") == Name.npos) ||
+  if ((Name.find("r64r") != Name.npos && Name.find("r64r64") == Name.npos && Name.find("r64r8") == Name.npos) ||
       Name.find("_64mr") != Name.npos ||
       Name.find("rr64") != Name.npos)
     return FILTER_WEAK;

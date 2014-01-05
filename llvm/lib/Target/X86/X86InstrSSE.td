@@ -2299,7 +2299,7 @@ multiclass sse12_cmp_scalar<RegisterClass RC, X86MemOperand x86memop,
            Sched<[itins.Sched.Folded, ReadAfterLd]>;
 
   // Accept explicit immediate argument form instead of comparison code.
-  let neverHasSideEffects = 1 in {
+  let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def rr_alt : SIi8<0xC2, MRMSrcReg, (outs RC:$dst),
                       (ins RC:$src1, RC:$src2, i8imm:$cc), asm_alt, [],
                       IIC_SSE_ALU_F32S_RR>, Sched<[itins.Sched]>;
@@ -2454,7 +2454,7 @@ multiclass sse12_cmp_packed<RegisterClass RC, X86MemOperand x86memop,
             Sched<[WriteFAddLd, ReadAfterLd]>;
 
   // Accept explicit immediate argument form instead of comparison code.
-  let neverHasSideEffects = 1 in {
+  let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def rri_alt : PIi8<0xC2, MRMSrcReg,
                (outs RC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
                asm_alt, [], itins.rr, d>, Sched<[WriteFAdd]>;
