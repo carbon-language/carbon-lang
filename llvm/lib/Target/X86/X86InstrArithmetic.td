@@ -497,7 +497,8 @@ def DEC64_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src1),
                 Requires<[In64BitMode]>;
 } // isConvertibleToThreeAddress = 1, CodeSize = 2
 
-let isCodeGenOnly = 1, CodeSize = 2 in {
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0,
+    CodeSize = 2 in {
 def INC32_16r : I<0xFF, MRM0r, (outs GR16:$dst), (ins GR16:$src1),
                   "inc{w}\t$dst", [], IIC_UNARY_REG>,
                 OpSize, Requires<[Not64BitMode]>;
@@ -510,7 +511,7 @@ def DEC32_16r : I<0xFF, MRM1r, (outs GR16:$dst), (ins GR16:$src1),
 def DEC32_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src1),
                   "dec{l}\t$dst", [], IIC_UNARY_REG>,
                 Requires<[Not64BitMode]>;
-} // isCodeGenOnly = 1, CodeSize = 2
+} // isCodeGenOnly = 1, ForceDisassemble = 1, HasSideEffects = 0, CodeSize = 2
 
 } // Constraints = "$src1 = $dst", SchedRW
 

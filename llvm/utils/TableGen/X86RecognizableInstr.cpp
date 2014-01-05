@@ -483,9 +483,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
 
   assert(Rec->isSubClassOf("X86Inst") && "Can only filter X86 instructions");
 
-  if (Form == X86Local::Pseudo ||
-      (IsCodeGenOnly && !ForceDisassemble &&
-       Name.find("INC32") == Name.npos && Name.find("DEC32") == Name.npos))
+  if (Form == X86Local::Pseudo || (IsCodeGenOnly && !ForceDisassemble))
     return FILTER_STRONG;
 
 
