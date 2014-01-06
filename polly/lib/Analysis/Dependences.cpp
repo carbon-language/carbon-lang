@@ -41,10 +41,7 @@ LegalityCheckDisabled("disable-polly-legality",
                       cl::desc("Disable polly legality check"), cl::Hidden,
                       cl::init(false), cl::cat(PollyCategory));
 
-enum AnalysisType {
-  VALUE_BASED_ANALYSIS,
-  MEMORY_BASED_ANALYSIS
-};
+enum AnalysisType { VALUE_BASED_ANALYSIS, MEMORY_BASED_ANALYSIS };
 
 static cl::opt<enum AnalysisType> OptAnalysisType(
     "polly-dependences-analysis-type",
