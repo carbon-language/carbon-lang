@@ -29,7 +29,7 @@ const char *tok::getTokenName(enum TokenKind Kind) {
   return 0;
 }
 
-const char *tok::getTokenSimpleSpelling(enum TokenKind Kind) {
+const char *tok::getPunctuatorSpelling(enum TokenKind Kind) {
   switch (Kind) {
 #define PUNCTUATOR(X,Y) case X: return Y;
 #include "clang/Basic/TokenKinds.def"

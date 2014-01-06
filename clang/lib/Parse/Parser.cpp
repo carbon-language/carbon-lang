@@ -164,7 +164,7 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
     SourceLocation Loc = Tok.getLocation();
     DiagnosticBuilder DB = Diag(Loc, DiagID);
     DB << FixItHint::CreateReplacement(SourceRange(Loc),
-                                       getTokenSimpleSpelling(ExpectedTok));
+                                       getPunctuatorSpelling(ExpectedTok));
     if (DiagID == diag::err_expected)
       DB << ExpectedTok;
     else if (DiagID == diag::err_expected_after)
@@ -180,7 +180,7 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
   SourceLocation EndLoc = PP.getLocForEndOfToken(PrevTokLocation);
   const char *Spelling = 0;
   if (EndLoc.isValid())
-    Spelling = tok::getTokenSimpleSpelling(ExpectedTok);
+    Spelling = tok::getPunctuatorSpelling(ExpectedTok);
 
   DiagnosticBuilder DB =
       Spelling

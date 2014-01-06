@@ -63,7 +63,7 @@ const char *getTokenName(enum TokenKind Kind) LLVM_READNONE;
 /// and will not produce any alternative spellings (e.g., a
 /// digraph). For the actual spelling of a given Token, use
 /// Preprocessor::getSpelling().
-const char *getTokenSimpleSpelling(enum TokenKind Kind) LLVM_READNONE;
+const char *getPunctuatorSpelling(enum TokenKind Kind) LLVM_READNONE;
 
 /// \brief Return true if this is a raw identifier or an identifier kind.
 inline bool isAnyIdentifier(TokenKind K) {

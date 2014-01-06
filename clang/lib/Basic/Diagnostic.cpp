@@ -831,7 +831,7 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       if (const char *S = getTokenNameForDiagnostic(Kind))
         // Unquoted translatable token name.
         Out << S;
-      else if (const char *S = tok::getTokenSimpleSpelling(Kind))
+      else if (const char *S = tok::getPunctuatorSpelling(Kind))
         // Quoted token spelling, currently only covers punctuators.
         Out << '\'' << S << '\'';
       else if (const char *S = tok::getTokenName(Kind))
