@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "XCoreMachineFunctionInfo.h"
+#include "XCoreInstrInfo.h"
+#include "llvm/IR/Function.h"
 
 using namespace llvm;
 
@@ -28,3 +30,31 @@ bool XCoreFunctionInfo::isLargeFrame(const MachineFunction &MF) const {
   // 16KB of function arguments.
   return CachedEStackSize > 0xf000;
 }
+
+int XCoreFunctionInfo::createLRSpillSlot(MachineFunction &MF) {
+  if (LRSpillSlotSet) {
+    return LRSpillSlot;
+  }
+  const TargetRegisterClass *RC = &XCore::GRRegsRegClass;
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  if (! MF.getFunction()->isVarArg()) {
+    // A fixed offset of 0 allows us to save / restore LR using entsp / retsp.
+    LRSpillSlot = MFI->CreateFixedObject(RC->getSize(), 0, true);
+  } else {
+    LRSpillSlot = MFI->CreateStackObject(RC->getSize(), RC->getAlignment(), true);
+  }
+  LRSpillSlotSet = true;
+  return LRSpillSlot;
+}
+
+int XCoreFunctionInfo::createFPSpillSlot(MachineFunction &MF) {
+  if (FPSpillSlotSet) {
+    return FPSpillSlot;
+  }
+  const TargetRegisterClass *RC = &XCore::GRRegsRegClass;
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  FPSpillSlot = MFI->CreateStackObject(RC->getSize(), RC->getAlignment(), true);
+  FPSpillSlotSet = true;
+  return FPSpillSlot;
+}
+

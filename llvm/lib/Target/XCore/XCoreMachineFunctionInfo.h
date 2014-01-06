@@ -27,8 +27,9 @@ class Function;
 /// XCore target-specific information for each MachineFunction.
 class XCoreFunctionInfo : public MachineFunctionInfo {
   virtual void anchor();
-  bool UsesLR;
+  bool LRSpillSlotSet;
   int LRSpillSlot;
+  bool FPSpillSlotSet;
   int FPSpillSlot;
   int VarArgsFrameIndex;
   mutable int CachedEStackSize;
@@ -36,15 +37,17 @@ class XCoreFunctionInfo : public MachineFunctionInfo {
 
 public:
   XCoreFunctionInfo() :
-    UsesLR(false),
+    LRSpillSlotSet(false),
     LRSpillSlot(0),
+    FPSpillSlotSet(false),
     FPSpillSlot(0),
     VarArgsFrameIndex(0),
     CachedEStackSize(-1) {}
   
   explicit XCoreFunctionInfo(MachineFunction &MF) :
-    UsesLR(false),
+    LRSpillSlotSet(false),
     LRSpillSlot(0),
+    FPSpillSlotSet(false),
     FPSpillSlot(0),
     VarArgsFrameIndex(0),
     CachedEStackSize(-1) {}
@@ -53,16 +56,21 @@ public:
   
   void setVarArgsFrameIndex(int off) { VarArgsFrameIndex = off; }
   int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
-  
-  void setUsesLR(bool val) { UsesLR = val; }
-  bool getUsesLR() const { return UsesLR; }
-  
-  void setLRSpillSlot(int off) { LRSpillSlot = off; }
-  int getLRSpillSlot() const { return LRSpillSlot; }
-  
-  void setFPSpillSlot(int off) { FPSpillSlot = off; }
-  int getFPSpillSlot() const { return FPSpillSlot; }
-  
+
+  int createLRSpillSlot(MachineFunction &MF);
+  bool hasLRSpillSlot() { return LRSpillSlotSet; }
+  int getLRSpillSlot() const {
+    assert(LRSpillSlotSet && "LR Spill slot no set");
+    return LRSpillSlot;
+  }
+
+  int createFPSpillSlot(MachineFunction &MF);
+  bool hasFPSpillSlot() { return FPSpillSlotSet; }
+  int getFPSpillSlot() const {
+    assert(FPSpillSlotSet && "FP Spill slot no set");
+    return FPSpillSlot;
+  }
+
   bool isLargeFrame(const MachineFunction &MF) const;
 
   std::vector<std::pair<MCSymbol*, CalleeSavedInfo> > &getSpillLabels() {
