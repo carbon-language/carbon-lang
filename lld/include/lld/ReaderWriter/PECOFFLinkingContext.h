@@ -46,8 +46,7 @@ public:
         _terminalServerAware(true), _dynamicBaseEnabled(true),
         _createManifest(true), _embedManifest(false), _manifestId(1),
         _manifestLevel("'asInvoker'"), _manifestUiAccess("'false'"),
-        _imageType(ImageType::exe),
-        _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
+        _isDll(false), _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
     setDeadStripping(true);
   }
 
@@ -71,11 +70,6 @@ public:
 
   /// \brief Casting support
   static inline bool classof(const LinkingContext *info) { return true; }
-
-  enum class ImageType {
-    exe,
-    dll
-  };
 
   virtual Writer &writer() const;
   virtual bool validateImpl(raw_ostream &diagnostics);
@@ -193,8 +187,8 @@ public:
     return _manifestDependency;
   }
 
-  void setImageType(ImageType type) { _imageType = type; }
-  ImageType getImageType() const { return _imageType; }
+  void setIsDll(bool val) { _isDll = val; }
+  bool isDll() const { return _isDll; }
 
   StringRef getOutputSectionName(StringRef sectionName) const;
   bool addSectionRenaming(raw_ostream &diagnostics,
@@ -282,7 +276,7 @@ private:
   std::string _manifestLevel;
   std::string _manifestUiAccess;
   std::string _manifestDependency;
-  ImageType _imageType;
+  bool _isDll;
 
   // The set to store /nodefaultlib arguments.
   std::set<std::string> _noDefaultLibs;

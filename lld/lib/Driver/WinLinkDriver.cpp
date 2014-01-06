@@ -571,7 +571,7 @@ void processLibEnv(PECOFFLinkingContext &context) {
 // Returns a default entry point symbol name depending on context image type and
 // subsystem. These default names are MS CRT compliant.
 StringRef getDefaultEntrySymbolName(PECOFFLinkingContext &context) {
-  if (context.getImageType() == PECOFFLinkingContext::ImageType::dll)
+  if (context.isDll())
     return "_DllMainCRTStartup@12";
   llvm::COFF::WindowsSubsystem subsystem = context.getSubsystem();
   if (subsystem == llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI)
@@ -726,7 +726,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
 
     case OPT_dll:
       // Parse /dll command line option
-      ctx.setImageType(PECOFFLinkingContext::ImageType::dll);
+      ctx.setIsDll(true);
       // Default base address of a DLL is 0x10000000.
       if (!parsedArgs->getLastArg(OPT_base))
         ctx.setBaseAddress(0x10000000);

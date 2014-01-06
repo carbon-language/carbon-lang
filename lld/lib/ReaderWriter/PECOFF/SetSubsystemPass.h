@@ -41,7 +41,7 @@ public:
         return;
       }
     }
-    if (_ctx.getImageType() == PECOFFLinkingContext::ImageType::dll) {
+    if (_ctx.isDll()) {
       _ctx.setSubsystem(WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI);
       return;
     }

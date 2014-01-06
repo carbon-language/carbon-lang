@@ -911,8 +911,7 @@ error_code PECOFFWriter::writeFile(const File &linkedFile, StringRef path) {
   applyAllRelocations(buffer->getBufferStart());
   DEBUG(printAllAtomAddresses());
 
-  if (_PECOFFLinkingContext.getImageType() ==
-      PECOFFLinkingContext::ImageType::dll)
+  if (_PECOFFLinkingContext.isDll())
     writeImportLibrary(_PECOFFLinkingContext);
 
   return buffer->commit();
@@ -984,8 +983,7 @@ void PECOFFWriter::setAddressOfEntryPoint(AtomChunk *text,
   // PECOFF spec says that entry point for dll images is optional, in which
   // case it must be set to 0.
   if (_PECOFFLinkingContext.entrySymbolName().empty() &&
-      _PECOFFLinkingContext.getImageType() ==
-          PECOFFLinkingContext::ImageType::dll) {
+      _PECOFFLinkingContext.isDll()) {
     peHeader->setAddressOfEntryPoint(0);
   } else {
     uint64_t entryPointAddress =
