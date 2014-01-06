@@ -648,14 +648,25 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   COFFSection *coff_section = SectionMap[&SectionData->getSection()];
   COFFSymbol *coff_symbol = SymbolMap[&A_SD.getSymbol()];
-  const MCSymbolRefExpr *SymA = Target.getSymA();
   const MCSymbolRefExpr *SymB = Target.getSymB();
-  const bool CrossSection = SymB &&
-    &SymA->getSymbol().getSection() != &SymB->getSymbol().getSection();
+  bool CrossSection = false;
 
-  if (Target.getSymB()) {
-    const MCSymbol *B = &Target.getSymB()->getSymbol();
+  if (SymB) {
+    const MCSymbol *B = &SymB->getSymbol();
     MCSymbolData &B_SD = Asm.getSymbolData(*B);
+    if (!B_SD.getFragment())
+      Asm.getContext().FatalError(
+          Fixup.getLoc(),
+          Twine("symbol '") + B->getName() +
+              "' can not be undefined in a subtraction expression");
+
+    if (!A_SD.getFragment())
+      Asm.getContext().FatalError(
+          Fixup.getLoc(),
+          Twine("symbol '") + Symbol.getName() +
+              "' can not be undefined in a subtraction expression");
+
+    CrossSection = &Symbol.getSection() != &B->getSection();
 
     // Offset of the symbol in the section
     int64_t a = Layout.getSymbolOffset(&B_SD);

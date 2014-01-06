@@ -720,6 +720,12 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       MCSymbolData &SDB = Asm.getSymbolData(SymbolB);
       IsPCRel = true;
 
+      if (!SDB.getFragment())
+        Asm.getContext().FatalError(
+            Fixup.getLoc(),
+            Twine("symbol '") + SymbolB.getName() +
+                "' can not be undefined in a subtraction expression");
+
       // Offset of the symbol in the section
       int64_t a = Layout.getSymbolOffset(&SDB);
 
