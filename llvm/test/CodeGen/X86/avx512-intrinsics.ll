@@ -514,3 +514,10 @@ define <8 x double> @test_vminpd(<8 x double> %a0, <8 x double> %a1) {
 }
 declare <8 x double> @llvm.x86.avx512.mask.min.pd.512(<8 x double>, <8 x double>,
                     <8 x double>, i8, i32)
+
+ define <8 x float> @test_cvtpd2ps(<8 x double> %a) {
+ ;CHECK: vcvtpd2ps {rd-sae}{{.*}}encoding: [0x62,0xf1,0xfd,0x38,0x5a,0xc0]
+  %res = call <8 x float> @llvm.x86.avx512.mask.cvtpd2ps.512(<8 x double> %a, <8 x float>zeroinitializer, i8 -1, i32 1)
+  ret <8 x float>%res
+ }
+ declare <8 x float> @llvm.x86.avx512.mask.cvtpd2ps.512(<8 x double>, <8 x float>, i8, i32)

@@ -2799,6 +2799,14 @@ defm VCVTPS2PDZ : avx512_vcvt_fp<0x5A, "vcvtps2pd", VR256X, VR512, fextend,
                                 SSEPackedDouble>, EVEX_V512, EVEX_CD8<32, CD8VH>;
 def : Pat<(v8f64 (extloadv8f32 addr:$src)),
             (VCVTPS2PDZrm addr:$src)>;
+            
+def : Pat<(v8f32 (int_x86_avx512_mask_cvtpd2ps_512 (v8f64 VR512:$src),
+                   (bc_v8f32(v8i32 immAllZerosV)), (i8 -1), (i32 FROUND_CURRENT))),
+          (VCVTPD2PSZrr VR512:$src)>;
+
+def : Pat<(v8f32 (int_x86_avx512_mask_cvtpd2ps_512 (v8f64 VR512:$src),
+                   (bc_v8f32(v8i32 immAllZerosV)), (i8 -1), imm:$rc)),
+          (VCVTPD2PSZrrb VR512:$src, imm:$rc)>;
 
 //===----------------------------------------------------------------------===//
 // AVX-512  Vector convert from sign integer to float/double

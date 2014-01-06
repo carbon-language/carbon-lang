@@ -466,6 +466,7 @@ def bc_v32i8 : PatFrag<(ops node:$in), (v32i8 (bitconvert node:$in))>;
 def bc_v16i16 : PatFrag<(ops node:$in), (v16i16 (bitconvert node:$in))>;
 def bc_v8i32 : PatFrag<(ops node:$in), (v8i32 (bitconvert node:$in))>;
 def bc_v4i64 : PatFrag<(ops node:$in), (v4i64 (bitconvert node:$in))>;
+def bc_v8f32 : PatFrag<(ops node:$in), (v8f32 (bitconvert node:$in))>;
 
 // 512-bit bitconvert pattern fragments
 def bc_v16i32 : PatFrag<(ops node:$in), (v16i32 (bitconvert node:$in))>;
