@@ -478,7 +478,7 @@ namespace std {
   }
 }
 
-#endif // __clang__ || __GNUC___ || _MSC_VER || __IBMCPP__
+#endif // __clang__ || __GNUC__ || _MSC_VER || __IBMCPP__
 
 #ifdef _LIBCPP_HAS_NO_UNICODE_CHARS
 typedef unsigned short char16_t;
