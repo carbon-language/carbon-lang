@@ -639,12 +639,15 @@ static void HandlePluralModifier(const Diagnostic &DInfo, unsigned ValNo,
   }
 }
 
-/// \brief Returns the friendly name for a token kind that will / appear
-// without quotes in diagnostic messages.
-static const char *getTokenNameForDiagnostic(tok::TokenKind Kind) {
+/// \brief Returns the friendly description for a token kind that will appear
+/// without quotes in diagnostic messages. These strings may be translatable in
+/// future.
+static const char *getTokenDescForDiagnostic(tok::TokenKind Kind) {
   switch (Kind) {
   case tok::identifier:
     return "identifier";
+  case tok::annot_template_id:
+    return "template name";
   default:
     return 0;
   }
@@ -828,12 +831,15 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       assert(ModifierLen == 0 && "No modifiers for token kinds yet");
 
       llvm::raw_svector_ostream Out(OutStr);
-      if (const char *S = getTokenNameForDiagnostic(Kind))
+      if (const char *S = tok::getPunctuatorSpelling(Kind))
+        // Quoted token spelling for punctuators.
+        Out << '\'' << S << '\'';
+      else if (const char *S = tok::getKeywordSpelling(Kind))
+        // Unquoted token spelling for keywords.
+        Out << S;
+      else if (const char *S = getTokenDescForDiagnostic(Kind))
         // Unquoted translatable token name.
         Out << S;
-      else if (const char *S = tok::getPunctuatorSpelling(Kind))
-        // Quoted token spelling, currently only covers punctuators.
-        Out << '\'' << S << '\'';
       else if (const char *S = tok::getTokenName(Kind))
         // Debug name, shouldn't appear in user-facing diagnostics.
         Out << '<' << S << '>';

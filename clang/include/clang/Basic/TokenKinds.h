@@ -65,6 +65,10 @@ const char *getTokenName(enum TokenKind Kind) LLVM_READNONE;
 /// Preprocessor::getSpelling().
 const char *getPunctuatorSpelling(enum TokenKind Kind) LLVM_READNONE;
 
+/// \brief Determines the spelling of simple keyword and contextual keyword
+/// tokens like 'int' and 'dynamic_cast'. Returns NULL for other token kinds.
+const char *getKeywordSpelling(enum TokenKind Kind) LLVM_READNONE;
+
 /// \brief Return true if this is a raw identifier or an identifier kind.
 inline bool isAnyIdentifier(TokenKind K) {
   return (K == tok::identifier) || (K == tok::raw_identifier);

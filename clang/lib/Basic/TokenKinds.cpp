@@ -35,6 +35,14 @@ const char *tok::getPunctuatorSpelling(enum TokenKind Kind) {
 #include "clang/Basic/TokenKinds.def"
   default: break;
   }
+  return 0;
+}
 
+const char *tok::getKeywordSpelling(enum TokenKind Kind) {
+  switch (Kind) {
+#define KEYWORD(X,Y) case kw_ ## X: return #X;
+#include "clang/Basic/TokenKinds.def"
+    default: break;
+  }
   return 0;
 }
