@@ -1237,13 +1237,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       }
 
       Diag(NameLoc, diag::err_explicit_spec_non_template)
-        << (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation)
-        << (TagType == DeclSpec::TST_class? 0
-            : TagType == DeclSpec::TST_struct? 1
-            : TagType == DeclSpec::TST_union? 2
-            : 3)
-        << Name
-        << SourceRange(LAngleLoc, RAngleLoc);
+          << (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation)
+          << TagTokKind << Name << SourceRange(LAngleLoc, RAngleLoc);
 
       // Strip off the last template parameter list if it was empty, since
       // we've removed its template argument list.
