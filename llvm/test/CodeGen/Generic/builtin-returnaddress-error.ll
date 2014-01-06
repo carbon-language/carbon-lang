@@ -1,6 +1,6 @@
 ; RUN: not llc < %s -O0 2> %t1
 ; RUN: FileCheck %s < %t1
-; XFAIL: ppc64,mips
+; XFAIL: ppc64,mips,s390x
 ; PR18363
 
 ; CHECK: argument to '__builtin_return_address' must be a constant integer
