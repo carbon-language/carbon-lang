@@ -24,18 +24,6 @@
 
 using namespace clang;
 
-static int SelectDigraphErrorMessage(tok::TokenKind Kind) {
-  switch (Kind) {
-    case tok::kw_template:         return 0;
-    case tok::kw_const_cast:       return 1;
-    case tok::kw_dynamic_cast:     return 2;
-    case tok::kw_reinterpret_cast: return 3;
-    case tok::kw_static_cast:      return 4;
-    default:
-      llvm_unreachable("Unknown type for digraph error message.");
-  }
-}
-
 // Are the two tokens adjacent in the same source file?
 bool Parser::areTokensAdjacent(const Token &First, const Token &Second) {
   SourceManager &SM = PP.getSourceManager();
@@ -56,8 +44,7 @@ static void FixDigraph(Parser &P, Preprocessor &PP, Token &DigraphToken,
   Range.setBegin(DigraphToken.getLocation());
   Range.setEnd(ColonToken.getLocation());
   P.Diag(DigraphToken.getLocation(), diag::err_missing_whitespace_digraph)
-      << SelectDigraphErrorMessage(Kind)
-      << FixItHint::CreateReplacement(Range, "< ::");
+      << Kind << FixItHint::CreateReplacement(Range, "< ::");
 
   // Update token information to reflect their change in token type.
   ColonToken.setKind(tok::coloncolon);
@@ -93,8 +80,8 @@ void Parser::CheckForTemplateAndDigraph(Token &Next, ParsedType ObjectType,
                               Template, MemberOfUnknownSpecialization))
     return;
 
-  FixDigraph(*this, PP, Next, SecondToken, tok::kw_template,
-             /*AtDigraph*/false);
+  FixDigraph(*this, PP, Next, SecondToken, tok::annot_template_id,
+             /*AtDigraph*/ false);
 }
 
 /// \brief Emits an error for a left parentheses after a double colon.
