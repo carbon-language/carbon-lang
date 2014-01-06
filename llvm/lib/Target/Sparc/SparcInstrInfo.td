@@ -230,24 +230,24 @@ def FCC_O   : FCC_VAL<29>;  // Ordered
 multiclass F3_12<string OpcStr, bits<6> Op3Val, SDNode OpNode,
                  RegisterClass RC, ValueType Ty, Operand immOp> {
   def rr  : F3_1<2, Op3Val,
-                 (outs RC:$dst), (ins RC:$b, RC:$c),
-                 !strconcat(OpcStr, " $b, $c, $dst"),
-                 [(set Ty:$dst, (OpNode Ty:$b, Ty:$c))]>;
+                 (outs RC:$rd), (ins RC:$rs1, RC:$rs2),
+                 !strconcat(OpcStr, " $rs1, $rs2, $rd"),
+                 [(set Ty:$rd, (OpNode Ty:$rs1, Ty:$rs2))]>;
   def ri  : F3_2<2, Op3Val,
-                 (outs RC:$dst), (ins RC:$b, immOp:$c),
-                 !strconcat(OpcStr, " $b, $c, $dst"),
-                 [(set Ty:$dst, (OpNode Ty:$b, (Ty simm13:$c)))]>;
+                 (outs RC:$rd), (ins RC:$rs1, immOp:$simm13),
+                 !strconcat(OpcStr, " $rs1, $simm13, $rd"),
+                 [(set Ty:$rd, (OpNode Ty:$rs1, (Ty simm13:$simm13)))]>;
 }
 
 /// F3_12np multiclass - Define a normal F3_1/F3_2 pattern in one shot, with no
 /// pattern.
 multiclass F3_12np<string OpcStr, bits<6> Op3Val> {
   def rr  : F3_1<2, Op3Val,
-                 (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
-                 !strconcat(OpcStr, " $b, $c, $dst"), []>;
+                 (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2),
+                 !strconcat(OpcStr, " $rs1, $rs2, $rd"), []>;
   def ri  : F3_2<2, Op3Val,
-                 (outs IntRegs:$dst), (ins IntRegs:$b, i32imm:$c),
-                 !strconcat(OpcStr, " $b, $c, $dst"), []>;
+                 (outs IntRegs:$rd), (ins IntRegs:$rs1, i32imm:$simm13),
+                 !strconcat(OpcStr, " $rs1, $simm13, $rd"), []>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -488,31 +488,31 @@ let rd = 0, imm22 = 0 in
 defm AND    : F3_12<"and", 0b000001, and, IntRegs, i32, i32imm>;
 
 def ANDNrr  : F3_1<2, 0b000101,
-                   (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
-                   "andn $b, $c, $dst",
-                   [(set i32:$dst, (and i32:$b, (not i32:$c)))]>;
+                   (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2),
+                   "andn $rs1, $rs2, $rd",
+                   [(set i32:$rd, (and i32:$rs1, (not i32:$rs2)))]>;
 def ANDNri  : F3_2<2, 0b000101,
-                   (outs IntRegs:$dst), (ins IntRegs:$b, i32imm:$c),
-                   "andn $b, $c, $dst", []>;
+                   (outs IntRegs:$rd), (ins IntRegs:$rs1, i32imm:$simm13),
+                   "andn $rs1, $simm13, $rd", []>;
 
 defm OR     : F3_12<"or", 0b000010, or, IntRegs, i32, i32imm>;
 
 def ORNrr   : F3_1<2, 0b000110,
-                   (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
-                   "orn $b, $c, $dst",
-                   [(set i32:$dst, (or i32:$b, (not i32:$c)))]>;
+                   (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2),
+                   "orn $rs1, $rs2, $rd",
+                   [(set i32:$rd, (or i32:$rs1, (not i32:$rs2)))]>;
 def ORNri   : F3_2<2, 0b000110,
-                   (outs IntRegs:$dst), (ins IntRegs:$b, i32imm:$c),
-                   "orn $b, $c, $dst", []>;
+                   (outs IntRegs:$rd), (ins IntRegs:$rs1, i32imm:$simm13),
+                   "orn $rs1, $simm13, $rd", []>;
 defm XOR    : F3_12<"xor", 0b000011, xor, IntRegs, i32, i32imm>;
 
 def XNORrr  : F3_1<2, 0b000111,
-                   (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
-                   "xnor $b, $c, $dst",
-                   [(set i32:$dst, (not (xor i32:$b, i32:$c)))]>;
+                   (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2),
+                   "xnor $rs1, $rs2, $rd",
+                   [(set i32:$rd, (not (xor i32:$rs1, i32:$rs2)))]>;
 def XNORri  : F3_2<2, 0b000111,
-                   (outs IntRegs:$dst), (ins IntRegs:$b, i32imm:$c),
-                   "xnor $b, $c, $dst", []>;
+                   (outs IntRegs:$rd), (ins IntRegs:$rs1, i32imm:$simm13),
+                   "xnor $rs1, $simm13, $rd", []>;
 
 // Section B.12 - Shift Instructions, p. 107
 defm SLL : F3_12<"sll", 0b100101, shl, IntRegs, i32, i32imm>;
@@ -545,20 +545,14 @@ let Defs = [ICC] in
 
 let Defs = [ICC], rd = 0 in {
   def CMPrr   : F3_1<2, 0b010100,
-                     (outs), (ins IntRegs:$b, IntRegs:$c),
-                     "cmp $b, $c",
-                     [(SPcmpicc i32:$b, i32:$c)]>;
+                     (outs), (ins IntRegs:$rs1, IntRegs:$rs2),
+                     "cmp $rs1, $rs2",
+                     [(SPcmpicc i32:$rs1, i32:$rs2)]>;
   def CMPri   : F3_2<2, 0b010100,
-                     (outs), (ins IntRegs:$b, i32imm:$c),
-                     "cmp $b, $c",
-                     [(SPcmpicc i32:$b, (i32 simm13:$c))]>;
+                     (outs), (ins IntRegs:$rs1, i32imm:$simm13),
+                     "cmp $rs1, $simm13",
+                     [(SPcmpicc i32:$rs1, (i32 simm13:$simm13))]>;
 }
-
-let Uses = [ICC], Defs = [ICC] in
-  def SUBXCCrr: F3_1<2, 0b011100,
-                (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
-                "subxcc $b, $c, $dst", []>;
-
 
 // Section B.18 - Multiply Instructions, p. 113
 let Defs = [Y] in {
@@ -858,7 +852,7 @@ let Defs = [FCC] in {
 //===----------------------------------------------------------------------===//
 // Instructions for Thread Local Storage(TLS).
 //===----------------------------------------------------------------------===//
-
+let isCodeGenOnly = 1, isAsmParserOnly = 1 in {
 def TLS_ADDrr : F3_1<2, 0b000000,
                     (outs IntRegs:$rd),
                     (ins IntRegs:$rs1, IntRegs:$rs2, TLSSym:$sym),
@@ -881,6 +875,7 @@ let Uses = [O6], isCall = 1, hasDelaySlot = 1 in
   bits<30> disp;
   let op = 1;
   let Inst{29-0} = disp;
+}
 }
 
 //===----------------------------------------------------------------------===//

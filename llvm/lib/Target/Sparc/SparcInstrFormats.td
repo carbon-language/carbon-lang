@@ -12,6 +12,7 @@ class InstSP<dag outs, dag ins, string asmstr, list<dag> pattern>
   field bits<32> Inst;
 
   let Namespace = "SP";
+  let Size = 4;
 
   bits<2> op;
   let Inst{31-30} = op;               // Top two bits are the 'op' field
@@ -20,6 +21,9 @@ class InstSP<dag outs, dag ins, string asmstr, list<dag> pattern>
   dag InOperandList = ins;
   let AsmString   = asmstr;
   let Pattern = pattern;
+
+  let DecoderNamespace = "Sparc";
+  field bits<32> SoftFail = 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -56,6 +60,27 @@ class F2_2<bits<3> op2Val, dag outs, dag ins, string asmstr,
 
   let Inst{29}    = annul;
   let Inst{28-25} = cond;
+}
+
+class F2_3<bits<3> op2Val, bits<2> ccVal, dag outs, dag ins, string asmstr,
+           list<dag> pattern>
+   : InstSP<outs, ins, asmstr, pattern> {
+  bit      annul;
+  bits<4>  cond;
+  bit      pred;
+  bits<19> imm19;
+
+  let op          = 0;    // op = 0
+
+  bit annul       = 0;    // currently unused
+  let pred        = 1;    // default is predict taken
+
+  let Inst{29}    = annul;
+  let Inst{28-25} = cond;
+  let Inst{24-22} = op2Val;
+  let Inst{21-20} = ccVal;
+  let Inst{19}    = pred;
+  let Inst{18-0}  = imm19;
 }
 
 //===----------------------------------------------------------------------===//

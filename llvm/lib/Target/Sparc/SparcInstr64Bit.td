@@ -141,6 +141,7 @@ def : Pat<(i64 imm:$val),
 let Predicates = [Is64Bit] in {
 
 // Register-register instructions.
+let isCodeGenOnly = 1 in {
 defm ANDX    : F3_12<"and", 0b000001, and, I64Regs, i64, i64imm>;
 defm ORX     : F3_12<"or",  0b000010, or,  I64Regs, i64, i64imm>;
 defm XORX    : F3_12<"xor", 0b000011, xor, I64Regs, i64, i64imm>;
@@ -161,26 +162,23 @@ def XNORXrr  : F3_1<2, 0b000111,
 defm ADDX    : F3_12<"add", 0b000000, add, I64Regs, i64, i64imm>;
 defm SUBX    : F3_12<"sub", 0b000100, sub, I64Regs, i64, i64imm>;
 
-def : Pat<(SPcmpicc i64:$a, i64:$b), (CMPrr $a, $b)>;
-
 def TLS_ADDXrr : F3_1<2, 0b000000, (outs I64Regs:$rd),
                    (ins I64Regs:$rs1, I64Regs:$rs2, TLSSym:$sym),
                    "add $rs1, $rs2, $rd, $sym",
                    [(set i64:$rd,
                        (tlsadd i64:$rs1, i64:$rs2, tglobaltlsaddr:$sym))]>;
 
-// Register-immediate instructions.
-
-def : Pat<(SPcmpicc i64:$a, (i64 simm13:$b)), (CMPri $a, (as_i32imm $b))>;
-
-def : Pat<(ctpop i64:$src), (POPCrr $src)>;
-
 // "LEA" form of add
-let isCodeGenOnly = 1 in
 def LEAX_ADDri : F3_2<2, 0b000000,
                      (outs I64Regs:$dst), (ins MEMri:$addr),
                      "add ${addr:arith}, $dst",
                      [(set iPTR:$dst, ADDRri:$addr)]>;
+}
+
+def : Pat<(SPcmpicc i64:$a, i64:$b), (CMPrr $a, $b)>;
+def : Pat<(SPcmpicc i64:$a, (i64 simm13:$b)), (CMPri $a, (as_i32imm $b))>;
+def : Pat<(ctpop i64:$src), (POPCrr $src)>;
+
 } // Predicates = [Is64Bit]
 
 
@@ -245,7 +243,7 @@ def LDXri  : F3_2<3, 0b001011,
                   (outs I64Regs:$dst), (ins MEMri:$addr),
                   "ldx [$addr], $dst",
                   [(set i64:$dst, (load ADDRri:$addr))]>;
-let mayLoad = 1 in
+let mayLoad = 1, isCodeGenOnly = 1, isAsmParserOnly = 1 in
   def TLS_LDXrr : F3_1<3, 0b001011,
                        (outs IntRegs:$dst), (ins MEMrr:$addr, TLSSym:$sym),
                        "ldx [$addr], $dst, $sym",
@@ -278,24 +276,24 @@ def : Pat<(i64 (extloadi32 ADDRrr:$addr)),  (LDrr ADDRrr:$addr)>;
 def : Pat<(i64 (extloadi32 ADDRri:$addr)),  (LDri ADDRri:$addr)>;
 
 // Sign-extending load of i32 into i64 is a new SPARC v9 instruction.
-def LDSWrr : F3_1<3, 0b001011,
+def LDSWrr : F3_1<3, 0b001000,
                  (outs I64Regs:$dst), (ins MEMrr:$addr),
                  "ldsw [$addr], $dst",
                  [(set i64:$dst, (sextloadi32 ADDRrr:$addr))]>;
-def LDSWri : F3_2<3, 0b001011,
+def LDSWri : F3_2<3, 0b001000,
                  (outs I64Regs:$dst), (ins MEMri:$addr),
                  "ldsw [$addr], $dst",
                  [(set i64:$dst, (sextloadi32 ADDRri:$addr))]>;
 
 // 64-bit stores.
 def STXrr  : F3_1<3, 0b001110,
-                 (outs), (ins MEMrr:$addr, I64Regs:$src),
-                 "stx $src, [$addr]",
-                 [(store i64:$src, ADDRrr:$addr)]>;
+                 (outs), (ins MEMrr:$addr, I64Regs:$rd),
+                 "stx $rd, [$addr]",
+                 [(store i64:$rd, ADDRrr:$addr)]>;
 def STXri  : F3_2<3, 0b001110,
-                 (outs), (ins MEMri:$addr, I64Regs:$src),
-                 "stx $src, [$addr]",
-                 [(store i64:$src, ADDRri:$addr)]>;
+                 (outs), (ins MEMri:$addr, I64Regs:$rd),
+                 "stx $rd, [$addr]",
+                 [(store i64:$rd, ADDRri:$addr)]>;
 
 // Truncating stores from i64 are identical to the i32 stores.
 def : Pat<(truncstorei8  i64:$src, ADDRrr:$addr), (STBrr ADDRrr:$addr, $src)>;
@@ -315,6 +313,15 @@ def : Pat<(store (i64 0), ADDRri:$dst), (STXri ADDRri:$dst, (i64 G0))>;
 //===----------------------------------------------------------------------===//
 // 64-bit Conditionals.
 //===----------------------------------------------------------------------===//
+
+// Conditional branch class on %xcc:
+class XBranchSP<dag ins, string asmstr, list<dag> pattern>
+  : F2_3<0b001, 0b10, (outs), ins, asmstr, pattern> {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let hasDelaySlot = 1;
+}
+
 //
 // Flag-setting instructions like subcc and addcc set both icc and xcc flags.
 // The icc flags correspond to the 32-bit result, and the xcc are for the
@@ -326,7 +333,7 @@ def : Pat<(store (i64 0), ADDRri:$dst), (STXri ADDRri:$dst, (i64 G0))>;
 let Predicates = [Is64Bit] in {
 
 let Uses = [ICC] in
-def BPXCC : BranchSP<(ins brtarget:$imm22, CCOp:$cond),
+def BPXCC : XBranchSP<(ins brtarget:$imm22, CCOp:$cond),
                      "b$cond %xcc, $imm22",
                      [(SPbrxcc bb:$imm22, imm:$cond)]>;
 
@@ -409,7 +416,7 @@ def : Pat<(SPselectfcc (i64 simm11:$t), i64:$f, imm:$cond),
 
 
 // 64 bit SETHI
-let Predicates = [Is64Bit] in {
+let Predicates = [Is64Bit], isCodeGenOnly = 1 in {
 def SETHIXi : F2_1<0b100,
                    (outs IntRegs:$rd), (ins i64imm:$imm22),
                    "sethi $imm22, $rd",
