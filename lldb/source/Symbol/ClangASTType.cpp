@@ -1134,7 +1134,7 @@ ClangASTType::GetTypeName () const
         if (typedef_type)
         {
             const TypedefNameDecl *typedef_decl = typedef_type->getDecl();
-            type_name = typedef_decl->getQualifiedNameAsString(printing_policy);
+            type_name = typedef_decl->getQualifiedNameAsString();
         }
         else
         {
