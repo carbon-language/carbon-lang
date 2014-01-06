@@ -1370,8 +1370,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
             (BaseType->isFunctionType() ||
              BaseType->isSpecificPlaceholderType(BuiltinType::BoundMember))) {
           Diag(OpLoc, diag::err_function_is_not_record)
-            << (OpKind == tok::arrow) << Base->getSourceRange()
-            << FixItHint::CreateRemoval(OpLoc);
+              << OpKind << Base->getSourceRange()
+              << FixItHint::CreateRemoval(OpLoc);
           return ParsePostfixExpressionSuffix(Base);
         }
 
