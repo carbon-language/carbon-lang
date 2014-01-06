@@ -558,6 +558,63 @@ define <4 x i32> @bsl4xi32(<4 x i32> %v1, <4 x i32> %v2, <4 x i32> %v3) {
   ret <4 x i32> %4
 }
 
+define <8 x i8> @vselect_v8i8(<8 x i8> %a) {
+;CHECK:  movi	 {{d[0-9]+}}, #0xffff
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %b = select <8 x i1> <i1 true, i1 true, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false>, <8 x i8> %a, <8 x i8> <i8 undef, i8 undef, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>
+  ret <8 x i8> %b
+}
+
+define <4 x i16> @vselect_v4i16(<4 x i16> %a) {
+;CHECK:  movi	 {{d[0-9]+}}, #0xffff
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %b = select <4 x i1> <i1 true, i1 false, i1 false, i1 false>, <4 x i16> %a, <4 x i16> <i16 undef, i16 0, i16 0, i16 0>
+  ret <4 x i16> %b
+}
+
+define <8 x i8> @vselect_cmp_ne(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) {
+;CHECK:  cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT:  not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %cmp = icmp ne <8 x i8> %a, %b
+  %d = select <8 x i1> %cmp, <8 x i8> %b, <8 x i8> %c
+  ret <8 x i8> %d
+}
+
+define <8 x i8> @vselect_cmp_eq(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) {
+;CHECK:  cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %cmp = icmp eq <8 x i8> %a, %b
+  %d = select <8 x i1> %cmp, <8 x i8> %b, <8 x i8> %c
+  ret <8 x i8> %d
+}
+
+define <8 x i8> @vselect_cmpz_ne(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) {
+;CHECK:  cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #0
+;CHECK-NEXT:  not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %cmp = icmp ne <8 x i8> %a, zeroinitializer
+  %d = select <8 x i1> %cmp, <8 x i8> %b, <8 x i8> %c
+  ret <8 x i8> %d
+}
+
+define <8 x i8> @vselect_cmpz_eq(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) {
+;CHECK:  cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #0
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %cmp = icmp eq <8 x i8> %a, zeroinitializer
+  %d = select <8 x i1> %cmp, <8 x i8> %b, <8 x i8> %c
+  ret <8 x i8> %d
+}
+
+define <8 x i8> @vselect_tst(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) {
+;CHECK:  cmtst {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+	%tmp3 = and <8 x i8> %a, %b
+	%tmp4 = icmp ne <8 x i8> %tmp3, zeroinitializer
+  %d = select <8 x i1> %tmp4, <8 x i8> %b, <8 x i8> %c
+  ret <8 x i8> %d
+}
+
 define <2 x i64> @bsl2xi64(<2 x i64> %v1, <2 x i64> %v2, <2 x i64> %v3) {
 ;CHECK:  bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
   %1 = and <2 x i64> %v1, %v2

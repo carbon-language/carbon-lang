@@ -5527,8 +5527,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
       }
 
       ConstantSDNode *CurrentND = cast<ConstantSDNode>(Op);
-      const APInt &C = CurrentND->getAPIntValue();
-      Elts.push_back(DAG.getConstant(C.shl(ShAmt).ashr(ShAmt),
+      const APInt &C = APInt(VTBits, CurrentND->getAPIntValue().getZExtValue());
+      Elts.push_back(DAG.getConstant(C.shl(ShAmt).ashr(ShAmt).getZExtValue(),
                                      Op.getValueType()));
     }
 
