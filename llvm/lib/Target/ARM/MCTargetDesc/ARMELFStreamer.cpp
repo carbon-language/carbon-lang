@@ -17,7 +17,6 @@
 #include "ARMArchName.h"
 #include "ARMFPUName.h"
 #include "ARMRegisterInfo.h"
-#include "ARMUnwindOp.h"
 #include "ARMUnwindOpAsm.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -40,6 +39,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/Support/ARMEHABI.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/FormattedStream.h"
@@ -49,7 +49,8 @@
 using namespace llvm;
 
 static std::string GetAEABIUnwindPersonalityName(unsigned Index) {
-  assert(Index < NUM_PERSONALITY_INDEX && "Invalid personality index");
+  assert(Index < ARM::EHABI::NUM_PERSONALITY_INDEX &&
+         "Invalid personality index");
   return (Twine("__aeabi_unwind_cpp_pr") + Twine(Index)).str();
 }
 
@@ -909,7 +910,7 @@ void ARMELFStreamer::Reset() {
   ExTab = NULL;
   FnStart = NULL;
   Personality = NULL;
-  PersonalityIndex = NUM_PERSONALITY_INDEX;
+  PersonalityIndex = ARM::EHABI::NUM_PERSONALITY_INDEX;
   FPReg = ARM::SP;
   FPOffset = 0;
   SPOffset = 0;
@@ -937,7 +938,7 @@ void ARMELFStreamer::emitFnEnd() {
   // Emit the exception index table entry
   SwitchToExIdxSection(*FnStart);
 
-  if (PersonalityIndex < NUM_PERSONALITY_INDEX)
+  if (PersonalityIndex < ARM::EHABI::NUM_PERSONALITY_INDEX)
     EmitPersonalityFixup(GetAEABIUnwindPersonalityName(PersonalityIndex));
 
   const MCSymbolRefExpr *FnStartRef =
@@ -948,7 +949,7 @@ void ARMELFStreamer::emitFnEnd() {
   EmitValue(FnStartRef, 4);
 
   if (CantUnwind) {
-    EmitIntValue(EXIDX_CANTUNWIND, 4);
+    EmitIntValue(ARM::EHABI::EXIDX_CANTUNWIND, 4);
   } else if (ExTab) {
     // Emit a reference to the unwind opcodes in the ".ARM.extab" section.
     const MCSymbolRefExpr *ExTabEntryRef =
@@ -960,7 +961,7 @@ void ARMELFStreamer::emitFnEnd() {
     // For the __aeabi_unwind_cpp_pr0, we have to emit the unwind opcodes in
     // the second word of exception index table entry.  The size of the unwind
     // opcodes should always be 4 bytes.
-    assert(PersonalityIndex == AEABI_UNWIND_CPP_PR0 &&
+    assert(PersonalityIndex == ARM::EHABI::AEABI_UNWIND_CPP_PR0 &&
            "Compact model must use __aeabi_cpp_unwind_pr0 as personality");
     assert(Opcodes.size() == 4u &&
            "Unwind opcode size for __aeabi_cpp_unwind_pr0 must be equal to 4");
@@ -1015,7 +1016,7 @@ void ARMELFStreamer::FlushUnwindOpcodes(bool NoHandlerData) {
   // For compact model 0, we have to emit the unwind opcodes in the .ARM.exidx
   // section.  Thus, we don't have to create an entry in the .ARM.extab
   // section.
-  if (NoHandlerData && PersonalityIndex == AEABI_UNWIND_CPP_PR0)
+  if (NoHandlerData && PersonalityIndex == ARM::EHABI::AEABI_UNWIND_CPP_PR0)
     return;
 
   // Switch to .ARM.extab section.

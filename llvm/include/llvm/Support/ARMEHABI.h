@@ -1,4 +1,4 @@
-//===-- ARMUnwindOp.h - ARM Unwind Opcodes ----------------------*- C++ -*-===//
+//===--- ARMEHABI.h - ARM Exception Handling ABI ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,13 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARM_UNWIND_OP_H
-#define ARM_UNWIND_OP_H
+#ifndef LLVM_SUPPORT_ARM_EHABI_H
+#define LLVM_SUPPORT_ARM_EHABI_H
 
 namespace llvm {
-
+namespace ARM {
+namespace EHABI {
   /// ARM exception handling table entry kinds
-  enum ARMEHTEntryKind {
+  enum EHTEntryKind {
     EHT_GENERIC = 0x00,
     EHT_COMPACT = 0x80
   };
@@ -29,7 +30,7 @@ namespace llvm {
   };
 
   /// ARM-defined frame unwinding opcodes
-  enum ARMUnwindOpcodes {
+  enum UnwindOpcodes {
     // Format: 00xxxxxx
     // Purpose: vsp = vsp + ((x << 2) + 4)
     UNWIND_OPCODE_INC_VSP = 0x00,
@@ -108,7 +109,7 @@ namespace llvm {
   };
 
   /// ARM-defined Personality Routine Index
-  enum ARMPersonalityRoutineIndex {
+  enum PersonalityRoutineIndex {
     // To make the exception handling table become more compact, ARM defined
     // several personality routines in EHABI.  There are 3 different
     // personality routines in ARM EHABI currently.  It is possible to have 16
@@ -119,7 +120,8 @@ namespace llvm {
 
     NUM_PERSONALITY_INDEX
   };
-
+}
+}
 }
 
 #endif // ARM_UNWIND_OP_H

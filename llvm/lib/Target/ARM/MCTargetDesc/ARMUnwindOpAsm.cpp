@@ -13,8 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMUnwindOpAsm.h"
-
-#include "ARMUnwindOp.h"
+#include "llvm/Support/ARMEHABI.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LEB128.h"
 
@@ -50,14 +49,15 @@ namespace {
 
     /// Emit the personality index prefix.
     inline void EmitPersonalityIndex(unsigned PI) {
-      assert(PI < NUM_PERSONALITY_INDEX && "Invalid personality prefix");
-      EmitByte(EHT_COMPACT | PI);
+      assert(PI < ARM::EHABI::NUM_PERSONALITY_INDEX &&
+             "Invalid personality prefix");
+      EmitByte(ARM::EHABI::EHT_COMPACT | PI);
     }
 
     /// Fill the rest of bytes with FINISH opcode.
     inline void FillFinishOpcode() {
       while (Pos < Vec.size())
-        EmitByte(UNWIND_OPCODE_FINISH);
+        EmitByte(ARM::EHABI::UNWIND_OPCODE_FINISH);
     }
   };
 }
@@ -85,22 +85,22 @@ void UnwindOpcodeAssembler::EmitRegSave(uint32_t RegSave) {
     uint32_t UnmaskedReg = RegSave & 0xfff0u & (~Mask);
     if (UnmaskedReg == 0u) {
       // Pop r[4 : (4 + n)]
-      EmitInt8(UNWIND_OPCODE_POP_REG_RANGE_R4 | Range);
+      EmitInt8(ARM::EHABI::UNWIND_OPCODE_POP_REG_RANGE_R4 | Range);
       RegSave &= 0x000fu;
     } else if (UnmaskedReg == (1u << 14)) {
       // Pop r[14] + r[4 : (4 + n)]
-      EmitInt8(UNWIND_OPCODE_POP_REG_RANGE_R4_R14 | Range);
+      EmitInt8(ARM::EHABI::UNWIND_OPCODE_POP_REG_RANGE_R4_R14 | Range);
       RegSave &= 0x000fu;
     }
   }
 
   // Two bytes opcode to save register r15-r4
   if ((RegSave & 0xfff0u) != 0)
-    EmitInt16(UNWIND_OPCODE_POP_REG_MASK_R4 | (RegSave >> 4));
+    EmitInt16(ARM::EHABI::UNWIND_OPCODE_POP_REG_MASK_R4 | (RegSave >> 4));
 
   // Opcode to save register r3-r0
   if ((RegSave & 0x000fu) != 0)
-    EmitInt16(UNWIND_OPCODE_POP_REG_MASK | (RegSave & 0x000fu));
+    EmitInt16(ARM::EHABI::UNWIND_OPCODE_POP_REG_MASK | (RegSave & 0x000fu));
 }
 
 /// Emit unwind opcodes for .vsave directives
@@ -125,7 +125,7 @@ void UnwindOpcodeAssembler::EmitVFPRegSave(uint32_t VFPRegSave) {
       Bit >>= 1;
     }
 
-    EmitInt16(UNWIND_OPCODE_POP_VFP_REG_RANGE_FSTMFDD_D16 |
+    EmitInt16(ARM::EHABI::UNWIND_OPCODE_POP_VFP_REG_RANGE_FSTMFDD_D16 |
               ((i - 16) << 4) | Range);
   }
 
@@ -147,34 +147,36 @@ void UnwindOpcodeAssembler::EmitVFPRegSave(uint32_t VFPRegSave) {
       Bit >>= 1;
     }
 
-    EmitInt16(UNWIND_OPCODE_POP_VFP_REG_RANGE_FSTMFDD | (i << 4) | Range);
+    EmitInt16(ARM::EHABI::UNWIND_OPCODE_POP_VFP_REG_RANGE_FSTMFDD | (i << 4) |
+              Range);
   }
 }
 
 /// Emit unwind opcodes to copy address from source register to $sp.
 void UnwindOpcodeAssembler::EmitSetSP(uint16_t Reg) {
-  EmitInt8(UNWIND_OPCODE_SET_VSP | Reg);
+  EmitInt8(ARM::EHABI::UNWIND_OPCODE_SET_VSP | Reg);
 }
 
 /// Emit unwind opcodes to add $sp with an offset.
 void UnwindOpcodeAssembler::EmitSPOffset(int64_t Offset) {
   if (Offset > 0x200) {
     uint8_t Buff[16];
-    Buff[0] = UNWIND_OPCODE_INC_VSP_ULEB128;
+    Buff[0] = ARM::EHABI::UNWIND_OPCODE_INC_VSP_ULEB128;
     size_t ULEBSize = encodeULEB128((Offset - 0x204) >> 2, Buff + 1);
     EmitBytes(Buff, ULEBSize + 1);
   } else if (Offset > 0) {
     if (Offset > 0x100) {
-      EmitInt8(UNWIND_OPCODE_INC_VSP | 0x3fu);
+      EmitInt8(ARM::EHABI::UNWIND_OPCODE_INC_VSP | 0x3fu);
       Offset -= 0x100;
     }
-    EmitInt8(UNWIND_OPCODE_INC_VSP | static_cast<uint8_t>((Offset - 4) >> 2));
+    EmitInt8(ARM::EHABI::UNWIND_OPCODE_INC_VSP |
+             static_cast<uint8_t>((Offset - 4) >> 2));
   } else if (Offset < 0) {
     while (Offset < -0x100) {
-      EmitInt8(UNWIND_OPCODE_DEC_VSP | 0x3fu);
+      EmitInt8(ARM::EHABI::UNWIND_OPCODE_DEC_VSP | 0x3fu);
       Offset += 0x100;
     }
-    EmitInt8(UNWIND_OPCODE_DEC_VSP |
+    EmitInt8(ARM::EHABI::UNWIND_OPCODE_DEC_VSP |
              static_cast<uint8_t>(((-Offset) - 4) >> 2));
   }
 }
@@ -186,7 +188,7 @@ void UnwindOpcodeAssembler::Finalize(unsigned &PersonalityIndex,
 
   if (HasPersonality) {
     // User-specifed personality routine: [ SIZE , OP1 , OP2 , ... ]
-    PersonalityIndex = NUM_PERSONALITY_INDEX;
+    PersonalityIndex = ARM::EHABI::NUM_PERSONALITY_INDEX;
     size_t TotalSize = Ops.size() + 1;
     size_t RoundUpSize = (TotalSize + 3) / 4 * 4;
     Result.resize(RoundUpSize);
@@ -194,12 +196,12 @@ void UnwindOpcodeAssembler::Finalize(unsigned &PersonalityIndex,
   } else {
     if (Ops.size() <= 3) {
       // __aeabi_unwind_cpp_pr0: [ 0x80 , OP1 , OP2 , OP3 ]
-      PersonalityIndex = AEABI_UNWIND_CPP_PR0;
+      PersonalityIndex = ARM::EHABI::AEABI_UNWIND_CPP_PR0;
       Result.resize(4);
       OpStreamer.EmitPersonalityIndex(PersonalityIndex);
     } else {
       // __aeabi_unwind_cpp_pr1: [ 0x81 , SIZE , OP1 , OP2 , ... ]
-      PersonalityIndex = AEABI_UNWIND_CPP_PR1;
+      PersonalityIndex = ARM::EHABI::AEABI_UNWIND_CPP_PR1;
       size_t TotalSize = Ops.size() + 2;
       size_t RoundUpSize = (TotalSize + 3) / 4 * 4;
       Result.resize(RoundUpSize);
