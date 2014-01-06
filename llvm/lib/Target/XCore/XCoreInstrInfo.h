@@ -81,6 +81,12 @@ public:
 
   virtual bool ReverseBranchCondition(
                             SmallVectorImpl<MachineOperand> &Cond) const;
+
+  // Emit code before MBBI to load immediate value into physical register Reg.
+  // Returns an iterator to the new instruction.
+  MachineBasicBlock::iterator loadImmediate(MachineBasicBlock &MBB,
+                                            MachineBasicBlock::iterator MI,
+                                            unsigned Reg, uint64_t Value) const;
 };
 
 }
