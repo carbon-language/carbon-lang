@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mccodeemitter"
+#include "SparcMCExpr.h"
 #include "SparcMCTargetDesc.h"
 #include "MCTargetDesc/SparcFixupKinds.h"
 #include "llvm/MC/MCCodeEmitter.h"
@@ -92,6 +93,41 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
 
   assert(MO.isExpr());
   const MCExpr *Expr = MO.getExpr();
+  if (const SparcMCExpr *SExpr = dyn_cast<SparcMCExpr>(Expr)) {
+    switch(SExpr->getKind()) {
+    default: assert(0 && "Unhandled sparc expression!"); break;
+    case SparcMCExpr::VK_Sparc_LO:
+      Fixups.push_back(MCFixup::Create(0, Expr,
+                                       (MCFixupKind)Sparc::fixup_sparc_lo10));
+      break;
+    case SparcMCExpr::VK_Sparc_HI:
+      Fixups.push_back(MCFixup::Create(0, Expr,
+                                       (MCFixupKind)Sparc::fixup_sparc_hi22));
+      break;
+    case SparcMCExpr::VK_Sparc_H44:
+      Fixups.push_back(MCFixup::Create(0, Expr,
+                                       (MCFixupKind)Sparc::fixup_sparc_h44));
+      break;
+    case SparcMCExpr::VK_Sparc_M44:
+      Fixups.push_back(MCFixup::Create(0, Expr,
+                                       (MCFixupKind)Sparc::fixup_sparc_m44));
+      break;
+    case SparcMCExpr::VK_Sparc_L44:
+      Fixups.push_back(MCFixup::Create(0, Expr,
+                                       (MCFixupKind)Sparc::fixup_sparc_l44));
+      break;
+    case SparcMCExpr::VK_Sparc_HH:
+      Fixups.push_back(MCFixup::Create(0, Expr,
+                                       (MCFixupKind)Sparc::fixup_sparc_hh));
+      break;
+    case SparcMCExpr::VK_Sparc_HM:
+      Fixups.push_back(MCFixup::Create(0, Expr,
+                                       (MCFixupKind)Sparc::fixup_sparc_hm));
+      break;
+    }
+    return 0;
+  }
+
   int64_t Res;
   if (Expr->EvaluateAsAbsolute(Res))
     return Res;

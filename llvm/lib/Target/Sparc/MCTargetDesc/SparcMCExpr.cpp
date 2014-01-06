@@ -70,15 +70,67 @@ void SparcMCExpr::PrintImpl(raw_ostream &OS) const
 bool
 SparcMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
                                          const MCAsmLayout *Layout) const {
-  assert(0 && "FIXME: Implement SparcMCExpr::EvaluateAsRelocatableImpl");
   return getSubExpr()->EvaluateAsRelocatable(Res, *Layout);
 }
 
+static void fixELFSymbolsInTLSFixupsImpl(const MCExpr *Expr, MCAssembler &Asm) {
+  assert(0 && "Implement fixELFSymbolsInTLSFixupsImpl!");
+}
 
 void SparcMCExpr::fixELFSymbolsInTLSFixups(MCAssembler &Asm) const {
-  assert(0 && "FIXME: Implement SparcMCExpr::fixELFSymbolsInTLSFixups");
+  switch(getKind()) {
+  default: return;
+  case VK_Sparc_TLS_GD_HI22:
+  case VK_Sparc_TLS_GD_LO10:
+  case VK_Sparc_TLS_GD_ADD:
+  case VK_Sparc_TLS_GD_CALL:
+  case VK_Sparc_TLS_LDM_HI22:
+  case VK_Sparc_TLS_LDM_LO10:
+  case VK_Sparc_TLS_LDM_ADD:
+  case VK_Sparc_TLS_LDM_CALL:
+  case VK_Sparc_TLS_LDO_HIX22:
+  case VK_Sparc_TLS_LDO_LOX10:
+  case VK_Sparc_TLS_LDO_ADD:
+  case VK_Sparc_TLS_IE_HI22:
+  case VK_Sparc_TLS_IE_LO10:
+  case VK_Sparc_TLS_IE_LD:
+  case VK_Sparc_TLS_IE_LDX:
+  case VK_Sparc_TLS_IE_ADD:
+  case VK_Sparc_TLS_LE_HIX22:
+  case VK_Sparc_TLS_LE_LOX10: break;
+  }
+  fixELFSymbolsInTLSFixupsImpl(getSubExpr(), Asm);
+}
+
+// FIXME: This basically copies MCObjectStreamer::AddValueSymbols. Perhaps
+// that method should be made public?
+// FIXME: really do above: now that at least three other backends are using it.
+static void AddValueSymbolsImpl(const MCExpr *Value, MCAssembler *Asm) {
+  switch (Value->getKind()) {
+  case MCExpr::Target:
+    llvm_unreachable("Can't handle nested target expr!");
+    break;
+
+  case MCExpr::Constant:
+    break;
+
+  case MCExpr::Binary: {
+    const MCBinaryExpr *BE = cast<MCBinaryExpr>(Value);
+    AddValueSymbolsImpl(BE->getLHS(), Asm);
+    AddValueSymbolsImpl(BE->getRHS(), Asm);
+    break;
+  }
+
+  case MCExpr::SymbolRef:
+    Asm->getOrCreateSymbolData(cast<MCSymbolRefExpr>(Value)->getSymbol());
+    break;
+
+  case MCExpr::Unary:
+    AddValueSymbolsImpl(cast<MCUnaryExpr>(Value)->getSubExpr(), Asm);
+    break;
+  }
 }
 
 void SparcMCExpr::AddValueSymbols(MCAssembler *Asm) const {
-  assert(0 && "FIXME: Implement SparcMCExpr::AddValueSymbols");
+  AddValueSymbolsImpl(getSubExpr(), Asm);
 }
