@@ -35,6 +35,7 @@ entry:
   ret [50000 x i32]* %Addr
 }
 
+
 ; CHECK: .section  .cp.rodata.cst4,"aMc",@progbits,4
 ; CHECK: .long 65536
 ; CHECK: .text
@@ -114,6 +115,46 @@ entry:
   %16 = add nsw i32 %14, %15
   ret i32 %16
 }
+
+
+; CHECK-LABEL: UnknownSize:
+; CHECK: ldw r0, dp[NoSize+40]
+; CHECK-NEXT: retsp 0
+;
+; LARGE: .section .cp.rodata,"ac",@progbits
+; LARGE: .LCPI{{[0-9_]*}}
+; LARGE-NEXT: .long NoSize
+; LARGE-NEXT: .text
+; LARGE-LABEL: UnknownSize:
+; LARGE: ldw r0, cp[.LCPI{{[0-9_]*}}]
+; LARGE-NEXT: ldw r0, r0[0]
+; LARGE-NEXT: retsp 0
+@NoSize = external global [0 x i32]
+define i32 @UnknownSize() nounwind {
+entry:
+  %0 = load i32* getelementptr inbounds ([0 x i32]* @NoSize, i32 0, i32 10)
+  ret i32 %0
+}
+
+
+; CHECK-LABEL: UnknownStruct:
+; CHECK: ldaw r0, dp[Unknown]
+; CHECK-NEXT: retsp 0
+;
+; LARGE: .section .cp.rodata,"ac",@progbits
+; LARGE: .LCPI{{[0-9_]*}}
+; LARGE-NEXT: .long Unknown
+; LARGE-NEXT: .text
+; LARGE-LABEL: UnknownStruct:
+; LARGE: ldw r0, cp[.LCPI{{[0-9_]*}}]
+; LARGE-NEXT: retsp 0
+%Struct = type opaque
+@Unknown = external global %Struct
+define %Struct* @UnknownStruct() nounwind {
+entry:
+  ret %Struct* @Unknown
+}
+
 
 ; CHECK: .section .dp.bss,"awd",@nobits
 ; CHECK-LABEL: l:

@@ -268,6 +268,18 @@ getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV,
   return DAG.getNode(XCoreISD::PCRelativeWrapper, dl, MVT::i32, GA);
 }
 
+static bool IsSmallObject(const GlobalValue *GV, const XCoreTargetLowering &XTL) {
+  if (XTL.getTargetMachine().getCodeModel() == CodeModel::Small)
+    return true;
+
+  Type *ObjType = GV->getType()->getPointerElementType();
+  if (!ObjType->isSized())
+    return false;
+
+  unsigned ObjSize = XTL.getDataLayout()->getTypeAllocSize(ObjType);
+  return ObjSize < CodeModelLargeSize && ObjSize != 0;
+}
+
 SDValue XCoreTargetLowering::
 LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
 {
@@ -275,10 +287,7 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
   const GlobalValue *GV = GN->getGlobal();
   SDLoc DL(GN);
   int64_t Offset = GN->getOffset();
-  Type *ObjType = GV->getType()->getPointerElementType();
-  if (getTargetMachine().getCodeModel() == CodeModel::Small ||
-      !ObjType->isSized() ||
-      getDataLayout()->getTypeAllocSize(ObjType) < CodeModelLargeSize) {
+  if (IsSmallObject(GV, *this)) {
     // We can only fold positive offsets that are a multiple of the word size.
     int64_t FoldedOffset = std::max(Offset & ~3, (int64_t)0);
     SDValue GA = DAG.getTargetGlobalAddress(GV, DL, MVT::i32, FoldedOffset);
