@@ -36,10 +36,8 @@ namespace pecoff {
 namespace edata {
 
 struct TableEntry {
-  TableEntry(StringRef _exportName, int _ordinal, const DefinedAtom *_atom,
-             bool _noname)
-      : exportName(_exportName), ordinal(_ordinal), atom(_atom),
-        noname(_noname) {}
+  TableEntry(StringRef exp, int ord, const DefinedAtom *a, bool n)
+      : exportName(exp), ordinal(ord), atom(a), noname(n) {}
   StringRef exportName;
   int ordinal;
   const DefinedAtom *atom;
