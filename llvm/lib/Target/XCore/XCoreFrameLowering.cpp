@@ -252,6 +252,15 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
   DebugLoc dl = MBBI->getDebugLoc();
   unsigned RetOpcode = MBBI->getOpcode();
 
+  if (RetOpcode == XCore::EH_RETURN) {
+    unsigned EhStackReg = MBBI->getOperand(0).getReg();
+    unsigned EhHandlerReg = MBBI->getOperand(1).getReg();
+    BuildMI(MBB, MBBI, dl, TII.get(XCore::SETSP_1r)).addReg(EhStackReg);
+    BuildMI(MBB, MBBI, dl, TII.get(XCore::BAU_1r)).addReg(EhHandlerReg);
+    MBB.erase(MBBI);  // Erase the previous return instruction.
+    return;
+  }
+
   // Work out frame sizes.
   // We will adjust the SP in stages towards the final FrameSize.
   int RemainingAdj = MFI->getStackSize();

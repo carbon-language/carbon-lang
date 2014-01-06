@@ -75,6 +75,10 @@ namespace llvm {
       // Offset from frame pointer to the first (possible) on-stack argument
       FRAME_TO_ARGS_OFFSET,
 
+      // Exception handler return. The stack is restored to the first
+      // followed by a jump to the second argument.
+      EH_RETURN,
+
       // Memory barrier.
       MEMBARRIER
     };
@@ -150,6 +154,7 @@ namespace llvm {
     // Lower Operand specifics
     SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;

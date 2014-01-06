@@ -61,6 +61,7 @@ getTargetNodeName(unsigned Opcode) const
     case XCoreISD::BR_JT             : return "XCoreISD::BR_JT";
     case XCoreISD::BR_JT32           : return "XCoreISD::BR_JT32";
     case XCoreISD::FRAME_TO_ARGS_OFFSET : return "XCoreISD::FRAME_TO_ARGS_OFFSET";
+    case XCoreISD::EH_RETURN         : return "XCoreISD::EH_RETURN";
     case XCoreISD::MEMBARRIER        : return "XCoreISD::MEMBARRIER";
     default                          : return NULL;
   }
@@ -152,6 +153,7 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 
   // Exception handling
+  setOperationAction(ISD::EH_RETURN, MVT::Other, Custom);
   setExceptionPointerRegister(XCore::R0);
   setExceptionSelectorRegister(XCore::R1);
   setOperationAction(ISD::FRAME_TO_ARGS_OFFSET, MVT::i32, Custom);
@@ -199,6 +201,7 @@ SDValue XCoreTargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode())
   {
+  case ISD::EH_RETURN:          return LowerEH_RETURN(Op, DAG);
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
   case ISD::BlockAddress:       return LowerBlockAddress(Op, DAG);
   case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
@@ -836,6 +839,45 @@ LowerFRAME_TO_ARGS_OFFSET(SDValue Op, SelectionDAG &DAG) const {
   // However, we don't know the offset until after the frame has be finalised.
   // This is done during the XCoreFTAOElim pass.
   return DAG.getNode(XCoreISD::FRAME_TO_ARGS_OFFSET, SDLoc(Op), MVT::i32);
+}
+
+SDValue XCoreTargetLowering::
+LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
+  // OUTCHAIN = EH_RETURN(INCHAIN, OFFSET, HANDLER)
+  // This node represents 'eh_return' gcc dwarf builtin, which is used to
+  // return from exception. The general meaning is: adjust stack by OFFSET and
+  // pass execution to HANDLER.
+  MachineFunction &MF = DAG.getMachineFunction();
+  SDValue Chain     = Op.getOperand(0);
+  SDValue Offset    = Op.getOperand(1);
+  SDValue Handler   = Op.getOperand(2);
+  SDLoc dl(Op);
+
+  // Absolute SP = (FP + FrameToArgs) + Offset
+  const TargetRegisterInfo *RegInfo = getTargetMachine().getRegisterInfo();
+  SDValue Stack = DAG.getCopyFromReg(DAG.getEntryNode(), dl,
+                            RegInfo->getFrameRegister(MF), MVT::i32);
+  SDValue FrameToArgs = DAG.getNode(XCoreISD::FRAME_TO_ARGS_OFFSET, dl,
+                                    MVT::i32);
+  Stack = DAG.getNode(ISD::ADD, dl, MVT::i32, Stack, FrameToArgs);
+  Stack = DAG.getNode(ISD::ADD, dl, MVT::i32, Stack, Offset);
+
+  // R0=ExceptionPointerRegister R1=ExceptionSelectorRegister
+  // which leaves 2 caller saved registers, R2 & R3 for us to use.
+  unsigned StackReg = XCore::R2;
+  unsigned HandlerReg = XCore::R3;
+
+  SDValue OutChains[] = {
+    DAG.getCopyToReg(Chain, dl, StackReg, Stack),
+    DAG.getCopyToReg(Chain, dl, HandlerReg, Handler)
+  };
+
+  Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, OutChains, 2);
+
+  return DAG.getNode(XCoreISD::EH_RETURN, dl, MVT::Other, Chain,
+                     DAG.getRegister(StackReg, MVT::i32),
+                     DAG.getRegister(HandlerReg, MVT::i32));
+
 }
 
 SDValue XCoreTargetLowering::
