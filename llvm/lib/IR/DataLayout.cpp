@@ -287,6 +287,9 @@ void DataLayout::parseSpecifier(StringRef Desc) {
       // Bit size.
       unsigned Size = Tok.empty() ? 0 : getInt(Tok);
 
+      assert((AlignType != AGGREGATE_ALIGN || Size == 0) &&
+             "These specifications don't have a size");
+
       // ABI alignment.
       Split = split(Rest, ':');
       unsigned ABIAlign = inBytes(getInt(Tok));

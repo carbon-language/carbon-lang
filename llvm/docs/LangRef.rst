@@ -1141,10 +1141,9 @@ as follows:
 ``p[n]:<size>:<abi>:<pref>``
     This specifies the *size* of a pointer and its ``<abi>`` and
     ``<pref>``\erred alignments for address space ``n``. All sizes are in
-    bits. Specifying the ``<pref>`` alignment is optional. If omitted, the
-    preceding ``:`` should be omitted too. The address space, ``n`` is
-    optional, and if not specified, denotes the default address space 0.
-    The value of ``n`` must be in the range [1,2^23).
+    bits. The address space, ``n`` is optional, and if not specified,
+    denotes the default address space 0.  The value of ``n`` must be
+    in the range [1,2^23).
 ``i<size>:<abi>:<pref>``
     This specifies the alignment for an integer type of a given bit
     ``<size>``. The value of ``<size>`` must be in the range [1,2^23).
@@ -1157,9 +1156,8 @@ as follows:
     will work. 32 (float) and 64 (double) are supported on all targets; 80
     or 128 (different flavors of long double) are also supported on some
     targets.
-``a<size>:<abi>:<pref>``
-    This specifies the alignment for an aggregate type of a given bit
-    ``<size>``.
+``a:<abi>:<pref>``
+    This specifies the alignment for an object of aggregate type.
 ``m:<mangling>``
    If prerest, specifies that llvm names are mangled in the output. The
    options are
@@ -1175,6 +1173,10 @@ as follows:
     ``n32:64`` for PowerPC 64, or ``n8:16:32:64`` for X86-64. Elements of
     this set are considered to support most general arithmetic operations
     efficiently.
+
+On every specification that takes a ``<abi>:<pref>``, specifying the
+``<pref>`` alignment is optional. If omitted, the preceding ``:``
+should be omitted too and ``<pref>`` will be equal to ``<abi>``.
 
 When constructing the data layout for a given target, LLVM starts with a
 default set of specifications which are then (possibly) overridden by
