@@ -10248,7 +10248,7 @@ bool Sema::CheckEnumRedeclaration(SourceLocation EnumLoc, bool IsScoped,
   if (IsScoped != Prev->isScoped()) {
     Diag(EnumLoc, diag::err_enum_redeclare_scoped_mismatch)
       << Prev->isScoped();
-    Diag(Prev->getLocation(), diag::note_previous_use);
+    Diag(Prev->getLocation(), diag::note_previous_declaration);
     return true;
   }
 
@@ -10259,13 +10259,13 @@ bool Sema::CheckEnumRedeclaration(SourceLocation EnumLoc, bool IsScoped,
                                         Prev->getIntegerType())) {
       Diag(EnumLoc, diag::err_enum_redeclare_type_mismatch)
         << EnumUnderlyingTy << Prev->getIntegerType();
-      Diag(Prev->getLocation(), diag::note_previous_use);
+      Diag(Prev->getLocation(), diag::note_previous_declaration);
       return true;
     }
   } else if (IsFixed != Prev->isFixed()) {
     Diag(EnumLoc, diag::err_enum_redeclare_fixed_mismatch)
       << Prev->isFixed();
-    Diag(Prev->getLocation(), diag::note_previous_use);
+    Diag(Prev->getLocation(), diag::note_previous_declaration);
     return true;
   }
 

@@ -78,22 +78,22 @@ Complete2 complete2;
 // All the redeclarations below are done twice on purpose. Tests that the type
 // of the declaration isn't changed.
 
-enum class Redeclare2; // expected-note{{previous use is here}} expected-note{{previous use is here}}
+enum class Redeclare2; // expected-note{{previous declaration is here}} expected-note{{previous declaration is here}}
 enum Redeclare2; // expected-error{{previously declared as scoped}}
 enum Redeclare2; // expected-error{{previously declared as scoped}}
 
-enum Redeclare3 : int; // expected-note{{previous use is here}} expected-note{{previous use is here}}
+enum Redeclare3 : int; // expected-note{{previous declaration is here}} expected-note{{previous declaration is here}}
 enum Redeclare3; // expected-error{{previously declared with fixed underlying type}}
 enum Redeclare3; // expected-error{{previously declared with fixed underlying type}}
 
 enum class Redeclare5;
 enum class Redeclare5 : int; // ok
 
-enum Redeclare6 : int; // expected-note{{previous use is here}} expected-note{{previous use is here}}
+enum Redeclare6 : int;   // expected-note{{previous declaration is here}} expected-note{{previous declaration is here}}
 enum Redeclare6 : short; // expected-error{{redeclared with different underlying type}}
 enum Redeclare6 : short; // expected-error{{redeclared with different underlying type}}
 
-enum class Redeclare7; // expected-note{{previous use is here}} expected-note{{previous use is here}}
+enum class Redeclare7;         // expected-note{{previous declaration is here}} expected-note{{previous declaration is here}}
 enum class Redeclare7 : short; // expected-error{{redeclared with different underlying type}}
 enum class Redeclare7 : short; // expected-error{{redeclared with different underlying type}}
 
