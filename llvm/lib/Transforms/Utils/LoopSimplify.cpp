@@ -309,6 +309,7 @@ ReprocessLoop:
       // Attempt to hoist out all instructions except for the
       // comparison and the branch.
       bool AllInvariant = true;
+      bool AnyInvariant = false;
       for (BasicBlock::iterator I = ExitingBlock->begin(); &*I != BI; ) {
         Instruction *Inst = I++;
         // Skip debug info intrinsics.
@@ -316,11 +317,18 @@ ReprocessLoop:
           continue;
         if (Inst == CI)
           continue;
-        if (!L->makeLoopInvariant(Inst, Changed,
-                                  Preheader ? Preheader->getTerminator() : 0)) {
+        if (!L->makeLoopInvariant(Inst, AnyInvariant,
+                                 Preheader ? Preheader->getTerminator() : 0)) {
           AllInvariant = false;
           break;
         }
+      }
+      if (AnyInvariant) {
+        Changed = true;
+        // The loop disposition of all SCEV expressions that depend on any
+        // hoisted values have also changed.
+        if (SE)
+          SE->forgetLoopDispositions(L);
       }
       if (!AllInvariant) continue;
 
@@ -334,11 +342,10 @@ ReprocessLoop:
       DEBUG(dbgs() << "LoopSimplify: Eliminating exiting block "
                    << ExitingBlock->getName() << "\n");
 
-      // If any reachable control flow within this loop has changed, notify
-      // ScalarEvolution. Currently assume the parent loop doesn't change
-      // (spliting edges doesn't count). If blocks, CFG edges, or other values
-      // in the parent loop change, then we need call to forgetLoop() for the
-      // parent instead.
+      // Notify ScalarEvolution before deleting this block. Currently assume the
+      // parent loop doesn't change (spliting edges doesn't count). If blocks,
+      // CFG edges, or other values in the parent loop change, then we need call
+      // to forgetLoop() for the parent instead.
       if (SE)
         SE->forgetLoop(L);
 
