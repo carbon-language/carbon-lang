@@ -417,16 +417,9 @@ namespace X86II {
     LOCKShift = FPTypeShift + 3,
     LOCK = 1 << LOCKShift,
 
-    // Segment override prefixes. Currently we just need ability to address
-    // stuff in gs and fs segments.
-    SegOvrShift = LOCKShift + 1,
-    SegOvrMask  = 3 << SegOvrShift,
-    FS          = 1 << SegOvrShift,
-    GS          = 2 << SegOvrShift,
-
     // Execution domain for SSE instructions in bits 23, 24.
     // 0 in bits 23-24 means normal, non-SSE instruction.
-    SSEDomainShift = SegOvrShift + 2,
+    SSEDomainShift = LOCKShift + 1,
 
     OpcodeShift   = SSEDomainShift + 2,
 

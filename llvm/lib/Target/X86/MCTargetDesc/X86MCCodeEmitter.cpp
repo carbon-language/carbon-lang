@@ -1123,29 +1123,19 @@ void X86MCCodeEmitter::EmitSegmentOverridePrefix(uint64_t TSFlags,
                                         unsigned &CurByte, int MemOperand,
                                         const MCInst &MI,
                                         raw_ostream &OS) const {
-  switch (TSFlags & X86II::SegOvrMask) {
-  default: llvm_unreachable("Invalid segment!");
-  case 0:
-    // No segment override, check for explicit one on memory operand.
-    if (MemOperand != -1) {   // If the instruction has a memory operand.
-      switch (MI.getOperand(MemOperand+X86::AddrSegmentReg).getReg()) {
-      default: llvm_unreachable("Unknown segment register!");
-      case 0: break;
-      case X86::CS: EmitByte(0x2E, CurByte, OS); break;
-      case X86::SS: EmitByte(0x36, CurByte, OS); break;
-      case X86::DS: EmitByte(0x3E, CurByte, OS); break;
-      case X86::ES: EmitByte(0x26, CurByte, OS); break;
-      case X86::FS: EmitByte(0x64, CurByte, OS); break;
-      case X86::GS: EmitByte(0x65, CurByte, OS); break;
-      }
-    }
-    break;
-  case X86II::FS:
-    EmitByte(0x64, CurByte, OS);
-    break;
-  case X86II::GS:
-    EmitByte(0x65, CurByte, OS);
-    break;
+  if (MemOperand < 0)
+    return; // No memory operand
+
+  // Check for explicit segment override on memory operand.
+  switch (MI.getOperand(MemOperand+X86::AddrSegmentReg).getReg()) {
+  default: llvm_unreachable("Unknown segment register!");
+  case 0: break;
+  case X86::CS: EmitByte(0x2E, CurByte, OS); break;
+  case X86::SS: EmitByte(0x36, CurByte, OS); break;
+  case X86::DS: EmitByte(0x3E, CurByte, OS); break;
+  case X86::ES: EmitByte(0x26, CurByte, OS); break;
+  case X86::FS: EmitByte(0x64, CurByte, OS); break;
+  case X86::GS: EmitByte(0x65, CurByte, OS); break;
   }
 }
 
