@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/TokenKinds.h"
-#include <cassert>
+#include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
 static const char * const TokNames[] = {
@@ -23,8 +23,10 @@ static const char * const TokNames[] = {
 };
 
 const char *tok::getTokenName(enum TokenKind Kind) {
-  assert(Kind < tok::NUM_TOKENS);
-  return TokNames[Kind];
+  if (Kind < tok::NUM_TOKENS)
+    return TokNames[Kind];
+  llvm_unreachable("unknown TokenKind");
+  return 0;
 }
 
 const char *tok::getTokenSimpleSpelling(enum TokenKind Kind) {

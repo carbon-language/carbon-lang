@@ -247,15 +247,15 @@ private:
   ///
   /// \param Loc The source location for which we are interested in finding out
   /// the diagnostic state. Can be null in order to query the latest state.
-  DiagnosticIDs::Level getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
-                                          const DiagnosticsEngine &Diag) const;
+  DiagnosticIDs::Level
+  getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
+                     const DiagnosticsEngine &Diag) const LLVM_READONLY;
 
   /// \brief An internal implementation helper used when \p DiagClass is
   /// already known.
-  DiagnosticIDs::Level getDiagnosticLevel(unsigned DiagID,
-                                          unsigned DiagClass,
-                                          SourceLocation Loc,
-                                          const DiagnosticsEngine &Diag) const;
+  DiagnosticIDs::Level
+  getDiagnosticLevel(unsigned DiagID, unsigned DiagClass, SourceLocation Loc,
+                     const DiagnosticsEngine &Diag) const LLVM_READONLY;
 
   /// \brief Used to report a diagnostic that is finally fully formed.
   ///
