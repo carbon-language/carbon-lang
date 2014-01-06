@@ -1523,10 +1523,13 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::Value *initialMutations =
     Builder.CreateLoad(StateMutationsPtr, "forcoll.initial-mutations");
 
+  RegionCounter Cnt = getPGORegionCounter(&S);
+
   // Start looping.  This is the point we return to whenever we have a
   // fresh, non-empty batch of objects.
   llvm::BasicBlock *LoopBodyBB = createBasicBlock("forcoll.loopbody");
   EmitBlock(LoopBodyBB);
+  Cnt.beginRegion(Builder);
 
   // The current index into the buffer.
   llvm::PHINode *index = Builder.CreatePHI(UnsignedLongLTy, 3, "forcoll.index");
@@ -1623,7 +1626,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     EmitAutoVarCleanups(variable);
 
   // Perform the loop body, setting up break and continue labels.
-  BreakContinueStack.push_back(BreakContinue(LoopEnd, AfterBody));
+  BreakContinueStack.push_back(BreakContinue(LoopEnd, AfterBody, &Cnt));
   {
     RunCleanupsScope Scope(*this);
     EmitStmt(S.getBody());
@@ -1642,6 +1645,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::Value *indexPlusOne
     = Builder.CreateAdd(index, llvm::ConstantInt::get(UnsignedLongLTy, 1));
 
+  // TODO: We should probably model this as a "continue" for PGO
   // If we haven't overrun the buffer yet, we can continue.
   Builder.CreateCondBr(Builder.CreateICmpULT(indexPlusOne, count),
                        LoopBodyBB, FetchMoreBB);
@@ -1665,6 +1669,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   index->addIncoming(zero, Builder.GetInsertBlock());
   count->addIncoming(refetchCount, Builder.GetInsertBlock());
 
+  // TODO: We should be applying PGO weights here, but this needs to handle the
+  // branch before FetchMoreBB or we risk getting the numbers wrong.
   Builder.CreateCondBr(Builder.CreateICmpEQ(refetchCount, zero),
                        EmptyBB, LoopBodyBB);
 
@@ -1687,6 +1693,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     PopCleanupBlock();
 
   EmitBlock(LoopEnd.getBlock());
+  // TODO: Once we calculate PGO weights above, set the region count here
 }
 
 void CodeGenFunction::EmitObjCAtTryStmt(const ObjCAtTryStmt &S) {

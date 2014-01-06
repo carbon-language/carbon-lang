@@ -16,6 +16,7 @@
 #include "CGCXXABI.h"
 #include "CGDebugInfo.h"
 #include "CodeGenModule.h"
+#include "CodeGenPGO.h"
 #include "TargetInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
@@ -44,7 +45,8 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
       NextCleanupDestIndex(1), FirstBlockInfo(0), EHResumeBlock(0),
       ExceptionSlot(0), EHSelectorSlot(0), DebugInfo(CGM.getModuleDebugInfo()),
       DisableDebugInfo(false), DidCallStackSave(false), IndirectBranch(0),
-      SwitchInsn(0), CaseRangeBlock(0), UnreachableBlock(0), NumReturnExprs(0),
+      PGO(cgm), SwitchInsn(0), SwitchWeights(0),
+      CaseRangeBlock(0), UnreachableBlock(0), NumReturnExprs(0),
       NumSimpleReturnExprs(0), CXXABIThisDecl(0), CXXABIThisValue(0),
       CXXThisValue(0), CXXDefaultInitExprThis(0),
       CXXStructorImplicitParamDecl(0), CXXStructorImplicitParamValue(0),
@@ -571,6 +573,8 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
   if (CGM.getCodeGenOpts().InstrumentForProfiling)
     EmitMCountInstrumentation();
 
+  PGO.assignRegionCounters(GD);
+
   if (RetTy->isVoidType()) {
     // Void type; nothing to return.
     ReturnValue = 0;
@@ -643,6 +647,8 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
 
 void CodeGenFunction::EmitFunctionBody(FunctionArgList &Args,
                                        const Stmt *Body) {
+  RegionCounter Cnt = getPGORegionCounter(Body);
+  Cnt.beginRegion(Builder);
   if (const CompoundStmt *S = dyn_cast<CompoundStmt>(Body))
     EmitCompoundStmtWithoutScope(*S);
   else
@@ -772,6 +778,9 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   // a quick pass now to see if we can.
   if (!CurFn->doesNotThrow())
     TryMarkNoThrow(CurFn);
+
+  PGO.emitWriteoutFunction(CurGD);
+  PGO.destroyRegionCounters();
 }
 
 /// ContainsLabel - Return true if the statement contains a label in it.  If
@@ -870,10 +879,13 @@ ConstantFoldsToSimpleInteger(const Expr *Cond, llvm::APSInt &ResultInt) {
 ///
 void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
                                            llvm::BasicBlock *TrueBlock,
-                                           llvm::BasicBlock *FalseBlock) {
+                                           llvm::BasicBlock *FalseBlock,
+                                           uint64_t TrueCount) {
   Cond = Cond->IgnoreParens();
 
   if (const BinaryOperator *CondBOp = dyn_cast<BinaryOperator>(Cond)) {
+    RegionCounter Cnt = getPGORegionCounter(CondBOp);
+
     // Handle X && Y in a condition.
     if (CondBOp->getOpcode() == BO_LAnd) {
       // If we have "1 && X", simplify the code.  "0 && X" would have constant
@@ -882,7 +894,9 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       if (ConstantFoldsToSimpleInteger(CondBOp->getLHS(), ConstantBool) &&
           ConstantBool) {
         // br(1 && X) -> br(X).
-        return EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
+        Cnt.beginRegion(Builder);
+        return EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock,
+                                    TrueCount);
       }
 
       // If we have "X && 1", simplify the code to use an uncond branch.
@@ -890,21 +904,28 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       if (ConstantFoldsToSimpleInteger(CondBOp->getRHS(), ConstantBool) &&
           ConstantBool) {
         // br(X && 1) -> br(X).
-        return EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, FalseBlock);
+        return EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, FalseBlock,
+                                    TrueCount);
       }
 
       // Emit the LHS as a conditional.  If the LHS conditional is false, we
       // want to jump to the FalseBlock.
       llvm::BasicBlock *LHSTrue = createBasicBlock("land.lhs.true");
+      // The counter tells us how often we evaluate RHS, and all of TrueCount
+      // can be propagated to that branch.
+      uint64_t RHSCount = Cnt.getCount();
 
       ConditionalEvaluation eval(*this);
-      EmitBranchOnBoolExpr(CondBOp->getLHS(), LHSTrue, FalseBlock);
+      EmitBranchOnBoolExpr(CondBOp->getLHS(), LHSTrue, FalseBlock, RHSCount);
       EmitBlock(LHSTrue);
 
       // Any temporaries created here are conditional.
+      Cnt.beginRegion(Builder);
       eval.begin(*this);
-      EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
+      EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock, TrueCount);
       eval.end(*this);
+      Cnt.adjustFallThroughCount();
+      Cnt.applyAdjustmentsToRegion();
 
       return;
     }
@@ -916,7 +937,9 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       if (ConstantFoldsToSimpleInteger(CondBOp->getLHS(), ConstantBool) &&
           !ConstantBool) {
         // br(0 || X) -> br(X).
-        return EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
+        Cnt.beginRegion(Builder);
+        return EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock,
+                                    TrueCount);
       }
 
       // If we have "X || 0", simplify the code to use an uncond branch.
@@ -924,21 +947,31 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       if (ConstantFoldsToSimpleInteger(CondBOp->getRHS(), ConstantBool) &&
           !ConstantBool) {
         // br(X || 0) -> br(X).
-        return EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, FalseBlock);
+        return EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, FalseBlock,
+                                    TrueCount);
       }
 
       // Emit the LHS as a conditional.  If the LHS conditional is true, we
       // want to jump to the TrueBlock.
       llvm::BasicBlock *LHSFalse = createBasicBlock("lor.lhs.false");
+      // We have the count for entry to the RHS and for the whole expression
+      // being true, so we can divy up True count between the short circuit and
+      // the RHS.
+      uint64_t LHSCount = TrueCount - Cnt.getCount();
+      uint64_t RHSCount = TrueCount - LHSCount;
 
       ConditionalEvaluation eval(*this);
-      EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, LHSFalse);
+      EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, LHSFalse, LHSCount);
       EmitBlock(LHSFalse);
 
       // Any temporaries created here are conditional.
+      Cnt.beginRegion(Builder);
       eval.begin(*this);
-      EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
+      EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock, RHSCount);
+
       eval.end(*this);
+      Cnt.adjustFallThroughCount();
+      Cnt.applyAdjustmentsToRegion();
 
       return;
     }
@@ -946,8 +979,13 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
 
   if (const UnaryOperator *CondUOp = dyn_cast<UnaryOperator>(Cond)) {
     // br(!x, t, f) -> br(x, f, t)
-    if (CondUOp->getOpcode() == UO_LNot)
-      return EmitBranchOnBoolExpr(CondUOp->getSubExpr(), FalseBlock, TrueBlock);
+    if (CondUOp->getOpcode() == UO_LNot) {
+      // Negate the count.
+      uint64_t FalseCount = PGO.getCurrentRegionCount() - TrueCount;
+      // Negate the condition and swap the destination blocks.
+      return EmitBranchOnBoolExpr(CondUOp->getSubExpr(), FalseBlock, TrueBlock,
+                                  FalseCount);
+    }
   }
 
   if (const ConditionalOperator *CondOp = dyn_cast<ConditionalOperator>(Cond)) {
@@ -955,17 +993,33 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
     llvm::BasicBlock *LHSBlock = createBasicBlock("cond.true");
     llvm::BasicBlock *RHSBlock = createBasicBlock("cond.false");
 
+    RegionCounter Cnt = getPGORegionCounter(CondOp);
     ConditionalEvaluation cond(*this);
-    EmitBranchOnBoolExpr(CondOp->getCond(), LHSBlock, RHSBlock);
+    EmitBranchOnBoolExpr(CondOp->getCond(), LHSBlock, RHSBlock, Cnt.getCount());
+
+    // When computing PGO branch weights, we only know the overall count for
+    // the true block. This code is essentially doing tail duplication of the
+    // naive code-gen, introducing new edges for which counts are not
+    // available. Divide the counts proportionally between the LHS and RHS of
+    // the conditional operator.
+    uint64_t LHSScaledTrueCount = 0;
+    if (TrueCount) {
+      double LHSRatio = Cnt.getCount() / (double) PGO.getCurrentRegionCount();
+      LHSScaledTrueCount = TrueCount * LHSRatio;
+    }
 
     cond.begin(*this);
     EmitBlock(LHSBlock);
-    EmitBranchOnBoolExpr(CondOp->getLHS(), TrueBlock, FalseBlock);
+    Cnt.beginRegion(Builder);
+    EmitBranchOnBoolExpr(CondOp->getLHS(), TrueBlock, FalseBlock,
+                         LHSScaledTrueCount);
     cond.end(*this);
 
     cond.begin(*this);
     EmitBlock(RHSBlock);
-    EmitBranchOnBoolExpr(CondOp->getRHS(), TrueBlock, FalseBlock);
+    Cnt.beginElseRegion();
+    EmitBranchOnBoolExpr(CondOp->getRHS(), TrueBlock, FalseBlock,
+                         TrueCount - LHSScaledTrueCount);
     cond.end(*this);
 
     return;
@@ -981,9 +1035,15 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
     return;
   }
 
+  // Create branch weights based on the number of times we get here and the
+  // number of times the condition should be true.
+  uint64_t CurrentCount = PGO.getCurrentRegionCountWithMin(TrueCount);
+  llvm::MDNode *Weights = PGO.createBranchWeights(TrueCount,
+                                                  CurrentCount - TrueCount);
+
   // Emit the code with the fully general case.
   llvm::Value *CondV = EvaluateExprAsBool(Cond);
-  Builder.CreateCondBr(CondV, TrueBlock, FalseBlock);
+  Builder.CreateCondBr(CondV, TrueBlock, FalseBlock, Weights);
 }
 
 /// ErrorUnsupported - Print out an error that codegen doesn't support the

@@ -85,7 +85,8 @@ namespace CodeGen {
   class CGCUDARuntime;
   class BlockFieldFlags;
   class FunctionArgList;
-  
+  class PGOProfileData;
+
   struct OrderGlobalInits {
     unsigned int priority;
     unsigned int lex_order;
@@ -258,6 +259,7 @@ class CodeGenModule : public CodeGenTypeCache {
   ARCEntrypoints *ARCData;
   llvm::MDNode *NoObjCARCExceptionsMetadata;
   RREntrypoints *RRData;
+  PGOProfileData *PGOData;
 
   // WeakRefReferences - A set of references that have only been seen via
   // a weakref so far. This is used to remove the weak of the reference if we
@@ -477,6 +479,10 @@ public:
   RREntrypoints &getRREntrypoints() const {
     assert(RRData != 0);
     return *RRData;
+  }
+
+  PGOProfileData *getPGOData() const {
+    return PGOData;
   }
 
   llvm::Constant *getStaticLocalDeclAddress(const VarDecl *D) {

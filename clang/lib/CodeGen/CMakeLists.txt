@@ -53,6 +53,7 @@ add_clang_library(clangCodeGen
   CodeGenModule.cpp
   CodeGenTBAA.cpp
   CodeGenTypes.cpp
+  CodeGenPGO.cpp
   ItaniumCXXABI.cpp
   MicrosoftCXXABI.cpp
   ModuleBuilder.cpp
