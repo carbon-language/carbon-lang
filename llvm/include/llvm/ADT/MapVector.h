@@ -1,4 +1,4 @@
-//===- llvm/ADT/MapVector.h - Map with deterministic value order *- C++ -*-===//
+//===- llvm/ADT/MapVector.h - Map w/ deterministic value order --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
