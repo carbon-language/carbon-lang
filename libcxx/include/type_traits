@@ -293,15 +293,15 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_void
 
 // __is_nullptr_t
 
-template <class _Tp> struct ____is_nullptr_t       : public false_type {};
-template <>          struct ____is_nullptr_t<nullptr_t> : public true_type {};
+template <class _Tp> struct __is_nullptr_t_impl       : public false_type {};
+template <>          struct __is_nullptr_t_impl<nullptr_t> : public true_type {};
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY __is_nullptr_t
-    : public ____is_nullptr_t<typename remove_cv<_Tp>::type> {};
+    : public __is_nullptr_t_impl<typename remove_cv<_Tp>::type> {};
 
 #if _LIBCPP_STD_VER > 11
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_null_pointer
-    : public ____is_nullptr_t<typename remove_cv<_Tp>::type> {};
+    : public __is_nullptr_t_impl<typename remove_cv<_Tp>::type> {};
 #endif
 
 // is_integral
@@ -644,13 +644,13 @@ template <class _Tp> using add_pointer_t = typename add_pointer<_Tp>::type;
 // is_signed
 
 template <class _Tp, bool = is_integral<_Tp>::value>
-struct ___is_signed : public integral_constant<bool, _Tp(-1) < _Tp(0)> {};
+struct __is_signed_impl : public integral_constant<bool, _Tp(-1) < _Tp(0)> {};
 
 template <class _Tp>
-struct ___is_signed<_Tp, false> : public true_type {};  // floating point
+struct __is_signed_impl<_Tp, false> : public true_type {};  // floating point
 
 template <class _Tp, bool = is_arithmetic<_Tp>::value>
-struct __is_signed : public ___is_signed<_Tp> {};
+struct __is_signed : public __is_signed_impl<_Tp> {};
 
 template <class _Tp> struct __is_signed<_Tp, false> : public false_type {};
 
@@ -659,13 +659,13 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_signed : public __is_signed
 // is_unsigned
 
 template <class _Tp, bool = is_integral<_Tp>::value>
-struct ___is_unsigned : public integral_constant<bool, _Tp(0) < _Tp(-1)> {};
+struct __is_unsigned_impl : public integral_constant<bool, _Tp(0) < _Tp(-1)> {};
 
 template <class _Tp>
-struct ___is_unsigned<_Tp, false> : public false_type {};  // floating point
+struct __is_unsigned_impl<_Tp, false> : public false_type {};  // floating point
 
 template <class _Tp, bool = is_arithmetic<_Tp>::value>
-struct __is_unsigned : public ___is_unsigned<_Tp> {};
+struct __is_unsigned : public __is_unsigned_impl<_Tp> {};
 
 template <class _Tp> struct __is_unsigned<_Tp, false> : public false_type {};
 

@@ -1047,10 +1047,10 @@ public:
           }
 };
 
-template <class _Tp> struct ____is_reference_wrapper : public false_type {};
-template <class _Tp> struct ____is_reference_wrapper<reference_wrapper<_Tp> > : public true_type {};
+template <class _Tp> struct __is_reference_wrapper_impl : public false_type {};
+template <class _Tp> struct __is_reference_wrapper_impl<reference_wrapper<_Tp> > : public true_type {};
 template <class _Tp> struct __is_reference_wrapper
-    : public ____is_reference_wrapper<typename remove_cv<_Tp>::type> {};
+    : public __is_reference_wrapper_impl<typename remove_cv<_Tp>::type> {};
 
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
