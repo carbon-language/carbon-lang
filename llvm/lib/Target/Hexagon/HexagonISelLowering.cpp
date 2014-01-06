@@ -982,11 +982,8 @@ HexagonTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MFI->setReturnAddressIsTaken(true);
 
-  if (!isa<ConstantSDNode>(Op.getOperand(0))) {
-    DAG.getContext()->emitError("argument to '__builtin_return_address' must "
-                                "be a constant integer");
+  if (verifyReturnAddressArgumentIsConstant(Op, DAG))
     return SDValue();
-  }
 
   EVT VT = Op.getValueType();
   SDLoc dl(Op);

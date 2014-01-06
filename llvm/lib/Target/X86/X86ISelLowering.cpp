@@ -12173,11 +12173,8 @@ SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op,
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   MFI->setReturnAddressIsTaken(true);
 
-  if (!isa<ConstantSDNode>(Op.getOperand(0))) {
-    DAG.getContext()->emitError("argument to '__builtin_return_address' must "
-                                "be a constant integer");
+  if (verifyReturnAddressArgumentIsConstant(Op, DAG))
     return SDValue();
-  }
 
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   SDLoc dl(Op);

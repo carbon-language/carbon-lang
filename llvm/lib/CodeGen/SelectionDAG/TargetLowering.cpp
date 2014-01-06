@@ -22,6 +22,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/CommandLine.h"
@@ -2662,4 +2663,15 @@ BuildUDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
     return DAG.getNode(ISD::SRL, dl, VT, NPQ,
              DAG.getConstant(magics.s-1, getShiftAmountTy(NPQ.getValueType())));
   }
+}
+
+bool TargetLowering::
+verifyReturnAddressArgumentIsConstant(SDValue Op, SelectionDAG &DAG) const {
+  if (!isa<ConstantSDNode>(Op.getOperand(0))) {
+    DAG.getContext()->emitError("argument to '__builtin_return_address' must "
+                                "be a constant integer");
+    return true;
+  }
+
+  return false;
 }
