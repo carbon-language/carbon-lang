@@ -141,6 +141,9 @@ typedef const char *(*LLVMSymbolLookupCallback)(void *DisInfo,
 /* The output reference is to a Objective-C class ref. */
 #define LLVMDisassembler_ReferenceType_Out_Objc_Class_Ref 8
 
+/* The output reference is to a C++ symbol name. */
+#define LLVMDisassembler_ReferenceType_DeMangled_Name 9
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* !defined(__cplusplus) */

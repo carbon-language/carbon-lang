@@ -56,6 +56,9 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
     if (Name) {
       SymbolicOp.AddSymbol.Name = Name;
       SymbolicOp.AddSymbol.Present = true;
+      // If Name is a C++ symbol name put the human readable name in a comment.
+      if(ReferenceType == LLVMDisassembler_ReferenceType_DeMangled_Name)
+        cStream << ReferenceName;
     }
     // For branches always create an MCExpr so it gets printed as hex address.
     else if (IsBranch) {
