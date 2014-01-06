@@ -16,7 +16,6 @@
 #include "MipsMCAsmInfo.h"
 #include "MipsTargetStreamer.h"
 #include "llvm/MC/MCCodeGenInfo.h"
-#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"

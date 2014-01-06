@@ -2,8 +2,10 @@
 #
 # CHECK:  .text
 # CHECK:  $BB0_2:
+# CHECK:  .abicalls
 $BB0_2:
   .ent directives_test
+     .abicalls
     .frame    $sp,0,$ra
     .mask     0x00000000,0
     .fmask    0x00000000,0

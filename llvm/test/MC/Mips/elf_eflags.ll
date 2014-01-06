@@ -29,7 +29,7 @@
 ; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips64r2 -print-hack-directives %s -o - | FileCheck -check-prefix=CHECK-BE64R2_PIC %s
 
 ; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32r2 -mattr=+mips16 -relocation-model=pic -print-hack-directives %s -o - | FileCheck -check-prefix=CHECK-LE32R2-MIPS16 %s
- 
+
 ; 32(R1) bit with NO_REORDER and static
 ; CHECK-BE32: .mips_hack_elf_flags 0x50001005
 ;

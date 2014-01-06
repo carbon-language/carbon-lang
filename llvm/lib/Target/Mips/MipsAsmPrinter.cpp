@@ -608,12 +608,10 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
   // TODO: Need to add -mabicalls and -mno-abicalls flags.
   // Currently we assume that -mabicalls is the default.
-  if (OutStreamer.hasRawTextSupport()) {
-    OutStreamer.EmitRawText(StringRef("\t.abicalls"));
-    Reloc::Model RM = Subtarget->getRelocationModel();
-    if (RM == Reloc::Static && !Subtarget->hasMips64())
-      OutStreamer.EmitRawText(StringRef("\t.option\tpic0"));
-  }
+  getTargetStreamer().emitDirectiveAbiCalls();
+  Reloc::Model RM = Subtarget->getRelocationModel();
+  if (RM == Reloc::Static && !Subtarget->hasMips64())
+    getTargetStreamer().emitDirectiveOptionPic0();
 
   // Tell the assembler which ABI we are using
   if (OutStreamer.hasRawTextSupport())
