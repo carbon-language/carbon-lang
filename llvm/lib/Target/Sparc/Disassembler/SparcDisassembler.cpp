@@ -104,14 +104,14 @@ static const unsigned DFPRegDecoderTable[] = {
   SP::D14,  SP::D30,  SP::D15,  SP::D31 };
 
 static const unsigned QFPRegDecoderTable[] = {
-  SP::Q0,  SP::Q8,   -1, -1,
-  SP::Q1,  SP::Q9,   -1, -1,
-  SP::Q2,  SP::Q10,  -1, -1,
-  SP::Q3,  SP::Q11,  -1, -1,
-  SP::Q4,  SP::Q12,  -1, -1,
-  SP::Q5,  SP::Q13,  -1, -1,
-  SP::Q6,  SP::Q14,  -1, -1,
-  SP::Q7,  SP::Q15,  -1, -1 } ;
+  SP::Q0,  SP::Q8,   (unsigned)-1,  (unsigned)-1,
+  SP::Q1,  SP::Q9,   (unsigned)-1,  (unsigned)-1,
+  SP::Q2,  SP::Q10,  (unsigned)-1,  (unsigned)-1,
+  SP::Q3,  SP::Q11,  (unsigned)-1,  (unsigned)-1,
+  SP::Q4,  SP::Q12,  (unsigned)-1,  (unsigned)-1,
+  SP::Q5,  SP::Q13,  (unsigned)-1,  (unsigned)-1,
+  SP::Q6,  SP::Q14,  (unsigned)-1,  (unsigned)-1,
+  SP::Q7,  SP::Q15,  (unsigned)-1,  (unsigned)-1 } ;
 
 static DecodeStatus DecodeIntRegsRegisterClass(MCInst &Inst,
                                                unsigned RegNo,
