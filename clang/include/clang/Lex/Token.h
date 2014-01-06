@@ -62,8 +62,7 @@ class Token {
   void *PtrData;
 
   /// Kind - The actual flavor of token this is.
-  ///
-  unsigned short Kind;
+  tok::TokenKind Kind;
 
   /// Flags - Bits we track about this token, members of the TokenFlags enum.
   unsigned char Flags;
@@ -83,13 +82,13 @@ public:
     IgnoredComma = 0x80    // This comma is not a macro argument separator (MS).
   };
 
-  tok::TokenKind getKind() const { return (tok::TokenKind)Kind; }
+  tok::TokenKind getKind() const { return Kind; }
   void setKind(tok::TokenKind K) { Kind = K; }
 
   /// is/isNot - Predicates to check if this token is a specific kind, as in
   /// "if (Tok.is(tok::l_brace)) {...}".
-  bool is(tok::TokenKind K) const { return Kind == (unsigned) K; }
-  bool isNot(tok::TokenKind K) const { return Kind != (unsigned) K; }
+  bool is(tok::TokenKind K) const { return Kind == K; }
+  bool isNot(tok::TokenKind K) const { return Kind != K; }
 
   /// \brief Return true if this is a raw identifier (when lexing
   /// in raw mode) or a non-keyword identifier (when lexing in non-raw mode).
@@ -145,9 +144,7 @@ public:
     setAnnotationEndLoc(R.getEnd());
   }
 
-  const char *getName() const {
-    return tok::getTokenName( (tok::TokenKind) Kind);
-  }
+  const char *getName() const { return tok::getTokenName(Kind); }
 
   /// \brief Reset all flags to cleared.
   void startToken() {

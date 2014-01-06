@@ -40,7 +40,7 @@ namespace clang {
   class StoredDiagnostic;
 #if LLVM_HAS_STRONG_ENUMS
   namespace tok {
-  enum TokenKind : unsigned;
+  enum TokenKind : unsigned short;
   }
 #endif
 
