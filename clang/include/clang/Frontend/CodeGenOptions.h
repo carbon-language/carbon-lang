@@ -134,6 +134,9 @@ public:
   /// Name of the profile file to use with -fprofile-sample-use.
   std::string SampleProfileFile;
 
+  /// Name of the profile file to use as input for -fprofile-instr-use
+  std::string InstrProfileInput;
+
 public:
   // Define accessors/mutators for code generation options of enumeration type.
 #define CODEGENOPT(Name, Bits, Default)

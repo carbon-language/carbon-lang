@@ -322,6 +322,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   // If we are building profile support, link that library in.
   if (Args.hasArg(options::OPT_fprofile_arcs) ||
       Args.hasArg(options::OPT_fprofile_generate) ||
+      Args.hasArg(options::OPT_fprofile_instr_generate) ||
       Args.hasArg(options::OPT_fcreate_profile) ||
       Args.hasArg(options::OPT_coverage)) {
     // Select the appropriate runtime library for the target.

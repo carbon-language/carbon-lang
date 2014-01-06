@@ -87,6 +87,9 @@ CODEGENOPT(OmitLeafFramePointer , 1, 0) ///< Set when -momit-leaf-frame-pointer 
 VALUE_CODEGENOPT(OptimizationLevel, 3, 0) ///< The -O[0-4] option specified.
 VALUE_CODEGENOPT(OptimizeSize, 2, 0) ///< If -Os (==1) or -Oz (==2) is specified.
 
+CODEGENOPT(ProfileInstrGenerate , 1, 0) ///< Instrument code to generate
+                                        ///< execution counts to use with PGO.
+
   /// If -fpcc-struct-return or -freg-struct-return is specified.
 ENUM_CODEGENOPT(StructReturnConvention, StructReturnConventionKind, 2, SRCK_Default)
 

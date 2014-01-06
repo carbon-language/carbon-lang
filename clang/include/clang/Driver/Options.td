@@ -376,6 +376,13 @@ def fprofile_sample_use_EQ : Joined<["-"], "fprofile-sample-use=">,
     HelpText<"Enable sample-based profile guided optimizations">;
 def fauto_profile_EQ : Joined<["-"], "fauto-profile=">,
     Alias<fprofile_sample_use_EQ>;
+def fprofile_instr_generate : Flag<["-"], "fprofile-instr-generate">,
+    Group<f_Group>, Flags<[CC1Option]>,
+    HelpText<"Generate instrumented code to collect execution counts">;
+def fprofile_instr_use : Flag<["-"], "fprofile-instr-use">, Group<f_Group>;
+def fprofile_instr_use_EQ : Joined<["-"], "fprofile-instr-use=">,
+    Group<f_Group>, Flags<[CC1Option]>,
+    HelpText<"Use instrumentation data for profile-guided optimization">;
 
 def fblocks : Flag<["-"], "fblocks">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable the 'blocks' language feature">;
