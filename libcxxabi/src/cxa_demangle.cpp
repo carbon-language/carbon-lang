@@ -2277,6 +2277,7 @@ parse_type(const char* first, const char* last, C& db)
 //                   ::= gt    # >             
 //                   ::= ix    # []            
 //                   ::= le    # <=            
+//                   ::= li <source-name>  # operator ""
 //                   ::= ls    # <<            
 //                   ::= lS    # <<=           
 //                   ::= lt    # <             
@@ -2437,6 +2438,18 @@ parse_operator_name(const char* first, const char* last, C& db)
             case 'e':
                 db.names.push_back("operator<=");
                 first += 2;
+                break;
+            case 'i':
+                {
+                    const char* t = parse_source_name(first+2, last, db);
+                    if (t != first+2)
+                    {
+                        if (db.names.empty())
+                            return first;
+                        db.names.back().first.insert(0, "operator\"\" ");
+                        first = t;
+                    }
+                }
                 break;
             case 's':
                 db.names.push_back("operator<<");
