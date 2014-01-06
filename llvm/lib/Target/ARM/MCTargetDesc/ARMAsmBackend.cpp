@@ -665,7 +665,7 @@ MCAsmBackend *llvm::createARMAsmBackend(const Target &T,
                                         StringRef TT, StringRef CPU) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSDarwin()) {
+  if (TheTriple.isOSBinFormatMachO()) {
     MachO::CPUSubTypeARM CS =
       StringSwitch<MachO::CPUSubTypeARM>(TheTriple.getArchName())
       .Cases("armv4t", "thumbv4t", MachO::CPU_SUBTYPE_ARM_V4T)

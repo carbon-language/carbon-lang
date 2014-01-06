@@ -1,6 +1,6 @@
 ; RUN: llc -mtriple=arm-none-none-eabi -mcpu=cortex-a15 -o - %s | FileCheck --check-prefix=CHECK-A %s
 ; RUN: llc -mtriple=thumb-none-none-eabi -mcpu=cortex-a15 -o - %s | FileCheck --check-prefix=CHECK-A-THUMB %s
-; RUN: llc -mtriple=thumb-apple-darwin -mcpu=cortex-m3 -o - %s | FileCheck --check-prefix=CHECK-M %s
+; RUN: llc -mtriple=thumb-apple-none-macho -mcpu=cortex-m3 -o - %s | FileCheck --check-prefix=CHECK-M %s
 
 declare arm_aapcscc void @bar()
 
@@ -34,10 +34,11 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
 
   ; Normal AAPCS function (r0-r3 pushed onto stack by hardware, lr set to
   ; appropriate sentinel so no special return needed).
+; CHECK-M-LABEL: irq_fn:
 ; CHECK-M: push {r4, r7, lr}
 ; CHECK-M: add r7, sp, #4
-; CHECK-M: sub sp, #4
 ; CHECK-M: mov r4, sp
+; CHECK-M: bic r4, r4, #7
 ; CHECK-M: mov sp, r4
 ; CHECK-M: blx _bar
 ; CHECK-M: subs r4, r7, #4
@@ -61,6 +62,8 @@ define arm_aapcscc void @fiq_fn() alignstack(8) "interrupt"="FIQ" {
 ; CHECK-A: pop {r0, r1, r2, r3, r4, r5, r6, r7, r11, lr}
 ; CHECK-A: subs pc, lr, #4
 
+; CHECK-A-THUMB-LABEL: fiq_fn:
+; CHECK-M-LABEL: fiq_fn:
   %val = load volatile [16 x i32]* @bigvar
   store volatile [16 x i32] %val, [16 x i32]* @bigvar
   ret void

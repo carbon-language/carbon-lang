@@ -311,7 +311,10 @@ public:
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
   bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
+
   bool isTargetELF() const { return TargetTriple.isOSBinFormatELF(); }
+  bool isTargetMachO() const { return TargetTriple.isOSBinFormatMachO(); }
+
   // ARM EABI is the bare-metal EABI described in ARM ABI documents and
   // can be accessed via -target arm-none-eabi. This is NOT GNUEABI.
   // FIXME: Add a flag for bare-metal for that target and set Triple::EABI

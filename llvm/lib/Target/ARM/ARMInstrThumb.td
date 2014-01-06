@@ -545,15 +545,15 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                      (tBX GPR:$dst, (ops 14, zero_reg))>,
                      Requires<[IsThumb]>, Sched<[WriteBr]>;
   }
-  // tTAILJMPd: IOS version uses a Thumb2 branch (no Thumb1 tail calls
-  // on IOS), so it's in ARMInstrThumb2.td.
-  // Non-IOS version:
+  // tTAILJMPd: MachO version uses a Thumb2 branch (no Thumb1 tail calls
+  // on MachO), so it's in ARMInstrThumb2.td.
+  // Non-MachO version:
   let Uses = [SP] in {
     def tTAILJMPdND : tPseudoExpand<(outs),
                    (ins t_brtarget:$dst, pred:$p),
                    4, IIC_Br, [],
                    (tB t_brtarget:$dst, pred:$p)>,
-                 Requires<[IsThumb, IsNotIOS]>, Sched<[WriteBr]>;
+                 Requires<[IsThumb, IsNotMachO]>, Sched<[WriteBr]>;
   }
 }
 

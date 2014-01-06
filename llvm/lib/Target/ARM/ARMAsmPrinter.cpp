@@ -146,9 +146,9 @@ void ARMAsmPrinter::EmitXXStructor(const Constant *CV) {
   assert(GV && "C++ constructor pointer was not a GlobalValue!");
 
   const MCExpr *E = MCSymbolRefExpr::Create(getSymbol(GV),
-                                            (Subtarget->isTargetDarwin()
-                                             ? MCSymbolRefExpr::VK_None
-                                             : MCSymbolRefExpr::VK_ARM_TARGET1),
+                                            (Subtarget->isTargetELF()
+                                             ? MCSymbolRefExpr::VK_ARM_TARGET1
+                                             : MCSymbolRefExpr::VK_None),
                                             OutContext);
   
   OutStreamer.EmitValue(E, Size);
@@ -440,7 +440,7 @@ bool ARMAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 }
 
 void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
-  if (Subtarget->isTargetDarwin()) {
+  if (Subtarget->isTargetMachO()) {
     Reloc::Model RelocM = TM.getRelocationModel();
     if (RelocM == Reloc::PIC_ || RelocM == Reloc::DynamicNoPIC) {
       // Declare all the text sections up front (before the DWARF sections
@@ -515,7 +515,7 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
 
 void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
-  if (Subtarget->isTargetDarwin()) {
+  if (Subtarget->isTargetMachO()) {
     // All darwin targets use mach-o.
     const TargetLoweringObjectFileMachO &TLOFMacho =
       static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
@@ -783,7 +783,7 @@ getModifierVariantKind(ARMCP::ARMCPModifier Modifier) {
 
 MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV,
                                         unsigned char TargetFlags) {
-  bool isIndirect = Subtarget->isTargetDarwin() &&
+  bool isIndirect = Subtarget->isTargetMachO() &&
     (TargetFlags & ARMII::MO_NONLAZY) &&
     Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
   if (!isIndirect)
@@ -824,7 +824,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
 
     // On Darwin, const-pool entries may get the "FOO$non_lazy_ptr" mangling, so
     // flag the global as MO_NONLAZY.
-    unsigned char TF = Subtarget->isTargetDarwin() ? ARMII::MO_NONLAZY : 0;
+    unsigned char TF = Subtarget->isTargetMachO() ? ARMII::MO_NONLAZY : 0;
     MCSym = GetARMGVSymbol(GV, TF);
   } else if (ACPV->isMachineBasicBlock()) {
     const MachineBasicBlock *MBB = cast<ARMConstantPoolMBB>(ACPV)->getMBB();
@@ -1536,7 +1536,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::TRAP: {
     // Non-Darwin binutils don't yet support the "trap" mnemonic.
     // FIXME: Remove this special case when they do.
-    if (!Subtarget->isTargetDarwin()) {
+    if (!Subtarget->isTargetMachO()) {
       //.long 0xe7ffdefe @ trap
       uint32_t Val = 0xe7ffdefeUL;
       OutStreamer.AddComment("trap");
@@ -1555,7 +1555,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::tTRAP: {
     // Non-Darwin binutils don't yet support the "trap" mnemonic.
     // FIXME: Remove this special case when they do.
-    if (!Subtarget->isTargetDarwin()) {
+    if (!Subtarget->isTargetMachO()) {
       //.short 57086 @ trap
       uint16_t Val = 0xdefe;
       OutStreamer.AddComment("trap");

@@ -268,7 +268,7 @@ static MCAsmInfo *createX86MCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   bool is64Bit = TheTriple.getArch() == Triple::x86_64;
 
   MCAsmInfo *MAI;
-  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO) {
+  if (TheTriple.isOSBinFormatMachO()) {
     if (is64Bit)
       MAI = new X86_64MCAsmInfoDarwin(TheTriple);
     else
@@ -362,7 +362,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     bool NoExecStack) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
+  if (TheTriple.isOSBinFormatMachO())
     return createMachOStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll);
 
   if (TheTriple.isOSWindows() && TheTriple.getEnvironment() != Triple::ELF)

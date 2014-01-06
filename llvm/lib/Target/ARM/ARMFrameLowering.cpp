@@ -195,7 +195,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     case ARM::R12:
       if (Reg == FramePtr)
         FramePtrSpillFI = FI;
-      if (STI.isTargetIOS())
+      if (STI.isTargetMachO())
         GPRCS2Size += 4;
       else
         GPRCS1Size += 4;
@@ -454,7 +454,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
     // Jump to label or value in register.
     if (RetOpcode == ARM::TCRETURNdi) {
       unsigned TCOpcode = STI.isThumb() ?
-               (STI.isTargetIOS() ? ARM::tTAILJMPd : ARM::tTAILJMPdND) :
+               (STI.isTargetMachO() ? ARM::tTAILJMPd : ARM::tTAILJMPdND) :
                ARM::TAILJMPd;
       MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(TCOpcode));
       if (JumpTarget.isGlobal())
@@ -599,7 +599,7 @@ void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
     unsigned LastReg = 0;
     for (; i != 0; --i) {
       unsigned Reg = CSI[i-1].getReg();
-      if (!(Func)(Reg, STI.isTargetIOS())) continue;
+      if (!(Func)(Reg, STI.isTargetMachO())) continue;
 
       // D-registers in the aligned area DPRCS2 are NOT spilled here.
       if (Reg >= ARM::D8 && Reg < ARM::D8 + NumAlignedDPRCS2Regs)
@@ -672,7 +672,7 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
     bool DeleteRet = false;
     for (; i != 0; --i) {
       unsigned Reg = CSI[i-1].getReg();
-      if (!(Func)(Reg, STI.isTargetIOS())) continue;
+      if (!(Func)(Reg, STI.isTargetMachO())) continue;
 
       // The aligned reloads from area DPRCS2 are not inserted here.
       if (Reg >= ARM::D8 && Reg < ARM::D8 + NumAlignedDPRCS2Regs)
@@ -1221,7 +1221,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     if (Spilled) {
       NumGPRSpills++;
 
-      if (!STI.isTargetIOS()) {
+      if (!STI.isTargetMachO()) {
         if (Reg == ARM::LR)
           LRSpilled = true;
         CS1Spilled = true;
@@ -1243,7 +1243,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
         break;
       }
     } else {
-      if (!STI.isTargetIOS()) {
+      if (!STI.isTargetMachO()) {
         UnspilledCS1GPRs.push_back(Reg);
         continue;
       }

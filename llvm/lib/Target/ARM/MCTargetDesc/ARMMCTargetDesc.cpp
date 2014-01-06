@@ -212,7 +212,7 @@ static MCRegisterInfo *createARMMCRegisterInfo(StringRef Triple) {
 static MCAsmInfo *createARMMCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSDarwin())
+  if (TheTriple.isOSBinFormatMachO())
     return new ARMMCAsmInfoDarwin();
 
   return new ARMELFMCAsmInfo();
@@ -240,7 +240,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     bool NoExecStack) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSDarwin())
+  if (TheTriple.isOSBinFormatMachO())
     return createMachOStreamer(Ctx, MAB, OS, Emitter, false);
 
   if (TheTriple.isOSWindows()) {

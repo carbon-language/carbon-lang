@@ -161,7 +161,7 @@ void ARMTargetLowering::addQRTypeForNEON(MVT VT) {
 }
 
 static TargetLoweringObjectFile *createTLOF(TargetMachine &TM) {
-  if (TM.getSubtarget<ARMSubtarget>().isTargetDarwin())
+  if (TM.getSubtarget<ARMSubtarget>().isTargetMachO())
     return new TargetLoweringObjectFileMachO();
 
   return new ARMElfTargetObjectFile();
@@ -175,7 +175,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
 
-  if (Subtarget->isTargetIOS()) {
+  if (Subtarget->isTargetMachO()) {
     // Uses VFP for Thumb libfuncs if available.
     if (Subtarget->isThumb() && Subtarget->hasVFP2() &&
         Subtarget->hasARMOps()) {
@@ -258,7 +258,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setLibcallName(RTLIB::SRL_I128, 0);
   setLibcallName(RTLIB::SRA_I128, 0);
 
-  if (Subtarget->isAAPCS_ABI() && !Subtarget->isTargetDarwin()) {
+  if (Subtarget->isAAPCS_ABI() && !Subtarget->isTargetMachO()) {
     // Double-precision floating-point arithmetic helper functions
     // RTABI chapter 4.1.2, Table 2
     setLibcallName(RTLIB::ADD_F64, "__aeabi_dadd");
@@ -733,8 +733,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
 
-  if (!Subtarget->isTargetDarwin()) {
-    // Non-Darwin platforms may return values in these registers via the
+  if (!Subtarget->isTargetMachO()) {
+    // Non-MachO platforms may return values in these registers via the
     // personality function.
     setExceptionPointerRegister(ARM::R0);
     setExceptionSelectorRegister(ARM::R1);
@@ -1694,14 +1694,14 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     const GlobalValue *GV = G->getGlobal();
     isDirect = true;
     bool isExt = GV->isDeclaration() || GV->isWeakForLinker();
-    bool isStub = (isExt && Subtarget->isTargetDarwin()) &&
+    bool isStub = (isExt && Subtarget->isTargetMachO()) &&
                    getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || isStub;
     // ARM call to a local ARM function is predicable.
     isLocalARMFunc = !Subtarget->isThumb() && (!isExt || !ARMInterworking);
     // tBX takes a register source operand.
     if (isStub && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
-      assert(Subtarget->isTargetDarwin() && "WrapperPIC use on non-Darwin?");
+      assert(Subtarget->isTargetMachO() && "WrapperPIC use on non-MachO?");
       Callee = DAG.getNode(ARMISD::WrapperPIC, dl, getPointerTy(),
                            DAG.getTargetGlobalAddress(GV, dl, getPointerTy()));
     } else {
@@ -1714,7 +1714,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     isDirect = true;
-    bool isStub = Subtarget->isTargetDarwin() &&
+    bool isStub = Subtarget->isTargetMachO() &&
                   getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || isStub;
     // tBX takes a register source operand.
@@ -3778,7 +3778,7 @@ SDValue ARMTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   SDLoc dl(Op);  // FIXME probably not meaningful
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
-  unsigned FrameReg = (Subtarget->isThumb() || Subtarget->isTargetDarwin())
+  unsigned FrameReg = (Subtarget->isThumb() || Subtarget->isTargetMachO())
     ? ARM::R7 : ARM::R11;
   SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, VT);
   while (Depth--)
@@ -6065,7 +6065,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ConstantPool:  return LowerConstantPool(Op, DAG);
   case ISD::BlockAddress:  return LowerBlockAddress(Op, DAG);
   case ISD::GlobalAddress:
-    return Subtarget->isTargetDarwin() ? LowerGlobalAddressDarwin(Op, DAG) :
+    return Subtarget->isTargetMachO() ? LowerGlobalAddressDarwin(Op, DAG) :
       LowerGlobalAddressELF(Op, DAG);
   case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
   case ISD::SELECT:        return LowerSELECT(Op, DAG);

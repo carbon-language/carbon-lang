@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=thumbv7-apple-darwin-eabi < %s | FileCheck %s
-; RUN: llc -mtriple=thumbv6m-apple-darwin-eabi -disable-fp-elim < %s | FileCheck %s --check-prefix=CHECK-T1
+; RUN: llc -mtriple=thumbv7-apple-none-macho < %s | FileCheck %s
+; RUN: llc -mtriple=thumbv6m-apple-none-macho -disable-fp-elim < %s | FileCheck %s --check-prefix=CHECK-T1
 ; RUN: llc -mtriple=thumbv7-apple-darwin-ios -disable-fp-elim < %s | FileCheck %s --check-prefix=CHECK-IOS
 
 
@@ -11,11 +11,11 @@ declare void @bar(i8*)
 
 define void @check_simple() minsize {
 ; CHECK-LABEL: check_simple:
-; CHECK: push.w {r7, r8, r9, r10, r11, lr}
+; CHECK: push {r3, r4, r5, r6, r7, lr}
 ; CHECK-NOT: sub sp, sp,
 ; ...
 ; CHECK-NOT: add sp, sp,
-; CHECK: pop.w {r0, r1, r2, r3, r11, pc}
+; CHECK: pop {r0, r1, r2, r3, r7, pc}
 
 ; CHECK-T1-LABEL: check_simple:
 ; CHECK-T1: push {r3, r4, r5, r6, r7, lr}
@@ -43,11 +43,11 @@ define void @check_simple() minsize {
 
 define void @check_simple_too_big() minsize {
 ; CHECK-LABEL: check_simple_too_big:
-; CHECK: push.w {r11, lr}
+; CHECK: push {r7, lr}
 ; CHECK: sub sp,
 ; ...
 ; CHECK: add sp,
-; CHECK: pop.w {r11, pc}
+; CHECK: pop {r7, pc}
   %var = alloca i8, i32 64
   call void @bar(i8* %var)
   ret void
@@ -92,16 +92,16 @@ define void @check_vfp_fold() minsize {
 ; folded in except that doing so would clobber the value being returned.
 define i64 @check_no_return_clobber() minsize {
 ; CHECK-LABEL: check_no_return_clobber:
-; CHECK: push.w {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, lr}
+; CHECK: push {r1, r2, r3, r4, r5, r6, r7, lr}
 ; CHECK-NOT: sub sp,
 ; ...
-; CHECK: add sp, #40
-; CHECK: pop.w {r11, pc}
+; CHECK: add sp, #24
+; CHECK: pop {r7, pc}
 
   ; Just to keep iOS FileCheck within previous function:
 ; CHECK-IOS-LABEL: check_no_return_clobber:
 
-  %var = alloca i8, i32 40
+  %var = alloca i8, i32 20
   call void @bar(i8* %var)
   ret i64 0
 }

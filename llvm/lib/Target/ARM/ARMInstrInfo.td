@@ -260,6 +260,8 @@ def IsARM            : Predicate<"!Subtarget->isThumb()">,
                                  AssemblerPredicate<"!ModeThumb", "arm-mode">;
 def IsIOS            : Predicate<"Subtarget->isTargetIOS()">;
 def IsNotIOS         : Predicate<"!Subtarget->isTargetIOS()">;
+def IsMachO          : Predicate<"Subtarget->isTargetMachO()">;
+def IsNotMachO       : Predicate<"!Subtarget->isTargetMachO()">;
 def IsNaCl           : Predicate<"Subtarget->isTargetNaCl()">;
 def UseNaClTrap      : Predicate<"Subtarget->useNaClTrap()">,
                                  AssemblerPredicate<"FeatureNaClTrap", "NaCl">;

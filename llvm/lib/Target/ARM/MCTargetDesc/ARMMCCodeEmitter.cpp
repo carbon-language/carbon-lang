@@ -56,9 +56,9 @@ public:
   bool isThumb2() const {
     return isThumb() && (STI.getFeatureBits() & ARM::FeatureThumb2) != 0;
   }
-  bool isTargetDarwin() const {
+  bool isTargetMachO() const {
     Triple TT(STI.getTargetTriple());
-  	return TT.isOSDarwin();
+    return TT.isOSBinFormatMachO();
   }
 
   unsigned getMachineSoImmOpValue(unsigned SoImm) const;
@@ -915,7 +915,7 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
     switch (ARM16Expr->getKind()) {
     default: llvm_unreachable("Unsupported ARMFixup");
     case ARMMCExpr::VK_ARM_HI16:
-      if (!isTargetDarwin() && EvaluateAsPCRel(E))
+      if (!isTargetMachO() && EvaluateAsPCRel(E))
         Kind = MCFixupKind(isThumb2()
                            ? ARM::fixup_t2_movt_hi16_pcrel
                            : ARM::fixup_arm_movt_hi16_pcrel);
@@ -925,7 +925,7 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
                            : ARM::fixup_arm_movt_hi16);
       break;
     case ARMMCExpr::VK_ARM_LO16:
-      if (!isTargetDarwin() && EvaluateAsPCRel(E))
+      if (!isTargetMachO() && EvaluateAsPCRel(E))
         Kind = MCFixupKind(isThumb2()
                            ? ARM::fixup_t2_movw_lo16_pcrel
                            : ARM::fixup_arm_movw_lo16_pcrel);
@@ -942,7 +942,7 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
   // it's just a plain immediate expression, and those evaluate to
   // the lower 16 bits of the expression regardless of whether
   // we have a movt or a movw.
-  if (!isTargetDarwin() && EvaluateAsPCRel(E))
+  if (!isTargetMachO() && EvaluateAsPCRel(E))
     Kind = MCFixupKind(isThumb2()
                        ? ARM::fixup_t2_movw_lo16_pcrel
                        : ARM::fixup_arm_movw_lo16_pcrel);

@@ -196,6 +196,7 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
     case Triple::EABIHF:
     case Triple::GNUEABI:
     case Triple::GNUEABIHF:
+    case Triple::MachO:
       TargetABI = ARM_ABI_AAPCS;
       break;
     default:
@@ -212,12 +213,11 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
 
   UseMovt = hasV6T2Ops() && ArmUseMOVT;
 
-  if (!isTargetIOS()) {
-    IsR9Reserved = ReserveR9;
-  } else {
+  if (isTargetMachO()) {
     IsR9Reserved = ReserveR9 | !HasV6Ops;
-    SupportsTailCall = !getTargetTriple().isOSVersionLT(5, 0);
-  }
+    SupportsTailCall = !isTargetIOS() || !getTargetTriple().isOSVersionLT(5, 0);
+  } else
+    IsR9Reserved = ReserveR9;
 
   if (!isThumb() || hasThumb2())
     PostRAScheduler = true;
@@ -239,7 +239,7 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
       // The above behavior is consistent with GCC.
       AllowsUnalignedMem = (
           (hasV7Ops() && (isTargetLinux() || isTargetNaCl())) ||
-          (hasV6Ops() && isTargetDarwin()));
+          (hasV6Ops() && isTargetMachO()));
       break;
     case StrictAlign:
       AllowsUnalignedMem = false;
@@ -281,7 +281,7 @@ ARMSubtarget::GVIsIndirectSymbol(const GlobalValue *GV,
   if (GV->isDeclaration() && !GV->isMaterializable())
     isDecl = true;
 
-  if (!isTargetDarwin()) {
+  if (!isTargetMachO()) {
     // Extra load is needed for all externally visible.
     if (GV->hasLocalLinkage() || GV->hasHiddenVisibility())
       return false;

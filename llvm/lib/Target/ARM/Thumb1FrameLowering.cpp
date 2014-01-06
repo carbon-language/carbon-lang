@@ -135,7 +135,7 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     case ARM::R11:
       if (Reg == FramePtr)
         FramePtrSpillFI = FI;
-      if (STI.isTargetIOS())
+      if (STI.isTargetMachO())
         GPRCS2Size += 4;
       else
         GPRCS1Size += 4;

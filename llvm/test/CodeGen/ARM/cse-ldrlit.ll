@@ -1,9 +1,9 @@
-; RUN: llc -mtriple=thumbv6m-apple-darwin-eabi -relocation-model=pic -o -  %s | FileCheck %s --check-prefix=CHECK-THUMB-PIC
-; RUN: llc -mtriple=arm-apple-darwin-eabi -relocation-model=pic -o -  %s | FileCheck %s --check-prefix=CHECK-ARM-PIC
-; RUN: llc -mtriple=thumbv6m-apple-darwin-eabi -relocation-model=dynamic-no-pic -o -  %s | FileCheck %s --check-prefix=CHECK-DYNAMIC
-; RUN: llc -mtriple=arm-apple-darwin-eabi -relocation-model=dynamic-no-pic -o -  %s | FileCheck %s --check-prefix=CHECK-DYNAMIC
-; RUN: llc -mtriple=thumbv6m-apple-darwin-eabi -relocation-model=static -o -  %s | FileCheck %s --check-prefix=CHECK-STATIC
-; RUN: llc -mtriple=arm-apple-darwin-eabi -relocation-model=static -o -  %s | FileCheck %s --check-prefix=CHECK-STATIC
+; RUN: llc -mtriple=thumbv6m-apple-none-macho -relocation-model=pic -o -  %s | FileCheck %s --check-prefix=CHECK-THUMB-PIC
+; RUN: llc -mtriple=arm-apple-none-macho -relocation-model=pic -o -  %s | FileCheck %s --check-prefix=CHECK-ARM-PIC
+; RUN: llc -mtriple=thumbv6m-apple-none-macho -relocation-model=dynamic-no-pic -o -  %s | FileCheck %s --check-prefix=CHECK-DYNAMIC
+; RUN: llc -mtriple=arm-apple-none-macho -relocation-model=dynamic-no-pic -o -  %s | FileCheck %s --check-prefix=CHECK-DYNAMIC
+; RUN: llc -mtriple=thumbv6m-apple-none-macho -relocation-model=static -o -  %s | FileCheck %s --check-prefix=CHECK-STATIC
+; RUN: llc -mtriple=arm-apple-none-macho -relocation-model=static -o -  %s | FileCheck %s --check-prefix=CHECK-STATIC
 @var = global [16 x i32] zeroinitializer
 
 declare void @bar(i32*)

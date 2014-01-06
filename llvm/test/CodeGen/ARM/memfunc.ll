@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios -o - | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv7m-darwin-eabi -o - | FileCheck %s --check-prefix=DARWIN
+; RUN: llc < %s -mtriple=thumbv7m-none-macho -o - | FileCheck %s --check-prefix=DARWIN
 ; RUN: llc < %s -mtriple=arm-none-eabi -o - | FileCheck --check-prefix=EABI %s
 ; RUN: llc < %s -mtriple=arm-none-eabihf -o - | FileCheck --check-prefix=EABI %s
 

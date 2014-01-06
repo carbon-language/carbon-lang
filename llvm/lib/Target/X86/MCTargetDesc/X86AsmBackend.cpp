@@ -803,7 +803,7 @@ MCAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
                                            StringRef CPU) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
+  if (TheTriple.isOSBinFormatMachO())
     return new DarwinX86_32AsmBackend(T, MRI, CPU,
                                       TheTriple.isMacOSX() &&
                                       !TheTriple.isMacOSXVersionLT(10, 7));
@@ -821,7 +821,7 @@ MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
                                            StringRef CPU) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO) {
+  if (TheTriple.isOSBinFormatMachO()) {
     MachO::CPUSubTypeX86 CS =
         StringSwitch<MachO::CPUSubTypeX86>(TheTriple.getArchName())
             .Case("x86_64h", MachO::CPU_SUBTYPE_X86_64_H)
