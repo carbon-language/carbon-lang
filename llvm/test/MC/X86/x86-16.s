@@ -27,6 +27,9 @@
 // CHECK: testb	%bl, %cl                # encoding: [0x84,0xcb]
         testb %bl, %cl
 
+// CHECK: addw	%ax, %ax                # encoding: [0x01,0xc0]
+        addw %ax, %ax
+
 into
 // CHECK: into
 // CHECK:  encoding: [0xce]
@@ -39,6 +42,10 @@ int $4
 int $255
 // CHECK: int $255
 // CHECK:  encoding: [0xcd,0xff]
+
+// CHECK: cmovbw %bx, %bx
+cmovnae	%bx,%bx
+
 
 // CHECK: fmul	%st(0)
 // CHECK:  encoding: [0xd8,0xc8]
@@ -64,9 +71,118 @@ int $255
 // CHECK:  encoding: [0xd8,0xf0]
         fdiv %st(0), %st
 
+// CHECK: movw	%cs, %ax
+// CHECK:  encoding: [0x8c,0xc8]
+        movw %cs, %ax
+
+// CHECK: movw	%cs, (%eax)
+// CHECK:  encoding: [0x67,0x8c,0x08]
+        movw %cs, (%eax)
+
+// CHECK: movw	(%eax), %cs
+// CHECK:  encoding: [0x67,0x8e,0x08]
+        movw (%eax), %cs
+
+// CHECK: movl	%cr0, %eax
+// CHECK:  encoding: [0x0f,0x20,0xc0]
+        movl %cr0,%eax
+
+// CHECK: movl	%cr1, %eax
+// CHECK:  encoding: [0x0f,0x20,0xc8]
+        movl %cr1,%eax
+
+// CHECK: movl	%cr2, %eax
+// CHECK:  encoding: [0x0f,0x20,0xd0]
+        movl %cr2,%eax
+
+// CHECK: movl	%cr3, %eax
+// CHECK:  encoding: [0x0f,0x20,0xd8]
+        movl %cr3,%eax
+
+// CHECK: movl	%cr4, %eax
+// CHECK:  encoding: [0x0f,0x20,0xe0]
+        movl %cr4,%eax
+
+// CHECK: movl	%dr0, %eax
+// CHECK:  encoding: [0x0f,0x21,0xc0]
+        movl %dr0,%eax
+
+// CHECK: movl	%dr1, %eax
+// CHECK:  encoding: [0x0f,0x21,0xc8]
+        movl %dr1,%eax
+
+// CHECK: movl	%dr1, %eax
+// CHECK:  encoding: [0x0f,0x21,0xc8]
+        movl %dr1,%eax
+
+// CHECK: movl	%dr2, %eax
+// CHECK:  encoding: [0x0f,0x21,0xd0]
+        movl %dr2,%eax
+
+// CHECK: movl	%dr3, %eax
+// CHECK:  encoding: [0x0f,0x21,0xd8]
+        movl %dr3,%eax
+
+// CHECK: movl	%dr4, %eax
+// CHECK:  encoding: [0x0f,0x21,0xe0]
+        movl %dr4,%eax
+
+// CHECK: movl	%dr5, %eax
+// CHECK:  encoding: [0x0f,0x21,0xe8]
+        movl %dr5,%eax
+
+// CHECK: movl	%dr6, %eax
+// CHECK:  encoding: [0x0f,0x21,0xf0]
+        movl %dr6,%eax
+
+// CHECK: movl	%dr7, %eax
+// CHECK:  encoding: [0x0f,0x21,0xf8]
+        movl %dr7,%eax
+
 // CHECK: wait
 // CHECK:  encoding: [0x9b]
 	fwait
+
+sysret
+// CHECK: sysretl
+// CHECK: encoding: [0x0f,0x07]
+sysretl
+// CHECK: sysretl
+// CHECK: encoding: [0x0f,0x07]
+
+testl	%ecx, -24(%ebp)
+// CHECK: testl	-24(%ebp), %ecx
+testl	-24(%ebp), %ecx
+// CHECK: testl	-24(%ebp), %ecx
+
+
+pushw %cs
+// CHECK: pushw	%cs
+// CHECK: encoding: [0x0e]
+pushw %ds
+// CHECK: pushw	%ds
+// CHECK: encoding: [0x1e]
+pushw %ss
+// CHECK: pushw	%ss
+// CHECK: encoding: [0x16]
+pushw %es
+// CHECK: pushw	%es
+// CHECK: encoding: [0x06]
+pushw %fs
+// CHECK: pushw	%fs
+// CHECK: encoding: [0x0f,0xa0]
+pushw %gs
+// CHECK: pushw	%gs
+// CHECK: encoding: [0x0f,0xa8]
+
+pushfd
+// CHECK: pushfl
+popfd
+// CHECK: popfl
+pushfl
+// CHECK: pushfl
+popfl
+// CHECK: popfl
 
 
 	setc	%bl
@@ -103,8 +219,14 @@ ljmpl	$0x7ace,$0x7ace
 // CHECK:	incb	%al # encoding: [0xfe,0xc0]
 	incb %al
 
+// CHECK:	incw	%ax # encoding: [0x40]
+	incw %ax
+
 // CHECK:	decb	%al # encoding: [0xfe,0xc8]
 	decb %al
+
+// CHECK:	decw	%ax # encoding: [0x48]
+	decw %ax
 
 // CHECK: pshufw $14, %mm4, %mm0 # encoding: [0x0f,0x70,0xc4,0x0e]
 pshufw $14, %mm4, %mm0
@@ -151,6 +273,10 @@ pshufw $90, %mm4, %mm0
 // CHECK: das
 // CHECK:  encoding: [0x2f]
         	das
+
+// CHECK: bound	2(%eax), %bx
+// CHECK:  encoding: [0x67,0x62,0x58,0x02]
+        	bound	2(%eax),%bx
 
 // CHECK: arpl	%bx, %bx
 // CHECK:  encoding: [0x63,0xdb]
@@ -219,10 +345,22 @@ pshufw $90, %mm4, %mm0
 	outsb	%ds:(%si), %dx
 	outsb	(%si), %dx
 
+// CHECK: outsw # encoding: [0x6f]
+// CHECK: outsw
+// CHECK: outsw
+	outsw
+	outsw	%ds:(%si), %dx
+	outsw	(%si), %dx
+
 // CHECK: insb # encoding: [0x6c]
 // CHECK: insb
 	insb
 	insb	%dx, %es:(%di)
+
+// CHECK: insw # encoding: [0x6d]
+// CHECK: insw
+	insw
+	insw	%dx, %es:(%di)
 
 // CHECK: movsb # encoding: [0xa4]
 // CHECK: movsb
@@ -230,6 +368,13 @@ pshufw $90, %mm4, %mm0
 	movsb
 	movsb	%ds:(%si), %es:(%di)
 	movsb	(%si), %es:(%di)
+
+// CHECK: movsw # encoding: [0xa5]
+// CHECK: movsw
+// CHECK: movsw
+	movsw
+	movsw	%ds:(%si), %es:(%di)
+	movsw	(%si), %es:(%di)
 
 // CHECK: lodsb # encoding: [0xac]
 // CHECK: lodsb
@@ -242,12 +387,34 @@ pshufw $90, %mm4, %mm0
 	lods	%ds:(%si), %al
 	lods	(%si), %al
 
+// CHECK: lodsw # encoding: [0xad]
+// CHECK: lodsw
+// CHECK: lodsw
+// CHECK: lodsw
+// CHECK: lodsw
+	lodsw
+	lodsw	%ds:(%si), %ax
+	lodsw	(%si), %ax
+	lods	%ds:(%si), %ax
+	lods	(%si), %ax
+
 // CHECK: stosb # encoding: [0xaa]
 // CHECK: stosb
 // CHECK: stosb
 	stosb
 	stosb	%al, %es:(%di)
 	stos	%al, %es:(%di)
+
+// CHECK: stosw # encoding: [0xab]
+// CHECK: stosw
+// CHECK: stosw
+	stosw
+	stosw	%ax, %es:(%di)
+	stos	%ax, %es:(%di)
+
+// CHECK: strw
+// CHECK: encoding: [0x0f,0x00,0xc8]
+	str %ax
 
 // CHECK: fsubp
 // CHECK: encoding: [0xde,0xe1]
@@ -257,3 +424,6 @@ fsubp %st,%st(1)
 // CHECK: encoding: [0xde,0xe2]
 fsubp   %st, %st(2)
 
+// CHECK: xchgw %ax, %ax
+// CHECK: encoding: [0x90]
+xchgw %ax, %ax

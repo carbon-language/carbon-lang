@@ -295,13 +295,15 @@ namespace X86II {
 
     // OpSize - Set if this instruction requires an operand size prefix (0x66),
     // which most often indicates that the instruction operates on 16 bit data
-    // instead of 32 bit data.
+    // instead of 32 bit data. OpSize16 in 16 bit mode indicates that the
+    // instruction operates on 32 bit data instead of 16 bit data.
     OpSize      = 1 << 6,
+    OpSize16    = 1 << 7,
 
     // AsSize - Set if this instruction requires an operand size prefix (0x67),
     // which most often indicates that the instruction address 16 bit address
     // instead of 32 bit address (or 32 bit address in 64 bit mode).
-    AdSize      = 1 << 7,
+    AdSize      = 1 << 8,
 
     //===------------------------------------------------------------------===//
     // Op0Mask - There are several prefix bytes that are used to form two byte
@@ -309,7 +311,7 @@ namespace X86II {
     // used to obtain the setting of this field.  If no bits in this field is
     // set, there is no prefix byte for obtaining a multibyte opcode.
     //
-    Op0Shift    = 8,
+    Op0Shift    = 9,
     Op0Mask     = 0x1F << Op0Shift,
 
     // TB - TwoByte - Set if this instruction has a two byte opcode, which

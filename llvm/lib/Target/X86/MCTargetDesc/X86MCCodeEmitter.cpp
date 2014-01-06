@@ -1191,8 +1191,7 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     EmitByte(0x67, CurByte, OS);
 
   // Emit the operand size opcode prefix as needed.
-  // FIXME for is16BitMode().
-  if (TSFlags & X86II::OpSize)
+  if (TSFlags & (is16BitMode(Features) ? X86II::OpSize16 : X86II::OpSize))
     EmitByte(0x66, CurByte, OS);
 
   bool Need0FPrefix = false;
