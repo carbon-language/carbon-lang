@@ -289,37 +289,65 @@ EmulateInstructionARM::GetRegisterInfo (uint32_t reg_kind, uint32_t reg_num, Reg
 uint32_t
 EmulateInstructionARM::GetFramePointerRegisterNumber () const
 {
-    if (m_opcode_mode == eModeThumb)
+    bool is_apple = false;
+    if (m_arch.GetTriple().getVendor() == llvm::Triple::Apple)
+        is_apple = true;
+    switch (m_arch.GetTriple().getOS())
     {
-        switch (m_arch.GetTriple().getOS())
-        {
             case llvm::Triple::Darwin:
             case llvm::Triple::MacOSX:
             case llvm::Triple::IOS:
-                return 7;
+                is_apple = true;
+                break;
             default:
                 break;
-        }
     }
-    return 11;
+
+    /* On Apple iOS et al, the frame pointer register is always r7.
+     * Typically on other ARM systems, thumb code uses r7; arm code uses r11. 
+     */
+
+    uint32_t fp_regnum = 11;
+
+    if (is_apple)
+        fp_regnum = 7;
+
+    if (m_opcode_mode == eModeThumb)
+        fp_regnum = 7;
+
+    return fp_regnum;
 }
 
 uint32_t
 EmulateInstructionARM::GetFramePointerDWARFRegisterNumber () const
 {
-    if (m_opcode_mode == eModeThumb)
+    bool is_apple = false;
+    if (m_arch.GetTriple().getVendor() == llvm::Triple::Apple)
+        is_apple = true;
+    switch (m_arch.GetTriple().getOS())
     {
-        switch (m_arch.GetTriple().getOS())
-        {
             case llvm::Triple::Darwin:
             case llvm::Triple::MacOSX:
             case llvm::Triple::IOS:
-                return dwarf_r7;
+                is_apple = true;
+                break;
             default:
                 break;
-        }
     }
-    return dwarf_r11;
+
+    /* On Apple iOS et al, the frame pointer register is always r7.
+     * Typically on other ARM systems, thumb code uses r7; arm code uses r11. 
+     */
+
+    uint32_t fp_regnum = dwarf_r11;
+
+    if (is_apple)
+        fp_regnum = dwarf_r7;
+
+    if (m_opcode_mode == eModeThumb)
+        fp_regnum = dwarf_r7;
+
+    return fp_regnum; 
 }
 
 // Push Multiple Registers stores multiple registers to the stack, storing to
