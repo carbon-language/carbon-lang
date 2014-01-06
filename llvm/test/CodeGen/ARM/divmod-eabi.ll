@@ -2,6 +2,8 @@
 ; RUN: llc -mtriple armv7-none-eabihf %s -o - | FileCheck %s --check-prefix=EABI
 ; RUN: llc -mtriple armv7-linux-gnueabi %s -o - | FileCheck %s --check-prefix=GNU
 ; RUN: llc -mtriple armv7-apple-darwin %s -o - | FileCheck %s --check-prefix=DARWIN
+; FIXME: long-term, we will use "-apple-macho" and won't need this exception:
+; RUN: llc -mtriple armv7-apple-darwin-eabi %s -o - | FileCheck %s --check-prefix=DARWIN
 
 define signext i16 @f16(i16 signext %a, i16 signext %b) {
 ; EABI-LABEL: f16:
