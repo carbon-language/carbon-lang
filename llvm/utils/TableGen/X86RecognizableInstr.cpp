@@ -230,7 +230,6 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   Prefix   = byteFromRec(Rec, "Prefix");
   Opcode   = byteFromRec(Rec, "Opcode");
   Form     = byteFromRec(Rec, "FormBits");
-  SegOvr   = byteFromRec(Rec, "SegOvrBits");
 
   HasOpSizePrefix  = Rec->getValueAsBit("hasOpSizePrefix");
   HasAdSizePrefix  = Rec->getValueAsBit("hasAdSizePrefix");
@@ -489,12 +488,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
 
   // Filter out artificial instructions but leave in the LOCK_PREFIX so it is
   // printed as a separate "instruction".
-
-  // Filter out instructions with segment override prefixes.
-  // They're too messy to handle now and we'll special case them if needed.
-
-  if (SegOvr)
-    return FILTER_STRONG;
 
 
   /////////////////

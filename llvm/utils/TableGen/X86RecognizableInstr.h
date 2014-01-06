@@ -44,8 +44,6 @@ private:
   uint8_t Opcode;
   /// The form field from the record
   uint8_t Form;
-  /// The segment override field from the record
-  uint8_t SegOvr;
   /// The hasOpSizePrefix field from the record
   bool HasOpSizePrefix;
   /// The hasAdSizePrefix field from the record
