@@ -7,6 +7,7 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -37,7 +38,7 @@ void llvm_pgo_emit(const char *MangledName, uint32_t NumCounters,
   uint32_t i;
   fprintf(OutputFile, "%s %u\n", MangledName, NumCounters);
   for (i = 0; i < NumCounters; ++i)
-    fprintf(OutputFile, "%llu\n", Counters[i]);
+    fprintf(OutputFile, "%" PRIu64 "\n", Counters[i]);
   fprintf(OutputFile, "\n");
 }
 
