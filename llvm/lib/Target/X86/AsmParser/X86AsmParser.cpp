@@ -544,9 +544,21 @@ private:
     // FIXME: Can tablegen auto-generate this?
     return (STI.getFeatureBits() & X86::Mode64Bit) != 0;
   }
-  void SwitchMode() {
-    unsigned FB = ComputeAvailableFeatures(STI.ToggleFeature(X86::Mode64Bit));
+  bool is32BitMode() const {
+    // FIXME: Can tablegen auto-generate this?
+    return (STI.getFeatureBits() & X86::Mode32Bit) != 0;
+  }
+  bool is16BitMode() const {
+    // FIXME: Can tablegen auto-generate this?
+    return (STI.getFeatureBits() & X86::Mode16Bit) != 0;
+  }
+  void SwitchMode(uint64_t mode) {
+    uint64_t oldMode = STI.getFeatureBits() &
+        (X86::Mode64Bit | X86::Mode32Bit | X86::Mode16Bit);
+    unsigned FB = ComputeAvailableFeatures(STI.ToggleFeature(oldMode | mode));
     setAvailableFeatures(FB);
+    assert(mode == (STI.getFeatureBits() &
+                    (X86::Mode64Bit | X86::Mode32Bit | X86::Mode16Bit)));
   }
 
   bool isParsingIntelSyntax() {
@@ -1033,7 +1045,8 @@ struct X86Operand : public MCParsedAsmOperand {
 } // end anonymous namespace.
 
 bool X86AsmParser::isSrcOp(X86Operand &Op) {
-  unsigned basereg = is64BitMode() ? X86::RSI : X86::ESI;
+  unsigned basereg =
+      is64BitMode() ? X86::RSI : (is32BitMode() ? X86::ESI : X86::SI);
 
   return (Op.isMem() &&
     (Op.Mem.SegReg == 0 || Op.Mem.SegReg == X86::DS) &&
@@ -1043,7 +1056,8 @@ bool X86AsmParser::isSrcOp(X86Operand &Op) {
 }
 
 bool X86AsmParser::isDstOp(X86Operand &Op) {
-  unsigned basereg = is64BitMode() ? X86::RDI : X86::EDI;
+  unsigned basereg =
+      is64BitMode() ? X86::RDI : (is32BitMode() ? X86::EDI : X86::DI);
 
   return Op.isMem() &&
     (Op.Mem.SegReg == 0 || Op.Mem.SegReg == X86::ES) &&
@@ -1193,7 +1207,8 @@ X86AsmParser::CreateMemForInlineAsm(unsigned SegReg, const MCExpr *Disp,
     // operand to ensure proper matching.  Just pick a GPR based on the size of
     // a pointer.
     if (!Info.IsVarDecl) {
-      unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
+      unsigned RegNo =
+          is64BitMode() ? X86::RBX : (is32BitMode() ? X86::EBX : X86::BX);
       return X86Operand::CreateReg(RegNo, Start, End, /*AddressOf=*/true,
                                    SMLoc(), Identifier, Info.OpDecl);
     }
@@ -1612,7 +1627,8 @@ X86Operand *X86AsmParser::ParseIntelOffsetOfOperator() {
   // The offset operator will have an 'r' constraint, thus we need to create
   // register operand to ensure proper matching.  Just pick a GPR based on
   // the size of a pointer.
-  unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
+  unsigned RegNo =
+      is64BitMode() ? X86::RBX : (is32BitMode() ? X86::EBX : X86::BX);
   return X86Operand::CreateReg(RegNo, Start, End, /*GetAddress=*/true,
                                OffsetOfLoc, Identifier, Info.OpDecl);
 }
@@ -2679,18 +2695,24 @@ bool X86AsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
 }
 
 /// ParseDirectiveCode
-///  ::= .code32 | .code64
+///  ::= .code16 | .code32 | .code64
 bool X86AsmParser::ParseDirectiveCode(StringRef IDVal, SMLoc L) {
-  if (IDVal == ".code32") {
+  if (IDVal == ".code16") {
     Parser.Lex();
-    if (is64BitMode()) {
-      SwitchMode();
+    if (!is16BitMode()) {
+      SwitchMode(X86::Mode16Bit);
+      getParser().getStreamer().EmitAssemblerFlag(MCAF_Code16);
+    }
+  } else  if (IDVal == ".code32") {
+    Parser.Lex();
+    if (!is32BitMode()) {
+      SwitchMode(X86::Mode32Bit);
       getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);
     }
   } else if (IDVal == ".code64") {
     Parser.Lex();
     if (!is64BitMode()) {
-      SwitchMode();
+      SwitchMode(X86::Mode64Bit);
       getParser().getStreamer().EmitAssemblerFlag(MCAF_Code64);
     }
   } else {

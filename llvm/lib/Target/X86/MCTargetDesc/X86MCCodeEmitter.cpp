@@ -49,7 +49,12 @@ public:
 
   bool is32BitMode() const {
     // FIXME: Can tablegen auto-generate this?
-    return (STI.getFeatureBits() & X86::Mode64Bit) == 0;
+    return (STI.getFeatureBits() & X86::Mode32Bit) != 0;
+  }
+
+  bool is16BitMode() const {
+    // FIXME: Can tablegen auto-generate this?
+    return (STI.getFeatureBits() & X86::Mode16Bit) != 0;
   }
 
   unsigned GetX86RegNum(const MCOperand &MO) const {
@@ -1177,13 +1182,16 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     assert(!Is64BitMemOperand(MI, MemOperand));
     need_address_override = Is16BitMemOperand(MI, MemOperand);
   } else {
-    need_address_override = false;
+    assert(is16BitMode());
+    assert(!Is64BitMemOperand(MI, MemOperand));
+    need_address_override = !Is16BitMemOperand(MI, MemOperand);
   }
 
   if (need_address_override)
     EmitByte(0x67, CurByte, OS);
 
   // Emit the operand size opcode prefix as needed.
+  // FIXME for is16BitMode().
   if (TSFlags & X86II::OpSize)
     EmitByte(0x66, CurByte, OS);
 

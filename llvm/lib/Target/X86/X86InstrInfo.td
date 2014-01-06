@@ -700,6 +700,12 @@ def Not64BitMode : Predicate<"!Subtarget->is64Bit()">,
                              AssemblerPredicate<"!Mode64Bit", "Not 64-bit mode">;
 def In64BitMode  : Predicate<"Subtarget->is64Bit()">,
                              AssemblerPredicate<"Mode64Bit", "64-bit mode">;
+def In16BitMode  : Predicate<"Subtarget->is16Bit()">,
+                             AssemblerPredicate<"Mode16Bit", "16-bit mode">;
+def Not16BitMode : Predicate<"!Subtarget->is16Bit()">,
+                             AssemblerPredicate<"!Mode16Bit", "Not 16-bit mode">;
+def In32BitMode  : Predicate<"Subtarget->is32Bit()">,
+                             AssemblerPredicate<"Mode32Bit", "32-bit mode">;
 def IsWin64      : Predicate<"Subtarget->isTargetWin64()">;
 def IsNaCl       : Predicate<"Subtarget->isTargetNaCl()">;
 def NotNaCl      : Predicate<"!Subtarget->isTargetNaCl()">;

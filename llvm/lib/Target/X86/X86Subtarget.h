@@ -205,8 +205,14 @@ private:
   /// StackAlignOverride - Override the stack alignment.
   unsigned StackAlignOverride;
 
-  /// In64BitMode - True if compiling for 64-bit, false for 32-bit.
+  /// In64BitMode - True if compiling for 64-bit, false for 16-bit or 32-bit.
   bool In64BitMode;
+
+  /// In32BitMode - True if compiling for 32-bit, false for 16-bit or 64-bit.
+  bool In32BitMode;
+
+  /// In16BitMode - True if compiling for 16-bit, false for 32-bit or 64-bit.
+  bool In16BitMode;
 
 public:
   /// This constructor initializes the data members to match that
@@ -242,6 +248,14 @@ public:
   /// Is this x86_64? (disregarding specific ABI / programming model)
   bool is64Bit() const {
     return In64BitMode;
+  }
+
+  bool is32Bit() const {
+    return In32BitMode;
+  }
+
+  bool is16Bit() const {
+    return In16BitMode;
   }
 
   /// Is this x86_64 with the ILP32 programming model (x32 ABI)?

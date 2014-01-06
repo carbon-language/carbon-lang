@@ -482,6 +482,12 @@ void X86Subtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   // target data structure which is shared with MC code emitter, etc.
   if (In64BitMode)
     ToggleFeature(X86::Mode64Bit);
+  else if (In32BitMode)
+    ToggleFeature(X86::Mode32Bit);
+  else if (In16BitMode)
+    ToggleFeature(X86::Mode16Bit);
+  else
+    llvm_unreachable("Not 16-bit, 32-bit or 64-bit mode!");
 
   DEBUG(dbgs() << "Subtarget features: SSELevel " << X86SSELevel
                << ", 3DNowLevel " << X863DNowLevel
@@ -551,7 +557,9 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , PICStyle(PICStyles::None)
   , TargetTriple(TT)
   , StackAlignOverride(StackAlignOverride)
-  , In64BitMode(is64Bit) {
+  , In64BitMode(is64Bit)
+  , In32BitMode(!is64Bit)
+  , In16BitMode(false) {
   initializeEnvironment();
   resetSubtargetFeatures(CPU, FS);
 }

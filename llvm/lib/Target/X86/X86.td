@@ -22,6 +22,10 @@ include "llvm/Target/Target.td"
 
 def Mode64Bit : SubtargetFeature<"64bit-mode", "In64BitMode", "true",
                                   "64-bit mode (x86_64)">;
+def Mode32Bit : SubtargetFeature<"32bit-mode", "In32BitMode", "true",
+                                  "32-bit mode (80386)">;
+def Mode16Bit : SubtargetFeature<"16bit-mode", "In16BitMode", "true",
+                                  "16-bit mode (i8086)">;
 
 //===----------------------------------------------------------------------===//
 // X86 Subtarget features
