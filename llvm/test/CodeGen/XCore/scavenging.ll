@@ -69,7 +69,7 @@ declare void @g(i32*, i32*)
 ; CHECK: .text
 ; !FP + large frame: spill SR+SR = entsp 2 + 100000
 ; CHECK-LABEL: ScavengeSlots:
-; CHECK: extsp 65535
+; CHECK: entsp 65535
 ; CHECK: extsp 34467
 ; scavenge r11
 ; CHECK: ldaw r11, sp[0]
@@ -97,10 +97,9 @@ declare void @g(i32*, i32*)
 ; CHECK: ldw r1, cp{{\[}}[[INDEX4]]{{\]}}
 ; CHECK: stw r11, r0[r1]
 ; CHECK: ldaw sp, sp[65535]
-; CHECK: ldaw sp, sp[34467]
 ; CHECK: ldw r4, sp[1]
 ; CHECK: ldw r5, sp[0]
-; CHECK: retsp 0
+; CHECK: retsp 34467
 define void @ScavengeSlots(i32 %r0, i32 %r1, i32 %r2, i32 %r3, i32 %r4) nounwind {
 entry:
   %Data = alloca [100000 x i32]

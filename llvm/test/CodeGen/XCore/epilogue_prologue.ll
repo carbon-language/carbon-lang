@@ -61,9 +61,11 @@ entry:
 
 ; FP + large frame: spill FP+SR = entsp 2 + 100000
 ; CHECKFP-LABEL: f4
-; CHECKFP: extsp 65535
+; CHECKFP: entsp 65535
 ; CHECKFP-NEXT: .Ltmp{{[0-9]+}}
 ; CHECKFP-NEXT: .cfi_def_cfa_offset 262140
+; CHECKFP-NEXT: .Ltmp{{[0-9]+}}
+; CHECKFP-NEXT: .cfi_offset 15, 0
 ; CHECKFP-NEXT: extsp 34467
 ; CHECKFP-NEXT: .Ltmp{{[0-9]+}}
 ; CHECKFP-NEXT: .cfi_def_cfa_offset 400008
@@ -76,20 +78,20 @@ entry:
 ; CHECKFP-NEXT: set sp, r10
 ; CHECKFP-NEXT: ldw r10, sp[1]
 ; CHECKFP-NEXT: ldaw sp, sp[65535]
-; CHECKFP-NEXT: ldaw sp, sp[34467]
-; CHECKFP-NEXT: retsp 0
+; CHECKFP-NEXT: retsp 34467
 ;
 ; !FP + large frame: spill SR+SR = entsp 2 + 100000
 ; CHECK-LABEL: f4
-; CHECK: extsp 65535
+; CHECK: entsp 65535
 ; CHECK-NEXT: .Ltmp{{[0-9]+}}
 ; CHECK-NEXT: .cfi_def_cfa_offset 262140
+; CHECK-NEXT: .Ltmp{{[0-9]+}}
+; CHECK-NEXT: .cfi_offset 15, 0
 ; CHECK-NEXT: extsp 34467
 ; CHECK-NEXT: .Ltmp{{[0-9]+}}
 ; CHECK-NEXT: .cfi_def_cfa_offset 400008
 ; CHECK-NEXT: ldaw sp, sp[65535]
-; CHECK-NEXT: ldaw sp, sp[34467]
-; CHECK-NEXT: retsp 0
+; CHECK-NEXT: retsp 34467
 define void @f4() {
 entry:
   %0 = alloca [100000 x i32]

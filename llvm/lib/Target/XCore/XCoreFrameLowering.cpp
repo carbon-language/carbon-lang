@@ -427,12 +427,20 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
 
+  bool LRUsed = MF.getRegInfo().isPhysRegUsed(XCore::LR);
+  // If we need to extend the stack it is more efficient to use entsp / retsp.
+  // We force the LR to be saved so these instructions are used.
+  if (!LRUsed && !MF.getFunction()->isVarArg() &&
+      MF.getFrameInfo()->estimateStackSize(MF))
+    LRUsed = true;
+
   // We will handling LR in the prologue/epilogue
   // and space on the stack ourselves.
-  if (MF.getRegInfo().isPhysRegUsed(XCore::LR)) {
+  if (LRUsed) {
     MF.getRegInfo().setPhysRegUnused(XCore::LR);
     XFI->createLRSpillSlot(MF);
   }
+
   // A callee save register is used to hold the FP.
   // This needs saving / restoring in the epilogue / prologue.
   if (hasFP(MF))
