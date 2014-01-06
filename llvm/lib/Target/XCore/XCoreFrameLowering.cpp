@@ -335,6 +335,9 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   for (std::vector<CalleeSavedInfo>::const_iterator it = CSI.begin();
                                                     it != CSI.end(); ++it) {
     unsigned Reg = it->getReg();
+    assert(Reg != XCore::LR && !(Reg == XCore::R10 && hasFP(*MF)) &&
+           "LR & FP are always handled in emitPrologue");
+
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);
     const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
@@ -355,7 +358,6 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                             const TargetRegisterInfo *TRI) const{
   MachineFunction *MF = MBB.getParent();
   const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
-
   bool AtStart = MI == MBB.begin();
   MachineBasicBlock::iterator BeforeI = MI;
   if (!AtStart)
@@ -363,6 +365,9 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   for (std::vector<CalleeSavedInfo>::const_iterator it = CSI.begin();
                                                     it != CSI.end(); ++it) {
     unsigned Reg = it->getReg();
+    assert(Reg != XCore::LR && !(Reg == XCore::R10 && hasFP(*MF)) &&
+           "LR & FP are always handled in emitEpilogue");
+
     const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
     TII.loadRegFromStackSlot(MBB, MI, Reg, it->getFrameIdx(), RC, TRI);
     assert(MI != MBB.begin() &&
@@ -441,6 +446,9 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // We force the LR to be saved so these instructions are used.
   if (!LRUsed && !MF.getFunction()->isVarArg() &&
       MF.getFrameInfo()->estimateStackSize(MF))
+    LRUsed = true;
+  // We will be spilling all callee saved registers in case of unwinding.
+  if (MF.getMMI().callsUnwindInit())
     LRUsed = true;
 
   // We will handling LR in the prologue/epilogue

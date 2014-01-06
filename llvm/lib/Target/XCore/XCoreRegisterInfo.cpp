@@ -199,11 +199,21 @@ bool XCoreRegisterInfo::needsFrameMoves(const MachineFunction &MF) {
 
 const uint16_t* XCoreRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
                                                                          const {
+  // The callee saved registers LR & FP are explicitly handled during
+  // emitPrologue & emitEpilogue and releated functions.
   static const uint16_t CalleeSavedRegs[] = {
     XCore::R4, XCore::R5, XCore::R6, XCore::R7,
-    XCore::R8, XCore::R9, XCore::R10, XCore::LR,
+    XCore::R8, XCore::R9, XCore::R10,
     0
   };
+  static const uint16_t CalleeSavedRegsFP[] = {
+    XCore::R4, XCore::R5, XCore::R6, XCore::R7,
+    XCore::R8, XCore::R9,
+    0
+  };
+  const TargetFrameLowering *TFI = MF->getTarget().getFrameLowering();
+  if (TFI->hasFP(*MF))
+    return CalleeSavedRegsFP;
   return CalleeSavedRegs;
 }
 

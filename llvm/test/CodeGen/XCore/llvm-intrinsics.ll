@@ -1,6 +1,11 @@
 ; RUN: llc < %s -march=xcore | FileCheck %s
 
 declare i8* @llvm.frameaddress(i32) nounwind readnone
+declare i8* @llvm.returnaddress(i32) nounwind
+declare i8* @llvm.eh.dwarf.cfa(i32) nounwind
+declare void @llvm.eh.return.i32(i32, i8*) nounwind
+declare void @llvm.eh.unwind.init() nounwind
+
 define i8* @FA0() nounwind {
 entry:
 ; CHECK-LABEL: FA0
@@ -21,7 +26,6 @@ entry:
   ret i8* %1
 }
 
-declare i8* @llvm.returnaddress(i32) nounwind readnone
 define i8* @RA0() nounwind {
 entry:
 ; CHECK-LABEL: RA0
@@ -45,7 +49,6 @@ entry:
 }
 
 ; test FRAME_TO_ARGS_OFFSET lowering
-declare i8* @llvm.eh.dwarf.cfa(i32) nounwind
 define i8* @FTAO0() nounwind {
 entry:
 ; CHECK-LABEL: FTAO0
@@ -70,7 +73,6 @@ entry:
   ret i8* %1
 }
 
-declare void @llvm.eh.return.i32(i32, i8*)
 define i8* @EH0(i32 %offset, i8* %handler) {
 entry:
 ; CHECK-LABEL: EH0
@@ -129,4 +131,99 @@ entry:
   %0 = load i32* @offset
   call void @llvm.eh.return.i32(i32 %0, i8* @handler)
   unreachable
+}
+
+
+; FP: spill FP+SR+R4:9 = entsp 2 + 6
+; CHECKFP-LABEL: Unwind0:
+; CHECKFP: entsp 8
+; CHECKFP: stw r10, sp[1]
+; CHECKFP: ldaw r10, sp[0]
+; CHECKFP: stw r4, r10[7]
+; CHECKFP: stw r5, r10[6]
+; CHECKFP: stw r6, r10[5]`
+; CHECKFP: stw r7, r10[4]
+; CHECKFP: stw r8, r10[3]
+; CHECKFP: stw r9, r10[2]
+; CHECKFP: ldw r9, r10[2]
+; CHECKFP: ldw r8, r10[3]
+; CHECKFP: ldw r7, r10[4]
+; CHECKFP: ldw r6, r10[5]
+; CHECKFP: ldw r5, r10[6]
+; CHECKFP: ldw r4, r10[7]
+; CHECKFP: set sp, r10
+; CHECKFP: ldw r10, sp[1]
+; CHECKFP: retsp 8
+;
+; !FP: spill R4:10 = entsp 7
+; CHECK-LABEL: Unwind0:
+; CHECK: entsp 7
+; CHECK: stw r4, sp[6]
+; CHECK: stw r5, sp[5]
+; CHECK: stw r6, sp[4]
+; CHECK: stw r7, sp[3]
+; CHECK: stw r8, sp[2]
+; CHECK: stw r9, sp[1]
+; CHECK: stw r10, sp[0]
+; CHECK: ldw r10, sp[0]
+; CHECK: ldw r9, sp[1]
+; CHECK: ldw r8, sp[2]
+; CHECK: ldw r7, sp[3]
+; CHECK: ldw r6, sp[4]
+; CHECK: ldw r5, sp[5]
+; CHECK: ldw r4, sp[6]
+; CHECK: retsp 7
+define void @Unwind0() {
+  call void @llvm.eh.unwind.init()
+  ret void
+}
+
+
+; FP: spill FP+SR+R4:9+LR = entsp 2 + 6 + extsp 1
+; CHECKFP-LABEL: Unwind1:
+; CHECKFP: entsp 8
+; CHECKFP: stw r10, sp[1]
+; CHECKFP: ldaw r10, sp[0]
+; CHECKFP: stw r4, r10[7]
+; CHECKFP: stw r5, r10[6]
+; CHECKFP: stw r6, r10[5]
+; CHECKFP: stw r7, r10[4]
+; CHECKFP: stw r8, r10[3]
+; CHECKFP: stw r9, r10[2]
+; CHECKFP: extsp 1
+; CHECKFP: bl foo
+; CHECKFP: ldaw sp, sp[1]
+; CHECKFP: ldw r9, r10[2]
+; CHECKFP: ldw r8, r10[3]
+; CHECKFP: ldw r7, r10[4]
+; CHECKFP: ldw r6, r10[5]
+; CHECKFP: ldw r5, r10[6]
+; CHECKFP: ldw r4, r10[7]
+; CHECKFP: set sp, r10
+; CHECKFP: ldw r10, sp[1]
+; CHECKFP: retsp 8
+;
+; !FP: spill R4:10+LR = entsp 7 + 1
+; CHECK-LABEL: Unwind1:
+; CHECK: entsp 8
+; CHECK: stw r4, sp[7]
+; CHECK: stw r5, sp[6]
+; CHECK: stw r6, sp[5]
+; CHECK: stw r7, sp[4]
+; CHECK: stw r8, sp[3]
+; CHECK: stw r9, sp[2]
+; CHECK: stw r10, sp[1]
+; CHECK: bl foo
+; CHECK: ldw r10, sp[1]
+; CHECK: ldw r9, sp[2]
+; CHECK: ldw r8, sp[3]
+; CHECK: ldw r7, sp[4]
+; CHECK: ldw r6, sp[5]
+; CHECK: ldw r5, sp[6]
+; CHECK: ldw r4, sp[7]
+; CHECK: retsp 8
+define void @Unwind1() {
+  call void (...)* @foo()
+  call void @llvm.eh.unwind.init()
+  ret void
 }
