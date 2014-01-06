@@ -56,6 +56,9 @@ def dprelwrapper : SDNode<"XCoreISD::DPRelativeWrapper", SDT_XCoreAddress,
 def cprelwrapper : SDNode<"XCoreISD::CPRelativeWrapper", SDT_XCoreAddress,
                            []>;
 
+def frametoargsoffset : SDNode<"XCoreISD::FRAME_TO_ARGS_OFFSET", SDTIntLeaf,
+                               []>;
+
 def SDT_XCoreStwsp    : SDTypeProfile<0, 2, [SDTCisInt<1>]>;
 def XCoreStwsp        : SDNode<"XCoreISD::STWSP", SDT_XCoreStwsp,
                                [SDNPHasChain, SDNPMayStore]>;
@@ -325,6 +328,11 @@ def ADJCALLSTACKUP : PseudoInstXCore<(outs), (ins i32imm:$amt1, i32imm:$amt2),
                             "# ADJCALLSTACKUP $amt1",
                             [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
+
+let isReMaterializable = 1 in
+def FRAME_TO_ARGS_OFFSET : PseudoInstXCore<(outs GRRegs:$dst), (ins),
+                               "# FRAME_TO_ARGS_OFFSET $dst",
+                               [(set GRRegs:$dst, (frametoargsoffset))]>;
 
 def LDWFI : PseudoInstXCore<(outs GRRegs:$dst), (ins MEMii:$addr),
                              "# LDWFI $dst, $addr",

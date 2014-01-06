@@ -48,6 +48,7 @@ public:
 
   virtual bool addPreISel();
   virtual bool addInstSelector();
+  virtual bool addPreEmitPass();
 };
 } // namespace
 
@@ -62,6 +63,11 @@ bool XCorePassConfig::addPreISel() {
 
 bool XCorePassConfig::addInstSelector() {
   addPass(createXCoreISelDag(getXCoreTargetMachine(), getOptLevel()));
+  return false;
+}
+
+bool XCorePassConfig::addPreEmitPass() {
+  addPass(createXCoreFrameToArgsOffsetEliminationPass());
   return false;
 }
 

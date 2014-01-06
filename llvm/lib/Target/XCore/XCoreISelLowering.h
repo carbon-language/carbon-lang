@@ -72,6 +72,9 @@ namespace llvm {
       // Jumptable branch using long branches for each entry.
       BR_JT32,
 
+      // Offset from frame pointer to the first (possible) on-stack argument
+      FRAME_TO_ARGS_OFFSET,
+
       // Memory barrier.
       MEMBARRIER
     };
@@ -158,6 +161,7 @@ namespace llvm {
     SDValue LowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerFRAME_TO_ARGS_OFFSET(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerINIT_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerADJUST_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;

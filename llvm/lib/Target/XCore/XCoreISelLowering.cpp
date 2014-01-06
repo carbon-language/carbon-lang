@@ -60,6 +60,7 @@ getTargetNodeName(unsigned Opcode) const
     case XCoreISD::CRC8              : return "XCoreISD::CRC8";
     case XCoreISD::BR_JT             : return "XCoreISD::BR_JT";
     case XCoreISD::BR_JT32           : return "XCoreISD::BR_JT32";
+    case XCoreISD::FRAME_TO_ARGS_OFFSET : return "XCoreISD::FRAME_TO_ARGS_OFFSET";
     case XCoreISD::MEMBARRIER        : return "XCoreISD::MEMBARRIER";
     default                          : return NULL;
   }
@@ -153,6 +154,7 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   // Exception handling
   setExceptionPointerRegister(XCore::R0);
   setExceptionSelectorRegister(XCore::R1);
+  setOperationAction(ISD::FRAME_TO_ARGS_OFFSET, MVT::i32, Custom);
 
   // Atomic operations
   setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Custom);
@@ -213,6 +215,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SUB:                return ExpandADDSUB(Op.getNode(), DAG);
   case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
   case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
+  case ISD::FRAME_TO_ARGS_OFFSET: return LowerFRAME_TO_ARGS_OFFSET(Op, DAG);
   case ISD::INIT_TRAMPOLINE:    return LowerINIT_TRAMPOLINE(Op, DAG);
   case ISD::ADJUST_TRAMPOLINE:  return LowerADJUST_TRAMPOLINE(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
@@ -824,6 +827,15 @@ LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getLoad(getPointerTy(), SDLoc(Op), DAG.getEntryNode(), FIN,
                      MachinePointerInfo::getFixedStack(FI), false, false,
                      false, 0);
+}
+
+SDValue XCoreTargetLowering::
+LowerFRAME_TO_ARGS_OFFSET(SDValue Op, SelectionDAG &DAG) const {
+  // This node represents offset from frame pointer to first on-stack argument.
+  // This is needed for correct stack adjustment during unwind.
+  // However, we don't know the offset until after the frame has be finalised.
+  // This is done during the XCoreFTAOElim pass.
+  return DAG.getNode(XCoreISD::FRAME_TO_ARGS_OFFSET, SDLoc(Op), MVT::i32);
 }
 
 SDValue XCoreTargetLowering::

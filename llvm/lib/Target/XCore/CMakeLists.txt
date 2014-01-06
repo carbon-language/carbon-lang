@@ -24,6 +24,7 @@ add_llvm_target(XCoreCodeGen
   XCoreTargetObjectFile.cpp
   XCoreTargetTransformInfo.cpp
   XCoreSelectionDAGInfo.cpp
+  XCoreFrameToArgsOffsetElim.cpp
   )
 
 add_subdirectory(Disassembler)
