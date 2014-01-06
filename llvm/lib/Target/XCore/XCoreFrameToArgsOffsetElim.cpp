@@ -41,14 +41,6 @@ FunctionPass *llvm::createXCoreFrameToArgsOffsetEliminationPass() {
   return new XCoreFTAOElim();
 }
 
-static inline bool isImmU6(unsigned val) {
-  return val < (1 << 6);
-}
-
-static inline bool isImmU16(unsigned val) {
-  return val < (1 << 16);
-}
-
 bool XCoreFTAOElim::runOnMachineFunction(MachineFunction &MF) {
   const XCoreInstrInfo &TII =
           *static_cast<const XCoreInstrInfo*>(MF.getTarget().getInstrInfo());
