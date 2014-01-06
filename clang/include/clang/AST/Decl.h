@@ -2900,6 +2900,10 @@ public:
     return IntegerType.dyn_cast<TypeSourceInfo*>();
   }
 
+  /// \brief Retrieve the source range that covers the underlying type if
+  /// specified.
+  SourceRange getIntegerTypeRange() const LLVM_READONLY;
+
   /// \brief Returns the width in bits required to store all the
   /// non-negative enumerators of this enum.
   unsigned getNumPositiveBits() const {
