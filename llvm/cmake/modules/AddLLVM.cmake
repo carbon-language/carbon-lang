@@ -2,6 +2,24 @@ include(LLVMParseArguments)
 include(LLVMProcessSources)
 include(LLVM-Config)
 
+function(llvm_update_compile_flags name)
+  get_property(target_compile_flags TARGET ${name} PROPERTY COMPILE_FLAGS)
+  if(NOT "${LLVM_COMPILE_FLAGS}" STREQUAL "")
+    set(target_compile_flags "${target_compile_flags} ${LLVM_COMPILE_FLAGS}")
+  endif()
+  if(LLVM_NO_RTTI)
+    list(APPEND LLVM_COMPILE_DEFINITIONS GTEST_HAS_RTTI=0)
+    if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
+      set(target_compile_flags "${target_compile_flags} -fno-rtti")
+    elseif (MSVC)
+      llvm_replace_compiler_option(target_compile_flags "/GR" "/GR-")
+    endif ()
+  endif()
+
+  set_property(TARGET ${name} PROPERTY COMPILE_FLAGS "${target_compile_flags}")
+  set_property(TARGET ${name} APPEND PROPERTY COMPILE_DEFINITIONS ${LLVM_COMPILE_DEFINITIONS})
+endfunction()
+
 function(add_llvm_symbol_exports target_name export_file)
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(native_export_file "${target_name}.exports")
@@ -343,6 +361,23 @@ function(add_unittest test_suite test_name)
     set(EXCLUDE_FROM_ALL ON)
   endif()
 
+  # Visual Studio 2012 only supports up to 8 template parameters in
+  # std::tr1::tuple by default, but gtest requires 10
+  if (MSVC AND MSVC_VERSION EQUAL 1700)
+    list(APPEND LLVM_COMPILE_DEFINITIONS _VARIADIC_MAX=10)
+  endif ()
+
+  include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
+  if (NOT LLVM_ENABLE_THREADS)
+    list(APPEND LLVM_COMPILE_DEFINITIONS GTEST_HAS_PTHREAD=0)
+  endif ()
+
+  if (SUPPORTS_NO_VARIADIC_MACROS_FLAG)
+    set(LLVM_COMPILE_FLAGS "-Wno-variadic-macros")
+  endif ()
+
+  set(LLVM_NO_RTTI ON)
+
   add_llvm_executable(${test_name} ${ARGN})
   set(outdir ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
   set_output_directory(${test_name} ${outdir} ${outdir})
@@ -357,30 +392,7 @@ function(add_unittest test_suite test_name)
   if (NOT ${test_suite_folder} STREQUAL "NOTFOUND")
     set_property(TARGET ${test_name} PROPERTY FOLDER "${test_suite_folder}")
   endif ()
-
-  # Visual Studio 2012 only supports up to 8 template parameters in
-  # std::tr1::tuple by default, but gtest requires 10
-  if (MSVC AND MSVC_VERSION EQUAL 1700)
-    set_property(TARGET ${test_name} APPEND PROPERTY COMPILE_DEFINITIONS _VARIADIC_MAX=10)
-  endif ()
-
-  include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
-  set_property(TARGET ${test_name} APPEND PROPERTY COMPILE_DEFINITIONS GTEST_HAS_RTTI=0)
-  if (NOT LLVM_ENABLE_THREADS)
-    set_property(TARGET ${test_name} APPEND PROPERTY COMPILE_DEFINITIONS GTEST_HAS_PTHREAD=0)
-  endif ()
-
-  get_property(target_compile_flags TARGET ${test_name} PROPERTY COMPILE_FLAGS)
-  if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
-    set(target_compile_flags "${target_compile_flags} -fno-rtti")
-  elseif (MSVC)
-    llvm_replace_compiler_option(target_compile_flags "/GR" "/GR-")
-  endif ()
-
-  if (SUPPORTS_NO_VARIADIC_MACROS_FLAG)
-    set(target_compile_flags "${target_compile_flags} -Wno-variadic-macros")
-  endif ()
-  set_property(TARGET ${test_name} PROPERTY COMPILE_FLAGS "${target_compile_flags}")
+  llvm_update_compile_flags(${test_name})
 endfunction()
 
 # This function provides an automatic way to 'configure'-like generate a file
