@@ -9,10 +9,9 @@
 #ifndef CLANG_LIB_DRIVER_SANITIZERARGS_H_
 #define CLANG_LIB_DRIVER_SANITIZERARGS_H_
 
-#include <string>
-
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
+#include <string>
 
 namespace clang {
 namespace driver {

@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_AST_COMMENT_LEXER_H
 #define LLVM_CLANG_AST_COMMENT_LEXER_H
 
-#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"

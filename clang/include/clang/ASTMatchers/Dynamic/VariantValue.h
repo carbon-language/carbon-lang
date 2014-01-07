@@ -17,14 +17,13 @@
 #ifndef LLVM_CLANG_AST_MATCHERS_DYNAMIC_VARIANT_VALUE_H
 #define LLVM_CLANG_AST_MATCHERS_DYNAMIC_VARIANT_VALUE_H
 
-#include <vector>
-
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchersInternal.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/type_traits.h"
+#include <vector>
 
 namespace clang {
 namespace ast_matchers {

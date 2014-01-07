@@ -16,8 +16,8 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
-#include "gtest/gtest.h"
 #include "llvm/ADT/STLExtras.h"
+#include "gtest/gtest.h"
 #include <string>
 
 namespace clang {

@@ -15,13 +15,13 @@
 #include "CXString.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/LLVM.h"
 #include "clang/Frontend/SerializedDiagnosticPrinter.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/ADT/Optional.h"
-#include "clang/Basic/LLVM.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Bitcode/BitstreamReader.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 using namespace clang;
 

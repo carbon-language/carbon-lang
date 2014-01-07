@@ -12,12 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTConsumer.h"
+#include "RAIIObjectsForParser.h"
 #include "clang/AST/StmtOpenMP.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/ADT/PointerIntPair.h"
-#include "RAIIObjectsForParser.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

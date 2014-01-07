@@ -19,8 +19,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace clang {
 namespace cxstring {

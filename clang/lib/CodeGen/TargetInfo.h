@@ -17,8 +17,8 @@
 
 #include "clang/AST/Type.h"
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
   class Constant;

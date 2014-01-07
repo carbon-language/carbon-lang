@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_ANALYSIS_BUGTYPE
 #define LLVM_CLANG_ANALYSIS_BUGTYPE
 
-#include "clang/StaticAnalyzer/Core/BugReporter/CommonBugCategories.h"
 #include "clang/Basic/LLVM.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/CommonBugCategories.h"
 #include "llvm/ADT/FoldingSet.h"
 #include <string>
 

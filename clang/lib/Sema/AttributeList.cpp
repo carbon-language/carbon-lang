@@ -12,12 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/AttributeList.h"
-#include "clang/Sema/SemaInternal.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Expr.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Sema/SemaInternal.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;

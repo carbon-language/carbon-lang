@@ -7,15 +7,14 @@
 //
 //===-------------------------------------------------------------------===//
 
-#include <string>
-#include <vector>
-
 #include "../ASTMatchersTest.h"
 #include "clang/ASTMatchers/Dynamic/Parser.h"
 #include "clang/ASTMatchers/Dynamic/Registry.h"
-#include "gtest/gtest.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringMap.h"
+#include "gtest/gtest.h"
+#include <string>
+#include <vector>
 
 namespace clang {
 namespace ast_matchers {

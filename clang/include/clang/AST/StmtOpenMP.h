@@ -15,10 +15,10 @@
 #ifndef LLVM_CLANG_AST_STMTOPENMP_H
 #define LLVM_CLANG_AST_STMTOPENMP_H
 
-#include "clang/Basic/OpenMPKinds.h"
-#include "clang/Basic/SourceLocation.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Stmt.h"
+#include "clang/Basic/OpenMPKinds.h"
+#include "clang/Basic/SourceLocation.h"
 
 namespace clang {
 

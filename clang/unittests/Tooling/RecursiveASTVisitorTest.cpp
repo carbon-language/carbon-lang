@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "TestVisitor.h"
-
 #include <stack>
 
 namespace clang {

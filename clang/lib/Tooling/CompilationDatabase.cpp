@@ -13,22 +13,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Tooling/CompilationDatabase.h"
-#include "clang/Tooling/CompilationDatabasePluginRegistry.h"
-#include "clang/Tooling/Tooling.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Path.h"
-#include "llvm/Support/system_error.h"
-#include <sstream>
-
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Driver/Action.h"
+#include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Job.h"
-#include "clang/Driver/Compilation.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "llvm/Support/Host.h"
+#include "clang/Tooling/CompilationDatabasePluginRegistry.h"
+#include "clang/Tooling/Tooling.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Option/Arg.h"
+#include "llvm/Support/Host.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/system_error.h"
+#include <sstream>
 
 namespace clang {
 namespace tooling {

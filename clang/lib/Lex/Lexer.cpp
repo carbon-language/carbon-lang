@@ -25,6 +25,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Lexer.h"
+#include "UnicodeCharSets.h"
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/CodeCompletionHandler.h"
@@ -37,7 +38,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "UnicodeCharSets.h"
 #include <cstring>
 using namespace clang;
 

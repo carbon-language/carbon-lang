@@ -17,10 +17,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/CodeGen/CodeGenABITypes.h"
-
+#include "CodeGenModule.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
-#include "CodeGenModule.h"
 
 using namespace clang;
 using namespace CodeGen;

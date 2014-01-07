@@ -8,6 +8,8 @@
 //===--------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
+#include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LangOptions.h"
@@ -20,8 +22,6 @@
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/Sema.h"
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/ASTConsumer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Path.h"
 #include "gtest/gtest.h"

@@ -13,14 +13,12 @@
 //===------------------------------------------------------------===//
 
 #include "clang/ASTMatchers/Dynamic/Registry.h"
-
-#include <utility>
-
 #include "Marshallers.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ManagedStatic.h"
+#include <utility>
 
 namespace clang {
 namespace ast_matchers {

@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_AST_STMT_ITR_H
 #define LLVM_CLANG_AST_STMT_ITR_H
 
-#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <cstddef>
 #include <iterator>

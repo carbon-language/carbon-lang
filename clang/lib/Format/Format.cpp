@@ -26,8 +26,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/YAMLTraits.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/YAMLTraits.h"
 #include <queue>
 #include <string>
 

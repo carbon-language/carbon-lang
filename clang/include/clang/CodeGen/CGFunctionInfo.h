@@ -19,7 +19,6 @@
 #include "clang/AST/CanonicalType.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/FoldingSet.h"
-
 #include <cassert>
 
 namespace llvm {

@@ -7,11 +7,10 @@
 //
 //===-----------------------------------------------------------------------===//
 
-#include <vector>
-
 #include "../ASTMatchersTest.h"
 #include "clang/ASTMatchers/Dynamic/Registry.h"
 #include "gtest/gtest.h"
+#include <vector>
 
 namespace clang {
 namespace ast_matchers {

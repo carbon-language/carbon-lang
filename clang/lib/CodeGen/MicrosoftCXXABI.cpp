@@ -15,8 +15,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGCXXABI.h"
-#include "CodeGenModule.h"
 #include "CGVTables.h"
+#include "CodeGenModule.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/VTableBuilder.h"

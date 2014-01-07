@@ -20,14 +20,13 @@
 #ifndef LLVM_CLANG_AST_MATCHERS_DYNAMIC_MARSHALLERS_H
 #define LLVM_CLANG_AST_MATCHERS_DYNAMIC_MARSHALLERS_H
 
-#include <string>
-
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/Dynamic/Diagnostics.h"
 #include "clang/ASTMatchers/Dynamic/VariantValue.h"
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/type_traits.h"
+#include <string>
 
 namespace clang {
 namespace ast_matchers {

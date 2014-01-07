@@ -12,14 +12,13 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include <string>
-#include <vector>
-
 #include "clang/ASTMatchers/Dynamic/Parser.h"
 #include "clang/ASTMatchers/Dynamic/Registry.h"
 #include "clang/Basic/CharInfo.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Twine.h"
+#include <string>
+#include <vector>
 
 namespace clang {
 namespace ast_matchers {

@@ -9,8 +9,8 @@
 
 
 #include "clang/AST/ASTTypeTraits.h"
-#include "gtest/gtest.h"
 #include "MatchVerifier.h"
+#include "gtest/gtest.h"
 
 using namespace clang::ast_matchers;
 
