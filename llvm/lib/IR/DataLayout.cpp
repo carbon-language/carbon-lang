@@ -205,9 +205,9 @@ static std::pair<StringRef, StringRef> split(StringRef Str, char Separator) {
   return Split;
 }
 
-/// Get an unsinged integer, including error checks.
+/// Get an unsigned integer, including error checks.
 static unsigned getInt(StringRef R) {
-  unsigned Result;
+  unsigned Result = 0;
   bool error = R.getAsInteger(10, Result); (void)error;
   assert(!error && "not a number, or does not fit in an unsigned int");
   return Result;
