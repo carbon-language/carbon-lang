@@ -2537,8 +2537,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 /// information in the source file. If the location is invalid, the
 /// previous location will be reused.
 void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc,
-                               bool ForceColumnInfo,
-                               llvm::MDNode *ForceScope) {
+                               bool ForceColumnInfo) {
   // Update our current location
   setLocation(Loc);
 
@@ -2557,7 +2556,7 @@ void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc,
   // Update last state.
   PrevLoc = CurLoc;
 
-  llvm::MDNode *Scope = ForceScope ? ForceScope : &*LexicalBlockStack.back();
+  llvm::MDNode *Scope = LexicalBlockStack.back();
   Builder.SetCurrentDebugLocation(llvm::DebugLoc::get
                                   (getLineNumber(CurLoc),
                                    getColumnNumber(CurLoc, ForceColumnInfo),
