@@ -6617,6 +6617,9 @@ static bool areVectorOperandsLaxBitCastable(ASTContext &Ctx,
   if (!Ctx.getLangOpts().LaxVectorConversions)
     return false;
 
+  if (!LHSType->isVectorType() || !RHSType->isVectorType())
+    return false;
+
   unsigned LHSSize = Ctx.getTypeSize(LHSType);
   unsigned RHSSize = Ctx.getTypeSize(RHSType);
   if (LHSSize != RHSSize)
@@ -6628,20 +6631,13 @@ static bool areVectorOperandsLaxBitCastable(ASTContext &Ctx,
   // Make sure such width is the same between the types, otherwise we may end
   // up with an invalid bitcast.
   unsigned LHSIRSize, RHSIRSize;
-  if (LHSType->isVectorType()) {
-    const VectorType *Vec = LHSType->getAs<VectorType>();
-    LHSIRSize = Vec->getNumElements() *
-        Ctx.getTypeSize(Vec->getElementType());
-  } else {
-    LHSIRSize = LHSSize;
-  }
-  if (RHSType->isVectorType()) {
-    const VectorType *Vec = RHSType->getAs<VectorType>();
-    RHSIRSize = Vec->getNumElements() *
-        Ctx.getTypeSize(Vec->getElementType());
-  } else {
-    RHSIRSize = RHSSize;
-  }
+  const VectorType *LVec = LHSType->getAs<VectorType>();
+  LHSIRSize = LVec->getNumElements() *
+      Ctx.getTypeSize(LVec->getElementType());
+  const VectorType *RVec = RHSType->getAs<VectorType>();
+  RHSIRSize = RVec->getNumElements() *
+      Ctx.getTypeSize(RVec->getElementType());
+
   if (LHSIRSize != RHSIRSize)
     return false;
 
@@ -6690,6 +6686,14 @@ QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
     // FIXME: Should we really be allowing this?
     RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
     return LHSType;
+  }
+
+  if (!(LHSType->isVectorType() || LHSType->isScalarType()) ||
+      !(RHSType->isVectorType() || RHSType->isScalarType())) {
+    Diag(Loc, diag::err_typecheck_vector_not_convertable_non_scalar)
+    << LHS.get()->getType() << RHS.get()->getType()
+    << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
+    return QualType();
   }
 
   // Canonicalize the ExtVector to the LHS, remember if we swapped so we can

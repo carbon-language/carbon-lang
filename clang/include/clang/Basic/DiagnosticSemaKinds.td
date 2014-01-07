@@ -1869,6 +1869,8 @@ def err_attribute_zero_size : Error<"zero vector size">;
 def err_attribute_size_too_large : Error<"vector size too large">;
 def err_typecheck_vector_not_convertable : Error<
   "can't convert between vector values of different size (%0 and %1)">;
+def err_typecheck_vector_not_convertable_non_scalar : Error<
+  "can't convert between vector and non-scalar values (%0 and %1)">;
 def err_ext_vector_component_exceeds_length : Error<
   "vector component access exceeds type %0">;
 def err_ext_vector_component_name_illegal : Error<

@@ -37,4 +37,12 @@ void f() {
   (void)(__v4hi)v8hi; // expected-error {{C-style cast from vector '__v8hi' to vector '__v4hi' of different size}}
 }
 
-
+struct testvec {
+  __v2si v;
+  void madd(const testvec& rhs) {
+    v = v + rhs; // expected-error {{can't convert between vector and non-scalar values}}
+  }
+  void madd2(testvec rhs) {
+    v = v + rhs; // expected-error {{can't convert between vector and non-scalar values}}
+  }
+};
