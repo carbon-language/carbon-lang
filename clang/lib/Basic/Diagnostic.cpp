@@ -646,8 +646,6 @@ static const char *getTokenDescForDiagnostic(tok::TokenKind Kind) {
   switch (Kind) {
   case tok::identifier:
     return "identifier";
-  case tok::annot_template_id:
-    return "template name";
   default:
     return 0;
   }
