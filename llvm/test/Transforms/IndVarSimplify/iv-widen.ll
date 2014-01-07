@@ -7,10 +7,11 @@ target triple = "x86_64-apple-darwin"
 ; Only one phi now.
 ; CHECK: phi
 ; CHECK-NOT: phi
-; We now get 2 trunc, one for the gep and one for the lcssa phi.
+; One trunc for the gep.
 ; CHECK: trunc i64 %indvars.iv to i32
-; CHECK: trunc i64 %indvars.iv to i32
-; CHECK-LABEL: B24:
+; One trunc for the dummy() call.
+; CHECK-LABEL: exit24:
+; CHECK: trunc i64 {{.*}}lcssa.wide to i32
 define void @sloop(i32* %a) {
 Prologue:
   br i1 undef, label %B18, label %B6
