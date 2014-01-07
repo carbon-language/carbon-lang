@@ -1907,7 +1907,8 @@ bool MallocChecker::mayFreeAnyEscapedMemoryOrIsModeledExplicitly(
     // that the pointers get freed by following the container itself.
     if (FirstSlot.startswith("addPointer") ||
         FirstSlot.startswith("insertPointer") ||
-        FirstSlot.startswith("replacePointer")) {
+        FirstSlot.startswith("replacePointer") ||
+        FirstSlot.equals("valueWithPointer")) {
       return true;
     }
 

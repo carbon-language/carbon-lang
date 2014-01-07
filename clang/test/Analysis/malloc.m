@@ -50,3 +50,8 @@ void testNSDataTruePositiveLeak() {
   char *b = (char *)malloc(12);
   NSData *d = [[NSData alloc] initWithBytes: b length: 12]; // expected-warning {{Potential leak of memory pointed to by 'b'}}
 }
+
+id wrapInNSValue() {
+  void *buffer = malloc(4);
+  return [NSValue valueWithPointer:buffer]; // no-warning
+}

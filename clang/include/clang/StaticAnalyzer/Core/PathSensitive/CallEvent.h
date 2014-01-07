@@ -885,6 +885,8 @@ public:
 
   virtual RuntimeDefinition getRuntimeDefinition() const;
 
+  virtual bool argumentsMayEscape() const;
+
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
                                             BindingsTy &Bindings) const;
 
