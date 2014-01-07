@@ -4,7 +4,7 @@
 // RUN:   | llvm-readobj -s -sd | FileCheck %s
 
 // Tag_CPU_name (=5)
-.cpu Cortex-A8
+.cpu cortex-a8
 
 // Tag_CPU_arch (=6)
 .eabi_attribute 6, 10
@@ -61,7 +61,7 @@
 .eabi_attribute 110, 160
 
 // Check that tags > 128 are encoded properly
-.eabi_attribute 129, 1
+.eabi_attribute 129, "1"
 .eabi_attribute 250, 1
 
 // CHECK:        Section {
@@ -71,15 +71,15 @@
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
 // CHECK-NEXT:     Offset: 0x34
-// CHECK-NEXT:     Size: 70
+// CHECK-NEXT:     Size: 71
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
 // CHECK-NEXT:     AddressAlignment: 1
 // CHECK-NEXT:     EntrySize: 0
 // CHECK-NEXT:     SectionData (
-// CHECK-NEXT:       0000: 41450000 00616561 62690001 3B000000
+// CHECK-NEXT:       0000: 41460000 00616561 62690001 3C000000
 // CHECK-NEXT:       0010: 05434F52 5445582D 41380006 0A074108
 // CHECK-NEXT:       0020: 0109020A 030C0214 01150117 01180119
 // CHECK-NEXT:       0030: 011B001C 0124012A 012C0244 036EA001
-// CHECK-NEXT:       0040: 810101FA 0101
+// CHECK-NEXT:       0040: 81013100 FA0101
 // CHECK-NEXT:     )

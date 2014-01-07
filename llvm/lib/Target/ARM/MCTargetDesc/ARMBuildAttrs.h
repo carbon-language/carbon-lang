@@ -16,6 +16,9 @@
 #define __TARGET_ARMBUILDATTRS_H__
 
 namespace llvm {
+
+class StringRef;
+
 namespace ARMBuildAttrs {
 
   enum SpecialAttr {
@@ -70,6 +73,10 @@ namespace ARMBuildAttrs {
     Virtualization_use        = 68,
     MPextension_use_old       = 70
   };
+
+  StringRef AttrTypeAsString(unsigned Attr, bool HasTagPrefix = true);
+  StringRef AttrTypeAsString(AttrType Attr, bool HasTagPrefix = true);
+  int AttrTypeFromString(StringRef Tag);
 
   // Magic numbers for .ARM.attributes
   enum AttrMagic {

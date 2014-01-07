@@ -92,6 +92,8 @@ public:
   virtual void switchVendor(StringRef Vendor) = 0;
   virtual void emitAttribute(unsigned Attribute, unsigned Value) = 0;
   virtual void emitTextAttribute(unsigned Attribute, StringRef String) = 0;
+  virtual void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
+				    StringRef StringValue = "") = 0;
   virtual void emitFPU(unsigned FPU) = 0;
   virtual void emitArch(unsigned Arch) = 0;
   virtual void finishAttributeSection() = 0;

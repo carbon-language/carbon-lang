@@ -125,6 +125,8 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   virtual void switchVendor(StringRef Vendor);
   virtual void emitAttribute(unsigned Attribute, unsigned Value);
   virtual void emitTextAttribute(unsigned Attribute, StringRef String);
+  virtual void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
+                                    StringRef StrinValue);
   virtual void emitArch(unsigned Arch);
   virtual void emitFPU(unsigned FPU);
   virtual void emitInst(uint32_t Inst, char Suffix = '\0');
@@ -182,11 +184,27 @@ void ARMTargetAsmStreamer::emitAttribute(unsigned Attribute, unsigned Value) {
 void ARMTargetAsmStreamer::emitTextAttribute(unsigned Attribute,
                                              StringRef String) {
   switch (Attribute) {
-  default: llvm_unreachable("Unsupported Text attribute in ASM Mode");
   case ARMBuildAttrs::CPU_name:
-    OS << "\t.cpu\t" << String.lower() << "\n";
+    OS << "\t.cpu\t" << String.lower();
+    break;
+  default:
+    OS << "\t.eabi_attribute\t" << Attribute << ", \"" << String << "\"";
     break;
   }
+  OS << "\n";
+}
+void ARMTargetAsmStreamer::emitIntTextAttribute(unsigned Attribute,
+                                                unsigned IntValue,
+                                                StringRef StringValue) {
+  switch (Attribute) {
+  default: llvm_unreachable("unsupported multi-value attribute in asm mode");
+  case ARMBuildAttrs::compatibility:
+    OS << "\t.eabi_attribute\t" << Attribute << ", " << IntValue;
+    if (!StringValue.empty())
+      OS << ", \"" << StringValue << "\"";
+    break;
+  }
+  OS << "\n";
 }
 void ARMTargetAsmStreamer::emitArch(unsigned Arch) {
   OS << "\t.arch\t" << GetArchName(Arch) << "\n";
@@ -213,7 +231,8 @@ private:
     enum {
       HiddenAttribute = 0,
       NumericAttribute,
-      TextAttribute
+      TextAttribute,
+      NumericAndTextAttributes
     } Type;
     unsigned Tag;
     unsigned IntValue;
@@ -289,6 +308,27 @@ private:
     Contents.push_back(Item);
   }
 
+  void setAttributeItems(unsigned Attribute, unsigned IntValue,
+                         StringRef StringValue, bool OverwriteExisting) {
+    // Look for existing attribute item
+    if (AttributeItem *Item = getAttributeItem(Attribute)) {
+      if (!OverwriteExisting)
+        return;
+      Item->IntValue = IntValue;
+      Item->StringValue = StringValue;
+      return;
+    }
+
+    // Create new attribute item
+    AttributeItem Item = {
+      AttributeItem::NumericAndTextAttributes,
+      Attribute,
+      IntValue,
+      StringValue
+    };
+    Contents.push_back(Item);
+  }
+
   void emitArchDefaultAttributes();
   void emitFPUDefaultAttributes();
 
@@ -307,6 +347,8 @@ private:
   virtual void switchVendor(StringRef Vendor);
   virtual void emitAttribute(unsigned Attribute, unsigned Value);
   virtual void emitTextAttribute(unsigned Attribute, StringRef String);
+  virtual void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
+                                    StringRef StringValue);
   virtual void emitArch(unsigned Arch);
   virtual void emitFPU(unsigned FPU);
   virtual void emitInst(uint32_t Inst, char Suffix = '\0');
@@ -588,6 +630,12 @@ void ARMTargetELFStreamer::emitTextAttribute(unsigned Attribute,
                                              StringRef Value) {
   setAttributeItem(Attribute, Value, /* OverwriteExisting= */ true);
 }
+void ARMTargetELFStreamer::emitIntTextAttribute(unsigned Attribute,
+                                                unsigned IntValue,
+                                                StringRef StringValue) {
+  setAttributeItems(Attribute, IntValue, StringValue,
+                    /* OverwriteExisting= */ true);
+}
 void ARMTargetELFStreamer::emitArch(unsigned Value) {
   Arch = Value;
 }
@@ -771,6 +819,11 @@ size_t ARMTargetELFStreamer::calculateContentSize() const {
       Result += getULEBSize(item.Tag);
       Result += item.StringValue.size() + 1; // string + '\0'
       break;
+    case AttributeItem::NumericAndTextAttributes:
+      Result += getULEBSize(item.Tag);
+      Result += getULEBSize(item.IntValue);
+      Result += item.StringValue.size() + 1; // string + '\0';
+      break;
     }
   }
   return Result;
@@ -838,6 +891,11 @@ void ARMTargetELFStreamer::finishAttributeSection() {
       Streamer.EmitULEB128IntValue(item.IntValue);
       break;
     case AttributeItem::TextAttribute:
+      Streamer.EmitBytes(item.StringValue.upper());
+      Streamer.EmitIntValue(0, 1); // '\0'
+      break;
+    case AttributeItem::NumericAndTextAttributes:
+      Streamer.EmitULEB128IntValue(item.IntValue);
       Streamer.EmitBytes(item.StringValue.upper());
       Streamer.EmitIntValue(0, 1); // '\0'
       break;
