@@ -49,7 +49,6 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/Mangler.h"
 
 using namespace clang;
 using namespace CodeGen;
