@@ -1098,12 +1098,11 @@ foldMemoryOperand(ArrayRef<std::pair<MachineInstr*, unsigned> > Ops,
         MRI.isReserved(Reg)) {
       continue;
     }
+    // Skip non-Defs, including undef uses and internal reads.
+    if (MO->isUse())
+      continue;
     MIBundleOperands::PhysRegInfo RI =
       MIBundleOperands(FoldMI).analyzePhysReg(Reg, &TRI);
-    if (MO->readsReg()) {
-      assert(RI.Reads && "Cannot fold physreg reader");
-      continue;
-    }
     if (RI.Defines)
       continue;
     // FoldMI does not define this physreg. Remove the LI segment.
