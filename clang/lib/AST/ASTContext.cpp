@@ -5642,7 +5642,9 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
     size = layout.getSize();
   }
 
+#ifndef NDEBUG
   uint64_t CurOffs = 0;
+#endif
   std::multimap<uint64_t, NamedDecl *>::iterator
     CurLayObj = FieldOrBaseOffsets.begin();
 
@@ -5656,7 +5658,9 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
       S += '"';
     }
     S += "^^?";
+#ifndef NDEBUG
     CurOffs += getTypeSize(VoidPtrTy);
+#endif
   }
 
   if (!RDecl->hasFlexibleArrayMember()) {
@@ -5667,8 +5671,8 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
   }
 
   for (; CurLayObj != FieldOrBaseOffsets.end(); ++CurLayObj) {
+#ifndef NDEBUG
     assert(CurOffs <= CurLayObj->first);
-
     if (CurOffs < CurLayObj->first) {
       uint64_t padding = CurLayObj->first - CurOffs; 
       // FIXME: There doesn't seem to be a way to indicate in the encoding that
@@ -5680,6 +5684,7 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
       // longer then though.
       CurOffs += padding;
     }
+#endif
 
     NamedDecl *dcl = CurLayObj->second;
     if (dcl == 0)
@@ -5692,7 +5697,9 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
       // making the encoding type bigger than it really is.
       getObjCEncodingForStructureImpl(base, S, FD, /*includeVBases*/false);
       assert(!base->isEmpty());
+#ifndef NDEBUG
       CurOffs += toBits(getASTRecordLayout(base).getNonVirtualSize());
+#endif
     } else {
       FieldDecl *field = cast<FieldDecl>(dcl);
       if (FD) {
@@ -5703,7 +5710,9 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
 
       if (field->isBitField()) {
         EncodeBitField(this, S, field->getType(), field);
+#ifndef NDEBUG
         CurOffs += field->getBitWidthValue(*this);
+#endif
       } else {
         QualType qt = field->getType();
         getLegacyIntegralTypeEncoding(qt);
@@ -5711,7 +5720,9 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
                                    /*OutermostType*/false,
                                    /*EncodingProperty*/false,
                                    /*StructField*/true);
+#ifndef NDEBUG
         CurOffs += getTypeSize(field->getType());
+#endif
       }
     }
   }
