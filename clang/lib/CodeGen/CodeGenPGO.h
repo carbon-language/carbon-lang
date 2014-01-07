@@ -149,7 +149,7 @@ public:
   /// within the region. The adjusted count, then, is the value of the counter
   /// at the end of the region.
   uint64_t getAdjustedCount() const {
-    assert(Adjust > 0 || (uint64_t)(-Adjust) <= Count && "Negative count");
+    assert((Adjust > 0 || (uint64_t)(-Adjust) <= Count) && "Negative count");
     return Count + Adjust;
   }
   /// Get the value of the counter in this region's parent, ie, the region that
