@@ -17,7 +17,7 @@
 
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Assembly/Parser.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"

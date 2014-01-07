@@ -10,7 +10,7 @@
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Assembly/Parser.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/IR/BasicBlock.h"

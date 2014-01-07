@@ -1,4 +1,4 @@
-//===- llvm/Assembly/PrintModulePass.h - Printing Pass ----------*- C++ -*-===//
+//===- PrintModulePass.h - IR Printing Passes -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ASSEMBLY_PRINTMODULEPASS_H
-#define LLVM_ASSEMBLY_PRINTMODULEPASS_H
+#ifndef LLVM_IR_PRINTMODULEPASS_H
+#define LLVM_IR_PRINTMODULEPASS_H
 
 #include <string>
 

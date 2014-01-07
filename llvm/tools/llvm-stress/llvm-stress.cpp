@@ -15,7 +15,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/IR/PrintModulePass.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Module.h"

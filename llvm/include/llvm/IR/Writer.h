@@ -1,4 +1,4 @@
-//===-- llvm/Assembly/Writer.h - Printer for LLVM assembly files --*- C++ -*-=//
+//===-- Writer.h - Printer for LLVM IR assembly files -------------*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,15 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This functionality is implemented by lib/VMCore/AsmWriter.cpp.
+// This functionality is implemented by lib/IR/AsmWriter.cpp.
 // This library is used to print LLVM assembly language files to an iostream. It
 // can print LLVM code at a variety of granularities, including Modules,
 // BasicBlocks, and Instructions.  This makes it useful for debugging.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ASSEMBLY_WRITER_H
-#define LLVM_ASSEMBLY_WRITER_H
+#ifndef LLVM_IR_WRITER_H
+#define LLVM_IR_WRITER_H
 
 namespace llvm {
 

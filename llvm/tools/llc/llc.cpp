@@ -16,7 +16,7 @@
 
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/IR/PrintModulePass.h"
 #include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"

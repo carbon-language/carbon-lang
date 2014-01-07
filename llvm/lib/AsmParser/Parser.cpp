@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This library implements the functionality defined in llvm/Assembly/Parser.h
+// This library implements the functionality defined in llvm/AsmParser/Parser.h
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Assembly/Parser.h"
+#include "llvm/AsmParser/Parser.h"
 #include "LLParser.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/Module.h"

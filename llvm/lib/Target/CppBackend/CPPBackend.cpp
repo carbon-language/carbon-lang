@@ -1918,7 +1918,6 @@ void CppWriter::printProgram(const std::string& fname,
 
   Out << "#include <llvm/ADT/SmallVector.h>\n";
   Out << "#include <llvm/Analysis/Verifier.h>\n";
-  Out << "#include <llvm/Assembly/PrintModulePass.h>\n";
   Out << "#include <llvm/IR/BasicBlock.h>\n";
   Out << "#include <llvm/IR/CallingConv.h>\n";
   Out << "#include <llvm/IR/Constants.h>\n";
@@ -1929,6 +1928,7 @@ void CppWriter::printProgram(const std::string& fname,
   Out << "#include <llvm/IR/Instructions.h>\n";
   Out << "#include <llvm/IR/LLVMContext.h>\n";
   Out << "#include <llvm/IR/Module.h>\n";
+  Out << "#include <llvm/IR/PrintModulePass.h>\n";
   Out << "#include <llvm/Support/FormattedStream.h>\n";
   Out << "#include <llvm/Support/MathExtras.h>\n";
   Out << "#include <algorithm>\n";

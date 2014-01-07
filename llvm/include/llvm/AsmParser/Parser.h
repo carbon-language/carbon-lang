@@ -1,4 +1,4 @@
-//===-- llvm/Assembly/Parser.h - Parser for VM assembly files ---*- C++ -*-===//
+//===-- Parser.h - Parser for LLVM IR text assembly files -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ASSEMBLY_PARSER_H
-#define LLVM_ASSEMBLY_PARSER_H
+#ifndef LLVM_ASMPARSER_PARSER_H
+#define LLVM_ASMPARSER_PARSER_H
 
 #include <string>
 

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/Assembly/Parser.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"

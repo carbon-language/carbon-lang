@@ -20,9 +20,9 @@
 
 #include "llvm/ADT/ValueMap.h"
 #include "DebugIR.h"
-#include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/DIBuilder.h"
 #include "llvm/DebugInfo.h"
+#include "llvm/IR/AssemblyAnnotationWriter.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/LLVMContext.h"

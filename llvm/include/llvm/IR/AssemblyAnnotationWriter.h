@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ASSEMBLY_ASMANNOTATIONWRITER_H
-#define LLVM_ASSEMBLY_ASMANNOTATIONWRITER_H
+#ifndef LLVM_IR_ASMANNOTATIONWRITER_H
+#define LLVM_IR_ASMANNOTATIONWRITER_H
 
 namespace llvm {
 

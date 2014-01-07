@@ -12,11 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/Assembly/Writer.h"
+#include "llvm/IR/PrintModulePass.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/LegacyPassManagers.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"

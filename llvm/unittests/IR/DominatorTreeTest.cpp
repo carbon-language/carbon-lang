@@ -9,7 +9,7 @@
 
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/PostDominators.h"
-#include "llvm/Assembly/Parser.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"

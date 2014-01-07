@@ -11,7 +11,7 @@
 #include "llvm-c/Core.h"
 #include "llvm-c/IRReader.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/Assembly/Parser.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
