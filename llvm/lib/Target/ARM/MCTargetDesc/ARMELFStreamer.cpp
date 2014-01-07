@@ -111,6 +111,7 @@ class ARMELFStreamer;
 class ARMTargetAsmStreamer : public ARMTargetStreamer {
   formatted_raw_ostream &OS;
   MCInstPrinter &InstPrinter;
+  bool IsVerboseAsm;
 
   virtual void emitFnStart();
   virtual void emitFnEnd();
@@ -133,12 +134,14 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   virtual void finishAttributeSection();
 
 public:
-  ARMTargetAsmStreamer(formatted_raw_ostream &OS, MCInstPrinter &InstPrinter);
+  ARMTargetAsmStreamer(formatted_raw_ostream &OS, MCInstPrinter &InstPrinter,
+                       bool VerboseAsm);
 };
 
 ARMTargetAsmStreamer::ARMTargetAsmStreamer(formatted_raw_ostream &OS,
-                                           MCInstPrinter &InstPrinter)
-    : OS(OS), InstPrinter(InstPrinter) {}
+                                           MCInstPrinter &InstPrinter,
+                                           bool VerboseAsm)
+    : OS(OS), InstPrinter(InstPrinter), IsVerboseAsm(VerboseAsm) {}
 void ARMTargetAsmStreamer::emitFnStart() { OS << "\t.fnstart\n"; }
 void ARMTargetAsmStreamer::emitFnEnd() { OS << "\t.fnend\n"; }
 void ARMTargetAsmStreamer::emitCantUnwind() { OS << "\t.cantunwind\n"; }
@@ -179,7 +182,13 @@ void ARMTargetAsmStreamer::emitRegSave(const SmallVectorImpl<unsigned> &RegList,
 void ARMTargetAsmStreamer::switchVendor(StringRef Vendor) {
 }
 void ARMTargetAsmStreamer::emitAttribute(unsigned Attribute, unsigned Value) {
-  OS << "\t.eabi_attribute\t" << Attribute << ", " << Twine(Value) << "\n";
+  OS << "\t.eabi_attribute\t" << Attribute << ", " << Twine(Value);
+  if (IsVerboseAsm) {
+    StringRef Name = ARMBuildAttrs::AttrTypeAsString(Attribute);
+    if (!Name.empty())
+      OS << "\t@ " << Name;
+  }
+  OS << "\n";
 }
 void ARMTargetAsmStreamer::emitTextAttribute(unsigned Attribute,
                                              StringRef String) {
@@ -189,6 +198,11 @@ void ARMTargetAsmStreamer::emitTextAttribute(unsigned Attribute,
     break;
   default:
     OS << "\t.eabi_attribute\t" << Attribute << ", \"" << String << "\"";
+    if (IsVerboseAsm) {
+      StringRef Name = ARMBuildAttrs::AttrTypeAsString(Attribute);
+      if (!Name.empty())
+        OS << "\t@ " << Name;
+    }
     break;
   }
   OS << "\n";
@@ -202,6 +216,8 @@ void ARMTargetAsmStreamer::emitIntTextAttribute(unsigned Attribute,
     OS << "\t.eabi_attribute\t" << Attribute << ", " << IntValue;
     if (!StringValue.empty())
       OS << ", \"" << StringValue << "\"";
+    if (IsVerboseAsm)
+      OS << "\t@ " << ARMBuildAttrs::AttrTypeAsString(Attribute);
     break;
   }
   OS << "\n";
@@ -1177,7 +1193,8 @@ MCStreamer *createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 bool useDwarfDirectory,
                                 MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                                 MCAsmBackend *TAB, bool ShowInst) {
-  ARMTargetAsmStreamer *S = new ARMTargetAsmStreamer(OS, *InstPrint);
+  ARMTargetAsmStreamer *S = new ARMTargetAsmStreamer(OS, *InstPrint,
+                                                     isVerboseAsm);
 
   return llvm::createAsmStreamer(Ctx, S, OS, isVerboseAsm, useLoc, useCFI,
                                  useDwarfDirectory, InstPrint, CE, TAB,
