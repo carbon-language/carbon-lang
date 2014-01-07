@@ -1534,8 +1534,18 @@ DynamicLoaderMacOSXDYLD::SetNotificationBreakpoint ()
             // callback function that will get called each time the
             // breakpoint gets hit. We will use this to track when shared
             // libraries get loaded/unloaded.
+            bool resolved = m_process->GetTarget().ResolveLoadAddress(m_dyld_all_image_infos.notification, so_addr);
+            if (!resolved)
+            {
+                ModuleSP dyld_module_sp = m_dyld_module_wp.lock();
+                if (dyld_module_sp)
+                {
+                    UpdateImageLoadAddress (dyld_module_sp.get(), m_dyld);
+                    resolved = m_process->GetTarget().ResolveLoadAddress(m_dyld_all_image_infos.notification, so_addr);
+                }
+            }
 
-            if (m_process->GetTarget().ResolveLoadAddress(m_dyld_all_image_infos.notification, so_addr))
+            if (resolved)
             {
                 Breakpoint *dyld_break = m_process->GetTarget().CreateBreakpoint (so_addr, true, false).get();
                 dyld_break->SetCallback (DynamicLoaderMacOSXDYLD::NotifyBreakpointHit, this, true);
