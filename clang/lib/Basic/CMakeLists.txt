@@ -32,17 +32,15 @@ if( NOT IS_SYMLINK "${CLANG_SOURCE_DIR}" )  # See PR 8437
   find_package(Subversion)
 endif()
 if (Subversion_FOUND AND EXISTS "${CLANG_SOURCE_DIR}/.svn")
-  # Create custom target to generate the Subversion version include.
-  add_custom_target(clang_revision_tag  ALL
-    COMMAND ${CMAKE_COMMAND} -DFIRST_SOURCE_DIR=${LLVM_MAIN_SRC_DIR}
-                             -DFIRST_REPOSITORY=LLVM_REPOSITORY
-                             -DSECOND_SOURCE_DIR=${CLANG_SOURCE_DIR}
-                             -DSECOND_REPOSITORY=SVN_REPOSITORY
-                             -DHEADER_FILE=${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc
-   -P ${LLVM_MAIN_SRC_DIR}/cmake/modules/GetSVN.cmake)
+  set(FIRST_SOURCE_DIR ${LLVM_MAIN_SRC_DIR})
+  set(FIRST_REPOSITORY LLVM_REPOSITORY)
+  set(SECOND_SOURCE_DIR ${CLANG_SOURCE_DIR})
+  set(SECOND_REPOSITORY SVN_REPOSITORY)
+  set(HEADER_FILE ${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc)
+  include(GetSVN)
 
   # Mark the generated header as being generated.
-message(STATUS "Expecting header to go in ${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc")
+  message(STATUS "Expecting header to go in ${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc")
   set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/SVNVersion.inc
     PROPERTIES GENERATED TRUE
                HEADER_FILE_ONLY TRUE)
@@ -69,8 +67,3 @@ add_dependencies(clangBasic
   ClangDiagnosticSema
   ClangDiagnosticSerialization
   )
-
-# clangBasic depends on the version.
-if (Subversion_FOUND AND EXISTS "${CLANG_SOURCE_DIR}/.svn")
-  add_dependencies(clangBasic clang_revision_tag)
-endif()
