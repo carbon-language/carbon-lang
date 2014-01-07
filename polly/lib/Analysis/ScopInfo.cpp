@@ -30,7 +30,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/Assembly/Writer.h"
+#include "llvm/IR/Writer.h"
 #include "llvm/Support/CommandLine.h"
 
 #define DEBUG_TYPE "polly-scops"

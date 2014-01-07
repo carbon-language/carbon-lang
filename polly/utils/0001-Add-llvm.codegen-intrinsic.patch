@@ -171,7 +171,7 @@ index 0000000..cf8aa54
 +#include "llvm/LLVMContext.h"
 +#include "llvm/Module.h"
 +#include "llvm/PassManager.h"
-+#include "llvm/Assembly/Parser.h"
++#include "llvm/AsmParser/Parser.h"
 +#include "llvm/Target/TargetMachine.h"
 +#include "llvm/Target/TargetRegisterInfo.h"
 +#include "llvm/Support/Debug.h"

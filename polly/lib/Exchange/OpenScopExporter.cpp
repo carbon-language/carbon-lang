@@ -19,7 +19,7 @@
 #include "polly/ScopInfo.h"
 #include "polly/ScopPass.h"
 
-#include "llvm/Assembly/Writer.h"
+#include "llvm/IR/Writer.h"
 
 #define OPENSCOP_INT_T_IS_MP
 #include "openscop/openscop.h"

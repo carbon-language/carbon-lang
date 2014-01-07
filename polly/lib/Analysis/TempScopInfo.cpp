@@ -25,7 +25,7 @@
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/Assembly/Writer.h"
+#include "llvm/IR/Writer.h"
 #include "llvm/IR/DataLayout.h"
 
 #define DEBUG_TYPE "polly-analyze-ir"

@@ -21,7 +21,7 @@
 #include "polly/ScopInfo.h"
 #include "polly/ScopLib.h"
 
-#include "llvm/Assembly/Writer.h"
+#include "llvm/IR/Writer.h"
 
 #define SCOPLIB_INT_T_IS_MP
 #include "scoplib/scop.h"

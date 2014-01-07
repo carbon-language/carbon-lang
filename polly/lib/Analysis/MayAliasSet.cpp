@@ -17,7 +17,7 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
-#include "llvm/Assembly/Writer.h"
+#include "llvm/IR/Writer.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"

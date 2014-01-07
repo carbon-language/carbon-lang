@@ -28,7 +28,7 @@
 #include "polly/ScopInfo.h"
 
 #define DEBUG_TYPE "polly-cloog"
-#include "llvm/Assembly/Writer.h"
+#include "llvm/IR/Writer.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 
