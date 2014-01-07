@@ -44,7 +44,7 @@ public:
     HasPersonality = 0;
   }
 
-  /// Set the personality index
+  /// Set the personality
   void setPersonality(const MCSymbol *Per) {
     HasPersonality = 1;
   }
