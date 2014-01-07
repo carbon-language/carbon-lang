@@ -11,7 +11,8 @@ CLANG_LEVEL := ../..
 
 include $(CLANG_LEVEL)/../../Makefile.config
 
-PARALLEL_DIRS := remove-cstr-calls tool-template modularize pp-trace
+PARALLEL_DIRS := remove-cstr-calls tool-template modularize \
+ module-map-checker pp-trace
 DIRS := clang-apply-replacements clang-modernize clang-tidy clang-query \
 	unittests
 

@@ -31,6 +31,7 @@ set(CLANG_TOOLS_TEST_DEPS
   clang-modernize
   clang-tidy
   modularize
+  module-map-checker
   pp-trace
   remove-cstr-calls
 
