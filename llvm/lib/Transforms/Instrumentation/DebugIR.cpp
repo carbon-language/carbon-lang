@@ -19,24 +19,22 @@
 #define DEBUG_TYPE "debug-ir"
 
 #include "llvm/ADT/ValueMap.h"
+#include "DebugIR.h"
 #include "llvm/Assembly/AssemblyAnnotationWriter.h"
-#include "llvm/DebugInfo.h"
 #include "llvm/DIBuilder.h"
-#include "llvm/InstVisitor.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/InstVisitor.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/Path.h"
-
-#include "DebugIR.h"
-
 #include <string>
 
 #define STR_HELPER(x) #x

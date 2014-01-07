@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZSubtarget.h"
+#include "MCTargetDesc/SystemZMCTargetDesc.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/Host.h"
-#include "MCTargetDesc/SystemZMCTargetDesc.h"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR

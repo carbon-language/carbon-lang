@@ -14,8 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/GCs.h"
 #include "llvm/CodeGen/GCMetadataPrinter.h"
+#include "llvm/CodeGen/GCs.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instruction.h"

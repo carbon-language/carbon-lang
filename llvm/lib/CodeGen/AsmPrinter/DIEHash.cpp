@@ -14,7 +14,6 @@
 #define DEBUG_TYPE "dwarfdebug"
 
 #include "DIEHash.h"
-
 #include "DIE.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"

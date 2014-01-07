@@ -15,10 +15,10 @@
 
 #define DEBUG_TYPE "ppcfastisel"
 #include "PPC.h"
+#include "MCTargetDesc/PPCPredicates.h"
 #include "PPCISelLowering.h"
 #include "PPCSubtarget.h"
 #include "PPCTargetMachine.h"
-#include "MCTargetDesc/PPCPredicates.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/FastISel.h"

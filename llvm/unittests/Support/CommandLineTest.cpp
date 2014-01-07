@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/CommandLine.h"
 #include "gtest/gtest.h"
 #include <stdlib.h>
 #include <string>

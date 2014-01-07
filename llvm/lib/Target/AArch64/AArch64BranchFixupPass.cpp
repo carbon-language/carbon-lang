@@ -16,13 +16,13 @@
 #include "AArch64.h"
 #include "AArch64InstrInfo.h"
 #include "Utils/AArch64BaseInfo.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(NumSplit,      "Number of uncond branches inserted");

@@ -36,8 +36,8 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/Instruction.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CFG.h"
 #include <algorithm>
 
 namespace llvm {

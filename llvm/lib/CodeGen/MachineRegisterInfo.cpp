@@ -13,9 +13,9 @@
 
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/raw_os_ostream.h"
 
 using namespace llvm;
 

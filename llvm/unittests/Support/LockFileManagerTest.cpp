@@ -10,9 +10,7 @@
 #include "llvm/Support/LockFileManager.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-
 #include "gtest/gtest.h"
-
 #include <memory>
 
 using namespace llvm;

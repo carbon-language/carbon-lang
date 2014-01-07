@@ -10,7 +10,6 @@
 #define DEBUG_TYPE "stackmaps"
 
 #include "llvm/CodeGen/StackMaps.h"
-
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/DataLayout.h"
@@ -21,10 +20,9 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetOpcodes.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOpcodes.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-
 #include <iterator>
 
 using namespace llvm;

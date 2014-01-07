@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm-c/Core.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
@@ -20,7 +21,6 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm-c/Core.h"
 #include <cassert>
 #include <cstdlib>
 

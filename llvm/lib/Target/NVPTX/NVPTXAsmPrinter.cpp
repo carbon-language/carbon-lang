@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "NVPTXAsmPrinter.h"
+#include "InstPrinter/NVPTXInstPrinter.h"
 #include "MCTargetDesc/NVPTXMCAsmInfo.h"
 #include "NVPTX.h"
 #include "NVPTXInstrInfo.h"
@@ -20,7 +21,6 @@
 #include "NVPTXRegisterInfo.h"
 #include "NVPTXTargetMachine.h"
 #include "NVPTXUtilities.h"
-#include "InstPrinter/NVPTXInstPrinter.h"
 #include "cl_common_defines.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/ConstantFolding.h"

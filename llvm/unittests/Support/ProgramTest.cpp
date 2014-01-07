@@ -12,7 +12,6 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "gtest/gtest.h"
-
 #include <stdlib.h>
 #if defined(__APPLE__)
 # include <crt_externs.h>

@@ -17,12 +17,12 @@
 #ifndef LLVM_DEBUGINFO_H
 #define LLVM_DEBUGINFO_H
 
-#include "llvm/Support/Casting.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/Dwarf.h"
 
 namespace llvm {

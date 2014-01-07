@@ -25,8 +25,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/CFG.h"
+#include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/BasicBlock.h"

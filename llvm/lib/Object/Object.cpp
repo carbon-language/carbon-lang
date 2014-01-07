@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Object/ObjectFile.h"
 #include "llvm-c/Object.h"
+#include "llvm/Object/ObjectFile.h"
 
 using namespace llvm;
 using namespace object;

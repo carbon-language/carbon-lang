@@ -25,7 +25,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
-
 #include <map>
 
 using namespace llvm;

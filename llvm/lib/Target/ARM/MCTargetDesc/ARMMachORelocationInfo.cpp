@@ -9,10 +9,10 @@
 
 #include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "ARMMCExpr.h"
+#include "llvm-c/Disassembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCRelocationInfo.h"
-#include "llvm-c/Disassembler.h"
 
 using namespace llvm;
 using namespace object;

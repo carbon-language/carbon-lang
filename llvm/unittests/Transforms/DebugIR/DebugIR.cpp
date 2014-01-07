@@ -13,16 +13,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/Triple.h"
+#include "../lib/Transforms/Instrumentation/DebugIR.h"
 #include "llvm/Config/config.h"
-#include "llvm/DebugInfo.h"
 #include "llvm/DIBuilder.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/Host.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Transforms/Instrumentation.h"
-
-#include "../lib/Transforms/Instrumentation/DebugIR.h"
 
 // These tests do not depend on MCJIT, but we use the TrivialModuleBuilder
 // helper class to construct some trivial Modules.

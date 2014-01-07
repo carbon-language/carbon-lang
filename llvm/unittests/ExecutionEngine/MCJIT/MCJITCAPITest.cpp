@@ -13,13 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/Analysis.h"
+#include "MCJITTestAPICommon.h"
 #include "llvm-c/Core.h"
 #include "llvm-c/ExecutionEngine.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/Transforms/Scalar.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/Support/Host.h"
-#include "MCJITTestAPICommon.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;

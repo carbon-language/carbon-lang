@@ -10,8 +10,8 @@
 #ifndef HexagonMACHINEFUNCTIONINFO_H
 #define HexagonMACHINEFUNCTIONINFO_H
 
-#include <map>
 #include "llvm/CodeGen/MachineFunction.h"
+#include <map>
 
 namespace llvm {
 

@@ -18,11 +18,11 @@
 #include "AArch64MachineFunctionInfo.h"
 #include "AArch64TargetMachine.h"
 #include "MCTargetDesc/AArch64MCTargetDesc.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
-#include "llvm/ADT/BitVector.h"
 
 #define GET_REGINFO_TARGET_DESC
 #include "AArch64GenRegisterInfo.inc"

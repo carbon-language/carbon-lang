@@ -14,9 +14,9 @@
 #ifndef LLVM_ADT_STRINGEXTRAS_H
 #define LLVM_ADT_STRINGEXTRAS_H
 
-#include <iterator>
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
+#include <iterator>
 
 namespace llvm {
 template<typename T> class SmallVectorImpl;

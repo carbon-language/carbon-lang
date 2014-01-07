@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Mips16RegisterInfo.h"
-#include "Mips16InstrInfo.h"
 #include "Mips.h"
 #include "Mips16InstrInfo.h"
 #include "MipsAnalyzeImmediate.h"

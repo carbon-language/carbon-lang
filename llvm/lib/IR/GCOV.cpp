@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/GCOV.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/GCOV.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/system_error.h"
 #include <algorithm>

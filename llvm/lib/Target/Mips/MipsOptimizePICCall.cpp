@@ -15,9 +15,9 @@
 #define DEBUG_TYPE "optimize-mips-pic-call"
 
 #include "Mips.h"
-#include "MipsTargetMachine.h"
-#include "MipsMachineFunction.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
+#include "MipsMachineFunction.h"
+#include "MipsTargetMachine.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"

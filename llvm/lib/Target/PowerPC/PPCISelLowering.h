@@ -19,8 +19,8 @@
 #include "PPCInstrInfo.h"
 #include "PPCRegisterInfo.h"
 #include "PPCSubtarget.h"
-#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {

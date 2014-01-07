@@ -17,7 +17,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/SwapByteOrder.h"
 #include "llvm/Support/type_traits.h"
-
 #include <cstring>
 
 #ifdef _MSC_VER

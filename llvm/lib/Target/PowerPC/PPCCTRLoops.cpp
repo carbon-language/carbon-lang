@@ -26,8 +26,10 @@
 #define DEBUG_TYPE "ctrloops"
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/ADT/Statistic.h"
+#include "PPC.h"
+#include "PPCTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
@@ -42,12 +44,10 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
-#include "llvm/Target/TargetLibraryInfo.h"
-#include "PPCTargetMachine.h"
-#include "PPC.h"
 
 #ifndef NDEBUG
 #include "llvm/CodeGen/MachineDominators.h"

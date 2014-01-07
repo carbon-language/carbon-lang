@@ -17,8 +17,8 @@
 #ifndef LLVM_AARCH64_BASEINFO_H
 #define LLVM_AARCH64_BASEINFO_H
 
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {

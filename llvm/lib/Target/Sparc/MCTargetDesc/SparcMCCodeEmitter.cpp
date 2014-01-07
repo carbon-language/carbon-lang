@@ -13,14 +13,14 @@
 
 #define DEBUG_TYPE "mccodeemitter"
 #include "SparcMCExpr.h"
-#include "SparcMCTargetDesc.h"
 #include "MCTargetDesc/SparcFixupKinds.h"
+#include "SparcMCTargetDesc.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;

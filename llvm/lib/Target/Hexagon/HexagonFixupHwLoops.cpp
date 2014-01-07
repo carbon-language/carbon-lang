@@ -15,6 +15,8 @@
 
 
 #include "llvm/ADT/DenseMap.h"
+#include "Hexagon.h"
+#include "HexagonTargetMachine.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -22,8 +24,6 @@
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/PassSupport.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "Hexagon.h"
-#include "HexagonTargetMachine.h"
 
 using namespace llvm;
 

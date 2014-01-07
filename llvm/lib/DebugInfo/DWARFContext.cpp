@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "DWARFContext.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compression.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"

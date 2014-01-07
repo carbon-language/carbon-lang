@@ -38,9 +38,9 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/polymorphic_ptr.h"
-#include "llvm/Support/type_traits.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/type_traits.h"
 #include <list>
 #include <vector>
 

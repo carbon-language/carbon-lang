@@ -15,8 +15,8 @@
 #ifndef POWERPC32_REGISTERINFO_H
 #define POWERPC32_REGISTERINFO_H
 
-#include "llvm/ADT/DenseMap.h"
 #include "PPC.h"
+#include "llvm/ADT/DenseMap.h"
 
 #define GET_REGINFO_HEADER
 #include "PPCGenRegisterInfo.inc"

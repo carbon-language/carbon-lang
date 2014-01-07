@@ -15,8 +15,8 @@
 #ifndef LLVM_ADT_POINTERUNION_H
 #define LLVM_ADT_POINTERUNION_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 

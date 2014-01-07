@@ -14,8 +14,8 @@
 
 #define DEBUG_TYPE "aarch64mcexpr"
 #include "AArch64MCExpr.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELF.h"
 #include "llvm/Object/ELF.h"
 

@@ -14,8 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/CodeExtractor.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"

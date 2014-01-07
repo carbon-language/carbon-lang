@@ -14,8 +14,8 @@
 #ifndef LLVM_TARGET_AARCH64INSTRINFO_H
 #define LLVM_TARGET_AARCH64INSTRINFO_H
 
-#include "llvm/Target/TargetInstrInfo.h"
 #include "AArch64RegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "AArch64GenInstrInfo.inc"

@@ -25,8 +25,8 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/IR/Constant.h"
-#include "llvm/IR/OperandTraits.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/OperandTraits.h"
 
 namespace llvm {
 

@@ -13,20 +13,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "NVPTX.h"
-#include "NVPTXUtilities.h"
 #include "MCTargetDesc/NVPTXBaseInfo.h"
-
-#include "llvm/PassManager.h"
+#include "NVPTXUtilities.h"
+#include "llvm/ADT/ValueMap.h"
+#include "llvm/CodeGen/MachineFunctionAnalysis.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
-#include "llvm/ADT/ValueMap.h"
-#include "llvm/CodeGen/MachineFunctionAnalysis.h"
-#include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/IR/IRBuilder.h"
+#include "llvm/PassManager.h"
 
 using namespace llvm;
 

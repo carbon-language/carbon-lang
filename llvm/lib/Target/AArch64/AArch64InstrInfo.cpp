@@ -26,7 +26,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
-
 #include <algorithm>
 
 #define GET_INSTRINFO_CTOR_DTOR

@@ -13,7 +13,6 @@
 #define DEBUG_TYPE "jit"
 #include "SparcJITInfo.h"
 #include "SparcRelocations.h"
-
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/Support/Memory.h"
 

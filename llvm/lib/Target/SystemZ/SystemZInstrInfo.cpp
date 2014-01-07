@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZInstrInfo.h"
-#include "SystemZTargetMachine.h"
 #include "SystemZInstrBuilder.h"
+#include "SystemZTargetMachine.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 

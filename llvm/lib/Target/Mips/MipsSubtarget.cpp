@@ -14,10 +14,10 @@
 #define DEBUG_TYPE "mips-subtarget"
 
 #include "MipsMachineFunction.h"
-#include "MipsSubtarget.h"
-#include "MipsTargetMachine.h"
 #include "Mips.h"
 #include "MipsRegisterInfo.h"
+#include "MipsSubtarget.h"
+#include "MipsTargetMachine.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/CommandLine.h"

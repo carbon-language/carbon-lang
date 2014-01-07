@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmInfo.h"

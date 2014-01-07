@@ -16,11 +16,11 @@
 
 #define DEBUG_TYPE "stack-protector"
 #include "llvm/CodeGen/StackProtector.h"
-#include "llvm/CodeGen/Analysis.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/CodeGen/Analysis.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"

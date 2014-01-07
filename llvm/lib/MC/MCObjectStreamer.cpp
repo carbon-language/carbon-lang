@@ -17,8 +17,8 @@
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
-#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 

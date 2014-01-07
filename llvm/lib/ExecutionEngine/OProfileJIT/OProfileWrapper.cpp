@@ -15,12 +15,12 @@
 
 #define DEBUG_TYPE "oprofile-wrapper"
 #include "llvm/ExecutionEngine/OProfileWrapper.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/MutexGuard.h"
-#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstring>
 #include <dirent.h>
 #include <fcntl.h>

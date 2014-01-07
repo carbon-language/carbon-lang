@@ -13,9 +13,8 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "SparcInstPrinter.h"
-
-#include "Sparc.h"
 #include "MCTargetDesc/SparcBaseInfo.h"
+#include "Sparc.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSymbol.h"

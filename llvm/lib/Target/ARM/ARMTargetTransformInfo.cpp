@@ -19,8 +19,8 @@
 #include "ARMTargetMachine.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/CostTable.h"
+#include "llvm/Target/TargetLowering.h"
 using namespace llvm;
 
 // Declare the pass initialization routine locally as target-specific passes

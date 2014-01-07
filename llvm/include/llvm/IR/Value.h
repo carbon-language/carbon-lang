@@ -14,11 +14,11 @@
 #ifndef LLVM_IR_VALUE_H
 #define LLVM_IR_VALUE_H
 
-#include "llvm/IR/Use.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/CBindingWrapping.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm-c/Core.h"
+#include "llvm/IR/Use.h"
+#include "llvm/Support/CBindingWrapping.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 

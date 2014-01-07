@@ -17,11 +17,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/STLExtras.h"
-#include "Windows.h"
 #include <fcntl.h>
 #include <io.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+// The Windows.h header must be the last one included.
+#include "Windows.h"
 
 #undef max
 

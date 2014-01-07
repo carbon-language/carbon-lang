@@ -16,10 +16,10 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/BranchProbability.h"
+#include "llvm/Support/CFG.h"
 
 namespace llvm {
 class LoopInfo;

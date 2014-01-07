@@ -10,8 +10,8 @@
 #include "DWARFDebugFrame.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <string>

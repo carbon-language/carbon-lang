@@ -10,11 +10,11 @@
 #ifndef LLVM_DEBUGINFO_DWARFUNIT_H
 #define LLVM_DEBUGINFO_DWARFUNIT_H
 
-#include "llvm/ADT/OwningPtr.h"
 #include "DWARFDebugAbbrev.h"
 #include "DWARFDebugInfoEntry.h"
 #include "DWARFDebugRangeList.h"
 #include "DWARFRelocMap.h"
+#include "llvm/ADT/OwningPtr.h"
 #include <vector>
 
 namespace llvm {

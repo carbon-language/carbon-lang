@@ -13,8 +13,8 @@
 
 #define DEBUG_TYPE "mips-isel"
 #include "MipsSEISelDAGToDAG.h"
-#include "Mips.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
+#include "Mips.h"
 #include "MipsAnalyzeImmediate.h"
 #include "MipsMachineFunction.h"
 #include "MipsRegisterInfo.h"

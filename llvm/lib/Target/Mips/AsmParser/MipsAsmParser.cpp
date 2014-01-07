@@ -10,6 +10,7 @@
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "MipsRegisterInfo.h"
 #include "MipsTargetStreamer.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -20,9 +21,8 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
-#include "llvm/Support/TargetRegistry.h"
-#include "llvm/ADT/APInt.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 

@@ -18,10 +18,10 @@
 #include "RuntimeDyldELF.h"
 #include "RuntimeDyldImpl.h"
 #include "RuntimeDyldMachO.h"
+#include "llvm/Object/ELF.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MutexGuard.h"
-#include "llvm/Object/ELF.h"
 
 using namespace llvm;
 using namespace llvm::object;

@@ -13,8 +13,8 @@
 
 #include "AArch64.h"
 #include "AArch64FrameLowering.h"
-#include "AArch64MachineFunctionInfo.h"
 #include "AArch64InstrInfo.h"
+#include "AArch64MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

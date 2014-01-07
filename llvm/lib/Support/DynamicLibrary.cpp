@@ -14,12 +14,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/DynamicLibrary.h"
-#include "llvm/Support/ManagedStatic.h"
+#include "llvm-c/Support.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
-#include "llvm-c/Support.h"
 #include <cstdio>
 #include <cstring>
 

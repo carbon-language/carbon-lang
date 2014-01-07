@@ -27,10 +27,9 @@
 #define DEBUG_TYPE "a15-sd-optimizer"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
-#include "ARMSubtarget.h"
 #include "ARMISelLowering.h"
+#include "ARMSubtarget.h"
 #include "ARMTargetMachine.h"
-
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -41,7 +40,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-
 #include <set>
 
 using namespace llvm;

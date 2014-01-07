@@ -15,8 +15,8 @@
 #include "X86TargetMachine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/StackMaps.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {

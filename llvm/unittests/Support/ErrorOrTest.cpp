@@ -8,9 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ErrorOr.h"
-
 #include "gtest/gtest.h"
-
 #include <memory>
 
 using namespace llvm;

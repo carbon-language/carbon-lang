@@ -34,11 +34,11 @@
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineLoopInfo.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/Passes.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 

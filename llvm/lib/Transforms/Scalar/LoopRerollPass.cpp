@@ -13,9 +13,9 @@
 
 #define DEBUG_TYPE "loop-reroll"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/Dominators.h"

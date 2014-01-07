@@ -13,8 +13,8 @@
 
 #define DEBUG_TYPE "loop-instsimplify"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"

@@ -14,14 +14,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "NVPTX.h"
-#include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Target/TargetFrameLowering.h"
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
 

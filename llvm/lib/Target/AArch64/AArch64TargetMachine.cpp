@@ -16,8 +16,8 @@
 #include "AArch64.h"
 #include "AArch64TargetMachine.h"
 #include "MCTargetDesc/AArch64MCTargetDesc.h"
-#include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;

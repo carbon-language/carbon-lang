@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCObjectFileInfo.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionCOFF.h"

@@ -12,14 +12,14 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Assembly/Parser.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Pass.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Pass.h"
-#include "llvm/PassManager.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;

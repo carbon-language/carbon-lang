@@ -28,6 +28,8 @@
 
 #define DEBUG_TYPE "hwloops"
 #include "llvm/ADT/SmallSet.h"
+#include "Hexagon.h"
+#include "HexagonTargetMachine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -40,9 +42,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "Hexagon.h"
-#include "HexagonTargetMachine.h"
-
 #include <algorithm>
 #include <vector>
 

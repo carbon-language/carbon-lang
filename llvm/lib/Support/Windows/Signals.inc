@@ -12,8 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FileSystem.h"
-
-#include "Windows.h"
 #include <algorithm>
 #include <stdio.h>
 #include <vector>
@@ -24,6 +22,9 @@
  #include <dbghelp.h>
 #endif
 #include <psapi.h>
+
+// The Windows.h header must be the last one included.
+#include "Windows.h"
 
 #ifdef _MSC_VER
  #pragma comment(lib, "psapi.lib")

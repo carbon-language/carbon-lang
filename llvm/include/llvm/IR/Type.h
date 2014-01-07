@@ -15,13 +15,13 @@
 #ifndef LLVM_IR_TYPE_H
 #define LLVM_IR_TYPE_H
 
+#include "llvm-c/Core.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/CBindingWrapping.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm-c/Core.h"
 
 namespace llvm {
 

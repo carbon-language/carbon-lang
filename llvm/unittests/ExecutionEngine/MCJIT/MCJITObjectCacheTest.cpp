@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/OwningPtr.h"
+#include "MCJITTestBase.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
@@ -15,7 +16,6 @@
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/ExecutionEngine/ObjectCache.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
-#include "MCJITTestBase.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;

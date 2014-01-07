@@ -14,10 +14,10 @@
 #include "AArch64Subtarget.h"
 #include "AArch64RegisterInfo.h"
 #include "MCTargetDesc/AArch64MCTargetDesc.h"
-#include "llvm/IR/GlobalValue.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/IR/GlobalValue.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR

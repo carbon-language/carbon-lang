@@ -25,12 +25,12 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetFrameLowering.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 

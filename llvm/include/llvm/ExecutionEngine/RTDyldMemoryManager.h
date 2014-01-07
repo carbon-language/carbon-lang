@@ -14,10 +14,10 @@
 #ifndef LLVM_EXECUTIONENGINE_RT_DYLD_MEMORY_MANAGER_H
 #define LLVM_EXECUTIONENGINE_RT_DYLD_MEMORY_MANAGER_H
 
+#include "llvm-c/ExecutionEngine.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/Memory.h"
-#include "llvm-c/ExecutionEngine.h"
 
 namespace llvm {
 

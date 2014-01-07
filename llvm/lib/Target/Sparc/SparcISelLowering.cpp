@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcISelLowering.h"
+#include "MCTargetDesc/SparcBaseInfo.h"
 #include "SparcMachineFunctionInfo.h"
 #include "SparcRegisterInfo.h"
 #include "SparcTargetMachine.h"
-#include "MCTargetDesc/SparcBaseInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"

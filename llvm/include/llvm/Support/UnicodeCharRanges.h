@@ -16,7 +16,6 @@
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include <algorithm>
 
 namespace llvm {

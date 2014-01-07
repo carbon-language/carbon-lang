@@ -17,6 +17,7 @@
 #ifndef MCJIT_TEST_BASE_H
 #define MCJIT_TEST_BASE_H
 
+#include "MCJITTestAPICommon.h"
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
@@ -26,7 +27,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/TypeBuilder.h"
 #include "llvm/Support/CodeGen.h"
-#include "MCJITTestAPICommon.h"
 
 namespace llvm {
 

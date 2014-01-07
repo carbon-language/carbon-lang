@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IRReader/IRReader.h"
+#include "llvm-c/Core.h"
+#include "llvm-c/IRReader.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -15,11 +17,9 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/system_error.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm-c/Core.h"
-#include "llvm-c/IRReader.h"
+#include "llvm/Support/system_error.h"
 
 using namespace llvm;
 

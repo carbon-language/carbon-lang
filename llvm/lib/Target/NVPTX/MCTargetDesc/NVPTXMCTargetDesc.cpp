@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "NVPTXMCTargetDesc.h"
-#include "NVPTXMCAsmInfo.h"
 #include "InstPrinter/NVPTXInstPrinter.h"
+#include "NVPTXMCAsmInfo.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"

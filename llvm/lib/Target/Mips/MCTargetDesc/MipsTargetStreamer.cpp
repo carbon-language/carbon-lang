@@ -15,9 +15,9 @@
 #include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/ELF.h"
 
 using namespace llvm;
 

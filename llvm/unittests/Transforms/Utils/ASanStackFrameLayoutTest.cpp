@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 #include "llvm/Transforms/Utils/ASanStackFrameLayout.h"
 #include "llvm/ADT/ArrayRef.h"
-#include <sstream>
 #include "gtest/gtest.h"
+#include <sstream>
 
 using namespace llvm;
 

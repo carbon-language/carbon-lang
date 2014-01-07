@@ -18,8 +18,8 @@
 #include "Utils/AArch64BaseInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/Target/TargetLowering.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
 namespace AArch64ISD {

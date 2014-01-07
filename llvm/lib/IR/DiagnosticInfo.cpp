@@ -20,7 +20,6 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/Atomic.h"
-
 #include <string>
 
 using namespace llvm;

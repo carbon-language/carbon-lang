@@ -15,8 +15,8 @@
 #ifndef LLVM_CODEGEN_SCHEDULEDAGINSTRS_H
 #define LLVM_CODEGEN_SCHEDULEDAGINSTRS_H
 
-#include "llvm/ADT/SparseSet.h"
 #include "llvm/ADT/SparseMultiSet.h"
+#include "llvm/ADT/SparseSet.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/Support/Compiler.h"

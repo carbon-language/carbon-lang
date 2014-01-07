@@ -14,8 +14,8 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Object/MachO.h"
 #include "llvm/Object/ELFObjectFile.h"
+#include "llvm/Object/MachO.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
