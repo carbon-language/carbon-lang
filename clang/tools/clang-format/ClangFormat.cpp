@@ -17,6 +17,7 @@
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/Version.h"
 #include "clang/Format/Format.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Rewrite/Core/Rewriter.h"
@@ -255,6 +256,11 @@ static bool format(StringRef FileName) {
 }  // namespace format
 }  // namespace clang
 
+static void PrintVersion() {
+  raw_ostream &OS = outs();
+  OS << clang::getClangToolFullVersion("clang-format") << '\n';
+}
+
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
 
@@ -268,6 +274,7 @@ int main(int argc, const char **argv) {
       I->second->setHiddenFlag(cl::ReallyHidden);
   }
 
+  cl::SetVersionPrinter(PrintVersion);
   cl::ParseCommandLineOptions(
       argc, argv,
       "A tool to format C/C++/Obj-C code.\n\n"

@@ -116,12 +116,16 @@ std::string getClangFullRepositoryVersion() {
 }
 
 std::string getClangFullVersion() {
+  return getClangToolFullVersion("clang");
+}
+
+std::string getClangToolFullVersion(StringRef ToolName) {
   std::string buf;
   llvm::raw_string_ostream OS(buf);
 #ifdef CLANG_VENDOR
   OS << CLANG_VENDOR;
 #endif
-  OS << "clang version " CLANG_VERSION_STRING " "
+  OS << ToolName << " version " CLANG_VERSION_STRING " "
      << getClangFullRepositoryVersion();
 
   // If vendor supplied, include the base LLVM version as well.
