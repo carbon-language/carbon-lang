@@ -10,6 +10,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Explicitly request that the format macros like PRIu64 be enabled if they
+// haven't already been enabled.
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
+
 #if !defined(__APPLE__)
 #include <inttypes.h>
 #endif
