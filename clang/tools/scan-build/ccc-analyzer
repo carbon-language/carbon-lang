@@ -29,6 +29,7 @@ my $Compiler;
 my $Clang;
 my $DefaultCCompiler;
 my $DefaultCXXCompiler;
+my $IsCXX;
 
 if (`uname -a` =~ m/Darwin/) { 
   $DefaultCCompiler = 'clang';
@@ -44,6 +45,8 @@ if ($FindBin::Script =~ /c\+\+-analyzer/) {
   
   $Clang = $ENV{'CLANG_CXX'};
   if (!defined $Clang) { $Clang = 'clang++'; }
+
+  $IsCXX = 1
 }
 else {
   $Compiler = $ENV{'CCC_CC'};
@@ -51,6 +54,8 @@ else {
 
   $Clang = $ENV{'CLANG'};
   if (!defined $Clang) { $Clang = 'clang'; }
+
+  $IsCXX = 0
 }
 
 ##===----------------------------------------------------------------------===##
@@ -377,18 +382,19 @@ my %IgnoredOptionMap = (
 );
 
 my %LangMap = (
-  'c'   => 'c',
+  'c'   => $IsCXX ? 'c++' : 'c',
   'cp'  => 'c++',
   'cpp' => 'c++',
   'cxx' => 'c++',
   'txx' => 'c++',
   'cc'  => 'c++',
   'C'   => 'c++',
-  'ii'  => 'c++',
-  'i'   => 'c-cpp-output',
+  'ii'  => 'c++-cpp-output',
+  'i'   => $IsCXX ? 'c++-cpp-output' : 'c-cpp-output',
   'm'   => 'objective-c',
   'mi'  => 'objective-c-cpp-output',
-  'mm'  => 'objective-c++'
+  'mm'  => 'objective-c++',
+  'mii' => 'objective-c++-cpp-output',
 );
 
 my %UniqueOptions = (
