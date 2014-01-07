@@ -134,7 +134,8 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       return;
     }
   } else {
-    llvm_unreachable("Unknown register class in copyPhysReg");
+    CopyPhysRegTuple(MBB, I, DL, DestReg, SrcReg);
+    return;
   }
 
   // E.g. ORR xDst, xzr, xSrc, lsl #0
@@ -142,6 +143,55 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     .addReg(ZeroReg)
     .addReg(SrcReg)
     .addImm(0);
+}
+
+void AArch64InstrInfo::CopyPhysRegTuple(MachineBasicBlock &MBB,
+                                        MachineBasicBlock::iterator I,
+                                        DebugLoc DL, unsigned DestReg,
+                                        unsigned SrcReg) const {
+  unsigned SubRegs;
+  bool IsQRegs;
+  if (AArch64::DPairRegClass.contains(DestReg, SrcReg)) {
+    SubRegs = 2;
+    IsQRegs = false;
+  } else if (AArch64::DTripleRegClass.contains(DestReg, SrcReg)) {
+    SubRegs = 3;
+    IsQRegs = false;
+  } else if (AArch64::DQuadRegClass.contains(DestReg, SrcReg)) {
+    SubRegs = 4;
+    IsQRegs = false;
+  } else if (AArch64::QPairRegClass.contains(DestReg, SrcReg)) {
+    SubRegs = 2;
+    IsQRegs = true;
+  } else if (AArch64::QTripleRegClass.contains(DestReg, SrcReg)) {
+    SubRegs = 3;
+    IsQRegs = true;
+  } else if (AArch64::QQuadRegClass.contains(DestReg, SrcReg)) {
+    SubRegs = 4;
+    IsQRegs = true;
+  } else
+    llvm_unreachable("Unknown register class");
+
+  unsigned BeginIdx = IsQRegs ? AArch64::qsub_0 : AArch64::dsub_0;
+  int Spacing = 1;
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
+  // Copy register tuples backward when the first Dest reg overlaps
+  // with SrcReg.
+  if (TRI->regsOverlap(SrcReg, TRI->getSubReg(DestReg, BeginIdx))) {
+    BeginIdx = BeginIdx + (SubRegs - 1);
+    Spacing = -1;
+  }
+
+  unsigned Opc = IsQRegs ? AArch64::ORRvvv_16B : AArch64::ORRvvv_8B;
+  for (unsigned i = 0; i != SubRegs; ++i) {
+    unsigned Dst = TRI->getSubReg(DestReg, BeginIdx + i * Spacing);
+    unsigned Src = TRI->getSubReg(SrcReg, BeginIdx + i * Spacing);
+    assert(Dst && Src && "Bad sub-register");
+    BuildMI(MBB, I, I->getDebugLoc(), get(Opc), Dst)
+        .addReg(Src)
+        .addReg(Src);
+  }
+  return;
 }
 
 /// Does the Opcode represent a conditional branch that we can remove and re-add

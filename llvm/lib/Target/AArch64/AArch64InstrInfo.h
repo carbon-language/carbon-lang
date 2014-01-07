@@ -42,6 +42,9 @@ public:
                    MachineBasicBlock::iterator I, DebugLoc DL,
                    unsigned DestReg, unsigned SrcReg,
                    bool KillSrc) const;
+  void CopyPhysRegTuple(MachineBasicBlock &MBB,
+                        MachineBasicBlock::iterator I, DebugLoc DL,
+                        unsigned DestReg, unsigned SrcReg) const;
 
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI,
