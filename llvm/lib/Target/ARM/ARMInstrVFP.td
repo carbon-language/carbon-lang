@@ -1762,3 +1762,14 @@ def : VFP2InstAlias<"vmov${p}.f64 $Dn, $Rt, $Rt2",
 // VMOVD does.
 def : VFP2InstAlias<"vmov${p} $Sd, $Sm",
                     (VMOVS SPR:$Sd, SPR:$Sm, pred:$p)>;
+
+// FCONSTD/FCONSTS alias for vmov.f64/vmov.f32
+// These aliases provide added functionality over vmov.f instructions by
+// allowing users to write assembly containing encoded floating point constants
+// (e.g. #0x70 vs #1.0).  Without these alises there is no way for the
+// assembler to accept encoded fp constants (but the equivalent fp-literal is
+// accepted directly by vmovf).
+def : VFP3InstAlias<"fconstd${p} $Dd, $val",
+                    (FCONSTD DPR:$Dd, vfp_f64imm:$val, pred:$p)>;
+def : VFP3InstAlias<"fconsts${p} $Sd, $val",
+                    (FCONSTS SPR:$Sd, vfp_f32imm:$val, pred:$p)>;

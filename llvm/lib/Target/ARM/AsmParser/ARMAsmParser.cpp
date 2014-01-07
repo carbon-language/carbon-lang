@@ -4620,8 +4620,12 @@ parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // for these:
   // vmov.i{8|16|32|64} <dreg|qreg>, #imm
   ARMOperand *TyOp = static_cast<ARMOperand*>(Operands[2]);
-  if (!TyOp->isToken() || (TyOp->getToken() != ".f32" &&
-                           TyOp->getToken() != ".f64"))
+  bool isVmovf = TyOp->isToken() && (TyOp->getToken() == ".f32" ||
+                                     TyOp->getToken() == ".f64");
+  ARMOperand *Mnemonic = static_cast<ARMOperand*>(Operands[0]);
+  bool isFconst = Mnemonic->isToken() && (Mnemonic->getToken() == "fconstd" ||
+                                          Mnemonic->getToken() == "fconsts");
+  if (!(isVmovf || isFconst))
     return MatchOperand_NoMatch;
 
   Parser.Lex(); // Eat '#' or '$'.
@@ -4634,7 +4638,7 @@ parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   }
   const AsmToken &Tok = Parser.getTok();
   SMLoc Loc = Tok.getLoc();
-  if (Tok.is(AsmToken::Real)) {
+  if (Tok.is(AsmToken::Real) && isVmovf) {
     APFloat RealVal(APFloat::IEEEsingle, Tok.getString());
     uint64_t IntVal = RealVal.bitcastToAPInt().getZExtValue();
     // If we had a '-' in front, toggle the sign bit.
@@ -4647,15 +4651,16 @@ parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   }
   // Also handle plain integers. Instructions which allow floating point
   // immediates also allow a raw encoded 8-bit value.
-  if (Tok.is(AsmToken::Integer)) {
+  if (Tok.is(AsmToken::Integer) && isFconst) {
     int64_t Val = Tok.getIntVal();
     Parser.Lex(); // Eat the token.
     if (Val > 255 || Val < 0) {
       Error(Loc, "encoded floating point value out of range");
       return MatchOperand_ParseFail;
     }
-    double RealVal = ARM_AM::getFPImmFloat(Val);
-    Val = APFloat(APFloat::IEEEdouble, RealVal).bitcastToAPInt().getZExtValue();
+    float RealVal = ARM_AM::getFPImmFloat(Val);
+    Val = APFloat(RealVal).bitcastToAPInt().getZExtValue();
+
     Operands.push_back(ARMOperand::CreateImm(
         MCConstantExpr::Create(Val, getContext()), S,
         Parser.getTok().getLoc()));
@@ -4910,7 +4915,7 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
         Mnemonic == "fmrs" || Mnemonic == "fsqrts" || Mnemonic == "fsubs" ||
         Mnemonic == "fsts" || Mnemonic == "fcpys" || Mnemonic == "fdivs" ||
         Mnemonic == "fmuls" || Mnemonic == "fcmps" || Mnemonic == "fcmpzs" ||
-        Mnemonic == "vfms" || Mnemonic == "vfnms" ||
+        Mnemonic == "vfms" || Mnemonic == "vfnms" || Mnemonic == "fconsts" ||
         (Mnemonic == "movs" && isThumb()))) {
     Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 1);
     CarrySetting = true;

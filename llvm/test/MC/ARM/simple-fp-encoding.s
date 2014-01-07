@@ -395,3 +395,46 @@
 
 @ CHECK: vmov.i32	d4, #0x0        @ encoding: [0x10,0x40,0x80,0xf2]
 @ CHECK: vmov.i32	d4, #0x42000000 @ encoding: [0x12,0x46,0x84,0xf2]
+
+@ Test encoding of floating point constants for vmov functions
+@ vfp3
+         vmov.f32 s5, #1.0
+         vmov.f32 s5, #0.125
+         vmov.f32 s5, #-1.875
+         vmov.f32 s5, #-0.59375
+
+         vmov.f64 d6, #1.0
+         vmov.f64 d6, #0.125
+         vmov.f64 d6, #-1.875
+         vmov.f64 d6, #-0.59375
+
+@ neon
+         vmov.f32 d7, #1.0
+         vmov.f32 d7, #0.125
+         vmov.f32 d7, #-1.875
+         vmov.f32 d7, #-0.59375
+
+         vmov.f32 q8, #1.0
+         vmov.f32 q8, #0.125
+         vmov.f32 q8, #-1.875
+         vmov.f32 q8, #-0.59375
+
+@ CHECK: vmov.f32        s5, #1.000000e+00 @ encoding: [0x00,0x2a,0xf7,0xee]
+@ CHECK: vmov.f32        s5, #1.250000e-01 @ encoding: [0x00,0x2a,0xf4,0xee]
+@ CHECK: vmov.f32        s5, #-1.875000e+00 @ encoding: [0x0e,0x2a,0xff,0xee]
+@ CHECK: vmov.f32        s5, #-5.937500e-01 @ encoding: [0x03,0x2a,0xfe,0xee]
+
+@ CHECK: vmov.f64        d6, #1.000000e+00 @ encoding: [0x00,0x6b,0xb7,0xee]
+@ CHECK: vmov.f64        d6, #1.250000e-01 @ encoding: [0x00,0x6b,0xb4,0xee]
+@ CHECK: vmov.f64        d6, #-1.875000e+00 @ encoding: [0x0e,0x6b,0xbf,0xee]
+@ CHECK: vmov.f64        d6, #-5.937500e-01 @ encoding: [0x03,0x6b,0xbe,0xee]
+
+@ CHECK: vmov.f32        d7, #1.000000e+00 @ encoding: [0x10,0x7f,0x87,0xf2]
+@ CHECK: vmov.f32        d7, #1.250000e-01 @ encoding: [0x10,0x7f,0x84,0xf2]
+@ CHECK: vmov.f32        d7, #-1.875000e+00 @ encoding: [0x1e,0x7f,0x87,0xf3]
+@ CHECK: vmov.f32        d7, #-5.937500e-01 @ encoding: [0x13,0x7f,0x86,0xf3]
+
+@ CHECK: vmov.f32        q8, #1.000000e+00 @ encoding: [0x50,0x0f,0xc7,0xf2]
+@ CHECK: vmov.f32        q8, #1.250000e-01 @ encoding: [0x50,0x0f,0xc4,0xf2]
+@ CHECK: vmov.f32        q8, #-1.875000e+00 @ encoding: [0x5e,0x0f,0xc7,0xf3]
+@ CHECK: vmov.f32        q8, #-5.937500e-01 @ encoding: [0x53,0x0f,0xc6,0xf3]
