@@ -116,46 +116,56 @@ typedef MapVector<const MCSection *, ConstantPool> ConstantPoolMapTy;
 class UnwindContext {
   MCAsmParser &Parser;
 
-  SMLoc FnStartLoc;
-  SMLoc CantUnwindLoc;
-  SMLoc PersonalityLoc;
-  SMLoc HandlerDataLoc;
+  typedef SmallVector<SMLoc, 4> Locs;
+
+  Locs FnStartLocs;
+  Locs CantUnwindLocs;
+  Locs PersonalityLocs;
+  Locs HandlerDataLocs;
   int FPReg;
 
 public:
   UnwindContext(MCAsmParser &P) : Parser(P), FPReg(-1) {}
 
-  bool hasFnStart() const { return FnStartLoc.isValid(); }
-  bool cantUnwind() const { return CantUnwindLoc.isValid(); }
-  bool hasHandlerData() const { return HandlerDataLoc.isValid(); }
-  bool hasPersonality() const { return PersonalityLoc.isValid(); }
+  bool hasFnStart() const { return !FnStartLocs.empty(); }
+  bool cantUnwind() const { return !CantUnwindLocs.empty(); }
+  bool hasHandlerData() const { return !HandlerDataLocs.empty(); }
+  bool hasPersonality() const { return !PersonalityLocs.empty(); }
 
-  void recordFnStart(SMLoc L) { FnStartLoc = L; }
-  void recordCantUnwind(SMLoc L) { CantUnwindLoc = L; }
-  void recordPersonality(SMLoc L) { PersonalityLoc = L; }
-  void recordHandlerData(SMLoc L) { HandlerDataLoc = L; }
+  void recordFnStart(SMLoc L) { FnStartLocs.push_back(L); }
+  void recordCantUnwind(SMLoc L) { CantUnwindLocs.push_back(L); }
+  void recordPersonality(SMLoc L) { PersonalityLocs.push_back(L); }
+  void recordHandlerData(SMLoc L) { HandlerDataLocs.push_back(L); }
 
   void saveFPReg(int Reg) { FPReg = Reg; }
   int getFPReg() const { return FPReg; }
 
   void emitFnStartLocNotes() const {
-    Parser.Note(FnStartLoc, ".fnstart was specified here");
+    for (Locs::const_iterator FI = FnStartLocs.begin(), FE = FnStartLocs.end();
+         FI != FE; ++FI)
+      Parser.Note(*FI, ".fnstart was specified here");
   }
   void emitCantUnwindLocNotes() const {
-    Parser.Note(CantUnwindLoc, ".cantunwind was specified here");
+    for (Locs::const_iterator UI = CantUnwindLocs.begin(),
+                              UE = CantUnwindLocs.end(); UI != UE; ++UI)
+      Parser.Note(*UI, ".cantunwind was specified here");
   }
   void emitHandlerDataLocNotes() const {
-    Parser.Note(HandlerDataLoc, ".handlerdata was specified here");
+    for (Locs::const_iterator HI = HandlerDataLocs.begin(),
+                              HE = HandlerDataLocs.end(); HI != HE; ++HI)
+      Parser.Note(*HI, ".handlerdata was specified here");
   }
   void emitPersonalityLocNotes() const {
-    Parser.Note(PersonalityLoc, ".personality was specified here");
+    for (Locs::const_iterator PI = PersonalityLocs.begin(),
+                              PE = PersonalityLocs.end(); PI != PE; ++PI)
+      Parser.Note(*PI, ".personality was specified here");
   }
 
   void reset() {
-    FnStartLoc = SMLoc();
-    CantUnwindLoc = SMLoc();
-    PersonalityLoc = SMLoc();
-    HandlerDataLoc = SMLoc();
+    FnStartLocs = Locs();
+    CantUnwindLocs = Locs();
+    PersonalityLocs = Locs();
+    HandlerDataLocs = Locs();
     FPReg = -1;
   }
 };
