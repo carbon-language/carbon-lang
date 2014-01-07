@@ -652,11 +652,11 @@ public:
      AF(BPAlloc), ScratchArgs(AF.getEmptyMap()),
      ObjCAllocRetE(gcenabled
                     ? RetEffect::MakeGCNotOwned()
-                    : (usesARC ? RetEffect::MakeARCNotOwned()
+                    : (usesARC ? RetEffect::MakeNotOwned(RetEffect::ObjC)
                                : RetEffect::MakeOwned(RetEffect::ObjC, true))),
      ObjCInitRetE(gcenabled 
                     ? RetEffect::MakeGCNotOwned()
-                    : (usesARC ? RetEffect::MakeARCNotOwned()
+                    : (usesARC ? RetEffect::MakeNotOwned(RetEffect::ObjC)
                                : RetEffect::MakeOwnedWhenTrackedReceiver())) {
     InitializeClassMethodSummaries();
     InitializeMethodSummaries();
@@ -2861,7 +2861,6 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
     }
 
     case RetEffect::GCNotOwnedSymbol:
-    case RetEffect::ARCNotOwnedSymbol:
     case RetEffect::NotOwnedSymbol: {
       const Expr *Ex = CallOrMsg.getOriginExpr();
       SymbolRef Sym = CallOrMsg.getReturnValue().getAsSymbol();

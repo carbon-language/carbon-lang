@@ -114,8 +114,6 @@ public:
     /// Indicates that the object is not owned and controlled by the
     /// Garbage collector.
     GCNotOwnedSymbol,
-    /// Indicates that the object is not owned and controlled by ARC.
-    ARCNotOwnedSymbol,
     /// Indicates that the return value is an owned object when the
     /// receiver is also a tracked object.
     OwnedWhenTrackedReceiver,
@@ -154,7 +152,7 @@ public:
   }
   
   bool notOwned() const {
-    return K == NotOwnedSymbol || K == ARCNotOwnedSymbol;
+    return K == NotOwnedSymbol;
   }
   
   bool operator==(const RetEffect &Other) const {
@@ -173,9 +171,6 @@ public:
   }
   static RetEffect MakeGCNotOwned() {
     return RetEffect(GCNotOwnedSymbol, ObjC);
-  }
-  static RetEffect MakeARCNotOwned() {
-    return RetEffect(ARCNotOwnedSymbol, ObjC);
   }
   static RetEffect MakeNoRet() {
     return RetEffect(NoRet);
