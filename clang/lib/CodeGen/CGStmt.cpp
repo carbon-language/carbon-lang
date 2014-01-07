@@ -37,7 +37,7 @@ void CodeGenFunction::EmitStopPoint(const Stmt *S) {
     Loc = S->getLocStart();
     DI->EmitLocation(Builder, Loc);
 
-    LastStopPoint = Loc;
+    LastStopPoint = std::make_pair(Loc, DI->getScope());
   }
 }
 

@@ -209,9 +209,10 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // all will be fine.
   if (CGDebugInfo *DI = getDebugInfo()) {
     if (OnlySimpleReturnStmts)
-      DI->EmitLocation(Builder, LastStopPoint, false);
+      DI->EmitLocation(Builder, LastStopPoint.first,
+                       false, LastStopPoint.second);
     else
-      DI->EmitLocation(Builder, EndLoc, false);
+      DI->EmitLocation(Builder, EndLoc, false, LastStopPoint.second);
   }
 
   // Pop any cleanups that might have been associated with the
@@ -228,7 +229,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
 
     if (CGDebugInfo *DI = getDebugInfo())
       if (OnlySimpleReturnStmts)
-        DI->EmitLocation(Builder, EndLoc, false);
+        DI->EmitLocation(Builder, EndLoc, false, LastStopPoint.second);
   }
 
   // Emit function epilog (to return).
