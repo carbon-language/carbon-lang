@@ -1464,7 +1464,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // declaration. The completeType, completeRequiredType, and completeClassData
   // callbacks will handle promoting the declaration to a definition.
   if (T ||
-      // Under -flimit-debug-info:
+      // Under -fno-standalone-debug:
       (DebugKind <= CodeGenOptions::LimitedDebugInfo &&
        // Emit only a forward declaration unless the type is required.
        ((!RD->isCompleteDefinitionRequired() && CGM.getLangOpts().CPlusPlus) ||
