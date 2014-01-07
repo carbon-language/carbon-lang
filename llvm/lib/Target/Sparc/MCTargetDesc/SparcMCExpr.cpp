@@ -67,6 +67,37 @@ void SparcMCExpr::PrintImpl(raw_ostream &OS) const
     OS << ')';
 }
 
+SparcMCExpr::VariantKind SparcMCExpr::parseVariantKind(StringRef name)
+{
+  return StringSwitch<SparcMCExpr::VariantKind>(name)
+    .Case("lo",  VK_Sparc_LO)
+    .Case("hi",  VK_Sparc_HI)
+    .Case("h44", VK_Sparc_H44)
+    .Case("m44", VK_Sparc_M44)
+    .Case("l44", VK_Sparc_L44)
+    .Case("hh",  VK_Sparc_HH)
+    .Case("hm",  VK_Sparc_HM)
+    .Case("tgd_hi22",   VK_Sparc_TLS_GD_HI22)
+    .Case("tgd_lo10",   VK_Sparc_TLS_GD_LO10)
+    .Case("tgd_add",    VK_Sparc_TLS_GD_ADD)
+    .Case("tgd_call",   VK_Sparc_TLS_GD_CALL)
+    .Case("tldm_hi22",  VK_Sparc_TLS_LDM_HI22)
+    .Case("tldm_lo10",  VK_Sparc_TLS_LDM_LO10)
+    .Case("tldm_add",   VK_Sparc_TLS_LDM_ADD)
+    .Case("tldm_call",  VK_Sparc_TLS_LDM_CALL)
+    .Case("tldo_hix22", VK_Sparc_TLS_LDO_HIX22)
+    .Case("tldo_lox10", VK_Sparc_TLS_LDO_LOX10)
+    .Case("tldo_add",   VK_Sparc_TLS_LDO_ADD)
+    .Case("tie_hi22",   VK_Sparc_TLS_IE_HI22)
+    .Case("tie_lo10",   VK_Sparc_TLS_IE_LO10)
+    .Case("tie_ld",     VK_Sparc_TLS_IE_LD)
+    .Case("tie_ldx",    VK_Sparc_TLS_IE_LDX)
+    .Case("tie_add",    VK_Sparc_TLS_IE_ADD)
+    .Case("tle_hix22",  VK_Sparc_TLS_LE_HIX22)
+    .Case("tle_lox10",  VK_Sparc_TLS_LE_LOX10)
+    .Default(VK_Sparc_None);
+}
+
 bool
 SparcMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
                                          const MCAsmLayout *Layout) const {

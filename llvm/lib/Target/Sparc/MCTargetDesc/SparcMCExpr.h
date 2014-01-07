@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+class StringRef;
 class SparcMCExpr : public MCTargetExpr {
 public:
   enum VariantKind {
@@ -90,6 +91,7 @@ public:
 
   static bool classof(const SparcMCExpr *) { return true; }
 
+  static VariantKind parseVariantKind(StringRef name);
 
 };
 

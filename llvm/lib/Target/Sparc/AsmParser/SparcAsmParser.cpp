@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/SparcMCTargetDesc.h"
+#include "MCTargetDesc/SparcMCExpr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
@@ -68,6 +69,7 @@ class SparcAsmParser : public MCTargetAsmParser {
   // returns true if Tok is matched to a register and returns register in RegNo.
   bool matchRegisterName(const AsmToken &Tok, unsigned &RegNo, bool isDFP,
                          bool isQFP);
+  bool matchSparcAsmModifiers(const MCExpr *&EVal, SMLoc &EndLoc);
 
 public:
   SparcAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
@@ -536,28 +538,30 @@ SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op)
     unsigned RegNo;
     if (matchRegisterName(Parser.getTok(), RegNo, false, false)) {
       Parser.Lex(); // Eat the identifier token.
+      E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
       Op = SparcOperand::CreateReg(RegNo, SparcOperand::rk_None, S, E);
       break;
     }
-    // FIXME: Handle modifiers like %hi, %lo etc.,
+    if (matchSparcAsmModifiers(EVal, E)) {
+      E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+      Op = SparcOperand::CreateImm(EVal, S, E);
+    }
     break;
 
   case AsmToken::Minus:
   case AsmToken::Integer:
-    if (!getParser().parseExpression(EVal))
+    if (!getParser().parseExpression(EVal, E))
       Op = SparcOperand::CreateImm(EVal, S, E);
     break;
 
   case AsmToken::Identifier: {
     StringRef Identifier;
     if (!getParser().parseIdentifier(Identifier)) {
-      SMLoc E = SMLoc::getFromPointer(Parser.getTok().
-                                      getLoc().getPointer() - 1);
+      E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
       MCSymbol *Sym = getContext().GetOrCreateSymbol(Identifier);
 
       const MCExpr *Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
                                                   getContext());
-
       Op = SparcOperand::CreateImm(Res, S, E);
     }
     break;
@@ -674,6 +678,32 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
   return false;
 }
 
+
+bool SparcAsmParser::matchSparcAsmModifiers(const MCExpr *&EVal,
+                                            SMLoc &EndLoc)
+{
+  AsmToken Tok = Parser.getTok();
+  if (!Tok.is(AsmToken::Identifier))
+    return false;
+
+  StringRef name = Tok.getString();
+
+  SparcMCExpr::VariantKind VK = SparcMCExpr::parseVariantKind(name);
+
+  if (VK == SparcMCExpr::VK_Sparc_None)
+    return false;
+
+  Parser.Lex(); // Eat the identifier.
+  if (Parser.getTok().getKind() != AsmToken::LParen)
+    return false;
+
+  Parser.Lex(); // Eat the LParen token.
+  const MCExpr *subExpr;
+  if (Parser.parseParenExpression(subExpr, EndLoc))
+    return false;
+  EVal = SparcMCExpr::Create(VK, subExpr, getContext());
+  return true;
+}
 
 
 extern "C" void LLVMInitializeSparcAsmParser() {

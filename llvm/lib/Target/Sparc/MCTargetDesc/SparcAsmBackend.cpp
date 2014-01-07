@@ -27,11 +27,11 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case FK_Data_8:
     return Value;
   case Sparc::fixup_sparc_call30:
-    return Value & 0x3fffffff;
+    return (Value >> 2) & 0x3fffffff;
   case Sparc::fixup_sparc_br22:
-    return Value & 0x3fffff;
+    return (Value >> 2) & 0x3fffff;
   case Sparc::fixup_sparc_br19:
-    return Value & 0x1ffff;
+    return (Value >> 2) & 0x1ffff;
   case Sparc::fixup_sparc_hi22:
     return (Value >> 10) & 0x3fffff;
   case Sparc::fixup_sparc_lo10:
@@ -45,7 +45,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case Sparc::fixup_sparc_hh:
     return (Value >> 42) & 0x3fffff;
   case Sparc::fixup_sparc_hm:
-    return (Value >>32) & 0x3ff;
+    return (Value >> 32) & 0x3ff;
   }
 }
 
@@ -62,16 +62,16 @@ namespace {
     const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
       const static MCFixupKindInfo Infos[Sparc::NumTargetFixupKinds] = {
         // name                    offset bits  flags
-        { "fixup_sparc_call30",     0,     30,  MCFixupKindInfo::FKF_IsPCRel },
-        { "fixup_sparc_br22",       0,     22,  MCFixupKindInfo::FKF_IsPCRel },
-        { "fixup_sparc_br19",       0,     19,  MCFixupKindInfo::FKF_IsPCRel },
-        { "fixup_sparc_hi22",       0,     22,  0 },
-        { "fixup_sparc_lo10",       0,     10,  0 },
-        { "fixup_sparc_h44",        0,     22,  0 },
-        { "fixup_sparc_m44",        0,     10,  0 },
-        { "fixup_sparc_l44",        0,     12,  0 },
-        { "fixup_sparc_hh",         0,     21,  0 },
-        { "fixup_sparc_hm",         0,     10,  0 },
+        { "fixup_sparc_call30",     2,     30,  MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_sparc_br22",      10,     22,  MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_sparc_br19",      13,     19,  MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_sparc_hi22",      10,     22,  0 },
+        { "fixup_sparc_lo10",      22,     10,  0 },
+        { "fixup_sparc_h44",       10,     22,  0 },
+        { "fixup_sparc_m44",       22,     10,  0 },
+        { "fixup_sparc_l44",       20,     12,  0 },
+        { "fixup_sparc_hh",        10,     22,  0 },
+        { "fixup_sparc_hm",        22,     10,  0 },
       };
 
       if (Kind < FirstTargetFixupKind)
