@@ -19,11 +19,11 @@
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/DebugInfo.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/Target/Mangler.h"
 
 using namespace llvm;
 

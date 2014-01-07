@@ -32,6 +32,7 @@
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Writer.h"
@@ -51,7 +52,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cctype>
 using namespace llvm;

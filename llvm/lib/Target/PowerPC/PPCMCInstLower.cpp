@@ -21,10 +21,10 @@
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 

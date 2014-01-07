@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCTargetObjectFile.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionELF.h"
-#include "llvm/Target/Mangler.h"
 
 using namespace llvm;
 

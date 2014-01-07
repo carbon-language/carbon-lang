@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/StackMaps.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/IR/Type.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -27,7 +28,6 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Target/Mangler.h"
 using namespace llvm;
 
 namespace {

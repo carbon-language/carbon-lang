@@ -1,5 +1,4 @@
 add_llvm_library(LLVMTarget
-  Mangler.cpp
   Target.cpp
   TargetIntrinsicInfo.cpp
   TargetJITInfo.cpp

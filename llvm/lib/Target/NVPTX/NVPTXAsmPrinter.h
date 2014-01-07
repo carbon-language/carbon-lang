@@ -27,7 +27,6 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetMachine.h"
 #include <fstream>
 

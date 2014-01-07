@@ -1,4 +1,4 @@
-//===-- llvm/Target/Mangler.h - Self-contained name mangler -----*- C++ -*-===//
+//===-- llvm/IR/Mangler.h - Self-contained name mangler ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

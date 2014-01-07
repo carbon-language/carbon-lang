@@ -9,9 +9,9 @@
 
 #include "SystemZMCInstLower.h"
 #include "SystemZAsmPrinter.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/Mangler.h"
 
 using namespace llvm;
 

@@ -17,9 +17,9 @@
 #include "MCTargetDesc/ARMMCExpr.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/Target/Mangler.h"
 using namespace llvm;
 
 
