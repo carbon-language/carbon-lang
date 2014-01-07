@@ -477,12 +477,18 @@ AArch64InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     default:
       llvm_unreachable("Unknown size for regclass");
     }
-  } else { // The spill of D tuples is implemented by Q tuples
-    if (RC == &AArch64::QPairRegClass)
+  } else { // For a super register class has more than one sub registers
+    if (AArch64::DPairRegClass.hasSubClassEq(RC))
+      StoreOp = AArch64::ST1x2_8B;
+    else if (AArch64::DTripleRegClass.hasSubClassEq(RC))
+      StoreOp = AArch64::ST1x3_8B;
+    else if (AArch64::DQuadRegClass.hasSubClassEq(RC))
+      StoreOp = AArch64::ST1x4_8B;
+    else if (AArch64::QPairRegClass.hasSubClassEq(RC))
       StoreOp = AArch64::ST1x2_16B;
-    else if (RC == &AArch64::QTripleRegClass)
+    else if (AArch64::QTripleRegClass.hasSubClassEq(RC))
       StoreOp = AArch64::ST1x3_16B;
-    else if (RC == &AArch64::QQuadRegClass)
+    else if (AArch64::QQuadRegClass.hasSubClassEq(RC))
       StoreOp = AArch64::ST1x4_16B;
     else
       llvm_unreachable("Unknown reg class");
@@ -537,12 +543,18 @@ AArch64InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     default:
       llvm_unreachable("Unknown size for regclass");
     }
-  } else { // The spill of D tuples is implemented by Q tuples
-    if (RC == &AArch64::QPairRegClass)
+  } else { // For a super register class has more than one sub registers
+    if (AArch64::DPairRegClass.hasSubClassEq(RC))
+      LoadOp = AArch64::LD1x2_8B;
+    else if (AArch64::DTripleRegClass.hasSubClassEq(RC))
+      LoadOp = AArch64::LD1x3_8B;
+    else if (AArch64::DQuadRegClass.hasSubClassEq(RC))
+      LoadOp = AArch64::LD1x4_8B;
+    else if (AArch64::QPairRegClass.hasSubClassEq(RC))
       LoadOp = AArch64::LD1x2_16B;
-    else if (RC == &AArch64::QTripleRegClass)
+    else if (AArch64::QTripleRegClass.hasSubClassEq(RC))
       LoadOp = AArch64::LD1x3_16B;
-    else if (RC == &AArch64::QQuadRegClass)
+    else if (AArch64::QQuadRegClass.hasSubClassEq(RC))
       LoadOp = AArch64::LD1x4_16B;
     else
       llvm_unreachable("Unknown reg class");
@@ -649,6 +661,17 @@ void AArch64InstrInfo::getAddressConstraints(const MachineInstr &MI,
     MinOffset = -0x40 * AccessScale;
     MaxOffset = 0x3f * AccessScale;
     return;
+  case AArch64::LD1x2_8B: case AArch64::ST1x2_8B:
+    AccessScale = 16;
+    MinOffset = 0;
+    MaxOffset = 0xfff * AccessScale;
+    return;
+  case AArch64::LD1x3_8B: case AArch64::ST1x3_8B:
+    AccessScale = 24;
+    MinOffset = 0;
+    MaxOffset = 0xfff * AccessScale;
+    return;
+  case AArch64::LD1x4_8B: case AArch64::ST1x4_8B:
   case AArch64::LD1x2_16B: case AArch64::ST1x2_16B:
     AccessScale = 32;
     MinOffset = 0;

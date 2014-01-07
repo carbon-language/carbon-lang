@@ -132,3 +132,44 @@ declare { <4 x float>, <4 x float>, <4 x float> } @llvm.arm.neon.vld3.v4f32(i8*,
 declare { <16 x i8>, <16 x i8>, <16 x i8>, <16 x i8> } @llvm.arm.neon.vld4.v16i8(i8*, i32)
 
 declare void @foo()
+
+; FIXME: We should not generate ld/st for such register spill/fill, because the
+; test case seems very simple and the register pressure is not high. If the
+; spill/fill algorithm is optimized, this test case may not be triggered. And
+; then we can delete it.
+; check the spill for Register Class QPair_with_qsub_0_in_FPR128Lo
+define <8 x i16> @test_2xFPR128Lo(i64 %got, i8* %ptr, <1 x i64> %a) {
+  tail call void @llvm.arm.neon.vst2lane.v1i64(i8* %ptr, <1 x i64> zeroinitializer, <1 x i64> zeroinitializer, i32 0, i32 8)
+  tail call void @foo()
+  %sv = shufflevector <1 x i64> zeroinitializer, <1 x i64> %a, <2 x i32> <i32 0, i32 1>
+  %1 = bitcast <2 x i64> %sv to <8 x i16>
+  %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2>
+  %3 = mul <8 x i16> %2, %2
+  ret <8 x i16> %3
+}
+
+; check the spill for Register Class QTriple_with_qsub_0_in_FPR128Lo
+define <8 x i16> @test_3xFPR128Lo(i64 %got, i8* %ptr, <1 x i64> %a) {
+  tail call void @llvm.arm.neon.vst3lane.v1i64(i8* %ptr, <1 x i64> zeroinitializer, <1 x i64> zeroinitializer, <1 x i64> zeroinitializer, i32 0, i32 8)
+  tail call void @foo()
+  %sv = shufflevector <1 x i64> zeroinitializer, <1 x i64> %a, <2 x i32> <i32 0, i32 1>
+  %1 = bitcast <2 x i64> %sv to <8 x i16>
+  %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2>
+  %3 = mul <8 x i16> %2, %2
+  ret <8 x i16> %3
+}
+
+; check the spill for Register Class QQuad_with_qsub_0_in_FPR128Lo
+define <8 x i16> @test_4xFPR128Lo(i64 %got, i8* %ptr, <1 x i64> %a) {
+  tail call void @llvm.arm.neon.vst4lane.v1i64(i8* %ptr, <1 x i64> zeroinitializer, <1 x i64> zeroinitializer, <1 x i64> zeroinitializer, <1 x i64> zeroinitializer, i32 0, i32 8)
+  tail call void @foo()
+  %sv = shufflevector <1 x i64> zeroinitializer, <1 x i64> %a, <2 x i32> <i32 0, i32 1>
+  %1 = bitcast <2 x i64> %sv to <8 x i16>
+  %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2>
+  %3 = mul <8 x i16> %2, %2
+  ret <8 x i16> %3
+}
+
+declare void @llvm.arm.neon.vst2lane.v1i64(i8*, <1 x i64>, <1 x i64>, i32, i32)
+declare void @llvm.arm.neon.vst3lane.v1i64(i8*, <1 x i64>, <1 x i64>, <1 x i64>, i32, i32)
+declare void @llvm.arm.neon.vst4lane.v1i64(i8*, <1 x i64>, <1 x i64>, <1 x i64>, <1 x i64>, i32, i32)

@@ -77,7 +77,10 @@ AArch64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 }
 
 static bool hasFrameOffset(int opcode) {
-  return opcode != AArch64::LD1x2_16B && opcode != AArch64::LD1x3_16B &&
+  return opcode != AArch64::LD1x2_8B  && opcode != AArch64::LD1x3_8B  &&
+         opcode != AArch64::LD1x4_8B  && opcode != AArch64::ST1x2_8B  &&
+         opcode != AArch64::ST1x3_8B  && opcode != AArch64::ST1x4_8B  &&
+         opcode != AArch64::LD1x2_16B && opcode != AArch64::LD1x3_16B &&
          opcode != AArch64::LD1x4_16B && opcode != AArch64::ST1x2_16B &&
          opcode != AArch64::ST1x3_16B && opcode != AArch64::ST1x4_16B;
 }

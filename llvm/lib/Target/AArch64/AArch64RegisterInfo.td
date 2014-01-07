@@ -30,7 +30,6 @@ def dsub_0 : SubRegIndex<64>;
 def dsub_1 : SubRegIndex<64, 64>;
 def dsub_2 : ComposedSubRegIndex<qsub_1, dsub_0>;
 def dsub_3 : ComposedSubRegIndex<qsub_1, dsub_1>;
-def dsub_4 : ComposedSubRegIndex<qsub_2, dsub_0>;
 }
 
 // Registers are identified with 5-bit ID numbers.
@@ -206,7 +205,7 @@ def FlagClass : RegisterClass<"AArch64", [i32], 32, (add NZCV)> {
 //===----------------------------------------------------------------------===//
 //  Consecutive vector registers
 //===----------------------------------------------------------------------===//
-// 2 Consecutive 64-bit registers: D0_D1, D1_D2, ..., D30_D31
+// 2 Consecutive 64-bit registers: D0_D1, D1_D2, ..., D31_D0
 def Tuples2D : RegisterTuples<[dsub_0, dsub_1],
                               [(rotl FPR64, 0), (rotl FPR64, 1)]>;
                               
