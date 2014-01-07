@@ -296,7 +296,8 @@ static void ParseCommentArgs(CommentOptions &Opts, ArgList &Args) {
 }
 
 static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
-                             DiagnosticsEngine &Diags) {
+                             DiagnosticsEngine &Diags,
+                             const TargetOptions &TargetOpts) {
   using namespace options;
   bool Success = true;
 
@@ -323,10 +324,16 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
     Opts.setDebugInfo(CodeGenOptions::DebugLineTablesOnly);
   } else if (Args.hasArg(OPT_g_Flag) || Args.hasArg(OPT_gdwarf_2) ||
              Args.hasArg(OPT_gdwarf_3) || Args.hasArg(OPT_gdwarf_4)) {
-    if (Args.hasFlag(OPT_flimit_debug_info, OPT_fno_limit_debug_info, true))
-      Opts.setDebugInfo(CodeGenOptions::LimitedDebugInfo);
-    else
+    bool Default = false;
+    // Until dtrace (via CTF) can deal with distributed debug info,
+    // Darwin defaults to standalone/full debug info.
+    if (llvm::Triple(TargetOpts.Triple).isOSDarwin())
+      Default = true;
+
+    if (Args.hasFlag(OPT_fstandalone_debug, OPT_fno_standalone_debug, Default))
       Opts.setDebugInfo(CodeGenOptions::FullDebugInfo);
+    else
+      Opts.setDebugInfo(CodeGenOptions::LimitedDebugInfo);
   }
   Opts.DebugColumnInfo = Args.hasArg(OPT_dwarf_column_info);
   Opts.SplitDwarfFile = Args.getLastArgValue(OPT_split_dwarf_file);
@@ -1662,8 +1669,9 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParseFileSystemArgs(Res.getFileSystemOpts(), *Args);
   // FIXME: We shouldn't have to pass the DashX option around here
   InputKind DashX = ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
-  Success = ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, DashX, Diags)
-            && Success;
+  ParseTargetArgs(Res.getTargetOpts(), *Args);
+  Success = ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, DashX, Diags,
+                             Res.getTargetOpts()) && Success;
   ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args);
   if (DashX != IK_AST && DashX != IK_LLVM_IR) {
     ParseLangArgs(*Res.getLangOpts(), *Args, DashX, Diags);
@@ -1678,8 +1686,6 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, FileMgr, Diags);
   ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args,
                               Res.getFrontendOpts().ProgramAction);
-  ParseTargetArgs(Res.getTargetOpts(), *Args);
-
   return Success;
 }
 

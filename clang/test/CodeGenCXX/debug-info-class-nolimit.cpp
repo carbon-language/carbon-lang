@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -triple x86_64-unk-unk -fno-limit-debug-info -o - -emit-llvm -g %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unk-unk -fstandalone-debug -o - -emit-llvm -g %s | FileCheck %s
+// On Darwin, this should be the default:
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -o - -emit-llvm -g %s | FileCheck %s
 
 namespace rdar14101097_1 { // see also PR16214
 // Check that we emit debug info for the definition of a struct if the

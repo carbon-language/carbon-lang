@@ -1,6 +1,6 @@
-// RUN: %clang -g -S -emit-llvm %s -o - | FileCheck %s
-// RUN: %clang -g -gline-tables-only -S -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-GMLT %s
-// RUN: %clang -g -fno-limit-debug-info -S -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-NOLIMIT %s
+// RUN: %clang -g -fno-standalone-debug -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang -g -gline-tables-only    -S -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-GMLT %s
+// RUN: %clang -g -fstandalone-debug    -S -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-NOLIMIT %s
 
 namespace A {
 #line 1 "foo.cpp"

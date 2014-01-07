@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g -triple x86_64-apple-darwin %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -g -fno-standalone-debug -triple x86_64-apple-darwin %s -o - | FileCheck %s
 
 struct MyClass {
   template <int i> int add(int j) {

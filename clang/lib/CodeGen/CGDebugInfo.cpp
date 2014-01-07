@@ -1464,13 +1464,13 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // declaration. The completeType, completeRequiredType, and completeClassData
   // callbacks will handle promoting the declaration to a definition.
   if (T ||
+      // Under -flimit-debug-info:
       (DebugKind <= CodeGenOptions::LimitedDebugInfo &&
-       // Under -flimit-debug-info, emit only a declaration unless the type is
-       // required to be complete.
-       !RD->isCompleteDefinitionRequired() && CGM.getLangOpts().CPlusPlus) ||
-      // If the class is dynamic, only emit a declaration. A definition will be
-      // emitted whenever the vtable is emitted.
-      (CXXDecl && CXXDecl->hasDefinition() && CXXDecl->isDynamicClass())) {
+       // Emit only a forward declaration unless the type is required.
+       ((!RD->isCompleteDefinitionRequired() && CGM.getLangOpts().CPlusPlus) ||
+        // If the class is dynamic, only emit a declaration. A definition will be
+        // emitted whenever the vtable is emitted.
+        (CXXDecl && CXXDecl->hasDefinition() && CXXDecl->isDynamicClass())))) {
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
     if (!T)

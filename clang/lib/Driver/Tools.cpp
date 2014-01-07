@@ -2945,8 +2945,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Forward -f (flag) options which we can pass directly.
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
   Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
-  Args.AddLastArg(CmdArgs, options::OPT_flimit_debug_info);
-  Args.AddLastArg(CmdArgs, options::OPT_fno_limit_debug_info);
+  Args.AddLastArg(CmdArgs, options::OPT_fstandalone_debug);
+  Args.AddLastArg(CmdArgs, options::OPT_fno_standalone_debug);
   Args.AddLastArg(CmdArgs, options::OPT_fno_operator_names);
   // AltiVec language extensions aren't relevant for assembling.
   if (!isa<PreprocessJobAction>(JA) || 

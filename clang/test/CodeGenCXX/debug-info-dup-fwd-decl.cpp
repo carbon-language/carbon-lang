@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g -triple x86_64-apple-darwin -fno-limit-debug-info %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -g -triple x86_64-apple-darwin -fstandalone-debug %s -o - | FileCheck %s
 
 class Test
 {
