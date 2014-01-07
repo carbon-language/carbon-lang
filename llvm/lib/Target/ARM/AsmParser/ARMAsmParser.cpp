@@ -113,12 +113,60 @@ public:
 // file.
 typedef MapVector<const MCSection *, ConstantPool> ConstantPoolMapTy;
 
+class UnwindContext {
+  MCAsmParser &Parser;
+
+  SMLoc FnStartLoc;
+  SMLoc CantUnwindLoc;
+  SMLoc PersonalityLoc;
+  SMLoc HandlerDataLoc;
+  int FPReg;
+
+public:
+  UnwindContext(MCAsmParser &P) : Parser(P), FPReg(-1) {}
+
+  bool hasFnStart() const { return FnStartLoc.isValid(); }
+  bool cantUnwind() const { return CantUnwindLoc.isValid(); }
+  bool hasHandlerData() const { return HandlerDataLoc.isValid(); }
+  bool hasPersonality() const { return PersonalityLoc.isValid(); }
+
+  void recordFnStart(SMLoc L) { FnStartLoc = L; }
+  void recordCantUnwind(SMLoc L) { CantUnwindLoc = L; }
+  void recordPersonality(SMLoc L) { PersonalityLoc = L; }
+  void recordHandlerData(SMLoc L) { HandlerDataLoc = L; }
+
+  void saveFPReg(int Reg) { FPReg = Reg; }
+  int getFPReg() const { return FPReg; }
+
+  void emitFnStartLocNotes() const {
+    Parser.Note(FnStartLoc, ".fnstart was specified here");
+  }
+  void emitCantUnwindLocNotes() const {
+    Parser.Note(CantUnwindLoc, ".cantunwind was specified here");
+  }
+  void emitHandlerDataLocNotes() const {
+    Parser.Note(HandlerDataLoc, ".handlerdata was specified here");
+  }
+  void emitPersonalityLocNotes() const {
+    Parser.Note(PersonalityLoc, ".personality was specified here");
+  }
+
+  void reset() {
+    FnStartLoc = SMLoc();
+    CantUnwindLoc = SMLoc();
+    PersonalityLoc = SMLoc();
+    HandlerDataLoc = SMLoc();
+    FPReg = -1;
+  }
+};
+
 class ARMAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
   const MCInstrInfo &MII;
   const MCRegisterInfo *MRI;
   ConstantPoolMapTy ConstantPools;
+  UnwindContext UC;
 
   // Assembler created constant pools for ldr pseudo
   ConstantPool *getConstantPool(const MCSection *Section) {
@@ -136,20 +184,6 @@ class ARMAsmParser : public MCTargetAsmParser {
   ARMTargetStreamer &getTargetStreamer() {
     MCTargetStreamer &TS = getParser().getStreamer().getTargetStreamer();
     return static_cast<ARMTargetStreamer &>(TS);
-  }
-
-  // Unwind directives state
-  SMLoc FnStartLoc;
-  SMLoc CantUnwindLoc;
-  SMLoc PersonalityLoc;
-  SMLoc HandlerDataLoc;
-  int FPReg;
-  void resetUnwindDirectiveParserState() {
-    FnStartLoc = SMLoc();
-    CantUnwindLoc = SMLoc();
-    PersonalityLoc = SMLoc();
-    HandlerDataLoc = SMLoc();
-    FPReg = -1;
   }
 
   // Map of register aliases registers via the .req directive.
@@ -348,7 +382,7 @@ public:
 
   ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
                const MCInstrInfo &MII)
-      : MCTargetAsmParser(), STI(_STI), Parser(_Parser), MII(MII), FPReg(-1) {
+      : MCTargetAsmParser(), STI(_STI), Parser(_Parser), MII(MII), UC(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
 
     // Cache the MCRegisterInfo.
@@ -8325,14 +8359,15 @@ bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
 /// parseDirectiveFnStart
 ///  ::= .fnstart
 bool ARMAsmParser::parseDirectiveFnStart(SMLoc L) {
-  if (FnStartLoc.isValid()) {
+  if (UC.hasFnStart()) {
     Error(L, ".fnstart starts before the end of previous one");
-    Note(FnStartLoc, "previous .fnstart starts here");
+    UC.emitFnStartLocNotes();
     return false;
   }
 
-  FnStartLoc = L;
   getTargetStreamer().emitFnStart();
+
+  UC.recordFnStart(L);
   return false;
 }
 
@@ -8340,34 +8375,36 @@ bool ARMAsmParser::parseDirectiveFnStart(SMLoc L) {
 ///  ::= .fnend
 bool ARMAsmParser::parseDirectiveFnEnd(SMLoc L) {
   // Check the ordering of unwind directives
-  if (!FnStartLoc.isValid()) {
+  if (!UC.hasFnStart()) {
     Error(L, ".fnstart must precede .fnend directive");
     return false;
   }
 
   // Reset the unwind directives parser state
-  resetUnwindDirectiveParserState();
   getTargetStreamer().emitFnEnd();
+
+  UC.reset();
   return false;
 }
 
 /// parseDirectiveCantUnwind
 ///  ::= .cantunwind
 bool ARMAsmParser::parseDirectiveCantUnwind(SMLoc L) {
+  UC.recordCantUnwind(L);
+
   // Check the ordering of unwind directives
-  CantUnwindLoc = L;
-  if (!FnStartLoc.isValid()) {
+  if (!UC.hasFnStart()) {
     Error(L, ".fnstart must precede .cantunwind directive");
     return false;
   }
-  if (HandlerDataLoc.isValid()) {
+  if (UC.hasHandlerData()) {
     Error(L, ".cantunwind can't be used with .handlerdata directive");
-    Note(HandlerDataLoc, ".handlerdata was specified here");
+    UC.emitHandlerDataLocNotes();
     return false;
   }
-  if (PersonalityLoc.isValid()) {
+  if (UC.hasPersonality()) {
     Error(L, ".cantunwind can't be used with .personality directive");
-    Note(PersonalityLoc, ".personality was specified here");
+    UC.emitPersonalityLocNotes();
     return false;
   }
 
@@ -8378,20 +8415,21 @@ bool ARMAsmParser::parseDirectiveCantUnwind(SMLoc L) {
 /// parseDirectivePersonality
 ///  ::= .personality name
 bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
+  UC.recordPersonality(L);
+
   // Check the ordering of unwind directives
-  PersonalityLoc = L;
-  if (!FnStartLoc.isValid()) {
+  if (!UC.hasFnStart()) {
     Error(L, ".fnstart must precede .personality directive");
     return false;
   }
-  if (CantUnwindLoc.isValid()) {
+  if (UC.cantUnwind()) {
     Error(L, ".personality can't be used with .cantunwind directive");
-    Note(CantUnwindLoc, ".cantunwind was specified here");
+    UC.emitCantUnwindLocNotes();
     return false;
   }
-  if (HandlerDataLoc.isValid()) {
+  if (UC.hasHandlerData()) {
     Error(L, ".personality must precede .handlerdata directive");
-    Note(HandlerDataLoc, ".handlerdata was specified here");
+    UC.emitHandlerDataLocNotes();
     return false;
   }
 
@@ -8412,15 +8450,16 @@ bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
 /// parseDirectiveHandlerData
 ///  ::= .handlerdata
 bool ARMAsmParser::parseDirectiveHandlerData(SMLoc L) {
+  UC.recordHandlerData(L);
+
   // Check the ordering of unwind directives
-  HandlerDataLoc = L;
-  if (!FnStartLoc.isValid()) {
+  if (!UC.hasFnStart()) {
     Error(L, ".fnstart must precede .personality directive");
     return false;
   }
-  if (CantUnwindLoc.isValid()) {
+  if (UC.cantUnwind()) {
     Error(L, ".handlerdata can't be used with .cantunwind directive");
-    Note(CantUnwindLoc, ".cantunwind was specified here");
+    UC.emitCantUnwindLocNotes();
     return false;
   }
 
@@ -8432,20 +8471,20 @@ bool ARMAsmParser::parseDirectiveHandlerData(SMLoc L) {
 ///  ::= .setfp fpreg, spreg [, offset]
 bool ARMAsmParser::parseDirectiveSetFP(SMLoc L) {
   // Check the ordering of unwind directives
-  if (!FnStartLoc.isValid()) {
+  if (!UC.hasFnStart()) {
     Error(L, ".fnstart must precede .setfp directive");
     return false;
   }
-  if (HandlerDataLoc.isValid()) {
+  if (UC.hasHandlerData()) {
     Error(L, ".setfp must precede .handlerdata directive");
     return false;
   }
 
   // Parse fpreg
-  SMLoc NewFPRegLoc = Parser.getTok().getLoc();
-  int NewFPReg = tryParseRegister();
-  if (NewFPReg == -1) {
-    Error(NewFPRegLoc, "frame pointer register expected");
+  SMLoc FPRegLoc = Parser.getTok().getLoc();
+  int FPReg = tryParseRegister();
+  if (FPReg == -1) {
+    Error(FPRegLoc, "frame pointer register expected");
     return false;
   }
 
@@ -8457,21 +8496,20 @@ bool ARMAsmParser::parseDirectiveSetFP(SMLoc L) {
   Parser.Lex(); // skip comma
 
   // Parse spreg
-  SMLoc NewSPRegLoc = Parser.getTok().getLoc();
-  int NewSPReg = tryParseRegister();
-  if (NewSPReg == -1) {
-    Error(NewSPRegLoc, "stack pointer register expected");
+  SMLoc SPRegLoc = Parser.getTok().getLoc();
+  int SPReg = tryParseRegister();
+  if (SPReg == -1) {
+    Error(SPRegLoc, "stack pointer register expected");
     return false;
   }
 
-  if (NewSPReg != ARM::SP && NewSPReg != FPReg) {
-    Error(NewSPRegLoc,
-          "register should be either $sp or the latest fp register");
+  if (SPReg != ARM::SP && SPReg != UC.getFPReg()) {
+    Error(SPRegLoc, "register should be either $sp or the latest fp register");
     return false;
   }
 
   // Update the frame pointer register
-  FPReg = NewFPReg;
+  UC.saveFPReg(FPReg);
 
   // Parse offset
   int64_t Offset = 0;
@@ -8501,8 +8539,8 @@ bool ARMAsmParser::parseDirectiveSetFP(SMLoc L) {
     Offset = CE->getValue();
   }
 
-  getTargetStreamer().emitSetFP(static_cast<unsigned>(NewFPReg),
-                                static_cast<unsigned>(NewSPReg), Offset);
+  getTargetStreamer().emitSetFP(static_cast<unsigned>(FPReg),
+                                static_cast<unsigned>(SPReg), Offset);
   return false;
 }
 
@@ -8510,11 +8548,11 @@ bool ARMAsmParser::parseDirectiveSetFP(SMLoc L) {
 ///  ::= .pad offset
 bool ARMAsmParser::parseDirectivePad(SMLoc L) {
   // Check the ordering of unwind directives
-  if (!FnStartLoc.isValid()) {
+  if (!UC.hasFnStart()) {
     Error(L, ".fnstart must precede .pad directive");
     return false;
   }
-  if (HandlerDataLoc.isValid()) {
+  if (UC.hasHandlerData()) {
     Error(L, ".pad must precede .handlerdata directive");
     return false;
   }
@@ -8549,11 +8587,11 @@ bool ARMAsmParser::parseDirectivePad(SMLoc L) {
 ///  ::= .vsave { registers }
 bool ARMAsmParser::parseDirectiveRegSave(SMLoc L, bool IsVector) {
   // Check the ordering of unwind directives
-  if (!FnStartLoc.isValid()) {
+  if (!UC.hasFnStart()) {
     Error(L, ".fnstart must precede .save or .vsave directives");
     return false;
   }
-  if (HandlerDataLoc.isValid()) {
+  if (UC.hasHandlerData()) {
     Error(L, ".save or .vsave must precede .handlerdata directive");
     return false;
   }
