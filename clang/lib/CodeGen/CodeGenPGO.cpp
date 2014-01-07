@@ -15,6 +15,7 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/StmtVisitor.h"
+#include "llvm/Config/config.h" // for strtoull()/strtoll() define
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/Support/FileSystem.h"
 
