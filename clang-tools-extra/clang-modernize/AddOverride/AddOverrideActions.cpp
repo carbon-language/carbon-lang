@@ -16,11 +16,10 @@
 #include "AddOverrideActions.h"
 #include "AddOverrideMatchers.h"
 #include "Core/Transform.h"
-
-#include "clang/Basic/CharInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
 

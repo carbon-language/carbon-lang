@@ -16,7 +16,6 @@
 #include "AddOverride.h"
 #include "AddOverrideActions.h"
 #include "AddOverrideMatchers.h"
-
 #include "clang/Frontend/CompilerInstance.h"
 
 using clang::ast_matchers::MatchFinder;

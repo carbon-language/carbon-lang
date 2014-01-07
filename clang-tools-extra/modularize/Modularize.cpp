@@ -143,6 +143,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTConsumer.h"
+#include "Modularize.h"
+#include "PreprocessorTracker.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Basic/SourceManager.h"
@@ -167,8 +169,6 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#include "Modularize.h"
-#include "PreprocessorTracker.h"
 
 using namespace clang;
 using namespace clang::driver;

@@ -16,8 +16,8 @@
 #ifndef CLANG_MODERNIZE_PASS_BY_VALUE_H
 #define CLANG_MODERNIZE_PASS_BY_VALUE_H
 
-#include "Core/Transform.h"
 #include "Core/IncludeDirectives.h"
+#include "Core/Transform.h"
 
 class ConstructorParamReplacer;
 

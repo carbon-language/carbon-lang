@@ -9,9 +9,9 @@
 
 #include "common/Utility.h"
 #include "Core/IncludeExcludeInfo.h"
-#include "gtest/gtest.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "gtest/gtest.h"
 #include <fstream>
 
 TEST(IncludeExcludeTest, ParseString) {

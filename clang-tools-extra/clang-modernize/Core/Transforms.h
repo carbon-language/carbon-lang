@@ -17,9 +17,8 @@
 #ifndef CLANG_MODERNIZE_TRANSFORMS_H
 #define CLANG_MODERNIZE_TRANSFORMS_H
 
-#include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/StringRef.h"
-
+#include "llvm/Support/CommandLine.h"
 #include <vector>
 
 // Forward declarations

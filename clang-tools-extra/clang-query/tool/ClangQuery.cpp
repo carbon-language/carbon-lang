@@ -27,9 +27,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Query.h"
-#include "QuerySession.h"
 #include "QueryParser.h"
-
+#include "QuerySession.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
@@ -38,9 +37,8 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
 #include <fstream>
-#include <string>
-
 #include <histedit.h>
+#include <string>
 
 using namespace clang;
 using namespace clang::ast_matchers;

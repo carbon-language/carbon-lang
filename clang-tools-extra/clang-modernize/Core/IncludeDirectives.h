@@ -19,8 +19,8 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Tooling/Refactoring.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringRef.h"
 #include <vector>
 
 namespace clang {

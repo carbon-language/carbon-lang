@@ -16,10 +16,8 @@
 
 #include "NullptrActions.h"
 #include "NullptrMatchers.h"
-
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
-
 #include "clang/Basic/CharInfo.h"
 #include "clang/Lex/Lexer.h"
 

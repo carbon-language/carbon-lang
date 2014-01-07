@@ -16,8 +16,8 @@
 #ifndef CLANG_MODERNIZE_REPLACEMENTHANDLING_H
 #define CLANG_MODERNIZE_REPLACEMENTHANDLING_H
 
-#include "llvm/ADT/StringRef.h"
 #include "Core/Transform.h"
+#include "llvm/ADT/StringRef.h"
 
 class ReplacementHandling {
 public:

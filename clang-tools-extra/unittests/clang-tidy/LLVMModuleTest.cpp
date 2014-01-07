@@ -1,5 +1,4 @@
 #include "ClangTidyTest.h"
-
 #include "llvm/LLVMTidyModule.h"
 
 namespace clang {

@@ -10,10 +10,10 @@
 #ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_QUERY_QUERY_H
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_QUERY_QUERY_H
 
-#include <string>
 #include "clang/ASTMatchers/Dynamic/VariantValue.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/Optional.h"
+#include <string>
 
 namespace clang {
 namespace query {

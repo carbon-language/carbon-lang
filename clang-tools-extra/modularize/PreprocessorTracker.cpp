@@ -245,12 +245,12 @@
 //===--------------------------------------------------------------------===//
 
 #include "clang/Lex/LexDiagnostic.h"
+#include "PreprocessorTracker.h"
 #include "clang/Lex/MacroArgs.h"
 #include "clang/Lex/PPCallbacks.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/StringPool.h"
 #include "llvm/ADT/SmallSet.h"
-#include "PreprocessorTracker.h"
+#include "llvm/Support/StringPool.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Modularize {
 

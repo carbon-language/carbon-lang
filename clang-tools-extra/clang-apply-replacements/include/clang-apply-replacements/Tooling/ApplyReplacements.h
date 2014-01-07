@@ -20,8 +20,8 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/system_error.h"
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace clang {
 

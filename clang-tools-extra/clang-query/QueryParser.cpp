@@ -10,10 +10,10 @@
 #include "QueryParser.h"
 #include "Query.h"
 #include "QuerySession.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "clang/ASTMatchers/Dynamic/Parser.h"
 #include "clang/Basic/CharInfo.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSwitch.h"
 
 using namespace llvm;
 using namespace clang::ast_matchers::dynamic;

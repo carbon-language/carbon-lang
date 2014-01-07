@@ -1,5 +1,4 @@
 #include "ClangTidyTest.h"
-
 #include "google/GoogleTidyModule.h"
 
 namespace clang {

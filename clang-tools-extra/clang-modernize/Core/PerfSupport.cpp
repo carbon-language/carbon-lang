@@ -15,9 +15,9 @@
 #include "PerfSupport.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Process.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Process.h"
+#include "llvm/Support/raw_ostream.h"
 
 void collectSourcePerfData(const Transform &T, SourcePerfData &Data) {
   for (Transform::TimingVec::const_iterator I = T.timing_begin(),

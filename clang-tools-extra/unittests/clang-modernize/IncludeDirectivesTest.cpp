@@ -8,11 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "Core/IncludeDirectives.h"
-#include "gtest/gtest.h"
 #include "common/VirtualFileHelper.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "llvm/Support/Path.h"
+#include "gtest/gtest.h"
 
 using namespace llvm;
 using namespace clang;

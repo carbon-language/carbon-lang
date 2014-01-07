@@ -14,9 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReplaceAutoPtrActions.h"
-#include "ReplaceAutoPtrMatchers.h"
 #include "Core/Transform.h"
-
+#include "ReplaceAutoPtrMatchers.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Lex/Lexer.h"
 

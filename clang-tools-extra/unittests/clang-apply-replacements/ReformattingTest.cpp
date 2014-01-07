@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang-apply-replacements/Tooling/ApplyReplacements.h"
+#include "common/VirtualFileHelper.h"
 #include "clang/Format/Format.h"
 #include "clang/Tooling/Refactoring.h"
-#include "common/VirtualFileHelper.h"
 #include "gtest/gtest.h"
 
 using namespace clang;
