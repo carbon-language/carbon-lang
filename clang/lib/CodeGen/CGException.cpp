@@ -1294,7 +1294,7 @@ void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
     // Initialize the catch variable and set up the cleanups.
     BeginCatch(*this, C);
 
-    // Emit the PGO counter increment
+    // Emit the PGO counter increment.
     RegionCounter CatchCnt = getPGORegionCounter(C);
     CatchCnt.beginRegion(Builder);
 

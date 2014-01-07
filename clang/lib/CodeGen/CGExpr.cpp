@@ -2660,7 +2660,7 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
     if (!CondExprBool) std::swap(live, dead);
 
     if (!ContainsLabel(dead)) {
-      // If the true case is live, we need to track its region
+      // If the true case is live, we need to track its region.
       if (CondExprBool)
         Cnt.beginRegion(Builder);
       return EmitLValue(live);

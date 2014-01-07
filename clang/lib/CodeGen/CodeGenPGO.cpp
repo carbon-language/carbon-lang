@@ -234,12 +234,12 @@ namespace {
     }
     void VisitStmt(const Stmt *S) { VisitChildren(S); }
 
-    /// Assign a counter to track entry to the function body
+    /// Assign a counter to track entry to the function body.
     void VisitFunctionDecl(const FunctionDecl *S) {
       (*CounterMap)[S->getBody()] = NextCounter++;
       Visit(S->getBody());
     }
-    /// Assign a counter to track the block following a label
+    /// Assign a counter to track the block following a label.
     void VisitLabelStmt(const LabelStmt *S) {
       (*CounterMap)[S] = NextCounter++;
       Visit(S->getSubStmt());
