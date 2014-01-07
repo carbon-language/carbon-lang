@@ -883,8 +883,6 @@ const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
 /// This IV user cannot be widen. Replace this use of the original narrow IV
 /// with a truncation of the new wide IV to isolate and eliminate the narrow IV.
 static void truncateIVUse(NarrowIVDefUse DU, DominatorTree *DT) {
-  DEBUG(dbgs() << "INDVARS: Truncate IV " << *DU.WideDef
-        << " for user " << *DU.NarrowUse << "\n");
   IRBuilder<> Builder(getInsertPointForUses(DU.NarrowUse, DU.NarrowDef, DT));
   Value *Trunc = Builder.CreateTrunc(DU.WideDef, DU.NarrowDef->getType());
   DU.NarrowUse->replaceUsesOfWith(DU.NarrowDef, Trunc);
@@ -895,27 +893,10 @@ static void truncateIVUse(NarrowIVDefUse DU, DominatorTree *DT) {
 Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
 
   // Stop traversing the def-use chain at inner-loop phis or post-loop phis.
-  if (PHINode *UsePhi = dyn_cast<PHINode>(DU.NarrowUse)) {
-    if (LI->getLoopFor(UsePhi->getParent()) != L) {
-      // For LCSSA phis, sink the truncate outside the loop.
-      // After SimplifyCFG most loop exit targets have a single predecessor.
-      // Otherwise fall back to a truncate within the loop.
-      if (UsePhi->getNumOperands() != 1)
-        truncateIVUse(DU, DT);
-      else {
-        PHINode *WidePhi =
-          PHINode::Create(DU.WideDef->getType(), 1, UsePhi->getName() + ".wide",
-                          UsePhi);
-        WidePhi->addIncoming(DU.WideDef, UsePhi->getIncomingBlock(0));
-        IRBuilder<> Builder(WidePhi->getParent()->getFirstInsertionPt());
-        Value *Trunc = Builder.CreateTrunc(WidePhi, DU.NarrowDef->getType());
-        UsePhi->replaceAllUsesWith(Trunc);
-        DeadInsts.push_back(UsePhi);
-        DEBUG(dbgs() << "INDVARS: Widen lcssa phi " << *UsePhi
-              << " to " << *WidePhi << "\n");
-      }
-      return 0;
-    }
+  if (isa<PHINode>(DU.NarrowUse) &&
+      LI->getLoopFor(DU.NarrowUse->getParent()) != L) {
+    truncateIVUse(DU, DT);
+    return 0;
   }
   // Our raison d'etre! Eliminate sign and zero extension.
   if (IsSigned ? isa<SExtInst>(DU.NarrowUse) : isa<ZExtInst>(DU.NarrowUse)) {
