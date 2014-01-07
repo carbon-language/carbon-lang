@@ -111,9 +111,6 @@ MCSymbol *TargetLoweringObjectFile::getSymbol(Mangler &M,
 MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
     Mangler &M, const GlobalValue *GV, StringRef Suffix) const {
   assert(!Suffix.empty());
-  assert(!GV->hasPrivateLinkage());
-  assert(!GV->hasLinkerPrivateLinkage());
-  assert(!GV->hasLinkerPrivateWeakLinkage());
 
   SmallString<60> NameStr;
   NameStr += DL->getPrivateGlobalPrefix();
