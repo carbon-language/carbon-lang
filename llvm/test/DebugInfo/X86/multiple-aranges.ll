@@ -6,10 +6,7 @@
 ; CHECK-NEXT: .long   .L.debug_info_begin0    # Offset Into Debug Info Section
 ; CHECK-NEXT: .byte   8                       # Address Size (in bytes)
 ; CHECK-NEXT: .byte   0                       # Segment Size (in bytes)
-; CHECK-NEXT: .byte   255
-; CHECK-NEXT: .byte   255
-; CHECK-NEXT: .byte   255
-; CHECK-NEXT: .byte   255
+; CHECK-NEXT: .zero   4,255
 ; CHECK-NEXT: .quad   kittens
 ; CHECK-NEXT: .Lset0 = rainbows-kittens
 ; CHECK-NEXT: .quad   .Lset0
@@ -22,10 +19,7 @@
 ; CHECK-NEXT: .long   .L.debug_info_begin1    # Offset Into Debug Info Section
 ; CHECK-NEXT: .byte   8                       # Address Size (in bytes)
 ; CHECK-NEXT: .byte   0                       # Segment Size (in bytes)
-; CHECK-NEXT: .byte   255
-; CHECK-NEXT: .byte   255
-; CHECK-NEXT: .byte   255
-; CHECK-NEXT: .byte   255
+; CHECK-NEXT: .zero   4,255
 ; CHECK-NEXT: .quad   rainbows
 ; CHECK-NEXT: .Lset1 = .Ldebug_end0-rainbows
 ; CHECK-NEXT: .quad   .Lset1

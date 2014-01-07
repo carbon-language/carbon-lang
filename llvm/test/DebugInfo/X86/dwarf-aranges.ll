@@ -7,10 +7,7 @@
 ; CHECK-NEXT: .byte 8 # Address Size (in bytes)
 ; CHECK-NEXT: .byte 0 # Segment Size (in bytes)
 ; -- alignment --
-; CHECK-NEXT: .byte
-; CHECK-NEXT: .byte
-; CHECK-NEXT: .byte
-; CHECK-NEXT: .byte
+; CHECK-NEXT: .zero 4,255
 
 ; <common symbols> - it should have made one span for each symbol.
 ; CHECK-NEXT: .quad some_bss

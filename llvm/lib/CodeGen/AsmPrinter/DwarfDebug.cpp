@@ -2817,9 +2817,8 @@ void DwarfDebug::emitDebugARanges() {
     unsigned TupleSize = PtrSize * 2;
 
     // 7.20 in the Dwarf specs requires the table to be aligned to a tuple.
-    unsigned Padding = 0;
-    while (((sizeof(int32_t) + ContentSize + Padding) % TupleSize) != 0)
-      Padding++;
+    unsigned Padding =
+        OffsetToAlignment(sizeof(int32_t) + ContentSize, TupleSize);
 
     ContentSize += Padding;
     ContentSize += (List.size() + 1) * TupleSize;
@@ -2836,8 +2835,7 @@ void DwarfDebug::emitDebugARanges() {
     Asm->OutStreamer.AddComment("Segment Size (in bytes)");
     Asm->EmitInt8(0);
 
-    for (unsigned n = 0; n < Padding; n++)
-      Asm->EmitInt8(0xff);
+    Asm->OutStreamer.EmitFill(Padding, 0xff);
 
     for (unsigned n = 0; n < List.size(); n++) {
       const ArangeSpan &Span = List[n];
