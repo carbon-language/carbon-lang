@@ -1827,8 +1827,8 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       // Check preconditions for proper SCEVExpander operation. SCEV does not
       // express SCEVExpander's dependencies, such as LoopSimplify. Instead any
       // pass that uses the SCEVExpander must do it. This does not work well for
-      // loop passes because SCEVExpander makes assumptions about all loops, while
-      // LoopPassManager only forces the current loop to be simplified.
+      // loop passes because SCEVExpander makes assumptions about all loops,
+      // while LoopPassManager only forces the current loop to be simplified.
       //
       // FIXME: SCEV expansion has no way to bail out, so the caller must
       // explicitly check any assumptions made by SCEV. Brittle.
