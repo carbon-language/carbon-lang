@@ -78,12 +78,12 @@ def ADDRri : ComplexPattern<iPTR, 2, "SelectADDRri", [frameindex], []>;
 // Address operands
 def SparcMEMrrAsmOperand : AsmOperandClass {
   let Name = "MEMrr";
-  let ParserMethod = "parseMEMrrOperand";
+  let ParserMethod = "parseMEMOperand";
 }
 
 def SparcMEMriAsmOperand : AsmOperandClass {
   let Name = "MEMri";
-  let ParserMethod = "parseMEMriOperand";
+  let ParserMethod = "parseMEMOperand";
 }
 
 def MEMrr : Operand<iPTR> {

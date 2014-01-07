@@ -28,6 +28,7 @@ namespace llvm {
 }
 
 namespace {
+class SparcOperand;
 class SparcAsmParser : public MCTargetAsmParser {
 
   MCSubtargetInfo &STI;
@@ -55,17 +56,14 @@ class SparcAsmParser : public MCTargetAsmParser {
 
   // Custom parse functions for Sparc specific operands.
   OperandMatchResultTy
-  parseMEMrrOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
-  OperandMatchResultTy
-  parseMEMriOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
-
-  OperandMatchResultTy
-  parseMEMOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                  int ImmOffsetOrReg);
+  parseMEMOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   OperandMatchResultTy
   parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                StringRef Name);
+
+  OperandMatchResultTy
+  parseSparcAsmOperand(SparcOperand *&Operand);
 
   // returns true if Tok is matched to a register and returns register in RegNo.
   bool matchRegisterName(const AsmToken &Tok, unsigned &RegNo, bool isDFP,
@@ -298,7 +296,35 @@ public:
     return Op;
   }
 
+  static SparcOperand *MorphToMEMrr(unsigned Base, SparcOperand *Op) {
+    unsigned offsetReg = Op->getReg();
+    Op->Kind = k_MemoryReg;
+    Op->Mem.Base = Base;
+    Op->Mem.OffsetReg = offsetReg;
+    Op->Mem.Off = 0;
+    return Op;
+  }
 
+  static SparcOperand *CreateMEMri(unsigned Base,
+                                 const MCExpr *Off,
+                                 SMLoc S, SMLoc E) {
+    SparcOperand *Op = new SparcOperand(k_MemoryImm);
+    Op->Mem.Base = Base;
+    Op->Mem.OffsetReg = 0;
+    Op->Mem.Off = Off;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
+  static SparcOperand *MorphToMEMri(unsigned Base, SparcOperand *Op) {
+    const MCExpr *Imm  = Op->getImm();
+    Op->Kind = k_MemoryImm;
+    Op->Mem.Base = Base;
+    Op->Mem.OffsetReg = 0;
+    Op->Mem.Off = Imm;
+    return Op;
+  }
 };
 
 } // end namespace
@@ -412,43 +438,99 @@ ParseDirective(AsmToken DirectiveID)
 }
 
 SparcAsmParser::OperandMatchResultTy SparcAsmParser::
-parseMEMOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                int ImmOffsetOrReg)
+parseMEMOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands)
 {
-  // FIXME: Implement memory operand parsing here.
-  return MatchOperand_NoMatch;
-}
 
-SparcAsmParser::OperandMatchResultTy SparcAsmParser::
-parseMEMrrOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands)
-{
-  return parseMEMOperand(Operands, 2);
-}
+  SMLoc S, E;
+  unsigned BaseReg = 0;
 
-SparcAsmParser::OperandMatchResultTy SparcAsmParser::
-parseMEMriOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands)
-{
-  return parseMEMOperand(Operands, 1);
+  if (ParseRegister(BaseReg, S, E)) {
+    return MatchOperand_NoMatch;
+  }
+
+  switch (getLexer().getKind()) {
+  default: return MatchOperand_NoMatch;
+
+  case AsmToken::RBrac:
+  case AsmToken::EndOfStatement:
+    Operands.push_back(SparcOperand::CreateMEMri(BaseReg, 0, S, E));
+    return MatchOperand_Success;
+
+  case AsmToken:: Plus:
+    Parser.Lex(); // Eat the '+'
+    break;
+  case AsmToken::Minus:
+    break;
+  }
+
+  SparcOperand *Offset = 0;
+  OperandMatchResultTy ResTy = parseSparcAsmOperand(Offset);
+  if (ResTy != MatchOperand_Success || !Offset)
+    return MatchOperand_NoMatch;
+
+  Offset = (Offset->isImm()
+            ? SparcOperand::MorphToMEMri(BaseReg, Offset)
+            : SparcOperand::MorphToMEMrr(BaseReg, Offset));
+
+  Operands.push_back(Offset);
+  return MatchOperand_Success;
 }
 
 SparcAsmParser::OperandMatchResultTy SparcAsmParser::
 parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
              StringRef Mnemonic)
 {
+
   OperandMatchResultTy ResTy = MatchOperandParserImpl(Operands, Mnemonic);
-  if (ResTy == MatchOperand_Success)
-    return ResTy;
+
   // If there wasn't a custom match, try the generic matcher below. Otherwise,
   // there was a match, but an error occurred, in which case, just return that
   // the operand parsing failed.
-  if (ResTy == MatchOperand_ParseFail)
+  if (ResTy == MatchOperand_Success || ResTy == MatchOperand_ParseFail)
     return ResTy;
+
+  if (getLexer().is(AsmToken::LBrac)) {
+    // Memory operand
+    Operands.push_back(SparcOperand::CreateToken("[",
+                                                 Parser.getTok().getLoc()));
+    Parser.Lex(); // Eat the [
+
+    ResTy = parseMEMOperand(Operands);
+    if (ResTy != MatchOperand_Success)
+      return ResTy;
+
+    if (!getLexer().is(AsmToken::RBrac))
+      return MatchOperand_ParseFail;
+
+    Operands.push_back(SparcOperand::CreateToken("]",
+                                                 Parser.getTok().getLoc()));
+    Parser.Lex(); // Eat the ]
+    return MatchOperand_Success;
+  }
+
+  SparcOperand *Op = 0;
+  ResTy = parseSparcAsmOperand(Op);
+  if (ResTy != MatchOperand_Success || !Op)
+    return MatchOperand_ParseFail;
+
+  // Push the parsed operand into the list of operands
+  Operands.push_back(Op);
+
+  return MatchOperand_Success;
+}
+
+SparcAsmParser::OperandMatchResultTy
+SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op)
+{
 
   SMLoc S = Parser.getTok().getLoc();
   SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
   const MCExpr *EVal;
-  SparcOperand *Op;
+
+  Op = 0;
   switch (getLexer().getKind()) {
+  default:  break;
+
   case AsmToken::Percent:
     Parser.Lex(); // Eat the '%'.
     unsigned RegNo;
@@ -458,40 +540,30 @@ parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
       break;
     }
     // FIXME: Handle modifiers like %hi, %lo etc.,
-    return MatchOperand_ParseFail;
+    break;
 
   case AsmToken::Minus:
   case AsmToken::Integer:
-    if (getParser().parseExpression(EVal))
-      return MatchOperand_ParseFail;
-
-    Op = SparcOperand::CreateImm(EVal, S, E);
+    if (!getParser().parseExpression(EVal))
+      Op = SparcOperand::CreateImm(EVal, S, E);
     break;
 
   case AsmToken::Identifier: {
     StringRef Identifier;
-    if (getParser().parseIdentifier(Identifier))
-      return MatchOperand_ParseFail;
-    SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-    MCSymbol *Sym = getContext().GetOrCreateSymbol(Identifier);
+    if (!getParser().parseIdentifier(Identifier)) {
+      SMLoc E = SMLoc::getFromPointer(Parser.getTok().
+                                      getLoc().getPointer() - 1);
+      MCSymbol *Sym = getContext().GetOrCreateSymbol(Identifier);
 
-    // Otherwise create a symbol reference.
-    const MCExpr *Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
-                                                getContext());
+      const MCExpr *Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
+                                                  getContext());
 
-    Op = SparcOperand::CreateImm(Res, S, E);
+      Op = SparcOperand::CreateImm(Res, S, E);
+    }
     break;
   }
-
-  case AsmToken::LBrac:  // handle [
-    return parseMEMOperand(Operands, 0);
-
-  default:
-    return MatchOperand_ParseFail;
   }
-  // Push the parsed operand into the list of operands
-  Operands.push_back(Op);
-  return MatchOperand_Success;
+  return (Op) ? MatchOperand_Success : MatchOperand_ParseFail;
 }
 
 bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
