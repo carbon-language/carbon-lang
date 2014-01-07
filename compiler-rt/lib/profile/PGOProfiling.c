@@ -7,12 +7,9 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#if !defined(__APPLE__)
-#include <inttypes.h>
-#endif
 
 #ifndef _MSC_VER
 #include <stdint.h>
