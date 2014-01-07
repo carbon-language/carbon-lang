@@ -118,6 +118,10 @@ public:
                                 const MCInstPrinter *IP,
                                 MCAsmParserSemaCallback &SI) = 0;
 
+  /// Note - Emit a note at the location \p L, with the message \p Msg.
+  virtual void Note(SMLoc L, const Twine &Msg,
+                    ArrayRef<SMRange> Ranges = None) = 0;
+
   /// Warning - Emit a warning at the location \p L, with the message \p Msg.
   ///
   /// \return The return value is true, if warnings are fatal.

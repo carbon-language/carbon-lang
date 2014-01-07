@@ -211,6 +211,7 @@ public:
     AssemblerDialect = i;
   }
 
+  virtual void Note(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges = None);
   virtual bool Warning(SMLoc L, const Twine &Msg,
                        ArrayRef<SMRange> Ranges = None);
   virtual bool Error(SMLoc L, const Twine &Msg,
@@ -535,6 +536,11 @@ void AsmParser::printMacroInstantiations() {
        it != ie; ++it)
     printMessage((*it)->InstantiationLoc, SourceMgr::DK_Note,
                  "while in macro instantiation");
+}
+
+void AsmParser::Note(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {
+  printMessage(L, SourceMgr::DK_Note, Msg, Ranges);
+  printMacroInstantiations();
 }
 
 bool AsmParser::Warning(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {

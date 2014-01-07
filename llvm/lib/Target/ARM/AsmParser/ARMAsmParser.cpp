@@ -190,6 +190,9 @@ class ARMAsmParser : public MCTargetAsmParser {
   MCAsmParser &getParser() const { return Parser; }
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
 
+  void Note(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges = None) {
+    return Parser.Note(L, Msg, Ranges);
+  }
   bool Warning(SMLoc L, const Twine &Msg,
                ArrayRef<SMRange> Ranges = None) {
     return Parser.Warning(L, Msg, Ranges);
@@ -8245,7 +8248,7 @@ bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
 bool ARMAsmParser::parseDirectiveFnStart(SMLoc L) {
   if (FnStartLoc.isValid()) {
     Error(L, ".fnstart starts before the end of previous one");
-    Error(FnStartLoc, "previous .fnstart starts here");
+    Note(FnStartLoc, "previous .fnstart starts here");
     return false;
   }
 
@@ -8280,12 +8283,12 @@ bool ARMAsmParser::parseDirectiveCantUnwind(SMLoc L) {
   }
   if (HandlerDataLoc.isValid()) {
     Error(L, ".cantunwind can't be used with .handlerdata directive");
-    Error(HandlerDataLoc, ".handlerdata was specified here");
+    Note(HandlerDataLoc, ".handlerdata was specified here");
     return false;
   }
   if (PersonalityLoc.isValid()) {
     Error(L, ".cantunwind can't be used with .personality directive");
-    Error(PersonalityLoc, ".personality was specified here");
+    Note(PersonalityLoc, ".personality was specified here");
     return false;
   }
 
@@ -8304,12 +8307,12 @@ bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
   }
   if (CantUnwindLoc.isValid()) {
     Error(L, ".personality can't be used with .cantunwind directive");
-    Error(CantUnwindLoc, ".cantunwind was specified here");
+    Note(CantUnwindLoc, ".cantunwind was specified here");
     return false;
   }
   if (HandlerDataLoc.isValid()) {
     Error(L, ".personality must precede .handlerdata directive");
-    Error(HandlerDataLoc, ".handlerdata was specified here");
+    Note(HandlerDataLoc, ".handlerdata was specified here");
     return false;
   }
 
@@ -8338,7 +8341,7 @@ bool ARMAsmParser::parseDirectiveHandlerData(SMLoc L) {
   }
   if (CantUnwindLoc.isValid()) {
     Error(L, ".handlerdata can't be used with .cantunwind directive");
-    Error(CantUnwindLoc, ".cantunwind was specified here");
+    Note(CantUnwindLoc, ".cantunwind was specified here");
     return false;
   }
 

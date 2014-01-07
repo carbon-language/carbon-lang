@@ -24,7 +24,7 @@ func1:
 @ CHECK: error: .personality can't be used with .cantunwind directive
 @ CHECK:        .personality __gxx_personality_v0
 @ CHECK:        ^
-@ CHECK: error: .cantunwind was specified here
+@ CHECK: note: .cantunwind was specified here
 @ CHECK:        .cantunwind
 @ CHECK:        ^
         .fnend
@@ -44,7 +44,7 @@ func2:
 @ CHECK: error: .handlerdata can't be used with .cantunwind directive
 @ CHECK:        .handlerdata
 @ CHECK:        ^
-@ CHECK: error: .cantunwind was specified here
+@ CHECK: note: .cantunwind was specified here
 @ CHECK:        .cantunwind
 @ CHECK:        ^
         .fnend
@@ -64,7 +64,7 @@ func3:
 @ CHECK: error: .cantunwind can't be used with .personality directive
 @ CHECK:        .cantunwind
 @ CHECK:        ^
-@ CHECK: error: .personality was specified here
+@ CHECK: note: .personality was specified here
 @ CHECK:        .personality __gxx_personality_v0
 @ CHECK:        ^
         .fnend
@@ -84,7 +84,7 @@ func4:
 @ CHECK: error: .cantunwind can't be used with .handlerdata directive
 @ CHECK:        .cantunwind
 @ CHECK:        ^
-@ CHECK: error: .handlerdata was specified here
+@ CHECK: note: .handlerdata was specified here
 @ CHECK:        .handlerdata
 @ CHECK:        ^
         .fnend

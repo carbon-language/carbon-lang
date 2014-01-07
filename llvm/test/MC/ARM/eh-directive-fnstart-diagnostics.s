@@ -24,7 +24,7 @@ func1:
 @ CHECK: error: .fnstart starts before the end of previous one
 @ CHECK:        .fnstart
 @ CHECK:        ^
-@ CHECK: error: previous .fnstart starts here
+@ CHECK: note: previous .fnstart starts here
 @ CHECK:        .fnstart
 @ CHECK:        ^
 func2:
