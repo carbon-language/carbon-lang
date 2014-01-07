@@ -16,15 +16,15 @@
 #include <stdio.h>
 #include <vector>
 
+// The Windows.h header must be after LLVM and standard headers.
+#include "Windows.h"
+
 #ifdef __MINGW32__
  #include <imagehlp.h>
 #else
  #include <dbghelp.h>
 #endif
 #include <psapi.h>
-
-// The Windows.h header must be the last one included.
-#include "Windows.h"
 
 #ifdef _MSC_VER
  #pragma comment(lib, "psapi.lib")
