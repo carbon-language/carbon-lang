@@ -154,6 +154,7 @@ if (KERN_SUCCESS == err)
 
         if options.search_stack:
             expr += '''
+#ifdef NUM_STACKS
 // Call the callback for the thread stack ranges
 for (uint32_t i=0; i<NUM_STACKS; ++i) {
     range_callback(task, &baton, 8, stacks[i].base, stacks[i].size);
@@ -161,13 +162,15 @@ for (uint32_t i=0; i<NUM_STACKS; ++i) {
         range_callback(task, &baton, 16, stacks[i].base - STACK_RED_ZONE_SIZE, STACK_RED_ZONE_SIZE);
     }
 }
-    '''
+#endif'''
     
         if options.search_segments:
             expr += '''
+#ifdef NUM_SEGMENTS
 // Call the callback for all segments
 for (uint32_t i=0; i<NUM_SEGMENTS; ++i)
-    range_callback(task, &baton, 32, segments[i].base, segments[i].size);'''
+    range_callback(task, &baton, 32, segments[i].base, segments[i].size);
+#endif'''
 
     if user_return_code:
         expr += "\n%s" % (user_return_code,)
@@ -447,133 +450,130 @@ def display_match_results (result, options, arg_str_description, expr, print_no_
         print "expression result:"
         print expr_sbvalue
     if expr_sbvalue.error.Success():
-        if expr_sbvalue.unsigned:
-            match_value = lldb.value(expr_sbvalue)  
-            i = 0
-            match_idx = 0
-            while 1:
-                print_entry = True
-                match_entry = match_value[i]; i += 1
-                if i > options.max_matches:
-                    result.AppendMessage('warning: the max number of matches (%u) was reached, use the --max-matches option to get more results' % (options.max_matches))
-                    break
-                malloc_addr = match_entry.addr.sbvalue.unsigned
-                if malloc_addr == 0:
-                    break
-                malloc_size = int(match_entry.size)
-                offset = int(match_entry.offset)
-                
-                if options.offset >= 0 and options.offset != offset:
-                    print_entry = False
-                else:                    
-                    match_addr = malloc_addr + offset
-                    type_flags = int(match_entry.type)
-                    #result.AppendMessage (hex(malloc_addr + offset))
-                    if type_flags == 64:
-                        search_stack_old = options.search_stack
-                        search_segments_old = options.search_segments
-                        search_heap_old = options.search_heap
-                        search_vm_regions = options.search_vm_regions
-                        options.search_stack = True
-                        options.search_segments = True
-                        options.search_heap = True
-                        options.search_vm_regions = False
-                        if malloc_info_impl (lldb.debugger, result, options, [hex(malloc_addr + offset)]):
-                            print_entry = False
-                        options.search_stack = search_stack_old
-                        options.search_segments = search_segments_old
-                        options.search_heap = search_heap_old
-                        options.search_vm_regions = search_vm_regions
-                    if print_entry:
-                        description = '%#16.16x: %s' % (match_addr, type_flags_to_description(type_flags, malloc_addr, malloc_size, offset))
-                        if options.show_size:
-                            description += ' <%5u>' % (malloc_size)
-                        if options.show_range:
-                            description += ' [%#x - %#x)' % (malloc_addr, malloc_addr + malloc_size)
-                        derefed_dynamic_value = None
-                        dynamic_value = match_entry.addr.sbvalue.GetDynamicValue(lldb.eDynamicCanRunTarget)
-                        if dynamic_value.type.name == 'void *':
-                            if options.type == 'pointer' and malloc_size == 4096:
-                                error = lldb.SBError()
-                                process = expr_sbvalue.GetProcess()
-                                target = expr_sbvalue.GetTarget()
-                                data = bytearray(process.ReadMemory(malloc_addr, 16, error))
-                                if data == '\xa1\xa1\xa1\xa1AUTORELEASE!':
-                                    ptr_size = target.addr_size
-                                    thread = process.ReadUnsignedFromMemory (malloc_addr + 16 + ptr_size, ptr_size, error)
-                                    #   4 bytes  0xa1a1a1a1
-                                    #  12 bytes  'AUTORELEASE!'
-                                    # ptr bytes  autorelease insertion point
-                                    # ptr bytes  pthread_t
-                                    # ptr bytes  next colder page
-                                    # ptr bytes  next hotter page
-                                    #   4 bytes  this page's depth in the list
-                                    #   4 bytes  high-water mark
-                                    description += ' AUTORELEASE! for pthread_t %#x' % (thread)
-                            #     else:
-                            #         description += 'malloc(%u)' % (malloc_size)
-                            # else:
-                            #     description += 'malloc(%u)' % (malloc_size)
-                        else:
-                            derefed_dynamic_value = dynamic_value.deref
-                            if derefed_dynamic_value:                        
-                                derefed_dynamic_type = derefed_dynamic_value.type
-                                derefed_dynamic_type_size = derefed_dynamic_type.size
-                                derefed_dynamic_type_name = derefed_dynamic_type.name
-                                description += ' '
-                                description += derefed_dynamic_type_name
-                                if offset < derefed_dynamic_type_size:
-                                    member_list = list();
-                                    get_member_types_for_offset (derefed_dynamic_type, offset, member_list)
-                                    if member_list:
-                                        member_path = ''
-                                        for member in member_list:
-                                            member_name = member.name
-                                            if member_name: 
-                                                if member_path:
-                                                    member_path += '.'
-                                                member_path += member_name
-                                        if member_path:
-                                            if options.ivar_regex_blacklist:
-                                                for ivar_regex in options.ivar_regex_blacklist:
-                                                    if ivar_regex.match(member_path):
-                                                        print_entry = False
-                                            description += '.%s' % (member_path)
-                                else:
-                                    description += '%u bytes after %s' % (offset - derefed_dynamic_type_size, derefed_dynamic_type_name)
-                            else:
-                                # strip the "*" from the end of the name since we were unable to dereference this
-                                description += dynamic_value.type.name[0:-1]
+        match_value = lldb.value(expr_sbvalue)  
+        i = 0
+        match_idx = 0
+        while 1:
+            print_entry = True
+            match_entry = match_value[i]; i += 1
+            if i > options.max_matches:
+                result.AppendMessage('warning: the max number of matches (%u) was reached, use the --max-matches option to get more results' % (options.max_matches))
+                break
+            malloc_addr = match_entry.addr.sbvalue.unsigned
+            if malloc_addr == 0:
+                break
+            malloc_size = int(match_entry.size)
+            offset = int(match_entry.offset)
+            
+            if options.offset >= 0 and options.offset != offset:
+                print_entry = False
+            else:                    
+                match_addr = malloc_addr + offset
+                type_flags = int(match_entry.type)
+                #result.AppendMessage (hex(malloc_addr + offset))
+                if type_flags == 64:
+                    search_stack_old = options.search_stack
+                    search_segments_old = options.search_segments
+                    search_heap_old = options.search_heap
+                    search_vm_regions = options.search_vm_regions
+                    options.search_stack = True
+                    options.search_segments = True
+                    options.search_heap = True
+                    options.search_vm_regions = False
+                    if malloc_info_impl (lldb.debugger, result, options, [hex(malloc_addr + offset)]):
+                        print_entry = False
+                    options.search_stack = search_stack_old
+                    options.search_segments = search_segments_old
+                    options.search_heap = search_heap_old
+                    options.search_vm_regions = search_vm_regions
                 if print_entry:
-                    match_idx += 1
-                    result_output = ''
-                    if description:
-                        result_output += description
-                        if options.print_type and derefed_dynamic_value:
-                            result_output += ' %s' % (derefed_dynamic_value)
-                        if options.print_object_description and dynamic_value:
-                            desc = dynamic_value.GetObjectDescription()
-                            if desc:
-                                result_output += '\n%s' % (desc)
-                    if result_output:
-                        result.AppendMessage(result_output)
-                    if options.memory:
-                        cmd_result = lldb.SBCommandReturnObject()
-                        if options.format == None:
-                            memory_command = "memory read --force 0x%x 0x%x" % (malloc_addr, malloc_addr + malloc_size)
+                    description = '%#16.16x: %s' % (match_addr, type_flags_to_description(type_flags, malloc_addr, malloc_size, offset))
+                    if options.show_size:
+                        description += ' <%5u>' % (malloc_size)
+                    if options.show_range:
+                        description += ' [%#x - %#x)' % (malloc_addr, malloc_addr + malloc_size)
+                    derefed_dynamic_value = None
+                    dynamic_value = match_entry.addr.sbvalue.GetDynamicValue(lldb.eDynamicCanRunTarget)
+                    if dynamic_value.type.name == 'void *':
+                        if options.type == 'pointer' and malloc_size == 4096:
+                            error = lldb.SBError()
+                            process = expr_sbvalue.GetProcess()
+                            target = expr_sbvalue.GetTarget()
+                            data = bytearray(process.ReadMemory(malloc_addr, 16, error))
+                            if data == '\xa1\xa1\xa1\xa1AUTORELEASE!':
+                                ptr_size = target.addr_size
+                                thread = process.ReadUnsignedFromMemory (malloc_addr + 16 + ptr_size, ptr_size, error)
+                                #   4 bytes  0xa1a1a1a1
+                                #  12 bytes  'AUTORELEASE!'
+                                # ptr bytes  autorelease insertion point
+                                # ptr bytes  pthread_t
+                                # ptr bytes  next colder page
+                                # ptr bytes  next hotter page
+                                #   4 bytes  this page's depth in the list
+                                #   4 bytes  high-water mark
+                                description += ' AUTORELEASE! for pthread_t %#x' % (thread)
+                        #     else:
+                        #         description += 'malloc(%u)' % (malloc_size)
+                        # else:
+                        #     description += 'malloc(%u)' % (malloc_size)
+                    else:
+                        derefed_dynamic_value = dynamic_value.deref
+                        if derefed_dynamic_value:                        
+                            derefed_dynamic_type = derefed_dynamic_value.type
+                            derefed_dynamic_type_size = derefed_dynamic_type.size
+                            derefed_dynamic_type_name = derefed_dynamic_type.name
+                            description += ' '
+                            description += derefed_dynamic_type_name
+                            if offset < derefed_dynamic_type_size:
+                                member_list = list();
+                                get_member_types_for_offset (derefed_dynamic_type, offset, member_list)
+                                if member_list:
+                                    member_path = ''
+                                    for member in member_list:
+                                        member_name = member.name
+                                        if member_name: 
+                                            if member_path:
+                                                member_path += '.'
+                                            member_path += member_name
+                                    if member_path:
+                                        if options.ivar_regex_blacklist:
+                                            for ivar_regex in options.ivar_regex_blacklist:
+                                                if ivar_regex.match(member_path):
+                                                    print_entry = False
+                                        description += '.%s' % (member_path)
+                            else:
+                                description += '%u bytes after %s' % (offset - derefed_dynamic_type_size, derefed_dynamic_type_name)
                         else:
-                            memory_command = "memory read --force -f %s 0x%x 0x%x" % (options.format, malloc_addr, malloc_addr + malloc_size)
-                        if options.verbose:
-                            result.AppendMessage(memory_command)
-                        lldb.debugger.GetCommandInterpreter().HandleCommand(memory_command, cmd_result)
-                        result.AppendMessage(cmd_result.GetOutput())
-                    if options.stack_history:
-                        dump_stack_history_entries(options, result, malloc_addr, 1)
-                    elif options.stack:
-                        dump_stack_history_entries(options, result, malloc_addr, 0)
-            return i
-        elif print_no_matches:
-            result.AppendMessage('no matches found for %s' % (arg_str_description))
+                            # strip the "*" from the end of the name since we were unable to dereference this
+                            description += dynamic_value.type.name[0:-1]
+            if print_entry:
+                match_idx += 1
+                result_output = ''
+                if description:
+                    result_output += description
+                    if options.print_type and derefed_dynamic_value:
+                        result_output += ' %s' % (derefed_dynamic_value)
+                    if options.print_object_description and dynamic_value:
+                        desc = dynamic_value.GetObjectDescription()
+                        if desc:
+                            result_output += '\n%s' % (desc)
+                if result_output:
+                    result.AppendMessage(result_output)
+                if options.memory:
+                    cmd_result = lldb.SBCommandReturnObject()
+                    if options.format == None:
+                        memory_command = "memory read --force 0x%x 0x%x" % (malloc_addr, malloc_addr + malloc_size)
+                    else:
+                        memory_command = "memory read --force -f %s 0x%x 0x%x" % (options.format, malloc_addr, malloc_addr + malloc_size)
+                    if options.verbose:
+                        result.AppendMessage(memory_command)
+                    lldb.debugger.GetCommandInterpreter().HandleCommand(memory_command, cmd_result)
+                    result.AppendMessage(cmd_result.GetOutput())
+                if options.stack_history:
+                    dump_stack_history_entries(options, result, malloc_addr, 1)
+                elif options.stack:
+                    dump_stack_history_entries(options, result, malloc_addr, 0)
+        return i
     else:
         result.AppendMessage(str(expr_sbvalue.error))
     return 0
@@ -871,7 +871,7 @@ stacks[%(index)u].base = 0x%(base)x;
 stacks[%(index)u].size = 0x%(size)x;''' % stack_dict
         return result
     else:
-        return None
+        return ''
 
 def get_sections_ranges_struct (process):
     '''Create code that defines a structure that represents all segments that
@@ -903,7 +903,7 @@ segments[%(index)u].base = 0x%(base)x;
 segments[%(index)u].size = 0x%(size)x;''' % segment_dict
         return result
     else:
-        return None
+        return ''
 
 def section_ptr_refs(debugger, command, result, dict):
     command_args = shlex.split(command)
