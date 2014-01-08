@@ -1546,7 +1546,8 @@ bool
 ValueObject::DumpPrintableRepresentation(Stream& s,
                                          ValueObjectRepresentationStyle val_obj_display,
                                          Format custom_format,
-                                         PrintableRepresentationSpecialCases special)
+                                         PrintableRepresentationSpecialCases special,
+                                         bool do_dump_error)
 {
 
     Flags flags(GetTypeInfo());
@@ -1745,7 +1746,12 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
         else
         {
             if (m_error.Fail())
-                s.Printf("<%s>", m_error.AsCString());
+            {
+                if (do_dump_error)
+                    s.Printf("<%s>", m_error.AsCString());
+                else
+                    return false;
+            }
             else if (val_obj_display == eValueObjectRepresentationStyleSummary)
                 s.PutCString("<no summary available>");
             else if (val_obj_display == eValueObjectRepresentationStyleValue)

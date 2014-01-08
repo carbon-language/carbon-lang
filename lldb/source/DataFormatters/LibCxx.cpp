@@ -26,6 +26,51 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::formatters;
 
+bool
+lldb_private::formatters::LibcxxSmartPointerSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ValueObjectSP valobj_sp(valobj.GetNonSyntheticValue());
+    if (!valobj_sp)
+        return false;
+    ValueObjectSP ptr_sp(valobj_sp->GetChildMemberWithName(ConstString("__ptr_"), true));
+    ValueObjectSP count_sp(valobj_sp->GetChildAtNamePath( {ConstString("__cntrl_"),ConstString("__shared_owners_")} ));
+    ValueObjectSP weakcount_sp(valobj_sp->GetChildAtNamePath( {ConstString("__cntrl_"),ConstString("__shared_weak_owners_")} ));
+    
+    if (!ptr_sp)
+        return false;
+    
+    if (ptr_sp->GetValueAsUnsigned(0) == 0)
+    {
+        stream.Printf("nullptr");
+        return true;
+    }
+    else
+    {
+        bool print_pointee = false;
+        Error error;
+        ValueObjectSP pointee_sp = ptr_sp->Dereference(error);
+        if (pointee_sp && error.Success())
+        {
+            if (pointee_sp->DumpPrintableRepresentation(stream,
+                                                        ValueObject::eValueObjectRepresentationStyleSummary,
+                                                        lldb::eFormatInvalid,
+                                                        ValueObject::ePrintableRepresentationSpecialCasesDisable,
+                                                        false))
+                print_pointee = true;
+        }
+        if (!print_pointee)
+            stream.Printf("ptr = 0x%" PRIx64, ptr_sp->GetValueAsUnsigned(0));
+    }
+    
+    if (count_sp)
+        stream.Printf(" strong=%" PRIu64, 1+count_sp->GetValueAsUnsigned(0));
+
+    if (weakcount_sp)
+        stream.Printf(" weak=%" PRIu64, 1+weakcount_sp->GetValueAsUnsigned(0));
+    
+    return true;
+}
+
 lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::LibcxxVectorBoolSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
 SyntheticChildrenFrontEnd(*valobj_sp.get()),
 m_bool_type(),

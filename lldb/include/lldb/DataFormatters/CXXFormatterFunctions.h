@@ -79,6 +79,9 @@ namespace lldb_private {
 
         bool
         LibcxxWStringSummaryProvider (ValueObject& valobj, Stream& stream); // libc++ std::wstring
+
+        bool
+        LibcxxSmartPointerSummaryProvider (ValueObject& valobj, Stream& stream); // libc++ std::shared_ptr<> and std::weak_ptr<>
         
         bool
         ObjCClassSummaryProvider (ValueObject& valobj, Stream& stream);

@@ -619,7 +619,8 @@ public:
     DumpPrintableRepresentation (Stream& s,
                                  ValueObjectRepresentationStyle val_obj_display = eValueObjectRepresentationStyleSummary,
                                  lldb::Format custom_format = lldb::eFormatInvalid,
-                                 PrintableRepresentationSpecialCases special = ePrintableRepresentationSpecialCasesAllow);
+                                 PrintableRepresentationSpecialCases special = ePrintableRepresentationSpecialCasesAllow,
+                                 bool do_dump_error = true);
     bool
     GetValueIsValid () const;
 

@@ -963,8 +963,9 @@ FormatManager::LoadLibcxxFormatters()
     AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::unordered containers summary provider", ConstString("^(std::__1::)unordered_(multi)?(map|set)<.+> >$"), stl_summary_flags, true);
 
     stl_summary_flags.SetSkipPointers(true);
-    AddStringSummary(libcxx_category_sp, "{${var.__ptr_%S}} (strong=${var.count} weak=${var.weak_count})}", ConstString("^std::__1::shared_ptr<.+>(( )?&)?$"), stl_summary_flags, true);
-    AddStringSummary(libcxx_category_sp, "{${var.__ptr_%S}} (strong=${var.count} weak=${var.weak_count})}", ConstString("^std::__1::weak_ptr<.+>(( )?&)?$"), stl_summary_flags, true);
+    
+    AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxSmartPointerSummaryProvider, "libc++ std::shared_ptr summary provider", ConstString("^std::__1::shared_ptr<.+>(( )?&)?$"), stl_summary_flags, true);
+    AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxSmartPointerSummaryProvider, "libc++ std::weak_ptr summary provider", ConstString("^std::__1::weak_ptr<.+>(( )?&)?$"), stl_summary_flags, true);
     
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibCxxVectorIteratorSyntheticFrontEndCreator, "std::vector iterator synthetic children", ConstString("^std::__1::__wrap_iter<.+>$"), stl_synth_flags, true);
     
