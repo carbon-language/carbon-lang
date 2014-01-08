@@ -307,17 +307,30 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
       << markup(">");
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
-    // If a symbolic branch target was added as a constant expression then print
-    // that address in hex. And only print 32 unsigned bits for the address.
-    const MCConstantExpr *BranchTarget = dyn_cast<MCConstantExpr>(Op.getExpr());
-    int64_t Address;
-    if (BranchTarget && BranchTarget->EvaluateAsAbsolute(Address)) {
-      O << "0x";
-      O.write_hex((uint32_t)Address);
+    const MCExpr *Expr = Op.getExpr();
+    switch (Expr->getKind()) {
+    case MCExpr::Binary:
+      O << '#' << *Expr;
+      break;
+    case MCExpr::Constant: {
+      // If a symbolic branch target was added as a constant expression then
+      // print that address in hex. And only print 32 unsigned bits for the
+      // address.
+      const MCConstantExpr *Constant = cast<MCConstantExpr>(Expr);
+      int64_t TargetAddress;
+      if (!Constant->EvaluateAsAbsolute(TargetAddress)) {
+        O << '#' << *Expr;
+      } else {
+        O << "0x";
+        O.write_hex(static_cast<uint32_t>(TargetAddress));
+      }
+      break;
     }
-    else {
-      // Otherwise, just print the expression.
-      O << *Op.getExpr();
+    default:
+      // FIXME: Should we always treat this as if it is a constant literal and
+      // prefix it with '#'?
+      O << *Expr;
+      break;
     }
   }
 }

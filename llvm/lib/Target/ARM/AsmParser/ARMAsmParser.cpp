@@ -8775,12 +8775,24 @@ unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
   // If the kind is a token for a literal immediate, check if our asm
   // operand matches. This is for InstAliases which have a fixed-value
   // immediate in the syntax.
-  if (Kind == MCK__35_0 && Op->isImm()) {
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op->getImm());
-    if (!CE)
-      return Match_InvalidOperand;
-    if (CE->getValue() == 0)
-      return Match_Success;
+  switch (Kind) {
+  default: break;
+  case MCK__35_0:
+    if (Op->isImm())
+      if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op->getImm()))
+        if (CE->getValue() == 0)
+          return Match_Success;
+    break;
+  case MCK_ARMSOImm:
+    if (Op->isImm()) {
+      const MCExpr *SOExpr = Op->getImm();
+      int64_t Value;
+      if (!SOExpr->EvaluateAsAbsolute(Value))
+        return Match_Success;
+      assert((Value >= INT32_MIN && Value <= INT32_MAX) &&
+             "expression value must be representiable in 32 bits");
+    }
+    break;
   }
   return Match_InvalidOperand;
 }
