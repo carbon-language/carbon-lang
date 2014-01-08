@@ -22,6 +22,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/PassManager.h"
+#include "llvm/Object/Archive.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -78,15 +79,24 @@ MCJIT::~MCJIT() {
   Modules.clear();
   Dyld.deregisterEHFrames();
 
-  LoadedObjectMap::iterator it, end = LoadedObjects.end();
-  for (it = LoadedObjects.begin(); it != end; ++it) {
-    ObjectImage *Obj = it->second;
+  LoadedObjectList::iterator it, end;
+  for (it = LoadedObjects.begin(), end = LoadedObjects.end(); it != end; ++it) {
+    ObjectImage *Obj = *it;
     if (Obj) {
       NotifyFreeingObject(*Obj);
       delete Obj;
     }
   }
   LoadedObjects.clear();
+
+
+  SmallVector<object::Archive *, 2>::iterator ArIt, ArEnd;
+  for (ArIt = Archives.begin(), ArEnd = Archives.end(); ArIt != ArEnd; ++ArIt) {
+    object::Archive *A = *ArIt;
+    delete A;
+  }
+  Archives.clear();
+
   delete TM;
 }
 
@@ -100,6 +110,21 @@ bool MCJIT::removeModule(Module *M) {
   return OwnedModules.removeModule(M);
 }
 
+
+
+void MCJIT::addObjectFile(object::ObjectFile *Obj) {
+  ObjectImage *LoadedObject = Dyld.loadObject(Obj);
+  if (!LoadedObject)
+    report_fatal_error(Dyld.getErrorString());
+
+  LoadedObjects.push_back(LoadedObject);
+
+  NotifyObjectEmitted(*LoadedObject);
+}
+
+void MCJIT::addArchive(object::Archive *A) {
+  Archives.push_back(A);
+}
 
 
 void MCJIT::setObjectCache(ObjectCache* NewCache) {
@@ -171,9 +196,9 @@ void MCJIT::generateCodeForModule(Module *M) {
   }
 
   // Load the object into the dynamic linker.
-  // MCJIT now owns the ObjectImage pointer (via its LoadedObjects map).
+  // MCJIT now owns the ObjectImage pointer (via its LoadedObjects list).
   ObjectImage *LoadedObject = Dyld.loadObject(ObjectToLoad.take());
-  LoadedObjects[M] = LoadedObject;
+  LoadedObjects.push_back(LoadedObject);
   if (!LoadedObject)
     report_fatal_error(Dyld.getErrorString());
 
@@ -270,6 +295,27 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
   uint64_t Addr = getExistingSymbolAddress(Name);
   if (Addr)
     return Addr;
+
+  SmallVector<object::Archive*, 2>::iterator I, E;
+  for (I = Archives.begin(), E = Archives.end(); I != E; ++I) {
+    object::Archive *A = *I;
+    // Look for our symbols in each Archive
+    object::Archive::child_iterator ChildIt = A->findSym(Name);
+    if (ChildIt != A->end_children()) {
+      OwningPtr<object::Binary> ChildBin;
+      // FIXME: Support nested archives?
+      if (!ChildIt->getAsBinary(ChildBin) && ChildBin->isObject()) {
+        object::ObjectFile *OF = reinterpret_cast<object::ObjectFile *>(
+                                                            ChildBin.take());
+        // This causes the object file to be loaded.
+        addObjectFile(OF);
+        // The address should be here now.
+        Addr = getExistingSymbolAddress(Name);
+        if (Addr)
+          return Addr;
+      }
+    }
+  }
 
   // If it hasn't already been generated, see if it's in one of our modules.
   Module *M = findModuleForSymbol(Name, CheckFunctionsOnly);
