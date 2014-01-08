@@ -404,20 +404,12 @@ To add more variables, look at ``test/lit.cfg``.
 Other Features
 --------------
 
-To make RUN line writing easier, there are several helper scripts and programs
-in the ``llvm/test/Scripts`` directory. This directory is in the PATH
-when running tests, so you can just call these scripts using their name.
-For example:
+To make RUN line writing easier, there are several helper programs. These
+helpers are in the PATH when running tests, so you can just call them using
+their name. For example:
 
-``ignore``
-   This script runs its arguments and then always returns 0. This is useful
-   in cases where the test needs to cause a tool to generate an error (e.g.
-   to check the error output). However, any program in a pipeline that
-   returns a non-zero result will cause the test to fail.  This script
-   overcomes that issue and nicely documents that the test case is
-   purposefully ignoring the result code of the tool
 ``not``
-   This script runs its arguments and then inverts the result code from it.
+   This program runs its arguments and then inverts the result code from it.
    Zero result codes become 1. Non-zero result codes become 0.
 
 Sometimes it is necessary to mark a test case as "expected fail" or
