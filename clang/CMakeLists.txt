@@ -414,6 +414,11 @@ add_subdirectory(tools)
 add_subdirectory(runtime)
 
 option(CLANG_BUILD_EXAMPLES "Build CLANG example programs by default." OFF)
+if (CLANG_BUILD_EXAMPLES)
+  set(ENABLE_CLANG_EXAMPLES "1")
+else()
+  set(ENABLE_CLANG_EXAMPLES "0")
+endif()
 add_subdirectory(examples)
 
 option(CLANG_INCLUDE_TESTS
