@@ -155,6 +155,7 @@ class MallocChecker : public Checker<check::DeadSymbols,
                                      eval::Assume>
 {
   mutable OwningPtr<BugType> BT_DoubleFree;
+  mutable OwningPtr<BugType> BT_DoubleDelete;
   mutable OwningPtr<BugType> BT_Leak;
   mutable OwningPtr<BugType> BT_UseFree;
   mutable OwningPtr<BugType> BT_BadFree;
@@ -277,6 +278,8 @@ private:
 
   bool checkUseAfterFree(SymbolRef Sym, CheckerContext &C, const Stmt *S) const;
 
+  bool checkDoubleDelete(SymbolRef Sym, CheckerContext &C) const;
+
   /// Check if the function is known free memory, or if it is
   /// "interesting" and should be modeled explicitly.
   ///
@@ -319,6 +322,8 @@ private:
                           SymbolRef Sym) const;
   void ReportDoubleFree(CheckerContext &C, SourceRange Range, bool Released,
                         SymbolRef Sym, SymbolRef PrevSym) const;
+
+  void ReportDoubleDelete(CheckerContext &C, SymbolRef Sym) const;
 
   /// Find the location of the allocation for Sym on the path leading to the
   /// exploded node N.
@@ -1413,6 +1418,27 @@ void MallocChecker::ReportDoubleFree(CheckerContext &C, SourceRange Range,
   }
 }
 
+void MallocChecker::ReportDoubleDelete(CheckerContext &C, SymbolRef Sym) const {
+
+  if (!Filter.CNewDeleteChecker)
+    return;
+
+  if (!isTrackedByCurrentChecker(C, Sym))
+    return;
+
+  if (ExplodedNode *N = C.generateSink()) {
+    if (!BT_DoubleDelete)
+      BT_DoubleDelete.reset(new BugType("Double delete", "Memory Error"));
+
+    BugReport *R = new BugReport(*BT_DoubleDelete,
+                                 "Attempt to delete released memory", N);
+
+    R->markInteresting(Sym);
+    R->addVisitor(new MallocBugVisitor(Sym));
+    C.emitReport(R);
+  }
+}
+
 ProgramStateRef MallocChecker::ReallocMem(CheckerContext &C,
                                           const CallExpr *CE,
                                           bool FreesOnFail) const {
@@ -1693,6 +1719,12 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 void MallocChecker::checkPreCall(const CallEvent &Call,
                                  CheckerContext &C) const {
 
+  if (const CXXDestructorCall *DC = dyn_cast<CXXDestructorCall>(&Call)) {
+    SymbolRef Sym = DC->getCXXThisVal().getAsSymbol();
+    if (!Sym || checkDoubleDelete(Sym, C))
+      return;
+  }
+
   // We will check for double free in the post visit.
   if (const AnyFunctionCall *FC = dyn_cast<AnyFunctionCall>(&Call)) {
     const FunctionDecl *FD = FC->getDecl();
@@ -1801,12 +1833,20 @@ bool MallocChecker::isReleased(SymbolRef Sym, CheckerContext &C) const {
 bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
                                       const Stmt *S) const {
 
-  // FIXME: Handle destructor called from delete more precisely.
-  if (isReleased(Sym, C) && S) {
+  if (isReleased(Sym, C)) {
     ReportUseAfterFree(C, S->getSourceRange(), Sym);
     return true;
   }
 
+  return false;
+}
+
+bool MallocChecker::checkDoubleDelete(SymbolRef Sym, CheckerContext &C) const {
+
+  if (isReleased(Sym, C)) {
+    ReportDoubleDelete(C, Sym);
+    return true;
+  }
   return false;
 }
 

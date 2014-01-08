@@ -338,13 +338,13 @@ class DerefClass{
 public:
   int *x;
   DerefClass() {}
-  ~DerefClass() {*x = 1;} //expected-warning {{Use of memory after it is freed}}
+  ~DerefClass() {*x = 1;}
 };
 
 void testDoubleDeleteClassInstance() {
   DerefClass *foo = new DerefClass();
   delete foo;
-  delete foo; // FIXME: We should ideally report warning here instead of inside the destructor.
+  delete foo; // expected-warning {{Attempt to delete released memory}}
 }
 
 class EmptyClass{
@@ -356,5 +356,5 @@ public:
 void testDoubleDeleteEmptyClass() {
   EmptyClass *foo = new EmptyClass();
   delete foo;
-  delete foo;  //expected-warning {{Attempt to free released memory}}
+  delete foo;  // expected-warning {{Attempt to delete released memory}}
 }
