@@ -116,6 +116,10 @@ public:
   // library.
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                 const Diagnostic &Info) LLVM_OVERRIDE {
+    // FIXME: Ensure that we don't get notes from user code related to errors
+    // from non-user code.
+    if (Diags->getSourceManager().isInSystemHeader(Info.getLocation()))
+      return;
     if (DiagLevel != DiagnosticsEngine::Note) {
       Errors.push_back(ClangTidyError(getMessage(Info)));
     } else {
