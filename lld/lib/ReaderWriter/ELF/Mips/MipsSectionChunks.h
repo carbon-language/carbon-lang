@@ -54,8 +54,7 @@ public:
       if (r->kindNamespace() != lld::Reference::KindNamespace::ELF)
         continue;
       assert(r->kindArch() == Reference::KindArch::Mips);
-      if (r->kindValue() == llvm::ELF::R_MIPS_32 ||
-          r->kindValue() == LLD_R_MIPS_GLOBAL_GOT) {
+      if (r->kindValue() == LLD_R_MIPS_GLOBAL_GOT) {
         ta = r->target();
         break;
       }

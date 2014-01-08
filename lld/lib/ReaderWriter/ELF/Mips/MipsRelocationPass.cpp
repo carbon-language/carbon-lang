@@ -122,30 +122,47 @@ private:
     const_cast<Reference &>(ref).setTarget(getGOTEntry(ref.target()));
   }
 
+  bool requireLocalGOT(const Atom *a) {
+    Atom::Scope scope;
+    if (isa<DefinedAtom>(a))
+      scope = dyn_cast<DefinedAtom>(a)->scope();
+    else if (isa<AbsoluteAtom>(a))
+      scope = dyn_cast<AbsoluteAtom>(a)->scope();
+    else
+      return false;
+
+    // Local and hidden symbols must be local.
+    if (scope == Atom::scopeTranslationUnit ||
+        scope == Atom::scopeLinkageUnit)
+      return true;
+
+    return false;
+  }
+
   const GOTAtom *getGOTEntry(const Atom *a) {
     auto got = _gotMap.find(a);
     if (got != _gotMap.end())
       return got->second;
 
-    const DefinedAtom *da = dyn_cast<DefinedAtom>(a);
-    bool isLocal = (da && da->scope() == Atom::scopeTranslationUnit);
-
     auto ga = new (_file._alloc) GOT0Atom(_file);
     _gotMap[a] = ga;
-    if (isLocal)
+
+    bool localGOT = requireLocalGOT(a);
+
+    if (localGOT)
       _localGotVector.push_back(ga);
     else {
-      if (da)
-        ga->addReferenceELF_Mips(R_MIPS_32, 0, a, 0);
-      else
-        ga->addReferenceELF_Mips(LLD_R_MIPS_GLOBAL_GOT, 0, a, 0);
       _globalGotVector.push_back(ga);
+      ga->addReferenceELF_Mips(LLD_R_MIPS_GLOBAL_GOT, 0, a, 0);
     }
+
+    if (const DefinedAtom *da = dyn_cast<DefinedAtom>(a))
+      ga->addReferenceELF_Mips(R_MIPS_32, 0, da, 0);
 
     DEBUG_WITH_TYPE("MipsGOT", {
       ga->_name = "__got_";
       ga->_name += a->name();
-      llvm::dbgs() << "[ GOT ] Create " << (isLocal ? "L " : "G ") << a->name()
+      llvm::dbgs() << "[ GOT ] Create " << (localGOT ? "L " : "G ") << a->name()
                    << "\n";
     });
 
