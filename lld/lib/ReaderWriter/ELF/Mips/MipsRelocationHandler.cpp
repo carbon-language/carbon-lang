@@ -95,6 +95,10 @@ MipsTargetRelocationHandler::MipsTargetRelocationHandler(
     const MipsLinkingContext &context, const MipsTargetHandler &handler)
     : _targetHandler(handler) {}
 
+MipsTargetRelocationHandler::~MipsTargetRelocationHandler() {
+  assert(_pairedRelocations.empty());
+}
+
 void
 MipsTargetRelocationHandler::savePairedRelocation(const lld::AtomLayout &atom,
                                                   const Reference &ref) const {

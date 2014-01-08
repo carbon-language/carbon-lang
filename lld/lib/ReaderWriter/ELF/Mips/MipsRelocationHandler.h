@@ -22,6 +22,8 @@ public:
   MipsTargetRelocationHandler(const MipsLinkingContext &context,
                               const MipsTargetHandler &handler);
 
+  ~MipsTargetRelocationHandler();
+
   virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                      const lld::AtomLayout &,
                                      const Reference &) const;
