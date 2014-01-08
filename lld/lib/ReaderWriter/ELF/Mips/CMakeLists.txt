@@ -1,6 +1,7 @@
 add_lld_library(lldMipsELFTarget
   MipsLinkingContext.cpp
   MipsRelocationHandler.cpp
+  MipsRelocationPass.cpp
   MipsTargetHandler.cpp
   )
 
