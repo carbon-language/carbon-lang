@@ -11383,32 +11383,24 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   case Intrinsic::x86_avx2_pmaxu_b:
   case Intrinsic::x86_avx2_pmaxu_w:
   case Intrinsic::x86_avx2_pmaxu_d:
-  case Intrinsic::x86_avx512_pmaxu_d:
-  case Intrinsic::x86_avx512_pmaxu_q:
   case Intrinsic::x86_sse2_pminu_b:
   case Intrinsic::x86_sse41_pminuw:
   case Intrinsic::x86_sse41_pminud:
   case Intrinsic::x86_avx2_pminu_b:
   case Intrinsic::x86_avx2_pminu_w:
   case Intrinsic::x86_avx2_pminu_d:
-  case Intrinsic::x86_avx512_pminu_d:
-  case Intrinsic::x86_avx512_pminu_q:
   case Intrinsic::x86_sse41_pmaxsb:
   case Intrinsic::x86_sse2_pmaxs_w:
   case Intrinsic::x86_sse41_pmaxsd:
   case Intrinsic::x86_avx2_pmaxs_b:
   case Intrinsic::x86_avx2_pmaxs_w:
   case Intrinsic::x86_avx2_pmaxs_d:
-  case Intrinsic::x86_avx512_pmaxs_d:
-  case Intrinsic::x86_avx512_pmaxs_q:
   case Intrinsic::x86_sse41_pminsb:
   case Intrinsic::x86_sse2_pmins_w:
   case Intrinsic::x86_sse41_pminsd:
   case Intrinsic::x86_avx2_pmins_b:
   case Intrinsic::x86_avx2_pmins_w:
-  case Intrinsic::x86_avx2_pmins_d:
-  case Intrinsic::x86_avx512_pmins_d:
-  case Intrinsic::x86_avx512_pmins_q: {
+  case Intrinsic::x86_avx2_pmins_d: {
     unsigned Opcode;
     switch (IntNo) {
     default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
@@ -11418,8 +11410,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case Intrinsic::x86_avx2_pmaxu_b:
     case Intrinsic::x86_avx2_pmaxu_w:
     case Intrinsic::x86_avx2_pmaxu_d:
-    case Intrinsic::x86_avx512_pmaxu_d:
-    case Intrinsic::x86_avx512_pmaxu_q:
       Opcode = X86ISD::UMAX;
       break;
     case Intrinsic::x86_sse2_pminu_b:
@@ -11428,8 +11418,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case Intrinsic::x86_avx2_pminu_b:
     case Intrinsic::x86_avx2_pminu_w:
     case Intrinsic::x86_avx2_pminu_d:
-    case Intrinsic::x86_avx512_pminu_d:
-    case Intrinsic::x86_avx512_pminu_q:
       Opcode = X86ISD::UMIN;
       break;
     case Intrinsic::x86_sse41_pmaxsb:
@@ -11438,8 +11426,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case Intrinsic::x86_avx2_pmaxs_b:
     case Intrinsic::x86_avx2_pmaxs_w:
     case Intrinsic::x86_avx2_pmaxs_d:
-    case Intrinsic::x86_avx512_pmaxs_d:
-    case Intrinsic::x86_avx512_pmaxs_q:
       Opcode = X86ISD::SMAX;
       break;
     case Intrinsic::x86_sse41_pminsb:
@@ -11448,8 +11434,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case Intrinsic::x86_avx2_pmins_b:
     case Intrinsic::x86_avx2_pmins_w:
     case Intrinsic::x86_avx2_pmins_d:
-    case Intrinsic::x86_avx512_pmins_d:
-    case Intrinsic::x86_avx512_pmins_q:
       Opcode = X86ISD::SMIN;
       break;
     }

@@ -1420,6 +1420,10 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VPERMI2Qrr,            X86::VPERMI2Qrm,            0 },
     { X86::VPERMI2PSrr,           X86::VPERMI2PSrm,           0 },
     { X86::VPERMI2PDrr,           X86::VPERMI2PDrm,           0 },
+    { X86::VBLENDMPDZrr,          X86::VBLENDMPDZrm,          0 },
+    { X86::VBLENDMPSZrr,          X86::VBLENDMPSZrm,          0 },
+    { X86::VPBLENDMDZrr,          X86::VPBLENDMDZrm,          0 },
+    { X86::VPBLENDMQZrr,          X86::VPBLENDMQZrm,          0 }
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl3); i != e; ++i) {
