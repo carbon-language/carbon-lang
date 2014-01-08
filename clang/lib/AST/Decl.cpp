@@ -782,11 +782,18 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
   // really have linkage, but it's convenient to say they do for the
   // purposes of calculating linkage of pointer-to-data-member
   // template arguments.
+  //
+  // Templates also don't officially have linkage, but since we ignore
+  // the C++ standard and look at template arguments when determining
+  // linkage and visibility of a template specialization, we might hit
+  // a template template argument that way. If we do, we need to
+  // consider its linkage.
   if (!(isa<CXXMethodDecl>(D) ||
         isa<VarDecl>(D) ||
         isa<FieldDecl>(D) ||
         isa<IndirectFieldDecl>(D) ||
-        isa<TagDecl>(D)))
+        isa<TagDecl>(D) ||
+        isa<TemplateDecl>(D)))
     return LinkageInfo::none();
 
   LinkageInfo LV;

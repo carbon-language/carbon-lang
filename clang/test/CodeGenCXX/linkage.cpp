@@ -220,3 +220,11 @@ namespace test17 {
   }
   template int *foo<42>();
 }
+
+// PR18408
+namespace test18 {
+  template<template<typename> class> struct A {};
+  struct B { template<typename> struct C; };
+  void f(A<B::C>) {}
+  // CHECK-DAG: define void @_ZN6test181fENS_1AINS_1B1CEEE(
+}
