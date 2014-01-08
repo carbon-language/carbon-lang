@@ -193,9 +193,9 @@ def MULXrr : F3_1<2, 0b001001,
                   "mulx $rs1, $rs2, $rd",
                   [(set i64:$rd, (mul i64:$rs1, i64:$rs2))]>;
 def MULXri : F3_2<2, 0b001001,
-                  (outs IntRegs:$rd), (ins IntRegs:$rs1, i64imm:$i),
-                  "mulx $rs1, $i, $rd",
-                  [(set i64:$rd, (mul i64:$rs1, (i64 simm13:$i)))]>;
+                  (outs IntRegs:$rd), (ins IntRegs:$rs1, i64imm:$simm13),
+                  "mulx $rs1, $simm13, $rd",
+                  [(set i64:$rd, (mul i64:$rs1, (i64 simm13:$simm13)))]>;
 
 // Division can trap.
 let hasSideEffects = 1 in {
@@ -204,18 +204,18 @@ def SDIVXrr : F3_1<2, 0b101101,
                    "sdivx $rs1, $rs2, $rd",
                    [(set i64:$rd, (sdiv i64:$rs1, i64:$rs2))]>;
 def SDIVXri : F3_2<2, 0b101101,
-                   (outs IntRegs:$rd), (ins IntRegs:$rs1, i64imm:$i),
-                   "sdivx $rs1, $i, $rd",
-                   [(set i64:$rd, (sdiv i64:$rs1, (i64 simm13:$i)))]>;
+                   (outs IntRegs:$rd), (ins IntRegs:$rs1, i64imm:$simm13),
+                   "sdivx $rs1, $simm13, $rd",
+                   [(set i64:$rd, (sdiv i64:$rs1, (i64 simm13:$simm13)))]>;
 
 def UDIVXrr : F3_1<2, 0b001101,
                    (outs I64Regs:$rd), (ins I64Regs:$rs1, I64Regs:$rs2),
                    "udivx $rs1, $rs2, $rd",
                    [(set i64:$rd, (udiv i64:$rs1, i64:$rs2))]>;
 def UDIVXri : F3_2<2, 0b001101,
-                   (outs IntRegs:$rd), (ins IntRegs:$rs1, i64imm:$i),
-                   "udivx $rs1, $i, $rd",
-                   [(set i64:$rd, (udiv i64:$rs1, (i64 simm13:$i)))]>;
+                   (outs IntRegs:$rd), (ins IntRegs:$rs1, i64imm:$simm13),
+                   "udivx $rs1, $simm13, $rd",
+                   [(set i64:$rd, (udiv i64:$rs1, (i64 simm13:$simm13)))]>;
 } // hasSideEffects = 1
 
 } // Predicates = [Is64Bit]
