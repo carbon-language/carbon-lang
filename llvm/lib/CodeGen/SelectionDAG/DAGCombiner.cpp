@@ -280,6 +280,10 @@ namespace {
     SDValue MatchBSwapHWordLow(SDNode *N, SDValue N0, SDValue N1,
                                bool DemandHighBits = true);
     SDValue MatchBSwapHWord(SDNode *N, SDValue N0, SDValue N1);
+    SDNode *MatchRotatePosNeg(SDValue Shifted, SDValue Pos, SDValue Neg,
+                              SDValue InnerPos, SDValue InnerNeg,
+                              unsigned PosOpcode, unsigned NegOpcode,
+                              SDLoc DL);
     SDNode *MatchRotate(SDValue LHS, SDValue RHS, SDLoc DL);
     SDValue ReduceLoadWidth(SDNode *N);
     SDValue ReduceLoadOpStoreWidth(SDNode *N);
@@ -3302,6 +3306,63 @@ static bool MatchRotateHalf(SDValue Op, SDValue &Shift, SDValue &Mask) {
   return false;
 }
 
+// A subroutine of MatchRotate used once we have found an OR of two opposite
+// shifts of Shifted.  If Neg == <operand size> - Pos then the OR reduces
+// to both (PosOpcode Shifted, Pos) and (NegOpcode Shifted, Neg), with the
+// former being preferred if supported.  InnerPos and InnerNeg are Pos and
+// Neg with outer conversions stripped away.
+SDNode *DAGCombiner::MatchRotatePosNeg(SDValue Shifted, SDValue Pos,
+                                       SDValue Neg, SDValue InnerPos,
+                                       SDValue InnerNeg, unsigned PosOpcode,
+                                       unsigned NegOpcode, SDLoc DL) {
+  // Check that Neg == SUBC - Pos.
+  if (InnerNeg.getOpcode() != ISD::SUB)
+    return 0;
+  ConstantSDNode *SUBC = dyn_cast<ConstantSDNode>(InnerNeg.getOperand(0));
+  if (!SUBC)
+    return 0;
+  if (InnerNeg.getOperand(1) != InnerPos)
+    return 0;
+
+  // fold (or (shl x, (*ext y)),
+  //          (srl x, (*ext (sub 32, y)))) ->
+  //   (rotl x, y) or (rotr x, (sub 32, y))
+  //
+  // fold (or (shl x, (*ext (sub 32, y))),
+  //          (srl x, (*ext y))) ->
+  //   (rotr x, y) or (rotl x, (sub 32, y))
+  EVT VT = Shifted.getValueType();
+  unsigned OpSizeInBits = VT.getSizeInBits();
+  if (SUBC->getAPIntValue() == OpSizeInBits) {
+    bool HasPos = TLI.isOperationLegalOrCustom(PosOpcode, VT);
+    return DAG.getNode(HasPos ? PosOpcode : NegOpcode, DL, VT, Shifted,
+                       HasPos ? Pos : Neg).getNode();
+  }
+
+  // fold (or (shl (*ext x), (*ext y)),
+  //          (srl (*ext x), (*ext (sub 32, y)))) ->
+  //   (*ext (rotl x, y)) or (*ext (rotr x, (sub 32, y)))
+  //
+  // fold (or (shl (*ext x), (*ext (sub 32, y))),
+  //          (srl (*ext x), (*ext y))) ->
+  //   (*ext (rotr x, y)) or (*ext (rotl x, (sub 32, y)))
+  if (Shifted.getOpcode() == ISD::ZERO_EXTEND ||
+      Shifted.getOpcode() == ISD::ANY_EXTEND) {
+    SDValue InnerShifted = Shifted.getOperand(0);
+    EVT InnerVT = InnerShifted.getValueType();
+    bool HasPosInner = TLI.isOperationLegalOrCustom(PosOpcode, InnerVT);
+    if (HasPosInner || TLI.isOperationLegalOrCustom(NegOpcode, InnerVT)) {
+      if (InnerVT.getSizeInBits() == SUBC->getAPIntValue()) {
+        SDValue V = DAG.getNode(HasPosInner ? PosOpcode : NegOpcode, DL,
+                                InnerVT, InnerShifted, HasPosInner ? Pos : Neg);
+        return DAG.getNode(Shifted.getOpcode(), DL, VT, V).getNode();
+      }
+    }
+  }
+
+  return 0;
+}
+
 // MatchRotate - Handle an 'or' of two operands.  If this is one of the many
 // idioms for rotate, and if the target supports rotation instructions, generate
 // a rot[lr].
@@ -3396,72 +3457,15 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, SDLoc DL) {
     RExtOp0 = RHSShiftAmt.getOperand(0);
   }
 
-  if (RExtOp0.getOpcode() == ISD::SUB && RExtOp0.getOperand(1) == LExtOp0) {
-    // fold (or (shl x, (*ext y)), (srl x, (*ext (sub 32, y)))) ->
-    //   (rotl x, y)
-    // fold (or (shl x, (*ext y)), (srl x, (*ext (sub 32, y)))) ->
-    //   (rotr x, (sub 32, y))
-    if (ConstantSDNode *SUBC =
-            dyn_cast<ConstantSDNode>(RExtOp0.getOperand(0))) {
-      if (SUBC->getAPIntValue() == OpSizeInBits) {
-        return DAG.getNode(HasROTL ? ISD::ROTL : ISD::ROTR, DL, VT, LHSShiftArg,
-                           HasROTL ? LHSShiftAmt : RHSShiftAmt).getNode();
-      } else if (LHSShiftArg.getOpcode() == ISD::ZERO_EXTEND ||
-                 LHSShiftArg.getOpcode() == ISD::ANY_EXTEND) {
-        // fold (or (shl (*ext x), (*ext y)),
-        //          (srl (*ext x), (*ext (sub 32, y)))) ->
-        //   (*ext (rotl x, y))
-        // fold (or (shl (*ext x), (*ext y)),
-        //          (srl (*ext x), (*ext (sub 32, y)))) ->
-        //   (*ext (rotr x, (sub 32, y)))
-        SDValue LArgExtOp0 = LHSShiftArg.getOperand(0);
-        EVT LArgVT = LArgExtOp0.getValueType();
-        bool HasROTRWithLArg = TLI.isOperationLegalOrCustom(ISD::ROTR, LArgVT);
-        bool HasROTLWithLArg = TLI.isOperationLegalOrCustom(ISD::ROTL, LArgVT);
-        if (HasROTRWithLArg || HasROTLWithLArg) {
-          if (LArgVT.getSizeInBits() == SUBC->getAPIntValue()) {
-            SDValue V =
-                DAG.getNode(HasROTLWithLArg ? ISD::ROTL : ISD::ROTR, DL, LArgVT,
-                            LArgExtOp0, HasROTL ? LHSShiftAmt : RHSShiftAmt);
-            return DAG.getNode(LHSShiftArg.getOpcode(), DL, VT, V).getNode();
-          }
-        }
-      }
-    }
-  } else if (LExtOp0.getOpcode() == ISD::SUB &&
-             RExtOp0 == LExtOp0.getOperand(1)) {
-    // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext y))) ->
-    //   (rotr x, y)
-    // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext y))) ->
-    //   (rotl x, (sub 32, y))
-    if (ConstantSDNode *SUBC =
-            dyn_cast<ConstantSDNode>(LExtOp0.getOperand(0))) {
-      if (SUBC->getAPIntValue() == OpSizeInBits) {
-        return DAG.getNode(HasROTR ? ISD::ROTR : ISD::ROTL, DL, VT, LHSShiftArg,
-                           HasROTR ? RHSShiftAmt : LHSShiftAmt).getNode();
-      } else if (RHSShiftArg.getOpcode() == ISD::ZERO_EXTEND ||
-                 RHSShiftArg.getOpcode() == ISD::ANY_EXTEND) {
-        // fold (or (shl (*ext x), (*ext (sub 32, y))),
-        //          (srl (*ext x), (*ext y))) ->
-        //   (*ext (rotl x, y))
-        // fold (or (shl (*ext x), (*ext (sub 32, y))),
-        //          (srl (*ext x), (*ext y))) ->
-        //   (*ext (rotr x, (sub 32, y)))
-        SDValue RArgExtOp0 = RHSShiftArg.getOperand(0);
-        EVT RArgVT = RArgExtOp0.getValueType();
-        bool HasROTRWithRArg = TLI.isOperationLegalOrCustom(ISD::ROTR, RArgVT);
-        bool HasROTLWithRArg = TLI.isOperationLegalOrCustom(ISD::ROTL, RArgVT);
-        if (HasROTRWithRArg || HasROTLWithRArg) {
-          if (RArgVT.getSizeInBits() == SUBC->getAPIntValue()) {
-            SDValue V =
-                DAG.getNode(HasROTRWithRArg ? ISD::ROTR : ISD::ROTL, DL, RArgVT,
-                            RArgExtOp0, HasROTR ? RHSShiftAmt : LHSShiftAmt);
-            return DAG.getNode(RHSShiftArg.getOpcode(), DL, VT, V).getNode();
-          }
-        }
-      }
-    }
-  }
+  SDNode *TryL = MatchRotatePosNeg(LHSShiftArg, LHSShiftAmt, RHSShiftAmt,
+                                   LExtOp0, RExtOp0, ISD::ROTL, ISD::ROTR, DL);
+  if (TryL)
+    return TryL;
+
+  SDNode *TryR = MatchRotatePosNeg(RHSShiftArg, RHSShiftAmt, LHSShiftAmt,
+                                   RExtOp0, LExtOp0, ISD::ROTR, ISD::ROTL, DL);
+  if (TryR)
+    return TryR;
 
   return 0;
 }
