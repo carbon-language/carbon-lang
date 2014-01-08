@@ -509,6 +509,10 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
 
                 m_register_info.AddRegister(reg_info, reg_name, alt_name, set_name);
             }
+            else
+            {
+                break;  // ensure exit before reg_num is incremented
+            }
         }
         else
         {
