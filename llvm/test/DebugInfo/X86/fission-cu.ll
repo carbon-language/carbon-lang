@@ -30,19 +30,6 @@
 ; CHECK: DW_AT_GNU_dwo_id        DW_FORM_data8
 ; CHECK: DW_AT_low_pc    DW_FORM_addr
 
-; CHECK: .debug_info contents:
-; CHECK: DW_TAG_compile_unit
-; CHECK: DW_AT_GNU_dwo_name [DW_FORM_strp] ( .debug_str[0x00000000] = "baz.dwo")
-; CHECK: DW_AT_GNU_addr_base [DW_FORM_sec_offset]                   (0x00000000)
-; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x00000000)
-; CHECK: DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000008] = "/usr/local/google/home/echristo/tmp")
-; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x0000000000000000)
-; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
-
-; CHECK: .debug_str contents:
-; CHECK: 0x00000000: "baz.dwo"
-; CHECK: 0x00000008: "/usr/local/google/home/echristo/tmp"
-
 ; Check that we're using the right forms.
 ; CHECK: .debug_abbrev.dwo contents:
 ; CHECK: Abbrev table for offset: 0x00000000
@@ -68,6 +55,15 @@
 ; CHECK: DW_AT_encoding  DW_FORM_data1
 ; CHECK: DW_AT_byte_size DW_FORM_data1
 
+; CHECK: .debug_info contents:
+; CHECK: DW_TAG_compile_unit
+; CHECK: DW_AT_GNU_dwo_name [DW_FORM_strp] ( .debug_str[0x00000000] = "baz.dwo")
+; CHECK: DW_AT_GNU_addr_base [DW_FORM_sec_offset]                   (0x00000000)
+; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x00000000)
+; CHECK: DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000008] = "/usr/local/google/home/echristo/tmp")
+; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x0000000000000000)
+; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
+
 ; Check that the rest of the compile units have information.
 ; CHECK: .debug_info.dwo contents:
 ; CHECK: DW_TAG_compile_unit
@@ -88,6 +84,9 @@
 ; CHECK: [[TYPE]]: DW_TAG_base_type
 ; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000003) string = "int")
 
+; CHECK: .debug_str contents:
+; CHECK: 0x00000000: "baz.dwo"
+; CHECK: 0x00000008: "/usr/local/google/home/echristo/tmp"
 
 ; CHECK: .debug_str.dwo contents:
 ; CHECK: 0x00000000: "clang version 3.3 (trunk 169021) (llvm/trunk 169020)"

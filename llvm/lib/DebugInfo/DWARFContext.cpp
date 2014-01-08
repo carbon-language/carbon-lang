@@ -66,11 +66,26 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     getDebugAbbrev()->dump(OS);
   }
 
+  if (DumpType == DIDT_All || DumpType == DIDT_AbbrevDwo) {
+    const DWARFDebugAbbrev *D = getDebugAbbrevDWO();
+    if (D) {
+      OS << "\n.debug_abbrev.dwo contents:\n";
+      getDebugAbbrevDWO()->dump(OS);
+    }
+  }
+
   if (DumpType == DIDT_All || DumpType == DIDT_Info) {
     OS << "\n.debug_info contents:\n";
     for (unsigned i = 0, e = getNumCompileUnits(); i != e; ++i)
       getCompileUnitAtIndex(i)->dump(OS);
   }
+
+  if (DumpType == DIDT_All || DumpType == DIDT_InfoDwo)
+    if (getNumDWOCompileUnits()) {
+      OS << "\n.debug_info.dwo contents:\n";
+      for (unsigned i = 0, e = getNumDWOCompileUnits(); i != e; ++i)
+        getDWOCompileUnitAtIndex(i)->dump(OS);
+    }
 
   if (DumpType == DIDT_All || DumpType == DIDT_Types) {
     OS << "\n.debug_types contents:\n";
@@ -126,6 +141,18 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     }
   }
 
+  if (DumpType == DIDT_All || DumpType == DIDT_StrDwo)
+    if (!getStringDWOSection().empty()) {
+      OS << "\n.debug_str.dwo contents:\n";
+      DataExtractor strDWOData(getStringDWOSection(), isLittleEndian(), 0);
+      offset = 0;
+      uint32_t strDWOOffset = 0;
+      while (const char *s = strDWOData.getCStr(&offset)) {
+        OS << format("0x%8.8x: \"%s\"\n", strDWOOffset, s);
+        strDWOOffset = offset;
+      }
+    }
+
   if (DumpType == DIDT_All || DumpType == DIDT_Ranges) {
     OS << "\n.debug_ranges contents:\n";
     // In fact, different compile units may have different address byte
@@ -155,33 +182,6 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
   if (DumpType == DIDT_All || DumpType == DIDT_GnuPubtypes)
     dumpPubSection(OS, "debug_gnu_pubtypes", getGnuPubTypesSection(),
                    isLittleEndian(), true /* GnuStyle */);
-
-  if (DumpType == DIDT_All || DumpType == DIDT_AbbrevDwo) {
-    const DWARFDebugAbbrev *D = getDebugAbbrevDWO();
-    if (D) {
-      OS << "\n.debug_abbrev.dwo contents:\n";
-      getDebugAbbrevDWO()->dump(OS);
-    }
-  }
-
-  if (DumpType == DIDT_All || DumpType == DIDT_InfoDwo)
-    if (getNumDWOCompileUnits()) {
-      OS << "\n.debug_info.dwo contents:\n";
-      for (unsigned i = 0, e = getNumDWOCompileUnits(); i != e; ++i)
-        getDWOCompileUnitAtIndex(i)->dump(OS);
-    }
-
-  if (DumpType == DIDT_All || DumpType == DIDT_StrDwo)
-    if (!getStringDWOSection().empty()) {
-      OS << "\n.debug_str.dwo contents:\n";
-      DataExtractor strDWOData(getStringDWOSection(), isLittleEndian(), 0);
-      offset = 0;
-      uint32_t strDWOOffset = 0;
-      while (const char *s = strDWOData.getCStr(&offset)) {
-        OS << format("0x%8.8x: \"%s\"\n", strDWOOffset, s);
-        strDWOOffset = offset;
-      }
-    }
 
   if (DumpType == DIDT_All || DumpType == DIDT_StrOffsetsDwo)
     if (!getStringOffsetDWOSection().empty()) {
