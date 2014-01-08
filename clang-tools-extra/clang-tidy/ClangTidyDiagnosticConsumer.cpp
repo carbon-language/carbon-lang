@@ -1,4 +1,4 @@
-//===--- tools/extra/clang-tidy/ClangTidy.cpp - Clang-tidy DiagnosticConsumer //
+//===--- tools/extra/clang-tidy/ClangTidyDiagnosticConsumer.cpp ----------=== //
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-///  \file This file implements clang-tidy DiagnosticConsumer.
+///  \file This file implements ClangTidyDiagnosticConsumer, ClangTidyMessage,
+///  ClangTidyContext and ClangTidyError classes.
 ///
 ///  This tool uses the Clang Tooling infrastructure, see
 ///    http://clang.llvm.org/docs/HowToSetupToolingForLLVM.html
