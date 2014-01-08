@@ -196,7 +196,7 @@ private:
     if (!Other.HasError) {
       // Get the other value.
       HasError = false;
-      new (getStorage()) storage_type(*Other.get());
+      new (getStorage()) storage_type(*Other.getStorage());
     } else {
       // Get other's error.
       HasError = true;
