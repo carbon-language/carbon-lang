@@ -551,14 +551,14 @@ void X86Subtarget::initializeEnvironment() {
 
 X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS,
-                           unsigned StackAlignOverride, bool is64Bit)
+                           unsigned StackAlignOverride)
   : X86GenSubtargetInfo(TT, CPU, FS)
   , X86ProcFamily(Others)
   , PICStyle(PICStyles::None)
   , TargetTriple(TT)
   , StackAlignOverride(StackAlignOverride)
-  , In64BitMode(is64Bit)
-  , In32BitMode(!is64Bit)
+  , In64BitMode(TargetTriple.getArch() == Triple::x86_64)
+  , In32BitMode(TargetTriple.getArch() == Triple::x86)
   , In16BitMode(false) {
   initializeEnvironment();
   resetSubtargetFeatures(CPU, FS);

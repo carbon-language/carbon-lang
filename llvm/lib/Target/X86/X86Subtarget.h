@@ -220,7 +220,7 @@ public:
   ///
   X86Subtarget(const std::string &TT, const std::string &CPU,
                const std::string &FS,
-               unsigned StackAlignOverride, bool is64Bit);
+               unsigned StackAlignOverride);
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every
