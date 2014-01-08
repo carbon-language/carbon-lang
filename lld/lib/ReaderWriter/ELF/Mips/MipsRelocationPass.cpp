@@ -33,9 +33,9 @@ public:
 };
 
 /// \brief MIPS GOT entry initialized by zero.
-class MipsGOT0Atom : public MipsGOTAtom {
+class GOT0Atom : public MipsGOTAtom {
 public:
-  MipsGOT0Atom(const File &f) : MipsGOTAtom(f) {}
+  GOT0Atom(const File &f) : MipsGOTAtom(f) {}
 
   virtual ArrayRef<uint8_t> rawContent() const {
     return llvm::makeArrayRef(mipsGot0AtomContent);
@@ -43,30 +43,30 @@ public:
 };
 
 /// \brief MIPS GOT entry initialized by zero.
-class MipsGOTModulePointerAtom : public MipsGOTAtom {
+class GOTModulePointerAtom : public MipsGOTAtom {
 public:
-  MipsGOTModulePointerAtom(const File &f) : MipsGOTAtom(f) {}
+  GOTModulePointerAtom(const File &f) : MipsGOTAtom(f) {}
 
   virtual ArrayRef<uint8_t> rawContent() const {
     return llvm::makeArrayRef(mipsGotModulePointerAtomContent);
   }
 };
 
-class MipsGOTPassFile : public SimpleFile {
+class RelocationPassFile : public SimpleFile {
 public:
-  MipsGOTPassFile(const ELFLinkingContext &ctx)
-      : SimpleFile("MipsGOTPassFile") {
+  RelocationPassFile(const ELFLinkingContext &ctx)
+      : SimpleFile("RelocationPassFile") {
     setOrdinal(ctx.getNextOrdinalAndIncrement());
   }
 
   llvm::BumpPtrAllocator _alloc;
 };
 
-class MipsGOTPass : public Pass {
+class RelocationPass : public Pass {
 public:
-  MipsGOTPass(MipsLinkingContext &context)
-      : _file(context), _got0(new (_file._alloc) MipsGOT0Atom(_file)),
-        _got1(new (_file._alloc) MipsGOTModulePointerAtom(_file)) {
+  RelocationPass(MipsLinkingContext &context)
+      : _file(context), _got0(new (_file._alloc) GOT0Atom(_file)),
+        _got1(new (_file._alloc) GOTModulePointerAtom(_file)) {
     _localGotVector.push_back(_got0);
     _localGotVector.push_back(_got1);
   }
@@ -96,7 +96,7 @@ public:
 
 private:
   /// \brief Owner of all the Atoms created by this pass.
-  MipsGOTPassFile _file;
+  RelocationPassFile _file;
 
   /// \brief GOT header entries.
   GOTAtom *_got0;
@@ -136,7 +136,7 @@ private:
     const DefinedAtom *da = dyn_cast<DefinedAtom>(a);
     bool isLocal = (da && da->scope() == Atom::scopeTranslationUnit);
 
-    auto ga = new (_file._alloc) MipsGOT0Atom(_file);
+    auto ga = new (_file._alloc) GOT0Atom(_file);
     _gotMap[a] = ga;
     if (isLocal)
       _localGotVector.push_back(ga);
@@ -166,7 +166,7 @@ lld::elf::createMipsRelocationPass(MipsLinkingContext &ctx) {
   switch (ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
   case llvm::ELF::ET_DYN:
-    return std::unique_ptr<Pass>(new MipsGOTPass(ctx));
+    return std::unique_ptr<Pass>(new RelocationPass(ctx));
   case llvm::ELF::ET_REL:
     return std::unique_ptr<Pass>();
   default:
