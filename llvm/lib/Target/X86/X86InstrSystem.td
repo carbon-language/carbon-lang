@@ -387,12 +387,16 @@ def VERWm : I<0x00, MRM5m, (outs), (ins i16mem:$seg),
 let SchedRW = [WriteSystem] in {
 def SGDT16m : I<0x01, MRM0m, (outs opaque48mem:$dst), (ins),
               "sgdt{w}\t$dst", [], IIC_SGDT>, TB, OpSize, Requires<[Not64BitMode]>;
-def SGDTm : I<0x01, MRM0m, (outs opaque48mem:$dst), (ins),
-              "sgdt\t$dst", [], IIC_SGDT>, OpSize16, TB;
+def SGDT32m : I<0x01, MRM0m, (outs opaque48mem:$dst), (ins),
+              "sgdt{l}\t$dst", [], IIC_SGDT>, OpSize16, TB, Requires <[Not64BitMode]>;
+def SGDT64m : I<0x01, MRM0m, (outs opaque80mem:$dst), (ins),
+              "sgdt{q}\t$dst", [], IIC_SGDT>, TB, Requires <[In64BitMode]>;
 def SIDT16m : I<0x01, MRM1m, (outs opaque48mem:$dst), (ins),
               "sidt{w}\t$dst", [], IIC_SIDT>, TB, OpSize, Requires<[Not64BitMode]>;
-def SIDTm : I<0x01, MRM1m, (outs opaque48mem:$dst), (ins),
-              "sidt\t$dst", []>, OpSize16, TB;
+def SIDT32m : I<0x01, MRM1m, (outs opaque48mem:$dst), (ins),
+              "sidt{l}\t$dst", []>, OpSize16, TB, Requires <[Not64BitMode]>;
+def SIDT64m : I<0x01, MRM1m, (outs opaque80mem:$dst), (ins),
+              "sidt{q}\t$dst", []>, TB, Requires <[In64BitMode]>;
 def SLDT16r : I<0x00, MRM0r, (outs GR16:$dst), (ins),
                 "sldt{w}\t$dst", [], IIC_SLDT>, TB, OpSize;
 def SLDT16m : I<0x00, MRM0m, (outs i16mem:$dst), (ins),
@@ -409,12 +413,16 @@ def SLDT64m : RI<0x00, MRM0m, (outs i16mem:$dst), (ins),
 
 def LGDT16m : I<0x01, MRM2m, (outs), (ins opaque48mem:$src),
               "lgdt{w}\t$src", [], IIC_LGDT>, TB, OpSize, Requires<[Not64BitMode]>;
-def LGDTm : I<0x01, MRM2m, (outs), (ins opaque48mem:$src),
-              "lgdt\t$src", [], IIC_LGDT>, OpSize16, TB;
+def LGDT32m : I<0x01, MRM2m, (outs), (ins opaque48mem:$src),
+              "lgdt{l}\t$src", [], IIC_LGDT>, OpSize16, TB, Requires<[Not64BitMode]>;
+def LGDT64m : I<0x01, MRM2m, (outs), (ins opaque80mem:$src),
+              "lgdt{q}\t$src", [], IIC_LGDT>, TB, Requires<[In64BitMode]>;
 def LIDT16m : I<0x01, MRM3m, (outs), (ins opaque48mem:$src),
               "lidt{w}\t$src", [], IIC_LIDT>, TB, OpSize, Requires<[Not64BitMode]>;
-def LIDTm : I<0x01, MRM3m, (outs), (ins opaque48mem:$src),
-              "lidt\t$src", [], IIC_LIDT>, OpSize16, TB;
+def LIDT32m : I<0x01, MRM3m, (outs), (ins opaque48mem:$src),
+              "lidt{l}\t$src", [], IIC_LIDT>, OpSize16, TB, Requires<[Not64BitMode]>;
+def LIDT64m : I<0x01, MRM3m, (outs), (ins opaque80mem:$src),
+              "lidt{q}\t$src", [], IIC_LIDT>, TB, Requires<[In64BitMode]>;
 def LLDT16r : I<0x00, MRM2r, (outs), (ins GR16:$src),
                 "lldt{w}\t$src", [], IIC_LLDT_REG>, TB;
 def LLDT16m : I<0x00, MRM2m, (outs), (ins i16mem:$src),

@@ -951,35 +951,35 @@ decw %ax  // CHECK:	decw	%ax # encoding: [0x66,0xff,0xc8]
 decl %eax // CHECK:	decl	%eax # encoding: [0xff,0xc8]
 
 // rdar://8416805
-// CHECK: lgdt	4(%rax)
+// CHECK: lgdtq	4(%rax)
 // CHECK:  encoding: [0x0f,0x01,0x50,0x04]
         	lgdt	4(%rax)
 
-// CHECK: lgdt	4(%rax)
+// CHECK: lgdtq	4(%rax)
 // CHECK:  encoding: [0x0f,0x01,0x50,0x04]
         	lgdtq	4(%rax)
 
-// CHECK: lidt	4(%rax)
+// CHECK: lidtq	4(%rax)
 // CHECK:  encoding: [0x0f,0x01,0x58,0x04]
         	lidt	4(%rax)
 
-// CHECK: lidt	4(%rax)
+// CHECK: lidtq	4(%rax)
 // CHECK:  encoding: [0x0f,0x01,0x58,0x04]
         	lidtq	4(%rax)
 
-// CHECK: sgdt	4(%rax)
+// CHECK: sgdtq	4(%rax)
 // CHECK:  encoding: [0x0f,0x01,0x40,0x04]
         	sgdt	4(%rax)
 
-// CHECK: sgdt	4(%rax)
+// CHECK: sgdtq	4(%rax)
 // CHECK:  encoding: [0x0f,0x01,0x40,0x04]
         	sgdtq	4(%rax)
 
-// CHECK: sidt	4(%rax)
+// CHECK: sidtq	4(%rax)
 // CHECK:  encoding: [0x0f,0x01,0x48,0x04]
         	sidt	4(%rax)
 
-// CHECK: sidt	4(%rax)
+// CHECK: sidtq	4(%rax)
 // CHECK:  encoding: [0x0f,0x01,0x48,0x04]
         	sidtq	4(%rax)
 

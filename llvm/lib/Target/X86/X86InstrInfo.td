@@ -2204,14 +2204,18 @@ def : MnemonicAlias<"iret",    "iretl",    "att">;
 def : MnemonicAlias<"sysret",  "sysretl",  "att">;
 def : MnemonicAlias<"sysexit", "sysexitl", "att">;
 
-def : MnemonicAlias<"lgdtl", "lgdt", "att">, Requires<[Not64BitMode]>;
-def : MnemonicAlias<"lgdtq", "lgdt", "att">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"lidtl", "lidt", "att">, Requires<[Not64BitMode]>;
-def : MnemonicAlias<"lidtq", "lidt", "att">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"sgdtl", "sgdt", "att">, Requires<[Not64BitMode]>;
-def : MnemonicAlias<"sgdtq", "sgdt", "att">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"sidtl", "sidt", "att">, Requires<[Not64BitMode]>;
-def : MnemonicAlias<"sidtq", "sidt", "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"lgdt", "lgdtw", "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"lgdt", "lgdtl", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"lgdt", "lgdtq", "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"lidt", "lidtw", "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"lidt", "lidtl", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"lidt", "lidtq", "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"sgdt", "sgdtw", "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"sgdt", "sgdtl", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"sgdt", "sgdtq", "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"sidt", "sidtw", "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"sidt", "sidtl", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"sidt", "sidtq", "att">, Requires<[In64BitMode]>;
 
 
 // Floating point stack aliases.

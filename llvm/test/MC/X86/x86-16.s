@@ -583,6 +583,54 @@ pshufw $90, %mm4, %mm0
 // CHECK:  encoding: [0x67,0x63,0x59,0x06]
         	arpl	%bx,6(%ecx)
 
+// CHECK: lgdtw	4(%eax)
+// CHECK:  encoding: [0x67,0x0f,0x01,0x50,0x04]
+        	lgdtw	4(%eax)
+
+// CHECK: lgdtw	4(%eax)
+// CHECK:  encoding: [0x67,0x0f,0x01,0x50,0x04]
+        	lgdt	4(%eax)
+
+// CHECK: lgdtl	4(%eax)
+// CHECK:  encoding: [0x67,0x66,0x0f,0x01,0x50,0x04]
+        	lgdtl	4(%eax)
+
+// CHECK: lidtw	4(%eax)
+// CHECK:  encoding: [0x67,0x0f,0x01,0x58,0x04]
+        	lidtw	4(%eax)
+
+// CHECK: lidtw	4(%eax)
+// CHECK:  encoding: [0x67,0x0f,0x01,0x58,0x04]
+        	lidt	4(%eax)
+
+// CHECK: lidtl	4(%eax)
+// CHECK:  encoding: [0x67,0x66,0x0f,0x01,0x58,0x04]
+        	lidtl	4(%eax)
+
+// CHECK: sgdtw	4(%eax)
+// CHECK:  encoding: [0x67,0x0f,0x01,0x40,0x04]
+        	sgdtw	4(%eax)
+
+// CHECK: sgdtw	4(%eax)
+// CHECK:  encoding: [0x67,0x0f,0x01,0x40,0x04]
+        	sgdt	4(%eax)
+
+// CHECK: sgdtl	4(%eax)
+// CHECK:  encoding: [0x67,0x66,0x0f,0x01,0x40,0x04]
+        	sgdtl	4(%eax)
+
+// CHECK: sidtw	4(%eax)
+// CHECK:  encoding: [0x67,0x0f,0x01,0x48,0x04]
+        	sidtw	4(%eax)
+
+// CHECK: sidtw	4(%eax)
+// CHECK:  encoding: [0x67,0x0f,0x01,0x48,0x04]
+        	sidt	4(%eax)
+
+// CHECK: sidtl	4(%eax)
+// CHECK:  encoding: [0x67,0x66,0x0f,0x01,0x48,0x04]
+        	sidtl	4(%eax)
+
 // CHECK: fcompi	%st(2)
 // CHECK:  encoding: [0xdf,0xf2]
         	fcompi	%st(2), %st
