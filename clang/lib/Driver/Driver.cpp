@@ -1879,7 +1879,7 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
     // Handle the Darwin '-arch' flag.
     if (Arg *A = Args.getLastArg(options::OPT_arch)) {
       if (StringRef(A->getValue()) == "x86_64h")
-        Target.setArchName(DarwinArchName);
+        Target.setArchName(A->getValue());
       else {
         llvm::Triple::ArchType DarwinArch
           = tools::darwin::getArchTypeForDarwinArchName(A->getValue());
