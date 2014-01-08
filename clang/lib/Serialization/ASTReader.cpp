@@ -1643,6 +1643,9 @@ InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
   if (F.InputFilesLoaded[ID-1].getFile())
     return F.InputFilesLoaded[ID-1];
 
+  if (F.InputFilesLoaded[ID-1].isNotFound())
+    return InputFile();
+
   // Go find this input file.
   BitstreamCursor &Cursor = F.InputFilesCursor;
   SavedStreamPosition SavedPosition(Cursor);
@@ -1692,6 +1695,8 @@ InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
         ErrorStr += "' referenced by AST file";
         Error(ErrorStr.c_str());
       }
+      // Record that we didn't find the file.
+      F.InputFilesLoaded[ID-1] = InputFile::getNotFound();
       return InputFile();
     }
 
