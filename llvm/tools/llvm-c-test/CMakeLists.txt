@@ -8,7 +8,7 @@ set(LLVM_LINK_COMPONENTS
   )
 
 if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wstrict-prototypes")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -Wstrict-prototypes")
 endif ()
 
 add_llvm_tool(llvm-c-test
