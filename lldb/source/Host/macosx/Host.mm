@@ -1003,61 +1003,69 @@ Host::GetOSVersion
     uint32_t &update
 )
 {
-    static const char *version_plist_file = "/System/Library/CoreServices/SystemVersion.plist";
-    char buffer[256];
-    const char *product_version_str = NULL;
-    
-    CFCReleaser<CFURLRef> plist_url(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
-                                                                            (UInt8 *) version_plist_file,
-                                                                            strlen (version_plist_file), NO));
-    if (plist_url.get())
+    static uint32_t g_major = 0;
+    static uint32_t g_minor = 0;
+    static uint32_t g_update = 0;
+
+    if (g_major == 0)
     {
-        CFCReleaser<CFPropertyListRef> property_list;
-        CFCReleaser<CFStringRef>       error_string;
-        CFCReleaser<CFDataRef>         resource_data;
-        SInt32                         error_code;
- 
-        // Read the XML file.
-        if (CFURLCreateDataAndPropertiesFromResource (kCFAllocatorDefault,
-                                                      plist_url.get(),
-                                                      resource_data.ptr_address(),
-                                                      NULL,
-                                                      NULL,
-                                                      &error_code))
+        static const char *version_plist_file = "/System/Library/CoreServices/SystemVersion.plist";
+        char buffer[256];
+        const char *product_version_str = NULL;
+        
+        CFCReleaser<CFURLRef> plist_url(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
+                                                                                (UInt8 *) version_plist_file,
+                                                                                strlen (version_plist_file), NO));
+        if (plist_url.get())
         {
-               // Reconstitute the dictionary using the XML data.
-            property_list = CFPropertyListCreateFromXMLData (kCFAllocatorDefault,
-                                                              resource_data.get(),
-                                                              kCFPropertyListImmutable,
-                                                              error_string.ptr_address());
-            if (CFGetTypeID(property_list.get()) == CFDictionaryGetTypeID())
+            CFCReleaser<CFPropertyListRef> property_list;
+            CFCReleaser<CFStringRef>       error_string;
+            CFCReleaser<CFDataRef>         resource_data;
+            SInt32                         error_code;
+     
+            // Read the XML file.
+            if (CFURLCreateDataAndPropertiesFromResource (kCFAllocatorDefault,
+                                                          plist_url.get(),
+                                                          resource_data.ptr_address(),
+                                                          NULL,
+                                                          NULL,
+                                                          &error_code))
             {
-                CFDictionaryRef property_dict = (CFDictionaryRef) property_list.get();
-                CFStringRef product_version_key = CFSTR("ProductVersion");
-                CFPropertyListRef product_version_value;
-                product_version_value = CFDictionaryGetValue(property_dict, product_version_key);
-                if (product_version_value && CFGetTypeID(product_version_value) == CFStringGetTypeID())
+                   // Reconstitute the dictionary using the XML data.
+                property_list = CFPropertyListCreateFromXMLData (kCFAllocatorDefault,
+                                                                  resource_data.get(),
+                                                                  kCFPropertyListImmutable,
+                                                                  error_string.ptr_address());
+                if (CFGetTypeID(property_list.get()) == CFDictionaryGetTypeID())
                 {
-                    CFStringRef product_version_cfstr = (CFStringRef) product_version_value;
-                    product_version_str = CFStringGetCStringPtr(product_version_cfstr, kCFStringEncodingUTF8);
-                    if (product_version_str != NULL) {
-                        if (CFStringGetCString(product_version_cfstr, buffer, 256, kCFStringEncodingUTF8))
-                            product_version_str = buffer;
+                    CFDictionaryRef property_dict = (CFDictionaryRef) property_list.get();
+                    CFStringRef product_version_key = CFSTR("ProductVersion");
+                    CFPropertyListRef product_version_value;
+                    product_version_value = CFDictionaryGetValue(property_dict, product_version_key);
+                    if (product_version_value && CFGetTypeID(product_version_value) == CFStringGetTypeID())
+                    {
+                        CFStringRef product_version_cfstr = (CFStringRef) product_version_value;
+                        product_version_str = CFStringGetCStringPtr(product_version_cfstr, kCFStringEncodingUTF8);
+                        if (product_version_str != NULL) {
+                            if (CFStringGetCString(product_version_cfstr, buffer, 256, kCFStringEncodingUTF8))
+                                product_version_str = buffer;
+                        }
                     }
                 }
             }
         }
+        if (product_version_str)
+            Args::StringToVersion(product_version_str, g_major, g_minor, g_update);
     }
     
-
-    if (product_version_str)
+    if (g_major != 0)
     {
-        Args::StringToVersion(product_version_str, major, minor, update);
+        major = g_major;
+        minor = g_minor;
+        update = g_update;
         return true;
     }
-    else
-        return false;
-
+    return false;
 }
 
 static bool
@@ -1327,8 +1335,29 @@ GetPosixspawnFlags (ProcessLaunchInfo &launch_info)
         flags |= POSIX_SPAWN_SETPGROUP;
     
 #ifdef POSIX_SPAWN_CLOEXEC_DEFAULT
+#if defined (__APPLE__)
+    static LazyBool g_use_close_on_exec_flag = eLazyBoolCalculate;
+    if (g_use_close_on_exec_flag == eLazyBoolCalculate)
+    {
+        g_use_close_on_exec_flag = eLazyBoolNo;
+        
+        uint32_t major, minor, update;
+        if (Host::GetOSVersion(major, minor, update))
+        {
+            // Kernel panic if we use the POSIX_SPAWN_CLOEXEC_DEFAULT on 10.7 or earlier
+            if (major > 10 || (major == 10 && minor > 7))
+            {
+                // Only enable for 10.8 and later OS versions
+                g_use_close_on_exec_flag = eLazyBoolYes;
+            }
+        }
+    }
+#else
+    static LazyBool g_use_close_on_exec_flag = eLazyBoolYes;
+#endif
     // Close all files exception those with file actions if this is supported.
-    flags |= POSIX_SPAWN_CLOEXEC_DEFAULT;       
+    if (g_use_close_on_exec_flag == eLazyBoolYes)
+        flags |= POSIX_SPAWN_CLOEXEC_DEFAULT;
 #endif
     
     return flags;
