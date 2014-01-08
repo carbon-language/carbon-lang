@@ -4826,6 +4826,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
                  "  aaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaa,\n"
                  "  aaaaaaa,      a\n"
                  "};");
+    verifyFormat("vector<int> foo = { ::SomeGlobalFunction() };");
 
     FormatStyle NoSpaces = getLLVMStyle();
     NoSpaces.Cpp11BracedListStyle = true;
@@ -4846,6 +4847,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
                  "  T member = {arg1, arg2};\n"
                  "};",
                  NoSpaces);
+    verifyFormat("vector<int> foo = {::SomeGlobalFunction()};", NoSpaces);
 
     // FIXME: The alignment of these trailing comments might be bad. Then again,
     // this might be utterly useless in real code.

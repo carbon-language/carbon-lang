@@ -1278,7 +1278,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::coloncolon))
     return false;
-  if (Right.is(tok::coloncolon))
+  if (Right.is(tok::coloncolon) && Left.isNot(tok::l_brace))
     return (Left.is(tok::less) && Style.Standard == FormatStyle::LS_Cpp03) ||
            !Left.isOneOf(tok::identifier, tok::greater, tok::l_paren,
                          tok::r_paren, tok::less);
