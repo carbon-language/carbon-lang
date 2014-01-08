@@ -201,15 +201,13 @@ void AMDGPUAsmPrinter::findNumUsedRegistersSI(MachineFunction &MF,
       unsigned numOperands = MI.getNumOperands();
       for (unsigned op_idx = 0; op_idx < numOperands; op_idx++) {
         MachineOperand &MO = MI.getOperand(op_idx);
-        unsigned maxUsed;
         unsigned width = 0;
         bool isSGPR = false;
-        unsigned reg;
-        unsigned hwReg;
+
         if (!MO.isReg()) {
           continue;
         }
-        reg = MO.getReg();
+        unsigned reg = MO.getReg();
         if (reg == AMDGPU::VCC) {
           VCCUsed = true;
           continue;
@@ -259,8 +257,8 @@ void AMDGPUAsmPrinter::findNumUsedRegistersSI(MachineFunction &MF,
         } else {
           llvm_unreachable("Unknown register class");
         }
-        hwReg = RI->getEncodingValue(reg) & 0xff;
-        maxUsed = hwReg + width - 1;
+        unsigned hwReg = RI->getEncodingValue(reg) & 0xff;
+        unsigned maxUsed = hwReg + width - 1;
         if (isSGPR) {
           MaxSGPR = maxUsed > MaxSGPR ? maxUsed : MaxSGPR;
         } else {
