@@ -292,6 +292,10 @@ namespace llvm {
     /// uses relocations for references to other .debug_* sections.
     bool DwarfUsesRelocationsAcrossSections;
 
+    /// DwarfFDESymbolsUseAbsDiff - true if DWARF FDE symbol reference
+    /// relocations should be replaced by an absolute difference.
+    bool DwarfFDESymbolsUseAbsDiff;
+
     /// DwarfRegNumForCFI - True if dwarf register numbers are printed
     /// instead of symbolic register names in .cfi_* directives.
     bool DwarfRegNumForCFI;  // Defaults to false;
@@ -512,6 +516,9 @@ namespace llvm {
     }
     bool doesDwarfUseRelocationsAcrossSections() const {
       return DwarfUsesRelocationsAcrossSections;
+    }
+    bool doDwarfFDESymbolsUseAbsDiff() const {
+      return DwarfFDESymbolsUseAbsDiff;
     }
     bool useDwarfRegNumForCFI() const {
       return DwarfRegNumForCFI;
