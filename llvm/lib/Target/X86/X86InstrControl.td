@@ -108,6 +108,13 @@ let isBranch = 1, isTerminator = 1, hasSideEffects = 0, SchedRW = [WriteJump] in
 
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
+  def JMP16r     : I<0xFF, MRM4r, (outs), (ins GR16:$dst), "jmp{w}\t{*}$dst",
+                     [(brind GR16:$dst)], IIC_JMP_REG>, Requires<[Not64BitMode]>,
+                   OpSize, Sched<[WriteJump]>;
+  def JMP16m     : I<0xFF, MRM4m, (outs), (ins i16mem:$dst), "jmp{w}\t{*}$dst",
+                     [(brind (loadi16 addr:$dst))], IIC_JMP_MEM>,
+                   Requires<[Not64BitMode]>, OpSize, Sched<[WriteJumpLd]>;
+
   def JMP32r     : I<0xFF, MRM4r, (outs), (ins GR32:$dst), "jmp{l}\t{*}$dst",
                      [(brind GR32:$dst)], IIC_JMP_REG>, Requires<[Not64BitMode]>,
                    OpSize16, Sched<[WriteJump]>;
@@ -163,6 +170,14 @@ let isCall = 1 in
                            (outs), (ins i32imm_pcrel:$dst),
                            "call{l}\t$dst", [], IIC_CALL_RI>, OpSize16,
                       Requires<[Not64BitMode]>, Sched<[WriteJump]>;
+    def CALL16r     : I<0xFF, MRM2r, (outs), (ins GR16:$dst),
+                        "call{w}\t{*}$dst", [(X86call GR16:$dst)], IIC_CALL_RI>,
+                      OpSize, Requires<[Not64BitMode]>, Sched<[WriteJump]>;
+    def CALL16m     : I<0xFF, MRM2m, (outs), (ins i16mem:$dst),
+                        "call{w}\t{*}$dst", [(X86call (loadi16 addr:$dst))],
+                        IIC_CALL_MEM>, OpSize,
+                      Requires<[Not64BitMode,FavorMemIndirectCall]>,
+                      Sched<[WriteJumpLd]>;
     def CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst),
                         "call{l}\t{*}$dst", [(X86call GR32:$dst)], IIC_CALL_RI>,
                       OpSize16, Requires<[Not64BitMode]>, Sched<[WriteJump]>;

@@ -601,6 +601,16 @@ lcalll	$0x7ace,$0x7ace
 jmpl	$0x7ace,$0x7ace
 ljmpl	$0x7ace,$0x7ace
 
+// CHECK: lcallw	$31438, $31438
+// CHECK: lcallw	$31438, $31438
+// CHECK: ljmpw	$31438, $31438
+// CHECK: ljmpw	$31438, $31438
+
+callw	$0x7ace,$0x7ace
+lcallw	$0x7ace,$0x7ace
+jmpw	$0x7ace,$0x7ace
+ljmpw	$0x7ace,$0x7ace
+
 // CHECK: lcalll	$31438, $31438
 // CHECK: lcalll	$31438, $31438
 // CHECK: ljmpl	$31438, $31438

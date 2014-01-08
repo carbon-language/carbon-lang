@@ -339,6 +339,10 @@ cmovnae	%bx,%bx
 // CHECK:  encoding: [0x66,0x61]
         	popal
 
+// CHECK: jmpw *8(%eax)
+// CHECK:   encoding: [0x67,0xff,0x60,0x08]
+	jmp	*8(%eax)
+
 // CHECK: jmpl *8(%eax)
 // CHECK:   encoding: [0x67,0x66,0xff,0x60,0x08]
         jmpl	*8(%eax)
@@ -475,6 +479,26 @@ calll	$0x7ace,$0x7ace
 lcalll	$0x7ace,$0x7ace
 jmpl	$0x7ace,$0x7ace
 ljmpl	$0x7ace,$0x7ace
+
+// CHECK: lcallw	$31438, $31438
+// CHECK: lcallw	$31438, $31438
+// CHECK: ljmpw	$31438, $31438
+// CHECK: ljmpw	$31438, $31438
+
+callw	$0x7ace,$0x7ace
+lcallw	$0x7ace,$0x7ace
+jmpw	$0x7ace,$0x7ace
+ljmpw	$0x7ace,$0x7ace
+
+// CHECK: lcallw	$31438, $31438
+// CHECK: lcallw	$31438, $31438
+// CHECK: ljmpw	$31438, $31438
+// CHECK: ljmpw	$31438, $31438
+
+call	$0x7ace,$0x7ace
+lcall	$0x7ace,$0x7ace
+jmp	$0x7ace,$0x7ace
+ljmp	$0x7ace,$0x7ace
 
 // CHECK: calll a
  calll a
