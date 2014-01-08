@@ -10785,7 +10785,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
           QualType EnumUnderlyingTy;
           if (TypeSourceInfo *TI = EnumUnderlying.dyn_cast<TypeSourceInfo*>())
-            EnumUnderlyingTy = TI->getType();
+            EnumUnderlyingTy = TI->getType().getUnqualifiedType();
           else if (const Type *T = EnumUnderlying.dyn_cast<const Type*>())
             EnumUnderlyingTy = QualType(T, 0);
 

@@ -2879,24 +2879,25 @@ public:
   void setPromotionType(QualType T) { PromotionType = T; }
 
   /// getIntegerType - Return the integer type this enum decl corresponds to.
-  /// This returns a null qualtype for an enum forward definition.
+  /// This returns a null QualType for an enum forward definition with no fixed
+  /// underlying type.
   QualType getIntegerType() const {
     if (!IntegerType)
       return QualType();
-    if (const Type* T = IntegerType.dyn_cast<const Type*>())
+    if (const Type *T = IntegerType.dyn_cast<const Type*>())
       return QualType(T, 0);
-    return IntegerType.get<TypeSourceInfo*>()->getType();
+    return IntegerType.get<TypeSourceInfo*>()->getType().getUnqualifiedType();
   }
 
   /// \brief Set the underlying integer type.
   void setIntegerType(QualType T) { IntegerType = T.getTypePtrOrNull(); }
 
   /// \brief Set the underlying integer type source info.
-  void setIntegerTypeSourceInfo(TypeSourceInfo* TInfo) { IntegerType = TInfo; }
+  void setIntegerTypeSourceInfo(TypeSourceInfo *TInfo) { IntegerType = TInfo; }
 
   /// \brief Return the type source info for the underlying integer type,
   /// if no type source info exists, return 0.
-  TypeSourceInfo* getIntegerTypeSourceInfo() const {
+  TypeSourceInfo *getIntegerTypeSourceInfo() const {
     return IntegerType.dyn_cast<TypeSourceInfo*>();
   }
 
