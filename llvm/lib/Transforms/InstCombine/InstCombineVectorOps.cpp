@@ -763,9 +763,10 @@ InstCombiner::EvaluateInDifferentElementOrder(Value *V, ArrayRef<int> Mask) {
         }
       }
 
+      // If element is not in Mask, no need to handle the operand 1 (element to
+      // be inserted). Just evaluate values in operand 0 according to Mask.
       if (!Found)
-        return UndefValue::get(
-            VectorType::get(V->getType()->getScalarType(), Mask.size()));
+        return EvaluateInDifferentElementOrder(I->getOperand(0), Mask);
 
       Value *V = EvaluateInDifferentElementOrder(I->getOperand(0), Mask);
       return InsertElementInst::Create(V, I->getOperand(1),

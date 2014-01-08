@@ -228,3 +228,20 @@ define <4 x float> @test15b(<4 x float> %LHS, <4 x float> %RHS) {
   ret <4 x float> %tmp5
 }
 
+define <1 x i32> @test16a(i32 %ele) {
+; CHECK-LABEL: @test16a(
+; CHECK-NEXT: ret <1 x i32> <i32 2>
+  %tmp0 = insertelement <2 x i32> <i32 1, i32 undef>, i32 %ele, i32 1
+  %tmp1 = shl <2 x i32> %tmp0, <i32 1, i32 1>
+  %tmp2 = shufflevector <2 x i32> %tmp1, <2 x i32> undef, <1 x i32> <i32 0>
+  ret <1 x i32> %tmp2
+}
+
+define <4 x i8> @test16b(i8 %ele) {
+; CHECK-LABEL: @test16b(
+; CHECK-NEXT: ret <4 x i8> <i8 2, i8 2, i8 2, i8 2>
+  %tmp0 = insertelement <8 x i8> <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 undef, i8 1>, i8 %ele, i32 6
+  %tmp1 = shl <8 x i8> %tmp0, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+  %tmp2 = shufflevector <8 x i8> %tmp1, <8 x i8> undef, <4 x i32> <i32 1, i32 2, i32 3, i32 4>
+  ret <4 x i8> %tmp2
+}
