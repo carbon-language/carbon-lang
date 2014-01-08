@@ -112,15 +112,15 @@ public:
                                             is_error_condition_enum<E>::value,
                                             void *>::type = 0)
       : HasError(true) {
-    new (getError()) error_code(make_error_code(ErrorCode));
+    new (getErrorStorage()) error_code(make_error_code(ErrorCode));
   }
 
   ErrorOr(llvm::error_code EC) : HasError(true) {
-    new (getError()) error_code(EC);
+    new (getErrorStorage()) error_code(EC);
   }
 
   ErrorOr(T Val) : HasError(false) {
-    new (get()) storage_type(moveIfMoveConstructible<storage_type>(Val));
+    new (getStorage()) storage_type(moveIfMoveConstructible<storage_type>(Val));
   }
 
   ErrorOr(const ErrorOr &Other) {
@@ -167,7 +167,7 @@ public:
 
   ~ErrorOr() {
     if (!HasError)
-      get()->~storage_type();
+      getStorage()->~storage_type();
   }
 
   typedef void (*unspecified_bool_type)();
@@ -179,15 +179,15 @@ public:
   }
 
   operator llvm::error_code() const {
-    return HasError ? *getError() : llvm::error_code::success();
+    return HasError ? *getErrorStorage() : llvm::error_code::success();
   }
 
   pointer operator ->() {
-    return toPointer(get());
+    return toPointer(getStorage());
   }
 
   reference operator *() {
-    return *get();
+    return *getStorage();
   }
 
 private:
@@ -196,11 +196,11 @@ private:
     if (!Other.HasError) {
       // Get the other value.
       HasError = false;
-      new (get()) storage_type(*Other.get());
+      new (getStorage()) storage_type(*Other.get());
     } else {
       // Get other's error.
       HasError = true;
-      new (getError()) error_code(Other);
+      new (getErrorStorage()) error_code(Other);
     }
   }
 
@@ -229,11 +229,11 @@ private:
     if (!Other.HasError) {
       // Get the other value.
       HasError = false;
-      new (get()) storage_type(std::move(*Other.get()));
+      new (getStorage()) storage_type(std::move(*Other.getStorage()));
     } else {
       // Get other's error.
       HasError = true;
-      new (getError()) error_code(Other);
+      new (getErrorStorage()) error_code(Other);
     }
   }
 
@@ -255,23 +255,23 @@ private:
     return &Val->get();
   }
 
-  storage_type *get() {
+  storage_type *getStorage() {
     assert(!HasError && "Cannot get value when an error exists!");
     return reinterpret_cast<storage_type*>(TStorage.buffer);
   }
 
-  const storage_type *get() const {
+  const storage_type *getStorage() const {
     assert(!HasError && "Cannot get value when an error exists!");
     return reinterpret_cast<const storage_type*>(TStorage.buffer);
   }
 
-  error_code *getError() {
+  error_code *getErrorStorage() {
     assert(HasError && "Cannot get error when a value exists!");
     return reinterpret_cast<error_code*>(ErrorStorage.buffer);
   }
 
-  const error_code *getError() const {
-    return const_cast<ErrorOr<T> *>(this)->getError();
+  const error_code *getErrorStorage() const {
+    return const_cast<ErrorOr<T> *>(this)->getErrorStorage();
   }
 
 
