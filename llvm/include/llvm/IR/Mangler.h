@@ -20,7 +20,6 @@ namespace llvm {
 
 class DataLayout;
 class GlobalValue;
-class MCContext;
 template <typename T> class SmallVectorImpl;
 class Twine;
 

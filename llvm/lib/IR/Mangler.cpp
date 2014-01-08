@@ -17,7 +17,6 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
