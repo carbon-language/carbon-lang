@@ -202,7 +202,7 @@ ErrorOr<File &> Group::getNextFile() {
     auto file = _elements[_nextElementIndex]->getNextFile();
     // Move on to the next element if we have finished processing all
     // the files in the input element
-    if (error_code(file) == InputGraphError::no_more_files) {
+    if (file.getError() == InputGraphError::no_more_files) {
       _nextElementIndex++;
       continue;
     }

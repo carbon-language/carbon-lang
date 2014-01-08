@@ -40,8 +40,7 @@ public:
   /// \brief Parse the input file to lld::File.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
     ErrorOr<StringRef> filePath = getPath(ctx);
-    if (!filePath &&
-        error_code(filePath) == llvm::errc::no_such_file_or_directory)
+    if (filePath.getError() == llvm::errc::no_such_file_or_directory)
       return make_error_code(llvm::errc::no_such_file_or_directory);
 
     // Create a memory buffer

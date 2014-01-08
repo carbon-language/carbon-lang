@@ -144,7 +144,7 @@ protected:
 TEST_F(InputGraphTest, Basic) {
   EXPECT_EQ(0, inputFileCount());
   ErrorOr<InputElement *> nextElement = inputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
 }
 
 TEST_F(InputGraphTest, AddAFile) {
@@ -152,13 +152,13 @@ TEST_F(InputGraphTest, AddAFile) {
   EXPECT_EQ(true, inputGraph().addInputElement(std::move(myfile)));
   EXPECT_EQ(1, inputFileCount());
   ErrorOr<InputElement *> nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   FileNode *fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   StringRef path = fileNode->getUserPath();
   EXPECT_EQ(0, path.compare("file1"));
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
 }
 
 TEST_F(InputGraphTest, AddAFileWithLLDFiles) {
@@ -172,7 +172,7 @@ TEST_F(InputGraphTest, AddAFileWithLLDFiles) {
   EXPECT_EQ(true, inputGraph().addInputElement(std::move(myfile)));
   EXPECT_EQ(1, inputFileCount());
   ErrorOr<InputElement *> nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   FileNode *fileNode = llvm::dyn_cast<FileNode>(*nextElement);
 
@@ -180,24 +180,24 @@ TEST_F(InputGraphTest, AddAFileWithLLDFiles) {
   EXPECT_EQ(0, path.compare("multi_files"));
 
   ErrorOr<File &> objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile1", (*objfile).path());
 
   objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile2", (*objfile).path());
 
   objfile = fileNode->getNextFile();
-  EXPECT_EQ(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_EQ(InputGraphError::no_more_files, objfile.getError());
 
   fileNode->resetNextIndex();
 
   objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile1", (*objfile).path());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
 }
 
 TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
@@ -247,7 +247,7 @@ TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
   EXPECT_EQ(2, inputFileCount());
 
   ErrorOr<InputElement *> nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   FileNode *fileNode = llvm::dyn_cast<FileNode>(*nextElement);
 
@@ -255,15 +255,15 @@ TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
   EXPECT_EQ(0, path.compare("multi_files1"));
 
   ErrorOr<File &> objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile1", (*objfile).path());
 
   objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile2", (*objfile).path());
 
   objfile = fileNode->getNextFile();
-  EXPECT_EQ(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_EQ(InputGraphError::no_more_files, objfile.getError());
 
   nextElement = inputGraph().getNextInputElement();
   EXPECT_EQ(InputElement::Kind::Control, (*nextElement)->kind());
@@ -272,23 +272,23 @@ TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
   EXPECT_EQ(ControlNode::ControlKind::Group, controlNode->controlKind());
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile_1", (*objfile).path());
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile_2", (*objfile).path());
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("group_objfile1", (*objfile).path());
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("group_objfile2", (*objfile).path());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
 }
 
 // Iterate through the group
@@ -339,7 +339,7 @@ TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
   EXPECT_EQ(2, inputFileCount());
 
   ErrorOr<InputElement *> nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   FileNode *fileNode = llvm::dyn_cast<FileNode>(*nextElement);
 
@@ -347,15 +347,15 @@ TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
   EXPECT_EQ(0, path.compare("multi_files1"));
 
   ErrorOr<File &> objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile1", (*objfile).path());
 
   objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile2", (*objfile).path());
 
   objfile = fileNode->getNextFile();
-  EXPECT_EQ(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_EQ(InputGraphError::no_more_files, objfile.getError());
 
   nextElement = inputGraph().getNextInputElement();
   EXPECT_EQ(InputElement::Kind::Control, (*nextElement)->kind());
@@ -364,37 +364,37 @@ TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
   EXPECT_EQ(ControlNode::ControlKind::Group, controlNode->controlKind());
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile_1", (*objfile).path());
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile_2", (*objfile).path());
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("group_objfile1", (*objfile).path());
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("group_objfile2", (*objfile).path());
 
   controlNode->setResolveState(Resolver::StateNewDefinedAtoms);
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile_1", (*objfile).path());
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("objfile_2", (*objfile).path());
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("group_objfile1", (*objfile).path());
 
   objfile = controlNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, error_code(objfile));
+  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("group_objfile2", (*objfile).path());
 }
 
@@ -443,37 +443,37 @@ TEST_F(InputGraphTest, ExpandInputGraphNode) {
   inputGraph().normalize();
 
   ErrorOr<InputElement *> nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   FileNode *fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("multi_files1", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("expand_file1", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("expand_file2", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("expand_node", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("obj_after_expand", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
 }
 
 // Node expansion tests.
@@ -521,31 +521,31 @@ TEST_F(InputGraphTest, ExpandAndReplaceInputGraphNode) {
   inputGraph().normalize();
 
   ErrorOr<InputElement *> nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   FileNode *fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("multi_files1", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("expand_file1", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("expand_file2", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("obj_after_expand", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
 }
 
 // Hidden Node tests
@@ -593,31 +593,31 @@ TEST_F(InputGraphTest, HiddenNodeTests) {
   inputGraph().normalize();
 
   ErrorOr<InputElement *> nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   FileNode *fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("multi_files1", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("expand_file1", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("expand_file2", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
   EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
   fileNode = llvm::dyn_cast<FileNode>(*nextElement);
   EXPECT_EQ("obj_after_expand", (*fileNode).getUserPath());
 
   nextElement = inputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, error_code(nextElement));
+  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
 }
 
 }

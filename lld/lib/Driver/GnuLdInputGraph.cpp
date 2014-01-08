@@ -16,8 +16,8 @@ using namespace lld;
 error_code ELFFileNode::parse(const LinkingContext &ctx,
                               raw_ostream &diagnostics) {
   ErrorOr<StringRef> filePath = getPath(ctx);
-  if (!filePath)
-    return error_code(filePath);
+  if (error_code ec = filePath.getError())
+    return ec;
 
   if (error_code ec = getBuffer(*filePath))
     return ec;
@@ -51,8 +51,8 @@ error_code ELFFileNode::parse(const LinkingContext &ctx,
 error_code GNULdScript::parse(const LinkingContext &ctx,
                               raw_ostream &diagnostics) {
   ErrorOr<StringRef> filePath = getPath(ctx);
-  if (!filePath)
-    return error_code(filePath);
+  if (error_code ec = filePath.getError())
+    return ec;
 
   if (error_code ec = getBuffer(*filePath))
     return ec;

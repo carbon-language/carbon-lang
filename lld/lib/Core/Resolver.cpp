@@ -266,11 +266,12 @@ bool Resolver::resolveUndefines() {
   for (;;) {
     ErrorOr<File &> file = _context.nextFile();
     _context.setResolverState(Resolver::StateNoChange);
-    if (error_code(file) == InputGraphError::no_more_files)
+    error_code ec = file.getError();
+    if (ec == InputGraphError::no_more_files)
       return true;
     if (!file) {
       llvm::errs() << "Error occurred in nextFile: "
-                   << error_code(file).message() << "\n";
+                   << ec.message() << "\n";
       return false;
     }
 

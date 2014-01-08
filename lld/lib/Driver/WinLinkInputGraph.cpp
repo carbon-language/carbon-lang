@@ -15,9 +15,9 @@ namespace lld {
 error_code PECOFFFileNode::parse(const LinkingContext &ctx,
                                  raw_ostream &diagnostics) {
   ErrorOr<StringRef> filePath = getPath(ctx);
-  if (!filePath) {
+  if (error_code ec = filePath.getError()) {
     diagnostics << "File not found: " << _path << "\n";
-    return error_code(filePath);
+    return ec;
   }
 
   if (error_code ec = getBuffer(*filePath)) {

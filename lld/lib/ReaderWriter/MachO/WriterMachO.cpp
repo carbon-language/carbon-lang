@@ -36,8 +36,8 @@ public:
     // Construct empty normalized file from atoms.
     ErrorOr<std::unique_ptr<NormalizedFile>> nFile = 
                                 normalized::normalizedFromAtoms(file, _context);
-    if (!nFile)
-      return nFile;
+    if (error_code ec = nFile.getError())
+      return ec;
     
     // For debugging, write out yaml form of normalized file.
     //writeYaml(*nFile->get(), llvm::errs());

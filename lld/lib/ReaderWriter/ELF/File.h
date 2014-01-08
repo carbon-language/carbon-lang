@@ -208,8 +208,8 @@ public:
         auto sHdr = _objFile->getSection(section->sh_info);
 
         auto sectionName = _objFile->getSectionName(sHdr);
-        if (!sectionName)
-          return error_code(sectionName);
+        if (error_code ec = sectionName.getError())
+          return ec;
 
         auto rai(_objFile->begin_rela(section));
         auto rae(_objFile->end_rela(section));
@@ -222,8 +222,8 @@ public:
         auto sHdr = _objFile->getSection(section->sh_info);
 
         auto sectionName = _objFile->getSectionName(sHdr);
-        if (!sectionName)
-          return error_code(sectionName);
+        if (error_code ec = sectionName.getError())
+          return ec;
 
         auto ri(_objFile->begin_rel(section));
         auto re(_objFile->end_rel(section));
@@ -246,12 +246,12 @@ public:
     std::vector<MergeString *> tokens;
     for (const Elf_Shdr *msi : _mergeStringSections) {
       auto sectionName = _objFile->getSectionName(msi);
-      if (!sectionName)
-        return error_code(sectionName);
+      if (error_code ec = sectionName.getError())
+        return ec;
 
       auto sectionContents = _objFile->getSectionContents(msi);
-      if (!sectionContents)
-        return error_code(sectionContents);
+      if (error_code ec = sectionContents.getError())
+        return ec;
 
       StringRef secCont(
           reinterpret_cast<const char *>(sectionContents->begin()),
@@ -300,8 +300,8 @@ public:
       const Elf_Shdr *section = _objFile->getSection(&*SymI);
 
       auto symbolName = _objFile->getSymbolName(SymI);
-      if (!symbolName)
-        return error_code(symbolName);
+      if (error_code ec = symbolName.getError())
+        return ec;
 
       if (SymI->st_shndx == llvm::ELF::SHN_ABS) {
         // Create an absolute atom.
@@ -358,16 +358,16 @@ public:
 
       auto sectionName = section ? _objFile->getSectionName(section)
                                  : StringRef();
-      if (!sectionName)
-        return error_code(sectionName);
+      if (error_code ec = sectionName.getError())
+        return ec;
 
       auto sectionContents =
           (section && section->sh_type != llvm::ELF::SHT_NOBITS)
               ? _objFile->getSectionContents(section)
               : ArrayRef<uint8_t>();
 
-      if (!sectionContents)
-        return error_code(sectionContents);
+      if (error_code ec = sectionContents.getError())
+        return ec;
 
       StringRef secCont(
           reinterpret_cast<const char *>(sectionContents->begin()),
@@ -391,8 +391,8 @@ public:
         StringRef symbolName = "";
         if (symbol->getType() != llvm::ELF::STT_SECTION) {
           auto symName = _objFile->getSymbolName(symbol);
-          if (!symName)
-            return error_code(symName);
+          if (error_code ec = symName.getError())
+            return ec;
           symbolName = *symName;
         }
 

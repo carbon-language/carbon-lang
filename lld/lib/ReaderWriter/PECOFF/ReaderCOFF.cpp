@@ -805,8 +805,8 @@ public:
             std::vector<std::unique_ptr<File>> &result) const {
     // Convert RC file to COFF
     ErrorOr<std::string> coffPath = convertResourceFileToCOFF(std::move(mb));
-    if (!coffPath)
-      return error_code(coffPath);
+    if (error_code ec = coffPath.getError())
+      return ec;
     llvm::FileRemover coffFileRemover(*coffPath);
 
     // Read and parse the COFF
@@ -852,8 +852,8 @@ private:
   convertResourceFileToCOFF(std::unique_ptr<MemoryBuffer> mb) {
     // Write the resource file to a temporary file.
     ErrorOr<std::string> inFilePath = writeResToTemporaryFile(std::move(mb));
-    if (!inFilePath)
-      return error_code(inFilePath);
+    if (error_code ec = inFilePath.getError())
+      return ec;
     llvm::FileRemover inFileRemover(*inFilePath);
 
     // Create an output file path.

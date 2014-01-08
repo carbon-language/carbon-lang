@@ -120,8 +120,8 @@ public:
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
     auto f = createELF<DynamicFileCreateELFTraits>(
         getElfArchType(&*mb), maxAlignment, std::move(mb), _useUndefines);
-    if (!f)
-      return f;
+    if (error_code ec = f.getError())
+      return ec;
     result.push_back(std::move(*f));
     return error_code::success();
   }

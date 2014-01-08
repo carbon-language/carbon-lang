@@ -48,8 +48,8 @@ public:
               e = obj.end_dynamic_symbols();
          i != e; ++i) {
       auto name = obj.getSymbolName(i);
-      if (!name)
-        return error_code(name);
+      if (error_code ec = name.getError())
+        return ec;
 
       // TODO: Add absolute symbols
       if (i->st_shndx == llvm::ELF::SHN_ABS)
