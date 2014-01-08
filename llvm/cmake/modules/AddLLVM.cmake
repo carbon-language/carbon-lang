@@ -215,6 +215,10 @@ ${name} ignored.")
         LINK_FLAGS " -Wl,-flat_namespace -Wl,-undefined -Wl,suppress")
     endif()
 
+    if (MODULE)
+      set_property(TARGET ${name} PROPERTY SUFFIX ${LLVM_PLUGIN_EXT})
+    endif ()
+
     if( EXCLUDE_FROM_ALL )
       set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
     else()
