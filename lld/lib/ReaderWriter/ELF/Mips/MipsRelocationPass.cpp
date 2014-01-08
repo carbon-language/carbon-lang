@@ -64,11 +64,9 @@ public:
 
 class RelocationPass : public Pass {
 public:
-  RelocationPass(MipsLinkingContext &context)
-      : _file(context), _got0(new (_file._alloc) GOT0Atom(_file)),
-        _got1(new (_file._alloc) GOTModulePointerAtom(_file)) {
-    _localGotVector.push_back(_got0);
-    _localGotVector.push_back(_got1);
+  RelocationPass(MipsLinkingContext &context) : _file(context) {
+    _localGotVector.push_back(new (_file._alloc) GOT0Atom(_file));
+    _localGotVector.push_back(new (_file._alloc) GOTModulePointerAtom(_file));
   }
 
   virtual void perform(std::unique_ptr<MutableFile> &mf) {
@@ -97,10 +95,6 @@ public:
 private:
   /// \brief Owner of all the Atoms created by this pass.
   RelocationPassFile _file;
-
-  /// \brief GOT header entries.
-  GOTAtom *_got0;
-  GOTAtom *_got1;
 
   /// \brief Map Atoms to their GOT entries.
   llvm::DenseMap<const Atom *, GOTAtom *> _gotMap;
