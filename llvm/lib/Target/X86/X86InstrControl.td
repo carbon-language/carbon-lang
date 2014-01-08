@@ -52,6 +52,9 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
 let isBarrier = 1, isBranch = 1, isTerminator = 1, SchedRW = [WriteJump] in {
   def JMP_4 : Ii32PCRel<0xE9, RawFrm, (outs), (ins brtarget:$dst),
                         "jmp\t$dst", [(br bb:$dst)], IIC_JMP_REL>, OpSize16;
+  def JMP_2 : Ii16PCRel<0xE9, RawFrm, (outs), (ins brtarget:$dst),
+                        "jmp\t$dst", [(br bb:$dst)], IIC_JMP_REL>, OpSize,
+                        Requires<[In16BitMode]>;
   let hasSideEffects = 0 in
   def JMP_1 : Ii8PCRel<0xEB, RawFrm, (outs), (ins brtarget8:$dst),
                        "jmp\t$dst", [], IIC_JMP_REL>;
@@ -63,6 +66,9 @@ let isBranch = 1, isTerminator = 1, Uses = [EFLAGS], SchedRW = [WriteJump] in {
     let hasSideEffects = 0 in
     def _1 : Ii8PCRel <opc1, RawFrm, (outs), (ins brtarget8:$dst), asm, [],
                        IIC_Jcc>;
+    def _2 : Ii16PCRel<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
+                       [(X86brcond bb:$dst, Cond, EFLAGS)], IIC_Jcc>, OpSize,
+		       TB, Requires<[In16BitMode]>;
     def _4 : Ii32PCRel<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
                        [(X86brcond bb:$dst, Cond, EFLAGS)], IIC_Jcc>, TB,
              OpSize16;
