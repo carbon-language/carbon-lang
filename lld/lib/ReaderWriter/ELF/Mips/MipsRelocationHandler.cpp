@@ -184,6 +184,10 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   case LLD_R_MIPS_GLOBAL_GOT:
     // Do nothing.
     break;
+  case LLD_R_MIPS_GLOBAL_GOT16:
+    relocGOT16(location, relocVAddress, targetVAddress, ref.addend(),
+               _targetHandler.getGPDispSymAddr());
+    break;
   default: {
     std::string str;
     llvm::raw_string_ostream s(str);

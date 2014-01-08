@@ -118,7 +118,15 @@ private:
     }
   }
 
+  bool isLocal(const Atom *a) {
+    return isa<DefinedAtom>(a) &&
+           dyn_cast<DefinedAtom>(a)->scope() == Atom::scopeTranslationUnit;
+  }
+
   void handleGOT(const Reference &ref) {
+    if (ref.kindValue() == R_MIPS_GOT16 && !isLocal(ref.target()))
+      const_cast<Reference &>(ref).setKindValue(LLD_R_MIPS_GLOBAL_GOT16);
+
     const_cast<Reference &>(ref).setTarget(getGOTEntry(ref.target()));
   }
 

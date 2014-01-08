@@ -1,0 +1,83 @@
+# Check handling of global/local GOT16 relocations.
+RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
+RUN:     --output-filetype=yaml -o %t %p/Inputs/got16.o
+RUN: FileCheck %s < %t
+
+CHECK:   - ref-name:        L002
+CHECK:     type:            got
+CHECK:     content:         [ 00, 00, 00, 00 ]
+CHECK:     alignment:       2^2
+CHECK:     section-choice:  custom-required
+CHECK:     section-name:    .got
+CHECK:     permissions:     rw-
+CHECK:     references:      
+CHECK:       - kind:            R_MIPS_32
+CHECK:         offset:          0
+CHECK:         target:          L003
+CHECK:   - ref-name:        L004
+CHECK:     type:            got
+CHECK:     content:         [ 00, 00, 00, 00 ]
+CHECK:     alignment:       2^2
+CHECK:     section-choice:  custom-required
+CHECK:     section-name:    .got
+CHECK:     permissions:     rw-
+CHECK:     references:      
+CHECK:       - kind:            R_MIPS_32
+CHECK:         offset:          0
+CHECK:         target:          hidden
+CHECK:   - ref-name:        L005
+CHECK:     type:            got
+CHECK:     content:         [ 00, 00, 00, 00 ]
+CHECK:     alignment:       2^2
+CHECK:     section-choice:  custom-required
+CHECK:     section-name:    .got
+CHECK:     permissions:     rw-
+CHECK:     references:      
+CHECK:       - kind:            LLD_R_MIPS_GLOBAL_GOT
+CHECK:         offset:          0
+CHECK:         target:          glob
+CHECK:       - kind:            R_MIPS_32
+CHECK:         offset:          0
+CHECK:         target:          glob
+CHECK:   - ref-name:        L006
+CHECK:     type:            got
+CHECK:     content:         [ 00, 00, 00, 00 ]
+CHECK:     alignment:       2^2
+CHECK:     section-choice:  custom-required
+CHECK:     section-name:    .got
+CHECK:     permissions:     rw-
+CHECK:     references:      
+CHECK:       - kind:            LLD_R_MIPS_GLOBAL_GOT
+CHECK:         offset:          0
+CHECK:         target:          extern
+CHECK:   - ref-name:        L007
+CHECK:     alignment:       2^4
+CHECK:     references:      
+CHECK:       - kind:            layout-after
+CHECK:         offset:          0
+CHECK:         target:          glob
+CHECK:   - name:            glob
+CHECK:     scope:           global
+CHECK:     content:         [ 00, 00, 84, 8F, 00, 00, 84, 24, 00, 00, 84, 8F, 
+CHECK:                        00, 00, 84, 8F, 00, 00, 84, 8F, 00, 00, 00, 00, 
+CHECK:                        00, 00, 00, 00, 00, 00, 00, 00 ]
+CHECK:     alignment:       2^4
+CHECK:     references:      
+CHECK:       - kind:            R_MIPS_GOT16
+CHECK:         offset:          0
+CHECK:         target:          L002
+CHECK:       - kind:            R_MIPS_LO16
+CHECK:         offset:          4
+CHECK:         target:          L003
+CHECK:       - kind:            LLD_R_MIPS_GLOBAL_GOT16
+CHECK:         offset:          8
+CHECK:         target:          L004
+CHECK:       - kind:            R_MIPS_CALL16
+CHECK:         offset:          12
+CHECK:         target:          L005
+CHECK:       - kind:            R_MIPS_CALL16
+CHECK:         offset:          16
+CHECK:         target:          L006
+CHECK:       - kind:            layout-before
+CHECK:         offset:          0
+CHECK:         target:          L007
