@@ -177,6 +177,9 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   case R_MIPS_JALR:
     // We do not do JALR optimization now.
     break;
+  case LLD_R_MIPS_GLOBAL_GOT:
+    // Do nothing.
+    break;
   default: {
     std::string str;
     llvm::raw_string_ostream s(str);

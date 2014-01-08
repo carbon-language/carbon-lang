@@ -14,6 +14,12 @@
 namespace lld {
 namespace elf {
 
+/// \brief Mips internal references.
+enum {
+  /// \brief Do nothing but mark GOT entry as a global one.
+  LLD_R_MIPS_GLOBAL_GOT = 1024
+};
+
 typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ElELFType;
 
 template <class ELFType> class MipsTargetLayout;

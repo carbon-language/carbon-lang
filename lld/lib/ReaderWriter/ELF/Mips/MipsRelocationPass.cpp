@@ -138,7 +138,7 @@ private:
       if (da)
         ga->addReferenceELF_Mips(R_MIPS_32, 0, a, 0);
       else
-        ga->addReferenceELF_Mips(R_MIPS_NONE, 0, a, 0);
+        ga->addReferenceELF_Mips(LLD_R_MIPS_GLOBAL_GOT, 0, a, 0);
       _globalGotVector.push_back(ga);
     }
 
