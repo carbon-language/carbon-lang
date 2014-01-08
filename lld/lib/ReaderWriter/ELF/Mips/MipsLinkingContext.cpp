@@ -12,8 +12,6 @@
 #include "MipsRelocationPass.h"
 #include "MipsTargetHandler.h"
 
-#include "llvm/ADT/StringSwitch.h"
-
 using namespace lld;
 using namespace lld::elf;
 
