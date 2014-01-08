@@ -1335,7 +1335,7 @@ GetPosixspawnFlags (ProcessLaunchInfo &launch_info)
         flags |= POSIX_SPAWN_SETPGROUP;
     
 #ifdef POSIX_SPAWN_CLOEXEC_DEFAULT
-#if defined (__APPLE__)
+#if defined (__APPLE__) && (defined (__x86_64__) || defined (__i386__))
     static LazyBool g_use_close_on_exec_flag = eLazyBoolCalculate;
     if (g_use_close_on_exec_flag == eLazyBoolCalculate)
     {
