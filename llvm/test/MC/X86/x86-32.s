@@ -442,13 +442,21 @@ cmovnae	%bx,%bx
 // FIXME: This is a correct bug poor encoding: Use 65 a1 7c 00 00 00 
         movl	%gs:124, %eax
 
-// CHECK: pusha
+// CHECK: pushal
 // CHECK:  encoding: [0x60]
         	pusha
 
-// CHECK: popa
+// CHECK: popal
 // CHECK:  encoding: [0x61]
         	popa
+
+// CHECK: pushaw
+// CHECK:  encoding: [0x66,0x60]
+        	pushaw
+
+// CHECK: popaw
+// CHECK:  encoding: [0x66,0x61]
+        	popaw
 
 // CHECK: pushal
 // CHECK:  encoding: [0x60]

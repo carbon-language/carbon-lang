@@ -974,13 +974,17 @@ def PUSHF64    : I<0x9C, RawFrm, (outs), (ins), "pushfq", [], IIC_PUSH_F>,
 
 let Defs = [EDI, ESI, EBP, EBX, EDX, ECX, EAX, ESP], Uses = [ESP],
     mayLoad = 1, neverHasSideEffects = 1, SchedRW = [WriteLoad] in {
-def POPA32   : I<0x61, RawFrm, (outs), (ins), "popa{l}", [], IIC_POP_A>,
+def POPA32   : I<0x61, RawFrm, (outs), (ins), "popal", [], IIC_POP_A>,
                OpSize16, Requires<[Not64BitMode]>;
+def POPA16   : I<0x61, RawFrm, (outs), (ins), "popaw", [], IIC_POP_A>,
+               OpSize, Requires<[Not64BitMode]>;
 }
 let Defs = [ESP], Uses = [EDI, ESI, EBP, EBX, EDX, ECX, EAX, ESP],
     mayStore = 1, neverHasSideEffects = 1, SchedRW = [WriteStore] in {
-def PUSHA32  : I<0x60, RawFrm, (outs), (ins), "pusha{l}", [], IIC_PUSH_A>,
+def PUSHA32  : I<0x60, RawFrm, (outs), (ins), "pushal", [], IIC_PUSH_A>,
                OpSize16, Requires<[Not64BitMode]>;
+def PUSHA16  : I<0x60, RawFrm, (outs), (ins), "pushaw", [], IIC_PUSH_A>,
+               OpSize, Requires<[Not64BitMode]>;
 }
 
 let Constraints = "$src = $dst", SchedRW = [WriteALU] in {
@@ -2143,23 +2147,36 @@ def : MnemonicAlias<"leaveq", "leave", "att">, Requires<[In64BitMode]>;
 def : MnemonicAlias<"loopz",  "loope",  "att">;
 def : MnemonicAlias<"loopnz", "loopne", "att">;
 
-def : MnemonicAlias<"pop",   "popl",  "att">, Requires<[Not64BitMode]>;
+def : MnemonicAlias<"pop",   "popw",  "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"pop",   "popl",  "att">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"pop",   "popq",  "att">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"popf",  "popfl", "att">, Requires<[Not64BitMode]>;
+def : MnemonicAlias<"popf",  "popfw", "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"popf",  "popfl", "att">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"popf",  "popfq", "att">, Requires<[In64BitMode]>;
 def : MnemonicAlias<"popfd", "popfl", "att">;
 
 // FIXME: This is wrong for "push reg".  "push %bx" should turn into pushw in
 // all modes.  However: "push (addr)" and "push $42" should default to
 // pushl/pushq depending on the current mode.  Similar for "pop %bx"
-def : MnemonicAlias<"push",   "pushl",  "att">, Requires<[Not64BitMode]>;
+def : MnemonicAlias<"push",   "pushw",  "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"push",   "pushl",  "att">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"push",   "pushq",  "att">, Requires<[In64BitMode]>;
-def : MnemonicAlias<"pushf",  "pushfl", "att">, Requires<[Not64BitMode]>;
+def : MnemonicAlias<"pushf",  "pushfw", "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"pushf",  "pushfl", "att">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"pushf",  "pushfq", "att">, Requires<[In64BitMode]>;
 def : MnemonicAlias<"pushfd", "pushfl", "att">;
 
-def : MnemonicAlias<"popad",   "popa", "intel">, Requires<[Not64BitMode]>;
-def : MnemonicAlias<"pushad",  "pusha", "intel">, Requires<[Not64BitMode]>;
+def : MnemonicAlias<"popad",  "popal",  "intel">, Requires<[Not64BitMode]>;
+def : MnemonicAlias<"pushad", "pushal", "intel">, Requires<[Not64BitMode]>;
+def : MnemonicAlias<"popa",   "popaw",  "intel">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"pusha",  "pushaw", "intel">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"popa",   "popal",  "intel">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"pusha",  "pushal", "intel">, Requires<[In32BitMode]>;
+
+def : MnemonicAlias<"popa",   "popaw",  "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"pusha",  "pushaw", "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"popa",   "popal",  "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"pusha",  "pushal", "att">, Requires<[In32BitMode]>;
 
 def : MnemonicAlias<"repe",  "rep",   "att">;
 def : MnemonicAlias<"repz",  "rep",   "att">;

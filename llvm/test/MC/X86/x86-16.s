@@ -62,8 +62,12 @@ int $255
 // CHECK: int $255
 // CHECK:  encoding: [0xcd,0xff]
 
+// CHECK: pushfw	# encoding: [0x9c]
+        pushf
 // CHECK: pushfl	# encoding: [0x66,0x9c]
         pushfl
+// CHECK: popfw         # encoding: [0x9d]
+        popf
 // CHECK: popfl	        # encoding: [0x66,0x9d]
         popfl
 
@@ -311,6 +315,22 @@ cmovnae	%bx,%bx
 // CHECK:  encoding: [0x9b]
 	fwait
 
+// CHECK: pusha
+// CHECK:  encoding: [0x60]
+        	pusha
+
+// CHECK: popa
+// CHECK:  encoding: [0x61]
+        	popa
+
+// CHECK: pushaw
+// CHECK:  encoding: [0x60]
+        	pushaw
+
+// CHECK: popaw
+// CHECK:  encoding: [0x61]
+        	popaw
+
 // CHECK: pushal
 // CHECK:  encoding: [0x66,0x60]
         	pushal
@@ -340,6 +360,25 @@ testl	%ecx, -24(%ebp)
 testl	-24(%ebp), %ecx
 // CHECK: testl	-24(%ebp), %ecx
 
+
+push %cs
+// CHECK: pushw	%cs
+// CHECK: encoding: [0x0e]
+push %ds
+// CHECK: pushw	%ds
+// CHECK: encoding: [0x1e]
+push %ss
+// CHECK: pushw	%ss
+// CHECK: encoding: [0x16]
+push %es
+// CHECK: pushw	%es
+// CHECK: encoding: [0x06]
+push %fs
+// CHECK: pushw	%fs
+// CHECK: encoding: [0x0f,0xa0]
+push %gs
+// CHECK: pushw	%gs
+// CHECK: encoding: [0x0f,0xa8]
 
 pushw %cs
 // CHECK: pushw	%cs
@@ -378,6 +417,16 @@ pushl %fs
 pushl %gs
 // CHECK: pushl	%gs
 // CHECK: encoding: [0x66,0x0f,0xa8]
+
+pop %ss
+// CHECK: popw	%ss
+// CHECK: encoding: [0x17]
+pop %ds
+// CHECK: popw	%ds
+// CHECK: encoding: [0x1f]
+pop %es
+// CHECK: popw	%es
+// CHECK: encoding: [0x07]
 
 popl %ss
 // CHECK: popl	%ss
