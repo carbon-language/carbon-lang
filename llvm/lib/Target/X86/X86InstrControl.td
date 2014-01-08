@@ -21,14 +21,17 @@
 // ST1 arguments when returning values on the x87 stack.
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, FPForm = SpecialFP, SchedRW = [WriteJumpLd] in {
-  def RET    : I   <0xC3, RawFrm, (outs), (ins variable_ops),
-                    "ret",
-                    [(X86retflag 0)], IIC_RET>, OpSize16;
+  def RETL   : I   <0xC3, RawFrm, (outs), (ins variable_ops),
+                    "ret{l}",
+                    [(X86retflag 0)], IIC_RET>, OpSize16, Requires<[Not64BitMode]>;
+  def RETQ   : I   <0xC3, RawFrm, (outs), (ins variable_ops),
+                    "ret{q}",
+                    [(X86retflag 0)], IIC_RET>, Requires<[In64BitMode]>;
   def RETW   : I   <0xC3, RawFrm, (outs), (ins),
                     "ret{w}",
                     [], IIC_RET>, OpSize;
   def RETI   : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
-                    "ret\t$amt",
+                    "ret{l}\t$amt",
                     [(X86retflag timm:$amt)], IIC_RET_IMM>, OpSize16;
   def RETIW  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt),
                     "ret{w}\t$amt",

@@ -3,7 +3,7 @@
 ; This should use flds to set the return value.
 ; CHECK-LABEL: test0:
 ; CHECK: flds
-; CHECK: ret
+; CHECK: retl
 @G = external global float
 define float @test0() nounwind {
   %t = load float* @G
@@ -12,7 +12,7 @@ define float @test0() nounwind {
 
 ; This should pop 4 bytes on return.
 ; CHECK-LABEL: test1:
-; CHECK: ret $4
+; CHECK: retl $4
 define void @test1({i32, i32, i32, i32}* sret %p) nounwind {
   store {i32, i32, i32, i32} zeroinitializer, {i32, i32, i32, i32}* %p
   ret void
@@ -25,7 +25,7 @@ define void @test1({i32, i32, i32, i32}* sret %p) nounwind {
 ; CHECK-NEXT: L2$pb:
 ; CHECK-NEXT: pop
 ; CHECK: HHH
-; CHECK: ret
+; CHECK: retl
 @HHH = external global i32
 define i32 @test2() nounwind {
   %t = load i32* @HHH

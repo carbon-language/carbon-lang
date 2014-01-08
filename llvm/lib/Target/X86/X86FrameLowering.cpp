@@ -107,7 +107,8 @@ static unsigned findDeadCallerSavedReg(MachineBasicBlock &MBB,
   unsigned Opc = MBBI->getOpcode();
   switch (Opc) {
   default: return 0;
-  case X86::RET:
+  case X86::RETL:
+  case X86::RETQ:
   case X86::RETI:
   case X86::TCRETURNdi:
   case X86::TCRETURNri:
@@ -728,7 +729,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   switch (RetOpcode) {
   default:
     llvm_unreachable("Can only insert epilog into returning blocks");
-  case X86::RET:
+  case X86::RETQ:
+  case X86::RETL:
   case X86::RETI:
   case X86::TCRETURNdi:
   case X86::TCRETURNri:
@@ -886,8 +888,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
     // Delete the pseudo instruction TCRETURN.
     MBB.erase(MBBI);
-  } else if ((RetOpcode == X86::RET || RetOpcode == X86::RETI) &&
-             (X86FI->getTCReturnAddrDelta() < 0)) {
+  } else if ((RetOpcode == X86::RETQ || RetOpcode == X86::RETI ||
+              RetOpcode == X86::RETL) && (X86FI->getTCReturnAddrDelta() < 0)) {
     // Add the return addr area delta back since we are not tail calling.
     int delta = -1*X86FI->getTCReturnAddrDelta();
     MBBI = MBB.getLastNonDebugInstr();

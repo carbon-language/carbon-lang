@@ -9,7 +9,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK: movq %rsp, %rbp
 ; CHECK: popq %rbp
 ; CHECK: movq %rcx, %rsp
-; CHECK: ret # eh_return, addr: %rcx
+; CHECK: retq # eh_return, addr: %rcx
 define i8* @test(i64 %a, i8* %b)  {
 entry:
   call void @llvm.eh.unwind.init()

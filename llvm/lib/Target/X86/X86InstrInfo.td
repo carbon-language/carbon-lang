@@ -2140,7 +2140,8 @@ def : MnemonicAlias<"cdqe", "cltq", "att">;
 def : MnemonicAlias<"cqo",  "cqto", "att">;
 
 // lret maps to lretl, it is not ambiguous with lretq.
-def : MnemonicAlias<"lret", "lretl", "att">;
+def : MnemonicAlias<"lret", "lretw", "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"lret", "lretl", "att">, Requires<[Not16BitMode]>;
 
 def : MnemonicAlias<"leavel", "leave", "att">, Requires<[Not64BitMode]>;
 def : MnemonicAlias<"leaveq", "leave", "att">, Requires<[In64BitMode]>;
@@ -2183,8 +2184,9 @@ def : MnemonicAlias<"repe",  "rep",   "att">;
 def : MnemonicAlias<"repz",  "rep",   "att">;
 def : MnemonicAlias<"repnz", "repne", "att">;
 
-def : MnemonicAlias<"retl", "ret", "att">, Requires<[Not64BitMode]>;
-def : MnemonicAlias<"retq", "ret", "att">, Requires<[In64BitMode]>;
+def : MnemonicAlias<"ret", "retw", "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"ret", "retl", "att">, Requires<[In32BitMode]>;
+def : MnemonicAlias<"ret", "retq", "att">, Requires<[In64BitMode]>;
 
 def : MnemonicAlias<"salb", "shlb", "att">;
 def : MnemonicAlias<"salw", "shlw", "att">;
@@ -2200,7 +2202,8 @@ def : MnemonicAlias<"ud2a",  "ud2",  "att">;
 def : MnemonicAlias<"verrw", "verr", "att">;
 
 // System instruction aliases.
-def : MnemonicAlias<"iret",    "iretl",    "att">;
+def : MnemonicAlias<"iret",    "iretw",    "att">, Requires<[In16BitMode]>;
+def : MnemonicAlias<"iret",    "iretl",    "att">, Requires<[Not16BitMode]>;
 def : MnemonicAlias<"sysret",  "sysretl",  "att">;
 def : MnemonicAlias<"sysexit", "sysexitl", "att">;
 

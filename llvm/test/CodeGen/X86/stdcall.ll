@@ -6,14 +6,14 @@
 define internal x86_stdcallcc void @MyFunc() nounwind {
 entry:
 ; CHECK: MyFunc@0:
-; CHECK: ret
+; CHECK: retl
   ret void
 }
 
 ; PR14410
 define x86_stdcallcc i32 @"\01DoNotMangle"(i32 %a) {
 ; CHECK: DoNotMangle:
-; CHECK: ret $4
+; CHECK: retl $4
 entry:
   ret i32 %a
 }

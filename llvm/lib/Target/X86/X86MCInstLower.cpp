@@ -334,6 +334,11 @@ static void SimplifyShortMoveForm(X86AsmPrinter &Printer, MCInst &Inst,
   Inst.addOperand(Saved);
 }
 
+static unsigned getRetOpcode(const X86Subtarget &Subtarget)
+{
+	return Subtarget.is64Bit() ? X86::RETQ : X86::RETL;
+}
+
 void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
 
@@ -462,7 +467,7 @@ ReSimplify:
   case X86::EH_RETURN:
   case X86::EH_RETURN64: {
     OutMI = MCInst();
-    OutMI.setOpcode(X86::RET);
+    OutMI.setOpcode(getRetOpcode(AsmPrinter.getSubtarget()));
     break;
   }
 
@@ -866,12 +871,12 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return LowerPATCHPOINT(OutStreamer, SM, *MI, Subtarget->is64Bit());
 
   case X86::MORESTACK_RET:
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::RET));
+    OutStreamer.EmitInstruction(MCInstBuilder(getRetOpcode(*Subtarget)));
     return;
 
   case X86::MORESTACK_RET_RESTORE_R10:
     // Return, then restore R10.
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::RET));
+    OutStreamer.EmitInstruction(MCInstBuilder(getRetOpcode(*Subtarget)));
     OutStreamer.EmitInstruction(MCInstBuilder(X86::MOV64rr)
       .addReg(X86::R10)
       .addReg(X86::RAX));

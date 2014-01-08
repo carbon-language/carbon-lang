@@ -888,7 +888,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
 
   // Now emit the RET.
   MachineInstrBuilder MIB =
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::RET));
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Subtarget->is64Bit() ? X86::RETQ : X86::RETL));
   for (unsigned i = 0, e = RetRegs.size(); i != e; ++i)
     MIB.addReg(RetRegs[i], RegState::Implicit);
   return true;

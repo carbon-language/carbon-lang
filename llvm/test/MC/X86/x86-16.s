@@ -71,6 +71,10 @@ int $255
 // CHECK: popfl	        # encoding: [0x66,0x9d]
         popfl
 
+retl
+// CHECK: ret
+// CHECK:  encoding: [0x66,0xc3]
+
 // CHECK: cmoval	%eax, %edx
 // CHECK:  encoding: [0x66,0x0f,0x47,0xd0]
         	cmoval	%eax,%edx
@@ -352,6 +356,16 @@ cmovnae	%bx,%bx
 lcalll $0x2, $0x1234
 
 
+iret
+// CHECK: iretw
+// CHECK: encoding: [0xcf]
+iretw
+// CHECK: iretw
+// CHECK: encoding: [0xcf]
+iretl
+// CHECK: iretl
+// CHECK: encoding: [0x66,0xcf]
+
 sysret
 // CHECK: sysretl
 // CHECK: encoding: [0x0f,0x07]
@@ -566,6 +580,30 @@ pshufw $90, %mm4, %mm0
 // CHECK: das
 // CHECK:  encoding: [0x2f]
         	das
+
+// CHECK: retw	$31438
+// CHECK:  encoding: [0xc2,0xce,0x7a]
+        	retw	$0x7ace
+
+// CHECK: lretw	$31438
+// CHECK:  encoding: [0xca,0xce,0x7a]
+        	lretw	$0x7ace
+
+// CHECK: retw	$31438
+// CHECK:  encoding: [0xc2,0xce,0x7a]
+        	ret	$0x7ace
+
+// CHECK: lretw	$31438
+// CHECK:  encoding: [0xca,0xce,0x7a]
+        	lret	$0x7ace
+
+// CHECK: retl	$31438
+// CHECK:  encoding: [0x66,0xc2,0xce,0x7a]
+        	retl	$0x7ace
+
+// CHECK: lretl	$31438
+// CHECK:  encoding: [0x66,0xca,0xce,0x7a]
+        	lretl	$0x7ace
 
 // CHECK: bound	2(%eax), %bx
 // CHECK:  encoding: [0x67,0x62,0x58,0x02]
@@ -825,3 +863,19 @@ xchgl %ecx, %eax
 // CHECK: xchgl %ecx, %eax
 // CHECK: encoding: [0x66,0x91]
 xchgl %eax, %ecx
+
+// CHECK: retw
+// CHECK: encoding: [0xc3]
+retw
+
+// CHECK: retl
+// CHECK: encoding: [0x66,0xc3]
+retl
+
+// CHECK: lretw
+// CHECK: encoding: [0xcb]
+lretw
+
+// CHECK: lretl
+// CHECK: encoding: [0x66,0xcb]
+lretl

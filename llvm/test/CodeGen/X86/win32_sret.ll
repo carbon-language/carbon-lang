@@ -16,13 +16,13 @@ entry:
 ; WIN32-LABEL:      _sret1:
 ; WIN32:      movb $42, (%eax)
 ; WIN32-NOT:  popl %eax
-; WIN32:    {{ret$}}
+; WIN32:    {{retl$}}
 
 ; MINGW_X86-LABEL:  _sret1:
-; MINGW_X86:  {{ret$}}
+; MINGW_X86:  {{retl$}}
 
 ; LINUX-LABEL:      sret1:
-; LINUX:      ret $4
+; LINUX:      retl $4
 
   store i8 42, i8* %x, align 4
   ret void
@@ -33,13 +33,13 @@ entry:
 ; WIN32-LABEL:      _sret2:
 ; WIN32:      movb {{.*}}, (%eax)
 ; WIN32-NOT:  popl %eax
-; WIN32:    {{ret$}}
+; WIN32:    {{retl$}}
 
 ; MINGW_X86-LABEL:  _sret2:
-; MINGW_X86:  {{ret$}}
+; MINGW_X86:  {{retl$}}
 
 ; LINUX-LABEL:      sret2:
-; LINUX:      ret $4
+; LINUX:      retl $4
 
   store i8 %y, i8* %x
   ret void
@@ -51,13 +51,13 @@ entry:
 ; WIN32:      movb $42, (%eax)
 ; WIN32-NOT:  movb $13, (%eax)
 ; WIN32-NOT:  popl %eax
-; WIN32:    {{ret$}}
+; WIN32:    {{retl$}}
 
 ; MINGW_X86-LABEL:  _sret3:
-; MINGW_X86:  {{ret$}}
+; MINGW_X86:  {{retl$}}
 
 ; LINUX-LABEL:      sret3:
-; LINUX:      ret $4
+; LINUX:      retl $4
 
   store i8 42, i8* %x
   store i8 13, i8* %y
@@ -72,13 +72,13 @@ entry:
 ; WIN32-LABEL:     _sret4:
 ; WIN32:     movl $42, (%eax)
 ; WIN32-NOT: popl %eax
-; WIN32:   {{ret$}}
+; WIN32:   {{retl$}}
 
 ; MINGW_X86-LABEL: _sret4:
-; MINGW_X86: {{ret$}}
+; MINGW_X86: {{retl$}}
 
 ; LINUX-LABEL:     sret4:
-; LINUX:     ret $4
+; LINUX:     retl $4
 
   %x = getelementptr inbounds %struct.S4* %agg.result, i32 0, i32 0
   store i32 42, i32* %x, align 4
@@ -105,7 +105,7 @@ entry:
 ; should match both 4(%esp) and 8(%esp).
 ; WIN32:     {{[48]}}(%esp), %eax
 ; WIN32:     movl $42, (%eax)
-; WIN32:     ret $4
+; WIN32:     retl $4
 }
 
 define void @call_foo5() {
@@ -126,7 +126,7 @@ entry:
 ; The this pointer goes to ECX.
 ; WIN32-NEXT: leal {{[0-9]+}}(%esp), %ecx
 ; WIN32-NEXT: calll "?foo@C5@@QAE?AUS5@@XZ"
-; WIN32:      ret
+; WIN32:      retl
   ret void
 }
 

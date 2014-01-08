@@ -247,11 +247,11 @@ entry:
 define void @t15(%struct.foo* noalias sret %agg.result) nounwind  {
 ; 32-LABEL: t15:
 ; 32: calll {{_?}}f
-; 32: ret $4
+; 32: retl $4
 
 ; 64-LABEL: t15:
 ; 64: callq {{_?}}f
-; 64: ret
+; 64: retq
   tail call fastcc void @f(%struct.foo* noalias sret %agg.result) nounwind
   ret void
 }
