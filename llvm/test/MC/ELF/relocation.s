@@ -22,6 +22,8 @@ bar:
         addq	$bar,%rax         # R_X86_64_32S
 	.quad	foo@DTPOFF
         movabsq	$baz@TPOFF, %rax
+	.word   foo-bar
+	.byte   foo-bar
 
 // CHECK:        Section {
 // CHECK:          Name: .rela.text
@@ -45,6 +47,8 @@ bar:
 // CHECK-NEXT:       0x77 R_X86_64_32S .text 0x0
 // CHECK-NEXT:       0x7B R_X86_64_DTPOFF64 foo 0x0
 // CHECK-NEXT:       0x85 R_X86_64_TPOFF64 baz 0x0
+// CHECK-NEXT:       0x8D R_X86_64_PC16 foo 0x8D
+// CHECK-NEXT:       0x8F R_X86_64_PC8 foo 0x8F
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }
 
