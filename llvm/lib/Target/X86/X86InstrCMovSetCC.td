@@ -28,7 +28,7 @@ multiclass CMOV<bits<8> opc, string Mnemonic, PatLeaf CondNode> {
           !strconcat(Mnemonic, "{l}\t{$src2, $dst|$dst, $src2}"),
           [(set GR32:$dst,
                 (X86cmov GR32:$src1, GR32:$src2, CondNode, EFLAGS))],
-                IIC_CMOV32_RR>, TB;
+                IIC_CMOV32_RR>, TB, OpSize16;
     def NAME#64rr
       :RI<opc, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
           !strconcat(Mnemonic, "{q}\t{$src2, $dst|$dst, $src2}"),
@@ -49,7 +49,8 @@ multiclass CMOV<bits<8> opc, string Mnemonic, PatLeaf CondNode> {
       : I<opc, MRMSrcMem, (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
           !strconcat(Mnemonic, "{l}\t{$src2, $dst|$dst, $src2}"),
           [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                    CondNode, EFLAGS))], IIC_CMOV32_RM>, TB;
+                                    CondNode, EFLAGS))], IIC_CMOV32_RM>,
+                                    TB, OpSize16;
     def NAME#64rm
       :RI<opc, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
           !strconcat(Mnemonic, "{q}\t{$src2, $dst|$dst, $src2}"),
