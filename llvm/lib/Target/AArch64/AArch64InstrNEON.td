@@ -1849,22 +1849,33 @@ multiclass NeonI_N2VShLL<string prefix, bit u, bits<5> opcode, string asmop,
 defm SSHLLvvi : NeonI_N2VShLL<"SSHLLvvi", 0b0, 0b10100, "sshll", sext>;
 defm USHLLvvi : NeonI_N2VShLL<"USHLLvvi", 0b1, 0b10100, "ushll", zext>;
 
-// Signed integer lengthen (vector) is alias for SSHLL Vd, Vn, #0
-// Signed integer lengthen (vector, second part) is alias for SSHLL2 Vd, Vn, #0
-// FIXME: This is actually the preferred syntax but TableGen can't deal with
-// custom printing of aliases.
-class NeonI_sxtl_alias<string asmop, string lane, string laneOp,
+class NeonI_ext_len_alias<string asmop, string lane, string laneOp,
                        Instruction inst, RegisterOperand VPRC,
                        RegisterOperand VPRCOp>
   : NeonInstAlias<asmop # "\t$Rd" # lane #", $Rn" # laneOp,
                   (inst VPRC:$Rd, VPRCOp:$Rn, 0), 0b0>;
 
-def SXTLvv_8B  : NeonI_sxtl_alias<"sxtl", ".8h", ".8b",  SSHLLvvi_8B, VPR128, VPR64>;
-def SXTLvv_4H  : NeonI_sxtl_alias<"sxtl", ".4s", ".4h",  SSHLLvvi_4H, VPR128, VPR64>;
-def SXTLvv_2S  : NeonI_sxtl_alias<"sxtl", ".2d", ".2s",  SSHLLvvi_2S, VPR128, VPR64>;
-def SXTL2vv_16B : NeonI_sxtl_alias<"sxtl2", ".8h", ".16b",  SSHLLvvi_16B, VPR128, VPR128>;
-def SXTL2vv_8H  : NeonI_sxtl_alias<"sxtl2", ".4s", ".8h",  SSHLLvvi_8H, VPR128, VPR128>;
-def SXTL2vv_4S  : NeonI_sxtl_alias<"sxtl2", ".2d", ".4s",  SSHLLvvi_4S, VPR128, VPR128>;
+// Signed integer lengthen (vector) is alias for SSHLL Vd, Vn, #0
+// Signed integer lengthen (vector, second part) is alias for SSHLL2 Vd, Vn, #0
+// FIXME: This is actually the preferred syntax but TableGen can't deal with
+// custom printing of aliases.
+def SXTLvv_8B  : NeonI_ext_len_alias<"sxtl", ".8h", ".8b",  SSHLLvvi_8B, VPR128, VPR64>;
+def SXTLvv_4H  : NeonI_ext_len_alias<"sxtl", ".4s", ".4h",  SSHLLvvi_4H, VPR128, VPR64>;
+def SXTLvv_2S  : NeonI_ext_len_alias<"sxtl", ".2d", ".2s",  SSHLLvvi_2S, VPR128, VPR64>;
+def SXTL2vv_16B : NeonI_ext_len_alias<"sxtl2", ".8h", ".16b",  SSHLLvvi_16B, VPR128, VPR128>;
+def SXTL2vv_8H  : NeonI_ext_len_alias<"sxtl2", ".4s", ".8h",  SSHLLvvi_8H, VPR128, VPR128>;
+def SXTL2vv_4S  : NeonI_ext_len_alias<"sxtl2", ".2d", ".4s",  SSHLLvvi_4S, VPR128, VPR128>;
+
+// Unsigned integer lengthen (vector) is alias for USHLL Vd, Vn, #0
+// Unsigned integer lengthen (vector, second part) is alias for USHLL2 Vd, Vn, #0
+// FIXME: This is actually the preferred syntax but TableGen can't deal with
+// custom printing of aliases.
+def UXTLvv_8B  : NeonI_ext_len_alias<"uxtl", ".8h", ".8b",  USHLLvvi_8B, VPR128, VPR64>;
+def UXTLvv_4H  : NeonI_ext_len_alias<"uxtl", ".4s", ".4h",  USHLLvvi_4H, VPR128, VPR64>;
+def UXTLvv_2S  : NeonI_ext_len_alias<"uxtl", ".2d", ".2s",  USHLLvvi_2S, VPR128, VPR64>;
+def UXTL2vv_16B : NeonI_ext_len_alias<"uxtl2", ".8h", ".16b",  USHLLvvi_16B, VPR128, VPR128>;
+def UXTL2vv_8H  : NeonI_ext_len_alias<"uxtl2", ".4s", ".8h",  USHLLvvi_8H, VPR128, VPR128>;
+def UXTL2vv_4S  : NeonI_ext_len_alias<"uxtl2", ".2d", ".4s",  USHLLvvi_4S, VPR128, VPR128>;
 
 // Rounding/Saturating shift
 class N2VShift_RQ<bit q, bit u, bits<5> opcode, string asmop, string T,
