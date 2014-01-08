@@ -1161,7 +1161,11 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   // Emit the address size opcode prefix as needed.
   bool need_address_override;
-  if (TSFlags & X86II::AdSize) {
+  // The AdSize prefix is only for 32-bit and 64-bit modes; in 16-bit mode we
+  // need the address override only for JECXZ instead. Since it's only one
+  // instruction, we special-case it rather than introducing an AdSize16 bit.
+  if ((!is16BitMode() && TSFlags & X86II::AdSize) ||
+      (is16BitMode() && MI.getOpcode() == X86::JECXZ_32)) {
     need_address_override = true;
   } else if (MemOperand == -1) {
     need_address_override = false;

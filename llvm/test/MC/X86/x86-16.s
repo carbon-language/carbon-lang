@@ -356,6 +356,14 @@ cmovnae	%bx,%bx
 lcalll $0x2, $0x1234
 
 
+L1:
+  jcxz L1
+// CHECK: jcxz L1
+// CHECK:   encoding: [0xe3,A]
+  jecxz L1
+// CHECK: jecxz L1
+// CHECK:   encoding: [0x67,0xe3,A]
+
 iret
 // CHECK: iretw
 // CHECK: encoding: [0xcf]
