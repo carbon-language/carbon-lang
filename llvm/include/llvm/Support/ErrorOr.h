@@ -203,7 +203,7 @@ private:
     } else {
       // Get other's error.
       HasError = true;
-      new (getErrorStorage()) error_code(Other);
+      new (getErrorStorage()) error_code(Other.getError());
     }
   }
 
