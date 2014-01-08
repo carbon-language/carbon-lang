@@ -119,10 +119,10 @@ private:
   }
 
   void handleGOT(const Reference &ref) {
-    const_cast<Reference &>(ref).setTarget(getEntry(ref.target()));
+    const_cast<Reference &>(ref).setTarget(getGOTEntry(ref.target()));
   }
 
-  const GOTAtom *getEntry(const Atom *a) {
+  const GOTAtom *getGOTEntry(const Atom *a) {
     auto got = _gotMap.find(a);
     if (got != _gotMap.end())
       return got->second;
