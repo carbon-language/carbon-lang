@@ -1654,6 +1654,8 @@ private:
   /// trailing-type-specifier)?
   static bool isTypeSpecifier(DeclSpecContext DSC) {
     switch (DSC) {
+    default:
+      llvm_unreachable("Missing DeclSpecContext case");
     case DSC_normal:
     case DSC_class:
     case DSC_top_level:
