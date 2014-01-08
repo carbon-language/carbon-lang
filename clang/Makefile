@@ -23,6 +23,12 @@ ifeq ($(BUILD_EXAMPLES),1)
 endif
 endif
 
+ifeq ($(BUILD_EXAMPLES),1)
+  ENABLE_CLANG_EXAMPLES := 1
+else
+  ENABLE_CLANG_EXAMPLES := 0
+endif
+
 ifeq ($(MAKECMDGOALS),libs-only)
   DIRS := $(filter-out tools docs, $(DIRS))
   OPTIONAL_DIRS :=
