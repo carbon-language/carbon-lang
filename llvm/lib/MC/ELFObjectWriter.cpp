@@ -1645,7 +1645,7 @@ ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                                       const MCFragment &FB,
                                                       bool InSet,
                                                       bool IsPCRel) const {
-  if (DataA.getFlags() & ELF_STB_Weak)
+  if (DataA.getFlags() & ELF_STB_Weak || MCELF::GetType(DataA) == ELF::STT_GNU_IFUNC)
     return false;
   return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
                                                  Asm, DataA, FB,InSet, IsPCRel);
