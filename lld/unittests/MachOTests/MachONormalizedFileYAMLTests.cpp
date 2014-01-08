@@ -45,7 +45,7 @@ TEST(ObjectFileYAML, empty_ppc) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      ppc\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "flags:     [ MH_SUBSECTIONS_VIA_SYMBOLS ]\n"
     "...\n");
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_ppc);
@@ -61,7 +61,7 @@ TEST(ObjectFileYAML, empty_x86_64) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      x86_64\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "flags:     [ MH_SUBSECTIONS_VIA_SYMBOLS ]\n"
     "...\n");
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_x86_64);
@@ -77,7 +77,7 @@ TEST(ObjectFileYAML, empty_x86) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      x86\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "flags:     [ MH_SUBSECTIONS_VIA_SYMBOLS ]\n"
     "...\n");
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_x86);
@@ -93,7 +93,7 @@ TEST(ObjectFileYAML, empty_armv6) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      armv6\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "flags:     [ MH_SUBSECTIONS_VIA_SYMBOLS ]\n"
     "...\n");
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_armv6);
@@ -109,7 +109,7 @@ TEST(ObjectFileYAML, empty_armv7) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      armv7\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "flags:     [ MH_SUBSECTIONS_VIA_SYMBOLS ]\n"
     "...\n");
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_armv7);
@@ -125,7 +125,7 @@ TEST(ObjectFileYAML, empty_armv7s) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      armv7s\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "flags:     [ MH_SUBSECTIONS_VIA_SYMBOLS ]\n"
     "...\n");
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_armv7s);
@@ -165,7 +165,7 @@ TEST(ObjectFileYAML, oneSymbol) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      x86_64\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "global-symbols:\n"
     "  - name:   _main\n"
     "    type:   N_SECT\n"
@@ -194,7 +194,7 @@ TEST(ObjectFileYAML, oneSection) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      x86_64\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "sections:\n"
     "  - segment:     __TEXT\n"
     "    section:     __text\n"
@@ -228,7 +228,7 @@ TEST(ObjectFileYAML, hello_x86_64) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      x86_64\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "flags:     [ MH_SUBSECTIONS_VIA_SYMBOLS ]\n"
     "sections:\n"
     "  - segment:     __TEXT\n"
@@ -357,7 +357,7 @@ TEST(ObjectFileYAML, hello_x86) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      x86\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "flags:     [ MH_SUBSECTIONS_VIA_SYMBOLS ]\n"
     "sections:\n"
     "  - segment:     __TEXT\n"
@@ -486,7 +486,7 @@ TEST(ObjectFileYAML, hello_armv6) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      armv6\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "flags:     [ MH_SUBSECTIONS_VIA_SYMBOLS ]\n"
     "sections:\n"
     "  - segment:     __TEXT\n"
@@ -616,7 +616,7 @@ TEST(ObjectFileYAML, hello_armv7) {
   std::unique_ptr<NormalizedFile> f = fromYAML(
     "---\n"
     "arch:      armv7\n"
-    "file-type: object\n"
+    "file-type: MH_OBJECT\n"
     "flags:     [ MH_SUBSECTIONS_VIA_SYMBOLS ]\n"
     "sections:\n"
     "  - segment:     __TEXT\n"

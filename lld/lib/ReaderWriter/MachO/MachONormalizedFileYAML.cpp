@@ -153,10 +153,10 @@ struct ScalarEnumerationTraits<lld::MachOLinkingContext::OS> {
 template <>
 struct ScalarEnumerationTraits<HeaderFileType> {
   static void enumeration(IO &io, HeaderFileType &value) {
-    io.enumCase(value, "object",      llvm::MachO::MH_OBJECT);
-    io.enumCase(value, "dylib",       llvm::MachO::MH_DYLIB);
-    io.enumCase(value, "executable",  llvm::MachO::MH_EXECUTE);
-    io.enumCase(value, "bundle",      llvm::MachO::MH_BUNDLE);
+    io.enumCase(value, "MH_OBJECT",   llvm::MachO::MH_OBJECT);
+    io.enumCase(value, "MH_DYLIB",    llvm::MachO::MH_DYLIB);
+    io.enumCase(value, "MH_EXECUTE",  llvm::MachO::MH_EXECUTE);
+    io.enumCase(value, "MH_BUNDLE",   llvm::MachO::MH_BUNDLE);
   }
 };
 
