@@ -219,7 +219,7 @@ error_code ELFObjectFile<ELFT>::getSymbolName(DataRefImpl Symb,
                                               StringRef &Result) const {
   ErrorOr<StringRef> Name = EF.getSymbolName(toELFSymIter(Symb));
   if (!Name)
-    return Name;
+    return Name.getError();
   Result = *Name;
   return object_error::success;
 }
@@ -233,7 +233,7 @@ error_code ELFObjectFile<ELFT>::getSymbolVersion(SymbolRef SymRef,
   ErrorOr<StringRef> Ver =
       EF.getSymbolVersion(EF.getSection(Symb.d.b), symb, IsDefault);
   if (!Ver)
-    return Ver;
+    return Ver.getError();
   Version = *Ver;
   return object_error::success;
 }
@@ -435,7 +435,7 @@ error_code ELFObjectFile<ELFT>::getSectionName(DataRefImpl Sec,
                                                StringRef &Result) const {
   ErrorOr<StringRef> Name = EF.getSectionName(&*toELFShdrIter(Sec));
   if (!Name)
-    return Name;
+    return Name.getError();
   Result = *Name;
   return object_error::success;
 }
@@ -743,7 +743,7 @@ error_code ELFObjectFile<ELFT>::getRelocationValueString(
   ErrorOr<StringRef> SymName =
       EF.getSymbolName(EF.getSection(sec->sh_link), symb);
   if (!SymName)
-    return SymName;
+    return SymName.getError();
   switch (EF.getHeader()->e_machine) {
   case ELF::EM_X86_64:
     switch (type) {

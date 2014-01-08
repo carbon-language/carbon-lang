@@ -181,10 +181,6 @@ public:
   T &get() { return *getStorage(); }
   const T &get() const { return const_cast<ErrorOr<T> >(this)->get(); }
 
-  operator llvm::error_code() const {
-    return HasError ? *getErrorStorage() : llvm::error_code::success();
-  }
-
   error_code getError() const {
     return HasError ? *getErrorStorage() : error_code::success();
   }
@@ -240,7 +236,7 @@ private:
     } else {
       // Get other's error.
       HasError = true;
-      new (getErrorStorage()) error_code(Other);
+      new (getErrorStorage()) error_code(Other.getError());
     }
   }
 

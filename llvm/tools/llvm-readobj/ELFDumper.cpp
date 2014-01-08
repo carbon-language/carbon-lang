@@ -66,7 +66,7 @@ private:
 
 template <class T> T errorOrDefault(ErrorOr<T> Val, T Default = T()) {
   if (!Val) {
-    error(Val);
+    error(Val.getError());
     return Default;
   }
 
@@ -632,7 +632,7 @@ void ELFDumper<ELFT>::printSymbol(typename ELFO::Elf_Sym_Iter Symbol) {
       FullSymbolName += (IsDefault ? "@@" : "@");
       FullSymbolName += *Version;
     } else
-      error(Version);
+      error(Version.getError());
   }
 
   DictScope D(W, "Symbol");
