@@ -928,8 +928,9 @@ let Predicates = [HasV9], Constraints = "$f = $rd" in {
     def FMOVQ_ICC
       : F4_3<0b110101, 0b000011, (outs QFPRegs:$rd),
                (ins QFPRegs:$rs2, QFPRegs:$f, CCOp:$cond),
-               "fmovd$cond %icc, $rs2, $rd",
-               [(set f128:$rd, (SPselecticc f128:$rs2, f128:$f, imm:$cond))]>;
+               "fmovq$cond %icc, $rs2, $rd",
+               [(set f128:$rd, (SPselecticc f128:$rs2, f128:$f, imm:$cond))]>,
+               Requires<[HasHardQuad]>;
   }
 
   let Uses = [FCC], opf_cc = 0b000 in {
@@ -946,8 +947,9 @@ let Predicates = [HasV9], Constraints = "$f = $rd" in {
     def FMOVQ_FCC
       : F4_3<0b110101, 0b000011, (outs QFPRegs:$rd),
              (ins QFPRegs:$rs2, QFPRegs:$f, CCOp:$cond),
-             "fmovd$cond %fcc0, $rs2, $rd",
-             [(set f128:$rd, (SPselectfcc f128:$rs2, f128:$f, imm:$cond))]>;
+             "fmovq$cond %fcc0, $rs2, $rd",
+             [(set f128:$rd, (SPselectfcc f128:$rs2, f128:$f, imm:$cond))]>,
+             Requires<[HasHardQuad]>;
   }
 
 }
@@ -1092,3 +1094,4 @@ def : Pat<(atomic_store ADDRri:$dst, i32:$val), (STri ADDRri:$dst, $val)>;
 
 
 include "SparcInstr64Bit.td"
+include "SparcInstrAliases.td"

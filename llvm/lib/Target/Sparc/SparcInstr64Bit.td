@@ -333,32 +333,42 @@ class XBranchSP<dag ins, string asmstr, list<dag> pattern>
 let Predicates = [Is64Bit] in {
 
 let Uses = [ICC] in
-def BPXCC : XBranchSP<(ins brtarget:$imm22, CCOp:$cond),
-                     "b$cond %xcc, $imm22",
-                     [(SPbrxcc bb:$imm22, imm:$cond)]>;
+def BPXCC : XBranchSP<(ins brtarget:$imm19, CCOp:$cond),
+                     "b$cond %xcc, $imm19",
+                     [(SPbrxcc bb:$imm19, imm:$cond)]>;
 
 // Conditional moves on %xcc.
 let Uses = [ICC], Constraints = "$f = $rd" in {
-def MOVXCCrr : Pseudo<(outs IntRegs:$rd),
+let cc = 0b110 in {
+def MOVXCCrr : F4_1<0b101100, (outs IntRegs:$rd),
                       (ins IntRegs:$rs2, IntRegs:$f, CCOp:$cond),
                       "mov$cond %xcc, $rs2, $rd",
                       [(set i32:$rd,
                        (SPselectxcc i32:$rs2, i32:$f, imm:$cond))]>;
-def MOVXCCri : Pseudo<(outs IntRegs:$rd),
-                      (ins i32imm:$i, IntRegs:$f, CCOp:$cond),
-                      "mov$cond %xcc, $i, $rd",
+def MOVXCCri : F4_2<0b101100, (outs IntRegs:$rd),
+                      (ins i32imm:$simm11, IntRegs:$f, CCOp:$cond),
+                      "mov$cond %xcc, $simm11, $rd",
                       [(set i32:$rd,
-                       (SPselectxcc simm11:$i, i32:$f, imm:$cond))]>;
-def FMOVS_XCC : Pseudo<(outs FPRegs:$rd),
+                       (SPselectxcc simm11:$simm11, i32:$f, imm:$cond))]>;
+} // cc
+
+let opf_cc = 0b110 in {
+def FMOVS_XCC : F4_3<0b110101, 0b000001, (outs FPRegs:$rd),
                       (ins FPRegs:$rs2, FPRegs:$f, CCOp:$cond),
                       "fmovs$cond %xcc, $rs2, $rd",
                       [(set f32:$rd,
                        (SPselectxcc f32:$rs2, f32:$f, imm:$cond))]>;
-def FMOVD_XCC : Pseudo<(outs DFPRegs:$rd),
+def FMOVD_XCC : F4_3<0b110101, 0b000010, (outs DFPRegs:$rd),
                       (ins DFPRegs:$rs2, DFPRegs:$f, CCOp:$cond),
                       "fmovd$cond %xcc, $rs2, $rd",
                       [(set f64:$rd,
                        (SPselectxcc f64:$rs2, f64:$f, imm:$cond))]>;
+def FMOVQ_XCC : F4_3<0b110101, 0b000011, (outs QFPRegs:$rd),
+                      (ins QFPRegs:$rs2, QFPRegs:$f, CCOp:$cond),
+                      "fmovq$cond %xcc, $rs2, $rd",
+                      [(set f128:$rd,
+                       (SPselectxcc f128:$rs2, f128:$f, imm:$cond))]>;
+} // opf_cc
 } // Uses, Constraints
 
 //===----------------------------------------------------------------------===//

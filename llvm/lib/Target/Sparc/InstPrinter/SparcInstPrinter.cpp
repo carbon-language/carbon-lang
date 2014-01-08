@@ -82,6 +82,17 @@ void SparcInstPrinter::printCCOperand(const MCInst *MI, int opNum,
                                      raw_ostream &O)
 {
   int CC = (int)MI->getOperand(opNum).getImm();
+  switch (MI->getOpcode()) {
+  default: break;
+  case SP::FBCOND:
+  case SP::MOVFCCrr:
+  case SP::MOVFCCri:
+  case SP::FMOVS_FCC:
+  case SP::FMOVD_FCC:
+  case SP::FMOVQ_FCC:  // Make sure CC is a fp conditional flag.
+    CC = (CC < 16) ? (CC + 16) : CC;
+    break;
+  }
   O << SPARCCondCodeToString((SPCC::CondCodes)CC);
 }
 

@@ -537,9 +537,29 @@ SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op)
     Parser.Lex(); // Eat the '%'.
     unsigned RegNo;
     if (matchRegisterName(Parser.getTok(), RegNo, false, false)) {
+      StringRef name = Parser.getTok().getString();
       Parser.Lex(); // Eat the identifier token.
       E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-      Op = SparcOperand::CreateReg(RegNo, SparcOperand::rk_None, S, E);
+      switch (RegNo) {
+      default:
+        Op = SparcOperand::CreateReg(RegNo, SparcOperand::rk_None, S, E);
+        break;
+      case Sparc::Y:
+        Op = SparcOperand::CreateToken("%y", S);
+        break;
+
+      case Sparc::ICC:
+        if (name == "xcc")
+          Op = SparcOperand::CreateToken("%xcc", S);
+        else
+          Op = SparcOperand::CreateToken("%icc", S);
+        break;
+
+      case Sparc::FCC:
+        assert(name == "fcc0" && "Cannot handle %fcc other than %fcc0 yet");
+        Op = SparcOperand::CreateToken("%fcc0", S);
+        break;
+      }
       break;
     }
     if (matchSparcAsmModifiers(EVal, E)) {
