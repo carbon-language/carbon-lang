@@ -1255,6 +1255,10 @@ void UnwrappedLineParser::parseObjCUntilAtEnd() {
       parseBlock(/*MustBeDeclaration=*/false);
       // In ObjC interfaces, nothing should be following the "}".
       addUnwrappedLine();
+    } else if (FormatTok->is(tok::r_brace)) {
+      // Ignore stray "}". parseStructuralElement doesn't consume them.
+      nextToken();
+      addUnwrappedLine();
     } else {
       parseStructuralElement();
     }
