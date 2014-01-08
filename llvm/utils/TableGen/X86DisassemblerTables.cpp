@@ -94,8 +94,11 @@ static inline bool inheritsFrom(InstructionContext child,
            inheritsFrom(child, IC_64BIT_XD)     ||
            inheritsFrom(child, IC_64BIT_XS));
   case IC_OPSIZE:
-    return inheritsFrom(child, IC_64BIT_OPSIZE);
+    return (inheritsFrom(child, IC_64BIT_OPSIZE) ||
+            inheritsFrom(child, IC_OPSIZE_ADSIZE));
   case IC_ADSIZE:
+    return inheritsFrom(child, IC_OPSIZE_ADSIZE);
+  case IC_OPSIZE_ADSIZE:
   case IC_64BIT_ADSIZE:
     return false;
   case IC_XD:

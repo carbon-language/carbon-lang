@@ -49,6 +49,17 @@
 // CHECK: shll	%eax                    # encoding: [0x66,0xd1,0xe0]
         sal $1, %eax
 
+// moffset forms of moves
+
+// CHECK: movb 0, %al  # encoding: [0xa0,0x00,0x00]
+movb	0, %al
+
+// CHECK: movw 0, %ax  # encoding: [0xa1,0x00,0x00]
+movw	0, %ax
+
+// CHECK: movl 0, %eax  # encoding: [0x66,0xa1,0x00,0x00]
+movl	0, %eax
+
 into
 // CHECK: into
 // CHECK:  encoding: [0xce]
