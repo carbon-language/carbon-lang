@@ -726,3 +726,125 @@ define <8 x i8> @getl(<16 x i8> %x) #0 {
   %vecinit14 = insertelement <8 x i8> %vecinit12, i8 %vecext13, i32 7
   ret <8 x i8> %vecinit14
 }
+
+define <4 x i16> @test_dup_v2i32_v4i16(<2 x i32> %a) {
+; CHECK-LABEL: test_dup_v2i32_v4i16:
+; CHECK: dup v0.4h, v0.h[2]
+entry:
+  %x = extractelement <2 x i32> %a, i32 1
+  %vget_lane = trunc i32 %x to i16
+  %vecinit.i = insertelement <4 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <4 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <4 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <4 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  ret <4 x i16> %vecinit3.i
+}
+
+define <8 x i16> @test_dup_v4i32_v8i16(<4 x i32> %a) {
+; CHECK-LABEL: test_dup_v4i32_v8i16:
+; CHECK: dup v0.8h, v0.h[6]
+entry:
+  %x = extractelement <4 x i32> %a, i32 3
+  %vget_lane = trunc i32 %x to i16
+  %vecinit.i = insertelement <8 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <8 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <8 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <8 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  %vecinit4.i = insertelement <8 x i16> %vecinit3.i, i16 %vget_lane, i32 4
+  %vecinit5.i = insertelement <8 x i16> %vecinit4.i, i16 %vget_lane, i32 5
+  %vecinit6.i = insertelement <8 x i16> %vecinit5.i, i16 %vget_lane, i32 6
+  %vecinit7.i = insertelement <8 x i16> %vecinit6.i, i16 %vget_lane, i32 7
+  ret <8 x i16> %vecinit7.i
+}
+
+define <4 x i16> @test_dup_v1i64_v4i16(<1 x i64> %a) {
+; CHECK-LABEL: test_dup_v1i64_v4i16:
+; CHECK: dup v0.4h, v0.h[0]
+entry:
+  %x = extractelement <1 x i64> %a, i32 0
+  %vget_lane = trunc i64 %x to i16
+  %vecinit.i = insertelement <4 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <4 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <4 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <4 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  ret <4 x i16> %vecinit3.i
+}
+
+define <2 x i32> @test_dup_v1i64_v2i32(<1 x i64> %a) {
+; CHECK-LABEL: test_dup_v1i64_v2i32:
+; CHECK: dup v0.2s, v0.s[0]
+entry:
+  %x = extractelement <1 x i64> %a, i32 0
+  %vget_lane = trunc i64 %x to i32
+  %vecinit.i = insertelement <2 x i32> undef, i32 %vget_lane, i32 0
+  %vecinit1.i = insertelement <2 x i32> %vecinit.i, i32 %vget_lane, i32 1
+  ret <2 x i32> %vecinit1.i
+}
+
+define <8 x i16> @test_dup_v2i64_v8i16(<2 x i64> %a) {
+; CHECK-LABEL: test_dup_v2i64_v8i16:
+; CHECK: dup v0.8h, v0.h[4]
+entry:
+  %x = extractelement <2 x i64> %a, i32 1
+  %vget_lane = trunc i64 %x to i16
+  %vecinit.i = insertelement <8 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <8 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <8 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <8 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  %vecinit4.i = insertelement <8 x i16> %vecinit3.i, i16 %vget_lane, i32 4
+  %vecinit5.i = insertelement <8 x i16> %vecinit4.i, i16 %vget_lane, i32 5
+  %vecinit6.i = insertelement <8 x i16> %vecinit5.i, i16 %vget_lane, i32 6
+  %vecinit7.i = insertelement <8 x i16> %vecinit6.i, i16 %vget_lane, i32 7
+  ret <8 x i16> %vecinit7.i
+}
+
+define <4 x i32> @test_dup_v2i64_v4i32(<2 x i64> %a) {
+; CHECK-LABEL: test_dup_v2i64_v4i32:
+; CHECK: dup v0.4s, v0.s[2]
+entry:
+  %x = extractelement <2 x i64> %a, i32 1
+  %vget_lane = trunc i64 %x to i32
+  %vecinit.i = insertelement <4 x i32> undef, i32 %vget_lane, i32 0
+  %vecinit1.i = insertelement <4 x i32> %vecinit.i, i32 %vget_lane, i32 1
+  %vecinit2.i = insertelement <4 x i32> %vecinit1.i, i32 %vget_lane, i32 2
+  %vecinit3.i = insertelement <4 x i32> %vecinit2.i, i32 %vget_lane, i32 3
+  ret <4 x i32> %vecinit3.i
+}
+
+define <4 x i16> @test_dup_v4i32_v4i16(<4 x i32> %a) {
+; CHECK-LABEL: test_dup_v4i32_v4i16:
+; CHECK: dup v0.4h, v0.h[2]
+entry:
+  %x = extractelement <4 x i32> %a, i32 1
+  %vget_lane = trunc i32 %x to i16
+  %vecinit.i = insertelement <4 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <4 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <4 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <4 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  ret <4 x i16> %vecinit3.i
+}
+
+define <4 x i16> @test_dup_v2i64_v4i16(<2 x i64> %a) {
+; CHECK-LABEL: test_dup_v2i64_v4i16:
+; CHECK: dup v0.4h, v0.h[0]
+entry:
+  %x = extractelement <2 x i64> %a, i32 0
+  %vget_lane = trunc i64 %x to i16
+  %vecinit.i = insertelement <4 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <4 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <4 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <4 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  ret <4 x i16> %vecinit3.i
+}
+
+define <2 x i32> @test_dup_v2i64_v2i32(<2 x i64> %a) {
+; CHECK-LABEL: test_dup_v2i64_v2i32:
+; CHECK: dup v0.2s, v0.s[0]
+entry:
+  %x = extractelement <2 x i64> %a, i32 0
+  %vget_lane = trunc i64 %x to i32
+  %vecinit.i = insertelement <2 x i32> undef, i32 %vget_lane, i32 0
+  %vecinit1.i = insertelement <2 x i32> %vecinit.i, i32 %vget_lane, i32 1
+  ret <2 x i32> %vecinit1.i
+}
+
