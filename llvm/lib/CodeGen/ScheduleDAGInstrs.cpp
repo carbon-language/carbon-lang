@@ -512,6 +512,10 @@ static bool MIsNeedChainEdge(AliasAnalysis *AA, const MachineFrameInfo *MFI,
   if (MIa == MIb)
     return false;
 
+  // FIXME: Need to handle multiple memory operands to support all targets.
+  if (!MIa->hasOneMemOperand() || !MIb->hasOneMemOperand())
+    return true;
+
   if (isUnsafeMemoryObject(MIa, MFI) || isUnsafeMemoryObject(MIb, MFI))
     return true;
 
@@ -526,10 +530,6 @@ static bool MIsNeedChainEdge(AliasAnalysis *AA, const MachineFrameInfo *MFI,
 
   MachineMemOperand *MMOa = *MIa->memoperands_begin();
   MachineMemOperand *MMOb = *MIb->memoperands_begin();
-
-  // FIXME: Need to handle multiple memory operands to support all targets.
-  if (!MIa->hasOneMemOperand() || !MIb->hasOneMemOperand())
-    llvm_unreachable("Multiple memory operands.");
 
   // The following interface to AA is fashioned after DAGCombiner::isAlias
   // and operates with MachineMemOperand offset with some important
