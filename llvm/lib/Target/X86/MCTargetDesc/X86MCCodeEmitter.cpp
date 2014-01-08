@@ -57,6 +57,24 @@ public:
     return (STI.getFeatureBits() & X86::Mode16Bit) != 0;
   }
 
+  /// Is16BitMemOperand - Return true if the specified instruction has
+  /// a 16-bit memory operand. Op specifies the operand # of the memoperand.
+  bool Is16BitMemOperand(const MCInst &MI, unsigned Op) const {
+    const MCOperand &BaseReg  = MI.getOperand(Op+X86::AddrBaseReg);
+    const MCOperand &IndexReg = MI.getOperand(Op+X86::AddrIndexReg);
+    const MCOperand &Disp     = MI.getOperand(Op+X86::AddrDisp);
+
+    if (is16BitMode() && BaseReg.getReg() == 0 &&
+        Disp.isImm() && Disp.getImm() < 0x10000)
+      return true;
+    if ((BaseReg.getReg() != 0 &&
+         X86MCRegisterClasses[X86::GR16RegClassID].contains(BaseReg.getReg())) ||
+        (IndexReg.getReg() != 0 &&
+         X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg.getReg())))
+      return true;
+    return false;
+  }
+
   unsigned GetX86RegNum(const MCOperand &MO) const {
     return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg()) & 0x7;
   }
@@ -249,20 +267,6 @@ static bool Is64BitMemOperand(const MCInst &MI, unsigned Op) {
   return false;
 }
 #endif
-
-/// Is16BitMemOperand - Return true if the specified instruction has
-/// a 16-bit memory operand. Op specifies the operand # of the memoperand.
-static bool Is16BitMemOperand(const MCInst &MI, unsigned Op) {
-  const MCOperand &BaseReg  = MI.getOperand(Op+X86::AddrBaseReg);
-  const MCOperand &IndexReg = MI.getOperand(Op+X86::AddrIndexReg);
-
-  if ((BaseReg.getReg() != 0 &&
-       X86MCRegisterClasses[X86::GR16RegClassID].contains(BaseReg.getReg())) ||
-      (IndexReg.getReg() != 0 &&
-       X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg.getReg())))
-    return true;
-  return false;
-}
 
 /// StartsWithGlobalOffsetTable - Check if this expression starts with
 ///  _GLOBAL_OFFSET_TABLE_ and if it is of the form

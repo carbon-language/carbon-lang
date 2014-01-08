@@ -319,6 +319,10 @@ cmovnae	%bx,%bx
 // CHECK:  encoding: [0x9b]
 	fwait
 
+// CHECK: [0x65,0x66,0x8b,0x06,0x7c,0x00]
+// FIXME: This is a correct bug poor encoding: Use 65 66 a1 7c 00
+        movl	%gs:124, %eax
+
 // CHECK: pusha
 // CHECK:  encoding: [0x60]
         	pusha
@@ -700,6 +704,54 @@ pshufw $90, %mm4, %mm0
 // CHECK: fucompi
 // CHECK:  encoding: [0xdf,0xe9]
         	fucompi
+
+// CHECK: fldcw	32493
+// CHECK:  encoding: [0xd9,0x2e,0xed,0x7e]
+        	fldcww	0x7eed
+
+// CHECK: fldcw	32493
+// CHECK:  encoding: [0xd9,0x2e,0xed,0x7e]
+        	fldcw	0x7eed
+
+// CHECK: fnstcw	32493
+// CHECK:  encoding: [0xd9,0x3e,0xed,0x7e]
+        	fnstcww	0x7eed
+
+// CHECK: fnstcw	32493
+// CHECK:  encoding: [0xd9,0x3e,0xed,0x7e]
+        	fnstcw	0x7eed
+
+// CHECK: wait
+// CHECK:  encoding: [0x9b]
+        	fstcww	0x7eed
+
+// CHECK: wait
+// CHECK:  encoding: [0x9b]
+        	fstcw	0x7eed
+
+// CHECK: fnstsw	32493
+// CHECK:  encoding: [0xdd,0x3e,0xed,0x7e]
+        	fnstsww	0x7eed
+
+// CHECK: fnstsw	32493
+// CHECK:  encoding: [0xdd,0x3e,0xed,0x7e]
+        	fnstsw	0x7eed
+
+// CHECK: wait
+// CHECK:  encoding: [0x9b]
+        	fstsww	0x7eed
+
+// CHECK: wait
+// CHECK:  encoding: [0x9b]
+        	fstsw	0x7eed
+
+// CHECK: verr	32493
+// CHECK:  encoding: [0x0f,0x00,0x26,0xed,0x7e]
+        	verrw	0x7eed
+
+// CHECK: verr	32493
+// CHECK:  encoding: [0x0f,0x00,0x26,0xed,0x7e]
+        	verr	0x7eed
 
 // CHECK: wait
 // CHECK:  encoding: [0x9b]
