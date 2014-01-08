@@ -3245,7 +3245,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
         case clang::Type::ExtVector:
             if (idx_is_valid)
             {
-                const VectorType *array = cast<VectorType>(GetQualType().getTypePtr());
+                const VectorType *array = cast<VectorType>(parent_qual_type.getTypePtr());
                 if (array)
                 {
                     ClangASTType element_type (m_ast, array->getElementType());
