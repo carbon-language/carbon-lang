@@ -1654,8 +1654,6 @@ private:
   /// trailing-type-specifier)?
   static bool isTypeSpecifier(DeclSpecContext DSC) {
     switch (DSC) {
-    default:
-      llvm_unreachable("Missing DeclSpecContext case");
     case DSC_normal:
     case DSC_class:
     case DSC_top_level:
@@ -1666,6 +1664,7 @@ private:
     case DSC_alias_declaration:
       return true;
     }
+    llvm_unreachable("Missing DeclSpecContext case");
   }
 
   /// Information on a C++0x for-range-initializer found while parsing a
