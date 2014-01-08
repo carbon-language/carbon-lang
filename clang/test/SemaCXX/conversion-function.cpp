@@ -405,3 +405,14 @@ namespace PR12712 {
 
   A f(const C c) { return c; }
 }
+
+namespace PR18234 {
+  struct A {
+    operator enum E { e } (); // expected-error {{'PR18234::A::E' can not be defined in a type specifier}}
+    operator struct S { int n; } (); // expected-error {{'PR18234::A::S' can not be defined in a type specifier}}
+  } a;
+  A::S s = a;
+  A::E e = a; // expected-note {{here}}
+  bool k1 = e == A::e; // expected-error {{no member named 'e'}}
+  bool k2 = e.n == 0;
+}

@@ -2056,8 +2056,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS, AccessSpecifier AS,
 
   // Validate declspec for type-name.
   unsigned Specs = DS.getParsedSpecifiers();
-  if ((DSC == DSC_type_specifier || DSC == DSC_trailing) &&
-      !DS.hasTypeSpecifier()) {
+  if (isTypeSpecifier(DSC) && !DS.hasTypeSpecifier()) {
     Diag(Tok, diag::err_expected_type);
     DS.SetTypeSpecError();
   } else if (Specs == DeclSpec::PQ_None && !DS.getNumProtocolQualifiers() &&
@@ -2155,8 +2154,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
   // within a type specifier. Outside of C++, we allow this even if the
   // language doesn't "officially" support implicit int -- we support
   // implicit int as an extension in C99 and C11.
-  if (DSC != DSC_type_specifier && DSC != DSC_trailing &&
-      !getLangOpts().CPlusPlus &&
+  if (!isTypeSpecifier(DSC) && !getLangOpts().CPlusPlus &&
       isValidAfterIdentifierInDeclarator(NextToken())) {
     // If this token is valid for implicit int, e.g. "static x = 4", then
     // we just avoid eating the identifier, so it will be parsed as the
@@ -2226,7 +2224,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
 
   // Determine whether this identifier could plausibly be the name of something
   // being declared (with a missing type).
-  if (DSC != DSC_type_specifier && DSC != DSC_trailing &&
+  if (!isTypeSpecifier(DSC) &&
       (!SS || DSC == DSC_top_level || DSC == DSC_class)) {
     // Look ahead to the next token to try to figure out what this declaration
     // was supposed to be.
@@ -2339,6 +2337,9 @@ Parser::getDeclSpecContextFromDeclaratorContext(unsigned Context) {
     return DSC_top_level;
   if (Context == Declarator::TrailingReturnContext)
     return DSC_trailing;
+  if (Context == Declarator::AliasDeclContext ||
+      Context == Declarator::AliasTemplateContext)
+    return DSC_alias_declaration;
   return DSC_normal;
 }
 
@@ -3751,7 +3752,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     } else {
       TUK = Sema::TUK_Definition;
     }
-  } else if (DSC != DSC_type_specifier &&
+  } else if (!isTypeSpecifier(DSC) &&
              (Tok.is(tok::semi) ||
               (Tok.isAtStartOfLine() &&
                !isValidAfterTypeSpecifier(CanBeBitfield)))) {
@@ -3813,7 +3814,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
                                    StartLoc, SS, Name, NameLoc, attrs.getList(),
                                    AS, DS.getModulePrivateSpecLoc(), TParams,
                                    Owned, IsDependent, ScopedEnumKWLoc,
-                                   IsScopedUsingClassTag, BaseType);
+                                   IsScopedUsingClassTag, BaseType,
+                                   DSC == DSC_type_specifier);
 
   if (IsDependent) {
     // This enum has a dependent nested-name-specifier. Handle it as a

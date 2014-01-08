@@ -1646,8 +1646,25 @@ private:
     DSC_class,  // class context, enables 'friend'
     DSC_type_specifier, // C++ type-specifier-seq or C specifier-qualifier-list
     DSC_trailing, // C++11 trailing-type-specifier in a trailing return type
+    DSC_alias_declaration, // C++11 type-specifier-seq in an alias-declaration
     DSC_top_level // top-level/namespace declaration context
   };
+
+  /// Is this a context in which we are parsing just a type-specifier (or
+  /// trailing-type-specifier)?
+  static bool isTypeSpecifier(DeclSpecContext DSC) {
+    switch (DSC) {
+    case DSC_normal:
+    case DSC_class:
+    case DSC_top_level:
+      return false;
+
+    case DSC_type_specifier:
+    case DSC_trailing:
+    case DSC_alias_declaration:
+      return true;
+    }
+  }
 
   /// Information on a C++0x for-range-initializer found while parsing a
   /// declaration which turns out to be a for-range-declaration.
