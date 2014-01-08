@@ -917,7 +917,10 @@ def PUSH32rmr: I<0xFF, MRM6r, (outs), (ins GR32:$reg), "push{l}\t$reg",[],
 def PUSH32rmm: I<0xFF, MRM6m, (outs), (ins i32mem:$src), "push{l}\t$src",[],
                  IIC_PUSH_MEM>, OpSize16, Requires<[Not64BitMode]>;
 
-def PUSHi8   : Ii8<0x6a, RawFrm, (outs), (ins i32i8imm:$imm),
+def PUSH16i8 : Ii8<0x6a, RawFrm, (outs), (ins i16i8imm:$imm),
+                   "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize,
+                   Requires<[Not64BitMode]>;
+def PUSH32i8 : Ii8<0x6a, RawFrm, (outs), (ins i32i8imm:$imm),
                    "push{l}\t$imm", [], IIC_PUSH_IMM>, OpSize16,
                    Requires<[Not64BitMode]>;
 def PUSHi16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm),
