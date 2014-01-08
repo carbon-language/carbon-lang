@@ -130,4 +130,47 @@ define <8 x i16> @test13(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-NOT: psraw
 ; CHECK: ret
 
+; Fold (vselect (build_vector AllOnes), N1, N2) -> N1
+
+define <4 x float> @test14(<4 x float> %a, <4 x float> %b) {
+  %1 = select <4 x i1> <i1 true, i1 undef, i1 true, i1 undef>, <4 x float> %a, <4 x float> %b
+  ret <4 x float> %1
+}
+; CHECK-LABEL: test14
+; CHECK-NOT: psllw
+; CHECK-NOT: psraw
+; CHECK-NOT: pcmpeq
+; CHECK: ret
+
+define <8 x i16> @test15(<8 x i16> %a, <8 x i16> %b) {
+  %1 = select <8 x i1> <i1 true, i1 true, i1 true, i1 undef, i1 undef, i1 true, i1 true, i1 undef>, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %1
+}
+; CHECK-LABEL: test15
+; CHECK-NOT: psllw
+; CHECK-NOT: psraw
+; CHECK-NOT: pcmpeq
+; CHECK: ret
+
+; Fold (vselect (build_vector AllZeros), N1, N2) -> N2
+
+define <4 x float> @test16(<4 x float> %a, <4 x float> %b) {
+  %1 = select <4 x i1> <i1 false, i1 undef, i1 false, i1 undef>, <4 x float> %a, <4 x float> %b
+  ret <4 x float> %1
+} 
+; CHECK-LABEL: test16
+; CHECK-NOT: psllw
+; CHECK-NOT: psraw
+; CHECK-NOT: xorps
+; CHECK: ret 
+
+define <8 x i16> @test17(<8 x i16> %a, <8 x i16> %b) {
+  %1 = select <8 x i1> <i1 false, i1 false, i1 false, i1 undef, i1 undef, i1 false, i1 false, i1 undef>, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %1
+}
+; CHECK-LABEL: test17
+; CHECK-NOT: psllw
+; CHECK-NOT: psraw
+; CHECK-NOT: xorps
+; CHECK: ret
 

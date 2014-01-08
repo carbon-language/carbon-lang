@@ -40,16 +40,16 @@ define <16 x i8> @xor16xi8(<16 x i8> %a, <16 x i8> %b) {
 
 define <8 x i8> @bsl8xi8_const(<8 x i8> %a, <8 x i8> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-	%tmp1 = and <8 x i8> %a, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
-	%tmp2 = and <8 x i8> %b, < i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0 >
+	%tmp1 = and <8 x i8> %a, < i8 -1, i8 -1, i8 0, i8 0, i8 -1, i8 -1, i8 0, i8 0 >
+	%tmp2 = and <8 x i8> %b, < i8 0, i8 0, i8 -1, i8 -1, i8 0, i8 0, i8 -1, i8 -1 >
 	%tmp3 = or <8 x i8> %tmp1, %tmp2
 	ret <8 x i8> %tmp3
 }
 
 define <16 x i8> @bsl16xi8_const(<16 x i8> %a, <16 x i8> %b) {
-;CHECK:  bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-	%tmp1 = and <16 x i8> %a, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
-	%tmp2 = and <16 x i8> %b, < i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0 >
+;CHECK: bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+	%tmp1 = and <16 x i8> %a, < i8 -1, i8 -1, i8 -1, i8 -1, i8 0, i8 0, i8 0, i8 0, i8 -1, i8 -1, i8 -1, i8 -1, i8 0, i8 0, i8 0, i8 0 >
+	%tmp2 = and <16 x i8> %b, < i8 0, i8 0, i8 0, i8 0, i8 -1, i8 -1, i8 -1, i8 -1, i8 0, i8 0, i8 0, i8 0, i8 -1, i8 -1, i8 -1, i8 -1 >
 	%tmp3 = or <16 x i8> %tmp1, %tmp2
 	ret <16 x i8> %tmp3
 }
@@ -444,10 +444,11 @@ define <2 x i64> @orn2xi64(<2 x i64> %a, <2 x i64> %b)  {
   %tmp2 = or <2 x i64> %a, %tmp1
   ret <2 x i64> %tmp2
 }
+
 define <2 x i32> @bsl2xi32_const(<2 x i32> %a, <2 x i32> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-	%tmp1 = and <2 x i32> %a, < i32 -1, i32 -1 >
-	%tmp2 = and <2 x i32> %b, < i32 0, i32 0 >
+	%tmp1 = and <2 x i32> %a, < i32 -1, i32 0 >
+	%tmp2 = and <2 x i32> %b, < i32 0, i32 -1 >
 	%tmp3 = or <2 x i32> %tmp1, %tmp2
 	ret <2 x i32> %tmp3
 }
@@ -455,40 +456,40 @@ define <2 x i32> @bsl2xi32_const(<2 x i32> %a, <2 x i32> %b)  {
 
 define <4 x i16> @bsl4xi16_const(<4 x i16> %a, <4 x i16> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-	%tmp1 = and <4 x i16> %a, < i16 -1, i16 -1, i16 -1,i16 -1 >
-	%tmp2 = and <4 x i16> %b, < i16 0, i16 0,i16 0, i16 0 >
+	%tmp1 = and <4 x i16> %a, < i16 -1, i16 0, i16 -1,i16 0 >
+	%tmp2 = and <4 x i16> %b, < i16 0, i16 -1,i16 0, i16 -1 >
 	%tmp3 = or <4 x i16> %tmp1, %tmp2
 	ret <4 x i16> %tmp3
 }
 
 define <1 x i64> @bsl1xi64_const(<1 x i64> %a, <1 x i64> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-	%tmp1 = and <1 x i64> %a, < i64 -1 >
-	%tmp2 = and <1 x i64> %b, < i64 0 >
+	%tmp1 = and <1 x i64> %a, < i64 -16 >
+	%tmp2 = and <1 x i64> %b, < i64 15 >
 	%tmp3 = or <1 x i64> %tmp1, %tmp2
 	ret <1 x i64> %tmp3
 }
 
 define <4 x i32> @bsl4xi32_const(<4 x i32> %a, <4 x i32> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-	%tmp1 = and <4 x i32> %a, < i32 -1, i32 -1, i32 -1, i32 -1 >
-	%tmp2 = and <4 x i32> %b, < i32 0, i32 0, i32 0, i32 0 >
+	%tmp1 = and <4 x i32> %a, < i32 -1, i32 0, i32 -1, i32 0 >
+	%tmp2 = and <4 x i32> %b, < i32 0, i32 -1, i32 0, i32 -1 >
 	%tmp3 = or <4 x i32> %tmp1, %tmp2
 	ret <4 x i32> %tmp3
 }
 
 define <8 x i16> @bsl8xi16_const(<8 x i16> %a, <8 x i16> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-	%tmp1 = and <8 x i16> %a, < i16 -1, i16 -1, i16 -1,i16 -1, i16 -1, i16 -1, i16 -1,i16 -1 >
-	%tmp2 = and <8 x i16> %b, < i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0 >
+	%tmp1 = and <8 x i16> %a, < i16 -1, i16 -1, i16 0,i16 0, i16 -1, i16 -1, i16 0,i16 0 >
+	%tmp2 = and <8 x i16> %b, < i16 0, i16 0, i16 -1, i16 -1, i16 0, i16 0, i16 -1, i16 -1 >
 	%tmp3 = or <8 x i16> %tmp1, %tmp2
 	ret <8 x i16> %tmp3
 }
 
 define <2 x i64> @bsl2xi64_const(<2 x i64> %a, <2 x i64> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-	%tmp1 = and <2 x i64> %a, < i64 -1, i64 -1 >
-	%tmp2 = and <2 x i64> %b, < i64 0, i64 0 >
+	%tmp1 = and <2 x i64> %a, < i64 -1, i64 0 >
+	%tmp2 = and <2 x i64> %b, < i64 0, i64 -1 >
 	%tmp3 = or <2 x i64> %tmp1, %tmp2
 	ret <2 x i64> %tmp3
 }
