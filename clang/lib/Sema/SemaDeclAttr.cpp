@@ -3228,24 +3228,6 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC,
   return false;
 }
 
-static void handleRegparmAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (hasDeclarator(D)) return;
-
-  unsigned numParams;
-  if (S.CheckRegparmAttr(Attr, numParams))
-    return;
-
-  if (!isa<ObjCMethodDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFunctionOrMethod;
-    return;
-  }
-
-  D->addAttr(::new (S.Context)
-             RegparmAttr(Attr.getRange(), S.Context, numParams,
-                         Attr.getAttributeSpellingListIndex()));
-}
-
 /// Checks a regparm attribute, returning true if it is ill-formed and
 /// otherwise setting numParams to the appropriate value.
 bool Sema::CheckRegparmAttr(const AttributeList &Attr, unsigned &numParams) {
@@ -3799,6 +3781,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Ptr64:
   case AttributeList::AT_SPtr:
   case AttributeList::AT_UPtr:
+  case AttributeList::AT_Regparm:
     // Ignore these, these are type attributes, handled by
     // ProcessTypeAttributes.
     break;
@@ -3963,7 +3946,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_NoDebug:     handleNoDebugAttr     (S, D, Attr); break;
   case AttributeList::AT_NoInline:
     handleSimpleAttribute<NoInlineAttr>(S, D, Attr); break;
-  case AttributeList::AT_Regparm:     handleRegparmAttr     (S, D, Attr); break;
   case AttributeList::IgnoredAttribute:
     // Just ignore
     break;
