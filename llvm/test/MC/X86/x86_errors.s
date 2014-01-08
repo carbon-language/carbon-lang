@@ -26,8 +26,23 @@ sysexitq
 lea (%rsp, %rbp, $4), %rax
 
 // rdar://10423777
-// 64: error: index register is 32-bit, but base register is 64-bit
+// 64: error: base register is 64-bit, but index register is not
 movq (%rsi,%ecx),%xmm0
+
+// 64: error: invalid 16-bit base register
+movl %eax,(%bp,%si)
+
+// 32: error: scale factor in 16-bit address must be 1
+movl %eax,(%bp,%si,2)
+
+// 32: error: invalid 16-bit base register
+movl %eax,(%cx)
+
+// 32: error: invalid 16-bit base/index register combination
+movl %eax,(%bp,%bx)
+
+// 32: error: 16-bit memory operand may not include only index register
+movl %eax,(,%bx)
 
 // 32: error: invalid operand for instruction
 outb al, 4

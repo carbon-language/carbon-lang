@@ -1853,10 +1853,11 @@ X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
   // If we reached here, then we just ate the ( of the memory operand.  Process
   // the rest of the memory operand.
   unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
-  SMLoc IndexLoc;
+  SMLoc IndexLoc, BaseLoc;
 
   if (getLexer().is(AsmToken::Percent)) {
     SMLoc StartLoc, EndLoc;
+    BaseLoc = Parser.getTok().getLoc();
     if (ParseRegister(BaseReg, StartLoc, EndLoc)) return 0;
     if (BaseReg == X86::EIZ || BaseReg == X86::RIZ) {
       Error(StartLoc, "eiz and riz can only be used as index registers",
@@ -1899,6 +1900,11 @@ X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
           }
 
           // Validate the scale amount.
+	  if (X86MCRegisterClasses[X86::GR16RegClassID].contains(BaseReg) &&
+              ScaleVal != 1) {
+            Error(Loc, "scale factor in 16-bit address must be 1");
+            return 0;
+	  }
           if (ScaleVal != 1 && ScaleVal != 2 && ScaleVal != 4 && ScaleVal != 8){
             Error(Loc, "scale factor in address must be 1, 2, 4 or 8");
             return 0;
@@ -1929,6 +1935,21 @@ X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
   SMLoc MemEnd = Parser.getTok().getEndLoc();
   Parser.Lex(); // Eat the ')'.
 
+  // Check for use of invalid 16-bit registers. Only BX/BP/SI/DI are allowed,
+  // and then only in non-64-bit modes. Except for DX, which is a special case
+  // because an unofficial form of in/out instructions uses it.
+  if (X86MCRegisterClasses[X86::GR16RegClassID].contains(BaseReg) &&
+      (is64BitMode() || (BaseReg != X86::BX && BaseReg != X86::BP &&
+                         BaseReg != X86::SI && BaseReg != X86::DI)) &&
+      BaseReg != X86::DX) {
+    Error(BaseLoc, "invalid 16-bit base register");
+    return 0;
+  }
+  if (BaseReg == 0 &&
+      X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg)) {
+    Error(IndexLoc, "16-bit memory operand may not include only index register");
+    return 0;
+  }
   // If we have both a base register and an index register make sure they are
   // both 64-bit or 32-bit registers.
   // To support VSIB, IndexReg can be 128-bit or 256-bit registers.
@@ -1937,15 +1958,29 @@ X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
         (X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg) ||
          X86MCRegisterClasses[X86::GR32RegClassID].contains(IndexReg)) &&
         IndexReg != X86::RIZ) {
-      Error(IndexLoc, "index register is 32-bit, but base register is 64-bit");
+      Error(BaseLoc, "base register is 64-bit, but index register is not");
       return 0;
     }
     if (X86MCRegisterClasses[X86::GR32RegClassID].contains(BaseReg) &&
         (X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg) ||
          X86MCRegisterClasses[X86::GR64RegClassID].contains(IndexReg)) &&
         IndexReg != X86::EIZ){
-      Error(IndexLoc, "index register is 64-bit, but base register is 32-bit");
+      Error(BaseLoc, "base register is 32-bit, but index register is not");
       return 0;
+    }
+    if (X86MCRegisterClasses[X86::GR16RegClassID].contains(BaseReg)) {
+      if (X86MCRegisterClasses[X86::GR32RegClassID].contains(IndexReg) ||
+          X86MCRegisterClasses[X86::GR64RegClassID].contains(IndexReg)) {
+        Error(BaseLoc, "base register is 16-bit, but index register is not");
+        return 0;
+      }
+      if (((BaseReg == X86::BX || BaseReg == X86::BP) &&
+           IndexReg != X86::SI && IndexReg != X86::DI) ||
+          ((BaseReg == X86::SI || BaseReg == X86::DI) &&
+           IndexReg != X86::BX && IndexReg != X86::BP)) {
+        Error(BaseLoc, "invalid 16-bit base/index register combination");
+        return 0;
+      }
     }
   }
 
