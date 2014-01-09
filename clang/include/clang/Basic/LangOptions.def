@@ -178,7 +178,7 @@ VALUE_LANGOPT(MSCVersion, 32, 0,
 
 LANGOPT(ApplePragmaPack, 1, 0, "Apple gcc-compatible #pragma pack handling")
 
-BENIGN_LANGOPT(RetainCommentsFromSystemHeaders, 1, 0, "retain documentation comments from system headers in the AST")
+LANGOPT(RetainCommentsFromSystemHeaders, 1, 0, "retain documentation comments from system headers in the AST")
 
 #undef LANGOPT
 #undef VALUE_LANGOPT
