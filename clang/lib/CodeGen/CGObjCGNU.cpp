@@ -947,7 +947,8 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
   Int32Ty = llvm::Type::getInt32Ty(VMContext);
   Int64Ty = llvm::Type::getInt64Ty(VMContext);
 
-  IntPtrTy = CGM.getDataLayout().getPointerSize() == 32 ? Int32Ty : Int64Ty;
+  IntPtrTy =
+      CGM.getDataLayout().getPointerSizeInBits() == 32 ? Int32Ty : Int64Ty;
 
   // Object type
   QualType UnqualIdTy = CGM.getContext().getObjCIdType();
@@ -1995,7 +1996,7 @@ void CGObjCGNU::GenerateProtocolHolderCategory() {
 /// bitfield / with the 63rd bit set will be 1<<64.
 llvm::Constant *CGObjCGNU::MakeBitField(ArrayRef<bool> bits) {
   int bitCount = bits.size();
-  int ptrBits = CGM.getDataLayout().getPointerSize();
+  int ptrBits = CGM.getDataLayout().getPointerSizeInBits();
   if (bitCount < ptrBits) {
     uint64_t val = 1;
     for (int i=0 ; i<bitCount ; ++i) {
