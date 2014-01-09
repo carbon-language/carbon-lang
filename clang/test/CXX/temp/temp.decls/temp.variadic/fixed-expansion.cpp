@@ -121,7 +121,16 @@ namespace PartialSpecialization {
 
 namespace FixedAliasTemplate {
   template<typename,typename,typename> struct S {};
-  template<typename T, typename U> using U = S<T, int, U>;
-  template<typename...Ts> U<Ts...> &f(U<Ts...>, Ts...);
-  S<int, int, double> &s1 = f({}, 0, 0.0);
+  template<typename T, typename U> using U = S<T, int, U>; // expected-note 2{{template parameter is declared here}}
+  template<typename...Ts> U<Ts...> &f(U<Ts...>, Ts...); // expected-error 2{{pack expansion used as argument for non-pack parameter of alias template}}
+  S<int, int, double> &s1 = f({}, 0, 0.0); // expected-error {{no matching function}}
+}
+
+namespace PR18401 {
+  template<typename... Args> struct foo { };
+  template<typename T, typename... Args> using bar = foo<T, Args...>; // expected-note 2{{template parameter is declared here}} expected-note {{'bar' declared here}}
+  template<typename T, typename... Args> using baz = bar<Args..., T>; // expected-error {{pack expansion used as argument for non-pack parameter of alias template}}
+  // FIXME: We should still record the alias template, but mark it as invalid.
+  template<typename...T> void f(baz<T...>); // expected-error {{no template named 'baz'; did you mean 'bar'}} expected-error {{pack expansion used as argument for non-pack}}
+  void g() { f(foo<int, char, double>()); } // expected-error {{no matching function}}
 }

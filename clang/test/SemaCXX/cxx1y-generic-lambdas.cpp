@@ -3,6 +3,9 @@
 // RUN: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fms-extensions %s -DMS_EXTENSIONS
 // RUN: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fdelayed-template-parsing -fms-extensions %s -DMS_EXTENSIONS -DDELAYED_TEMPLATE_PARSING
 
+template<class F, class ...Rest> struct first_impl { typedef F type; };
+template<class ...Args> using first = typename first_impl<Args...>::type;
+
 namespace simple_explicit_capture {
   void test() {
     int i;
@@ -497,8 +500,6 @@ int run = fooT('a') + fooT(3.14);
 
 template<class ... Ts> void print(Ts ... ts) { }
 
-template<class F, class ... Rest> using first = F;
-
 template<class ... Ts> auto fooV(Ts ... ts) {
   auto L = [](auto ... a) { 
     auto M = [](decltype(a) ... b) {  
@@ -568,7 +569,6 @@ int (*np2)(const char*, int, const char*, double, const char*, int) = O; // expe
 namespace variadic_tests_1 {
 template<class ... Ts> void print(Ts ... ts) { }
 
-template<class F, class ... Rest> using FirstType = F;
 template<class F, class ... Rest> F& FirstArg(F& f, Rest...) { return f; }
  
 template<class ... Ts> int fooV(Ts ... ts) {
@@ -582,7 +582,7 @@ template<class ... Ts> int fooV(Ts ... ts) {
       };  
       N('a');
       N(N);
-      N(FirstType<Ts...>{});
+      N(first<Ts...>{});
     };
     M(a...);
     print("a = ", a..., "\n");    
@@ -607,7 +607,7 @@ template<class ... Ts> int fooV(Ts ... ts) {
       };  
       N('a');
       N(N);
-      N(FirstType<Ts...>{});
+      N(first<Ts...>{});
     };
     M(a...);
     return M;
@@ -627,7 +627,7 @@ template<class ... Ts> int fooV(Ts ... ts) {
         };  
         N('a');
         N(N);
-        N(FirstType<Ts...>{});
+        N(first<Ts...>{});
         return N;
       };
       M(a...);
@@ -771,7 +771,6 @@ int run = test();
 
 
 namespace fptr_with_decltype_return_type {
-template<class F, class ... Ts> using FirstType = F;
 template<class F, class ... Rest> F& FirstArg(F& f, Rest& ... r) { return f; };
 template<class ... Ts> auto vfun(Ts&& ... ts) {
   print(ts...);
@@ -782,7 +781,7 @@ int test()
  {
    auto L = [](auto ... As) {
     return [](auto b) ->decltype(b) {   
-      vfun([](decltype(As) a) -> decltype(a) { return a; } ...)(FirstType<decltype(As)...>{});
+      vfun([](decltype(As) a) -> decltype(a) { return a; } ...)(first<decltype(As)...>{});
       return decltype(b){};
     };
    };

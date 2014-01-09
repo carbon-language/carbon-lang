@@ -2480,11 +2480,10 @@ Decl *TemplateDeclInstantiator::VisitVarTemplateSpecializationDecl(
 
   // Check that the template argument list is well-formed for this template.
   SmallVector<TemplateArgument, 4> Converted;
-  bool ExpansionIntoFixedList = false;
   if (SemaRef.CheckTemplateArgumentList(
           VarTemplate, VarTemplate->getLocStart(),
           const_cast<TemplateArgumentListInfo &>(VarTemplateArgsInfo), false,
-          Converted, &ExpansionIntoFixedList))
+          Converted))
     return 0;
 
   // Find the variable template specialization declaration that

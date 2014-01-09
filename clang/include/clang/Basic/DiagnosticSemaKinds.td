@@ -3414,6 +3414,8 @@ def note_template_declared_here : Note<
   "%select{function template|class template|variable template"
   "|type alias template|template template parameter}0 "
   "%1 declared here">;
+def err_alias_template_expansion_into_fixed_list : Error<
+  "pack expansion used as argument for non-pack parameter of alias template">;
 def note_parameter_type : Note<
   "parameter of type %0 is declared here">;
 

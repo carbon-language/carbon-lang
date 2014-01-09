@@ -11,10 +11,6 @@ template<typename T> void g(T);
 
 template<template<typename> class F> void h(F<int>);
 
-template<typename,typename,typename> struct S {};
-template<typename T, typename U> using U = S<T, int, U>;
-template<typename...Ts> void h(U<Ts...>, Ts...);
-
 // CHECK-LABEL: define void @_Z1zv(
 void z() {
   vector<int> VI;
@@ -42,7 +38,4 @@ void z() {
   Vec<Vec<int>> VVI;
   g(VVI);
   // CHECK: call void @_Z1gI6vectorIS0_Ii5allocIiEES1_IS3_EEEvT_(
-
-  // CHECK: call void @_Z1hIJidEEv1UIDpT_ES2_
-  h({}, 0, 0.0);
 }
