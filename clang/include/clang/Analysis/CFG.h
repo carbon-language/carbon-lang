@@ -25,6 +25,7 @@
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/raw_ostream.h"
 #include <bitset>
 #include <cassert>
 #include <iterator>
@@ -560,6 +561,9 @@ public:
   void print(raw_ostream &OS, const CFG* cfg, const LangOptions &LO,
              bool ShowColors) const;
   void printTerminator(raw_ostream &OS, const LangOptions &LO) const;
+  void printAsOperand(raw_ostream &OS, bool /*PrintType*/) {
+    OS << "BB#" << getBlockID();
+  }
 
   void addSuccessor(CFGBlock *Block, BumpVectorContext &C) {
     if (Block)

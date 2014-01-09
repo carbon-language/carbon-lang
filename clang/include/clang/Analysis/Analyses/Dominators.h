@@ -155,11 +155,6 @@ private:
   CFG *cfg;
 };
 
-inline void WriteAsOperand(raw_ostream &OS, const CFGBlock *BB,
-                          bool t) {
-  OS << "BB#" << BB->getBlockID();
-}
-
 } // end namespace clang
 
 //===-------------------------------------
