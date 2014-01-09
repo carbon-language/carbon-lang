@@ -97,7 +97,7 @@ public:
     : Out(O), CurBit(0), CurValue(0), CurCodeSize(2) {}
 
   ~BitstreamWriter() {
-    assert(CurBit == 0 && "Unflused data remaining");
+    assert(CurBit == 0 && "Unflushed data remaining");
     assert(BlockScope.empty() && CurAbbrevs.empty() && "Block imbalance");
 
     // Free the BlockInfoRecords.
