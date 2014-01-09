@@ -6,7 +6,9 @@
 ; CHECK-NEXT:  __LLVM_StackMaps:
 ; CHECK-NEXT:   .long   0
 ; Num LargeConstants
-; CHECK-NEXT:   .long   1
+; CHECK-NEXT:   .long   3
+; CHECK-NEXT:   .quad   2147483648
+; CHECK-NEXT:   .quad   4294967295
 ; CHECK-NEXT:   .quad   4294967296
 ; Num Callsites
 ; CHECK-NEXT:   .long   18
@@ -16,12 +18,17 @@
 ; CHECK-NEXT:   .quad   1
 ; CHECK-NEXT:   .long   L{{.*}}-_constantargs
 ; CHECK-NEXT:   .short  0
-; CHECK-NEXT:   .short  4
+; CHECK-NEXT:   .short  12
 ; SmallConstant
 ; CHECK-NEXT:   .byte   4
 ; CHECK-NEXT:   .byte   8
 ; CHECK-NEXT:   .short  0
-; CHECK-NEXT:   .long   65535
+; CHECK-NEXT:   .long   -1
+; SmallConstant
+; CHECK-NEXT:   .byte   4
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  0
+; CHECK-NEXT:   .long   -1
 ; SmallConstant
 ; CHECK-NEXT:   .byte   4
 ; CHECK-NEXT:   .byte   8
@@ -31,17 +38,52 @@
 ; CHECK-NEXT:   .byte   4
 ; CHECK-NEXT:   .byte   8
 ; CHECK-NEXT:   .short  0
+; CHECK-NEXT:   .long   2000000000
+; SmallConstant
+; CHECK-NEXT:   .byte   4
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  0
+; CHECK-NEXT:   .long   2147483647
+; SmallConstant
+; CHECK-NEXT:   .byte   4
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  0
 ; CHECK-NEXT:   .long   -1
+; SmallConstant
+; CHECK-NEXT:   .byte   4
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  0
+; CHECK-NEXT:   .long   -1
+; SmallConstant
+; CHECK-NEXT:   .byte   4
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  0
+; CHECK-NEXT:   .long   0
 ; LargeConstant at index 0
 ; CHECK-NEXT:   .byte   5
 ; CHECK-NEXT:   .byte   8
 ; CHECK-NEXT:   .short  0
 ; CHECK-NEXT:   .long   0
+; LargeConstant at index 1
+; CHECK-NEXT:   .byte   5
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  0
+; CHECK-NEXT:   .long   1
+; LargeConstant at index 2
+; CHECK-NEXT:   .byte   5
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  0
+; CHECK-NEXT:   .long   2
+; SmallConstant
+; CHECK-NEXT:   .byte   4
+; CHECK-NEXT:   .byte   8
+; CHECK-NEXT:   .short  0
+; CHECK-NEXT:   .long   -1
 
 define void @constantargs() {
 entry:
   %0 = inttoptr i64 12345 to i8*
-  tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 1, i32 15, i8* %0, i32 0, i64 65535, i64 65536, i64 4294967295, i64 4294967296)
+  tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 1, i32 15, i8* %0, i32 0, i16 65535, i16 -1, i32 65536, i32 2000000000, i32 2147483647, i32 -1, i32 4294967295, i32 4294967296, i64 2147483648, i64 4294967295, i64 4294967296, i64 -1)
   ret void
 }
 
