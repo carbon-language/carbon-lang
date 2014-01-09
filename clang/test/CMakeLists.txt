@@ -30,6 +30,8 @@ list(APPEND CLANG_TEST_DEPS
   clang clang-headers
   c-index-test diagtool arcmt-test c-arcmt-test
   clang-check clang-format
+  PrintFunctionNames
+  SampleAnalyzerPlugin
   )
 set(CLANG_TEST_PARAMS
   clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
