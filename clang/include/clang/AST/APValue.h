@@ -108,10 +108,15 @@ private:
   };
   struct MemberPointerData;
 
-  // We ensure elsewhere that Data is big enough for LV and MemberPointerData.
-  llvm::AlignedCharArrayUnion<void *, APSInt, APFloat, ComplexAPSInt,
-                              ComplexAPFloat, Vec, Arr, StructData, UnionData,
-                              AddrLabelDiffData> Data;
+  enum {
+    MaxSize = (sizeof(ComplexAPSInt) > sizeof(ComplexAPFloat) ?
+               sizeof(ComplexAPSInt) : sizeof(ComplexAPFloat))
+  };
+
+  union {
+    void *Aligner;
+    char Data[MaxSize];
+  };
 
 public:
   APValue() : Kind(Uninitialized) {}
@@ -195,7 +200,7 @@ public:
 
   APSInt &getInt() {
     assert(isInt() && "Invalid accessor");
-    return *(APSInt*)(char*)Data.buffer;
+    return *(APSInt*)(char*)Data;
   }
   const APSInt &getInt() const {
     return const_cast<APValue*>(this)->getInt();
@@ -203,7 +208,7 @@ public:
 
   APFloat &getFloat() {
     assert(isFloat() && "Invalid accessor");
-    return *(APFloat*)(char*)Data.buffer;
+    return *(APFloat*)(char*)Data;
   }
   const APFloat &getFloat() const {
     return const_cast<APValue*>(this)->getFloat();
@@ -211,7 +216,7 @@ public:
 
   APSInt &getComplexIntReal() {
     assert(isComplexInt() && "Invalid accessor");
-    return ((ComplexAPSInt*)(char*)Data.buffer)->Real;
+    return ((ComplexAPSInt*)(char*)Data)->Real;
   }
   const APSInt &getComplexIntReal() const {
     return const_cast<APValue*>(this)->getComplexIntReal();
@@ -219,7 +224,7 @@ public:
 
   APSInt &getComplexIntImag() {
     assert(isComplexInt() && "Invalid accessor");
-    return ((ComplexAPSInt*)(char*)Data.buffer)->Imag;
+    return ((ComplexAPSInt*)(char*)Data)->Imag;
   }
   const APSInt &getComplexIntImag() const {
     return const_cast<APValue*>(this)->getComplexIntImag();
@@ -227,7 +232,7 @@ public:
 
   APFloat &getComplexFloatReal() {
     assert(isComplexFloat() && "Invalid accessor");
-    return ((ComplexAPFloat*)(char*)Data.buffer)->Real;
+    return ((ComplexAPFloat*)(char*)Data)->Real;
   }
   const APFloat &getComplexFloatReal() const {
     return const_cast<APValue*>(this)->getComplexFloatReal();
@@ -235,7 +240,7 @@ public:
 
   APFloat &getComplexFloatImag() {
     assert(isComplexFloat() && "Invalid accessor");
-    return ((ComplexAPFloat*)(char*)Data.buffer)->Imag;
+    return ((ComplexAPFloat*)(char*)Data)->Imag;
   }
   const APFloat &getComplexFloatImag() const {
     return const_cast<APValue*>(this)->getComplexFloatImag();
@@ -254,20 +259,20 @@ public:
   APValue &getVectorElt(unsigned I) {
     assert(isVector() && "Invalid accessor");
     assert(I < getVectorLength() && "Index out of range");
-    return ((Vec*)(char*)Data.buffer)->Elts[I];
+    return ((Vec*)(char*)Data)->Elts[I];
   }
   const APValue &getVectorElt(unsigned I) const {
     return const_cast<APValue*>(this)->getVectorElt(I);
   }
   unsigned getVectorLength() const {
     assert(isVector() && "Invalid accessor");
-    return ((const Vec*)(const void *)Data.buffer)->NumElts;
+    return ((const Vec*)(const void *)Data)->NumElts;
   }
 
   APValue &getArrayInitializedElt(unsigned I) {
     assert(isArray() && "Invalid accessor");
     assert(I < getArrayInitializedElts() && "Index out of range");
-    return ((Arr*)(char*)Data.buffer)->Elts[I];
+    return ((Arr*)(char*)Data)->Elts[I];
   }
   const APValue &getArrayInitializedElt(unsigned I) const {
     return const_cast<APValue*>(this)->getArrayInitializedElt(I);
@@ -278,35 +283,35 @@ public:
   APValue &getArrayFiller() {
     assert(isArray() && "Invalid accessor");
     assert(hasArrayFiller() && "No array filler");
-    return ((Arr*)(char*)Data.buffer)->Elts[getArrayInitializedElts()];
+    return ((Arr*)(char*)Data)->Elts[getArrayInitializedElts()];
   }
   const APValue &getArrayFiller() const {
     return const_cast<APValue*>(this)->getArrayFiller();
   }
   unsigned getArrayInitializedElts() const {
     assert(isArray() && "Invalid accessor");
-    return ((const Arr*)(const void *)Data.buffer)->NumElts;
+    return ((const Arr*)(const void *)Data)->NumElts;
   }
   unsigned getArraySize() const {
     assert(isArray() && "Invalid accessor");
-    return ((const Arr*)(const void *)Data.buffer)->ArrSize;
+    return ((const Arr*)(const void *)Data)->ArrSize;
   }
 
   unsigned getStructNumBases() const {
     assert(isStruct() && "Invalid accessor");
-    return ((const StructData*)(const char*)Data.buffer)->NumBases;
+    return ((const StructData*)(const char*)Data)->NumBases;
   }
   unsigned getStructNumFields() const {
     assert(isStruct() && "Invalid accessor");
-    return ((const StructData*)(const char*)Data.buffer)->NumFields;
+    return ((const StructData*)(const char*)Data)->NumFields;
   }
   APValue &getStructBase(unsigned i) {
     assert(isStruct() && "Invalid accessor");
-    return ((StructData*)(char*)Data.buffer)->Elts[i];
+    return ((StructData*)(char*)Data)->Elts[i];
   }
   APValue &getStructField(unsigned i) {
     assert(isStruct() && "Invalid accessor");
-    return ((StructData*)(char*)Data.buffer)->Elts[getStructNumBases() + i];
+    return ((StructData*)(char*)Data)->Elts[getStructNumBases() + i];
   }
   const APValue &getStructBase(unsigned i) const {
     return const_cast<APValue*>(this)->getStructBase(i);
@@ -317,11 +322,11 @@ public:
 
   const FieldDecl *getUnionField() const {
     assert(isUnion() && "Invalid accessor");
-    return ((const UnionData*)(const char*)Data.buffer)->Field;
+    return ((const UnionData*)(const char*)Data)->Field;
   }
   APValue &getUnionValue() {
     assert(isUnion() && "Invalid accessor");
-    return *((UnionData*)(char*)Data.buffer)->Value;
+    return *((UnionData*)(char*)Data)->Value;
   }
   const APValue &getUnionValue() const {
     return const_cast<APValue*>(this)->getUnionValue();
@@ -333,41 +338,41 @@ public:
 
   const AddrLabelExpr* getAddrLabelDiffLHS() const {
     assert(isAddrLabelDiff() && "Invalid accessor");
-    return ((const AddrLabelDiffData*)(const char*)Data.buffer)->LHSExpr;
+    return ((const AddrLabelDiffData*)(const char*)Data)->LHSExpr;
   }
   const AddrLabelExpr* getAddrLabelDiffRHS() const {
     assert(isAddrLabelDiff() && "Invalid accessor");
-    return ((const AddrLabelDiffData*)(const char*)Data.buffer)->RHSExpr;
+    return ((const AddrLabelDiffData*)(const char*)Data)->RHSExpr;
   }
 
   void setInt(const APSInt &I) {
     assert(isInt() && "Invalid accessor");
-    *(APSInt*)(char*)Data.buffer = I;
+    *(APSInt*)(char*)Data = I;
   }
   void setFloat(const APFloat &F) {
     assert(isFloat() && "Invalid accessor");
-    *(APFloat*)(char*)Data.buffer = F;
+    *(APFloat*)(char*)Data = F;
   }
   void setVector(const APValue *E, unsigned N) {
     assert(isVector() && "Invalid accessor");
-    ((Vec*)(char*)Data.buffer)->Elts = new APValue[N];
-    ((Vec*)(char*)Data.buffer)->NumElts = N;
+    ((Vec*)(char*)Data)->Elts = new APValue[N];
+    ((Vec*)(char*)Data)->NumElts = N;
     for (unsigned i = 0; i != N; ++i)
-      ((Vec*)(char*)Data.buffer)->Elts[i] = E[i];
+      ((Vec*)(char*)Data)->Elts[i] = E[i];
   }
   void setComplexInt(const APSInt &R, const APSInt &I) {
     assert(R.getBitWidth() == I.getBitWidth() &&
            "Invalid complex int (type mismatch).");
     assert(isComplexInt() && "Invalid accessor");
-    ((ComplexAPSInt*)(char*)Data.buffer)->Real = R;
-    ((ComplexAPSInt*)(char*)Data.buffer)->Imag = I;
+    ((ComplexAPSInt*)(char*)Data)->Real = R;
+    ((ComplexAPSInt*)(char*)Data)->Imag = I;
   }
   void setComplexFloat(const APFloat &R, const APFloat &I) {
     assert(&R.getSemantics() == &I.getSemantics() &&
            "Invalid complex float (type mismatch).");
     assert(isComplexFloat() && "Invalid accessor");
-    ((ComplexAPFloat*)(char*)Data.buffer)->Real = R;
-    ((ComplexAPFloat*)(char*)Data.buffer)->Imag = I;
+    ((ComplexAPFloat*)(char*)Data)->Real = R;
+    ((ComplexAPFloat*)(char*)Data)->Imag = I;
   }
   void setLValue(LValueBase B, const CharUnits &O, NoLValuePath,
                  unsigned CallIndex);
@@ -376,13 +381,13 @@ public:
                  unsigned CallIndex);
   void setUnion(const FieldDecl *Field, const APValue &Value) {
     assert(isUnion() && "Invalid accessor");
-    ((UnionData*)(char*)Data.buffer)->Field = Field;
-    *((UnionData*)(char*)Data.buffer)->Value = Value;
+    ((UnionData*)(char*)Data)->Field = Field;
+    *((UnionData*)(char*)Data)->Value = Value;
   }
   void setAddrLabelDiff(const AddrLabelExpr* LHSExpr,
                         const AddrLabelExpr* RHSExpr) {
-    ((AddrLabelDiffData*)(char*)Data.buffer)->LHSExpr = LHSExpr;
-    ((AddrLabelDiffData*)(char*)Data.buffer)->RHSExpr = RHSExpr;
+    ((AddrLabelDiffData*)(char*)Data)->LHSExpr = LHSExpr;
+    ((AddrLabelDiffData*)(char*)Data)->RHSExpr = RHSExpr;
   }
 
   /// Assign by swapping from a copy of the RHS.
@@ -399,46 +404,46 @@ private:
   }
   void MakeInt() {
     assert(isUninit() && "Bad state change");
-    new ((void*)Data.buffer) APSInt(1);
+    new ((void*)Data) APSInt(1);
     Kind = Int;
   }
   void MakeFloat() {
     assert(isUninit() && "Bad state change");
-    new ((void*)(char*)Data.buffer) APFloat(0.0);
+    new ((void*)(char*)Data) APFloat(0.0);
     Kind = Float;
   }
   void MakeVector() {
     assert(isUninit() && "Bad state change");
-    new ((void*)(char*)Data.buffer) Vec();
+    new ((void*)(char*)Data) Vec();
     Kind = Vector;
   }
   void MakeComplexInt() {
     assert(isUninit() && "Bad state change");
-    new ((void*)(char*)Data.buffer) ComplexAPSInt();
+    new ((void*)(char*)Data) ComplexAPSInt();
     Kind = ComplexInt;
   }
   void MakeComplexFloat() {
     assert(isUninit() && "Bad state change");
-    new ((void*)(char*)Data.buffer) ComplexAPFloat();
+    new ((void*)(char*)Data) ComplexAPFloat();
     Kind = ComplexFloat;
   }
   void MakeLValue();
   void MakeArray(unsigned InitElts, unsigned Size);
   void MakeStruct(unsigned B, unsigned M) {
     assert(isUninit() && "Bad state change");
-    new ((void*)(char*)Data.buffer) StructData(B, M);
+    new ((void*)(char*)Data) StructData(B, M);
     Kind = Struct;
   }
   void MakeUnion() {
     assert(isUninit() && "Bad state change");
-    new ((void*)(char*)Data.buffer) UnionData();
+    new ((void*)(char*)Data) UnionData();
     Kind = Union;
   }
   void MakeMemberPointer(const ValueDecl *Member, bool IsDerivedMember,
                          ArrayRef<const CXXRecordDecl*> Path);
   void MakeAddrLabelDiff() {
     assert(isUninit() && "Bad state change");
-    new ((void*)(char*)Data.buffer) AddrLabelDiffData();
+    new ((void*)(char*)Data) AddrLabelDiffData();
     Kind = AddrLabelDiff;
   }
 };
