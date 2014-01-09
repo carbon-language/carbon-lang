@@ -23,7 +23,9 @@
 # }
 # gcc -c main.c fn.c fn1.c
 
-RUN: lld -flavor gnu --output-filetype=yaml -r %p/Inputs/mainobj.x86_64 %p/Inputs/libfnarchive.a | FileCheck -check-prefix NOFORCELOAD %s
+RUN: lld -flavor gnu -target x86_64-linux --output-filetype=yaml -r \
+RUN:   %p/Inputs/mainobj.x86_64 %p/Inputs/libfnarchive.a | \
+RUN:   FileCheck -check-prefix NOFORCELOAD %s
 
 NOFORCELOAD:  defined-atoms:
 NOFORCELOAD:    - name:              fn
