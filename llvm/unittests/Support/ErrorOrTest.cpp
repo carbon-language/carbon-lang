@@ -23,6 +23,9 @@ TEST(ErrorOr, SimpleValue) {
   EXPECT_TRUE(a);
   EXPECT_EQ(1, *a);
 
+  ErrorOr<int> b = a;
+  EXPECT_EQ(1, *b);
+
   a = t2();
   EXPECT_FALSE(a);
   EXPECT_EQ(errc::invalid_argument, a.getError());
