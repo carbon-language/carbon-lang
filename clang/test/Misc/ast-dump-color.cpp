@@ -82,6 +82,6 @@ int TestExpr __attribute__((guarded_by(mu1)));
 //CHECK: {{^}}[[Blue]]|-[[RESET]][[GREEN]]VarDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]line:18:1[[RESET]], [[Yellow]]line:25:8[[RESET]]>[[CYAN]] mu2[[RESET]] [[Green]]'class Mutex':'class Mutex'[[RESET]]{{$}}
 //CHECK: {{^}}[[Blue]]| `-[[RESET]][[MAGENTA]]CXXConstructExpr[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]col:8[[RESET]]> [[Green]]'class Mutex':'class Mutex'[[RESET]][[Cyan]][[RESET]][[Cyan]][[RESET]] [[Green]]'void (void)'[[RESET]]{{$}}
 //CHECK: {{^}}[[Blue]]`-[[RESET]][[GREEN]]VarDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]line:26:1[[RESET]], [[Yellow]]col:5[[RESET]]>[[CYAN]] TestExpr[[RESET]] [[Green]]'int'[[RESET]]{{$}}
-//CHECK: {{^}}[[Blue]]  `-[[RESET]][[BLUE]]GuardedByAttr[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]col:29[[RESET]]>{{$}}
+//CHECK: {{^}}[[Blue]]  `-[[RESET]][[BLUE]]GuardedByAttr[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]col:29[[RESET]], [[Yellow]]col:43[[RESET]]>{{$}}
 //CHECK: {{^}}[[Blue]]    `-[[RESET]][[MAGENTA]]DeclRefExpr[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]col:40[[RESET]]> [[Green]]'class Mutex':'class Mutex'[[RESET]][[Cyan]] lvalue[[RESET]][[Cyan]][[RESET]] [[GREEN]]Var[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]][[CYAN]] 'mu1'[[RESET]] [[Green]]'class Mutex':'class Mutex'[[RESET]]{{$}}
 
