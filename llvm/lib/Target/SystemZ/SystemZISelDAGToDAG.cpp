@@ -769,15 +769,17 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
     RxSBG.Input = N.getOperand(0);
     return true;
 
-  case ISD::ZERO_EXTEND: {
-    // Restrict the mask to the extended operand.
-    unsigned InnerBitSize = N.getOperand(0).getValueType().getSizeInBits();
-    if (!refineRxSBGMask(RxSBG, allOnes(InnerBitSize)))
-      return false;
+  case ISD::ZERO_EXTEND:
+    if (RxSBG.Opcode != SystemZ::RNSBG) {
+      // Restrict the mask to the extended operand.
+      unsigned InnerBitSize = N.getOperand(0).getValueType().getSizeInBits();
+      if (!refineRxSBGMask(RxSBG, allOnes(InnerBitSize)))
+        return false;
 
-    RxSBG.Input = N.getOperand(0);
-    return true;
-  }
+      RxSBG.Input = N.getOperand(0);
+      return true;
+    }
+    // Fall through.
     
   case ISD::SIGN_EXTEND: {
     // Check that the extension bits are don't-care (i.e. are masked out

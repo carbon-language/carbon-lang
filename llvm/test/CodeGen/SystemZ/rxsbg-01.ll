@@ -110,3 +110,14 @@ define i64 @f11(i64 %a, i64 %b) {
   %xor = xor i64 %a, %andb
   ret i64 %xor
 }
+
+; Check the handling of zext and XOR, which can use ROSBG.
+define i64 @f12(i64 %a, i32 %b) {
+; CHECK-LABEL: f12:
+; CHECK: rxsbg %r2, %r3, 32, 63, 0
+; CHECK: br %r14
+  %add = add i32 %b, 1
+  %ext = zext i32 %add to i64
+  %xor = xor i64 %a, %ext
+  ret i64 %xor
+}

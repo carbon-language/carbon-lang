@@ -255,3 +255,14 @@ define i64 @f22(i64 %a, i64 %b) {
   %and = and i64 %a, %rotlorb
   ret i64 %and
 }
+
+; Check the handling of zext and AND, which isn't suitable for RNSBG.
+define i64 @f23(i64 %a, i32 %b) {
+; CHECK-LABEL: f23:
+; CHECK-NOT: rnsbg
+; CHECK: br %r14
+  %add = add i32 %b, 1
+  %ext = zext i32 %add to i64
+  %and = and i64 %a, %ext
+  ret i64 %and
+}
