@@ -5,7 +5,6 @@ set(LLVM_LINK_COMPONENTS
 add_clang_library(clangTidy
   ClangTidy.cpp
   ClangTidyModule.cpp
-  ClangTidyDiagnosticConsumer.cpp
   )
 target_link_libraries(clangTidy
   clangAST

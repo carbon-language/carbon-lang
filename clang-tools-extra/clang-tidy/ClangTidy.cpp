@@ -174,6 +174,38 @@ bool ChecksFilter::IsCheckEnabled(StringRef Name) {
   return EnableChecks.match(Name) && !DisableChecks.match(Name);
 }
 
+ClangTidyMessage::ClangTidyMessage(StringRef Message) : Message(Message) {}
+
+ClangTidyMessage::ClangTidyMessage(StringRef Message,
+                                   const SourceManager &Sources,
+                                   SourceLocation Loc)
+    : Message(Message) {
+  FilePath = Sources.getFilename(Loc);
+  FileOffset = Sources.getFileOffset(Loc);
+}
+
+ClangTidyError::ClangTidyError(const ClangTidyMessage &Message)
+    : Message(Message) {}
+
+DiagnosticBuilder ClangTidyContext::Diag(SourceLocation Loc,
+                                         StringRef Message) {
+  return DiagEngine->Report(
+      Loc, DiagEngine->getCustomDiagID(DiagnosticsEngine::Warning, Message));
+}
+
+void ClangTidyContext::setDiagnosticsEngine(DiagnosticsEngine *Engine) {
+  DiagEngine = Engine;
+}
+
+void ClangTidyContext::setSourceManager(SourceManager *SourceMgr) {
+  DiagEngine->setSourceManager(SourceMgr);
+}
+
+/// \brief Store a \c ClangTidyError.
+void ClangTidyContext::storeError(const ClangTidyError &Error) {
+  Errors->push_back(Error);
+}
+
 void ClangTidyCheck::run(const ast_matchers::MatchFinder::MatchResult &Result) {
   Context->setSourceManager(Result.SourceManager);
   check(Result);

@@ -13,6 +13,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Tooling/Refactoring.h"
+#include "llvm/ADT/SmallString.h"
 
 namespace clang {
 
@@ -102,20 +103,63 @@ private:
 // implementation file.
 class ClangTidyDiagnosticConsumer : public DiagnosticConsumer {
 public:
-  ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx);
+  ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx) : Context(Ctx) {
+    IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
+    Diags.reset(new DiagnosticsEngine(
+        IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs), &*DiagOpts, this,
+        /*ShouldOwnClient=*/false));
+    Context.setDiagnosticsEngine(Diags.get());
+  }
 
   // FIXME: The concept of converting between FixItHints and Replacements is
   // more generic and should be pulled out into a more useful Diagnostics
   // library.
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const Diagnostic &Info) LLVM_OVERRIDE;
+                                const Diagnostic &Info) LLVM_OVERRIDE {
+    // FIXME: Ensure that we don't get notes from user code related to errors
+    // from non-user code.
+    if (Diags->getSourceManager().isInSystemHeader(Info.getLocation()))
+      return;
+    if (DiagLevel != DiagnosticsEngine::Note) {
+      Errors.push_back(ClangTidyError(getMessage(Info)));
+    } else {
+      assert(!Errors.empty() &&
+             "A diagnostic note can only be appended to a message.");
+      Errors.back().Notes.push_back(getMessage(Info));
+    }
+    addFixes(Info, Errors.back());
+  }
 
   // Flushes the internal diagnostics buffer to the ClangTidyContext.
-  virtual void finish() LLVM_OVERRIDE;
+  virtual void finish() LLVM_OVERRIDE {
+    for (unsigned i = 0, e = Errors.size(); i != e; ++i) {
+      Context.storeError(Errors[i]);
+    }
+    Errors.clear();
+  }
 
 private:
-  void addFixes(const Diagnostic &Info, ClangTidyError &Error);
-  ClangTidyMessage getMessage(const Diagnostic &Info) const;
+  void addFixes(const Diagnostic &Info, ClangTidyError &Error) {
+    if (!Info.hasSourceManager())
+      return;
+    SourceManager &SourceMgr = Info.getSourceManager();
+    tooling::Replacements Replacements;
+    for (unsigned i = 0, e = Info.getNumFixItHints(); i != e; ++i) {
+      Error.Fix.insert(tooling::Replacement(
+          SourceMgr, Info.getFixItHint(i).RemoveRange.getBegin(), 0,
+          Info.getFixItHint(i).CodeToInsert));
+    }
+  }
+
+  ClangTidyMessage getMessage(const Diagnostic &Info) const {
+    SmallString<100> Buf;
+    Info.FormatDiagnostic(Buf);
+    if (!Info.hasSourceManager()) {
+      return ClangTidyMessage(Buf.str());
+    }
+    return ClangTidyMessage(Buf.str(), Info.getSourceManager(),
+                            Info.getLocation());
+  }
 
   ClangTidyContext &Context;
   OwningPtr<DiagnosticsEngine> Diags;
