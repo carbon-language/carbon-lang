@@ -1987,9 +1987,7 @@ void DwarfTypeUnit::emitHeader(const MCSection *ASection,
   Asm->OutStreamer.AddComment("Type Signature");
   Asm->OutStreamer.EmitIntValue(TypeSignature, sizeof(TypeSignature));
   Asm->OutStreamer.AddComment("Type DIE Offset");
-  // In a skeleton type unit there is no type DIE so emit a zero offset.
-  Asm->OutStreamer.EmitIntValue(Ty ? Ty->getOffset() : 0,
-                                sizeof(Ty->getOffset()));
+  Asm->OutStreamer.EmitIntValue(Ty->getOffset(), sizeof(Ty->getOffset()));
 }
 
 void DwarfTypeUnit::initSection(const MCSection *Section) {

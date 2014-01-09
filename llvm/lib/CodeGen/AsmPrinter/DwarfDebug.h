@@ -596,10 +596,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// section.
   DwarfCompileUnit *constructSkeletonCU(const DwarfCompileUnit *CU);
 
-  /// \brief Construct the split debug info compile unit for the debug info
-  /// section.
-  DwarfTypeUnit *constructSkeletonTU(const DwarfTypeUnit *TU);
-
   /// \brief Emit the debug info dwo section.
   void emitDebugInfoDWO();
 
