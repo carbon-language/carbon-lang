@@ -256,7 +256,8 @@ class LLIObjectCache : public ObjectCache {
 public:
   LLIObjectCache(const std::string& CacheDir) : CacheDir(CacheDir) {
     // Add trailing '/' to cache dir if necessary.
-    if (!this->CacheDir.empty() && this->CacheDir.back() != '/')
+    if (!this->CacheDir.empty() &&
+        this->CacheDir[this->CacheDir.size() - 1] != '/')
       this->CacheDir += '/'; 
   }
   virtual ~LLIObjectCache() {}
