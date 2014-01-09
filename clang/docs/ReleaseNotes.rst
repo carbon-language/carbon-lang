@@ -51,6 +51,11 @@ Major New Features
 GCC 4.7 changed the mingw ABI. Clang 3.4 and older use the GCC 4.6
 ABI. Clang 3.5 and newer use the GCC 4.7 abi.
 
+- The __has_attribute feature test is now target-aware. Older versions of Clang 
+would return true when the attribute spelling was known, regardless of whether 
+the attribute was available to the specific target. Clang now returns true only 
+when the attribute pertains to the current compilation target.
+
 
 Improvements to Clang's diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

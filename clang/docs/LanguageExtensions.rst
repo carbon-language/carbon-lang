@@ -113,8 +113,8 @@ of ``cxx_rvalue_references``.
 -------------------
 
 This function-like macro takes a single identifier argument that is the name of
-an attribute.  It evaluates to 1 if the attribute is supported or 0 if not.  It
-can be used like this:
+an attribute.  It evaluates to 1 if the attribute is supported by the current
+compilation target, or 0 if not.  It can be used like this:
 
 .. code-block:: c++
 
@@ -133,6 +133,7 @@ can be used like this:
 The attribute name can also be specified with a preceding and following ``__``
 (double underscore) to avoid interference from a macro with the same name.  For
 instance, ``__always_inline__`` can be used instead of ``always_inline``.
+
 
 Include File Checking Macros
 ============================
