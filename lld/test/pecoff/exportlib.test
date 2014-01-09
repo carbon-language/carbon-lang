@@ -1,0 +1,32 @@
+# REQUIRES: winlib
+
+# RUN: yaml2obj %p/Inputs/export.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /out:%t.dll /dll /entry:init \
+# RUN:   /export:exportfn1 /export:exportfn2 -- %t.obj
+# RUN: llvm-readobj %t.lib | FileCheck %s
+
+CHECK: File: exportlib.test.tmp.dll
+CHECK: Format: COFF-i386
+CHECK: Arch: i386
+CHECK: AddressSize: 32bit
+
+CHECK: File: exportlib.test.tmp.dll
+CHECK: Format: COFF-i386
+CHECK: Arch: i386
+CHECK: AddressSize: 32bit
+
+CHECK: File: exportlib.test.tmp.dll
+CHECK: Format: COFF-i386
+CHECK: Arch: i386
+CHECK: AddressSize: 32bit
+
+CHECK: File: exportlib.test.tmp.dll
+CHECK: Format: COFF-<unknown arch>
+CHECK: Arch: unknown
+CHECK: AddressSize: 32bit
+
+CHECK: File: exportlib.test.tmp.dll
+CHECK: Format: COFF-<unknown arch>
+CHECK: Arch: unknown
+CHECK: AddressSize: 32bit
