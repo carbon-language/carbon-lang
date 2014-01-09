@@ -6188,6 +6188,12 @@ public:
 
 private:
     void __init(_BidirectionalIterator __a, _BidirectionalIterator __b);
+    void __establish_result () {
+        if (__subs_[_N_] == -1)
+            __result_ = &__position_->prefix();
+        else
+            __result_ = &(*__position_)[__subs_[_N_]];
+        }       
 };
 
 template <class _BidirectionalIterator, class _CharT, class _Traits>
@@ -6205,12 +6211,7 @@ regex_token_iterator<_BidirectionalIterator, _CharT, _Traits>::
     __init(_BidirectionalIterator __a, _BidirectionalIterator __b)
 {
     if (__position_ != _Position())
-    {
-        if (__subs_[_N_] == -1)
-            __result_ = &__position_->prefix();
-        else
-            __result_ = &(*__position_)[__subs_[_N_]];
-    }
+        __establish_result ();
     else if (__subs_[_N_] == -1)
     {
         __suffix_.matched = true;
@@ -6288,6 +6289,8 @@ regex_token_iterator<_BidirectionalIterator, _CharT, _Traits>::
 {
     if (__x.__result_ == &__x.__suffix_)
         __result_ == &__suffix_;
+    else if ( __result_ != nullptr )
+        __establish_result ();
 }
 
 template <class _BidirectionalIterator, class _CharT, class _Traits>
@@ -6299,12 +6302,15 @@ regex_token_iterator<_BidirectionalIterator, _CharT, _Traits>::
     {
         __position_ = __x.__position_;
         if (__x.__result_ == &__x.__suffix_)
-            __result_ == &__suffix_;
+            __result_ = &__suffix_;
         else
             __result_ = __x.__result_;
         __suffix_ = __x.__suffix_;
         _N_ = __x._N_;
         __subs_ = __x.__subs_;
+
+        if ( __result_ != nullptr && __result_ != &__suffix_ )
+            __establish_result();
     }
     return *this;
 }
@@ -6337,22 +6343,14 @@ regex_token_iterator<_BidirectionalIterator, _CharT, _Traits>::operator++()
     else if (_N_ + 1 < __subs_.size())
     {
         ++_N_;
-        if (__subs_[_N_] == -1)
-            __result_ = &__position_->prefix();
-        else
-            __result_ = &(*__position_)[__subs_[_N_]];
+        __establish_result();
     }
     else
     {
         _N_ = 0;
         ++__position_;
         if (__position_ != _Position())
-        {
-            if (__subs_[_N_] == -1)
-                __result_ = &__position_->prefix();
-            else
-                __result_ = &(*__position_)[__subs_[_N_]];
-        }
+            __establish_result();
         else
         {
             if (_VSTD::find(__subs_.begin(), __subs_.end(), -1) != __subs_.end()
