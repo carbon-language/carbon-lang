@@ -383,7 +383,12 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
       if (pointeeTy.isVolatileQualified())
         typeQuals += typeQuals.empty() ? "volatile" : " volatile";
     } else {
-      addressQuals.push_back(Builder.getInt32(0));
+      uint32_t AddrSpc = 0;
+      if (ty->isImageType())
+        AddrSpc =
+          CGM.getContext().getTargetAddressSpace(LangAS::opencl_global);
+      
+      addressQuals.push_back(Builder.getInt32(AddrSpc));
 
       // Get argument type name.
       std::string typeName = ty.getUnqualifiedType().getAsString();
