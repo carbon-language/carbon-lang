@@ -451,9 +451,6 @@ fi
 
 AC_SUBST(HOST_ARCH,$host_arch)
 
-dnl Check for the endianness of the target
-AC_C_BIGENDIAN(AC_SUBST([ENDIAN],[big]),AC_SUBST([ENDIAN],[little]))
-
 dnl Check for build platform executable suffix if we're cross-compiling
 if test "$cross_compiling" = yes; then
   AC_SUBST(LLVM_CROSS_COMPILING, [1])
