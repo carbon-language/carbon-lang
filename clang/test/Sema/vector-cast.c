@@ -36,3 +36,11 @@ void f3(t3 Y) {
   f2(Y);  // expected-warning {{incompatible vector types passing 't3' to parameter of type 't2'}}
 }
 
+typedef float float2 __attribute__ ((vector_size (8)));
+
+void f4() {
+  float2 f2;
+  double d;
+  f2 += d;
+  d += f2;
+}

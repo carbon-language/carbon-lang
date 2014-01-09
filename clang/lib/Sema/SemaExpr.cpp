@@ -6617,7 +6617,8 @@ static bool areVectorOperandsLaxBitCastable(ASTContext &Ctx,
   if (!Ctx.getLangOpts().LaxVectorConversions)
     return false;
 
-  if (!LHSType->isVectorType() || !RHSType->isVectorType())
+  if (!(LHSType->isVectorType() || LHSType->isScalarType()) ||
+      !(RHSType->isVectorType() || RHSType->isScalarType()))
     return false;
 
   unsigned LHSSize = Ctx.getTypeSize(LHSType);
@@ -6631,13 +6632,20 @@ static bool areVectorOperandsLaxBitCastable(ASTContext &Ctx,
   // Make sure such width is the same between the types, otherwise we may end
   // up with an invalid bitcast.
   unsigned LHSIRSize, RHSIRSize;
-  const VectorType *LVec = LHSType->getAs<VectorType>();
-  LHSIRSize = LVec->getNumElements() *
-      Ctx.getTypeSize(LVec->getElementType());
-  const VectorType *RVec = RHSType->getAs<VectorType>();
-  RHSIRSize = RVec->getNumElements() *
-      Ctx.getTypeSize(RVec->getElementType());
-
+  if (LHSType->isVectorType()) {
+    const VectorType *Vec = LHSType->getAs<VectorType>();
+    LHSIRSize = Vec->getNumElements() *
+        Ctx.getTypeSize(Vec->getElementType());
+  } else {
+    LHSIRSize = LHSSize;
+  }
+  if (RHSType->isVectorType()) {
+    const VectorType *Vec = RHSType->getAs<VectorType>();
+    RHSIRSize = Vec->getNumElements() *
+        Ctx.getTypeSize(Vec->getElementType());
+  } else {
+    RHSIRSize = RHSSize;
+  }
   if (LHSIRSize != RHSIRSize)
     return false;
 
