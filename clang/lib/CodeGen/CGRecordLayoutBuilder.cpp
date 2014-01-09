@@ -144,6 +144,11 @@ private:
   bool LayoutNonVirtualBases(const CXXRecordDecl *RD, 
                              const ASTRecordLayout &Layout);
 
+  /// MSLayoutNonVirtualBases - layout the virtual bases of a record decl,
+  /// like MSVC.
+  bool MSLayoutNonVirtualBases(const CXXRecordDecl *RD, 
+                               const ASTRecordLayout &Layout);
+
   /// ComputeNonVirtualBaseType - Compute the non-virtual base field types.
   bool ComputeNonVirtualBaseType(const CXXRecordDecl *RD);
   
@@ -708,6 +713,72 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
 }
 
 bool
+CGRecordLayoutBuilder::MSLayoutNonVirtualBases(const CXXRecordDecl *RD,
+                                               const ASTRecordLayout &Layout) {
+  // Add a vfptr if the layout says to do so.
+  if (Layout.hasOwnVFPtr()) {
+    llvm::Type *FunctionType =
+      llvm::FunctionType::get(llvm::Type::getInt32Ty(Types.getLLVMContext()),
+                              /*isVarArg=*/true);
+    llvm::Type *VTableTy = FunctionType->getPointerTo();
+
+    if (getTypeAlignment(VTableTy) > Alignment) {
+      // FIXME: Should we allow this to happen in Sema?
+      assert(!Packed && "Alignment is wrong even with packed struct!");
+      return false;
+    }
+
+    assert(NextFieldOffset.isZero() &&
+           "VTable pointer must come first!");
+    AppendField(CharUnits::Zero(), VTableTy->getPointerTo());
+  }
+
+  // Layout the non-virtual bases that have leading vfptrs.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    if (I->isVirtual())
+      continue;
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    const ASTRecordLayout &BaseLayout
+      = Types.getContext().getASTRecordLayout(BaseDecl);
+
+    if (!BaseLayout.hasExtendableVFPtr())
+      continue;
+
+    if (!LayoutNonVirtualBase(BaseDecl, Layout.getBaseClassOffset(BaseDecl)))
+      return false;
+  }
+
+  // Layout the non-virtual bases that don't have leading vfptrs.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    if (I->isVirtual())
+      continue;
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    const ASTRecordLayout &BaseLayout
+      = Types.getContext().getASTRecordLayout(BaseDecl);
+
+    if (BaseLayout.hasExtendableVFPtr())
+      continue;
+
+    if (!LayoutNonVirtualBase(BaseDecl, Layout.getBaseClassOffset(BaseDecl)))
+      return false;
+  }
+
+  // Add a vb-table pointer if the layout insists.
+  if (Layout.hasOwnVBPtr()) {
+    CharUnits VBPtrOffset = Layout.getVBPtrOffset();
+    llvm::Type *Vbptr = llvm::Type::getInt32PtrTy(Types.getLLVMContext());
+    AppendPadding(VBPtrOffset, getTypeAlignment(Vbptr));
+    AppendField(VBPtrOffset, Vbptr);
+  }
+
+  return true;
+}
+
+bool
 CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(RD);
 
@@ -755,7 +826,10 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
 
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
   if (RD)
-    if (!LayoutNonVirtualBases(RD, Layout))
+    if (Types.getTarget().getCXXABI().isMicrosoft()) {
+      if (!MSLayoutNonVirtualBases(RD, Layout))
+        return false;
+    } else if (!LayoutNonVirtualBases(RD, Layout))
       return false;
 
   unsigned FieldNo = 0;

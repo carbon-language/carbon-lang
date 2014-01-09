@@ -2157,7 +2157,7 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
   // Respect required alignment, this is necessary because we may have adjusted
   // the alignment in the case of pragam pack.
   Info.Alignment = std::max(Info.Alignment, Layout.getRequiredAlignment());
-  Info.Size = Layout.getNonVirtualSize();
+  Info.Size = Layout.getDataSize();
   return Info;
 }
 
@@ -2538,17 +2538,17 @@ void MicrosoftRecordLayoutBuilder::injectVPtrs(const CXXRecordDecl *RD) {
     // different from the general case layout but it may have to do with lazy
     // placement of zero sized bases.
     VBPtrOffset = Size;
-    if (LastBaseLayout && LastBaseLayout->getNonVirtualSize().isZero()) {
+    if (LastBaseLayout && LastBaseLayout->getDataSize().isZero()) {
       VBPtrOffset = Bases[LastBaseDecl];
-      if (PenultBaseLayout && PenultBaseLayout->getNonVirtualSize().isZero())
+      if (PenultBaseLayout && PenultBaseLayout->getDataSize().isZero())
         VBPtrOffset = Bases[PenultBaseDecl];
     }
     // Once we've located a spot for the vbptr, place it.
     VBPtrOffset = VBPtrOffset.RoundUpToAlignment(PointerInfo.Alignment);
     Size = VBPtrOffset + PointerInfo.Size;
-    if (LastBaseLayout && LastBaseLayout->getNonVirtualSize().isZero()) {
+    if (LastBaseLayout && LastBaseLayout->getDataSize().isZero()) {
       // Add the padding between zero sized bases after the vbptr.
-      if (PenultBaseLayout && PenultBaseLayout->getNonVirtualSize().isZero())
+      if (PenultBaseLayout && PenultBaseLayout->getDataSize().isZero())
         Size += CharUnits::One();
       Size = Size.RoundUpToAlignment(LastBaseLayout->getRequiredAlignment());
       Bases[LastBaseDecl] = Size;
@@ -2601,7 +2601,7 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
     CharUnits BaseOffset = Size.RoundUpToAlignment(Info.Alignment);
     VBases.insert(std::make_pair(BaseDecl,
         ASTRecordLayout::VBaseInfo(BaseOffset, HasVtordisp)));
-    Size = BaseOffset + BaseLayout.getNonVirtualSize();
+    Size = BaseOffset + BaseLayout.getDataSize();
     updateAlignment(Info.Alignment);
     PreviousBaseLayout = &BaseLayout;
   }
