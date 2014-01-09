@@ -3005,9 +3005,8 @@ void DwarfDebug::addDwarfTypeUnitType(DICompileUnit CUNode,
   const DwarfTypeUnit *&TU = DwarfTypeUnits[CTy];
   if (!TU) {
     DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
-    DwarfTypeUnit *NewTU =
-        new DwarfTypeUnit(InfoHolder.getUnits().size(), UnitDie, CUNode, Asm,
-                          this, &InfoHolder);
+    DwarfTypeUnit *NewTU = new DwarfTypeUnit(
+        InfoHolder.getUnits().size(), UnitDie, CUNode, Asm, this, &InfoHolder);
     TU = NewTU;
     InfoHolder.addUnit(NewTU);
 
