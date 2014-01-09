@@ -235,14 +235,8 @@ def UDIVXri : F3_2<2, 0b001101,
 let Predicates = [Is64Bit] in {
 
 // 64-bit loads.
-def LDXrr  : F3_1<3, 0b001011,
-                  (outs I64Regs:$dst), (ins MEMrr:$addr),
-                  "ldx [$addr], $dst",
-                  [(set i64:$dst, (load ADDRrr:$addr))]>;
-def LDXri  : F3_2<3, 0b001011,
-                  (outs I64Regs:$dst), (ins MEMri:$addr),
-                  "ldx [$addr], $dst",
-                  [(set i64:$dst, (load ADDRri:$addr))]>;
+defm LDX   : Load<"ldx", 0b001011, load, I64Regs, i64>;
+
 let mayLoad = 1, isCodeGenOnly = 1, isAsmParserOnly = 1 in
   def TLS_LDXrr : F3_1<3, 0b001011,
                        (outs IntRegs:$dst), (ins MEMrr:$addr, TLSSym:$sym),
@@ -276,24 +270,10 @@ def : Pat<(i64 (extloadi32 ADDRrr:$addr)),  (LDrr ADDRrr:$addr)>;
 def : Pat<(i64 (extloadi32 ADDRri:$addr)),  (LDri ADDRri:$addr)>;
 
 // Sign-extending load of i32 into i64 is a new SPARC v9 instruction.
-def LDSWrr : F3_1<3, 0b001000,
-                 (outs I64Regs:$dst), (ins MEMrr:$addr),
-                 "ldsw [$addr], $dst",
-                 [(set i64:$dst, (sextloadi32 ADDRrr:$addr))]>;
-def LDSWri : F3_2<3, 0b001000,
-                 (outs I64Regs:$dst), (ins MEMri:$addr),
-                 "ldsw [$addr], $dst",
-                 [(set i64:$dst, (sextloadi32 ADDRri:$addr))]>;
+defm LDSW   : Load<"ldsw", 0b001000, sextloadi32, I64Regs, i64>;
 
 // 64-bit stores.
-def STXrr  : F3_1<3, 0b001110,
-                 (outs), (ins MEMrr:$addr, I64Regs:$rd),
-                 "stx $rd, [$addr]",
-                 [(store i64:$rd, ADDRrr:$addr)]>;
-def STXri  : F3_2<3, 0b001110,
-                 (outs), (ins MEMri:$addr, I64Regs:$rd),
-                 "stx $rd, [$addr]",
-                 [(store i64:$rd, ADDRri:$addr)]>;
+defm STX    : Store<"stx", 0b001110, store,  I64Regs, i64>;
 
 // Truncating stores from i64 are identical to the i32 stores.
 def : Pat<(truncstorei8  i64:$src, ADDRrr:$addr), (STBrr ADDRrr:$addr, $src)>;

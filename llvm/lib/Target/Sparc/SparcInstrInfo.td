@@ -250,6 +250,32 @@ multiclass F3_12np<string OpcStr, bits<6> Op3Val> {
                  !strconcat(OpcStr, " $rs1, $simm13, $rd"), []>;
 }
 
+// Load multiclass - Define both Reg+Reg/Reg+Imm patterns in one shot.
+multiclass Load<string OpcStr, bits<6> Op3Val, SDPatternOperator OpNode,
+           RegisterClass RC, ValueType Ty> {
+  def rr  : F3_1<3, Op3Val,
+                 (outs RC:$dst), (ins MEMrr:$addr),
+                 !strconcat(OpcStr, " [$addr], $dst"),
+                 [(set Ty:$dst, (OpNode ADDRrr:$addr))]>;
+  def ri  : F3_2<3, Op3Val,
+                 (outs RC:$dst), (ins MEMri:$addr),
+                 !strconcat(OpcStr, " [$addr], $dst"),
+                 [(set Ty:$dst, (OpNode ADDRri:$addr))]>;
+}
+
+// Store multiclass - Define both Reg+Reg/Reg+Imm patterns in one shot.
+multiclass Store<string OpcStr, bits<6> Op3Val, SDPatternOperator OpNode,
+           RegisterClass RC, ValueType Ty> {
+  def rr  : F3_1<3, Op3Val,
+                 (outs), (ins MEMrr:$addr, RC:$rd),
+                 !strconcat(OpcStr, " $rd, [$addr]"),
+                 [(OpNode Ty:$rd, ADDRrr:$addr)]>;
+  def ri  : F3_2<3, Op3Val,
+                 (outs), (ins MEMri:$addr, RC:$rd),
+                 !strconcat(OpcStr, " $rd, [$addr]"),
+                 [(OpNode Ty:$rd, ADDRri:$addr)]>;
+}
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -350,128 +376,28 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
 }
 
 // Section B.1 - Load Integer Instructions, p. 90
-def LDSBrr : F3_1<3, 0b001001,
-                  (outs IntRegs:$dst), (ins MEMrr:$addr),
-                  "ldsb [$addr], $dst",
-                  [(set i32:$dst, (sextloadi8 ADDRrr:$addr))]>;
-def LDSBri : F3_2<3, 0b001001,
-                  (outs IntRegs:$dst), (ins MEMri:$addr),
-                  "ldsb [$addr], $dst",
-                  [(set i32:$dst, (sextloadi8 ADDRri:$addr))]>;
-def LDSHrr : F3_1<3, 0b001010,
-                  (outs IntRegs:$dst), (ins MEMrr:$addr),
-                  "ldsh [$addr], $dst",
-                  [(set i32:$dst, (sextloadi16 ADDRrr:$addr))]>;
-def LDSHri : F3_2<3, 0b001010,
-                  (outs IntRegs:$dst), (ins MEMri:$addr),
-                  "ldsh [$addr], $dst",
-                  [(set i32:$dst, (sextloadi16 ADDRri:$addr))]>;
-def LDUBrr : F3_1<3, 0b000001,
-                  (outs IntRegs:$dst), (ins MEMrr:$addr),
-                  "ldub [$addr], $dst",
-                  [(set i32:$dst, (zextloadi8 ADDRrr:$addr))]>;
-def LDUBri : F3_2<3, 0b000001,
-                  (outs IntRegs:$dst), (ins MEMri:$addr),
-                  "ldub [$addr], $dst",
-                  [(set i32:$dst, (zextloadi8 ADDRri:$addr))]>;
-def LDUHrr : F3_1<3, 0b000010,
-                  (outs IntRegs:$dst), (ins MEMrr:$addr),
-                  "lduh [$addr], $dst",
-                  [(set i32:$dst, (zextloadi16 ADDRrr:$addr))]>;
-def LDUHri : F3_2<3, 0b000010,
-                  (outs IntRegs:$dst), (ins MEMri:$addr),
-                  "lduh [$addr], $dst",
-                  [(set i32:$dst, (zextloadi16 ADDRri:$addr))]>;
-def LDrr   : F3_1<3, 0b000000,
-                  (outs IntRegs:$dst), (ins MEMrr:$addr),
-                  "ld [$addr], $dst",
-                  [(set i32:$dst, (load ADDRrr:$addr))]>;
-def LDri   : F3_2<3, 0b000000,
-                  (outs IntRegs:$dst), (ins MEMri:$addr),
-                  "ld [$addr], $dst",
-                  [(set i32:$dst, (load ADDRri:$addr))]>;
+defm LDSB : Load<"ldsb", 0b001001, sextloadi8,  IntRegs, i32>;
+defm LDSH : Load<"ldsh", 0b001010, sextloadi16, IntRegs, i32>;
+defm LDUB : Load<"ldub", 0b000001, zextloadi8,  IntRegs, i32>;
+defm LDUH : Load<"lduh", 0b000010, zextloadi16, IntRegs, i32>;
+defm LD   : Load<"ld",   0b000000, load,        IntRegs, i32>;
 
 // Section B.2 - Load Floating-point Instructions, p. 92
-def LDFrr  : F3_1<3, 0b100000,
-                  (outs FPRegs:$dst), (ins MEMrr:$addr),
-                  "ld [$addr], $dst",
-                  [(set f32:$dst, (load ADDRrr:$addr))]>;
-def LDFri  : F3_2<3, 0b100000,
-                  (outs FPRegs:$dst), (ins MEMri:$addr),
-                  "ld [$addr], $dst",
-                  [(set f32:$dst, (load ADDRri:$addr))]>;
-def LDDFrr : F3_1<3, 0b100011,
-                  (outs DFPRegs:$dst), (ins MEMrr:$addr),
-                  "ldd [$addr], $dst",
-                  [(set f64:$dst, (load ADDRrr:$addr))]>;
-def LDDFri : F3_2<3, 0b100011,
-                  (outs DFPRegs:$dst), (ins MEMri:$addr),
-                  "ldd [$addr], $dst",
-                  [(set f64:$dst, (load ADDRri:$addr))]>;
-def LDQFrr : F3_1<3, 0b100010,
-                  (outs QFPRegs:$dst), (ins MEMrr:$addr),
-                  "ldq [$addr], $dst",
-                  [(set f128:$dst, (load ADDRrr:$addr))]>,
-                  Requires<[HasV9, HasHardQuad]>;
-def LDQFri : F3_2<3, 0b100010,
-                  (outs QFPRegs:$dst), (ins MEMri:$addr),
-                  "ldq [$addr], $dst",
-                  [(set f128:$dst, (load ADDRri:$addr))]>,
-                  Requires<[HasV9, HasHardQuad]>;
+defm LDF   : Load<"ld",  0b100000, load, FPRegs,  f32>;
+defm LDDF  : Load<"ldd", 0b100011, load, DFPRegs, f64>;
+defm LDQF  : Load<"ldq", 0b100010, load, QFPRegs, f128>,
+             Requires<[HasV9, HasHardQuad]>;
 
 // Section B.4 - Store Integer Instructions, p. 95
-def STBrr : F3_1<3, 0b000101,
-                 (outs), (ins MEMrr:$addr, IntRegs:$rd),
-                 "stb $rd, [$addr]",
-                 [(truncstorei8 i32:$rd, ADDRrr:$addr)]>;
-def STBri : F3_2<3, 0b000101,
-                 (outs), (ins MEMri:$addr, IntRegs:$rd),
-                 "stb $rd, [$addr]",
-                 [(truncstorei8 i32:$rd, ADDRri:$addr)]>;
-def STHrr : F3_1<3, 0b000110,
-                 (outs), (ins MEMrr:$addr, IntRegs:$rd),
-                 "sth $rd, [$addr]",
-                 [(truncstorei16 i32:$rd, ADDRrr:$addr)]>;
-def STHri : F3_2<3, 0b000110,
-                 (outs), (ins MEMri:$addr, IntRegs:$rd),
-                 "sth $rd, [$addr]",
-                 [(truncstorei16 i32:$rd, ADDRri:$addr)]>;
-def STrr  : F3_1<3, 0b000100,
-                 (outs), (ins MEMrr:$addr, IntRegs:$rd),
-                 "st $rd, [$addr]",
-                 [(store i32:$rd, ADDRrr:$addr)]>;
-def STri  : F3_2<3, 0b000100,
-                 (outs), (ins MEMri:$addr, IntRegs:$rd),
-                 "st $rd, [$addr]",
-                 [(store i32:$rd, ADDRri:$addr)]>;
+defm STB   : Store<"stb", 0b000101, truncstorei8,  IntRegs, i32>;
+defm STH   : Store<"sth", 0b000110, truncstorei16, IntRegs, i32>;
+defm ST    : Store<"st",  0b000100, store,         IntRegs, i32>;
 
 // Section B.5 - Store Floating-point Instructions, p. 97
-def STFrr   : F3_1<3, 0b100100,
-                   (outs), (ins MEMrr:$addr, FPRegs:$rd),
-                   "st $rd, [$addr]",
-                   [(store f32:$rd, ADDRrr:$addr)]>;
-def STFri   : F3_2<3, 0b100100,
-                   (outs), (ins MEMri:$addr, FPRegs:$rd),
-                   "st $rd, [$addr]",
-                   [(store f32:$rd, ADDRri:$addr)]>;
-def STDFrr  : F3_1<3, 0b100111,
-                   (outs), (ins MEMrr:$addr, DFPRegs:$rd),
-                   "std  $rd, [$addr]",
-                   [(store f64:$rd, ADDRrr:$addr)]>;
-def STDFri  : F3_2<3, 0b100111,
-                   (outs), (ins MEMri:$addr, DFPRegs:$rd),
-                   "std $rd, [$addr]",
-                   [(store f64:$rd, ADDRri:$addr)]>;
-def STQFrr  : F3_1<3, 0b100110,
-                   (outs), (ins MEMrr:$addr, QFPRegs:$rd),
-                   "stq  $rd, [$addr]",
-                   [(store f128:$rd, ADDRrr:$addr)]>,
-                   Requires<[HasV9, HasHardQuad]>;
-def STQFri  : F3_2<3, 0b100110,
-                   (outs), (ins MEMri:$addr, QFPRegs:$rd),
-                   "stq $rd, [$addr]",
-                   [(store f128:$rd, ADDRri:$addr)]>,
-                   Requires<[HasV9, HasHardQuad]>;
+defm STF   : Store<"st",  0b100100, store,         FPRegs,  f32>;
+defm STDF  : Store<"std", 0b100111, store,         DFPRegs, f64>;
+defm STQF  : Store<"stq", 0b100110, store,         QFPRegs, f128>,
+             Requires<[HasV9, HasHardQuad]>;
 
 // Section B.9 - SETHI Instruction, p. 104
 def SETHIi: F2_1<0b100,
