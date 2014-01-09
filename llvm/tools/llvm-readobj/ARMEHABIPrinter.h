@@ -137,8 +137,8 @@ void PrinterContext<ET>::PrintExceptionTable(const Elf_Shdr *IT,
   /// +-+---+----+-----------------------+
   /// |  more personality routine data   |
 
-  const uint32_t Word =
-    *reinterpret_cast<const uint32_t *>(Contents->data() + TableEntryOffset);
+  const support::ulittle32_t Word =
+    *reinterpret_cast<const support::ulittle32_t *>(Contents->data() + TableEntryOffset);
 
   if (Word & 0x80000000) {
     SW.printString("Model", StringRef("Compact"));
@@ -200,16 +200,17 @@ void PrinterContext<ET>::PrintIndexTable(unsigned SectionIndex,
   ///   - The special bit pattern EXIDX_CANTUNWIND, indicating that associated
   ///     frames cannot be unwound
 
-  const uint32_t *Data = reinterpret_cast<const uint32_t *>(Contents->data());
+  const support::ulittle32_t *Data =
+    reinterpret_cast<const support::ulittle32_t *>(Contents->data());
   const unsigned Entries = IT->sh_size / IndexTableEntrySize;
 
   ListScope E(SW, "Entries");
   for (unsigned Entry = 0; Entry < Entries; ++Entry) {
     DictScope E(SW, "Entry");
 
-    const uint32_t Word0 =
+    const support::ulittle32_t Word0 =
       Data[Entry * (IndexTableEntrySize / sizeof(*Data)) + 0];
-    const uint32_t Word1 =
+    const support::ulittle32_t Word1 =
       Data[Entry * (IndexTableEntrySize / sizeof(*Data)) + 1];
 
     if (Word0 & 0x80000000) {
