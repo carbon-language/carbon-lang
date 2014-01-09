@@ -292,12 +292,7 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
   // Ignore the left paren location for now.
   ConsumeParen();
 
-  OwningPtr<EnterExpressionEvaluationContext> Unevaluated;
   ArgsVector ArgExprs;
-
-  if (attributeParsedArgsUnevaluated(*AttrName))
-    Unevaluated.reset(new EnterExpressionEvaluationContext(Actions,
-                                                           Sema::Unevaluated));
 
   if (Tok.is(tok::identifier)) {
     // If this attribute wants an 'identifier' argument, make it so.
@@ -322,6 +317,11 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
 
     // Parse the non-empty comma-separated list of expressions.
     do {
+      OwningPtr<EnterExpressionEvaluationContext> Unevaluated;
+      if (attributeParsedArgsUnevaluated(*AttrName))
+        Unevaluated.reset(new EnterExpressionEvaluationContext(Actions,
+        Sema::Unevaluated));
+
       ExprResult ArgExpr(ParseAssignmentExpression());
       if (ArgExpr.isInvalid()) {
         SkipUntil(tok::r_paren, StopAtSemi);
@@ -338,6 +338,9 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
     Attrs.addNew(AttrName, SourceRange(AttrLoc, RParen), ScopeName, ScopeLoc,
                  ArgExprs.data(), ArgExprs.size(), Syntax);
   }
+
+  if (EndLoc)
+    *EndLoc = RParen;
 }
 
 /// \brief Parses a single argument for a declspec, including the
