@@ -72,3 +72,12 @@ static NSString *x = @"hi"; // expected-warning {{unused variable 'x'}}
 - (void) b {}
 - (void) a { [self b]; }
 @end
+
+// Test that objc_precise_lifetime suppresses
+// unused variable warnings.
+extern void rdar15596883_foo(void);
+void rdar15596883(id x) {
+  __attribute__((objc_precise_lifetime)) id y = x; // no-warning
+  rdar15596883_foo();
+}
+
