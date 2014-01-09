@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
-#include "TargetAttributesSema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclCXX.h"
@@ -204,7 +203,6 @@ static bool checkAttributeNumArgs(Sema &S, const AttributeList &Attr,
 
   return true;
 }
-
 
 /// \brief Check if the attribute has at least as many args as Num. May
 /// output an error.
@@ -3174,8 +3172,7 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC,
     return true;
   }
 
-  // TODO: diagnose uses of these conventions on the wrong target. Or, better
-  // move to TargetAttributesSema one day.
+  // TODO: diagnose uses of these conventions on the wrong target.
   switch (attr.getKind()) {
   case AttributeList::AT_CDecl: CC = CC_C; break;
   case AttributeList::AT_FastCall: CC = CC_X86FastCall; break;
@@ -3712,6 +3709,179 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                                         Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleARMInterruptAttr(Sema &S, Decl *D,
+                                   const AttributeList &Attr) {
+  // Check the attribute arguments.
+  if (Attr.getNumArgs() > 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
+      << Attr.getName() << 1;
+    return;
+  }
+
+  StringRef Str;
+  SourceLocation ArgLoc;
+
+  if (Attr.getNumArgs() == 0)
+    Str = "";
+  else if (!S.checkStringLiteralArgumentAttr(Attr, 0, Str, &ArgLoc))
+    return;
+
+  ARMInterruptAttr::InterruptType Kind;
+  if (!ARMInterruptAttr::ConvertStrToInterruptType(Str, Kind)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
+      << Attr.getName() << Str << ArgLoc;
+    return;
+  }
+
+  unsigned Index = Attr.getAttributeSpellingListIndex();
+  D->addAttr(::new (S.Context)
+             ARMInterruptAttr(Attr.getLoc(), S.Context, Kind, Index));
+}
+
+static void handleMSP430InterruptAttr(Sema &S, Decl *D,
+                                      const AttributeList &Attr) {
+  if (!checkAttributeNumArgs(S, Attr, 1))
+    return;
+
+  if (!Attr.isArgExpr(0)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) << Attr.getName()
+      << AANT_ArgumentIntegerConstant;
+    return;    
+  }
+
+  // FIXME: Check for decl - it should be void ()(void).
+
+  Expr *NumParamsExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
+  llvm::APSInt NumParams(32);
+  if (!NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentIntegerConstant
+      << NumParamsExpr->getSourceRange();
+    return;
+  }
+
+  unsigned Num = NumParams.getLimitedValue(255);
+  if ((Num & 1) || Num > 30) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
+      << Attr.getName() << (int)NumParams.getSExtValue()
+      << NumParamsExpr->getSourceRange();
+    return;
+  }
+
+  D->addAttr(::new (S.Context) MSP430InterruptAttr(Attr.getLoc(), S.Context, Num));
+  D->addAttr(::new (S.Context) UsedAttr(Attr.getLoc(), S.Context));
+}
+
+static void handleInterruptAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  // Dispatch the interrupt attribute based on the current target.
+  if (S.Context.getTargetInfo().getTriple().getArch() == llvm::Triple::msp430)
+    handleMSP430InterruptAttr(S, D, Attr);
+  else
+    handleARMInterruptAttr(S, D, Attr);
+}
+
+static void handleX86ForceAlignArgPointerAttr(Sema &S, Decl *D,
+                                              const AttributeList& Attr) {
+  // If we try to apply it to a function pointer, don't warn, but don't
+  // do anything, either. It doesn't matter anyway, because there's nothing
+  // special about calling a force_align_arg_pointer function.
+  ValueDecl *VD = dyn_cast<ValueDecl>(D);
+  if (VD && VD->getType()->isFunctionPointerType())
+    return;
+  // Also don't warn on function pointer typedefs.
+  TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D);
+  if (TD && (TD->getUnderlyingType()->isFunctionPointerType() ||
+    TD->getUnderlyingType()->isFunctionType()))
+    return;
+  // Attribute can only be applied to function types.
+  if (!isa<FunctionDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << /* function */0;
+    return;
+  }
+
+  D->addAttr(::new (S.Context) X86ForceAlignArgPointerAttr(Attr.getRange(),
+    S.Context));
+}
+
+DLLImportAttr *Sema::mergeDLLImportAttr(Decl *D, SourceRange Range,
+                                        unsigned AttrSpellingListIndex) {
+  if (D->hasAttr<DLLExportAttr>()) {
+    Diag(Range.getBegin(), diag::warn_attribute_ignored) << "dllimport";
+    return NULL;
+  }
+
+  if (D->hasAttr<DLLImportAttr>())
+    return NULL;
+
+  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (VD->hasDefinition()) {
+      // dllimport cannot be applied to definitions.
+      Diag(D->getLocation(), diag::warn_attribute_invalid_on_definition)
+        << "dllimport";
+      return NULL;
+    }
+  }
+
+  return ::new (Context)DLLImportAttr(Range, Context,
+                                      AttrSpellingListIndex);
+}
+
+static void handleDLLImportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  // Attribute can be applied only to functions or variables.
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (!FD && !isa<VarDecl>(D)) {
+    // Apparently Visual C++ thinks it is okay to not emit a warning
+    // in this case, so only emit a warning when -fms-extensions is not
+    // specified.
+    if (!S.getLangOpts().MicrosoftExt)
+      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 2 /*variable and function*/;
+    return;
+  }
+
+  // Currently, the dllimport attribute is ignored for inlined functions.
+  // Warning is emitted.
+  if (FD && FD->isInlineSpecified()) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+    return;
+  }
+
+  unsigned Index = Attr.getAttributeSpellingListIndex();
+  DLLImportAttr *NewAttr = S.mergeDLLImportAttr(D, Attr.getRange(), Index);
+  if (NewAttr)
+    D->addAttr(NewAttr);
+}
+
+DLLExportAttr *Sema::mergeDLLExportAttr(Decl *D, SourceRange Range,
+                                        unsigned AttrSpellingListIndex) {
+  if (DLLImportAttr *Import = D->getAttr<DLLImportAttr>()) {
+    Diag(Import->getLocation(), diag::warn_attribute_ignored) << "dllimport";
+    D->dropAttr<DLLImportAttr>();
+  }
+
+  if (D->hasAttr<DLLExportAttr>())
+    return NULL;
+
+  return ::new (Context)DLLExportAttr(Range, Context,
+                                      AttrSpellingListIndex);
+}
+
+static void handleDLLExportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  // Currently, the dllexport attribute is ignored for inlined functions, unless
+  // the -fkeep-inline-functions flag has been used. Warning is emitted;
+  if (isa<FunctionDecl>(D) && cast<FunctionDecl>(D)->isInlineSpecified()) {
+    // FIXME: ... unless the -fkeep-inline-functions flag has been used.
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+    return;
+  }
+
+  unsigned Index = Attr.getAttributeSpellingListIndex();
+  DLLExportAttr *NewAttr = S.mergeDLLExportAttr(D, Attr.getRange(), Index);
+  if (NewAttr)
+    D->addAttr(NewAttr);
+}
+
 /// Handles semantic checking for features that are common to all attributes,
 /// such as checking whether a parameter was properly specified, or the correct
 /// number of arguments were passed, etc.
@@ -3723,8 +3893,7 @@ static bool handleCommonAttributeFeatures(Sema &S, Scope *scope, Decl *D,
   // We also bail on unknown and ignored attributes because those are handled
   // as part of the target-specific handling logic.
   if (Attr.hasCustomParsing() ||
-      Attr.getKind() == AttributeList::UnknownAttribute ||
-      Attr.getKind() == AttributeList::IgnoredAttribute)
+      Attr.getKind() == AttributeList::UnknownAttribute)
     return false;
 
   // Check whether the attribute requires specific language extensions to be
@@ -3755,7 +3924,7 @@ static bool handleCommonAttributeFeatures(Sema &S, Scope *scope, Decl *D,
 static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
                                  const AttributeList &Attr,
                                  bool IncludeCXX11Attributes) {
-  if (Attr.isInvalid())
+  if (Attr.isInvalid() || Attr.getKind() == AttributeList::IgnoredAttribute)
     return;
 
   // Ignore C++11 attributes on declarator chunks: they appertain to the type
@@ -3763,28 +3932,42 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   if (Attr.isCXX11Attribute() && !IncludeCXX11Attributes)
     return;
 
+  // Unknown attributes are automatically warned on. Target-specific attributes
+  // which do not apply to the current target architecture are treated as
+  // though they were unknown attributes.
+  if (Attr.getKind() == AttributeList::UnknownAttribute ||
+      !Attr.existsInTarget(S.Context.getTargetInfo().getTriple())) {
+    S.Diag(Attr.getLoc(), Attr.isDeclspecAttribute() ?
+            diag::warn_unhandled_ms_attribute_ignored :
+            diag::warn_unknown_attribute_ignored) << Attr.getName();
+    return;
+  }
+  
   if (handleCommonAttributeFeatures(S, scope, D, Attr))
     return;
 
   switch (Attr.getKind()) {
+  default:
+      // Type attributes are handled elsewhere; silently move on.
+    assert(Attr.isTypeAttr() && "Non-type attribute not handled");
+  break;
+  case AttributeList::AT_Interrupt:
+    handleInterruptAttr(S, D, Attr); break;
+  case AttributeList::AT_X86ForceAlignArgPointer:
+    handleX86ForceAlignArgPointerAttr(S, D, Attr); break;
+  case AttributeList::AT_DLLExport:
+    handleDLLExportAttr(S, D, Attr); break;
+  case AttributeList::AT_DLLImport:
+    handleDLLImportAttr(S, D, Attr); break;
+  case AttributeList::AT_Mips16:
+    handleSimpleAttribute<Mips16Attr>(S, D, Attr); break;
+  case AttributeList::AT_NoMips16:
+    handleSimpleAttribute<NoMips16Attr>(S, D, Attr); break;
   case AttributeList::AT_IBAction:
     handleSimpleAttribute<IBActionAttr>(S, D, Attr); break;
   case AttributeList::AT_IBOutlet:    handleIBOutlet(S, D, Attr); break;
   case AttributeList::AT_IBOutletCollection:
     handleIBOutletCollection(S, D, Attr); break;
-  case AttributeList::AT_AddressSpace:
-  case AttributeList::AT_ObjCGC:
-  case AttributeList::AT_VectorSize:
-  case AttributeList::AT_NeonVectorType:
-  case AttributeList::AT_NeonPolyVectorType:
-  case AttributeList::AT_Ptr32:
-  case AttributeList::AT_Ptr64:
-  case AttributeList::AT_SPtr:
-  case AttributeList::AT_UPtr:
-  case AttributeList::AT_Regparm:
-    // Ignore these, these are type attributes, handled by
-    // ProcessTypeAttributes.
-    break;
   case AttributeList::AT_Alias:       handleAliasAttr       (S, D, Attr); break;
   case AttributeList::AT_Aligned:     handleAlignedAttr     (S, D, Attr); break;
   case AttributeList::AT_AlwaysInline:
@@ -3946,9 +4129,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_NoDebug:     handleNoDebugAttr     (S, D, Attr); break;
   case AttributeList::AT_NoInline:
     handleSimpleAttribute<NoInlineAttr>(S, D, Attr); break;
-  case AttributeList::IgnoredAttribute:
-    // Just ignore
-    break;
   case AttributeList::AT_NoInstrumentFunction:  // Interacts with -pg.
     handleSimpleAttribute<NoInstrumentFunctionAttr>(S, D, Attr); break;
   case AttributeList::AT_StdCall:
@@ -4077,15 +4257,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_TypeTagForDatatype:
     handleTypeTagForDatatypeAttr(S, D, Attr);
-    break;
-
-  default:
-    // Ask target about the attribute.
-    const TargetAttributesSema &TargetAttrs = S.getTargetAttributesSema();
-    if (!TargetAttrs.ProcessDeclAttribute(scope, D, Attr, S))
-      S.Diag(Attr.getLoc(), Attr.isDeclspecAttribute() ? 
-             diag::warn_unhandled_ms_attribute_ignored : 
-             diag::warn_unknown_attribute_ignored) << Attr.getName();
     break;
   }
 }

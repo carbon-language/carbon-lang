@@ -20,6 +20,7 @@
 #include "clang/Sema/Ownership.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/Allocator.h"
 #include <cassert>
 
@@ -484,11 +485,15 @@ public:
   /// to pretty print itself.
   unsigned getAttributeSpellingListIndex() const;
 
+  bool isTargetSpecificAttr() const;
+  bool isTypeAttr() const;
+
   bool hasCustomParsing() const;
   unsigned getMinArgs() const;
   unsigned getMaxArgs() const;
   bool diagnoseAppertainsTo(class Sema &S, const Decl *D) const;
   bool diagnoseLangOpts(class Sema &S) const;
+  bool existsInTarget(llvm::Triple T) const;
 };
 
 /// A factory, from which one makes pools, from which one creates

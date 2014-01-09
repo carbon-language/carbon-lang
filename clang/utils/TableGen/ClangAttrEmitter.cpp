@@ -74,7 +74,8 @@ static StringRef NormalizeAttrSpelling(StringRef AttrSpelling) {
 
 typedef std::vector<std::pair<std::string, Record *> > ParsedAttrMap;
 
-static ParsedAttrMap getParsedAttrList(const RecordKeeper &Records) {
+static ParsedAttrMap getParsedAttrList(const RecordKeeper &Records,
+                                       ParsedAttrMap *Dupes = 0) {
   std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
   std::set<std::string> Seen;
   ParsedAttrMap R;
@@ -89,8 +90,11 @@ static ParsedAttrMap getParsedAttrList(const RecordKeeper &Records) {
 
         // If this attribute has already been handled, it does not need to be
         // handled again.
-        if (Seen.find(AN) != Seen.end())
+        if (Seen.find(AN) != Seen.end()) {
+          if (Dupes)
+            Dupes->push_back(std::make_pair(AN, *I));
           continue;
+        }
         Seen.insert(AN);
       } else
         AN = NormalizeAttrName(Attr.getName()).str();
@@ -2063,15 +2067,111 @@ static std::string GenerateLangOptRequirements(const Record &R,
   return FnName;
 }
 
+static void GenerateDefaultTargetRequirements(raw_ostream &OS) {
+  OS << "static bool defaultTargetRequirements(llvm::Triple) {\n";
+  OS << "  return true;\n";
+  OS << "}\n\n";
+}
+
+static std::string GenerateTargetRequirements(const Record &Attr,
+                                              const ParsedAttrMap &Dupes,
+                                              raw_ostream &OS) {
+  // If the attribute is not a target specific attribute, return the default
+  // target handler.
+  if (!Attr.isSubClassOf("TargetSpecificAttr"))
+    return "defaultTargetRequirements";
+
+  // Get the list of architectures to be tested for.
+  const Record *R = Attr.getValueAsDef("Target");
+  std::vector<std::string> Arches = R->getValueAsListOfStrings("Arches");
+  if (Arches.empty()) {
+    PrintError(Attr.getLoc(), "Empty list of target architectures for a "
+                              "target-specific attr");
+    return "defaultTargetRequirements";
+  }
+
+  // If there are other attributes which share the same parsed attribute kind,
+  // such as target-specific attributes with a shared spelling, collapse the
+  // duplicate architectures. This is required because a shared target-specific
+  // attribute has only one AttributeList::Kind enumeration value, but it
+  // applies to multiple target architectures. In order for the attribute to be
+  // considered valid, all of its architectures need to be included.
+  if (!Attr.isValueUnset("ParseKind")) {
+    std::string APK = Attr.getValueAsString("ParseKind");
+    for (ParsedAttrMap::const_iterator I = Dupes.begin(), E = Dupes.end();
+         I != E; ++I) {
+      if (I->first == APK) {
+        std::vector<std::string> DA = I->second->getValueAsDef("Target")->
+                                            getValueAsListOfStrings("Arches");
+        std::copy(DA.begin(), DA.end(), std::back_inserter(Arches));
+      }
+    }
+  }
+
+  std::string FnName = "isTarget", Test = "(";
+  for (std::vector<std::string>::const_iterator I = Arches.begin(),
+       E = Arches.end(); I != E; ++I) {
+    std::string Part = *I;
+    Test += "Arch == llvm::Triple::" + Part;
+    if (I + 1 != E)
+      Test += " || ";
+    FnName += Part;
+  }
+  Test += ")";
+
+  // If the target also requires OS testing, generate those tests as well.
+  bool UsesOS = false;
+  if (!R->isValueUnset("OSes")) {
+    UsesOS = true;
+    
+    // We know that there was at least one arch test, so we need to and in the
+    // OS tests.
+    Test += " && (";
+    std::vector<std::string> OSes = R->getValueAsListOfStrings("OSes");
+    for (std::vector<std::string>::const_iterator I = OSes.begin(),
+         E = OSes.end(); I != E; ++I) {
+      std::string Part = *I;
+
+      Test += "OS == llvm::Triple::" + Part;
+      if (I + 1 != E)
+        Test += " || ";
+      FnName += Part;
+    }
+    Test += ")";
+  }
+
+  // If this code has already been generated, simply return the previous
+  // instance of it.
+  static std::set<std::string> CustomTargetSet;
+  std::set<std::string>::iterator I = CustomTargetSet.find(FnName);
+  if (I != CustomTargetSet.end())
+    return *I;
+
+  OS << "static bool " << FnName << "(llvm::Triple T) {\n";
+  OS << "  llvm::Triple::ArchType Arch = T.getArch();\n";
+  if (UsesOS)
+    OS << "  llvm::Triple::OSType OS = T.getOS();\n";
+  OS << "  return " << Test << ";\n";
+  OS << "}\n\n";
+
+  CustomTargetSet.insert(FnName);
+  return FnName;
+}
+
 /// Emits the parsed attribute helpers
 void EmitClangAttrParsedAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
   emitSourceFileHeader("Parsed attribute helpers", OS);
 
-  ParsedAttrMap Attrs = getParsedAttrList(Records);
+  // Get the list of parsed attributes, and accept the optional list of
+  // duplicates due to the ParseKind.
+  ParsedAttrMap Dupes;
+  ParsedAttrMap Attrs = getParsedAttrList(Records, &Dupes);
 
-  // Generate the default appertainsTo and language option diagnostic methods.
+  // Generate the default appertainsTo, target and language option diagnostic
+  // methods.
   GenerateDefaultAppertainsTo(OS);
   GenerateDefaultLangOptRequirements(OS);
+  GenerateDefaultTargetRequirements(OS);
 
   // Generate the appertainsTo diagnostic methods and write their names into
   // another mapping. At the same time, generate the AttrInfoMap object
@@ -2080,13 +2180,22 @@ void EmitClangAttrParsedAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
   std::stringstream SS;
   for (ParsedAttrMap::iterator I = Attrs.begin(), E = Attrs.end(); I != E;
        ++I) {
+    // TODO: If the attribute's kind appears in the list of duplicates, that is
+    // because it is a target-specific attribute that appears multiple times.
+    // It would be beneficial to test whether the duplicates are "similar
+    // enough" to each other to not cause problems. For instance, check that
+    // the spellings are identicial, and custom parsing rules match, etc.
+
     // We need to generate struct instances based off ParsedAttrInfo from
     // AttributeList.cpp.
     SS << "  { ";
     emitArgInfo(*I->second, SS);
     SS << ", " << I->second->getValueAsBit("HasCustomParsing");
+    SS << ", " << I->second->isSubClassOf("TargetSpecificAttr");
+    SS << ", " << I->second->isSubClassOf("TypeAttr");
     SS << ", " << GenerateAppertainsTo(*I->second, OS);
     SS << ", " << GenerateLangOptRequirements(*I->second, OS);
+    SS << ", " << GenerateTargetRequirements(*I->second, Dupes, OS);
     SS << " }";
 
     if (I + 1 != E)

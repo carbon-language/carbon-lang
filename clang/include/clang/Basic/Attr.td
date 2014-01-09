@@ -142,6 +142,21 @@ def MicrosoftExt : LangOpt<"MicrosoftExt">;
 def Borland : LangOpt<"Borland">;
 def CUDA : LangOpt<"CUDA">;
 
+// Defines targets for target-specific attributes. The list of strings should
+// specify architectures for which the target applies, based off the ArchType
+// enumeration in Triple.h.
+class TargetArch<list<string> arches> {
+  list<string> Arches = arches;
+  list<string> OSes;
+}
+def TargetARM : TargetArch<["arm", "thumb"]>;
+def TargetMSP430 : TargetArch<["msp430"]>;
+def TargetX86 : TargetArch<["x86"]>;
+def TargetX86Win : TargetArch<["x86", "x86_64"]> {
+  let OSes = ["Win32", "MinGW32"];
+}
+def TargetMips : TargetArch<["mips", "mipsel"]>;
+
 class Attr {
   // The various ways in which an attribute can be spelled in source
   list<Spelling> Spellings;
@@ -187,10 +202,10 @@ class TypeAttr : Attr {
 /// An inheritable attribute is inherited by later redeclarations.
 class InheritableAttr : Attr;
 
-/// A target-specific attribute that is meant to be processed via
-/// TargetAttributesSema::ProcessDeclAttribute.  This class is meant to be used
-/// as a mixin with InheritableAttr or Attr depending on the attribute's needs.
-class TargetSpecificAttr {
+/// A target-specific attribute.  This class is meant to be used as a mixin
+/// with InheritableAttr or Attr depending on the attribute's needs.
+class TargetSpecificAttr<TargetArch target> {
+  TargetArch Target = target;
   // Attributes are generally required to have unique spellings for their names
   // so that the parser can determine what kind of attribute it has parsed.
   // However, target-specific attributes are special in that the attribute only
@@ -269,7 +284,7 @@ def Annotate : InheritableParamAttr {
   let Args = [StringArgument<"Annotation">];
 }
 
-def ARMInterrupt : InheritableAttr, TargetSpecificAttr {
+def ARMInterrupt : InheritableAttr, TargetSpecificAttr<TargetARM> {
   // NOTE: If you add any additional spellings, MSP430Interrupt's spellings
   // must match.
   let Spellings = [GNU<"interrupt">];
@@ -547,7 +562,7 @@ def MSABI : InheritableAttr {
 //  let Subjects = [Function, ObjCMethod];
 }
 
-def MSP430Interrupt : InheritableAttr, TargetSpecificAttr {
+def MSP430Interrupt : InheritableAttr, TargetSpecificAttr<TargetMSP430> {
   // NOTE: If you add any additional spellings, ARMInterrupt's spellings must
   // match.
   let Spellings = [GNU<"interrupt">];
@@ -556,7 +571,7 @@ def MSP430Interrupt : InheritableAttr, TargetSpecificAttr {
   let HasCustomParsing = 1;
 }
 
-def Mips16 : InheritableAttr, TargetSpecificAttr {
+def Mips16 : InheritableAttr, TargetSpecificAttr<TargetMips> {
   let Spellings = [GNU<"mips16">, CXX11<"gnu", "mips16">];
   let Subjects = SubjectList<[Function], ErrorDiag>;
 }
@@ -600,7 +615,7 @@ def NoInline : InheritableAttr {
   let Subjects = SubjectList<[Function]>;
 }
 
-def NoMips16 : InheritableAttr, TargetSpecificAttr {
+def NoMips16 : InheritableAttr, TargetSpecificAttr<TargetMips> {
   let Spellings = [GNU<"nomips16">, CXX11<"gnu", "nomips16">];
   let Subjects = SubjectList<[Function], ErrorDiag>;
 }
@@ -952,8 +967,11 @@ def WeakRef : InheritableAttr {
   let Subjects = SubjectList<[Var, Function], ErrorDiag>;
 }
 
-def X86ForceAlignArgPointer : InheritableAttr, TargetSpecificAttr {
-  let Spellings = [];
+def X86ForceAlignArgPointer : InheritableAttr, TargetSpecificAttr<TargetX86> {
+  let Spellings = [GNU<"force_align_arg_pointer">];
+  // Technically, this appertains to a FunctionDecl, but the target-specific
+  // code silently allows anything function-like (such as typedefs or function
+  // pointers), but does not apply the attribute to them.
 }
 
 // Attribute to disable AddressSanitizer (or equivalent) checks.
@@ -1232,12 +1250,12 @@ def MsStruct : InheritableAttr {
   let Subjects = SubjectList<[Record]>;
 }
 
-def DLLExport : InheritableAttr, TargetSpecificAttr {
+def DLLExport : InheritableAttr, TargetSpecificAttr<TargetX86Win> {
   let Spellings = [Declspec<"dllexport">];
   let Subjects = SubjectList<[Function, Var]>;
 }
 
-def DLLImport : InheritableAttr, TargetSpecificAttr {
+def DLLImport : InheritableAttr, TargetSpecificAttr<TargetX86Win> {
   let Spellings = [Declspec<"dllimport">];
   // Technically, the subjects for DllImport are Function and Var, but there is
   // custom semantic handling required when MicrosoftExt is true.

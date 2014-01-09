@@ -47,7 +47,6 @@ add_clang_library(clangSema
   SemaTemplateInstantiateDecl.cpp
   SemaTemplateVariadic.cpp
   SemaType.cpp
-  TargetAttributesSema.cpp
   TypeLocBuilder.cpp
   )
 

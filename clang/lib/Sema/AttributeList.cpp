@@ -156,10 +156,13 @@ struct ParsedAttrInfo {
   unsigned NumArgs : 4;
   unsigned OptArgs : 4;
   unsigned HasCustomParsing : 1;
+  unsigned IsTargetSpecific : 1;
+  unsigned IsType : 1;
 
   bool (*DiagAppertainsToDecl)(Sema &S, const AttributeList &Attr,
                                const Decl *);
   bool (*DiagLangOpts)(Sema &S, const AttributeList &Attr);
+  bool (*ExistsInTarget)(llvm::Triple T);
 };
 
 namespace {
@@ -188,4 +191,16 @@ bool AttributeList::diagnoseAppertainsTo(Sema &S, const Decl *D) const {
 
 bool AttributeList::diagnoseLangOpts(Sema &S) const {
   return getInfo(*this).DiagLangOpts(S, *this);
+}
+
+bool AttributeList::isTargetSpecificAttr() const {
+  return getInfo(*this).IsTargetSpecific;
+}
+
+bool AttributeList::isTypeAttr() const {
+  return getInfo(*this).IsType;
+}
+
+bool AttributeList::existsInTarget(llvm::Triple T) const {
+  return getInfo(*this).ExistsInTarget(T);
 }

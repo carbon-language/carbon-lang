@@ -152,7 +152,6 @@ namespace clang {
   class Stmt;
   class StringLiteral;
   class SwitchStmt;
-  class TargetAttributesSema;
   class TemplateArgument;
   class TemplateArgumentList;
   class TemplateArgumentLoc;
@@ -204,7 +203,6 @@ typedef std::pair<llvm::PointerUnion<const TemplateTypeParmType*, NamedDecl*>,
 class Sema {
   Sema(const Sema &) LLVM_DELETED_FUNCTION;
   void operator=(const Sema &) LLVM_DELETED_FUNCTION;
-  mutable const TargetAttributesSema* TheTargetAttributesSema;
 
   ///\brief Source of additional semantic information.
   ExternalSemaSource *ExternalSource;
@@ -875,7 +873,6 @@ public:
 
   DiagnosticsEngine &getDiagnostics() const { return Diags; }
   SourceManager &getSourceManager() const { return SourceMgr; }
-  const TargetAttributesSema &getTargetAttributesSema() const;
   Preprocessor &getPreprocessor() const { return PP; }
   ASTContext &getASTContext() const { return Context; }
   ASTConsumer &getASTConsumer() const { return Consumer; }
