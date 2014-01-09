@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -E %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple arm-unknown-linux -E %s -o - | FileCheck %s
 
 // CHECK: always_inline
 #if __has_attribute(always_inline)
@@ -37,4 +37,14 @@ int has_something_we_dont_have();
 // CHECK: has_no_volatile_attribute
 #if !__has_attribute(volatile)
 int has_no_volatile_attribute();
+#endif
+
+// CHECK: has_arm_interrupt
+#if __has_attribute(interrupt)
+  int has_arm_interrupt();
+#endif
+
+// CHECK: does_not_have_dllexport
+#if !__has_attribute(dllexport)
+  int does_not_have_dllexport();
 #endif

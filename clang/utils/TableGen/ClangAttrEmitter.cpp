@@ -1537,18 +1537,55 @@ void EmitClangAttrPCHWrite(RecordKeeper &Records, raw_ostream &OS) {
 
 // Emits the list of spellings for attributes.
 void EmitClangAttrSpellingList(RecordKeeper &Records, raw_ostream &OS) {
-  emitSourceFileHeader("llvm::StringSwitch code to match all known attributes",
-                       OS);
+  emitSourceFileHeader("llvm::StringSwitch code to match attributes based on "
+                       "the target triple, T", OS);
 
   std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
   
-  for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end(); I != E; ++I) {
+  for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end();
+       I != E; ++I) {
     Record &Attr = **I;
 
-    std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
+    // It is assumed that there will be an llvm::Triple object named T within
+    // scope that can be used to determine whether the attribute exists in
+    // a given target.
+    std::string Test;
+    if (Attr.isSubClassOf("TargetSpecificAttr")) {
+      const Record *R = Attr.getValueAsDef("Target");
+      std::vector<std::string> Arches = R->getValueAsListOfStrings("Arches");
 
-    for (std::vector<Record*>::const_iterator I = Spellings.begin(), E = Spellings.end(); I != E; ++I) {
-      OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", true)\n";
+      Test += "(";
+      for (std::vector<std::string>::const_iterator AI = Arches.begin(),
+           AE = Arches.end(); AI != AE; ++AI) {
+        std::string Part = *AI;
+        Test += "T.getArch() == llvm::Triple::" + Part;
+        if (AI + 1 != AE)
+          Test += " || ";
+      }
+      Test += ")";
+
+      std::vector<std::string> OSes;
+      if (!R->isValueUnset("OSes")) {
+        Test += " && (";
+        std::vector<std::string> OSes = R->getValueAsListOfStrings("OSes");
+        for (std::vector<std::string>::const_iterator AI = OSes.begin(),
+             AE = OSes.end(); AI != AE; ++AI) {
+          std::string Part = *AI;
+
+          Test += "T.getOS() == llvm::Triple::" + Part;
+          if (AI + 1 != AE)
+            Test += " || ";
+        }
+        Test += ")";
+      }
+    } else
+      Test = "true";
+
+    std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
+    for (std::vector<Record*>::const_iterator I = Spellings.begin(),
+         E = Spellings.end(); I != E; ++I) {
+      OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", " << Test;
+      OS << ")\n";
     }
   }
 
