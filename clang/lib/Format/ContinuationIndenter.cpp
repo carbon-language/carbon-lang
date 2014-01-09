@@ -721,13 +721,15 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     Penalty += Style.PenaltyExcessCharacter * ExcessCharacters;
   }
 
+  if (Current.Role)
+    Current.Role->formatFromToken(State, this, DryRun);
   // If the previous has a special role, let it consume tokens as appropriate.
   // It is necessary to start at the previous token for the only implemented
   // role (comma separated list). That way, the decision whether or not to break
   // after the "{" is already done and both options are tried and evaluated.
   // FIXME: This is ugly, find a better way.
   if (Previous && Previous->Role)
-    Penalty += Previous->Role->format(State, this, DryRun);
+    Penalty += Previous->Role->formatAfterToken(State, this, DryRun);
 
   return Penalty;
 }

@@ -398,10 +398,21 @@ public:
 
   /// \brief Apply the special formatting that the given role demands.
   ///
+  /// Assumes that the token having this role is already formatted.
+  ///
   /// Continues formatting from \p State leaving indentation to \p Indenter and
   /// returns the total penalty that this formatting incurs.
-  virtual unsigned format(LineState &State, ContinuationIndenter *Indenter,
-                          bool DryRun) {
+  virtual unsigned formatFromToken(LineState &State,
+                                   ContinuationIndenter *Indenter,
+                                   bool DryRun) {
+    return 0;
+  }
+
+  /// \brief Same as \c formatFromToken, but assumes that the first token has
+  /// already been set thereby deciding on the first line break.
+  virtual unsigned formatAfterToken(LineState &State,
+                                    ContinuationIndenter *Indenter,
+                                    bool DryRun) {
     return 0;
   }
 
@@ -414,12 +425,17 @@ protected:
 
 class CommaSeparatedList : public TokenRole {
 public:
-  CommaSeparatedList(const FormatStyle &Style) : TokenRole(Style) {}
+  CommaSeparatedList(const FormatStyle &Style)
+      : TokenRole(Style), HasNestedBracedList(false) {}
 
   virtual void precomputeFormattingInfos(const FormatToken *Token);
 
-  virtual unsigned format(LineState &State, ContinuationIndenter *Indenter,
-                          bool DryRun);
+  virtual unsigned formatAfterToken(LineState &State,
+                                    ContinuationIndenter *Indenter,
+                                    bool DryRun);
+
+  virtual unsigned formatFromToken(LineState &State,
+                                   ContinuationIndenter *Indenter, bool DryRun);
 
   /// \brief Adds \p Token as the next comma to the \c CommaSeparated list.
   virtual void CommaFound(const FormatToken *Token) { Commas.push_back(Token); }
@@ -454,6 +470,8 @@ private:
 
   /// \brief Precomputed formats that can be used for this list.
   SmallVector<ColumnFormat, 4> Formats;
+
+  bool HasNestedBracedList;
 };
 
 } // namespace format

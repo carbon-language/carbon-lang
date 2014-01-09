@@ -1913,23 +1913,29 @@ TEST_F(FormatTest, NestedStaticInitializers) {
       " } };");
 
   verifyFormat(
-      "SomeArrayOfSomeType a = { { { 1, 2, 3 }, { 1, 2, 3 },\n"
+      "SomeArrayOfSomeType a = { { { 1, 2, 3 },\n"
+      "                            { 1, 2, 3 },\n"
       "                            { 111111111111111111111111111111,\n"
       "                              222222222222222222222222222222,\n"
       "                              333333333333333333333333333333 },\n"
-      "                            { 1, 2, 3 }, { 1, 2, 3 } } };");
+      "                            { 1, 2, 3 },\n"
+      "                            { 1, 2, 3 } } };");
   verifyFormat(
-      "SomeArrayOfSomeType a = { { { 1, 2, 3 } }, { { 1, 2, 3 } },\n"
+      "SomeArrayOfSomeType a = { { { 1, 2, 3 } },\n"
+      "                          { { 1, 2, 3 } },\n"
       "                          { { 111111111111111111111111111111,\n"
       "                              222222222222222222222222222222,\n"
       "                              333333333333333333333333333333 } },\n"
-      "                          { { 1, 2, 3 } }, { { 1, 2, 3 } } };");
+      "                          { { 1, 2, 3 } },\n"
+      "                          { { 1, 2, 3 } } };");
   verifyGoogleFormat(
       "SomeArrayOfSomeType a = {\n"
-      "    {{1, 2, 3}}, {{1, 2, 3}},\n"
+      "    {{1, 2, 3}},\n"
+      "    {{1, 2, 3}},\n"
       "    {{111111111111111111111111111111, 222222222222222222222222222222,\n"
       "      333333333333333333333333333333}},\n"
-      "    {{1, 2, 3}}, {{1, 2, 3}}};");
+      "    {{1, 2, 3}},\n"
+      "    {{1, 2, 3}}};");
 
   verifyFormat(
       "struct {\n"
@@ -4938,16 +4944,23 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
                "         { aaaaaaaaaaaaaaaaa } };",
                getLLVMStyleWithColumns(60));
 
-  // No column layout for nested lists.
+  // With nested lists, we should either format one item per line or all nested
+  // lists one one line.
   // FIXME: For some nested lists, we can do better.
   verifyFormat(
       "SomeStruct my_struct_array = {\n"
       "  { aaaaaa, aaaaaaaa, aaaaaaaaaa, aaaaaaaaa, aaaaaaaaa, aaaaaaaaaa,\n"
       "    aaaaaaaaaaaaa, aaaaaaa, aaa },\n"
+      "  { aaa, aaa },\n"
+      "  { aaa, aaa },\n"
       "  { aaaa, aaaa, aaaa, aaaa, aaaa, aaaa, aaaa, aaa },\n"
       "  { aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaa,\n"
       "    aaaaaaaaaaaa, a, aaaaaaaaaa, aaaaaaaaa, aaa },\n"
       "};");
+
+  // No column layout should be used here.
+  verifyFormat("aaaaaaaaaaaaaaa = { aaaaaaaaaaaaaaaaaaaaaaaaaaa, 0, 0,\n"
+               "                    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb };");
 }
 
 TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {

@@ -26,11 +26,10 @@ TokenRole::~TokenRole() {}
 
 void TokenRole::precomputeFormattingInfos(const FormatToken *Token) {}
 
-unsigned CommaSeparatedList::format(LineState &State,
-                                    ContinuationIndenter *Indenter,
-                                    bool DryRun) {
-  if (!State.NextToken->Previous || !State.NextToken->Previous->Previous ||
-      Commas.size() <= 2)
+unsigned CommaSeparatedList::formatAfterToken(LineState &State,
+                                              ContinuationIndenter *Indenter,
+                                              bool DryRun) {
+  if (!State.NextToken->Previous || !State.NextToken->Previous->Previous)
     return 0;
 
   // Ensure that we start on the opening brace.
@@ -82,6 +81,14 @@ unsigned CommaSeparatedList::format(LineState &State,
   return Penalty;
 }
 
+unsigned CommaSeparatedList::formatFromToken(LineState &State,
+                                             ContinuationIndenter *Indenter,
+                                             bool DryRun) {
+  if (HasNestedBracedList)
+    State.Stack.back().AvoidBinPacking = true;
+  return 0;
+}
+
 // Returns the lengths in code points between Begin and End (both included),
 // assuming that the entire sequence is put on a single line.
 static unsigned CodePointsBetween(const FormatToken *Begin,
@@ -92,8 +99,7 @@ static unsigned CodePointsBetween(const FormatToken *Begin,
 
 void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   // FIXME: At some point we might want to do this for other lists, too.
-  if (!Token->MatchingParen || Token->isNot(tok::l_brace) ||
-      Token->NestingLevel != 0)
+  if (!Token->MatchingParen || Token->isNot(tok::l_brace))
     return;
 
   FormatToken *ItemBegin = Token->Next;
@@ -103,7 +109,6 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   // trailing comments which are otherwise ignored for column alignment.
   SmallVector<unsigned, 8> EndOfLineItemLength;
 
-  bool HasNestedBracedList = false;
   for (unsigned i = 0, e = Commas.size() + 1; i != e; ++i) {
     // Skip comments on their own line.
     while (ItemBegin->HasUnescapedNewline && ItemBegin->isTrailingComment())
@@ -143,6 +148,13 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
     ItemBegin = ItemEnd->Next;
   }
 
+  // If this doesn't have a nested list, we require at least 6 elements in order
+  // create a column layout. If it has a nested list, column layout ensures one
+  // list element per line.
+  if (HasNestedBracedList || Commas.size() < 5 ||
+      Token->NestingLevel != 0)
+    return;
+
   // We can never place more than ColumnLimit / 3 items in a row (because of the
   // spaces and the comma).
   for (unsigned Columns = 1; Columns <= Style.ColumnLimit / 3; ++Columns) {
@@ -177,11 +189,6 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
 
     // Ignore layouts that are bound to violate the column limit.
     if (Format.TotalWidth > Style.ColumnLimit)
-      continue;
-
-    // If this braced list has nested braced list, we format it either with one
-    // element per line or with all elements on one line.
-    if (HasNestedBracedList && Columns > 1 && Format.LineCount > 1)
       continue;
 
     Formats.push_back(Format);
