@@ -3306,15 +3306,56 @@ static bool MatchRotateHalf(SDValue Op, SDValue &Shift, SDValue &Mask) {
   return false;
 }
 
-// Return true if we can prove that Neg == OpSize - Pos.  This means that
+// Return true if we can prove that, whenever Neg and Pos are both in the
+// range [0, OpSize), Neg == (Pos == 0 ? 0 : OpSize - Pos).  This means that
 // for two opposing shifts shift1 and shift2 and a value X with OpBits bits:
 //
 //     (or (shift1 X, Neg), (shift2 X, Pos))
 //
 // reduces to a rotate in direction shift2 by Pos and a rotate in direction
-// shift1 by Neg.  Note that the (or ...) then invokes undefined behavior
-// if Pos == 0 (and consequently Neg == OpSize).
+// shift1 by Neg.  The range [0, OpSize) means that we only need to consider
+// shift amounts with defined behavior.
 static bool matchRotateSub(SDValue Pos, SDValue Neg, unsigned OpSize) {
+  // If OpSize is a power of 2 then:
+  //
+  //  (a) (Pos == 0 ? 0 : OpSize - Pos) == (OpSize - Pos) & (OpSize - 1)
+  //  (b) Neg == Neg & (OpSize - 1) whenever Neg is in [0, OpSize).
+  //
+  // So if OpSize is a power of 2 and Neg is (and Neg', OpSize-1), we check
+  // for the stronger condition:
+  //
+  //     Neg & (OpSize - 1) == (OpSize - Pos) & (OpSize - 1)    [A]
+  //
+  // for all Neg and Pos.  Since Neg & (OpSize - 1) == Neg' & (OpSize - 1)
+  // we can just replace Neg with Neg' for the rest of the function.
+  //
+  // In other cases we check for the even stronger condition:
+  //
+  //     Neg == OpSize - Pos                                    [B]
+  //
+  // for all Neg and Pos.  Note that the (or ...) then invokes undefined
+  // behavior if Pos == 0 (and consequently Neg == OpSize).
+  // 
+  // We could actually use [A] whenever OpSize is a power of 2, but the
+  // only extra cases that it would match are those uninteresting ones
+  // where Neg and Pos are never in range at the same time.  E.g. for
+  // OpSize == 32, using [A] would allow a Neg of the form (sub 64, Pos)
+  // as well as (sub 32, Pos), but:
+  //
+  //     (or (shift1 X, (sub 64, Pos)), (shift2 X, Pos))
+  //
+  // always invokes undefined behavior for 32-bit X.
+  //
+  // Below, Mask == OpSize - 1 when using [A] and is all-ones otherwise.
+  unsigned LoBits = 0;
+  if (Neg.getOpcode() == ISD::AND &&
+      isPowerOf2_64(OpSize) &&
+      Neg.getOperand(1).getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(Neg.getOperand(1))->getAPIntValue() == OpSize - 1) {
+    Neg = Neg.getOperand(0);
+    LoBits = Log2_64(OpSize);
+  }
+
   // Check whether Neg has the form (sub NegC, NegOp1) for some NegC and NegOp1.
   if (Neg.getOpcode() != ISD::SUB)
     return 0;
@@ -3323,24 +3364,39 @@ static bool matchRotateSub(SDValue Pos, SDValue Neg, unsigned OpSize) {
     return 0;
   SDValue NegOp1 = Neg.getOperand(1);
 
-  // The condition we need to prove is now NegC - NegOp1 == OpSize - Pos.
-  // Check whether the terms match directly.
+  // The condition we need is now:
+  //
+  //     (NegC - NegOp1) & Mask == (OpSize - Pos) & Mask
+  //
+  // If NegOp1 == Pos then we need:
+  //
+  //              OpSize & Mask == NegC & Mask
+  //
+  // (because "x & Mask" is a truncation and distributes through subtraction).
+  APInt Width;
   if (Pos == NegOp1)
-    return NegC->getAPIntValue() == OpSize;
-
+    Width = NegC->getAPIntValue();
   // Check for cases where Pos has the form (add NegOp1, PosC) for some PosC.
   // Then the condition we want to prove becomes:
-  //   NegC - NegOp1 == OpSize - (NegOp1 + PosC)
-  //            NegC == OpSize - PosC
   //
-  // Because NegC and PosC are APInts, this is easier to test as:
-  //          OpSize == NegC + PosC
-  if (Pos.getOpcode() == ISD::ADD && Pos.getOperand(0) == NegOp1) {
-    ConstantSDNode *PosC = dyn_cast<ConstantSDNode>(Pos.getOperand(1));
-    return PosC && OpSize == NegC->getAPIntValue() + PosC->getAPIntValue();
-  }
+  //     (NegC - NegOp1) & Mask == (OpSize - (NegOp1 + PosC)) & Mask
+  //
+  // which, again because "x & Mask" is a truncation, becomes:
+  //
+  //                NegC & Mask == (OpSize - PosC) & Mask
+  //              OpSize & Mask == (NegC + PosC) & Mask
+  else if (Pos.getOpcode() == ISD::ADD &&
+           Pos.getOperand(0) == NegOp1 &&
+           Pos.getOperand(1).getOpcode() == ISD::Constant)
+    Width = (cast<ConstantSDNode>(Pos.getOperand(1))->getAPIntValue() +
+             NegC->getAPIntValue());
+  else
+    return false;
 
-  return false;
+  // Now we just need to check that OpSize & Mask == Width & Mask.
+  if (LoBits)
+    return Width.getLoBits(LoBits) == 0;
+  return Width == OpSize;
 }
 
 // A subroutine of MatchRotate used once we have found an OR of two opposite

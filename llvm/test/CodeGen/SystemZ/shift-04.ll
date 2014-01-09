@@ -216,3 +216,75 @@ define i32 @f16(i32 %a, i64 %amt) {
   %or = or i32 %parta, %partb
   ret i32 %or
 }
+
+; Check cases where (-x & 31) is used instead of 32 - x.
+define i32 @f17(i32 %x, i32 %y) {
+; CHECK-LABEL: f17:
+; CHECK: rll %r2, %r2, 0(%r3)
+; CHECK: br %r14
+entry:
+  %shl = shl i32 %x, %y
+  %sub = sub i32 0, %y
+  %and = and i32 %sub, 31
+  %shr = lshr i32 %x, %and
+  %or = or i32 %shr, %shl
+  ret i32 %or
+}
+
+; ...and again with ((32 - x) & 31).
+define i32 @f18(i32 %x, i32 %y) {
+; CHECK-LABEL: f18:
+; CHECK: rll %r2, %r2, 0(%r3)
+; CHECK: br %r14
+entry:
+  %shl = shl i32 %x, %y
+  %sub = sub i32 32, %y
+  %and = and i32 %sub, 31
+  %shr = lshr i32 %x, %and
+  %or = or i32 %shr, %shl
+  ret i32 %or
+}
+
+; This is not a rotation.
+define i32 @f19(i32 %x, i32 %y) {
+; CHECK-LABEL: f19:
+; CHECK-NOT: rll
+; CHECK: br %r14
+entry:
+  %shl = shl i32 %x, %y
+  %sub = sub i32 16, %y
+  %and = and i32 %sub, 31
+  %shr = lshr i32 %x, %and
+  %or = or i32 %shr, %shl
+  ret i32 %or
+}
+
+; Repeat f17 with an addition on the shift count.
+define i32 @f20(i32 %x, i32 %y) {
+; CHECK-LABEL: f20:
+; CHECK: rll %r2, %r2, 199(%r3)
+; CHECK: br %r14
+entry:
+  %add = add i32 %y, 199
+  %shl = shl i32 %x, %add
+  %sub = sub i32 0, %add
+  %and = and i32 %sub, 31
+  %shr = lshr i32 %x, %and
+  %or = or i32 %shr, %shl
+  ret i32 %or
+}
+
+; ...and again with the InstCombine version.
+define i32 @f21(i32 %x, i32 %y) {
+; CHECK-LABEL: f21:
+; CHECK: rll %r2, %r2, 199(%r3)
+; CHECK: br %r14
+entry:
+  %add = add i32 %y, 199
+  %shl = shl i32 %x, %add
+  %sub = sub i32 -199, %y
+  %and = and i32 %sub, 31
+  %shr = lshr i32 %x, %and
+  %or = or i32 %shr, %shl
+  ret i32 %or
+}
