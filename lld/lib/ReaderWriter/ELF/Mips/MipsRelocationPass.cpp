@@ -119,8 +119,9 @@ private:
   }
 
   bool isLocal(const Atom *a) {
-    return isa<DefinedAtom>(a) &&
-           dyn_cast<DefinedAtom>(a)->scope() == Atom::scopeTranslationUnit;
+    if (auto *da = dyn_cast<DefinedAtom>(a))
+      return da->scope() == Atom::scopeTranslationUnit;
+    return false;
   }
 
   void handleGOT(const Reference &ref) {
@@ -132,10 +133,10 @@ private:
 
   bool requireLocalGOT(const Atom *a) {
     Atom::Scope scope;
-    if (isa<DefinedAtom>(a))
-      scope = dyn_cast<DefinedAtom>(a)->scope();
-    else if (isa<AbsoluteAtom>(a))
-      scope = dyn_cast<AbsoluteAtom>(a)->scope();
+    if (auto *da = dyn_cast<DefinedAtom>(a))
+      scope = da->scope();
+    else if (auto *aa = dyn_cast<AbsoluteAtom>(a))
+      scope = aa->scope();
     else
       return false;
 
