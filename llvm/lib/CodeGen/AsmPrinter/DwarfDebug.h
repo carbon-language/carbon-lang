@@ -589,6 +589,9 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// DWARF 5 Experimental Split Dwarf Emitters
 
+  /// \brief Initialize common features of skeleton units.
+  void initSkeletonUnit(const DwarfUnit *U, DIE *Die, DwarfUnit *NewU);
+
   /// \brief Construct the split debug info compile unit for the debug info
   /// section.
   DwarfCompileUnit *constructSkeletonCU(const DwarfCompileUnit *CU);

@@ -23,9 +23,9 @@
 ; CHECK: .debug_abbrev contents:
 ; CHECK: Abbrev table for offset: 0x00000000
 ; CHECK: [1] DW_TAG_compile_unit DW_CHILDREN_no
+; CHECK: DW_AT_stmt_list DW_FORM_sec_offset
 ; CHECK: DW_AT_GNU_dwo_name      DW_FORM_strp
 ; CHECK: DW_AT_GNU_addr_base     DW_FORM_sec_offset
-; CHECK: DW_AT_stmt_list DW_FORM_sec_offset
 ; CHECK: DW_AT_comp_dir  DW_FORM_strp
 ; CHECK: DW_AT_GNU_dwo_id        DW_FORM_data8
 ; CHECK: DW_AT_low_pc    DW_FORM_addr
@@ -57,9 +57,9 @@
 
 ; CHECK: .debug_info contents:
 ; CHECK: DW_TAG_compile_unit
+; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x00000000)
 ; CHECK: DW_AT_GNU_dwo_name [DW_FORM_strp] ( .debug_str[0x00000000] = "baz.dwo")
 ; CHECK: DW_AT_GNU_addr_base [DW_FORM_sec_offset]                   (0x00000000)
-; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x00000000)
 ; CHECK: DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000008] = "/usr/local/google/home/echristo/tmp")
 ; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x0000000000000000)
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
@@ -105,9 +105,9 @@
 ;
 ; OBJ: .debug_info
 ; OBJ-NEXT: R_X86_64_32 .debug_abbrev
+; OBJ-NEXT: R_X86_64_32 .debug_line
 ; OBJ-NEXT: R_X86_64_32 .debug_str
 ; OBJ-NEXT: R_X86_64_32 .debug_addr
-; OBJ-NEXT: R_X86_64_32 .debug_line
 ; OBJ-NEXT: R_X86_64_32 .debug_str
 ; OBJ-NEXT: }
 ; OBJ: .debug_aranges

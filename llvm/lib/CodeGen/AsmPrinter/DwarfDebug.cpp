@@ -2930,6 +2930,27 @@ void DwarfDebug::emitDebugRanges() {
 
 // DWARF5 Experimental Separate Dwarf emitters.
 
+void DwarfDebug::initSkeletonUnit(const DwarfUnit *U, DIE *Die,
+                                  DwarfUnit *NewU) {
+  NewU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
+                       U->getCUNode().getSplitDebugFilename());
+
+  // Relocate to the beginning of the addr_base section, else 0 for the
+  // beginning of the one for this compile unit.
+  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+    NewU->addSectionLabel(Die, dwarf::DW_AT_GNU_addr_base,
+                           DwarfAddrSectionSym);
+  else
+    NewU->addSectionOffset(Die, dwarf::DW_AT_GNU_addr_base, 0);
+
+  if (!CompilationDir.empty())
+    NewU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
+
+  addGnuPubAttributes(NewU, Die);
+
+  SkeletonHolder.addUnit(NewU);
+}
+
 // This DIE has the following attributes: DW_AT_comp_dir, DW_AT_stmt_list,
 // DW_AT_low_pc, DW_AT_high_pc, DW_AT_ranges, DW_AT_dwo_name, DW_AT_dwo_id,
 // DW_AT_ranges_base, DW_AT_addr_base.
@@ -2942,17 +2963,6 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
   NewCU->initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
                      DwarfInfoSectionSym);
 
-  NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
-                        CU->getCUNode().getSplitDebugFilename());
-
-  // Relocate to the beginning of the addr_base section, else 0 for the
-  // beginning of the one for this compile unit.
-  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    NewCU->addSectionLabel(Die, dwarf::DW_AT_GNU_addr_base,
-                           DwarfAddrSectionSym);
-  else
-    NewCU->addSectionOffset(Die, dwarf::DW_AT_GNU_addr_base, 0);
-
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section.
   // FIXME: Should handle multiple compile units.
@@ -2961,12 +2971,7 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
   else
     NewCU->addSectionOffset(Die, dwarf::DW_AT_stmt_list, 0);
 
-  if (!CompilationDir.empty())
-    NewCU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
-
-  addGnuPubAttributes(NewCU, Die);
-
-  SkeletonHolder.addUnit(NewCU);
+  initSkeletonUnit(CU, Die, NewCU);
 
   return NewCU;
 }
