@@ -2490,7 +2490,7 @@ void MicrosoftRecordLayoutBuilder::injectVFPtr(const CXXRecordDecl *RD) {
 }
 
 void MicrosoftRecordLayoutBuilder::injectVPtrs(const CXXRecordDecl *RD) {
-  if (!(HasOwnVFPtr || HasVBPtr && !SharedVBPtrBase))
+  if (!(HasOwnVFPtr || (HasVBPtr && !SharedVBPtrBase)))
     return;
   if (!Is64BitMode || RequiredAlignment <= CharUnits::fromQuantity(8)) {
     // Note that the VBPtr is injected first.  It depends on the alignment of
