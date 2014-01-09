@@ -28,7 +28,6 @@
 #include "polly/ScopInfo.h"
 
 #define DEBUG_TYPE "polly-cloog"
-#include "llvm/IR/Writer.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 
@@ -258,11 +257,11 @@ std::string CloogExporter::getFileName(Region *R) const {
   raw_string_ostream ExitStr(ExitName);
   raw_string_ostream EntryStr(EntryName);
 
-  WriteAsOperand(EntryStr, R->getEntry(), false);
+  R->getEntry()->printAsOperand(EntryStr, false);
   EntryStr.str();
 
   if (R->getExit()) {
-    WriteAsOperand(ExitStr, R->getExit(), false);
+    R->getExit()->printAsOperand(ExitStr, false);
     ExitStr.str();
   } else
     ExitName = "FunctionExit";

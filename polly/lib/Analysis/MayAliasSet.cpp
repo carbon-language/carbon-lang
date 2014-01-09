@@ -17,7 +17,6 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -29,7 +28,7 @@ void MayAliasSet::print(raw_ostream &OS) const {
   OS << "Must alias {";
 
   for (const_iterator I = mustalias_begin(), E = mustalias_end(); I != E; ++I) {
-    WriteAsOperand(OS, *I, false);
+    (*I)->printAsOperand(OS, false);
     OS << ", ";
   }
 

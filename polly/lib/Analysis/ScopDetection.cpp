@@ -56,7 +56,6 @@
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/DiagnosticInfo.h"

@@ -20,7 +20,6 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #define DEBUG_TYPE "polly-independent"
@@ -481,13 +480,13 @@ bool IndependentBlocks::isIndependentBlock(const Region *R,
          OI != OE; ++OI) {
       if (isEscapeOperand(*OI, BB, R)) {
         DEBUG(dbgs() << "Instruction in function '";
-              WriteAsOperand(dbgs(), BB->getParent(), false);
+              BB->getParent()->printAsOperand(dbgs(), false);
               dbgs() << "' not independent:\n");
         DEBUG(dbgs() << "Uses invalid operator\n");
         DEBUG(Inst->print(dbgs()));
         DEBUG(dbgs() << "\n");
         DEBUG(dbgs() << "Invalid operator is: ";
-              WriteAsOperand(dbgs(), *OI, false); dbgs() << "\n");
+              (*OI)->printAsOperand(dbgs(), false); dbgs() << "\n");
         return false;
       }
     }
