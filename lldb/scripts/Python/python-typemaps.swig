@@ -440,7 +440,7 @@
    else // if (flags & __SRW)
       mode[i++] = 'a';
 #endif
-   $result = PyFile_FromFile($1, const_cast<char*>(""), mode, fclose);
+   $result = PyFile_FromFile($1, const_cast<char*>(""), mode, fflush);
 }
 
 %typemap(in) (const char* string, int len) {
