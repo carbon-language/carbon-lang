@@ -289,7 +289,7 @@ int main() {
 // CHECK-NEXT:  8 |     (D vftable pointer)
 // CHECK-NEXT: 16 |     double a
 // CHECK-NEXT: sizeof=24, align=8
-// CHECK-NEXT: nvsize=8, nvalign=4
+// CHECK-NEXT: nvsize=8, nvalign=8
 
 // CHECK: %struct.H = type { %struct.G, i32*, %class.D }
 
