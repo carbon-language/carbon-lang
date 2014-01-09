@@ -153,8 +153,14 @@ namespace {
 
   cl::opt<bool>
   EnableCacheManager("enable-cache-manager",
-        cl::desc("Use cache manager to save/load mdoules."),
+        cl::desc("Use cache manager to save/load mdoules"),
         cl::init(false));
+
+  cl::opt<std::string>
+  ObjectCacheDir("object-cache-dir",
+                  cl::desc("Directory to store cached object files "
+                           "(must be user writable)"),
+                  cl::init(""));
 
   cl::opt<std::string>
   FakeArgv0("fake-argv0",
@@ -240,13 +246,19 @@ namespace {
 //===----------------------------------------------------------------------===//
 // Object cache
 //
-// This object cache implementation writes cached objects to disk using a
-// filename provided in the module descriptor and tries to load a saved object
-// using that filename if the file exists.
+// This object cache implementation writes cached objects to disk to the
+// directory specified by CacheDir, using a filename provided in the module
+// descriptor. The cache tries to load a saved object using that path if the
+// file exists. CacheDir defaults to "", in which case objects are cached
+// alongside their originating bitcodes. 
 //
 class LLIObjectCache : public ObjectCache {
 public:
-  LLIObjectCache() { }
+  LLIObjectCache(const std::string& CacheDir) : CacheDir(CacheDir) {
+    // Add trailing '/' to cache dir if necessary.
+    if (!this->CacheDir.empty() && this->CacheDir.back() != '/')
+      this->CacheDir += '/'; 
+  }
   virtual ~LLIObjectCache() {}
 
   virtual void notifyObjectCompiled(const Module *M, const MemoryBuffer *Obj) {
@@ -255,6 +267,8 @@ public:
     if (!getCacheFilename(ModuleID, CacheName))
       return;
     std::string errStr;
+    if (!CacheDir.empty()) // Create user-defined cache dir.
+      sys::fs::create_directories(CacheName.substr(0, CacheName.rfind('/')));
     raw_fd_ostream outfile(CacheName.c_str(), errStr, sys::fs::F_Binary);
     outfile.write(Obj->getBufferStart(), Obj->getBufferSize());
     outfile.close();
@@ -279,12 +293,14 @@ public:
   }
 
 private:
+  std::string CacheDir;
+
   bool getCacheFilename(const std::string &ModID, std::string &CacheName) {
     std::string Prefix("file:");
     size_t PrefixLength = Prefix.length();
     if (ModID.substr(0, PrefixLength) != Prefix)
       return false;
-    CacheName = ModID.substr(PrefixLength);
+    CacheName = CacheDir + ModID.substr(PrefixLength);
     size_t pos = CacheName.rfind('.');
     CacheName.replace(pos, CacheName.length() - pos, ".o");
     return true;
@@ -476,7 +492,7 @@ int main(int argc, char **argv, char * const *envp) {
   }
 
   if (EnableCacheManager) {
-    CacheManager = new LLIObjectCache;
+    CacheManager = new LLIObjectCache(ObjectCacheDir);
     EE->setObjectCache(CacheManager);
   }
 
