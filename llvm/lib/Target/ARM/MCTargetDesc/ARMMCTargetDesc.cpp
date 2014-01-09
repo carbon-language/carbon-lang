@@ -126,9 +126,9 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
           ARMArchFeature = "+v7";
       } else if (Len >= Idx+2 && TT[Idx+1] == 's') {
         if (NoCPU)
-          // v7s: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureT2XtPk
+          // v7s: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureHasRAS
           //      Swift
-          ARMArchFeature = "+v7,+swift,+neon,+db,+t2dsp,+t2xtpk";
+          ARMArchFeature = "+v7,+swift,+neon,+db,+t2dsp,+ras";
         else
           // Use CPU to figure out the exact features.
           ARMArchFeature = "+v7";
