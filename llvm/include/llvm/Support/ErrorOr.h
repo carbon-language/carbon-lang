@@ -178,8 +178,8 @@ public:
     return HasError ? 0 : unspecified_bool_true;
   }
 
-  T &get() { return *getStorage(); }
-  const T &get() const { return const_cast<ErrorOr<T> >(this)->get(); }
+  reference get() { return *getStorage(); }
+  const reference get() const { return const_cast<ErrorOr<T> >(this)->get(); }
 
   error_code getError() const {
     return HasError ? *getErrorStorage() : error_code::success();
