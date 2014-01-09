@@ -40,23 +40,23 @@ GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,
                        cl::init(false));
 
 /// Unit - Unit constructor.
-DwarfUnit::DwarfUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
-                     DwarfDebug *DW, DwarfFile *DWU)
-    : UniqueID(UID), Node(Node), UnitDie(D), DebugInfoOffset(0), Asm(A), DD(DW),
-      DU(DWU), IndexTyDie(0), Section(0), Skeleton(0) {
+DwarfUnit::DwarfUnit(unsigned UID, DIE *D, AsmPrinter *A, DwarfDebug *DW,
+                     DwarfFile *DWU)
+    : UniqueID(UID), UnitDie(D), DebugInfoOffset(0), Asm(A), DD(DW), DU(DWU),
+      IndexTyDie(0), Section(0), Skeleton(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 
 DwarfCompileUnit::DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
                                    AsmPrinter *A, DwarfDebug *DW,
                                    DwarfFile *DWU)
-    : DwarfUnit(UID, D, Node, A, DW, DWU) {
+    : DwarfUnit(UID, D, A, DW, DWU), Node(Node) {
   insertDIE(Node, D);
 }
 
 DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DIE *D, uint16_t Language,
                              AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU)
-    : DwarfUnit(UID, D, DICompileUnit(), A, DW, DWU), Language(Language) {}
+    : DwarfUnit(UID, D, A, DW, DWU), Language(Language) {}
 
 /// ~Unit - Destructor for compile unit.
 DwarfUnit::~DwarfUnit() {

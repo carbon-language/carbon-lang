@@ -65,9 +65,6 @@ protected:
   /// UniqueID - a numeric ID unique among all CUs in the module
   unsigned UniqueID;
 
-  /// Node - MDNode for the compile unit.
-  DICompileUnit Node;
-
   /// Unit debug information entry.
   const OwningPtr<DIE> UnitDie;
 
@@ -149,8 +146,8 @@ protected:
   /// Skeleton unit associated with this unit.
   DwarfUnit *Skeleton;
 
-  DwarfUnit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A,
-            DwarfDebug *DW, DwarfFile *DWU);
+  DwarfUnit(unsigned UID, DIE *D, AsmPrinter *A, DwarfDebug *DW,
+            DwarfFile *DWU);
 
 public:
   virtual ~DwarfUnit();
@@ -219,7 +216,6 @@ public:
   // Accessors.
   unsigned getUniqueID() const { return UniqueID; }
   virtual uint16_t getLanguage() const = 0;
-  DICompileUnit getNode() const { return Node; }
   DIE *getUnitDie() const { return UnitDie.get(); }
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
@@ -534,9 +530,13 @@ private:
 };
 
 class DwarfCompileUnit : public DwarfUnit {
+  /// Node - MDNode for the compile unit.
+  DICompileUnit Node;
+
 public:
   DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
                    DwarfDebug *DW, DwarfFile *DWU);
+  DICompileUnit getNode() const { return Node; }
   virtual ~DwarfCompileUnit() LLVM_OVERRIDE;
 
   /// createGlobalVariableDIE - create global variable DIE.
