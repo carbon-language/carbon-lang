@@ -180,10 +180,3 @@ int main(int argc, char **argv) {
 
   return TableGenMain(argv[0], &LLVMTableGenMain);
 }
-
-extern "C" {
-// Disable LeakSanitizer for this binary as it has too many leaks that are not
-// very interesting to fix. __lsan_is_turned_off is explained in
-// compiler-rt/include/sanitizer/lsan_interface.h
-int __lsan_is_turned_off() { return 1; }
-}  // extern "C"
