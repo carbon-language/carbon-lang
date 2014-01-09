@@ -70,11 +70,10 @@ public:
 /// It is used like the following.
 /// \code
 ///   ErrorOr<Buffer> getBuffer();
-///   void handleError(error_code ec);
 ///
 ///   auto buffer = getBuffer();
-///   if (!buffer)
-///     handleError(buffer);
+///   if (error_code ec = buffer.getError())
+///     return ec;
 ///   buffer->write("adena");
 /// \endcode
 ///
