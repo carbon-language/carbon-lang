@@ -2938,12 +2938,12 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   DwarfCompileUnit *NewCU = new DwarfCompileUnit(
-      CU->getUniqueID(), Die, CU->getNode(), Asm, this, &SkeletonHolder);
+      CU->getUniqueID(), Die, CU->getCUNode(), Asm, this, &SkeletonHolder);
   NewCU->initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
                      DwarfInfoSectionSym);
 
   NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
-                        CU->getNode().getSplitDebugFilename());
+                        CU->getCUNode().getSplitDebugFilename());
 
   // Relocate to the beginning of the addr_base section, else 0 for the
   // beginning of the one for this compile unit.
@@ -2999,19 +2999,20 @@ void DwarfDebug::emitDebugStrDWO() {
                          OffSec, StrSym);
 }
 
-void DwarfDebug::addDwarfTypeUnitType(uint16_t Language, StringRef Identifier,
-                                      DIE *RefDie, DICompositeType CTy) {
+void DwarfDebug::addDwarfTypeUnitType(DICompileUnit CUNode,
+                                      StringRef Identifier, DIE *RefDie,
+                                      DICompositeType CTy) {
   const DwarfTypeUnit *&TU = DwarfTypeUnits[CTy];
   if (!TU) {
     DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
     DwarfTypeUnit *NewTU =
-        new DwarfTypeUnit(InfoHolder.getUnits().size(), UnitDie, Language, Asm,
+        new DwarfTypeUnit(InfoHolder.getUnits().size(), UnitDie, CUNode, Asm,
                           this, &InfoHolder);
     TU = NewTU;
     InfoHolder.addUnit(NewTU);
 
     NewTU->addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
-                   Language);
+                   CUNode.getLanguage());
 
     DIE *Die = NewTU->createTypeDIE(CTy);
 

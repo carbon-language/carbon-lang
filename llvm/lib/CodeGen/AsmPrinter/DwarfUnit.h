@@ -66,7 +66,7 @@ protected:
   unsigned UniqueID;
 
   /// Node - MDNode for the compile unit.
-  DICompileUnit Node;
+  DICompileUnit CUNode;
 
   /// Unit debug information entry.
   const OwningPtr<DIE> UnitDie;
@@ -218,8 +218,8 @@ public:
 
   // Accessors.
   unsigned getUniqueID() const { return UniqueID; }
-  virtual uint16_t getLanguage() const = 0;
-  DICompileUnit getNode() const { return Node; }
+  uint16_t getLanguage() const { return CUNode.getLanguage(); }
+  DICompileUnit getCUNode() const { return CUNode; }
   DIE *getUnitDie() const { return UnitDie.get(); }
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
@@ -545,18 +545,15 @@ public:
   /// addLabelAddress - Add a dwarf label attribute data and value using
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
   void addLabelAddress(DIE *Die, dwarf::Attribute Attribute, MCSymbol *Label);
-
-  uint16_t getLanguage() const LLVM_OVERRIDE { return getNode().getLanguage(); }
 };
 
 class DwarfTypeUnit : public DwarfUnit {
 private:
-  uint16_t Language;
   uint64_t TypeSignature;
   const DIE *Ty;
 
 public:
-  DwarfTypeUnit(unsigned UID, DIE *D, uint16_t Language, AsmPrinter *A,
+  DwarfTypeUnit(unsigned UID, DIE *D, DICompileUnit CUNode, AsmPrinter *A,
                 DwarfDebug *DW, DwarfFile *DWU);
   virtual ~DwarfTypeUnit() LLVM_OVERRIDE;
 
@@ -564,7 +561,6 @@ public:
   uint64_t getTypeSignature() const { return TypeSignature; }
   void setType(const DIE *Ty) { this->Ty = Ty; }
 
-  uint16_t getLanguage() const LLVM_OVERRIDE { return Language; }
   /// Emit the header for this unit, not including the initial length field.
   void emitHeader(const MCSection *ASection, const MCSymbol *ASectionSym) const
       LLVM_OVERRIDE;

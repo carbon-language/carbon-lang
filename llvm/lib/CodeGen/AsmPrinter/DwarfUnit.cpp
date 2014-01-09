@@ -42,8 +42,8 @@ GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,
 /// Unit - Unit constructor.
 DwarfUnit::DwarfUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
                      DwarfDebug *DW, DwarfFile *DWU)
-    : UniqueID(UID), Node(Node), UnitDie(D), DebugInfoOffset(0), Asm(A), DD(DW),
-      DU(DWU), IndexTyDie(0), Section(0), Skeleton(0) {
+    : UniqueID(UID), CUNode(Node), UnitDie(D), DebugInfoOffset(0), Asm(A),
+      DD(DW), DU(DWU), IndexTyDie(0), Section(0), Skeleton(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 
@@ -54,9 +54,9 @@ DwarfCompileUnit::DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
   insertDIE(Node, D);
 }
 
-DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DIE *D, uint16_t Language,
+DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DIE *D, DICompileUnit CUNode,
                              AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU)
-    : DwarfUnit(UID, D, DICompileUnit(), A, DW, DWU), Language(Language) {}
+    : DwarfUnit(UID, D, CUNode, A, DW, DWU) {}
 
 /// ~Unit - Destructor for compile unit.
 DwarfUnit::~DwarfUnit() {
@@ -956,8 +956,7 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     DICompositeType CTy(Ty);
     if (GenerateDwarfTypeUnits && !Ty.isForwardDecl())
       if (MDString *TypeId = CTy.getIdentifier()) {
-        DD->addDwarfTypeUnitType(getLanguage(), TypeId->getString(), TyDIE,
-                                 CTy);
+        DD->addDwarfTypeUnitType(getCUNode(), TypeId->getString(), TyDIE, CTy);
         // Skip updating the accellerator tables since this is not the full type
         return TyDIE;
       }
