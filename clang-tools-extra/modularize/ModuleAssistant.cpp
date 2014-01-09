@@ -139,7 +139,7 @@ static const char *ReservedNames[] = {
   "link",          "umbrella", "extern", "use",      0 // Flag end.
 };
 
-// Convert module name to a non keyword.
+// Convert module name to a non-keyword.
 // Prepends a '_' to the name if and only if the name is a keyword.
 static std::string
 ensureNoCollisionWithReservedName(llvm::StringRef MightBeReservedName) {

@@ -776,7 +776,7 @@ INPUT_FILTER           =
 # filter if there is a match.  The filters are a list of the form:
 # pattern=filter (like *.cpp=my_cpp_filter). See INPUT_FILTER for further
 # info on how filters are used. If FILTER_PATTERNS is empty or if
-# non of the patterns match the file name, INPUT_FILTER is applied.
+# none of the patterns match the file name, INPUT_FILTER is applied.
 
 FILTER_PATTERNS        =
 
