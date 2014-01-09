@@ -126,6 +126,16 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Unset environment variables for process before launching.</td></tr>
+                        <td class="content">
+                            <b>(gdb)</b> unset env DEBUG<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> settings remove target.env-vars DEBUG<br>
+                            <b>(lldb)</b> set rem target.env-vars DEBUG<br>
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">Show the arguments that will be or were passed to the program when run.</td></tr>
                         <td class="content">
                             <b>(gdb)</b> show args<br>
