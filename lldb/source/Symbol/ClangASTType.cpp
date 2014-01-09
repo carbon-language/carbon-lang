@@ -3245,7 +3245,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
         case clang::Type::ExtVector:
             if (idx_is_valid)
             {
-                const VectorType *array = cast<VectorType>(GetQualType().getTypePtr());
+                const VectorType *array = cast<VectorType>(parent_qual_type.getTypePtr());
                 if (array)
                 {
                     ClangASTType element_type (m_ast, array->getElementType());
@@ -3266,7 +3266,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
         case clang::Type::IncompleteArray:
             if (ignore_array_bounds || idx_is_valid)
             {
-                const ArrayType *array = cast<ArrayType>(GetQualType().getTypePtr());
+                const ArrayType *array = cast<ArrayType>(parent_qual_type.getTypePtr());
                 if (array)
                 {
                     ClangASTType element_type (m_ast, array->getElementType());
