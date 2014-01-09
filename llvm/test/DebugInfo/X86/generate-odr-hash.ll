@@ -1,7 +1,10 @@
 ; REQUIRES: object-emission
 
 ; RUN: llc %s -o %t -filetype=obj -O0 -generate-type-units -mtriple=x86_64-unknown-linux-gnu
-; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-dwarfdump %t | FileCheck --check-prefix=CHECK --check-prefix=SINGLE %s
+
+; RUN: llc %s -split-dwarf=Enable -o %t -filetype=obj -O0 -generate-type-units -mtriple=x86_64-unknown-linux-gnu
+; RUN: llvm-dwarfdump %t | FileCheck --check-prefix=CHECK --check-prefix=FISSION %s
 
 ; Generated from:
 ; struct bar {};
@@ -43,7 +46,8 @@
 
 ; wombat wom;
 
-; CHECK-LABEL: .debug_info contents:
+; SINGLE-LABEL: .debug_info contents:
+; FISSION-LABEL: .debug_info.dwo contents:
 ; CHECK: Compile Unit: length = [[CU_SIZE:[0-9a-f]+]]
 
 ; CHECK: DW_TAG_structure_type
@@ -53,18 +57,32 @@
 
 ; Ensure the CU-local type 'walrus' is not placed in a type unit.
 ; CHECK: DW_TAG_structure_type
-; CHECK-NEXT: debug_str{{.*}}"walrus"
+; CHECK-NEXT: DW_AT_name{{.*}}"walrus"
 ; CHECK-NEXT: DW_AT_byte_size
 ; CHECK-NEXT: DW_AT_decl_file
 ; CHECK-NEXT: DW_AT_decl_line
 
-; CHECK-LABEL: .debug_types contents:
+; FISSION-LABEL: .debug_types contents:
+; FISSION-NOT: type_signature
+; FISSION-LABEL: type_signature = 0x1d02f3be30cc5688
+; FISSION: DW_TAG_type_unit
+; FISSION: DW_AT_GNU_dwo_name{{.*}}"bar.dwo"
+; FISSION: DW_AT_comp_dir{{.*}}"/tmp/dbginfo"
+; FISSION-NOT: type_signature
+; FISSION-LABEL: type_signature = 0xb04af47397402e77
+; FISSION-NOT: type_signature
+; FISSION-LABEL: type_signature = 0xfd756cee88f8a118
+; FISSION-NOT: type_signature
+; FISSION-LABEL: type_signature = 0xe94f6d3843e62d6b
+
+; SINGLE-LABEL: .debug_types contents:
+; FISSION-LABEL: .debug_types.dwo contents:
 
 ; Check that we generate a hash for bar and the value.
 ; CHECK-NOT: type_signature
 ; CHECK-LABEL: type_signature = 0x1d02f3be30cc5688
 ; CHECK: DW_TAG_structure_type
-; CHECK-NEXT: debug_str{{.*}}"bar"
+; CHECK-NEXT: DW_AT_name{{.*}}"bar"
 
 
 ; Check that we generate a hash for fluffy and the value.
@@ -72,13 +90,13 @@
 ; CHECK-LABEL: type_signature = 0xb04af47397402e77
 ; CHECK-NOT: DW_AT_GNU_odr_signature [DW_FORM_data8]   (0x9a0124d5a0c21c52)
 ; CHECK: DW_TAG_namespace
-; CHECK-NEXT: debug_str{{.*}}"echidna"
+; CHECK-NEXT: DW_AT_name{{.*}}"echidna"
 ; CHECK: DW_TAG_namespace
-; CHECK-NEXT: debug_str{{.*}}"capybara"
+; CHECK-NEXT: DW_AT_name{{.*}}"capybara"
 ; CHECK: DW_TAG_namespace
-; CHECK-NEXT: debug_str{{.*}}"mongoose"
+; CHECK-NEXT: DW_AT_name{{.*}}"mongoose"
 ; CHECK: DW_TAG_class_type
-; CHECK-NEXT: debug_str{{.*}}"fluffy"
+; CHECK-NEXT: DW_AT_name{{.*}}"fluffy"
 
 ; Check that we generate a hash for wombat and the value, but not for the
 ; anonymous type contained within.
@@ -86,7 +104,7 @@
 ; CHECK-LABEL: type_signature = 0xfd756cee88f8a118
 ; CHECK-NOT: DW_AT_GNU_odr_signature [DW_FORM_data8] (0x685bcc220141e9d7)
 ; CHECK: DW_TAG_structure_type
-; CHECK-NEXT: debug_str{{.*}}"wombat"
+; CHECK-NEXT: DW_AT_name{{.*}}"wombat"
 
 ; CHECK-NOT: type_signature
 ; CHECK-LABEL: type_signature = 0xe94f6d3843e62d6b
@@ -100,7 +118,7 @@
 ; CHECK-NOT: DW_AT_name
 ; CHECK-NOT: DW_AT_GNU_odr_signature
 ; CHECK: DW_TAG_member
-; CHECK-NEXT: debug_str{{.*}}"a"
+; CHECK-NEXT: DW_AT_name{{.*}}"a"
 
 ; Use the unit size as a rough hash/identifier for the unit we're dealing with
 ; it happens to be unambiguous at the moment, but it's hardly ideal.
@@ -110,17 +128,21 @@
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "walrus"
 ; Type unit for 'bar'
-; CHECK-NEXT: unit_size = 0x00000023
+; SINGLE-NEXT: unit_size = 0x00000023
+; FISSION-NEXT: unit_size = 0x00000024
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "bar"
-; CHECK-NEXT: unit_size = 0x0000005d
+; SINGLE-NEXT: unit_size = 0x0000005d
+; FISSION-NEXT: unit_size = 0x00000024
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "int"
 ; CHECK-NEXT: "echidna::capybara::mongoose::fluffy"
-; CHECK-NEXT: unit_size = 0x0000003a
+; SINGLE-NEXT: unit_size = 0x0000003a
+; FISSION-NEXT: unit_size = 0x00000024
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "wombat"
-; CHECK-NEXT: unit_size = 0x0000004b
+; SINGLE-NEXT: unit_size = 0x0000004b
+; FISSION-NEXT: unit_size = 0x00000024
 ; CHECK-NEXT: Offset Name
 ; CHECK-NEXT: "int"
 
@@ -179,7 +201,7 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!42, !54}
 !llvm.ident = !{!43}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !3, metadata !20, metadata !37, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/bar.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !3, metadata !20, metadata !37, metadata !2, metadata !"bar.dwo"} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/bar.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"bar.cpp", metadata !"/tmp/dbginfo"}
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !4, metadata !5, metadata !13, metadata !16}

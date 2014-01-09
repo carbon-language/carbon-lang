@@ -2976,6 +2976,21 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
   return NewCU;
 }
 
+// This DIE has the following attributes: DW_AT_comp_dir, DW_AT_dwo_name,
+// DW_AT_addr_base.
+DwarfTypeUnit *DwarfDebug::constructSkeletonTU(const DwarfTypeUnit *TU) {
+
+  DIE *Die = new DIE(dwarf::DW_TAG_type_unit);
+  DwarfTypeUnit *NewTU = new DwarfTypeUnit(
+      TU->getUniqueID(), Die, TU->getCUNode(), Asm, this, &SkeletonHolder);
+  NewTU->setTypeSignature(TU->getTypeSignature());
+  NewTU->initSection(
+      Asm->getObjFileLowering().getDwarfTypesSection(TU->getTypeSignature()));
+
+  initSkeletonUnit(TU, Die, NewTU);
+  return NewTU;
+}
+
 // Emit the .debug_info.dwo section for separated dwarf. This contains the
 // compile units that would normally be in debug_info.
 void DwarfDebug::emitDebugInfoDWO() {
@@ -3018,8 +3033,6 @@ void DwarfDebug::addDwarfTypeUnitType(DICompileUnit CUNode,
     NewTU->addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                    CUNode.getLanguage());
 
-    DIE *Die = NewTU->createTypeDIE(CTy);
-
     MD5 Hash;
     Hash.update(Identifier);
     // ... take the least significant 8 bytes and return those. Our MD5
@@ -3029,7 +3042,10 @@ void DwarfDebug::addDwarfTypeUnitType(DICompileUnit CUNode,
     Hash.final(Result);
     uint64_t Signature = *reinterpret_cast<support::ulittle64_t *>(Result + 8);
     NewTU->setTypeSignature(Signature);
-    NewTU->setType(Die);
+    if (useSplitDwarf())
+      NewTU->setSkeleton(constructSkeletonTU(NewTU));
+
+    NewTU->setType(NewTU->createTypeDIE(CTy));
 
     NewTU->initSection(
         useSplitDwarf()
