@@ -19,7 +19,6 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
@@ -309,7 +308,7 @@ llvm::SplitFunctionsOutOfModule(Module *M,
   for (unsigned i = 0, e = F.size(); i != e; ++i) {
     Function *TNOF = cast<Function>(VMap[F[i]]);
     DEBUG(errs() << "Removing function ");
-    DEBUG(WriteAsOperand(errs(), TNOF, false));
+    DEBUG(TNOF->printAsOperand(errs(), false));
     DEBUG(errs() << "\n");
     TestFunctions.insert(cast<Function>(NewVMap[TNOF]));
     DeleteFunctionBody(TNOF);       // Function is now external in this module!
@@ -330,7 +329,7 @@ llvm::SplitFunctionsOutOfModule(Module *M,
       if (Function *SafeFn = globalInitUsesExternalBA(GV)) {
         errs() << "*** Error: when reducing functions, encountered "
                   "the global '";
-        WriteAsOperand(errs(), GV, false);
+        GV->printAsOperand(errs(), false);
         errs() << "' with an initializer that references blockaddresses "
                   "from safe function '" << SafeFn->getName()
                << "' and from test function '" << TestFn->getName() << "'.\n";

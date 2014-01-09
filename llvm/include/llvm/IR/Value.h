@@ -36,6 +36,7 @@ class InlineAsm;
 class Instruction;
 class LLVMContext;
 class MDNode;
+class Module;
 class StringRef;
 class Twine;
 class Type;
@@ -105,6 +106,13 @@ public:
   /// print - Implement operator<< on Value.
   ///
   void print(raw_ostream &O, AssemblyAnnotationWriter *AAW = 0) const;
+
+  /// \brief Print the name of this Value out to the specified raw_ostream.
+  /// This is useful when you just want to print 'int %reg126', not the
+  /// instruction that generated it. If you specify a Module for context, then
+  /// even constanst get pretty-printed; for example, the type of a null
+  /// pointer is printed symbolically.
+  void printAsOperand(raw_ostream &O, bool PrintType = true, const Module *M = 0) const;
 
   /// All values are typed, get the type of this value.
   ///

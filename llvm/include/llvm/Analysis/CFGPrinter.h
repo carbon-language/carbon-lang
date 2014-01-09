@@ -18,7 +18,6 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/GraphWriter.h"
 
@@ -40,7 +39,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     std::string Str;
     raw_string_ostream OS(Str);
 
-    WriteAsOperand(OS, Node, false);
+    Node->printAsOperand(OS, false);
     return OS.str();
   }
 
@@ -51,7 +50,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     raw_string_ostream OS(Str);
 
     if (Node->getName().empty()) {
-      WriteAsOperand(OS, Node, false);
+      Node->printAsOperand(OS, false);
       OS << ":";
     }
 

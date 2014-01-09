@@ -62,7 +62,6 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/InstVisitor.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
@@ -101,7 +100,7 @@ namespace {  // Anonymous namespace for class
         if (I->empty() || !I->back().isTerminator()) {
           dbgs() << "Basic Block in function '" << F.getName()
                  << "' does not have terminator!\n";
-          WriteAsOperand(dbgs(), I, true);
+          I->printAsOperand(dbgs(), true);
           dbgs() << "\n";
           Broken = true;
         }
@@ -348,7 +347,7 @@ namespace {
       if (isa<Instruction>(V)) {
         MessagesStr << *V << '\n';
       } else {
-        WriteAsOperand(MessagesStr, V, true, Mod);
+        V->printAsOperand(MessagesStr, true, Mod);
         MessagesStr << '\n';
       }
     }

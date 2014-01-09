@@ -17,7 +17,6 @@
 
 #include "llvm/Analysis/Trace.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -37,7 +36,7 @@ void Trace::print(raw_ostream &O) const {
   O << "; Trace from function " << F->getName() << ", blocks:\n";
   for (const_iterator i = begin(), e = end(); i != e; ++i) {
     O << "; ";
-    WriteAsOperand(O, *i, true, getModule());
+    (*i)->printAsOperand(O, true, getModule());
     O << "\n";
   }
   O << "; Trace parent function: \n" << *F;

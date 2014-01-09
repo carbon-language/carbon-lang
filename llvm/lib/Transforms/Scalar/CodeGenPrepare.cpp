@@ -30,7 +30,6 @@
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
@@ -845,7 +844,7 @@ void ExtAddrMode::print(raw_ostream &OS) const {
   if (BaseGV) {
     OS << (NeedPlus ? " + " : "")
        << "GV:";
-    WriteAsOperand(OS, BaseGV, /*PrintType=*/false);
+    BaseGV->printAsOperand(OS, /*PrintType=*/false);
     NeedPlus = true;
   }
 
@@ -855,13 +854,13 @@ void ExtAddrMode::print(raw_ostream &OS) const {
   if (BaseReg) {
     OS << (NeedPlus ? " + " : "")
        << "Base:";
-    WriteAsOperand(OS, BaseReg, /*PrintType=*/false);
+    BaseReg->printAsOperand(OS, /*PrintType=*/false);
     NeedPlus = true;
   }
   if (Scale) {
     OS << (NeedPlus ? " + " : "")
        << Scale << "*";
-    WriteAsOperand(OS, ScaledReg, /*PrintType=*/false);
+    ScaledReg->printAsOperand(OS, /*PrintType=*/false);
   }
 
   OS << ']';

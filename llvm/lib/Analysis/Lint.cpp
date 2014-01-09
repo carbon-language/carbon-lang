@@ -46,7 +46,6 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/InstVisitor.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
@@ -129,7 +128,7 @@ namespace {
       if (isa<Instruction>(V)) {
         MessagesStr << *V << '\n';
       } else {
-        WriteAsOperand(MessagesStr, V, true, Mod);
+        V->printAsOperand(MessagesStr, true, Mod);
         MessagesStr << '\n';
       }
     }

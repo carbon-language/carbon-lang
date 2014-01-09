@@ -16,7 +16,6 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/LegacyPassManagers.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -144,7 +143,7 @@ void PassManagerPrettyStackEntry::print(raw_ostream &OS) const {
     OS << "value";
 
   OS << " '";
-  WriteAsOperand(OS, V, /*PrintTy=*/false, M);
+  V->printAsOperand(OS, /*PrintTy=*/false, M);
   OS << "'\n";
 }
 

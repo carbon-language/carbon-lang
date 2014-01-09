@@ -39,7 +39,6 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -1712,7 +1711,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
       !Deps[0].getResult().isDef() && !Deps[0].getResult().isClobber()) {
     DEBUG(
       dbgs() << "GVN: non-local load ";
-      WriteAsOperand(dbgs(), LI);
+      LI->printAsOperand(dbgs());
       dbgs() << " has unknown dependencies\n";
     );
     return false;
@@ -1890,7 +1889,7 @@ bool GVN::processLoad(LoadInst *L) {
     DEBUG(
       // fast print dep, using operator<< on instruction is too slow.
       dbgs() << "GVN: load ";
-      WriteAsOperand(dbgs(), L);
+      L->printAsOperand(dbgs());
       Instruction *I = Dep.getInst();
       dbgs() << " is clobbered by " << *I << '\n';
     );
@@ -1905,7 +1904,7 @@ bool GVN::processLoad(LoadInst *L) {
     DEBUG(
       // fast print dep, using operator<< on instruction is too slow.
       dbgs() << "GVN: load ";
-      WriteAsOperand(dbgs(), L);
+      L->printAsOperand(dbgs());
       dbgs() << " has unknown dependence\n";
     );
     return false;

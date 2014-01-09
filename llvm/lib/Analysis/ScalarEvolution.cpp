@@ -77,7 +77,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Operator.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
@@ -138,7 +137,7 @@ void SCEV::dump() const {
 void SCEV::print(raw_ostream &OS) const {
   switch (getSCEVType()) {
   case scConstant:
-    WriteAsOperand(OS, cast<SCEVConstant>(this)->getValue(), false);
+    cast<SCEVConstant>(this)->getValue()->printAsOperand(OS, false);
     return;
   case scTruncate: {
     const SCEVTruncateExpr *Trunc = cast<SCEVTruncateExpr>(this);
@@ -174,7 +173,7 @@ void SCEV::print(raw_ostream &OS) const {
     if (AR->getNoWrapFlags(FlagNW) &&
         !AR->getNoWrapFlags((NoWrapFlags)(FlagNUW | FlagNSW)))
       OS << "nw><";
-    WriteAsOperand(OS, AR->getLoop()->getHeader(), /*PrintType=*/false);
+    AR->getLoop()->getHeader()->printAsOperand(OS, /*PrintType=*/false);
     OS << ">";
     return;
   }
@@ -229,13 +228,13 @@ void SCEV::print(raw_ostream &OS) const {
     Constant *FieldNo;
     if (U->isOffsetOf(CTy, FieldNo)) {
       OS << "offsetof(" << *CTy << ", ";
-      WriteAsOperand(OS, FieldNo, false);
+      FieldNo->printAsOperand(OS, false);
       OS << ")";
       return;
     }
 
     // Otherwise just print it normally.
-    WriteAsOperand(OS, U->getValue(), false);
+    U->getValue()->printAsOperand(OS, false);
     return;
   }
   case scCouldNotCompute:
@@ -7321,7 +7320,7 @@ static void PrintLoopInfo(raw_ostream &OS, ScalarEvolution *SE,
     PrintLoopInfo(OS, SE, *I);
 
   OS << "Loop ";
-  WriteAsOperand(OS, L->getHeader(), /*PrintType=*/false);
+  L->getHeader()->printAsOperand(OS, /*PrintType=*/false);
   OS << ": ";
 
   SmallVector<BasicBlock *, 8> ExitBlocks;
@@ -7337,7 +7336,7 @@ static void PrintLoopInfo(raw_ostream &OS, ScalarEvolution *SE,
 
   OS << "\n"
         "Loop ";
-  WriteAsOperand(OS, L->getHeader(), /*PrintType=*/false);
+  L->getHeader()->printAsOperand(OS, /*PrintType=*/false);
   OS << ": ";
 
   if (!isa<SCEVCouldNotCompute>(SE->getMaxBackedgeTakenCount(L))) {
@@ -7359,7 +7358,7 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
   ScalarEvolution &SE = *const_cast<ScalarEvolution *>(this);
 
   OS << "Classifying expressions for: ";
-  WriteAsOperand(OS, F, /*PrintType=*/false);
+  F->printAsOperand(OS, /*PrintType=*/false);
   OS << "\n";
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (isSCEVable(I->getType()) && !isa<CmpInst>(*I)) {
@@ -7390,7 +7389,7 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
     }
 
   OS << "Determining loop execution counts for: ";
-  WriteAsOperand(OS, F, /*PrintType=*/false);
+  F->printAsOperand(OS, /*PrintType=*/false);
   OS << "\n";
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
     PrintLoopInfo(OS, &SE, *I);

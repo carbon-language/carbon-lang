@@ -30,7 +30,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
@@ -352,7 +351,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     break;
   case MachineOperand::MO_GlobalAddress:
     OS << "<ga:";
-    WriteAsOperand(OS, getGlobal(), /*PrintType=*/false);
+    getGlobal()->printAsOperand(OS, /*PrintType=*/false);
     if (getOffset()) OS << "+" << getOffset();
     OS << '>';
     break;
@@ -363,7 +362,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     break;
   case MachineOperand::MO_BlockAddress:
     OS << '<';
-    WriteAsOperand(OS, getBlockAddress(), /*PrintType=*/false);
+    getBlockAddress()->printAsOperand(OS, /*PrintType=*/false);
     if (getOffset()) OS << "+" << getOffset();
     OS << '>';
     break;
@@ -375,7 +374,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     break;
   case MachineOperand::MO_Metadata:
     OS << '<';
-    WriteAsOperand(OS, getMetadata(), /*PrintType=*/false);
+    getMetadata()->printAsOperand(OS, /*PrintType=*/false);
     OS << '>';
     break;
   case MachineOperand::MO_MCSymbol:
@@ -484,7 +483,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
   if (!MMO.getValue())
     OS << "<unknown>";
   else
-    WriteAsOperand(OS, MMO.getValue(), /*PrintType=*/false);
+    MMO.getValue()->printAsOperand(OS, /*PrintType=*/false);
 
   unsigned AS = MMO.getAddrSpace();
   if (AS != 0)
@@ -509,7 +508,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
   if (const MDNode *TBAAInfo = MMO.getTBAAInfo()) {
     OS << "(tbaa=";
     if (TBAAInfo->getNumOperands() > 0)
-      WriteAsOperand(OS, TBAAInfo->getOperand(0), /*PrintType=*/false);
+      TBAAInfo->getOperand(0)->printAsOperand(OS, /*PrintType=*/false);
     else
       OS << "<unknown>";
     OS << ")";

@@ -14,7 +14,6 @@
 
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -138,10 +137,10 @@ AliasAnalysisCounter::alias(const Location &LocA, const Location &LocB) {
   if (PrintAll || (PrintAllFailures && R == MayAlias)) {
     errs() << AliasString << ":\t";
     errs() << "[" << LocA.Size << "B] ";
-    WriteAsOperand(errs(), LocA.Ptr, true, M);
+    LocA.Ptr->printAsOperand(errs(), true, M);
     errs() << ", ";
     errs() << "[" << LocB.Size << "B] ";
-    WriteAsOperand(errs(), LocB.Ptr, true, M);
+    LocB.Ptr->printAsOperand(errs(), true, M);
     errs() << "\n";
   }
 
@@ -164,7 +163,7 @@ AliasAnalysisCounter::getModRefInfo(ImmutableCallSite CS,
   if (PrintAll || (PrintAllFailures && R == ModRef)) {
     errs() << MRString << ":  Ptr: ";
     errs() << "[" << Loc.Size << "B] ";
-    WriteAsOperand(errs(), Loc.Ptr, true, M);
+    Loc.Ptr->printAsOperand(errs(), true, M);
     errs() << "\t<->" << *CS.getInstruction() << '\n';
   }
   return R;

@@ -20,7 +20,6 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -259,9 +258,9 @@ bool Sinking::SinkInstruction(Instruction *Inst,
     return false;
 
   DEBUG(dbgs() << "Sink" << *Inst << " (";
-        WriteAsOperand(dbgs(), Inst->getParent(), false);
+        Inst->getParent()->printAsOperand(dbgs(), false);
         dbgs() << " -> ";
-        WriteAsOperand(dbgs(), SuccToSinkTo, false);
+        SuccToSinkTo->printAsOperand(dbgs(), false);
         dbgs() << ")\n");
 
   // Move the instruction.

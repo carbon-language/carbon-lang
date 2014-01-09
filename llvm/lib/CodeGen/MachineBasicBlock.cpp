@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/Debug.h"
@@ -278,7 +277,7 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
   const char *Comma = "";
   if (const BasicBlock *LBB = getBasicBlock()) {
     OS << Comma << "derived from LLVM BB ";
-    WriteAsOperand(OS, LBB, /*PrintType=*/false);
+    LBB->printAsOperand(OS, /*PrintType=*/false);
     Comma = ", ";
   }
   if (isLandingPad()) { OS << Comma << "EH LANDING PAD"; Comma = ", "; }
@@ -329,6 +328,10 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
     }
     OS << '\n';
   }
+}
+
+void MachineBasicBlock::printAsOperand(raw_ostream &OS, bool /*PrintType*/) {
+  OS << "BB#" << getNumber();
 }
 
 void MachineBasicBlock::removeLiveIn(unsigned Reg) {
@@ -1216,9 +1219,3 @@ MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
   // At this point we have no idea of the liveness of the register.
   return LQR_Unknown;
 }
-
-void llvm::WriteAsOperand(raw_ostream &OS, const MachineBasicBlock *MBB,
-                          bool t) {
-  OS << "BB#" << MBB->getNumber();
-}
-

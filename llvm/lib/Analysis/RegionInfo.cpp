@@ -15,7 +15,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -215,7 +214,7 @@ std::string Region::getNameStr() const {
   if (getEntry()->getName().empty()) {
     raw_string_ostream OS(entryName);
 
-    WriteAsOperand(OS, getEntry(), false);
+    getEntry()->printAsOperand(OS, false);
   } else
     entryName = getEntry()->getName();
 
@@ -223,7 +222,7 @@ std::string Region::getNameStr() const {
     if (getExit()->getName().empty()) {
       raw_string_ostream OS(exitName);
 
-      WriteAsOperand(OS, getExit(), false);
+      getExit()->printAsOperand(OS, false);
     } else
       exitName = getExit()->getName();
   } else

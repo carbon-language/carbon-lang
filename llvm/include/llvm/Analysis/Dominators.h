@@ -155,7 +155,7 @@ template<class NodeT>
 inline raw_ostream &operator<<(raw_ostream &o,
                                const DomTreeNodeBase<NodeT> *Node) {
   if (Node->getBlock())
-    WriteAsOperand(o, Node->getBlock(), false);
+    Node->getBlock()->printAsOperand(o, false);
   else
     o << " <<exit node>>";
 

@@ -18,7 +18,6 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Type.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -566,7 +565,7 @@ void AliasSet::print(raw_ostream &OS) const {
     OS << "Pointers: ";
     for (iterator I = begin(), E = end(); I != E; ++I) {
       if (I != begin()) OS << ", ";
-      WriteAsOperand(OS << "(", I.getPointer());
+      I.getPointer()->printAsOperand(OS << "(");
       OS << ", " << I.getSize() << ")";
     }
   }
@@ -574,7 +573,7 @@ void AliasSet::print(raw_ostream &OS) const {
     OS << "\n    " << UnknownInsts.size() << " Unknown instructions: ";
     for (unsigned i = 0, e = UnknownInsts.size(); i != e; ++i) {
       if (i) OS << ", ";
-      WriteAsOperand(OS, UnknownInsts[i]);
+      UnknownInsts[i]->printAsOperand(OS);
     }
   }
   OS << "\n";

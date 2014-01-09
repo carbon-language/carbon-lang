@@ -608,6 +608,9 @@ public:
   void dump() const;
   void print(raw_ostream &OS, SlotIndexes* = 0) const;
 
+  // Printing method used by LoopInfo.
+  void printAsOperand(raw_ostream &OS, bool PrintType = true);
+
   /// getNumber - MachineBasicBlocks are uniquely numbered at the function
   /// level, unless they're not in a MachineFunction yet, in which case this
   /// will return -1.
@@ -654,8 +657,6 @@ private:
 };
 
 raw_ostream& operator<<(raw_ostream &OS, const MachineBasicBlock &MBB);
-
-void WriteAsOperand(raw_ostream &, const MachineBasicBlock*, bool t);
 
 // This is useful when building IndexedMaps keyed on basic block pointers.
 struct MBB2NumberFunctor :

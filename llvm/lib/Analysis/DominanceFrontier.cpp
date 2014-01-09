@@ -9,7 +9,6 @@
 
 #include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -114,7 +113,7 @@ void DominanceFrontierBase::print(raw_ostream &OS, const Module* ) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
     OS << "  DomFrontier for BB ";
     if (I->first)
-      WriteAsOperand(OS, I->first, false);
+      I->first->printAsOperand(OS, false);
     else
       OS << " <<exit node>>";
     OS << " is:\t";
@@ -125,7 +124,7 @@ void DominanceFrontierBase::print(raw_ostream &OS, const Module* ) const {
          I != E; ++I) {
       OS << ' ';
       if (*I)
-        WriteAsOperand(OS, *I, false);
+        (*I)->printAsOperand(OS, false);
       else
         OS << "<<exit node>>";
     }

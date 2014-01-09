@@ -68,7 +68,6 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ValueHandle.h"
@@ -394,7 +393,7 @@ void Formula::print(raw_ostream &OS) const {
   bool First = true;
   if (BaseGV) {
     if (!First) OS << " + "; else First = false;
-    WriteAsOperand(OS, BaseGV, /*PrintType=*/false);
+    BaseGV->printAsOperand(OS, /*PrintType=*/false);
   }
   if (BaseOffset != 0) {
     if (!First) OS << " + "; else First = false;
@@ -1080,19 +1079,19 @@ void LSRFixup::print(raw_ostream &OS) const {
   // Store is common and interesting enough to be worth special-casing.
   if (StoreInst *Store = dyn_cast<StoreInst>(UserInst)) {
     OS << "store ";
-    WriteAsOperand(OS, Store->getOperand(0), /*PrintType=*/false);
+    Store->getOperand(0)->printAsOperand(OS, /*PrintType=*/false);
   } else if (UserInst->getType()->isVoidTy())
     OS << UserInst->getOpcodeName();
   else
-    WriteAsOperand(OS, UserInst, /*PrintType=*/false);
+    UserInst->printAsOperand(OS, /*PrintType=*/false);
 
   OS << ", OperandValToReplace=";
-  WriteAsOperand(OS, OperandValToReplace, /*PrintType=*/false);
+  OperandValToReplace->printAsOperand(OS, /*PrintType=*/false);
 
   for (PostIncLoopSet::const_iterator I = PostIncLoops.begin(),
        E = PostIncLoops.end(); I != E; ++I) {
     OS << ", PostIncLoop=";
-    WriteAsOperand(OS, (*I)->getHeader(), /*PrintType=*/false);
+    (*I)->getHeader()->printAsOperand(OS, /*PrintType=*/false);
   }
 
   if (LUIdx != ~size_t(0))
@@ -4734,7 +4733,7 @@ LSRInstance::LSRInstance(Loop *L, Pass *P)
 #endif // DEBUG
 
   DEBUG(dbgs() << "\nLSR on loop ";
-        WriteAsOperand(dbgs(), L->getHeader(), /*PrintType=*/false);
+        L->getHeader()->printAsOperand(dbgs(), /*PrintType=*/false);
         dbgs() << ":\n");
 
   // First, perform some low-level loop optimizations.
