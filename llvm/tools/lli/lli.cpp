@@ -53,7 +53,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include <cerrno>
-#include <fstream>
 
 #ifdef __CYGWIN__
 #include <cygwin/version.h>
@@ -255,7 +254,8 @@ public:
     std::string CacheName;
     if (!getCacheFilename(ModuleID, CacheName))
       return;
-    std::ofstream outfile(CacheName.c_str(), std::ofstream::binary);
+    std::string errStr;
+    raw_fd_ostream outfile(CacheName.c_str(), errStr, sys::fs::F_Binary);
     outfile.write(Obj->getBufferStart(), Obj->getBufferSize());
     outfile.close();
   }
