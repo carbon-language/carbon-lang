@@ -91,6 +91,13 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
       getTypeUnitAtIndex(i)->dump(OS);
   }
 
+  if (DumpType == DIDT_All || DumpType == DIDT_TypesDwo)
+    if (getNumDWOTypeUnits()) {
+      OS << "\n.debug_types.dwo contents:\n";
+      for (unsigned i = 0, e = getNumDWOTypeUnits(); i != e; ++i)
+        getDWOTypeUnitAtIndex(i)->dump(OS);
+    }
+
   if (DumpType == DIDT_All || DumpType == DIDT_Loc) {
     OS << "\n.debug_loc contents:\n";
     getDebugLoc()->dump(OS);
@@ -330,6 +337,27 @@ void DWARFContext::parseDWOCompileUnits() {
     }
     DWOCUs.push_back(DWOCU.take());
     offset = DWOCUs.back()->getNextUnitOffset();
+  }
+}
+
+void DWARFContext::parseDWOTypeUnits() {
+  const TypeSectionMap &Sections = getTypesDWOSections();
+  for (TypeSectionMap::const_iterator I = Sections.begin(), E = Sections.end();
+       I != E; ++I) {
+    uint32_t offset = 0;
+    const DataExtractor &DIData =
+        DataExtractor(I->second.Data, isLittleEndian(), 0);
+    while (DIData.isValidOffset(offset)) {
+      OwningPtr<DWARFTypeUnit> TU(new DWARFTypeUnit(
+          getDebugAbbrevDWO(), I->second.Data, getAbbrevDWOSection(),
+          getRangeDWOSection(), getStringDWOSection(),
+          getStringOffsetDWOSection(), getAddrSection(), &I->second.Relocs,
+          isLittleEndian()));
+      if (!TU->extract(DIData, &offset))
+        break;
+      DWOTUs.push_back(TU.take());
+      offset = DWOTUs.back()->getNextUnitOffset();
+    }
   }
 }
 
@@ -632,6 +660,8 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
       // Find debug_types data by section rather than name as there are
       // multiple, comdat grouped, debug_types sections.
       TypesSections[*i].Data = data;
+    } else if (name == "debug_types.dwo") {
+      TypesDWOSections[*i].Data = data;
     }
 
     section_iterator RelocatedSection = i->getRelocatedSection();
@@ -652,11 +682,14 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
         .Case("debug_line", &LineSection.Relocs)
         .Default(0);
     if (!Map) {
-      if (RelSecName != "debug_types")
-        continue;
       // Find debug_types relocs by section rather than name as there are
       // multiple, comdat grouped, debug_types sections.
-      Map = &TypesSections[*RelocatedSection].Relocs;
+      if (RelSecName == "debug_types")
+        Map = &TypesSections[*RelocatedSection].Relocs;
+      else if (RelSecName == "debug_types.dwo")
+        Map = &TypesDWOSections[*RelocatedSection].Relocs;
+      else
+        continue;
     }
 
     if (i->begin_relocations() != i->end_relocations()) {
