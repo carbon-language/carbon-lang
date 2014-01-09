@@ -187,3 +187,32 @@ define i32 @f14(i32 %a, i32 *%ptr) {
   %or = or i32 %parta, %partb
   ret i32 %or
 }
+
+; Check another form of f5, which is the one produced by running f5 through
+; instcombine.
+define i32 @f15(i32 %a, i32 %amt) {
+; CHECK-LABEL: f15:
+; CHECK: rll %r2, %r2, 10(%r3)
+; CHECK: br %r14
+  %add = add i32 %amt, 10
+  %sub = sub i32 22, %amt
+  %parta = shl i32 %a, %add
+  %partb = lshr i32 %a, %sub
+  %or = or i32 %parta, %partb
+  ret i32 %or
+}
+
+; Likewise for f7.
+define i32 @f16(i32 %a, i64 %amt) {
+; CHECK-LABEL: f16:
+; CHECK: rll %r2, %r2, 10(%r3)
+; CHECK: br %r14
+  %add = add i64 %amt, 10
+  %sub = sub i64 22, %amt
+  %addtrunc = trunc i64 %add to i32
+  %subtrunc = trunc i64 %sub to i32
+  %parta = shl i32 %a, %addtrunc
+  %partb = lshr i32 %a, %subtrunc
+  %or = or i32 %parta, %partb
+  ret i32 %or
+}

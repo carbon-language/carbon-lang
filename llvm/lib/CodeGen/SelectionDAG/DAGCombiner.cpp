@@ -3306,6 +3306,43 @@ static bool MatchRotateHalf(SDValue Op, SDValue &Shift, SDValue &Mask) {
   return false;
 }
 
+// Return true if we can prove that Neg == OpSize - Pos.  This means that
+// for two opposing shifts shift1 and shift2 and a value X with OpBits bits:
+//
+//     (or (shift1 X, Neg), (shift2 X, Pos))
+//
+// reduces to a rotate in direction shift2 by Pos and a rotate in direction
+// shift1 by Neg.  Note that the (or ...) then invokes undefined behavior
+// if Pos == 0 (and consequently Neg == OpSize).
+static bool matchRotateSub(SDValue Pos, SDValue Neg, unsigned OpSize) {
+  // Check whether Neg has the form (sub NegC, NegOp1) for some NegC and NegOp1.
+  if (Neg.getOpcode() != ISD::SUB)
+    return 0;
+  ConstantSDNode *NegC = dyn_cast<ConstantSDNode>(Neg.getOperand(0));
+  if (!NegC)
+    return 0;
+  SDValue NegOp1 = Neg.getOperand(1);
+
+  // The condition we need to prove is now NegC - NegOp1 == OpSize - Pos.
+  // Check whether the terms match directly.
+  if (Pos == NegOp1)
+    return NegC->getAPIntValue() == OpSize;
+
+  // Check for cases where Pos has the form (add NegOp1, PosC) for some PosC.
+  // Then the condition we want to prove becomes:
+  //   NegC - NegOp1 == OpSize - (NegOp1 + PosC)
+  //            NegC == OpSize - PosC
+  //
+  // Because NegC and PosC are APInts, this is easier to test as:
+  //          OpSize == NegC + PosC
+  if (Pos.getOpcode() == ISD::ADD && Pos.getOperand(0) == NegOp1) {
+    ConstantSDNode *PosC = dyn_cast<ConstantSDNode>(Pos.getOperand(1));
+    return PosC && OpSize == NegC->getAPIntValue() + PosC->getAPIntValue();
+  }
+
+  return false;
+}
+
 // A subroutine of MatchRotate used once we have found an OR of two opposite
 // shifts of Shifted.  If Neg == <operand size> - Pos then the OR reduces
 // to both (PosOpcode Shifted, Pos) and (NegOpcode Shifted, Neg), with the
@@ -3315,15 +3352,6 @@ SDNode *DAGCombiner::MatchRotatePosNeg(SDValue Shifted, SDValue Pos,
                                        SDValue Neg, SDValue InnerPos,
                                        SDValue InnerNeg, unsigned PosOpcode,
                                        unsigned NegOpcode, SDLoc DL) {
-  // Check that Neg == SUBC - Pos.
-  if (InnerNeg.getOpcode() != ISD::SUB)
-    return 0;
-  ConstantSDNode *SUBC = dyn_cast<ConstantSDNode>(InnerNeg.getOperand(0));
-  if (!SUBC)
-    return 0;
-  if (InnerNeg.getOperand(1) != InnerPos)
-    return 0;
-
   // fold (or (shl x, (*ext y)),
   //          (srl x, (*ext (sub 32, y)))) ->
   //   (rotl x, y) or (rotr x, (sub 32, y))
@@ -3332,8 +3360,7 @@ SDNode *DAGCombiner::MatchRotatePosNeg(SDValue Shifted, SDValue Pos,
   //          (srl x, (*ext y))) ->
   //   (rotr x, y) or (rotl x, (sub 32, y))
   EVT VT = Shifted.getValueType();
-  unsigned OpSizeInBits = VT.getSizeInBits();
-  if (SUBC->getAPIntValue() == OpSizeInBits) {
+  if (matchRotateSub(InnerPos, InnerNeg, VT.getSizeInBits())) {
     bool HasPos = TLI.isOperationLegalOrCustom(PosOpcode, VT);
     return DAG.getNode(HasPos ? PosOpcode : NegOpcode, DL, VT, Shifted,
                        HasPos ? Pos : Neg).getNode();
@@ -3352,7 +3379,7 @@ SDNode *DAGCombiner::MatchRotatePosNeg(SDValue Shifted, SDValue Pos,
     EVT InnerVT = InnerShifted.getValueType();
     bool HasPosInner = TLI.isOperationLegalOrCustom(PosOpcode, InnerVT);
     if (HasPosInner || TLI.isOperationLegalOrCustom(NegOpcode, InnerVT)) {
-      if (InnerVT.getSizeInBits() == SUBC->getAPIntValue()) {
+      if (matchRotateSub(InnerPos, InnerNeg, InnerVT.getSizeInBits())) {
         SDValue V = DAG.getNode(HasPosInner ? PosOpcode : NegOpcode, DL,
                                 InnerVT, InnerShifted, HasPosInner ? Pos : Neg);
         return DAG.getNode(Shifted.getOpcode(), DL, VT, V).getNode();
