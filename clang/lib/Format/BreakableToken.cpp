@@ -149,7 +149,7 @@ BreakableSingleLineToken::BreakableSingleLineToken(
     encoding::Encoding Encoding, const FormatStyle &Style)
     : BreakableToken(Tok, IndentLevel, InPPDirective, Encoding, Style),
       StartColumn(StartColumn), Prefix(Prefix), Postfix(Postfix) {
-  assert(Tok.TokenText.startswith(Prefix) && Tok.TokenText.endswith(Postfix));
+  assert(Tok.TokenText.endswith(Postfix));
   Line = Tok.TokenText.substr(
       Prefix.size(), Tok.TokenText.size() - Prefix.size() - Postfix.size());
 }

@@ -6239,7 +6239,7 @@ TEST_F(FormatTest, BreakStringLiterals) {
       format("#define A \"some text other\";", AlignLeft));
 }
 
-TEST_F(FormatTest, BreaksWideStringLiterals) {
+TEST_F(FormatTest, BreaksWideAndNSStringLiterals) {
   EXPECT_EQ(
       "u8\"utf8 string \"\n"
       "u8\"literal\";",
@@ -6255,6 +6255,9 @@ TEST_F(FormatTest, BreaksWideStringLiterals) {
   EXPECT_EQ("L\"wide string \"\n"
             "L\"literal\";",
             format("L\"wide string literal\";", getGoogleStyleWithColumns(16)));
+  EXPECT_EQ("@\"NSString \"\n"
+            "@\"literal\";",
+            format("@\"NSString literal\";", getGoogleStyleWithColumns(16)));
 }
 
 TEST_F(FormatTest, BreaksRawStringLiterals) {

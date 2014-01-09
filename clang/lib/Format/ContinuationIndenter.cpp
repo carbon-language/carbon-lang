@@ -804,13 +804,21 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
     StringRef Text = Current.TokenText;
     StringRef Prefix;
     StringRef Postfix;
+    bool IsNSStringLiteral = false;
     // FIXME: Handle whitespace between '_T', '(', '"..."', and ')'.
     // FIXME: Store Prefix and Suffix (or PrefixLength and SuffixLength to
     // reduce the overhead) for each FormatToken, which is a string, so that we
     // don't run multiple checks here on the hot path.
+    if (Text.startswith("\"") && Current.Previous &&
+        Current.Previous->is(tok::at)) {
+      IsNSStringLiteral = true;
+      Prefix = "@\"";
+      --StartColumn;
+    }
     if ((Text.endswith(Postfix = "\"") &&
-         (Text.startswith(Prefix = "\"") || Text.startswith(Prefix = "u\"") ||
-          Text.startswith(Prefix = "U\"") || Text.startswith(Prefix = "u8\"") ||
+         (IsNSStringLiteral || Text.startswith(Prefix = "\"") ||
+          Text.startswith(Prefix = "u\"") || Text.startswith(Prefix = "U\"") ||
+          Text.startswith(Prefix = "u8\"") ||
           Text.startswith(Prefix = "L\""))) ||
         (Text.startswith(Prefix = "_T(\"") && Text.endswith(Postfix = "\")")) ||
         getRawStringLiteralPrefixPostfix(Text, Prefix, Postfix)) {
