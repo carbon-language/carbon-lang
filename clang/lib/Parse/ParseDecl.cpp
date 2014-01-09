@@ -207,6 +207,14 @@ static bool attributeIsTypeArgAttr(const IdentifierInfo &II) {
            .Default(false);
 }
 
+/// \brief Determine whether the given attribute requires parsing its arguments
+/// in an unevaluated context or not.
+static bool attributeParsedArgsUnevaluated(const IdentifierInfo &II) {
+  return llvm::StringSwitch<bool>(normalizeAttrName(II.getName()))
+#include "clang/Parse/AttrArgContext.inc"
+           .Default(false);
+}
+
 IdentifierLoc *Parser::ParseIdentifierLoc() {
   assert(Tok.is(tok::identifier) && "expected an identifier");
   IdentifierLoc *IL = IdentifierLoc::create(Actions.Context,
@@ -270,13 +278,6 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
     return;
   }
   
-  // Thread safety attributes are parsed in an unevaluated context.
-  // FIXME: Share the bulk of the parsing code here and just pull out
-  // the unevaluated context.
-  if (IsThreadSafetyAttribute(AttrName->getName())) {
-    ParseThreadSafetyAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc);
-    return;
-  }
   // Type safety attributes have their own grammar.
   if (AttrKind == AttributeList::AT_TypeTagForDatatype) {
     ParseTypeTagForDatatypeAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc);
@@ -291,7 +292,12 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
   // Ignore the left paren location for now.
   ConsumeParen();
 
+  OwningPtr<EnterExpressionEvaluationContext> Unevaluated;
   ArgsVector ArgExprs;
+
+  if (attributeParsedArgsUnevaluated(*AttrName))
+    Unevaluated.reset(new EnterExpressionEvaluationContext(Actions,
+                                                           Sema::Unevaluated));
 
   if (Tok.is(tok::identifier)) {
     // If this attribute wants an 'identifier' argument, make it so.
@@ -1213,54 +1219,6 @@ bool Parser::IsThreadSafetyAttribute(StringRef AttrName) {
       .Case("exclusive_locks_required", true)
       .Case("shared_locks_required", true)
       .Default(false);
-}
-
-/// \brief Parse the contents of thread safety attributes. These
-/// should always be parsed as an expression list.
-///
-/// We need to special case the parsing due to the fact that if the first token
-/// of the first argument is an identifier, the main parse loop will store
-/// that token as a "parameter" and the rest of
-/// the arguments will be added to a list of "arguments". However,
-/// subsequent tokens in the first argument are lost. We instead parse each
-/// argument as an expression and add all arguments to the list of "arguments".
-/// In future, we will take advantage of this special case to also
-/// deal with some argument scoping issues here (for example, referring to a
-/// function parameter in the attribute on that function).
-void Parser::ParseThreadSafetyAttribute(IdentifierInfo &AttrName,
-                                        SourceLocation AttrNameLoc,
-                                        ParsedAttributes &Attrs,
-                                        SourceLocation *EndLoc) {
-  assert(Tok.is(tok::l_paren) && "Attribute arg list not starting with '('");
-
-  BalancedDelimiterTracker T(*this, tok::l_paren);
-  T.consumeOpen();
-
-  ArgsVector ArgExprs;
-  bool ArgExprsOk = true;
-
-  // now parse the list of expressions
-  while (Tok.isNot(tok::r_paren)) {
-    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
-    ExprResult ArgExpr(ParseAssignmentExpression());
-    if (ArgExpr.isInvalid()) {
-      ArgExprsOk = false;
-      T.consumeClose();
-      break;
-    } else {
-      ArgExprs.push_back(ArgExpr.release());
-    }
-    // Eat the comma, move to the next argument
-    if (!TryConsumeToken(tok::comma))
-      break;
-  }
-  // Match the ')'.
-  if (ArgExprsOk && !T.consumeClose()) {
-    Attrs.addNew(&AttrName, AttrNameLoc, 0, AttrNameLoc, ArgExprs.data(),
-                 ArgExprs.size(), AttributeList::AS_GNU);
-  }
-  if (EndLoc)
-    *EndLoc = T.getCloseLocation();
 }
 
 void Parser::ParseTypeTagForDatatypeAttribute(IdentifierInfo &AttrName,

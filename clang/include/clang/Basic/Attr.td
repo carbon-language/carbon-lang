@@ -168,6 +168,9 @@ class Attr {
   // content. Eg) It parses 3 args, but semantically takes 4 args.  Opts out of
   // common attribute error checking.
   bit HasCustomParsing = 0;
+  // Set to true if all of the attribute's arguments should be parsed in an
+  // unevaluated context.
+  bit ParseArgumentsAsUnevaluated = 0;
   // Lists language options, one of which is required to be true for the
   // attribute to be applicable. If empty, no language options are required.
   list<LangOpt> LangOpts = [];
@@ -1008,6 +1011,7 @@ def GuardedBy : InheritableAttr {
   let Args = [ExprArgument<"Arg">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Field, SharedVar], WarnDiag,
                              "ExpectedFieldOrGlobalVar">;
 }
@@ -1017,6 +1021,7 @@ def PtGuardedBy : InheritableAttr {
   let Args = [ExprArgument<"Arg">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Field, SharedVar], WarnDiag,
                              "ExpectedFieldOrGlobalVar">;
 }
@@ -1026,6 +1031,7 @@ def AcquiredAfter : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Field, SharedVar], WarnDiag,
                              "ExpectedFieldOrGlobalVar">;
 }
@@ -1035,6 +1041,7 @@ def AcquiredBefore : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Field, SharedVar], WarnDiag,
                              "ExpectedFieldOrGlobalVar">;
 }
@@ -1044,6 +1051,7 @@ def ExclusiveLockFunction : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Function, FunctionTemplate]>;
 }
 
@@ -1052,6 +1060,7 @@ def SharedLockFunction : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Function, FunctionTemplate]>;
 }
 
@@ -1060,6 +1069,7 @@ def AssertExclusiveLock : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Function, FunctionTemplate]>;
 }
 
@@ -1068,6 +1078,7 @@ def AssertSharedLock : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Function, FunctionTemplate]>;
 }
 
@@ -1078,6 +1089,7 @@ def ExclusiveTrylockFunction : InheritableAttr {
   let Args = [ExprArgument<"SuccessValue">, VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Function, FunctionTemplate]>;
 }
 
@@ -1088,6 +1100,7 @@ def SharedTrylockFunction : InheritableAttr {
   let Args = [ExprArgument<"SuccessValue">, VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Function, FunctionTemplate]>;
 }
 
@@ -1096,6 +1109,7 @@ def UnlockFunction : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Function, FunctionTemplate]>;
 }
 
@@ -1104,6 +1118,7 @@ def LockReturned : InheritableAttr {
   let Args = [ExprArgument<"Arg">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Function, FunctionTemplate]>;
 }
 
@@ -1112,6 +1127,7 @@ def LocksExcluded : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Function, FunctionTemplate]>;
 }
 
@@ -1120,6 +1136,7 @@ def ExclusiveLocksRequired : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Function, FunctionTemplate]>;
 }
 
@@ -1128,6 +1145,7 @@ def SharedLocksRequired : InheritableAttr {
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
+  let ParseArgumentsAsUnevaluated = 1;
   let Subjects = SubjectList<[Function, FunctionTemplate]>;
 }
 

@@ -1291,6 +1291,33 @@ void EmitClangAttrTypeArgList(RecordKeeper &Records, raw_ostream &OS) {
   }
 }
 
+/// \brief Emits the parse-arguments-in-unevaluated-context property for
+/// attributes.
+void EmitClangAttrArgContextList(RecordKeeper &Records, raw_ostream &OS) {
+  emitSourceFileHeader("StringSwitch code to match attributes which require "
+                       "an unevaluated context", OS);
+
+  ParsedAttrMap Attrs = getParsedAttrList(Records);
+  for (ParsedAttrMap::const_iterator I = Attrs.begin(), E = Attrs.end();
+       I != E; ++I) {
+    const Record &Attr = *I->second;
+
+    if (!Attr.getValueAsBit("ParseArgumentsAsUnevaluated"))
+      continue;
+
+    // All these spellings take are parsed unevaluated.
+    std::vector<Record *> Spellings = Attr.getValueAsListOfDefs("Spellings");
+    std::set<std::string> Emitted;
+    for (std::vector<Record*>::const_iterator I = Spellings.begin(),
+         E = Spellings.end(); I != E; ++I) {
+      if (Emitted.insert((*I)->getValueAsString("Name")).second)
+        OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", "
+        << "true" << ")\n";
+    }
+
+  }
+}
+
 // Emits the first-argument-is-identifier property for attributes.
 void EmitClangAttrIdentifierArgList(RecordKeeper &Records, raw_ostream &OS) {
   emitSourceFileHeader("llvm::StringSwitch code to match attributes with "

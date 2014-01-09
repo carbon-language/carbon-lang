@@ -1,6 +1,6 @@
 CLANG_LEVEL := ../../..
 TD_SRC_DIR = $(PROJ_SRC_DIR)/../Basic
-BUILT_SOURCES = AttrIdentifierArg.inc AttrLateParsed.inc AttrTypeArg.inc
+BUILT_SOURCES = AttrIdentifierArg.inc AttrLateParsed.inc AttrTypeArg.inc AttrArgContext.inc
 
 TABLEGEN_INC_FILES_COMMON = 1
 
@@ -22,4 +22,10 @@ $(ObjDir)/AttrLateParsed.inc.tmp : $(TD_SRC_DIR)/Attr.td $(CLANG_TBLGEN) \
                                    $(ObjDir)/.dir
 	$(Echo) "Building Clang attribute late-parsed table with tblgen"
 	$(Verb) $(ClangTableGen) -gen-clang-attr-late-parsed-list -o $(call SYSPATH, $@) \
+		-I $(PROJ_SRC_DIR)/../../ $<
+
+$(ObjDir)/AttrArgContext.inc.tmp : $(TD_SRC_DIR)/Attr.td $(CLANG_TBLGEN) \
+                                   $(ObjDir)/.dir
+	$(Echo) "Building Clang attribute argument context table with tblgen"
+	$(Verb) $(ClangTableGen) -gen-clang-attr-arg-context-list -o $(call SYSPATH, $@) \
 		-I $(PROJ_SRC_DIR)/../../ $<

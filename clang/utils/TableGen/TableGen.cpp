@@ -25,6 +25,7 @@ using namespace clang;
 enum ActionType {
   GenClangAttrClasses,
   GenClangAttrIdentifierArgList,
+  GenClangAttrArgContextList,
   GenClangAttrTypeArgList,
   GenClangAttrImpl,
   GenClangAttrList,
@@ -66,6 +67,10 @@ cl::opt<ActionType> Action(
                    "gen-clang-attr-identifier-arg-list",
                    "Generate a list of attributes that take an "
                    "identifier as their first argument"),
+        clEnumValN(GenClangAttrArgContextList,
+                   "gen-clang-attr-arg-context-list",
+                   "Generate a list of attributes that parse their arguments "
+                   "in an unevaluated context"),
         clEnumValN(GenClangAttrTypeArgList,
                    "gen-clang-attr-type-arg-list",
                    "Generate a list of attributes that take a type as their "
@@ -153,6 +158,9 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
     break;
   case GenClangAttrIdentifierArgList:
     EmitClangAttrIdentifierArgList(Records, OS);
+    break;
+  case GenClangAttrArgContextList:
+    EmitClangAttrArgContextList(Records, OS);
     break;
   case GenClangAttrTypeArgList:
     EmitClangAttrTypeArgList(Records, OS);

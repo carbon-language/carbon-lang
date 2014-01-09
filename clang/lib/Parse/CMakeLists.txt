@@ -33,6 +33,7 @@ add_dependencies(clangParse
   ClangDiagnosticCommon
   ClangDiagnosticParse
   ClangStmtNodes
+  ClangAttrArgContext
   )
 
 target_link_libraries(clangParse
