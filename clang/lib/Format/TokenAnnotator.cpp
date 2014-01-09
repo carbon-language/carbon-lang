@@ -474,6 +474,18 @@ private:
     }
   }
 
+  void parsePragma() {
+    next(); // Consume "pragma".
+    if (CurrentToken && CurrentToken->TokenText == "mark") {
+      next(); // Consume "mark".
+      next(); // Consume first token (so we fix leading whitespace).
+      while (CurrentToken != NULL) {
+        CurrentToken->Type = TT_ImplicitStringLiteral;
+        next();
+      }
+    }
+  }
+
   void parsePreprocessorDirective() {
     next();
     if (CurrentToken == NULL)
@@ -494,6 +506,9 @@ private:
     case tok::pp_error:
     case tok::pp_warning:
       parseWarningOrError();
+      break;
+    case tok::pp_pragma:
+      parsePragma();
       break;
     case tok::pp_if:
     case tok::pp_elif:
