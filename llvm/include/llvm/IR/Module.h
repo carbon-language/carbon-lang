@@ -142,12 +142,6 @@ public:
   /// The named metadata constant interators.
   typedef NamedMDListType::const_iterator const_named_metadata_iterator;
 
-  /// An enumeration for describing the endianess of the target machine.
-  enum Endianness { LittleEndian, BigEndian };
-
-  /// An enumeration for describing the size of a pointer on the target machine.
-  enum PointerSize { Pointer32, Pointer64 };
-
   /// This enumeration defines the supported behaviors of module flags.
   enum ModFlagBehavior {
     /// Emits an error if two values disagree, otherwise the resulting value is
@@ -235,14 +229,6 @@ public:
   /// Get the target triple which is a string describing the target host.
   /// @returns a string containing the target triple.
   const std::string &getTargetTriple() const { return TargetTriple; }
-
-  /// Get the target endian information.
-  /// @returns Endianess - an enumeration for the endianess of the target
-  Endianness getEndianness() const;
-
-  /// Get the target pointer size.
-  /// @returns PointerSize - an enumeration for the size of the target's pointer
-  PointerSize getPointerSize() const;
 
   /// Get the global data context.
   /// @returns LLVMContext - a container for LLVM's global information
