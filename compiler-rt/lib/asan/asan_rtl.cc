@@ -96,8 +96,12 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 
   ParseFlag(str, &f->quarantine_size, "quarantine_size");
   ParseFlag(str, &f->redzone, "redzone");
+  ParseFlag(str, &f->max_redzone, "max_redzone");
   CHECK_GE(f->redzone, 16);
+  CHECK_GE(f->max_redzone, f->redzone);
+  CHECK_LE(f->max_redzone, 2048);
   CHECK(IsPowerOfTwo(f->redzone));
+  CHECK(IsPowerOfTwo(f->max_redzone));
 
   ParseFlag(str, &f->debug, "debug");
   ParseFlag(str, &f->report_globals, "report_globals");
@@ -145,6 +149,7 @@ void InitializeFlags(Flags *f, const char *env) {
   internal_memset(f, 0, sizeof(*f));
   f->quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 26 : 1UL << 28;
   f->redzone = 16;
+  f->max_redzone = 2048;
   f->debug = false;
   f->report_globals = 1;
   f->check_initialization_order = false;
@@ -376,7 +381,8 @@ static void PrintAddressSpaceLayout() {
            (void*)MEM_TO_SHADOW(kMidShadowEnd));
   }
   Printf("\n");
-  Printf("red_zone=%zu\n", (uptr)flags()->redzone);
+  Printf("redzone=%zu\n", (uptr)flags()->redzone);
+  Printf("max_redzone=%zu\n", (uptr)flags()->max_redzone);
   Printf("quarantine_size=%zuM\n", (uptr)flags()->quarantine_size >> 20);
   Printf("malloc_context_size=%zu\n",
          (uptr)common_flags()->malloc_context_size);

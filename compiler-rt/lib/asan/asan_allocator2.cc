@@ -133,7 +133,8 @@ static uptr ComputeRZLog(uptr user_requested_size) {
     user_requested_size <= (1 << 14) - 256  ? 4 :
     user_requested_size <= (1 << 15) - 512  ? 5 :
     user_requested_size <= (1 << 16) - 1024 ? 6 : 7;
-  return Max(rz_log, RZSize2Log(flags()->redzone));
+  return Min(Max(rz_log, RZSize2Log(flags()->redzone)),
+             RZSize2Log(flags()->max_redzone));
 }
 
 // The memory chunk allocated from the underlying allocator looks like this:
