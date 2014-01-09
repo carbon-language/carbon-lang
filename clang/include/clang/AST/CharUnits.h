@@ -165,7 +165,7 @@ namespace clang {
       /// RoundUpToAlignment - Returns the next integer (mod 2**64) that is
       /// greater than or equal to this quantity and is a multiple of \p Align.
       /// Align must be non-zero.
-      CharUnits RoundUpToAlignment(const CharUnits &Align) {
+      CharUnits RoundUpToAlignment(const CharUnits &Align) const {
         return CharUnits(llvm::RoundUpToAlignment(Quantity, 
                                                   Align.Quantity));
       }

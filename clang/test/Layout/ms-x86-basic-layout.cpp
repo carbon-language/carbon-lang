@@ -77,7 +77,7 @@ struct TestF1 : A4, virtual A16 {
 // CHECK-NEXT:   16 |   struct A16 (virtual base)
 // CHECK-NEXT:   16 |     int a
 // CHECK-NEXT:      | [sizeof=32, align=16
-// CHECK-NEXT:      |  nvsize=12, nvalign=4]
+// CHECK-NEXT:      |  nvsize=12, nvalign=16]
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct TestF1
@@ -88,7 +88,7 @@ struct TestF1 : A4, virtual A16 {
 // CHECK-X64-NEXT:   32 |   struct A16 (virtual base)
 // CHECK-X64-NEXT:   32 |     int a
 // CHECK-X64-NEXT:      | [sizeof=48, align=16
-// CHECK-X64-NEXT:      |  nvsize=24, nvalign=8]
+// CHECK-X64-NEXT:      |  nvsize=24, nvalign=16]
 
 struct TestF2 : A4, virtual C4 {
 	int a;
@@ -136,7 +136,7 @@ struct TestF3 : A4, virtual C16 {
 // CHECK-NEXT:   16 |     (C16 vftable pointer)
 // CHECK-NEXT:   32 |     int a
 // CHECK-NEXT:      | [sizeof=48, align=16
-// CHECK-NEXT:      |  nvsize=12, nvalign=4]
+// CHECK-NEXT:      |  nvsize=12, nvalign=16]
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct TestF3
@@ -148,7 +148,7 @@ struct TestF3 : A4, virtual C16 {
 // CHECK-X64-NEXT:   32 |     (C16 vftable pointer)
 // CHECK-X64-NEXT:   48 |     int a
 // CHECK-X64-NEXT:      | [sizeof=64, align=16
-// CHECK-X64-NEXT:      |  nvsize=24, nvalign=8]
+// CHECK-X64-NEXT:      |  nvsize=24, nvalign=16]
 
 struct TestF4 : TestF3, A4 {
 	int a;
@@ -281,7 +281,7 @@ struct TestF7 : A4, virtual C16 {
 // CHECK-NEXT:   32 |     (C16 vftable pointer)
 // CHECK-NEXT:   48 |     int a
 // CHECK-NEXT:      | [sizeof=64, align=16
-// CHECK-NEXT:      |  nvsize=12, nvalign=4]
+// CHECK-NEXT:      |  nvsize=12, nvalign=16]
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct TestF7
 // CHECK-X64-NEXT:    0 |   struct A4 (base)
@@ -293,7 +293,7 @@ struct TestF7 : A4, virtual C16 {
 // CHECK-X64-NEXT:   48 |     (C16 vftable pointer)
 // CHECK-X64-NEXT:   64 |     int a
 // CHECK-X64-NEXT:      | [sizeof=80, align=16
-// CHECK-X64-NEXT:      |  nvsize=24, nvalign=8]
+// CHECK-X64-NEXT:      |  nvsize=24, nvalign=16]
 
 struct TestF8 : TestF7, A4 {
 	int a;
@@ -351,7 +351,7 @@ struct TestF9 : A4, virtual C16 {
 // CHECK-NEXT:   16 |     (C16 vftable pointer)
 // CHECK-NEXT:   32 |     int a
 // CHECK-NEXT:      | [sizeof=48, align=16
-// CHECK-NEXT:      |  nvsize=16, nvalign=4]
+// CHECK-NEXT:      |  nvsize=16, nvalign=16]
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct TestF9
 // CHECK-X64-NEXT:    0 |   (TestF9 vftable pointer)
@@ -363,7 +363,7 @@ struct TestF9 : A4, virtual C16 {
 // CHECK-X64-NEXT:   32 |     (C16 vftable pointer)
 // CHECK-X64-NEXT:   48 |     int a
 // CHECK-X64-NEXT:      | [sizeof=64, align=16
-// CHECK-X64-NEXT:      |  nvsize=32, nvalign=8]
+// CHECK-X64-NEXT:      |  nvsize=32, nvalign=16]
 
 struct TestFA : TestF9, A4 {
 	int a;
@@ -604,7 +604,7 @@ struct F2 : A4, virtual A16f {
 // CHECK-NEXT:   16 |     (A16f vftable pointer)
 // CHECK-NEXT:   32 |     int a
 // CHECK-NEXT:      | [sizeof=48, align=16
-// CHECK-NEXT:      |  nvsize=16, nvalign=4]
+// CHECK-NEXT:      |  nvsize=16, nvalign=16]
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct F2
 // CHECK-X64-NEXT:    0 |   (F2 vftable pointer)
@@ -616,7 +616,7 @@ struct F2 : A4, virtual A16f {
 // CHECK-X64-NEXT:   32 |     (A16f vftable pointer)
 // CHECK-X64-NEXT:   48 |     int a
 // CHECK-X64-NEXT:      | [sizeof=64, align=16
-// CHECK-X64-NEXT:      |  nvsize=32, nvalign=8]
+// CHECK-X64-NEXT:      |  nvsize=32, nvalign=16]
 
 struct F3 : A4, virtual A16f {
 	__declspec(align(16)) int a;
@@ -748,7 +748,7 @@ struct F6 : virtual A16f, A4, virtual B {
 // CHECK-NEXT:   64 |       (X vbtable pointer)
 // CHECK-NEXT:   68 |     int a
 // CHECK-NEXT:      | [sizeof=80, align=16
-// CHECK-NEXT:      |  nvsize=16, nvalign=4]
+// CHECK-NEXT:      |  nvsize=16, nvalign=16]
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct F6
 // CHECK-X64-NEXT:    0 |   (F6 vftable pointer)
@@ -768,7 +768,7 @@ struct F6 : virtual A16f, A4, virtual B {
 // CHECK-X64-NEXT:   80 |       (X vbtable pointer)
 // CHECK-X64-NEXT:   88 |     int a
 // CHECK-X64-NEXT:      | [sizeof=96, align=16
-// CHECK-X64-NEXT:      |  nvsize=32, nvalign=8]
+// CHECK-X64-NEXT:      |  nvsize=32, nvalign=16]
 
 int a[
 sizeof(TestF0)+

@@ -82,9 +82,9 @@ private:
     /// the size of the object without virtual bases.
     CharUnits NonVirtualSize;
 
-    /// NonVirtualAlign - The non-virtual alignment (in chars) of an object,
+    /// NonVirtualAlignment - The non-virtual alignment (in chars) of an object,
     /// which is the alignment of the object without virtual bases.
-    CharUnits NonVirtualAlign;
+    CharUnits NonVirtualAlignment;
 
     /// SizeOfLargestEmptySubobject - The size of the largest empty subobject
     /// (either a base or a member). Will be zero if the class doesn't contain
@@ -104,8 +104,9 @@ private:
     /// a primary base class.
     bool HasExtendableVFPtr : 1;
 
-    /// HasZeroSizedSubObject - True if this class contains a zero sized member or base or a base
-    /// with a zero sized member or base.  Only used for MS-ABI.
+    /// HasZeroSizedSubObject - True if this class contains a zero sized member
+    /// or base or a base with a zero sized member or base.  Only used for
+    /// MS-ABI.
     bool HasZeroSizedSubObject : 1;
 
     /// \brief True if this class is zero sized or first base is zero sized or
@@ -148,7 +149,7 @@ private:
                   CharUnits vbptroffset,
                   CharUnits datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
-                  CharUnits nonvirtualsize, CharUnits nonvirtualalign,
+                  CharUnits nonvirtualsize, CharUnits nonvirtualalignment,
                   CharUnits SizeOfLargestEmptySubobject,
                   const CXXRecordDecl *PrimaryBase,
                   bool IsPrimaryBaseVirtual,
@@ -198,10 +199,10 @@ public:
 
   /// getNonVirtualSize - Get the non-virtual alignment (in chars) of an object,
   /// which is the alignment of the object without virtual bases.
-  CharUnits getNonVirtualAlign() const {
+  CharUnits getNonVirtualAlignment() const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
 
-    return CXXInfo->NonVirtualAlign;
+    return CXXInfo->NonVirtualAlignment;
   }
 
   /// getPrimaryBase - Get the primary base for this record.

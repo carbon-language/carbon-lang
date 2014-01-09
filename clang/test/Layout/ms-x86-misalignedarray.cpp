@@ -8,16 +8,20 @@ struct T2 : virtual T0 { };
 struct T3 { T2 a[1]; char c; };
 
 // CHECK: *** Dumping AST Record Layout
-// CHECK:    0 | struct T3
-// CHECK:    0 |   struct T2 [1] a
-// CHECK:    5 |   char c
-// CHECK:      | [sizeof=8, align=4
-// CHECK:      |  nvsize=8, nvalign=4]
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct T3
+// CHECK-NEXT:    0 |   struct T2 [1] a
+// CHECK-NEXT:    5 |   char c
+// CHECK-NEXT:      | [sizeof=8, align=4
+// CHECK-NEXT:      |  nvsize=8, nvalign=4]
 // CHECK-X64: *** Dumping AST Record Layout
-// CHECK-X64:    0 | struct T3
-// CHECK-X64:    0 |   struct T2 [1] a
-// CHECK-X64:   16 |   char c
-// CHECK-X64:      | [sizeof=24, align=8
-// CHECK-X64:      |  nvsize=24, nvalign=8]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct T3
+// CHECK-X64-NEXT:    0 |   struct T2 [1] a
+// CHECK-X64-NEXT:   16 |   char c
+// CHECK-X64-NEXT:      | [sizeof=24, align=8
+// CHECK-X64-NEXT:      |  nvsize=24, nvalign=8]
 
 int a[sizeof(T3)];

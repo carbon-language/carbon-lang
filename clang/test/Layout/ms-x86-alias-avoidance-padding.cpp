@@ -46,41 +46,55 @@ struct AT3 : AT2, AT1 {
 };
 
 // CHECK: *** Dumping AST Record Layout
-// CHECK:    0 | struct AT3
-// CHECK:    0 |   struct AT2 (base)
-// CHECK:    0 |     struct AT0 t
-// CHECK:    0 |       union AT0::<anonymous at {{.*}} x
-// CHECK:    0 |         struct AT0::<anonymous at {{.*}} y
-// CHECK:    0 |           int a
-// CHECK:    4 |           struct AT t (empty)
-// CHECK:    0 |         int b
-// CHECK:    8 |       char c
-// CHECK:   12 |     char AT2FieldName0
-// CHECK:   20 |   struct AT1 (base)
-// CHECK:   20 |     struct V (base)
-// CHECK:   20 |       struct AT (base) (empty)
-// CHECK:   20 |       char c
-// CHECK:   24 |     int a
-// CHECK:      | [sizeof=28, align=4
-// CHECK:      |  nvsize=28, nvalign=4]
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct AT3
+// CHECK-NEXT:    0 |   struct AT2 (base)
+// CHECK-NEXT:    0 |     struct AT0 t
+// CHECK-NEXT:    0 |       union AT0::<anonymous at {{.*}} x
+// CHECK-NEXT:    0 |         struct AT0::<anonymous at {{.*}} y
+// CHECK-NEXT:    0 |           int a
+// CHECK-NEXT:    4 |           struct AT t (empty)
+// CHECK:         0 |         int b
+// CHECK:         8 |       char c
+// CHECK:        12 |     char AT2FieldName0
+// CHECK-NEXT:   20 |   struct AT1 (base)
+// CHECK-NEXT:   20 |     struct V (base)
+// CHECK-NEXT:   20 |       struct AT (base) (empty)
+// CHECK-NEXT:   20 |       char c
+// CHECK-NEXT:   24 |     int a
+// CHECK-NEXT:      | [sizeof=28, align=4
+// CHECK-NEXT:      |  nvsize=28, nvalign=4]
 // CHECK-X64: *** Dumping AST Record Layout
-// CHECK-X64:    0 | struct AT3
-// CHECK-X64:    0 |   struct AT2 (base)
-// CHECK-X64:    0 |     struct AT0 t
-// CHECK-X64:    0 |       union AT0::<anonymous at {{.*}} x
-// CHECK-X64:    0 |         struct AT0::<anonymous at {{.*}} y
-// CHECK-X64:    0 |           int a
-// CHECK-X64:    4 |           struct AT t (empty)
-// CHECK-X64:    0 |         int b
-// CHECK-X64:    8 |       char c
-// CHECK-X64:   12 |     char AT2FieldName0
-// CHECK-X64:   20 |   struct AT1 (base)
-// CHECK-X64:   20 |     struct V (base)
-// CHECK-X64:   20 |       struct AT (base) (empty)
-// CHECK-X64:   20 |       char c
-// CHECK-X64:   24 |     int a
-// CHECK-X64:      | [sizeof=28, align=4
-// CHECK-X64:      |  nvsize=28, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct AT3
+// CHECK-X64-NEXT:    0 |   struct AT2 (base)
+// CHECK-X64-NEXT:    0 |     struct AT0 t
+// CHECK-X64-NEXT:    0 |       union AT0::<anonymous at {{.*}} x
+// CHECK-X64-NEXT:    0 |         struct AT0::<anonymous at {{.*}} y
+// CHECK-X64-NEXT:    0 |           int a
+// CHECK-X64-NEXT:    4 |           struct AT t (empty)
+// CHECK-X64:         0 |         int b
+// CHECK-X64:         8 |       char c
+// CHECK-X64:        12 |     char AT2FieldName0
+// CHECK-X64-NEXT:   20 |   struct AT1 (base)
+// CHECK-X64-NEXT:   20 |     struct V (base)
+// CHECK-X64-NEXT:   20 |       struct AT (base) (empty)
+// CHECK-X64-NEXT:   20 |       char c
+// CHECK-X64-NEXT:   24 |     int a
+// CHECK-X64-NEXT:      | [sizeof=28, align=4
+// CHECK-X64-NEXT:      |  nvsize=28, nvalign=4]
 
 struct BT0 {
 	BT0() {
@@ -103,21 +117,25 @@ struct BT3 : BT0, BT2 {
 };
 
 // CHECK: *** Dumping AST Record Layout
-// CHECK:    0 | struct BT3
-// CHECK:    0 |   struct BT0 (base) (empty)
-// CHECK:    1 |   struct BT2 (base)
-// CHECK:    1 |     struct BT0 (base) (empty)
-// CHECK:    1 |     char BT2FieldName0
-// CHECK:      | [sizeof=2, align=1
-// CHECK:      |  nvsize=2, nvalign=1]
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct BT3
+// CHECK-NEXT:    0 |   struct BT0 (base) (empty)
+// CHECK-NEXT:    1 |   struct BT2 (base)
+// CHECK-NEXT:    1 |     struct BT0 (base) (empty)
+// CHECK-NEXT:    1 |     char BT2FieldName0
+// CHECK-NEXT:      | [sizeof=2, align=1
+// CHECK-NEXT:      |  nvsize=2, nvalign=1]
 // CHECK-X64: *** Dumping AST Record Layout
-// CHECK-X64:    0 | struct BT3
-// CHECK-X64:    0 |   struct BT0 (base) (empty)
-// CHECK-X64:    1 |   struct BT2 (base)
-// CHECK-X64:    1 |     struct BT0 (base) (empty)
-// CHECK-X64:    1 |     char BT2FieldName0
-// CHECK-X64:      | [sizeof=2, align=1
-// CHECK-X64:      |  nvsize=2, nvalign=1]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct BT3
+// CHECK-X64-NEXT:    0 |   struct BT0 (base) (empty)
+// CHECK-X64-NEXT:    1 |   struct BT2 (base)
+// CHECK-X64-NEXT:    1 |     struct BT0 (base) (empty)
+// CHECK-X64-NEXT:    1 |     char BT2FieldName0
+// CHECK-X64-NEXT:      | [sizeof=2, align=1
+// CHECK-X64-NEXT:      |  nvsize=2, nvalign=1]
 
 struct T0 : AT {
 	T0() {
@@ -148,29 +166,35 @@ struct __declspec(align(1)) T3 : virtual T1, virtual T2 {
 };
 
 // CHECK: *** Dumping AST Record Layout
-// CHECK:    0 | struct T3
-// CHECK:    0 |   (T3 vbtable pointer)
-// CHECK:    4 |   struct T1 (virtual base)
-// CHECK:    4 |     struct T0 (base) (empty)
-// CHECK:    4 |       struct AT (base) (empty)
-// CHECK:    4 |     char a
-// CHECK:   12 |   struct T2 (virtual base)
-// CHECK:   12 |     struct AT (base) (empty)
-// CHECK:   12 |     char a
-// CHECK:      | [sizeof=16, align=4
-// CHECK:      |  nvsize=4, nvalign=4]
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct T3
+// CHECK-NEXT:    0 |   (T3 vbtable pointer)
+// CHECK-NEXT:    4 |   struct T1 (virtual base)
+// CHECK-NEXT:    4 |     struct T0 (base) (empty)
+// CHECK-NEXT:    4 |       struct AT (base) (empty)
+// CHECK-NEXT:    4 |     char a
+// CHECK-NEXT:   12 |   struct T2 (virtual base)
+// CHECK-NEXT:   12 |     struct AT (base) (empty)
+// CHECK-NEXT:   12 |     char a
+// CHECK-NEXT:      | [sizeof=16, align=4
+// CHECK-NEXT:      |  nvsize=4, nvalign=4]
 // CHECK-X64: *** Dumping AST Record Layout
-// CHECK-X64:    0 | struct T3
-// CHECK-X64:    0 |   (T3 vbtable pointer)
-// CHECK-X64:    8 |   struct T1 (virtual base)
-// CHECK-X64:    8 |     struct T0 (base) (empty)
-// CHECK-X64:    8 |       struct AT (base) (empty)
-// CHECK-X64:    8 |     char a
-// CHECK-X64:   16 |   struct T2 (virtual base)
-// CHECK-X64:   16 |     struct AT (base) (empty)
-// CHECK-X64:   16 |     char a
-// CHECK-X64:      | [sizeof=24, align=8
-// CHECK-X64:      |  nvsize=8, nvalign=8]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct T3
+// CHECK-X64-NEXT:    0 |   (T3 vbtable pointer)
+// CHECK-X64-NEXT:    8 |   struct T1 (virtual base)
+// CHECK-X64-NEXT:    8 |     struct T0 (base) (empty)
+// CHECK-X64-NEXT:    8 |       struct AT (base) (empty)
+// CHECK-X64-NEXT:    8 |     char a
+// CHECK-X64-NEXT:   16 |   struct T2 (virtual base)
+// CHECK-X64-NEXT:   16 |     struct AT (base) (empty)
+// CHECK-X64-NEXT:   16 |     char a
+// CHECK-X64-NEXT:      | [sizeof=24, align=8
+// CHECK-X64-NEXT:      |  nvsize=8, nvalign=8]
 
 int a[
 sizeof(AT3) +

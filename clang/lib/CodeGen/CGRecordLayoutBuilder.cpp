@@ -712,7 +712,7 @@ CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(RD);
 
   CharUnits NonVirtualSize  = Layout.getNonVirtualSize();
-  CharUnits NonVirtualAlign = Layout.getNonVirtualAlign();
+  CharUnits NonVirtualAlign = Layout.getNonVirtualAlignment();
   CharUnits AlignedNonVirtualTypeSize =
     NonVirtualSize.RoundUpToAlignment(NonVirtualAlign);
   
@@ -994,7 +994,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
 
   if (BaseTy) {
     CharUnits NonVirtualSize  = Layout.getNonVirtualSize();
-    CharUnits NonVirtualAlign = Layout.getNonVirtualAlign();
+    CharUnits NonVirtualAlign = Layout.getNonVirtualAlignment();
     CharUnits AlignedNonVirtualTypeSize = 
       NonVirtualSize.RoundUpToAlignment(NonVirtualAlign);
 

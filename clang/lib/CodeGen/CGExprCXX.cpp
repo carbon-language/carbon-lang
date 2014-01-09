@@ -316,7 +316,7 @@ static void EmitNullBaseClassInitialization(CodeGenFunction &CGF,
 
   const ASTRecordLayout &Layout = CGF.getContext().getASTRecordLayout(Base);
   CharUnits Size = Layout.getNonVirtualSize();
-  CharUnits Align = Layout.getNonVirtualAlign();
+  CharUnits Align = Layout.getNonVirtualAlignment();
 
   llvm::Value *SizeVal = CGF.CGM.getSize(Size);
 
