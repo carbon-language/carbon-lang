@@ -49,7 +49,7 @@ class PrinterContext {
   void PrintIndexTable(unsigned SectionIndex, const Elf_Shdr *IT) const;
   void PrintExceptionTable(const Elf_Shdr *IT, const Elf_Shdr *EHT,
                            uint64_t TableEntryOffset) const;
-  void PrintByteCode(const ArrayRef<uint8_t> ByteCode) const;
+  void PrintOpcodes(const uint8_t *Entry, size_t Length, off_t Offset) const;
 
 public:
   PrinterContext(StreamWriter &Writer, const object::ELFFile<ET> *File)
@@ -148,22 +148,13 @@ void PrinterContext<ET>::PrintExceptionTable(const Elf_Shdr *IT,
 
     switch (PersonalityIndex) {
     case AEABI_UNWIND_CPP_PR0:
-      PrintByteCode(Contents->slice(TableEntryOffset + 1, 3));
+      llvm_unreachable("Personality 0 should be compact inline!");
       break;
     case AEABI_UNWIND_CPP_PR1:
     case AEABI_UNWIND_CPP_PR2:
       unsigned AdditionalWords = (Word & 0x00ff0000) >> 16;
-
-      SmallVector<uint8_t, 10> ByteCode;
-      ByteCode.reserve(2 + 4 * AdditionalWords);
-
-      for (unsigned WI = 1, WE = AdditionalWords; WI <= WE; ++WI)
-        ByteCode.append(Contents->data() + TableEntryOffset + 4 * WI,
-                        Contents->data() + TableEntryOffset + 4 * WI + 4);
-      ByteCode.append(Contents->data() + TableEntryOffset,
-                      Contents->data() + TableEntryOffset + 2);
-
-      PrintByteCode(ArrayRef<uint8_t>(ByteCode.begin(), ByteCode.end()));
+      PrintOpcodes(Contents->data() + TableEntryOffset, 2 + 4 * AdditionalWords,
+                   2);
       break;
     }
   } else {
@@ -177,10 +168,11 @@ void PrinterContext<ET>::PrintExceptionTable(const Elf_Shdr *IT,
 }
 
 template <typename ET>
-void PrinterContext<ET>::PrintByteCode(const ArrayRef<uint8_t> ByteCode) const {
-  ListScope BC(SW, "ByteCode");
-  for (unsigned BCI = 0, BCE = ByteCode.size(); BCI != BCE; ++BCI)
-    SW.printHex("Instruction", ByteCode[BCE - BCI - 1]);
+void PrinterContext<ET>::PrintOpcodes(const uint8_t *Entry,
+                                      size_t Length, off_t Offset) const {
+  ListScope OCC(SW, "Opcodes");
+  for (unsigned OCI = Offset; OCI < Length + Offset; OCI++)
+    SW.printHex("Opcode", Entry[OCI ^ 0x3]);
 }
 
 template <typename ET>
@@ -234,7 +226,7 @@ void PrinterContext<ET>::PrintIndexTable(unsigned SectionIndex,
       unsigned PersonalityIndex = (Word1 & 0x0f000000) >> 24;
       SW.printNumber("PersonalityIndex", PersonalityIndex);
 
-      PrintByteCode(Contents->slice(Entry * IndexTableEntrySize + 4, 3));
+      PrintOpcodes(Contents->data() + Entry * IndexTableEntrySize + 4, 3, 1);
     } else {
       const Elf_Shdr *EHT =
         FindExceptionTable(SectionIndex, Entry * IndexTableEntrySize + 4);

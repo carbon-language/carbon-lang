@@ -91,10 +91,10 @@ function2:
 @ CHECK:         FunctionName: __personality
 @ CHECK:         Model: Compact (Inline)
 @ CHECK:         PersonalityIndex: 0
-@ CHECK:         ByteCode [
-@ CHECK:           Instruction: 0xB0
-@ CHECK:           Instruction: 0xB0
-@ CHECK:           Instruction: 0xB0
+@ CHECK:         Opcodes [
+@ CHECK:           Opcode: 0xB0
+@ CHECK:           Opcode: 0xB0
+@ CHECK:           Opcode: 0xB0
 @ CHECK:         ]
 @ CHECK:       }
 @ CHECK:     ]
@@ -107,10 +107,10 @@ function2:
 @ CHECK:         FunctionName: personality0
 @ CHECK:         Model: Compact (Inline)
 @ CHECK:         PersonalityIndex: 0
-@ CHECK:         ByteCode [
-@ CHECK:           Instruction: 0xB0
-@ CHECK:           Instruction: 0xB0
-@ CHECK:           Instruction: 0xB0
+@ CHECK:         Opcodes [
+@ CHECK:           Opcode: 0xB0
+@ CHECK:           Opcode: 0xB0
+@ CHECK:           Opcode: 0xB0
 @ CHECK:         ]
 @ CHECK:       }
 @ CHECK:     ]
@@ -125,13 +125,13 @@ function2:
 @ CHECK:         TableEntryOffset: 0x0
 @ CHECK:         Model: Compact
 @ CHECK:         PersonalityIndex: 1
-@ CHECK:         ByteCode [
-@ CHECK:           Instruction: 0xB1
-@ CHECK:           Instruction: 0xF
-@ CHECK:           Instruction: 0xA7
-@ CHECK:           Instruction: 0x3F
-@ CHECK:           Instruction: 0xB0
-@ CHECK:           Instruction: 0xB0
+@ CHECK:         Opcodes [
+@ CHECK:           Opcode: 0xB1
+@ CHECK:           Opcode: 0xF
+@ CHECK:           Opcode: 0xA7
+@ CHECK:           Opcode: 0x3F
+@ CHECK:           Opcode: 0xB0
+@ CHECK:           Opcode: 0xB0
 @ CHECK:         ]
 @ CHECK:       }
 @ CHECK:     ]
@@ -157,10 +157,10 @@ function2:
 @ CHECK:         FunctionName: opcodes
 @ CHECK:         Model: Compact (Inline)
 @ CHECK:         PersonalityIndex: 0
-@ CHECK:         ByteCode [
-@ CHECK:           Instruction: 0xC9
-@ CHECK:           Instruction: 0x84
-@ CHECK:           Instruction: 0xB0
+@ CHECK:         Opcodes [
+@ CHECK:           Opcode: 0xC9
+@ CHECK:           Opcode: 0x84
+@ CHECK:           Opcode: 0xB0
 @ CHECK:         ]
 @ CHECK:       }
 @ CHECK:     ]
@@ -173,10 +173,10 @@ function2:
 @ CHECK:         FunctionName: function0
 @ CHECK:         Model: Compact (Inline)
 @ CHECK:         PersonalityIndex: 0
-@ CHECK:         ByteCode [
-@ CHECK:           Instruction: 0xB0
-@ CHECK:           Instruction: 0xB0
-@ CHECK:           Instruction: 0xB0
+@ CHECK:         Opcodes [
+@ CHECK:           Opcode: 0xB0
+@ CHECK:           Opcode: 0xB0
+@ CHECK:           Opcode: 0xB0
 @ CHECK:         ]
 @ CHECK:       }
 @ CHECK:       Entry {
@@ -191,10 +191,10 @@ function2:
 @ CHECK:         FunctionName: function2
 @ CHECK:         Model: Compact (Inline)
 @ CHECK:         PersonalityIndex: 0
-@ CHECK:         ByteCode [
-@ CHECK:           Instruction: 0xB0
-@ CHECK:           Instruction: 0xB0
-@ CHECK:           Instruction: 0xB0
+@ CHECK:         Opcodes [
+@ CHECK:           Opcode: 0xB0
+@ CHECK:           Opcode: 0xB0
+@ CHECK:           Opcode: 0xB0
 @ CHECK:         ]
 @ CHECK:       }
 @ CHECK:     ]
