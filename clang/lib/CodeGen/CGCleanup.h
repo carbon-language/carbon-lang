@@ -194,6 +194,15 @@ public:
     return getHandlers()[I];
   }
 
+  // Clear all handler blocks.
+  // FIXME: it's better to always call clearHandlerBlocks in DTOR and have a
+  // 'takeHandler' or some such function which removes ownership from the
+  // EHCatchScope object if the handlers should live longer than EHCatchScope.
+  void clearHandlerBlocks() {
+    for (unsigned I = 0, N = getNumHandlers(); I != N; ++I)
+      delete getHandler(I).Block;
+  }
+
   typedef const Handler *iterator;
   iterator begin() const { return getHandlers(); }
   iterator end() const { return getHandlers() + getNumHandlers(); }
