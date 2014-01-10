@@ -341,22 +341,6 @@ inline error_code remove(const Twine &Path) {
   return remove(Path, Existed);
 }
 
-/// @brief Recursively remove all files below \a path, then \a path. Files are
-///        removed as if by POSIX remove().
-///
-/// @param path Input path.
-/// @param num_removed Number of files removed.
-/// @returns errc::success if path has been removed and num_removed has been
-///          successfully set, otherwise a platform specific error_code.
-error_code remove_all(const Twine &path, uint32_t &num_removed);
-
-/// @brief Convenience function for clients that don't need to know how many
-///        files were removed.
-inline error_code remove_all(const Twine &Path) {
-  uint32_t Removed;
-  return remove_all(Path, Removed);
-}
-
 /// @brief Rename \a from to \a to. Files are renamed as if by POSIX rename().
 ///
 /// @param from The path to rename from.

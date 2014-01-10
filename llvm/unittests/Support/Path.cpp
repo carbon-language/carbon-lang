@@ -225,8 +225,7 @@ protected:
   }
 
   virtual void TearDown() {
-    uint32_t removed;
-    ASSERT_NO_ERROR(fs::remove_all(TestDirectory.str(), removed));
+    ASSERT_NO_ERROR(fs::remove(TestDirectory.str()));
   }
 };
 
@@ -414,6 +413,18 @@ TEST_F(FileSystemTest, DirectoryIteration) {
   ASSERT_LT(a0, aa1);
   ASSERT_LT(a0, ab1);
   ASSERT_LT(z0, za1);
+
+  ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "/recursive/a0/aa1"));
+  ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "/recursive/a0/ab1"));
+  ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "/recursive/a0"));
+  ASSERT_NO_ERROR(
+      fs::remove(Twine(TestDirectory) + "/recursive/dontlookhere/da1"));
+  ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "/recursive/dontlookhere"));
+  ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "/recursive/pop/p1"));
+  ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "/recursive/pop"));
+  ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "/recursive/z0/za1"));
+  ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "/recursive/z0"));
+  ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "/recursive"));
 }
 
 const char archive[] = "!<arch>\x0A";
@@ -479,6 +490,7 @@ TEST_F(FileSystemTest, Magic) {
     ASSERT_NO_ERROR(fs::has_magic(file_pathname.c_str(), magic, res));
     EXPECT_TRUE(res);
     EXPECT_EQ(i->magic, fs::identify_magic(magic));
+    ASSERT_NO_ERROR(fs::remove(Twine(file_pathname)));
   }
 }
 
@@ -509,6 +521,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
     MemoryBuffer::getFile(FilePathname.c_str(), Buf);
     EXPECT_EQ(Buf->getBuffer(), "\n");
   }
+  ASSERT_NO_ERROR(fs::remove(Twine(FilePathname)));
 }
 #endif
 

@@ -56,6 +56,7 @@ TEST(FileOutputBuffer, Test) {
   uint64_t File1Size;
   ASSERT_NO_ERROR(fs::file_size(Twine(File1), File1Size));
   ASSERT_EQ(File1Size, 8192ULL);
+  ASSERT_NO_ERROR(fs::remove(File1.str()));
 
  	// TEST 2: Verify abort case.
   SmallString<128> File2(TestDirectory);
@@ -71,6 +72,7 @@ TEST(FileOutputBuffer, Test) {
   bool Exists = false;
   ASSERT_NO_ERROR(fs::exists(Twine(File2), Exists));
   EXPECT_FALSE(Exists);
+  ASSERT_NO_ERROR(fs::remove(File2.str()));
 
   // TEST 3: Verify sizing down case.
   SmallString<128> File3(TestDirectory);
@@ -94,6 +96,7 @@ TEST(FileOutputBuffer, Test) {
   uint64_t File3Size;
   ASSERT_NO_ERROR(fs::file_size(Twine(File3), File3Size));
   ASSERT_EQ(File3Size, 5000ULL);
+  ASSERT_NO_ERROR(fs::remove(File3.str()));
 
   // TEST 4: Verify file can be made executable.
   SmallString<128> File4(TestDirectory);
@@ -112,9 +115,9 @@ TEST(FileOutputBuffer, Test) {
   ASSERT_NO_ERROR(fs::status(Twine(File4), Status));
   bool IsExecutable = (Status.permissions() & fs::owner_exe);
   EXPECT_TRUE(IsExecutable);
+  ASSERT_NO_ERROR(fs::remove(File4.str()));
 
   // Clean up.
-  uint32_t RemovedCount;
-  ASSERT_NO_ERROR(fs::remove_all(TestDirectory.str(), RemovedCount));
+  ASSERT_NO_ERROR(fs::remove(TestDirectory.str()));
 }
 } // anonymous namespace

@@ -40,7 +40,8 @@ TEST(LockFileManagerTest, Basic) {
   // Now that the lock is out of scope, the file should be gone.
   EXPECT_FALSE(sys::fs::exists(StringRef(LockedFile)));
 
-  sys::fs::remove_all(StringRef(TmpDir));
+  EC = sys::fs::remove(StringRef(TmpDir));
+  ASSERT_FALSE(EC);
 }
 
 } // end anonymous namespace
