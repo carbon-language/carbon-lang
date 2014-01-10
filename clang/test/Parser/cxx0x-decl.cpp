@@ -104,3 +104,14 @@ namespace UsingDeclAttrs {
   using [[gnu::aligned(1)]] T = int; // expected-error {{an attribute list cannot appear here}}
   using T = int [[gnu::aligned(1)]]; // expected-error {{'aligned' attribute cannot be applied to types}}
 }
+
+namespace DuplicateSpecifier {
+  constexpr constexpr int f(); // expected-warning {{duplicate 'constexpr' declaration specifier}}
+  constexpr int constexpr a = 0; // expected-warning {{duplicate 'constexpr' declaration specifier}}
+
+  struct A {
+    friend constexpr int constexpr friend f(); // expected-warning {{duplicate 'friend' declaration specifier}} \
+                                               // expected-warning {{duplicate 'constexpr' declaration specifier}}
+    friend struct A friend; // expected-warning {{duplicate 'friend'}} expected-error {{'friend' must appear first}}
+  };
+}

@@ -827,7 +827,12 @@ bool DeclSpec::SetFriendSpec(SourceLocation Loc, const char *&PrevSpec,
                              unsigned &DiagID) {
   if (Friend_specified) {
     PrevSpec = "friend";
-    DiagID = diag::ext_duplicate_declspec;
+    // Keep the later location, so that we can later diagnose ill-formed
+    // declarations like 'friend class X friend;'. Per [class.friend]p3,
+    // 'friend' must be the first token in a friend declaration that is
+    // not a function declaration.
+    FriendLoc = Loc;
+    DiagID = diag::warn_duplicate_declspec;
     return true;
   }
 
@@ -850,7 +855,13 @@ bool DeclSpec::setModulePrivateSpec(SourceLocation Loc, const char *&PrevSpec,
 
 bool DeclSpec::SetConstexprSpec(SourceLocation Loc, const char *&PrevSpec,
                                 unsigned &DiagID) {
-  // 'constexpr constexpr' is ok.
+  // 'constexpr constexpr' is ok, but warn as this is likely not what the user
+  // intended.
+  if (Constexpr_specified) {
+    DiagID = diag::warn_duplicate_declspec;
+    PrevSpec = "constexpr";
+    return true;
+  }
   Constexpr_specified = true;
   ConstexprLoc = Loc;
   return false;

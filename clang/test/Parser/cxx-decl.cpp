@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -verify -fsyntax-only -triple i386-linux -pedantic -fcxx-exceptions -fexceptions %s
+// RUN: %clang_cc1 -verify -fsyntax-only -triple i386-linux -pedantic-errors -fcxx-exceptions -fexceptions %s
 
-const char const *x10; // expected-warning {{duplicate 'const' declaration specifier}}
+const char const *x10; // expected-error {{duplicate 'const' declaration specifier}}
 
 int x(*g); // expected-error {{use of undeclared identifier 'g'}}
 
@@ -46,7 +46,7 @@ class asm_class_test {
   void foo() __asm__("baz");
 };
 
-enum { fooenum = 1, }; // expected-warning {{commas at the end of enumerator lists are a C++11 extension}}
+enum { fooenum = 1, }; // expected-error {{commas at the end of enumerator lists are a C++11 extension}}
 
 struct a {
   int Type : fooenum;
@@ -81,7 +81,7 @@ namespace Commas {
   (global5),
   *global6,
   &global7 = global1,
-  &&global8 = static_cast<int&&>(global1), // expected-warning 2{{rvalue reference}}
+  &&global8 = static_cast<int&&>(global1), // expected-error 2{{rvalue reference}}
   S::a,
   global9,
   global10 = 0,
@@ -212,14 +212,14 @@ namespace PR5066 {
   template<typename T> struct X {};
   X<int N> x; // expected-error {{type-id cannot have a name}}
 
-  using T = int (*T)(); // expected-error {{type-id cannot have a name}} expected-warning {{C++11}}
+  using T = int (*T)(); // expected-error {{type-id cannot have a name}} expected-error {{C++11}}
 }
 
 namespace PR17255 {
 void foo() {
   typename A::template B<>; // expected-error {{use of undeclared identifier 'A'}} \
                             // expected-error {{expected a qualified name after 'typename'}} \
-                            // expected-warning {{'template' keyword outside of a template}}
+                            // expected-error {{'template' keyword outside of a template}}
 }
 }
 
@@ -230,6 +230,13 @@ namespace PR17567 {
   };
   FooBar::FooBar() {} // expected-error {{undeclared}} expected-error {{missing return type}}
   FooBar::~FooBar() {} // expected-error {{undeclared}} expected-error {{expected the class name}}
+}
+
+namespace DuplicateFriend {
+  struct A {
+    friend void friend f(); // expected-warning {{duplicate 'friend' declaration specifier}}
+    friend struct B friend; // expected-warning {{duplicate 'friend' declaration specifier}}
+  };
 }
 
 // PR8380
