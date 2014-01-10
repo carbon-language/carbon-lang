@@ -1553,13 +1553,15 @@ TEST(MemorySanitizer, strtoull) {
   EXPECT_NOT_POISONED((S8) e);
 }
 
-TEST(MemorySanitizer, strtoimax) {
+// https://code.google.com/p/memory-sanitizer/issues/detail?id=36
+TEST(MemorySanitizer, DISABLED_strtoimax) {
   char *e;
   assert(1 == strtoimax("1", &e, 10));
   EXPECT_NOT_POISONED((S8) e);
 }
 
-TEST(MemorySanitizer, strtoumax) {
+// https://code.google.com/p/memory-sanitizer/issues/detail?id=36
+TEST(MemorySanitizer, DISABLED_strtoumax) {
   char *e;
   assert(1 == strtoumax("1", &e, 10));
   EXPECT_NOT_POISONED((S8) e);
