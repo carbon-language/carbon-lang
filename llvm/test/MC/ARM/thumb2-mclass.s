@@ -1,9 +1,10 @@
 @ RUN: llvm-mc -triple=thumbv7m-apple-darwin -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -triple=thumbv6m -show-encoding < %s | FileCheck %s
   .syntax unified
   .globl _func
 
 @ Check that the assembler can handle the documented syntax from the ARM ARM.
-@ These tests test instruction encodings specific to v7m & v7m (FeatureMClass).
+@ These tests test instruction encodings specific to v6m & v7m (FeatureMClass).
 
 @------------------------------------------------------------------------------
 @ MRS
@@ -19,9 +20,6 @@
         mrs  r0, msp
         mrs  r0, psp
         mrs  r0, primask
-        mrs  r0, basepri
-        mrs  r0, basepri_max
-        mrs  r0, faultmask
         mrs  r0, control
 
 @ CHECK: mrs	r0, apsr                @ encoding: [0xef,0xf3,0x00,0x80]
@@ -34,9 +32,6 @@
 @ CHECK: mrs	r0, msp                 @ encoding: [0xef,0xf3,0x08,0x80]
 @ CHECK: mrs	r0, psp                 @ encoding: [0xef,0xf3,0x09,0x80]
 @ CHECK: mrs	r0, primask             @ encoding: [0xef,0xf3,0x10,0x80]
-@ CHECK: mrs	r0, basepri             @ encoding: [0xef,0xf3,0x11,0x80]
-@ CHECK: mrs	r0, basepri_max         @ encoding: [0xef,0xf3,0x12,0x80]
-@ CHECK: mrs	r0, faultmask           @ encoding: [0xef,0xf3,0x13,0x80]
 @ CHECK: mrs	r0, control             @ encoding: [0xef,0xf3,0x14,0x80]
 
 @------------------------------------------------------------------------------
@@ -65,9 +60,6 @@
         msr  msp, r0
         msr  psp, r0
         msr  primask, r0
-        msr  basepri, r0
-        msr  basepri_max, r0
-        msr  faultmask, r0
         msr  control, r0
 
 @ CHECK: msr	apsr, r0                @ encoding: [0x80,0xf3,0x00,0x88]
@@ -92,7 +84,4 @@
 @ CHECK: msr	msp, r0                 @ encoding: [0x80,0xf3,0x08,0x88]
 @ CHECK: msr	psp, r0                 @ encoding: [0x80,0xf3,0x09,0x88]
 @ CHECK: msr	primask, r0             @ encoding: [0x80,0xf3,0x10,0x88]
-@ CHECK: msr	basepri, r0             @ encoding: [0x80,0xf3,0x11,0x88]
-@ CHECK: msr	basepri_max, r0         @ encoding: [0x80,0xf3,0x12,0x88]
-@ CHECK: msr	faultmask, r0           @ encoding: [0x80,0xf3,0x13,0x88]
 @ CHECK: msr	control, r0             @ encoding: [0x80,0xf3,0x14,0x88]
