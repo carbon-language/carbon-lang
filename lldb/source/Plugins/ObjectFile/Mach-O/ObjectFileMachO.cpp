@@ -1569,8 +1569,9 @@ ParseTrieEntries (DataExtractor &data,
 			e.entry.address = data.GetULEB128(&offset);
 			if ( e.entry.flags & EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER )
             {
-                resolver_addresses.insert(e.entry.address);
+                //resolver_addresses.insert(e.entry.address);
 				e.entry.other = data.GetULEB128(&offset);
+                resolver_addresses.insert(e.entry.other);
             }
 			else
 				e.entry.other = 0;
@@ -2003,6 +2004,31 @@ ObjectFileMachO::ParseSymtab ()
         size_t num_syms = 0;
         std::string memory_symbol_name;
         uint32_t unmapped_local_symbols_found = 0;
+
+        std::vector<TrieEntryWithOffset> trie_entries;
+        std::set<lldb::addr_t> resolver_addresses;
+
+        if (dyld_trie_data.GetByteSize() > 0)
+        {
+            std::vector<llvm::StringRef> nameSlices;
+            ParseTrieEntries (dyld_trie_data,
+                              0,
+                              nameSlices,
+                              resolver_addresses,
+                              trie_entries);
+            
+            ConstString text_segment_name ("__TEXT");
+            SectionSP text_segment_sp = GetSectionList()->FindSectionByName(text_segment_name);
+            if (text_segment_sp)
+            {
+                const lldb::addr_t text_segment_file_addr = text_segment_sp->GetFileAddress();
+                if (text_segment_file_addr != LLDB_INVALID_ADDRESS)
+                {
+                    for (auto &e : trie_entries)
+                        e.entry.address += text_segment_file_addr;
+                }
+            }
+        }
 
 #if defined (__APPLE__) && defined (__arm__)
 
@@ -2839,9 +2865,16 @@ ObjectFileMachO::ParseSymtab ()
                                                                 // into the N_FUN flags to avoid duplicate symbols in the symbol table
                                                                 sym[pos->second].SetExternal(sym[sym_idx].IsExternal());
                                                                 sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                                                if (resolver_addresses.find(nlist.n_value) != resolver_adresses.end())
+                                                                    sym[pos->second].SetType (eSymbolTypeResolver);
                                                                 sym[sym_idx].Clear();
                                                                 continue;
                                                             }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (resolver_addresses.find(nlist.n_value) != resolver_adresses.end())
+                                                                sym[sym_idx].SetType (eSymbolTypeResolver);
                                                         }
                                                     }
                                                     else if (type == eSymbolTypeData)
@@ -2919,7 +2952,7 @@ ObjectFileMachO::ParseSymtab ()
         // Must reset this in case it was mutated above!
         nlist_data_offset = 0;
 #endif
-        
+
         if (nlist_data.GetByteSize() > 0)
         {
 
@@ -3584,9 +3617,16 @@ ObjectFileMachO::ParseSymtab ()
                                     // into the N_FUN flags to avoid duplicate symbols in the symbol table
                                     sym[pos->second].SetExternal(sym[sym_idx].IsExternal());
                                     sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                    if (resolver_addresses.find(nlist.n_value) != resolver_addresses.end())
+                                        sym[pos->second].SetType (eSymbolTypeResolver);
                                     sym[sym_idx].Clear();
                                     continue;
                                 }
+                            }
+                            else
+                            {
+                                if (resolver_addresses.find(nlist.n_value) != resolver_addresses.end())
+                                    sym[sym_idx].SetType (eSymbolTypeResolver);
                             }
                         }
                         else if (type == eSymbolTypeData)
@@ -3734,31 +3774,6 @@ ObjectFileMachO::ParseSymtab ()
         {
             num_syms = sym_idx;
             sym = symtab->Resize (num_syms);
-        }
-
-        std::vector<TrieEntryWithOffset> trie_entries;
-        std::set<lldb::addr_t> resolver_addresses;
-
-        if (dyld_trie_data.GetByteSize() > 0)
-        {
-            std::vector<llvm::StringRef> nameSlices;
-            ParseTrieEntries (dyld_trie_data,
-                              0,
-                              nameSlices,
-                              resolver_addresses,
-                              trie_entries);
-            
-            ConstString text_segment_name ("__TEXT");
-            SectionSP text_segment_sp = GetSectionList()->FindSectionByName(text_segment_name);
-            if (text_segment_sp)
-            {
-                const lldb::addr_t text_segment_file_addr = text_segment_sp->GetFileAddress();
-                if (text_segment_file_addr != LLDB_INVALID_ADDRESS)
-                {
-                    for (auto &e : trie_entries)
-                        e.entry.address += text_segment_file_addr;
-                }
-            }
         }
 
         // Now synthesize indirect symbols
