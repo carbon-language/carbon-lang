@@ -169,9 +169,13 @@ class AssertingInferiorTestCase(TestBase):
 
             self.runCmd("frame select " + str(frame.GetFrameID()), RUN_SUCCEEDED)
 
-            # TODO: Disassembly does not specify '->' for the PC for a non-terminal frame for a function with a tail call.
+            # Don't expect the function name to be in the disassembly as the assert
+            # function might be a no-return function where the PC is past the end
+            # of the function and in the next function. We also can't back the PC up
+            # because we don't know how much to back it up by on targets with opcodes
+            # that have differing sizes
             self.expect("disassemble -a %s" % frame.GetPC(),
-                substrs = [frame.GetFunctionName()])
+                substrs = ['->'])
 
     def check_expr_in_main(self, thread):
         depth = thread.GetNumFrames()
