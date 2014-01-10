@@ -20,3 +20,5 @@ else()
     gold-plugin.cpp
     )
 endif()
+
+target_link_libraries(LLVMgold LTO)
