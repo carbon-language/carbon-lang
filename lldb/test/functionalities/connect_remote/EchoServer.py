@@ -17,7 +17,11 @@ conn, addr = s.accept()
 print 'Connected by', addr
 while 1:
     data = conn.recv(1024)
-    if not data: break
-    conn.send(data)
-    print 'Received:', data
+    if data: 
+        print 'Received:', data
+        # Don't response to acks that are sent to us
+        if data != '+':
+            conn.send("+$#00")
+    else:
+        break
 conn.close()
