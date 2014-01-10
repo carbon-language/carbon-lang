@@ -268,8 +268,11 @@ public:
     if (!getCacheFilename(ModuleID, CacheName))
       return;
     std::string errStr;
-    if (!CacheDir.empty()) // Create user-defined cache dir.
-      sys::fs::create_directories(CacheName.substr(0, CacheName.rfind('/')));
+    if (!CacheDir.empty()) { // Create user-defined cache dir.
+      SmallString<128> dir(CacheName);
+      sys::path::remove_filename(dir);
+      sys::fs::create_directories(Twine(dir));
+    }
     raw_fd_ostream outfile(CacheName.c_str(), errStr, sys::fs::F_Binary);
     outfile.write(Obj->getBufferStart(), Obj->getBufferSize());
     outfile.close();
