@@ -841,18 +841,16 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
         {
             // Spawn a debugserver and try to get the port it listens to.
             ProcessLaunchInfo debugserver_launch_info;
-            StreamString host_and_port;
             if (hostname.empty())
                 hostname = "localhost";
-            host_and_port.Printf("%s:%u", hostname.c_str(), port);
-            const char *host_and_port_cstr = host_and_port.GetString().c_str();
             Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
             if (log)
-                log->Printf("Launching debugserver with: %s...\n", host_and_port_cstr);
+                log->Printf("Launching debugserver with: %s:%u...\n", hostname.c_str(), port);
 
             debugserver_launch_info.SetMonitorProcessCallback(ReapDebugserverProcess, this, false);
             
-            error = StartDebugserverProcess (host_and_port_cstr,
+            error = StartDebugserverProcess (hostname.empty() ? NULL : hostname.c_str(),
+                                             port,
                                              debugserver_launch_info,
                                              port);
 

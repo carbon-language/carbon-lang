@@ -167,6 +167,34 @@ namespace {
     
 } // anonymous namespace end
 
+static bool rand_initialized = false;
+
+// TODO Randomly assigning a port is unsafe.  We should get an unused
+// ephemeral port from the kernel and make sure we reserve it before passing
+// it to debugserver.
+
+#if defined (__APPLE__)
+#define LOW_PORT    (IPPORT_RESERVED)
+#define HIGH_PORT   (IPPORT_HIFIRSTAUTO)
+#else
+#define LOW_PORT    (1024u)
+#define HIGH_PORT   (49151u)
+#endif
+
+static inline uint16_t
+get_random_port ()
+{
+    if (!rand_initialized)
+    {
+        time_t seed = time(NULL);
+        
+        rand_initialized = true;
+        srand(seed);
+    }
+    return (rand() % (HIGH_PORT - LOW_PORT)) + LOW_PORT;
+}
+
+
 lldb_private::ConstString
 ProcessGDBRemote::GetPluginNameStatic()
 {
@@ -2514,7 +2542,6 @@ Error
 ProcessGDBRemote::LaunchAndConnectToDebugserver (const ProcessInfo &process_info)
 {
     Error error;
-    uint16_t port = 0;
     if (m_debugserver_pid == LLDB_INVALID_PROCESS_ID)
     {
         // If we locate debugserver, keep that located version around
@@ -2524,7 +2551,20 @@ ProcessGDBRemote::LaunchAndConnectToDebugserver (const ProcessInfo &process_info
         debugserver_launch_info.SetMonitorProcessCallback (MonitorDebugserverProcess, this, false);
         debugserver_launch_info.SetUserID(process_info.GetUserID());
 
-        error = m_gdb_comm.StartDebugserverProcess (NULL,
+#if defined (__APPLE__) && defined (__arm__)
+        // On iOS, still do a local connection using a random port
+        const char *hostname = "localhost";
+        uint16_t port = get_random_port ();
+#else
+        // Set hostname being NULL to do the reverse connect where debugserver
+        // will bind to port zero and it will communicate back to us the port
+        // that we will connect to
+        const char *hostname = NULL;
+        uint16_t port = 0;
+#endif
+
+        error = m_gdb_comm.StartDebugserverProcess (hostname,
+                                                    port,
                                                     debugserver_launch_info,
                                                     port);
 
@@ -2552,9 +2592,9 @@ ProcessGDBRemote::LaunchAndConnectToDebugserver (const ProcessInfo &process_info
         }
         else
         {
-            char connect_url[128];
-            snprintf (connect_url, sizeof(connect_url), "connect://localhost:%u", port);
-            error = ConnectToDebugserver (connect_url);
+            StreamString connect_url;
+            connect_url.Printf("connect://%s:%u", hostname, port);
+            error = ConnectToDebugserver (connect_url.GetString().c_str());
         }
 
     }

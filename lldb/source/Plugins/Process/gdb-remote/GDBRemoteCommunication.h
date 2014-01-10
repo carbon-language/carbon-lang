@@ -121,9 +121,10 @@ public:
     // supplied connection URL.
     //------------------------------------------------------------------
     lldb_private::Error
-    StartDebugserverProcess (const char *host_and_port,
+    StartDebugserverProcess (const char *hostname,
+                             uint16_t in_port, // If set to zero, then out_port will contain the bound port on exit
                              lldb_private::ProcessLaunchInfo &launch_info,
-                             uint16_t &port);
+                             uint16_t &out_port);
 
     void
     DumpHistory(lldb_private::Stream &strm);
