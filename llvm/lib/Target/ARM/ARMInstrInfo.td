@@ -2463,12 +2463,14 @@ class LDRTImmediate<bit has_offset, string args, dag iops>
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr;
   let Inst{11-0} = !if(has_offset, offset{11-0}, 0);
-  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
 def LDRT_POST_IMM
   : LDRTImmediate<1, "\t$Rt, $addr, $offset",
-                  (ins addr_offset_none:$addr, am2offset_imm:$offset)>;
+                  (ins addr_offset_none:$addr, am2offset_imm:$offset)> {
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
+}
+
 def LDRT_POST_IMM_0
   : LDRTImmediate<0, "\t$Rt, $addr", (ins addr_offset_none:$addr)>;
 
@@ -2504,12 +2506,14 @@ class LDRBTImmediate<bit has_offset, string args, dag iops>
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr;
   let Inst{11-0} = !if(has_offset, offset{11-0}, 0);
-  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
 def LDRBT_POST_IMM
   : LDRBTImmediate<1, "\t$Rt, $addr, $offset",
-                   (ins addr_offset_none:$addr, am2offset_imm:$offset)>;
+                   (ins addr_offset_none:$addr, am2offset_imm:$offset)> {
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
+}
+
 def LDRBT_POST_IMM_0
   : LDRBTImmediate<0, "\t$Rt, $addr", (ins addr_offset_none:$addr)>;
 
@@ -2785,12 +2789,15 @@ class STRBTImmediate<bit has_offset, string args, dag iops>
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr;
   let Inst{11-0} = !if(has_offset, offset{11-0}, 0);
-  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
 def STRBT_POST_IMM
   : STRBTImmediate<1, "\t$Rt, $addr, $offset",
-                   (ins GPR:$Rt, addr_offset_none:$addr, am2offset_imm:$offset)>;
+                 (ins GPR:$Rt, addr_offset_none:$addr, am2offset_imm:$offset)> {
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
+}
+
+
 def STRBT_POST_IMM_0
   : STRBTImmediate<0, "\t$Rt, $addr", (ins GPR:$Rt, addr_offset_none:$addr)>;
 
@@ -2826,12 +2833,14 @@ class STRTImmediate<bit has_offset, string args, dag iops>
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr;
   let Inst{11-0} = !if(has_offset, offset{11-0}, 0);
-  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
 def STRT_POST_IMM
   : STRTImmediate<1, "\t$Rt, $addr, $offset",
-                  (ins GPR:$Rt, addr_offset_none:$addr, am2offset_imm:$offset)>;
+                 (ins GPR:$Rt, addr_offset_none:$addr, am2offset_imm:$offset)> {
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
+}
+
 def STRT_POST_IMM_0
   : STRTImmediate<0, "\t$Rt, $addr", (ins GPR:$Rt, addr_offset_none:$addr)>;
 }
