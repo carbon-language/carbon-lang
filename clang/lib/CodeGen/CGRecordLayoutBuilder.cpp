@@ -825,12 +825,13 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(D);
 
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
-  if (RD)
+  if (RD) {
     if (Types.getTarget().getCXXABI().isMicrosoft()) {
       if (!MSLayoutNonVirtualBases(RD, Layout))
         return false;
     } else if (!LayoutNonVirtualBases(RD, Layout))
       return false;
+  }
 
   unsigned FieldNo = 0;
   
