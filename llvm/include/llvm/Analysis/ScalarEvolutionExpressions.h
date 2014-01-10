@@ -563,13 +563,14 @@ namespace llvm {
     : public SCEVVisitor<SCEVParameterRewriter, const SCEV*> {
   public:
     static const SCEV *rewrite(const SCEV *Scev, ScalarEvolution &SE,
-                               ValueToValueMap &Map) {
-      SCEVParameterRewriter Rewriter(SE, Map);
+                               ValueToValueMap &Map,
+                               bool InterpretConsts = false) {
+      SCEVParameterRewriter Rewriter(SE, Map, InterpretConsts);
       return Rewriter.visit(Scev);
     }
 
-    SCEVParameterRewriter(ScalarEvolution &S, ValueToValueMap &M)
-      : SE(S), Map(M) {}
+    SCEVParameterRewriter(ScalarEvolution &S, ValueToValueMap &M, bool C)
+      : SE(S), Map(M), InterpretConsts(C) {}
 
     const SCEV *visitConstant(const SCEVConstant *Constant) {
       return Constant;
@@ -632,8 +633,12 @@ namespace llvm {
 
     const SCEV *visitUnknown(const SCEVUnknown *Expr) {
       Value *V = Expr->getValue();
-      if (Map.count(V))
-        return SE.getUnknown(Map[V]);
+      if (Map.count(V)) {
+        Value *NV = Map[V];
+        if (InterpretConsts && isa<ConstantInt>(NV))
+          return SE.getConstant(cast<ConstantInt>(NV));
+        return SE.getUnknown(NV);
+      }
       return Expr;
     }
 
@@ -644,6 +649,7 @@ namespace llvm {
   private:
     ScalarEvolution &SE;
     ValueToValueMap &Map;
+    bool InterpretConsts;
   };
 
   typedef DenseMap<const Loop*, const SCEV*> LoopToScevMapT;
