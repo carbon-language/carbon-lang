@@ -630,15 +630,19 @@ void ARMAsmPrinter::emitAttributes() {
   ATS.emitAttribute(ARMBuildAttrs::CPU_arch,
                     getArchForCPU(CPUString, Subtarget));
 
-  if (Subtarget->isAClass()) {
-    ATS.emitAttribute(ARMBuildAttrs::CPU_arch_profile,
-                      ARMBuildAttrs::ApplicationProfile);
-  } else if (Subtarget->isRClass()) {
-    ATS.emitAttribute(ARMBuildAttrs::CPU_arch_profile,
-                      ARMBuildAttrs::RealTimeProfile);
-  } else if (Subtarget->isMClass()){
-    ATS.emitAttribute(ARMBuildAttrs::CPU_arch_profile,
-                      ARMBuildAttrs::MicroControllerProfile);
+  // Tag_CPU_arch_profile must have the default value of 0 when "Architecture
+  // profile is not applicable (e.g. pre v7, or cross-profile code)". 
+  if (Subtarget->hasV7Ops()) {
+    if (Subtarget->isAClass()) {
+      ATS.emitAttribute(ARMBuildAttrs::CPU_arch_profile,
+                        ARMBuildAttrs::ApplicationProfile);
+    } else if (Subtarget->isRClass()) {
+      ATS.emitAttribute(ARMBuildAttrs::CPU_arch_profile,
+                        ARMBuildAttrs::RealTimeProfile);
+    } else if (Subtarget->isMClass()) {
+      ATS.emitAttribute(ARMBuildAttrs::CPU_arch_profile,
+                        ARMBuildAttrs::MicroControllerProfile);
+    }
   }
 
   ATS.emitAttribute(ARMBuildAttrs::ARM_ISA_use, Subtarget->hasARMOps() ?

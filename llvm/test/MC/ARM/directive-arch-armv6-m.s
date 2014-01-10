@@ -19,12 +19,12 @@
 @ CHECK-OBJ:    ]
 @ CHECK-OBJ:    Address: 0x0
 @ CHECK-OBJ:    Offset: 0x34
-@ CHECK-OBJ:    Size: 27
+@ CHECK-OBJ:    Size: 25
 @ CHECK-OBJ:    Link: 0
 @ CHECK-OBJ:    Info: 0
 @ CHECK-OBJ:    AddressAlignment: 1
 @ CHECK-OBJ:    EntrySize: 0
 @ CHECK-OBJ:    SectionData (
-@ CHECK-OBJ:      0000: 411A0000 00616561 62690001 10000000  |A....aeabi......|
-@ CHECK-OBJ:      0010: 05362D4D 00060B07 4D0901             |.6-M....M..|
+@ CHECK-OBJ:      0000: 41180000 00616561 62690001 0E000000  |A....aeabi......|
+@ CHECK-OBJ:      0010: 05362D4D 00060B09 01                 |.6-M.....|
 @ CHECK-OBJ:    )

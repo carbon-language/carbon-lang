@@ -43,7 +43,7 @@
 ; V6-NOT:    .eabi_attribute 68
 
 ; V6M:  .eabi_attribute 6, 12
-; V6M:  .eabi_attribute 7, 77
+; V6M-NOT:  .eabi_attribute 7
 ; V6M:  .eabi_attribute 8, 0
 ; V6M:  .eabi_attribute 9, 1
 ; V6M:  .eabi_attribute 24, 1
@@ -333,7 +333,7 @@
 
 ; CORTEX-M0:  .cpu cortex-m0
 ; CORTEX-M0:  .eabi_attribute 6, 12
-; CORTEX-M0:  .eabi_attribute 7, 77
+; CORTEX-M0-NOT:  .eabi_attribute 7
 ; CORTEX-M0:  .eabi_attribute 8, 0
 ; CORTEX-M0:  .eabi_attribute 9, 1
 ; CORTEX-M0:  .eabi_attribute 24, 1
