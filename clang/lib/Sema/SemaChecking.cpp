@@ -4970,9 +4970,11 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
   else
     OS << Value;
 
-  S.Diag(E->getOperatorLoc(), diag::warn_out_of_range_compare)
-      << OS.str() << OtherT << IsTrue
-      << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
+  S.DiagRuntimeBehavior(E->getOperatorLoc(), E,
+                        S.PDiag(diag::warn_out_of_range_compare)
+                          << OS.str() << OtherT << IsTrue
+                          << E->getLHS()->getSourceRange()
+                          << E->getRHS()->getSourceRange());
 }
 
 /// Analyze the operands of the given comparison.  Implements the
