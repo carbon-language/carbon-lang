@@ -1201,7 +1201,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         regloc.type = UnwindLLDB::RegisterLocation::eRegisterValueInferred;
         regloc.location.inferred_value = m_cfa + offset;
         m_registers[lldb_regnum] = regloc;
-        UnwindLogMsg ("supplying caller's register %d, value is CFA plus offset", lldb_regnum);
+        UnwindLogMsg ("supplying caller's register %d, value is CFA plus offset %d", lldb_regnum, offset);
         return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     }
 
@@ -1211,7 +1211,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         regloc.type = UnwindLLDB::RegisterLocation::eRegisterSavedAtMemoryLocation;
         regloc.location.target_memory_location = m_cfa + offset;
         m_registers[lldb_regnum] = regloc;
-        UnwindLogMsg ("supplying caller's register %d from the stack, saved at CFA plus offset", lldb_regnum);
+        UnwindLogMsg ("supplying caller's register %d from the stack, saved at CFA plus offset %d", lldb_regnum, offset);
         return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     }
 
