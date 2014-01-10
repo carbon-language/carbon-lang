@@ -84,23 +84,23 @@ extern SEL MySelector(SEL s);
 
 // rdar://14007194
 @interface UxTechTest : NSObject
-- (int) invalidate : (id)Arg; // expected-warning {{multiple selectors named 'invalidate:' found}}
-+ (int) C_invalidate : (int)arg; // expected-warning {{multiple selectors named 'C_invalidate:' found}}
+- (int) invalidate : (id)Arg;
++ (int) C_invalidate : (int)arg;
 @end
 
 @interface UxTechTest(CAT)
-- (char) invalidate : (int)arg; // expected-note {{also found}}
-+ (int) C_invalidate : (char)arg; // expected-note {{also found}}
+- (char) invalidate : (int)arg;
++ (int) C_invalidate : (char)arg;
 @end
 
 @interface NSPort : NSObject
-- (double) invalidate : (void*)Arg1; // expected-note {{also found}}
-+ (int) C_invalidate : (id*)arg; // expected-note {{also found}}
+- (double) invalidate : (void*)Arg1;
++ (int) C_invalidate : (id*)arg;
 @end
 
 
 @interface USEText : NSPort
-- (int) invalidate : (int)arg; // expected-note {{also found}}
+- (int) invalidate : (int)arg;
 @end
 
 @implementation USEText

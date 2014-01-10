@@ -856,8 +856,6 @@ def warn_auto_implicit_atomic_property : Warning<
   InGroup<ImplicitAtomic>, DefaultIgnore;
 def warn_unimplemented_selector:  Warning<
   "creating selector for nonexistent method %0">, InGroup<Selector>, DefaultIgnore;
-def warning_multiple_selectors: Warning<
-  "multiple selectors named %0 found">, InGroup<SelectorTypeMismatch>, DefaultIgnore;
 def warn_unimplemented_protocol_method : Warning<
   "method %0 in protocol %1 not implemented">, InGroup<Protocol>;
 
