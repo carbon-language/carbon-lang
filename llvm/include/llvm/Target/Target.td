@@ -973,11 +973,6 @@ class AsmWriter {
 
   // OperandSpacing - Space between operand columns.
   int OperandSpacing = -1;
-
-  // isMCAsmWriter - Is this assembly writer for an MC emitter? This controls
-  // generation of the printInstruction() method. For MC printers, it takes
-  // an MCInstr* operand, otherwise it takes a MachineInstr*.
-  bit isMCAsmWriter = 1;
 }
 def DefaultAsmWriter : AsmWriter;
 
