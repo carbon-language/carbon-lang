@@ -82,8 +82,7 @@ LTOCodeGenerator::~LTOCodeGenerator() {
 
 // Initialize LTO passes. Please keep this funciton in sync with
 // PassManagerBuilder::populateLTOPassManager(), and make sure all LTO
-// passes are initialized. 
-//
+// passes are initialized.
 void LTOCodeGenerator::initializeLTOPasses() {
   PassRegistry &R = *PassRegistry::getPassRegistry();
 
@@ -197,7 +196,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   return true;
 }
 
-bool LTOCodeGenerator::compile_to_file(const char** name, 
+bool LTOCodeGenerator::compile_to_file(const char** name,
                                        bool disableOpt,
                                        bool disableInline,
                                        bool disableGVNLoadPRE,
@@ -461,7 +460,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // Add an appropriate DataLayout instance for this module...
   passes.add(new DataLayout(*TargetMach->getDataLayout()));
 
-  // Add appropriate TargetLibraryInfo for this module. 
+  // Add appropriate TargetLibraryInfo for this module.
   passes.add(new TargetLibraryInfo(Triple(TargetMach->getTargetTriple())));
 
   TargetMach->addAnalysisPasses(passes);
