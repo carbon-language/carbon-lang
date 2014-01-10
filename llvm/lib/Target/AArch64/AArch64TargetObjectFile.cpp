@@ -17,8 +17,8 @@
 using namespace llvm;
 
 void
-AArch64LinuxTargetObjectFile::Initialize(MCContext &Ctx,
-                                         const TargetMachine &TM) {
+AArch64ElfTargetObjectFile::Initialize(MCContext &Ctx,
+                                       const TargetMachine &TM) {
   TargetLoweringObjectFileELF::Initialize(Ctx, TM);
   InitializeELF(TM.Options.UseInitArray);
 }
