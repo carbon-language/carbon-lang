@@ -304,7 +304,15 @@ private:
     size_t PrefixLength = Prefix.length();
     if (ModID.substr(0, PrefixLength) != Prefix)
       return false;
-    CacheName = CacheDir + ModID.substr(PrefixLength);
+        std::string CacheSubdir = ModID.substr(PrefixLength);
+#if defined(_WIN32)
+        // Transform "X:\foo" => "/X\foo" for convenience.
+        if (isalpha(CacheSubdir[0]) && CacheSubdir[1] == ':') {
+          CacheSubdir[1] = CacheSubdir[0];
+          CacheSubdir[0] = '/';
+        }
+#endif
+    CacheName = CacheDir + CacheSubdir;
     size_t pos = CacheName.rfind('.');
     CacheName.replace(pos, CacheName.length() - pos, ".o");
     return true;
