@@ -1,5 +1,3 @@
-; REQUIRES: shell
-
 ; This first line will generate the .o files for the next run line
 ; RUN: rm -rf %t.cachedir
 ; RUN: mkdir -p %t.cachedir
