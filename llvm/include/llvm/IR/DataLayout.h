@@ -104,7 +104,7 @@ private:
     MM_None,
     MM_ELF,
     MM_MachO,
-    MM_COFF,
+    MM_WINCOFF,
     MM_Mips
   };
   ManglingModeT ManglingMode;
@@ -234,7 +234,7 @@ public:
   }
 
   bool hasMicrosoftFastStdCallMangling() const {
-    return ManglingMode == MM_COFF;
+    return ManglingMode == MM_WINCOFF;
   }
 
   bool hasLinkerPrivateGlobalPrefix() const {
@@ -254,7 +254,7 @@ public:
     case MM_Mips:
       return '\0';
     case MM_MachO:
-    case MM_COFF:
+    case MM_WINCOFF:
       return '_';
     }
     llvm_unreachable("invalid mangling mode");
@@ -269,7 +269,7 @@ public:
     case MM_Mips:
       return "$";
     case MM_MachO:
-    case MM_COFF:
+    case MM_WINCOFF:
       return "L";
     }
     llvm_unreachable("invalid mangling mode");

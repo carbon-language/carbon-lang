@@ -1165,7 +1165,7 @@ as follows:
    * ``m``: Mips mangling: Private symbols get a ``$`` prefix.
    * ``o``: Mach-O mangling: Private symbols get ``L`` prefix. Other
     symbols get a ``_`` prefix.
-   * ``c``:  COFF prefix:  Similar to Mach-O, but stdcall and fastcall
+   * ``w``: Windows COFF prefix:  Similar to Mach-O, but stdcall and fastcall
   functions also get a suffix based on the frame size.
 ``n<size1>:<size2>:<size3>...``
     This specifies a set of native integer widths for the target CPU in

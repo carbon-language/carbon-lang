@@ -159,7 +159,7 @@ const char *DataLayout::getManglingComponent(const Triple &T) {
   if (T.isOSBinFormatELF() || T.isArch64Bit())
     return "-m:e";
   assert(T.isOSBinFormatCOFF());
-  return "-m:c";
+  return "-m:w";
 }
 
 static const LayoutAlignElem DefaultAlignments[] = {
@@ -334,8 +334,8 @@ void DataLayout::parseSpecifier(StringRef Desc) {
       case 'm':
         ManglingMode = MM_Mips;
         break;
-      case 'c':
-        ManglingMode = MM_COFF;
+      case 'w':
+        ManglingMode = MM_WINCOFF;
         break;
       }
       break;
@@ -525,8 +525,8 @@ std::string DataLayout::getStringRepresentation() const {
   case MM_MachO:
     OS << "-m:o";
     break;
-  case MM_COFF:
-    OS << "-m:c";
+  case MM_WINCOFF:
+    OS << "-m:w";
     break;
   case MM_Mips:
     OS << "-m:m";
