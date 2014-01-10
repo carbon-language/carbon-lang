@@ -30,3 +30,11 @@
 // RUN: %clang -target powerpc-unknown-unknown -c -x assembler %s -### -m64 2>&1 \
 // RUN:   | FileCheck -check-prefix=PPC-M64 %s
 // PPC-M64: {{.*as.*-a64}}
+
+// RUN: %clang -target sparc64-unknown-unknown -no-integrated-as -c -x assembler %s -### -m32 2>&1 \
+// RUN:   | FileCheck -check-prefix=SPARCV8 %s
+// SPARCV8: {{.*as.*-32}}
+
+// RUN: %clang -target sparc-unknown-unknown -no-integrated-as -c -x assembler %s -### -m64 2>&1 \
+// RUN:   | FileCheck -check-prefix=SPARCV9 %s
+// SPARCV9: {{.*as.*-64}}
