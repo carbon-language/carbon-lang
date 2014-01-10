@@ -2477,6 +2477,9 @@ void MicrosoftRecordLayoutBuilder::injectVBPtr(const CXXRecordDecl *RD) {
          i->second += Offset;
   // Update the object alignment.
   updateAlignment(PointerInfo.Alignment);
+  // The presence of a vbptr suppresses zero sized objects that are not in
+  // virtual bases.
+  HasZeroSizedSubObject = false;
 }
 
 void MicrosoftRecordLayoutBuilder::injectVFPtr(const CXXRecordDecl *RD) {
@@ -2566,6 +2569,9 @@ void MicrosoftRecordLayoutBuilder::injectVPtrs(const CXXRecordDecl *RD) {
     }
   }
   layoutFields(RD);
+  // The presence of a vbptr suppresses zero sized objects that are not in
+  // virtual bases.
+  HasZeroSizedSubObject = false;
 }
 
 void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {

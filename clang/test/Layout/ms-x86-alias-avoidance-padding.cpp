@@ -139,29 +139,29 @@ struct BT3 : BT0, BT2 {
 
 struct T0 : AT {
 	T0() {
-		printf("T0 (this) : %d\n", (char*)this - buffer);
+		printf("T0 (this) : %d\n", (int)((char*)this - buffer));
 	}
 };
 
 struct T1 : T0 {
 	char a;
 	T1() {
-		printf("T1 (this) : %d\n", (char*)this - buffer);
-		printf("T1 (fiel) : %d\n", (char*)&a - buffer);
+		printf("T1 (this) : %d\n", (int)((char*)this - buffer));
+		printf("T1 (fiel) : %d\n", (int)((char*)&a - buffer));
 	}
 };
 
 struct T2 : AT {
 	char a;
 	T2() {
-		printf("T2 (this) : %d\n", (char*)this - buffer);
-		printf("T2 (fiel) : %d\n", (char*)&a - buffer);
+		printf("T2 (this) : %d\n", (int)((char*)this - buffer));
+		printf("T2 (fiel) : %d\n", (int)((char*)&a - buffer));
 	}
 };
 
 struct __declspec(align(1)) T3 : virtual T1, virtual T2 {
 	T3() {
-		printf("T3 (this) : %d\n", (char*)this - buffer);
+		printf("T3 (this) : %d\n", (int)((char*)this - buffer));
 	}
 };
 
@@ -196,7 +196,69 @@ struct __declspec(align(1)) T3 : virtual T1, virtual T2 {
 // CHECK-X64-NEXT:      | [sizeof=24, align=8
 // CHECK-X64-NEXT:      |  nvsize=8, nvalign=8]
 
+struct B {};
+struct C { int a; };
+struct D : B, virtual C { B b; };
+struct E : D, B {};
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct E
+// CHECK-NEXT:    0 |   struct D (base)
+// CHECK-NEXT:    4 |     struct B (base) (empty)
+// CHECK-NEXT:    0 |     (D vbtable pointer)
+// CHECK-NEXT:    4 |     struct B b (empty)
+// CHECK:         8 |   struct B (base) (empty)
+// CHECK-NEXT:    8 |   struct C (virtual base)
+// CHECK-NEXT:    8 |     int a
+// CHECK-NEXT:      | [sizeof=12, align=4
+// CHECK-NEXT:      |  nvsize=8, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:   0 | struct E
+// CHECK-X64-NEXT:   0 |   struct D (base)
+// CHECK-X64-NEXT:   8 |     struct B (base) (empty)
+// CHECK-X64-NEXT:   0 |     (D vbtable pointer)
+// CHECK-X64-NEXT:   8 |     struct B b (empty)
+// CHECK-X64:       16 |   struct B (base) (empty)
+// CHECK-X64-NEXT:  16 |   struct C (virtual base)
+// CHECK-X64-NEXT:  16 |     int a
+// CHECK-X64-NEXT:     | [sizeof=24, align=8
+// CHECK-X64-NEXT:     |  nvsize=16, nvalign=8]
+
+struct F : virtual D, virtual B {};
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct F
+// CHECK-NEXT:    0 |   (F vbtable pointer)
+// CHECK-NEXT:    4 |   struct C (virtual base)
+// CHECK-NEXT:    4 |     int a
+// CHECK-NEXT:    8 |   struct D (virtual base)
+// CHECK-NEXT:   12 |     struct B (base) (empty)
+// CHECK-NEXT:    8 |     (D vbtable pointer)
+// CHECK-NEXT:   12 |     struct B b (empty)
+// CHECK:        16 |   struct B (virtual base) (empty)
+// CHECK-NEXT:      | [sizeof=16, align=4
+// CHECK-NEXT:      |  nvsize=4, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct F
+// CHECK-X64-NEXT:    0 |   (F vbtable pointer)
+// CHECK-X64-NEXT:    8 |   struct C (virtual base)
+// CHECK-X64-NEXT:    8 |     int a
+// CHECK-X64-NEXT:   16 |   struct D (virtual base)
+// CHECK-X64-NEXT:   24 |     struct B (base) (empty)
+// CHECK-X64-NEXT:   16 |     (D vbtable pointer)
+// CHECK-X64-NEXT:   24 |     struct B b (empty)
+// CHECK-X64:        32 |   struct B (virtual base) (empty)
+// CHECK-X64-NEXT:      | [sizeof=32, align=8
+// CHECK-X64-NEXT:      |  nvsize=8, nvalign=8]
+
 int a[
 sizeof(AT3) +
 sizeof(BT3) +
-sizeof(T3)];
+sizeof(T3) +
+sizeof(E) +
+sizeof(F) +
+0];
