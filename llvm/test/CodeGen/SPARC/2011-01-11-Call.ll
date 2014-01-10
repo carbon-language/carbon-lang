@@ -8,7 +8,7 @@
 ; V8-NEXT:  nop
 ; V8:       call bar
 ; V8-NEXT:  nop
-; V8:       jmp %i7+8
+; V8:       ret
 ; V8-NEXT:  restore
 
 ; V9-LABEL: test
@@ -17,7 +17,7 @@
 ; V9-NEXT:  nop
 ; V9:       call bar
 ; V9-NEXT:  nop
-; V9:       jmp %i7+8
+; V9:       ret
 ; V9-NEXT:  restore
 
 define void @test() nounwind {
@@ -36,14 +36,14 @@ declare void @bar(...)
 ; V8:       save %sp
 ; V8:       call foo
 ; V8-NEXT:  nop
-; V8:       jmp %i7+8
+; V8:       ret
 ; V8-NEXT:  restore %g0, %o0, %o0
 
 ; V9-LABEL: test_tail_call_with_return
 ; V9:       save %sp
 ; V9:       call foo
 ; V9-NEXT:  nop
-; V9:       jmp %i7+8
+; V9:       ret
 ; V9-NEXT:  restore %g0, %o0, %o0
 
 define i32 @test_tail_call_with_return() nounwind {

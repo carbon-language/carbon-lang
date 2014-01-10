@@ -14,7 +14,7 @@ define zeroext i8 @loadG() {
 
 ; abs32: loadG
 ; abs32: sethi %hi(G), %[[R:[gilo][0-7]]]
-; abs32: jmp %o7+8
+; abs32: retl
 ; abs32: ldub [%[[R]]+%lo(G)], %o0
 
 
@@ -22,7 +22,7 @@ define zeroext i8 @loadG() {
 ; abs44: sethi %h44(G), %[[R1:[gilo][0-7]]]
 ; abs44: add %[[R1]], %m44(G), %[[R2:[gilo][0-7]]]
 ; abs44: sllx %[[R2]], 12, %[[R3:[gilo][0-7]]]
-; abs44: jmp %o7+8
+; abs44: retl
 ; abs44: ldub [%[[R3]]+%l44(G)], %o0
 
 
@@ -32,7 +32,7 @@ define zeroext i8 @loadG() {
 ; abs64: sethi %hh(G), %[[R3:[gilo][0-7]]]
 ; abs64: add %[[R3]], %hm(G), %[[R4:[gilo][0-7]]]
 ; abs64: sllx %[[R4]], 32, %[[R5:[gilo][0-7]]]
-; abs64: jmp %o7+8
+; abs64: retl
 ; abs64: ldub [%[[R5]]+%[[R2]]], %o0
 
 
@@ -42,7 +42,7 @@ define zeroext i8 @loadG() {
 ; v8pic32: add %[[R1]], %lo(G), %[[Goffs:[gilo][0-7]]]
 ; v8pic32: ld [%[[GOT:[gilo][0-7]]]+%[[Goffs]]], %[[Gaddr:[gilo][0-7]]]
 ; v8pic32: ldub [%[[Gaddr]]], %i0
-; v8pic32: jmp %i7+8
+; v8pic32: ret
 ; v8pic32: restore
 
 
@@ -52,6 +52,6 @@ define zeroext i8 @loadG() {
 ; v9pic32: add %[[R1]], %lo(G), %[[Goffs:[gilo][0-7]]]
 ; v9pic32: ldx [%[[GOT:[gilo][0-7]]]+%[[Goffs]]], %[[Gaddr:[gilo][0-7]]]
 ; v9pic32: ldub [%[[Gaddr]]], %i0
-; v9pic32: jmp %i7+8
+; v9pic32: ret
 ; v9pic32: restore
 

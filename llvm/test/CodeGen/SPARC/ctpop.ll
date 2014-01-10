@@ -9,12 +9,12 @@ declare i32 @llvm.ctpop.i32(i32)
 
 ; V9-LABEL: test
 ; V9:       srl %o0, 0, %o0
-; V9-NEXT:  jmp %o7+8
+; V9-NEXT:  retl
 ; V9-NEXT:  popc %o0, %o0
 
 ; SPARC64-LABEL: test
 ; SPARC64:       srl %o0, 0, %o0
-; SPARC64:       jmp %o7+8
+; SPARC64:       retl
 ; SPARC64:       popc %o0, %o0
 
 define i32 @test(i32 %X) {

@@ -7,7 +7,7 @@ entry:
 ; CHECK: test
 ; CHECK: call bar
 ; CHECK-NOT: nop
-; CHECK: jmp
+; CHECK: ret
 ; CHECK-NEXT: restore
   %0 = tail call i32 @bar(i32 %a) nounwind
   ret i32 %0
@@ -18,7 +18,7 @@ entry:
 ; CHECK:      test_jmpl
 ; CHECK:      call
 ; CHECK-NOT:  nop
-; CHECK:      jmp
+; CHECK:      ret
 ; CHECK-NEXT: restore
   %0 = tail call i32 %f(i32 %a, i32 %b) nounwind
   ret i32 %0
@@ -47,7 +47,7 @@ bb:                                               ; preds = %entry, %bb
 
 bb5:                                              ; preds = %bb, %entry
   %a_addr.1.lcssa = phi i32 [ %a, %entry ], [ %a_addr.0, %bb ]
-;CHECK:      jmp
+;CHECK:      retl
 ;CHECK-NOT: restore
   ret i32 %a_addr.1.lcssa
 }
@@ -110,7 +110,7 @@ declare i32 @func(i32*)
 define i32 @restore_add(i32 %a, i32 %b) {
 entry:
 ;CHECK-LABEL:  restore_add:
-;CHECK:  jmp %i7+8
+;CHECK:  ret
 ;CHECK:  restore %o0, %i1, %o0
   %0 = tail call i32 @bar(i32 %a) nounwind
   %1 = add nsw i32 %0, %b
@@ -120,7 +120,7 @@ entry:
 define i32 @restore_add_imm(i32 %a) {
 entry:
 ;CHECK-LABEL:  restore_add_imm:
-;CHECK:  jmp %i7+8
+;CHECK:  ret
 ;CHECK:  restore %o0, 20, %o0
   %0 = tail call i32 @bar(i32 %a) nounwind
   %1 = add nsw i32 %0, 20
@@ -130,7 +130,7 @@ entry:
 define i32 @restore_or(i32 %a) {
 entry:
 ;CHECK-LABEL:  restore_or:
-;CHECK:  jmp %i7+8
+;CHECK:  ret
 ;CHECK:  restore %g0, %o0, %o0
   %0 = tail call i32 @bar(i32 %a) nounwind
   ret i32 %0
@@ -140,7 +140,7 @@ define i32 @restore_or_imm(i32 %a) {
 entry:
 ;CHECK-LABEL:  restore_or_imm:
 ;CHECK:  or %o0, 20, %i0
-;CHECK:  jmp %i7+8
+;CHECK:  ret
 ;CHECK:  restore %g0, %g0, %g0
   %0 = tail call i32 @bar(i32 %a) nounwind
   %1 = or i32 %0, 20

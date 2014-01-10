@@ -128,3 +128,9 @@ def : InstAlias<"jmp $addr", (JMPLri G0, MEMri:$addr)>;
 // call addr -> jmpl addr, %o7
 def : InstAlias<"call $addr", (JMPLrr O7, MEMrr:$addr)>;
 def : InstAlias<"call $addr", (JMPLri O7, MEMri:$addr)>;
+
+// retl -> RETL 8
+def : InstAlias<"retl", (RETL 8)>;
+
+// ret -> RET 8
+def : InstAlias<"ret", (RET 8)>;

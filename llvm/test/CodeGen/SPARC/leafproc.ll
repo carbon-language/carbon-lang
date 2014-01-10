@@ -1,7 +1,7 @@
 ; RUN: llc -march=sparc -disable-sparc-leaf-proc=0 < %s | FileCheck %s
 
 ; CHECK-LABEL:      func_nobody:
-; CHECK:      jmp %o7+8
+; CHECK:      retl
 ; CHECK-NEXT: nop
 define void @func_nobody() {
 entry:
@@ -10,7 +10,7 @@ entry:
 
 
 ; CHECK-LABEL:      return_int_const:
-; CHECK:      jmp %o7+8
+; CHECK:      retl
 ; CHECK-NEXT: or %g0, 1729, %o0
 define i32 @return_int_const() {
 entry:
@@ -19,7 +19,7 @@ entry:
 
 ; CHECK-LABEL:      return_double_const:
 ; CHECK:      sethi
-; CHECK:      jmp %o7+8
+; CHECK:      retl
 ; CHECK-NEXT: ldd {{.*}}, %f0
 
 define double @return_double_const() {
@@ -29,7 +29,7 @@ entry:
 
 ; CHECK-LABEL:      leaf_proc_with_args:
 ; CHECK:      add {{%o[0-1]}}, {{%o[0-1]}}, [[R:%[go][0-7]]]
-; CHECK:      jmp %o7+8
+; CHECK:      retl
 ; CHECK-NEXT: add [[R]], %o2, %o0
 
 define i32 @leaf_proc_with_args(i32 %a, i32 %b, i32 %c) {
@@ -42,7 +42,7 @@ entry:
 ; CHECK-LABEL:     leaf_proc_with_args_in_stack:
 ; CHECK-DAG: ld [%sp+92], {{%[go][0-7]}}
 ; CHECK-DAG: ld [%sp+96], {{%[go][0-7]}}
-; CHECK:     jmp %o7+8
+; CHECK:     retl
 ; CHECK-NEXT: add {{.*}}, %o0
 define i32 @leaf_proc_with_args_in_stack(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f, i32 %g, i32 %h) {
 entry:
@@ -63,7 +63,7 @@ entry:
 ; CHECK:      or %g0, 2, [[R2:%[go][0-7]]]
 ; CHECK:      st [[R2]], [%sp+100]
 ; CHECK:      ld {{.+}}, %o0
-; CHECK:      jmp %o7+8
+; CHECK:      retl
 ; CHECK-NEXT: add %sp, 104, %sp
 
 define i32 @leaf_proc_with_local_array(i32 %a, i32 %b, i32 %c) {
