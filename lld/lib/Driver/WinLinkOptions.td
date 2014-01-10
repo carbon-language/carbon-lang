@@ -50,6 +50,10 @@ def manifestdependency : P<"manifestdependency",
 def incl : Joined<["/", "-"], "include:">,
     HelpText<"Force symbol to be added to symbol table as undefined one">;
 
+// "def" is also a keyword.
+def deffile : Joined<["/", "-"], "def:">,
+    HelpText<"Use module-definition file">;
+
 def nodefaultlib_all : F<"nodefaultlib">;
 def noentry : F<"noentry">;
 def dll : F<"dll">;

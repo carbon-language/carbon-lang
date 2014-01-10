@@ -20,6 +20,7 @@
 
 #include "lld/Driver/Driver.h"
 #include "lld/Driver/WinLinkInputGraph.h"
+#include "lld/Driver/WinLinkModuleDef.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -28,6 +29,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
@@ -337,8 +339,19 @@ bool parseExport(StringRef option, PECOFFLinkingContext::ExportDesc &ret) {
   }
 }
 
-StringRef replaceExtension(PECOFFLinkingContext &ctx,
-                           StringRef path, StringRef extension) {
+// Read module-definition file.
+bool parseDef(StringRef option,
+              std::vector<PECOFFLinkingContext::ExportDesc> &ret) {
+  OwningPtr<MemoryBuffer> buf;
+  if (MemoryBuffer::getFile(option, buf))
+    return false;
+  moduledef::Lexer lexer(std::unique_ptr<MemoryBuffer>(buf.take()));
+  moduledef::Parser parser(lexer);
+  return parser.parse(ret);
+}
+
+StringRef replaceExtension(PECOFFLinkingContext &ctx, StringRef path,
+                           StringRef extension) {
   SmallString<128> val = path;
   llvm::sys::path::replace_extension(val, extension);
   return ctx.allocate(val.str());
@@ -903,6 +916,18 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
         desc.name = ctx.decorateSymbol(desc.name);
       ctx.addDllExport(desc);
       break;
+    }
+
+    case OPT_deffile: {
+      std::vector<PECOFFLinkingContext::ExportDesc> exports;
+      if (!parseDef(inputArg->getValue(), exports)) {
+        diagnostics << "Error: invalid module-definition file\n";
+        return false;
+      }
+      for (PECOFFLinkingContext::ExportDesc desc : exports) {
+        desc.name = ctx.decorateSymbol(desc.name);
+        ctx.addDllExport(desc);
+      }
     }
 
     case OPT_libpath:
