@@ -485,3 +485,14 @@ Lbaz: .quad 0
 @ CHECK: strht	r8, [r1], #-25          @ encoding: [0xb9,0x81,0x61,0xe0]
 @ CHECK: strht	r5, [r3], r4            @ encoding: [0xb4,0x50,0xa3,0xe0]
 @ CHECK: strht	r6, [r8], -r0           @ encoding: [0xb0,0x60,0x28,0xe0]
+
+@------------------------------------------------------------------------------
+@ GNU Assembler Compatibility
+@------------------------------------------------------------------------------
+
+	ldrd r0, [sp]
+	strd r0, [sp]
+
+@ CHECK: ldrd r0, r1, [sp]              @ encoding: [0xd0,0x00,0xcd,0xe1]
+@ CHECK: strd r0, r1, [sp]              @ encoding: [0xf0,0x00,0xcd,0xe1]
+

@@ -2280,6 +2280,12 @@ let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
   def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rt, GPR:$Rt2), (ins addrmode3:$addr),
                    LdMiscFrm, IIC_iLoad_d_r, "ldrd", "\t$Rt, $Rt2, $addr", []>,
              Requires<[IsARM, HasV5TE]>;
+
+  // GNU Assembler extension (compatibility)
+  let isAsmParserOnly = 1 in
+    def LDRD_PAIR : AI3ld<0b1101, 0, (outs GPRPairOp:$Rt), (ins addrmode3:$addr),
+                          LdMiscFrm, IIC_iLoad_d_r, "ldrd", "\t$Rt, $addr", []>,
+                    Requires<[IsARM, HasV5TE]>;
 }
 
 def LDA : AIldracq<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr),
@@ -2545,12 +2551,21 @@ def STRH : AI3str<0b1011, (outs), (ins GPR:$Rt, addrmode3:$addr), StMiscFrm,
                [(truncstorei16 GPR:$Rt, addrmode3:$addr)]>;
 
 // Store doubleword
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
+let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
   def STRD : AI3str<0b1111, (outs), (ins GPR:$Rt, GPR:$Rt2, addrmode3:$addr),
                     StMiscFrm, IIC_iStore_d_r, "strd", "\t$Rt, $Rt2, $addr", []>,
              Requires<[IsARM, HasV5TE]> {
     let Inst{21} = 0;
   }
+
+  // GNU Assembler extension (compatibility)
+  let isAsmParserOnly = 1 in
+    def STRD_PAIR : AI3str<0b1111, (outs), (ins GPRPairOp:$Rt, addrmode3:$addr),
+                           StMiscFrm, IIC_iStore_d_r, "strd", "\t$Rt, $addr", []>,
+                    Requires<[IsARM, HasV5TE]> {
+      let Inst{21} = 0;
+    }
+}
 
 // Indexed stores
 multiclass AI2_stridx<bit isByte, string opc,

@@ -5445,6 +5445,19 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     }
   }
 
+  // GNU Assembler extension (compatibility)
+  if ((Mnemonic == "ldrd" || Mnemonic == "strd") && !isThumb() &&
+      Operands.size() == 4) {
+    ARMOperand *Op = static_cast<ARMOperand *>(Operands[2]);
+    assert(Op->isReg() && "expected register argument");
+    assert(MRI->getMatchingSuperReg(Op->getReg(), ARM::gsub_0,
+                                    &MRI->getRegClass(ARM::GPRPairRegClassID))
+           && "expected register pair");
+    Operands.insert(Operands.begin() + 3,
+                    ARMOperand::CreateReg(Op->getReg() + 1, Op->getStartLoc(),
+                                          Op->getEndLoc()));
+  }
+
   // FIXME: As said above, this is all a pretty gross hack.  This instruction
   // does not fit with other "subs" and tblgen.
   // Adjust operands of B9.3.19 SUBS PC, LR, #imm (Thumb2) system instruction
@@ -8792,6 +8805,11 @@ unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
       assert((Value >= INT32_MIN && Value <= INT32_MAX) &&
              "expression value must be representiable in 32 bits");
     }
+    break;
+  case MCK_GPRPair:
+    if (Op->isReg() &&
+        MRI->getRegClass(ARM::GPRRegClassID).contains(Op->getReg()))
+      return Match_Success;
     break;
   }
   return Match_InvalidOperand;
