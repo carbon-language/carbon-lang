@@ -9,7 +9,7 @@
 int argc_copy;
 
 extern "C" {
-int __lsan_is_turned_off() {
+int LeakSanitizerIsTurnedOffForTheCurrentProcess() {
   return (argc_copy == 1);
 }
 }

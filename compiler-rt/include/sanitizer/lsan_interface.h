@@ -45,6 +45,11 @@ extern "C" {
   // for the program it is linked into (if the return value is non-zero). This
   // function must be defined as returning a constant value; any behavior beyond
   // that is unsupported.
+  int LeakSanitizerIsTurnedOffForTheCurrentProcess();
+
+  // Same as LeakSanitizerIsTurnedOffForTheCurrentProcess, but deprecated.
+  // If both functions are defined only
+  // LeakSanitizerIsTurnedOffForTheCurrentProcess is used.
   int __lsan_is_turned_off();
 
   // Calling this function makes LSan enter the leak checking phase immediately.

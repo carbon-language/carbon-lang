@@ -423,8 +423,13 @@ void DoLeakCheck() {
   static bool already_done;
   if (already_done) return;
   already_done = true;
-  if (&__lsan_is_turned_off && __lsan_is_turned_off())
-    return;
+  if (&LeakSanitizerIsTurnedOffForTheCurrentProcess) {
+    if (LeakSanitizerIsTurnedOffForTheCurrentProcess())
+      return;
+  } else if (&__lsan_is_turned_off) {
+    if (__lsan_is_turned_off())
+      return;
+  }
 
   DoLeakCheckParam param;
   param.success = false;
@@ -712,6 +717,10 @@ void __lsan_do_leak_check() {
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 int __lsan_is_turned_off() {
+  return 0;
+}
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+int LeakSanitizerIsTurnedOffForTheCurrentProcess() {
   return 0;
 }
 #endif
