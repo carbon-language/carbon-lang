@@ -30,8 +30,8 @@
 using namespace llvm;
 
 static TargetLoweringObjectFile *createTLOF(AArch64TargetMachine &TM) {
-  const AArch64Subtarget *Subtarget = &TM.getSubtarget<AArch64Subtarget>();
-  assert (Subtarget->isTargetELF() && "unknown subtarget type");
+  assert (TM.getSubtarget<AArch64Subtarget>().isTargetELF() &&
+          "unknown subtarget type");
   return new AArch64ElfTargetObjectFile();
 }
 
