@@ -3,6 +3,7 @@ add_lld_unittest(DriverTests
   GnuLdDriverTest.cpp
   DarwinLdDriverTest.cpp
   WinLinkDriverTest.cpp
+  WinLinkModuleDefTest.cpp
   InputGraphTest.cpp
   )
 
