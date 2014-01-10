@@ -19,6 +19,8 @@ else()
   add_llvm_loadable_module(LLVMgold
     gold-plugin.cpp
     )
-endif()
 
 target_link_libraries(LLVMgold LTO)
+
+endif()
+
