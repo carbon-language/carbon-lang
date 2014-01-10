@@ -320,9 +320,8 @@ Parser::TPResult Parser::TryParseInitDeclaratorList() {
       return TPResult::True();
     }
 
-    if (Tok.isNot(tok::comma))
+    if (!TryConsumeToken(tok::comma))
       break;
-    ConsumeToken(); // the comma.
   }
 
   return TPResult::Ambiguous();
@@ -595,13 +594,10 @@ Parser::isCXX11AttributeSpecifier(bool Disambiguate,
       }
     }
 
-    if (Tok.is(tok::ellipsis))
-      ConsumeToken();
+    TryConsumeToken(tok::ellipsis);
 
-    if (Tok.isNot(tok::comma))
+    if (!TryConsumeToken(tok::comma))
       break;
-
-    ConsumeToken();
   }
 
   // An attribute must end ']]'.
@@ -1724,9 +1720,8 @@ Parser::TryParseParameterDeclarationClause(bool *InvalidAsDeclaration,
         return TPResult::False();
     }
 
-    if (Tok.isNot(tok::comma))
+    if (!TryConsumeToken(tok::comma))
       break;
-    ConsumeToken(); // the comma.
   }
 
   return TPResult::Ambiguous();

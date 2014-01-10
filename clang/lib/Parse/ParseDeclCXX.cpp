@@ -465,10 +465,8 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
 
   // Ignore optional 'typename'.
   // FIXME: This is wrong; we should parse this as a typename-specifier.
-  if (Tok.is(tok::kw_typename)) {
-    TypenameLoc = ConsumeToken();
+  if (TryConsumeToken(tok::kw_typename, TypenameLoc))
     HasTypenameKeyword = true;
-  }
 
   // Parse nested-name-specifier.
   IdentifierInfo *LastII = 0;
@@ -1675,10 +1673,8 @@ void Parser::ParseBaseClause(Decl *ClassDecl) {
 
     // If the next token is a comma, consume it and keep reading
     // base-specifiers.
-    if (Tok.isNot(tok::comma)) break;
-
-    // Consume the comma.
-    ConsumeToken();
+    if (!TryConsumeToken(tok::comma))
+      break;
   }
 
   // Attach the base specifiers
@@ -1704,10 +1700,8 @@ Parser::BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
   MaybeParseCXX11Attributes(Attributes);
 
   // Parse the 'virtual' keyword.
-  if (Tok.is(tok::kw_virtual))  {
-    ConsumeToken();
+  if (TryConsumeToken(tok::kw_virtual))
     IsVirtual = true;
-  }
 
   CheckMisplacedCXX11Attribute(Attributes, StartLoc);
 
@@ -1744,9 +1738,8 @@ Parser::BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
   // actually part of the base-specifier-list grammar productions, but we
   // parse it here for convenience.
   SourceLocation EllipsisLoc;
-  if (Tok.is(tok::ellipsis))
-    EllipsisLoc = ConsumeToken();
-  
+  TryConsumeToken(tok::ellipsis, EllipsisLoc);
+
   // Find the complete source range for the base-specifier.
   SourceRange Range(StartLoc, EndLocation);
 
@@ -2098,8 +2091,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     if (!DeclaratorInfo.hasName()) {
       // If so, skip until the semi-colon or a }.
       SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
-      if (Tok.is(tok::semi))
-        ConsumeToken();
+      TryConsumeToken(tok::semi);
       return;
     }
 
@@ -2205,8 +2197,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     //   declarator pure-specifier[opt]
     //   declarator brace-or-equal-initializer[opt]
     //   identifier[opt] ':' constant-expression
-    if (Tok.is(tok::colon)) {
-      ConsumeToken();
+    if (TryConsumeToken(tok::colon)) {
       BitfieldSize = ParseConstantExpression();
       if (BitfieldSize.isInvalid())
         SkipUntil(tok::comma, StopAtSemi | StopBeforeMatch);
@@ -2866,8 +2857,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
     T.consumeClose();
 
     SourceLocation EllipsisLoc;
-    if (Tok.is(tok::ellipsis))
-      EllipsisLoc = ConsumeToken();
+    TryConsumeToken(tok::ellipsis, EllipsisLoc);
 
     return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
                                        TemplateTypeTy, DS, IdLoc,
@@ -3022,10 +3012,8 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
       Exceptions.push_back(Res.get());
       Ranges.push_back(Range);
     }
-    
-    if (Tok.is(tok::comma))
-      ConsumeToken();
-    else
+
+    if (!TryConsumeToken(tok::comma))
       break;
   }
 
@@ -3219,10 +3207,8 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
 
   while (Tok.isNot(tok::r_square)) {
     // attribute not present
-    if (Tok.is(tok::comma)) {
-      ConsumeToken();
+    if (TryConsumeToken(tok::comma))
       continue;
-    }
 
     SourceLocation ScopeLoc, AttrLoc;
     IdentifierInfo *ScopeName = 0, *AttrName = 0;
@@ -3233,9 +3219,7 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
       break;
 
     // scoped attribute
-    if (Tok.is(tok::coloncolon)) {
-      ConsumeToken();
-
+    if (TryConsumeToken(tok::coloncolon)) {
       ScopeName = AttrName;
       ScopeLoc = AttrLoc;
 
@@ -3278,12 +3262,9 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
                                AttrLoc),
                    ScopeName, ScopeLoc, 0, 0, AttributeList::AS_CXX11);
 
-    if (Tok.is(tok::ellipsis)) {
-      ConsumeToken();
-
+    if (TryConsumeToken(tok::ellipsis))
       Diag(Tok, diag::err_cxx11_attribute_forbids_ellipsis)
         << AttrName->getName();
-    }
   }
 
   if (ExpectAndConsume(tok::r_square))

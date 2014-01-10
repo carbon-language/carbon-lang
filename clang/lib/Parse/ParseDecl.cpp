@@ -870,10 +870,7 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
           << Keyword << SourceRange(UnavailableLoc);
       }
       UnavailableLoc = KeywordLoc;
-
-      if (TryConsumeToken(tok::comma))
-        continue;
-      break;
+      continue;
     }
 
     if (Tok.isNot(tok::equal)) {
@@ -927,11 +924,7 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
         << Keyword << VersionRange;
     }
 
-    if (Tok.isNot(tok::comma))
-      break;
-
-    ConsumeToken();
-  } while (true);
+  } while (TryConsumeToken(tok::comma));
 
   // Closing ')'.
   if (T.consumeClose())
@@ -1000,8 +993,7 @@ void Parser::ParseObjCBridgeRelatedAttribute(IdentifierInfo &ObjCBridgeRelated,
     return;
   }
   IdentifierLoc *RelatedClass = ParseIdentifierLoc();
-  if (!TryConsumeToken(tok::comma)) {
-    Diag(Tok, diag::err_expected) << tok::comma;
+  if (ExpectAndConsume(tok::comma)) {
     SkipUntil(tok::r_paren, StopAtSemi);
     return;
   }
