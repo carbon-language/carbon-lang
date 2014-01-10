@@ -250,7 +250,7 @@ namespace {
 // directory specified by CacheDir, using a filename provided in the module
 // descriptor. The cache tries to load a saved object using that path if the
 // file exists. CacheDir defaults to "", in which case objects are cached
-// alongside their originating bitcodes. 
+// alongside their originating bitcodes.
 //
 class LLIObjectCache : public ObjectCache {
 public:
@@ -258,7 +258,7 @@ public:
     // Add trailing '/' to cache dir if necessary.
     if (!this->CacheDir.empty() &&
         this->CacheDir[this->CacheDir.size() - 1] != '/')
-      this->CacheDir += '/'; 
+      this->CacheDir += '/';
   }
   virtual ~LLIObjectCache() {}
 
