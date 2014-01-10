@@ -74,8 +74,8 @@ that notices of confidentiality or non-disclosure cannot be respected.
 .. _patch:
 .. _one-off patches:
 
-Making a Patch
---------------
+Making and Submitting a Patch
+-----------------------------
 
 When making a patch for review, the goal is to make it as easy for the reviewer
 to read it as possible.  As such, we recommend that you:
@@ -96,6 +96,12 @@ to read it as possible.  As such, we recommend that you:
 #. If you are modifying generated files, such as the top-level ``configure``
    script, please separate out those changes into a separate patch from the rest
    of your changes.
+
+Once your patch is ready, submit it by emailing it to the appropriate project's
+commit mailing list (or commit it directly if applicable). Alternatively, some
+patches get sent to the project's development list or component of the LLVM bug
+tracker, but the commit list is the primary place for reviews and should
+generally be preferred.
 
 When sending a patch to a mailing list, it is a good idea to send it as an
 *attachment* to the message, not embedded into the text of the message.  This
@@ -125,7 +131,8 @@ software. We generally follow these policies:
 #. All developers are required to have significant changes reviewed before they
    are committed to the repository.
 
-#. Code reviews are conducted by email, usually on the llvm-commits list.
+#. Code reviews are conducted by email on the relevant project's commit mailing
+   list, or alternatively on the project's development list or bug tracker.
 
 #. Code can be reviewed either before it is committed or after.  We expect major
    changes to be reviewed before being committed, but smaller changes (or
@@ -413,15 +420,24 @@ to go about making the change.
 Attribution of Changes
 ----------------------
 
-We believe in correct attribution of contributions to their contributors.
-However, we do not want the source code to be littered with random attributions
-"this code written by J. Random Hacker" (this is noisy and distracting).  In
-practice, the revision control system keeps a perfect history of who changed
-what, and the CREDITS.txt file describes higher-level contributions.  If you
-commit a patch for someone else, please say "patch contributed by J. Random
-Hacker!" in the commit message.
+When contributors submit a patch to an LLVM project, other developers with
+commit access may commit it for the author once appropriate (based on the
+progression of code review, etc.). When doing so, it is important to retain
+correct attribution of contributions to their contributors. However, we do not
+want the source code to be littered with random attributions "this code written
+by J. Random Hacker" (this is noisy and distracting). In practice, the revision
+control system keeps a perfect history of who changed what, and the CREDITS.txt
+file describes higher-level contributions. If you commit a patch for someone
+else, please say "patch contributed by J. Random Hacker!" in the commit
+message. Overall, please do not add contributor names to the source code.
 
-Overall, please do not add contributor names to the source code.
+Also, don't commit patches authored by others unless they have submitted the
+patch to the project or you have been authorized to submit them on their behalf
+(you work together and your company authorized you to contribute the patches,
+etc.). The author should first submit them to the relevant project's commit
+list, development list, or LLVM bug tracker component. If someone sends you
+a patch privately, encourage them to submit it to the appropriate list first.
+
 
 .. _copyright-license-patents:
 
