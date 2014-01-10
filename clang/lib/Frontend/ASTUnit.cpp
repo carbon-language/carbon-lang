@@ -2591,8 +2591,7 @@ bool ASTUnit::Save(StringRef File) {
   }
 
   if (llvm::sys::fs::rename(TempPath.str(), File)) {
-    bool exists;
-    llvm::sys::fs::remove(TempPath.str(), exists);
+    llvm::sys::fs::remove(TempPath.str());
     return true;
   }
 

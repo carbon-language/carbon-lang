@@ -458,10 +458,9 @@ public:
       AllWritten = false;
       Diagnostics.Report(clang::diag::err_unable_to_rename_temp)
         << TempFilename << Filename << ec.message();
-      bool existed;
       // If the remove fails, there's not a lot we can do - this is already an
       // error.
-      llvm::sys::fs::remove(TempFilename.str(), existed);
+      llvm::sys::fs::remove(TempFilename.str());
     }
   }
 

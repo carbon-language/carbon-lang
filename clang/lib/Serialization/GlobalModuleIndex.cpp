@@ -807,13 +807,12 @@ GlobalModuleIndex::writeIndex(FileManager &FileMgr, StringRef Path) {
     return EC_IOError;
 
   // Remove the old index file. It isn't relevant any more.
-  bool OldIndexExisted;
-  llvm::sys::fs::remove(IndexPath.str(), OldIndexExisted);
+  llvm::sys::fs::remove(IndexPath.str());
 
   // Rename the newly-written index file to the proper name.
   if (llvm::sys::fs::rename(IndexTmpPath.str(), IndexPath.str())) {
     // Rename failed; just remove the 
-    llvm::sys::fs::remove(IndexTmpPath.str(), OldIndexExisted);
+    llvm::sys::fs::remove(IndexTmpPath.str());
     return EC_IOError;
   }
 

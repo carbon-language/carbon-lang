@@ -432,8 +432,7 @@ void CompilerInstance::clearOutputFiles(bool EraseFiles) {
     delete it->OS;
     if (!it->TempFilename.empty()) {
       if (EraseFiles) {
-        bool existed;
-        llvm::sys::fs::remove(it->TempFilename, existed);
+        llvm::sys::fs::remove(it->TempFilename);
       } else {
         SmallString<128> NewOutFile(it->Filename);
 
@@ -445,8 +444,7 @@ void CompilerInstance::clearOutputFiles(bool EraseFiles) {
           getDiagnostics().Report(diag::err_unable_to_rename_temp)
             << it->TempFilename << it->Filename << ec.message();
 
-          bool existed;
-          llvm::sys::fs::remove(it->TempFilename, existed);
+          llvm::sys::fs::remove(it->TempFilename);
         }
       }
     } else if (!it->Filename.empty() && EraseFiles)
@@ -1091,10 +1089,8 @@ static void pruneModuleCache(const HeaderSearchOptions &HSOpts) {
 
     // If we removed all of the files in the directory, remove the directory
     // itself.
-    if (RemovedAllFiles) {
-      bool Existed;
-      llvm::sys::fs::remove(Dir->path(), Existed);
-    }
+    if (RemovedAllFiles)
+      llvm::sys::fs::remove(Dir->path());
   }
 }
 

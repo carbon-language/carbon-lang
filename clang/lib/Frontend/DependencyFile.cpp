@@ -166,8 +166,7 @@ static void PrintFilename(raw_ostream &OS, StringRef Filename) {
 
 void DependencyFileCallback::OutputDependencyFile() {
   if (SeenMissingHeader) {
-    bool existed;
-    llvm::sys::fs::remove(OutputFile, existed);
+    llvm::sys::fs::remove(OutputFile);
     return;
   }
 

@@ -36,8 +36,7 @@ void FileRemapper::clear(StringRef outputDir) {
   assert(ToFromMappings.empty());
   if (!outputDir.empty()) {
     std::string infoFile = getRemapInfoFile(outputDir);
-    bool existed;
-    llvm::sys::fs::remove(infoFile, existed);
+    llvm::sys::fs::remove(infoFile);
   }
 }
 
