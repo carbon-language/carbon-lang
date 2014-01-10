@@ -51,20 +51,28 @@ void func()
 }
 
 // rdar://9157348
+// rdar://15757510
 
 @interface J
-@property (retain) id newFoo; // expected-note {{property declared here}}
-@property (strong) id copyBar; // expected-note {{property declared here}}
-@property (copy) id allocBaz; // expected-note {{property declared here}}
+@property (retain) id newFoo; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
+@property (strong) id copyBar;  // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
+@property (copy) id allocBaz; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
 @property (copy, nonatomic) id new;
+@property (retain) id newDFoo; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
+@property (strong) id copyDBar; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
+@property (copy) id allocDBaz; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
 @end
 
 @implementation J
-@synthesize newFoo;	// expected-error {{property's synthesized getter follows Cocoa naming convention for returning}}
-@synthesize copyBar;	// expected-error {{property's synthesized getter follows Cocoa naming convention for returning}}
-@synthesize allocBaz;	// expected-error {{property's synthesized getter follows Cocoa naming convention for returning}}
+@synthesize newFoo;
+@synthesize copyBar;
+@synthesize allocBaz;
 @synthesize new;
 - new {return 0; };
+
+@dynamic newDFoo;
+@dynamic copyDBar; 
+@dynamic allocDBaz;
 @end
 
 

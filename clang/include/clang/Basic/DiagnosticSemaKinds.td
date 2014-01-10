@@ -703,8 +703,8 @@ def note_atomic_property_fixup_suggest : Note<"setter and getter must both be "
 def err_atomic_property_nontrivial_assign_op : Error<
   "atomic property of reference type %0 cannot have non-trivial assignment"
   " operator">;
-def warn_owning_getter_rule : Warning<
-  "property's synthesized getter follows Cocoa naming"
+def warn_cocoa_naming_owned_rule : Warning<
+  "property follows Cocoa naming"
   " convention for returning 'owned' objects">,
   InGroup<DiagGroup<"objc-property-matches-cocoa-ownership-rule">>;
 def warn_auto_synthesizing_protocol_property :Warning<
@@ -733,8 +733,8 @@ def warn_property_getter_owning_mismatch : Warning<
 def error_property_setter_ambiguous_use : Error<
   "synthesized properties %0 and %1 both claim setter %2 -"
   " use of this setter will cause unexpected behavior">;
-def err_ownin_getter_rule : Error<
-  "property's synthesized getter follows Cocoa naming"
+def err_cocoa_naming_owned_rule : Error<
+  "property follows Cocoa naming"
   " convention for returning 'owned' objects">;
 def warn_default_atomic_custom_getter_setter : Warning<
   "atomic by default property %0 has a user defined %select{getter|setter}1 "

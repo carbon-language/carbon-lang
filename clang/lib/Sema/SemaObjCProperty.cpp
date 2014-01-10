@@ -1795,9 +1795,6 @@ void Sema::DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D
   for (ObjCImplementationDecl::propimpl_iterator
          i = D->propimpl_begin(), e = D->propimpl_end(); i != e; ++i) {
     ObjCPropertyImplDecl *PID = *i;
-    if (PID->getPropertyImplementation() != ObjCPropertyImplDecl::Synthesize)
-      continue;
-    
     const ObjCPropertyDecl *PD = PID->getPropertyDecl();
     if (PD && !PD->hasAttr<NSReturnsNotRetainedAttr>() &&
         !D->getInstanceMethod(PD->getGetterName())) {
@@ -1808,10 +1805,9 @@ void Sema::DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D
       if (family == OMF_alloc || family == OMF_copy ||
           family == OMF_mutableCopy || family == OMF_new) {
         if (getLangOpts().ObjCAutoRefCount)
-          Diag(PID->getLocation(), diag::err_ownin_getter_rule);
+          Diag(PD->getLocation(), diag::err_cocoa_naming_owned_rule);
         else
-          Diag(PID->getLocation(), diag::warn_owning_getter_rule);
-        Diag(PD->getLocation(), diag::note_property_declare);
+          Diag(PD->getLocation(), diag::warn_cocoa_naming_owned_rule);
       }
     }
   }
