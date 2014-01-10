@@ -155,6 +155,8 @@ static unsigned getRelaxedOpcode(unsigned Op) {
   case ARM::tLDRpci:    return ARM::t2LDRpci;
   case ARM::tADR:       return ARM::t2ADR;
   case ARM::tB:         return ARM::t2B;
+  case ARM::tCBZ:       return ARM::tHINT;
+  case ARM::tCBNZ:      return ARM::tHINT;
   }
 }
 
@@ -196,6 +198,12 @@ bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
     int64_t Offset = int64_t(Value) - 4;
     return Offset > 1020 || Offset < 0 || Offset & 3;
   }
+  case ARM::fixup_arm_thumb_cb:
+    // If we have a Thumb CBZ or CBNZ instruction and its target is the next
+    // instruction it is is actually out of range for the instruction.
+    // It will be changed to a NOP.
+    int64_t Offset = (Value & ~1);
+    return Offset == 2;
   }
   llvm_unreachable("Unexpected fixup kind in fixupNeedsRelaxation()!");
 }
@@ -212,7 +220,18 @@ void ARMAsmBackend::relaxInstruction(const MCInst &Inst, MCInst &Res) const {
     report_fatal_error("unexpected instruction to relax: " + OS.str());
   }
 
-  // The instructions we're relaxing have (so far) the same operands.
+  // If we are changing Thumb CBZ or CBNZ instruction to a NOP, aka tHINT, we
+  // have to change the operands too.
+  if ((Inst.getOpcode() == ARM::tCBZ || Inst.getOpcode() == ARM::tCBNZ) &&
+      RelaxedOp == ARM::tHINT) {
+    Res.setOpcode(RelaxedOp);
+    Res.addOperand(MCOperand::CreateImm(0));
+    Res.addOperand(MCOperand::CreateImm(14));
+    Res.addOperand(MCOperand::CreateReg(0));
+    return;
+  } 
+
+  // The rest of instructions we're relaxing have the same operands.
   // We just need to update to the proper opcode.
   Res = Inst;
   Res.setOpcode(RelaxedOp);
