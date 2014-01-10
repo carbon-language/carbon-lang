@@ -273,16 +273,12 @@ public:
   bool ParseTopLevelDecl(DeclGroupPtrTy &Result);
 
   /// ConsumeToken - Consume the current 'peek token' and lex the next one.
-  /// This does not work with all kinds of tokens: strings and specific other
-  /// tokens must be consumed with custom methods below.  This returns the
-  /// location of the consumed token.
+  /// This does not work with special tokens: string literals, code completion
+  /// and balanced tokens must be handled using the specific consume methods.
+  /// Returns the location of the consumed token.
   SourceLocation ConsumeToken() {
     assert(!isTokenSpecial() &&
            "Should consume special tokens with Consume*Token");
-
-    if (LLVM_UNLIKELY(Tok.is(tok::code_completion)))
-      return handleUnexpectedCodeCompletionToken();
-
     PrevTokLocation = Tok.getLocation();
     PP.Lex(Tok);
     return PrevTokLocation;
@@ -329,7 +325,7 @@ private:
   /// isTokenSpecial - True if this token requires special consumption methods.
   bool isTokenSpecial() const {
     return isTokenStringLiteral() || isTokenParen() || isTokenBracket() ||
-           isTokenBrace();
+           isTokenBrace() || Tok.is(tok::code_completion);
   }
 
   /// \brief Returns true if the current token is '=' or is a type of '='.
