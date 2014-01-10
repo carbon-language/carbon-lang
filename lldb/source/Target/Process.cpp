@@ -21,6 +21,7 @@
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Symbol/Symbol.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Expression/ClangUserExpression.h"
@@ -41,6 +42,7 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanBase.h"
+#include "Plugins/Process/Utility/InferiorCallPOSIX.h"
 
 #ifndef LLDB_DISABLE_POSIX
 #include <spawn.h>
@@ -1052,6 +1054,7 @@ Process::Process(Target &target, Listener &listener) :
     m_currently_handling_event(false),
     m_finalize_called(false),
     m_clear_thread_plans_on_stop (false),
+    m_force_next_event_delivery(false),
     m_last_broadcast_state (eStateInvalid),
     m_destroy_in_process (false),
     m_can_jit(eCanJITDontKnow)
@@ -2143,7 +2146,60 @@ Process::EnableBreakpointSiteByID (lldb::user_id_t break_id)
 lldb::break_id_t
 Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardware)
 {
-    const addr_t load_addr = owner->GetAddress().GetOpcodeLoadAddress (&m_target);
+    addr_t load_addr = LLDB_INVALID_ADDRESS;
+    
+    bool show_error = true;
+    switch (GetState())
+    {
+        case eStateInvalid:
+        case eStateUnloaded:
+        case eStateConnected:
+        case eStateAttaching:
+        case eStateLaunching:
+        case eStateDetached:
+        case eStateExited:
+            show_error = false;
+            break;
+            
+        case eStateStopped:
+        case eStateRunning:
+        case eStateStepping:
+        case eStateCrashed:
+        case eStateSuspended:
+            show_error = IsAlive();
+            break;
+    }
+
+    // Reset the IsIndirect flag here, in case the location changes from
+    // pointing to a indirect symbol to a regular symbol.
+    owner->SetIsIndirect (false);
+    
+    if (owner->ShouldResolveIndirectFunctions())
+    {
+        Symbol *symbol = owner->GetAddress().CalculateSymbolContextSymbol();
+        if (symbol && symbol->IsIndirect())
+        {
+            Error error;
+            load_addr = ResolveIndirectFunction (&symbol->GetAddress(), error);
+            if (!error.Success() && show_error)
+            {
+                m_target.GetDebugger().GetErrorFile().Printf ("warning: failed to resolve indirect function at 0x%" PRIx64 " for breakpoint %i.%i: %s\n",
+                                                              symbol->GetAddress().GetLoadAddress(&m_target),
+                                                              owner->GetBreakpoint().GetID(),
+                                                              owner->GetID(),
+                                                              error.AsCString() ? error.AsCString() : "unkown error");
+                return LLDB_INVALID_BREAK_ID;
+            }
+            Address resolved_address(load_addr);
+            load_addr = resolved_address.GetOpcodeLoadAddress (&m_target);
+            owner->SetIsIndirect(true);
+        }
+        else
+            load_addr = owner->GetAddress().GetOpcodeLoadAddress (&m_target);
+    }
+    else
+        load_addr = owner->GetAddress().GetOpcodeLoadAddress (&m_target);
+    
     if (load_addr != LLDB_INVALID_ADDRESS)
     {
         BreakpointSiteSP bp_site_sp;
@@ -2172,28 +2228,6 @@ Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardw
                 }
                 else
                 {
-                    bool show_error = true;
-                    switch (GetState())
-                    {
-                        case eStateInvalid:
-                        case eStateUnloaded:
-                        case eStateConnected:
-                        case eStateAttaching:
-                        case eStateLaunching:
-                        case eStateDetached:
-                        case eStateExited:
-                            show_error = false;
-                            break;
-                            
-                        case eStateStopped:
-                        case eStateRunning:
-                        case eStateStepping:
-                        case eStateCrashed:
-                        case eStateSuspended:
-                            show_error = IsAlive();
-                            break;
-                    }
-                    
                     if (show_error)
                     {
                         // Report error for setting breakpoint...
@@ -3804,33 +3838,38 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
             // stopped -> running: Report except when there is one or more no votes
             //     and no yes votes.
             SynchronouslyNotifyStateChanged (state);
-            switch (m_last_broadcast_state)
+            if (m_force_next_event_delivery)
+                return_value = true;
+            else
             {
-                case eStateRunning:
-                case eStateStepping:
-                    // We always suppress multiple runnings with no PUBLIC stop in between.
-                    return_value = false;
-                    break;
-                default:
-                    // TODO: make this work correctly. For now always report
-                    // run if we aren't running so we don't miss any runnning
-                    // events. If I run the lldb/test/thread/a.out file and
-                    // break at main.cpp:58, run and hit the breakpoints on
-                    // multiple threads, then somehow during the stepping over
-                    // of all breakpoints no run gets reported.
+                switch (m_last_broadcast_state)
+                {
+                    case eStateRunning:
+                    case eStateStepping:
+                        // We always suppress multiple runnings with no PUBLIC stop in between.
+                        return_value = false;
+                        break;
+                    default:
+                        // TODO: make this work correctly. For now always report
+                        // run if we aren't running so we don't miss any runnning
+                        // events. If I run the lldb/test/thread/a.out file and
+                        // break at main.cpp:58, run and hit the breakpoints on
+                        // multiple threads, then somehow during the stepping over
+                        // of all breakpoints no run gets reported.
 
-                    // This is a transition from stop to run.
-                    switch (m_thread_list.ShouldReportRun (event_ptr))
-                    {
-                        case eVoteYes:
-                        case eVoteNoOpinion:
-                            return_value = true;
-                            break;
-                        case eVoteNo:
-                            return_value = false;
-                            break;
-                    }
-                    break;
+                        // This is a transition from stop to run.
+                        switch (m_thread_list.ShouldReportRun (event_ptr))
+                        {
+                            case eVoteYes:
+                            case eVoteNoOpinion:
+                                return_value = true;
+                                break;
+                            case eVoteNo:
+                                return_value = false;
+                                break;
+                        }
+                        break;
+                }
             }
             break;
         case eStateStopped:
@@ -3903,6 +3942,9 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
         break;
     }
     
+    // Forcing the next event delivery is a one shot deal.  So reset it here.
+    m_force_next_event_delivery = false;
+
     // We do some coalescing of events (for instance two consecutive running events get coalesced.)
     // But we only coalesce against events we actually broadcast.  So we use m_last_broadcast_state
     // to track that.  NB - you can't use "m_public_state.GetValue()" for that purpose, as was originally done,
@@ -4984,6 +5026,22 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 final_timeout.OffsetWithMicroSeconds(timeout_usec);
         }
 
+        // This isn't going to work if there are unfetched events on the queue.
+        // Are there cases where we might want to run the remaining events here, and then try to
+        // call the function?  That's probably being too tricky for our own good.
+        
+        Event *other_events = listener.PeekAtNextEvent();
+        if (other_events != NULL)
+        {
+            errors.Printf("Calling RunThreadPlan with pending events on the queue.");
+            return eExecutionSetupError;
+        }
+        
+        // We also need to make sure that the next event is delivered.  We might be calling a function as part of
+        // a thread plan, in which case the last delivered event could be the running event, and we don't want
+        // event coalescing to cause us to lose OUR running event...
+        ForceNextEventDelivery();
+        
         // This while loop must exit out the bottom, there's cleanup that we need to do when we are done.
         // So don't call return anywhere within it.
         
@@ -5770,5 +5828,41 @@ Process::DidExec ()
     // After we figure out what was loaded/unloaded in CompleteAttach,
     // we need to let the target know so it can do any cleanup it needs to.
     target.DidExec();
+}
+
+addr_t
+Process::ResolveIndirectFunction(const Address *address, Error &error)
+{
+    if (address == nullptr)
+    {
+        Symbol *symbol = address->CalculateSymbolContextSymbol();
+        error.SetErrorStringWithFormat("unable to determine direct function call for indirect function %s",
+                                          symbol ? symbol->GetName().AsCString() : "<UNKNOWN>");
+        return LLDB_INVALID_ADDRESS;
+    }
+    
+    addr_t function_addr = LLDB_INVALID_ADDRESS;
+    
+    addr_t addr = address->GetLoadAddress(&GetTarget());
+    std::map<addr_t,addr_t>::const_iterator iter = m_resolved_indirect_addresses.find(addr);
+    if (iter != m_resolved_indirect_addresses.end())
+    {
+        function_addr = (*iter).second;
+    }
+    else
+    {
+        if (!InferiorCall(this, address, function_addr))
+        {
+            Symbol *symbol = address->CalculateSymbolContextSymbol();
+            error.SetErrorStringWithFormat ("Unable to call resolver for indirect function %s",
+                                          symbol ? symbol->GetName().AsCString() : "<UNKNOWN>");
+            function_addr = LLDB_INVALID_ADDRESS;
+        }
+        else
+        {
+            m_resolved_indirect_addresses.insert(std::pair<addr_t, addr_t>(addr, function_addr));
+        }
+    }
+    return function_addr;
 }
 

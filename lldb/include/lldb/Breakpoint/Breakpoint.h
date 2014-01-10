@@ -612,12 +612,30 @@ protected:
     /// Only the Target can make a breakpoint, and it owns the breakpoint lifespans.
     /// The constructor takes a filter and a resolver.  Up in Target there are convenience
     /// variants that make breakpoints for some common cases.
+    ///
+    /// @param[in] target
+    ///    The target in which the breakpoint will be set.
+    ///
+    /// @param[in] filter_sp
+    ///    Shared pointer to the search filter that restricts the search domain of the breakpoint.
+    ///
+    /// @param[in] resolver_sp
+    ///    Shared pointer to the resolver object that will determine breakpoint matches.
+    ///
+    /// @param hardware
+    ///    If true, request a hardware breakpoint to be used to implement the breakpoint locations.
+    ///
+    /// @param resolve_indirect_symbols
+    ///    If true, and the address of a given breakpoint location in this breakpoint is set on an
+    ///    indirect symbol (i.e. Symbol::IsIndirect returns true) then the actual breakpoint site will
+    ///    be set on the target of the indirect symbol.
     //------------------------------------------------------------------
     // This is the generic constructor
     Breakpoint(Target &target,
                lldb::SearchFilterSP &filter_sp,
                lldb::BreakpointResolverSP &resolver_sp,
-               bool hardware);
+               bool hardware,
+               bool resolve_indirect_symbols = true);
     
     friend class BreakpointLocation;  // To call the following two when determining whether to stop.
 
@@ -643,6 +661,7 @@ private:
     BreakpointOptions m_options;              // Settable breakpoint options
     BreakpointLocationList m_locations;       // The list of locations currently found for this breakpoint.
     std::string m_kind_description;
+    bool m_resolve_indirect_symbols;
     
     void
     SendBreakpointChangedEvent (lldb::BreakpointEventType eventKind);

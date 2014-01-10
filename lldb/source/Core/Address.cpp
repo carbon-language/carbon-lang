@@ -328,15 +328,27 @@ Address::GetLoadAddress (Target *target) const
 addr_t
 Address::GetCallableLoadAddress (Target *target, bool is_indirect) const
 {
-    if (is_indirect && target) {
+    addr_t code_addr = LLDB_INVALID_ADDRESS;
+    
+    if (is_indirect && target)
+    {
         ProcessSP processSP = target->GetProcessSP();
         Error error;
         if (processSP.get())
-            return processSP->ResolveIndirectFunction(this, error);
+        {
+            code_addr = processSP->ResolveIndirectFunction(this, error);
+            if (!error.Success())
+                code_addr = LLDB_INVALID_ADDRESS;
+        }
     }
-
-    addr_t code_addr = GetLoadAddress (target);
-
+    else
+    {
+        code_addr = GetLoadAddress (target);
+    }
+    
+    if (code_addr == LLDB_INVALID_ADDRESS)
+        return code_addr;
+    
     if (target)
         return target->GetCallableLoadAddress (code_addr, GetAddressClass());
     return code_addr;

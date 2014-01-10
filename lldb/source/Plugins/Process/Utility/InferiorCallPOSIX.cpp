@@ -34,9 +34,16 @@
 using namespace lldb;
 using namespace lldb_private;
 
-bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
-                                    addr_t addr, addr_t length, unsigned prot,
-                                    unsigned flags, addr_t fd, addr_t offset) {
+bool
+lldb_private::InferiorCallMmap (Process *process,
+                                addr_t &allocated_addr,
+                                addr_t addr,
+                                addr_t length,
+                                unsigned prot,
+                                unsigned flags,
+                                addr_t fd,
+                                addr_t offset)
+{
     Thread *thread = process->GetThreadList().GetSelectedThread().get();
     if (thread == NULL)
         return false;
@@ -139,8 +146,11 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
     return false;
 }
 
-bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
-                                      addr_t length) {
+bool
+lldb_private::InferiorCallMunmap (Process *process,
+                                  addr_t addr,
+                                  addr_t length)
+{
    Thread *thread = process->GetThreadList().GetSelectedThread().get();
    if (thread == NULL)
        return false;
@@ -209,7 +219,14 @@ bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
     return false;
 }
 
-bool lldb_private::InferiorCall(Process *process, const Address *address, addr_t &returned_func) {
+// FIXME: This has nothing to do with Posix, it is just a convenience function that calls a
+// function of the form "void * (*)(void)".  We should find a better place to put this.
+
+bool
+lldb_private::InferiorCall (Process *process,
+                            const Address *address,
+                            addr_t &returned_func)
+{
     Thread *thread = process->GetThreadList().GetSelectedThread().get();
     if (thread == NULL || address == NULL)
         return false;
@@ -233,7 +250,7 @@ bool lldb_private::InferiorCall(Process *process, const Address *address, addr_t
     lldb::ThreadPlanSP call_plan_sp (call_function_thread_plan);
     if (call_plan_sp)
     {
-        StreamFile error_strm;
+        StreamString error_strm;
         // This plan is a utility plan, so set it to discard itself when done.
         call_plan_sp->SetIsMasterPlan (true);
         call_plan_sp->SetOkayToDiscard(true);

@@ -2986,11 +2986,7 @@ public:
     //------------------------------------------------------------------
 
     virtual lldb::addr_t
-    ResolveIndirectFunction(const Address *address, Error &error)
-    {
-        error.SetErrorStringWithFormat("error: %s does not support indirect functions in the debug process", GetPluginName().GetCString());
-        return LLDB_INVALID_ADDRESS;
-    }
+    ResolveIndirectFunction(const Address *address, Error &error);
 
     virtual Error
     GetMemoryRegionInfo (lldb::addr_t load_addr, 
@@ -3670,6 +3666,12 @@ protected:
     {
         return IS_VALID_LLDB_HOST_THREAD(m_private_state_thread);
     }
+    
+    void
+    ForceNextEventDelivery()
+    {
+        m_force_next_event_delivery = true;
+    }
 
     //------------------------------------------------------------------
     // Type definitions
@@ -3744,7 +3746,9 @@ protected:
     bool                        m_resume_requested;         // If m_currently_handling_event or m_currently_handling_do_on_removals are true, Resume will only request a resume, using this flag to check.
     bool                        m_finalize_called;
     bool                        m_clear_thread_plans_on_stop;
+    bool                        m_force_next_event_delivery;
     lldb::StateType             m_last_broadcast_state;   /// This helps with the Public event coalescing in ShouldBroadcastEvent.
+    std::map<lldb::addr_t,lldb::addr_t> m_resolved_indirect_addresses;
     bool m_destroy_in_process;
     
     enum {

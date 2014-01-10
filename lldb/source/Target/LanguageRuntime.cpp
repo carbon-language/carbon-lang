@@ -269,7 +269,8 @@ LanguageRuntime::CreateExceptionBreakpoint (Target &target,
     BreakpointResolverSP resolver_sp(new ExceptionBreakpointResolver(language, catch_bp, throw_bp));
     SearchFilterSP filter_sp(new ExceptionSearchFilter(target.shared_from_this(), language));
     bool hardware = false;
-    BreakpointSP exc_breakpt_sp (target.CreateBreakpoint (filter_sp, resolver_sp, is_internal, hardware));
+    bool resolve_indirect_functions = false;
+    BreakpointSP exc_breakpt_sp (target.CreateBreakpoint (filter_sp, resolver_sp, is_internal, hardware, resolve_indirect_functions));
     if (is_internal)
         exc_breakpt_sp->SetBreakpointKind("exception");
     

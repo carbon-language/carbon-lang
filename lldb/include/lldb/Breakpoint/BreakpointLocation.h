@@ -321,7 +321,59 @@ public:
     //------------------------------------------------------------------
     bool
     InvokeCallback (StoppointCallbackContext *context);
+    
+    //------------------------------------------------------------------
+    /// Returns whether we should resolve Indirect functions in setting the breakpoint site
+    /// for this location.
+    ///
+    /// @return
+    ///     \b true if the breakpoint SITE for this location should be set on the
+    ///     resolved location for Indirect functions.
+    //------------------------------------------------------------------
+    bool
+    ShouldResolveIndirectFunctions ()
+    {
+        return m_should_resolve_indirect_functions;
+    }
 
+    //------------------------------------------------------------------
+    /// Returns whether the address set in the breakpoint site for this location was found by resolving
+    /// an indirect symbol.
+    ///
+    /// @return
+    ///     \b true or \b false as given in the description above.
+    //------------------------------------------------------------------
+    bool
+    IsIndirect ()
+    {
+        return m_is_indirect;
+    }
+    
+    void
+    SetIsIndirect (bool is_indirect)
+    {
+        m_is_indirect = is_indirect;
+    }
+    
+    //------------------------------------------------------------------
+    /// Returns whether the address set in the breakpoint location was re-routed to the target of a
+    /// re-exported symbol.
+    ///
+    /// @return
+    ///     \b true or \b false as given in the description above.
+    //------------------------------------------------------------------
+    bool
+    IsReExported ()
+    {
+        return m_is_reexported;
+    }
+    
+    void
+    SetIsReExported (bool is_reexported)
+    {
+        m_is_reexported = is_reexported;
+    }
+    
 protected:
     friend class BreakpointLocationList;
     friend class Process;
@@ -375,12 +427,16 @@ private:
                         Breakpoint &owner,
                         const Address &addr,
                         lldb::tid_t tid,
-                        bool hardware);
-
+                        bool hardware,
+                        bool check_for_resolver = true);
+    
     //------------------------------------------------------------------
     // Data members:
     //------------------------------------------------------------------
     bool m_being_created;
+    bool m_should_resolve_indirect_functions;
+    bool m_is_reexported;
+    bool m_is_indirect;
     Address m_address; ///< The address defining this location.
     Breakpoint &m_owner; ///< The breakpoint that produced this object.
     std::unique_ptr<BreakpointOptions> m_options_ap; ///< Breakpoint options pointer, NULL if we're using our breakpoint's options.
@@ -389,6 +445,12 @@ private:
     Mutex m_condition_mutex; ///< Guards parsing and evaluation of the condition, which could be evaluated by multiple processes.
     size_t m_condition_hash; ///< For testing whether the condition source code changed.
 
+    void
+    SetShouldResolveIndirectFunctions (bool do_resolve)
+    {
+        m_should_resolve_indirect_functions = do_resolve;
+    }
+    
     void
     SendBreakpointLocationChangedEvent (lldb::BreakpointEventType eventKind);
     

@@ -403,7 +403,9 @@ ItaniumABILanguageRuntime::CreateExceptionBreakpoint (bool catch_bp,
     FileSpecList filter_modules;
     BreakpointResolverSP exception_resolver_sp = CreateExceptionResolver (NULL, catch_bp, throw_bp, for_expressions);
     SearchFilterSP filter_sp (CreateExceptionSearchFilter ());
-    return target.CreateBreakpoint (filter_sp, exception_resolver_sp, is_internal, false);
+    const bool hardware = false;
+    const bool resolve_indirect_functions = false;
+    return target.CreateBreakpoint (filter_sp, exception_resolver_sp, is_internal, hardware, resolve_indirect_functions);
 }
 
 void

@@ -1596,14 +1596,6 @@ DynamicLoaderMacOSXDYLD::PrivateProcessStateChanged (Process *process, StateType
     }
 }
 
-// This bit in the n_desc field of the mach file means that this is a
-// stub that runs arbitrary code to determine the trampoline target.
-// We've established a naming convention with the CoreOS folks for the
-// equivalent symbols they will use for this (which the objc guys didn't follow...) 
-// For now we'll just look for all symbols matching that naming convention...
-
-#define MACH_O_N_SYMBOL_RESOLVER 0x100
-
 ThreadPlanSP
 DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others)
 {
@@ -1612,104 +1604,123 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
     const SymbolContext &current_context = current_frame->GetSymbolContext(eSymbolContextSymbol);
     Symbol *current_symbol = current_context.symbol;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    TargetSP target_sp (thread.CalculateTarget());
 
     if (current_symbol != NULL)
     {
+        std::vector<Address>  addresses;
+        
         if (current_symbol->IsTrampoline())
         {
             const ConstString &trampoline_name = current_symbol->GetMangled().GetName(Mangled::ePreferMangled);
             
             if (trampoline_name)
             {
-                SymbolContextList target_symbols;
-                TargetSP target_sp (thread.CalculateTarget());
                 const ModuleList &images = target_sp->GetImages();
                 
-                images.FindSymbolsWithNameAndType(trampoline_name, eSymbolTypeCode, target_symbols);
-
-                size_t num_original_symbols = target_symbols.GetSize();
-                // FIXME: The resolver symbol is only valid in object files.  In binaries it is reused for the
-                // shared library slot number.  So we'll have to look this up in the dyld info.
-                // For now, just turn this off.
+                SymbolContextList code_symbols;
+                images.FindSymbolsWithNameAndType(trampoline_name, eSymbolTypeCode, code_symbols);
+                size_t num_code_symbols = code_symbols.GetSize();
                 
-                // bool orig_is_resolver = (current_symbol->GetFlags() & MACH_O_N_SYMBOL_RESOLVER) == MACH_O_N_SYMBOL_RESOLVER;
-                // FIXME: Actually that isn't true, the N_SYMBOL_RESOLVER bit is only valid in .o files.  You can't use
-                // the symbol flags to tell whether something is a symbol resolver in a linked image.
-                bool orig_is_resolver = false;
-                
-                if (num_original_symbols > 0)
+                if (num_code_symbols > 0)
                 {
-                    // We found symbols that look like they are the targets to our symbol.  Now look through the
-                    // modules containing our symbols to see if there are any for our symbol.  
-                    
-                    ModuleList modules_to_search;
-                    
-                    for (size_t i = 0; i < num_original_symbols; i++)
+                    for (uint32_t i = 0; i < num_code_symbols; i++)
                     {
-                        SymbolContext sc;
-                        target_symbols.GetContextAtIndex(i, sc);
-                        
-                        ModuleSP module_sp (sc.symbol->CalculateSymbolContextModule());
-                        if (module_sp)
-                             modules_to_search.AppendIfNeeded(module_sp);
-                    }
-                    
-                    // If the original stub symbol is a resolver, then we don't want to break on the symbol with the
-                    // original name, but instead on all the symbols it could resolve to since otherwise we would stop 
-                    // in the middle of the resolution...
-                    // Note that the stub is not of the resolver type it will point to the equivalent symbol,
-                    // not the original name, so in that case we don't need to do anything.
-                    
-                    if (orig_is_resolver)
-                    {
-                        target_symbols.Clear();
-                        
-                        FindEquivalentSymbols (current_symbol, modules_to_search, target_symbols);
-                    }
-                                            
-                    // FIXME - Make the Run to Address take multiple addresses, and
-                    // run to any of them.
-                    uint32_t num_symbols = target_symbols.GetSize();
-                    if (num_symbols > 0)
-                    {
-                        std::vector<lldb::addr_t>  addresses;
-                        addresses.resize (num_symbols);
-                        for (uint32_t i = 0; i < num_symbols; i++)
+                        SymbolContext context;
+                        AddressRange addr_range;
+                        if (code_symbols.GetContextAtIndex(i, context))
                         {
-                            SymbolContext context;
-                            AddressRange addr_range;
-                            if (target_symbols.GetContextAtIndex(i, context))
+                            context.GetAddressRange (eSymbolContextEverything, 0, false, addr_range);
+                            addresses.push_back(addr_range.GetBaseAddress());
+                            if (log)
                             {
-                                context.GetAddressRange (eSymbolContextEverything, 0, false, addr_range);
-                                lldb::addr_t load_addr = addr_range.GetBaseAddress().GetLoadAddress(target_sp.get());
-                                addresses[i] = load_addr;
+                                addr_t load_addr = addr_range.GetBaseAddress().GetLoadAddress(target_sp.get());
+
+                                log->Printf ("Found a trampoline target symbol at 0x%" PRIx64 ".", load_addr);
                             }
                         }
-                        if (addresses.size() > 0)
-                            thread_plan_sp.reset (new ThreadPlanRunToAddress (thread, addresses, stop_others));
-                        else
+                    }
+                }
+                
+                SymbolContextList reexported_symbols;
+                images.FindSymbolsWithNameAndType(trampoline_name, eSymbolTypeReExported, reexported_symbols);
+                size_t num_reexported_symbols = reexported_symbols.GetSize();
+                if (num_reexported_symbols > 0)
+                {
+                    for (uint32_t i = 0; i < num_reexported_symbols; i++)
+                    {
+                        SymbolContext context;
+                        if (reexported_symbols.GetContextAtIndex(i, context))
                         {
-                            if (log)
-                                log->Printf ("Couldn't resolve the symbol contexts.");
+                            if (context.symbol)
+                            {
+                                Symbol *actual_symbol = context.symbol->ResolveReExportedSymbol(*target_sp.get());
+                                if (actual_symbol)
+                                {
+                                    if (actual_symbol->GetAddress().IsValid())
+                                    {
+                                        addresses.push_back(actual_symbol->GetAddress());
+                                        if (log)
+                                        {
+                                            lldb::addr_t load_addr = actual_symbol->GetAddress().GetLoadAddress(target_sp.get());
+                                            log->Printf ("Found a re-exported symbol: %s at 0x%" PRIx64 ".",
+                                                         actual_symbol->GetName().GetCString(), load_addr);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                    else
+                }
+            }
+        }
+        else if (current_symbol->GetType() == eSymbolTypeReExported)
+        {
+            // I am not sure we could ever end up stopped AT a re-exported symbol.  But just in case:
+            
+            const Symbol *actual_symbol = current_symbol->ResolveReExportedSymbol(*(target_sp.get()));
+            if (actual_symbol)
+            {
+                Address target_addr(actual_symbol->GetAddress());
+                if (target_addr.IsValid())
+                {
+                    if (log)
+                        log->Printf ("Found a re-exported symbol: %s pointing to: %s at 0x%" PRIx64 ".",
+                                     current_symbol->GetName().GetCString(),
+                                     actual_symbol->GetName().GetCString(),
+                                     target_addr.GetLoadAddress(target_sp.get()));
+                    addresses.push_back (target_addr.GetLoadAddress(target_sp.get()));
+                
+                }
+            }
+        }
+        
+        if (addresses.size() > 0)
+        {
+            // First check whether any of the addresses point to Indirect symbols, and if they do, resolve them:
+            std::vector<lldb::addr_t> load_addrs;
+            for (Address address : addresses)
+            {
+                Symbol *symbol = address.CalculateSymbolContextSymbol();
+                if (symbol && symbol->IsIndirect())
+                {
+                    Error error;
+                    addr_t resolved_addr = thread.GetProcess()->ResolveIndirectFunction(&symbol->GetAddress(), error);
+                    if (error.Success())
                     {
+                        load_addrs.push_back(resolved_addr);
                         if (log)
-                        {
-                            log->Printf ("Found a resolver stub for: \"%s\" but could not find any symbols it resolves to.", 
-                                         trampoline_name.AsCString());
-                        }
+                            log->Printf("ResolveIndirectFunction found resolved target for %s at 0x%" PRIx64 ".",
+                                        symbol->GetName().GetCString(), resolved_addr);
                     }
                 }
                 else
                 {
-                    if (log)
-                    {
-                        log->Printf ("Could not find symbol for trampoline target: \"%s\"", trampoline_name.AsCString());
-                    }
+                    load_addrs.push_back(address.GetLoadAddress(target_sp.get()));
                 }
+                
             }
+            thread_plan_sp.reset (new ThreadPlanRunToAddress (thread, load_addrs, stop_others));
         }
     }
     else
@@ -1732,7 +1743,7 @@ DynamicLoaderMacOSXDYLD::FindEquivalentSymbols (lldb_private::Symbol *original_s
         
     size_t initial_size = equivalent_symbols.GetSize();
     
-    static const char *resolver_name_regex = "(_gc|_non_gc|\\$[A-Z0-9]+)$";
+    static const char *resolver_name_regex = "(_gc|_non_gc|\\$[A-Za-z0-9\\$]+)$";
     std::string equivalent_regex_buf("^");
     equivalent_regex_buf.append (trampoline_name.GetCString());
     equivalent_regex_buf.append (resolver_name_regex);

@@ -637,7 +637,8 @@ public:
     CreateBreakpoint (lldb::SearchFilterSP &filter_sp,
                       lldb::BreakpointResolverSP &resolver_sp,
                       bool internal,
-                      bool request_hardware);
+                      bool request_hardware,
+                      bool resolve_indirect_symbols);
 
     // Use this to create a watchpoint:
     lldb::WatchpointSP

@@ -236,7 +236,7 @@ protected:
     ///     Returns breakpoint location id.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
-    Create (const Address &addr);
+    Create (const Address &addr, bool resolve_indirect_symbols);
     
     void
     StartRecordingNewLocations(BreakpointLocationCollection &new_locations);
@@ -246,6 +246,7 @@ protected:
     
     lldb::BreakpointLocationSP
     AddLocation (const Address &addr,
+                 bool resolve_indirect_symbols,
                  bool *new_location = NULL);
 
     bool

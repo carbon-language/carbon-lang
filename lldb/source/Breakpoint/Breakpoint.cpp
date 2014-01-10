@@ -45,14 +45,19 @@ Breakpoint::GetEventIdentifier ()
 //----------------------------------------------------------------------
 // Breakpoint constructor
 //----------------------------------------------------------------------
-Breakpoint::Breakpoint(Target &target, SearchFilterSP &filter_sp, BreakpointResolverSP &resolver_sp, bool hardware) :
+Breakpoint::Breakpoint(Target &target,
+                       SearchFilterSP &filter_sp,
+                       BreakpointResolverSP &resolver_sp,
+                       bool hardware,
+                       bool resolve_indirect_symbols) :
     m_being_created(true),
     m_hardware(hardware),
     m_target (target),
     m_filter_sp (filter_sp),
     m_resolver_sp (resolver_sp),
     m_options (),
-    m_locations (*this)
+    m_locations (*this),
+    m_resolve_indirect_symbols(resolve_indirect_symbols)
 {
     m_being_created = false;
 }
@@ -87,7 +92,7 @@ Breakpoint::GetTarget () const
 BreakpointLocationSP
 Breakpoint::AddLocation (const Address &addr, bool *new_location)
 {
-    return m_locations.AddLocation (addr, new_location);
+    return m_locations.AddLocation (addr, m_resolve_indirect_symbols, new_location);
 }
 
 BreakpointLocationSP

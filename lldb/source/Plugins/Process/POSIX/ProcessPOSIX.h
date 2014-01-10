@@ -104,9 +104,6 @@ public:
     virtual lldb_private::Error
     DoDeallocateMemory(lldb::addr_t ptr);
 
-    virtual lldb::addr_t
-    ResolveIndirectFunction(const lldb_private::Address *address, lldb_private::Error &error);
-
     virtual size_t
     GetSoftwareBreakpointTrapOpcode(lldb_private::BreakpointSite* bp_site);
 
