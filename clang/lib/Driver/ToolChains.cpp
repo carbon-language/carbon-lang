@@ -1204,6 +1204,13 @@ void Generic_GCC::GCCInstallationDetector::print(raw_ostream &OS) const {
                                                 "powerpc64le-suse-linux",
                                                 "ppc64le-redhat-linux" };
 
+  static const char *const SPARCv8LibDirs[] = { "/lib32", "/lib" };
+  static const char *const SPARCv8Triples[] = { "sparc-linux-gnu",
+                                                "sparcv8-linux-gnu" };
+  static const char *const SPARCv9LibDirs[] = { "/lib64", "/lib" };
+  static const char *const SPARCv9Triples[] = { "sparc64-linux-gnu",
+                                                "sparcv9-linux-gnu" };
+
   static const char *const SystemZLibDirs[] = { "/lib64", "/lib" };
   static const char *const SystemZTriples[] = {
     "s390x-linux-gnu", "s390x-unknown-linux-gnu", "s390x-ibm-linux-gnu",
@@ -1323,6 +1330,26 @@ void Generic_GCC::GCCInstallationDetector::print(raw_ostream &OS) const {
     TripleAliases.append(PPC64LETriples,
                          PPC64LETriples + llvm::array_lengthof(PPC64LETriples));
     break;
+  case llvm::Triple::sparc:
+    LibDirs.append(SPARCv8LibDirs,
+                   SPARCv8LibDirs + llvm::array_lengthof(SPARCv8LibDirs));
+    TripleAliases.append(SPARCv8Triples,
+                         SPARCv8Triples + llvm::array_lengthof(SPARCv8Triples));
+    BiarchLibDirs.append(SPARCv9LibDirs,
+                         SPARCv9LibDirs + llvm::array_lengthof(SPARCv9LibDirs));
+    BiarchTripleAliases.append(
+        SPARCv9Triples, SPARCv9Triples + llvm::array_lengthof(SPARCv9Triples));
+    break;
+  case llvm::Triple::sparcv9:
+    LibDirs.append(SPARCv9LibDirs,
+                   SPARCv9LibDirs + llvm::array_lengthof(SPARCv9LibDirs));
+    TripleAliases.append(SPARCv9Triples,
+                         SPARCv9Triples + llvm::array_lengthof(SPARCv9Triples));
+    BiarchLibDirs.append(SPARCv8LibDirs,
+                         SPARCv8LibDirs + llvm::array_lengthof(SPARCv8LibDirs));
+    BiarchTripleAliases.append(
+        SPARCv8Triples, SPARCv8Triples + llvm::array_lengthof(SPARCv8Triples));
+    break;
   case llvm::Triple::systemz:
     LibDirs.append(SystemZLibDirs,
                    SystemZLibDirs + llvm::array_lengthof(SystemZLibDirs));
@@ -1408,6 +1435,7 @@ static bool findTargetBiarchSuffix(std::string &Suffix, StringRef Path,
     Suffix = "/n32";
   else if (TargetArch == llvm::Triple::x86_64 ||
            TargetArch == llvm::Triple::ppc64 ||
+           TargetArch == llvm::Triple::sparcv9 ||
            TargetArch == llvm::Triple::systemz ||
            TargetArch == llvm::Triple::mips64 ||
            TargetArch == llvm::Triple::mips64el)
