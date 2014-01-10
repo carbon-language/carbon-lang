@@ -111,8 +111,7 @@ LockFileManager::LockFileManager(StringRef FileName)
       // We failed to write out PID, so make up an excuse, remove the
       // unique lock file, and fail.
       Error = make_error_code(errc::no_space_on_device);
-      bool Existed;
-      sys::fs::remove(UniqueLockFileName.c_str(), Existed);
+      sys::fs::remove(UniqueLockFileName.c_str());
       return;
     }
   }
@@ -137,14 +136,13 @@ LockFileManager::LockFileManager(StringRef FileName)
 
   // Someone else managed to create the lock file first. Wipe out our unique
   // lock file (it's useless now) and read the process ID from the lock file.
-  bool Existed;
-  sys::fs::remove(UniqueLockFileName.str(), Existed);
+  sys::fs::remove(UniqueLockFileName.str());
   if ((Owner = readLockFile(LockFileName)))
     return;
 
   // There is a lock file that nobody owns; try to clean it up and report
   // an error.
-  sys::fs::remove(LockFileName.str(), Existed);
+  sys::fs::remove(LockFileName.str());
   Error = EC;
 }
 
@@ -163,9 +161,8 @@ LockFileManager::~LockFileManager() {
     return;
 
   // Since we own the lock, remove the lock file and our own unique lock file.
-  bool Existed;
-  sys::fs::remove(LockFileName.str(), Existed);
-  sys::fs::remove(UniqueLockFileName.str(), Existed);
+  sys::fs::remove(LockFileName.str());
+  sys::fs::remove(UniqueLockFileName.str());
 }
 
 void LockFileManager::waitForUnlock() {

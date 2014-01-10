@@ -25,10 +25,8 @@ tool_output_file::CleanupInstaller::CleanupInstaller(const char *filename)
 
 tool_output_file::CleanupInstaller::~CleanupInstaller() {
   // Delete the file if the client hasn't told us not to.
-  if (!Keep && Filename != "-") {
-    bool Existed;
-    sys::fs::remove(Filename, Existed);
-  }
+  if (!Keep && Filename != "-")
+    sys::fs::remove(Filename);
 
   // Ok, the file is successfully written and closed, or deleted. There's no
   // further need to clean it up on signals.

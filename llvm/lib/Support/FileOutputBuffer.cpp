@@ -28,8 +28,7 @@ FileOutputBuffer::FileOutputBuffer(mapped_file_region * R,
 }
 
 FileOutputBuffer::~FileOutputBuffer() {
-  bool Existed;
-  sys::fs::remove(Twine(TempPath), Existed);
+  sys::fs::remove(Twine(TempPath));
 }
 
 error_code FileOutputBuffer::create(StringRef FilePath,
@@ -57,8 +56,7 @@ error_code FileOutputBuffer::create(StringRef FilePath,
   }
 
   // Delete target file.
-  bool Existed;
-  EC = sys::fs::remove(FilePath, Existed);
+  EC = sys::fs::remove(FilePath);
   if (EC)
     return EC;
 
