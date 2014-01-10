@@ -139,6 +139,15 @@ void InitCommonLsan();
 void DoLeakCheck();
 bool DisabledInThisThread();
 
+// Special case for "new T[0]" where T is a type with DTOR.
+// new T[0] will allocate one word for the array size (0) and store a pointer
+// to the end of allocated chunk.
+inline bool IsSpecialCaseOfOperatorNew0(uptr chunk_beg, uptr chunk_size,
+                                        uptr addr) {
+  return chunk_size == sizeof(uptr) && chunk_beg + chunk_size == addr &&
+         *reinterpret_cast<uptr *>(chunk_beg) == 0;
+}
+
 // The following must be implemented in the parent tool.
 
 void ForEachChunk(ForEachChunkCallback callback, void *arg);

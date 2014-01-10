@@ -710,8 +710,12 @@ uptr PointsIntoChunk(void* p) {
   __asan::AsanChunk *m = __asan::GetAsanChunkByAddrFastLocked(addr);
   if (!m) return 0;
   uptr chunk = m->Beg();
-  if ((m->chunk_state == __asan::CHUNK_ALLOCATED) &&
-      m->AddrIsInside(addr, /*locked_version=*/true))
+  if (m->chunk_state != __asan::CHUNK_ALLOCATED)
+    return 0;
+  if (m->AddrIsInside(addr, /*locked_version=*/true))
+    return chunk;
+  if (IsSpecialCaseOfOperatorNew0(chunk, m->UsedSize(/*locked_version*/ true),
+                                  addr))
     return chunk;
   return 0;
 }

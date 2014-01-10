@@ -143,7 +143,11 @@ uptr PointsIntoChunk(void* p) {
   if (addr < chunk) return 0;
   ChunkMetadata *m = Metadata(reinterpret_cast<void *>(chunk));
   CHECK(m);
-  if (m->allocated && addr < chunk + m->requested_size)
+  if (!m->allocated)
+    return 0;
+  if (addr < chunk + m->requested_size)
+    return chunk;
+  if (IsSpecialCaseOfOperatorNew0(chunk, m->requested_size, addr))
     return chunk;
   return 0;
 }
