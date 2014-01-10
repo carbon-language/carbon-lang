@@ -409,8 +409,8 @@ CommunicationKDP::SendRequestConnect (uint16_t reply_port,
     MakeRequestPacketHeader (command, request_packet, command_length);
     // Always send connect ports as little endian
     request_packet.SetByteOrder (eByteOrderLittle);
-    request_packet.PutHex16 (reply_port);
-    request_packet.PutHex16 (exc_port);
+    request_packet.PutHex16 (htons(reply_port));
+    request_packet.PutHex16 (htons(exc_port));
     request_packet.SetByteOrder (m_byte_order);
     request_packet.PutCString (greeting);
     DataExtractor reply_packet;
@@ -438,7 +438,7 @@ CommunicationKDP::SendRequestReattach (uint16_t reply_port)
     MakeRequestPacketHeader (command, request_packet, command_length);
     // Always send connect ports as little endian
     request_packet.SetByteOrder (eByteOrderLittle);
-    request_packet.PutHex16(reply_port);
+    request_packet.PutHex16(htons(reply_port));
     request_packet.SetByteOrder (m_byte_order);
     DataExtractor reply_packet;
     if (SendRequestAndGetReply (command, request_packet, reply_packet))
@@ -1035,8 +1035,8 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                 {
                     case KDP_CONNECT:               
                         {
-                            const uint16_t reply_port = packet.GetU16 (&offset);
-                            const uint16_t exc_port = packet.GetU16 (&offset);
+                            const uint16_t reply_port = ntohs(packet.GetU16 (&offset));
+                            const uint16_t exc_port = ntohs(packet.GetU16 (&offset));
                             s.Printf(" (reply_port = %u, exc_port = %u, greeting = \"%s\")", reply_port, exc_port, packet.GetCStr(&offset));
                         }
                         break;
@@ -1214,7 +1214,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
 
                     case KDP_REATTACH:
                         {
-                            const uint16_t reply_port = packet.GetU16 (&offset);
+                            const uint16_t reply_port = ntohs(packet.GetU16 (&offset));
                             s.Printf(" (reply_port = %u)", reply_port);
                         }
                         break;
