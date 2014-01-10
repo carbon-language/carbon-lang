@@ -453,6 +453,7 @@ parseMEMOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands)
   switch (getLexer().getKind()) {
   default: return MatchOperand_NoMatch;
 
+  case AsmToken::Comma:
   case AsmToken::RBrac:
   case AsmToken::EndOfStatement:
     Operands.push_back(SparcOperand::CreateMEMri(BaseReg, 0, S, E));

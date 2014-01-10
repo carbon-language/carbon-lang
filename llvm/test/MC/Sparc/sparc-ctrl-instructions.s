@@ -31,6 +31,19 @@
         ! CHECK-NEXT:                ! fixup A - offset: 0, value: %lo(sym), kind: fixup_sparc_lo10
         jmp %g1+%lo(sym)
 
+        ! CHECK: jmpl %g1+%i2, %g2  ! encoding: [0x85,0xc0,0x40,0x1a]
+        jmpl %g1 + %i2, %g2
+
+        ! CHECK: jmpl %o1+8, %g2    ! encoding: [0x85,0xc2,0x60,0x08]
+        jmpl %o1 + 8, %g2
+
+        ! CHECK: jmpl %g1, %g2      ! encoding: [0x85,0xc0,0x60,0x00]
+        jmpl %g1, %g2
+
+        ! CHECK: jmpl %g1+%lo(sym), %g2   ! encoding: [0x85,0xc0,0b011000AA,A]
+        ! CHECK-NEXT:                     ! fixup A - offset: 0, value: %lo(sym), kind: fixup_sparc_lo10
+        jmpl %g1+%lo(sym), %g2
+
         ! CHECK: ba .BB0      ! encoding: [0x10,0b10AAAAAA,A,A]
         ! CHECK-NEXT:         ! fixup A - offset: 0, value: .BB0, kind: fixup_sparc_br22
         ba .BB0

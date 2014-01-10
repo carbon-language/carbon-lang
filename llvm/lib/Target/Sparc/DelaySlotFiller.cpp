@@ -278,19 +278,19 @@ void Filler::insertCallDefsUses(MachineBasicBlock::iterator MI,
   switch(MI->getOpcode()) {
   default: llvm_unreachable("Unknown opcode.");
   case SP::CALL: break;
-  case SP::JMPLrr:
-  case SP::JMPLri:
+  case SP::CALLrr:
+  case SP::CALLri:
     assert(MI->getNumOperands() >= 2);
     const MachineOperand &Reg = MI->getOperand(0);
-    assert(Reg.isReg() && "JMPL first operand is not a register.");
-    assert(Reg.isUse() && "JMPL first operand is not a use.");
+    assert(Reg.isReg() && "CALL first operand is not a register.");
+    assert(Reg.isUse() && "CALL first operand is not a use.");
     RegUses.insert(Reg.getReg());
 
     const MachineOperand &RegOrImm = MI->getOperand(1);
     if (RegOrImm.isImm())
         break;
-    assert(RegOrImm.isReg() && "JMPLrr second operand is not a register.");
-    assert(RegOrImm.isUse() && "JMPLrr second operand is not a use.");
+    assert(RegOrImm.isReg() && "CALLrr second operand is not a register.");
+    assert(RegOrImm.isUse() && "CALLrr second operand is not a use.");
     RegUses.insert(RegOrImm.getReg());
     break;
   }
@@ -353,8 +353,8 @@ bool Filler::needsUnimp(MachineBasicBlock::iterator I, unsigned &StructSize)
   switch (I->getOpcode()) {
   default: llvm_unreachable("Unknown call opcode.");
   case SP::CALL: structSizeOpNum = 1; break;
-  case SP::JMPLrr:
-  case SP::JMPLri: structSizeOpNum = 2; break;
+  case SP::CALLrr:
+  case SP::CALLri: structSizeOpNum = 2; break;
   case SP::TLS_CALL: return false;
   }
 

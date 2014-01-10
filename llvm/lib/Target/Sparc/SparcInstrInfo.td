@@ -362,10 +362,18 @@ let usesCustomInserter = 1, Uses = [FCC] in {
             [(set f128:$dst, (SPselectfcc f128:$T, f128:$F, imm:$Cond))]>;
 }
 
+// JMPL Instruction.
+let isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
+  def JMPLrr: F3_1<2, 0b111000, (outs IntRegs:$dst), (ins MEMrr:$addr),
+                  "jmpl $addr, $dst", []>;
+  def JMPLri: F3_2<2, 0b111000, (outs IntRegs:$dst), (ins MEMri:$addr),
+                  "jmpl $addr, $dst", []>;
+}
 
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
-let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
+let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1,
+    isCodeGenOnly = 1 in {
   let rd = 0, rs1 = 15 in
     def RETL: F3_2<2, 0b111000, (outs), (ins i32imm:$val),
                    "jmp %o7+$val", [(retflag simm13:$val)]>;
@@ -519,9 +527,8 @@ class BranchSP<dag ins, string asmstr, list<dag> pattern>
 }
 
 // Indirect branch instructions.
-let isTerminator = 1, isBarrier = 1,
-     hasDelaySlot = 1, isBranch =1,
-     isIndirectBranch = 1, rd = 0 in {
+let isTerminator = 1, isBarrier = 1,  hasDelaySlot = 1, isBranch =1,
+     isIndirectBranch = 1, rd = 0, isCodeGenOnly = 1 in {
   def BINDrr  : F3_1<2, 0b111000,
                    (outs), (ins MEMrr:$ptr),
                    "jmp $ptr",
@@ -564,15 +571,17 @@ let Uses = [O6],
     let Inst{29-0} = disp;
   }
 
-  // indirect calls
-  def JMPLrr : F3_1<2, 0b111000,
-                    (outs), (ins MEMrr:$ptr, variable_ops),
-                    "call $ptr",
-                    [(call ADDRrr:$ptr)]> { let rd = 15; }
-  def JMPLri : F3_2<2, 0b111000,
-                    (outs), (ins MEMri:$ptr, variable_ops),
-                    "call $ptr",
-                    [(call ADDRri:$ptr)]> { let rd = 15; }
+  // indirect calls: special cases of JMPL.
+  let isCodeGenOnly = 1, rd = 15 in {
+    def CALLrr : F3_1<2, 0b111000,
+                      (outs), (ins MEMrr:$ptr, variable_ops),
+                      "call $ptr",
+                      [(call ADDRrr:$ptr)]>;
+    def CALLri : F3_2<2, 0b111000,
+                      (outs), (ins MEMri:$ptr, variable_ops),
+                      "call $ptr",
+                      [(call ADDRri:$ptr)]>;
+  }
 }
 
 // Section B.28 - Read State Register Instructions

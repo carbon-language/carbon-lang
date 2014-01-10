@@ -22,6 +22,7 @@
 using namespace llvm;
 
 #define GET_INSTRUCTION_NAME
+#define PRINT_ALIAS_INSTR
 #include "SparcGenAsmWriter.inc"
 
 void SparcInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const
@@ -32,8 +33,32 @@ void SparcInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const
 void SparcInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
                                StringRef Annot)
 {
-  printInstruction(MI, O);
+  if (!printAliasInstr(MI, O) && !printSparcAliasInstr(MI, O))
+    printInstruction(MI, O);
   printAnnotation(O, Annot);
+}
+
+bool SparcInstPrinter::printSparcAliasInstr(const MCInst *MI, raw_ostream &O)
+{
+  switch (MI->getOpcode()) {
+  default: return false;
+  case SP::JMPLrr:
+  case SP::JMPLri: {
+    if (MI->getNumOperands() != 3)
+      return false;
+    if (!MI->getOperand(0).isReg())
+      return false;
+    switch (MI->getOperand(0).getReg()) {
+    default: return false;
+    case SP::G0: // jmp $addr
+      O << "\tjmp "; printMemOperand(MI, 1, O);
+      return true;
+    case SP::O7: // call $addr
+      O << "\tcall "; printMemOperand(MI, 1, O);
+      return true;
+    }
+  }
+  }
 }
 
 void SparcInstPrinter::printOperand(const MCInst *MI, int opNum,
