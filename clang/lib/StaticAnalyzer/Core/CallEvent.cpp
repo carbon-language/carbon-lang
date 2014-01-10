@@ -863,8 +863,16 @@ RuntimeDefinition ObjCMethodCall::getRuntimeDefinition() const {
         Optional<const ObjCMethodDecl *> &Val = PMC[std::make_pair(IDecl, Sel)];
 
         // Query lookupPrivateMethod() if the cache does not hit.
-        if (!Val.hasValue())
+        if (!Val.hasValue()) {
           Val = IDecl->lookupPrivateMethod(Sel);
+
+          // If the method is a property accessor, we should try to "inline" it
+          // even if we don't actually have an implementation.
+          if (!*Val)
+            if (const ObjCMethodDecl *CompileTimeMD = E->getMethodDecl())
+              if (CompileTimeMD->isPropertyAccessor())
+                Val = IDecl->lookupInstanceMethod(Sel);
+        }
 
         const ObjCMethodDecl *MD = Val.getValue();
         if (CanBeSubClassed)

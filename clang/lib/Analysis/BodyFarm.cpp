@@ -74,6 +74,9 @@ public:
   
   /// Create an Objective-C bool literal.
   ObjCBoolLiteralExpr *makeObjCBool(bool Val);
+
+  /// Create an Objective-C ivar reference.
+  ObjCIvarRefExpr *makeObjCIvarRef(const Expr *Base, const ObjCIvarDecl *IVar);
   
   /// Create a Return statement.
   ReturnStmt *makeReturn(const Expr *RetVal);
@@ -146,6 +149,15 @@ ObjCBoolLiteralExpr *ASTMaker::makeObjCBool(bool Val) {
   QualType Ty = C.getBOOLDecl() ? C.getBOOLType() : C.ObjCBuiltinBoolTy;
   return new (C) ObjCBoolLiteralExpr(Val, Ty, SourceLocation());
 }
+
+ObjCIvarRefExpr *ASTMaker::makeObjCIvarRef(const Expr *Base,
+                                           const ObjCIvarDecl *IVar) {
+  return new (C) ObjCIvarRefExpr(const_cast<ObjCIvarDecl*>(IVar),
+                                 IVar->getType(), SourceLocation(),
+                                 SourceLocation(), const_cast<Expr*>(Base),
+                                 /*arrow=*/true, /*free=*/false);
+}
+
 
 ReturnStmt *ASTMaker::makeReturn(const Expr *RetVal) {
   return new (C) ReturnStmt(SourceLocation(), const_cast<Expr*>(RetVal), 0);
@@ -371,6 +383,64 @@ Stmt *BodyFarm::getBody(const FunctionDecl *D) {
   }
   
   if (FF) { Val = FF(C, D); }
+  return Val.getValue();
+}
+
+static Stmt *createObjCPropertyGetter(ASTContext &Ctx,
+                                      const ObjCPropertyDecl *Prop) {
+  const ObjCIvarDecl *IVar = Prop->getPropertyIvarDecl();
+  if (!IVar)
+    return 0;
+  if (Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak)
+    return 0;
+  if (IVar->getType().getCanonicalType() !=
+      Prop->getType().getNonReferenceType().getCanonicalType())
+    return 0;
+
+  // C++ records require copy constructors, so we can't just synthesize an AST.
+  // FIXME: Use ObjCPropertyImplDecl's already-synthesized AST. Currently it's
+  // not in a form the analyzer can use.
+  if (Prop->getType()->getAsCXXRecordDecl())
+    return 0;
+
+  ASTMaker M(Ctx);
+
+  const VarDecl *selfVar = Prop->getGetterMethodDecl()->getSelfDecl();
+
+  Expr *loadedIVar =
+    M.makeObjCIvarRef(
+      M.makeLvalueToRvalue(
+        M.makeDeclRefExpr(selfVar),
+        selfVar->getType()),
+      IVar);
+
+  if (!Prop->getType()->isReferenceType())
+    loadedIVar = M.makeLvalueToRvalue(loadedIVar, IVar->getType());
+
+  return M.makeReturn(loadedIVar);
+}
+
+Stmt *BodyFarm::getBody(const ObjCMethodDecl *D, const ObjCPropertyDecl *Prop) {
+  if (!D->isPropertyAccessor())
+    return 0;
+
+  D = D->getCanonicalDecl();
+
+  Optional<Stmt *> &Val = Bodies[D];
+  if (Val.hasValue())
+    return Val.getValue();
+  Val = 0;
+
+  if (!Prop)
+    Prop = D->findPropertyDecl();
+  if (!Prop)
+    return 0;
+
+  if (D->param_size() != 0)
+    return 0;
+
+  Val = createObjCPropertyGetter(C, Prop);
+
   return Val.getValue();
 }
 

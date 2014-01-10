@@ -94,14 +94,21 @@ Stmt *AnalysisDeclContext::getBody(bool &IsAutosynthesized) const {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     Stmt *Body = FD->getBody();
     if (!Body && Manager && Manager->synthesizeBodies()) {
-      IsAutosynthesized = true;
-      return getBodyFarm(getASTContext()).getBody(FD);
+      Body = getBodyFarm(getASTContext()).getBody(FD);
+      if (Body)
+        IsAutosynthesized = true;
     }
     return Body;
   }
-  else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
-    return MD->getBody();
-  else if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
+  else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+    Stmt *Body = MD->getBody();
+    if (!Body && Manager && Manager->synthesizeBodies()) {
+      Body = getBodyFarm(getASTContext()).getBody(MD);
+      if (Body)
+        IsAutosynthesized = true;
+    }
+    return Body;
+  } else if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
     return BD->getBody();
   else if (const FunctionTemplateDecl *FunTmpl
            = dyn_cast_or_null<FunctionTemplateDecl>(D))

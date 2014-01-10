@@ -2735,6 +2735,16 @@ static QualType GetReturnType(const Expr *RetE, ASTContext &Ctx) {
   return RetTy;
 }
 
+static bool wasSynthesizedProperty(const ObjCMethodCall *Call,
+                                   ExplodedNode *N) {
+  if (!Call || !Call->getDecl()->isPropertyAccessor())
+    return false;
+
+  CallExitEnd PP = N->getLocation().castAs<CallExitEnd>();
+  const StackFrameContext *Frame = PP.getCalleeContext();
+  return Frame->getAnalysisDeclContext()->isBodyAutosynthesized();
+}
+
 // We don't always get the exact modeling of the function with regards to the
 // retain count checker even when the function is inlined. For example, we need
 // to stop tracking the symbols which were marked with StopTrackingHard.
@@ -2769,6 +2779,15 @@ void RetainCountChecker::processSummaryOfInlined(const RetainSummary &Summ,
     SymbolRef Sym = CallOrMsg.getReturnValue().getAsSymbol();
     if (Sym)
       state = removeRefBinding(state, Sym);
+  } else if (RE.getKind() == RetEffect::NotOwnedSymbol) {
+    if (wasSynthesizedProperty(MsgInvocation, C.getPredecessor())) {
+      // Believe the summary if we synthesized the body and the return value is
+      // untracked. This handles property getters.
+      SymbolRef Sym = CallOrMsg.getReturnValue().getAsSymbol();
+      if (Sym && !getRefBinding(state, Sym))
+        state = setRefBinding(state, Sym, RefVal::makeNotOwned(RE.getObjKind(),
+                                                               Sym->getType()));
+    }
   }
   
   C.addTransition(state);
