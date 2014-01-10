@@ -1,0 +1,11 @@
+_Z3sumii:105580:5279
+0: 5279
+1: 5279
+2: 5279
+main:225715:0
+2: 5553
+3: 5391
+# This indicates that at line 3 of this function, the 'then' branch
+# of the conditional is taken (discriminator '1'). However, we still
+# do not handle this case, so we compute the wrong branch weights here.
+3.1: 5752  _Z3sumii:5860

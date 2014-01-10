@@ -45,6 +45,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/Support/LineIterator.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
@@ -115,6 +116,7 @@ protected:
   unsigned TotalSamples;
 
   /// \brief Total number of samples collected at the head of the function.
+  /// FIXME: Use head samples to estimate a cold/hot attribute for the function.
   unsigned TotalHeadSamples;
 
   /// \brief Line number for the function header. Used to compute relative
@@ -204,6 +206,11 @@ public:
     return Profiles[F.getName()];
   }
 
+  /// \brief Report a parse error message and stop compilation.
+  void reportParseError(int64_t LineNumber, Twine Msg) const {
+    report_fatal_error(Filename + ":" + Twine(LineNumber) + ": " + Msg + "\n");
+  }
+
 protected:
   /// \brief Map every function to its associated profile.
   ///
@@ -218,63 +225,6 @@ protected:
   /// independently. If possible, the profiler should have a text
   /// version of the profile format to be used in constructing test
   /// cases and debugging.
-  StringRef Filename;
-};
-
-/// \brief Loader class for text-based profiles.
-///
-/// This class defines a simple interface to read text files containing
-/// profiles. It keeps track of line number information and location of
-/// the file pointer. Users of this class are responsible for actually
-/// parsing the lines returned by the readLine function.
-///
-/// TODO - This does not really belong here. It is a generic text file
-/// reader. It should be moved to the Support library and made more general.
-class ExternalProfileTextLoader {
-public:
-  ExternalProfileTextLoader(StringRef F) : Filename(F) {
-    error_code EC;
-    EC = MemoryBuffer::getFile(Filename, Buffer);
-    if (EC)
-      report_fatal_error("Could not open profile file " + Filename + ": " +
-                         EC.message());
-    FP = Buffer->getBufferStart();
-    Lineno = 0;
-  }
-
-  /// \brief Read a line from the mapped file.
-  StringRef readLine() {
-    size_t Length = 0;
-    const char *start = FP;
-    while (FP != Buffer->getBufferEnd() && *FP != '\n') {
-      Length++;
-      FP++;
-    }
-    if (FP != Buffer->getBufferEnd())
-      FP++;
-    Lineno++;
-    return StringRef(start, Length);
-  }
-
-  /// \brief Return true, if we've reached EOF.
-  bool atEOF() const { return FP == Buffer->getBufferEnd(); }
-
-  /// \brief Report a parse error message and stop compilation.
-  void reportParseError(Twine Msg) const {
-    report_fatal_error(Filename + ":" + Twine(Lineno) + ": " + Msg + "\n");
-  }
-
-private:
-  /// \brief Memory buffer holding the text file.
-  OwningPtr<MemoryBuffer> Buffer;
-
-  /// \brief Current position into the memory buffer.
-  const char *FP;
-
-  /// \brief Current line number.
-  int64_t Lineno;
-
-  /// \brief Path name where to the profile file.
   StringRef Filename;
 };
 
@@ -386,77 +336,118 @@ void SampleModuleProfile::dump() {
 
 /// \brief Load samples from a text file.
 ///
-/// The file is divided in two segments:
+/// The file contains a list of samples for every function executed at
+/// runtime. Each function profile has the following format:
 ///
-/// Symbol table (represented with the string "symbol table")
-///    Number of symbols in the table
-///    symbol 1
-///    symbol 2
+///    function1:total_samples:total_head_samples
+///    offset1[.discriminator]: number_of_samples [fn1:num fn2:num ... ]
+///    offset2[.discriminator]: number_of_samples [fn3:num fn4:num ... ]
 ///    ...
-///    symbol N
-///
-/// Function body profiles
-///    function1:total_samples:total_head_samples:number_of_locations
-///    location_offset_1: number_of_samples
-///    location_offset_2: number_of_samples
-///    ...
-///    location_offset_N: number_of_samples
+///    offsetN[.discriminator]: number_of_samples [fn5:num fn6:num ... ]
 ///
 /// Function names must be mangled in order for the profile loader to
-/// match them in the current translation unit.
+/// match them in the current translation unit. The two numbers in the
+/// function header specify how many total samples were accumulated in
+/// the function (first number), and the total number of samples accumulated
+/// at the prologue of the function (second number). This head sample
+/// count provides an indicator of how frequent is the function invoked.
+///
+/// Each sampled line may contain several items. Some are optional
+/// (marked below):
+///
+/// a- Source line offset. This number represents the line number
+///    in the function where the sample was collected. The line number
+///    is always relative to the line where symbol of the function
+///    is defined. So, if the function has its header at line 280,
+///    the offset 13 is at line 293 in the file.
+///
+/// b- [OPTIONAL] Discriminator. This is used if the sampled program
+///    was compiled with DWARF discriminator support
+///    (http://wiki.dwarfstd.org/index.php?title=Path_Discriminators)
+///    This is currently only emitted by GCC and we just ignore it.
+///
+///    FIXME: Handle discriminators, since they are needed to distinguish
+///           multiple control flow within a single source LOC.
+///
+/// c- Number of samples. This is the number of samples collected by
+///    the profiler at this source location.
+///
+/// d- [OPTIONAL] Potential call targets and samples. If present, this
+///    line contains a call instruction. This models both direct and
+///    indirect calls. Each called target is listed together with the
+///    number of samples. For example,
+///
+///    130: 7  foo:3  bar:2  baz:7
+///
+///    The above means that at relative line offset 130 there is a
+///    call instruction that calls one of foo(), bar() and baz(). With
+///    baz() being the relatively more frequent call target.
+///
+///    FIXME: This is currently unhandled, but it has a lot of
+///           potential for aiding the inliner.
+///
 ///
 /// Since this is a flat profile, a function that shows up more than
 /// once gets all its samples aggregated across all its instances.
-/// TODO - flat profiles are too imprecise to provide good optimization
-/// opportunities. Convert them to context-sensitive profile.
+///
+/// FIXME: flat profiles are too imprecise to provide good optimization
+///        opportunities. Convert them to context-sensitive profile.
 ///
 /// This textual representation is useful to generate unit tests and
 /// for debugging purposes, but it should not be used to generate
 /// profiles for large programs, as the representation is extremely
 /// inefficient.
 void SampleModuleProfile::loadText() {
-  ExternalProfileTextLoader Loader(Filename);
-
-  // Read the symbol table.
-  StringRef Line = Loader.readLine();
-  if (Line != "symbol table")
-    Loader.reportParseError("Expected 'symbol table', found " + Line);
-  int NumSymbols;
-  Line = Loader.readLine();
-  if (Line.getAsInteger(10, NumSymbols))
-    Loader.reportParseError("Expected a number, found " + Line);
-  for (int I = 0; I < NumSymbols; I++)
-    Profiles[Loader.readLine()] = SampleFunctionProfile();
+  OwningPtr<MemoryBuffer> Buffer;
+  error_code EC = MemoryBuffer::getFile(Filename, Buffer);
+  if (EC)
+    report_fatal_error("Could not open file " + Filename + ": " + EC.message());
+  line_iterator LineIt(*Buffer, '#');
 
   // Read the profile of each function. Since each function may be
   // mentioned more than once, and we are collecting flat profiles,
   // accumulate samples as we parse them.
-  Regex HeadRE("^([^:]+):([0-9]+):([0-9]+):([0-9]+)$");
-  Regex LineSample("^([0-9]+): ([0-9]+)$");
-  while (!Loader.atEOF()) {
-    SmallVector<StringRef, 4> Matches;
-    Line = Loader.readLine();
-    if (!HeadRE.match(Line, &Matches))
-      Loader.reportParseError("Expected 'mangled_name:NUM:NUM:NUM', found " +
-                              Line);
-    assert(Matches.size() == 5);
+  Regex HeadRE("^([^:]+):([0-9]+):([0-9]+)$");
+  Regex LineSample("^([0-9]+)(\\.[0-9]+)?: ([0-9]+)(.*)$");
+  while (!LineIt.is_at_eof()) {
+    // Read the header of each function. The function header should
+    // have this format:
+    //
+    //        function_name:total_samples:total_head_samples
+    //
+    // See above for an explanation of each field.
+    SmallVector<StringRef, 3> Matches;
+    if (!HeadRE.match(*LineIt, &Matches))
+      reportParseError(LineIt.line_number(),
+                       "Expected 'mangled_name:NUM:NUM', found " + *LineIt);
+    assert(Matches.size() == 4);
     StringRef FName = Matches[1];
-    unsigned NumSamples, NumHeadSamples, NumSampledLines;
+    unsigned NumSamples, NumHeadSamples;
     Matches[2].getAsInteger(10, NumSamples);
     Matches[3].getAsInteger(10, NumHeadSamples);
-    Matches[4].getAsInteger(10, NumSampledLines);
+    Profiles[FName] = SampleFunctionProfile();
     SampleFunctionProfile &FProfile = Profiles[FName];
     FProfile.addTotalSamples(NumSamples);
     FProfile.addHeadSamples(NumHeadSamples);
-    unsigned I;
-    for (I = 0; I < NumSampledLines && !Loader.atEOF(); I++) {
-      Line = Loader.readLine();
-      if (!LineSample.match(Line, &Matches))
-        Loader.reportParseError("Expected 'NUM: NUM', found " + Line);
-      assert(Matches.size() == 3);
+    ++LineIt;
+
+    // Now read the body. The body of the function ends when we reach
+    // EOF or when we see the start of the next function.
+    while (!LineIt.is_at_eof() && isdigit((*LineIt)[0])) {
+      if (!LineSample.match(*LineIt, &Matches))
+        reportParseError(
+            LineIt.line_number(),
+            "Expected 'NUM[.NUM]: NUM[ mangled_name:NUM]*', found " + *LineIt);
+      assert(Matches.size() == 5);
       unsigned LineOffset, NumSamples;
       Matches[1].getAsInteger(10, LineOffset);
-      Matches[2].getAsInteger(10, NumSamples);
+
+      // FIXME: Handle discriminator information (in Matches[2]).
+
+      Matches[3].getAsInteger(10, NumSamples);
+
+      // FIXME: Handle called targets (in Matches[4]).
+
       // When dealing with instruction weights, we use the value
       // zero to indicate the absence of a sample. If we read an
       // actual zero from the profile file, return it as 1 to
@@ -464,10 +455,8 @@ void SampleModuleProfile::loadText() {
       if (NumSamples == 0)
         NumSamples = 1;
       FProfile.addBodySamples(LineOffset, NumSamples);
+      ++LineIt;
     }
-
-    if (I < NumSampledLines)
-      Loader.reportParseError("Unexpected end of file");
   }
 }
 
