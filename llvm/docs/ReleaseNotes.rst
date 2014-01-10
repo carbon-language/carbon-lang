@@ -34,6 +34,9 @@ page <http://llvm.org/releases/>`_.
 Non-comprehensive list of changes in this release
 =================================================
 
+* All backends have been changed to use the MC asm printer and support for the
+  non MC one has been removed.
+
 .. NOTE
    For small 1-3 sentence descriptions, just add an entry at the end of
    this list. If your description won't fit comfortably in one bullet
