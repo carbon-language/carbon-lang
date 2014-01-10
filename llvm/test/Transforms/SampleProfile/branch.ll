@@ -46,8 +46,8 @@ if.end:                                           ; preds = %entry
   tail call void @llvm.dbg.value(metadata !{i32 %call}, i64 0, metadata !17), !dbg !30
   %cmp1 = icmp sgt i32 %call, 100, !dbg !35
   br i1 %cmp1, label %for.body, label %if.end6, !dbg !35
-; CHECK: edge if.end -> for.body probability is 2243 / 2244 = 99.9554% [HOT edge]
-; CHECK: edge if.end -> if.end6 probability is 1 / 2244 = 0.0445633%
+; CHECK: edge if.end -> for.body probability is 1 / 2 = 50%
+; CHECK: edge if.end -> if.end6 probability is 1 / 2 = 50%
 
 for.body:                                         ; preds = %if.end, %for.body
   %u.016 = phi i32 [ %inc, %for.body ], [ 0, %if.end ]
@@ -65,8 +65,8 @@ for.body:                                         ; preds = %if.end, %for.body
   tail call void @llvm.dbg.value(metadata !{i32 %inc}, i64 0, metadata !21), !dbg !38
   %exitcond = icmp eq i32 %inc, %call, !dbg !38
   br i1 %exitcond, label %if.end6, label %for.body, !dbg !38
-; CHECK: edge for.body -> if.end6 probability is 1 / 2244 = 0.0445633%
-; CHECK: edge for.body -> for.body probability is 2243 / 2244 = 99.9554% [HOT edge]
+; CHECK: edge for.body -> if.end6 probability is 1 / 10227 = 0.00977804
+; CHECK: edge for.body -> for.body probability is 10226 / 10227 = 99.9902% [HOT edge]
 
 if.end6:                                          ; preds = %for.body, %if.end
   %result.0 = phi double [ 0.000000e+00, %if.end ], [ %sub, %for.body ]

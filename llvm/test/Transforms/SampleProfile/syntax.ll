@@ -1,3 +1,4 @@
+; RUN: not opt < %s -sample-profile -sample-profile-file=%S/Inputs/syntax.prof 2>&1 | FileCheck -check-prefix=NO-DEBUG %s
 ; RUN: not opt < %s -sample-profile -sample-profile-file=missing.prof 2>&1 | FileCheck -check-prefix=MISSING-FILE %s
 ; RUN: not opt < %s -sample-profile -sample-profile-file=%S/Inputs/missing_symtab.prof 2>&1 | FileCheck -check-prefix=MISSING-SYMTAB %s
 ; RUN: not opt < %s -sample-profile -sample-profile-file=%S/Inputs/missing_num_syms.prof 2>&1 | FileCheck -check-prefix=MISSING-NUM-SYMS %s
@@ -9,7 +10,8 @@ define void @empty() {
 entry:
   ret void
 }
-; MISSING-FILE: LLVM ERROR: Could not open profile file missing.prof:
+; NO-DEBUG: LLVM ERROR: No debug information found in function empty
+; MISSING-FILE: LLVM ERROR: Could not open file missing.prof: No such file or directory
 ; MISSING-SYMTAB: LLVM ERROR: {{.*}}missing_symtab.prof:1: Expected 'symbol table', found 1
 ; MISSING-NUM-SYMS: LLVM ERROR: {{.*}}missing_num_syms.prof:2: Expected a number, found empty
 ; BAD-FN-HEADER: LLVM ERROR: {{.*}}bad_fn_header.prof:4: Expected 'mangled_name:NUM:NUM:NUM', found empty:100:BAD
