@@ -5879,6 +5879,8 @@ TEST_F(FormatTest, ObjCLiterals) {
   verifyFormat("NSNumber *piOverTwo = @(M_PI / 2);");
   verifyFormat("NSNumber *favoriteColor = @(Green);");
   verifyFormat("NSString *path = @(getenv(\"PATH\"));");
+
+  verifyFormat("[dictionary setObject:@(1) forKey:@\"number\"];");
 }
 
 TEST_F(FormatTest, ObjCDictLiterals) {
