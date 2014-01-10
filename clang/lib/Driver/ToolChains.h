@@ -428,6 +428,9 @@ public:
   Generic_ELF(const Driver &D, const llvm::Triple &Triple,
               const llvm::opt::ArgList &Args)
       : Generic_GCC(D, Triple, Args) {}
+
+  virtual void addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
+                                     llvm::opt::ArgStringList &CC1Args) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY AuroraUX : public Generic_GCC {
@@ -579,8 +582,6 @@ public:
   virtual void
   AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                             llvm::opt::ArgStringList &CC1Args) const;
-  virtual void addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
-                                     llvm::opt::ArgStringList &CC1Args) const;
   virtual void
   AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                                llvm::opt::ArgStringList &CC1Args) const;
