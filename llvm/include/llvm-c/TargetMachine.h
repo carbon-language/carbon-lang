@@ -62,7 +62,7 @@ LLVMTargetRef LLVMGetFirstTarget(void);
 LLVMTargetRef LLVMGetNextTarget(LLVMTargetRef T);
 
 /*===-- Target ------------------------------------------------------------===*/
-/** Finds the target corresponding to the given name and stores it in \p T. 
+/** Finds the target corresponding to the given name and stores it in \p T.
   Returns 0 on success. */
 LLVMTargetRef LLVMGetTargetFromName(const char *Name);
 
