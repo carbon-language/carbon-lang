@@ -72,18 +72,20 @@ void Parser::error(const Token &tok, Twine msg) {
       msg);
 }
 
-bool Parser::parse(std::vector<PECOFFLinkingContext::ExportDesc> &result) {
+llvm::Optional<Directive *> Parser::parse() {
   consumeToken();
-  if (_tok._kind != Kind::kw_exports) {
-    error(_tok, "Expected EXPORTS");
-    return false;
+  if (_tok._kind == Kind::kw_exports) {
+    std::vector<PECOFFLinkingContext::ExportDesc> exports;
+    for (;;) {
+      PECOFFLinkingContext::ExportDesc desc;
+      if (!parseExport(desc))
+        break;
+      exports.push_back(desc);
+    }
+    return new (_alloc) Exports(exports);
   }
-  for (;;) {
-    PECOFFLinkingContext::ExportDesc desc;
-    if (!parseExport(desc))
-      return true;
-    result.push_back(desc);
-  }
+  error(_tok, "Expected EXPORTS");
+  return llvm::None;
 }
 
 bool Parser::parseExport(PECOFFLinkingContext::ExportDesc &result) {

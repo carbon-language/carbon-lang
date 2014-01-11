@@ -340,14 +340,14 @@ bool parseExport(StringRef option, PECOFFLinkingContext::ExportDesc &ret) {
 }
 
 // Read module-definition file.
-bool parseDef(StringRef option,
-              std::vector<PECOFFLinkingContext::ExportDesc> &ret) {
+llvm::Optional<moduledef::Directive *> parseDef(StringRef option,
+                                                llvm::BumpPtrAllocator &alloc) {
   OwningPtr<MemoryBuffer> buf;
   if (MemoryBuffer::getFile(option, buf))
-    return false;
+    return llvm::None;
   moduledef::Lexer lexer(std::unique_ptr<MemoryBuffer>(buf.take()));
-  moduledef::Parser parser(lexer);
-  return parser.parse(ret);
+  moduledef::Parser parser(lexer, alloc);
+  return parser.parse();
 }
 
 StringRef replaceExtension(PECOFFLinkingContext &ctx, StringRef path,
@@ -919,14 +919,22 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     }
 
     case OPT_deffile: {
-      std::vector<PECOFFLinkingContext::ExportDesc> exports;
-      if (!parseDef(inputArg->getValue(), exports)) {
+      llvm::BumpPtrAllocator alloc;
+      llvm::Optional<moduledef::Directive *> dir =
+          parseDef(inputArg->getValue(), alloc);
+      if (!dir.hasValue()) {
         diagnostics << "Error: invalid module-definition file\n";
         return false;
       }
-      for (PECOFFLinkingContext::ExportDesc desc : exports) {
-        desc.name = ctx.decorateSymbol(desc.name);
-        ctx.addDllExport(desc);
+
+      if (auto *exp = dyn_cast<moduledef::Exports>(dir.getValue())) {
+        for (PECOFFLinkingContext::ExportDesc desc : exp->getExports()) {
+          desc.name = ctx.decorateSymbol(desc.name);
+          ctx.addDllExport(desc);
+        }
+      } else {
+        llvm::dbgs() << static_cast<int>(dir.getValue()->getKind()) << "\n";
+        llvm_unreachable("Unknown module-definition directive.\n");
       }
     }
 

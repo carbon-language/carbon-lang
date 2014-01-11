@@ -17,6 +17,8 @@
 
 #include "lld/Core/LLVM.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
+#include "llvm/ADT/Optional.h"
+#include "llvm/Support/Allocator.h"
 
 namespace lld {
 namespace moduledef {
@@ -54,10 +56,43 @@ private:
   llvm::SourceMgr _sourceManager;
 };
 
+class Directive {
+public:
+  enum class Kind { exports };
+
+  Kind getKind() const { return _kind; }
+  virtual ~Directive() {}
+
+protected:
+  explicit Directive(Kind k) : _kind(k) {}
+
+private:
+  Kind _kind;
+};
+
+class Exports : public Directive {
+public:
+  explicit Exports(const std::vector<PECOFFLinkingContext::ExportDesc> &exports)
+      : Directive(Kind::exports), _exports(exports) {}
+
+  static bool classof(const Directive *dir) {
+    return dir->getKind() == Kind::exports;
+  }
+
+  const std::vector<PECOFFLinkingContext::ExportDesc> &getExports() const {
+    return _exports;
+  }
+
+private:
+  const std::vector<PECOFFLinkingContext::ExportDesc> _exports;
+};
+
 class Parser {
 public:
-  explicit Parser(Lexer &lex) : _lex(lex) {}
-  bool parse(std::vector<PECOFFLinkingContext::ExportDesc> &result);
+  explicit Parser(Lexer &lex, llvm::BumpPtrAllocator &alloc)
+      : _lex(lex), _alloc(alloc) {}
+
+  llvm::Optional<Directive *> parse();
 
 private:
   void consumeToken();
@@ -67,6 +102,7 @@ private:
   bool parseExport(PECOFFLinkingContext::ExportDesc &result);
 
   Lexer &_lex;
+  llvm::BumpPtrAllocator &_alloc;
   Token _tok;
   std::vector<Token> _tokBuf;
 };
