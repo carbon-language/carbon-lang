@@ -221,7 +221,7 @@ entry:
 ; CHECK: load x86_fp80*
 ; CHECK: load x86_fp80*
 ; CHECK-NOT: insertelement <2 x x86_fp80>
-; CHECK_NOT: insertelement <2 x x86_fp80>
+; CHECK-NOT: insertelement <2 x x86_fp80>
   br i1 undef, label %then, label %end
 
 then:

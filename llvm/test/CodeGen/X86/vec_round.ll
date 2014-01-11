@@ -5,7 +5,7 @@ target triple = "x86_64-unknown-linux-gnu"
 declare void @use(<2 x double>)
 
 ; CHECK-LABEL: @test
-; CHECK callq round
+; CHECK: callq round
 
 ; Function Attrs: nounwind uwtable
 define void @test() {

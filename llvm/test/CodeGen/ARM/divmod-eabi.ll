@@ -189,7 +189,7 @@ entry:
   %div = sdiv i32 %a, %b
 ; EABI: __aeabi_idivmod
 ; EABI: mov [[div:r[0-9]+]], r0
-; GNU __aeabi_idiv
+; GNU: __aeabi_idiv
 ; GNU: mov [[sum:r[0-9]+]], r0
 ; DARWIN: ___divsi3
 ; DARWIN: mov [[sum:r[0-9]+]], r0

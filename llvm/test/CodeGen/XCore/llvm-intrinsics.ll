@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=xcore | FileCheck %s
+; RUN: llc < %s -march=xcore -disable-fp-elim | FileCheck %s -check-prefix=CHECKFP
 
 declare i8* @llvm.frameaddress(i32) nounwind readnone
 declare i8* @llvm.returnaddress(i32) nounwind
@@ -141,7 +142,7 @@ entry:
 ; CHECKFP: ldaw r10, sp[0]
 ; CHECKFP: stw r4, r10[7]
 ; CHECKFP: stw r5, r10[6]
-; CHECKFP: stw r6, r10[5]`
+; CHECKFP: stw r6, r10[5]
 ; CHECKFP: stw r7, r10[4]
 ; CHECKFP: stw r8, r10[3]
 ; CHECKFP: stw r9, r10[2]

@@ -43,8 +43,8 @@ entry:
 ; STATIC-MIPS16-1: li  $[[R1_16:[0-9]+]], %hi($tmp[[TI_16:[0-9]+]])
 ; STATIC-MIPS16-1: sll ${{[0-9]+}},  $[[R1_16]], 16
 ; STATIC-MIPS16-2: li  ${{[0-9]+}}, %lo($tmp{{[0-9]+}})
-; STATIC-MIPS16-1 jal	dummy
-; STATIC-MIPS16-2 jal	dummy
+; STATIC-MIPS16-1: jal	dummy
+; STATIC-MIPS16-2: jal	dummy
 
 define void @f() nounwind {
 entry:

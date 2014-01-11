@@ -185,7 +185,7 @@ define <16 x float> @uitof32(<16 x i32> %a) nounwind {
 }
 
 ; CHECK-LABEL: @fptosi02
-; CHECK vcvttss2si {{.*}} encoding: [0x62
+; CHECK: vcvttss2si {{.*}} encoding: [0x62
 ; CHECK: ret
 define i32 @fptosi02(float %a) nounwind {
   %b = fptosi float %a to i32
@@ -193,7 +193,7 @@ define i32 @fptosi02(float %a) nounwind {
 }
 
 ; CHECK-LABEL: @fptoui02
-; CHECK vcvttss2usi {{.*}} encoding: [0x62
+; CHECK: vcvttss2usi {{.*}} encoding: [0x62
 ; CHECK: ret
 define i32 @fptoui02(float %a) nounwind {
   %b = fptoui float %a to i32
@@ -201,7 +201,7 @@ define i32 @fptoui02(float %a) nounwind {
 }
 
 ; CHECK-LABEL: @uitofp02
-; CHECK vcvtusi2ss
+; CHECK: vcvtusi2ss
 ; CHECK: ret
 define float @uitofp02(i32 %a) nounwind {
   %b = uitofp i32 %a to float
@@ -209,7 +209,7 @@ define float @uitofp02(i32 %a) nounwind {
 }
 
 ; CHECK-LABEL: @uitofp03
-; CHECK vcvtusi2sd
+; CHECK: vcvtusi2sd
 ; CHECK: ret
 define double @uitofp03(i32 %a) nounwind {
   %b = uitofp i32 %a to double

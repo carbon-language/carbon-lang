@@ -87,7 +87,7 @@ declare void @llvm.AMDGPU.barrier.local()
 ; CHECK-LABEL: @local_global_alias
 ; CHECK: LDS_READ_RET
 ; CHECK-NOT: ALU clause
-; CHECK MOV * T{{[0-9]\.[XYZW]}}, OQAP
+; CHECK: MOV * T{{[0-9]\.[XYZW]}}, OQAP
 define void @local_global_alias(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
   %0 = getelementptr inbounds [2 x i32] addrspace(3)* @local_mem, i32 0, i32 0

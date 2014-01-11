@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumb-apple-darwin | FileCheck %s
 
 define i32 @f1(float %X, float %Y) {
-; CHECK-LABEL _f1:
+; CHECK-LABEL: _f1:
 ; CHECK: bne
 ; CHECK: .data_region
 ; CHECK: .long   ___unordsf2
@@ -11,7 +11,7 @@ define i32 @f1(float %X, float %Y) {
 }
 
 define i32 @f2(float %X, float %Y) {
-; CHECK-LABEL _f2:
+; CHECK-LABEL: _f2:
 ; CHECK: beq
 ; CHECK: .data_region
 ; CHECK: .long   ___unordsf2

@@ -2,7 +2,7 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios -O0 | FileCheck %s -check-prefix=ARM
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -verify-machineinstrs | FileCheck %s -check-prefix=THUMBTWO
 ; RUN: llc < %s -mtriple=thumbv6-apple-ios | FileCheck %s -check-prefix=THUMBONE
-; RUN  llc < %s -mtriple=armv4-apple-ios | FileCheck %s -check-prefix=ARMV4
+; RUN: llc < %s -mtriple=armv4-apple-ios | FileCheck %s -check-prefix=ARMV4
 
 define void @test1(i32* %ptr, i32 %val1) {
 ; ARM: test1

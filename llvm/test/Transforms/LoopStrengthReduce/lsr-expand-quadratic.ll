@@ -13,7 +13,7 @@ target triple = "x86_64-apple-macosx"
 ; CHECK: %lsr.iv = phi i32 [ %lsr.iv.next, %test2.loop ], [ -16777216, %entry ]
 ; CHECK: %lsr.iv.next = add nsw i32 %lsr.iv, 16777216
 ;
-; CHECK=LABEL: for.end:
+; CHECK-LABEL: for.end:
 ; CHECK: %sub.cond.us = sub nsw i32 %inc1115.us, %sub.us
 ; CHECK: %sext.us = mul i32 %lsr.iv.next, %sub.cond.us
 ; CHECK: %f = ashr i32 %sext.us, 24

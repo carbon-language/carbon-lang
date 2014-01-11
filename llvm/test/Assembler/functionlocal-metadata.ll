@@ -53,4 +53,4 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 ; CHECK: ![[ID0]] = metadata !{i32 662302, i32 26, metadata ![[ID1]], null}
 ; CHECK: ![[ID1]] = metadata !{i32 4, metadata !"foo"}
 ; CHECK: ![[ID2]] = metadata !{metadata !"bar"}
-; CHECK; ![[ID3]] = metadata !{metadata !"foo"}
+; CHECK: ![[ID3]] = metadata !{metadata !"foo"}

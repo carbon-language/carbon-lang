@@ -75,7 +75,7 @@ loopexit:
 ; PR17532
 
 ; CHECK-LABEL: i8_loop
-; CHECK; icmp eq i32 {{.*}}, 256
+; CHECK: icmp eq i32 {{.*}}, 256
 define i32 @i8_loop() nounwind readnone ssp uwtable {
   br label %1
 
@@ -92,7 +92,7 @@ define i32 @i8_loop() nounwind readnone ssp uwtable {
 }
 
 ; CHECK-LABEL: i16_loop
-; CHECK; icmp eq i32 {{.*}}, 65536
+; CHECK: icmp eq i32 {{.*}}, 65536
 
 define i32 @i16_loop() nounwind readnone ssp uwtable {
   br label %1

@@ -77,7 +77,7 @@ entry:
 ; loads and stores should be lowered to copies, so there shouldn't be any
 ; MOVA instructions.
 
-; R600-CHECK-LABLE: @direct_loop
+; R600-CHECK-LABEL: @direct_loop
 ; R600-CHECK-NOT: MOVA_INT
 ; SI-CHECK-LABEL: @direct_loop
 ; SI-CHECK-NOT: V_MOVREL

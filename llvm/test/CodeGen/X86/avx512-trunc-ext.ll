@@ -18,7 +18,7 @@ define <8 x i16> @trunc_8x64_to_8x16(<8 x i64> %i) nounwind readnone {
 
 
 ; CHECK-LABEL: zext_16x8_to_16x32
-; CHECK; vpmovzxbd {{.*}}%zmm
+; CHECK: vpmovzxbd {{.*}}%zmm
 ; CHECK: ret
 define <16 x i32> @zext_16x8_to_16x32(<16 x i8> %i) nounwind readnone {
   %x = zext <16 x i8> %i to <16 x i32>
@@ -26,7 +26,7 @@ define <16 x i32> @zext_16x8_to_16x32(<16 x i8> %i) nounwind readnone {
 }
 
 ; CHECK-LABEL: sext_16x8_to_16x32
-; CHECK; vpmovsxbd {{.*}}%zmm
+; CHECK: vpmovsxbd {{.*}}%zmm
 ; CHECK: ret
 define <16 x i32> @sext_16x8_to_16x32(<16 x i8> %i) nounwind readnone {
   %x = sext <16 x i8> %i to <16 x i32>
@@ -35,7 +35,7 @@ define <16 x i32> @sext_16x8_to_16x32(<16 x i8> %i) nounwind readnone {
 
 
 ; CHECK-LABEL: zext_16x16_to_16x32
-; CHECK; vpmovzxwd {{.*}}%zmm
+; CHECK: vpmovzxwd {{.*}}%zmm
 ; CHECK: ret
 define <16 x i32> @zext_16x16_to_16x32(<16 x i16> %i) nounwind readnone {
   %x = zext <16 x i16> %i to <16 x i32>
@@ -43,7 +43,7 @@ define <16 x i32> @zext_16x16_to_16x32(<16 x i16> %i) nounwind readnone {
 }
 
 ; CHECK-LABEL: zext_8x16_to_8x64
-; CHECK; vpmovzxwq
+; CHECK: vpmovzxwq
 ; CHECK: ret
 define <8 x i64> @zext_8x16_to_8x64(<8 x i16> %i) nounwind readnone {
   %x = zext <8 x i16> %i to <8 x i64>

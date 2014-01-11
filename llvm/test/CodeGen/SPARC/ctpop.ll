@@ -5,7 +5,7 @@
 declare i32 @llvm.ctpop.i32(i32)
 
 ; V8-LABEL: test
-; V8-NOT  : popc
+; V8-NOT: popc
 
 ; V9-LABEL: test
 ; V9:       srl %o0, 0, %o0

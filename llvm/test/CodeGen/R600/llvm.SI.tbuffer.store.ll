@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
-;CHECK_LABEL: @test1
+;CHECK-LABEL: @test1
 ;CHECK: TBUFFER_STORE_FORMAT_XYZW {{v\[[0-9]+:[0-9]+\]}}, 32, -1, 0, -1, 0, 14, 4, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, -1, 0, 0
 define void @test1(i32 %a1, i32 %vaddr) {
     %vdata = insertelement <4 x i32> undef, i32 %a1, i32 0
@@ -10,7 +10,7 @@ define void @test1(i32 %a1, i32 %vaddr) {
     ret void
 }
 
-;CHECK_LABEL: @test2
+;CHECK-LABEL: @test2
 ;CHECK: TBUFFER_STORE_FORMAT_XYZ {{v\[[0-9]+:[0-9]+\]}}, 24, -1, 0, -1, 0, 13, 4, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, -1, 0, 0
 define void @test2(i32 %a1, i32 %vaddr) {
     %vdata = insertelement <4 x i32> undef, i32 %a1, i32 0
@@ -20,7 +20,7 @@ define void @test2(i32 %a1, i32 %vaddr) {
     ret void
 }
 
-;CHECK_LABEL: @test3
+;CHECK-LABEL: @test3
 ;CHECK: TBUFFER_STORE_FORMAT_XY {{v\[[0-9]+:[0-9]+\]}}, 16, -1, 0, -1, 0, 11, 4, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, -1, 0, 0
 define void @test3(i32 %a1, i32 %vaddr) {
     %vdata = insertelement <2 x i32> undef, i32 %a1, i32 0
@@ -30,7 +30,7 @@ define void @test3(i32 %a1, i32 %vaddr) {
     ret void
 }
 
-;CHECK_LABEL: @test4
+;CHECK-LABEL: @test4
 ;CHECK: TBUFFER_STORE_FORMAT_X {{v[0-9]+}}, 8, -1, 0, -1, 0, 4, 4, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, -1, 0, 0
 define void @test4(i32 %vdata, i32 %vaddr) {
     call void @llvm.SI.tbuffer.store.i32(<16 x i8> undef, i32 %vdata,

@@ -17,7 +17,7 @@
 ; CI-CHECK-NEXT: .long 32768
 
 ; EG-CHECK: LDS_WRITE
-; SI-CHECK_NOT: S_WQM_B64
+; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: DS_WRITE_B32 0
 
 ; GROUP_BARRIER must be the last instruction in a clause
