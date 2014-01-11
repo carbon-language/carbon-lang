@@ -150,7 +150,7 @@ public:
 
     /// Emits a warning if two values disagree. The result value will be the
     /// operand for the flag from the first module being linked.
-    Warning  = 2,
+    Warning = 2,
 
     /// Adds a requirement that another module flag be present and have a
     /// specified value after linking is performed. The value must be a metadata
