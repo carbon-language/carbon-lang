@@ -168,8 +168,9 @@ DIType DbgVariable::getType() const {
 
 } // end llvm namespace
 
-/// Return Dwarf Version by checking module flags.
-static unsigned getDwarfVersionFromModule(const Module *M) {
+/// Return Dwarf Version by checking module flags and returning
+/// the default version otherwise.
+static unsigned getDwarfVersion(const Module *M) {
   Value *Val = M->getModuleFlag("Dwarf Version");
   if (!Val)
     return dwarf::DWARF_VERSION;
@@ -211,7 +212,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 
   DwarfVersion = DwarfVersionNumber
                      ? DwarfVersionNumber
-                     : getDwarfVersionFromModule(MMI->getModule());
+                     : getDwarfVersion(MMI->getModule());
 
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
