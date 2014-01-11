@@ -74,7 +74,7 @@ struct Y : A, B {
 // CHECK-NEXT:   12 |   char a
 // CHECK-NEXT:   14 |   int b
 // CHECK-NEXT:      | [sizeof=20, align=4
-// CHECK-NEXT:      |  nvsize=20, nvalign=4]
+// CHECK-NEXT:      |  nvsize=18, nvalign=4]
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct Y
@@ -85,7 +85,7 @@ struct Y : A, B {
 // CHECK-X64-NEXT:   12 |   char a
 // CHECK-X64-NEXT:   14 |   int b
 // CHECK-X64-NEXT:      | [sizeof=20, align=4
-// CHECK-X64-NEXT:      |  nvsize=20, nvalign=4]
+// CHECK-X64-NEXT:      |  nvsize=18, nvalign=4]
 
 struct Z : virtual B {
 	char a;
@@ -291,6 +291,36 @@ struct YF {
 // CHECK-X64:           | [sizeof=5, align=1
 // CHECK-X64-NEXT:      |  nvsize=5, nvalign=1]
 
+#pragma pack(16)
+struct __declspec(align(16)) D0 { char a; };
+#pragma pack(1)
+struct D1 : public D0 { char a; };
+#pragma pack(16)
+struct D2 : D1 { char a; };
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct D2
+// CHECK-NEXT:    0 |   struct D1 (base)
+// CHECK-NEXT:    0 |     struct D0 (base)
+// CHECK-NEXT:    0 |       char a
+// CHECK-NEXT:    1 |     char a
+// CHECK-NEXT:    2 |   char a
+// CHECK-NEXT:      | [sizeof=16, align=16
+// CHECK-NEXT:      |  nvsize=16, nvalign=16]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct D2
+// CHECK-X64-NEXT:    0 |   struct D1 (base)
+// CHECK-X64-NEXT:    0 |     struct D0 (base)
+// CHECK-X64-NEXT:    0 |       char a
+// CHECK-X64-NEXT:    1 |     char a
+// CHECK-X64-NEXT:    2 |   char a
+// CHECK-X64-NEXT:      | [sizeof=16, align=16
+// CHECK-X64-NEXT:      |  nvsize=16, nvalign=16]
+
 int a[
 sizeof(X)+
 sizeof(Y)+
@@ -303,4 +333,6 @@ sizeof(YC)+
 sizeof(YD)+
 sizeof(YE)+
 sizeof(YF)+
+sizeof(YF)+
+sizeof(D2)+
 0];

@@ -2077,10 +2077,6 @@ public:
   /// __declspec(align) into account.  It also updates RequiredAlignment as a
   /// side effect because it is most convenient to do so here.
   ElementInfo getAdjustedElementInfo(const FieldDecl *FD);
-  /// \brief Updates the alignment of the record.
-  void updateAlignment(CharUnits MemberAlignment) {
-    Alignment = std::max(Alignment, MemberAlignment);
-  }
   /// \brief Places a field at an offset in CharUnits.
   void placeFieldAtOffset(CharUnits FieldOffset) {
     FieldOffsets.push_back(Context.toBits(FieldOffset));
@@ -2157,7 +2153,9 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
   if (Layout.hasZeroSizedSubObject())
     HasZeroSizedSubObject = true;
   // Respect required alignment, this is necessary because we may have adjusted
-  // the alignment in the case of pragam pack.
+  // the alignment in the case of pragam pack.  Note that the required alignment
+  // doesn't actually apply to the struct alignment at this point.
+  Alignment = std::max(Alignment, Info.Alignment);
   Info.Alignment = std::max(Info.Alignment, Layout.getRequiredAlignment());
   Info.Size = Layout.getDataSize();
   return Info;
@@ -2204,6 +2202,9 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
     // Capture required alignment as a side-effect.
     RequiredAlignment = std::max(RequiredAlignment, FieldRequiredAlignment);
   }
+  // TODO: Add a Sema warning that MS ignores bitfield alignment in unions.
+  if (!(FD->isBitField() && IsUnion))
+    Alignment = std::max(Alignment, Info.Alignment);
   return Info;
 }
 
@@ -2356,7 +2357,6 @@ void MicrosoftRecordLayoutBuilder::layoutNonVirtualBase(
   CharUnits BaseOffset = Size.RoundUpToAlignment(Info.Alignment);
   Bases.insert(std::make_pair(BaseDecl, BaseOffset));
   Size = BaseOffset + BaseLayout.getDataSize();
-  updateAlignment(Info.Alignment);
   PreviousBaseLayout = &BaseLayout;
   VBPtrOffset = Size;
 }
@@ -2384,7 +2384,6 @@ void MicrosoftRecordLayoutBuilder::layoutField(const FieldDecl *FD) {
     placeFieldAtOffset(FieldOffset);
     Size = FieldOffset + Info.Size;
   }
-  updateAlignment(Info.Alignment);
 }
 
 void MicrosoftRecordLayoutBuilder::layoutBitField(const FieldDecl *FD) {
@@ -2412,13 +2411,11 @@ void MicrosoftRecordLayoutBuilder::layoutBitField(const FieldDecl *FD) {
   if (IsUnion) {
     placeFieldAtOffset(CharUnits::Zero());
     Size = std::max(Size, Info.Size);
-    // TODO: Add a Sema warning that MS ignores bitfield alignment in unions.
   } else {
     // Allocate a new block of memory and place the bitfield in it.
     CharUnits FieldOffset = Size.RoundUpToAlignment(Info.Alignment);
     placeFieldAtOffset(FieldOffset);
     Size = FieldOffset + Info.Size;
-    updateAlignment(Info.Alignment);
     RemainingBitsInField = Context.toBits(Info.Size) - Width;
   }
 }
@@ -2443,7 +2440,6 @@ MicrosoftRecordLayoutBuilder::layoutZeroWidthBitField(const FieldDecl *FD) {
     CharUnits FieldOffset = Size.RoundUpToAlignment(Info.Alignment);
     placeFieldAtOffset(FieldOffset);
     Size = FieldOffset;
-    updateAlignment(Info.Alignment);
   }
 }
 
@@ -2475,8 +2471,6 @@ void MicrosoftRecordLayoutBuilder::injectVBPtr(const CXXRecordDecl *RD) {
        i != e; ++i)
        if (i->second >= InjectionSite)
          i->second += Offset;
-  // Update the object alignment.
-  updateAlignment(PointerInfo.Alignment);
   // The presence of a vbptr suppresses zero sized objects that are not in
   // virtual bases.
   HasZeroSizedSubObject = false;
@@ -2500,7 +2494,6 @@ void MicrosoftRecordLayoutBuilder::injectVFPtr(const CXXRecordDecl *RD) {
   for (BaseOffsetsMapTy::iterator i = Bases.begin(), e = Bases.end();
        i != e; ++i)
     i->second += Offset;
-  updateAlignment(PointerInfo.Alignment);
 }
 
 void MicrosoftRecordLayoutBuilder::injectVPtrs(const CXXRecordDecl *RD) {
@@ -2512,6 +2505,7 @@ void MicrosoftRecordLayoutBuilder::injectVPtrs(const CXXRecordDecl *RD) {
     // the record.
     injectVBPtr(RD);
     injectVFPtr(RD);
+    Alignment = std::max(Alignment, PointerInfo.Alignment);
     return;
   }
   // In 64-bit mode, structs with RequiredAlignment greater than 8 get special
@@ -2521,7 +2515,7 @@ void MicrosoftRecordLayoutBuilder::injectVPtrs(const CXXRecordDecl *RD) {
   FieldOffsets.clear();
   Bases.clear();
   Size = CharUnits::Zero();
-  updateAlignment(PointerInfo.Alignment);
+  Alignment = std::max(Alignment, PointerInfo.Alignment);
   if (HasOwnVFPtr)
     Size = PointerInfo.Size;
   layoutNonVirtualBases(RD);
@@ -2619,7 +2613,6 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
     VBases.insert(std::make_pair(BaseDecl,
         ASTRecordLayout::VBaseInfo(BaseOffset, HasVtordisp)));
     Size = BaseOffset + BaseLayout.getDataSize();
-    updateAlignment(Info.Alignment);
     PreviousBaseLayout = &BaseLayout;
   }
 }
