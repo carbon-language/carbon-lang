@@ -150,24 +150,19 @@ private:
   typedef llvm::StringMap<const lld::Atom *> NameToAtom;
   typedef llvm::DenseMap<const lld::Atom *, std::string> AtomToRefName;
 
-  // Allocate a new copy of this string and keep track of allocations
-  // in _stringCopies, so they can be freed when RefNameBuilder is destroyed.
+  // Allocate a new copy of this string in _storage, so the strings 
+  // can be freed when RefNameBuilder is destroyed.
   StringRef copyString(StringRef str) {
-    // We want _stringCopies to own the string memory so it is deallocated
-    // when the File object is destroyed.  But we need a StringRef that
-    // points into that memory.
-    std::unique_ptr<char[]> s(new char[str.size()]);
-    memcpy(s.get(), str.data(), str.size());
-    StringRef r = StringRef(s.get(), str.size());
-    _stringCopies.push_back(std::move(s));
-    return r;
+    char* s = _storage.Allocate<char>(str.size());
+    memcpy(s, str.data(), str.size());
+    return StringRef(s, str.size());
   }
 
   unsigned int                         _collisionCount;
   unsigned int                         _unnamedCounter;
   NameToAtom                           _nameMap;
   AtomToRefName                        _refNames;
-  std::vector<std::unique_ptr<char[]>> _stringCopies;
+  llvm::BumpPtrAllocator               _storage;
 };
 
 /// Used when reading yaml files to find the target of a reference
@@ -640,17 +635,12 @@ template <> struct MappingTraits<const lld::File *> {
       return _absoluteAtoms;
     }
 
-    // Allocate a new copy of this string and keep track of allocations
-    // in _stringCopies, so they can be freed when File is destroyed.
+    // Allocate a new copy of this string in _storage, so the strings 
+    // can be freed when File is destroyed.
     StringRef copyString(StringRef str) {
-      // We want _stringCopies to own the string memory so it is deallocated
-      // when the File object is destroyed.  But we need a StringRef that
-      // points into that memory.
-      std::unique_ptr<char[]> s(new char[str.size()]);
-      memcpy(s.get(), str.data(), str.size());
-      StringRef r = StringRef(s.get(), str.size());
-      _stringCopies.push_back(std::move(s));
-      return r;
+      char* s = _storage.Allocate<char>(str.size());
+      memcpy(s, str.data(), str.size());
+      return StringRef(s, str.size());
     }
 
     IO                                  &_io;
@@ -660,7 +650,7 @@ template <> struct MappingTraits<const lld::File *> {
     AtomList<lld::UndefinedAtom>         _undefinedAtoms;
     AtomList<lld::SharedLibraryAtom>     _sharedLibraryAtoms;
     AtomList<lld::AbsoluteAtom>          _absoluteAtoms;
-    std::vector<std::unique_ptr<char[]>> _stringCopies;
+    llvm::BumpPtrAllocator               _storage;
   };
 
   static void mapping(IO &io, const lld::File *&file) {
