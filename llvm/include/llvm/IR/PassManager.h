@@ -35,6 +35,9 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_IR_PASS_MANAGER_H
+#define LLVM_IR_PASS_MANAGER_H
+
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/polymorphic_ptr.h"
@@ -818,3 +821,5 @@ createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
 }
 
 }
+
+#endif
