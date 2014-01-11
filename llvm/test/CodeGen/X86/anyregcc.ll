@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -disable-fp-elim | FileCheck %s
-; RUN: llc < %s -march=x86-64 -mcpu=corei7     | FileCheck --check-prefix=SSE %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=corei7     | FileCheck --check-prefix=SSE %s
 ; RUN: llc < %s -march=x86-64 -mcpu=corei7-avx | FileCheck --check-prefix=AVX %s
 
 
