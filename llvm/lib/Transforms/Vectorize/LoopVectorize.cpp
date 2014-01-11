@@ -1539,8 +1539,9 @@ static Instruction *getFirstInst(Instruction *FirstInst, Value *V,
 
 std::pair<Instruction *, Instruction *>
 InnerLoopVectorizer::addStrideCheck(Instruction *Loc) {
+  Instruction *tnullptr = 0;
   if (!Legal->mustCheckStrides())
-    return std::pair<Instruction *, Instruction *>(0, 0);
+    return std::pair<Instruction *, Instruction *>(tnullptr, tnullptr);
 
   IRBuilder<> ChkBuilder(Loc);
 
@@ -1578,8 +1579,9 @@ InnerLoopVectorizer::addRuntimeCheck(Instruction *Loc) {
   LoopVectorizationLegality::RuntimePointerCheck *PtrRtCheck =
   Legal->getRuntimePointerCheck();
 
+  Instruction *tnullptr = 0;
   if (!PtrRtCheck->Need)
-    return std::pair<Instruction *, Instruction *>(0, 0);
+    return std::pair<Instruction *, Instruction *>(tnullptr, tnullptr);
 
   unsigned NumPointers = PtrRtCheck->Pointers.size();
   SmallVector<TrackingVH<Value> , 2> Starts;
