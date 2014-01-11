@@ -1,0 +1,44 @@
+# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s -o %t  && \
+# RUN: llvm-nm %t | FileCheck %s
+#
+# Test a mix of atoms and mach-o both encoded in yaml
+#
+
+--- !native
+defined-atoms:
+    - name:              _main
+      type:              code
+      scope:             global
+      content:           [ 55, 48, 89, E5, 30, C0, E8, 00, 
+                           00, 00, 00, 31, C0, 5D, C3 ]
+      references:
+      - offset:          7
+        kind:            X86_64_RELOC_BRANCH
+        target:          _foo
+        
+undefined-atoms:
+ - name:                _foo
+
+
+--- !mach-o
+arch:         x86_64
+file-type:    MH_OBJECT
+sections:
+ - segment:     __TEXT
+   section:     __text
+   type:        S_REGULAR
+   attributes:  [ S_ATTR_PURE_INSTRUCTIONS ]
+   address:     0
+   content:     [ 0xC3 ]
+global-symbols:
+ - name:        _foo
+   type:        N_SECT
+   scope:       [ N_EXT ]
+   sect:        1
+   desc:        [ ]
+   value:       0
+
+...
+
+# CHECK:	{{[0-9a-f]+}} T _foo
+# CHECK:	{{[0-9a-f]+}} T _main

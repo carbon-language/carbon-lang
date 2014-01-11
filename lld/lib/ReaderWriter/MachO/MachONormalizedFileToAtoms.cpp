@@ -34,7 +34,7 @@ namespace lld {
 namespace mach_o {
 namespace normalized {
 
-static uint64_t nextSymbolAddress(const NormalizedFile &normalizedFile, 
+static uint64_t nextSymbolAddress(const NormalizedFile &normalizedFile,
                                 const Symbol &symbol) {
   uint64_t symbolAddr = symbol.value;
   uint8_t symbolSectionIndex = symbol.sect;
@@ -54,18 +54,18 @@ static uint64_t nextSymbolAddress(const NormalizedFile &normalizedFile,
 }
 
 static ErrorOr<std::unique_ptr<lld::File>>
-normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path) {
+normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
+                        bool copyRefs) {
   std::unique_ptr<MachOFile> file(new MachOFile(path));
 
- for (const Symbol &sym : normalizedFile.globalSymbols) {
+  for (const Symbol &sym : normalizedFile.globalSymbols) {
     // Mach-O symbol table does have size in it, so need to scan ahead
     // to find symbol with next highest address.
     const Section &section = normalizedFile.sections[sym.sect - 1];
     uint64_t offset = sym.value - section.address;
     uint64_t size = nextSymbolAddress(normalizedFile, sym) - sym.value;
-    ArrayRef<uint8_t> atomContent = llvm::makeArrayRef(&section.content[offset],
-                                                      size);
-    file->addDefinedAtom(sym.name, atomContent);
+    ArrayRef<uint8_t> atomContent = section.content.slice(offset, size);
+    file->addDefinedAtom(sym.name, atomContent, copyRefs);
   }
 
   assert(normalizedFile.localSymbols.empty() &&
@@ -77,10 +77,11 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path) {
 }
 
 ErrorOr<std::unique_ptr<lld::File>>
-normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path) {
+normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path,
+                  bool copyRefs) {
   switch (normalizedFile.fileType) {
   case MH_OBJECT:
-    return normalizedObjectToAtoms(normalizedFile, path);
+    return normalizedObjectToAtoms(normalizedFile, path, copyRefs);
   default:
     llvm_unreachable("unhandled MachO file type!");
   }

@@ -21,6 +21,12 @@
 
 using llvm::sys::fs::file_magic;
 
+namespace llvm {
+  namespace yaml {
+    class IO;
+  }
+}
+
 namespace lld {
 class ELFLinkingContext;
 class File;
@@ -54,6 +60,29 @@ public:
             std::vector<std::unique_ptr<File>> &result) const = 0;
 };
 
+
+/// \brief An abstract class for handling alternate yaml representations
+/// of object files.
+///
+/// The YAML syntax allows "tags" which are used to specify the type of
+/// the YAML node.  In lld, top level YAML documents can be in many YAML
+/// representations (e.g mach-o encoded as yaml, etc).  A tag is used to
+/// specify which representation is used in the following YAML document.
+/// To work, there must be a YamlIOTaggedDocumentHandler registered that
+/// handles each tag type.
+class YamlIOTaggedDocumentHandler {
+public:
+  virtual ~YamlIOTaggedDocumentHandler();
+
+  /// This method is called on each registered YamlIOTaggedDocumentHandler
+  /// until one returns true.  If the subclass handles tag type !xyz, then
+  /// this method should call io.mapTag("!xzy") to see if that is the current
+  /// document type, and if so, process the rest of the document using
+  /// YAML I/O, then convert the result into an lld::File* and return it.
+  virtual bool handledDocTag(llvm::yaml::IO &io, const lld::File *&f) const = 0;
+};
+
+
 /// A registry to hold the list of currently registered Readers and
 /// tables which map Reference kind values to strings.
 /// The linker does not directly invoke Readers.  Instead, it registers
@@ -78,6 +107,10 @@ public:
   /// value to a string.
   bool referenceKindToString(Reference::KindNamespace ns, Reference::KindArch a,
                              Reference::KindValue value, StringRef &) const;
+
+  /// Walk the list of registered tag handlers and have the one that handles
+  /// the current document type process the yaml into an lld::File*.
+  bool handleTaggedDoc(llvm::yaml::IO &io, const lld::File *&file) const;
 
   // These methods are called to dynamically add support for various file
   // formats. The methods are also implemented in the appropriate lib*.a
@@ -108,6 +141,7 @@ public:
   void addKindTable(Reference::KindNamespace ns, Reference::KindArch arch,
                     const KindStrings array[]);
 
+
 private:
   struct KindEntry {
     Reference::KindNamespace  ns;
@@ -116,9 +150,11 @@ private:
   };
 
   void add(std::unique_ptr<Reader>);
+  void add(std::unique_ptr<YamlIOTaggedDocumentHandler>);
 
-  std::vector<std::unique_ptr<Reader>>  _readers;
-  std::vector<KindEntry>                _kindEntries;
+  std::vector<std::unique_ptr<Reader>>                       _readers;
+  std::vector<std::unique_ptr<YamlIOTaggedDocumentHandler>>  _yamlHandlers;
+  std::vector<KindEntry>                                     _kindEntries;
 };
 
 // Utilities for building a KindString table.  For instance:

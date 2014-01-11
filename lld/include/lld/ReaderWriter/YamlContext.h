@@ -39,6 +39,7 @@ struct YamlContext {
   const Registry *_registry;
   File *_file;
   NormalizedFile *_normalizeMachOFile;
+  StringRef _path;
 };
 
 } // end namespace lld

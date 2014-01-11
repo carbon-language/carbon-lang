@@ -45,6 +45,7 @@
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/YAMLTraits.h"
@@ -52,6 +53,7 @@
 #ifndef LLD_READER_WRITER_MACHO_NORMALIZE_FILE_H
 #define LLD_READER_WRITER_MACHO_NORMALIZE_FILE_H
 
+using llvm::BumpPtrAllocator;
 using llvm::yaml::Hex64;
 using llvm::yaml::Hex32;
 using llvm::yaml::Hex8;
@@ -113,7 +115,7 @@ struct Section {
   SectionAttr     attributes;
   uint32_t        alignment;
   Hex64           address;
-  std::vector<uint8_t> content;
+  ArrayRef<uint8_t> content;
   Relocations     relocations;
   IndirectSymbols indirectSymbols;
 };
@@ -235,6 +237,9 @@ struct NormalizedFile {
   // split-seg-info
   // function-starts
   // data-in-code
+  
+  // For any allocations in this struct which need to be owned by this struct.
+  BumpPtrAllocator            ownedAllocations;
 };
 
 
@@ -260,15 +265,22 @@ writeYaml(const NormalizedFile &file, raw_ostream &out);
 
 /// Takes in-memory normalized dylib or object and parses it into lld::File
 ErrorOr<std::unique_ptr<lld::File>>
-normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path);
+normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path, 
+                  bool copyRefs);
 
 /// Takes atoms and generates a normalized macho-o view.
 ErrorOr<std::unique_ptr<NormalizedFile>> 
 normalizedFromAtoms(const lld::File &atomFile, const MachOLinkingContext &ctxt);
 
 
-
 } // namespace normalized
+
+/// Class for interfacing mach-o yaml files into generic yaml parsing
+class MachOYamlIOTaggedDocumentHandler : public YamlIOTaggedDocumentHandler {
+  bool handledDocTag(llvm::yaml::IO &io, const lld::File *&file) const;
+};
+
+
 } // namespace mach_o
 } // namespace lld
 

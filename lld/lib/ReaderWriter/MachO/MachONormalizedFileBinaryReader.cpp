@@ -175,12 +175,12 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb) {
           section.attributes  = read32(swap, sect->flags) & SECTION_ATTRIBUTES;
           section.alignment   = read32(swap, sect->align);
           section.address     = read64(swap, sect->addr);
-          const char *content = mb->getBufferStart() 
+          const uint8_t *content = (uint8_t *)mb->getBufferStart() 
                                            + read32(swap, sect->offset);
           size_t contentSize = read64(swap, sect->size);
           // Note: this assign() is copying the content bytes.  Ideally,
           // we can use a custom allocator for vector to avoid the copy.
-          section.content.assign(content, content+contentSize);
+          section.content = llvm::makeArrayRef(content, contentSize);
           appendRelocations(section.relocations, mb->getBuffer(), 
                             swap, isBigEndianArch, read32(swap, sect->reloff), 
                                                    read32(swap, sect->nreloc));
@@ -210,12 +210,12 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb) {
           section.attributes  = read32(swap, sect->flags) & SECTION_ATTRIBUTES;
           section.alignment   = read32(swap, sect->align);
           section.address     = read32(swap, sect->addr);
-          const char *content = mb->getBufferStart() 
+          const uint8_t *content = (uint8_t *)mb->getBufferStart() 
                                            + read32(swap, sect->offset);
           size_t contentSize = read32(swap, sect->size);
           // Note: this assign() is copying the content bytes.  Ideally,
           // we can use a custom allocator for vector to avoid the copy.
-          section.content.assign(content, content+contentSize);
+          section.content = llvm::makeArrayRef(content, contentSize);
           appendRelocations(section.relocations, mb->getBuffer(), 
                             swap, isBigEndianArch, read32(swap, sect->reloff), 
                                                    read32(swap, sect->nreloc));
@@ -328,6 +328,8 @@ void Registry::addSupportMachOObjects(StringRef archName) {
   default:
     llvm_unreachable("mach-o arch not supported");
   }
+  add(std::unique_ptr<YamlIOTaggedDocumentHandler>(
+                               new mach_o::MachOYamlIOTaggedDocumentHandler()));
 }
 
 } // namespace lld

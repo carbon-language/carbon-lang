@@ -23,7 +23,8 @@ using namespace llvm::MachO;
 TEST(ToAtomsTest, empty_obj_x86_64) {
   NormalizedFile f;
   f.arch = lld::MachOLinkingContext::arch_x86_64;
-  ErrorOr<std::unique_ptr<const lld::File>> atom_f = normalizedToAtoms(f, "");
+  ErrorOr<std::unique_ptr<const lld::File>> atom_f = normalizedToAtoms(f, "", 
+                                                                       false);
   EXPECT_FALSE(!atom_f);
   EXPECT_EQ(0U, (*atom_f)->defined().size());
 }
@@ -34,8 +35,7 @@ TEST(ToAtomsTest, basic_obj_x86_64) {
   Section textSection;
   static const uint8_t contentBytes[] = { 0x90, 0xC3, 0xC3 };
   const unsigned contentSize = sizeof(contentBytes) / sizeof(contentBytes[0]);
-  textSection.content.insert(textSection.content.begin(), contentBytes,
-                             &contentBytes[contentSize]);
+  textSection.content = llvm::makeArrayRef(contentBytes, contentSize);
   f.sections.push_back(textSection);
   Symbol fooSymbol;
   fooSymbol.name = "_foo";
@@ -50,7 +50,8 @@ TEST(ToAtomsTest, basic_obj_x86_64) {
   barSymbol.value = 2;
   f.globalSymbols.push_back(barSymbol);
   
-  ErrorOr<std::unique_ptr<const lld::File>> atom_f = normalizedToAtoms(f, "");
+  ErrorOr<std::unique_ptr<const lld::File>> atom_f = normalizedToAtoms(f, "", 
+                                                                       false);
   EXPECT_FALSE(!atom_f);
   const lld::File &file = **atom_f;
   EXPECT_EQ(2U, file.defined().size());

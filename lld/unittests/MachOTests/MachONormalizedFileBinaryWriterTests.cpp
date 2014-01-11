@@ -139,7 +139,7 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
       0x05, 0xfc, 0xff, 0xff, 0xff, 0x78, 0x56, 0x34, 
       0x12, 0x48, 0x8b, 0x3d, 0x00, 0x00, 0x00, 0x00 };
 
-    text.content.assign(textBytes, textBytes+sizeof(textBytes));
+    text.content = llvm::makeArrayRef(textBytes, sizeof(textBytes));
     text.relocations.push_back(makeReloc(0x01, false, true, X86_64_RELOC_BRANCH, 1));
     text.relocations.push_back(makeReloc(0x08, false, true, X86_64_RELOC_GOT_LOAD, 1));
     text.relocations.push_back(makeReloc(0x0E, false, true, X86_64_RELOC_GOT, 1));
@@ -252,7 +252,7 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
        0x00, 0x00, 0x8b, 0xb0, 0xfb, 0xff, 0xff, 0xff,
        0x8b, 0x80, 0x11, 0x00, 0x00, 0x00 };
 
-    text.content.assign(textBytes, textBytes+sizeof(textBytes));
+    text.content = llvm::makeArrayRef(textBytes, sizeof(textBytes));
     text.relocations.push_back(makeReloc(0x01, true, true, GENERIC_RELOC_VANILLA, 0));
     text.relocations.push_back(makeReloc(0x06, false, true, GENERIC_RELOC_VANILLA, 0));
     text.relocations.push_back(makeScatReloc(0x0c, GENERIC_RELOC_LOCAL_SECTDIFF, 0));
@@ -361,7 +361,7 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
       0xc0, 0xf2, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
       0x00, 0xbf };
 
-    text.content.assign(textBytes, textBytes+sizeof(textBytes));
+    text.content = llvm::makeArrayRef(textBytes, sizeof(textBytes));
     text.relocations.push_back(makeReloc(0x00, true, true, 
                                         ARM_THUMB_RELOC_BR22, 2));
     text.relocations.push_back(makeScatReloc(0x04, 
@@ -492,7 +492,7 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
       0x80, 0x42, 0x00, 0x28, 0x80, 0x63, 0x00, 0x28,
       0x60, 0x00, 0x00, 0x00 };
 
-    text.content.assign(textBytes, textBytes+sizeof(textBytes));
+    text.content = llvm::makeArrayRef(textBytes, sizeof(textBytes));
     text.relocations.push_back(makeReloc(0x00, true, true, 
                                         PPC_RELOC_BR24, 2));
     text.relocations.push_back(makeReloc(0x04, true, true, 

@@ -5,7 +5,7 @@
 # all atoms in select archive members.
 #
 
----
+--- !native
 defined-atoms:
     - name:              foo
       type:              code
@@ -13,11 +13,10 @@ defined-atoms:
 undefined-atoms:
     - name:              bar
 
----
-kind:                   archive
+--- !archive
 members:
   - name:               bar.o
-    content:
+    content: !native
       defined-atoms:
         - name:              bar
           scope:             global
@@ -27,7 +26,7 @@ members:
           type:              code
 
   - name:               baz.o
-    content: 
+    content: !native
       defined-atoms:
         - name:              baz
           scope:             global

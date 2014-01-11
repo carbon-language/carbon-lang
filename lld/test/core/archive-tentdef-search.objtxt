@@ -7,7 +7,7 @@
 # does not search.
 #
 
----
+--- !native
 defined-atoms:
     - name:              foo
       type:              code
@@ -17,11 +17,10 @@ defined-atoms:
       type:              zero-fill
       merge:             as-tentative
 
----
-kind:                   archive
+--- !archive
 members:
   - name:               bar.o
-    content:
+    content: !native
       defined-atoms:
         - name:              bar
           scope:             global

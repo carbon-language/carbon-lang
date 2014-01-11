@@ -107,7 +107,7 @@ struct SequenceTraits< ContentBytes > {
   static const bool flow = true;
 };
 
-// The indirect symbols for a section is represented as a flow sequence 
+// The indirect symbols for a section is represented as a flow sequence
 // of numbers (symbol table indexes).
 template<>
 struct SequenceTraits< IndirectSymbols > {
@@ -279,30 +279,36 @@ struct MappingTraits<Section> {
     io.mapOptional("attributes",      sect.attributes);
     io.mapOptional("alignment",       sect.alignment, 0U);
     io.mapRequired("address",         sect.address);
-    MappingNormalization<NormalizedContent, std::vector<uint8_t>> content(
+    MappingNormalization<NormalizedContent, ArrayRef<uint8_t>> content(
         io, sect.content);
-    io.mapOptional("content",         content->normalizedContent);
+    io.mapOptional("content",         content->_normalizedContent);
     io.mapOptional("relocations",     sect.relocations);
     io.mapOptional("indirect-syms",   sect.indirectSymbols);
   }
 
-  // FIXME: It would be good if we could remove this, so we don't need to copy
-  // the content data.
   struct NormalizedContent {
-    NormalizedContent(IO &) {}
-    NormalizedContent(IO &, std::vector<uint8_t> content) {
+    NormalizedContent(IO &io) : _io(io) {}
+    NormalizedContent(IO &io, ArrayRef<uint8_t> content) : _io(io) {
+      // When writing yaml, copy content byte array to Hex8 vector.
       for (auto &c : content) {
-        normalizedContent.push_back(c);
+        _normalizedContent.push_back(c);
       }
     }
-    std::vector<uint8_t> denormalize(IO &) {
-      std::vector<uint8_t> content;
-      for (auto &c : normalizedContent) {
-        content.push_back(c);
-      }
-      return content;
+    ArrayRef<uint8_t> denormalize(IO &io) {
+      // When reading yaml, allocate byte array owned by NormalizedFile and
+      // copy Hex8 vector to byte array.
+      YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
+      assert(info != nullptr);
+      NormalizedFile *file = info->_normalizeMachOFile;
+      assert(file != nullptr);
+      size_t size = _normalizedContent.size();
+      uint8_t *bytes = file->ownedAllocations.Allocate<uint8_t>(size);
+      std::copy(_normalizedContent.begin(), _normalizedContent.end(), bytes);
+      return makeArrayRef(bytes, size);
     }
-    ContentBytes normalizedContent;
+    
+    IO                &_io;
+    ContentBytes       _normalizedContent;
   };
 };
 
@@ -612,10 +618,37 @@ struct MappingTraits<NormalizedFile> {
 
 namespace lld {
 namespace mach_o {
+
+/// Handles !mach-o tagged yaml documents.  
+bool MachOYamlIOTaggedDocumentHandler::handledDocTag(llvm::yaml::IO &io,
+                                                 const lld::File *&file) const {
+  if (!io.mapTag("!mach-o"))
+    return false;
+  // Step 1: parse yaml into normalized mach-o struct.
+  NormalizedFile nf;
+  YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
+  assert(info != nullptr);
+  assert(info->_normalizeMachOFile == nullptr);
+  info->_normalizeMachOFile = &nf;
+  MappingTraits<NormalizedFile>::mapping(io, nf);
+  // Step 2: parse normalized mach-o struct into atoms.
+  ErrorOr<std::unique_ptr<lld::File>> foe = normalizedToAtoms(nf, info->_path,
+                                                              true);
+  if (foe) {
+    // Transfer ownership to "out" File parameter.
+    std::unique_ptr<lld::File> f = std::move(foe.get());
+    file = f.release();
+    return true;
+  }
+  return false;
+}
+
+
+
 namespace normalized {
 
 /// Parses a yaml encoded mach-o file to produce an in-memory normalized view.
-ErrorOr<std::unique_ptr<NormalizedFile>> 
+ErrorOr<std::unique_ptr<NormalizedFile>>
 readYaml(std::unique_ptr<MemoryBuffer> &mb) {
   // Make empty NormalizedFile.
   std::unique_ptr<NormalizedFile> f(new NormalizedFile());
@@ -638,7 +671,7 @@ readYaml(std::unique_ptr<MemoryBuffer> &mb) {
 
 
 /// Writes a yaml encoded mach-o files from an in-memory normalized view.
-error_code 
+error_code
 writeYaml(const NormalizedFile &file, raw_ostream &out) {
   // YAML I/O is not const aware, so need to cast away ;-(
   NormalizedFile *f = const_cast<NormalizedFile*>(&file);

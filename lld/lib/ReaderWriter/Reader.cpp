@@ -21,8 +21,16 @@ namespace lld {
 Reader::~Reader() {
 }
 
+
+YamlIOTaggedDocumentHandler::~YamlIOTaggedDocumentHandler() { }
+
+
 void Registry::add(std::unique_ptr<Reader> reader) {
   _readers.push_back(std::move(reader));
+}
+
+void Registry::add(std::unique_ptr<YamlIOTaggedDocumentHandler> handler) {
+  _yamlHandlers.push_back(std::move(handler));
 }
 
 error_code
@@ -55,6 +63,16 @@ Registry::Registry() {
   addKindTable(Reference::KindNamespace::all, Reference::KindArch::all,
                kindStrings);
 }
+
+bool Registry::handleTaggedDoc(llvm::yaml::IO &io, 
+                               const lld::File *&file) const {
+  for (const std::unique_ptr<YamlIOTaggedDocumentHandler> &h : _yamlHandlers) {
+    if (h->handledDocTag(io, file))
+      return true;
+  }
+  return false;
+}
+
 
 void Registry::addKindTable(Reference::KindNamespace ns,
                             Reference::KindArch arch,

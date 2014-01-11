@@ -4,7 +4,7 @@
 # Test that hello-world can be linked into a mach-o executable
 #
 
---- !atoms
+--- !native
 defined-atoms:
     - name:              _main
       type:              code

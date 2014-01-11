@@ -4,7 +4,7 @@
 # Tests that an undefine in one archive can force a load from another archive.
 #
 
----
+--- !native
 defined-atoms:
     - name:              foo
       type:              code
@@ -12,11 +12,10 @@ defined-atoms:
 undefined-atoms:
     - name:              bar1
 
----
-kind:                   archive
+--- !archive
 members:
     - name:             bar1.o
-      content:
+      content: !native
         defined-atoms:
           - name:              bar1
             scope:             global
@@ -29,7 +28,7 @@ members:
           - name:              baz1
 
     - name:              bar2.o
-      content:
+      content: !native
         defined-atoms:
           - name:              bar2
             scope:             global
@@ -38,11 +37,10 @@ members:
           - name:              bar2b
             type:              code
 
----
-kind:                   archive
+--- !archive
 members:
     - name:             baz1.o
-      content:
+      content: !native
        defined-atoms:
          - name:              baz1
            scope:             global
@@ -52,7 +50,7 @@ members:
            type:              code
 
     - name:               baz2.o
-      content:
+      content: !native
        defined-atoms:
          - name:              baz2
            scope:             global

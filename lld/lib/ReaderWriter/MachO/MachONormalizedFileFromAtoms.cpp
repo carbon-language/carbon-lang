@@ -422,8 +422,8 @@ void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
   si->normalizedSectionIndex = file.sections.size()-1;
   // Copy content from atoms to content buffer for section.
   // FIXME: zerofill atoms/sections should not take up content space.
-  normSect->content.resize(si->size);
-  uint8_t *sectionContent = normSect->content.data();
+  uint8_t *sectionContent = file.ownedAllocations.Allocate<uint8_t>(si->size);
+  normSect->content = llvm::makeArrayRef(sectionContent, si->size);
   for (AtomInfo &ai : si->atomsAndOffsets) {
     // Copy raw bytes.
     uint8_t *atomContent = reinterpret_cast<uint8_t*>

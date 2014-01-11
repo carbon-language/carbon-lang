@@ -664,24 +664,15 @@ template <> struct MappingTraits<const lld::File *> {
   };
 
   static void mapping(IO &io, const lld::File *&file) {
-    // We only support writing atom based YAML
-    FileKinds kind = fileKindObjectAtoms;
-    // If reading, peek ahead to see what kind of file this is.
-    io.mapOptional("kind", kind, fileKindObjectAtoms);
-    switch (kind) {
-    case fileKindObjectAtoms:
+    YamlContext *info = reinterpret_cast<YamlContext *>(io.getContext());
+    assert(info != nullptr);
+    // Let any register tag handler process this.
+    if (info->_registry && info->_registry->handleTaggedDoc(io, file))
+      return;
+    // If no registered handler claims this tag and there is no tag, 
+    // grandfather in as "!native".
+    if (io.mapTag("!native", true) || io.mapTag("tag:yaml.org,2002:map"))
       mappingAtoms(io, file);
-      break;
-    case fileKindArchive:
-      mappingArchive(io, file);
-      break;
-    case fileKindObjectELF:
-    case fileKindObjectMachO:
-      // Eventually we will have an external function to call, similar
-      // to mappingAtoms() and mappingArchive() but implememented
-      // with coresponding file format code.
-      llvm_unreachable("section based YAML not supported yet");
-    }
   }
 
   static void mappingAtoms(IO &io, const lld::File *&file) {
@@ -1236,6 +1227,31 @@ private:
 
 namespace {
 
+/// Handles !native tagged yaml documents.
+class NativeYamlIOTaggedDocumentHandler : public YamlIOTaggedDocumentHandler {
+  bool handledDocTag(llvm::yaml::IO &io, const lld::File *&file) const {
+    if (io.mapTag("!native")) {
+      MappingTraits<const lld::File *>::mappingAtoms(io, file);
+      return true;
+    }
+    return false;
+  }
+};
+
+
+/// Handles !archive tagged yaml documents.
+class ArchiveYamlIOTaggedDocumentHandler : public YamlIOTaggedDocumentHandler {
+  bool handledDocTag(llvm::yaml::IO &io, const lld::File *&file) const {
+    if (io.mapTag("!archive")) {
+      MappingTraits<const lld::File *>::mappingArchive(io, file);
+      return true;
+    }
+    return false;
+  }
+};
+
+
+
 class YAMLReader : public Reader {
 public:
   YAMLReader(const Registry &registry) : _registry(registry) {}
@@ -1257,6 +1273,7 @@ public:
     // Create YAML Input Reader.
     YamlContext yamlContext;
     yamlContext._registry = &_registry;
+    yamlContext._path = mb->getBufferIdentifier();
     llvm::yaml::Input yin(mb->getBuffer(), &yamlContext);
 
     // Fill vector with File objects created by parsing yaml.
@@ -1283,6 +1300,10 @@ private:
 
 void Registry::addSupportYamlFiles() {
   add(std::unique_ptr<Reader>(new YAMLReader(*this)));
+  add(std::unique_ptr<YamlIOTaggedDocumentHandler>(
+                                    new NativeYamlIOTaggedDocumentHandler()));
+  add(std::unique_ptr<YamlIOTaggedDocumentHandler>(
+                                    new ArchiveYamlIOTaggedDocumentHandler()));
 }
 
 std::unique_ptr<Writer> createWriterYAML(const LinkingContext &context) {
