@@ -51,11 +51,17 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
   for (;;) {
     // Parse nested pass managers by recursing.
     if (PipelineText.startswith("module(")) {
+      ModulePassManager NestedMPM;
+
+      // Parse the inner pipeline into the nested manager.
       PipelineText = PipelineText.substr(strlen("module("));
-      if (!parseModulePassPipeline(MPM, PipelineText))
+      if (!parseModulePassPipeline(NestedMPM, PipelineText))
         return false;
       assert(!PipelineText.empty() && PipelineText[0] == ')');
       PipelineText = PipelineText.substr(1);
+
+      // Now add the nested manager as a module pass.
+      MPM.addPass(NestedMPM);
     } else {
       // Otherwise try to parse a pass name.
       size_t End = PipelineText.find_first_of(",)");
