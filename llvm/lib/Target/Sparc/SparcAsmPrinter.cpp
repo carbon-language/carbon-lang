@@ -184,7 +184,6 @@ static void LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
 
 void SparcAsmPrinter::EmitInstruction(const MachineInstr *MI)
 {
-  MCInst TmpInst;
 
   switch (MI->getOpcode()) {
   default: break;
@@ -195,8 +194,13 @@ void SparcAsmPrinter::EmitInstruction(const MachineInstr *MI)
     LowerGETPCXAndEmitMCInsts(MI, OutStreamer, OutContext);
     return;
   }
-  LowerSparcMachineInstrToMCInst(MI, TmpInst, *this);
-  OutStreamer.EmitInstruction(TmpInst);
+  MachineBasicBlock::const_instr_iterator I = MI;
+  MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
+  do {
+    MCInst TmpInst;
+    LowerSparcMachineInstrToMCInst(I, TmpInst, *this);
+    OutStreamer.EmitInstruction(TmpInst);
+  } while ((++I != E) && I->isInsideBundle()); // Delay slot check.
 }
 
 void SparcAsmPrinter::EmitFunctionBodyStart() {

@@ -19,6 +19,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -55,14 +56,16 @@ namespace {
     bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
     bool runOnMachineFunction(MachineFunction &F) {
       bool Changed = false;
+
+      // This pass invalidates liveness information when it reorders
+      // instructions to fill delay slot.
+      F.getRegInfo().invalidateLiveness();
+
       for (MachineFunction::iterator FI = F.begin(), FE = F.end();
            FI != FE; ++FI)
         Changed |= runOnMachineBasicBlock(*FI);
       return Changed;
     }
-
-    bool isDelayFiller(MachineBasicBlock &MBB,
-                       MachineBasicBlock::iterator candidate);
 
     void insertCallDefsUses(MachineBasicBlock::iterator MI,
                             SmallSet<unsigned, 32>& RegDefs,
@@ -152,6 +155,10 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       assert (J != MBB.end() && "MI needs a delay instruction.");
       BuildMI(MBB, ++J, MI->getDebugLoc(),
               TII->get(SP::UNIMP)).addImm(structSize);
+      // Bundle the delay filler and unimp with the instruction.
+      MIBundleBuilder(MBB, MachineBasicBlock::iterator(MI), J);
+    } else {
+      MIBundleBuilder(MBB, MachineBasicBlock::iterator(MI), I);
     }
   }
   return Changed;
@@ -209,7 +216,7 @@ Filler::findDelayInstr(MachineBasicBlock &MBB,
         || I->isInlineAsm()
         || I->isLabel()
         || I->hasDelaySlot()
-        || isDelayFiller(MBB, I))
+        || I->isBundledWithSucc())
       break;
 
     if (delayHasHazard(I, sawLoad, sawStore, RegDefs, RegUses)) {
@@ -330,18 +337,6 @@ bool Filler::IsRegInSet(SmallSet<unsigned, 32>& RegSet, unsigned Reg)
     if (RegSet.count(*AI))
       return true;
   return false;
-}
-
-// return true if the candidate is a delay filler.
-bool Filler::isDelayFiller(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator candidate)
-{
-  if (candidate == MBB.begin())
-    return false;
-  if (candidate->getOpcode() == SP::UNIMP)
-    return true;
-  --candidate;
-  return candidate->hasDelaySlot();
 }
 
 bool Filler::needsUnimp(MachineBasicBlock::iterator I, unsigned &StructSize)
@@ -484,10 +479,10 @@ bool Filler::tryCombineRestoreWithPrevInst(MachineBasicBlock &MBB,
          && MBBI->getOperand(1).getReg() == SP::G0
          && MBBI->getOperand(2).getReg() == SP::G0);
 
-  MachineBasicBlock::iterator PrevInst = MBBI; --PrevInst;
+  MachineBasicBlock::iterator PrevInst = llvm::prior(MBBI);
 
-  // It cannot combine with a delay filler.
-  if (isDelayFiller(MBB, PrevInst))
+  // It cannot be combined with a bundled instruction.
+  if (PrevInst->isBundledWithSucc())
     return false;
 
   const TargetInstrInfo *TII = TM.getInstrInfo();

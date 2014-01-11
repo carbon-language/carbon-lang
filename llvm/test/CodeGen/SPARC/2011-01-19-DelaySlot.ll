@@ -1,5 +1,5 @@
-;RUN: llc -march=sparc < %s | FileCheck %s
-;RUN: llc -march=sparc -O0 < %s | FileCheck %s -check-prefix=UNOPT
+;RUN: llc -march=sparc < %s -verify-machineinstrs | FileCheck %s
+;RUN: llc -march=sparc -O0 < %s -verify-machineinstrs | FileCheck %s -check-prefix=UNOPT
 
 
 define i32 @test(i32 %a) nounwind {
