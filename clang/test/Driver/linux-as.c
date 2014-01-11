@@ -65,6 +65,7 @@
 // RUN:   | FileCheck -check-prefix=CHECK-SPARCV9 %s
 // CHECK-SPARCV9: as
 // CHECK-SPARCV9: -64
+// CHECK-SPARCV9: -Av9a
 // CHECK-SPARCV9: -o
 //
 // RUN: %clang -target sparc-linux -mcpu=invalid-cpu -### \
@@ -72,6 +73,7 @@
 // RUN:   | FileCheck -check-prefix=CHECK-SPARCV8 %s
 // CHECK-SPARCV8: as
 // CHECK-SPARCV8: -32
+// CHECK-SPARCV8: -Av8plusa
 // CHECK-SPARCV8: -o
 //
 // RUN: %clang -target s390x-linux -### -no-integrated-as -c %s 2>&1 \

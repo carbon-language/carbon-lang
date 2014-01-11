@@ -6291,8 +6291,10 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-many");
   } else if (getToolChain().getArch() == llvm::Triple::sparc) {
     CmdArgs.push_back("-32");
+    CmdArgs.push_back("-Av8plusa");
   } else if (getToolChain().getArch() == llvm::Triple::sparcv9) {
     CmdArgs.push_back("-64");
+    CmdArgs.push_back("-Av9a");
   } else if (getToolChain().getArch() == llvm::Triple::arm) {
     StringRef MArch = getToolChain().getArchName();
     if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
