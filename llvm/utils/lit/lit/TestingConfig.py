@@ -1,7 +1,7 @@
 import os
 import sys
 
-OldPy = sys.version_info[0] == 2 and sys.version_info[1] < 6
+OldPy = sys.version_info[0] == 2 and sys.version_info[1] < 7
 
 class TestingConfig:
     """"
@@ -75,13 +75,12 @@ class TestingConfig:
 
         # Load the config script data.
         data = None
-        if OldPy:
-            f = open(path)
-            try:
-                data = f.read()
-            except:
-                litConfig.fatal('unable to load config file: %r' % (path,))
-            f.close()
+        f = open(path)
+        try:
+            data = f.read()
+        except:
+            litConfig.fatal('unable to load config file: %r' % (path,))
+        f.close()
 
         # Execute the config script to initialize the object.
         cfg_globals = dict(globals())
@@ -92,7 +91,7 @@ class TestingConfig:
             if OldPy:
                 exec("exec data in cfg_globals")
             else:
-                execfile(path, cfg_globals)
+                exec(compile(data, path, 'exec'), cfg_globals, None)
             if litConfig.debug:
                 litConfig.note('... loaded config %r' % path)
         except SystemExit:
