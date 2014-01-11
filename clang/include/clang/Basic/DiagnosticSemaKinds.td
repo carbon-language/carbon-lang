@@ -3970,8 +3970,8 @@ def err_flexible_array_virtual_base : Error<
 def err_flexible_array_empty_aggregate : Error<
   "flexible array member %0 not allowed in otherwise empty "
   "%select{struct|interface|union|class|enum}1">;
-def err_flexible_array_has_nonpod_type : Error<
-  "flexible array member %0 of non-POD element type %1">;
+def err_flexible_array_has_nontrivial_dtor : Error<
+  "flexible array member %0 of type %1 with non-trivial destruction">;
 def ext_flexible_array_in_struct : Extension<
   "%0 may not be nested in a struct due to flexible array member">,
   InGroup<FlexibleArrayExtensions>;

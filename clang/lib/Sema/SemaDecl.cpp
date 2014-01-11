@@ -11994,9 +11994,14 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
         Diag(FD->getLocation(), diag::ext_c99_flexible_array_member)
           << FD->getDeclName() << Record->getTagKind();
 
-      if (!FD->getType()->isDependentType() &&
-          !Context.getBaseElementType(FD->getType()).isPODType(Context)) {
-        Diag(FD->getLocation(), diag::err_flexible_array_has_nonpod_type)
+      // If the element type has a non-trivial destructor, we would not
+      // implicitly destroy the elements, so disallow it for now.
+      //
+      // FIXME: GCC allows this. We should probably either implicitly delete
+      // the destructor of the containing class, or just allow this.
+      QualType BaseElem = Context.getBaseElementType(FD->getType());
+      if (!BaseElem->isDependentType() && BaseElem.isDestructedType()) {
+        Diag(FD->getLocation(), diag::err_flexible_array_has_nontrivial_dtor)
           << FD->getDeclName() << FD->getType();
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
