@@ -58,13 +58,13 @@ namespace Recursion {
   };
   struct B;
   struct A {
+    // expected-note@-1 {{while substituting deduced template arguments}}
     typedef B type;
     template<typename T,
              typename = typename InvokeCopyConstructor<typename T::type>::type>
     // expected-note@-1 {{in instantiation of template class}}
     A(const T &);
     // expected-note@-1 {{in instantiation of default argument}}
-    // expected-note@-2 {{while substituting deduced template arguments}}
   };
   struct B { // expected-note {{candidate constructor (the implicit move }}
     B(); // expected-note {{candidate constructor not viable}}

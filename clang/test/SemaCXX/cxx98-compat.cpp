@@ -219,11 +219,11 @@ int n = {}; // expected-warning {{scalar initialized from empty initializer list
 class PrivateMember {
   struct ImPrivate {};
 };
-template<typename T> typename T::ImPrivate SFINAEAccessControl(T t) { // expected-warning {{substitution failure due to access control is incompatible with C++98}} expected-note {{while substituting deduced template arguments into function template 'SFINAEAccessControl' [with T = PrivateMember]}}
+template<typename T> typename T::ImPrivate SFINAEAccessControl(T t) { // expected-warning {{substitution failure due to access control is incompatible with C++98}}
   return typename T::ImPrivate();
 }
 int SFINAEAccessControl(...) { return 0; }
-int CheckSFINAEAccessControl = SFINAEAccessControl(PrivateMember());
+int CheckSFINAEAccessControl = SFINAEAccessControl(PrivateMember()); // expected-note {{while substituting deduced template arguments into function template 'SFINAEAccessControl' [with T = PrivateMember]}}
 
 template<typename T>
 struct FriendRedefinition {

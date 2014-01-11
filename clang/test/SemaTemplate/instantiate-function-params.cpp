@@ -7,12 +7,12 @@ template<typename T1> struct if_ {
 };
 template <class Model, void (Model::*)()> struct wrap_constraints { };
 template <class Model> 
-inline char has_constraints_(Model* ,  // expected-note 2{{while substituting deduced template arguments into function template 'has_constraints_' [with }} \
-                             // expected-note 3{{candidate template ignored}}
+inline char has_constraints_(Model* , // expected-note 3{{candidate template ignored}}
                                wrap_constraints<Model,&Model::constraints>* = 0); // expected-note 2{{in instantiation}}
 
 template <class Model> struct not_satisfied {
-  static const bool value = sizeof( has_constraints_((Model*)0)  == 1); // expected-error 3{{no matching function}}
+  static const bool value = sizeof( has_constraints_((Model*)0)  == 1); // expected-error 3{{no matching function}} \
+  // expected-note 2{{while substituting deduced template arguments into function template 'has_constraints_' [with }}
 };
 template <class ModelFn> struct requirement_;
 template <void(*)()> struct instantiate {
