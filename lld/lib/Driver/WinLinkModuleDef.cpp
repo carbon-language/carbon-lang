@@ -27,6 +27,9 @@ Token Lexer::lex() {
   case '=':
     _buffer = _buffer.drop_front();
     return Token(Kind::equal, "=");
+  case ',':
+    _buffer = _buffer.drop_front();
+    return Token(Kind::comma, ",");
   case '"': {
     size_t end = _buffer.find('"', 1);
     Token ret;
@@ -42,11 +45,12 @@ Token Lexer::lex() {
   default: {
     size_t end = _buffer.find_first_not_of(
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "0123456789_.*~+!@#$%^&*()");
+        "0123456789_.*~+!@#$%^&*()/");
     StringRef word = _buffer.substr(0, end);
     Kind kind = llvm::StringSwitch<Kind>(word)
                     .Case("DATA", Kind::kw_data)
                     .Case("EXPORTS", Kind::kw_exports)
+                    .Case("HEAPSIZE", Kind::kw_heapsize)
                     .Case("NONAME", Kind::kw_noname)
                     .Default(Kind::identifier);
     _buffer = (end == _buffer.npos) ? "" : _buffer.drop_front(end);
@@ -84,7 +88,13 @@ llvm::Optional<Directive *> Parser::parse() {
     }
     return new (_alloc) Exports(exports);
   }
-  error(_tok, "Expected EXPORTS");
+  if (_tok._kind == Kind::kw_heapsize) {
+    uint64_t reserve, commit;
+    if (!parseHeapsize(reserve, commit))
+      return llvm::None;
+    return new (_alloc) Heapsize(reserve, commit);
+  }
+  error(_tok, "Expected EXPORTS or HEAPSIZE");
   return llvm::None;
 }
 
@@ -115,6 +125,31 @@ bool Parser::parseExport(PECOFFLinkingContext::ExportDesc &result) {
     ungetToken();
     return true;
   }
+}
+
+bool Parser::parseHeapsize(uint64_t &reserve, uint64_t &commit) {
+  consumeToken();
+  if (_tok._kind != Kind::identifier) {
+    ungetToken();
+    return false;
+  }
+  if (_tok._range.getAsInteger(0, reserve))
+    return false;
+
+  consumeToken();
+  if (_tok._kind != Kind::comma) {
+    ungetToken();
+    commit = 0;
+    return true;
+  }
+  consumeToken();
+  if (_tok._kind != Kind::identifier) {
+    ungetToken();
+    return false;
+  }
+  if (_tok._range.getAsInteger(0, commit))
+    return false;
+  return true;
 }
 
 } // moddef

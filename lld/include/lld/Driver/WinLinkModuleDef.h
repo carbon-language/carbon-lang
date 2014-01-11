@@ -27,9 +27,11 @@ enum class Kind {
   unknown,
   eof,
   identifier,
+  comma,
   equal,
   kw_data,
   kw_exports,
+  kw_heapsize,
   kw_noname,
 };
 
@@ -58,7 +60,7 @@ private:
 
 class Directive {
 public:
-  enum class Kind { exports };
+  enum class Kind { exports, heapsize };
 
   Kind getKind() const { return _kind; }
   virtual ~Directive() {}
@@ -87,6 +89,23 @@ private:
   const std::vector<PECOFFLinkingContext::ExportDesc> _exports;
 };
 
+class Heapsize : public Directive {
+public:
+  explicit Heapsize(uint64_t reserve, uint64_t commit)
+      : Directive(Kind::heapsize), _reserve(reserve), _commit(commit) {}
+
+  static bool classof(const Directive *dir) {
+    return dir->getKind() == Kind::heapsize;
+  }
+
+  uint64_t getReserve() const { return _reserve; }
+  uint64_t getCommit() const { return _commit; }
+
+private:
+  const uint64_t _reserve;
+  const uint64_t _commit;
+};
+
 class Parser {
 public:
   explicit Parser(Lexer &lex, llvm::BumpPtrAllocator &alloc)
@@ -100,6 +119,7 @@ private:
   void error(const Token &tok, Twine msg);
 
   bool parseExport(PECOFFLinkingContext::ExportDesc &result);
+  bool parseHeapsize(uint64_t &reserve, uint64_t &commit);
 
   Lexer &_lex;
   llvm::BumpPtrAllocator &_alloc;

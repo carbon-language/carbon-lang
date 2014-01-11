@@ -67,3 +67,23 @@ TEST_F(ParserTest, Exports) {
   EXPECT_EQ(exports[4].noname, true);
   EXPECT_EQ(exports[4].isData, true);
 }
+
+TEST_F(ParserTest, Heapsize1) {
+  llvm::BumpPtrAllocator alloc;
+  llvm::Optional<moduledef::Directive *> dir = parse("HEAPSIZE 65536", alloc);
+  EXPECT_TRUE(dir.hasValue());
+  auto *heapsize = dyn_cast<moduledef::Heapsize>(dir.getValue());
+  EXPECT_TRUE(heapsize != nullptr);
+  EXPECT_EQ(65536U, heapsize->getReserve());
+  EXPECT_EQ(0U, heapsize->getCommit());
+}
+
+TEST_F(ParserTest, Heapsize2) {
+  llvm::BumpPtrAllocator alloc;
+  llvm::Optional<moduledef::Directive *> dir = parse("HEAPSIZE 65536, 8192", alloc);
+  EXPECT_TRUE(dir.hasValue());
+  auto *heapsize = dyn_cast<moduledef::Heapsize>(dir.getValue());
+  EXPECT_TRUE(heapsize != nullptr);
+  EXPECT_EQ(65536U, heapsize->getReserve());
+  EXPECT_EQ(8192U, heapsize->getCommit());
+}
