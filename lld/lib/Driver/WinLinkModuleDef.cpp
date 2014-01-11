@@ -94,7 +94,7 @@ llvm::Optional<Directive *> Parser::parse() {
       return llvm::None;
     return new (_alloc) Heapsize(reserve, commit);
   }
-  error(_tok, "Expected EXPORTS or HEAPSIZE");
+  error(_tok, Twine("Unknown directive: ") + _tok._range);
   return llvm::None;
 }
 
