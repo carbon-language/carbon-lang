@@ -3003,7 +3003,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
   }
 }
 
-void PrintBasePath(const VFPtrInfo::BasePath &Path, raw_ostream &Out) {
+static void PrintBasePath(const VFPtrInfo::BasePath &Path, raw_ostream &Out) {
   for (VFPtrInfo::BasePath::const_reverse_iterator I = Path.rbegin(),
        E = Path.rend(); I != E; ++I) {
     Out << "'";
