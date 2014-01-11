@@ -115,6 +115,7 @@ public:
 
 private:
   void consumeToken();
+  bool consumeTokenAsInt(uint64_t &result);
   void ungetToken();
   void error(const Token &tok, Twine msg);
 

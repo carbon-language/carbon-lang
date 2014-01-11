@@ -68,6 +68,20 @@ void Parser::consumeToken() {
   _tokBuf.pop_back();
 }
 
+bool Parser::consumeTokenAsInt(uint64_t &result) {
+  consumeToken();
+  if (_tok._kind != Kind::identifier) {
+    ungetToken();
+    error(_tok, "Integer expected");
+    return false;
+  }
+  if (_tok._range.getAsInteger(10, result)) {
+    error(_tok, "Integer expected");
+    return false;
+  }
+  return true;
+}
+
 void Parser::ungetToken() { _tokBuf.push_back(_tok); }
 
 void Parser::error(const Token &tok, Twine msg) {
@@ -128,12 +142,7 @@ bool Parser::parseExport(PECOFFLinkingContext::ExportDesc &result) {
 }
 
 bool Parser::parseHeapsize(uint64_t &reserve, uint64_t &commit) {
-  consumeToken();
-  if (_tok._kind != Kind::identifier) {
-    ungetToken();
-    return false;
-  }
-  if (_tok._range.getAsInteger(0, reserve))
+  if (!consumeTokenAsInt(reserve))
     return false;
 
   consumeToken();
@@ -142,12 +151,8 @@ bool Parser::parseHeapsize(uint64_t &reserve, uint64_t &commit) {
     commit = 0;
     return true;
   }
-  consumeToken();
-  if (_tok._kind != Kind::identifier) {
-    ungetToken();
-    return false;
-  }
-  if (_tok._range.getAsInteger(0, commit))
+
+  if (!consumeTokenAsInt(commit))
     return false;
   return true;
 }
