@@ -17,12 +17,12 @@ char *return_char (int input)
 
 int main2() {
 // CHECK: [ DW_TAG_auto_variable ] [ptr] [line [[@LINE+2]]]
-// CHECK metadata !{i32 {{.*}}, metadata !{{.*}}, i32 [[@LINE+1]], {{.*}}} ; [ DW_TAG_lexical_block ]
+// CHECK: metadata !{i32 {{.*}}, metadata !{{.*}}, i32 [[@LINE+1]], {{.*}}} ; [ DW_TAG_lexical_block ]
   if (char *ptr = return_char(1)) {
     printf ("%s", ptr);
   }
 // CHECK: [ DW_TAG_auto_variable ] [ptr] [line [[@LINE+2]]]
-// CHECK metadata !{i32 {{.*}}, metadata !{{.*}}, i32 [[@LINE+1]], {{.*}}} ; [ DW_TAG_lexical_block ]
+// CHECK: metadata !{i32 {{.*}}, metadata !{{.*}}, i32 [[@LINE+1]], {{.*}}} ; [ DW_TAG_lexical_block ]
   if (char *ptr = return_char(2)) {
     printf ("%s", ptr);
   }

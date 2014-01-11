@@ -13,6 +13,6 @@ int SaveDiv(int numerator, int denominator, int *res) {
   *res = myres;
   return 1;
 }
-// CHECK-NOT error
+// CHECK-NOT: error:
 // CHECK: error: cannot compile this SEH __try yet
-// CHECK-NOT error
+// CHECK-NOT: error:
