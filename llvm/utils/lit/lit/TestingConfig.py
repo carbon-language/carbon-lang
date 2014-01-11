@@ -75,12 +75,13 @@ class TestingConfig:
 
         # Load the config script data.
         data = None
-        f = open(path)
-        try:
-            data = f.read()
-        except:
-            litConfig.fatal('unable to load config file: %r' % (path,))
-        f.close()
+        if not OldPy:
+            f = open(path)
+            try:
+                data = f.read()
+            except:
+                litConfig.fatal('unable to load config file: %r' % (path,))
+            f.close()
 
         # Execute the config script to initialize the object.
         cfg_globals = dict(globals())
@@ -89,7 +90,7 @@ class TestingConfig:
         cfg_globals['__file__'] = path
         try:
             if OldPy:
-                exec("exec data in cfg_globals")
+                execfile(path, cfg_globals)
             else:
                 exec(compile(data, path, 'exec'), cfg_globals, None)
             if litConfig.debug:
