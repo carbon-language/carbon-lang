@@ -126,7 +126,7 @@ TinyTripCountVectorThreshold("vectorizer-min-trip-count", cl::init(16),
 ///    } else
 ///      ...
 static cl::opt<bool> EnableMemAccessVersioning(
-    "enable-mem-access-versioning", cl::init(false), cl::Hidden,
+    "enable-mem-access-versioning", cl::init(true), cl::Hidden,
     cl::desc("Enable symblic stride memory access versioning"));
 
 /// We don't unroll loops with a known constant trip count below this number.
