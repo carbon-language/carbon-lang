@@ -627,7 +627,7 @@ public:
                                                 bool useVoidTy = false);
 
   /// UpdateSplitBlock - When an MBB was split during scheduling, update the
-  /// references that ned to refer to the last resulting block.
+  /// references that need to refer to the last resulting block.
   void UpdateSplitBlock(MachineBasicBlock *First, MachineBasicBlock *Last);
 
 private:
