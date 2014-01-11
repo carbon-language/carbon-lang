@@ -210,9 +210,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   else
     HasDwarfPubSections = DwarfPubSections == Enable;
 
-  DwarfVersion = DwarfVersionNumber
-                     ? DwarfVersionNumber
-                     : getDwarfVersion(MMI->getModule());
+  DwarfVersion = DwarfVersionNumber ? DwarfVersionNumber
+                                    : getDwarfVersion(MMI->getModule());
 
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
@@ -2939,8 +2938,7 @@ void DwarfDebug::initSkeletonUnit(const DwarfUnit *U, DIE *Die,
   // Relocate to the beginning of the addr_base section, else 0 for the
   // beginning of the one for this compile unit.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    NewU->addSectionLabel(Die, dwarf::DW_AT_GNU_addr_base,
-                           DwarfAddrSectionSym);
+    NewU->addSectionLabel(Die, dwarf::DW_AT_GNU_addr_base, DwarfAddrSectionSym);
   else
     NewU->addSectionOffset(Die, dwarf::DW_AT_GNU_addr_base, 0);
 
