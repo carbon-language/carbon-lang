@@ -86,6 +86,8 @@ struct TestModulePass {
     return PreservedAnalyses::none();
   }
 
+  static StringRef name() { return "TestModulePass"; }
+
   int &RunCount;
 };
 
@@ -93,6 +95,8 @@ struct TestPreservingModulePass {
   PreservedAnalyses run(Module *M) {
     return PreservedAnalyses::all();
   }
+
+  static StringRef name() { return "TestPreservingModulePass"; }
 };
 
 struct TestMinPreservingModulePass {
@@ -105,6 +109,8 @@ struct TestMinPreservingModulePass {
     PA.preserve<FunctionAnalysisManagerModuleProxy>();
     return PA;
   }
+
+  static StringRef name() { return "TestMinPreservingModulePass"; }
 };
 
 struct TestFunctionPass {
@@ -138,6 +144,8 @@ struct TestFunctionPass {
     return PreservedAnalyses::all();
   }
 
+  static StringRef name() { return "TestFunctionPass"; }
+
   int &RunCount;
   int &AnalyzedInstrCount;
   int &AnalyzedFunctionCount;
@@ -153,6 +161,8 @@ struct TestInvalidationFunctionPass {
     return F->getName() == Name ? PreservedAnalyses::none()
                                 : PreservedAnalyses::all();
   }
+
+  static StringRef name() { return "TestInvalidationFunctionPass"; }
 
   StringRef Name;
 };

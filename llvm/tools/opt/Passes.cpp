@@ -24,6 +24,7 @@ namespace {
   /// \brief No-op module pass which does nothing.
 struct NoOpModulePass {
   PreservedAnalyses run(Module *M) { return PreservedAnalyses::all(); }
+  static StringRef name() { return "NoOpModulePass"; }
 };
 
 } // End anonymous namespace.

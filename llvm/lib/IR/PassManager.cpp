@@ -7,19 +7,36 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/IR/PassManager.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
+static cl::opt<bool>
+DebugPM("debug-pass-manager", cl::Hidden,
+        cl::desc("Print pass management debugging information"));
+
 PreservedAnalyses ModulePassManager::run(Module *M, ModuleAnalysisManager *AM) {
   PreservedAnalyses PA = PreservedAnalyses::all();
+
+  if (DebugPM)
+    dbgs() << "Starting module pass manager run.\n";
+
   for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx) {
+    if (DebugPM)
+      dbgs() << "Running module pass: " << Passes[Idx]->name() << "\n";
+
     PreservedAnalyses PassPA = Passes[Idx]->run(M, AM);
     if (AM)
       AM->invalidate(M, PassPA);
     PA.intersect(llvm_move(PassPA));
   }
+
+  if (DebugPM)
+    dbgs() << "Finished module pass manager run.\n";
+
   return PA;
 }
 
@@ -61,12 +78,23 @@ void ModuleAnalysisManager::invalidateImpl(Module *M,
 
 PreservedAnalyses FunctionPassManager::run(Function *F, FunctionAnalysisManager *AM) {
   PreservedAnalyses PA = PreservedAnalyses::all();
+
+  if (DebugPM)
+    dbgs() << "Starting function pass manager run.\n";
+
   for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx) {
+    if (DebugPM)
+      dbgs() << "Running function pass: " << Passes[Idx]->name() << "\n";
+
     PreservedAnalyses PassPA = Passes[Idx]->run(F, AM);
     if (AM)
       AM->invalidate(F, PassPA);
     PA.intersect(llvm_move(PassPA));
   }
+
+  if (DebugPM)
+    dbgs() << "Finished function pass manager run.\n";
+
   return PA;
 }
 
