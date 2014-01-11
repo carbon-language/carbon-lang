@@ -35,6 +35,7 @@ enum class Kind {
   kw_heapsize,
   kw_name,
   kw_noname,
+  kw_version,
 };
 
 class Token {
@@ -62,7 +63,7 @@ private:
 
 class Directive {
 public:
-  enum class Kind { exports, heapsize, name };
+  enum class Kind { exports, heapsize, name, version };
 
   Kind getKind() const { return _kind; }
   virtual ~Directive() {}
@@ -125,6 +126,23 @@ private:
   const uint64_t _baseaddr;
 };
 
+class Version : public Directive {
+public:
+  explicit Version(int major, int minor)
+      : Directive(Kind::version), _major(major), _minor(minor) {}
+
+  static bool classof(const Directive *dir) {
+    return dir->getKind() == Kind::version;
+  }
+
+  int getMajorVersion() const { return _major; }
+  int getMinorVersion() const { return _minor; }
+
+private:
+  const int _major;
+  const int _minor;
+};
+
 class Parser {
 public:
   explicit Parser(Lexer &lex, llvm::BumpPtrAllocator &alloc)
@@ -143,6 +161,7 @@ private:
   bool parseExport(PECOFFLinkingContext::ExportDesc &result);
   bool parseHeapsize(uint64_t &reserve, uint64_t &commit);
   bool parseName(std::string &outfile, uint64_t &baseaddr);
+  bool parseVersion(int &major, int &minor);
 
   Lexer &_lex;
   llvm::BumpPtrAllocator &_alloc;

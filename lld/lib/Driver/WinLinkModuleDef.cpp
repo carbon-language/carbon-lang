@@ -54,6 +54,7 @@ Token Lexer::lex() {
                     .Case("HEAPSIZE", Kind::kw_heapsize)
                     .Case("NAME", Kind::kw_name)
                     .Case("NONAME", Kind::kw_noname)
+                    .Case("VERSION", Kind::kw_version)
                     .Default(Kind::identifier);
     _buffer = (end == _buffer.npos) ? "" : _buffer.drop_front(end);
     return Token(kind, word);
@@ -129,6 +130,13 @@ llvm::Optional<Directive *> Parser::parse() {
       return llvm::None;
     return new (_alloc) Name(outputPath, baseaddr);
   }
+  // VERSION
+  if (_tok._kind == Kind::kw_version) {
+    int major, minor;
+    if (!parseVersion(major, minor))
+      return llvm::None;
+    return new (_alloc) Version(major, minor);
+  }
   error(_tok, Twine("Unknown directive: ") + _tok._range);
   return llvm::None;
 }
@@ -195,6 +203,23 @@ bool Parser::parseName(std::string &outputPath, uint64_t &baseaddr) {
       return false;
   } else {
     baseaddr = 0;
+  }
+  return true;
+}
+
+// VERSION major[.minor]
+bool Parser::parseVersion(int &major, int &minor) {
+  consumeToken();
+  if (_tok._kind != Kind::identifier)
+    return false;
+  StringRef v1, v2;
+  llvm::tie(v1, v2) = _tok._range.split('.');
+  if (v1.getAsInteger(10, major))
+    return false;
+  if (v2.empty()) {
+    minor = 0;
+  } else if (v2.getAsInteger(10, minor)) {
+    return false;
   }
   return true;
 }

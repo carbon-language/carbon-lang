@@ -107,3 +107,23 @@ TEST_F(ParserTest, Name2) {
   EXPECT_EQ("foo.exe", name->getOutputPath());
   EXPECT_EQ(4096U, name->getBaseAddress());
 }
+
+TEST_F(ParserTest, Version1) {
+  llvm::BumpPtrAllocator alloc;
+  llvm::Optional<moduledef::Directive *> dir = parse("VERSION 12", alloc);
+  EXPECT_TRUE(dir.hasValue());
+  auto *ver = dyn_cast<moduledef::Version>(dir.getValue());
+  EXPECT_TRUE(ver != nullptr);
+  EXPECT_EQ(12, ver->getMajorVersion());
+  EXPECT_EQ(0, ver->getMinorVersion());
+}
+
+TEST_F(ParserTest, Version2) {
+  llvm::BumpPtrAllocator alloc;
+  llvm::Optional<moduledef::Directive *> dir = parse("VERSION 12.34", alloc);
+  EXPECT_TRUE(dir.hasValue());
+  auto *ver = dyn_cast<moduledef::Version>(dir.getValue());
+  EXPECT_TRUE(ver != nullptr);
+  EXPECT_EQ(12, ver->getMajorVersion());
+  EXPECT_EQ(34, ver->getMinorVersion());
+}

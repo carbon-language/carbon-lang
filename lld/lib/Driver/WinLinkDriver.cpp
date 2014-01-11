@@ -948,6 +948,9 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
           ctx.setOutputPath(ctx.allocate(name->getOutputPath()));
         if (name->getBaseAddress() && ctx.getBaseAddress())
           ctx.setBaseAddress(name->getBaseAddress());
+      } else if (auto *ver = dyn_cast<moduledef::Version>(dir.getValue())) {
+        ctx.setImageVersion(PECOFFLinkingContext::Version(
+            ver->getMajorVersion(), ver->getMinorVersion()));
       } else {
         llvm::dbgs() << static_cast<int>(dir.getValue()->getKind()) << "\n";
         llvm_unreachable("Unknown module-definition directive.\n");
