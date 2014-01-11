@@ -6,6 +6,7 @@ Also lookup objective-c data types and evaluate expressions.
 import os, time
 import unittest2
 import lldb
+import string
 from lldbtest import *
 import lldbutil
 
@@ -110,6 +111,47 @@ class FoundationTestCase(TestBase):
         # Followed by -[NSAutoreleasePool release].
         self.expect("thread backtrace", "Stop at -[NSAutoreleasePool release]",
             substrs = ["Foundation`-[NSAutoreleasePool release]"])
+
+    @dsym_test
+    @expectedFailureDarwin(15797390)
+    def test_expression_lookups_objc_dsym(self):
+        """Test running an expression detect spurious debug info lookups (dSYM)."""
+        self.buildDsym()
+        self.expression_lookups_objc()
+
+    @dwarf_test
+    @expectedFailureDarwin(15797390)
+    def test_expression_lookups_objc_dwarf(self):
+        """Test running an expression detect spurious debug info lookups (DWARF)."""
+        self.buildDwarf()
+        self.expression_lookups_objc()
+
+    def expression_lookups_objc (self):
+        """Test running an expression and make sure we don't search all dwarf files for any internal names (anything that contains '__lldb')."""
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # Stop at -[MyString initWithNSString:].
+        lldbutil.run_break_set_by_symbol (self, '-[MyString initWithNSString:]', num_expected_locations=1, sym_exact=True)
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # Log any DWARF lookups
+        logfile = "dwarf-lookups.txt"
+        self.runCmd("log enable -f %s dwarf lookups" % (logfile))
+        self.runCmd("expr self")
+        self.runCmd("log disable dwarf lookups")
+        f = open(logfile)
+        lines = f.readlines()
+        num_errors = 0
+        for line in lines:
+            if string.find(line, "$__lldb") != -1:
+                if num_errors == 0:
+                    print "error: found spurious name lookups when evaluating an expression:"
+                num_errors += 1
+                print line,
+        self.assertTrue(num_errors == 0, "Spurious lookups detected")
+        f.close()
 
     def setUp(self):
         # Call super's setUp().
