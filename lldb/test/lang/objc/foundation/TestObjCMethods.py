@@ -137,10 +137,16 @@ class FoundationTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
 
         # Log any DWARF lookups
-        logfile = "dwarf-lookups.txt"
+        logfile = os.path.join(os.getcwd(), "dwarf-lookups.txt")
         self.runCmd("log enable -f %s dwarf lookups" % (logfile))
         self.runCmd("expr self")
         self.runCmd("log disable dwarf lookups")
+        
+        def cleanup():
+            sys.unlink (logfile)
+        
+        self.addTearDownHook(cleanup)
+        
         f = open(logfile)
         lines = f.readlines()
         num_errors = 0
