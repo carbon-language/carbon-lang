@@ -1672,6 +1672,29 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                         }
                     }
                 }
+                
+                SymbolContextList indirect_symbols;
+                images.FindSymbolsWithNameAndType(trampoline_name, eSymbolTypeResolver, indirect_symbols);
+                size_t num_indirect_symbols = indirect_symbols.GetSize();
+                if (num_indirect_symbols > 0)
+                {
+                    for (uint32_t i = 0; i < num_indirect_symbols; i++)
+                    {
+                        SymbolContext context;
+                        AddressRange addr_range;
+                        if (indirect_symbols.GetContextAtIndex(i, context))
+                        {
+                            context.GetAddressRange (eSymbolContextEverything, 0, false, addr_range);
+                            addresses.push_back(addr_range.GetBaseAddress());
+                            if (log)
+                            {
+                                addr_t load_addr = addr_range.GetBaseAddress().GetLoadAddress(target_sp.get());
+
+                                log->Printf ("Found an indirect target symbol at 0x%" PRIx64 ".", load_addr);
+                            }
+                        }
+                    }
+                }
             }
         }
         else if (current_symbol->GetType() == eSymbolTypeReExported)
