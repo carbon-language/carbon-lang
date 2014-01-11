@@ -26,6 +26,7 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -911,6 +912,20 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
   if (E->getKind() == MCExpr::Target) {
     const ARMMCExpr *ARM16Expr = cast<ARMMCExpr>(E);
     E = ARM16Expr->getSubExpr();
+
+    if (const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(E)) {
+      const int64_t Value = MCE->getValue();
+      if (Value > UINT32_MAX)
+        report_fatal_error("constant value truncated (limited to 32-bit)");
+
+      switch (ARM16Expr->getKind()) {
+      case ARMMCExpr::VK_ARM_HI16:
+        return (int32_t(Value) & 0xffff0000) >> 16;
+      case ARMMCExpr::VK_ARM_LO16:
+        return (int32_t(Value) & 0x0000ffff);
+      default: llvm_unreachable("Unsupported ARMFixup");
+      }
+    }
 
     switch (ARM16Expr->getKind()) {
     default: llvm_unreachable("Unsupported ARMFixup");
