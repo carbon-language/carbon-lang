@@ -6079,6 +6079,18 @@ void Sema::ActOnFinishDelayedMemberDeclarations(Scope *S, Decl *RecordD) {
   PopDeclContext();
 }
 
+/// This is used to implement the constant expression evaluation part of the
+/// attribute enable_if extension. There is nothing in standard C++ which would
+/// require reentering parameters.
+void Sema::ActOnReenterCXXMethodParameter(Scope *S, ParmVarDecl *Param) {
+  if (!Param)
+    return;
+
+  S->AddDecl(Param);
+  if (Param->getDeclName())
+    IdResolver.AddDecl(Param);
+}
+
 /// ActOnStartDelayedCXXMethodDeclaration - We have completed
 /// parsing a top-level (non-nested) C++ class, and we are now
 /// parsing those parts of the given Method declaration that could

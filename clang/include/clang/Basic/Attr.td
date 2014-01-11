@@ -470,6 +470,13 @@ def Destructor : InheritableAttr {
   let Subjects = SubjectList<[Function]>;
 }
 
+def EnableIf : InheritableAttr {
+  let Spellings = [GNU<"enable_if">];
+  let Subjects = SubjectList<[Function]>;
+  let Args = [ExprArgument<"Cond">, StringArgument<"Message">];
+  let TemplateDependent = 1;
+}
+
 def ExtVectorType : Attr {
   let Spellings = [GNU<"ext_vector_type">];
   let Subjects = SubjectList<[TypedefName], ErrorDiag>;

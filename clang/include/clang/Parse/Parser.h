@@ -1968,7 +1968,7 @@ private:
     if (Tok.is(tok::kw___attribute)) {
       ParsedAttributes attrs(AttrFactory);
       SourceLocation endLoc;
-      ParseGNUAttributes(attrs, &endLoc, LateAttrs);
+      ParseGNUAttributes(attrs, &endLoc, LateAttrs, &D);
       D.takeAttributes(attrs, endLoc);
     }
   }
@@ -1980,14 +1980,16 @@ private:
   }
   void ParseGNUAttributes(ParsedAttributes &attrs,
                           SourceLocation *endLoc = 0,
-                          LateParsedAttrList *LateAttrs = 0);
+                          LateParsedAttrList *LateAttrs = 0,
+                          Declarator *D = 0);
   void ParseGNUAttributeArgs(IdentifierInfo *AttrName,
                              SourceLocation AttrNameLoc,
                              ParsedAttributes &Attrs,
                              SourceLocation *EndLoc,
                              IdentifierInfo *ScopeName,
                              SourceLocation ScopeLoc,
-                             AttributeList::Syntax Syntax);
+                             AttributeList::Syntax Syntax,
+                             Declarator *D);
   IdentifierLoc *ParseIdentifierLoc();
 
   void MaybeParseCXX11Attributes(Declarator &D) {

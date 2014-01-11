@@ -1008,8 +1008,8 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
       isa<FunctionNoProtoType>(NewQType.getTypePtr()))
     return false;
 
-  const FunctionProtoType* OldType = cast<FunctionProtoType>(OldQType);
-  const FunctionProtoType* NewType = cast<FunctionProtoType>(NewQType);
+  const FunctionProtoType *OldType = cast<FunctionProtoType>(OldQType);
+  const FunctionProtoType *NewType = cast<FunctionProtoType>(NewQType);
 
   // The signature of a function includes the types of its
   // parameters (C++ 1.3.10), which includes the presence or absence
@@ -1082,6 +1082,22 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
     OldQuals &= ~Qualifiers::Restrict;
     NewQuals &= ~Qualifiers::Restrict;
     if (OldQuals != NewQuals)
+      return true;
+  }
+
+  // enable_if attributes are an order-sensitive part of the signature.
+  for (specific_attr_iterator<EnableIfAttr>
+         NewI = New->specific_attr_begin<EnableIfAttr>(),
+         NewE = New->specific_attr_end<EnableIfAttr>(),
+         OldI = Old->specific_attr_begin<EnableIfAttr>(),
+         OldE = Old->specific_attr_end<EnableIfAttr>();
+       NewI != NewE || OldI != OldE; ++NewI, ++OldI) {
+    if (NewI == NewE || OldI == OldE)
+      return true;
+    llvm::FoldingSetNodeID NewID, OldID;
+    NewI->getCond()->Profile(NewID, Context, true);
+    OldI->getCond()->Profile(OldID, Context, true);
+    if (!(NewID == OldID))
       return true;
   }
 
@@ -5452,11 +5468,11 @@ void
 Sema::AddOverloadCandidate(FunctionDecl *Function,
                            DeclAccessPair FoundDecl,
                            ArrayRef<Expr *> Args,
-                           OverloadCandidateSet& CandidateSet,
+                           OverloadCandidateSet &CandidateSet,
                            bool SuppressUserConversions,
                            bool PartialOverloading,
                            bool AllowExplicit) {
-  const FunctionProtoType* Proto
+  const FunctionProtoType *Proto
     = dyn_cast<FunctionProtoType>(Function->getType()->getAs<FunctionType>());
   assert(Proto && "Functions without a prototype cannot be overloaded");
   assert(!Function->getDescribedFunctionTemplate() &&
@@ -5568,7 +5584,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
       if (Candidate.Conversions[ArgIdx].isBad()) {
         Candidate.Viable = false;
         Candidate.FailureKind = ovl_fail_bad_conversion;
-        break;
+        return;
       }
     } else {
       // (C++ 13.3.2p2): For the purposes of overload resolution, any
@@ -5577,6 +5593,77 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
       Candidate.Conversions[ArgIdx].setEllipsis();
     }
   }
+
+  if (EnableIfAttr *FailedAttr = CheckEnableIf(Function, Args)) {
+    Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_enable_if;
+    Candidate.DeductionFailure.Data = FailedAttr;
+    return;
+  }
+}
+
+static bool IsNotEnableIfAttr(Attr *A) { return !isa<EnableIfAttr>(A); }
+
+EnableIfAttr *Sema::CheckEnableIf(FunctionDecl *Function, ArrayRef<Expr *> Args,
+                                  bool MissingImplicitThis) {
+  // FIXME: specific_attr_iterator<EnableIfAttr> iterates in reverse order, but
+  // we need to find the first failing one.
+  if (!Function->hasAttrs())
+    return 0;
+  AttrVec Attrs = Function->getAttrs();
+  AttrVec::iterator E = std::remove_if(Attrs.begin(), Attrs.end(),
+                                       IsNotEnableIfAttr);
+  if (Attrs.begin() == E)
+    return 0;
+  std::reverse(Attrs.begin(), E);
+
+  SFINAETrap Trap(*this);
+
+  // Convert the arguments.
+  SmallVector<Expr *, 16> ConvertedArgs;
+  bool InitializationFailed = false;
+  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+    if (i == 0 && !MissingImplicitThis && isa<CXXMethodDecl>(Function) &&
+        !cast<CXXMethodDecl>(Function)->isStatic()) {
+      CXXMethodDecl *Method = cast<CXXMethodDecl>(Function);
+      ExprResult R =
+        PerformObjectArgumentInitialization(Args[0], /*Qualifier=*/0,
+                                            Method, Method);
+      if (R.isInvalid()) {
+        InitializationFailed = true;
+        break;
+      }
+      ConvertedArgs.push_back(R.take());
+    } else {
+      ExprResult R =
+        PerformCopyInitialization(InitializedEntity::InitializeParameter(
+                                                Context,
+                                                Function->getParamDecl(i)),
+                                  SourceLocation(),
+                                  Args[i]);
+      if (R.isInvalid()) {
+        InitializationFailed = true;
+        break;
+      }
+      ConvertedArgs.push_back(R.take());
+    }
+  }
+
+  if (InitializationFailed || Trap.hasErrorOccurred())
+    return cast<EnableIfAttr>(Attrs[0]);
+
+  for (AttrVec::iterator I = Attrs.begin(); I != E; ++I) {
+    APValue Result;
+    EnableIfAttr *EIA = cast<EnableIfAttr>(*I);
+    if (!EIA->getCond()->EvaluateWithSubstitution(
+            Result, Context, Function,
+            llvm::ArrayRef<const Expr*>(ConvertedArgs.data(),
+                                        ConvertedArgs.size())) ||
+        !Result.isInt() || !Result.getInt().getBoolValue()) {
+      return EIA;
+    }
+  }
+  return 0;
 }
 
 /// \brief Add all of the function declarations in the given function set to
@@ -5658,9 +5745,9 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
                          CXXRecordDecl *ActingContext, QualType ObjectType,
                          Expr::Classification ObjectClassification,
                          ArrayRef<Expr *> Args,
-                         OverloadCandidateSet& CandidateSet,
+                         OverloadCandidateSet &CandidateSet,
                          bool SuppressUserConversions) {
-  const FunctionProtoType* Proto
+  const FunctionProtoType *Proto
     = dyn_cast<FunctionProtoType>(Method->getType()->getAs<FunctionType>());
   assert(Proto && "Methods without a prototype cannot be overloaded");
   assert(!isa<CXXConstructorDecl>(Method) &&
@@ -5747,14 +5834,21 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
       if (Candidate.Conversions[ArgIdx + 1].isBad()) {
         Candidate.Viable = false;
         Candidate.FailureKind = ovl_fail_bad_conversion;
-        break;
+        return;
       }
     } else {
       // (C++ 13.3.2p2): For the purposes of overload resolution, any
       // argument for which there is no corresponding parameter is
-      // considered to ""match the ellipsis" (C+ 13.3.3.1.3).
+      // considered to "match the ellipsis" (C+ 13.3.3.1.3).
       Candidate.Conversions[ArgIdx + 1].setEllipsis();
     }
+  }
+
+  if (EnableIfAttr *FailedAttr = CheckEnableIf(Method, Args, true)) {
+    Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_enable_if;
+    Candidate.DeductionFailure.Data = FailedAttr;
+    return;
   }
 }
 
@@ -5971,7 +6065,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
     return;
   }
 
-  // We won't go through a user-define type conversion function to convert a
+  // We won't go through a user-defined type conversion function to convert a
   // derived to base as such conversions are given Conversion Rank. They only
   // go through a copy constructor. 13.3.3.1.2-p4 [over.ics.user]
   QualType FromCanon
@@ -6031,6 +6125,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
         GetConversionRank(ICS.Standard.Second) != ICR_Exact_Match) {
       Candidate.Viable = false;
       Candidate.FailureKind = ovl_fail_final_conversion_not_exact;
+      return;
     }
 
     // C++0x [dcl.init.ref]p5:
@@ -6042,17 +6137,25 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
         ICS.Standard.First == ICK_Lvalue_To_Rvalue) {
       Candidate.Viable = false;
       Candidate.FailureKind = ovl_fail_bad_final_conversion;
+      return;
     }
     break;
 
   case ImplicitConversionSequence::BadConversion:
     Candidate.Viable = false;
     Candidate.FailureKind = ovl_fail_bad_final_conversion;
-    break;
+    return;
 
   default:
     llvm_unreachable(
            "Can only end up with a standard conversion sequence or failure");
+  }
+
+  if (EnableIfAttr *FailedAttr = CheckEnableIf(Conversion, ArrayRef<Expr*>())) {
+    Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_enable_if;
+    Candidate.DeductionFailure.Data = FailedAttr;
+    return;
   }
 }
 
@@ -6191,7 +6294,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
       if (Candidate.Conversions[ArgIdx + 1].isBad()) {
         Candidate.Viable = false;
         Candidate.FailureKind = ovl_fail_bad_conversion;
-        break;
+        return;
       }
     } else {
       // (C++ 13.3.2p2): For the purposes of overload resolution, any
@@ -6199,6 +6302,13 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
       // considered to ""match the ellipsis" (C+ 13.3.3.1.3).
       Candidate.Conversions[ArgIdx + 1].setEllipsis();
     }
+  }
+
+  if (EnableIfAttr *FailedAttr = CheckEnableIf(Conversion, ArrayRef<Expr*>())) {
+    Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_enable_if;
+    Candidate.DeductionFailure.Data = FailedAttr;
+    return;
   }
 }
 
@@ -8111,6 +8221,47 @@ isBetterOverloadCandidate(Sema &S,
     }
   }
 
+  // Check for enable_if value-based overload resolution.
+  if (Cand1.Function && Cand2.Function &&
+      (Cand1.Function->hasAttr<EnableIfAttr>() ||
+       Cand2.Function->hasAttr<EnableIfAttr>())) {
+    // FIXME: The next several lines are just
+    // specific_attr_iterator<EnableIfAttr> but going in declaration order,
+    // instead of reverse order which is how they're stored in the AST.
+    AttrVec Cand1Attrs;
+    AttrVec::iterator Cand1E = Cand1Attrs.end();
+    if (Cand1.Function->hasAttrs()) {
+      Cand1Attrs = Cand1.Function->getAttrs();
+      Cand1E = std::remove_if(Cand1Attrs.begin(), Cand1Attrs.end(),
+                              IsNotEnableIfAttr);
+      std::reverse(Cand1Attrs.begin(), Cand1E);
+    }
+
+    AttrVec Cand2Attrs;
+    AttrVec::iterator Cand2E = Cand2Attrs.end();
+    if (Cand2.Function->hasAttrs()) {
+      Cand2Attrs = Cand2.Function->getAttrs();
+      Cand2E = std::remove_if(Cand2Attrs.begin(), Cand2Attrs.end(),
+                              IsNotEnableIfAttr);
+      std::reverse(Cand2Attrs.begin(), Cand2E);
+    }
+    for (AttrVec::iterator
+         Cand1I = Cand1Attrs.begin(), Cand2I = Cand2Attrs.begin();
+         Cand1I != Cand1E || Cand2I != Cand2E; ++Cand1I, ++Cand2I) {
+      if (Cand1I == Cand1E)
+        return false;
+      if (Cand2I == Cand2E)
+        return true;
+      llvm::FoldingSetNodeID Cand1ID, Cand2ID;
+      cast<EnableIfAttr>(*Cand1I)->getCond()->Profile(Cand1ID,
+                                                      S.getASTContext(), true);
+      cast<EnableIfAttr>(*Cand2I)->getCond()->Profile(Cand2ID,
+                                                      S.getASTContext(), true);
+      if (!(Cand1ID == Cand2ID))
+        return false;
+    }
+  }
+
   return false;
 }
 
@@ -8819,6 +8970,15 @@ void DiagnoseBadTarget(Sema &S, OverloadCandidate *Cand) {
       << (unsigned) FnKind << CalleeTarget << CallerTarget;
 }
 
+void DiagnoseFailedEnableIfAttr(Sema &S, OverloadCandidate *Cand) {
+  FunctionDecl *Callee = Cand->Function;
+  EnableIfAttr *Attr = static_cast<EnableIfAttr*>(Cand->DeductionFailure.Data);
+
+  S.Diag(Callee->getLocation(),
+         diag::note_ovl_candidate_disabled_by_enable_if_attr)
+      << Attr->getCond()->getSourceRange() << Attr->getMessage();
+}
+
 /// Generates a 'note' diagnostic for an overload candidate.  We've
 /// already generated a primary error at the call site.
 ///
@@ -8882,6 +9042,9 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
 
   case ovl_fail_bad_target:
     return DiagnoseBadTarget(S, Cand);
+
+  case ovl_fail_enable_if:
+    return DiagnoseFailedEnableIfAttr(S, Cand);
   }
 }
 
@@ -11107,7 +11270,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
         << qualsString
         << (qualsString.find(' ') == std::string::npos ? 1 : 2);
     }
-              
+
     CXXMemberCallExpr *call
       = new (Context) CXXMemberCallExpr(Context, MemExprE, Args,
                                         resultType, valueKind, RParenLoc);

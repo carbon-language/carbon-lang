@@ -4474,6 +4474,21 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
   else if (isa<MemberExpr>(NakedFn))
     NDecl = cast<MemberExpr>(NakedFn)->getMemberDecl();
 
+  if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(NDecl)) {
+    if (FD->hasAttr<EnableIfAttr>()) {
+      if (const EnableIfAttr *Attr = CheckEnableIf(FD, ArgExprs, true)) {
+        Diag(Fn->getLocStart(),
+             isa<CXXMethodDecl>(FD) ?
+                 diag::err_ovl_no_viable_member_function_in_call :
+                 diag::err_ovl_no_viable_function_in_call)
+          << FD << FD->getSourceRange();
+        Diag(FD->getLocation(),
+             diag::note_ovl_candidate_disabled_by_enable_if_attr)
+            << Attr->getCond()->getSourceRange() << Attr->getMessage();
+      }
+    }
+  }
+
   return BuildResolvedCallExpr(Fn, NDecl, LParenLoc, ArgExprs, RParenLoc,
                                ExecConfig, IsExecConfig);
 }

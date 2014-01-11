@@ -129,6 +129,39 @@ static void instantiateDependentAlignedAttr(
   }
 }
 
+static void instantiateDependentEnableIfAttr(
+    Sema &S, const MultiLevelTemplateArgumentList &TemplateArgs,
+    const EnableIfAttr *A, const Decl *Tmpl, Decl *New) {
+  Expr *Cond = 0;
+  {
+    EnterExpressionEvaluationContext Unevaluated(S, Sema::Unevaluated);
+    ExprResult Result = S.SubstExpr(A->getCond(), TemplateArgs);
+    if (Result.isInvalid())
+      return;
+    Cond = Result.takeAs<Expr>();
+  }
+  if (A->getCond()->isTypeDependent() && !Cond->isTypeDependent()) {
+    ExprResult Converted = S.PerformContextuallyConvertToBool(Cond);
+    if (Converted.isInvalid())
+      return;
+    Cond = Converted.take();
+  }
+
+  SmallVector<PartialDiagnosticAt, 8> Diags;
+  if (A->getCond()->isValueDependent() && !Cond->isValueDependent() &&
+      !Expr::isPotentialConstantExprUnevaluated(Cond, cast<FunctionDecl>(Tmpl),
+                                                Diags)) {
+    S.Diag(A->getLocation(), diag::err_enable_if_never_constant_expr);
+    for (int I = 0, N = Diags.size(); I != N; ++I)
+      S.Diag(Diags[I].first, Diags[I].second);
+    return;
+  }
+
+  EnableIfAttr *EIA = new (S.getASTContext()) EnableIfAttr(
+      A->getLocation(), S.getASTContext(), Cond, A->getMessage());
+  New->addAttr(EIA);
+}
+
 void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
                             const Decl *Tmpl, Decl *New,
                             LateInstantiatedAttrVec *LateAttrs,
@@ -141,6 +174,13 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
     const AlignedAttr *Aligned = dyn_cast<AlignedAttr>(TmplAttr);
     if (Aligned && Aligned->isAlignmentDependent()) {
       instantiateDependentAlignedAttr(*this, TemplateArgs, Aligned, New);
+      continue;
+    }
+
+    const EnableIfAttr *EnableIf = dyn_cast<EnableIfAttr>(TmplAttr);
+    if (EnableIf && EnableIf->getCond()->isValueDependent()) {
+      instantiateDependentEnableIfAttr(*this, TemplateArgs, EnableIf, Tmpl,
+                                       New);
       continue;
     }
 

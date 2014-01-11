@@ -1316,6 +1316,8 @@ parameters of protocol-qualified type.
 Query the presence of this new mangling with
 ``__has_feature(objc_protocol_qualifier_mangling)``.
 
+.. _langext-overloading:
+
 Function Overloading in C
 =========================
 
@@ -1397,6 +1399,84 @@ caveats to this use of name mangling:
   would in C.
 
 Query for this feature with ``__has_extension(attribute_overloadable)``.
+
+Controlling Overload Resolution
+===============================
+
+Clang introduces the ``enable_if`` attribute, which can be placed on function
+declarations to control which overload is selected based on the values of the
+function's arguments. When combined with the
+:ref:``overloadable<langext-overloading>`` attribute, this feature is also
+available in C.
+
+.. code-block:: c++
+
+  int isdigit(int c);
+  int isdigit(int c) __attribute__((enable_if(c >= -1 && c <= 255, "'c' must have the value of an unsigned char or EOF")));
+  
+  void foo(char c) {
+    isdigit(c);
+    isdigit(10);
+    isdigit(-10);  // results in a compile-time error.
+  }
+
+The enable_if attribute takes two arguments, the first is an expression written
+in terms of the function parameters, the second is a string explaining why this
+overload candidate could not be selected to be displayed in diagnostics. The
+expression is part of the function signature for the purposes of determining
+whether it is a redeclaration (following the rules used when determining
+whether a C++ template specialization is ODR-equivalent), but is not part of
+the type.
+
+An enable_if expression will be evaluated by substituting the values of the
+parameters from the call site into the arguments in the expression and
+determining whether the result is true. If the result is false or could not be
+determined through constant expression evaluation, then this overload will not
+be chosen and the reason supplied in the string will be given to the user if
+their code does not compile as a result.
+
+Because the enable_if expression is an unevaluated context, there are no global
+state changes, nor the ability to pass information from the enable_if
+expression to the function body. For example, suppose we want calls to
+strnlen(strbuf, maxlen) to resolve to strnlen_chk(strbuf, maxlen, size of
+strbuf) only if the size of strbuf can be determined:
+
+.. code-block:: c++
+
+  __attribute__((always_inline))
+  static inline size_t strnlen(const char *s, size_t maxlen)
+    __attribute__((overloadable))
+    __attribute__((enable_if(__builtin_object_size(s, 0) != -1))),
+                             "chosen when the buffer size is known but 'maxlen' is not")))
+  {
+    return strnlen_chk(s, maxlen, __builtin_object_size(s, 0));
+  }
+
+Multiple enable_if attributes may be applied to a single declaration. In this
+case, the enable_if expressions are evaluated from left to right in the
+following manner. First, the candidates whose enable_if expressions evaluate to
+false or cannot be evaluated are discarded. If the remaining candidates do not
+share ODR-equivalent enable_if expressions, the overload resolution is
+ambiguous. Otherwise, enable_if overload resolution continues with the next
+enable_if attribute on the candidates that have not been discarded and have
+remaining enable_if attributes. In this way, we pick the most specific
+overload out of a number of viable overloads using enable_if.
+
+.. code-block:: c++
+  void f() __attribute__((enable_if(true, "")));  // #1
+  void f() __attribute__((enable_if(true, ""))) __attribute__((enable_if(true, "")));  // #2
+  
+  void g(int i, int j) __attribute__((enable_if(i, "")));  // #1
+  void g(int i, int j) __attribute__((enable_if(j, ""))) __attribute__((enable_if(true)));  // #2
+
+In this example, a call to f() is always resolved to #2, as the first enable_if
+expression is ODR-equivalent for both declarations, but #1 does not have another
+enable_if expression to continue evaluating, so the next round of evaluation has
+only a single candidate. In a call to g(1, 1), the call is ambiguous even though
+#2 has more enable_if attributes, because the first enable_if expressions are
+not ODR-equivalent.
+
+Query for this feature with ``__has_attribute(enable_if)``.
 
 Initializer lists for complex numbers in C
 ==========================================

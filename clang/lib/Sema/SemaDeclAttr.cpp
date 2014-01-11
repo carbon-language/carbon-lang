@@ -827,6 +827,34 @@ static void handleLocksExcludedAttr(Sema &S, Decl *D,
                                Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleEnableIfAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  Expr *Cond = Attr.getArgAsExpr(0);
+  if (!Cond->isTypeDependent()) {
+    ExprResult Converted = S.PerformContextuallyConvertToBool(Cond);
+    if (Converted.isInvalid())
+      return;
+    Cond = Converted.take();
+  }
+
+  StringRef Msg;
+  if (!S.checkStringLiteralArgumentAttr(Attr, 1, Msg))
+    return;
+
+  SmallVector<PartialDiagnosticAt, 8> Diags;
+  if (!Cond->isValueDependent() &&
+      !Expr::isPotentialConstantExprUnevaluated(Cond, cast<FunctionDecl>(D),
+                                                Diags)) {
+    S.Diag(Attr.getLoc(), diag::err_enable_if_never_constant_expr);
+    for (int I = 0, N = Diags.size(); I != N; ++I)
+      S.Diag(Diags[I].first, Diags[I].second);
+    return;
+  }
+
+  D->addAttr(::new (S.Context)
+             EnableIfAttr(Attr.getRange(), S.Context, Cond, Msg,
+                          Attr.getAttributeSpellingListIndex()));
+}
+
 static void handleConsumableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   ConsumableAttr::ConsumedState DefaultState;
 
@@ -3990,6 +4018,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleAttrWithMessage<DeprecatedAttr>(S, D, Attr);
     break;
   case AttributeList::AT_Destructor:  handleDestructorAttr  (S, D, Attr); break;
+  case AttributeList::AT_EnableIf:    handleEnableIfAttr    (S, D, Attr); break;
   case AttributeList::AT_ExtVectorType:
     handleExtVectorTypeAttr(S, scope, D, Attr);
     break;

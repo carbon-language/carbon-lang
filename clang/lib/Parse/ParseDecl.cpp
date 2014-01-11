@@ -117,7 +117,8 @@ static bool isAttributeLateParsed(const IdentifierInfo &II) {
 /// We follow the C++ model, but don't allow junk after the identifier.
 void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
                                 SourceLocation *endLoc,
-                                LateParsedAttrList *LateAttrs) {
+                                LateParsedAttrList *LateAttrs,
+                                Declarator *D) {
   assert(Tok.is(tok::kw___attribute) && "Not a GNU attribute list!");
 
   while (Tok.is(tok::kw___attribute)) {
@@ -153,7 +154,7 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
       // Handle "parameterized" attributes
       if (!LateAttrs || !isAttributeLateParsed(*AttrName)) {
         ParseGNUAttributeArgs(AttrName, AttrNameLoc, attrs, endLoc, 0,
-                              SourceLocation(), AttributeList::AS_GNU);
+                              SourceLocation(), AttributeList::AS_GNU, D);
         continue;
       }
 
@@ -258,7 +259,8 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
                                    SourceLocation *EndLoc,
                                    IdentifierInfo *ScopeName,
                                    SourceLocation ScopeLoc,
-                                   AttributeList::Syntax Syntax) {
+                                   AttributeList::Syntax Syntax,
+                                   Declarator *D) {
 
   assert(Tok.is(tok::l_paren) && "Attribute arg list not starting with '('");
 
@@ -272,21 +274,36 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
     ParseAvailabilityAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc);
     return;
   }
-  
+
   if (AttrKind == AttributeList::AT_ObjCBridgeRelated) {
     ParseObjCBridgeRelatedAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc);
     return;
   }
-  
+
   // Type safety attributes have their own grammar.
   if (AttrKind == AttributeList::AT_TypeTagForDatatype) {
     ParseTypeTagForDatatypeAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc);
     return;
   }
+
   // Some attributes expect solely a type parameter.
   if (attributeIsTypeArgAttr(*AttrName)) {
     ParseAttributeWithTypeArg(*AttrName, AttrNameLoc, Attrs, EndLoc);
     return;
+  }
+
+  // These may refer to the function arguments, but need to be parsed early to
+  // participate in determining whether it's a redeclaration.
+  llvm::OwningPtr<ParseScope> PrototypeScope;
+  if (AttrName->isStr("enable_if") && D && D->isFunctionDeclarator()) {
+    DeclaratorChunk::FunctionTypeInfo FTI = D->getFunctionTypeInfo();
+    PrototypeScope.reset(new ParseScope(this, Scope::FunctionPrototypeScope |
+                                        Scope::FunctionDeclarationScope |
+                                        Scope::DeclScope));
+    for (unsigned i = 0; i != FTI.NumArgs; ++i) {
+      ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[i].Param);
+      Actions.ActOnReenterCXXMethodParameter(getCurScope(), Param);
+    }
   }
 
   // Ignore the left paren location for now.
@@ -1156,7 +1173,7 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
         Actions.ActOnReenterFunctionContext(Actions.CurScope, D);
 
       ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc,
-                            0, SourceLocation(), AttributeList::AS_GNU);
+                            0, SourceLocation(), AttributeList::AS_GNU, 0);
 
       if (HasFunScope) {
         Actions.ActOnExitFunctionContext();
@@ -1169,7 +1186,7 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
       // If there are multiple decls, then the decl cannot be within the
       // function scope.
       ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc,
-                            0, SourceLocation(), AttributeList::AS_GNU);
+                            0, SourceLocation(), AttributeList::AS_GNU, 0);
     }
   } else {
     Diag(Tok, diag::warn_attribute_no_decl) << LA.AttrName.getName();

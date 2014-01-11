@@ -474,13 +474,30 @@ namespace {
 
       /// Evaluate in any way we know how. Don't worry about side-effects that
       /// can't be modeled.
-      EM_IgnoreSideEffects
+      EM_IgnoreSideEffects,
+
+      /// Evaluate as a constant expression. Stop if we find that the expression
+      /// is not a constant expression. Some expressions can be retried in the
+      /// optimizer if we don't constant fold them here, but in an unevaluated
+      /// context we try to fold them immediately since the optimizer never
+      /// gets a chance to look at it.
+      EM_ConstantExpressionUnevaluated,
+
+      /// Evaluate as a potential constant expression. Keep going if we hit a
+      /// construct that we can't evaluate yet (because we don't yet know the
+      /// value of something) but stop if we hit something that could never be
+      /// a constant expression. Some expressions can be retried in the
+      /// optimizer if we don't constant fold them here, but in an unevaluated
+      /// context we try to fold them immediately since the optimizer never
+      /// gets a chance to look at it.
+      EM_PotentialConstantExpressionUnevaluated
     } EvalMode;
 
     /// Are we checking whether the expression is a potential constant
     /// expression?
     bool checkingPotentialConstantExpression() const {
-      return EvalMode == EM_PotentialConstantExpression;
+      return EvalMode == EM_PotentialConstantExpression ||
+             EvalMode == EM_PotentialConstantExpressionUnevaluated;
     }
 
     /// Are we checking an expression for overflow?
@@ -573,6 +590,8 @@ namespace {
             // some later problem.
           case EM_ConstantExpression:
           case EM_PotentialConstantExpression:
+          case EM_ConstantExpressionUnevaluated:
+          case EM_PotentialConstantExpressionUnevaluated:
             HasActiveDiagnostic = false;
             return OptionalDiagnostic();
           }
@@ -644,11 +663,13 @@ namespace {
     bool keepEvaluatingAfterSideEffect() {
       switch (EvalMode) {
       case EM_PotentialConstantExpression:
+      case EM_PotentialConstantExpressionUnevaluated:
       case EM_EvaluateForOverflow:
       case EM_IgnoreSideEffects:
         return true;
 
       case EM_ConstantExpression:
+      case EM_ConstantExpressionUnevaluated:
       case EM_ConstantFold:
         return false;
       }
@@ -670,10 +691,12 @@ namespace {
 
       switch (EvalMode) {
       case EM_PotentialConstantExpression:
+      case EM_PotentialConstantExpressionUnevaluated:
       case EM_EvaluateForOverflow:
         return true;
 
       case EM_ConstantExpression:
+      case EM_ConstantExpressionUnevaluated:
       case EM_ConstantFold:
       case EM_IgnoreSideEffects:
         return false;
@@ -696,7 +719,9 @@ namespace {
                         Info.EvalStatus.Diag->empty() &&
                         !Info.EvalStatus.HasSideEffects),
         OldMode(Info.EvalMode) {
-      if (Enabled && Info.EvalMode == EvalInfo::EM_ConstantExpression)
+      if (Enabled &&
+          (Info.EvalMode == EvalInfo::EM_ConstantExpression ||
+           Info.EvalMode == EvalInfo::EM_ConstantExpressionUnevaluated))
         Info.EvalMode = EvalInfo::EM_ConstantFold;
     }
     void keepDiagnostics() { Enabled = false; }
@@ -5985,7 +6010,17 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
 
     // Expression had no side effects, but we couldn't statically determine the
     // size of the referenced object.
-    return Error(E);
+    switch (Info.EvalMode) {
+    case EvalInfo::EM_ConstantExpression:
+    case EvalInfo::EM_PotentialConstantExpression:
+    case EvalInfo::EM_ConstantFold:
+    case EvalInfo::EM_EvaluateForOverflow:
+    case EvalInfo::EM_IgnoreSideEffects:
+      return Error(E);
+    case EvalInfo::EM_ConstantExpressionUnevaluated:
+    case EvalInfo::EM_PotentialConstantExpressionUnevaluated:
+      return Success(-1ULL, E);
+    }
   }
 
   case Builtin::BI__builtin_bswap16:
@@ -8656,6 +8691,28 @@ bool Expr::isCXX11ConstantExpr(const ASTContext &Ctx, APValue *Result,
   return IsConstExpr;
 }
 
+bool Expr::EvaluateWithSubstitution(APValue &Value, ASTContext &Ctx,
+                                    const FunctionDecl *Callee,
+                                    llvm::ArrayRef<const Expr*> Args) const {
+  Expr::EvalStatus Status;
+  EvalInfo Info(Ctx, Status, EvalInfo::EM_ConstantExpressionUnevaluated);
+
+  ArgVector ArgValues(Args.size());
+  for (ArrayRef<const Expr*>::iterator I = Args.begin(), E = Args.end();
+       I != E; ++I) {
+    if (!Evaluate(ArgValues[I - Args.begin()], Info, *I))
+      // If evaluation fails, throw away the argument entirely.
+      ArgValues[I - Args.begin()] = APValue();
+    if (Info.EvalStatus.HasSideEffects)
+      return false;
+  }
+
+  // Build fake call to Callee.
+  CallStackFrame Frame(Info, Callee->getLocation(), Callee, /*This*/0,
+                       ArgValues.data());
+  return Evaluate(Value, Info, this) && !Info.EvalStatus.HasSideEffects;
+}
+
 bool Expr::isPotentialConstantExpr(const FunctionDecl *FD,
                                    SmallVectorImpl<
                                      PartialDiagnosticAt> &Diags) {
@@ -8694,5 +8751,29 @@ bool Expr::isPotentialConstantExpr(const FunctionDecl *FD,
     HandleFunctionCall(Loc, FD, (MD && MD->isInstance()) ? &This : 0,
                        Args, FD->getBody(), Info, Scratch);
 
+  return Diags.empty();
+}
+
+bool Expr::isPotentialConstantExprUnevaluated(Expr *E,
+                                              const FunctionDecl *FD,
+                                              SmallVectorImpl<
+                                                PartialDiagnosticAt> &Diags) {
+  Expr::EvalStatus Status;
+  Status.Diag = &Diags;
+
+  EvalInfo Info(FD->getASTContext(), Status,
+                EvalInfo::EM_PotentialConstantExpressionUnevaluated);
+
+  // Fabricate a call stack frame to give the arguments a plausible cover story.
+  ArrayRef<const Expr*> Args;
+  ArgVector ArgValues(0);
+  bool Success = EvaluateArgs(Args, ArgValues, Info);
+  (void)Success;
+  assert(Success &&
+         "Failed to set up arguments for potential constant evaluation");
+  CallStackFrame Frame(Info, SourceLocation(), FD, 0, ArgValues.data());
+
+  APValue ResultScratch;
+  Evaluate(ResultScratch, Info, E);
   return Diags.empty();
 }

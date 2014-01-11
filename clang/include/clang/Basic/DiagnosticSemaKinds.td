@@ -1737,6 +1737,8 @@ def err_constexpr_local_var_no_init : Error<
 def ext_constexpr_function_never_constant_expr : ExtWarn<
   "constexpr %select{function|constructor}0 never produces a "
   "constant expression">, InGroup<DiagGroup<"invalid-constexpr">>, DefaultError;
+def err_enable_if_never_constant_expr : Error<
+  "'enable_if' attribute expression never produces a constant expression">;
 def err_constexpr_body_no_return : Error<
   "no return statement in constexpr function">;
 def warn_cxx11_compat_constexpr_body_no_return : Warning<
@@ -2586,6 +2588,8 @@ def note_ovl_candidate_substitution_failure : Note<
     "candidate template ignored: substitution failure%0%1">;
 def note_ovl_candidate_disabled_by_enable_if : Note<
     "candidate template ignored: disabled by %0%1">;
+def note_ovl_candidate_disabled_by_enable_if_attr : Note<
+    "candidate disabled: %0">;
 def note_ovl_candidate_failed_overload_resolution : Note<
     "candidate template ignored: couldn't resolve reference to overloaded "
     "function %0">;

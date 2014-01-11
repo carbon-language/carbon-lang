@@ -101,6 +101,7 @@ namespace clang {
   class DependentDiagnostic;
   class DesignatedInitExpr;
   class Designation;
+  class EnableIfAttr;
   class EnumConstantDecl;
   class Expr;
   class ExtVectorType;
@@ -2199,6 +2200,11 @@ public:
   // Emit as a series of 'note's all template and non-templates
   // identified by the expression Expr
   void NoteAllOverloadCandidates(Expr* E, QualType DestType = QualType());
+
+  /// Check the enable_if expressions on the given function. Returns the first
+  /// failing attribute, or NULL if they were all successful.
+  EnableIfAttr *CheckEnableIf(FunctionDecl *Function, ArrayRef<Expr *> Args,
+                              bool MissingImplicitThis = false);
 
   // [PossiblyAFunctionType]  -->   [Return]
   // NonFunctionType --> NonFunctionType
@@ -4770,6 +4776,7 @@ public:
                                          AttributeList *AttrList);
   void ActOnFinishCXXMemberDecls();
 
+  void ActOnReenterCXXMethodParameter(Scope *S, ParmVarDecl *Param);
   void ActOnReenterTemplateScope(Scope *S, Decl *Template);
   void ActOnReenterDeclaratorTemplateScope(Scope *S, DeclaratorDecl *D);
   void ActOnStartDelayedMemberDeclarations(Scope *S, Decl *Record);

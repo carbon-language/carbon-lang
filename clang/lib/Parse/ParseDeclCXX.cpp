@@ -3243,7 +3243,7 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
     if (Tok.is(tok::l_paren)) {
       if (ScopeName && ScopeName->getName() == "gnu") {
         ParseGNUAttributeArgs(AttrName, AttrLoc, attrs, endLoc,
-                              ScopeName, ScopeLoc, AttributeList::AS_CXX11);
+                              ScopeName, ScopeLoc, AttributeList::AS_CXX11, 0);
         AttrParsed = true;
       } else {
         if (StandardAttr)
