@@ -935,6 +935,11 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
       } else if (auto *hs = dyn_cast<moduledef::Heapsize>(dir.getValue())) {
         ctx.setHeapReserve(hs->getReserve());
         ctx.setHeapCommit(hs->getCommit());
+      } else if (auto *name = dyn_cast<moduledef::Name>(dir.getValue())) {
+        if (!name->getOutputPath().empty() && ctx.outputPath().empty())
+          ctx.setOutputPath(ctx.allocate(name->getOutputPath()));
+        if (name->getBaseAddress() && ctx.getBaseAddress())
+          ctx.setBaseAddress(name->getBaseAddress());
       } else {
         llvm::dbgs() << static_cast<int>(dir.getValue()->getKind()) << "\n";
         llvm_unreachable("Unknown module-definition directive.\n");

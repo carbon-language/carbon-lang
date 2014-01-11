@@ -87,3 +87,23 @@ TEST_F(ParserTest, Heapsize2) {
   EXPECT_EQ(65536U, heapsize->getReserve());
   EXPECT_EQ(8192U, heapsize->getCommit());
 }
+
+TEST_F(ParserTest, Name1) {
+  llvm::BumpPtrAllocator alloc;
+  llvm::Optional<moduledef::Directive *> dir = parse("NAME foo.exe", alloc);
+  EXPECT_TRUE(dir.hasValue());
+  auto *name = dyn_cast<moduledef::Name>(dir.getValue());
+  EXPECT_TRUE(name != nullptr);
+  EXPECT_EQ("foo.exe", name->getOutputPath());
+  EXPECT_EQ(0U, name->getBaseAddress());
+}
+
+TEST_F(ParserTest, Name2) {
+  llvm::BumpPtrAllocator alloc;
+  llvm::Optional<moduledef::Directive *> dir = parse("NAME foo.exe BASE=4096", alloc);
+  EXPECT_TRUE(dir.hasValue());
+  auto *name = dyn_cast<moduledef::Name>(dir.getValue());
+  EXPECT_TRUE(name != nullptr);
+  EXPECT_EQ("foo.exe", name->getOutputPath());
+  EXPECT_EQ(4096U, name->getBaseAddress());
+}

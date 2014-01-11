@@ -48,9 +48,11 @@ Token Lexer::lex() {
         "0123456789_.*~+!@#$%^&*()/");
     StringRef word = _buffer.substr(0, end);
     Kind kind = llvm::StringSwitch<Kind>(word)
+                    .Case("BASE", Kind::kw_base)
                     .Case("DATA", Kind::kw_data)
                     .Case("EXPORTS", Kind::kw_exports)
                     .Case("HEAPSIZE", Kind::kw_heapsize)
+                    .Case("NAME", Kind::kw_name)
                     .Case("NONAME", Kind::kw_noname)
                     .Default(Kind::identifier);
     _buffer = (end == _buffer.npos) ? "" : _buffer.drop_front(end);
@@ -82,6 +84,15 @@ bool Parser::consumeTokenAsInt(uint64_t &result) {
   return true;
 }
 
+bool Parser::expectAndConsume(Kind kind, Twine msg) {
+  consumeToken();
+  if (_tok._kind != kind) {
+    error(_tok, msg);
+    return false;
+  }
+  return true;
+}
+
 void Parser::ungetToken() { _tokBuf.push_back(_tok); }
 
 void Parser::error(const Token &tok, Twine msg) {
@@ -92,6 +103,7 @@ void Parser::error(const Token &tok, Twine msg) {
 
 llvm::Optional<Directive *> Parser::parse() {
   consumeToken();
+  // EXPORTS
   if (_tok._kind == Kind::kw_exports) {
     std::vector<PECOFFLinkingContext::ExportDesc> exports;
     for (;;) {
@@ -102,11 +114,20 @@ llvm::Optional<Directive *> Parser::parse() {
     }
     return new (_alloc) Exports(exports);
   }
+  // HEAPSIZE
   if (_tok._kind == Kind::kw_heapsize) {
     uint64_t reserve, commit;
     if (!parseHeapsize(reserve, commit))
       return llvm::None;
     return new (_alloc) Heapsize(reserve, commit);
+  }
+  // NAME
+  if (_tok._kind == Kind::kw_name) {
+    std::string outputPath;
+    uint64_t baseaddr;
+    if (!parseName(outputPath, baseaddr))
+      return llvm::None;
+    return new (_alloc) Name(outputPath, baseaddr);
   }
   error(_tok, Twine("Unknown directive: ") + _tok._range);
   return llvm::None;
@@ -141,6 +162,7 @@ bool Parser::parseExport(PECOFFLinkingContext::ExportDesc &result) {
   }
 }
 
+// HEAPSIZE reserve [, commit]
 bool Parser::parseHeapsize(uint64_t &reserve, uint64_t &commit) {
   if (!consumeTokenAsInt(reserve))
     return false;
@@ -154,6 +176,26 @@ bool Parser::parseHeapsize(uint64_t &reserve, uint64_t &commit) {
 
   if (!consumeTokenAsInt(commit))
     return false;
+  return true;
+}
+
+// NAME [outputPath] [BASE=address]
+bool Parser::parseName(std::string &outputPath, uint64_t &baseaddr) {
+  consumeToken();
+  if (_tok._kind == Kind::identifier) {
+    outputPath = _tok._range;
+    consumeToken();
+  } else {
+    outputPath = "";
+  }
+  if (_tok._kind == Kind::kw_base) {
+    if (!expectAndConsume(Kind::equal, "'=' expected"))
+      return false;
+    if (!consumeTokenAsInt(baseaddr))
+      return false;
+  } else {
+    baseaddr = 0;
+  }
   return true;
 }
 

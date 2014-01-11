@@ -29,9 +29,11 @@ enum class Kind {
   identifier,
   comma,
   equal,
+  kw_base,
   kw_data,
   kw_exports,
   kw_heapsize,
+  kw_name,
   kw_noname,
 };
 
@@ -60,7 +62,7 @@ private:
 
 class Directive {
 public:
-  enum class Kind { exports, heapsize };
+  enum class Kind { exports, heapsize, name };
 
   Kind getKind() const { return _kind; }
   virtual ~Directive() {}
@@ -106,6 +108,23 @@ private:
   const uint64_t _commit;
 };
 
+class Name : public Directive {
+public:
+  explicit Name(StringRef outputPath, uint64_t baseaddr)
+      : Directive(Kind::name), _outputPath(outputPath), _baseaddr(baseaddr) {}
+
+  static bool classof(const Directive *dir) {
+    return dir->getKind() == Kind::name;
+  }
+
+  StringRef getOutputPath() const { return _outputPath; }
+  uint64_t getBaseAddress() const { return _baseaddr; }
+
+private:
+  const std::string _outputPath;
+  const uint64_t _baseaddr;
+};
+
 class Parser {
 public:
   explicit Parser(Lexer &lex, llvm::BumpPtrAllocator &alloc)
@@ -116,11 +135,14 @@ public:
 private:
   void consumeToken();
   bool consumeTokenAsInt(uint64_t &result);
+  bool expectAndConsume(Kind kind, Twine msg);
+
   void ungetToken();
   void error(const Token &tok, Twine msg);
 
   bool parseExport(PECOFFLinkingContext::ExportDesc &result);
   bool parseHeapsize(uint64_t &reserve, uint64_t &commit);
+  bool parseName(std::string &outfile, uint64_t &baseaddr);
 
   Lexer &_lex;
   llvm::BumpPtrAllocator &_alloc;
