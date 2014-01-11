@@ -234,17 +234,18 @@ X86RegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
 
 const uint16_t *
 X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
+  bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
+  bool HasAVX512 = TM.getSubtarget<X86Subtarget>().hasAVX512();
+
   switch (MF->getFunction()->getCallingConv()) {
   case CallingConv::GHC:
   case CallingConv::HiPE:
     return CSR_NoRegs_SaveList;
-
   case CallingConv::AnyReg:
-    return CSR_AllRegs_64_SaveList;
-
+    if (HasAVX)
+      return CSR_64_AllRegs_AVX_SaveList;
+    return CSR_64_AllRegs_SaveList;
   case CallingConv::Intel_OCL_BI: {
-    bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
-    bool HasAVX512 = TM.getSubtarget<X86Subtarget>().hasAVX512();
     if (HasAVX512 && IsWin64)
       return CSR_Win64_Intel_OCL_BI_AVX512_SaveList;
     if (HasAVX512 && Is64Bit)
@@ -257,12 +258,10 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
       return CSR_64_Intel_OCL_BI_SaveList;
     break;
   }
-
   case CallingConv::Cold:
     if (Is64Bit)
-      return CSR_MostRegs_64_SaveList;
+      return CSR_64_MostRegs_SaveList;
     break;
-
   default:
     break;
   }
@@ -285,7 +284,15 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
   bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
   bool HasAVX512 = TM.getSubtarget<X86Subtarget>().hasAVX512();
 
-  if (CC == CallingConv::Intel_OCL_BI) {
+  switch (CC) {
+  case CallingConv::GHC:
+  case CallingConv::HiPE:
+    return CSR_NoRegs_RegMask;
+  case CallingConv::AnyReg:
+    if (HasAVX)
+      return CSR_64_AllRegs_AVX_RegMask;
+    return CSR_64_AllRegs_RegMask;
+  case CallingConv::Intel_OCL_BI: {
     if (IsWin64 && HasAVX512)
       return CSR_Win64_Intel_OCL_BI_AVX512_RegMask;
     if (Is64Bit && HasAVX512)
@@ -297,17 +304,20 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
     if (!HasAVX && !IsWin64 && Is64Bit)
       return CSR_64_Intel_OCL_BI_RegMask;
   }
-  if (CC == CallingConv::GHC || CC == CallingConv::HiPE)
-    return CSR_NoRegs_RegMask;
-  if (CC == CallingConv::AnyReg)
-    return CSR_AllRegs_64_RegMask;
-  if (!Is64Bit)
-    return CSR_32_RegMask;
-  if (CC == CallingConv::Cold)
-    return CSR_MostRegs_64_RegMask;
-  if (IsWin64)
-    return CSR_Win64_RegMask;
-  return CSR_64_RegMask;
+  case CallingConv::Cold:
+    if (Is64Bit)
+      return CSR_64_MostRegs_RegMask;
+    break;
+  default:
+    break;
+  }
+
+  if (Is64Bit) {
+    if (IsWin64)
+      return CSR_Win64_RegMask;
+    return CSR_64_RegMask;
+  }
+  return CSR_32_RegMask;
 }
 
 const uint32_t*
