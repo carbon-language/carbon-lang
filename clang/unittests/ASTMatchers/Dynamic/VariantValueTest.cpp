@@ -117,7 +117,7 @@ TEST(VariantValueTest, Matcher) {
   EXPECT_FALSE(VariantValue(VariantMatcher::SingleMatcher(varDecl()))
                    .getMatcher()
                    .hasTypedMatcher<Stmt>());
-#if !defined(NDEBUG) && GTEST_HAS_DEATH_TEST && !defined(_MSC_VER)
+#if !defined(NDEBUG) && GTEST_HAS_DEATH_TEST
   // Trying to get the wrong matcher fails an assertion in Matcher<T>.  We don't
   // do this test when building with MSVC because its debug C runtime prints the
   // assertion failure message as a wide string, which gtest doesn't understand.
