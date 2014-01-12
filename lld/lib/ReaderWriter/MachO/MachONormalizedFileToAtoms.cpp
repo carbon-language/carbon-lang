@@ -53,19 +53,24 @@ static uint64_t nextSymbolAddress(const NormalizedFile &normalizedFile,
   return closestAddr;
 }
 
+static void processSymbol(const NormalizedFile &normalizedFile, MachOFile &file,
+                          const Symbol &sym, bool copyRefs) {
+  // Mach-O symbol table does have size in it, so need to scan ahead
+  // to find symbol with next highest address.
+  const Section &section = normalizedFile.sections[sym.sect - 1];
+  uint64_t offset = sym.value - section.address;
+  uint64_t size = nextSymbolAddress(normalizedFile, sym) - sym.value;
+  ArrayRef<uint8_t> atomContent = section.content.slice(offset, size);
+  file.addDefinedAtom(sym.name, atomContent, copyRefs);
+}
+
 static ErrorOr<std::unique_ptr<lld::File>>
 normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                         bool copyRefs) {
   std::unique_ptr<MachOFile> file(new MachOFile(path));
 
   for (const Symbol &sym : normalizedFile.globalSymbols) {
-    // Mach-O symbol table does have size in it, so need to scan ahead
-    // to find symbol with next highest address.
-    const Section &section = normalizedFile.sections[sym.sect - 1];
-    uint64_t offset = sym.value - section.address;
-    uint64_t size = nextSymbolAddress(normalizedFile, sym) - sym.value;
-    ArrayRef<uint8_t> atomContent = section.content.slice(offset, size);
-    file->addDefinedAtom(sym.name, atomContent, copyRefs);
+    processSymbol(normalizedFile, *file, sym, copyRefs);
   }
 
   assert(normalizedFile.localSymbols.empty() &&
