@@ -469,9 +469,10 @@ raw_fd_ostream::raw_fd_ostream(int fd, bool shouldClose, bool unbuffered)
   : raw_ostream(unbuffered), FD(fd),
     ShouldClose(shouldClose), Error(false), UseAtomicWrites(false) {
 #ifdef O_BINARY
-  // Setting STDOUT and STDERR to binary mode is necessary in Win32
+  // Setting STDOUT to binary mode is necessary in Win32
   // to avoid undesirable linefeed conversion.
-  if (fd == STDOUT_FILENO || fd == STDERR_FILENO)
+  // Don't touch STDERR, or w*printf() (in assert()) would barf wide chars.
+  if (fd == STDOUT_FILENO)
     setmode(fd, O_BINARY);
 #endif
 
