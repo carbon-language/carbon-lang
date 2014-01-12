@@ -9,10 +9,10 @@ define void @test1(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
 	ret void
 
 ; CHECK-LABEL: test1:
-; CHECK: 	movl	8(%esp), %eax
-; CHECK-NEXT: 	movapd	(%eax), %xmm0
+; CHECK: 	movl	4(%esp), %eax
+; CHECK-NEXT: 	movl	8(%esp), %ecx
+; CHECK-NEXT: 	movapd	(%ecx), %xmm0
 ; CHECK-NEXT: 	movlpd	12(%esp), %xmm0
-; CHECK-NEXT: 	movl	4(%esp), %eax
 ; CHECK-NEXT: 	movapd	%xmm0, (%eax)
 ; CHECK-NEXT: 	ret
 }

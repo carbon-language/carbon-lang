@@ -13,8 +13,8 @@ define i32 @foo(i32 %i, i32* nocapture %c) nounwind uwtable readonly ssp {
 
 bb1:                                     ; preds = %0
 ;CHECK: DEBUG_VALUE: a
-;CHECK-NEXT: 	.loc	1 5 5
-;CHECK-NEXT:	addl
+;CHECK:      .loc	1 5 5
+;CHECK-NEXT: addl
   %gh = add nsw i32 %ab, 2, !dbg !16
   br label %bb2, !dbg !16
 

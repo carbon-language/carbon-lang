@@ -10,14 +10,12 @@ declare void @llvm.va_start(i8*)
 define void @test_simple(i32 %n, ...) {
 ; CHECK-LABEL: test_simple:
 ; CHECK: sub sp, sp, #[[STACKSIZE:[0-9]+]]
-; CHECK: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, #:lo12:var
 ; CHECK: mov x[[FPRBASE:[0-9]+]], sp
 ; CHECK: str q7, [x[[FPRBASE]], #112]
 ; CHECK: add x[[GPRBASE:[0-9]+]], sp, #[[GPRFROMSP:[0-9]+]]
 ; CHECK: str x7, [x[[GPRBASE]], #48]
 
 ; CHECK-NOFP: sub sp, sp, #[[STACKSIZE:[0-9]+]]
-; CHECK-NOFP: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, #:lo12:var
 ; CHECK-NOFP: add x[[GPRBASE:[0-9]+]], sp, #[[GPRFROMSP:[0-9]+]]
 ; CHECK-NOFP: str x7, [x[[GPRBASE]], #48]
 ; CHECK-NOFP-NOT: str q7,
@@ -27,8 +25,10 @@ define void @test_simple(i32 %n, ...) {
 
 ; CHECK: str q0, [sp]
 ; CHECK: str x1, [sp, #[[GPRFROMSP]]]
+; CHECK: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, #:lo12:var
 
 ; CHECK-NOFP-NOT: str q0, [sp]
+; CHECK-NOFP: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, #:lo12:var
 
   %addr = bitcast %va_list* @var to i8*
   call void @llvm.va_start(i8* %addr)

@@ -892,6 +892,7 @@ void SelectionDAGBuilder::clear() {
   PendingExports.clear();
   CurInst = NULL;
   HasTailCall = false;
+  SDNodeOrder = LowestSDNodeOrder;
 }
 
 /// clearDanglingDebugInfo - Clear the dangling debug information

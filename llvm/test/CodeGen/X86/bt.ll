@@ -20,7 +20,7 @@
 define void @test2(i32 %x, i32 %n) nounwind {
 entry:
 ; CHECK: test2
-; CHECK: btl %eax, %ecx
+; CHECK: btl %ecx, %eax
 ; CHECK: jb
 	%tmp29 = lshr i32 %x, %n		; <i32> [#uses=1]
 	%tmp3 = and i32 %tmp29, 1		; <i32> [#uses=1]

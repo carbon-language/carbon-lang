@@ -488,6 +488,10 @@ private:
 private:
   const TargetMachine &TM;
 public:
+  /// Lowest valid SDNodeOrder. The special case 0 is reserved for scheduling
+  /// nodes without a corresponding SDNode.
+  static const unsigned LowestSDNodeOrder = 1;
+
   SelectionDAG &DAG;
   const DataLayout *TD;
   AliasAnalysis *AA;
@@ -534,7 +538,7 @@ public:
 
   SelectionDAGBuilder(SelectionDAG &dag, FunctionLoweringInfo &funcinfo,
                       CodeGenOpt::Level ol)
-    : CurInst(NULL), SDNodeOrder(0), TM(dag.getTarget()),
+    : CurInst(NULL), SDNodeOrder(LowestSDNodeOrder), TM(dag.getTarget()),
       DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
       HasTailCall(false) {
   }

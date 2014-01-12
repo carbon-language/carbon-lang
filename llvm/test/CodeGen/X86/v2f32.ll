@@ -24,9 +24,9 @@ define void @test1(<2 x float> %Q, float *%P2) nounwind {
 ; W64-NEXT: ret
 
 ; X32-LABEL: test1:
+; X32-NEXT: movl	4(%esp), %eax
 ; X32-NEXT: pshufd	$1, %xmm0, %xmm1
 ; X32-NEXT: addss	%xmm0, %xmm1
-; X32-NEXT: movl	4(%esp), %eax
 ; X32-NEXT: movss	%xmm1, (%eax)
 ; X32-NEXT: ret
 }

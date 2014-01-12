@@ -2,9 +2,9 @@
 
 ; CHECK-LABEL: main:
 ; CHECK: pushl %esi
+; CHECK-NEXT: testb $1, 8(%esp)
 ; CHECK-NEXT: movl  $-12, %eax
 ; CHECK-NEXT: movl  $-1, %edx
-; CHECK-NEXT: testb $1, 8(%esp)
 ; CHECK-NEXT: cmovel    %edx, %eax
 ; CHECK-NEXT: xorl  %ecx, %ecx
 ; CHECK-NEXT: movl  %eax, %esi
