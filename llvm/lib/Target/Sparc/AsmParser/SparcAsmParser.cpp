@@ -54,6 +54,8 @@ class SparcAsmParser : public MCTargetAsmParser {
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands);
   bool ParseDirective(AsmToken DirectiveID);
 
+  virtual unsigned validateTargetOperandClass(MCParsedAsmOperand *Op,
+                                              unsigned Kind);
 
   // Custom parse functions for Sparc specific operands.
   OperandMatchResultTy
@@ -67,8 +69,9 @@ class SparcAsmParser : public MCTargetAsmParser {
   parseSparcAsmOperand(SparcOperand *&Operand);
 
   // returns true if Tok is matched to a register and returns register in RegNo.
-  bool matchRegisterName(const AsmToken &Tok, unsigned &RegNo, bool isDFP,
-                         bool isQFP);
+  bool matchRegisterName(const AsmToken &Tok, unsigned &RegNo,
+                         unsigned &RegKind);
+
   bool matchSparcAsmModifiers(const MCExpr *&EVal, SMLoc &EndLoc);
 
 public:
@@ -178,6 +181,16 @@ public:
   bool isMEMrr() const { return Kind == k_MemoryReg; }
   bool isMEMri() const { return Kind == k_MemoryImm; }
 
+  bool isFloatReg() const {
+    return (Kind == k_Register && Reg.Kind == rk_FloatReg);
+  }
+
+  bool isFloatOrDoubleReg() const {
+    return (Kind == k_Register && (Reg.Kind == rk_FloatReg
+                                   || Reg.Kind == rk_DoubleReg));
+  }
+
+
   StringRef getToken() const {
     assert(Kind == k_Token && "Invalid access!");
     return StringRef(Tok.Data, Tok.Length);
@@ -280,11 +293,11 @@ public:
   }
 
   static SparcOperand *CreateReg(unsigned RegNum,
-                                 SparcOperand::RegisterKind Kind,
+                                 unsigned Kind,
                                  SMLoc S, SMLoc E) {
     SparcOperand *Op = new SparcOperand(k_Register);
     Op->Reg.RegNum = RegNum;
-    Op->Reg.Kind   = Kind;
+    Op->Reg.Kind   = (SparcOperand::RegisterKind)Kind;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -295,6 +308,40 @@ public:
     Op->Imm.Val = Val;
     Op->StartLoc = S;
     Op->EndLoc = E;
+    return Op;
+  }
+
+  static SparcOperand *MorphToDoubleReg(SparcOperand *Op) {
+    unsigned Reg = Op->getReg();
+    assert(Op->Reg.Kind == rk_FloatReg);
+    unsigned regIdx = Reg - Sparc::F0;
+    if (regIdx % 2 || regIdx > 31)
+      return 0;
+    Op->Reg.RegNum = DoubleRegs[regIdx / 2];
+    Op->Reg.Kind = rk_DoubleReg;
+    return Op;
+  }
+
+  static SparcOperand *MorphToQuadReg(SparcOperand *Op) {
+    unsigned Reg = Op->getReg();
+    unsigned regIdx = 0;
+    switch (Op->Reg.Kind) {
+    default: assert(0 && "Unexpected register kind!");
+    case rk_FloatReg:
+      regIdx = Reg - Sparc::F0;
+      if (regIdx % 4 || regIdx > 31)
+        return 0;
+      Reg = QuadFPRegs[regIdx / 4];
+      break;
+    case rk_DoubleReg:
+      regIdx =  Reg - Sparc::D0;
+      if (regIdx % 2 || regIdx > 31)
+        return 0;
+      Reg = QuadFPRegs[regIdx / 2];
+      break;
+    }
+    Op->Reg.RegNum  = Reg;
+    Op->Reg.Kind = rk_QuadReg;
     return Op;
   }
 
@@ -383,7 +430,8 @@ ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc)
   if (getLexer().getKind() != AsmToken::Percent)
     return false;
   Parser.Lex();
-  if (matchRegisterName(Tok, RegNo, false, false)) {
+  unsigned regKind = SparcOperand::rk_None;
+  if (matchRegisterName(Tok, RegNo, regKind)) {
     Parser.Lex();
     return false;
   }
@@ -537,13 +585,14 @@ SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op)
   case AsmToken::Percent:
     Parser.Lex(); // Eat the '%'.
     unsigned RegNo;
-    if (matchRegisterName(Parser.getTok(), RegNo, false, false)) {
+    unsigned RegKind;
+    if (matchRegisterName(Parser.getTok(), RegNo, RegKind)) {
       StringRef name = Parser.getTok().getString();
       Parser.Lex(); // Eat the identifier token.
       E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
       switch (RegNo) {
       default:
-        Op = SparcOperand::CreateReg(RegNo, SparcOperand::rk_None, S, E);
+        Op = SparcOperand::CreateReg(RegNo, RegKind, S, E);
         break;
       case Sparc::Y:
         Op = SparcOperand::CreateToken("%y", S);
@@ -593,38 +642,43 @@ SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op)
 
 bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
                                        unsigned &RegNo,
-                                       bool isDFP,
-                                       bool isQFP)
+                                       unsigned &RegKind)
 {
   int64_t intVal = 0;
   RegNo = 0;
+  RegKind = SparcOperand::rk_None;
   if (Tok.is(AsmToken::Identifier)) {
     StringRef name = Tok.getString();
 
     // %fp
     if (name.equals("fp")) {
       RegNo = Sparc::I6;
+      RegKind = SparcOperand::rk_IntReg;
       return true;
     }
     // %sp
     if (name.equals("sp")) {
       RegNo = Sparc::O6;
+      RegKind = SparcOperand::rk_IntReg;
       return true;
     }
 
     if (name.equals("y")) {
       RegNo = Sparc::Y;
+      RegKind = SparcOperand::rk_Y;
       return true;
     }
 
     if (name.equals("icc")) {
       RegNo = Sparc::ICC;
+      RegKind = SparcOperand::rk_CCReg;
       return true;
     }
 
     if (name.equals("xcc")) {
       // FIXME:: check 64bit.
       RegNo = Sparc::ICC;
+      RegKind = SparcOperand::rk_CCReg;
       return true;
     }
 
@@ -634,6 +688,7 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
         && intVal < 4) {
       // FIXME: check 64bit and  handle %fcc1 - %fcc3
       RegNo = Sparc::FCC;
+      RegKind = SparcOperand::rk_CCReg;
       return true;
     }
 
@@ -642,6 +697,7 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
         && !name.substr(1).getAsInteger(10, intVal)
         && intVal < 8) {
       RegNo = IntRegs[intVal];
+      RegKind = SparcOperand::rk_IntReg;
       return true;
     }
     // %o0 - %o7
@@ -649,43 +705,37 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
         && !name.substr(1).getAsInteger(10, intVal)
         && intVal < 8) {
       RegNo = IntRegs[8 + intVal];
+      RegKind = SparcOperand::rk_IntReg;
       return true;
     }
     if (name.substr(0, 1).equals_lower("l")
         && !name.substr(1).getAsInteger(10, intVal)
         && intVal < 8) {
       RegNo = IntRegs[16 + intVal];
+      RegKind = SparcOperand::rk_IntReg;
       return true;
     }
     if (name.substr(0, 1).equals_lower("i")
         && !name.substr(1).getAsInteger(10, intVal)
         && intVal < 8) {
       RegNo = IntRegs[24 + intVal];
+      RegKind = SparcOperand::rk_IntReg;
       return true;
     }
     // %f0 - %f31
     if (name.substr(0, 1).equals_lower("f")
         && !name.substr(1, 2).getAsInteger(10, intVal) && intVal < 32) {
-      if (isDFP && (intVal%2 == 0)) {
-        RegNo = DoubleRegs[intVal/2];
-      } else if (isQFP && (intVal%4 == 0)) {
-        RegNo = QuadFPRegs[intVal/4];
-      } else {
-        RegNo = FloatRegs[intVal];
-      }
+      RegNo = FloatRegs[intVal];
+      RegKind = SparcOperand::rk_FloatReg;
       return true;
     }
     // %f32 - %f62
     if (name.substr(0, 1).equals_lower("f")
         && !name.substr(1, 2).getAsInteger(10, intVal)
         && intVal >= 32 && intVal <= 62 && (intVal % 2 == 0)) {
-      if (isDFP) {
-        RegNo = DoubleRegs[16 + intVal/2];
-      } else if (isQFP && (intVal % 4 == 0)) {
-        RegNo = QuadFPRegs[8 + intVal/4];
-      } else {
-        return false;
-      }
+      // FIXME: Check V9
+      RegNo = DoubleRegs[16 + intVal/2];
+      RegKind = SparcOperand::rk_DoubleReg;
       return true;
     }
 
@@ -693,6 +743,7 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
     if (name.substr(0, 1).equals_lower("r")
         && !name.substr(1, 2).getAsInteger(10, intVal) && intVal < 31) {
       RegNo = IntRegs[intVal];
+      RegKind = SparcOperand::rk_IntReg;
       return true;
     }
   }
@@ -735,3 +786,26 @@ extern "C" void LLVMInitializeSparcAsmParser() {
 #define GET_REGISTER_MATCHER
 #define GET_MATCHER_IMPLEMENTATION
 #include "SparcGenAsmMatcher.inc"
+
+
+
+unsigned SparcAsmParser::
+validateTargetOperandClass(MCParsedAsmOperand *GOp,
+                           unsigned Kind)
+{
+  SparcOperand *Op = (SparcOperand*)GOp;
+  if (Op->isFloatOrDoubleReg()) {
+    switch (Kind) {
+    default: break;
+    case MCK_DFPRegs:
+      if (!Op->isFloatReg() || SparcOperand::MorphToDoubleReg(Op))
+        return MCTargetAsmParser::Match_Success;
+      break;
+    case MCK_QFPRegs:
+      if (SparcOperand::MorphToQuadReg(Op))
+        return MCTargetAsmParser::Match_Success;
+      break;
+    }
+  }
+  return Match_InvalidOperand;
+}

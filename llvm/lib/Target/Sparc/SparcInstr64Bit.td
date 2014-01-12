@@ -358,31 +358,31 @@ def FMOVQ_XCC : F4_3<0b110101, 0b000011, (outs QFPRegs:$rd),
 let Predicates = [Is64Bit] in {
 
 def FXTOS : F3_3u<2, 0b110100, 0b010000100,
-                 (outs FPRegs:$dst), (ins DFPRegs:$src),
-                 "fxtos $src, $dst",
-                 [(set FPRegs:$dst, (SPxtof DFPRegs:$src))]>;
+                 (outs FPRegs:$rd), (ins DFPRegs:$rs2),
+                 "fxtos $rs2, $rd",
+                 [(set FPRegs:$rd, (SPxtof DFPRegs:$rs2))]>;
 def FXTOD : F3_3u<2, 0b110100, 0b010001000,
-                 (outs DFPRegs:$dst), (ins DFPRegs:$src),
-                 "fxtod $src, $dst",
-                 [(set DFPRegs:$dst, (SPxtof DFPRegs:$src))]>;
+                 (outs DFPRegs:$rd), (ins DFPRegs:$rs2),
+                 "fxtod $rs2, $rd",
+                 [(set DFPRegs:$rd, (SPxtof DFPRegs:$rs2))]>;
 def FXTOQ : F3_3u<2, 0b110100, 0b010001100,
-                 (outs QFPRegs:$dst), (ins DFPRegs:$src),
-                 "fxtoq $src, $dst",
-                 [(set QFPRegs:$dst, (SPxtof DFPRegs:$src))]>,
+                 (outs QFPRegs:$rd), (ins DFPRegs:$rs2),
+                 "fxtoq $rs2, $rd",
+                 [(set QFPRegs:$rd, (SPxtof DFPRegs:$rs2))]>,
                  Requires<[HasHardQuad]>;
 
 def FSTOX : F3_3u<2, 0b110100, 0b010000001,
-                 (outs DFPRegs:$dst), (ins FPRegs:$src),
-                 "fstox $src, $dst",
-                 [(set DFPRegs:$dst, (SPftox FPRegs:$src))]>;
+                 (outs DFPRegs:$rd), (ins FPRegs:$rs2),
+                 "fstox $rs2, $rd",
+                 [(set DFPRegs:$rd, (SPftox FPRegs:$rs2))]>;
 def FDTOX : F3_3u<2, 0b110100, 0b010000010,
-                 (outs DFPRegs:$dst), (ins DFPRegs:$src),
-                 "fdtox $src, $dst",
-                 [(set DFPRegs:$dst, (SPftox DFPRegs:$src))]>;
+                 (outs DFPRegs:$rd), (ins DFPRegs:$rs2),
+                 "fdtox $rs2, $rd",
+                 [(set DFPRegs:$rd, (SPftox DFPRegs:$rs2))]>;
 def FQTOX : F3_3u<2, 0b110100, 0b010000011,
-                 (outs DFPRegs:$dst), (ins QFPRegs:$src),
-                 "fqtox $src, $dst",
-                 [(set DFPRegs:$dst, (SPftox QFPRegs:$src))]>,
+                 (outs DFPRegs:$rd), (ins QFPRegs:$rs2),
+                 "fqtox $rs2, $rd",
+                 [(set DFPRegs:$rd, (SPftox QFPRegs:$rs2))]>,
                  Requires<[HasHardQuad]>;
 
 } // Predicates = [Is64Bit]
