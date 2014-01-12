@@ -42,13 +42,6 @@ FunctionPass *createPrintFunctionPass(raw_ostream &OS,
 BasicBlockPass *createPrintBasicBlockPass(raw_ostream &OS,
                                           const std::string &Banner = "");
 
-/// \brief Pass for printing a Module as LLVM's text IR assembly.
-///
-/// NOTE: This pass is for use with the new pass manager. Use the create...Pass
-/// functions above to create passes for use with the legacy pass manager.
-class AOEUPrintModulePass {
-};
-
 } // End llvm namespace
 
 #endif
