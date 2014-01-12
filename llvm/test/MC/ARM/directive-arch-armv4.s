@@ -34,6 +34,5 @@
 	mul r4, r5, r6
 	smull r4, r5, r6, r3
 	umull r4, r5, r6, r3
-	umlal r4, r5, r6, r3
-	umaal r4, r5, r6, r3
 	smlal r4, r5, r6, r3
+	umlal r4, r5, r6, r3
