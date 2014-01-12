@@ -80,7 +80,7 @@ entry:
 ; CHECK: selectf32_xcc
 ; CHECK: cmp %i0, %i1
 ; CHECK: fmovsg %xcc, %f5, %f7
-; CHECK: fmovs %f7, %f1
+; CHECK: fmovs %f7, %f0
 define float @selectf32_xcc(i64 %x, i64 %y, float %a, float %b) {
 entry:
   %tobool = icmp sgt i64 %x, %y

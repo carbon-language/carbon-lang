@@ -21,7 +21,7 @@ entry:
 ; abs44: add %[[R1]], %m44(.LCPI0_0), %[[R2:[gilo][0-7]]]
 ; abs44: sllx %[[R2]], 12, %[[R3:[gilo][0-7]]]
 ; abs44: retl
-; abs44: ld [%[[R3]]+%l44(.LCPI0_0)], %f1
+; abs44: ld [%[[R3]]+%l44(.LCPI0_0)], %f0
 
 
 ; abs64: floatCP
@@ -31,7 +31,7 @@ entry:
 ; abs64: add %[[R3]], %hm(.LCPI0_0), %[[R4:[gilo][0-7]]]
 ; abs64: sllx %[[R4]], 32, %[[R5:[gilo][0-7]]]
 ; abs64: retl
-; abs64: ld [%[[R5]]+%[[R2]]], %f1
+; abs64: ld [%[[R5]]+%[[R2]]], %f0
 
 
 ; v8pic32: floatCP
@@ -50,7 +50,7 @@ entry:
 ; v9pic32: sethi %hi(.LCPI0_0), %[[R1:[gilo][0-7]]]
 ; v9pic32: add %[[R1]], %lo(.LCPI0_0), %[[Goffs:[gilo][0-7]]]
 ; v9pic32: ldx [%[[GOT:[gilo][0-7]]]+%[[Goffs]]], %[[Gaddr:[gilo][0-7]]]
-; v9pic32: ld [%[[Gaddr]]], %f1
+; v9pic32: ld [%[[Gaddr]]], %f0
 ; v9pic32: ret
 ; v9pic32: restore
 

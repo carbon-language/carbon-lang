@@ -254,7 +254,7 @@ SparcTargetLowering::LowerReturn_64(SDValue Chain,
                  DAG.getTarget(), RVLocs, *DAG.getContext());
 
   // Analyze return values.
-  CCInfo.AnalyzeReturn(Outs, CC_Sparc64);
+  CCInfo.AnalyzeReturn(Outs, RetCC_Sparc64);
 
   SDValue Flag;
   SmallVector<SDValue, 4> RetOps(1, Chain);
@@ -1258,7 +1258,7 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
   if (CLI.Ins.size() == 1 && CLI.Ins[0].VT == MVT::f32 && CLI.CS == 0)
     CLI.Ins[0].Flags.setInReg();
 
-  RVInfo.AnalyzeCallResult(CLI.Ins, CC_Sparc64);
+  RVInfo.AnalyzeCallResult(CLI.Ins, RetCC_Sparc64);
 
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {

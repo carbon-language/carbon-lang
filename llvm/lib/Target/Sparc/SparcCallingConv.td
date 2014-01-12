@@ -103,7 +103,7 @@ def RetCC_Sparc32 : CallingConv<[
 // Function return values are passed exactly like function arguments, except a
 // struct up to 32 bytes in size can be returned in registers.
 
-// Function arguments AND return values.
+// Function arguments AND most return values.
 def CC_Sparc64 : CallingConv<[
   // The frontend uses the inreg flag to indicate i32 and float arguments from
   // structs. These arguments are not promoted to 64 bits, but they can still
@@ -116,6 +116,15 @@ def CC_Sparc64 : CallingConv<[
   // Custom assignment is required because stack space is reserved for all
   // arguments whether they are passed in registers or not.
   CCCustom<"CC_Sparc64_Full">
+]>;
+
+def RetCC_Sparc64 : CallingConv<[
+  // A single f32 return value always goes in %f0. The ABI doesn't specify what
+  // happens to multiple f32 return values outside a struct.
+  CCIfType<[f32], CCCustom<"CC_Sparc64_Half">>,
+
+  // Otherwise, return values are passed exactly like arguments.
+  CCDelegateTo<CC_Sparc64>
 ]>;
 
 // Callee-saved registers are handled by the register window mechanism.
