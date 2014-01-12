@@ -227,11 +227,17 @@ raw_ostream &raw_ostream::operator<<(double N) {
   // On MSVCRT and compatible, output of %e is incompatible to Posix
   // by default. Number of exponent digits should be at least 2. "%+03d"
   // FIXME: Implement our formatter to here or Support/Format.h!
+#if __cplusplus >= 201103L && defined(__MINGW32__)
+  // FIXME: It should be generic to C++11.
+  if (N == 0.0 && std::signbit(N))
+    return *this << "-0.000000e+00";
+#else
   int fpcl = _fpclass(N);
 
   // negative zero
   if (fpcl == _FPCLASS_NZ)
     return *this << "-0.000000e+00";
+#endif
 
   char buf[16];
   unsigned len;
