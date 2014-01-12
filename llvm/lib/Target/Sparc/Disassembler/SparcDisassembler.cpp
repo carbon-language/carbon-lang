@@ -104,14 +104,14 @@ static const unsigned DFPRegDecoderTable[] = {
   SP::D14,  SP::D30,  SP::D15,  SP::D31 };
 
 static const unsigned QFPRegDecoderTable[] = {
-  SP::Q0,  SP::Q8,   (unsigned)-1,  (unsigned)-1,
-  SP::Q1,  SP::Q9,   (unsigned)-1,  (unsigned)-1,
-  SP::Q2,  SP::Q10,  (unsigned)-1,  (unsigned)-1,
-  SP::Q3,  SP::Q11,  (unsigned)-1,  (unsigned)-1,
-  SP::Q4,  SP::Q12,  (unsigned)-1,  (unsigned)-1,
-  SP::Q5,  SP::Q13,  (unsigned)-1,  (unsigned)-1,
-  SP::Q6,  SP::Q14,  (unsigned)-1,  (unsigned)-1,
-  SP::Q7,  SP::Q15,  (unsigned)-1,  (unsigned)-1 } ;
+  SP::Q0,  SP::Q8,   ~0U,  ~0U,
+  SP::Q1,  SP::Q9,   ~0U,  ~0U,
+  SP::Q2,  SP::Q10,  ~0U,  ~0U,
+  SP::Q3,  SP::Q11,  ~0U,  ~0U,
+  SP::Q4,  SP::Q12,  ~0U,  ~0U,
+  SP::Q5,  SP::Q13,  ~0U,  ~0U,
+  SP::Q6,  SP::Q14,  ~0U,  ~0U,
+  SP::Q7,  SP::Q15,  ~0U,  ~0U } ;
 
 static DecodeStatus DecodeIntRegsRegisterClass(MCInst &Inst,
                                                unsigned RegNo,
@@ -168,7 +168,7 @@ static DecodeStatus DecodeQFPRegsRegisterClass(MCInst &Inst,
     return MCDisassembler::Fail;
 
   unsigned Reg = QFPRegDecoderTable[RegNo];
-  if (Reg == (unsigned)-1)
+  if (Reg == ~0U)
     return MCDisassembler::Fail;
   Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
