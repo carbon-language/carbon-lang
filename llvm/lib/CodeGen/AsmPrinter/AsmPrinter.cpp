@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -2216,14 +2217,13 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
     if (!MI.isBranch() || MI.isIndirectBranch())
       return false;
 
-    // If we are the operands of one of the branches, this is not
-    // a fall through.
-    for (MachineInstr::mop_iterator OI = MI.operands_begin(),
-           OE = MI.operands_end(); OI != OE; ++OI) {
-      const MachineOperand& OP = *OI;
-      if (OP.isJTI())
+    // If we are the operands of one of the branches, this is not a fall
+    // through. Note that targets with delay slots will usually bundle
+    // terminators with the delay slot instruction.
+    for (ConstMIBundleOperands OP(&MI); OP.isValid(); ++OP) {
+      if (OP->isJTI())
         return false;
-      if (OP.isMBB() && OP.getMBB() == MBB)
+      if (OP->isMBB() && OP->getMBB() == MBB)
         return false;
     }
   }
