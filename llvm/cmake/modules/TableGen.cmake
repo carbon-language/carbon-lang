@@ -33,7 +33,7 @@ macro(tablegen project ofn)
         ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
         ${CMAKE_CURRENT_BINARY_DIR}/${ofn}
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
-    COMMENT ""
+    COMMENT "Updating ${ofn}..."
     )
 
   # `make clean' must remove all those generated files:
