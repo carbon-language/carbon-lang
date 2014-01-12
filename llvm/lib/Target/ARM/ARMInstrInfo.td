@@ -2450,29 +2450,22 @@ def LDRT_POST_REG : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$Rn_wb),
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
-class LDRTImmediate<bit has_offset, string args, dag iops>
-  : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$Rn_wb), iops,
+def LDRT_POST_IMM
+  : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+               (ins addr_offset_none:$addr, am2offset_imm:$offset),
                IndexModePost, LdFrm, IIC_iLoad_ru,
-               "ldrt", args, "$addr.base = $Rn_wb", []> {
+               "ldrt", "\t$Rt, $addr, $offset", "$addr.base = $Rn_wb", []> {
   // {12}     isAdd
   // {11-0}   imm12/Rm
   bits<14> offset;
   bits<4> addr;
   let Inst{25} = 0;
-  let Inst{23} = !if(has_offset, offset{12}, 1);
+  let Inst{23} = offset{12};
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr;
-  let Inst{11-0} = !if(has_offset, offset{11-0}, 0);
-}
-
-def LDRT_POST_IMM
-  : LDRTImmediate<1, "\t$Rt, $addr, $offset",
-                  (ins addr_offset_none:$addr, am2offset_imm:$offset)> {
+  let Inst{11-0} = offset{11-0};
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
-
-def LDRT_POST_IMM_0
-  : LDRTImmediate<0, "\t$Rt, $addr", (ins addr_offset_none:$addr)>;
 
 def LDRBT_POST_REG : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
                      (ins addr_offset_none:$addr, am2offset_reg:$offset),
@@ -2493,29 +2486,22 @@ def LDRBT_POST_REG : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
-class LDRBTImmediate<bit has_offset, string args, dag iops>
-  : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb), iops,
-                    IndexModePost, LdFrm, IIC_iLoad_bh_ru,
-                    "ldrbt", args, "$addr.base = $Rn_wb", []> {
+def LDRBT_POST_IMM
+  : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+               (ins addr_offset_none:$addr, am2offset_imm:$offset),
+               IndexModePost, LdFrm, IIC_iLoad_bh_ru,
+               "ldrbt", "\t$Rt, $addr, $offset", "$addr.base = $Rn_wb", []> {
   // {12}     isAdd
   // {11-0}   imm12/Rm
   bits<14> offset;
   bits<4> addr;
   let Inst{25} = 0;
-  let Inst{23} = !if(has_offset, offset{12}, 1);
+  let Inst{23} = offset{12};
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr;
-  let Inst{11-0} = !if(has_offset, offset{11-0}, 0);
-}
-
-def LDRBT_POST_IMM
-  : LDRBTImmediate<1, "\t$Rt, $addr, $offset",
-                   (ins addr_offset_none:$addr, am2offset_imm:$offset)> {
+  let Inst{11-0} = offset{11-0};
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
-
-def LDRBT_POST_IMM_0
-  : LDRBTImmediate<0, "\t$Rt, $addr", (ins addr_offset_none:$addr)>;
 
 multiclass AI3ldrT<bits<4> op, string opc> {
   def i : AI3ldstidxT<op, 1, (outs GPR:$Rt, GPR:$base_wb),
@@ -2546,6 +2532,14 @@ defm LDRSBT : AI3ldrT<0b1101, "ldrsbt">;
 defm LDRHT  : AI3ldrT<0b1011, "ldrht">;
 defm LDRSHT : AI3ldrT<0b1111, "ldrsht">;
 }
+
+def LDRT_POST
+  : ARMAsmPseudo<"ldrt${q} $Rt, $addr", (ins addr_offset_none:$addr, pred:$q),
+                 (outs GPR:$Rt)>;
+
+def LDRBT_POST
+  : ARMAsmPseudo<"ldrbt${q} $Rt, $addr", (ins addr_offset_none:$addr, pred:$q),
+                 (outs GPR:$Rt)>;
 
 // Store
 
@@ -2777,29 +2771,26 @@ def STRBT_POST_REG : AI2ldstidx<0, 1, 0, (outs GPR:$Rn_wb),
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
-class STRBTImmediate<bit has_offset, string args, dag iops>
-  : AI2ldstidx<0, 1, 0, (outs GPR:$Rn_wb), iops, IndexModePost, StFrm,
-               IIC_iStore_bh_ru, "strbt", args, "$addr.base = $Rn_wb", []> {
+def STRBT_POST_IMM
+  : AI2ldstidx<0, 1, 0, (outs GPR:$Rn_wb),
+               (ins GPR:$Rt, addr_offset_none:$addr, am2offset_imm:$offset),
+               IndexModePost, StFrm, IIC_iStore_bh_ru,
+               "strbt", "\t$Rt, $addr, $offset", "$addr.base = $Rn_wb", []> {
   // {12}     isAdd
   // {11-0}   imm12/Rm
   bits<14> offset;
   bits<4> addr;
   let Inst{25} = 0;
-  let Inst{23} = !if(has_offset, offset{12}, 1);
+  let Inst{23} = offset{12};
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr;
-  let Inst{11-0} = !if(has_offset, offset{11-0}, 0);
-}
-
-def STRBT_POST_IMM
-  : STRBTImmediate<1, "\t$Rt, $addr, $offset",
-                 (ins GPR:$Rt, addr_offset_none:$addr, am2offset_imm:$offset)> {
+  let Inst{11-0} = offset{11-0};
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
-
-def STRBT_POST_IMM_0
-  : STRBTImmediate<0, "\t$Rt, $addr", (ins GPR:$Rt, addr_offset_none:$addr)>;
+def STRBT_POST
+  : ARMAsmPseudo<"strbt${q} $Rt, $addr",
+                 (ins GPR:$Rt, addr_offset_none:$addr, pred:$q)>;
 
 let mayStore = 1, neverHasSideEffects = 1 in {
 def STRT_POST_REG : AI2ldstidx<0, 0, 0, (outs GPR:$Rn_wb),
@@ -2821,30 +2812,27 @@ def STRT_POST_REG : AI2ldstidx<0, 0, 0, (outs GPR:$Rn_wb),
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
-class STRTImmediate<bit has_offset, string args, dag iops>
-  : AI2ldstidx<0, 0, 0, (outs GPR:$Rn_wb), iops, IndexModePost, StFrm,
-               IIC_iStore_ru, "strt", args, "$addr.base = $Rn_wb", []> {
+def STRT_POST_IMM
+  : AI2ldstidx<0, 0, 0, (outs GPR:$Rn_wb),
+               (ins GPR:$Rt, addr_offset_none:$addr, am2offset_imm:$offset),
+               IndexModePost, StFrm, IIC_iStore_ru,
+               "strt", "\t$Rt, $addr, $offset", "$addr.base = $Rn_wb", []> {
   // {12}     isAdd
   // {11-0}   imm12/Rm
   bits<14> offset;
   bits<4> addr;
   let Inst{25} = 0;
-  let Inst{23} = !if(has_offset, offset{12}, 1);
+  let Inst{23} = offset{12};
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr;
-  let Inst{11-0} = !if(has_offset, offset{11-0}, 0);
-}
-
-def STRT_POST_IMM
-  : STRTImmediate<1, "\t$Rt, $addr, $offset",
-                 (ins GPR:$Rt, addr_offset_none:$addr, am2offset_imm:$offset)> {
+  let Inst{11-0} = offset{11-0};
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
-
-def STRT_POST_IMM_0
-  : STRTImmediate<0, "\t$Rt, $addr", (ins GPR:$Rt, addr_offset_none:$addr)>;
 }
 
+def STRT_POST
+  : ARMAsmPseudo<"strt${q} $Rt, $addr",
+                 (ins GPR:$Rt, addr_offset_none:$addr, pred:$q)>;
 
 multiclass AI3strT<bits<4> op, string opc> {
   def i : AI3ldstidxT<op, 0, (outs GPR:$base_wb),

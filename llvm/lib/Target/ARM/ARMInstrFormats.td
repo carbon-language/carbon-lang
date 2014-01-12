@@ -329,10 +329,10 @@ class InstThumb<AddrMode am, int sz, IndexMode im,
 // Pseudo-instructions for alternate assembly syntax (never used by codegen).
 // These are aliases that require C++ handling to convert to the target
 // instruction, while InstAliases can be handled directly by tblgen.
-class AsmPseudoInst<string asm, dag iops>
+class AsmPseudoInst<string asm, dag iops, dag oops = (outs)>
   : InstTemplate<AddrModeNone, 0, IndexModeNone, Pseudo, GenericDomain,
                  "", NoItinerary> {
-  let OutOperandList = (outs);
+  let OutOperandList = oops;
   let InOperandList = iops;
   let Pattern = [];
   let isCodeGenOnly = 0; // So we get asm matcher for it.
@@ -340,16 +340,16 @@ class AsmPseudoInst<string asm, dag iops>
   let isPseudo = 1;
 }
 
-class ARMAsmPseudo<string asm, dag iops> : AsmPseudoInst<asm, iops>,
-        Requires<[IsARM]>;
-class tAsmPseudo<string asm, dag iops> : AsmPseudoInst<asm, iops>,
-        Requires<[IsThumb]>;
-class t2AsmPseudo<string asm, dag iops> : AsmPseudoInst<asm, iops>,
-        Requires<[IsThumb2]>;
-class VFP2AsmPseudo<string asm, dag iops> : AsmPseudoInst<asm, iops>,
-        Requires<[HasVFP2]>;
-class NEONAsmPseudo<string asm, dag iops> : AsmPseudoInst<asm, iops>,
-        Requires<[HasNEON]>;
+class ARMAsmPseudo<string asm, dag iops, dag oops = (outs)>
+  : AsmPseudoInst<asm, iops, oops>, Requires<[IsARM]>;
+class tAsmPseudo<string asm, dag iops, dag oops = (outs)>
+  : AsmPseudoInst<asm, iops, oops>, Requires<[IsThumb]>;
+class t2AsmPseudo<string asm, dag iops, dag oops = (outs)>
+  : AsmPseudoInst<asm, iops, oops>, Requires<[IsThumb2]>;
+class VFP2AsmPseudo<string asm, dag iops, dag oops = (outs)>
+  : AsmPseudoInst<asm, iops, oops>, Requires<[HasVFP2]>;
+class NEONAsmPseudo<string asm, dag iops, dag oops = (outs)>
+  : AsmPseudoInst<asm, iops, oops>, Requires<[HasNEON]>;
 
 // Pseudo instructions for the code generator.
 class PseudoInst<dag oops, dag iops, InstrItinClass itin, list<dag> pattern>
