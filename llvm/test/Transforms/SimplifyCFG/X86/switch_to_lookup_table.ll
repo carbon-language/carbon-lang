@@ -806,3 +806,53 @@ return:
 ; CHECK-NOT: @switch.table
 ; CHECK: switch i32 %c
 }
+
+; If we can build a lookup table without any holes, we don't need a default result.
+declare void @exit(i32)
+define i32 @nodefaultnoholes(i32 %c) {
+entry:
+  switch i32 %c, label %sw.default [
+    i32 0, label %return
+    i32 1, label %sw.bb1
+    i32 2, label %sw.bb2
+    i32 3, label %sw.bb3
+  ]
+
+sw.bb1: br label %return
+sw.bb2: br label %return
+sw.bb3: br label %return
+sw.default: call void @exit(i32 1)
+            unreachable
+return:
+  %x = phi i32 [ -1, %sw.bb3 ], [ 0, %sw.bb2 ], [ 123, %sw.bb1 ], [ 55, %entry ]
+  ret i32 %x
+
+; CHECK-LABEL: @nodefaultnoholes(
+; CHECK: @switch.table
+; CHECK-NOT: switch i32
+}
+
+; This lookup table will have holes, so we cannot build it without default result.
+define i32 @nodefaultwithholes(i32 %c) {
+entry:
+  switch i32 %c, label %sw.default [
+    i32 0, label %return
+    i32 1, label %sw.bb1
+    i32 2, label %sw.bb2
+    i32 3, label %sw.bb3
+    i32 5, label %sw.bb3
+  ]
+
+sw.bb1: br label %return
+sw.bb2: br label %return
+sw.bb3: br label %return
+sw.default: call void @exit(i32 1)
+            unreachable
+return:
+  %x = phi i32 [ -1, %sw.bb3 ], [ 0, %sw.bb2 ], [ 123, %sw.bb1 ], [ 55, %entry ]
+  ret i32 %x
+
+; CHECK-LABEL: @nodefaultwithholes(
+; CHECK-NOT: @switch.table
+; CHECK: switch i32
+}
