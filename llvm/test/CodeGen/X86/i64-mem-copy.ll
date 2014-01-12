@@ -3,7 +3,7 @@
 ; X64: movq ({{%rsi|%rdx}}), %r
 
 ; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s -check-prefix=X32
-; X32: movsd (%ecx), %xmm
+; X32: movsd ({{%ecx|%eax}}), %xmm
 
 ; Uses movsd to load / store i64 values if sse2 is available.
 
