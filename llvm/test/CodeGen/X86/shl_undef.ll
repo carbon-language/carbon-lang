@@ -1,4 +1,4 @@
-; RUN: llc < %s -O1 -mtriple=i386-apple-darwin | FileCheck %s
+; RUN: llc < %s -O1 -mtriple=i386-apple-darwin -x86-asm-syntax=intel | FileCheck %s
 ;
 ; Interesting test case where %tmp1220 = xor i32 %tmp862, %tmp592 and
 ; %tmp1676 = xor i32 %tmp1634, %tmp1530 have zero demanded bits after
@@ -9,6 +9,8 @@
 ;
 ; See rdar://9453156 and rdar://9487392.
 ;
+
+; Use intel syntax, or "shl" might hit "pushl".
 
 ; CHECK-NOT: shl
 define i32 @foo(i8* %a0, i32* %a2) nounwind {
