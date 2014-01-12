@@ -5362,6 +5362,11 @@ SparcV9ABIInfo::classifyType(QualType Ty, unsigned SizeLimit) const {
   if (!isAggregateTypeForABI(Ty))
     return ABIArgInfo::getDirect();
 
+  // If a C++ object has either a non-trivial copy constructor or a non-trivial
+  // destructor, it is passed with an explicit indirect pointer / sret pointer.
+  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI()))
+    return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
+
   // This is a small aggregate type that should be passed in registers.
   // Build a coercion type from the LLVM struct type.
   llvm::StructType *StrTy = dyn_cast<llvm::StructType>(CGT.ConvertType(Ty));
