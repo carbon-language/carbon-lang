@@ -66,7 +66,17 @@
 // CHECK-SPARCV9: as
 // CHECK-SPARCV9: -64
 // CHECK-SPARCV9: -Av9a
+// CHECK-SPARCV9-NOT: -KPIC
 // CHECK-SPARCV9: -o
+//
+// RUN: %clang -target sparc64-linux -mcpu=invalid-cpu -### \
+// RUN:   -no-integrated-as -fpic -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-SPARCV9PIC %s
+// CHECK-SPARCV9PIC: as
+// CHECK-SPARCV9PIC: -64
+// CHECK-SPARCV9PIC: -Av9a
+// CHECK-SPARCV9PIC: -KPIC
+// CHECK-SPARCV9PIC: -o
 //
 // RUN: %clang -target sparc-linux -mcpu=invalid-cpu -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \

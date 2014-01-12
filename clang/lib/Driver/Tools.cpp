@@ -6270,6 +6270,7 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                       const ArgList &Args,
                                       const char *LinkingOutput) const {
   ArgStringList CmdArgs;
+  bool NeedsKPIC = false;
 
   // Add --32/--64 to make sure we get the format we want.
   // This is incomplete
@@ -6292,9 +6293,11 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   } else if (getToolChain().getArch() == llvm::Triple::sparc) {
     CmdArgs.push_back("-32");
     CmdArgs.push_back("-Av8plusa");
+    NeedsKPIC = true;
   } else if (getToolChain().getArch() == llvm::Triple::sparcv9) {
     CmdArgs.push_back("-64");
     CmdArgs.push_back("-Av9a");
+    NeedsKPIC = true;
   } else if (getToolChain().getArch() == llvm::Triple::arm) {
     StringRef MArch = getToolChain().getArchName();
     if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
@@ -6357,6 +6360,15 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back(Args.MakeArgString("-mmsa"));
     }
 
+    NeedsKPIC = true;
+  } else if (getToolChain().getArch() == llvm::Triple::systemz) {
+    // Always pass an -march option, since our default of z10 is later
+    // than the GNU assembler's default.
+    StringRef CPUName = getSystemZTargetCPU(Args);
+    CmdArgs.push_back(Args.MakeArgString("-march=" + CPUName));
+  }
+
+  if (NeedsKPIC) {
     Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
                                       options::OPT_fpic, options::OPT_fno_pic,
                                       options::OPT_fPIE, options::OPT_fno_PIE,
@@ -6368,11 +6380,6 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
          LastPICArg->getOption().matches(options::OPT_fpie))) {
       CmdArgs.push_back("-KPIC");
     }
-  } else if (getToolChain().getArch() == llvm::Triple::systemz) {
-    // Always pass an -march option, since our default of z10 is later
-    // than the GNU assembler's default.
-    StringRef CPUName = getSystemZTargetCPU(Args);
-    CmdArgs.push_back(Args.MakeArgString("-march=" + CPUName));
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
