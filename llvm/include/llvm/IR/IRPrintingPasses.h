@@ -19,12 +19,16 @@
 #ifndef LLVM_IR_PRINTMODULEPASS_H
 #define LLVM_IR_PRINTMODULEPASS_H
 
+#include "llvm/ADT/StringRef.h"
 #include <string>
 
 namespace llvm {
-class FunctionPass;
-class ModulePass;
 class BasicBlockPass;
+class Function;
+class FunctionPass;
+class Module;
+class ModulePass;
+class PreservedAnalyses;
 class raw_ostream;
 
 /// \brief Create and return a pass that writes the module to the specified
@@ -41,6 +45,40 @@ FunctionPass *createPrintFunctionPass(raw_ostream &OS,
 /// \c raw_ostream.
 BasicBlockPass *createPrintBasicBlockPass(raw_ostream &OS,
                                           const std::string &Banner = "");
+
+/// \brief Pass for printing a Module as LLVM's text IR assembly.
+///
+/// Note: This pass is for use with the new pass manager. Use the create...Pass
+/// functions above to create passes for use with the legacy pass manager.
+class PrintModulePass {
+  raw_ostream &OS;
+  std::string Banner;
+
+public:
+  PrintModulePass();
+  PrintModulePass(raw_ostream &OS, const std::string &Banner = "");
+
+  PreservedAnalyses run(Module *M);
+
+  static StringRef name() { return "PrintModulePass"; }
+};
+
+/// \brief Pass for printing a Function as LLVM's text IR assembly.
+///
+/// Note: This pass is for use with the new pass manager. Use the create...Pass
+/// functions above to create passes for use with the legacy pass manager.
+class PrintFunctionPass {
+  raw_ostream &OS;
+  std::string Banner;
+
+public:
+  PrintFunctionPass();
+  PrintFunctionPass(raw_ostream &OS, const std::string &Banner = "");
+
+  PreservedAnalyses run(Function *F);
+
+  static StringRef name() { return "PrintFunctionPass"; }
+};
 
 } // End llvm namespace
 

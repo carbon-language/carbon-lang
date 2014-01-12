@@ -14,25 +14,43 @@
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+PrintModulePass::PrintModulePass() : OS(dbgs()) {}
+PrintModulePass::PrintModulePass(raw_ostream &OS, const std::string &Banner)
+    : OS(OS), Banner(Banner) {}
+
+PreservedAnalyses PrintModulePass::run(Module *M) {
+  OS << Banner << *M;
+  return PreservedAnalyses::all();
+}
+
+PrintFunctionPass::PrintFunctionPass() : OS(dbgs()) {}
+PrintFunctionPass::PrintFunctionPass(raw_ostream &OS, const std::string &Banner)
+    : OS(OS), Banner(Banner) {}
+
+PreservedAnalyses PrintFunctionPass::run(Function *F) {
+  OS << Banner << static_cast<Value &>(*F);
+  return PreservedAnalyses::all();
+}
+
 namespace {
 
-class PrintModulePass : public ModulePass {
-  raw_ostream &Out;
-  std::string Banner;
+class PrintModulePassWrapper : public ModulePass {
+  PrintModulePass P;
 
 public:
   static char ID;
-  PrintModulePass() : ModulePass(ID), Out(dbgs()) {}
-  PrintModulePass(raw_ostream &Out, const std::string &Banner)
-      : ModulePass(ID), Out(Out), Banner(Banner) {}
+  PrintModulePassWrapper() : ModulePass(ID) {}
+  PrintModulePassWrapper(raw_ostream &OS, const std::string &Banner)
+      : ModulePass(ID), P(OS, Banner) {}
 
   bool runOnModule(Module &M) {
-    Out << Banner << M;
+    P.run(&M);
     return false;
   }
 
@@ -41,19 +59,18 @@ public:
   }
 };
 
-class PrintFunctionPass : public FunctionPass {
-  raw_ostream &Out;
-  std::string Banner;
+class PrintFunctionPassWrapper : public FunctionPass {
+  PrintFunctionPass P;
 
 public:
   static char ID;
-  PrintFunctionPass() : FunctionPass(ID), Out(dbgs()) {}
-  PrintFunctionPass(raw_ostream &Out, const std::string &Banner)
-      : FunctionPass(ID), Out(Out), Banner(Banner) {}
+  PrintFunctionPassWrapper() : FunctionPass(ID) {}
+  PrintFunctionPassWrapper(raw_ostream &OS, const std::string &Banner)
+      : FunctionPass(ID), P(OS, Banner) {}
 
   // This pass just prints a banner followed by the function as it's processed.
   bool runOnFunction(Function &F) {
-    Out << Banner << static_cast<Value &>(F);
+    P.run(&F);
     return false;
   }
 
@@ -84,24 +101,24 @@ public:
 
 }
 
-char PrintModulePass::ID = 0;
-INITIALIZE_PASS(PrintModulePass, "print-module", "Print module to stderr",
-                false, false)
-char PrintFunctionPass::ID = 0;
-INITIALIZE_PASS(PrintFunctionPass, "print-function", "Print function to stderr",
-                false, false)
+char PrintModulePassWrapper::ID = 0;
+INITIALIZE_PASS(PrintModulePassWrapper, "print-module",
+                "Print module to stderr", false, false)
+char PrintFunctionPassWrapper::ID = 0;
+INITIALIZE_PASS(PrintFunctionPassWrapper, "print-function",
+                "Print function to stderr", false, false)
 char PrintBasicBlockPass::ID = 0;
 INITIALIZE_PASS(PrintBasicBlockPass, "print-bb", "Print BB to stderr", false,
                 false)
 
 ModulePass *llvm::createPrintModulePass(llvm::raw_ostream &OS,
                                         const std::string &Banner) {
-  return new PrintModulePass(OS, Banner);
+  return new PrintModulePassWrapper(OS, Banner);
 }
 
 FunctionPass *llvm::createPrintFunctionPass(llvm::raw_ostream &OS,
                                             const std::string &Banner) {
-  return new PrintFunctionPass(OS, Banner);
+  return new PrintFunctionPassWrapper(OS, Banner);
 }
 
 BasicBlockPass *llvm::createPrintBasicBlockPass(llvm::raw_ostream &OS,

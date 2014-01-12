@@ -15,7 +15,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Passes.h"
+#include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
@@ -39,12 +41,14 @@ struct NoOpFunctionPass {
 // under different macros.
 static bool isModulePassName(StringRef Name) {
   if (Name == "no-op-module") return true;
+  if (Name == "print") return true;
 
   return false;
 }
 
 static bool isFunctionPassName(StringRef Name) {
   if (Name == "no-op-function") return true;
+  if (Name == "print") return true;
 
   return false;
 }
@@ -54,12 +58,20 @@ static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
     MPM.addPass(NoOpModulePass());
     return true;
   }
+  if (Name == "print") {
+    MPM.addPass(PrintModulePass(dbgs()));
+    return true;
+  }
   return false;
 }
 
 static bool parseFunctionPassName(FunctionPassManager &FPM, StringRef Name) {
   if (Name == "no-op-function") {
     FPM.addPass(NoOpFunctionPass());
+    return true;
+  }
+  if (Name == "print") {
+    FPM.addPass(PrintFunctionPass(dbgs()));
     return true;
   }
   return false;
