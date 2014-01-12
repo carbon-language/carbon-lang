@@ -113,20 +113,17 @@ char PrintBasicBlockPass::ID = 0;
 INITIALIZE_PASS(PrintBasicBlockPass, "print-bb", "Print BB to stderr", false,
                 false)
 
-ModulePass *llvm::createPrintModulePass(llvm::raw_ostream *OS,
-                                        bool DeleteStream,
+ModulePass *llvm::createPrintModulePass(llvm::raw_ostream &OS,
                                         const std::string &Banner) {
-  return new PrintModulePass(Banner, OS, DeleteStream);
+  return new PrintModulePass(Banner, &OS, false);
 }
 
-FunctionPass *llvm::createPrintFunctionPass(const std::string &Banner,
-                                            llvm::raw_ostream *OS,
-                                            bool DeleteStream) {
-  return new PrintFunctionPass(Banner, OS, DeleteStream);
+FunctionPass *llvm::createPrintFunctionPass(llvm::raw_ostream &OS,
+                                            const std::string &Banner) {
+  return new PrintFunctionPass(Banner, &OS, false);
 }
 
-BasicBlockPass *llvm::createPrintBasicBlockPass(llvm::raw_ostream *OS,
-                                                bool DeleteStream,
+BasicBlockPass *llvm::createPrintBasicBlockPass(llvm::raw_ostream &OS,
                                                 const std::string &Banner) {
-  return new PrintBasicBlockPass(Banner, OS, DeleteStream);
+  return new PrintBasicBlockPass(Banner, &OS, false);
 }

@@ -823,7 +823,7 @@ int main(int argc, char **argv) {
     }
 
     if (PrintEachXForm)
-      Passes.add(createPrintModulePass(&errs()));
+      Passes.add(createPrintModulePass(errs()));
   }
 
   // If -std-compile-opts was specified at the end of the pass list, add them.
@@ -866,7 +866,7 @@ int main(int argc, char **argv) {
   // Write bitcode or assembly to the output as the last step...
   if (!NoOutput && !AnalyzeOnly) {
     if (OutputAssembly)
-      Passes.add(createPrintModulePass(&Out->os()));
+      Passes.add(createPrintModulePass(Out->os()));
     else
       Passes.add(createBitcodeWriterPass(Out->os()));
   }

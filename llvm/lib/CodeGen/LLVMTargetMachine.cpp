@@ -154,7 +154,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     // machine-level pass), and whatever other information is needed to
     // deserialize the code and resume compilation.  For now, just write the
     // LLVM IR.
-    PM.add(createPrintModulePass(&Out));
+    PM.add(createPrintModulePass(Out));
     return false;
   }
 

@@ -389,7 +389,7 @@ void TargetPassConfig::addIRPasses() {
   if (getOptLevel() != CodeGenOpt::None && !DisableLSR) {
     addPass(createLoopStrengthReducePass());
     if (PrintLSR)
-      addPass(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &dbgs()));
+      addPass(createPrintFunctionPass(dbgs(), "\n\n*** Code after LSR ***\n"));
   }
 
   addPass(createGCLoweringPass());
@@ -440,9 +440,8 @@ void TargetPassConfig::addISelPrepare() {
   addPass(createStackProtectorPass(TM));
 
   if (PrintISelInput)
-    addPass(createPrintFunctionPass("\n\n"
-                                    "*** Final LLVM Code input to ISel ***\n",
-                                    &dbgs()));
+    addPass(createPrintFunctionPass(
+        dbgs(), "\n\n*** Final LLVM Code input to ISel ***\n"));
 
   // All passes which modify the LLVM IR are now complete; run the verifier
   // to ensure that the IR is valid.

@@ -235,7 +235,7 @@ public:
 
   /// createPrinterPass - Get a function printer pass.
   Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const {
-    return createPrintFunctionPass(Banner, &O);
+    return createPrintFunctionPass(O, Banner);
   }
 
   // Prepare for running an on the fly pass, freeing memory if needed
@@ -304,7 +304,7 @@ public:
 
   /// createPrinterPass - Get a module printer pass.
   Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const {
-    return createPrintModulePass(&O, false, Banner);
+    return createPrintModulePass(O, Banner);
   }
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of
@@ -404,7 +404,7 @@ public:
 
   /// createPrinterPass - Get a module printer pass.
   Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const {
-    return createPrintModulePass(&O, false, Banner);
+    return createPrintModulePass(O, Banner);
   }
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of

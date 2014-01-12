@@ -29,20 +29,25 @@ class raw_ostream;
 
 /// \brief Create and return a pass that writes the module to the specified
 /// \c raw_ostream.
-ModulePass *createPrintModulePass(raw_ostream *OS, bool DeleteStream = false,
+ModulePass *createPrintModulePass(raw_ostream &OS,
                                   const std::string &Banner = "");
 
 /// \brief Create and return a pass that prints functions to the specified
 /// \c raw_ostream as they are processed.
-FunctionPass *createPrintFunctionPass(const std::string &Banner,
-                                      raw_ostream *OS,
-                                      bool DeleteStream = false);
+FunctionPass *createPrintFunctionPass(raw_ostream &OS,
+                                      const std::string &Banner = "");
 
 /// \brief Create and return a pass that writes the BB to the specified
 /// \c raw_ostream.
-BasicBlockPass *createPrintBasicBlockPass(raw_ostream *OS,
-                                          bool DeleteStream = false,
+BasicBlockPass *createPrintBasicBlockPass(raw_ostream &OS,
                                           const std::string &Banner = "");
+
+/// \brief Pass for printing a Module as LLVM's text IR assembly.
+///
+/// NOTE: This pass is for use with the new pass manager. Use the create...Pass
+/// functions above to create passes for use with the legacy pass manager.
+class AOEUPrintModulePass {
+};
 
 } // End llvm namespace
 
