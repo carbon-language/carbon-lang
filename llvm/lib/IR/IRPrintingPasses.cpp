@@ -22,23 +22,17 @@ using namespace llvm;
 namespace {
 
 class PrintModulePass : public ModulePass {
+  raw_ostream &Out;
   std::string Banner;
-  raw_ostream *Out;
-  bool DeleteStream;
 
 public:
   static char ID;
-  PrintModulePass() : ModulePass(ID), Out(&dbgs()), DeleteStream(false) {}
-  PrintModulePass(const std::string &B, raw_ostream *o, bool DS)
-      : ModulePass(ID), Banner(B), Out(o), DeleteStream(DS) {}
-
-  ~PrintModulePass() {
-    if (DeleteStream)
-      delete Out;
-  }
+  PrintModulePass() : ModulePass(ID), Out(dbgs()) {}
+  PrintModulePass(raw_ostream &Out, const std::string &Banner)
+      : ModulePass(ID), Out(Out), Banner(Banner) {}
 
   bool runOnModule(Module &M) {
-    (*Out) << Banner << M;
+    Out << Banner << M;
     return false;
   }
 
@@ -48,25 +42,18 @@ public:
 };
 
 class PrintFunctionPass : public FunctionPass {
+  raw_ostream &Out;
   std::string Banner;
-  raw_ostream *Out;
-  bool DeleteStream;
 
 public:
   static char ID;
-  PrintFunctionPass()
-      : FunctionPass(ID), Banner(""), Out(&dbgs()), DeleteStream(false) {}
-  PrintFunctionPass(const std::string &B, raw_ostream *o, bool DS)
-      : FunctionPass(ID), Banner(B), Out(o), DeleteStream(DS) {}
-
-  ~PrintFunctionPass() {
-    if (DeleteStream)
-      delete Out;
-  }
+  PrintFunctionPass() : FunctionPass(ID), Out(dbgs()) {}
+  PrintFunctionPass(raw_ostream &Out, const std::string &Banner)
+      : FunctionPass(ID), Out(Out), Banner(Banner) {}
 
   // This pass just prints a banner followed by the function as it's processed.
   bool runOnFunction(Function &F) {
-    (*Out) << Banner << static_cast<Value &>(F);
+    Out << Banner << static_cast<Value &>(F);
     return false;
   }
 
@@ -76,24 +63,17 @@ public:
 };
 
 class PrintBasicBlockPass : public BasicBlockPass {
+  raw_ostream &Out;
   std::string Banner;
-  raw_ostream *Out;
-  bool DeleteStream;
 
 public:
   static char ID;
-  PrintBasicBlockPass()
-      : BasicBlockPass(ID), Out(&dbgs()), DeleteStream(false) {}
-  PrintBasicBlockPass(const std::string &B, raw_ostream *o, bool DS)
-      : BasicBlockPass(ID), Banner(B), Out(o), DeleteStream(DS) {}
-
-  ~PrintBasicBlockPass() {
-    if (DeleteStream)
-      delete Out;
-  }
+  PrintBasicBlockPass() : BasicBlockPass(ID), Out(dbgs()) {}
+  PrintBasicBlockPass(raw_ostream &Out, const std::string &Banner)
+      : BasicBlockPass(ID), Out(Out), Banner(Banner) {}
 
   bool runOnBasicBlock(BasicBlock &BB) {
-    (*Out) << Banner << BB;
+    Out << Banner << BB;
     return false;
   }
 
@@ -101,6 +81,7 @@ public:
     AU.setPreservesAll();
   }
 };
+
 }
 
 char PrintModulePass::ID = 0;
@@ -115,15 +96,15 @@ INITIALIZE_PASS(PrintBasicBlockPass, "print-bb", "Print BB to stderr", false,
 
 ModulePass *llvm::createPrintModulePass(llvm::raw_ostream &OS,
                                         const std::string &Banner) {
-  return new PrintModulePass(Banner, &OS, false);
+  return new PrintModulePass(OS, Banner);
 }
 
 FunctionPass *llvm::createPrintFunctionPass(llvm::raw_ostream &OS,
                                             const std::string &Banner) {
-  return new PrintFunctionPass(Banner, &OS, false);
+  return new PrintFunctionPass(OS, Banner);
 }
 
 BasicBlockPass *llvm::createPrintBasicBlockPass(llvm::raw_ostream &OS,
                                                 const std::string &Banner) {
-  return new PrintBasicBlockPass(Banner, &OS, false);
+  return new PrintBasicBlockPass(OS, Banner);
 }
