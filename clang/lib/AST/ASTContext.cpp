@@ -2822,8 +2822,6 @@ static bool isCanonicalResultType(QualType T) {
           T.getObjCLifetime() == Qualifiers::OCL_ExplicitNone);
 }
 
-/// getFunctionType - Return a normal function type with a typed argument
-/// list.  isVariadic indicates whether the argument list includes '...'.
 QualType
 ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
                             const FunctionProtoType::ExtProtoInfo &EPI) const {
