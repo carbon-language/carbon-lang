@@ -55,6 +55,56 @@
 ; CHECK-MIXED-FP-AND-MP: Running module pass: NoOpModulePass
 ; CHECK-MIXED-FP-AND-MP: Finished module pass manager
 
+; RUN: not opt -disable-output -debug-pass-manager \
+; RUN:     -passes='no-op-module)' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-UNBALANCED1
+; CHECK-UNBALANCED1: unable to parse pass pipeline description
+
+; RUN: not opt -disable-output -debug-pass-manager \
+; RUN:     -passes='module(no-op-module))' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-UNBALANCED2
+; CHECK-UNBALANCED2: unable to parse pass pipeline description
+
+; RUN: not opt -disable-output -debug-pass-manager \
+; RUN:     -passes='module(no-op-module' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-UNBALANCED3
+; CHECK-UNBALANCED3: unable to parse pass pipeline description
+
+; RUN: not opt -disable-output -debug-pass-manager \
+; RUN:     -passes='no-op-function)' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-UNBALANCED4
+; CHECK-UNBALANCED4: unable to parse pass pipeline description
+
+; RUN: not opt -disable-output -debug-pass-manager \
+; RUN:     -passes='function(no-op-function))' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-UNBALANCED5
+; CHECK-UNBALANCED5: unable to parse pass pipeline description
+
+; RUN: not opt -disable-output -debug-pass-manager \
+; RUN:     -passes='function(function(no-op-function)))' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-UNBALANCED6
+; CHECK-UNBALANCED6: unable to parse pass pipeline description
+
+; RUN: not opt -disable-output -debug-pass-manager \
+; RUN:     -passes='function(no-op-function' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-UNBALANCED7
+; CHECK-UNBALANCED7: unable to parse pass pipeline description
+
+; RUN: not opt -disable-output -debug-pass-manager \
+; RUN:     -passes='function(function(no-op-function)' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-UNBALANCED8
+; CHECK-UNBALANCED8: unable to parse pass pipeline description
+
+; RUN: not opt -disable-output -debug-pass-manager \
+; RUN:     -passes='no-op-module,)' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-UNBALANCED9
+; CHECK-UNBALANCED9: unable to parse pass pipeline description
+
+; RUN: not opt -disable-output -debug-pass-manager \
+; RUN:     -passes='no-op-function,)' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-UNBALANCED10
+; CHECK-UNBALANCED10: unable to parse pass pipeline description
+
 define void @f() {
  ret void
 }

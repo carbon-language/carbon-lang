@@ -50,7 +50,6 @@ static bool isFunctionPassName(StringRef Name) {
 }
 
 static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
-  assert(isModulePassName(Name));
   if (Name == "no-op-module") {
     MPM.addPass(NoOpModulePass());
     return true;
@@ -59,7 +58,6 @@ static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
 }
 
 static bool parseFunctionPassName(FunctionPassManager &FPM, StringRef Name) {
-  assert(isFunctionPassName(Name));
   if (Name == "no-op-function") {
     FPM.addPass(NoOpFunctionPass());
     return true;
@@ -76,9 +74,10 @@ static bool parseFunctionPassPipeline(FunctionPassManager &FPM,
 
       // Parse the inner pipeline inte the nested manager.
       PipelineText = PipelineText.substr(strlen("function("));
-      if (!parseFunctionPassPipeline(NestedFPM, PipelineText))
+      if (!parseFunctionPassPipeline(NestedFPM, PipelineText) ||
+          PipelineText.empty())
         return false;
-      assert(!PipelineText.empty() && PipelineText[0] == ')');
+      assert(PipelineText[0] == ')');
       PipelineText = PipelineText.substr(1);
 
       // Add the nested pass manager with the appropriate adaptor.
@@ -109,9 +108,10 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
 
       // Parse the inner pipeline into the nested manager.
       PipelineText = PipelineText.substr(strlen("module("));
-      if (!parseModulePassPipeline(NestedMPM, PipelineText))
+      if (!parseModulePassPipeline(NestedMPM, PipelineText) ||
+          PipelineText.empty())
         return false;
-      assert(!PipelineText.empty() && PipelineText[0] == ')');
+      assert(PipelineText[0] == ')');
       PipelineText = PipelineText.substr(1);
 
       // Now add the nested manager as a module pass.
@@ -121,9 +121,10 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
 
       // Parse the inner pipeline inte the nested manager.
       PipelineText = PipelineText.substr(strlen("function("));
-      if (!parseFunctionPassPipeline(NestedFPM, PipelineText))
+      if (!parseFunctionPassPipeline(NestedFPM, PipelineText) ||
+          PipelineText.empty())
         return false;
-      assert(!PipelineText.empty() && PipelineText[0] == ')');
+      assert(PipelineText[0] == ')');
       PipelineText = PipelineText.substr(1);
 
       // Add the nested pass manager with the appropriate adaptor.
@@ -151,23 +152,24 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
 bool llvm::parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText) {
   // Look at the first entry to figure out which layer to start parsing at.
   if (PipelineText.startswith("module("))
-    return parseModulePassPipeline(MPM, PipelineText);
+    return parseModulePassPipeline(MPM, PipelineText) && PipelineText.empty();
   if (PipelineText.startswith("function(")) {
     FunctionPassManager FPM;
-    if (!parseFunctionPassPipeline(FPM, PipelineText))
+    if (!parseFunctionPassPipeline(FPM, PipelineText) || !PipelineText.empty())
       return false;
     MPM.addPass(createModuleToFunctionPassAdaptor(FPM));
     return true;
   }
 
   // This isn't a direct pass manager name, look for the end of a pass name.
-  StringRef FirstName = PipelineText.substr(0, PipelineText.find_first_of(","));
+  StringRef FirstName =
+      PipelineText.substr(0, PipelineText.find_first_of(",)"));
   if (isModulePassName(FirstName))
-    return parseModulePassPipeline(MPM, PipelineText);
+    return parseModulePassPipeline(MPM, PipelineText) && PipelineText.empty();
 
   if (isFunctionPassName(FirstName)) {
     FunctionPassManager FPM;
-    if (!parseFunctionPassPipeline(FPM, PipelineText))
+    if (!parseFunctionPassPipeline(FPM, PipelineText) || !PipelineText.empty())
       return false;
     MPM.addPass(createModuleToFunctionPassAdaptor(FPM));
     return true;
