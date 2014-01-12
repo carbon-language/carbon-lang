@@ -23,7 +23,7 @@ template<int ...I>  // expected-warning {{variadic templates are incompatible wi
 class Variadic3 {};
 
 alignas(8) int with_alignas; // expected-warning {{'alignas' is incompatible with C++98}}
-int with_attribute [[ ]]; // expected-warning {{attributes are incompatible with C++98}}
+int with_attribute [[ ]]; // expected-warning {{generalized attributes are incompatible with C++98}}
 
 void Literals() {
   (void)u8"str"; // expected-warning {{unicode literals are incompatible with C++98}}
