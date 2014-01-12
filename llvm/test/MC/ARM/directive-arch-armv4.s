@@ -18,7 +18,7 @@
 @ CHECK-OBJ:    Flags [ (0x0)
 @ CHECK-OBJ:    ]
 @ CHECK-OBJ:    Address: 0x0
-@ CHECK-OBJ:    Offset: 0x34
+@ CHECK-OBJ:    Offset: 0x{{[0-9A-F]*}}
 @ CHECK-OBJ:    Size: 23
 @ CHECK-OBJ:    Link: 0
 @ CHECK-OBJ:    Info: 0
@@ -28,3 +28,12 @@
 @ CHECK-OBJ:      0000: 41160000 00616561 62690001 0C000000  |A....aeabi......|
 @ CHECK-OBJ:      0010: 05340006 010801                      |.4.....|
 @ CHECK-OBJ:    )
+
+
+@ Check that multiplication is supported
+	mul r4, r5, r6
+	smull r4, r5, r6, r3
+	umull r4, r5, r6, r3
+	umlal r4, r5, r6, r3
+	umaal r4, r5, r6, r3
+	smlal r4, r5, r6, r3
