@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
-#include "llvm/IR/PrintModulePass.h"
+#include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"

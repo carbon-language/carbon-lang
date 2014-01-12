@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "llvm/IR/PrintModulePass.h"
+#include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/LegacyPassManagers.h"
 #include "llvm/IR/Module.h"

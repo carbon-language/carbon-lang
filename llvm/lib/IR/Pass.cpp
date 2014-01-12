@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Pass.h"
-#include "llvm/IR/PrintModulePass.h"
+#include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/PassRegistry.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/PassNameParser.h"

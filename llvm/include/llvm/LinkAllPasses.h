@@ -28,7 +28,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/PrintModulePass.h"
+#include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/ObjCARC.h"

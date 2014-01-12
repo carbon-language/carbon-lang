@@ -1,4 +1,4 @@
-//===- PrintModulePass.h - IR Printing Passes -------------------*- C++ -*-===//
+//===- IRPrintingPasses.h - Passes to print out IR constructs ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,13 +6,14 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines two passes to print out a module.  The PrintModulePass pass
-// simply prints out the entire module when it is executed.  The
-// PrintFunctionPass class is designed to be pipelined with other
-// FunctionPass's, and prints out the functions of the module as they are
-// processed.
-//
+/// \file
+///
+/// This file defines passes to print out IR in various granularities. The
+/// PrintModulePass pass simply prints out the entire module when it is
+/// executed. The PrintFunctionPass class is designed to be pipelined with
+/// other FunctionPass's, and prints out the functions of the module as they
+/// are processed.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_IR_PRINTMODULEPASS_H
@@ -26,19 +27,19 @@ class ModulePass;
 class BasicBlockPass;
 class raw_ostream;
 
-/// createPrintModulePass - Create and return a pass that writes the
-/// module to the specified raw_ostream.
+/// \brief Create and return a pass that writes the module to the specified
+/// \c raw_ostream.
 ModulePass *createPrintModulePass(raw_ostream *OS, bool DeleteStream = false,
                                   const std::string &Banner = "");
 
-/// createPrintFunctionPass - Create and return a pass that prints
-/// functions to the specified raw_ostream as they are processed.
+/// \brief Create and return a pass that prints functions to the specified
+/// \c raw_ostream as they are processed.
 FunctionPass *createPrintFunctionPass(const std::string &Banner,
                                       raw_ostream *OS,
                                       bool DeleteStream = false);
 
-/// createPrintBasicBlockPass - Create and return a pass that writes the
-/// BB to the specified raw_ostream.
+/// \brief Create and return a pass that writes the BB to the specified
+/// \c raw_ostream.
 BasicBlockPass *createPrintBasicBlockPass(raw_ostream *OS,
                                           bool DeleteStream = false,
                                           const std::string &Banner = "");

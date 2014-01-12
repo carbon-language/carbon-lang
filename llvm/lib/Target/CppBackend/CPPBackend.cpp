@@ -1924,11 +1924,11 @@ void CppWriter::printProgram(const std::string& fname,
   Out << "#include <llvm/IR/DerivedTypes.h>\n";
   Out << "#include <llvm/IR/Function.h>\n";
   Out << "#include <llvm/IR/GlobalVariable.h>\n";
+  Out << "#include <llvm/IR/IRPrintingPasses.h>\n";
   Out << "#include <llvm/IR/InlineAsm.h>\n";
   Out << "#include <llvm/IR/Instructions.h>\n";
   Out << "#include <llvm/IR/LLVMContext.h>\n";
   Out << "#include <llvm/IR/Module.h>\n";
-  Out << "#include <llvm/IR/PrintModulePass.h>\n";
   Out << "#include <llvm/Support/FormattedStream.h>\n";
   Out << "#include <llvm/Support/MathExtras.h>\n";
   Out << "#include <algorithm>\n";
