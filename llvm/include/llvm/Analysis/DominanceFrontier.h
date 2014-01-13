@@ -18,7 +18,7 @@
 #ifndef LLVM_ANALYSIS_DOMINANCEFRONTIER_H
 #define LLVM_ANALYSIS_DOMINANCEFRONTIER_H
 
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Dominators.h"
 #include <map>
 #include <set>
 

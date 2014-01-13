@@ -15,7 +15,7 @@
 #define DEBUG_TYPE "dwarfehprepare"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"

@@ -14,7 +14,7 @@
 #ifndef LLVM_ANALYSIS_POSTDOMINATORS_H
 #define LLVM_ANALYSIS_POSTDOMINATORS_H
 
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Dominators.h"
 
 namespace llvm {
 

@@ -17,7 +17,7 @@
 #include "llvm-c/Initialization.h"
 #include "llvm-c/Transforms/Vectorize.h"
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/Verifier.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/PassManager.h"
 

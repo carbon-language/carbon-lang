@@ -15,7 +15,7 @@
 #define DEBUG_TYPE "partialinlining"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"

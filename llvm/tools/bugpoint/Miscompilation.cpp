@@ -15,12 +15,12 @@
 #include "BugDriver.h"
 #include "ListReducer.h"
 #include "ToolRunner.h"
-#include "llvm/Analysis/Verifier.h"
 #include "llvm/Config/config.h"   // for HAVE_LINK_R
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Linker.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"

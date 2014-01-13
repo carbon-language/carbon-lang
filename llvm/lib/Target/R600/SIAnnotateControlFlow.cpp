@@ -14,8 +14,8 @@
 
 #include "AMDGPU.h"
 #include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"

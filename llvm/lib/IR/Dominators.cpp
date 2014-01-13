@@ -14,11 +14,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Analysis/DominatorInternals.h"
+#include "llvm/IR/DominatorInternals.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"

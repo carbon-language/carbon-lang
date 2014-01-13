@@ -15,7 +15,7 @@
 #define DEBUG_TYPE "mem2reg"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"

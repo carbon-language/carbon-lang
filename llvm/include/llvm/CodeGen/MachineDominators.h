@@ -15,11 +15,11 @@
 #ifndef LLVM_CODEGEN_MACHINEDOMINATORS_H
 #define LLVM_CODEGEN_MACHINEDOMINATORS_H
 
-#include "llvm/Analysis/DominatorInternals.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/IR/DominatorInternals.h"
+#include "llvm/IR/Dominators.h"
 
 namespace llvm {
 

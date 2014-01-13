@@ -1,4 +1,4 @@
-//===- llvm/Analysis/Dominators.h - Dominator Info Calculation --*- C++ -*-===//
+//===- Dominators.h - Dominator Info Calculation ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_DOMINATORS_H
-#define LLVM_ANALYSIS_DOMINATORS_H
+#ifndef LLVM_IR_DOMINATORS_H
+#define LLVM_IR_DOMINATORS_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"

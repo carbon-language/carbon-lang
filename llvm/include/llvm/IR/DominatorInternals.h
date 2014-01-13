@@ -1,4 +1,4 @@
-//=== llvm/Analysis/DominatorInternals.h - Dominator Calculation -*- C++ -*-==//
+//===- DominatorInternals.h - Dominator Calculation --------------*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_DOMINATOR_INTERNALS_H
-#define LLVM_ANALYSIS_DOMINATOR_INTERNALS_H
+#ifndef LLVM_IR_DOMINATOR_INTERNALS_H
+#define LLVM_IR_DOMINATOR_INTERNALS_H
 
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Dominators.h"
 
 //===----------------------------------------------------------------------===//
 //

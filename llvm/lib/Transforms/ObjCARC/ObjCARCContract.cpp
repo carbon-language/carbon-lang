@@ -32,7 +32,7 @@
 #include "DependencyAnalysis.h"
 #include "ProvenanceAnalysis.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/Support/Debug.h"

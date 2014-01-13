@@ -14,8 +14,8 @@
 
 #include "llvm/Analysis/CFG.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/Dominators.h"
 
 using namespace llvm;
 

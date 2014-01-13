@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/Verifier.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
