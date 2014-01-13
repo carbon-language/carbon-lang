@@ -312,3 +312,30 @@ D::~D() {
 }
 
 }
+
+namespace test2 {
+struct A { A(); };
+struct B : virtual A { B() {} };
+struct C : B, A { C() {} };
+
+// PR18435: Order mattered here.  We were generating code for the delegating
+// call to B() from C().
+void callC() { C x; }
+
+// CHECK-LABEL: define linkonce_odr x86_thiscallcc %"struct.test2::C"* @"\01??0C@test2@@QAE@XZ"
+// CHECK:           (%"struct.test2::C"* returned %this, i32 %is_most_derived)
+// CHECK: br i1
+//   Virtual bases
+// CHECK: call x86_thiscallcc %"struct.test2::A"* @"\01??0A@test2@@QAE@XZ"(%"struct.test2::A"* %{{.*}})
+// CHECK: br label
+//   Non-virtual bases
+// CHECK: call x86_thiscallcc %"struct.test2::B"* @"\01??0B@test2@@QAE@XZ"(%"struct.test2::B"* %{{.*}}, i32 0)
+// CHECK: call x86_thiscallcc %"struct.test2::A"* @"\01??0A@test2@@QAE@XZ"(%"struct.test2::A"* %{{.*}})
+// CHECK: ret
+
+// CHECK2-LABEL: define linkonce_odr x86_thiscallcc %"struct.test2::B"* @"\01??0B@test2@@QAE@XZ"
+// CHECK2:           (%"struct.test2::B"* returned %this, i32 %is_most_derived)
+// CHECK2: call x86_thiscallcc %"struct.test2::A"* @"\01??0A@test2@@QAE@XZ"(%"struct.test2::A"* %{{.*}})
+// CHECK2: ret
+
+}

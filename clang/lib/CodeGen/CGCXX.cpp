@@ -190,11 +190,13 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
 
 void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *ctor,
                                        CXXCtorType ctorType) {
-  // The complete constructor is equivalent to the base constructor
-  // for classes with no virtual bases.  Try to emit it as an alias.
-  if (getTarget().getCXXABI().hasConstructorVariants() &&
-      !ctor->getParent()->getNumVBases() &&
-      (ctorType == Ctor_Complete || ctorType == Ctor_Base)) {
+  if (!getTarget().getCXXABI().hasConstructorVariants()) {
+    // If there are no constructor variants, always emit the complete destructor.
+    ctorType = Ctor_Complete;
+  } else if (!ctor->getParent()->getNumVBases() &&
+             (ctorType == Ctor_Complete || ctorType == Ctor_Base)) {
+    // The complete constructor is equivalent to the base constructor
+    // for classes with no virtual bases.  Try to emit it as an alias.
     bool ProducedAlias =
         !TryEmitDefinitionAsAlias(GlobalDecl(ctor, Ctor_Complete),
                                   GlobalDecl(ctor, Ctor_Base), true);
