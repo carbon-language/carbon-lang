@@ -2680,7 +2680,7 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
   eval.begin(*this);
   LValue lhs = EmitLValue(expr->getTrueExpr());
   eval.end(*this);
-  Cnt.adjustFallThroughCount();
+  Cnt.adjustForControlFlow();
 
   if (!lhs.isSimple())
     return EmitUnsupportedLValue(expr, "conditional operator");
@@ -2694,7 +2694,7 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
   eval.begin(*this);
   LValue rhs = EmitLValue(expr->getFalseExpr());
   eval.end(*this);
-  Cnt.adjustFallThroughCount();
+  Cnt.adjustForControlFlow();
   if (!rhs.isSimple())
     return EmitUnsupportedLValue(expr, "conditional operator");
   rhsBlock = Builder.GetInsertBlock();

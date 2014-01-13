@@ -928,7 +928,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       eval.begin(*this);
       EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock, TrueCount);
       eval.end(*this);
-      Cnt.adjustFallThroughCount();
+      Cnt.adjustForControlFlow();
       Cnt.applyAdjustmentsToRegion();
 
       return;
@@ -974,7 +974,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock, RHSCount);
 
       eval.end(*this);
-      Cnt.adjustFallThroughCount();
+      Cnt.adjustForControlFlow();
       Cnt.applyAdjustmentsToRegion();
 
       return;

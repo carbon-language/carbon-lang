@@ -200,15 +200,15 @@ public:
     PGO->setCurrentRegionCount(RegionCount);
   }
 
-  /// Control may either enter or leave the region, so the count at the end may
-  /// be different from the start. Call this to track that adjustment without
-  /// modifying the current count. Must not be called before one of beginRegion
-  /// or beginElseRegion.
-  void adjustFallThroughCount() {
+  /// Adjust for non-local control flow after emitting a subexpression or
+  /// substatement. This must be called to account for constructs such as gotos,
+  /// labels, and returns, so that we can ensure that our region's count is
+  /// correct in the code that follows.
+  void adjustForControlFlow() {
     Adjust += PGO->getCurrentRegionCount() - RegionCount;
   }
   /// Commit all adjustments to the current region. This should be called after
-  /// all blocks that adjust the fallthrough count have been emitted.
+  /// all blocks that adjust for control flow count have been emitted.
   void applyAdjustmentsToRegion() {
     PGO->setCurrentRegionCount(ParentCount + Adjust);
   }

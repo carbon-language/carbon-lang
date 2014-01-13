@@ -2934,7 +2934,7 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
   CGF.EmitBlock(RHSBlock);
   Cnt.beginRegion(Builder);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
-  Cnt.adjustFallThroughCount();
+  Cnt.adjustForControlFlow();
   eval.end(CGF);
 
   // Reaquire the RHS block, as there may be subblocks inserted.
@@ -3017,7 +3017,7 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
   CGF.EmitBlock(RHSBlock);
   Cnt.beginRegion(Builder);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
-  Cnt.adjustFallThroughCount();
+  Cnt.adjustForControlFlow();
 
   eval.end(CGF);
 
@@ -3171,7 +3171,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   eval.begin(CGF);
   Value *LHS = Visit(lhsExpr);
   eval.end(CGF);
-  Cnt.adjustFallThroughCount();
+  Cnt.adjustForControlFlow();
 
   LHSBlock = Builder.GetInsertBlock();
   Builder.CreateBr(ContBlock);
@@ -3181,7 +3181,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   eval.begin(CGF);
   Value *RHS = Visit(rhsExpr);
   eval.end(CGF);
-  Cnt.adjustFallThroughCount();
+  Cnt.adjustForControlFlow();
 
   RHSBlock = Builder.GetInsertBlock();
   CGF.EmitBlock(ContBlock);

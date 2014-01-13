@@ -903,7 +903,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   CGF.EmitBlock(LHSBlock);
   Cnt.beginRegion(Builder);
   Visit(E->getTrueExpr());
-  Cnt.adjustFallThroughCount();
+  Cnt.adjustForControlFlow();
   eval.end(CGF);
 
   assert(CGF.HaveInsertPoint() && "expression evaluation ended with no IP!");
@@ -919,7 +919,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   CGF.EmitBlock(RHSBlock);
   Cnt.beginElseRegion();
   Visit(E->getFalseExpr());
-  Cnt.adjustFallThroughCount();
+  Cnt.adjustForControlFlow();
   eval.end(CGF);
 
   CGF.EmitBlock(ContBlock);

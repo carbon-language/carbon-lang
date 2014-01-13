@@ -760,7 +760,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   CGF.EmitBlock(LHSBlock);
   Cnt.beginRegion(Builder);
   ComplexPairTy LHS = Visit(E->getTrueExpr());
-  Cnt.adjustFallThroughCount();
+  Cnt.adjustForControlFlow();
   LHSBlock = Builder.GetInsertBlock();
   CGF.EmitBranch(ContBlock);
   eval.end(CGF);
@@ -769,7 +769,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   CGF.EmitBlock(RHSBlock);
   Cnt.beginElseRegion();
   ComplexPairTy RHS = Visit(E->getFalseExpr());
-  Cnt.adjustFallThroughCount();
+  Cnt.adjustForControlFlow();
   RHSBlock = Builder.GetInsertBlock();
   CGF.EmitBlock(ContBlock);
   eval.end(CGF);
