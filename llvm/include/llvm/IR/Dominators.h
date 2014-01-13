@@ -51,10 +51,8 @@ public:
   bool isSingleEdge() const;
 };
 
-//===-------------------------------------
-/// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
-/// compute a normal dominator tree.
-///
+/// \brief Concrete subclass of DominatorTreeBase that is used to compute a
+/// normal dominator tree.
 class DominatorTree : public FunctionPass {
 public:
   static char ID; // Pass ID, replacement for typeid
@@ -71,10 +69,11 @@ public:
 
   DominatorTreeBase<BasicBlock>& getBase() { return *DT; }
 
-  /// getRoots - Return the root blocks of the current CFG.  This may include
-  /// multiple blocks if we are computing post dominators.  For forward
-  /// dominators, this will always be a single block (the entry node).
+  /// \brief Returns the root blocks of the current CFG.
   ///
+  /// This may include multiple blocks if we are computing post dominators.
+  /// For forward dominators, this will always be a single block (the entry
+  /// node).
   inline const std::vector<BasicBlock*> &getRoots() const {
     return DT->getRoots();
   }
@@ -93,8 +92,8 @@ public:
     DT->getDescendants(R, Result);
   }
 
-  /// compare - Return false if the other dominator tree matches this
-  /// dominator tree. Otherwise return true.
+  /// \brief Returns *false* if the other dominator tree matches this dominator
+  /// tree.
   inline bool compare(DominatorTree &Other) const {
     DomTreeNode *R = getRootNode();
     DomTreeNode *OtherR = Other.getRootNode();
@@ -124,9 +123,10 @@ public:
     return DT->dominates(A, B);
   }
 
-  // dominates - Return true if Def dominates a use in User. This performs
-  // the special checks necessary if Def and User are in the same basic block.
-  // Note that Def doesn't dominate a use in Def itself!
+  // \brief Return true if Def dominates a use in User.
+  //
+  // This performs the special checks necessary if Def and User are in the same
+  // basic block. Note that Def doesn't dominate a use in Def itself!
   bool dominates(const Instruction *Def, const Use &U) const;
   bool dominates(const Instruction *Def, const Instruction *User) const;
   bool dominates(const Instruction *Def, const BasicBlock *BB) const;
@@ -141,8 +141,9 @@ public:
     return DT->properlyDominates(A, B);
   }
 
-  /// findNearestCommonDominator - Find nearest common dominator basic block
-  /// for basic block A and B. If there is no such block then return NULL.
+  /// \brief Find nearest common dominator basic block for basic block A and B.
+  ///
+  /// If there is no such block then return NULL.
   inline BasicBlock *findNearestCommonDominator(BasicBlock *A, BasicBlock *B) {
     return DT->findNearestCommonDominator(A, B);
   }
@@ -156,23 +157,23 @@ public:
     return DT->getNode(BB);
   }
 
-  /// getNode - return the (Post)DominatorTree node for the specified basic
-  /// block.  This is the same as using operator[] on this class.
+  /// \brief Returns the DominatorTree node for the specified basic block.
   ///
+  /// This is the same as using operator[] on this class.
   inline DomTreeNode *getNode(BasicBlock *BB) const {
     return DT->getNode(BB);
   }
 
-  /// addNewBlock - Add a new node to the dominator tree information.  This
-  /// creates a new node as a child of DomBB dominator node,linking it into
-  /// the children list of the immediate dominator.
+  /// \brief Add a new node to the dominator tree information.
+  ///
+  /// This creates a new node as a child of DomBB dominator node, linking it
+  /// into the children list of the immediate dominator.
   inline DomTreeNode *addNewBlock(BasicBlock *BB, BasicBlock *DomBB) {
     return DT->addNewBlock(BB, DomBB);
   }
 
-  /// changeImmediateDominator - This method is used to update the dominator
-  /// tree information when a node's immediate dominator changes.
-  ///
+  /// \brief Updates the dominator tree information when a node's immediate
+  /// dominator changes.
   inline void changeImmediateDominator(BasicBlock *N, BasicBlock* NewIDom) {
     DT->changeImmediateDominator(N, NewIDom);
   }
@@ -181,15 +182,17 @@ public:
     DT->changeImmediateDominator(N, NewIDom);
   }
 
-  /// eraseNode - Removes a node from the dominator tree. Block must not
-  /// dominate any other blocks. Removes node from its immediate dominator's
-  /// children list. Deletes dominator node associated with basic block BB.
+  /// \brief Removes a node from the dominator tree.
+  ///
+  /// The block must not dominate any other blocks. Removes node from its
+  /// immediate dominator's children list. Deletes dominator node associated
+  /// with basic block BB.
   inline void eraseNode(BasicBlock *BB) {
     DT->eraseNode(BB);
   }
 
-  /// splitBlock - BB is split and now it has one successor. Update dominator
-  /// tree to reflect this change.
+  /// \brief BB is split and now it has one successor; update dominator tree to
+  /// reflect this change.
   inline void splitBlock(BasicBlock* NewBB) {
     DT->splitBlock(NewBB);
   }
@@ -209,9 +212,9 @@ public:
 };
 
 //===-------------------------------------
-/// DominatorTree GraphTraits specialization so the DominatorTree can be
-/// iterable by generic graph iterators.
-///
+// DominatorTree GraphTraits specializations so the DominatorTree can be
+// iterable by generic graph iterators.
+
 template <> struct GraphTraits<DomTreeNode*> {
   typedef DomTreeNode NodeType;
   typedef NodeType::iterator  ChildIteratorType;
@@ -251,7 +254,6 @@ template <> struct GraphTraits<DominatorTree*>
     return df_end(getEntryNode(N));
   }
 };
-
 
 } // End llvm namespace
 
