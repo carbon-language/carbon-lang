@@ -12,32 +12,36 @@
 
 namespace lld {
 
-/// \brief Return the bits that are described by the mask
-template < typename T >
-T gatherBits(T val, T mask)
-{
+/// Gather val's bits as specified by the mask. Example:
+///
+///  Val:    0bABCDEFGHIJKLMN
+///  Mask:   0b10111100001011
+///  Output: 0b000000ACDEFKMN
+template <typename T> T gatherBits(T val, T mask) {
   T result = 0;
   size_t off = 0;
 
-  for (size_t bit = 0; bit != sizeof (T) * 8; ++bit) {
+  for (size_t bit = 0; bit != sizeof(T) * 8; ++bit) {
     const bool valBit = (val >> bit) & 1;
     const bool maskBit = (mask >> bit) & 1;
     if (maskBit) {
-      result |= static_cast <T> (valBit) << off;
+      result |= static_cast<T>(valBit) << off;
       ++off;
     }
   }
   return result;
 }
 
-/// \brief Set the bits as described by the mask
-template <typename T>
-T scatterBits(T val, T mask)
-{
+/// Scatter val's bits as specified by the mask. Example:
+///
+///  Val:    0bABCDEFG
+///  Mask:   0b10111100001011
+///  Output: 0b00ABCD0000E0FG
+template <typename T> T scatterBits(T val, T mask) {
   T result = 0;
   size_t off = 0;
 
-  for (size_t bit = 0; bit != sizeof (T) * 8; ++bit) {
+  for (size_t bit = 0; bit != sizeof(T) * 8; ++bit) {
     const bool valBit = (val >> off) & 1;
     const bool maskBit = (mask >> bit) & 1;
     if (maskBit) {
