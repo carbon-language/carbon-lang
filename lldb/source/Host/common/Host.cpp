@@ -13,12 +13,12 @@
 #include <errno.h>
 #include <limits.h>
 #include <sys/types.h>
-#include <unistd.h>
 #ifdef _WIN32
 #include "lldb/Host/windows/windows.h"
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #else
+#include <unistd.h>
 #include <dlfcn.h>
 #include <grp.h>
 #include <netdb.h>
