@@ -607,87 +607,58 @@ static bool isOneUseSetCC(SDValue N) {
   return false;
 }
 
+// \brief Returns the SDNode if it is a constant BuildVector or constant int.
+static SDNode *isConstantBuildVectorOrConstantInt(SDValue N) {
+  if (isa<ConstantSDNode>(N))
+    return N.getNode();
+  BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N);
+  if(BV && BV->isConstant())
+    return BV;
+  return NULL;
+}
+
 SDValue DAGCombiner::ReassociateOps(unsigned Opc, SDLoc DL,
                                     SDValue N0, SDValue N1) {
   EVT VT = N0.getValueType();
-  if (VT.isVector()) {
-    if (N0.getOpcode() == Opc) {
-      BuildVectorSDNode *L = dyn_cast<BuildVectorSDNode>(N0.getOperand(1));
-      if(L && L->isConstant()) {
-        BuildVectorSDNode *R = dyn_cast<BuildVectorSDNode>(N1);
-        if (R && R->isConstant()) {
-          // reassoc. (op (op x, c1), c2) -> (op x, (op c1, c2))
-          SDValue OpNode = DAG.FoldConstantArithmetic(Opc, VT, L, R);
-          return DAG.getNode(Opc, DL, VT, N0.getOperand(0), OpNode);
-        }
-
-        if (N0.hasOneUse()) {
-          // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one
-          // use
-          SDValue OpNode = DAG.getNode(Opc, SDLoc(N0), VT,
-                                       N0.getOperand(0), N1);
-          AddToWorkList(OpNode.getNode());
-          return DAG.getNode(Opc, DL, VT, OpNode, N0.getOperand(1));
-        }
+  if (N0.getOpcode() == Opc) {
+    if (SDNode *L = isConstantBuildVectorOrConstantInt(N0.getOperand(1))) {
+      if (SDNode *R = isConstantBuildVectorOrConstantInt(N1)) {
+        // reassoc. (op (op x, c1), c2) -> (op x, (op c1, c2))
+        SDValue OpNode = DAG.FoldConstantArithmetic(Opc, VT, L, R);
+        if (!OpNode.getNode())
+          return SDValue();
+        return DAG.getNode(Opc, DL, VT, N0.getOperand(0), OpNode);
       }
-    }
-
-    if (N1.getOpcode() == Opc) {
-      BuildVectorSDNode *R = dyn_cast<BuildVectorSDNode>(N1.getOperand(1));
-      if (R && R->isConstant()) {
-        BuildVectorSDNode *L = dyn_cast<BuildVectorSDNode>(N0);
-        if (L && L->isConstant()) {
-          // reassoc. (op c2, (op x, c1)) -> (op x, (op c1, c2))
-          SDValue OpNode = DAG.FoldConstantArithmetic(Opc, VT, R, L);
-          return DAG.getNode(Opc, DL, VT, N1.getOperand(0), OpNode);
-        }
-        if (N1.hasOneUse()) {
-          // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) iff x+c1 has one
-          // use
-          SDValue OpNode = DAG.getNode(Opc, SDLoc(N0), VT,
-                                       N1.getOperand(0), N0);
-          AddToWorkList(OpNode.getNode());
-          return DAG.getNode(Opc, DL, VT, OpNode, N1.getOperand(1));
-        }
+      if (N0.hasOneUse()) {
+        // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one
+        // use
+        SDValue OpNode = DAG.getNode(Opc, SDLoc(N0), VT, N0.getOperand(0), N1);
+        if (!OpNode.getNode())
+          return SDValue();
+        AddToWorkList(OpNode.getNode());
+        return DAG.getNode(Opc, DL, VT, OpNode, N0.getOperand(1));
       }
-    }
-
-    return SDValue();
-  }
-
-  if (N0.getOpcode() == Opc && isa<ConstantSDNode>(N0.getOperand(1))) {
-    if (isa<ConstantSDNode>(N1)) {
-      // reassoc. (op (op x, c1), c2) -> (op x, (op c1, c2))
-      SDValue OpNode =
-        DAG.FoldConstantArithmetic(Opc, VT,
-                                   cast<ConstantSDNode>(N0.getOperand(1)),
-                                   cast<ConstantSDNode>(N1));
-      return DAG.getNode(Opc, DL, VT, N0.getOperand(0), OpNode);
-    }
-    if (N0.hasOneUse()) {
-      // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one use
-      SDValue OpNode = DAG.getNode(Opc, SDLoc(N0), VT,
-                                   N0.getOperand(0), N1);
-      AddToWorkList(OpNode.getNode());
-      return DAG.getNode(Opc, DL, VT, OpNode, N0.getOperand(1));
     }
   }
 
-  if (N1.getOpcode() == Opc && isa<ConstantSDNode>(N1.getOperand(1))) {
-    if (isa<ConstantSDNode>(N0)) {
-      // reassoc. (op c2, (op x, c1)) -> (op x, (op c1, c2))
-      SDValue OpNode =
-        DAG.FoldConstantArithmetic(Opc, VT,
-                                   cast<ConstantSDNode>(N1.getOperand(1)),
-                                   cast<ConstantSDNode>(N0));
-      return DAG.getNode(Opc, DL, VT, N1.getOperand(0), OpNode);
-    }
-    if (N1.hasOneUse()) {
-      // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) iff x+c1 has one use
-      SDValue OpNode = DAG.getNode(Opc, SDLoc(N0), VT,
-                                   N1.getOperand(0), N0);
-      AddToWorkList(OpNode.getNode());
-      return DAG.getNode(Opc, DL, VT, OpNode, N1.getOperand(1));
+  if (N1.getOpcode() == Opc) {
+    if (SDNode *R = isConstantBuildVectorOrConstantInt(N1.getOperand(1))) {
+      if (SDNode *L = isConstantBuildVectorOrConstantInt(N0)) {
+        // reassoc. (op c2, (op x, c1)) -> (op x, (op c1, c2))
+        SDValue OpNode = DAG.FoldConstantArithmetic(Opc, VT, R, L);
+        if (!OpNode.getNode())
+          return SDValue();
+        return DAG.getNode(Opc, DL, VT, N1.getOperand(0), OpNode);
+      }
+      if (N1.hasOneUse()) {
+        // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) iff x+c1 has one
+        // use
+        SDValue OpNode = DAG.getNode(Opc, SDLoc(N0), VT, N1.getOperand(0), N0);
+        if (!OpNode.getNode())
+          return SDValue();
+        AddToWorkList(OpNode.getNode());
+        return DAG.getNode(Opc, DL, VT, OpNode, N1.getOperand(1));
+      }
     }
   }
 
