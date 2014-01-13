@@ -32,8 +32,11 @@ void ClangTidyCheckFactories::createChecks(
     ChecksFilter &Filter, SmallVectorImpl<ClangTidyCheck *> &Checks) {
   for (FactoryMap::iterator I = Factories.begin(), E = Factories.end(); I != E;
        ++I) {
-    if (Filter.IsCheckEnabled(I->first))
-      Checks.push_back(I->second->createCheck());
+    if (Filter.IsCheckEnabled(I->first)) {
+      ClangTidyCheck *Check = I->second->createCheck();
+      Check->setName(I->first);
+      Checks.push_back(Check);
+    }
   }
 }
 

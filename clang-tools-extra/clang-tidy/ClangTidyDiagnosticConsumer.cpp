@@ -33,13 +33,18 @@ ClangTidyMessage::ClangTidyMessage(StringRef Message,
   FileOffset = Sources.getFileOffset(Loc);
 }
 
-ClangTidyError::ClangTidyError(const ClangTidyMessage &Message)
-    : Message(Message) {}
+ClangTidyError::ClangTidyError(StringRef CheckName,
+                               const ClangTidyMessage &Message)
+    : CheckName(CheckName), Message(Message) {}
 
-DiagnosticBuilder ClangTidyContext::Diag(SourceLocation Loc,
+DiagnosticBuilder ClangTidyContext::diag(StringRef CheckName,
+                                         SourceLocation Loc,
                                          StringRef Message) {
-  return DiagEngine->Report(
-      Loc, DiagEngine->getCustomDiagID(DiagnosticsEngine::Warning, Message));
+  unsigned ID =
+      DiagEngine->getCustomDiagID(DiagnosticsEngine::Warning, Message);
+  if (CheckNamesByDiagnosticID.count(ID) == 0)
+    CheckNamesByDiagnosticID.insert(std::make_pair(ID, CheckName.str()));
+  return DiagEngine->Report(Loc, ID);
 }
 
 void ClangTidyContext::setDiagnosticsEngine(DiagnosticsEngine *Engine) {
@@ -53,6 +58,14 @@ void ClangTidyContext::setSourceManager(SourceManager *SourceMgr) {
 /// \brief Store a \c ClangTidyError.
 void ClangTidyContext::storeError(const ClangTidyError &Error) {
   Errors->push_back(Error);
+}
+
+StringRef ClangTidyContext::getCheckName(unsigned DiagnosticID) const {
+  llvm::DenseMap<unsigned, std::string>::const_iterator I =
+      CheckNamesByDiagnosticID.find(DiagnosticID);
+  if (I != CheckNamesByDiagnosticID.end())
+    return I->second;
+  return "";
 }
 
 ClangTidyDiagnosticConsumer::ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx)
@@ -72,7 +85,8 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
   if (Diags->getSourceManager().isInSystemHeader(Info.getLocation()))
     return;
   if (DiagLevel != DiagnosticsEngine::Note) {
-    Errors.push_back(ClangTidyError(getMessage(Info)));
+    Errors.push_back(
+        ClangTidyError(Context.getCheckName(Info.getID()), getMessage(Info)));
   } else {
     assert(!Errors.empty() &&
            "A diagnostic note can only be appended to a message.");

@@ -174,9 +174,18 @@ bool ChecksFilter::IsCheckEnabled(StringRef Name) {
   return EnableChecks.match(Name) && !DisableChecks.match(Name);
 }
 
+DiagnosticBuilder ClangTidyCheck::diag(SourceLocation Loc, StringRef Message) {
+  return Context->diag(CheckName, Loc, Message);
+}
+
 void ClangTidyCheck::run(const ast_matchers::MatchFinder::MatchResult &Result) {
   Context->setSourceManager(Result.SourceManager);
   check(Result);
+}
+
+void ClangTidyCheck::setName(StringRef Name) {
+  assert(CheckName.empty());
+  CheckName = Name.str();
 }
 
 std::vector<std::string> getCheckNames(StringRef EnableChecksRegex,
@@ -231,7 +240,8 @@ void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
 static void reportDiagnostic(const ClangTidyMessage &Message,
                              SourceManager &SourceMgr,
                              DiagnosticsEngine::Level Level,
-                             DiagnosticsEngine &Diags) {
+                             DiagnosticsEngine &Diags,
+                             StringRef CheckName = "") {
   SourceLocation Loc;
   if (!Message.FilePath.empty()) {
     const FileEntry *File =
@@ -240,7 +250,11 @@ static void reportDiagnostic(const ClangTidyMessage &Message,
     Loc = SourceMgr.getLocForStartOfFile(ID);
     Loc = Loc.getLocWithOffset(Message.FileOffset);
   }
-  Diags.Report(Loc, Diags.getCustomDiagID(Level, Message.Message));
+  if (CheckName.empty())
+    Diags.Report(Loc, Diags.getCustomDiagID(Level, Message.Message));
+  else
+    Diags.Report(Loc, Diags.getCustomDiagID(Level, (Message.Message + " [" +
+                                                    CheckName + "]").str()));
 }
 
 void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {
@@ -256,7 +270,8 @@ void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {
   for (SmallVectorImpl<ClangTidyError>::iterator I = Errors.begin(),
                                                  E = Errors.end();
        I != E; ++I) {
-    reportDiagnostic(I->Message, SourceMgr, DiagnosticsEngine::Warning, Diags);
+    reportDiagnostic(I->Message, SourceMgr, DiagnosticsEngine::Warning, Diags,
+                     I->CheckName);
     for (unsigned i = 0, e = I->Notes.size(); i != e; ++i) {
       reportDiagnostic(I->Notes[i], SourceMgr, DiagnosticsEngine::Note, Diags);
     }

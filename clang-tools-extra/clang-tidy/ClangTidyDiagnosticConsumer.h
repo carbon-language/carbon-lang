@@ -13,6 +13,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Tooling/Refactoring.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace clang {
 
@@ -46,8 +47,9 @@ struct ClangTidyMessage {
 ///
 /// FIXME: Make Diagnostics flexible enough to support this directly.
 struct ClangTidyError {
-  ClangTidyError(const ClangTidyMessage &Message);
+  ClangTidyError(StringRef CheckName, const ClangTidyMessage &Message);
 
+  std::string CheckName;
   ClangTidyMessage Message;
   tooling::Replacements Fix;
   SmallVector<ClangTidyMessage, 1> Notes;
@@ -72,7 +74,8 @@ public:
   /// This is still under heavy development and will likely change towards using
   /// tablegen'd diagnostic IDs.
   /// FIXME: Figure out a way to manage ID spaces.
-  DiagnosticBuilder Diag(SourceLocation Loc, StringRef Message);
+  DiagnosticBuilder diag(StringRef CheckName, SourceLocation Loc,
+                         StringRef Message);
 
   /// \brief Sets the \c DiagnosticsEngine so that Diagnostics can be generated
   /// correctly.
@@ -85,6 +88,10 @@ public:
   /// This is called from the \c ClangTidyCheck base class.
   void setSourceManager(SourceManager *SourceMgr);
 
+  /// \brief Returns the name of the clang-tidy check which produced this
+  /// diagnostic ID.
+  StringRef getCheckName(unsigned DiagnosticID) const;
+
 private:
   friend class ClangTidyDiagnosticConsumer; // Calls storeError().
 
@@ -93,6 +100,7 @@ private:
 
   SmallVectorImpl<ClangTidyError> *Errors;
   DiagnosticsEngine *DiagEngine;
+  llvm::DenseMap<unsigned, std::string> CheckNamesByDiagnosticID;
 };
 
 /// \brief A diagnostic consumer that turns each \c Diagnostic into a

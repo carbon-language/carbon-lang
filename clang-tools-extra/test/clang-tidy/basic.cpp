@@ -4,4 +4,4 @@
 
 namespace i {
 }
-// CHECK: warning: namespace not terminated with a closing comment
+// CHECK: warning: namespace not terminated with a closing comment [llvm-namespace-comment]

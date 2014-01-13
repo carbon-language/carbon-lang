@@ -75,11 +75,17 @@ public:
   /// \brief The infrastructure sets the context to \p Ctx with this function.
   void setContext(ClangTidyContext *Ctx) { Context = Ctx; }
 
-protected:
-  ClangTidyContext *Context;
+  /// \brief Add a diagnostic with the check's name.
+  DiagnosticBuilder diag(SourceLocation Loc, StringRef Message);
+
+  /// \brief Sets the check name. Intended to be used by the clang-tidy
+  /// framework. Can be called only once.
+  void setName(StringRef Name);
 
 private:
   virtual void run(const ast_matchers::MatchFinder::MatchResult &Result);
+  ClangTidyContext *Context;
+  std::string CheckName;
 };
 
 /// \brief Filters checks by name.
