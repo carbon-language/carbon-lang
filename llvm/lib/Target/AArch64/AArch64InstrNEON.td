@@ -6222,6 +6222,20 @@ def : Pat<(v2i32 (bitconvert (v1i64  VPR64:$src))), (v2i32 VPR64:$src)>;
 def : Pat<(v4i16 (bitconvert (v1i64  VPR64:$src))), (v4i16 VPR64:$src)>;
 def : Pat<(v8i8  (bitconvert (v1i64  VPR64:$src))), (v8i8 VPR64:$src)>;
 
+def : Pat<(v1i64 (bitconvert (v1f64  VPR64:$src))), (v1i64 VPR64:$src)>;
+def : Pat<(v2f32 (bitconvert (v1f64  VPR64:$src))), (v2f32 VPR64:$src)>;
+def : Pat<(v2i32 (bitconvert (v1f64  VPR64:$src))), (v2i32 VPR64:$src)>;
+def : Pat<(v4i16 (bitconvert (v1f64  VPR64:$src))), (v4i16 VPR64:$src)>;
+def : Pat<(v8i8 (bitconvert (v1f64  VPR64:$src))), (v8i8 VPR64:$src)>;
+def : Pat<(f64   (bitconvert (v1f64  VPR64:$src))), (f64 VPR64:$src)>;
+
+def : Pat<(v1f64 (bitconvert (v1i64  VPR64:$src))), (v1f64 VPR64:$src)>;
+def : Pat<(v1f64 (bitconvert (v2f32  VPR64:$src))), (v1f64 VPR64:$src)>;
+def : Pat<(v1f64 (bitconvert (v2i32  VPR64:$src))), (v1f64 VPR64:$src)>;
+def : Pat<(v1f64 (bitconvert (v4i16  VPR64:$src))), (v1f64 VPR64:$src)>;
+def : Pat<(v1f64 (bitconvert (v8i8  VPR64:$src))), (v1f64 VPR64:$src)>;
+def : Pat<(v1f64 (bitconvert (f64  VPR64:$src))), (v1f64 VPR64:$src)>;
+
 // ..and 128-bit vector bitcasts...
 
 def : Pat<(v2f64 (bitconvert (v16i8  VPR128:$src))), (v2f64 VPR128:$src)>;
