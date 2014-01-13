@@ -3333,15 +3333,15 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
       "void f() {\n"
       "  someo->Add((new util::filetools::Handler(dir))\n"
       "                 ->OnEvent1(NewPermanentCallback(\n"
-      "                       this, &HandlerHolderClass::EventHandlerCBA))\n"
+      "                     this, &HandlerHolderClass::EventHandlerCBA))\n"
       "                 ->OnEvent2(NewPermanentCallback(\n"
-      "                       this, &HandlerHolderClass::EventHandlerCBB))\n"
+      "                     this, &HandlerHolderClass::EventHandlerCBB))\n"
       "                 ->OnEvent3(NewPermanentCallback(\n"
-      "                       this, &HandlerHolderClass::EventHandlerCBC))\n"
+      "                     this, &HandlerHolderClass::EventHandlerCBC))\n"
       "                 ->OnEvent5(NewPermanentCallback(\n"
-      "                       this, &HandlerHolderClass::EventHandlerCBD))\n"
+      "                     this, &HandlerHolderClass::EventHandlerCBD))\n"
       "                 ->OnEvent6(NewPermanentCallback(\n"
-      "                       this, &HandlerHolderClass::EventHandlerCBE)));\n"
+      "                     this, &HandlerHolderClass::EventHandlerCBE)));\n"
       "}");
 
   verifyFormat(
@@ -3367,7 +3367,7 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
                "    .has<bbbbbbbbbbbbbbbbbbbbb>();");
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaa()\n"
                "    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<\n"
-               "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>();");
+               "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>();");
 
   // Prefer not to break after empty parentheses.
   verifyFormat("FirstToken->WhitespaceRange.getBegin().getLocWithOffset(\n"

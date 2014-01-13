@@ -467,8 +467,6 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
 
   if (!Current.isTrailingComment())
     State.Stack.back().LastSpace = State.Column;
-  if (Current.isMemberAccess())
-    State.Stack.back().LastSpace += Current.ColumnWidth;
   State.StartOfLineLevel = State.ParenLevel;
   State.LowestLevelOnLine = State.ParenLevel;
 
