@@ -6288,7 +6288,7 @@ regex_token_iterator<_BidirectionalIterator, _CharT, _Traits>::
       __subs_(__x.__subs_)
 {
     if (__x.__result_ == &__x.__suffix_)
-        __result_ == &__suffix_;
+        __result_ = &__suffix_;
     else if ( __result_ != nullptr )
         __establish_result ();
 }
