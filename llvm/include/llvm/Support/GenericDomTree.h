@@ -65,7 +65,7 @@ class DomTreeNodeBase {
   NodeT *TheBB;
   DomTreeNodeBase<NodeT> *IDom;
   std::vector<DomTreeNodeBase<NodeT> *> Children;
-  int DFSNumIn, DFSNumOut;
+  mutable int DFSNumIn, DFSNumOut;
 
   template<class N> friend class DominatorTreeBase;
   friend struct PostDominatorTree;
@@ -197,8 +197,8 @@ protected:
   DomTreeNodeMapType DomTreeNodes;
   DomTreeNodeBase<NodeT> *RootNode;
 
-  bool DFSInfoValid;
-  unsigned int SlowQueries;
+  mutable bool DFSInfoValid;
+  mutable unsigned int SlowQueries;
   // Information record used during immediate dominators computation.
   struct InfoRec {
     unsigned DFSNum;
@@ -361,7 +361,7 @@ public:
   /// Note that this is not a constant time operation!
   ///
   bool properlyDominates(const DomTreeNodeBase<NodeT> *A,
-                         const DomTreeNodeBase<NodeT> *B) {
+                         const DomTreeNodeBase<NodeT> *B) const {
     if (A == 0 || B == 0)
       return false;
     if (A == B)
@@ -369,7 +369,7 @@ public:
     return dominates(A, B);
   }
 
-  bool properlyDominates(const NodeT *A, const NodeT *B);
+  bool properlyDominates(const NodeT *A, const NodeT *B) const;
 
   /// isReachableFromEntry - Return true if A is dominated by the entry
   /// block of the function containing it.
@@ -387,7 +387,7 @@ public:
   /// constant time operation!
   ///
   inline bool dominates(const DomTreeNodeBase<NodeT> *A,
-                        const DomTreeNodeBase<NodeT> *B) {
+                        const DomTreeNodeBase<NodeT> *B) const {
     // A node trivially dominates itself.
     if (B == A)
       return true;
@@ -422,7 +422,7 @@ public:
     return dominatedBySlowTreeWalk(A, B);
   }
 
-  bool dominates(const NodeT *A, const NodeT *B);
+  bool dominates(const NodeT *A, const NodeT *B) const;
 
   NodeT *getRoot() const {
     assert(this->Roots.size() == 1 && "Should always have entry node!");
@@ -587,13 +587,13 @@ protected:
 
   /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking
   /// dominator tree in dfs order.
-  void updateDFSNumbers() {
+  void updateDFSNumbers() const {
     unsigned DFSNum = 0;
 
-    SmallVector<std::pair<DomTreeNodeBase<NodeT>*,
-                typename DomTreeNodeBase<NodeT>::iterator>, 32> WorkStack;
+    SmallVector<std::pair<const DomTreeNodeBase<NodeT>*,
+                typename DomTreeNodeBase<NodeT>::const_iterator>, 32> WorkStack;
 
-    DomTreeNodeBase<NodeT> *ThisRoot = getRootNode();
+    const DomTreeNodeBase<NodeT> *ThisRoot = getRootNode();
 
     if (!ThisRoot)
       return;
@@ -606,8 +606,8 @@ protected:
     ThisRoot->DFSNumIn = DFSNum++;
 
     while (!WorkStack.empty()) {
-      DomTreeNodeBase<NodeT> *Node = WorkStack.back().first;
-      typename DomTreeNodeBase<NodeT>::iterator ChildIt =
+      const DomTreeNodeBase<NodeT> *Node = WorkStack.back().first;
+      typename DomTreeNodeBase<NodeT>::const_iterator ChildIt =
         WorkStack.back().second;
 
       // If we visited all of the children of this node, "recurse" back up the
@@ -617,7 +617,7 @@ protected:
         WorkStack.pop_back();
       } else {
         // Otherwise, recursively visit this child.
-        DomTreeNodeBase<NodeT> *Child = *ChildIt;
+        const DomTreeNodeBase<NodeT> *Child = *ChildIt;
         ++WorkStack.back().second;
 
         WorkStack.push_back(std::make_pair(Child, Child->begin()));
@@ -690,7 +690,7 @@ public:
 // These two functions are declared out of line as a workaround for building
 // with old (< r147295) versions of clang because of pr11642.
 template<class NodeT>
-bool DominatorTreeBase<NodeT>::dominates(const NodeT *A, const NodeT *B) {
+bool DominatorTreeBase<NodeT>::dominates(const NodeT *A, const NodeT *B) const {
   if (A == B)
     return true;
 
@@ -702,7 +702,7 @@ bool DominatorTreeBase<NodeT>::dominates(const NodeT *A, const NodeT *B) {
 }
 template<class NodeT>
 bool
-DominatorTreeBase<NodeT>::properlyDominates(const NodeT *A, const NodeT *B) {
+DominatorTreeBase<NodeT>::properlyDominates(const NodeT *A, const NodeT *B) const {
   if (A == B)
     return false;
 
