@@ -18,8 +18,8 @@ class MachODefinedAtom : public SimpleDefinedAtom {
 public:
   // FIXME: This constructor should also take the ContentType.
   MachODefinedAtom(const File &f, const StringRef name,
-                   const ArrayRef<uint8_t> content)
-      : SimpleDefinedAtom(f), _name(name), _content(content) {}
+                   const ArrayRef<uint8_t> content, Scope scope)
+      : SimpleDefinedAtom(f), _name(name), _content(content), _scope(scope) {}
 
   virtual uint64_t size() const { return rawContent().size(); }
 
@@ -27,13 +27,14 @@ public:
 
   virtual StringRef name() const { return _name; }
 
-  virtual Scope scope() const { return scopeGlobal; }
+  virtual Scope scope() const { return _scope; }
 
   virtual ArrayRef<uint8_t> rawContent() const { return _content; }
 
 private:
   const StringRef _name;
   const ArrayRef<uint8_t> _content;
+  const Scope _scope;
 };
 } // mach_o
 } // lld

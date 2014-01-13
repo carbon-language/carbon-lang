@@ -50,7 +50,28 @@ static uint64_t nextSymbolAddress(const NormalizedFile &normalizedFile,
     if (sValue < closestAddr)
       closestAddr = s.value;
   }
+  for (const Symbol &s : normalizedFile.localSymbols) {
+    if (s.sect != symbolSectionIndex)
+      continue;
+    uint64_t sValue = s.value;
+    if (sValue <= symbolAddr)
+      continue;
+    if (sValue < closestAddr)
+      closestAddr = s.value;
+  }
   return closestAddr;
+}
+
+static Atom::Scope atomScope(uint8_t scope) {
+  switch (scope) {
+  case N_EXT:
+    return Atom::scopeGlobal;
+  case N_PEXT | N_EXT:
+    return Atom::scopeLinkageUnit;
+  case 0:
+    return Atom::scopeTranslationUnit;
+  }
+  llvm_unreachable("unknown scope value!");
 }
 
 static void processSymbol(const NormalizedFile &normalizedFile, MachOFile &file,
@@ -61,7 +82,7 @@ static void processSymbol(const NormalizedFile &normalizedFile, MachOFile &file,
   uint64_t offset = sym.value - section.address;
   uint64_t size = nextSymbolAddress(normalizedFile, sym) - sym.value;
   ArrayRef<uint8_t> atomContent = section.content.slice(offset, size);
-  file.addDefinedAtom(sym.name, atomContent, copyRefs);
+  file.addDefinedAtom(sym.name, atomContent, atomScope(sym.scope), copyRefs);
 }
 
 static ErrorOr<std::unique_ptr<lld::File>>
@@ -73,8 +94,10 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
     processSymbol(normalizedFile, *file, sym, copyRefs);
   }
 
-  assert(normalizedFile.localSymbols.empty() &&
-         "local symbols not supported yet!");
+  for (const Symbol &sym : normalizedFile.localSymbols) {
+    processSymbol(normalizedFile, *file, sym, copyRefs);
+  }
+
   assert(normalizedFile.undefinedSymbols.empty() &&
          "undefined symbols not supported yet!");
 

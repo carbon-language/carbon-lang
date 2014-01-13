@@ -21,8 +21,9 @@ class MachOFile : public SimpleFile {
 public:
   MachOFile(StringRef path) : SimpleFile(path) {}
 
-  void addDefinedAtom(StringRef name, ArrayRef<uint8_t> content, bool cpyRefs) {
-    if (cpyRefs) {
+  void addDefinedAtom(StringRef name, ArrayRef<uint8_t> content,
+                      Atom::Scope scope, bool copyRefs) {
+    if (copyRefs) {
       // Make a copy of the atom's name and content that is owned by this file.
       char *s = _allocator.Allocate<char>(name.size());
       memcpy(s, name.data(), name.size());
@@ -32,7 +33,7 @@ public:
       content = llvm::makeArrayRef(bytes, content.size());
     }
     MachODefinedAtom *atom =
-        new (_allocator) MachODefinedAtom(*this, name, content);
+        new (_allocator) MachODefinedAtom(*this, name, content, scope);
     addAtom(*atom);
   }
 
