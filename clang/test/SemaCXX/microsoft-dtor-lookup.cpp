@@ -32,10 +32,9 @@ namespace Test2 {
 // requires a dtor for B, but we can't implicitly define it because ~A is
 // private.  bar should be able to call A's private dtor without error, even
 // though MSVC rejects bar.
-
 class A {
 private:
-  ~A(); // expected-note 2{{declared private here}}
+  ~A(); // expected-note {{declared private here}}
   int a;
 };
 
@@ -54,7 +53,7 @@ struct D {
 };
 
 void foo(B b) { } // expected-note {{implicit destructor for 'Test2::B' first required here}}
-void bar(A a) { } // expected-error {{variable of type 'Test2::A' has private destructor}}
+void bar(A a) { } // no error; MSVC rejects this, but we skip the direct access check.
 void baz(D d) { } // no error
 
 }
@@ -64,13 +63,13 @@ namespace Test3 {
 
 class A {
   A();
-  ~A(); // expected-note 2{{implicitly declared private here}}
+  ~A(); // expected-note {{implicitly declared private here}}
   friend void bar(A);
   int a;
 };
 
 void bar(A a) { }
-void baz(A a) { } // expected-error {{variable of type 'Test3::A' has private destructor}}
+void baz(A a) { } // no error; MSVC rejects this, but the standard allows it.
 
 // MSVC accepts foo() but we reject it for consistency with Itanium.  MSVC also
 // rejects this if A has a copy ctor or if we call A's ctor.

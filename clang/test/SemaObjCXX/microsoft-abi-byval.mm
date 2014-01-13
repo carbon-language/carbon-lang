@@ -1,7 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -cxx-abi microsoft -Wno-objc-root-class %s
+// expected-no-diagnostics
 
 class Foo {
-  ~Foo(); // expected-note {{implicitly declared private here}}
+  ~Foo();
 };
 
 @interface bar
@@ -9,6 +10,6 @@ class Foo {
 @end
 
 @implementation bar
-- (void) my_method: (Foo)arg { // expected-error {{variable of type 'Foo' has private destructor}}
+- (void) my_method: (Foo)arg { // no error; MS ABI will call Foo's dtor, but we skip the access check.
 }
 @end
