@@ -14,13 +14,14 @@ define i64 @f1(i32 %a) {
   ret i64 %ext
 }
 
-; ...and again with the highest shift count.
+; ...and again with the highest shift count that doesn't reduce to an
+; ashr/sext pair.
 define i64 @f2(i32 %a) {
 ; CHECK-LABEL: f2:
-; CHECK: sllg [[REG:%r[0-5]]], %r2, 32
+; CHECK: sllg [[REG:%r[0-5]]], %r2, 33
 ; CHECK: srag %r2, [[REG]], 63
 ; CHECK: br %r14
-  %shr = lshr i32 %a, 31
+  %shr = lshr i32 %a, 30
   %trunc = trunc i32 %shr to i1
   %ext = sext i1 %trunc to i64
   ret i64 %ext
@@ -75,4 +76,16 @@ define i64 @f6(i64 %a) {
   %shr = ashr i64 %shl, 60
   %and = and i64 %shr, 256
   ret i64 %and
+}
+
+; Test another form of f1.
+define i64 @f7(i32 %a) {
+; CHECK-LABEL: f7:
+; CHECK: sllg [[REG:%r[0-5]]], %r2, 62
+; CHECK: srag %r2, [[REG]], 63
+; CHECK: br %r14
+  %1 = shl i32 %a, 30
+  %sext = ashr i32 %1, 31
+  %ext = sext i32 %sext to i64
+  ret i64 %ext
 }
