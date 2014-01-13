@@ -604,7 +604,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
   bool HasVEX_4VOp3 = (TSFlags >> X86II::VEXShift) & X86II::VEX_4VOp3;
   bool HasMemOp4 = (TSFlags >> X86II::VEXShift) & X86II::MemOp4;
-  bool HasEVEX_RC = false;
+  bool HasEVEX_RC = (TSFlags >> X86II::VEXShift) & X86II::EVEX_RC;
 
   // VEX_R: opcode externsion equivalent to REX.R in
   // 1's complement (inverted) form
@@ -686,6 +686,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   // EVEX_aaa
   unsigned char EVEX_aaa = 0;
 
+  bool EncodeRC = false;
+
   // Encode the operand size opcode prefix as needed.
   if (TSFlags & X86II::OpSize)
     VEX_PP = 0x01;
@@ -749,7 +751,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   // Classify VEX_B, VEX_4V, VEX_R, VEX_X
   unsigned NumOps = Desc.getNumOperands();
-  unsigned RcOperand = NumOps-1;
   unsigned CurOp = 0;
   if (NumOps > 1 && Desc.getOperandConstraint(1, MCOI::TIED_TO) == 0)
     ++CurOp;
@@ -910,10 +911,13 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     if (HasVEX_4VOp3)
       VEX_4V = getVEXRegisterEncoding(MI, CurOp++);
     if (EVEX_b) {
-      assert(RcOperand >= CurOp);
-      EVEX_rc = MI.getOperand(RcOperand).getImm() & 0x3;
-      HasEVEX_RC = true;
-    }
+      if (HasEVEX_RC) {
+        unsigned RcOperand = NumOps-1;
+        assert(RcOperand >= CurOp);
+        EVEX_rc = MI.getOperand(RcOperand).getImm() & 0x3;
+      }
+      EncodeRC = true;
+    }      
     break;
   case X86II::MRMDestReg:
     // MRMDestReg instructions forms:
@@ -940,6 +944,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       VEX_R = 0x0;
     if (HasEVEX && X86II::is32ExtendedReg(MI.getOperand(CurOp).getReg()))
       EVEX_R2 = 0x0;
+    if (EVEX_b)
+      EncodeRC = true;
     break;
   case X86II::MRM0r: case X86II::MRM1r:
   case X86II::MRM2r: case X86II::MRM3r:
@@ -1013,7 +1019,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
              (VEX_4V  << 3) |
              (EVEX_U  << 2) |
              VEX_PP, CurByte, OS);
-    if (HasEVEX_RC)
+    if (EncodeRC)
       EmitByte((EVEX_z  << 7) |
               (EVEX_rc << 5) |
               (EVEX_b  << 4) |
@@ -1293,7 +1299,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // It uses the EVEX.aaa field?
   bool HasEVEX = (TSFlags >> X86II::VEXShift) & X86II::EVEX;
   bool HasEVEX_K = HasEVEX && ((TSFlags >> X86II::VEXShift) & X86II::EVEX_K);
-  bool HasEVEX_B = HasEVEX && ((TSFlags >> X86II::VEXShift) & X86II::EVEX_B);
+  bool HasEVEX_RC = HasEVEX && ((TSFlags >> X86II::VEXShift) & X86II::EVEX_RC);
   
   // Determine where the memory operand starts, if present.
   int MemoryOperand = X86II::getMemoryOperandNo(TSFlags, Opcode);
@@ -1391,7 +1397,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasVEX_4VOp3)
       ++CurOp;
     // do not count the rounding control operand
-    if (HasEVEX_B)
+    if (HasEVEX_RC)
       NumOps--;
     break;
 

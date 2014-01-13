@@ -503,8 +503,10 @@ namespace X86II {
     MemOp4 = 1U << 18,
 
     /// XOP - Opcode prefix used by XOP instructions.
-    XOP = 1U << 19
+    XOP = 1U << 19,
 
+    /// Explicitly specified rounding control
+    EVEX_RC = 1U << 20
   };
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the

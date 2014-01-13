@@ -57,3 +57,20 @@ define i16 @test4(i16 %a, i16 %b) {
  ret i16 %b1
 
 }
+
+; CHECK-LABEL: test5
+; CHECK: ret
+define float @test5(float %p) #0 {
+entry:
+  %cmp = fcmp oeq float %p, 0.000000e+00
+  br i1 %cmp, label %return, label %if.end
+
+if.end:                                           ; preds = %entry
+  %cmp1 = fcmp ogt float %p, 0.000000e+00
+  %cond = select i1 %cmp1, float 1.000000e+00, float -1.000000e+00
+  br label %return
+
+return:                                           ; preds = %if.end, %entry
+  %retval.0 = phi float [ %cond, %if.end ], [ %p, %entry ]
+  ret float %retval.0
+}

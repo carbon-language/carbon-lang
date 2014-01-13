@@ -150,6 +150,7 @@ class EVEX_4V : VEX_4V { bit hasEVEXPrefix = 1; }
 class EVEX_K { bit hasEVEX_K = 1; }
 class EVEX_KZ : EVEX_K { bit hasEVEX_Z = 1; }
 class EVEX_B { bit hasEVEX_B = 1; }
+class EVEX_RC { bit hasEVEX_RC = 1; }
 class EVEX_V512 { bit hasEVEX_L2 = 1; bit hasVEX_L = 0; }
 class EVEX_CD8<int esize, CD8VForm form> {
   bits<2> EVEX_CD8E = !if(!eq(esize, 8),  0b00,
@@ -217,6 +218,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit has3DNow0F0FOpcode =0;// Wacky 3dNow! encoding?
   bit hasMemOp4Prefix = 0;  // Same bit as VEX_W, but used for swapping operands
   bit hasXOP_Prefix = 0;    // Does this inst require an XOP prefix?
+  bit hasEVEX_RC = 0;       // Explicitly specified rounding control in FP instruction.
 
   // TSFlags layout should be kept in sync with X86InstrInfo.h.
   let TSFlags{5-0}   = FormBits;
@@ -247,6 +249,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{49}    = has3DNow0F0FOpcode;
   let TSFlags{50}    = hasMemOp4Prefix;
   let TSFlags{51}    = hasXOP_Prefix;
+  let TSFlags{52}    = hasEVEX_RC;
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>

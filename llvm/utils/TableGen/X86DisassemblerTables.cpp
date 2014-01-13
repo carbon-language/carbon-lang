@@ -210,12 +210,13 @@ static inline bool inheritsFrom(InstructionContext child,
     return inheritsFrom(child, IC_EVEX_W_XD_K) ||
            inheritsFrom(child, IC_EVEX_L_W_XD_K);
   case IC_EVEX_OPSIZE_K:
-    return inheritsFrom(child, IC_EVEX_W_OPSIZE_K) ||
-           inheritsFrom(child, IC_EVEX_W_OPSIZE_K);
+  case IC_EVEX_OPSIZE_B:
+    return false;
   case IC_EVEX_W_K:
   case IC_EVEX_W_XS_K:
   case IC_EVEX_W_XD_K:
   case IC_EVEX_W_OPSIZE_K:
+  case IC_EVEX_W_OPSIZE_B:
     return false;
   case IC_EVEX_L_K:
   case IC_EVEX_L_XS_K:
