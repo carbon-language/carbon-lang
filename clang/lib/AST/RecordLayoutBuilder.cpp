@@ -2186,9 +2186,6 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
         Context.getTypeInfoInChars(FD->getType());
     if (FD->isBitField() && FD->getMaxAlignment() != 0)
       Info.Alignment = std::max(Info.Alignment, FieldRequiredAlignment);
-    // Respect pragma pack.
-    if (!MaxFieldAlignment.isZero())
-      Info.Alignment = std::min(Info.Alignment, MaxFieldAlignment);
   }
   // Respect packed field attribute.
   if (FD->hasAttr<PackedAttr>())
@@ -2200,6 +2197,9 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
     // Capture required alignment as a side-effect.
     RequiredAlignment = std::max(RequiredAlignment, FieldRequiredAlignment);
   }
+  // Respect pragma pack.
+  if (!MaxFieldAlignment.isZero())
+    Info.Alignment = std::min(Info.Alignment, MaxFieldAlignment);
   // TODO: Add a Sema warning that MS ignores bitfield alignment in unions.
   if (!(FD->isBitField() && IsUnion))
     Alignment = std::max(Alignment, Info.Alignment);
