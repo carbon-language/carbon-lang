@@ -816,11 +816,31 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
   }
 
   if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
-    MRI->setRegClass(DstReg, CP.getNewRC());
-
     unsigned NewIdx = NewMI->getOperand(0).getSubReg();
-    updateRegDefsUses(DstReg, DstReg, DstIdx);
-    NewMI->getOperand(0).setSubReg(NewIdx);
+    const TargetRegisterClass *RCForInst;
+    if (NewIdx)
+      RCForInst = TRI->getMatchingSuperRegClass(MRI->getRegClass(DstReg), DefRC,
+                                                NewIdx);
+
+    if (MRI->constrainRegClass(DstReg, DefRC)) {
+      // The materialized instruction is quite capable of setting DstReg
+      // directly, but it may still have a now-trivial subregister index which
+      // we should clear.
+      NewMI->getOperand(0).setSubReg(0);
+    } else if (NewIdx && RCForInst) {
+      // The subreg index on NewMI is essential; we still have to make sure
+      // DstReg:idx is in a class that NewMI can use.
+      MRI->constrainRegClass(DstReg, RCForInst);
+    } else {
+      // DstReg is actually incompatible with NewMI, we have to move to a
+      // super-reg's class. This could come from a sequence like:
+      //     GR32 = MOV32r0
+      //     GR8 = COPY GR32:sub_8
+      MRI->setRegClass(DstReg, CP.getNewRC());
+      updateRegDefsUses(DstReg, DstReg, DstIdx);
+      NewMI->getOperand(0).setSubReg(
+          TRI->composeSubRegIndices(SrcIdx, DefMI->getOperand(0).getSubReg()));
+    }
   } else if (NewMI->getOperand(0).getReg() != CopyDstReg) {
     // The New instruction may be defining a sub-register of what's actually
     // been asked for. If so it must implicitly define the whole thing.
