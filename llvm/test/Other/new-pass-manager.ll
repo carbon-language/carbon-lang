@@ -23,6 +23,12 @@
 ; CHECK-FUNCTION-PRINT: Finished function pass manager
 ; CHECK-FUNCTION-PRINT: Finished module pass manager
 
+; RUN: opt -S -o - -passes='no-op-module,no-op-module' %s \
+; RUN:     | FileCheck %s --check-prefix=CHECK-NOOP
+; CHECK-NOOP: define void @foo() {
+; CHECK-NOOP:   ret void
+; CHECK-NOOP: }
+
 define void @foo() {
   ret void
 }
