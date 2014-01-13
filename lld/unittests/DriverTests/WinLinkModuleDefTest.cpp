@@ -18,25 +18,26 @@ using namespace lld;
 
 class ParserTest : public testing::Test {
 protected:
-  llvm::Optional<moduledef::Directive *> parse(const char *contents,
-                                               llvm::BumpPtrAllocator &alloc) {
+  llvm::Optional<moduledef::Directive *> parse(const char *contents) {
     auto membuf =
         std::unique_ptr<MemoryBuffer>(MemoryBuffer::getMemBuffer(contents));
     moduledef::Lexer lexer(std::move(membuf));
-    moduledef::Parser parser(lexer, alloc);
+    moduledef::Parser parser(lexer, _alloc);
     return parser.parse();
   }
+
+private:
+  llvm::BumpPtrAllocator _alloc;
 };
 
 TEST_F(ParserTest, Exports) {
-  llvm::BumpPtrAllocator alloc;
-  llvm::Optional<moduledef::Directive *> dir = parse("EXPORTS\n"
-                                                     "  sym1\n"
-                                                     "  sym2 @5\n"
-                                                     "  sym3 @8 NONAME\n"
-                                                     "  sym4 DATA\n"
-                                                     "  sym5 @10 NONAME DATA\n",
-                                                     alloc);
+  llvm::Optional<moduledef::Directive *> dir =
+      parse("EXPORTS\n"
+            "  sym1\n"
+            "  sym2 @5\n"
+            "  sym3 @8 NONAME\n"
+            "  sym4 DATA\n"
+            "  sym5 @10 NONAME DATA\n");
   EXPECT_TRUE(dir.hasValue());
   EXPECT_EQ(moduledef::Directive::Kind::exports, dir.getValue()->getKind());
 
@@ -69,8 +70,7 @@ TEST_F(ParserTest, Exports) {
 }
 
 TEST_F(ParserTest, Heapsize) {
-  llvm::BumpPtrAllocator alloc;
-  llvm::Optional<moduledef::Directive *> dir = parse("HEAPSIZE 65536", alloc);
+  llvm::Optional<moduledef::Directive *> dir = parse("HEAPSIZE 65536");
   EXPECT_TRUE(dir.hasValue());
   auto *heapsize = dyn_cast<moduledef::Heapsize>(dir.getValue());
   EXPECT_TRUE(heapsize != nullptr);
@@ -79,8 +79,8 @@ TEST_F(ParserTest, Heapsize) {
 }
 
 TEST_F(ParserTest, Heapsize_WithCommit) {
-  llvm::BumpPtrAllocator alloc;
-  llvm::Optional<moduledef::Directive *> dir = parse("HEAPSIZE 65536, 8192", alloc);
+
+  llvm::Optional<moduledef::Directive *> dir = parse("HEAPSIZE 65536, 8192");
   EXPECT_TRUE(dir.hasValue());
   auto *heapsize = dyn_cast<moduledef::Heapsize>(dir.getValue());
   EXPECT_TRUE(heapsize != nullptr);
@@ -89,8 +89,7 @@ TEST_F(ParserTest, Heapsize_WithCommit) {
 }
 
 TEST_F(ParserTest, Name) {
-  llvm::BumpPtrAllocator alloc;
-  llvm::Optional<moduledef::Directive *> dir = parse("NAME foo.exe", alloc);
+  llvm::Optional<moduledef::Directive *> dir = parse("NAME foo.exe");
   EXPECT_TRUE(dir.hasValue());
   auto *name = dyn_cast<moduledef::Name>(dir.getValue());
   EXPECT_TRUE(name != nullptr);
@@ -99,8 +98,7 @@ TEST_F(ParserTest, Name) {
 }
 
 TEST_F(ParserTest, Name_WithBase) {
-  llvm::BumpPtrAllocator alloc;
-  llvm::Optional<moduledef::Directive *> dir = parse("NAME foo.exe BASE=4096", alloc);
+  llvm::Optional<moduledef::Directive *> dir = parse("NAME foo.exe BASE=4096");
   EXPECT_TRUE(dir.hasValue());
   auto *name = dyn_cast<moduledef::Name>(dir.getValue());
   EXPECT_TRUE(name != nullptr);
@@ -109,9 +107,8 @@ TEST_F(ParserTest, Name_WithBase) {
 }
 
 TEST_F(ParserTest, Name_LongFileName) {
-  llvm::BumpPtrAllocator alloc;
-  llvm::Optional<moduledef::Directive *> dir = parse(
-      "NAME \"a long file name.exe\"", alloc);
+  llvm::Optional<moduledef::Directive *> dir =
+      parse("NAME \"a long file name.exe\"");
   EXPECT_TRUE(dir.hasValue());
   auto *name = dyn_cast<moduledef::Name>(dir.getValue());
   EXPECT_TRUE(name != nullptr);
@@ -120,8 +117,7 @@ TEST_F(ParserTest, Name_LongFileName) {
 }
 
 TEST_F(ParserTest, Version_Major) {
-  llvm::BumpPtrAllocator alloc;
-  llvm::Optional<moduledef::Directive *> dir = parse("VERSION 12", alloc);
+  llvm::Optional<moduledef::Directive *> dir = parse("VERSION 12");
   EXPECT_TRUE(dir.hasValue());
   auto *ver = dyn_cast<moduledef::Version>(dir.getValue());
   EXPECT_TRUE(ver != nullptr);
@@ -130,8 +126,7 @@ TEST_F(ParserTest, Version_Major) {
 }
 
 TEST_F(ParserTest, Version_MajorMinor) {
-  llvm::BumpPtrAllocator alloc;
-  llvm::Optional<moduledef::Directive *> dir = parse("VERSION 12.34", alloc);
+  llvm::Optional<moduledef::Directive *> dir = parse("VERSION 12.34");
   EXPECT_TRUE(dir.hasValue());
   auto *ver = dyn_cast<moduledef::Version>(dir.getValue());
   EXPECT_TRUE(ver != nullptr);
