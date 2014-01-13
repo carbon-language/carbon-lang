@@ -2907,10 +2907,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       isInvalid = DS.setFunctionSpecForceInline(Loc, PrevSpec, DiagID);
       IdentifierInfo *AttrName = Tok.getIdentifierInfo();
       SourceLocation AttrNameLoc = Tok.getLocation();
-      // FIXME: This does not work correctly if it is set to be a declspec
-      //        attribute, and a GNU attribute is simply incorrect.
       DS.getAttributes().addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0, 0,
-                                AttributeList::AS_GNU);
+                                AttributeList::AS_Keyword);
       break;
     }
 
