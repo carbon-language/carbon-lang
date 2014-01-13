@@ -1429,6 +1429,12 @@ DWARFExpression::Evaluate
         //----------------------------------------------------------------------
         case DW_OP_deref:
             {
+                if (stack.empty())
+                {
+                    if (error_ptr)
+                        error_ptr->SetErrorString("Expression stack empty for DW_OP_deref.");
+                    return false;
+                }
                 Value::ValueType value_type = stack.back().GetValueType();
                 switch (value_type)
                 {
@@ -1504,6 +1510,12 @@ DWARFExpression::Evaluate
         //----------------------------------------------------------------------
         case DW_OP_deref_size:
             {
+                if (stack.empty())
+                {
+                    if (error_ptr)
+                        error_ptr->SetErrorString("Expression stack empty for DW_OP_deref_size.");
+                    return false;
+                }
                 uint8_t size = opcodes.GetU8(&offset);
                 Value::ValueType value_type = stack.back().GetValueType();
                 switch (value_type)
