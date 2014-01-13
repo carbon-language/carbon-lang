@@ -736,6 +736,9 @@ class RI<bits<8> o, Format F, dag outs, dag ins, string asm,
 class RIi8 <bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii8<o, F, outs, ins, asm, pattern, itin>, REX_W;
+class RIi16 <bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : Ii16<o, F, outs, ins, asm, pattern, itin>, REX_W;
 class RIi32 <bits<8> o, Format F, dag outs, dag ins, string asm,
              list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii32<o, F, outs, ins, asm, pattern, itin>, REX_W;

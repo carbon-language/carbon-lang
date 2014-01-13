@@ -1673,7 +1673,8 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
 
   case X86::RETQ:
   case X86::RETL:
-  case X86::RETI:
+  case X86::RETIL:
+  case X86::RETIQ:
     // If RET has an FP register use operand, pass the first one in ST(0) and
     // the second one in ST(1).
 

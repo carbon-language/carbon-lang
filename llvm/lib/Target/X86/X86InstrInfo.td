@@ -2162,7 +2162,7 @@ def : MnemonicAlias<"cdq",  "cltd", "att">;
 def : MnemonicAlias<"cdqe", "cltq", "att">;
 def : MnemonicAlias<"cqo",  "cqto", "att">;
 
-// lret maps to lretl, it is not ambiguous with lretq.
+// In 64-bit mode lret maps to lretl; it is not ambiguous with lretq.
 def : MnemonicAlias<"lret", "lretw", "att">, Requires<[In16BitMode]>;
 def : MnemonicAlias<"lret", "lretl", "att">, Requires<[Not16BitMode]>;
 

@@ -30,20 +30,27 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
   def RETW   : I   <0xC3, RawFrm, (outs), (ins),
                     "ret{w}",
                     [], IIC_RET>, OpSize;
-  def RETI   : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
+  def RETIL  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "ret{l}\t$amt",
-                    [(X86retflag timm:$amt)], IIC_RET_IMM>, OpSize16;
+                    [(X86retflag timm:$amt)], IIC_RET_IMM>, OpSize16,
+               Requires<[Not64BitMode]>;
+  def RETIQ  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
+                    "ret{q}\t$amt",
+                    [(X86retflag timm:$amt)], IIC_RET_IMM>,
+               Requires<[In64BitMode]>;
   def RETIW  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt),
                     "ret{w}\t$amt",
                     [], IIC_RET_IMM>, OpSize;
   def LRETL  : I   <0xCB, RawFrm, (outs), (ins),
                     "{l}ret{l|f}", [], IIC_RET>, OpSize16;
+  def LRETQ  : RI  <0xCB, RawFrm, (outs), (ins),
+                    "{l}ret{|f}q", [], IIC_RET>, Requires<[In64BitMode]>;
   def LRETW  : I   <0xCB, RawFrm, (outs), (ins),
                     "{l}ret{w|f}", [], IIC_RET>, OpSize;
-  def LRETQ  : RI  <0xCB, RawFrm, (outs), (ins),
-                    "{l}ret{q|f}", [], IIC_RET>;
-  def LRETI  : Ii16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
+  def LRETIL : Ii16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
                     "{l}ret{l|f}\t$amt", [], IIC_RET>, OpSize16;
+  def LRETIQ : RIi16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
+                    "{l}ret{|f}q\t$amt", [], IIC_RET>, Requires<[In64BitMode]>;
   def LRETIW : Ii16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
                     "{l}ret{w|f}\t$amt", [], IIC_RET>, OpSize;
 }
