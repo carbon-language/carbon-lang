@@ -39,3 +39,8 @@
 // RUN: %clang_cl /fallback /Ox -### -- %s 2>&1 | FileCheck -check-prefix=Ox %s
 // Ox: cl.exe
 // Ox: "/Ox"
+
+// Only fall back when actually compiling, not for e.g. /P (preprocess).
+// RUN: %clang_cl /fallback /P -### -- %s 2>&1 | FileCheck -check-prefix=P %s
+// P-NOT: ||
+// P-NOT: "cl.exe"

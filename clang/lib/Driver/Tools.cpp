@@ -3725,7 +3725,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Finally add the compile command to the compilation.
-  if (Args.hasArg(options::OPT__SLASH_fallback)) {
+  if (Args.hasArg(options::OPT__SLASH_fallback) &&
+      Output.getType() == types::TY_Object) {
     tools::visualstudio::Compile CL(getToolChain());
     Command *CLCommand = CL.GetCommand(C, JA, Output, Inputs, Args,
                                        LinkingOutput);
