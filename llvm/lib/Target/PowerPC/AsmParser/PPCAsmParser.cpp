@@ -1373,7 +1373,7 @@ bool PPCAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
     for (;;) {
       const MCExpr *Value;
       if (getParser().parseExpression(Value))
-        return true;
+        return false;
 
       getParser().getStreamer().EmitValue(Value, Size);
 
@@ -1397,8 +1397,10 @@ bool PPCAsmParser::ParseDirectiveTC(unsigned Size, SMLoc L) {
   while (getLexer().isNot(AsmToken::EndOfStatement)
          && getLexer().isNot(AsmToken::Comma))
     Parser.Lex();
-  if (getLexer().isNot(AsmToken::Comma))
-    return Error(L, "unexpected token in directive");
+  if (getLexer().isNot(AsmToken::Comma)) {
+    Error(L, "unexpected token in directive");
+    return false;
+  }
   Parser.Lex();
 
   // Align to word size.
@@ -1412,8 +1414,10 @@ bool PPCAsmParser::ParseDirectiveTC(unsigned Size, SMLoc L) {
 ///  ::= .machine [ cpu | "push" | "pop" ]
 bool PPCAsmParser::ParseDirectiveMachine(SMLoc L) {
   if (getLexer().isNot(AsmToken::Identifier) &&
-      getLexer().isNot(AsmToken::String))
-    return Error(L, "unexpected token in directive");
+      getLexer().isNot(AsmToken::String)) {
+    Error(L, "unexpected token in directive");
+    return false;
+  }
 
   StringRef CPU = Parser.getTok().getIdentifier();
   Parser.Lex();
@@ -1423,11 +1427,15 @@ bool PPCAsmParser::ParseDirectiveMachine(SMLoc L) {
   // Implement ".machine any" (by doing nothing) for the benefit
   // of existing assembler code.  Likewise, we can then implement
   // ".machine push" and ".machine pop" as no-op.
-  if (CPU != "any" && CPU != "push" && CPU != "pop")
-    return Error(L, "unrecognized machine type");
+  if (CPU != "any" && CPU != "push" && CPU != "pop") {
+    Error(L, "unrecognized machine type");
+    return false;
+  }
 
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return Error(L, "unexpected token in directive");
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    Error(L, "unexpected token in directive");
+    return false;
+  }
 
   return false;
 }
@@ -1436,8 +1444,10 @@ bool PPCAsmParser::ParseDirectiveMachine(SMLoc L) {
 ///  ::= .machine cpu-identifier
 bool PPCAsmParser::ParseDarwinDirectiveMachine(SMLoc L) {
   if (getLexer().isNot(AsmToken::Identifier) &&
-      getLexer().isNot(AsmToken::String))
-    return Error(L, "unexpected token in directive");
+      getLexer().isNot(AsmToken::String)) {
+    Error(L, "unexpected token in directive");
+    return false;
+  }
 
   StringRef CPU = Parser.getTok().getIdentifier();
   Parser.Lex();
@@ -1445,16 +1455,24 @@ bool PPCAsmParser::ParseDarwinDirectiveMachine(SMLoc L) {
   // FIXME: this is only the 'default' set of cpu variants.
   // However we don't act on this information at present, this is simply
   // allowing parsing to proceed with minimal sanity checking.
-  if (CPU != "ppc7400" && CPU != "ppc" && CPU != "ppc64")
-    return Error(L, "unrecognized cpu type");
+  if (CPU != "ppc7400" && CPU != "ppc" && CPU != "ppc64") {
+    Error(L, "unrecognized cpu type");
+    return false;
+  }
 
-  if (isPPC64() && (CPU == "ppc7400" || CPU == "ppc"))
-    return Error(L, "wrong cpu type specified for 64bit");
-  if (!isPPC64() && CPU == "ppc64")
-    return Error(L, "wrong cpu type specified for 32bit");
+  if (isPPC64() && (CPU == "ppc7400" || CPU == "ppc")) {
+    Error(L, "wrong cpu type specified for 64bit");
+    return false;
+  }
+  if (!isPPC64() && CPU == "ppc64") {
+    Error(L, "wrong cpu type specified for 32bit");
+    return false;
+  }
 
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return Error(L, "unexpected token in directive");
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    Error(L, "unexpected token in directive");
+    return false;
+  }
 
   return false;
 }

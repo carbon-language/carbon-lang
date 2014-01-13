@@ -2407,13 +2407,17 @@ bool MipsAsmParser::parseDirectiveMipsHackStocg() {
     reportParseError("expected identifier");
 
   MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
-  if (getLexer().isNot(AsmToken::Comma))
-    return TokError("unexpected token");
+  if (getLexer().isNot(AsmToken::Comma)) {
+    TokError("unexpected token");
+    return false;
+  }
   Lex();
 
   int64_t Flags = 0;
-  if (Parser.parseAbsoluteExpression(Flags))
-    return TokError("unexpected token");
+  if (Parser.parseAbsoluteExpression(Flags)) {
+    TokError("unexpected token");
+    return false;
+  }
 
   getTargetStreamer().emitMipsHackSTOCG(Sym, Flags);
   return false;
@@ -2421,8 +2425,10 @@ bool MipsAsmParser::parseDirectiveMipsHackStocg() {
 
 bool MipsAsmParser::parseDirectiveMipsHackELFFlags() {
   int64_t Flags = 0;
-  if (Parser.parseAbsoluteExpression(Flags))
-    return TokError("unexpected token");
+  if (Parser.parseAbsoluteExpression(Flags)) {
+    TokError("unexpected token");
+    return false;
+  }
 
   getTargetStreamer().emitMipsHackELFFlags(Flags);
   return false;
@@ -2499,7 +2505,6 @@ bool MipsAsmParser::parseDirectiveOption() {
 }
 
 bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
-
   StringRef IDVal = DirectiveID.getString();
 
   if (IDVal == ".ent") {
