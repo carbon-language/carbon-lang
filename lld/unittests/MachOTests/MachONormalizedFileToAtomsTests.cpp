@@ -23,7 +23,7 @@ using namespace llvm::MachO;
 TEST(ToAtomsTest, empty_obj_x86_64) {
   NormalizedFile f;
   f.arch = lld::MachOLinkingContext::arch_x86_64;
-  ErrorOr<std::unique_ptr<const lld::File>> atom_f = normalizedToAtoms(f, "", 
+  ErrorOr<std::unique_ptr<const lld::File>> atom_f = normalizedToAtoms(f, "",
                                                                        false);
   EXPECT_FALSE(!atom_f);
   EXPECT_EQ(0U, (*atom_f)->defined().size());
@@ -58,8 +58,8 @@ TEST(ToAtomsTest, basic_obj_x86_64) {
   bazSymbol.sect = 1;
   bazSymbol.value = 3;
   f.localSymbols.push_back(bazSymbol);
-  
-  ErrorOr<std::unique_ptr<const lld::File>> atom_f = normalizedToAtoms(f, "", 
+
+  ErrorOr<std::unique_ptr<const lld::File>> atom_f = normalizedToAtoms(f, "",
                                                                        false);
   EXPECT_FALSE(!atom_f);
   const lld::File &file = **atom_f;
@@ -75,7 +75,7 @@ TEST(ToAtomsTest, basic_obj_x86_64) {
   EXPECT_EQ(0x90, atom1->rawContent()[0]);
   EXPECT_EQ(0xC3, atom1->rawContent()[1]);
   EXPECT_EQ(lld::Atom::scopeGlobal, atom1->scope());
-  
+
   EXPECT_TRUE(atom2->name().equals("_bar"));
   EXPECT_EQ(1U, atom2->rawContent().size());
   EXPECT_EQ(0xC3, atom2->rawContent()[0]);

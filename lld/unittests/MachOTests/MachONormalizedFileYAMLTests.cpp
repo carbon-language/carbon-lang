@@ -27,7 +27,7 @@ using lld::mach_o::normalized::Relocation;
 
 static std::unique_ptr<NormalizedFile> fromYAML(StringRef str) {
   std::unique_ptr<MemoryBuffer> mb(MemoryBuffer::getMemBuffer(str));
-  ErrorOr<std::unique_ptr<NormalizedFile>> r 
+  ErrorOr<std::unique_ptr<NormalizedFile>> r
                                     = lld::mach_o::normalized::readYaml(mb);
   EXPECT_FALSE(!r);
   return std::move(*r);
@@ -139,7 +139,7 @@ TEST(ObjectFileYAML, empty_armv7s) {
 
 
 TEST(ObjectFileYAML, roundTrip) {
-  std::string intermediate;  
+  std::string intermediate;
   {
     NormalizedFile f;
     f.arch = lld::MachOLinkingContext::arch_x86_64;
@@ -214,7 +214,7 @@ TEST(ObjectFileYAML, oneSection) {
   EXPECT_TRUE(sect.segmentName.equals("__TEXT"));
   EXPECT_TRUE(sect.sectionName.equals("__text"));
   EXPECT_EQ((uint32_t)(sect.type), (uint32_t)(llvm::MachO::S_REGULAR));
-  EXPECT_EQ((uint32_t)(sect.attributes), 
+  EXPECT_EQ((uint32_t)(sect.attributes),
                             (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS));
   EXPECT_EQ(sect.alignment, 1U);
   EXPECT_EQ((uint64_t)sect.address, 0x12345678ULL);
@@ -281,13 +281,13 @@ TEST(ObjectFileYAML, hello_x86_64) {
   EXPECT_EQ(f->fileType, llvm::MachO::MH_OBJECT);
   EXPECT_EQ((int)(f->flags), llvm::MachO::MH_SUBSECTIONS_VIA_SYMBOLS);
   EXPECT_EQ(f->sections.size(), 2UL);
-  
+
   const Section& sect1 = f->sections[0];
   EXPECT_TRUE(sect1.segmentName.equals("__TEXT"));
   EXPECT_TRUE(sect1.sectionName.equals("__text"));
   EXPECT_EQ((uint32_t)(sect1.type), (uint32_t)(llvm::MachO::S_REGULAR));
-  EXPECT_EQ((uint32_t)(sect1.attributes), 
-                            (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS 
+  EXPECT_EQ((uint32_t)(sect1.attributes),
+                            (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(sect1.alignment, 0U);
   EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
@@ -313,7 +313,7 @@ TEST(ObjectFileYAML, hello_x86_64) {
   EXPECT_TRUE(reloc2.isExtern);
   EXPECT_EQ(reloc2.symbol, 1U);
   EXPECT_EQ((int)(reloc2.value), 0);
- 
+
   const Section& sect2 = f->sections[1];
   EXPECT_TRUE(sect2.segmentName.equals("__TEXT"));
   EXPECT_TRUE(sect2.sectionName.equals("__cstring"));
@@ -325,7 +325,7 @@ TEST(ObjectFileYAML, hello_x86_64) {
   EXPECT_EQ((int)(sect2.content[0]), 0x68);
   EXPECT_EQ((int)(sect2.content[1]), 0x65);
   EXPECT_EQ((int)(sect2.content[2]), 0x6c);
-  
+
   EXPECT_EQ(f->globalSymbols.size(), 1UL);
   const Symbol& sym1 = f->globalSymbols[0];
   EXPECT_TRUE(sym1.name.equals("_main"));
@@ -412,13 +412,13 @@ TEST(ObjectFileYAML, hello_x86) {
   EXPECT_EQ(f->fileType, llvm::MachO::MH_OBJECT);
   EXPECT_EQ((int)(f->flags), llvm::MachO::MH_SUBSECTIONS_VIA_SYMBOLS);
   EXPECT_EQ(f->sections.size(), 2UL);
-  
+
   const Section& sect1 = f->sections[0];
   EXPECT_TRUE(sect1.segmentName.equals("__TEXT"));
   EXPECT_TRUE(sect1.sectionName.equals("__text"));
   EXPECT_EQ((uint32_t)(sect1.type), (uint32_t)(llvm::MachO::S_REGULAR));
-  EXPECT_EQ((uint32_t)(sect1.attributes), 
-                            (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS 
+  EXPECT_EQ((uint32_t)(sect1.attributes),
+                            (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(sect1.alignment, 0U);
   EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
@@ -451,7 +451,7 @@ TEST(ObjectFileYAML, hello_x86) {
   EXPECT_FALSE(reloc3.pcRel);
   EXPECT_EQ(reloc3.symbol, 0U);
   EXPECT_EQ((int)(reloc3.value), 0xb);
- 
+
   const Section& sect2 = f->sections[1];
   EXPECT_TRUE(sect2.segmentName.equals("__TEXT"));
   EXPECT_TRUE(sect2.sectionName.equals("__cstring"));
@@ -463,7 +463,7 @@ TEST(ObjectFileYAML, hello_x86) {
   EXPECT_EQ((int)(sect2.content[0]), 0x68);
   EXPECT_EQ((int)(sect2.content[1]), 0x65);
   EXPECT_EQ((int)(sect2.content[2]), 0x6c);
-  
+
   EXPECT_EQ(f->globalSymbols.size(), 1UL);
   const Symbol& sym1 = f->globalSymbols[0];
   EXPECT_TRUE(sym1.name.equals("_main"));
@@ -540,13 +540,13 @@ TEST(ObjectFileYAML, hello_armv6) {
   EXPECT_EQ(f->fileType, llvm::MachO::MH_OBJECT);
   EXPECT_EQ((int)(f->flags), llvm::MachO::MH_SUBSECTIONS_VIA_SYMBOLS);
   EXPECT_EQ(f->sections.size(), 2UL);
-  
+
   const Section& sect1 = f->sections[0];
   EXPECT_TRUE(sect1.segmentName.equals("__TEXT"));
   EXPECT_TRUE(sect1.sectionName.equals("__text"));
   EXPECT_EQ((uint32_t)(sect1.type), (uint32_t)(llvm::MachO::S_REGULAR));
-  EXPECT_EQ((uint32_t)(sect1.attributes), 
-                            (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS 
+  EXPECT_EQ((uint32_t)(sect1.attributes),
+                            (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(sect1.alignment, 2U);
   EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
@@ -579,7 +579,7 @@ TEST(ObjectFileYAML, hello_armv6) {
   EXPECT_TRUE(reloc3.isExtern);
   EXPECT_EQ(reloc3.symbol, 1U);
   EXPECT_EQ((int)(reloc3.value), 0);
- 
+
   const Section& sect2 = f->sections[1];
   EXPECT_TRUE(sect2.segmentName.equals("__TEXT"));
   EXPECT_TRUE(sect2.sectionName.equals("__cstring"));
@@ -591,7 +591,7 @@ TEST(ObjectFileYAML, hello_armv6) {
   EXPECT_EQ((int)(sect2.content[0]), 0x68);
   EXPECT_EQ((int)(sect2.content[1]), 0x65);
   EXPECT_EQ((int)(sect2.content[2]), 0x6c);
-  
+
   EXPECT_EQ(f->globalSymbols.size(), 1UL);
   const Symbol& sym1 = f->globalSymbols[0];
   EXPECT_TRUE(sym1.name.equals("_main"));
@@ -682,13 +682,13 @@ TEST(ObjectFileYAML, hello_armv7) {
   EXPECT_EQ(f->fileType, llvm::MachO::MH_OBJECT);
   EXPECT_EQ((int)(f->flags), llvm::MachO::MH_SUBSECTIONS_VIA_SYMBOLS);
   EXPECT_EQ(f->sections.size(), 2UL);
-  
+
   const Section& sect1 = f->sections[0];
   EXPECT_TRUE(sect1.segmentName.equals("__TEXT"));
   EXPECT_TRUE(sect1.sectionName.equals("__text"));
   EXPECT_EQ((uint32_t)(sect1.type), (uint32_t)(llvm::MachO::S_REGULAR));
-  EXPECT_EQ((uint32_t)(sect1.attributes), 
-                            (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS 
+  EXPECT_EQ((uint32_t)(sect1.attributes),
+                            (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(sect1.alignment, 1U);
   EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
@@ -749,7 +749,7 @@ TEST(ObjectFileYAML, hello_armv7) {
   EXPECT_EQ((int)(sect2.content[0]), 0x68);
   EXPECT_EQ((int)(sect2.content[1]), 0x65);
   EXPECT_EQ((int)(sect2.content[2]), 0x6c);
-  
+
   EXPECT_EQ(f->globalSymbols.size(), 1UL);
   const Symbol& sym1 = f->globalSymbols[0];
   EXPECT_TRUE(sym1.name.equals("_main"));

@@ -32,8 +32,8 @@ using namespace lld::mach_o::normalized;
 // Parses binary mach-o file at specified path and returns
 // ownership of buffer to mb parameter and ownership of
 // Normalized file to nf parameter.
-static void 
-fromBinary(StringRef path, std::unique_ptr<MemoryBuffer> &mb, 
+static void
+fromBinary(StringRef path, std::unique_ptr<MemoryBuffer> &mb,
                            std::unique_ptr<NormalizedFile> &nf) {
 
   OwningPtr<MemoryBuffer> opmb;
@@ -41,15 +41,15 @@ fromBinary(StringRef path, std::unique_ptr<MemoryBuffer> &mb,
   EXPECT_FALSE(ec);
   mb.reset(opmb.take());
 
-  ErrorOr<std::unique_ptr<NormalizedFile>> r 
+  ErrorOr<std::unique_ptr<NormalizedFile>> r
                                     = lld::mach_o::normalized::readBinary(mb);
   EXPECT_FALSE(!r);
   nf.reset(r->release());
 }
 
 
-static Relocation 
-makeReloc(unsigned addr, bool rel, bool ext, RelocationInfoType type, 
+static Relocation
+makeReloc(unsigned addr, bool rel, bool ext, RelocationInfoType type,
                                                               unsigned sym) {
   Relocation result;
   result.offset = addr;
@@ -63,7 +63,7 @@ makeReloc(unsigned addr, bool rel, bool ext, RelocationInfoType type,
   return result;
 }
 
-static Relocation 
+static Relocation
 makeScatReloc(unsigned addr, RelocationInfoType type, unsigned value) {
   Relocation result;
   result.offset = addr;
@@ -77,7 +77,7 @@ makeScatReloc(unsigned addr, RelocationInfoType type, unsigned value) {
   return result;
 }
 
-static Symbol 
+static Symbol
 makeUndefSymbol(StringRef name) {
   Symbol sym;
   sym.name = name;
@@ -90,7 +90,7 @@ makeUndefSymbol(StringRef name) {
 }
 
 
-static Symbol 
+static Symbol
 makeSymbol(StringRef name, unsigned addr) {
   Symbol sym;
   sym.name = name;
@@ -102,7 +102,7 @@ makeSymbol(StringRef name, unsigned addr) {
   return sym;
 }
 
-static Symbol 
+static Symbol
 makeThumbSymbol(StringRef name, unsigned addr) {
   Symbol sym;
   sym.name = name;
@@ -127,16 +127,16 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
     text.segmentName = "__TEXT";
     text.sectionName = "__text";
     text.type = S_REGULAR;
-    text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
+    text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
     text.alignment = 4;
     text.address = 0;
     const uint8_t textBytes[] = {
-      0xe8, 0x00, 0x00, 0x00, 0x00, 0x48, 0x8b, 0x05, 
-      0x00, 0x00, 0x00, 0x00, 0xff, 0x35, 0x00, 0x00, 
-      0x00, 0x00, 0x8b, 0x05, 0x00, 0x00, 0x00, 0x00, 
-      0xc6, 0x05, 0xff, 0xff, 0xff, 0xff, 0x12, 0xc7, 
-      0x05, 0xfc, 0xff, 0xff, 0xff, 0x78, 0x56, 0x34, 
+      0xe8, 0x00, 0x00, 0x00, 0x00, 0x48, 0x8b, 0x05,
+      0x00, 0x00, 0x00, 0x00, 0xff, 0x35, 0x00, 0x00,
+      0x00, 0x00, 0x8b, 0x05, 0x00, 0x00, 0x00, 0x00,
+      0xc6, 0x05, 0xff, 0xff, 0xff, 0xff, 0x12, 0xc7,
+      0x05, 0xfc, 0xff, 0xff, 0xff, 0x78, 0x56, 0x34,
       0x12, 0x48, 0x8b, 0x3d, 0x00, 0x00, 0x00, 0x00 };
 
     text.content = llvm::makeArrayRef(textBytes, sizeof(textBytes));
@@ -147,16 +147,16 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
     text.relocations.push_back(makeReloc(0x1A, false, true, X86_64_RELOC_SIGNED_1, 1));
     text.relocations.push_back(makeReloc(0x21, false, true, X86_64_RELOC_SIGNED_4, 1));
     text.relocations.push_back(makeReloc(0x2C, false, true, X86_64_RELOC_TLV, 2));
- 
+
     f.undefinedSymbols.push_back(makeUndefSymbol("_bar"));
     f.undefinedSymbols.push_back(makeUndefSymbol("_tbar"));
-  
+
     error_code ec = llvm::sys::fs::createTemporaryFile(Twine("xx"), "o", tmpFl);
     EXPECT_FALSE(ec);
     ec = writeBinary(f, tmpFl);
     EXPECT_FALSE(ec);
   }
-  
+
   std::unique_ptr<MemoryBuffer> bufferOwner;
   std::unique_ptr<NormalizedFile> f2;
   fromBinary(tmpFl, bufferOwner, f2);
@@ -164,7 +164,7 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
   EXPECT_EQ(lld::MachOLinkingContext::arch_x86_64, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
   EXPECT_EQ(FileFlags(MH_SUBSECTIONS_VIA_SYMBOLS), f2->flags);
-  
+
   EXPECT_TRUE(f2->localSymbols.empty());
   EXPECT_TRUE(f2->globalSymbols.empty());
   EXPECT_EQ(2UL, f2->undefinedSymbols.size());
@@ -176,13 +176,13 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
   EXPECT_TRUE(tbarUndef.name.equals("_tbar"));
   EXPECT_EQ(N_UNDF, tbarUndef.type);
   EXPECT_EQ(SymbolScope(N_EXT), tbarUndef.scope);
-  
+
   EXPECT_EQ(1UL, f2->sections.size());
   const Section& text = f2->sections[0];
   EXPECT_TRUE(text.segmentName.equals("__TEXT"));
   EXPECT_TRUE(text.sectionName.equals("__text"));
   EXPECT_EQ(S_REGULAR, text.type);
-  EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
+  EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(text.alignment, 4U);
   EXPECT_EQ(text.address, Hex64(0x0));
@@ -223,7 +223,7 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
   EXPECT_EQ(signed4.length, 2);
   EXPECT_EQ(signed4.isExtern, true);
   EXPECT_EQ(signed4.symbol, 1U);
-  
+
   error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
   EXPECT_FALSE(ec);
 }
@@ -243,7 +243,7 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
     text.segmentName = "__TEXT";
     text.sectionName = "__text";
     text.type = S_REGULAR;
-    text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
+    text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
     text.alignment = 4;
     text.address = 0;
@@ -258,10 +258,10 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
     text.relocations.push_back(makeScatReloc(0x0c, GENERIC_RELOC_LOCAL_SECTDIFF, 0));
     text.relocations.push_back(makeScatReloc(0x0, GENERIC_RELOC_PAIR, 5));
     text.relocations.push_back(makeReloc(0x12, true, true, GENERIC_RELOC_TLV, 1));
- 
+
     f.undefinedSymbols.push_back(makeUndefSymbol("_bar"));
     f.undefinedSymbols.push_back(makeUndefSymbol("_tbar"));
- 
+
     error_code ec = llvm::sys::fs::createTemporaryFile(Twine("xx"), "o", tmpFl);
     EXPECT_FALSE(ec);
     ec = writeBinary(f, tmpFl);
@@ -274,7 +274,7 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
   EXPECT_EQ(lld::MachOLinkingContext::arch_x86, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
   EXPECT_EQ(FileFlags(MH_SUBSECTIONS_VIA_SYMBOLS), f2->flags);
-  
+
   EXPECT_TRUE(f2->localSymbols.empty());
   EXPECT_TRUE(f2->globalSymbols.empty());
   EXPECT_EQ(2UL, f2->undefinedSymbols.size());
@@ -286,13 +286,13 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
   EXPECT_TRUE(tbarUndef.name.equals("_tbar"));
   EXPECT_EQ(N_UNDF, tbarUndef.type);
   EXPECT_EQ(SymbolScope(N_EXT), tbarUndef.scope);
-  
+
   EXPECT_EQ(1UL, f2->sections.size());
   const Section& text = f2->sections[0];
   EXPECT_TRUE(text.segmentName.equals("__TEXT"));
   EXPECT_TRUE(text.sectionName.equals("__text"));
   EXPECT_EQ(S_REGULAR, text.type);
-  EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
+  EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(text.alignment, 4U);
   EXPECT_EQ(text.address, Hex64(0x0));
@@ -331,7 +331,7 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
   EXPECT_EQ(tlv.length, 2);
   EXPECT_EQ(tlv.isExtern, true);
   EXPECT_EQ(tlv.symbol, 1U);
-  
+
   //llvm::errs() << "temp = " << tmpFl << "\n";
   error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
   EXPECT_FALSE(ec);
@@ -352,29 +352,29 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
     text.segmentName = "__TEXT";
     text.sectionName = "__text";
     text.type = S_REGULAR;
-    text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
+    text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
     text.alignment = 2;
     text.address = 0;
     const uint8_t textBytes[] = {
-      0xff, 0xf7, 0xfe, 0xef, 0x40, 0xf2, 0x05, 0x01, 
+      0xff, 0xf7, 0xfe, 0xef, 0x40, 0xf2, 0x05, 0x01,
       0xc0, 0xf2, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
       0x00, 0xbf };
 
     text.content = llvm::makeArrayRef(textBytes, sizeof(textBytes));
-    text.relocations.push_back(makeReloc(0x00, true, true, 
+    text.relocations.push_back(makeReloc(0x00, true, true,
                                         ARM_THUMB_RELOC_BR22, 2));
-    text.relocations.push_back(makeScatReloc(0x04, 
+    text.relocations.push_back(makeScatReloc(0x04,
                                         ARM_RELOC_HALF_SECTDIFF, 0x10));
-    text.relocations.push_back(makeScatReloc(0x00, 
+    text.relocations.push_back(makeScatReloc(0x00,
                                         ARM_RELOC_PAIR, 0xC));
-    text.relocations.push_back(makeScatReloc(0x08, 
+    text.relocations.push_back(makeScatReloc(0x08,
                                         ARM_RELOC_HALF_SECTDIFF, 0x10));
-    text.relocations.push_back(makeScatReloc(0x00, 
+    text.relocations.push_back(makeScatReloc(0x00,
                                         ARM_RELOC_PAIR, 0xC));
-    text.relocations.push_back(makeReloc(0x0C, false, true, 
+    text.relocations.push_back(makeReloc(0x0C, false, true,
                                         ARM_RELOC_VANILLA, 2));
- 
+
     f.globalSymbols.push_back(makeThumbSymbol("_foo", 0x00));
     f.globalSymbols.push_back(makeThumbSymbol("_foo2", 0x10));
     f.undefinedSymbols.push_back(makeUndefSymbol("_bar"));
@@ -391,7 +391,7 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
   EXPECT_EQ(lld::MachOLinkingContext::arch_armv7, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
   EXPECT_EQ(FileFlags(MH_SUBSECTIONS_VIA_SYMBOLS), f2->flags);
-  
+
   EXPECT_TRUE(f2->localSymbols.empty());
   EXPECT_EQ(2UL, f2->globalSymbols.size());
   const Symbol& fooDef = f2->globalSymbols[0];
@@ -404,19 +404,19 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
   EXPECT_EQ(N_SECT, foo2Def.type);
   EXPECT_EQ(1, foo2Def.sect);
   EXPECT_EQ(SymbolScope(N_EXT), foo2Def.scope);
-  
+
   EXPECT_EQ(1UL, f2->undefinedSymbols.size());
   const Symbol& barUndef = f2->undefinedSymbols[0];
   EXPECT_TRUE(barUndef.name.equals("_bar"));
   EXPECT_EQ(N_UNDF, barUndef.type);
   EXPECT_EQ(SymbolScope(N_EXT), barUndef.scope);
-  
+
   EXPECT_EQ(1UL, f2->sections.size());
   const Section& text = f2->sections[0];
   EXPECT_TRUE(text.segmentName.equals("__TEXT"));
   EXPECT_TRUE(text.sectionName.equals("__text"));
   EXPECT_EQ(S_REGULAR, text.type);
-  EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
+  EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(text.alignment, 2U);
   EXPECT_EQ(text.address, Hex64(0x0));
@@ -459,7 +459,7 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
   EXPECT_EQ(absPointer.length, 2);
   EXPECT_EQ(absPointer.isExtern, true);
   EXPECT_EQ(absPointer.symbol, 2U);
-  
+
   //llvm::errs() << "temp = " << tmpFl << "\n";
   error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
   EXPECT_FALSE(ec);
@@ -480,7 +480,7 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
     text.segmentName = "__TEXT";
     text.sectionName = "__text";
     text.type = S_REGULAR;
-    text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
+    text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
     text.alignment = 2;
     text.address = 0;
@@ -493,25 +493,25 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
       0x60, 0x00, 0x00, 0x00 };
 
     text.content = llvm::makeArrayRef(textBytes, sizeof(textBytes));
-    text.relocations.push_back(makeReloc(0x00, true, true, 
+    text.relocations.push_back(makeReloc(0x00, true, true,
                                         PPC_RELOC_BR24, 2));
-    text.relocations.push_back(makeReloc(0x04, true, true, 
+    text.relocations.push_back(makeReloc(0x04, true, true,
                                         PPC_RELOC_BR14, 2));
-    text.relocations.push_back(makeScatReloc(0x08, 
+    text.relocations.push_back(makeScatReloc(0x08,
                                         PPC_RELOC_HI16_SECTDIFF, 0x28));
-    text.relocations.push_back(makeScatReloc(0x24, 
+    text.relocations.push_back(makeScatReloc(0x24,
                                         PPC_RELOC_PAIR, 0x4));
-    text.relocations.push_back(makeScatReloc(0x0C, 
+    text.relocations.push_back(makeScatReloc(0x0C,
                                         PPC_RELOC_HA16_SECTDIFF, 0x28));
-    text.relocations.push_back(makeScatReloc(0x24, 
+    text.relocations.push_back(makeScatReloc(0x24,
                                         PPC_RELOC_PAIR, 0x4));
-    text.relocations.push_back(makeScatReloc(0x10, 
+    text.relocations.push_back(makeScatReloc(0x10,
                                         PPC_RELOC_LO16_SECTDIFF, 0x28));
-    text.relocations.push_back(makeScatReloc(0x00, 
+    text.relocations.push_back(makeScatReloc(0x00,
                                         PPC_RELOC_PAIR, 0x4));
-    text.relocations.push_back(makeScatReloc(0x14, 
+    text.relocations.push_back(makeScatReloc(0x14,
                                         PPC_RELOC_LO14_SECTDIFF, 0x28));
-    text.relocations.push_back(makeScatReloc(0x00, 
+    text.relocations.push_back(makeScatReloc(0x00,
                                         PPC_RELOC_PAIR, 0x4));
     text.relocations.push_back(makeReloc(0x18, false, false,
                                         PPC_RELOC_HI16, 1));
@@ -546,7 +546,7 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
   EXPECT_EQ(lld::MachOLinkingContext::arch_ppc, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
   EXPECT_EQ(FileFlags(MH_SUBSECTIONS_VIA_SYMBOLS), f2->flags);
-  
+
   EXPECT_TRUE(f2->localSymbols.empty());
   EXPECT_EQ(2UL, f2->globalSymbols.size());
   const Symbol& fooDef = f2->globalSymbols[0];
@@ -559,19 +559,19 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
   EXPECT_EQ(N_SECT, foo2Def.type);
   EXPECT_EQ(1, foo2Def.sect);
   EXPECT_EQ(SymbolScope(N_EXT), foo2Def.scope);
-  
+
   EXPECT_EQ(1UL, f2->undefinedSymbols.size());
   const Symbol& barUndef = f2->undefinedSymbols[0];
   EXPECT_TRUE(barUndef.name.equals("_bar"));
   EXPECT_EQ(N_UNDF, barUndef.type);
   EXPECT_EQ(SymbolScope(N_EXT), barUndef.scope);
-  
+
   EXPECT_EQ(1UL, f2->sections.size());
   const Section& text = f2->sections[0];
   EXPECT_TRUE(text.segmentName.equals("__TEXT"));
   EXPECT_TRUE(text.sectionName.equals("__text"));
   EXPECT_EQ(S_REGULAR, text.type);
-  EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS 
+  EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
   EXPECT_EQ(text.alignment, 2U);
   EXPECT_EQ(text.address, Hex64(0x0));
@@ -688,7 +688,7 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
   EXPECT_EQ(absloa2.type, PPC_RELOC_PAIR);
   EXPECT_EQ(absloa2.length, 2);
   EXPECT_EQ(absloa2.symbol, 0U);
- 
+
   error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
   EXPECT_FALSE(ec);
 }
