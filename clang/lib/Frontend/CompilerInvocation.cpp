@@ -1628,9 +1628,12 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   // Use the default target triple if unspecified.
   if (Opts.Triple.empty())
     Opts.Triple = llvm::sys::getDefaultTargetTriple();
-}
 
-//
+  // Use the MS ABI for Win32 targets unless otherwise specified.
+  if (Opts.CXXABI.empty() &&
+      llvm::Triple(Opts.Triple).getOS() == llvm::Triple::Win32)
+    Opts.CXXABI = "microsoft";
+}
 
 bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                                         const char *const *ArgBegin,
