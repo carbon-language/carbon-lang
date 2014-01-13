@@ -637,10 +637,9 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
   uint64_t ExitCount = Cnt.getLoopExitCount();
 
   // As long as the condition is true, iterate the loop.
-  if (EmitBoolCondBranch) {
+  if (EmitBoolCondBranch)
     Builder.CreateCondBr(BoolCondVal, LoopBody, LoopExit.getBlock(),
                          PGO.createBranchWeights(LoopCount, ExitCount));
-  }
 
   // Emit the exit block.
   EmitBlock(LoopExit.getBlock());
