@@ -40,7 +40,7 @@ public:
   explicit BitcodeWriterPass(raw_ostream &OS) : OS(OS) {}
 
   /// \brief Run the bitcode writer pass, and output the module to the selected
-  /// \brief output stream.
+  /// output stream.
   PreservedAnalyses run(Module *M);
 
   static StringRef name() { return "BitcodeWriterPass"; }
