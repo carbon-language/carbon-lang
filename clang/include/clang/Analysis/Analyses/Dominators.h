@@ -17,9 +17,15 @@
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/IR/DominatorInternals.h"
-#include "llvm/IR/Dominators.h"
-#include "llvm/IR/Module.h"
+#include "llvm/Support/GenericDomTree.h"
+#include "llvm/Support/GenericDomTreeConstruction.h"
+
+// FIXME: There is no good reason for the domtree to require a print method
+// which accepts an LLVM Module, so remove this (and the method's argument that
+// needs it) when that is fixed.
+namespace llvm {
+class Module;
+}
 
 namespace clang {
 
