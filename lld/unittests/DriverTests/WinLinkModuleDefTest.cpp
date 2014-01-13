@@ -68,7 +68,7 @@ TEST_F(ParserTest, Exports) {
   EXPECT_EQ(exports[4].isData, true);
 }
 
-TEST_F(ParserTest, Heapsize1) {
+TEST_F(ParserTest, Heapsize) {
   llvm::BumpPtrAllocator alloc;
   llvm::Optional<moduledef::Directive *> dir = parse("HEAPSIZE 65536", alloc);
   EXPECT_TRUE(dir.hasValue());
@@ -78,7 +78,7 @@ TEST_F(ParserTest, Heapsize1) {
   EXPECT_EQ(0U, heapsize->getCommit());
 }
 
-TEST_F(ParserTest, Heapsize2) {
+TEST_F(ParserTest, Heapsize_WithCommit) {
   llvm::BumpPtrAllocator alloc;
   llvm::Optional<moduledef::Directive *> dir = parse("HEAPSIZE 65536, 8192", alloc);
   EXPECT_TRUE(dir.hasValue());
@@ -88,7 +88,7 @@ TEST_F(ParserTest, Heapsize2) {
   EXPECT_EQ(8192U, heapsize->getCommit());
 }
 
-TEST_F(ParserTest, Name1) {
+TEST_F(ParserTest, Name) {
   llvm::BumpPtrAllocator alloc;
   llvm::Optional<moduledef::Directive *> dir = parse("NAME foo.exe", alloc);
   EXPECT_TRUE(dir.hasValue());
@@ -98,7 +98,7 @@ TEST_F(ParserTest, Name1) {
   EXPECT_EQ(0U, name->getBaseAddress());
 }
 
-TEST_F(ParserTest, Name2) {
+TEST_F(ParserTest, Name_WithBase) {
   llvm::BumpPtrAllocator alloc;
   llvm::Optional<moduledef::Directive *> dir = parse("NAME foo.exe BASE=4096", alloc);
   EXPECT_TRUE(dir.hasValue());
@@ -108,7 +108,7 @@ TEST_F(ParserTest, Name2) {
   EXPECT_EQ(4096U, name->getBaseAddress());
 }
 
-TEST_F(ParserTest, Name3) {
+TEST_F(ParserTest, Name_LongFileName) {
   llvm::BumpPtrAllocator alloc;
   llvm::Optional<moduledef::Directive *> dir = parse(
       "NAME \"a long file name.exe\"", alloc);
@@ -119,7 +119,7 @@ TEST_F(ParserTest, Name3) {
   EXPECT_EQ(0U, name->getBaseAddress());
 }
 
-TEST_F(ParserTest, Version1) {
+TEST_F(ParserTest, Version_Major) {
   llvm::BumpPtrAllocator alloc;
   llvm::Optional<moduledef::Directive *> dir = parse("VERSION 12", alloc);
   EXPECT_TRUE(dir.hasValue());
@@ -129,7 +129,7 @@ TEST_F(ParserTest, Version1) {
   EXPECT_EQ(0, ver->getMinorVersion());
 }
 
-TEST_F(ParserTest, Version2) {
+TEST_F(ParserTest, Version_MajorMinor) {
   llvm::BumpPtrAllocator alloc;
   llvm::Optional<moduledef::Directive *> dir = parse("VERSION 12.34", alloc);
   EXPECT_TRUE(dir.hasValue());
