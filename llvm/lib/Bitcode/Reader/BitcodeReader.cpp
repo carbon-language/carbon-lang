@@ -3274,18 +3274,14 @@ const error_category &BitcodeReader::BitcodeErrorCategory() {
 
 /// getLazyBitcodeModule - lazy function-at-a-time loading from a file.
 ///
-Module *llvm::getLazyBitcodeModule(MemoryBuffer *Buffer,
-                                   LLVMContext& Context,
-                                   std::string *ErrMsg) {
+ErrorOr<Module *> llvm::getLazyBitcodeModule(MemoryBuffer *Buffer,
+                                             LLVMContext &Context) {
   Module *M = new Module(Buffer->getBufferIdentifier(), Context);
   BitcodeReader *R = new BitcodeReader(Buffer, Context);
   M->setMaterializer(R);
   if (error_code EC = R->ParseBitcodeInto(M)) {
-    if (ErrMsg)
-      *ErrMsg = EC.message();
-
     delete M;  // Also deletes R.
-    return 0;
+    return EC;
   }
   // Have the BitcodeReader dtor delete 'Buffer'.
   R->setBufferOwned(true);
@@ -3317,8 +3313,13 @@ Module *llvm::getStreamedBitcodeModule(const std::string &name,
 /// If an error occurs, return null and fill in *ErrMsg if non-null.
 Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext& Context,
                                std::string *ErrMsg){
-  Module *M = getLazyBitcodeModule(Buffer, Context, ErrMsg);
-  if (!M) return 0;
+  ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context);
+  if (error_code EC = ModuleOrErr.getError()) {
+    if (ErrMsg)
+      *ErrMsg = EC.message();
+    return 0;
+  }
+  Module *M = ModuleOrErr.get();
 
   // Don't let the BitcodeReader dtor delete 'Buffer', regardless of whether
   // there was an error.

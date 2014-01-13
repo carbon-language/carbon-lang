@@ -51,14 +51,17 @@ LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef,
                                        LLVMModuleRef *OutM,
                                        char **OutMessage) {
   std::string Message;
+  ErrorOr<Module *> ModuleOrErr =
+      getLazyBitcodeModule(unwrap(MemBuf), *unwrap(ContextRef));
 
-  *OutM = wrap(getLazyBitcodeModule(unwrap(MemBuf), *unwrap(ContextRef),
-                                    &Message));
-  if (!*OutM) {
+  if (error_code EC = ModuleOrErr.getError()) {
+    *OutM = wrap((Module *)NULL);
     if (OutMessage)
-      *OutMessage = strdup(Message.c_str());
+      *OutMessage = strdup(EC.message().c_str());
     return 1;
   }
+
+  *OutM = wrap(ModuleOrErr.get());
 
   return 0;
 

@@ -14,6 +14,7 @@
 #ifndef LLVM_BITCODE_READERWRITER_H
 #define LLVM_BITCODE_READERWRITER_H
 
+#include "llvm/Support/ErrorOr.h"
 #include <string>
 
 namespace llvm {
@@ -25,14 +26,11 @@ namespace llvm {
   class ModulePass;
   class raw_ostream;
 
-  /// getLazyBitcodeModule - Read the header of the specified bitcode buffer
-  /// and prepare for lazy deserialization of function bodies.  If successful,
-  /// this takes ownership of 'buffer' and returns a non-null pointer.  On
-  /// error, this returns null, *does not* take ownership of Buffer, and fills
-  /// in *ErrMsg with an error description if ErrMsg is non-null.
-  Module *getLazyBitcodeModule(MemoryBuffer *Buffer,
-                               LLVMContext &Context,
-                               std::string *ErrMsg = 0);
+  /// Read the header of the specified bitcode buffer and prepare for lazy
+  /// deserialization of function bodies.  If successful, this takes ownership
+  /// of 'buffer. On error, this *does not* take ownership of Buffer.
+  ErrorOr<Module *> getLazyBitcodeModule(MemoryBuffer *Buffer,
+                                         LLVMContext &Context);
 
   /// getStreamedBitcodeModule - Read the header of the specified stream
   /// and prepare for lazy deserialization and streaming of function bodies.
