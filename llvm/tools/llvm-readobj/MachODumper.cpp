@@ -15,7 +15,6 @@
 #include "Error.h"
 #include "ObjDumper.h"
 #include "StreamWriter.h"
-
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/Casting.h"

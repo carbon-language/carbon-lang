@@ -11,7 +11,6 @@
 #define LLVM_READOBJ_ARMEHABI_PRINTER_H
 
 #include "StreamWriter.h"
-
 #include "llvm/Object/ELF.h"
 #include "llvm/Object/ELFTypes.h"
 #include "llvm/Support/ARMEHABI.h"

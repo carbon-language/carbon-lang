@@ -13,11 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-readobj.h"
+#include "ARMEHABIPrinter.h"
 #include "Error.h"
 #include "ObjDumper.h"
 #include "StreamWriter.h"
-#include "ARMEHABIPrinter.h"
-
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Support/Compiler.h"

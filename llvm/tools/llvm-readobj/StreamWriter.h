@@ -11,8 +11,8 @@
 #define LLVM_READOBJ_STREAMWRITER_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/raw_ostream.h"

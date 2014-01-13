@@ -13,10 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h" // plugin-api.h requires HAVE_STDINT_H
-#include <plugin-api.h>
 #include "llvm-c/lto.h"
-#include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Errno.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -29,6 +28,7 @@
 #include <cstring>
 #include <fstream>
 #include <list>
+#include <plugin-api.h>
 #include <vector>
 
 // Support Windows/MinGW crazyness.

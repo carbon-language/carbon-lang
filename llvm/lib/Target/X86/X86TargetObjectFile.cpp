@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86TargetObjectFile.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionELF.h"
-#include "llvm/IR/Mangler.h"
 #include "llvm/Support/Dwarf.h"
 
 using namespace llvm;

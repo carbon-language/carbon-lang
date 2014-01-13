@@ -15,17 +15,15 @@
 #ifndef LLI_REMOTETARGETEXTERNAL_H
 #define LLI_REMOTETARGETEXTERNAL_H
 
-#include "llvm/Config/config.h"
-
+#include "RemoteTarget.h"
+#include "RemoteTargetMessage.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Config/config.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Memory.h"
 #include <stdlib.h>
 #include <string>
-
-#include "RemoteTarget.h"
-#include "RemoteTargetMessage.h"
 
 namespace llvm {
 

@@ -15,14 +15,13 @@
 #ifndef REMOTEMEMORYMANAGER_H
 #define REMOTEMEMORYMANAGER_H
 
+#include "RemoteTarget.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Memory.h"
 #include <utility>
-
-#include "RemoteTarget.h"
 
 namespace llvm {
 

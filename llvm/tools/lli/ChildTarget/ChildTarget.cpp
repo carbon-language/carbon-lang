@@ -1,5 +1,4 @@
 #include "llvm/Config/config.h"
-
 #include "../RemoteTargetMessage.h"
 #include <assert.h>
 #include <map>

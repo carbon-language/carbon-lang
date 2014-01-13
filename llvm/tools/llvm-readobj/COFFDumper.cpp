@@ -13,25 +13,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-readobj.h"
-#include "ObjDumper.h"
-
 #include "Error.h"
+#include "ObjDumper.h"
 #include "StreamWriter.h"
-
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/COFF.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/COFF.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Win64EH.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-
 #include <algorithm>
 #include <cstring>
 #include <time.h>

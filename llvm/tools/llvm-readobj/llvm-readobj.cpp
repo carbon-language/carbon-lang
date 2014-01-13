@@ -20,11 +20,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-readobj.h"
-
 #include "Error.h"
 #include "ObjDumper.h"
 #include "StreamWriter.h"
-
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
@@ -38,7 +36,6 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/system_error.h"
-
 #include <string>
 
 
