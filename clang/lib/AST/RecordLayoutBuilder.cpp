@@ -2302,8 +2302,10 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBases(const CXXRecordDecl *RD) {
     if (!BaseLayout.hasExtendableVFPtr())
       continue;
     // If we don't have a primary base, this one qualifies.
-    if (!PrimaryBase)
+    if (!PrimaryBase) {
       PrimaryBase = BaseDecl;
+      LeadsWithZeroSizedBase = BaseLayout.leadsWithZeroSizedBase();
+    }
     // Lay out the base.
     layoutNonVirtualBase(BaseDecl, BaseLayout, PreviousBaseLayout);
   }
