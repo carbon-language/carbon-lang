@@ -16,36 +16,38 @@
 using namespace llvm;
 using namespace lld;
 
-class ParserTest : public testing::Test {
+template <typename T> class ParserTest : public testing::Test {
 protected:
-  llvm::Optional<moduledef::Directive *> parse(const char *contents) {
+  T *parse(const char *contents) {
     auto membuf =
         std::unique_ptr<MemoryBuffer>(MemoryBuffer::getMemBuffer(contents));
     moduledef::Lexer lexer(std::move(membuf));
     moduledef::Parser parser(lexer, _alloc);
-    return parser.parse();
+    llvm::Optional<moduledef::Directive *> dir = parser.parse();
+    EXPECT_TRUE(dir.hasValue());
+    auto *ret = dyn_cast<T>(dir.getValue());
+    EXPECT_TRUE(ret != nullptr);
+    return ret;
   }
 
 private:
   llvm::BumpPtrAllocator _alloc;
 };
 
-TEST_F(ParserTest, Exports) {
-  llvm::Optional<moduledef::Directive *> dir =
-      parse("EXPORTS\n"
-            "  sym1\n"
-            "  sym2 @5\n"
-            "  sym3 @8 NONAME\n"
-            "  sym4 DATA\n"
-            "  sym5 @10 NONAME DATA\n");
-  EXPECT_TRUE(dir.hasValue());
-  EXPECT_EQ(moduledef::Directive::Kind::exports, dir.getValue()->getKind());
+class ExportsTest : public ParserTest<moduledef::Exports> {};
+class HeapsizeTest : public ParserTest<moduledef::Heapsize> {};
+class NameTest : public ParserTest<moduledef::Name> {};
+class VersionTest : public ParserTest<moduledef::Version> {};
 
-  auto *exportsDir = dyn_cast<moduledef::Exports>(dir.getValue());
-  EXPECT_TRUE(exportsDir != nullptr);
-
+TEST_F(ExportsTest, Basic) {
+  moduledef::Exports *dir = parse("EXPORTS\n"
+                                  "  sym1\n"
+                                  "  sym2 @5\n"
+                                  "  sym3 @8 NONAME\n"
+                                  "  sym4 DATA\n"
+                                  "  sym5 @10 NONAME DATA\n");
   const std::vector<PECOFFLinkingContext::ExportDesc> &exports =
-      exportsDir->getExports();
+      dir->getExports();
   EXPECT_EQ(5U, exports.size());
   EXPECT_EQ(exports[0].name, "sym1");
   EXPECT_EQ(exports[0].ordinal, -1);
@@ -69,67 +71,44 @@ TEST_F(ParserTest, Exports) {
   EXPECT_EQ(exports[4].isData, true);
 }
 
-TEST_F(ParserTest, Heapsize) {
-  llvm::Optional<moduledef::Directive *> dir = parse("HEAPSIZE 65536");
-  EXPECT_TRUE(dir.hasValue());
-  auto *heapsize = dyn_cast<moduledef::Heapsize>(dir.getValue());
-  EXPECT_TRUE(heapsize != nullptr);
+TEST_F(HeapsizeTest, Basic) {
+  moduledef::Heapsize *heapsize = parse("HEAPSIZE 65536");
   EXPECT_EQ(65536U, heapsize->getReserve());
   EXPECT_EQ(0U, heapsize->getCommit());
 }
 
-TEST_F(ParserTest, Heapsize_WithCommit) {
-
-  llvm::Optional<moduledef::Directive *> dir = parse("HEAPSIZE 65536, 8192");
-  EXPECT_TRUE(dir.hasValue());
-  auto *heapsize = dyn_cast<moduledef::Heapsize>(dir.getValue());
-  EXPECT_TRUE(heapsize != nullptr);
+TEST_F(HeapsizeTest, WithCommit) {
+  moduledef::Heapsize *heapsize = parse("HEAPSIZE 65536, 8192");
   EXPECT_EQ(65536U, heapsize->getReserve());
   EXPECT_EQ(8192U, heapsize->getCommit());
 }
 
-TEST_F(ParserTest, Name) {
-  llvm::Optional<moduledef::Directive *> dir = parse("NAME foo.exe");
-  EXPECT_TRUE(dir.hasValue());
-  auto *name = dyn_cast<moduledef::Name>(dir.getValue());
-  EXPECT_TRUE(name != nullptr);
+TEST_F(NameTest, Basic) {
+  moduledef::Name *name = parse("NAME foo.exe");
   EXPECT_EQ("foo.exe", name->getOutputPath());
   EXPECT_EQ(0U, name->getBaseAddress());
 }
 
-TEST_F(ParserTest, Name_WithBase) {
-  llvm::Optional<moduledef::Directive *> dir = parse("NAME foo.exe BASE=4096");
-  EXPECT_TRUE(dir.hasValue());
-  auto *name = dyn_cast<moduledef::Name>(dir.getValue());
-  EXPECT_TRUE(name != nullptr);
+TEST_F(NameTest, WithBase) {
+  moduledef::Name *name = parse("NAME foo.exe BASE=4096");
   EXPECT_EQ("foo.exe", name->getOutputPath());
   EXPECT_EQ(4096U, name->getBaseAddress());
 }
 
-TEST_F(ParserTest, Name_LongFileName) {
-  llvm::Optional<moduledef::Directive *> dir =
-      parse("NAME \"a long file name.exe\"");
-  EXPECT_TRUE(dir.hasValue());
-  auto *name = dyn_cast<moduledef::Name>(dir.getValue());
-  EXPECT_TRUE(name != nullptr);
+TEST_F(NameTest, LongFileName) {
+  moduledef::Name *name = parse("NAME \"a long file name.exe\"");
   EXPECT_EQ("a long file name.exe", name->getOutputPath());
   EXPECT_EQ(0U, name->getBaseAddress());
 }
 
-TEST_F(ParserTest, Version_Major) {
-  llvm::Optional<moduledef::Directive *> dir = parse("VERSION 12");
-  EXPECT_TRUE(dir.hasValue());
-  auto *ver = dyn_cast<moduledef::Version>(dir.getValue());
-  EXPECT_TRUE(ver != nullptr);
+TEST_F(VersionTest, Major) {
+  moduledef::Version *ver = parse("VERSION 12");
   EXPECT_EQ(12, ver->getMajorVersion());
   EXPECT_EQ(0, ver->getMinorVersion());
 }
 
-TEST_F(ParserTest, Version_MajorMinor) {
-  llvm::Optional<moduledef::Directive *> dir = parse("VERSION 12.34");
-  EXPECT_TRUE(dir.hasValue());
-  auto *ver = dyn_cast<moduledef::Version>(dir.getValue());
-  EXPECT_TRUE(ver != nullptr);
+TEST_F(VersionTest, MajorMinor) {
+  moduledef::Version *ver = parse("VERSION 12.34");
   EXPECT_EQ(12, ver->getMajorVersion());
   EXPECT_EQ(34, ver->getMinorVersion());
 }
