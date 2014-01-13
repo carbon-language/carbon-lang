@@ -1171,7 +1171,7 @@ void Generic_GCC::GCCInstallationDetector::print(raw_ostream &OS) const {
     "i686-linux-gnu", "i686-pc-linux-gnu", "i486-linux-gnu", "i386-linux-gnu",
     "i386-redhat-linux6E", "i686-redhat-linux", "i586-redhat-linux",
     "i386-redhat-linux", "i586-suse-linux", "i486-slackware-linux",
-    "i686-montavista-linux"
+    "i686-montavista-linux", "i686-linux-android"
   };
 
   static const char *const MIPSLibDirs[] = { "/lib" };
