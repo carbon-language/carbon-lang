@@ -269,12 +269,12 @@ define i64 @f23(i64 %foo) {
 ; mask and rotate.
 define i32 @f24(i32 %foo) {
 ; CHECK-LABEL: f24:
-; CHECK: nilf %r2, 14
-; CHECK: rll %r2, %r2, 3
+; CHECK: nilf %r2, 254
+; CHECK: rll %r2, %r2, 29
 ; CHECK: br %r14
-  %and = and i32 %foo, 14
-  %parta = shl i32 %and, 3
-  %partb = lshr i32 %and, 29
+  %and = and i32 %foo, 254
+  %parta = lshr i32 %and, 3
+  %partb = shl i32 %and, 29
   %rotl = or i32 %parta, %partb
   ret i32 %rotl
 }
@@ -295,7 +295,6 @@ define i64 @f25(i64 %foo) {
 ; This again needs a separate mask and rotate.
 define i32 @f26(i32 %foo) {
 ; CHECK-LABEL: f26:
-; CHECK: nill %r2, 65487
 ; CHECK: rll %r2, %r2, 5
 ; CHECK: br %r14
   %and = and i32 %foo, -49
