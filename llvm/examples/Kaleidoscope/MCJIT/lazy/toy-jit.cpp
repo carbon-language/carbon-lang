@@ -1,7 +1,7 @@
 #define MINIMAL_STDERR_OUTPUT
 
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/Verifier.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/IR/DataLayout.h"
