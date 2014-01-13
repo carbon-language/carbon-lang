@@ -56,7 +56,7 @@ extern "C" {
   // in a contiguous region of memory. The container owns the region of memory
   // [beg, end); the memory [beg, mid) is used to store the current elements
   // and the memory [mid, end) is reserved for future elements;
-  // end <= mid <= end. For example, in "std::vector<> v"
+  // beg <= mid <= end. For example, in "std::vector<> v"
   //   beg = &v[0];
   //   end = beg + v.capacity() * sizeof(v[0]);
   //   mid = beg + v.size()     * sizeof(v[0]);
