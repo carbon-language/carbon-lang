@@ -199,7 +199,7 @@ namespace {
     BBVectorize(Pass *P, const VectorizeConfig &C)
       : BasicBlockPass(ID), Config(C) {
       AA = &P->getAnalysis<AliasAnalysis>();
-      DT = &P->getAnalysis<DominatorTree>();
+      DT = &P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
       SE = &P->getAnalysis<ScalarEvolution>();
       TD = P->getAnalysisIfAvailable<DataLayout>();
       TTI = IgnoreTargetInfo ? 0 : &P->getAnalysis<TargetTransformInfo>();
@@ -430,7 +430,7 @@ namespace {
 
     virtual bool runOnBasicBlock(BasicBlock &BB) {
       AA = &getAnalysis<AliasAnalysis>();
-      DT = &getAnalysis<DominatorTree>();
+      DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
       SE = &getAnalysis<ScalarEvolution>();
       TD = getAnalysisIfAvailable<DataLayout>();
       TTI = IgnoreTargetInfo ? 0 : &getAnalysis<TargetTransformInfo>();
@@ -441,11 +441,11 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       BasicBlockPass::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
-      AU.addRequired<DominatorTree>();
+      AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<ScalarEvolution>();
       AU.addRequired<TargetTransformInfo>();
       AU.addPreserved<AliasAnalysis>();
-      AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addPreserved<ScalarEvolution>();
       AU.setPreservesCFG();
     }
@@ -3141,7 +3141,7 @@ static const char bb_vectorize_name[] = "Basic-Block Vectorization";
 INITIALIZE_PASS_BEGIN(BBVectorize, BBV_NAME, bb_vectorize_name, false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_END(BBVectorize, BBV_NAME, bb_vectorize_name, false, false)
 

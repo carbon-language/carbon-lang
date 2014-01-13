@@ -60,7 +60,9 @@ StackProtector::getSSPLayout(const AllocaInst *AI) const {
 bool StackProtector::runOnFunction(Function &Fn) {
   F = &Fn;
   M = F->getParent();
-  DT = getAnalysisIfAvailable<DominatorTree>();
+  DominatorTreeWrapperPass *DTWP =
+      getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  DT = DTWP ? &DTWP->getDomTree() : 0;
   TLI = TM->getTargetLowering();
 
   if (!RequiresStackProtector())

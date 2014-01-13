@@ -508,11 +508,12 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
   DestBB->getInstList().splice(DestBB->begin(), PredBB->getInstList());
 
   if (P) {
-    DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>();
-    if (DT) {
-      BasicBlock *PredBBIDom = DT->getNode(PredBB)->getIDom()->getBlock();
-      DT->changeImmediateDominator(DestBB, PredBBIDom);
-      DT->eraseNode(PredBB);
+    if (DominatorTreeWrapperPass *DTWP =
+            P->getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {
+      DominatorTree &DT = DTWP->getDomTree();
+      BasicBlock *PredBBIDom = DT.getNode(PredBB)->getIDom()->getBlock();
+      DT.changeImmediateDominator(DestBB, PredBBIDom);
+      DT.eraseNode(PredBB);
     }
   }
   // Nuke BB.

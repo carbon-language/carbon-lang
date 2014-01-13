@@ -45,7 +45,7 @@ namespace {
 
     // LCSSA form makes instruction renaming easier.
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
@@ -252,8 +252,9 @@ bool LoopRotate::simplifyLoopLatch(Loop *L) {
   // Nuke the Latch block.
   assert(Latch->empty() && "unable to evacuate Latch");
   LI->removeBlock(Latch);
-  if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>())
-    DT->eraseNode(Latch);
+  if (DominatorTreeWrapperPass *DTWP =
+          getAnalysisIfAvailable<DominatorTreeWrapperPass>())
+    DTWP->getDomTree().eraseNode(Latch);
   Latch->eraseFromParent();
   return true;
 }
@@ -434,23 +435,25 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
     // The conditional branch can't be folded, handle the general case.
     // Update DominatorTree to reflect the CFG change we just made.  Then split
     // edges as necessary to preserve LoopSimplify form.
-    if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>()) {
+    if (DominatorTreeWrapperPass *DTWP =
+            getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {
+      DominatorTree &DT = DTWP->getDomTree();
       // Everything that was dominated by the old loop header is now dominated
       // by the original loop preheader. Conceptually the header was merged
       // into the preheader, even though we reuse the actual block as a new
       // loop latch.
-      DomTreeNode *OrigHeaderNode = DT->getNode(OrigHeader);
+      DomTreeNode *OrigHeaderNode = DT.getNode(OrigHeader);
       SmallVector<DomTreeNode *, 8> HeaderChildren(OrigHeaderNode->begin(),
                                                    OrigHeaderNode->end());
-      DomTreeNode *OrigPreheaderNode = DT->getNode(OrigPreheader);
+      DomTreeNode *OrigPreheaderNode = DT.getNode(OrigPreheader);
       for (unsigned I = 0, E = HeaderChildren.size(); I != E; ++I)
-        DT->changeImmediateDominator(HeaderChildren[I], OrigPreheaderNode);
+        DT.changeImmediateDominator(HeaderChildren[I], OrigPreheaderNode);
 
-      assert(DT->getNode(Exit)->getIDom() == OrigPreheaderNode);
-      assert(DT->getNode(NewHeader)->getIDom() == OrigPreheaderNode);
+      assert(DT.getNode(Exit)->getIDom() == OrigPreheaderNode);
+      assert(DT.getNode(NewHeader)->getIDom() == OrigPreheaderNode);
 
       // Update OrigHeader to be dominated by the new header block.
-      DT->changeImmediateDominator(OrigHeader, OrigLatch);
+      DT.changeImmediateDominator(OrigHeader, OrigLatch);
     }
 
     // Right now OrigPreHeader has two successors, NewHeader and ExitBlock, and
@@ -472,15 +475,17 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
     PHBI->eraseFromParent();
 
     // With our CFG finalized, update DomTree if it is available.
-    if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>()) {
+    if (DominatorTreeWrapperPass *DTWP =
+            getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {
+      DominatorTree &DT = DTWP->getDomTree();
       // Update OrigHeader to be dominated by the new header block.
-      DT->changeImmediateDominator(NewHeader, OrigPreheader);
-      DT->changeImmediateDominator(OrigHeader, OrigLatch);
+      DT.changeImmediateDominator(NewHeader, OrigPreheader);
+      DT.changeImmediateDominator(OrigHeader, OrigLatch);
 
       // Brute force incremental dominator tree update. Call
       // findNearestCommonDominator on all CFG predecessors of each child of the
       // original header.
-      DomTreeNode *OrigHeaderNode = DT->getNode(OrigHeader);
+      DomTreeNode *OrigHeaderNode = DT.getNode(OrigHeader);
       SmallVector<DomTreeNode *, 8> HeaderChildren(OrigHeaderNode->begin(),
                                                    OrigHeaderNode->end());
       bool Changed;
@@ -493,11 +498,11 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
           pred_iterator PI = pred_begin(BB);
           BasicBlock *NearestDom = *PI;
           for (pred_iterator PE = pred_end(BB); PI != PE; ++PI)
-            NearestDom = DT->findNearestCommonDominator(NearestDom, *PI);
+            NearestDom = DT.findNearestCommonDominator(NearestDom, *PI);
 
           // Remember if this changes the DomTree.
           if (Node->getIDom()->getBlock() != NearestDom) {
-            DT->changeImmediateDominator(BB, NearestDom);
+            DT.changeImmediateDominator(BB, NearestDom);
             Changed = true;
           }
         }

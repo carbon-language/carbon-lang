@@ -53,162 +53,59 @@ public:
 
 /// \brief Concrete subclass of DominatorTreeBase that is used to compute a
 /// normal dominator tree.
-class DominatorTree : public FunctionPass {
+class DominatorTree : public DominatorTreeBase<BasicBlock> {
 public:
-  static char ID; // Pass ID, replacement for typeid
-  DominatorTreeBase<BasicBlock>* DT;
+  typedef DominatorTreeBase<BasicBlock> Base;
 
-  DominatorTree() : FunctionPass(ID) {
-    initializeDominatorTreePass(*PassRegistry::getPassRegistry());
-    DT = new DominatorTreeBase<BasicBlock>(false);
-  }
+  DominatorTree() : DominatorTreeBase<BasicBlock>(false) {}
 
-  ~DominatorTree() {
-    delete DT;
-  }
-
-  DominatorTreeBase<BasicBlock>& getBase() { return *DT; }
-
-  /// \brief Returns the root blocks of the current CFG.
-  ///
-  /// This may include multiple blocks if we are computing post dominators.
-  /// For forward dominators, this will always be a single block (the entry
-  /// node).
-  inline const std::vector<BasicBlock*> &getRoots() const {
-    return DT->getRoots();
-  }
-
-  inline BasicBlock *getRoot() const {
-    return DT->getRoot();
-  }
-
-  inline DomTreeNode *getRootNode() const {
-    return DT->getRootNode();
-  }
-
-  /// Get all nodes dominated by R, including R itself.
-  void getDescendants(BasicBlock *R,
-                     SmallVectorImpl<BasicBlock *> &Result) const {
-    DT->getDescendants(R, Result);
-  }
+  // FIXME: This is no longer needed and should be removed when its uses are
+  // cleaned up.
+  Base& getBase() { return *this; }
 
   /// \brief Returns *false* if the other dominator tree matches this dominator
   /// tree.
-  inline bool compare(DominatorTree &Other) const {
-    DomTreeNode *R = getRootNode();
-    DomTreeNode *OtherR = Other.getRootNode();
+  inline bool compare(const DominatorTree &Other) const {
+    const DomTreeNode *R = getRootNode();
+    const DomTreeNode *OtherR = Other.getRootNode();
 
     if (!R || !OtherR || R->getBlock() != OtherR->getBlock())
       return true;
 
-    if (DT->compare(Other.getBase()))
+    if (Base::compare(Other))
       return true;
 
     return false;
   }
 
-  virtual bool runOnFunction(Function &F);
+  // Ensure base-class overloads are visible.
+  using Base::dominates;
 
-  virtual void verifyAnalysis() const;
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-  }
-
-  inline bool dominates(const DomTreeNode* A, const DomTreeNode* B) const {
-    return DT->dominates(A, B);
-  }
-
-  inline bool dominates(const BasicBlock* A, const BasicBlock* B) const {
-    return DT->dominates(A, B);
-  }
-
-  // \brief Return true if Def dominates a use in User.
-  //
-  // This performs the special checks necessary if Def and User are in the same
-  // basic block. Note that Def doesn't dominate a use in Def itself!
+  /// \brief Return true if Def dominates a use in User.
+  ///
+  /// This performs the special checks necessary if Def and User are in the same
+  /// basic block. Note that Def doesn't dominate a use in Def itself!
   bool dominates(const Instruction *Def, const Use &U) const;
   bool dominates(const Instruction *Def, const Instruction *User) const;
   bool dominates(const Instruction *Def, const BasicBlock *BB) const;
   bool dominates(const BasicBlockEdge &BBE, const Use &U) const;
   bool dominates(const BasicBlockEdge &BBE, const BasicBlock *BB) const;
 
-  bool properlyDominates(const DomTreeNode *A, const DomTreeNode *B) const {
-    return DT->properlyDominates(A, B);
-  }
-
-  bool properlyDominates(const BasicBlock *A, const BasicBlock *B) const {
-    return DT->properlyDominates(A, B);
-  }
-
-  /// \brief Find nearest common dominator basic block for basic block A and B.
-  ///
-  /// If there is no such block then return NULL.
-  inline BasicBlock *findNearestCommonDominator(BasicBlock *A, BasicBlock *B) {
-    return DT->findNearestCommonDominator(A, B);
-  }
-
-  inline const BasicBlock *findNearestCommonDominator(const BasicBlock *A,
-                                                      const BasicBlock *B) {
-    return DT->findNearestCommonDominator(A, B);
-  }
-
   inline DomTreeNode *operator[](BasicBlock *BB) const {
-    return DT->getNode(BB);
+    return getNode(BB);
   }
 
-  /// \brief Returns the DominatorTree node for the specified basic block.
-  ///
-  /// This is the same as using operator[] on this class.
-  inline DomTreeNode *getNode(BasicBlock *BB) const {
-    return DT->getNode(BB);
-  }
+  // Ensure base class overloads are visible.
+  using Base::isReachableFromEntry;
 
-  /// \brief Add a new node to the dominator tree information.
-  ///
-  /// This creates a new node as a child of DomBB dominator node, linking it
-  /// into the children list of the immediate dominator.
-  inline DomTreeNode *addNewBlock(BasicBlock *BB, BasicBlock *DomBB) {
-    return DT->addNewBlock(BB, DomBB);
-  }
-
-  /// \brief Updates the dominator tree information when a node's immediate
-  /// dominator changes.
-  inline void changeImmediateDominator(BasicBlock *N, BasicBlock* NewIDom) {
-    DT->changeImmediateDominator(N, NewIDom);
-  }
-
-  inline void changeImmediateDominator(DomTreeNode *N, DomTreeNode* NewIDom) {
-    DT->changeImmediateDominator(N, NewIDom);
-  }
-
-  /// \brief Removes a node from the dominator tree.
-  ///
-  /// The block must not dominate any other blocks. Removes node from its
-  /// immediate dominator's children list. Deletes dominator node associated
-  /// with basic block BB.
-  inline void eraseNode(BasicBlock *BB) {
-    DT->eraseNode(BB);
-  }
-
-  /// \brief BB is split and now it has one successor; update dominator tree to
-  /// reflect this change.
-  inline void splitBlock(BasicBlock* NewBB) {
-    DT->splitBlock(NewBB);
-  }
-
-  bool isReachableFromEntry(const BasicBlock* A) const {
-    return DT->isReachableFromEntry(A);
-  }
-
+  /// \brief Provide an overload for a Use.
   bool isReachableFromEntry(const Use &U) const;
 
-
-  virtual void releaseMemory() {
-    DT->releaseMemory();
-  }
-
-  virtual void print(raw_ostream &OS, const Module* M= 0) const;
+  /// \brief Verify the correctness of the domtree by re-computing it.
+  ///
+  /// This should only be used for debugging as it aborts the program if the
+  /// verification fails.
+  void verifyDomTree() const;
 };
 
 //===-------------------------------------
@@ -253,6 +150,33 @@ template <> struct GraphTraits<DominatorTree*>
   static nodes_iterator nodes_end(DominatorTree *N) {
     return df_end(getEntryNode(N));
   }
+};
+
+/// \brief Analysis pass which computes a \c DominatorTree.
+class DominatorTreeWrapperPass : public FunctionPass {
+  DominatorTree DT;
+
+public:
+  static char ID;
+
+  DominatorTreeWrapperPass() : FunctionPass(ID) {
+    initializeDominatorTreeWrapperPassPass(*PassRegistry::getPassRegistry());
+  }
+
+  DominatorTree &getDomTree() { return DT; }
+  const DominatorTree &getDomTree() const { return DT; }
+
+  virtual bool runOnFunction(Function &F);
+
+  virtual void verifyAnalysis() const;
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+  }
+
+  virtual void releaseMemory() { DT.releaseMemory(); }
+
+  virtual void print(raw_ostream &OS, const Module *M = 0) const;
 };
 
 } // End llvm namespace

@@ -33,7 +33,7 @@ char IVUsers::ID = 0;
 INITIALIZE_PASS_BEGIN(IVUsers, "iv-users",
                       "Induction Variable Users", false, true)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_END(IVUsers, "iv-users",
                       "Induction Variable Users", false, true)
@@ -223,7 +223,7 @@ IVUsers::IVUsers()
 
 void IVUsers::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfo>();
-  AU.addRequired<DominatorTree>();
+  AU.addRequired<DominatorTreeWrapperPass>();
   AU.addRequired<ScalarEvolution>();
   AU.setPreservesAll();
 }
@@ -232,7 +232,7 @@ bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
 
   L = l;
   LI = &getAnalysis<LoopInfo>();
-  DT = &getAnalysis<DominatorTree>();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolution>();
   TD = getAnalysisIfAvailable<DataLayout>();
 

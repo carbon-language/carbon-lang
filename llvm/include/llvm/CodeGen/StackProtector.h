@@ -115,7 +115,7 @@ public:
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addPreserved<DominatorTree>();
+    AU.addPreserved<DominatorTreeWrapperPass>();
   }
 
   SSPLayoutKind getSSPLayout(const AllocaInst *AI) const;

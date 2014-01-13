@@ -106,7 +106,7 @@ namespace {
     const char *getPassName() const { return "CodeGen Prepare"; }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<TargetLibraryInfo>();
     }
 
@@ -145,7 +145,9 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   ModifiedDT = false;
   if (TM) TLI = TM->getTargetLowering();
   TLInfo = &getAnalysis<TargetLibraryInfo>();
-  DT = getAnalysisIfAvailable<DominatorTree>();
+  DominatorTreeWrapperPass *DTWP =
+      getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  DT = DTWP ? &DTWP->getDomTree() : 0;
   OptSize = F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                            Attribute::OptimizeForSize);
 
@@ -219,7 +221,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   }
 
   if (ModifiedDT && DT)
-    DT->DT->recalculate(F);
+    DT->recalculate(F);
 
   return EverMadeChange;
 }

@@ -706,7 +706,7 @@ void RegionInfo::Calculate(Function &F) {
 bool RegionInfo::runOnFunction(Function &F) {
   releaseMemory();
 
-  DT = &getAnalysis<DominatorTree>();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   PDT = &getAnalysis<PostDominatorTree>();
   DF = &getAnalysis<DominanceFrontier>();
 
@@ -720,7 +720,7 @@ bool RegionInfo::runOnFunction(Function &F) {
 
 void RegionInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequiredTransitive<DominatorTree>();
+  AU.addRequiredTransitive<DominatorTreeWrapperPass>();
   AU.addRequired<PostDominatorTree>();
   AU.addRequired<DominanceFrontier>();
 }
@@ -846,7 +846,7 @@ void RegionInfo::splitBlock(BasicBlock* NewBB, BasicBlock *OldBB)
 char RegionInfo::ID = 0;
 INITIALIZE_PASS_BEGIN(RegionInfo, "regions",
                 "Detect single entry single exit regions", true, true)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
 INITIALIZE_PASS_END(RegionInfo, "regions",

@@ -176,7 +176,7 @@ namespace {
 
     bool runOnFunction(Function &F) {
       // Get dominator information if we are being run by PassManager
-      DT = &getAnalysis<DominatorTree>();
+      DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
       Mod = F.getParent();
       if (!Context) Context = &F.getContext();
@@ -233,7 +233,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequiredID(PreVerifyID);
-      AU.addRequired<DominatorTree>();
+      AU.addRequired<DominatorTreeWrapperPass>();
     }
 
     /// abortIfBroken - If the module is broken and we are supposed to abort on
@@ -395,7 +395,7 @@ namespace {
 char Verifier::ID = 0;
 INITIALIZE_PASS_BEGIN(Verifier, "verify", "Module Verifier", false, false)
 INITIALIZE_PASS_DEPENDENCY(PreVerifier)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_END(Verifier, "verify", "Module Verifier", false, false)
 
 // Assert - We know that cond should be true, if not print an error message.

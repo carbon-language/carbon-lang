@@ -119,8 +119,8 @@ Function* PartialInliner::unswitchFunction(Function* F) {
       
   // The CodeExtractor needs a dominator tree.
   DominatorTree DT;
-  DT.runOnFunction(*duplicateFunction);
-  
+  DT.recalculate(*duplicateFunction);
+
   // Extract the body of the if.
   Function* extractedFunction
     = CodeExtractor(toExtract, &DT).extractCodeRegion();

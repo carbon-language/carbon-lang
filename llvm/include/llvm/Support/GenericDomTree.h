@@ -298,7 +298,7 @@ public:
 
   /// compare - Return false if the other dominator tree base matches this
   /// dominator tree base. Otherwise return true.
-  bool compare(DominatorTreeBase &Other) const {
+  bool compare(const DominatorTreeBase &Other) const {
 
     const DomTreeNodeMapType &OtherDomTreeNodes = Other.DomTreeNodes;
     if (DomTreeNodes.size() != OtherDomTreeNodes.size())

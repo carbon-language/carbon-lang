@@ -46,7 +46,7 @@ VerifyLoopInfoX("verify-loop-info", cl::location(VerifyLoopInfo),
 
 char LoopInfo::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopInfo, "loops", "Natural Loop Information", true, true)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_END(LoopInfo, "loops", "Natural Loop Information", true, true)
 
 // Loop identifier metadata name.
@@ -613,7 +613,7 @@ Loop *UnloopUpdater::getNearestLoop(BasicBlock *BB, Loop *BBLoop) {
 //
 bool LoopInfo::runOnFunction(Function &) {
   releaseMemory();
-  LI.Analyze(getAnalysis<DominatorTree>().getBase());
+  LI.Analyze(getAnalysis<DominatorTreeWrapperPass>().getDomTree());
   return false;
 }
 
@@ -704,7 +704,7 @@ void LoopInfo::verifyAnalysis() const {
 
 void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<DominatorTree>();
+  AU.addRequired<DominatorTreeWrapperPass>();
 }
 
 void LoopInfo::print(raw_ostream &OS, const Module*) const {

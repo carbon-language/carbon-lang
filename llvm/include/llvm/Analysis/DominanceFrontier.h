@@ -169,7 +169,7 @@ public:
 
   virtual bool runOnFunction(Function &) {
     Frontiers.clear();
-    DominatorTree &DT = getAnalysis<DominatorTree>();
+    DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     Roots = DT.getRoots();
     assert(Roots.size() == 1 && "Only one entry block for forward domfronts!");
     calculate(DT, DT[Roots[0]]);
@@ -178,7 +178,7 @@ public:
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired<DominatorTree>();
+    AU.addRequired<DominatorTreeWrapperPass>();
   }
 
   const DomSetType &calculate(const DominatorTree &DT,

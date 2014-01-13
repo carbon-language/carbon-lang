@@ -45,7 +45,9 @@ namespace {
 
     /// runOnFunction - Remove instructions that simplify.
     bool runOnFunction(Function &F) {
-      const DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>();
+      const DominatorTreeWrapperPass *DTWP =
+          getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+      const DominatorTree *DT = DTWP ? &DTWP->getDomTree() : 0;
       const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
       const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
       SmallPtrSet<const Instruction*, 8> S1, S2, *ToSimplify = &S1, *Next = &S2;

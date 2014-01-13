@@ -167,15 +167,17 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
 
   // Finally, erase the old block and update dominator info.
   if (P) {
-    if (DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>()) {
-      if (DomTreeNode *DTN = DT->getNode(BB)) {
-        DomTreeNode *PredDTN = DT->getNode(PredBB);
+    if (DominatorTreeWrapperPass *DTWP =
+            P->getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {
+      DominatorTree &DT = DTWP->getDomTree();
+      if (DomTreeNode *DTN = DT.getNode(BB)) {
+        DomTreeNode *PredDTN = DT.getNode(PredBB);
         SmallVector<DomTreeNode*, 8> Children(DTN->begin(), DTN->end());
         for (SmallVectorImpl<DomTreeNode *>::iterator DI = Children.begin(),
              DE = Children.end(); DI != DE; ++DI)
-          DT->changeImmediateDominator(*DI, PredDTN);
+          DT.changeImmediateDominator(*DI, PredDTN);
 
-        DT->eraseNode(BB);
+        DT.eraseNode(BB);
       }
 
       if (LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>())
@@ -280,18 +282,20 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
     if (Loop *L = LI->getLoopFor(Old))
       L->addBasicBlockToLoop(New, LI->getBase());
 
-  if (DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>()) {
+  if (DominatorTreeWrapperPass *DTWP =
+          P->getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {
+    DominatorTree &DT = DTWP->getDomTree();
     // Old dominates New. New node dominates all other nodes dominated by Old.
-    if (DomTreeNode *OldNode = DT->getNode(Old)) {
+    if (DomTreeNode *OldNode = DT.getNode(Old)) {
       std::vector<DomTreeNode *> Children;
       for (DomTreeNode::iterator I = OldNode->begin(), E = OldNode->end();
            I != E; ++I)
         Children.push_back(*I);
 
-      DomTreeNode *NewNode = DT->addNewBlock(New,Old);
+      DomTreeNode *NewNode = DT.addNewBlock(New, Old);
       for (std::vector<DomTreeNode *>::iterator I = Children.begin(),
              E = Children.end(); I != E; ++I)
-        DT->changeImmediateDominator(*I, NewNode);
+        DT.changeImmediateDominator(*I, NewNode);
     }
   }
 
@@ -336,9 +340,9 @@ static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
   }
 
   // Update dominator tree if available.
-  DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>();
-  if (DT)
-    DT->splitBlock(NewBB);
+  if (DominatorTreeWrapperPass *DTWP =
+          P->getAnalysisIfAvailable<DominatorTreeWrapperPass>())
+    DTWP->getDomTree().splitBlock(NewBB);
 
   if (!L) return;
 

@@ -16,7 +16,7 @@ using namespace llvm;
 char DominanceFrontier::ID = 0;
 INITIALIZE_PASS_BEGIN(DominanceFrontier, "domfrontier",
                 "Dominance Frontier Construction", true, true)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_END(DominanceFrontier, "domfrontier",
                 "Dominance Frontier Construction", true, true)
 

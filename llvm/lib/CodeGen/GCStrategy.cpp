@@ -153,7 +153,7 @@ const char *LowerIntrinsics::getPassName() const {
 void LowerIntrinsics::getAnalysisUsage(AnalysisUsage &AU) const {
   FunctionPass::getAnalysisUsage(AU);
   AU.addRequired<GCModuleInfo>();
-  AU.addPreserved<DominatorTree>();
+  AU.addPreserved<DominatorTreeWrapperPass>();
 }
 
 /// doInitialization - If this module uses the GC intrinsics, find them now.
@@ -270,8 +270,9 @@ bool LowerIntrinsics::runOnFunction(Function &F) {
 
   // Custom lowering may modify the CFG, so dominators must be recomputed.
   if (UseCustomLoweringPass) {
-    if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>())
-      DT->DT->recalculate(F);
+    if (DominatorTreeWrapperPass *DTWP =
+            getAnalysisIfAvailable<DominatorTreeWrapperPass>())
+      DTWP->getDomTree().recalculate(F);
   }
 
   return MadeChange;

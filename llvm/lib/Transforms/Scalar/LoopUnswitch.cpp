@@ -169,7 +169,7 @@ namespace {
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
-      AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addPreserved<ScalarEvolution>();
       AU.addRequired<TargetTransformInfo>();
     }
@@ -384,7 +384,9 @@ static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
 bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   LI = &getAnalysis<LoopInfo>();
   LPM = &LPM_Ref;
-  DT = getAnalysisIfAvailable<DominatorTree>();
+  DominatorTreeWrapperPass *DTWP =
+      getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  DT = DTWP ? &DTWP->getDomTree() : 0;
   currentLoop = L;
   Function *F = currentLoop->getHeader()->getParent();
   bool Changed = false;
@@ -397,7 +399,7 @@ bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   if (Changed) {
     // FIXME: Reconstruct dom info, because it is not preserved properly.
     if (DT)
-      DT->runOnFunction(*F);
+      DT->recalculate(*F);
   }
   return Changed;
 }

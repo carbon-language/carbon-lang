@@ -960,7 +960,7 @@ struct LoopVectorize : public LoopPass {
     DL = getAnalysisIfAvailable<DataLayout>();
     LI = &getAnalysis<LoopInfo>();
     TTI = &getAnalysis<TargetTransformInfo>();
-    DT = &getAnalysis<DominatorTree>();
+    DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
 
     // If the target claims to have no vector registers don't attempt
@@ -1055,12 +1055,12 @@ struct LoopVectorize : public LoopPass {
     LoopPass::getAnalysisUsage(AU);
     AU.addRequiredID(LoopSimplifyID);
     AU.addRequiredID(LCSSAID);
-    AU.addRequired<DominatorTree>();
+    AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<LoopInfo>();
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<TargetTransformInfo>();
     AU.addPreserved<LoopInfo>();
-    AU.addPreserved<DominatorTree>();
+    AU.addPreserved<DominatorTreeWrapperPass>();
   }
 
 };
@@ -2976,7 +2976,7 @@ void InnerLoopVectorizer::updateAnalysis() {
   DT->changeImmediateDominator(LoopScalarBody, LoopScalarPreHeader);
   DT->changeImmediateDominator(LoopExitBlock, LoopMiddleBlock);
 
-  DEBUG(DT->verifyAnalysis());
+  DEBUG(DT->verifyDomTree());
 }
 
 /// \brief Check whether it is safe to if-convert this phi node.
@@ -5390,7 +5390,7 @@ char LoopVectorize::ID = 0;
 static const char lv_name[] = "Loop Vectorization";
 INITIALIZE_PASS_BEGIN(LoopVectorize, LV_NAME, lv_name, false, false)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)

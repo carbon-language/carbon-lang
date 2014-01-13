@@ -46,9 +46,9 @@ namespace {
       AU.setPreservesCFG();
       FunctionPass::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
-      AU.addRequired<DominatorTree>();
+      AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfo>();
-      AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addPreserved<LoopInfo>();
     }
   private:
@@ -62,7 +62,7 @@ namespace {
 char Sinking::ID = 0;
 INITIALIZE_PASS_BEGIN(Sinking, "sink", "Code sinking", false, false)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(Sinking, "sink", "Code sinking", false, false)
 
@@ -95,7 +95,7 @@ bool Sinking::AllUsesDominatedByBlock(Instruction *Inst,
 }
 
 bool Sinking::runOnFunction(Function &F) {
-  DT = &getAnalysis<DominatorTree>();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LI = &getAnalysis<LoopInfo>();
   AA = &getAnalysis<AliasAnalysis>();
 

@@ -175,8 +175,8 @@ namespace {
       AU.addPreserved<AliasAnalysis>();
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
-      AU.addPreserved<DominatorTree>();
-      AU.addRequired<DominatorTree>();
+      AU.addPreserved<DominatorTreeWrapperPass>();
+      AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<TargetLibraryInfo>();
       AU.addRequired<TargetTransformInfo>();
     }
@@ -186,7 +186,8 @@ namespace {
     }
 
     DominatorTree *getDominatorTree() {
-      return DT ? DT : (DT=&getAnalysis<DominatorTree>());
+      return DT ? DT
+                : (DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree());
     }
 
     ScalarEvolution *getScalarEvolution() {
@@ -213,7 +214,7 @@ char LoopIdiomRecognize::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",
                       false, false)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)

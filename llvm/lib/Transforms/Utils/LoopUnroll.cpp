@@ -413,8 +413,9 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   if (LPM) {
     // FIXME: Reconstruct dom info, because it is not preserved properly.
     // Incrementally updating domtree after loop unrolling would be easy.
-    if (DominatorTree *DT = LPM->getAnalysisIfAvailable<DominatorTree>())
-      DT->runOnFunction(*L->getHeader()->getParent());
+    if (DominatorTreeWrapperPass *DTWP =
+            LPM->getAnalysisIfAvailable<DominatorTreeWrapperPass>())
+      DTWP->getDomTree().recalculate(*L->getHeader()->getParent());
 
     // Simplify any new induction variables in the partially unrolled loop.
     ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>();

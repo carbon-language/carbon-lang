@@ -67,7 +67,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
 
-      AU.addRequired<DominatorTree>();
+      AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfo>();
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreserved<ScalarEvolution>();
@@ -86,7 +86,7 @@ namespace {
   
 char LCSSA::ID = 0;
 INITIALIZE_PASS_BEGIN(LCSSA, "lcssa", "Loop-Closed SSA Form Pass", false, false)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_END(LCSSA, "lcssa", "Loop-Closed SSA Form Pass", false, false)
 
@@ -111,8 +111,8 @@ static bool BlockDominatesAnExit(BasicBlock *BB,
 /// runOnFunction - Process all loops in the function, inner-most out.
 bool LCSSA::runOnLoop(Loop *TheLoop, LPPassManager &LPM) {
   L = TheLoop;
-  
-  DT = &getAnalysis<DominatorTree>();
+
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LI = &getAnalysis<LoopInfo>();
   SE = getAnalysisIfAvailable<ScalarEvolution>();
 

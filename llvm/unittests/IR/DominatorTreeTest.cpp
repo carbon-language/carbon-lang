@@ -26,7 +26,8 @@ namespace llvm {
     struct DPass : public FunctionPass {
       static char ID;
       virtual bool runOnFunction(Function &F) {
-        DominatorTree *DT = &getAnalysis<DominatorTree>();
+        DominatorTree *DT =
+            &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
         PostDominatorTree *PDT = &getAnalysis<PostDominatorTree>();
         Function::iterator FI = F.begin();
 
@@ -176,7 +177,7 @@ namespace llvm {
         return false;
       }
       virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-        AU.addRequired<DominatorTree>();
+        AU.addRequired<DominatorTreeWrapperPass>();
         AU.addRequired<PostDominatorTree>();
       }
       DPass() : FunctionPass(ID) {
@@ -226,6 +227,6 @@ namespace llvm {
 }
 
 INITIALIZE_PASS_BEGIN(DPass, "dpass", "dpass", false, false)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
 INITIALIZE_PASS_END(DPass, "dpass", "dpass", false, false)

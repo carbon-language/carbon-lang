@@ -42,10 +42,10 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid.
-    DwarfEHPrepare(const TargetMachine *TM) :
-      FunctionPass(ID), TM(TM), RewindFunction(0) {
-        initializeDominatorTreePass(*PassRegistry::getPassRegistry());
-      }
+    DwarfEHPrepare(const TargetMachine *TM)
+        : FunctionPass(ID), TM(TM), RewindFunction(0) {
+      initializeDominatorTreeWrapperPassPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnFunction(Function &Fn);
 

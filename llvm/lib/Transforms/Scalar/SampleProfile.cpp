@@ -254,7 +254,7 @@ public:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesCFG();
     AU.addRequired<LoopInfo>();
-    AU.addRequired<DominatorTree>();
+    AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<PostDominatorTree>();
   }
 
@@ -628,7 +628,7 @@ void SampleFunctionProfile::findEquivalenceClasses(Function &F) {
     // If all those conditions hold, BB2's equivalence class is BB1.
     DominatedBBs.clear();
     PDT->getDescendants(BB1, DominatedBBs);
-    findEquivalencesFor(BB1, DominatedBBs, DT->DT);
+    findEquivalencesFor(BB1, DominatedBBs, DT);
 
     DEBUG(printBlockEquivalence(dbgs(), BB1));
   }
@@ -988,7 +988,7 @@ bool SampleFunctionProfile::emitAnnotations(Function &F, DominatorTree *DomTree,
 char SampleProfileLoader::ID = 0;
 INITIALIZE_PASS_BEGIN(SampleProfileLoader, "sample-profile",
                       "Sample Profile loader", false, false)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_END(SampleProfileLoader, "sample-profile",
@@ -1009,7 +1009,7 @@ FunctionPass *llvm::createSampleProfileLoaderPass(StringRef Name) {
 }
 
 bool SampleProfileLoader::runOnFunction(Function &F) {
-  DominatorTree *DT = &getAnalysis<DominatorTree>();
+  DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   PostDominatorTree *PDT = &getAnalysis<PostDominatorTree>();
   LoopInfo *LI = &getAnalysis<LoopInfo>();
   SampleFunctionProfile &FunctionProfile = Profiler->getProfile(F);

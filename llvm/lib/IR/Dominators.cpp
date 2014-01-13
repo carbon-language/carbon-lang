@@ -64,35 +64,6 @@ bool BasicBlockEdge::isSingleEdge() const {
 TEMPLATE_INSTANTIATION(class llvm::DomTreeNodeBase<BasicBlock>);
 TEMPLATE_INSTANTIATION(class llvm::DominatorTreeBase<BasicBlock>);
 
-char DominatorTree::ID = 0;
-INITIALIZE_PASS(DominatorTree, "domtree",
-                "Dominator Tree Construction", true, true)
-
-bool DominatorTree::runOnFunction(Function &F) {
-  DT->recalculate(F);
-  return false;
-}
-
-void DominatorTree::verifyAnalysis() const {
-  if (!VerifyDomInfo) return;
-
-  Function &F = *getRoot()->getParent();
-
-  DominatorTree OtherDT;
-  OtherDT.getBase().recalculate(F);
-  if (compare(OtherDT)) {
-    errs() << "DominatorTree is not up to date!\nComputed:\n";
-    print(errs());
-    errs() << "\nActual:\n";
-    OtherDT.print(errs());
-    abort();
-  }
-}
-
-void DominatorTree::print(raw_ostream &OS, const Module *) const {
-  DT->print(OS);
-}
-
 // dominates - Return true if Def dominates a use in User. This performs
 // the special checks necessary if Def and User are in the same basic block.
 // Note that Def doesn't dominate a use in Def itself!
@@ -210,8 +181,7 @@ bool DominatorTree::dominates(const BasicBlockEdge &BBE,
   return true;
 }
 
-bool DominatorTree::dominates(const BasicBlockEdge &BBE,
-                              const Use &U) const {
+bool DominatorTree::dominates(const BasicBlockEdge &BBE, const Use &U) const {
   // Assert that we have a single edge. We could handle them by simply
   // returning false, but since isSingleEdge is linear on the number of
   // edges, the callers can normally handle them more efficiently.
@@ -234,8 +204,7 @@ bool DominatorTree::dominates(const BasicBlockEdge &BBE,
   return dominates(BBE, UseBB);
 }
 
-bool DominatorTree::dominates(const Instruction *Def,
-                              const Use &U) const {
+bool DominatorTree::dominates(const Instruction *Def, const Use &U) const {
   Instruction *UserInst = cast<Instruction>(U.getUser());
   const BasicBlock *DefBB = Def->getParent();
 
@@ -300,3 +269,44 @@ bool DominatorTree::isReachableFromEntry(const Use &U) const {
   // Everything else uses their operands in their own block.
   return isReachableFromEntry(I->getParent());
 }
+
+void DominatorTree::verifyDomTree() const {
+  if (!VerifyDomInfo)
+    return;
+
+  Function &F = *getRoot()->getParent();
+
+  DominatorTree OtherDT;
+  OtherDT.recalculate(F);
+  if (compare(OtherDT)) {
+    errs() << "DominatorTree is not up to date!\nComputed:\n";
+    print(errs());
+    errs() << "\nActual:\n";
+    OtherDT.print(errs());
+    abort();
+  }
+}
+
+//===----------------------------------------------------------------------===//
+//  DominatorTreeWrapperPass Implementation
+//===----------------------------------------------------------------------===//
+//
+// The implementation details of the wrapper pass that holds a DominatorTree.
+//
+//===----------------------------------------------------------------------===//
+
+char DominatorTreeWrapperPass::ID = 0;
+INITIALIZE_PASS(DominatorTreeWrapperPass, "domtree",
+                "Dominator Tree Construction", true, true)
+
+bool DominatorTreeWrapperPass::runOnFunction(Function &F) {
+  DT.recalculate(F);
+  return false;
+}
+
+void DominatorTreeWrapperPass::verifyAnalysis() const { DT.verifyDomTree(); }
+
+void DominatorTreeWrapperPass::print(raw_ostream &OS, const Module *) const {
+  DT.print(OS);
+}
+

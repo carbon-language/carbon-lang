@@ -78,14 +78,15 @@ protected:
                                     "", &ID, 0, true, true);
         PassRegistry::getPassRegistry()->registerPass(*PI, false);
         initializeLoopInfoPass(*PassRegistry::getPassRegistry());
-        initializeDominatorTreePass(*PassRegistry::getPassRegistry());
+        initializeDominatorTreeWrapperPassPass(
+            *PassRegistry::getPassRegistry());
         return 0;
       }
 
       void getAnalysisUsage(AnalysisUsage &AU) const {
         AU.setPreservesAll();
         AU.addRequired<LoopInfo>();
-        AU.addRequired<DominatorTree>();
+        AU.addRequired<DominatorTreeWrapperPass>();
       }
 
       bool runOnFunction(Function &F) {
@@ -93,7 +94,8 @@ protected:
           return false;
 
         LoopInfo *LI = &getAnalysis<LoopInfo>();
-        DominatorTree *DT = &getAnalysis<DominatorTree>();
+        DominatorTree *DT =
+            &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
         EXPECT_EQ(isPotentiallyReachable(A, B, 0, 0), ExpectedResult);
         EXPECT_EQ(isPotentiallyReachable(A, B, DT, 0), ExpectedResult);
         EXPECT_EQ(isPotentiallyReachable(A, B, 0, LI), ExpectedResult);

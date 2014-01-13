@@ -95,7 +95,7 @@ char ObjCARCContract::ID = 0;
 INITIALIZE_PASS_BEGIN(ObjCARCContract,
                       "objc-arc-contract", "ObjC ARC contraction", false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_END(ObjCARCContract,
                     "objc-arc-contract", "ObjC ARC contraction", false, false)
 
@@ -105,7 +105,7 @@ Pass *llvm::createObjCARCContractPass() {
 
 void ObjCARCContract::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();
-  AU.addRequired<DominatorTree>();
+  AU.addRequired<DominatorTreeWrapperPass>();
   AU.setPreservesCFG();
 }
 
@@ -323,7 +323,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
 
   Changed = false;
   AA = &getAnalysis<AliasAnalysis>();
-  DT = &getAnalysis<DominatorTree>();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   PA.setAA(&getAnalysis<AliasAnalysis>());
 

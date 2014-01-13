@@ -42,7 +42,7 @@ namespace {
     virtual bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addPreserved<LoopInfo>();
 
       // No loop canonicalization guarantees are broken by this pass.
@@ -209,7 +209,9 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
   // If we don't have a pass object, we can't update anything...
   if (P == 0) return NewBB;
 
-  DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>();
+  DominatorTreeWrapperPass *DTWP =
+      P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  DominatorTree *DT = DTWP ? &DTWP->getDomTree() : 0;
   LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>();
 
   // If we have nothing to update, just return.

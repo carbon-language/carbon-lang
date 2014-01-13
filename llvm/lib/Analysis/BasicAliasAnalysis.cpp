@@ -1335,7 +1335,9 @@ bool BasicAliasAnalysis::isValueEqualInPotentialCycles(const Value *V,
     return false;
 
   // Use dominance or loop info if available.
-  DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>();
+  DominatorTreeWrapperPass *DTWP =
+      getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  DominatorTree *DT = DTWP ? &DTWP->getDomTree() : 0;
   LoopInfo *LI = getAnalysisIfAvailable<LoopInfo>();
 
   // Make sure that the visited phis cannot reach the Value. This ensures that

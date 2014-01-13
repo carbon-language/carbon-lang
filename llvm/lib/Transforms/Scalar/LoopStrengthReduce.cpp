@@ -4694,7 +4694,8 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
 
 LSRInstance::LSRInstance(Loop *L, Pass *P)
     : IU(P->getAnalysis<IVUsers>()), SE(P->getAnalysis<ScalarEvolution>()),
-      DT(P->getAnalysis<DominatorTree>()), LI(P->getAnalysis<LoopInfo>()),
+      DT(P->getAnalysis<DominatorTreeWrapperPass>().getDomTree()),
+      LI(P->getAnalysis<LoopInfo>()),
       TTI(P->getAnalysis<TargetTransformInfo>()), L(L), Changed(false),
       IVIncInsertPos(0) {
   // If LoopSimplify form is not available, stay out of trouble.
@@ -4873,7 +4874,7 @@ char LoopStrengthReduce::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopStrengthReduce, "loop-reduce",
                 "Loop Strength Reduction", false, false)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(IVUsers)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
@@ -4898,8 +4899,8 @@ void LoopStrengthReduce::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
   AU.addRequiredID(LoopSimplifyID);
-  AU.addRequired<DominatorTree>();
-  AU.addPreserved<DominatorTree>();
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addPreserved<DominatorTreeWrapperPass>();
   AU.addRequired<ScalarEvolution>();
   AU.addPreserved<ScalarEvolution>();
   // Requiring LoopSimplify a second time here prevents IVUsers from running
@@ -4924,10 +4925,9 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager & /*LPM*/) {
 #ifndef NDEBUG
     Rewriter.setDebugType(DEBUG_TYPE);
 #endif
-    unsigned numFolded =
-        Rewriter.replaceCongruentIVs(L, &getAnalysis<DominatorTree>(),
-                                     DeadInsts,
-                                     &getAnalysis<TargetTransformInfo>());
+    unsigned numFolded = Rewriter.replaceCongruentIVs(
+        L, &getAnalysis<DominatorTreeWrapperPass>().getDomTree(), DeadInsts,
+        &getAnalysis<TargetTransformInfo>());
     if (numFolded) {
       Changed = true;
       DeleteTriviallyDeadInstructions(DeadInsts);

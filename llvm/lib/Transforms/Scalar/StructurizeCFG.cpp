@@ -245,8 +245,8 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequiredID(LowerSwitchID);
-    AU.addRequired<DominatorTree>();
-    AU.addPreserved<DominatorTree>();
+    AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addPreserved<DominatorTreeWrapperPass>();
     RegionPass::getAnalysisUsage(AU);
   }
 };
@@ -258,7 +258,7 @@ char StructurizeCFG::ID = 0;
 INITIALIZE_PASS_BEGIN(StructurizeCFG, "structurizecfg", "Structurize the CFG",
                       false, false)
 INITIALIZE_PASS_DEPENDENCY(LowerSwitch)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(RegionInfo)
 INITIALIZE_PASS_END(StructurizeCFG, "structurizecfg", "Structurize the CFG",
                     false, false)
@@ -876,7 +876,7 @@ bool StructurizeCFG::runOnRegion(Region *R, RGPassManager &RGM) {
   Func = R->getEntry()->getParent();
   ParentRegion = R;
 
-  DT = &getAnalysis<DominatorTree>();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   orderNodes();
   collectInfos();
