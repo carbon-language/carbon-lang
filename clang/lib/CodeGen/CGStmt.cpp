@@ -1383,7 +1383,6 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
     const SwitchCase *Case = 0;
     if (FindCaseStatementsForValue(S, ConstantCondValue, CaseStmts,
                                    getContext(), Case)) {
-      PGO.setCurrentRegionCount(0);
       if (Case) {
         RegionCounter CaseCnt = getPGORegionCounter(Case);
         CaseCnt.beginRegion(Builder);
