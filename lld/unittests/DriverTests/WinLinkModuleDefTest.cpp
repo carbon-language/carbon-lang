@@ -108,6 +108,17 @@ TEST_F(ParserTest, Name2) {
   EXPECT_EQ(4096U, name->getBaseAddress());
 }
 
+TEST_F(ParserTest, Name3) {
+  llvm::BumpPtrAllocator alloc;
+  llvm::Optional<moduledef::Directive *> dir = parse(
+      "NAME \"a long file name.exe\"", alloc);
+  EXPECT_TRUE(dir.hasValue());
+  auto *name = dyn_cast<moduledef::Name>(dir.getValue());
+  EXPECT_TRUE(name != nullptr);
+  EXPECT_EQ("a long file name.exe", name->getOutputPath());
+  EXPECT_EQ(0U, name->getBaseAddress());
+}
+
 TEST_F(ParserTest, Version1) {
   llvm::BumpPtrAllocator alloc;
   llvm::Optional<moduledef::Directive *> dir = parse("VERSION 12", alloc);
