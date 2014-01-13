@@ -71,6 +71,9 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
 
   option(LLVM_INSTALL_TOOLCHAIN_ONLY "Only include toolchain files in the 'install' target." OFF)
 
+  option(LLVM_FORCE_USE_OLD_HOST_TOOLCHAIN
+         "Set to ON to force using an old, unsupported host toolchain." OFF)
+
   include(AddLLVM)
   include(TableGen)
   include(HandleLLVMOptions)
