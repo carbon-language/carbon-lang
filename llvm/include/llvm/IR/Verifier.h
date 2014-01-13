@@ -29,7 +29,7 @@ class FunctionPass;
 class Module;
 class Function;
 
-/// @brief An enumeration to specify the action to be taken if errors found.
+/// \brief An enumeration to specify the action to be taken if errors found.
 ///
 /// This enumeration is used in the functions below to indicate what should
 /// happen if the verifier finds errors. Each of the functions that uses
@@ -41,34 +41,28 @@ enum VerifierFailureAction {
   ReturnStatusAction    ///< verifyModule will just return true
 };
 
-/// @brief Create a verifier pass.
+/// \brief Create a verifier pass.
 ///
 /// Check a module or function for validity.  When the pass is used, the
 /// action indicated by the \p action argument will be used if errors are
 /// found.
-FunctionPass *createVerifierPass(
-  VerifierFailureAction action = AbortProcessAction ///< Action to take
-);
+FunctionPass *
+createVerifierPass(VerifierFailureAction action = AbortProcessAction);
 
-/// @brief Check a module for errors.
+/// \brief Check a module for errors.
 ///
 /// If there are no errors, the function returns false. If an error is found,
 /// the action taken depends on the \p action parameter.
 /// This should only be used for debugging, because it plays games with
 /// PassManagers and stuff.
+bool verifyModule(const Module &M,
+                  VerifierFailureAction action = AbortProcessAction,
+                  std::string *ErrorInfo = 0);
 
-bool verifyModule(
-  const Module &M,  ///< The module to be verified
-  VerifierFailureAction action = AbortProcessAction, ///< Action to take
-  std::string *ErrorInfo = 0      ///< Information about failures.
-);
-
-// verifyFunction - Check a function for errors, useful for use when debugging a
-// pass.
-bool verifyFunction(
-  const Function &F,  ///< The function to be verified
-  VerifierFailureAction action = AbortProcessAction ///< Action to take
-);
+/// \brief Check a function for errors, useful for use when debugging a
+/// pass.
+bool verifyFunction(const Function &F,
+                    VerifierFailureAction action = AbortProcessAction);
 
 } // End llvm namespace
 
