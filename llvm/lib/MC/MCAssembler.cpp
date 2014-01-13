@@ -738,17 +738,17 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
 uint64_t MCAssembler::handleFixup(const MCAsmLayout &Layout,
                                   MCFragment &F,
                                   const MCFixup &Fixup) {
-   // Evaluate the fixup.
-   MCValue Target;
-   uint64_t FixedValue;
-   if (!evaluateFixup(Layout, Fixup, &F, Target, FixedValue)) {
-     // The fixup was unresolved, we need a relocation. Inform the object
-     // writer of the relocation, and give it an opportunity to adjust the
-     // fixup value if need be.
-     getWriter().RecordRelocation(*this, Layout, &F, Fixup, Target, FixedValue);
-   }
-   return FixedValue;
- }
+  // Evaluate the fixup.
+  MCValue Target;
+  uint64_t FixedValue;
+  if (!evaluateFixup(Layout, Fixup, &F, Target, FixedValue)) {
+    // The fixup was unresolved, we need a relocation. Inform the object
+    // writer of the relocation, and give it an opportunity to adjust the
+    // fixup value if need be.
+    getWriter().RecordRelocation(*this, Layout, &F, Fixup, Target, FixedValue);
+  }
+  return FixedValue;
+}
 
 void MCAssembler::Finish() {
   DEBUG_WITH_TYPE("mc-dump", {
