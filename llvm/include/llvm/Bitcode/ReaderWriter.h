@@ -63,10 +63,6 @@ namespace llvm {
   /// should be in "binary" mode.
   void WriteBitcodeToFile(const Module *M, raw_ostream &Out);
 
-  /// createBitcodeWriterPass - Create and return a pass that writes the module
-  /// to the specified ostream.
-  ModulePass *createBitcodeWriterPass(raw_ostream &Str);
-
 
   /// isBitcodeWrapper - Return true if the given bytes are the magic bytes
   /// for an LLVM IR bitcode wrapper.

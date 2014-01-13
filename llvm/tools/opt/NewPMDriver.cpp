@@ -16,6 +16,7 @@
 #include "NewPMDriver.h"
 #include "Passes.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Bitcode/BitcodeWriterPass.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -44,7 +45,8 @@ bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
     MPM.addPass(PrintModulePass(Out->os()));
     break;
   case OK_OutputBitcode:
-    llvm::report_fatal_error("Bitcode output is not yet implemented!");
+    MPM.addPass(BitcodeWriterPass(Out->os()));
+    break;
   }
 
   // Before executing passes, print the final values of the LLVM options.

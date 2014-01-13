@@ -29,6 +29,11 @@
 ; CHECK-NOOP:   ret void
 ; CHECK-NOOP: }
 
+; Round trip through bitcode.
+; RUN: opt -f -o - -passes='no-op-module,no-op-module' %s \
+; RUN:     | llvm-dis \
+; RUN:     | FileCheck %s --check-prefix=CHECK-NOOP
+
 define void @foo() {
   ret void
 }

@@ -20,7 +20,7 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Bitcode/BitcodeWriterPass.h"
 #include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/DataLayout.h"
