@@ -213,7 +213,7 @@ MachinePassRegistry RegisterScheduler::Registry;
 static cl::opt<RegisterScheduler::FunctionPassCtor, false,
                RegisterPassParser<RegisterScheduler> >
 ISHeuristic("pre-RA-sched",
-            cl::init(&createDefaultScheduler),
+            cl::init(&createDefaultScheduler), cl::Hidden,
             cl::desc("Instruction schedulers available (before register"
                      " allocation):"));
 

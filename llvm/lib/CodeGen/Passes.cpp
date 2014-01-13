@@ -61,7 +61,7 @@ static cl::opt<cl::boolOrDefault>
 OptimizeRegAlloc("optimize-regalloc", cl::Hidden,
     cl::desc("Enable optimized register allocation compilation path."));
 static cl::opt<cl::boolOrDefault>
-EnableMachineSched("enable-misched", cl::Hidden,
+EnableMachineSched("enable-misched",
     cl::desc("Enable the machine instruction scheduling pass."));
 static cl::opt<bool> DisablePostRAMachineLICM("disable-postra-machine-licm",
     cl::Hidden,
