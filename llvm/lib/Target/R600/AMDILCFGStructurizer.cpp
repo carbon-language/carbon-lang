@@ -26,7 +26,6 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachinePostDominators.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/IR/DominatorInternals.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"

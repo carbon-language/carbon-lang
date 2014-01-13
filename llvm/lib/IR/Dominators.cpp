@@ -18,12 +18,12 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/IR/DominatorInternals.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/GenericDomTreeConstruction.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 using namespace llvm;
@@ -56,7 +56,8 @@ bool BasicBlockEdge::isSingleEdge() const {
 //===----------------------------------------------------------------------===//
 //
 // Provide public access to DominatorTree information.  Implementation details
-// can be found in DominatorInternals.h.
+// can be found in Dominators.h, GenericDomTree.h, and
+// GenericDomTreeConstruction.h.
 //
 //===----------------------------------------------------------------------===//
 

@@ -1,4 +1,4 @@
-//===- DominatorInternals.h - Dominator Calculation --------------*- C++ -*-==//
+//===- GenericDomTreeConstruction.h - Dominator Calculation ------*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,27 +6,27 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+/// \file
+///
+/// Generic dominator tree construction - This file provides rouitens to
+/// constructs immediate dominator information for a flow-graph based on the
+/// algorithm described in this document:
+///
+///   A Fast Algorithm for Finding Dominators in a Flowgraph
+///   T. Lengauer & R. Tarjan, ACM TOPLAS July 1979, pgs 121-141.
+///
+/// This implements the O(n*log(n)) versions of EVAL and LINK, because it turns
+/// out that the theoretically slower O(n*log(n)) implementation is actually
+/// faster than the almost-linear O(n*alpha(n)) version, even for large CFGs.
+///
+//===----------------------------------------------------------------------===//
 
-#ifndef LLVM_IR_DOMINATOR_INTERNALS_H
-#define LLVM_IR_DOMINATOR_INTERNALS_H
+
+#ifndef LLVM_SUPPORT_GENERIC_DOM_TREE_CONSTRUCTION_H
+#define LLVM_SUPPORT_GENERIC_DOM_TREE_CONSTRUCTION_H
 
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/IR/Dominators.h"
-
-//===----------------------------------------------------------------------===//
-//
-// DominatorTree construction - This pass constructs immediate dominator
-// information for a flow-graph based on the algorithm described in this
-// document:
-//
-//   A Fast Algorithm for Finding Dominators in a Flowgraph
-//   T. Lengauer & R. Tarjan, ACM TOPLAS July 1979, pgs 121-141.
-//
-// This implements the O(n*log(n)) versions of EVAL and LINK, because it turns
-// out that the theoretically slower O(n*log(n)) implementation is actually
-// faster than the almost-linear O(n*alpha(n)) version, even for large CFGs.
-//
-//===----------------------------------------------------------------------===//
+#include "llvm/Support/GenericDomTree.h"
 
 namespace llvm {
 

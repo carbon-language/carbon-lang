@@ -49,6 +49,11 @@ enum VerifierFailureAction {
 FunctionPass *
 createVerifierPass(VerifierFailureAction action = AbortProcessAction);
 
+/// \brief Check a function for errors, useful for use when debugging a
+/// pass.
+bool verifyFunction(const Function &F,
+                    VerifierFailureAction action = AbortProcessAction);
+
 /// \brief Check a module for errors.
 ///
 /// If there are no errors, the function returns false. If an error is found,
@@ -58,11 +63,6 @@ createVerifierPass(VerifierFailureAction action = AbortProcessAction);
 bool verifyModule(const Module &M,
                   VerifierFailureAction action = AbortProcessAction,
                   std::string *ErrorInfo = 0);
-
-/// \brief Check a function for errors, useful for use when debugging a
-/// pass.
-bool verifyFunction(const Function &F,
-                    VerifierFailureAction action = AbortProcessAction);
 
 } // End llvm namespace
 
