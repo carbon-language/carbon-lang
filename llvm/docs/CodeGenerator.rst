@@ -434,12 +434,12 @@ For example, consider this simple LLVM example:
 .. code-block:: llvm
 
   define i32 @test(i32 %X, i32 %Y) {
-    %Z = udiv i32 %X, %Y
+    %Z = sdiv i32 %X, %Y
     ret i32 %Z
   }
 
-The X86 instruction selector produces this machine code for the ``div`` and
-``ret`` (use "``llc X.bc -march=x86 -print-machineinstrs``" to get this):
+The X86 instruction selector might produce this machine code for the ``div`` and
+``ret``:
 
 .. code-block:: llvm
 
@@ -454,8 +454,8 @@ The X86 instruction selector produces this machine code for the ``div`` and
   %EAX = mov %reg1026           ;; 32-bit return value goes in EAX
   ret
 
-By the end of code generation, the register allocator has coalesced the
-registers and deleted the resultant identity moves producing the following
+By the end of code generation, the register allocator would coalesce the
+registers and delete the resultant identity moves producing the following
 code:
 
 .. code-block:: llvm
