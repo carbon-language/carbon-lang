@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -cxx-abi itanium -verify %s
+// RUN: %clang_cc1 -fsyntax-only -cxx-abi microsoft -DMSABI -verify %s
 
 typedef typeof(sizeof(int)) size_t;
 
@@ -28,12 +29,18 @@ namespace test0 {
 namespace test1 {
   class A {
   public:
+#ifdef MSABI
+    // expected-note@+2 {{declared here}}
+#endif
     static void operator delete(void *p) {}; // expected-note {{member 'operator delete' declared here}}
     virtual ~A();
   };
 
   class B : protected A {
   public:
+#ifdef MSABI
+    // expected-note@+2 {{declared here}}
+#endif
     static void operator delete(void *, size_t) {}; // expected-note {{member 'operator delete' declared here}}
     ~B();
   };
@@ -43,6 +50,9 @@ namespace test1 {
     using A::operator delete;
     using B::operator delete;
 
+#ifdef MSABI
+    // expected-error@+2 {{multiple suitable 'operator delete' functions in 'C'}}
+#endif
     ~C();
   };
 
@@ -52,12 +62,22 @@ namespace test1 {
 // ...at the point of definition of a virtual destructor...
 namespace test2 {
   struct A {
+#ifdef MSABI
+    // expected-error@+3 {{no suitable member 'operator delete' in 'A'}}
+    // expected-note@+3 {{declared here}}
+#endif
     virtual ~A();
     static void operator delete(void*, const int &);
   };
 
   struct B {
+#ifdef MSABI
+    // expected-error@+2 {{no suitable member 'operator delete' in 'B'}}
+#endif
     virtual ~B();
+#ifdef MSABI
+    // expected-note@+2 {{declared here}}
+#endif
     static void operator delete(void*, const int &); // expected-note {{declared here}}
   };
   B::~B() {} // expected-error {{no suitable member 'operator delete' in 'B'}}
@@ -74,7 +94,13 @@ namespace test2 {
 // PR7346
 namespace test3 {
   struct A {
+#ifdef MSABI
+    // expected-error@+2 {{no suitable member 'operator delete' in 'A'}}
+#endif
     virtual ~A();
+#ifdef MSABI
+    // expected-note@+2 {{declared here}}
+#endif
     static void operator delete(void*, const int &);
   };
 

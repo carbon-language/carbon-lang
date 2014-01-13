@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm -o - %s | FileCheck %s
 
 struct X { };
 
@@ -7,8 +7,6 @@ struct X { };
 // CHECK: @x2 = external global %struct.X
 // CHECK: @x3 = external global %struct.X
 extern "C" {
-
-
   X x1;
 }
 

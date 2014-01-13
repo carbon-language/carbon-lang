@@ -1,6 +1,8 @@
-// RUN: %clang %s -S -emit-llvm -o - | grep -e "define linkonce_odr.*_ZlsR11std_ostreamRK8StreamerI3FooE"
+// RUN: %clang_cc1 %s -emit-llvm -cxx-abi itanium -o - | FileCheck %s
 // RUN: %clang_cc1 %s -DREDEFINE -verify
 // PR8007: friend function not instantiated.
+
+// CHECK: define linkonce_odr{{.*}}_ZlsR11std_ostreamRK8StreamerI3FooE
 
 struct std_ostream
 {

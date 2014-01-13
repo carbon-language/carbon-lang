@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -Wweak-vtables -Wweak-template-vtables
+// RUN: %clang_cc1 %s -fsyntax-only -verify -cxx-abi itanium -Wweak-vtables -Wweak-template-vtables
+// RUN: %clang_cc1 %s -fsyntax-only -cxx-abi microsoft -Werror -Wno-weak-vtables -Wno-weak-template-vtables
 
 struct A { // expected-warning {{'A' has no out-of-line virtual method definitions; its vtable will be emitted in every translation unit}}
   virtual void f() { } 

@@ -1,5 +1,8 @@
-// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s
-// RUN: not %clang_cc1 -std=c++11 -fsyntax-only -fdiagnostics-parseable-fixits -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -cxx-abi itanium -verify -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -cxx-abi microsoft -DMSABI -verify -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s
+
+// RUN: not %clang_cc1 -std=c++11 -fsyntax-only -cxx-abi itanium -fdiagnostics-parseable-fixits -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -std=c++11 -fsyntax-only -cxx-abi microsoft -fdiagnostics-parseable-fixits -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s 2>&1 | FileCheck %s
 
 // PR 13824
 class A {
@@ -288,6 +291,11 @@ void different_subobject_downcast(E *e, F *f, A *a) {
   (void)reinterpret_cast<I *>(f);
   // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
 
+#ifdef MSABI
+  // In MS ABI mode, A is at non-zero offset in H.
+  // expected-warning@+3 {{'reinterpret_cast' to class 'H *' from its base at non-zero offset 'A *' behaves differently from 'static_cast'}}
+  // expected-note@+2 {{use 'static_cast'}}
+#endif
   (void)reinterpret_cast<H *>(a);
 
   // expected-warning@+2 {{'reinterpret_cast' to class 'L' (aka 'const F *volatile') from its base at non-zero offset 'E *' behaves differently from 'static_cast'}}
@@ -309,6 +317,12 @@ void different_subobject_upcast(F *f, G *g, H *h, I *i) {
   // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:9-[[@LINE-1]]:25}:"static_cast"
 
   (void)reinterpret_cast<E *>(h);
+
+#ifdef MSABI
+  // In MS ABI mode, A is at non-zero offset in H.
+  // expected-warning@+3 {{'reinterpret_cast' from class 'H *' to its base at non-zero offset 'A *' behaves differently from 'static_cast'}}
+  // expected-note@+2 {{use 'static_cast'}}
+#endif
   (void)reinterpret_cast<A *>(h);
 
   // expected-warning@+2 {{'reinterpret_cast' from class 'I *' to its virtual base 'F *' behaves differently from 'static_cast'}}

@@ -13,6 +13,7 @@ int PR10757f() {
 }
 
 struct DelOpDel {
-  virtual ~DelOpDel() {} // expected-error {{deleted function}}
-  void operator delete(void*) = delete; // expected-note {{deleted here}}
+  // FIXME: In MS ABI, we error twice below.
+  virtual ~DelOpDel() {} // expected-error 1-2 {{attempt to use a deleted function}}
+  void operator delete(void*) = delete; // expected-note 1-2 {{deleted here}}
 };

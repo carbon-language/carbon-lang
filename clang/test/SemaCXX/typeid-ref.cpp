@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm -o - %s | FileCheck %s
 namespace std {
   class type_info;
 }

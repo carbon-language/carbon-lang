@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o %t
+// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm %s -o %t
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-GLOBALS
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-1
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-2

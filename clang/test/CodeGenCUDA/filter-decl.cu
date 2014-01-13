@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-HOST %s
-// RUN: %clang_cc1 -emit-llvm %s -o - -fcuda-is-device | FileCheck -check-prefix=CHECK-DEVICE %s
+// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-HOST %s
+// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm %s -o - -fcuda-is-device | FileCheck -check-prefix=CHECK-DEVICE %s
 
 #include "../SemaCUDA/cuda.h"
 

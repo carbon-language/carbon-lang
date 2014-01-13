@@ -1,4 +1,7 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -Wc++-compat
+// RUN: %clang_cc1 %s -cxx-abi itanium -fsyntax-only -verify -Wc++-compat
+
+// FIXME: Empty C structs are 4 bytes in MSVC, but the -cxx-abi flag probably
+// shouldn't affect this since it's not C++. PR18263.
 
 struct emp_1 { // expected-warning {{empty struct has size 0 in C, size 1 in C++}}
 };

@@ -1,6 +1,10 @@
-// RUN: %clang_cc1 -std=c++98 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
-// RUN: %clang_cc1 -std=c++11 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
-// RUN: %clang_cc1 -std=c++1y %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
+// RUN: %clang_cc1 -std=c++98 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors -cxx-abi itanium
+// RUN: %clang_cc1 -std=c++11 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors -cxx-abi itanium
+// RUN: %clang_cc1 -std=c++1y %s -verify -fexceptions -fcxx-exceptions -pedantic-errors -cxx-abi itanium
+
+// RUN: %clang_cc1 -std=c++98 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors -cxx-abi microsoft -DMSABI
+// RUN: %clang_cc1 -std=c++11 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors -cxx-abi microsoft -DMSABI
+// RUN: %clang_cc1 -std=c++1y %s -verify -fexceptions -fcxx-exceptions -pedantic-errors -cxx-abi microsoft -DMSABI
 
 // PR13819 -- __SIZE_TYPE__ is incompatible.
 typedef __SIZE_TYPE__ size_t; // expected-error 0-1 {{extension}}
@@ -534,17 +538,30 @@ namespace dr250 { // dr250: yes
 
 namespace dr252 { // dr252: yes
   struct A {
+#ifdef MSABI
+    // expected-note@+2 {{found}}
+#endif
     void operator delete(void*); // expected-note {{found}}
   };
   struct B {
+#ifdef MSABI
+    // expected-note@+2 {{found}}
+#endif
     void operator delete(void*); // expected-note {{found}}
   };
   struct C : A, B {
+#ifdef MSABI
+    // expected-error@+2 {{'operator delete' found in multiple base classes}}
+#endif
     virtual ~C();
   };
   C::~C() {} // expected-error {{'operator delete' found in multiple base classes}}
 
   struct D {
+#ifdef MSABI
+    // expected-note@+3 {{here}} MSABI
+    // expected-error@+3 {{no suitable member 'operator delete'}}
+#endif
     void operator delete(void*, int); // expected-note {{here}}
     virtual ~D();
   };
@@ -552,18 +569,22 @@ namespace dr252 { // dr252: yes
 
   struct E {
     void operator delete(void*, int);
-    void operator delete(void*) = delete; // expected-error 0-1{{extension}} expected-note {{here}}
-    virtual ~E();
+    void operator delete(void*) = delete; // expected-error 0-1{{extension}} expected-note 1-2 {{here}}
+    virtual ~E(); // expected-error 0-1 {{attempt to use a deleted function}}
   };
-  E::~E() {} // expected-error {{deleted}}
+  E::~E() {} // expected-error {{attempt to use a deleted function}}
 
   struct F {
     // If both functions are available, the first one is a placement delete.
     void operator delete(void*, size_t);
+#ifdef MSABI
+    // expected-note@+3 {{here}}
+    // expected-error@+3 {{attempt to use a deleted function}}
+#endif
     void operator delete(void*) = delete; // expected-error 0-1{{extension}} expected-note {{here}}
     virtual ~F();
   };
-  F::~F() {} // expected-error {{deleted}}
+  F::~F() {} // expected-error {{attempt to use a deleted function}}
 
   struct G {
     void operator delete(void*, size_t);

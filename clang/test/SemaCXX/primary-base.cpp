@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -cxx-abi itanium -fsyntax-only -verify %s
 // expected-no-diagnostics
 class A { virtual void f(); };
 class B : virtual A { };

@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -cxx-abi itanium -verify %s
+// RUN: %clang_cc1 -fsyntax-only -cxx-abi microsoft -DMSABI -verify %s
 struct A {
   virtual ~A();
 };
@@ -9,8 +10,12 @@ struct B : A { // expected-error {{no suitable member 'operator delete' in 'B'}}
   void operator delete (void *, int); // expected-note {{'operator delete' declared here}}
 };
 
+#ifdef MSABI
+B b; // expected-note {{implicit destructor for 'B' first required here}}
+#else
 void B::f() { // expected-note {{implicit destructor for 'B' first required here}}
 }
+#endif
 
 struct C : A { // expected-error {{no suitable member 'operator delete' in 'C'}}
   C();
@@ -26,4 +31,3 @@ struct D : A { // expected-error {{no suitable member 'operator delete' in 'D'}}
 void f() {
   new D; // expected-note {{implicit destructor for 'D' first required here}}
 }
-

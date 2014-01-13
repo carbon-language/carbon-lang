@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -O3 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -O3 -cxx-abi itanium -emit-llvm -o - %s | FileCheck %s
 
 // Is FP_CONTRACT is honored in a simple case?
 float fp_contract_1(float a, float b, float c) {

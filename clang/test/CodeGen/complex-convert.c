@@ -22,9 +22,14 @@ void foo(signed char sc, unsigned char uc, signed long long sll,
   _Complex signed long long csll1;
   _Complex unsigned long long cull1;
   // CHECK-LABEL: define void @foo(
-  // CHECK: alloca i[[CHSIZE:[0-9]+]], align [[CHALIGN:[0-9]+]]
-  // CHECK-NEXT: alloca i[[CHSIZE]], align [[CHALIGN]]
-  // CHECK-NEXT: alloca i[[LLSIZE:[0-9]+]], align [[LLALIGN:[0-9]+]]
+  // Match the prototype to pick up the size of sc and sll.
+  // CHECK: i[[CHSIZE:[0-9]+]]{{[^,]*}},
+  // CHECK: i[[CHSIZE]]{{[^,]*}},
+  // CHECK: i[[LLSIZE:[0-9]+]]
+
+  // Match against the allocas to pick up the alignments.
+  // CHECK: alloca i[[CHSIZE]], align [[CHALIGN:[0-9]+]]
+  // CHECK: alloca i[[LLSIZE]], align [[LLALIGN:[0-9]+]]
 
   sc1 = csc;
   // CHECK: %[[VAR1:[A-Za-z0-9.]+]] = getelementptr inbounds { i[[CHSIZE]], i[[CHSIZE]]  }* %[[CSC:[A-Za-z0-9.]+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0

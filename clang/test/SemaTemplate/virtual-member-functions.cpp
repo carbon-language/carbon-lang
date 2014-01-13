@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -cxx-abi itanium -fsyntax-only -verify %s
+// RUN: %clang_cc1 -cxx-abi microsoft -DMSABI -fsyntax-only -verify %s
 
 namespace PR5557 {
 template <class T> struct A {
@@ -71,8 +72,13 @@ namespace PR7114 {
 
   int f() { return B<int>::value; }
 
+#ifdef MSABI
+  void test_typeid(B<float>::Inner bfi) { // expected-note{{implicit destructor}}
+    (void)typeid(bfi);
+#else
   void test_typeid(B<float>::Inner bfi) {
     (void)typeid(bfi); // expected-note{{implicit destructor}}
+#endif
   }
 
   template<typename T>
@@ -80,7 +86,7 @@ namespace PR7114 {
     void f() { }
   };
 
-  void test_X(X<int> xi, X<float> xf) {
+  void test_X(X<int> &xi, X<float> &xf) {
     xi.f();
   }
 }

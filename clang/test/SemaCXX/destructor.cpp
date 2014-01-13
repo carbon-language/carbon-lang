@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -std=c++11 -fsyntax-only -Wnon-virtual-dtor -Wdelete-non-virtual-dtor -verify %s
+// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fsyntax-only -Wnon-virtual-dtor -Wdelete-non-virtual-dtor -verify %s
+// RUN: %clang_cc1 -std=c++11 -cxx-abi microsoft -DMSABI -fsyntax-only -Wnon-virtual-dtor -Wdelete-non-virtual-dtor -verify %s
 class A {
 public:
   ~A();
@@ -83,6 +84,12 @@ namespace PR6421 {
 }
 
 namespace PR6709 {
+#ifdef MSABI
+  // This bug, "Clang instantiates destructor for function argument" is intended
+  // behaviour in the Microsoft ABI because the callee needs to destruct the arguments.
+  // expected-error@+3 {{indirection requires pointer operand ('int' invalid)}}
+  // expected-note@+3 {{in instantiation of member function 'PR6709::X<int>::~X' requested here}}
+#endif
   template<class T> class X { T v; ~X() { ++*v; } };
   void a(X<int> x) {}
 }
@@ -100,10 +107,16 @@ namespace test6 {
       T::deleteIt(p); // expected-error {{type 'int' cannot be used prior to '::'}}
     }
 
+#ifdef MSABI
+    // expected-note@+2 {{in instantiation of member function 'test6::A<int>::operator delete' requested here}}
+#endif
     virtual ~A() {}
   };
 
-  class B : A<int> { B(); }; // expected-note {{in instantiation of member function 'test6::A<int>::operator delete' requested here}}
+#ifndef MSABI
+    // expected-note@+2 {{in instantiation of member function 'test6::A<int>::operator delete' requested here}}
+#endif
+  class B : A<int> { B(); };
   B::B() {}
 }
 

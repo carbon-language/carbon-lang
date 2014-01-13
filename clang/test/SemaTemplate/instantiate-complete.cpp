@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -cxx-abi itanium -fsyntax-only -verify %s
+// RUN: %clang_cc1 -cxx-abi microsoft -DMSABI -fsyntax-only -verify %s
 
 // Tests various places where requiring a complete type involves
 // instantiation of that type.
@@ -7,6 +8,9 @@ template<typename T>
 struct X {
   X(T);
 
+#ifdef MSABI
+// expected-error@+2{{data member instantiated with function type 'long (long)'}}
+#endif
   T f; // expected-error{{data member instantiated with function type 'float (int)'}} \
        // expected-error{{data member instantiated with function type 'int (int)'}} \
        // expected-error{{data member instantiated with function type 'char (char)'}} \
@@ -40,7 +44,11 @@ void test_new() {
 
 void test_memptr(X<long> *p1, long X<long>::*pm1,
                  X<long(long)> *p2, 
+#ifdef MSABI
+                 long (X<long(long)>::*pm2)(long)) { // expected-note{{in instantiation of template class 'X<long (long)>' requested here}}
+#else
                  long (X<long(long)>::*pm2)(long)) {
+#endif
   (void)(p1->*pm1);
 }
 

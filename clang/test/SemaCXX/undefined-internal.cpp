@@ -1,7 +1,10 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // Make sure we don't produce invalid IR.
-// RUN: %clang_cc1 -emit-llvm-only %s
+// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm-only %s
+
+// FIXME: -cxx-abi itanium shouldn't be necessary; the test should pass
+// in MS mode too.
 
 namespace test1 {
   static void foo(); // expected-warning {{function 'test1::foo' has internal linkage but is not defined}}

@@ -7,11 +7,11 @@
 // FIXME: Don't seek bb labels, like "if.else"
 // REQUIRES: asserts
 
-// RUN: %clangxx %s -o - -emit-llvm -S -fprofile-instr-generate | FileCheck -check-prefix=PGOGEN %s
-// RUN: %clangxx %s -o - -emit-llvm -S -fprofile-instr-generate | FileCheck -check-prefix=PGOGEN-EXC %s
+// RUN: %clangxx %s -o - -emit-llvm -S -fprofile-instr-generate -Xclang -cxx-abi -Xclang itanium | FileCheck -check-prefix=PGOGEN %s
+// RUN: %clangxx %s -o - -emit-llvm -S -fprofile-instr-generate -Xclang -cxx-abi -Xclang itanium | FileCheck -check-prefix=PGOGEN-EXC %s
 
-// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile.pgodata | FileCheck -check-prefix=PGOUSE %s
-// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile.pgodata | FileCheck -check-prefix=PGOUSE-EXC %s
+// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile.pgodata -Xclang -cxx-abi -Xclang itanium | FileCheck -check-prefix=PGOUSE %s
+// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile.pgodata -Xclang -cxx-abi -Xclang itanium | FileCheck -check-prefix=PGOUSE-EXC %s
 
 // PGOGEN: @[[THC:__llvm_pgo_ctr[0-9]*]] = private global [11 x i64] zeroinitializer
 // PGOGEN-EXC: @[[THC:__llvm_pgo_ctr[0-9]*]] = private global [11 x i64] zeroinitializer
