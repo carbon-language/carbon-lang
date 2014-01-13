@@ -49,6 +49,7 @@
 #include <algorithm>
 #include <memory>
 using namespace llvm;
+using namespace opt_tool;
 
 // The OptimizationList is automatically populated with registered Passes by the
 // PassNameParser.
@@ -670,14 +671,19 @@ int main(int argc, char **argv) {
     if (CheckBitcodeOutputToConsole(Out->os(), !Quiet))
       NoOutput = true;
 
-  if (PassPipeline.getNumOccurrences() > 0)
+  if (PassPipeline.getNumOccurrences() > 0) {
+    OutputKind OK = OK_NoOutput;
+    if (!NoOutput)
+      OK = OutputAssembly ? OK_OutputAssembly : OK_OutputBitcode;
+
     // The user has asked to use the new pass manager and provided a pipeline
     // string. Hand off the rest of the functionality to the new code for that
     // layer.
     return runPassPipeline(argv[0], Context, *M.get(), Out.get(), PassPipeline,
-                           NoOutput)
+                           OK)
                ? 0
                : 1;
+  }
 
   // Create a PassManager to hold and optimize the collection of passes we are
   // about to build.

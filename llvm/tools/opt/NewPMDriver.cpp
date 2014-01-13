@@ -23,10 +23,11 @@
 #include "llvm/Support/ToolOutputFile.h"
 
 using namespace llvm;
+using namespace opt_tool;
 
 bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
                            tool_output_file *Out, StringRef PassPipeline,
-                           bool NoOutput) {
+                           OutputKind OK) {
   // Before executing passes, print the final values of the LLVM options.
   cl::PrintOptionValues();
 
@@ -40,7 +41,7 @@ bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
   MPM.run(&M);
 
   // Declare success.
-  if (!NoOutput)
+  if (OK != OK_NoOutput)
     Out->keep();
   return true;
 }
