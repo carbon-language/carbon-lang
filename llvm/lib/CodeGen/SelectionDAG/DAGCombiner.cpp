@@ -610,6 +610,51 @@ static bool isOneUseSetCC(SDValue N) {
 SDValue DAGCombiner::ReassociateOps(unsigned Opc, SDLoc DL,
                                     SDValue N0, SDValue N1) {
   EVT VT = N0.getValueType();
+  if (VT.isVector()) {
+    if (N0.getOpcode() == Opc) {
+      BuildVectorSDNode *L = dyn_cast<BuildVectorSDNode>(N0.getOperand(1));
+      if(L && L->isConstant()) {
+        BuildVectorSDNode *R = dyn_cast<BuildVectorSDNode>(N1);
+        if (R && R->isConstant()) {
+          // reassoc. (op (op x, c1), c2) -> (op x, (op c1, c2))
+          SDValue OpNode = DAG.FoldConstantArithmetic(Opc, VT, L, R);
+          return DAG.getNode(Opc, DL, VT, N0.getOperand(0), OpNode);
+        }
+
+        if (N0.hasOneUse()) {
+          // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one
+          // use
+          SDValue OpNode = DAG.getNode(Opc, SDLoc(N0), VT,
+                                       N0.getOperand(0), N1);
+          AddToWorkList(OpNode.getNode());
+          return DAG.getNode(Opc, DL, VT, OpNode, N0.getOperand(1));
+        }
+      }
+    }
+
+    if (N1.getOpcode() == Opc) {
+      BuildVectorSDNode *R = dyn_cast<BuildVectorSDNode>(N1.getOperand(1));
+      if (R && R->isConstant()) {
+        BuildVectorSDNode *L = dyn_cast<BuildVectorSDNode>(N0);
+        if (L && L->isConstant()) {
+          // reassoc. (op c2, (op x, c1)) -> (op x, (op c1, c2))
+          SDValue OpNode = DAG.FoldConstantArithmetic(Opc, VT, R, L);
+          return DAG.getNode(Opc, DL, VT, N1.getOperand(0), OpNode);
+        }
+        if (N1.hasOneUse()) {
+          // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) iff x+c1 has one
+          // use
+          SDValue OpNode = DAG.getNode(Opc, SDLoc(N0), VT,
+                                       N1.getOperand(0), N0);
+          AddToWorkList(OpNode.getNode());
+          return DAG.getNode(Opc, DL, VT, OpNode, N1.getOperand(1));
+        }
+      }
+    }
+
+    return SDValue();
+  }
+
   if (N0.getOpcode() == Opc && isa<ConstantSDNode>(N0.getOperand(1))) {
     if (isa<ConstantSDNode>(N1)) {
       // reassoc. (op (op x, c1), c2) -> (op x, (op c1, c2))
@@ -5868,14 +5913,7 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
   if (!LegalTypes &&
       N0.getOpcode() == ISD::BUILD_VECTOR && N0.getNode()->hasOneUse() &&
       VT.isVector()) {
-    bool isSimple = true;
-    for (unsigned i = 0, e = N0.getNumOperands(); i != e; ++i)
-      if (N0.getOperand(i).getOpcode() != ISD::UNDEF &&
-          N0.getOperand(i).getOpcode() != ISD::Constant &&
-          N0.getOperand(i).getOpcode() != ISD::ConstantFP) {
-        isSimple = false;
-        break;
-      }
+    bool isSimple = cast<BuildVectorSDNode>(N0)->isConstant();
 
     EVT DestEltVT = N->getValueType(0).getVectorElementType();
     assert(!DestEltVT.isVector() &&
@@ -10381,18 +10419,15 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
   // this operation.
   if (LHS.getOpcode() == ISD::BUILD_VECTOR &&
       RHS.getOpcode() == ISD::BUILD_VECTOR) {
+    // Check if both vectors are constants. If not bail out.
+    if (!cast<BuildVectorSDNode>(LHS)->isConstant() &&
+        !cast<BuildVectorSDNode>(RHS)->isConstant())
+      return SDValue();
+
     SmallVector<SDValue, 8> Ops;
     for (unsigned i = 0, e = LHS.getNumOperands(); i != e; ++i) {
       SDValue LHSOp = LHS.getOperand(i);
       SDValue RHSOp = RHS.getOperand(i);
-      // If these two elements can't be folded, bail out.
-      if ((LHSOp.getOpcode() != ISD::UNDEF &&
-           LHSOp.getOpcode() != ISD::Constant &&
-           LHSOp.getOpcode() != ISD::ConstantFP) ||
-          (RHSOp.getOpcode() != ISD::UNDEF &&
-           RHSOp.getOpcode() != ISD::Constant &&
-           RHSOp.getOpcode() != ISD::ConstantFP))
-        break;
 
       // Can't fold divide by zero.
       if (N->getOpcode() == ISD::SDIV || N->getOpcode() == ISD::UDIV ||

@@ -6533,6 +6533,15 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
   return true;
 }
 
+bool BuildVectorSDNode::isConstant() const {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    unsigned Opc = getOperand(i).getOpcode();
+    if (Opc != ISD::UNDEF && Opc != ISD::Constant && Opc != ISD::ConstantFP)
+      return false;
+  }
+  return true;
+}
+
 bool ShuffleVectorSDNode::isSplatMask(const int *Mask, EVT VT) {
   // Find the first non-undef value in the shuffle mask.
   unsigned i, e;

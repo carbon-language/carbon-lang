@@ -1492,6 +1492,8 @@ public:
                        unsigned &SplatBitSize, bool &HasAnyUndefs,
                        unsigned MinSplatBits = 0, bool isBigEndian = false);
 
+  bool isConstant() const;
+
   static inline bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::BUILD_VECTOR;
   }
