@@ -1312,14 +1312,15 @@ def : T1Pat<(subc   tGPR:$lhs, tGPR:$rhs),
 def : T1Pat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
 
 // GlobalAddress
-def tLDRLIT_ga_pcrel : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
+def tLDRLIT_ga_pcrel : PseudoInst<(outs tGPR:$dst), (ins i32imm:$addr),
                                   IIC_iLoadiALU,
-                                  [(set GPR:$dst,
+                                  [(set tGPR:$dst,
                                         (ARMWrapperPIC tglobaladdr:$addr))]>,
                        Requires<[IsThumb, DontUseMovt]>;
 
-def tLDRLIT_ga_abs : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iLoad_i,
-                                [(set GPR:$dst,
+def tLDRLIT_ga_abs : PseudoInst<(outs tGPR:$dst), (ins i32imm:$src),
+                                IIC_iLoad_i,
+                                [(set tGPR:$dst,
                                       (ARMWrapper tglobaladdr:$src))]>,
                      Requires<[IsThumb, DontUseMovt]>;
 
