@@ -6246,14 +6246,16 @@ bool Sema::CheckParmsForFunctionDef(ParmVarDecl *const *P,
     if (getLangOpts().CPlusPlus && Context.getTargetInfo()
                                        .getCXXABI()
                                        .areArgsDestroyedLeftToRightInCallee()) {
-      if (const RecordType *RT = Param->getType()->getAs<RecordType>()) {
-        CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-        if (!ClassDecl->isInvalidDecl() &&
-            !ClassDecl->hasIrrelevantDestructor() &&
-            !ClassDecl->isDependentContext()) {
-          CXXDestructorDecl *Destructor = LookupDestructor(ClassDecl);
-          MarkFunctionReferenced(Param->getLocation(), Destructor);
-          DiagnoseUseOfDecl(Destructor, Param->getLocation());
+      if (!Param->isInvalidDecl()) {
+        if (const RecordType *RT = Param->getType()->getAs<RecordType>()) {
+          CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+          if (!ClassDecl->isInvalidDecl() &&
+              !ClassDecl->hasIrrelevantDestructor() &&
+              !ClassDecl->isDependentContext()) {
+            CXXDestructorDecl *Destructor = LookupDestructor(ClassDecl);
+            MarkFunctionReferenced(Param->getLocation(), Destructor);
+            DiagnoseUseOfDecl(Destructor, Param->getLocation());
+          }
         }
       }
     }
