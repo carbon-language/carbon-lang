@@ -53,7 +53,7 @@ _Decimal32 x;  // expected-error {{GNU decimal type extension not supported}}
 int __attribute__ ((vector_size (8), vector_size (8))) v;  // expected-error {{invalid vector element type}}
 
 void test(int i) {
-  char c = (char __attribute__((align(8)))) i; // expected-warning {{'align' attribute ignored when parsing type}}
+  char c = (char __attribute__((aligned(8)))) i; // expected-warning {{'aligned' attribute ignored when parsing type}}
 }
 
 // http://llvm.org/PR11082

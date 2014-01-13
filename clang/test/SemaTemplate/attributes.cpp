@@ -22,7 +22,7 @@ namespace attribute_aligned {
   template<unsigned Size, unsigned Align>
   class my_aligned_storage
   {
-    __attribute__((align(Align))) char storage[Size];
+    __attribute__((aligned(Align))) char storage[Size];
   };
   
   template<typename T>
