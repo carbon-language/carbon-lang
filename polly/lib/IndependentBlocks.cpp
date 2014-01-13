@@ -507,7 +507,7 @@ bool IndependentBlocks::areAllBlocksIndependent(const Region *R) const {
 void IndependentBlocks::getAnalysisUsage(AnalysisUsage &AU) const {
   // FIXME: If we set preserves cfg, the cfg only passes do not need to
   // be "addPreserved"?
-  AU.addPreserved<DominatorTree>();
+  AU.addPreserved<DominatorTreeWrapperPass>();
   AU.addPreserved<DominanceFrontier>();
   AU.addPreserved<PostDominatorTree>();
   AU.addRequired<RegionInfo>();

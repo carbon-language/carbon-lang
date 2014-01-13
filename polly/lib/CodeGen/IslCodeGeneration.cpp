@@ -848,7 +848,7 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   BasicBlock *ThenBB = BasicBlock::Create(Context, "polly.then", F);
   BasicBlock *ElseBB = BasicBlock::Create(Context, "polly.else", F);
 
-  DominatorTree &DT = P->getAnalysis<DominatorTree>();
+  DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   DT.addNewBlock(ThenBB, CondBB);
   DT.addNewBlock(ElseBB, CondBB);
   DT.changeImmediateDominator(MergeBB, CondBB);
@@ -1052,7 +1052,7 @@ public:
   virtual void printScop(raw_ostream &OS) const {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<DominatorTree>();
+    AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<IslAstInfo>();
     AU.addRequired<RegionInfo>();
     AU.addRequired<ScalarEvolution>();
@@ -1063,7 +1063,7 @@ public:
     AU.addPreserved<Dependences>();
 
     AU.addPreserved<LoopInfo>();
-    AU.addPreserved<DominatorTree>();
+    AU.addPreserved<DominatorTreeWrapperPass>();
     AU.addPreserved<IslAstInfo>();
     AU.addPreserved<ScopDetection>();
     AU.addPreserved<ScalarEvolution>();
@@ -1085,7 +1085,7 @@ Pass *polly::createIslCodeGenerationPass() { return new IslCodeGeneration(); }
 INITIALIZE_PASS_BEGIN(IslCodeGeneration, "polly-codegen-isl",
                       "Polly - Create LLVM-IR from SCoPs", false, false);
 INITIALIZE_PASS_DEPENDENCY(Dependences);
-INITIALIZE_PASS_DEPENDENCY(DominatorTree);
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(LoopInfo);
 INITIALIZE_PASS_DEPENDENCY(RegionInfo);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);

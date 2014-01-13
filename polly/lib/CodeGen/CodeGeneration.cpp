@@ -619,7 +619,7 @@ void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
   ClastVars = ClastVarsCopy;
 
   clearDomtree((*LoopBody).getParent()->getParent(),
-               P->getAnalysis<DominatorTree>());
+               P->getAnalysis<DominatorTreeWrapperPass>().getDomTree());
 
   Builder.SetInsertPoint(AfterLoop);
 }
@@ -907,7 +907,7 @@ void ClastStmtCodeGen::codegen(const clast_guard *g) {
   MergeBB->setName("polly.merge");
   BasicBlock *ThenBB = BasicBlock::Create(Context, "polly.then", F);
 
-  DominatorTree &DT = P->getAnalysis<DominatorTree>();
+  DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   DT.addNewBlock(ThenBB, CondBB);
   DT.changeImmediateDominator(MergeBB, CondBB);
 
@@ -1028,7 +1028,7 @@ public:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired<CloogInfo>();
     AU.addRequired<Dependences>();
-    AU.addRequired<DominatorTree>();
+    AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<RegionInfo>();
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<ScopDetection>();
@@ -1039,7 +1039,7 @@ public:
     AU.addPreserved<CloogInfo>();
     AU.addPreserved<Dependences>();
     AU.addPreserved<LoopInfo>();
-    AU.addPreserved<DominatorTree>();
+    AU.addPreserved<DominatorTreeWrapperPass>();
     AU.addPreserved<ScopDetection>();
     AU.addPreserved<ScalarEvolution>();
 
@@ -1061,7 +1061,7 @@ INITIALIZE_PASS_BEGIN(CodeGeneration, "polly-codegen",
                       "Polly - Create LLVM-IR from SCoPs", false, false);
 INITIALIZE_PASS_DEPENDENCY(CloogInfo);
 INITIALIZE_PASS_DEPENDENCY(Dependences);
-INITIALIZE_PASS_DEPENDENCY(DominatorTree);
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfo);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);

@@ -50,7 +50,7 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
                          IRBuilder<> &Builder, Pass *P, BasicBlock *&ExitBB,
                          ICmpInst::Predicate Predicate) {
 
-  DominatorTree &DT = P->getAnalysis<DominatorTree>();
+  DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LoopInfo &LI = P->getAnalysis<LoopInfo>();
   Function *F = Builder.GetInsertBlock()->getParent();
   LLVMContext &Context = F->getContext();
@@ -279,7 +279,7 @@ Value *OMPGenerator::createSubfunction(Value *Stride, Value *StructData,
   CheckNextBB = BasicBlock::Create(Context, "omp.checkNext", FN);
   LoadIVBoundsBB = BasicBlock::Create(Context, "omp.loadIVBounds", FN);
 
-  DominatorTree &DT = P->getAnalysis<DominatorTree>();
+  DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   DT.addNewBlock(HeaderBB, PrevBB);
   DT.addNewBlock(ExitBB, HeaderBB);
   DT.addNewBlock(CheckNextBB, HeaderBB);

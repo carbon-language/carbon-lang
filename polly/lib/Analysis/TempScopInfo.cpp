@@ -336,7 +336,7 @@ void TempScopInfo::print(raw_ostream &OS, const Module *) const {
 }
 
 bool TempScopInfo::runOnFunction(Function &F) {
-  DT = &getAnalysis<DominatorTree>();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   PDT = &getAnalysis<PostDominatorTree>();
   SE = &getAnalysis<ScalarEvolution>();
   LI = &getAnalysis<LoopInfo>();
@@ -355,7 +355,7 @@ bool TempScopInfo::runOnFunction(Function &F) {
 
 void TempScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DataLayout>();
-  AU.addRequiredTransitive<DominatorTree>();
+  AU.addRequiredTransitive<DominatorTreeWrapperPass>();
   AU.addRequiredTransitive<PostDominatorTree>();
   AU.addRequiredTransitive<LoopInfo>();
   AU.addRequiredTransitive<ScalarEvolution>();
@@ -385,7 +385,7 @@ INITIALIZE_PASS_BEGIN(TempScopInfo, "polly-analyze-ir",
                       "Polly - Analyse the LLVM-IR in the detected regions",
                       false, false);
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis);
-INITIALIZE_PASS_DEPENDENCY(DominatorTree);
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(LoopInfo);
 INITIALIZE_PASS_DEPENDENCY(PostDominatorTree);
 INITIALIZE_PASS_DEPENDENCY(RegionInfo);

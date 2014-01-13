@@ -23,7 +23,8 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *PassInfo) {
   BasicBlock *StartBlock, *SplitBlock, *NewBlock;
   Region &R = S.getRegion();
   IRBuilder<> Builder(R.getEntry());
-  DominatorTree &DT = PassInfo->getAnalysis<DominatorTree>();
+  DominatorTree &DT =
+      PassInfo->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   RegionInfo &RI = PassInfo->getAnalysis<RegionInfo>();
 
   // Split the entry edge of the region and generate a new basic block on this
