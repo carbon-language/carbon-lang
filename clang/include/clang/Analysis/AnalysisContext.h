@@ -409,7 +409,8 @@ public:
                              bool addInitializers = false,
                              bool addTemporaryDtors = false,
                              bool synthesizeBodies = false,
-                             bool addStaticInitBranches = false);
+                             bool addStaticInitBranches = false,
+                             bool addCXXNewAllocator = true);
 
   ~AnalysisDeclContextManager();
 

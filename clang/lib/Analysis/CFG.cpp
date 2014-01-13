@@ -363,6 +363,7 @@ private:
                                       AddStmtChoice asc);
   CFGBlock *VisitCXXCatchStmt(CXXCatchStmt *S);
   CFGBlock *VisitCXXConstructExpr(CXXConstructExpr *C, AddStmtChoice asc);
+  CFGBlock *VisitCXXNewExpr(CXXNewExpr *DE, AddStmtChoice asc);
   CFGBlock *VisitCXXDeleteExpr(CXXDeleteExpr *DE, AddStmtChoice asc);
   CFGBlock *VisitCXXForRangeStmt(CXXForRangeStmt *S);
   CFGBlock *VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E,
@@ -458,6 +459,9 @@ private:
   }
   void appendInitializer(CFGBlock *B, CXXCtorInitializer *I) {
     B->appendInitializer(I, cfg->getBumpVectorContext());
+  }
+  void appendNewAllocator(CFGBlock *B, CXXNewExpr *NE) {
+    B->appendNewAllocator(NE, cfg->getBumpVectorContext());
   }
   void appendBaseDtor(CFGBlock *B, const CXXBaseSpecifier *BS) {
     B->appendBaseDtor(BS, cfg->getBumpVectorContext());
@@ -1121,6 +1125,9 @@ CFGBlock *CFGBuilder::Visit(Stmt * S, AddStmtChoice asc) {
 
     case Stmt::CXXConstructExprClass:
       return VisitCXXConstructExpr(cast<CXXConstructExpr>(S), asc);
+
+    case Stmt::CXXNewExprClass:
+      return VisitCXXNewExpr(cast<CXXNewExpr>(S), asc);
 
     case Stmt::CXXDeleteExprClass:
       return VisitCXXDeleteExpr(cast<CXXDeleteExpr>(S), asc);
@@ -3124,6 +3131,22 @@ CFGBlock *CFGBuilder::VisitCXXConstructExpr(CXXConstructExpr *C,
   return VisitChildren(C);
 }
 
+CFGBlock *CFGBuilder::VisitCXXNewExpr(CXXNewExpr *NE,
+                                      AddStmtChoice asc) {
+
+  autoCreateBlock();
+  appendStmt(Block, NE);
+  if (NE->getInitializer())
+    Block = VisitStmt(NE->getInitializer(), asc);
+  if (BuildOpts.AddCXXNewAllocator)
+    appendNewAllocator(Block, NE);
+  if (NE->isArray())
+    Block = VisitStmt(NE->getArraySize(), asc);
+  for (CXXNewExpr::arg_iterator I = NE->placement_arg_begin(),
+       E = NE->placement_arg_end(); I != E; ++I)
+    Block = VisitStmt(*I, asc);
+  return Block;
+}
 
 CFGBlock *CFGBuilder::VisitCXXDeleteExpr(CXXDeleteExpr *DE,
                                          AddStmtChoice asc) {
@@ -3426,6 +3449,7 @@ CFGImplicitDtor::getDestructorDecl(ASTContext &astContext) const {
   switch (getKind()) {
     case CFGElement::Statement:
     case CFGElement::Initializer:
+    case CFGElement::NewAllocator:
       llvm_unreachable("getDestructorDecl should only be used with "
                        "ImplicitDtors");
     case CFGElement::AutomaticObjectDtor: {
@@ -3789,6 +3813,11 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper &Helper,
     OS << ".~" << T->getAsCXXRecordDecl()->getName().str() << "()";
     OS << " (Implicit destructor)\n";
 
+  } else if (Optional<CFGNewAllocator> NE = E.getAs<CFGNewAllocator>()) {
+    OS << "CFGNewAllocator(";
+    if (const CXXNewExpr *AllocExpr = NE->getAllocatorExpr())
+      AllocExpr->getType().print(OS, PrintingPolicy(Helper.getLangOpts()));
+    OS << ")\n";
   } else if (Optional<CFGDeleteDtor> DE = E.getAs<CFGDeleteDtor>()) {
     const CXXRecordDecl *RD = DE->getCXXRecordDecl();
     if (!RD)

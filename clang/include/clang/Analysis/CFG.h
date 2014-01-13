@@ -46,6 +46,7 @@ namespace clang {
   class ASTContext;
   class CXXRecordDecl;
   class CXXDeleteExpr;
+  class CXXNewExpr;
 
 /// CFGElement - Represents a top-level expression in a basic block.
 class CFGElement {
@@ -54,6 +55,7 @@ public:
     // main kind
     Statement,
     Initializer,
+    NewAllocator,
     // dtor kind
     AutomaticObjectDtor,
     DeleteDtor,
@@ -71,7 +73,9 @@ protected:
 
   CFGElement(Kind kind, const void *Ptr1, const void *Ptr2 = 0)
     : Data1(const_cast<void*>(Ptr1), ((unsigned) kind) & 0x3),
-      Data2(const_cast<void*>(Ptr2), (((unsigned) kind) >> 2) & 0x3) {}
+      Data2(const_cast<void*>(Ptr2), (((unsigned) kind) >> 2) & 0x3) {
+    assert(getKind() == kind);
+  }
 
   CFGElement() {}
 public:
@@ -139,6 +143,25 @@ private:
   CFGInitializer() {}
   static bool isKind(const CFGElement &E) {
     return E.getKind() == Initializer;
+  }
+};
+
+/// CFGNewAllocator - Represents C++ allocator call.
+class CFGNewAllocator : public CFGElement {
+public:
+  explicit CFGNewAllocator(const CXXNewExpr *S)
+    : CFGElement(NewAllocator, S) {}
+
+  // Get the new expression.
+  const CXXNewExpr *getAllocatorExpr() const {
+    return static_cast<CXXNewExpr *>(Data1.getPointer());
+  }
+
+private:
+  friend class CFGElement;
+  CFGNewAllocator() {}
+  static bool isKind(const CFGElement &elem) {
+    return elem.getKind() == NewAllocator;
   }
 };
 
@@ -580,6 +603,11 @@ public:
     Elements.push_back(CFGInitializer(initializer), C);
   }
 
+  void appendNewAllocator(CXXNewExpr *NE,
+                          BumpVectorContext &C) {
+    Elements.push_back(CFGNewAllocator(NE), C);
+  }
+
   void appendBaseDtor(const CXXBaseSpecifier *BS, BumpVectorContext &C) {
     Elements.push_back(CFGBaseDtor(BS), C);
   }
@@ -638,6 +666,7 @@ public:
     bool AddImplicitDtors;
     bool AddTemporaryDtors;
     bool AddStaticInitBranches;
+    bool AddCXXNewAllocator;
 
     bool alwaysAdd(const Stmt *stmt) const {
       return alwaysAddMask[stmt->getStmtClass()];
@@ -659,7 +688,8 @@ public:
       ,AddInitializers(false)
       ,AddImplicitDtors(false)
       ,AddTemporaryDtors(false)
-      ,AddStaticInitBranches(false) {}
+      ,AddStaticInitBranches(false)
+      ,AddCXXNewAllocator(false) {}
   };
 
   /// \brief Provides a custom implementation of the iterator class to have the

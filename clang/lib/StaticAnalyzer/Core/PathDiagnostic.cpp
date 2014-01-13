@@ -571,6 +571,7 @@ getLocationForCaller(const StackFrameContext *SFC,
     return PathDiagnosticLocation::create(CallerInfo->getDecl(), SM);
   }
   case CFGElement::TemporaryDtor:
+  case CFGElement::NewAllocator:
     llvm_unreachable("not yet implemented!");
   }
 

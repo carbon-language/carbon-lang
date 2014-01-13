@@ -68,7 +68,8 @@ AnalysisDeclContextManager::AnalysisDeclContextManager(bool useUnoptimizedCFG,
                                                        bool addInitializers,
                                                        bool addTemporaryDtors,
                                                        bool synthesizeBodies,
-                                                       bool addStaticInitBranch)
+                                                       bool addStaticInitBranch,
+                                                       bool addCXXNewAllocator)
   : SynthesizeBodies(synthesizeBodies)
 {
   cfgBuildOptions.PruneTriviallyFalseEdges = !useUnoptimizedCFG;
@@ -76,6 +77,7 @@ AnalysisDeclContextManager::AnalysisDeclContextManager(bool useUnoptimizedCFG,
   cfgBuildOptions.AddInitializers = addInitializers;
   cfgBuildOptions.AddTemporaryDtors = addTemporaryDtors;
   cfgBuildOptions.AddStaticInitBranches = addStaticInitBranch;
+  cfgBuildOptions.AddCXXNewAllocator = addCXXNewAllocator;
 }
 
 void AnalysisDeclContextManager::clear() {
