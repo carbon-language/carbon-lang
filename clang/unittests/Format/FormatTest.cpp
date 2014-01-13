@@ -2896,6 +2896,13 @@ TEST_F(FormatTest, ConstructorInitializers) {
                "    : aaaaa(aaaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaa,\n"
                "            aaaaaaaaaaaaaaaaaaaaaa) {}",
                OnePerLine);
+
+  EXPECT_EQ("Constructor()\n"
+            "    : // Comment forcing unwanted break.\n"
+            "      aaaa(aaaa) {}",
+            format("Constructor() :\n"
+                   "    // Comment forcing unwanted break.\n"
+                   "    aaaa(aaaa) {}"));
 }
 
 TEST_F(FormatTest, MemoizationTests) {

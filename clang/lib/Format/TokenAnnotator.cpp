@@ -1436,6 +1436,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
                                      const FormatToken &Right) {
   if (Right.is(tok::comment)) {
     return Right.Previous->BlockKind != BK_BracedInit &&
+           Right.Previous->Type != TT_CtorInitializerColon &&
            Right.NewlinesBefore > 0;
   } else if (Right.Previous->isTrailingComment() ||
              (Right.isStringLiteral() && Right.Previous->isStringLiteral())) {
