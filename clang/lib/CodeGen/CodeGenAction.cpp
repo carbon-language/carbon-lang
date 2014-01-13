@@ -354,12 +354,14 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
       return 0;
     }
 
-    LinkModuleToUse = getLazyBitcodeModule(BCBuf, *VMContext, &ErrorStr);
-    if (!LinkModuleToUse) {
+    ErrorOr<llvm::Module *> ModuleOrErr =
+        getLazyBitcodeModule(BCBuf, *VMContext);
+    if (error_code EC = ModuleOrErr.getError()) {
       CI.getDiagnostics().Report(diag::err_cannot_open_file)
-        << LinkBCFile << ErrorStr;
+        << LinkBCFile << EC.message();
       return 0;
     }
+    LinkModuleToUse = ModuleOrErr.get();
   }
 
   BEConsumer = 
