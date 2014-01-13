@@ -316,25 +316,6 @@ if (LIBXML2_FOUND)
   endif ()
 endif ()
 
-option(LLVM_FORCE_USE_OLD_TOOLCHAIN
-       "Set to ON if you want to force CMake to use a toolchain older than those supported by LLVM."
-       OFF)
-if(NOT LLVM_FORCE_USE_OLD_TOOLCHAIN)
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.7)
-      message(FATAL_ERROR "Host GCC version must be at least 4.7!")
-    endif()
-  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.1)
-      message(FATAL_ERROR "Host Clang version must be at least 3.1!")
-    endif()
-  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 17.0)
-      message(FATAL_ERROR "Host Visual Studio must be at least 2012 (MSVC 17.0)")
-    endif()
-  endif()
-endif()
-
 include(CheckCXXCompilerFlag)
 
 check_cxx_compiler_flag("-Wno-variadic-macros" SUPPORTS_NO_VARIADIC_MACROS_FLAG)

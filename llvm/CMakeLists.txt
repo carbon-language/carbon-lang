@@ -195,6 +195,9 @@ else()
   option(LLVM_ENABLE_ASSERTIONS "Enable assertions" ON)
 endif()
 
+option(LLVM_FORCE_USE_OLD_HOST_TOOLCHAIN
+       "Set to ON to force using an old, unsupported host toolchain." OFF)
+
 option(LLVM_USE_INTEL_JITEVENTS
   "Use Intel JIT API to inform Intel(R) VTune(TM) Amplifier XE 2011 about JIT code"
   OFF)
