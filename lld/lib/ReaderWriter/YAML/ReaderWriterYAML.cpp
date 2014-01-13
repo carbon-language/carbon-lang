@@ -153,7 +153,7 @@ private:
   // Allocate a new copy of this string in _storage, so the strings 
   // can be freed when RefNameBuilder is destroyed.
   StringRef copyString(StringRef str) {
-    char* s = _storage.Allocate<char>(str.size());
+    char *s = _storage.Allocate<char>(str.size());
     memcpy(s, str.data(), str.size());
     return StringRef(s, str.size());
   }
@@ -638,7 +638,7 @@ template <> struct MappingTraits<const lld::File *> {
     // Allocate a new copy of this string in _storage, so the strings 
     // can be freed when File is destroyed.
     StringRef copyString(StringRef str) {
-      char* s = _storage.Allocate<char>(str.size());
+      char *s = _storage.Allocate<char>(str.size());
       memcpy(s, str.data(), str.size());
       return StringRef(s, str.size());
     }
