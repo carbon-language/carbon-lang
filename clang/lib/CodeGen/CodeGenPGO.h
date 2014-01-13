@@ -74,6 +74,10 @@ public:
   /// of changes to the most recent counter from control flow and non-local
   /// exits.
   void setCurrentRegionCount(uint64_t Count) { CurrentRegionCount = Count; }
+  /// Indicate that the current region is never reached, and thus should have a
+  /// counter value of zero. This is important so that subsequent regions can
+  /// correctly track their parent counts.
+  void setCurrentRegionUnreachable() { setCurrentRegionCount(0); }
 
   /// Calculate branch weights appropriate for PGO data
   llvm::MDNode *createBranchWeights(uint64_t TrueCount, uint64_t FalseCount);
