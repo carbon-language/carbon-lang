@@ -1030,6 +1030,1447 @@ entry:
   ret <8 x i16> %shuffle.i
 }
 
+define <8 x i8> @test_same_vuzp1_s8(<8 x i8> %a) {
+; CHECK: test_same_vuzp1_s8:
+; CHECK: uzp1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vuzp1q_s8(<16 x i8> %a) {
+; CHECK: test_same_vuzp1q_s8:
+; CHECK: uzp1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14, i32 16, i32 18, i32 20, i32 22, i32 24, i32 26, i32 28, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vuzp1_s16(<4 x i16> %a) {
+; CHECK: test_same_vuzp1_s16:
+; CHECK: uzp1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vuzp1q_s16(<8 x i16> %a) {
+; CHECK: test_same_vuzp1q_s16:
+; CHECK: uzp1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vuzp1q_s32(<4 x i32> %a) {
+; CHECK: test_same_vuzp1q_s32:
+; CHECK: uzp1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_same_vuzp1_u8(<8 x i8> %a) {
+; CHECK: test_same_vuzp1_u8:
+; CHECK: uzp1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vuzp1q_u8(<16 x i8> %a) {
+; CHECK: test_same_vuzp1q_u8:
+; CHECK: uzp1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14, i32 16, i32 18, i32 20, i32 22, i32 24, i32 26, i32 28, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vuzp1_u16(<4 x i16> %a) {
+; CHECK: test_same_vuzp1_u16:
+; CHECK: uzp1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vuzp1q_u16(<8 x i16> %a) {
+; CHECK: test_same_vuzp1q_u16:
+; CHECK: uzp1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vuzp1q_u32(<4 x i32> %a) {
+; CHECK: test_same_vuzp1q_u32:
+; CHECK: uzp1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_same_vuzp1q_f32(<4 x float> %a) {
+; CHECK: test_same_vuzp1q_f32:
+; CHECK: uzp1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> %a, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_same_vuzp1_p8(<8 x i8> %a) {
+; CHECK: test_same_vuzp1_p8:
+; CHECK: uzp1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vuzp1q_p8(<16 x i8> %a) {
+; CHECK: test_same_vuzp1q_p8:
+; CHECK: uzp1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14, i32 16, i32 18, i32 20, i32 22, i32 24, i32 26, i32 28, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vuzp1_p16(<4 x i16> %a) {
+; CHECK: test_same_vuzp1_p16:
+; CHECK: uzp1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vuzp1q_p16(<8 x i16> %a) {
+; CHECK: test_same_vuzp1q_p16:
+; CHECK: uzp1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <8 x i8> @test_same_vuzp2_s8(<8 x i8> %a) {
+; CHECK: test_same_vuzp2_s8:
+; CHECK: uzp2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vuzp2q_s8(<16 x i8> %a) {
+; CHECK: test_same_vuzp2q_s8:
+; CHECK: uzp2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15, i32 17, i32 19, i32 21, i32 23, i32 25, i32 27, i32 29, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vuzp2_s16(<4 x i16> %a) {
+; CHECK: test_same_vuzp2_s16:
+; CHECK: uzp2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vuzp2q_s16(<8 x i16> %a) {
+; CHECK: test_same_vuzp2q_s16:
+; CHECK: uzp2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vuzp2q_s32(<4 x i32> %a) {
+; CHECK: test_same_vuzp2q_s32:
+; CHECK: uzp2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_same_vuzp2_u8(<8 x i8> %a) {
+; CHECK: test_same_vuzp2_u8:
+; CHECK: uzp2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vuzp2q_u8(<16 x i8> %a) {
+; CHECK: test_same_vuzp2q_u8:
+; CHECK: uzp2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15, i32 17, i32 19, i32 21, i32 23, i32 25, i32 27, i32 29, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vuzp2_u16(<4 x i16> %a) {
+; CHECK: test_same_vuzp2_u16:
+; CHECK: uzp2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vuzp2q_u16(<8 x i16> %a) {
+; CHECK: test_same_vuzp2q_u16:
+; CHECK: uzp2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vuzp2q_u32(<4 x i32> %a) {
+; CHECK: test_same_vuzp2q_u32:
+; CHECK: uzp2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_same_vuzp2q_f32(<4 x float> %a) {
+; CHECK: test_same_vuzp2q_f32:
+; CHECK: uzp2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> %a, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_same_vuzp2_p8(<8 x i8> %a) {
+; CHECK: test_same_vuzp2_p8:
+; CHECK: uzp2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vuzp2q_p8(<16 x i8> %a) {
+; CHECK: test_same_vuzp2q_p8:
+; CHECK: uzp2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15, i32 17, i32 19, i32 21, i32 23, i32 25, i32 27, i32 29, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vuzp2_p16(<4 x i16> %a) {
+; CHECK: test_same_vuzp2_p16:
+; CHECK: uzp2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vuzp2q_p16(<8 x i16> %a) {
+; CHECK: test_same_vuzp2q_p16:
+; CHECK: uzp2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <8 x i8> @test_same_vzip1_s8(<8 x i8> %a) {
+; CHECK: test_same_vzip1_s8:
+; CHECK: zip1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vzip1q_s8(<16 x i8> %a) {
+; CHECK: test_same_vzip1q_s8:
+; CHECK: zip1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 0, i32 16, i32 1, i32 17, i32 2, i32 18, i32 3, i32 19, i32 4, i32 20, i32 5, i32 21, i32 6, i32 22, i32 7, i32 23>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vzip1_s16(<4 x i16> %a) {
+; CHECK: test_same_vzip1_s16:
+; CHECK: zip1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vzip1q_s16(<8 x i16> %a) {
+; CHECK: test_same_vzip1q_s16:
+; CHECK: zip1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vzip1q_s32(<4 x i32> %a) {
+; CHECK: test_same_vzip1q_s32:
+; CHECK: zip1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_same_vzip1_u8(<8 x i8> %a) {
+; CHECK: test_same_vzip1_u8:
+; CHECK: zip1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vzip1q_u8(<16 x i8> %a) {
+; CHECK: test_same_vzip1q_u8:
+; CHECK: zip1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 0, i32 16, i32 1, i32 17, i32 2, i32 18, i32 3, i32 19, i32 4, i32 20, i32 5, i32 21, i32 6, i32 22, i32 7, i32 23>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vzip1_u16(<4 x i16> %a) {
+; CHECK: test_same_vzip1_u16:
+; CHECK: zip1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vzip1q_u16(<8 x i16> %a) {
+; CHECK: test_same_vzip1q_u16:
+; CHECK: zip1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vzip1q_u32(<4 x i32> %a) {
+; CHECK: test_same_vzip1q_u32:
+; CHECK: zip1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_same_vzip1q_f32(<4 x float> %a) {
+; CHECK: test_same_vzip1q_f32:
+; CHECK: zip1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> %a, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_same_vzip1_p8(<8 x i8> %a) {
+; CHECK: test_same_vzip1_p8:
+; CHECK: zip1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vzip1q_p8(<16 x i8> %a) {
+; CHECK: test_same_vzip1q_p8:
+; CHECK: zip1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 0, i32 16, i32 1, i32 17, i32 2, i32 18, i32 3, i32 19, i32 4, i32 20, i32 5, i32 21, i32 6, i32 22, i32 7, i32 23>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vzip1_p16(<4 x i16> %a) {
+; CHECK: test_same_vzip1_p16:
+; CHECK: zip1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vzip1q_p16(<8 x i16> %a) {
+; CHECK: test_same_vzip1q_p16:
+; CHECK: zip1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i16> %shuffle.i
+}
+
+define <8 x i8> @test_same_vzip2_s8(<8 x i8> %a) {
+; CHECK: test_same_vzip2_s8:
+; CHECK: zip2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vzip2q_s8(<16 x i8> %a) {
+; CHECK: test_same_vzip2q_s8:
+; CHECK: zip2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 8, i32 24, i32 9, i32 25, i32 10, i32 26, i32 11, i32 27, i32 12, i32 28, i32 13, i32 29, i32 14, i32 30, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vzip2_s16(<4 x i16> %a) {
+; CHECK: test_same_vzip2_s16:
+; CHECK: zip2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vzip2q_s16(<8 x i16> %a) {
+; CHECK: test_same_vzip2q_s16:
+; CHECK: zip2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vzip2q_s32(<4 x i32> %a) {
+; CHECK: test_same_vzip2q_s32:
+; CHECK: zip2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_same_vzip2_u8(<8 x i8> %a) {
+; CHECK: test_same_vzip2_u8:
+; CHECK: zip2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vzip2q_u8(<16 x i8> %a) {
+; CHECK: test_same_vzip2q_u8:
+; CHECK: zip2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 8, i32 24, i32 9, i32 25, i32 10, i32 26, i32 11, i32 27, i32 12, i32 28, i32 13, i32 29, i32 14, i32 30, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vzip2_u16(<4 x i16> %a) {
+; CHECK: test_same_vzip2_u16:
+; CHECK: zip2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vzip2q_u16(<8 x i16> %a) {
+; CHECK: test_same_vzip2q_u16:
+; CHECK: zip2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vzip2q_u32(<4 x i32> %a) {
+; CHECK: test_same_vzip2q_u32:
+; CHECK: zip2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_same_vzip2q_f32(<4 x float> %a) {
+; CHECK: test_same_vzip2q_f32:
+; CHECK: zip2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> %a, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_same_vzip2_p8(<8 x i8> %a) {
+; CHECK: test_same_vzip2_p8:
+; CHECK: zip2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vzip2q_p8(<16 x i8> %a) {
+; CHECK: test_same_vzip2q_p8:
+; CHECK: zip2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 8, i32 24, i32 9, i32 25, i32 10, i32 26, i32 11, i32 27, i32 12, i32 28, i32 13, i32 29, i32 14, i32 30, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vzip2_p16(<4 x i16> %a) {
+; CHECK: test_same_vzip2_p16:
+; CHECK: zip2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vzip2q_p16(<8 x i16> %a) {
+; CHECK: test_same_vzip2q_p16:
+; CHECK: zip2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <8 x i8> @test_same_vtrn1_s8(<8 x i8> %a) {
+; CHECK: test_same_vtrn1_s8:
+; CHECK: trn1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vtrn1q_s8(<16 x i8> %a) {
+; CHECK: test_same_vtrn1q_s8:
+; CHECK: trn1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 0, i32 16, i32 2, i32 18, i32 4, i32 20, i32 6, i32 22, i32 8, i32 24, i32 10, i32 26, i32 12, i32 28, i32 14, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vtrn1_s16(<4 x i16> %a) {
+; CHECK: test_same_vtrn1_s16:
+; CHECK: trn1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vtrn1q_s16(<8 x i16> %a) {
+; CHECK: test_same_vtrn1q_s16:
+; CHECK: trn1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vtrn1q_s32(<4 x i32> %a) {
+; CHECK: test_same_vtrn1q_s32:
+; CHECK: trn1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_same_vtrn1_u8(<8 x i8> %a) {
+; CHECK: test_same_vtrn1_u8:
+; CHECK: trn1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vtrn1q_u8(<16 x i8> %a) {
+; CHECK: test_same_vtrn1q_u8:
+; CHECK: trn1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 0, i32 16, i32 2, i32 18, i32 4, i32 20, i32 6, i32 22, i32 8, i32 24, i32 10, i32 26, i32 12, i32 28, i32 14, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vtrn1_u16(<4 x i16> %a) {
+; CHECK: test_same_vtrn1_u16:
+; CHECK: trn1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vtrn1q_u16(<8 x i16> %a) {
+; CHECK: test_same_vtrn1q_u16:
+; CHECK: trn1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vtrn1q_u32(<4 x i32> %a) {
+; CHECK: test_same_vtrn1q_u32:
+; CHECK: trn1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_same_vtrn1q_f32(<4 x float> %a) {
+; CHECK: test_same_vtrn1q_f32:
+; CHECK: trn1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> %a, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_same_vtrn1_p8(<8 x i8> %a) {
+; CHECK: test_same_vtrn1_p8:
+; CHECK: trn1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vtrn1q_p8(<16 x i8> %a) {
+; CHECK: test_same_vtrn1q_p8:
+; CHECK: trn1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 0, i32 16, i32 2, i32 18, i32 4, i32 20, i32 6, i32 22, i32 8, i32 24, i32 10, i32 26, i32 12, i32 28, i32 14, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vtrn1_p16(<4 x i16> %a) {
+; CHECK: test_same_vtrn1_p16:
+; CHECK: trn1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vtrn1q_p16(<8 x i16> %a) {
+; CHECK: test_same_vtrn1q_p16:
+; CHECK: trn1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <8 x i8> @test_same_vtrn2_s8(<8 x i8> %a) {
+; CHECK: test_same_vtrn2_s8:
+; CHECK: trn2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vtrn2q_s8(<16 x i8> %a) {
+; CHECK: test_same_vtrn2q_s8:
+; CHECK: trn2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 1, i32 17, i32 3, i32 19, i32 5, i32 21, i32 7, i32 23, i32 9, i32 25, i32 11, i32 27, i32 13, i32 29, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vtrn2_s16(<4 x i16> %a) {
+; CHECK: test_same_vtrn2_s16:
+; CHECK: trn2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vtrn2q_s16(<8 x i16> %a) {
+; CHECK: test_same_vtrn2q_s16:
+; CHECK: trn2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vtrn2q_s32(<4 x i32> %a) {
+; CHECK: test_same_vtrn2q_s32:
+; CHECK: trn2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_same_vtrn2_u8(<8 x i8> %a) {
+; CHECK: test_same_vtrn2_u8:
+; CHECK: trn2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vtrn2q_u8(<16 x i8> %a) {
+; CHECK: test_same_vtrn2q_u8:
+; CHECK: trn2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 1, i32 17, i32 3, i32 19, i32 5, i32 21, i32 7, i32 23, i32 9, i32 25, i32 11, i32 27, i32 13, i32 29, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vtrn2_u16(<4 x i16> %a) {
+; CHECK: test_same_vtrn2_u16:
+; CHECK: trn2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vtrn2q_u16(<8 x i16> %a) {
+; CHECK: test_same_vtrn2q_u16:
+; CHECK: trn2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_same_vtrn2q_u32(<4 x i32> %a) {
+; CHECK: test_same_vtrn2q_u32:
+; CHECK: trn2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_same_vtrn2q_f32(<4 x float> %a) {
+; CHECK: test_same_vtrn2q_f32:
+; CHECK: trn2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> %a, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_same_vtrn2_p8(<8 x i8> %a) {
+; CHECK: test_same_vtrn2_p8:
+; CHECK: trn2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> %a, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_same_vtrn2q_p8(<16 x i8> %a) {
+; CHECK: test_same_vtrn2q_p8:
+; CHECK: trn2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> %a, <16 x i32> <i32 1, i32 17, i32 3, i32 19, i32 5, i32 21, i32 7, i32 23, i32 9, i32 25, i32 11, i32 27, i32 13, i32 29, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_same_vtrn2_p16(<4 x i16> %a) {
+; CHECK: test_same_vtrn2_p16:
+; CHECK: trn2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> %a, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_same_vtrn2q_p16(<8 x i16> %a) {
+; CHECK: test_same_vtrn2q_p16:
+; CHECK: trn2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> %a, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+
+define <8 x i8> @test_undef_vuzp1_s8(<8 x i8> %a) {
+; CHECK: test_undef_vuzp1_s8:
+; CHECK: uzp1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vuzp1q_s8(<16 x i8> %a) {
+; CHECK: test_undef_vuzp1q_s8:
+; CHECK: uzp1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14, i32 16, i32 18, i32 20, i32 22, i32 24, i32 26, i32 28, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vuzp1_s16(<4 x i16> %a) {
+; CHECK: test_undef_vuzp1_s16:
+; CHECK: uzp1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vuzp1q_s16(<8 x i16> %a) {
+; CHECK: test_undef_vuzp1q_s16:
+; CHECK: uzp1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vuzp1q_s32(<4 x i32> %a) {
+; CHECK: test_undef_vuzp1q_s32:
+; CHECK: uzp1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vuzp1_u8(<8 x i8> %a) {
+; CHECK: test_undef_vuzp1_u8:
+; CHECK: uzp1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vuzp1q_u8(<16 x i8> %a) {
+; CHECK: test_undef_vuzp1q_u8:
+; CHECK: uzp1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14, i32 16, i32 18, i32 20, i32 22, i32 24, i32 26, i32 28, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vuzp1_u16(<4 x i16> %a) {
+; CHECK: test_undef_vuzp1_u16:
+; CHECK: uzp1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vuzp1q_u16(<8 x i16> %a) {
+; CHECK: test_undef_vuzp1q_u16:
+; CHECK: uzp1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vuzp1q_u32(<4 x i32> %a) {
+; CHECK: test_undef_vuzp1q_u32:
+; CHECK: uzp1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_undef_vuzp1q_f32(<4 x float> %a) {
+; CHECK: test_undef_vuzp1q_f32:
+; CHECK: uzp1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vuzp1_p8(<8 x i8> %a) {
+; CHECK: test_undef_vuzp1_p8:
+; CHECK: uzp1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vuzp1q_p8(<16 x i8> %a) {
+; CHECK: test_undef_vuzp1q_p8:
+; CHECK: uzp1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14, i32 16, i32 18, i32 20, i32 22, i32 24, i32 26, i32 28, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vuzp1_p16(<4 x i16> %a) {
+; CHECK: test_undef_vuzp1_p16:
+; CHECK: uzp1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vuzp1q_p16(<8 x i16> %a) {
+; CHECK: test_undef_vuzp1q_p16:
+; CHECK: uzp1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vuzp2_s8(<8 x i8> %a) {
+; CHECK: test_undef_vuzp2_s8:
+; CHECK: uzp2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vuzp2q_s8(<16 x i8> %a) {
+; CHECK: test_undef_vuzp2q_s8:
+; CHECK: uzp2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15, i32 17, i32 19, i32 21, i32 23, i32 25, i32 27, i32 29, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vuzp2_s16(<4 x i16> %a) {
+; CHECK: test_undef_vuzp2_s16:
+; CHECK: uzp2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vuzp2q_s16(<8 x i16> %a) {
+; CHECK: test_undef_vuzp2q_s16:
+; CHECK: uzp2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vuzp2q_s32(<4 x i32> %a) {
+; CHECK: test_undef_vuzp2q_s32:
+; CHECK: uzp2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vuzp2_u8(<8 x i8> %a) {
+; CHECK: test_undef_vuzp2_u8:
+; CHECK: uzp2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vuzp2q_u8(<16 x i8> %a) {
+; CHECK: test_undef_vuzp2q_u8:
+; CHECK: uzp2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15, i32 17, i32 19, i32 21, i32 23, i32 25, i32 27, i32 29, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vuzp2_u16(<4 x i16> %a) {
+; CHECK: test_undef_vuzp2_u16:
+; CHECK: uzp2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vuzp2q_u16(<8 x i16> %a) {
+; CHECK: test_undef_vuzp2q_u16:
+; CHECK: uzp2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vuzp2q_u32(<4 x i32> %a) {
+; CHECK: test_undef_vuzp2q_u32:
+; CHECK: uzp2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_undef_vuzp2q_f32(<4 x float> %a) {
+; CHECK: test_undef_vuzp2q_f32:
+; CHECK: uzp2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vuzp2_p8(<8 x i8> %a) {
+; CHECK: test_undef_vuzp2_p8:
+; CHECK: uzp2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vuzp2q_p8(<16 x i8> %a) {
+; CHECK: test_undef_vuzp2q_p8:
+; CHECK: uzp2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15, i32 17, i32 19, i32 21, i32 23, i32 25, i32 27, i32 29, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vuzp2_p16(<4 x i16> %a) {
+; CHECK: test_undef_vuzp2_p16:
+; CHECK: uzp2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vuzp2q_p16(<8 x i16> %a) {
+; CHECK: test_undef_vuzp2q_p16:
+; CHECK: uzp2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vzip1_s8(<8 x i8> %a) {
+; CHECK: test_undef_vzip1_s8:
+; CHECK: zip1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vzip1q_s8(<16 x i8> %a) {
+; CHECK: test_undef_vzip1q_s8:
+; CHECK: zip1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 16, i32 1, i32 17, i32 2, i32 18, i32 3, i32 19, i32 4, i32 20, i32 5, i32 21, i32 6, i32 22, i32 7, i32 23>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vzip1_s16(<4 x i16> %a) {
+; CHECK: test_undef_vzip1_s16:
+; CHECK: zip1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vzip1q_s16(<8 x i16> %a) {
+; CHECK: test_undef_vzip1q_s16:
+; CHECK: zip1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vzip1q_s32(<4 x i32> %a) {
+; CHECK: test_undef_vzip1q_s32:
+; CHECK: zip1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vzip1_u8(<8 x i8> %a) {
+; CHECK: test_undef_vzip1_u8:
+; CHECK: zip1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vzip1q_u8(<16 x i8> %a) {
+; CHECK: test_undef_vzip1q_u8:
+; CHECK: zip1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 16, i32 1, i32 17, i32 2, i32 18, i32 3, i32 19, i32 4, i32 20, i32 5, i32 21, i32 6, i32 22, i32 7, i32 23>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vzip1_u16(<4 x i16> %a) {
+; CHECK: test_undef_vzip1_u16:
+; CHECK: zip1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vzip1q_u16(<8 x i16> %a) {
+; CHECK: test_undef_vzip1q_u16:
+; CHECK: zip1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vzip1q_u32(<4 x i32> %a) {
+; CHECK: test_undef_vzip1q_u32:
+; CHECK: zip1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_undef_vzip1q_f32(<4 x float> %a) {
+; CHECK: test_undef_vzip1q_f32:
+; CHECK: zip1 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vzip1_p8(<8 x i8> %a) {
+; CHECK: test_undef_vzip1_p8:
+; CHECK: zip1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vzip1q_p8(<16 x i8> %a) {
+; CHECK: test_undef_vzip1q_p8:
+; CHECK: zip1 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 16, i32 1, i32 17, i32 2, i32 18, i32 3, i32 19, i32 4, i32 20, i32 5, i32 21, i32 6, i32 22, i32 7, i32 23>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vzip1_p16(<4 x i16> %a) {
+; CHECK: test_undef_vzip1_p16:
+; CHECK: zip1 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vzip1q_p16(<8 x i16> %a) {
+; CHECK: test_undef_vzip1q_p16:
+; CHECK: zip1 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11>
+  ret <8 x i16> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vzip2_s8(<8 x i8> %a) {
+; CHECK: test_undef_vzip2_s8:
+; CHECK: zip2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vzip2q_s8(<16 x i8> %a) {
+; CHECK: test_undef_vzip2q_s8:
+; CHECK: zip2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 8, i32 24, i32 9, i32 25, i32 10, i32 26, i32 11, i32 27, i32 12, i32 28, i32 13, i32 29, i32 14, i32 30, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vzip2_s16(<4 x i16> %a) {
+; CHECK: test_undef_vzip2_s16:
+; CHECK: zip2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vzip2q_s16(<8 x i16> %a) {
+; CHECK: test_undef_vzip2q_s16:
+; CHECK: zip2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vzip2q_s32(<4 x i32> %a) {
+; CHECK: test_undef_vzip2q_s32:
+; CHECK: zip2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vzip2_u8(<8 x i8> %a) {
+; CHECK: test_undef_vzip2_u8:
+; CHECK: zip2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vzip2q_u8(<16 x i8> %a) {
+; CHECK: test_undef_vzip2q_u8:
+; CHECK: zip2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 8, i32 24, i32 9, i32 25, i32 10, i32 26, i32 11, i32 27, i32 12, i32 28, i32 13, i32 29, i32 14, i32 30, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vzip2_u16(<4 x i16> %a) {
+; CHECK: test_undef_vzip2_u16:
+; CHECK: zip2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vzip2q_u16(<8 x i16> %a) {
+; CHECK: test_undef_vzip2q_u16:
+; CHECK: zip2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vzip2q_u32(<4 x i32> %a) {
+; CHECK: test_undef_vzip2q_u32:
+; CHECK: zip2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_undef_vzip2q_f32(<4 x float> %a) {
+; CHECK: test_undef_vzip2q_f32:
+; CHECK: zip2 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vzip2_p8(<8 x i8> %a) {
+; CHECK: test_undef_vzip2_p8:
+; CHECK: zip2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vzip2q_p8(<16 x i8> %a) {
+; CHECK: test_undef_vzip2q_p8:
+; CHECK: zip2 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 8, i32 24, i32 9, i32 25, i32 10, i32 26, i32 11, i32 27, i32 12, i32 28, i32 13, i32 29, i32 14, i32 30, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vzip2_p16(<4 x i16> %a) {
+; CHECK: test_undef_vzip2_p16:
+; CHECK: zip2 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vzip2q_p16(<8 x i16> %a) {
+; CHECK: test_undef_vzip2q_p16:
+; CHECK: zip2 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 4, i32 12, i32 5, i32 13, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vtrn1_s8(<8 x i8> %a) {
+; CHECK: test_undef_vtrn1_s8:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vtrn1q_s8(<16 x i8> %a) {
+; CHECK: test_undef_vtrn1q_s8:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 16, i32 2, i32 18, i32 4, i32 20, i32 6, i32 22, i32 8, i32 24, i32 10, i32 26, i32 12, i32 28, i32 14, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vtrn1_s16(<4 x i16> %a) {
+; CHECK: test_undef_vtrn1_s16:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vtrn1q_s16(<8 x i16> %a) {
+; CHECK: test_undef_vtrn1q_s16:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vtrn1q_s32(<4 x i32> %a) {
+; CHECK: test_undef_vtrn1q_s32:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vtrn1_u8(<8 x i8> %a) {
+; CHECK: test_undef_vtrn1_u8:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vtrn1q_u8(<16 x i8> %a) {
+; CHECK: test_undef_vtrn1q_u8:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 16, i32 2, i32 18, i32 4, i32 20, i32 6, i32 22, i32 8, i32 24, i32 10, i32 26, i32 12, i32 28, i32 14, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vtrn1_u16(<4 x i16> %a) {
+; CHECK: test_undef_vtrn1_u16:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vtrn1q_u16(<8 x i16> %a) {
+; CHECK: test_undef_vtrn1q_u16:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vtrn1q_u32(<4 x i32> %a) {
+; CHECK: test_undef_vtrn1q_u32:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_undef_vtrn1q_f32(<4 x float> %a) {
+; CHECK: test_undef_vtrn1q_f32:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vtrn1_p8(<8 x i8> %a) {
+; CHECK: test_undef_vtrn1_p8:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vtrn1q_p8(<16 x i8> %a) {
+; CHECK: test_undef_vtrn1q_p8:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 16, i32 2, i32 18, i32 4, i32 20, i32 6, i32 22, i32 8, i32 24, i32 10, i32 26, i32 12, i32 28, i32 14, i32 30>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vtrn1_p16(<4 x i16> %a) {
+; CHECK: test_undef_vtrn1_p16:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vtrn1q_p16(<8 x i16> %a) {
+; CHECK: test_undef_vtrn1q_p16:
+; CHECK: ret
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
+  ret <8 x i16> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vtrn2_s8(<8 x i8> %a) {
+; CHECK: test_undef_vtrn2_s8:
+; CHECK: rev16 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vtrn2q_s8(<16 x i8> %a) {
+; CHECK: test_undef_vtrn2q_s8:
+; CHECK: rev16 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 1, i32 17, i32 3, i32 19, i32 5, i32 21, i32 7, i32 23, i32 9, i32 25, i32 11, i32 27, i32 13, i32 29, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vtrn2_s16(<4 x i16> %a) {
+; CHECK: test_undef_vtrn2_s16:
+; CHECK: rev32 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vtrn2q_s16(<8 x i16> %a) {
+; CHECK: test_undef_vtrn2q_s16:
+; CHECK: rev32 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vtrn2q_s32(<4 x i32> %a) {
+; CHECK: test_undef_vtrn2q_s32:
+; CHECK: rev64 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vtrn2_u8(<8 x i8> %a) {
+; CHECK: test_undef_vtrn2_u8:
+; CHECK: rev16 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vtrn2q_u8(<16 x i8> %a) {
+; CHECK: test_undef_vtrn2q_u8:
+; CHECK: rev16 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 1, i32 17, i32 3, i32 19, i32 5, i32 21, i32 7, i32 23, i32 9, i32 25, i32 11, i32 27, i32 13, i32 29, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vtrn2_u16(<4 x i16> %a) {
+; CHECK: test_undef_vtrn2_u16:
+; CHECK: rev32 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vtrn2q_u16(<8 x i16> %a) {
+; CHECK: test_undef_vtrn2q_u16:
+; CHECK: rev32 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
+define <4 x i32> @test_undef_vtrn2q_u32(<4 x i32> %a) {
+; CHECK: test_undef_vtrn2q_u32:
+; CHECK: rev64 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x i32> %shuffle.i
+}
+
+define <4 x float> @test_undef_vtrn2q_f32(<4 x float> %a) {
+; CHECK: test_undef_vtrn2q_f32:
+; CHECK: rev64 {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+entry:
+  %shuffle.i = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x float> %shuffle.i
+}
+
+define <8 x i8> @test_undef_vtrn2_p8(<8 x i8> %a) {
+; CHECK: test_undef_vtrn2_p8:
+; CHECK: rev16 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+entry:
+  %shuffle.i = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i8> %shuffle.i
+}
+
+define <16 x i8> @test_undef_vtrn2q_p8(<16 x i8> %a) {
+; CHECK: test_undef_vtrn2q_p8:
+; CHECK: rev16 {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+entry:
+  %shuffle.i = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 1, i32 17, i32 3, i32 19, i32 5, i32 21, i32 7, i32 23, i32 9, i32 25, i32 11, i32 27, i32 13, i32 29, i32 15, i32 31>
+  ret <16 x i8> %shuffle.i
+}
+
+define <4 x i16> @test_undef_vtrn2_p16(<4 x i16> %a) {
+; CHECK: test_undef_vtrn2_p16:
+; CHECK: rev32 {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+entry:
+  %shuffle.i = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x i16> %shuffle.i
+}
+
+define <8 x i16> @test_undef_vtrn2q_p16(<8 x i16> %a) {
+; CHECK: test_undef_vtrn2q_p16:
+; CHECK: rev32 {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+entry:
+  %shuffle.i = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
+  ret <8 x i16> %shuffle.i
+}
+
 define %struct.int8x8x2_t @test_vuzp_s8(<8 x i8> %a, <8 x i8> %b) {
 ; CHECK: test_vuzp_s8:
 ; CHECK: uzp1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b

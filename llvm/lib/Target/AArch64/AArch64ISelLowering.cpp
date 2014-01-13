@@ -4242,7 +4242,7 @@ static bool isREVMask(ArrayRef<int> M, EVT VT, unsigned BlockSize) {
 
 // isPermuteMask - Check whether the vector shuffle matches to UZP, ZIP and
 // TRN instruction.
-static unsigned isPermuteMask(ArrayRef<int> M, EVT VT) {
+static unsigned isPermuteMask(ArrayRef<int> M, EVT VT, bool isV2undef) {
   unsigned NumElts = VT.getVectorNumElements();
   if (NumElts < 4)
     return 0;
@@ -4251,7 +4251,10 @@ static unsigned isPermuteMask(ArrayRef<int> M, EVT VT) {
 
   // Check UZP1
   for (unsigned i = 0; i < NumElts; ++i) {
-    if ((unsigned)M[i] != i * 2) {
+    unsigned answer = i * 2;
+    if (isV2undef && answer >= NumElts)
+      answer -= NumElts;
+    if (M[i] != -1 && (unsigned)M[i] != answer) {
       ismatch = false;
       break;
     }
@@ -4262,7 +4265,10 @@ static unsigned isPermuteMask(ArrayRef<int> M, EVT VT) {
   // Check UZP2
   ismatch = true;
   for (unsigned i = 0; i < NumElts; ++i) {
-    if ((unsigned)M[i] != i * 2 + 1) {
+    unsigned answer = i * 2 + 1;
+    if (isV2undef && answer >= NumElts)
+      answer -= NumElts;
+    if (M[i] != -1 && (unsigned)M[i] != answer) {
       ismatch = false;
       break;
     }
@@ -4273,7 +4279,10 @@ static unsigned isPermuteMask(ArrayRef<int> M, EVT VT) {
   // Check ZIP1
   ismatch = true;
   for (unsigned i = 0; i < NumElts; ++i) {
-    if ((unsigned)M[i] != i / 2 + NumElts * (i % 2)) {
+    unsigned answer = i / 2 + NumElts * (i % 2);
+    if (isV2undef && answer >= NumElts)
+      answer -= NumElts;
+    if (M[i] != -1 && (unsigned)M[i] != answer) {
       ismatch = false;
       break;
     }
@@ -4284,7 +4293,10 @@ static unsigned isPermuteMask(ArrayRef<int> M, EVT VT) {
   // Check ZIP2
   ismatch = true;
   for (unsigned i = 0; i < NumElts; ++i) {
-    if ((unsigned)M[i] != (NumElts + i) / 2 + NumElts * (i % 2)) {
+    unsigned answer = (NumElts + i) / 2 + NumElts * (i % 2);
+    if (isV2undef && answer >= NumElts)
+      answer -= NumElts;
+    if (M[i] != -1 && (unsigned)M[i] != answer) {
       ismatch = false;
       break;
     }
@@ -4295,7 +4307,10 @@ static unsigned isPermuteMask(ArrayRef<int> M, EVT VT) {
   // Check TRN1
   ismatch = true;
   for (unsigned i = 0; i < NumElts; ++i) {
-    if ((unsigned)M[i] != i + (NumElts - 1) * (i % 2)) {
+    unsigned answer = i + (NumElts - 1) * (i % 2);
+    if (isV2undef && answer >= NumElts)
+      answer -= NumElts;
+    if (M[i] != -1 && (unsigned)M[i] != answer) {
       ismatch = false;
       break;
     }
@@ -4306,7 +4321,10 @@ static unsigned isPermuteMask(ArrayRef<int> M, EVT VT) {
   // Check TRN2
   ismatch = true;
   for (unsigned i = 0; i < NumElts; ++i) {
-    if ((unsigned)M[i] != 1 + i + (NumElts - 1) * (i % 2)) {
+    unsigned answer = 1 + i + (NumElts - 1) * (i % 2);
+    if (isV2undef && answer >= NumElts)
+      answer -= NumElts;
+    if (M[i] != -1 && (unsigned)M[i] != answer) {
       ismatch = false;
       break;
     }
@@ -4343,9 +4361,18 @@ AArch64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   if (isREVMask(ShuffleMask, VT, 16))
     return DAG.getNode(AArch64ISD::NEON_REV16, dl, VT, V1);
 
-  unsigned ISDNo = isPermuteMask(ShuffleMask, VT);
-  if (ISDNo)
-    return DAG.getNode(ISDNo, dl, VT, V1, V2);
+  unsigned ISDNo;
+  if (V2.getOpcode() == ISD::UNDEF)
+    ISDNo = isPermuteMask(ShuffleMask, VT, true);
+  else
+    ISDNo = isPermuteMask(ShuffleMask, VT, false);
+
+  if (ISDNo) {
+    if (V2.getOpcode() == ISD::UNDEF)
+      return DAG.getNode(ISDNo, dl, VT, V1, V1);
+    else
+      return DAG.getNode(ISDNo, dl, VT, V1, V2);
+  }
 
   // If the element of shuffle mask are all the same constant, we can
   // transform it into either NEON_VDUP or NEON_VDUPLANE
