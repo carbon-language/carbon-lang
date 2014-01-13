@@ -139,7 +139,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,
     FullName += "::";
   FullName += AttrName;
 
-  return ::getAttrKind(FullName);
+  return ::getAttrKind(FullName, SyntaxUsed);
 }
 
 unsigned AttributeList::getAttributeSpellingListIndex() const {

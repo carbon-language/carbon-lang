@@ -2250,9 +2250,8 @@ void EmitClangAttrParsedAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
 void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
   emitSourceFileHeader("Attribute name matcher", OS);
 
-  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
-
-  std::vector<StringMatcher::StringPair> Matches;
+  std::vector<Record *> Attrs = Records.getAllDerivedDefinitions("Attr");
+  std::vector<StringMatcher::StringPair> GNU, Declspec, CXX11, Keywords;
   std::set<std::string> Seen;
   for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end();
        I != E; ++I) {
@@ -2261,8 +2260,16 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
     bool SemaHandler = Attr.getValueAsBit("SemaHandler");
     bool Ignored = Attr.getValueAsBit("Ignored");
     if (SemaHandler || Ignored) {
-      std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
-
+      // Attribute spellings can be shared between target-specific attributes,
+      // and can be shared between syntaxes for the same attribute. For
+      // instance, an attribute can be spelled GNU<"interrupt"> for an ARM-
+      // specific attribute, or MSP430-specific attribute. Additionally, an
+      // attribute can be spelled GNU<"dllexport"> and Declspec<"dllexport">
+      // for the same semantic attribute. Ultimately, we need to map each of
+      // these to a single AttributeList::Kind value, but the StringMatcher
+      // class cannot handle duplicate match strings. So we generate a list of
+      // string to match based on the syntax, and emit multiple string matchers
+      // depending on the syntax used.
       std::string AttrName;
       if (Attr.isSubClassOf("TargetSpecificAttr") &&
           !Attr.isValueUnset("ParseKind")) {
@@ -2273,34 +2280,48 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
       } else
         AttrName = NormalizeAttrName(StringRef(Attr.getName())).str();
 
+      std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
       for (std::vector<Record*>::const_iterator I = Spellings.begin(),
            E = Spellings.end(); I != E; ++I) {
         std::string RawSpelling = (*I)->getValueAsString("Name");
-
-        SmallString<64> Spelling;
-        if ((*I)->getValueAsString("Variety") == "CXX11") {
+        std::vector<StringMatcher::StringPair> *Matches = 0;
+        std::string Spelling, Variety = (*I)->getValueAsString("Variety");
+        if (Variety == "CXX11") {
+          Matches = &CXX11;
           Spelling += (*I)->getValueAsString("Namespace");
           Spelling += "::";
-        }
-        Spelling += NormalizeAttrSpelling(RawSpelling);
+        } else if (Variety == "GNU")
+          Matches = &GNU;
+        else if (Variety == "Declspec")
+          Matches = &Declspec;
+        else if (Variety == "Keyword")
+          Matches = &Keywords;
 
+        assert(Matches && "Unsupported spelling variety found");
+
+        Spelling += NormalizeAttrSpelling(RawSpelling);
         if (SemaHandler)
-          Matches.push_back(
-            StringMatcher::StringPair(
-              StringRef(Spelling),
-              "return AttributeList::AT_" + AttrName + ";"));
+          Matches->push_back(StringMatcher::StringPair(Spelling,
+                              "return AttributeList::AT_" + AttrName + ";"));
         else
-          Matches.push_back(
-            StringMatcher::StringPair(
-              StringRef(Spelling),
-              "return AttributeList::IgnoredAttribute;"));
+          Matches->push_back(StringMatcher::StringPair(Spelling,
+                              "return AttributeList::IgnoredAttribute;"));
       }
     }
   }
   
-  OS << "static AttributeList::Kind getAttrKind(StringRef Name) {\n";
-  StringMatcher("Name", Matches, OS).Emit();
-  OS << "return AttributeList::UnknownAttribute;\n"
+  OS << "static AttributeList::Kind getAttrKind(StringRef Name, ";
+  OS << "AttributeList::Syntax Syntax) {\n";
+  OS << "  if (AttributeList::AS_GNU == Syntax) {\n";
+  StringMatcher("Name", GNU, OS).Emit();
+  OS << "  } else if (AttributeList::AS_Declspec == Syntax) {\n";
+  StringMatcher("Name", Declspec, OS).Emit();
+  OS << "  } else if (AttributeList::AS_CXX11 == Syntax) {\n";
+  StringMatcher("Name", CXX11, OS).Emit();
+  OS << "  } else if (AttributeList::AS_Keyword == Syntax) {\n";
+  StringMatcher("Name", Keywords, OS).Emit();
+  OS << "  }\n";
+  OS << "  return AttributeList::UnknownAttribute;\n"
      << "}\n";
 }
 
