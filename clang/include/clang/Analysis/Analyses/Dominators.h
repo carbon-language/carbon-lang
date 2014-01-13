@@ -17,8 +17,8 @@
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/Analysis/DominatorInternals.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/DominatorInternals.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Module.h"
 
 namespace clang {
