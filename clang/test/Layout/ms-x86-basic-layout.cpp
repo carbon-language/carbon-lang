@@ -770,6 +770,21 @@ struct F6 : virtual A16f, A4, virtual B {
 // CHECK-X64-NEXT:      | [sizeof=96, align=16
 // CHECK-X64-NEXT:      |  nvsize=32, nvalign=16]
 
+struct ArrayFieldOfRecords {
+  A4 InlineElts[2];
+};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct ArrayFieldOfRecords
+// CHECK-NEXT:    0 |   struct A4 [2] InlineElts
+// CHECK-NEXT:      | [sizeof=8, align=4
+// CHECK-NEXT:      |  nvsize=8, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct ArrayFieldOfRecords
+// CHECK-X64-NEXT:    0 |   struct A4 [2] InlineElts
+// CHECK-X64-NEXT:      | [sizeof=8, align=4
+// CHECK-X64-NEXT:      |  nvsize=8, nvalign=4]
+
 int a[
 sizeof(TestF0)+
 sizeof(TestF1)+
@@ -790,4 +805,5 @@ sizeof(F2)+
 sizeof(F3)+
 sizeof(F4)+
 sizeof(F5)+
-sizeof(F6)];
+sizeof(F6)+
+sizeof(ArrayFieldOfRecords)];

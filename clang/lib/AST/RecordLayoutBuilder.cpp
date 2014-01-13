@@ -2176,16 +2176,14 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
     Info = getAdjustedElementInfo(Layout);
     // Nomally getAdjustedElementInfo returns the non-virtual size, which is
     // correct for bases but not for fields.
-    Info.Size = Layout.getSize();
+    Info.Size = Context.getTypeInfoInChars(FD->getType()).first;
     // Capture required alignment as a side-effect.
     RequiredAlignment = std::max(RequiredAlignment,
                                  Layout.getRequiredAlignment());
   }
   else {
-    std::pair<CharUnits, CharUnits> FieldInfo =
+    llvm::tie(Info.Size, Info.Alignment) =
         Context.getTypeInfoInChars(FD->getType());
-    Info.Size = FieldInfo.first;
-    Info.Alignment = FieldInfo.second;
     if (FD->isBitField() && FD->getMaxAlignment() != 0)
       Info.Alignment = std::max(Info.Alignment, FieldRequiredAlignment);
     // Respect pragma pack.
