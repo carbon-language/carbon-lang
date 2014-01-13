@@ -3476,8 +3476,9 @@ static SDValue PerformORCombine(SDNode *N,
       BuildVectorSDNode *BVN1 = dyn_cast<BuildVectorSDNode>(N1->getOperand(1));
       APInt SplatBits1;
       if (BVN1 && BVN1->isConstantSplat(SplatBits1, SplatUndef, SplatBitSize,
-                                        HasAnyUndefs) &&
-          !HasAnyUndefs && SplatBits0 == ~SplatBits1) {
+                                        HasAnyUndefs) && !HasAnyUndefs &&
+          SplatBits0.getBitWidth() == SplatBits1.getBitWidth() &&
+          SplatBits0 == ~SplatBits1) {
 
         return DAG.getNode(ISD::VSELECT, DL, VT, N0->getOperand(1),
                            N0->getOperand(0), N1->getOperand(0));
