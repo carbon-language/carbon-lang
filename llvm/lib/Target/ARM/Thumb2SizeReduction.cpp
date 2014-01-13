@@ -980,6 +980,9 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
       MachineOperand *MO = BundleMI->findRegisterDefOperand(ARM::CPSR);
       if (MO && !MO->isDead())
         LiveCPSR = true;
+      MO = BundleMI->findRegisterUseOperand(ARM::CPSR);
+      if (MO && !MO->isKill())
+        LiveCPSR = true;
     }
 
     bool DefCPSR = false;
