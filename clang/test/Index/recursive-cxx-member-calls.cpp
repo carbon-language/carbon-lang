@@ -186,6 +186,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 }
 
 // RUN: c-index-test -test-annotate-tokens=%s:1:1:186:1 %s 2>&1 | FileCheck -check-prefix=CHECK-tokens %s
+// XFAIL: mingw32,win32
 // CHECK-tokens: Keyword: "typedef" [1:1 - 1:8]
 // CHECK-tokens: Keyword: "long" [1:9 - 1:13]
 // CHECK-tokens: Keyword: "unsigned" [1:14 - 1:22]
@@ -1524,6 +1525,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "}" [186:1 - 186:2] CompoundStmt=
 
 // RUN: c-index-test -test-load-source all %s -std=c++98 2>&1 | FileCheck %s
+// XFAIL: mingw32,win32
 // CHECK: 1:27: TypedefDecl=__darwin_size_t:1:27 (Definition) Extent=[1:1 - 1:42]
 // CHECK: 2:25: TypedefDecl=size_t:2:25 (Definition) Extent=[2:1 - 2:31]
 // CHECK: 2:9: TypeRef=__darwin_size_t:1:27 Extent=[2:9 - 2:24]
