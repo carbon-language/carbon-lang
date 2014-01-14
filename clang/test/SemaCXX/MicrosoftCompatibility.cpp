@@ -24,6 +24,7 @@ void test()
 namespace ms_predefined_types {
   // ::type_info is a built-in forward class declaration.
   void f(const type_info &a);
+  void f(size_t);
 }
 
 

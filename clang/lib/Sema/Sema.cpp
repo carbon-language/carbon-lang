@@ -182,6 +182,8 @@ void Sema::Initialize() {
     if (IdResolver.begin(&Context.Idents.get("type_info")) == IdResolver.end())
       PushOnScopeChains(Context.buildImplicitRecord("type_info", TTK_Class),
                         TUScope);
+
+    addImplicitTypedef("size_t", Context.getSizeType());
   }
 
   // Initialize predefined OpenCL types.
