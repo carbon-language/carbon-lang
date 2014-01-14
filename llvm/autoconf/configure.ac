@@ -96,6 +96,75 @@ if test "$CXX" = "clang++" ; then
   AC_LANG_POP([C++])
 fi
 
+dnl Set up variables that track whether the host compiler is GCC or Clang where
+dnl we can effectively sanity check them. We don't try to sanity check all the
+dnl other possible compilers.
+AC_MSG_CHECKING([whether GCC or Clang is our host compiler])
+AC_LANG_PUSH([C++])
+llvm_cv_cxx_compiler=unknown
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if ! __clang__
+                                     #error
+                                     #endif
+                                     ]])],
+                  llvm_cv_cxx_compiler=clang,
+                  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if ! __GNUC__
+                                                        #error
+                                                        #endif
+                                                        ]])],
+                                     llvm_cv_cxx_compiler=gcc, [])])
+AC_LANG_POP([C++])
+AC_MSG_RESULT([${llvm_cv_cxx_compiler}])
+
+dnl Check both GCC and Clang for sufficiently modern versions. These checks can
+dnl be bypassed by passing a flag if necessary on a platform.
+AC_ARG_ENABLE(compiler-version-checks,
+              AS_HELP_STRING([--enable-compiler-version-checks],
+                             [Check the version of the host compiler (default is YES)]),,
+                             enableval=default)
+case "$enableval" in
+  no)
+    ;;
+  yes|default)
+    AC_LANG_PUSH([C++])
+    case "$llvm_cv_cxx_compiler" in
+    clang)
+      AC_MSG_CHECKING([whether Clang is new enough])
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#if __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 1)
+#error This version of Clang is too old to build LLVM
+#endif
+]])],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_ERROR([
+The selected Clang compiler is not new enough to build LLVM. Please upgrade to
+Clang 3.1. You may pass --disable-compiler-version-checks to configure to
+bypass these sanity checks.])])
+      ;;
+    gcc)
+      AC_MSG_CHECKING([whether GCC is new enough])
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 7)
+#error This version of GCC is too old to build LLVM
+#endif
+]])],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_ERROR([
+The selected GCC C++ compiler is not new enough to build LLVM. Please upgrade
+to GCC 4.7. You may pass --disable-compiler-version-checks to configure to
+bypass these sanity checks.])])
+      ;;
+    unknown)
+      ;;
+    esac
+    AC_LANG_POP([C++])
+    ;;
+  *)
+    AC_MSG_ERROR([Invalid setting for --enable-compiler-version-checks. Use "yes" or "no"])
+    ;;
+esac
+
 dnl Configure all of the projects present in our source tree. While we could
 dnl just AC_CONFIG_SUBDIRS on the set of directories in projects that have a
 dnl configure script, that usage of the AC_CONFIG_SUBDIRS macro is deprecated.
