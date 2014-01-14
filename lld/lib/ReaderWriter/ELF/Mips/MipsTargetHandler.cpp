@@ -178,7 +178,8 @@ void MipsTargetHandler::finalizeSymbolValues() {
     assert(gpDispAtomIter != _targetLayout.absoluteAtoms().end());
     _gpDispSymAtom = (*gpDispAtomIter);
     _gpDispSymAtom->_virtualAddr =
-        gotSection ? gotSection->virtualAddr() + 0x7FF0 : 0;
+        gotSection ? gotSection->virtualAddr() + _targetLayout.getGPOffset()
+                   : 0;
   }
 }
 

@@ -26,6 +26,9 @@ public:
       : TargetLayout<ELFType>(ctx),
         _gotSection(new (_alloc) MipsGOTSection<ELFType>(ctx)) {}
 
+  /// \brief GP offset relative to .got section.
+  uint64_t getGPOffset() const { return 0x7FF0; }
+
   const MipsGOTSection<ELFType> &getGOTSection() const { return *_gotSection; }
 
   virtual AtomSection<ELFType> *
