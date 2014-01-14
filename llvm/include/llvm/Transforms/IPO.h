@@ -108,14 +108,17 @@ Pass *createPruneEHPass();
 ////
 /// The symbols in \p ExportList are never internalized.
 ///
+/// When OnlyHidden=true, only symbols with hidden visibility are internalized.
+///
 /// The symbol in DSOList are internalized if it is safe to drop them from
 /// the symbol table.
 ///
 /// Note that commandline options that are used with the above function are not
 /// used now!
-ModulePass *createInternalizePass(ArrayRef<const char *> ExportList);
+ModulePass *createInternalizePass(ArrayRef<const char *> ExportList,
+                                  bool OnlyHidden = false);
 /// createInternalizePass - Same as above, but with an empty exportList.
-ModulePass *createInternalizePass();
+ModulePass *createInternalizePass(bool OnlyHidden = false);
 
 //===----------------------------------------------------------------------===//
 /// createDeadArgEliminationPass - This pass removes arguments from functions

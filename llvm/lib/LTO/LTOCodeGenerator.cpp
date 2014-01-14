@@ -62,7 +62,8 @@ const char* LTOCodeGenerator::getVersionString() {
 LTOCodeGenerator::LTOCodeGenerator()
     : Context(getGlobalContext()), Linker(new Module("ld-temp.o", Context)),
       TargetMach(NULL), EmitDwarfDebugInfo(false), ScopeRestrictionsDone(false),
-      CodeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC), NativeObjectFile(NULL) {
+      CodeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
+      InternalizeStrategy(LTO_INTERNALIZE_FULL), NativeObjectFile(NULL) {
   initializeLTOPasses();
 }
 
@@ -162,6 +163,18 @@ void LTOCodeGenerator::setCodePICModel(lto_codegen_model model) {
     return;
   }
   llvm_unreachable("Unknown PIC model!");
+}
+
+void
+LTOCodeGenerator::setInternalizeStrategy(lto_internalize_strategy Strategy) {
+  switch (Strategy) {
+  case LTO_INTERNALIZE_FULL:
+  case LTO_INTERNALIZE_NONE:
+  case LTO_INTERNALIZE_HIDDEN:
+    InternalizeStrategy = Strategy;
+    return;
+  }
+  llvm_unreachable("Unknown internalize strategy!");
 }
 
 bool LTOCodeGenerator::writeMergedModules(const char *path,
@@ -377,7 +390,7 @@ static void accumulateAndSortLibcalls(std::vector<StringRef> &Libcalls,
 }
 
 void LTOCodeGenerator::applyScopeRestrictions() {
-  if (ScopeRestrictionsDone)
+  if (ScopeRestrictionsDone || !shouldInternalize())
     return;
   Module *mergedModule = Linker.getModule();
 
@@ -429,7 +442,8 @@ void LTOCodeGenerator::applyScopeRestrictions() {
     LLVMCompilerUsed->setSection("llvm.metadata");
   }
 
-  passes.add(createInternalizePass(MustPreserveList));
+  passes.add(
+      createInternalizePass(MustPreserveList, shouldOnlyInternalizeHidden()));
 
   // apply scope restrictions
   passes.run(*mergedModule);
