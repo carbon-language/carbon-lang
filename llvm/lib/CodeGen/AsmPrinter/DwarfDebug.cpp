@@ -1050,13 +1050,15 @@ void DwarfDebug::finalizeModuleInfo() {
                       dwarf::DW_FORM_data8, ID);
       }
 
-      // If we've requested ranges and have them emit a DW_AT_ranges attribute
-      // on the unit that will remain in the .o file, otherwise add a
-      // DW_AT_low_pc.
+      // If we have code split among multiple sections or we've requested
+      // it then emit a DW_AT_ranges attribute on the unit that will remain
+      // in the .o file, otherwise add a DW_AT_low_pc.
       // FIXME: Also add a high pc if we can.
-      // FIXME: We should use ranges if we have multiple compile units.
+      // FIXME: We should use ranges if we have multiple compile units or
+      // allow reordering of code ala .subsections_via_symbols in mach-o.
       DwarfCompileUnit *U = SkCU ? SkCU : static_cast<DwarfCompileUnit *>(TheU);
-      if (DwarfCURanges && TheU->getRanges().size())
+      if ((DwarfCURanges || TargetMachine::getFunctionSections()) &&
+          TheU->getRanges().size())
         addSectionLabel(Asm, U, U->getUnitDie(), dwarf::DW_AT_ranges,
                         Asm->GetTempSymbol("cu_ranges", U->getUniqueID()),
                         DwarfDebugRangeSectionSym);
