@@ -42,21 +42,21 @@ struct IntWrapperStruct {
 @end
 
 void testConsistencyStruct(StructWrapper *w) {
-  clang_analyzer_eval(w.inner.value == w.inner.value); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(w.inner.value == w.inner.value); // expected-warning{{TRUE}}
 
   int origValue = w.inner.value;
   if (origValue != 42)
     return;
 
-  clang_analyzer_eval(w.inner.value == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(w.inner.value == 42); // expected-warning{{TRUE}}
 }
 
 
 class CustomCopy {
 public:
   CustomCopy() : value(0) {}
-  CustomCopy(const CustomCopy &other) {
-    clang_analyzer_checkInlined(false);
+  CustomCopy(const CustomCopy &other) : value(other.value) {
+    clang_analyzer_checkInlined(true); // expected-warning{{TRUE}}
   }
   int value;
 };
@@ -70,11 +70,11 @@ public:
 @end
 
 void testConsistencyCustomCopy(CustomCopyWrapper *w) {
-  clang_analyzer_eval(w.inner.value == w.inner.value); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(w.inner.value == w.inner.value); // expected-warning{{TRUE}}
 
   int origValue = w.inner.value;
   if (origValue != 42)
     return;
 
-  clang_analyzer_eval(w.inner.value == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(w.inner.value == 42); // expected-warning{{TRUE}}
 }

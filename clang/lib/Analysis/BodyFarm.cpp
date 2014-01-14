@@ -393,14 +393,26 @@ static Stmt *createObjCPropertyGetter(ASTContext &Ctx,
     return 0;
   if (Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak)
     return 0;
+
+  const ObjCImplementationDecl *ImplDecl =
+    IVar->getContainingInterface()->getImplementation();
+  if (ImplDecl) {
+    typedef ObjCImplementationDecl::propimpl_iterator propimpl_iterator;
+    for (propimpl_iterator I = ImplDecl->propimpl_begin(),
+                           E = ImplDecl->propimpl_end();
+         I != E; ++I) {
+      if (I->getPropertyDecl() != Prop)
+        continue;
+
+      if (I->getGetterCXXConstructor()) {
+        ASTMaker M(Ctx);
+        return M.makeReturn(I->getGetterCXXConstructor());
+      }
+    }
+  }
+
   if (IVar->getType().getCanonicalType() !=
       Prop->getType().getNonReferenceType().getCanonicalType())
-    return 0;
-
-  // C++ records require copy constructors, so we can't just synthesize an AST.
-  // FIXME: Use ObjCPropertyImplDecl's already-synthesized AST. Currently it's
-  // not in a form the analyzer can use.
-  if (Prop->getType()->getAsCXXRecordDecl())
     return 0;
 
   ASTMaker M(Ctx);
