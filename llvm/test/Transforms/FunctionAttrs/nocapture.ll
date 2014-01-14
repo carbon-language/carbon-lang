@@ -91,6 +91,21 @@ l:
 	ret i32 %val
 }
 
+; CHECK: define i32 @nc1_addrspace(i32* %q, i32 addrspace(1)* nocapture %p, i1 %b)
+define i32 @nc1_addrspace(i32* %q, i32 addrspace(1)* %p, i1 %b) {
+e:
+	br label %l
+l:
+	%x = phi i32 addrspace(1)* [ %p, %e ]
+	%y = phi i32* [ %q, %e ]
+	%tmp = addrspacecast i32 addrspace(1)* %x to i32*		; <i32*> [#uses=2]
+	%tmp2 = select i1 %b, i32* %tmp, i32* %y
+	%val = load i32* %tmp2		; <i32> [#uses=1]
+	store i32 0, i32* %tmp
+	store i32* %y, i32** @g
+	ret i32 %val
+}
+
 ; CHECK: define void @nc2(i32* nocapture %p, i32* %q)
 define void @nc2(i32* %p, i32* %q) {
 	%1 = call i32 @nc1(i32* %q, i32* %p, i1 0)		; <i32> [#uses=0]
