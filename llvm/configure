@@ -814,19 +814,13 @@ CXXFLAGS
 CCC
 CPP
 CXXCPP'
-ac_subdirs_all='projects/llvm-gcc
-projects/test-suite
+ac_subdirs_all='projects/test-suite
 projects/llvm-test
 projects/poolalloc
 projects/llvm-poolalloc
 projects/sample
 projects/privbracket
-projects/llvm-stacker
-projects/llvm-reopt
-projects/llvm-java
-projects/llvm-tv
 projects/safecode
-projects/llvm-kernel
 tools/polly'
 
 # Initialize some variables set by options.
@@ -3583,11 +3577,6 @@ fi
 
 
 
-if test -d ${srcdir}/projects/llvm-gcc ; then
-  subdirs="$subdirs projects/llvm-gcc"
-
-fi
-
 if test -d ${srcdir}/projects/test-suite ; then
   subdirs="$subdirs projects/test-suite"
 
@@ -3616,20 +3605,9 @@ do
     ;;
       privbracket)  subdirs="$subdirs projects/privbracket"
  ;;
-      llvm-stacker) subdirs="$subdirs projects/llvm-stacker"
- ;;
-      llvm-reopt)   subdirs="$subdirs projects/llvm-reopt"
-;;
-      llvm-java)    subdirs="$subdirs projects/llvm-java"
- ;;
-      llvm-tv)      subdirs="$subdirs projects/llvm-tv"
-   ;;
       safecode)     subdirs="$subdirs projects/safecode"
  ;;
-      llvm-kernel)  subdirs="$subdirs projects/llvm-kernel"
- ;;
       compiler-rt)       ;;
-      llvm-gcc)       ;;
       test-suite)     ;;
       llvm-test)      ;;
       poolalloc)      ;;
@@ -10300,7 +10278,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10303 "configure"
+#line 10281 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

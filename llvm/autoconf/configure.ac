@@ -109,11 +109,6 @@ dnl created before running the configure scripts of projects that depend upon
 dnl them.
 dnl
 
-dnl Several projects use llvm-gcc, so configure that first
-if test -d ${srcdir}/projects/llvm-gcc ; then
-  AC_CONFIG_SUBDIRS([projects/llvm-gcc])
-fi
-
 dnl Several projects use the LLVM test suite, so configure it next.
 if test -d ${srcdir}/projects/test-suite ; then
   AC_CONFIG_SUBDIRS([projects/test-suite])
@@ -141,14 +136,8 @@ do
     case ${i} in
       sample)       AC_CONFIG_SUBDIRS([projects/sample])    ;;
       privbracket)  AC_CONFIG_SUBDIRS([projects/privbracket]) ;;
-      llvm-stacker) AC_CONFIG_SUBDIRS([projects/llvm-stacker]) ;;
-      llvm-reopt)   AC_CONFIG_SUBDIRS([projects/llvm-reopt]);;
-      llvm-java)    AC_CONFIG_SUBDIRS([projects/llvm-java]) ;;
-      llvm-tv)      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
       safecode)     AC_CONFIG_SUBDIRS([projects/safecode]) ;;
-      llvm-kernel)  AC_CONFIG_SUBDIRS([projects/llvm-kernel]) ;;
       compiler-rt)       ;;
-      llvm-gcc)       ;;
       test-suite)     ;;
       llvm-test)      ;;
       poolalloc)      ;;
