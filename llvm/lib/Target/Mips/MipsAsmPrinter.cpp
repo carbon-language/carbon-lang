@@ -265,6 +265,9 @@ const char *MipsAsmPrinter::getCurrentABIString() const {
 }
 
 void MipsAsmPrinter::EmitFunctionEntryLabel() {
+  if (Subtarget->inMicroMipsMode())
+    getTargetStreamer().emitDirectiveSetMicroMips();
+
   if (OutStreamer.hasRawTextSupport()) {
     if (Subtarget->inMips16Mode())
       OutStreamer.EmitRawText(StringRef("\t.set\tmips16"));
@@ -275,9 +278,6 @@ void MipsAsmPrinter::EmitFunctionEntryLabel() {
     OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
   }
 
-  if (Subtarget->inMicroMipsMode())
-    getTargetStreamer().emitMipsHackSTOCG(CurrentFnSym,
-                                          (unsigned)ELF::STO_MIPS_MICROMIPS);
   OutStreamer.EmitLabel(CurrentFnSym);
 }
 

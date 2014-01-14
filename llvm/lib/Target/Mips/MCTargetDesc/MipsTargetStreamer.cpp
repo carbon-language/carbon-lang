@@ -38,16 +38,15 @@ void MipsTargetAsmStreamer::emitMipsHackELFFlags(unsigned Flags) {
   OS.write_hex(Flags);
   OS << '\n';
 }
-void MipsTargetAsmStreamer::emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val) {
-  if (!PrintHackDirectives)
-    return;
 
-  OS << "\t.mips_hack_stocg ";
-  OS << Sym->getName();
-  OS << ", ";
-  OS << Val;
-  OS << '\n';
+void MipsTargetAsmStreamer::emitDirectiveSetMicroMips() {
+  OS << "\t.set\tmicromips\n";
 }
+
+void MipsTargetAsmStreamer::emitDirectiveSetNoMicroMips() {
+  OS << "\t.set\tnomicromips\n";
+}
+
 void MipsTargetAsmStreamer::emitDirectiveAbiCalls() { OS << "\t.abicalls\n"; }
 void MipsTargetAsmStreamer::emitDirectiveOptionPic0() {
   OS << "\t.option\tpic0\n";
@@ -55,6 +54,15 @@ void MipsTargetAsmStreamer::emitDirectiveOptionPic0() {
 
 // This part is for ELF object output.
 MipsTargetELFStreamer::MipsTargetELFStreamer() {}
+
+void MipsTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
+  MCSymbolData &Data = getStreamer().getOrCreateSymbolData(Symbol);
+  // The "other" values are stored in the last 6 bits of the second byte
+  // The traditional defines for STO values assume the full byte and thus
+  // the shift to pack it.
+  if (isMicroMipsEnabled())
+    MCELF::setOther(Data, ELF::STO_MIPS_MICROMIPS >> 2);
+}
 
 MCELFStreamer &MipsTargetELFStreamer::getStreamer() {
   return static_cast<MCELFStreamer &>(*Streamer);
@@ -65,14 +73,14 @@ void MipsTargetELFStreamer::emitMipsHackELFFlags(unsigned Flags) {
   MCA.setELFHeaderEFlags(Flags);
 }
 
-// Set a symbol's STO flags.
-void MipsTargetELFStreamer::emitMipsHackSTOCG(MCSymbol *Sym, unsigned Val) {
-  MCSymbolData &Data = getStreamer().getOrCreateSymbolData(Sym);
-  // The "other" values are stored in the last 6 bits of the second byte
-  // The traditional defines for STO values assume the full byte and thus
-  // the shift to pack it.
-  MCELF::setOther(Data, Val >> 2);
+void MipsTargetELFStreamer::emitDirectiveSetMicroMips() {
+  MicroMipsEnabled = true;
 }
+
+void MipsTargetELFStreamer::emitDirectiveSetNoMicroMips() {
+  MicroMipsEnabled = false;
+}
+
 void MipsTargetELFStreamer::emitDirectiveAbiCalls() {
   MCAssembler &MCA = getStreamer().getAssembler();
   unsigned Flags = MCA.getELFHeaderEFlags();

@@ -194,7 +194,6 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool isEvaluated(const MCExpr *Expr);
   bool parseDirectiveSet();
-  bool parseDirectiveMipsHackStocg();
   bool parseDirectiveMipsHackELFFlags();
   bool parseDirectiveOption();
 
@@ -2388,7 +2387,11 @@ bool MipsAsmParser::parseDirectiveSet() {
     Parser.eatToEndOfStatement();
     return false;
   } else if (Tok.getString() == "nomicromips") {
-    // Ignore this directive for now.
+    getTargetStreamer().emitDirectiveSetNoMicroMips();
+    Parser.eatToEndOfStatement();
+    return false;
+  } else if (Tok.getString() == "micromips") {
+    getTargetStreamer().emitDirectiveSetMicroMips();
     Parser.eatToEndOfStatement();
     return false;
   } else {
@@ -2398,29 +2401,6 @@ bool MipsAsmParser::parseDirectiveSet() {
   }
 
   return true;
-}
-
-bool MipsAsmParser::parseDirectiveMipsHackStocg() {
-  MCAsmParser &Parser = getParser();
-  StringRef Name;
-  if (Parser.parseIdentifier(Name))
-    reportParseError("expected identifier");
-
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
-  if (getLexer().isNot(AsmToken::Comma)) {
-    TokError("unexpected token");
-    return false;
-  }
-  Lex();
-
-  int64_t Flags = 0;
-  if (Parser.parseAbsoluteExpression(Flags)) {
-    TokError("unexpected token");
-    return false;
-  }
-
-  getTargetStreamer().emitMipsHackSTOCG(Sym, Flags);
-  return false;
 }
 
 bool MipsAsmParser::parseDirectiveMipsHackELFFlags() {
@@ -2551,9 +2531,6 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
     parseDirectiveWord(4, DirectiveID.getLoc());
     return false;
   }
-
-  if (IDVal == ".mips_hack_stocg")
-    return parseDirectiveMipsHackStocg();
 
   if (IDVal == ".mips_hack_elf_flags")
     return parseDirectiveMipsHackELFFlags();

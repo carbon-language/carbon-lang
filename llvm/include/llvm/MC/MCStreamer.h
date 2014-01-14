@@ -71,6 +71,9 @@ protected:
 public:
   virtual ~MCTargetStreamer();
   void setStreamer(MCStreamer *S) { Streamer = S; }
+
+  // Allow a target to add behavior to the EmitLabel of MCStreamer.
+  virtual void emitLabel(MCSymbol *Symbol);
 };
 
 // FIXME: declared here because it is used from

@@ -24,6 +24,7 @@ using namespace llvm;
 
 // Pin the vtables to this file.
 MCTargetStreamer::~MCTargetStreamer() {}
+void MCTargetStreamer::emitLabel(MCSymbol *Symbol) {}
 void ARMTargetStreamer::anchor() {}
 
 MCStreamer::MCStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer)
@@ -214,6 +215,10 @@ void MCStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(getCurrentSection().first && "Cannot emit before setting section!");
   AssignSection(Symbol, getCurrentSection().first);
   LastSymbol = Symbol;
+
+  MCTargetStreamer *TS = getTargetStreamer();
+  if (TS)
+    TS->emitLabel(Symbol);
 }
 
 void MCStreamer::EmitDebugLabel(MCSymbol *Symbol) {

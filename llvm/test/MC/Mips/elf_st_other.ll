@@ -8,4 +8,5 @@ entry:
   ret i32 0
 }
 
-; CHECK:     .mips_hack_stocg main, 128
+; CHECK: .set	micromips
+; CHECK: main:
