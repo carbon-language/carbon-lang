@@ -3180,13 +3180,6 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 }
 
-static void handleOpenCLImageAccessAttr(Sema &S, Decl *D,
-                                        const AttributeList &Attr) {
-  D->addAttr(::new (S.Context)
-              OpenCLImageAccessAttr(Attr.getRange(), S.Context,
-                                    Attr.getAttributeSpellingListIndex()));
-}
-
 bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC, 
                                 const FunctionDecl *FD) {
   if (attr.isInvalid())
