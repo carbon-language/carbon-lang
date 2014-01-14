@@ -17,22 +17,22 @@
 
 // 66 0F 38 80
 def INVEPT32 : I<0x80, MRMSrcMem, (outs), (ins GR32:$src1, i128mem:$src2),
-               "invept\t{$src2, $src1|$src1, $src2}", []>, OpSize, T8,
+               "invept\t{$src2, $src1|$src1, $src2}", []>, T8PD,
                Requires<[Not64BitMode]>;
 def INVEPT64 : I<0x80, MRMSrcMem, (outs), (ins GR64:$src1, i128mem:$src2),
-               "invept\t{$src2, $src1|$src1, $src2}", []>, OpSize, T8,
+               "invept\t{$src2, $src1|$src1, $src2}", []>, T8PD,
                Requires<[In64BitMode]>;
 // 66 0F 38 81
 def INVVPID32 : I<0x81, MRMSrcMem, (outs), (ins GR32:$src1, i128mem:$src2),
-                "invvpid\t{$src2, $src1|$src1, $src2}", []>, OpSize, T8,
+                "invvpid\t{$src2, $src1|$src1, $src2}", []>, T8PD,
                 Requires<[Not64BitMode]>;
 def INVVPID64 : I<0x81, MRMSrcMem, (outs), (ins GR64:$src1, i128mem:$src2),
-                "invvpid\t{$src2, $src1|$src1, $src2}", []>, OpSize, T8,
+                "invvpid\t{$src2, $src1|$src1, $src2}", []>, T8PD,
                 Requires<[In64BitMode]>;
 // 0F 01 C1
 def VMCALL : I<0x01, MRM_C1, (outs), (ins), "vmcall", []>, TB;
 def VMCLEARm : I<0xC7, MRM6m, (outs), (ins i64mem:$vmcs),
-  "vmclear\t$vmcs", []>, OpSize, TB;
+  "vmclear\t$vmcs", []>, PD;
 // OF 01 D4
 def VMFUNC : I<0x01, MRM_D4, (outs), (ins), "vmfunc", []>, TB;
 // 0F 01 C2

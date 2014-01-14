@@ -908,8 +908,8 @@ let Predicates = [HasBMI2] in {
   defm SARX64 : bmi_shift<"sarx{q}", GR64, i64mem>, T8XS, VEX_W;
   defm SHRX32 : bmi_shift<"shrx{l}", GR32, i32mem>, T8XD;
   defm SHRX64 : bmi_shift<"shrx{q}", GR64, i64mem>, T8XD, VEX_W;
-  defm SHLX32 : bmi_shift<"shlx{l}", GR32, i32mem>, T8, OpSize;
-  defm SHLX64 : bmi_shift<"shlx{q}", GR64, i64mem>, T8, OpSize, VEX_W;
+  defm SHLX32 : bmi_shift<"shlx{l}", GR32, i32mem>, T8PD;
+  defm SHLX64 : bmi_shift<"shlx{q}", GR64, i64mem>, T8PD, VEX_W;
 
   // Prefer RORX which is non-destructive and doesn't update EFLAGS.
   let AddedComplexity = 10 in {

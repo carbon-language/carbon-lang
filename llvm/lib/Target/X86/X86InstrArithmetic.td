@@ -1363,21 +1363,21 @@ let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
   let SchedRW = [WriteALU] in {
   def ADCX32rr : I<0xF6, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
              "adcx{l}\t{$src, $dst|$dst, $src}",
-             [], IIC_BIN_NONMEM>, T8, OpSize;
+             [], IIC_BIN_NONMEM>, T8PD;
 
   def ADCX64rr : I<0xF6, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
              "adcx{q}\t{$src, $dst|$dst, $src}",
-             [], IIC_BIN_NONMEM>, T8, OpSize, REX_W, Requires<[In64BitMode]>;
+             [], IIC_BIN_NONMEM>, T8PD, REX_W, Requires<[In64BitMode]>;
   } // SchedRW
 
   let mayLoad = 1, SchedRW = [WriteALULd] in {
   def ADCX32rm : I<0xF6, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
              "adcx{l}\t{$src, $dst|$dst, $src}",
-             [], IIC_BIN_MEM>, T8, OpSize;
+             [], IIC_BIN_MEM>, T8PD;
 
   def ADCX64rm : I<0xF6, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
              "adcx{q}\t{$src, $dst|$dst, $src}",
-             [], IIC_BIN_MEM>, T8, OpSize, REX_W, Requires<[In64BitMode]>;
+             [], IIC_BIN_MEM>, T8PD, REX_W, Requires<[In64BitMode]>;
   }
 }
 
