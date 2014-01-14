@@ -1137,6 +1137,21 @@ LIBBUILTIN(ctanh, "XdXd", "fnc", "complex.h", ALL_LANGUAGES)
 LIBBUILTIN(ctanhf, "XfXf", "fnc", "complex.h", ALL_LANGUAGES)
 LIBBUILTIN(ctanhl, "XLdXLd", "fnc", "complex.h", ALL_LANGUAGES)
 
+// __sinpi and friends are OS X specific library functions, but otherwise much
+// like the standard (non-complex) sin (etc).
+LIBBUILTIN(__sinpi, "dd", "fne", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(__sinpif, "ff", "fne", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(__cospi, "dd", "fne", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(__cospif, "ff", "fne", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(__tanpi, "dd", "fne", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(__tanpif, "ff", "fne", "math.h", ALL_LANGUAGES)
+
+// Similarly, __exp10 is OS X only
+LIBBUILTIN(__exp10, "dd", "fne", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(__exp10f, "ff", "fne", "math.h", ALL_LANGUAGES)
+
 // Blocks runtime Builtin math library functions
 LIBBUILTIN(_Block_object_assign, "vv*vC*iC", "f", "Blocks.h", ALL_LANGUAGES)
 LIBBUILTIN(_Block_object_dispose, "vvC*iC", "f", "Blocks.h", ALL_LANGUAGES)

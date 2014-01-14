@@ -244,6 +244,16 @@ long double _Complex ctanl(long double _Complex);
 double _Complex ctanh(double _Complex);
 float _Complex ctanhf(float _Complex);
 long double _Complex ctanhl(long double _Complex);
+
+double __sinpi(double);
+float __sinpif(float);
+double __cospi(double);
+float __cospif(float);
+double __tanpi(double);
+float __tanpif(float);
+
+double __exp10(double);
+float __exp10f(float);
 #ifdef __cplusplus
 }
 #endif
@@ -298,7 +308,8 @@ void *use[] = {
   F(crealf),     F(creall),     F(csin),       F(csinf),       F(csinl),
   F(csinh),      F(csinhf),     F(csinhl),     F(csqrt),       F(csqrtf),
   F(csqrtl),     F(ctan),       F(ctanf),      F(ctanl),       F(ctanh),
-  F(ctanhf),     F(ctanhl)
+  F(ctanhf),     F(ctanhl),     F(__sinpi),    F(__sinpif),    F(__cospi),
+  F(__cospif),   F(__tanpi),    F(__tanpif),   F(__exp10),     F(__exp10f)
 };
 
 // CHECK-NOERRNO: declare double @atan2(double, double) [[NUW:#[0-9]+]]
@@ -510,6 +521,14 @@ void *use[] = {
 // CHECK-NOERRNO: declare <2 x float> @ctanf(<2 x float>) [[NUW]]
 // CHECK-NOERRNO: declare { double, double } @ctanh(double, double) [[NUW]]
 // CHECK-NOERRNO: declare <2 x float> @ctanhf(<2 x float>) [[NUW]]
+// CHECK-NOERRNO: declare double @__sinpi(double) [[NUW]]
+// CHECK-NOERRNO: declare float @__sinpif(float) [[NUW]]
+// CHECK-NOERRNO: declare double @__cospi(double) [[NUW]]
+// CHECK-NOERRNO: declare float @__cospif(float) [[NUW]]
+// CHECK-NOERRNO: declare double @__tanpi(double) [[NUW]]
+// CHECK-NOERRNO: declare float @__tanpif(float) [[NUW]]
+// CHECK-NOERRNO: declare double @__exp10(double) [[NUW]]
+// CHECK-NOERRNO: declare float @__exp10f(float) [[NUW]]
 
 // CHECK-ERRNO: declare i32 @abs(i32) [[NUW:#[0-9]+]]
 // CHECK-ERRNO: declare i64 @labs(i64) [[NUW]]
