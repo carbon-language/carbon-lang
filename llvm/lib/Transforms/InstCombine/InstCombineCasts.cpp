@@ -1909,5 +1909,5 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
 }
 
 Instruction *InstCombiner::visitAddrSpaceCast(AddrSpaceCastInst &CI) {
-  return commonCastTransforms(CI);
+  return commonPointerCastTransforms(CI);
 }

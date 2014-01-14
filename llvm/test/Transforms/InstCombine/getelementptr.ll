@@ -789,4 +789,13 @@ define i16 @test41([3 x i32] addrspace(1)* %array) {
 ; CHECK-NEXT: ret i16 8
 }
 
+define i32 addrspace(1)* @ascast_0_gep([128 x i32]* %p) nounwind {
+; CHECK-LABEL: @ascast_0_gep(
+; CHECK-NOT: getelementptr
+; CHECK: ret
+  %gep = getelementptr [128 x i32]* %p, i32 0, i32 0
+  %x = addrspacecast i32* %gep to i32 addrspace(1)*
+  ret i32 addrspace(1)* %x
+}
+
 ; CHECK: attributes [[NUW]] = { nounwind }
