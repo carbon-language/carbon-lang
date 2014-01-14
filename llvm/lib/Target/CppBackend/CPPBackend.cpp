@@ -131,6 +131,7 @@ namespace {
   private:
     void printLinkageType(GlobalValue::LinkageTypes LT);
     void printVisibilityType(GlobalValue::VisibilityTypes VisTypes);
+    void printDLLStorageClassType(GlobalValue::DLLStorageClassTypes DSCType);
     void printThreadLocalMode(GlobalVariable::ThreadLocalMode TLM);
     void printCallingConv(CallingConv::ID cc);
     void printEscapedString(const std::string& str);
@@ -300,10 +301,6 @@ void CppWriter::printLinkageType(GlobalValue::LinkageTypes LT) {
     Out << "GlobalValue::AppendingLinkage"; break;
   case GlobalValue::ExternalLinkage:
     Out << "GlobalValue::ExternalLinkage"; break;
-  case GlobalValue::DLLImportLinkage:
-    Out << "GlobalValue::DLLImportLinkage"; break;
-  case GlobalValue::DLLExportLinkage:
-    Out << "GlobalValue::DLLExportLinkage"; break;
   case GlobalValue::ExternalWeakLinkage:
     Out << "GlobalValue::ExternalWeakLinkage"; break;
   case GlobalValue::CommonLinkage:
@@ -321,6 +318,21 @@ void CppWriter::printVisibilityType(GlobalValue::VisibilityTypes VisType) {
     break;
   case GlobalValue::ProtectedVisibility:
     Out << "GlobalValue::ProtectedVisibility";
+    break;
+  }
+}
+
+void CppWriter::printDLLStorageClassType(
+                                    GlobalValue::DLLStorageClassTypes DSCType) {
+  switch (DSCType) {
+  case GlobalValue::DefaultStorageClass:
+    Out << "GlobalValue::DefaultStorageClass";
+    break;
+  case GlobalValue::DLLImportStorageClass:
+    Out << "GlobalValue::DLLImportStorageClass";
+    break;
+  case GlobalValue::DLLExportStorageClass:
+    Out << "GlobalValue::DLLExportStorageClass";
     break;
   }
 }
@@ -1025,6 +1037,13 @@ void CppWriter::printVariableHead(const GlobalVariable *GV) {
     printCppName(GV);
     Out << "->setVisibility(";
     printVisibilityType(GV->getVisibility());
+    Out << ");";
+    nl(Out);
+  }
+  if (GV->getDLLStorageClass() != GlobalValue::DefaultStorageClass) {
+    printCppName(GV);
+    Out << "->setDLLStorageClass(";
+    printDLLStorageClassType(GV->getDLLStorageClass());
     Out << ");";
     nl(Out);
   }
@@ -1743,6 +1762,13 @@ void CppWriter::printFunctionHead(const Function* F) {
     printCppName(F);
     Out << "->setVisibility(";
     printVisibilityType(F->getVisibility());
+    Out << ");";
+    nl(Out);
+  }
+  if (F->getDLLStorageClass() != GlobalValue::DefaultStorageClass) {
+    printCppName(F);
+    Out << "->setDLLStorageClass(";
+    printDLLStorageClassType(F->getDLLStorageClass());
     Out << ");";
     nl(Out);
   }

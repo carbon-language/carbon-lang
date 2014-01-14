@@ -204,6 +204,7 @@ namespace llvm {
       bool HasLinkage; return ParseOptionalLinkage(Linkage, HasLinkage);
     }
     bool ParseOptionalVisibility(unsigned &Visibility);
+    bool ParseOptionalDLLStorageClass(unsigned &DLLStorageClass);
     bool ParseOptionalCallingConv(CallingConv::ID &CC);
     bool ParseOptionalAlignment(unsigned &Alignment);
     bool ParseScopeAndOrdering(bool isAtomic, SynchronizationScope &Scope,
@@ -234,8 +235,10 @@ namespace llvm {
     bool ParseUnnamedGlobal();
     bool ParseNamedGlobal();
     bool ParseGlobal(const std::string &Name, LocTy Loc, unsigned Linkage,
-                     bool HasLinkage, unsigned Visibility);
-    bool ParseAlias(const std::string &Name, LocTy Loc, unsigned Visibility);
+                     bool HasLinkage, unsigned Visibility,
+                     unsigned DLLStorageClass);
+    bool ParseAlias(const std::string &Name, LocTy Loc, unsigned Visibility,
+                    unsigned DLLStorageClass);
     bool ParseStandaloneMetadata();
     bool ParseNamedMetadata();
     bool ParseMDString(MDString *&Result);

@@ -658,7 +658,7 @@ for each library name referenced.
 MODULE_CODE_GLOBALVAR Record
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``[GLOBALVAR, pointer type, isconst, initid, linkage, alignment, section, visibility, threadlocal, unnamed_addr]``
+``[GLOBALVAR, pointer type, isconst, initid, linkage, alignment, section, visibility, threadlocal, unnamed_addr, dllstorageclass]``
 
 The ``GLOBALVAR`` record (code 7) marks the declaration or definition of a
 global variable. The operand fields are:
@@ -713,12 +713,20 @@ global variable. The operand fields are:
 * *unnamed_addr*: If present and non-zero, indicates that the variable has
   ``unnamed_addr``
 
+.. _dllstorageclass:
+
+* *dllstorageclass*: If present, an encoding of the DLL storage class of this variable:
+
+  * ``default``: code 0
+  * ``dllimport``: code 1
+  * ``dllexport``: code 2
+
 .. _FUNCTION:
 
 MODULE_CODE_FUNCTION Record
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``[FUNCTION, type, callingconv, isproto, linkage, paramattr, alignment, section, visibility, gc, prefix]``
+``[FUNCTION, type, callingconv, isproto, linkage, paramattr, alignment, section, visibility, gc, prefix, dllstorageclass]``
 
 The ``FUNCTION`` record (code 8) marks the declaration or definition of a
 function. The operand fields are:
@@ -762,10 +770,12 @@ function. The operand fields are:
 * *prefix*: If non-zero, the value index of the prefix data for this function,
   plus 1.
 
+* *dllstorageclass*: An encoding of the `dllstorageclass`_ of this function
+
 MODULE_CODE_ALIAS Record
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-``[ALIAS, alias type, aliasee val#, linkage, visibility]``
+``[ALIAS, alias type, aliasee val#, linkage, visibility, dllstorageclass]``
 
 The ``ALIAS`` record (code 9) marks the definition of an alias. The operand
 fields are
@@ -777,6 +787,8 @@ fields are
 * *linkage*: An encoding of the `linkage type`_ for this alias
 
 * *visibility*: If present, an encoding of the `visibility`_ of the alias
+
+* *dllstorageclass*: If present, an encoding of the `dllstorageclass`_ of the alias
 
 MODULE_CODE_PURGEVALS Record
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
