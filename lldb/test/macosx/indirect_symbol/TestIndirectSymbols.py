@@ -6,7 +6,7 @@ import lldb
 import lldbutil
 from lldbtest import *
 
-class TestObjCStepping(TestBase):
+class TestIndirectFunctions(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
