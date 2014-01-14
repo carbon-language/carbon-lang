@@ -421,11 +421,15 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
   Assert1(!GV.isDeclaration() ||
           GV.isMaterializable() ||
           GV.hasExternalLinkage() ||
+          GV.hasDLLImportLinkage() ||
           GV.hasExternalWeakLinkage() ||
           (isa<GlobalAlias>(GV) &&
            (GV.hasLocalLinkage() || GV.hasWeakLinkage())),
-          "Global is external, but doesn't have external or weak linkage!",
+  "Global is external, but doesn't have external or dllimport or weak linkage!",
           &GV);
+
+  Assert1(!GV.hasDLLImportLinkage() || GV.isDeclaration(),
+          "Global is marked as dllimport, but not external", &GV);
 
   Assert1(!GV.hasAppendingLinkage() || isa<GlobalVariable>(GV),
           "Only global variables can have appending linkage!", &GV);
@@ -452,7 +456,8 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
               &GV);
     }
   } else {
-    Assert1(GV.hasExternalLinkage() || GV.hasExternalWeakLinkage(),
+    Assert1(GV.hasExternalLinkage() || GV.hasDLLImportLinkage() ||
+            GV.hasExternalWeakLinkage(),
             "invalid linkage type for global declaration", &GV);
   }
 
@@ -496,11 +501,6 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
       }
     }
   }
-
-  Assert1(!GV.hasDLLImportStorageClass() ||
-          (GV.isDeclaration() && GV.hasExternalLinkage()) ||
-          GV.hasAvailableExternallyLinkage(),
-          "Global is marked as dllimport, but not external", &GV);
 
   if (!GV.hasInitializer()) {
     visitGlobalValue(GV);
@@ -1078,7 +1078,8 @@ void Verifier::visitFunction(Function &F) {
   if (F.isMaterializable()) {
     // Function has a body somewhere we can't see.
   } else if (F.isDeclaration()) {
-    Assert1(F.hasExternalLinkage() || F.hasExternalWeakLinkage(),
+    Assert1(F.hasExternalLinkage() || F.hasDLLImportLinkage() ||
+            F.hasExternalWeakLinkage(),
             "invalid linkage type for function declaration", &F);
   } else {
     // Verify that this function (which has a body) is not named "llvm.*".  It
@@ -1104,11 +1105,6 @@ void Verifier::visitFunction(Function &F) {
     if (F.hasAddressTaken(&U))
       Assert1(0, "Invalid user of intrinsic instruction!", U);
   }
-
-  Assert1(!F.hasDLLImportStorageClass() ||
-          (F.isDeclaration() && F.hasExternalLinkage()) ||
-          F.hasAvailableExternallyLinkage(),
-          "Function is marked as dllimport, but not external.", &F);
 }
 
 // verifyBasicBlock - Verify that a basic block is well formed...

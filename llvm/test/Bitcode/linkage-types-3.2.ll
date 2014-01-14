@@ -50,7 +50,7 @@
 ; CHECK: @dllexport.var = dllexport global i32 0
 
 @dllimport.var = dllimport global i32
-; CHECK: @dllimport.var = external dllimport global i32
+; CHECK: @dllimport.var = dllimport global i32
 
 define private void @private()
 ; CHECK: define private void @private

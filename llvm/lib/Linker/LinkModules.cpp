@@ -543,8 +543,8 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
   if (SrcIsDeclaration) {
     // If Src is external or if both Src & Dest are external..  Just link the
     // external globals, we aren't adding anything.
-    if (Src->hasDLLImportStorageClass()) {
-      // If one of GVs is marked as DLLImport, result should be dllimport'ed.
+    if (Src->hasDLLImportLinkage()) {
+      // If one of GVs has DLLImport linkage, result should be dllimport'ed.
       if (DestIsDeclaration) {
         LinkFromSrc = true;
         LT = Src->getLinkage();
@@ -557,7 +557,7 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
       LinkFromSrc = false;
       LT = Dest->getLinkage();
     }
-  } else if (DestIsDeclaration && !Dest->hasDLLImportStorageClass()) {
+  } else if (DestIsDeclaration && !Dest->hasDLLImportLinkage()) {
     // If Dest is external but Src is not:
     LinkFromSrc = true;
     LT = Src->getLinkage();
@@ -584,8 +584,10 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
       LT = GlobalValue::ExternalLinkage;
     }
   } else {
-    assert((Dest->hasExternalLinkage()  || Dest->hasExternalWeakLinkage()) &&
-           (Src->hasExternalLinkage()   || Src->hasExternalWeakLinkage()) &&
+    assert((Dest->hasExternalLinkage()  || Dest->hasDLLImportLinkage() ||
+            Dest->hasDLLExportLinkage() || Dest->hasExternalWeakLinkage()) &&
+           (Src->hasExternalLinkage()   || Src->hasDLLImportLinkage() ||
+            Src->hasDLLExportLinkage()  || Src->hasExternalWeakLinkage()) &&
            "Unexpected linkage type!");
     return emitError("Linking globals named '" + Src->getName() +
                  "': symbol multiply defined!");

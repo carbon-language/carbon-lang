@@ -697,7 +697,7 @@ bool X86FastISel::X86SelectCallAddress(const Value *V, X86AddressMode &AM) {
       return false;
 
     // Can't handle DLLImport.
-    if (GV->hasDLLImportStorageClass())
+    if (GV->hasDLLImportLinkage())
       return false;
 
     // Can't handle TLS.

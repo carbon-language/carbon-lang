@@ -80,8 +80,8 @@ static GlobalValue::LinkageTypes GetDecodedLinkage(unsigned Val) {
   case 2:  return GlobalValue::AppendingLinkage;
   case 3:  return GlobalValue::InternalLinkage;
   case 4:  return GlobalValue::LinkOnceAnyLinkage;
-  case 5:  return GlobalValue::ExternalLinkage; // Obsolete DLLImportLinkage
-  case 6:  return GlobalValue::ExternalLinkage; // Obsolete DLLExportLinkage
+  case 5:  return GlobalValue::DLLImportLinkage;
+  case 6:  return GlobalValue::DLLExportLinkage;
   case 7:  return GlobalValue::ExternalWeakLinkage;
   case 8:  return GlobalValue::CommonLinkage;
   case 9:  return GlobalValue::PrivateLinkage;
@@ -99,16 +99,6 @@ static GlobalValue::VisibilityTypes GetDecodedVisibility(unsigned Val) {
   case 0: return GlobalValue::DefaultVisibility;
   case 1: return GlobalValue::HiddenVisibility;
   case 2: return GlobalValue::ProtectedVisibility;
-  }
-}
-
-static GlobalValue::DLLStorageClassTypes
-GetDecodedDLLStorageClass(unsigned Val) {
-  switch (Val) {
-  default: // Map unknown values to default.
-  case 0: return GlobalValue::DefaultStorageClass;
-  case 1: return GlobalValue::DLLImportStorageClass;
-  case 2: return GlobalValue::DLLExportStorageClass;
   }
 }
 
@@ -200,13 +190,6 @@ static SynchronizationScope GetDecodedSynchScope(unsigned Val) {
   case bitc::SYNCHSCOPE_SINGLETHREAD: return SingleThread;
   default: // Map unknown scopes to cross-thread.
   case bitc::SYNCHSCOPE_CROSSTHREAD: return CrossThread;
-  }
-}
-
-static void UpgradeDLLImportExportLinkage(llvm::GlobalValue *GV, unsigned Val) {
-  switch (Val) {
-  case 5: GV->setDLLStorageClass(GlobalValue::DLLImportStorageClass); break;
-  case 6: GV->setDLLStorageClass(GlobalValue::DLLExportStorageClass); break;
   }
 }
 
@@ -1814,7 +1797,7 @@ error_code BitcodeReader::ParseModule(bool Resume) {
     }
     // GLOBALVAR: [pointer type, isconst, initid,
     //             linkage, alignment, section, visibility, threadlocal,
-    //             unnamed_addr, dllstorageclass]
+    //             unnamed_addr]
     case bitc::MODULE_CODE_GLOBALVAR: {
       if (Record.size() < 6)
         return Error(InvalidRecord);
@@ -1860,11 +1843,6 @@ error_code BitcodeReader::ParseModule(bool Resume) {
       NewGV->setVisibility(Visibility);
       NewGV->setUnnamedAddr(UnnamedAddr);
 
-      if (Record.size() > 10)
-        NewGV->setDLLStorageClass(GetDecodedDLLStorageClass(Record[10]));
-      else
-        UpgradeDLLImportExportLinkage(NewGV, Record[3]);
-
       ValueList.push_back(NewGV);
 
       // Remember which value to use for the global initializer.
@@ -1873,8 +1851,7 @@ error_code BitcodeReader::ParseModule(bool Resume) {
       break;
     }
     // FUNCTION:  [type, callingconv, isproto, linkage, paramattr,
-    //             alignment, section, visibility, gc, unnamed_addr,
-    //             dllstorageclass]
+    //             alignment, section, visibility, gc, unnamed_addr]
     case bitc::MODULE_CODE_FUNCTION: {
       if (Record.size() < 8)
         return Error(InvalidRecord);
@@ -1914,12 +1891,6 @@ error_code BitcodeReader::ParseModule(bool Resume) {
       Func->setUnnamedAddr(UnnamedAddr);
       if (Record.size() > 10 && Record[10] != 0)
         FunctionPrefixes.push_back(std::make_pair(Func, Record[10]-1));
-
-      if (Record.size() > 11)
-        Func->setDLLStorageClass(GetDecodedDLLStorageClass(Record[11]));
-      else
-        UpgradeDLLImportExportLinkage(Func, Record[3]);
-
       ValueList.push_back(Func);
 
       // If this is a function with a body, remember the prototype we are
@@ -1931,7 +1902,7 @@ error_code BitcodeReader::ParseModule(bool Resume) {
       break;
     }
     // ALIAS: [alias type, aliasee val#, linkage]
-    // ALIAS: [alias type, aliasee val#, linkage, visibility, dllstorageclass]
+    // ALIAS: [alias type, aliasee val#, linkage, visibility]
     case bitc::MODULE_CODE_ALIAS: {
       if (Record.size() < 3)
         return Error(InvalidRecord);
@@ -1946,10 +1917,6 @@ error_code BitcodeReader::ParseModule(bool Resume) {
       // Old bitcode files didn't have visibility field.
       if (Record.size() > 3)
         NewGA->setVisibility(GetDecodedVisibility(Record[3]));
-      if (Record.size() > 4)
-        NewGA->setDLLStorageClass(GetDecodedDLLStorageClass(Record[4]));
-      else
-        UpgradeDLLImportExportLinkage(NewGA, Record[2]);
       ValueList.push_back(NewGA);
       AliasInits.push_back(std::make_pair(NewGA, Record[1]));
       break;

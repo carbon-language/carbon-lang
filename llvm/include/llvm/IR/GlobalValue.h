@@ -42,6 +42,8 @@ public:
     PrivateLinkage,     ///< Like Internal, but omit from symbol table.
     LinkerPrivateLinkage, ///< Like Private, but linker removes.
     LinkerPrivateWeakLinkage, ///< Like LinkerPrivate, but weak.
+    DLLImportLinkage,   ///< Function to be imported from DLL
+    DLLExportLinkage,   ///< Function to be accessible from DLL.
     ExternalWeakLinkage,///< ExternalWeak linkage description.
     CommonLinkage       ///< Tentative definitions.
   };
@@ -53,19 +55,11 @@ public:
     ProtectedVisibility     ///< The GV is protected
   };
 
-  /// @brief Storage classes of global values for PE targets.
-  enum DLLStorageClassTypes {
-    DefaultStorageClass   = 0,
-    DLLImportStorageClass = 1, ///< Function to be imported from DLL
-    DLLExportStorageClass = 2  ///< Function to be accessible from DLL.
-  };
-
 protected:
   GlobalValue(Type *ty, ValueTy vty, Use *Ops, unsigned NumOps,
               LinkageTypes linkage, const Twine &Name)
     : Constant(ty, vty, Ops, NumOps), Linkage(linkage),
-      Visibility(DefaultVisibility), Alignment(0), UnnamedAddr(0),
-      DllStorageClass(DefaultStorageClass), Parent(0) {
+      Visibility(DefaultVisibility), Alignment(0), UnnamedAddr(0), Parent(0) {
     setName(Name);
   }
 
@@ -75,7 +69,6 @@ protected:
   unsigned Visibility : 2;    // The visibility style of this global
   unsigned Alignment : 16;    // Alignment of this symbol, must be power of two
   unsigned UnnamedAddr : 1;   // This value's address is not significant
-  unsigned DllStorageClass : 2; // DLL storage class
   Module *Parent;             // The containing module.
   std::string Section;        // Section to emit this into, empty mean default
 public:
@@ -98,18 +91,7 @@ public:
     return Visibility == ProtectedVisibility;
   }
   void setVisibility(VisibilityTypes V) { Visibility = V; }
-
-  DLLStorageClassTypes getDLLStorageClass() const {
-    return DLLStorageClassTypes(DllStorageClass);
-  }
-  bool hasDLLImportStorageClass() const {
-    return DllStorageClass == DLLImportStorageClass;
-  }
-  bool hasDLLExportStorageClass() const {
-    return DllStorageClass == DLLExportStorageClass;
-  }
-  void setDLLStorageClass(DLLStorageClassTypes C) { DllStorageClass = C; }
-
+  
   bool hasSection() const { return !Section.empty(); }
   const std::string &getSection() const { return Section; }
   void setSection(StringRef S) { Section = S; }
@@ -163,6 +145,12 @@ public:
   static bool isLocalLinkage(LinkageTypes Linkage) {
     return isInternalLinkage(Linkage) || isPrivateLinkage(Linkage) ||
       isLinkerPrivateLinkage(Linkage) || isLinkerPrivateWeakLinkage(Linkage);
+  }
+  static bool isDLLImportLinkage(LinkageTypes Linkage) {
+    return Linkage == DLLImportLinkage;
+  }
+  static bool isDLLExportLinkage(LinkageTypes Linkage) {
+    return Linkage == DLLExportLinkage;
   }
   static bool isExternalWeakLinkage(LinkageTypes Linkage) {
     return Linkage == ExternalWeakLinkage;
@@ -221,6 +209,8 @@ public:
     return isLinkerPrivateWeakLinkage(Linkage);
   }
   bool hasLocalLinkage() const { return isLocalLinkage(Linkage); }
+  bool hasDLLImportLinkage() const { return isDLLImportLinkage(Linkage); }
+  bool hasDLLExportLinkage() const { return isDLLExportLinkage(Linkage); }
   bool hasExternalWeakLinkage() const { return isExternalWeakLinkage(Linkage); }
   bool hasCommonLinkage() const { return isCommonLinkage(Linkage); }
 

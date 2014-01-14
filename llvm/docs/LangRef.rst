@@ -274,8 +274,27 @@ linkage:
     visible, meaning that it participates in linkage and can be used to
     resolve external symbol references.
 
+The next two types of linkage are targeted for Microsoft Windows
+platform only. They are designed to support importing (exporting)
+symbols from (to) DLLs (Dynamic Link Libraries).
+
+``dllimport``
+    "``dllimport``" linkage causes the compiler to reference a function
+    or variable via a global pointer to a pointer that is set up by the
+    DLL exporting the symbol. On Microsoft Windows targets, the pointer
+    name is formed by combining ``__imp_`` and the function or variable
+    name.
+``dllexport``
+    "``dllexport``" linkage causes the compiler to provide a global
+    pointer to a pointer in a DLL, so that it can be referenced with the
+    ``dllimport`` attribute. On Microsoft Windows targets, the pointer
+    name is formed by combining ``__imp_`` and the function or variable
+    name. Since this linkage exists for defining a dll interface, the
+    compiler, assembler and linker know it is externally referenced and
+    must refrain from deleting the symbol.
+
 It is illegal for a function *declaration* to have any linkage type
-other than ``external`` or ``extern_weak``.
+other than ``external``, ``dllimport`` or ``extern_weak``.
 
 .. _callingconv:
 
@@ -397,25 +416,6 @@ styles:
 
 .. _namedtypes:
 
-DLL Storage Classes
--------------------
-
-All Global Variables, Functions and Aliases can have one of the following
-DLL storage class:
-
-``dllimport``
-    "``dllimport``" causes the compiler to reference a function or variable via
-    a global pointer to a pointer that is set up by the DLL exporting the
-    symbol. On Microsoft Windows targets, the pointer name is formed by
-    combining ``__imp_`` and the function or variable name.
-``dllexport``
-    "``dllexport``" causes the compiler to provide a global pointer to a pointer
-    in a DLL, so that it can be referenced with the ``dllimport`` attribute. On
-    Microsoft Windows targets, the pointer name is formed by combining
-    ``__imp_`` and the function or variable name. Since this storage class
-    exists for defining a dll interface, the compiler, assembler and linker know
-    it is externally referenced and must refrain from deleting the symbol.
-
 Named Types
 -----------
 
@@ -529,15 +529,6 @@ assume that the globals are densely packed in their section and try to
 iterate over them as an array, alignment padding would break this
 iteration.
 
-Globals can also have a :ref:`DLL storage class <dllstorageclass>`.
-
-Syntax::
-
-    [@<GlobalVarName> =] [Linkage] [Visibility] [DLLStorageClass] [ThreadLocal]
-                         [AddrSpace] [unnamed_addr] [ExternallyInitialized]
-                         <global | constant> <Type>
-                         [, section "name"] [, align <Alignment>]
-
 For example, the following defines a global in a numbered address space
 with an initializer, section, and alignment:
 
@@ -565,8 +556,7 @@ Functions
 
 LLVM function definitions consist of the "``define``" keyword, an
 optional :ref:`linkage type <linkage>`, an optional :ref:`visibility
-style <visibility>`, an optional :ref:`DLL storage class <dllstorageclass>`,
-an optional :ref:`calling convention <callingconv>`,
+style <visibility>`, an optional :ref:`calling convention <callingconv>`,
 an optional ``unnamed_addr`` attribute, a return type, an optional
 :ref:`parameter attribute <paramattrs>` for the return type, a function
 name, a (possibly empty) argument list (each with optional :ref:`parameter
@@ -577,8 +567,7 @@ curly brace, a list of basic blocks, and a closing curly brace.
 
 LLVM function declarations consist of the "``declare``" keyword, an
 optional :ref:`linkage type <linkage>`, an optional :ref:`visibility
-style <visibility>`, an optional :ref:`DLL storage class <dllstorageclass>`,
-an optional :ref:`calling convention <callingconv>`,
+style <visibility>`, an optional :ref:`calling convention <callingconv>`,
 an optional ``unnamed_addr`` attribute, a return type, an optional
 :ref:`parameter attribute <paramattrs>` for the return type, a function
 name, a possibly empty list of arguments, an optional alignment, an optional
@@ -614,7 +603,7 @@ be significant and two identical functions can be merged.
 
 Syntax::
 
-    define [linkage] [visibility] [DLLStorageClass]
+    define [linkage] [visibility]
            [cconv] [ret attrs]
            <ResultType> @<FunctionName> ([argument list])
            [fn Attrs] [section "name"] [align N]
@@ -627,13 +616,12 @@ Aliases
 
 Aliases act as "second name" for the aliasee value (which can be either
 function, global variable, another alias or bitcast of global value).
-Aliases may have an optional :ref:`linkage type <linkage>`, an optional
-:ref:`visibility style <visibility>`, and an optional :ref:`DLL storage class
-<dllstorageclass>`.
+Aliases may have an optional :ref:`linkage type <linkage>`, and an optional
+:ref:`visibility style <visibility>`.
 
 Syntax::
 
-    @<Name> = [Visibility] [DLLStorageClass] alias [Linkage] <AliaseeTy> @<Aliasee>
+    @<Name> = alias [Linkage] [Visibility] <AliaseeTy> @<Aliasee>
 
 The linkage must be one of ``private``, ``linker_private``,
 ``linker_private_weak``, ``internal``, ``linkonce``, ``weak``,

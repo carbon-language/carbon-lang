@@ -116,7 +116,7 @@ static bool shouldInternalize(const GlobalValue &GV,
     return false;
 
   // Assume that dllexported symbols are referenced elsewhere
-  if (GV.hasDLLExportStorageClass())
+  if (GV.hasDLLExportLinkage())
     return false;
 
   // Already has internal linkage

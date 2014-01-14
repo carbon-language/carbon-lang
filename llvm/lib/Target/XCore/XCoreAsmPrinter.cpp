@@ -135,6 +135,10 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::InternalLinkage:
   case GlobalValue::PrivateLinkage:
     break;
+  case GlobalValue::DLLImportLinkage:
+    llvm_unreachable("DLLImport linkage is not supported by this target!");
+  case GlobalValue::DLLExportLinkage:
+    llvm_unreachable("DLLExport linkage is not supported by this target!");
   default:
     llvm_unreachable("Unknown linkage type!");
   }

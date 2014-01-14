@@ -481,6 +481,8 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
   case GlobalValue::AppendingLinkage:                return 2;
   case GlobalValue::InternalLinkage:                 return 3;
   case GlobalValue::LinkOnceAnyLinkage:              return 4;
+  case GlobalValue::DLLImportLinkage:                return 5;
+  case GlobalValue::DLLExportLinkage:                return 6;
   case GlobalValue::ExternalWeakLinkage:             return 7;
   case GlobalValue::CommonLinkage:                   return 8;
   case GlobalValue::PrivateLinkage:                  return 9;
@@ -500,15 +502,6 @@ static unsigned getEncodedVisibility(const GlobalValue *GV) {
   case GlobalValue::ProtectedVisibility: return 2;
   }
   llvm_unreachable("Invalid visibility");
-}
-
-static unsigned getEncodedDLLStorageClass(const GlobalValue *GV) {
-  switch (GV->getDLLStorageClass()) {
-  case GlobalValue::DefaultStorageClass:   return 0;
-  case GlobalValue::DLLImportStorageClass: return 1;
-  case GlobalValue::DLLExportStorageClass: return 2;
-  }
-  llvm_unreachable("Invalid DLL storage class");
 }
 
 static unsigned getEncodedThreadLocalMode(const GlobalVariable *GV) {
@@ -614,7 +607,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
 
     // GLOBALVAR: [type, isconst, initid,
     //             linkage, alignment, section, visibility, threadlocal,
-    //             unnamed_addr, externally_initialized, dllstorageclass]
+    //             unnamed_addr, externally_initialized]
     Vals.push_back(VE.getTypeID(GV->getType()));
     Vals.push_back(GV->isConstant());
     Vals.push_back(GV->isDeclaration() ? 0 :
@@ -624,13 +617,11 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Vals.push_back(GV->hasSection() ? SectionMap[GV->getSection()] : 0);
     if (GV->isThreadLocal() ||
         GV->getVisibility() != GlobalValue::DefaultVisibility ||
-        GV->hasUnnamedAddr() || GV->isExternallyInitialized() ||
-        GV->getDLLStorageClass() != GlobalValue::DefaultStorageClass) {
+        GV->hasUnnamedAddr() || GV->isExternallyInitialized()) {
       Vals.push_back(getEncodedVisibility(GV));
       Vals.push_back(getEncodedThreadLocalMode(GV));
       Vals.push_back(GV->hasUnnamedAddr());
       Vals.push_back(GV->isExternallyInitialized());
-      Vals.push_back(getEncodedDLLStorageClass(GV));
     } else {
       AbbrevToUse = SimpleGVarAbbrev;
     }
@@ -655,7 +646,6 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Vals.push_back(F->hasUnnamedAddr());
     Vals.push_back(F->hasPrefixData() ? (VE.getValueID(F->getPrefixData()) + 1)
                                       : 0);
-    Vals.push_back(getEncodedDLLStorageClass(F));
 
     unsigned AbbrevToUse = 0;
     Stream.EmitRecord(bitc::MODULE_CODE_FUNCTION, Vals, AbbrevToUse);
@@ -670,7 +660,6 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Vals.push_back(VE.getValueID(AI->getAliasee()));
     Vals.push_back(getEncodedLinkage(AI));
     Vals.push_back(getEncodedVisibility(AI));
-    Vals.push_back(getEncodedDLLStorageClass(AI));
     unsigned AbbrevToUse = 0;
     Stream.EmitRecord(bitc::MODULE_CODE_ALIAS, Vals, AbbrevToUse);
     Vals.clear();
