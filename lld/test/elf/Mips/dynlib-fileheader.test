@@ -21,7 +21,7 @@ CHECK:  Machine: EM_MIPS (0x8)
 CHECK:  Version: 1
 CHECK:  Entry: 0x170
 CHECK:  ProgramHeaderOffset: 0x34
-CHECK:  SectionHeaderOffset: 0x21C8
+CHECK:  SectionHeaderOffset: 0x21D8
 CHECK:  Flags [ (0x0)
 CHECK:  ]
 CHECK:  HeaderSize: 52

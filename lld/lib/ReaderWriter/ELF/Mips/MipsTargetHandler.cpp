@@ -157,6 +157,7 @@ bool MipsTargetHandler::createImplicitFiles(
 
   if (_context.isDynamic()) {
     file->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+    file->addAbsoluteAtom("_gp");
     file->addAbsoluteAtom("_gp_disp");
   }
   result.push_back(std::move(file));
@@ -172,6 +173,12 @@ void MipsTargetHandler::finalizeSymbolValues() {
     auto gotAtomIter = _targetLayout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
     assert(gotAtomIter != _targetLayout.absoluteAtoms().end());
     (*gotAtomIter)->_virtualAddr = gotSection ? gotSection->virtualAddr() : 0;
+
+    auto gpAtomIter = _targetLayout.findAbsoluteAtom("_gp");
+    assert(gpAtomIter != _targetLayout.absoluteAtoms().end());
+    (*gpAtomIter)->_virtualAddr =
+        gotSection ? gotSection->virtualAddr() + _targetLayout.getGPOffset()
+                   : 0;
 
     auto gpDispAtomIter = _targetLayout.findAbsoluteAtom("_gp_disp");
     assert(gpDispAtomIter != _targetLayout.absoluteAtoms().end());
