@@ -271,6 +271,7 @@ SparcTargetLowering::LowerReturn_64(SDValue Chain,
 
     // Integer return values must be sign or zero extended by the callee.
     switch (VA.getLocInfo()) {
+    case CCValAssign::Full: break;
     case CCValAssign::SExt:
       OutVal = DAG.getNode(ISD::SIGN_EXTEND, DL, VA.getLocVT(), OutVal);
       break;
@@ -279,8 +280,9 @@ SparcTargetLowering::LowerReturn_64(SDValue Chain,
       break;
     case CCValAssign::AExt:
       OutVal = DAG.getNode(ISD::ANY_EXTEND, DL, VA.getLocVT(), OutVal);
-    default:
       break;
+    default:
+      llvm_unreachable("Unknown loc info!");
     }
 
     // The custom bit on an i32 return value indicates that it should be passed

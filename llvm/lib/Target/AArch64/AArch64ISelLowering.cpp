@@ -1220,7 +1220,8 @@ AArch64TargetLowering::LowerFormalArguments(SDValue Chain,
       break;
     case CCValAssign::SExt:
     case CCValAssign::ZExt:
-    case CCValAssign::AExt: {
+    case CCValAssign::AExt:
+    case CCValAssign::FPExt: {
       unsigned DestSize = VA.getValVT().getSizeInBits();
       unsigned DestSubReg;
 
@@ -1441,7 +1442,8 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
     case CCValAssign::Full: break;
     case CCValAssign::SExt:
     case CCValAssign::ZExt:
-    case CCValAssign::AExt: {
+    case CCValAssign::AExt:
+    case CCValAssign::FPExt: {
       unsigned SrcSize = VA.getValVT().getSizeInBits();
       unsigned SrcSubReg;
 

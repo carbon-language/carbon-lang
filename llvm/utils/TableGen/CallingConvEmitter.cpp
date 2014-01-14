@@ -193,13 +193,18 @@ void CallingConvEmitter::EmitAction(Record *Action,
       O << IndentStr << "return false;\n";
     } else if (Action->isSubClassOf("CCPromoteToType")) {
       Record *DestTy = Action->getValueAsDef("DestTy");
-      O << IndentStr << "LocVT = " << getEnumName(getValueType(DestTy)) <<";\n";
-      O << IndentStr << "if (ArgFlags.isSExt())\n"
-        << IndentStr << IndentStr << "LocInfo = CCValAssign::SExt;\n"
-        << IndentStr << "else if (ArgFlags.isZExt())\n"
-        << IndentStr << IndentStr << "LocInfo = CCValAssign::ZExt;\n"
-        << IndentStr << "else\n"
-        << IndentStr << IndentStr << "LocInfo = CCValAssign::AExt;\n";
+      MVT::SimpleValueType DestVT = getValueType(DestTy);
+      O << IndentStr << "LocVT = " << getEnumName(DestVT) <<";\n";
+      if (MVT(DestVT).isFloatingPoint()) {
+        O << IndentStr << "LocInfo = CCValAssign::FPExt;\n";
+      } else {
+        O << IndentStr << "if (ArgFlags.isSExt())\n"
+          << IndentStr << IndentStr << "LocInfo = CCValAssign::SExt;\n"
+          << IndentStr << "else if (ArgFlags.isZExt())\n"
+          << IndentStr << IndentStr << "LocInfo = CCValAssign::ZExt;\n"
+          << IndentStr << "else\n"
+          << IndentStr << IndentStr << "LocInfo = CCValAssign::AExt;\n";
+      }
     } else if (Action->isSubClassOf("CCBitConvertToType")) {
       Record *DestTy = Action->getValueAsDef("DestTy");
       O << IndentStr << "LocVT = " << getEnumName(getValueType(DestTy)) <<";\n";
