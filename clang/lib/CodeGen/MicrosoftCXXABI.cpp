@@ -275,11 +275,6 @@ private:
   GetNullMemberPointerFields(const MemberPointerType *MPT,
                              llvm::SmallVectorImpl<llvm::Constant *> &fields);
 
-  /// \brief Finds the offset from the base of RD to the vbptr it uses, even if
-  /// it is reusing a vbptr from a non-virtual base.  RD must have morally
-  /// virtual bases.
-  CharUnits GetVBPtrOffsetFromBases(const CXXRecordDecl *RD);
-
   /// \brief Shared code for virtual base adjustment.  Returns the offset from
   /// the vbptr to the virtual base.  Optionally returns the address of the
   /// vbptr itself.
@@ -405,41 +400,13 @@ llvm::Value *MicrosoftCXXABI::adjustToCompleteObject(CodeGenFunction &CGF,
   return ptr;
 }
 
-/// \brief Finds the first non-virtual base of RD that has virtual bases.  If RD
-/// doesn't have a vbptr, it will reuse the vbptr of the returned class.
-static const CXXRecordDecl *FindFirstNVBaseWithVBases(const CXXRecordDecl *RD) {
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
-    const CXXRecordDecl *Base = I->getType()->getAsCXXRecordDecl();
-    if (!I->isVirtual() && Base->getNumVBases() > 0)
-      return Base;
-  }
-  llvm_unreachable("RD must have an nv base with vbases");
-}
-
-CharUnits MicrosoftCXXABI::GetVBPtrOffsetFromBases(const CXXRecordDecl *RD) {
-  assert(RD->getNumVBases());
-  CharUnits Total = CharUnits::Zero();
-  while (RD) {
-    const ASTRecordLayout &RDLayout = getContext().getASTRecordLayout(RD);
-    CharUnits VBPtrOffset = RDLayout.getVBPtrOffset();
-    // -1 is the sentinel for no vbptr.
-    if (VBPtrOffset != CharUnits::fromQuantity(-1)) {
-      Total += VBPtrOffset;
-      break;
-    }
-    RD = FindFirstNVBaseWithVBases(RD);
-    Total += RDLayout.getBaseClassOffset(RD);
-  }
-  return Total;
-}
-
 llvm::Value *
 MicrosoftCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
                                            llvm::Value *This,
                                            const CXXRecordDecl *ClassDecl,
                                            const CXXRecordDecl *BaseClassDecl) {
-  int64_t VBPtrChars = GetVBPtrOffsetFromBases(ClassDecl).getQuantity();
+  int64_t VBPtrChars =
+      getContext().getASTRecordLayout(ClassDecl).getVBPtrOffset().getQuantity();
   llvm::Value *VBPtrOffset = llvm::ConstantInt::get(CGM.PtrDiffTy, VBPtrChars);
   CharUnits IntSize = getContext().getTypeSizeInChars(getContext().IntTy);
   CharUnits VBTableChars =
@@ -1483,7 +1450,7 @@ MicrosoftCXXABI::EmitFullMemberPointer(llvm::Constant *FirstField,
   if (hasVBPtrOffsetField(Inheritance)) {
     CharUnits Offs = CharUnits::Zero();
     if (RD->getNumVBases())
-      Offs = GetVBPtrOffsetFromBases(RD);
+      Offs = getContext().getASTRecordLayout(RD).getVBPtrOffset();
     fields.push_back(llvm::ConstantInt::get(CGM.IntTy, Offs.getQuantity()));
   }
 
@@ -1762,9 +1729,8 @@ MicrosoftCXXABI::AdjustVirtualBase(CodeGenFunction &CGF,
   // know the vbptr offset.
   if (!VBPtrOffset) {
     CharUnits offs = CharUnits::Zero();
-    if (RD->getNumVBases()) {
-      offs = GetVBPtrOffsetFromBases(RD);
-    }
+    if (RD->getNumVBases())
+      offs = getContext().getASTRecordLayout(RD).getVBPtrOffset();
     VBPtrOffset = llvm::ConstantInt::get(CGM.IntTy, offs.getQuantity());
   }
   llvm::Value *VBPtr = 0;
