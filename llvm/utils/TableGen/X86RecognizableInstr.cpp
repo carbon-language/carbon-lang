@@ -80,7 +80,7 @@ namespace X86Local {
     XD = 11,  XS = 12,
     T8 = 13,  P_TA = 14,
     A6 = 15,  A7 = 16, T8XD = 17, T8XS = 18, TAXD = 19,
-    XOP8 = 20, XOP9 = 21, XOPA = 22, PD = 23, T8PD = 24, TAPD = 25,
+    XOP8 = 20, XOP9 = 21, XOPA = 22, PD = 23, T8PD = 24, TAPD = 25
   };
 }
 
