@@ -819,7 +819,6 @@ projects/llvm-test
 projects/poolalloc
 projects/llvm-poolalloc
 projects/sample
-projects/privbracket
 projects/safecode
 tools/polly'
 
@@ -3934,8 +3933,6 @@ do
     case ${i} in
       sample)       subdirs="$subdirs projects/sample"
     ;;
-      privbracket)  subdirs="$subdirs projects/privbracket"
- ;;
       safecode)     subdirs="$subdirs projects/safecode"
  ;;
       compiler-rt)       ;;
@@ -10609,7 +10606,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10612 "configure"
+#line 10609 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

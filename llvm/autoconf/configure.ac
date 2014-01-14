@@ -204,7 +204,6 @@ do
   if test -d ${srcdir}/projects/${i} ; then
     case ${i} in
       sample)       AC_CONFIG_SUBDIRS([projects/sample])    ;;
-      privbracket)  AC_CONFIG_SUBDIRS([projects/privbracket]) ;;
       safecode)     AC_CONFIG_SUBDIRS([projects/safecode]) ;;
       compiler-rt)       ;;
       test-suite)     ;;
