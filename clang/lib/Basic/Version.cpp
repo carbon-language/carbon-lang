@@ -102,11 +102,11 @@ std::string getClangFullRepositoryVersion() {
       OS << Revision;
     }
     OS << ')';
-  }  
+  }
   // Support LLVM in a separate repository.
   std::string LLVMRev = getLLVMRevision();
   if (!LLVMRev.empty() && LLVMRev != Revision) {
-    OS << " (";    
+    OS << " (";
     std::string LLVMRepo = getLLVMRepositoryPath();
     if (!LLVMRepo.empty())
       OS << LLVMRepo << ' ';
