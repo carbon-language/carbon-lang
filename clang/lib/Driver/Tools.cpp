@@ -4780,27 +4780,10 @@ void darwin::Link::AddLinkArgs(Compilation &C,
         << A->getAsString(Args);
   }
 
-  // Newer linkers support -demangle, pass it if supported and not disabled by
+  // Newer linkers support -demangle. Pass it if supported and not disabled by
   // the user.
-  if (Version[0] >= 100 && !Args.hasArg(options::OPT_Z_Xlinker__no_demangle)) {
-    // Don't pass -demangle to ld_classic.
-    //
-    // FIXME: This is a temporary workaround, ld should be handling this.
-    bool UsesLdClassic = (getToolChain().getArch() == llvm::Triple::x86 &&
-                          Args.hasArg(options::OPT_static));
-    if (getToolChain().getArch() == llvm::Triple::x86) {
-      for (arg_iterator it = Args.filtered_begin(options::OPT_Xlinker,
-                                                 options::OPT_Wl_COMMA),
-             ie = Args.filtered_end(); it != ie; ++it) {
-        const Arg *A = *it;
-        for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
-          if (StringRef(A->getValue(i)) == "-kext")
-            UsesLdClassic = true;
-      }
-    }
-    if (!UsesLdClassic)
-      CmdArgs.push_back("-demangle");
-  }
+  if (Version[0] >= 100 && !Args.hasArg(options::OPT_Z_Xlinker__no_demangle))
+    CmdArgs.push_back("-demangle");
 
   if (Args.hasArg(options::OPT_rdynamic) && Version[0] >= 137)
     CmdArgs.push_back("-export_dynamic");
