@@ -169,23 +169,21 @@ void MipsTargetHandler::finalizeSymbolValues() {
 
   if (_context.isDynamic()) {
     auto gotSection = _targetLayout.findOutputSection(".got");
+    auto got = gotSection ? gotSection->virtualAddr() : 0;
+    auto gp = gotSection ? got + _targetLayout.getGPOffset() : 0;
 
     auto gotAtomIter = _targetLayout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
     assert(gotAtomIter != _targetLayout.absoluteAtoms().end());
-    (*gotAtomIter)->_virtualAddr = gotSection ? gotSection->virtualAddr() : 0;
+    (*gotAtomIter)->_virtualAddr = got;
 
     auto gpAtomIter = _targetLayout.findAbsoluteAtom("_gp");
     assert(gpAtomIter != _targetLayout.absoluteAtoms().end());
-    (*gpAtomIter)->_virtualAddr =
-        gotSection ? gotSection->virtualAddr() + _targetLayout.getGPOffset()
-                   : 0;
+    (*gpAtomIter)->_virtualAddr = gp;
 
     auto gpDispAtomIter = _targetLayout.findAbsoluteAtom("_gp_disp");
     assert(gpDispAtomIter != _targetLayout.absoluteAtoms().end());
     _gpDispSymAtom = (*gpDispAtomIter);
-    _gpDispSymAtom->_virtualAddr =
-        gotSection ? gotSection->virtualAddr() + _targetLayout.getGPOffset()
-                   : 0;
+    _gpDispSymAtom->_virtualAddr = gp;
   }
 }
 
