@@ -1211,9 +1211,7 @@ void ExecutionEngine::emitGlobals() {
         }
 
         // If the existing global is strong, never replace it.
-        if (GVEntry->hasExternalLinkage() ||
-            GVEntry->hasDLLImportLinkage() ||
-            GVEntry->hasDLLExportLinkage())
+        if (GVEntry->hasExternalLinkage())
           continue;
 
         // Otherwise, we know it's linkonce/weak, replace it if this is a strong

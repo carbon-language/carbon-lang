@@ -257,7 +257,6 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
     }
     return;
-  case GlobalValue::DLLExportLinkage:
   case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
@@ -272,7 +271,6 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
     return;
   case GlobalValue::AvailableExternallyLinkage:
     llvm_unreachable("Should never emit this");
-  case GlobalValue::DLLImportLinkage:
   case GlobalValue::ExternalWeakLinkage:
     llvm_unreachable("Don't know how to emit these");
   }

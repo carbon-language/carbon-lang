@@ -55,7 +55,7 @@ unsigned char X86Subtarget::
 ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
   // DLLImport only exists on windows, it is implemented as a load from a
   // DLLIMPORT stub.
-  if (GV->hasDLLImportLinkage())
+  if (GV->hasDLLImportStorageClass())
     return X86II::MO_DLLIMPORT;
 
   // Determine whether this is a reference to a definition or a declaration.
