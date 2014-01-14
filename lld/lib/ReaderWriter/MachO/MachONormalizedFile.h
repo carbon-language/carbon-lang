@@ -244,8 +244,9 @@ struct NormalizedFile {
 
 
 /// Reads a mach-o file and produces an in-memory normalized view.
-ErrorOr<std::unique_ptr<NormalizedFile>> 
-readBinary(std::unique_ptr<MemoryBuffer> &mb);
+ErrorOr<std::unique_ptr<NormalizedFile>>
+readBinary(std::unique_ptr<MemoryBuffer> &mb,
+           const MachOLinkingContext::Arch arch);
 
 /// Takes in-memory normalized view and writes a mach-o object file.
 error_code 

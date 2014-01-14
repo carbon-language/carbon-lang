@@ -23,12 +23,12 @@ using namespace lld::mach_o::normalized;
 using namespace llvm::MachO;
 
 static std::unique_ptr<NormalizedFile>
-fromBinary(const uint8_t bytes[], unsigned length) {
-
+fromBinary(const uint8_t bytes[], unsigned length, StringRef archStr) {
   StringRef sr((const char*)bytes, length);
   std::unique_ptr<MemoryBuffer> mb(MemoryBuffer::getMemBuffer(sr, "", false));
-  ErrorOr<std::unique_ptr<NormalizedFile>> r
-                                    = lld::mach_o::normalized::readBinary(mb);
+  ErrorOr<std::unique_ptr<NormalizedFile>> r =
+      lld::mach_o::normalized::readBinary(
+          mb, lld::MachOLinkingContext::archFromName(archStr));
   EXPECT_FALSE(!r);
   return std::move(*r);
 }
@@ -59,7 +59,8 @@ TEST(BinaryReaderTest, empty_obj_x86_64) {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-  std::unique_ptr<NormalizedFile> f = fromBinary(fileBytes, sizeof(fileBytes));
+  std::unique_ptr<NormalizedFile> f =
+      fromBinary(fileBytes, sizeof(fileBytes), "x86_64");
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_x86_64);
   EXPECT_EQ((int)(f->fileType), MH_OBJECT);
   EXPECT_EQ((int)(f->flags), MH_SUBSECTIONS_VIA_SYMBOLS);
@@ -90,7 +91,8 @@ TEST(BinaryReaderTest, empty_obj_x86) {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-  std::unique_ptr<NormalizedFile> f = fromBinary(fileBytes, sizeof(fileBytes));
+  std::unique_ptr<NormalizedFile> f =
+      fromBinary(fileBytes, sizeof(fileBytes), "i386");
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_x86);
   EXPECT_EQ((int)(f->fileType), MH_OBJECT);
   EXPECT_EQ((int)(f->flags), MH_SUBSECTIONS_VIA_SYMBOLS);
@@ -121,7 +123,8 @@ TEST(BinaryReaderTest, empty_obj_ppc) {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-  std::unique_ptr<NormalizedFile> f = fromBinary(fileBytes, sizeof(fileBytes));
+  std::unique_ptr<NormalizedFile> f =
+      fromBinary(fileBytes, sizeof(fileBytes), "ppc");
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_ppc);
   EXPECT_EQ((int)(f->fileType), MH_OBJECT);
   EXPECT_EQ((int)(f->flags), MH_SUBSECTIONS_VIA_SYMBOLS);
@@ -152,7 +155,8 @@ TEST(BinaryReaderTest, empty_obj_armv7) {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-  std::unique_ptr<NormalizedFile> f = fromBinary(fileBytes, sizeof(fileBytes));
+  std::unique_ptr<NormalizedFile> f =
+      fromBinary(fileBytes, sizeof(fileBytes), "armv7");
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_armv7);
   EXPECT_EQ((int)(f->fileType), MH_OBJECT);
   EXPECT_EQ((int)(f->flags), MH_SUBSECTIONS_VIA_SYMBOLS);
@@ -161,7 +165,28 @@ TEST(BinaryReaderTest, empty_obj_armv7) {
   EXPECT_TRUE(f->undefinedSymbols.empty());
 }
 
+TEST(BinaryReaderTest, empty_obj_x86_64_arm7) {
+  const uint8_t fileBytes[] = {
+#include "empty_obj_x86_armv7.txt"
+  };
+  std::unique_ptr<NormalizedFile> f =
+      fromBinary(fileBytes, sizeof(fileBytes), "x86_64");
+  EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_x86_64);
+  EXPECT_EQ((int)(f->fileType), MH_OBJECT);
+  EXPECT_EQ((int)(f->flags), MH_SUBSECTIONS_VIA_SYMBOLS);
+  EXPECT_TRUE(f->localSymbols.empty());
+  EXPECT_TRUE(f->globalSymbols.empty());
+  EXPECT_TRUE(f->undefinedSymbols.empty());
 
+  std::unique_ptr<NormalizedFile> f2 =
+      fromBinary(fileBytes, sizeof(fileBytes), "armv7");
+  EXPECT_EQ(f2->arch, lld::MachOLinkingContext::arch_armv7);
+  EXPECT_EQ((int)(f2->fileType), MH_OBJECT);
+  EXPECT_EQ((int)(f2->flags), MH_SUBSECTIONS_VIA_SYMBOLS);
+  EXPECT_TRUE(f2->localSymbols.empty());
+  EXPECT_TRUE(f2->globalSymbols.empty());
+  EXPECT_TRUE(f2->undefinedSymbols.empty());
+}
 
 TEST(BinaryReaderTest, hello_obj_x86_64) {
   const uint8_t fileBytes[] = {
@@ -229,7 +254,8 @@ TEST(BinaryReaderTest, hello_obj_x86_64) {
     0x69, 0x6E, 0x00, 0x5F, 0x70, 0x72, 0x69, 0x6E,
     0x74, 0x66, 0x00, 0x4C, 0x5F, 0x2E, 0x73, 0x74,
     0x72, 0x00, 0x00, 0x00 };
-  std::unique_ptr<NormalizedFile> f = fromBinary(fileBytes, sizeof(fileBytes));
+  std::unique_ptr<NormalizedFile> f =
+      fromBinary(fileBytes, sizeof(fileBytes), "x86_64");
 
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_x86_64);
   EXPECT_EQ((int)(f->fileType), MH_OBJECT);
@@ -354,7 +380,8 @@ TEST(BinaryReaderTest, hello_obj_x86) {
     0x69, 0x6E, 0x00, 0x5F, 0x70, 0x72, 0x69, 0x6E,
     0x74, 0x66, 0x00, 0x00
   };
-  std::unique_ptr<NormalizedFile> f = fromBinary(fileBytes, sizeof(fileBytes));
+  std::unique_ptr<NormalizedFile> f =
+      fromBinary(fileBytes, sizeof(fileBytes), "i386");
 
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_x86);
   EXPECT_EQ((int)(f->fileType), MH_OBJECT);
@@ -486,7 +513,8 @@ TEST(BinaryReaderTest, hello_obj_armv7) {
     0x00, 0x5F, 0x6D, 0x61, 0x69, 0x6E, 0x00, 0x5F,
     0x70, 0x72, 0x69, 0x6E, 0x74, 0x66, 0x00, 0x00
   };
-  std::unique_ptr<NormalizedFile> f = fromBinary(fileBytes, sizeof(fileBytes));
+  std::unique_ptr<NormalizedFile> f =
+      fromBinary(fileBytes, sizeof(fileBytes), "armv7");
 
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_armv7);
   EXPECT_EQ((int)(f->fileType), MH_OBJECT);
@@ -630,7 +658,8 @@ TEST(BinaryReaderTest, hello_obj_ppc) {
     0x00, 0x5F, 0x6D, 0x61, 0x69, 0x6E, 0x00, 0x5F,
     0x70, 0x72, 0x69, 0x6E, 0x74, 0x66, 0x00, 0x00
   };
-  std::unique_ptr<NormalizedFile> f = fromBinary(fileBytes, sizeof(fileBytes));
+  std::unique_ptr<NormalizedFile> f =
+      fromBinary(fileBytes, sizeof(fileBytes), "ppc");
 
   EXPECT_EQ(f->arch, lld::MachOLinkingContext::arch_ppc);
   EXPECT_EQ((int)(f->fileType), MH_OBJECT);

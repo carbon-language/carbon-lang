@@ -32,21 +32,19 @@ using namespace lld::mach_o::normalized;
 // Parses binary mach-o file at specified path and returns
 // ownership of buffer to mb parameter and ownership of
 // Normalized file to nf parameter.
-static void
-fromBinary(StringRef path, std::unique_ptr<MemoryBuffer> &mb,
-                           std::unique_ptr<NormalizedFile> &nf) {
-
+static void fromBinary(StringRef path, std::unique_ptr<MemoryBuffer> &mb,
+                       std::unique_ptr<NormalizedFile> &nf, StringRef archStr) {
   OwningPtr<MemoryBuffer> opmb;
   error_code ec = MemoryBuffer::getFile(path, opmb);
   EXPECT_FALSE(ec);
   mb.reset(opmb.take());
 
-  ErrorOr<std::unique_ptr<NormalizedFile>> r
-                                    = lld::mach_o::normalized::readBinary(mb);
+  ErrorOr<std::unique_ptr<NormalizedFile>> r =
+      lld::mach_o::normalized::readBinary(
+          mb, lld::MachOLinkingContext::archFromName(archStr));
   EXPECT_FALSE(!r);
   nf.reset(r->release());
 }
-
 
 static Relocation
 makeReloc(unsigned addr, bool rel, bool ext, RelocationInfoType type,
@@ -159,7 +157,7 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
 
   std::unique_ptr<MemoryBuffer> bufferOwner;
   std::unique_ptr<NormalizedFile> f2;
-  fromBinary(tmpFl, bufferOwner, f2);
+  fromBinary(tmpFl, bufferOwner, f2, "x86_64");
 
   EXPECT_EQ(lld::MachOLinkingContext::arch_x86_64, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
@@ -269,7 +267,7 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
   }
   std::unique_ptr<MemoryBuffer> bufferOwner;
   std::unique_ptr<NormalizedFile> f2;
-  fromBinary(tmpFl, bufferOwner, f2);
+  fromBinary(tmpFl, bufferOwner, f2, "i386");
 
   EXPECT_EQ(lld::MachOLinkingContext::arch_x86, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
@@ -386,7 +384,7 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
   }
   std::unique_ptr<MemoryBuffer> bufferOwner;
   std::unique_ptr<NormalizedFile> f2;
-  fromBinary(tmpFl, bufferOwner, f2);
+  fromBinary(tmpFl, bufferOwner, f2, "armv7");
 
   EXPECT_EQ(lld::MachOLinkingContext::arch_armv7, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
@@ -541,7 +539,7 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
   }
   std::unique_ptr<MemoryBuffer> bufferOwner;
   std::unique_ptr<NormalizedFile> f2;
-  fromBinary(tmpFl, bufferOwner, f2);
+  fromBinary(tmpFl, bufferOwner, f2, "ppc");
 
   EXPECT_EQ(lld::MachOLinkingContext::arch_ppc, f2->arch);
   EXPECT_EQ(MH_OBJECT, f2->fileType);
@@ -692,8 +690,4 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
   error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
   EXPECT_FALSE(ec);
 }
-
-
-
-
 
