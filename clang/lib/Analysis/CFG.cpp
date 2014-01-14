@@ -3136,15 +3136,16 @@ CFGBlock *CFGBuilder::VisitCXXNewExpr(CXXNewExpr *NE,
 
   autoCreateBlock();
   appendStmt(Block, NE);
+
   if (NE->getInitializer())
-    Block = VisitStmt(NE->getInitializer(), asc);
+    Block = Visit(NE->getInitializer());
   if (BuildOpts.AddCXXNewAllocator)
     appendNewAllocator(Block, NE);
   if (NE->isArray())
-    Block = VisitStmt(NE->getArraySize(), asc);
+    Block = Visit(NE->getArraySize());
   for (CXXNewExpr::arg_iterator I = NE->placement_arg_begin(),
        E = NE->placement_arg_end(); I != E; ++I)
-    Block = VisitStmt(*I, asc);
+    Block = Visit(*I);
   return Block;
 }
 

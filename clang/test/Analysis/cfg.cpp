@@ -372,3 +372,32 @@ void test_placement_new_array() {
   int buffer[16];
   MyClass* obj = new (buffer) MyClass[5];
 }
+
+
+// For the helper function; see below.
+// CHECK: [B2 (ENTRY)]
+// CHECK-NEXT:   Succs (1): B1
+
+// CHECK: [B2 (ENTRY)]
+// CHECK-NEXT:   Succs (1): B1
+// CHECK: [B1]
+// CHECK-NEXT:   1: 0
+// CHECK-NEXT:   2: [B1.1] (ImplicitCastExpr, NullToPointer, PR18472_t)
+// CHECK-NEXT:   3: (PR18472_t)[B1.2] (CStyleCastExpr, NoOp, PR18472_t)
+// CHECK-NEXT:   4: CFGNewAllocator(int *)
+// CHECK-NEXT:   5: new (([B1.3])) int
+// CHECK-NEXT:   6: return [B1.5];
+// CHECK-NEXT:   Preds (1): B2
+// CHECK-NEXT:   Succs (1): B0
+// CHECK: [B0 (EXIT)]
+// CHECK-NEXT:   Preds (1): B1
+
+extern "C" typedef int *PR18472_t;
+void *operator new (unsigned long, PR18472_t);
+template <class T> T *PR18472() {
+  return new (((PR18472_t) 0)) T;
+}
+void PR18472_helper() {
+  PR18472<int>();
+}
+
