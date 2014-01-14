@@ -380,7 +380,7 @@ to the linker depending on the stage selection options).
 
 =item B<-###>
 
-Print the commands to run for this compilation.
+Print (but do not run) the commands to run for this compilation.
 
 =item B<--help>
 
