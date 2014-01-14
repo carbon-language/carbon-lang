@@ -139,12 +139,13 @@ static void MapRodata() {
 #endif
   if (tmpdir == 0)
     return;
-  char filename[256];
-  internal_snprintf(filename, sizeof(filename), "%s/tsan.rodata.%d",
+  char name[256];
+  internal_snprintf(name, sizeof(name), "%s/tsan.rodata.%d",
                     tmpdir, (int)internal_getpid());
-  uptr openrv = internal_open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
+  uptr openrv = internal_open(name, O_RDWR | O_CREAT | O_EXCL, 0600);
   if (internal_iserror(openrv))
     return;
+  internal_unlink(name);  // Unlink it now, so that we can reuse the buffer.
   fd_t fd = openrv;
   // Fill the file with kShadowRodata.
   const uptr kMarkerSize = 512 * 1024 / sizeof(u64);
@@ -157,13 +158,12 @@ static void MapRodata() {
                             MAP_PRIVATE | MAP_ANONYMOUS, fd, 0);
   if (internal_iserror(page)) {
     internal_close(fd);
-    internal_unlink(filename);
     return;
   }
   // Map the file into shadow of .rodata sections.
   MemoryMappingLayout proc_maps(/*cache_enabled*/true);
   uptr start, end, offset, prot;
-  char name[128];
+  // Reusing the buffer 'name'.
   while (proc_maps.Next(&start, &end, &offset, name, ARRAY_SIZE(name), &prot)) {
     if (name[0] != 0 && name[0] != '['
         && (prot & MemoryMappingLayout::kProtectionRead)
@@ -180,7 +180,6 @@ static void MapRodata() {
     }
   }
   internal_close(fd);
-  internal_unlink(filename);
 }
 
 void InitializeShadowMemory() {
