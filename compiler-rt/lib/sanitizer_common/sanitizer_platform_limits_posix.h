@@ -169,6 +169,11 @@ namespace __sanitizer {
   #elif !defined(__powerpc64__)
     uptr __unused0;
   #endif
+  #if defined(__x86_64__) && !defined(_LP64)
+    u64 shm_atime;
+    u64 shm_dtime;
+    u64 shm_ctime;
+  #else
     uptr shm_atime;
   #ifndef _LP64
     uptr __unused1;
@@ -181,14 +186,21 @@ namespace __sanitizer {
   #ifndef _LP64
     uptr __unused3;
   #endif
+  #endif
   #ifdef __powerpc__
     uptr shm_segsz;
   #endif
     int shm_cpid;
     int shm_lpid;
+  #if defined(__x86_64__) && !defined(_LP64)
+    u64 shm_nattch;
+    u64 __unused4;
+    u64 __unused5;
+  #else
     uptr shm_nattch;
     uptr __unused4;
     uptr __unused5;
+  #endif
   };
   #endif  // SANITIZER_LINUX && !SANITIZER_ANDROID
 
@@ -296,7 +308,11 @@ namespace __sanitizer {
   };
 #endif
 
+#if defined(__x86_64__) && !defined(_LP64)
+  typedef long long __sanitizer_clock_t;
+#else
   typedef long __sanitizer_clock_t;
+#endif
 
 #if SANITIZER_LINUX
 #if defined(_LP64) || defined(__x86_64__) || defined(__powerpc__)
