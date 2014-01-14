@@ -3913,44 +3913,60 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
     return;
   }
 
-  // Check the attribute arguments.
-  if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << Attr.getName() << 1;
-    Attr.setInvalid();
-    return;
-  }
-  Expr *ASArgExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
-  llvm::APSInt addrSpace(32);
-  if (ASArgExpr->isTypeDependent() || ASArgExpr->isValueDependent() ||
-      !ASArgExpr->isIntegerConstantExpr(addrSpace, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
-      << Attr.getName() << AANT_ArgumentIntegerConstant
-      << ASArgExpr->getSourceRange();
-    Attr.setInvalid();
-    return;
-  }
-
-  // Bounds checking.
-  if (addrSpace.isSigned()) {
-    if (addrSpace.isNegative()) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_address_space_negative)
+  unsigned ASIdx;
+  if (Attr.getKind() == AttributeList::AT_AddressSpace) {
+    // Check the attribute arguments.
+    if (Attr.getNumArgs() != 1) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+        << Attr.getName() << 1;
+      Attr.setInvalid();
+      return;
+    }
+    Expr *ASArgExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
+    llvm::APSInt addrSpace(32);
+    if (ASArgExpr->isTypeDependent() || ASArgExpr->isValueDependent() ||
+        !ASArgExpr->isIntegerConstantExpr(addrSpace, S.Context)) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+        << Attr.getName() << AANT_ArgumentIntegerConstant
         << ASArgExpr->getSourceRange();
       Attr.setInvalid();
       return;
     }
-    addrSpace.setIsSigned(false);
-  }
-  llvm::APSInt max(addrSpace.getBitWidth());
-  max = Qualifiers::MaxAddressSpace;
-  if (addrSpace > max) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_address_space_too_high)
-      << int(Qualifiers::MaxAddressSpace) << ASArgExpr->getSourceRange();
-    Attr.setInvalid();
-    return;
-  }
 
-  unsigned ASIdx = static_cast<unsigned>(addrSpace.getZExtValue());
+    // Bounds checking.
+    if (addrSpace.isSigned()) {
+      if (addrSpace.isNegative()) {
+        S.Diag(Attr.getLoc(), diag::err_attribute_address_space_negative)
+          << ASArgExpr->getSourceRange();
+        Attr.setInvalid();
+        return;
+      }
+      addrSpace.setIsSigned(false);
+    }
+    llvm::APSInt max(addrSpace.getBitWidth());
+    max = Qualifiers::MaxAddressSpace;
+    if (addrSpace > max) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_address_space_too_high)
+        << int(Qualifiers::MaxAddressSpace) << ASArgExpr->getSourceRange();
+      Attr.setInvalid();
+      return;
+    }
+    ASIdx = static_cast<unsigned>(addrSpace.getZExtValue());
+  } else {
+    // The keyword-based type attributes imply which address space to use.
+    switch (Attr.getKind()) {
+    case AttributeList::AT_OpenCLGlobalAddressSpace:
+      ASIdx = LangAS::opencl_global; break;
+    case AttributeList::AT_OpenCLLocalAddressSpace:
+      ASIdx = LangAS::opencl_local; break;
+    case AttributeList::AT_OpenCLConstantAddressSpace:
+      ASIdx = LangAS::opencl_constant; break;
+    default:
+      assert(Attr.getKind() == AttributeList::AT_OpenCLPrivateAddressSpace);
+      ASIdx = 0; break;
+    }
+  }
+  
   Type = S.Context.getAddrSpaceQualType(Type, ASIdx);
 }
 
@@ -4893,6 +4909,10 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       // it it breaks large amounts of Linux software.
       attr.setUsedAsTypeAttr();
       break;
+    case AttributeList::AT_OpenCLPrivateAddressSpace:
+    case AttributeList::AT_OpenCLGlobalAddressSpace:
+    case AttributeList::AT_OpenCLLocalAddressSpace:
+    case AttributeList::AT_OpenCLConstantAddressSpace:
     case AttributeList::AT_AddressSpace:
       HandleAddressSpaceTypeAttribute(type, attr, state.getSema());
       attr.setUsedAsTypeAttr();

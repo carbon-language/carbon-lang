@@ -648,9 +648,6 @@ public:
                                           syntax));
   }
 
-  AttributeList *createIntegerAttribute(ASTContext &C, IdentifierInfo *Name,
-                                        SourceLocation TokLoc, int Arg);
-
   AttributeList *createTypeTagForDatatype(
                     IdentifierInfo *attrName, SourceRange attrRange,
                     IdentifierInfo *scopeName, SourceLocation scopeLoc,
@@ -862,15 +859,6 @@ public:
     add(attr);
     return attr;
   }
-
-  AttributeList *addNewInteger(ASTContext &C, IdentifierInfo *name,
-                               SourceLocation loc, int arg) {
-    AttributeList *attr =
-      pool.createIntegerAttribute(C, name, loc, arg);
-    add(attr);
-    return attr;
-  }
-
 
 private:
   mutable AttributePool pool;

@@ -106,14 +106,6 @@ void AttributePool::takePool(AttributeList *pool) {
   } while (pool);
 }
 
-AttributeList *
-AttributePool::createIntegerAttribute(ASTContext &C, IdentifierInfo *Name,
-                                      SourceLocation TokLoc, int Arg) {
-  ArgsUnion IArg = IntegerLiteral::Create(C, llvm::APInt(32, (uint64_t) Arg),
-                                      C.IntTy, TokLoc);
-  return create(Name, TokLoc, 0, TokLoc, &IArg, 1, AttributeList::AS_GNU);
-}
-
 #include "clang/Sema/AttrParsedAttrKinds.inc"
 
 AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,

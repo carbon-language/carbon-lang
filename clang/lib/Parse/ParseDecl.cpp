@@ -651,55 +651,34 @@ void Parser::ParseOpenCLAttributes(ParsedAttributes &attrs) {
   }
 }
 
-void Parser::ParseOpenCLQualifiers(DeclSpec &DS) {
-  // FIXME: The mapping from attribute spelling to semantics should be
-  //        performed in Sema, not here.
-  SourceLocation Loc = Tok.getLocation();
-  switch(Tok.getKind()) {
+void Parser::ParseOpenCLQualifiers(ParsedAttributes &Attrs) {
+  IdentifierInfo *AttrName = Tok.getIdentifierInfo();
+  SourceLocation AttrNameLoc = Tok.getLocation();
+  ArgsUnion Expr;
+  switch (Tok.getKind()) {
     // OpenCL qualifiers:
     case tok::kw___private:
-      DS.getAttributes().addNewInteger(
-          Actions.getASTContext(),
-          PP.getIdentifierInfo("address_space"), Loc, 0);
-      break;
-
     case tok::kw___global:
-      DS.getAttributes().addNewInteger(
-          Actions.getASTContext(),
-          PP.getIdentifierInfo("address_space"), Loc, LangAS::opencl_global);
-      break;
-
     case tok::kw___local:
-      DS.getAttributes().addNewInteger(
-          Actions.getASTContext(),
-          PP.getIdentifierInfo("address_space"), Loc, LangAS::opencl_local);
-      break;
-
     case tok::kw___constant:
-      DS.getAttributes().addNewInteger(
-          Actions.getASTContext(),
-          PP.getIdentifierInfo("address_space"), Loc, LangAS::opencl_constant);
+      // These are handled automatically below and have no args.
       break;
-
     case tok::kw___read_only:
-      DS.getAttributes().addNewInteger(
-          Actions.getASTContext(),
-          PP.getIdentifierInfo("opencl_image_access"), Loc, CLIA_read_only);
+      Expr = Actions.ActOnIntegerConstant(SourceLocation(),
+                                          CLIA_read_only).take();
       break;
-
     case tok::kw___write_only:
-      DS.getAttributes().addNewInteger(
-          Actions.getASTContext(),
-          PP.getIdentifierInfo("opencl_image_access"), Loc, CLIA_write_only);
+      Expr = Actions.ActOnIntegerConstant(SourceLocation(),
+                                          CLIA_write_only).take();
       break;
-
     case tok::kw___read_write:
-      DS.getAttributes().addNewInteger(
-          Actions.getASTContext(),
-          PP.getIdentifierInfo("opencl_image_access"), Loc, CLIA_read_write);
+      Expr = Actions.ActOnIntegerConstant(SourceLocation(),
+                                          CLIA_read_write).take();
       break;
-    default: break;
+    default: llvm_unreachable("Unknown OpenCL qualifier");
   }
+  Attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, &Expr,
+               Expr.isNull() ? 0 : 1, AttributeList::AS_Keyword);
 }
 
 /// \brief Parse a version number.
@@ -3235,7 +3214,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw___read_only:
     case tok::kw___write_only:
     case tok::kw___read_write:
-      ParseOpenCLQualifiers(DS);
+      ParseOpenCLQualifiers(DS.getAttributes());
       break;
 
     case tok::less:
@@ -4468,7 +4447,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
     case tok::kw___read_only:
     case tok::kw___write_only:
     case tok::kw___read_write:
-      ParseOpenCLQualifiers(DS);
+      ParseOpenCLQualifiers(DS.getAttributes());
       break;
 
     case tok::kw___uptr:
