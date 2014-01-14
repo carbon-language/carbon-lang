@@ -816,18 +816,17 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
   }
 
   if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
-    unsigned NewIdx = NewMI->getOperand(0).getSubReg();
+    unsigned NewIdx;
     const TargetRegisterClass *RCForInst;
-    if (NewIdx)
-      RCForInst = TRI->getMatchingSuperRegClass(MRI->getRegClass(DstReg), DefRC,
-                                                NewIdx);
 
     if (MRI->constrainRegClass(DstReg, DefRC)) {
       // The materialized instruction is quite capable of setting DstReg
       // directly, but it may still have a now-trivial subregister index which
       // we should clear.
       NewMI->getOperand(0).setSubReg(0);
-    } else if (NewIdx && RCForInst) {
+    } else if ((NewIdx = NewMI->getOperand(0).getSubReg()) &&
+               (RCForInst = TRI->getMatchingSuperRegClass(
+                 MRI->getRegClass(DstReg), DefRC, NewIdx))) {
       // The subreg index on NewMI is essential; we still have to make sure
       // DstReg:idx is in a class that NewMI can use.
       MRI->constrainRegClass(DstReg, RCForInst);
