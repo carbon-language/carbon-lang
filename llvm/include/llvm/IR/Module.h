@@ -454,12 +454,10 @@ public:
   /// Make sure all GlobalValues in this Module are fully read.
   error_code materializeAll();
 
-  /// MaterializeAllPermanently - Make sure all GlobalValues in this Module are
-  /// fully read and clear the Materializer.  If the module is corrupt, this
-  /// returns true, fills in the optional string with information about the
-  /// problem, and DOES NOT clear the old Materializer.  If successful, this
-  /// returns false.
-  bool MaterializeAllPermanently(std::string *ErrInfo = 0);
+  /// Make sure all GlobalValues in this Module are fully read and clear the
+  /// Materializer. If the module is corrupt, this DOES NOT clear the old
+  /// Materializer.
+  error_code materializeAllPermanently();
 
 /// @}
 /// @name Direct access to the globals list, functions list, and symbol table

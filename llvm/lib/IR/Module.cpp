@@ -383,14 +383,12 @@ error_code Module::materializeAll() {
   return Materializer->MaterializeModule(this);
 }
 
-bool Module::MaterializeAllPermanently(std::string *ErrInfo) {
-  if (error_code EC = materializeAll()) {
-    if (ErrInfo)
-      *ErrInfo = EC.message();
-    return true;
-  }
+error_code Module::materializeAllPermanently() {
+  if (error_code EC = materializeAll())
+    return EC;
+
   Materializer.reset();
-  return false;
+  return error_code::success();
 }
 
 //===----------------------------------------------------------------------===//

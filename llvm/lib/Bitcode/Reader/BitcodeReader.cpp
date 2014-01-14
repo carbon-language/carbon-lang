@@ -3359,7 +3359,9 @@ Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext& Context,
   static_cast<BitcodeReader*>(M->getMaterializer())->setBufferOwned(false);
 
   // Read in the entire module, and destroy the BitcodeReader.
-  if (M->MaterializeAllPermanently(ErrMsg)) {
+  if (error_code EC = M->materializeAllPermanently()) {
+    if (ErrMsg)
+      *ErrMsg = EC.message();
     delete M;
     return 0;
   }

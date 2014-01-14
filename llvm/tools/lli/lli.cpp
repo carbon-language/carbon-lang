@@ -413,11 +413,10 @@ int main(int argc, char **argv, char * const *envp) {
   }
 
   // If not jitting lazily, load the whole bitcode file eagerly too.
-  std::string ErrorMsg;
   if (NoLazyCompilation) {
-    if (Mod->MaterializeAllPermanently(&ErrorMsg)) {
+    if (error_code EC = Mod->materializeAllPermanently()) {
       errs() << argv[0] << ": bitcode didn't read correctly.\n";
-      errs() << "Reason: " << ErrorMsg << "\n";
+      errs() << "Reason: " << EC.message() << "\n";
       exit(1);
     }
   }
@@ -433,6 +432,7 @@ int main(int argc, char **argv, char * const *envp) {
     DebugIRPass->runOnModule(*Mod);
   }
 
+  std::string ErrorMsg;
   EngineBuilder builder(Mod);
   builder.setMArch(MArch);
   builder.setMCPU(MCPU);
