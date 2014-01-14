@@ -26,18 +26,58 @@ namespace llvm {
 // only here for testing purposes and is therefore intended to be the simplest
 // implementation that will work.  It is assumed that the parent and child
 // share characteristics like endianness.
+//
+// Quick description of the protocol:
+//
+// { Header + Payload Size + Payload }
+//
+// The protocol message consist of a header, the payload size (which can be
+// zero), and the payload itself. The payload can contain any number of items,
+// and the size has to be the sum of them all. Each end is responsible for
+// reading/writing the correct number of items with the correct sizes.
+//
+// The current four known exchanges are:
+//
+//  * Allocate Space:
+//   Parent: { LLI_AllocateSpace, 8, Alignment, Size }
+//    Child: { LLI_AllocationResult, 8, Address }
+//
+//  * Load Data:
+//   Parent: { LLI_LoadDataSection, 8+Size, Address, Data }
+//    Child: { LLI_LoadComplete, 4, StatusCode }
+//
+//  * Load Code:
+//   Parent: { LLI_LoadCodeSection, 8+Size, Address, Code }
+//    Child: { LLI_LoadComplete, 4, StatusCode }
+//
+//  * Execute Code:
+//   Parent: { LLI_Execute, 8, Address }
+//    Child: { LLI_ExecutionResult, 4, Result }
+//
+// It is the responsibility of either side to check for correct headers,
+// sizes and payloads, since any inconsistency would misalign the pipe, and
+// result in data corruption.
 
 enum LLIMessageType {
   LLI_Error = -1,
   LLI_ChildActive = 0,        // Data = not used
-  LLI_AllocateSpace,          // Data = struct { uint_32t Align, uint_32t Size }
-  LLI_AllocationResult,       // Data = uint64_t AllocAddress (in Child memory space)
-  LLI_LoadCodeSection,        // Data = uint32_t Addr, followed by section contests
-  LLI_LoadDataSection,        // Data = uint32_t Addr, followed by section contents
-  LLI_LoadComplete,           // Data = not used
-  LLI_Execute,                // Data = Address of function to execute
-  LLI_ExecutionResult,        // Data = uint64_t Result
+  LLI_AllocateSpace,          // Data = struct { uint32_t Align, uint_32t Size }
+  LLI_AllocationResult,       // Data = uint64_t Address (child memory space)
+
+  LLI_LoadCodeSection,        // Data = uint64_t Address, void * SectionData
+  LLI_LoadDataSection,        // Data = uint64_t Address, void * SectionData
+  LLI_LoadResult,             // Data = uint32_t LLIMessageStatus
+
+  LLI_Execute,                // Data = uint64_t Address
+  LLI_ExecutionResult,        // Data = uint32_t Result
+
   LLI_Terminate               // Data = not used
+};
+
+enum LLIMessageStatus {
+  LLI_Status_Success = 0,     // Operation succeeded
+  LLI_Status_NotAllocated,    // Address+Size not allocated in child space
+  LLI_Status_IncompleteMsg    // Size received doesn't match request
 };
 
 } // end namespace llvm

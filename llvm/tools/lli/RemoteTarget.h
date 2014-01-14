@@ -25,10 +25,12 @@
 namespace llvm {
 
 class RemoteTarget {
-  std::string ErrorMsg;
   bool IsRunning;
 
   SmallVector<sys::MemoryBlock, 16> Allocations;
+
+protected:
+  std::string ErrorMsg;
 
 public:
   StringRef getErrorMsg() const { return ErrorMsg; }
@@ -39,7 +41,7 @@ public:
   /// @param      Alignment Required minimum alignment for allocated space.
   /// @param[out] Address   Remote address of the allocated memory.
   ///
-  /// @returns False on success. On failure, ErrorMsg is updated with
+  /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
   virtual bool allocateSpace(size_t Size,
                              unsigned Alignment,
@@ -51,7 +53,7 @@ public:
   /// @param      Data      Source address in the host process.
   /// @param      Size      Number of bytes to copy.
   ///
-  /// @returns False on success. On failure, ErrorMsg is updated with
+  /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
   virtual bool loadData(uint64_t Address,
                         const void *Data,
@@ -63,7 +65,7 @@ public:
   /// @param      Data      Source address in the host process.
   /// @param      Size      Number of bytes to copy.
   ///
-  /// @returns False on success. On failure, ErrorMsg is updated with
+  /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
   virtual bool loadCode(uint64_t Address,
                         const void *Data,
@@ -76,7 +78,7 @@ public:
   ///                       process.
   /// @param[out] RetVal    The integer return value of the called function.
   ///
-  /// @returns False on success. On failure, ErrorMsg is updated with
+  /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
   virtual bool executeCode(uint64_t Address,
                            int &RetVal);
@@ -89,12 +91,12 @@ public:
   virtual unsigned getPageAlignment() { return 4096; }
 
   /// Start the remote process.
-  virtual void create();
+  virtual bool create();
 
   /// Terminate the remote process.
   virtual void stop();
 
-  RemoteTarget() : ErrorMsg(""), IsRunning(false) {}
+  RemoteTarget() : IsRunning(false), ErrorMsg("") {}
   virtual ~RemoteTarget() { if (IsRunning) stop(); }
 
   // Create an instance of the system-specific remote target class.

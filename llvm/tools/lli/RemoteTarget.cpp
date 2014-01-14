@@ -56,34 +56,35 @@ bool RemoteTarget::allocateSpace(size_t Size, unsigned Alignment,
   sys::MemoryBlock *Prev = Allocations.size() ? &Allocations.back() : NULL;
   sys::MemoryBlock Mem = sys::Memory::AllocateRWX(Size, Prev, &ErrorMsg);
   if (Mem.base() == NULL)
-    return true;
+    return false;
   if ((uintptr_t)Mem.base() % Alignment) {
     ErrorMsg = "unable to allocate sufficiently aligned memory";
-    return true;
+    return false;
   }
   Address = reinterpret_cast<uint64_t>(Mem.base());
-  return false;
+  return true;
 }
 
 bool RemoteTarget::loadData(uint64_t Address, const void *Data, size_t Size) {
   memcpy ((void*)Address, Data, Size);
-  return false;
+  return true;
 }
 
 bool RemoteTarget::loadCode(uint64_t Address, const void *Data, size_t Size) {
   memcpy ((void*)Address, Data, Size);
   sys::MemoryBlock Mem((void*)Address, Size);
   sys::Memory::setExecutable(Mem, &ErrorMsg);
-  return false;
+  return true;
 }
 
 bool RemoteTarget::executeCode(uint64_t Address, int &RetVal) {
   int (*fn)(void) = (int(*)(void))Address;
   RetVal = fn();
-  return false;
+  return true;
 }
 
-void RemoteTarget::create() {
+bool RemoteTarget::create() {
+  return true;
 }
 
 void RemoteTarget::stop() {

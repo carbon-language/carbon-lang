@@ -30,7 +30,7 @@ struct ConnectionData_t {
 
 namespace llvm {
 
-void RemoteTargetExternal::create() {
+bool RemoteTargetExternal::create() {
   int PipeFD[2][2];
   pid_t ChildPID;
 
@@ -73,16 +73,53 @@ void RemoteTargetExternal::create() {
     // Store the parent ends of the pipes
     ConnectionData = (void*)new ConnectionData_t(PipeFD[1][0], PipeFD[0][1]);
 
-    Receive(LLI_ChildActive);
+    // We must get Ack from the client (blocking read)
+    if (!Receive(LLI_ChildActive)) {
+      ErrorMsg += ", (RemoteTargetExternal::create) - Stopping process!";
+      stop();
+      return false;
+    }
+  }
+  return true;
+}
+
+static void ReportError(int rc, size_t Size, std::string &ErrorMsg) {
+  if (rc == -1) {
+    if (errno == EPIPE)
+      ErrorMsg += "pipe closed";
+    else if (errno == EINTR)
+      ErrorMsg += "interrupted";
+    else
+      ErrorMsg += "file descriptor error";
+  } else {
+    char Number[10] = { 0 };
+    ErrorMsg += "Expecting ";
+    sprintf(Number, "%d", (uint32_t)Size);
+    ErrorMsg += Number;
+    ErrorMsg += " bytes, Got ";
+    sprintf(Number, "%d", rc);
+    ErrorMsg += Number;
   }
 }
 
-int RemoteTargetExternal::WriteBytes(const void *Data, size_t Size) {
-  return write(((ConnectionData_t*)ConnectionData)->OutputPipe, Data, Size);
+bool RemoteTargetExternal::WriteBytes(const void *Data, size_t Size) {
+  int rc = write(((ConnectionData_t*)ConnectionData)->OutputPipe, Data, Size);
+  if (rc != -1 && (size_t)rc == Size)
+    return true;
+
+  ErrorMsg = "WriteBytes: ";
+  ReportError(rc, Size, ErrorMsg);
+  return false;
 }
 
-int RemoteTargetExternal::ReadBytes(void *Data, size_t Size) {
-  return read(((ConnectionData_t*)ConnectionData)->InputPipe, Data, Size);
+bool RemoteTargetExternal::ReadBytes(void *Data, size_t Size) {
+  int rc = read(((ConnectionData_t*)ConnectionData)->InputPipe, Data, Size);
+  if (rc != -1 && (size_t)rc == Size)
+    return true;
+
+  ErrorMsg = "ReadBytes: ";
+  ReportError(rc, Size, ErrorMsg);
+  return false;
 }
 
 void RemoteTargetExternal::Wait() {

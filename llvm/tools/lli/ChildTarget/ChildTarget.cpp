@@ -25,8 +25,8 @@ private:
   // Outgoing message handlers
   void sendChildActive();
   void sendAllocationResult(uint64_t Addr);
-  void sendLoadComplete();
-  void sendExecutionComplete(uint64_t Result);
+  void sendLoadStatus(uint32_t Status);
+  void sendExecutionComplete(int Result);
 
   // OS-specific functions
   void initializeConnection();
@@ -36,6 +36,7 @@ private:
   void makeSectionExecutable(uint64_t Addr, uint32_t Size);
   void InvalidateInstructionCache(const void *Addr, size_t Len);
   void releaseMemory(uint64_t Addr, uint32_t Size);
+  bool isAllocatedMemory(uint64_t Address, uint32_t Size);
 
   // Store a map of allocated buffers to sizes.
   typedef std::map<uint64_t, uint32_t> AllocMapType;
@@ -121,33 +122,36 @@ void LLIChildTarget::handleLoadSection(bool IsCode) {
   // Read the message data size.
   uint32_t DataSize;
   int rc = ReadBytes(&DataSize, 4);
+  (void)rc;
   assert(rc == 4);
 
   // Read the target load address.
   uint64_t Addr;
   rc = ReadBytes(&Addr, 8);
   assert(rc == 8);
-
   size_t BufferSize = DataSize - 8;
 
-  // FIXME: Verify that this is in allocated space
+  if (!isAllocatedMemory(Addr, BufferSize))
+    return sendLoadStatus(LLI_Status_NotAllocated);
 
   // Read section data into previously allocated buffer
-  rc = ReadBytes((void*)Addr, DataSize - 8);
-  assert(rc == (int)(BufferSize));
+  rc = ReadBytes((void*)Addr, BufferSize);
+  if (rc != (int)(BufferSize))
+    return sendLoadStatus(LLI_Status_IncompleteMsg);
 
   // If IsCode, mark memory executable
   if (IsCode)
     makeSectionExecutable(Addr, BufferSize);
 
   // Send MarkLoadComplete message.
-  sendLoadComplete();
+  sendLoadStatus(LLI_Status_Success);
 }
 
 void LLIChildTarget::handleExecute() {
   // Read the message data size.
   uint32_t DataSize;
   int rc = ReadBytes(&DataSize, 4);
+  (void)rc;
   assert(rc == 4);
   assert(DataSize == 8);
 
@@ -162,7 +166,7 @@ void LLIChildTarget::handleExecute() {
   Result = fn();
 
   // Send ExecutionResult message.
-  sendExecutionComplete((int64_t)Result);
+  sendExecutionComplete(Result);
 }
 
 void LLIChildTarget::handleTerminate() {
@@ -175,11 +179,26 @@ void LLIChildTarget::handleTerminate() {
   m_AllocatedBufferMap.clear();
 }
 
+bool LLIChildTarget::isAllocatedMemory(uint64_t Address, uint32_t Size) {
+  uint64_t End = Address+Size;
+  AllocMapType::iterator ItBegin = m_AllocatedBufferMap.begin();
+  AllocMapType::iterator ItEnd = m_AllocatedBufferMap.end();
+  for (AllocMapType::iterator It = ItBegin; It != ItEnd; ++It) {
+    uint64_t A = It->first;
+    uint64_t E = A + It->second;
+    // Starts and finishes inside allocated region
+    if (Address >= A && End <= E)
+      return true;
+  }
+  return false;
+}
+
 // Outgoing message handlers
 void LLIChildTarget::sendChildActive() {
   // Write the message type.
   uint32_t MsgType = (uint32_t)LLI_ChildActive;
   int rc = WriteBytes(&MsgType, 4);
+  (void)rc;
   assert(rc == 4);
 
   // Write the data size.
@@ -192,6 +211,7 @@ void LLIChildTarget::sendAllocationResult(uint64_t Addr) {
   // Write the message type.
   uint32_t MsgType = (uint32_t)LLI_AllocationResult;
   int rc = WriteBytes(&MsgType, 4);
+  (void)rc;
   assert(rc == 4);
 
   // Write the data size.
@@ -204,33 +224,39 @@ void LLIChildTarget::sendAllocationResult(uint64_t Addr) {
   assert(rc == 8);
 }
 
-void LLIChildTarget::sendLoadComplete() {
+void LLIChildTarget::sendLoadStatus(uint32_t Status) {
   // Write the message type.
-  uint32_t MsgType = (uint32_t)LLI_LoadComplete;
+  uint32_t MsgType = (uint32_t)LLI_LoadResult;
   int rc = WriteBytes(&MsgType, 4);
+  (void)rc;
   assert(rc == 4);
 
   // Write the data size.
-  uint32_t DataSize = 0;
-  rc = WriteBytes(&DataSize, 4);
-  assert(rc == 4);
-}
-
-void LLIChildTarget::sendExecutionComplete(uint64_t Result) {
-  // Write the message type.
-  uint32_t MsgType = (uint32_t)LLI_ExecutionResult;
-  int rc = WriteBytes(&MsgType, 4);
-  assert(rc == 4);
-
-
-  // Write the data size.
-  uint32_t DataSize = 8;
+  uint32_t DataSize = 4;
   rc = WriteBytes(&DataSize, 4);
   assert(rc == 4);
 
   // Write the result.
-  rc = WriteBytes(&Result, 8);
-  assert(rc == 8);
+  rc = WriteBytes(&Status, 4);
+  assert(rc == 4);
+}
+
+void LLIChildTarget::sendExecutionComplete(int Result) {
+  // Write the message type.
+  uint32_t MsgType = (uint32_t)LLI_ExecutionResult;
+  int rc = WriteBytes(&MsgType, 4);
+  (void)rc;
+  assert(rc == 4);
+
+
+  // Write the data size.
+  uint32_t DataSize = 4;
+  rc = WriteBytes(&DataSize, 4);
+  assert(rc == 4);
+
+  // Write the result.
+  rc = WriteBytes(&Result, 4);
+  assert(rc == 4);
 }
 
 #ifdef LLVM_ON_UNIX

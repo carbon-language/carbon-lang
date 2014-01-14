@@ -35,7 +35,7 @@ public:
   /// @param      Alignment Required minimum alignment for allocated space.
   /// @param[out] Address   Remote address of the allocated memory.
   ///
-  /// @returns False on success. On failure, ErrorMsg is updated with
+  /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
   virtual bool allocateSpace(size_t Size,
                              unsigned Alignment,
@@ -47,7 +47,7 @@ public:
   /// @param      Data      Source address in the host process.
   /// @param      Size      Number of bytes to copy.
   ///
-  /// @returns False on success. On failure, ErrorMsg is updated with
+  /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
   virtual bool loadData(uint64_t Address, const void *Data, size_t Size);
 
@@ -57,7 +57,7 @@ public:
   /// @param      Data      Source address in the host process.
   /// @param      Size      Number of bytes to copy.
   ///
-  /// @returns False on success. On failure, ErrorMsg is updated with
+  /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
   virtual bool loadCode(uint64_t Address, const void *Data, size_t Size);
 
@@ -68,7 +68,7 @@ public:
   ///                       process.
   /// @param[out] RetVal    The integer return value of the called function.
   ///
-  /// @returns False on success. On failure, ErrorMsg is updated with
+  /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
   virtual bool executeCode(uint64_t Address, int &RetVal);
 
@@ -80,7 +80,10 @@ public:
   virtual unsigned getPageAlignment() { return 4096; }
 
   /// Start the remote process.
-  virtual void create();
+  ///
+  /// @returns True on success. On failure, ErrorMsg is updated with
+  ///          descriptive text of the encountered error.
+  virtual bool create();
 
   /// Terminate the remote process.
   virtual void stop();
@@ -91,23 +94,37 @@ public:
 private:
   std::string ChildName;
 
-  // This will get filled in as a point to an OS-specific structure.
-  void *ConnectionData;
-
-  void SendAllocateSpace(uint32_t Alignment, uint32_t Size);
-  void SendLoadSection(uint64_t Addr,
+  bool SendAllocateSpace(uint32_t Alignment, uint32_t Size);
+  bool SendLoadSection(uint64_t Addr,
                        const void *Data,
                        uint32_t Size,
                        bool IsCode);
-  void SendExecute(uint64_t Addr);
-  void SendTerminate();
+  bool SendExecute(uint64_t Addr);
+  bool SendTerminate();
 
-  void Receive(LLIMessageType Msg);
-  void Receive(LLIMessageType Msg, int &Data);
-  void Receive(LLIMessageType Msg, uint64_t &Data);
+  // High-level wrappers for receiving data
+  bool Receive(LLIMessageType Msg);
+  bool Receive(LLIMessageType Msg, int32_t &Data);
+  bool Receive(LLIMessageType Msg, uint64_t &Data);
 
-  int WriteBytes(const void *Data, size_t Size);
-  int ReadBytes(void *Data, size_t Size);
+  // Lower level target-independent read/write to deal with errors
+  bool ReceiveHeader(LLIMessageType Msg);
+  bool ReceivePayload();
+  bool SendHeader(LLIMessageType Msg);
+  bool SendPayload();
+
+  // Functions to append/retrieve data from the payload
+  SmallVector<const void *, 2> SendData;
+  SmallVector<void *, 1> ReceiveData; // Future proof
+  SmallVector<int, 2> Sizes;
+  void AppendWrite(const void *Data, uint32_t Size);
+  void AppendRead(void *Data, uint32_t Size);
+
+  // This will get filled in as a point to an OS-specific structure.
+  void *ConnectionData;
+
+  bool WriteBytes(const void *Data, size_t Size);
+  bool ReadBytes(void *Data, size_t Size);
   void Wait();
 };
 

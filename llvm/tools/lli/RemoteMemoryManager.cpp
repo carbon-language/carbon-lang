@@ -129,7 +129,7 @@ void RemoteMemoryManager::notifyObjectLoaded(ExecutionEngine *EE,
 
   // Allocate space in the remote target.
   uint64_t RemoteAddr;
-  if (Target->allocateSpace(CurOffset, MaxAlign, RemoteAddr))
+  if (!Target->allocateSpace(CurOffset, MaxAlign, RemoteAddr))
     report_fatal_error(Target->getErrorMsg());
 
   // Map the section addresses so relocations will get updated in the local
@@ -155,13 +155,13 @@ bool RemoteMemoryManager::finalizeMemory(std::string *ErrMsg) {
     uint64_t RemoteAddr = I->first;
     const Allocation &Section = I->second;
     if (Section.IsCode) {
-      Target->loadCode(RemoteAddr, Section.MB.base(), Section.MB.size());
-
+      if (!Target->loadCode(RemoteAddr, Section.MB.base(), Section.MB.size()))
+        report_fatal_error(Target->getErrorMsg());
       DEBUG(dbgs() << "  loading code: " << Section.MB.base()
             << " to remote: 0x" << format("%llx", RemoteAddr) << "\n");
     } else {
-      Target->loadData(RemoteAddr, Section.MB.base(), Section.MB.size());
-
+      if (!Target->loadData(RemoteAddr, Section.MB.base(), Section.MB.size()))
+        report_fatal_error(Target->getErrorMsg());
       DEBUG(dbgs() << "  loading data: " << Section.MB.base()
             << " to remote: 0x" << format("%llx", RemoteAddr) << "\n");
     }

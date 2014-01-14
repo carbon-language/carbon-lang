@@ -685,7 +685,10 @@ int main(int argc, char **argv, char * const *envp) {
     MM->setRemoteTarget(Target.get());
 
     // Create the remote target.
-    Target->create();
+    if (!Target->create()) {
+      errs() << "ERROR: " << Target->getErrorMsg() << "\n";
+      return EXIT_FAILURE;
+    }
 
     // Since we're executing in a (at least simulated) remote address space,
     // we can't use the ExecutionEngine::runFunctionAsMain(). We have to
@@ -702,7 +705,7 @@ int main(int argc, char **argv, char * const *envp) {
     DEBUG(dbgs() << "Executing '" << EntryFn->getName() << "' at 0x"
                  << format("%llx", Entry) << "\n");
 
-    if (Target->executeCode(Entry, Result))
+    if (!Target->executeCode(Entry, Result))
       errs() << "ERROR: " << Target->getErrorMsg() << "\n";
 
     // Like static constructors, the remote target MCJIT support doesn't handle
