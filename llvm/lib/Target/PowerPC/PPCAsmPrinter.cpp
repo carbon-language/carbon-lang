@@ -769,7 +769,7 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
   bool isPPC64 = TD->getPointerSizeInBits() == 64;
 
   PPCTargetStreamer &TS =
-      static_cast<PPCTargetStreamer &>(OutStreamer.getTargetStreamer());
+      static_cast<PPCTargetStreamer &>(*OutStreamer.getTargetStreamer());
 
   if (isPPC64 && !TOC.empty()) {
     const MCSectionELF *Section = OutStreamer.getContext().getELFSection(".toc",

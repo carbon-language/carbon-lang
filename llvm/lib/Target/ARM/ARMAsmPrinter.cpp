@@ -616,7 +616,7 @@ static ARMBuildAttrs::CPUArch getArchForCPU(StringRef CPU,
 }
 
 void ARMAsmPrinter::emitAttributes() {
-  MCTargetStreamer &TS = OutStreamer.getTargetStreamer();
+  MCTargetStreamer &TS = *OutStreamer.getTargetStreamer();
   ARMTargetStreamer &ATS = static_cast<ARMTargetStreamer &>(TS);
 
   ATS.switchVendor("aeabi");
@@ -983,7 +983,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
   assert(MI->getFlag(MachineInstr::FrameSetup) &&
       "Only instruction which are involved into frame setup code are allowed");
 
-  MCTargetStreamer &TS = OutStreamer.getTargetStreamer();
+  MCTargetStreamer &TS = *OutStreamer.getTargetStreamer();
   ARMTargetStreamer &ATS = static_cast<ARMTargetStreamer &>(TS);
   const MachineFunction &MF = *MI->getParent()->getParent();
   const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();

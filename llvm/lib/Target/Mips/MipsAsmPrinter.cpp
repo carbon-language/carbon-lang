@@ -46,7 +46,7 @@
 using namespace llvm;
 
 MipsTargetStreamer &MipsAsmPrinter::getTargetStreamer() {
-  return static_cast<MipsTargetStreamer &>(OutStreamer.getTargetStreamer());
+  return static_cast<MipsTargetStreamer &>(*OutStreamer.getTargetStreamer());
 }
 
 bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {

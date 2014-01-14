@@ -37,7 +37,8 @@ using namespace llvm;
 namespace {
   class SparcAsmPrinter : public AsmPrinter {
     SparcTargetStreamer &getTargetStreamer() {
-      return static_cast<SparcTargetStreamer&>(OutStreamer.getTargetStreamer());
+      return static_cast<SparcTargetStreamer &>(
+          *OutStreamer.getTargetStreamer());
     }
   public:
     explicit SparcAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)

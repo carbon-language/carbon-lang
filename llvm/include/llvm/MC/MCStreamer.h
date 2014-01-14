@@ -171,9 +171,8 @@ public:
 
   MCContext &getContext() const { return Context; }
 
-  MCTargetStreamer &getTargetStreamer() {
-    assert(TargetStreamer);
-    return *TargetStreamer;
+  MCTargetStreamer *getTargetStreamer() {
+    return TargetStreamer.get();
   }
 
   unsigned getNumFrameInfos() { return FrameInfos.size(); }

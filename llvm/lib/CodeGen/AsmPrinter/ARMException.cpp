@@ -48,7 +48,7 @@ ARMException::ARMException(AsmPrinter *A)
 ARMException::~ARMException() {}
 
 ARMTargetStreamer &ARMException::getTargetStreamer() {
-  MCTargetStreamer &TS = Asm->OutStreamer.getTargetStreamer();
+  MCTargetStreamer &TS = *Asm->OutStreamer.getTargetStreamer();
   return static_cast<ARMTargetStreamer &>(TS);
 }
 

@@ -925,7 +925,7 @@ void ARMTargetELFStreamer::emitInst(uint32_t Inst, char Suffix) {
 }
 
 void ARMELFStreamer::FinishImpl() {
-  MCTargetStreamer &TS = getTargetStreamer();
+  MCTargetStreamer &TS = *getTargetStreamer();
   ARMTargetStreamer &ATS = static_cast<ARMTargetStreamer &>(TS);
   ATS.finishAttributeSection();
 

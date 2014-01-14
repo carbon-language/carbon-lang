@@ -57,7 +57,7 @@ namespace {
 class MipsAsmParser : public MCTargetAsmParser {
 
   MipsTargetStreamer &getTargetStreamer() {
-    MCTargetStreamer &TS = Parser.getStreamer().getTargetStreamer();
+    MCTargetStreamer &TS = *Parser.getStreamer().getTargetStreamer();
     return static_cast<MipsTargetStreamer &>(TS);
   }
 

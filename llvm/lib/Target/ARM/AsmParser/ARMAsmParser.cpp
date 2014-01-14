@@ -192,7 +192,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   }
 
   ARMTargetStreamer &getTargetStreamer() {
-    MCTargetStreamer &TS = getParser().getStreamer().getTargetStreamer();
+    MCTargetStreamer &TS = *getParser().getStreamer().getTargetStreamer();
     return static_cast<ARMTargetStreamer &>(TS);
   }
 
