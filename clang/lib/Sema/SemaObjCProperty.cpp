@@ -1148,12 +1148,15 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       ImplicitParamDecl *SelfDecl = getterMethod->getSelfDecl();
       DeclRefExpr *SelfExpr = 
         new (Context) DeclRefExpr(SelfDecl, false, SelfDecl->getType(),
-                                  VK_RValue, PropertyDiagLoc);
+                                  VK_LValue, PropertyDiagLoc);
       MarkDeclRefReferenced(SelfExpr);
+      Expr *LoadSelfExpr =
+        ImplicitCastExpr::Create(Context, SelfDecl->getType(),
+                                 CK_LValueToRValue, SelfExpr, 0, VK_RValue);
       Expr *IvarRefExpr =
         new (Context) ObjCIvarRefExpr(Ivar, Ivar->getType(), PropertyDiagLoc,
                                       Ivar->getLocation(),
-                                      SelfExpr, true, true);
+                                      LoadSelfExpr, true, true);
       ExprResult Res = 
         PerformCopyInitialization(InitializedEntity::InitializeResult(
                                     PropertyDiagLoc,
@@ -1196,12 +1199,15 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       ImplicitParamDecl *SelfDecl = setterMethod->getSelfDecl();
       DeclRefExpr *SelfExpr = 
         new (Context) DeclRefExpr(SelfDecl, false, SelfDecl->getType(),
-                                  VK_RValue, PropertyDiagLoc);
+                                  VK_LValue, PropertyDiagLoc);
       MarkDeclRefReferenced(SelfExpr);
+      Expr *LoadSelfExpr =
+        ImplicitCastExpr::Create(Context, SelfDecl->getType(),
+                                 CK_LValueToRValue, SelfExpr, 0, VK_RValue);
       Expr *lhs =
         new (Context) ObjCIvarRefExpr(Ivar, Ivar->getType(), PropertyDiagLoc,
                                       Ivar->getLocation(),
-                                      SelfExpr, true, true);
+                                      LoadSelfExpr, true, true);
       ObjCMethodDecl::param_iterator P = setterMethod->param_begin();
       ParmVarDecl *Param = (*P);
       QualType T = Param->getType().getNonReferenceType();
