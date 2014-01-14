@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -std=c++11 -cxx-abi microsoft -fms-compatibility -fsyntax-only -triple=i386-pc-win32 -verify %s
-// RUN: %clang_cc1 -std=c++11 -cxx-abi microsoft -fms-compatibility -fsyntax-only -triple=x86_64-pc-win32 -verify %s
+// RUN: %clang_cc1 -std=c++11 -fms-compatibility -fsyntax-only -triple=i386-pc-win32 -verify %s
+// RUN: %clang_cc1 -std=c++11 -fms-compatibility -fsyntax-only -triple=x86_64-pc-win32 -verify %s
 //
 // This file should also give no diagnostics when run through cl.exe from MSVS
 // 2012, which supports C++11 and static_assert.  It should pass for both 64-bit

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions -ffreestanding -target-feature +avx -emit-llvm %s -o - -cxx-abi microsoft -triple=i686-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -fms-extensions -ffreestanding -target-feature +avx -emit-llvm %s -o - -triple=i686-pc-win32 | FileCheck %s
 
 #include <xmmintrin.h>
 #include <emmintrin.h>

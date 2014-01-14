@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -emit-llvm -cxx-abi microsoft -triple=i386-pc-win32 %s -o - | FileCheck %s
-// RUN: %clang_cc1 -DINLINE_INIT -emit-llvm -cxx-abi microsoft -triple=i386-pc-win32 %s -o - | FileCheck %s --check-prefix=CHECK-INLINE
-// RUN: %clang_cc1 -DREAL_DEFINITION -emit-llvm -cxx-abi microsoft -triple=i386-pc-win32 %s -o - | FileCheck %s --check-prefix=CHECK-OUTOFLINE
-// RUN: %clang_cc1 -DINLINE_INIT -DREAL_DEFINITION -emit-llvm -cxx-abi microsoft -triple=i386-pc-win32 %s -o - | FileCheck %s --check-prefix=CHECK-INLINE
+// RUN: %clang_cc1 -emit-llvm -triple=i386-pc-win32 %s -o - | FileCheck %s
+// RUN: %clang_cc1 -DINLINE_INIT -emit-llvm -triple=i386-pc-win32 %s -o - | FileCheck %s --check-prefix=CHECK-INLINE
+// RUN: %clang_cc1 -DREAL_DEFINITION -emit-llvm -triple=i386-pc-win32 %s -o - | FileCheck %s --check-prefix=CHECK-OUTOFLINE
+// RUN: %clang_cc1 -DINLINE_INIT -DREAL_DEFINITION -emit-llvm -triple=i386-pc-win32 %s -o - | FileCheck %s --check-prefix=CHECK-INLINE
 
 struct S {
   // For MS ABI, we emit a linkonce_odr definition here, even though it's really just a declaration.

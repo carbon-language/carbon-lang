@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -fms-extensions -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -fms-extensions -emit-llvm %s -o - -triple=i386-pc-win32 | FileCheck %s
 
 // CHECK: "\01?LRef@@YAXAAH@Z"
 void LRef(int& a) { }

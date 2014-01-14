@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -cxx-abi itanium -o - -O2 | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -triple %itanium_abi_triple -o - -O2 | FileCheck %s
 
 struct B;
 extern B x;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -emit-llvm %s -o %t
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -emit-llvm %s -o %t
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-1
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-2
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-3

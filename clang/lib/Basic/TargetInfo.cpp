@@ -82,8 +82,10 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   // Default to not using fp2ret for __Complex long double
   ComplexLongDoubleUsesFP2Ret = false;
 
-  // Default to using the Itanium ABI.
-  TheCXXABI.set(TargetCXXABI::GenericItanium);
+  // Set the C++ ABI based on the triple.
+  TheCXXABI.set(Triple.getOS() == llvm::Triple::Win32
+                    ? TargetCXXABI::Microsoft
+                    : TargetCXXABI::GenericItanium);
 
   // Default to an empty address space map.
   AddrSpaceMap = &DefaultAddrSpaceMap;

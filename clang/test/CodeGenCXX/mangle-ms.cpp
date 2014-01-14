@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 -std=c++11 | FileCheck %s
-// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=x86_64-pc-win32 -std=c++11| FileCheck -check-prefix X64 %s
+// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -triple=i386-pc-win32 -std=c++11 | FileCheck %s
+// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -triple=x86_64-pc-win32 -std=c++11| FileCheck -check-prefix X64 %s
 
 int a;
 // CHECK-DAG: @"\01?a@@3HA"

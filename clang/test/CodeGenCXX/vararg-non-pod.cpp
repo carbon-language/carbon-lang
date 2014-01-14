@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wno-error=non-pod-varargs -cxx-abi itanium -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -Wno-error=non-pod-varargs -triple %itanium_abi_triple -emit-llvm -o - %s | FileCheck %s
 
 struct X {
   X();

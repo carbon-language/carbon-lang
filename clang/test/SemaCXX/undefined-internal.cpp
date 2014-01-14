@@ -1,9 +1,9 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // Make sure we don't produce invalid IR.
-// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm-only %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -emit-llvm-only %s
 
-// FIXME: -cxx-abi itanium shouldn't be necessary; the test should pass
+// FIXME: Itanium shouldn't be necessary; the test should pass
 // in MS mode too.
 
 namespace test1 {

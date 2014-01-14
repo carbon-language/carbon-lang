@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -cxx-abi itanium -verify %s
-// RUN: %clang_cc1 -fsyntax-only -cxx-abi microsoft -DMSABI -verify %s
+// RUN: %clang_cc1 -fsyntax-only -triple %itanium_abi_triple -verify %s
+// RUN: %clang_cc1 -fsyntax-only -triple %ms_abi_triple -DMSABI -verify %s
 // PR7800
 
 // The Microsoft ABI doesn't have the concept of key functions, so we have different

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fno-rtti -cxx-abi microsoft -triple=i386-pc-win32 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -fno-rtti -triple=i386-pc-win32 -emit-llvm -o - | FileCheck %s
 
 // See microsoft-abi-structors.cpp for constructor codegen tests.
 

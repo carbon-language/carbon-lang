@@ -3933,10 +3933,6 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   // implemented in clang.
   CmdArgs.push_back("--dependent-lib=oldnames");
 
-  // FIXME: Make this default for the win32 triple.
-  CmdArgs.push_back("-cxx-abi");
-  CmdArgs.push_back("microsoft");
-
   if (Arg *A = Args.getLastArg(options::OPT_show_includes))
     A->render(Args, CmdArgs);
 

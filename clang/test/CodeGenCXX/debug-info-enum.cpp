@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -emit-llvm -g %s -o - | FileCheck %s
 
 // CHECK: [[ENUMS:![0-9]*]], {{[^,]*}}, {{[^,]*}}, {{[^,]*}}, {{[^,]*}}, {{[^,]*}}} ; [ DW_TAG_compile_unit ]
 // CHECK: [[ENUMS]] = metadata !{metadata [[E1:![0-9]*]], metadata [[E2:![0-9]*]], metadata [[E3:![0-9]*]]}

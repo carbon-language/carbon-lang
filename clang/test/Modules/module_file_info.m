@@ -16,7 +16,6 @@
 // CHECK:     Triple:
 // CHECK:     CPU: 
 // CHECK:     ABI: 
-// CHECK:     C++ ABI: 
 // CHECK:     Linker version: 
 
 // CHECK: Header search options:

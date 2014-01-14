@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -cxx-abi microsoft -fms-extensions -fdelayed-template-parsing -triple=i386-pc-win32 | FileCheck %s
-// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -cxx-abi microsoft -fms-extensions -fdelayed-template-parsing -triple=x86_64-pc-win32 | FileCheck -check-prefix X64 %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -fms-extensions -fdelayed-template-parsing -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -fms-extensions -fdelayed-template-parsing -triple=x86_64-pc-win32 | FileCheck -check-prefix X64 %s
 
 namespace ClassScopeSpecialization {
   struct Type {

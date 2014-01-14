@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm-only %s -verify
+// RUN: %clang_cc1 -triple %itanium_abi_triple -emit-llvm-only %s -verify
 
 // rdar://15522601
 class MyClass {

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fno-rtti -emit-llvm -o %t.ll -fdump-vtable-layouts %s -cxx-abi microsoft -triple=i386-pc-win32 >%t
+// RUN: %clang_cc1 -fno-rtti -emit-llvm -o %t.ll -fdump-vtable-layouts %s -triple=i386-pc-win32 >%t
 
 // RUN: FileCheck --check-prefix=VTABLE-C %s < %t
 // RUN: FileCheck --check-prefix=VTABLE-D %s < %t

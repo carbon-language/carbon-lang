@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -cxx-abi itanium -std=c++11 -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -std=c++11 -g %s -o - | FileCheck %s
 // CHECK: metadata !"_ZTS1A"} ; [ DW_TAG_class_type ] [A]
 // CHECK: metadata !"_ZN1A3fooEiS_3$_0", {{.*}} [protected]
 // CHECK: ![[THISTYPE:[0-9]+]] = {{.*}} ; [ DW_TAG_pointer_type ] {{.*}} [artificial] [from _ZTS1A]

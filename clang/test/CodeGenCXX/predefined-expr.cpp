@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 %s -cxx-abi itanium -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 %s -triple %itanium_abi_triple -emit-llvm -o - | FileCheck %s
 
 // CHECK: private unnamed_addr constant [15 x i8] c"externFunction\00"
 // CHECK: private unnamed_addr constant [26 x i8] c"void NS::externFunction()\00"

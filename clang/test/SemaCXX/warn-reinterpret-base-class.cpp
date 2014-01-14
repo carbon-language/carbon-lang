@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -std=c++11 -fsyntax-only -cxx-abi itanium -verify -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s
-// RUN: %clang_cc1 -std=c++11 -fsyntax-only -cxx-abi microsoft -DMSABI -verify -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -triple %itanium_abi_triple -verify -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -triple %ms_abi_triple -DMSABI -verify -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s
 
-// RUN: not %clang_cc1 -std=c++11 -fsyntax-only -cxx-abi itanium -fdiagnostics-parseable-fixits -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s 2>&1 | FileCheck %s
-// RUN: not %clang_cc1 -std=c++11 -fsyntax-only -cxx-abi microsoft -fdiagnostics-parseable-fixits -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -std=c++11 -fsyntax-only -triple %itanium_abi_triple -fdiagnostics-parseable-fixits -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -std=c++11 -fsyntax-only -triple %ms_abi_triple -fdiagnostics-parseable-fixits -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s 2>&1 | FileCheck %s
 
 // PR 13824
 class A {

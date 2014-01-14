@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 -fms-extensions -cxx-abi microsoft -verify -triple i686-pc-win32 %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -fms-extensions -verify -triple i686-pc-win32 %s
 
 // Pointers to free functions
 void            free_func_default();

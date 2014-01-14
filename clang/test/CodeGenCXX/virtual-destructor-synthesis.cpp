@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -cxx-abi itanium -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple %itanium_abi_triple -emit-llvm -o - | FileCheck %s
 
 struct box {
   virtual ~box();

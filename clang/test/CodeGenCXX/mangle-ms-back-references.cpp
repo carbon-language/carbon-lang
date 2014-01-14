@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -fms-extensions -fblocks -emit-llvm %s -o - -triple=i386-pc-win32 | FileCheck %s
 
 void f1(const char* a, const char* b) {}
 // CHECK: "\01?f1@@YAXPBD0@Z"

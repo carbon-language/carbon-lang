@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -std=c++11 -cxx-abi itanium | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -std=c++11 -triple %itanium_abi_triple | FileCheck %s
 
 extern "C" int printf(...);
 

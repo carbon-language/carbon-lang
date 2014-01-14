@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -cxx-abi itanium -O1 %s
+// RUN: %clang_cc1 -emit-llvm-only -triple %itanium_abi_triple -O1 %s
 // This used to crash under asan and valgrind.
 // PR12284
 

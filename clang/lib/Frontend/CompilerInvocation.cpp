@@ -1617,7 +1617,6 @@ static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,
 static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   using namespace options;
   Opts.ABI = Args.getLastArgValue(OPT_target_abi);
-  Opts.CXXABI = Args.getLastArgValue(OPT_cxx_abi);
   Opts.CPU = Args.getLastArgValue(OPT_target_cpu);
   Opts.FPMath = Args.getLastArgValue(OPT_mfpmath);
   Opts.FeaturesAsWritten = Args.getAllArgValues(OPT_target_feature);
@@ -1627,11 +1626,6 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   // Use the default target triple if unspecified.
   if (Opts.Triple.empty())
     Opts.Triple = llvm::sys::getDefaultTargetTriple();
-
-  // Use the MS ABI for Win32 targets unless otherwise specified.
-  if (Opts.CXXABI.empty() &&
-      llvm::Triple(Opts.Triple).getOS() == llvm::Triple::Win32)
-    Opts.CXXABI = "microsoft";
 }
 
 bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
@@ -1767,8 +1761,7 @@ std::string CompilerInvocation::getModuleHash() const {
   
   // Extend the signature with the target options.
   code = hash_combine(code, TargetOpts->Triple, TargetOpts->CPU,
-                      TargetOpts->ABI, TargetOpts->CXXABI,
-                      TargetOpts->LinkerVersion);
+                      TargetOpts->ABI, TargetOpts->LinkerVersion);
   for (unsigned i = 0, n = TargetOpts->FeaturesAsWritten.size(); i != n; ++i)
     code = hash_combine(code, TargetOpts->FeaturesAsWritten[i]);
 

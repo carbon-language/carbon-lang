@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fexceptions -fcxx-exceptions -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fexceptions -fcxx-exceptions -emit-llvm -o - %s | FileCheck %s
 
 struct A {
   ~A();

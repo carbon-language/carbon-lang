@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i686-pc-win32 -cxx-abi itanium -fsyntax-only %s
-// RUN: %clang_cc1 -triple i686-pc-win32 -cxx-abi microsoft -verify -DMSVC_ABI %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -fsyntax-only %s
+// RUN: %clang_cc1 -triple %ms_abi_triple -verify -DMSVC_ABI %s
 
 namespace Test1 {
 

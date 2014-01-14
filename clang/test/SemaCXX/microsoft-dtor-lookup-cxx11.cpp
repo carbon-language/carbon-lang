@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i686-pc-win32 -cxx-abi microsoft -std=c++11 -verify %s
+// RUN: %clang_cc1 -triple i686-pc-win32 -std=c++11 -verify %s
 
 struct S {
   virtual ~S() = delete; // expected-note {{'~S' has been explicitly marked deleted here}}

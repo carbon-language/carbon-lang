@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 %s -fms-extensions -triple i686-pc-win32 -cxx-abi itanium -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -fms-extensions -triple i686-pc-win32 -emit-llvm -o - | FileCheck %s
 
-// CHECK: @L__FUNCTION__._Z4funcv = private constant [5 x i16] [i16 102, i16 117, i16 110, i16 99, i16 0], align 2
+// CHECK: @"L__FUNCTION__.?func@@YAXXZ" = private constant [5 x i16] [i16 102, i16 117, i16 110, i16 99, i16 0], align 2
 
 void wprint(const wchar_t*);
 

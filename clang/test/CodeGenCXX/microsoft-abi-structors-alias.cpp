@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 -fno-rtti -mconstructor-aliases | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -fno-rtti -mconstructor-aliases | FileCheck %s
 
 namespace test1 {
 template <typename T> class A {

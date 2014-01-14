@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fsyntax-only -Wnon-virtual-dtor -Wdelete-non-virtual-dtor -verify %s
-// RUN: %clang_cc1 -std=c++11 -cxx-abi microsoft -DMSABI -fsyntax-only -Wnon-virtual-dtor -Wdelete-non-virtual-dtor -verify %s
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fsyntax-only -Wnon-virtual-dtor -Wdelete-non-virtual-dtor -verify %s
+// RUN: %clang_cc1 -std=c++11 -triple %ms_abi_triple -DMSABI -fsyntax-only -Wnon-virtual-dtor -Wdelete-non-virtual-dtor -verify %s
 class A {
 public:
   ~A();

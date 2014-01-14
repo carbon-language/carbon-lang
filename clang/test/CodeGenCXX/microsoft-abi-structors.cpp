@@ -1,10 +1,10 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -mconstructor-aliases -cxx-abi microsoft -triple=i386-pc-win32 -fno-rtti > %t
+// RUN: %clang_cc1 -emit-llvm %s -o - -mconstructor-aliases -triple=i386-pc-win32 -fno-rtti > %t
 // RUN: FileCheck %s < %t
 // vftables are emitted very late, so do another pass to try to keep the checks
 // in source order.
 // RUN: FileCheck --check-prefix DTORS %s < %t
 //
-// RUN: %clang_cc1 -emit-llvm %s -o - -mconstructor-aliases -cxx-abi microsoft -triple=x86_64-pc-win32 -fno-rtti | FileCheck --check-prefix DTORS-X64 %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -mconstructor-aliases -triple=x86_64-pc-win32 -fno-rtti | FileCheck --check-prefix DTORS-X64 %s
 
 namespace basic {
 

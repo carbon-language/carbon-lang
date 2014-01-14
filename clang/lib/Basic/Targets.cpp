@@ -5841,12 +5841,6 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
     return 0;
   }
 
-  // Set the target C++ ABI.
-  if (!Opts->CXXABI.empty() && !Target->setCXXABI(Opts->CXXABI)) {
-    Diags.Report(diag::err_target_unknown_cxxabi) << Opts->CXXABI;
-    return 0;
-  }
-
   // Set the fp math unit.
   if (!Opts->FPMath.empty() && !Target->setFPMath(Opts->FPMath)) {
     Diags.Report(diag::err_target_unknown_fpmath) << Opts->FPMath;

@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 %s -ffake-address-space-map -faddress-space-map-mangling=yes -cxx-abi itanium -emit-llvm -o - | FileCheck -check-prefix=ASMANG %s
-// RUN: %clang_cc1 %s -ffake-address-space-map -faddress-space-map-mangling=no -cxx-abi itanium -emit-llvm -o - | FileCheck -check-prefix=NOASMANG %s
+// RUN: %clang_cc1 %s -ffake-address-space-map -faddress-space-map-mangling=yes -triple %itanium_abi_triple -emit-llvm -o - | FileCheck -check-prefix=ASMANG %s
+// RUN: %clang_cc1 %s -ffake-address-space-map -faddress-space-map-mangling=no -triple %itanium_abi_triple -emit-llvm -o - | FileCheck -check-prefix=NOASMANG %s
 
 // We can't name this f as private is equivalent to default
 // no specifier given address space so we get multiple definition

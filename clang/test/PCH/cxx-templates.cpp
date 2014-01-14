@@ -1,21 +1,21 @@
 // Test this without pch.
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fcxx-exceptions -fexceptions -include %S/cxx-templates.h -verify %s -ast-dump -o -
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fcxx-exceptions -fexceptions -include %S/cxx-templates.h %s -emit-llvm -o - -DNO_ERRORS | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -include %S/cxx-templates.h -verify %s -ast-dump -o -
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -include %S/cxx-templates.h %s -emit-llvm -o - -DNO_ERRORS | FileCheck %s
 
 // Test with pch.
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fcxx-exceptions -fexceptions -x c++-header -emit-pch -o %t %S/cxx-templates.h
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fcxx-exceptions -fexceptions -include-pch %t -verify %s -ast-dump  -o -
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fcxx-exceptions -fexceptions -include-pch %t %s -emit-llvm -o - -error-on-deserialized-decl doNotDeserialize -DNO_ERRORS | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -x c++-header -emit-pch -o %t %S/cxx-templates.h
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -include-pch %t -verify %s -ast-dump  -o -
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -include-pch %t %s -emit-llvm -o - -error-on-deserialized-decl doNotDeserialize -DNO_ERRORS | FileCheck %s
 
 // Test with modules.
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fcxx-exceptions -fexceptions -fmodules -x c++-header -emit-pch -o %t %S/cxx-templates.h
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fcxx-exceptions -fexceptions -fmodules -include-pch %t -verify %s -ast-dump  -o -
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fcxx-exceptions -fexceptions -fmodules -include-pch %t %s -emit-llvm -o - -error-on-deserialized-decl doNotDeserialize -DNO_ERRORS | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -fmodules -x c++-header -emit-pch -o %t %S/cxx-templates.h
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -fmodules -include-pch %t -verify %s -ast-dump  -o -
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -fmodules -include-pch %t %s -emit-llvm -o - -error-on-deserialized-decl doNotDeserialize -DNO_ERRORS | FileCheck %s
 
 // Test with pch and delayed template parsing.
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fcxx-exceptions -fdelayed-template-parsing -fexceptions -x c++-header -emit-pch -o %t %S/cxx-templates.h
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fcxx-exceptions -fdelayed-template-parsing -fexceptions -include-pch %t -verify %s -ast-dump  -o -
-// RUN: %clang_cc1 -std=c++11 -cxx-abi itanium -fcxx-exceptions -fdelayed-template-parsing -fexceptions -include-pch %t %s -emit-llvm -o - -DNO_ERRORS | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fdelayed-template-parsing -fexceptions -x c++-header -emit-pch -o %t %S/cxx-templates.h
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fdelayed-template-parsing -fexceptions -include-pch %t -verify %s -ast-dump  -o -
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fdelayed-template-parsing -fexceptions -include-pch %t %s -emit-llvm -o - -DNO_ERRORS | FileCheck %s
 
 // CHECK: define weak_odr {{.*}}void @_ZN2S4IiE1mEv
 // CHECK: define linkonce_odr {{.*}}void @_ZN2S3IiE1mEv

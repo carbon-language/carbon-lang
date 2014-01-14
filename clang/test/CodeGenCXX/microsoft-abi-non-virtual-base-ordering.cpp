@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fno-rtti -emit-llvm -cxx-abi microsoft -triple=i686-pc-win32 -o - %s  2>/dev/null | FileCheck %s
-// RUN: %clang_cc1 -fno-rtti -emit-llvm -cxx-abi microsoft -triple=x86_64-pc-win32 -o - %s  2>/dev/null | FileCheck %s
+// RUN: %clang_cc1 -fno-rtti -emit-llvm -triple=i686-pc-win32 -o - %s  2>/dev/null | FileCheck %s
+// RUN: %clang_cc1 -fno-rtti -emit-llvm -triple=x86_64-pc-win32 -o - %s  2>/dev/null | FileCheck %s
 
 struct C0 { int a; };
 struct C1 { int a; virtual void C1M() {} };

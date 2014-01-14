@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -triple i686-pc-win32 -fdump-record-layouts -cxx-abi microsoft %s 2>&1 \
+// RUN: %clang_cc1 -emit-llvm-only -triple i686-pc-win32 -fdump-record-layouts %s 2>&1 \
 // RUN:            | FileCheck %s
 
 #pragma pack(push, 8)

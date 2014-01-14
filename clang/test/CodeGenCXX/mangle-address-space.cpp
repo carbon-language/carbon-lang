@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -cxx-abi itanium -o - %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -o - %s | FileCheck %s
 
 // CHECK-LABEL: define void @_Z2f0Pc
 void f0(char *p) { }

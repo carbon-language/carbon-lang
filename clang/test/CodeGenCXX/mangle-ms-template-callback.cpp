@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -triple=i386-pc-win32 | FileCheck %s
 
 template<typename Signature>
 class C;

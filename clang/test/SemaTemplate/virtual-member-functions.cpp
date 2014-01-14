@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -cxx-abi itanium -fsyntax-only -verify %s
-// RUN: %clang_cc1 -cxx-abi microsoft -DMSABI -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple %ms_abi_triple -DMSABI -fsyntax-only -verify %s
 
 namespace PR5557 {
 template <class T> struct A {

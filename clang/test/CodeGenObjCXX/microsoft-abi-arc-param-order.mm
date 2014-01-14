@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -cxx-abi microsoft -mconstructor-aliases -fobjc-arc -triple i686-pc-win32 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -mconstructor-aliases -fobjc-arc -triple i686-pc-win32 -emit-llvm -o - %s | FileCheck %s
 
 struct A {
   A();

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm %s -o %t
+// RUN: %clang_cc1 -triple %itanium_abi_triple -emit-llvm %s -o %t
 
 // Note-LABEL: define CLANG_GENERATE_KNOWN_GOOD and compile to generate code
 // that makes all of the defaulted arguments explicit. The resulting

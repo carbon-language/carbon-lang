@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-arc -fobjc-runtime-has-weak -cxx-abi itanium -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -fobjc-arc -fobjc-runtime-has-weak -triple %itanium_abi_triple -emit-llvm -o - %s | FileCheck %s
 
 // CHECK-LABEL: define void @_Z1fPU8__strongP11objc_object(i8**)
 void f(__strong id *) {}

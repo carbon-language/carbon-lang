@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -cxx-abi itanium -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -g -triple %itanium_abi_triple -emit-llvm -o - %s | FileCheck %s
 
 // Make sure that clang outputs distinct debug info for a function
 // that is inlined twice on the same line. Otherwise it would appear

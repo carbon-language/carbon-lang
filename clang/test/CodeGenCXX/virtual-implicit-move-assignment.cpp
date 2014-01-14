@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -cxx-abi itanium -emit-llvm -std=c++11 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -emit-llvm -std=c++11 -o - %s | FileCheck %s
 
 struct D;
 struct B {

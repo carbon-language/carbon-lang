@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 %s -DNS=std -emit-llvm -cxx-abi itanium -o - | FileCheck %s --check-prefix=CHECK-STD
-// RUN: %clang_cc1 %s -DNS=n -emit-llvm -cxx-abi itanium -o - | FileCheck %s --check-prefix=CHECK-N
+// RUN: %clang_cc1 %s -DNS=std -emit-llvm -triple %itanium_abi_triple -o - | FileCheck %s --check-prefix=CHECK-STD
+// RUN: %clang_cc1 %s -DNS=n -emit-llvm -triple %itanium_abi_triple -o - | FileCheck %s --check-prefix=CHECK-N
 
 // _ZNSt1DISt1CE1iE = std::D<std::C>::i
 // CHECK-STD: @_ZNSt1DISt1CE1iE = 

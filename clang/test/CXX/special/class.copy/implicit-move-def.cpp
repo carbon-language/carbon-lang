@@ -1,6 +1,6 @@
-// FIXME: %clang_cc1 -emit-llvm -cxx-abi itanium -o - -std=c++11 %s | FileCheck -check-prefix=CHECK %s
-// RUN: %clang_cc1 -emit-llvm -cxx-abi itanium -o - -std=c++11 %s | FileCheck -check-prefix=CHECK-ASSIGN %s
-// RUN: %clang_cc1 -emit-llvm -cxx-abi itanium -o - -std=c++11 %s | FileCheck -check-prefix=CHECK-CTOR %s
+// FIXME: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -o - -std=c++11 %s | FileCheck -check-prefix=CHECK %s
+// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -o - -std=c++11 %s | FileCheck -check-prefix=CHECK-ASSIGN %s
+// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -o - -std=c++11 %s | FileCheck -check-prefix=CHECK-CTOR %s
 
 // construct
 

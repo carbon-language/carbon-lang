@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 %s -std=c++98 -cxx-abi itanium -emit-llvm -o - | FileCheck %s
-// RUN: %clang_cc1 %s -std=c++98 -cxx-abi itanium -emit-llvm -o - -DPROTOTYPE | FileCheck --check-prefix=CHECK-PROTOTYPE %s
-// RUN: %clang_cc1 %s -std=c++98 -cxx-abi itanium -emit-llvm -o - -DINSTANTIATE | FileCheck --check-prefix=CHECK-INSTANTIATE %s
-// RUN: %clang_cc1 %s -std=c++98 -cxx-abi itanium -emit-llvm -o - -DPROTOTYPE -DINSTANTIATE | FileCheck --check-prefix=CHECK-PROTOTYPE-INSTANTIATE %s
+// RUN: %clang_cc1 %s -std=c++98 -triple %itanium_abi_triple -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -std=c++98 -triple %itanium_abi_triple -emit-llvm -o - -DPROTOTYPE | FileCheck --check-prefix=CHECK-PROTOTYPE %s
+// RUN: %clang_cc1 %s -std=c++98 -triple %itanium_abi_triple -emit-llvm -o - -DINSTANTIATE | FileCheck --check-prefix=CHECK-INSTANTIATE %s
+// RUN: %clang_cc1 %s -std=c++98 -triple %itanium_abi_triple -emit-llvm -o - -DPROTOTYPE -DINSTANTIATE | FileCheck --check-prefix=CHECK-PROTOTYPE-INSTANTIATE %s
 // RUN: %clang_cc1 %s -DREDEFINE -verify
 // RUN: %clang_cc1 %s -DPROTOTYPE -DREDEFINE -verify
 // PR8007: friend function not instantiated, reordered version.

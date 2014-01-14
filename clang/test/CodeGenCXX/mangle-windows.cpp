@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -cxx-abi microsoft \
-// RUN:     -triple=i386-pc-win32 | FileCheck --check-prefix=WIN %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 | \
+// RUN:     FileCheck --check-prefix=WIN %s
 //
 // RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-mingw32 | \
 // RUN:     FileCheck --check-prefix=ITANIUM %s

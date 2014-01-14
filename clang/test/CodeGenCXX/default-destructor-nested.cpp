@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -cxx-abi itanium -emit-llvm-only
+// RUN: %clang_cc1 %s -triple %itanium_abi_triple -emit-llvm-only
 // PR6294
 
 class A {

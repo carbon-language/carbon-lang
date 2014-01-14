@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -mconstructor-aliases -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -mconstructor-aliases -triple=i386-pc-win32 | FileCheck %s
 
 // CHECK: @llvm.global_ctors = appending global [2 x { i32, void ()* }]
 // CHECK: [{ i32, void ()* } { i32 65535, void ()* @"\01??__Efoo@?$B@H@@YAXXZ" },
