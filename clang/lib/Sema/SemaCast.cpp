@@ -2170,6 +2170,21 @@ void CastOperation::CheckCStyleCast() {
 
   assert(!SrcType->isPlaceholderType());
 
+  // OpenCL v1 s6.5: Casting a pointer to address space A to a pointer to
+  // address space B is illegal.
+  if (Self.getLangOpts().OpenCL && DestType->isPointerType() &&
+      SrcType->isPointerType()) {
+    if (DestType->getPointeeType().getAddressSpace() !=
+        SrcType->getPointeeType().getAddressSpace()) {
+      Self.Diag(OpRange.getBegin(),
+                diag::err_typecheck_incompatible_address_space)
+          << SrcType << DestType << Sema::AA_Casting
+          << SrcExpr.get()->getSourceRange();
+      SrcExpr = ExprError();
+      return;
+    }
+  }
+
   if (Self.RequireCompleteType(OpRange.getBegin(), DestType,
                                diag::err_typecheck_cast_to_incomplete)) {
     SrcExpr = ExprError();
