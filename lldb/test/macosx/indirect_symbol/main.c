@@ -1,5 +1,5 @@
 extern int call_through_indirect(int);
-extern int call_through_reexport(int);
+extern int reexport_to_indirect(int);
 
 int
 main ()
