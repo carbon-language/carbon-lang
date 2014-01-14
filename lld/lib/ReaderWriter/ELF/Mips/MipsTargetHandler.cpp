@@ -64,7 +64,7 @@ public:
     // The base address of the segment.
     dyn.d_un.d_ptr = 0;
     dyn.d_tag = DT_MIPS_BASE_ADDRESS;
-    addEntry(dyn);
+    _dt_baseaddr = addEntry(dyn);
 
     // Number of local global offset table entries.
     dyn.d_un.d_val = 0;
@@ -91,6 +91,13 @@ public:
   virtual void updateDynamicTable() {
     DynamicTable<Mips32ElELFType>::updateDynamicTable();
 
+    // Assign the minimum segment address to the DT_MIPS_BASE_ADDRESS tag.
+    auto baseAddr = std::numeric_limits<uint64_t>::max();
+    for (auto si : _layout.segments())
+      if (si->segmentType() != llvm::ELF::PT_NULL)
+        baseAddr = std::min(baseAddr, si->virtualAddr());
+    _entries[_dt_baseaddr].d_un.d_val = baseAddr;
+
     auto &got = _layout.getGOTSection();
 
     _entries[_dt_symtabno].d_un.d_val = getSymbolTable()->size();
@@ -108,6 +115,7 @@ private:
   std::size_t _dt_localgot;
   std::size_t _dt_gotsym;
   std::size_t _dt_pltgot;
+  std::size_t _dt_baseaddr;
 };
 }
 

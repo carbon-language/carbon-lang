@@ -34,6 +34,18 @@ bool MipsLinkingContext::isLittleEndian() const {
   return Mips32ElELFType::TargetEndianness == llvm::support::little;
 }
 
+uint64_t MipsLinkingContext::getBaseAddress() const {
+  if (_baseAddress == 0 && getOutputELFType() == llvm::ELF::ET_EXEC)
+    return 0x400000;
+  return _baseAddress;
+}
+
+StringRef MipsLinkingContext::entrySymbolName() const {
+  if (_outputELFType == elf::ET_EXEC && _entrySymbolName.empty())
+    return "__start";
+  return _entrySymbolName;
+}
+
 void MipsLinkingContext::addPasses(PassManager &pm) {
   auto pass = createMipsRelocationPass(*this);
   if (pass)

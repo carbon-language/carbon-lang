@@ -35,6 +35,8 @@ public:
 
   // ELFLinkingContext
   virtual bool isLittleEndian() const;
+  virtual uint64_t getBaseAddress() const;
+  virtual StringRef entrySymbolName() const;
   virtual void addPasses(PassManager &pm);
 };
 

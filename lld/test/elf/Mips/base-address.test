@@ -1,0 +1,65 @@
+# Check executable base address configuration. Base address should be
+# equal to 0x400000 and the MIPS_BASE_ADDRESS dynamic tag's value should
+# be the same.
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t1 %s
+# RUN: lld -flavor gnu -target mipsel --noinhibit-exec -o %t2 %t1
+# RUN: llvm-readobj -dynamic-table -program-headers %t2 | FileCheck %s
+
+# CHECK: DynamicSection [ (15 entries)
+# CHECK:   Tag        Type                 Name/Value
+# CHECK:   0x00000004 HASH                 0x400110
+# CHECK:   0x00000005 STRTAB               0x400130
+# CHECK:   0x00000006 SYMTAB               0x400120
+# CHECK:   0x0000000A STRSZ                1 (bytes)
+# CHECK:   0x0000000B SYMENT               16 (bytes)
+# CHECK:   0x0000001A FINI_ARRAY           0x0
+# CHECK:   0x0000001C FINI_ARRAYSZ         0 (bytes)
+# CHECK:   0x70000001 MIPS_RLD_VERSION     1
+# CHECK:   0x70000005 MIPS_FLAGS           0x2
+# CHECK:   0x70000006 MIPS_BASE_ADDRESS    0x400000
+# CHECK:   0x7000000A MIPS_LOCAL_GOTNO     2
+# CHECK:   0x70000011 MIPS_SYMTABNO        1
+# CHECK:   0x70000013 MIPS_GOTSYM          0x1
+# CHECK:   0x00000003 PLTGOT               0x401000
+# CHECK:   0x00000000 NULL                 0x0
+# CHECK: ]
+
+# CHECK: ProgramHeaders [
+# CHECK:   ProgramHeader {
+# CHECK:     Type: PT_PHDR (0x6)
+# CHECK:     Offset: 0x34
+# CHECK:     VirtualAddress: 0x400034
+# CHECK:   }
+# CHECK:   ProgramHeader {
+# CHECK:     Type: PT_INTERP (0x3)
+# CHECK:     Offset: 0xF4
+# CHECK:     VirtualAddress: 0x4000F4
+# CHECK:   }
+# CHECK:   ProgramHeader {
+# CHECK:     Type: PT_LOAD (0x1)
+# CHECK:     Offset: 0x0
+# CHECK:     VirtualAddress: 0x400000
+# CHECK:   }
+# CHECK:   ProgramHeader {
+# CHECK:     Type: PT_LOAD (0x1)
+# CHECK:     Offset: 0x1000
+# CHECK:     VirtualAddress: 0x401000
+# CHECK:   }
+# CHECK:   ProgramHeader {
+# CHECK:     Type: PT_LOAD (0x1)
+# CHECK:     Offset: 0x2000
+# CHECK:     VirtualAddress: 0x402000
+# CHECK:   }
+# CHECK:   ProgramHeader {
+# CHECK:     Type: PT_DYNAMIC (0x2)
+# CHECK:     Offset: 0x138
+# CHECK:     VirtualAddress: 0x400138
+# CHECK:   }
+# CHECK: ]
+
+    .global main
+    .ent    main
+main:
+    nop
+    .end    main
+
