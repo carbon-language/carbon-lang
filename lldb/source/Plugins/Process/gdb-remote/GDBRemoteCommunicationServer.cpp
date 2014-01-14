@@ -806,8 +806,7 @@ GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote &packet)
 {
 #ifdef _WIN32
-    // No unix sockets on windows
-    return false;
+    return SendErrorResponse(9);
 #else
     // Spawn a local debugserver as a platform so we can then attach or launch
     // a process...
