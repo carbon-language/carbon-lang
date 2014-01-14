@@ -82,7 +82,7 @@ class Vector {
     EnsureSize(size);
     if (old_size < size) {
       for (uptr i = old_size; i < size; i++)
-        begin_[i] = T();
+        internal_memset(&begin_[i], 0, sizeof(begin_[i]));
     }
   }
 
