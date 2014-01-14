@@ -162,3 +162,26 @@ end:
   ; the correct edge-case (first inst in block is correct one to adjust).
   ret void
 }
+
+define void @test_varsize(...) minsize {
+; CHECK-T1-LABEL: test_varsize:
+; CHECK-T1: sub	sp, #16
+; CHECK-T1: push	{r2, r3, r4, r5, r7, lr}
+; ...
+; CHECK-T1: pop	{r2, r3, r4, r5, r7}
+; CHECK-T1: pop	{r3}
+; CHECK-T1: add	sp, #16
+; CHECK-T1: bx	r3
+
+; CHECK-LABEL: test_varsize:
+; CHECK: sub	sp, #16
+; CHECK: push	{r5, r6, r7, lr}
+; ...
+; CHECK: pop.w	{r2, r3, r7, lr}
+; CHECK: add	sp, #16
+; CHECK: bx	lr
+
+  %var = alloca i8, i32 8
+  call void @bar(i8* %var)
+  ret void
+}

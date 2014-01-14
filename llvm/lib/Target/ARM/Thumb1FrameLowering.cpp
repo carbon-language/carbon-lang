@@ -304,9 +304,9 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
     // we need to update the SP after popping the value. Therefore, we
     // pop the old LR into R3 as a temporary.
 
-    // Move back past the callee-saved register restoration
-    while (MBBI != MBB.end() && isCSRestore(MBBI, CSRegs))
-      ++MBBI;
+    // Get the last instruction, tBX_RET
+    MBBI = MBB.getLastNonDebugInstr();
+    assert (MBBI->getOpcode() == ARM::tBX_RET);
     // Epilogue for vararg functions: pop LR to R3 and branch off it.
     AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tPOP)))
       .addReg(ARM::R3, RegState::Define);
