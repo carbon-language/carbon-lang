@@ -593,7 +593,7 @@ CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
     return llvm::Function::InternalLinkage;
   
   if (D->hasAttr<DLLExportAttr>())
-    return llvm::Function::DLLExportLinkage;
+    return llvm::Function::ExternalLinkage;
   
   if (D->hasAttr<WeakAttr>())
     return llvm::Function::WeakAnyLinkage;
@@ -808,7 +808,8 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
   // overridden by a definition.
 
   if (FD->hasAttr<DLLImportAttr>()) {
-    F->setLinkage(llvm::Function::DLLImportLinkage);
+    F->setLinkage(llvm::Function::ExternalLinkage);
+    F->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
   } else if (FD->hasAttr<WeakAttr>() ||
              FD->isWeakImported()) {
     // "extern_weak" is overloaded in LLVM; we probably should have
@@ -816,6 +817,8 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
     F->setLinkage(llvm::Function::ExternalWeakLinkage);
   } else {
     F->setLinkage(llvm::Function::ExternalLinkage);
+    if (FD->hasAttr<DLLExportAttr>())
+      F->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
 
     LinkageInfo LV = FD->getLinkageAndVisibility();
     if (LV.getLinkage() == ExternalLinkage && LV.isVisibilityExplicit()) {
@@ -1608,9 +1611,10 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
     if (LV.getLinkage() != ExternalLinkage) {
       // Don't set internal linkage on declarations.
     } else {
-      if (D->hasAttr<DLLImportAttr>())
-        GV->setLinkage(llvm::GlobalValue::DLLImportLinkage);
-      else if (D->hasAttr<WeakAttr>() || D->isWeakImported())
+      if (D->hasAttr<DLLImportAttr>()) {
+        GV->setLinkage(llvm::GlobalValue::ExternalLinkage);
+        GV->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
+      } else if (D->hasAttr<WeakAttr>() || D->isWeakImported())
         GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
 
       // Set visibility on a declaration only if it's explicit.
@@ -1883,6 +1887,10 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::GlobalValue::LinkageTypes Linkage = 
     GetLLVMLinkageVarDefinition(D, GV->isConstant());
   GV->setLinkage(Linkage);
+  if (D->hasAttr<DLLImportAttr>())
+    GV->setDLLStorageClass(llvm::GlobalVariable::DLLImportStorageClass);
+  else if (D->hasAttr<DLLExportAttr>())
+    GV->setDLLStorageClass(llvm::GlobalVariable::DLLExportStorageClass);
 
   // If required by the ABI, give definitions of static data members with inline
   // initializers linkonce_odr linkage.
@@ -1925,9 +1933,9 @@ CodeGenModule::GetLLVMLinkageVarDefinition(const VarDecl *D, bool isConstant) {
   if (Linkage == GVA_Internal)
     return llvm::Function::InternalLinkage;
   else if (D->hasAttr<DLLImportAttr>())
-    return llvm::Function::DLLImportLinkage;
+    return llvm::Function::ExternalLinkage;
   else if (D->hasAttr<DLLExportAttr>())
-    return llvm::Function::DLLExportLinkage;
+    return llvm::Function::ExternalLinkage;
   else if (D->hasAttr<SelectAnyAttr>()) {
     // selectany symbols are externally visible, so use weak instead of
     // linkonce.  MSVC optimizes away references to const selectany globals, so
@@ -2250,9 +2258,9 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       // The dllexport attribute is ignored for undefined symbols.
       if (FD->hasBody())
-        GA->setLinkage(llvm::Function::DLLExportLinkage);
+        GA->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
     } else {
-      GA->setLinkage(llvm::Function::DLLExportLinkage);
+      GA->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
     }
   } else if (D->hasAttr<WeakAttr>() ||
              D->hasAttr<WeakRefAttr>() ||
