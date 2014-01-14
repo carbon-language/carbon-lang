@@ -15,15 +15,16 @@
 
 namespace llvm {
 
-void RemoteTargetExternal::create() {
+bool RemoteTargetExternal::create() {
+  return false;
 }
 
-int RemoteTargetExternal::WriteBytes(const void *Data, size_t Size) {
-  return 0;
+bool RemoteTargetExternal::WriteBytes(const void *Data, size_t Size) {
+  return false;
 }
 
-int RemoteTargetExternal::ReadBytes(void *Data, size_t Size) {
-  return 0;
+bool RemoteTargetExternal::ReadBytes(void *Data, size_t Size) {
+  return false;
 }
 
 void RemoteTargetExternal::Wait() {
