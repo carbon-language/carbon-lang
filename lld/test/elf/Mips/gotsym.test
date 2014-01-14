@@ -1,0 +1,28 @@
+# Check _gp_disp and GOT_OFFSET_TABLE value
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t1 %s
+
+# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t2 %t1
+# RUN: llvm-objdump -section-headers -t %t2 | FileCheck -check-prefix=SHARED %s
+
+# SHARED: Sections:
+# SHARED: Idx Name          Size      Address          Type
+# SHARED:   6 .got          00000008 0000000000001000 DATA 
+# SHARED: SYMBOL TABLE:
+# SHARED: 00001000 g       *ABS*  00000000 _GLOBAL_OFFSET_TABLE_
+# SHARED: 00008ff0 g       *ABS*  00000000 _gp_disp
+
+# RUN: lld -flavor gnu -target mipsel -e main --noinhibit-exec -o %t2 %t1
+# RUN: llvm-objdump -section-headers -t %t2 | FileCheck -check-prefix=EXE %s
+
+# EXE: Sections:
+# EXE: Idx Name          Size      Address          Type
+# EXE:   7 .got          00000008 0000000000401000 DATA
+# EXE: SYMBOL TABLE:
+# EXE: 00401000 g       *ABS*  00000000 _GLOBAL_OFFSET_TABLE_
+# EXE: 00408ff0 g       *ABS*  00000000 _gp_disp
+
+    .global main
+    .ent    main
+main:
+    nop
+    .end    main
