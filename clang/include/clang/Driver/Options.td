@@ -575,9 +575,9 @@ def fmessage_length_EQ : Joined<["-"], "fmessage-length=">, Group<f_Group>;
 def fms_extensions : Flag<["-"], "fms-extensions">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Accept some non-standard constructs supported by the Microsoft compiler">;
 def fms_compatibility : Flag<["-"], "fms-compatibility">, Group<f_Group>, Flags<[CC1Option]>,
-  HelpText<"Enable Microsoft compatibility mode">;
+  HelpText<"Enable full Microsoft Visual C++ compatibility">;
 def fmsc_version : Joined<["-"], "fmsc-version=">, Group<f_Group>, Flags<[CC1Option, CoreOption]>,
-  HelpText<"Version of the Microsoft C/C++ compiler to report in _MSC_VER (0 = don't define it (default))">;
+  HelpText<"Microsoft compiler version number to report in _MSC_VER (0 = don't define it (default))">;
 def fdelayed_template_parsing : Flag<["-"], "fdelayed-template-parsing">, Group<f_Group>,
   HelpText<"Parse templated function definitions at the end of the "
            "translation unit">,  Flags<[CC1Option]>;
