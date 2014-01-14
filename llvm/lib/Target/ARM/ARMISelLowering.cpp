@@ -156,7 +156,7 @@ void ARMTargetLowering::addDRTypeForNEON(MVT VT) {
 }
 
 void ARMTargetLowering::addQRTypeForNEON(MVT VT) {
-  addRegisterClass(VT, &ARM::QPRRegClass);
+  addRegisterClass(VT, &ARM::DPairRegClass);
   addTypeForNEON(VT, MVT::v2f64, MVT::v4i32);
 }
 
