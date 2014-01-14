@@ -66,8 +66,8 @@ dnl instead of the autoconf default (for example, '-g -O2' for CC=gcc).
 
 dnl We need to check for the compiler up here to avoid anything else
 dnl starting with a different one.
-AC_PROG_CC(clang llvm-gcc gcc)
-AC_PROG_CXX(clang++ llvm-g++ g++)
+AC_PROG_CC(clang gcc)
+AC_PROG_CXX(clang++ g++)
 AC_PROG_CPP
 
 dnl If CXX is Clang, check that it can find and parse C++ standard library
