@@ -56,23 +56,6 @@ define weak_odr dllexport void @weak1() {
 @WeakVar2 = weak_odr dllexport unnamed_addr constant i32 1
 
 
-; CHECK: .globl alias
-; CHECK: alias = notExported
-@alias = dllexport alias void()* @notExported
-
-; CHECK: .globl alias2
-; CHECK: alias2 = f1
-@alias2 = dllexport alias void()* @f1
-
-; CHECK: .globl alias3
-; CHECK: alias3 = alias
-@alias3 = dllexport alias void()* @alias
-
-; CHECK: .weak weak_alias
-; CHECK: weak_alias = f1
-@weak_alias = dllexport alias weak_odr void()* @f1
-
-
 ; CHECK: .section .drectve
 ; WIN32: /EXPORT:Var1,DATA
 ; WIN32: /EXPORT:Var2,DATA
@@ -84,10 +67,6 @@ define weak_odr dllexport void @weak1() {
 ; WIN32: /EXPORT:lnk1
 ; WIN32: /EXPORT:lnk2
 ; WIN32: /EXPORT:weak1
-; WIN32: /EXPORT:alias
-; WIN32: /EXPORT:alias2
-; WIN32: /EXPORT:alias3
-; WIN32: /EXPORT:weak_alias
 ; MINGW: -export:Var1,data
 ; MINGW: -export:Var2,data
 ; MINGW: -export:Var3,data
@@ -98,7 +77,3 @@ define weak_odr dllexport void @weak1() {
 ; MINGW: -export:lnk1
 ; MINGW: -export:lnk2
 ; MINGW: -export:weak1
-; MINGW: -export:alias
-; MINGW: -export:alias2
-; MINGW: -export:alias3
-; MINGW: -export:weak_alias

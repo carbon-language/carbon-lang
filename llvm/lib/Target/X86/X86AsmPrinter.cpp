@@ -658,21 +658,6 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       if (I->hasDLLExportStorageClass())
         DLLExportedGlobals.push_back(getSymbol(I));
 
-    for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
-                                      I != E; ++I) {
-      const GlobalValue *GV = I;
-      if (!GV->hasDLLExportStorageClass())
-        continue;
-
-      while (const GlobalAlias *A = dyn_cast<GlobalAlias>(GV))
-        GV = A->getAliasedGlobal();
-
-      if (isa<Function>(GV))
-        DLLExportedFns.push_back(getSymbol(I));
-      else if (isa<GlobalVariable>(GV))
-        DLLExportedGlobals.push_back(getSymbol(I));
-    }
-
     // Output linker support code for dllexported globals on windows.
     if (!DLLExportedGlobals.empty() || !DLLExportedFns.empty()) {
       const TargetLoweringObjectFileCOFF &TLOFCOFF =
