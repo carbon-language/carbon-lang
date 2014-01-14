@@ -220,10 +220,19 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node,
     unsigned VRBase = 0;
     const TargetRegisterClass *RC =
       TRI->getAllocatableClass(TII->getRegClass(II, i, TRI, *MF));
-    // If the register class is unknown for the given definition, then try to
-    // infer one from the value type.
-    if (!RC && i < NumResults)
-      RC = TLI->getRegClassFor(Node->getSimpleValueType(i));
+    // Always let the value type influence the used register class. The
+    // constraints on the instruction may be too lax to represent the value
+    // type correctly. For example, a 64-bit float (X86::FR64) can't live in
+    // the 32-bit float super-class (X86::FR32).
+    if (i < NumResults && TLI->isTypeLegal(Node->getSimpleValueType(i))) {
+      const TargetRegisterClass *VTRC =
+        TLI->getRegClassFor(Node->getSimpleValueType(i));
+      if (RC)
+        VTRC = TRI->getCommonSubClass(RC, VTRC);
+      if (VTRC)
+        RC = VTRC;
+    }
+
     if (II.OpInfo[i].isOptionalDef()) {
       // Optional def must be a physical register.
       unsigned NumResults = CountResults(Node);
