@@ -349,6 +349,28 @@ struct JC : JB, JA { };
 // CHECK-X64-NEXT:      | [sizeof=4, align=4
 // CHECK-X64-NEXT:      |  nvsize=4, nvalign=4]
 
+#pragma pack()
+struct KA { char a; };
+#pragma pack(1)
+struct KB : KA { __declspec(align(2)) char a; };
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct KB
+// CHECK-NEXT:    0 |   struct KA (base)
+// CHECK-NEXT:    0 |     char a
+// CHECK-NEXT:    2 |   char a
+// CHECK-NEXT:      | [sizeof=4, align=2
+// CHECK-NEXT:      |  nvsize=3, nvalign=2]
+// CHECK-x64: *** Dumping AST Record Layout
+// CHECK-x64: *** Dumping AST Record Layout
+// CHECK-x64-NEXT:    0 | struct KB
+// CHECK-x64-NEXT:    0 |   struct KA (base)
+// CHECK-x64-NEXT:    0 |     char a
+// CHECK-x64-NEXT:    2 |   char a
+// CHECK-x64-NEXT:      | [sizeof=4, align=2
+// CHECK-x64-NEXT:      |  nvsize=3, nvalign=2]
+
 int a[
 sizeof(X)+
 sizeof(Y)+
@@ -364,4 +386,5 @@ sizeof(YF)+
 sizeof(YF)+
 sizeof(D2)+
 sizeof(JC)+
+sizeof(KB)+
 0];
