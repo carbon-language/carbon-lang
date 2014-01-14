@@ -104,8 +104,8 @@ our ``FrontendAction`` over some code.  For example, to run the
 Putting it together --- the first tool
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Now we combine the two previous steps into our first real tool.  This example
-tool is also checked into the clang tree at
+Now we combine the two previous steps into our first real tool.  A more advanced
+version of this example tool is also checked into the clang tree at
 ``tools/clang-check/ClangCheck.cpp``.
 
 .. code-block:: c++
