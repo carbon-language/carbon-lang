@@ -53,3 +53,13 @@ class AttrTester2 {
 };
 
 class CONSUMABLE(42) AttrTester3; // expected-error {{'consumable' attribute requires an identifier}}
+
+
+class CONSUMABLE(unconsumed)
+      __attribute__((consumable_auto_cast_state))
+      __attribute__((consumable_set_state_on_read))
+      Status {
+};
+
+
+

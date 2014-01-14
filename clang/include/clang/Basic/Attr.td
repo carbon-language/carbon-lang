@@ -1187,6 +1187,16 @@ def Consumable : InheritableAttr {
                            ["Unknown", "Consumed", "Unconsumed"]>];
 }
 
+def ConsumableAutoCast : InheritableAttr {
+  let Spellings = [GNU<"consumable_auto_cast_state">];
+  let Subjects = SubjectList<[CXXRecord]>;
+}
+
+def ConsumableSetOnRead : InheritableAttr {
+  let Spellings = [GNU<"consumable_set_state_on_read">];
+  let Subjects = SubjectList<[CXXRecord]>;
+}
+
 def CallableWhen : InheritableAttr {
   let Spellings = [GNU<"callable_when">];
   let Subjects = SubjectList<[CXXMethod]>;
