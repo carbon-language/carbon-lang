@@ -578,14 +578,21 @@ computeNewArchiveMembers(ArchiveOperation Operation,
 }
 
 template <typename T>
-static void printWithSpacePadding(raw_ostream &OS, T Data, unsigned Size) {
+static void printWithSpacePadding(raw_fd_ostream &OS, T Data, unsigned Size,
+				  bool MayTruncate = false) {
   uint64_t OldPos = OS.tell();
   OS << Data;
   unsigned SizeSoFar = OS.tell() - OldPos;
-  assert(Size >= SizeSoFar && "Data doesn't fit in Size");
-  unsigned Remaining = Size - SizeSoFar;
-  for (unsigned I = 0; I < Remaining; ++I)
-    OS << ' ';
+  if (Size > SizeSoFar) {
+    unsigned Remaining = Size - SizeSoFar;
+    for (unsigned I = 0; I < Remaining; ++I)
+      OS << ' ';
+  } else if (Size < SizeSoFar) {
+    assert(MayTruncate && "Data doesn't fit in Size");
+    // Some of the data this is used for (like UID) can be larger than the
+    // space available in the archive format. Truncate in that case.
+    OS.seek(OldPos + Size);
+  }
 }
 
 static void print32BE(raw_fd_ostream &Out, unsigned Val) {
@@ -600,8 +607,8 @@ static void printRestOfMemberHeader(raw_fd_ostream &Out,
                                     unsigned GID, unsigned Perms,
                                     unsigned Size) {
   printWithSpacePadding(Out, ModTime.toEpochTime(), 12);
-  printWithSpacePadding(Out, UID, 6);
-  printWithSpacePadding(Out, GID, 6);
+  printWithSpacePadding(Out, UID, 6, true);
+  printWithSpacePadding(Out, GID, 6, true);
   printWithSpacePadding(Out, format("%o", Perms), 8);
   printWithSpacePadding(Out, Size, 10);
   Out << "`\n";
