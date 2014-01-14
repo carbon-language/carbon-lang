@@ -3729,14 +3729,6 @@ def UMLALv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
                            Requires<[IsARM, NoV6]>;
 }
 
-let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
-def UMAALv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
-                              (ins GPR:$Rn, GPR:$Rm, pred:$p),
-                              4, IIC_iMAC64, [],
-          (UMAAL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p)>,
-                           Requires<[IsARM, NoV6]>;
-}
-
 } // neverHasSideEffects
 
 // Most significant word multiply
