@@ -34,7 +34,17 @@ private:
   llvm::BumpPtrAllocator _alloc;
 };
 
-class ExportsTest : public ParserTest<moduledef::Exports> {};
+class ExportsTest : public ParserTest<moduledef::Exports> {
+public:
+  void verifyExportDesc(const PECOFFLinkingContext::ExportDesc &exp,
+                        StringRef sym, int ordinal, bool noname, bool isData) {
+    EXPECT_EQ(sym, exp.name);
+    EXPECT_EQ(ordinal, exp.ordinal);
+    EXPECT_EQ(noname, exp.noname);
+    EXPECT_EQ(isData, exp.isData);
+  }
+};
+
 class HeapsizeTest : public ParserTest<moduledef::Heapsize> {};
 class NameTest : public ParserTest<moduledef::Name> {};
 class VersionTest : public ParserTest<moduledef::Version> {};
@@ -49,26 +59,11 @@ TEST_F(ExportsTest, Basic) {
   const std::vector<PECOFFLinkingContext::ExportDesc> &exports =
       dir->getExports();
   EXPECT_EQ(5U, exports.size());
-  EXPECT_EQ(exports[0].name, "sym1");
-  EXPECT_EQ(exports[0].ordinal, -1);
-  EXPECT_EQ(exports[0].noname, false);
-  EXPECT_EQ(exports[0].isData, false);
-  EXPECT_EQ(exports[1].name, "sym2");
-  EXPECT_EQ(exports[1].ordinal, 5);
-  EXPECT_EQ(exports[1].noname, false);
-  EXPECT_EQ(exports[1].isData, false);
-  EXPECT_EQ(exports[2].name, "sym3");
-  EXPECT_EQ(exports[2].ordinal, 8);
-  EXPECT_EQ(exports[2].noname, true);
-  EXPECT_EQ(exports[2].isData, false);
-  EXPECT_EQ(exports[3].name, "sym4");
-  EXPECT_EQ(exports[3].ordinal, -1);
-  EXPECT_EQ(exports[3].noname, false);
-  EXPECT_EQ(exports[3].isData, true);
-  EXPECT_EQ(exports[4].name, "sym5");
-  EXPECT_EQ(exports[4].ordinal, 10);
-  EXPECT_EQ(exports[4].noname, true);
-  EXPECT_EQ(exports[4].isData, true);
+  verifyExportDesc(exports[0], "sym1", -1, false, false);
+  verifyExportDesc(exports[1], "sym2", 5, false, false);
+  verifyExportDesc(exports[2], "sym3", 8, true, false);
+  verifyExportDesc(exports[3], "sym4", -1, false, true);
+  verifyExportDesc(exports[4], "sym5", 10, true, true);
 }
 
 TEST_F(HeapsizeTest, Basic) {
