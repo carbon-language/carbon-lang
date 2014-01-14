@@ -38,7 +38,7 @@ fi
 
 if [ -z "$CXX_LANG" ]
 then
-    CXX_LANG=c++1y
+    CXX_LANG=c++11
 fi
 if [ -z "$OPTIONS" ]
 then
