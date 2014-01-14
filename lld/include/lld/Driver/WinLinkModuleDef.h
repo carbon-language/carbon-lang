@@ -35,6 +35,7 @@ enum class Kind {
   kw_heapsize,
   kw_name,
   kw_noname,
+  kw_stacksize,
   kw_version,
 };
 
@@ -63,7 +64,7 @@ private:
 
 class Directive {
 public:
-  enum class Kind { exports, heapsize, name, version };
+  enum class Kind { exports, heapsize, name, stacksize, version };
 
   Kind getKind() const { return _kind; }
   virtual ~Directive() {}
@@ -92,13 +93,14 @@ private:
   const std::vector<PECOFFLinkingContext::ExportDesc> _exports;
 };
 
-class Heapsize : public Directive {
+template <Directive::Kind kind>
+class MemorySize : public Directive {
 public:
-  explicit Heapsize(uint64_t reserve, uint64_t commit)
-      : Directive(Kind::heapsize), _reserve(reserve), _commit(commit) {}
+  explicit MemorySize(uint64_t reserve, uint64_t commit)
+      : Directive(kind), _reserve(reserve), _commit(commit) {}
 
   static bool classof(const Directive *dir) {
-    return dir->getKind() == Kind::heapsize;
+    return dir->getKind() == kind;
   }
 
   uint64_t getReserve() const { return _reserve; }
@@ -108,6 +110,9 @@ private:
   const uint64_t _reserve;
   const uint64_t _commit;
 };
+
+typedef MemorySize<Directive::Kind::heapsize> Heapsize;
+typedef MemorySize<Directive::Kind::stacksize> Stacksize;
 
 class Name : public Directive {
 public:
@@ -159,7 +164,7 @@ private:
   void error(const Token &tok, Twine msg);
 
   bool parseExport(PECOFFLinkingContext::ExportDesc &result);
-  bool parseHeapsize(uint64_t &reserve, uint64_t &commit);
+  bool parseMemorySize(uint64_t &reserve, uint64_t &commit);
   bool parseName(std::string &outfile, uint64_t &baseaddr);
   bool parseVersion(int &major, int &minor);
 

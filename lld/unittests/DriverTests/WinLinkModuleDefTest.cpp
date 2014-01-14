@@ -46,6 +46,7 @@ public:
 };
 
 class HeapsizeTest : public ParserTest<moduledef::Heapsize> {};
+class StacksizeTest : public ParserTest<moduledef::Stacksize> {};
 class NameTest : public ParserTest<moduledef::Name> {};
 class VersionTest : public ParserTest<moduledef::Version> {};
 
@@ -76,6 +77,18 @@ TEST_F(HeapsizeTest, WithCommit) {
   moduledef::Heapsize *heapsize = parse("HEAPSIZE 65536, 8192");
   EXPECT_EQ(65536U, heapsize->getReserve());
   EXPECT_EQ(8192U, heapsize->getCommit());
+}
+
+TEST_F(StacksizeTest, Basic) {
+  moduledef::Stacksize *stacksize = parse("STACKSIZE 65536");
+  EXPECT_EQ(65536U, stacksize->getReserve());
+  EXPECT_EQ(0U, stacksize->getCommit());
+}
+
+TEST_F(StacksizeTest, WithCommit) {
+  moduledef::Stacksize *stacksize = parse("STACKSIZE 65536, 8192");
+  EXPECT_EQ(65536U, stacksize->getReserve());
+  EXPECT_EQ(8192U, stacksize->getCommit());
 }
 
 TEST_F(NameTest, Basic) {

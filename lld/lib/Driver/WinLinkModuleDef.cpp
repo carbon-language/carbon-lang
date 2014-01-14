@@ -54,6 +54,7 @@ Token Lexer::lex() {
                     .Case("HEAPSIZE", Kind::kw_heapsize)
                     .Case("NAME", Kind::kw_name)
                     .Case("NONAME", Kind::kw_noname)
+                    .Case("STACKSIZE", Kind::kw_stacksize)
                     .Case("VERSION", Kind::kw_version)
                     .Default(Kind::identifier);
     _buffer = (end == _buffer.npos) ? "" : _buffer.drop_front(end);
@@ -118,9 +119,16 @@ llvm::Optional<Directive *> Parser::parse() {
   // HEAPSIZE
   if (_tok._kind == Kind::kw_heapsize) {
     uint64_t reserve, commit;
-    if (!parseHeapsize(reserve, commit))
+    if (!parseMemorySize(reserve, commit))
       return llvm::None;
     return new (_alloc) Heapsize(reserve, commit);
+  }
+  // STACKSIZE
+  if (_tok._kind == Kind::kw_stacksize) {
+    uint64_t reserve, commit;
+    if (!parseMemorySize(reserve, commit))
+      return llvm::None;
+    return new (_alloc) Stacksize(reserve, commit);
   }
   // NAME
   if (_tok._kind == Kind::kw_name) {
@@ -170,8 +178,8 @@ bool Parser::parseExport(PECOFFLinkingContext::ExportDesc &result) {
   }
 }
 
-// HEAPSIZE reserve [, commit]
-bool Parser::parseHeapsize(uint64_t &reserve, uint64_t &commit) {
+// HEAPSIZE/STACKSIZE reserve[,commit]
+bool Parser::parseMemorySize(uint64_t &reserve, uint64_t &commit) {
   if (!consumeTokenAsInt(reserve))
     return false;
 
