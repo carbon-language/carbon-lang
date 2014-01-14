@@ -133,7 +133,7 @@ static bool MaybeRemoveCommaBeforeVaArgs(SmallVectorImpl<Token> &ResultToks,
   // In Microsoft-compatibility mode, a comma is removed in the expansion
   // of " ... , __VA_ARGS__ " if __VA_ARGS__ is empty.  This extension is
   // not supported by gcc.
-  if (!HasPasteOperator && !PP.getLangOpts().MicrosoftMode)
+  if (!HasPasteOperator && !PP.getLangOpts().MSVCCompat)
     return false;
 
   // GCC removes the comma in the expansion of " ... , ## __VA_ARGS__ " if
@@ -282,7 +282,7 @@ void TokenLexer::ExpandFunctionArguments() {
         // behavior by not considering single commas from nested macro
         // expansions as argument separators. Set a flag on the token so we can
         // test for this later when the macro expansion is processed.
-        if (PP.getLangOpts().MicrosoftMode && NumToks == 1 &&
+        if (PP.getLangOpts().MSVCCompat && NumToks == 1 &&
             ResultToks.back().is(tok::comma))
           ResultToks.back().setFlag(Token::IgnoredComma);
 

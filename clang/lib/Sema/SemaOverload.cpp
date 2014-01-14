@@ -3631,11 +3631,10 @@ CompareStandardConversionSequences(Sema &S,
   // }
   // Here, MSVC will call f(int) instead of generating a compile error
   // as clang will do in standard mode.
-  if (S.getLangOpts().MicrosoftMode &&
-      SCS1.Second == ICK_Integral_Conversion &&
-      SCS2.Second == ICK_Floating_Integral && 
+  if (S.getLangOpts().MSVCCompat && SCS1.Second == ICK_Integral_Conversion &&
+      SCS2.Second == ICK_Floating_Integral &&
       S.Context.getTypeSize(SCS1.getFromType()) ==
-      S.Context.getTypeSize(SCS1.getToType(2)))
+          S.Context.getTypeSize(SCS1.getToType(2)))
     return ImplicitConversionSequence::Better;
 
   return ImplicitConversionSequence::Indistinguishable;
@@ -10445,7 +10444,7 @@ bool Sema::buildOverloadedCallSet(Scope *S, Expr *Fn,
     // create a type dependent CallExpr. The goal is to postpone name lookup
     // to instantiation time to be able to search into type dependent base
     // classes.
-    if (getLangOpts().MicrosoftMode && CurContext->isDependentContext() && 
+    if (getLangOpts().MSVCCompat && CurContext->isDependentContext() &&
         (isa<FunctionDecl>(CurContext) || isa<CXXRecordDecl>(CurContext))) {
       CallExpr *CE = new (Context) CallExpr(Context, Fn, Args,
                                             Context.DependentTy, VK_RValue,

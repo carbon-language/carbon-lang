@@ -454,7 +454,7 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
     CXXTypeInfoDecl = R.getAsSingle<RecordDecl>();
     // Microsoft's typeinfo doesn't have type_info in std but in the global
     // namespace if _HAS_EXCEPTIONS is defined to 0. See PR13153.
-    if (!CXXTypeInfoDecl && LangOpts.MicrosoftMode) {
+    if (!CXXTypeInfoDecl && LangOpts.MSVCCompat) {
       LookupQualifiedName(R, Context.getTranslationUnitDecl());
       CXXTypeInfoDecl = R.getAsSingle<RecordDecl>();
     }
@@ -1650,7 +1650,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
     // Didn't find a member overload. Look for a global one.
     DeclareGlobalNewDelete();
     DeclContext *TUDecl = Context.getTranslationUnitDecl();
-    bool FallbackEnabled = IsArray && Context.getLangOpts().MicrosoftMode;
+    bool FallbackEnabled = IsArray && Context.getLangOpts().MSVCCompat;
     if (FindAllocationOverload(StartLoc, Range, NewName, AllocArgs, TUDecl,
                                /*AllowMissing=*/FallbackEnabled, OperatorNew,
                                /*Diagnose=*/!FallbackEnabled)) {
@@ -5070,7 +5070,7 @@ ExprResult Sema::ActOnDecltypeExpression(Expr *E) {
 
   // In MS mode, don't perform any extra checking of call return types within a
   // decltype expression.
-  if (getLangOpts().MicrosoftMode)
+  if (getLangOpts().MSVCCompat)
     return Owned(E);
 
   // Perform the semantic checks we delayed until this point.
@@ -5345,7 +5345,7 @@ ExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
 
   if (!ObjectType->isDependentType() && !ObjectType->isScalarType() &&
       !ObjectType->isVectorType()) {
-    if (getLangOpts().MicrosoftMode && ObjectType->isVoidType())
+    if (getLangOpts().MSVCCompat && ObjectType->isVoidType())
       Diag(OpLoc, diag::ext_pseudo_dtor_on_void) << Base->getSourceRange();
     else
       Diag(OpLoc, diag::err_pseudo_dtor_base_not_scalar)
