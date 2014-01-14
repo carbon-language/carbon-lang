@@ -171,8 +171,7 @@ void MipsTargetHandler::finalizeSymbolValues() {
 
     auto gotAtomIter = _targetLayout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
     assert(gotAtomIter != _targetLayout.absoluteAtoms().end());
-    _gotSymAtom = (*gotAtomIter);
-    _gotSymAtom->_virtualAddr = gotSection ? gotSection->virtualAddr() : 0;
+    (*gotAtomIter)->_virtualAddr = gotSection ? gotSection->virtualAddr() : 0;
 
     auto gpDispAtomIter = _targetLayout.findAbsoluteAtom("_gp_disp");
     assert(gpDispAtomIter != _targetLayout.absoluteAtoms().end());

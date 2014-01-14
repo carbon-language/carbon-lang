@@ -69,7 +69,6 @@ private:
   llvm::BumpPtrAllocator _alloc;
   MipsTargetLayout<Mips32ElELFType> _targetLayout;
   MipsTargetRelocationHandler _relocationHandler;
-  AtomLayout *_gotSymAtom;
   AtomLayout *_gpDispSymAtom;
 };
 
