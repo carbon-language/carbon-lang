@@ -28,5 +28,6 @@ constant int foo3 __attribute__((vec_type_hint(char))) = 0; // expected-error {{
 
 void f_kernel_image2d_t( kernel image2d_t image ) { // expected-error {{'kernel' attribute only applies to functions}}
   int __kernel x; // expected-error {{'__kernel' attribute only applies to functions}}
-
+  read_only int i; // expected-error {{'read_only' attribute only applies to parameters}}
+  __write_only int j; // expected-error {{'__write_only' attribute only applies to parameters}}
 }

@@ -453,16 +453,19 @@ def OpenCLKernel : InheritableAttr {
   let Subjects = SubjectList<[Function], ErrorDiag>;
 }
 
+// This attribute is both a type attribute, and a declaration attribute (for
+// parameter variables).
 def OpenCLImageAccess : Attr {
-  let Spellings = [GNU<"opencl_image_access">,
-                   Keyword<"__read_only">, Keyword<"read_only">,
+  let Spellings = [Keyword<"__read_only">, Keyword<"read_only">,
                    Keyword<"__write_only">, Keyword<"write_only">,
                    Keyword<"__read_write">, Keyword<"read_write">];
-
-  // The access argument is used by the GNU syntax when parsing the attribute,
-  // but is used by the semantic attribute for all syntaxes (the keywords imply
-  // a specific access value).
-  let Args = [IntArgument<"Access">];
+  let Subjects = SubjectList<[ParmVar], ErrorDiag>;
+  let Accessors = [Accessor<"isReadOnly", [Keyword<"__read_only">,
+                                           Keyword<"read_only">]>,
+                   Accessor<"isReadWrite", [Keyword<"__read_write">,
+                                            Keyword<"read_write">]>,
+                   Accessor<"isWriteOnly", [Keyword<"__write_only">,
+                                            Keyword<"write_only">]>];
 }
 
 def OpenCLPrivateAddressSpace : TypeAttr {

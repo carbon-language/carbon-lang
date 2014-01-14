@@ -16,7 +16,6 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/AddressSpaces.h"
 #include "clang/Basic/CharInfo.h"
-#include "clang/Basic/OpenCL.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/ParsedTemplate.h"
@@ -654,31 +653,8 @@ void Parser::ParseOpenCLAttributes(ParsedAttributes &attrs) {
 void Parser::ParseOpenCLQualifiers(ParsedAttributes &Attrs) {
   IdentifierInfo *AttrName = Tok.getIdentifierInfo();
   SourceLocation AttrNameLoc = Tok.getLocation();
-  ArgsUnion Expr;
-  switch (Tok.getKind()) {
-    // OpenCL qualifiers:
-    case tok::kw___private:
-    case tok::kw___global:
-    case tok::kw___local:
-    case tok::kw___constant:
-      // These are handled automatically below and have no args.
-      break;
-    case tok::kw___read_only:
-      Expr = Actions.ActOnIntegerConstant(SourceLocation(),
-                                          CLIA_read_only).take();
-      break;
-    case tok::kw___write_only:
-      Expr = Actions.ActOnIntegerConstant(SourceLocation(),
-                                          CLIA_write_only).take();
-      break;
-    case tok::kw___read_write:
-      Expr = Actions.ActOnIntegerConstant(SourceLocation(),
-                                          CLIA_read_write).take();
-      break;
-    default: llvm_unreachable("Unknown OpenCL qualifier");
-  }
-  Attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, &Expr,
-               Expr.isNull() ? 0 : 1, AttributeList::AS_Keyword);
+  Attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0, 0,
+               AttributeList::AS_Keyword);
 }
 
 /// \brief Parse a version number.

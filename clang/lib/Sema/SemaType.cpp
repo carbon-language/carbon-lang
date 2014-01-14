@@ -22,7 +22,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeLocVisitor.h"
-#include "clang/Basic/OpenCL.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
@@ -4613,43 +4612,6 @@ void Sema::adjustMemberFunctionCC(QualType &T, bool IsStatic) {
   T = Context.getAdjustedType(T, Wrapped);
 }
 
-/// Handle OpenCL image access qualifiers: read_only, write_only, read_write
-static void HandleOpenCLImageAccessAttribute(QualType& CurType,
-                                             const AttributeList &Attr,
-                                             Sema &S) {
-  // Check the attribute arguments.
-  if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << Attr.getName() << 1;
-    Attr.setInvalid();
-    return;
-  }
-  Expr *sizeExpr = static_cast<Expr *>(Attr.getArgAsExpr(0));
-  llvm::APSInt arg(32);
-  if (sizeExpr->isTypeDependent() || sizeExpr->isValueDependent() ||
-      !sizeExpr->isIntegerConstantExpr(arg, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
-      << Attr.getName() << AANT_ArgumentIntegerConstant
-      << sizeExpr->getSourceRange();
-    Attr.setInvalid();
-    return;
-  }
-  unsigned iarg = static_cast<unsigned>(arg.getZExtValue());
-  switch (iarg) {
-  case CLIA_read_only:
-  case CLIA_write_only:
-  case CLIA_read_write:
-    // Implemented in a separate patch
-    break;
-  default:
-    // Implemented in a separate patch
-    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_size)
-      << sizeExpr->getSourceRange();
-    Attr.setInvalid();
-    break;
-  }
-}
-
 /// HandleVectorSizeAttribute - this attribute is only applicable to integral
 /// and float scalars, although arrays, pointers, and function return values are
 /// allowed in conjunction with this construct. Aggregates with this attribute
@@ -4941,7 +4903,8 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       attr.setUsedAsTypeAttr();
       break;
     case AttributeList::AT_OpenCLImageAccess:
-      HandleOpenCLImageAccessAttribute(type, attr, state.getSema());
+      // FIXME: there should be some type checking happening here, I would
+      // imagine, but the original handler's checking was entirely superfluous.
       attr.setUsedAsTypeAttr();
       break;
 

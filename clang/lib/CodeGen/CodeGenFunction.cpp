@@ -22,7 +22,6 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtCXX.h"
-#include "clang/Basic/OpenCL.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
@@ -412,10 +411,11 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
     // Get image access qualifier:
     if (ty->isImageType()) {
       const OpenCLImageAccessAttr *A = parm->getAttr<OpenCLImageAccessAttr>();
-      if (A && A->getAccess() == CLIA_write_only)
+      if (A && A->isWriteOnly())
         accessQuals.push_back(llvm::MDString::get(Context, "write_only"));
       else
         accessQuals.push_back(llvm::MDString::get(Context, "read_only"));
+      // FIXME: what about read_write?
     } else
       accessQuals.push_back(llvm::MDString::get(Context, "none"));
 
