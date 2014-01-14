@@ -811,7 +811,6 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
         Current.Previous->is(tok::at)) {
       IsNSStringLiteral = true;
       Prefix = "@\"";
-      --StartColumn;
     }
     if ((Text.endswith(Postfix = "\"") &&
          (IsNSStringLiteral || Text.startswith(Prefix = "\"") ||

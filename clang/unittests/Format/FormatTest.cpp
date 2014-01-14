@@ -6266,7 +6266,7 @@ TEST_F(FormatTest, BreaksWideAndNSStringLiterals) {
             format("L\"wide string literal\";", getGoogleStyleWithColumns(16)));
   EXPECT_EQ("@\"NSString \"\n"
             "@\"literal\";",
-            format("@\"NSString literal\";", getGoogleStyleWithColumns(16)));
+            format("@\"NSString literal\";", getGoogleStyleWithColumns(19)));
 }
 
 TEST_F(FormatTest, BreaksRawStringLiterals) {
