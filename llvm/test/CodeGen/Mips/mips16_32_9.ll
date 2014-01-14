@@ -5,7 +5,7 @@ entry:
   ret void
 }
 
-; 32: 	.set	mips16                  # @foo
+; 32: 	.set	mips16
 ; 32: 	.ent	foo
 ; 32:	jrc $ra
 ; 32:	.end	foo
@@ -14,7 +14,7 @@ entry:
   ret void
 }
 
-; 32: 	.set	nomips16                  # @nofoo
+; 32: 	.set	nomips16
 ; 32: 	.ent	nofoo
 ; 32:	.set	noreorder
 ; 32:	.set	nomacro
@@ -30,7 +30,7 @@ entry:
   ret i32 0
 }
 
-; 32: 	.set	mips16                  # @main
+; 32: 	.set	mips16
 ; 32: 	.ent	main
 ; 32:	jrc $ra
 ; 32:	.end	main

@@ -6,7 +6,7 @@ entry:
   ret void
 }
 
-; CHECK: 	.set	mips16                  # @foo
+; CHECK: 	.set	mips16
 ; CHECK:	.ent	foo
 ; CHECK:	jrc $ra
 ; CHECK:	.end	foo

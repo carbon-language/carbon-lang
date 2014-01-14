@@ -47,6 +47,18 @@ void MipsTargetAsmStreamer::emitDirectiveSetNoMicroMips() {
   OS << "\t.set\tnomicromips\n";
 }
 
+void MipsTargetAsmStreamer::emitDirectiveSetMips16() {
+  OS << "\t.set\tmips16\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetNoMips16() {
+  OS << "\t.set\tnomips16\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveEnt(const MCSymbol &Symbol) {
+  OS << "\t.ent\t" << Symbol.getName() << '\n';
+}
+
 void MipsTargetAsmStreamer::emitDirectiveAbiCalls() { OS << "\t.abicalls\n"; }
 void MipsTargetAsmStreamer::emitDirectiveOptionPic0() {
   OS << "\t.option\tpic0\n";
@@ -79,6 +91,18 @@ void MipsTargetELFStreamer::emitDirectiveSetMicroMips() {
 
 void MipsTargetELFStreamer::emitDirectiveSetNoMicroMips() {
   MicroMipsEnabled = false;
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetMips16() {
+  // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetNoMips16() {
+  // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitDirectiveEnt(const MCSymbol &Symbol) {
+  // FIXME: implement.
 }
 
 void MipsTargetELFStreamer::emitDirectiveAbiCalls() {

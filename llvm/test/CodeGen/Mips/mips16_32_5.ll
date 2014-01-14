@@ -6,11 +6,11 @@ entry:
   ret void
 }
 
-; 16: 	.set	mips16                  # @foo
+; 16: 	.set	mips16
 ; 16: 	.ent	foo
 ; 16:	jrc $ra
 ; 16:	.end	foo
-; 32: 	.set	mips16                  # @foo
+; 32: 	.set	mips16
 ; 32: 	.ent	foo
 ; 32:	jrc $ra
 ; 32:	.end	foo
@@ -19,7 +19,7 @@ entry:
   ret void
 }
 
-; 16: 	.set	nomips16                  # @nofoo
+; 16: 	.set	nomips16
 ; 16: 	.ent	nofoo
 ; 16:	.set	noreorder
 ; 16:	.set	nomacro
@@ -30,7 +30,7 @@ entry:
 ; 16:	.set	macro
 ; 16:	.set	reorder
 ; 16:	.end	nofoo
-; 32: 	.set	nomips16                  # @nofoo
+; 32: 	.set	nomips16
 ; 32: 	.ent	nofoo
 ; 32:	.set	noreorder
 ; 32:	.set	nomacro
@@ -46,7 +46,7 @@ entry:
   ret i32 0
 }
 
-; 16: 	.set	nomips16                  # @main
+; 16: 	.set	nomips16
 ; 16: 	.ent	main
 ; 16:	.set	noreorder
 ; 16:	.set	nomacro
@@ -58,7 +58,7 @@ entry:
 ; 16:	.set	reorder
 ; 16:	.end	main
 
-; 32: 	.set	nomips16                  # @main
+; 32: 	.set	nomips16
 ; 32: 	.ent	main
 ; 32:	.set	noreorder
 ; 32:	.set	nomacro

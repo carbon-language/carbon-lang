@@ -15,7 +15,7 @@ entry:
   %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([13 x i8]* @.str, i32 0, i32 0))
   ret i32 0
 
-; SR: 	.set	mips16                  # @main
+; SR: 	.set	mips16
 
 ; SR32: .set nomips16
 ; SR32: .ent main

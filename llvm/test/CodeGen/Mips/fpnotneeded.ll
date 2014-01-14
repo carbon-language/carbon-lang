@@ -10,7 +10,7 @@ entry:
   ret void
 }
 
-; 32: 	.set	mips16                  # @vv
+; 32: 	.set	mips16
 ; 32: 	.ent	vv
 
 ; 32:	save	{{.+}}
@@ -23,7 +23,7 @@ entry:
   ret i32 %0
 }
 
-; 32: 	.set	mips16                  # @iv
+; 32: 	.set	mips16
 ; 32: 	.ent	iv
 
 ; 32:	save	{{.+}}
@@ -39,7 +39,7 @@ entry:
   ret void
 }
 
-; 32: 	.set	mips16                  # @vif
+; 32: 	.set	mips16
 ; 32: 	.ent	vif
 
 ; 32:	save	{{.+}}
@@ -52,7 +52,7 @@ entry:
   ret void
 }
 
-; 32: 	.set	mips16                  # @foo
+; 32: 	.set	mips16
 ; 32: 	.ent	foo
 
 ; 32:	save	{{.+}}
@@ -69,7 +69,7 @@ entry:
   ret float 1.000000e+00
 }
 
-; 32: 	.set	nomips16                  # @fv
+; 32: 	.set	nomips16
 ; 32: 	.ent	fv
 ; 32:	.set	noreorder
 ; 32:	.set	nomacro
