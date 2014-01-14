@@ -115,6 +115,8 @@ public:
   };
 
   typedef typename std::vector<Chunk<ELFT> *>::iterator ChunkIter;
+  typedef typename std::vector<Segment<ELFT> *>::iterator SegmentIter;
+
   // The additional segments are used to figure out
   // if there is a segment by that type already created
   // For example : PT_TLS, we have two sections .tdata/.tbss
@@ -251,7 +253,7 @@ public:
 
   inline range<ChunkIter> sections() { return _sections; }
 
-  inline range<ChunkIter> segments() { return _segments; }
+  inline range<SegmentIter> segments() { return _segments; }
 
   inline ELFHeader<ELFT> *getHeader() { return _elfHeader; }
 
