@@ -26,10 +26,12 @@
 #define HIDDEN_DIRECTIVE .private_extern
 #define LOCAL_LABEL(name) L_##name
 #define FILE_LEVEL_DIRECTIVE  .subsections_via_symbols
+#define SYMBOL_IS_FUNC(name)
 #else
 #define HIDDEN_DIRECTIVE .hidden
 #define LOCAL_LABEL(name) .L_##name
-#define FILE_LEVEL_DIRECTIVE  
+#define FILE_LEVEL_DIRECTIVE
+#define SYMBOL_IS_FUNC(name) .type name, @function
 #endif
 
 #define GLUE2(a, b) a ## b
@@ -46,21 +48,25 @@
 #define DEFINE_COMPILERRT_FUNCTION(name)                   \
   FILE_LEVEL_DIRECTIVE     SEPARATOR                       \
   .globl SYMBOL_NAME(name) SEPARATOR                       \
+  SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR              \
   DECLARE_SYMBOL_VISIBILITY(name)                          \
   SYMBOL_NAME(name):
 
 #define DEFINE_COMPILERRT_PRIVATE_FUNCTION(name)           \
   .globl SYMBOL_NAME(name) SEPARATOR                       \
+  SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR              \
   HIDDEN_DIRECTIVE SYMBOL_NAME(name) SEPARATOR             \
   SYMBOL_NAME(name):
 
 #define DEFINE_COMPILERRT_PRIVATE_FUNCTION_UNMANGLED(name) \
   .globl name SEPARATOR                                    \
+  SYMBOL_IS_FUNC(name) SEPARATOR                           \
   HIDDEN_DIRECTIVE name SEPARATOR                          \
   name:
 
 #define DEFINE_COMPILERRT_FUNCTION_ALIAS(name, target)     \
   .globl SYMBOL_NAME(name) SEPARATOR                       \
+  SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR              \
   .set SYMBOL_NAME(name), SYMBOL_NAME(target) SEPARATOR
 
 #if defined (__ARM_EABI__)
