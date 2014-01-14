@@ -121,7 +121,7 @@ private:
 
 MipsTargetHandler::MipsTargetHandler(MipsLinkingContext &context)
     : DefaultTargetHandler(context), _targetLayout(context),
-      _relocationHandler(context, *this) {}
+      _relocationHandler(context, *this), _gpDispSymAtom(nullptr) {}
 
 uint64_t MipsTargetHandler::getGPDispSymAddr() const {
   return _gpDispSymAtom ? _gpDispSymAtom->_virtualAddr : 0;
