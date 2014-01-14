@@ -74,3 +74,25 @@ return:                                           ; preds = %if.end, %entry
   %retval.0 = phi float [ %cond, %if.end ], [ %p, %entry ]
   ret float %retval.0
 }
+
+; CHECK-LABEL: test6
+; CHECK: cmpl
+; CHECK-NOT: kmov
+; CHECK: ret
+define i32 @test6(i32 %a, i32 %b) {
+  %cmp = icmp eq i32 %a, %b
+  %res = zext i1 %cmp to i32
+  ret i32 %res
+}
+
+; CHECK-LABEL: test7
+; CHECK: vucomisd
+; CHECK-NOT: kmov
+; CHECK: ret
+define i32 @test7(double %x, double %y) #2 {
+entry:
+  %0 = fcmp one double %x, %y
+  %or = zext i1 %0 to i32
+  ret i32 %or
+}
+
