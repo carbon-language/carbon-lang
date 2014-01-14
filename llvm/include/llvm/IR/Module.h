@@ -22,6 +22,7 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/system_error.h"
 
 namespace llvm {
 
@@ -450,11 +451,8 @@ public:
   /// materialized lazily.  If !isDematerializable(), this method is a noop.
   void Dematerialize(GlobalValue *GV);
 
-  /// MaterializeAll - Make sure all GlobalValues in this Module are fully read.
-  /// If the module is corrupt, this returns true and fills in the optional
-  /// string with information about the problem.  If successful, this returns
-  /// false.
-  bool MaterializeAll(std::string *ErrInfo = 0);
+  /// Make sure all GlobalValues in this Module are fully read.
+  error_code materializeAll();
 
   /// MaterializeAllPermanently - Make sure all GlobalValues in this Module are
   /// fully read and clear the Materializer.  If the module is corrupt, this
