@@ -36,9 +36,13 @@ then
 	fi
 fi
 
+if [ -z "$CXX_LANG" ]
+then
+    CXX_LANG=c++1y
+fi
 if [ -z "$OPTIONS" ]
 then
-	OPTIONS="-std=c++11 -stdlib=libc++"
+	OPTIONS="-std=${CXX_LANG} -stdlib=libc++"
 fi
 OPTIONS="$OPTIONS -I$LIBCXX_ROOT/test/support"
 
