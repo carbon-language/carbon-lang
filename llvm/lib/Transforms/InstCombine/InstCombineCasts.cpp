@@ -1797,11 +1797,6 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     Type *DstElTy = DstPTy->getElementType();
     Type *SrcElTy = SrcPTy->getElementType();
 
-    // If the address spaces don't match, don't eliminate the bitcast, which is
-    // required for changing types.
-    if (SrcPTy->getAddressSpace() != DstPTy->getAddressSpace())
-      return 0;
-
     // If we are casting a alloca to a pointer to a type of the same
     // size, rewrite the allocation instruction to allocate the "right" type.
     // There is no need to modify malloc calls because it is their bitcast that
