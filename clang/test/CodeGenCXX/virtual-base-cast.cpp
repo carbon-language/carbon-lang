@@ -77,13 +77,13 @@ BB* d() { return y; }
 // Same as 'c' except the vbptr offset is 4, changing the initial GEP and the
 // final add.
 // MSVC: @"\01?d@@YAPAUBB@@XZ"() [[NUW:#[0-9]+]] {
-// MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8* {{.*}}, i32 12
+// MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8* {{.*}}, i32 4
 // MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i8**
 // MSVC:   %[[vbtable:.*]] = load i8** %[[vbptr]]
 // MSVC:   %[[entry:.*]] = getelementptr inbounds i8* {{.*}}, i32 16
 // MSVC:   %[[entry_i32:.*]] = bitcast i8* %[[entry]] to i32*
 // MSVC:   %[[offset:.*]] = load i32* %[[entry_i32]]
-// MSVC:   add nsw i32 12, %[[offset]]
+// MSVC:   add nsw i32 4, %[[offset]]
 // MSVC: }
 
 // CHECK: attributes [[NUW]] = { nounwind{{.*}} }

@@ -2341,6 +2341,10 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBases(const CXXRecordDecl *RD) {
   // Set our VBPtroffset if we know it at this point.
   if (!HasVBPtr)
     VBPtrOffset = CharUnits::fromQuantity(-1);
+  else if (SharedVBPtrBase) {
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(SharedVBPtrBase);
+    VBPtrOffset = Bases[SharedVBPtrBase] + Layout.getVBPtrOffset();
+  }
 }
 
 void MicrosoftRecordLayoutBuilder::layoutNonVirtualBase(
@@ -2444,13 +2448,8 @@ MicrosoftRecordLayoutBuilder::layoutZeroWidthBitField(const FieldDecl *FD) {
 }
 
 void MicrosoftRecordLayoutBuilder::injectVBPtr(const CXXRecordDecl *RD) {
-  if (!HasVBPtr)
+  if (!HasVBPtr || SharedVBPtrBase)
     return;
-  if (SharedVBPtrBase) {
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(SharedVBPtrBase);
-    VBPtrOffset = Bases[SharedVBPtrBase] + Layout.getVBPtrOffset();
-    return;
-  }
   // Inject the VBPointer at the injection site.
   CharUnits InjectionSite = VBPtrOffset;
   // But before we do, make sure it's properly aligned.

@@ -95,7 +95,7 @@ void (UnspecSingle::*us_f_mp)() = &UnspecSingle::foo;
 // CHECK: @"\01?v_f_mp@Const@@3P8Virtual@@AEXXZQ2@" =
 // CHECK:   global { i8*, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Virtual@@QAEXXZ" to i8*), i32 0, i32 0 }, align 4
 // CHECK: @"\01?u_f_mp@Const@@3P8Unspecified@@AEXXZQ2@" =
-// CHECK:   global { i8*, i32, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 20, i32 0 }, align 4
+// CHECK:   global { i8*, i32, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 12, i32 0 }, align 4
 // CHECK: @"\01?us_f_mp@Const@@3P8UnspecSingle@@AEXXZQ2@" =
 // CHECK:   global { i8*, i32, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@UnspecSingle@@QAEXXZ" to i8*), i32 0, i32 0, i32 0 }, align 4
 }
@@ -167,7 +167,7 @@ void EmitNonVirtualMemberPointers() {
 // CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Virtual@@QAEXXZ" to i8*), i32 0, i32 0 },
 // CHECK:     { i8*, i32, i32 }* %{{.*}}, align 4
 // CHECK:   store { i8*, i32, i32, i32 }
-// CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 20, i32 0 },
+// CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 12, i32 0 },
 // CHECK:     { i8*, i32, i32, i32 }* %{{.*}}, align 4
 // CHECK:   store { i8*, i32, i32, i32 }
 // CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@UnspecWithVBPtr@@QAEXXZ" to i8*),

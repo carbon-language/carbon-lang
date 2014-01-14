@@ -264,7 +264,7 @@ struct H : Z, A {
 
   // VTABLE-EXTENDED-H: VFTable for 'V1' in 'simple::A' in 'extended::A' in 'extended::H' (2 entries).
   // VTABLE-EXTENDED-H-NEXT: 0 | void simple::A::f()
-  // VTABLE-EXTENDED-H-NEXT:     [this adjustment: vtordisp at -4, vbptr at 4 to the left,
+  // VTABLE-EXTENDED-H-NEXT:     [this adjustment: vtordisp at -4, vbptr at 8 to the left,
   // VTABLE-EXTENDED-H-NEXT:      vboffset at 8 in the vbtable, 8 non-virtual]
 
   // MANGLING-DAG: @"\01?f@A@simple@@$R477PPPPPPPM@7AEXXZ"
