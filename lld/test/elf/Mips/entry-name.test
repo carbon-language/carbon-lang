@@ -1,0 +1,14 @@
+# Check name of executable entry symbol.
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t1 %s
+# RUN: lld -flavor gnu -target mipsel --noinhibit-exec -o %t2 %t1
+# RUN: llvm-objdump -t %t2 | FileCheck %s
+
+# CHECK: SYMBOL TABLE:
+# CHECK: 00400134 g     F .text  00000004 main
+# CHECK: 00000000         *UND*  00000000 __start
+
+    .global main
+    .ent    main
+main:
+    nop
+    .end    main
