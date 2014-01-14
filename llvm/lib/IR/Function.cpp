@@ -736,10 +736,8 @@ bool Function::isDefTriviallyDead() const {
 bool Function::callsFunctionThatReturnsTwice() const {
   for (const_inst_iterator
          I = inst_begin(this), E = inst_end(this); I != E; ++I) {
-    const CallInst* callInst = dyn_cast<CallInst>(&*I);
-    if (!callInst)
-      continue;
-    if (callInst->canReturnTwice())
+    ImmutableCallSite CS(&*I);
+    if (CS && CS.hasFnAttr(Attribute::ReturnsTwice))
       return true;
   }
 
