@@ -25,7 +25,7 @@ protected:
     moduledef::Parser parser(lexer, _alloc);
     llvm::Optional<moduledef::Directive *> dir = parser.parse();
     EXPECT_TRUE(dir.hasValue());
-    auto *ret = dyn_cast<T>(dir.getValue());
+    T *ret = dyn_cast<T>(dir.getValue());
     EXPECT_TRUE(ret != nullptr);
     return ret;
   }
