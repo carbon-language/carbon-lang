@@ -102,15 +102,15 @@ dnl other possible compilers.
 AC_MSG_CHECKING([whether GCC or Clang is our host compiler])
 AC_LANG_PUSH([C++])
 llvm_cv_cxx_compiler=unknown
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if ! __clang__
-                                     #error
-                                     #endif
-                                     ]])],
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#if ! __clang__
+                                    #error
+                                    #endif
+                                    ]])],
                   llvm_cv_cxx_compiler=clang,
-                  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if ! __GNUC__
-                                                        #error
-                                                        #endif
-                                                        ]])],
+                  [AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#if ! __GNUC__
+                                                       #error
+                                                       #endif
+                                                       ]])],
                                      llvm_cv_cxx_compiler=gcc, [])])
 AC_LANG_POP([C++])
 AC_MSG_RESULT([${llvm_cv_cxx_compiler}])
@@ -129,7 +129,7 @@ case "$enableval" in
     case "$llvm_cv_cxx_compiler" in
     clang)
       AC_MSG_CHECKING([whether Clang is new enough])
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+      AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #if __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 1)
 #error This version of Clang is too old to build LLVM
 #endif
@@ -140,10 +140,34 @@ case "$enableval" in
 The selected Clang compiler is not new enough to build LLVM. Please upgrade to
 Clang 3.1. You may pass --disable-compiler-version-checks to configure to
 bypass these sanity checks.])])
+
+      dnl Note that libstdc++4.6 is known broken for C++11 builds. The errors
+      dnl are sometimes deeply confusing though. Here we test for an obvious
+      dnl incomplete feature in 4.6's standard library that was completed in
+      dnl 4.7's.
+      AC_MSG_CHECKING([whether Clang will select a modern C++ standard library])
+      llvm_cv_old_cxxflags="$CXXFLAGS"
+      CXXFLAGS="$CXXFLAGS -std=c++0x"
+      AC_LINK_IFELSE([AC_LANG_SOURCE([[
+#include <atomic>
+std::atomic<float> x(0.0f);
+int main() { return (float)x; }
+]])],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_ERROR([
+We detected a missing feature in the standard C++ library that was known to be
+missing in libstdc++4.6 and implemented in libstdc++4.7. There are numerous
+C++11 problems with 4.6's library, and we don't support GCCs or libstdc++ older
+than 4.7. You will need to update your system and ensure Clang uses the newer
+standard library.
+
+If this error is incorrect or you need to force things to work, you may pass
+'--disable-compiler-version-checks' to configure to bypass this test.])])
       ;;
     gcc)
       AC_MSG_CHECKING([whether GCC is new enough])
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+      AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 7)
 #error This version of GCC is too old to build LLVM
 #endif

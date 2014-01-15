@@ -3593,16 +3593,9 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #if ! __clang__
-                                     #error
-                                     #endif
+                                    #error
+                                    #endif
 
-int
-main ()
-{
-
-  ;
-  return 0;
-}
 _ACEOF
 rm -f conftest.$ac_objext
 if { (ac_try="$ac_compile"
@@ -3650,16 +3643,9 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #if ! __GNUC__
-                                                        #error
-                                                        #endif
+                                                       #error
+                                                       #endif
 
-int
-main ()
-{
-
-  ;
-  return 0;
-}
 _ACEOF
 rm -f conftest.$ac_objext
 if { (ac_try="$ac_compile"
@@ -3748,13 +3734,6 @@ cat >>conftest.$ac_ext <<_ACEOF
 #error This version of Clang is too old to build LLVM
 #endif
 
-int
-main ()
-{
-
-  ;
-  return 0;
-}
 _ACEOF
 rm -f conftest.$ac_objext
 if { (ac_try="$ac_compile"
@@ -3810,6 +3789,88 @@ bypass these sanity checks." >&2;}
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+                              { echo "$as_me:$LINENO: checking whether Clang will select a modern C++ standard library" >&5
+echo $ECHO_N "checking whether Clang will select a modern C++ standard library... $ECHO_C" >&6; }
+      llvm_cv_old_cxxflags="$CXXFLAGS"
+      CXXFLAGS="$CXXFLAGS -std=c++0x"
+      cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <atomic>
+std::atomic<float> x(0.0f);
+int main() { return (float)x; }
+
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	{ echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+           { { echo "$as_me:$LINENO: error:
+We detected a missing feature in the standard C++ library that was known to be
+missing in libstdc++4.6 and implemented in libstdc++4.7. There are numerous
+C++11 problems with 4.6's library, and we don't support GCCs or libstdc++ older
+than 4.7. You will need to update your system and ensure Clang uses the newer
+standard library.
+
+If this error is incorrect or you need to force things to work, you may pass
+'--disable-compiler-version-checks' to configure to bypass this test." >&5
+echo "$as_me: error:
+We detected a missing feature in the standard C++ library that was known to be
+missing in libstdc++4.6 and implemented in libstdc++4.7. There are numerous
+C++11 problems with 4.6's library, and we don't support GCCs or libstdc++ older
+than 4.7. You will need to update your system and ensure Clang uses the newer
+standard library.
+
+If this error is incorrect or you need to force things to work, you may pass
+'--disable-compiler-version-checks' to configure to bypass this test." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+rm -f core conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
       ;;
     gcc)
       { echo "$as_me:$LINENO: checking whether GCC is new enough" >&5
@@ -3825,13 +3886,6 @@ cat >>conftest.$ac_ext <<_ACEOF
 #error This version of GCC is too old to build LLVM
 #endif
 
-int
-main ()
-{
-
-  ;
-  return 0;
-}
 _ACEOF
 rm -f conftest.$ac_objext
 if { (ac_try="$ac_compile"
@@ -10606,7 +10660,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10609 "configure"
+#line 10663 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
