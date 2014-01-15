@@ -1462,6 +1462,7 @@ remaining enable_if attributes. In this way, we pick the most specific
 overload out of a number of viable overloads using enable_if.
 
 .. code-block:: c++
+
   void f() __attribute__((enable_if(true, "")));  // #1
   void f() __attribute__((enable_if(true, ""))) __attribute__((enable_if(true, "")));  // #2
   
