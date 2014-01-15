@@ -1,4 +1,4 @@
-// RUN: %clang -target powerpc64-unknown-linux-gnu -maltivec -fsyntax-only %s
+// RUN: %clang_cc1 -triple powerpc64-unknown-linux-gnu -faltivec -fsyntax-only %s
 
 // PR16456: Verify that bool, true, false are treated as context-sensitive
 // keywords (and therefore available for use as identifiers) when in

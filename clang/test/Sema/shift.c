@@ -1,4 +1,4 @@
-// RUN: %clang -Wall -Wshift-sign-overflow -ffreestanding -fsyntax-only -Xclang -verify %s
+// RUN: %clang_cc1 -Wall -Wshift-sign-overflow -ffreestanding -fsyntax-only -verify %s
 
 #include <limits.h>
 
