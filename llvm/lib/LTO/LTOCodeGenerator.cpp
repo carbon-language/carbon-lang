@@ -21,6 +21,8 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
@@ -37,6 +39,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -63,7 +66,8 @@ LTOCodeGenerator::LTOCodeGenerator()
     : Context(getGlobalContext()), Linker(new Module("ld-temp.o", Context)),
       TargetMach(NULL), EmitDwarfDebugInfo(false), ScopeRestrictionsDone(false),
       CodeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
-      InternalizeStrategy(LTO_INTERNALIZE_FULL), NativeObjectFile(NULL) {
+      InternalizeStrategy(LTO_INTERNALIZE_FULL), NativeObjectFile(NULL),
+      DiagHandler(NULL), DiagContext(NULL) {
   initializeLTOPasses();
 }
 
@@ -535,4 +539,48 @@ void LTOCodeGenerator::parseCodeGenDebugOptions() {
   if (!CodegenOptions.empty())
     cl::ParseCommandLineOptions(CodegenOptions.size(),
                                 const_cast<char **>(&CodegenOptions[0]));
+}
+
+void LTOCodeGenerator::DiagnosticHandler(const DiagnosticInfo &DI,
+                                         void *Context) {
+  ((LTOCodeGenerator *)Context)->DiagnosticHandler2(DI);
+}
+
+void LTOCodeGenerator::DiagnosticHandler2(const DiagnosticInfo &DI) {
+  // Map the LLVM internal diagnostic severity to the LTO diagnostic severity.
+  lto_codegen_diagnostic_severity_t Severity;
+  switch (DI.getSeverity()) {
+  case DS_Error:
+    Severity = LTO_DS_ERROR;
+    break;
+  case DS_Warning:
+    Severity = LTO_DS_WARNING;
+    break;
+  case DS_Note:
+    Severity = LTO_DS_NOTE;
+    break;
+  }
+  // Create the string that will be reported to the external diagnostic handler.
+  std::string MsgStorage;
+  raw_string_ostream Stream(MsgStorage);
+  DiagnosticPrinterRawOStream DP(Stream);
+  DI.print(DP);
+  Stream.flush();
+
+  // If this method has been called it means someone has set up an external
+  // diagnostic handler. Assert on that.
+  assert(DiagHandler && "Invalid diagnostic handler");
+  (*DiagHandler)(Severity, MsgStorage.c_str(), DiagContext);
+}
+
+void
+LTOCodeGenerator::setDiagnosticHandler(lto_diagnostic_handler_t DiagHandler,
+                                       void *Ctxt) {
+  this->DiagHandler = DiagHandler;
+  this->DiagContext = Ctxt;
+  if (!DiagHandler)
+    return Context.setDiagnosticHandler(NULL, NULL);
+  // Register the LTOCodeGenerator stub in the LLVMContext to forward the
+  // diagnostic to the external DiagHandler.
+  Context.setDiagnosticHandler(LTOCodeGenerator::DiagnosticHandler, this);
 }

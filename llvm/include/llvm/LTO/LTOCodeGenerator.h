@@ -46,6 +46,7 @@
 
 namespace llvm {
   class LLVMContext;
+  class DiagnosticInfo;
   class GlobalValue;
   class Mangler;
   class MemoryBuffer;
@@ -115,6 +116,8 @@ struct LTOCodeGenerator {
                       bool disableGVNLoadPRE,
                       std::string &errMsg);
 
+  void setDiagnosticHandler(lto_diagnostic_handler_t, void *);
+
   bool shouldInternalize() const {
     return InternalizeStrategy != LTO_INTERNALIZE_NONE;
   }
@@ -139,6 +142,10 @@ private:
                         llvm::Mangler &Mangler);
   bool determineTarget(std::string &errMsg);
 
+  static void DiagnosticHandler(const llvm::DiagnosticInfo &DI, void *Context);
+
+  void DiagnosticHandler2(const llvm::DiagnosticInfo &DI);
+
   typedef llvm::StringMap<uint8_t> StringSet;
 
   llvm::LLVMContext &Context;
@@ -155,6 +162,8 @@ private:
   std::string MCpu;
   std::string NativeObjectPath;
   llvm::TargetOptions Options;
+  lto_diagnostic_handler_t DiagHandler;
+  void *DiagContext;
 };
 
 #endif // LTO_CODE_GENERATOR_H

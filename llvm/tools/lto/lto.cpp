@@ -193,6 +193,13 @@ lto_symbol_attributes lto_module_get_symbol_attribute(lto_module_t mod,
   return mod->getSymbolAttributes(index);
 }
 
+/// Set a diagnostic handler.
+void lto_codegen_set_diagnostic_handler(lto_code_gen_t cg,
+                                        lto_diagnostic_handler_t diag_handler,
+                                        void *ctxt) {
+  cg->setDiagnosticHandler(diag_handler, ctxt);
+}
+
 /// lto_codegen_create - Instantiates a code generator. Returns NULL if there
 /// is an error.
 lto_code_gen_t lto_codegen_create(void) {

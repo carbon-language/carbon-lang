@@ -40,7 +40,7 @@ typedef bool lto_bool_t;
  * @{
  */
 
-#define LTO_API_VERSION 6
+#define LTO_API_VERSION 7
 
 typedef enum {
     LTO_SYMBOL_ALIGNMENT_MASK              = 0x0000001F, /* log2 of alignment */
@@ -204,6 +204,33 @@ lto_module_get_symbol_name(lto_module_t mod, unsigned int index);
 extern lto_symbol_attributes
 lto_module_get_symbol_attribute(lto_module_t mod, unsigned int index);
 
+/**
+ * Diagnostic severity.
+ */
+typedef enum {
+  LTO_DS_ERROR,
+  LTO_DS_WARNING,
+  LTO_DS_NOTE
+} lto_codegen_diagnostic_severity_t;
+
+/**
+ * Diagnostic handler type.
+ * \p severity defines the severity.
+ * \p diag is the actual diagnostic.
+ * The diagnostic is not prefixed by any of severity keyword, e.g., 'error: '.
+ * \p ctxt is used to pass the context set with the diagnostic handler.
+ */
+typedef void (*lto_diagnostic_handler_t)(
+    lto_codegen_diagnostic_severity_t severity, const char *diag, void *ctxt);
+
+/**
+ * Set a diagnostic handler and the related context (void *).
+ * This is more general than lto_get_error_message, as the diagnostic handler
+ * can be called at anytime within lto.
+ */
+extern void lto_codegen_set_diagnostic_handler(lto_code_gen_t,
+                                               lto_diagnostic_handler_t,
+                                               void *);
 
 /**
  * Instantiates a code generator.
