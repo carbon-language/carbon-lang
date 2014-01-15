@@ -34,7 +34,7 @@
 
 using namespace llvm;
 
-static cl::opt<bool> 
+static cl::opt<bool>
 FindBugs("find-bugs", cl::desc("Run many different optimization sequences "
                                "on program to find bugs"), cl::init(false));
 
@@ -63,11 +63,11 @@ static cl::list<const PassInfo*, bool, PassNameParser>
 PassList(cl::desc("Passes available:"), cl::ZeroOrMore);
 
 static cl::opt<bool>
-StandardCompileOpts("std-compile-opts", 
+StandardCompileOpts("std-compile-opts",
                    cl::desc("Include the standard compile time optimizations"));
 
 static cl::opt<bool>
-StandardLinkOpts("std-link-opts", 
+StandardLinkOpts("std-link-opts",
                  cl::desc("Include the standard link time optimizations"));
 
 static cl::opt<bool>
@@ -100,7 +100,7 @@ namespace {
     BugDriver &D;
   public:
     AddToDriver(BugDriver &_D) : FunctionPassManager(0), D(_D) {}
-    
+
     virtual void add(Pass *P) {
       const void *ID = P->getPassID();
       const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(ID);
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
   llvm::PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 #endif
-  
+
   // Initialize passes
   PassRegistry &Registry = *PassRegistry::getPassRegistry();
   initializeCore(Registry);
@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
   initializeInstCombine(Registry);
   initializeInstrumentation(Registry);
   initializeTarget(Registry);
-  
+
   cl::ParseCommandLineOptions(argc, argv,
                               "LLVM automatic testcase reducer. See\nhttp://"
                               "llvm.org/cmds/bugpoint.html"
@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
   BugDriver D(argv[0], FindBugs, TimeoutValue, MemoryLimit,
               UseValgrind, Context);
   if (D.addSources(InputFilenames)) return 1;
-  
+
   AddToDriver PM(D);
   if (StandardCompileOpts) {
     PassManagerBuilder Builder;
@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
     Builder.Inliner = createFunctionInliningPass();
     Builder.populateModulePassManager(PM);
   }
-      
+
   if (StandardLinkOpts) {
     PassManagerBuilder Builder;
     Builder.populateLTOPassManager(PM, /*Internalize=*/true,
