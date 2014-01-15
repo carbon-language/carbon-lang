@@ -43,7 +43,6 @@ namespace ento {
 
 class AnalysisManager;
 class CallEvent;
-class SimpleCall;
 class CXXConstructorCall;
 
 class ExprEngine : public SubEngine {

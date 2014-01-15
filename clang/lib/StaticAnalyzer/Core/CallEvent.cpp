@@ -387,7 +387,7 @@ bool AnyFunctionCall::argumentsMayEscape() const {
 }
 
 
-const FunctionDecl *SimpleCall::getDecl() const {
+const FunctionDecl *SimpleFunctionCall::getDecl() const {
   const FunctionDecl *D = getOriginExpr()->getDirectCallee();
   if (D)
     return D;
@@ -549,14 +549,14 @@ const BlockDataRegion *BlockCall::getBlockRegion() const {
 }
 
 CallEvent::param_iterator BlockCall::param_begin() const {
-  const BlockDecl *D = getBlockDecl();
+  const BlockDecl *D = getDecl();
   if (!D)
     return 0;
   return D->param_begin();
 }
 
 CallEvent::param_iterator BlockCall::param_end() const {
-  const BlockDecl *D = getBlockDecl();
+  const BlockDecl *D = getDecl();
   if (!D)
     return 0;
   return D->param_end();
@@ -940,7 +940,7 @@ CallEventManager::getSimpleCall(const CallExpr *CE, ProgramStateRef State,
 
   // Otherwise, it's a normal function call, static member function call, or
   // something we can't reason about.
-  return create<FunctionCall>(CE, State, LCtx);
+  return create<SimpleFunctionCall>(CE, State, LCtx);
 }
 
 

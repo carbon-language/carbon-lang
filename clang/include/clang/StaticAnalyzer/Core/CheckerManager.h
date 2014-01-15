@@ -33,7 +33,6 @@ namespace ento {
   class AnalysisManager;
   class BugReporter;
   class CheckerContext;
-  class SimpleCall;
   class ObjCMethodCall;
   class SVal;
   class ExplodedNode;
