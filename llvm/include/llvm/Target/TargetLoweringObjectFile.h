@@ -29,6 +29,7 @@ namespace llvm {
   class MCSymbol;
   class MCSymbolRefExpr;
   class MCStreamer;
+  class ConstantExpr;
   class GlobalValue;
   class TargetMachine;
   
@@ -151,6 +152,11 @@ public:
   /// \brief Create a symbol reference to describe the given TLS variable when
   /// emitting the address in debug info.
   virtual const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
+
+  virtual const MCExpr *
+  getExecutableRelativeSymbol(const ConstantExpr *CE, Mangler *Mang) const {
+    return 0;
+  }
 
 protected:
   virtual const MCSection *

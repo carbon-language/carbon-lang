@@ -41,6 +41,12 @@ namespace llvm {
     virtual const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
   };
 
+  /// \brief This implementation is used for Windows targets on x86 and x86-64.
+  class X86WindowsTargetObjectFile : public TargetLoweringObjectFileCOFF {
+    virtual const MCExpr *getExecutableRelativeSymbol(const ConstantExpr *CE,
+                                                      Mangler *Mang) const;
+  };
+
 } // end namespace llvm
 
 #endif

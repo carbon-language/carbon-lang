@@ -9,6 +9,7 @@
 
 #include "X86TargetObjectFile.h"
 #include "llvm/IR/Mangler.h"
+#include "llvm/IR/Operator.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -52,4 +53,55 @@ const MCExpr *
 X86LinuxTargetObjectFile::getDebugThreadLocalSymbol(
     const MCSymbol *Sym) const {
   return MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_DTPOFF, getContext());
+}
+
+const MCExpr *
+X86WindowsTargetObjectFile::getExecutableRelativeSymbol(const ConstantExpr *CE,
+                                                        Mangler *Mang) const {
+  // We are looking for the difference of two symbols, need a subtraction
+  // operation.
+  const SubOperator *Sub = dyn_cast<SubOperator>(CE);
+  if (!Sub)
+    return 0;
+
+  // Symbols must first be numbers before we can subtract them, we need to see a
+  // ptrtoint on both subtraction operands.
+  const PtrToIntOperator *SubLHS =
+      dyn_cast<PtrToIntOperator>(Sub->getOperand(0));
+  const PtrToIntOperator *SubRHS =
+      dyn_cast<PtrToIntOperator>(Sub->getOperand(1));
+  if (!SubLHS || !SubRHS)
+    return 0;
+
+  // Our symbols should exist in address space zero, cowardly no-op if
+  // otherwise.
+  if (SubLHS->getPointerAddressSpace() != 0 ||
+      SubRHS->getPointerAddressSpace() != 0)
+    return 0;
+
+  // Both ptrtoint instructions must wrap global variables:
+  // - Only global variables are eligible for image relative relocations.
+  // - The subtrahend refers to the special symbol __ImageBase, a global.
+  const GlobalVariable *GVLHS =
+      dyn_cast<GlobalVariable>(SubLHS->getPointerOperand());
+  const GlobalVariable *GVRHS =
+      dyn_cast<GlobalVariable>(SubRHS->getPointerOperand());
+  if (!GVLHS || !GVRHS)
+    return 0;
+
+  // We expect __ImageBase to be a global variable without a section, externally
+  // defined.
+  //
+  // It should look something like this: @__ImageBase = external constant i8
+  if (GVRHS->isThreadLocal() || GVRHS->getName() != "__ImageBase" ||
+      !GVRHS->hasExternalLinkage() || GVRHS->hasInitializer() ||
+      GVRHS->hasSection())
+    return 0;
+
+  // An image-relative, thread-local, symbol makes no sense.
+  if (GVLHS->isThreadLocal())
+    return 0;
+
+  return MCSymbolRefExpr::Create(
+      getSymbol(*Mang, GVLHS), MCSymbolRefExpr::VK_COFF_IMGREL32, getContext());
 }

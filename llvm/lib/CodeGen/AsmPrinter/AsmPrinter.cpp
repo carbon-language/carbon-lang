@@ -1512,6 +1512,10 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
     llvm_unreachable("Unknown constant value to lower!");
   }
 
+  if (const MCExpr *RelocExpr =
+          AP.getObjFileLowering().getExecutableRelativeSymbol(CE, AP.Mang))
+    return RelocExpr;
+
   switch (CE->getOpcode()) {
   default:
     // If the code isn't optimized, there may be outstanding folding

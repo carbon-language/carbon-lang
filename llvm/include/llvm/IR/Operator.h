@@ -473,6 +473,36 @@ public:
 
 };
 
+class PtrToIntOperator
+    : public ConcreteOperator<Operator, Instruction::PtrToInt> {
+  friend class PtrToInt;
+  friend class ConstantExpr;
+
+public:
+  Value *getPointerOperand() {
+    return getOperand(0);
+  }
+  const Value *getPointerOperand() const {
+    return getOperand(0);
+  }
+  static unsigned getPointerOperandIndex() {
+    return 0U;                      // get index for modifying correct operand
+  }
+
+  /// getPointerOperandType - Method to return the pointer operand as a
+  /// PointerType.
+  Type *getPointerOperandType() const {
+    return getPointerOperand()->getType();
+  }
+
+  /// getPointerAddressSpace - Method to return the address space of the
+  /// pointer operand.
+  unsigned getPointerAddressSpace() const {
+    return cast<PointerType>(getPointerOperandType())->getAddressSpace();
+  }
+};
+
+
 } // End llvm namespace
 
 #endif
