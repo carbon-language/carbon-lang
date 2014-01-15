@@ -35,12 +35,14 @@ namespace {
 struct X86Operand;
 
 static const char OpPrecedence[] = {
-  0, // IC_PLUS
-  0, // IC_MINUS
-  1, // IC_MULTIPLY
-  1, // IC_DIVIDE
-  2, // IC_RPAREN
-  3, // IC_LPAREN
+  0, // IC_OR
+  1, // IC_AND
+  2, // IC_PLUS
+  2, // IC_MINUS
+  3, // IC_MULTIPLY
+  3, // IC_DIVIDE
+  4, // IC_RPAREN
+  5, // IC_LPAREN
   0, // IC_IMM
   0  // IC_REGISTER
 };
@@ -57,7 +59,9 @@ private:
   }
 
   enum InfixCalculatorTok {
-    IC_PLUS = 0,
+    IC_OR = 0,
+    IC_AND,
+    IC_PLUS,
     IC_MINUS,
     IC_MULTIPLY,
     IC_DIVIDE,
@@ -182,6 +186,18 @@ private:
             Val = Op1.second / Op2.second;
             OperandStack.push_back(std::make_pair(IC_IMM, Val));
             break;
+          case IC_OR:
+            assert (Op1.first == IC_IMM && Op2.first == IC_IMM &&
+                    "Or operation with an immediate and a register!");
+            Val = Op1.second | Op2.second;
+            OperandStack.push_back(std::make_pair(IC_IMM, Val));
+            break;
+          case IC_AND:
+            assert (Op1.first == IC_IMM && Op2.first == IC_IMM &&
+                    "And operation with an immediate and a register!");
+            Val = Op1.second & Op2.second;
+            OperandStack.push_back(std::make_pair(IC_IMM, Val));
+            break;
           }
         }
       }
@@ -191,6 +207,8 @@ private:
   };
 
   enum IntelExprState {
+    IES_OR,
+    IES_AND,
     IES_PLUS,
     IES_MINUS,
     IES_MULTIPLY,
@@ -237,6 +255,36 @@ private:
       return Info;
     }
 
+    void onOr() {
+      IntelExprState CurrState = State;
+      switch (State) {
+      default:
+        State = IES_ERROR;
+        break;
+      case IES_INTEGER:
+      case IES_RPAREN:
+      case IES_REGISTER:
+        State = IES_OR;
+        IC.pushOperator(IC_OR);
+        break;
+      }
+      PrevState = CurrState;
+    }
+    void onAnd() {
+      IntelExprState CurrState = State;
+      switch (State) {
+      default:
+        State = IES_ERROR;
+        break;
+      case IES_INTEGER:
+      case IES_RPAREN:
+      case IES_REGISTER:
+        State = IES_AND;
+        IC.pushOperator(IC_AND);
+        break;
+      }
+      PrevState = CurrState;
+    }
     void onPlus() {
       IntelExprState CurrState = State;
       switch (State) {
@@ -351,6 +399,8 @@ private:
         break;
       case IES_PLUS:
       case IES_MINUS:
+      case IES_OR:
+      case IES_AND:
       case IES_DIVIDE:
       case IES_MULTIPLY:
       case IES_LPAREN:
@@ -363,6 +413,7 @@ private:
           // Get the scale and replace the 'Register * Scale' with '0'.
           IC.popOperator();
         } else if ((PrevState == IES_PLUS || PrevState == IES_MINUS ||
+                    PrevState == IES_OR || PrevState == IES_AND ||
                     PrevState == IES_MULTIPLY || PrevState == IES_DIVIDE ||
                     PrevState == IES_LPAREN || PrevState == IES_LBRAC) &&
                    CurrState == IES_MINUS) {
@@ -448,11 +499,14 @@ private:
         break;
       case IES_PLUS:
       case IES_MINUS:
+      case IES_OR:
+      case IES_AND:
       case IES_MULTIPLY:
       case IES_DIVIDE:
       case IES_LPAREN:
         // FIXME: We don't handle this type of unary minus, yet.
         if ((PrevState == IES_PLUS || PrevState == IES_MINUS ||
+            PrevState == IES_OR || PrevState == IES_AND ||
             PrevState == IES_MULTIPLY || PrevState == IES_DIVIDE ||
             PrevState == IES_LPAREN || PrevState == IES_LBRAC) &&
             CurrState == IES_MINUS) {
@@ -1379,6 +1433,8 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
     case AsmToken::Minus:   SM.onMinus(); break;
     case AsmToken::Star:    SM.onStar(); break;
     case AsmToken::Slash:   SM.onDivide(); break;
+    case AsmToken::Pipe:    SM.onOr(); break;
+    case AsmToken::Amp:     SM.onAnd(); break;
     case AsmToken::LBrac:   SM.onLBrac(); break;
     case AsmToken::RBrac:   SM.onRBrac(); break;
     case AsmToken::LParen:  SM.onLParen(); break;
