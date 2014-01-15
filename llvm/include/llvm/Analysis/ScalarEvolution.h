@@ -253,17 +253,28 @@ namespace llvm {
     /// Mark predicate values currently being processed by isImpliedCond.
     DenseSet<Value*> PendingLoopPredicates;
 
-    /// ExitLimit - Information about the number of loop iterations for
-    /// which a loop exit's branch condition evaluates to the not-taken path.
-    /// This is a temporary pair of exact and max expressions that are
-    /// eventually summarized in ExitNotTakenInfo and BackedgeTakenInfo.
+    /// ExitLimit - Information about the number of loop iterations for which a
+    /// loop exit's branch condition evaluates to the not-taken path.  This is a
+    /// temporary pair of exact and max expressions that are eventually
+    /// summarized in ExitNotTakenInfo and BackedgeTakenInfo.
+    ///
+    /// If MustExit is true, then the exit must be taken when the BECount
+    /// reaches Exact (and before surpassing Max). If MustExit is false, then
+    /// BECount may exceed Exact or Max if the loop exits via another branch. In
+    /// either case, the loop may exit early via another branch.
+    ///
+    /// MustExit is true for most cases. However, an exit guarded by an
+    /// (in)equality on a nonunit stride may be skipped.
     struct ExitLimit {
       const SCEV *Exact;
       const SCEV *Max;
+      bool MustExit;
 
-      /*implicit*/ ExitLimit(const SCEV *E) : Exact(E), Max(E) {}
+      /*implicit*/ ExitLimit(const SCEV *E)
+        : Exact(E), Max(E), MustExit(true) {}
 
-      ExitLimit(const SCEV *E, const SCEV *M) : Exact(E), Max(M) {}
+      ExitLimit(const SCEV *E, const SCEV *M, bool MustExit)
+        : Exact(E), Max(M), MustExit(MustExit) {}
 
       /// hasAnyInfo - Test whether this ExitLimit contains any computed
       /// information, or whether it's all SCEVCouldNotCompute values.

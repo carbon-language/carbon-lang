@@ -4337,6 +4337,8 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   // Examine all exits and pick the most conservative values.
   const SCEV *MaxBECount = getCouldNotCompute();
   bool CouldComputeBECount = true;
+  BasicBlock *Latch = L->getLoopLatch(); // may be NULL.
+  const SCEV *LatchMaxCount = 0;
   SmallVector<std::pair<BasicBlock *, const SCEV *>, 4> ExitCounts;
   for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i) {
     ExitLimit EL = ComputeExitLimit(L, ExitingBlocks[i]);
@@ -4353,13 +4355,17 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
       // We cannot take the "min" MaxBECount, because non-unit stride loops may
       // skip some loop tests. Taking the max over the exits is sufficiently
       // conservative.  TODO: We could do better taking into consideration
-      // that (1) the loop has unit stride (2) the last loop test is
-      // less-than/greater-than (3) any loop test is less-than/greater-than AND
-      // falls-through some constant times less then the other tests.
-      MaxBECount = getUMaxFromMismatchedTypes(MaxBECount, EL.Max);
+      // non-latch exits that dominate the latch.
+      if (EL.MustExit && ExitingBlocks[i] == Latch)
+        LatchMaxCount = EL.Max;
+      else
+        MaxBECount = getUMaxFromMismatchedTypes(MaxBECount, EL.Max);
     }
   }
-
+  // Be more precise in the easy case of a loop latch that must exit.
+  if (LatchMaxCount) {
+    MaxBECount = getUMinFromMismatchedTypes(MaxBECount, LatchMaxCount);
+  }
   return BackedgeTakenInfo(ExitCounts, CouldComputeBECount, MaxBECount);
 }
 
@@ -4455,6 +4461,7 @@ ScalarEvolution::ComputeExitLimitFromCond(const Loop *L,
                                                IsSubExpr || EitherMayExit);
       const SCEV *BECount = getCouldNotCompute();
       const SCEV *MaxBECount = getCouldNotCompute();
+      bool MustExit = false;
       if (EitherMayExit) {
         // Both conditions must be true for the loop to continue executing.
         // Choose the less conservative count.
@@ -4469,6 +4476,7 @@ ScalarEvolution::ComputeExitLimitFromCond(const Loop *L,
           MaxBECount = EL0.Max;
         else
           MaxBECount = getUMinFromMismatchedTypes(EL0.Max, EL1.Max);
+        MustExit = EL0.MustExit || EL1.MustExit;
       } else {
         // Both conditions must be true at the same time for the loop to exit.
         // For now, be conservative.
@@ -4477,9 +4485,10 @@ ScalarEvolution::ComputeExitLimitFromCond(const Loop *L,
           MaxBECount = EL0.Max;
         if (EL0.Exact == EL1.Exact)
           BECount = EL0.Exact;
+        MustExit = EL0.MustExit && EL1.MustExit;
       }
 
-      return ExitLimit(BECount, MaxBECount);
+      return ExitLimit(BECount, MaxBECount, MustExit);
     }
     if (BO->getOpcode() == Instruction::Or) {
       // Recurse on the operands of the or.
@@ -4490,6 +4499,7 @@ ScalarEvolution::ComputeExitLimitFromCond(const Loop *L,
                                                IsSubExpr || EitherMayExit);
       const SCEV *BECount = getCouldNotCompute();
       const SCEV *MaxBECount = getCouldNotCompute();
+      bool MustExit = false;
       if (EitherMayExit) {
         // Both conditions must be false for the loop to continue executing.
         // Choose the less conservative count.
@@ -4504,6 +4514,7 @@ ScalarEvolution::ComputeExitLimitFromCond(const Loop *L,
           MaxBECount = EL0.Max;
         else
           MaxBECount = getUMinFromMismatchedTypes(EL0.Max, EL1.Max);
+        MustExit = EL0.MustExit || EL1.MustExit;
       } else {
         // Both conditions must be false at the same time for the loop to exit.
         // For now, be conservative.
@@ -4512,9 +4523,10 @@ ScalarEvolution::ComputeExitLimitFromCond(const Loop *L,
           MaxBECount = EL0.Max;
         if (EL0.Exact == EL1.Exact)
           BECount = EL0.Exact;
+        MustExit = EL0.MustExit && EL1.MustExit;
       }
 
-      return ExitLimit(BECount, MaxBECount);
+      return ExitLimit(BECount, MaxBECount, MustExit);
     }
   }
 
@@ -5594,7 +5606,7 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L, bool IsSubExpr) {
     else
       MaxBECount = getConstant(CountDown ? CR.getUnsignedMax()
                                          : -CR.getUnsignedMin());
-    return ExitLimit(Distance, MaxBECount);
+    return ExitLimit(Distance, MaxBECount, /*MustExit=*/true);
   }
 
   // If the recurrence is known not to wraparound, unsigned divide computes the
@@ -5602,16 +5614,20 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L, bool IsSubExpr) {
   // that the value will either become zero (and thus the loop terminates), that
   // the loop will terminate through some other exit condition first, or that
   // the loop has undefined behavior.  This means we can't "miss" the exit
-  // value, even with nonunit stride.
+  // value, even with nonunit stride, and exit later via the same branch. Note
+  // that we can skip this exit if loop later exits via a different
+  // branch. Hence MustExit=false.
   //
   // This is only valid for expressions that directly compute the loop exit. It
   // is invalid for subexpressions in which the loop may exit through this
   // branch even if this subexpression is false. In that case, the trip count
   // computed by this udiv could be smaller than the number of well-defined
   // iterations.
-  if (!IsSubExpr && AddRec->getNoWrapFlags(SCEV::FlagNW))
-    return getUDivExpr(Distance, CountDown ? getNegativeSCEV(Step) : Step);
-
+  if (!IsSubExpr && AddRec->getNoWrapFlags(SCEV::FlagNW)) {
+    const SCEV *Exact =
+      getUDivExpr(Distance, CountDown ? getNegativeSCEV(Step) : Step);
+    return ExitLimit(Exact, Exact, /*MustExit=*/false);
+  }
   // Then, try to solve the above equation provided that Start is constant.
   if (const SCEVConstant *StartC = dyn_cast<SCEVConstant>(Start))
     return SolveLinEquationWithOverflow(StepC->getValue()->getValue(),
@@ -6475,7 +6491,7 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
   if (isa<SCEVCouldNotCompute>(MaxBECount))
     MaxBECount = BECount;
 
-  return ExitLimit(BECount, MaxBECount);
+  return ExitLimit(BECount, MaxBECount, /*MustExit=*/true);
 }
 
 ScalarEvolution::ExitLimit
@@ -6547,7 +6563,7 @@ ScalarEvolution::HowManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
   if (isa<SCEVCouldNotCompute>(MaxBECount))
     MaxBECount = BECount;
 
-  return ExitLimit(BECount, MaxBECount);
+  return ExitLimit(BECount, MaxBECount, /*MustExit=*/true);
 }
 
 /// getNumIterationsInRange - Return the number of iterations of this loop that
