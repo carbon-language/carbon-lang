@@ -109,3 +109,11 @@ Radar11059352_1 *_Path;
     return wp;
 }
 @end
+
+id test_objc_precise_lifetime_foo();
+void test_objc_precise_lifetime() {
+  __attribute__((objc_precise_lifetime)) id dead = test_objc_precise_lifetime_foo(); // no-warning
+  dead = 0;
+  dead = test_objc_precise_lifetime_foo(); // no-warning
+  dead = 0;
+}
