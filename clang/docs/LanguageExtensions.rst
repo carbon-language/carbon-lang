@@ -873,7 +873,6 @@ C++1y variable templates
 Use ``__has_feature(cxx_variable_templates)`` or
 ``__has_extension(cxx_variable_templates)`` to determine if support for
 templated variable declarations is enabled.
-Clang does not yet support this feature.
 
 C11
 ---

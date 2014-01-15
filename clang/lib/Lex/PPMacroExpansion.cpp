@@ -1039,7 +1039,7 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
            // C++1y features supported by other languages as extensions.
            .Case("cxx_binary_literals", true)
            .Case("cxx_init_captures", LangOpts.CPlusPlus11)
-           .Case("cxx_variable_templates", true)
+           .Case("cxx_variable_templates", LangOpts.CPlusPlus)
            .Default(false);
 }
 
