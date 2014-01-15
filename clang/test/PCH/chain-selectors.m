@@ -18,9 +18,9 @@ void bar() {
   // FIXME: Can't verify notes in headers
   //[a f2];
 
-  (void)@selector(x); // expected-warning {{using @selector on method 'x' with no implementation in translation unit}}
-  (void)@selector(y); // expected-warning {{using @selector on method 'y' with no implementation in translation unit}}
-  (void)@selector(e); // expected-warning {{using @selector on method 'e' with no implementation in translation unit}}
+  (void)@selector(x); // expected-warning {{no method with selector 'x' is implemented in this translation unit}}
+  (void)@selector(y); // expected-warning {{no method with selector 'y' is implemented in this translation unit}}
+  (void)@selector(e); // expected-warning {{no method with selector 'e' is implemented in this translation unit}}
 }
 
 @implementation X (Blah)

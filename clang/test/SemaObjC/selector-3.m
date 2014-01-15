@@ -14,7 +14,7 @@
 - (void) foo
 {
   SEL a,b,c;
-  a = @selector(b1ar);  // expected-warning {{using @selector on method 'b1ar' with no implementation in translation unit}}
+  a = @selector(b1ar);  // expected-warning {{no method with selector 'b1ar' is implemented in this translation unit}}
   b = @selector(bar);
 }
 @end
@@ -25,7 +25,7 @@
 
 SEL func()
 {
-    return  @selector(length);  // expected-warning {{using @selector on method 'length' with no implementation in translation unit}}
+    return  @selector(length);  // expected-warning {{no method with selector 'length' is implemented in this translation unit}}
 }
 
 // rdar://9545564
@@ -69,7 +69,7 @@ extern SEL MySelector(SEL s);
 
 @implementation INTF
 - (void) Meth {
-  if( [cnx respondsToSelector:MySelector(@selector( _setQueue: ))] ) // expected-warning {{using @selector on method '_setQueue:' with no implementation in translation unit}}
+  if( [cnx respondsToSelector:MySelector(@selector( _setQueue: ))] ) // expected-warning {{no method with selector '_setQueue:' is implemented in this translation unit}}
   {
   }
 
