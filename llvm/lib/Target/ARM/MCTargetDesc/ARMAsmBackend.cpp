@@ -692,7 +692,6 @@ MCAsmBackend *llvm::createARMAsmBackend(const Target &T,
       .Cases("armv6", "thumbv6", MachO::CPU_SUBTYPE_ARM_V6)
       .Cases("armv6m", "thumbv6m", MachO::CPU_SUBTYPE_ARM_V6M)
       .Cases("armv7em", "thumbv7em", MachO::CPU_SUBTYPE_ARM_V7EM)
-      .Cases("armv7f", "thumbv7f", MachO::CPU_SUBTYPE_ARM_V7F)
       .Cases("armv7k", "thumbv7k", MachO::CPU_SUBTYPE_ARM_V7K)
       .Cases("armv7m", "thumbv7m", MachO::CPU_SUBTYPE_ARM_V7M)
       .Cases("armv7s", "thumbv7s", MachO::CPU_SUBTYPE_ARM_V7S)

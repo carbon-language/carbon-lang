@@ -973,7 +973,7 @@ namespace llvm {
       CPU_SUBTYPE_ARM_V5TEJ   = 7,
       CPU_SUBTYPE_ARM_XSCALE  = 8,
       CPU_SUBTYPE_ARM_V7      = 9,
-      CPU_SUBTYPE_ARM_V7F     = 10,
+      //  unused  ARM_V7F     = 10,
       CPU_SUBTYPE_ARM_V7S     = 11,
       CPU_SUBTYPE_ARM_V7K     = 12,
       CPU_SUBTYPE_ARM_V6M     = 14,
