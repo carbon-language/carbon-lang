@@ -509,15 +509,20 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
   }
 
   // Pass inline keyword to optimizer if it appears explicitly on any
-  // declaration.
-  if (!CGM.getCodeGenOpts().NoInline)
-    if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
+  // declaration. Also, in the case of -fno-inline attach NoInline
+  // attribute to all function that are not marked AlwaysInline or ForceInline.
+  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
+    if (!CGM.getCodeGenOpts().NoInline) {
       for (FunctionDecl::redecl_iterator RI = FD->redecls_begin(),
              RE = FD->redecls_end(); RI != RE; ++RI)
         if (RI->isInlineSpecified()) {
           Fn->addFnAttr(llvm::Attribute::InlineHint);
           break;
         }
+    } else if (!FD->hasAttr<AlwaysInlineAttr>() &&
+               !FD->hasAttr<ForceInlineAttr>())
+      Fn->addFnAttr(llvm::Attribute::NoInline);
+  }
 
   if (getLangOpts().OpenCL) {
     // Add metadata for a kernel function.
