@@ -118,6 +118,7 @@ class MCAsmLexer {
 protected: // Can only create subclasses.
   const char *TokStart;
   bool SkipSpace;
+  bool AllowAtInIdentifier;
 
   MCAsmLexer();
 
@@ -170,6 +171,9 @@ public:
 
   /// setSkipSpace - Set whether spaces should be ignored by the lexer
   void setSkipSpace(bool val) { SkipSpace = val; }
+
+  bool getAllowAtInIdentifier() { return AllowAtInIdentifier; }
+  void setAllowAtInIdentifier(bool v) { AllowAtInIdentifier = v; }
 };
 
 } // End llvm namespace

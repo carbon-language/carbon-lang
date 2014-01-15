@@ -590,7 +590,14 @@ bool ELFAsmParser::ParseDirectiveSymver(StringRef, SMLoc) {
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("expected a comma");
 
+  // ARM assembly uses @ for a comment...
+  // except when parsing the second parameter of the .symver directive.
+  // Force the next symbol to allow @ in the identifier, which is
+  // required for this directive and then reset it to its initial state.
+  const bool AllowAtInIdentifier = getLexer().getAllowAtInIdentifier();
+  getLexer().setAllowAtInIdentifier(true);
   Lex();
+  getLexer().setAllowAtInIdentifier(AllowAtInIdentifier);
 
   StringRef AliasName;
   if (getParser().parseIdentifier(AliasName))
