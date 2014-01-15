@@ -69,11 +69,11 @@ extern "C" {
      modules that were compiled without the corresponding compiler flag. */
   void __msan_set_keep_going(int keep_going);
 
-  /* Print shadow and origin for the memory range to stdout in a human-readable
+  /* Print shadow and origin for the memory range to stderr in a human-readable
      format. */
   void __msan_print_shadow(const volatile void *x, size_t size);
 
-  /* Print current function arguments shadow and origin to stdout in a
+  /* Print current function arguments shadow and origin to stderr in a
      human-readable format. */
   void __msan_print_param_shadow();
 
