@@ -80,9 +80,9 @@ IMPLEMENTED_PASS=0
 afunc() {
 	fail=0
 	pass=0
-	if (ls *.fail.cpp > /dev/null 2>&1)
+	if (ls ${TEST_PREFIX}*fail.cpp > /dev/null 2>&1)
 	then
-		for FILE in $(ls *.fail.cpp); do
+		for FILE in $(ls ${TEST_PREFIX}*fail.cpp); do
 			if $CC $OPTIONS $HEADER_INCLUDE $SOURCE_LIB $FILE $LIBS -o ./$TEST_EXE > /dev/null 2>&1
 			then
 				rm ./$TEST_EXE
@@ -94,9 +94,9 @@ afunc() {
 		done
 	fi
 
-	if (ls *.pass.cpp > /dev/null 2>&1)
+	if (ls ${TEST_PREFIX}*pass.cpp > /dev/null 2>&1)
 	then
-		for FILE in $(ls *.pass.cpp); do
+		for FILE in $(ls ${TEST_PREFIX}*pass.cpp); do
             if [ "$VERBOSE" ]
             then
              	echo "Running test: " $FILE
