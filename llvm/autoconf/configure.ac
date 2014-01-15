@@ -164,6 +164,7 @@ standard library.
 
 If this error is incorrect or you need to force things to work, you may pass
 '--disable-compiler-version-checks' to configure to bypass this test.])])
+      CXXFLAGS="$llvm_cv_old_cxxflags"
       ;;
     gcc)
       AC_MSG_CHECKING([whether GCC is new enough])
