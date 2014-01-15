@@ -65,7 +65,7 @@ void MipsTargetAsmStreamer::emitDirectiveOptionPic0() {
 }
 
 // This part is for ELF object output.
-MipsTargetELFStreamer::MipsTargetELFStreamer() {}
+MipsTargetELFStreamer::MipsTargetELFStreamer() : MicroMipsEnabled(false) {}
 
 void MipsTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
   if (!isMicroMipsEnabled())
