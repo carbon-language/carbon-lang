@@ -48,3 +48,40 @@ for.end.loopexit:
 for.end:
   ret void
 }
+
+; We used to crash on this function because we removed the fptosi cast when
+; replacing the symbolic stride '%conv'.
+; PR18480
+
+; CHECK-LABEL: fn1
+; CHECK: load <2 x double>
+
+define void @fn1(double* noalias %x, double* noalias %c, double %a) {
+entry:
+  %conv = fptosi double %a to i32
+  %cmp8 = icmp sgt i32 %conv, 0
+  br i1 %cmp8, label %for.body.preheader, label %for.end
+
+for.body.preheader:
+  br label %for.body
+
+for.body:
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %for.body.preheader ]
+  %0 = trunc i64 %indvars.iv to i32
+  %mul = mul nsw i32 %0, %conv
+  %idxprom = sext i32 %mul to i64
+  %arrayidx = getelementptr inbounds double* %x, i64 %idxprom
+  %1 = load double* %arrayidx, align 8
+  %arrayidx3 = getelementptr inbounds double* %c, i64 %indvars.iv
+  store double %1, double* %arrayidx3, align 8
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %conv
+  br i1 %exitcond, label %for.end.loopexit, label %for.body
+
+for.end.loopexit:
+  br label %for.end
+
+for.end:
+  ret void
+}

@@ -1072,9 +1072,10 @@ struct LoopVectorize : public LoopPass {
 // LoopVectorizationCostModel.
 //===----------------------------------------------------------------------===//
 
-static Value *stripCast(Value *V) {
+static Value *stripIntegerCast(Value *V) {
   if (CastInst *CI = dyn_cast<CastInst>(V))
-    return CI->getOperand(0);
+    if (CI->getOperand(0)->getType()->isIntegerTy())
+      return CI->getOperand(0);
   return V;
 }
 
@@ -1095,7 +1096,7 @@ static const SCEV *replaceSymbolicStrideSCEV(ScalarEvolution *SE,
     Value *StrideVal = SI->second;
 
     // Strip casts.
-    StrideVal = stripCast(StrideVal);
+    StrideVal = stripIntegerCast(StrideVal);
 
     // Replace symbolic stride by one.
     Value *One = ConstantInt::get(StrideVal->getType(), 1);
@@ -1551,7 +1552,7 @@ InnerLoopVectorizer::addStrideCheck(Instruction *Loc) {
   for (SmallPtrSet<Value *, 8>::iterator SI = Legal->strides_begin(),
                                          SE = Legal->strides_end();
        SI != SE; ++SI) {
-    Value *Ptr = stripCast(*SI);
+    Value *Ptr = stripIntegerCast(*SI);
     Value *C = ChkBuilder.CreateICmpNE(Ptr, ConstantInt::get(Ptr->getType(), 1),
                                        "stride.chk");
     // Store the first instruction we create.
