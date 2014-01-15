@@ -10391,8 +10391,8 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
   if (LHS.getOpcode() == ISD::BUILD_VECTOR &&
       RHS.getOpcode() == ISD::BUILD_VECTOR) {
     // Check if both vectors are constants. If not bail out.
-    if (!cast<BuildVectorSDNode>(LHS)->isConstant() &&
-        !cast<BuildVectorSDNode>(RHS)->isConstant())
+    if (!(cast<BuildVectorSDNode>(LHS)->isConstant() &&
+          cast<BuildVectorSDNode>(RHS)->isConstant()))
       return SDValue();
 
     SmallVector<SDValue, 8> Ops;
