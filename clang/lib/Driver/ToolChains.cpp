@@ -113,7 +113,6 @@ static const char *GetArmArchForMArch(StringRef Value) {
     .Cases("armv7a", "armv7-a", "armv7")
     .Cases("armv7r", "armv7-r", "armv7")
     .Cases("armv7em", "armv7e-m", "armv7em")
-    .Cases("armv7f", "armv7-f", "armv7f")
     .Cases("armv7k", "armv7-k", "armv7k")
     .Cases("armv7m", "armv7-m", "armv7m")
     .Cases("armv7s", "armv7-s", "armv7s")
@@ -128,10 +127,9 @@ static const char *GetArmArchForMCpu(StringRef Value) {
     .Case("xscale", "xscale")
     .Cases("arm1136j-s", "arm1136jf-s", "arm1176jz-s", "arm1176jzf-s", "armv6")
     .Case("cortex-m0", "armv6m")
-    .Cases("cortex-a5", "cortex-a7", "cortex-a8", "armv7")
+    .Cases("cortex-a5", "cortex-a7", "cortex-a8", "cortex-a9-mp", "armv7")
     .Cases("cortex-a9", "cortex-a12", "cortex-a15", "krait", "armv7")
     .Cases("cortex-r4", "cortex-r5", "armv7r")
-    .Case("cortex-a9-mp", "armv7f")
     .Case("cortex-m3", "armv7m")
     .Case("cortex-m4", "armv7em")
     .Case("swift", "armv7s")
@@ -861,8 +859,6 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       DAL->AddJoinedArg(0, MArch, "armv7a");
     else if (Name == "armv7em")
       DAL->AddJoinedArg(0, MArch, "armv7em");
-    else if (Name == "armv7f")
-      DAL->AddJoinedArg(0, MArch, "armv7f");
     else if (Name == "armv7k")
       DAL->AddJoinedArg(0, MArch, "armv7k");
     else if (Name == "armv7m")
