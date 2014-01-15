@@ -150,15 +150,15 @@ static uint64_t read_64bit_value() {
 }
 
 static char *mangle_filename(const char *orig_filename) {
-  char *filename = 0;
-  int prefix_len = 0;
-  int prefix_strip = 0;
+  char *new_filename;
+  size_t filename_len, prefix_len;
+  int prefix_strip;
   int level = 0;
-  const char *fname = orig_filename, *ptr = NULL;
+  const char *fname, *ptr;
   const char *prefix = getenv("GCOV_PREFIX");
   const char *prefix_strip_str = getenv("GCOV_PREFIX_STRIP");
 
-  if (!prefix)
+  if (prefix == NULL || prefix[0] == '\0')
     return strdup(orig_filename);
 
   if (prefix_strip_str) {
@@ -167,38 +167,44 @@ static char *mangle_filename(const char *orig_filename) {
     /* Negative GCOV_PREFIX_STRIP values are ignored */
     if (prefix_strip < 0)
       prefix_strip = 0;
+  } else {
+    prefix_strip = 0;
   }
 
-  prefix_len = strlen(prefix);
-  filename = malloc(prefix_len + 1 + strlen(orig_filename) + 1);
-  strcpy(filename, prefix);
-
-  if (prefix[prefix_len - 1] != '/')
-    strcat(filename, "/");
-
-  for (ptr = fname + 1; *ptr != '\0' && level < prefix_strip; ++ptr) {
-    if (*ptr != '/') continue;
+  fname = orig_filename;
+  for (level = 0, ptr = fname + 1; level < prefix_strip; ++ptr) {
+    if (*ptr == '\0')
+      break;
+    if (*ptr != '/')
+      continue;
     fname = ptr;
     ++level;
   }
 
-  strcat(filename, fname);
+  filename_len = strlen(fname);
+  prefix_len = strlen(prefix);
+  new_filename = malloc(prefix_len + 1 + filename_len + 1);
+  memcpy(new_filename, prefix, prefix_len);
 
-  return filename;
+  if (prefix[prefix_len - 1] != '/')
+    filename[prefix_len++] = '/';
+  memcpy(new_filename + prefix_len, fname, filename_len + 1);
+
+  return new_filename;
 }
 
-static void recursive_mkdir(char *filename) {
+static void recursive_mkdir(char *path) {
   int i;
 
-  for (i = 1; filename[i] != '\0'; ++i) {
-    if (filename[i] != '/') continue;
-    filename[i] = '\0';
+  for (i = 1; path[i] != '\0'; ++i) {
+    if (path[i] != '/') continue;
+    path[i] = '\0';
 #ifdef _WIN32
-    _mkdir(filename);
+    _mkdir(path);
 #else
-    mkdir(filename, 0755);  /* Some of these will fail, ignore it. */
+    mkdir(path, 0755);  /* Some of these will fail, ignore it. */
 #endif
-    filename[i] = '/';
+    path[i] = '/';
   }
 }
 
