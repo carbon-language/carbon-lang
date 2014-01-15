@@ -570,16 +570,14 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
   sys::fs::file_magic magic = sys::fs::identify_magic(Buffer->getBuffer());
 
   LLVMContext &Context = getGlobalContext();
-  std::string ErrorMessage;
   if (magic == sys::fs::file_magic::bitcode) {
-    Module *Result = 0;
-    Result = ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage);
-    if (Result) {
+    ErrorOr<Module *> ModuleOrErr = parseBitcodeFile(Buffer.get(), Context);
+    if (error(ModuleOrErr.getError(), Filename)) {
+      return;
+    } else {
+      Module *Result = ModuleOrErr.get();
       DumpSymbolNamesFromModule(Result);
       delete Result;
-    } else {
-      error(ErrorMessage, Filename);
-      return;
     }
   } else if (magic == sys::fs::file_magic::archive) {
     OwningPtr<Binary> arch;
@@ -616,11 +614,10 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
           OwningPtr<MemoryBuffer> buff;
           if (error(i->getMemoryBuffer(buff)))
             return;
-          Module *Result = 0;
-          if (buff)
-            Result = ParseBitcodeFile(buff.get(), Context, &ErrorMessage);
 
-          if (Result) {
+          ErrorOr<Module *> ModuleOrErr = parseBitcodeFile(buff.get(), Context);
+          if (ModuleOrErr) {
+            Module *Result = ModuleOrErr.get();
             DumpSymbolNamesFromModule(Result);
             delete Result;
           }

@@ -3342,16 +3342,11 @@ Module *llvm::getStreamedBitcodeModule(const std::string &name,
   return M;
 }
 
-/// ParseBitcodeFile - Read the specified bitcode file, returning the module.
-/// If an error occurs, return null and fill in *ErrMsg if non-null.
-Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext& Context,
-                               std::string *ErrMsg){
+ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
+                                         LLVMContext &Context) {
   ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context);
-  if (error_code EC = ModuleOrErr.getError()) {
-    if (ErrMsg)
-      *ErrMsg = EC.message();
-    return 0;
-  }
+  if (!ModuleOrErr)
+    return ModuleOrErr;
   Module *M = ModuleOrErr.get();
 
   // Don't let the BitcodeReader dtor delete 'Buffer', regardless of whether
@@ -3360,10 +3355,8 @@ Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext& Context,
 
   // Read in the entire module, and destroy the BitcodeReader.
   if (error_code EC = M->materializeAllPermanently()) {
-    if (ErrMsg)
-      *ErrMsg = EC.message();
     delete M;
-    return 0;
+    return EC;
   }
 
   // TODO: Restore the use-lists to the in-memory state when the bitcode was

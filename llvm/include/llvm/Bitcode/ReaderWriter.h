@@ -50,11 +50,10 @@ namespace llvm {
                                      LLVMContext &Context,
                                      std::string *ErrMsg = 0);
 
-  /// ParseBitcodeFile - Read the specified bitcode file, returning the module.
-  /// If an error occurs, this returns null and fills in *ErrMsg if it is
-  /// non-null.  This method *never* takes ownership of Buffer.
-  Module *ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext &Context,
-                           std::string *ErrMsg = 0);
+  /// Read the specified bitcode file, returning the module.
+  /// This method *never* takes ownership of Buffer.
+  ErrorOr<Module *> parseBitcodeFile(MemoryBuffer *Buffer,
+                                     LLVMContext &Context);
 
   /// WriteBitcodeToFile - Write the specified module to the specified
   /// raw output stream.  For streams where it matters, the given stream
