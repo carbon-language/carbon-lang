@@ -254,10 +254,14 @@ struct FormatStyle {
   /// template argument lists
   bool SpacesInAngles;
 
-  /// \brief If \c false, spaces may be inserted into '()'.
+  /// \brief If \c true, spaces may be inserted into '()'.
   bool SpaceInEmptyParentheses;
 
-  /// \brief If \c false, spaces may be inserted into C style casts.
+  /// \brief If \c true, spaces are inserted inside container literals (e.g.
+  /// ObjC and Javascript array and dict literals).
+  bool SpacesInContainerLiterals;
+
+  /// \brief If \c true, spaces may be inserted into C style casts.
   bool SpacesInCStyleCastParentheses;
 
   /// \brief Different ways to put a space before opening parentheses.
@@ -335,6 +339,7 @@ struct FormatStyle {
            UseTab == R.UseTab && SpacesInParentheses == R.SpacesInParentheses &&
            SpacesInAngles == R.SpacesInAngles &&
            SpaceInEmptyParentheses == R.SpaceInEmptyParentheses &&
+           SpacesInContainerLiterals == R.SpacesInContainerLiterals &&
            SpacesInCStyleCastParentheses == R.SpacesInCStyleCastParentheses &&
            SpaceBeforeParens == R.SpaceBeforeParens &&
            SpaceBeforeAssignmentOperators == R.SpaceBeforeAssignmentOperators &&

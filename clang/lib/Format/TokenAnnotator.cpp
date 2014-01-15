@@ -1321,17 +1321,15 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::l_square))
     return Left.Type == TT_ArrayInitializerLSquare &&
-           Right.isNot(tok::r_square);
+           Style.SpacesInContainerLiterals && Right.isNot(tok::r_square);
   if (Right.is(tok::r_square))
-    return Right.MatchingParen &&
+    return Right.MatchingParen && Style.SpacesInContainerLiterals &&
            Right.MatchingParen->Type == TT_ArrayInitializerLSquare;
   if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr &&
       Right.Type != TT_LambdaLSquare && Left.isNot(tok::numeric_constant))
     return false;
   if (Left.is(tok::colon))
     return Left.Type != TT_ObjCMethodExpr;
-  if (Right.is(tok::colon))
-    return Right.Type != TT_ObjCMethodExpr && !Left.is(tok::question);
   if (Right.is(tok::l_paren)) {
     if (Left.is(tok::r_paren) && Left.MatchingParen &&
         Left.MatchingParen->Previous &&
@@ -1404,7 +1402,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if (Tok.is(tok::colon))
     return !Line.First->isOneOf(tok::kw_case, tok::kw_default) &&
            Tok.getNextNonComment() != NULL && Tok.Type != TT_ObjCMethodExpr &&
-           !Tok.Previous->is(tok::question);
+           !Tok.Previous->is(tok::question) &&
+           (Tok.Type != TT_DictLiteral || Style.SpacesInContainerLiterals);
   if (Tok.Previous->Type == TT_UnaryOperator ||
       Tok.Previous->Type == TT_CastRParen)
     return false;

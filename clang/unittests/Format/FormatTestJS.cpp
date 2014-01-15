@@ -79,5 +79,10 @@ TEST_F(FormatTestJS, UnderstandsJavaScriptOperators) {
                getGoogleJSStyleWithColumns(20));
 }
 
+TEST_F(FormatTestJS, SpacesInContainerLiterals) {
+  verifyFormat("var arr = [1, 2, 3];");
+  verifyFormat("var obj = {a: 1, b: 2, c: 3};");
+}
+
 } // end namespace tooling
 } // end namespace clang

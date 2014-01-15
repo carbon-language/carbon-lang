@@ -190,6 +190,8 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("SpaceInEmptyParentheses", Style.SpaceInEmptyParentheses);
     IO.mapOptional("SpacesInCStyleCastParentheses",
                    Style.SpacesInCStyleCastParentheses);
+    IO.mapOptional("SpacesInContainerLiterals",
+                   Style.SpacesInContainerLiterals);
     IO.mapOptional("SpaceBeforeAssignmentOperators",
                    Style.SpaceBeforeAssignmentOperators);
     IO.mapOptional("ContinuationIndentWidth", Style.ContinuationIndentWidth);
@@ -271,6 +273,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.UseTab = FormatStyle::UT_Never;
   LLVMStyle.SpacesInParentheses = false;
   LLVMStyle.SpaceInEmptyParentheses = false;
+  LLVMStyle.SpacesInContainerLiterals = true;
   LLVMStyle.SpacesInCStyleCastParentheses = false;
   LLVMStyle.SpaceBeforeParens = FormatStyle::SBPO_ControlStatements;
   LLVMStyle.SpaceBeforeAssignmentOperators = true;
@@ -316,9 +319,7 @@ FormatStyle getGoogleJSStyle() {
   FormatStyle GoogleJSStyle = getGoogleStyle();
   GoogleJSStyle.Language = FormatStyle::LK_JavaScript;
   GoogleJSStyle.BreakBeforeTernaryOperators = false;
-  // FIXME: Currently unimplemented:
-  // var arr = [1, 2, 3];  // No space after [ or before ].
-  // var obj = {a: 1, b: 2, c: 3};  // No space after ':'.
+  GoogleJSStyle.SpacesInContainerLiterals = false;
   return GoogleJSStyle;
 }
 
