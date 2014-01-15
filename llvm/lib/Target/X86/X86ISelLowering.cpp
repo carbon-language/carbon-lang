@@ -10235,11 +10235,13 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
       X86::CondCode CCode = (X86::CondCode)Op0.getConstantOperandVal(0);
       bool Invert = (CC == ISD::SETNE) ^
         cast<ConstantSDNode>(Op1)->isNullValue();
-      if (!Invert) return Op0;
+      if (!Invert)
+        return Op0;
 
       CCode = X86::GetOppositeBranchCondition(CCode);
       SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
-                         DAG.getConstant(CCode, MVT::i8), Op0.getOperand(1));
+                                  DAG.getConstant(CCode, MVT::i8),
+                                  Op0.getOperand(1));
       if (VT == MVT::i1)
         return DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, SetCC);
       return SetCC;
@@ -10254,7 +10256,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, DAG);
   EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
   SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
-                      DAG.getConstant(X86CC, MVT::i8), EFLAGS);
+                              DAG.getConstant(X86CC, MVT::i8), EFLAGS);
   if (VT == MVT::i1)
     return DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, SetCC);
   return SetCC;
@@ -17705,13 +17707,15 @@ static SDValue CMPEQCombine(SDNode *N, SelectionDAG &DAG,
           // See X86ATTInstPrinter.cpp:printSSECC().
           unsigned x86cc = (cc0 == X86::COND_E) ? 0 : 4;
           if (Subtarget->hasAVX512()) {
-            SDValue FSetCC = DAG.getNode(X86ISD::FSETCC, DL, MVT::i1, CMP00, CMP01,
-                               DAG.getConstant(x86cc, MVT::i8));
+            SDValue FSetCC = DAG.getNode(X86ISD::FSETCC, DL, MVT::i1, CMP00,
+                                         CMP01, DAG.getConstant(x86cc, MVT::i8));
             if (N->getValueType(0) != MVT::i1)
-              return DAG.getNode(ISD::ZERO_EXTEND, DL, N->getValueType(0), FSetCC);
+              return DAG.getNode(ISD::ZERO_EXTEND, DL, N->getValueType(0),
+                                 FSetCC);
             return FSetCC;
           }
-          SDValue OnesOrZeroesF = DAG.getNode(X86ISD::FSETCC, DL, CMP00.getValueType(), CMP00, CMP01,
+          SDValue OnesOrZeroesF = DAG.getNode(X86ISD::FSETCC, DL,
+                                              CMP00.getValueType(), CMP00, CMP01,
                                               DAG.getConstant(x86cc, MVT::i8));
           MVT IntVT = (is64BitFP ? MVT::i64 : MVT::i32); 
           SDValue OnesOrZeroesI = DAG.getNode(ISD::BITCAST, DL, IntVT,
