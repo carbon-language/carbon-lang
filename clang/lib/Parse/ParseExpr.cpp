@@ -1492,8 +1492,7 @@ Parser::ParseExprAfterUnaryExprOrTypeTrait(const Token &OpTok,
     // pathenthesis around type name.
     if (OpTok.is(tok::kw_sizeof)  || OpTok.is(tok::kw___alignof) ||
         OpTok.is(tok::kw_alignof) || OpTok.is(tok::kw__Alignof)) {
-      bool isAmbiguousTypeId;
-      if (isTypeIdInParens(isAmbiguousTypeId)) {
+      if (isTypeIdUnambiguously()) {
         DeclSpec DS(AttrFactory);
         ParseSpecifierQualifierList(DS);
         Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);

@@ -118,3 +118,10 @@ void test3() {
   (void)s1.foo();
   (void)s2.foo();
 }
+
+namespace pr16992 {
+  typedef int T;
+  unsigned getsz() {
+    return (sizeof T());
+  }
+}

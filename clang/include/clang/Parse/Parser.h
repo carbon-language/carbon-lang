@@ -1788,6 +1788,7 @@ private:
   /// disambiguation will occur.
   enum TentativeCXXTypeIdContext {
     TypeIdInParens,
+    TypeIdUnambiguous,
     TypeIdAsTemplateArgument
   };
 
@@ -1804,6 +1805,16 @@ private:
   bool isTypeIdInParens() {
     bool isAmbiguous;
     return isTypeIdInParens(isAmbiguous);
+  }
+
+  /// \brief Checks if the current tokens form type-id or expression.
+  /// It is similar to isTypeIdInParens but does not suppose that type-id
+  /// is in parenthesis.
+  bool isTypeIdUnambiguously() {
+    bool IsAmbiguous;
+    if (getLangOpts().CPlusPlus)
+      return isCXXTypeId(TypeIdUnambiguous, IsAmbiguous);
+    return isTypeSpecifierQualifier();
   }
 
   /// isCXXDeclarationStatement - C++-specialized function that disambiguates
