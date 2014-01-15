@@ -30,7 +30,7 @@ def LEA64_32r : I<0x8D, MRMSrcMem,
                   (outs GR32:$dst), (ins lea64_32mem:$src),
                   "lea{l}\t{$src|$dst}, {$dst|$src}",
                   [(set GR32:$dst, lea64_32addr:$src)], IIC_LEA>,
-                  Requires<[In64BitMode]>;
+                  OpSize16, Requires<[In64BitMode]>;
 
 let isReMaterializable = 1 in
 def LEA64r   : RI<0x8D, MRMSrcMem, (outs GR64:$dst), (ins lea64mem:$src),
@@ -486,7 +486,7 @@ def INC64_32r : I<0xFF, MRM0r, (outs GR32:$dst), (ins GR32:$src1),
                   "inc{l}\t$dst",
                   [(set GR32:$dst, EFLAGS, (X86inc_flag GR32:$src1))],
                   IIC_UNARY_REG>,
-                Requires<[In64BitMode]>;
+                OpSize16, Requires<[In64BitMode]>;
 def DEC64_16r : I<0xFF, MRM1r, (outs GR16:$dst), (ins GR16:$src1),
                   "dec{w}\t$dst",
                   [(set GR16:$dst, EFLAGS, (X86dec_flag GR16:$src1))],
@@ -496,7 +496,7 @@ def DEC64_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src1),
                   "dec{l}\t$dst",
                   [(set GR32:$dst, EFLAGS, (X86dec_flag GR32:$src1))],
                   IIC_UNARY_REG>,
-                Requires<[In64BitMode]>;
+                OpSize16, Requires<[In64BitMode]>;
 } // isConvertibleToThreeAddress = 1, CodeSize = 2
 
 let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0,
@@ -543,7 +543,7 @@ def INC64_16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst), "inc{w}\t$dst",
 def INC64_32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst), "inc{l}\t$dst",
                   [(store (add (loadi32 addr:$dst), 1), addr:$dst),
                     (implicit EFLAGS)], IIC_UNARY_MEM>,
-                Requires<[In64BitMode]>;
+                OpSize16, Requires<[In64BitMode]>;
 def DEC64_16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst), "dec{w}\t$dst",
                   [(store (add (loadi16 addr:$dst), -1), addr:$dst),
                     (implicit EFLAGS)], IIC_UNARY_MEM>,
@@ -551,7 +551,7 @@ def DEC64_16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst), "dec{w}\t$dst",
 def DEC64_32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst), "dec{l}\t$dst",
                   [(store (add (loadi32 addr:$dst), -1), addr:$dst),
                     (implicit EFLAGS)], IIC_UNARY_MEM>,
-                Requires<[In64BitMode]>;
+                OpSize16, Requires<[In64BitMode]>;
 } // CodeSize = 2, SchedRW
 
 let Constraints = "$src1 = $dst", SchedRW = [WriteALU] in {
