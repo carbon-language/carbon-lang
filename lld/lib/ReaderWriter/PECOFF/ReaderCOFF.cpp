@@ -253,10 +253,10 @@ DefinedAtom::Merge getMerge(const coff_aux_section_definition *auxsym) {
 
 FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, error_code &ec)
     : File(mb->getBufferIdentifier(), kindObject), _ordinal(0) {
-  OwningPtr<llvm::object::Binary> bin;
-  ec = llvm::object::createBinary(mb.release(), bin);
-  if (ec)
+  auto binaryOrErr = llvm::object::createBinary(mb.release());
+  if ((ec = binaryOrErr.getError()))
     return;
+  OwningPtr<llvm::object::Binary> bin(binaryOrErr.get());
 
   _obj.reset(dyn_cast<const llvm::object::COFFObjectFile>(bin.get()));
   if (!_obj) {
