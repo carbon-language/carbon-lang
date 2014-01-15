@@ -40,6 +40,7 @@
 ; new archive and checking that date.
 ; RUN: rm -f very_long_bytecode_file_name.bc
 ; RUN: llvm-ar xo %p/Inputs/GNU.a very_long_bytecode_file_name.bc
+; RUN; rm -f %t.a
 ; RUN: llvm-ar rc %t.a very_long_bytecode_file_name.bc
 ; RUN: env TZ=GMT llvm-ar tv %t.a | FileCheck %s
 
