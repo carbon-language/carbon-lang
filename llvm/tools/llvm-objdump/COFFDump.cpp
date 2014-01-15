@@ -230,11 +230,13 @@ static void printCOFFSymbolAddress(llvm::raw_ostream &Out,
 // Prints import tables. The import table is a table containing the list of
 // DLL name and symbol names which will be linked by the loader.
 static void printImportTables(const COFFObjectFile *Obj) {
+  import_directory_iterator i = Obj->import_directory_begin();
+  import_directory_iterator e = Obj->import_directory_end();
+  if (i == e)
+    return;
   outs() << "The Import Tables:\n";
   error_code ec;
-  for (import_directory_iterator i = Obj->import_directory_begin(),
-                                 e = Obj->import_directory_end();
-       i != e; i = i.increment(ec)) {
+  for (; i != e; i = i.increment(ec)) {
     if (ec)
       return;
 
