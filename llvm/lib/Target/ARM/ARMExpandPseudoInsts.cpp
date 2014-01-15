@@ -479,6 +479,8 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI) {
 
   if (SrcIsKill && !SrcIsUndef) // Add an implicit kill for the super-reg.
     MIB->addRegisterKilled(SrcReg, TRI, true);
+  else if (!SrcIsUndef)
+    MIB.addReg(SrcReg, RegState::Implicit); // Add implicit uses for src reg.
   TransferImpOps(MI, MIB, MIB);
 
   // Transfer memoperands.
@@ -604,8 +606,8 @@ void ARMExpandPseudo::ExpandVTBL(MachineBasicBlock::iterator &MBBI,
   MIB.addOperand(MI.getOperand(OpIdx++));
   MIB.addOperand(MI.getOperand(OpIdx++));
 
-  if (SrcIsKill)  // Add an implicit kill for the super-reg.
-    MIB->addRegisterKilled(SrcReg, TRI, true);
+  // Add an implicit kill and use for the super-reg.
+  MIB.addReg(SrcReg, RegState::Implicit | getKillRegState(SrcIsKill));
   TransferImpOps(MI, MIB, MIB);
   MI.eraseFromParent();
 }
