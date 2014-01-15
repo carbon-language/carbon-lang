@@ -60,6 +60,16 @@ class SCBaseMM<string opstr, RegisterOperand RO> :
   let Constraints = "$rt = $dst";
 }
 
+class LoadMM<string opstr, DAGOperand RO, SDPatternOperator OpNode = null_frag,
+             InstrItinClass Itin = NoItinerary> :
+  InstSE<(outs RO:$rt), (ins mem_mm_12:$addr),
+         !strconcat(opstr, "\t$rt, $addr"),
+         [(set RO:$rt, (OpNode addrimm12:$addr))], Itin, FrmI> {
+  let DecoderMethod = "DecodeMemMMImm12";
+  let canFoldAsLoad = 1;
+  let mayLoad = 1;
+}
+
 let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   /// Arithmetic Instructions (ALU Immediate)
   def ADDiu_MM : MMRel, ArithLogicI<"addiu", simm16, GPR32Opnd>,
@@ -135,6 +145,8 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
     def SH_MM  : Store<"sh", GPR32Opnd>, MMRel, LW_FM_MM<0xe>;
     def SW_MM  : Store<"sw", GPR32Opnd>, MMRel, LW_FM_MM<0x3e>;
   }
+
+  def LWU_MM : LoadMM<"lwu", GPR32Opnd, zextloadi32, IILoad>, LL_FM_MM<0xe>;
 
   /// Load and Store Instructions - unaligned
   def LWL_MM : LoadLeftRightMM<"lwl", MipsLWL, GPR32Opnd, mem_mm_12>,
