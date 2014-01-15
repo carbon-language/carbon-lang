@@ -727,13 +727,15 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       Result = Context.WCharTy;
     else if (DS.getTypeSpecSign() == DeclSpec::TSS_signed) {
       S.Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec)
-        << DS.getSpecifierName(DS.getTypeSpecType());
+        << DS.getSpecifierName(DS.getTypeSpecType(),
+                               Context.getPrintingPolicy());
       Result = Context.getSignedWCharType();
     } else {
       assert(DS.getTypeSpecSign() == DeclSpec::TSS_unsigned &&
         "Unknown TSS value");
       S.Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec)
-        << DS.getSpecifierName(DS.getTypeSpecType());
+        << DS.getSpecifierName(DS.getTypeSpecType(),
+                               Context.getPrintingPolicy());
       Result = Context.getUnsignedWCharType();
     }
     break;

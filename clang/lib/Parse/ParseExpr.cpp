@@ -30,6 +30,7 @@
 #include "clang/Sema/TypoCorrection.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "clang/AST/ASTContext.h"
 using namespace clang;
 
 /// \brief Simple precedence-based parser for binary/ternary operators.
@@ -790,7 +791,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
             DS.SetRangeEnd(ILoc);
             const char *PrevSpec = 0;
             unsigned DiagID;
-            DS.SetTypeSpecType(TST_typename, ILoc, PrevSpec, DiagID, Typ);
+            DS.SetTypeSpecType(TST_typename, ILoc, PrevSpec, DiagID, Typ,
+                               Actions.getASTContext().getPrintingPolicy());
             
             Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
             TypeResult Ty = Actions.ActOnTypeName(getCurScope(), 
@@ -955,7 +957,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       const char *PrevSpec = 0;
       unsigned DiagID;
       DS.SetTypeSpecType(TST_typename, Tok.getAnnotationEndLoc(),
-                         PrevSpec, DiagID, Type);
+                         PrevSpec, DiagID, Type,
+                         Actions.getASTContext().getPrintingPolicy());
 
       Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
       TypeResult Ty = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);

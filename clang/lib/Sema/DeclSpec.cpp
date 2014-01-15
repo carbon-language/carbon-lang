@@ -418,12 +418,13 @@ const char *DeclSpec::getSpecifierName(TSS S) {
   llvm_unreachable("Unknown typespec!");
 }
 
-const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
+const char *DeclSpec::getSpecifierName(DeclSpec::TST T,
+                                       const PrintingPolicy &Policy) {
   switch (T) {
   case DeclSpec::TST_unspecified: return "unspecified";
   case DeclSpec::TST_void:        return "void";
   case DeclSpec::TST_char:        return "char";
-  case DeclSpec::TST_wchar:       return "wchar_t";
+  case DeclSpec::TST_wchar:       return Policy.MSWChar ? "__wchar_t" : "wchar_t";
   case DeclSpec::TST_char16:      return "char16_t";
   case DeclSpec::TST_char32:      return "char32_t";
   case DeclSpec::TST_int:         return "int";
@@ -431,7 +432,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_half:        return "half";
   case DeclSpec::TST_float:       return "float";
   case DeclSpec::TST_double:      return "double";
-  case DeclSpec::TST_bool:        return "_Bool";
+  case DeclSpec::TST_bool:        return Policy.Bool ? "bool" : "_Bool";
   case DeclSpec::TST_decimal32:   return "_Decimal32";
   case DeclSpec::TST_decimal64:   return "_Decimal64";
   case DeclSpec::TST_decimal128:  return "_Decimal128";
@@ -467,7 +468,8 @@ const char *DeclSpec::getSpecifierName(TQ T) {
 
 bool DeclSpec::SetStorageClassSpec(Sema &S, SCS SC, SourceLocation Loc,
                                    const char *&PrevSpec,
-                                   unsigned &DiagID) {
+                                   unsigned &DiagID,
+                                   const PrintingPolicy &Policy) {
   // OpenCL v1.1 s6.8g: "The extern, static, auto and register storage-class
   // specifiers are not supported.
   // It seems sensible to prohibit private_extern too
@@ -502,10 +504,10 @@ bool DeclSpec::SetStorageClassSpec(Sema &S, SCS SC, SourceLocation Loc,
     bool isInvalid = true;
     if (TypeSpecType == TST_unspecified && S.getLangOpts().CPlusPlus) {
       if (SC == SCS_auto)
-        return SetTypeSpecType(TST_auto, Loc, PrevSpec, DiagID);
+        return SetTypeSpecType(TST_auto, Loc, PrevSpec, DiagID, Policy);
       if (StorageClassSpec == SCS_auto) {
         isInvalid = SetTypeSpecType(TST_auto, StorageClassSpecLoc,
-                                    PrevSpec, DiagID);
+                                    PrevSpec, DiagID, Policy);
         assert(!isInvalid && "auto SCS -> TST recovery failed");
       }
     }
@@ -541,7 +543,8 @@ bool DeclSpec::SetStorageClassSpecThread(TSCS TSC, SourceLocation Loc,
 /// specified).
 bool DeclSpec::SetTypeSpecWidth(TSW W, SourceLocation Loc,
                                 const char *&PrevSpec,
-                                unsigned &DiagID) {
+                                unsigned &DiagID,
+                                const PrintingPolicy &Policy) {
   // Overwrite TSWLoc only if TypeSpecWidth was unspecified, so that
   // for 'long long' we will keep the source location of the first 'long'.
   if (TypeSpecWidth == TSW_unspecified)
@@ -552,7 +555,7 @@ bool DeclSpec::SetTypeSpecWidth(TSW W, SourceLocation Loc,
   TypeSpecWidth = W;
   if (TypeAltiVecVector && !TypeAltiVecBool &&
       ((TypeSpecWidth == TSW_long) || (TypeSpecWidth == TSW_longlong))) {
-    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType, Policy);
     DiagID = diag::warn_vector_long_decl_spec_combination;
     return true;
   }
@@ -582,19 +585,21 @@ bool DeclSpec::SetTypeSpecSign(TSS S, SourceLocation Loc,
 bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
                                const char *&PrevSpec,
                                unsigned &DiagID,
-                               ParsedType Rep) {
-  return SetTypeSpecType(T, Loc, Loc, PrevSpec, DiagID, Rep);
+                               ParsedType Rep,
+                               const PrintingPolicy &Policy) {
+  return SetTypeSpecType(T, Loc, Loc, PrevSpec, DiagID, Rep, Policy);
 }
 
 bool DeclSpec::SetTypeSpecType(TST T, SourceLocation TagKwLoc,
                                SourceLocation TagNameLoc,
                                const char *&PrevSpec,
                                unsigned &DiagID,
-                               ParsedType Rep) {
+                               ParsedType Rep,
+                               const PrintingPolicy &Policy) {
   assert(isTypeRep(T) && "T does not store a type");
   assert(Rep && "no type provided!");
   if (TypeSpecType != TST_unspecified) {
-    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType, Policy);
     DiagID = diag::err_invalid_decl_spec_combination;
     return true;
   }
@@ -609,11 +614,12 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation TagKwLoc,
 bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
                                const char *&PrevSpec,
                                unsigned &DiagID,
-                               Expr *Rep) {
+                               Expr *Rep,
+                               const PrintingPolicy &Policy) {
   assert(isExprRep(T) && "T does not store an expr");
   assert(Rep && "no expression provided!");
   if (TypeSpecType != TST_unspecified) {
-    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType, Policy);
     DiagID = diag::err_invalid_decl_spec_combination;
     return true;
   }
@@ -628,20 +634,22 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
 bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
                                const char *&PrevSpec,
                                unsigned &DiagID,
-                               Decl *Rep, bool Owned) {
-  return SetTypeSpecType(T, Loc, Loc, PrevSpec, DiagID, Rep, Owned);
+                               Decl *Rep, bool Owned,
+                               const PrintingPolicy &Policy) {
+  return SetTypeSpecType(T, Loc, Loc, PrevSpec, DiagID, Rep, Owned, Policy);
 }
 
 bool DeclSpec::SetTypeSpecType(TST T, SourceLocation TagKwLoc,
                                SourceLocation TagNameLoc,
                                const char *&PrevSpec,
                                unsigned &DiagID,
-                               Decl *Rep, bool Owned) {
+                               Decl *Rep, bool Owned,
+                               const PrintingPolicy &Policy) {
   assert(isDeclRep(T) && "T does not store a decl");
   // Unlike the other cases, we don't assert that we actually get a decl.
 
   if (TypeSpecType != TST_unspecified) {
-    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType, Policy);
     DiagID = diag::err_invalid_decl_spec_combination;
     return true;
   }
@@ -655,11 +663,12 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation TagKwLoc,
 
 bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
                                const char *&PrevSpec,
-                               unsigned &DiagID) {
+                               unsigned &DiagID,
+                               const PrintingPolicy &Policy) {
   assert(!isDeclRep(T) && !isTypeRep(T) && !isExprRep(T) &&
          "rep required for these type-spec kinds!");
   if (TypeSpecType != TST_unspecified) {
-    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType, Policy);
     DiagID = diag::err_invalid_decl_spec_combination;
     return true;
   }
@@ -672,7 +681,7 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
   TypeSpecType = T;
   TypeSpecOwned = false;
   if (TypeAltiVecVector && !TypeAltiVecBool && (TypeSpecType == TST_double)) {
-    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType, Policy);
     DiagID = diag::err_invalid_vector_decl_spec;
     return true;
   }
@@ -680,9 +689,10 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
 }
 
 bool DeclSpec::SetTypeAltiVecVector(bool isAltiVecVector, SourceLocation Loc,
-                          const char *&PrevSpec, unsigned &DiagID) {
+                          const char *&PrevSpec, unsigned &DiagID,
+                          const PrintingPolicy &Policy) {
   if (TypeSpecType != TST_unspecified) {
-    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType, Policy);
     DiagID = diag::err_invalid_vector_decl_spec_combination;
     return true;
   }
@@ -692,10 +702,11 @@ bool DeclSpec::SetTypeAltiVecVector(bool isAltiVecVector, SourceLocation Loc,
 }
 
 bool DeclSpec::SetTypeAltiVecPixel(bool isAltiVecPixel, SourceLocation Loc,
-                          const char *&PrevSpec, unsigned &DiagID) {
+                          const char *&PrevSpec, unsigned &DiagID,
+                          const PrintingPolicy &Policy) {
   if (!TypeAltiVecVector || TypeAltiVecPixel ||
       (TypeSpecType != TST_unspecified)) {
-    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType, Policy);
     DiagID = diag::err_invalid_pixel_decl_spec_combination;
     return true;
   }
@@ -706,10 +717,11 @@ bool DeclSpec::SetTypeAltiVecPixel(bool isAltiVecPixel, SourceLocation Loc,
 }
 
 bool DeclSpec::SetTypeAltiVecBool(bool isAltiVecBool, SourceLocation Loc,
-                          const char *&PrevSpec, unsigned &DiagID) {
+                                  const char *&PrevSpec, unsigned &DiagID,
+                                  const PrintingPolicy &Policy) {
   if (!TypeAltiVecVector || TypeAltiVecBool ||
       (TypeSpecType != TST_unspecified)) {
-    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType, Policy);
     DiagID = diag::err_invalid_vector_bool_decl_spec;
     return true;
   }
@@ -901,7 +913,7 @@ void DeclSpec::SaveWrittenBuiltinSpecs() {
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
 /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,
 /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
+void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP, const PrintingPolicy &Policy) {
   // Before possibly changing their values, save specs as written.
   SaveWrittenBuiltinSpecs();
 
@@ -954,7 +966,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
            (TypeSpecType != TST_int)) || TypeAltiVecPixel) {
         Diag(D, TSTLoc, diag::err_invalid_vector_bool_decl_spec)
           << (TypeAltiVecPixel ? "__pixel" :
-                                 getSpecifierName((TST)TypeSpecType));
+                                 getSpecifierName((TST)TypeSpecType, Policy));
       }
 
       // Only 'short' is valid with vector bool. (PIM 2.1)
@@ -984,7 +996,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
     else if (TypeSpecType != TST_int  && TypeSpecType != TST_int128 &&
              TypeSpecType != TST_char && TypeSpecType != TST_wchar) {
       Diag(D, TSSLoc, diag::err_invalid_sign_spec)
-        << getSpecifierName((TST)TypeSpecType);
+        << getSpecifierName((TST)TypeSpecType, Policy);
       // signed double -> double.
       TypeSpecSign = TSS_unspecified;
     }
@@ -1001,7 +1013,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
       Diag(D, TSWLoc,
            TypeSpecWidth == TSW_short ? diag::err_invalid_short_spec
                                       : diag::err_invalid_longlong_spec)
-        <<  getSpecifierName((TST)TypeSpecType);
+        <<  getSpecifierName((TST)TypeSpecType, Policy);
       TypeSpecType = TST_int;
       TypeSpecOwned = false;
     }
@@ -1011,7 +1023,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
       TypeSpecType = TST_int;  // long -> long int.
     else if (TypeSpecType != TST_int && TypeSpecType != TST_double) {
       Diag(D, TSWLoc, diag::err_invalid_long_spec)
-        << getSpecifierName((TST)TypeSpecType);
+        << getSpecifierName((TST)TypeSpecType, Policy);
       TypeSpecType = TST_int;
       TypeSpecOwned = false;
     }
@@ -1033,7 +1045,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
         Diag(D, TSTLoc, diag::ext_integer_complex);
     } else if (TypeSpecType != TST_float && TypeSpecType != TST_double) {
       Diag(D, TSCLoc, diag::err_invalid_complex_spec)
-        << getSpecifierName((TST)TypeSpecType);
+        << getSpecifierName((TST)TypeSpecType, Policy);
       TypeSpecComplex = TSC_unspecified;
     }
   }
