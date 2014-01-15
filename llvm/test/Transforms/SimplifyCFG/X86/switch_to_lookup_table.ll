@@ -856,3 +856,39 @@ return:
 ; CHECK-NOT: @switch.table
 ; CHECK: switch i32
 }
+
+; We build lookup tables for switches with three or more cases.
+define i32 @threecases(i32 %c) {
+entry:
+  switch i32 %c, label %sw.default [
+    i32 0, label %return
+    i32 1, label %sw.bb1
+    i32 2, label %sw.bb2
+  ]
+sw.bb1: br label %return
+sw.bb2: br label %return
+sw.default: br label %return
+return:
+  %x = phi i32 [ 3, %sw.default ], [ 5, %sw.bb2 ], [ 7, %sw.bb1 ], [ 9, %entry ]
+  ret i32 %x
+; CHECK-LABEL: @threecases(
+; CHECK-NOT: switch i32
+; CHECK: @switch.table
+}
+
+; We don't build tables for switches with two cases.
+define i32 @twocases(i32 %c) {
+entry:
+  switch i32 %c, label %sw.default [
+    i32 0, label %return
+    i32 1, label %sw.bb1
+  ]
+sw.bb1: br label %return
+sw.default: br label %return
+return:
+  %x = phi i32 [ 3, %sw.default ], [ 7, %sw.bb1 ], [ 9, %entry ]
+  ret i32 %x
+; CHECK-LABEL: @twocases(
+; CHECK: switch i32
+; CHECK-NOT: @switch.table
+}
