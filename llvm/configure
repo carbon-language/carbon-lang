@@ -4620,11 +4620,12 @@ fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-                              { echo "$as_me:$LINENO: checking whether Clang will select a modern C++ standard library" >&5
+                                          if test "$ENABLE_LIBCPP" -eq 0 ; then
+        { echo "$as_me:$LINENO: checking whether Clang will select a modern C++ standard library" >&5
 echo $ECHO_N "checking whether Clang will select a modern C++ standard library... $ECHO_C" >&6; }
-      llvm_cv_old_cxxflags="$CXXFLAGS"
-      CXXFLAGS="$CXXFLAGS -std=c++0x"
-      cat >conftest.$ac_ext <<_ACEOF
+        llvm_cv_old_cxxflags="$CXXFLAGS"
+        CXXFLAGS="$CXXFLAGS -std=c++0x"
+        cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -4678,7 +4679,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 	{ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
-           { { echo "$as_me:$LINENO: error:
+             { { echo "$as_me:$LINENO: error:
 We detected a missing feature in the standard C++ library that was known to be
 missing in libstdc++4.6 and implemented in libstdc++4.7. There are numerous
 C++11 problems with 4.6's library, and we don't support GCCs or libstdc++ older
@@ -4701,7 +4702,8 @@ fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
-      CXXFLAGS="$llvm_cv_old_cxxflags"
+        CXXFLAGS="$llvm_cv_old_cxxflags"
+      fi
       ;;
     gcc)
       { echo "$as_me:$LINENO: checking whether GCC is new enough" >&5
@@ -10661,7 +10663,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10664 "configure"
+#line 10666 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

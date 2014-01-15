@@ -538,18 +538,21 @@ bypass these sanity checks.])])
       dnl Note that libstdc++4.6 is known broken for C++11 builds. The errors
       dnl are sometimes deeply confusing though. Here we test for an obvious
       dnl incomplete feature in 4.6's standard library that was completed in
-      dnl 4.7's.
-      AC_MSG_CHECKING([whether Clang will select a modern C++ standard library])
-      llvm_cv_old_cxxflags="$CXXFLAGS"
-      CXXFLAGS="$CXXFLAGS -std=c++0x"
-      AC_LINK_IFELSE([AC_LANG_SOURCE([[
+      dnl 4.7's. We also have to disable this test if 'ENABLE_LIBCPP' is set
+      dnl because the enable flags don't actually fix CXXFLAGS, they rely on
+      dnl that happening in the Makefile.
+      if test "$ENABLE_LIBCPP" -eq 0 ; then
+        AC_MSG_CHECKING([whether Clang will select a modern C++ standard library])
+        llvm_cv_old_cxxflags="$CXXFLAGS"
+        CXXFLAGS="$CXXFLAGS -std=c++0x"
+        AC_LINK_IFELSE([AC_LANG_SOURCE([[
 #include <atomic>
 std::atomic<float> x(0.0f);
 int main() { return (float)x; }
 ]])],
-          [AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])
-           AC_MSG_ERROR([
+            [AC_MSG_RESULT([yes])],
+            [AC_MSG_RESULT([no])
+             AC_MSG_ERROR([
 We detected a missing feature in the standard C++ library that was known to be
 missing in libstdc++4.6 and implemented in libstdc++4.7. There are numerous
 C++11 problems with 4.6's library, and we don't support GCCs or libstdc++ older
@@ -558,7 +561,8 @@ standard library.
 
 If this error is incorrect or you need to force things to work, you may pass
 '--disable-compiler-version-checks' to configure to bypass this test.])])
-      CXXFLAGS="$llvm_cv_old_cxxflags"
+        CXXFLAGS="$llvm_cv_old_cxxflags"
+      fi
       ;;
     gcc)
       AC_MSG_CHECKING([whether GCC is new enough])
