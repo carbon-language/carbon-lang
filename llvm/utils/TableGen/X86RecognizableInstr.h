@@ -46,6 +46,8 @@ private:
   uint8_t Form;
   /// The hasOpSizePrefix field from the record
   bool HasOpSizePrefix;
+  /// The hasOpSize16Prefix field from the record
+  bool HasOpSize16Prefix;
   /// The hasAdSizePrefix field from the record
   bool HasAdSizePrefix;
   /// The hasREX_WPrefix field from the record
@@ -89,9 +91,7 @@ private:
   std::string Name;
   /// The AT&T AsmString for the instruction
   std::string AsmString;
-  
-  /// Indicates whether the instruction is SSE
-  bool IsSSE;
+
   /// Indicates whether the instruction should be emitted into the decode
   /// tables; regardless, it will be emitted into the instruction info table
   bool ShouldBeEmitted;

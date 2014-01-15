@@ -232,6 +232,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   Form     = byteFromRec(Rec, "FormBits");
 
   HasOpSizePrefix  = Rec->getValueAsBit("hasOpSizePrefix");
+  HasOpSize16Prefix = Rec->getValueAsBit("hasOpSize16Prefix");
   HasAdSizePrefix  = Rec->getValueAsBit("hasAdSizePrefix");
   HasREX_WPrefix   = Rec->getValueAsBit("hasREX_WPrefix");
   HasVEXPrefix     = Rec->getValueAsBit("hasVEXPrefix");
@@ -254,10 +255,6 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
 
   Operands = &insn.Operands.OperandList;
 
-  IsSSE            = ((HasOpSizePrefix || Prefix == X86Local::PD ||
-                       Prefix == X86Local::T8PD || Prefix == X86Local::TAPD) &&
-                      (Name.find("16") == Name.npos)) ||
-                     (Name.find("CRC32") != Name.npos);
   HasVEX_LPrefix   = Rec->getValueAsBit("hasVEX_L");
 
   // Check for 64-bit inst which does not require REX
@@ -558,9 +555,9 @@ void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
   Spec->operands[operandIndex].encoding = encodingFromString(typeName,
                                                               HasOpSizePrefix);
   Spec->operands[operandIndex].type = typeFromString(typeName,
-                                                     IsSSE,
                                                      HasREX_WPrefix,
-                                                     HasOpSizePrefix);
+                                                     HasOpSizePrefix,
+                                                     HasOpSize16Prefix);
 
   ++operandIndex;
   ++physicalOperandIndex;
@@ -1164,36 +1161,34 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
 
 #define TYPE(str, type) if (s == str) return type;
 OperandType RecognizableInstr::typeFromString(const std::string &s,
-                                              bool isSSE,
                                               bool hasREX_WPrefix,
-                                              bool hasOpSizePrefix) {
-  if (isSSE) {
-    // For SSE instructions, we ignore the OpSize prefix and force operand
-    // sizes.
-    TYPE("GR16",              TYPE_R16)
-    TYPE("GR32",              TYPE_R32)
-    TYPE("GR64",              TYPE_R64)
-  }
+                                              bool hasOpSizePrefix,
+                                              bool hasOpSize16Prefix) {
   if(hasREX_WPrefix) {
     // For instructions with a REX_W prefix, a declared 32-bit register encoding
     // is special.
     TYPE("GR32",              TYPE_R32)
   }
-  if(!hasOpSizePrefix) {
-    // For instructions without an OpSize prefix, a declared 16-bit register or
+  if(hasOpSizePrefix) {
+    // For instructions with an OpSize prefix, a declared 16-bit register or
     // immediate encoding is special.
-    TYPE("GR16",              TYPE_R16)
-    TYPE("i16imm",            TYPE_IMM16)
+    TYPE("GR16",              TYPE_Rv)
+    TYPE("i16imm",            TYPE_IMMv)
+  }
+  if(hasOpSize16Prefix) {
+    // For instructions with an OpSize16 prefix, a declared 32-bit register or
+    // immediate encoding is special.
+    TYPE("GR32",              TYPE_Rv)
   }
   TYPE("i16mem",              TYPE_Mv)
-  TYPE("i16imm",              TYPE_IMMv)
+  TYPE("i16imm",              TYPE_IMM16)
   TYPE("i16i8imm",            TYPE_IMMv)
-  TYPE("GR16",                TYPE_Rv)
+  TYPE("GR16",                TYPE_R16)
   TYPE("i32mem",              TYPE_Mv)
   TYPE("i32imm",              TYPE_IMMv)
   TYPE("i32i8imm",            TYPE_IMM32)
   TYPE("u32u8imm",            TYPE_IMM32)
-  TYPE("GR32",                TYPE_Rv)
+  TYPE("GR32",                TYPE_R32)
   TYPE("GR32orGR64",          TYPE_R32)
   TYPE("i64mem",              TYPE_Mv)
   TYPE("i64i32imm",           TYPE_IMM64)
