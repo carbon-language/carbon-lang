@@ -68,12 +68,17 @@ void MipsTargetAsmStreamer::emitDirectiveOptionPic0() {
 MipsTargetELFStreamer::MipsTargetELFStreamer() {}
 
 void MipsTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
+  if (!isMicroMipsEnabled())
+    return;
   MCSymbolData &Data = getStreamer().getOrCreateSymbolData(Symbol);
+  uint8_t Type = MCELF::GetType(Data);
+  if (Type != ELF::STT_FUNC)
+    return;
+
   // The "other" values are stored in the last 6 bits of the second byte
   // The traditional defines for STO values assume the full byte and thus
   // the shift to pack it.
-  if (isMicroMipsEnabled())
-    MCELF::setOther(Data, ELF::STO_MIPS_MICROMIPS >> 2);
+  MCELF::setOther(Data, ELF::STO_MIPS_MICROMIPS >> 2);
 }
 
 MCELFStreamer &MipsTargetELFStreamer::getStreamer() {
