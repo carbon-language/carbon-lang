@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -triple x86_64-apple-darwin12 -std=c++11 %s > %t 2>&1
 // RUN: FileCheck --input-file=%t %s
 
+// CHECK-LABEL: void checkWrap(int i)
 // CHECK: ENTRY
 // CHECK-NEXT: Succs (1): B1
 // CHECK: [B1]
@@ -36,6 +37,7 @@ void checkWrap(int i) {
   }
 }
 
+// CHECK-LABEL: void checkDeclStmts()
 // CHECK: ENTRY
 // CHECK-NEXT: Succs (1): B1
 // CHECK: [B1]
@@ -68,6 +70,7 @@ void checkDeclStmts() {
   static_assert(1, "abc");
 }
 
+// CHECK-LABEL: void F(EmptyE e)
 // CHECK: ENTRY
 // CHECK-NEXT: Succs (1): B1
 // CHECK: [B1]
@@ -84,6 +87,7 @@ void F(EmptyE e) {
   switch (e) {}
 }
 
+// CHECK-LABEL: void testBuiltinSize()
 // CHECK: ENTRY
 // CHECK-NEXT: Succs (1): B1
 // CHECK: [B1]
@@ -107,6 +111,7 @@ public:
   ~A() {}
 };
 
+// CHECK-LABEL: void test_deletedtor()
 // CHECK: [B2 (ENTRY)]
 // CHECK-NEXT:   Succs (1): B1
 // CHECK: [B1]
@@ -127,6 +132,7 @@ void test_deletedtor() {
   delete a;
 }
 
+// CHECK-LABEL: void test_deleteArraydtor()
 // CHECK: [B2 (ENTRY)]
 // CHECK-NEXT:   Succs (1): B1
 // CHECK: [B1]
@@ -160,7 +166,7 @@ namespace NoReturnSingleSuccessor {
     ~B() __attribute__((noreturn));
   };
 
-// CHECK: ENTRY
+// CHECK-LABEL: int test1(int *x)
 // CHECK: 1: 1
 // CHECK-NEXT: 2: return
 // CHECK-NEXT: ~B() (Implicit destructor)
@@ -172,7 +178,7 @@ namespace NoReturnSingleSuccessor {
       return 1;
   }
 
-// CHECK: ENTRY
+// CHECK-LABEL: int test2(int *x)
 // CHECK: 1: 1
 // CHECK-NEXT: 2: return
 // CHECK-NEXT: destructor
@@ -186,6 +192,7 @@ namespace NoReturnSingleSuccessor {
 }
 
 // Test CFG support for "extending" an enum.
+// CHECK-LABEL: int test_enum_with_extension(enum MyEnum value)
 // CHECK:  [B7 (ENTRY)]
 // CHECK-NEXT:    Succs (1): B2
 // CHECK:  [B1]
@@ -251,6 +258,7 @@ int test_enum_with_extension(enum MyEnum value) {
   return x;
 }
 
+// CHECK-LABEL: int test_enum_with_extension_default(enum MyEnum value)
 // CHECK:  [B7 (ENTRY)]
 // CHECK-NEXT:    Succs (1): B2
 // CHECK:  [B1]
@@ -313,14 +321,7 @@ int test_enum_with_extension_default(enum MyEnum value) {
 }
 
 
-// CHECK:  [B1 (ENTRY)]
-// CHECK-NEXT:  Succs (1): B0
-// CHECK:  [B0 (EXIT)]
-// CHECK-NEXT:  Preds (1): B1
-// CHECK:  [B1 (ENTRY)]
-// CHECK-NEXT:  Succs (1): B0
-// CHECK:  [B0 (EXIT)]
-// CHECK-NEXT:  Preds (1): B1
+// CHECK-LABEL: void test_placement_new()
 // CHECK:  [B2 (ENTRY)]
 // CHECK-NEXT:  Succs (1): B1
 // CHECK:  [B1]
@@ -351,6 +352,7 @@ void test_placement_new() {
   MyClass* obj = new (buffer) MyClass();
 }
 
+// CHECK-LABEL: void test_placement_new_array()
 // CHECK:  [B2 (ENTRY)]
 // CHECK-NEXT:  Succs (1): B1
 // CHECK: [B1]
@@ -374,10 +376,7 @@ void test_placement_new_array() {
 }
 
 
-// For the helper function; see below.
-// CHECK: [B2 (ENTRY)]
-// CHECK-NEXT:   Succs (1): B1
-
+// CHECK-LABEL: int *PR18472()
 // CHECK: [B2 (ENTRY)]
 // CHECK-NEXT:   Succs (1): B1
 // CHECK: [B1]

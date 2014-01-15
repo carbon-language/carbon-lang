@@ -95,6 +95,11 @@ class CFGDumper : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
+    PrintingPolicy Policy(mgr.getLangOpts());
+    Policy.TerseOutput = true;
+    Policy.PolishForDeclaration = true;
+    D->print(llvm::errs(), Policy);
+
     if (CFG *cfg = mgr.getCFG(D)) {
       cfg->dump(mgr.getLangOpts(),
                 llvm::sys::Process::StandardErrHasColors());
