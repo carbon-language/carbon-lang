@@ -48,16 +48,15 @@ class StoreLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
 class LLBaseMM<string opstr, RegisterOperand RO> :
   InstSE<(outs RO:$rt), (ins mem_mm_12:$addr),
          !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
-  let DecoderMethod = "DecodeMem";
+  let DecoderMethod = "DecodeMemMMImm12";
   let mayLoad = 1;
 }
 
 class SCBaseMM<string opstr, RegisterOperand RO> :
-  InstSE<(outs RO:$dst), (ins RO:$rt, mem_mm_12:$addr),
+  InstSE<(outs), (ins RO:$rt, mem_mm_12:$addr),
          !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
-  let DecoderMethod = "DecodeMem";
+  let DecoderMethod = "DecodeMemMMImm12";
   let mayStore = 1;
-  let Constraints = "$rt = $dst";
 }
 
 class LoadMM<string opstr, DAGOperand RO, SDPatternOperator OpNode = null_frag,
