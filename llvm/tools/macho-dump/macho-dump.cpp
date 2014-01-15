@@ -379,9 +379,10 @@ int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv, "llvm Mach-O dumping tool\n");
 
-  OwningPtr<Binary> Binary;
-  if (error_code EC = createBinary(InputFile, Binary))
+  ErrorOr<Binary *> BinaryOrErr = createBinary(InputFile);
+  if (error_code EC = BinaryOrErr.getError())
     return Error("unable to read input: '" + EC.message() + "'");
+  OwningPtr<Binary> Binary(BinaryOrErr.get());
 
   const MachOObjectFile *InputObject = dyn_cast<MachOObjectFile>(Binary.get());
   if (!InputObject)

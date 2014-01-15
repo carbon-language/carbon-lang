@@ -187,9 +187,10 @@ error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result) const {
   OwningPtr<MemoryBuffer> Buff;
   if (error_code ec = getMemoryBuffer(Buff))
     return ec;
-  if (error_code ec = createBinary(Buff.take(), ret))
-    return ec;
-  Result.swap(ret);
+  ErrorOr<Binary *> BinaryOrErr = createBinary(Buff.take());
+  if (error_code EC = BinaryOrErr.getError())
+    return EC;
+  Result.reset(BinaryOrErr.get());
   return object_error::success;
 }
 

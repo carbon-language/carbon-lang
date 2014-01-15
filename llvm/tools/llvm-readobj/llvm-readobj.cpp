@@ -260,11 +260,12 @@ static void dumpInput(StringRef File) {
   }
 
   // Attempt to open the binary.
-  OwningPtr<Binary> Binary;
-  if (error_code EC = createBinary(File, Binary)) {
+  ErrorOr<Binary *> BinaryOrErr = createBinary(File);
+  if (error_code EC = BinaryOrErr.getError()) {
     reportError(File, EC);
     return;
   }
+  OwningPtr<Binary> Binary(BinaryOrErr.get());
 
   if (Archive *Arc = dyn_cast<Archive>(Binary.get()))
     dumpArchive(Arc);

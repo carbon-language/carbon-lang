@@ -14,8 +14,8 @@
 #ifndef LLVM_OBJECT_BINARY_H
 #define LLVM_OBJECT_BINARY_H
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Object/Error.h"
+#include "llvm/Support/ErrorOr.h"
 
 namespace llvm {
 
@@ -113,13 +113,11 @@ public:
 /// @brief Create a Binary from Source, autodetecting the file type.
 ///
 /// @param Source The data to create the Binary from. Ownership is transferred
-///        to Result if successful. If an error is returned, Source is destroyed
-///        by createBinary before returning.
-/// @param Result A pointer to the resulting Binary if no error occured.
-error_code createBinary(MemoryBuffer *Source, OwningPtr<Binary> &Result);
+///        to the Binary if successful. If an error is returned,
+///        Source is destroyed by createBinary before returning.
+ErrorOr<Binary *> createBinary(MemoryBuffer *Source);
 
-error_code createBinary(StringRef Path, OwningPtr<Binary> &Result);
-
+ErrorOr<Binary *> createBinary(StringRef Path);
 }
 }
 
