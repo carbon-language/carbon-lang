@@ -1176,9 +1176,9 @@ as follows:
    * ``e``: ELF mangling: Private symbols get a ``.L`` prefix.
    * ``m``: Mips mangling: Private symbols get a ``$`` prefix.
    * ``o``: Mach-O mangling: Private symbols get ``L`` prefix. Other
-    symbols get a ``_`` prefix.
+     symbols get a ``_`` prefix.
    * ``w``: Windows COFF prefix:  Similar to Mach-O, but stdcall and fastcall
-  functions also get a suffix based on the frame size.
+     functions also get a suffix based on the frame size.
 ``n<size1>:<size2>:<size3>...``
     This specifies a set of native integer widths for the target CPU in
     bits. For example, it might contain ``n32`` for 32-bit PowerPC,
