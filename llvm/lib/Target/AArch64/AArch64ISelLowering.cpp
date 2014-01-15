@@ -286,6 +286,15 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   setExceptionSelectorRegister(AArch64::X1);
 
   if (Subtarget->hasNEON()) {
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v8i8, Expand);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i16, Expand);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i32, Expand);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v1i64, Expand);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v16i8, Expand);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v8i16, Expand);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i32, Expand);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i64, Expand);
+
     setOperationAction(ISD::BUILD_VECTOR, MVT::v1i8, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v8i8, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v16i8, Custom);
@@ -3574,7 +3583,25 @@ static bool isVShiftRImm(SDValue Op, EVT VT, int64_t &Cnt) {
   return (Cnt >= 1 && Cnt <= ElementBits);
 }
 
-/// Checks for immediate versions of vector shifts and lowers them.
+static SDValue GenForSextInreg(SDNode *N,
+                               TargetLowering::DAGCombinerInfo &DCI,
+                               EVT SrcVT, EVT DestVT, EVT SubRegVT,
+                               const int *Mask, SDValue Src) {
+  SelectionDAG &DAG = DCI.DAG;
+  SDValue Bitcast
+    = DAG.getNode(ISD::BITCAST, SDLoc(N), SrcVT, Src);
+  SDValue Sext
+    = DAG.getNode(ISD::SIGN_EXTEND, SDLoc(N), DestVT, Bitcast);
+  SDValue ShuffleVec
+    = DAG.getVectorShuffle(DestVT, SDLoc(N), Sext, DAG.getUNDEF(DestVT), Mask);
+  SDValue ExtractSubreg
+    = SDValue(DAG.getMachineNode(TargetOpcode::EXTRACT_SUBREG, SDLoc(N),
+                SubRegVT, ShuffleVec,
+                DAG.getTargetConstant(AArch64::sub_64, MVT::i32)), 0);
+  return ExtractSubreg;
+}
+
+/// Checks for vector shifts and lowers them.
 static SDValue PerformShiftCombine(SDNode *N,
                                    TargetLowering::DAGCombinerInfo &DCI,
                                    const AArch64Subtarget *ST) {
@@ -3582,6 +3609,51 @@ static SDValue PerformShiftCombine(SDNode *N,
   EVT VT = N->getValueType(0);
   if (N->getOpcode() == ISD::SRA && (VT == MVT::i32 || VT == MVT::i64))
     return PerformSRACombine(N, DCI);
+
+  // We're looking for an SRA/SHL pair to help generating instruction
+  //   sshll  v0.8h, v0.8b, #0
+  // The instruction STXL is also the alias of this instruction.
+  //
+  // For example, for DAG like below,
+  //   v2i32 = sra (v2i32 (shl v2i32, 16)), 16
+  // we can transform it into
+  //   v2i32 = EXTRACT_SUBREG 
+  //             (v4i32 (suffle_vector
+  //                       (v4i32 (sext (v4i16 (bitcast v2i32))), 
+  //                       undef, (0, 2, u, u)),
+  //             sub_64
+  //
+  // With this transformation we expect to generate "SSHLL + UZIP1"
+  // Sometimes UZIP1 can be optimized away by combining with other context.
+  int64_t ShrCnt, ShlCnt;
+  if (N->getOpcode() == ISD::SRA
+      && (VT == MVT::v2i32 || VT == MVT::v4i16)
+      && isVShiftRImm(N->getOperand(1), VT, ShrCnt)
+      && N->getOperand(0).getOpcode() == ISD::SHL
+      && isVShiftRImm(N->getOperand(0).getOperand(1), VT, ShlCnt)) {
+    SDValue Src = N->getOperand(0).getOperand(0);
+    if (VT == MVT::v2i32 && ShrCnt == 16 && ShlCnt == 16) {
+      // sext_inreg(v2i32, v2i16)
+      // We essentially only care the Mask {0, 2, u, u}
+      int Mask[4] = {0, 2, 4, 6};
+      return GenForSextInreg(N, DCI, MVT::v4i16, MVT::v4i32, MVT::v2i32,
+                             Mask, Src); 
+    }
+    else if (VT == MVT::v2i32 && ShrCnt == 24 && ShlCnt == 24) {
+      // sext_inreg(v2i16, v2i8)
+      // We essentially only care the Mask {0, u, 4, u, u, u, u, u, u, u, u, u}
+      int Mask[8] = {0, 2, 4, 6, 8, 10, 12, 14};
+      return GenForSextInreg(N, DCI, MVT::v8i8, MVT::v8i16, MVT::v2i32,
+                             Mask, Src);
+    }
+    else if (VT == MVT::v4i16 && ShrCnt == 8 && ShlCnt == 8) {
+      // sext_inreg(v4i16, v4i8)
+      // We essentially only care the Mask {0, 2, 4, 6, u, u, u, u, u, u, u, u}
+      int Mask[8] = {0, 2, 4, 6, 8, 10, 12, 14};
+      return GenForSextInreg(N, DCI, MVT::v8i8, MVT::v8i16, MVT::v4i16,
+                             Mask, Src);
+    }
+  }
 
   // Nothing to be done for scalar shifts.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();

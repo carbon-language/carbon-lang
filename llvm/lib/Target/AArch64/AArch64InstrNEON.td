@@ -1877,6 +1877,10 @@ def UXTL2vv_16B : NeonI_ext_len_alias<"uxtl2", ".8h", ".16b",  USHLLvvi_16B, VPR
 def UXTL2vv_8H  : NeonI_ext_len_alias<"uxtl2", ".4s", ".8h",  USHLLvvi_8H, VPR128, VPR128>;
 def UXTL2vv_4S  : NeonI_ext_len_alias<"uxtl2", ".2d", ".4s",  USHLLvvi_4S, VPR128, VPR128>;
 
+def : Pat<(v8i16 (anyext (v8i8 VPR64:$Rn))), (USHLLvvi_8B VPR64:$Rn, 0)>;
+def : Pat<(v4i32 (anyext (v4i16 VPR64:$Rn))), (USHLLvvi_4H VPR64:$Rn, 0)>;
+def : Pat<(v2i64 (anyext (v2i32 VPR64:$Rn))), (USHLLvvi_2S VPR64:$Rn, 0)>;
+
 // Rounding/Saturating shift
 class N2VShift_RQ<bit q, bit u, bits<5> opcode, string asmop, string T,
                   RegisterOperand VPRC, ValueType Ty, Operand ImmTy,
