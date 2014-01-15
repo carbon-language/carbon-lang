@@ -209,6 +209,10 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   else
     HasDwarfPubSections = DwarfPubSections == Enable;
 
+  // For now only turn on CU ranges if we've explicitly asked for it
+  // or we have -ffunction-sections enabled.
+  HasCURanges = DwarfCURanges || TargetMachine::getFunctionSections();
+
   DwarfVersion = DwarfVersionNumber
                      ? DwarfVersionNumber
                      : getDwarfVersionFromModule(MMI->getModule());
@@ -1057,8 +1061,7 @@ void DwarfDebug::finalizeModuleInfo() {
       // FIXME: We should use ranges if we have multiple compile units or
       // allow reordering of code ala .subsections_via_symbols in mach-o.
       DwarfCompileUnit *U = SkCU ? SkCU : static_cast<DwarfCompileUnit *>(TheU);
-      if ((DwarfCURanges || TargetMachine::getFunctionSections()) &&
-          TheU->getRanges().size())
+      if (useCURanges() && TheU->getRanges().size())
         addSectionLabel(Asm, U, U->getUnitDie(), dwarf::DW_AT_ranges,
                         Asm->GetTempSymbol("cu_ranges", U->getUniqueID()),
                         DwarfDebugRangeSectionSym);
@@ -2910,7 +2913,7 @@ void DwarfDebug::emitDebugRanges() {
     }
 
     // Now emit a range for the CU itself.
-    if (DwarfCURanges) {
+    if (useCURanges()) {
       Asm->OutStreamer.EmitLabel(
           Asm->GetTempSymbol("cu_ranges", TheCU->getUniqueID()));
       const SmallVectorImpl<RangeSpan> &Ranges = TheCU->getRanges();

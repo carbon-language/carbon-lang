@@ -1,5 +1,6 @@
 ; RUN: llc -split-dwarf=Enable -O0 %s -ffunction-sections -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
 ; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck --check-prefix=FUNCTION-SECTIONS %s
+; RUN: llvm-readobj --relocations %t | FileCheck --check-prefix=FUNCTION-SECTIONS-RELOCS %s
 
 ; RUN: llc -split-dwarf=Enable -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
 ; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck --check-prefix=NO-FUNCTION-SECTIONS %s
@@ -11,6 +12,9 @@
 
 ; With function sections enabled make sure that we have a DW_AT_ranges attribute.
 ; FUNCTION-SECTIONS: DW_AT_ranges
+
+; Check that we have a relocation against the .debug_ranges section.
+; FUNCTION-SECTIONS-RELOCS: R_X86_64_32 .debug_ranges 0x0
 
 ; Without function sections enabled make sure that we have no DW_AT_ranges attribute.
 ; NO-FUNCTION-SECTIONS-NOT: DW_AT_ranges
