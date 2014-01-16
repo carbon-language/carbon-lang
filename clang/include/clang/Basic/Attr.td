@@ -275,6 +275,7 @@ def Aligned : InheritableAttr {
 }
 
 def AlignMac68k : InheritableAttr {
+  // This attribute has no spellings as it is only ever created implicitly.
   let Spellings = [];
   let SemaHandler = 0;
 }
@@ -602,6 +603,7 @@ def Malloc : InheritableAttr {
 }
 
 def MaxFieldAlignment : InheritableAttr {
+  // This attribute has no spellings as it is only ever created implicitly.
   let Spellings = [];
   let Args = [UnsignedArgument<"Alignment">];
   let SemaHandler = 0;
@@ -808,7 +810,7 @@ def Overloadable : Attr {
 }
 
 def Override : InheritableAttr { 
-  let Spellings = [];
+  let Spellings = [Keyword<"override">];
   let SemaHandler = 0;
 }
 
