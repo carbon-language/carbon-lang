@@ -1198,13 +1198,19 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
 
   // -A + B  -->  B - A
   // -A + -B  -->  -(A + B)
-  if (Value *LHSV = dyn_castFNegVal(LHS))
-    return BinaryOperator::CreateFSub(RHS, LHSV);
+  if (Value *LHSV = dyn_castFNegVal(LHS)) {
+    Instruction *RI = BinaryOperator::CreateFSub(RHS, LHSV);
+    RI->copyFastMathFlags(&I);
+    return RI;
+  }
 
   // A + -B  -->  A - B
   if (!isa<Constant>(RHS))
-    if (Value *V = dyn_castFNegVal(RHS))
-      return BinaryOperator::CreateFSub(LHS, V);
+    if (Value *V = dyn_castFNegVal(RHS)) {
+      Instruction *RI = BinaryOperator::CreateFSub(LHS, V);
+      RI->copyFastMathFlags(&I);
+      return RI;
+    }
 
   // Check for (fadd double (sitofp x), y), see if we can merge this into an
   // integer add followed by a promotion.

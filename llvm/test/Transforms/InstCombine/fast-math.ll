@@ -140,6 +140,26 @@ define float @fold13(float %x) {
 ; CHECK: ret
 }
 
+; -x + y => y - x
+define float @fold14(float %x, float %y) {
+  %neg = fsub fast float -0.0, %x
+  %add = fadd fast float %neg, %y
+  ret float %add
+; CHECK: fold14
+; CHECK: fsub fast float %y, %x
+; CHECK: ret
+}
+
+; x + -y => x - y
+define float @fold15(float %x, float %y) {
+  %neg = fsub fast float -0.0, %y
+  %add = fadd fast float %x, %neg
+  ret float %add
+; CHECK: fold15
+; CHECK: fsub fast float %x, %y
+; CHECK: ret
+}
+
 ; =========================================================================
 ;
 ;   Testing-cases about fmul begin
