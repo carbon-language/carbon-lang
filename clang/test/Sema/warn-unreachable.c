@@ -1,4 +1,4 @@
-// RUN: %clang %s -fsyntax-only -Xclang -verify -fblocks -Wunreachable-code -Wno-unused-value -Wno-covered-switch-default
+// RUN: %clang_cc1 %s -fsyntax-only -verify -fblocks -Wunreachable-code -Wno-unused-value -Wno-covered-switch-default
 
 int halt() __attribute__((noreturn));
 int live();

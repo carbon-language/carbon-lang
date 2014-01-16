@@ -1,5 +1,5 @@
-// RUN: %clang -fsyntax-only %s 2>&1 | FileCheck %s
-// RUN: %clang -fsyntax-only -fapple-pragma-pack %s 2>&1 | FileCheck -check-prefix=CHECK-APPLE %s
+// RUN: %clang_cc1 -fsyntax-only %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -fsyntax-only -fapple-pragma-pack %s 2>&1 | FileCheck -check-prefix=CHECK-APPLE %s
 
 #pragma pack(push,1)
 #pragma pack(2)
