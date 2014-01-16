@@ -157,8 +157,10 @@ static void instantiateDependentEnableIfAttr(
     return;
   }
 
-  EnableIfAttr *EIA = new (S.getASTContext()) EnableIfAttr(
-      A->getLocation(), S.getASTContext(), Cond, A->getMessage());
+  EnableIfAttr *EIA = new (S.getASTContext())
+                        EnableIfAttr(A->getLocation(), S.getASTContext(), Cond,
+                                     A->getMessage(),
+                                     A->getSpellingListIndex());
   New->addAttr(EIA);
 }
 

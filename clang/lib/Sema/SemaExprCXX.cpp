@@ -2058,8 +2058,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
         if (InitialParam1Type == Param1 &&
             (NumParams == 1 || InitialParam2Type == Param2)) {
           if (AddMallocAttr && !Func->hasAttr<MallocAttr>())
-            Func->addAttr(::new (Context) MallocAttr(SourceLocation(),
-                                                     Context));
+            Func->addAttr(MallocAttr::CreateImplicit(Context));
           // Make the function visible to name lookup, even if we found it in
           // an unimported module. It either is an implicitly-declared global
           // allocation function, or is suppressing that function.
@@ -2102,7 +2101,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   Alloc->setImplicit();
 
   if (AddMallocAttr)
-    Alloc->addAttr(::new (Context) MallocAttr(SourceLocation(), Context));
+    Alloc->addAttr(MallocAttr::CreateImplicit(Context));
 
   ParmVarDecl *ParamDecls[2];
   for (unsigned I = 0; I != NumParams; ++I)

@@ -255,7 +255,7 @@ bool Sema::makeUnavailableInSystemHeader(SourceLocation loc,
   // If the function is already unavailable, it's not an error.
   if (fn->hasAttr<UnavailableAttr>()) return true;
 
-  fn->addAttr(new (Context) UnavailableAttr(loc, Context, msg));
+  fn->addAttr(UnavailableAttr::CreateImplicit(Context, msg, loc));
   return true;
 }
 

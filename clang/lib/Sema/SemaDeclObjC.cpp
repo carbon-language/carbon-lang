@@ -98,8 +98,9 @@ bool Sema::checkInitMethod(ObjCMethodDecl *method,
   // If we're in a system header, and this is not a call, just make
   // the method unusable.
   if (receiverTypeIfCall.isNull() && getSourceManager().isInSystemHeader(loc)) {
-    method->addAttr(new (Context) UnavailableAttr(loc, Context,
-                "init method returns a type unrelated to its receiver type"));
+    method->addAttr(UnavailableAttr::CreateImplicit(Context,
+                "init method returns a type unrelated to its receiver type",
+                loc));
     return true;
   }
 
@@ -230,8 +231,7 @@ bool Sema::CheckARCMethodDecl(ObjCMethodDecl *method) {
     if (checkInitMethod(method, QualType()))
       return true;
 
-    method->addAttr(new (Context) NSConsumesSelfAttr(SourceLocation(),
-                                                     Context));
+    method->addAttr(NSConsumesSelfAttr::CreateImplicit(Context));
 
     // Don't add a second copy of this attribute, but otherwise don't
     // let it be suppressed.
@@ -250,8 +250,7 @@ bool Sema::CheckARCMethodDecl(ObjCMethodDecl *method) {
     break;
   }
 
-  method->addAttr(new (Context) NSReturnsRetainedAttr(SourceLocation(),
-                                                      Context));
+  method->addAttr(NSReturnsRetainedAttr::CreateImplicit(Context));
   return false;
 }
 
@@ -3167,8 +3166,8 @@ Decl *Sema::ActOnMethodDeclaration(
     if (IMD && IMD->hasAttr<ObjCRequiresSuperAttr>() &&
         !ObjCMethod->hasAttr<ObjCRequiresSuperAttr>()) {
       // merge the attribute into implementation.
-      ObjCMethod->addAttr(
-        new (Context) ObjCRequiresSuperAttr(ObjCMethod->getLocation(), Context));
+      ObjCMethod->addAttr(ObjCRequiresSuperAttr::CreateImplicit(Context,
+                                                   ObjCMethod->getLocation()));
     }
     if (isa<ObjCCategoryImplDecl>(ImpDecl)) {
       ObjCMethodFamily family = ObjCMethod->getMethodFamily();

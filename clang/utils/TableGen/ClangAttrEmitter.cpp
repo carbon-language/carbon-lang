@@ -14,6 +14,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/StringMatcher.h"
@@ -59,6 +60,17 @@ static StringRef NormalizeAttrName(StringRef AttrName) {
     AttrName = AttrName.substr(0, AttrName.size() - 2);
 
   return AttrName;
+}
+
+// Normalize the name by removing any and all leading and trailing underscores.
+// This is different from NormalizeAttrName in that it also handles names like
+// _pascal and __pascal.
+static StringRef NormalizeNameForSpellingComparison(StringRef Name) {
+  while (Name.startswith("_"))
+    Name = Name.substr(1, Name.size());
+  while (Name.endswith("_"))
+    Name = Name.substr(0, Name.size() - 1);
+  return Name;
 }
 
 // Normalize attribute spelling only if the spelling has both leading
@@ -151,6 +163,10 @@ namespace {
 
     virtual bool isEnumArg() const { return false; }
     virtual bool isVariadicEnumArg() const { return false; }
+
+    virtual void writeImplicitCtorArgs(raw_ostream &OS) const {
+      OS << getUpperName();
+    }
   };
 
   class SimpleArgument : public Argument {
@@ -394,6 +410,9 @@ namespace {
     void writeCtorParameters(raw_ostream &OS) const {
       OS << "bool Is" << getUpperName() << "Expr, void *" << getUpperName();
     }
+    void writeImplicitCtorArgs(raw_ostream &OS) const {
+      OS << "Is" << getUpperName() << "Expr, " << getUpperName();
+    }
     void writeDeclarations(raw_ostream &OS) const {
       OS << "bool is" << getLowerName() << "Expr;\n";
       OS << "union {\n";
@@ -490,6 +509,9 @@ namespace {
     void writeCtorParameters(raw_ostream &OS) const {
       OS << getType() << " *" << getUpperName() << ", unsigned "
          << getUpperName() << "Size";
+    }
+    void writeImplicitCtorArgs(raw_ostream &OS) const {
+      OS << getUpperName() << ", " << getUpperName() << "Size";
     }
     void writeDeclarations(raw_ostream &OS) const {
       OS << "  unsigned " << getLowerName() << "Size;\n";
@@ -1104,6 +1126,20 @@ static void writeAttrAccessorDefinition(Record &R, raw_ostream &OS) {
   }
 }
 
+static bool SpellingNamesAreCommon(const std::vector<Record *>& Spellings) {
+  assert(!Spellings.empty() && "An empty list of spellings was provided");
+  std::string FirstName = NormalizeNameForSpellingComparison(
+    Spellings.front()->getValueAsString("Name"));
+  for (std::vector<Record *>::const_iterator I = llvm::next(Spellings.begin()),
+       E = Spellings.end(); I != E; ++I) {
+    std::string Name = NormalizeNameForSpellingComparison(
+      (*I)->getValueAsString("Name"));
+    if (Name != FirstName)
+      return false;
+  }
+  return true;
+}
+
 namespace clang {
 
 // Emits the class definitions for attributes.
@@ -1153,7 +1189,58 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
 
     ae = Args.end();
 
-    OS << "\n public:\n";
+    OS << "\npublic:\n";
+
+    std::vector<Record *> Spellings = R.getValueAsListOfDefs("Spellings");
+
+    // If there are zero or one spellings, all spelling-related functionality
+    // can be elided. If all of the spellings share the same name, the spelling
+    // functionality can also be elided.
+    bool ElideSpelling = (Spellings.size() <= 1) ||
+                         SpellingNamesAreCommon(Spellings);
+
+    if (!ElideSpelling) {
+      OS << "  enum Spelling {\n";
+      for (std::vector<Record *>::const_iterator I = Spellings.begin(),
+           E = Spellings.end(); I != E; ++I) {
+        if (I != Spellings.begin())
+          OS << ",\n";
+        const Record &S = **I;
+        std::string Variety = S.getValueAsString("Variety");
+        std::string Spelling = S.getValueAsString("Name");
+        std::string Namespace = "";
+
+        if (Variety == "CXX11")
+          Namespace = S.getValueAsString("Namespace");
+
+        OS << "    " << Variety << "_";
+        if (!Namespace.empty())
+          OS << Namespace << "_";
+        OS << Spelling;
+      }
+      OS << "\n  };\n\n";
+    }
+
+    OS << "  static " << R.getName() << "Attr *CreateImplicit(";
+    OS << "ASTContext &Ctx";
+    if (!ElideSpelling)
+      OS << ", Spelling S";
+    for (ai = Args.begin(); ai != ae; ++ai) {
+      OS << ", ";
+      (*ai)->writeCtorParameters(OS);
+    }
+    OS << ", SourceRange Loc = SourceRange()";
+    OS << ") {\n";
+    OS << "    " << R.getName() << "Attr *A = new (Ctx) " << R.getName();
+    OS << "Attr(Loc, Ctx, ";
+    for (ai = Args.begin(); ai != ae; ++ai) {
+      (*ai)->writeImplicitCtorArgs(OS);
+      OS << ", ";
+    }
+    OS << (ElideSpelling ? "0" : "S") << ");\n";
+    OS << "    A->setImplicit(true);\n";
+    OS << "    return A;\n  }\n\n";
+
     OS << "  " << R.getName() << "Attr(SourceRange R, ASTContext &Ctx\n";
     
     bool HasOpt = false;
@@ -1166,7 +1253,7 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     }
 
     OS << "              , ";
-    OS << "unsigned SI = 0\n";
+    OS << "unsigned SI\n";
 
     OS << "             )\n";
     OS << "    : " << SuperName << "(attr::" << R.getName() << ", R, SI)\n";
@@ -1198,7 +1285,7 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
       }
 
       OS << "              , ";
-      OS << "unsigned SI = 0\n";
+      OS << "unsigned SI\n";
 
       OS << "             )\n";
       OS << "    : " << SuperName << "(attr::" << R.getName() << ", R, SI)\n";
@@ -1483,6 +1570,8 @@ void EmitClangAttrPCHRead(RecordKeeper &Records, raw_ostream &OS) {
     OS << "  case attr::" << R.getName() << ": {\n";
     if (R.isSubClassOf(InhClass))
       OS << "    bool isInherited = Record[Idx++];\n";
+    OS << "    bool isImplicit = Record[Idx++];\n";
+    OS << "    unsigned Spelling = Record[Idx++];\n";
     ArgRecords = R.getValueAsListOfDefs("Args");
     Args.clear();
     for (ai = ArgRecords.begin(), ae = ArgRecords.end(); ai != ae; ++ai) {
@@ -1495,9 +1584,10 @@ void EmitClangAttrPCHRead(RecordKeeper &Records, raw_ostream &OS) {
       OS << ", ";
       (*ri)->writePCHReadArgs(OS);
     }
-    OS << ");\n";
+    OS << ", Spelling);\n";
     if (R.isSubClassOf(InhClass))
       OS << "    cast<InheritableAttr>(New)->setInherited(isInherited);\n";
+    OS << "    New->setImplicit(isImplicit);\n";
     OS << "    break;\n";
     OS << "  }\n";
   }
@@ -1527,6 +1617,9 @@ void EmitClangAttrPCHWrite(RecordKeeper &Records, raw_ostream &OS) {
          << "Attr>(A);\n";
     if (R.isSubClassOf(InhClass))
       OS << "    Record.push_back(SA->isInherited());\n";
+    OS << "    Record.push_back(A->isImplicit());\n";
+    OS << "    Record.push_back(A->getSpellingListIndex());\n";
+
     for (ai = Args.begin(), ae = Args.end(); ai != ae; ++ai)
       createArgument(**ai, R.getName())->writePCHWrite(OS);
     OS << "    break;\n";
@@ -1806,7 +1899,7 @@ void EmitClangAttrTemplateInstantiate(RecordKeeper &Records, raw_ostream &OS) {
       OS << ", ";
       (*ai)->writeTemplateInstantiationArgs(OS);
     }
-    OS << ");\n    }\n";
+    OS << ", A->getSpellingListIndex());\n    }\n";
   }
   OS << "  } // end switch\n"
      << "  llvm_unreachable(\"Unknown attribute!\");\n"

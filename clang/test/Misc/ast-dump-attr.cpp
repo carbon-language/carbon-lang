@@ -103,3 +103,10 @@ N: __attribute(()) ;
 // CHECK: LabelStmt {{.*}} 'N'
 // CHECK-NEXT: NullStmt
 }
+
+namespace Test {
+extern "C" int printf(const char *format, ...);
+// CHECK: FunctionDecl{{.*}}printf
+// CHECK-NEXT: ParmVarDecl{{.*}}format{{.*}}'const char *'
+// CHECK-NEXT: FormatAttr{{.*}}printf 1 2 Implicit
+}

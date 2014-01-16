@@ -941,7 +941,7 @@ void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
   setSelfDecl(self);
 
   if (selfIsConsumed)
-    self->addAttr(new (Context) NSConsumedAttr(SourceLocation(), Context));
+    self->addAttr(NSConsumedAttr::CreateImplicit(Context));
 
   if (selfIsPseudoStrong)
     self->setARCPseudoStrong(true);

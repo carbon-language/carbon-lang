@@ -48,10 +48,9 @@ protected:
   /// An index into the spelling list of an
   /// attribute defined in Attr.td file.
   unsigned SpellingListIndex : 4;
-
   bool Inherited : 1;
-
   bool IsPackExpansion : 1;
+  bool Implicit : 1;
 
   virtual ~Attr();
 
@@ -76,7 +75,7 @@ public:
 protected:
   Attr(attr::Kind AK, SourceRange R, unsigned SpellingListIndex = 0)
     : Range(R), AttrKind(AK), SpellingListIndex(SpellingListIndex),
-      Inherited(false), IsPackExpansion(false) {}
+      Inherited(false), IsPackExpansion(false), Implicit(false) {}
 
 public:
 
@@ -92,6 +91,11 @@ public:
   void setRange(SourceRange R) { Range = R; }
 
   bool isInherited() const { return Inherited; }
+
+  /// \brief Returns true if the attribute has been implicitly created instead
+  /// of explicitly written by the user.
+  bool isImplicit() const { return Implicit; }
+  void setImplicit(bool I) { Implicit = I; }
 
   void setPackExpansion(bool PE) { IsPackExpansion = PE; }
   bool isPackExpansion() const { return IsPackExpansion; }

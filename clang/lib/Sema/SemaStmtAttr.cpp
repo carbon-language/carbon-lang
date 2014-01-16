@@ -40,7 +40,8 @@ static Attr *handleFallThroughAttr(Sema &S, Stmt *St, const AttributeList &A,
     S.Diag(A.getRange().getBegin(), diag::err_fallthrough_attr_outside_switch);
     return 0;
   }
-  return ::new (S.Context) FallThroughAttr(A.getRange(), S.Context);
+  return ::new (S.Context) FallThroughAttr(A.getRange(), S.Context,
+                                           A.getAttributeSpellingListIndex());
 }
 
 
