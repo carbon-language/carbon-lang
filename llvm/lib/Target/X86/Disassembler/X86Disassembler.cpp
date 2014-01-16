@@ -207,6 +207,16 @@ static void tryAddingPcLoadReferenceComment(uint64_t Address, uint64_t Value,
   Dis->tryAddingPcLoadReferenceComment(Value, Address);
 }
 
+static const uint8_t segmentRegnums[SEG_OVERRIDE_max] = {
+  0,        // SEG_OVERRIDE_NONE
+  X86::CS,
+  X86::SS,
+  X86::DS,
+  X86::ES,
+  X86::FS,
+  X86::GS
+};
+
 /// translateImmediate  - Appends an immediate operand to an MCInst.
 ///
 /// @param mcInst       - The MCInst to append to.
@@ -315,6 +325,13 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
                                insn.immediateOffset, insn.immediateSize,
                                mcInst, Dis))
     mcInst.addOperand(MCOperand::CreateImm(immediate));
+
+  if (type == TYPE_MOFFS8 || type == TYPE_MOFFS16 ||
+      type == TYPE_MOFFS32 || type == TYPE_MOFFS64) {
+    MCOperand segmentReg;
+    segmentReg = MCOperand::CreateReg(segmentRegnums[insn.segmentOverride]);
+    mcInst.addOperand(segmentReg);
+  }
 }
 
 /// translateRMRegister - Translates a register stored in the R/M field of the
@@ -522,17 +539,7 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn,
   }
   
   displacement = MCOperand::CreateImm(insn.displacement);
-  
-  static const uint8_t segmentRegnums[SEG_OVERRIDE_max] = {
-    0,        // SEG_OVERRIDE_NONE
-    X86::CS,
-    X86::SS,
-    X86::DS,
-    X86::ES,
-    X86::FS,
-    X86::GS
-  };
-  
+
   segmentReg = MCOperand::CreateReg(segmentRegnums[insn.segmentOverride]);
   
   mcInst.addOperand(baseReg);

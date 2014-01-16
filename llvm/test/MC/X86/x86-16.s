@@ -330,8 +330,7 @@ cmovnae	%bx,%bx
 // CHECK:  encoding: [0x9b]
 	fwait
 
-// CHECK: [0x65,0x66,0x8b,0x06,0x7c,0x00]
-// FIXME: This is a correct bug poor encoding: Use 65 66 a1 7c 00
+// CHECK: [0x66,0x65,0xa1,0x7c,0x00]
         movl	%gs:124, %eax
 
 // CHECK: pusha

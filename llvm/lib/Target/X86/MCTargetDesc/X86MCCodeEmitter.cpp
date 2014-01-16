@@ -158,9 +158,8 @@ public:
                            const MCInst &MI, const MCInstrDesc &Desc,
                            raw_ostream &OS) const;
 
-  void EmitSegmentOverridePrefix(uint64_t TSFlags, unsigned &CurByte,
-                                 int MemOperand, const MCInst &MI,
-                                 raw_ostream &OS) const;
+  void EmitSegmentOverridePrefix(unsigned &CurByte, unsigned SegOperand,
+                                 const MCInst &MI, raw_ostream &OS) const;
 
   void EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte, int MemOperand,
                         const MCInst &MI, const MCInstrDesc &Desc,
@@ -977,7 +976,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   }
 
   // Emit segment override opcode prefix as needed.
-  EmitSegmentOverridePrefix(TSFlags, CurByte, MemOperand, MI, OS);
+  if (MemOperand >= 0)
+    EmitSegmentOverridePrefix(CurByte, MemOperand+X86::AddrSegmentReg, MI, OS);
 
   if (!HasEVEX) {
     // VEX opcode prefix can have 2 or 3 bytes
@@ -1134,15 +1134,12 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
 }
 
 /// EmitSegmentOverridePrefix - Emit segment override opcode prefix as needed
-void X86MCCodeEmitter::EmitSegmentOverridePrefix(uint64_t TSFlags,
-                                        unsigned &CurByte, int MemOperand,
-                                        const MCInst &MI,
-                                        raw_ostream &OS) const {
-  if (MemOperand < 0)
-    return; // No memory operand
-
+void X86MCCodeEmitter::EmitSegmentOverridePrefix(unsigned &CurByte,
+                                                 unsigned SegOperand,
+                                                 const MCInst &MI,
+                                                 raw_ostream &OS) const {
   // Check for explicit segment override on memory operand.
-  switch (MI.getOperand(MemOperand+X86::AddrSegmentReg).getReg()) {
+  switch (MI.getOperand(SegOperand).getReg()) {
   default: llvm_unreachable("Unknown segment register!");
   case 0: break;
   case X86::CS: EmitByte(0x2E, CurByte, OS); break;
@@ -1168,7 +1165,8 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     EmitByte(0xF0, CurByte, OS);
 
   // Emit segment override opcode prefix as needed.
-  EmitSegmentOverridePrefix(TSFlags, CurByte, MemOperand, MI, OS);
+  if (MemOperand >= 0)
+    EmitSegmentOverridePrefix(CurByte, MemOperand+X86::AddrSegmentReg, MI, OS);
 
   // Emit the repeat opcode prefix as needed.
   if ((TSFlags & X86II::Op0Mask) == X86II::REP)
@@ -1336,6 +1334,15 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     llvm_unreachable("Pseudo instruction shouldn't be emitted");
   case X86II::RawFrm:
     EmitByte(BaseOpcode, CurByte, OS);
+    break;
+  case X86II::RawFrmMemOffs:
+    // Emit segment override opcode prefix as needed.
+    EmitSegmentOverridePrefix(CurByte, 1, MI, OS);
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitImmediate(MI.getOperand(CurOp++), MI.getLoc(),
+                  X86II::getSizeOfImm(TSFlags), getImmFixupKind(TSFlags),
+                  CurByte, OS, Fixups);
+    ++CurOp; // skip segment operand
     break;
   case X86II::RawFrmImm8:
     EmitByte(BaseOpcode, CurByte, OS);

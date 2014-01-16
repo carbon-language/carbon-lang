@@ -59,11 +59,11 @@ namespace X86Local {
     MRMDestMem  = 4,
     MRMSrcReg   = 5,
     MRMSrcMem   = 6,
+    RawFrmMemOffs = 7,
     MRM0r = 16, MRM1r = 17, MRM2r = 18, MRM3r = 19,
     MRM4r = 20, MRM5r = 21, MRM6r = 22, MRM7r = 23,
     MRM0m = 24, MRM1m = 25, MRM2m = 26, MRM3m = 27,
     MRM4m = 28, MRM5m = 29, MRM6m = 30, MRM7m = 31,
-    MRMInitReg  = 32,
     RawFrmImm8  = 43,
     RawFrmImm16 = 44,
 #define MAP(from, to) MRM_##from = to,
@@ -631,6 +631,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
   unsigned physicalOperandIndex = 0;
 
   switch (Form) {
+  default: llvm_unreachable("Unhandled form");
   case X86Local::RawFrm:
     // Operand 1 (optional) is an address or immediate.
     // Operand 2 (optional) is an immediate.
@@ -638,6 +639,10 @@ void RecognizableInstr::emitInstructionSpecifier() {
            "Unexpected number of operands for RawFrm");
     HANDLE_OPTIONAL(relocation)
     HANDLE_OPTIONAL(immediate)
+    break;
+  case X86Local::RawFrmMemOffs:
+    // Operand 1 is an address.
+    HANDLE_OPERAND(relocation);
     break;
   case X86Local::AddRegFrm:
     // Operand 1 is added to the opcode.
@@ -840,7 +845,30 @@ void RecognizableInstr::emitInstructionSpecifier() {
       HANDLE_OPERAND(relocation)
     }
     break;
-  case X86Local::MRMInitReg:
+  case X86Local::MRM_C1:
+  case X86Local::MRM_C2:
+  case X86Local::MRM_C3:
+  case X86Local::MRM_C4:
+  case X86Local::MRM_C8:
+  case X86Local::MRM_C9:
+  case X86Local::MRM_CA:
+  case X86Local::MRM_CB:
+  case X86Local::MRM_E8:
+  case X86Local::MRM_F0:
+  case X86Local::MRM_F9:
+  case X86Local::MRM_D0:
+  case X86Local::MRM_D1:
+  case X86Local::MRM_D4:
+  case X86Local::MRM_D5:
+  case X86Local::MRM_D6:
+  case X86Local::MRM_D8:
+  case X86Local::MRM_D9:
+  case X86Local::MRM_DA:
+  case X86Local::MRM_DB:
+  case X86Local::MRM_DC:
+  case X86Local::MRM_DD:
+  case X86Local::MRM_DE:
+  case X86Local::MRM_DF:
     // Ignored.
     break;
   }

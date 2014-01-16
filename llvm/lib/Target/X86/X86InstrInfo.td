@@ -467,17 +467,21 @@ def X86MemOffs64AsmOperand : AsmOperandClass {
 }
 
 let OperandType = "OPERAND_MEMORY" in {
-def offset8 : Operand<i64> {
+def offset8 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs8AsmOperand;
+  let MIOperandInfo = (ops i64imm, i8imm);
   let PrintMethod = "printMemOffs8"; }
-def offset16 : Operand<i64> {
+def offset16 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs16AsmOperand;
+  let MIOperandInfo = (ops i64imm, i8imm);
   let PrintMethod = "printMemOffs16"; }
-def offset32 : Operand<i64> {
+def offset32 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs32AsmOperand;
+  let MIOperandInfo = (ops i64imm, i8imm);
   let PrintMethod = "printMemOffs32"; }
-def offset64 : Operand<i64> {
+def offset64 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs64AsmOperand;
+  let MIOperandInfo = (ops i64imm, i8imm);
   let PrintMethod = "printMemOffs64"; }
 }
 
@@ -1146,44 +1150,44 @@ let hasSideEffects = 0 in {
 /// 32-bit offset from the segment base. These are only valid in x86-32 mode.
 let SchedRW = [WriteALU] in {
 let mayLoad = 1 in {
-def MOV8o8a : Ii32 <0xA0, RawFrm, (outs), (ins offset8:$src),
+def MOV8o8a : Ii32 <0xA0, RawFrmMemOffs, (outs), (ins offset8:$src),
                    "mov{b}\t{$src, %al|al, $src}", [], IIC_MOV_MEM>,
                    Requires<[In32BitMode]>;
-def MOV16o16a : Ii32 <0xA1, RawFrm, (outs), (ins offset16:$src),
+def MOV16o16a : Ii32 <0xA1, RawFrmMemOffs, (outs), (ins offset16:$src),
                       "mov{w}\t{$src, %ax|ax, $src}", [], IIC_MOV_MEM>, OpSize,
                      Requires<[In32BitMode]>;
-def MOV32o32a : Ii32 <0xA1, RawFrm, (outs), (ins offset32:$src),
+def MOV32o32a : Ii32 <0xA1, RawFrmMemOffs, (outs), (ins offset32:$src),
                       "mov{l}\t{$src, %eax|eax, $src}", [], IIC_MOV_MEM>,
                       OpSize16, Requires<[In32BitMode]>;
 
-def MOV8o8a_16 : Ii16 <0xA0, RawFrm, (outs), (ins offset8:$src),
+def MOV8o8a_16 : Ii16 <0xA0, RawFrmMemOffs, (outs), (ins offset8:$src),
                    "mov{b}\t{$src, %al|al, $src}", [], IIC_MOV_MEM>,
                    AdSize, Requires<[In16BitMode]>;
-def MOV16o16a_16 : Ii16 <0xA1, RawFrm, (outs), (ins offset16:$src),
+def MOV16o16a_16 : Ii16 <0xA1, RawFrmMemOffs, (outs), (ins offset16:$src),
                       "mov{w}\t{$src, %ax|ax, $src}", [], IIC_MOV_MEM>, OpSize,
                      AdSize, Requires<[In16BitMode]>;
-def MOV32o32a_16 : Ii16 <0xA1, RawFrm, (outs), (ins offset32:$src),
+def MOV32o32a_16 : Ii16 <0xA1, RawFrmMemOffs, (outs), (ins offset32:$src),
                       "mov{l}\t{$src, %eax|eax, $src}", [], IIC_MOV_MEM>,
                       AdSize, OpSize16, Requires<[In16BitMode]>;
 }
 let mayStore = 1 in {
-def MOV8ao8 : Ii32 <0xA2, RawFrm, (outs offset8:$dst), (ins),
+def MOV8ao8 : Ii32 <0xA2, RawFrmMemOffs, (outs offset8:$dst), (ins),
                    "mov{b}\t{%al, $dst|$dst, al}", [], IIC_MOV_MEM>,
                   Requires<[In32BitMode]>;
-def MOV16ao16 : Ii32 <0xA3, RawFrm, (outs offset16:$dst), (ins),
+def MOV16ao16 : Ii32 <0xA3, RawFrmMemOffs, (outs offset16:$dst), (ins),
                       "mov{w}\t{%ax, $dst|$dst, ax}", [], IIC_MOV_MEM>, OpSize,
                      Requires<[In32BitMode]>;
-def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs offset32:$dst), (ins),
+def MOV32ao32 : Ii32 <0xA3, RawFrmMemOffs, (outs offset32:$dst), (ins),
                       "mov{l}\t{%eax, $dst|$dst, eax}", [], IIC_MOV_MEM>,
                      OpSize16, Requires<[In32BitMode]>;
 
-def MOV8ao8_16 : Ii16 <0xA2, RawFrm, (outs offset8:$dst), (ins),
+def MOV8ao8_16 : Ii16 <0xA2, RawFrmMemOffs, (outs offset8:$dst), (ins),
                    "mov{b}\t{%al, $dst|$dst, al}", [], IIC_MOV_MEM>,
                   AdSize, Requires<[In16BitMode]>;
-def MOV16ao16_16 : Ii16 <0xA3, RawFrm, (outs offset16:$dst), (ins),
+def MOV16ao16_16 : Ii16 <0xA3, RawFrmMemOffs, (outs offset16:$dst), (ins),
                       "mov{w}\t{%ax, $dst|$dst, ax}", [], IIC_MOV_MEM>, OpSize,
                      AdSize, Requires<[In16BitMode]>;
-def MOV32ao32_16 : Ii16 <0xA3, RawFrm, (outs offset32:$dst), (ins),
+def MOV32ao32_16 : Ii16 <0xA3, RawFrmMemOffs, (outs offset32:$dst), (ins),
                       "mov{l}\t{%eax, $dst|$dst, eax}", [], IIC_MOV_MEM>,
                      OpSize16, AdSize, Requires<[In16BitMode]>;
 }
@@ -1192,31 +1196,31 @@ def MOV32ao32_16 : Ii16 <0xA3, RawFrm, (outs offset32:$dst), (ins),
 // These forms all have full 64-bit absolute addresses in their instructions
 // and use the movabs mnemonic to indicate this specific form.
 let mayLoad = 1 in {
-def MOV64o8a : RIi64_NOREX<0xA0, RawFrm, (outs), (ins offset8:$src),
+def MOV64o8a : RIi64_NOREX<0xA0, RawFrmMemOffs, (outs), (ins offset8:$src),
                      "movabs{b}\t{$src, %al|al, $src}", []>,
                      Requires<[In64BitMode]>;
-def MOV64o16a : RIi64_NOREX<0xA1, RawFrm, (outs), (ins offset16:$src),
+def MOV64o16a : RIi64_NOREX<0xA1, RawFrmMemOffs, (outs), (ins offset16:$src),
                      "movabs{w}\t{$src, %ax|ax, $src}", []>, OpSize,
                      Requires<[In64BitMode]>;
-def MOV64o32a : RIi64_NOREX<0xA1, RawFrm, (outs), (ins offset32:$src),
+def MOV64o32a : RIi64_NOREX<0xA1, RawFrmMemOffs, (outs), (ins offset32:$src),
                      "movabs{l}\t{$src, %eax|eax, $src}", []>,
                      Requires<[In64BitMode]>;
-def MOV64o64a : RIi64<0xA1, RawFrm, (outs), (ins offset64:$src),
+def MOV64o64a : RIi64<0xA1, RawFrmMemOffs, (outs), (ins offset64:$src),
                      "movabs{q}\t{$src, %rax|rax, $src}", []>,
                      Requires<[In64BitMode]>;
 }
 
 let mayStore = 1 in {
-def MOV64ao8 : RIi64_NOREX<0xA2, RawFrm, (outs offset8:$dst), (ins),
+def MOV64ao8 : RIi64_NOREX<0xA2, RawFrmMemOffs, (outs offset8:$dst), (ins),
                      "movabs{b}\t{%al, $dst|$dst, al}", []>,
                      Requires<[In64BitMode]>;
-def MOV64ao16 : RIi64_NOREX<0xA3, RawFrm, (outs offset16:$dst), (ins),
+def MOV64ao16 : RIi64_NOREX<0xA3, RawFrmMemOffs, (outs offset16:$dst), (ins),
                      "movabs{w}\t{%ax, $dst|$dst, ax}", []>, OpSize,
                      Requires<[In64BitMode]>;
-def MOV64ao32 : RIi64_NOREX<0xA3, RawFrm, (outs offset32:$dst), (ins),
+def MOV64ao32 : RIi64_NOREX<0xA3, RawFrmMemOffs, (outs offset32:$dst), (ins),
                      "movabs{l}\t{%eax, $dst|$dst, eax}", []>,
                      Requires<[In64BitMode]>;
-def MOV64ao64 : RIi64<0xA3, RawFrm, (outs offset64:$dst), (ins),
+def MOV64ao64 : RIi64<0xA3, RawFrmMemOffs, (outs offset64:$dst), (ins),
                      "movabs{q}\t{%rax, $dst|$dst, rax}", []>,
                      Requires<[In64BitMode]>;
 }

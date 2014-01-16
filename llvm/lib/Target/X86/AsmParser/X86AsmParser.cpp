@@ -923,19 +923,19 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   bool isMemOffs8() const {
-    return Kind == Memory && !getMemSegReg() && !getMemBaseReg() &&
+    return Kind == Memory && !getMemBaseReg() &&
       !getMemIndexReg() && getMemScale() == 1 && (!Mem.Size || Mem.Size == 8);
   }
   bool isMemOffs16() const {
-    return Kind == Memory && !getMemSegReg() && !getMemBaseReg() &&
+    return Kind == Memory && !getMemBaseReg() &&
       !getMemIndexReg() && getMemScale() == 1 && (!Mem.Size || Mem.Size == 16);
   }
   bool isMemOffs32() const {
-    return Kind == Memory && !getMemSegReg() && !getMemBaseReg() &&
+    return Kind == Memory && !getMemBaseReg() &&
       !getMemIndexReg() && getMemScale() == 1 && (!Mem.Size || Mem.Size == 32);
   }
   bool isMemOffs64() const {
-    return Kind == Memory && !getMemSegReg() && !getMemBaseReg() &&
+    return Kind == Memory && !getMemBaseReg() &&
       !getMemIndexReg() && getMemScale() == 1 && (!Mem.Size || Mem.Size == 64);
   }
 
@@ -1015,12 +1015,13 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   void addMemOffsOperands(MCInst &Inst, unsigned N) const {
-    assert((N == 1) && "Invalid number of operands!");
+    assert((N == 2) && "Invalid number of operands!");
     // Add as immediates when possible.
     if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemDisp()))
       Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
     else
       Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
+    Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
   }
 
   static X86Operand *CreateToken(StringRef Str, SMLoc Loc) {
