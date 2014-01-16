@@ -5,6 +5,9 @@
 // RUN: %clang -target x86_64-apple-darwin -arch armv7m -fPIC -resource-dir=%S/Inputs/resource_dir %s -### 2>> %t
 // RUN: %clang -target x86_64-apple-darwin -arch armv7em -fPIC -mfloat-abi=hard -resource-dir=%S/Inputs/resource_dir %s -### 2>> %t
 // RUN: %clang -target x86_64-apple-darwin -arch armv7em -fPIC -mfloat-abi=softfp -resource-dir=%S/Inputs/resource_dir %s -### 2>> %t
+// RUN: %clang -target x86_64-apple-none-macho -arch armv7 -mhard-float -resource-dir=%S/Inputs/resource_dir %s -### 2>> %t
+// RUN: %clang -target x86_64-apple-none-macho -arch armv7 -msoft-float -fPIC -resource-dir=%S/Inputs/resource_dir %s -### 2>> %t
+
 
 // RUN: FileCheck %s < %t
 
@@ -27,4 +30,6 @@
 // callers we're compiling will expect.
 // CHECK: libclang_rt.soft_pic.a
 
-// FIXME: test ARMv7a when we switch to -none-macho as the triple
+// -arch "armv7" (== embedded v7a) can be used in a couple of variants:
+// CHECK: libclang_rt.hard_static.a
+// CHECK: libclang_rt.soft_pic.a

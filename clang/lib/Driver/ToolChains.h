@@ -187,21 +187,133 @@ private:
   mutable OwningPtr<tools::gcc::Compile> Compile;
 };
 
-  /// Darwin - The base Darwin tool chain.
-class LLVM_LIBRARY_VISIBILITY Darwin : public ToolChain {
-public:
-  /// The host version.
-  unsigned DarwinVersion[3];
-
+class LLVM_LIBRARY_VISIBILITY MachO : public ToolChain {
 protected:
   virtual Tool *buildAssembler() const;
   virtual Tool *buildLinker() const;
   virtual Tool *getTool(Action::ActionClass AC) const;
-
 private:
   mutable OwningPtr<tools::darwin::Lipo> Lipo;
   mutable OwningPtr<tools::darwin::Dsymutil> Dsymutil;
   mutable OwningPtr<tools::darwin::VerifyDebug> VerifyDebug;
+
+public:
+  MachO(const Driver &D, const llvm::Triple &Triple,
+             const llvm::opt::ArgList &Args);
+  ~MachO();
+
+  /// @name MachO specific toolchain API
+  /// {
+
+  /// Get the "MachO" arch name for a particular compiler invocation. For
+  /// example, Apple treats different ARM variations as distinct architectures.
+  StringRef getMachOArchName(const llvm::opt::ArgList &Args) const;
+
+
+  /// Add the linker arguments to link the ARC runtime library.
+  virtual void AddLinkARCArgs(const llvm::opt::ArgList &Args,
+                              llvm::opt::ArgStringList &CmdArgs) const {}
+
+  /// Add the linker arguments to link the compiler runtime library.
+  virtual void AddLinkRuntimeLibArgs(const llvm::opt::ArgList &Args,
+                                     llvm::opt::ArgStringList &CmdArgs) const;
+
+  virtual void
+  addStartObjectFileArgs(const llvm::opt::ArgList &Args,
+                         llvm::opt::ArgStringList &CmdArgs) const {}
+
+  virtual void addMinVersionArgs(const llvm::opt::ArgList &Args,
+                                 llvm::opt::ArgStringList &CmdArgs) const {}
+
+  /// On some iOS platforms, kernel and kernel modules were built statically. Is
+  /// this such a target?
+  virtual bool isKernelStatic() const {
+    return false;
+  }
+
+  /// Is the target either iOS or an iOS simulator?
+  bool isTargetIOSBased() const {
+    return false;
+  }
+
+  void AddLinkRuntimeLib(const llvm::opt::ArgList &Args,
+                         llvm::opt::ArgStringList &CmdArgs,
+                         StringRef DarwinStaticLib,
+                         bool AlwaysLink = false,
+                         bool IsEmbedded = false) const;
+
+  /// }
+  /// @name ToolChain Implementation
+  /// {
+
+  std::string ComputeEffectiveClangTriple(const llvm::opt::ArgList &Args,
+                                          types::ID InputType) const;
+
+  virtual types::ID LookupTypeForExtension(const char *Ext) const;
+
+  virtual bool HasNativeLLVMSupport() const;
+
+  virtual llvm::opt::DerivedArgList *
+  TranslateArgs(const llvm::opt::DerivedArgList &Args,
+                const char *BoundArch) const;
+
+  virtual bool IsBlocksDefault() const {
+    // Always allow blocks on Apple; users interested in versioning are
+    // expected to use /usr/include/Blocks.h.
+    return true;
+  }
+  virtual bool IsIntegratedAssemblerDefault() const {
+    // Default integrated assembler to on for Apple's MachO targets.
+    return true;
+  }
+
+  virtual bool IsMathErrnoDefault() const {
+    return false;
+  }
+
+  virtual bool IsEncodeExtendedBlockSignatureDefault() const {
+    return true;
+  }
+
+  virtual bool IsObjCNonFragileABIDefault() const {
+    // Non-fragile ABI is default for everything but i386.
+    return getTriple().getArch() != llvm::Triple::x86;
+  }
+
+  virtual bool UseObjCMixedDispatch() const {
+    return true;
+  }
+
+  virtual bool IsUnwindTablesDefault() const;
+
+  virtual RuntimeLibType GetDefaultRuntimeLibType() const {
+    return ToolChain::RLT_CompilerRT;
+  }
+
+  virtual bool isPICDefault() const;
+  virtual bool isPIEDefault() const;
+  virtual bool isPICDefaultForced() const;
+
+  virtual bool SupportsProfiling() const;
+
+  virtual bool SupportsObjCGC() const {
+    return false;
+  }
+
+  virtual bool UseDwarfDebugFlags() const;
+
+  virtual bool UseSjLjExceptions() const {
+    return false;
+  }
+
+  /// }
+};
+
+  /// Darwin - The base Darwin tool chain.
+class LLVM_LIBRARY_VISIBILITY Darwin : public MachO {
+public:
+  /// The host version.
+  unsigned DarwinVersion[3];
 
   /// Whether the information on the target has been initialized.
   //
@@ -213,8 +325,7 @@ private:
   enum DarwinPlatformKind {
     MacOS,
     IPhoneOS,
-    IPhoneOSSimulator,
-    Embedded // FIXME: embedded isn't really a Darwin platform.
+    IPhoneOSSimulator
   };
 
   mutable DarwinPlatformKind TargetPlatform;
@@ -242,7 +353,24 @@ public:
   std::string ComputeEffectiveClangTriple(const llvm::opt::ArgList &Args,
                                           types::ID InputType) const;
 
-  /// @name Darwin Specific Toolchain API
+  /// @name Apple Specific Toolchain Implementation
+  /// {
+
+  virtual void
+  addMinVersionArgs(const llvm::opt::ArgList &Args,
+                    llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
+
+  virtual void
+  addStartObjectFileArgs(const llvm::opt::ArgList &Args,
+                         llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
+
+  virtual bool isKernelStatic() const {
+    return !isTargetIPhoneOS() || isIPhoneOSVersionLT(6, 0);
+  }
+
+protected:
+  /// }
+  /// @name Darwin specific Toolchain functions
   /// {
 
   // FIXME: Eliminate these ...Target functions and derive separate tool chains
@@ -280,22 +408,12 @@ public:
     return TargetPlatform == MacOS;
   }
 
-  bool isTargetEmbedded() const {
-    assert(TargetInitialized && "Target not initialized!");
-    return TargetPlatform == Embedded;
-  }
-
   bool isTargetInitialized() const { return TargetInitialized; }
 
   VersionTuple getTargetVersion() const {
     assert(TargetInitialized && "Target not initialized!");
     return TargetVersion;
   }
-
-  /// getDarwinArchName - Get the "Darwin" arch name for a particular compiler
-  /// invocation. For example, Darwin treats different ARM variations as
-  /// distinct architectures.
-  StringRef getDarwinArchName(const llvm::opt::ArgList &Args) const;
 
   bool isIPhoneOSVersionLT(unsigned V0, unsigned V1=0, unsigned V2=0) const {
     assert(isTargetIOSBased() && "Unexpected call for non iOS target!");
@@ -307,53 +425,17 @@ public:
     return TargetVersion < VersionTuple(V0, V1, V2);
   }
 
-  /// AddLinkARCArgs - Add the linker arguments to link the ARC runtime library.
-  virtual void AddLinkARCArgs(const llvm::opt::ArgList &Args,
-                              llvm::opt::ArgStringList &CmdArgs) const = 0;
-
-  /// AddLinkRuntimeLibArgs - Add the linker arguments to link the compiler
-  /// runtime library.
-  virtual void
-  AddLinkRuntimeLibArgs(const llvm::opt::ArgList &Args,
-                        llvm::opt::ArgStringList &CmdArgs) const = 0;
-
+public:
   /// }
   /// @name ToolChain Implementation
   /// {
-
-  virtual types::ID LookupTypeForExtension(const char *Ext) const;
-
-  virtual bool HasNativeLLVMSupport() const;
-
-  virtual ObjCRuntime getDefaultObjCRuntime(bool isNonFragile) const;
-  virtual bool hasBlocksRuntime() const;
 
   virtual llvm::opt::DerivedArgList *
   TranslateArgs(const llvm::opt::DerivedArgList &Args,
                 const char *BoundArch) const;
 
-  virtual bool IsBlocksDefault() const {
-    // Always allow blocks on Darwin; users interested in versioning are
-    // expected to use /usr/include/Blocks.h.
-    return true;
-  }
-  virtual bool IsIntegratedAssemblerDefault() const {
-    // Default integrated assembler to on for Darwin.
-    return true;
-  }
-
-  virtual bool IsMathErrnoDefault() const {
-    return false;
-  }
-
-  virtual bool IsEncodeExtendedBlockSignatureDefault() const {
-    return true;
-  }
-  
-  virtual bool IsObjCNonFragileABIDefault() const {
-    // Non-fragile ABI is default for everything but i386.
-    return getTriple().getArch() != llvm::Triple::x86;
-  }
+  virtual ObjCRuntime getDefaultObjCRuntime(bool isNonFragile) const;
+  virtual bool hasBlocksRuntime() const;
 
   virtual bool UseObjCMixedDispatch() const {
     // This is only used with the non-fragile ABI and non-legacy dispatch.
@@ -361,7 +443,7 @@ public:
     // Mixed dispatch is used everywhere except OS X before 10.6.
     return !(isTargetMacOS() && isMacosxVersionLT(10, 6));
   }
-  virtual bool IsUnwindTablesDefault() const;
+
   virtual unsigned GetDefaultStackProtectorLevel(bool KernelOrKext) const {
     // Stack protectors default to on for user code on 10.5,
     // and for everything in 10.6 and beyond
@@ -374,24 +456,12 @@ public:
 
     return 0;
   }
-  virtual RuntimeLibType GetDefaultRuntimeLibType() const {
-    return ToolChain::RLT_CompilerRT;
-  }
-  virtual bool isPICDefault() const;
-  virtual bool isPIEDefault() const;
-  virtual bool isPICDefaultForced() const;
-
-  virtual bool SupportsProfiling() const;
 
   virtual bool SupportsObjCGC() const;
 
   virtual void CheckObjCARC() const;
 
-  virtual bool UseDwarfDebugFlags() const;
-
   virtual bool UseSjLjExceptions() const;
-
-  /// }
 };
 
 /// DarwinClang - The Darwin toolchain used by Clang.
@@ -400,25 +470,24 @@ public:
   DarwinClang(const Driver &D, const llvm::Triple &Triple,
               const llvm::opt::ArgList &Args);
 
-  /// @name Darwin ToolChain Implementation
+  /// @name Apple ToolChain Implementation
   /// {
 
-  virtual void AddLinkRuntimeLibArgs(const llvm::opt::ArgList &Args,
-                                     llvm::opt::ArgStringList &CmdArgs) const;
-  void AddLinkRuntimeLib(const llvm::opt::ArgList &Args,
-                         llvm::opt::ArgStringList &CmdArgs,
-                         StringRef DarwinStaticLib,
-                         bool AlwaysLink = false,
-                         bool IsEmbedded = false) const;
+  virtual void
+  AddLinkRuntimeLibArgs(const llvm::opt::ArgList &Args,
+                        llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
 
-  virtual void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
-                                   llvm::opt::ArgStringList &CmdArgs) const;
+  virtual void
+  AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
+                                   llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
 
-  virtual void AddCCKextLibArgs(const llvm::opt::ArgList &Args,
-                                llvm::opt::ArgStringList &CmdArgs) const;
+  virtual void
+  AddCCKextLibArgs(const llvm::opt::ArgList &Args,
+                   llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
 
-  virtual void AddLinkARCArgs(const llvm::opt::ArgList &Args,
-                              llvm::opt::ArgStringList &CmdArgs) const;
+  virtual void
+  AddLinkARCArgs(const llvm::opt::ArgList &Args,
+                 llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
   /// }
 };
 

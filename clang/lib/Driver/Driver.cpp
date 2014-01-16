@@ -379,8 +379,8 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   BuildInputs(C->getDefaultToolChain(), *TranslatedArgs, Inputs);
 
   // Construct the list of abstract actions to perform for this compilation. On
-  // Darwin target OSes this uses the driver-driver and universal actions.
-  if (TC.getTriple().isOSDarwin())
+  // MachO targets this uses the driver-driver and universal actions.
+  if (TC.getTriple().isOSBinFormatMachO())
     BuildUniversalActions(C->getDefaultToolChain(), C->getArgs(),
                           Inputs, C->getActions());
   else
@@ -492,7 +492,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   // Construct the list of abstract actions to perform for this compilation. On
   // Darwin OSes this uses the driver-driver and builds universal actions.
   const ToolChain &TC = C.getDefaultToolChain();
-  if (TC.getTriple().isOSDarwin())
+  if (TC.getTriple().isOSBinFormatMachO())
     BuildUniversalActions(TC, C.getArgs(), Inputs, C.getActions());
   else
     BuildActions(TC, C.getArgs(), Inputs, C.getActions());
@@ -868,7 +868,7 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
       // Validate the option here; we don't save the type here because its
       // particular spelling may participate in other driver choices.
       llvm::Triple::ArchType Arch =
-        tools::darwin::getArchTypeForDarwinArchName(A->getValue());
+        tools::darwin::getArchTypeForMachOArchName(A->getValue());
       if (Arch == llvm::Triple::UnknownArch) {
         Diag(clang::diag::err_drv_invalid_arch_name)
           << A->getAsString(Args);
@@ -1363,7 +1363,7 @@ void Driver::BuildJobs(Compilation &C) const {
 
   // Collect the list of architectures.
   llvm::StringSet<> ArchNames;
-  if (C.getDefaultToolChain().getTriple().isOSDarwin()) {
+  if (C.getDefaultToolChain().getTriple().isOSBinFormatMachO()) {
     for (ArgList::const_iterator it = C.getArgs().begin(), ie = C.getArgs().end();
          it != ie; ++it) {
       Arg *A = *it;
@@ -1864,28 +1864,18 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
 
   llvm::Triple Target(llvm::Triple::normalize(DefaultTargetTriple));
 
-  // Handle Darwin-specific options available here.
-  if (Target.isOSDarwin()) {
+  // Handle Apple-specific options available here.
+  if (Target.isOSBinFormatMachO()) {
     // If an explict Darwin arch name is given, that trumps all.
     if (!DarwinArchName.empty()) {
-      if (DarwinArchName == "x86_64h")
-        Target.setArchName(DarwinArchName);
-      else
-        Target.setArch(
-          tools::darwin::getArchTypeForDarwinArchName(DarwinArchName));
+      tools::darwin::setTripleTypeForMachOArchName(Target, DarwinArchName);
       return Target;
     }
 
     // Handle the Darwin '-arch' flag.
     if (Arg *A = Args.getLastArg(options::OPT_arch)) {
-      if (StringRef(A->getValue()) == "x86_64h")
-        Target.setArchName(A->getValue());
-      else {
-        llvm::Triple::ArchType DarwinArch
-          = tools::darwin::getArchTypeForDarwinArchName(A->getValue());
-        if (DarwinArch != llvm::Triple::UnknownArch)
-          Target.setArch(DarwinArch);
-      }
+      StringRef ArchName = A->getValue();
+      tools::darwin::setTripleTypeForMachOArchName(Target, ArchName);
     }
   }
 
@@ -1989,6 +1979,10 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
       }
       if (Target.isOSBinFormatELF()) {
         TC = new toolchains::Generic_ELF(*this, Target, Args);
+        break;
+      }
+      if (Target.getEnvironment() == llvm::Triple::MachO) {
+        TC = new toolchains::MachO(*this, Target, Args);
         break;
       }
       TC = new toolchains::Generic_GCC(*this, Target, Args);

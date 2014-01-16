@@ -475,7 +475,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
   case llvm::Triple::arm:
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
-    if (Triple.isOSDarwin())
+    if (Triple.isOSBinFormatMachO())
       return true;
     return false;
 
@@ -746,10 +746,11 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   const char *ABIName = 0;
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     ABIName = A->getValue();
-  } else if (Triple.isOSDarwin()) {
+  } else if (Triple.isOSBinFormatMachO()) {
     // The backend is hardwired to assume AAPCS for M-class processors, ensure
     // the frontend matches that.
     if (Triple.getEnvironment() == llvm::Triple::EABI ||
+        Triple.getEnvironment() == llvm::Triple::MachO ||
         StringRef(CPUName).startswith("cortex-m")) {
       ABIName = "aapcs";
     } else {
@@ -1191,7 +1192,7 @@ static const char *getX86TargetCPU(const ArgList &Args,
                                    const llvm::Triple &Triple) {
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
     if (StringRef(A->getValue()) != "native") {
-      if (Triple.isOSDarwin() && Triple.getArchName() == "x86_64h")
+      if (Triple.isOSBinFormatMachO() && Triple.getArchName() == "x86_64h")
         return "core-avx2";
 
       return A->getValue();
@@ -1216,7 +1217,7 @@ static const char *getX86TargetCPU(const ArgList &Args,
   bool Is64Bit = Triple.getArch() == llvm::Triple::x86_64;
 
   // FIXME: Need target hooks.
-  if (Triple.isOSDarwin()) {
+  if (Triple.isOSBinFormatMachO()) {
     if (Triple.getArchName() == "x86_64h")
       return "core-avx2";
     return Is64Bit ? "core2" : "yonah";
@@ -2556,7 +2557,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       // -gline-tables-only.
       CmdArgs.push_back("-gline-tables-only");
       // Default is dwarf-2 for darwin.
-      if (getToolChain().getTriple().isOSDarwin())
+      if (getToolChain().getTriple().isOSBinFormatMachO())
         CmdArgs.push_back("-gdwarf-2");
     } else if (A->getOption().matches(options::OPT_gdwarf_2))
       CmdArgs.push_back("-gdwarf-2");
@@ -2567,7 +2568,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else if (!A->getOption().matches(options::OPT_g0) &&
              !A->getOption().matches(options::OPT_ggdb0)) {
       // Default is dwarf-2 for darwin.
-      if (getToolChain().getTriple().isOSDarwin())
+      if (getToolChain().getTriple().isOSBinFormatMachO())
         CmdArgs.push_back("-gdwarf-2");
       else
         CmdArgs.push_back("-g");
@@ -3864,7 +3865,7 @@ ObjCRuntime Clang::AddObjCRuntimeArgs(const ArgList &args,
   // -fnext-runtime
   } else if (runtimeArg->getOption().matches(options::OPT_fnext_runtime)) {
     // On Darwin, make this use the default behavior for the toolchain.
-    if (getToolChain().getTriple().isOSDarwin()) {
+    if (getToolChain().getTriple().isOSBinFormatMachO()) {
       runtime = getToolChain().getDefaultObjCRuntime(isNonFragile);
 
     // Otherwise, build for a generic macosx port.
@@ -4101,7 +4102,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
 
   // If using a driver driver, force the arch.
   llvm::Triple::ArchType Arch = getToolChain().getArch();
-  if (getToolChain().getTriple().isOSDarwin()) {
+  if (getToolChain().getTriple().isOSBinFormatMachO()) {
     CmdArgs.push_back("-arch");
 
     // FIXME: Remove these special cases.
@@ -4596,7 +4597,7 @@ const char *arm::getLLVMArchSuffixForARM(StringRef CPU) {
     .Default("");
 }
 
-llvm::Triple::ArchType darwin::getArchTypeForDarwinArchName(StringRef Str) {
+llvm::Triple::ArchType darwin::getArchTypeForMachOArchName(StringRef Str) {
   // See arch(3) and llvm-gcc's driver-driver.c. We don't implement support for
   // archs which Darwin doesn't use.
 
@@ -4627,6 +4628,18 @@ llvm::Triple::ArchType darwin::getArchTypeForDarwinArchName(StringRef Str) {
     .Case("amdil", llvm::Triple::amdil)
     .Case("spir", llvm::Triple::spir)
     .Default(llvm::Triple::UnknownArch);
+}
+
+void darwin::setTripleTypeForMachOArchName(llvm::Triple &T, StringRef Str) {
+  llvm::Triple::ArchType Arch = getArchTypeForMachOArchName(Str);
+  T.setArch(Arch);
+
+  if (Str == "x86_64h")
+    T.setArchName(Str);
+  else if (Str == "armv6m" || Str == "armv7m" || Str == "armv7em") {
+    T.setOS(llvm::Triple::UnknownOS);
+    T.setEnvironment(llvm::Triple::MachO);
+  }
 }
 
 const char *Clang::getBaseInputName(const ArgList &Args,
@@ -4697,7 +4710,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Derived from asm spec.
-  AddDarwinArch(Args, CmdArgs);
+  AddMachOArch(Args, CmdArgs);
 
   // Use -force_cpusubtype_ALL on x86 by default.
   if (getToolChain().getArch() == llvm::Triple::x86 ||
@@ -4708,8 +4721,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   if (getToolChain().getArch() != llvm::Triple::x86_64 &&
       (((Args.hasArg(options::OPT_mkernel) ||
          Args.hasArg(options::OPT_fapple_kext)) &&
-        (!getDarwinToolChain().isTargetIPhoneOS() ||
-         getDarwinToolChain().isIPhoneOSVersionLT(6, 0))) ||
+        getMachOToolChain().isKernelStatic()) ||
        Args.hasArg(options::OPT_static)))
     CmdArgs.push_back("-static");
 
@@ -4730,11 +4742,11 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
-void darwin::DarwinTool::anchor() {}
+void darwin::MachOTool::anchor() {}
 
-void darwin::DarwinTool::AddDarwinArch(const ArgList &Args,
-                                       ArgStringList &CmdArgs) const {
-  StringRef ArchName = getDarwinToolChain().getDarwinArchName(Args);
+void darwin::MachOTool::AddMachOArch(const ArgList &Args,
+                                     ArgStringList &CmdArgs) const {
+  StringRef ArchName = getMachOToolChain().getMachOArchName(Args);
 
   // Derived from darwin_arch spec.
   CmdArgs.push_back("-arch");
@@ -4762,7 +4774,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
                                ArgStringList &CmdArgs,
                                const InputInfoList &Inputs) const {
   const Driver &D = getToolChain().getDriver();
-  const toolchains::Darwin &DarwinTC = getDarwinToolChain();
+  const toolchains::MachO &MachOTC = getMachOToolChain();
 
   unsigned Version[3] = { 0, 0, 0 };
   if (Arg *A = Args.getLastArg(options::OPT_mlinker_version_EQ)) {
@@ -4803,7 +4815,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   }
 
   if (!Args.hasArg(options::OPT_dynamiclib)) {
-    AddDarwinArch(Args, CmdArgs);
+    AddMachOArch(Args, CmdArgs);
     // FIXME: Why do this only on this path?
     Args.AddLastArg(CmdArgs, options::OPT_force__cpusubtype__ALL);
 
@@ -4839,7 +4851,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
     Args.AddAllArgsTranslated(CmdArgs, options::OPT_current__version,
                               "-dylib_current_version");
 
-    AddDarwinArch(Args, CmdArgs);
+    AddMachOArch(Args, CmdArgs);
 
     Args.AddAllArgsTranslated(CmdArgs, options::OPT_install__name,
                               "-dylib_install_name");
@@ -4848,7 +4860,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   Args.AddLastArg(CmdArgs, options::OPT_all__load);
   Args.AddAllArgs(CmdArgs, options::OPT_allowable__client);
   Args.AddLastArg(CmdArgs, options::OPT_bind__at__load);
-  if (DarwinTC.isTargetIOSBased())
+  if (MachOTC.isTargetIOSBased())
     Args.AddLastArg(CmdArgs, options::OPT_arch__errors__fatal);
   Args.AddLastArg(CmdArgs, options::OPT_dead__strip);
   Args.AddLastArg(CmdArgs, options::OPT_no__dead__strip__inits__and__terms);
@@ -4862,25 +4874,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   Args.AddAllArgs(CmdArgs, options::OPT_init);
 
   // Add the deployment target.
-  VersionTuple TargetVersion = DarwinTC.getTargetVersion();
-
-  // If we had an explicit -mios-simulator-version-min argument, honor that,
-  // otherwise use the traditional deployment targets. We can't just check the
-  // is-sim attribute because existing code follows this path, and the linker
-  // may not handle the argument.
-  //
-  // FIXME: We may be able to remove this, once we can verify no one depends on
-  // it.
-  if (Args.hasArg(options::OPT_mios_simulator_version_min_EQ)) {
-    CmdArgs.push_back("-ios_simulator_version_min");
-    CmdArgs.push_back(Args.MakeArgString(TargetVersion.getAsString()));
-  } else if (DarwinTC.isTargetIOSBased()) {
-    CmdArgs.push_back("-iphoneos_version_min");
-    CmdArgs.push_back(Args.MakeArgString(TargetVersion.getAsString()));
-  } else if (DarwinTC.isTargetMacOS()) {
-    CmdArgs.push_back("-macosx_version_min");
-    CmdArgs.push_back(Args.MakeArgString(TargetVersion.getAsString()));
-  }
+  MachOTC.addMinVersionArgs(Args, CmdArgs);
 
   Args.AddLastArg(CmdArgs, options::OPT_nomultidefs);
   Args.AddLastArg(CmdArgs, options::OPT_multi__module);
@@ -4995,95 +4989,8 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Output.getFilename());
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
-      !Args.hasArg(options::OPT_nostartfiles)) {
-    // Derived from startfile spec.
-    if (Args.hasArg(options::OPT_dynamiclib)) {
-      // Derived from darwin_dylib1 spec.
-      if (getDarwinToolChain().isTargetIOSSimulator()) {
-        // The simulator doesn't have a versioned crt1 file.
-        CmdArgs.push_back("-ldylib1.o");
-      } else if (getDarwinToolChain().isTargetIPhoneOS()) {
-        if (getDarwinToolChain().isIPhoneOSVersionLT(3, 1))
-          CmdArgs.push_back("-ldylib1.o");
-      } else if (getDarwinToolChain().isTargetMacOS()) {
-        if (getDarwinToolChain().isMacosxVersionLT(10, 5))
-          CmdArgs.push_back("-ldylib1.o");
-        else if (getDarwinToolChain().isMacosxVersionLT(10, 6))
-          CmdArgs.push_back("-ldylib1.10.5.o");
-      }
-    } else {
-      if (Args.hasArg(options::OPT_bundle)) {
-        if (!Args.hasArg(options::OPT_static)) {
-          // Derived from darwin_bundle1 spec.
-          if (getDarwinToolChain().isTargetIOSSimulator()) {
-            // The simulator doesn't have a versioned crt1 file.
-            CmdArgs.push_back("-lbundle1.o");
-          } else if (getDarwinToolChain().isTargetIPhoneOS()) {
-            if (getDarwinToolChain().isIPhoneOSVersionLT(3, 1))
-              CmdArgs.push_back("-lbundle1.o");
-          } else if (getDarwinToolChain().isTargetMacOS()) {
-            if (getDarwinToolChain().isMacosxVersionLT(10, 6))
-              CmdArgs.push_back("-lbundle1.o");
-          }
-        }
-      } else {
-        if (Args.hasArg(options::OPT_pg) &&
-            getToolChain().SupportsProfiling()) {
-          if (Args.hasArg(options::OPT_static) ||
-              Args.hasArg(options::OPT_object) ||
-              Args.hasArg(options::OPT_preload)) {
-            CmdArgs.push_back("-lgcrt0.o");
-          } else {
-            CmdArgs.push_back("-lgcrt1.o");
-
-            // darwin_crt2 spec is empty.
-          }
-          // By default on OS X 10.8 and later, we don't link with a crt1.o
-          // file and the linker knows to use _main as the entry point.  But,
-          // when compiling with -pg, we need to link with the gcrt1.o file,
-          // so pass the -no_new_main option to tell the linker to use the
-          // "start" symbol as the entry point.
-          if (getDarwinToolChain().isTargetMacOS() &&
-              !getDarwinToolChain().isMacosxVersionLT(10, 8))
-            CmdArgs.push_back("-no_new_main");
-        } else {
-          if (Args.hasArg(options::OPT_static) ||
-              Args.hasArg(options::OPT_object) ||
-              Args.hasArg(options::OPT_preload)) {
-            CmdArgs.push_back("-lcrt0.o");
-          } else {
-            // Derived from darwin_crt1 spec.
-            if (getDarwinToolChain().isTargetIOSSimulator()) {
-              // The simulator doesn't have a versioned crt1 file.
-              CmdArgs.push_back("-lcrt1.o");
-            } else if (getDarwinToolChain().isTargetIPhoneOS()) {
-              if (getDarwinToolChain().isIPhoneOSVersionLT(3, 1))
-                CmdArgs.push_back("-lcrt1.o");
-              else if (getDarwinToolChain().isIPhoneOSVersionLT(6, 0))
-                CmdArgs.push_back("-lcrt1.3.1.o");
-            } else if (getDarwinToolChain().isTargetMacOS()) {
-              if (getDarwinToolChain().isMacosxVersionLT(10, 5))
-                CmdArgs.push_back("-lcrt1.o");
-              else if (getDarwinToolChain().isMacosxVersionLT(10, 6))
-                CmdArgs.push_back("-lcrt1.10.5.o");
-              else if (getDarwinToolChain().isMacosxVersionLT(10, 8))
-                CmdArgs.push_back("-lcrt1.10.6.o");
-
-              // darwin_crt2 spec is empty.
-            }
-          }
-        }
-      }
-    }
-
-    if (getDarwinToolChain().isTargetMacOS() &&
-        Args.hasArg(options::OPT_shared_libgcc) &&
-        getDarwinToolChain().isMacosxVersionLT(10, 5)) {
-      const char *Str =
-        Args.MakeArgString(getToolChain().GetFilePath("crt3.o"));
-      CmdArgs.push_back(Str);
-    }
-  }
+      !Args.hasArg(options::OPT_nostartfiles))
+    getMachOToolChain().addStartObjectFileArgs(Args, CmdArgs);
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
 
@@ -5096,19 +5003,9 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (isObjCRuntimeLinked(Args) &&
       !Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
-    // Avoid linking compatibility stubs on i386 mac.
-    if (!getDarwinToolChain().isTargetMacOS() ||
-        getDarwinToolChain().getArch() != llvm::Triple::x86) {
-      // If we don't have ARC or subscripting runtime support, link in the
-      // runtime stubs.  We have to do this *before* adding any of the normal
-      // linker inputs so that its initializer gets run first.
-      ObjCRuntime runtime =
-        getDarwinToolChain().getDefaultObjCRuntime(/*nonfragile*/ true);
-      // We use arclite library for both ARC and subscripting support.
-      if ((!runtime.hasNativeARC() && isObjCAutoRefCount(Args)) ||
-          !runtime.hasSubscripting())
-        getDarwinToolChain().AddLinkARCArgs(Args, CmdArgs);
-    }
+    // We use arclite library for both ARC and subscripting support.
+    getMachOToolChain().AddLinkARCArgs(Args, CmdArgs);
+
     CmdArgs.push_back("-framework");
     CmdArgs.push_back("Foundation");
     // Link libobj.
@@ -5132,7 +5029,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // link_ssp spec is empty.
 
     // Let the tool chain choose which runtime library to link.
-    getDarwinToolChain().AddLinkRuntimeLibArgs(Args, CmdArgs);
+    getMachOToolChain().AddLinkRuntimeLibArgs(Args, CmdArgs);
   }
 
   if (!Args.hasArg(options::OPT_nostdlib) &&

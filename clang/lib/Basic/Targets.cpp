@@ -90,7 +90,6 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
                              VersionTuple &PlatformMinVersion) {
   Builder.defineMacro("__APPLE_CC__", "6000");
   Builder.defineMacro("__APPLE__");
-  Builder.defineMacro("__MACH__");
   Builder.defineMacro("OBJC_NEW_PROPERTIES");
   // AddressSanitizer doesn't play well with source fortification, which is on
   // by default on Darwin.
@@ -154,7 +153,7 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
       Str[5] = '\0';
       Builder.defineMacro("__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__",
                           Str);
-    } else {
+    } else if (Triple.isMacOSX()) {
       // Note that the Driver allows versions which aren't representable in the
       // define (because we only get a single digit for the minor and micro
       // revision numbers). So, we limit them to the maximum representable
@@ -170,6 +169,10 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
       Builder.defineMacro("__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", Str);
     }
   }
+
+  // Tell users about the kernel if there is one.
+  if (Triple.isOSDarwin())
+    Builder.defineMacro("__MACH__");
 
   PlatformMinVersion = VersionTuple(Maj, Min, Rev);
 }
@@ -5535,7 +5538,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
-    if (Triple.isOSDarwin())
+    if (Triple.isOSBinFormatMachO())
       return new DarwinARMTargetInfo(Triple);
 
     switch (os) {
