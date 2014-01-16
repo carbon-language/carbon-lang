@@ -85,11 +85,11 @@ the ``llvm-symbolizer`` binary:
 
 If that does not work for you (e.g. your process is sandboxed), you can use a
 separate script to symbolize the result offline (online symbolization can be
-force disabled by setting ``ASAN_OPTIONS=symbolize=1``):
+force disabled by setting ``ASAN_OPTIONS=symbolize=0``):
 
 .. code-block:: console
 
-    % ./a.out 2> log
+    % ASAN_OPTIONS=symbolize=0 ./a.out 2> log
     % projects/compiler-rt/lib/asan/scripts/asan_symbolize.py / < log | c++filt
     ==9442== ERROR: AddressSanitizer heap-use-after-free on address 0x7f7ddab8c084 at pc 0x403c8c bp 0x7fff87fb82d0 sp 0x7fff87fb82c8
     READ of size 4 at 0x7f7ddab8c084 thread T0
