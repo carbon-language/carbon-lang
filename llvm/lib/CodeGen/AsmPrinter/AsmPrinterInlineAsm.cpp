@@ -428,21 +428,14 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
   // If this asmstr is empty, just print the #APP/#NOAPP markers.
   // These are useful to see where empty asm's wound up.
   if (AsmStr[0] == 0) {
-    // Don't emit the comments if writing to a .o file.
-    if (!OutStreamer.hasRawTextSupport()) return;
-
-    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
-                            MAI->getInlineAsmStart());
-    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
-                            MAI->getInlineAsmEnd());
+    OutStreamer.emitRawComment(MAI->getInlineAsmStart());
+    OutStreamer.emitRawComment(MAI->getInlineAsmEnd());
     return;
   }
 
   // Emit the #APP start marker.  This has to happen even if verbose-asm isn't
-  // enabled, so we use EmitRawText.
-  if (OutStreamer.hasRawTextSupport())
-    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
-                            MAI->getInlineAsmStart());
+  // enabled, so we use emitRawComment.
+  OutStreamer.emitRawComment(MAI->getInlineAsmStart());
 
   // Get the !srcloc metadata node if we have it, and decode the loc cookie from
   // it.
@@ -477,10 +470,8 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
   EmitInlineAsm(OS.str(), LocMD, MI->getInlineAsmDialect());
 
   // Emit the #NOAPP end marker.  This has to happen even if verbose-asm isn't
-  // enabled, so we use EmitRawText.
-  if (OutStreamer.hasRawTextSupport())
-    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
-                            MAI->getInlineAsmEnd());
+  // enabled, so we use emitRawComment.
+  OutStreamer.emitRawComment(MAI->getInlineAsmEnd());
 }
 
 

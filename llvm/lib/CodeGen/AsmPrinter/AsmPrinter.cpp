@@ -579,7 +579,7 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
 
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
-  OS << '\t' << AP.MAI->getCommentString() << "DEBUG_VALUE: ";
+  OS << "DEBUG_VALUE: ";
 
   DIVariable V(MI->getOperand(2).getMetadata());
   if (V.getContext().isSubprogram()) {
@@ -627,7 +627,7 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
       // Suppress offset, it is not meaningful here.
       OS << "undef";
       // NOTE: Want this comment at start of line, don't emit with AddComment.
-      AP.OutStreamer.EmitRawText(OS.str());
+      AP.OutStreamer.emitRawComment(OS.str());
       return true;
     }
     if (Deref)
@@ -639,7 +639,7 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
     OS << '+' << Offset << ']';
 
   // NOTE: Want this comment at start of line, don't emit with AddComment.
-  AP.OutStreamer.EmitRawText(OS.str());
+  AP.OutStreamer.emitRawComment(OS.str());
   return true;
 }
 
@@ -2155,8 +2155,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   if (MBB->pred_empty() || isBlockOnlyReachableByFallthrough(MBB)) {
     if (isVerbose() && OutStreamer.hasRawTextSupport()) {
       // NOTE: Want this comment at start of line, don't emit with AddComment.
-      OutStreamer.EmitRawText(Twine(MAI->getCommentString()) + " BB#" +
-                              Twine(MBB->getNumber()) + ":");
+      OutStreamer.emitRawComment(" BB#" + Twine(MBB->getNumber()) + ":", false);
     }
   } else {
     OutStreamer.EmitLabel(MBB->getSymbol());

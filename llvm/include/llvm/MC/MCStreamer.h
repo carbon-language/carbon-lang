@@ -217,6 +217,12 @@ public:
   /// use this method.
   virtual raw_ostream &GetCommentOS();
 
+  /// Print T and prefix it with the comment string (normally #) and optionally
+  /// a tab. This prints the comment immediately, not at the end of the
+  /// current line. It is basically a safe version of EmitRawText: since it
+  /// only prints comments, the object streamer ignores it instead of asserting.
+  virtual void emitRawComment(const Twine &T, bool TabPrefix = true);
+
   /// AddBlankLine - Emit a blank line to a .s file to pretty it up.
   virtual void AddBlankLine() {}
 

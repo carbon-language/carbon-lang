@@ -81,6 +81,8 @@ raw_ostream &MCStreamer::GetCommentOS() {
   return nulls();
 }
 
+void MCStreamer::emitRawComment(const Twine &T, bool TabPrefix) {}
+
 void MCStreamer::generateCompactUnwindEncodings(MCAsmBackend *MAB) {
   for (std::vector<MCDwarfFrameInfo>::iterator I = FrameInfos.begin(),
          E = FrameInfos.end(); I != E; ++I)

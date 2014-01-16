@@ -115,6 +115,8 @@ public:
     return CommentStream;
   }
 
+  void emitRawComment(const Twine &T, bool TabPrefix = true) LLVM_OVERRIDE;
+
   /// AddBlankLine - Emit a blank line to a .s file to pretty it up.
   virtual void AddBlankLine() {
     EmitEOL();
@@ -309,6 +311,13 @@ void MCAsmStreamer::EmitCommentsAndEOL() {
 static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   assert(Bytes && "Invalid size!");
   return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
+}
+
+void MCAsmStreamer::emitRawComment(const Twine &T, bool TabPrefix) {
+  if (TabPrefix)
+    OS << '\t';
+  OS << MAI->getCommentString() << T;
+  EmitEOL();
 }
 
 void MCAsmStreamer::ChangeSection(const MCSection *Section,
