@@ -563,20 +563,13 @@ StringRef COFFObjectFile::getLoadName() const {
 }
 
 import_directory_iterator COFFObjectFile::import_directory_begin() const {
-  DataRefImpl Imp;
-  Imp.p = reinterpret_cast<uintptr_t>(ImportDirectory);
-  return import_directory_iterator(ImportDirectoryEntryRef(Imp, this));
+  return import_directory_iterator(
+      ImportDirectoryEntryRef(ImportDirectory, 0, this));
 }
 
 import_directory_iterator COFFObjectFile::import_directory_end() const {
-  DataRefImpl Imp;
-  if (ImportDirectory) {
-    Imp.p = reinterpret_cast<uintptr_t>(
-        ImportDirectory + (NumberOfImportDirectory - 1));
-  } else {
-    Imp.p = 0;
-  }
-  return import_directory_iterator(ImportDirectoryEntryRef(Imp, this));
+  return import_directory_iterator(
+      ImportDirectoryEntryRef(ImportDirectory, NumberOfImportDirectory, this));
 }
 
 section_iterator COFFObjectFile::begin_sections() const {
@@ -884,55 +877,42 @@ error_code COFFObjectFile::getLibraryPath(DataRefImpl LibData,
 
 bool ImportDirectoryEntryRef::
 operator==(const ImportDirectoryEntryRef &Other) const {
-  return ImportDirectoryPimpl == Other.ImportDirectoryPimpl;
-}
-
-static const import_directory_table_entry *toImportEntry(DataRefImpl Imp) {
-  return reinterpret_cast<const import_directory_table_entry *>(Imp.p);
+  return ImportTable == Other.ImportTable && Index == Other.Index;
 }
 
 error_code
 ImportDirectoryEntryRef::getNext(ImportDirectoryEntryRef &Result) const {
-  const import_directory_table_entry *Dir = toImportEntry(ImportDirectoryPimpl);
-  Dir += 1;
-  DataRefImpl Next;
-  Next.p = reinterpret_cast<uintptr_t>(Dir);
-  Result = ImportDirectoryEntryRef(Next, OwningObject);
+  Result = ImportDirectoryEntryRef(ImportTable, Index + 1, OwningObject);
   return object_error::success;
 }
 
 error_code ImportDirectoryEntryRef::
 getImportTableEntry(const import_directory_table_entry *&Result) const {
-  Result = toImportEntry(ImportDirectoryPimpl);
+  Result = ImportTable;
   return object_error::success;
 }
 
 error_code ImportDirectoryEntryRef::getName(StringRef &Result) const {
-  const import_directory_table_entry *Dir = toImportEntry(ImportDirectoryPimpl);
   uintptr_t IntPtr = 0;
-  if (error_code ec = OwningObject->getRvaPtr(Dir->NameRVA, IntPtr))
-    return ec;
-  const char *Ptr = reinterpret_cast<const char *>(IntPtr);
-  Result = StringRef(Ptr);
+  if (error_code EC = OwningObject->getRvaPtr(ImportTable->NameRVA, IntPtr))
+    return EC;
+  Result = StringRef(reinterpret_cast<const char *>(IntPtr));
   return object_error::success;
 }
 
 error_code ImportDirectoryEntryRef::getImportLookupEntry(
     const import_lookup_table_entry32 *&Result) const {
-  const import_directory_table_entry *Dir = toImportEntry(ImportDirectoryPimpl);
   uintptr_t IntPtr = 0;
-  if (error_code ec = OwningObject->getRvaPtr(
-          Dir->ImportLookupTableRVA, IntPtr))
-    return ec;
+  if (error_code EC =
+          OwningObject->getRvaPtr(ImportTable->ImportLookupTableRVA, IntPtr))
+    return EC;
   Result = reinterpret_cast<const import_lookup_table_entry32 *>(IntPtr);
   return object_error::success;
 }
 
 namespace llvm {
-
-  ObjectFile *ObjectFile::createCOFFObjectFile(MemoryBuffer *Object) {
-    error_code ec;
-    return new COFFObjectFile(Object, ec);
-  }
-
+ObjectFile *ObjectFile::createCOFFObjectFile(MemoryBuffer *Object) {
+  error_code ec;
+  return new COFFObjectFile(Object, ec);
+}
 } // end namespace llvm

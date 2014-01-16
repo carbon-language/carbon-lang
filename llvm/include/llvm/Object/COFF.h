@@ -369,9 +369,9 @@ public:
 class ImportDirectoryEntryRef {
 public:
   ImportDirectoryEntryRef() : OwningObject(0) {}
-  ImportDirectoryEntryRef(DataRefImpl ImportDirectory,
+  ImportDirectoryEntryRef(const import_directory_table_entry *Table, uint32_t I,
                           const COFFObjectFile *Owner)
-      : ImportDirectoryPimpl(ImportDirectory), OwningObject(Owner) {}
+      : ImportTable(Table), Index(I), OwningObject(Owner) {}
 
   bool operator==(const ImportDirectoryEntryRef &Other) const;
   error_code getNext(ImportDirectoryEntryRef &Result) const;
@@ -384,7 +384,8 @@ public:
   getImportLookupEntry(const import_lookup_table_entry32 *&Result) const;
 
 private:
-  DataRefImpl ImportDirectoryPimpl;
+  const import_directory_table_entry *ImportTable;
+  uint32_t Index;
   const COFFObjectFile *OwningObject;
 };
 } // end namespace object
