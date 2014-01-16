@@ -2444,3 +2444,7 @@ QualType::DestructionKind QualType::isDestructedTypeImpl(QualType type) {
 
   return DK_none;
 }
+
+CXXRecordDecl *MemberPointerType::getMostRecentCXXRecordDecl() const {
+  return getClass()->getAsCXXRecordDecl()->getMostRecentDecl();
+}
