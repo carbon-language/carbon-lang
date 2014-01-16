@@ -1249,10 +1249,6 @@ bool ModuleLinker::run() {
   for (unsigned i = 0, e = AppendingVars.size(); i != e; ++i)
     linkAppendingVarInit(AppendingVars[i]);
   
-  // Update the initializers in the DstM module now that all globals that may
-  // be referenced are in DstM.
-  linkGlobalInits();
-
   // Link in the function bodies that are defined in the source module into
   // DstM.
   for (Module::iterator SF = SrcM->begin(), E = SrcM->end(); SF != E; ++SF) {
@@ -1289,6 +1285,10 @@ bool ModuleLinker::run() {
   // Merge the module flags into the DstM module.
   if (linkModuleFlagsMetadata())
     return true;
+
+  // Update the initializers in the DstM module now that all globals that may
+  // be referenced are in DstM.
+  linkGlobalInits();
 
   // Process vector of lazily linked in functions.
   bool LinkedInAnyFunctions;
