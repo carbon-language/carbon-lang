@@ -323,15 +323,16 @@ static void SimplifyShortMoveForm(X86AsmPrinter &Printer, MCInst &Inst,
   if (Absolute &&
       (Inst.getOperand(AddrBase + 0).getReg() != 0 ||
        Inst.getOperand(AddrBase + 2).getReg() != 0 ||
-       Inst.getOperand(AddrBase + 4).getReg() != 0 ||
        Inst.getOperand(AddrBase + 1).getImm() != 1))
     return;
 
   // If so, rewrite the instruction.
   MCOperand Saved = Inst.getOperand(AddrOp);
+  MCOperand Seg = Inst.getOperand(AddrBase + 4);
   Inst = MCInst();
   Inst.setOpcode(Opcode);
   Inst.addOperand(Saved);
+  Inst.addOperand(Seg);
 }
 
 static unsigned getRetOpcode(const X86Subtarget &Subtarget)
