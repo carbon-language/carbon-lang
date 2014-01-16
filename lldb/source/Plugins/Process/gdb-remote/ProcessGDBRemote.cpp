@@ -95,7 +95,7 @@ using namespace lldb_private;
 
 
 namespace {
-    
+
     static PropertyDefinition
     g_properties[] =
     {
