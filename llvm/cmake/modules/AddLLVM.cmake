@@ -85,8 +85,12 @@ function(add_llvm_symbol_exports target_name export_file)
   # Force re-linking when the exports file changes. Actually, it
   # forces recompilation of the source file. The LINK_DEPENDS target
   # property only works for makefile-based generators.
-  set_property(SOURCE ${first_source_file} APPEND PROPERTY
-    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${native_export_file})
+  # FIXME: This is not safe because this will create the same target
+  # ${native_export_file} in several different file:
+  # - One where we emitted ${target_name}_exports
+  # - One where we emitted the build command for the following object.
+  # set_property(SOURCE ${first_source_file} APPEND PROPERTY
+  #   OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${native_export_file})
 
   set_property(DIRECTORY APPEND
     PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${native_export_file})
