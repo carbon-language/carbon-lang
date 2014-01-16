@@ -217,8 +217,7 @@ void DIEInteger::EmitValue(AsmPrinter *Asm, dwarf::Form Form) const {
   case dwarf::DW_FORM_flag_present:
     // Emit something to keep the lines and comments in sync.
     // FIXME: Is there a better way to do this?
-    if (Asm->OutStreamer.hasRawTextSupport())
-      Asm->OutStreamer.EmitRawText("");
+    Asm->OutStreamer.AddBlankLine();
     return;
   case dwarf::DW_FORM_flag:  // Fall thru
   case dwarf::DW_FORM_ref1:  // Fall thru
