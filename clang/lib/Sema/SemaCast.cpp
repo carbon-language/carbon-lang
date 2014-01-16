@@ -1346,7 +1346,8 @@ TryStaticMemberPointerUpcast(Sema &Self, ExprResult &SrcExpr, QualType SrcType,
   QualType DestClass(DestMemPtr->getClass(), 0);
   CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
                   /*DetectVirtual=*/true);
-  if (!Self.IsDerivedFrom(SrcClass, DestClass, Paths)) {
+  if (Self.RequireCompleteType(OpRange.getBegin(), SrcClass, 0) ||
+      !Self.IsDerivedFrom(SrcClass, DestClass, Paths)) {
     return TC_NotApplicable;
   }
 
