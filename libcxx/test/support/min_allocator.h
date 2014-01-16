@@ -1,3 +1,12 @@
+//===----------------------------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef MIN_ALLOCATOR_H
 #define MIN_ALLOCATOR_H
 

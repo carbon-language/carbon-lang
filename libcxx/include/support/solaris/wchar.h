@@ -1,3 +1,12 @@
+//===----------------------------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 #define iswalpha sun_iswalpha
 #define iswupper sun_iswupper
 #define iswlower sun_iswlower

@@ -1,3 +1,12 @@
+//===----------------------------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 ////////////////////////////////////////////////////////////////////////////////
 // Minimal xlocale implementation for Solaris.  This implements the subset of
 // the xlocale APIs that libc++ depends on.
