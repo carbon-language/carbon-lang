@@ -23,16 +23,13 @@
 using namespace llvm;
 using namespace object;
 
-namespace {
 using support::ulittle8_t;
 using support::ulittle16_t;
 using support::ulittle32_t;
 using support::little16_t;
-}
 
-namespace {
 // Returns false if size is greater than the buffer size. And sets ec.
-bool checkSize(const MemoryBuffer *M, error_code &EC, uint64_t Size) {
+static bool checkSize(const MemoryBuffer *M, error_code &EC, uint64_t Size) {
   if (M->getBufferSize() < Size) {
     EC = object_error::unexpected_eof;
     return false;
@@ -43,8 +40,8 @@ bool checkSize(const MemoryBuffer *M, error_code &EC, uint64_t Size) {
 // Sets Obj unless any bytes in [addr, addr + size) fall outsize of m.
 // Returns unexpected_eof if error.
 template<typename T>
-error_code getObject(const T *&Obj, const MemoryBuffer *M, const uint8_t *Ptr,
-                     const size_t Size = sizeof(T)) {
+static error_code getObject(const T *&Obj, const MemoryBuffer *M,
+                            const uint8_t *Ptr, const size_t Size = sizeof(T)) {
   uintptr_t Addr = uintptr_t(Ptr);
   if (Addr + Size < Addr ||
       Addr + Size < Size ||
@@ -53,7 +50,6 @@ error_code getObject(const T *&Obj, const MemoryBuffer *M, const uint8_t *Ptr,
   }
   Obj = reinterpret_cast<const T *>(Addr);
   return object_error::success;
-}
 }
 
 const coff_symbol *COFFObjectFile::toSymb(DataRefImpl Ref) const {
@@ -1003,4 +999,4 @@ ObjectFile *ObjectFile::createCOFFObjectFile(MemoryBuffer *Object) {
   error_code EC;
   return new COFFObjectFile(Object, EC);
 }
-} // end namespace llvm
+}
