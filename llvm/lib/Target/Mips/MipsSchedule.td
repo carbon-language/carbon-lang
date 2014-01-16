@@ -58,6 +58,7 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<IIBranch           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IIHiLo             , [InstrStage<1,  [IMULDIV]>]>,
   InstrItinData<IIImul             , [InstrStage<17, [IMULDIV]>]>,
+  InstrItinData<IIImult            , [InstrStage<17, [IMULDIV]>]>,
   InstrItinData<IIIdiv             , [InstrStage<38, [IMULDIV]>]>,
   InstrItinData<IIFcvt             , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IIFmove            , [InstrStage<2,  [ALU]>]>,
