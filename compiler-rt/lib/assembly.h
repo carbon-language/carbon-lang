@@ -31,7 +31,11 @@
 #define HIDDEN_DIRECTIVE .hidden
 #define LOCAL_LABEL(name) .L_##name
 #define FILE_LEVEL_DIRECTIVE
-#define SYMBOL_IS_FUNC(name) .type name, @function
+#  if defined(__arm__)
+#  define SYMBOL_IS_FUNC(name) .type name, %function
+#  else
+#  define SYMBOL_IS_FUNC(name) .type name, @function
+#  endif
 #endif
 
 #define GLUE2(a, b) a ## b
