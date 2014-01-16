@@ -910,6 +910,11 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
 
     if (Attrs.hasAttribute(Idx, Attribute::StructRet))
       Assert1(Idx == 1, "Attribute sret is not on first parameter!", V);
+
+    if (Attrs.hasAttribute(Idx, Attribute::InAlloca)) {
+      Assert1(Idx == FT->getNumParams(),
+              "inalloca isn't on the last parameter!", V);
+    }
   }
 
   if (!Attrs.hasAttributes(AttributeSet::FunctionIndex))
@@ -1541,15 +1546,6 @@ void Verifier::VerifyCallSite(CallSite CS) {
   // Verify call attributes.
   VerifyFunctionAttrs(FTy, Attrs, I);
 
-  // Verify that values used for inalloca parameters are in fact allocas.
-  for (unsigned i = 0, e = CS.arg_size(); i != e; ++i) {
-    if (!Attrs.hasAttribute(1 + i, Attribute::InAlloca))
-      continue;
-    Value *Arg = CS.getArgument(i);
-    Assert2(isa<AllocaInst>(Arg), "Inalloca argument is not an alloca!", I,
-            Arg);
-  }
-
   if (FTy->isVarArg()) {
     // FIXME? is 'nest' even legal here?
     bool SawNest = false;
@@ -1583,6 +1579,10 @@ void Verifier::VerifyCallSite(CallSite CS) {
 
       Assert1(!Attrs.hasAttribute(Idx, Attribute::StructRet),
               "Attribute 'sret' cannot be used for vararg call arguments!", I);
+
+      if (Attrs.hasAttribute(Idx, Attribute::InAlloca))
+        Assert1(Idx == CS.arg_size(), "inalloca isn't on the last argument!",
+                I);
     }
   }
 
@@ -1887,21 +1887,6 @@ void Verifier::visitAllocaInst(AllocaInst &AI) {
           &AI);
   Assert1(AI.getArraySize()->getType()->isIntegerTy(),
           "Alloca array size must have integer type", &AI);
-
-  // Verify that an alloca instruction is not used with inalloca more than once.
-  unsigned InAllocaUses = 0;
-  for (User::use_iterator UI = AI.use_begin(), UE = AI.use_end(); UI != UE;
-       ++UI) {
-    CallSite CS(*UI);
-    if (!CS)
-      continue;
-    unsigned ArgNo = CS.getArgumentNo(UI);
-    if (CS.isInAllocaArgument(ArgNo)) {
-      InAllocaUses++;
-      Assert1(InAllocaUses <= 1,
-              "Allocas can be used at most once with inalloca!", &AI);
-    }
-  }
 
   visitInstruction(AI);
 }

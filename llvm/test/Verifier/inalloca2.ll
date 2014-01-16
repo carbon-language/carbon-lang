@@ -1,4 +1,6 @@
-; RUN: not llvm-as %s -o /dev/null 2>&1 | FileCheck %s
+; This used to be invalid, but now it's valid.  Ensure the verifier
+; doesn't reject it.
+; RUN: llvm-as %s -o /dev/null
 
 declare void @doit(i64* inalloca %a)
 
@@ -7,7 +9,6 @@ entry:
   %a = alloca [2 x i32]
   %b = bitcast [2 x i32]* %a to i64*
   call void @doit(i64* inalloca %b)
-; CHECK: Inalloca argument is not an alloca!
   ret void
 }
 
@@ -16,6 +17,5 @@ entry:
   %a = alloca i64
   call void @doit(i64* inalloca %a)
   call void @doit(i64* inalloca %a)
-; CHECK: Allocas can be used at most once with inalloca!
   ret void
 }

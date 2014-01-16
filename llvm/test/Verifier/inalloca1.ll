@@ -17,3 +17,6 @@ declare void @e(i64* readonly inalloca %p)
 
 declare void @f(void ()* inalloca %p)
 ; CHECK: do not support unsized types
+
+declare void @g(i32* inalloca %p, i32 %p2)
+; CHECK: inalloca isn't on the last parameter!

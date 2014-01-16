@@ -727,29 +727,27 @@ Currently, only the following parameter attributes are defined:
 
 .. Warning:: This feature is unstable and not fully implemented.
 
-    The ``inalloca`` argument attribute allows the caller to get the
-    address of an outgoing argument to a ``call`` or ``invoke`` before
-    it executes.  It is similar to ``byval`` in that it is used to pass
-    arguments by value, but it guarantees that the argument will not be
-    copied.
+    The ``inalloca`` argument attribute allows the caller to take the
+    address of all stack-allocated arguments to a ``call`` or ``invoke``
+    before it executes.  It is similar to ``byval`` in that it is used
+    to pass arguments by value, but it guarantees that the argument will
+    not be copied.
 
-    To be :ref:`well formed <wellformed>`, the caller must pass in an
-    alloca value into an ``inalloca`` parameter, and an alloca may be
-    used as an ``inalloca`` argument at most once.  The attribute can
-    only be applied to parameters that would be passed in memory and not
-    registers.  The ``inalloca`` attribute cannot be used in conjunction
-    with other attributes that affect argument storage, like ``inreg``,
-    ``nest``, ``sret``, or ``byval``.  The ``inalloca`` stack space is
-    considered to be clobbered by any call that uses it, so any
+    To be :ref:`well formed <wellformed>`, an alloca may be used as an
+    ``inalloca`` argument at most once.  The attribute can only be
+    applied to the last parameter, and it guarantees that they are
+    passed in memory.  The ``inalloca`` attribute cannot be used in
+    conjunction with other attributes that affect argument storage, like
+    ``inreg``, ``nest``, ``sret``, or ``byval``.  The ``inalloca`` stack
+    space is considered to be clobbered by any call that uses it, so any
     ``inalloca`` parameters cannot be marked ``readonly``.
 
-    Allocas passed with ``inalloca`` to a call must be in the opposite
-    order of the parameter list, meaning that the rightmost argument
-    must be allocated first.  If a call has inalloca arguments, no other
-    allocas can occur between the first alloca used by the call and the
-    call site, unless they are are cleared by calls to
-    :ref:`llvm.stackrestore <int_stackrestore>`.  Violating these rules
-    results in undefined behavior at runtime.
+    When the call site is reached, the argument allocation must have
+    been the most recent stack allocation that is still live, or the
+    results are undefined.  It is possible to allocate additional stack
+    space after an argument allocation and before its call site, but it
+    must be cleared off with :ref:`llvm.stackrestore
+    <int_stackrestore>`.
 
     See :doc:`InAlloca` for more information on how to use this
     attribute.
