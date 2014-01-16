@@ -20,7 +20,9 @@ ErrorOr<int> t2() { return errc::invalid_argument; }
 
 TEST(ErrorOr, SimpleValue) {
   ErrorOr<int> a = t1();
-  EXPECT_TRUE(a);
+  // FIXME: This is probably a bug in gtest. EXPECT_TRUE should expand to
+  // include the !! to make it friendly to explicit bool operators.
+  EXPECT_TRUE(!!a);
   EXPECT_EQ(1, *a);
 
   ErrorOr<int> b = a;
