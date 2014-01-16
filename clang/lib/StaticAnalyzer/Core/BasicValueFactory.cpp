@@ -177,7 +177,7 @@ BasicValueFactory::evalAPSInt(BinaryOperator::Opcode Op,
 
       uint64_t Amt = V2.getZExtValue();
 
-      if (Amt > V1.getBitWidth())
+      if (Amt >= V1.getBitWidth())
         return NULL;
 
       return &getValue( V1.operator<<( (unsigned) Amt ));
@@ -195,7 +195,7 @@ BasicValueFactory::evalAPSInt(BinaryOperator::Opcode Op,
 
       uint64_t Amt = V2.getZExtValue();
 
-      if (Amt > V1.getBitWidth())
+      if (Amt >= V1.getBitWidth())
         return NULL;
 
       return &getValue( V1.operator>>( (unsigned) Amt ));
