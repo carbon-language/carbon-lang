@@ -2,51 +2,36 @@
 #
 # RUN: lld -flavor link /out:%t1.dll /dll /entry:init \
 # RUN:   /export:exportfn1 /export:exportfn2 -- %t.obj
-# RUN: llvm-objdump -s %t1.dll | FileCheck -check-prefix=CHECK1 %s
+# RUN: llvm-objdump -p %t1.dll | FileCheck -check-prefix=CHECK1 %s
 
-CHECK1:      Contents of section .edata:
-CHECK1-NEXT:  1000 00000000 {{........}} 00000000 3c100000
-CHECK1-NEXT:  1010 01000000 02000000 02000000 28100000
-CHECK1-NEXT:  1020 30100000 38100000 08200000 10200000
-CHECK1-NEXT:  1030 51100000 5b100000 00000100 6578706f
-CHECK1-NEXT:  1040 72742e74 6573742e 746d7031 2e646c6c
-CHECK1-NEXT:  1050 00657870 6f727466 6e310065 78706f72
-CHECK1-NEXT:  1060 74666e32 00
+CHECK1:      Export Table:
+CHECK1-NEXT: Ordinal      RVA  Name
+CHECK1-NEXT:       1   0x2008  exportfn1
+CHECK1-NEXT:       2   0x2010  exportfn2
 
 # RUN: lld -flavor link /out:%t2.dll /dll /subsystem:console /entry:init \
 # RUN:   /export:exportfn1,@5 /export:exportfn2 -- %t.obj
-# RUN: llvm-objdump -s %t2.dll | FileCheck -check-prefix=CHECK2 %s
+# RUN: llvm-objdump -p %t2.dll | FileCheck -check-prefix=CHECK2 %s
 
-CHECK2:      Contents of section .edata:
-CHECK2-NEXT:  1000 00000000 {{........}} 00000000 3c100000
-CHECK2-NEXT:  1010 05000000 02000000 02000000 28100000
-CHECK2-NEXT:  1020 30100000 38100000 08200000 10200000
-CHECK2-NEXT:  1030 51100000 5b100000 00000100 6578706f
-CHECK2-NEXT:  1040 72742e74 6573742e 746d7032 2e646c6c
-CHECK2-NEXT:  1050 00657870 6f727466 6e310065 78706f72
-CHECK2-NEXT:  1060 74666e32 00
+CHECK2:      Export Table:
+CHECK2-NEXT:  Ordinal      RVA  Name
+CHECK2-NEXT:        5   0x2008  exportfn1
+CHECK2-NEXT:        6   0x2010  exportfn2
 
 # RUN: lld -flavor link /out:%t3.dll /dll /subsystem:console /entry:init \
 # RUN:   /export:exportfn1,@5,noname /export:exportfn2 -- %t.obj
-# RUN: llvm-objdump -s %t3.dll | FileCheck -check-prefix=CHECK3 %s
+# RUN: llvm-objdump -p %t3.dll | FileCheck -check-prefix=CHECK3 %s
 
-CHECK3:      Contents of section .edata:
-CHECK3-NEXT:  1000 00000000 {{........}} 00000000 36100000
-CHECK3-NEXT:  1010 05000000 02000000 01000000 28100000
-CHECK3-NEXT:  1020 30100000 34100000 08200000 10200000
-CHECK3-NEXT:  1030 4b100000 01006578 706f7274 2e746573
-CHECK3-NEXT:  1040 742e746d 70332e64 6c6c0065 78706f72
-CHECK3-NEXT:  1050 74666e32 00
+CHECK3:      Export Table:
+CHECK3-NEXT:  Ordinal      RVA  Name
+CHECK3-NEXT:        5   0x2008
+CHECK3-NEXT:        6   0x2010  exportfn2
 
 # RUN: lld -flavor link /out:%t4.dll /dll /entry:init \
 # RUN:   /def:%p/Inputs/exports.def -- %t.obj
-# RUN: llvm-objdump -s %t4.dll | FileCheck -check-prefix=CHECK4 %s
+# RUN: llvm-objdump -p %t4.dll | FileCheck -check-prefix=CHECK4 %s
 
-CHECK4:      Contents of section .edata:
-CHECK4-NEXT:  1000 00000000 {{........}} 00000000 3c100000
-CHECK4-NEXT:  1010 05000000 02000000 02000000 28100000
-CHECK4-NEXT:  1020 30100000 38100000 08200000 10200000
-CHECK4-NEXT:  1030 51100000 5b100000 00000100 6578706f
-CHECK4-NEXT:  1040 72742e74 6573742e 746d7034 2e646c6c
-CHECK4-NEXT:  1050 00657870 6f727466 6e310065 78706f72
-CHECK4-NEXT:  1060 74666e32 00
+CHECK4:      Export Table:
+CHECK4-NEXT:  Ordinal      RVA  Name
+CHECK4-NEXT:        5   0x2008  exportfn1
+CHECK4-NEXT:        6   0x2010  exportfn2
