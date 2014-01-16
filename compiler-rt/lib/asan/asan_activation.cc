@@ -22,8 +22,8 @@ namespace __asan {
 static struct AsanDeactivatedFlags {
   int quarantine_size;
   int max_redzone;
-  int poison_heap;
   int malloc_context_size;
+  bool poison_heap;
 } asan_deactivated_flags;
 
 static bool asan_is_deactivated;
