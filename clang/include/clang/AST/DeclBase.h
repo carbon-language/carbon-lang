@@ -32,6 +32,7 @@ class DeclarationName;
 class DependentDiagnostic;
 class EnumDecl;
 class FunctionDecl;
+class FunctionType;
 class LinkageComputer;
 class LinkageSpecDecl;
 class Module;
@@ -942,6 +943,11 @@ public:
   // Same as dump(), but forces color printing.
   void dumpColor() const;
   void dump(raw_ostream &Out) const;
+
+  /// \brief Looks through the Decl's underlying type to extract a FunctionType
+  /// when possible. Will return null if the type underlying the Decl does not
+  /// have a FunctionType.
+  const FunctionType *getFunctionType(bool BlocksToo = true) const;
 
 private:
   void setAttrsImpl(const AttrVec& Attrs, ASTContext &Ctx);

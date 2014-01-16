@@ -2061,6 +2061,12 @@ static std::string CalculateDiagnostic(const Record &S) {
   return "";
 }
 
+static std::string GetSubjectWithSuffix(const Record *R) {
+  std::string B = R->getName();
+  if (B == "DeclBase")
+    return "Decl";
+  return B + "Decl";
+}
 static std::string GenerateCustomAppertainsTo(const Record &Subject,
                                               raw_ostream &OS) {
   std::string FnName = "is" + Subject.getName();
@@ -2082,9 +2088,9 @@ static std::string GenerateCustomAppertainsTo(const Record &Subject,
   }
 
   OS << "static bool " << FnName << "(const Decl *D) {\n";
-  OS << "  const " << Base->getName() << "Decl *S = dyn_cast<";
-  OS << Base->getName();
-  OS << "Decl>(D);\n";
+  OS << "  const " << GetSubjectWithSuffix(Base) << " *S = dyn_cast<";
+  OS << GetSubjectWithSuffix(Base);
+  OS << ">(D);\n";
   OS << "  return S && " << Subject.getValueAsString("CheckCode") << ";\n";
   OS << "}\n\n";
 
@@ -2126,7 +2132,7 @@ static std::string GenerateAppertainsTo(const Record &Attr, raw_ostream &OS) {
     if ((*I)->isSubClassOf("SubsetSubject")) {
       SS << "!" << GenerateCustomAppertainsTo(**I, OS) << "(D)";
     } else {
-      SS << "!isa<" << (*I)->getName() << "Decl>(D)";
+      SS << "!isa<" << GetSubjectWithSuffix(*I) << ">(D)";
     }
 
     if (I + 1 != E)

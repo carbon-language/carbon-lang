@@ -56,6 +56,21 @@ def SharedVar : SubsetSubject<Var,
 def GlobalVar : SubsetSubject<Var,
                              [{S->hasGlobalStorage()}]>;
 
+// FIXME: this hack is needed because DeclNodes.td defines the base Decl node
+// type to be a class, not a definition. This makes it impossible to create an
+// attribute subject which accepts a Decl. Normally, this is not a problem,
+// because the attribute can have no Subjects clause to accomplish this. But in
+// the case of a SubsetSubject, there's no way to express it without this hack.
+def DeclBase : AttrSubject;
+def FunctionLike : SubsetSubject<DeclBase,
+                                  [{S->getFunctionType(false) != NULL}]>;
+
+def HasFunctionProto : SubsetSubject<DeclBase,
+                                     [{(S->getFunctionType(true) != NULL &&
+                              isa<FunctionProtoType>(S->getFunctionType())) ||
+                                       isa<ObjCMethodDecl>(S) ||
+                                       isa<BlockDecl>(S)}]>;
+
 // A single argument to an attribute
 class Argument<string name, bit optional> {
   string Name = name;
@@ -426,6 +441,8 @@ def CUDALaunchBounds : InheritableAttr {
   let Spellings = [GNU<"launch_bounds">];
   let Args = [IntArgument<"MaxThreads">, DefaultIntArgument<"MinBlocks", 0>];
   let LangOpts = [CUDA];
+  let Subjects = SubjectList<[ObjCMethod, FunctionLike], WarnDiag,
+                             "ExpectedFunctionOrMethod">;
   // An AST node is created for this attribute, but is not used by other parts
   // of the compiler. However, this node needs to exist in the AST because
   // non-LLVM backends may be relying on the attribute's presence.
@@ -536,11 +553,15 @@ def Format : InheritableAttr {
   let Spellings = [GNU<"format">, CXX11<"gnu", "format">];
   let Args = [IdentifierArgument<"Type">, IntArgument<"FormatIdx">,
               IntArgument<"FirstArg">];
+  let Subjects = SubjectList<[ObjCMethod, Block, FunctionLike,
+                              HasFunctionProto], WarnDiag, "ExpectedFunction">;
 }
 
 def FormatArg : InheritableAttr {
   let Spellings = [GNU<"format_arg">, CXX11<"gnu", "format_arg">];
   let Args = [IntArgument<"FormatIdx">];
+  let Subjects = SubjectList<[ObjCMethod, FunctionLike, HasFunctionProto],
+                             WarnDiag, "ExpectedFunction">;
 }
 
 def GNUInline : InheritableAttr {
@@ -656,6 +677,8 @@ def NoMips16 : InheritableAttr, TargetSpecificAttr<TargetMips> {
 
 def NonNull : InheritableAttr {
   let Spellings = [GNU<"nonnull">, CXX11<"gnu", "nonnull">];
+  let Subjects = SubjectList<[ObjCMethod, FunctionLike, HasFunctionProto],
+                             WarnDiag, "ExpectedFunction">;
   let Args = [VariadicUnsignedArgument<"Args">];
   let AdditionalMembers =
 [{bool isNonNull(unsigned idx) const {
@@ -804,6 +827,8 @@ def Ownership : InheritableAttr {
     }
   }];
   let Args = [IdentifierArgument<"Module">, VariadicUnsignedArgument<"Args">];
+  let Subjects = SubjectList<[FunctionLike, HasFunctionProto], WarnDiag,
+                             "ExpectedFunction">;
 }
 
 def Packed : InheritableAttr {
@@ -930,6 +955,9 @@ def ObjCRequiresPropertyDefs : InheritableAttr {
 
 def Unused : InheritableAttr {
   let Spellings = [GNU<"unused">, CXX11<"gnu", "unused">];
+  let Subjects = SubjectList<[Var, ObjCIvar, Type, Label, Field, ObjCMethod,
+                              FunctionLike], WarnDiag,
+                             "ExpectedVariableFunctionOrLabel">;
 }
 
 def Used : InheritableAttr {
@@ -985,6 +1013,8 @@ def WarnUnusedResult : InheritableAttr {
   let Spellings = [GNU<"warn_unused_result">,
                    CXX11<"clang", "warn_unused_result">,
                    CXX11<"gnu", "warn_unused_result">];
+  let Subjects = SubjectList<[ObjCMethod, CXXRecord, FunctionLike], WarnDiag,
+                             "ExpectedFunctionMethodOrClass">;
 }
 
 def Weak : InheritableAttr {

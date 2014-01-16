@@ -43,52 +43,11 @@ namespace AttributeLangSupport {
 //  Helper functions
 //===----------------------------------------------------------------------===//
 
-static const FunctionType *getFunctionType(const Decl *D,
-                                           bool blocksToo = true) {
-  QualType Ty;
-  if (const ValueDecl *decl = dyn_cast<ValueDecl>(D))
-    Ty = decl->getType();
-  else if (const TypedefNameDecl* decl = dyn_cast<TypedefNameDecl>(D))
-    Ty = decl->getUnderlyingType();
-  else
-    return 0;
-
-  if (Ty->isFunctionPointerType())
-    Ty = Ty->getAs<PointerType>()->getPointeeType();
-  else if (blocksToo && Ty->isBlockPointerType())
-    Ty = Ty->getAs<BlockPointerType>()->getPointeeType();
-
-  return Ty->getAs<FunctionType>();
-}
-
-// FIXME: We should provide an abstraction around a method or function
-// to provide the following bits of information.
-
-/// isFunction - Return true if the given decl has function
-/// type (function or function-typed variable).
-static bool isFunction(const Decl *D) {
-  return getFunctionType(D, false) != NULL;
-}
-
 /// isFunctionOrMethod - Return true if the given decl has function
 /// type (function or function-typed variable) or an Objective-C
 /// method.
 static bool isFunctionOrMethod(const Decl *D) {
-  return isFunction(D) || isa<ObjCMethodDecl>(D);
-}
-
-/// isFunctionOrMethodOrBlock - Return true if the given decl has function
-/// type (function or function-typed variable) or an Objective-C
-/// method or a block.
-static bool isFunctionOrMethodOrBlock(const Decl *D) {
-  if (isFunctionOrMethod(D))
-    return true;
-  // check for block is more involved.
-  if (const VarDecl *V = dyn_cast<VarDecl>(D)) {
-    QualType Ty = V->getType();
-    return Ty->isBlockPointerType();
-  }
-  return isa<BlockDecl>(D);
+  return (D->getFunctionType() != NULL) || isa<ObjCMethodDecl>(D);
 }
 
 /// Return true if the given decl has a declarator that should have
@@ -103,19 +62,16 @@ static bool hasDeclarator(const Decl *D) {
 /// information. This decl should have already passed
 /// isFunctionOrMethod or isFunctionOrMethodOrBlock.
 static bool hasFunctionProto(const Decl *D) {
-  if (const FunctionType *FnTy = getFunctionType(D))
+  if (const FunctionType *FnTy = D->getFunctionType())
     return isa<FunctionProtoType>(FnTy);
-  else {
-    assert(isa<ObjCMethodDecl>(D) || isa<BlockDecl>(D));
-    return true;
-  }
+  return isa<ObjCMethodDecl>(D) || isa<BlockDecl>(D);
 }
 
 /// getFunctionOrMethodNumArgs - Return number of function or method
 /// arguments. It is an error to call this on a K&R function (use
 /// hasFunctionProto first).
 static unsigned getFunctionOrMethodNumArgs(const Decl *D) {
-  if (const FunctionType *FnTy = getFunctionType(D))
+  if (const FunctionType *FnTy = D->getFunctionType())
     return cast<FunctionProtoType>(FnTy)->getNumArgs();
   if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
     return BD->getNumParams();
@@ -123,7 +79,7 @@ static unsigned getFunctionOrMethodNumArgs(const Decl *D) {
 }
 
 static QualType getFunctionOrMethodArgType(const Decl *D, unsigned Idx) {
-  if (const FunctionType *FnTy = getFunctionType(D))
+  if (const FunctionType *FnTy = D->getFunctionType())
     return cast<FunctionProtoType>(FnTy)->getArgType(Idx);
   if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
     return BD->getParamDecl(Idx)->getType();
@@ -132,13 +88,13 @@ static QualType getFunctionOrMethodArgType(const Decl *D, unsigned Idx) {
 }
 
 static QualType getFunctionOrMethodResultType(const Decl *D) {
-  if (const FunctionType *FnTy = getFunctionType(D))
+  if (const FunctionType *FnTy = D->getFunctionType())
     return cast<FunctionProtoType>(FnTy)->getResultType();
   return cast<ObjCMethodDecl>(D)->getResultType();
 }
 
 static bool isFunctionOrMethodVariadic(const Decl *D) {
-  if (const FunctionType *FnTy = getFunctionType(D)) {
+  if (const FunctionType *FnTy = D->getFunctionType()) {
     const FunctionProtoType *proto = cast<FunctionProtoType>(FnTy);
     return proto->isVariadic();
   } else if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
@@ -1201,14 +1157,6 @@ static void possibleTransparentUnionPointerType(QualType &T) {
 }
 
 static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  // GCC ignores the nonnull attribute on K&R style function prototypes, so we
-  // ignore it as well
-  if (!isFunctionOrMethod(D) || !hasFunctionProto(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFunction;
-    return;
-  }
-
   SmallVector<unsigned, 8> NonNullArgs;
   for (unsigned i = 0; i < Attr.getNumArgs(); ++i) {
     Expr *Ex = Attr.getArgAsExpr(i);
@@ -1304,12 +1252,6 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
       return;
     }
     break;
-  }
-
-  if (!isFunction(D) || !hasFunctionProto(D)) {
-    S.Diag(AL.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << AL.getName() << ExpectedFunction;
-    return;
   }
 
   IdentifierInfo *Module = AL.getArgAsIdent(0)->Ident;
@@ -1634,19 +1576,6 @@ static void handleDependencyAttr(Sema &S, Scope *Scope, Decl *D,
   D->addAttr(::new (S.Context) CarriesDependencyAttr(
                                    Attr.getRange(), S.Context,
                                    Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleUnusedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!isa<VarDecl>(D) && !isa<ObjCIvarDecl>(D) && !isFunctionOrMethod(D) &&
-      !isa<TypeDecl>(D) && !isa<LabelDecl>(D) && !isa<FieldDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedVariableFunctionOrLabel;
-    return;
-  }
-
-  D->addAttr(::new (S.Context)
-             UnusedAttr(Attr.getRange(), S.Context,
-                        Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleUsedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -2185,7 +2114,8 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   } else if (const VarDecl *V = dyn_cast<VarDecl>(D)) {
     QualType Ty = V->getType();
     if (Ty->isBlockPointerType() || Ty->isFunctionPointerType()) {
-      const FunctionType *FT = Ty->isFunctionPointerType() ? getFunctionType(D)
+      const FunctionType *FT = Ty->isFunctionPointerType()
+       ? D->getFunctionType()
        : Ty->getAs<BlockPointerType>()->getPointeeType()->getAs<FunctionType>();
       if (!cast<FunctionProtoType>(FT)->isVariadic()) {
         int m = Ty->isFunctionPointerType() ? 0 : 1;
@@ -2208,13 +2138,7 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleWarnUnusedResult(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!isFunction(D) && !isa<ObjCMethodDecl>(D) && !isa<CXXRecordDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFunctionMethodOrClass;
-    return;
-  }
-
-  if (isFunction(D) && getFunctionType(D)->getResultType()->isVoidType()) {
+  if (D->getFunctionType() && D->getFunctionType()->getResultType()->isVoidType()) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_void_function_method)
       << Attr.getName() << 0;
     return;
@@ -2408,12 +2332,6 @@ static void handleCleanupAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 /// Handle __attribute__((format_arg((idx)))) attribute based on
 /// http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
 static void handleFormatArgAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!isFunctionOrMethod(D) || !hasFunctionProto(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFunction;
-    return;
-  }
-
   Expr *IdxExpr = Attr.getArgAsExpr(0);
   uint64_t ArgIdx;
   if (!checkFunctionOrMethodArgumentIndex(S, D, Attr, 1, IdxExpr, ArgIdx))
@@ -2555,12 +2473,6 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!Attr.isArgIdent(0)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
       << Attr.getName() << 1 << AANT_ArgumentIdentifier;
-    return;
-  }
-
-  if (!isFunctionOrMethodOrBlock(D) || !hasFunctionProto(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFunction;
     return;
   }
 
@@ -3292,12 +3204,6 @@ static void handleLaunchBoundsAttr(Sema &S, Decl *D,
     // FIXME: 0 is not okay.
     S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
       << Attr.getName() << 2;
-    return;
-  }
-
-  if (!isFunctionOrMethod(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << ExpectedFunctionOrMethod;
     return;
   }
 
@@ -4120,7 +4026,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_ObjCRequiresPropertyDefs:
     handleSimpleAttribute<ObjCRequiresPropertyDefsAttr>(S, D, Attr); break;
-  case AttributeList::AT_Unused:      handleUnusedAttr      (S, D, Attr); break;
+  case AttributeList::AT_Unused:
+    handleSimpleAttribute<UnusedAttr>(S, D, Attr); break;
   case AttributeList::AT_ReturnsTwice:
     handleSimpleAttribute<ReturnsTwiceAttr>(S, D, Attr); break;
   case AttributeList::AT_Used:        handleUsedAttr        (S, D, Attr); break;

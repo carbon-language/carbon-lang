@@ -701,6 +701,24 @@ bool Decl::AccessDeclContextSanity() const {
 static Decl::Kind getKind(const Decl *D) { return D->getKind(); }
 static Decl::Kind getKind(const DeclContext *DC) { return DC->getDeclKind(); }
 
+const FunctionType *Decl::getFunctionType(bool BlocksToo) const {
+  QualType Ty;
+  if (const ValueDecl *D = dyn_cast<ValueDecl>(this))
+    Ty = D->getType();
+  else if (const TypedefNameDecl *D = dyn_cast<TypedefNameDecl>(this))
+    Ty = D->getUnderlyingType();
+  else
+    return 0;
+
+  if (Ty->isFunctionPointerType())
+    Ty = Ty->getAs<PointerType>()->getPointeeType();
+  else if (BlocksToo && Ty->isBlockPointerType())
+    Ty = Ty->getAs<BlockPointerType>()->getPointeeType();
+
+  return Ty->getAs<FunctionType>();
+}
+
+
 /// Starting at a given context (a Decl or DeclContext), look for a
 /// code context that is not a closure (a lambda, block, etc.).
 template <class T> static Decl *getNonClosureContext(T *D) {
