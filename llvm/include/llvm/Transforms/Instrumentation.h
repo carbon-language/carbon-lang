@@ -66,11 +66,9 @@ ModulePass *createGCOVProfilerPass(const GCOVOptions &Options =
 // Insert AddressSanitizer (address sanity checking) instrumentation
 FunctionPass *createAddressSanitizerFunctionPass(
     bool CheckInitOrder = true, bool CheckUseAfterReturn = false,
-    bool CheckLifetime = false, StringRef BlacklistFile = StringRef(),
-    bool ZeroBaseShadow = false);
+    bool CheckLifetime = false, StringRef BlacklistFile = StringRef());
 ModulePass *createAddressSanitizerModulePass(
-    bool CheckInitOrder = true, StringRef BlacklistFile = StringRef(),
-    bool ZeroBaseShadow = false);
+    bool CheckInitOrder = true, StringRef BlacklistFile = StringRef());
 
 // Insert MemorySanitizer instrumentation (detection of uninitialized reads)
 FunctionPass *createMemorySanitizerPass(bool TrackOrigins = false,

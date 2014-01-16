@@ -234,8 +234,7 @@ struct ShadowMapping {
   bool OrShadowOffset;
 };
 
-static ShadowMapping getShadowMapping(const Module &M, int LongSize,
-                                      bool ZeroBaseShadow) {
+static ShadowMapping getShadowMapping(const Module &M, int LongSize) {
   llvm::Triple TargetTriple(M.getTargetTriple());
   bool IsAndroid = TargetTriple.getEnvironment() == llvm::Triple::Android;
   bool IsMacOSX = TargetTriple.getOS() == llvm::Triple::MacOSX;
@@ -252,15 +251,15 @@ static ShadowMapping getShadowMapping(const Module &M, int LongSize,
   // 1/8-th of the address space.
   Mapping.OrShadowOffset = !IsPPC64 && !ClShort64BitOffset;
 
-  Mapping.Offset = (IsAndroid || ZeroBaseShadow) ? 0 :
+  Mapping.Offset = IsAndroid ? 0 :
       (LongSize == 32 ?
        (IsMIPS32 ? kMIPS32_ShadowOffset32 : kDefaultShadowOffset32) :
        IsPPC64 ? kPPC64_ShadowOffset64 : kDefaultShadowOffset64);
-  if (!ZeroBaseShadow && ClShort64BitOffset && IsX86_64 && !IsMacOSX) {
+  if (!IsAndroid && ClShort64BitOffset && IsX86_64 && !IsMacOSX) {
     assert(LongSize == 64);
     Mapping.Offset = kDefaultShort64bitShadowOffset;
   }
-  if (!ZeroBaseShadow && ClMappingOffsetLog >= 0) {
+  if (!IsAndroid && ClMappingOffsetLog >= 0) {
     // Zero offset log is the special case.
     Mapping.Offset = (ClMappingOffsetLog == 0) ? 0 : 1ULL << ClMappingOffsetLog;
   }
@@ -284,15 +283,13 @@ struct AddressSanitizer : public FunctionPass {
   AddressSanitizer(bool CheckInitOrder = true,
                    bool CheckUseAfterReturn = false,
                    bool CheckLifetime = false,
-                   StringRef BlacklistFile = StringRef(),
-                   bool ZeroBaseShadow = false)
+                   StringRef BlacklistFile = StringRef())
       : FunctionPass(ID),
         CheckInitOrder(CheckInitOrder || ClInitializers),
         CheckUseAfterReturn(CheckUseAfterReturn || ClUseAfterReturn),
         CheckLifetime(CheckLifetime || ClCheckLifetime),
         BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
-                                            : BlacklistFile),
-        ZeroBaseShadow(ZeroBaseShadow) {}
+                                            : BlacklistFile) {}
   virtual const char *getPassName() const {
     return "AddressSanitizerFunctionPass";
   }
@@ -329,7 +326,6 @@ struct AddressSanitizer : public FunctionPass {
   bool CheckUseAfterReturn;
   bool CheckLifetime;
   SmallString<64> BlacklistFile;
-  bool ZeroBaseShadow;
 
   LLVMContext *C;
   DataLayout *TD;
@@ -354,13 +350,11 @@ struct AddressSanitizer : public FunctionPass {
 class AddressSanitizerModule : public ModulePass {
  public:
   AddressSanitizerModule(bool CheckInitOrder = true,
-                         StringRef BlacklistFile = StringRef(),
-                         bool ZeroBaseShadow = false)
+                         StringRef BlacklistFile = StringRef())
       : ModulePass(ID),
         CheckInitOrder(CheckInitOrder || ClInitializers),
         BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
-                                            : BlacklistFile),
-        ZeroBaseShadow(ZeroBaseShadow) {}
+                                            : BlacklistFile) {}
   bool runOnModule(Module &M);
   static char ID;  // Pass identification, replacement for typeid
   virtual const char *getPassName() const {
@@ -378,7 +372,6 @@ class AddressSanitizerModule : public ModulePass {
 
   bool CheckInitOrder;
   SmallString<64> BlacklistFile;
-  bool ZeroBaseShadow;
 
   OwningPtr<SpecialCaseList> BL;
   SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
@@ -536,9 +529,9 @@ INITIALIZE_PASS(AddressSanitizer, "asan",
     false, false)
 FunctionPass *llvm::createAddressSanitizerFunctionPass(
     bool CheckInitOrder, bool CheckUseAfterReturn, bool CheckLifetime,
-    StringRef BlacklistFile, bool ZeroBaseShadow) {
+    StringRef BlacklistFile) {
   return new AddressSanitizer(CheckInitOrder, CheckUseAfterReturn,
-                              CheckLifetime, BlacklistFile, ZeroBaseShadow);
+                              CheckLifetime, BlacklistFile);
 }
 
 char AddressSanitizerModule::ID = 0;
@@ -546,9 +539,8 @@ INITIALIZE_PASS(AddressSanitizerModule, "asan-module",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs."
     "ModulePass", false, false)
 ModulePass *llvm::createAddressSanitizerModulePass(
-    bool CheckInitOrder, StringRef BlacklistFile, bool ZeroBaseShadow) {
-  return new AddressSanitizerModule(CheckInitOrder, BlacklistFile,
-                                    ZeroBaseShadow);
+    bool CheckInitOrder, StringRef BlacklistFile) {
+  return new AddressSanitizerModule(CheckInitOrder, BlacklistFile);
 }
 
 static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
@@ -926,7 +918,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   C = &(M.getContext());
   int LongSize = TD->getPointerSizeInBits();
   IntptrTy = Type::getIntNTy(*C, LongSize);
-  Mapping = getShadowMapping(M, LongSize, ZeroBaseShadow);
+  Mapping = getShadowMapping(M, LongSize);
   initializeCallbacks(M);
   DynamicallyInitializedGlobals.Init(M);
 
@@ -1133,7 +1125,7 @@ bool AddressSanitizer::doInitialization(Module &M) {
   AsanInitFunction->setLinkage(Function::ExternalLinkage);
   IRB.CreateCall(AsanInitFunction);
 
-  Mapping = getShadowMapping(M, LongSize, ZeroBaseShadow);
+  Mapping = getShadowMapping(M, LongSize);
   emitShadowMapping(M, IRB);
 
   appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndCtorPriority);
