@@ -180,12 +180,10 @@ static void addAddressSanitizerPasses(const PassManagerBuilder &Builder,
       LangOpts.Sanitize.InitOrder,
       LangOpts.Sanitize.UseAfterReturn,
       LangOpts.Sanitize.UseAfterScope,
-      CGOpts.SanitizerBlacklistFile,
-      CGOpts.SanitizeAddressZeroBaseShadow));
+      CGOpts.SanitizerBlacklistFile));
   PM.add(createAddressSanitizerModulePass(
       LangOpts.Sanitize.InitOrder,
-      CGOpts.SanitizerBlacklistFile,
-      CGOpts.SanitizeAddressZeroBaseShadow));
+      CGOpts.SanitizerBlacklistFile));
 }
 
 static void addMemorySanitizerPass(const PassManagerBuilder &Builder,
