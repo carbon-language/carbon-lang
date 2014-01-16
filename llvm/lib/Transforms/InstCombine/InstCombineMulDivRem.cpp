@@ -426,6 +426,16 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
         return NV;
 
     ConstantFP *C = dyn_cast<ConstantFP>(Op1);
+
+    // (fmul X, -1.0) --> (fsub -0.0, X)
+    if (C && C->isExactlyValue(-1.0)) {
+      Instruction *RI = BinaryOperator::CreateFSub(
+        ConstantFP::getNegativeZero(C->getType()),
+        Op0);
+      RI->copyFastMathFlags(&I);
+      return RI;
+    }
+
     if (C && AllowReassociate && C->getValueAPF().isFiniteNonZero()) {
       // Let MDC denote an expression in one of these forms:
       // X * C, C/X, X/C, where C is a constant.

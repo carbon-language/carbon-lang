@@ -93,3 +93,15 @@ for.body:                                         ; preds = %for.cond
 for.end:                                          ; preds = %for.cond
   ret void
 }
+
+; X * -1.0 => -0.0 - X
+define float @test9(float %x) {
+  %mul = fmul float %x, -1.0
+  ret float %mul
+
+; CHECK-LABEL: @test9(
+; CHECK-NOT: fmul
+; CHECK: fsub
+}
+
+
