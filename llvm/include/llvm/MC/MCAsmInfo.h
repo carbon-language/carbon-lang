@@ -101,10 +101,6 @@ namespace llvm {
     /// instructions from each other when on the same line.
     const char *SeparatorString;             // Defaults to ';'
 
-    /// CommentColumn - This indicates the comment num (zero-based) at
-    /// which asm comments should be printed.
-    unsigned CommentColumn;                  // Defaults to 40
-
     /// CommentString - This indicates the comment character used by the
     /// assembler.
     const char *CommentString;               // Defaults to "#"
@@ -407,9 +403,13 @@ namespace llvm {
     const char *getSeparatorString() const {
       return SeparatorString;
     }
+
+    /// This indicates the column (zero-based) at which asm comments should be
+    /// printed.
     unsigned getCommentColumn() const {
-      return CommentColumn;
+      return 40;
     }
+
     const char *getCommentString() const {
       return CommentString;
     }

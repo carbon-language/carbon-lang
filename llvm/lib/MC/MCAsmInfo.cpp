@@ -37,7 +37,6 @@ MCAsmInfo::MCAsmInfo() {
   MinInstAlignment = 1;
   DollarIsPC = false;
   SeparatorString = ";";
-  CommentColumn = 40;
   CommentString = "#";
   LabelSuffix = ":";
   DebugLabelSuffix = ":";

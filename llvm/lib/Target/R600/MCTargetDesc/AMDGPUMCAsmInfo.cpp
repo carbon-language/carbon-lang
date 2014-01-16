@@ -21,7 +21,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   LinkerRequiresNonEmptyDwarfLines = true;
   MaxInstLength = 16;
   SeparatorString = "\n";
-  CommentColumn = 40;
   CommentString = ";";
   LabelSuffix = ":";
   InlineAsmStart = ";#ASMSTART";
