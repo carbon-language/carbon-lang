@@ -17,7 +17,6 @@ def IMULDIV : FuncUnit;
 // Instruction Itinerary classes used for Mips
 //===----------------------------------------------------------------------===//
 def IIAlu              : InstrItinClass;
-def IILogic            : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIXfer             : InstrItinClass;
@@ -48,6 +47,7 @@ def II_ADDI             : InstrItinClass;
 def II_ADDIU            : InstrItinClass;
 def II_ADDU             : InstrItinClass;
 def II_AND              : InstrItinClass;
+def II_ANDI             : InstrItinClass;
 def II_CLO              : InstrItinClass;
 def II_CLZ              : InstrItinClass;
 def II_DADDIU           : InstrItinClass;
@@ -84,6 +84,7 @@ def II_SRL              : InstrItinClass;
 def II_SRLV             : InstrItinClass;
 def II_SUBU             : InstrItinClass;
 def II_XOR              : InstrItinClass;
+def II_XORI             : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
 // Mips Generic instruction itineraries.
@@ -125,7 +126,9 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_RDHWR           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_SUBU            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_XOR             , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<IILogic            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_ANDI            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_ORI             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_XORI            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IILoad             , [InstrStage<3,  [ALU]>]>,
   InstrItinData<IIStore            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IIXfer             , [InstrStage<2,  [ALU]>]>,

@@ -63,14 +63,11 @@ def SLTi64  : SetCC_I<"slti", setlt, simm16_64, immSExt16, GPR64Opnd>,
               SLTI_FM<0xa>;
 def SLTiu64 : SetCC_I<"sltiu", setult, simm16_64, immSExt16, GPR64Opnd>,
               SLTI_FM<0xb>;
-def ANDi64 : ArithLogicI<"andi", uimm16_64, GPR64Opnd, IILogic, immZExt16,
-                         and>,
+def ANDi64 : ArithLogicI<"andi", uimm16_64, GPR64Opnd, II_AND, immZExt16, and>,
              ADDI_FM<0xc>;
-def ORi64   : ArithLogicI<"ori", uimm16_64, GPR64Opnd, IILogic, immZExt16,
-                          or>,
+def ORi64   : ArithLogicI<"ori", uimm16_64, GPR64Opnd, II_OR, immZExt16, or>,
               ADDI_FM<0xd>;
-def XORi64  : ArithLogicI<"xori", uimm16_64, GPR64Opnd, IILogic, immZExt16,
-                          xor>,
+def XORi64  : ArithLogicI<"xori", uimm16_64, GPR64Opnd, II_XOR, immZExt16, xor>,
               ADDI_FM<0xe>;
 def LUi64   : LoadUpper<"lui", GPR64Opnd, uimm16_64>, LUI_FM;
 }
