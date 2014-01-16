@@ -21,6 +21,7 @@
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
 #include "sanitizer_symbolizer.h"
+#include "sanitizer_symbolizer_libbacktrace.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -386,10 +387,12 @@ class InternalSymbolizer {
 class POSIXSymbolizer : public Symbolizer {
  public:
   POSIXSymbolizer(ExternalSymbolizer *external_symbolizer,
-                  InternalSymbolizer *internal_symbolizer)
+                  InternalSymbolizer *internal_symbolizer,
+                  LibbacktraceSymbolizer *libbacktrace_symbolizer)
       : Symbolizer(),
         external_symbolizer_(external_symbolizer),
-        internal_symbolizer_(internal_symbolizer) {}
+        internal_symbolizer_(internal_symbolizer),
+        libbacktrace_symbolizer_(libbacktrace_symbolizer) {}
 
   uptr SymbolizePC(uptr addr, AddressInfo *frames, uptr max_frames) {
     BlockingMutexLock l(&mu_);
@@ -399,9 +402,17 @@ class POSIXSymbolizer : public Symbolizer {
     uptr module_offset;
     if (!FindModuleNameAndOffsetForAddress(addr, &module_name, &module_offset))
       return 0;
+    // First, try to use libbacktrace symbolizer (if it's available).
+    if (libbacktrace_symbolizer_ != 0) {
+      mu_.CheckLocked();
+      uptr res = libbacktrace_symbolizer_->SymbolizeCode(
+          addr, frames, max_frames, module_name, module_offset);
+      if (res > 0)
+        return res;
+    }
     const char *str = SendCommand(false, module_name, module_offset);
     if (str == 0) {
-      // External symbolizer was not initialized or failed. Fill only data
+      // Symbolizer was not initialized or failed. Fill only data
       // about module name and offset.
       AddressInfo *info = &frames[0];
       info->Clear();
@@ -462,6 +473,12 @@ class POSIXSymbolizer : public Symbolizer {
     info->address = addr;
     info->module = internal_strdup(module_name);
     info->module_offset = module_offset;
+    // First, try to use libbacktrace symbolizer (if it's available).
+    if (libbacktrace_symbolizer_ != 0) {
+      mu_.CheckLocked();
+      if (libbacktrace_symbolizer_->SymbolizeData(info))
+        return true;
+    }
     const char *str = SendCommand(true, module_name, module_offset);
     if (str == 0)
       return true;
@@ -479,7 +496,8 @@ class POSIXSymbolizer : public Symbolizer {
   }
 
   bool CanReturnFileLineInfo() {
-    return internal_symbolizer_ != 0 || external_symbolizer_ != 0;
+    return internal_symbolizer_ != 0 || external_symbolizer_ != 0 ||
+           libbacktrace_symbolizer_ != 0;
   }
 
   void Flush() {
@@ -497,6 +515,11 @@ class POSIXSymbolizer : public Symbolizer {
     // Run hooks even if we don't use internal symbolizer, as cxxabi
     // demangle may call system functions.
     SymbolizerScope sym_scope(this);
+    // Try to use libbacktrace demangler (if available).
+    if (libbacktrace_symbolizer_ != 0) {
+      if (const char *demangled = libbacktrace_symbolizer_->Demangle(name))
+        return demangled;
+    }
     if (internal_symbolizer_ != 0)
       return internal_symbolizer_->Demangle(name);
     return DemangleCXXABI(name);
@@ -578,24 +601,30 @@ class POSIXSymbolizer : public Symbolizer {
 
   ExternalSymbolizer *external_symbolizer_;        // Leaked.
   InternalSymbolizer *const internal_symbolizer_;  // Leaked.
+  LibbacktraceSymbolizer *libbacktrace_symbolizer_;  // Leaked.
 };
 
 Symbolizer *Symbolizer::PlatformInit(const char *path_to_external) {
   InternalSymbolizer* internal_symbolizer =
       InternalSymbolizer::get(&symbolizer_allocator_);
   ExternalSymbolizer *external_symbolizer = 0;
+  LibbacktraceSymbolizer *libbacktrace_symbolizer = 0;
 
   if (!internal_symbolizer) {
-    // Find path to llvm-symbolizer if it's not provided.
-    if (!path_to_external)
-      path_to_external = FindPathToBinary("llvm-symbolizer");
-    if (path_to_external && path_to_external[0] != '\0')
-      external_symbolizer = new(symbolizer_allocator_)
-          ExternalSymbolizer(path_to_external);
+    libbacktrace_symbolizer =
+        LibbacktraceSymbolizer::get(&symbolizer_allocator_);
+    if (!libbacktrace_symbolizer) {
+      // Find path to llvm-symbolizer if it's not provided.
+      if (!path_to_external)
+        path_to_external = FindPathToBinary("llvm-symbolizer");
+      if (path_to_external && path_to_external[0] != '\0')
+        external_symbolizer = new(symbolizer_allocator_)
+            ExternalSymbolizer(path_to_external);
+    }
   }
 
-  return new(symbolizer_allocator_)
-      POSIXSymbolizer(external_symbolizer, internal_symbolizer);
+  return new(symbolizer_allocator_) POSIXSymbolizer(
+      external_symbolizer, internal_symbolizer, libbacktrace_symbolizer);
 }
 
 }  // namespace __sanitizer

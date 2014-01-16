@@ -20,6 +20,7 @@ set(SANITIZER_SOURCES
   sanitizer_stacktrace.cc
   sanitizer_suppressions.cc
   sanitizer_symbolizer.cc
+  sanitizer_symbolizer_libbacktrace.cc
   sanitizer_symbolizer_win.cc
   sanitizer_thread_registry.cc
   sanitizer_win.cc)
@@ -67,6 +68,7 @@ set(SANITIZER_HEADERS
   sanitizer_stoptheworld.h
   sanitizer_suppressions.h
   sanitizer_symbolizer.h
+  sanitizer_symbolizer_libbacktrace.h
   sanitizer_syscall_generic.inc
   sanitizer_syscall_linux_x86_64.inc
   sanitizer_thread_registry.h)
