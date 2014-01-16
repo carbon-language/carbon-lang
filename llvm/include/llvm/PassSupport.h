@@ -30,6 +30,7 @@
 
 namespace llvm {
 
+class TargetMachine;
 //===---------------------------------------------------------------------------
 /// PassInfo class - An instance of this class exists for every pass known by
 /// the system, and can be obtained from a live Pass by calling its
@@ -39,6 +40,7 @@ namespace llvm {
 class PassInfo {
 public:
   typedef Pass* (*NormalCtor_t)();
+  typedef Pass *(*TargetMachineCtor_t)(TargetMachine *);
 
 private:
   const char      *const PassName;     // Nice name for Pass
@@ -50,22 +52,26 @@ private:
   std::vector<const PassInfo*> ItfImpl;// Interfaces implemented by this pass
 
   NormalCtor_t NormalCtor;
+  TargetMachineCtor_t TargetMachineCtor;
 
 public:
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass.
   PassInfo(const char *name, const char *arg, const void *pi,
-           NormalCtor_t normal, bool isCFGOnly, bool is_analysis)
+           NormalCtor_t normal, bool isCFGOnly, bool is_analysis,
+           TargetMachineCtor_t machine = NULL)
     : PassName(name), PassArgument(arg), PassID(pi), 
       IsCFGOnlyPass(isCFGOnly), 
-      IsAnalysis(is_analysis), IsAnalysisGroup(false), NormalCtor(normal) { }
+      IsAnalysis(is_analysis), IsAnalysisGroup(false), NormalCtor(normal),
+      TargetMachineCtor(machine) {}
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass. This version is for use by analysis groups; it
   /// does not auto-register the pass.
   PassInfo(const char *name, const void *pi)
     : PassName(name), PassArgument(""), PassID(pi), 
       IsCFGOnlyPass(false), 
-      IsAnalysis(false), IsAnalysisGroup(true), NormalCtor(0) { }
+      IsAnalysis(false), IsAnalysisGroup(true), NormalCtor(0),
+      TargetMachineCtor(0) {}
 
   /// getPassName - Return the friendly name for the pass, never returns null
   ///
@@ -105,6 +111,16 @@ public:
   }
   void setNormalCtor(NormalCtor_t Ctor) {
     NormalCtor = Ctor;
+  }
+
+  /// getTargetMachineCtor - Return a pointer to a function, that when called
+  /// with a TargetMachine, creates an instance of the pass and returns it.
+  /// This pointer may be null if there is no constructor with a TargetMachine
+  /// for the pass.
+  ///
+  TargetMachineCtor_t getTargetMachineCtor() const { return TargetMachineCtor; }
+  void setTargetMachineCtor(TargetMachineCtor_t Ctor) {
+    TargetMachineCtor = Ctor;
   }
 
   /// createPass() - Use this method to create an instance of this pass.
@@ -181,6 +197,10 @@ private:
 
 template<typename PassName>
 Pass *callDefaultCtor() { return new PassName(); }
+
+template <typename PassName> Pass *callTargetMachineCtor(TargetMachine *TM) {
+  return new PassName(TM);
+}
 
 //===---------------------------------------------------------------------------
 /// RegisterPass<t> template - This template class is used to notify the system

@@ -179,6 +179,8 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
       assert(ImplementationInfo->getNormalCtor() &&
            "Cannot specify pass as default if it does not have a default ctor");
       InterfaceInfo->setNormalCtor(ImplementationInfo->getNormalCtor());
+      InterfaceInfo->setTargetMachineCtor(
+          ImplementationInfo->getTargetMachineCtor());
     }
   }
   

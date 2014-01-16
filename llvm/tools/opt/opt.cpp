@@ -795,7 +795,9 @@ int main(int argc, char **argv) {
 
     const PassInfo *PassInf = PassList[i];
     Pass *P = 0;
-    if (PassInf->getNormalCtor())
+    if (PassInf->getTargetMachineCtor())
+      P = PassInf->getTargetMachineCtor()(TM.get());
+    else if (PassInf->getNormalCtor())
       P = PassInf->getNormalCtor()();
     else
       errs() << argv[0] << ": cannot create pass: "

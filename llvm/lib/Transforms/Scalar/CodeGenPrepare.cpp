@@ -129,11 +129,19 @@ namespace {
 }
 
 char CodeGenPrepare::ID = 0;
-INITIALIZE_PASS_BEGIN(CodeGenPrepare, "codegenprepare",
-                "Optimize for code generation", false, false)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
-INITIALIZE_PASS_END(CodeGenPrepare, "codegenprepare",
-                "Optimize for code generation", false, false)
+static void *initializeCodeGenPreparePassOnce(PassRegistry &Registry) {
+  initializeTargetLibraryInfoPass(Registry);
+  PassInfo *PI = new PassInfo(
+      "Optimize for code generation", "codegenprepare", &CodeGenPrepare::ID,
+      PassInfo::NormalCtor_t(callDefaultCtor<CodeGenPrepare>), false, false,
+      PassInfo::TargetMachineCtor_t(callTargetMachineCtor<CodeGenPrepare>));
+  Registry.registerPass(*PI, true);
+  return PI;
+}
+
+void llvm::initializeCodeGenPreparePass(PassRegistry &Registry) {
+  CALL_ONCE_INITIALIZATION(initializeCodeGenPreparePassOnce)
+}
 
 FunctionPass *llvm::createCodeGenPreparePass(const TargetMachine *TM) {
   return new CodeGenPrepare(TM);
