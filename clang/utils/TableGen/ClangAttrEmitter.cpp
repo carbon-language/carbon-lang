@@ -1200,7 +1200,12 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
                          SpellingNamesAreCommon(Spellings);
 
     if (!ElideSpelling) {
+      // The enumerants are automatically generated based on the variety,
+      // namespace (if present) and name for each attribute spelling. However,
+      // care is taken to avoid trampling on the reserved namespace due to
+      // underscores.
       OS << "  enum Spelling {\n";
+      std::set<std::string> Uniques;
       for (std::vector<Record *>::const_iterator I = Spellings.begin(),
            E = Spellings.end(); I != E; ++I) {
         if (I != Spellings.begin())
@@ -1209,14 +1214,25 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
         std::string Variety = S.getValueAsString("Variety");
         std::string Spelling = S.getValueAsString("Name");
         std::string Namespace = "";
+        std::string EnumName = "";
 
         if (Variety == "CXX11")
           Namespace = S.getValueAsString("Namespace");
 
-        OS << "    " << Variety << "_";
+        EnumName += (Variety + "_");
         if (!Namespace.empty())
-          OS << Namespace << "_";
-        OS << Spelling;
+          EnumName += (NormalizeNameForSpellingComparison(Namespace).str() +
+                      "_");
+        EnumName += NormalizeNameForSpellingComparison(Spelling);
+
+        // Since we have been stripping underscores to avoid trampling on the
+        // reserved namespace, we may have inadvertantly created duplicate
+        // enumerant names. Unique the name if required.
+        while (Uniques.find(EnumName) != Uniques.end())
+          EnumName += "_alternate";
+        Uniques.insert(EnumName);
+
+        OS << "    " << EnumName;
       }
       OS << "\n  };\n\n";
     }
