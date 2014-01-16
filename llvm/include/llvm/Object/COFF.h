@@ -406,9 +406,11 @@ public:
 
   bool operator==(const ExportDirectoryEntryRef &Other) const;
   error_code getNext(ExportDirectoryEntryRef &Result) const;
+
+  error_code getDllName(StringRef &Result) const;
   error_code getOrdinal(uint32_t &Result) const;
   error_code getExportRVA(uint32_t &Result) const;
-  error_code getName(StringRef &Result) const;
+  error_code getSymbolName(StringRef &Result) const;
 
 private:
   const export_directory_table_entry *ExportTable;

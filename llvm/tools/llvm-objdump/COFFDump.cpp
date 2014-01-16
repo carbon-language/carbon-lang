@@ -279,6 +279,10 @@ static void printExportTable(const COFFObjectFile *Obj) {
   export_directory_iterator E = Obj->export_directory_end();
   if (I == E)
     return;
+  StringRef DllName;
+  if (I->getDllName(DllName))
+    return;
+  outs() << " DLL name: " << DllName << "\n";
   outs() << " Ordinal      RVA  Name\n";
   error_code EC;
   for (; I != E; I = I.increment(EC)) {
@@ -293,7 +297,7 @@ static void printExportTable(const COFFObjectFile *Obj) {
     outs() << format("    % 4d %# 8x", Ordinal, RVA);
 
     StringRef Name;
-    if (I->getName(Name))
+    if (I->getSymbolName(Name))
       continue;
     if (!Name.empty())
       outs() << "  " << Name;

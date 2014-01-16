@@ -949,6 +949,16 @@ ExportDirectoryEntryRef::getNext(ExportDirectoryEntryRef &Result) const {
   return object_error::success;
 }
 
+// Returns the name of the current export symbol. If the symbol is exported only
+// by ordinal, the empty string is set as a result.
+error_code ExportDirectoryEntryRef::getDllName(StringRef &Result) const {
+  uintptr_t IntPtr = 0;
+  if (error_code EC = OwningObject->getRvaPtr(ExportTable->NameRVA, IntPtr))
+    return EC;
+  Result = StringRef(reinterpret_cast<const char *>(IntPtr));
+  return object_error::success;
+}
+
 // Returns the export ordinal of the current export symbol.
 error_code ExportDirectoryEntryRef::getOrdinal(uint32_t &Result) const {
   Result = ExportTable->OrdinalBase + Index;
@@ -968,7 +978,7 @@ error_code ExportDirectoryEntryRef::getExportRVA(uint32_t &Result) const {
 
 // Returns the name of the current export symbol. If the symbol is exported only
 // by ordinal, the empty string is set as a result.
-error_code ExportDirectoryEntryRef::getName(StringRef &Result) const {
+error_code ExportDirectoryEntryRef::getSymbolName(StringRef &Result) const {
   uintptr_t IntPtr = 0;
   if (error_code EC = OwningObject->getRvaPtr(
           ExportTable->OrdinalTableRVA, IntPtr))
