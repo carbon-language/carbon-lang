@@ -188,8 +188,8 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def CLO_MM : MMRel, CountLeading1<"clo", GPR32Opnd>, CLO_FM_MM<0x12c>;
 
   /// Sign Ext In Register Instructions.
-  def SEB_MM : MMRel, SignExtInReg<"seb", i8, GPR32Opnd>, SEB_FM_MM<0x0ac>;
-  def SEH_MM : MMRel, SignExtInReg<"seh", i16, GPR32Opnd>, SEB_FM_MM<0x0ec>;
+  def SEB_MM : MMRel, SignExtInReg<"seb", i8, GPR32Opnd, II_SEB>, SEB_FM_MM<0x0ac>;
+  def SEH_MM : MMRel, SignExtInReg<"seh", i16, GPR32Opnd, II_SEH>, SEB_FM_MM<0x0ec>;
 
   /// Word Swap Bytes Within Halfwords
   def WSBH_MM : MMRel, SubwordSwap<"wsbh", GPR32Opnd>, SEB_FM_MM<0x1ec>;

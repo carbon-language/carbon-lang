@@ -768,9 +768,10 @@ class CountLeading1<string opstr, RegisterOperand RO>:
 
 
 // Sign Extend in Register.
-class SignExtInReg<string opstr, ValueType vt, RegisterOperand RO> :
+class SignExtInReg<string opstr, ValueType vt, RegisterOperand RO,
+                   InstrItinClass itin> :
   InstSE<(outs RO:$rd), (ins RO:$rt), !strconcat(opstr, "\t$rd, $rt"),
-         [(set RO:$rd, (sext_inreg RO:$rt, vt))], IIseb, FrmR, opstr> {
+         [(set RO:$rd, (sext_inreg RO:$rt, vt))], itin, FrmR, opstr> {
   let Predicates = [HasSEInReg, HasStdEnc];
 }
 
@@ -1082,8 +1083,8 @@ def MFHI : MMRel, MoveFromLOHI<"mfhi", GPR32Opnd, AC0>, MFLO_FM<0x10>;
 def MFLO : MMRel, MoveFromLOHI<"mflo", GPR32Opnd, AC0>, MFLO_FM<0x12>;
 
 /// Sign Ext In Register Instructions.
-def SEB : MMRel, SignExtInReg<"seb", i8, GPR32Opnd>, SEB_FM<0x10, 0x20>;
-def SEH : MMRel, SignExtInReg<"seh", i16, GPR32Opnd>, SEB_FM<0x18, 0x20>;
+def SEB : MMRel, SignExtInReg<"seb", i8, GPR32Opnd, II_SEB>, SEB_FM<0x10, 0x20>;
+def SEH : MMRel, SignExtInReg<"seh", i16, GPR32Opnd, II_SEH>, SEB_FM<0x18, 0x20>;
 
 /// Count Leading
 def CLZ : MMRel, CountLeading0<"clz", GPR32Opnd>, CLO_FM<0x20>;
