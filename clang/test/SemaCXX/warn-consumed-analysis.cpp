@@ -51,7 +51,7 @@ public:
 
 class CONSUMABLE(unconsumed) DestructorTester {
 public:
-  DestructorTester() RETURN_TYPESTATE(unconsumed);
+  DestructorTester();
   DestructorTester(int);
   
   void operator*() CALLABLE_WHEN("unconsumed");
@@ -82,11 +82,21 @@ ConsumableClass<int> returnsUnknown() RETURN_TYPESTATE(unknown);
 void testInitialization() {
   ConsumableClass<int> var0;
   ConsumableClass<int> var1 = ConsumableClass<int>();
-  
-  var0 = ConsumableClass<int>();
-  
+  ConsumableClass<int> var2(42);
+  ConsumableClass<int> var3(var2);  // copy constructor
+  ConsumableClass<int> var4(var0);  // copy consumed value
+
   *var0; // expected-warning {{invalid invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
   *var1; // expected-warning {{invalid invocation of method 'operator*' on object 'var1' while it is in the 'consumed' state}}
+  *var2;
+  *var3;
+  *var4; // expected-warning {{invalid invocation of method 'operator*' on object 'var4' while it is in the 'consumed' state}}
+
+  var0 = ConsumableClass<int>(42);
+  *var0;
+  
+  var0 = var1;
+  *var0; // expected-warning {{invalid invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
   
   if (var0.isValid()) {
     *var0;
@@ -98,19 +108,16 @@ void testInitialization() {
 }
 
 void testDestruction() {
-  DestructorTester D0(42), D1(42);
+  DestructorTester D0(42), D1(42), D2;
   
   *D0;
   *D1;
-  
-  DestructorTester D2;
-  *D2;
+  *D2; // expected-warning {{invalid invocation of method 'operator*' on object 'D2' while it is in the 'consumed' state}}
   
   D0.~DestructorTester(); // expected-warning {{invalid invocation of method '~DestructorTester' on object 'D0' while it is in the 'unconsumed' state}}
   
   return; // expected-warning {{invalid invocation of method '~DestructorTester' on object 'D0' while it is in the 'unconsumed' state}} \
-             expected-warning {{invalid invocation of method '~DestructorTester' on object 'D1' while it is in the 'unconsumed' state}} \
-             expected-warning {{invalid invocation of method '~DestructorTester' on object 'D2' while it is in the 'unconsumed' state}}
+             expected-warning {{invalid invocation of method '~DestructorTester' on object 'D1' while it is in the 'unconsumed' state}}
 }
 
 void testTempValue() {
@@ -425,6 +432,29 @@ void testParamTypestateCaller() {
   ConsumableClass<int> Var0, Var1(42);
   
   testParamTypestateCallee(Var0, Var1); // expected-warning {{argument not in expected state; expected 'consumed', observed 'unconsumed'}}
+}
+
+
+void consumeFunc(ConsumableClass<int> P PARAM_TYPESTATE(unconsumed));
+struct ParamTest {
+  static void consumeFuncStatic(ConsumableClass<int> P PARAM_TYPESTATE(unconsumed));
+  void consumeFuncMeth(ConsumableClass<int> P PARAM_TYPESTATE(unconsumed));
+  void operator<<(ConsumableClass<int> P PARAM_TYPESTATE(unconsumed));
+};
+
+void operator>>(ParamTest& pt, ConsumableClass<int> P PARAM_TYPESTATE(unconsumed));
+
+
+void testFunctionParams() {
+  // Make sure we handle the different kinds of functions.
+  ConsumableClass<int> P;
+
+  consumeFunc(P);                   // expected-warning {{argument not in expected state; expected 'unconsumed', observed 'consumed'}}
+  ParamTest::consumeFuncStatic(P);  // expected-warning {{argument not in expected state; expected 'unconsumed', observed 'consumed'}}
+  ParamTest pt;
+  pt.consumeFuncMeth(P);            // expected-warning {{argument not in expected state; expected 'unconsumed', observed 'consumed'}}
+  pt << P;                          // expected-warning {{argument not in expected state; expected 'unconsumed', observed 'consumed'}}
+  pt >> P;                          // expected-warning {{argument not in expected state; expected 'unconsumed', observed 'consumed'}}
 }
 
 void baf3(ConsumableClass<int> var) {

@@ -183,11 +183,8 @@ static bool isKnownState(ConsumedState State) {
   llvm_unreachable("invalid enum");
 }
 
-static bool isRValueRefish(QualType ParamType) {
-  return ParamType->isRValueReferenceType(); /* ||
-        (ParamType->isLValueReferenceType() &&
-         !cast<LValueReferenceType>(
-           ParamType.getCanonicalType())->isSpelledAsLValue()); */
+static bool isRValueRef(QualType ParamType) {
+  return ParamType->isRValueReferenceType();
 }
 
 static bool isTestingFunction(const FunctionDecl *FunDecl) {
@@ -607,8 +604,8 @@ void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PInfo,
 bool ConsumedStmtVisitor::handleCall(const CallExpr *Call, const Expr *ObjArg,
                                      const FunctionDecl *FunD) {
   unsigned Offset = 0;
-  if (isa<CXXMethodDecl>(FunD))
-    Offset = 1;  // First argument to call is 'this' parameter
+  if (isa<CXXOperatorCallExpr>(Call) && isa<CXXMethodDecl>(FunD))
+    Offset = 1;  // first argument is 'this'
 
   // check explicit parameters
   for (unsigned Index = Offset; Index < Call->getNumArgs(); ++Index) {
@@ -640,15 +637,14 @@ bool ConsumedStmtVisitor::handleCall(const CallExpr *Call, const Expr *ObjArg,
       continue;
 
     // Adjust state on the caller side.
-    if (isRValueRefish(ParamType))
+    if (isRValueRef(ParamType))
       setStateForVarOrTmp(StateMap, PInfo, consumed::CS_Consumed);
     else if (ReturnTypestateAttr *RT = Param->getAttr<ReturnTypestateAttr>())
       setStateForVarOrTmp(StateMap, PInfo, mapReturnTypestateAttrState(RT));
-    else if (isPointerOrRef(ParamType)) {
-      if (!ParamType->getPointeeType().isConstQualified() ||
-          isSetOnReadPtrType(ParamType))
-        setStateForVarOrTmp(StateMap, PInfo, consumed::CS_Unknown);
-    }
+    else if (isPointerOrRef(ParamType) &&
+             (!ParamType->getPointeeType().isConstQualified() ||
+              isSetOnReadPtrType(ParamType)))
+      setStateForVarOrTmp(StateMap, PInfo, consumed::CS_Unknown);
   }
 
   if (!ObjArg)
@@ -885,11 +881,11 @@ void ConsumedStmtVisitor::VisitParmVarDecl(const ParmVarDecl *Param) {
     ParamState = mapParamTypestateAttrState(PTA);    
   else if (isConsumableType(ParamType))
     ParamState = mapConsumableAttrState(ParamType);    
-  else if (isRValueRefish(ParamType) &&
-             isConsumableType(ParamType->getPointeeType()))    
+  else if (isRValueRef(ParamType) &&
+           isConsumableType(ParamType->getPointeeType()))
     ParamState = mapConsumableAttrState(ParamType->getPointeeType());    
   else if (ParamType->isReferenceType() &&
-             isConsumableType(ParamType->getPointeeType()))
+           isConsumableType(ParamType->getPointeeType()))
     ParamState = consumed::CS_Unknown;
   
   if (ParamState != CS_None)
