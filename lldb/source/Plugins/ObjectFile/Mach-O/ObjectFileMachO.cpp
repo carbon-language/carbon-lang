@@ -2882,7 +2882,7 @@ ObjectFileMachO::ParseSymtab ()
                                                         else
                                                         {
                                                             if (resolver_addresses.find(nlist.n_value) != resolver_addresses.end())
-                                                                sym[sym_idx].SetType (eSymbolTypeResolver);
+                                                                type = eSymbolTypeResolver;
                                                         }
                                                     }
                                                     else if (type == eSymbolTypeData)
@@ -3650,7 +3650,7 @@ ObjectFileMachO::ParseSymtab ()
                             else
                             {
                                 if (resolver_addresses.find(nlist.n_value) != resolver_addresses.end())
-                                    sym[sym_idx].SetType (eSymbolTypeResolver);
+                                    type = eSymbolTypeResolver;
                             }
                         }
                         else if (type == eSymbolTypeData)
