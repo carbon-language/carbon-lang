@@ -1,4 +1,6 @@
-// RUN: %clang -fsyntax-only -verify -Wthread-safety -Wthread-safety-beta -fcxx-exceptions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wthread-safety -Wthread-safety-beta -fcxx-exceptions %s
+// FIXME: This test never worked due to a broken RUN line.
+// XFAIL: *
 
 #define LOCKABLE            __attribute__ ((lockable))
 #define SCOPED_LOCKABLE     __attribute__ ((scoped_lockable))
