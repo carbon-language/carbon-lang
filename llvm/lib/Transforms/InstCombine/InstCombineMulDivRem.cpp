@@ -1050,8 +1050,10 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
     }
 
     // X / C => X * 1/C
-    if (Instruction *T = CvtFDivConstToReciprocal(Op0, Op1C, AllowReciprocal))
+    if (Instruction *T = CvtFDivConstToReciprocal(Op0, Op1C, AllowReciprocal)) {
+      T->copyFastMathFlags(&I);
       return T;
+    }
 
     return 0;
   }
