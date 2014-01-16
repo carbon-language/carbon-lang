@@ -85,7 +85,7 @@ PlatformLinux::CreateInstance (bool force, const ArchSpec *arch)
         }
     }
     if (create)
-        return new PlatformLinux(true);
+        return new PlatformLinux(false);
     return NULL;
 }
 

@@ -24,14 +24,15 @@ main ()
   pthread_t threads[10];
 
   int thread_value = 0;
+  int i;
 
-  for (int i = 0; i < 10; i++)
+  for (i = 0; i < 10; i++)
     {
       thread_value += 1;
       pthread_create (&threads[i], NULL, &thread_function, &thread_value);
     }
 
-  for (int i = 0; i < 10; i++)
+  for (i = 0; i < 10; i++)
     pthread_join (threads[i], NULL);
 
   return 0;
