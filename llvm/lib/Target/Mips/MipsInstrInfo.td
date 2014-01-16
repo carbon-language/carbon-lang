@@ -448,28 +448,30 @@ class MArithR<string opstr, bit isComm = 0> :
 class LogicNOR<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs, RO:$rt),
          !strconcat(opstr, "\t$rd, $rs, $rt"),
-         [(set RO:$rd, (not (or RO:$rs, RO:$rt)))], IIArith, FrmR, opstr> {
+         [(set RO:$rd, (not (or RO:$rs, RO:$rt)))], II_NOR, FrmR, opstr> {
   let isCommutable = 1;
 }
 
 // Shifts
 class shift_rotate_imm<string opstr, Operand ImmOpnd,
-                       RegisterOperand RO, SDPatternOperator OpNode = null_frag,
+                       RegisterOperand RO, InstrItinClass itin,
+                       SDPatternOperator OpNode = null_frag,
                        SDPatternOperator PF = null_frag> :
   InstSE<(outs RO:$rd), (ins RO:$rt, ImmOpnd:$shamt),
          !strconcat(opstr, "\t$rd, $rt, $shamt"),
-         [(set RO:$rd, (OpNode RO:$rt, PF:$shamt))], IIArith, FrmR, opstr>;
+         [(set RO:$rd, (OpNode RO:$rt, PF:$shamt))], itin, FrmR, opstr>;
 
-class shift_rotate_reg<string opstr, RegisterOperand RO,
+class shift_rotate_reg<string opstr, RegisterOperand RO, InstrItinClass itin,
                        SDPatternOperator OpNode = null_frag>:
   InstSE<(outs RO:$rd), (ins RO:$rt, GPR32Opnd:$rs),
          !strconcat(opstr, "\t$rd, $rt, $rs"),
-         [(set RO:$rd, (OpNode RO:$rt, GPR32Opnd:$rs))], IIArith, FrmR, opstr>;
+         [(set RO:$rd, (OpNode RO:$rt, GPR32Opnd:$rs))], itin, FrmR,
+         opstr>;
 
 // Load Upper Imediate
 class LoadUpper<string opstr, RegisterOperand RO, Operand Imm>:
   InstSE<(outs RO:$rt), (ins Imm:$imm16), !strconcat(opstr, "\t$rt, $imm16"),
-         [], IIArith, FrmI, opstr>, IsAsCheapAsAMove {
+         [], II_LUI, FrmI, opstr>, IsAsCheapAsAMove {
   let neverHasSideEffects = 1;
   let isReMaterializable = 1;
 }
@@ -756,12 +758,12 @@ class EffectiveAddress<string opstr, RegisterOperand RO> :
 // Count Leading Ones/Zeros in Word
 class CountLeading0<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
-         [(set RO:$rd, (ctlz RO:$rs))], IIArith, FrmR, opstr>,
+         [(set RO:$rd, (ctlz RO:$rs))], II_CLZ, FrmR, opstr>,
   Requires<[HasBitCount, HasStdEnc]>;
 
 class CountLeading1<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
-         [(set RO:$rd, (ctlz (not RO:$rs)))], IIArith, FrmR, opstr>,
+         [(set RO:$rd, (ctlz (not RO:$rs)))], II_CLO, FrmR, opstr>,
   Requires<[HasBitCount, HasStdEnc]>;
 
 
@@ -783,7 +785,7 @@ class SubwordSwap<string opstr, RegisterOperand RO>:
 // Read Hardware
 class ReadHardware<RegisterOperand CPURegOperand, RegisterOperand RO> :
   InstSE<(outs CPURegOperand:$rt), (ins RO:$rd), "rdhwr\t$rt, $rd", [],
-         IIArith, FrmR>;
+         II_RDHWR, FrmR>;
 
 // Ext and Ins
 class ExtBase<string opstr, RegisterOperand RO, Operand PosOpnd,
@@ -900,7 +902,7 @@ let isPseudo = 1, isCodeGenOnly = 1 in {
 //===----------------------------------------------------------------------===//
 
 /// Arithmetic Instructions (ALU Immediate)
-def ADDiu : MMRel, ArithLogicI<"addiu", simm16, GPR32Opnd, IIArith, immSExt16,
+def ADDiu : MMRel, ArithLogicI<"addiu", simm16, GPR32Opnd, II_ADDIU, immSExt16,
                                add>,
             ADDI_FM<0x9>, IsAsCheapAsAMove;
 def ADDi  : MMRel, ArithLogicI<"addi", simm16, GPR32Opnd>, ADDI_FM<0x8>;
@@ -920,9 +922,9 @@ def XORi  : MMRel, ArithLogicI<"xori", uimm16, GPR32Opnd, IILogic, immZExt16,
 def LUi   : MMRel, LoadUpper<"lui", GPR32Opnd, uimm16>, LUI_FM;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
-def ADDu  : MMRel, ArithLogicR<"addu", GPR32Opnd, 1, IIArith, add>,
+def ADDu  : MMRel, ArithLogicR<"addu", GPR32Opnd, 1, II_ADDU, add>,
             ADD_FM<0, 0x21>;
-def SUBu  : MMRel, ArithLogicR<"subu", GPR32Opnd, 0, IIArith, sub>,
+def SUBu  : MMRel, ArithLogicR<"subu", GPR32Opnd, 0, II_SUBU, sub>,
             ADD_FM<0, 0x23>;
 let Defs = [HI0, LO0] in
 def MUL   : MMRel, ArithLogicR<"mul", GPR32Opnd, 1, IIImul, mul>,
@@ -940,22 +942,24 @@ def XOR   : MMRel, ArithLogicR<"xor", GPR32Opnd, 1, IILogic, xor>,
 def NOR   : MMRel, LogicNOR<"nor", GPR32Opnd>, ADD_FM<0, 0x27>;
 
 /// Shift Instructions
-def SLL  : MMRel, shift_rotate_imm<"sll", uimm5, GPR32Opnd, shl, immZExt5>,
-           SRA_FM<0, 0>;
-def SRL  : MMRel, shift_rotate_imm<"srl", uimm5, GPR32Opnd, srl, immZExt5>,
-           SRA_FM<2, 0>;
-def SRA  : MMRel, shift_rotate_imm<"sra", uimm5, GPR32Opnd, sra, immZExt5>,
-           SRA_FM<3, 0>;
-def SLLV : MMRel, shift_rotate_reg<"sllv", GPR32Opnd, shl>, SRLV_FM<4, 0>;
-def SRLV : MMRel, shift_rotate_reg<"srlv", GPR32Opnd, srl>, SRLV_FM<6, 0>;
-def SRAV : MMRel, shift_rotate_reg<"srav", GPR32Opnd, sra>, SRLV_FM<7, 0>;
+def SLL  : MMRel, shift_rotate_imm<"sll", uimm5, GPR32Opnd, II_SLL, shl,
+                                   immZExt5>, SRA_FM<0, 0>;
+def SRL  : MMRel, shift_rotate_imm<"srl", uimm5, GPR32Opnd, II_SRL, srl,
+                                   immZExt5>, SRA_FM<2, 0>;
+def SRA  : MMRel, shift_rotate_imm<"sra", uimm5, GPR32Opnd, II_SRA, sra,
+                                   immZExt5>, SRA_FM<3, 0>;
+def SLLV : MMRel, shift_rotate_reg<"sllv", GPR32Opnd, II_SLLV, shl>,
+           SRLV_FM<4, 0>;
+def SRLV : MMRel, shift_rotate_reg<"srlv", GPR32Opnd, II_SRLV, srl>,
+           SRLV_FM<6, 0>;
+def SRAV : MMRel, shift_rotate_reg<"srav", GPR32Opnd, II_SRAV, sra>,
+           SRLV_FM<7, 0>;
 
 // Rotate Instructions
 let Predicates = [HasMips32r2, HasStdEnc] in {
-  def ROTR  : MMRel, shift_rotate_imm<"rotr", uimm5, GPR32Opnd, rotr,
-                                      immZExt5>,
-              SRA_FM<2, 1>;
-  def ROTRV : MMRel, shift_rotate_reg<"rotrv", GPR32Opnd, rotr>,
+  def ROTR  : MMRel, shift_rotate_imm<"rotr", uimm5, GPR32Opnd, II_ROTR, rotr,
+                                      immZExt5>, SRA_FM<2, 1>;
+  def ROTRV : MMRel, shift_rotate_reg<"rotrv", GPR32Opnd, II_ROTRV, rotr>,
               SRLV_FM<6, 1>;
 }
 

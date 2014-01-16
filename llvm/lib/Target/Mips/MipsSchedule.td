@@ -17,7 +17,6 @@ def IMULDIV : FuncUnit;
 // Instruction Itinerary classes used for Mips
 //===----------------------------------------------------------------------===//
 def IIAlu              : InstrItinClass;
-def IIArith            : InstrItinClass;
 def IILogic            : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
@@ -45,12 +44,87 @@ def IIFStore           : InstrItinClass;
 def IIFmoveC1          : InstrItinClass;
 def IIPseudo           : InstrItinClass;
 
+def II_ADDI             : InstrItinClass;
+def II_ADDIU            : InstrItinClass;
+def II_ADDU             : InstrItinClass;
+def II_AND              : InstrItinClass;
+def II_CLO              : InstrItinClass;
+def II_CLZ              : InstrItinClass;
+def II_DADDIU           : InstrItinClass;
+def II_DADDU            : InstrItinClass;
+def II_DROTR            : InstrItinClass;
+def II_DROTR32          : InstrItinClass;
+def II_DROTRV           : InstrItinClass;
+def II_DSLL             : InstrItinClass;
+def II_DSLL32           : InstrItinClass;
+def II_DSLLV            : InstrItinClass;
+def II_DSRA             : InstrItinClass;
+def II_DSRA32           : InstrItinClass;
+def II_DSRAV            : InstrItinClass;
+def II_DSRL             : InstrItinClass;
+def II_DSRL32           : InstrItinClass;
+def II_DSRLV            : InstrItinClass;
+def II_DSUBU            : InstrItinClass;
+def II_LUI              : InstrItinClass;
+def II_MOVF             : InstrItinClass;
+def II_MOVN             : InstrItinClass;
+def II_MOVT             : InstrItinClass;
+def II_MOVZ             : InstrItinClass;
+def II_NOR              : InstrItinClass;
+def II_OR               : InstrItinClass;
+def II_ORI              : InstrItinClass;
+def II_RDHWR            : InstrItinClass;
+def II_ROTR             : InstrItinClass;
+def II_ROTRV            : InstrItinClass;
+def II_SLL              : InstrItinClass;
+def II_SLLV             : InstrItinClass;
+def II_SRA              : InstrItinClass;
+def II_SRAV             : InstrItinClass;
+def II_SRL              : InstrItinClass;
+def II_SRLV             : InstrItinClass;
+def II_SUBU             : InstrItinClass;
+def II_XOR              : InstrItinClass;
+
 //===----------------------------------------------------------------------===//
 // Mips Generic instruction itineraries.
 //===----------------------------------------------------------------------===//
 def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<IIAlu              , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<IIArith            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_ADDI            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_ADDIU           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_ADDU            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_AND             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SLL             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SRA             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SRL             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_ROTR            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SLLV            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SRAV            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SRLV            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_ROTRV           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_CLO             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_CLZ             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DADDIU          , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DADDU           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DSLL            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DSRL            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DSRA            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DSLLV           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DSRLV           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DSRAV           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DSUBU           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DROTR           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DROTRV          , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_LUI             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_MOVF            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_MOVN            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_MOVT            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_MOVZ            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_NOR             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_OR              , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_RDHWR           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SUBU            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_XOR             , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IILogic            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IILoad             , [InstrStage<3,  [ALU]>]>,
   InstrItinData<IIStore            , [InstrStage<1,  [ALU]>]>,

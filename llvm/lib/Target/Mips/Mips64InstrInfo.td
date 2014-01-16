@@ -54,7 +54,7 @@ let isPseudo = 1, isCodeGenOnly = 1 in {
 let DecoderNamespace = "Mips64" in {
 /// Arithmetic Instructions (ALU Immediate)
 def DADDi   : ArithLogicI<"daddi", simm16_64, GPR64Opnd>, ADDI_FM<0x18>;
-def DADDiu  : ArithLogicI<"daddiu", simm16_64, GPR64Opnd, IIArith,
+def DADDiu  : ArithLogicI<"daddiu", simm16_64, GPR64Opnd, II_DADDIU,
                           immSExt16, add>,
               ADDI_FM<0x19>, IsAsCheapAsAMove;
 
@@ -77,41 +77,48 @@ def LUi64   : LoadUpper<"lui", GPR64Opnd, uimm16_64>, LUI_FM;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
 def DADD   : ArithLogicR<"dadd", GPR64Opnd>, ADD_FM<0, 0x2c>;
-def DADDu  : ArithLogicR<"daddu", GPR64Opnd, 1, IIArith, add>,
+def DADDu  : ArithLogicR<"daddu", GPR64Opnd, 1, II_DADDU, add>,
                               ADD_FM<0, 0x2d>;
-def DSUBu  : ArithLogicR<"dsubu", GPR64Opnd, 0, IIArith, sub>,
+def DSUBu  : ArithLogicR<"dsubu", GPR64Opnd, 0, II_DSUBU, sub>,
                               ADD_FM<0, 0x2f>;
 
 let isCodeGenOnly = 1 in {
 def SLT64  : SetCC_R<"slt", setlt, GPR64Opnd>, ADD_FM<0, 0x2a>;
 def SLTu64 : SetCC_R<"sltu", setult, GPR64Opnd>, ADD_FM<0, 0x2b>;
-def AND64  : ArithLogicR<"and", GPR64Opnd, 1, IIArith, and>, ADD_FM<0, 0x24>;
-def OR64   : ArithLogicR<"or", GPR64Opnd, 1, IIArith, or>, ADD_FM<0, 0x25>;
-def XOR64  : ArithLogicR<"xor", GPR64Opnd, 1, IIArith, xor>, ADD_FM<0, 0x26>;
+def AND64  : ArithLogicR<"and", GPR64Opnd, 1, II_AND, and>, ADD_FM<0, 0x24>;
+def OR64   : ArithLogicR<"or", GPR64Opnd, 1, II_OR, or>, ADD_FM<0, 0x25>;
+def XOR64  : ArithLogicR<"xor", GPR64Opnd, 1, II_XOR, xor>, ADD_FM<0, 0x26>;
 def NOR64  : LogicNOR<"nor", GPR64Opnd>, ADD_FM<0, 0x27>;
 }
 
 /// Shift Instructions
-def DSLL   : shift_rotate_imm<"dsll", uimm6, GPR64Opnd, shl, immZExt6>,
+def DSLL   : shift_rotate_imm<"dsll", uimm6, GPR64Opnd, II_DSLL, shl, immZExt6>,
              SRA_FM<0x38, 0>;
-def DSRL   : shift_rotate_imm<"dsrl", uimm6, GPR64Opnd, srl, immZExt6>,
+def DSRL   : shift_rotate_imm<"dsrl", uimm6, GPR64Opnd, II_DSRL, srl, immZExt6>,
              SRA_FM<0x3a, 0>;
-def DSRA   : shift_rotate_imm<"dsra", uimm6, GPR64Opnd, sra, immZExt6>,
+def DSRA   : shift_rotate_imm<"dsra", uimm6, GPR64Opnd, II_DSRA, sra, immZExt6>,
              SRA_FM<0x3b, 0>;
-def DSLLV  : shift_rotate_reg<"dsllv", GPR64Opnd, shl>, SRLV_FM<0x14, 0>;
-def DSRLV  : shift_rotate_reg<"dsrlv", GPR64Opnd, srl>, SRLV_FM<0x16, 0>;
-def DSRAV  : shift_rotate_reg<"dsrav", GPR64Opnd, sra>, SRLV_FM<0x17, 0>;
-def DSLL32 : shift_rotate_imm<"dsll32", uimm5, GPR64Opnd>, SRA_FM<0x3c, 0>;
-def DSRL32 : shift_rotate_imm<"dsrl32", uimm5, GPR64Opnd>, SRA_FM<0x3e, 0>;
-def DSRA32 : shift_rotate_imm<"dsra32", uimm5, GPR64Opnd>, SRA_FM<0x3f, 0>;
+def DSLLV  : shift_rotate_reg<"dsllv", GPR64Opnd, II_DSLLV, shl>,
+             SRLV_FM<0x14, 0>;
+def DSRLV  : shift_rotate_reg<"dsrlv", GPR64Opnd, II_DSRLV, srl>,
+             SRLV_FM<0x16, 0>;
+def DSRAV  : shift_rotate_reg<"dsrav", GPR64Opnd, II_DSRAV, sra>,
+             SRLV_FM<0x17, 0>;
+def DSLL32 : shift_rotate_imm<"dsll32", uimm5, GPR64Opnd, II_DSLL32>,
+             SRA_FM<0x3c, 0>;
+def DSRL32 : shift_rotate_imm<"dsrl32", uimm5, GPR64Opnd, II_DSRL32>,
+             SRA_FM<0x3e, 0>;
+def DSRA32 : shift_rotate_imm<"dsra32", uimm5, GPR64Opnd, II_DSRA32>,
+             SRA_FM<0x3f, 0>;
 
 // Rotate Instructions
 let Predicates = [HasMips64r2, HasStdEnc] in {
-  def DROTR  : shift_rotate_imm<"drotr", uimm6, GPR64Opnd, rotr, immZExt6>,
-               SRA_FM<0x3a, 1>;
-  def DROTRV : shift_rotate_reg<"drotrv", GPR64Opnd, rotr>,
+  def DROTR  : shift_rotate_imm<"drotr", uimm6, GPR64Opnd, II_DROTR, rotr,
+                                immZExt6>, SRA_FM<0x3a, 1>;
+  def DROTRV : shift_rotate_reg<"drotrv", GPR64Opnd, II_DROTRV, rotr>,
                SRLV_FM<0x16, 1>;
-  def DROTR32 : shift_rotate_imm<"drotr32", uimm5, GPR64Opnd>, SRA_FM<0x3e, 1>;
+  def DROTR32 : shift_rotate_imm<"drotr32", uimm5, GPR64Opnd, II_DROTR32>,
+                SRA_FM<0x3e, 1>;
 }
 
 /// Load and Store Instructions
@@ -215,11 +222,11 @@ def DINSM : InsBase<"dinsm", GPR64Opnd, uimm5>, EXT_FM<5>;
 
 let isCodeGenOnly = 1, rs = 0, shamt = 0 in {
   def DSLL64_32 : FR<0x00, 0x3c, (outs GPR64:$rd), (ins GPR32:$rt),
-                     "dsll\t$rd, $rt, 32", [], IIArith>;
+                     "dsll\t$rd, $rt, 32", [], II_DSLL>;
   def SLL64_32 : FR<0x0, 0x00, (outs GPR64:$rd), (ins GPR32:$rt),
-                    "sll\t$rd, $rt, 0", [], IIArith>;
+                    "sll\t$rd, $rt, 0", [], II_SLL>;
   def SLL64_64 : FR<0x0, 0x00, (outs GPR64:$rd), (ins GPR64:$rt),
-                    "sll\t$rd, $rt, 0", [], IIArith>;
+                    "sll\t$rd, $rt, 0", [], II_SLL>;
 }
 }
 //===----------------------------------------------------------------------===//

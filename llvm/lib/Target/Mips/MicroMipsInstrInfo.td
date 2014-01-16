@@ -116,21 +116,21 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                  MULT_FM_MM<0x2ec>;
 
   /// Shift Instructions
-  def SLL_MM   : MMRel, shift_rotate_imm<"sll", uimm5, GPR32Opnd>,
+  def SLL_MM   : MMRel, shift_rotate_imm<"sll", uimm5, GPR32Opnd, II_SLL>,
                  SRA_FM_MM<0, 0>;
-  def SRL_MM   : MMRel, shift_rotate_imm<"srl", uimm5, GPR32Opnd>,
+  def SRL_MM   : MMRel, shift_rotate_imm<"srl", uimm5, GPR32Opnd, II_SRL>,
                  SRA_FM_MM<0x40, 0>;
-  def SRA_MM   : MMRel, shift_rotate_imm<"sra", uimm5, GPR32Opnd>,
+  def SRA_MM   : MMRel, shift_rotate_imm<"sra", uimm5, GPR32Opnd, II_SRA>,
                  SRA_FM_MM<0x80, 0>;
-  def SLLV_MM  : MMRel, shift_rotate_reg<"sllv", GPR32Opnd>,
+  def SLLV_MM  : MMRel, shift_rotate_reg<"sllv", GPR32Opnd, II_SLLV>,
                  SRLV_FM_MM<0x10, 0>;
-  def SRLV_MM  : MMRel, shift_rotate_reg<"srlv", GPR32Opnd>,
+  def SRLV_MM  : MMRel, shift_rotate_reg<"srlv", GPR32Opnd, II_SRLV>,
                  SRLV_FM_MM<0x50, 0>;
-  def SRAV_MM  : MMRel, shift_rotate_reg<"srav", GPR32Opnd>,
+  def SRAV_MM  : MMRel, shift_rotate_reg<"srav", GPR32Opnd, II_SRAV>,
                  SRLV_FM_MM<0x90, 0>;
-  def ROTR_MM  : MMRel, shift_rotate_imm<"rotr", uimm5, GPR32Opnd>,
+  def ROTR_MM  : MMRel, shift_rotate_imm<"rotr", uimm5, GPR32Opnd, II_ROTR>,
                  SRA_FM_MM<0xc0, 0>;
-  def ROTRV_MM : MMRel, shift_rotate_reg<"rotrv", GPR32Opnd>,
+  def ROTRV_MM : MMRel, shift_rotate_reg<"rotrv", GPR32Opnd, II_ROTRV>,
                  SRLV_FM_MM<0xd0, 0>;
 
   /// Load and Store Instructions - aligned
