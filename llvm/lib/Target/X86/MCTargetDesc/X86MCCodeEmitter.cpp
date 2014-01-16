@@ -634,7 +634,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   unsigned char VEX_W = 0;
 
   // XOP: Use XOP prefix byte 0x8f instead of VEX.
-  bool XOP = false;
+  bool XOP = (TSFlags >> X86II::VEXShift) & X86II::XOP;
 
   // VEX_5M (VEX m-mmmmm field):
   //
@@ -688,15 +688,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   bool EncodeRC = false;
 
-  // Encode the operand size opcode prefix as needed.
-  if (TSFlags & X86II::OpSize)
-    VEX_PP = 0x01;
-
   if ((TSFlags >> X86II::VEXShift) & X86II::VEX_W)
     VEX_W = 1;
-
-  if ((TSFlags >> X86II::VEXShift) & X86II::XOP)
-    XOP = true;
 
   if ((TSFlags >> X86II::VEXShift) & X86II::VEX_L)
     VEX_L = 1;
@@ -780,6 +773,9 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     ++CurOp;
 
   switch (TSFlags & X86II::FormMask) {
+  default: llvm_unreachable("Unexpected form in EmitVEXOpcodePrefix!");
+  case X86II::RawFrm:
+    break;
   case X86II::MRMDestMem: {
     // MRMDestMem instructions forms:
     //  MemAddr, src1(ModR/M)
@@ -977,8 +973,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       VEX_B = 0x0;
     if (HasEVEX && X86II::is32ExtendedReg(MI.getOperand(CurOp).getReg()))
       VEX_X = 0x0;
-    break;
-  default: // RawFrm
     break;
   }
 
