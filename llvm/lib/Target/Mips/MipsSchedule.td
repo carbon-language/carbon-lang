@@ -19,7 +19,6 @@ def IMULDIV : FuncUnit;
 def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
-def IIXfer             : InstrItinClass;
 def IIBranch           : InstrItinClass;
 def IIHiLo             : InstrItinClass;
 def IIImul             : InstrItinClass;
@@ -132,7 +131,6 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_XORI            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IILoad             , [InstrStage<3,  [ALU]>]>,
   InstrItinData<IIStore            , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<IIXfer             , [InstrStage<2,  [ALU]>]>,
   InstrItinData<IIBranch           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IIHiLo             , [InstrStage<1,  [IMULDIV]>]>,
   InstrItinData<IIImul             , [InstrStage<17, [IMULDIV]>]>,
