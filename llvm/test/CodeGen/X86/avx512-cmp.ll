@@ -96,3 +96,12 @@ entry:
   ret i32 %or
 }
 
+define i32 @test8(i32 %a1, i32 %a2, i32 %a3) {
+  %tmp1 = icmp eq i32 %a1, -1
+  %tmp2 = icmp eq i32 %a2, -2147483648
+  %tmp3 = and i1 %tmp1, %tmp2
+  %tmp4 = icmp eq i32 %a3, 0
+  %tmp5 = or i1 %tmp3, %tmp4
+  %res = select i1 %tmp5, i32 1, i32 %a3
+  ret i32 %res
+  }
