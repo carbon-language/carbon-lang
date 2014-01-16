@@ -312,7 +312,7 @@ void InitializeAllocator() {
 static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
                       AllocType alloc_type, bool can_fill) {
   if (!asan_inited)
-    __asan_init();
+    AsanInitFromRtl();
   Flags &fl = *flags();
   CHECK(stack);
   const uptr min_alignment = SHADOW_GRANULARITY;
@@ -357,6 +357,16 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     AllocatorCache *cache = &fallback_allocator_cache;
     allocated = allocator.Allocate(cache, needed_size, 8, false);
   }
+
+  if (*(u8 *)MEM_TO_SHADOW((u64)allocated) == 0 && flags()->poison_heap) {
+    // Heap poisoning is enabled, but the allocator provides an unpoisoned
+    // chunk. This is possible if flags()->poison_heap was disabled for some
+    // time, for example, due to flags()->start_disabled.
+    // Anyway, poison the block before using it for anything else.
+    uptr allocated_size = allocator.GetActuallyAllocatedSize(allocated);
+    PoisonShadow((uptr)allocated, allocated_size, kAsanHeapLeftRedzoneMagic);
+  }
+
   uptr alloc_beg = reinterpret_cast<uptr>(allocated);
   uptr alloc_end = alloc_beg + needed_size;
   uptr beg_plus_redzone = alloc_beg + rz_size;

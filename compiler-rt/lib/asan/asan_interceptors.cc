@@ -73,7 +73,7 @@ static inline bool RangesOverlap(const char *offset1, uptr length1,
 #define ENSURE_ASAN_INITED() do { \
   CHECK(!asan_init_is_running); \
   if (!asan_inited) { \
-    __asan_init(); \
+    AsanInitFromRtl(); \
   } \
 } while (0)
 

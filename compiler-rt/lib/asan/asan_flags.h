@@ -115,6 +115,11 @@ struct Flags {
   // If true, assume that dynamic initializers can never access globals from
   // other modules, even if the latter are already initialized.
   bool strict_init_order;
+  // If true, ASan tweaks a bunch of other flags (quarantine, redzone, heap
+  // poisoning) to reduce memory consumption as much as possible, and restores
+  // them to original values when the first instrumented module is loaded into
+  // the process. This is mainly intended to be used on Android.
+  bool start_deactivated;
 };
 
 extern Flags asan_flags_dont_use_directly;

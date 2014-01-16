@@ -67,6 +67,8 @@ namespace __asan {
 class AsanThread;
 using __sanitizer::StackTrace;
 
+void AsanInitFromRtl();
+
 // asan_rtl.cc
 void NORETURN ShowStatsAndAbort();
 
