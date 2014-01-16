@@ -145,21 +145,19 @@ error_code COFFObjectFile::getSymbolType(DataRefImpl Ref,
   if (Symb->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
       Symb->SectionNumber == COFF::IMAGE_SYM_UNDEFINED) {
     Result = SymbolRef::ST_Unknown;
+  } else if (Symb->getComplexType() == COFF::IMAGE_SYM_DTYPE_FUNCTION) {
+    Result = SymbolRef::ST_Function;
   } else {
-    if (Symb->getComplexType() == COFF::IMAGE_SYM_DTYPE_FUNCTION) {
-      Result = SymbolRef::ST_Function;
-    } else {
-      uint32_t Characteristics = 0;
-      if (Symb->SectionNumber > 0) {
-        const coff_section *Section = NULL;
-        if (error_code EC = getSection(Symb->SectionNumber, Section))
-          return EC;
-        Characteristics = Section->Characteristics;
-      }
-      if (Characteristics & COFF::IMAGE_SCN_MEM_READ &&
-          ~Characteristics & COFF::IMAGE_SCN_MEM_WRITE) // Read only.
-        Result = SymbolRef::ST_Data;
+    uint32_t Characteristics = 0;
+    if (Symb->SectionNumber > 0) {
+      const coff_section *Section = NULL;
+      if (error_code EC = getSection(Symb->SectionNumber, Section))
+        return EC;
+      Characteristics = Section->Characteristics;
     }
+    if (Characteristics & COFF::IMAGE_SCN_MEM_READ &&
+        ~Characteristics & COFF::IMAGE_SCN_MEM_WRITE) // Read only.
+      Result = SymbolRef::ST_Data;
   }
   return object_error::success;
 }
