@@ -149,8 +149,11 @@ void MCExternalSymbolizer::tryAddingPcLoadReferenceComment(raw_ostream &cStream,
     if(ReferenceType == LLVMDisassembler_ReferenceType_Out_LitPool_SymAddr)
       cStream << "literal pool symbol address: " << ReferenceName;
     else if(ReferenceType ==
-            LLVMDisassembler_ReferenceType_Out_LitPool_CstrAddr)
-      cStream << "literal pool for: \"" << ReferenceName << "\"";
+            LLVMDisassembler_ReferenceType_Out_LitPool_CstrAddr) {
+      cStream << "literal pool for: \"";
+      cStream.write_escaped(ReferenceName);
+      cStream << "\"";
+    }
     else if(ReferenceType ==
             LLVMDisassembler_ReferenceType_Out_Objc_CFString_Ref)
       cStream << "Objc cfstring ref: @\"" << ReferenceName << "\"";
