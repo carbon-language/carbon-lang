@@ -1,11 +1,14 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep sfence
-; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep lfence
-; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep mfence
-; RUN: llc < %s -march=x86 -mattr=+sse2 | grep MEMBARRIER
+; RUN: llc < %s -mtriple=i686-apple-darwin -mattr=+sse2 | FileCheck %s
 
 define void @test() {
   fence acquire
+  ; CHECK: #MEMBARRIER
+
   fence release
+  ; CHECK: #MEMBARRIER
+
   fence acq_rel
+  ; CHECK: #MEMBARRIER
+
   ret void
 }
