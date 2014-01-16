@@ -63,31 +63,24 @@ static const u64 kDefaultShadowOffset64 = 1ULL << 44;
 static const u64 kDefaultShort64bitShadowOffset = 0x7FFF8000;  // < 2G.
 static const u64 kMIPS32_ShadowOffset32 = 0x0aaa8000;
 
-#if ASAN_FLEXIBLE_MAPPING_AND_OFFSET == 1
-extern "C" SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_scale;
-extern "C" SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_offset;
-# define SHADOW_SCALE (__asan_mapping_scale)
-# define SHADOW_OFFSET (__asan_mapping_offset)
+#define SHADOW_SCALE kDefaultShadowScale
+#if SANITIZER_ANDROID
+# define SHADOW_OFFSET (0)
 #else
-# define SHADOW_SCALE kDefaultShadowScale
-# if SANITIZER_ANDROID
-#  define SHADOW_OFFSET (0)
-# else
-#  if SANITIZER_WORDSIZE == 32
-#   if defined(__mips__)
-#     define SHADOW_OFFSET kMIPS32_ShadowOffset32
-#   else
-#     define SHADOW_OFFSET kDefaultShadowOffset32
-#   endif
+# if SANITIZER_WORDSIZE == 32
+#  if defined(__mips__)
+#    define SHADOW_OFFSET kMIPS32_ShadowOffset32
 #  else
-#   if SANITIZER_MAC
-#    define SHADOW_OFFSET kDefaultShadowOffset64
-#   else
-#    define SHADOW_OFFSET kDefaultShort64bitShadowOffset
-#   endif
+#    define SHADOW_OFFSET kDefaultShadowOffset32
+#  endif
+# else
+#  if SANITIZER_MAC
+#   define SHADOW_OFFSET kDefaultShadowOffset64
+#  else
+#   define SHADOW_OFFSET kDefaultShort64bitShadowOffset
 #  endif
 # endif
-#endif  // ASAN_FLEXIBLE_MAPPING_AND_OFFSET
+#endif
 
 #define SHADOW_GRANULARITY (1ULL << SHADOW_SCALE)
 #define MEM_TO_SHADOW(mem) (((mem) >> SHADOW_SCALE) + (SHADOW_OFFSET))

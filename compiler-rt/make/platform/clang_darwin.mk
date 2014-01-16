@@ -150,16 +150,14 @@ CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.asan_osx_dynamic := \
 	$(CFLAGS) -mmacosx-version-min=10.6 -fno-builtin \
 	-gline-tables-only \
-	-DMAC_INTERPOSE_FUNCTIONS=1 \
-  -DASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
+	-DMAC_INTERPOSE_FUNCTIONS=1
 
 CFLAGS.asan_iossim_dynamic := \
 	$(CFLAGS) -mios-simulator-version-min=7.0 \
         -isysroot $(IOSSIM_SDK_PATH) \
         -fno-builtin \
 	-gline-tables-only \
-	-DMAC_INTERPOSE_FUNCTIONS=1 \
-  -DASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
+	-DMAC_INTERPOSE_FUNCTIONS=1
 
 CFLAGS.ubsan_osx	:= $(CFLAGS) -mmacosx-version-min=10.6 -fno-builtin
 
