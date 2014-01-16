@@ -4241,8 +4241,7 @@ Decl *ASTNodeImporter::VisitVarTemplateDecl(VarTemplateDecl *D) {
     return 0;
 
   VarTemplateDecl *D2 = VarTemplateDecl::Create(
-      Importer.getToContext(), DC, Loc, Name, TemplateParams, D2Templated,
-      /*PrevDecl=*/0);
+      Importer.getToContext(), DC, Loc, Name, TemplateParams, D2Templated);
   D2Templated->setDescribedVarTemplate(D2);
 
   D2->setAccess(D->getAccess());

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s -Wno-c++1y-extensions
 
 // This test creates cases where implicit instantiations of various entities
 // would cause a diagnostic, but provides expliict specializations for those
@@ -10,6 +10,8 @@ struct NonDefaultConstructible {
   NonDefaultConstructible(int);
 };
 
+// FIXME: The "must originally be declared in namespace" diagnostics throughout
+// this file are wrong.
 
 // C++ [temp.expl.spec]p1:
 //   An explicit specialization of any of the following:
@@ -89,6 +91,44 @@ namespace N0 {
 template<> struct N0::X0<volatile void> { 
   void f1(void *);
 };
+
+//     -- variable template [C++1y]
+namespace N0 {
+template<typename T> int v0; // expected-note +{{here}}
+template<> extern int v0<char[1]>;
+template<> extern int v0<char[2]>;
+template<> extern int v0<char[5]>;
+template<> extern int v0<char[6]>;
+}
+using N0::v0;
+
+template<typename T> int v1; // expected-note +{{here}}
+template<> extern int v1<char[3]>;
+template<> extern int v1<char[4]>;
+template<> extern int v1<char[7]>;
+template<> extern int v1<char[8]>;
+
+template<> int N0::v0<int[1]>;
+template<> int v0<int[2]>; // FIXME: ill-formed
+template<> int ::v1<int[3]>; // expected-warning {{extra qualification}}
+template<> int v1<int[4]>;
+
+template<> int N0::v0<char[1]>;
+template<> int v0<char[2]>; // FIXME: ill-formed
+template<> int ::v1<char[3]>; // expected-warning {{extra qualification}}
+template<> int v1<char[4]>;
+
+namespace N1 {
+template<> int N0::v0<int[5]>; // expected-error {{must originally be declared in namespace 'N0'}} expected-error {{does not enclose namespace}}
+template<> int v0<int[6]>; // expected-error {{must originally be declared in namespace 'N0'}}
+template<> int ::v1<int[7]>; // expected-error {{must originally be declared in the global scope}} expected-error {{cannot name the global scope}}
+template<> int v1<int[8]>; // expected-error {{must originally be declared in the global scope}}
+
+template<> int N0::v0<char[5]>; // expected-error {{does not enclose namespace 'N0'}}
+template<> int v0<char[6]>; // FIXME: ill-formed
+template<> int ::v1<char[7]>; // expected-error {{cannot name the global scope}}
+template<> int v1<char[8]>; // FIXME: ill-formed
+}
 
 //     -- member function of a class template
 template<> void N0::X0<void*>::f1(void *) { }

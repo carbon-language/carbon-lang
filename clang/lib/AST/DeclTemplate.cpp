@@ -941,11 +941,8 @@ VarTemplateDecl *VarTemplateDecl::getDefinition() {
 VarTemplateDecl *VarTemplateDecl::Create(ASTContext &C, DeclContext *DC,
                                          SourceLocation L, DeclarationName Name,
                                          TemplateParameterList *Params,
-                                         NamedDecl *Decl,
-                                         VarTemplateDecl *PrevDecl) {
-  VarTemplateDecl *New = new (C, DC) VarTemplateDecl(DC, L, Name, Params, Decl);
-  New->setPreviousDecl(PrevDecl);
-  return New;
+                                         VarDecl *Decl) {
+  return new (C, DC) VarTemplateDecl(DC, L, Name, Params, Decl);
 }
 
 VarTemplateDecl *VarTemplateDecl::CreateDeserialized(ASTContext &C,

@@ -81,7 +81,7 @@ namespace odr_tmpl {
     template<typename T> T v; // expected-note {{previous definition is here}}
     template<typename T> int v; // expected-error {{redefinition of 'v'}}
     
-    template<typename T> int v1; // expected-note {{previous template declaration is here}}
+    template<typename T> extern int v1; // expected-note {{previous template declaration is here}}
     template<int I> int v1;      // expected-error {{template parameter has a different kind in template redeclaration}}
   }
   namespace pvt_use {
@@ -90,11 +90,8 @@ namespace odr_tmpl {
   }
 
   namespace pvt_diff_params {
-    // FIXME: (?) Redefinitions should simply be not allowed, whether the
-    // template parameters match or not. However, this current behaviour also
-    // matches that of class templates...
-    template<typename T, typename> T v;   // expected-note 2{{previous template declaration is here}}
-    template<typename T> T v;   // expected-error {{too few template parameters in template redeclaration}}
+    template<typename T, typename> T v;   // expected-note {{previous template declaration is here}}
+    template<typename T> T v;   // expected-error {{too few template parameters in template redeclaration}} expected-note {{previous template declaration is here}}
     template<typename T, typename, typename> T v; // expected-error {{too many template parameters in template redeclaration}}
   }
 
@@ -391,7 +388,7 @@ namespace nested {
   
   namespace n1 {
     template<typename T> 
-    T pi1a = T(3.1415926535897932385);
+    T pi1a = T(3.1415926535897932385); // expected-note {{explicitly specialized declaration is here}}
 #ifndef PRECXX11
 // expected-note@-2 {{explicit instantiation refers here}}
 #endif
@@ -413,7 +410,7 @@ namespace nested {
 #endif
     float f1 = pi1a<float>;
     
-    template<> double pi1a<double> = 5.2;  // expected-error {{no variable template matches specialization}}
+    template<> double pi1a<double> = 5.2;  // expected-error {{variable template specialization of 'pi1a' must originally be declared in namespace 'n1'}}
     double d1 = pi1a<double>;
   }
   

@@ -1033,8 +1033,9 @@ Decl *TemplateDeclInstantiator::VisitVarTemplateDecl(VarTemplateDecl *D) {
 
   VarTemplateDecl *Inst = VarTemplateDecl::Create(
       SemaRef.Context, DC, D->getLocation(), D->getIdentifier(), InstParams,
-      VarInst, PrevVarTemplate);
+      VarInst);
   VarInst->setDescribedVarTemplate(Inst);
+  Inst->setPreviousDecl(PrevVarTemplate);
 
   Inst->setAccess(D->getAccess());
   if (!PrevVarTemplate)
@@ -3516,7 +3517,18 @@ VarTemplateSpecializationDecl *Sema::BuildVarTemplateInstantiation(
   // or may not be the declaration in the class; if it's in the class, we want
   // to instantiate a member in the class (a declaration), and if it's outside,
   // we want to instantiate a definition.
-  FromVar = FromVar->getFirstDecl();
+  //
+  // If we're instantiating an explicitly-specialized member template or member
+  // partial specialization, don't do this. The member specialization completely
+  // replaces the original declaration in this case.
+  bool IsMemberSpec = false;
+  if (VarTemplatePartialSpecializationDecl *PartialSpec =
+          dyn_cast<VarTemplatePartialSpecializationDecl>(FromVar))
+    IsMemberSpec = PartialSpec->isMemberSpecialization();
+  else if (VarTemplateDecl *FromTemplate = FromVar->getDescribedVarTemplate())
+    IsMemberSpec = FromTemplate->isMemberSpecialization();
+  if (!IsMemberSpec)
+    FromVar = FromVar->getFirstDecl();
 
   MultiLevelTemplateArgumentList MultiLevelList(TemplateArgList);
   TemplateDeclInstantiator Instantiator(*this, FromVar->getDeclContext(),

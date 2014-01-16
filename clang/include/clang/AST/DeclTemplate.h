@@ -2704,8 +2704,8 @@ public:
   /// \brief Create a variable template node.
   static VarTemplateDecl *Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, DeclarationName Name,
-                                 TemplateParameterList *Params, NamedDecl *Decl,
-                                 VarTemplateDecl *PrevDecl);
+                                 TemplateParameterList *Params,
+                                 VarDecl *Decl);
 
   /// \brief Create an empty variable template node.
   static VarTemplateDecl *CreateDeserialized(ASTContext &C, unsigned ID);
