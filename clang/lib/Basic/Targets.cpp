@@ -4532,6 +4532,12 @@ public:
       UIntMaxType = UnsignedLong;
     }
     Int64Type = IntMaxType;
+
+    // The SPARCv8 System V ABI has long double 128-bits in size, but 64-bit
+    // aligned. The SPARCv9 SCD 2.4.1 says 16-byte aligned.
+    LongDoubleWidth = 128;
+    LongDoubleAlign = 128;
+    LongDoubleFormat = &llvm::APFloat::IEEEquad;
   }
 
   virtual void getTargetDefines(const LangOptions &Opts,

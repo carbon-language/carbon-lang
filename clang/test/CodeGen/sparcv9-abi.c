@@ -18,6 +18,9 @@ long long f_int_3(long long x) { return x; }
 // CHECK-LABEL: define signext i8 @f_int_4(i8 signext %x)
 char f_int_4(char x) { return x; }
 
+// CHECK-LABEL: define fp128 @f_ld(fp128 %x)
+long double f_ld(long double x) { return x; }
+
 // Small structs are passed in registers.
 struct small {
   int *a, *b;
