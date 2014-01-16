@@ -19,7 +19,7 @@ entry:
 ; load-relax: $CPI0_0:
 ; load-relax:	.4byte	3735943886
 ; load-relax:	.end	t
-  call void asm sideeffect ".space 40000", ""() #1, !srcloc !1
+  call void asm sideeffect ".space 10000", ""() #1, !srcloc !1
   ret void
 }
 

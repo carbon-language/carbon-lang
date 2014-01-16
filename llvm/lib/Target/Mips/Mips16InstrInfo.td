@@ -119,6 +119,7 @@ class FJAL16_ins<bits<1> _X, string asmstr,
          !strconcat(asmstr, "\t$imm\n\tnop"),[],
          itin>  {
   let isCodeGenOnly=1;
+  let Size=6;
 }
 
 class FJALB16_ins<bits<1> _X, string asmstr,
@@ -127,6 +128,7 @@ class FJALB16_ins<bits<1> _X, string asmstr,
          !strconcat(asmstr, "\t$imm\t# branch\n\tnop"),[],
          itin>  {
   let isCodeGenOnly=1;
+  let Size=6;
 }
 
 //
