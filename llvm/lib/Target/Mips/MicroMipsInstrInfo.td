@@ -106,9 +106,9 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def XOR_MM   : MMRel, ArithLogicR<"xor", GPR32Opnd, 1, IIAlu, xor>,
                  ADD_FM_MM<0, 0x310>;
   def NOR_MM   : MMRel, LogicNOR<"nor", GPR32Opnd>, ADD_FM_MM<0, 0x2d0>;
-  def MULT_MM  : MMRel, Mult<"mult", IIImul, GPR32Opnd, [HI0, LO0]>,
+  def MULT_MM  : MMRel, Mult<"mult", IIImult, GPR32Opnd, [HI0, LO0]>,
                  MULT_FM_MM<0x22c>;
-  def MULTu_MM : MMRel, Mult<"multu", IIImul, GPR32Opnd, [HI0, LO0]>,
+  def MULTu_MM : MMRel, Mult<"multu", IIImult, GPR32Opnd, [HI0, LO0]>,
                  MULT_FM_MM<0x26c>;
   def SDIV_MM  : MMRel, Div<"div", IIIdiv, GPR32Opnd, [HI0, LO0]>,
                  MULT_FM_MM<0x2ac>;
