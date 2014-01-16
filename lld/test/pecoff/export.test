@@ -5,7 +5,7 @@
 # RUN: llvm-objdump -p %t1.dll | FileCheck -check-prefix=CHECK1 %s
 
 CHECK1:      Export Table:
-CHECK1-NEXT: Ordinal      RVA  Name
+CHECK1:       Ordinal      RVA  Name
 CHECK1-NEXT:       1   0x2008  exportfn1
 CHECK1-NEXT:       2   0x2010  exportfn2
 
@@ -14,7 +14,7 @@ CHECK1-NEXT:       2   0x2010  exportfn2
 # RUN: llvm-objdump -p %t2.dll | FileCheck -check-prefix=CHECK2 %s
 
 CHECK2:      Export Table:
-CHECK2-NEXT:  Ordinal      RVA  Name
+CHECK2:       Ordinal      RVA  Name
 CHECK2-NEXT:        5   0x2008  exportfn1
 CHECK2-NEXT:        6   0x2010  exportfn2
 
@@ -23,7 +23,7 @@ CHECK2-NEXT:        6   0x2010  exportfn2
 # RUN: llvm-objdump -p %t3.dll | FileCheck -check-prefix=CHECK3 %s
 
 CHECK3:      Export Table:
-CHECK3-NEXT:  Ordinal      RVA  Name
+CHECK3:       Ordinal      RVA  Name
 CHECK3-NEXT:        5   0x2008
 CHECK3-NEXT:        6   0x2010  exportfn2
 
@@ -32,6 +32,6 @@ CHECK3-NEXT:        6   0x2010  exportfn2
 # RUN: llvm-objdump -p %t4.dll | FileCheck -check-prefix=CHECK4 %s
 
 CHECK4:      Export Table:
-CHECK4-NEXT:  Ordinal      RVA  Name
+CHECK4:       Ordinal      RVA  Name
 CHECK4-NEXT:        5   0x2008  exportfn1
 CHECK4-NEXT:        6   0x2010  exportfn2
