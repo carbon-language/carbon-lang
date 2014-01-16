@@ -280,6 +280,9 @@ struct FormatToken {
            (!ColonRequired || (Next && Next->is(tok::colon)));
   }
 
+  /// \brief Determine whether the token is a simple-type-specifier.
+  bool isSimpleTypeSpecifier() const;
+
   bool isObjCAccessSpecifier() const {
     return is(tok::at) && Next && (Next->isObjCAtKeyword(tok::objc_public) ||
                                    Next->isObjCAtKeyword(tok::objc_protected) ||

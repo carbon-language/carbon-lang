@@ -7890,6 +7890,10 @@ TEST_F(FormatTest, FormatsLambdas) {
                "        [&](int, int) { return 1; });\n"
                "}\n");
 
+  // Lambdas with return types.
+  verifyFormat("int c = []()->int { return 2; }();\n");
+  verifyFormat("int c = []()->vector<int> { return { 2 }; }();\n");
+
   // Not lambdas.
   verifyFormat("constexpr char hello[]{ \"hello\" };");
   verifyFormat("double &operator[](int i) { return 0; }\n"

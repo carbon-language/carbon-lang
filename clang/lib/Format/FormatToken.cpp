@@ -22,6 +22,36 @@
 namespace clang {
 namespace format {
 
+// FIXME: This is copy&pasted from Sema. Put it in a common place and remove
+// duplication.
+bool FormatToken::isSimpleTypeSpecifier() const {
+  switch (Tok.getKind()) {
+  case tok::kw_short:
+  case tok::kw_long:
+  case tok::kw___int64:
+  case tok::kw___int128:
+  case tok::kw_signed:
+  case tok::kw_unsigned:
+  case tok::kw_void:
+  case tok::kw_char:
+  case tok::kw_int:
+  case tok::kw_half:
+  case tok::kw_float:
+  case tok::kw_double:
+  case tok::kw_wchar_t:
+  case tok::kw_bool:
+  case tok::kw___underlying_type:
+  case tok::annot_typename:
+  case tok::kw_char16_t:
+  case tok::kw_char32_t:
+  case tok::kw_typeof:
+  case tok::kw_decltype:
+    return true;
+  default:
+    return false;
+  }
+}
+
 TokenRole::~TokenRole() {}
 
 void TokenRole::precomputeFormattingInfos(const FormatToken *Token) {}

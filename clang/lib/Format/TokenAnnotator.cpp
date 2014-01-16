@@ -697,7 +697,7 @@ private:
         bool ParensAreType = !Current.Previous ||
                              Current.Previous->Type == TT_PointerOrReference ||
                              Current.Previous->Type == TT_TemplateCloser ||
-                             isSimpleTypeSpecifier(*Current.Previous);
+                             Current.Previous->isSimpleTypeSpecifier();
         bool ParensCouldEndDecl =
             Current.Next &&
             Current.Next->isOneOf(tok::equal, tok::semi, tok::l_brace);
@@ -778,7 +778,7 @@ private:
 
     return (!IsPPKeyword && PreviousNotConst->is(tok::identifier)) ||
            PreviousNotConst->Type == TT_PointerOrReference ||
-           isSimpleTypeSpecifier(*PreviousNotConst);
+           PreviousNotConst->isSimpleTypeSpecifier();
   }
 
   /// \brief Return the type of the given token assuming it is * or &.
@@ -853,36 +853,6 @@ private:
     return TT_UnaryOperator;
   }
 
-  // FIXME: This is copy&pasted from Sema. Put it in a common place and remove
-  // duplication.
-  /// \brief Determine whether the token kind starts a simple-type-specifier.
-  bool isSimpleTypeSpecifier(const FormatToken &Tok) const {
-    switch (Tok.Tok.getKind()) {
-    case tok::kw_short:
-    case tok::kw_long:
-    case tok::kw___int64:
-    case tok::kw___int128:
-    case tok::kw_signed:
-    case tok::kw_unsigned:
-    case tok::kw_void:
-    case tok::kw_char:
-    case tok::kw_int:
-    case tok::kw_half:
-    case tok::kw_float:
-    case tok::kw_double:
-    case tok::kw_wchar_t:
-    case tok::kw_bool:
-    case tok::kw___underlying_type:
-    case tok::annot_typename:
-    case tok::kw_char16_t:
-    case tok::kw_char32_t:
-    case tok::kw_typeof:
-    case tok::kw_decltype:
-      return true;
-    default:
-      return false;
-    }
-  }
 
   SmallVector<Context, 8> Contexts;
 

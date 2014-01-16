@@ -762,15 +762,22 @@ bool UnwrappedLineParser::tryToParseLambda() {
   if (!tryToParseLambdaIntroducer())
     return false;
 
-  while (FormatTok->isNot(tok::l_brace)) {
+  while (FormatTok && FormatTok->isNot(tok::l_brace)) {
+    if (FormatTok->isSimpleTypeSpecifier()) {
+      nextToken();
+      continue;
+    }
     switch (FormatTok->Tok.getKind()) {
     case tok::l_brace:
       break;
     case tok::l_paren:
       parseParens();
       break;
+    case tok::less:
+    case tok::greater:
     case tok::identifier:
     case tok::kw_mutable:
+    case tok::arrow:
       nextToken();
       break;
     default:
@@ -956,7 +963,6 @@ void UnwrappedLineParser::parseSquare() {
   if (tryToParseLambda())
     return;
   do {
-    // llvm::errs() << FormatTok->Tok.getName() << "\n";
     switch (FormatTok->Tok.getKind()) {
     case tok::l_paren:
       parseParens();
