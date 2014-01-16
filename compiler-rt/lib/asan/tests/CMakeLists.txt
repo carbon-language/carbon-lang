@@ -15,13 +15,6 @@ include(CompilerRTCompile)
 include_directories(..)
 include_directories(../..)
 
-# Use zero-based shadow on Android.
-if(ANDROID)
-  set(ASAN_TESTS_USE_ZERO_BASE_SHADOW TRUE)
-else()
-  set(ASAN_TESTS_USE_ZERO_BASE_SHADOW FALSE)
-endif()
-
 set(ASAN_UNITTEST_HEADERS
   asan_mac_test.h
   asan_test_config.h
@@ -66,10 +59,6 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   -mllvm -asan-mapping-scale=0        # default will be used
   -mllvm -asan-mapping-offset-log=-1  # default will be used
 )
-if(ASAN_TESTS_USE_ZERO_BASE_SHADOW)
-  list(APPEND ASAN_UNITTEST_INSTRUMENTED_CFLAGS
-    -fsanitize-address-zero-base-shadow)
-endif()
 
 # Unit tests require libstdc++.
 set(ASAN_UNITTEST_COMMON_LINKFLAGS -lstdc++)
