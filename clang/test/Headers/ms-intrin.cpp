@@ -11,14 +11,3 @@ typedef __SIZE_TYPE__ size_t;
 // Use some C++ to make sure we closed the extern "C" brackets.
 template <typename T>
 void foo(T V) {}
-
-void bar() {
-  _ReadWriteBarrier();  // expected-warning {{is deprecated: use other intrinsics or C++11 atomics instead}}
-  _ReadBarrier();       // expected-warning {{is deprecated: use other intrinsics or C++11 atomics instead}}
-  _WriteBarrier();      // expected-warning {{is deprecated: use other intrinsics or C++11 atomics instead}}
-  // FIXME: It'd be handy if we didn't have to hardcode the line number in
-  // intrin.h.
-  // expected-note@Intrin.h:754 {{'_ReadWriteBarrier' has been explicitly marked deprecated here}}
-  // expected-note@Intrin.h:759 {{'_ReadBarrier' has been explicitly marked deprecated here}}
-  // expected-note@Intrin.h:764 {{'_WriteBarrier' has been explicitly marked deprecated here}}
-}
