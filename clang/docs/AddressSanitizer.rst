@@ -61,14 +61,13 @@ or:
     % clang -g -fsanitize=address example_UseAfterFree.o
 
 If a bug is detected, the program will print an error message to stderr and
-exit with a non-zero exit code. Currently, AddressSanitizer does not symbolize
-its output, so you may need to use a separate script to symbolize the result
-offline (this will be fixed in future).
+exit with a non-zero exit code. To make AddressSanitizer symbolize its output
+you need to set the ``ASAN_SYMBOLIZER_PATH`` environment variable to point to
+the ``llvm-symbolizer`` binary:
 
 .. code-block:: console
 
-    % ./a.out 2> log
-    % projects/compiler-rt/lib/asan/scripts/asan_symbolize.py / < log | c++filt
+    % ASAN_SYMBOLIZER_PATH=/usr/local/bin/llvm-symbolizer ./a.out
     ==9442== ERROR: AddressSanitizer heap-use-after-free on address 0x7f7ddab8c084 at pc 0x403c8c bp 0x7fff87fb82d0 sp 0x7fff87fb82c8
     READ of size 4 at 0x7f7ddab8c084 thread T0
         #0 0x403c8c in main example_UseAfterFree.cc:4
@@ -83,6 +82,23 @@ offline (this will be fixed in future).
         #1 0x403c43 in main example_UseAfterFree.cc:2
         #2 0x7f7ddabcac4d in __libc_start_main ??:0
     ==9442== ABORTING
+
+If that does not work for you (e.g. your process is sandboxed), you can use a
+separate script to symbolize the result offline (online symbolization can be
+force disabled by setting ``ASAN_OPTIONS=symbolize=1``):
+
+.. code-block:: console
+
+    % ./a.out 2> log
+    % projects/compiler-rt/lib/asan/scripts/asan_symbolize.py / < log | c++filt
+    ==9442== ERROR: AddressSanitizer heap-use-after-free on address 0x7f7ddab8c084 at pc 0x403c8c bp 0x7fff87fb82d0 sp 0x7fff87fb82c8
+    READ of size 4 at 0x7f7ddab8c084 thread T0
+        #0 0x403c8c in main example_UseAfterFree.cc:4
+        #1 0x7f7ddabcac4d in __libc_start_main ??:0
+    ...
+
+Note that on OS X you may need to run ``dsymutil`` on your binary to have the
+file\:line info in the AddressSanitizer reports.
 
 AddressSanitizer exits on the first detected error. This is by design.
 One reason: it makes the generated code smaller and faster (both by
