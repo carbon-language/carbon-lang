@@ -75,6 +75,9 @@ private:
   bool parseParens(bool LookForDecls = false) {
     if (CurrentToken == NULL)
       return false;
+    bool AfterCaret = Contexts.back().CaretFound;
+    Contexts.back().CaretFound = false;
+
     ScopedContextCreator ContextCreator(*this, tok::l_paren, 1);
 
     // FIXME: This is a bit of a hack. Do better.
@@ -103,8 +106,7 @@ private:
                Left->Previous->MatchingParen->Type == TT_LambdaLSquare) {
       // This is a parameter list of a lambda expression.
       Contexts.back().IsExpression = false;
-    } else if (Left->Previous && Left->Previous->is(tok::caret) &&
-               Left->Previous->Type == TT_UnaryOperator) {
+    } else if (AfterCaret) {
       // This is the parameter list of an ObjC block.
       Contexts.back().IsExpression = false;
     }
@@ -581,7 +583,7 @@ private:
           ColonIsForRangeExpr(false), ColonIsDictLiteral(false),
           ColonIsObjCMethodExpr(false), FirstObjCSelectorName(NULL),
           FirstStartOfName(NULL), IsExpression(IsExpression),
-          CanBeExpression(true), InCtorInitializer(false) {}
+          CanBeExpression(true), InCtorInitializer(false), CaretFound(false) {}
 
     tok::TokenKind ContextKind;
     unsigned BindingStrength;
@@ -595,6 +597,7 @@ private:
     bool IsExpression;
     bool CanBeExpression;
     bool InCtorInitializer;
+    bool CaretFound;
   };
 
   /// \brief Puts a new \c Context onto the stack \c Contexts for the lifetime
@@ -673,8 +676,11 @@ private:
                                                Contexts.back().IsExpression);
       } else if (Current.isOneOf(tok::minus, tok::plus, tok::caret)) {
         Current.Type = determinePlusMinusCaretUsage(Current);
-        if (Current.Type == TT_UnaryOperator)
+        if (Current.Type == TT_UnaryOperator) {
           ++Contexts.back().NumBlockParameters;
+          if (Current.is(tok::caret))
+            Contexts.back().CaretFound = true;
+        }
       } else if (Current.isOneOf(tok::minusminus, tok::plusplus)) {
         Current.Type = determineIncrementUsage(Current);
       } else if (Current.is(tok::exclaim)) {

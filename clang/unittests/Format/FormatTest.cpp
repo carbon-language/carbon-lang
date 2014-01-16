@@ -7907,6 +7907,10 @@ TEST_F(FormatTest, FormatsBlocks) {
   verifyFormat("int i = {[operation setCompletionBlock : ^{ [self "
                "onOperationDone]; }] };");
   verifyFormat("[operation setCompletionBlock:^(int *i) { f(); }];");
+  verifyFormat("int a = [operation block:^int(int *i) { return 1; }];");
+  verifyFormat("[myObject doSomethingWith:arg1\n"
+               "                      aaa:^int(int *a) { return 1; }\n"
+               "                      bbb:f(a * b)];");
 
   verifyFormat("[operation setCompletionBlock:^{\n"
                "    [self.delegate newDataAvailable];\n"
