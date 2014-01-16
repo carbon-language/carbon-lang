@@ -24,10 +24,10 @@ define float @test2(float %x) {
 define float @test3(float %x, float %y) {
   %sub1 = fsub float -0.000000e+00, %x
   %sub2 = fsub float -0.000000e+00, %y
-  %mul = fmul float %sub1, %sub2
+  %mul = fmul fast float %sub1, %sub2
   ret float %mul
 ; CHECK-LABEL: @test3(
-; CHECK: fmul float %x, %y
+; CHECK: fmul fast float %x, %y
 }
 
 ; (0.0 - X) * (0.0 - Y) => X * Y
@@ -103,5 +103,4 @@ define float @test9(float %x) {
 ; CHECK-NOT: fmul
 ; CHECK: fsub
 }
-
 

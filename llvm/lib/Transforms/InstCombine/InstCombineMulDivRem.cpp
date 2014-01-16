@@ -525,8 +525,11 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
       Value *N1 = dyn_castFNegVal(Opnd1, IgnoreZeroSign);
 
       // -X * -Y => X*Y
-      if (N1)
-        return BinaryOperator::CreateFMul(N0, N1);
+      if (N1) {
+        Value *FMul = Builder->CreateFMul(N0, N1);
+        FMul->takeName(&I);
+        return ReplaceInstUsesWith(I, FMul);
+      }
 
       if (Opnd0->hasOneUse()) {
         // -X * Y => -(X*Y) (Promote negation as high as possible)
