@@ -1,6 +1,7 @@
 ; This tests that MC/asm header conversion is smooth and that the
 ; build attributes are correct
 
+; RUN: llc < %s -mtriple=thumbv5-linux-gnueabi -mcpu=xscale | FileCheck %s --check-prefix=XSCALE
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi | FileCheck %s --check-prefix=V6
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi | FileCheck %s --check-prefix=V6M
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi -mcpu=arm1156t2f-s | FileCheck %s --check-prefix=ARM1156T2F-S
@@ -31,6 +32,10 @@
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=-vfp2,-vfp3,-vfp4,-neon | FileCheck %s --check-prefix=CORTEX-A7-NOFPU
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=+vfp4,-neon | FileCheck %s --check-prefix=CORTEX-A7-FPUV4
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=+vfp4,,+d16,-neon | FileCheck %s --check-prefix=CORTEX-A7-FPUV4
+
+; XSCALE:      .eabi_attribute 6, 5
+; XSCALE:      .eabi_attribute 8, 1
+; XSCALE:      .eabi_attribute 9, 1
 
 ; V6:   .eabi_attribute 6, 6
 ; V6:   .eabi_attribute 8, 1
