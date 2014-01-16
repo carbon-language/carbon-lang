@@ -161,9 +161,11 @@ static error_code resolveSectionAndAddress(const COFFObjectFile *Obj,
                                            const SymbolRef &Sym,
                                            const coff_section *&ResolvedSection,
                                            uint64_t &ResolvedAddr) {
-  if (error_code ec = Sym.getAddress(ResolvedAddr)) return ec;
+  if (error_code EC = Sym.getAddress(ResolvedAddr))
+    return EC;
   section_iterator iter(Obj->begin_sections());
-  if (error_code ec = Sym.getSection(iter)) return ec;
+  if (error_code EC = Sym.getSection(iter))
+    return EC;
   ResolvedSection = Obj->getCOFFSection(iter);
   return object_error::success;
 }
@@ -176,7 +178,8 @@ static error_code resolveSymbol(const std::vector<RelocationRef> &Rels,
                                                   E = Rels.end();
                                                   I != E; ++I) {
     uint64_t Ofs;
-    if (error_code ec = I->getOffset(Ofs)) return ec;
+    if (error_code EC = I->getOffset(Ofs))
+      return EC;
     if (Ofs == Offset) {
       Sym = *I->getSymbol();
       break;
@@ -197,9 +200,10 @@ static error_code getSectionContents(const COFFObjectFile *Obj,
   SymbolRef Sym;
   if (error_code ec = resolveSymbol(Rels, Offset, Sym)) return ec;
   const coff_section *Section;
-  if (error_code ec = resolveSectionAndAddress(Obj, Sym, Section, Addr))
-    return ec;
-  if (error_code ec = Obj->getSectionContents(Section, Contents)) return ec;
+  if (error_code EC = resolveSectionAndAddress(Obj, Sym, Section, Addr))
+    return EC;
+  if (error_code EC = Obj->getSectionContents(Section, Contents))
+    return EC;
   return object_error::success;
 }
 
@@ -209,8 +213,10 @@ static error_code getSectionContents(const COFFObjectFile *Obj,
 static error_code resolveSymbolName(const std::vector<RelocationRef> &Rels,
                                     uint64_t Offset, StringRef &Name) {
   SymbolRef Sym;
-  if (error_code ec = resolveSymbol(Rels, Offset, Sym)) return ec;
-  if (error_code ec = Sym.getName(Name)) return ec;
+  if (error_code EC = resolveSymbol(Rels, Offset, Sym))
+    return EC;
+  if (error_code EC = Sym.getName(Name))
+    return EC;
   return object_error::success;
 }
 
@@ -218,8 +224,8 @@ static void printCOFFSymbolAddress(llvm::raw_ostream &Out,
                                    const std::vector<RelocationRef> &Rels,
                                    uint64_t Offset, uint32_t Disp) {
   StringRef Sym;
-  if (error_code ec = resolveSymbolName(Rels, Offset, Sym)) {
-    error(ec);
+  if (error_code EC = resolveSymbolName(Rels, Offset, Sym)) {
+    error(EC);
     return ;
   }
   Out << Sym;
@@ -230,20 +236,20 @@ static void printCOFFSymbolAddress(llvm::raw_ostream &Out,
 // Prints import tables. The import table is a table containing the list of
 // DLL name and symbol names which will be linked by the loader.
 static void printImportTables(const COFFObjectFile *Obj) {
-  import_directory_iterator i = Obj->import_directory_begin();
-  import_directory_iterator e = Obj->import_directory_end();
-  if (i == e)
+  import_directory_iterator I = Obj->import_directory_begin();
+  import_directory_iterator E = Obj->import_directory_end();
+  if (I == E)
     return;
   outs() << "The Import Tables:\n";
-  error_code ec;
-  for (; i != e; i = i.increment(ec)) {
-    if (ec)
+  error_code EC;
+  for (; I != E; I = I.increment(EC)) {
+    if (EC)
       return;
 
     const import_directory_table_entry *Dir;
     StringRef Name;
-    if (i->getImportTableEntry(Dir)) return;
-    if (i->getName(Name)) return;
+    if (I->getImportTableEntry(Dir)) return;
+    if (I->getName(Name)) return;
 
     outs() << format("  lookup %08x time %08x fwd %08x name %08x addr %08x\n\n",
                      static_cast<uint32_t>(Dir->ImportLookupTableRVA),
@@ -254,7 +260,7 @@ static void printImportTables(const COFFObjectFile *Obj) {
     outs() << "    DLL Name: " << Name << "\n";
     outs() << "    Hint/Ord  Name\n";
     const import_lookup_table_entry32 *entry;
-    if (i->getImportLookupEntry(entry))
+    if (I->getImportLookupEntry(entry))
       return;
     for (; entry->data; ++entry) {
       if (entry->isOrdinal()) {
@@ -317,11 +323,11 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
 
   const coff_section *Pdata = 0;
 
-  error_code ec;
+  error_code EC;
   for (section_iterator SI = Obj->begin_sections(),
                         SE = Obj->end_sections();
-                        SI != SE; SI.increment(ec)) {
-    if (error(ec)) return;
+                        SI != SE; SI.increment(EC)) {
+    if (error(EC)) return;
 
     StringRef Name;
     if (error(SI->getName(Name))) continue;
@@ -332,8 +338,8 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
     std::vector<RelocationRef> Rels;
     for (relocation_iterator RI = SI->begin_relocations(),
                              RE = SI->end_relocations();
-                             RI != RE; RI.increment(ec)) {
-      if (error(ec)) break;
+                             RI != RE; RI.increment(EC)) {
+      if (error(EC)) break;
       Rels.push_back(*RI);
     }
 
