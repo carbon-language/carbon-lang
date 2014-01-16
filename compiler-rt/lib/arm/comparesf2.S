@@ -141,3 +141,5 @@ DEFINE_COMPILERRT_FUNCTION(__unordsf2)
     cmpls   r3,         #0xff000000
     movhi   r0,         #1
     bx      lr
+
+DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_fcmpun, __unordsf2)
