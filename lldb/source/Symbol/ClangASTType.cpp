@@ -4745,7 +4745,7 @@ ClangASTType::AddMethodToCXXRecordType (const char *name,
     cxx_method_decl->setVirtualAsWritten (is_virtual);
     
     if (is_attr_used)
-        cxx_method_decl->addAttr(::new (*m_ast) UsedAttr(SourceRange(), *m_ast));
+        cxx_method_decl->addAttr(clang::UsedAttr::CreateImplicit(*m_ast));
     
     // Populate the method decl with parameter decls
     
