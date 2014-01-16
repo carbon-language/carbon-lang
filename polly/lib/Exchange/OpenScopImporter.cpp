@@ -17,7 +17,6 @@
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/ScopPass.h"
-#include "llvm/IR/Writer.h"
 
 #ifdef OPENSCOP_FOUND
 
