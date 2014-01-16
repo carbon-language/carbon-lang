@@ -63,7 +63,8 @@ or:
 If a bug is detected, the program will print an error message to stderr and
 exit with a non-zero exit code. To make AddressSanitizer symbolize its output
 you need to set the ``ASAN_SYMBOLIZER_PATH`` environment variable to point to
-the ``llvm-symbolizer`` binary:
+the ``llvm-symbolizer`` binary (or make sure ``llvm-symbolizer`` is in your
+``$PATH``):
 
 .. code-block:: console
 
