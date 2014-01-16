@@ -297,7 +297,7 @@ def ARMInterrupt : InheritableAttr, TargetSpecificAttr<TargetARM> {
 }
 
 def AsmLabel : InheritableAttr {
-  let Spellings = [];
+  let Spellings = [Keyword<"asm">, Keyword<"__asm__">];
   let Args = [StringArgument<"Label">];
   let SemaHandler = 0;
 }
