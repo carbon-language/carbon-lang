@@ -70,13 +70,6 @@ static inline bool RangesOverlap(const char *offset1, uptr length1,
   } \
 } while (0)
 
-#define ENSURE_ASAN_INITED() do { \
-  CHECK(!asan_init_is_running); \
-  if (!asan_inited) { \
-    AsanInitFromRtl(); \
-  } \
-} while (0)
-
 static inline uptr MaybeRealStrnlen(const char *s, uptr maxlen) {
 #if ASAN_INTERCEPT_STRNLEN
   if (REAL(strnlen) != 0) {

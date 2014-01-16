@@ -18,6 +18,6 @@
 namespace __asan {
 void AsanStartDeactivated();
 void AsanActivate();
-} // namespace __asan
+}  // namespace __asan
 
-#endif // ASAN_ACTIVATION_H
+#endif  // ASAN_ACTIVATION_H

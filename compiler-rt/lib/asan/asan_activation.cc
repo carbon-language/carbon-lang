@@ -29,7 +29,7 @@ static struct AsanDeactivatedFlags {
 static bool asan_is_deactivated;
 
 void AsanStartDeactivated() {
-  VReport(1, "Deactivating asan\n");
+  VReport(1, "Deactivating ASan\n");
   // Save flag values.
   asan_deactivated_flags.quarantine_size = flags()->quarantine_size;
   asan_deactivated_flags.max_redzone = flags()->max_redzone;
@@ -47,7 +47,7 @@ void AsanStartDeactivated() {
 
 void AsanActivate() {
   if (!asan_is_deactivated) return;
-  VReport(1, "Activating asan\n");
+  VReport(1, "Activating ASan\n");
 
   // Restore flag values.
   // FIXME: this is not atomic, and there may be other threads alive.
@@ -66,4 +66,4 @@ void AsanActivate() {
       common_flags()->malloc_context_size);
 }
 
-} // namespace __asan
+}  // namespace __asan
