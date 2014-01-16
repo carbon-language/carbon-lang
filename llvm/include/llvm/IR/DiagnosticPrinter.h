@@ -20,6 +20,7 @@
 
 namespace llvm {
 // Forward declarations.
+class Module;
 class raw_ostream;
 class StringRef;
 class Twine;
@@ -49,6 +50,7 @@ public:
 
   // IR related types.
   virtual DiagnosticPrinter &operator<<(const Value &V) = 0;
+  virtual DiagnosticPrinter &operator<<(const Module &M) = 0;
 };
 
 /// \brief Basic diagnostic printer that uses an underlying raw_ostream.
@@ -78,6 +80,7 @@ public:
 
   // IR related types.
   virtual DiagnosticPrinter &operator<<(const Value &V);
+  virtual DiagnosticPrinter &operator<<(const Module &M);
 };
 } // End namespace llvm
 

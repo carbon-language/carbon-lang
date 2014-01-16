@@ -39,6 +39,7 @@ enum DiagnosticSeverity {
 enum DiagnosticKind {
   DK_InlineAsm,
   DK_StackSize,
+  DK_DebugMetadataVersion,
   DK_FirstPluginKind
 };
 
@@ -157,6 +158,35 @@ public:
   /// Hand rolled RTTI.
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_StackSize;
+  }
+};
+
+/// Diagnostic information for debug metadata version reporting.
+/// This is basically a module and a version.
+class DiagnosticInfoDebugMetadataVersion : public DiagnosticInfo {
+private:
+  /// The module that is concerned by this debug metadata version diagnostic.
+  const Module &M;
+  /// The actual metadata version.
+  unsigned MetadataVersion;
+
+public:
+  /// \p The module that is concerned by this debug metadata version diagnostic.
+  /// \p The actual metadata version.
+  DiagnosticInfoDebugMetadataVersion(const Module &M, unsigned MetadataVersion,
+                          DiagnosticSeverity Severity = DS_Warning)
+      : DiagnosticInfo(DK_DebugMetadataVersion, Severity), M(M),
+        MetadataVersion(MetadataVersion) {}
+
+  const Module &getModule() const { return M; }
+  unsigned getMetadataVersion() const { return MetadataVersion; }
+
+  /// \see DiagnosticInfo::print.
+  virtual void print(DiagnosticPrinter &DP) const;
+
+  /// Hand rolled RTTI.
+  static bool classof(const DiagnosticInfo *DI) {
+    return DI->getKind() == DK_DebugMetadataVersion;
   }
 };
 

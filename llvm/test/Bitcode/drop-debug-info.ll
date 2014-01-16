@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | llvm-dis | FileCheck %s
+; RUN: llvm-as < %s -o %t.bc 2>&1 >/dev/null | FileCheck -check-prefix=WARN %s
+; RUN: llvm-dis < %t.bc | FileCheck %s
 
 define i32 @main() {
 entry:
@@ -22,5 +23,6 @@ entry:
 !9 = metadata !{i32 2, metadata !"Dwarf Version", i32 2}
 !12 = metadata !{i32 4, i32 0, metadata !4, null}
 
+; WARN: warning: invalid debug metadata version (0)
 ; CHECK-NOT: !dbg
 ; CHECK-NOT: !llvm.dbg.cu
