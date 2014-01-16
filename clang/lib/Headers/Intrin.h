@@ -48,6 +48,7 @@ void __addfsbyte(unsigned long, unsigned char);
 void __addfsdword(unsigned long, unsigned long);
 void __addfsword(unsigned long, unsigned short);
 void __code_seg(const char *);
+static __inline__
 void __cpuid(int[4], int);
 void __cpuidex(int[4], int, int);
 void __debugbreak(void);
@@ -287,6 +288,7 @@ void _WriteBarrier(void);
 void _xabort(const unsigned int imm);
 unsigned __int32 xbegin(void);
 void _xend(void);
+static __inline__
 unsigned __int64 __cdecl _xgetbv(unsigned int);
 void __cdecl _xrstor(void const *, unsigned __int64);
 void __cdecl _xsave(void *, unsigned __int64);
@@ -774,6 +776,23 @@ _AddressOfReturnAddress(void) {
 static __inline__ void * __attribute__((__always_inline__, __nodebug__))
 _ReturnAddress(void) {
   return __builtin_return_address(0);
+}
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__cpuid(int __info[4], int __level) {
+#if __i386__
+  __asm__ ("cpuid"
+         : "=a"(__info[0]), "=b" (__info[1]), "=c"(__info[2]), "=d"(__info[3])
+         : "0"(__level));
+#else
+  __asm__ ("cpuid" : "=a"(__info[0]), "=b" (__info[1]), "=c"(__info[2]), "=d"(__info[3])
+                   : "0"(__level));
+#endif
+}
+static __inline__ unsigned __int64 __cdecl __attribute__((__always_inline__, __nodebug__))
+_xgetbv(unsigned int __xcr_no) {
+  unsigned int __eax, __edx;
+  __asm__ ("xgetbv" : "=a" (__eax), "=d" (__edx) : "c" (__xcr_no));
+  return ((unsigned __int64)__edx << 32) | __eax;
 }
 
 #ifdef __cplusplus
