@@ -271,6 +271,36 @@ static void printImportTables(const COFFObjectFile *Obj) {
   }
 }
 
+// Prints export tables. The export table is a table containing the list of
+// exported symbol from the DLL.
+static void printExportTable(const COFFObjectFile *Obj) {
+  outs() << "Export Table:\n";
+  export_directory_iterator I = Obj->export_directory_begin();
+  export_directory_iterator E = Obj->export_directory_end();
+  if (I == E)
+    return;
+  outs() << " Ordinal      RVA  Name\n";
+  error_code EC;
+  for (; I != E; I = I.increment(EC)) {
+    if (EC)
+      return;
+    uint32_t Ordinal;
+    if (I->getOrdinal(Ordinal))
+      return;
+    uint32_t RVA;
+    if (I->getExportRVA(RVA))
+      return;
+    outs() << format("    % 4d %# 8x", Ordinal, RVA);
+
+    StringRef Name;
+    if (I->getName(Name))
+      continue;
+    if (!Name.empty())
+      outs() << "  " << Name;
+    outs() << "\n";
+  }
+}
+
 void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
   const coff_file_header *Header;
   if (error(Obj->getCOFFHeader(Header))) return;
@@ -399,5 +429,7 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
 }
 
 void llvm::printCOFFFileHeader(const object::ObjectFile *Obj) {
-  printImportTables(dyn_cast<const COFFObjectFile>(Obj));
+  const COFFObjectFile *file = dyn_cast<const COFFObjectFile>(Obj);
+  printImportTables(file);
+  printExportTable(file);
 }

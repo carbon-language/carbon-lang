@@ -445,9 +445,27 @@ error_code COFFObjectFile::initImportTablePtr() {
     return ec;
   ImportDirectory = reinterpret_cast<
       const import_directory_table_entry *>(IntPtr);
+  return object_error::success;
+}
 
-  // It's an error if there's no section containing the Import Table RVA.
-  return object_error::parse_failed;
+// Find the export table.
+error_code COFFObjectFile::initExportTablePtr() {
+  // First, we get the RVA of the export table. If the file lacks a pointer to
+  // the export table, do nothing.
+  const data_directory *DataEntry;
+  if (getDataDirectory(COFF::EXPORT_TABLE, DataEntry))
+    return object_error::success;
+
+  // Do nothing if the pointer to export table is NULL.
+  if (DataEntry->RelativeVirtualAddress == 0)
+    return object_error::success;
+
+  uint32_t ExportTableRva = DataEntry->RelativeVirtualAddress;
+  uintptr_t IntPtr = 0;
+  if (error_code EC = getRvaPtr(ExportTableRva, IntPtr))
+    return EC;
+  ExportDirectory = reinterpret_cast<const export_directory_table_entry *>(IntPtr);
+  return object_error::success;
 }
 
 COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
@@ -460,7 +478,8 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
   , StringTable(0)
   , StringTableSize(0)
   , ImportDirectory(0)
-  , NumberOfImportDirectory(0) {
+  , NumberOfImportDirectory(0)
+  , ExportDirectory(0) {
   // Check that we at least have enough room for a header.
   if (!checkSize(Data, ec, sizeof(coff_file_header))) return;
 
@@ -521,6 +540,10 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
   if ((ec = initImportTablePtr()))
     return;
 
+  // Initialize the pointer to the export table.
+  if ((ec = initExportTablePtr()))
+    return;
+
   ec = object_error::success;
 }
 
@@ -570,6 +593,19 @@ import_directory_iterator COFFObjectFile::import_directory_begin() const {
 import_directory_iterator COFFObjectFile::import_directory_end() const {
   return import_directory_iterator(
       ImportDirectoryEntryRef(ImportDirectory, NumberOfImportDirectory, this));
+}
+
+export_directory_iterator COFFObjectFile::export_directory_begin() const {
+  return export_directory_iterator(
+      ExportDirectoryEntryRef(ExportDirectory, 0, this));
+}
+
+export_directory_iterator COFFObjectFile::export_directory_end() const {
+  if (ExportDirectory == 0)
+    return export_directory_iterator(ExportDirectoryEntryRef(0, 0, this));
+  ExportDirectoryEntryRef ref(ExportDirectory,
+                              ExportDirectory->AddressTableEntries, this);
+  return export_directory_iterator(ref);
 }
 
 section_iterator COFFObjectFile::begin_sections() const {
@@ -907,6 +943,62 @@ error_code ImportDirectoryEntryRef::getImportLookupEntry(
           OwningObject->getRvaPtr(ImportTable->ImportLookupTableRVA, IntPtr))
     return EC;
   Result = reinterpret_cast<const import_lookup_table_entry32 *>(IntPtr);
+  return object_error::success;
+}
+
+bool ExportDirectoryEntryRef::
+operator==(const ExportDirectoryEntryRef &Other) const {
+  return ExportTable == Other.ExportTable && Index == Other.Index;
+}
+
+error_code
+ExportDirectoryEntryRef::getNext(ExportDirectoryEntryRef &Result) const {
+  Result = ExportDirectoryEntryRef(ExportTable, Index + 1, OwningObject);
+  return object_error::success;
+}
+
+// Returns the export ordinal of the current export symbol.
+error_code ExportDirectoryEntryRef::getOrdinal(uint32_t &Result) const {
+  Result = ExportTable->OrdinalBase + Index;
+  return object_error::success;
+}
+
+// Returns the address of the current export symbol.
+error_code ExportDirectoryEntryRef::getExportRVA(uint32_t &Result) const {
+  uintptr_t IntPtr = 0;
+  if (error_code EC = OwningObject->getRvaPtr(
+          ExportTable->ExportAddressTableRVA, IntPtr))
+    return EC;
+  const export_address_table_entry *entry = reinterpret_cast<const export_address_table_entry *>(IntPtr);
+  Result = entry[Index].ExportRVA;
+  return object_error::success;
+}
+
+// Returns the name of the current export symbol. If the symbol is exported only
+// by ordinal, the empty string is set as a result.
+error_code ExportDirectoryEntryRef::getName(StringRef &Result) const {
+  uintptr_t IntPtr = 0;
+  if (error_code EC = OwningObject->getRvaPtr(
+          ExportTable->OrdinalTableRVA, IntPtr))
+    return EC;
+  const ulittle16_t *Start = reinterpret_cast<const ulittle16_t *>(IntPtr);
+
+  uint32_t NumEntries = ExportTable->NumberOfNamePointers;
+  int Offset = 0;
+  for (const ulittle16_t *I = Start, *E = Start + NumEntries;
+       I < E; ++I, ++Offset) {
+    if (*I != Index)
+      continue;
+    if (error_code EC = OwningObject->getRvaPtr(
+            ExportTable->NamePointerRVA, IntPtr))
+      return EC;
+    const ulittle32_t *NamePtr = reinterpret_cast<const ulittle32_t *>(IntPtr);
+    if (error_code EC = OwningObject->getRvaPtr(NamePtr[Offset], IntPtr))
+      return EC;
+    Result = StringRef(reinterpret_cast<const char *>(IntPtr));
+    return object_error::success;
+  }
+  Result = "";
   return object_error::success;
 }
 

@@ -1,9 +1,16 @@
-// RUN: llvm-objdump -p %p/Inputs/nop.exe.coff-i386 | FileCheck %s
+// RUN: llvm-objdump -p %p/Inputs/nop.exe.coff-i386 | \
+// RUN:   FileCheck -check-prefix=IMPORT %s
 
-CHECK:       The Import Tables:
-CHECK-NEXT:  lookup 00005028 time 00000000 fwd 00000000 name 00005096 addr 00005058
-CHECK:       DLL Name: KERNEL32.dll
-CHECK-NEXT:     Hint/Ord  Name
-CHECK-NEXT:          365  ExitProcess
+IMPORT:       The Import Tables:
+IMPORT-NEXT:  lookup 00005028 time 00000000 fwd 00000000 name 00005096 addr 00005058
+IMPORT:       DLL Name: KERNEL32.dll
+IMPORT-NEXT:     Hint/Ord  Name
+IMPORT-NEXT:          365  ExitProcess
 
+// RUN: llvm-objdump -p %p/Inputs/export.dll.coff-i386 | \
+// RUN:   FileCheck -check-prefix=EXPORT %s
 
+EXPORT:      Export Table:
+EXPORT-NEXT:  Ordinal      RVA  Name
+EXPORT-NEXT:        5   0x2008
+EXPORT-NEXT:        6   0x2010  exportfn2
