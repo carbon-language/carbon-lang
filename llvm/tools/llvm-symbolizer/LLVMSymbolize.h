@@ -71,7 +71,6 @@ private:
   ObjectFile *getObjectFileFromBinary(Binary *Bin, const std::string &ArchName);
 
   std::string printDILineInfo(DILineInfo LineInfo) const;
-  static std::string DemangleGlobalName(const std::string &Name);
 
   // Owns all the parsed binaries and object files.
   SmallVector<Binary*, 4> ParsedBinariesAndObjects;

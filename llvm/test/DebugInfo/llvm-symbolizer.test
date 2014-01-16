@@ -66,3 +66,14 @@ RUN:   | FileCheck %s --check-prefix=BINARY
 BINARY:       main
 BINARY-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16
 BINARY:      _start
+
+RUN: echo "0x400720" > %t.input5
+RUN: echo "0x4004a0" >> %t.input5
+RUN: echo "0x4006f0" >> %t.input5
+RUN: llvm-symbolizer --obj %p/Inputs/llvm-symbolizer-test.elf-x86-64 < %t.input5 \
+RUN:   | FileCheck %s --check-prefix=BINARY_C
+
+BINARY_C:       main
+BINARY_C-NEXT: /tmp/dbginfo{{[/\\]}}llvm-symbolizer-test.c:10
+BINARY_C:      _start
+BINARY_C:      {{g$}}
