@@ -99,11 +99,11 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def SLT_MM   : MMRel, SetCC_R<"slt", setlt, GPR32Opnd>, ADD_FM_MM<0, 0x350>;
   def SLTu_MM  : MMRel, SetCC_R<"sltu", setult, GPR32Opnd>,
                  ADD_FM_MM<0, 0x390>;
-  def AND_MM   : MMRel, ArithLogicR<"and", GPR32Opnd, 1, IIAlu, and>,
+  def AND_MM   : MMRel, ArithLogicR<"and", GPR32Opnd, 1, II_AND, and>,
                  ADD_FM_MM<0, 0x250>;
-  def OR_MM    : MMRel, ArithLogicR<"or", GPR32Opnd, 1, IIAlu, or>,
+  def OR_MM    : MMRel, ArithLogicR<"or", GPR32Opnd, 1, II_OR, or>,
                  ADD_FM_MM<0, 0x290>;
-  def XOR_MM   : MMRel, ArithLogicR<"xor", GPR32Opnd, 1, IIAlu, xor>,
+  def XOR_MM   : MMRel, ArithLogicR<"xor", GPR32Opnd, 1, II_XOR, xor>,
                  ADD_FM_MM<0, 0x310>;
   def NOR_MM   : MMRel, LogicNOR<"nor", GPR32Opnd>, ADD_FM_MM<0, 0x2d0>;
   def MULT_MM  : MMRel, Mult<"mult", IIImult, GPR32Opnd, [HI0, LO0]>,
@@ -162,9 +162,9 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                   NoItinerary>, ADD_FM_MM<0, 0x58>;
   def MOVN_I_MM : MMRel, CMov_I_I_FT<"movn", GPR32Opnd, GPR32Opnd,
                   NoItinerary>, ADD_FM_MM<0, 0x18>;
-  def MOVT_I_MM : MMRel, CMov_F_I_FT<"movt", GPR32Opnd, IIAlu>,
+  def MOVT_I_MM : MMRel, CMov_F_I_FT<"movt", GPR32Opnd, II_MOVT>,
                   CMov_F_I_FM_MM<0x25>;
-  def MOVF_I_MM : MMRel, CMov_F_I_FT<"movf", GPR32Opnd, IIAlu>,
+  def MOVF_I_MM : MMRel, CMov_F_I_FT<"movf", GPR32Opnd, II_MOVF>,
                   CMov_F_I_FM_MM<0x5>;
 
   /// Move to/from HI/LO
