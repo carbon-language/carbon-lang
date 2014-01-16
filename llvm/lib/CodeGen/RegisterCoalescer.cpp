@@ -769,6 +769,14 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
   if (DstOperand.getSubReg() && !DstOperand.isUndef())
     return false;
 
+  // If both SrcIdx and DstIdx are set, correct rematerialization would widen
+  // the register substantially (beyond both source and dest size). This is bad
+  // for performance since it can cascade through a function, introducing many
+  // extra spills and fills (e.g. ARM can easily end up copying QQQQPR registers
+  // around after a few subreg copies).
+  if (SrcIdx && DstIdx)
+    return false;
+
   const TargetRegisterClass *DefRC = TII->getRegClass(MCID, 0, TRI, *MF);
   if (!DefMI->isImplicitDef()) {
     if (TargetRegisterInfo::isPhysicalRegister(DstReg)) {
@@ -816,30 +824,19 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
   }
 
   if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
-    unsigned NewIdx;
-    const TargetRegisterClass *RCForInst;
+    const TargetRegisterClass *NewRC = CP.getNewRC();
+    unsigned NewIdx = NewMI->getOperand(0).getSubReg();
 
-    if (MRI->constrainRegClass(DstReg, DefRC)) {
-      // The materialized instruction is quite capable of setting DstReg
-      // directly, but it may still have a now-trivial subregister index which
-      // we should clear.
-      NewMI->getOperand(0).setSubReg(0);
-    } else if ((NewIdx = NewMI->getOperand(0).getSubReg()) &&
-               (RCForInst = TRI->getMatchingSuperRegClass(
-                 MRI->getRegClass(DstReg), DefRC, NewIdx))) {
-      // The subreg index on NewMI is essential; we still have to make sure
-      // DstReg:idx is in a class that NewMI can use.
-      MRI->constrainRegClass(DstReg, RCForInst);
-    } else {
-      // DstReg is actually incompatible with NewMI, we have to move to a
-      // super-reg's class. This could come from a sequence like:
-      //     GR32 = MOV32r0
-      //     GR8 = COPY GR32:sub_8
-      MRI->setRegClass(DstReg, CP.getNewRC());
-      updateRegDefsUses(DstReg, DstReg, DstIdx);
-      NewMI->getOperand(0).setSubReg(
-          TRI->composeSubRegIndices(SrcIdx, DefMI->getOperand(0).getSubReg()));
-    }
+    if (NewIdx)
+      NewRC = TRI->getMatchingSuperRegClass(NewRC, DefRC, NewIdx);
+    else
+      NewRC = TRI->getCommonSubClass(NewRC, DefRC);
+
+    assert(NewRC && "subreg chosen for remat incompatible with instruction");
+    MRI->setRegClass(DstReg, NewRC);
+
+    updateRegDefsUses(DstReg, DstReg, DstIdx);
+    NewMI->getOperand(0).setSubReg(NewIdx);
   } else if (NewMI->getOperand(0).getReg() != CopyDstReg) {
     // The New instruction may be defining a sub-register of what's actually
     // been asked for. If so it must implicitly define the whole thing.
