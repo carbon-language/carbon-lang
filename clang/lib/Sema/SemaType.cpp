@@ -1456,6 +1456,13 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                                diag::err_array_of_abstract_type))
       return QualType();
 
+    // Mentioning a member pointer type for an array type causes us to lock in
+    // an inheritance model, even if it's inside an unused typedef.
+    if (Context.getTargetInfo().getCXXABI().isMicrosoft())
+      if (const MemberPointerType *MPTy = T->getAs<MemberPointerType>())
+        if (!MPTy->getClass()->isDependentType())
+          RequireCompleteType(Loc, T, 0);
+
   } else {
     // C99 6.7.5.2p1: If the element type is an incomplete or function type,
     // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
