@@ -53,29 +53,34 @@ CGDebugInfo::~CGDebugInfo() {
 }
 
 
-NoLocation::NoLocation(CodeGenFunction &CGF, CGBuilderTy &B)
+SaveAndRestoreLocation::SaveAndRestoreLocation(CodeGenFunction &CGF, CGBuilderTy &B)
   : DI(CGF.getDebugInfo()), Builder(B) {
   if (DI) {
     SavedLoc = DI->getLocation();
     DI->CurLoc = SourceLocation();
-    Builder.SetCurrentDebugLocation(llvm::DebugLoc());
   }
+}
+
+SaveAndRestoreLocation::~SaveAndRestoreLocation() {
+  if (DI)
+    DI->EmitLocation(Builder, SavedLoc);
+}
+
+NoLocation::NoLocation(CodeGenFunction &CGF, CGBuilderTy &B)
+  : SaveAndRestoreLocation(CGF, B) {
+  if (DI)
+    Builder.SetCurrentDebugLocation(llvm::DebugLoc());
 }
 
 NoLocation::~NoLocation() {
-  if (DI) {
+  if (DI)
     assert(Builder.getCurrentDebugLocation().isUnknown());
-    DI->CurLoc = SavedLoc;
-  }
 }
 
 ArtificialLocation::ArtificialLocation(CodeGenFunction &CGF, CGBuilderTy &B)
-  : DI(CGF.getDebugInfo()), Builder(B) {
-  if (DI) {
-    SavedLoc = DI->getLocation();
-    DI->CurLoc = SourceLocation();
+  : SaveAndRestoreLocation(CGF, B) {
+  if (DI)
     Builder.SetCurrentDebugLocation(llvm::DebugLoc());
-  }
 }
 
 void ArtificialLocation::Emit() {
@@ -91,10 +96,8 @@ void ArtificialLocation::Emit() {
 }
 
 ArtificialLocation::~ArtificialLocation() {
-  if (DI) {
+  if (DI)
     assert(Builder.getCurrentDebugLocation().getLine() == 0);
-    DI->CurLoc = SavedLoc;
-  }
 }
 
 void CGDebugInfo::setLocation(SourceLocation Loc) {

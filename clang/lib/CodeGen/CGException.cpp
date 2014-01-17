@@ -766,11 +766,9 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
 
   // Save the current IR generation state.
   CGBuilderTy::InsertPoint savedIP = Builder.saveAndClearIP();
-  SourceLocation SavedLocation;
-  if (CGDebugInfo *DI = getDebugInfo()) {
-    SavedLocation = DI->getLocation();
+  SaveAndRestoreLocation AutoRestoreLocation(*this, Builder);
+  if (CGDebugInfo *DI = getDebugInfo())
     DI->EmitLocation(Builder, CurEHLocation);
-  }
 
   const EHPersonality &personality = EHPersonality::get(getLangOpts());
 
@@ -892,8 +890,6 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
 
   // Restore the old IR generation state.
   Builder.restoreIP(savedIP);
-  if (CGDebugInfo *DI = getDebugInfo())
-    DI->EmitLocation(Builder, SavedLocation);
 
   return lpad;
 }
