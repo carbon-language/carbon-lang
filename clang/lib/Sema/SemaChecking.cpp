@@ -736,6 +736,7 @@ static void CheckNonNullArguments(Sema &S,
                                   const NamedDecl *FDecl,
                                   const Expr * const *ExprArgs,
                                   SourceLocation CallSiteLoc) {
+  // Check the attributes attached to the method/function itself.
   for (specific_attr_iterator<NonNullAttr>
        I = FDecl->specific_attr_begin<NonNullAttr>(),
        E = FDecl->specific_attr_end<NonNullAttr>(); I != E; ++I) {
@@ -746,6 +747,21 @@ static void CheckNonNullArguments(Sema &S,
          i != e; ++i) {
       CheckNonNullArgument(S, ExprArgs[*i], CallSiteLoc);
     }
+  }
+
+  // Check the attributes on the parameters.
+  ArrayRef<ParmVarDecl*> parms;
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(FDecl))
+    parms = FD->parameters();
+  else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(FDecl))
+    parms = MD->parameters();
+
+  unsigned argIndex = 0;
+  for (ArrayRef<ParmVarDecl*>::iterator I = parms.begin(), E = parms.end();
+       I != E; ++I, ++argIndex) {
+    const ParmVarDecl *PVD = *I;
+    if (PVD->hasAttr<NonNullAttr>())
+      CheckNonNullArgument(S, ExprArgs[argIndex], CallSiteLoc);
   }
 }
 

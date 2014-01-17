@@ -1156,6 +1156,36 @@ static void possibleTransparentUnionPointerType(QualType &T) {
     }
 }
 
+static bool attrNonNullArgCheck(Sema &S, QualType T, const AttributeList &Attr,
+                                SourceRange R) {
+  T = T.getNonReferenceType();
+  possibleTransparentUnionPointerType(T);
+
+  if (!T->isAnyPointerType() && !T->isBlockPointerType()) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_pointers_only)
+      << Attr.getName() << R;
+    return false;
+  }
+  return true;
+}
+
+static void handleNonNullAttrParameter(Sema &S, ParmVarDecl *D,
+                                       const AttributeList &Attr) {
+  // Is the argument a pointer type?
+  if (!attrNonNullArgCheck(S, D->getType(), Attr, D->getSourceRange()))
+    return;
+
+  if (Attr.getNumArgs() > 0) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_nonnull_parm_no_args)
+      << D->getSourceRange();
+    return;
+  }
+
+  D->addAttr(::new (S.Context)
+             NonNullAttr(Attr.getRange(), S.Context, 0, 0,
+                         Attr.getAttributeSpellingListIndex()));
+}
+
 static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   SmallVector<unsigned, 8> NonNullArgs;
   for (unsigned i = 0; i < Attr.getNumArgs(); ++i) {
@@ -1165,15 +1195,10 @@ static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
       return;
 
     // Is the function argument a pointer type?
-    QualType T = getFunctionOrMethodArgType(D, Idx).getNonReferenceType();
-    possibleTransparentUnionPointerType(T);
-    
-    if (!T->isAnyPointerType() && !T->isBlockPointerType()) {
-      // FIXME: Should also highlight argument in decl.
-      S.Diag(Attr.getLoc(), diag::warn_attribute_pointers_only)
-        << Attr.getName() << Ex->getSourceRange();
+    // FIXME: Should also highlight argument in decl in the diagnostic.
+    if (!attrNonNullArgCheck(S, getFunctionOrMethodArgType(D, Idx),
+                             Attr, Ex->getSourceRange()))
       continue;
-    }
 
     NonNullArgs.push_back(Idx);
   }
@@ -3947,7 +3972,12 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Mode:        handleModeAttr        (S, D, Attr); break;
   case AttributeList::AT_NoCommon:
     handleSimpleAttribute<NoCommonAttr>(S, D, Attr); break;
-  case AttributeList::AT_NonNull:     handleNonNullAttr     (S, D, Attr); break;
+  case AttributeList::AT_NonNull:
+      if (ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(D))
+        handleNonNullAttrParameter(S, PVD, Attr);
+      else
+        handleNonNullAttr(S, D, Attr);
+      break;
   case AttributeList::AT_Overloadable:
     handleSimpleAttribute<OverloadableAttr>(S, D, Attr); break;
   case AttributeList::AT_Ownership:   handleOwnershipAttr   (S, D, Attr); break;

@@ -95,3 +95,17 @@ extern void DoSomethingNotNull(void *db) __attribute__((nonnull(1)));
 }
 @end
 
+__attribute__((objc_root_class))
+  @interface TestNonNullParameters
+- (void) doNotPassNullParameterNonPointerArg:(int)__attribute__((nonnull))x; // expected-warning {{'nonnull' attribute only applies to pointer arguments}}
+- (void) doNotPassNullParameter:(id)__attribute__((nonnull))x;
+- (void) doNotPassNullParameterArgIndex:(id)__attribute__((nonnull(1)))x; // expected-warning {{'nonnull' attribute when used on parameters takes no arguments}}
+- (void) doNotPassNullOnMethod:(id)x __attribute__((nonnull(1)));
+@end
+
+void test(TestNonNullParameters *f) {
+  [f doNotPassNullParameter:0]; // expected-warning {{null passed to a callee which requires a non-null argument}}
+  [f doNotPassNullParameterArgIndex:0]; // no-warning
+  [f doNotPassNullOnMethod:0]; // expected-warning {{null passed to a callee which requires a non-null argument}}
+}
+

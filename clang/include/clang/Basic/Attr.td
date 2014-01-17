@@ -679,8 +679,9 @@ def NoMips16 : InheritableAttr, TargetSpecificAttr<TargetMips> {
 
 def NonNull : InheritableAttr {
   let Spellings = [GNU<"nonnull">, CXX11<"gnu", "nonnull">];
-  let Subjects = SubjectList<[ObjCMethod, FunctionLike, HasFunctionProto],
-                             WarnDiag, "ExpectedFunctionOrMethod">;
+  let Subjects = SubjectList<[ObjCMethod, FunctionLike, HasFunctionProto,
+                              ParmVar],
+                             WarnDiag, "ExpectedFunctionMethodOrParameter">;
   let Args = [VariadicUnsignedArgument<"Args">];
   let AdditionalMembers =
 [{bool isNonNull(unsigned idx) const {
