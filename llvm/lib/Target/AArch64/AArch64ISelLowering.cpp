@@ -403,6 +403,61 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::FP_TO_UINT, MVT::v2i32, Custom);
     setOperationAction(ISD::FP_TO_UINT, MVT::v2i64, Custom);
 
+    // Neon does not support vector divide/remainder operations except
+    // floating-point divide.
+    setOperationAction(ISD::SDIV, MVT::v1i8, Expand);
+    setOperationAction(ISD::SDIV, MVT::v8i8, Expand);
+    setOperationAction(ISD::SDIV, MVT::v16i8, Expand);
+    setOperationAction(ISD::SDIV, MVT::v1i16, Expand);
+    setOperationAction(ISD::SDIV, MVT::v4i16, Expand);
+    setOperationAction(ISD::SDIV, MVT::v8i16, Expand);
+    setOperationAction(ISD::SDIV, MVT::v1i32, Expand);
+    setOperationAction(ISD::SDIV, MVT::v2i32, Expand);
+    setOperationAction(ISD::SDIV, MVT::v4i32, Expand);
+    setOperationAction(ISD::SDIV, MVT::v1i64, Expand);
+    setOperationAction(ISD::SDIV, MVT::v2i64, Expand);
+
+    setOperationAction(ISD::UDIV, MVT::v1i8, Expand);
+    setOperationAction(ISD::UDIV, MVT::v8i8, Expand);
+    setOperationAction(ISD::UDIV, MVT::v16i8, Expand);
+    setOperationAction(ISD::UDIV, MVT::v1i16, Expand);
+    setOperationAction(ISD::UDIV, MVT::v4i16, Expand);
+    setOperationAction(ISD::UDIV, MVT::v8i16, Expand);
+    setOperationAction(ISD::UDIV, MVT::v1i32, Expand);
+    setOperationAction(ISD::UDIV, MVT::v2i32, Expand);
+    setOperationAction(ISD::UDIV, MVT::v4i32, Expand);
+    setOperationAction(ISD::UDIV, MVT::v1i64, Expand);
+    setOperationAction(ISD::UDIV, MVT::v2i64, Expand);
+
+    setOperationAction(ISD::SREM, MVT::v1i8, Expand);
+    setOperationAction(ISD::SREM, MVT::v8i8, Expand);
+    setOperationAction(ISD::SREM, MVT::v16i8, Expand);
+    setOperationAction(ISD::SREM, MVT::v1i16, Expand);
+    setOperationAction(ISD::SREM, MVT::v4i16, Expand);
+    setOperationAction(ISD::SREM, MVT::v8i16, Expand);
+    setOperationAction(ISD::SREM, MVT::v1i32, Expand);
+    setOperationAction(ISD::SREM, MVT::v2i32, Expand);
+    setOperationAction(ISD::SREM, MVT::v4i32, Expand);
+    setOperationAction(ISD::SREM, MVT::v1i64, Expand);
+    setOperationAction(ISD::SREM, MVT::v2i64, Expand);
+
+    setOperationAction(ISD::UREM, MVT::v1i8, Expand);
+    setOperationAction(ISD::UREM, MVT::v8i8, Expand);
+    setOperationAction(ISD::UREM, MVT::v16i8, Expand);
+    setOperationAction(ISD::UREM, MVT::v1i16, Expand);
+    setOperationAction(ISD::UREM, MVT::v4i16, Expand);
+    setOperationAction(ISD::UREM, MVT::v8i16, Expand);
+    setOperationAction(ISD::UREM, MVT::v1i32, Expand);
+    setOperationAction(ISD::UREM, MVT::v2i32, Expand);
+    setOperationAction(ISD::UREM, MVT::v4i32, Expand);
+    setOperationAction(ISD::UREM, MVT::v1i64, Expand);
+    setOperationAction(ISD::UREM, MVT::v2i64, Expand);
+
+    setOperationAction(ISD::FREM, MVT::v2f32, Expand);
+    setOperationAction(ISD::FREM, MVT::v4f32, Expand);
+    setOperationAction(ISD::FREM, MVT::v1f64, Expand);
+    setOperationAction(ISD::FREM, MVT::v2f64, Expand);
+
     // Vector ExtLoad and TruncStore are expanded.
     for (unsigned I = MVT::FIRST_VECTOR_VALUETYPE;
          I <= MVT::LAST_VECTOR_VALUETYPE; ++I) {
