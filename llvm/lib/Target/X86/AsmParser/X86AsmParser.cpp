@@ -1246,6 +1246,7 @@ static unsigned getIntelMemOperandSize(StringRef OpStr) {
     .Cases("XWORD", "xword", 80)
     .Cases("XMMWORD", "xmmword", 128)
     .Cases("YMMWORD", "ymmword", 256)
+    .Cases("ZMMWORD", "zmmword", 512)
     .Default(0);
   return Size;
 }
