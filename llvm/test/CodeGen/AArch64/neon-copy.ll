@@ -948,3 +948,35 @@ entry:
   ret <2 x i32> %vecinit1.i
 }
 
+define <2 x i32> @test_concat_undef_v1i32(<1 x i32> %a) {
+; CHECK-LABEL: test_concat_undef_v1i32:
+; CHECK: dup v{{[0-9]+}}.2s, v{{[0-9]+}}.s[0]
+entry:
+  %0 = extractelement <1 x i32> %a, i32 0
+  %vecinit1.i = insertelement <2 x i32> undef, i32 %0, i32 1
+  ret <2 x i32> %vecinit1.i
+}
+
+define <2 x i32> @test_concat_v1i32_v1i32(<1 x i32> %a) {
+; CHECK-LABEL: test_concat_v1i32_v1i32:
+; CHECK: dup v{{[0-9]+}}.2s, v{{[0-9]+}}.s[0]
+entry:
+  %0 = extractelement <1 x i32> %a, i32 0
+  %vecinit.i = insertelement <2 x i32> undef, i32 %0, i32 0
+  %vecinit1.i = insertelement <2 x i32> %vecinit.i, i32 %0, i32 1
+  ret <2 x i32> %vecinit1.i
+}
+
+define <2 x float> @test_scalar_to_vector_f32_to_v2f32(<1 x float> %a) {
+entry:
+  %0 = extractelement <1 x float> %a, i32 0
+  %vecinit1.i = insertelement <2 x float> undef, float %0, i32 0
+  ret <2 x float> %vecinit1.i
+}
+
+define <4 x float> @test_scalar_to_vector_f32_to_v4f32(<1 x float> %a) {
+entry:
+  %0 = extractelement <1 x float> %a, i32 0
+  %vecinit1.i = insertelement <4 x float> undef, float %0, i32 0
+  ret <4 x float> %vecinit1.i
+}

@@ -324,10 +324,8 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v1f64, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2f64, Custom);
 
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i32, Legal);
     setOperationAction(ISD::CONCAT_VECTORS, MVT::v16i8, Legal);
-    setOperationAction(ISD::CONCAT_VECTORS, MVT::v8i16, Legal);
-    setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i32, Legal);
-    setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i64, Legal);
     setOperationAction(ISD::CONCAT_VECTORS, MVT::v8i16, Legal);
     setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i32, Legal);
     setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i64, Legal);
