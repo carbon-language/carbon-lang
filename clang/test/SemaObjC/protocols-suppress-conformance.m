@@ -59,14 +59,21 @@ int x;
 __attribute__((objc_protocol_requires_explicit_implementation))
 @protocol ProtocolA
 @required
-- (void)rlyeh;
-- (void)innsmouth;
+- (void)rlyeh; // expected-note 2 {{method 'rlyeh' declared here}}
+- (void)innsmouth; // expected-note 2 {{method 'innsmouth' declared here}}
 @end
 
 @protocol ProtocolB <ProtocolA>
 @required
 - (void)dunwich;
-- (id)innsmouth;
+- (void)innsmouth; // expected-note {{method 'innsmouth' declared here}}
+@end
+
+__attribute__((objc_protocol_requires_explicit_implementation))
+@protocol ProtocolB_Explicit <ProtocolA>
+@required
+- (void)dunwich;
+- (void)innsmouth; // expected-note 2 {{method 'innsmouth' declared here}}
 @end
 
 @protocol ProtocolC
@@ -76,14 +83,24 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 - (void)dunwich;
 @end
 
-@interface MyObject <ProtocolC>
-@end
+@interface MyObject <ProtocolC> @end
 
-@interface MyLovecraft <ProtocolA>
-@end
+// Provide two variants of a base class, one that adopts ProtocolA and
+// one that does not.
+@interface Lovecraft <ProtocolA> @end
+@interface Lovecraft_2 @end
 
-@interface MyShoggoth : MyLovecraft <ProtocolB>
-@end
+// Provide two variants of a subclass that conform to ProtocolB.  One
+// subclasses from a class that conforms to ProtocolA, the other that
+// does not.
+//
+// From those, provide two variants that conformat to ProtocolB_Explicit
+// instead.
+@interface Shoggoth : Lovecraft <ProtocolB> @end
+@interface Shoggoth_2 : Lovecraft_2 <ProtocolB> @end
+@interface Shoggoth_Explicit : Lovecraft <ProtocolB_Explicit> @end
+@interface Shoggoth_2_Explicit : Lovecraft_2 <ProtocolB_Explicit> @end
+
 
 @implementation MyObject
 - (void)innsmouth {}
@@ -91,12 +108,28 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 - (void)dunwich {}
 @end
 
-@implementation MyLovecraft
+@implementation Lovecraft
 - (void)innsmouth {}
 - (void)rlyeh {}
 @end
 
-@implementation MyShoggoth
+@implementation Shoggoth
+- (void)dunwich {}
+@end
+
+@implementation Shoggoth_2 // expected-warning {{method 'innsmouth' in protocol 'ProtocolB' not implemented}}\
+                           // expected-warning {{method 'rlyeh' in protocol 'ProtocolA' not implemented}}\
+                           // expected-warning {{'innsmouth' in protocol 'ProtocolA' not implemented}} 
+- (void)dunwich {}
+@end
+
+@implementation Shoggoth_Explicit // expected-warning {{method 'innsmouth' in protocol 'ProtocolB_Explicit' not implemented}}
+- (void)dunwich {}
+@end
+
+@implementation Shoggoth_2_Explicit // expected-warning {{method 'innsmouth' in protocol 'ProtocolB_Explicit' not implemented}}\
+                                    // expected-warning {{method 'rlyeh' in protocol 'ProtocolA' not implemented}}\
+                                    // expected-warning {{method 'innsmouth' in protocol 'ProtocolA' not implemented}}
 - (void)dunwich {}
 @end
 
