@@ -1613,8 +1613,10 @@ UndefOrNullArgVisitor::VisitNode(const ExplodedNode *N,
   CallEventManager &CEMgr = BRC.getStateManager().getCallEventManager();
   CallEventRef<> Call = CEMgr.getCaller(CEnter->getCalleeContext(), State);
   unsigned Idx = 0;
-  for (CallEvent::param_iterator I = Call->param_begin(),
-                                 E = Call->param_end(); I != E; ++I, ++Idx) {
+  ArrayRef<ParmVarDecl*> parms = Call->parameters();
+
+  for (ArrayRef<ParmVarDecl*>::iterator I = parms.begin(), E = parms.end();
+                              I != E; ++I, ++Idx) {
     const MemRegion *ArgReg = Call->getArgSVal(Idx).getAsRegion();
 
     // Are we tracking the argument or its subregion?

@@ -342,23 +342,16 @@ public:
   // Iterator access to formal parameters and their types.
 private:
   typedef std::const_mem_fun_t<QualType, ParmVarDecl> get_type_fun;
-  
-public:
-  typedef const ParmVarDecl * const *param_iterator;
 
-  /// Returns an iterator over the call's formal parameters.
+public:
+  /// Return call's formal parameters.
   ///
   /// Remember that the number of formal parameters may not match the number
   /// of arguments for all calls. However, the first parameter will always
   /// correspond with the argument value returned by \c getArgSVal(0).
-  ///
-  /// If the call has no accessible declaration, \c param_begin() will be equal
-  /// to \c param_end().
-  virtual param_iterator param_begin() const = 0;
-  /// \sa param_begin()
-  virtual param_iterator param_end() const = 0;
+  virtual ArrayRef<ParmVarDecl*> parameters() const = 0;
 
-  typedef llvm::mapped_iterator<param_iterator, get_type_fun>
+  typedef llvm::mapped_iterator<ArrayRef<ParmVarDecl*>::iterator, get_type_fun>
     param_type_iterator;
 
   /// Returns an iterator over the types of the call's formal parameters.
@@ -367,12 +360,13 @@ public:
   /// definition because it represents a public interface, and probably has
   /// more annotations.
   param_type_iterator param_type_begin() const {
-    return llvm::map_iterator(param_begin(),
+    return llvm::map_iterator(parameters().begin(),
                               get_type_fun(&ParmVarDecl::getType));
   }
   /// \sa param_type_begin()
   param_type_iterator param_type_end() const {
-    return llvm::map_iterator(param_end(), get_type_fun(&ParmVarDecl::getType));
+    return llvm::map_iterator(parameters().end(),
+                              get_type_fun(&ParmVarDecl::getType));
   }
 
   // For debugging purposes only
@@ -420,8 +414,7 @@ public:
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
                                             BindingsTy &Bindings) const;
 
-  virtual param_iterator param_begin() const;
-  virtual param_iterator param_end() const;
+  virtual ArrayRef<ParmVarDecl *> parameters() const;
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() >= CE_BEG_FUNCTION_CALLS &&
@@ -515,8 +508,7 @@ public:
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
                                             BindingsTy &Bindings) const;
 
-  virtual param_iterator param_begin() const;
-  virtual param_iterator param_end() const;
+  virtual ArrayRef<ParmVarDecl*> parameters() const;
 
   virtual Kind getKind() const { return CE_Block; }
 
@@ -885,8 +877,7 @@ public:
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
                                             BindingsTy &Bindings) const;
 
-  virtual param_iterator param_begin() const;
-  virtual param_iterator param_end() const;
+  virtual ArrayRef<ParmVarDecl*> parameters() const;
 
   virtual Kind getKind() const { return CE_ObjCMessage; }
 

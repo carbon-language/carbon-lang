@@ -282,14 +282,14 @@ static void addParameterValuesToBindings(const StackFrameContext *CalleeCtx,
                                          CallEvent::BindingsTy &Bindings,
                                          SValBuilder &SVB,
                                          const CallEvent &Call,
-                                         CallEvent::param_iterator I,
-                                         CallEvent::param_iterator E) {
+                                         ArrayRef<ParmVarDecl*> parameters) {
   MemRegionManager &MRMgr = SVB.getRegionManager();
 
   // If the function has fewer parameters than the call has arguments, we simply
   // do not bind any values to them.
   unsigned NumArgs = Call.getNumArgs();
   unsigned Idx = 0;
+  ArrayRef<ParmVarDecl*>::iterator I = parameters.begin(), E = parameters.end();
   for (; I != E && Idx < NumArgs; ++I, ++Idx) {
     const ParmVarDecl *ParamDecl = *I;
     assert(ParamDecl && "Formal parameter has no decl?");
@@ -304,21 +304,11 @@ static void addParameterValuesToBindings(const StackFrameContext *CalleeCtx,
   // FIXME: Variadic arguments are not handled at all right now.
 }
 
-
-CallEvent::param_iterator AnyFunctionCall::param_begin() const {
+ArrayRef<ParmVarDecl*> AnyFunctionCall::parameters() const {
   const FunctionDecl *D = getDecl();
   if (!D)
-    return 0;
-
-  return D->param_begin();
-}
-
-CallEvent::param_iterator AnyFunctionCall::param_end() const {
-  const FunctionDecl *D = getDecl();
-  if (!D)
-    return 0;
-
-  return D->param_end();
+    return llvm::ArrayRef<ParmVarDecl*>();
+  return D->parameters();
 }
 
 void AnyFunctionCall::getInitialStackFrameContents(
@@ -327,7 +317,7 @@ void AnyFunctionCall::getInitialStackFrameContents(
   const FunctionDecl *D = cast<FunctionDecl>(CalleeCtx->getDecl());
   SValBuilder &SVB = getState()->getStateManager().getSValBuilder();
   addParameterValuesToBindings(CalleeCtx, Bindings, SVB, *this,
-                               D->param_begin(), D->param_end());
+                               D->parameters());
 }
 
 bool AnyFunctionCall::argumentsMayEscape() const {
@@ -548,18 +538,11 @@ const BlockDataRegion *BlockCall::getBlockRegion() const {
   return dyn_cast_or_null<BlockDataRegion>(DataReg);
 }
 
-CallEvent::param_iterator BlockCall::param_begin() const {
+ArrayRef<ParmVarDecl*> BlockCall::parameters() const {
   const BlockDecl *D = getDecl();
   if (!D)
     return 0;
-  return D->param_begin();
-}
-
-CallEvent::param_iterator BlockCall::param_end() const {
-  const BlockDecl *D = getDecl();
-  if (!D)
-    return 0;
-  return D->param_end();
+  return D->parameters();
 }
 
 void BlockCall::getExtraInvalidatedValues(ValueList &Values) const {
@@ -573,7 +556,7 @@ void BlockCall::getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
   const BlockDecl *D = cast<BlockDecl>(CalleeCtx->getDecl());
   SValBuilder &SVB = getState()->getStateManager().getSValBuilder();
   addParameterValuesToBindings(CalleeCtx, Bindings, SVB, *this,
-                               D->param_begin(), D->param_end());
+                               D->parameters());
 }
 
 
@@ -602,8 +585,6 @@ void CXXConstructorCall::getInitialStackFrameContents(
   }
 }
 
-
-
 SVal CXXDestructorCall::getCXXThisVal() const {
   if (Data)
     return loc::MemRegionVal(DtorDataTy::getFromOpaqueValue(Data).getPointer());
@@ -619,21 +600,11 @@ RuntimeDefinition CXXDestructorCall::getRuntimeDefinition() const {
   return CXXInstanceCall::getRuntimeDefinition();
 }
 
-
-CallEvent::param_iterator ObjCMethodCall::param_begin() const {
+ArrayRef<ParmVarDecl*> ObjCMethodCall::parameters() const {
   const ObjCMethodDecl *D = getDecl();
   if (!D)
-    return 0;
-
-  return D->param_begin();
-}
-
-CallEvent::param_iterator ObjCMethodCall::param_end() const {
-  const ObjCMethodDecl *D = getDecl();
-  if (!D)
-    return 0;
-
-  return D->param_end();
+    return ArrayRef<ParmVarDecl*>();
+  return D->parameters();
 }
 
 void
@@ -911,7 +882,7 @@ void ObjCMethodCall::getInitialStackFrameContents(
   const ObjCMethodDecl *D = cast<ObjCMethodDecl>(CalleeCtx->getDecl());
   SValBuilder &SVB = getState()->getStateManager().getSValBuilder();
   addParameterValuesToBindings(CalleeCtx, Bindings, SVB, *this,
-                               D->param_begin(), D->param_end());
+                               D->parameters());
 
   SVal SelfVal = getReceiverSVal();
   if (!SelfVal.isUnknown()) {
