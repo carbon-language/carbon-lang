@@ -959,6 +959,12 @@ error_code ExportDirectoryEntryRef::getDllName(StringRef &Result) const {
   return object_error::success;
 }
 
+// Returns the starting ordinal number.
+error_code ExportDirectoryEntryRef::getOrdinalBase(uint32_t &Result) const {
+  Result = ExportTable->OrdinalBase;
+  return object_error::success;
+}
+
 // Returns the export ordinal of the current export symbol.
 error_code ExportDirectoryEntryRef::getOrdinal(uint32_t &Result) const {
   Result = ExportTable->OrdinalBase + Index;

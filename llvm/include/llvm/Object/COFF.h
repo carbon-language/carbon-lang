@@ -408,6 +408,7 @@ public:
   error_code getNext(ExportDirectoryEntryRef &Result) const;
 
   error_code getDllName(StringRef &Result) const;
+  error_code getOrdinalBase(uint32_t &Result) const;
   error_code getOrdinal(uint32_t &Result) const;
   error_code getExportRVA(uint32_t &Result) const;
   error_code getSymbolName(StringRef &Result) const;

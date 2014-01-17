@@ -12,6 +12,7 @@ IMPORT-NEXT:          365  ExitProcess
 
 EXPORT:      Export Table:
 EXPORT-NEXT:  DLL name: export.test.tmp3.dll
+EXPORT-NEXT:  Ordinal base: 5
 EXPORT-NEXT:  Ordinal      RVA  Name
 EXPORT-NEXT:        5   0x2008
 EXPORT-NEXT:        6   0x2010  exportfn2

@@ -286,9 +286,13 @@ static void printExportTable(const COFFObjectFile *Obj) {
   if (I == E)
     return;
   StringRef DllName;
+  uint32_t OrdinalBase;
   if (I->getDllName(DllName))
     return;
+  if (I->getOrdinalBase(OrdinalBase))
+    return;
   outs() << " DLL name: " << DllName << "\n";
+  outs() << " Ordinal base: " << OrdinalBase << "\n";
   outs() << " Ordinal      RVA  Name\n";
   error_code EC;
   for (; I != E; I = I.increment(EC)) {
