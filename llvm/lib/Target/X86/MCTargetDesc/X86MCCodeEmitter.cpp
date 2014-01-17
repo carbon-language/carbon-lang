@@ -754,22 +754,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   // Classify VEX_B, VEX_4V, VEX_R, VEX_X
   unsigned NumOps = Desc.getNumOperands();
-  unsigned CurOp = 0;
-  if (NumOps > 1 && Desc.getOperandConstraint(1, MCOI::TIED_TO) == 0)
-    ++CurOp;
-  else if (NumOps > 3 && Desc.getOperandConstraint(2, MCOI::TIED_TO) == 0 &&
-           Desc.getOperandConstraint(3, MCOI::TIED_TO) == 1)
-    // Special case for AVX-512 GATHER with 2 TIED_TO operands
-    // Skip the first 2 operands: dst, mask_wb
-    CurOp += 2;
-  else if (NumOps > 3 && Desc.getOperandConstraint(2, MCOI::TIED_TO) == 0 &&
-           Desc.getOperandConstraint(NumOps - 1, MCOI::TIED_TO) == 1)
-    // Special case for GATHER with 2 TIED_TO operands
-    // Skip the first 2 operands: dst, mask_wb
-    CurOp += 2;
-  else if (NumOps > 2 && Desc.getOperandConstraint(NumOps - 2, MCOI::TIED_TO) == 0)
-    // SCATTER
-    ++CurOp;
+  unsigned CurOp = X86II::getOperandBias(Desc);
 
   switch (TSFlags & X86II::FormMask) {
   default: llvm_unreachable("Unexpected form in EmitVEXOpcodePrefix!");
