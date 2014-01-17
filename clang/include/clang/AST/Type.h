@@ -3036,15 +3036,10 @@ public:
       return 0;
     return reinterpret_cast<FunctionDecl * const *>(arg_type_end())[1];
   }
-  bool isNothrow(const ASTContext &Ctx) const {
-    ExceptionSpecificationType EST = getExceptionSpecType();
-    assert(EST != EST_Unevaluated && EST != EST_Uninstantiated);
-    if (EST == EST_DynamicNone || EST == EST_BasicNoexcept)
-      return true;
-    if (EST != EST_ComputedNoexcept)
-      return false;
-    return getNoexceptSpec(Ctx) == NR_Nothrow;
-  }
+  /// \brief Determine whether this function type has a non-throwing exception
+  /// specification. If this depends on template arguments, returns
+  /// \c ResultIfDependent.
+  bool isNothrow(const ASTContext &Ctx, bool ResultIfDependent = false) const;
 
   bool isVariadic() const { return Variadic; }
 

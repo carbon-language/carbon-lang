@@ -38,7 +38,7 @@ struct Test {
   } __attribute__((aligned(256)));
 
   void* operator new(unsigned long) {
-    return 0;
+    return 0; // expected-warning {{'operator new' should not return a null pointer unless it is declared 'throw()'}}
   }
 
   SeparateCacheLines<int> high_contention_data[10];
@@ -59,7 +59,7 @@ struct Test {
   } __attribute__((aligned(256)));
 
   void* operator new[](unsigned long) {
-    return 0;
+    return 0; // expected-warning {{'operator new[]' should not return a null pointer unless it is declared 'throw()'}}
   }
 
   SeparateCacheLines<int> high_contention_data[10];

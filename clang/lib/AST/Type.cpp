@@ -1689,6 +1689,31 @@ FunctionProtoType::getNoexceptSpec(const ASTContext &ctx) const {
   return value.getBoolValue() ? NR_Nothrow : NR_Throw;
 }
 
+bool FunctionProtoType::isNothrow(const ASTContext &Ctx,
+                                  bool ResultIfDependent) const {
+  ExceptionSpecificationType EST = getExceptionSpecType();
+  assert(EST != EST_Unevaluated && EST != EST_Uninstantiated);
+  if (EST == EST_DynamicNone || EST == EST_BasicNoexcept)
+    return true;
+
+  if (EST == EST_Dynamic && ResultIfDependent == true) {
+    // A dynamic exception specification is throwing unless every exception
+    // type is an (unexpanded) pack expansion type.
+    for (unsigned I = 0, N = NumExceptions; I != N; ++I)
+      if (!getExceptionType(I)->getAs<PackExpansionType>())
+        return false;
+    return ResultIfDependent;
+  }
+
+  if (EST != EST_ComputedNoexcept)
+    return false;
+
+  NoexceptResult NR = getNoexceptSpec(Ctx);
+  if (NR == NR_Dependent)
+    return ResultIfDependent;
+  return NR == NR_Nothrow;
+}
+
 bool FunctionProtoType::isTemplateVariadic() const {
   for (unsigned ArgIdx = getNumArgs(); ArgIdx; --ArgIdx)
     if (isa<PackExpansionType>(getArgType(ArgIdx - 1)))
