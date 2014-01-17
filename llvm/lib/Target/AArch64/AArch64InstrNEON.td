@@ -8852,6 +8852,12 @@ def : Pat<(v2i64 (sra (v2i64 VPR128:$Rn), (v2i64 VPR128:$Rm))),
 // Patterns for handling half-precision values
 //
 
+// Convert between f16 value and f32 value
+def : Pat<(f32 (f16_to_f32 (i32 GPR32:$Rn))),
+          (FCVTsh (EXTRACT_SUBREG (FMOVsw $Rn), sub_16))>;
+def : Pat<(i32 (f32_to_f16 (f32 FPR32:$Rn))),
+          (FMOVws (SUBREG_TO_REG (i64 0), (f16 (FCVThs $Rn)), sub_16))>;
+
 // Convert f16 value coming in as i16 value to f32
 def : Pat<(f32 (f16_to_f32 (i32 (and (i32 GPR32:$Rn), 65535)))),
           (FCVTsh (EXTRACT_SUBREG (FMOVsw GPR32:$Rn), sub_16))>;
