@@ -32,6 +32,7 @@
 
 @ Check that multiplication is supported
 	mul r4, r5, r6
+	mla r4, r5, r6, r3
 	smull r4, r5, r6, r3
 	umull r4, r5, r6, r3
 	smlal r4, r5, r6, r3
