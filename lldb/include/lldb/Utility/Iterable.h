@@ -147,9 +147,14 @@ public:
         return m_iter >= rhs.m_iter;
     }
     
-    friend AdaptedConstIterator operator+(typename BackingIterator::difference_type, AdaptedConstIterator &);
-    friend typename BackingIterator::difference_type operator-(AdaptedConstIterator &, AdaptedConstIterator &);
-    friend void swap(AdaptedConstIterator &, AdaptedConstIterator &);
+    template <typename C1, typename E1, E1 (*A1)(typename C1::const_iterator &)>
+    friend AdaptedConstIterator<C1, E1, A1> operator+(typename C1::const_iterator::difference_type, AdaptedConstIterator<C1, E1, A1> &);
+
+    template <typename C1, typename E1, E1 (*A1)(typename C1::const_iterator &)>
+    friend typename C1::const_iterator::difference_type operator-(AdaptedConstIterator<C1, E1, A1> &, AdaptedConstIterator<C1, E1, A1> &);
+
+    template <typename C1, typename E1, E1 (*A1)(typename C1::const_iterator &)>
+    friend void swap(AdaptedConstIterator<C1, E1, A1> &, AdaptedConstIterator<C1, E1, A1> &);
 };
     
 template <typename C, typename E, E (*A)(typename C::const_iterator &)>
