@@ -14,7 +14,7 @@
 // RUN: not %clang_cc1 -x objective-c -include-pch %t-dir/prefix.pch -fmodules -fmodules-cache-path=%t-dir/cache -fsyntax-only %s 2> %t-dir/log
 // RUN: FileCheck %s < %t-dir/log
 
-// CHECK: file '{{.*}}/test.h' has been modified since the precompiled header '{{.*}}prefix.pch' was built
-// CHECK: '{{.*}}/test.h' required by '{{.*}}/test.pcm'
-// CHECK: '{{.*}}/test.pcm' required by '{{.*}}/prefix.pch'
-// CHECK: please rebuild precompiled header '{{.*}}/prefix.pch'
+// CHECK: file '[[TEST_H:.*[/\\]test\.h]]' has been modified since the precompiled header '[[PREFIX_PCH:.*/prefix\.pch]]' was built
+// CHECK: '[[TEST_H]]' required by '[[TEST_PCM:.*[/\\]test\.pcm]]'
+// CHECK: '[[TEST_PCM]]' required by '[[PREFIX_PCH]]'
+// CHECK: please rebuild precompiled header '[[PREFIX_PCH]]'
