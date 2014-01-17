@@ -314,8 +314,7 @@ public:
     if (hasStandardSelLocs())
       return getStandardSelectorLoc(Index, getSelector(),
                                    getSelLocsKind() == SelLoc_StandardWithSpace,
-                      llvm::makeArrayRef(const_cast<ParmVarDecl**>(getParams()),
-                                         NumParams),
+                                    parameters(),
                                    DeclEndLoc);
     return getStoredSelLocs()[Index];
   }
@@ -362,6 +361,13 @@ public:
   // name mangling requirements.
   param_const_iterator sel_param_end() const {
     return param_begin() + getSelector().getNumArgs();
+  }
+
+  // ArrayRef access to formal parameters.  This should eventually
+  // replace the iterator interface above.
+  ArrayRef<ParmVarDecl*> parameters() const {
+    return llvm::makeArrayRef(const_cast<ParmVarDecl**>(getParams()),
+                              NumParams);
   }
 
   /// \brief Sets the method's parameters and selector source locations.

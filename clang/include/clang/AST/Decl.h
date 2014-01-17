@@ -1851,6 +1851,12 @@ public:
     setParams(getASTContext(), NewParamInfo);
   }
 
+  // ArrayRef iterface to parameters.
+  // FIXME: Should one day replace iterator interface.
+  ArrayRef<ParmVarDecl*> parameters() const {
+    return llvm::makeArrayRef(ParamInfo, getNumParams());
+  }
+
   const ArrayRef<NamedDecl *> &getDeclsInPrototypeScope() const {
     return DeclsInPrototypeScope;
   }
