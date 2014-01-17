@@ -53,7 +53,7 @@ public:
     bool                ExtractValue(const lldb_private::DWARFDataExtractor& data,
                                      lldb::offset_t* offset_ptr,
                                      const DWARFCompileUnit* cu);
-    bool                IsInlinedCStr() const { return (m_value.data != NULL) && m_value.data == (uint8_t*)m_value.value.cstr; }
+    bool                IsInlinedCStr() const { return (m_value.data != NULL) && m_value.data == (const uint8_t*)m_value.value.cstr; }
     const uint8_t*      BlockData() const;
     uint64_t            Reference(const DWARFCompileUnit* cu) const;
     uint64_t            Reference (dw_offset_t offset) const;

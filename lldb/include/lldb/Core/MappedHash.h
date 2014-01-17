@@ -382,9 +382,9 @@ public:
             lldb::offset_t offset = m_header.Read (data, 0);
             if (offset != LLDB_INVALID_OFFSET && IsValid ())
             {
-                m_hash_indexes = (uint32_t *)data.GetData (&offset, m_header.bucket_count * sizeof(uint32_t));
-                m_hash_values  = (uint32_t *)data.GetData (&offset, m_header.hashes_count * sizeof(uint32_t));
-                m_hash_offsets = (uint32_t *)data.GetData (&offset, m_header.hashes_count * sizeof(uint32_t));
+                m_hash_indexes = (const uint32_t *)data.GetData (&offset, m_header.bucket_count * sizeof(uint32_t));
+                m_hash_values  = (const uint32_t *)data.GetData (&offset, m_header.hashes_count * sizeof(uint32_t));
+                m_hash_offsets = (const uint32_t *)data.GetData (&offset, m_header.hashes_count * sizeof(uint32_t));
             }
         }
         
@@ -542,9 +542,9 @@ public:
     protected:
         // Implementation agnostic information
         HeaderType m_header;
-        uint32_t *m_hash_indexes;
-        uint32_t *m_hash_values;
-        uint32_t *m_hash_offsets;
+        const uint32_t *m_hash_indexes;
+        const uint32_t *m_hash_values;
+        const uint32_t *m_hash_offsets;
     };
     
 };
