@@ -73,8 +73,8 @@ namespace lldb_private {
         GetStatus (Stream &strm);
 
         virtual Error
-        GetFile (const FileSpec &platform_file,
-                 const UUID* uuid, FileSpec &local_file);
+        GetFileWithUUID (const FileSpec &platform_file,
+                         const UUID* uuid, FileSpec &local_file);
 
         virtual bool
         GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info);

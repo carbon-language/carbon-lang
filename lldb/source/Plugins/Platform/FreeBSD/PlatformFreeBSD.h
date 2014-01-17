@@ -144,8 +144,8 @@ public:
 
     // Only on PlatformMacOSX:
     virtual lldb_private::Error
-    GetFile (const lldb_private::FileSpec &platform_file,
-             const lldb_private::UUID* uuid, lldb_private::FileSpec &local_file);
+    GetFileWithUUID (const lldb_private::FileSpec &platform_file,
+                     const lldb_private::UUID* uuid, lldb_private::FileSpec &local_file);
 
     lldb_private::Error
     GetSharedModule (const lldb_private::ModuleSpec &module_spec,

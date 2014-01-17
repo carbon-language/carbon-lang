@@ -285,13 +285,13 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
 }
 
 Error
-PlatformLinux::GetFile (const FileSpec &platform_file, 
-                        const UUID *uuid_ptr, FileSpec &local_file)
+PlatformLinux::GetFileWithUUID (const FileSpec &platform_file, 
+                                const UUID *uuid_ptr, FileSpec &local_file)
 {
     if (IsRemote())
     {
         if (m_remote_platform_sp)
-            return m_remote_platform_sp->GetFile (platform_file, uuid_ptr, local_file);
+            return m_remote_platform_sp->GetFileWithUUID (platform_file, uuid_ptr, local_file);
     }
 
     // Default to the local case

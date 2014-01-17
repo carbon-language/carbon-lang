@@ -81,9 +81,9 @@ Platform::SetDefaultPlatform (const lldb::PlatformSP &platform_sp)
 }
 
 Error
-Platform::GetFile (const FileSpec &platform_file, 
-                   const UUID *uuid_ptr,
-                   FileSpec &local_file)
+Platform::GetFileWithUUID (const FileSpec &platform_file, 
+                           const UUID *uuid_ptr,
+                           FileSpec &local_file)
 {
     // Default to the local case
     local_file = platform_file;

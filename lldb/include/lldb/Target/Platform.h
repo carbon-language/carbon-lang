@@ -314,9 +314,9 @@ namespace lldb_private {
         ///     An error object.
         //------------------------------------------------------------------
         virtual Error
-        GetFile (const FileSpec &platform_file, 
-                 const UUID *uuid_ptr,
-                 FileSpec &local_file);
+        GetFileWithUUID (const FileSpec &platform_file, 
+                         const UUID *uuid_ptr,
+                         FileSpec &local_file);
 
         //----------------------------------------------------------------------
         // Locate the scripting resource given a module specification.

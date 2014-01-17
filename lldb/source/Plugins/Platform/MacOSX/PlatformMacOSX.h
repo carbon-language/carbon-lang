@@ -87,9 +87,9 @@ public:
     }
     
     virtual lldb_private::Error
-    GetFile (const lldb_private::FileSpec &platform_file, 
-             const lldb_private::UUID *uuid_ptr,
-             lldb_private::FileSpec &local_file);
+    GetFileWithUUID (const lldb_private::FileSpec &platform_file, 
+                     const lldb_private::UUID *uuid_ptr,
+                     lldb_private::FileSpec &local_file);
     
     virtual bool
     GetSupportedArchitectureAtIndex (uint32_t idx, 

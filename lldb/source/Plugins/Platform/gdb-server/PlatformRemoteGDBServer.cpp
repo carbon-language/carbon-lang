@@ -119,9 +119,9 @@ PlatformRemoteGDBServer::ResolveExecutable (const FileSpec &exe_file,
 }
 
 Error
-PlatformRemoteGDBServer::GetFile (const FileSpec &platform_file, 
-                                  const UUID *uuid_ptr,
-                                  FileSpec &local_file)
+PlatformRemoteGDBServer::GetFileWithUUID (const FileSpec &platform_file, 
+                                          const UUID *uuid_ptr,
+                                          FileSpec &local_file)
 {
     // Default to the local case
     local_file = platform_file;

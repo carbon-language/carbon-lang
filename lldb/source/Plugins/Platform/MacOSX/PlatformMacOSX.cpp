@@ -249,7 +249,7 @@ PlatformMacOSX::GetSymbolFile (const FileSpec &platform_file,
     if (IsRemote())
     {
         if (m_remote_platform_sp)
-            return m_remote_platform_sp->GetFile (platform_file, uuid_ptr, local_file);
+            return m_remote_platform_sp->GetFileWithUUID (platform_file, uuid_ptr, local_file);
     }
 
     // Default to the local case
@@ -258,9 +258,9 @@ PlatformMacOSX::GetSymbolFile (const FileSpec &platform_file,
 }
 
 lldb_private::Error
-PlatformMacOSX::GetFile (const lldb_private::FileSpec &platform_file,
-                         const lldb_private::UUID *uuid_ptr,
-                         lldb_private::FileSpec &local_file)
+PlatformMacOSX::GetFileWithUUID (const lldb_private::FileSpec &platform_file,
+                                 const lldb_private::UUID *uuid_ptr,
+                                 lldb_private::FileSpec &local_file)
 {
     if (IsRemote() && m_remote_platform_sp)
     {
