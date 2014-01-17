@@ -117,7 +117,6 @@ def err_target_unknown_triple : Error<
   "unknown target triple '%0', please use -triple or -arch">;
 def err_target_unknown_cpu : Error<"unknown target CPU '%0'">;
 def err_target_unknown_abi : Error<"unknown target ABI '%0'">;
-def err_target_unknown_cxxabi : Error<"unknown C++ ABI '%0'">;
 def err_target_unknown_fpmath : Error<"unknown FP unit '%0'">;
 def err_target_unsupported_fpmath : Error<
     "the '%0' unit is not supported with this instruction set">;
