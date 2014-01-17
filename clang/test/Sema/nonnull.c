@@ -32,3 +32,4 @@ void test_baz() {
   baz3(0); // no-warning
 }
 
+int i __attribute__((nonnull)); // expected-warning {{'nonnull' attribute only applies to functions, methods, and parameters}}
