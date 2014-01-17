@@ -308,7 +308,7 @@ ThreadList::ShouldStop (Event *event_ptr)
         // If this becomes a problem, we'll have to have another StopReason like "StopInfoHidden" which will look invalid
         // everywhere but at this check.
     
-        if (thread_sp->GetProcess()->GetStopID() != 0)
+        if (thread_sp->GetProcess()->GetStopID() > 1)
             did_anybody_stop_for_a_reason = true;
         else
             did_anybody_stop_for_a_reason |= thread_sp->ThreadStoppedForAReason();
