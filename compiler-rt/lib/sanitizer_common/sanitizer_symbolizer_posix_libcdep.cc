@@ -233,9 +233,6 @@ class ExternalSymbolizer {
     return 0;
   }
 
-  void Flush() {
-  }
-
  private:
   bool Restart() {
     if (input_fd_ != kInvalidFd)
@@ -506,8 +503,6 @@ class POSIXSymbolizer : public Symbolizer {
       SymbolizerScope sym_scope(this);
       internal_symbolizer_->Flush();
     }
-    if (external_symbolizer_ != 0)
-      external_symbolizer_->Flush();
   }
 
   const char *Demangle(const char *name) {
