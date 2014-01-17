@@ -1,4 +1,4 @@
-// RUN: not %clang %s -verify 2>&1 | FileCheck %s
+// RUN: not %clang -verify %s 2>&1 | FileCheck %s
 // RUN: %clang -cc1 -verify %s
 // expected-no-diagnostics
 
