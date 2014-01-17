@@ -101,7 +101,7 @@ public:
   /// by the instruction.
   ///
   unsigned getAlignment() const {
-    return (1u << getSubclassDataFromInstruction()) >> 1;
+    return (1u << (getSubclassDataFromInstruction() & 31)) >> 1;
   }
   void setAlignment(unsigned Align);
 
@@ -109,6 +109,20 @@ public:
   /// function and is a constant size.  If so, the code generator will fold it
   /// into the prolog/epilog code, so it is basically free.
   bool isStaticAlloca() const;
+
+  /// \brief Return true if this alloca is used as an inalloca argument to a
+  /// call.  Such allocas are never considered static even if they are in the
+  /// entry block.
+  bool isUsedWithInAlloca() const {
+    return getSubclassDataFromInstruction() & 32;
+  }
+
+  /// \brief Specify whether this alloca is used to represent a the arguments to
+  /// a call.
+  void setUsedWithInAlloca(bool V) {
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~32) |
+                               (V ? 32 : 0));
+  }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) {

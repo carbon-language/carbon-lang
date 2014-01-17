@@ -59,6 +59,11 @@ public:
   /// containing function.
   bool hasByValAttr() const;
 
+  /// \brief Return true if this argument has the byval attribute or inalloca
+  /// attribute on it in its containing function.  These attributes both
+  /// represent arguments being passed by value.
+  bool hasByValOrInAllocaAttr() const;
+
   /// \brief If this is a byval or inalloca argument, return its alignment.
   unsigned getParamAlignment() const;
 

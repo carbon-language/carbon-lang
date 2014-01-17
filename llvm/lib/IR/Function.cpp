@@ -92,6 +92,13 @@ bool Argument::hasInAllocaAttr() const {
     hasAttribute(getArgNo()+1, Attribute::InAlloca);
 }
 
+bool Argument::hasByValOrInAllocaAttr() const {
+  if (!getType()->isPointerTy()) return false;
+  AttributeSet Attrs = getParent()->getAttributes();
+  return Attrs.hasAttribute(getArgNo() + 1, Attribute::ByVal) ||
+         Attrs.hasAttribute(getArgNo() + 1, Attribute::InAlloca);
+}
+
 unsigned Argument::getParamAlignment() const {
   assert(getType()->isPointerTy() && "Only pointers have alignments");
   return getParent()->getParamAlignment(getArgNo()+1);

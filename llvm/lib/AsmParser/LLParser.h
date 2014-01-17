@@ -211,6 +211,7 @@ namespace llvm {
                                AtomicOrdering &Ordering);
     bool ParseOptionalStackAlignment(unsigned &Alignment);
     bool ParseOptionalCommaAlign(unsigned &Alignment, bool &AteExtraComma);
+    bool ParseOptionalCommaInAlloca(bool &IsInAlloca);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices,bool &AteExtraComma);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices) {
       bool AteExtraComma;

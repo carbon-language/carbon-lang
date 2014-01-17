@@ -893,7 +893,8 @@ void AllocaInst::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Align <= MaximumAlignment &&
          "Alignment is greater than MaximumAlignment!");
-  setInstructionSubclassData(Log2_32(Align) + 1);
+  setInstructionSubclassData((getSubclassDataFromInstruction() & ~31) |
+                             (Log2_32(Align) + 1));
   assert(getAlignment() == Align && "Alignment representation error!");
 }
 
@@ -916,7 +917,7 @@ bool AllocaInst::isStaticAlloca() const {
   
   // Must be in the entry block.
   const BasicBlock *Parent = getParent();
-  return Parent == &Parent->getParent()->front();
+  return Parent == &Parent->getParent()->front() && !isUsedWithInAlloca();
 }
 
 //===----------------------------------------------------------------------===//

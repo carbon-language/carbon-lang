@@ -4069,31 +4069,42 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
 //===----------------------------------------------------------------------===//
 
 /// ParseAlloc
-///   ::= 'alloca' Type (',' TypeAndValue)? (',' OptionalInfo)?
+///   ::= 'alloca' Type (',' 'inalloca')? (',' TypeAndValue)? (',' OptionalInfo)?
 int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Size = 0;
   LocTy SizeLoc;
   unsigned Alignment = 0;
+  bool IsInAlloca = false;
   Type *Ty = 0;
   if (ParseType(Ty)) return true;
 
   bool AteExtraComma = false;
   if (EatIfPresent(lltok::comma)) {
-    if (Lex.getKind() == lltok::kw_align) {
-      if (ParseOptionalAlignment(Alignment)) return true;
-    } else if (Lex.getKind() == lltok::MetadataVar) {
-      AteExtraComma = true;
-    } else {
-      if (ParseTypeAndValue(Size, SizeLoc, PFS) ||
-          ParseOptionalCommaAlign(Alignment, AteExtraComma))
-        return true;
+    bool HaveComma = true;
+    if (EatIfPresent(lltok::kw_inalloca)) {
+      IsInAlloca = true;
+      HaveComma = EatIfPresent(lltok::comma);
+    }
+
+    if (HaveComma) {
+      if (Lex.getKind() == lltok::kw_align) {
+        if (ParseOptionalAlignment(Alignment)) return true;
+      } else if (Lex.getKind() == lltok::MetadataVar) {
+        AteExtraComma = true;
+      } else {
+        if (ParseTypeAndValue(Size, SizeLoc, PFS) ||
+            ParseOptionalCommaAlign(Alignment, AteExtraComma))
+          return true;
+      }
     }
   }
 
   if (Size && !Size->getType()->isIntegerTy())
     return Error(SizeLoc, "element count must have integer type");
 
-  Inst = new AllocaInst(Ty, Size, Alignment);
+  AllocaInst *AI = new AllocaInst(Ty, Size, Alignment);
+  AI->setUsedWithInAlloca(IsInAlloca);
+  Inst = AI;
   return AteExtraComma ? InstExtraComma : InstNormal;
 }
 

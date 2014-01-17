@@ -778,19 +778,16 @@ Currently, only the following parameter attributes are defined:
 .. Warning:: This feature is unstable and not fully implemented.
 
     The ``inalloca`` argument attribute allows the caller to take the
-    address of all stack-allocated arguments to a ``call`` or ``invoke``
-    before it executes.  It is similar to ``byval`` in that it is used
-    to pass arguments by value, but it guarantees that the argument will
-    not be copied.
+    address of outgoing stack arguments.  An ``inalloca`` argument must
+    be a pointer to stack memory produced by an ``alloca`` instruction.
+    The alloca, or argument allocation, must also be tagged with the
+    inalloca keyword.  Only the past argument may have the ``inalloca``
+    attribute, and that argument is guaranteed to be passed in memory.
 
-    To be :ref:`well formed <wellformed>`, an alloca may be used as an
-    ``inalloca`` argument at most once.  The attribute can only be
-    applied to the last parameter, and it guarantees that they are
-    passed in memory.  The ``inalloca`` attribute cannot be used in
-    conjunction with other attributes that affect argument storage, like
-    ``inreg``, ``nest``, ``sret``, or ``byval``.  The ``inalloca`` stack
-    space is considered to be clobbered by any call that uses it, so any
-    ``inalloca`` parameters cannot be marked ``readonly``.
+    An argument allocation may be used by a call at most once because
+    the call may deallocate it.  The ``inalloca`` attribute cannot be
+    used in conjunction with other attributes that affect argument
+    storage, like ``inreg``, ``nest``, ``sret``, or ``byval``.
 
     When the call site is reached, the argument allocation must have
     been the most recent stack allocation that is still live, or the
@@ -4693,7 +4690,7 @@ Syntax:
 
 ::
 
-      <result> = alloca <type>[, <ty> <NumElements>][, align <alignment>]     ; yields {type*}:result
+      <result> = alloca <type>[, inalloca][, <ty> <NumElements>][, align <alignment>]     ; yields {type*}:result
 
 Overview:
 """""""""
