@@ -584,3 +584,9 @@ fsub ST(1)
 fsubr ST(1)
 fdiv ST(1)
 fdivr ST(1)
+
+
+// CHECK: fxsaveq (%rax)
+// CHECK: fxrstorq (%rax)
+fxsave64 [rax]
+fxrstor64 [rax]
