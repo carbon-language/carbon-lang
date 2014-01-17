@@ -31,10 +31,26 @@ inline int64_t calcAHL(int64_t AHI, int64_t ALO) {
   return (AHI << 16) + (int16_t)ALO;
 }
 
+template <size_t BITS, class T> inline T signExtend(T val) {
+  if (val & (T(1) << (BITS - 1)))
+    val |= T(-1) << BITS;
+  return val;
+}
+
 /// \brief R_MIPS_32
 /// local/external: word32 S + A (truncate)
 void reloc32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   uint32_t result = (uint32_t)(S + A);
+  applyReloc(location, result);
+}
+
+/// \brief R_MIPS_26
+/// local   : ((A | ((P + 4) & 0x3F000000)) + S) >> 2
+/// external: (sign–extend(A) + S) >> 2
+void reloc26(uint8_t *location, uint64_t P, uint64_t S, bool isLocal) {
+  int32_t A = (*(uint32_t*)location & 0x03FFFFFFU) << 2;
+  uint32_t result = isLocal ? (A | ((P + 4) & 0x3F000000)) : signExtend<28>(A);
+  result = (result + S) >> 2;
   applyReloc(location, result);
 }
 
@@ -162,6 +178,9 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   case R_MIPS_32:
     reloc32(location, relocVAddress, targetVAddress, ref.addend());
     break;
+  case R_MIPS_26:
+    reloc26(location, relocVAddress, targetVAddress, true);
+    break;
   case R_MIPS_HI16:
     savePairedRelocation(atom, ref);
     break;
@@ -187,6 +206,9 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   case LLD_R_MIPS_GLOBAL_GOT16:
     relocGOT16(location, relocVAddress, targetVAddress, ref.addend(),
                _targetHandler.getGPDispSymAddr());
+    break;
+  case LLD_R_MIPS_GLOBAL_26:
+    reloc26(location, relocVAddress, targetVAddress, false);
     break;
   default: {
     std::string str;

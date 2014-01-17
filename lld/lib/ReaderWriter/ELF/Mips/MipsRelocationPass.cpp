@@ -111,6 +111,9 @@ private:
       return;
     assert(ref.kindArch() == Reference::KindArch::Mips);
     switch (ref.kindValue()) {
+    case R_MIPS_26:
+      handlePLT(ref);
+      break;
     case R_MIPS_GOT16:
     case R_MIPS_CALL16:
       handleGOT(ref);
@@ -122,6 +125,13 @@ private:
     if (auto *da = dyn_cast<DefinedAtom>(a))
       return da->scope() == Atom::scopeTranslationUnit;
     return false;
+  }
+
+  void handlePLT(const Reference &ref) {
+    if (ref.kindValue() == R_MIPS_26 && !isLocal(ref.target()))
+      const_cast<Reference &>(ref).setKindValue(LLD_R_MIPS_GLOBAL_26);
+
+    // FIXME (simon): Create PLT entry.
   }
 
   void handleGOT(const Reference &ref) {

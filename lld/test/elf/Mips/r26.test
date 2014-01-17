@@ -1,0 +1,47 @@
+# Check handling of R_MIPS_26 relocation.
+
+# Build shared library
+# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
+# RUN:         -o=%t1 %p/Inputs/ext.s
+# RUN: lld -flavor gnu -target mipsel -shared -o %t2 %t1
+
+# Build executable
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t3 %s
+# RUN: llvm-objdump -r %t3 | FileCheck -check-prefix=REL %s
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t4 %t3 %t2
+# RUN: llvm-objdump -disassemble %t4 | FileCheck -check-prefix=EXE %s
+
+# Object file has three R_MIPS_26 relocations
+# REL: RELOCATION RECORDS FOR [.rel.text]:
+# REL: 8 R_MIPS_26 Unknown
+# REL: 16 R_MIPS_26 Unknown
+# REL: 24 R_MIPS_26 Unknown
+
+# EXE: Disassembly of section .text:
+# EXE: glob:
+# EXE:   40014c:  09 f8 20 03  jalr    $25
+# EXE:   400150:  00 00 00 00  nop
+#
+# Jump to 'loc' label address
+# EXE:   400154:  57 00 10 0c  jal     4194652
+# EXE:   400158:  00 00 00 00  nop
+#
+# EXE: loc:
+# Jump to 'glob' label address
+# EXE:   40015c:  53 00 10 0c  jal     4194636
+# EXE:   400160:  00 00 00 00  nop
+#
+# Jump to the first PLT entry (.plt + 32) for ext1 entry
+# EXE:   400164:  00 00 00 0c  jal     0
+# EXE:   400168:  00 00 00 00  nop
+
+    .abicalls
+    .global glob
+    .ent    glob
+glob:
+    jal     $t9
+    jal     loc
+loc:
+    jal     glob
+    jal     ext1
+    .end    glob
