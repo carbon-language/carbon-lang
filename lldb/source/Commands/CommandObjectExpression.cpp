@@ -373,6 +373,8 @@ CommandObjectExpression::EvaluateExpression
         
         if (m_command_options.timeout > 0)
             options.SetTimeoutUsec(m_command_options.timeout);
+        else
+            options.SetTimeoutUsec(0);
         
         exe_results = target->EvaluateExpression (expr, 
                                                   exe_ctx.GetFramePtr(),
