@@ -242,6 +242,12 @@ sub build_llvm
             print "Configuring clang ($arch) in '$llvm_dstroot_arch'...\n";
             my $lldb_configuration_options = "--enable-targets=x86_64,arm $common_configure_options $llvm_config_href->{configure_options}";
 
+            # We're configuring llvm/clang with --enable-cxx11 and --enable-libcpp but llvm/configure doesn't
+            # pick up the right C++ standard library.  If we have a MACOSX_DEPLOYMENT_TARGET of 10.7 or 10.8
+            # (or are using actually building on those releases), we need to specify "-stdlib=libc++" at link
+            # time or llvm/configure will not see <atomic> as available and error out (v. llvm r199313).
+            $ENV{LDFLAGS} = $ENV{LDFLAGS} . " -stdlib=libc++";
+
             if ($is_arm)
             {
                 $lldb_configuration_options .= " --host=arm-apple-darwin${os_release} --target=arm-apple-darwin${os_release} --build=i686-apple-darwin${os_release} --program-prefix=\"\"";
