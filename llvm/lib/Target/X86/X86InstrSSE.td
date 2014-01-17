@@ -7487,9 +7487,9 @@ let Constraints = "$src1 = $dst" in {
   def CRC32r32r16 : SS42I_crc32r<0xF1, "crc32{w}", GR32, GR16,
                                  int_x86_sse42_crc32_32_16>, OpSize;
   def CRC32r32m32 : SS42I_crc32m<0xF1, "crc32{l}", GR32, i32mem,
-                                 int_x86_sse42_crc32_32_32>;
+                                 int_x86_sse42_crc32_32_32>, OpSize16;
   def CRC32r32r32 : SS42I_crc32r<0xF1, "crc32{l}", GR32, GR32,
-                                 int_x86_sse42_crc32_32_32>;
+                                 int_x86_sse42_crc32_32_32>, OpSize16;
   def CRC32r64m64 : SS42I_crc32m<0xF1, "crc32{q}", GR64, i64mem,
                                  int_x86_sse42_crc32_64_64>, REX_W;
   def CRC32r64r64 : SS42I_crc32r<0xF1, "crc32{q}", GR64, GR64,
