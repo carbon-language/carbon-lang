@@ -1443,7 +1443,6 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
 
   // Standard conversions (C++ [conv])
   SCS.setAsIdentityConversion();
-  SCS.DeprecatedStringLiteralToCharPtr = false;
   SCS.IncompatibleObjC = false;
   SCS.setFromType(FromType);
   SCS.CopyConstructor = 0;
@@ -1542,7 +1541,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     FromType = S.Context.getArrayDecayedType(FromType);
 
     if (S.IsStringLiteralToNonConstPointerConversion(From, ToType)) {
-      // This conversion is deprecated. (C++ D.4).
+      // This conversion is deprecated in C++03 (D.4)
       SCS.DeprecatedStringLiteralToCharPtr = true;
 
       // For the purpose of ranking in overload resolution
@@ -3259,18 +3258,15 @@ Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
     IsUserDefinedConversion(*this, From, ToType, ICS.UserDefined,
                             CandidateSet, false, false);
   if (OvResult == OR_Ambiguous)
-    Diag(From->getLocStart(),
-         diag::err_typecheck_ambiguous_condition)
-          << From->getType() << ToType << From->getSourceRange();
+    Diag(From->getLocStart(), diag::err_typecheck_ambiguous_condition)
+        << From->getType() << ToType << From->getSourceRange();
   else if (OvResult == OR_No_Viable_Function && !CandidateSet.empty()) {
     if (!RequireCompleteType(From->getLocStart(), ToType,
-                          diag::err_typecheck_nonviable_condition_incomplete,
+                             diag::err_typecheck_nonviable_condition_incomplete,
                              From->getType(), From->getSourceRange()))
-      Diag(From->getLocStart(),
-           diag::err_typecheck_nonviable_condition)
-           << From->getType() << From->getSourceRange() << ToType;
-  }
-  else
+      Diag(From->getLocStart(), diag::err_typecheck_nonviable_condition)
+          << From->getType() << From->getSourceRange() << ToType;
+  } else
     return false;
   CandidateSet.NoteCandidates(*this, OCD_AllCandidates, From);
   return true;
@@ -3280,37 +3276,43 @@ Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
 /// of two user-defined conversion sequences to determine whether any ordering
 /// is possible.
 static ImplicitConversionSequence::CompareKind
-compareConversionFunctions(Sema &S,
-                           FunctionDecl *Function1,
+compareConversionFunctions(Sema &S, FunctionDecl *Function1,
                            FunctionDecl *Function2) {
   if (!S.getLangOpts().ObjC1 || !S.getLangOpts().CPlusPlus11)
     return ImplicitConversionSequence::Indistinguishable;
-  
+
   // Objective-C++:
   //   If both conversion functions are implicitly-declared conversions from
-  //   a lambda closure type to a function pointer and a block pointer, 
+  //   a lambda closure type to a function pointer and a block pointer,
   //   respectively, always prefer the conversion to a function pointer,
   //   because the function pointer is more lightweight and is more likely
   //   to keep code working.
   CXXConversionDecl *Conv1 = dyn_cast<CXXConversionDecl>(Function1);
   if (!Conv1)
     return ImplicitConversionSequence::Indistinguishable;
-    
+
   CXXConversionDecl *Conv2 = dyn_cast<CXXConversionDecl>(Function2);
   if (!Conv2)
     return ImplicitConversionSequence::Indistinguishable;
-  
+
   if (Conv1->getParent()->isLambda() && Conv2->getParent()->isLambda()) {
     bool Block1 = Conv1->getConversionType()->isBlockPointerType();
     bool Block2 = Conv2->getConversionType()->isBlockPointerType();
     if (Block1 != Block2)
-      return Block1? ImplicitConversionSequence::Worse 
-                   : ImplicitConversionSequence::Better;
+      return Block1 ? ImplicitConversionSequence::Worse
+                    : ImplicitConversionSequence::Better;
   }
 
   return ImplicitConversionSequence::Indistinguishable;
 }
-  
+
+static bool hasDeprecatedStringLiteralToCharPtrConversion(
+    const ImplicitConversionSequence &ICS) {
+  return (ICS.isStandard() && ICS.Standard.DeprecatedStringLiteralToCharPtr) ||
+         (ICS.isUserDefined() &&
+          ICS.UserDefined.Before.DeprecatedStringLiteralToCharPtr);
+}
+
 /// CompareImplicitConversionSequences - Compare two implicit
 /// conversion sequences to determine whether one is better than the
 /// other or if they are indistinguishable (C++ 13.3.3.2).
@@ -3333,6 +3335,32 @@ CompareImplicitConversionSequences(Sema &S,
   //   described in 13.3.3.2, the ambiguous conversion sequence is
   //   treated as a user-defined sequence that is indistinguishable
   //   from any other user-defined conversion sequence.
+
+  // String literal to 'char *' conversion has been deprecated in C++03. It has
+  // been removed from C++11. We still accept this conversion, if it happens at
+  // the best viable function. Otherwise, this conversion is considered worse
+  // than ellipsis conversion. Consider this as an extension; this is not in the
+  // standard. For example:
+  //
+  // int &f(...);    // #1
+  // void f(char*);  // #2
+  // void g() { int &r = f("foo"); }
+  //
+  // In C++03, we pick #2 as the best viable function.
+  // In C++11, we pick #1 as the best viable function, because ellipsis
+  // conversion is better than string-literal to char* conversion (since there
+  // is no such conversion in C++11). If there was no #1 at all or #1 couldn't
+  // convert arguments, #2 would be the best viable function in C++11.
+  // If the best viable function has this conversion, a warning will be issued
+  // in C++03, or an ExtWarn (+SFINAE failure) will be issued in C++11.
+
+  if (S.getLangOpts().CPlusPlus11 && !S.getLangOpts().WritableStrings &&
+      hasDeprecatedStringLiteralToCharPtrConversion(ICS1) !=
+      hasDeprecatedStringLiteralToCharPtrConversion(ICS2))
+    return hasDeprecatedStringLiteralToCharPtrConversion(ICS1)
+               ? ImplicitConversionSequence::Worse
+               : ImplicitConversionSequence::Better;
+
   if (ICS1.getKindRank() < ICS2.getKindRank())
     return ImplicitConversionSequence::Better;
   if (ICS2.getKindRank() < ICS1.getKindRank())
@@ -4244,6 +4272,7 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
       ICS.Standard.BindsImplicitObjectArgumentWithoutRefQualifier = false;
       ICS.Standard.ObjCLifetimeConversionBinding = ObjCLifetimeConversion;
       ICS.Standard.CopyConstructor = 0;
+      ICS.Standard.DeprecatedStringLiteralToCharPtr = false;
 
       // Nothing more to do: the inaccessibility/ambiguity check for
       // derived-to-base conversions is suppressed when we're
@@ -4318,6 +4347,7 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
     ICS.Standard.BindsImplicitObjectArgumentWithoutRefQualifier = false;
     ICS.Standard.ObjCLifetimeConversionBinding = ObjCLifetimeConversion;
     ICS.Standard.CopyConstructor = 0;
+    ICS.Standard.DeprecatedStringLiteralToCharPtr = false;
     return ICS;
   }
 

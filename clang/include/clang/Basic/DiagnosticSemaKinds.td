@@ -4534,6 +4534,9 @@ def ext_array_init_parens : ExtWarn<
 def warn_deprecated_string_literal_conversion : Warning<
   "conversion from string literal to %0 is deprecated">,
   InGroup<CXX11CompatDeprecatedWritableStr>;
+def ext_deprecated_string_literal_conversion : ExtWarn<
+  "ISO C++11 does not allow conversion from string literal to %0">,
+  InGroup<CXX11CompatDeprecatedWritableStr>, SFINAEFailure;
 def warn_deprecated_string_literal_conversion_c : Warning<
   "dummy warning to enable -fconst-strings">, InGroup<DeprecatedWritableStr>, DefaultIgnore;
 def err_realimag_invalid_type : Error<"invalid type %0 to %1 operator">;
