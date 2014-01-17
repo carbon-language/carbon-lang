@@ -1699,6 +1699,8 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
           CmdArgs.push_back("-fatal-assembler-warnings");
         } else if (Value == "--noexecstack") {
           CmdArgs.push_back("-mnoexecstack");
+        } else if (Value == "-compress-debug-sections") {
+          D.Diag(diag::warn_missing_debug_compression);
         } else if (Value.startswith("-I")) {
           CmdArgs.push_back(Value.data());
           // We need to consume the next argument if the current arg is a plain
@@ -4042,6 +4044,16 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // FIXME: Add -static support, once we have it.
+
+  // Consume all the warning flags. Usually this would be handled more
+  // gracefully by -cc1 (warning about unknown warning flags, etc) but -cc1as
+  // doesn't handle that so rather than warning about unused flags that are
+  // actually used, we'll lie by omission instead.
+  // FIXME: Stop lying and consume only the appropriate driver flags
+  for (arg_iterator it = Args.filtered_begin(options::OPT_W_Group),
+                    ie = Args.filtered_end();
+       it != ie; ++it)
+    (*it)->claim();
 
   CollectArgsForIntegratedAssembler(C, Args, CmdArgs,
                                     getToolChain().getDriver());
