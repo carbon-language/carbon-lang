@@ -2,6 +2,8 @@
 
 @interface MyObject
 - (void)takePointer:(void *)ptr __attribute__((nonnull(1)));
+- (void)takePointerArg:(void *)__attribute__((nonnull)) ptr;
+
 @end
 
 void testNonNullMethod(int *p, MyObject *obj) {
@@ -21,3 +23,10 @@ void testSubclass(int *p, Subclass *obj) {
     return;
   [obj takePointer:p]; // expected-warning{{nonnull}}
 }
+
+void testSubclassArg(int *p, Subclass *obj) {
+  if (p)
+    return;
+  [obj takePointerArg:p]; // expected-warning{{nonnull}}
+}
+

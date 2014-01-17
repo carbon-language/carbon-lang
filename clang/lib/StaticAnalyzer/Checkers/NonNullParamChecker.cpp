@@ -43,7 +43,7 @@ public:
 } // end anonymous namespace
 
 void NonNullParamChecker::checkPreCall(const CallEvent &Call,
-                                      CheckerContext &C) const {
+                                       CheckerContext &C) const {
   const Decl *FD = Call.getDecl();
   if (!FD)
     return;
@@ -66,6 +66,12 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
     }
 
     bool haveAttrNonNull = Att && Att->isNonNull(idx);
+    if (!haveAttrNonNull) {
+      // Check if the parameter is also marked 'nonnull'.
+      ArrayRef<ParmVarDecl*> parms = Call.parameters();
+      if (idx < parms.size())
+        haveAttrNonNull = parms[idx]->hasAttr<NonNullAttr>();
+    }
 
     if (!haveRefTypeParam && !haveAttrNonNull)
       continue;
