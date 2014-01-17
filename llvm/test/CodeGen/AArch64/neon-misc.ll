@@ -1080,6 +1080,90 @@ define <2 x i64> @test_vcvtq_u64_f64(<2 x double> %a) #0 {
   ret <2 x i64> %vcvt.i
 }
 
+define <2 x i64> @test_vcvt_s64_f32(<2 x float> %a) #0 {
+; CHECK: fcvtl v{{[0-9]+}}.2d, v{{[0-9]+}}.2s
+; CHECK: fcvtzs v{{[0-9]+}}.2d, v{{[0-9]+}}.2d
+  %vcvt.i = fptosi <2 x float> %a to <2 x i64>
+  ret <2 x i64> %vcvt.i
+}
+
+define <2 x i64> @test_vcvt_u64_f32(<2 x float> %a) #0 {
+; CHECK: fcvtl v{{[0-9]+}}.2d, v{{[0-9]+}}.2s
+; CHECK: fcvtzu v{{[0-9]+}}.2d, v{{[0-9]+}}.2d
+  %vcvt.i = fptoui <2 x float> %a to <2 x i64>
+  ret <2 x i64> %vcvt.i
+}
+
+define <4 x i16> @test_vcvt_s16_f32(<4 x float> %a) #0 {
+; CHECK: fcvtzs v{{[0-9]+}}.4s, v{{[0-9]+}}.4s
+; CHECK: xtn v{{[0-9]+}}.4h, v{{[0-9]+}}.4s
+  %vcvt.i = fptosi <4 x float> %a to <4 x i16>
+  ret <4 x i16> %vcvt.i
+}
+
+define <4 x i16> @test_vcvt_u16_f32(<4 x float> %a) #0 {
+; CHECK: fcvtzu v{{[0-9]+}}.4s, v{{[0-9]+}}.4s
+; CHECK: xtn v{{[0-9]+}}.4h, v{{[0-9]+}}.4s
+  %vcvt.i = fptoui <4 x float> %a to <4 x i16>
+  ret <4 x i16> %vcvt.i
+}
+
+define <2 x i32> @test_vcvt_s32_f64(<2 x double> %a) #0 {
+; CHECK: fcvtzs v{{[0-9]+}}.2d, v{{[0-9]+}}.2d
+; CHECK: xtn v{{[0-9]+}}.2s, v{{[0-9]+}}.2d
+  %vcvt.i = fptosi <2 x double> %a to <2 x i32>
+  ret <2 x i32> %vcvt.i
+}
+
+define <2 x i32> @test_vcvt_u32_f64(<2 x double> %a) #0 {
+; CHECK: fcvtzu v{{[0-9]+}}.2d, v{{[0-9]+}}.2d
+; CHECK: xtn v{{[0-9]+}}.2s, v{{[0-9]+}}.2d
+  %vcvt.i = fptoui <2 x double> %a to <2 x i32>
+  ret <2 x i32> %vcvt.i
+}
+
+define <1 x i8> @test_vcvt_s8_f64(<1 x double> %a) #0 {
+; CHECK: fcvtzs w{{[0-9]+}}, d{{[0-9]+}}
+; CHECK: ins v{{[0-9]+}}.b[0], w{{[0-9]+}}
+  %vcvt.i = fptosi <1 x double> %a to <1 x i8>
+  ret <1 x i8> %vcvt.i
+}
+
+define <1 x i8> @test_vcvt_u8_f64(<1 x double> %a) #0 {
+; CHECK: fcvtzs w{{[0-9]+}}, d{{[0-9]+}}
+; CHECK: ins v{{[0-9]+}}.b[0], w{{[0-9]+}}
+  %vcvt.i = fptoui <1 x double> %a to <1 x i8>
+  ret <1 x i8> %vcvt.i
+}
+
+define <1 x i16> @test_vcvt_s16_f64(<1 x double> %a) #0 {
+; CHECK: fcvtzs w{{[0-9]+}}, d{{[0-9]+}}
+; CHECK: ins v{{[0-9]+}}.h[0], w{{[0-9]+}}
+  %vcvt.i = fptosi <1 x double> %a to <1 x i16>
+  ret <1 x i16> %vcvt.i
+}
+
+define <1 x i16> @test_vcvt_u16_f64(<1 x double> %a) #0 {
+; CHECK: fcvtzs w{{[0-9]+}}, d{{[0-9]+}}
+; CHECK: ins v{{[0-9]+}}.h[0], w{{[0-9]+}}
+  %vcvt.i = fptoui <1 x double> %a to <1 x i16>
+  ret <1 x i16> %vcvt.i
+}
+
+define <1 x i32> @test_vcvt_s32_f64_v1(<1 x double> %a) #0 {
+; CHECK: fcvtzs w{{[0-9]+}}, d{{[0-9]+}}
+; CHECK: fmov s{{[0-9]+}}, w{{[0-9]+}}
+  %vcvt.i = fptosi <1 x double> %a to <1 x i32>
+  ret <1 x i32> %vcvt.i
+}
+
+define <1 x i32> @test_vcvt_u32_f64_v1(<1 x double> %a) #0 {
+; CHECK: fcvtzu w{{[0-9]+}}, d{{[0-9]+}}
+; CHECK: fmov s{{[0-9]+}}, w{{[0-9]+}}
+  %vcvt.i = fptoui <1 x double> %a to <1 x i32>
+  ret <1 x i32> %vcvt.i
+}
+
 define <2 x i32> @test_vcvtn_s32_f32(<2 x float> %a) {
 ; CHECK-LABEL: test_vcvtn_s32_f32
 ; CHECK: fcvtns v{{[0-9]+}}.2s, v{{[0-9]+}}.2s
@@ -1348,6 +1432,94 @@ define <2 x double> @test_vcvtq_f64_u64(<2 x i64> %a) #0 {
 ; CHECK: ucvtf v{{[0-9]+}}.2d, v{{[0-9]+}}.2d
   %vcvt.i = uitofp <2 x i64> %a to <2 x double>
   ret <2 x double> %vcvt.i
+}
+
+define <2 x float> @test_vcvt_f32_s64(<2 x i64> %a) #0 {
+; CHECK: scvtf v{{[0-9]+}}.2d, v{{[0-9]+}}.2d
+; CHECK: fcvtn v{{[0-9]+}}.2s, v{{[0-9]+}}.2d
+  %vcvt.i = sitofp <2 x i64> %a to <2 x float>
+  ret <2 x float> %vcvt.i
+}
+
+define <2 x float> @test_vcvt_f32_u64(<2 x i64> %a) #0 {
+; CHECK: ucvtf v{{[0-9]+}}.2d, v{{[0-9]+}}.2d
+; CHECK: fcvtn v{{[0-9]+}}.2s, v{{[0-9]+}}.2d
+  %vcvt.i = uitofp <2 x i64> %a to <2 x float>
+  ret <2 x float> %vcvt.i
+}
+
+define <4 x float> @test_vcvt_f32_s16(<4 x i16> %a) #0 {
+; CHECK: sshll v{{[0-9]+}}.4s, v{{[0-9]+}}.4h, #0
+; CHECK: scvtf v{{[0-9]+}}.4s, v{{[0-9]+}}.4s
+  %vcvt.i = sitofp <4 x i16> %a to <4 x float>
+  ret <4 x float> %vcvt.i
+}
+
+define <4 x float> @test_vcvt_f32_u16(<4 x i16> %a) #0 {
+; CHECK: ushll v{{[0-9]+}}.4s, v{{[0-9]+}}.4h, #0
+; CHECK: ucvtf v{{[0-9]+}}.4s, v{{[0-9]+}}.4s
+  %vcvt.i = uitofp <4 x i16> %a to <4 x float>
+  ret <4 x float> %vcvt.i
+}
+
+define <2 x double> @test_vcvt_f64_s32(<2 x i32> %a) #0 {
+; CHECK: sshll v{{[0-9]+}}.2d, v{{[0-9]+}}.2s, #0
+; CHECK: scvtf v{{[0-9]+}}.2d, v{{[0-9]+}}.2d
+  %vcvt.i = sitofp <2 x i32> %a to <2 x double>
+  ret <2 x double> %vcvt.i
+}
+
+define <2 x double> @test_vcvt_f64_u32(<2 x i32> %a) #0 {
+; CHECK: ushll v{{[0-9]+}}.2d, v{{[0-9]+}}.2s, #0
+; CHECK: ucvtf v{{[0-9]+}}.2d, v{{[0-9]+}}.2d
+  %vcvt.i = uitofp <2 x i32> %a to <2 x double>
+  ret <2 x double> %vcvt.i
+}
+
+define <1 x double> @test_vcvt_f64_s8(<1 x i8> %a) #0 {
+; CHECK: umov w{{[0-9]+}}, v{{[0-9]+}}.b[0]
+; CHECK: sxtb w{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: scvtf d{{[0-9]+}}, w{{[0-9]+}}
+  %vcvt.i = sitofp <1 x i8> %a to <1 x double>
+  ret <1 x double> %vcvt.i
+}
+
+define <1 x double> @test_vcvt_f64_u8(<1 x i8> %a) #0 {
+; CHECK: umov w{{[0-9]+}}, v{{[0-9]+}}.b[0]
+; CHECK: and w{{[0-9]+}}, w{{[0-9]+}}, #0xff
+; CHECK: ucvtf d{{[0-9]+}}, w{{[0-9]+}}
+  %vcvt.i = uitofp <1 x i8> %a to <1 x double>
+  ret <1 x double> %vcvt.i
+}
+
+define <1 x double> @test_vcvt_f64_s16(<1 x i16> %a) #0 {
+; CHECK: umov w{{[0-9]+}}, v{{[0-9]+}}.h[0]
+; CHECK: sxth w{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: scvtf d{{[0-9]+}}, w{{[0-9]+}}
+  %vcvt.i = sitofp <1 x i16> %a to <1 x double>
+  ret <1 x double> %vcvt.i
+}
+
+define <1 x double> @test_vcvt_f64_u16(<1 x i16> %a) #0 {
+; CHECK: umov w{{[0-9]+}}, v{{[0-9]+}}.h[0]
+; CHECK: and w{{[0-9]+}}, w{{[0-9]+}}, #0xffff
+; CHECK: ucvtf d{{[0-9]+}}, w{{[0-9]+}}
+  %vcvt.i = uitofp <1 x i16> %a to <1 x double>
+  ret <1 x double> %vcvt.i
+}
+
+define <1 x double> @test_vcvt_f64_s32_v1(<1 x i32> %a) #0 {
+; CHECK: fmov w{{[0-9]+}}, s{{[0-9]+}}
+; CHECK: scvtf d{{[0-9]+}}, w{{[0-9]+}}
+  %vcvt.i = sitofp <1 x i32> %a to <1 x double>
+  ret <1 x double> %vcvt.i
+}
+
+define <1 x double> @test_vcvt_f64_u32_v1(<1 x i32> %a) #0 {
+; CHECK: fmov w{{[0-9]+}}, s{{[0-9]+}}
+; CHECK: ucvtf d{{[0-9]+}}, w{{[0-9]+}}
+  %vcvt.i = uitofp <1 x i32> %a to <1 x double>
+  ret <1 x double> %vcvt.i
 }
 
 declare <2 x double> @llvm.sqrt.v2f64(<2 x double>) #2

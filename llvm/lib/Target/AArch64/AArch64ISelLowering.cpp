@@ -375,6 +375,34 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::FROUND, MVT::v1f64, Legal);
     setOperationAction(ISD::FROUND, MVT::v2f64, Legal);
 
+    setOperationAction(ISD::SINT_TO_FP, MVT::v1i8, Custom);
+    setOperationAction(ISD::SINT_TO_FP, MVT::v1i16, Custom);
+    setOperationAction(ISD::SINT_TO_FP, MVT::v1i32, Custom);
+    setOperationAction(ISD::SINT_TO_FP, MVT::v4i16, Custom);
+    setOperationAction(ISD::SINT_TO_FP, MVT::v2i32, Custom);
+    setOperationAction(ISD::SINT_TO_FP, MVT::v2i64, Custom);
+
+    setOperationAction(ISD::UINT_TO_FP, MVT::v1i8, Custom);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v1i16, Custom);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v1i32, Custom);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v4i16, Custom);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v2i32, Custom);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v2i64, Custom);
+
+    setOperationAction(ISD::FP_TO_SINT, MVT::v1i8, Custom);
+    setOperationAction(ISD::FP_TO_SINT, MVT::v1i16, Custom);
+    setOperationAction(ISD::FP_TO_SINT, MVT::v1i32, Custom);
+    setOperationAction(ISD::FP_TO_SINT, MVT::v4i16, Custom);
+    setOperationAction(ISD::FP_TO_SINT, MVT::v2i32, Custom);
+    setOperationAction(ISD::FP_TO_SINT, MVT::v2i64, Custom);
+
+    setOperationAction(ISD::FP_TO_UINT, MVT::v1i8, Custom);
+    setOperationAction(ISD::FP_TO_UINT, MVT::v1i16, Custom);
+    setOperationAction(ISD::FP_TO_UINT, MVT::v1i32, Custom);
+    setOperationAction(ISD::FP_TO_UINT, MVT::v4i16, Custom);
+    setOperationAction(ISD::FP_TO_UINT, MVT::v2i32, Custom);
+    setOperationAction(ISD::FP_TO_UINT, MVT::v2i64, Custom);
+
     // Vector ExtLoad and TruncStore are expanded.
     for (unsigned I = MVT::FIRST_VECTOR_VALUETYPE;
          I <= MVT::LAST_VECTOR_VALUETYPE; ++I) {
@@ -2119,9 +2147,42 @@ AArch64TargetLowering::LowerFP_EXTEND(SDValue Op, SelectionDAG &DAG) const {
   return LowerF128ToCall(Op, DAG, LC);
 }
 
+static SDValue LowerVectorFP_TO_INT(SDValue Op, SelectionDAG &DAG,
+                                    bool IsSigned) {
+  SDLoc dl(Op);
+  EVT VT = Op.getValueType();
+  SDValue Vec = Op.getOperand(0);
+  EVT OpVT = Vec.getValueType();
+  unsigned Opc = IsSigned ? ISD::FP_TO_SINT : ISD::FP_TO_UINT;
+
+  if (VT.getVectorNumElements() == 1) {
+    assert(OpVT == MVT::v1f64 && "Unexpected vector type!");
+    if (VT.getSizeInBits() == OpVT.getSizeInBits())
+      return Op;
+    return DAG.UnrollVectorOp(Op.getNode());
+  }
+
+  if (VT.getSizeInBits() > OpVT.getSizeInBits()) {
+    assert(Vec.getValueType() == MVT::v2f32 && VT == MVT::v2i64 &&
+           "Unexpected vector type!");
+    Vec = DAG.getNode(ISD::FP_EXTEND, dl, MVT::v2f64, Vec);
+    return DAG.getNode(Opc, dl, VT, Vec);
+  } else if (VT.getSizeInBits() < OpVT.getSizeInBits()) {
+    EVT CastVT = EVT::getIntegerVT(*DAG.getContext(),
+                                   OpVT.getVectorElementType().getSizeInBits());
+    CastVT =
+        EVT::getVectorVT(*DAG.getContext(), CastVT, VT.getVectorNumElements());
+    Vec = DAG.getNode(Opc, dl, CastVT, Vec);
+    return DAG.getNode(ISD::TRUNCATE, dl, VT, Vec);
+  }
+  return DAG.getNode(Opc, dl, VT, Vec);
+}
+
 SDValue
 AArch64TargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
                                       bool IsSigned) const {
+  if (Op.getValueType().isVector())
+    return LowerVectorFP_TO_INT(Op, DAG, IsSigned);
   if (Op.getOperand(0).getValueType() != MVT::f128) {
     // It's legal except when f128 is involved
     return Op;
@@ -2467,9 +2528,42 @@ AArch64TargetLowering::LowerGlobalTLSAddress(SDValue Op,
   return DAG.getNode(ISD::ADD, DL, PtrVT, ThreadBase, TPOff);
 }
 
+static SDValue LowerVectorINT_TO_FP(SDValue Op, SelectionDAG &DAG,
+                                    bool IsSigned) {
+  SDLoc dl(Op);
+  EVT VT = Op.getValueType();
+  SDValue Vec = Op.getOperand(0);
+  unsigned Opc = IsSigned ? ISD::SINT_TO_FP : ISD::UINT_TO_FP;
+
+  if (VT.getVectorNumElements() == 1) {
+    assert(VT == MVT::v1f64 && "Unexpected vector type!");
+    if (VT.getSizeInBits() == Vec.getValueSizeInBits())
+      return Op;
+    return DAG.UnrollVectorOp(Op.getNode());
+  }
+
+  if (VT.getSizeInBits() < Vec.getValueSizeInBits()) {
+    assert(Vec.getValueType() == MVT::v2i64 && VT == MVT::v2f32 &&
+           "Unexpected vector type!");
+    Vec = DAG.getNode(Opc, dl, MVT::v2f64, Vec);
+    return DAG.getNode(ISD::FP_ROUND, dl, VT, Vec, DAG.getIntPtrConstant(0));
+  } else if (VT.getSizeInBits() > Vec.getValueSizeInBits()) {
+    unsigned CastOpc = IsSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+    EVT CastVT = EVT::getIntegerVT(*DAG.getContext(),
+                                   VT.getVectorElementType().getSizeInBits());
+    CastVT =
+        EVT::getVectorVT(*DAG.getContext(), CastVT, VT.getVectorNumElements());
+    Vec = DAG.getNode(CastOpc, dl, CastVT, Vec);
+  }
+
+  return DAG.getNode(Opc, dl, VT, Vec);
+}
+
 SDValue
 AArch64TargetLowering::LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG,
                                       bool IsSigned) const {
+  if (Op.getValueType().isVector())
+    return LowerVectorINT_TO_FP(Op, DAG, IsSigned);
   if (Op.getValueType() != MVT::f128) {
     // Legal for everything except f128.
     return Op;
