@@ -312,7 +312,8 @@ added in the future:
     so that the call does not break any live ranges in the caller side.
     This calling convention does not support varargs and requires the
     prototype of all callees to exactly match the prototype of the
-    function definition.
+    function definition. Furthermore the inliner doesn't consider such function
+    calls for inlining.
 "``cc 10``" - GHC convention
     This calling convention has been implemented specifically for use by
     the `Glasgow Haskell Compiler (GHC) <http://www.haskell.org/ghc>`_.
@@ -375,7 +376,13 @@ added in the future:
     that have a hot path and a cold path. The hot path is usually a small piece
     of code that doesn't many registers. The cold path might need to call out to
     another function and therefore only needs to preserve the caller-saved
-    registers, which haven't already been saved by the caller.
+    registers, which haven't already been saved by the caller. The
+    `PreserveMost` calling convention is very similar to the `cold` calling
+    convention in terms of caller/callee-saved registers, but they are used for
+    different types of function calls. `coldcc` is for function calls that are
+    rarely executed, whereas `preserve_mostcc` function calls are intended to be
+    on the hot path and definitely executed a lot. Furthermore `preserve_mostcc`
+    doesn't prevent the inliner from inlining the function call.
 
     This calling convention will be used by a future version of the ObjectiveC
     runtime and should therefore still be considered experimental at this time.
