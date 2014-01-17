@@ -528,10 +528,13 @@ void Parser::ParseLexedMemberInitializer(LateParsedMemberInitializer &MI) {
 
   SourceLocation EqualLoc;
 
+  Actions.ActOnStartCXXInClassMemberInitializer();
+
   ExprResult Init = ParseCXXMemberInitializer(MI.Field, /*IsFunction=*/false, 
                                               EqualLoc);
 
-  Actions.ActOnCXXInClassMemberInitializer(MI.Field, EqualLoc, Init.release());
+  Actions.ActOnFinishCXXInClassMemberInitializer(MI.Field, EqualLoc,
+                                                 Init.release());
 
   // The next token should be our artificial terminating EOF token.
   if (Tok.isNot(tok::eof)) {

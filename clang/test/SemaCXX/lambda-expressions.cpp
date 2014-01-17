@@ -283,3 +283,14 @@ namespace lambdas_in_NSDMIs {
     L l; 
   }
 }
+
+// PR18477: don't try to capture 'this' from an NSDMI encountered while parsing
+// a lambda.
+namespace NSDMIs_in_lambdas {
+  template<typename T> struct S { int a = 0; int b = a; };
+  void f() { []() { S<int> s; }; }
+
+  auto x = []{ struct S { int n, m = n; }; };
+  auto y = [&]{ struct S { int n, m = n; }; };
+  void g() { auto z = [&]{ struct S { int n, m = n; }; }; }
+}
