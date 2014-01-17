@@ -1365,9 +1365,9 @@ let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
              "adcx{l}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_NONMEM>, T8PD;
 
-  def ADCX64rr : I<0xF6, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
+  def ADCX64rr : RI<0xF6, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
              "adcx{q}\t{$src, $dst|$dst, $src}",
-             [], IIC_BIN_NONMEM>, T8PD, REX_W, Requires<[In64BitMode]>;
+             [], IIC_BIN_NONMEM>, T8PD, Requires<[In64BitMode]>;
   } // SchedRW
 
   let mayLoad = 1, SchedRW = [WriteALULd] in {
@@ -1375,9 +1375,9 @@ let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
              "adcx{l}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_MEM>, T8PD;
 
-  def ADCX64rm : I<0xF6, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+  def ADCX64rm : RI<0xF6, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
              "adcx{q}\t{$src, $dst|$dst, $src}",
-             [], IIC_BIN_MEM>, T8PD, REX_W, Requires<[In64BitMode]>;
+             [], IIC_BIN_MEM>, T8PD, Requires<[In64BitMode]>;
   }
 }
 
@@ -1390,9 +1390,9 @@ let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
              "adox{l}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_NONMEM>, T8XS;
 
-  def ADOX64rr : I<0xF6, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
+  def ADOX64rr : RI<0xF6, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
              "adox{q}\t{$src, $dst|$dst, $src}",
-             [], IIC_BIN_NONMEM>, T8XS, REX_W, Requires<[In64BitMode]>;
+             [], IIC_BIN_NONMEM>, T8XS, Requires<[In64BitMode]>;
   } // SchedRW
 
   let mayLoad = 1, SchedRW = [WriteALULd] in {
@@ -1400,8 +1400,8 @@ let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
              "adox{l}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_MEM>, T8XS;
 
-  def ADOX64rm : I<0xF6, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+  def ADOX64rm : RI<0xF6, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
              "adox{q}\t{$src, $dst|$dst, $src}",
-             [], IIC_BIN_MEM>, T8XS, REX_W, Requires<[In64BitMode]>;
+             [], IIC_BIN_MEM>, T8XS, Requires<[In64BitMode]>;
   }
 }

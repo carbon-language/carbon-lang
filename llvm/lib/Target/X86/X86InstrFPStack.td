@@ -621,13 +621,13 @@ def FCOMPP : I<0xD9, RawFrm, (outs), (ins), "fcompp", [], IIC_FCOMPP>, DE;
 
 def FXSAVE : I<0xAE, MRM0m, (outs opaque512mem:$dst), (ins),
                "fxsave\t$dst", [], IIC_FXSAVE>, TB;
-def FXSAVE64 : I<0xAE, MRM0m, (outs opaque512mem:$dst), (ins),
-                 "fxsave{q|64}\t$dst", [], IIC_FXSAVE>, TB, REX_W,
-                 Requires<[In64BitMode]>;
+def FXSAVE64 : RI<0xAE, MRM0m, (outs opaque512mem:$dst), (ins),
+                  "fxsave{q|64}\t$dst", [], IIC_FXSAVE>, TB, 
+                  Requires<[In64BitMode]>;
 def FXRSTOR : I<0xAE, MRM1m, (outs), (ins opaque512mem:$src),
                 "fxrstor\t$src", [], IIC_FXRSTOR>, TB;
-def FXRSTOR64 : I<0xAE, MRM1m, (outs), (ins opaque512mem:$src),
-                  "fxrstor{q|64}\t$src", [], IIC_FXRSTOR>, TB, REX_W,
+def FXRSTOR64 : RI<0xAE, MRM1m, (outs), (ins opaque512mem:$src),
+                  "fxrstor{q|64}\t$src", [], IIC_FXRSTOR>, TB,
                   Requires<[In64BitMode]>;
 } // SchedRW
 
