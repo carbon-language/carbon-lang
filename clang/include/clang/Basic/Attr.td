@@ -1378,11 +1378,16 @@ def MSInheritance : InheritableAttr {
   let Spellings = [Keyword<"__single_inheritance">,
                    Keyword<"__multiple_inheritance">,
                    Keyword<"__virtual_inheritance">,
-                   Keyword<"__unspecified_inheritance">];
+                   // We use an empty string to denote an unspecified
+                   // inheritance attribute.
+                   Keyword<"">];
   let Accessors = [Accessor<"IsSingle", [Keyword<"__single_inheritance">]>,
                    Accessor<"IsMultiple", [Keyword<"__multiple_inheritance">]>,
                    Accessor<"IsVirtual", [Keyword<"__virtual_inheritance">]>,
-                   Accessor<"IsUnspecified", [Keyword<"__unspecified_inheritance">]>];
+                   Accessor<"IsUnspecified", [Keyword<"">]>];
+  // This index is based off the Spellings list and corresponds to the empty
+  // keyword "spelling."
+  let AdditionalMembers = [{static const int UnspecifiedSpellingIndex = 3;}];
 }
 
 def Unaligned : IgnoredAttr {

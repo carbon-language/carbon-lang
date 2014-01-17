@@ -92,43 +92,28 @@ static bool usesMultipleInheritanceModel(const CXXRecordDecl *RD) {
   return false;
 }
 
-static MSInheritanceAttr::Spelling
-MSInheritanceAttrToModel(const MSInheritanceAttr *Attr) {
+static MSInheritanceModel MSInheritanceAttrToModel(MSInheritanceAttr *Attr) {
   if (Attr->IsSingle())
-    return MSInheritanceAttr::Keyword_single_inheritance;
+    return MSIM_Single;
   else if (Attr->IsMultiple())
-    return MSInheritanceAttr::Keyword_multiple_inheritance;
+    return MSIM_Multiple;
   else if (Attr->IsVirtual())
-    return MSInheritanceAttr::Keyword_virtual_inheritance;
+    return MSIM_Virtual;
   
   assert(Attr->IsUnspecified() && "Expected unspecified inheritance attr");
-  return MSInheritanceAttr::Keyword_unspecified_inheritance;
+  return MSIM_Unspecified;
 }
 
-static MSInheritanceAttr::Spelling
-calculateInheritanceModel(const CXXRecordDecl *RD) {
-  if (!RD->hasDefinition())
-    return MSInheritanceAttr::Keyword_unspecified_inheritance;
-  if (RD->getNumVBases() > 0)
-    return MSInheritanceAttr::Keyword_virtual_inheritance;
-  if (usesMultipleInheritanceModel(RD))
-    return MSInheritanceAttr::Keyword_multiple_inheritance;
-  return MSInheritanceAttr::Keyword_single_inheritance;
-}
-
-MSInheritanceAttr::Spelling
-CXXRecordDecl::getMSInheritanceModel() const {
-  MSInheritanceAttr *IA = getAttr<MSInheritanceAttr>();
-  assert(IA && "Expected MSInheritanceAttr on the CXXRecordDecl!");
-  return MSInheritanceAttrToModel(IA);
-}
-
-void CXXRecordDecl::setMSInheritanceModel() {
-  if (hasAttr<MSInheritanceAttr>())
-    return;
-
-  addAttr(MSInheritanceAttr::CreateImplicit(
-      getASTContext(), calculateInheritanceModel(this), getSourceRange()));
+MSInheritanceModel CXXRecordDecl::getMSInheritanceModel() const {
+  if (MSInheritanceAttr *IA = this->getAttr<MSInheritanceAttr>())
+    return MSInheritanceAttrToModel(IA);
+  // If there was no explicit attribute, the record must be defined already, and
+  // we can figure out the inheritance model from its other properties.
+  if (this->getNumVBases() > 0)
+    return MSIM_Virtual;
+  if (usesMultipleInheritanceModel(this))
+    return this->isPolymorphic() ? MSIM_MultiplePolymorphic : MSIM_Multiple;
+  return this->isPolymorphic() ? MSIM_SinglePolymorphic : MSIM_Single;
 }
 
 // Returns the number of pointer and integer slots used to represent a member
@@ -161,9 +146,9 @@ void CXXRecordDecl::setMSInheritanceModel() {
 //   };
 static std::pair<unsigned, unsigned>
 getMSMemberPointerSlots(const MemberPointerType *MPT) {
-  const CXXRecordDecl *RD = MPT->getMostRecentCXXRecordDecl();
-  MSInheritanceAttr::Spelling Inheritance = RD->getMSInheritanceModel();
-  unsigned Ptrs = 0;
+  const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+  MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
+  unsigned Ptrs;
   unsigned Ints = 0;
   if (MPT->isMemberFunctionPointer()) {
     // Member function pointers are a struct of a function pointer followed by a
@@ -171,29 +156,26 @@ getMSMemberPointerSlots(const MemberPointerType *MPT) {
     // function pointer is a real function if it is non-virtual and a vftable
     // slot thunk if it is virtual.  The ints select the object base passed for
     // the 'this' pointer.
-    Ptrs = 1; // First slot is always a function pointer.
+    Ptrs = 1;  // First slot is always a function pointer.
     switch (Inheritance) {
-    case MSInheritanceAttr::Keyword_unspecified_inheritance:
-      ++Ints; // VBTableOffset
-    case MSInheritanceAttr::Keyword_virtual_inheritance:
-      ++Ints; // VirtualBaseAdjustmentOffset
-    case MSInheritanceAttr::Keyword_multiple_inheritance:
-      ++Ints; // NonVirtualBaseAdjustment
-    case MSInheritanceAttr::Keyword_single_inheritance:
-      break;  // Nothing
+    case MSIM_Unspecified: ++Ints;  // VBTableOffset
+    case MSIM_Virtual:     ++Ints;  // VirtualBaseAdjustmentOffset
+    case MSIM_MultiplePolymorphic:
+    case MSIM_Multiple:    ++Ints;  // NonVirtualBaseAdjustment
+    case MSIM_SinglePolymorphic:
+    case MSIM_Single:      break;   // Nothing
     }
   } else {
     // Data pointers are an aggregate of ints.  The first int is an offset
     // followed by vbtable-related offsets.
-    Ints = 1; // We always have a field offset.
+    Ptrs = 0;
     switch (Inheritance) {
-    case MSInheritanceAttr::Keyword_unspecified_inheritance:
-      ++Ints; // VBTableOffset
-    case MSInheritanceAttr::Keyword_virtual_inheritance:
-      ++Ints; // VirtualBaseAdjustmentOffset
-    case MSInheritanceAttr::Keyword_multiple_inheritance:
-    case MSInheritanceAttr::Keyword_single_inheritance:
-      break;  // Nothing
+    case MSIM_Unspecified: ++Ints;  // VBTableOffset
+    case MSIM_Virtual:     ++Ints;  // VirtualBaseAdjustmentOffset
+    case MSIM_MultiplePolymorphic:
+    case MSIM_Multiple:             // Nothing
+    case MSIM_SinglePolymorphic:
+    case MSIM_Single:      ++Ints;  // Field offset
     }
   }
   return std::make_pair(Ptrs, Ints);

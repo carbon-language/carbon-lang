@@ -17,7 +17,6 @@
 #define LLVM_CLANG_AST_DECLCXX_H
 
 #include "clang/AST/ASTUnresolvedSet.h"
-#include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
@@ -257,6 +256,16 @@ public:
 
   /// \brief Retrieves the type and source location of the base class.
   TypeSourceInfo *getTypeSourceInfo() const { return BaseTypeInfo; }
+};
+
+/// The inheritance model to use for member pointers of a given CXXRecordDecl.
+enum MSInheritanceModel {
+  MSIM_Single,
+  MSIM_SinglePolymorphic,
+  MSIM_Multiple,
+  MSIM_MultiplePolymorphic,
+  MSIM_Virtual,
+  MSIM_Unspecified
 };
 
 /// \brief Represents a C++ struct/union/class.
@@ -1599,9 +1608,7 @@ public:
   }
 
   /// \brief Returns the inheritance model used for this record.
-  MSInheritanceAttr::Spelling getMSInheritanceModel() const;
-  /// \brief Locks-in the inheritance model for this class.
-  void setMSInheritanceModel();
+  MSInheritanceModel getMSInheritanceModel() const;
 
   /// \brief Determine whether this lambda expression was known to be dependent
   /// at the time it was created, even if its context does not appear to be

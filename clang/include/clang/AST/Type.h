@@ -2205,7 +2205,6 @@ public:
   }
 
   const Type *getClass() const { return Class; }
-  CXXRecordDecl *getMostRecentCXXRecordDecl() const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
