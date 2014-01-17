@@ -99,7 +99,7 @@ extern "C" {
   void __sanitizer_report_error_summary(const char *error_summary);
 
   SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump();
-  SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(void *pc);
+  SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov();
   SANITIZER_INTERFACE_ATTRIBUTE
   void __sanitizer_annotate_contiguous_container(const void *beg,
                                                  const void *end,

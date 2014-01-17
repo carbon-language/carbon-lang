@@ -11,15 +11,15 @@
 // This file implements run-time support for a poor man's coverage tool.
 //
 // Compiler instrumentation:
-// For every function F the compiler injects the following code:
+// For every interesting basic block the compiler injects the following code:
 // if (*Guard) {
-//    __sanitizer_cov(&F);
+//    __sanitizer_cov();
 //    *Guard = 1;
 // }
-// It's fine to call __sanitizer_cov more than once for a given function.
+// It's fine to call __sanitizer_cov more than once for a given block.
 //
 // Run-time:
-//  - __sanitizer_cov(pc): record that we've executed a given PC.
+//  - __sanitizer_cov(): record that we've executed the PC (GET_CALLER_PC).
 //  - __sanitizer_cov_dump: dump the coverage data to disk.
 //  For every module of the current process that has coverage data
 //  this will create a file module_name.PID.sancov. The file format is simple:
@@ -37,6 +37,7 @@
 #include "sanitizer_libc.h"
 #include "sanitizer_mutex.h"
 #include "sanitizer_procmaps.h"
+#include "sanitizer_stacktrace.h"
 #include "sanitizer_flags.h"
 
 struct CovData {
@@ -105,8 +106,8 @@ void CovDump() {
 }  // namespace __sanitizer
 
 extern "C" {
-SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(void *pc) {
-  CovAdd(reinterpret_cast<uptr>(pc));
+SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov() {
+  CovAdd(StackTrace::GetPreviousInstructionPc(GET_CALLER_PC()));
 }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() { CovDump(); }
 }  // extern "C"

@@ -33,6 +33,7 @@
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/InstVisitor.h"
@@ -130,8 +131,9 @@ static cl::opt<bool> ClUseAfterReturn("asan-use-after-return",
 // This flag may need to be replaced with -f[no]asan-globals.
 static cl::opt<bool> ClGlobals("asan-globals",
        cl::desc("Handle global objects"), cl::Hidden, cl::init(true));
-static cl::opt<bool> ClCoverage("asan-coverage",
-       cl::desc("ASan coverage"), cl::Hidden, cl::init(false));
+static cl::opt<int> ClCoverage("asan-coverage",
+       cl::desc("ASan coverage. 0: none, 1: entry block, 2: all blocks"),
+       cl::Hidden, cl::init(false));
 static cl::opt<bool> ClInitializers("asan-initialization-order",
        cl::desc("Handle C++ initializer order"), cl::Hidden, cl::init(false));
 static cl::opt<bool> ClMemIntrin("asan-memintrin",
@@ -320,7 +322,8 @@ struct AddressSanitizer : public FunctionPass {
   bool LooksLikeCodeInBug11395(Instruction *I);
   void FindDynamicInitializers(Module &M);
   bool GlobalIsLinkerInitialized(GlobalVariable *G);
-  bool InjectCoverage(Function &F);
+  bool InjectCoverage(Function &F, const ArrayRef<BasicBlock*> AllBlocks);
+  void InjectCoverageAtBlock(Function &F, BasicBlock &BB);
 
   bool CheckInitOrder;
   bool CheckUseAfterReturn;
@@ -1076,7 +1079,7 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
   AsanHandleNoReturnFunc = checkInterfaceFunction(M.getOrInsertFunction(
       kAsanHandleNoReturnName, IRB.getVoidTy(), NULL));
   AsanCovFunction = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanCovName, IRB.getVoidTy(), IntptrTy, NULL));
+      kAsanCovName, IRB.getVoidTy(), NULL));
   // We insert an empty inline asm after __asan_report* to avoid callback merge.
   EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
                             StringRef(""), StringRef(""),
@@ -1148,33 +1151,11 @@ bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
   return false;
 }
 
-// Poor man's coverage that works with ASan.
-// We create a Guard boolean variable with the same linkage
-// as the function and inject this code into the entry block:
-// if (*Guard) {
-//    __sanitizer_cov(&F);
-//    *Guard = 1;
-// }
-// The accesses to Guard are atomic. The rest of the logic is
-// in __sanitizer_cov (it's fine to call it more than once).
-//
-// This coverage implementation provides very limited data:
-// it only tells if a given function was ever executed.
-// No counters, no per-basic-block or per-edge data.
-// But for many use cases this is what we need and the added slowdown
-// is negligible. This simple implementation will probably be obsoleted
-// by the upcoming Clang-based coverage implementation.
-// By having it here and now we hope to
-//  a) get the functionality to users earlier and
-//  b) collect usage statistics to help improve Clang coverage design.
-bool AddressSanitizer::InjectCoverage(Function &F) {
-  if (!ClCoverage) return false;
-
+void AddressSanitizer::InjectCoverageAtBlock(Function &F, BasicBlock &BB) {
+  BasicBlock::iterator IP = BB.getFirstInsertionPt(), BE = BB.end();
   // Skip static allocas at the top of the entry block so they don't become
   // dynamic when we split the block.  If we used our optimized stack layout,
   // then there will only be one alloca and it will come first.
-  BasicBlock &Entry = F.getEntryBlock();
-  BasicBlock::iterator IP = Entry.getFirstInsertionPt(), BE = Entry.end();
   for (; IP != BE; ++IP) {
     AllocaInst *AI = dyn_cast<AllocaInst>(IP);
     if (!AI || !AI->isStaticAlloca())
@@ -1190,14 +1171,48 @@ bool AddressSanitizer::InjectCoverage(Function &F) {
   Load->setAtomic(Monotonic);
   Load->setAlignment(1);
   Value *Cmp = IRB.CreateICmpEQ(Constant::getNullValue(Int8Ty), Load);
-  Instruction *Ins = SplitBlockAndInsertIfThen(Cmp, IP, false);
+  Instruction *Ins = SplitBlockAndInsertIfThen(
+      Cmp, IP, false, MDBuilder(*C).createBranchWeights(1, 100000));
   IRB.SetInsertPoint(Ins);
   // We pass &F to __sanitizer_cov. We could avoid this and rely on
   // GET_CALLER_PC, but having the PC of the first instruction is just nice.
-  IRB.CreateCall(AsanCovFunction, IRB.CreatePointerCast(&F, IntptrTy));
+  Instruction *Call = IRB.CreateCall(AsanCovFunction);
+  Call->setDebugLoc(IP->getDebugLoc());
   StoreInst *Store = IRB.CreateStore(ConstantInt::get(Int8Ty, 1), Guard);
   Store->setAtomic(Monotonic);
   Store->setAlignment(1);
+}
+
+// Poor man's coverage that works with ASan.
+// We create a Guard boolean variable with the same linkage
+// as the function and inject this code into the entry block (-asan-coverage=1)
+// or all blocks (-asan-coverage=2):
+// if (*Guard) {
+//    __sanitizer_cov(&F);
+//    *Guard = 1;
+// }
+// The accesses to Guard are atomic. The rest of the logic is
+// in __sanitizer_cov (it's fine to call it more than once).
+//
+// This coverage implementation provides very limited data:
+// it only tells if a given function (block) was ever executed.
+// No counters, no per-edge data.
+// But for many use cases this is what we need and the added slowdown
+// is negligible. This simple implementation will probably be obsoleted
+// by the upcoming Clang-based coverage implementation.
+// By having it here and now we hope to
+//  a) get the functionality to users earlier and
+//  b) collect usage statistics to help improve Clang coverage design.
+bool AddressSanitizer::InjectCoverage(Function &F,
+                                      const ArrayRef<BasicBlock *> AllBlocks) {
+  if (!ClCoverage) return false;
+
+  if (ClCoverage == 1) {
+    InjectCoverageAtBlock(F, F.getEntryBlock());
+  } else {
+    for (size_t i = 0, n = AllBlocks.size(); i < n; i++)
+      InjectCoverageAtBlock(F, *AllBlocks[i]);
+  }
   return true;
 }
 
@@ -1222,12 +1237,14 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   SmallSet<Value*, 16> TempsToInstrument;
   SmallVector<Instruction*, 16> ToInstrument;
   SmallVector<Instruction*, 8> NoReturnCalls;
+  SmallVector<BasicBlock*, 16> AllBlocks;
   int NumAllocas = 0;
   bool IsWrite;
 
   // Fill the set of memory operations to instrument.
   for (Function::iterator FI = F.begin(), FE = F.end();
        FI != FE; ++FI) {
+    AllBlocks.push_back(FI);
     TempsToInstrument.clear();
     int NumInsnsPerBB = 0;
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end();
@@ -1297,7 +1314,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
 
   bool res = NumInstrumented > 0 || ChangedStack || !NoReturnCalls.empty();
 
-  if (InjectCoverage(F))
+  if (InjectCoverage(F, AllBlocks))
     res = true;
 
   DEBUG(dbgs() << "ASAN done instrumenting: " << res << " " << F << "\n");
