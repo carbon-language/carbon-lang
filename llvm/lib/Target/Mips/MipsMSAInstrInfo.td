@@ -2297,8 +2297,8 @@ class LSA_DESC {
   dag OutOperandList = (outs GPR32Opnd:$rd);
   dag InOperandList = (ins GPR32Opnd:$rs, GPR32Opnd:$rt, LSAImm:$sa);
   string AsmString = "lsa\t$rd, $rs, $rt, $sa";
-  list<dag> Pattern = [(set GPR32Opnd:$rd, (add GPR32Opnd:$rs,
-                                                (shl GPR32Opnd:$rt,
+  list<dag> Pattern = [(set GPR32Opnd:$rd, (add GPR32Opnd:$rt,
+                                                (shl GPR32Opnd:$rs,
                                                      immZExt2Lsa:$sa)))];
   InstrItinClass Itinerary = NoItinerary;
 }

@@ -11,7 +11,7 @@ entry:
 declare i32 @llvm.mips.lsa(i32, i32, i32) nounwind
 
 ; CHECK: llvm_mips_lsa_test:
-; CHECK: lsa {{\$[0-9]+}}, {{\$[0-9]+}}, {{\$[0-9]+}}, 2
+; CHECK: lsa {{\$[0-9]+}}, $5, $4, 2
 ; CHECK: .size llvm_mips_lsa_test
 
 define i32 @lsa_test(i32 %a, i32 %b) nounwind {
@@ -22,5 +22,5 @@ entry:
 }
 
 ; CHECK: lsa_test:
-; CHECK: lsa {{\$[0-9]+}}, {{\$[0-9]+}}, {{\$[0-9]+}}, 2
+; CHECK: lsa {{\$[0-9]+}}, $5, $4, 2
 ; CHECK: .size lsa_test
