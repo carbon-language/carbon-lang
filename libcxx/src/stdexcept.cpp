@@ -79,7 +79,7 @@ __libcpp_nmstr::operator=(const __libcpp_nmstr& s) _NOEXCEPT
     const char* p = str_;
     str_ = s.str_;
     __sync_add_and_fetch(&count(), 1);
-    if (__sync_add_and_fetch((count_t*)(p-sizeof(count_t)), count_t(-1)) < 0)
+    if (__sync_add_and_fetch(reinterpret_cast<count_t*>(const_cast<char*>(p)-sizeof(count_t)), count_t(-1)) < 0)
         delete [] (p-offset);
     return *this;
 }
