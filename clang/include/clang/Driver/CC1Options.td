@@ -254,6 +254,8 @@ def fconstexpr_backtrace_limit : Separate<["-"], "fconstexpr-backtrace-limit">, 
   HelpText<"Set the maximum number of entries to print in a constexpr evaluation backtrace (0 = no limit).">;
 def fmessage_length : Separate<["-"], "fmessage-length">, MetaVarName<"<N>">,
   HelpText<"Format message diagnostics so that they fit within N columns or fewer, when possible.">;
+def verify : Flag<["-"], "verify">,
+  HelpText<"Verify diagnostic output using comment directives">;
 def Wno_rewrite_macros : Flag<["-"], "Wno-rewrite-macros">,
   HelpText<"Silence ObjC rewriting warnings">;
 
