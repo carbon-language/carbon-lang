@@ -1,0 +1,13 @@
+# Check program interpreter setup.
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t1 %s
+# RUN: lld -flavor gnu -target mipsel -e main -o %t2 %t1
+# RUN: llvm-objdump -s %t2 | FileCheck %s
+
+# CHECK: Contents of section .interp:
+# CHECK-NEXT: 4000f4 2f6c6962 2f6c642e 736f2e31 00 /lib/ld.so.1.
+
+    .global main
+    .ent    main
+main:
+    nop
+    .end    main

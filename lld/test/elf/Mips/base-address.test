@@ -7,9 +7,9 @@
 
 # CHECK: DynamicSection [ (15 entries)
 # CHECK:   Tag        Type                 Name/Value
-# CHECK:   0x00000004 HASH                 0x400110
-# CHECK:   0x00000005 STRTAB               0x400130
-# CHECK:   0x00000006 SYMTAB               0x400120
+# CHECK:   0x00000004 HASH                 0x400104
+# CHECK:   0x00000005 STRTAB               0x400124
+# CHECK:   0x00000006 SYMTAB               0x400114
 # CHECK:   0x0000000A STRSZ                1 (bytes)
 # CHECK:   0x0000000B SYMENT               16 (bytes)
 # CHECK:   0x0000001A FINI_ARRAY           0x0
@@ -52,8 +52,8 @@
 # CHECK:   }
 # CHECK:   ProgramHeader {
 # CHECK:     Type: PT_DYNAMIC (0x2)
-# CHECK:     Offset: 0x138
-# CHECK:     VirtualAddress: 0x400138
+# CHECK:     Offset: 0x12C
+# CHECK:     VirtualAddress: 0x40012C
 # CHECK:   }
 # CHECK: ]
 

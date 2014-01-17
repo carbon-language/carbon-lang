@@ -46,6 +46,10 @@ StringRef MipsLinkingContext::entrySymbolName() const {
   return _entrySymbolName;
 }
 
+StringRef MipsLinkingContext::getDefaultInterpreter() const {
+  return "/lib/ld.so.1";
+}
+
 void MipsLinkingContext::addPasses(PassManager &pm) {
   auto pass = createMipsRelocationPass(*this);
   if (pass)
