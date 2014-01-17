@@ -517,7 +517,7 @@ def warn_cxx98_compat_nullptr : Warning<
 def warn_cxx98_compat_alignas : Warning<"'alignas' is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def warn_cxx98_compat_attribute : Warning<
-  "generalized attributes are incompatible with C++98">,
+  "C++11 attribute syntax is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_cxx11_attribute_forbids_arguments : Error<
   "attribute '%0' cannot have an argument list">;
