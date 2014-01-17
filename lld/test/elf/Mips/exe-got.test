@@ -1,0 +1,60 @@
+# Check that external symbol defined in the executable file
+# and referenced by R_MIPS_CALL16 relocation has a corresponded
+# entry in the local GOT section.
+#
+# Build shared library
+# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
+# RUN:         -o=%t1 %p/Inputs/ext.s
+# RUN: lld -flavor gnu -target mipsel -shared -o %t2 %t1
+
+# Build executable
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t3 %s
+# RUN: lld -flavor gnu -target mipsel -e glob \
+# RUN:     --output-filetype=yaml -o %t4 %t3 %t2
+# RUN: FileCheck -check-prefix=GOT %s < %t4
+
+# GOT header
+# GOT:   - type:            got
+# GOT:     content:         [ 00, 00, 00, 00 ]
+# GOT:     alignment:       2^2
+# GOT:     section-choice:  custom-required
+# GOT:     section-name:    .got
+# GOT:     permissions:     rw-
+# GOT:   - type:            got
+# GOT:     content:         [ 00, 00, 00, 80 ]
+# GOT:     alignment:       2^2
+# GOT:     section-choice:  custom-required
+# GOT:     section-name:    .got
+# GOT:     permissions:     rw-
+# Local GOT entry for 'glob' symbol
+# GOT:   - ref-name:        L000
+# GOT:     type:            got
+# GOT:     content:         [ 00, 00, 00, 00 ]
+# GOT:     alignment:       2^2
+# GOT:     section-choice:  custom-required
+# GOT:     section-name:    .got
+# GOT:     permissions:     rw-
+# GOT:     references:
+# GOT:       - kind:            R_MIPS_32
+# GOT:         offset:          0
+# GOT:         target:          glob
+# Global GOT entry for 'ext1' symbol
+# GOT:   - ref-name:        L001
+# GOT:     type:            got
+# GOT:     content:         [ 00, 00, 00, 00 ]
+# GOT:     alignment:       2^2
+# GOT:     section-choice:  custom-required
+# GOT:     section-name:    .got
+# GOT:     permissions:     rw-
+# GOT:     references:
+# GOT:       - kind:            LLD_R_MIPS_GLOBAL_GOT
+# GOT:         offset:          0
+# GOT:         target:          ext1
+
+    .abicalls
+    .global glob
+    .ent    glob
+glob:
+    lw      $4,%call16(glob)($28)
+    lw      $4,%call16(ext1)($28)
+    .end    glob

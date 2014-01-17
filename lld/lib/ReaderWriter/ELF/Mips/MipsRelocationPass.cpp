@@ -114,7 +114,8 @@ public:
 
 class RelocationPass : public Pass {
 public:
-  RelocationPass(MipsLinkingContext &context) : _file(context) {
+  RelocationPass(MipsLinkingContext &context)
+      : _context(context), _file(context) {
     _localGotVector.push_back(new (_file._alloc) GOT0Atom(_file));
     _localGotVector.push_back(new (_file._alloc) GOTModulePointerAtom(_file));
   }
@@ -157,6 +158,9 @@ public:
   }
 
 private:
+  /// \brief Reference to the linking context.
+  const MipsLinkingContext &_context;
+
   /// \brief Owner of all the Atoms created by this pass.
   RelocationPassFile _file;
 
@@ -227,6 +231,10 @@ private:
     // Local and hidden symbols must be local.
     if (scope == Atom::scopeTranslationUnit ||
         scope == Atom::scopeLinkageUnit)
+      return true;
+
+    // External symbol defined in an executable file requires a local GOT entry.
+    if (_context.getOutputELFType() == llvm::ELF::ET_EXEC)
       return true;
 
     return false;
