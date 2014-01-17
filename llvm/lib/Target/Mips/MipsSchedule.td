@@ -20,7 +20,6 @@ def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
-def IIHiLo             : InstrItinClass;
 def IIImul             : InstrItinClass;
 def IIImult            : InstrItinClass;
 def IIIdiv             : InstrItinClass;
@@ -64,6 +63,8 @@ def II_DSRL32           : InstrItinClass;
 def II_DSRLV            : InstrItinClass;
 def II_DSUBU            : InstrItinClass;
 def II_LUI              : InstrItinClass;
+def II_MFHI_MFLO        : InstrItinClass; // mfhi and mflo
+def II_MTHI_MTLO        : InstrItinClass; // mthi and mtlo
 def II_MOVF             : InstrItinClass;
 def II_MOVN             : InstrItinClass;
 def II_MOVT             : InstrItinClass;
@@ -132,7 +133,8 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<IILoad             , [InstrStage<3,  [ALU]>]>,
   InstrItinData<IIStore            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IIBranch           , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<IIHiLo             , [InstrStage<1,  [IMULDIV]>]>,
+  InstrItinData<II_MFHI_MFLO       , [InstrStage<1,  [IMULDIV]>]>,
+  InstrItinData<II_MTHI_MTLO       , [InstrStage<1,  [IMULDIV]>]>,
   InstrItinData<IIImul             , [InstrStage<17, [IMULDIV]>]>,
   InstrItinData<IIImult            , [InstrStage<17, [IMULDIV]>]>,
   InstrItinData<IIIdiv             , [InstrStage<38, [IMULDIV]>]>,

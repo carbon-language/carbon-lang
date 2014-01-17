@@ -727,21 +727,22 @@ class Div<string opstr, InstrItinClass itin, RegisterOperand RO,
 // Move from Hi/Lo
 class PseudoMFLOHI<RegisterClass DstRC, RegisterClass SrcRC, SDNode OpNode>
   : PseudoSE<(outs DstRC:$rd), (ins SrcRC:$hilo),
-             [(set DstRC:$rd, (OpNode SrcRC:$hilo))], IIHiLo>;
+             [(set DstRC:$rd, (OpNode SrcRC:$hilo))], II_MFHI_MFLO>;
 
 class MoveFromLOHI<string opstr, RegisterOperand RO, Register UseReg>:
-  InstSE<(outs RO:$rd), (ins), !strconcat(opstr, "\t$rd"), [], IIHiLo, FrmR,
-         opstr> {
+  InstSE<(outs RO:$rd), (ins), !strconcat(opstr, "\t$rd"), [], II_MFHI_MFLO,
+         FrmR, opstr> {
   let Uses = [UseReg];
   let neverHasSideEffects = 1;
 }
 
 class PseudoMTLOHI<RegisterClass DstRC, RegisterClass SrcRC>
   : PseudoSE<(outs DstRC:$lohi), (ins SrcRC:$lo, SrcRC:$hi),
-             [(set DstRC:$lohi, (MipsMTLOHI SrcRC:$lo, SrcRC:$hi))], IIHiLo>;
+             [(set DstRC:$lohi, (MipsMTLOHI SrcRC:$lo, SrcRC:$hi))],
+             II_MTHI_MTLO>;
 
 class MoveToLOHI<string opstr, RegisterOperand RO, list<Register> DefRegs>:
-  InstSE<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"), [], IIHiLo,
+  InstSE<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"), [], II_MTHI_MTLO,
   FrmR, opstr> {
   let Defs = DefRegs;
   let neverHasSideEffects = 1;
