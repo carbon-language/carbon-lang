@@ -368,7 +368,13 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
         // If the OS is Linux, "unknown" in the vendor slot isn't what we want
         // for the default triple.  It's probably an artifact of config.guess.
         if (triple.getOS() == llvm::Triple::Linux && triple.getVendor() == llvm::Triple::UnknownVendor)
-            triple.setVendorName("");
+        {
+            const char *const dist_c_str = GetDistributionId ().AsCString ();
+            if (dist_c_str)
+                triple.setVendorName (dist_c_str);
+            else
+                triple.setVendorName ("");
+        }
 
         switch (triple.getArch())
         {
@@ -445,6 +451,19 @@ Host::GetTargetTriple()
     }
     return g_host_triple;
 }
+
+// See linux/Host.cpp for Linux-based implementations of this.
+// Add your platform-specific implementation to the appropriate host file.
+#if !defined(__linux__)
+
+const ConstString &
+    Host::GetDistributionId ()
+{
+    static ConstString s_distribution_id;
+    return s_distribution_id;
+}
+
+#endif // #if !defined(__linux__)
 
 lldb::pid_t
 Host::GetCurrentProcessID()

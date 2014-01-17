@@ -202,6 +202,23 @@ public:
     GetTargetTriple ();
 
     //------------------------------------------------------------------
+    /// Gets the name of the distribution (i.e. distributor id).
+    ///
+    /// On Linux, this will return the equivalent of lsb_release -i.
+    /// Android will return 'android'.  Other systems may return
+    /// nothing.
+    ///
+    /// @return
+    ///     A ConstString reference containing the OS distribution id.
+    ///     The return string will be all lower case, with whitespace
+    ///     replaced with underscores.  The return string will be
+    ///     empty (result.AsCString() will return NULL) if the distribution
+    ///     cannot be obtained.
+    //------------------------------------------------------------------
+    static const ConstString &
+    GetDistributionId ();
+
+    //------------------------------------------------------------------
     /// Get the process ID for the calling process.
     ///
     /// @return

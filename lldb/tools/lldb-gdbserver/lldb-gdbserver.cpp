@@ -188,7 +188,7 @@ main (int argc, char *argv[])
         display_usage(progname);
         exit(255);
     }
-    
+
     const char *host_and_port = argv[0];
     argc -= 1;
     argv += 1;
@@ -199,9 +199,15 @@ main (int argc, char *argv[])
     {
         // Launch the program specified on the command line
         launch_info.SetArguments((const char **)argv, true);
-        launch_info.GetFlags().Set(eLaunchFlagDebug | eLaunchFlagStopAtEntry);
+
+        unsigned int launch_flags = eLaunchFlagStopAtEntry;
+#if !defined(__linux__)
+        // linux doesn't yet handle eLaunchFlagDebug
+        launch_flags |= eLaunchFlagDebug;
+#endif
+        launch_info.GetFlags ().Set (launch_flags);
         error = Host::LaunchProcess (launch_info);
-        
+
         if (error.Success())
         {
             printf ("Launched '%s' as process %" PRIu64 "...\n", argv[0], launch_info.GetProcessID());

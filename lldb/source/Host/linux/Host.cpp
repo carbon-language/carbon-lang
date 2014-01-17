@@ -20,6 +20,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Error.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Target/Process.h"
 
 #include "lldb/Host/Host.h"
@@ -493,4 +494,115 @@ Host::GetEnvironment (StringList &env)
     for (i=0; (env_entry = host_env[i]) != NULL; ++i)
         env.AppendString(env_entry);
     return i;
+}
+
+const ConstString &
+Host::GetDistributionId ()
+{
+    // Try to run 'lbs_release -i', and use that response
+    // for the distribution id.
+
+    static bool s_evaluated;
+    static ConstString s_distribution_id;
+
+    if (!s_evaluated)
+    {
+        s_evaluated = true;
+
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST));
+        if (log)
+            log->Printf ("attempting to determine Linux distribution...");
+
+        // check if the lsb_release command exists at one of the
+        // following paths
+        const char *const exe_paths[] = {
+            "/bin/lsb_release",
+            "/usr/bin/lsb_release"
+        };
+
+        for (int exe_index = 0;
+             exe_index < sizeof (exe_paths) / sizeof (exe_paths[0]);
+             ++exe_index)
+        {
+            const char *const get_distribution_info_exe = exe_paths[exe_index];
+            if (access (get_distribution_info_exe, F_OK))
+            {
+                // this exe doesn't exist, move on to next exe
+                if (log)
+                    log->Printf ("executable doesn't exist: %s",
+                            get_distribution_info_exe);
+                continue;
+            }
+
+            // execute the distribution-retrieval command, read output
+            std::string get_distribution_id_command (get_distribution_info_exe);
+            get_distribution_id_command += " -i";
+
+            FILE *file = popen (get_distribution_id_command.c_str (), "r");
+            if (!file)
+            {
+                if (log)
+                    log->Printf (
+                        "failed to run command: \"%s\", cannot retrieve "
+                        "platform information",
+                        get_distribution_id_command.c_str ());
+                return s_distribution_id;
+            }
+
+            // retrieve the distribution id string.
+            char distribution_id[256] = { '\0' };
+            if (fgets (distribution_id, sizeof (distribution_id) - 1, file)
+                    != NULL)
+            {
+                if (log)
+                    log->Printf ("distribution id command returned \"%s\"",
+                            distribution_id);
+
+                const char *const distributor_id_key = "Distributor ID:\t";
+                if (strstr (distribution_id, distributor_id_key))
+                {
+                    // strip newlines
+                    std::string id_string (distribution_id +
+                            strlen (distributor_id_key));
+                    id_string.erase(
+                        std::remove (
+                            id_string.begin (),
+                            id_string.end (),
+                            '\n'),
+                        id_string.end ());
+
+                    // lower case it and convert whitespace to underscores
+                    std::transform (
+                        id_string.begin(),
+                        id_string.end (),
+                        id_string.begin (),
+                        [] (char ch)
+                        { return tolower ( isspace (ch) ? '_' : ch ); });
+
+                    s_distribution_id.SetCString (id_string.c_str ());
+                    if (log)
+                        log->Printf ("distribion id set to \"%s\"",
+                                s_distribution_id.GetCString ());
+                }
+                else
+                {
+                    if (log)
+                        log->Printf ("failed to find \"%s\" field in \"%s\"",
+                                distributor_id_key, distribution_id);
+                }
+            }
+            else
+            {
+                if (log)
+                    log->Printf (
+                        "failed to retrieve distribution id, \"%s\" returned no"
+                        " lines", get_distribution_id_command.c_str ());
+            }
+
+            // clean up the file
+            pclose(file);
+        }
+    }
+
+    return s_distribution_id;
 }
