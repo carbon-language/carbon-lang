@@ -935,8 +935,8 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
         Actions.push_back(new DsymutilJobAction(Inputs, types::TY_dSYM));
       }
 
-      // Verify the output (debug information only) if we passed '-verify'.
-      if (Args.hasArg(options::OPT_verify)) {
+      // Verify the output (debug information only for now).
+      if (Args.hasArg(options::OPT_verify_debug_info)) {
         ActionList VerifyInputs;
         VerifyInputs.push_back(Actions.back());
         Actions.pop_back();

@@ -2,7 +2,7 @@
 //
 // REQUIRES: asserts
 // RUN: %clang -target x86_64-apple-darwin10 -ccc-print-phases \
-// RUN:   -verify -arch i386 -arch x86_64 %s -g 2> %t
+// RUN:   --verify-debug-info -arch i386 -arch x86_64 %s -g 2> %t
 // RUN: FileCheck -check-prefix=CHECK-MULTIARCH-ACTIONS < %t %s
 //
 // CHECK-MULTIARCH-ACTIONS: 0: input, "{{.*}}darwin-verify-debug.c", c
@@ -10,7 +10,7 @@
 // CHECK-MULTIARCH-ACTIONS: 9: verify, {8}, none
 //
 // RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
-// RUN:   -verify -arch i386 -arch x86_64 %s -g 2> %t
+// RUN:   --verify-debug-info -arch i386 -arch x86_64 %s -g 2> %t
 // RUN: FileCheck -check-prefix=CHECK-MULTIARCH-BINDINGS < %t %s
 //
 // CHECK-MULTIARCH-BINDINGS: # "x86_64-apple-darwin10" - "darwin::Dsymutil", inputs: ["a.out"], output: "a.out.dSYM"
@@ -19,7 +19,7 @@
 // Check output name derivation.
 //
 // RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
-// RUN:   -verify -o foo %s -g 2> %t
+// RUN:   --verify-debug-info -o foo %s -g 2> %t
 // RUN: FileCheck -check-prefix=CHECK-OUTPUT-NAME < %t %s
 //
 // CHECK-OUTPUT-NAME: "x86_64-apple-darwin10" - "darwin::Link", inputs: [{{.*}}], output: "foo"
@@ -30,5 +30,5 @@
 //
 // RUN: touch %t.o
 // RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
-// RUN:   -verify -o foo %t.o -g 2> %t
+// RUN:   --verify-debug-info -o foo %t.o -g 2> %t
 // RUN: not grep "Verify" %t
