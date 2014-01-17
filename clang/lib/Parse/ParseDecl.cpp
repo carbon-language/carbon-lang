@@ -5155,6 +5155,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
       // FIXME: currently, "static" case isn't handled correctly.
       bool IsCXX11MemberFunction =
         getLangOpts().CPlusPlus11 &&
+        D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
         (D.getContext() == Declarator::MemberContext
          ? !D.getDeclSpec().isFriendSpecified()
          : D.getContext() == Declarator::FileContext &&
