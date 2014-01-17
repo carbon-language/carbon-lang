@@ -36,9 +36,9 @@ class Function;
 /// this enumeration as an argument provides a default value for it. The
 /// actions are listed below.
 enum VerifierFailureAction {
-  AbortProcessAction,   ///< verifyModule will print to stderr and abort()
-  PrintMessageAction,   ///< verifyModule will print to stderr and return true
-  ReturnStatusAction    ///< verifyModule will just return true
+  AbortProcessAction, ///< verifyModule will print to stderr and abort()
+  PrintMessageAction, ///< verifyModule will print to stderr and return true
+  ReturnStatusAction  ///< verifyModule will just return true
 };
 
 /// \brief Create a verifier pass.
@@ -51,6 +51,9 @@ createVerifierPass(VerifierFailureAction action = AbortProcessAction);
 
 /// \brief Check a function for errors, useful for use when debugging a
 /// pass.
+///
+/// If there are no errors, the function returns false. If an error is found,
+/// the action taken depends on the \p action parameter.
 bool verifyFunction(const Function &F,
                     VerifierFailureAction action = AbortProcessAction);
 
