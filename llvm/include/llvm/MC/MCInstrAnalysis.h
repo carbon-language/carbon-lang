@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_MC_MCINSTRANALYSIS_H
+#define LLVM_MC_MCINSTRANALYSIS_H
+
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -63,4 +66,6 @@ public:
                  uint64_t &Target) const;
 };
 
-}
+} // End llvm namespace
+
+#endif
