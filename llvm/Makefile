@@ -115,7 +115,7 @@ cross-compile-build-tools:
 	  unset SDKROOT ; \
 	  unset UNIVERSAL_SDK_PATH ; \
 	  configure_opts= ; \
-	  if test "$ENABLE_LIBCPP" -ne 0 ; then \
+	  if test "$(ENABLE_LIBCPP)" -ne 0 ; then \
 	    configure_opts="$$configure_opts --enable-libcpp"; \
 	  fi; \
 	  $(PROJ_SRC_DIR)/configure --build=$(BUILD_TRIPLE) \
