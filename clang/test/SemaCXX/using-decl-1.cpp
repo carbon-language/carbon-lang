@@ -119,6 +119,27 @@ namespace foo
   };
 }
 
+namespace using_tag_redeclaration
+{
+  struct S;
+  namespace N {
+    using ::using_tag_redeclaration::S;
+    struct S {}; // expected-note {{previous definition is here}}
+  }
+  void f() {
+    N::S s1;
+    S s2;
+  }
+  void g() {
+    struct S; // expected-note {{forward declaration of 'S'}}
+    S s3; // expected-error {{variable has incomplete type 'S'}}
+  }
+  void h() {
+    using ::using_tag_redeclaration::S;
+    struct S {}; // expected-error {{redefinition of 'S'}}
+  }
+}
+
 // Don't suggest non-typenames for positions requiring typenames.
 namespace using_suggestion_tyname_val {
 namespace N { void FFF() {} }
