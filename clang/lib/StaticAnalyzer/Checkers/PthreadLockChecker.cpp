@@ -69,7 +69,7 @@ void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
                 false, XNUSemantics);
   else if (FName == "pthread_mutex_trylock" ||
            FName == "pthread_rwlock_tryrdlock" ||
-           FName == "pthread_rwlock_tryrwlock")
+           FName == "pthread_rwlock_trywrlock")
     AcquireLock(C, CE, state->getSVal(CE->getArg(0), LCtx),
                 true, PthreadSemantics);
   else if (FName == "lck_mtx_try_lock" ||
@@ -170,10 +170,10 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
     if (!N)
       return;
     BugReport *report = new BugReport(*BT_lor,
-                                                      "This was not the most "
-                                                      "recently acquired lock. "
-                                                      "Possible lock order "
-                                                      "reversal", N);
+                                               "This was not the most "
+                                               "recently acquired lock. "
+                                               "Possible lock order "
+                                               "reversal", N);
     report->addRange(CE->getArg(0)->getSourceRange());
     C.emitReport(report);
     return;
