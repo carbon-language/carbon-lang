@@ -1,0 +1,40 @@
+# Check initialization of .plt header entries.
+
+# Build shared library
+# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
+# RUN:         -o=%t1 %p/Inputs/ext.s
+# RUN: lld -flavor gnu -target mipsel -shared -o %t2 %t1
+
+# Build executable
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t3 %s
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t4 %t3 %t2
+# RUN: llvm-objdump -section-headers -disassemble %t4 | \
+# RUN:   FileCheck -check-prefix=EXE %s
+
+# EXE: Disassembly of section .plt:
+# EXE: .plt:
+# PLT0 entry. Points to the .got.plt[0]
+# EXE:   400170:  40 00 1c 3c  lui     $gp, 64
+# EXE:   400174:  00 20 99 8f  lw      $25, 8192($gp)
+# EXE:   400178:  00 20 9c 27  addiu   $gp, $gp, 8192
+# EXE:   40017c:  23 c0 1c 03  subu    $24, $24, $gp
+# EXE:   400180:  21 78 e0 03  move    $15, $ra
+# EXE:   400184:  82 c0 18 00  srl     $24, $24, 2
+# EXE:   400188:  09 f8 20 03  jalr    $25
+# EXE:   40018c:  fe ff 18 27  addiu   $24, $24, -2
+
+# EXE: Sections:
+# EXE: Idx Name          Size      Address          Type
+# EXE:   6 .plt          00000030 0000000000400170 TEXT DATA
+# EXE:  10 .got.plt      0000000c 0000000000402000 DATA
+
+    .abicalls
+    .global glob
+    .ent    glob
+glob:
+    jal     $t9
+    jal     loc
+loc:
+    jal     glob
+    jal     ext1
+    .end    glob

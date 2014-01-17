@@ -35,7 +35,7 @@ public:
   createSection(StringRef name, int32_t type,
                 DefinedAtom::ContentPermissions permissions,
                 Layout::SectionOrder order) {
-    if (type == DefinedAtom::typeGOT)
+    if (type == DefinedAtom::typeGOT && name == ".got")
       return _gotSection;
     return DefaultLayout<ELFType>::createSection(name, type, permissions,
                                                  order);

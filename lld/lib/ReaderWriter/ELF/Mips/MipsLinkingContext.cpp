@@ -56,3 +56,16 @@ void MipsLinkingContext::addPasses(PassManager &pm) {
     pm.add(std::move(pass));
   ELFLinkingContext::addPasses(pm);
 }
+
+bool MipsLinkingContext::isPLTRelocation(const DefinedAtom &,
+                                         const Reference &r) const {
+  if (r.kindNamespace() != Reference::KindNamespace::ELF)
+    return false;
+  assert(r.kindArch() == Reference::KindArch::Mips);
+  switch (r.kindValue()) {
+  case llvm::ELF::R_MIPS_JUMP_SLOT:
+    return true;
+  default:
+    return false;
+  }
+}

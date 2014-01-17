@@ -105,6 +105,18 @@ void relocCall16(uint8_t *location, uint64_t P, uint64_t S, int64_t A,
   applyReloc(location, result);
 }
 
+/// \brief LLD_R_MIPS_HI16
+void relocLldHi16(uint8_t *location, uint64_t S) {
+  int32_t result = lld::scatterBits<uint32_t>((S + 0x8000) >> 16, 0xffff);
+  applyReloc(location, result);
+}
+
+/// \brief LLD_R_MIPS_LO16
+void relocLldLo16(uint8_t *location, uint64_t S) {
+  int32_t result = lld::scatterBits<uint32_t>(S, 0xffff);
+  applyReloc(location, result);
+}
+
 } // end anon namespace
 
 MipsTargetRelocationHandler::MipsTargetRelocationHandler(
@@ -200,6 +212,9 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   case R_MIPS_JALR:
     // We do not do JALR optimization now.
     break;
+  case R_MIPS_JUMP_SLOT:
+    // Ignore runtime relocations.
+    break;
   case LLD_R_MIPS_GLOBAL_GOT:
     // Do nothing.
     break;
@@ -209,6 +224,12 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     break;
   case LLD_R_MIPS_GLOBAL_26:
     reloc26(location, relocVAddress, targetVAddress, false);
+    break;
+  case LLD_R_MIPS_HI16:
+    relocLldHi16(location, targetVAddress);
+    break;
+  case LLD_R_MIPS_LO16:
+    relocLldLo16(location, targetVAddress);
     break;
   default: {
     std::string str;

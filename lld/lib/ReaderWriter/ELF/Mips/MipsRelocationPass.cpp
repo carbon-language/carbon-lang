@@ -24,6 +24,26 @@ const uint8_t mipsGot0AtomContent[] = { 0x00, 0x00, 0x00, 0x00 };
 // Module pointer
 const uint8_t mipsGotModulePointerAtomContent[] = { 0x00, 0x00, 0x00, 0x80 };
 
+// PLT0 entry
+const uint8_t mipsPlt0AtomContent[] = {
+  0x00, 0x00, 0x1c, 0x3c, // lui   $28, %hi(&GOTPLT[0])
+  0x00, 0x00, 0x99, 0x8f, // lw    $25, %lo(&GOTPLT[0])($28)
+  0x00, 0x00, 0x9c, 0x27, // addiu $28, $28, %lo(&GOTPLT[0])
+  0x23, 0xc0, 0x1c, 0x03, // subu  $24, $24, $28
+  0x21, 0x78, 0xe0, 0x03, // move  $15, $31
+  0x82, 0xc0, 0x18, 0x00, // srl   $24, $24, 2
+  0x09, 0xf8, 0x20, 0x03, // jalr  $25
+  0xfe, 0xff, 0x18, 0x27  // subu  $24, $24, 2
+};
+
+// Regular PLT entry
+const uint8_t mipsPltAAtomContent[] = {
+  0x00, 0x00, 0x0f, 0x3c, // lui   $15, %hi(.got.plt entry)
+  0x00, 0x00, 0xf9, 0x8d, // l[wd] $25, %lo(.got.plt entry)($15)
+  0x08, 0x00, 0x20, 0x03, // jr    $25
+  0x00, 0x00, 0xf8, 0x25  // addiu $24, $15, %lo(.got.plt entry)
+};
+
 /// \brief Abstract base class represent MIPS GOT entries.
 class MipsGOTAtom : public GOTAtom {
 public:
@@ -49,6 +69,36 @@ public:
 
   virtual ArrayRef<uint8_t> rawContent() const {
     return llvm::makeArrayRef(mipsGotModulePointerAtomContent);
+  }
+};
+
+class PLT0Atom : public PLTAtom {
+public:
+  PLT0Atom(const File &f) : PLTAtom(f, ".plt") {}
+
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return llvm::makeArrayRef(mipsPlt0AtomContent);
+  }
+};
+
+class PLTAAtom : public PLTAtom {
+public:
+  PLTAAtom(const File &f) : PLTAtom(f, ".plt") {}
+
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return llvm::makeArrayRef(mipsPltAAtomContent);
+  }
+};
+
+/// \brief MIPS GOT PLT entry
+class GOTPLTAtom : public GOTAtom {
+public:
+  GOTPLTAtom(const File &f) : GOTAtom(f, ".got.plt") {}
+
+  virtual Alignment alignment() const { return Alignment(2); }
+
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return llvm::makeArrayRef(mipsGot0AtomContent);
   }
 };
 
@@ -90,6 +140,20 @@ public:
       got->setOrdinal(ordinal++);
       mf->addAtom(*got);
     }
+
+    for (auto &plt : _pltVector) {
+      DEBUG_WITH_TYPE("MipsGOT", llvm::dbgs() << "[ PLT ] Adding "
+                                              << plt->name() << "\n");
+      plt->setOrdinal(ordinal++);
+      mf->addAtom(*plt);
+    }
+
+    for (auto &gotplt : _gotpltVector) {
+      DEBUG_WITH_TYPE("MipsGOT", llvm::dbgs() << "[ GOTPLT ] Adding "
+                                              << gotplt->name() << "\n");
+      gotplt->setOrdinal(ordinal++);
+      mf->addAtom(*gotplt);
+    }
   }
 
 private:
@@ -104,6 +168,15 @@ private:
 
   /// \brief the list of global GOT atoms.
   std::vector<GOTAtom *> _globalGotVector;
+
+  /// \brief Map Atoms to their PLT entries.
+  llvm::DenseMap<const Atom *, PLTAtom *> _pltMap;
+
+  /// \brief the list of PLT atoms.
+  std::vector<PLTAtom *> _pltVector;
+
+  /// \brief the list of GOTPLT atoms.
+  std::vector<GOTAtom *> _gotpltVector;
 
   /// \brief Handle a specific reference.
   void handleReference(const DefinedAtom &atom, const Reference &ref) {
@@ -131,7 +204,8 @@ private:
     if (ref.kindValue() == R_MIPS_26 && !isLocal(ref.target()))
       const_cast<Reference &>(ref).setKindValue(LLD_R_MIPS_GLOBAL_26);
 
-    // FIXME (simon): Create PLT entry.
+    if (isa<SharedLibraryAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getPLTEntry(ref.target()));
   }
 
   void handleGOT(const Reference &ref) {
@@ -186,6 +260,69 @@ private:
     });
 
     return ga;
+  }
+
+  void createPLTHeader() {
+    assert(_pltVector.empty() && _gotpltVector.empty());
+
+    auto pa = new (_file._alloc) PLT0Atom(_file);
+    _pltVector.push_back(pa);
+
+    auto ga0 = new (_file._alloc) GOTPLTAtom(_file);
+    _gotpltVector.push_back(ga0);
+    auto ga1 = new (_file._alloc) GOTPLTAtom(_file);
+    _gotpltVector.push_back(ga1);
+
+    // Setup reference to fixup the PLT0 entry.
+    pa->addReferenceELF_Mips(LLD_R_MIPS_HI16, 0, ga0, 0);
+    pa->addReferenceELF_Mips(LLD_R_MIPS_LO16, 4, ga0, 0);
+    pa->addReferenceELF_Mips(LLD_R_MIPS_LO16, 8, ga0, 0);
+
+    DEBUG_WITH_TYPE("MipsGOT", {
+      pa->_name = "__plt0";
+      llvm::dbgs() << "[ PLT ] Create PLT0\n";
+      ga0->_name = "__gotplt0";
+      llvm::dbgs() << "[ GOTPLT ] Create GOTPLT0\n";
+      ga1->_name = "__gotplt1";
+      llvm::dbgs() << "[ GOTPLT ] Create GOTPLT1\n";
+    });
+  }
+
+  const PLTAtom *getPLTEntry(const Atom *a) {
+    auto plt = _pltMap.find(a);
+    if (plt != _pltMap.end())
+      return plt->second;
+
+    if (_pltVector.empty())
+      createPLTHeader();
+
+    auto pa = new (_file._alloc) PLTAAtom(_file);
+    _pltMap[a] = pa;
+    _pltVector.push_back(pa);
+
+    auto ga = new (_file._alloc) GOTPLTAtom(_file);
+    _gotpltVector.push_back(ga);
+
+    // Setup reference to fixup the PLT entry.
+    pa->addReferenceELF_Mips(LLD_R_MIPS_HI16, 0, ga, 0);
+    pa->addReferenceELF_Mips(LLD_R_MIPS_LO16, 4, ga, 0);
+    pa->addReferenceELF_Mips(LLD_R_MIPS_LO16, 12, ga, 0);
+
+    // Setup reference to assign initial value to the .got.plt entry.
+    ga->addReferenceELF_Mips(R_MIPS_32, 0, _pltVector.front(), 0);
+    // Create dynamic relocation to adjust the .got.plt entry at runtime.
+    ga->addReferenceELF_Mips(R_MIPS_JUMP_SLOT, 0, a, 0);
+
+    DEBUG_WITH_TYPE("MipsGOT", {
+      pa->_name = "__plt_";
+      pa->_name += a->name();
+      llvm::dbgs() << "[ PLT ] Create " << a->name() << "\n";
+      ga->_name = "__got_plt_";
+      ga->_name += a->name();
+      llvm::dbgs() << "[ GOTPLT ] Create " << a->name() << "\n";
+    });
+
+    return pa;
   }
 };
 
