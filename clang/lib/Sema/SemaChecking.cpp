@@ -713,29 +713,39 @@ bool Sema::getFormatStringInfo(const FormatAttr *Format, bool IsCXXMember,
   return true;
 }
 
+static void CheckNonNullArgument(Sema &S,
+                                 const Expr *ArgExpr,
+                                 SourceLocation CallSiteLoc) {
+  // As a special case, transparent unions initialized with zero are
+  // considered null for the purposes of the nonnull attribute.
+  if (const RecordType *UT = ArgExpr->getType()->getAsUnionType()) {
+    if (UT->getDecl()->hasAttr<TransparentUnionAttr>())
+      if (const CompoundLiteralExpr *CLE =
+          dyn_cast<CompoundLiteralExpr>(ArgExpr))
+        if (const InitListExpr *ILE =
+            dyn_cast<InitListExpr>(CLE->getInitializer()))
+          ArgExpr = ILE->getInit(0);
+  }
+
+  bool Result;
+  if (ArgExpr->EvaluateAsBooleanCondition(Result, S.Context) && !Result)
+    S.Diag(CallSiteLoc, diag::warn_null_arg) << ArgExpr->getSourceRange();
+}
+
 static void CheckNonNullArguments(Sema &S,
-                                  const NonNullAttr *NonNull,
+                                  const NamedDecl *FDecl,
                                   const Expr * const *ExprArgs,
                                   SourceLocation CallSiteLoc) {
-  for (NonNullAttr::args_iterator i = NonNull->args_begin(),
-       e = NonNull->args_end();
-       i != e; ++i) {
-    const Expr *ArgExpr = ExprArgs[*i];
+  for (specific_attr_iterator<NonNullAttr>
+       I = FDecl->specific_attr_begin<NonNullAttr>(),
+       E = FDecl->specific_attr_end<NonNullAttr>(); I != E; ++I) {
 
-    // As a special case, transparent unions initialized with zero are
-    // considered null for the purposes of the nonnull attribute.
-    if (const RecordType *UT = ArgExpr->getType()->getAsUnionType()) {
-      if (UT->getDecl()->hasAttr<TransparentUnionAttr>())
-        if (const CompoundLiteralExpr *CLE =
-            dyn_cast<CompoundLiteralExpr>(ArgExpr))
-          if (const InitListExpr *ILE =
-              dyn_cast<InitListExpr>(CLE->getInitializer()))
-            ArgExpr = ILE->getInit(0);
+    const NonNullAttr *NonNull = *I;
+    for (NonNullAttr::args_iterator i = NonNull->args_begin(),
+         e = NonNull->args_end();
+         i != e; ++i) {
+      CheckNonNullArgument(S, ExprArgs[*i], CallSiteLoc);
     }
-
-    bool Result;
-    if (ArgExpr->EvaluateAsBooleanCondition(Result, S.Context) && !Result)
-      S.Diag(CallSiteLoc, diag::warn_null_arg) << ArgExpr->getSourceRange();
   }
 }
 
@@ -780,10 +790,7 @@ void Sema::checkCall(NamedDecl *FDecl,
   }
 
   if (FDecl) {
-    for (specific_attr_iterator<NonNullAttr>
-           I = FDecl->specific_attr_begin<NonNullAttr>(),
-           E = FDecl->specific_attr_end<NonNullAttr>(); I != E; ++I)
-      CheckNonNullArguments(*this, *I, Args.data(), Loc);
+    CheckNonNullArguments(*this, FDecl, Args.data(), Loc);
 
     // Type safety checking.
     for (specific_attr_iterator<ArgumentWithTypeTagAttr>
