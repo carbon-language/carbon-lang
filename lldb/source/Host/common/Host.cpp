@@ -368,13 +368,7 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
         // If the OS is Linux, "unknown" in the vendor slot isn't what we want
         // for the default triple.  It's probably an artifact of config.guess.
         if (triple.getOS() == llvm::Triple::Linux && triple.getVendor() == llvm::Triple::UnknownVendor)
-        {
-            const char *const dist_c_str = GetDistributionId ().AsCString ();
-            if (dist_c_str)
-                triple.setVendorName (dist_c_str);
-            else
-                triple.setVendorName ("");
-        }
+            triple.setVendorName ("");
 
         switch (triple.getArch())
         {
