@@ -529,6 +529,15 @@ public:
       parsePreprocessorDirective();
       return LT_PreprocessorDirective;
     }
+  
+    // Directly allow to 'import <string-literal>' to support protocol buffer
+    // definitions (code.google.com/p/protobuf) or missing "#" (either way we
+    // should not break the line).
+    IdentifierInfo *Info = CurrentToken->Tok.getIdentifierInfo();
+    if (Info && Info->getPPKeywordID() == tok::pp_import &&
+        CurrentToken->Next && CurrentToken->Next->is(tok::string_literal))
+      parseIncludeDirective();
+
     while (CurrentToken != NULL) {
       if (CurrentToken->is(tok::kw_virtual))
         KeywordVirtualFound = true;
