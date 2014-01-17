@@ -458,7 +458,8 @@ error_code COFFObjectFile::initExportTablePtr() {
   uintptr_t IntPtr = 0;
   if (error_code EC = getRvaPtr(ExportTableRva, IntPtr))
     return EC;
-  ExportDirectory = reinterpret_cast<const export_directory_table_entry *>(IntPtr);
+  ExportDirectory =
+      reinterpret_cast<const export_directory_table_entry *>(IntPtr);
   return object_error::success;
 }
 
@@ -733,7 +734,8 @@ ArrayRef<uint8_t> COFFObjectFile::getSymbolAuxData(
          == 0 && "Aux Symbol data did not point to the beginning of a symbol");
 # endif
   }
-  return ArrayRef<uint8_t>(Aux, Symbol->NumberOfAuxSymbols * sizeof(coff_symbol));
+  return ArrayRef<uint8_t>(Aux,
+                           Symbol->NumberOfAuxSymbols * sizeof(coff_symbol));
 }
 
 error_code COFFObjectFile::getSectionName(const coff_section *Sec,
@@ -977,7 +979,8 @@ error_code ExportDirectoryEntryRef::getExportRVA(uint32_t &Result) const {
   if (error_code EC = OwningObject->getRvaPtr(
           ExportTable->ExportAddressTableRVA, IntPtr))
     return EC;
-  const export_address_table_entry *entry = reinterpret_cast<const export_address_table_entry *>(IntPtr);
+  const export_address_table_entry *entry =
+      reinterpret_cast<const export_address_table_entry *>(IntPtr);
   Result = entry[Index].ExportRVA;
   return object_error::success;
 }
