@@ -79,46 +79,6 @@ using namespace llvm;
 static cl::opt<bool> DisableDebugInfoVerifier("disable-debug-info-verifier",
                                               cl::init(true));
 
-namespace {  // Anonymous namespace for class
-  struct PreVerifier : public FunctionPass {
-    static char ID; // Pass ID, replacement for typeid
-
-    PreVerifier() : FunctionPass(ID) {
-      initializePreVerifierPass(*PassRegistry::getPassRegistry());
-    }
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesAll();
-    }
-
-    // Check that the prerequisites for successful DominatorTree construction
-    // are satisfied.
-    bool runOnFunction(Function &F) {
-      bool Broken = false;
-
-      for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-        if (I->empty() || !I->back().isTerminator()) {
-          dbgs() << "Basic Block in function '" << F.getName()
-                 << "' does not have terminator!\n";
-          I->printAsOperand(dbgs(), true);
-          dbgs() << "\n";
-          Broken = true;
-        }
-      }
-
-      if (Broken)
-        report_fatal_error("Broken module, no Basic Block terminator!");
-
-      return false;
-    }
-  };
-}
-
-char PreVerifier::ID = 0;
-INITIALIZE_PASS(PreVerifier, "preverify", "Preliminary module verification",
-                false, false)
-static char &PreVerifyID = PreVerifier::ID;
-
 namespace {
   struct Verifier : public FunctionPass, public InstVisitor<Verifier> {
     static char ID; // Pass ID, replacement for typeid
@@ -127,7 +87,7 @@ namespace {
                           // What to do if verification fails.
     Module *Mod;          // Module we are verifying right now
     LLVMContext *Context; // Context within which we are verifying
-    DominatorTree *DT;    // Dominator Tree, caution can be null!
+    DominatorTree DT;
     const DataLayout *DL;
 
     std::string Messages;
@@ -153,13 +113,13 @@ namespace {
 
     Verifier()
       : FunctionPass(ID), Broken(false),
-        action(AbortProcessAction), Mod(0), Context(0), DT(0), DL(0),
+        action(AbortProcessAction), Mod(0), Context(0), DL(0),
         MessagesStr(Messages), PersonalityFn(0) {
       initializeVerifierPass(*PassRegistry::getPassRegistry());
     }
     explicit Verifier(VerifierFailureAction ctn)
       : FunctionPass(ID), Broken(false), action(ctn), Mod(0),
-        Context(0), DT(0), DL(0), MessagesStr(Messages), PersonalityFn(0) {
+        Context(0), DL(0), MessagesStr(Messages), PersonalityFn(0) {
       initializeVerifierPass(*PassRegistry::getPassRegistry());
     }
 
@@ -175,8 +135,27 @@ namespace {
     }
 
     bool runOnFunction(Function &F) {
-      // Get dominator information if we are being run by PassManager
-      DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+      Broken = false;
+
+      // First ensure the function is well-enough formed to compute dominance
+      // information.
+      for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+        if (I->empty() || !I->back().isTerminator()) {
+          dbgs() << "Basic Block in function '" << F.getName()
+                 << "' does not have terminator!\n";
+          I->printAsOperand(dbgs(), true);
+          dbgs() << "\n";
+          Broken = true;
+        }
+      }
+      if (Broken)
+        return abortIfBroken();
+
+      // Now directly compute a dominance tree. We don't rely on the pass
+      // manager to provide this as it isolates us from a potentially
+      // out-of-date dominator tree and makes it significantly more complex to
+      // run this code outside of a pass manager.
+      DT.recalculate(F);
 
       Mod = F.getParent();
       if (!Context) Context = &F.getContext();
@@ -232,8 +211,6 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
-      AU.addRequiredID(PreVerifyID);
-      AU.addRequired<DominatorTreeWrapperPass>();
     }
 
     /// abortIfBroken - If the module is broken and we are supposed to abort on
@@ -393,10 +370,7 @@ namespace {
 } // End anonymous namespace
 
 char Verifier::ID = 0;
-INITIALIZE_PASS_BEGIN(Verifier, "verify", "Module Verifier", false, false)
-INITIALIZE_PASS_DEPENDENCY(PreVerifier)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_END(Verifier, "verify", "Module Verifier", false, false)
+INITIALIZE_PASS(Verifier, "verify", "Module Verifier", false, false)
 
 // Assert - We know that cond should be true, if not print an error message.
 #define Assert(C, M) \
@@ -2026,7 +2000,7 @@ void Verifier::verifyDominatesUse(Instruction &I, unsigned i) {
   }
 
   const Use &U = I.getOperandUse(i);
-  Assert2(InstsInThisBlock.count(Op) || DT->dominates(Op, U),
+  Assert2(InstsInThisBlock.count(Op) || DT.dominates(Op, U),
           "Instruction does not dominate all uses!", Op, &I);
 }
 
@@ -2039,7 +2013,7 @@ void Verifier::visitInstruction(Instruction &I) {
   if (!isa<PHINode>(I)) {   // Check that non-phi nodes are not self referential
     for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
          UI != UE; ++UI)
-      Assert1(*UI != (User*)&I || !DT->isReachableFromEntry(BB),
+      Assert1(*UI != (User*)&I || !DT.isReachableFromEntry(BB),
               "Only PHI nodes may reference their own value!", &I);
   }
 

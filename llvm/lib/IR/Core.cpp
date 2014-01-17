@@ -45,7 +45,6 @@ void llvm::initializeCore(PassRegistry &Registry) {
   initializePrintFunctionPassWrapperPass(Registry);
   initializePrintBasicBlockPassPass(Registry);
   initializeVerifierPass(Registry);
-  initializePreVerifierPass(Registry);
 }
 
 void LLVMInitializeCore(LLVMPassRegistryRef R) {
