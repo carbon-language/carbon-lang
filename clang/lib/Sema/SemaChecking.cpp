@@ -713,6 +713,32 @@ bool Sema::getFormatStringInfo(const FormatAttr *Format, bool IsCXXMember,
   return true;
 }
 
+static void CheckNonNullArguments(Sema &S,
+                                  const NonNullAttr *NonNull,
+                                  const Expr * const *ExprArgs,
+                                  SourceLocation CallSiteLoc) {
+  for (NonNullAttr::args_iterator i = NonNull->args_begin(),
+       e = NonNull->args_end();
+       i != e; ++i) {
+    const Expr *ArgExpr = ExprArgs[*i];
+
+    // As a special case, transparent unions initialized with zero are
+    // considered null for the purposes of the nonnull attribute.
+    if (const RecordType *UT = ArgExpr->getType()->getAsUnionType()) {
+      if (UT->getDecl()->hasAttr<TransparentUnionAttr>())
+        if (const CompoundLiteralExpr *CLE =
+            dyn_cast<CompoundLiteralExpr>(ArgExpr))
+          if (const InitListExpr *ILE =
+              dyn_cast<InitListExpr>(CLE->getInitializer()))
+            ArgExpr = ILE->getInit(0);
+    }
+
+    bool Result;
+    if (ArgExpr->EvaluateAsBooleanCondition(Result, S.Context) && !Result)
+      S.Diag(CallSiteLoc, diag::warn_null_arg) << ArgExpr->getSourceRange();
+  }
+}
+
 /// Handles the checks for format strings, non-POD arguments to vararg
 /// functions, and NULL arguments passed to non-NULL parameters.
 void Sema::checkCall(NamedDecl *FDecl,
@@ -757,7 +783,7 @@ void Sema::checkCall(NamedDecl *FDecl,
     for (specific_attr_iterator<NonNullAttr>
            I = FDecl->specific_attr_begin<NonNullAttr>(),
            E = FDecl->specific_attr_end<NonNullAttr>(); I != E; ++I)
-      CheckNonNullArguments(*I, Args.data(), Loc);
+      CheckNonNullArguments(*this, *I, Args.data(), Loc);
 
     // Type safety checking.
     for (specific_attr_iterator<ArgumentWithTypeTagAttr>
@@ -2178,32 +2204,6 @@ checkFormatStringExpr(Sema &S, const Expr *E, ArrayRef<const Expr *> Args,
 
   default:
     return SLCT_NotALiteral;
-  }
-}
-
-void
-Sema::CheckNonNullArguments(const NonNullAttr *NonNull,
-                            const Expr * const *ExprArgs,
-                            SourceLocation CallSiteLoc) {
-  for (NonNullAttr::args_iterator i = NonNull->args_begin(),
-                                  e = NonNull->args_end();
-       i != e; ++i) {
-    const Expr *ArgExpr = ExprArgs[*i];
-
-    // As a special case, transparent unions initialized with zero are
-    // considered null for the purposes of the nonnull attribute.
-    if (const RecordType *UT = ArgExpr->getType()->getAsUnionType()) {
-      if (UT->getDecl()->hasAttr<TransparentUnionAttr>())
-        if (const CompoundLiteralExpr *CLE =
-            dyn_cast<CompoundLiteralExpr>(ArgExpr))
-          if (const InitListExpr *ILE =
-              dyn_cast<InitListExpr>(CLE->getInitializer()))
-            ArgExpr = ILE->getInit(0);
-    }
-
-    bool Result;
-    if (ArgExpr->EvaluateAsBooleanCondition(Result, Context) && !Result)
-      Diag(CallSiteLoc, diag::warn_null_arg) << ArgExpr->getSourceRange();
   }
 }
 

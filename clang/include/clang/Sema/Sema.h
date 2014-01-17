@@ -7893,10 +7893,6 @@ private:
                             SourceLocation Loc, SourceRange range,
                             llvm::SmallBitVector &CheckedVarArgs);
 
-  void CheckNonNullArguments(const NonNullAttr *NonNull,
-                             const Expr * const *ExprArgs,
-                             SourceLocation CallSiteLoc);
-
   void CheckMemaccessArguments(const CallExpr *Call,
                                unsigned BId,
                                IdentifierInfo *FnName);
