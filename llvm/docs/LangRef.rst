@@ -359,6 +359,49 @@ added in the future:
     allocated. This can currently only be used with calls to
     llvm.experimental.patchpoint because only this intrinsic records
     the location of its arguments in a side table. See :doc:`StackMaps`.
+"``preserve_mostcc``" - The `PreserveMost` calling convention
+    This calling convention attempts to make the code in the caller as little
+    intrusive as possible. This calling convention behaves identical to the `C`
+    calling convention on how arguments and return values are passed, but it
+    uses a different set of caller/callee-saved registers. This alleviates the
+    burden of saving and recovering a large register set before and after the
+    call in the caller.
+
+    - On X86-64 the callee preserves all general purpose registers, except for
+      R11. R11 can be used as a scratch register. Floating-point registers
+      (XMMs/YMMs) are not preserved and need to be saved by the caller.
+
+    The idea behind this convention is to support calls to runtime functions
+    that have a hot path and a cold path. The hot path is usually a small piece
+    of code that doesn't many registers. The cold path might need to call out to
+    another function and therefore only needs to preserve the caller-saved
+    registers, which haven't already been saved by the caller.
+
+    This calling convention will be used by a future version of the ObjectiveC
+    runtime and should therefore still be considered experimental at this time.
+    Although this convention was created to optimize certain runtime calls to
+    the ObjectiveC runtime, it is not limited to this runtime and might be used
+    by other runtimes in the future too. The current implementation only
+    supports X86-64, but the intention is to support more architectures in the
+    future.
+"``preserve_allcc``" - The `PreserveAll` calling convention
+    This calling convention attempts to make the code in the caller even less
+    intrusive than the `PreserveMost` calling convention. This calling
+    convention also behaves identical to the `C` calling convention on how
+    arguments and return values are passed, but it uses a different set of
+    caller/callee-saved registers. This removes the burden of saving and
+    recovering a large register set before and after the call in the caller.
+
+    - On X86-64 the callee preserves all general purpose registers, except for
+      R11. R11 can be used as a scratch register. Furthermore it also preserves
+      all floating-point registers (XMMs/YMMs).
+
+    The idea behind this convention is to support calls to runtime functions
+    that don't need to call out to any other functions.
+
+    This calling convention, like the `PreserveMost` calling convention, will be
+    used by a future version of the ObjectiveC runtime and should be considered
+    experimental at this time.
 "``cc <n>``" - Numbered convention
     Any calling convention may be specified by number, allowing
     target-specific calling conventions to be used. Target specific

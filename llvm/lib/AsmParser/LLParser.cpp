@@ -1369,6 +1369,8 @@ bool LLParser::ParseOptionalDLLStorageClass(unsigned &Res) {
 ///   ::= 'x86_64_win64cc'
 ///   ::= 'webkit_jscc'
 ///   ::= 'anyregcc'
+///   ::= 'preserve_mostcc'
+///   ::= 'preserve_allcc'
 ///   ::= 'cc' UINT
 ///
 bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
@@ -1393,6 +1395,8 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
   case lltok::kw_x86_64_win64cc: CC = CallingConv::X86_64_Win64; break;
   case lltok::kw_webkit_jscc:    CC = CallingConv::WebKit_JS; break;
   case lltok::kw_anyregcc:       CC = CallingConv::AnyReg; break;
+  case lltok::kw_preserve_mostcc:CC = CallingConv::PreserveMost; break;
+  case lltok::kw_preserve_allcc: CC = CallingConv::PreserveAll; break;
   case lltok::kw_cc: {
       unsigned ArbitraryCC;
       Lex.Lex();

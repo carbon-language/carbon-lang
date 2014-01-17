@@ -739,6 +739,8 @@ function. The operand fields are:
   * ``coldcc``: code 9
   * ``webkit_jscc``: code 12
   * ``anyregcc``: code 13
+  * ``preserve_mostcc``: code 14
+  * ``preserve_allcc``: code 15
   * ``x86_stdcallcc``: code 64
   * ``x86_fastcallcc``: code 65
   * ``arm_apcscc``: code 66
