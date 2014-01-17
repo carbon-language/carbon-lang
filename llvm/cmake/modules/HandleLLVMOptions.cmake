@@ -23,6 +23,22 @@ if(NOT LLVM_FORCE_USE_OLD_TOOLCHAIN)
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.1)
       message(FATAL_ERROR "Host Clang version must be at least 3.1!")
     endif()
+
+    # Also test that we aren't using too old of a version of libstdc++ with the
+    # Clang compiler. This is tricky as there is no real way to check the
+    # version of libstdc++ directly. Instead we test for a known bug in
+    # libstdc++4.6 that is fixed in libstdc++4.7.
+    if(NOT LLVM_ENABLE_LIBCXX)
+      set(CMAKE_REQUIRED_FLAGS "-std=c++0x")
+      check_cxx_source_compiles("
+#include <atomic>
+std::atomic<float> x(0.0f);
+int main() { return (float)x; }"
+        LLVM_NO_OLD_LIBSTDCXX)
+      if(NOT LLVM_NO_OLD_LIBSTDCXX)
+        message(FATAL_ERROR "Host Clang must be able to find libstdc++4.7 or newer!")
+      endif()
+    endif()
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 17.0)
       message(FATAL_ERROR "Host Visual Studio must be at least 2012 (MSVC 17.0)")
