@@ -6101,9 +6101,14 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   getToolChain().getTriple().getOSVersion(Major, Minor, Micro);
   bool useLibgcc = true;
   if (Major >= 7 || (Major == 6 && Minor == 99 && Micro >= 23) || Major == 0) {
-    if (getToolChain().getArch() == llvm::Triple::x86 ||
-        getToolChain().getArch() == llvm::Triple::x86_64)
+    switch(getToolChain().getArch()) {
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
       useLibgcc = false;
+      break;
+    default:
+      break;
+    }
   }
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
