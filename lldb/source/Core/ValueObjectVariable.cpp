@@ -328,6 +328,12 @@ ValueObjectVariable::GetLocationAsCString ()
 bool
 ValueObjectVariable::SetValueFromCString (const char *value_str, Error& error)
 {
+    if (!UpdateValueIfNeeded())
+    {
+        error.SetErrorString("unable to update value before writing");
+        return false;
+    }
+    
     if (m_resolved_value.GetContextType() == Value::eContextTypeRegisterInfo)
     {
         RegisterInfo *reg_info = m_resolved_value.GetRegisterInfo();
@@ -360,6 +366,12 @@ ValueObjectVariable::SetValueFromCString (const char *value_str, Error& error)
 bool
 ValueObjectVariable::SetData (DataExtractor &data, Error &error)
 {
+    if (!UpdateValueIfNeeded())
+    {
+        error.SetErrorString("unable to update value before writing");
+        return false;
+    }
+    
     if (m_resolved_value.GetContextType() == Value::eContextTypeRegisterInfo)
     {
         RegisterInfo *reg_info = m_resolved_value.GetRegisterInfo();
