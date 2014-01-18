@@ -994,11 +994,12 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   Type *OldRetTy = Caller->getType();
   Type *NewRetTy = FT->getReturnType();
 
-  if (NewRetTy->isStructTy())
-    return false; // TODO: Handle multiple return values.
-
   // Check to see if we are changing the return type...
   if (OldRetTy != NewRetTy) {
+
+    if (NewRetTy->isStructTy())
+      return false; // TODO: Handle multiple return values.
+
     if (!CastInst::isBitCastable(NewRetTy, OldRetTy)) {
       if (Callee->isDeclaration())
         return false;   // Cannot transform this return value.

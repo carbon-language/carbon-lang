@@ -13,3 +13,15 @@ entry:
 
 declare i8* @ctime(i32*)
 
+define internal { i8 } @foo(i32*) {
+entry:
+  ret { i8 } { i8 0 }
+}
+
+define void @test_struct_ret() {
+; CHECK-LABEL: @test_struct_ret
+; CHECK-NOT: bitcast
+entry:
+  %0 = call { i8 } bitcast ({ i8 } (i32*)* @foo to { i8 } (i16*)*)(i16* null)
+  ret void
+}
