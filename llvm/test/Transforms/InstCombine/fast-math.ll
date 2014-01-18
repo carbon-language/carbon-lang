@@ -160,6 +160,22 @@ define float @fold15(float %x, float %y) {
 ; CHECK: ret
 }
 
+; (select X+Y, X-Y) => X + (select Y, -Y)
+define float @fold16(float %x, float %y) {
+  %cmp = fcmp ogt float %x, %y
+  %plus = fadd fast float %x, %y
+  %minus = fsub fast float %x, %y
+  %r = select i1 %cmp, float %plus, float %minus
+  ret float %r
+; CHECK: fold16
+; CHECK: fsub fast float
+; CHECK: select
+; CHECK: fadd fast float
+; CHECK: ret
+}
+
+
+
 ; =========================================================================
 ;
 ;   Testing-cases about fmul begin

@@ -638,6 +638,8 @@ static Value *BuildNew(Instruction *I, ArrayRef<Value*> NewOps) {
       if (isa<PossiblyExactOperator>(BO)) {
         New->setIsExact(BO->isExact());
       }
+      if (isa<FPMathOperator>(BO))
+        New->copyFastMathFlags(I);
       return New;
     }
     case Instruction::ICmp:

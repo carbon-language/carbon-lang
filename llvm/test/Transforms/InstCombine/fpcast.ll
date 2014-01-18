@@ -31,6 +31,15 @@ define half @test4(float %a) {
   ret half %c
 }
 
+; CHECK: test4-fast
+define half @test4-fast(float %a) {
+; CHECK: fptrunc
+; CHECK: fsub fast
+  %b = fsub fast float -0.0, %a
+  %c = fptrunc float %b to half
+  ret half %c
+}
+
 ; CHECK: test5
 define half @test5(float %a, float %b, float %c) {
 ; CHECK: fcmp ogt

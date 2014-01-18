@@ -210,6 +210,10 @@ public:
     setNoSignedZeros();
     setAllowReciprocal();
   }
+
+  void operator&=(const FastMathFlags &OtherFlags) {
+    Flags &= OtherFlags.Flags;
+  }
 };
 
 

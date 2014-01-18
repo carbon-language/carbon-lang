@@ -1232,7 +1232,10 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
             LHSOrig = Builder->CreateFPExt(LHSOrig, CI.getType());
           if (RHSOrig->getType() != CI.getType())
             RHSOrig = Builder->CreateFPExt(RHSOrig, CI.getType());
-          return BinaryOperator::Create(OpI->getOpcode(), LHSOrig, RHSOrig);
+          Instruction *RI =
+            BinaryOperator::Create(OpI->getOpcode(), LHSOrig, RHSOrig);
+          RI->copyFastMathFlags(OpI);
+          return RI;
         }
         break;
       case Instruction::FMul:
@@ -1246,7 +1249,10 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
             LHSOrig = Builder->CreateFPExt(LHSOrig, CI.getType());
           if (RHSOrig->getType() != CI.getType())
             RHSOrig = Builder->CreateFPExt(RHSOrig, CI.getType());
-          return BinaryOperator::CreateFMul(LHSOrig, RHSOrig);
+          Instruction *RI =
+            BinaryOperator::CreateFMul(LHSOrig, RHSOrig);
+          RI->copyFastMathFlags(OpI);
+          return RI;
         }
         break;
       case Instruction::FDiv:
@@ -1261,7 +1267,10 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
             LHSOrig = Builder->CreateFPExt(LHSOrig, CI.getType());
           if (RHSOrig->getType() != CI.getType())
             RHSOrig = Builder->CreateFPExt(RHSOrig, CI.getType());
-          return BinaryOperator::CreateFDiv(LHSOrig, RHSOrig);
+          Instruction *RI =
+            BinaryOperator::CreateFDiv(LHSOrig, RHSOrig);
+          RI->copyFastMathFlags(OpI);
+          return RI;
         }
         break;
       case Instruction::FRem:
@@ -1274,6 +1283,8 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
         else if (RHSWidth <= SrcWidth)
           RHSOrig = Builder->CreateFPExt(RHSOrig, LHSOrig->getType());
         Value *ExactResult = Builder->CreateFRem(LHSOrig, RHSOrig);
+        if (Instruction *RI = dyn_cast<Instruction>(ExactResult))
+          RI->copyFastMathFlags(OpI);
         return CastInst::CreateFPCast(ExactResult, CI.getType());
     }
 
@@ -1281,7 +1292,9 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
     if (BinaryOperator::isFNeg(OpI)) {
       Value *InnerTrunc = Builder->CreateFPTrunc(OpI->getOperand(1),
                                                  CI.getType());
-      return BinaryOperator::CreateFNeg(InnerTrunc);
+      Instruction *RI = BinaryOperator::CreateFNeg(InnerTrunc);
+      RI->copyFastMathFlags(OpI);
+      return RI;
     }
   }
 
