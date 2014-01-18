@@ -71,7 +71,7 @@ private:
   bool resolveUndefines();
   void updateReferences();
   void deadStripOptimize();
-  bool checkUndefines(bool final);
+  bool checkUndefines(bool isFinal);
   void removeCoalescedAwayAtoms();
   void checkDylibSymbolCollisions();
   void linkTimeOptimize();

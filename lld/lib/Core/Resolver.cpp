@@ -360,9 +360,9 @@ void Resolver::deadStripOptimize() {
 }
 
 // error out if some undefines remain
-bool Resolver::checkUndefines(bool final) {
+bool Resolver::checkUndefines(bool isFinal) {
   // when using LTO, undefines are checked after bitcode is optimized
-  if (_haveLLVMObjs && !final)
+  if (_haveLLVMObjs && !isFinal)
     return false;
 
   // build vector of remaining undefined symbols
