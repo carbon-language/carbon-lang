@@ -439,15 +439,14 @@ bool Resolver::resolve() {
 }
 
 void Resolver::MergedFile::addAtom(const Atom &atom) {
-  if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom)) {
-    _definedAtoms._atoms.push_back(defAtom);
-  } else if (const UndefinedAtom *undefAtom = dyn_cast<UndefinedAtom>(&atom)) {
-    _undefinedAtoms._atoms.push_back(undefAtom);
-  } else if (const SharedLibraryAtom *slAtom =
-                 dyn_cast<SharedLibraryAtom>(&atom)) {
-    _sharedLibraryAtoms._atoms.push_back(slAtom);
-  } else if (const AbsoluteAtom *abAtom = dyn_cast<AbsoluteAtom>(&atom)) {
-    _absoluteAtoms._atoms.push_back(abAtom);
+  if (auto *def = dyn_cast<DefinedAtom>(&atom)) {
+    _definedAtoms._atoms.push_back(def);
+  } else if (auto *undef = dyn_cast<UndefinedAtom>(&atom)) {
+    _undefinedAtoms._atoms.push_back(undef);
+  } else if (auto *shared = dyn_cast<SharedLibraryAtom>(&atom)) {
+    _sharedLibraryAtoms._atoms.push_back(shared);
+  } else if (auto *abs = dyn_cast<AbsoluteAtom>(&atom)) {
+    _absoluteAtoms._atoms.push_back(abs);
   } else {
     llvm_unreachable("atom has unknown definition kind");
   }
