@@ -220,10 +220,7 @@ public:
     /// This will be something like "ubuntu", "fedora", etc. on Linux.
     /// This should be the same value returned by
     /// Host::GetDistributionId ().
-    ///
-    /// @return A ConstString ref containing the distribution id,
-    ///         potentially empty.
-    //------------------------------------------------------------------
+    ///------------------------------------------------------------------
     void
     SetDistributionId (const char* distribution_id);
 
