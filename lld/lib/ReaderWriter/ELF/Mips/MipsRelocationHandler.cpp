@@ -40,8 +40,7 @@ template <size_t BITS, class T> inline T signExtend(T val) {
 /// \brief R_MIPS_32
 /// local/external: word32 S + A (truncate)
 void reloc32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
-  uint32_t result = (uint32_t)(S + A);
-  applyReloc(location, result);
+  applyReloc(location, (S + A) & 0xffffffff);
 }
 
 /// \brief R_MIPS_26
@@ -66,8 +65,7 @@ void relocHi16(uint8_t *location, uint64_t P, uint64_t S, int64_t AHL,
   else
     result = (AHL + S) - (int16_t)(AHL + S);
 
-  result = lld::scatterBits<uint32_t>(result >> 16, 0xffff);
-  applyReloc(location, result);
+  applyReloc(location, (result >> 16) & 0xffff);
 }
 
 /// \brief R_MIPS_LO16
@@ -82,8 +80,7 @@ void relocLo16(uint8_t *location, uint64_t P, uint64_t S, int64_t AHL,
   else
     result = AHL + S;
 
-  result = lld::scatterBits<uint32_t>(result, 0xffff);
-  applyReloc(location, result);
+  applyReloc(location, result & 0xffff);
 }
 
 /// \brief R_MIPS_GOT16
@@ -92,8 +89,7 @@ void relocGOT16(uint8_t *location, uint64_t P, uint64_t S, int64_t AHL,
                 uint64_t GP) {
   // FIXME (simon): for local sym put high 16 bit of AHL to the GOT
   int32_t G = (int32_t)(S - GP);
-  int32_t result = lld::scatterBits<uint32_t>(G, 0xffff);
-  applyReloc(location, result);
+  applyReloc(location, G & 0xffff);
 }
 
 /// \brief R_MIPS_CALL16
@@ -101,20 +97,17 @@ void relocGOT16(uint8_t *location, uint64_t P, uint64_t S, int64_t AHL,
 void relocCall16(uint8_t *location, uint64_t P, uint64_t S, int64_t A,
                  uint64_t GP) {
   int32_t G = (int32_t)(S - GP);
-  int32_t result = lld::scatterBits<uint32_t>(G, 0xffff);
-  applyReloc(location, result);
+  applyReloc(location, G & 0xffff);
 }
 
 /// \brief LLD_R_MIPS_HI16
 void relocLldHi16(uint8_t *location, uint64_t S) {
-  int32_t result = lld::scatterBits<uint32_t>((S + 0x8000) >> 16, 0xffff);
-  applyReloc(location, result);
+  applyReloc(location, ((S + 0x8000) >> 16) & 0xffff);
 }
 
 /// \brief LLD_R_MIPS_LO16
 void relocLldLo16(uint8_t *location, uint64_t S) {
-  int32_t result = lld::scatterBits<uint32_t>(S, 0xffff);
-  applyReloc(location, result);
+  applyReloc(location, S & 0xffff);
 }
 
 } // end anon namespace
