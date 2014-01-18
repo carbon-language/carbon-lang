@@ -19,7 +19,6 @@ class SBBreakpointCallbackCase(TestBase):
           self.addTearDownHook(lambda: os.remove(self.inferior))
 
     @unittest2.expectedFailure # llvm.org/pr16000: SBBreakpoint.SetCallback() does nothing
-    @expectedFailureFreeBSD("llvm.org/pr18191") # Cannot find -llldb on FreeBSD
     @skipIfi386
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     def test_breakpoint_callback(self):
@@ -27,7 +26,6 @@ class SBBreakpointCallbackCase(TestBase):
         self.build_and_test('driver.cpp test_breakpoint_callback.cpp',
                             'test_breakpoint_callback')
 
-    @expectedFailureFreeBSD("llvm.org/pr18191") # Cannot find -llldb on FreeBSD
     @skipIfi386
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     def test_sb_api_listener_event_description(self):
@@ -36,7 +34,6 @@ class SBBreakpointCallbackCase(TestBase):
                             'test_listener_event_description')
         pass
 
-    @expectedFailureFreeBSD("llvm.org/pr18191") # Cannot find -llldb on FreeBSD
     @skipIfi386
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     def test_sb_api_listener_event_process_state(self):
@@ -48,7 +45,6 @@ class SBBreakpointCallbackCase(TestBase):
         pass
 
 
-    @expectedFailureFreeBSD("llvm.org/pr18191") # Cannot find -llldb on FreeBSD
     @skipIfi386
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     @skipIfLinux # llvm.org/pr16016 assertion failure in ProcessPOSIX.cpp.
