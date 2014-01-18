@@ -1405,7 +1405,7 @@ Controlling Overload Resolution
 Clang introduces the ``enable_if`` attribute, which can be placed on function
 declarations to control which overload is selected based on the values of the
 function's arguments. When combined with the
-:ref:``overloadable<langext-overloading>`` attribute, this feature is also
+:ref:`overloadable<langext-overloading>` attribute, this feature is also
 available in C.
 
 .. code-block:: c++
