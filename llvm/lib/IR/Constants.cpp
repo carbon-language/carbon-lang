@@ -584,23 +584,21 @@ Constant *ConstantFP::get(Type *Ty, StringRef Str) {
   return C; 
 }
 
+Constant *ConstantFP::getNegativeZero(Type *Ty) {
+  const fltSemantics &Semantics = *TypeToFloatSemantics(Ty->getScalarType());
+  APFloat NegZero = APFloat::getZero(Semantics, /*Negative=*/true);
+  Constant *C = get(Ty->getContext(), NegZero);
 
-ConstantFP *ConstantFP::getNegativeZero(Type *Ty) {
-  LLVMContext &Context = Ty->getContext();
-  APFloat apf = cast<ConstantFP>(Constant::getNullValue(Ty))->getValueAPF();
-  apf.changeSign();
-  return get(Context, apf);
+  if (VectorType *VTy = dyn_cast<VectorType>(Ty))
+    return ConstantVector::getSplat(VTy->getNumElements(), C);
+
+  return C;
 }
 
 
 Constant *ConstantFP::getZeroValueForNegation(Type *Ty) {
-  Type *ScalarTy = Ty->getScalarType();
-  if (ScalarTy->isFloatingPointTy()) {
-    Constant *C = getNegativeZero(ScalarTy);
-    if (VectorType *VTy = dyn_cast<VectorType>(Ty))
-      return ConstantVector::getSplat(VTy->getNumElements(), C);
-    return C;
-  }
+  if (Ty->isFPOrFPVectorTy())
+    return getNegativeZero(Ty);
 
   return Constant::getNullValue(Ty);
 }
@@ -635,10 +633,14 @@ ConstantFP* ConstantFP::get(LLVMContext &Context, const APFloat& V) {
   return Slot;
 }
 
-ConstantFP *ConstantFP::getInfinity(Type *Ty, bool Negative) {
-  const fltSemantics &Semantics = *TypeToFloatSemantics(Ty);
-  return ConstantFP::get(Ty->getContext(),
-                         APFloat::getInf(Semantics, Negative));
+Constant *ConstantFP::getInfinity(Type *Ty, bool Negative) {
+  const fltSemantics &Semantics = *TypeToFloatSemantics(Ty->getScalarType());
+  Constant *C = get(Ty->getContext(), APFloat::getInf(Semantics, Negative));
+
+  if (VectorType *VTy = dyn_cast<VectorType>(Ty))
+    return ConstantVector::getSplat(VTy->getNumElements(), C);
+
+  return C;
 }
 
 ConstantFP::ConstantFP(Type *Ty, const APFloat& V)

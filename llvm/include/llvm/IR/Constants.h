@@ -255,8 +255,8 @@ public:
   static Constant *get(Type* Ty, double V);
   static Constant *get(Type* Ty, StringRef Str);
   static ConstantFP *get(LLVMContext &Context, const APFloat &V);
-  static ConstantFP *getNegativeZero(Type* Ty);
-  static ConstantFP *getInfinity(Type *Ty, bool Negative = false);
+  static Constant *getNegativeZero(Type *Ty);
+  static Constant *getInfinity(Type *Ty, bool Negative = false);
 
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(Type *Ty, const APFloat &V);
