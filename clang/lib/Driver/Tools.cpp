@@ -2599,7 +2599,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-generate-gnu-dwarf-pub-sections");
   }
 
-  Args.AddAllArgs(CmdArgs, options::OPT_fdebug_types_section);
+  if (Args.hasArg(options::OPT_fdebug_types_section)) {
+    CmdArgs.push_back("-backend-option");
+    CmdArgs.push_back("-generate-type-units");
+  }
 
   Args.AddAllArgs(CmdArgs, options::OPT_ffunction_sections);
   Args.AddAllArgs(CmdArgs, options::OPT_fdata_sections);

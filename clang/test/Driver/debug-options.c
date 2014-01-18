@@ -45,11 +45,13 @@
 // RUN:             | FileCheck -check-prefix=GLTO_NO %s
 //
 // RUN: %clang -### -c -grecord-gcc-switches -gno-record-gcc-switches \
-// RUN:        -gstrict-dwarf -gno-strict-dwarf -fdebug-types-section \
-// RUN:        -fno-debug-types-section %s 2>&1                       \
+// RUN:        -gstrict-dwarf -gno-strict-dwarf %s 2>&1 \
 // RUN:        | FileCheck -check-prefix=GIGNORE %s
 //
 // RUN: %clang -### -c -ggnu-pubnames %s 2>&1 | FileCheck -check-prefix=GOPT %s
+//
+// RUN: %clang -### -fdebug-types-section %s 2>&1 \
+// RUN:        | FileCheck -check-prefix=FDTS %s
 //
 // G: "-cc1"
 // G: "-g"
@@ -90,3 +92,5 @@
 // GIGNORE-NOT: "argument unused during compilation"
 //
 // GOPT: -generate-gnu-dwarf-pub-sections
+//
+// FDTS: "-backend-option" "-generate-type-units"
