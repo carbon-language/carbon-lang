@@ -10681,8 +10681,9 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   }
 
   if (!Previous.empty()) {
-    NamedDecl *DirectPrevDecl = *Previous.begin();
-    NamedDecl *PrevDecl = DirectPrevDecl->getUnderlyingDecl();
+    NamedDecl *PrevDecl = Previous.getFoundDecl();
+    NamedDecl *DirectPrevDecl =
+        getLangOpts().MSVCCompat ? *Previous.begin() : PrevDecl;
 
     // It's okay to have a tag decl in the same scope as a typedef
     // which hides a tag decl in the same scope.  Finding this
