@@ -924,15 +924,33 @@ C11 ``_Thread_local``
 Use ``__has_feature(c_thread_local)`` or ``__has_extension(c_thread_local)``
 to determine if support for ``_Thread_local`` variables is enabled.
 
-Checks for Type Traits
-======================
+Checks for Type Trait Primitives
+================================
+
+Type trait primitives are special builtin constant expressions that can be used
+by the standard C++ library to facilitate or simplify the implementation of
+user-facing type traits in the <type_traits> header.
+
+They are not intended to be used directly by user code because they are
+implementation-defined and subject to change -- as such they're tied closely to
+the supported set of system headers, currently:
+
+* LLVM's own libc++
+* GNU libstdc++
+* The Microsoft standard C++ library
 
 Clang supports the `GNU C++ type traits
 <http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html>`_ and a subset of the
 `Microsoft Visual C++ Type traits
-<http://msdn.microsoft.com/en-us/library/ms177194(v=VS.100).aspx>`_.  For each
-supported type trait ``__X``, ``__has_extension(X)`` indicates the presence of
-the type trait.  For example:
+<http://msdn.microsoft.com/en-us/library/ms177194(v=VS.100).aspx>`_.
+
+Feature detection is supported only for some of the primitives at present. User
+code should not use these checks because they bear no direct relation to the
+actual set of type traits supported by the C++ standard library.
+
+For type trait ``__X``, ``__has_extension(X)`` indicates the presence of the
+type trait primitive in the compiler. A simplistic usage example as might be
+seen in standard C++ headers follows:
 
 .. code-block:: c++
 
@@ -942,10 +960,10 @@ the type trait.  For example:
     static const bool value = __is_convertible_to(From, To);
   };
   #else
-  // Emulate type trait
+  // Emulate type trait for compatibility with other compilers.
   #endif
 
-The following type traits are supported by Clang:
+The following type trait primitives are supported by Clang:
 
 * ``__has_nothrow_assign`` (GNU, Microsoft)
 * ``__has_nothrow_copy`` (GNU, Microsoft)
