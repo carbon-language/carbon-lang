@@ -313,6 +313,14 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
     response.PutCStringAsRawHex8(host_triple.getTriple().c_str());
     response.Printf (";ptrsize:%u;",host_arch.GetAddressByteSize());
 
+    const char* distribution_id = host_arch.GetDistributionId ().AsCString ();
+    if (distribution_id)
+    {
+        response.PutCString("distribution_id:");
+        response.PutCStringAsRawHex8(distribution_id);
+        response.PutCString(";");
+    }
+
     uint32_t cpu = host_arch.GetMachOCPUType();
     uint32_t sub = host_arch.GetMachOCPUSubType();
     if (cpu != LLDB_INVALID_CPUTYPE)

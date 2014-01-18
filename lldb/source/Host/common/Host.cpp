@@ -370,23 +370,29 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
         if (triple.getOS() == llvm::Triple::Linux && triple.getVendor() == llvm::Triple::UnknownVendor)
             triple.setVendorName ("");
 
+        const char* distribution_id = GetDistributionId ().AsCString();
+
         switch (triple.getArch())
         {
         default:
             g_host_arch_32.SetTriple(triple);
+            g_host_arch_32.SetDistributionId (distribution_id);
             g_supports_32 = true;
             break;
 
         case llvm::Triple::x86_64:
             g_host_arch_64.SetTriple(triple);
+            g_host_arch_64.SetDistributionId (distribution_id);
             g_supports_64 = true;
             g_host_arch_32.SetTriple(triple.get32BitArchVariant());
+            g_host_arch_32.SetDistributionId (distribution_id);
             g_supports_32 = true;
             break;
 
         case llvm::Triple::sparcv9:
         case llvm::Triple::ppc64:
             g_host_arch_64.SetTriple(triple);
+            g_host_arch_64.SetDistributionId (distribution_id);
             g_supports_64 = true;
             break;
         }

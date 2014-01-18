@@ -536,6 +536,7 @@ os_kernel: a string describing the kernel version
 os_version: a version string that represents the current OS version (10.8.2)
 watchpoint_exceptions_received: one of "before" or "after" to specify if a watchpoint is triggered before or after the pc when it stops
 default_packet_timeout: an unsigned number that specifies the default timeout in seconds
+distribution_id: optional. For linux, specifies distribution id (e.g. ubuntu, fedora, etc.)
 
 //----------------------------------------------------------------------
 // "qGDBServerVersion"

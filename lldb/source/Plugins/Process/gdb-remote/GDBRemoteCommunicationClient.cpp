@@ -1254,6 +1254,7 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                 std::string os_name;
                 std::string vendor_name;
                 std::string triple;
+                std::string distribution_id;
                 uint32_t pointer_byte_size = 0;
                 StringExtractor extractor;
                 ByteOrder byte_order = eByteOrderInvalid;
@@ -1285,6 +1286,13 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                         extractor.GetStringRef().swap(value);
                         extractor.SetFilePos(0);
                         extractor.GetHexByteString (triple);
+                        ++num_keys_decoded;
+                    }
+                    else if (name.compare ("distribution_id") == 0)
+                    {
+                        extractor.GetStringRef ().swap (value);
+                        extractor.SetFilePos (0);
+                        extractor.GetHexByteString (distribution_id);
                         ++num_keys_decoded;
                     }
                     else if (name.compare("os_build") == 0)
@@ -1461,7 +1469,9 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                     {
                         assert (byte_order == m_host_arch.GetByteOrder());
                     }
-                }       
+                }
+                if (!distribution_id.empty ())
+                    m_host_arch.SetDistributionId (distribution_id.c_str ());
             }
         }
     }

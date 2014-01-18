@@ -349,14 +349,16 @@ FindArchDefinitionEntry (const ArchDefinition *def, ArchSpec::Core core)
 ArchSpec::ArchSpec() :
     m_triple (),
     m_core (kCore_invalid),
-    m_byte_order (eByteOrderInvalid)
+    m_byte_order (eByteOrderInvalid),
+    m_distribution_id ()
 {
 }
 
 ArchSpec::ArchSpec (const char *triple_cstr, Platform *platform) :
     m_triple (),
     m_core (kCore_invalid),
-    m_byte_order (eByteOrderInvalid)
+    m_byte_order (eByteOrderInvalid),
+    m_distribution_id ()
 {
     if (triple_cstr)
         SetTriple(triple_cstr, platform);
@@ -366,7 +368,8 @@ ArchSpec::ArchSpec (const char *triple_cstr, Platform *platform) :
 ArchSpec::ArchSpec (const char *triple_cstr) :
     m_triple (),
     m_core (kCore_invalid),
-    m_byte_order (eByteOrderInvalid)
+    m_byte_order (eByteOrderInvalid),
+    m_distribution_id ()
 {
     if (triple_cstr)
         SetTriple(triple_cstr);
@@ -375,7 +378,8 @@ ArchSpec::ArchSpec (const char *triple_cstr) :
 ArchSpec::ArchSpec(const llvm::Triple &triple) :
     m_triple (),
     m_core (kCore_invalid),
-    m_byte_order (eByteOrderInvalid)
+    m_byte_order (eByteOrderInvalid),
+    m_distribution_id ()
 {
     SetTriple(triple);
 }
@@ -383,7 +387,8 @@ ArchSpec::ArchSpec(const llvm::Triple &triple) :
 ArchSpec::ArchSpec (ArchitectureType arch_type, uint32_t cpu, uint32_t subtype) :
     m_triple (),
     m_core (kCore_invalid),
-    m_byte_order (eByteOrderInvalid)
+    m_byte_order (eByteOrderInvalid),
+    m_distribution_id ()
 {
     SetArchitecture (arch_type, cpu, subtype);
 }
@@ -403,6 +408,7 @@ ArchSpec::operator= (const ArchSpec& rhs)
         m_triple = rhs.m_triple;
         m_core = rhs.m_core;
         m_byte_order = rhs.m_byte_order;
+        m_distribution_id = rhs.m_distribution_id;
     }
     return *this;
 }
@@ -413,6 +419,7 @@ ArchSpec::Clear()
     m_triple = llvm::Triple();
     m_core = kCore_invalid;
     m_byte_order = eByteOrderInvalid;
+    m_distribution_id.Clear ();
 }
 
 //===----------------------------------------------------------------------===//
@@ -466,6 +473,18 @@ ArchSpec::GetMachine () const
         return core_def->machine;
 
     return llvm::Triple::UnknownArch;
+}
+
+const ConstString&
+ArchSpec::GetDistributionId () const
+{
+    return m_distribution_id;
+}
+
+void
+ArchSpec::SetDistributionId (const char* distribution_id)
+{
+    m_distribution_id.SetCString (distribution_id);
 }
 
 uint32_t
@@ -763,6 +782,8 @@ ArchSpec::IsCompatibleMatch (const ArchSpec& rhs) const
 bool
 ArchSpec::IsEqualTo (const ArchSpec& rhs, bool exact_match) const
 {
+    // explicitly ignoring m_distribution_id in this method.
+
     if (GetByteOrder() != rhs.GetByteOrder())
         return false;
         
