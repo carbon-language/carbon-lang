@@ -40,6 +40,7 @@ set(LLVM_TEST_DEPENDS
           llvm-readobj
           llvm-rtdyld
           llvm-symbolizer
+          llvm-tblgen
           macho-dump
           opt
           profile_rt-shared
