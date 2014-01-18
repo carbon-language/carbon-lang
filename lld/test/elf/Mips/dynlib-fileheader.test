@@ -1,39 +1,49 @@
-RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
-RUN:     -o %t %p/Inputs/dynobj.o
-RUN: llvm-readobj -file-headers %t | FileCheck %s
+# Check ELF Header for shared library.
 
-CHECK: Format: ELF32-mips
-CHECK: Arch: mipsel
-CHECK: AddressSize: 32bit
-CHECK: LoadName: 
-CHECK: ElfHeader {
-CHECK:   Ident {
-CHECK:    Magic: (7F 45 4C 46)
-CHECK:    Class: 32-bit (0x1)
-CHECK:    DataEncoding: LittleEndian (0x1)
-CHECK:    FileVersion: 1
-CHECK:    OS/ABI: SystemV (0x0)
-CHECK:    ABIVersion: 0
-CHECK:    Unused: (00 00 00 00 00 00 00)
-CHECK:  }
-CHECK:  Type: SharedObject (0x3)
-CHECK:  Machine: EM_MIPS (0x8)
-CHECK:  Version: 1
-CHECK:  Entry: 0x170
-CHECK:  ProgramHeaderOffset: 0x34
-CHECK:  SectionHeaderOffset: 0x21D8
-CHECK:  Flags [ (0x70001007)
-CHECK:    0x1
-CHECK:    0x2
-CHECK:    0x1000
-CHECK:    0x10000000
-CHECK:    0x20000000
-CHECK:    0x40000000
-CHECK:  ]
-CHECK:  HeaderSize: 52
-CHECK:  ProgramHeaderEntrySize: 32
-CHECK:  ProgramHeaderCount: 5
-CHECK:  SectionHeaderEntrySize: 40
-CHECK:  SectionHeaderCount: 16
-CHECK:  StringTableSectionIndex: 13
-CHECK:}
+# Build shared library
+# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic -o=%t-obj %s
+# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-obj
+# RUN: llvm-readobj -file-headers %t-so | FileCheck %s
+
+# CHECK: Format: ELF32-mips
+# CHECK: Arch: mipsel
+# CHECK: AddressSize: 32bit
+# CHECK: LoadName: 
+# CHECK: ElfHeader {
+# CHECK:   Ident {
+# CHECK:    Magic: (7F 45 4C 46)
+# CHECK:    Class: 32-bit (0x1)
+# CHECK:    DataEncoding: LittleEndian (0x1)
+# CHECK:    FileVersion: 1
+# CHECK:    OS/ABI: SystemV (0x0)
+# CHECK:    ABIVersion: 0
+# CHECK:    Unused: (00 00 00 00 00 00 00)
+# CHECK:  }
+# CHECK:  Type: SharedObject (0x3)
+# CHECK:  Machine: EM_MIPS (0x8)
+# CHECK:  Version: 1
+# CHECK:  Entry: 0x110
+# CHECK:  ProgramHeaderOffset: 0x34
+# CHECK:  SectionHeaderOffset: 0x20E0
+# CHECK:  Flags [ (0x70001007)
+# CHECK:    0x1
+# CHECK:    0x2
+# CHECK:    0x1000
+# CHECK:    0x10000000
+# CHECK:    0x20000000
+# CHECK:    0x40000000
+# CHECK:  ]
+# CHECK:  HeaderSize: 52
+# CHECK:  ProgramHeaderEntrySize: 32
+# CHECK:  ProgramHeaderCount: 5
+# CHECK:  SectionHeaderEntrySize: 40
+# CHECK:  SectionHeaderCount: 12
+# CHECK:  StringTableSectionIndex: 9
+# CHECK:}
+
+    .abicalls
+    .global glob
+    .ent    glob
+glob:
+    nop
+    .end    glob

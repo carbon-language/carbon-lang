@@ -1,118 +1,158 @@
 # Check sorting of .dynsym content accordingly to .got section.
-RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
-RUN:     -o %t %p/Inputs/dynobj.o
-RUN: llvm-readobj -dyn-symbols %t | FileCheck -check-prefix=CHECK-DYN %s
 
-RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
-RUN:     --output-filetype=yaml -o %t %p/Inputs/dynobj.o
-RUN: FileCheck -check-prefix=CHECK-GOT %s < %t
+# Build shared library
+# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic -o=%t-obj %s
+# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t-so %t-obj
+# RUN: llvm-readobj -dyn-symbols %t-so | FileCheck -check-prefix=CHECK-DYN %s
 
-CHECK-DYN: Format: ELF32-mips
-CHECK-DYN: Arch: mipsel
-CHECK-DYN: AddressSize: 32bit
-CHECK-DYN: LoadName: 
-CHECK-DYN: DynamicSymbols [
-CHECK-DYN:   Symbol {
-CHECK-DYN:     Name: @ (0)
-CHECK-DYN:     Value: 0x0
-CHECK-DYN:     Size: 0
-CHECK-DYN:     Binding: Local (0x0)
-CHECK-DYN:     Type: None (0x0)
-CHECK-DYN:     Other: 0
-CHECK-DYN:     Section:  (0x0)
-CHECK-DYN:   }
-CHECK-DYN:   Symbol {
-CHECK-DYN:     Name: foo@ (5)
-CHECK-DYN:     Value: 0x194
-CHECK-DYN:     Size: 156
-CHECK-DYN:     Binding: Global (0x1)
-CHECK-DYN:     Type: Function (0x2)
-CHECK-DYN:     Other: 0
-CHECK-DYN:     Section: .text (0x4)
-CHECK-DYN:   }
-CHECK-DYN:   Symbol {
-CHECK-DYN:     Name: bar@ (1)
-CHECK-DYN:     Value: 0x170
-CHECK-DYN:     Size: 36
-CHECK-DYN:     Binding: Global (0x1)
-CHECK-DYN:     Type: Function (0x2)
-CHECK-DYN:     Other: 0
-CHECK-DYN:     Section: .text (0x4)
-CHECK-DYN:   }
-CHECK-DYN:   Symbol {
-CHECK-DYN:     Name: xyz@ (9)
-CHECK-DYN:     Value: 0x0
-CHECK-DYN:     Size: 0
-CHECK-DYN:     Binding: Global (0x1)
-CHECK-DYN:     Type: None (0x0)
-CHECK-DYN:     Other: 0
-CHECK-DYN:     Section:  (0x0)
-CHECK-DYN:   }
-CHECK-DYN:   Symbol {
-CHECK-DYN:     Name: abc@ (13)
-CHECK-DYN:     Value: 0x0
-CHECK-DYN:     Size: 0
-CHECK-DYN:     Binding: Global (0x1)
-CHECK-DYN:     Type: None (0x0)
-CHECK-DYN:     Other: 0
-CHECK-DYN:     Section:  (0x0)
-CHECK-DYN:   }
-CHECK-DYN: ]
+# Build shared library (yaml format)
+# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic -o=%t-obj %s
+# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
+# RUN:     --output-filetype=yaml -o %t-yaml %t-obj
+# RUN: FileCheck -check-prefix=CHECK-GOT %s < %t-yaml
 
-CHECK-GOT:   - type:            got
-CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-CHECK-GOT:     alignment:       2^2
-CHECK-GOT:     section-choice:  custom-required
-CHECK-GOT:     section-name:    .got
-CHECK-GOT:     permissions:     rw-
-CHECK-GOT:   - type:            got
-CHECK-GOT:     content:         [ 00, 00, 00, 80 ]
-CHECK-GOT:     alignment:       2^2
-CHECK-GOT:     section-choice:  custom-required
-CHECK-GOT:     section-name:    .got
-CHECK-GOT:     permissions:     rw-
-CHECK-GOT:   - ref-name:        L004
-CHECK-GOT:     type:            got
-CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-CHECK-GOT:     alignment:       2^2
-CHECK-GOT:     section-choice:  custom-required
-CHECK-GOT:     section-name:    .got
-CHECK-GOT:     permissions:     rw-
-CHECK-GOT:   - ref-name:        L006
-CHECK-GOT:     type:            got
-CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-CHECK-GOT:     alignment:       2^2
-CHECK-GOT:     section-choice:  custom-required
-CHECK-GOT:     section-name:    .got
-CHECK-GOT:     permissions:     rw-
-CHECK-GOT:   - ref-name:        L003
-CHECK-GOT:     type:            got
-CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-CHECK-GOT:     alignment:       2^2
-CHECK-GOT:     section-choice:  custom-required
-CHECK-GOT:     section-name:    .got
-CHECK-GOT:     permissions:     rw-
-CHECK-GOT:     references:
-CHECK-GOT:       - kind:            R_MIPS_32
-CHECK-GOT:         offset:          0
-CHECK-GOT:         target:          bar
-CHECK-GOT:   - ref-name:        L005
-CHECK-GOT:     type:            got
-CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-CHECK-GOT:     alignment:       2^2
-CHECK-GOT:     section-choice:  custom-required
-CHECK-GOT:     section-name:    .got
-CHECK-GOT:     permissions:     rw-
-CHECK-GOT:   - ref-name:        L007
-CHECK-GOT:     type:            got
-CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-CHECK-GOT:     alignment:       2^2
-CHECK-GOT:     section-choice:  custom-required
-CHECK-GOT:     section-name:    .got
-CHECK-GOT:     permissions:     rw-
-CHECK-GOT:   - ref-name:        L002
-CHECK-GOT:     alignment:       2^4
-CHECK-GOT:     references:
-CHECK-GOT:       - kind:            layout-after
-CHECK-GOT:         offset:          0
-CHECK-GOT:         target:          bar
+# CHECK-DYN: Format: ELF32-mips
+# CHECK-DYN: Arch: mipsel
+# CHECK-DYN: AddressSize: 32bit
+# CHECK-DYN: LoadName: 
+# CHECK-DYN: DynamicSymbols [
+# CHECK-DYN:   Symbol {
+# CHECK-DYN:     Name: @ (0)
+# CHECK-DYN:     Value: 0x0
+# CHECK-DYN:     Size: 0
+# CHECK-DYN:     Binding: Local (0x0)
+# CHECK-DYN:     Type: None (0x0)
+# CHECK-DYN:     Other: 0
+# CHECK-DYN:     Section:  (0x0)
+# CHECK-DYN:   }
+# CHECK-DYN:   Symbol {
+# CHECK-DYN:     Name: bar@ (5)
+# CHECK-DYN:     Value: 0x178
+# CHECK-DYN:     Size: 4
+# CHECK-DYN:     Binding: Global (0x1)
+# CHECK-DYN:     Type: Function (0x2)
+# CHECK-DYN:     Other: 0
+# CHECK-DYN:     Section: .text (0x4)
+# CHECK-DYN:   }
+# CHECK-DYN:   Symbol {
+# CHECK-DYN:     Name: foo@ (1)
+# CHECK-DYN:     Value: 0x160
+# CHECK-DYN:     Size: 24
+# CHECK-DYN:     Binding: Global (0x1)
+# CHECK-DYN:     Type: Function (0x2)
+# CHECK-DYN:     Other: 0
+# CHECK-DYN:     Section: .text (0x4)
+# CHECK-DYN:   }
+# CHECK-DYN:   Symbol {
+# CHECK-DYN:     Name: ext1@ (9)
+# CHECK-DYN:     Value: 0x0
+# CHECK-DYN:     Size: 0
+# CHECK-DYN:     Binding: Global (0x1)
+# CHECK-DYN:     Type: None (0x0)
+# CHECK-DYN:     Other: 0
+# CHECK-DYN:     Section:  (0x0)
+# CHECK-DYN:   }
+# CHECK-DYN:   Symbol {
+# CHECK-DYN:     Name: ext2@ (14)
+# CHECK-DYN:     Value: 0x0
+# CHECK-DYN:     Size: 0
+# CHECK-DYN:     Binding: Global (0x1)
+# CHECK-DYN:     Type: None (0x0)
+# CHECK-DYN:     Other: 0
+# CHECK-DYN:     Section:  (0x0)
+# CHECK-DYN:   }
+# CHECK-DYN: ]
+
+# CHECK-GOT:   - type:            got
+# CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
+# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     section-choice:  custom-required
+# CHECK-GOT:     section-name:    .got
+# CHECK-GOT:     permissions:     rw-
+# CHECK-GOT:   - type:            got
+# CHECK-GOT:     content:         [ 00, 00, 00, 80 ]
+# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     section-choice:  custom-required
+# CHECK-GOT:     section-name:    .got
+# CHECK-GOT:     permissions:     rw-
+# CHECK-GOT:   - ref-name:        L002
+# CHECK-GOT:     type:            got
+# CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
+# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     section-choice:  custom-required
+# CHECK-GOT:     section-name:    .got
+# CHECK-GOT:     permissions:     rw-
+# CHECK-GOT:     references:
+# CHECK-GOT:       - kind:            R_MIPS_32
+# CHECK-GOT:         offset:          0
+# CHECK-GOT:         target:          L003
+# CHECK-GOT:   - ref-name:        L004
+# CHECK-GOT:     type:            got
+# CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
+# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     section-choice:  custom-required
+# CHECK-GOT:     section-name:    .got
+# CHECK-GOT:     permissions:     rw-
+# CHECK-GOT:     references:
+# CHECK-GOT:       - kind:            R_MIPS_32
+# CHECK-GOT:         offset:          0
+# CHECK-GOT:         target:          L005
+# CHECK-GOT:   - ref-name:        L006
+# CHECK-GOT:     type:            got
+# CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
+# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     section-choice:  custom-required
+# CHECK-GOT:     section-name:    .got
+# CHECK-GOT:     permissions:     rw-
+# CHECK-GOT:     references:
+# CHECK-GOT:       - kind:            LLD_R_MIPS_GLOBAL_GOT
+# CHECK-GOT:         offset:          0
+# CHECK-GOT:         target:          foo
+# CHECK-GOT:   - ref-name:        L007
+# CHECK-GOT:     type:            got
+# CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
+# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     section-choice:  custom-required
+# CHECK-GOT:     section-name:    .got
+# CHECK-GOT:     permissions:     rw-
+# CHECK-GOT:     references:
+# CHECK-GOT:       - kind:            LLD_R_MIPS_GLOBAL_GOT
+# CHECK-GOT:         offset:          0
+# CHECK-GOT:         target:          ext1
+# CHECK-GOT:   - ref-name:        L009
+# CHECK-GOT:     type:            got
+# CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
+# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     section-choice:  custom-required
+# CHECK-GOT:     section-name:    .got
+# CHECK-GOT:     permissions:     rw-
+# CHECK-GOT:     references:
+# CHECK-GOT:       - kind:            LLD_R_MIPS_GLOBAL_GOT
+# CHECK-GOT:         offset:          0
+# CHECK-GOT:         target:          ext2
+
+    .abicalls
+    .global foo
+    .ent    foo
+foo:
+    lw      $gp, %got($.str1)($1)
+    addiu   $4, $gp, %lo($.str1)
+    lw      $4, %got($.str2)($1)
+    addiu   $4, $4, %lo($.str2)
+    lw      $25, %call16(foo)($1)
+    lw      $25, %call16(ext1)($1)
+    .end    foo
+
+    .global bar
+    .ent    brar
+bar:
+    lw      $25, %call16(ext2)($1)
+    .end    bar
+
+    .section  .rodata.str1
+$.str1:
+    .asciz  "str1"
+
+    .section  .rodata.str2
+$.str2:
+    .asciz  "str2"
