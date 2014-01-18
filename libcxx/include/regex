@@ -3310,10 +3310,14 @@ basic_regex<_CharT, _Traits>::__parse_BACKREF(_ForwardIterator __first,
         _ForwardIterator __temp = _VSTD::next(__first);
         if (__temp != __last)
         {
-            if (*__first == '\\' && '1' <= *__temp && *__temp <= '9')
-            {
-                __push_back_ref(*__temp - '0');
-                __first = ++__temp;
+            if (*__first == '\\')
+            { 
+                int __val = __traits_.value(*__temp, 10);
+                if (__val >= 1 && __val <= 9)
+                {
+                    __push_back_ref(__val);
+                    __first = ++__temp;
+                }
             }
         }
     }
@@ -4052,14 +4056,19 @@ basic_regex<_CharT, _Traits>::__parse_DUP_COUNT(_ForwardIterator __first,
                                                 _ForwardIterator __last,
                                                 int& __c)
 {
-    if (__first != __last && '0' <= *__first && *__first <= '9')
+    if (__first != __last )
     {
-        __c = *__first - '0';
-        for (++__first; __first != __last && '0' <= *__first && *__first <= '9';
-                                                                      ++__first)
+        int __val = __traits_.value(*__first, 10);
+        if ( __val != -1 )
         {
-            __c *= 10;
-            __c += *__first - '0';
+            __c = __val;
+            for (++__first; 
+                 __first != __last && ( __val = __traits_.value(*__first, 10)) != -1;
+                 ++__first)
+            {
+                __c *= 10;
+                __c += __val;
+            }
         }
     }
     return __first;
