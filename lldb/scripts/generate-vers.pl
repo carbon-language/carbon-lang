@@ -2,11 +2,11 @@
 
 sub usage()
 {
-  print "Usage: generate-vers.pl /path/toproject.pbxproj";
+  print "Usage: generate-vers.pl /path/toproject.pbxproj program_name";
   exit(0);
 }
 
-(scalar @ARGV == 1) or usage();
+(scalar @ARGV == 2) or usage();
 
 open $pbxproj, $ARGV[0] or die "Couldn't open ".$ARGV[0];
 
@@ -51,6 +51,6 @@ $lowercase_name = lc $product_name;
 
 close $pbxproj;
 
-$file_string = " const unsigned char liblldb_coreVersionString[] __attribute__ ((used)) = \"@(#)PROGRAM:".$uppercase_name."  PROJECT:".$lowercase_name."-".$lldb_version_string."\" \"\\n\"; const double liblldb_coreVersionNumber __attribute__ ((used)) = (double)".$lldb_version.".".$lldb_train.";\n";
+$file_string = " const unsigned char ".$ARGV[1]."VersionString[] __attribute__ ((used)) = \"@(#)PROGRAM:".$uppercase_name."  PROJECT:".$lowercase_name."-".$lldb_version_string."\" \"\\n\"; const double ".$ARGV[1]."VersionNumber __attribute__ ((used)) = (double)".$lldb_version.".".$lldb_train.";\n";
 
 print $file_string;

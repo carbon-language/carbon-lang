@@ -25,7 +25,7 @@ include $(LLDB_LEVEL)/Makefile
 
 ifeq ($(HOST_OS),Darwin)
 LLDB_vers.c: $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/generate-vers.pl $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/lldb.xcodeproj/project.pbxproj
-	"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/generate-vers.pl" "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/lldb.xcodeproj/project.pbxproj" > LLDB_vers.c
+	"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/generate-vers.pl" "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/lldb.xcodeproj/project.pbxproj" liblldb_core > LLDB_vers.c
 else
 LLDB_REVISION := $(strip \
         $(shell $(LLVM_SRC_ROOT)/utils/GetSourceVersion $(LLVM_SRC_ROOT)/tools/lldb))

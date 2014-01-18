@@ -1118,19 +1118,23 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                     {
                         framework_pos += strlen("LLDB.framework");
                         ::strncpy (framework_pos, "/Resources/Python", PATH_MAX - (framework_pos - raw_path));
+                    } 
+                    else 
+                    {
+#endif
+                        llvm::SmallString<256> python_version_dir;
+                        llvm::raw_svector_ostream os(python_version_dir);
+                        os << "/python" << PY_MAJOR_VERSION << '.' << PY_MINOR_VERSION << "/site-packages";
+                        os.flush();
+
+                        // We may get our string truncated. Should we protect
+                        // this with an assert?
+
+                        ::strncat(raw_path, python_version_dir.c_str(),
+                                  sizeof(raw_path) - strlen(raw_path) - 1);
+
+#if defined (__APPLE__)
                     }
-#else
-                    llvm::SmallString<256> python_version_dir;
-                    llvm::raw_svector_ostream os(python_version_dir);
-                    os << "/python" << PY_MAJOR_VERSION << '.' << PY_MINOR_VERSION << "/site-packages";
-                    os.flush();
-
-                    // We may get our string truncated. Should we protect
-                    // this with an assert?
-
-                    ::strncat(raw_path, python_version_dir.c_str(),
-                              sizeof(raw_path) - strlen(raw_path) - 1);
-
 #endif
                     FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
                     g_lldb_python_dir.SetCString(resolved_path);

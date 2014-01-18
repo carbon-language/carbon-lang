@@ -24,4 +24,8 @@ ifneq ($(HOST_OS),MingW)
 DIRS += driver lldb-platform
 endif
 
+ifeq ($(HOST_OS),Darwin)
+DIRS += debugserver
+endif
+
 include $(LLDB_LEVEL)/Makefile
