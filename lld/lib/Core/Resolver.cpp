@@ -399,8 +399,8 @@ bool Resolver::checkUndefines(bool isFinal) {
       // Seems like this symbol is undefined. Warn that.
       foundUndefines = true;
       if (_context.printRemainingUndefines()) {
-        llvm::errs() << "Undefined Symbol: " << undefAtom->file().path()
-                     << " : " << undefAtom->name() << "\n";
+        llvm::errs() << "Undefined symbol: " << undefAtom->file().path()
+                     << ": " << undefAtom->name() << "\n";
       }
     }
     if (foundUndefines) {
