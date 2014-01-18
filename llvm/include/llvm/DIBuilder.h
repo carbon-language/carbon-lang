@@ -545,7 +545,7 @@ namespace llvm {
     /// @param File          File where this variable is defined.
     /// @param LineNo        Line number.
     /// @param Ty            Function type.
-    /// @param isLocalToUnit True if this function is not externally visible..
+    /// @param isLocalToUnit True if this function is not externally visible.
     /// @param isDefinition  True if this is a function definition.
     /// @param ScopeLine     Set to the beginning of the scope this starts
     /// @param Flags         e.g. is this function prototyped or not.
