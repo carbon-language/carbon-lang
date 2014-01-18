@@ -22,7 +22,13 @@ CHECK:  Version: 1
 CHECK:  Entry: 0x170
 CHECK:  ProgramHeaderOffset: 0x34
 CHECK:  SectionHeaderOffset: 0x21D8
-CHECK:  Flags [ (0x0)
+CHECK:  Flags [ (0x70001007)
+CHECK:    0x1
+CHECK:    0x2
+CHECK:    0x1000
+CHECK:    0x10000000
+CHECK:    0x20000000
+CHECK:    0x40000000
 CHECK:  ]
 CHECK:  HeaderSize: 52
 CHECK:  ProgramHeaderEntrySize: 32

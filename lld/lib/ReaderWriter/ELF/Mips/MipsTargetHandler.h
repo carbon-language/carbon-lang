@@ -54,6 +54,8 @@ public:
 
   uint64_t getGPDispSymAddr() const;
 
+  virtual bool doesOverrideELFHeader();
+  virtual void setELFHeader(ELFHeader<Mips32ElELFType> *elfHeader);
   virtual MipsTargetLayout<Mips32ElELFType> &targetLayout();
   virtual const MipsTargetRelocationHandler &getRelocationHandler() const;
   virtual LLD_UNIQUE_BUMP_PTR(DynamicTable<Mips32ElELFType>)

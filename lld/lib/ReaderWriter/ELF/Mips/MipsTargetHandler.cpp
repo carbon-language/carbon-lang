@@ -127,6 +127,27 @@ uint64_t MipsTargetHandler::getGPDispSymAddr() const {
   return _gpDispSymAtom ? _gpDispSymAtom->_virtualAddr : 0;
 }
 
+bool MipsTargetHandler::doesOverrideELFHeader() { return true; }
+
+void MipsTargetHandler::setELFHeader(ELFHeader<Mips32ElELFType> *elfHeader) {
+  elfHeader->e_version(1);
+
+  elfHeader->e_ident(llvm::ELF::EI_VERSION, llvm::ELF::EV_CURRENT);
+  elfHeader->e_ident(llvm::ELF::EI_OSABI, llvm::ELF::ELFOSABI_NONE);
+  if (_targetLayout.findOutputSection(".got.plt"))
+    elfHeader->e_ident(llvm::ELF::EI_ABIVERSION, 1);
+  else
+    elfHeader->e_ident(llvm::ELF::EI_ABIVERSION, 0);
+
+  // FIXME (simon): Read elf flags from all inputs, check compatibility,
+  // merge them and write result here.
+  uint32_t flags = llvm::ELF::EF_MIPS_NOREORDER | llvm::ELF::EF_MIPS_ABI_O32 |
+                   llvm::ELF::EF_MIPS_CPIC | llvm::ELF::EF_MIPS_ARCH_32R2;
+  if (_context.getOutputELFType() == llvm::ELF::ET_DYN)
+    flags |= EF_MIPS_PIC;
+  elfHeader->e_flags(flags);
+}
+
 MipsTargetLayout<Mips32ElELFType> &MipsTargetHandler::targetLayout() {
   return _targetLayout;
 }
