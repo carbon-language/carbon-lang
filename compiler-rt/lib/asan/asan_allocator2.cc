@@ -358,7 +358,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     allocated = allocator.Allocate(cache, needed_size, 8, false);
   }
 
-  if (*(u8 *)MEM_TO_SHADOW((u64)allocated) == 0 && flags()->poison_heap) {
+  if (*(u8 *)MEM_TO_SHADOW((uptr)allocated) == 0 && flags()->poison_heap) {
     // Heap poisoning is enabled, but the allocator provides an unpoisoned
     // chunk. This is possible if flags()->poison_heap was disabled for some
     // time, for example, due to flags()->start_disabled.
