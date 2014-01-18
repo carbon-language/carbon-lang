@@ -1226,7 +1226,7 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
         EnumName += NormalizeNameForSpellingComparison(Spelling);
 
         // Since we have been stripping underscores to avoid trampling on the
-        // reserved namespace, we may have inadvertantly created duplicate
+        // reserved namespace, we may have inadvertently created duplicate
         // enumerant names. Unique the name if required.
         while (Uniques.find(EnumName) != Uniques.end())
           EnumName += "_alternate";
@@ -2337,7 +2337,7 @@ void EmitClangAttrParsedAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     // because it is a target-specific attribute that appears multiple times.
     // It would be beneficial to test whether the duplicates are "similar
     // enough" to each other to not cause problems. For instance, check that
-    // the spellings are identicial, and custom parsing rules match, etc.
+    // the spellings are identical, and custom parsing rules match, etc.
 
     // We need to generate struct instances based off ParsedAttrInfo from
     // AttributeList.cpp.
