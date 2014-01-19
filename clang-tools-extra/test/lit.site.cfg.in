@@ -15,6 +15,7 @@ config.have_libedit = "@HAVE_LIBEDIT@"
 # Support substitution of the tools and libs dirs with user parameters. This is
 # used when we can't determine the tool dir at configuration time.
 try:
+    config.clang_tools_dir = config.clang_tools_dir % lit_config.params
     config.llvm_tools_dir = config.llvm_tools_dir % lit_config.params
     config.llvm_libs_dir = config.llvm_libs_dir % lit_config.params
 except KeyError:
