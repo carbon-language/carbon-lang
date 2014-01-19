@@ -100,11 +100,12 @@ int main(int argc, char **argv) {
   }
 
   if (!DisableVerify) {
-    std::string Err;
-    if (verifyModule(*M.get(), ReturnStatusAction, &Err)) {
+    std::string ErrorStr;
+    raw_string_ostream OS(ErrorStr);
+    if (verifyModule(*M.get(), &OS)) {
       errs() << argv[0]
              << ": assembly parsed, but does not verify as correct!\n";
-      errs() << Err;
+      errs() << OS.str();
       return 1;
     }
   }

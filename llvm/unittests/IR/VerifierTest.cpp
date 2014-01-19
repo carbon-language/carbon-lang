@@ -42,7 +42,7 @@ TEST(VerifierTest, Branch_i1) {
   Constant *Zero32 = ConstantInt::get(IntegerType::get(C, 32), 0);
   BI->setOperand(0, Zero32);
 
-  EXPECT_TRUE(verifyFunction(*F, ReturnStatusAction));
+  EXPECT_TRUE(verifyFunction(*F));
 }
 
 TEST(VerifierTest, AliasUnnamedAddr) {
@@ -58,8 +58,10 @@ TEST(VerifierTest, AliasUnnamedAddr) {
                                     "bar", Aliasee, &M);
   GA->setUnnamedAddr(true);
   std::string Error;
-  EXPECT_TRUE(verifyModule(M, ReturnStatusAction, &Error));
-  EXPECT_TRUE(StringRef(Error).startswith("Alias cannot have unnamed_addr"));
+  raw_string_ostream ErrorOS(Error);
+  EXPECT_TRUE(verifyModule(M, &ErrorOS));
+  EXPECT_TRUE(
+      StringRef(ErrorOS.str()).startswith("Alias cannot have unnamed_addr"));
 }
 
 TEST(VerifierTest, InvalidRetAttribute) {
@@ -72,9 +74,10 @@ TEST(VerifierTest, InvalidRetAttribute) {
                                    Attribute::UWTable));
 
   std::string Error;
-  EXPECT_TRUE(verifyModule(M, ReturnStatusAction, &Error));
-  EXPECT_TRUE(StringRef(Error).
-              startswith("Attribute 'uwtable' only applies to functions!"));
+  raw_string_ostream ErrorOS(Error);
+  EXPECT_TRUE(verifyModule(M, &ErrorOS));
+  EXPECT_TRUE(StringRef(ErrorOS.str()).startswith(
+      "Attribute 'uwtable' only applies to functions!"));
 }
 
 }

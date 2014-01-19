@@ -11,6 +11,7 @@
 #include "llvm-c/Initialization.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/PassRegistry.h"
 #include <cstring>
@@ -72,21 +73,33 @@ void LLVMInitializeAnalysis(LLVMPassRegistryRef R) {
 
 LLVMBool LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action,
                           char **OutMessages) {
+  raw_ostream *DebugOS = Action != LLVMReturnStatusAction ? &errs() : 0;
   std::string Messages;
+  raw_string_ostream MsgsOS(Messages);
 
-  LLVMBool Result = verifyModule(*unwrap(M),
-                            static_cast<VerifierFailureAction>(Action),
-                            OutMessages? &Messages : 0);
+  LLVMBool Result = verifyModule(*unwrap(M), OutMessages ? &MsgsOS : DebugOS);
+
+  // Duplicate the output to stderr.
+  if (DebugOS && OutMessages)
+    *DebugOS << MsgsOS.str();
+
+  if (Action == LLVMAbortProcessAction && Result)
+    report_fatal_error("Broken module found, compilation aborted!");
 
   if (OutMessages)
-    *OutMessages = strdup(Messages.c_str());
+    *OutMessages = strdup(MsgsOS.str().c_str());
 
   return Result;
 }
 
 LLVMBool LLVMVerifyFunction(LLVMValueRef Fn, LLVMVerifierFailureAction Action) {
-  return verifyFunction(*unwrap<Function>(Fn),
-                        static_cast<VerifierFailureAction>(Action));
+  LLVMBool Result = verifyFunction(
+      *unwrap<Function>(Fn), Action != LLVMReturnStatusAction ? &errs() : 0);
+
+  if (Action == LLVMAbortProcessAction && Result)
+    report_fatal_error("Broken function found, compilation aborted!");
+
+  return Result;
 }
 
 void LLVMViewFunctionCFG(LLVMValueRef Fn) {

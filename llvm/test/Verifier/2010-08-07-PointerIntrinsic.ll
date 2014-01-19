@@ -1,6 +1,5 @@
-; RUN: not llvm-as < %s 2> %t
-; RUN: FileCheck %s --input-file=%t
-; CHECK: Broken module
+; RUN: not llvm-as < %s 2>&1 | FileCheck %s
+; CHECK: assembly parsed, but does not verify as correct
 ; PR7316
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:32"
