@@ -116,7 +116,7 @@ public:
   Instruction *visitSub(BinaryOperator &I);
   Instruction *visitFSub(BinaryOperator &I);
   Instruction *visitMul(BinaryOperator &I);
-  Value *foldFMulConst(Instruction *FMulOrDiv, ConstantFP *C,
+  Value *foldFMulConst(Instruction *FMulOrDiv, Constant *C,
                        Instruction *InsertBefore);
   Instruction *visitFMul(BinaryOperator &I);
   Instruction *visitURem(BinaryOperator &I);

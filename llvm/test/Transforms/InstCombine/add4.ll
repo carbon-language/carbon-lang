@@ -77,3 +77,26 @@ define float @test7(float %A, float %B, i32 %C) {
 ; CHECK: uitofp
 }
 
+define <4 x float> @test8(<4 x float> %A, <4 x float> %B, <4 x i1> %C) {
+  ;;  B*(uitofp i1 C) + A*(1 - uitofp i1 C) -> select C, A, B
+  %cf = uitofp <4 x i1> %C to <4 x float>
+  %mc = fsub fast <4 x float> <float 1.0, float 1.0, float 1.0, float 1.0>, %cf
+  %p1 = fmul fast <4 x float> %A, %mc
+  %p2 = fmul fast <4 x float> %B, %cf
+  %s1 = fadd fast <4 x float> %p2, %p1
+  ret <4 x float> %s1
+; CHECK-LABEL: @test8(
+; CHECK: select <4 x i1> %C, <4 x float> %B, <4 x float> %A
+}
+
+define <4 x float> @test9(<4 x float> %A, <4 x float> %B, <4 x i1> %C) {
+  ;; A*(1 - uitofp i1 C) + B*(uitofp i1 C) -> select C, A, B
+  %cf = uitofp <4 x i1> %C to <4 x float>
+  %mc = fsub fast <4 x float> <float 1.0, float 1.0, float 1.0, float 1.0>, %cf
+  %p1 = fmul fast <4 x float> %A, %mc
+  %p2 = fmul fast <4 x float> %B, %cf
+  %s1 = fadd fast <4 x float> %p1, %p2
+  ret <4 x float> %s1
+; CHECK-LABEL: @test9
+; CHECK: select <4 x i1> %C, <4 x float> %B, <4 x float> %A
+}

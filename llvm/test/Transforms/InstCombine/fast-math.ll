@@ -259,6 +259,14 @@ define float @fmul3(float %f1, float %f2) {
 ; CHECK: fmul fast float %f1, 3.000000e+00
 }
 
+define <4 x float> @fmul3_vec(<4 x float> %f1, <4 x float> %f2) {
+  %t1 = fdiv <4 x float> %f1, <float 2.0e+3, float 3.0e+3, float 2.0e+3, float 1.0e+3>
+  %t3 = fmul fast <4 x float> %t1, <float 6.0e+3, float 6.0e+3, float 2.0e+3, float 1.0e+3>
+  ret <4 x float> %t3
+; CHECK-LABEL: @fmul3_vec(
+; CHECK: fmul fast <4 x float> %f1, <float 3.000000e+00, float 2.000000e+00, float 1.000000e+00, float 1.000000e+00>
+}
+
 ; Rule "X/C1 * C2 => X * (C2/C1) is not applicable if C2/C1 is either a special
 ; value of a denormal. The 0x3810000000000000 here take value FLT_MIN
 ;
@@ -343,6 +351,15 @@ define float @fdiv2(float %x) {
 ; 0x3FE0B21660000000 = 0.52173918485641479492
 ; CHECK-LABEL: @fdiv2(
 ; CHECK: fmul fast float %x, 0x3FE0B21660000000
+}
+
+define <2 x float> @fdiv2_vec(<2 x float> %x) {
+  %mul = fmul <2 x float> %x, <float 6.0, float 9.0>
+  %div1 = fdiv fast <2 x float> %mul, <float 2.0, float 3.0>
+  ret <2 x float> %div1
+
+; CHECK-LABEL: @fdiv2_vec(
+; CHECK: fmul fast <2 x float> %x, <float 3.000000e+00, float 3.000000e+00>
 }
 
 ; "X/C1 / C2 => X * (1/(C2*C1))" is disabled (for now) is C2/C1 is a denormal
