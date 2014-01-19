@@ -7854,15 +7854,6 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
                    Style));
 }
 
-TEST_F(FormatTest, FormatsProtocolBufferDefinitions) {
-  // It seems that clang-format can format protocol buffer definitions
-  // (see https://code.google.com/p/protobuf/).
-  verifyFormat("message SomeMessage {\n"
-               "  required int32 field1 = 1;\n"
-               "  optional string field2 = 2 [default = \"2\"]\n"
-               "}");
-}
-
 TEST_F(FormatTest, FormatsLambdas) {
   verifyFormat("int c = [b]() mutable {\n"
                "  return [&b] { return b++; }();\n"

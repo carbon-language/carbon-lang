@@ -39,7 +39,10 @@ struct FormatStyle {
     /// Should be used for C, C++, ObjectiveC, ObjectiveC++.
     LK_Cpp,
     /// Should be used for JavaScript.
-    LK_JavaScript
+    LK_JavaScript,
+    /// Should be used for Protocol Buffers
+    /// (https://developers.google.com/protocol-buffers/).
+    LK_Proto
   };
 
   /// \brief Language, this format style is targeted at.
@@ -360,6 +363,10 @@ FormatStyle getGoogleStyle();
 /// guide:
 /// http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml.
 FormatStyle getGoogleJSStyle();
+
+/// \brief Returns a format style complying with Google's Protocol Buffer style:
+/// https://developers.google.com/protocol-buffers/docs/style.
+FormatStyle getGoogleProtoStyle();
 
 /// \brief Returns a format style complying with Chromium's style guide:
 /// http://www.chromium.org/developers/coding-style.

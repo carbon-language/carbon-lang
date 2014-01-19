@@ -39,6 +39,7 @@ template <> struct ScalarEnumerationTraits<FormatStyle::LanguageKind> {
   static void enumeration(IO &IO, FormatStyle::LanguageKind &Value) {
     IO.enumCase(Value, "Cpp", FormatStyle::LK_Cpp);
     IO.enumCase(Value, "JavaScript", FormatStyle::LK_JavaScript);
+    IO.enumCase(Value, "Proto", FormatStyle::LK_Proto);
   }
 };
 
@@ -323,6 +324,13 @@ FormatStyle getGoogleJSStyle() {
   return GoogleJSStyle;
 }
 
+FormatStyle getGoogleProtoStyle() {
+  FormatStyle GoogleProtoStyle = getGoogleStyle();
+  GoogleProtoStyle.Language = FormatStyle::LK_Proto;
+  GoogleProtoStyle.AllowShortFunctionsOnASingleLine = false;
+  return GoogleProtoStyle;
+}
+
 FormatStyle getChromiumStyle() {
   FormatStyle ChromiumStyle = getGoogleStyle();
   ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
@@ -379,8 +387,16 @@ bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
   } else if (Name.equals_lower("mozilla")) {
     *Style = getMozillaStyle();
   } else if (Name.equals_lower("google")) {
-    *Style = Language == FormatStyle::LK_JavaScript ? getGoogleJSStyle()
-                                                    : getGoogleStyle();
+    switch (Language) {
+    case FormatStyle::LK_JavaScript:
+      *Style = getGoogleJSStyle();
+      break;
+    case FormatStyle::LK_Proto:
+      *Style = getGoogleProtoStyle();
+      break;
+    default:
+      *Style = getGoogleStyle();
+    }
   } else if (Name.equals_lower("webkit")) {
     *Style = getWebKitStyle();
   } else if (Name.equals_lower("gnu")) {
@@ -1350,6 +1366,8 @@ static StringRef getLanguageName(FormatStyle::LanguageKind Language) {
     return "C++";
   case FormatStyle::LK_JavaScript:
     return "JavaScript";
+  case FormatStyle::LK_Proto:
+    return "Proto";
   default:
     return "Unknown";
   }
@@ -1698,6 +1716,9 @@ const char *StyleOptionHelpDescription =
 static FormatStyle::LanguageKind getLanguageByFileName(StringRef FileName) {
   if (FileName.endswith_lower(".js")) {
     return FormatStyle::LK_JavaScript;
+  } else if (FileName.endswith_lower(".proto") ||
+             FileName.endswith_lower(".protodevel")) {
+    return FormatStyle::LK_Proto;
   }
   return FormatStyle::LK_Cpp;
 }

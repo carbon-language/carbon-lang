@@ -1164,9 +1164,12 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 0;
   if (Left.is(tok::comma))
     return 1;
-  if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr)
-    return 250;
-
+  if (Right.is(tok::l_square)) {
+    if (Style.Language == FormatStyle::LK_Proto)
+      return 1;
+    if (Right.Type != TT_ObjCMethodExpr)
+      return 250;
+  }
   if (Right.Type == TT_StartOfName || Right.is(tok::kw_operator)) {
     if (Line.First->is(tok::kw_for) && Right.PartOfMultiVariableDeclStmt)
       return 3;
@@ -1250,6 +1253,10 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                                           const FormatToken &Left,
                                           const FormatToken &Right) {
+  if (Style.Language == FormatStyle::LK_Proto) {
+    if (Right.is(tok::l_paren) && Left.TokenText == "returns")
+      return true;
+  }
   if (Right.is(tok::hashhash))
     return Left.is(tok::hash);
   if (Left.isOneOf(tok::hashhash, tok::hash))
@@ -1452,6 +1459,10 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
     // deliberate choice and might have aligned the contents of the string
     // literal accordingly. Thus, we try keep existing line breaks.
     return Right.NewlinesBefore > 0;
+  } else if (Right.Previous->is(tok::l_brace) &&
+             Style.Language == FormatStyle::LK_Proto) {
+    // Don't enums onto single lines in protocol buffers.
+    return true;
   }
   return false;
 }
