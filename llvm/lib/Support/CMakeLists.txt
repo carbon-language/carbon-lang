@@ -2,6 +2,7 @@ add_llvm_library(LLVMSupport
   APFloat.cpp
   APInt.cpp
   APSInt.cpp
+  ARMBuildAttrs.cpp
   Allocator.cpp
   BlockFrequency.cpp
   BranchProbability.cpp

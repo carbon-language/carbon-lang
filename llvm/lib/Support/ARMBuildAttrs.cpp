@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARMBuildAttrs.h"
+#include "llvm/Support/ARMBuildAttributes.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 

@@ -22,7 +22,6 @@
 #include "ARMTargetObjectFile.h"
 #include "InstPrinter/ARMInstPrinter.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
-#include "MCTargetDesc/ARMBuildAttrs.h"
 #include "MCTargetDesc/ARMMCExpr.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallString.h"
@@ -45,6 +44,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/ARMBuildAttributes.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
@@ -697,7 +697,7 @@ void ARMAsmPrinter::emitAttributes() {
     ATS.emitAttribute(ARMBuildAttrs::ABI_FP_number_model,
                       ARMBuildAttrs::AllowIEE754);
 
-  // FIXME: add more flags to ARMBuildAttrs.h
+  // FIXME: add more flags to ARMBuildAttributes.h
   // 8-bytes alignment stuff.
   ATS.emitAttribute(ARMBuildAttrs::ABI_align8_needed, 1);
   ATS.emitAttribute(ARMBuildAttrs::ABI_align8_preserved, 1);
