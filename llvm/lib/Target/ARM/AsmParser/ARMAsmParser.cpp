@@ -8365,7 +8365,7 @@ bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
   else if (Tag == ARMBuildAttrs::compatibility) {
     IsStringValue = true;
     IsIntegerValue = true;
-  } else if (Tag == ARMBuildAttrs::nodefaults || Tag < 32 || Tag % 2 == 0)
+  } else if (Tag < 32 || Tag % 2 == 0)
     IsIntegerValue = true;
   else if (Tag % 2 == 1)
     IsStringValue = true;
