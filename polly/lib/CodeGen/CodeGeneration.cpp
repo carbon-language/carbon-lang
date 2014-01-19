@@ -801,7 +801,7 @@ int ClastStmtCodeGen::getNumberOfIterations(const clast_for *For) {
   int NumberOfIterations = polly::getNumberOfIterations(LoopDomain);
   if (NumberOfIterations == -1)
     return -1;
-  return NumberOfIterations / isl_int_get_si(For->stride) + 1;
+  return NumberOfIterations / mpz_get_si(For->stride) + 1;
 }
 
 void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
