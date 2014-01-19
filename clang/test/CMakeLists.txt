@@ -30,6 +30,7 @@ list(APPEND CLANG_TEST_DEPS
   clang clang-headers
   c-index-test diagtool arcmt-test c-arcmt-test
   clang-check clang-format
+  clang-tblgen
   PrintFunctionNames
   SampleAnalyzerPlugin
   )
