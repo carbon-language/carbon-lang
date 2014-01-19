@@ -1265,7 +1265,7 @@ public:
   /// \returns the number of words to hold the integer value with a given bit
   /// width.
   static unsigned getNumWords(unsigned BitWidth) {
-    return (BitWidth + APINT_BITS_PER_WORD - 1) / APINT_BITS_PER_WORD;
+    return ((uint64_t)BitWidth + APINT_BITS_PER_WORD - 1) / APINT_BITS_PER_WORD;
   }
 
   /// \brief Compute the number of active bits in the value

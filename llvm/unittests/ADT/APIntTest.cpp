@@ -623,6 +623,14 @@ TEST(APIntTest, arrayAccess) {
   }
 }
 
+TEST(APIntTest, LargeAPIntConstruction) {
+  // Check that we can properly construct very large APInt. It is very
+  // unlikely that people will ever do this, but it is a legal input,
+  // so we should not crash on it.
+  APInt A9(UINT32_MAX, 0);
+  EXPECT_FALSE(A9.getBoolValue());
+}
+
 TEST(APIntTest, nearestLogBase2) {
   // Single word check.  
 
