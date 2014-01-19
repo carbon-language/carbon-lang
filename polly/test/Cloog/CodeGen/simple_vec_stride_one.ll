@@ -60,7 +60,7 @@ define i32 @main() nounwind {
 ; CHECK: store <4 x float> [[LOAD1]]
 
 ; IMPORT: for (c2=0;c2<=12;c2+=4) {
-; IMPORT:     Stmt_2(c2/4);
+; IMPORT:     Stmt_2({{[(]?}}c2/4{{[)]?}});
 ; IMPORT: }
 
 ; We do not generate optimal loads for this.
