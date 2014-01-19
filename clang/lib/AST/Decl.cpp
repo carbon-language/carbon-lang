@@ -2304,8 +2304,8 @@ bool FunctionDecl::isReservedGlobalPlacementOperator() const {
          getDeclName().getCXXOverloadedOperator() == OO_Array_New ||
          getDeclName().getCXXOverloadedOperator() == OO_Array_Delete);
 
-  if (isa<CXXRecordDecl>(getDeclContext())) return false;
-  assert(getDeclContext()->getRedeclContext()->isTranslationUnit());
+  if (!getDeclContext()->getRedeclContext()->isTranslationUnit())
+    return false;
 
   const FunctionProtoType *proto = getType()->castAs<FunctionProtoType>();
   if (proto->getNumArgs() != 2 || proto->isVariadic()) return false;
@@ -2336,7 +2336,10 @@ bool FunctionDecl::isReplaceableGlobalAllocationFunction() const {
 
   if (isa<CXXRecordDecl>(getDeclContext()))
     return false;
-  assert(getDeclContext()->getRedeclContext()->isTranslationUnit());
+
+  // This can only fail for an invalid 'operator new' declaration.
+  if (!getDeclContext()->getRedeclContext()->isTranslationUnit())
+    return false;
 
   const FunctionProtoType *FPT = getType()->castAs<FunctionProtoType>();
   if (FPT->getNumArgs() > 2 || FPT->isVariadic())
@@ -2377,7 +2380,9 @@ FunctionDecl::getCorrespondingUnsizedGlobalDeallocationFunction() const {
     return 0;
   if (isa<CXXRecordDecl>(getDeclContext()))
     return 0;
-  assert(getDeclContext()->getRedeclContext()->isTranslationUnit());
+
+  if (!getDeclContext()->getRedeclContext()->isTranslationUnit())
+    return 0;
 
   if (getNumParams() != 2 || isVariadic() ||
       !Ctx.hasSameType(getType()->castAs<FunctionProtoType>()->getArgType(1),
