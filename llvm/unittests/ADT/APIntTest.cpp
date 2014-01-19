@@ -665,6 +665,17 @@ TEST(APIntTest, nearestLogBase2) {
   uint64_t I6[4] = {0x0, 0x0, 0x0, 0x18};
   APInt A6(integerPartWidth*4, ArrayRef<integerPart>(I6, 4));
   EXPECT_EQ(A6.nearestLogBase2(), A6.ceilLogBase2());
+
+  // Test BitWidth == 1 special cases.
+  APInt A7(1, 1);
+  EXPECT_EQ(A7.nearestLogBase2(), 0ULL);
+  APInt A8(1, 0);
+  EXPECT_EQ(A8.nearestLogBase2(), UINT32_MAX);
+
+  // Test the zero case when we have a bit width large enough such
+  // that the bit width is larger than UINT32_MAX-1.
+  APInt A9(UINT32_MAX, 0);
+  EXPECT_EQ(A9.nearestLogBase2(), UINT32_MAX);
 }
 
 }

@@ -1505,16 +1505,32 @@ public:
   }
 
   /// \returns the nearest log base 2 of this APInt. Ties round up.
+  ///
+  /// NOTE: When we have a BitWidth of 1, we define:
+  /// 
+  ///   log2(0) = UINT32_MAX
+  ///   log2(1) = 0
+  ///
+  /// to get around any mathematical concerns resulting from
+  /// referencing 2 in a space where 2 does no exist.
   unsigned nearestLogBase2() const {
-    // This is implemented by taking the normal log 2 of a number and adding 1
-    // to it if MSB - 1 is set.
+    // Special case when we have a bitwidth of 1. If VAL is 1, then we
+    // get 0. If VAL is 0, we get UINT64_MAX which gets truncated to
+    // UINT32_MAX.
+    if (BitWidth == 1)
+      return VAL - 1;
 
-    // We follow the model from logBase2 that logBase2(0) == UINT32_MAX. This
-    // works since if we have 0, MSB will be 0. Then we subtract one yielding
-    // UINT32_MAX. Finally extractBit of MSB - 1 will be UINT32_MAX implying
-    // that we get BitWidth - 1.
+    // Handle the zero case.
+    if (!getBoolValue())
+      return UINT32_MAX;
+
+    // The non-zero case is handled by computing:
+    //
+    //   nearestLogBase2(x) = logBase2(x) + x[logBase2(x)-1].
+    //
+    // where x[i] is referring to the value of the ith bit of x.
     unsigned lg = logBase2();
-    return lg + unsigned((*this)[std::min(lg - 1, BitWidth - 1)]);
+    return lg + unsigned((*this)[lg - 1]);
   }
 
   /// \returns the log base 2 of this APInt if its an exact power of two, -1
