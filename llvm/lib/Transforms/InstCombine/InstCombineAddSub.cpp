@@ -845,17 +845,6 @@ Value *FAddCombine::createAddendVal
   return createFMul(OpndVal, Coeff.getValue(Instr->getType()));
 }
 
-/// AddOne - Add one to a ConstantInt.
-static Constant *AddOne(Constant *C) {
-  return ConstantExpr::getAdd(C, ConstantInt::get(C->getType(), 1));
-}
-
-/// SubOne - Subtract one from a ConstantInt.
-static Constant *SubOne(Constant *C) {
-  return ConstantExpr::getAdd(C, ConstantInt::getAllOnesValue(C->getType()));
-}
-
-
 // dyn_castFoldableMul - If this value is a multiply that can be folded into
 // other computations (because it has a constant operand), return the
 // non-constant operand of the multiply, and set CST to point to the multiplier.

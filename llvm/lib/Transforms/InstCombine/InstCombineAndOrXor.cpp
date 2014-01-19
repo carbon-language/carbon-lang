@@ -20,16 +20,6 @@
 using namespace llvm;
 using namespace PatternMatch;
 
-
-/// AddOne - Add one to a ConstantInt.
-static Constant *AddOne(ConstantInt *C) {
-  return ConstantInt::get(C->getContext(), C->getValue() + 1);
-}
-/// SubOne - Subtract one from a ConstantInt.
-static Constant *SubOne(ConstantInt *C) {
-  return ConstantInt::get(C->getContext(), C->getValue()-1);
-}
-
 /// isFreeToInvert - Return true if the specified value is free to invert (apply
 /// ~ to).  This happens in cases where the ~ can be eliminated.
 static inline bool isFreeToInvert(Value *V) {

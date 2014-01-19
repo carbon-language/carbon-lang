@@ -28,15 +28,6 @@ static ConstantInt *getOne(Constant *C) {
   return ConstantInt::get(cast<IntegerType>(C->getType()), 1);
 }
 
-/// AddOne - Add one to a ConstantInt
-static Constant *AddOne(Constant *C) {
-  return ConstantExpr::getAdd(C, ConstantInt::get(C->getType(), 1));
-}
-/// SubOne - Subtract one from a ConstantInt
-static Constant *SubOne(Constant *C) {
-  return ConstantExpr::getSub(C, ConstantInt::get(C->getType(), 1));
-}
-
 static ConstantInt *ExtractElement(Constant *V, Constant *Idx) {
   return cast<ConstantInt>(ConstantExpr::getExtractElement(V, Idx));
 }
