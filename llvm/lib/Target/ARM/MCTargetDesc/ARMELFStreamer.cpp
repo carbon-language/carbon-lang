@@ -290,6 +290,7 @@ private:
     if (AttributeItem *Item = getAttributeItem(Attribute)) {
       if (!OverwriteExisting)
         return;
+      Item->Type = AttributeItem::NumericAttribute;
       Item->IntValue = Value;
       return;
     }
@@ -310,6 +311,7 @@ private:
     if (AttributeItem *Item = getAttributeItem(Attribute)) {
       if (!OverwriteExisting)
         return;
+      Item->Type = AttributeItem::TextAttribute;
       Item->StringValue = Value;
       return;
     }
@@ -330,6 +332,7 @@ private:
     if (AttributeItem *Item = getAttributeItem(Attribute)) {
       if (!OverwriteExisting)
         return;
+      Item->Type = AttributeItem::NumericAndTextAttributes;
       Item->IntValue = IntValue;
       Item->StringValue = StringValue;
       return;
