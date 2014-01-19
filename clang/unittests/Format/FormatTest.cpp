@@ -5404,11 +5404,6 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
   verifyGoogleFormat("- foo:(int)foo;");
 }
 
-TEST_F(FormatTest, FormatObjCBlocks) {
-  verifyFormat("int (^Block)(int, int);");
-  verifyFormat("int (^Block1)(int, int) = ^(int i, int j)");
-}
-
 TEST_F(FormatTest, FormatObjCInterface) {
   verifyFormat("@interface Foo : NSObject <NSSomeDelegate> {\n"
                "@public\n"
@@ -7905,6 +7900,12 @@ TEST_F(FormatTest, FormatsLambdas) {
 }
 
 TEST_F(FormatTest, FormatsBlocks) {
+  verifyFormat("int (^Block)(int, int);");
+  verifyFormat("int (^Block1)(int, int) = ^(int i, int j)");
+
+  verifyFormat("foo(^{ bar(); });");
+  verifyFormat("foo(a, ^{ bar(); });");
+
   // FIXME: Make whitespace formatting consistent. Ask a ObjC dev how
   // it would ideally look.
   verifyFormat("[operation setCompletionBlock:^{ [self onOperationDone]; }];");

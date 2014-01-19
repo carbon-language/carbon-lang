@@ -171,6 +171,8 @@ private:
       }
       if (CurrentToken->isOneOf(tok::r_square, tok::r_brace))
         return false;
+      else if (CurrentToken->is(tok::l_brace))
+        Left->Type = TT_Unknown; // Not TT_ObjCBlockLParen
       updateParameterCount(Left, CurrentToken);
       if (CurrentToken->is(tok::comma) && CurrentToken->Next &&
           !CurrentToken->Next->HasUnescapedNewline &&
