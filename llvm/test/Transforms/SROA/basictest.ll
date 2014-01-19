@@ -1356,3 +1356,18 @@ entry:
   %cond105.i.i = load float* %cond105.in.i.i, align 8
   ret void
 }
+
+define void @test23(i32 %x) {
+; CHECK-LABEL: @test23(
+; CHECK-NOT: alloca
+; CHECK: ret void
+entry:
+  %a = alloca i32, align 4
+  store i32 %x, i32* %a, align 4
+  %gep1 = getelementptr inbounds i32* %a, i32 1
+  %gep0 = getelementptr inbounds i32* %a, i32 0
+  %cast1 = bitcast i32* %gep1 to i8*
+  %cast0 = bitcast i32* %gep0 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %cast1, i8* %cast0, i32 4, i32 1, i1 false)
+  ret void
+}
