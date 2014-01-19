@@ -699,8 +699,8 @@ void ARMAsmPrinter::emitAttributes() {
 
   // FIXME: add more flags to ARMBuildAttributes.h
   // 8-bytes alignment stuff.
-  ATS.emitAttribute(ARMBuildAttrs::ABI_align8_needed, 1);
-  ATS.emitAttribute(ARMBuildAttrs::ABI_align8_preserved, 1);
+  ATS.emitAttribute(ARMBuildAttrs::ABI_align_needed, 1);
+  ATS.emitAttribute(ARMBuildAttrs::ABI_align_preserved, 1);
 
   // ABI_HardFP_use attribute to indicate single precision FP.
   if (Subtarget->isFPOnlySP())

@@ -43,9 +43,9 @@
 @ CHECK: .eabi_attribute 22, 1
 	.eabi_attribute Tag_ABI_FP_number_model, 3
 @ CHECK: .eabi_attribute 23, 3
-	.eabi_attribute Tag_ABI_align8_needed, 1
+	.eabi_attribute Tag_ABI_align_needed, 1
 @ CHECK: .eabi_attribute 24, 1
-	.eabi_attribute Tag_ABI_align8_preserved, 2
+	.eabi_attribute Tag_ABI_align_preserved, 2
 @ CHECK: .eabi_attribute 25, 2
 	.eabi_attribute Tag_ABI_enum_size, 3
 @ CHECK: .eabi_attribute 26, 3
@@ -81,6 +81,13 @@
 @ CHECK: .eabi_attribute 67, "2.09"
 	.eabi_attribute Tag_Virtualization_use, 0
 @ CHECK: .eabi_attribute 68, 0
+
+@ ===--- Compatibility Checks ---===
+
+	.eabi_attribute Tag_ABI_align8_needed, 1
+@ CHECK: .eabi_attribute 24, 1
+	.eabi_attribute Tag_ABI_align8_preserved, 2
+@ CHECK: .eabi_attribute 25, 2
 
 @ ===--- GNU AS Compatibility Checks ---===
 

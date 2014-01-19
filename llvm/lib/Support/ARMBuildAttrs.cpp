@@ -40,8 +40,8 @@ const struct {
   { ARMBuildAttrs::ABI_FP_exceptions, "Tag_ABI_FP_exceptions" },
   { ARMBuildAttrs::ABI_FP_user_exceptions, "Tag_ABI_FP_user_exceptions" },
   { ARMBuildAttrs::ABI_FP_number_model, "Tag_ABI_FP_number_model" },
-  { ARMBuildAttrs::ABI_align8_needed, "Tag_ABI_align8_needed" },
-  { ARMBuildAttrs::ABI_align8_preserved, "Tag_ABI_align8_preserved" },
+  { ARMBuildAttrs::ABI_align_needed, "Tag_ABI_align_needed" },
+  { ARMBuildAttrs::ABI_align_preserved, "Tag_ABI_align_preserved" },
   { ARMBuildAttrs::ABI_enum_size, "Tag_ABI_enum_size" },
   { ARMBuildAttrs::ABI_HardFP_use, "Tag_ABI_HardFP_use" },
   { ARMBuildAttrs::ABI_VFP_args, "Tag_ABI_VFP_args" },
@@ -62,9 +62,9 @@ const struct {
 
   // Legacy Names
   { ARMBuildAttrs::FP_arch, "Tag_VFP_arch" },
-  { ARMBuildAttrs::ABI_align8_needed, "Tag_ABI_align_needed" },
-  { ARMBuildAttrs::ABI_align8_preserved, "Tag_ABI_align_preserved" },
   { ARMBuildAttrs::FP_HP_extension, "Tag_VFP_HP_extension" },
+  { ARMBuildAttrs::ABI_align_needed, "Tag_ABI_align8_needed" },
+  { ARMBuildAttrs::ABI_align_preserved, "Tag_ABI_align8_preserved" },
 };
 }
 

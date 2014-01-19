@@ -33,8 +33,6 @@ enum SpecialAttr {
 enum AttrType {
   // Rest correspond to ELF/.ARM.attributes
   File                      = 1,
-  Section                   = 2,
-  Symbol                    = 3,
   CPU_raw_name              = 4,
   CPU_name                  = 5,
   CPU_arch                  = 6,
@@ -55,8 +53,8 @@ enum AttrType {
   ABI_FP_exceptions         = 21,
   ABI_FP_user_exceptions    = 22,
   ABI_FP_number_model       = 23,
-  ABI_align8_needed         = 24,
-  ABI_align8_preserved      = 25,
+  ABI_align_needed          = 24,
+  ABI_align_preserved       = 25,
   ABI_enum_size             = 26,
   ABI_HardFP_use            = 27,
   ABI_VFP_args              = 28,
@@ -67,14 +65,20 @@ enum AttrType {
   CPU_unaligned_access      = 34,
   FP_HP_extension           = 36,
   ABI_FP_16bit_format       = 38,
-  MPextension_use           = 42, // was 70, 2.08 ABI
+  MPextension_use           = 42, // recoded from 70 (ABI r2.08)
   DIV_use                   = 44,
-  nodefaults                = 64,
   also_compatible_with      = 65,
-  T2EE_use                  = 66,
   conformance               = 67,
   Virtualization_use        = 68,
-  MPextension_use_old       = 70
+
+  /// Legacy Tags
+  Section                   = 2,  // deprecated (ABI r2.09)
+  Symbol                    = 3,  // deprecated (ABI r2.09)
+  ABI_align8_needed         = 24, // renamed to ABI_align_needed (ABI r2.09)
+  ABI_align8_preserved      = 25, // renamed to ABI_align_preserved (ABI r2.09)
+  nodefaults                = 64, // deprecated (ABI r2.09)
+  T2EE_use                  = 66, // deprecated (ABI r2.09)
+  MPextension_use_old       = 70  // recoded to MPextension_use (ABI r2.08)
 };
 
 StringRef AttrTypeAsString(unsigned Attr, bool HasTagPrefix = true);

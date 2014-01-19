@@ -170,7 +170,7 @@
 ; CORTEX-A7-NOFPU: .eabi_attribute	24, 1
 ; CORTEX-A7-FPUV4: .eabi_attribute	24, 1
 
-; Tag_ABI_align8_preserved
+; Tag_ABI_align_preserved
 ; CORTEX-A7-CHECK: .eabi_attribute	25, 1
 ; CORTEX-A7-NOFPU: .eabi_attribute	25, 1
 ; CORTEX-A7-FPUV4: .eabi_attribute	25, 1
