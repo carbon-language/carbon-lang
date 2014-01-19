@@ -187,7 +187,7 @@ static char *mangle_filename(const char *orig_filename) {
   memcpy(new_filename, prefix, prefix_len);
 
   if (prefix[prefix_len - 1] != '/')
-    filename[prefix_len++] = '/';
+    new_filename[prefix_len++] = '/';
   memcpy(new_filename + prefix_len, fname, filename_len + 1);
 
   return new_filename;
