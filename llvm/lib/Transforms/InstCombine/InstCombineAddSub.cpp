@@ -851,8 +851,8 @@ static Constant *AddOne(Constant *C) {
 }
 
 /// SubOne - Subtract one from a ConstantInt.
-static Constant *SubOne(ConstantInt *C) {
-  return ConstantInt::get(C->getContext(), C->getValue()-1);
+static Constant *SubOne(Constant *C) {
+  return ConstantExpr::getAdd(C, ConstantInt::getAllOnesValue(C->getType()));
 }
 
 
@@ -861,23 +861,20 @@ static Constant *SubOne(ConstantInt *C) {
 // non-constant operand of the multiply, and set CST to point to the multiplier.
 // Otherwise, return null.
 //
-static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
-  if (!V->hasOneUse() || !V->getType()->isIntegerTy())
+static inline Value *dyn_castFoldableMul(Value *V, Constant *&CST) {
+  if (!V->hasOneUse() || !V->getType()->isIntOrIntVectorTy())
     return 0;
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) return 0;
 
   if (I->getOpcode() == Instruction::Mul)
-    if ((CST = dyn_cast<ConstantInt>(I->getOperand(1))))
+    if ((CST = dyn_cast<Constant>(I->getOperand(1))))
       return I->getOperand(0);
   if (I->getOpcode() == Instruction::Shl)
-    if ((CST = dyn_cast<ConstantInt>(I->getOperand(1)))) {
+    if ((CST = dyn_cast<Constant>(I->getOperand(1)))) {
       // The multiplier is really 1 << CST.
-      uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
-      uint32_t CSTVal = CST->getLimitedValue(BitWidth);
-      CST = ConstantInt::get(V->getType()->getContext(),
-                             APInt::getOneBitSet(BitWidth, CSTVal));
+      CST = ConstantExpr::getShl(ConstantInt::get(V->getType(), 1), CST);
       return I->getOperand(0);
     }
   return 0;
@@ -987,7 +984,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (Instruction *NV = FoldOpIntoPhi(I))
       return NV;
 
-  if (I.getType()->isIntegerTy(1))
+  if (I.getType()->getScalarType()->isIntegerTy(1))
     return BinaryOperator::CreateXor(LHS, RHS);
 
   // X + X --> X << 1
@@ -1017,20 +1014,22 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       return BinaryOperator::CreateSub(LHS, V);
 
 
-  ConstantInt *C2;
-  if (Value *X = dyn_castFoldableMul(LHS, C2)) {
-    if (X == RHS)   // X*C + X --> X * (C+1)
-      return BinaryOperator::CreateMul(RHS, AddOne(C2));
+  {
+    Constant *C2;
+    if (Value *X = dyn_castFoldableMul(LHS, C2)) {
+      if (X == RHS) // X*C + X --> X * (C+1)
+        return BinaryOperator::CreateMul(RHS, AddOne(C2));
 
-    // X*C1 + X*C2 --> X * (C1+C2)
-    ConstantInt *C1;
-    if (X == dyn_castFoldableMul(RHS, C1))
-      return BinaryOperator::CreateMul(X, ConstantExpr::getAdd(C1, C2));
+      // X*C1 + X*C2 --> X * (C1+C2)
+      Constant *C1;
+      if (X == dyn_castFoldableMul(RHS, C1))
+        return BinaryOperator::CreateMul(X, ConstantExpr::getAdd(C1, C2));
+    }
+
+    // X + X*C --> X * (C+1)
+    if (dyn_castFoldableMul(RHS, C2) == LHS)
+      return BinaryOperator::CreateMul(LHS, AddOne(C2));
   }
-
-  // X + X*C --> X * (C+1)
-  if (dyn_castFoldableMul(RHS, C2) == LHS)
-    return BinaryOperator::CreateMul(LHS, AddOne(C2));
 
   // A+B --> A|B iff A and B have no bits set in common.
   if (IntegerType *IT = dyn_cast<IntegerType>(I.getType())) {
@@ -1071,12 +1070,16 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
 
-  if (ConstantInt *CRHS = dyn_cast<ConstantInt>(RHS)) {
-    Value *X = 0;
-    if (match(LHS, m_Not(m_Value(X))))    // ~X + C --> (C-1) - X
+  if (Constant *CRHS = dyn_cast<Constant>(RHS)) {
+    Value *X;
+    if (match(LHS, m_Not(m_Value(X)))) // ~X + C --> (C-1) - X
       return BinaryOperator::CreateSub(SubOne(CRHS), X);
+  }
 
+  if (ConstantInt *CRHS = dyn_cast<ConstantInt>(RHS)) {
     // (X & FF00) + xx00  -> (X+xx00) & FF00
+    Value *X;
+    ConstantInt *C2;
     if (LHS->hasOneUse() &&
         match(LHS, m_And(m_Value(X), m_ConstantInt(C2))) &&
         CRHS->getValue() == (CRHS->getValue() & C2->getValue())) {
@@ -1381,12 +1384,37 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   if (match(Op0, m_AllOnes()))
     return BinaryOperator::CreateNot(Op1);
 
-  if (ConstantInt *C = dyn_cast<ConstantInt>(Op0)) {
+  if (Constant *C = dyn_cast<Constant>(Op0)) {
     // C - ~X == X + (1+C)
     Value *X = 0;
     if (match(Op1, m_Not(m_Value(X))))
       return BinaryOperator::CreateAdd(X, AddOne(C));
 
+    // Try to fold constant sub into select arguments.
+    if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
+      if (Instruction *R = FoldOpIntoSelect(I, SI))
+        return R;
+
+    // C-(X+C2) --> (C-C2)-X
+    Constant *C2;
+    if (match(Op1, m_Add(m_Value(X), m_Constant(C2))))
+      return BinaryOperator::CreateSub(ConstantExpr::getSub(C, C2), X);
+
+    if (SimplifyDemandedInstructionBits(I))
+      return &I;
+
+    // Fold (sub 0, (zext bool to B)) --> (sext bool to B)
+    if (C->isNullValue() && match(Op1, m_ZExt(m_Value(X))))
+      if (X->getType()->getScalarType()->isIntegerTy(1))
+        return CastInst::CreateSExtOrBitCast(X, Op1->getType());
+
+    // Fold (sub 0, (sext bool to B)) --> (zext bool to B)
+    if (C->isNullValue() && match(Op1, m_SExt(m_Value(X))))
+      if (X->getType()->getScalarType()->isIntegerTy(1))
+        return CastInst::CreateZExtOrBitCast(X, Op1->getType());
+  }
+
+  if (ConstantInt *C = dyn_cast<ConstantInt>(Op0)) {
     // -(X >>u 31) -> (X >>s 31)
     // -(X >>s 31) -> (X >>u 31)
     if (C->isZero()) {
@@ -1401,29 +1429,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
           CI->getValue() == I.getType()->getPrimitiveSizeInBits()-1)
         return BinaryOperator::CreateLShr(X, CI);
     }
-
-    // Try to fold constant sub into select arguments.
-    if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
-      if (Instruction *R = FoldOpIntoSelect(I, SI))
-        return R;
-
-    // C-(X+C2) --> (C-C2)-X
-    ConstantInt *C2;
-    if (match(Op1, m_Add(m_Value(X), m_ConstantInt(C2))))
-      return BinaryOperator::CreateSub(ConstantExpr::getSub(C, C2), X);
-
-    if (SimplifyDemandedInstructionBits(I))
-      return &I;
-
-    // Fold (sub 0, (zext bool to B)) --> (sext bool to B)
-    if (C->isZero() && match(Op1, m_ZExt(m_Value(X))))
-      if (X->getType()->isIntegerTy(1))
-        return CastInst::CreateSExtOrBitCast(X, Op1->getType());
-
-    // Fold (sub 0, (sext bool to B)) --> (zext bool to B)
-    if (C->isZero() && match(Op1, m_SExt(m_Value(X))))
-      if (X->getType()->isIntegerTy(1))
-        return CastInst::CreateZExtOrBitCast(X, Op1->getType());
   }
 
 
@@ -1441,7 +1446,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   if (Op1->hasOneUse()) {
     Value *X = 0, *Y = 0, *Z = 0;
     Constant *C = 0;
-    ConstantInt *CI = 0;
+    Constant *CI = 0;
 
     // (X - (Y - Z))  -->  (X + (Z - Y)).
     if (match(Op1, m_Sub(m_Value(Y), m_Value(Z))))
@@ -1466,13 +1471,13 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         return BinaryOperator::CreateShl(XNeg, Y);
 
     // X - X*C --> X * (1-C)
-    if (match(Op1, m_Mul(m_Specific(Op0), m_ConstantInt(CI)))) {
+    if (match(Op1, m_Mul(m_Specific(Op0), m_Constant(CI)))) {
       Constant *CP1 = ConstantExpr::getSub(ConstantInt::get(I.getType(),1), CI);
       return BinaryOperator::CreateMul(Op0, CP1);
     }
 
     // X - X<<C --> X * (1-(1<<C))
-    if (match(Op1, m_Shl(m_Specific(Op0), m_ConstantInt(CI)))) {
+    if (match(Op1, m_Shl(m_Specific(Op0), m_Constant(CI)))) {
       Constant *One = ConstantInt::get(I.getType(), 1);
       C = ConstantExpr::getSub(One, ConstantExpr::getShl(One, CI));
       return BinaryOperator::CreateMul(Op0, C);
@@ -1487,19 +1492,19 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
     // X - A*CI -> X + A*-CI
     // X - CI*A -> X + A*-CI
-    if (match(Op1, m_Mul(m_Value(A), m_ConstantInt(CI))) ||
-        match(Op1, m_Mul(m_ConstantInt(CI), m_Value(A)))) {
+    if (match(Op1, m_Mul(m_Value(A), m_Constant(CI))) ||
+        match(Op1, m_Mul(m_Constant(CI), m_Value(A)))) {
       Value *NewMul = Builder->CreateMul(A, ConstantExpr::getNeg(CI));
       return BinaryOperator::CreateAdd(Op0, NewMul);
     }
   }
 
-  ConstantInt *C1;
+  Constant *C1;
   if (Value *X = dyn_castFoldableMul(Op0, C1)) {
     if (X == Op1)  // X*C - X --> X * (C-1)
       return BinaryOperator::CreateMul(Op1, SubOne(C1));
 
-    ConstantInt *C2;   // X*C1 - X*C2 -> X * (C1-C2)
+    Constant *C2;   // X*C1 - X*C2 -> X * (C1-C2)
     if (X == dyn_castFoldableMul(Op1, C2))
       return BinaryOperator::CreateMul(X, ConstantExpr::getSub(C1, C2));
   }

@@ -387,7 +387,7 @@ for.end:                                          ; preds = %for.cond
 ;   return Foo.A[a];
 ; }
 ; CHECK-LABEL: define i32 @noAlias08(
-; CHECK: sub nsw <4 x i32>
+; CHECK: sub <4 x i32>
 ; CHECK: ret
 
 define i32 @noAlias08(i32 %a) #0 {
@@ -439,7 +439,7 @@ for.end:                                          ; preds = %for.cond
 ;   return Foo.A[a];
 ; }
 ; CHECK-LABEL: define i32 @noAlias09(
-; CHECK: sub nsw <4 x i32>
+; CHECK: sub <4 x i32>
 ; CHECK: ret
 
 define i32 @noAlias09(i32 %a) #0 {
@@ -491,7 +491,7 @@ for.end:                                          ; preds = %for.cond
 ;   return *(PA+a);
 ; }
 ; CHECK-LABEL: define i32 @noAlias10(
-; CHECK-NOT: sub nsw <4 x i32>
+; CHECK-NOT: sub {{.*}} <4 x i32>
 ; CHECK: ret
 ;
 ; TODO: This test vectorizes (with run-time check) on real targets with -O3)
@@ -721,7 +721,7 @@ for.end:                                          ; preds = %for.cond
 ;   return Foo.A[a];
 ; }
 ; CHECK-LABEL: define i32 @noAlias14(
-; CHECK: sub nsw <4 x i32>
+; CHECK: sub <4 x i32>
 ; CHECK: ret
 
 define i32 @noAlias14(i32 %a) #0 {

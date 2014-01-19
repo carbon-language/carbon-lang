@@ -158,15 +158,6 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   }
 
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
-    // Canonicalize (X+C1)*CI -> X*CI+C1*CI.
-    { Value *X; ConstantInt *C1;
-      if (Op0->hasOneUse() &&
-          match(Op0, m_Add(m_Value(X), m_ConstantInt(C1)))) {
-        Value *Add = Builder->CreateMul(X, CI);
-        return BinaryOperator::CreateAdd(Add, Builder->CreateMul(C1, CI));
-      }
-    }
-
     // (Y - X) * (-(2**n)) -> (X - Y) * (2**n), for positive nonzero n
     // (Y + const) * (-(2**n)) -> (-constY) * (2**n), for positive nonzero n
     // The "* (2**n)" thus becomes a potential shifting opportunity.
@@ -201,6 +192,16 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     if (isa<PHINode>(Op0))
       if (Instruction *NV = FoldOpIntoPhi(I))
         return NV;
+
+    // Canonicalize (X+C1)*CI -> X*CI+C1*CI.
+    {
+      Value *X;
+      Constant *C1;
+      if (match(Op0, m_OneUse(m_Add(m_Value(X), m_Constant(C1))))) {
+        Value *Add = Builder->CreateMul(X, Op1);
+        return BinaryOperator::CreateAdd(Add, Builder->CreateMul(C1, Op1));
+      }
+    }
   }
 
   if (Value *Op0v = dyn_castNegVal(Op0))     // -X * -Y = X*Y
@@ -247,7 +248,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   }
 
   /// i1 mul -> i1 and.
-  if (I.getType()->isIntegerTy(1))
+  if (I.getType()->getScalarType()->isIntegerTy(1))
     return BinaryOperator::CreateAnd(Op0, Op1);
 
   // X*(1 << Y) --> X << Y
@@ -882,13 +883,11 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
     return Common;
 
   // (x lshr C1) udiv C2 --> x udiv (C2 << C1)
-  if (ConstantInt *C2 = dyn_cast<ConstantInt>(Op1)) {
+  if (Constant *C2 = dyn_cast<Constant>(Op1)) {
     Value *X;
-    ConstantInt *C1;
-    if (match(Op0, m_LShr(m_Value(X), m_ConstantInt(C1)))) {
-      APInt NC = C2->getValue().shl(C1->getLimitedValue(C1->getBitWidth()-1));
-      return BinaryOperator::CreateUDiv(X, Builder->getInt(NC));
-    }
+    Constant *C1;
+    if (match(Op0, m_LShr(m_Value(X), m_Constant(C1))))
+      return BinaryOperator::CreateUDiv(X, ConstantExpr::getShl(C2, C1));
   }
 
   // (zext A) udiv (zext B) --> zext (A udiv B)
@@ -942,11 +941,11 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   if (Instruction *Common = commonIDivTransforms(I))
     return Common;
 
-  if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
-    // sdiv X, -1 == -X
-    if (RHS->isAllOnesValue())
-      return BinaryOperator::CreateNeg(Op0);
+  // sdiv X, -1 == -X
+  if (match(Op1, m_AllOnes()))
+    return BinaryOperator::CreateNeg(Op0);
 
+  if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     // sdiv X, C  -->  ashr exact X, log2(C)
     if (I.isExact() && RHS->getValue().isNonNegative() &&
         RHS->getValue().isPowerOf2()) {
@@ -954,7 +953,9 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
                                             RHS->getValue().exactLogBase2());
       return BinaryOperator::CreateExactAShr(Op0, ShAmt, I.getName());
     }
+  }
 
+  if (Constant *RHS = dyn_cast<Constant>(Op1)) {
     // -X/C  -->  X/-C  provided the negation doesn't overflow.
     if (SubOperator *Sub = dyn_cast<SubOperator>(Op0))
       if (match(Sub->getOperand(0), m_Zero()) && Sub->hasNoSignedWrap())
@@ -1149,7 +1150,7 @@ Instruction *InstCombiner::commonIRemTransforms(BinaryOperator &I) {
   if (isa<SelectInst>(Op1) && SimplifyDivRemOfSelect(I))
     return &I;
 
-  if (isa<ConstantInt>(Op1)) {
+  if (isa<Constant>(Op1)) {
     if (Instruction *Op0I = dyn_cast<Instruction>(Op0)) {
       if (SelectInst *SI = dyn_cast<SelectInst>(Op0I)) {
         if (Instruction *R = FoldOpIntoSelect(I, SI))

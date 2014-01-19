@@ -391,4 +391,56 @@ define i16 @test30_as1(i8 addrspace(1)* %foo, i16 %i, i16 %j) {
   ret i16 %sub
 }
 
+define <2 x i64> @test31(<2 x i64> %A) {
+  %xor = xor <2 x i64> %A, <i64 -1, i64 -1>
+  %sub = sub <2 x i64> <i64 2, i64 3>, %xor
+  ret <2 x i64> %sub
+; CHECK-LABEL: @test31(
+; CHECK-NEXT: %sub = add <2 x i64> %A, <i64 3, i64 4>
+; CHECK-NEXT: ret <2 x i64> %sub
+}
 
+define <2 x i64> @test32(<2 x i64> %A) {
+  %add = add <2 x i64> %A, <i64 -1, i64 -1>
+  %sub = sub <2 x i64> <i64 2, i64 3>, %add
+  ret <2 x i64> %sub
+; CHECK-LABEL: @test32(
+; CHECK-NEXT: %sub = sub <2 x i64> <i64 3, i64 4>
+; CHECK-NEXT: ret <2 x i64> %sub
+}
+
+define <2 x i64> @test33(<2 x i1> %A) {
+  %ext = zext <2 x i1> %A to <2 x i64>
+  %sub = sub <2 x i64> zeroinitializer, %ext
+  ret <2 x i64> %sub
+; CHECK-LABEL: @test33(
+; CHECK-NEXT: %sub = sext <2 x i1> %A to <2 x i64>
+; CHECK-NEXT: ret <2 x i64> %sub
+}
+
+define <2 x i64> @test34(<2 x i1> %A) {
+  %ext = sext <2 x i1> %A to <2 x i64>
+  %sub = sub <2 x i64> zeroinitializer, %ext
+  ret <2 x i64> %sub
+; CHECK-LABEL: @test34(
+; CHECK-NEXT: %sub = zext <2 x i1> %A to <2 x i64>
+; CHECK-NEXT: ret <2 x i64> %sub
+}
+
+define <2 x i64> @test35(<2 x i64> %A) {
+  %mul = mul <2 x i64> %A, <i64 3, i64 4>
+  %sub = sub <2 x i64> %A, %mul
+  ret <2 x i64> %sub
+; CHECK-LABEL: @test35(
+; CHECK-NEXT: %sub = mul <2 x i64> %A, <i64 -2, i64 -3>
+; CHECK-NEXT: ret <2 x i64> %sub
+}
+
+define <2 x i64> @test36(<2 x i64> %A) {
+  %shl = shl <2 x i64> %A, <i64 3, i64 4>
+  %sub = sub <2 x i64> %shl, %A
+  ret <2 x i64> %sub
+; CHECK-LABEL: @test36(
+; CHECK-NEXT: %sub = mul <2 x i64> %A, <i64 7, i64 15>
+; CHECK-NEXT: ret <2 x i64> %sub
+}

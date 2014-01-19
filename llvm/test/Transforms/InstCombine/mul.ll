@@ -181,3 +181,19 @@ define i32 @test19(i32 %A, i32 %B) {
   ret i32 %H
 ; CHECK: ret i32 0
 }
+
+define <2 x i64> @test20(<2 x i64> %A) {
+; CHECK-LABEL: @test20(
+        %B = add <2 x i64> %A, <i64 12, i64 14>
+        %C = mul <2 x i64> %B, <i64 3, i64 2>
+        ret <2 x i64> %C
+; CHECK: mul <2 x i64> %A, <i64 3, i64 2>
+; CHECK: add <2 x i64> %{{.}}, <i64 36, i64 28>
+}
+
+define <2 x i1> @test21(<2 x i1> %A, <2 x i1> %B) {
+; CHECK-LABEL: @test21(
+        %C = mul <2 x i1> %A, %B
+        ret <2 x i1> %C
+; CHECK: %C = and <2 x i1> %A, %B
+}

@@ -41,3 +41,38 @@ define i32 @test4(i32 %A) {
 ; CHECK-NEXT: ret i32 %B
 }
 
+define <2 x i1> @test5(<2 x i1> %A, <2 x i1> %B) {
+  %add = add <2 x i1> %A, %B
+  ret <2 x i1> %add
+; CHECK-LABEL: @test5(
+; CHECK-NEXT: %add = xor <2 x i1> %A, %B
+; CHECK-NEXT: ret <2 x i1> %add
+}
+
+define <2 x i64> @test6(<2 x i64> %A) {
+  %shl = shl <2 x i64> %A, <i64 2, i64 3>
+  %add = add <2 x i64> %shl, %A
+  ret <2 x i64> %add
+; CHECK-LABEL: @test6(
+; CHECK-NEXT: %add = mul <2 x i64> %A, <i64 5, i64 9>
+; CHECK-NEXT: ret <2 x i64> %add
+}
+
+define <2 x i64> @test7(<2 x i64> %A) {
+  %shl = shl <2 x i64> %A, <i64 2, i64 3>
+  %mul = mul <2 x i64> %A, <i64 3, i64 4>
+  %add = add <2 x i64> %shl, %mul
+  ret <2 x i64> %add
+; CHECK-LABEL: @test7(
+; CHECK-NEXT: %add = mul <2 x i64> %A, <i64 7, i64 12>
+; CHECK-NEXT: ret <2 x i64> %add
+}
+
+define <2 x i64> @test8(<2 x i64> %A) {
+  %xor = xor <2 x i64> %A, <i64 -1, i64 -1>
+  %add = add <2 x i64> %xor, <i64 2, i64 3>
+  ret <2 x i64> %add
+; CHECK-LABEL: @test8(
+; CHECK-NEXT: %add = sub <2 x i64> <i64 1, i64 2>, %A
+; CHECK-NEXT: ret <2 x i64> %add
+}
