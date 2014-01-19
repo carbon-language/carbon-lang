@@ -267,7 +267,6 @@ set (LLVM_TOOLCHAIN_TOOLS
   )
 
 macro(add_llvm_tool name)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR})
   if( NOT LLVM_BUILD_TOOLS )
     set(EXCLUDE_FROM_ALL ON)
   endif()
@@ -284,7 +283,6 @@ endmacro(add_llvm_tool name)
 
 
 macro(add_llvm_example name)
-#  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_EXAMPLES_BINARY_DIR})
   if( NOT LLVM_BUILD_EXAMPLES )
     set(EXCLUDE_FROM_ALL ON)
   endif()
