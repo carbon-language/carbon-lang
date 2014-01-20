@@ -3786,8 +3786,7 @@ DLLImportAttr *Sema::mergeDLLImportAttr(Decl *D, SourceRange Range,
     }
   }
 
-  return ::new (Context)DLLImportAttr(Range, Context,
-                                      AttrSpellingListIndex);
+  return ::new (Context) DLLImportAttr(Range, Context, AttrSpellingListIndex);
 }
 
 static void handleDLLImportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -3799,7 +3798,7 @@ static void handleDLLImportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     // specified.
     if (!S.getLangOpts().MicrosoftExt)
       S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 2 /*variable and function*/;
+        << Attr.getName() << ExpectedVariableOrFunction;
     return;
   }
 
@@ -3826,13 +3825,12 @@ DLLExportAttr *Sema::mergeDLLExportAttr(Decl *D, SourceRange Range,
   if (D->hasAttr<DLLExportAttr>())
     return NULL;
 
-  return ::new (Context)DLLExportAttr(Range, Context,
-                                      AttrSpellingListIndex);
+  return ::new (Context) DLLExportAttr(Range, Context, AttrSpellingListIndex);
 }
 
 static void handleDLLExportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // Currently, the dllexport attribute is ignored for inlined functions, unless
-  // the -fkeep-inline-functions flag has been used. Warning is emitted;
+  // the -fkeep-inline-functions flag has been used. Warning is emitted.
   if (isa<FunctionDecl>(D) && cast<FunctionDecl>(D)->isInlineSpecified()) {
     // FIXME: ... unless the -fkeep-inline-functions flag has been used.
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
