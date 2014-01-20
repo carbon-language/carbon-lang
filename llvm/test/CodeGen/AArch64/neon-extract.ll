@@ -188,35 +188,3 @@ entry:
   %vext = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10>
   ret <8 x i16> %vext
 }
-
-define <8 x i8> @test_undef_vext_s8(<8 x i8> %a) {
-; CHECK: test_undef_vext_s8:
-; CHECK: ext {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #0x2
-entry:
-  %vext = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 10, i32 10, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9>
-  ret <8 x i8> %vext
-}
-
-define <16 x i8> @test_undef_vextq_s8(<16 x i8> %a) {
-; CHECK: test_undef_vextq_s8:
-; CHECK: ext {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #0x6
-entry:
-  %vext = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 20, i32 20, i32 20, i32 20, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 20, i32 20, i32 20, i32 20, i32 20>
-  ret <16 x i8> %vext
-}
-
-define <4 x i16> @test_undef_vext_s16(<4 x i16> %a) {
-; CHECK: test_undef_vext_s16:
-; CHECK: ext {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #0x2
-entry:
-  %vext = shufflevector <4 x i16> %a, <4 x i16> undef, <4 x i32> <i32 4, i32 2, i32 3, i32 4>
-  ret <4 x i16> %vext
-}
-
-define <8 x i16> @test_undef_vextq_s16(<8 x i16> %a) {
-; CHECK: test_undef_vextq_s16:
-; CHECK: ext {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #0x6
-entry:
-  %vext = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 10, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10>
-  ret <8 x i16> %vext
-}
