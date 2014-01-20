@@ -1245,15 +1245,6 @@ static void handleReturnsNonNullAttr(Sema &S, Decl *D,
                                Attr.getAttributeSpellingListIndex()));
 }
 
-static const char *ownershipKindToDiagName(OwnershipAttr::OwnershipKind K) {
-  switch (K) {
-    case OwnershipAttr::Holds:    return "'ownership_holds'";
-    case OwnershipAttr::Takes:    return "'ownership_takes'";
-    case OwnershipAttr::Returns:  return "'ownership_returns'";
-  }
-  llvm_unreachable("unknown ownership");
-}
-
 static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
   // This attribute must be applied to a function declaration. The first
   // argument to the attribute must be an identifier, the name of the resource,
@@ -1339,7 +1330,7 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
       if ((*i)->getOwnKind() != K && (*i)->args_end() !=
           std::find((*i)->args_begin(), (*i)->args_end(), Idx)) {
         S.Diag(AL.getLoc(), diag::err_attributes_are_not_compatible)
-          << AL.getName() << ownershipKindToDiagName((*i)->getOwnKind());
+          << AL.getName() << *i;
         return;
       }
     }
