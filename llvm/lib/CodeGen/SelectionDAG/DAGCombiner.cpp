@@ -2249,7 +2249,7 @@ SDValue DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp,
   bool HiExists = N->hasAnyUseOfValue(1);
   if (!HiExists &&
       (!LegalOperations ||
-       TLI.isOperationLegal(LoOp, N->getValueType(0)))) {
+       TLI.isOperationLegalOrCustom(LoOp, N->getValueType(0)))) {
     SDValue Res = DAG.getNode(LoOp, SDLoc(N), N->getValueType(0),
                               N->op_begin(), N->getNumOperands());
     return CombineTo(N, Res, Res);
