@@ -74,6 +74,12 @@ def HasFunctionProto : SubsetSubject<DeclBase,
                                        isa<ObjCMethodDecl>(S) ||
                                        isa<BlockDecl>(S)}]>;
 
+// This is a fake Decl node that represents a function definition as well as a
+// function declaration. This can be used for attributes which are allowed to
+// appear on the definition of a function that's been late parsed. It is
+// treated and diagnosed the same as a FunctionDecl.
+def FunctionDefinition : DDecl<Function, 1>;
+
 // A single argument to an attribute
 class Argument<string name, bit optional> {
   string Name = name;
@@ -1097,7 +1103,7 @@ def ScopedLockable : InheritableAttr {
 
 def NoThreadSafetyAnalysis : InheritableAttr {
   let Spellings = [GNU<"no_thread_safety_analysis">];
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 def GuardedBy : InheritableAttr {
@@ -1146,7 +1152,7 @@ def ExclusiveLockFunction : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 def SharedLockFunction : InheritableAttr {
@@ -1155,7 +1161,7 @@ def SharedLockFunction : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 def AssertExclusiveLock : InheritableAttr {
@@ -1164,7 +1170,7 @@ def AssertExclusiveLock : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 def AssertSharedLock : InheritableAttr {
@@ -1173,7 +1179,7 @@ def AssertSharedLock : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 // The first argument is an integer or boolean value specifying the return value
@@ -1184,7 +1190,7 @@ def ExclusiveTrylockFunction : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 // The first argument is an integer or boolean value specifying the return value
@@ -1195,7 +1201,7 @@ def SharedTrylockFunction : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 def UnlockFunction : InheritableAttr {
@@ -1204,7 +1210,7 @@ def UnlockFunction : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 def LockReturned : InheritableAttr {
@@ -1213,7 +1219,7 @@ def LockReturned : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 def LocksExcluded : InheritableAttr {
@@ -1222,7 +1228,7 @@ def LocksExcluded : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 def ExclusiveLocksRequired : InheritableAttr {
@@ -1231,7 +1237,7 @@ def ExclusiveLocksRequired : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 def SharedLocksRequired : InheritableAttr {
@@ -1240,7 +1246,7 @@ def SharedLocksRequired : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
-  let Subjects = SubjectList<[Function, FunctionTemplate]>;
+  let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
 // C/C++ consumed attributes.

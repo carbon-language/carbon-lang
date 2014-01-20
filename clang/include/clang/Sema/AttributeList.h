@@ -494,6 +494,7 @@ public:
   bool diagnoseAppertainsTo(class Sema &S, const Decl *D) const;
   bool diagnoseLangOpts(class Sema &S) const;
   bool existsInTarget(llvm::Triple T) const;
+  bool canAppearOnFunctionDefinition() const;
 };
 
 /// A factory, from which one makes pools, from which one creates

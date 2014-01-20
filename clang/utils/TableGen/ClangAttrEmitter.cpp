@@ -2006,6 +2006,7 @@ static std::string CalculateDiagnostic(const Record &S) {
 
     uint32_t V = StringSwitch<uint32_t>(Name)
                    .Case("Function", Func)
+                   .Case("FunctionDefinition", Func)
                    .Case("Var", Var)
                    .Case("ObjCMethod", ObjCMethod)
                    .Case("ParmVar", Param)
@@ -2081,6 +2082,8 @@ static std::string GetSubjectWithSuffix(const Record *R) {
   std::string B = R->getName();
   if (B == "DeclBase")
     return "Decl";
+  else if (B == "FunctionDefinition")
+    return "FunctionDecl";
   return B + "Decl";
 }
 static std::string GenerateCustomAppertainsTo(const Record &Subject,
@@ -2311,6 +2314,24 @@ static std::string GenerateTargetRequirements(const Record &Attr,
   return FnName;
 }
 
+static bool CanAppearOnFuncDef(const Record &Attr) {
+  // Look at the subjects this function appertains to; if a FunctionDefinition
+  // appears in the list, then this attribute can appear on a function
+  // definition.
+  if (Attr.isValueUnset("Subjects"))
+    return false;
+
+  std::vector<Record *> Subjects = Attr.getValueAsDef("Subjects")->
+                                        getValueAsListOfDefs("Subjects");
+  for (std::vector<Record *>::const_iterator I = Subjects.begin(),
+       E = Subjects.end(); I != E; ++I) {
+    const Record &Subject = **I;
+    if (Subject.getName() == "FunctionDefinition")
+      return true;
+  }
+  return false;
+}
+
 /// Emits the parsed attribute helpers
 void EmitClangAttrParsedAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
   emitSourceFileHeader("Parsed attribute helpers", OS);
@@ -2346,6 +2367,7 @@ void EmitClangAttrParsedAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     SS << ", " << I->second->getValueAsBit("HasCustomParsing");
     SS << ", " << I->second->isSubClassOf("TargetSpecificAttr");
     SS << ", " << I->second->isSubClassOf("TypeAttr");
+    SS << ", " << CanAppearOnFuncDef(*I->second);
     SS << ", " << GenerateAppertainsTo(*I->second, OS);
     SS << ", " << GenerateLangOptRequirements(*I->second, OS);
     SS << ", " << GenerateTargetRequirements(*I->second, Dupes, OS);
