@@ -1254,7 +1254,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                                           const FormatToken &Left,
                                           const FormatToken &Right) {
   if (Style.Language == FormatStyle::LK_Proto) {
-    if (Right.is(tok::l_paren) && Left.TokenText == "returns")
+    if (Right.is(tok::l_paren) &&
+        (Left.TokenText == "returns" || Left.TokenText == "option"))
       return true;
   }
   if (Right.is(tok::hashhash))

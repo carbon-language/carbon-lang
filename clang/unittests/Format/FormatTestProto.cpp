@@ -68,5 +68,10 @@ TEST_F(FormatTestProto, MessageFieldAttributes) {
                "    [default = REALLY_REALLY_LONG_CONSTANT_VALUE];");
 }
 
+TEST_F(FormatTestProto, FormatsOptions) {
+  verifyFormat("option java_package = \"my.test.package\";");
+  verifyFormat("option (my_custom_option) = \"abc\";");
+}
+
 } // end namespace tooling
 } // end namespace clang
