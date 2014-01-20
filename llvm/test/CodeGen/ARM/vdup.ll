@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -float-abi=soft -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -float-abi=soft -mattr=+neon -verify-machineinstrs | FileCheck %s
 
 define <8 x i8> @v_dup8(i8 %A) nounwind {
 ;CHECK-LABEL: v_dup8:
@@ -330,4 +330,36 @@ define <8 x i8> @check_i8(<16 x i8> %v) nounwind {
   %1 = insertelement  <8  x i8> undef, i8 %x, i32 0
   %2 = insertelement  <8  x i8> %1, i8 %x, i32 1
   ret <8 x i8> %2
+}
+
+; Check that an SPR splat produces a vdup.
+
+define <2 x float> @check_spr_splat2(<2 x float> %p, i16 %q) {
+;CHECK-LABEL: check_spr_splat2:
+;CHECK: vdup.32 d
+  %conv = sitofp i16 %q to float
+  %splat.splatinsert = insertelement <2 x float> undef, float %conv, i32 0
+  %splat.splat = shufflevector <2 x float> %splat.splatinsert, <2 x float> undef, <2 x i32> zeroinitializer
+  %sub = fsub <2 x float> %splat.splat, %p
+  ret <2 x float> %sub
+}
+
+define <4 x float> @check_spr_splat4(<4 x float> %p, i16 %q) {
+;CHECK-LABEL: check_spr_splat4:
+;CHECK: vdup.32 q
+  %conv = sitofp i16 %q to float
+  %splat.splatinsert = insertelement <4 x float> undef, float %conv, i32 0
+  %splat.splat = shufflevector <4 x float> %splat.splatinsert, <4 x float> undef, <4 x i32> zeroinitializer
+  %sub = fsub <4 x float> %splat.splat, %p
+  ret <4 x float> %sub
+}
+
+define <4 x float> @check_spr_splat4_lane1(<4 x float> %p, i16 %q) {
+;CHECK-LABEL: check_spr_splat4_lane1:
+;CHECK: vdup.32 q{{.*}}, d{{.*}}[1]
+  %conv = sitofp i16 %q to float
+  %splat.splatinsert = insertelement <4 x float> undef, float %conv, i32 1
+  %splat.splat = shufflevector <4 x float> %splat.splatinsert, <4 x float> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
+  %sub = fsub <4 x float> %splat.splat, %p
+  ret <4 x float> %sub
 }

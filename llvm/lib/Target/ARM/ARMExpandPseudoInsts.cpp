@@ -1079,33 +1079,6 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MI.eraseFromParent();
       return true;
     }
-    case ARM::VDUPfqf:
-    case ARM::VDUPfdf:{
-      unsigned NewOpc = Opcode == ARM::VDUPfqf ? ARM::VDUPLN32q :
-        ARM::VDUPLN32d;
-      MachineInstrBuilder MIB =
-        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc));
-      unsigned OpIdx = 0;
-      unsigned SrcReg = MI.getOperand(1).getReg();
-      unsigned Lane = TRI->getEncodingValue(SrcReg) & 1;
-      unsigned DReg = TRI->getMatchingSuperReg(SrcReg,
-                            Lane & 1 ? ARM::ssub_1 : ARM::ssub_0,
-                            &ARM::DPR_VFP2RegClass);
-      // The lane is [0,1] for the containing DReg superregister.
-      // Copy the dst/src register operands.
-      MIB.addOperand(MI.getOperand(OpIdx++));
-      MIB.addReg(DReg);
-      ++OpIdx;
-      // Add the lane select operand.
-      MIB.addImm(Lane);
-      // Add the predicate operands.
-      MIB.addOperand(MI.getOperand(OpIdx++));
-      MIB.addOperand(MI.getOperand(OpIdx++));
-
-      TransferImpOps(MI, MIB, MIB);
-      MI.eraseFromParent();
-      return true;
-    }
 
     case ARM::VLD2q8Pseudo:
     case ARM::VLD2q16Pseudo:
