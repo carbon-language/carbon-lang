@@ -3027,36 +3027,40 @@ void DwarfDebug::emitDebugStrDWO() {
 void DwarfDebug::addDwarfTypeUnitType(DICompileUnit CUNode,
                                       StringRef Identifier, DIE *RefDie,
                                       DICompositeType CTy) {
+
   const DwarfTypeUnit *&TU = DwarfTypeUnits[CTy];
-  if (!TU) {
-    DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
-    DwarfTypeUnit *NewTU = new DwarfTypeUnit(
-        InfoHolder.getUnits().size(), UnitDie, CUNode, Asm, this, &InfoHolder);
-    TU = NewTU;
-    InfoHolder.addUnit(NewTU);
-
-    NewTU->addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
-                   CUNode.getLanguage());
-
-    MD5 Hash;
-    Hash.update(Identifier);
-    // ... take the least significant 8 bytes and return those. Our MD5
-    // implementation always returns its results in little endian, swap bytes
-    // appropriately.
-    MD5::MD5Result Result;
-    Hash.final(Result);
-    uint64_t Signature = *reinterpret_cast<support::ulittle64_t *>(Result + 8);
-    NewTU->setTypeSignature(Signature);
-    if (useSplitDwarf())
-      NewTU->setSkeleton(constructSkeletonTU(NewTU));
-
-    NewTU->setType(NewTU->createTypeDIE(CTy));
-
-    NewTU->initSection(
-        useSplitDwarf()
-            ? Asm->getObjFileLowering().getDwarfTypesDWOSection(Signature)
-            : Asm->getObjFileLowering().getDwarfTypesSection(Signature));
+  if (TU) {
+    CUMap.begin()->second->addDIETypeSignature(RefDie, *TU);
+    return;
   }
 
-  CUMap.begin()->second->addDIETypeSignature(RefDie, *TU);
+  DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
+  DwarfTypeUnit *NewTU = new DwarfTypeUnit(
+      InfoHolder.getUnits().size(), UnitDie, CUNode, Asm, this, &InfoHolder);
+  TU = NewTU;
+  InfoHolder.addUnit(NewTU);
+
+  NewTU->addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
+                 CUNode.getLanguage());
+
+  MD5 Hash;
+  Hash.update(Identifier);
+  // ... take the least significant 8 bytes and return those. Our MD5
+  // implementation always returns its results in little endian, swap bytes
+  // appropriately.
+  MD5::MD5Result Result;
+  Hash.final(Result);
+  uint64_t Signature = *reinterpret_cast<support::ulittle64_t *>(Result + 8);
+  NewTU->setTypeSignature(Signature);
+  if (useSplitDwarf())
+    NewTU->setSkeleton(constructSkeletonTU(NewTU));
+
+  NewTU->setType(NewTU->createTypeDIE(CTy));
+
+  NewTU->initSection(
+      useSplitDwarf()
+          ? Asm->getObjFileLowering().getDwarfTypesDWOSection(Signature)
+          : Asm->getObjFileLowering().getDwarfTypesSection(Signature));
+
+  CUMap.begin()->second->addDIETypeSignature(RefDie, *NewTU);
 }
