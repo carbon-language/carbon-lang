@@ -4654,22 +4654,28 @@ AArch64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   // it into NEON_VEXTRACT.
   if (V1EltNum == Length) {
     // Check if the shuffle mask is sequential.
-    bool IsSequential = true;
-    int CurMask = ShuffleMask[0];
-    for (int I = 0; I < Length; ++I) {
-      if (ShuffleMask[I] != CurMask) {
-        IsSequential = false;
-        break;
-      }
-      CurMask++;
+    int SkipUndef = 0;
+    while (ShuffleMask[SkipUndef] == -1) {
+      SkipUndef++;
     }
-    if (IsSequential) {
-      assert((EltSize % 8 == 0) && "Bitsize of vector element is incorrect");
-      unsigned VecSize = EltSize * V1EltNum;
-      unsigned Index = (EltSize/8) * ShuffleMask[0];
-      if (VecSize == 64 || VecSize == 128)
-        return DAG.getNode(AArch64ISD::NEON_VEXTRACT, dl, VT, V1, V2,
-                           DAG.getConstant(Index, MVT::i64));
+    int CurMask = ShuffleMask[SkipUndef];
+    if (CurMask >= SkipUndef) {
+      bool IsSequential = true;
+      for (int I = SkipUndef; I < Length; ++I) {
+        if (ShuffleMask[I] != -1 && ShuffleMask[I] != CurMask) {
+          IsSequential = false;
+          break;
+        }
+        CurMask++;
+      }
+      if (IsSequential) {
+        assert((EltSize % 8 == 0) && "Bitsize of vector element is incorrect");
+        unsigned VecSize = EltSize * V1EltNum;
+        unsigned Index = (EltSize / 8) * (ShuffleMask[SkipUndef] - SkipUndef);
+        if (VecSize == 64 || VecSize == 128)
+          return DAG.getNode(AArch64ISD::NEON_VEXTRACT, dl, VT, V1, V2,
+                             DAG.getConstant(Index, MVT::i64));
+      }
     }
   }
 
