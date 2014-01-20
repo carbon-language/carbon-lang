@@ -89,6 +89,8 @@ add_llvm_library(LLVMSupport
   TimeValue.cpp
   Valgrind.cpp
   Watchdog.cpp
+
+  ADDITIONAL_HEADERS
   Unix/Host.inc
   Unix/Memory.inc
   Unix/Mutex.inc

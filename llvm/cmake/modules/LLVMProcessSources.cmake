@@ -38,7 +38,8 @@ endmacro(add_header_files)
 
 
 function(llvm_process_sources OUT_VAR)
-  set( sources ${ARGN} )
+  cmake_parse_arguments(ARG "" "" "ADDITIONAL_HEADERS" ${ARGN})
+  set(sources ${ARG_UNPARSED_ARGUMENTS})
   llvm_check_source_file_list( ${sources} )
   # Create file dependencies on the tablegenned files, if any.  Seems
   # that this is not strictly needed, as dependencies of the .cpp
@@ -50,9 +51,10 @@ function(llvm_process_sources OUT_VAR)
   endforeach(s)
   if( MSVC_IDE OR XCODE )
     # This adds .td and .h files to the Visual Studio solution:
-    # FIXME: Shall we handle *.def here?
     add_td_sources(sources)
     add_header_files(sources)
+    set_source_files_properties(${ARG_ADDITIONAL_HEADERS} PROPERTIES HEADER_FILE_ONLY ON)
+    list(APPEND sources ${ARG_ADDITIONAL_HEADERS})
   endif()
 
   # Set common compiler options:
