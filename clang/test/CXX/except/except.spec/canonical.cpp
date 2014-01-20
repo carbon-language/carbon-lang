@@ -9,7 +9,7 @@ namespace std
 template <class _Tp> _Tp&& declval() noexcept;
 
 template <class _Tp, class... _Args>
-struct __is_nothrow_constructible
+struct _is_nothrow_constructible
 {
   static const bool value = noexcept(_Tp(declval<_Args>()...));
 };
@@ -22,7 +22,7 @@ public:
   typedef _Allocator allocator_type;
 
   basic_string()
-      noexcept(__is_nothrow_constructible<allocator_type>::value);
+      noexcept(_is_nothrow_constructible<allocator_type>::value);
 };
 
 template <class, class, class _Compare>
@@ -30,7 +30,7 @@ struct __map_value_compare
 {
 public:
   __map_value_compare()
-      noexcept(__is_nothrow_constructible<_Compare>::value);
+      noexcept(_is_nothrow_constructible<_Compare>::value);
 };
 
 struct less
@@ -45,10 +45,10 @@ struct map
 
 
 template<class T, class _Traits, class _Allocator>
-basic_string<T, _Traits, _Allocator>::basic_string() noexcept(__is_nothrow_constructible<allocator_type>::value) {}
+basic_string<T, _Traits, _Allocator>::basic_string() noexcept(_is_nothrow_constructible<allocator_type>::value) {}
 
 template <class T, class Value, class _Compare>
 __map_value_compare<T, Value, _Compare>::__map_value_compare()
-  noexcept(__is_nothrow_constructible<_Compare>::value) {}
+  noexcept(_is_nothrow_constructible<_Compare>::value) {}
 
 }  // std
