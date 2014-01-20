@@ -94,11 +94,8 @@ static inline bool inheritsFrom(InstructionContext child,
            inheritsFrom(child, IC_64BIT_XD)     ||
            inheritsFrom(child, IC_64BIT_XS));
   case IC_OPSIZE:
-    return (inheritsFrom(child, IC_64BIT_OPSIZE) ||
-            inheritsFrom(child, IC_OPSIZE_ADSIZE));
+    return inheritsFrom(child, IC_64BIT_OPSIZE);
   case IC_ADSIZE:
-    return inheritsFrom(child, IC_OPSIZE_ADSIZE);
-  case IC_OPSIZE_ADSIZE:
   case IC_64BIT_ADSIZE:
     return false;
   case IC_XD:
@@ -802,6 +799,15 @@ void DisassemblerTables::setTableFields(ModRMDecision     &decision,
 
         if(newInfo.filtered)
           continue; // filtered instructions get lowest priority
+
+        // Instructions such as MOV8ao8 and MOV8ao8_16 differ only in the
+        // presence of the AdSize prefix. However, the disassembler doesn't
+        // care about that difference in the instruction definition; it
+        // handles 16-bit vs. 32-bit addressing for itself based purely
+        // on the 0x67 prefix and the CPU mode. So there's no need to
+        // disambiguate between them; just let them conflict/coexist.
+        if (previousInfo.name + "_16" == newInfo.name)
+          continue;
 
         if(previousInfo.name == "NOOP" && (newInfo.name == "XCHG16ar" ||
                                            newInfo.name == "XCHG32ar" ||

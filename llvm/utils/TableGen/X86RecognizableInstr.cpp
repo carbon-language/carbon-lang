@@ -468,8 +468,6 @@ InstructionContext RecognizableInstr::insnContext() const {
     else if (HasOpSizePrefix &&
              (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
       insnContext = IC_XS_OPSIZE;
-    else if (HasOpSizePrefix && HasAdSizePrefix)
-      insnContext = IC_OPSIZE_ADSIZE;
     else if (HasOpSizePrefix || Prefix == X86Local::PD ||
              Prefix == X86Local::T8PD || Prefix == X86Local::TAPD)
       insnContext = IC_OPSIZE;

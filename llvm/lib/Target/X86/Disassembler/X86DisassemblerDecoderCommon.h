@@ -92,8 +92,6 @@ enum attributeBits {
                                         "operands change width")               \
   ENUM_ENTRY(IC_ADSIZE,             3,  "requires an ADSIZE prefix, so "       \
                                         "operands change width")               \
-  ENUM_ENTRY(IC_OPSIZE_ADSIZE,      3,  "requires both OPSIZE and ADSIZE "     \
-                                        "prefixes")                            \
   ENUM_ENTRY(IC_XD,                 2,  "may say something about the opcode "  \
                                         "but not the operands")                \
   ENUM_ENTRY(IC_XS,                 2,  "may say something about the opcode "  \
