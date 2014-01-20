@@ -65,3 +65,8 @@ bl f05(plt)
 @CHECK: 72 R_ARM_PREL31 f18
 @CHECK: 76 R_ARM_PREL31 f19
 
+@ tlsldo
+.word f20(TLSLDO)
+.word f21(tlsldo)
+@CHECK: 80 R_ARM_TLS_LDO32 f20
+@CHECK: 84 R_ARM_TLS_LDO32 f21

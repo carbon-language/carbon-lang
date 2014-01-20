@@ -165,6 +165,7 @@ public:
     VK_ARM_TARGET1,
     VK_ARM_TARGET2,
     VK_ARM_PREL31,
+    VK_ARM_TLSLDO,         // symbol(tlsldo)
 
     VK_PPC_LO,             // symbol@l
     VK_PPC_HI,             // symbol@h
