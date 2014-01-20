@@ -2933,11 +2933,11 @@ private:
 
   friend class ASTContext;  // ASTContext creates these.
 
-  const bool *getConsumedArgsBuffer() const {
-    assert(hasAnyConsumedArgs());
+  const bool *getConsumedParamsBuffer() const {
+    assert(hasAnyConsumedParams());
 
     // Find the end of the exceptions.
-    Expr * const *eh_end = reinterpret_cast<Expr * const *>(arg_type_end());
+    Expr *const *eh_end = reinterpret_cast<Expr *const *>(param_type_end());
     if (getExceptionSpecType() != EST_ComputedNoexcept)
       eh_end += NumExceptions;
     else
@@ -2947,13 +2947,13 @@ private:
   }
 
 public:
-  unsigned getNumArgs() const { return NumArgs; }
-  QualType getArgType(unsigned i) const {
-    assert(i < NumArgs && "Invalid argument number!");
-    return arg_type_begin()[i];
+  unsigned getNumParams() const { return NumArgs; }
+  QualType getParamType(unsigned i) const {
+    assert(i < NumArgs && "Invalid parameter index");
+    return param_type_begin()[i];
   }
-  ArrayRef<QualType> getArgTypes() const {
-    return ArrayRef<QualType>(arg_type_begin(), arg_type_end());
+  ArrayRef<QualType> getParamTypes() const {
+    return ArrayRef<QualType>(param_type_begin(), param_type_end());
   }
 
   ExtProtoInfo getExtProtoInfo() const {
@@ -2975,8 +2975,8 @@ public:
     } else if (EPI.ExceptionSpecType == EST_Unevaluated) {
       EPI.ExceptionSpecDecl = getExceptionSpecDecl();
     }
-    if (hasAnyConsumedArgs())
-      EPI.ConsumedArguments = getConsumedArgsBuffer();
+    if (hasAnyConsumedParams())
+      EPI.ConsumedArguments = getConsumedParamsBuffer();
     return EPI;
   }
 
@@ -3015,7 +3015,7 @@ public:
     if (getExceptionSpecType() != EST_ComputedNoexcept)
       return 0;
     // NoexceptExpr sits where the arguments end.
-    return *reinterpret_cast<Expr *const *>(arg_type_end());
+    return *reinterpret_cast<Expr *const *>(param_type_end());
   }
   /// \brief If this function type has an exception specification which hasn't
   /// been determined yet (either because it has not been evaluated or because
@@ -3025,7 +3025,7 @@ public:
     if (getExceptionSpecType() != EST_Uninstantiated &&
         getExceptionSpecType() != EST_Unevaluated)
       return 0;
-    return reinterpret_cast<FunctionDecl * const *>(arg_type_end())[0];
+    return reinterpret_cast<FunctionDecl *const *>(param_type_end())[0];
   }
   /// \brief If this function type has an uninstantiated exception
   /// specification, this is the function whose exception specification
@@ -3034,7 +3034,7 @@ public:
   FunctionDecl *getExceptionSpecTemplate() const {
     if (getExceptionSpecType() != EST_Uninstantiated)
       return 0;
-    return reinterpret_cast<FunctionDecl * const *>(arg_type_end())[1];
+    return reinterpret_cast<FunctionDecl *const *>(param_type_end())[1];
   }
   /// \brief Determine whether this function type has a non-throwing exception
   /// specification. If this depends on template arguments, returns
@@ -3061,16 +3061,18 @@ public:
     return static_cast<RefQualifierKind>(RefQualifier);
   }
 
-  typedef const QualType *arg_type_iterator;
-  arg_type_iterator arg_type_begin() const {
+  typedef const QualType *param_type_iterator;
+  param_type_iterator param_type_begin() const {
     return reinterpret_cast<const QualType *>(this+1);
   }
-  arg_type_iterator arg_type_end() const { return arg_type_begin()+NumArgs; }
+  param_type_iterator param_type_end() const {
+    return param_type_begin() + NumArgs;
+  }
 
   typedef const QualType *exception_iterator;
   exception_iterator exception_begin() const {
     // exceptions begin where arguments end
-    return arg_type_end();
+    return param_type_end();
   }
   exception_iterator exception_end() const {
     if (getExceptionSpecType() != EST_Dynamic)
@@ -3078,13 +3080,11 @@ public:
     return exception_begin() + NumExceptions;
   }
 
-  bool hasAnyConsumedArgs() const {
-    return HasAnyConsumedArgs;
-  }
-  bool isArgConsumed(unsigned I) const {
-    assert(I < getNumArgs() && "argument index out of range!");
-    if (hasAnyConsumedArgs())
-      return getConsumedArgsBuffer()[I];
+  bool hasAnyConsumedParams() const { return HasAnyConsumedArgs; }
+  bool isParamConsumed(unsigned I) const {
+    assert(I < getNumParams() && "parameter index out of range");
+    if (hasAnyConsumedParams())
+      return getConsumedParamsBuffer()[I];
     return false;
   }
 
@@ -3100,7 +3100,7 @@ public:
 
   void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Ctx);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
-                      arg_type_iterator ArgTys, unsigned NumArgs,
+                      param_type_iterator ArgTys, unsigned NumArgs,
                       const ExtProtoInfo &EPI, const ASTContext &Context);
 };
 

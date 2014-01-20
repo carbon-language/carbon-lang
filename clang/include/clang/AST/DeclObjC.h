@@ -381,13 +381,21 @@ public:
   // Iterator access to parameter types.
   typedef std::const_mem_fun_t<QualType, ParmVarDecl> deref_fun;
   typedef llvm::mapped_iterator<param_const_iterator, deref_fun>
-      arg_type_iterator;
+  param_type_iterator;
 
-  arg_type_iterator arg_type_begin() const {
+  param_type_iterator arg_type_begin() const {
     return llvm::map_iterator(param_begin(), deref_fun(&ParmVarDecl::getType));
   }
-  arg_type_iterator arg_type_end() const {
+  param_type_iterator arg_type_end() const {
     return llvm::map_iterator(param_end(), deref_fun(&ParmVarDecl::getType));
+  }
+
+  // FunctionProtoType adapters.
+  param_type_iterator param_type_begin() const {
+    return arg_type_begin();
+  }
+  param_type_iterator param_type_end() const {
+    return arg_type_end();
   }
 
   /// createImplicitParams - Used to lazily create the self and cmd

@@ -302,11 +302,11 @@ void WalkAST::checkCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
     return;
 
   // Verify that the function takes a single argument.
-  if (FPT->getNumArgs() != 1)
+  if (FPT->getNumParams() != 1)
     return;
 
   // Is the argument a 'char*'?
-  const PointerType *PT = FPT->getArgType(0)->getAs<PointerType>();
+  const PointerType *PT = FPT->getParamType(0)->getAs<PointerType>();
   if (!PT)
     return;
 
@@ -338,15 +338,15 @@ void WalkAST::checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
     return;
 
   // Verify that the function takes two arguments.
-  if (FPT->getNumArgs() != 2)
+  if (FPT->getNumParams() != 2)
     return;
 
   // Verify the first argument type is integer.
-  if (!FPT->getArgType(0)->isIntegralOrUnscopedEnumerationType())
+  if (!FPT->getParamType(0)->isIntegralOrUnscopedEnumerationType())
     return;
 
   // Verify the second argument type is char*.
-  const PointerType *PT = FPT->getArgType(1)->getAs<PointerType>();
+  const PointerType *PT = FPT->getParamType(1)->getAs<PointerType>();
   if (!PT)
     return;
 
@@ -382,11 +382,11 @@ void WalkAST::checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
     return;
 
   // Verify that the function takes a single argument.
-  if (FPT->getNumArgs() != 1)
+  if (FPT->getNumParams() != 1)
     return;
 
   // Verify that the argument is Pointer Type.
-  const PointerType *PT = FPT->getArgType(0)->getAs<PointerType>();
+  const PointerType *PT = FPT->getParamType(0)->getAs<PointerType>();
   if (!PT)
     return;
 
@@ -551,14 +551,14 @@ bool WalkAST::checkCall_strCommon(const CallExpr *CE, const FunctionDecl *FD) {
     return false;
 
   // Verify the function takes two arguments, three in the _chk version.
-  int numArgs = FPT->getNumArgs();
+  int numArgs = FPT->getNumParams();
   if (numArgs != 2 && numArgs != 3)
     return false;
 
   // Verify the type for both arguments.
   for (int i = 0; i < 2; i++) {
     // Verify that the arguments are pointers.
-    const PointerType *PT = FPT->getArgType(i)->getAs<PointerType>();
+    const PointerType *PT = FPT->getParamType(i)->getAs<PointerType>();
     if (!PT)
       return false;
 
@@ -584,17 +584,16 @@ void WalkAST::checkCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
   if (!FTP)
     return;
 
-  if (FTP->getNumArgs() == 1) {
+  if (FTP->getNumParams() == 1) {
     // Is the argument an 'unsigned short *'?
     // (Actually any integer type is allowed.)
-    const PointerType *PT = FTP->getArgType(0)->getAs<PointerType>();
+    const PointerType *PT = FTP->getParamType(0)->getAs<PointerType>();
     if (!PT)
       return;
 
     if (! PT->getPointeeType()->isIntegralOrUnscopedEnumerationType())
       return;
-  }
-  else if (FTP->getNumArgs() != 0)
+  } else if (FTP->getNumParams() != 0)
     return;
 
   // Issue a warning.
@@ -628,7 +627,7 @@ void WalkAST::checkCall_random(const CallExpr *CE, const FunctionDecl *FD) {
     return;
 
   // Verify that the function takes no argument.
-  if (FTP->getNumArgs() != 0)
+  if (FTP->getNumParams() != 0)
     return;
 
   // Issue a warning.
@@ -704,12 +703,12 @@ void WalkAST::checkUncheckedReturnValue(CallExpr *CE) {
 
   // Verify that the function takes one or two arguments (depending on
   //   the function).
-  if (FTP->getNumArgs() != (identifierid < 4 ? 1 : 2))
+  if (FTP->getNumParams() != (identifierid < 4 ? 1 : 2))
     return;
 
   // The arguments must be integers.
-  for (unsigned i = 0; i < FTP->getNumArgs(); i++)
-    if (! FTP->getArgType(i)->isIntegralOrUnscopedEnumerationType())
+  for (unsigned i = 0; i < FTP->getNumParams(); i++)
+    if (!FTP->getParamType(i)->isIntegralOrUnscopedEnumerationType())
       return;
 
   // Issue a warning.

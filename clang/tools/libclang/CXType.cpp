@@ -538,7 +538,7 @@ int clang_getNumArgTypes(CXType X) {
     return -1;
   
   if (const FunctionProtoType *FD = T->getAs<FunctionProtoType>()) {
-    return FD->getNumArgs();
+    return FD->getNumParams();
   }
   
   if (T->getAs<FunctionNoProtoType>()) {
@@ -554,11 +554,11 @@ CXType clang_getArgType(CXType X, unsigned i) {
     return MakeCXType(QualType(), GetTU(X));
 
   if (const FunctionProtoType *FD = T->getAs<FunctionProtoType>()) {
-    unsigned numArgs = FD->getNumArgs();
+    unsigned numArgs = FD->getNumParams();
     if (i >= numArgs)
       return MakeCXType(QualType(), GetTU(X));
-    
-    return MakeCXType(FD->getArgType(i), GetTU(X));
+
+    return MakeCXType(FD->getParamType(i), GetTU(X));
   }
   
   return MakeCXType(QualType(), GetTU(X));

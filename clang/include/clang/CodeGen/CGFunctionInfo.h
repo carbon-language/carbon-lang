@@ -194,7 +194,7 @@ public:
   static RequiredArgs forPrototypePlus(const FunctionProtoType *prototype,
                                        unsigned additional) {
     if (!prototype->isVariadic()) return All;
-    return RequiredArgs(prototype->getNumArgs() + additional);
+    return RequiredArgs(prototype->getNumParams() + additional);
   }
 
   static RequiredArgs forPrototype(const FunctionProtoType *prototype) {

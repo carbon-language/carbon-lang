@@ -1336,12 +1336,13 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
   // <argument-list> ::= X # void
   //                 ::= <type>+ @
   //                 ::= <type>* Z # varargs
-  if (Proto->getNumArgs() == 0 && !Proto->isVariadic()) {
+  if (Proto->getNumParams() == 0 && !Proto->isVariadic()) {
     Out << 'X';
   } else {
     // Happens for function pointer type arguments for example.
-    for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
-         ArgEnd = Proto->arg_type_end();
+    for (FunctionProtoType::param_type_iterator
+             Arg = Proto->param_type_begin(),
+             ArgEnd = Proto->param_type_end();
          Arg != ArgEnd; ++Arg)
       mangleArgumentType(*Arg, Range);
     // <builtin-type>      ::= Z  # ellipsis

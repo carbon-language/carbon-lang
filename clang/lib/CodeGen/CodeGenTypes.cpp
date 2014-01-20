@@ -226,8 +226,8 @@ bool CodeGenTypes::isFuncTypeConvertible(const FunctionType *FT) {
     return false;
   
   if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT))
-    for (unsigned i = 0, e = FPT->getNumArgs(); i != e; i++)
-      if (!isFuncTypeArgumentConvertible(FPT->getArgType(i)))
+    for (unsigned i = 0, e = FPT->getNumParams(); i != e; i++)
+      if (!isFuncTypeArgumentConvertible(FPT->getParamType(i)))
         return false;
 
   return true;
@@ -482,8 +482,8 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       if (const RecordType *RT = FT->getResultType()->getAs<RecordType>())
         ConvertRecordDeclType(RT->getDecl());
       if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT))
-        for (unsigned i = 0, e = FPT->getNumArgs(); i != e; i++)
-          if (const RecordType *RT = FPT->getArgType(i)->getAs<RecordType>())
+        for (unsigned i = 0, e = FPT->getNumParams(); i != e; i++)
+          if (const RecordType *RT = FPT->getParamType(i)->getAs<RecordType>())
             ConvertRecordDeclType(RT->getDecl());
 
       // Return a placeholder type.

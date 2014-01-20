@@ -624,17 +624,17 @@ void TypePrinter::printFunctionProtoAfter(const FunctionProtoType *T,
   OS << '(';
   {
     ParamPolicyRAII ParamPolicy(Policy);
-    for (unsigned i = 0, e = T->getNumArgs(); i != e; ++i) {
+    for (unsigned i = 0, e = T->getNumParams(); i != e; ++i) {
       if (i) OS << ", ";
-      print(T->getArgType(i), OS, StringRef());
+      print(T->getParamType(i), OS, StringRef());
     }
   }
   
   if (T->isVariadic()) {
-    if (T->getNumArgs())
+    if (T->getNumParams())
       OS << ", ";
     OS << "...";
-  } else if (T->getNumArgs() == 0 && !Policy.LangOpts.CPlusPlus) {
+  } else if (T->getNumParams() == 0 && !Policy.LangOpts.CPlusPlus) {
     // Do not emit int() if we have a proto, emit 'int(void)'.
     OS << "void";
   }

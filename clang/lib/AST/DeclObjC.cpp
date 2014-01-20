@@ -868,7 +868,7 @@ ObjCMethodFamily ObjCMethodDecl::getMethodFamily() const {
       if (noParams < 1 || noParams > 3)
         family = OMF_None;
       else {
-        ObjCMethodDecl::arg_type_iterator it = arg_type_begin();
+        ObjCMethodDecl::param_type_iterator it = arg_type_begin();
         QualType ArgT = (*it);
         if (!ArgT->isObjCSelType()) {
           family = OMF_None;

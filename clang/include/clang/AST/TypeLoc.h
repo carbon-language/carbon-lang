@@ -1219,7 +1219,7 @@ public:
   unsigned getNumArgs() const {
     if (isa<FunctionNoProtoType>(getTypePtr()))
       return 0;
-    return cast<FunctionProtoType>(getTypePtr())->getNumArgs();
+    return cast<FunctionProtoType>(getTypePtr())->getNumParams();
   }
   ParmVarDecl *getArg(unsigned i) const { return getParmArray()[i]; }
   void setArg(unsigned i, ParmVarDecl *VD) { getParmArray()[i] = VD; }

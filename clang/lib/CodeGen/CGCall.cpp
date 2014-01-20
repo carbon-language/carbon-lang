@@ -92,8 +92,8 @@ static const CGFunctionInfo &arrangeLLVMFunctionInfo(CodeGenTypes &CGT,
                                               FunctionType::ExtInfo extInfo) {
   RequiredArgs required = RequiredArgs::forPrototypePlus(FTP, prefix.size());
   // FIXME: Kill copy.
-  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-    prefix.push_back(FTP->getArgType(i));
+  for (unsigned i = 0, e = FTP->getNumParams(); i != e; ++i)
+    prefix.push_back(FTP->getParamType(i));
   CanQualType resultType = FTP->getResultType().getUnqualifiedType();
   return CGT.arrangeLLVMFunctionInfo(resultType, prefix, extInfo, required);
 }
@@ -211,8 +211,8 @@ CodeGenTypes::arrangeCXXConstructorDeclaration(const CXXConstructorDecl *D,
   CanQual<FunctionProtoType> FTP = GetFormalType(D);
 
   // Add the formal parameters.
-  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-    argTypes.push_back(FTP->getArgType(i));
+  for (unsigned i = 0, e = FTP->getNumParams(); i != e; ++i)
+    argTypes.push_back(FTP->getParamType(i));
 
   TheCXXABI.BuildConstructorSignature(D, ctorKind, resultType, argTypes);
 
@@ -239,7 +239,7 @@ CodeGenTypes::arrangeCXXDestructor(const CXXDestructorDecl *D,
   TheCXXABI.BuildDestructorSignature(D, dtorKind, resultType, argTypes);
 
   CanQual<FunctionProtoType> FTP = GetFormalType(D);
-  assert(FTP->getNumArgs() == 0 && "dtor with formal parameters");
+  assert(FTP->getNumParams() == 0 && "dtor with formal parameters");
   assert(FTP->isVariadic() == 0 && "dtor with formal parameters");
 
   FunctionType::ExtInfo extInfo = FTP->getExtInfo();
@@ -344,7 +344,7 @@ arrangeFreeFunctionLikeCall(CodeGenTypes &CGT,
   // extra prefix plus the arguments in the prototype.
   if (const FunctionProtoType *proto = dyn_cast<FunctionProtoType>(fnType)) {
     if (proto->isVariadic())
-      required = RequiredArgs(proto->getNumArgs() + numExtraRequiredArgs);
+      required = RequiredArgs(proto->getNumParams() + numExtraRequiredArgs);
 
   // If we don't have a prototype at all, but we're supposed to
   // explicitly use the variadic convention for unprototyped calls,

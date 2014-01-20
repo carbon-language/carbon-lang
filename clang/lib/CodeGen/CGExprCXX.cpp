@@ -1014,17 +1014,17 @@ namespace {
     void Emit(CodeGenFunction &CGF, Flags flags) {
       const FunctionProtoType *FPT
         = OperatorDelete->getType()->getAs<FunctionProtoType>();
-      assert(FPT->getNumArgs() == NumPlacementArgs + 1 ||
-             (FPT->getNumArgs() == 2 && NumPlacementArgs == 0));
+      assert(FPT->getNumParams() == NumPlacementArgs + 1 ||
+             (FPT->getNumParams() == 2 && NumPlacementArgs == 0));
 
       CallArgList DeleteArgs;
 
       // The first argument is always a void*.
-      FunctionProtoType::arg_type_iterator AI = FPT->arg_type_begin();
+      FunctionProtoType::param_type_iterator AI = FPT->param_type_begin();
       DeleteArgs.add(RValue::get(Ptr), *AI++);
 
       // A member 'operator delete' can take an extra 'size_t' argument.
-      if (FPT->getNumArgs() == NumPlacementArgs + 2)
+      if (FPT->getNumParams() == NumPlacementArgs + 2)
         DeleteArgs.add(RValue::get(AllocSize), *AI++);
 
       // Pass the rest of the arguments, which must match exactly.
@@ -1069,17 +1069,17 @@ namespace {
     void Emit(CodeGenFunction &CGF, Flags flags) {
       const FunctionProtoType *FPT
         = OperatorDelete->getType()->getAs<FunctionProtoType>();
-      assert(FPT->getNumArgs() == NumPlacementArgs + 1 ||
-             (FPT->getNumArgs() == 2 && NumPlacementArgs == 0));
+      assert(FPT->getNumParams() == NumPlacementArgs + 1 ||
+             (FPT->getNumParams() == 2 && NumPlacementArgs == 0));
 
       CallArgList DeleteArgs;
 
       // The first argument is always a void*.
-      FunctionProtoType::arg_type_iterator AI = FPT->arg_type_begin();
+      FunctionProtoType::param_type_iterator AI = FPT->param_type_begin();
       DeleteArgs.add(Ptr.restore(CGF), *AI++);
 
       // A member 'operator delete' can take an extra 'size_t' argument.
-      if (FPT->getNumArgs() == NumPlacementArgs + 2) {
+      if (FPT->getNumParams() == NumPlacementArgs + 2) {
         RValue RV = AllocSize.restore(CGF);
         DeleteArgs.add(RV, *AI++);
       }
@@ -1168,8 +1168,8 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // We start at 1 here because the first argument (the allocation size)
   // has already been emitted.
   EmitCallArgs(allocatorArgs, allocatorType->isVariadic(),
-               allocatorType->arg_type_begin() + 1,
-               allocatorType->arg_type_end(), E->placement_arg_begin(),
+               allocatorType->param_type_begin() + 1,
+               allocatorType->param_type_end(), E->placement_arg_begin(),
                E->placement_arg_end());
 
   // Emit the allocation call.  If the allocator is a global placement
@@ -1286,14 +1286,14 @@ void CodeGenFunction::EmitDeleteCall(const FunctionDecl *DeleteFD,
   // Check if we need to pass the size to the delete operator.
   llvm::Value *Size = 0;
   QualType SizeTy;
-  if (DeleteFTy->getNumArgs() == 2) {
-    SizeTy = DeleteFTy->getArgType(1);
+  if (DeleteFTy->getNumParams() == 2) {
+    SizeTy = DeleteFTy->getParamType(1);
     CharUnits DeleteTypeSize = getContext().getTypeSizeInChars(DeleteTy);
     Size = llvm::ConstantInt::get(ConvertType(SizeTy), 
                                   DeleteTypeSize.getQuantity());
   }
-  
-  QualType ArgTy = DeleteFTy->getArgType(0);
+
+  QualType ArgTy = DeleteFTy->getParamType(0);
   llvm::Value *DeletePtr = Builder.CreateBitCast(Ptr, ConvertType(ArgTy));
   DeleteArgs.add(RValue::get(DeletePtr), ArgTy);
 
@@ -1422,19 +1422,19 @@ namespace {
     void Emit(CodeGenFunction &CGF, Flags flags) {
       const FunctionProtoType *DeleteFTy =
         OperatorDelete->getType()->getAs<FunctionProtoType>();
-      assert(DeleteFTy->getNumArgs() == 1 || DeleteFTy->getNumArgs() == 2);
+      assert(DeleteFTy->getNumParams() == 1 || DeleteFTy->getNumParams() == 2);
 
       CallArgList Args;
       
       // Pass the pointer as the first argument.
-      QualType VoidPtrTy = DeleteFTy->getArgType(0);
+      QualType VoidPtrTy = DeleteFTy->getParamType(0);
       llvm::Value *DeletePtr
         = CGF.Builder.CreateBitCast(Ptr, CGF.ConvertType(VoidPtrTy));
       Args.add(RValue::get(DeletePtr), VoidPtrTy);
 
       // Pass the original requested size as the second argument.
-      if (DeleteFTy->getNumArgs() == 2) {
-        QualType size_t = DeleteFTy->getArgType(1);
+      if (DeleteFTy->getNumParams() == 2) {
+        QualType size_t = DeleteFTy->getParamType(1);
         llvm::IntegerType *SizeTy
           = cast<llvm::IntegerType>(CGF.ConvertType(size_t));
         

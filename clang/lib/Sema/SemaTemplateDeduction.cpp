@@ -1382,12 +1382,11 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
                                             Info, Deduced, 0))
         return Result;
 
-      return DeduceTemplateArguments(S, TemplateParams,
-                                     FunctionProtoParam->arg_type_begin(),
-                                     FunctionProtoParam->getNumArgs(),
-                                     FunctionProtoArg->arg_type_begin(),
-                                     FunctionProtoArg->getNumArgs(),
-                                     Info, Deduced, SubTDF);
+      return DeduceTemplateArguments(
+          S, TemplateParams, FunctionProtoParam->param_type_begin(),
+          FunctionProtoParam->getNumParams(),
+          FunctionProtoArg->param_type_begin(),
+          FunctionProtoArg->getNumParams(), Info, Deduced, SubTDF);
     }
 
     case Type::InjectedClassName: {
@@ -3751,7 +3750,7 @@ SpecializeCorrespondingLambdaCallOperatorAndInvoker(
   FunctionProtoType::ExtProtoInfo EPI = InvokerFPT->getExtProtoInfo();
   EPI.TypeQuals = 0;
   InvokerSpecialized->setType(S.Context.getFunctionType(
-      InvokerFPT->getResultType(), InvokerFPT->getArgTypes(),EPI));
+      InvokerFPT->getResultType(), InvokerFPT->getParamTypes(), EPI));
   return Sema::TDK_Success;
 }
 /// \brief Deduce template arguments for a templated conversion
@@ -4231,10 +4230,10 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
         ++Skip1;
     }
 
-    Args1.insert(Args1.end(),
-                 Proto1->arg_type_begin() + Skip1, Proto1->arg_type_end());
-    Args2.insert(Args2.end(),
-                 Proto2->arg_type_begin() + Skip2, Proto2->arg_type_end());
+    Args1.insert(Args1.end(), Proto1->param_type_begin() + Skip1,
+                 Proto1->param_type_end());
+    Args2.insert(Args2.end(), Proto2->param_type_begin() + Skip2,
+                 Proto2->param_type_end());
 
     // C++ [temp.func.order]p5:
     //   The presence of unused ellipsis and default arguments has no effect on
@@ -4883,8 +4882,8 @@ MarkUsedTemplateParameters(ASTContext &Ctx, QualType T,
     const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
     MarkUsedTemplateParameters(Ctx, Proto->getResultType(), OnlyDeduced,
                                Depth, Used);
-    for (unsigned I = 0, N = Proto->getNumArgs(); I != N; ++I)
-      MarkUsedTemplateParameters(Ctx, Proto->getArgType(I), OnlyDeduced,
+    for (unsigned I = 0, N = Proto->getNumParams(); I != N; ++I)
+      MarkUsedTemplateParameters(Ctx, Proto->getParamType(I), OnlyDeduced,
                                  Depth, Used);
     break;
   }

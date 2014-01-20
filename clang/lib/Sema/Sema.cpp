@@ -1286,7 +1286,7 @@ bool Sema::tryExprAsCall(Expr &E, QualType &ZeroArgCallReturnTy,
 
   if (const FunctionProtoType *FPT =
       dyn_cast_or_null<FunctionProtoType>(FunTy)) {
-    if (FPT->getNumArgs() == 0)
+    if (FPT->getNumParams() == 0)
       ZeroArgCallReturnTy = FunTy->getResultType();
     return true;
   }

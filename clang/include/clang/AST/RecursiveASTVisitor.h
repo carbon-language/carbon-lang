@@ -954,8 +954,8 @@ DEF_TRAVERSE_TYPE(FunctionNoProtoType, {
 DEF_TRAVERSE_TYPE(FunctionProtoType, {
     TRY_TO(TraverseType(T->getResultType()));
 
-    for (FunctionProtoType::arg_type_iterator A = T->arg_type_begin(),
-                                           AEnd = T->arg_type_end();
+    for (FunctionProtoType::param_type_iterator A = T->param_type_begin(),
+                                                AEnd = T->param_type_end();
          A != AEnd; ++A) {
       TRY_TO(TraverseType(*A));
     }
@@ -1187,8 +1187,8 @@ DEF_TRAVERSE_TYPELOC(FunctionProtoType, {
     for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
       if (TL.getArg(I)) {
         TRY_TO(TraverseDecl(TL.getArg(I)));
-      } else if (I < T->getNumArgs()) {
-        TRY_TO(TraverseType(T->getArgType(I)));
+      } else if (I < T->getNumParams()) {
+        TRY_TO(TraverseType(T->getParamType(I)));
       }
     }
 

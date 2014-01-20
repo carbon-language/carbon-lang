@@ -479,10 +479,10 @@ static bool HasSameVirtualSignature(const CXXMethodDecl *LHS,
   // list here because there isn't necessarily an inheritance
   // relationship between the two methods.
   if (LT->getTypeQuals() != RT->getTypeQuals() ||
-      LT->getNumArgs() != RT->getNumArgs())
+      LT->getNumParams() != RT->getNumParams())
     return false;
-  for (unsigned I = 0, E = LT->getNumArgs(); I != E; ++I)
-    if (LT->getArgType(I) != RT->getArgType(I))
+  for (unsigned I = 0, E = LT->getNumParams(); I != E; ++I)
+    if (LT->getParamType(I) != RT->getParamType(I))
       return false;
   return true;
 }

@@ -1735,8 +1735,8 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
 
       SmallVector<QualType, 4> ArgTypes;
       ArgTypes.push_back(Context.VoidPtrTy);
-      for (unsigned I = 1, N = Proto->getNumArgs(); I < N; ++I)
-        ArgTypes.push_back(Proto->getArgType(I));
+      for (unsigned I = 1, N = Proto->getNumParams(); I < N; ++I)
+        ArgTypes.push_back(Proto->getParamType(I));
 
       FunctionProtoType::ExtProtoInfo EPI;
       EPI.Variadic = Proto->isVariadic();
@@ -3513,7 +3513,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, TypeTrait UTT,
             return false;
           // TODO: check whether evaluating default arguments can throw.
           // For now, we'll be conservative and assume that they can throw.
-          if (!CPT->isNothrow(Self.Context) || CPT->getNumArgs() > 1)
+          if (!CPT->isNothrow(Self.Context) || CPT->getNumParams() > 1)
             return false;
         }
       }
@@ -3551,7 +3551,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, TypeTrait UTT,
             return false;
           // FIXME: check whether evaluating default arguments can throw.
           // For now, we'll be conservative and assume that they can throw.
-          if (!CPT->isNothrow(Self.Context) || CPT->getNumArgs() > 0)
+          if (!CPT->isNothrow(Self.Context) || CPT->getNumParams() > 0)
             return false;
         }
       }

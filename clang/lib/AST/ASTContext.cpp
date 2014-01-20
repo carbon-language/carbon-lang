@@ -2088,7 +2088,7 @@ const FunctionType *ASTContext::adjustFunctionType(const FunctionType *T,
     const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
     FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
     EPI.ExtInfo = Info;
-    Result = getFunctionType(FPT->getResultType(), FPT->getArgTypes(), EPI);
+    Result = getFunctionType(FPT->getResultType(), FPT->getParamTypes(), EPI);
   }
 
   return cast<FunctionType>(Result.getTypePtr());
@@ -2100,7 +2100,7 @@ void ASTContext::adjustDeducedFunctionResultType(FunctionDecl *FD,
   while (true) {
     const FunctionProtoType *FPT = FD->getType()->castAs<FunctionProtoType>();
     FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-    FD->setType(getFunctionType(ResultType, FPT->getArgTypes(), EPI));
+    FD->setType(getFunctionType(ResultType, FPT->getParamTypes(), EPI));
     if (FunctionDecl *Next = FD->getPreviousDecl())
       FD = Next;
     else
@@ -5423,8 +5423,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       S += "@?";
       // Block parameters
       if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT)) {
-        for (FunctionProtoType::arg_type_iterator I = FPT->arg_type_begin(),
-               E = FPT->arg_type_end(); I && (I != E); ++I) {
+        for (FunctionProtoType::param_type_iterator I = FPT->param_type_begin(),
+                                                    E = FPT->param_type_end();
+             I && (I != E); ++I) {
           getObjCEncodingForTypeImpl(*I, S, 
                                      ExpandPointedToStructures, 
                                      ExpandStructures, 
@@ -6855,11 +6856,11 @@ QualType ASTContext::mergeTransparentUnionType(QualType T, QualType SubType,
   return QualType();
 }
 
-/// mergeFunctionArgumentTypes - merge two types which appear as function
-/// argument types
-QualType ASTContext::mergeFunctionArgumentTypes(QualType lhs, QualType rhs, 
-                                                bool OfBlockPointer,
-                                                bool Unqualified) {
+/// mergeFunctionParameterTypes - merge two types which appear as function
+/// parameter types
+QualType ASTContext::mergeFunctionParameterTypes(QualType lhs, QualType rhs,
+                                                 bool OfBlockPointer,
+                                                 bool Unqualified) {
   // GNU extension: two types are compatible if they appear as a function
   // argument, one of the types is a transparent union type and the other
   // type is compatible with a union member
@@ -6949,8 +6950,8 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
   if (lproto && rproto) { // two C99 style function prototypes
     assert(!lproto->hasExceptionSpec() && !rproto->hasExceptionSpec() &&
            "C++ shouldn't be here");
-    unsigned lproto_nargs = lproto->getNumArgs();
-    unsigned rproto_nargs = rproto->getNumArgs();
+    unsigned lproto_nargs = lproto->getNumParams();
+    unsigned rproto_nargs = rproto->getNumParams();
 
     // Compatible functions must have the same number of arguments
     if (lproto_nargs != rproto_nargs)
@@ -6970,11 +6971,10 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     // Check argument compatibility
     SmallVector<QualType, 10> types;
     for (unsigned i = 0; i < lproto_nargs; i++) {
-      QualType largtype = lproto->getArgType(i).getUnqualifiedType();
-      QualType rargtype = rproto->getArgType(i).getUnqualifiedType();
-      QualType argtype = mergeFunctionArgumentTypes(largtype, rargtype,
-                                                    OfBlockPointer,
-                                                    Unqualified);
+      QualType largtype = lproto->getParamType(i).getUnqualifiedType();
+      QualType rargtype = rproto->getParamType(i).getUnqualifiedType();
+      QualType argtype = mergeFunctionParameterTypes(
+          largtype, rargtype, OfBlockPointer, Unqualified);
       if (argtype.isNull()) return QualType();
       
       if (Unqualified)
@@ -7012,10 +7012,10 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     // The only types actually affected are promotable integer
     // types and floats, which would be passed as a different
     // type depending on whether the prototype is visible.
-    unsigned proto_nargs = proto->getNumArgs();
+    unsigned proto_nargs = proto->getNumParams();
     for (unsigned i = 0; i < proto_nargs; ++i) {
-      QualType argTy = proto->getArgType(i);
-      
+      QualType argTy = proto->getParamType(i);
+
       // Look at the converted type of enum types, since that is the type used
       // to pass enum values.
       if (const EnumType *Enum = argTy->getAs<EnumType>()) {
@@ -7034,7 +7034,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
 
     FunctionProtoType::ExtProtoInfo EPI = proto->getExtProtoInfo();
     EPI.ExtInfo = einfo;
-    return getFunctionType(retType, proto->getArgTypes(), EPI);
+    return getFunctionType(retType, proto->getParamTypes(), EPI);
   }
 
   if (allLTypes) return lhs;
@@ -7338,16 +7338,16 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
 bool ASTContext::FunctionTypesMatchOnNSConsumedAttrs(
                    const FunctionProtoType *FromFunctionType,
                    const FunctionProtoType *ToFunctionType) {
-  if (FromFunctionType->hasAnyConsumedArgs() != 
-      ToFunctionType->hasAnyConsumedArgs())
+  if (FromFunctionType->hasAnyConsumedParams() !=
+      ToFunctionType->hasAnyConsumedParams())
     return false;
   FunctionProtoType::ExtProtoInfo FromEPI = 
     FromFunctionType->getExtProtoInfo();
   FunctionProtoType::ExtProtoInfo ToEPI = 
     ToFunctionType->getExtProtoInfo();
   if (FromEPI.ConsumedArguments && ToEPI.ConsumedArguments)
-    for (unsigned ArgIdx = 0, NumArgs = FromFunctionType->getNumArgs();
-         ArgIdx != NumArgs; ++ArgIdx)  {
+    for (unsigned ArgIdx = 0, NumArgs = FromFunctionType->getNumParams();
+         ArgIdx != NumArgs; ++ArgIdx) {
       if (FromEPI.ConsumedArguments[ArgIdx] != 
           ToEPI.ConsumedArguments[ArgIdx])
         return false;
@@ -7383,7 +7383,7 @@ QualType ASTContext::mergeObjCGCQualifiers(QualType LHS, QualType RHS) {
         FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
         EPI.ExtInfo = getFunctionExtInfo(LHS);
         QualType ResultType =
-            getFunctionType(OldReturnType, FPT->getArgTypes(), EPI);
+            getFunctionType(OldReturnType, FPT->getParamTypes(), EPI);
         return ResultType;
       }
     }

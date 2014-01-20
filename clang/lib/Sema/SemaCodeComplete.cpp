@@ -2297,7 +2297,7 @@ static void AddFunctionParameterChunks(ASTContext &Context,
   if (const FunctionProtoType *Proto 
         = Function->getType()->getAs<FunctionProtoType>())
     if (Proto->isVariadic()) {
-      if (Proto->getNumArgs() == 0)
+      if (Proto->getNumParams() == 0)
         Result.AddPlaceholderChunk("...");
 
       MaybeAddSentinel(Context, Function, Result);
@@ -2854,7 +2854,7 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
                                   Proto->getResultType().getAsString(Policy)));
   
   Result.AddChunk(CodeCompletionString::CK_LeftParen);
-  unsigned NumParams = FDecl? FDecl->getNumParams() : Proto->getNumArgs();
+  unsigned NumParams = FDecl ? FDecl->getNumParams() : Proto->getNumParams();
   for (unsigned I = 0; I != NumParams; ++I) {
     if (I)
       Result.AddChunk(CodeCompletionString::CK_Comma);
@@ -2866,7 +2866,7 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
       ArgString = FDecl->getParamDecl(I)->getNameAsString();
       ArgType = FDecl->getParamDecl(I)->getOriginalType();
     } else {
-      ArgType = Proto->getArgType(I);
+      ArgType = Proto->getParamType(I);
     }
     
     ArgType.getAsStringInternal(ArgString, Policy);
@@ -3925,12 +3925,13 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn, ArrayRef<Expr *> Args) {
     for (unsigned I = 0, N = Results.size(); I != N; ++I) {
       if (const FunctionType *FType = Results[I].getFunctionType())
         if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FType))
-          if (Args.size() < Proto->getNumArgs()) {
+          if (Args.size() < Proto->getNumParams()) {
             if (ParamType.isNull())
-              ParamType = Proto->getArgType(Args.size());
+              ParamType = Proto->getParamType(Args.size());
             else if (!Context.hasSameUnqualifiedType(
-                                            ParamType.getNonReferenceType(),
-                       Proto->getArgType(Args.size()).getNonReferenceType())) {
+                          ParamType.getNonReferenceType(),
+                          Proto->getParamType(Args.size())
+                              .getNonReferenceType())) {
               ParamType = QualType();
               break;
             }
@@ -3951,8 +3952,8 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn, ArrayRef<Expr *> Args) {
     
     if (const FunctionProtoType *Proto
                                   = FunctionType->getAs<FunctionProtoType>()) {
-      if (Args.size() < Proto->getNumArgs())
-        ParamType = Proto->getArgType(Args.size());
+      if (Args.size() < Proto->getNumParams())
+        ParamType = Proto->getParamType(Args.size());
     }
   }
 

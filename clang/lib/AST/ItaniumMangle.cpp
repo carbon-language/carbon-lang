@@ -2017,7 +2017,7 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
     FunctionTypeDepth.leaveResultType();
   }
 
-  if (Proto->getNumArgs() == 0 && !Proto->isVariadic()) {
+  if (Proto->getNumParams() == 0 && !Proto->isVariadic()) {
     //   <builtin-type> ::= v   # void
     Out << 'v';
 
@@ -2025,8 +2025,8 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
     return;
   }
 
-  for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
-                                         ArgEnd = Proto->arg_type_end();
+  for (FunctionProtoType::param_type_iterator Arg = Proto->param_type_begin(),
+                                              ArgEnd = Proto->param_type_end();
        Arg != ArgEnd; ++Arg)
     mangleType(Context.getASTContext().getSignatureParameterType(*Arg));
 

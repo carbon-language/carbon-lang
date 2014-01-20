@@ -557,23 +557,23 @@ struct CanProxyAdaptor<FunctionProtoType>
   : public CanProxyBase<FunctionProtoType> {
   LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getResultType)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(FunctionType::ExtInfo, getExtInfo)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(unsigned, getNumArgs)
-  CanQualType getArgType(unsigned i) const {
-    return CanQualType::CreateUnsafe(this->getTypePtr()->getArgType(i));
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(unsigned, getNumParams)
+  CanQualType getParamType(unsigned i) const {
+    return CanQualType::CreateUnsafe(this->getTypePtr()->getParamType(i));
   }
 
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isVariadic)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(unsigned, getTypeQuals)
 
-  typedef CanTypeIterator<FunctionProtoType::arg_type_iterator>
-    arg_type_iterator;
+  typedef CanTypeIterator<FunctionProtoType::param_type_iterator>
+  param_type_iterator;
 
-  arg_type_iterator arg_type_begin() const {
-    return arg_type_iterator(this->getTypePtr()->arg_type_begin());
+  param_type_iterator param_type_begin() const {
+    return param_type_iterator(this->getTypePtr()->param_type_begin());
   }
 
-  arg_type_iterator arg_type_end() const {
-    return arg_type_iterator(this->getTypePtr()->arg_type_end());
+  param_type_iterator param_type_end() const {
+    return param_type_iterator(this->getTypePtr()->param_type_end());
   }
 
   // Note: canonical function types never have exception specifications

@@ -1659,7 +1659,7 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> args,
   }
 
   if (epi.ConsumedArguments) {
-    bool *consumedArgs = const_cast<bool*>(getConsumedArgsBuffer());
+    bool *consumedArgs = const_cast<bool *>(getConsumedParamsBuffer());
     for (unsigned i = 0; i != NumArgs; ++i)
       consumedArgs[i] = epi.ConsumedArguments[i];
   }
@@ -1715,8 +1715,8 @@ bool FunctionProtoType::isNothrow(const ASTContext &Ctx,
 }
 
 bool FunctionProtoType::isTemplateVariadic() const {
-  for (unsigned ArgIdx = getNumArgs(); ArgIdx; --ArgIdx)
-    if (isa<PackExpansionType>(getArgType(ArgIdx - 1)))
+  for (unsigned ArgIdx = getNumParams(); ArgIdx; --ArgIdx)
+    if (isa<PackExpansionType>(getParamType(ArgIdx - 1)))
       return true;
   
   return false;
@@ -1778,7 +1778,7 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID,
                                 const ASTContext &Ctx) {
-  Profile(ID, getResultType(), arg_type_begin(), NumArgs, getExtProtoInfo(),
+  Profile(ID, getResultType(), param_type_begin(), NumArgs, getExtProtoInfo(),
           Ctx);
 }
 
@@ -2232,8 +2232,9 @@ static CachedProperties computeCachedProperties(const Type *T) {
   case Type::FunctionProto: {
     const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
     CachedProperties result = Cache::get(FPT->getResultType());
-    for (FunctionProtoType::arg_type_iterator ai = FPT->arg_type_begin(),
-           ae = FPT->arg_type_end(); ai != ae; ++ai)
+    for (FunctionProtoType::param_type_iterator ai = FPT->param_type_begin(),
+                                                ae = FPT->param_type_end();
+         ai != ae; ++ai)
       result = merge(result, Cache::get(*ai));
     return result;
   }
@@ -2317,8 +2318,9 @@ static LinkageInfo computeLinkageInfo(const Type *T) {
   case Type::FunctionProto: {
     const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
     LinkageInfo LV = computeLinkageInfo(FPT->getResultType());
-    for (FunctionProtoType::arg_type_iterator ai = FPT->arg_type_begin(),
-           ae = FPT->arg_type_end(); ai != ae; ++ai)
+    for (FunctionProtoType::param_type_iterator ai = FPT->param_type_begin(),
+                                                ae = FPT->param_type_end();
+         ai != ae; ++ai)
       LV.merge(computeLinkageInfo(*ai));
     return LV;
   }

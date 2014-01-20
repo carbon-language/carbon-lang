@@ -367,7 +367,7 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
     QualType Result = FPT->getResultType();
     if (Result->isUndeducedType()) {
       Result = SubstAutoType(Result, Context.DependentTy);
-      MethodType = Context.getFunctionType(Result, FPT->getArgTypes(),
+      MethodType = Context.getFunctionType(Result, FPT->getParamTypes(),
                                            FPT->getExtProtoInfo());
     }
   }
@@ -1164,8 +1164,9 @@ static void addFunctionPointerConversion(Sema &S,
     InvokerExtInfo.TypeQuals = 0;
     assert(InvokerExtInfo.RefQualifier == RQ_None && 
         "Lambda's call operator should not have a reference qualifier");
-    InvokerFunctionTy = S.Context.getFunctionType(CallOpProto->getResultType(),
-        CallOpProto->getArgTypes(), InvokerExtInfo);
+    InvokerFunctionTy =
+        S.Context.getFunctionType(CallOpProto->getResultType(),
+                                  CallOpProto->getParamTypes(), InvokerExtInfo);
     PtrToFunctionTy = S.Context.getPointerType(InvokerFunctionTy);
   }
 
@@ -1331,7 +1332,7 @@ static void addBlockPointerConversion(Sema &S,
     FunctionProtoType::ExtProtoInfo ExtInfo = Proto->getExtProtoInfo();
     ExtInfo.TypeQuals = 0;
     QualType FunctionTy = S.Context.getFunctionType(
-        Proto->getResultType(), Proto->getArgTypes(), ExtInfo);
+        Proto->getResultType(), Proto->getParamTypes(), ExtInfo);
     BlockPtrTy = S.Context.getBlockPointerType(FunctionTy);
   }
 
@@ -1456,7 +1457,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
       const FunctionProtoType *Proto
         = CallOperator->getType()->getAs<FunctionProtoType>();
       QualType FunctionTy = Context.getFunctionType(
-          LSI->ReturnType, Proto->getArgTypes(), Proto->getExtProtoInfo());
+          LSI->ReturnType, Proto->getParamTypes(), Proto->getExtProtoInfo());
       CallOperator->setType(FunctionTy);
     }
     // C++ [expr.prim.lambda]p7:

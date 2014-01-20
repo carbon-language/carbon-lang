@@ -547,8 +547,9 @@ void RewriteObjC::RewriteBlocksInFunctionProtoType(QualType funcType,
                                                    NamedDecl *D) {
   if (const FunctionProtoType *fproto
       = dyn_cast<FunctionProtoType>(funcType.IgnoreParens())) {
-    for (FunctionProtoType::arg_type_iterator I = fproto->arg_type_begin(),
-         E = fproto->arg_type_end(); I && (I != E); ++I)
+    for (FunctionProtoType::param_type_iterator I = fproto->param_type_begin(),
+                                                E = fproto->param_type_end();
+         I && (I != E); ++I)
       if (isTopLevelBlockPointerType(*I)) {
         // All the args are checked/rewritten. Don't call twice!
         RewriteBlockPointerDecl(D);
@@ -818,14 +819,15 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
         // Now, emit the argument types (if any).
         if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FPRetType)){
           Getr += "(";
-          for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
+          for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i) {
             if (i) Getr += ", ";
-            std::string ParamStr = FT->getArgType(i).getAsString(
-                                                          Context->getPrintingPolicy());
+            std::string ParamStr =
+                FT->getParamType(i).getAsString(Context->getPrintingPolicy());
             Getr += ParamStr;
           }
           if (FT->isVariadic()) {
-            if (FT->getNumArgs()) Getr += ", ";
+            if (FT->getNumParams())
+              Getr += ", ";
             Getr += "...";
           }
           Getr += ")";
@@ -1157,14 +1159,15 @@ void RewriteObjC::RewriteObjCMethodDecl(const ObjCInterfaceDecl *IDecl,
     // Now, emit the argument types (if any).
     if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FPRetType)) {
       ResultStr += "(";
-      for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
+      for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i) {
         if (i) ResultStr += ", ";
-        std::string ParamStr = FT->getArgType(i).getAsString(
-          Context->getPrintingPolicy());
+        std::string ParamStr =
+            FT->getParamType(i).getAsString(Context->getPrintingPolicy());
         ResultStr += ParamStr;
       }
       if (FT->isVariadic()) {
-        if (FT->getNumArgs()) ResultStr += ", ";
+        if (FT->getNumParams())
+          ResultStr += ", ";
         ResultStr += "...";
       }
       ResultStr += ")";
@@ -2190,8 +2193,8 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
   // Now check arguments.
   const char *startBuf = SM->getCharacterData(Loc);
   const char *startFuncBuf = startBuf;
-  for (unsigned i = 0; i < proto->getNumArgs(); i++) {
-    if (needToScanForQualifiers(proto->getArgType(i))) {
+  for (unsigned i = 0; i < proto->getNumParams(); i++) {
+    if (needToScanForQualifiers(proto->getParamType(i))) {
       // Since types are unique, we need to scan the buffer.
 
       const char *endBuf = startBuf;
@@ -2335,9 +2338,9 @@ void RewriteObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
   FdStr += " ";
   FdStr += FD->getName();
   FdStr +=  "(";
-  unsigned numArgs = proto->getNumArgs();
+  unsigned numArgs = proto->getNumParams();
   for (unsigned i = 0; i < numArgs; i++) {
-    QualType ArgType = proto->getArgType(i);
+    QualType ArgType = proto->getParamType(i);
     RewriteBlockPointerType(FdStr, ArgType);
     if (i+1 < numArgs)
       FdStr += ", ";
@@ -3788,8 +3791,9 @@ QualType RewriteObjC::convertFunctionTypeOfBlocks(const FunctionType *FT) {
   bool HasBlockType = convertBlockPointerToFunctionPointer(Res);
   
   if (FTP) {
-    for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(),
-         E = FTP->arg_type_end(); I && (I != E); ++I) {
+    for (FunctionProtoType::param_type_iterator I = FTP->param_type_begin(),
+                                                E = FTP->param_type_end();
+         I && (I != E); ++I) {
       QualType t = *I;
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
       if (convertBlockPointerToFunctionPointer(t))
@@ -3858,8 +3862,9 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
   // Push the block argument type.
   ArgTypes.push_back(PtrBlock);
   if (FTP) {
-    for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(),
-         E = FTP->arg_type_end(); I && (I != E); ++I) {
+    for (FunctionProtoType::param_type_iterator I = FTP->param_type_begin(),
+                                                E = FTP->param_type_end();
+         I && (I != E); ++I) {
       QualType t = *I;
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
       if (!convertBlockPointerToFunctionPointer(t))
@@ -4061,8 +4066,9 @@ bool RewriteObjC::PointerTypeTakesAnyBlockArguments(QualType QT) {
     FTP = BPT->getPointeeType()->getAs<FunctionProtoType>();
   }
   if (FTP) {
-    for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(),
-         E = FTP->arg_type_end(); I != E; ++I)
+    for (FunctionProtoType::param_type_iterator I = FTP->param_type_begin(),
+                                                E = FTP->param_type_end();
+         I != E; ++I)
       if (isTopLevelBlockPointerType(*I))
         return true;
   }
@@ -4080,8 +4086,9 @@ bool RewriteObjC::PointerTypeTakesAnyObjCQualifiedType(QualType QT) {
     FTP = BPT->getPointeeType()->getAs<FunctionProtoType>();
   }
   if (FTP) {
-    for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(),
-         E = FTP->arg_type_end(); I != E; ++I) {
+    for (FunctionProtoType::param_type_iterator I = FTP->param_type_begin(),
+                                                E = FTP->param_type_end();
+         I != E; ++I) {
       if ((*I)->isObjCQualifiedIdType())
         return true;
       if ((*I)->isObjCObjectPointerType() &&

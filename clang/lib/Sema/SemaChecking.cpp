@@ -767,12 +767,9 @@ static void CheckNonNullArguments(Sema &S,
 
 /// Handles the checks for format strings, non-POD arguments to vararg
 /// functions, and NULL arguments passed to non-NULL parameters.
-void Sema::checkCall(NamedDecl *FDecl,
-                     ArrayRef<const Expr *> Args,
-                     unsigned NumProtoArgs,
-                     bool IsMemberFunction,
-                     SourceLocation Loc,
-                     SourceRange Range,
+void Sema::checkCall(NamedDecl *FDecl, ArrayRef<const Expr *> Args,
+                     unsigned NumParams, bool IsMemberFunction,
+                     SourceLocation Loc, SourceRange Range,
                      VariadicCallType CallType) {
   // FIXME: We should check as much as we can in the template definition.
   if (CurContext->isDependentContext())
@@ -796,7 +793,7 @@ void Sema::checkCall(NamedDecl *FDecl,
   // Refuse POD arguments that weren't caught by the format string
   // checks above.
   if (CallType != VariadicDoesNotApply) {
-    for (unsigned ArgIdx = NumProtoArgs; ArgIdx < Args.size(); ++ArgIdx) {
+    for (unsigned ArgIdx = NumParams; ArgIdx < Args.size(); ++ArgIdx) {
       // Args[ArgIdx] can be null in malformed code.
       if (const Expr *Arg = Args[ArgIdx]) {
         if (CheckedVarArgs.empty() || !CheckedVarArgs[ArgIdx])
@@ -826,7 +823,7 @@ void Sema::CheckConstructorCall(FunctionDecl *FDecl,
                                 SourceLocation Loc) {
   VariadicCallType CallType =
     Proto->isVariadic() ? VariadicConstructor : VariadicDoesNotApply;
-  checkCall(FDecl, Args, Proto->getNumArgs(),
+  checkCall(FDecl, Args, Proto->getNumParams(),
             /*IsMemberFunction=*/true, Loc, SourceRange(), CallType);
 }
 
@@ -840,7 +837,7 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall,
                           IsMemberOperatorCall;
   VariadicCallType CallType = getVariadicCallType(FDecl, Proto,
                                                   TheCall->getCallee());
-  unsigned NumProtoArgs = Proto ? Proto->getNumArgs() : 0;
+  unsigned NumParams = Proto ? Proto->getNumParams() : 0;
   Expr** Args = TheCall->getArgs();
   unsigned NumArgs = TheCall->getNumArgs();
   if (IsMemberOperatorCall) {
@@ -850,8 +847,7 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall,
     ++Args;
     --NumArgs;
   }
-  checkCall(FDecl, llvm::makeArrayRef<const Expr *>(Args, NumArgs),
-            NumProtoArgs,
+  checkCall(FDecl, llvm::makeArrayRef<const Expr *>(Args, NumArgs), NumParams,
             IsMemberFunction, TheCall->getRParenLoc(),
             TheCall->getCallee()->getSourceRange(), CallType);
 
@@ -906,15 +902,13 @@ bool Sema::CheckPointerCall(NamedDecl *NDecl, CallExpr *TheCall,
   } else { // Ty->isFunctionPointerType()
     CallType = VariadicFunction;
   }
-  unsigned NumProtoArgs = Proto ? Proto->getNumArgs() : 0;
+  unsigned NumParams = Proto ? Proto->getNumParams() : 0;
 
-  checkCall(NDecl,
-            llvm::makeArrayRef<const Expr *>(TheCall->getArgs(),
-                                             TheCall->getNumArgs()),
-            NumProtoArgs, /*IsMemberFunction=*/false,
-            TheCall->getRParenLoc(),
+  checkCall(NDecl, llvm::makeArrayRef<const Expr *>(TheCall->getArgs(),
+                                                    TheCall->getNumArgs()),
+            NumParams, /*IsMemberFunction=*/false, TheCall->getRParenLoc(),
             TheCall->getCallee()->getSourceRange(), CallType);
-  
+
   return false;
 }
 
@@ -923,13 +917,11 @@ bool Sema::CheckPointerCall(NamedDecl *NDecl, CallExpr *TheCall,
 bool Sema::CheckOtherCall(CallExpr *TheCall, const FunctionProtoType *Proto) {
   VariadicCallType CallType = getVariadicCallType(/*FDecl=*/0, Proto,
                                                   TheCall->getCallee());
-  unsigned NumProtoArgs = Proto ? Proto->getNumArgs() : 0;
+  unsigned NumParams = Proto ? Proto->getNumParams() : 0;
 
-  checkCall(/*FDecl=*/0,
-            llvm::makeArrayRef<const Expr *>(TheCall->getArgs(),
-                                             TheCall->getNumArgs()),
-            NumProtoArgs, /*IsMemberFunction=*/false,
-            TheCall->getRParenLoc(),
+  checkCall(/*FDecl=*/0, llvm::makeArrayRef<const Expr *>(
+                             TheCall->getArgs(), TheCall->getNumArgs()),
+            NumParams, /*IsMemberFunction=*/false, TheCall->getRParenLoc(),
             TheCall->getCallee()->getSourceRange(), CallType);
 
   return false;

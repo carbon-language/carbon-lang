@@ -1738,14 +1738,14 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
   Args.add(RValue::get(This), D->getThisType(getContext()));
   
   // Push the src ptr.
-  QualType QT = *(FPT->arg_type_begin());
+  QualType QT = *(FPT->param_type_begin());
   llvm::Type *t = CGM.getTypes().ConvertType(QT);
   Src = Builder.CreateBitCast(Src, t);
   Args.add(RValue::get(Src), QT);
 
   // Skip over first argument (Src).
-  EmitCallArgs(Args, FPT->isVariadic(), FPT->arg_type_begin() + 1,
-               FPT->arg_type_end(), ArgBeg + 1, ArgEnd);
+  EmitCallArgs(Args, FPT->isVariadic(), FPT->param_type_begin() + 1,
+               FPT->param_type_end(), ArgBeg + 1, ArgEnd);
 
   EmitCall(CGM.getTypes().arrangeCXXMethodCall(Args, FPT, RequiredArgs::All),
            Callee, ReturnValueSlot(), Args, D);

@@ -2193,9 +2193,10 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
     //        types and those associated with the return type.
     case Type::FunctionProto: {
       const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
-      for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
-                                             ArgEnd = Proto->arg_type_end();
-             Arg != ArgEnd; ++Arg)
+      for (FunctionProtoType::param_type_iterator
+               Arg = Proto->param_type_begin(),
+               ArgEnd = Proto->param_type_end();
+           Arg != ArgEnd; ++Arg)
         Queue.push_back(Arg->getTypePtr());
       // fallthrough
     }
@@ -2348,20 +2349,20 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
     return true;
 
   const FunctionProtoType *Proto = Fn->getType()->getAs<FunctionProtoType>();
-  if (Proto->getNumArgs() < 1)
+  if (Proto->getNumParams() < 1)
     return false;
 
   if (T1->isEnumeralType()) {
-    QualType ArgType = Proto->getArgType(0).getNonReferenceType();
+    QualType ArgType = Proto->getParamType(0).getNonReferenceType();
     if (Context.hasSameUnqualifiedType(T1, ArgType))
       return true;
   }
 
-  if (Proto->getNumArgs() < 2)
+  if (Proto->getNumParams() < 2)
     return false;
 
   if (!T2.isNull() && T2->isEnumeralType()) {
-    QualType ArgType = Proto->getArgType(1).getNonReferenceType();
+    QualType ArgType = Proto->getParamType(1).getNonReferenceType();
     if (Context.hasSameUnqualifiedType(T2, ArgType))
       return true;
   }
@@ -4590,7 +4591,7 @@ bool FunctionCallFilterCCC::ValidateCandidate(const TypoCorrection &candidate) {
         if (ValType->isAnyPointerType() || ValType->isReferenceType())
           ValType = ValType->getPointeeType();
         if (const FunctionProtoType *FPT = ValType->getAs<FunctionProtoType>())
-          if (FPT->getNumArgs() == NumArgs)
+          if (FPT->getNumParams() == NumArgs)
             return true;
       }
     }

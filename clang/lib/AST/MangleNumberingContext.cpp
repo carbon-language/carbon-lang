@@ -24,7 +24,7 @@ MangleNumberingContext::getManglingNumber(const CXXMethodDecl *CallOperator) {
     = CallOperator->getType()->getAs<FunctionProtoType>();
   ASTContext &Context = CallOperator->getASTContext();
 
-  QualType Key = Context.getFunctionType(Context.VoidTy, Proto->getArgTypes(),
+  QualType Key = Context.getFunctionType(Context.VoidTy, Proto->getParamTypes(),
                                          FunctionProtoType::ExtProtoInfo());
   Key = Context.getCanonicalType(Key);
   return ++ManglingNumbers[Key->castAs<FunctionProtoType>()];

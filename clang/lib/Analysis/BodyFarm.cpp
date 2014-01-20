@@ -35,8 +35,7 @@ static bool isDispatchBlock(QualType Ty) {
   // returns void.
   const FunctionProtoType *FT =
   BPT->getPointeeType()->getAs<FunctionProtoType>();
-  if (!FT || !FT->getResultType()->isVoidType()  ||
-      FT->getNumArgs() != 0)
+  if (!FT || !FT->getResultType()->isVoidType() || FT->getNumParams() != 0)
     return false;
 
   return true;
