@@ -35,16 +35,16 @@ namespace {
     virtual bool runOnModule(Module &M) {
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
         if (!I->isDeclaration()) continue;
-        
+
         bool PrintedFn = false;
         for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
              UI != E; ++UI) {
           Instruction *User = dyn_cast<Instruction>(*UI);
           if (!User) continue;
-          
+
           CallSite CS(cast<Value>(User));
           if (!CS) continue;
-          
+
           for (CallSite::arg_iterator AI = CS.arg_begin(),
                E = CS.arg_end(); AI != E; ++AI) {
             if (!isa<Constant>(*AI)) continue;
