@@ -186,6 +186,10 @@ let isCall = 1 in
                            (outs), (ins i32imm_pcrel:$dst),
                            "call{l}\t$dst", [], IIC_CALL_RI>, OpSize16,
                       Requires<[Not64BitMode]>, Sched<[WriteJump]>;
+    def CALLpcrel16 : Ii16PCRel<0xE8, RawFrm,
+                           (outs), (ins i16imm_pcrel:$dst),
+                           "call{w}\t$dst", [], IIC_CALL_RI>, OpSize,
+                      Sched<[WriteJump]>;
     def CALL16r     : I<0xFF, MRM2r, (outs), (ins GR16:$dst),
                         "call{w}\t{*}$dst", [(X86call GR16:$dst)], IIC_CALL_RI>,
                       OpSize, Requires<[Not64BitMode]>, Sched<[WriteJump]>;
@@ -218,12 +222,6 @@ let isCall = 1 in
     def FARCALL32m  : I<0xFF, MRM3m, (outs), (ins opaque48mem:$dst),
                         "lcall{l}\t{*}$dst", [], IIC_CALL_FAR_MEM>, OpSize16,
                       Sched<[WriteJumpLd]>;
-
-    // callw for 16 bit code for the assembler.
-    let isAsmParserOnly = 1 in
-      def CALLpcrel16 : Ii16PCRel<0xE8, RawFrm,
-                       (outs), (ins i16imm_pcrel:$dst),
-                       "callw\t$dst", []>, OpSize;
   }
 
 
