@@ -605,24 +605,6 @@ public:
   /// either; the entire thing is pretty badly mangled.
   virtual bool hasProtectedVisibility() const { return true; }
 
-  /// \brief Return the section to use for CFString literals, or 0 if no
-  /// special section is used.
-  virtual const char *getCFStringSection() const {
-    return "__DATA,__cfstring";
-  }
-
-  /// \brief Return the section to use for NSString literals, or 0 if no
-  /// special section is used.
-  virtual const char *getNSStringSection() const {
-    return "__OBJC,__cstring_object,regular,no_dead_strip";
-  }
-
-  /// \brief Return the section to use for NSString literals, or 0 if no
-  /// special section is used (NonFragile ABI).
-  virtual const char *getNSStringNonFragileABISection() const {
-    return "__DATA, __objc_stringobj, regular, no_dead_strip";
-  }
-
   /// \brief An optional hook that targets can implement to perform semantic
   /// checking on attribute((section("foo"))) specifiers.
   ///

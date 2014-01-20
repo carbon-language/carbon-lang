@@ -2420,8 +2420,8 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   GV = new llvm::GlobalVariable(getModule(), C->getType(), true,
                                 llvm::GlobalVariable::PrivateLinkage, C,
                                 "_unnamed_cfstring_");
-  if (const char *Sect = getTarget().getCFStringSection())
-    GV->setSection(Sect);
+  const char *CFStringSection = "__DATA,__cfstring";
+  GV->setSection(CFStringSection);
   Entry.setValue(GV);
 
   return GV;
@@ -2532,12 +2532,14 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   GV = new llvm::GlobalVariable(getModule(), C->getType(), true,
                                 llvm::GlobalVariable::PrivateLinkage, C,
                                 "_unnamed_nsstring_");
+  const char *NSStringSection = "__OBJC,__cstring_object,regular,no_dead_strip";
+  const char *NSStringNonFragileABISection =
+      "__DATA, __objc_stringobj, regular, no_dead_strip";
   // FIXME. Fix section.
-  if (const char *Sect = 
-        LangOpts.ObjCRuntime.isNonFragile() 
-          ? getTarget().getNSStringNonFragileABISection() 
-          : getTarget().getNSStringSection())
-    GV->setSection(Sect);
+  const char *Sect = LangOpts.ObjCRuntime.isNonFragile()
+                         ? NSStringNonFragileABISection
+                         : NSStringSection;
+  GV->setSection(Sect);
   Entry.setValue(GV);
   
   return GV;
