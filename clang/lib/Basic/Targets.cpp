@@ -4028,6 +4028,12 @@ public:
       Builder.defineMacro("__ARM_NEON__");
     }
 
+    Builder.defineMacro("__ARM_SIZEOF_WCHAR_T",
+                        Opts.ShortWChar ? "2" : "4");
+
+    Builder.defineMacro("__ARM_SIZEOF_MINIMAL_ENUM",
+                        Opts.ShortEnums ? "1" : "4");
+
     if (CRC)
       Builder.defineMacro("__ARM_FEATURE_CRC32");
 

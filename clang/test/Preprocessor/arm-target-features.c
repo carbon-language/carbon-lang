@@ -68,6 +68,15 @@
 // RUN: %clang -target armv8a-eabi -x c -E -dM %s -o - | FileCheck --check-prefix=THUMBV8A-EABI %s
 // THUMBV8A-EABI:#define __ARM_ARCH_EXT_IDIV__ 1
 
+// RUN: %clang -target arm-none-linux-gnu -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-DEFS %s
+// CHECK-DEFS:#define __ARM_SIZEOF_MINIMAL_ENUM 4
+// CHECK-DEFS:#define __ARM_SIZEOF_WCHAR_T 4
+
+// RUN: %clang -target arm-none-linux-gnu -fshort-wchar -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-SHORTWCHAR %s
+// CHECK-SHORTWCHAR:#define __ARM_SIZEOF_WCHAR_T 2
+
+// RUN: %clang -target arm-none-linux-gnu -fshort-enums -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-SHORTENUMS %s
+// CHECK-SHORTENUMS:#define __ARM_SIZEOF_MINIMAL_ENUM 1
 
 // Test that -mhwdiv has the right effect for a target CPU which has hwdiv enabled by default.
 // RUN: %clang -target armv7 -mcpu=cortex-a15 -x c -E -dM %s -o - | FileCheck --check-prefix=DEFAULTHWDIV-ARM %s
