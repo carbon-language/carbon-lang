@@ -2396,12 +2396,17 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   GV->setUnnamedAddr(true);
   // Don't enforce the target's minimum global alignment, since the only use
   // of the string is via this class initializer.
+  // FIXME: We set the section explicitly to avoid a bug in ld64 224.1. Without
+  // it LLVM can merge the string with a non unnamed_addr one during LTO. Doing
+  // that changes the section it ends in, which surprises ld64.
   if (isUTF16) {
     CharUnits Align = getContext().getTypeAlignInChars(getContext().ShortTy);
     GV->setAlignment(Align.getQuantity());
+    GV->setSection("__TEXT,__ustring");
   } else {
     CharUnits Align = getContext().getTypeAlignInChars(getContext().CharTy);
     GV->setAlignment(Align.getQuantity());
+    GV->setSection("__TEXT,__cstring,cstring_literals");
   }
 
   // String.
