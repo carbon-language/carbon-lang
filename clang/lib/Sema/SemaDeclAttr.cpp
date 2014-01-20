@@ -1651,7 +1651,7 @@ static void handleDestructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  uint32_t priority = ConstructorAttr::DefaultPriority;
+  uint32_t priority = DestructorAttr::DefaultPriority;
   if (Attr.getNumArgs() > 0 &&
       !checkUInt32Argument(S, Attr, Attr.getArgAsExpr(0), priority))
     return;
