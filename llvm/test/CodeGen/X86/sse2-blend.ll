@@ -1,22 +1,22 @@
 ; RUN: llc < %s -march=x86 -mcpu=yonah -mattr=+sse2,-sse4.1 | FileCheck %s
 
-; CHECK: vsel_float
-; CHECK: xorps
+; CHECK-LABEL: vsel_float
+; CHECK-NOT: xorps
 ; CHECK: movss
-; CHECK: orps
+; CHECK-NOT: orps
 ; CHECK: ret
 define void@vsel_float(<4 x float>* %v1, <4 x float>* %v2) {
   %A = load <4 x float>* %v1
   %B = load <4 x float>* %v2
-  %vsel = select <4 x i1> <i1 true, i1 false, i1 false, i1 false>, <4 x float> %A, <4 x float> %B
+  %vsel = select <4 x i1> <i1 false, i1 true, i1 true, i1 true>, <4 x float> %A, <4 x float> %B
   store <4 x float > %vsel, <4 x float>* %v1
   ret void
 }
 
-; CHECK: vsel_i32
-; CHECK: xorps
+; CHECK-LABEL: vsel_i32
+; CHECK-NOT: xorps
 ; CHECK: movss
-; CHECK: orps
+; CHECK-NOT: orps
 ; CHECK: ret
 define void@vsel_i32(<4 x i32>* %v1, <4 x i32>* %v2) {
   %A = load <4 x i32>* %v1
@@ -27,7 +27,7 @@ define void@vsel_i32(<4 x i32>* %v1, <4 x i32>* %v2) {
 }
 
 ; Without forcing instructions, fall back to the preferred PS domain.
-; CHECK: vsel_i64
+; CHECK-LABEL: vsel_i64
 ; CHECK: andnps
 ; CHECK: orps
 ; CHECK: ret
@@ -41,7 +41,7 @@ define void@vsel_i64(<2 x i64>* %v1, <2 x i64>* %v2) {
 }
 
 ; Without forcing instructions, fall back to the preferred PS domain.
-; CHECK: vsel_double
+; CHECK-LABEL: vsel_double
 ; CHECK: andnps
 ; CHECK: orps
 ; CHECK: ret

@@ -1,13 +1,11 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7 -mattr=+sse4.1 | FileCheck %s
 
 
-; In this test we check that sign-extend of the mask bit is performed by
-; shifting the needed bit to the MSB, and not using shl+sra.
+; Verify that we produce movss instead of blendvps when possible.
 
 ;CHECK-LABEL: vsel_float:
-;CHECK: movl $-1
-;CHECK-NEXT: movd
-;CHECK-NEXT: blendvps
+;CHECK-NOT: blendvps
+;CHECK: movss
 ;CHECK: ret
 define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
   %vsel = select <4 x i1> <i1 true, i1 false, i1 false, i1 false>, <4 x float> %v1, <4 x float> %v2
@@ -15,9 +13,8 @@ define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
 }
 
 ;CHECK-LABEL: vsel_4xi8:
-;CHECK: movl $-1
-;CHECK-NEXT: movd
-;CHECK-NEXT: blendvps
+;CHECK-NOT: blendvps
+;CHECK: movss
 ;CHECK: ret
 define <4 x i8> @vsel_4xi8(<4 x i8> %v1, <4 x i8> %v2) {
   %vsel = select <4 x i1> <i1 true, i1 false, i1 false, i1 false>, <4 x i8> %v1, <4 x i8> %v2
