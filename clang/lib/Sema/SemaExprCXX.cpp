@@ -3516,7 +3516,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, TypeTrait UTT,
     }
     return false;
   case UTT_HasNothrowConstructor:
-    // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
+    // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html
     //   If __has_trivial_constructor (type) is true then the trait is
     //   true, else if type is a cv class or union type (or array
     //   thereof) with a default constructor that is known not to
@@ -3528,6 +3528,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, TypeTrait UTT,
           !RD->hasNonTrivialDefaultConstructor())
         return true;
 
+      bool FoundConstructor = false;
       DeclContext::lookup_const_result R = Self.LookupConstructors(RD);
       for (DeclContext::lookup_const_iterator Con = R.begin(),
            ConEnd = R.end(); Con != ConEnd; ++Con) {
@@ -3536,16 +3537,19 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, TypeTrait UTT,
           continue;
         CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
         if (Constructor->isDefaultConstructor()) {
+          FoundConstructor = true;
           const FunctionProtoType *CPT
               = Constructor->getType()->getAs<FunctionProtoType>();
           CPT = Self.ResolveExceptionSpec(KeyLoc, CPT);
           if (!CPT)
             return false;
-          // TODO: check whether evaluating default arguments can throw.
+          // FIXME: check whether evaluating default arguments can throw.
           // For now, we'll be conservative and assume that they can throw.
-          return CPT->isNothrow(Self.Context) && CPT->getNumArgs() == 0;
+          if (!CPT->isNothrow(Self.Context) || CPT->getNumArgs() > 0)
+            return false;
         }
       }
+      return FoundConstructor;
     }
     return false;
   case UTT_HasVirtualDestructor:

@@ -112,6 +112,14 @@ struct HasNoThrowConstructor { HasNoThrowConstructor() throw(); };
 struct HasNoThrowConstructorWithArgs {
   HasNoThrowConstructorWithArgs(HasCons i = HasCons(0)) throw();
 };
+struct HasMultipleDefaultConstructor1 {
+  HasMultipleDefaultConstructor1() throw();
+  HasMultipleDefaultConstructor1(int i = 0);
+};
+struct HasMultipleDefaultConstructor2 {
+  HasMultipleDefaultConstructor2(int i = 0);
+  HasMultipleDefaultConstructor2() throw();
+};
 
 struct HasNoThrowCopy { HasNoThrowCopy(const HasNoThrowCopy&) throw(); };
 struct HasMultipleCopy {
@@ -1562,6 +1570,9 @@ void has_nothrow_constructor() {
   { int arr[F(__has_nothrow_constructor(void))]; }
   { int arr[F(__has_nothrow_constructor(cvoid))]; }
   { int arr[F(__has_nothrow_constructor(HasTemplateCons))]; }
+
+  { int arr[F(__has_nothrow_constructor(HasMultipleDefaultConstructor1))]; }
+  { int arr[F(__has_nothrow_constructor(HasMultipleDefaultConstructor2))]; }
 }
 
 void has_virtual_destructor() {
