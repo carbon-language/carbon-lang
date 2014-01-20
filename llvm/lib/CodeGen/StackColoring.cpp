@@ -43,6 +43,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SlotIndexes.h"
+#include "llvm/CodeGen/StackProtector.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
@@ -117,6 +118,8 @@ class StackColoring : public MachineFunctionPass {
   VNInfo::Allocator VNInfoAllocator;
   /// SlotIndex analysis object.
   SlotIndexes *Indexes;
+  /// The stack protector object.
+  StackProtector *SP;
 
   /// The list of lifetime markers found. These markers are to be removed
   /// once the coloring is done.
@@ -191,6 +194,7 @@ INITIALIZE_PASS_BEGIN(StackColoring,
                    "stack-coloring", "Merge disjoint stack slots", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
+INITIALIZE_PASS_DEPENDENCY(StackProtector)
 INITIALIZE_PASS_END(StackColoring,
                    "stack-coloring", "Merge disjoint stack slots", false, false)
 
@@ -198,6 +202,7 @@ void StackColoring::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineDominatorTree>();
   AU.addPreserved<MachineDominatorTree>();
   AU.addRequired<SlotIndexes>();
+  AU.addRequired<StackProtector>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -517,6 +522,10 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
       Inst = Cast;
     }
 
+    // Allow the stack protector to adjust its value map to account for the
+    // upcoming replacement.
+    SP->adjustForColoring(From, To);
+
     // Note that this will not replace uses in MMOs (which we'll update below),
     // or anywhere else (which is why we won't delete the original
     // instruction).
@@ -674,6 +683,7 @@ bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
   MF = &Func;
   MFI = MF->getFrameInfo();
   Indexes = &getAnalysis<SlotIndexes>();
+  SP = &getAnalysis<StackProtector>();
   BlockLiveness.clear();
   BasicBlocks.clear();
   BasicBlockNumbering.clear();

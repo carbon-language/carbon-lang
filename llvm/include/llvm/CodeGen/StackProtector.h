@@ -119,6 +119,7 @@ public:
   }
 
   SSPLayoutKind getSSPLayout(const AllocaInst *AI) const;
+  void adjustForColoring(const AllocaInst *From, const AllocaInst *To);
 
   virtual bool runOnFunction(Function &Fn);
 };

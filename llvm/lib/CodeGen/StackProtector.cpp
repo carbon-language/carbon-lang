@@ -57,6 +57,27 @@ StackProtector::getSSPLayout(const AllocaInst *AI) const {
   return AI ? Layout.lookup(AI) : SSPLK_None;
 }
 
+void StackProtector::adjustForColoring(const AllocaInst *From,
+                                       const AllocaInst *To) {
+  // When coloring replaces one alloca with another, transfer the SSPLayoutKind
+  // tag from the remapped to the target alloca. The remapped alloca should
+  // have a size smaller than or equal to the replacement alloca.
+  SSPLayoutMap::iterator I = Layout.find(From);
+  if (I != Layout.end()) {
+    SSPLayoutKind Kind = I->second;
+    Layout.erase(I);
+
+    // Transfer the tag, but make sure that SSPLK_AddrOf does not overwrite
+    // SSPLK_SmallArray or SSPLK_LargeArray, and make sure that
+    // SSPLK_SmallArray does not overwrite SSPLK_LargeArray.
+    I = Layout.find(To);
+    if (I == Layout.end())
+      Layout.insert(std::make_pair(To, Kind));
+    else if (I->second != SSPLK_LargeArray && Kind != SSPLK_AddrOf)
+      I->second = Kind;
+  }
+}
+
 bool StackProtector::runOnFunction(Function &Fn) {
   F = &Fn;
   M = F->getParent();
