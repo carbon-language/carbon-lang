@@ -1111,6 +1111,11 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
       //
       if (!isa<Constant>(Y) || !isa<Constant>(Op1)) {
         NewInst = Builder->CreateFMul(Y, Op1);
+        if (Instruction *RI = dyn_cast<Instruction>(NewInst)) {
+          FastMathFlags Flags = I.getFastMathFlags();
+          Flags &= cast<Instruction>(Op0)->getFastMathFlags();
+          RI->setFastMathFlags(Flags);
+        }
         SimpR = BinaryOperator::CreateFDiv(X, NewInst);
       }
     } else if (Op1->hasOneUse() && match(Op1, m_FDiv(m_Value(X), m_Value(Y)))) {
@@ -1118,6 +1123,11 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
       //
       if (!isa<Constant>(Y) || !isa<Constant>(Op0)) {
         NewInst = Builder->CreateFMul(Op0, Y);
+        if (Instruction *RI = dyn_cast<Instruction>(NewInst)) {
+          FastMathFlags Flags = I.getFastMathFlags();
+          Flags &= cast<Instruction>(Op1)->getFastMathFlags();
+          RI->setFastMathFlags(Flags);
+        }
         SimpR = BinaryOperator::CreateFDiv(NewInst, X);
       }
     }

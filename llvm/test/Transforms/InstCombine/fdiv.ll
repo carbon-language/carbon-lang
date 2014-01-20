@@ -31,3 +31,21 @@ define float @test4(float %x) nounwind readnone ssp {
 ; CHECK-LABEL: @test4(
 ; CHECK-NEXT: fmul fast float %x, 1.250000e-01
 }
+
+define float @test5(float %x, float %y, float %z) nounwind readnone ssp {
+  %div1 = fdiv fast float %x, %y
+  %div2 = fdiv fast float %div1, %z
+  ret float %div2
+; CHECK-LABEL: @test5(
+; CHECK-NEXT: fmul fast
+; CHECK-NEXT: fdiv fast
+}
+
+define float @test6(float %x, float %y, float %z) nounwind readnone ssp {
+  %div1 = fdiv fast float %x, %y
+  %div2 = fdiv fast float %z, %div1
+  ret float %div2
+; CHECK-LABEL: @test6(
+; CHECK-NEXT: fmul fast
+; CHECK-NEXT: fdiv fast
+}

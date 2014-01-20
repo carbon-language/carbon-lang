@@ -175,7 +175,7 @@ namespace {
     Value *createFDiv(Value *Opnd0, Value *Opnd1);
     Value *createFNeg(Value *V);
     Value *createNaryFAdd(const AddendVect& Opnds, unsigned InstrQuota);
-    void createInstPostProc(Instruction *NewInst);
+    void createInstPostProc(Instruction *NewInst, bool NoNumber = false);
 
     InstCombiner::BuilderTy *Builder;
     Instruction *Instr;
@@ -483,6 +483,11 @@ Value *FAddCombine::performFactorization(Instruction *I) {
   if (!Factor)
     return 0;
 
+  FastMathFlags Flags;
+  Flags.setUnsafeAlgebra();
+  if (I0) Flags &= I->getFastMathFlags();
+  if (I1) Flags &= I->getFastMathFlags();
+
   // Create expression "NewAddSub = AddSub0 +/- AddsSub1"
   Value *NewAddSub = (I->getOpcode() == Instruction::FAdd) ?
                       createFAdd(AddSub0, AddSub1) :
@@ -491,12 +496,20 @@ Value *FAddCombine::performFactorization(Instruction *I) {
     const APFloat &F = CFP->getValueAPF();
     if (!F.isNormal())
       return 0;
+  } else if (Instruction *II = dyn_cast<Instruction>(NewAddSub))
+    II->setFastMathFlags(Flags);
+
+  if (isMpy) {
+    Value *RI = createFMul(Factor, NewAddSub);
+    if (Instruction *II = dyn_cast<Instruction>(RI))
+      II->setFastMathFlags(Flags);
+    return RI;
   }
 
-  if (isMpy)
-    return createFMul(Factor, NewAddSub);
-
-  return createFDiv(NewAddSub, Factor);
+  Value *RI = createFDiv(NewAddSub, Factor);
+  if (Instruction *II = dyn_cast<Instruction>(RI))
+    II->setFastMathFlags(Flags);
+  return RI;
 }
 
 Value *FAddCombine::simplify(Instruction *I) {
@@ -746,7 +759,10 @@ Value *FAddCombine::createFSub
 
 Value *FAddCombine::createFNeg(Value *V) {
   Value *Zero = cast<Value>(ConstantFP::get(V->getType(), 0.0));
-  return createFSub(Zero, V);
+  Value *NewV = createFSub(Zero, V);
+  if (Instruction *I = dyn_cast<Instruction>(NewV))
+    createInstPostProc(I, true); // fneg's don't receive instruction numbers.
+  return NewV;
 }
 
 Value *FAddCombine::createFAdd
@@ -771,11 +787,13 @@ Value *FAddCombine::createFDiv(Value *Opnd0, Value *Opnd1) {
   return V;
 }
 
-void FAddCombine::createInstPostProc(Instruction *NewInstr) {
+void FAddCombine::createInstPostProc(Instruction *NewInstr,
+                                     bool NoNumber) {
   NewInstr->setDebugLoc(Instr->getDebugLoc());
 
   // Keep track of the number of instruction created.
-  incCreateInstNum();
+  if (!NoNumber)
+    incCreateInstNum();
 
   // Propagate fast-math flags
   NewInstr->setFastMathFlags(Instr->getFastMathFlags());
