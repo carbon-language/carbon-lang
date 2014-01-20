@@ -489,19 +489,6 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
                                    SectionKind::getText());
       OutStreamer.SwitchSection(StaticInitSect);
     }
-
-    // Compiling with debug info should not affect the code
-    // generation!  Since some of the data sections are first switched
-    // to only in ASMPrinter::doFinalization(), the debug info
-    // sections would come before the data sections in the object
-    // file.  This is problematic, since PC-relative loads have to use
-    // different instruction sequences in order to reach global data
-    // in the same object file.
-    OutStreamer.SwitchSection(getObjFileLowering().getCStringSection());
-    OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
-    OutStreamer.SwitchSection(getObjFileLowering().getDataCommonSection());
-    OutStreamer.SwitchSection(getObjFileLowering().getDataBSSSection());
-    OutStreamer.SwitchSection(getObjFileLowering().getNonLazySymbolPointerSection());
   }
 
   // Use unified assembler syntax.
