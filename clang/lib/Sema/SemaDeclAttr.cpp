@@ -4020,7 +4020,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_CFUnknownTransfer:
     handleCFUnknownTransferAttr(S, D, Attr); break;
 
-  // Checker-specific.
   case AttributeList::AT_CFConsumed:
   case AttributeList::AT_NSConsumed:  handleNSConsumedAttr  (S, D, Attr); break;
   case AttributeList::AT_NSConsumesSelf:
