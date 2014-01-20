@@ -747,7 +747,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   // so that they can be given more precise dependencies. We track
   // separately the known memory locations that may alias and those
   // that are known not to alias
-  MapVector<const Value *, SUnit *> AliasMemDefs, NonAliasMemDefs;
+  MapVector<const Value *, std::vector<SUnit *> > AliasMemDefs, NonAliasMemDefs;
   MapVector<const Value *, std::vector<SUnit *> > AliasMemUses, NonAliasMemUses;
   std::set<SUnit*> RejectMemNodes;
 
@@ -842,9 +842,11 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
     if (isGlobalMemoryObject(AA, MI)) {
       // Be conservative with these and add dependencies on all memory
       // references, even those that are known to not alias.
-      for (MapVector<const Value *, SUnit *>::iterator I =
+      for (MapVector<const Value *, std::vector<SUnit *> >::iterator I =
              NonAliasMemDefs.begin(), E = NonAliasMemDefs.end(); I != E; ++I) {
-        I->second->addPred(SDep(SU, SDep::Barrier));
+        for (unsigned i = 0, e = I->second.size(); i != e; ++i) {
+          I->second[i]->addPred(SDep(SU, SDep::Barrier));
+        }
       }
       for (MapVector<const Value *, std::vector<SUnit *> >::iterator I =
              NonAliasMemUses.begin(), E = NonAliasMemUses.end(); I != E; ++I) {
@@ -880,9 +882,11 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       for (unsigned k = 0, m = PendingLoads.size(); k != m; ++k)
         addChainDependency(AAForDep, MFI, SU, PendingLoads[k], RejectMemNodes,
                            TrueMemOrderLatency);
-      for (MapVector<const Value *, SUnit *>::iterator I = AliasMemDefs.begin(),
-           E = AliasMemDefs.end(); I != E; ++I)
-        addChainDependency(AAForDep, MFI, SU, I->second, RejectMemNodes);
+      for (MapVector<const Value *, std::vector<SUnit *> >::iterator I =
+           AliasMemDefs.begin(), E = AliasMemDefs.end(); I != E; ++I) {
+        for (unsigned i = 0, e = I->second.size(); i != e; ++i)
+          addChainDependency(AAForDep, MFI, SU, I->second[i], RejectMemNodes);
+      }
       for (MapVector<const Value *, std::vector<SUnit *> >::iterator I =
            AliasMemUses.begin(), E = AliasMemUses.end(); I != E; ++I) {
         for (unsigned i = 0, e = I->second.size(); i != e; ++i)
@@ -914,19 +918,29 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         // A store to a specific PseudoSourceValue. Add precise dependencies.
         // Record the def in MemDefs, first adding a dep if there is
         // an existing def.
-        MapVector<const Value *, SUnit *>::iterator I =
+        MapVector<const Value *, std::vector<SUnit *> >::iterator I =
           ((ThisMayAlias) ? AliasMemDefs.find(V) : NonAliasMemDefs.find(V));
-        MapVector<const Value *, SUnit *>::iterator IE =
+        MapVector<const Value *, std::vector<SUnit *> >::iterator IE =
           ((ThisMayAlias) ? AliasMemDefs.end() : NonAliasMemDefs.end());
         if (I != IE) {
-          addChainDependency(AAForDep, MFI, SU, I->second, RejectMemNodes,
-                             0, true);
-          I->second = SU;
+          for (unsigned i = 0, e = I->second.size(); i != e; ++i)
+            addChainDependency(AAForDep, MFI, SU, I->second[i], RejectMemNodes,
+                               0, true);
+
+          // If we're not using AA, then we only need one store per object.
+          if (!AAForDep)
+            I->second.clear();
+          I->second.push_back(SU);
         } else {
-          if (ThisMayAlias)
-            AliasMemDefs[V] = SU;
-          else
-            NonAliasMemDefs[V] = SU;
+          if (ThisMayAlias) {
+            if (!AAForDep)
+              AliasMemDefs[V].clear();
+            AliasMemDefs[V].push_back(SU);
+          } else {
+            if (!AAForDep)
+              NonAliasMemDefs[V].clear();
+            NonAliasMemDefs[V].push_back(SU);
+          }
         }
         // Handle the uses in MemUses, if there are any.
         MapVector<const Value *, std::vector<SUnit *> >::iterator J =
@@ -976,9 +990,11 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         if (Objs.empty()) {
           // A load with no underlying object. Depend on all
           // potentially aliasing stores.
-          for (MapVector<const Value *, SUnit *>::iterator I =
+          for (MapVector<const Value *, std::vector<SUnit *> >::iterator I =
                  AliasMemDefs.begin(), E = AliasMemDefs.end(); I != E; ++I)
-            addChainDependency(AAForDep, MFI, SU, I->second, RejectMemNodes);
+            for (unsigned i = 0, e = I->second.size(); i != e; ++i)
+              addChainDependency(AAForDep, MFI, SU, I->second[i],
+                                 RejectMemNodes);
 
           PendingLoads.push_back(SU);
           MayAlias = true;
@@ -995,13 +1011,14 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
             MayAlias = true;
 
           // A load from a specific PseudoSourceValue. Add precise dependencies.
-          MapVector<const Value *, SUnit *>::iterator I =
+          MapVector<const Value *, std::vector<SUnit *> >::iterator I =
             ((ThisMayAlias) ? AliasMemDefs.find(V) : NonAliasMemDefs.find(V));
-          MapVector<const Value *, SUnit *>::iterator IE =
+          MapVector<const Value *, std::vector<SUnit *> >::iterator IE =
             ((ThisMayAlias) ? AliasMemDefs.end() : NonAliasMemDefs.end());
           if (I != IE)
-            addChainDependency(AAForDep, MFI, SU, I->second, RejectMemNodes,
-                               0, true);
+            for (unsigned i = 0, e = I->second.size(); i != e; ++i)
+              addChainDependency(AAForDep, MFI, SU, I->second[i],
+                                 RejectMemNodes, 0, true);
           if (ThisMayAlias)
             AliasMemUses[V].push_back(SU);
           else
