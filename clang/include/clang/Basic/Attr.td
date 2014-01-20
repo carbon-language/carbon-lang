@@ -693,6 +693,12 @@ def NonNull : InheritableAttr {
   } }];
 }
 
+def ReturnsNonNull : InheritableAttr {
+  let Spellings = [GNU<"returns_nonnull">];
+  let Subjects = SubjectList<[ObjCMethod, FunctionLike, HasFunctionProto],
+                             WarnDiag, "ExpectedFunctionOrMethod">;
+}
+
 def NoReturn : InheritableAttr {
   let Spellings = [GNU<"noreturn">, CXX11<"gnu", "noreturn">,
                    Declspec<"noreturn">];

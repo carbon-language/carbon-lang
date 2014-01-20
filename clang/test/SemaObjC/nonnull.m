@@ -74,6 +74,9 @@ void func6(dispatch_object_t _head) {
 @interface NSObject 
 - (void)doSomethingWithNonNullPointer:(void *)ptr :(int)iarg : (void*)ptr1 __attribute__((nonnull(1, 3)));
 + (void)doSomethingClassyWithNonNullPointer:(void *)ptr __attribute__((nonnull(1)));
+- (void*)returnsCNonNull __attribute__((returns_nonnull)); // no-warning
+- (id)returnsObjCNonNull __attribute__((returns_nonnull)); // no-warning
+- (int)returnsIntNonNull __attribute__((returns_nonnull)); // expected-warning {{'returns_nonnull' attribute only applies to return values that are pointers}}
 @end
 
 extern void DoSomethingNotNull(void *db) __attribute__((nonnull(1)));
