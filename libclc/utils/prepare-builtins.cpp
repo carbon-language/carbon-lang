@@ -9,6 +9,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Config/config.h"
 
@@ -34,8 +35,16 @@ int main(int argc, char **argv) {
     OwningPtr<MemoryBuffer> BufferPtr;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr))
       ErrorMessage = ec.message();
-    else
+    else {
+#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR > 4)
+      ErrorOr<Module *> ModuleOrErr = parseBitcodeFile(BufferPtr.get(), Context);
+      if (error_code ec = ModuleOrErr.getError())
+        ErrorMessage = ec.message();
+      M.reset(ModuleOrErr.get());
+#else
       M.reset(ParseBitcodeFile(BufferPtr.get(), Context, &ErrorMessage));
+#endif
+    }
   }
 
   if (M.get() == 0) {
