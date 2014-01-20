@@ -99,6 +99,15 @@ public:
           Arch == llvm::Triple::x86_64)
         return false;
     }
+    else if (isNeXTFamily() && getVersion().getMajor() == 10) {
+      unsigned minor = 0;
+      if (getVersion().getMinor().hasValue())
+        minor = getVersion().getMinor().getValue();
+      if (minor == 5 &&
+          (Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64))
+        return false;
+    }
+    // Except for deployment target of 10.5,
     // Mac runtimes use legacy dispatch everywhere now.
     return true;
   }

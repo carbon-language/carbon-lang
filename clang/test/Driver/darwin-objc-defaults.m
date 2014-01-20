@@ -37,6 +37,7 @@
 
 // CHECK-CHECK-X86_64_OSX10_5: "-cc1"
 // CHECK-CHECK-X86_64_OSX10_5: -fobjc-runtime=macosx-10.5
+// CHECK-CHECK-X86_64_OSX10_5: -fobjc-dispatch-method=non-legacy
 // CHECK-CHECK-X86_64_OSX10_5: darwin-objc-defaults
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
