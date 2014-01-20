@@ -1795,34 +1795,7 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
 
 /// DeclhasAttr - returns true if decl Declaration already has the target
 /// attribute.
-static bool
-DeclHasAttr(const Decl *D, const Attr *A) {
-  // There can be multiple AvailabilityAttr in a Decl. Make sure we copy
-  // all of them. It is mergeAvailabilityAttr in SemaDeclAttr.cpp that is
-  // responsible for making sure they are consistent.
-  const AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(A);
-  if (AA)
-    return false;
-
-  // The following thread safety attributes can also be duplicated.
-  switch (A->getKind()) {
-    case attr::ExclusiveLocksRequired:
-    case attr::SharedLocksRequired:
-    case attr::LocksExcluded:
-    case attr::ExclusiveLockFunction:
-    case attr::SharedLockFunction:
-    case attr::UnlockFunction:
-    case attr::ExclusiveTrylockFunction:
-    case attr::SharedTrylockFunction:
-    case attr::GuardedBy:
-    case attr::PtGuardedBy:
-    case attr::AcquiredBefore:
-    case attr::AcquiredAfter:
-      return false;
-    default:
-      ;
-  }
-
+static bool DeclHasAttr(const Decl *D, const Attr *A) {
   const OwnershipAttr *OA = dyn_cast<OwnershipAttr>(A);
   const AnnotateAttr *Ann = dyn_cast<AnnotateAttr>(A);
   for (Decl::attr_iterator i = D->attr_begin(), e = D->attr_end(); i != e; ++i)
@@ -1997,7 +1970,7 @@ static bool mergeDeclAttribute(Sema &S, NamedDecl *D, InheritableAttr *Attr,
     // AlignedAttrs are handled separately, because we need to handle all
     // such attributes on a declaration at the same time.
     NewAttr = 0;
-  else if (!DeclHasAttr(D, Attr))
+  else if (Attr->duplicatesAllowed() || !DeclHasAttr(D, Attr))
     NewAttr = cast<InheritableAttr>(Attr->clone(S.Context));
 
   if (NewAttr) {

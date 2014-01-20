@@ -1353,6 +1353,9 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     OS << "  virtual bool isLateParsed() const { return "
        << LateParsed << "; }\n";
 
+    if (R.getValueAsBit("DuplicatesAllowedWhileMerging"))
+      OS << "  virtual bool duplicatesAllowed() const { return true; }\n\n";
+
     OS << "};\n\n";
   }
 

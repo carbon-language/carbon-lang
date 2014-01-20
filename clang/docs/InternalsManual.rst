@@ -1713,6 +1713,11 @@ For instance, ``AttributeList::AT_Interrupt`` is the shared parsed attribute
 kind, but ARMInterruptAttr and MSP430InterruptAttr are the semantic attributes 
 generated.
 
+By default, when declarations are merging attributes, an attribute will not be 
+duplicated. However, if an attribute can be duplicated during this merging 
+stage, set ``DuplicatesAllowedWhileMerging`` to ``1``, and the attribute will 
+be merged.
+
 If additional functionality is desired for the semantic form of the attribute, 
 the ``AdditionalMembers`` field specifies code to be copied verbatim into the 
 semantic attribute class object.

@@ -108,6 +108,11 @@ public:
   // Pretty print this attribute.
   virtual void printPretty(raw_ostream &OS,
                            const PrintingPolicy &Policy) const = 0;
+
+  /// \brief By default, attributes cannot be duplicated when being merged;
+  /// however, an attribute can override this. Returns true if the attribute
+  /// can be duplicated when merging.
+  virtual bool duplicatesAllowed() const { return false; }
 };
 
 class InheritableAttr : public Attr {
