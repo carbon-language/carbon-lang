@@ -18,7 +18,11 @@
 
          fcmeq s10, s11, #0.0
          fcmeq d20, d21, #0.0
+         fcmeq s10, s11, #0
+         fcmeq d20, d21, #0x0
 
+// CHECK: fcmeq s10, s11, #0.0   // encoding: [0x6a,0xd9,0xa0,0x5e]
+// CHECK: fcmeq d20, d21, #0.0   // encoding: [0xb4,0xda,0xe0,0x5e]
 // CHECK: fcmeq s10, s11, #0.0   // encoding: [0x6a,0xd9,0xa0,0x5e]
 // CHECK: fcmeq d20, d21, #0.0   // encoding: [0xb4,0xda,0xe0,0x5e]
 
@@ -38,7 +42,11 @@
 
          fcmge s10, s11, #0.0
          fcmge d20, d21, #0.0
+         fcmge s10, s11, #0
+         fcmge d20, d21, #0x0
 
+// CHECK: fcmge s10, s11, #0.0   // encoding: [0x6a,0xc9,0xa0,0x7e]
+// CHECK: fcmge d20, d21, #0.0   // encoding: [0xb4,0xca,0xe0,0x7e]
 // CHECK: fcmge s10, s11, #0.0   // encoding: [0x6a,0xc9,0xa0,0x7e]
 // CHECK: fcmge d20, d21, #0.0   // encoding: [0xb4,0xca,0xe0,0x7e]
 
@@ -58,7 +66,11 @@
 
          fcmgt s10, s11, #0.0
          fcmgt d20, d21, #0.0
+         fcmgt s10, s11, #0
+         fcmgt d20, d21, #0x0
 
+// CHECK: fcmgt s10, s11, #0.0   // encoding: [0x6a,0xc9,0xa0,0x5e]
+// CHECK: fcmgt d20, d21, #0.0   // encoding: [0xb4,0xca,0xe0,0x5e]
 // CHECK: fcmgt s10, s11, #0.0   // encoding: [0x6a,0xc9,0xa0,0x5e]
 // CHECK: fcmgt d20, d21, #0.0   // encoding: [0xb4,0xca,0xe0,0x5e]
 
@@ -68,7 +80,11 @@
 
          fcmle s10, s11, #0.0
          fcmle d20, d21, #0.0
+         fcmle s10, s11, #0
+         fcmle d20, d21, #0x0
 
+// CHECK: fcmle s10, s11, #0.0   // encoding: [0x6a,0xd9,0xa0,0x7e]
+// CHECK: fcmle d20, d21, #0.0   // encoding: [0xb4,0xda,0xe0,0x7e]
 // CHECK: fcmle s10, s11, #0.0   // encoding: [0x6a,0xd9,0xa0,0x7e]
 // CHECK: fcmle d20, d21, #0.0   // encoding: [0xb4,0xda,0xe0,0x7e]
 
@@ -78,7 +94,11 @@
 
          fcmlt s10, s11, #0.0
          fcmlt d20, d21, #0.0
+         fcmlt s10, s11, #0
+         fcmlt d20, d21, #0x0
 
+// CHECK: fcmlt s10, s11, #0.0   // encoding: [0x6a,0xe9,0xa0,0x5e]
+// CHECK: fcmlt d20, d21, #0.0   // encoding: [0xb4,0xea,0xe0,0x5e]
 // CHECK: fcmlt s10, s11, #0.0   // encoding: [0x6a,0xe9,0xa0,0x5e]
 // CHECK: fcmlt d20, d21, #0.0   // encoding: [0xb4,0xea,0xe0,0x5e]
 

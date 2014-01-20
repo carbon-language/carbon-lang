@@ -109,6 +109,9 @@ public:
   OperandMatchResultTy
   ParseFPImmOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
+  OperandMatchResultTy
+  ParseFPImm0AndImm0Operand( SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
   template<typename SomeNamedImmMapper> OperandMatchResultTy
   ParseNamedImmOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return ParseNamedImmOperand(SomeNamedImmMapper(), Operands);
@@ -826,6 +829,10 @@ public:
     return CE->getValue() == N;
   }
 
+  bool isFPZeroIZero() const {
+    return isFPZero();
+  }
+
   static AArch64Operand *CreateImmWithLSL(const MCExpr *Val,
                                           unsigned ShiftAmount,
                                           bool ImplicitAmount,
@@ -963,6 +970,10 @@ public:
   void addFPZeroOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands");
     Inst.addOperand(MCOperand::CreateImm(0));
+  }
+
+  void addFPZeroIZeroOperands(MCInst &Inst, unsigned N) const {
+    addFPZeroOperands(Inst, N);
   }
 
   void addInvCondCodeOperands(MCInst &Inst, unsigned N) const {
@@ -1605,6 +1616,43 @@ AArch64AsmParser::ParseFPImmOperand(
   return MatchOperand_Success;
 }
 
+AArch64AsmParser::OperandMatchResultTy
+AArch64AsmParser::ParseFPImm0AndImm0Operand(
+                               SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // FIXME?: I want to live in a world where immediates must start with
+  // #. Please don't dash my hopes (well, do if you have a good reason).
+
+  //This function is only used in floating compare with zero instructions to get
+  //those instructions accept both #0.0 and #0.
+  if (Parser.getTok().isNot(AsmToken::Hash)) return MatchOperand_NoMatch;
+
+  SMLoc S = Parser.getTok().getLoc();
+  Parser.Lex(); // Eat '#'
+
+  APFloat RealVal(0.0);
+  if (Parser.getTok().is(AsmToken::Real)) {
+    if(Parser.getTok().getString() != "0.0") {
+      Error(S, "only #0.0 is acceptable as immediate");
+      return MatchOperand_ParseFail;
+    }
+  }
+  else if (Parser.getTok().is(AsmToken::Integer)) {
+    if(Parser.getTok().getIntVal() != 0) {
+      Error(S, "only #0.0 is acceptable as immediate");
+      return MatchOperand_ParseFail;
+    }
+  }
+  else {
+    Error(S, "only #0.0 is acceptable as immediate");
+    return MatchOperand_ParseFail;
+  }
+
+  Parser.Lex(); // Eat real number
+  SMLoc E = Parser.getTok().getLoc();
+
+  Operands.push_back(AArch64Operand::CreateFPImm(0.0, S, E));
+  return MatchOperand_Success;
+}
 
 // Automatically generated
 static unsigned MatchRegisterName(StringRef Name);

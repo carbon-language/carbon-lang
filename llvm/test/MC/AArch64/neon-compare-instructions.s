@@ -346,7 +346,13 @@
          fcmeq v0.2s, v31.2s, #0.0
          fcmeq v4.4s, v7.4s, #0.0
          fcmeq v29.2d, v2.2d, #0.0
+         fcmeq v0.2s, v31.2s, #0
+         fcmeq v4.4s, v7.4s, #0
+         fcmeq v29.2d, v2.2d, #0
 
+// CHECK: fcmeq v0.2s, v31.2s, #0.0  // encoding: [0xe0,0xdb,0xa0,0x0e]
+// CHECK: fcmeq v4.4s, v7.4s, #0.0   // encoding: [0xe4,0xd8,0xa0,0x4e]
+// CHECK: fcmeq v29.2d, v2.2d, #0.0  // encoding: [0x5d,0xd8,0xe0,0x4e]
 // CHECK: fcmeq v0.2s, v31.2s, #0.0  // encoding: [0xe0,0xdb,0xa0,0x0e]
 // CHECK: fcmeq v4.4s, v7.4s, #0.0   // encoding: [0xe4,0xd8,0xa0,0x4e]
 // CHECK: fcmeq v29.2d, v2.2d, #0.0  // encoding: [0x5d,0xd8,0xe0,0x4e]
@@ -357,7 +363,13 @@
          fcmge v31.4s, v29.4s, #0.0
          fcmge v3.2s, v8.2s, #0.0
          fcmge v17.2d, v15.2d, #0.0
+         fcmge v31.4s, v29.4s, #0
+         fcmge v3.2s, v8.2s, #0
+         fcmge v17.2d, v15.2d, #0
 
+// CHECK: fcmge v31.4s, v29.4s, #0.0  // encoding: [0xbf,0xcb,0xa0,0x6e]
+// CHECK: fcmge v3.2s, v8.2s, #0.0    // encoding: [0x03,0xc9,0xa0,0x2e]
+// CHECK: fcmge v17.2d, v15.2d, #0.0   // encoding: [0xf1,0xc9,0xe0,0x6e]
 // CHECK: fcmge v31.4s, v29.4s, #0.0  // encoding: [0xbf,0xcb,0xa0,0x6e]
 // CHECK: fcmge v3.2s, v8.2s, #0.0    // encoding: [0x03,0xc9,0xa0,0x2e]
 // CHECK: fcmge v17.2d, v15.2d, #0.0   // encoding: [0xf1,0xc9,0xe0,0x6e]
@@ -368,7 +380,13 @@
          fcmgt v0.2s, v31.2s, #0.0
          fcmgt v4.4s, v7.4s, #0.0
          fcmgt v29.2d, v2.2d, #0.0
+         fcmgt v0.2s, v31.2s, #0
+         fcmgt v4.4s, v7.4s, #0
+         fcmgt v29.2d, v2.2d, #0
 
+// CHECK: fcmgt v0.2s, v31.2s, #0.0   // encoding: [0xe0,0xcb,0xa0,0x0e]
+// CHECK: fcmgt v4.4s, v7.4s, #0.0    // encoding: [0xe4,0xc8,0xa0,0x4e]
+// CHECK: fcmgt v29.2d, v2.2d, #0.0   // encoding: [0x5d,0xc8,0xe0,0x4e]
 // CHECK: fcmgt v0.2s, v31.2s, #0.0   // encoding: [0xe0,0xcb,0xa0,0x0e]
 // CHECK: fcmgt v4.4s, v7.4s, #0.0    // encoding: [0xe4,0xc8,0xa0,0x4e]
 // CHECK: fcmgt v29.2d, v2.2d, #0.0   // encoding: [0x5d,0xc8,0xe0,0x4e]
@@ -379,7 +397,13 @@
          fcmle v1.4s, v8.4s, #0.0
          fcmle v3.2s, v20.2s, #0.0
          fcmle v7.2d, v13.2d, #0.0
+         fcmle v1.4s, v8.4s, #0
+         fcmle v3.2s, v20.2s, #0
+         fcmle v7.2d, v13.2d, #0
 
+// CHECK: fcmle v1.4s, v8.4s, #0.0   // encoding: [0x01,0xd9,0xa0,0x6e]
+// CHECK: fcmle v3.2s, v20.2s, #0.0  // encoding: [0x83,0xda,0xa0,0x2e]
+// CHECK: fcmle v7.2d, v13.2d, #0.0  // encoding: [0xa7,0xd9,0xe0,0x6e]
 // CHECK: fcmle v1.4s, v8.4s, #0.0   // encoding: [0x01,0xd9,0xa0,0x6e]
 // CHECK: fcmle v3.2s, v20.2s, #0.0  // encoding: [0x83,0xda,0xa0,0x2e]
 // CHECK: fcmle v7.2d, v13.2d, #0.0  // encoding: [0xa7,0xd9,0xe0,0x6e]
@@ -390,7 +414,13 @@
          fcmlt v16.2s, v2.2s, #0.0
          fcmlt v15.4s, v4.4s, #0.0
          fcmlt v5.2d, v29.2d, #0.0
+         fcmlt v16.2s, v2.2s, #0
+         fcmlt v15.4s, v4.4s, #0
+         fcmlt v5.2d, v29.2d, #0
 
+// CHECK: fcmlt v16.2s, v2.2s, #0.0   // encoding: [0x50,0xe8,0xa0,0x0e]
+// CHECK: fcmlt v15.4s, v4.4s, #0.0   // encoding: [0x8f,0xe8,0xa0,0x4e]
+// CHECK: fcmlt v5.2d, v29.2d, #0.0   // encoding: [0xa5,0xeb,0xe0,0x4e]
 // CHECK: fcmlt v16.2s, v2.2s, #0.0   // encoding: [0x50,0xe8,0xa0,0x0e]
 // CHECK: fcmlt v15.4s, v4.4s, #0.0   // encoding: [0x8f,0xe8,0xa0,0x4e]
 // CHECK: fcmlt v5.2d, v29.2d, #0.0   // encoding: [0xa5,0xeb,0xe0,0x4e]

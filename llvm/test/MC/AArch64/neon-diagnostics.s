@@ -680,10 +680,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        fcmeq v0.16b, v1.16b, #0.0
 // CHECK-ERROR:                 ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: only #0.0 is acceptable as immediate
 // CHECK-ERROR:        fcmeq v0.8b, v1.4h, #1.0
 // CHECK-ERROR:                             ^
-// CHECK-ERROR: error:  Expected floating-point immediate
+// CHECK-ERROR: error: only #0.0 is acceptable as immediate
 // CHECK-ERROR:        fcmeq v0.8b, v1.4h, #1
 // CHECK-ERROR:                             ^
 //----------------------------------------------------------------------
@@ -694,7 +694,7 @@
          fcmge v31.4s, v29.2s, #0.0
          fcmge v3.8b, v8.2s, #0.0
          fcmle v17.8h, v15.2d, #-1.0
-         fcmle v17.8h, v15.2d, #0
+         fcmle v17.8h, v15.2d, #2
 
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        fcmge v31.4s, v29.2s, #0.0
@@ -702,11 +702,11 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        fcmge v3.8b, v8.2s, #0.0
 // CHECK-ERROR:                 ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: only #0.0 is acceptable as immediate
 // CHECK-ERROR:        fcmle v17.8h, v15.2d, #-1.0
 // CHECK-ERROR:                               ^
-// CHECK-ERROR: error:  Expected floating-point immediate
-// CHECK-ERROR:        fcmle v17.8h, v15.2d, #0
+// CHECK-ERROR: error: only #0.0 is acceptable as immediate
+// CHECK-ERROR:        fcmle v17.8h, v15.2d, #2
 // CHECK-ERROR:                               ^
 //----------------------------------------------------------------------
 // Vector Compare Mask Greater Than Zero (Floating Point)
@@ -723,10 +723,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        fcmgt v4.4s, v7.4h, #0.0
 // CHECK-ERROR:                        ^
-// CHECK-ERROR: error: expected floating-point constant #0.0 or invalid register type
+// CHECK-ERROR: error: only #0.0 is acceptable as immediate
 // CHECK-ERROR:        fcmlt v29.2d, v5.2d, #255.0
 // CHECK-ERROR:                              ^
-// CHECK-ERROR: error:  Expected floating-point immediate
+// CHECK-ERROR: error: only #0.0 is acceptable as immediate
 // CHECK-ERROR:        fcmlt v29.2d, v5.2d, #255
 // CHECK-ERROR:                              ^
 
@@ -745,10 +745,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        fcmge v3.8b, v8.2s, #0.0
 // CHECK-ERROR:                 ^
-// CHECK-ERROR: error: expected floating-point constant #0.0 or invalid register type
+// CHECK-ERROR: error: only #0.0 is acceptable as immediate
 // CHECK-ERROR:        fcmle v17.2d, v15.2d, #15.0
 // CHECK-ERROR:                               ^
-// CHECK-ERROR: error:  Expected floating-point immediate
+// CHECK-ERROR: error: only #0.0 is acceptable as immediate
 // CHECK-ERROR:        fcmle v17.2d, v15.2d, #15
 // CHECK-ERROR:                              ^
 
@@ -767,10 +767,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        fcmgt v4.4s, v7.4h, #0.0
 // CHECK-ERROR:                        ^
-// CHECK-ERROR: error: expected floating-point constant #0.0 or invalid register type
+// CHECK-ERROR: error: only #0.0 is acceptable as immediate
 // CHECK-ERROR:        fcmlt v29.2d, v5.2d, #16.0
 // CHECK-ERROR:                              ^
-// CHECK-ERROR: error:  Expected floating-point immediate
+// CHECK-ERROR: error: only #0.0 is acceptable as immediate
 // CHECK-ERROR:        fcmlt v29.2d, v5.2d, #2
 // CHECK-ERROR:                              ^
 
