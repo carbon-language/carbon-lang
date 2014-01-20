@@ -1235,12 +1235,7 @@ static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
 static void handleReturnsNonNullAttr(Sema &S, Decl *D,
                                      const AttributeList &Attr) {
-  QualType ResultType;
-  if (const FunctionType *Ty = D->getFunctionType())
-    ResultType = Ty->getResultType();
-  else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
-    ResultType = MD->getResultType();
-
+  QualType ResultType = getFunctionOrMethodResultType(D);
   if (!attrNonNullArgCheck(S, ResultType, Attr, Attr.getRange(),
                            /* isReturnValue */ true))
     return;
@@ -3997,9 +3992,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
       else
         handleNonNullAttr(S, D, Attr);
       break;
-    case AttributeList::AT_ReturnsNonNull:
-      handleReturnsNonNullAttr(S, D, Attr);
-      break;
+  case AttributeList::AT_ReturnsNonNull:
+    handleReturnsNonNullAttr(S, D, Attr); break;
   case AttributeList::AT_Overloadable:
     handleSimpleAttribute<OverloadableAttr>(S, D, Attr); break;
   case AttributeList::AT_Ownership:   handleOwnershipAttr   (S, D, Attr); break;

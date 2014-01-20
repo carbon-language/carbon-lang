@@ -32,10 +32,10 @@ void test_baz() {
   baz3(0); // no-warning
 }
 
-void test_void_returns_nonnull() __attribute__((returns_nonnull)); // expected-warning {{'returns_nonnull' attribute only applies to return values that are pointers}}
-int test_int_returns_nonnull() __attribute__((returns_nonnull)); // expected-warning {{'returns_nonnull' attribute only applies to return values that are pointers}}
-void *test_ptr_returns_nonnull() __attribute__((returns_nonnull)); // no-warning
+void test_void_returns_nonnull(void) __attribute__((returns_nonnull)); // expected-warning {{'returns_nonnull' attribute only applies to return values that are pointers}}
+int test_int_returns_nonnull(void) __attribute__((returns_nonnull)); // expected-warning {{'returns_nonnull' attribute only applies to return values that are pointers}}
+void *test_ptr_returns_nonnull(void) __attribute__((returns_nonnull)); // no-warning
 
 int i __attribute__((nonnull)); // expected-warning {{'nonnull' attribute only applies to functions, methods, and parameters}}
 int j __attribute__((returns_nonnull)); // expected-warning {{'returns_nonnull' attribute only applies to functions and methods}}
-
+void *test_no_fn_proto() __attribute__((returns_nonnull));  // expected-warning {{'returns_nonnull' attribute only applies to functions and methods}}
