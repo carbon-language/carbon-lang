@@ -168,9 +168,11 @@ enum {
   AllowMP = 1, // Allow use of MP extensions
 
   // Tag_DIV_use, (=44), uleb128
+  // Note: AllowDIVExt must be emitted if and only if the permission to use
+  // hardware divide cannot be conveyed using AllowDIVIfExists or DisallowDIV
   AllowDIVIfExists = 0, // Allow hardware divide if available in arch, or no
                         // info exists.
-  DisallowDIV = 1,      // Hardware divide explicitly disallowed
+  DisallowDIV = 1,      // Hardware divide explicitly disallowed.
   AllowDIVExt = 2,      // Allow hardware divide as optional architecture
                         // extension above the base arch specified by
                         // Tag_CPU_arch and Tag_CPU_arch_profile.

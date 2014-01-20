@@ -719,12 +719,14 @@ void ARMAsmPrinter::emitAttributes() {
   if (Subtarget->hasMPExtension())
       ATS.emitAttribute(ARMBuildAttrs::MPextension_use, ARMBuildAttrs::AllowMP);
 
-  if (Subtarget->hasDivide()) {
-    // Check if hardware divide is only available in thumb2 or ARM as well.
-    ATS.emitAttribute(ARMBuildAttrs::DIV_use,
-      Subtarget->hasDivideInARMMode() ? ARMBuildAttrs::AllowDIVExt :
-                                        ARMBuildAttrs::AllowDIVIfExists);
-  }
+  // Hardware divide in ARM mode is part of base arch, starting from ARMv8.
+  // If only Thumb hwdiv is present, it must also be in base arch (ARMv7-R/M).
+  // It is not possible to produce DisallowDIV: if hwdiv is present in the base
+  // arch, supplying -hwdiv downgrades the effective arch, via ClearImpliedBits.
+  // AllowDIVExt is only emitted if hwdiv isn't available in the base arch;
+  // otherwise, the default value (AllowDIVIfExists) applies.
+  if (Subtarget->hasDivideInARMMode() && !Subtarget->hasV8Ops())
+      ATS.emitAttribute(ARMBuildAttrs::DIV_use, ARMBuildAttrs::AllowDIVExt);
 
   if (Subtarget->hasTrustZone() && Subtarget->hasVirtualization())
       ATS.emitAttribute(ARMBuildAttrs::Virtualization_use,
