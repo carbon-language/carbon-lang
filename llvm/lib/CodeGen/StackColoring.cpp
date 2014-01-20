@@ -503,6 +503,24 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
     const AllocaInst *To = MFI->getObjectAllocation(it->second);
     assert(To && From && "Invalid allocation object");
     Allocas[From] = To;
+
+    // AA might be used later for instruction scheduling, and we need it to be
+    // able to deduce the correct aliasing releationships between pointers
+    // derived from the alloca being remapped and the target of that remapping.
+    // The only safe way, without directly informing AA about the remapping
+    // somehow, is to directly update the IR to reflect the change being made
+    // here.
+    Instruction *Inst = const_cast<AllocaInst *>(To);
+    if (From->getType() != To->getType()) {
+      BitCastInst *Cast = new BitCastInst(Inst, From->getType());
+      Cast->insertAfter(Inst);
+      Inst = Cast;
+    }
+
+    // Note that this will not replace uses in MMOs (which we'll update below),
+    // or anywhere else (which is why we won't delete the original
+    // instruction).
+    const_cast<AllocaInst *>(From)->replaceAllUsesWith(Inst);
   }
 
   // Remap all instructions to the new stack slots.
@@ -526,20 +544,11 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
         if (!V)
           continue;
 
-        const PseudoSourceValue *PSV = dyn_cast<const PseudoSourceValue>(V);
-        if (PSV && PSV->isConstant(MFI))
+        // We've replaced IR-level uses of the remapped allocas, so we only
+        // need to replace direct uses here.
+        if (!isa<AllocaInst>(V))
           continue;
 
-        // Climb up and find the original alloca.
-        V = GetUnderlyingObject(V);
-        // If we did not find one, or if the one that we found is not in our
-        // map, then move on.
-        if (!V || !isa<AllocaInst>(V)) {
-          // Clear mem operand since we don't know for sure that it doesn't
-          // alias a merged alloca.
-          MMO->setValue(0);
-          continue;
-        }
         const AllocaInst *AI= cast<AllocaInst>(V);
         if (!Allocas.count(AI))
           continue;
