@@ -105,9 +105,7 @@ class X86GenericDisassembler : public MCDisassembler {
 public:
   /// Constructor     - Initializes the disassembler.
   ///
-  /// @param mode     - The X86 architecture mode to decode for.
-  X86GenericDisassembler(const MCSubtargetInfo &STI, DisassemblerMode mode,
-                         const MCInstrInfo *MII);
+  X86GenericDisassembler(const MCSubtargetInfo &STI, const MCInstrInfo *MII);
 private:
   ~X86GenericDisassembler();
 public:

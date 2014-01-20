@@ -31,6 +31,8 @@
 #include "X86GenRegisterInfo.inc"
 #define GET_INSTRINFO_ENUM
 #include "X86GenInstrInfo.inc"
+#define GET_SUBTARGETINFO_ENUM
+#include "X86GenSubtargetInfo.inc"
 
 using namespace llvm;
 using namespace llvm::X86Disassembler;
@@ -73,9 +75,23 @@ static bool translateInstruction(MCInst &target,
                                 const MCDisassembler *Dis);
 
 X86GenericDisassembler::X86GenericDisassembler(const MCSubtargetInfo &STI,
-                                               DisassemblerMode mode,
                                                const MCInstrInfo *MII)
-  : MCDisassembler(STI), MII(MII), fMode(mode) {}
+  : MCDisassembler(STI), MII(MII) {
+  switch (STI.getFeatureBits() &
+          (X86::Mode16Bit | X86::Mode32Bit | X86::Mode64Bit)) {
+  case X86::Mode16Bit:
+    fMode = MODE_16BIT;
+    break;
+  case X86::Mode32Bit:
+    fMode = MODE_32BIT;
+    break;
+  case X86::Mode64Bit:
+    fMode = MODE_64BIT;
+    break;
+  default:
+    llvm_unreachable("Invalid CPU mode");
+  }
+}
 
 X86GenericDisassembler::~X86GenericDisassembler() {
   delete MII;
@@ -737,22 +753,16 @@ static bool translateInstruction(MCInst &mcInst,
   return false;
 }
 
-static MCDisassembler *createX86_32Disassembler(const Target &T,
-                                                const MCSubtargetInfo &STI) {
-  return new X86Disassembler::X86GenericDisassembler(STI, MODE_32BIT,
-                                                     T.createMCInstrInfo());
-}
-
-static MCDisassembler *createX86_64Disassembler(const Target &T,
-                                                const MCSubtargetInfo &STI) {
-  return new X86Disassembler::X86GenericDisassembler(STI, MODE_64BIT,
+static MCDisassembler *createX86Disassembler(const Target &T,
+                                             const MCSubtargetInfo &STI) {
+  return new X86Disassembler::X86GenericDisassembler(STI,
                                                      T.createMCInstrInfo());
 }
 
 extern "C" void LLVMInitializeX86Disassembler() { 
   // Register the disassembler.
   TargetRegistry::RegisterMCDisassembler(TheX86_32Target, 
-                                         createX86_32Disassembler);
+                                         createX86Disassembler);
   TargetRegistry::RegisterMCDisassembler(TheX86_64Target,
-                                         createX86_64Disassembler);
+                                         createX86Disassembler);
 }
