@@ -156,8 +156,7 @@ class AliasTestCase(TestBase):
 
         self.expect ("exprf x 1234",
                      COMMAND_FAILED_AS_EXPECTED, error = True,
-                     substrs = [ "use of undeclared identifier 'f'",
-                                 "1 errors parsing expression" ])
+                     substrs = [ "1 errors parsing expression" ])
 
 if __name__ == '__main__':
     import atexit
