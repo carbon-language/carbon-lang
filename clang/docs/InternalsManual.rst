@@ -1718,6 +1718,11 @@ duplicated. However, if an attribute can be duplicated during this merging
 stage, set ``DuplicatesAllowedWhileMerging`` to ``1``, and the attribute will 
 be merged.
 
+By default, attribute arguments are parsed in an evaluated context. If the 
+arguments for an attribute should be parsed in an unevaluated context (akin to 
+the way the argument to a ``sizeof`` expression is parsed), you can set 
+``ParseArgumentsAsUnevaluated`` to ``1``.
+
 If additional functionality is desired for the semantic form of the attribute, 
 the ``AdditionalMembers`` field specifies code to be copied verbatim into the 
 semantic attribute class object.
