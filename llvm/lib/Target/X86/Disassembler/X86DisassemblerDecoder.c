@@ -971,7 +971,7 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
     }
   }
   else {
-    if (isPrefixAtLocation(insn, 0x66, insn->necessaryPrefixLocation))
+    if (insn->mode != MODE_16BIT && isPrefixAtLocation(insn, 0x66, insn->necessaryPrefixLocation))
       attrMask |= ATTR_OPSIZE;
     else if (isPrefixAtLocation(insn, 0x67, insn->necessaryPrefixLocation))
       attrMask |= ATTR_ADSIZE;
@@ -989,7 +989,8 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
 
   /* The following clauses compensate for limitations of the tables. */
 
-  if (insn->prefixPresent[0x66] && !(attrMask & ATTR_OPSIZE)) {
+  if ((insn->mode == MODE_16BIT || insn->prefixPresent[0x66]) &&
+      !(attrMask & ATTR_OPSIZE)) {
     /*
      * The instruction tables make no distinction between instructions that
      * allow OpSize anywhere (i.e., 16-bit operations) and that need it in a
@@ -1021,7 +1022,8 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
     specWithOpSizeName =
       x86DisassemblerGetInstrName(instructionIDWithOpsize, miiArg);
 
-    if (is16BitEquivalent(specName, specWithOpSizeName)) {
+    if (is16BitEquivalent(specName, specWithOpSizeName) &&
+        (insn->mode == MODE_16BIT) ^ insn->prefixPresent[0x66]) {
       insn->instructionID = instructionIDWithOpsize;
       insn->spec = specifierForUID(instructionIDWithOpsize);
     } else {
