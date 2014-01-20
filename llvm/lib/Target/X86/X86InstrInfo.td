@@ -1068,7 +1068,7 @@ let SchedRW = [WriteMicrocoded] in {
 let Defs = [EDI,ESI], Uses = [EDI,ESI,EFLAGS] in {
 def MOVSB : I<0xA4, RawFrm, (outs), (ins), "movsb", [], IIC_MOVS>;
 def MOVSW : I<0xA5, RawFrm, (outs), (ins), "movsw", [], IIC_MOVS>, OpSize;
-def MOVSD : I<0xA5, RawFrm, (outs), (ins), "movs{l|d}", [], IIC_MOVS>, OpSize16;
+def MOVSL : I<0xA5, RawFrm, (outs), (ins), "movs{l|d}", [], IIC_MOVS>, OpSize16;
 def MOVSQ : RI<0xA5, RawFrm, (outs), (ins), "movsq", [], IIC_MOVS>;
 }
 
@@ -1078,7 +1078,7 @@ def STOSB : I<0xAA, RawFrm, (outs), (ins), "stosb", [], IIC_STOS>;
 let Defs = [EDI], Uses = [AX,EDI,EFLAGS] in
 def STOSW : I<0xAB, RawFrm, (outs), (ins), "stosw", [], IIC_STOS>, OpSize;
 let Defs = [EDI], Uses = [EAX,EDI,EFLAGS] in
-def STOSD : I<0xAB, RawFrm, (outs), (ins), "stos{l|d}", [], IIC_STOS>, OpSize16;
+def STOSL : I<0xAB, RawFrm, (outs), (ins), "stos{l|d}", [], IIC_STOS>, OpSize16;
 let Defs = [RCX,RDI], Uses = [RAX,RCX,RDI,EFLAGS] in
 def STOSQ : RI<0xAB, RawFrm, (outs), (ins), "stosq", [], IIC_STOS>;
 
@@ -1678,14 +1678,14 @@ def REPNE_PREFIX : I<0xF2, RawFrm, (outs),  (ins), "repne", []>;
 let SchedRW = [WriteMicrocoded] in {
 def LODSB : I<0xAC, RawFrm, (outs), (ins), "lodsb", [], IIC_LODS>;
 def LODSW : I<0xAD, RawFrm, (outs), (ins), "lodsw", [], IIC_LODS>, OpSize;
-def LODSD : I<0xAD, RawFrm, (outs), (ins), "lods{l|d}", [], IIC_LODS>, OpSize16;
+def LODSL : I<0xAD, RawFrm, (outs), (ins), "lods{l|d}", [], IIC_LODS>, OpSize16;
 def LODSQ : RI<0xAD, RawFrm, (outs), (ins), "lodsq", [], IIC_LODS>;
 }
 
 let SchedRW = [WriteSystem] in {
 def OUTSB : I<0x6E, RawFrm, (outs), (ins), "outsb", [], IIC_OUTS>;
 def OUTSW : I<0x6F, RawFrm, (outs), (ins), "outsw", [], IIC_OUTS>, OpSize;
-def OUTSD : I<0x6F, RawFrm, (outs), (ins), "outs{l|d}", [], IIC_OUTS>, OpSize16;
+def OUTSL : I<0x6F, RawFrm, (outs), (ins), "outs{l|d}", [], IIC_OUTS>, OpSize16;
 }
 
 // Flag instructions
@@ -2474,7 +2474,7 @@ def : InstAlias<"movq $src, $dst",
 
 // movsd with no operands (as opposed to the SSE scalar move of a double) is an
 // alias for movsl. (as in rep; movsd)
-def : InstAlias<"movsd", (MOVSD), 0>;
+def : InstAlias<"movsd", (MOVSL), 0>;
 
 // movsx aliases
 def : InstAlias<"movsx $src, $dst", (MOVSX16rr8 GR16:$dst, GR8:$src), 0>;
