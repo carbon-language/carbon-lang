@@ -272,6 +272,11 @@ namespace PR16900 {
   A f(A a) { return -a; } // expected-error {{invalid argument type 'PR16900::A' to unary expression}}
 }
 
+namespace PR18551 {
+  enum class A { A };
+  bool f() { return !A::A; } // expected-error {{invalid argument type 'PR18551::A' to unary expression}}
+}
+
 namespace rdar15124329 {
   enum class B : bool { F, T };
 
