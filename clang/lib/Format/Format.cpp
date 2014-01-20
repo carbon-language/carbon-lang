@@ -320,6 +320,7 @@ FormatStyle getGoogleJSStyle() {
   FormatStyle GoogleJSStyle = getGoogleStyle();
   GoogleJSStyle.Language = FormatStyle::LK_JavaScript;
   GoogleJSStyle.BreakBeforeTernaryOperators = false;
+  GoogleJSStyle.MaxEmptyLinesToKeep = 2;
   GoogleJSStyle.SpacesInContainerLiterals = false;
   return GoogleJSStyle;
 }
