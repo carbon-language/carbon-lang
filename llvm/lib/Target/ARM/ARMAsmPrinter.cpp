@@ -489,6 +489,13 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
                                    SectionKind::getText());
       OutStreamer.SwitchSection(StaticInitSect);
     }
+
+    // Compiling with debug info should not affect the code
+    // generation.  Ensure the cstring section comes before the
+    // optional __DWARF secion. Otherwise, PC-relative loads would
+    // have to use different instruction sequences at "-g" in order to
+    // reach global data in the same object file.
+    OutStreamer.SwitchSection(getObjFileLowering().getCStringSection());
   }
 
   // Use unified assembler syntax.
