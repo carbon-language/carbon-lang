@@ -256,7 +256,7 @@ void initializeTypeBasedAliasAnalysisPass(PassRegistry&);
 void initializeUnifyFunctionExitNodesPass(PassRegistry&);
 void initializeUnreachableBlockElimPass(PassRegistry&);
 void initializeUnreachableMachineBlockElimPass(PassRegistry&);
-void initializeVerifierPassPass(PassRegistry&);
+void initializeVerifierLegacyPassPass(PassRegistry&);
 void initializeVirtRegMapPass(PassRegistry&);
 void initializeVirtRegRewriterPass(PassRegistry&);
 void initializeInstSimplifierPass(PassRegistry&);

@@ -34,6 +34,11 @@ enum OutputKind {
   OK_OutputAssembly,
   OK_OutputBitcode
 };
+enum VerifierKind {
+  VK_NoVerifier,
+  VK_VerifyInAndOut,
+  VK_VerifyEachPass
+};
 }
 
 /// \brief Driver function to run the new pass manager over a module.
@@ -44,7 +49,7 @@ enum OutputKind {
 /// when the transition finishes.
 bool runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
                      tool_output_file *Out, StringRef PassPipeline,
-                     opt_tool::OutputKind OK);
+                     opt_tool::OutputKind OK, opt_tool::VerifierKind VK);
 }
 
 #endif

@@ -49,7 +49,8 @@ class ModulePassManager;
 /// the sequence of passes aren't all the exact same kind of pass, it will be
 /// an error. You cannot mix different levels implicitly, you must explicitly
 /// form a pass manager in which to nest passes.
-bool parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText);
+bool parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText,
+                       bool VerifyEachPass = true);
 
 }
 

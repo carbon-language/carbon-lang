@@ -62,9 +62,9 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/InstVisitor.h"
 #include "llvm/Pass.h"
-#include "llvm/PassManager.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
@@ -2387,18 +2387,18 @@ bool llvm::verifyModule(const Module &M, raw_ostream *OS) {
 }
 
 namespace {
-struct VerifierPass : public FunctionPass {
+struct VerifierLegacyPass : public FunctionPass {
   static char ID;
 
   Verifier V;
   bool FatalErrors;
 
-  VerifierPass() : FunctionPass(ID), FatalErrors(true) {
-    initializeVerifierPassPass(*PassRegistry::getPassRegistry());
+  VerifierLegacyPass() : FunctionPass(ID), FatalErrors(true) {
+    initializeVerifierLegacyPassPass(*PassRegistry::getPassRegistry());
   }
-  explicit VerifierPass(bool FatalErrors)
+  explicit VerifierLegacyPass(bool FatalErrors)
       : FunctionPass(ID), V(dbgs()), FatalErrors(FatalErrors) {
-    initializeVerifierPassPass(*PassRegistry::getPassRegistry());
+    initializeVerifierLegacyPassPass(*PassRegistry::getPassRegistry());
   }
 
   bool runOnFunction(Function &F) {
@@ -2421,10 +2421,23 @@ struct VerifierPass : public FunctionPass {
 };
 }
 
-char VerifierPass::ID = 0;
-INITIALIZE_PASS(VerifierPass, "verify", "Module Verifier", false, false)
+char VerifierLegacyPass::ID = 0;
+INITIALIZE_PASS(VerifierLegacyPass, "verify", "Module Verifier", false, false)
 
 FunctionPass *llvm::createVerifierPass(bool FatalErrors) {
-  return new VerifierPass(FatalErrors);
+  return new VerifierLegacyPass(FatalErrors);
 }
 
+PreservedAnalyses VerifierPass::run(Module *M) {
+  if (verifyModule(*M, &dbgs()) && FatalErrors)
+    report_fatal_error("Broken module found, compilation aborted!");
+
+  return PreservedAnalyses::all();
+}
+
+PreservedAnalyses VerifierPass::run(Function *F) {
+  if (verifyFunction(*F, &dbgs()) && FatalErrors)
+    report_fatal_error("Broken function found, compilation aborted!");
+
+  return PreservedAnalyses::all();
+}

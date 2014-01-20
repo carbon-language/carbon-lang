@@ -676,11 +676,17 @@ int main(int argc, char **argv) {
     if (!NoOutput)
       OK = OutputAssembly ? OK_OutputAssembly : OK_OutputBitcode;
 
+    VerifierKind VK = VK_VerifyInAndOut;
+    if (NoVerify)
+      VK = VK_NoVerifier;
+    else if (VerifyEach)
+      VK = VK_VerifyEachPass;
+
     // The user has asked to use the new pass manager and provided a pipeline
     // string. Hand off the rest of the functionality to the new code for that
     // layer.
     return runPassPipeline(argv[0], Context, *M.get(), Out.get(), PassPipeline,
-                           OK)
+                           OK, VK)
                ? 0
                : 1;
   }
