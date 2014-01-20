@@ -48,8 +48,11 @@ std::string X86_MC::ParseX86Triple(StringRef TT) {
   std::string FS;
   if (TheTriple.getArch() == Triple::x86_64)
     FS = "+64bit-mode,-32bit-mode,-16bit-mode";
-  else
+  else if (TheTriple.getEnvironment() != Triple::CODE16)
     FS = "-64bit-mode,+32bit-mode,-16bit-mode";
+  else
+    FS = "-64bit-mode,-32bit-mode,+16bit-mode";
+
   return FS;
 }
 

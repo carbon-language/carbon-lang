@@ -120,6 +120,7 @@ public:
     GNUEABI,
     GNUEABIHF,
     GNUX32,
+    CODE16,
     EABI,
     EABIHF,
     MachO,

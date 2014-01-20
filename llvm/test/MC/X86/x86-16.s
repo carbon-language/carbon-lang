@@ -1,6 +1,4 @@
-// RUN: llvm-mc -triple i386-unknown-unknown --show-encoding %s | FileCheck %s
-
-	.code16
+// RUN: llvm-mc -triple i386-unknown-unknown-code16 --show-encoding %s | FileCheck %s
 
 	movl $0x12345678, %ebx
 // CHECK: movl
