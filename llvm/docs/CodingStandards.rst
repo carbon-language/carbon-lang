@@ -106,6 +106,24 @@ an algorithm is being implemented or something tricky is going on, a reference
 to the paper where it is published should be included, as well as any notes or
 *gotchas* in the code to watch out for.
 
+Namespace Markers
+"""""""""""""""""
+
+We don't indent namespaces (see below) and so feel free to add markers to the
+end of a namespace where it helps readabilitily:
+
+.. code-block:: c++
+
+  namespace foo {
+
+  // Lots of code here...
+
+  } // End foo namespace
+
+This isn't required, and in many cases (such as the namespace used for an
+entire file like the 'llvm' namespace in header files) it isn't really useful.
+Use your judgment and add it where it helps.
+
 Class overviews
 """""""""""""""
 
@@ -336,7 +354,33 @@ Indent Code Consistently
 
 Okay, in your first year of programming you were told that indentation is
 important.  If you didn't believe and internalize this then, now is the time.
-Just do it.
+Just do it.  A few cases are called out here that have common alternatives. The
+intent in saying which way to format things is to increase consistency across
+the LLVM codebase.
+
+Namespaces
+""""""""""
+
+A simple rule: don't indent them. Here are examples of well formatted and
+indented namespaces:
+
+.. code-block:: c++
+  namespace llvm {
+
+  namespace foo {
+  class A;
+  class B;
+  }
+
+  namespace {
+  /// \brief Some local class definition.
+  /// ...
+  class Widget {
+    // ... lots of code here ...
+  };
+  } // End anonymous namespace
+
+  } // End llvm namespace
 
 Compiler Issues
 ---------------
