@@ -72,7 +72,7 @@ public:
   /// \brief parse each member
   virtual error_code
   parseAllMembers(std::vector<std::unique_ptr<File>> &result) const {
-    for (auto mf = _archive->begin_children(), me = _archive->end_children();
+    for (auto mf = _archive->child_begin(), me = _archive->child_end();
          mf != me; ++mf) {
       if (error_code ec = instantiateMember(mf, result))
         return ec;
@@ -177,7 +177,7 @@ public:
     DEBUG_WITH_TYPE("FileArchive", llvm::dbgs()
                                        << "Table of contents for archive '"
                                        << _archive->getFileName() << "':\n");
-    for (auto i = _archive->begin_symbols(), e = _archive->end_symbols();
+    for (auto i = _archive->symbol_begin(), e = _archive->symbol_end();
          i != e; ++i) {
       StringRef name;
       error_code ec;
