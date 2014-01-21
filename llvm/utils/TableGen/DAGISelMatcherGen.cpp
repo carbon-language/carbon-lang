@@ -850,8 +850,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
          "Node has no result");
 
   AddMatcher(new EmitNodeMatcher(II.Namespace+"::"+II.TheDef->getName(),
-                                 ResultVTs.data(), ResultVTs.size(),
-                                 InstOps.data(), InstOps.size(),
+                                 ResultVTs, InstOps,
                                  NodeHasChain, TreeHasInGlue, TreeHasOutGlue,
                                  NodeHasMemRefs, NumFixedArityOperands,
                                  NextRecordedOperandNo));
@@ -907,8 +906,7 @@ void MatcherGen::EmitResultCode() {
   // merge them together into a token factor.  This informs the generated code
   // what all the chained nodes are.
   if (!MatchedChainNodes.empty())
-    AddMatcher(new EmitMergeInputChainsMatcher
-               (MatchedChainNodes.data(), MatchedChainNodes.size()));
+    AddMatcher(new EmitMergeInputChainsMatcher(MatchedChainNodes));
 
   // Codegen the root of the result pattern, capturing the resulting values.
   SmallVector<unsigned, 8> Ops;
@@ -949,10 +947,9 @@ void MatcherGen::EmitResultCode() {
   // If the matched pattern covers nodes which define a glue result, emit a node
   // that tells the matcher about them so that it can update their results.
   if (!MatchedGlueResultNodes.empty())
-    AddMatcher(new MarkGlueResultsMatcher(MatchedGlueResultNodes.data(),
-                                          MatchedGlueResultNodes.size()));
+    AddMatcher(new MarkGlueResultsMatcher(MatchedGlueResultNodes));
 
-  AddMatcher(new CompleteMatchMatcher(Ops.data(), Ops.size(), Pattern));
+  AddMatcher(new CompleteMatchMatcher(Ops, Pattern));
 }
 
 

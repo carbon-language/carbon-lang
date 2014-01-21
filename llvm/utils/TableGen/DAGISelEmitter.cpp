@@ -155,8 +155,7 @@ void DAGISelEmitter::run(raw_ostream &OS) {
     }
   }
 
-  Matcher *TheMatcher = new ScopeMatcher(&PatternMatchers[0],
-                                         PatternMatchers.size());
+  Matcher *TheMatcher = new ScopeMatcher(PatternMatchers);
 
   TheMatcher = OptimizeMatcher(TheMatcher, CGP);
   //Matcher->dump();
