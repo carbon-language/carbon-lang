@@ -20,7 +20,6 @@ def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
-def IIFrecipFsqrtStep  : InstrItinClass;
 def IIFLoad            : InstrItinClass;
 def IIFStore           : InstrItinClass;
 def IIFmoveC1          : InstrItinClass;
@@ -229,7 +228,6 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_DIV_D           , [InstrStage<36, [ALU]>]>,
   InstrItinData<II_SQRT_S          , [InstrStage<54, [ALU]>]>,
   InstrItinData<II_SQRT_D          , [InstrStage<12, [ALU]>]>,
-  InstrItinData<IIFrecipFsqrtStep  , [InstrStage<5,  [ALU]>]>,
   InstrItinData<IIFLoad            , [InstrStage<3,  [ALU]>]>,
   InstrItinData<IIFStore           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IIFmoveC1          , [InstrStage<2,  [ALU]>]>
