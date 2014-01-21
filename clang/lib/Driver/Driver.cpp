@@ -1900,13 +1900,22 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
       Target.getOS() == llvm::Triple::Minix)
     return Target;
 
-  // Handle pseudo-target flags '-m32' and '-m64'.
-  if (Arg *A = Args.getLastArg(options::OPT_m32, options::OPT_m64)) {
+  // Handle pseudo-target flags '-m64', '-m32' and '-m16'.
+  if (Arg *A = Args.getLastArg(options::OPT_m64, options::OPT_m32,
+                               options::OPT_m16)) {
     llvm::Triple::ArchType AT;
-    if (A->getOption().matches(options::OPT_m32))
-      AT = Target.get32BitArchVariant().getArch();
-    else
+    if (A->getOption().matches(options::OPT_m64))
       AT = Target.get64BitArchVariant().getArch();
+    else if (A->getOption().matches(options::OPT_m32))
+      AT = Target.get32BitArchVariant().getArch();
+    else if (A->getOption().matches(options::OPT_m16)) {
+      AT = Target.get32BitArchVariant().getArch();
+      if (AT == llvm::Triple::x86)
+        Target.setEnvironment(llvm::Triple::CODE16);
+      else
+        AT = llvm::Triple::UnknownArch;
+    }
+
     if (AT != llvm::Triple::UnknownArch)
       Target.setArch(AT);
   }
