@@ -284,17 +284,20 @@ void __sanitizer_annotate_contiguous_container(const void *beg_p,
   uptr a = RoundDownTo(Min(old_mid, new_mid), granularity);
   uptr c = RoundUpTo(Max(old_mid, new_mid), granularity);
   uptr d1 = RoundDownTo(old_mid, granularity);
-  uptr d2 = RoundUpTo(old_mid, granularity);
+  // uptr d2 = RoundUpTo(old_mid, granularity);
   // Currently we should be in this state:
   // [a, d1) is good, [d2, c) is bad, [d1, d2) is partially good.
   // Make a quick sanity check that we are indeed in this state.
-  if (d1 != d2)
-    CHECK_EQ(*(u8*)MemToShadow(d1), old_mid - d1);
+  //
+  // FIXME: Two of these three checks are disabled until we fix
+  // https://code.google.com/p/address-sanitizer/issues/detail?id=258.
+  // if (d1 != d2)
+  //  CHECK_EQ(*(u8*)MemToShadow(d1), old_mid - d1);
   if (a + granularity <= d1)
     CHECK_EQ(*(u8*)MemToShadow(a), 0);
-  if (d2 + granularity <= c && c <= end)
-    CHECK_EQ(*(u8 *)MemToShadow(c - granularity),
-             kAsanContiguousContainerOOBMagic);
+  // if (d2 + granularity <= c && c <= end)
+  //   CHECK_EQ(*(u8 *)MemToShadow(c - granularity),
+  //            kAsanContiguousContainerOOBMagic);
 
   uptr b1 = RoundDownTo(new_mid, granularity);
   uptr b2 = RoundUpTo(new_mid, granularity);
