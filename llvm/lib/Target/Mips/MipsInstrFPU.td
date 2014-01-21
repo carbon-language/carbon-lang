@@ -368,17 +368,17 @@ def FMOV_D64 : ABSS_FT<"mov.d", FGR64Opnd, FGR64Opnd, II_MOV_D>,
 /// Floating Point Memory Instructions
 let Predicates = [HasStdEnc] in {
   def LWC1 : MMRel, LW_FT<"lwc1", FGR32Opnd, II_LWC1, load>, LW_FM<0x31>;
-  def SWC1 : MMRel, SW_FT<"swc1", FGR32Opnd, IIFStore, store>, LW_FM<0x39>;
+  def SWC1 : MMRel, SW_FT<"swc1", FGR32Opnd, II_SWC1, store>, LW_FM<0x39>;
 }
 
 let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
   def LDC164 : LW_FT<"ldc1", FGR64Opnd, II_LDC1, load>, LW_FM<0x35>;
-  def SDC164 : SW_FT<"sdc1", FGR64Opnd, IIFStore, store>, LW_FM<0x3d>;
+  def SDC164 : SW_FT<"sdc1", FGR64Opnd, II_SDC1, store>, LW_FM<0x3d>;
 }
 
 let Predicates = [NotFP64bit, HasStdEnc] in {
   def LDC1 : MMRel, LW_FT<"ldc1", AFGR64Opnd, II_LDC1, load>, LW_FM<0x35>;
-  def SDC1 : MMRel, SW_FT<"sdc1", AFGR64Opnd, IIFStore, store>, LW_FM<0x3d>;
+  def SDC1 : MMRel, SW_FT<"sdc1", AFGR64Opnd, II_SDC1, store>, LW_FM<0x3d>;
 }
 
 /// Cop2 Memory Instructions
@@ -392,29 +392,29 @@ let Predicates = [HasStdEnc] in {
 // Indexed loads and stores.
 let Predicates = [HasFPIdx, HasStdEnc] in {
   def LWXC1 : MMRel, LWXC1_FT<"lwxc1", FGR32Opnd, II_LWXC1, load>, LWXC1_FM<0>;
-  def SWXC1 : MMRel, SWXC1_FT<"swxc1", FGR32Opnd, IIFStore, store>, SWXC1_FM<8>;
+  def SWXC1 : MMRel, SWXC1_FT<"swxc1", FGR32Opnd, II_SWXC1, store>, SWXC1_FM<8>;
 }
 
 let Predicates = [HasFPIdx, NotFP64bit, HasStdEnc, NotInMicroMips] in {
   def LDXC1 : LWXC1_FT<"ldxc1", AFGR64Opnd, II_LDXC1, load>, LWXC1_FM<1>;
-  def SDXC1 : SWXC1_FT<"sdxc1", AFGR64Opnd, IIFStore, store>, SWXC1_FM<9>;
+  def SDXC1 : SWXC1_FT<"sdxc1", AFGR64Opnd, II_SDXC1, store>, SWXC1_FM<9>;
 }
 
 let Predicates = [HasFPIdx, IsFP64bit, HasStdEnc],
     DecoderNamespace="Mips64" in {
   def LDXC164 : LWXC1_FT<"ldxc1", FGR64Opnd, II_LDXC1, load>, LWXC1_FM<1>;
-  def SDXC164 : SWXC1_FT<"sdxc1", FGR64Opnd, IIFStore, store>, SWXC1_FM<9>;
+  def SDXC164 : SWXC1_FT<"sdxc1", FGR64Opnd, II_SDXC1, store>, SWXC1_FM<9>;
 }
 
 // Load/store doubleword indexed unaligned.
 let Predicates = [NotFP64bit, HasStdEnc] in {
   def LUXC1 : MMRel, LWXC1_FT<"luxc1", AFGR64Opnd, II_LUXC1>, LWXC1_FM<0x5>;
-  def SUXC1 : MMRel, SWXC1_FT<"suxc1", AFGR64Opnd, IIFStore>, SWXC1_FM<0xd>;
+  def SUXC1 : MMRel, SWXC1_FT<"suxc1", AFGR64Opnd, II_SUXC1>, SWXC1_FM<0xd>;
 }
 
 let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace="Mips64" in {
   def LUXC164 : LWXC1_FT<"luxc1", FGR64Opnd, II_LUXC1>, LWXC1_FM<0x5>;
-  def SUXC164 : SWXC1_FT<"suxc1", FGR64Opnd, IIFStore>, SWXC1_FM<0xd>;
+  def SUXC164 : SWXC1_FT<"suxc1", FGR64Opnd, II_SUXC1>, SWXC1_FM<0xd>;
 }
 
 /// Floating-point Aritmetic
