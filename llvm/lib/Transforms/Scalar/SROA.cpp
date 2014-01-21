@@ -957,7 +957,11 @@ static Type *findCommonType(AllocaSlices::const_iterator B,
                             AllocaSlices::const_iterator E,
                             uint64_t EndOffset) {
   Type *Ty = 0;
-  bool IgnoreNonIntegralTypes = false;
+  bool TyIsCommon = true;
+  IntegerType *ITy = 0;
+
+  // Note that we need to look at *every* alloca slice's Use to ensure we
+  // always get consistent results regardless of the order of slices.
   for (AllocaSlices::const_iterator I = B; I != E; ++I) {
     Use *U = I->getUse();
     if (isa<IntrinsicInst>(*U->getUser()))
@@ -970,37 +974,30 @@ static Type *findCommonType(AllocaSlices::const_iterator B,
       UserTy = LI->getType();
     } else if (StoreInst *SI = dyn_cast<StoreInst>(U->getUser())) {
       UserTy = SI->getValueOperand()->getType();
-    } else {
-      IgnoreNonIntegralTypes = true; // Give up on anything but an iN type.
-      continue;
     }
 
-    if (IntegerType *ITy = dyn_cast<IntegerType>(UserTy)) {
+    if (!UserTy || (Ty && Ty != UserTy))
+      TyIsCommon = false; // Give up on anything but an iN type.
+    else
+      Ty = UserTy;
+
+    if (IntegerType *UserITy = dyn_cast_or_null<IntegerType>(UserTy)) {
       // If the type is larger than the partition, skip it. We only encounter
       // this for split integer operations where we want to use the type of the
       // entity causing the split. Also skip if the type is not a byte width
       // multiple.
-      if (ITy->getBitWidth() % 8 != 0 ||
-          ITy->getBitWidth() / 8 > (EndOffset - B->beginOffset()))
+      if (UserITy->getBitWidth() % 8 != 0 ||
+          UserITy->getBitWidth() / 8 > (EndOffset - B->beginOffset()))
         continue;
 
-      // If we have found an integer type use covering the alloca, use that
-      // regardless of the other types, as integers are often used for
-      // a "bucket of bits" type.
-      //
-      // NB: This *must* be the only return from inside the loop so that the
-      // order of slices doesn't impact the computed type.
-      return ITy;
-    } else if (IgnoreNonIntegralTypes) {
-      continue;
+      // Track the largest bitwidth integer type used in this way in case there
+      // is no common type.
+      if (!ITy || ITy->getBitWidth() < UserITy->getBitWidth())
+        ITy = UserITy;
     }
-
-    if (Ty && Ty != UserTy)
-      IgnoreNonIntegralTypes = true; // Give up on anything but an iN type.
-
-    Ty = UserTy;
   }
-  return Ty;
+
+  return TyIsCommon ? Ty : ITy;
 }
 
 /// PHI instructions that use an alloca and are subsequently loaded can be
