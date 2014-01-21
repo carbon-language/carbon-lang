@@ -2695,6 +2695,17 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
       addPathIfExists(LibPath + "/../" + Multilib, Paths);
     }
   }
+
+  // Similar to the logic for GCC above, if we currently running Clang inside
+  // of the requested system root, add its parent multilib library paths to
+  // those searched.
+  // FIXME: It's not clear whether we should use the driver's installed
+  // directory ('Dir' below) or the ResourceDir.
+  if (StringRef(D.Dir).startswith(SysRoot)) {
+    addPathIfExists(D.Dir + "/../lib/" + MultiarchTriple, Paths);
+    addPathIfExists(D.Dir + "/../" + Multilib, Paths);
+  }
+
   addPathIfExists(SysRoot + "/lib/" + MultiarchTriple, Paths);
   addPathIfExists(SysRoot + "/lib/../" + Multilib, Paths);
   addPathIfExists(SysRoot + "/usr/lib/" + MultiarchTriple, Paths);
@@ -2723,6 +2734,15 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     if (StringRef(LibPath).startswith(SysRoot))
       addPathIfExists(LibPath, Paths);
   }
+
+  // Similar to the logic for GCC above, if we are currently running Clang
+  // inside of the requested system root, add its parent library path to those
+  // searched.
+  // FIXME: It's not clear whether we should use the driver's installed
+  // directory ('Dir' below) or the ResourceDir.
+  if (StringRef(D.Dir).startswith(SysRoot))
+    addPathIfExists(D.Dir + "/../lib", Paths);
+
   addPathIfExists(SysRoot + "/lib", Paths);
   addPathIfExists(SysRoot + "/usr/lib", Paths);
 }
