@@ -17,7 +17,6 @@ def IMULDIV : FuncUnit;
 // Instruction Itinerary classes used for Mips
 //===----------------------------------------------------------------------===//
 def IIAlu              : InstrItinClass;
-def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
 def IIPseudo           : InstrItinClass;
@@ -64,11 +63,22 @@ def II_DSRL32           : InstrItinClass;
 def II_DSRLV            : InstrItinClass;
 def II_DSUBU            : InstrItinClass;
 def II_FLOOR            : InstrItinClass;
+def II_LB               : InstrItinClass;
+def II_LBU              : InstrItinClass;
+def II_LD               : InstrItinClass;
 def II_LDC1             : InstrItinClass;
+def II_LDL              : InstrItinClass;
+def II_LDR              : InstrItinClass;
 def II_LDXC1            : InstrItinClass;
+def II_LH               : InstrItinClass;
+def II_LHU              : InstrItinClass;
 def II_LUI              : InstrItinClass;
 def II_LUXC1            : InstrItinClass;
+def II_LW               : InstrItinClass;
+def II_LWU              : InstrItinClass;
 def II_LWC1             : InstrItinClass;
+def II_LWL              : InstrItinClass;
+def II_LWR              : InstrItinClass;
 def II_LWXC1            : InstrItinClass;
 def II_MADD             : InstrItinClass;
 def II_MADDU            : InstrItinClass;
@@ -111,6 +121,7 @@ def II_NMSUB_S          : InstrItinClass;
 def II_NOR              : InstrItinClass;
 def II_OR               : InstrItinClass;
 def II_ORI              : InstrItinClass;
+def II_RESTORE          : InstrItinClass;
 def II_RDHWR            : InstrItinClass;
 def II_ROTR             : InstrItinClass;
 def II_ROTRV            : InstrItinClass;
@@ -184,7 +195,17 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_ANDI            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_ORI             , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_XORI            , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<IILoad             , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LB              , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LBU             , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LH              , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LHU             , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LW              , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LWL             , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LWR             , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LD              , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LDL             , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LDR             , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_RESTORE         , [InstrStage<3,  [ALU]>]>,
   InstrItinData<IIStore            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IIBranch           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DMULT           , [InstrStage<17, [IMULDIV]>]>,

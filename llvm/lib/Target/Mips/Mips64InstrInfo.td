@@ -121,30 +121,30 @@ let Predicates = [HasMips64r2, HasStdEnc] in {
 /// Load and Store Instructions
 ///  aligned
 let isCodeGenOnly = 1 in {
-def LB64  : Load<"lb", GPR64Opnd, sextloadi8, IILoad>, LW_FM<0x20>;
-def LBu64 : Load<"lbu", GPR64Opnd, zextloadi8, IILoad>, LW_FM<0x24>;
-def LH64  : Load<"lh", GPR64Opnd, sextloadi16, IILoad>, LW_FM<0x21>;
-def LHu64 : Load<"lhu", GPR64Opnd, zextloadi16, IILoad>, LW_FM<0x25>;
-def LW64  : Load<"lw", GPR64Opnd, sextloadi32, IILoad>, LW_FM<0x23>;
+def LB64  : Load<"lb", GPR64Opnd, sextloadi8, II_LB>, LW_FM<0x20>;
+def LBu64 : Load<"lbu", GPR64Opnd, zextloadi8, II_LBU>, LW_FM<0x24>;
+def LH64  : Load<"lh", GPR64Opnd, sextloadi16, II_LH>, LW_FM<0x21>;
+def LHu64 : Load<"lhu", GPR64Opnd, zextloadi16, II_LHU>, LW_FM<0x25>;
+def LW64  : Load<"lw", GPR64Opnd, sextloadi32, II_LW>, LW_FM<0x23>;
 def SB64  : Store<"sb", GPR64Opnd, truncstorei8, IIStore>, LW_FM<0x28>;
 def SH64  : Store<"sh", GPR64Opnd, truncstorei16, IIStore>, LW_FM<0x29>;
 def SW64  : Store<"sw", GPR64Opnd, truncstorei32, IIStore>, LW_FM<0x2b>;
 }
 
-def LWu   : Load<"lwu", GPR64Opnd, zextloadi32, IILoad>, LW_FM<0x27>;
-def LD    : Load<"ld", GPR64Opnd, load, IILoad>, LW_FM<0x37>;
+def LWu   : Load<"lwu", GPR64Opnd, zextloadi32, II_LWU>, LW_FM<0x27>;
+def LD    : Load<"ld", GPR64Opnd, load, II_LD>, LW_FM<0x37>;
 def SD    : Store<"sd", GPR64Opnd, store, IIStore>, LW_FM<0x3f>;
 
 /// load/store left/right
 let isCodeGenOnly = 1 in {
-def LWL64 : LoadLeftRight<"lwl", MipsLWL, GPR64Opnd, IILoad>, LW_FM<0x22>;
-def LWR64 : LoadLeftRight<"lwr", MipsLWR, GPR64Opnd, IILoad>, LW_FM<0x26>;
+def LWL64 : LoadLeftRight<"lwl", MipsLWL, GPR64Opnd, II_LWL>, LW_FM<0x22>;
+def LWR64 : LoadLeftRight<"lwr", MipsLWR, GPR64Opnd, II_LWR>, LW_FM<0x26>;
 def SWL64 : StoreLeftRight<"swl", MipsSWL, GPR64Opnd, IIStore>, LW_FM<0x2a>;
 def SWR64 : StoreLeftRight<"swr", MipsSWR, GPR64Opnd, IIStore>, LW_FM<0x2e>;
 }
 
-def LDL   : LoadLeftRight<"ldl", MipsLDL, GPR64Opnd, IILoad>, LW_FM<0x1a>;
-def LDR   : LoadLeftRight<"ldr", MipsLDR, GPR64Opnd, IILoad>, LW_FM<0x1b>;
+def LDL   : LoadLeftRight<"ldl", MipsLDL, GPR64Opnd, II_LDL>, LW_FM<0x1a>;
+def LDR   : LoadLeftRight<"ldr", MipsLDR, GPR64Opnd, II_LDR>, LW_FM<0x1b>;
 def SDL   : StoreLeftRight<"sdl", MipsSDL, GPR64Opnd, IIStore>, LW_FM<0x2c>;
 def SDR   : StoreLeftRight<"sdr", MipsSDR, GPR64Opnd, IIStore>, LW_FM<0x2d>;
 
