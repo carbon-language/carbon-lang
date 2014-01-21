@@ -91,8 +91,9 @@ bool StackProtector::runOnFunction(Function &Fn) {
 
   Attribute Attr = Fn.getAttributes().getAttribute(
       AttributeSet::FunctionIndex, "stack-protector-buffer-size");
-  if (Attr.isStringAttribute())
-    Attr.getValueAsString().getAsInteger(10, SSPBufferSize);
+  if (Attr.isStringAttribute() &&
+      Attr.getValueAsString().getAsInteger(10, SSPBufferSize))
+      return false; // Invalid integer string
 
   ++NumFunProtected;
   return InsertStackProtectors();
