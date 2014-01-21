@@ -176,7 +176,7 @@ void OpcodeDecoder::Decode_10110010_uleb128(const uint8_t *Opcodes,
   for (unsigned BI = 0, BE = ULEB.size(); BI != BE; ++BI)
     Value = Value | ((ULEB[BI] & 0x7f) << (7 * BI));
 
-  OS << format("; vsp = vsp + %u\n", 0x204 + (Value << 2));
+  OS << format("; vsp = vsp + %" PRIu64 "\n", 0x204 + (Value << 2));
 }
 void OpcodeDecoder::Decode_10110011_sssscccc(const uint8_t *Opcodes,
                                              unsigned &OI) {
