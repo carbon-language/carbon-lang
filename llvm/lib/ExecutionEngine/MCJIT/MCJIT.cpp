@@ -301,7 +301,7 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
     object::Archive *A = *I;
     // Look for our symbols in each Archive
     object::Archive::child_iterator ChildIt = A->findSym(Name);
-    if (ChildIt != A->end_children()) {
+    if (ChildIt != A->child_end()) {
       OwningPtr<object::Binary> ChildBin;
       // FIXME: Support nested archives?
       if (!ChildIt->getAsBinary(ChildBin) && ChildBin->isObject()) {

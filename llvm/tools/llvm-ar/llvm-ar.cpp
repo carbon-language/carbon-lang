@@ -365,8 +365,8 @@ static bool shouldCreateArchive(ArchiveOperation Op) {
 
 static void performReadOperation(ArchiveOperation Operation,
                                  object::Archive *OldArchive) {
-  for (object::Archive::child_iterator I = OldArchive->begin_children(),
-                                       E = OldArchive->end_children();
+  for (object::Archive::child_iterator I = OldArchive->child_begin(),
+                                       E = OldArchive->child_end();
        I != E; ++I) {
     StringRef Name;
     failIfError(I->getName(Name));
@@ -516,8 +516,8 @@ computeNewArchiveMembers(ArchiveOperation Operation,
   int InsertPos = -1;
   StringRef PosName = sys::path::filename(RelPos);
   if (OldArchive) {
-    for (object::Archive::child_iterator I = OldArchive->begin_children(),
-                                         E = OldArchive->end_children();
+    for (object::Archive::child_iterator I = OldArchive->child_begin(),
+                                         E = OldArchive->child_end();
          I != E; ++I) {
       int Pos = Ret.size();
       StringRef Name;

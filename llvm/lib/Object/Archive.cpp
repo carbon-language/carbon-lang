@@ -136,7 +136,7 @@ error_code Archive::Child::getName(StringRef &Result) const {
                        + sizeof(ArchiveMemberHeader)
                        + offset;
     // Verify it.
-    if (Parent->StringTable == Parent->end_children()
+    if (Parent->StringTable == Parent->child_end()
         || addr < (Parent->StringTable->Data.begin()
                    + sizeof(ArchiveMemberHeader))
         || addr > (Parent->StringTable->Data.begin()
@@ -195,7 +195,7 @@ error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result) const {
 }
 
 Archive::Archive(MemoryBuffer *source, error_code &ec)
-  : Binary(Binary::ID_Archive, source), SymbolTable(end_children()) {
+  : Binary(Binary::ID_Archive, source), SymbolTable(child_end()) {
   // Check for sufficient magic.
   assert(source);
   if (source->getBufferSize() < 8 ||
@@ -205,8 +205,8 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   }
 
   // Get the special members.
-  child_iterator i = begin_children(false);
-  child_iterator e = end_children();
+  child_iterator i = child_begin(false);
+  child_iterator e = child_end();
 
   if (i == e) {
     ec = object_error::success;
@@ -310,9 +310,9 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   ec = object_error::success;
 }
 
-Archive::child_iterator Archive::begin_children(bool SkipInternal) const {
+Archive::child_iterator Archive::child_begin(bool SkipInternal) const {
   if (Data->getBufferSize() == 8) // empty archive.
-    return end_children();
+    return child_end();
 
   if (SkipInternal)
     return FirstRegular;
@@ -322,7 +322,7 @@ Archive::child_iterator Archive::begin_children(bool SkipInternal) const {
   return c;
 }
 
-Archive::child_iterator Archive::end_children() const {
+Archive::child_iterator Archive::child_end() const {
   return Child(this, NULL);
 }
 
@@ -385,7 +385,7 @@ Archive::Symbol Archive::Symbol::getNext() const {
   return t;
 }
 
-Archive::symbol_iterator Archive::begin_symbols() const {
+Archive::symbol_iterator Archive::symbol_begin() const {
   if (!hasSymbolTable())
     return symbol_iterator(Symbol(this, 0, 0));
 
@@ -408,7 +408,7 @@ Archive::symbol_iterator Archive::begin_symbols() const {
   return symbol_iterator(Symbol(this, 0, string_start_offset));
 }
 
-Archive::symbol_iterator Archive::end_symbols() const {
+Archive::symbol_iterator Archive::symbol_end() const {
   if (!hasSymbolTable())
     return symbol_iterator(Symbol(this, 0, 0));
 
@@ -429,23 +429,23 @@ Archive::symbol_iterator Archive::end_symbols() const {
 }
 
 Archive::child_iterator Archive::findSym(StringRef name) const {
-  Archive::symbol_iterator bs = begin_symbols();
-  Archive::symbol_iterator es = end_symbols();
+  Archive::symbol_iterator bs = symbol_begin();
+  Archive::symbol_iterator es = symbol_end();
   Archive::child_iterator result;
   
   StringRef symname;
   for (; bs != es; ++bs) {
     if (bs->getName(symname))
-        return end_children();
+        return child_end();
     if (symname == name) {
       if (bs->getMember(result))
-        return end_children();
+        return child_end();
       return result;
     }
   }
-  return end_children();
+  return child_end();
 }
 
 bool Archive::hasSymbolTable() const {
-  return SymbolTable != end_children();
+  return SymbolTable != child_end();
 }

@@ -801,8 +801,8 @@ static void DumpObject(const ObjectFile *o) {
 
 /// @brief Dump each object file in \a a;
 static void DumpArchive(const Archive *a) {
-  for (Archive::child_iterator i = a->begin_children(),
-                               e = a->end_children(); i != e; ++i) {
+  for (Archive::child_iterator i = a->child_begin(),
+                               e = a->child_end(); i != e; ++i) {
     OwningPtr<Binary> child;
     if (error_code ec = i->getAsBinary(child)) {
       // Ignore non-object files.

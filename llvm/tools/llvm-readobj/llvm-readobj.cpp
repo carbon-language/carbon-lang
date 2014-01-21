@@ -232,8 +232,8 @@ static void dumpObject(const ObjectFile *Obj) {
 
 /// @brief Dumps each object file in \a Arc;
 static void dumpArchive(const Archive *Arc) {
-  for (Archive::child_iterator ArcI = Arc->begin_children(),
-                               ArcE = Arc->end_children();
+  for (Archive::child_iterator ArcI = Arc->child_begin(),
+                               ArcE = Arc->child_end();
                                ArcI != ArcE; ++ArcI) {
     OwningPtr<Binary> child;
     if (error_code EC = ArcI->getAsBinary(child)) {
