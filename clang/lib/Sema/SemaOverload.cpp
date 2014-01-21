@@ -1097,7 +1097,7 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
     llvm::FoldingSetNodeID NewID, OldID;
     NewI->getCond()->Profile(NewID, Context, true);
     OldI->getCond()->Profile(OldID, Context, true);
-    if (!(NewID == OldID))
+    if (NewID != OldID)
       return true;
   }
 
@@ -8288,7 +8288,7 @@ isBetterOverloadCandidate(Sema &S,
                                                       S.getASTContext(), true);
       cast<EnableIfAttr>(*Cand2I)->getCond()->Profile(Cand2ID,
                                                       S.getASTContext(), true);
-      if (!(Cand1ID == Cand2ID))
+      if (Cand1ID != Cand2ID)
         return false;
     }
   }
