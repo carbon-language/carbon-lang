@@ -2378,18 +2378,11 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
     C = llvm::ConstantDataArray::getString(VMContext, Entry.getKey());
   }
 
-  llvm::GlobalValue::LinkageTypes Linkage;
-  if (isUTF16)
-    // FIXME: why do utf strings get "_" labels instead of "L" labels?
-    Linkage = llvm::GlobalValue::InternalLinkage;
-  else
-    Linkage = llvm::GlobalValue::PrivateLinkage;
-
   // Note: -fwritable-strings doesn't make the backing store strings of
   // CFStrings writable. (See <rdar://problem/10657500>)
   llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(getModule(), C->getType(), /*isConstant=*/true,
-                             Linkage, C, ".str");
+      new llvm::GlobalVariable(getModule(), C->getType(), /*isConstant=*/true,
+                               llvm::GlobalValue::PrivateLinkage, C, ".str");
   GV->setUnnamedAddr(true);
   // Don't enforce the target's minimum global alignment, since the only use
   // of the string is via this class initializer.
