@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -verify -Wno-gcc-compat %s
+// RUN: %clang_cc1 -std=c++11 -verify %s
 
 typedef int (*fp)(int);
 int surrogate(int);
