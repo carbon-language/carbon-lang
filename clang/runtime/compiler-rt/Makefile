@@ -78,17 +78,17 @@ ifeq ($(shell test -d $(COMPILERRT_SRC_ROOT) && echo OK),OK)
 # support.
 RuntimeDirs :=
 ifeq ($(OS),Darwin)
-RuntimeDirs += darwin darwin_embedded
+RuntimeDirs += darwin macho_embedded
 RuntimeLibrary.darwin.Configs := \
 	eprintf.a 10.4.a osx.a ios.a cc_kext.a cc_kext_ios5.a \
 	asan_osx_dynamic.dylib \
 	profile_osx.a profile_ios.a \
 	ubsan_osx.a
 
-RuntimeLibrary.darwin_embedded.Configs := \
+RuntimeLibrary.macho_embedded.Configs := \
 	hard_static.a hard_pic.a
 ifneq (,$(findstring ARM,$(TARGETS_TO_BUILD)))
-RuntimeLibrary.darwin_embedded.Configs += \
+RuntimeLibrary.macho_embedded.Configs += \
 	soft_static.a soft_pic.a
 endif
 

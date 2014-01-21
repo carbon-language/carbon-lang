@@ -281,7 +281,7 @@ void MachO::AddLinkRuntimeLib(const ArgList &Args, ArgStringList &CmdArgs,
                               StringRef DarwinStaticLib, bool AlwaysLink,
                               bool IsEmbedded) const {
   SmallString<128> P(getDriver().ResourceDir);
-  llvm::sys::path::append(P, "lib", IsEmbedded ? "darwin_embedded" : "darwin",
+  llvm::sys::path::append(P, "lib", IsEmbedded ? "macho_embedded" : "darwin",
                           DarwinStaticLib);
 
   // For now, allow missing resource libraries to support developers who may
