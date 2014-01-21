@@ -26,22 +26,26 @@ let TargetPrefix = "mips" in {  // All intrinsics start with "llvm.mips.".
 // Addition/subtraction
 
 def int_mips_addu_qb : GCCBuiltin<"__builtin_mips_addu_qb">,
-  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
+  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty],
+            [Commutative, IntrNoMem]>;
 def int_mips_addu_s_qb : GCCBuiltin<"__builtin_mips_addu_s_qb">,
-  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
+  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty],
+            [Commutative, IntrNoMem]>;
 def int_mips_subu_qb : GCCBuiltin<"__builtin_mips_subu_qb">,
-  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty], []>;
+  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [IntrNoMem]>;
 def int_mips_subu_s_qb : GCCBuiltin<"__builtin_mips_subu_s_qb">,
-  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty], []>;
+  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [IntrNoMem]>;
 
 def int_mips_addq_ph : GCCBuiltin<"__builtin_mips_addq_ph">,
-  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty], [Commutative]>;
+  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty],
+            [Commutative, IntrNoMem]>;
 def int_mips_addq_s_ph : GCCBuiltin<"__builtin_mips_addq_s_ph">,
-  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty], [Commutative]>;
+  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty],
+            [Commutative, IntrNoMem]>;
 def int_mips_subq_ph : GCCBuiltin<"__builtin_mips_subq_ph">,
-  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty], []>;
+  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty], [IntrNoMem]>;
 def int_mips_subq_s_ph : GCCBuiltin<"__builtin_mips_subq_s_ph">,
-  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty], []>;
+  Intrinsic<[mips_v2q15_ty], [mips_v2q15_ty, mips_v2q15_ty], [IntrNoMem]>;
 
 def int_mips_madd: GCCBuiltin<"__builtin_mips_madd">,
   Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty],
