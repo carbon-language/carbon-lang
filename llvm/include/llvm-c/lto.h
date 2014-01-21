@@ -40,7 +40,7 @@ typedef bool lto_bool_t;
  * @{
  */
 
-#define LTO_API_VERSION 7
+#define LTO_API_VERSION 8
 
 /**
  * \since prior to LTO_API_VERSION=3
@@ -245,6 +245,43 @@ lto_module_get_symbol_name(lto_module_t mod, unsigned int index);
  */
 extern lto_symbol_attributes
 lto_module_get_symbol_attribute(lto_module_t mod, unsigned int index);
+
+
+/**
+ * Returns the number of dependent libraries in the object module.
+ *
+ * \since LTO_API_VERSION=8
+ */
+extern unsigned int
+lto_module_get_num_deplibs(lto_module_t mod);
+
+
+/**
+ * Returns the ith dependent library in the module.
+ *
+ * \since LTO_API_VERSION=8
+ */
+extern const char*
+lto_module_get_deplib(lto_module_t mod, unsigned int index);
+
+
+/**
+ * Returns the number of linker options in the object module.
+ *
+ * \since LTO_API_VERSION=8
+ */
+extern unsigned int
+lto_module_get_num_linkeropts(lto_module_t mod);
+
+
+/**
+ * Returns the ith linker option in the module.
+ *
+ * \since LTO_API_VERSION=8
+ */
+extern const char*
+lto_module_get_linkeropt(lto_module_t mod, unsigned int index);
+
 
 /**
  * Diagnostic severity.

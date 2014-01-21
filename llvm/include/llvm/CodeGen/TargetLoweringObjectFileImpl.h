@@ -80,6 +80,10 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
 public:
   virtual ~TargetLoweringObjectFileMachO() {}
 
+  /// getDepLibFromLinkerOpt - Extract the dependent library name from a linker
+  /// option string. Returns StringRef() if the option does not specify a library.
+  virtual StringRef getDepLibFromLinkerOpt(StringRef LinkerOption) const;
+
   /// emitModuleFlags - Emit the module flags that specify the garbage
   /// collection information.
   virtual void emitModuleFlags(MCStreamer &Streamer,
@@ -128,6 +132,10 @@ public:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
+
+  /// getDepLibFromLinkerOpt - Extract the dependent library name from a linker
+  /// option string. Returns StringRef() if the option does not specify a library.
+  virtual StringRef getDepLibFromLinkerOpt(StringRef LinkerOption) const;
 
   /// emitModuleFlags - Emit Obj-C garbage collection and linker options.  Only
   /// linker option emission is implemented for COFF.

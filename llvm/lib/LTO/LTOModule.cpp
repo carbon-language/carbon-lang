@@ -18,6 +18,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -37,6 +38,8 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 using namespace llvm;
@@ -176,6 +179,8 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
     delete Ret;
     return NULL;
   }
+
+  Ret->parseMetadata();
 
   return Ret;
 }
@@ -797,4 +802,28 @@ bool LTOModule::parseSymbols(std::string &errMsg) {
   }
 
   return false;
+}
+
+/// parseMetadata - Parse metadata from the module
+void LTOModule::parseMetadata() {
+  // Linker Options
+  if (Value *Val = _module->getModuleFlag("Linker Options")) {
+    MDNode *LinkerOptions = cast<MDNode>(Val);
+    for (unsigned i = 0, e = LinkerOptions->getNumOperands(); i != e; ++i) {
+      MDNode *MDOptions = cast<MDNode>(LinkerOptions->getOperand(i));
+      for (unsigned ii = 0, ie = MDOptions->getNumOperands(); ii != ie; ++ii) {
+        MDString *MDOption = cast<MDString>(MDOptions->getOperand(ii));
+        StringRef Op = _linkeropt_strings.
+            GetOrCreateValue(MDOption->getString()).getKey();
+        StringRef DepLibName = _target->getTargetLowering()->
+            getObjFileLowering().getDepLibFromLinkerOpt(Op);
+        if (!DepLibName.empty())
+          _deplibs.push_back(DepLibName.data());
+        else if (!Op.empty())
+          _linkeropts.push_back(Op.data());
+      }
+    }
+  }
+
+  // Add other interesting metadata here.
 }

@@ -5,6 +5,10 @@ lto_module_create
 lto_module_create_from_fd
 lto_module_create_from_fd_at_offset
 lto_module_create_from_memory
+lto_module_get_deplib
+lto_module_get_linkeropt
+lto_module_get_num_deplibs
+lto_module_get_num_linkeropts
 lto_module_get_num_symbols
 lto_module_get_symbol_attribute
 lto_module_get_symbol_name

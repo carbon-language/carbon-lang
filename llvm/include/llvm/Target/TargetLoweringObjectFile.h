@@ -57,6 +57,12 @@ public:
                                     const TargetMachine &TM,
                                     const MCSymbol *Sym) const;
 
+  /// getDepLibFromLinkerOpt - Extract the dependent library name from a linker
+  /// option string. Returns StringRef() if the option does not specify a library.
+  virtual StringRef getDepLibFromLinkerOpt(StringRef LinkerOption) const {
+    return StringRef();
+  }
+
   /// emitModuleFlags - Emit the module flags that the platform cares about.
   virtual void emitModuleFlags(MCStreamer &,
                                ArrayRef<Module::ModuleFlagEntry>,

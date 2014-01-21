@@ -402,6 +402,16 @@ TargetLoweringObjectFileELF::InitializeELF(bool UseInitArray_) {
 //                                 MachO
 //===----------------------------------------------------------------------===//
 
+/// getDepLibFromLinkerOpt - Extract the dependent library name from a linker
+/// option string. Returns StringRef() if the option does not specify a library.
+StringRef TargetLoweringObjectFileMachO::
+getDepLibFromLinkerOpt(StringRef LinkerOption) const {
+  const char *LibCmd = "-l";
+  if (LinkerOption.startswith(LibCmd))
+    return LinkerOption.substr(strlen(LibCmd));
+  return StringRef();
+}
+
 /// emitModuleFlags - Perform code emission for module flags.
 void TargetLoweringObjectFileMachO::
 emitModuleFlags(MCStreamer &Streamer,
@@ -772,6 +782,14 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     return BSSSection;
 
   return DataSection;
+}
+
+StringRef TargetLoweringObjectFileCOFF::
+getDepLibFromLinkerOpt(StringRef LinkerOption) const {
+  const char *LibCmd = "/DEFAULTLIB:";
+  if (LinkerOption.startswith(LibCmd))
+    return LinkerOption.substr(strlen(LibCmd));
+  return StringRef();
 }
 
 void TargetLoweringObjectFileCOFF::
