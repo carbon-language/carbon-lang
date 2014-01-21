@@ -1007,8 +1007,7 @@ void Darwin::addStartObjectFileArgs(const llvm::opt::ArgList &Args,
   if (Args.hasArg(options::OPT_dynamiclib)) {
     // Derived from darwin_dylib1 spec.
     if (isTargetIOSSimulator()) {
-      // The simulator doesn't have a versioned crt1 file.
-      CmdArgs.push_back("-ldylib1.o");
+      ; // iOS simulator does not need dylib1.o.
     } else if (isTargetIPhoneOS()) {
       if (isIPhoneOSVersionLT(3, 1))
         CmdArgs.push_back("-ldylib1.o");
@@ -1023,8 +1022,7 @@ void Darwin::addStartObjectFileArgs(const llvm::opt::ArgList &Args,
       if (!Args.hasArg(options::OPT_static)) {
         // Derived from darwin_bundle1 spec.
         if (isTargetIOSSimulator()) {
-          // The simulator doesn't have a versioned crt1 file.
-          CmdArgs.push_back("-lbundle1.o");
+          ; // iOS simulator does not need bundle1.o.
         } else if (isTargetIPhoneOS()) {
           if (isIPhoneOSVersionLT(3, 1))
             CmdArgs.push_back("-lbundle1.o");
@@ -1059,8 +1057,7 @@ void Darwin::addStartObjectFileArgs(const llvm::opt::ArgList &Args,
         } else {
           // Derived from darwin_crt1 spec.
           if (isTargetIOSSimulator()) {
-            // The simulator doesn't have a versioned crt1 file.
-            CmdArgs.push_back("-lcrt1.o");
+            ; // iOS simulator does not need crt1.o.
           } else if (isTargetIPhoneOS()) {
             if (isIPhoneOSVersionLT(3, 1))
               CmdArgs.push_back("-lcrt1.o");

@@ -45,6 +45,22 @@
 // LINK_IPHONE_3_1-NOT: -lbundle1.o
 // LINK_IPHONE_3_1: -lSystem
 
+// RUN: %clang -target i386-apple-darwin9 -### -arch i386 -mios-simulator-version-min=3.0 %t.o 2> %t.log
+// RUN: %clang -target i386-apple-darwin9 -### -arch i386 -mios-simulator-version-min=3.0 -dynamiclib %t.o 2>> %t.log
+// RUN: %clang -target i386-apple-darwin9 -### -arch i386 -mios-simulator-version-min=3.0 -bundle %t.o 2>> %t.log
+// RUN: FileCheck -check-prefix=LINK_IOSSIM_3_0 %s < %t.log
+
+// LINK_IOSSIM_3_0: {{ld(.exe)?"}}
+// LINK_IOSSIM_3_0-NOT: -lcrt1.o
+// LINK_IOSSIM_3_0: -lSystem
+// LINK_IOSSIM_3_0: {{ld(.exe)?"}}
+// LINK_IOSSIM_3_0: -dylib
+// LINK_IOSSIM_3_0-NOT: -ldylib1.o
+// LINK_IOSSIM_3_0: -lSystem
+// LINK_IOSSIM_3_0: {{ld(.exe)?"}}
+// LINK_IOSSIM_3_0-NOT: -lbundle1.o
+// LINK_IOSSIM_3_0: -lSystem
+
 // RUN: %clang -target i386-apple-darwin9 -### -fpie %t.o 2> %t.log
 // RUN: FileCheck -check-prefix=LINK_EXPLICIT_PIE %s < %t.log
 //
