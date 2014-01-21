@@ -20,7 +20,6 @@ def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
-def IIFmoveC1          : InstrItinClass;
 def IIPseudo           : InstrItinClass;
 
 def II_ABS              : InstrItinClass;
@@ -47,6 +46,8 @@ def II_DIV              : InstrItinClass;
 def II_DIVU             : InstrItinClass;
 def II_DIV_D            : InstrItinClass;
 def II_DIV_S            : InstrItinClass;
+def II_DMFC1            : InstrItinClass;
+def II_DMTC1            : InstrItinClass;
 def II_DMULT            : InstrItinClass;
 def II_DMULTU           : InstrItinClass;
 def II_DROTR            : InstrItinClass;
@@ -73,6 +74,8 @@ def II_MADD             : InstrItinClass;
 def II_MADDU            : InstrItinClass;
 def II_MADD_D           : InstrItinClass;
 def II_MADD_S           : InstrItinClass;
+def II_MFC1             : InstrItinClass;
+def II_MFHC1            : InstrItinClass;
 def II_MFHI_MFLO        : InstrItinClass; // mfhi and mflo
 def II_MOVF             : InstrItinClass;
 def II_MOVF_D           : InstrItinClass;
@@ -92,6 +95,8 @@ def II_MSUB             : InstrItinClass;
 def II_MSUBU            : InstrItinClass;
 def II_MSUB_D           : InstrItinClass;
 def II_MSUB_S           : InstrItinClass;
+def II_MTC1             : InstrItinClass;
+def II_MTHC1            : InstrItinClass;
 def II_MTHI_MTLO        : InstrItinClass; // mthi and mtlo
 def II_MUL              : InstrItinClass;
 def II_MULT             : InstrItinClass;
@@ -246,5 +251,10 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_SDXC1           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_SWXC1           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_SUXC1           , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<IIFmoveC1          , [InstrStage<2,  [ALU]>]>
+  InstrItinData<II_DMFC1           , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_DMTC1           , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MFC1            , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MTC1            , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MFHC1           , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MTHC1           , [InstrStage<2,  [ALU]>]>
 ]>;
