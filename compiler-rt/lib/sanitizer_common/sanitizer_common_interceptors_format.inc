@@ -22,24 +22,6 @@ static const char *parse_number(const char *p, int *out) {
   return p;
 }
 
-static const char *maybe_parse_number(const char *p, int *out) {
-  if (*p >= '0' && *p <= '9')
-    p = parse_number(p, out);
-  return p;
-}
-
-static const char *maybe_parse_number_or_star(const char *p, int *out,
-                                              bool *star) {
-  if (*p == '*') {
-    *star = true;
-    ++p;
-  } else {
-    *star = false;
-    p = maybe_parse_number(p, out);
-  }
-  return p;
-}
-
 static const char *maybe_parse_param_index(const char *p, int *out) {
   // n$
   if (*p >= '0' && *p <= '9') {
@@ -377,6 +359,24 @@ struct PrintfDirective {
   char lengthModifier[2];
   char convSpecifier;
 };
+
+static const char *maybe_parse_number(const char *p, int *out) {
+  if (*p >= '0' && *p <= '9')
+    p = parse_number(p, out);
+  return p;
+}
+
+static const char *maybe_parse_number_or_star(const char *p, int *out,
+                                              bool *star) {
+  if (*p == '*') {
+    *star = true;
+    ++p;
+  } else {
+    *star = false;
+    p = maybe_parse_number(p, out);
+  }
+  return p;
+}
 
 // Parse printf format string. Same as scanf_parse_next.
 static const char *printf_parse_next(const char *p, PrintfDirective *dir) {
