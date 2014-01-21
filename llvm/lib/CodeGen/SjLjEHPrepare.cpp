@@ -251,7 +251,7 @@ void SjLjEHPrepare::lowerIncomingArguments(Function &F) {
     // Aggregate types can't be cast, but are legal argument types, so we have
     // to handle them differently. We use an extract/insert pair as a
     // lightweight method to achieve the same goal.
-    if (isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) {
+    if (isa<StructType>(Ty) || isa<ArrayType>(Ty)) {
       Instruction *EI = ExtractValueInst::Create(AI, 0, "", AfterAllocaInsPt);
       Instruction *NI = InsertValueInst::Create(AI, EI, 0);
       NI->insertAfter(EI);
