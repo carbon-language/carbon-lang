@@ -76,7 +76,7 @@ def CVT_L_D64_MM : MMRel, ABSS_FT<"cvt.l.d", FGR64Opnd, FGR64Opnd, II_CVT>,
 
 def FABS_S_MM : MMRel, ABSS_FT<"abs.s", FGR32Opnd, FGR32Opnd, II_ABS, fabs>,
                 ABS_FM_MM<0, 0xd>;
-def FMOV_S_MM : MMRel, ABSS_FT<"mov.s", FGR32Opnd, FGR32Opnd, IIFmove>,
+def FMOV_S_MM : MMRel, ABSS_FT<"mov.s", FGR32Opnd, FGR32Opnd, II_MOV_S>,
                 ABS_FM_MM<0, 0x1>;
 def FNEG_S_MM : MMRel, ABSS_FT<"neg.s", FGR32Opnd, FGR32Opnd, II_NEG, fneg>,
                 ABS_FM_MM<0, 0x2d>;
@@ -94,30 +94,30 @@ def FABS_MM : MMRel, ABSS_FT<"abs.d", AFGR64Opnd, AFGR64Opnd, II_ABS, fabs>,
 def FNEG_MM : MMRel, ABSS_FT<"neg.d", AFGR64Opnd, AFGR64Opnd, II_NEG, fneg>,
               ABS_FM_MM<1, 0x2d>;
 
-def FMOV_D32_MM : MMRel, ABSS_FT<"mov.d", AFGR64Opnd, AFGR64Opnd, IIFmove>,
+def FMOV_D32_MM : MMRel, ABSS_FT<"mov.d", AFGR64Opnd, AFGR64Opnd, II_MOV_D>,
                   ABS_FM_MM<1, 0x1>, Requires<[NotFP64bit, HasStdEnc]>;
 
-def MOVZ_I_S_MM : MMRel, CMov_I_F_FT<"movz.s", GPR32Opnd, FGR32Opnd, IIFmove>,
-                  CMov_I_F_FM_MM<0x78, 0>;
-def MOVN_I_S_MM : MMRel, CMov_I_F_FT<"movn.s", GPR32Opnd, FGR32Opnd, IIFmove>,
-                  CMov_I_F_FM_MM<0x38, 0>;
+def MOVZ_I_S_MM : MMRel, CMov_I_F_FT<"movz.s", GPR32Opnd, FGR32Opnd,
+                                     II_MOVZ_S>, CMov_I_F_FM_MM<0x78, 0>;
+def MOVN_I_S_MM : MMRel, CMov_I_F_FT<"movn.s", GPR32Opnd, FGR32Opnd,
+                                     II_MOVN_S>, CMov_I_F_FM_MM<0x38, 0>;
 def MOVZ_I_D32_MM : MMRel, CMov_I_F_FT<"movz.d", GPR32Opnd, AFGR64Opnd,
-                    IIFmove>, CMov_I_F_FM_MM<0x78, 1>;
+                                       II_MOVZ_D>, CMov_I_F_FM_MM<0x78, 1>;
 def MOVN_I_D32_MM : MMRel, CMov_I_F_FT<"movn.d", GPR32Opnd, AFGR64Opnd,
-                    IIFmove>, CMov_I_F_FM_MM<0x38, 1>;
+                                       II_MOVN_D>, CMov_I_F_FM_MM<0x38, 1>;
 
-def MOVT_S_MM : MMRel, CMov_F_F_FT<"movt.s", FGR32Opnd, IIFmove, MipsCMovFP_T>,
-                CMov_F_F_FM_MM<0x60, 0>;
-def MOVF_S_MM : MMRel, CMov_F_F_FT<"movf.s", FGR32Opnd, IIFmove, MipsCMovFP_F>,
-                CMov_F_F_FM_MM<0x20, 0>;
-def MOVT_D32_MM : MMRel, CMov_F_F_FT<"movt.d", AFGR64Opnd,
-                  IIFmove, MipsCMovFP_T>, CMov_F_F_FM_MM<0x60, 1>;
-def MOVF_D32_MM : MMRel, CMov_F_F_FT<"movf.d", AFGR64Opnd,
-                  IIFmove, MipsCMovFP_F>, CMov_F_F_FM_MM<0x20, 1>;
+def MOVT_S_MM : MMRel, CMov_F_F_FT<"movt.s", FGR32Opnd, II_MOVT_S,
+                                   MipsCMovFP_T>, CMov_F_F_FM_MM<0x60, 0>;
+def MOVF_S_MM : MMRel, CMov_F_F_FT<"movf.s", FGR32Opnd, II_MOVF_S,
+                                   MipsCMovFP_F>, CMov_F_F_FM_MM<0x20, 0>;
+def MOVT_D32_MM : MMRel, CMov_F_F_FT<"movt.d", AFGR64Opnd, II_MOVT_D,
+                                     MipsCMovFP_T>, CMov_F_F_FM_MM<0x60, 1>;
+def MOVF_D32_MM : MMRel, CMov_F_F_FT<"movf.d", AFGR64Opnd, II_MOVF_D,
+                                     MipsCMovFP_F>, CMov_F_F_FM_MM<0x20, 1>;
 
-def CFC1_MM : MMRel, MFC1_FT<"cfc1", GPR32Opnd, CCROpnd, IIFmove>,
+def CFC1_MM : MMRel, MFC1_FT<"cfc1", GPR32Opnd, CCROpnd, II_CFC1>,
               MFC1_FM_MM<0x40>;
-def CTC1_MM : MMRel, MTC1_FT<"ctc1", CCROpnd, GPR32Opnd, IIFmove>,
+def CTC1_MM : MMRel, MTC1_FT<"ctc1", CCROpnd, GPR32Opnd, II_CTC1>,
               MFC1_FM_MM<0x60>;
 def MFC1_MM : MMRel, MFC1_FT<"mfc1", GPR32Opnd, FGR32Opnd,
                              IIFmoveC1, bitconvert>, MFC1_FM_MM<0x80>;

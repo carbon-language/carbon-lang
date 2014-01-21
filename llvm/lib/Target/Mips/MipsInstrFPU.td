@@ -338,8 +338,8 @@ defm FSQRT : ABSS_M<"sqrt.d", IIFsqrtDouble, fsqrt>, ABSS_FM<0x4, 17>;
 // regardless of register aliasing.
 
 /// Move Control Registers From/To CPU Registers
-def CFC1 : MMRel, MFC1_FT<"cfc1", GPR32Opnd, CCROpnd, IIFmove>, MFC1_FM<2>;
-def CTC1 : MMRel, MTC1_FT<"ctc1", CCROpnd, GPR32Opnd, IIFmove>, MFC1_FM<6>;
+def CFC1 : MMRel, MFC1_FT<"cfc1", GPR32Opnd, CCROpnd, II_CFC1>, MFC1_FM<2>;
+def CTC1 : MMRel, MTC1_FT<"ctc1", CCROpnd, GPR32Opnd, II_CTC1>, MFC1_FM<6>;
 def MFC1 : MMRel, MFC1_FT<"mfc1", GPR32Opnd, FGR32Opnd, IIFmoveC1,
                           bitconvert>, MFC1_FM<0>;
 def MTC1 : MMRel, MTC1_FT<"mtc1", FGR32Opnd, GPR32Opnd, IIFmoveC1,
@@ -353,11 +353,11 @@ def DMFC1 : MFC1_FT<"dmfc1", GPR64Opnd, FGR64Opnd, IIFmoveC1,
 def DMTC1 : MTC1_FT<"dmtc1", FGR64Opnd, GPR64Opnd, IIFmoveC1,
             bitconvert>, MFC1_FM<5>;
 
-def FMOV_S   : MMRel, ABSS_FT<"mov.s", FGR32Opnd, FGR32Opnd, IIFmove>,
+def FMOV_S   : MMRel, ABSS_FT<"mov.s", FGR32Opnd, FGR32Opnd, II_MOV_S>,
                ABSS_FM<0x6, 16>;
-def FMOV_D32 : MMRel, ABSS_FT<"mov.d", AFGR64Opnd, AFGR64Opnd, IIFmove>,
+def FMOV_D32 : MMRel, ABSS_FT<"mov.d", AFGR64Opnd, AFGR64Opnd, II_MOV_D>,
                ABSS_FM<0x6, 17>, Requires<[NotFP64bit, HasStdEnc]>;
-def FMOV_D64 : ABSS_FT<"mov.d", FGR64Opnd, FGR64Opnd, IIFmove>,
+def FMOV_D64 : ABSS_FT<"mov.d", FGR64Opnd, FGR64Opnd, II_MOV_D>,
                ABSS_FM<0x6, 17>, Requires<[IsFP64bit, HasStdEnc]> {
                  let DecoderNamespace = "Mips64";
 }

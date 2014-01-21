@@ -20,7 +20,6 @@ def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
-def IIFmove            : InstrItinClass;
 def IIFcmp             : InstrItinClass;
 def IIFadd             : InstrItinClass;
 def IIFmulSingle       : InstrItinClass;
@@ -42,8 +41,10 @@ def II_ADDU             : InstrItinClass;
 def II_AND              : InstrItinClass;
 def II_ANDI             : InstrItinClass;
 def II_CEIL             : InstrItinClass;
+def II_CFC1             : InstrItinClass;
 def II_CLO              : InstrItinClass;
 def II_CLZ              : InstrItinClass;
+def II_CTC1             : InstrItinClass;
 def II_CVT              : InstrItinClass;
 def II_DADDIU           : InstrItinClass;
 def II_DADDU            : InstrItinClass;
@@ -72,9 +73,19 @@ def II_MADD             : InstrItinClass;
 def II_MADDU            : InstrItinClass;
 def II_MFHI_MFLO        : InstrItinClass; // mfhi and mflo
 def II_MOVF             : InstrItinClass;
+def II_MOVF_D           : InstrItinClass;
+def II_MOVF_S           : InstrItinClass;
 def II_MOVN             : InstrItinClass;
+def II_MOVN_D           : InstrItinClass;
+def II_MOVN_S           : InstrItinClass;
 def II_MOVT             : InstrItinClass;
+def II_MOVT_D           : InstrItinClass;
+def II_MOVT_S           : InstrItinClass;
 def II_MOVZ             : InstrItinClass;
+def II_MOVZ_D           : InstrItinClass;
+def II_MOVZ_S           : InstrItinClass;
+def II_MOV_D            : InstrItinClass;
+def II_MOV_S            : InstrItinClass;
 def II_MSUB             : InstrItinClass;
 def II_MSUBU            : InstrItinClass;
 def II_MTHI_MTLO        : InstrItinClass; // mthi and mtlo
@@ -137,6 +148,8 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_LUI             , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_MOVF            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_MOVN            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_MOVN_S          , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_MOVN_D          , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_MOVT            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_MOVZ            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_NOR             , [InstrStage<1,  [ALU]>]>,
@@ -174,7 +187,16 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_NEG             , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_ROUND           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_TRUNC           , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<IIFmove            , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MOV_D           , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MOV_S           , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_CFC1            , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_CTC1            , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MOVF_D          , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MOVF_S          , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MOVT_D          , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MOVT_S          , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MOVZ_D          , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_MOVZ_S          , [InstrStage<2,  [ALU]>]>,
   InstrItinData<IIFcmp             , [InstrStage<3,  [ALU]>]>,
   InstrItinData<IIFadd             , [InstrStage<4,  [ALU]>]>,
   InstrItinData<IIFmulSingle       , [InstrStage<7,  [ALU]>]>,
