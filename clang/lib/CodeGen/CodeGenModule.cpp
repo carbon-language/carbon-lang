@@ -2383,11 +2383,8 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
     // FIXME: why do utf strings get "_" labels instead of "L" labels?
     Linkage = llvm::GlobalValue::InternalLinkage;
   else
-    // FIXME: With OS X ld 123.2 (xcode 4) and LTO we would get a linker error
-    // when using private linkage. It is not clear if this is a bug in ld
-    // or a reasonable new restriction.
-    Linkage = llvm::GlobalValue::LinkerPrivateLinkage;
-  
+    Linkage = llvm::GlobalValue::PrivateLinkage;
+
   // Note: -fwritable-strings doesn't make the backing store strings of
   // CFStrings writable. (See <rdar://problem/10657500>)
   llvm::GlobalVariable *GV =
