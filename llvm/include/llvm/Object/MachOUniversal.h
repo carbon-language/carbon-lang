@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/Binary.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MachO.h"
 
 namespace llvm {
@@ -77,6 +78,7 @@ public:
   };
 
   MachOUniversalBinary(MemoryBuffer *Source, error_code &ec);
+  static ErrorOr<MachOUniversalBinary*> create(MemoryBuffer *Source);
 
   object_iterator begin_objects() const {
     return ObjectForArch(this, 0);

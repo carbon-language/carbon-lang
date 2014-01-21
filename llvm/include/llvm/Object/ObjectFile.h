@@ -384,9 +384,9 @@ public:
   }
 
 public:
-  static ObjectFile *createCOFFObjectFile(MemoryBuffer *Object);
-  static ObjectFile *createELFObjectFile(MemoryBuffer *Object);
-  static ObjectFile *createMachOObjectFile(MemoryBuffer *Object);
+  static ErrorOr<ObjectFile *> createCOFFObjectFile(MemoryBuffer *Object);
+  static ErrorOr<ObjectFile *> createELFObjectFile(MemoryBuffer *Object);
+  static ErrorOr<ObjectFile *> createMachOObjectFile(MemoryBuffer *Object);
 };
 
 // Inline function definitions.

@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 
@@ -163,6 +164,7 @@ public:
   };
 
   Archive(MemoryBuffer *source, error_code &ec);
+  static ErrorOr<Archive *> create(MemoryBuffer *Source);
 
   enum Kind {
     K_GNU,

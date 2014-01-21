@@ -56,7 +56,7 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
   case sys::fs::file_magic::elf_executable:
   case sys::fs::file_magic::elf_shared_object:
   case sys::fs::file_magic::elf_core:
-    return createELFObjectFile(Object);
+    return createELFObjectFile(Object).get();
   case sys::fs::file_magic::macho_object:
   case sys::fs::file_magic::macho_executable:
   case sys::fs::file_magic::macho_fixed_virtual_memory_shared_lib:
@@ -67,11 +67,11 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
   case sys::fs::file_magic::macho_bundle:
   case sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
   case sys::fs::file_magic::macho_dsym_companion:
-    return createMachOObjectFile(Object);
+    return createMachOObjectFile(Object).get();
   case sys::fs::file_magic::coff_object:
   case sys::fs::file_magic::coff_import_library:
   case sys::fs::file_magic::pecoff_executable:
-    return createCOFFObjectFile(Object);
+    return createCOFFObjectFile(Object).get();
   }
   llvm_unreachable("Unexpected Object File Type");
 }

@@ -194,6 +194,14 @@ error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result) const {
   return object_error::success;
 }
 
+ErrorOr<Archive*> Archive::create(MemoryBuffer *Source) {
+  error_code EC;
+  OwningPtr<Archive> Ret(new Archive(Source, EC));
+  if (EC)
+    return EC;
+  return Ret.take();
+}
+
 Archive::Archive(MemoryBuffer *source, error_code &ec)
   : Binary(Binary::ID_Archive, source), SymbolTable(child_end()) {
   // Check for sufficient magic.

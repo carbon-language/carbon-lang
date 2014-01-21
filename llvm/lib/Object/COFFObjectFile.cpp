@@ -514,10 +514,12 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &EC)
     CurPtr += COFFHeader->SizeOfOptionalHeader;
   }
 
-  if (!COFFHeader->isImportLibrary())
-    if ((EC = getObject(SectionTable, Data, base() + CurPtr,
-                        COFFHeader->NumberOfSections * sizeof(coff_section))))
-      return;
+  if (COFFHeader->isImportLibrary())
+    return;
+
+  if ((EC = getObject(SectionTable, Data, base() + CurPtr,
+                      COFFHeader->NumberOfSections * sizeof(coff_section))))
+    return;
 
   // Initialize the pointer to the symbol table.
   if (COFFHeader->PointerToSymbolTable != 0)
@@ -1013,9 +1015,10 @@ error_code ExportDirectoryEntryRef::getSymbolName(StringRef &Result) const {
   return object_error::success;
 }
 
-namespace llvm {
-ObjectFile *ObjectFile::createCOFFObjectFile(MemoryBuffer *Object) {
+ErrorOr<ObjectFile *> ObjectFile::createCOFFObjectFile(MemoryBuffer *Object) {
   error_code EC;
-  return new COFFObjectFile(Object, EC);
-}
+  OwningPtr<COFFObjectFile> Ret(new COFFObjectFile(Object, EC));
+  if (EC)
+    return EC;
+  return Ret.take();
 }
