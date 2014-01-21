@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mcpu=x86-64 -enable-misched -misched-bottomup=0 -misched-topdown=0 -misched=shuffle -enable-aa-sched-mi | FileCheck %s
-; REQUIRES: Asserts
+; REQUIRES: asserts
 ; -misched=shuffle is NDEBUG only!
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"

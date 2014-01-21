@@ -1,7 +1,7 @@
 ; RUN: llc < %s -fast-isel -verify-machineinstrs -mtriple=x86_64-apple-darwin10
 ; RUN: llc < %s -fast-isel -verify-machineinstrs -mtriple=x86_64-pc-win32 | FileCheck %s -check-prefix=WIN32
 ; RUN: llc < %s -fast-isel -verify-machineinstrs -mtriple=x86_64-pc-win64 | FileCheck %s -check-prefix=WIN64
-; Requires: Asserts
+; REQUIRES: asserts
 
 ; Previously, this would cause an assert.
 define i31 @t1(i31 %a, i31 %b, i31 %c) {
