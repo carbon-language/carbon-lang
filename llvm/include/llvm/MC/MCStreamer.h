@@ -92,6 +92,8 @@ public:
   virtual void emitPad(int64_t Offset) = 0;
   virtual void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
                            bool isVector) = 0;
+  virtual void emitUnwindRaw(int64_t StackOffset,
+                             const SmallVectorImpl<uint8_t> &Opcodes) = 0;
 
   virtual void switchVendor(StringRef Vendor) = 0;
   virtual void emitAttribute(unsigned Attribute, unsigned Value) = 0;

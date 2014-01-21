@@ -61,6 +61,12 @@ public:
   /// Emit unwind opcodes to add $sp with an offset.
   void EmitSPOffset(int64_t Offset);
 
+  /// Emit unwind raw opcodes
+  void EmitRaw(const SmallVectorImpl<uint8_t> &Opcodes) {
+    Ops.insert(Ops.end(), Opcodes.begin(), Opcodes.end());
+    OpBegins.push_back(OpBegins.back() + Opcodes.size());
+  }
+
   /// Finalize the unwind opcode sequence for EmitBytes()
   void Finalize(unsigned &PersonalityIndex,
                 SmallVectorImpl<uint8_t> &Result);

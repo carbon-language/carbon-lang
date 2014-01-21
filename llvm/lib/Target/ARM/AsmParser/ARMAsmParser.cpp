@@ -295,6 +295,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveLtorg(SMLoc L);
   bool parseDirectiveEven(SMLoc L);
   bool parseDirectivePersonalityIndex(SMLoc L);
+  bool parseDirectiveUnwindRaw(SMLoc L);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -8081,6 +8082,8 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveEven(DirectiveID.getLoc());
   else if (IDVal == ".personalityindex")
     return parseDirectivePersonalityIndex(DirectiveID.getLoc());
+  else if (IDVal == ".unwind_raw")
+    return parseDirectiveUnwindRaw(DirectiveID.getLoc());
   return true;
 }
 
@@ -8912,6 +8915,87 @@ bool ARMAsmParser::parseDirectivePersonalityIndex(SMLoc L) {
   }
 
   getTargetStreamer().emitPersonalityIndex(CE->getValue());
+  return false;
+}
+
+/// parseDirectiveUnwindRaw
+///   ::= .unwind_raw offset, opcode [, opcode...]
+bool ARMAsmParser::parseDirectiveUnwindRaw(SMLoc L) {
+  if (!UC.hasFnStart()) {
+    Parser.eatToEndOfStatement();
+    Error(L, ".fnstart must precede .unwind_raw directives");
+    return false;
+  }
+
+  int64_t StackOffset;
+
+  const MCExpr *OffsetExpr;
+  SMLoc OffsetLoc = getLexer().getLoc();
+  if (getLexer().is(AsmToken::EndOfStatement) ||
+      getParser().parseExpression(OffsetExpr)) {
+    Error(OffsetLoc, "expected expression");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(OffsetExpr);
+  if (!CE) {
+    Error(OffsetLoc, "offset must be a constant");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  StackOffset = CE->getValue();
+
+  if (getLexer().isNot(AsmToken::Comma)) {
+    Error(getLexer().getLoc(), "expected comma");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+  Parser.Lex();
+
+  SmallVector<uint8_t, 16> Opcodes;
+  for (;;) {
+    const MCExpr *OE;
+
+    SMLoc OpcodeLoc = getLexer().getLoc();
+    if (getLexer().is(AsmToken::EndOfStatement) || Parser.parseExpression(OE)) {
+      Error(OpcodeLoc, "expected opcode expression");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+
+    const MCConstantExpr *OC = dyn_cast<MCConstantExpr>(OE);
+    if (!OC) {
+      Error(OpcodeLoc, "opcode value must be a constant");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+
+    const int64_t Opcode = OC->getValue();
+    if (Opcode & ~0xff) {
+      Error(OpcodeLoc, "invalid opcode");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+
+    Opcodes.push_back(uint8_t(Opcode));
+
+    if (getLexer().is(AsmToken::EndOfStatement))
+      break;
+
+    if (getLexer().isNot(AsmToken::Comma)) {
+      Error(getLexer().getLoc(), "unexpected token in directive");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+
+    Parser.Lex();
+  }
+
+  getTargetStreamer().emitUnwindRaw(StackOffset, Opcodes);
+
+  Parser.Lex();
   return false;
 }
 

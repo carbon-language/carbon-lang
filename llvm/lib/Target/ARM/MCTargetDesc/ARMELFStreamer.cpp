@@ -123,6 +123,8 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   virtual void emitPad(int64_t Offset);
   virtual void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
                            bool isVector);
+  virtual void emitUnwindRaw(int64_t Offset,
+                             const SmallVectorImpl<uint8_t> &Opcodes);
 
   virtual void switchVendor(StringRef Vendor);
   virtual void emitAttribute(unsigned Attribute, unsigned Value);
@@ -240,6 +242,16 @@ void ARMTargetAsmStreamer::emitInst(uint32_t Inst, char Suffix) {
   if (Suffix)
     OS << "." << Suffix;
   OS << "\t0x" << utohexstr(Inst) << "\n";
+}
+
+void ARMTargetAsmStreamer::emitUnwindRaw(int64_t Offset,
+                                      const SmallVectorImpl<uint8_t> &Opcodes) {
+  OS << "\t.unwind_raw " << Offset;
+  for (SmallVectorImpl<uint8_t>::const_iterator OCI = Opcodes.begin(),
+                                                OCE = Opcodes.end();
+       OCI != OCE; ++OCI)
+    OS << ", 0x" << utohexstr(*OCI);
+  OS << '\n';
 }
 
 class ARMTargetELFStreamer : public ARMTargetStreamer {
@@ -367,6 +379,8 @@ private:
   virtual void emitPad(int64_t Offset);
   virtual void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
                            bool isVector);
+  virtual void emitUnwindRaw(int64_t Offset,
+                             const SmallVectorImpl<uint8_t> &Opcodes);
 
   virtual void switchVendor(StringRef Vendor);
   virtual void emitAttribute(unsigned Attribute, unsigned Value);
@@ -425,6 +439,7 @@ public:
   void emitSetFP(unsigned NewFpReg, unsigned NewSpReg, int64_t Offset = 0);
   void emitPad(int64_t Offset);
   void emitRegSave(const SmallVectorImpl<unsigned> &RegList, bool isVector);
+  void emitUnwindRaw(int64_t Offset, const SmallVectorImpl<uint8_t> &Opcodes);
 
   virtual void ChangeSection(const MCSection *Section,
                              const MCExpr *Subsection) {
@@ -636,6 +651,10 @@ void ARMTargetELFStreamer::emitPad(int64_t Offset) {
 void ARMTargetELFStreamer::emitRegSave(const SmallVectorImpl<unsigned> &RegList,
                                        bool isVector) {
   getStreamer().emitRegSave(RegList, isVector);
+}
+void ARMTargetELFStreamer::emitUnwindRaw(int64_t Offset,
+                                      const SmallVectorImpl<uint8_t> &Opcodes) {
+  getStreamer().emitUnwindRaw(Offset, Opcodes);
 }
 void ARMTargetELFStreamer::switchVendor(StringRef Vendor) {
   assert(!Vendor.empty() && "Vendor cannot be empty.");
@@ -1200,6 +1219,13 @@ void ARMELFStreamer::emitRegSave(const SmallVectorImpl<unsigned> &RegList,
     UnwindOpAsm.EmitVFPRegSave(Mask);
   else
     UnwindOpAsm.EmitRegSave(Mask);
+}
+
+void ARMELFStreamer::emitUnwindRaw(int64_t Offset,
+                                   const SmallVectorImpl<uint8_t> &Opcodes) {
+  FlushPendingOffset();
+  SPOffset = SPOffset - Offset;
+  UnwindOpAsm.EmitRaw(Opcodes);
 }
 
 namespace llvm {
