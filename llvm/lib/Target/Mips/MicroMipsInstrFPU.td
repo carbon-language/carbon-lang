@@ -12,7 +12,7 @@ def FADD_MM  : MMRel, ADDS_FT<"add.d", AFGR64Opnd, II_ADD_D, 1, fadd>,
                ADDS_FM_MM<1, 0x30>;
 def FDIV_MM  : MMRel, ADDS_FT<"div.d", AFGR64Opnd, IIFdivDouble, 0, fdiv>,
                ADDS_FM_MM<1, 0xf0>;
-def FMUL_MM  : MMRel, ADDS_FT<"mul.d", AFGR64Opnd, IIFmulDouble, 1, fmul>,
+def FMUL_MM  : MMRel, ADDS_FT<"mul.d", AFGR64Opnd, II_MUL_D, 1, fmul>,
                ADDS_FM_MM<1, 0xb0>;
 def FSUB_MM  : MMRel, ADDS_FT<"sub.d", AFGR64Opnd, II_SUB_D, 0, fsub>,
                ADDS_FM_MM<1, 0x70>;
@@ -137,12 +137,12 @@ def NMADD_S_MM : MMRel, NMADDS_FT<"nmadd.s", FGR32Opnd, II_NMADD_S, fadd>,
 def NMSUB_S_MM : MMRel, NMADDS_FT<"nmsub.s", FGR32Opnd, II_NMSUB_S, fsub>,
                  MADDS_FM_MM<0x22>;
 
-def MADD_D32_MM  : MMRel, MADDS_FT<"madd.d", AFGR64Opnd, IIFmulDouble, fadd>,
+def MADD_D32_MM  : MMRel, MADDS_FT<"madd.d", AFGR64Opnd, II_MADD_D, fadd>,
                    MADDS_FM_MM<0x9>;
-def MSUB_D32_MM  : MMRel, MADDS_FT<"msub.d", AFGR64Opnd, IIFmulDouble, fsub>,
+def MSUB_D32_MM  : MMRel, MADDS_FT<"msub.d", AFGR64Opnd, II_MSUB_D, fsub>,
                    MADDS_FM_MM<0x29>;
-def NMADD_D32_MM : MMRel, NMADDS_FT<"nmadd.d", AFGR64Opnd, IIFmulDouble,
-                                    fadd>, MADDS_FM_MM<0xa>;
-def NMSUB_D32_MM : MMRel, NMADDS_FT<"nmsub.d", AFGR64Opnd, IIFmulDouble,
-                                    fsub>, MADDS_FM_MM<0x2a>;
+def NMADD_D32_MM : MMRel, NMADDS_FT<"nmadd.d", AFGR64Opnd, II_NMADD_D, fadd>,
+                   MADDS_FM_MM<0xa>;
+def NMSUB_D32_MM : MMRel, NMADDS_FT<"nmsub.d", AFGR64Opnd, II_NMSUB_D, fsub>,
+                   MADDS_FM_MM<0x2a>;
 }

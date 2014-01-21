@@ -427,7 +427,7 @@ def FDIV_S : MMRel, ADDS_FT<"div.s", FGR32Opnd, IIFdivSingle, 0, fdiv>,
 defm FDIV :  ADDS_M<"div.d", IIFdivDouble, 0, fdiv>, ADDS_FM<0x03, 17>;
 def FMUL_S : MMRel, ADDS_FT<"mul.s", FGR32Opnd, II_MUL_S, 1, fmul>,
              ADDS_FM<0x02, 16>;
-defm FMUL :  ADDS_M<"mul.d", IIFmulDouble, 1, fmul>, ADDS_FM<0x02, 17>;
+defm FMUL :  ADDS_M<"mul.d", II_MUL_D, 1, fmul>, ADDS_FM<0x02, 17>;
 def FSUB_S : MMRel, ADDS_FT<"sub.s", FGR32Opnd, II_SUB_S, 0, fsub>,
              ADDS_FM<0x01, 16>;
 defm FSUB :  ADDS_M<"sub.d", II_SUB_D, 0, fsub>, ADDS_FM<0x01, 17>;
@@ -447,31 +447,31 @@ let Predicates = [HasMips32r2, NoNaNsFPMath, HasStdEnc] in {
 }
 
 let Predicates = [HasMips32r2, NotFP64bit, HasStdEnc] in {
-  def MADD_D32 : MMRel, MADDS_FT<"madd.d", AFGR64Opnd, IIFmulDouble, fadd>,
+  def MADD_D32 : MMRel, MADDS_FT<"madd.d", AFGR64Opnd, II_MADD_D, fadd>,
                  MADDS_FM<4, 1>;
-  def MSUB_D32 : MMRel, MADDS_FT<"msub.d", AFGR64Opnd, IIFmulDouble, fsub>,
+  def MSUB_D32 : MMRel, MADDS_FT<"msub.d", AFGR64Opnd, II_MSUB_D, fsub>,
                  MADDS_FM<5, 1>;
 }
 
 let Predicates = [HasMips32r2, NotFP64bit, NoNaNsFPMath, HasStdEnc] in {
-  def NMADD_D32 : MMRel, NMADDS_FT<"nmadd.d", AFGR64Opnd, IIFmulDouble, fadd>,
+  def NMADD_D32 : MMRel, NMADDS_FT<"nmadd.d", AFGR64Opnd, II_NMADD_D, fadd>,
                   MADDS_FM<6, 1>;
-  def NMSUB_D32 : MMRel, NMADDS_FT<"nmsub.d", AFGR64Opnd, IIFmulDouble, fsub>,
+  def NMSUB_D32 : MMRel, NMADDS_FT<"nmsub.d", AFGR64Opnd, II_NMSUB_D, fsub>,
                   MADDS_FM<7, 1>;
 }
 
 let Predicates = [HasMips32r2, IsFP64bit, HasStdEnc], isCodeGenOnly=1 in {
-  def MADD_D64 : MADDS_FT<"madd.d", FGR64Opnd, IIFmulDouble, fadd>,
+  def MADD_D64 : MADDS_FT<"madd.d", FGR64Opnd, II_MADD_D, fadd>,
                  MADDS_FM<4, 1>;
-  def MSUB_D64 : MADDS_FT<"msub.d", FGR64Opnd, IIFmulDouble, fsub>,
+  def MSUB_D64 : MADDS_FT<"msub.d", FGR64Opnd, II_MSUB_D, fsub>,
                  MADDS_FM<5, 1>;
 }
 
 let Predicates = [HasMips32r2, IsFP64bit, NoNaNsFPMath, HasStdEnc],
     isCodeGenOnly=1 in {
-  def NMADD_D64 : NMADDS_FT<"nmadd.d", FGR64Opnd, IIFmulDouble, fadd>,
+  def NMADD_D64 : NMADDS_FT<"nmadd.d", FGR64Opnd, II_NMADD_D, fadd>,
                   MADDS_FM<6, 1>;
-  def NMSUB_D64 : NMADDS_FT<"nmsub.d", FGR64Opnd, IIFmulDouble, fsub>,
+  def NMSUB_D64 : NMADDS_FT<"nmsub.d", FGR64Opnd, II_NMSUB_D, fsub>,
                   MADDS_FM<7, 1>;
 }
 
