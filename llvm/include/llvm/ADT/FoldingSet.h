@@ -278,6 +278,8 @@ public:
 
   bool operator==(FoldingSetNodeIDRef) const;
 
+  bool operator!=(FoldingSetNodeIDRef RHS) const { return !(*this == RHS); }
+
   /// Used to compare the "ordering" of two nodes as defined by the
   /// profiled bits and their ordering defined by memcmp().
   bool operator<(FoldingSetNodeIDRef) const;
@@ -330,6 +332,9 @@ public:
   ///
   bool operator==(const FoldingSetNodeID &RHS) const;
   bool operator==(const FoldingSetNodeIDRef RHS) const;
+
+  bool operator!=(const FoldingSetNodeID &RHS) const { return !(*this == RHS); }
+  bool operator!=(const FoldingSetNodeIDRef RHS) const { return !(*this ==RHS);}
 
   /// Used to compare the "ordering" of two nodes as defined by the
   /// profiled bits and their ordering defined by memcmp().
