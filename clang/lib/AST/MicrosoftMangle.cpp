@@ -345,7 +345,7 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
   // Pointers and references are odd. The type of 'int * const foo;' gets
   // mangled as 'QAHA' instead of 'PAHB', for example.
   TypeLoc TL = VD->getTypeSourceInfo()->getTypeLoc();
-  QualType Ty = TL.getType();
+  QualType Ty = VD->getType();
   if (Ty->isPointerType() || Ty->isReferenceType() ||
       Ty->isMemberPointerType()) {
     mangleType(Ty, TL.getSourceRange(), QMM_Drop);
@@ -1803,6 +1803,8 @@ void MicrosoftCXXNameMangler::mangleType(const UnaryTransformType *T,
 }
 
 void MicrosoftCXXNameMangler::mangleType(const AutoType *T, SourceRange Range) {
+  assert(T->getDeducedType().isNull() && "expecting a dependent type!");
+
   DiagnosticsEngine &Diags = Context.getDiags();
   unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
     "cannot mangle this 'auto' type yet");
