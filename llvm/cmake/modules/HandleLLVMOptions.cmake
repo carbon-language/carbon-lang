@@ -42,7 +42,7 @@ int main() { return (float)x; }"
         message(FATAL_ERROR "Host Clang must be able to find libstdc++4.7 or newer!")
       endif()
     endif()
-  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 17.0)
       message(FATAL_ERROR "Host Visual Studio must be at least 2012 (MSVC 17.0)")
     endif()
