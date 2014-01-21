@@ -6950,11 +6950,8 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
   if (lproto && rproto) { // two C99 style function prototypes
     assert(!lproto->hasExceptionSpec() && !rproto->hasExceptionSpec() &&
            "C++ shouldn't be here");
-    unsigned lproto_nargs = lproto->getNumParams();
-    unsigned rproto_nargs = rproto->getNumParams();
-
-    // Compatible functions must have the same number of arguments
-    if (lproto_nargs != rproto_nargs)
+    // Compatible functions must have the same number of parameters
+    if (lproto->getNumParams() != rproto->getNumParams())
       return QualType();
 
     // Variadic and non-variadic functions aren't compatible
@@ -6967,28 +6964,29 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     if (LangOpts.ObjCAutoRefCount &&
         !FunctionTypesMatchOnNSConsumedAttrs(rproto, lproto))
       return QualType();
-      
-    // Check argument compatibility
+
+    // Check parameter type compatibility
     SmallVector<QualType, 10> types;
-    for (unsigned i = 0; i < lproto_nargs; i++) {
-      QualType largtype = lproto->getParamType(i).getUnqualifiedType();
-      QualType rargtype = rproto->getParamType(i).getUnqualifiedType();
-      QualType argtype = mergeFunctionParameterTypes(
-          largtype, rargtype, OfBlockPointer, Unqualified);
-      if (argtype.isNull()) return QualType();
-      
+    for (unsigned i = 0, n = lproto->getNumParams(); i < n; i++) {
+      QualType lParamType = lproto->getParamType(i).getUnqualifiedType();
+      QualType rParamType = rproto->getParamType(i).getUnqualifiedType();
+      QualType paramType = mergeFunctionParameterTypes(
+          lParamType, rParamType, OfBlockPointer, Unqualified);
+      if (paramType.isNull())
+        return QualType();
+
       if (Unqualified)
-        argtype = argtype.getUnqualifiedType();
-      
-      types.push_back(argtype);
+        paramType = paramType.getUnqualifiedType();
+
+      types.push_back(paramType);
       if (Unqualified) {
-        largtype = largtype.getUnqualifiedType();
-        rargtype = rargtype.getUnqualifiedType();
+        lParamType = lParamType.getUnqualifiedType();
+        rParamType = rParamType.getUnqualifiedType();
       }
-      
-      if (getCanonicalType(argtype) != getCanonicalType(largtype))
+
+      if (getCanonicalType(paramType) != getCanonicalType(lParamType))
         allLTypes = false;
-      if (getCanonicalType(argtype) != getCanonicalType(rargtype))
+      if (getCanonicalType(paramType) != getCanonicalType(rParamType))
         allRTypes = false;
     }
       
@@ -7012,20 +7010,19 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     // The only types actually affected are promotable integer
     // types and floats, which would be passed as a different
     // type depending on whether the prototype is visible.
-    unsigned proto_nargs = proto->getNumParams();
-    for (unsigned i = 0; i < proto_nargs; ++i) {
-      QualType argTy = proto->getParamType(i);
+    for (unsigned i = 0, n = proto->getNumParams(); i < n; ++i) {
+      QualType paramTy = proto->getParamType(i);
 
       // Look at the converted type of enum types, since that is the type used
       // to pass enum values.
-      if (const EnumType *Enum = argTy->getAs<EnumType>()) {
-        argTy = Enum->getDecl()->getIntegerType();
-        if (argTy.isNull())
+      if (const EnumType *Enum = paramTy->getAs<EnumType>()) {
+        paramTy = Enum->getDecl()->getIntegerType();
+        if (paramTy.isNull())
           return QualType();
       }
-      
-      if (argTy->isPromotableIntegerType() ||
-          getCanonicalType(argTy).getUnqualifiedType() == FloatTy)
+
+      if (paramTy->isPromotableIntegerType() ||
+          getCanonicalType(paramTy).getUnqualifiedType() == FloatTy)
         return QualType();
     }
 
@@ -7346,10 +7343,8 @@ bool ASTContext::FunctionTypesMatchOnNSConsumedAttrs(
   FunctionProtoType::ExtProtoInfo ToEPI = 
     ToFunctionType->getExtProtoInfo();
   if (FromEPI.ConsumedParameters && ToEPI.ConsumedParameters)
-    for (unsigned ArgIdx = 0, NumArgs = FromFunctionType->getNumParams();
-         ArgIdx != NumArgs; ++ArgIdx) {
-      if (FromEPI.ConsumedParameters[ArgIdx] !=
-          ToEPI.ConsumedParameters[ArgIdx])
+    for (unsigned i = 0, n = FromFunctionType->getNumParams(); i != n; ++i) {
+      if (FromEPI.ConsumedParameters[i] != ToEPI.ConsumedParameters[i])
         return false;
     }
   return true;

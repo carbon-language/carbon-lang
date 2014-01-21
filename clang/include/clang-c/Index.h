@@ -2887,7 +2887,7 @@ CINDEX_LINKAGE enum CXCallingConv clang_getFunctionTypeCallingConv(CXType T);
 CINDEX_LINKAGE CXType clang_getResultType(CXType T);
 
 /**
- * \brief Retrieve the number of non-variadic arguments associated with a
+ * \brief Retrieve the number of non-variadic parameters associated with a
  * function type.
  *
  * If a non-function type is passed in, -1 is returned.
@@ -2895,7 +2895,7 @@ CINDEX_LINKAGE CXType clang_getResultType(CXType T);
 CINDEX_LINKAGE int clang_getNumArgTypes(CXType T);
 
 /**
- * \brief Retrieve the type of an argument of a function type.
+ * \brief Retrieve the type of a parameter of a function type.
  *
  * If a non-function type is passed in or the function does not have enough
  * parameters, an invalid type is returned.

@@ -136,8 +136,8 @@ public:
   /// be converted to an LLVM type (i.e. doesn't depend on an incomplete tag
   /// type).
   bool isFuncTypeConvertible(const FunctionType *FT);
-  bool isFuncTypeArgumentConvertible(QualType Ty);
-  
+  bool isFuncParamTypeConvertible(QualType Ty);
+
   /// GetFunctionTypeForVTable - Get the LLVM function type for use in a vtable,
   /// given a CXXMethodDecl. If the method to has an incomplete return type,
   /// and/or incomplete argument types, this will return the opaque type.
