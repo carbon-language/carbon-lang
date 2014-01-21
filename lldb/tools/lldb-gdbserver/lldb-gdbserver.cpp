@@ -28,6 +28,8 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Host/OptionParser.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandReturnObject.h"
 #include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServer.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
 using namespace lldb;
@@ -44,6 +46,7 @@ static struct option g_long_options[] =
 {
     { "debug",              no_argument,        &g_debug,           1   },
     { "verbose",            no_argument,        &g_verbose,         1   },
+    { "lldb-command",       required_argument,  NULL,               'c' },
     { "log-file",           required_argument,  NULL,               'l' },
     { "log-flags",          required_argument,  NULL,               'f' },
     { NULL,                 0,                  NULL,               0   }
@@ -75,7 +78,8 @@ signal_handler(int signo)
 static void
 display_usage (const char *progname)
 {
-    fprintf(stderr, "Usage:\n  %s [--log-file log-file-path] [--log-flags flags] HOST:PORT [-- PROGRAM ARG1 ARG2 ...]\n", progname);
+    fprintf(stderr, "Usage:\n  %s [--log-file log-file-path] [--log-flags flags] [--lldb-command command]* HOST:PORT "
+            "[-- PROGRAM ARG1 ARG2 ...]\n", progname);
     exit(0);
 }
 
@@ -94,31 +98,31 @@ main (int argc, char *argv[])
     Error error;
     int ch;
     Debugger::Initialize(NULL);
+
+    lldb::DebuggerSP debugger_sp = Debugger::CreateInstance ();
+
+    debugger_sp->SetInputFileHandle(stdin, false);
+    debugger_sp->SetOutputFileHandle(stdout, false);
+    debugger_sp->SetErrorFileHandle(stderr, false);
+
     ProcessLaunchInfo launch_info;
     ProcessAttachInfo attach_info;
 
     bool show_usage = false;
     int option_error = 0;
-//    StreamSP stream_sp (new StreamFile(stdout, false));
-//    const char *log_channels[] = { "host", "process", NULL };
-//    EnableLog (stream_sp, 0, log_channels, NULL);
 #if __GLIBC__
     optind = 0;
 #else
     optreset = 1;
     optind = 1;
 #endif
-    
+
     std::string short_options(OptionParser::GetShortOptionString(g_long_options));
 
-    
+    std::vector<std::string> lldb_commands;
+
     while ((ch = getopt_long_only(argc, argv, short_options.c_str(), g_long_options, &long_option_index)) != -1)
     {
-//        DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
-//                    ch, (uint8_t)ch,
-//                    g_long_options[long_option_index].name,
-//                    g_long_options[long_option_index].has_arg ? '=' : ' ',
-//                    optarg ? optarg : "");
         switch (ch)
         {
         case 0:   // Any optional that auto set themselves will return 0
@@ -150,7 +154,6 @@ main (int argc, char *argv[])
                     }
 
                 }
-                
             }
             break;
 
@@ -158,20 +161,25 @@ main (int argc, char *argv[])
             if (optarg && optarg[0])
                 log_args.AppendArgument(optarg);
             break;
-            
+
+        case 'c': // lldb commands
+            if (optarg && optarg[0])
+                lldb_commands.push_back(optarg);
+            break;
+
         case 'h':   /* fall-through is intentional */
         case '?':
             show_usage = true;
             break;
         }
     }
-    
+
     if (show_usage || option_error)
     {
         display_usage(progname);
         exit(option_error);
     }
-    
+
     if (log_stream_sp)
     {
         if (log_args.GetArgumentCount() == 0)
@@ -180,13 +188,26 @@ main (int argc, char *argv[])
     }
 
     // Skip any options we consumed with getopt_long_only
+    printf ("optind = %d\n", optind);
     argc -= optind;
     argv += optind;
-    
+
     if (argc == 0)
     {
         display_usage(progname);
         exit(255);
+    }
+
+    // Run any commands requested
+    for (const auto &lldb_command : lldb_commands)
+    {
+        printf("(lldb) %s\n", lldb_command.c_str ());
+
+        lldb_private::CommandReturnObject result;
+        debugger_sp->GetCommandInterpreter ().HandleCommand (lldb_command.c_str (), eLazyBoolNo, result);
+        const char *output = result.GetOutputData ();
+        if (output && output[0])
+            puts (output);
     }
 
     const char *host_and_port = argv[0];
