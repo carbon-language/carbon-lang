@@ -17,17 +17,17 @@ def FMUL_MM  : MMRel, ADDS_FT<"mul.d", AFGR64Opnd, II_MUL_D, 1, fmul>,
 def FSUB_MM  : MMRel, ADDS_FT<"sub.d", AFGR64Opnd, II_SUB_D, 0, fsub>,
                ADDS_FM_MM<1, 0x70>;
 
-def LWC1_MM : MMRel, LW_FT<"lwc1", FGR32Opnd, IIFLoad, load>, LW_FM_MM<0x27>;
+def LWC1_MM : MMRel, LW_FT<"lwc1", FGR32Opnd, II_LWC1, load>, LW_FM_MM<0x27>;
 def SWC1_MM : MMRel, SW_FT<"swc1", FGR32Opnd, IIFStore, store>,
               LW_FM_MM<0x26>;
-def LDC1_MM : MMRel, LW_FT<"ldc1", AFGR64Opnd, IIFLoad, load>, LW_FM_MM<0x2f>;
+def LDC1_MM : MMRel, LW_FT<"ldc1", AFGR64Opnd, II_LDC1, load>, LW_FM_MM<0x2f>;
 def SDC1_MM : MMRel, SW_FT<"sdc1", AFGR64Opnd, IIFStore, store>,
               LW_FM_MM<0x2e>;
-def LWXC1_MM : MMRel, LWXC1_FT<"lwxc1", FGR32Opnd, IIFLoad, load>,
+def LWXC1_MM : MMRel, LWXC1_FT<"lwxc1", FGR32Opnd, II_LWXC1, load>,
                LWXC1_FM_MM<0x48>;
 def SWXC1_MM : MMRel, SWXC1_FT<"swxc1", FGR32Opnd, IIFStore, store>,
                SWXC1_FM_MM<0x88>;
-def LUXC1_MM : MMRel, LWXC1_FT<"luxc1", AFGR64Opnd, IIFLoad>,
+def LUXC1_MM : MMRel, LWXC1_FT<"luxc1", AFGR64Opnd, II_LUXC1>,
                LWXC1_FM_MM<0x148>;
 def SUXC1_MM : MMRel, SWXC1_FT<"suxc1", AFGR64Opnd, IIFStore>,
                SWXC1_FM_MM<0x188>;

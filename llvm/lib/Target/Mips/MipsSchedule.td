@@ -20,7 +20,6 @@ def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
-def IIFLoad            : InstrItinClass;
 def IIFStore           : InstrItinClass;
 def IIFmoveC1          : InstrItinClass;
 def IIPseudo           : InstrItinClass;
@@ -65,7 +64,12 @@ def II_DSRL32           : InstrItinClass;
 def II_DSRLV            : InstrItinClass;
 def II_DSUBU            : InstrItinClass;
 def II_FLOOR            : InstrItinClass;
+def II_LDC1             : InstrItinClass;
+def II_LDXC1            : InstrItinClass;
 def II_LUI              : InstrItinClass;
+def II_LUXC1            : InstrItinClass;
+def II_LWC1             : InstrItinClass;
+def II_LWXC1            : InstrItinClass;
 def II_MADD             : InstrItinClass;
 def II_MADDU            : InstrItinClass;
 def II_MADD_D           : InstrItinClass;
@@ -228,7 +232,11 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_DIV_D           , [InstrStage<36, [ALU]>]>,
   InstrItinData<II_SQRT_S          , [InstrStage<54, [ALU]>]>,
   InstrItinData<II_SQRT_D          , [InstrStage<12, [ALU]>]>,
-  InstrItinData<IIFLoad            , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LDC1            , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LWC1            , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LDXC1           , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LWXC1           , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_LUXC1           , [InstrStage<3,  [ALU]>]>,
   InstrItinData<IIFStore           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IIFmoveC1          , [InstrStage<2,  [ALU]>]>
 ]>;
