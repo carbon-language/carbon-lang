@@ -117,6 +117,7 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   virtual void emitFnEnd();
   virtual void emitCantUnwind();
   virtual void emitPersonality(const MCSymbol *Personality);
+  virtual void emitPersonalityIndex(unsigned Index);
   virtual void emitHandlerData();
   virtual void emitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset = 0);
   virtual void emitPad(int64_t Offset);
@@ -147,6 +148,9 @@ void ARMTargetAsmStreamer::emitFnEnd() { OS << "\t.fnend\n"; }
 void ARMTargetAsmStreamer::emitCantUnwind() { OS << "\t.cantunwind\n"; }
 void ARMTargetAsmStreamer::emitPersonality(const MCSymbol *Personality) {
   OS << "\t.personality " << Personality->getName() << '\n';
+}
+void ARMTargetAsmStreamer::emitPersonalityIndex(unsigned Index) {
+  OS << "\t.personalityindex " << Index << '\n';
 }
 void ARMTargetAsmStreamer::emitHandlerData() { OS << "\t.handlerdata\n"; }
 void ARMTargetAsmStreamer::emitSetFP(unsigned FpReg, unsigned SpReg,
@@ -357,6 +361,7 @@ private:
   virtual void emitFnEnd();
   virtual void emitCantUnwind();
   virtual void emitPersonality(const MCSymbol *Personality);
+  virtual void emitPersonalityIndex(unsigned Index);
   virtual void emitHandlerData();
   virtual void emitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset = 0);
   virtual void emitPad(int64_t Offset);
@@ -415,6 +420,7 @@ public:
   void emitFnEnd();
   void emitCantUnwind();
   void emitPersonality(const MCSymbol *Per);
+  void emitPersonalityIndex(unsigned index);
   void emitHandlerData();
   void emitSetFP(unsigned NewFpReg, unsigned NewSpReg, int64_t Offset = 0);
   void emitPad(int64_t Offset);
@@ -613,6 +619,9 @@ void ARMTargetELFStreamer::emitFnEnd() { getStreamer().emitFnEnd(); }
 void ARMTargetELFStreamer::emitCantUnwind() { getStreamer().emitCantUnwind(); }
 void ARMTargetELFStreamer::emitPersonality(const MCSymbol *Personality) {
   getStreamer().emitPersonality(Personality);
+}
+void ARMTargetELFStreamer::emitPersonalityIndex(unsigned Index) {
+  getStreamer().emitPersonalityIndex(Index);
 }
 void ARMTargetELFStreamer::emitHandlerData() {
   getStreamer().emitHandlerData();
@@ -1133,6 +1142,11 @@ void ARMELFStreamer::emitHandlerData() { FlushUnwindOpcodes(false); }
 void ARMELFStreamer::emitPersonality(const MCSymbol *Per) {
   Personality = Per;
   UnwindOpAsm.setPersonality(Per);
+}
+
+void ARMELFStreamer::emitPersonalityIndex(unsigned Index) {
+  assert(Index < ARM::EHABI::NUM_PERSONALITY_INDEX && "invalid index");
+  PersonalityIndex = Index;
 }
 
 void ARMELFStreamer::emitSetFP(unsigned NewFPReg, unsigned NewSPReg,

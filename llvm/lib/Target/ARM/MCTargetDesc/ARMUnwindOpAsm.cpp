@@ -194,14 +194,17 @@ void UnwindOpcodeAssembler::Finalize(unsigned &PersonalityIndex,
     Result.resize(RoundUpSize);
     OpStreamer.EmitSize(RoundUpSize);
   } else {
-    if (Ops.size() <= 3) {
+    // If no personalityindex is specified, select ane
+    if (PersonalityIndex == ARM::EHABI::NUM_PERSONALITY_INDEX)
+      PersonalityIndex = (Ops.size() <= 3) ? ARM::EHABI::AEABI_UNWIND_CPP_PR0
+                                           : ARM::EHABI::AEABI_UNWIND_CPP_PR1;
+    if (PersonalityIndex == ARM::EHABI::AEABI_UNWIND_CPP_PR0) {
       // __aeabi_unwind_cpp_pr0: [ 0x80 , OP1 , OP2 , OP3 ]
-      PersonalityIndex = ARM::EHABI::AEABI_UNWIND_CPP_PR0;
+      assert(Ops.size() <= 3 && "too many opcodes for __aeabi_unwind_cpp_pr0");
       Result.resize(4);
       OpStreamer.EmitPersonalityIndex(PersonalityIndex);
     } else {
-      // __aeabi_unwind_cpp_pr1: [ 0x81 , SIZE , OP1 , OP2 , ... ]
-      PersonalityIndex = ARM::EHABI::AEABI_UNWIND_CPP_PR1;
+      // __aeabi_unwind_cpp_pr{1,2}: [ {0x81,0x82} , SIZE , OP1 , OP2 , ... ]
       size_t TotalSize = Ops.size() + 2;
       size_t RoundUpSize = (TotalSize + 3) / 4 * 4;
       Result.resize(RoundUpSize);

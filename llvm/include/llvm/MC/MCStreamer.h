@@ -85,6 +85,7 @@ public:
   virtual void emitFnEnd() = 0;
   virtual void emitCantUnwind() = 0;
   virtual void emitPersonality(const MCSymbol *Personality) = 0;
+  virtual void emitPersonalityIndex(unsigned Index) = 0;
   virtual void emitHandlerData() = 0;
   virtual void emitSetFP(unsigned FpReg, unsigned SpReg,
                          int64_t Offset = 0) = 0;
