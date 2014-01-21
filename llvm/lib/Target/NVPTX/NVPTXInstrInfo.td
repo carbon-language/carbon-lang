@@ -689,11 +689,23 @@ def FDIV32approxrr_ftz : NVPTXInst<(outs Float32Regs:$dst),
                       [(set Float32Regs:$dst,
                         (fdiv Float32Regs:$a, Float32Regs:$b))]>,
                       Requires<[do_DIVF32_APPROX, doF32FTZ]>;
+def FDIV32approxri_ftz : NVPTXInst<(outs Float32Regs:$dst),
+                      (ins Float32Regs:$a, f32imm:$b),
+                      "div.approx.ftz.f32 \t$dst, $a, $b;",
+                      [(set Float32Regs:$dst,
+                        (fdiv Float32Regs:$a, fpimm:$b))]>,
+                      Requires<[do_DIVF32_APPROX, doF32FTZ]>;
 def FDIV32approxrr     : NVPTXInst<(outs Float32Regs:$dst),
                       (ins Float32Regs:$a, Float32Regs:$b),
                       "div.approx.f32 \t$dst, $a, $b;",
                       [(set Float32Regs:$dst,
                         (fdiv Float32Regs:$a, Float32Regs:$b))]>,
+                      Requires<[do_DIVF32_APPROX]>;
+def FDIV32approxri : NVPTXInst<(outs Float32Regs:$dst),
+                      (ins Float32Regs:$a, f32imm:$b),
+                      "div.approx.f32 \t$dst, $a, $b;",
+                      [(set Float32Regs:$dst,
+                        (fdiv Float32Regs:$a, fpimm:$b))]>,
                       Requires<[do_DIVF32_APPROX]>;
 //
 // F32 Semi-accurate reciprocal
