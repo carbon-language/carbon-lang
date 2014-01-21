@@ -581,6 +581,11 @@ public:
   /// on to \arg Dest.
   void EmitBranchThroughCleanup(JumpDest Dest);
   
+  /// isObviouslyBranchWithoutCleanups - Return true if a branch to the
+  /// specified destination obviously has no cleanups to run.  'false' is always
+  /// a conservatively correct answer for this method.
+  bool isObviouslyBranchWithoutCleanups(JumpDest Dest) const;
+
   /// popCatchScope - Pops the catch scope at the top of the EHScope
   /// stack, emitting any required code (other than the catch handlers
   /// themselves).

@@ -1075,6 +1075,30 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   llvm::ConstantInt *CaseVal =
     Builder.getInt(S.getLHS()->EvaluateKnownConstInt(getContext()));
 
+  // If the body of the case is just a 'break', try to not emit an empty block.
+  // If we're profiling or we're not optimizing, leave the block in for better
+  // debug and coverage analysis.
+  if (!CGM.getCodeGenOpts().ProfileInstrGenerate &&
+      CGM.getCodeGenOpts().OptimizationLevel > 0 &&
+      isa<BreakStmt>(S.getSubStmt())) {
+    JumpDest Block = BreakContinueStack.back().BreakBlock;
+
+    // Only do this optimization if there are no cleanups that need emitting.
+    if (isObviouslyBranchWithoutCleanups(Block)) {
+      if (SwitchWeights)
+        SwitchWeights->push_back(CaseCnt.getCount() - CaseCnt.getParentCount());
+      SwitchInsn->addCase(CaseVal, Block.getBlock());
+
+      // If there was a fallthrough into this case, make sure to redirect it to
+      // the end of the switch as well.
+      if (Builder.GetInsertBlock()) {
+        Builder.CreateBr(Block.getBlock());
+        Builder.ClearInsertionPoint();
+      }
+      return;
+    }
+  }
+
   EmitBlock(createBasicBlock("sw.bb"));
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
   if (SwitchWeights)
