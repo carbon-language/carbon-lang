@@ -542,14 +542,14 @@ class SetCC_R<string opstr, PatFrag cond_op, RegisterOperand RO> :
   InstSE<(outs GPR32Opnd:$rd), (ins RO:$rs, RO:$rt),
          !strconcat(opstr, "\t$rd, $rs, $rt"),
          [(set GPR32Opnd:$rd, (cond_op RO:$rs, RO:$rt))],
-         IIslt, FrmR, opstr>;
+         II_SLT_SLTU, FrmR, opstr>;
 
 class SetCC_I<string opstr, PatFrag cond_op, Operand Od, PatLeaf imm_type,
               RegisterOperand RO>:
   InstSE<(outs GPR32Opnd:$rt), (ins RO:$rs, Od:$imm16),
          !strconcat(opstr, "\t$rt, $rs, $imm16"),
          [(set GPR32Opnd:$rt, (cond_op RO:$rs, imm_type:$imm16))],
-         IIslt, FrmI, opstr>;
+         II_SLTI_SLTIU, FrmI, opstr>;
 
 // Jump
 class JumpFJ<DAGOperand opnd, string opstr, SDPatternOperator operator,

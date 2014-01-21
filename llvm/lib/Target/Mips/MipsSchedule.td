@@ -20,7 +20,6 @@ def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
-def IIslt              : InstrItinClass;
 def IIFcvt             : InstrItinClass;
 def IIFmove            : InstrItinClass;
 def IIFcmp             : InstrItinClass;
@@ -89,6 +88,8 @@ def II_SEB              : InstrItinClass;
 def II_SEH              : InstrItinClass;
 def II_SLL              : InstrItinClass;
 def II_SLLV             : InstrItinClass;
+def II_SLTI_SLTIU       : InstrItinClass; // slti and sltiu
+def II_SLT_SLTU         : InstrItinClass; // slt and sltu
 def II_SRA              : InstrItinClass;
 def II_SRAV             : InstrItinClass;
 def II_SRL              : InstrItinClass;
