@@ -1,6 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wthread-safety -Wthread-safety-beta -fcxx-exceptions %s
-// FIXME: This test never worked due to a broken RUN line.
-// XFAIL: *
+// RUN: %clang_cc1 -fsyntax-only -verify -Wthread-safety -Wthread-safety-beta %s
 
 #define LOCKABLE            __attribute__ ((lockable))
 #define SCOPED_LOCKABLE     __attribute__ ((scoped_lockable))
@@ -33,15 +31,10 @@ struct Foo {
   struct Mutex *mu_;
 };
 
-// Define mutex lock/unlock functions.
-void mutex_exclusive_lock(struct Mutex *mu) EXCLUSIVE_LOCK_FUNCTION(mu) {
-}
-
-void mutex_shared_lock(struct Mutex *mu) SHARED_LOCK_FUNCTION(mu) {
-}
-
-void mutex_unlock(struct Mutex *mu) UNLOCK_FUNCTION(mu) {
-}
+// Declare mutex lock/unlock functions.
+void mutex_exclusive_lock(struct Mutex *mu) EXCLUSIVE_LOCK_FUNCTION(mu);
+void mutex_shared_lock(struct Mutex *mu) SHARED_LOCK_FUNCTION(mu);
+void mutex_unlock(struct Mutex *mu) UNLOCK_FUNCTION(mu);
 
 // Define global variables.
 struct Mutex mu1;
@@ -105,8 +98,8 @@ int main() {
 
   Foo_func3(5);
 
-  set_value(&a_, 0); // expected-warning{{calling function 'setA' requires exclusive lock on 'foo_.mu_'}}
-  get_value(b_); // expected-warning{{calling function 'getB' requires shared lock on 'foo_.mu_'}}
+  set_value(&a_, 0); // expected-warning{{calling function 'set_value' requires exclusive lock on 'foo_.mu_'}}
+  get_value(b_); // expected-warning{{calling function 'get_value' requires shared lock on 'foo_.mu_'}}
   mutex_exclusive_lock(foo_.mu_);
   set_value(&a_, 1);
   mutex_unlock(foo_.mu_);
