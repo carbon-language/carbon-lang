@@ -4247,11 +4247,11 @@ struct CheckAbstractUsage {
 
   void Check(FunctionProtoTypeLoc TL, Sema::AbstractDiagSelID Sel) {
     Visit(TL.getResultLoc(), Sema::AbstractReturnType);
-    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
-      if (!TL.getArg(I))
+    for (unsigned I = 0, E = TL.getNumParams(); I != E; ++I) {
+      if (!TL.getParam(I))
         continue;
-      
-      TypeSourceInfo *TSI = TL.getArg(I)->getTypeSourceInfo();
+
+      TypeSourceInfo *TSI = TL.getParam(I)->getTypeSourceInfo();
       if (TSI) Visit(TSI->getTypeLoc(), Sema::AbstractParamType);
     }
   }
@@ -8545,7 +8545,7 @@ private:
       PD->setScopeInfo(0, I);
       PD->setImplicit();
       ParamDecls.push_back(PD);
-      ProtoLoc.setArg(I, PD);
+      ProtoLoc.setParam(I, PD);
     }
 
     // Set up the new constructor.
@@ -10637,11 +10637,11 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
   const FunctionProtoType *Proto 
     = Constructor->getType()->getAs<FunctionProtoType>();
   assert(Proto && "Constructor without a prototype?");
-  unsigned NumArgsInProto = Proto->getNumParams();
+  unsigned NumParams = Proto->getNumParams();
 
   // If too few arguments are available, we'll fill in the rest with defaults.
-  if (NumArgs < NumArgsInProto)
-    ConvertedArgs.reserve(NumArgsInProto);
+  if (NumArgs < NumParams)
+    ConvertedArgs.reserve(NumParams);
   else
     ConvertedArgs.reserve(NumArgs);
 

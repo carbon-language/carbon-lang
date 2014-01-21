@@ -1520,8 +1520,8 @@ bool CursorVisitor::VisitFunctionTypeLoc(FunctionTypeLoc TL,
   if (!SkipResultType && Visit(TL.getResultLoc()))
     return true;
 
-  for (unsigned I = 0, N = TL.getNumArgs(); I != N; ++I)
-    if (Decl *D = TL.getArg(I))
+  for (unsigned I = 0, N = TL.getNumParams(); I != N; ++I)
+    if (Decl *D = TL.getParam(I))
       if (Visit(MakeCXCursor(D, TU, RegionOfInterest)))
         return true;
 
@@ -2437,8 +2437,8 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
                          TL.getAs<FunctionProtoTypeLoc>()) {
             if (E->hasExplicitParameters()) {
               // Visit parameters.
-              for (unsigned I = 0, N = Proto.getNumArgs(); I != N; ++I)
-                if (Visit(MakeCXCursor(Proto.getArg(I), TU)))
+              for (unsigned I = 0, N = Proto.getNumParams(); I != N; ++I)
+                if (Visit(MakeCXCursor(Proto.getParam(I), TU)))
                   return true;
             } else {
               // Visit result type.

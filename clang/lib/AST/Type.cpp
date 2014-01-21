@@ -1585,41 +1585,37 @@ StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   llvm_unreachable("Invalid calling convention.");
 }
 
-FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> args,
+FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
                                      QualType canonical,
                                      const ExtProtoInfo &epi)
-  : FunctionType(FunctionProto, result, epi.TypeQuals,
-                 canonical,
-                 result->isDependentType(),
-                 result->isInstantiationDependentType(),
-                 result->isVariablyModifiedType(),
-                 result->containsUnexpandedParameterPack(),
-                 epi.ExtInfo),
-    NumArgs(args.size()), NumExceptions(epi.NumExceptions),
-    ExceptionSpecType(epi.ExceptionSpecType),
-    HasAnyConsumedArgs(epi.ConsumedArguments != 0),
-    Variadic(epi.Variadic), HasTrailingReturn(epi.HasTrailingReturn),
-    RefQualifier(epi.RefQualifier)
-{
-  assert(NumArgs == args.size() && "function has too many parameters");
+    : FunctionType(FunctionProto, result, epi.TypeQuals, canonical,
+                   result->isDependentType(),
+                   result->isInstantiationDependentType(),
+                   result->isVariablyModifiedType(),
+                   result->containsUnexpandedParameterPack(), epi.ExtInfo),
+      NumParams(params.size()), NumExceptions(epi.NumExceptions),
+      ExceptionSpecType(epi.ExceptionSpecType),
+      HasAnyConsumedParams(epi.ConsumedParameters != 0), Variadic(epi.Variadic),
+      HasTrailingReturn(epi.HasTrailingReturn), RefQualifier(epi.RefQualifier) {
+  assert(NumParams == params.size() && "function has too many parameters");
 
   // Fill in the trailing argument array.
   QualType *argSlot = reinterpret_cast<QualType*>(this+1);
-  for (unsigned i = 0; i != NumArgs; ++i) {
-    if (args[i]->isDependentType())
+  for (unsigned i = 0; i != NumParams; ++i) {
+    if (params[i]->isDependentType())
       setDependent();
-    else if (args[i]->isInstantiationDependentType())
+    else if (params[i]->isInstantiationDependentType())
       setInstantiationDependent();
-    
-    if (args[i]->containsUnexpandedParameterPack())
+
+    if (params[i]->containsUnexpandedParameterPack())
       setContainsUnexpandedParameterPack();
 
-    argSlot[i] = args[i];
+    argSlot[i] = params[i];
   }
 
   if (getExceptionSpecType() == EST_Dynamic) {
     // Fill in the exception array.
-    QualType *exnSlot = argSlot + NumArgs;
+    QualType *exnSlot = argSlot + NumParams;
     for (unsigned i = 0, e = epi.NumExceptions; i != e; ++i) {
       if (epi.Exceptions[i]->isDependentType())
         setDependent();
@@ -1633,7 +1629,7 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> args,
     }
   } else if (getExceptionSpecType() == EST_ComputedNoexcept) {
     // Store the noexcept expression and context.
-    Expr **noexSlot = reinterpret_cast<Expr**>(argSlot + NumArgs);
+    Expr **noexSlot = reinterpret_cast<Expr **>(argSlot + NumParams);
     *noexSlot = epi.NoexceptExpr;
     
     if (epi.NoexceptExpr) {
@@ -1646,7 +1642,8 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> args,
   } else if (getExceptionSpecType() == EST_Uninstantiated) {
     // Store the function decl from which we will resolve our
     // exception specification.
-    FunctionDecl **slot = reinterpret_cast<FunctionDecl**>(argSlot + NumArgs);
+    FunctionDecl **slot =
+        reinterpret_cast<FunctionDecl **>(argSlot + NumParams);
     slot[0] = epi.ExceptionSpecDecl;
     slot[1] = epi.ExceptionSpecTemplate;
     // This exception specification doesn't make the type dependent, because
@@ -1654,14 +1651,15 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> args,
   } else if (getExceptionSpecType() == EST_Unevaluated) {
     // Store the function decl from which we will resolve our
     // exception specification.
-    FunctionDecl **slot = reinterpret_cast<FunctionDecl**>(argSlot + NumArgs);
+    FunctionDecl **slot =
+        reinterpret_cast<FunctionDecl **>(argSlot + NumParams);
     slot[0] = epi.ExceptionSpecDecl;
   }
 
-  if (epi.ConsumedArguments) {
-    bool *consumedArgs = const_cast<bool *>(getConsumedParamsBuffer());
-    for (unsigned i = 0; i != NumArgs; ++i)
-      consumedArgs[i] = epi.ConsumedArguments[i];
+  if (epi.ConsumedParameters) {
+    bool *consumedParams = const_cast<bool *>(getConsumedParamsBuffer());
+    for (unsigned i = 0; i != NumParams; ++i)
+      consumedParams[i] = epi.ConsumedParameters[i];
   }
 }
 
@@ -1723,7 +1721,7 @@ bool FunctionProtoType::isTemplateVariadic() const {
 }
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
-                                const QualType *ArgTys, unsigned NumArgs,
+                                const QualType *ArgTys, unsigned NumParams,
                                 const ExtProtoInfo &epi,
                                 const ASTContext &Context) {
 
@@ -1745,7 +1743,7 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
   // whether the following bool is the EH spec or part of the arguments.
 
   ID.AddPointer(Result.getAsOpaquePtr());
-  for (unsigned i = 0; i != NumArgs; ++i)
+  for (unsigned i = 0; i != NumParams; ++i)
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
   // This method is relatively performance sensitive, so as a performance
   // shortcut, use one AddInteger call instead of four for the next four
@@ -1768,9 +1766,9 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
              epi.ExceptionSpecType == EST_Unevaluated) {
     ID.AddPointer(epi.ExceptionSpecDecl->getCanonicalDecl());
   }
-  if (epi.ConsumedArguments) {
-    for (unsigned i = 0; i != NumArgs; ++i)
-      ID.AddBoolean(epi.ConsumedArguments[i]);
+  if (epi.ConsumedParameters) {
+    for (unsigned i = 0; i != NumParams; ++i)
+      ID.AddBoolean(epi.ConsumedParameters[i]);
   }
   epi.ExtInfo.Profile(ID);
   ID.AddBoolean(epi.HasTrailingReturn);
@@ -1778,7 +1776,7 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID,
                                 const ASTContext &Ctx) {
-  Profile(ID, getResultType(), param_type_begin(), NumArgs, getExtProtoInfo(),
+  Profile(ID, getResultType(), param_type_begin(), NumParams, getExtProtoInfo(),
           Ctx);
 }
 

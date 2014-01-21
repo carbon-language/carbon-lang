@@ -1631,7 +1631,7 @@ QualType ASTNodeImporter::VisitFunctionProtoType(const FunctionProtoType *T) {
   ToEPI.RefQualifier = FromEPI.RefQualifier;
   ToEPI.NumExceptions = ExceptionTypes.size();
   ToEPI.Exceptions = ExceptionTypes.data();
-  ToEPI.ConsumedArguments = FromEPI.ConsumedArguments;
+  ToEPI.ConsumedParameters = FromEPI.ConsumedParameters;
   ToEPI.ExceptionSpecType = FromEPI.ExceptionSpecType;
   ToEPI.NoexceptExpr = Importer.Import(FromEPI.NoexceptExpr);
   ToEPI.ExceptionSpecDecl = cast_or_null<FunctionDecl>(

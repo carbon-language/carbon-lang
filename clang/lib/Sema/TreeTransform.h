@@ -4357,7 +4357,7 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
 
   if (T->hasTrailingReturn()) {
     if (getDerived().TransformFunctionTypeParams(
-            TL.getBeginLoc(), TL.getParmArray(), TL.getNumArgs(),
+            TL.getBeginLoc(), TL.getParmArray(), TL.getNumParams(),
             TL.getTypePtr()->param_type_begin(), ParamTypes, &ParamDecls))
       return QualType();
 
@@ -4381,7 +4381,7 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
       return QualType();
 
     if (getDerived().TransformFunctionTypeParams(
-            TL.getBeginLoc(), TL.getParmArray(), TL.getNumArgs(),
+            TL.getBeginLoc(), TL.getParmArray(), TL.getNumParams(),
             TL.getTypePtr()->param_type_begin(), ParamTypes, &ParamDecls))
       return QualType();
   }
@@ -4404,8 +4404,8 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
   NewTL.setLParenLoc(TL.getLParenLoc());
   NewTL.setRParenLoc(TL.getRParenLoc());
   NewTL.setLocalRangeEnd(TL.getLocalRangeEnd());
-  for (unsigned i = 0, e = NewTL.getNumArgs(); i != e; ++i)
-    NewTL.setArg(i, ParamDecls[i]);
+  for (unsigned i = 0, e = NewTL.getNumParams(); i != e; ++i)
+    NewTL.setParam(i, ParamDecls[i]);
 
   return Result;
 }
@@ -8276,7 +8276,7 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
     FunctionProtoTypeLoc NewCallOpFPTL = 
         NewCallOpTSI->getTypeLoc().castAs<FunctionProtoTypeLoc>();
     ParmVarDecl **NewParamDeclArray = NewCallOpFPTL.getParmArray();
-    const unsigned NewNumArgs = NewCallOpFPTL.getNumArgs();
+    const unsigned NewNumArgs = NewCallOpFPTL.getNumParams();
 
     for (unsigned I = 0; I < NewNumArgs; ++I) {
       // If this call operator's type does not require transformation, 

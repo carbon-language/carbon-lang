@@ -2895,7 +2895,7 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
   } else if (EPI.ExceptionSpecType == EST_Unevaluated) {
     Size += sizeof(FunctionDecl*);
   }
-  if (EPI.ConsumedArguments)
+  if (EPI.ConsumedParameters)
     Size += NumArgs * sizeof(bool);
 
   FunctionProtoType *FTP = (FunctionProtoType*) Allocate(Size, TypeAlignment);
@@ -7345,11 +7345,11 @@ bool ASTContext::FunctionTypesMatchOnNSConsumedAttrs(
     FromFunctionType->getExtProtoInfo();
   FunctionProtoType::ExtProtoInfo ToEPI = 
     ToFunctionType->getExtProtoInfo();
-  if (FromEPI.ConsumedArguments && ToEPI.ConsumedArguments)
+  if (FromEPI.ConsumedParameters && ToEPI.ConsumedParameters)
     for (unsigned ArgIdx = 0, NumArgs = FromFunctionType->getNumParams();
          ArgIdx != NumArgs; ++ArgIdx) {
-      if (FromEPI.ConsumedArguments[ArgIdx] != 
-          ToEPI.ConsumedArguments[ArgIdx])
+      if (FromEPI.ConsumedParameters[ArgIdx] !=
+          ToEPI.ConsumedParameters[ArgIdx])
         return false;
     }
   return true;

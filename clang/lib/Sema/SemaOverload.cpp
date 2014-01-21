@@ -5562,12 +5562,12 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   Candidate.IgnoreObjectArgument = false;
   Candidate.ExplicitCallArguments = Args.size();
 
-  unsigned NumArgsInProto = Proto->getNumParams();
+  unsigned NumParams = Proto->getNumParams();
 
   // (C++ 13.3.2p2): A candidate function having fewer than m
   // parameters is viable only if it has an ellipsis in its parameter
   // list (8.3.5).
-  if ((Args.size() + (PartialOverloading && Args.size())) > NumArgsInProto &&
+  if ((Args.size() + (PartialOverloading && Args.size())) > NumParams &&
       !Proto->isVariadic()) {
     Candidate.Viable = false;
     Candidate.FailureKind = ovl_fail_too_many_arguments;
@@ -5599,7 +5599,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   // Determine the implicit conversion sequences for each of the
   // arguments.
   for (unsigned ArgIdx = 0; ArgIdx < Args.size(); ++ArgIdx) {
-    if (ArgIdx < NumArgsInProto) {
+    if (ArgIdx < NumParams) {
       // (C++ 13.3.2p3): for F to be a viable function, there shall
       // exist for each argument an implicit conversion sequence
       // (13.3.3.1) that converts that argument to the corresponding
@@ -5805,12 +5805,12 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
   Candidate.IgnoreObjectArgument = false;
   Candidate.ExplicitCallArguments = Args.size();
 
-  unsigned NumArgsInProto = Proto->getNumParams();
+  unsigned NumParams = Proto->getNumParams();
 
   // (C++ 13.3.2p2): A candidate function having fewer than m
   // parameters is viable only if it has an ellipsis in its parameter
   // list (8.3.5).
-  if (Args.size() > NumArgsInProto && !Proto->isVariadic()) {
+  if (Args.size() > NumParams && !Proto->isVariadic()) {
     Candidate.Viable = false;
     Candidate.FailureKind = ovl_fail_too_many_arguments;
     return;
@@ -5850,7 +5850,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
   // Determine the implicit conversion sequences for each of the
   // arguments.
   for (unsigned ArgIdx = 0; ArgIdx < Args.size(); ++ArgIdx) {
-    if (ArgIdx < NumArgsInProto) {
+    if (ArgIdx < NumParams) {
       // (C++ 13.3.2p3): for F to be a viable function, there shall
       // exist for each argument an implicit conversion sequence
       // (13.3.3.1) that converts that argument to the corresponding
@@ -6287,12 +6287,12 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   Candidate.Conversions[0].UserDefined.After.setAsIdentityConversion();
 
   // Find the
-  unsigned NumArgsInProto = Proto->getNumParams();
+  unsigned NumParams = Proto->getNumParams();
 
   // (C++ 13.3.2p2): A candidate function having fewer than m
   // parameters is viable only if it has an ellipsis in its parameter
   // list (8.3.5).
-  if (Args.size() > NumArgsInProto && !Proto->isVariadic()) {
+  if (Args.size() > NumParams && !Proto->isVariadic()) {
     Candidate.Viable = false;
     Candidate.FailureKind = ovl_fail_too_many_arguments;
     return;
@@ -6300,7 +6300,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
 
   // Function types don't have any default arguments, so just check if
   // we have enough arguments.
-  if (Args.size() < NumArgsInProto) {
+  if (Args.size() < NumParams) {
     // Not enough arguments.
     Candidate.Viable = false;
     Candidate.FailureKind = ovl_fail_too_few_arguments;
@@ -6310,7 +6310,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   // Determine the implicit conversion sequences for each of the
   // arguments.
   for (unsigned ArgIdx = 0, N = Args.size(); ArgIdx != N; ++ArgIdx) {
-    if (ArgIdx < NumArgsInProto) {
+    if (ArgIdx < NumParams) {
       // (C++ 13.3.2p3): for F to be a viable function, there shall
       // exist for each argument an implicit conversion sequence
       // (13.3.3.1) that converts that argument to the corresponding
@@ -9356,9 +9356,9 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
   }
 
   // Fill in the rest of the conversions.
-  unsigned NumArgsInProto = Proto->getNumParams();
+  unsigned NumParams = Proto->getNumParams();
   for (; ConvIdx != ConvCount; ++ConvIdx, ++ArgIdx) {
-    if (ArgIdx < NumArgsInProto) {
+    if (ArgIdx < NumParams) {
       Cand->Conversions[ConvIdx] = TryCopyInitialization(
           S, Args[ArgIdx], Proto->getParamType(ArgIdx), SuppressUserConversions,
           /*InOverloadResolution=*/true,
@@ -11684,7 +11684,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   const FunctionProtoType *Proto =
     Method->getType()->getAs<FunctionProtoType>();
 
-  unsigned NumArgsInProto = Proto->getNumParams();
+  unsigned NumParams = Proto->getNumParams();
 
   DeclarationNameInfo OpLocInfo(
                Context.DeclarationNames.getCXXOperatorName(OO_Call), LParenLoc);
@@ -11720,8 +11720,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
 
   // We may have default arguments. If so, we need to allocate more
   // slots in the call for them.
-  if (Args.size() < NumArgsInProto)
-    TheCall->setNumArgs(Context, NumArgsInProto + 1);
+  if (Args.size() < NumParams)
+    TheCall->setNumArgs(Context, NumParams + 1);
 
   bool IsError = false;
 
@@ -11736,7 +11736,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   TheCall->setArg(0, Object.take());
 
   // Check the argument types.
-  for (unsigned i = 0; i != NumArgsInProto; i++) {
+  for (unsigned i = 0; i != NumParams; i++) {
     Expr *Arg;
     if (i < Args.size()) {
       Arg = Args[i];
@@ -11768,7 +11768,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   // If this is a variadic call, handle args passed through "...".
   if (Proto->isVariadic()) {
     // Promote the arguments (C99 6.5.2.2p7).
-    for (unsigned i = NumArgsInProto, e = Args.size(); i < e; i++) {
+    for (unsigned i = NumParams, e = Args.size(); i < e; i++) {
       ExprResult Arg = DefaultVariadicArgumentPromotion(Args[i], VariadicMethod, 0);
       IsError |= Arg.isInvalid();
       TheCall->setArg(i + 1, Arg.take());

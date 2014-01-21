@@ -2212,20 +2212,20 @@ static std::string FormatFunctionParameter(ASTContext &Context,
 
   // Format the parameter list.
   std::string Params;
-  if (!BlockProto || Block.getNumArgs() == 0) {
+  if (!BlockProto || Block.getNumParams() == 0) {
     if (BlockProto && BlockProto.getTypePtr()->isVariadic())
       Params = "(...)";
     else
       Params = "(void)";
   } else {
     Params += "(";
-    for (unsigned I = 0, N = Block.getNumArgs(); I != N; ++I) {
+    for (unsigned I = 0, N = Block.getNumParams(); I != N; ++I) {
       if (I)
         Params += ", ";
-      Params += FormatFunctionParameter(Context, Policy, Block.getArg(I),
-                                        /*SuppressName=*/false, 
+      Params += FormatFunctionParameter(Context, Policy, Block.getParam(I),
+                                        /*SuppressName=*/false,
                                         /*SuppressBlock=*/true);
-      
+
       if (I == N - 1 && BlockProto.getTypePtr()->isVariadic())
         Params += ", ...";
     }

@@ -7198,11 +7198,9 @@ public:
 
   /// GatherArgumentsForCall - Collector argument expressions for various
   /// form of call prototypes.
-  bool GatherArgumentsForCall(SourceLocation CallLoc,
-                              FunctionDecl *FDecl,
+  bool GatherArgumentsForCall(SourceLocation CallLoc, FunctionDecl *FDecl,
                               const FunctionProtoType *Proto,
-                              unsigned FirstProtoArg,
-                              ArrayRef<Expr *> Args,
+                              unsigned FirstParam, ArrayRef<Expr *> Args,
                               SmallVectorImpl<Expr *> &AllArgs,
                               VariadicCallType CallType = VariadicDoesNotApply,
                               bool AllowExplicit = false,

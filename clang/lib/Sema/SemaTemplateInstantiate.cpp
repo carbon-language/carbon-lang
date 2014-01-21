@@ -1638,8 +1638,8 @@ static bool NeedsInstantiationAsFunctionType(TypeSourceInfo *T) {
     return false;
 
   FunctionProtoTypeLoc FP = TL.castAs<FunctionProtoTypeLoc>();
-  for (unsigned I = 0, E = FP.getNumArgs(); I != E; ++I) {
-    ParmVarDecl *P = FP.getArg(I);
+  for (unsigned I = 0, E = FP.getNumParams(); I != E; ++I) {
+    ParmVarDecl *P = FP.getParam(I);
 
     // This must be synthesized from a typedef.
     if (!P) continue;

@@ -1245,8 +1245,8 @@ static void addFunctionPointerConversion(Sema &S,
                                              From->getTypeSourceInfo(),
                                              From->getStorageClass(),
                                              /*DefaultArg=*/0));
-    CallOpConvTL.setArg(I, From);
-    CallOpConvNameTL.setArg(I, From);
+    CallOpConvTL.setParam(I, From);
+    CallOpConvNameTL.setParam(I, From);
   }
 
   CXXConversionDecl *Conversion 

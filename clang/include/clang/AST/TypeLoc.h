@@ -1208,21 +1208,21 @@ public:
   }
 
   ArrayRef<ParmVarDecl *> getParams() const {
-    return ArrayRef<ParmVarDecl *>(getParmArray(), getNumArgs());
+    return ArrayRef<ParmVarDecl *>(getParmArray(), getNumParams());
   }
 
-  // ParmVarDecls* are stored after Info, one for each argument.
+  // ParmVarDecls* are stored after Info, one for each parameter.
   ParmVarDecl **getParmArray() const {
     return (ParmVarDecl**) getExtraLocalData();
   }
 
-  unsigned getNumArgs() const {
+  unsigned getNumParams() const {
     if (isa<FunctionNoProtoType>(getTypePtr()))
       return 0;
     return cast<FunctionProtoType>(getTypePtr())->getNumParams();
   }
-  ParmVarDecl *getArg(unsigned i) const { return getParmArray()[i]; }
-  void setArg(unsigned i, ParmVarDecl *VD) { getParmArray()[i] = VD; }
+  ParmVarDecl *getParam(unsigned i) const { return getParmArray()[i]; }
+  void setParam(unsigned i, ParmVarDecl *VD) { getParmArray()[i] = VD; }
 
   TypeLoc getResultLoc() const {
     return getInnerTypeLoc();
@@ -1237,14 +1237,14 @@ public:
     setLParenLoc(Loc);
     setRParenLoc(Loc);
     setLocalRangeEnd(Loc);
-    for (unsigned i = 0, e = getNumArgs(); i != e; ++i)
-      setArg(i, NULL);
+    for (unsigned i = 0, e = getNumParams(); i != e; ++i)
+      setParam(i, NULL);
   }
 
   /// \brief Returns the size of the type source info data block that is
   /// specific to this type.
   unsigned getExtraLocalDataSize() const {
-    return getNumArgs() * sizeof(ParmVarDecl*);
+    return getNumParams() * sizeof(ParmVarDecl *);
   }
 
   unsigned getExtraLocalDataAlignment() const {
