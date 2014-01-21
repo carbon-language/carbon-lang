@@ -294,3 +294,33 @@ namespace NSDMIs_in_lambdas {
   auto y = [&]{ struct S { int n, m = n; }; };
   void g() { auto z = [&]{ struct S { int n, m = n; }; }; }
 }
+
+namespace CaptureIncomplete {
+  struct Incomplete; // expected-note 2{{forward decl}}
+  void g(const Incomplete &a);
+  void f(Incomplete &a) {
+    (void) [a] {}; // expected-error {{incomplete}}
+    (void) [&a] {};
+
+    (void) [=] { g(a); }; // expected-error {{incomplete}}
+    (void) [&] { f(a); };
+  }
+}
+
+namespace CaptureAbstract {
+  struct S {
+    virtual void f() = 0; // expected-note {{unimplemented}}
+    int n = 0;
+  };
+  struct T : S {
+    constexpr T() {}
+    void f();
+  };
+  void f() {
+    constexpr T t = T();
+    S &s = const_cast<T&>(t);
+    // FIXME: Once we properly compute odr-use per DR712, this should be
+    // accepted (and should not capture 's').
+    [=] { return s.n; }; // expected-error {{abstract}}
+  }
+}
