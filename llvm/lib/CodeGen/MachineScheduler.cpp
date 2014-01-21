@@ -2531,10 +2531,16 @@ void GenericScheduler::initPolicy(MachineBasicBlock::iterator Begin,
   // Avoid setting up the register pressure tracker for small regions to save
   // compile time. As a rough heuristic, only track pressure when the number of
   // schedulable instructions exceeds half the integer register file.
-  unsigned NIntRegs = Context->RegClassInfo->getNumAllocatableRegs(
-    TM.getTargetLowering()->getRegClassFor(MVT::i32));
-
-  RegionPolicy.ShouldTrackPressure = NumRegionInstrs > (NIntRegs / 2);
+  RegionPolicy.ShouldTrackPressure = true;
+  unsigned LegalIntVT = MVT::i32;
+  for (; LegalIntVT > (unsigned)MVT::i1; --LegalIntVT) {
+    if (TM.getTargetLowering()->isTypeLegal((MVT::SimpleValueType)LegalIntVT)) {
+      unsigned NIntRegs = Context->RegClassInfo->getNumAllocatableRegs(
+        TM.getTargetLowering()->getRegClassFor(
+          (MVT::SimpleValueType)LegalIntVT));
+      RegionPolicy.ShouldTrackPressure = NumRegionInstrs > (NIntRegs / 2);
+    }
+  }
 
   // For generic targets, we default to bottom-up, because it's simpler and more
   // compile-time optimizations have been implemented in that direction.
