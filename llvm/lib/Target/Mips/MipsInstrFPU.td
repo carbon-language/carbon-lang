@@ -246,86 +246,86 @@ defm D64 : C_COND_M<"d", FGR64Opnd, 17>, Requires<[IsFP64bit, HasStdEnc]>;
 //===----------------------------------------------------------------------===//
 // Floating Point Instructions
 //===----------------------------------------------------------------------===//
-def ROUND_W_S  : MMRel, ABSS_FT<"round.w.s", FGR32Opnd, FGR32Opnd, IIFcvt>,
+def ROUND_W_S  : MMRel, ABSS_FT<"round.w.s", FGR32Opnd, FGR32Opnd, II_ROUND>,
                  ABSS_FM<0xc, 16>;
-def TRUNC_W_S  : MMRel, ABSS_FT<"trunc.w.s", FGR32Opnd, FGR32Opnd, IIFcvt>,
+def TRUNC_W_S  : MMRel, ABSS_FT<"trunc.w.s", FGR32Opnd, FGR32Opnd, II_TRUNC>,
                  ABSS_FM<0xd, 16>;
-def CEIL_W_S   : MMRel, ABSS_FT<"ceil.w.s", FGR32Opnd, FGR32Opnd, IIFcvt>,
+def CEIL_W_S   : MMRel, ABSS_FT<"ceil.w.s", FGR32Opnd, FGR32Opnd, II_CEIL>,
                  ABSS_FM<0xe, 16>;
-def FLOOR_W_S  : MMRel, ABSS_FT<"floor.w.s", FGR32Opnd, FGR32Opnd, IIFcvt>,
+def FLOOR_W_S  : MMRel, ABSS_FT<"floor.w.s", FGR32Opnd, FGR32Opnd, II_FLOOR>,
                  ABSS_FM<0xf, 16>;
-def CVT_W_S    : MMRel, ABSS_FT<"cvt.w.s", FGR32Opnd, FGR32Opnd, IIFcvt>,
+def CVT_W_S    : MMRel, ABSS_FT<"cvt.w.s", FGR32Opnd, FGR32Opnd, II_CVT>,
                  ABSS_FM<0x24, 16>;
 
-defm ROUND_W : ROUND_M<"round.w.d", IIFcvt>, ABSS_FM<0xc, 17>;
-defm TRUNC_W : ROUND_M<"trunc.w.d", IIFcvt>, ABSS_FM<0xd, 17>;
-defm CEIL_W  : ROUND_M<"ceil.w.d", IIFcvt>, ABSS_FM<0xe, 17>;
-defm FLOOR_W : ROUND_M<"floor.w.d", IIFcvt>, ABSS_FM<0xf, 17>;
-defm CVT_W   : ROUND_M<"cvt.w.d", IIFcvt>, ABSS_FM<0x24, 17>;
+defm ROUND_W : ROUND_M<"round.w.d", II_ROUND>, ABSS_FM<0xc, 17>;
+defm TRUNC_W : ROUND_M<"trunc.w.d", II_TRUNC>, ABSS_FM<0xd, 17>;
+defm CEIL_W  : ROUND_M<"ceil.w.d", II_CEIL>, ABSS_FM<0xe, 17>;
+defm FLOOR_W : ROUND_M<"floor.w.d", II_FLOOR>, ABSS_FM<0xf, 17>;
+defm CVT_W   : ROUND_M<"cvt.w.d", II_CVT>, ABSS_FM<0x24, 17>;
 
 let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
-  def ROUND_L_S : ABSS_FT<"round.l.s", FGR64Opnd, FGR32Opnd, IIFcvt>,
+  def ROUND_L_S : ABSS_FT<"round.l.s", FGR64Opnd, FGR32Opnd, II_ROUND>,
                   ABSS_FM<0x8, 16>;
-  def ROUND_L_D64 : ABSS_FT<"round.l.d", FGR64Opnd, FGR64Opnd, IIFcvt>,
+  def ROUND_L_D64 : ABSS_FT<"round.l.d", FGR64Opnd, FGR64Opnd, II_ROUND>,
                     ABSS_FM<0x8, 17>;
-  def TRUNC_L_S : ABSS_FT<"trunc.l.s", FGR64Opnd, FGR32Opnd, IIFcvt>,
+  def TRUNC_L_S : ABSS_FT<"trunc.l.s", FGR64Opnd, FGR32Opnd, II_TRUNC>,
                   ABSS_FM<0x9, 16>;
-  def TRUNC_L_D64 : ABSS_FT<"trunc.l.d", FGR64Opnd, FGR64Opnd, IIFcvt>,
+  def TRUNC_L_D64 : ABSS_FT<"trunc.l.d", FGR64Opnd, FGR64Opnd, II_TRUNC>,
                     ABSS_FM<0x9, 17>;
-  def CEIL_L_S  : ABSS_FT<"ceil.l.s", FGR64Opnd, FGR32Opnd, IIFcvt>,
+  def CEIL_L_S  : ABSS_FT<"ceil.l.s", FGR64Opnd, FGR32Opnd, II_CEIL>,
                   ABSS_FM<0xa, 16>;
-  def CEIL_L_D64 : ABSS_FT<"ceil.l.d", FGR64Opnd, FGR64Opnd, IIFcvt>,
+  def CEIL_L_D64 : ABSS_FT<"ceil.l.d", FGR64Opnd, FGR64Opnd, II_CEIL>,
                    ABSS_FM<0xa, 17>;
-  def FLOOR_L_S : ABSS_FT<"floor.l.s", FGR64Opnd, FGR32Opnd, IIFcvt>,
+  def FLOOR_L_S : ABSS_FT<"floor.l.s", FGR64Opnd, FGR32Opnd, II_FLOOR>,
                   ABSS_FM<0xb, 16>;
-  def FLOOR_L_D64 : ABSS_FT<"floor.l.d", FGR64Opnd, FGR64Opnd, IIFcvt>,
+  def FLOOR_L_D64 : ABSS_FT<"floor.l.d", FGR64Opnd, FGR64Opnd, II_FLOOR>,
                     ABSS_FM<0xb, 17>;
 }
 
-def CVT_S_W : MMRel, ABSS_FT<"cvt.s.w", FGR32Opnd, FGR32Opnd, IIFcvt>,
+def CVT_S_W : MMRel, ABSS_FT<"cvt.s.w", FGR32Opnd, FGR32Opnd, II_CVT>,
               ABSS_FM<0x20, 20>;
-def CVT_L_S : MMRel, ABSS_FT<"cvt.l.s", FGR64Opnd, FGR32Opnd, IIFcvt>,
+def CVT_L_S : MMRel, ABSS_FT<"cvt.l.s", FGR64Opnd, FGR32Opnd, II_CVT>,
               ABSS_FM<0x25, 16>;
-def CVT_L_D64: MMRel, ABSS_FT<"cvt.l.d", FGR64Opnd, FGR64Opnd, IIFcvt>,
+def CVT_L_D64: MMRel, ABSS_FT<"cvt.l.d", FGR64Opnd, FGR64Opnd, II_CVT>,
                ABSS_FM<0x25, 17>;
 
 let Predicates = [NotFP64bit, HasStdEnc] in {
-  def CVT_S_D32 : MMRel, ABSS_FT<"cvt.s.d", FGR32Opnd, AFGR64Opnd, IIFcvt>,
+  def CVT_S_D32 : MMRel, ABSS_FT<"cvt.s.d", FGR32Opnd, AFGR64Opnd, II_CVT>,
                   ABSS_FM<0x20, 17>;
-  def CVT_D32_W : MMRel, ABSS_FT<"cvt.d.w", AFGR64Opnd, FGR32Opnd, IIFcvt>,
+  def CVT_D32_W : MMRel, ABSS_FT<"cvt.d.w", AFGR64Opnd, FGR32Opnd, II_CVT>,
                   ABSS_FM<0x21, 20>;
-  def CVT_D32_S : MMRel, ABSS_FT<"cvt.d.s", AFGR64Opnd, FGR32Opnd, IIFcvt>,
+  def CVT_D32_S : MMRel, ABSS_FT<"cvt.d.s", AFGR64Opnd, FGR32Opnd, II_CVT>,
                   ABSS_FM<0x21, 16>;
 }
 
 let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
-  def CVT_S_D64 : ABSS_FT<"cvt.s.d", FGR32Opnd, FGR64Opnd, IIFcvt>,
+  def CVT_S_D64 : ABSS_FT<"cvt.s.d", FGR32Opnd, FGR64Opnd, II_CVT>,
                   ABSS_FM<0x20, 17>;
-  def CVT_S_L   : ABSS_FT<"cvt.s.l", FGR32Opnd, FGR64Opnd, IIFcvt>,
+  def CVT_S_L   : ABSS_FT<"cvt.s.l", FGR32Opnd, FGR64Opnd, II_CVT>,
                   ABSS_FM<0x20, 21>;
-  def CVT_D64_W : ABSS_FT<"cvt.d.w", FGR64Opnd, FGR32Opnd, IIFcvt>,
+  def CVT_D64_W : ABSS_FT<"cvt.d.w", FGR64Opnd, FGR32Opnd, II_CVT>,
                   ABSS_FM<0x21, 20>;
-  def CVT_D64_S : ABSS_FT<"cvt.d.s", FGR64Opnd, FGR32Opnd, IIFcvt>,
+  def CVT_D64_S : ABSS_FT<"cvt.d.s", FGR64Opnd, FGR32Opnd, II_CVT>,
                   ABSS_FM<0x21, 16>;
-  def CVT_D64_L : ABSS_FT<"cvt.d.l", FGR64Opnd, FGR64Opnd, IIFcvt>,
+  def CVT_D64_L : ABSS_FT<"cvt.d.l", FGR64Opnd, FGR64Opnd, II_CVT>,
                   ABSS_FM<0x21, 21>;
 }
 
 let isPseudo = 1, isCodeGenOnly = 1 in {
-  def PseudoCVT_S_W : ABSS_FT<"", FGR32Opnd, GPR32Opnd, IIFcvt>;
-  def PseudoCVT_D32_W : ABSS_FT<"", AFGR64Opnd, GPR32Opnd, IIFcvt>;
-  def PseudoCVT_S_L : ABSS_FT<"", FGR64Opnd, GPR64Opnd, IIFcvt>;
-  def PseudoCVT_D64_W : ABSS_FT<"", FGR64Opnd, GPR32Opnd, IIFcvt>;
-  def PseudoCVT_D64_L : ABSS_FT<"", FGR64Opnd, GPR64Opnd, IIFcvt>;
+  def PseudoCVT_S_W : ABSS_FT<"", FGR32Opnd, GPR32Opnd, II_CVT>;
+  def PseudoCVT_D32_W : ABSS_FT<"", AFGR64Opnd, GPR32Opnd, II_CVT>;
+  def PseudoCVT_S_L : ABSS_FT<"", FGR64Opnd, GPR64Opnd, II_CVT>;
+  def PseudoCVT_D64_W : ABSS_FT<"", FGR64Opnd, GPR32Opnd, II_CVT>;
+  def PseudoCVT_D64_L : ABSS_FT<"", FGR64Opnd, GPR64Opnd, II_CVT>;
 }
 
 let Predicates = [NoNaNsFPMath, HasStdEnc] in {
-  def FABS_S : MMRel, ABSS_FT<"abs.s", FGR32Opnd, FGR32Opnd, IIFcvt, fabs>,
+  def FABS_S : MMRel, ABSS_FT<"abs.s", FGR32Opnd, FGR32Opnd, II_ABS, fabs>,
                ABSS_FM<0x5, 16>;
-  def FNEG_S : MMRel, ABSS_FT<"neg.s", FGR32Opnd, FGR32Opnd, IIFcvt, fneg>,
+  def FNEG_S : MMRel, ABSS_FT<"neg.s", FGR32Opnd, FGR32Opnd, II_NEG, fneg>,
                ABSS_FM<0x7, 16>;
-  defm FABS : ABSS_M<"abs.d", IIFcvt, fabs>, ABSS_FM<0x5, 17>;
-  defm FNEG : ABSS_M<"neg.d", IIFcvt, fneg>, ABSS_FM<0x7, 17>;
+  defm FABS : ABSS_M<"abs.d", II_ABS, fabs>, ABSS_FM<0x5, 17>;
+  defm FNEG : ABSS_M<"neg.d", II_NEG, fneg>, ABSS_FM<0x7, 17>;
 }
 
 def FSQRT_S : MMRel, ABSS_FT<"sqrt.s", FGR32Opnd, FGR32Opnd, IIFsqrtSingle,
