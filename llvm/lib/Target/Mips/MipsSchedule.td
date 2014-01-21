@@ -20,8 +20,6 @@ def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
-def IIFdivSingle       : InstrItinClass;
-def IIFdivDouble       : InstrItinClass;
 def IIFsqrtSingle      : InstrItinClass;
 def IIFsqrtDouble      : InstrItinClass;
 def IIFrecipFsqrtStep  : InstrItinClass;
@@ -52,6 +50,8 @@ def II_DDIV             : InstrItinClass;
 def II_DDIVU            : InstrItinClass;
 def II_DIV              : InstrItinClass;
 def II_DIVU             : InstrItinClass;
+def II_DIV_D            : InstrItinClass;
+def II_DIV_S            : InstrItinClass;
 def II_DMULT            : InstrItinClass;
 def II_DMULTU           : InstrItinClass;
 def II_DROTR            : InstrItinClass;
@@ -225,8 +225,8 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_MSUB_D          , [InstrStage<8,  [ALU]>]>,
   InstrItinData<II_NMADD_D         , [InstrStage<8,  [ALU]>]>,
   InstrItinData<II_NMSUB_D         , [InstrStage<8,  [ALU]>]>,
-  InstrItinData<IIFdivSingle       , [InstrStage<23, [ALU]>]>,
-  InstrItinData<IIFdivDouble       , [InstrStage<36, [ALU]>]>,
+  InstrItinData<II_DIV_S           , [InstrStage<23, [ALU]>]>,
+  InstrItinData<II_DIV_D           , [InstrStage<36, [ALU]>]>,
   InstrItinData<IIFsqrtSingle      , [InstrStage<54, [ALU]>]>,
   InstrItinData<IIFsqrtDouble      , [InstrStage<12, [ALU]>]>,
   InstrItinData<IIFrecipFsqrtStep  , [InstrStage<5,  [ALU]>]>,

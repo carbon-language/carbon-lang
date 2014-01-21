@@ -1,7 +1,7 @@
 let isCodeGenOnly = 1, Predicates = [InMicroMips] in {
 def FADD_S_MM : MMRel, ADDS_FT<"add.s", FGR32Opnd, II_ADD_S, 1, fadd>,
                 ADDS_FM_MM<0, 0x30>;
-def FDIV_S_MM : MMRel, ADDS_FT<"div.s", FGR32Opnd, IIFdivSingle, 0, fdiv>,
+def FDIV_S_MM : MMRel, ADDS_FT<"div.s", FGR32Opnd, II_DIV_S, 0, fdiv>,
                 ADDS_FM_MM<0, 0xf0>;
 def FMUL_S_MM : MMRel, ADDS_FT<"mul.s", FGR32Opnd, II_MUL_S, 1, fmul>,
                 ADDS_FM_MM<0, 0xb0>;
@@ -10,7 +10,7 @@ def FSUB_S_MM : MMRel, ADDS_FT<"sub.s", FGR32Opnd, II_SUB_S, 0, fsub>,
 
 def FADD_MM  : MMRel, ADDS_FT<"add.d", AFGR64Opnd, II_ADD_D, 1, fadd>,
                ADDS_FM_MM<1, 0x30>;
-def FDIV_MM  : MMRel, ADDS_FT<"div.d", AFGR64Opnd, IIFdivDouble, 0, fdiv>,
+def FDIV_MM  : MMRel, ADDS_FT<"div.d", AFGR64Opnd, II_DIV_D, 0, fdiv>,
                ADDS_FM_MM<1, 0xf0>;
 def FMUL_MM  : MMRel, ADDS_FT<"mul.d", AFGR64Opnd, II_MUL_D, 1, fmul>,
                ADDS_FM_MM<1, 0xb0>;
