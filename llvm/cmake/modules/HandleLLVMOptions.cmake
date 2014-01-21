@@ -30,6 +30,9 @@ if(NOT LLVM_FORCE_USE_OLD_TOOLCHAIN)
     # libstdc++4.6 that is fixed in libstdc++4.7.
     if(NOT LLVM_ENABLE_LIBCXX)
       set(CMAKE_REQUIRED_FLAGS "-std=c++0x")
+      if (ANDROID)
+        set(CMAKE_REQUIRED_LIBRARIES "atomic")
+      endif()
       check_cxx_source_compiles("
 #include <atomic>
 std::atomic<float> x(0.0f);
