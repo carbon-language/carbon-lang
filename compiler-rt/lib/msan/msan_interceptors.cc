@@ -1291,6 +1291,8 @@ extern "C" int *__errno_location(void);
   } while (false)  // FIXME
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) REAL(name)
 #define COMMON_INTERCEPTOR_ON_EXIT(ctx) OnExit()
+// FIXME: update Msan to use common printf interceptors
+#define SANITIZER_INTERCEPT_PRINTF 0
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) CHECK_UNPOISONED(p, s)

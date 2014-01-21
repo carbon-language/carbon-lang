@@ -7,22 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Scanf implementation for use in *Sanitizer interceptors.
+// Scanf/printf implementation for use in *Sanitizer interceptors.
 // Follows http://pubs.opengroup.org/onlinepubs/9699919799/functions/fscanf.html
+// and http://pubs.opengroup.org/onlinepubs/9699919799/functions/fprintf.html
 // with a few common GNU extensions.
 //
 //===----------------------------------------------------------------------===//
 #include <stdarg.h>
-
-struct ScanfDirective {
-  int argIdx; // argument index, or -1 of not specified ("%n$")
-  int fieldWidth;
-  bool suppressed; // suppress assignment ("*")
-  bool allocate;   // allocate space ("m")
-  char lengthModifier[2];
-  char convSpecifier;
-  bool maybeGnuMalloc;
-};
 
 static const char *parse_number(const char *p, int *out) {
   *out = internal_atoll(p);
@@ -31,9 +22,178 @@ static const char *parse_number(const char *p, int *out) {
   return p;
 }
 
+static const char *maybe_parse_number(const char *p, int *out) {
+  if (*p >= '0' && *p <= '9')
+    p = parse_number(p, out);
+  return p;
+}
+
+static const char *maybe_parse_number_or_star(const char *p, int *out,
+                                              bool *star) {
+  if (*p == '*') {
+    *star = true;
+    ++p;
+  } else {
+    *star = false;
+    p = maybe_parse_number(p, out);
+  }
+  return p;
+}
+
+static const char *maybe_parse_param_index(const char *p, int *out) {
+  // n$
+  if (*p >= '0' && *p <= '9') {
+    int number;
+    const char *q = parse_number(p, &number);
+    CHECK(q);
+    if (*q == '$') {
+      *out = number;
+      p = q + 1;
+    }
+  }
+
+  // Otherwise, do not change p. This will be re-parsed later as the field
+  // width.
+  return p;
+}
+
 static bool char_is_one_of(char c, const char *s) {
   return !!internal_strchr(s, c);
 }
+
+static const char *maybe_parse_length_modifier(const char *p, char ll[2]) {
+  if (char_is_one_of(*p, "jztLq")) {
+    ll[0] = *p;
+    ++p;
+  } else if (*p == 'h') {
+    ll[0] = 'h';
+    ++p;
+    if (*p == 'h') {
+      ll[1] = 'h';
+      ++p;
+    }
+  } else if (*p == 'l') {
+    ll[0] = 'l';
+    ++p;
+    if (*p == 'l') {
+      ll[1] = 'l';
+      ++p;
+    }
+  }
+  return p;
+}
+
+// Returns true if the character is an integer conversion specifier.
+static bool format_is_integer_conv(char c) {
+  return char_is_one_of(c, "diouxXn");
+}
+
+// Returns true if the character is an floating point conversion specifier.
+static bool format_is_float_conv(char c) {
+  return char_is_one_of(c, "aAeEfFgG");
+}
+
+// Returns string output character size for string-like conversions,
+// or 0 if the conversion is invalid.
+static int format_get_char_size(char convSpecifier,
+                                const char lengthModifier[2]) {
+  if (char_is_one_of(convSpecifier, "CS")) {
+    // wchar_t
+    return 0;
+  }
+
+  if (char_is_one_of(convSpecifier, "cs[")) {
+    if (lengthModifier[0] == 'l')
+      // wchar_t
+      return 0;
+    else if (lengthModifier[0] == 0)
+      return sizeof(char);
+    else
+      return 0;
+  }
+
+  return 0;
+}
+
+enum FormatStoreSize {
+  // Store size not known in advance; can be calculated as strlen() of the
+  // destination buffer.
+  FSS_STRLEN = -1,
+  // Invalid conversion specifier.
+  FSS_INVALID = 0
+};
+
+// Returns the memory size of a format directive (if >0), or a value of
+// FormatStoreSize.
+static int format_get_value_size(char convSpecifier,
+                                 const char lengthModifier[2], int fieldWidth,
+                                 bool promote_float) {
+  if (format_is_integer_conv(convSpecifier)) {
+    switch (lengthModifier[0]) {
+    case 'h':
+      return lengthModifier[1] == 'h' ? sizeof(char) : sizeof(short);
+    case 'l':
+      return lengthModifier[1] == 'l' ? sizeof(long long) : sizeof(long);
+    case 'L':
+      return sizeof(long long);
+    case 'j':
+      return sizeof(INTMAX_T);
+    case 'z':
+      return sizeof(SIZE_T);
+    case 't':
+      return sizeof(PTRDIFF_T);
+    case 0:
+      return sizeof(int);
+    default:
+      return FSS_INVALID;
+    }
+  }
+
+  if (format_is_float_conv(convSpecifier)) {
+    switch (lengthModifier[0]) {
+    case 'L':
+    case 'q':
+      return sizeof(long double);
+    case 'l':
+      return lengthModifier[1] == 'l' ? sizeof(long double)
+                                           : sizeof(double);
+    case 0:
+      // Printf promotes floats to doubles but scanf does not
+      return promote_float ? sizeof(double) : sizeof(float);
+    default:
+      return FSS_INVALID;
+    }
+  }
+
+  if (char_is_one_of(convSpecifier, "cC")) {
+    unsigned charSize = format_get_char_size(convSpecifier, lengthModifier);
+    if (charSize == 0)
+      return FSS_INVALID;
+    if (fieldWidth == 0)
+      return charSize;
+    return fieldWidth * charSize;
+  }
+
+  if (convSpecifier == 'p') {
+    if (lengthModifier[0] != 0)
+      return FSS_INVALID;
+    return sizeof(void *);
+  }
+
+  return FSS_INVALID;
+}
+
+struct ScanfDirective {
+  int argIdx; // argument index, or -1 if not specified ("%n$")
+  int fieldWidth;
+  const char *begin;
+  const char *end;
+  bool suppressed; // suppress assignment ("*")
+  bool allocate;   // allocate space ("m")
+  char lengthModifier[2];
+  char convSpecifier;
+  bool maybeGnuMalloc;
+};
 
 // Parse scanf format string. If a valid directive in encountered, it is
 // returned in dir. This function returns the pointer to the first
@@ -49,6 +209,7 @@ static const char *scanf_parse_next(const char *p, bool allowGnuMalloc,
       ++p;
       continue;
     }
+    dir->begin = p;
     ++p;
     // %%
     if (*p == '%') {
@@ -59,25 +220,18 @@ static const char *scanf_parse_next(const char *p, bool allowGnuMalloc,
       return 0;
     }
     // %n$
-    if (*p >= '0' && *p <= '9') {
-      int number;
-      const char *q = parse_number(p, &number);
-      if (*q == '$') {
-        dir->argIdx = number;
-        p = q + 1;
-      }
-      // Otherwise, do not change p. This will be re-parsed later as the field
-      // width.
-    }
+    p = maybe_parse_param_index(p, &dir->argIdx);
+    CHECK(p);
     // *
     if (*p == '*') {
       dir->suppressed = true;
       ++p;
     }
-    // Field width.
+    // Field width
     if (*p >= '0' && *p <= '9') {
       p = parse_number(p, &dir->fieldWidth);
-      if (dir->fieldWidth <= 0)
+      CHECK(p);
+      if (dir->fieldWidth <= 0)  // Width if at all must be non-zero
         return 0;
     }
     // m
@@ -86,24 +240,7 @@ static const char *scanf_parse_next(const char *p, bool allowGnuMalloc,
       ++p;
     }
     // Length modifier.
-    if (char_is_one_of(*p, "jztLq")) {
-      dir->lengthModifier[0] = *p;
-      ++p;
-    } else if (*p == 'h') {
-      dir->lengthModifier[0] = 'h';
-      ++p;
-      if (*p == 'h') {
-        dir->lengthModifier[1] = 'h';
-        ++p;
-      }
-    } else if (*p == 'l') {
-      dir->lengthModifier[0] = 'l';
-      ++p;
-      if (*p == 'l') {
-        dir->lengthModifier[1] = 'l';
-        ++p;
-      }
-    }
+    p = maybe_parse_length_modifier(p, dir->lengthModifier);
     // Conversion specifier.
     dir->convSpecifier = *p++;
     // Consume %[...] expression.
@@ -145,129 +282,40 @@ static const char *scanf_parse_next(const char *p, bool allowGnuMalloc,
         dir->maybeGnuMalloc = true;
       }
     }
+    dir->end = p;
     break;
   }
   return p;
 }
 
-// Returns true if the character is an integer conversion specifier.
-static bool scanf_is_integer_conv(char c) {
-  return char_is_one_of(c, "diouxXn");
-}
-
-// Returns true if the character is an floating point conversion specifier.
-static bool scanf_is_float_conv(char c) {
-  return char_is_one_of(c, "aAeEfFgG");
-}
-
-// Returns string output character size for string-like conversions,
-// or 0 if the conversion is invalid.
-static int scanf_get_char_size(ScanfDirective *dir) {
-  if (char_is_one_of(dir->convSpecifier, "CS")) {
-    // wchar_t
-    return 0;
-  }
-
-  if (char_is_one_of(dir->convSpecifier, "cs[")) {
-    if (dir->lengthModifier[0] == 'l')
-      // wchar_t
-      return 0;
-    else if (dir->lengthModifier[0] == 0)
-      return sizeof(char);
-    else
-      return 0;
-  }
-
-  return 0;
-}
-
-enum ScanfStoreSize {
-  // Store size not known in advance; can be calculated as strlen() of the
-  // destination buffer.
-  SSS_STRLEN = -1,
-  // Invalid conversion specifier.
-  SSS_INVALID = 0
-};
-
-// Returns the store size of a scanf directive (if >0), or a value of
-// ScanfStoreSize.
-static int scanf_get_store_size(ScanfDirective *dir) {
+static int scanf_get_value_size(ScanfDirective *dir) {
   if (dir->allocate) {
     if (!char_is_one_of(dir->convSpecifier, "cCsS["))
-      return SSS_INVALID;
+      return FSS_INVALID;
     return sizeof(char *);
   }
 
   if (dir->maybeGnuMalloc) {
     if (dir->convSpecifier != 'a' || dir->lengthModifier[0])
-      return SSS_INVALID;
+      return FSS_INVALID;
     // This is ambiguous, so check the smaller size of char * (if it is
     // a GNU extension of %as, %aS or %a[...]) and float (if it is
     // POSIX %a followed by s, S or [ letters).
     return sizeof(char *) < sizeof(float) ? sizeof(char *) : sizeof(float);
   }
 
-  if (scanf_is_integer_conv(dir->convSpecifier)) {
-    switch (dir->lengthModifier[0]) {
-    case 'h':
-      return dir->lengthModifier[1] == 'h' ? sizeof(char) : sizeof(short);
-    case 'l':
-      return dir->lengthModifier[1] == 'l' ? sizeof(long long) : sizeof(long);
-    case 'L':
-      return sizeof(long long);
-    case 'j':
-      return sizeof(INTMAX_T);
-    case 'z':
-      return sizeof(SIZE_T);
-    case 't':
-      return sizeof(PTRDIFF_T);
-    case 0:
-      return sizeof(int);
-    default:
-      return SSS_INVALID;
-    }
-  }
-
-  if (scanf_is_float_conv(dir->convSpecifier)) {
-    switch (dir->lengthModifier[0]) {
-    case 'L':
-    case 'q':
-      return sizeof(long double);
-    case 'l':
-      return dir->lengthModifier[1] == 'l' ? sizeof(long double)
-                                           : sizeof(double);
-    case 0:
-      return sizeof(float);
-    default:
-      return SSS_INVALID;
-    }
-  }
-
   if (char_is_one_of(dir->convSpecifier, "sS[")) {
-    unsigned charSize = scanf_get_char_size(dir);
+    unsigned charSize = format_get_char_size(dir->convSpecifier,
+                                             dir->lengthModifier);
     if (charSize == 0)
-      return SSS_INVALID;
+      return FSS_INVALID;
     if (dir->fieldWidth == 0)
-      return SSS_STRLEN;
+      return FSS_STRLEN;
     return (dir->fieldWidth + 1) * charSize;
   }
 
-  if (char_is_one_of(dir->convSpecifier, "cC")) {
-    unsigned charSize = scanf_get_char_size(dir);
-    if (charSize == 0)
-      return SSS_INVALID;
-    if (dir->fieldWidth == 0)
-      return charSize;
-    return dir->fieldWidth * charSize;
-  }
-
-  if (dir->convSpecifier == 'p') {
-    if (dir->lengthModifier[1] != 0)
-      return SSS_INVALID;
-    return sizeof(void *);
-  }
-
-  return SSS_INVALID;
+  return format_get_value_size(dir->convSpecifier, dir->lengthModifier,
+                               dir->fieldWidth, false);
 }
 
 // Common part of *scanf interceptors.
@@ -277,6 +325,8 @@ static void scanf_common(void *ctx, int n_inputs, bool allowGnuMalloc,
                          const char *format, va_list aq) {
   CHECK_GT(n_inputs, 0);
   const char *p = format;
+
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, format, internal_strlen(format) + 1);
 
   while (*p) {
     ScanfDirective dir;
@@ -295,17 +345,191 @@ static void scanf_common(void *ctx, int n_inputs, bool allowGnuMalloc,
     }
     if (dir.suppressed)
       continue;
-    int size = scanf_get_store_size(&dir);
-    if (size == SSS_INVALID)
+    int size = scanf_get_value_size(&dir);
+    if (size == FSS_INVALID) {
+      Report("WARNING: unexpected format specifier in scanf interceptor: "
+        "%.*s\n", dir.end - dir.begin, dir.begin);
       break;
+    }
     void *argp = va_arg(aq, void *);
     if (dir.convSpecifier != 'n')
       --n_inputs;
     if (n_inputs < 0)
       break;
-    if (size == SSS_STRLEN) {
+    if (size == FSS_STRLEN) {
       size = internal_strlen((const char *)argp) + 1;
     }
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, argp, size);
+  }
+}
+
+struct PrintfDirective {
+  int fieldWidth;
+  int fieldPrecision;
+  int argIdx; // width argument index, or -1 if not specified ("%*n$")
+  int precisionIdx; // precision argument index, or -1 if not specified (".*n$")
+  const char *begin;
+  const char *end;
+  bool starredWidth;
+  bool starredPrecision;
+  char lengthModifier[2];
+  char convSpecifier;
+};
+
+// Parse printf format string. Same as scanf_parse_next.
+static const char *printf_parse_next(const char *p, PrintfDirective *dir) {
+  internal_memset(dir, 0, sizeof(*dir));
+  dir->argIdx = dir->precisionIdx = -1;
+
+  while (*p) {
+    if (*p != '%') {
+      ++p;
+      continue;
+    }
+    dir->begin = p;
+    ++p;
+    // %%
+    if (*p == '%') {
+      ++p;
+      continue;
+    }
+    if (*p == '\0') {
+      return 0;
+    }
+    // %n$
+    p = maybe_parse_param_index(p, &dir->precisionIdx);
+    CHECK(p);
+    // Flags
+    while (char_is_one_of(*p, "'-+ #0")) {
+      ++p;
+    }
+    // Field width
+    p = maybe_parse_number_or_star(p, &dir->fieldWidth,
+                                   &dir->starredWidth);
+    if (!p)
+      return 0;
+    // Precision
+    if (*p == '.') {
+      ++p;
+      // Actual precision is optional (surprise!)
+      p = maybe_parse_number_or_star(p, &dir->fieldPrecision,
+                                     &dir->starredPrecision);
+      if (!p)
+        return 0;
+      // m$
+      if (dir->starredPrecision) {
+        p = maybe_parse_param_index(p, &dir->precisionIdx);
+        CHECK(p);
+      }
+    }
+    // Length modifier.
+    p = maybe_parse_length_modifier(p, dir->lengthModifier);
+    // Conversion specifier.
+    dir->convSpecifier = *p++;
+    dir->end = p;
+    break;
+  }
+  return p;
+}
+
+static int printf_get_value_size(PrintfDirective *dir) {
+  if (dir->convSpecifier == 'm') {
+    return sizeof(char *);
+  }
+
+  if (char_is_one_of(dir->convSpecifier, "sS")) {
+    unsigned charSize = format_get_char_size(dir->convSpecifier,
+                                             dir->lengthModifier);
+    if (charSize == 0)
+      return FSS_INVALID;
+    return FSS_STRLEN;
+  }
+
+  return format_get_value_size(dir->convSpecifier, dir->lengthModifier,
+                               dir->fieldWidth, true);
+}
+
+#define SKIP_SCALAR_ARG(aq, convSpecifier, size)                   \
+  do {                                                             \
+    if (format_is_float_conv(convSpecifier)) {                     \
+      switch (size) {                                              \
+      case 8:                                                      \
+        va_arg(*aq, double);                                       \
+        break;                                                     \
+      case 16:                                                     \
+        va_arg(*aq, long double);                                  \
+        break;                                                     \
+      default:                                                     \
+        Report("WARNING: unexpected floating-point arg size"       \
+               " in printf interceptor: %d\n", size);              \
+        return;                                                    \
+      }                                                            \
+    } else {                                                       \
+      switch (size) {                                              \
+      case 1:                                                      \
+      case 2:                                                      \
+      case 4:                                                      \
+        va_arg(*aq, u32);                                          \
+        break;                                                     \
+      case 8:                                                      \
+        va_arg(*aq, u64);                                          \
+        break;                                                     \
+      default:                                                     \
+        Report("WARNING: unexpected arg size"                      \
+               " in printf interceptor: %d\n", size);              \
+        return;                                                    \
+      }                                                            \
+    }                                                              \
+  } while (0)
+
+// Common part of *printf interceptors.
+// Process format string and va_list, and report all load ranges.
+static void printf_common(void *ctx, const char *format, va_list aq) {
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, format, internal_strlen(format) + 1);
+
+  const char *p = format;
+
+  while (*p) {
+    PrintfDirective dir;
+    p = printf_parse_next(p, &dir);
+    if (!p)
+      break;
+    if (dir.convSpecifier == 0) {
+      // This can only happen at the end of the format string.
+      CHECK_EQ(*p, 0);
+      break;
+    }
+    // Here the directive is valid. Do what it says.
+    if (dir.argIdx != -1 || dir.precisionIdx != -1) {
+      // Unsupported.
+      break;
+    }
+    if (dir.starredWidth) {
+      // Dynamic width
+      SKIP_SCALAR_ARG(&aq, 'd', sizeof(int));
+    }
+    if (dir.starredPrecision) {
+      // Dynamic precision
+      SKIP_SCALAR_ARG(&aq, 'd', sizeof(int));
+    }
+    int size = printf_get_value_size(&dir);
+    if (size == FSS_INVALID) {
+      Report("WARNING: unexpected format specifier in printf "
+             "interceptor: %.*s\n", dir.end - dir.begin, dir.begin);
+      break;
+    }
+    if (dir.convSpecifier == 'n') {
+      void *argp = va_arg(aq, void *);
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, argp, size);
+      continue;
+    } else if (size == FSS_STRLEN) {
+      if (void *argp = va_arg(aq, void *)) {
+        size = internal_strlen((const char *)argp) + 1;
+        COMMON_INTERCEPTOR_READ_RANGE(ctx, argp, size);
+      }
+    } else {
+      // Skip non-pointer args
+      SKIP_SCALAR_ARG(&aq, dir.convSpecifier, size);
+    }
   }
 }

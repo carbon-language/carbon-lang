@@ -56,6 +56,8 @@ struct CommonFlags {
   bool allocator_may_return_null;
   // If false, disable printing error summaries in addition to error reports.
   bool print_summary;
+  // Check printf arguments.
+  bool check_printf;
 };
 
 inline CommonFlags *common_flags() {

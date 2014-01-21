@@ -32,6 +32,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->leak_check_at_exit = true;
   f->allocator_may_return_null = false;
   f->print_summary = true;
+  f->check_printf = false;
 }
 
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
@@ -48,6 +49,7 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   ParseFlag(str, &f->leak_check_at_exit, "leak_check_at_exit");
   ParseFlag(str, &f->allocator_may_return_null, "allocator_may_return_null");
   ParseFlag(str, &f->print_summary, "print_summary");
+  ParseFlag(str, &f->check_printf, "check_printf");
 
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)
