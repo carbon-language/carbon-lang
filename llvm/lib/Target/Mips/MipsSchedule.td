@@ -20,7 +20,6 @@ def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
-def IIFadd             : InstrItinClass;
 def IIFmulSingle       : InstrItinClass;
 def IIFmulDouble       : InstrItinClass;
 def IIFdivSingle       : InstrItinClass;
@@ -37,6 +36,8 @@ def II_ABS              : InstrItinClass;
 def II_ADDI             : InstrItinClass;
 def II_ADDIU            : InstrItinClass;
 def II_ADDU             : InstrItinClass;
+def II_ADD_D            : InstrItinClass;
+def II_ADD_S            : InstrItinClass;
 def II_AND              : InstrItinClass;
 def II_ANDI             : InstrItinClass;
 def II_CEIL             : InstrItinClass;
@@ -112,6 +113,8 @@ def II_SRAV             : InstrItinClass;
 def II_SRL              : InstrItinClass;
 def II_SRLV             : InstrItinClass;
 def II_SUBU             : InstrItinClass;
+def II_SUB_D            : InstrItinClass;
+def II_SUB_S            : InstrItinClass;
 def II_TRUNC            : InstrItinClass;
 def II_XOR              : InstrItinClass;
 def II_XORI             : InstrItinClass;
@@ -200,7 +203,10 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_MOVZ_S          , [InstrStage<2,  [ALU]>]>,
   InstrItinData<II_C_CC_S          , [InstrStage<3,  [ALU]>]>,
   InstrItinData<II_C_CC_D          , [InstrStage<3,  [ALU]>]>,
-  InstrItinData<IIFadd             , [InstrStage<4,  [ALU]>]>,
+  InstrItinData<II_ADD_D           , [InstrStage<4,  [ALU]>]>,
+  InstrItinData<II_ADD_S           , [InstrStage<4,  [ALU]>]>,
+  InstrItinData<II_SUB_D           , [InstrStage<4,  [ALU]>]>,
+  InstrItinData<II_SUB_S           , [InstrStage<4,  [ALU]>]>,
   InstrItinData<IIFmulSingle       , [InstrStage<7,  [ALU]>]>,
   InstrItinData<IIFmulDouble       , [InstrStage<8,  [ALU]>]>,
   InstrItinData<IIFdivSingle       , [InstrStage<23, [ALU]>]>,

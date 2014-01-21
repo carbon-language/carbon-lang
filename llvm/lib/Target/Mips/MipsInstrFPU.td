@@ -419,18 +419,18 @@ let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace="Mips64" in {
 }
 
 /// Floating-point Aritmetic
-def FADD_S : MMRel, ADDS_FT<"add.s", FGR32Opnd, IIFadd, 1, fadd>,
+def FADD_S : MMRel, ADDS_FT<"add.s", FGR32Opnd, II_ADD_S, 1, fadd>,
              ADDS_FM<0x00, 16>;
-defm FADD :  ADDS_M<"add.d", IIFadd, 1, fadd>, ADDS_FM<0x00, 17>;
+defm FADD :  ADDS_M<"add.d", II_ADD_D, 1, fadd>, ADDS_FM<0x00, 17>;
 def FDIV_S : MMRel, ADDS_FT<"div.s", FGR32Opnd, IIFdivSingle, 0, fdiv>,
              ADDS_FM<0x03, 16>;
 defm FDIV :  ADDS_M<"div.d", IIFdivDouble, 0, fdiv>, ADDS_FM<0x03, 17>;
 def FMUL_S : MMRel, ADDS_FT<"mul.s", FGR32Opnd, IIFmulSingle, 1, fmul>,
              ADDS_FM<0x02, 16>;
 defm FMUL :  ADDS_M<"mul.d", IIFmulDouble, 1, fmul>, ADDS_FM<0x02, 17>;
-def FSUB_S : MMRel, ADDS_FT<"sub.s", FGR32Opnd, IIFadd, 0, fsub>,
+def FSUB_S : MMRel, ADDS_FT<"sub.s", FGR32Opnd, II_SUB_S, 0, fsub>,
              ADDS_FM<0x01, 16>;
-defm FSUB :  ADDS_M<"sub.d", IIFadd, 0, fsub>, ADDS_FM<0x01, 17>;
+defm FSUB :  ADDS_M<"sub.d", II_SUB_D, 0, fsub>, ADDS_FM<0x01, 17>;
 
 let Predicates = [HasMips32r2, HasStdEnc] in {
   def MADD_S : MMRel, MADDS_FT<"madd.s", FGR32Opnd, IIFmulSingle, fadd>,
