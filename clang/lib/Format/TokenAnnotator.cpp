@@ -516,6 +516,7 @@ private:
       break;
     case tok::pp_if:
     case tok::pp_elif:
+      Contexts.back().IsExpression = true;
       parseLine();
       break;
     default:
@@ -531,7 +532,7 @@ public:
       parsePreprocessorDirective();
       return LT_PreprocessorDirective;
     }
-  
+
     // Directly allow to 'import <string-literal>' to support protocol buffer
     // definitions (code.google.com/p/protobuf) or missing "#" (either way we
     // should not break the line).
