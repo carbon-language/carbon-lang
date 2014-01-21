@@ -52,7 +52,7 @@ def ROUND_W_S_MM : MMRel, ABSS_FT<"round.w.s", FGR32Opnd, FGR32Opnd, II_ROUND>,
                    ROUND_W_FM_MM<0, 0xec>;
 def TRUNC_W_S_MM : MMRel, ABSS_FT<"trunc.w.s", FGR32Opnd, FGR32Opnd, II_TRUNC>,
                    ROUND_W_FM_MM<0, 0xac>;
-def FSQRT_S_MM : MMRel, ABSS_FT<"sqrt.s", FGR32Opnd, FGR32Opnd,IIFsqrtSingle,
+def FSQRT_S_MM : MMRel, ABSS_FT<"sqrt.s", FGR32Opnd, FGR32Opnd, II_SQRT_S,
                                 fsqrt>, ROUND_W_FM_MM<0, 0x28>;
 
 def CEIL_W_MM  : MMRel, ABSS_FT<"ceil.w.d", FGR32Opnd, AFGR64Opnd, II_CEIL>,
@@ -66,8 +66,8 @@ def ROUND_W_MM : MMRel, ABSS_FT<"round.w.d", FGR32Opnd, AFGR64Opnd, II_ROUND>,
 def TRUNC_W_MM : MMRel, ABSS_FT<"trunc.w.d", FGR32Opnd, AFGR64Opnd, II_TRUNC>,
                  ROUND_W_FM_MM<1, 0xac>;
 
-def FSQRT_MM : MMRel, ABSS_FT<"sqrt.d", AFGR64Opnd, AFGR64Opnd,
-                              IIFsqrtDouble, fsqrt>, ROUND_W_FM_MM<1, 0x28>;
+def FSQRT_MM : MMRel, ABSS_FT<"sqrt.d", AFGR64Opnd, AFGR64Opnd, II_SQRT_D,
+                              fsqrt>, ROUND_W_FM_MM<1, 0x28>;
 
 def CVT_L_S_MM   : MMRel, ABSS_FT<"cvt.l.s", FGR64Opnd, FGR32Opnd, II_CVT>,
                    ROUND_W_FM_MM<0, 0x4>;

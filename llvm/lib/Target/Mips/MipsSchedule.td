@@ -20,8 +20,6 @@ def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
-def IIFsqrtSingle      : InstrItinClass;
-def IIFsqrtDouble      : InstrItinClass;
 def IIFrecipFsqrtStep  : InstrItinClass;
 def IIFLoad            : InstrItinClass;
 def IIFStore           : InstrItinClass;
@@ -116,6 +114,8 @@ def II_SLL              : InstrItinClass;
 def II_SLLV             : InstrItinClass;
 def II_SLTI_SLTIU       : InstrItinClass; // slti and sltiu
 def II_SLT_SLTU         : InstrItinClass; // slt and sltu
+def II_SQRT_D           : InstrItinClass;
+def II_SQRT_S           : InstrItinClass;
 def II_SRA              : InstrItinClass;
 def II_SRAV             : InstrItinClass;
 def II_SRL              : InstrItinClass;
@@ -227,8 +227,8 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_NMSUB_D         , [InstrStage<8,  [ALU]>]>,
   InstrItinData<II_DIV_S           , [InstrStage<23, [ALU]>]>,
   InstrItinData<II_DIV_D           , [InstrStage<36, [ALU]>]>,
-  InstrItinData<IIFsqrtSingle      , [InstrStage<54, [ALU]>]>,
-  InstrItinData<IIFsqrtDouble      , [InstrStage<12, [ALU]>]>,
+  InstrItinData<II_SQRT_S          , [InstrStage<54, [ALU]>]>,
+  InstrItinData<II_SQRT_D          , [InstrStage<12, [ALU]>]>,
   InstrItinData<IIFrecipFsqrtStep  , [InstrStage<5,  [ALU]>]>,
   InstrItinData<IIFLoad            , [InstrStage<3,  [ALU]>]>,
   InstrItinData<IIFStore           , [InstrStage<1,  [ALU]>]>,

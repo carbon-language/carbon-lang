@@ -331,9 +331,9 @@ let Predicates = [NoNaNsFPMath, HasStdEnc] in {
   defm FNEG : ABSS_M<"neg.d", II_NEG, fneg>, ABSS_FM<0x7, 17>;
 }
 
-def FSQRT_S : MMRel, ABSS_FT<"sqrt.s", FGR32Opnd, FGR32Opnd, IIFsqrtSingle,
-               fsqrt>, ABSS_FM<0x4, 16>;
-defm FSQRT : ABSS_M<"sqrt.d", IIFsqrtDouble, fsqrt>, ABSS_FM<0x4, 17>;
+def FSQRT_S : MMRel, ABSS_FT<"sqrt.s", FGR32Opnd, FGR32Opnd, II_SQRT_S, fsqrt>,
+              ABSS_FM<0x4, 16>;
+defm FSQRT : ABSS_M<"sqrt.d", II_SQRT_D, fsqrt>, ABSS_FM<0x4, 17>;
 
 // The odd-numbered registers are only referenced when doing loads,
 // stores, and moves between floating-point and integer registers.
