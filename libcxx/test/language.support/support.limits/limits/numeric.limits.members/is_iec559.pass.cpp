@@ -48,6 +48,6 @@ int main()
 #if (defined(__ppc__) || defined(__ppc64__))
     test<long double, false>();
 #else
-     test<long double, true>();
+    test<long double, true>();
 #endif
 }
