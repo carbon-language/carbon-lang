@@ -62,18 +62,17 @@ stack_adjust:
 @ CHECK:         Model: Compact (Inline)
 @ CHECK:         PersonalityIndex: 0
 @ CHECK:         Opcodes [
-@ CHECK:           Opcode: 0xB1
-@ CHECK:           Opcode: 0x1
-@ CHECK:           Opcode: 0xB0
+@ CHECK:           0xB1 0x01 ; pop {r0}
+@ CHECK:           0xB0      ; finish
 @ CHECK:         ]
 @ CHECK:       }
 @ CHECK:       Entry {
 @ CHECK:         Model: Compact (Inline)
 @ CHECK:         PersonalityIndex: 0
 @ CHECK:         Opcodes [
-@ CHECK:           Opcode: 0xB0
-@ CHECK:           Opcode: 0xB0
-@ CHECK:           Opcode: 0xB0
+@ CHECK:           0xB0      ; finish
+@ CHECK:           0xB0      ; finish
+@ CHECK:           0xB0      ; finish
 @ CHECK:         ]
 @ CHECK:       }
 @ CHECK:       Entry {
@@ -81,30 +80,28 @@ stack_adjust:
 @ CHECK:         Model: Compact
 @ CHECK:         PersonalityIndex: 1
 @ CHECK:         Opcodes [
-@ CHECK:           Opcode: 0x9B
-@ CHECK:           Opcode: 0x40
-@ CHECK:           Opcode: 0x84
-@ CHECK:           Opcode: 0x80
-@ CHECK:           Opcode: 0xB0
-@ CHECK:           Opcode: 0xB0
+@ CHECK:           0x9B      ; vsp = r11
+@ CHECK:           0x40      ; vsp = vsp - 4
+@ CHECK:           0x84 0x80 ; pop {fp, lr}
+@ CHECK:           0xB0      ; finish
+@ CHECK:           0xB0      ; finish
 @ CHECK:         ]
 @ CHECK:       }
 @ CHECK:       Entry {
 @ CHECK:         Model: Compact (Inline)
 @ CHECK:         PersonalityIndex: 0
 @ CHECK:         Opcodes [
-@ CHECK:           Opcode: 0x80
-@ CHECK:           Opcode: 0x0
-@ CHECK:           Opcode: 0xB0
+@ CHECK:           0x80 0x00 ; refuse to unwind
+@ CHECK:           0xB0      ; finish
 @ CHECK:         ]
 @ CHECK:       }
 @ CHECK:       Entry {
 @ CHECK:         Model: Compact (Inline)
 @ CHECK:         PersonalityIndex: 0
 @ CHECK:         Opcodes [
-@ CHECK:           Opcode: 0x9B
-@ CHECK:           Opcode: 0x4D
-@ CHECK:           Opcode: 0xC2
+@ CHECK:           0x9B      ; vsp = r11
+@ CHECK:           0x4D      ; vsp = vsp - 56
+@ CHECK:           0xC2      ; pop {wR10, wR11, wR12}
 @ CHECK:         ]
 @ CHECK:       }
 @ CHECK:     ]

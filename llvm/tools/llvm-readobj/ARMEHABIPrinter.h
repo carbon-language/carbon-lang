@@ -15,12 +15,299 @@
 #include "llvm/Object/ELF.h"
 #include "llvm/Object/ELFTypes.h"
 #include "llvm/Support/ARMEHABI.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/type_traits.h"
+
+namespace {
+template <typename type_, size_t N>
+size_t countof(const type_ (&)[N]) {
+  return N;
+}
+}
 
 namespace llvm {
 namespace ARM {
 namespace EHABI {
+
+class OpcodeDecoder {
+  StreamWriter &SW;
+  raw_ostream &OS;
+
+  struct RingEntry {
+    uint8_t Mask;
+    uint8_t Value;
+    void (OpcodeDecoder::*Routine)(const uint8_t *Opcodes, unsigned &OI);
+  };
+  static const RingEntry Ring[];
+
+  void Decode_00xxxxxx(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_01xxxxxx(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_1000iiii_iiiiiiii(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_10011101(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_10011111(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_1001nnnn(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_10100nnn(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_10101nnn(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_10110000(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_10110001_0000iiii(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_10110010_uleb128(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_10110011_sssscccc(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_101101nn(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_10111nnn(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_11000110_sssscccc(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_11000111_0000iiii(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_11001000_sssscccc(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_11001001_sssscccc(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_11001yyy(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_11000nnn(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_11010nnn(const uint8_t *Opcodes, unsigned &OI);
+  void Decode_11xxxyyy(const uint8_t *Opcodes, unsigned &OI);
+
+  void PrintGPR(uint16_t GPRMask);
+  void PrintRegisters(uint32_t Mask, StringRef Prefix);
+
+public:
+  OpcodeDecoder(StreamWriter &SW) : SW(SW), OS(SW.getOStream()) {}
+  void Decode(const uint8_t *Opcodes, off_t Offset, size_t Length);
+};
+
+const OpcodeDecoder::RingEntry OpcodeDecoder::Ring[] = {
+  { 0xc0, 0x00, &OpcodeDecoder::Decode_00xxxxxx },
+  { 0xc0, 0x40, &OpcodeDecoder::Decode_01xxxxxx },
+  { 0xf0, 0x80, &OpcodeDecoder::Decode_1000iiii_iiiiiiii },
+  { 0xff, 0x9d, &OpcodeDecoder::Decode_10011101 },
+  { 0xff, 0x9f, &OpcodeDecoder::Decode_10011111 },
+  { 0xf0, 0x90, &OpcodeDecoder::Decode_1001nnnn },
+  { 0xf8, 0xa0, &OpcodeDecoder::Decode_10100nnn },
+  { 0xf8, 0xa8, &OpcodeDecoder::Decode_10101nnn },
+  { 0xff, 0xb0, &OpcodeDecoder::Decode_10110000 },
+  { 0xff, 0xb1, &OpcodeDecoder::Decode_10110001_0000iiii },
+  { 0xff, 0xb2, &OpcodeDecoder::Decode_10110010_uleb128 },
+  { 0xff, 0xb3, &OpcodeDecoder::Decode_10110011_sssscccc },
+  { 0xfc, 0xb4, &OpcodeDecoder::Decode_101101nn },
+  { 0xf8, 0xb8, &OpcodeDecoder::Decode_10111nnn },
+  { 0xff, 0xc6, &OpcodeDecoder::Decode_11000110_sssscccc },
+  { 0xff, 0xc7, &OpcodeDecoder::Decode_11000111_0000iiii },
+  { 0xff, 0xc8, &OpcodeDecoder::Decode_11001000_sssscccc },
+  { 0xff, 0xc9, &OpcodeDecoder::Decode_11001001_sssscccc },
+  { 0xc8, 0xc8, &OpcodeDecoder::Decode_11001yyy },
+  { 0xf8, 0xc0, &OpcodeDecoder::Decode_11000nnn },
+  { 0xf8, 0xd0, &OpcodeDecoder::Decode_11010nnn },
+  { 0xc0, 0xc0, &OpcodeDecoder::Decode_11xxxyyy },
+};
+
+void OpcodeDecoder::Decode_00xxxxxx(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; vsp = vsp + %u\n", Opcode,
+                           ((Opcode & 0x3f) << 2) + 4);
+}
+void OpcodeDecoder::Decode_01xxxxxx(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; vsp = vsp - %u\n", Opcode,
+                           ((Opcode & 0x3f) << 2) + 4);
+}
+void OpcodeDecoder::Decode_1000iiii_iiiiiiii(const uint8_t *Opcodes,
+                                             unsigned &OI) {
+  uint8_t Opcode0 = Opcodes[OI++ ^ 3];
+  uint8_t Opcode1 = Opcodes[OI++ ^ 3];
+
+  uint16_t GPRMask = (Opcode1 << 4) | ((Opcode0 & 0x0f) << 12);
+  SW.startLine()
+    << format("0x%02X 0x%02X ; %s",
+              Opcode0, Opcode1, GPRMask ? "pop " : "refuse to unwind");
+  if (GPRMask)
+    PrintGPR(GPRMask);
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_10011101(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; reserved (ARM MOVrr)\n", Opcode);
+}
+void OpcodeDecoder::Decode_10011111(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; reserved (WiMMX MOVrr)\n", Opcode);
+}
+void OpcodeDecoder::Decode_1001nnnn(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; vsp = r%u\n", Opcode, (Opcode & 0x0f));
+}
+void OpcodeDecoder::Decode_10100nnn(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; pop ", Opcode);
+  PrintGPR((((1 << ((Opcode & 0x7) + 1)) - 1) << 4));
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_10101nnn(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; pop ", Opcode);
+  PrintGPR((((1 << ((Opcode & 0x7) + 1)) - 1) << 4) | (1 << 14));
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_10110000(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; finish\n", Opcode);
+}
+void OpcodeDecoder::Decode_10110001_0000iiii(const uint8_t *Opcodes,
+                                             unsigned &OI) {
+  uint8_t Opcode0 = Opcodes[OI++ ^ 3];
+  uint8_t Opcode1 = Opcodes[OI++ ^ 3];
+
+  SW.startLine()
+    << format("0x%02X 0x%02X ; %s", Opcode0, Opcode1,
+              ((Opcode1 & 0xf0) || Opcode1 == 0x00) ? "spare" : "pop ");
+  if (((Opcode1 & 0xf0) == 0x00) && Opcode1)
+    PrintGPR((Opcode1 & 0x0f));
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_10110010_uleb128(const uint8_t *Opcodes,
+                                            unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X ", Opcode);
+
+  SmallVector<uint8_t, 4> ULEB;
+  do { ULEB.push_back(Opcodes[OI ^ 3]); } while (Opcodes[OI++ ^ 3] & 0x80);
+
+  for (unsigned BI = 0, BE = ULEB.size(); BI != BE; ++BI)
+    OS << format("0x%02X ", ULEB[BI]);
+
+  uint64_t Value = 0;
+  for (unsigned BI = 0, BE = ULEB.size(); BI != BE; ++BI)
+    Value = Value | ((ULEB[BI] & 0x7f) << (7 * BI));
+
+  OS << format("; vsp = vsp + %u\n", 0x204 + (Value << 2));
+}
+void OpcodeDecoder::Decode_10110011_sssscccc(const uint8_t *Opcodes,
+                                             unsigned &OI) {
+  uint8_t Opcode0 = Opcodes[OI++ ^ 3];
+  uint8_t Opcode1 = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X 0x%02X ; pop ", Opcode0, Opcode1);
+  uint8_t Start = ((Opcode1 & 0xf0) >> 4);
+  uint8_t Count = ((Opcode1 & 0x0f) >> 0);
+  PrintRegisters((((1 << (Count + 1)) - 1) << Start), "d");
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_101101nn(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; spare\n", Opcode);
+}
+void OpcodeDecoder::Decode_10111nnn(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; pop ", Opcode);
+  PrintRegisters((((1 << ((Opcode & 0x07) + 1)) - 1) << 8), "d");
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_11000110_sssscccc(const uint8_t *Opcodes,
+                                             unsigned &OI) {
+  uint8_t Opcode0 = Opcodes[OI++ ^ 3];
+  uint8_t Opcode1 = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X 0x%02X ; pop ", Opcode0, Opcode1);
+  uint8_t Start = ((Opcode1 & 0xf0) >> 4);
+  uint8_t Count = ((Opcode1 & 0x0f) >> 0);
+  PrintRegisters((((1 << (Count + 1)) - 1) << Start), "wR");
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_11000111_0000iiii(const uint8_t *Opcodes,
+                                             unsigned &OI) {
+  uint8_t Opcode0 = Opcodes[OI++ ^ 3];
+  uint8_t Opcode1 = Opcodes[OI++ ^ 3];
+  SW.startLine()
+    << format("0x%02X 0x%02X ; %s", Opcode0, Opcode1,
+              ((Opcode1 & 0xf0) || Opcode1 == 0x00) ? "spare" : "pop ");
+  if ((Opcode1 & 0xf0) == 0x00 && Opcode1)
+      PrintRegisters(Opcode1 & 0x0f, "wCGR");
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_11001000_sssscccc(const uint8_t *Opcodes,
+                                             unsigned &OI) {
+  uint8_t Opcode0 = Opcodes[OI++ ^ 3];
+  uint8_t Opcode1 = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X 0x%02X ; pop ", Opcode0, Opcode1);
+  uint8_t Start = 16 + ((Opcode1 & 0xf0) >> 4);
+  uint8_t Count = ((Opcode1 & 0x0f) >> 0);
+  PrintRegisters((((1 << (Count + 1)) - 1) << Start), "d");
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_11001001_sssscccc(const uint8_t *Opcodes,
+                                             unsigned &OI) {
+  uint8_t Opcode0 = Opcodes[OI++ ^ 3];
+  uint8_t Opcode1 = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X 0x%02X ; pop ", Opcode0, Opcode1);
+  uint8_t Start = ((Opcode1 & 0xf0) >> 4);
+  uint8_t Count = ((Opcode1 & 0x0f) >> 0);
+  PrintRegisters((((1 << (Count + 1)) - 1) << Start), "d");
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_11001yyy(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; spare\n", Opcode);
+}
+void OpcodeDecoder::Decode_11000nnn(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; pop ", Opcode);
+  PrintRegisters((((1 << ((Opcode & 0x07) + 1)) - 1) << 10), "wR");
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_11010nnn(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; pop ", Opcode);
+  PrintRegisters((((1 << ((Opcode & 0x07) + 1)) - 1) << 8), "d");
+  OS << '\n';
+}
+void OpcodeDecoder::Decode_11xxxyyy(const uint8_t *Opcodes, unsigned &OI) {
+  uint8_t Opcode = Opcodes[OI++ ^ 3];
+  SW.startLine() << format("0x%02X      ; spare\n", Opcode);
+}
+
+void OpcodeDecoder::PrintGPR(uint16_t GPRMask) {
+  static const char *GPRRegisterNames[16] = {
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10",
+    "fp", "ip", "sp", "lr", "pc"
+  };
+
+  OS << '{';
+  bool Comma = false;
+  for (unsigned RI = 0, RE = 17; RI < RE; ++RI) {
+    if (GPRMask & (1 << RI)) {
+      if (Comma)
+        OS << ", ";
+      OS << GPRRegisterNames[RI];
+      Comma = true;
+    }
+  }
+  OS << '}';
+}
+
+void OpcodeDecoder::PrintRegisters(uint32_t VFPMask, StringRef Prefix) {
+  OS << '{';
+  bool Comma = false;
+  for (unsigned RI = 0, RE = 32; RI < RE; ++RI) {
+    if (VFPMask & (1 << RI)) {
+      if (Comma)
+        OS << ", ";
+      OS << Prefix << RI;
+      Comma = true;
+    }
+  }
+  OS << '}';
+}
+
+void OpcodeDecoder::Decode(const uint8_t *Opcodes, off_t Offset, size_t Length) {
+  for (unsigned OCI = Offset; OCI < Length + Offset; ) {
+    bool Decoded = false;
+    for (unsigned REI = 0, REE = countof(Ring); REI != REE && !Decoded; ++REI) {
+      if ((Opcodes[OCI ^ 3] & Ring[REI].Mask) == Ring[REI].Value) {
+        (this->*Ring[REI].Routine)(Opcodes, OCI);
+        Decoded = true;
+        break;
+      }
+    }
+    if (!Decoded)
+      SW.startLine() << format("0x%02X      ; reserved\n", Opcodes[OCI++ ^ 3]);
+  }
+}
+
 template <typename ET>
 class PrinterContext {
   StreamWriter &SW;
@@ -171,8 +458,7 @@ template <typename ET>
 void PrinterContext<ET>::PrintOpcodes(const uint8_t *Entry,
                                       size_t Length, off_t Offset) const {
   ListScope OCC(SW, "Opcodes");
-  for (unsigned OCI = Offset; OCI < Length + Offset; OCI++)
-    SW.printHex("Opcode", Entry[OCI ^ 0x3]);
+  OpcodeDecoder(OCC.W).Decode(Entry, Offset, Length);
 }
 
 template <typename ET>
