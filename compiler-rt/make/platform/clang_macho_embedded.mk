@@ -14,13 +14,12 @@ CheckArches = \
     for arch in $(1); do \
       if $(CC) -arch $$arch -c \
 	  -integrated-as \
-	  $(ProjSrcRoot)/make/platform/clang_darwin_test_input.c \
-	  -isysroot $(ProjSrcRoot)/SDKs/darwin \
+	  $(ProjSrcRoot)/make/platform/clang_macho_embedded_test_input.c \
 	  -o /dev/null > /dev/null 2> /dev/null; then \
         result="$$result$$arch "; \
       else \
 	printf 1>&2 \
-	  "warning: clang_darwin.mk: dropping arch '$$arch' from lib '$(2)'\n"; \
+	  "warning: clang_macho_embedded.mk: dropping arch '$$arch' from lib '$(2)'\n"; \
       fi; \
     done; \
     echo $$result)
