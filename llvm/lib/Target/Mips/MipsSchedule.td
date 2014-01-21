@@ -20,7 +20,6 @@ def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
-def IIFcmp             : InstrItinClass;
 def IIFadd             : InstrItinClass;
 def IIFmulSingle       : InstrItinClass;
 def IIFmulDouble       : InstrItinClass;
@@ -46,6 +45,8 @@ def II_CLO              : InstrItinClass;
 def II_CLZ              : InstrItinClass;
 def II_CTC1             : InstrItinClass;
 def II_CVT              : InstrItinClass;
+def II_C_CC_D           : InstrItinClass; // Any c.<cc>.d instruction
+def II_C_CC_S           : InstrItinClass; // Any c.<cc>.s instruction
 def II_DADDIU           : InstrItinClass;
 def II_DADDU            : InstrItinClass;
 def II_DDIV             : InstrItinClass;
@@ -197,7 +198,8 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_MOVT_S          , [InstrStage<2,  [ALU]>]>,
   InstrItinData<II_MOVZ_D          , [InstrStage<2,  [ALU]>]>,
   InstrItinData<II_MOVZ_S          , [InstrStage<2,  [ALU]>]>,
-  InstrItinData<IIFcmp             , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_C_CC_S          , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<II_C_CC_D          , [InstrStage<3,  [ALU]>]>,
   InstrItinData<IIFadd             , [InstrStage<4,  [ALU]>]>,
   InstrItinData<IIFmulSingle       , [InstrStage<7,  [ALU]>]>,
   InstrItinData<IIFmulDouble       , [InstrStage<8,  [ALU]>]>,

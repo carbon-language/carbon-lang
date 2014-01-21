@@ -213,35 +213,38 @@ class CEQS_FT<string typestr, RegisterClass RC, InstrItinClass Itin,
   let isCodeGenOnly = 1;
 }
 
-class C_COND_FT<string CondStr, string Typestr, RegisterOperand RC>  :
+class C_COND_FT<string CondStr, string Typestr, RegisterOperand RC,
+                InstrItinClass itin>  :
    InstSE<(outs), (ins RC:$fs, RC:$ft),
-          !strconcat("c.", CondStr, ".", Typestr, "\t$fs, $ft"), [], IIFcmp,
+          !strconcat("c.", CondStr, ".", Typestr, "\t$fs, $ft"), [], itin,
           FrmFR>;
 
-multiclass C_COND_M<string TypeStr, RegisterOperand RC, bits<5> fmt> {
-  def C_F_#NAME : C_COND_FT<"f", TypeStr, RC>, C_COND_FM<fmt, 0>;
-  def C_UN_#NAME : C_COND_FT<"un", TypeStr, RC>, C_COND_FM<fmt, 1>;
-  def C_EQ_#NAME : C_COND_FT<"eq", TypeStr, RC>, C_COND_FM<fmt, 2>;
-  def C_UEQ_#NAME : C_COND_FT<"ueq", TypeStr, RC>, C_COND_FM<fmt, 3>;
-  def C_OLT_#NAME : C_COND_FT<"olt", TypeStr, RC>, C_COND_FM<fmt, 4>;
-  def C_ULT_#NAME : C_COND_FT<"ult", TypeStr, RC>, C_COND_FM<fmt, 5>;
-  def C_OLE_#NAME : C_COND_FT<"ole", TypeStr, RC>, C_COND_FM<fmt, 6>;
-  def C_ULE_#NAME : C_COND_FT<"ule", TypeStr, RC>, C_COND_FM<fmt, 7>;
-  def C_SF_#NAME : C_COND_FT<"sf", TypeStr, RC>, C_COND_FM<fmt, 8>;
-  def C_NGLE_#NAME : C_COND_FT<"ngle", TypeStr, RC>, C_COND_FM<fmt, 9>;
-  def C_SEQ_#NAME : C_COND_FT<"seq", TypeStr, RC>, C_COND_FM<fmt, 10>;
-  def C_NGL_#NAME : C_COND_FT<"ngl", TypeStr, RC>, C_COND_FM<fmt, 11>;
-  def C_LT_#NAME : C_COND_FT<"lt", TypeStr, RC>, C_COND_FM<fmt, 12>;
-  def C_NGE_#NAME : C_COND_FT<"nge", TypeStr, RC>, C_COND_FM<fmt, 13>;
-  def C_LE_#NAME : C_COND_FT<"le", TypeStr, RC>, C_COND_FM<fmt, 14>;
-  def C_NGT_#NAME : C_COND_FT<"ngt", TypeStr, RC>, C_COND_FM<fmt, 15>;
+multiclass C_COND_M<string TypeStr, RegisterOperand RC, bits<5> fmt,
+                    InstrItinClass itin> {
+  def C_F_#NAME : C_COND_FT<"f", TypeStr, RC, itin>, C_COND_FM<fmt, 0>;
+  def C_UN_#NAME : C_COND_FT<"un", TypeStr, RC, itin>, C_COND_FM<fmt, 1>;
+  def C_EQ_#NAME : C_COND_FT<"eq", TypeStr, RC, itin>, C_COND_FM<fmt, 2>;
+  def C_UEQ_#NAME : C_COND_FT<"ueq", TypeStr, RC, itin>, C_COND_FM<fmt, 3>;
+  def C_OLT_#NAME : C_COND_FT<"olt", TypeStr, RC, itin>, C_COND_FM<fmt, 4>;
+  def C_ULT_#NAME : C_COND_FT<"ult", TypeStr, RC, itin>, C_COND_FM<fmt, 5>;
+  def C_OLE_#NAME : C_COND_FT<"ole", TypeStr, RC, itin>, C_COND_FM<fmt, 6>;
+  def C_ULE_#NAME : C_COND_FT<"ule", TypeStr, RC, itin>, C_COND_FM<fmt, 7>;
+  def C_SF_#NAME : C_COND_FT<"sf", TypeStr, RC, itin>, C_COND_FM<fmt, 8>;
+  def C_NGLE_#NAME : C_COND_FT<"ngle", TypeStr, RC, itin>, C_COND_FM<fmt, 9>;
+  def C_SEQ_#NAME : C_COND_FT<"seq", TypeStr, RC, itin>, C_COND_FM<fmt, 10>;
+  def C_NGL_#NAME : C_COND_FT<"ngl", TypeStr, RC, itin>, C_COND_FM<fmt, 11>;
+  def C_LT_#NAME : C_COND_FT<"lt", TypeStr, RC, itin>, C_COND_FM<fmt, 12>;
+  def C_NGE_#NAME : C_COND_FT<"nge", TypeStr, RC, itin>, C_COND_FM<fmt, 13>;
+  def C_LE_#NAME : C_COND_FT<"le", TypeStr, RC, itin>, C_COND_FM<fmt, 14>;
+  def C_NGT_#NAME : C_COND_FT<"ngt", TypeStr, RC, itin>, C_COND_FM<fmt, 15>;
 }
 
-defm S : C_COND_M<"s", FGR32Opnd, 16>;
-defm D32 : C_COND_M<"d", AFGR64Opnd, 17>,
-                    Requires<[NotFP64bit, HasStdEnc]>;
+defm S : C_COND_M<"s", FGR32Opnd, 16, II_C_CC_S>;
+defm D32 : C_COND_M<"d", AFGR64Opnd, 17, II_C_CC_D>,
+           Requires<[NotFP64bit, HasStdEnc]>;
 let DecoderNamespace = "Mips64" in
-defm D64 : C_COND_M<"d", FGR64Opnd, 17>, Requires<[IsFP64bit, HasStdEnc]>;
+defm D64 : C_COND_M<"d", FGR64Opnd, 17, II_C_CC_D>,
+           Requires<[IsFP64bit, HasStdEnc]>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Instructions
@@ -508,11 +511,11 @@ def MIPS_FCOND_LE   : PatLeaf<(i32 14)>;
 def MIPS_FCOND_NGT  : PatLeaf<(i32 15)>;
 
 /// Floating Point Compare
-def FCMP_S32 : MMRel, CEQS_FT<"s", FGR32, IIFcmp, MipsFPCmp>, CEQS_FM<16>;
-def FCMP_D32 : MMRel, CEQS_FT<"d", AFGR64, IIFcmp, MipsFPCmp>, CEQS_FM<17>,
+def FCMP_S32 : MMRel, CEQS_FT<"s", FGR32, II_C_CC_S, MipsFPCmp>, CEQS_FM<16>;
+def FCMP_D32 : MMRel, CEQS_FT<"d", AFGR64, II_C_CC_D, MipsFPCmp>, CEQS_FM<17>,
                Requires<[NotFP64bit, HasStdEnc]>;
 let DecoderNamespace = "Mips64" in
-def FCMP_D64 : CEQS_FT<"d", FGR64, IIFcmp, MipsFPCmp>, CEQS_FM<17>,
+def FCMP_D64 : CEQS_FT<"d", FGR64, II_C_CC_D, MipsFPCmp>, CEQS_FM<17>,
                Requires<[IsFP64bit, HasStdEnc]>;
 
 //===----------------------------------------------------------------------===//

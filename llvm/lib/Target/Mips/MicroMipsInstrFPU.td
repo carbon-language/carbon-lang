@@ -32,9 +32,9 @@ def LUXC1_MM : MMRel, LWXC1_FT<"luxc1", AFGR64Opnd, IIFLoad>,
 def SUXC1_MM : MMRel, SWXC1_FT<"suxc1", AFGR64Opnd, IIFStore>,
                SWXC1_FM_MM<0x188>;
 
-def FCMP_S32_MM : MMRel, CEQS_FT<"s", FGR32, IIFcmp, MipsFPCmp>,
+def FCMP_S32_MM : MMRel, CEQS_FT<"s", FGR32, II_C_CC_S, MipsFPCmp>,
                   CEQS_FM_MM<0>;
-def FCMP_D32_MM : MMRel, CEQS_FT<"d", AFGR64, IIFcmp, MipsFPCmp>,
+def FCMP_D32_MM : MMRel, CEQS_FT<"d", AFGR64, II_C_CC_D, MipsFPCmp>,
                   CEQS_FM_MM<1>;
 
 def BC1F_MM : MMRel, BC1F_FT<"bc1f", brtarget_mm, IIBranch, MIPS_BRANCH_F>,
