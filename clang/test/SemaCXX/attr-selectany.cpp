@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fms-extensions -fsyntax-only -verify -std=c++11 %s
 // MSVC produces similar diagnostics.
 
 __declspec(selectany) void foo() { } // expected-error{{'selectany' can only be applied to data items with external linkage}}
@@ -31,3 +31,6 @@ class X {
 };
 
 __declspec(selectany) X x(1);
+
+namespace { class Internal {}; }
+__declspec(selectany) auto x8 = Internal(); // expected-error {{'selectany' can only be applied to data items with external linkage}}
