@@ -32,6 +32,7 @@ using namespace __sanitizer;
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size)                         \
   COMMON_INTERCEPTOR_READ_WRITE_RANGE(ctx, ptr, size)
 
+#define SANITIZER_INTERCEPT_PRINTF 1
 #include "sanitizer_common/sanitizer_common_interceptors_scanf.inc"
 
 static const unsigned I = sizeof(int);

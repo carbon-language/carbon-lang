@@ -363,6 +363,8 @@ static void scanf_common(void *ctx, int n_inputs, bool allowGnuMalloc,
   }
 }
 
+#if SANITIZER_INTERCEPT_PRINTF
+
 struct PrintfDirective {
   int fieldWidth;
   int fieldPrecision;
@@ -533,3 +535,5 @@ static void printf_common(void *ctx, const char *format, va_list aq) {
     }
   }
 }
+
+#endif  // SANITIZER_INTERCEPT_PRINTF
