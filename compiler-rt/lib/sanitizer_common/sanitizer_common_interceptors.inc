@@ -570,7 +570,7 @@ INTERCEPTOR(char *, strptime, char *s, char *format, __sanitizer_tm *tm) {
 #endif
 
 #if SANITIZER_INTERCEPT_SCANF || SANITIZER_INTERCEPT_PRINTF
-#include "sanitizer_common_interceptors_scanf.inc"
+#include "sanitizer_common_interceptors_format.inc"
 
 #define FORMAT_INTERCEPTOR_IMPL(name, vname, ...)                              \
   {                                                                            \

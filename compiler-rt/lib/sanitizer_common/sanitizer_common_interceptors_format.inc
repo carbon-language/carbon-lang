@@ -1,4 +1,4 @@
-//===-- sanitizer_common_interceptors_scanf.inc -----------------*- C++ -*-===//
+//===-- sanitizer_common_interceptors_format.inc ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

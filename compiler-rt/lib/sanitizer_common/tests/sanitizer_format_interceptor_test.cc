@@ -1,4 +1,4 @@
-//===-- sanitizer_scanf_interceptor_test.cc -------------------------------===//
+//===-- sanitizer_format_interceptor_test.cc ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -33,7 +33,7 @@ using namespace __sanitizer;
   COMMON_INTERCEPTOR_READ_WRITE_RANGE(ctx, ptr, size)
 
 #define SANITIZER_INTERCEPT_PRINTF 1
-#include "sanitizer_common/sanitizer_common_interceptors_scanf.inc"
+#include "sanitizer_common/sanitizer_common_interceptors_format.inc"
 
 static const unsigned I = sizeof(int);
 static const unsigned L = sizeof(long);

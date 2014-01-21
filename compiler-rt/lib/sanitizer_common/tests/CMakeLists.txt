@@ -5,6 +5,7 @@ set(SANITIZER_UNITTESTS
   sanitizer_atomic_test.cc
   sanitizer_common_test.cc
   sanitizer_flags_test.cc
+  sanitizer_format_interceptor_test.cc
   sanitizer_ioctl_test.cc
   sanitizer_libc_test.cc
   sanitizer_linux_test.cc
@@ -14,7 +15,6 @@ set(SANITIZER_UNITTESTS
   sanitizer_posix_test.cc
   sanitizer_printf_test.cc
   sanitizer_procmaps_test.cc
-  sanitizer_scanf_interceptor_test.cc
   sanitizer_stackdepot_test.cc
   sanitizer_stacktrace_test.cc
   sanitizer_stoptheworld_test.cc
