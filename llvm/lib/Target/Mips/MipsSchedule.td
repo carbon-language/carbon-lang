@@ -20,7 +20,6 @@ def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
-def IIFmulSingle       : InstrItinClass;
 def IIFmulDouble       : InstrItinClass;
 def IIFdivSingle       : InstrItinClass;
 def IIFdivDouble       : InstrItinClass;
@@ -73,6 +72,7 @@ def II_FLOOR            : InstrItinClass;
 def II_LUI              : InstrItinClass;
 def II_MADD             : InstrItinClass;
 def II_MADDU            : InstrItinClass;
+def II_MADD_S           : InstrItinClass;
 def II_MFHI_MFLO        : InstrItinClass; // mfhi and mflo
 def II_MOVF             : InstrItinClass;
 def II_MOVF_D           : InstrItinClass;
@@ -90,11 +90,15 @@ def II_MOV_D            : InstrItinClass;
 def II_MOV_S            : InstrItinClass;
 def II_MSUB             : InstrItinClass;
 def II_MSUBU            : InstrItinClass;
+def II_MSUB_S           : InstrItinClass;
 def II_MTHI_MTLO        : InstrItinClass; // mthi and mtlo
 def II_MUL              : InstrItinClass;
 def II_MULT             : InstrItinClass;
 def II_MULTU            : InstrItinClass;
+def II_MUL_S            : InstrItinClass;
 def II_NEG              : InstrItinClass;
+def II_NMADD_S          : InstrItinClass;
+def II_NMSUB_S          : InstrItinClass;
 def II_NOR              : InstrItinClass;
 def II_OR               : InstrItinClass;
 def II_ORI              : InstrItinClass;
@@ -207,7 +211,11 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_ADD_S           , [InstrStage<4,  [ALU]>]>,
   InstrItinData<II_SUB_D           , [InstrStage<4,  [ALU]>]>,
   InstrItinData<II_SUB_S           , [InstrStage<4,  [ALU]>]>,
-  InstrItinData<IIFmulSingle       , [InstrStage<7,  [ALU]>]>,
+  InstrItinData<II_MUL_S           , [InstrStage<7,  [ALU]>]>,
+  InstrItinData<II_MADD_S          , [InstrStage<7,  [ALU]>]>,
+  InstrItinData<II_MSUB_S          , [InstrStage<7,  [ALU]>]>,
+  InstrItinData<II_NMADD_S         , [InstrStage<7,  [ALU]>]>,
+  InstrItinData<II_NMSUB_S         , [InstrStage<7,  [ALU]>]>,
   InstrItinData<IIFmulDouble       , [InstrStage<8,  [ALU]>]>,
   InstrItinData<IIFdivSingle       , [InstrStage<23, [ALU]>]>,
   InstrItinData<IIFdivDouble       , [InstrStage<36, [ALU]>]>,
