@@ -28,6 +28,10 @@ private:
   void ExtractVectorElements(SDValue Op, SelectionDAG &DAG,
                              SmallVectorImpl<SDValue> &Args,
                              unsigned Start, unsigned Count) const;
+  SDValue LowerConstantInitializer(const Constant* Init, const GlobalValue *GV,
+                                   const SDValue &InitPtr,
+                                   SDValue Chain,
+                                   SelectionDAG &DAG) const;
   SDValue LowerFrameIndex(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerEXTRACT_SUBVECTOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const;

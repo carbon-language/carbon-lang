@@ -21,6 +21,7 @@
 #include "AMDILIntrinsicInfo.h"
 #include "R600MachineFunctionInfo.h"
 #include "SIMachineFunctionInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -276,32 +277,106 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   return Op;
 }
 
+SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
+                                                       const GlobalValue *GV,
+                                                       const SDValue &InitPtr,
+                                                       SDValue Chain,
+                                                       SelectionDAG &DAG) const {
+  const DataLayout *TD = getTargetMachine().getDataLayout();
+  SDLoc DL(InitPtr);
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(Init)) {
+    EVT VT = EVT::getEVT(CI->getType());
+    PointerType *PtrTy = PointerType::get(CI->getType(), 0);
+    return DAG.getStore(Chain, DL,  DAG.getConstant(*CI, VT), InitPtr,
+                 MachinePointerInfo(UndefValue::get(PtrTy)), false, false,
+                 TD->getPrefTypeAlignment(CI->getType()));
+  } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(Init)) {
+    EVT VT = EVT::getEVT(CFP->getType());
+    PointerType *PtrTy = PointerType::get(CFP->getType(), 0);
+    return DAG.getStore(Chain, DL, DAG.getConstantFP(*CFP, VT), InitPtr,
+                 MachinePointerInfo(UndefValue::get(PtrTy)), false, false,
+                 TD->getPrefTypeAlignment(CFP->getType()));
+  } else if (Init->getType()->isAggregateType()) {
+    EVT PtrVT = InitPtr.getValueType();
+    unsigned NumElements = Init->getType()->getArrayNumElements();
+    SmallVector<SDValue, 8> Chains;
+    for (unsigned i = 0; i < NumElements; ++i) {
+      SDValue Offset = DAG.getConstant(i * TD->getTypeAllocSize(
+          Init->getType()->getArrayElementType()), PtrVT);
+      SDValue Ptr = DAG.getNode(ISD::ADD, DL, PtrVT, InitPtr, Offset);
+      Chains.push_back(LowerConstantInitializer(Init->getAggregateElement(i),
+                       GV, Ptr, Chain, DAG));
+    }
+    return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, &Chains[0],
+                       Chains.size());
+  } else {
+    Init->dump();
+    llvm_unreachable("Unhandled constant initializer");
+  }
+}
+
 SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
                                                  SDValue Op,
                                                  SelectionDAG &DAG) const {
 
   const DataLayout *TD = getTargetMachine().getDataLayout();
   GlobalAddressSDNode *G = cast<GlobalAddressSDNode>(Op);
-
-  assert(G->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS);
-  // XXX: What does the value of G->getOffset() mean?
-  assert(G->getOffset() == 0 &&
-         "Do not know what to do with an non-zero offset");
-
   const GlobalValue *GV = G->getGlobal();
 
-  unsigned Offset;
-  if (MFI->LocalMemoryObjects.count(GV) == 0) {
-    uint64_t Size = TD->getTypeAllocSize(GV->getType()->getElementType());
-    Offset = MFI->LDSSize;
-    MFI->LocalMemoryObjects[GV] = Offset;
-    // XXX: Account for alignment?
-    MFI->LDSSize += Size;
-  } else {
-    Offset = MFI->LocalMemoryObjects[GV];
-  }
+  switch (G->getAddressSpace()) {
+  default: llvm_unreachable("Global Address lowering not implemented for this "
+                            "address space");
+  case AMDGPUAS::LOCAL_ADDRESS: {
+    // XXX: What does the value of G->getOffset() mean?
+    assert(G->getOffset() == 0 &&
+         "Do not know what to do with an non-zero offset");
 
-  return DAG.getConstant(Offset, getPointerTy(G->getAddressSpace()));
+    unsigned Offset;
+    if (MFI->LocalMemoryObjects.count(GV) == 0) {
+      uint64_t Size = TD->getTypeAllocSize(GV->getType()->getElementType());
+      Offset = MFI->LDSSize;
+      MFI->LocalMemoryObjects[GV] = Offset;
+      // XXX: Account for alignment?
+      MFI->LDSSize += Size;
+    } else {
+      Offset = MFI->LocalMemoryObjects[GV];
+    }
+
+    return DAG.getConstant(Offset, getPointerTy(G->getAddressSpace()));
+  }
+  case AMDGPUAS::CONSTANT_ADDRESS: {
+    MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
+    Type *EltType = GV->getType()->getElementType();
+    unsigned Size = TD->getTypeAllocSize(EltType);
+    unsigned Alignment = TD->getPrefTypeAlignment(EltType);
+
+    const GlobalVariable *Var = dyn_cast<GlobalVariable>(GV);
+    const Constant *Init = Var->getInitializer();
+    int FI = FrameInfo->CreateStackObject(Size, Alignment, false);
+    SDValue InitPtr = DAG.getFrameIndex(FI,
+        getPointerTy(AMDGPUAS::PRIVATE_ADDRESS));
+    SmallVector<SDNode*, 8> WorkList;
+
+    for (SDNode::use_iterator I = DAG.getEntryNode()->use_begin(),
+                              E = DAG.getEntryNode()->use_end(); I != E; ++I) {
+      if (I->getOpcode() != AMDGPUISD::REGISTER_LOAD && I->getOpcode() != ISD::LOAD)
+        continue;
+      WorkList.push_back(*I);
+    }
+    SDValue Chain = LowerConstantInitializer(Init, GV, InitPtr, DAG.getEntryNode(), DAG);
+    for (SmallVector<SDNode*, 8>::iterator I = WorkList.begin(),
+                                           E = WorkList.end(); I != E; ++I) {
+      SmallVector<SDValue, 8> Ops;
+      Ops.push_back(Chain);
+      for (unsigned i = 1; i < (*I)->getNumOperands(); ++i) {
+        Ops.push_back((*I)->getOperand(i));
+      }
+      DAG.UpdateNodeOperands(*I, &Ops[0], Ops.size());
+    }
+    return DAG.getZExtOrTrunc(InitPtr, SDLoc(Op),
+        getPointerTy(AMDGPUAS::CONSTANT_ADDRESS));
+  }
+  }
 }
 
 void AMDGPUTargetLowering::ExtractVectorElements(SDValue Op, SelectionDAG &DAG,
@@ -593,6 +668,19 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   LoadSDNode *Load = cast<LoadSDNode>(Op);
   ISD::LoadExtType ExtType = Load->getExtensionType();
+
+  // Lower loads constant address space global variable loads
+  if (Load->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS &&
+      isa<GlobalVariable>(GetUnderlyingObject(Load->getPointerInfo().V))) {
+
+    SDValue Ptr = DAG.getZExtOrTrunc(Load->getBasePtr(), DL,
+        getPointerTy(AMDGPUAS::PRIVATE_ADDRESS));
+    Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Ptr,
+        DAG.getConstant(2, MVT::i32));
+    return DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op.getValueType(),
+                       Load->getChain(), Ptr,
+                       DAG.getTargetConstant(0, MVT::i32), Op.getOperand(2));
+  }
 
   if (Load->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS ||
       ExtType == ISD::NON_EXTLOAD || Load->getMemoryVT().bitsGE(MVT::i32))
