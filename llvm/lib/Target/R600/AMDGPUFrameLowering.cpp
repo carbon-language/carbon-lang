@@ -77,14 +77,21 @@ int AMDGPUFrameLowering::getFrameIndexOffset(const MachineFunction &MF,
   // Start the offset at 2 so we don't overwrite work group information.
   // XXX: We should only do this when the shader actually uses this
   // information.
-  unsigned Offset = 2;
+  unsigned OffsetBytes = 2 * (getStackWidth(MF) * 4);
   int UpperBound = FI == -1 ? MFI->getNumObjects() : FI;
 
   for (int i = MFI->getObjectIndexBegin(); i < UpperBound; ++i) {
-    unsigned Size = MFI->getObjectSize(i);
-    Offset += (Size / (getStackWidth(MF) * 4));
+    OffsetBytes = RoundUpToAlignment(OffsetBytes, MFI->getObjectAlignment(i));
+    OffsetBytes += MFI->getObjectSize(i);
+    // Each regiter holds 4 bytes, so we must always align the offset to at
+    // least 4 bytes, so that 2 frame objects won't share the same register.
+    OffsetBytes = RoundUpToAlignment(OffsetBytes, 4);
   }
-  return Offset;
+
+  if (FI != -1)
+    OffsetBytes = RoundUpToAlignment(OffsetBytes, MFI->getObjectAlignment(FI));
+
+  return OffsetBytes / (getStackWidth(MF) * 4);
 }
 
 const TargetFrameLowering::SpillSlot *
