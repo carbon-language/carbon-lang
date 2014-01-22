@@ -317,7 +317,7 @@ static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI, tool_output_file *Out) 
   return Error;
 }
 
-static int AssembleInput(const char *ProgName, const Target *TheTarget, 
+static int AssembleInput(const char *ProgName, const Target *TheTarget,
                          SourceMgr &SrcMgr, MCContext &Ctx, MCStreamer &Str,
                          MCAsmInfo &MAI, MCSubtargetInfo &STI, MCInstrInfo &MCII) {
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(SrcMgr, Ctx,
