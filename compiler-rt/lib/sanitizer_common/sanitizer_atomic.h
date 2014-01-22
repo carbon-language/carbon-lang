@@ -44,7 +44,8 @@ struct atomic_uint32_t {
 
 struct atomic_uint64_t {
   typedef u64 Type;
-  volatile Type val_dont_use;
+  // On 32-bit platforms u64 is not necessary aligned on 8 bytes.
+  volatile ALIGNED(8) Type val_dont_use;
 };
 
 struct atomic_uintptr_t {
