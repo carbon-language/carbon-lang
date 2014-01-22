@@ -539,6 +539,26 @@
 // RUN: %clang -target arm -mthumb -mhwdiv=arm -x c -E -dM %s -o - | FileCheck --check-prefix=ARMHWDIV-THUMB-FALSE %s
 // ARMHWDIV-THUMB-FALSE-NOT:#define __ARM_ARCH_EXT_IDIV__
 
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=armv8-none-none < /dev/null | FileCheck -check-prefix ARMv8 %s
+// ARMv8: #define __THUMB_INTERWORK__ 1
+// ARMv8-NOT: #define __thumb2__
+
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=thumbv8 < /dev/null | FileCheck -check-prefix Thumbv8 %s
+// Thumbv8: #define __THUMB_INTERWORK__ 1
+// Thumbv8: #define __thumb2__
+
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=thumbv5 < /dev/null | FileCheck -check-prefix Thumbv5 %s
+// Thumbv5: #define __THUMB_INTERWORK__ 1
+// Thumbv5-NOT: #define __thumb2__
+
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=thumbv6t2 < /dev/null | FileCheck -check-prefix Thumbv6t2 %s
+// Thumbv6t2: #define __THUMB_INTERWORK__ 1
+// Thumbv6t2: #define __thumb2__
+
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=thumbv7 < /dev/null | FileCheck -check-prefix Thumbv7 %s
+// Thumbv7: #define __THUMB_INTERWORK__ 1
+// Thumbv7: #define __thumb2__
+
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-none-none < /dev/null | FileCheck -check-prefix I386 %s
 //

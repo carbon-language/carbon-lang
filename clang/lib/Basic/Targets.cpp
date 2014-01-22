@@ -3973,12 +3973,12 @@ public:
     StringRef CPUProfile = getCPUProfile(CPU);
     if (!CPUProfile.empty())
       Builder.defineMacro("__ARM_ARCH_PROFILE", CPUProfile);
-    
+
     // Subtarget options.
 
     // FIXME: It's more complicated than this and we don't really support
     // interworking.
-    if (5 <= CPUArchVer && CPUArchVer <= 7)
+    if (5 <= CPUArchVer && CPUArchVer <= 8)
       Builder.defineMacro("__THUMB_INTERWORK__");
 
     if (ABI == "aapcs" || ABI == "aapcs-linux" || ABI == "aapcs-vfp") {
@@ -4000,7 +4000,11 @@ public:
     if (IsThumb) {
       Builder.defineMacro("__THUMBEL__");
       Builder.defineMacro("__thumb__");
-      if (CPUArch == "6T2" || CPUArchVer == 7)
+      // We check both CPUArchVer and ArchName because when only triple is
+      // specified, the default CPU is arm1136j-s.
+      StringRef ArchName = getTriple().getArchName();
+      if (CPUArch == "6T2" || CPUArchVer >= 7 || ArchName.endswith("v6t2") ||
+          ArchName.endswith("v7") || ArchName.endswith("v8"))
         Builder.defineMacro("__thumb2__");
     }
     if (((HWDiv & HWDivThumb) && IsThumb) || ((HWDiv & HWDivARM) && !IsThumb))
@@ -4018,7 +4022,7 @@ public:
       if (FPU & VFP4FPU)
         Builder.defineMacro("__ARM_VFPV4__");
     }
-    
+
     // This only gets set when Neon instructions are actually available, unlike
     // the VFP define, hence the soft float and arch check. This is subtly
     // different from gcc, we follow the intent which was that it should be set
