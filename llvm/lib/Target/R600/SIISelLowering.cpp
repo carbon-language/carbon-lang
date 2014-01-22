@@ -125,11 +125,17 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
 
   setLoadExtAction(ISD::SEXTLOAD, MVT::i32, Expand);
-  setLoadExtAction(ISD::EXTLOAD, MVT::i32, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Custom);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Custom);
   setLoadExtAction(ISD::SEXTLOAD, MVT::v8i16, Expand);
   setLoadExtAction(ISD::SEXTLOAD, MVT::v16i16, Expand);
 
+  setLoadExtAction(ISD::EXTLOAD, MVT::i8, Custom);
+  setLoadExtAction(ISD::EXTLOAD, MVT::i16, Custom);
+  setLoadExtAction(ISD::EXTLOAD, MVT::i32, Expand);
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
+  setTruncStoreAction(MVT::i32, MVT::i8, Custom);
+  setTruncStoreAction(MVT::i32, MVT::i16, Custom);
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
   setTruncStoreAction(MVT::i64, MVT::i32, Expand);
   setTruncStoreAction(MVT::i128, MVT::i64, Expand);
@@ -700,21 +706,26 @@ SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
 SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   LoadSDNode *Load = cast<LoadSDNode>(Op);
+  SDValue Ret = AMDGPUTargetLowering::LowerLOAD(Op, DAG);
+  SDValue MergedValues[2];
+  MergedValues[1] = Load->getChain();
+  if (Ret.getNode()) {
+    MergedValues[0] = Ret;
+    return DAG.getMergeValues(MergedValues, 2, DL);
+  }
 
-  if (Load->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS)
+  if (Load->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS) {
     return SDValue();
+  }
 
   SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Load->getBasePtr(),
                             DAG.getConstant(2, MVT::i32));
+  Ret = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op.getValueType(),
+                    Load->getChain(), Ptr,
+                    DAG.getTargetConstant(0, MVT::i32),
+                    Op.getOperand(2));
 
-  SDValue Ret = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op.getValueType(),
-                            Load->getChain(), Ptr,
-                            DAG.getTargetConstant(0, MVT::i32),
-                            Op.getOperand(2));
-  SDValue MergedValues[2] = {
-    Ret,
-    Load->getChain()
-  };
+  MergedValues[0] = Ret;
   return DAG.getMergeValues(MergedValues, 2, DL);
 
 }
@@ -796,7 +807,34 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   SDValue Chain = Store->getChain();
   SmallVector<SDValue, 8> Values;
 
-  if (VT == MVT::i64) {
+  if (Store->isTruncatingStore()) {
+    unsigned Mask = 0;
+    if (Store->getMemoryVT() == MVT::i8) {
+      Mask = 0xff;
+    } else if (Store->getMemoryVT() == MVT::i16) {
+      Mask = 0xffff;
+    }
+    SDValue Dst = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, MVT::i32,
+                              Chain, Store->getBasePtr(),
+                              DAG.getConstant(0, MVT::i32));
+    SDValue ByteIdx = DAG.getNode(ISD::AND, DL, MVT::i32, Store->getBasePtr(),
+                                  DAG.getConstant(0x3, MVT::i32));
+    SDValue ShiftAmt = DAG.getNode(ISD::SHL, DL, MVT::i32, ByteIdx,
+                                   DAG.getConstant(3, MVT::i32));
+    SDValue MaskedValue = DAG.getNode(ISD::AND, DL, MVT::i32, Store->getValue(),
+                                      DAG.getConstant(Mask, MVT::i32));
+    SDValue ShiftedValue = DAG.getNode(ISD::SHL, DL, MVT::i32,
+                                       MaskedValue, ShiftAmt);
+    SDValue RotrAmt = DAG.getNode(ISD::SUB, DL, MVT::i32,
+                                  DAG.getConstant(32, MVT::i32), ShiftAmt);
+    SDValue DstMask = DAG.getNode(ISD::ROTR, DL, MVT::i32,
+                                  DAG.getConstant(Mask, MVT::i32),
+                                  RotrAmt);
+    Dst = DAG.getNode(ISD::AND, DL, MVT::i32, Dst, DstMask);
+    Dst = DAG.getNode(ISD::OR, DL, MVT::i32, Dst, ShiftedValue);
+
+    Values.push_back(Dst);
+  } else if (VT == MVT::i64) {
     for (unsigned i = 0; i < 2; ++i) {
       Values.push_back(DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32,
                        Store->getValue(), DAG.getConstant(i, MVT::i32)));

@@ -1113,6 +1113,10 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
     return SDValue();
   }
 
+  SDValue Ret = AMDGPUTargetLowering::LowerSTORE(Op, DAG);
+  if (Ret.getNode()) {
+    return Ret;
+  }
   // Lowering for indirect addressing
 
   const MachineFunction &MF = DAG.getMachineFunction();
@@ -1203,6 +1207,15 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
   SDValue Chain = Op.getOperand(0);
   SDValue Ptr = Op.getOperand(1);
   SDValue LoweredLoad;
+
+  SDValue Ret = AMDGPUTargetLowering::LowerLOAD(Op, DAG);
+  if (Ret.getNode()) {
+    SDValue Ops[2];
+    Ops[0] = Ret;
+    Ops[1] = Chain;
+    return DAG.getMergeValues(Ops, 2, DL);
+  }
+
 
   if (LoadNode->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS && VT.isVector()) {
     SDValue MergedValues[2] = {

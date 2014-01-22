@@ -589,17 +589,95 @@ SDValue AMDGPUTargetLowering::SplitVectorStore(SDValue Op,
   return DAG.getNode(ISD::TokenFactor, SL, MVT::Other, &Chains[0], NumElts);
 }
 
+SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  LoadSDNode *Load = cast<LoadSDNode>(Op);
+  ISD::LoadExtType ExtType = Load->getExtensionType();
+
+  if (Load->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS ||
+      ExtType == ISD::NON_EXTLOAD || Load->getMemoryVT().bitsGE(MVT::i32))
+    return SDValue();
+
+
+  EVT VT = Op.getValueType();
+  EVT MemVT = Load->getMemoryVT();
+  unsigned Mask = 0;
+  if (Load->getMemoryVT() == MVT::i8) {
+    Mask = 0xff;
+  } else if (Load->getMemoryVT() == MVT::i16) {
+    Mask = 0xffff;
+  }
+  SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Load->getBasePtr(),
+                            DAG.getConstant(2, MVT::i32));
+  SDValue Ret = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op.getValueType(),
+                            Load->getChain(), Ptr,
+                            DAG.getTargetConstant(0, MVT::i32),
+                            Op.getOperand(2));
+  SDValue ByteIdx = DAG.getNode(ISD::AND, DL, MVT::i32,
+                                Load->getBasePtr(),
+                                DAG.getConstant(0x3, MVT::i32));
+  SDValue ShiftAmt = DAG.getNode(ISD::SHL, DL, MVT::i32, ByteIdx,
+                                 DAG.getConstant(3, MVT::i32));
+  Ret = DAG.getNode(ISD::SRL, DL, MVT::i32, Ret, ShiftAmt);
+  Ret = DAG.getNode(ISD::AND, DL, MVT::i32, Ret,
+                    DAG.getConstant(Mask, MVT::i32));
+  if (ExtType == ISD::SEXTLOAD) {
+    SDValue SExtShift = DAG.getConstant(
+        VT.getSizeInBits() - MemVT.getSizeInBits(), MVT::i32);
+    Ret = DAG.getNode(ISD::SHL, DL, MVT::i32, Ret, SExtShift);
+    Ret = DAG.getNode(ISD::SRA, DL, MVT::i32, Ret, SExtShift);
+  }
+
+  return Ret;
+}
+
 SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc DL(Op);
   SDValue Result = AMDGPUTargetLowering::MergeVectorStore(Op, DAG);
   if (Result.getNode()) {
     return Result;
   }
 
   StoreSDNode *Store = cast<StoreSDNode>(Op);
+  SDValue Chain = Store->getChain();
   if ((Store->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS ||
        Store->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS) &&
       Store->getValue().getValueType().isVector()) {
     return SplitVectorStore(Op, DAG);
+  }
+
+  if (Store->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS &&
+      Store->getMemoryVT().bitsLT(MVT::i32)) {
+    unsigned Mask = 0;
+    if (Store->getMemoryVT() == MVT::i8) {
+      Mask = 0xff;
+    } else if (Store->getMemoryVT() == MVT::i16) {
+      Mask = 0xffff;
+    }
+    SDValue TruncPtr = DAG.getZExtOrTrunc(Store->getBasePtr(), DL, MVT::i32);
+    SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, TruncPtr,
+                              DAG.getConstant(2, MVT::i32));
+    SDValue Dst = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, MVT::i32,
+                              Chain, Ptr, DAG.getTargetConstant(0, MVT::i32));
+    SDValue ByteIdx = DAG.getNode(ISD::AND, DL, MVT::i32, TruncPtr,
+                                  DAG.getConstant(0x3, MVT::i32));
+    SDValue ShiftAmt = DAG.getNode(ISD::SHL, DL, MVT::i32, ByteIdx,
+                                   DAG.getConstant(3, MVT::i32));
+    SDValue SExtValue = DAG.getNode(ISD::SIGN_EXTEND, DL, MVT::i32,
+                                    Store->getValue());
+    SDValue MaskedValue = DAG.getNode(ISD::AND, DL, MVT::i32, SExtValue,
+                                      DAG.getConstant(Mask, MVT::i32));
+    SDValue ShiftedValue = DAG.getNode(ISD::SHL, DL, MVT::i32,
+                                       MaskedValue, ShiftAmt);
+    SDValue DstMask = DAG.getNode(ISD::SHL, DL, MVT::i32, DAG.getConstant(Mask, MVT::i32),
+                                  ShiftAmt);
+    DstMask = DAG.getNode(ISD::XOR, DL, MVT::i32, DstMask,
+                          DAG.getConstant(0xffffffff, MVT::i32));
+    Dst = DAG.getNode(ISD::AND, DL, MVT::i32, Dst, DstMask);
+
+    SDValue Value = DAG.getNode(ISD::OR, DL, MVT::i32, Dst, ShiftedValue);
+    return DAG.getNode(AMDGPUISD::REGISTER_STORE, DL, MVT::Other,
+                       Chain, Value, Ptr, DAG.getTargetConstant(0, MVT::i32));
   }
   return SDValue();
 }

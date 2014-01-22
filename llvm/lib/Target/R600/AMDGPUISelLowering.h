@@ -54,6 +54,7 @@ protected:
   /// \brief Split a vector load into multiple scalar loads.
   SDValue SplitVectorLoad(const SDValue &Op, SelectionDAG &DAG) const;
   SDValue SplitVectorStore(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   bool isHWTrueValue(SDValue Op) const;
   bool isHWFalseValue(SDValue Op) const;

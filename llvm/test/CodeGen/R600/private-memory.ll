@@ -1,10 +1,11 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=R600-CHECK
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s --check-prefix=SI-CHECK
+; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=R600-CHECK --check-prefix=FUNC
+; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s --check-prefix=SI-CHECK --check-prefix=FUNC
 
 ; This test checks that uses and defs of the AR register happen in the same
 ; instruction clause.
 
-; R600-CHECK-LABEL: @mova_same_clause
+; FUNC-LABEL: @mova_same_clause
+
 ; R600-CHECK: MOVA_INT
 ; R600-CHECK-NOT: ALU clause
 ; R600-CHECK: 0 + AR.x
@@ -12,7 +13,6 @@
 ; R600-CHECK-NOT: ALU clause
 ; R600-CHECK: 0 + AR.x
 
-; SI-CHECK-LABEL: @mova_same_clause
 ; SI-CHECK: V_READFIRSTLANE
 ; SI-CHECK: V_MOVRELD
 ; SI-CHECK: S_CBRANCH
@@ -46,9 +46,8 @@ entry:
 ; XXX: This generated code has unnecessary MOVs, we should be able to optimize
 ; this.
 
-; R600-CHECK-LABEL: @multiple_structs
+; FUNC-LABEL: @multiple_structs
 ; R600-CHECK-NOT: MOVA_INT
-; SI-CHECK-LABEL: @multiple_structs
 ; SI-CHECK-NOT: V_MOVREL
 %struct.point = type { i32, i32 }
 
@@ -77,9 +76,8 @@ entry:
 ; loads and stores should be lowered to copies, so there shouldn't be any
 ; MOVA instructions.
 
-; R600-CHECK-LABEL: @direct_loop
+; FUNC-LABEL: @direct_loop
 ; R600-CHECK-NOT: MOVA_INT
-; SI-CHECK-LABEL: @direct_loop
 ; SI-CHECK-NOT: V_MOVREL
 
 define void @direct_loop(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
@@ -112,4 +110,49 @@ for.end:
   %value = load i32* %value_ptr
   store i32 %value, i32 addrspace(1)* %out
   ret void
+}
+
+; FUNC-LABEL: @short_array
+
+; R600-CHECK: MOV {{\** *}}T{{[0-9]\.[XYZW]}}, literal
+; R600-CHECK: 65536
+; R600-CHECK: MOVA_INT
+
+; SI-CHECK: V_MOV_B32_e32 v{{[0-9]}}, 65536
+; SI-CHECK: V_MOVRELS_B32_e32
+define void @short_array(i32 addrspace(1)* %out, i32 %index) {
+entry:
+  %0 = alloca [2 x i16]
+  %1 = getelementptr [2 x i16]* %0, i32 0, i32 0
+  %2 = getelementptr [2 x i16]* %0, i32 0, i32 1
+  store i16 0, i16* %1
+  store i16 1, i16* %2
+  %3 = getelementptr [2 x i16]* %0, i32 0, i32 %index
+  %4 = load i16* %3
+  %5 = sext i16 %4 to i32
+  store i32 %5, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: @char_array
+
+; R600-CHECK: OR_INT {{\** *}}T{{[0-9]\.[XYZW]}}, {{[PVT0-9]+\.[XYZW]}}, literal
+; R600-CHECK: 256
+; R600-CHECK: MOVA_INT
+
+; SI-CHECK: V_OR_B32_e32 v{{[0-9]}}, 256
+; SI-CHECK: V_MOVRELS_B32_e32
+define void @char_array(i32 addrspace(1)* %out, i32 %index) {
+entry:
+  %0 = alloca [2 x i8]
+  %1 = getelementptr [2 x i8]* %0, i32 0, i32 0
+  %2 = getelementptr [2 x i8]* %0, i32 0, i32 1
+  store i8 0, i8* %1
+  store i8 1, i8* %2
+  %3 = getelementptr [2 x i8]* %0, i32 0, i32 %index
+  %4 = load i8* %3
+  %5 = sext i8 %4 to i32
+  store i32 %5, i32 addrspace(1)* %out
+  ret void
+
 }
