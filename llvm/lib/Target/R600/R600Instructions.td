@@ -642,6 +642,9 @@ ins, AsmPrint, [] >, CF_WORD0_EG, CF_WORD1_EG {
 def CF_ALU : ALU_CLAUSE<8, "ALU">;
 def CF_ALU_PUSH_BEFORE : ALU_CLAUSE<9, "ALU_PUSH_BEFORE">;
 def CF_ALU_POP_AFTER : ALU_CLAUSE<10, "ALU_POP_AFTER">;
+def CF_ALU_CONTINUE : ALU_CLAUSE<13, "ALU_CONTINUE">;
+def CF_ALU_BREAK : ALU_CLAUSE<14, "ALU_BREAK">;
+def CF_ALU_ELSE_AFTER : ALU_CLAUSE<15, "ALU_ELSE_AFTER">;
 
 def FETCH_CLAUSE : AMDGPUInst <(outs),
 (ins i32imm:$addr), "Fetch clause starting at $addr:", [] > {
@@ -1236,6 +1239,10 @@ let Predicates = [isR600] in {
   }
   def CF_JUMP_R600 : CF_CLAUSE_R600<10, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
   "JUMP @$ADDR POP:$POP_COUNT"> {
+    let CNT = 0;
+  }
+  def CF_PUSH_ELSE_R600 : CF_CLAUSE_R600<12, (ins i32imm:$ADDR),
+  "PUSH_ELSE @$ADDR"> {
     let CNT = 0;
   }
   def CF_ELSE_R600 : CF_CLAUSE_R600<13, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
