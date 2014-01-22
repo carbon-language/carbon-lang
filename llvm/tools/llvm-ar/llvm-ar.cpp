@@ -670,7 +670,11 @@ static void writeSymbolTable(
     object::ObjectFile *Obj;
     if (I->isNewMember()) {
       const char *Filename = I->getNew();
-      Obj = object::ObjectFile::createObjectFile(Filename);
+      if (ErrorOr<object::ObjectFile *> ObjOrErr =
+              object::ObjectFile::createObjectFile(Filename))
+        Obj = ObjOrErr.get();
+      else
+        Obj = NULL;
     } else {
       object::Archive::child_iterator OldMember = I->getOld();
       OwningPtr<object::Binary> Binary;

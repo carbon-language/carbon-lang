@@ -44,7 +44,8 @@ public:
   ObjectImageCommon(ObjectBuffer* Input)
   : ObjectImage(Input) // saves Input as Buffer and takes ownership
   {
-    ObjFile = object::ObjectFile::createObjectFile(Buffer->getMemBuffer());
+    ObjFile =
+        object::ObjectFile::createObjectFile(Buffer->getMemBuffer()).get();
   }
   ObjectImageCommon(object::ObjectFile* Input)
   : ObjectImage(NULL), ObjFile(Input)  {}

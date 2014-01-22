@@ -376,8 +376,8 @@ public:
   /// @param ObjectPath The path to the object file. ObjectPath.isObject must
   ///        return true.
   /// @brief Create ObjectFile from path.
-  static ObjectFile *createObjectFile(StringRef ObjectPath);
-  static ObjectFile *createObjectFile(MemoryBuffer *Object);
+  static ErrorOr<ObjectFile *> createObjectFile(StringRef ObjectPath);
+  static ErrorOr<ObjectFile *> createObjectFile(MemoryBuffer *Object);
 
   static inline bool classof(const Binary *v) {
     return v->isObject();

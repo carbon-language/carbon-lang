@@ -93,11 +93,12 @@ static void DumpInput(const StringRef &Filename) {
     return;
   }
 
-  OwningPtr<ObjectFile> Obj(ObjectFile::createObjectFile(Buff.take()));
-  if (!Obj) {
-    errs() << Filename << ": Unknown object file format\n";
+  ErrorOr<ObjectFile*> ObjOrErr(ObjectFile::createObjectFile(Buff.take()));
+  if (error_code EC = ObjOrErr.getError()) {
+    errs() << Filename << ": " << EC.message() << '\n';
     return;
   }
+  OwningPtr<ObjectFile> Obj(ObjOrErr.get());
 
   OwningPtr<DIContext> DICtx(DIContext::getDWARFContext(Obj.get()));
 

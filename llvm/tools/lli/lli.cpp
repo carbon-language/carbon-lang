@@ -527,13 +527,13 @@ int main(int argc, char **argv, char * const *envp) {
   }
 
   for (unsigned i = 0, e = ExtraObjects.size(); i != e; ++i) {
-    object::ObjectFile *Obj = object::ObjectFile::createObjectFile(
-                                                         ExtraObjects[i]);
+    ErrorOr<object::ObjectFile *> Obj =
+        object::ObjectFile::createObjectFile(ExtraObjects[i]);
     if (!Obj) {
       Err.print(argv[0], errs());
       return 1;
     }
-    EE->addObjectFile(Obj);
+    EE->addObjectFile(Obj.get());
   }
 
   for (unsigned i = 0, e = ExtraArchives.size(); i != e; ++i) {
