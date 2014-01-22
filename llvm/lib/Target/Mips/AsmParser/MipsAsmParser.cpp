@@ -161,7 +161,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   MipsAsmParser::OperandMatchResultTy
   parseLSAImm(SmallVectorImpl<MCParsedAsmOperand *> &Operands);
 
-  bool searchSymbolAlias(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+  bool searchSymbolAlias(SmallVectorImpl<MCParsedAsmOperand *> &Operands,
                          unsigned RegKind);
 
   bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand *> &,
@@ -463,8 +463,8 @@ public:
     return Op;
   }
 
-  static MipsOperand *CreateMem(unsigned Base, const MCExpr *Off,
-                                SMLoc S, SMLoc E) {
+  static MipsOperand *CreateMem(unsigned Base, const MCExpr *Off, SMLoc S,
+                                SMLoc E) {
     MipsOperand *Op = new MipsOperand(k_Memory);
     Op->Mem.Base = Base;
     Op->Mem.Off = Off;
@@ -580,13 +580,13 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
       break;
     case Mips::BEQ:
     case Mips::BNE:
-      assert (MCID.getNumOperands() == 3 && "unexpected number of operands");
+      assert(MCID.getNumOperands() == 3 && "unexpected number of operands");
       Offset = Inst.getOperand(2);
       if (!Offset.isImm())
         break; // We'll deal with this situation later on when applying fixups.
       if (!isIntN(isMicroMips() ? 17 : 18, Offset.getImm()))
         return Error(IDLoc, "branch target out of range");
-      if (OffsetToAlignment (Offset.getImm(), 1LL << (isMicroMips() ? 1 : 2)))
+      if (OffsetToAlignment(Offset.getImm(), 1LL << (isMicroMips() ? 1 : 2)))
         return Error(IDLoc, "branch to misaligned address");
       break;
     case Mips::BGEZ:
@@ -597,13 +597,13 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     case Mips::BLTZAL:
     case Mips::BC1F:
     case Mips::BC1T:
-      assert (MCID.getNumOperands() == 2 && "unexpected number of operands");
+      assert(MCID.getNumOperands() == 2 && "unexpected number of operands");
       Offset = Inst.getOperand(1);
       if (!Offset.isImm())
         break; // We'll deal with this situation later on when applying fixups.
       if (!isIntN(isMicroMips() ? 17 : 18, Offset.getImm()))
         return Error(IDLoc, "branch target out of range");
-      if (OffsetToAlignment (Offset.getImm(), 1LL << (isMicroMips() ? 1 : 2)))
+      if (OffsetToAlignment(Offset.getImm(), 1LL << (isMicroMips() ? 1 : 2)))
         return Error(IDLoc, "branch to misaligned address");
       break;
     }
@@ -2151,8 +2151,8 @@ MipsAsmParser::parseLSAImm(SmallVectorImpl<MCParsedAsmOperand *> &Operands) {
     return MatchOperand_ParseFail;
   }
 
-  Operands.push_back(MipsOperand::CreateLSAImm(Expr, S,
-                                               Parser.getTok().getLoc()));
+  Operands.push_back(
+      MipsOperand::CreateLSAImm(Expr, S, Parser.getTok().getLoc()));
   return MatchOperand_Success;
 }
 
@@ -2378,7 +2378,7 @@ bool MipsAsmParser::parseSetAssignment() {
     return reportParseError("unexpected token in .set directive");
   Lex(); // Eat comma
 
- if (Parser.parseExpression(Value))
+  if (Parser.parseExpression(Value))
     return reportParseError("expected valid expression after comma");
 
   // Check if the Name already exists as a symbol.
