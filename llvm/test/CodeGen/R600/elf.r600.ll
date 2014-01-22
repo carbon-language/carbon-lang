@@ -6,7 +6,7 @@
 
 ; CONFIG-CHECK: .section .AMDGPU.config
 ; CONFIG-CHECK-NEXT: .long   166100
-; CONFIG-CHECK-NEXT: .long   258
+; CONFIG-CHECK-NEXT: .long   2
 ; CONFIG-CHECK-NEXT: .long   165900
 ; CONFIG-CHECK-NEXT: .long   0
 define void @test(float addrspace(1)* %out, i32 %p) {

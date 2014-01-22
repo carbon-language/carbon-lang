@@ -70,6 +70,7 @@ public:
   bool IsIRStructurizerEnabled() const;
   bool isIfCvtEnabled() const;
   unsigned getWavefrontSize() const;
+  unsigned getStackEntrySize() const;
 
   virtual bool enableMachineScheduler() const {
     return getGeneration() <= NORTHERN_ISLANDS;

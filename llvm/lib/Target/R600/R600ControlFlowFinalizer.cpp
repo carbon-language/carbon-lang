@@ -28,6 +28,134 @@ using namespace llvm;
 
 namespace {
 
+struct CFStack {
+
+  enum StackItem {
+    ENTRY = 0,
+    SUB_ENTRY = 1,
+    FIRST_NON_WQM_PUSH = 2,
+    FIRST_NON_WQM_PUSH_W_FULL_ENTRY = 3
+  };
+
+  const AMDGPUSubtarget &ST;
+  std::vector<StackItem> BranchStack;
+  std::vector<StackItem> LoopStack;
+  unsigned MaxStackSize;
+  unsigned CurrentEntries;
+  unsigned CurrentSubEntries;
+
+  CFStack(const AMDGPUSubtarget &st, unsigned ShaderType) : ST(st),
+      // We need to reserve a stack entry for CALL_FS in vertex shaders.
+      MaxStackSize(ShaderType == ShaderType::VERTEX ? 1 : 0),
+      CurrentEntries(0), CurrentSubEntries(0) { }
+
+  unsigned getLoopDepth();
+  bool branchStackContains(CFStack::StackItem);
+  bool requiresWorkAroundForInst(unsigned Opcode);
+  unsigned getSubEntrySize(CFStack::StackItem Item);
+  void updateMaxStackSize();
+  void pushBranch(unsigned Opcode, bool isWQM = false);
+  void pushLoop();
+  void popBranch();
+  void popLoop();
+};
+
+unsigned CFStack::getLoopDepth() {
+  return LoopStack.size();
+}
+
+bool CFStack::branchStackContains(CFStack::StackItem Item) {
+  for (std::vector<CFStack::StackItem>::const_iterator I = BranchStack.begin(),
+       E = BranchStack.end(); I != E; ++I) {
+    if (*I == Item)
+      return true;
+  }
+  return false;
+}
+
+unsigned CFStack::getSubEntrySize(CFStack::StackItem Item) {
+  switch(Item) {
+  default:
+    return 0;
+  case CFStack::FIRST_NON_WQM_PUSH:
+  assert(!ST.hasCaymanISA());
+  if (ST.getGeneration() <= AMDGPUSubtarget::R700) {
+    // +1 For the push operation.
+    // +2 Extra space required.
+    return 3;
+  } else {
+    // Some documentation says that this is not necessary on Evergreen,
+    // but experimentation has show that we need to allocate 1 extra
+    // sub-entry for the first non-WQM push.
+    // +1 For the push operation.
+    // +1 Extra space required.
+    return 2;
+  }
+  case CFStack::FIRST_NON_WQM_PUSH_W_FULL_ENTRY:
+    assert(ST.getGeneration() >= AMDGPUSubtarget::EVERGREEN);
+    // +1 For the push operation.
+    // +1 Extra space required.
+    return 2;
+  case CFStack::SUB_ENTRY:
+    return 1;
+  }
+}
+
+void CFStack::updateMaxStackSize() {
+  unsigned CurrentStackSize = CurrentEntries +
+                              (RoundUpToAlignment(CurrentSubEntries, 4) / 4);
+  MaxStackSize = std::max(CurrentStackSize, MaxStackSize);
+}
+
+void CFStack::pushBranch(unsigned Opcode, bool isWQM) {
+  CFStack::StackItem Item = CFStack::ENTRY;
+  switch(Opcode) {
+  case AMDGPU::CF_PUSH_EG:
+  case AMDGPU::CF_ALU_PUSH_BEFORE:
+    if (!isWQM) {
+      if (!ST.hasCaymanISA() && !branchStackContains(CFStack::FIRST_NON_WQM_PUSH))
+        Item = CFStack::FIRST_NON_WQM_PUSH;  // May not be required on Evergreen/NI
+                                             // See comment in
+                                             // CFStack::getSubEntrySize()
+      else if (CurrentEntries > 0 &&
+               ST.getGeneration() > AMDGPUSubtarget::EVERGREEN &&
+               !ST.hasCaymanISA() &&
+               !branchStackContains(CFStack::FIRST_NON_WQM_PUSH_W_FULL_ENTRY))
+        Item = CFStack::FIRST_NON_WQM_PUSH_W_FULL_ENTRY;
+      else
+        Item = CFStack::SUB_ENTRY;
+    } else
+      Item = CFStack::ENTRY;
+    break;
+  }
+  BranchStack.push_back(Item);
+  if (Item == CFStack::ENTRY)
+    CurrentEntries++;
+  else
+    CurrentSubEntries += getSubEntrySize(Item);
+  updateMaxStackSize();
+}
+
+void CFStack::pushLoop() {
+  LoopStack.push_back(CFStack::ENTRY);
+  CurrentEntries++;
+  updateMaxStackSize();
+}
+
+void CFStack::popBranch() {
+  CFStack::StackItem Top = BranchStack.back();
+  if (Top == CFStack::ENTRY)
+    CurrentEntries--;
+  else
+    CurrentSubEntries-= getSubEntrySize(Top);
+  BranchStack.pop_back();
+}
+
+void CFStack::popLoop() {
+  CurrentEntries--;
+  LoopStack.pop_back();
+}
+
 class R600ControlFlowFinalizer : public MachineFunctionPass {
 
 private:
@@ -300,24 +428,6 @@ private:
     }
   }
 
-  unsigned getHWStackSize(unsigned StackSubEntry, bool hasPush) const {
-    switch (ST.getGeneration()) {
-    case AMDGPUSubtarget::R600:
-    case AMDGPUSubtarget::R700:
-      if (hasPush)
-        StackSubEntry += 2;
-      break;
-    case AMDGPUSubtarget::EVERGREEN:
-      if (hasPush)
-        StackSubEntry ++;
-    case AMDGPUSubtarget::NORTHERN_ISLANDS:
-      StackSubEntry += 2;
-      break;
-    default: llvm_unreachable("Not a VLIW4/VLIW5 GPU");
-    }
-    return (StackSubEntry + 3)/4; // Need ceil value of StackSubEntry/4
-  }
-
 public:
   R600ControlFlowFinalizer(TargetMachine &tm) : MachineFunctionPass(ID),
     TII (0), TRI(0),
@@ -329,23 +439,19 @@ public:
   virtual bool runOnMachineFunction(MachineFunction &MF) {
     TII=static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo());
     TRI=static_cast<const R600RegisterInfo *>(MF.getTarget().getRegisterInfo());
+    R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
 
-    unsigned MaxStack = 0;
-    unsigned CurrentStack = 0;
-    unsigned CurrentLoopDepth = 0;
-    bool HasPush = false;
+    CFStack CFStack(ST, MFI->ShaderType);
     for (MachineFunction::iterator MB = MF.begin(), ME = MF.end(); MB != ME;
         ++MB) {
       MachineBasicBlock &MBB = *MB;
       unsigned CfCount = 0;
       std::vector<std::pair<unsigned, std::set<MachineInstr *> > > LoopStack;
       std::vector<MachineInstr * > IfThenElseStack;
-      R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
       if (MFI->ShaderType == 1) {
         BuildMI(MBB, MBB.begin(), MBB.findDebugLoc(MBB.begin()),
             getHWInstrDesc(CF_CALL_FS));
         CfCount++;
-        MaxStack = 1;
       }
       std::vector<ClauseFile> FetchClauses, AluClauses;
       std::vector<MachineInstr *> LastAlu(1);
@@ -368,16 +474,16 @@ public:
         I++;
         switch (MI->getOpcode()) {
         case AMDGPU::CF_ALU_PUSH_BEFORE:
-          CurrentStack++;
-          MaxStack = std::max(MaxStack, CurrentStack);
-          HasPush = true;
-          if (ST.hasCaymanISA() && CurrentLoopDepth > 1) {
+          if (ST.hasCaymanISA() && CFStack.getLoopDepth() > 1) {
             BuildMI(MBB, MI, MBB.findDebugLoc(MI), TII->get(AMDGPU::CF_PUSH_EG))
                 .addImm(CfCount + 1)
                 .addImm(1);
             MI->setDesc(TII->get(AMDGPU::CF_ALU));
             CfCount++;
-          }
+            CFStack.pushBranch(AMDGPU::CF_PUSH_EG);
+          } else
+            CFStack.pushBranch(AMDGPU::CF_ALU_PUSH_BEFORE);
+
         case AMDGPU::CF_ALU:
           I = MI;
           AluClauses.push_back(MakeALUClause(MBB, I));
@@ -385,9 +491,7 @@ public:
           CfCount++;
           break;
         case AMDGPU::WHILELOOP: {
-          CurrentStack+=4;
-          CurrentLoopDepth++;
-          MaxStack = std::max(MaxStack, CurrentStack);
+          CFStack.pushLoop();
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               getHWInstrDesc(CF_WHILE_LOOP))
               .addImm(1);
@@ -400,8 +504,7 @@ public:
           break;
         }
         case AMDGPU::ENDLOOP: {
-          CurrentStack-=4;
-          CurrentLoopDepth--;
+          CFStack.popLoop();
           std::pair<unsigned, std::set<MachineInstr *> > Pair =
               LoopStack.back();
           LoopStack.pop_back();
@@ -439,7 +542,7 @@ public:
           break;
         }
         case AMDGPU::ENDIF: {
-          CurrentStack--;
+          CFStack.popBranch();
           if (LastAlu.back()) {
             ToPopAfter.push_back(LastAlu.back());
           } else {
@@ -514,7 +617,7 @@ public:
             .addImm(Alu->getOperand(8).getImm());
         Alu->eraseFromParent();
       }
-      MFI->StackSize = getHWStackSize(MaxStack, HasPush);
+      MFI->StackSize = CFStack.MaxStackSize;
     }
 
     return false;

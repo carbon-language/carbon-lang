@@ -79,6 +79,23 @@ unsigned
 AMDGPUSubtarget::getWavefrontSize() const {
   return WavefrontSize;
 }
+unsigned
+AMDGPUSubtarget::getStackEntrySize() const {
+  assert(getGeneration() <= NORTHERN_ISLANDS);
+  switch(getWavefrontSize()) {
+  case 16:
+    return 8;
+  case 32:
+    if (hasCaymanISA())
+      return 4;
+    else
+      return 8;
+  case 64:
+    return 4;
+  default:
+    llvm_unreachable("Illegal wavefront size.");
+  }
+}
 bool
 AMDGPUSubtarget::isTargetELF() const {
   return false;
