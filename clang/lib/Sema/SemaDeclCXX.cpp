@@ -11984,6 +11984,11 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
     }
   }
 
+  // C++11 [basic.start.main]p3:
+  //   A program that defines main as deleted [...] is ill-formed.
+  if (Fn->isMain())
+    Diag(DelLoc, diag::err_deleted_main);
+
   Fn->setDeletedAsWritten();
 }
 
