@@ -33,3 +33,13 @@ entry:
   %0 = tail call i32 asm sideeffect "add $1, $2, $0", "=r,r,rI"(i32 %a, i32 10000)
   ret i32 %0
 }
+
+; CHECK-LABEL: test_constraint_reg
+; CHECK:       ldda [%o1] 43, %g2
+; CHECK:       ldda [%o1] 43, %g3
+define void @test_constraint_reg(i32 %s, i32* %ptr) {
+entry:
+  %0 = tail call i64 asm sideeffect "ldda [$1] $2, $0", "={r2},r,n"(i32* %ptr, i32 43)
+  %1 = tail call i64 asm sideeffect "ldda [$1] $2, $0", "={g3},r,n"(i32* %ptr, i32 43)
+  ret void
+}

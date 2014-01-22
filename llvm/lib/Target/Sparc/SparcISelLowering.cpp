@@ -2997,6 +2997,26 @@ SparcTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     case 'r':
       return std::make_pair(0U, &SP::IntRegsRegClass);
     }
+  } else  if (!Constraint.empty() && Constraint.size() <= 5
+              && Constraint[0] == '{' && *(Constraint.end()-1) == '}') {
+    // constraint = '{r<d>}'
+    // Remove the braces from around the name.
+    StringRef name(Constraint.data()+1, Constraint.size()-2);
+    // Handle register aliases:
+    //       r0-r7   -> g0-g7
+    //       r8-r15  -> o0-o7
+    //       r16-r23 -> l0-l7
+    //       r24-r31 -> i0-i7
+    uint64_t intVal = 0;
+    if (name.substr(0, 1).equals("r")
+        && !name.substr(1).getAsInteger(10, intVal) && intVal <= 31) {
+      const char regTypes[] = { 'g', 'o', 'l', 'i' };
+      char regType = regTypes[intVal/8];
+      char regIdx = '0' + (intVal % 8);
+      char tmp[] = { '{', regType, regIdx, '}', 0 };
+      std::string newConstraint = std::string(tmp);
+      return TargetLowering::getRegForInlineAsmConstraint(newConstraint, VT);
+    }
   }
 
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
