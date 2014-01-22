@@ -74,3 +74,23 @@ stos %rax, (%edi)
 // 64: 	stosq %rax, %es:(%edi) # encoding: [0x48,0x67,0xab]
 // ERR32: only available in 64-bit mode
 // ERR16: only available in 64-bit mode
+
+scas %es:(%edi), %al
+// 64: scasb %es:(%edi), %al # encoding: [0x67,0xae]
+// 32: scasb %es:(%edi), %al # encoding: [0xae]
+// 16: scasb %es:(%edi), %al # encoding: [0x67,0xae]
+
+scasq %es:(%edi)
+// 64: scasq %es:(%edi), %rax # encoding: [0x48,0x67,0xaf]
+// ERR32: 64-bit
+// ERR16: 64-bit
+
+scasl %es:(%edi), %al
+// ERR64: invalid operand
+// ERR32: invalid operand
+// ERR16: invalid operand
+
+scas %es:(%di), %ax
+// ERR64: invalid 16-bit base register
+// 16: scasw %es:(%di), %ax # encoding: [0xaf]
+// 32: scasw %es:(%di), %ax # encoding: [0x66,0x67,0xaf]

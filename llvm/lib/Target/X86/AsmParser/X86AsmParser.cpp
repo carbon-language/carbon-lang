@@ -2361,6 +2361,14 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
        Name == "stosl" || Name == "stosd" || Name == "stosq"))
     Operands.push_back(DefaultMemDIOperand(NameLoc));
 
+  // Transform "scas[bwlq]" into "scas[bwlq] ($DIREG)" for appropriate
+  // values of $DIREG according to the mode. It would be nice if this
+  // could be achieved with InstAlias in the tables.
+  if (Name.startswith("scas") && Operands.size() == 1 &&
+      (Name == "scas" || Name == "scasb" || Name == "scasw" ||
+       Name == "scasl" || Name == "scasd" || Name == "scasq"))
+    Operands.push_back(DefaultMemDIOperand(NameLoc));
+
   // FIXME: Hack to handle recognize s{hr,ar,hl} $1, <op>.  Canonicalize to
   // "shift <op>".
   if ((Name.startswith("shr") || Name.startswith("sar") ||

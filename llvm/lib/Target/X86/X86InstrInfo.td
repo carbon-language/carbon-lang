@@ -1157,11 +1157,14 @@ let Defs = [RCX,RDI], Uses = [RAX,RCX,RDI,EFLAGS] in
 def STOSQ : RI<0xAB, RawFrmDst, (outs dstidx64:$dst), (ins),
                "stosq\t{%rax, $dst|$dst, rax}", [], IIC_STOS>;
 
-def SCAS8 : I<0xAE, RawFrm, (outs), (ins), "scasb", [], IIC_SCAS>;
-def SCAS16 : I<0xAF, RawFrm, (outs), (ins), "scasw", [], IIC_SCAS>, OpSize;
-def SCAS32 : I<0xAF, RawFrm, (outs), (ins), "scas{l|d}", [], IIC_SCAS>,
-               OpSize16;
-def SCAS64 : RI<0xAF, RawFrm, (outs), (ins), "scasq", [], IIC_SCAS>;
+def SCAS8 : I<0xAE, RawFrmDst, (outs), (ins dstidx8:$dst),
+              "scasb\t{$dst, %al|al, $dst}", [], IIC_SCAS>;
+def SCAS16 : I<0xAF, RawFrmDst, (outs), (ins dstidx16:$dst),
+               "scasw\t{$dst, %ax|ax, $dst}", [], IIC_SCAS>, OpSize;
+def SCAS32 : I<0xAF, RawFrmDst, (outs), (ins dstidx32:$dst),
+               "scas{l|d}\t{$dst, %eax|eax, $dst}", [], IIC_SCAS>, OpSize16;
+def SCAS64 : RI<0xAF, RawFrmDst, (outs), (ins dstidx64:$dst),
+                "scasq\t{$dst, %rax|rax, $dst}", [], IIC_SCAS>;
 
 def CMPS8 : I<0xA6, RawFrm, (outs), (ins), "cmpsb", [], IIC_CMPS>;
 def CMPS16 : I<0xA7, RawFrm, (outs), (ins), "cmpsw", [], IIC_CMPS>, OpSize;
@@ -2431,6 +2434,18 @@ def : InstAlias<"stos {%al, $dst|$dst, al}", (STOSB dstidx8:$dst),  0>;
 def : InstAlias<"stos {%ax, $dst|$dst, ax}", (STOSW dstidx16:$dst), 0>;
 def : InstAlias<"stos {%eax, $dst|$dst, eax}", (STOSL dstidx32:$dst), 0>;
 def : InstAlias<"stos {%rax, $dst|$dst, rax}", (STOSQ dstidx64:$dst), 0>, Requires<[In64BitMode]>;
+
+// scas aliases. Accept the destination being omitted because it's implicit
+// in the mnemonic, or the mnemonic suffix being omitted because it's implicit
+// in the destination.
+def : InstAlias<"scasb $dst", (SCAS8 dstidx8:$dst),  0>;
+def : InstAlias<"scasw $dst", (SCAS16 dstidx16:$dst), 0>;
+def : InstAlias<"scas{l|d} $dst", (SCAS32 dstidx32:$dst), 0>;
+def : InstAlias<"scasq $dst", (SCAS64 dstidx64:$dst), 0>, Requires<[In64BitMode]>;
+def : InstAlias<"scas {$dst, %al|al, $dst}", (SCAS8 dstidx8:$dst),  0>;
+def : InstAlias<"scas {$dst, %ax|ax, $dst}", (SCAS16 dstidx16:$dst), 0>;
+def : InstAlias<"scas {$dst, %eax|eax, $dst}", (SCAS32 dstidx32:$dst), 0>;
+def : InstAlias<"scas {$dst, %rax|rax, $dst}", (SCAS64 dstidx64:$dst), 0>, Requires<[In64BitMode]>;
 
 // div and idiv aliases for explicit A register.
 def : InstAlias<"div{b}\t{$src, %al|al, $src}", (DIV8r  GR8 :$src)>;
