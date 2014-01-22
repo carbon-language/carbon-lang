@@ -209,7 +209,8 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
           Context.hasSameUnqualifiedType(T, SearchType)) {
         // We found our type!
 
-        return ParsedType::make(T);
+        return CreateParsedType(T,
+                                Context.getTrivialTypeSourceInfo(T, NameLoc));
       }
 
       if (!SearchType.isNull())
@@ -245,7 +246,9 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
               = dyn_cast<ClassTemplateSpecializationDecl>(Record->getDecl())) {
           if (Spec->getSpecializedTemplate()->getCanonicalDecl() ==
                 Template->getCanonicalDecl())
-            return ParsedType::make(MemberOfType);
+            return CreateParsedType(
+                MemberOfType,
+                Context.getTrivialTypeSourceInfo(MemberOfType, NameLoc));
         }
 
         continue;
@@ -264,7 +267,9 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
         // specialized.
         if (TemplateDecl *SpecTemplate = SpecName.getAsTemplateDecl()) {
           if (SpecTemplate->getCanonicalDecl() == Template->getCanonicalDecl())
-            return ParsedType::make(MemberOfType);
+            return CreateParsedType(
+                MemberOfType,
+                Context.getTrivialTypeSourceInfo(MemberOfType, NameLoc));
 
           continue;
         }
@@ -275,7 +280,9 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
                                     = SpecName.getAsDependentTemplateName()) {
           if (DepTemplate->isIdentifier() &&
               DepTemplate->getIdentifier() == Template->getIdentifier())
-            return ParsedType::make(MemberOfType);
+            return CreateParsedType(
+                MemberOfType,
+                Context.getTrivialTypeSourceInfo(MemberOfType, NameLoc));
 
           continue;
         }
