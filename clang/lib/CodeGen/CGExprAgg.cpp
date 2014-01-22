@@ -935,7 +935,11 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   llvm::Value *ArgPtr = CGF.EmitVAArg(ArgValue, VE->getType());
 
   if (!ArgPtr) {
-    CGF.ErrorUnsupported(VE, "aggregate va_arg expression");
+    // If EmitVAArg fails, we fall back to the LLVM instruction.
+    llvm::Value *Val =
+        Builder.CreateVAArg(ArgValue, CGF.ConvertType(VE->getType()));
+    if (!Dest.isIgnored())
+      Builder.CreateStore(Val, Dest.getAddr());
     return;
   }
 
