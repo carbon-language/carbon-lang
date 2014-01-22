@@ -2482,6 +2482,14 @@ void EmitClangAttrDump(RecordKeeper &Records, raw_ostream &OS) {
     if (!R.getValueAsBit("ASTNode"))
       continue;
     OS << "  case attr::" << R.getName() << ": {\n";
+
+    // If the attribute has a semantically-meaningful name (which is determined
+    // by whether there is a Spelling enumeration for it), then write out the
+    // spelling used for the attribute.
+    std::vector<Record *> Spellings = R.getValueAsListOfDefs("Spellings");
+    if (Spellings.size() > 1 && !SpellingNamesAreCommon(Spellings))
+      OS << "    OS << \" \" << A->getSpelling();\n";
+
     Args = R.getValueAsListOfDefs("Args");
     if (!Args.empty()) {
       OS << "    const " << R.getName() << "Attr *SA = cast<" << R.getName()
