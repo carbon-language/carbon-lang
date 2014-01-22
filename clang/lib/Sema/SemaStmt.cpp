@@ -2650,7 +2650,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       return StmtError();
     }
     RetValExp = Res.take();
-    CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
+    CheckReturnValExpr(RetValExp, FnRetType, ReturnLoc);
   }
 
   if (RetValExp) {
@@ -2774,13 +2774,21 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
   QualType FnRetType;
   QualType RelatedRetType;
+  const AttrVec *Attrs = 0;
+  bool isObjCMethod = false;
+
   if (const FunctionDecl *FD = getCurFunctionDecl()) {
     FnRetType = FD->getResultType();
+    if (FD->hasAttrs())
+      Attrs = &FD->getAttrs();
     if (FD->isNoReturn())
       Diag(ReturnLoc, diag::warn_noreturn_function_has_return_expr)
         << FD->getDeclName();
   } else if (ObjCMethodDecl *MD = getCurMethodDecl()) {
     FnRetType = MD->getResultType();
+    isObjCMethod = true;
+    if (MD->hasAttrs())
+      Attrs = &MD->getAttrs();
     if (MD->hasRelatedResultType() && MD->getClassInterface()) {
       // In the implementation of a method with a related return type, the
       // type used to type-check the validity of return statements within the
@@ -2935,7 +2943,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         RetValExp = Res.takeAs<Expr>();
       }
 
-      CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
+      CheckReturnValExpr(RetValExp, FnRetType, ReturnLoc, isObjCMethod, Attrs);
 
       // C++11 [basic.stc.dynamic.allocation]p4:
       //   If an allocation function declared with a non-throwing

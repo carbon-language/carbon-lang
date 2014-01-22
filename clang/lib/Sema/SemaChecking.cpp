@@ -713,22 +713,33 @@ bool Sema::getFormatStringInfo(const FormatAttr *Format, bool IsCXXMember,
   return true;
 }
 
-static void CheckNonNullArgument(Sema &S,
-                                 const Expr *ArgExpr,
-                                 SourceLocation CallSiteLoc) {
+/// Checks if a the given expression evaluates to null.
+///
+/// \brief Returns true if the value evaluates to null.
+static bool CheckNonNullExpr(Sema &S,
+                             const Expr *Expr) {
   // As a special case, transparent unions initialized with zero are
   // considered null for the purposes of the nonnull attribute.
-  if (const RecordType *UT = ArgExpr->getType()->getAsUnionType()) {
+  if (const RecordType *UT = Expr->getType()->getAsUnionType()) {
     if (UT->getDecl()->hasAttr<TransparentUnionAttr>())
       if (const CompoundLiteralExpr *CLE =
-          dyn_cast<CompoundLiteralExpr>(ArgExpr))
+          dyn_cast<CompoundLiteralExpr>(Expr))
         if (const InitListExpr *ILE =
             dyn_cast<InitListExpr>(CLE->getInitializer()))
-          ArgExpr = ILE->getInit(0);
+          Expr = ILE->getInit(0);
   }
 
   bool Result;
-  if (ArgExpr->EvaluateAsBooleanCondition(Result, S.Context) && !Result)
+  if (Expr->EvaluateAsBooleanCondition(Result, S.Context) && !Result)
+    return true;
+
+  return false;
+}
+
+static void CheckNonNullArgument(Sema &S,
+                                 const Expr *ArgExpr,
+                                 SourceLocation CallSiteLoc) {
+  if (CheckNonNullExpr(S, ArgExpr))
     S.Diag(CallSiteLoc, diag::warn_null_arg) << ArgExpr->getSourceRange();
 }
 
@@ -4019,9 +4030,9 @@ static Expr *EvalAddr(Expr* E, SmallVectorImpl<DeclRefExpr *> &refVars,
 
 /// CheckReturnStackAddr - Check if a return statement returns the address
 ///   of a stack variable.
-void
-Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
-                           SourceLocation ReturnLoc) {
+static void
+CheckReturnStackAddr(Sema &S, Expr *RetValExp, QualType lhsType,
+                     SourceLocation ReturnLoc) {
 
   Expr *stackE = 0;
   SmallVector<DeclRefExpr *, 8> refVars;
@@ -4029,7 +4040,7 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
   // Perform checking for returned stack addresses, local blocks,
   // label addresses or references to temporaries.
   if (lhsType->isPointerType() ||
-      (!getLangOpts().ObjCAutoRefCount && lhsType->isBlockPointerType())) {
+      (!S.getLangOpts().ObjCAutoRefCount && lhsType->isBlockPointerType())) {
     stackE = EvalAddr(RetValExp, refVars, /*ParentDecl=*/0);
   } else if (lhsType->isReferenceType()) {
     stackE = EvalVal(RetValExp, refVars, /*ParentDecl=*/0);
@@ -4053,16 +4064,16 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
   }
 
   if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(stackE)) { //address of local var.
-    Diag(diagLoc, lhsType->isReferenceType() ? diag::warn_ret_stack_ref
+    S.Diag(diagLoc, lhsType->isReferenceType() ? diag::warn_ret_stack_ref
                                              : diag::warn_ret_stack_addr)
      << DR->getDecl()->getDeclName() << diagRange;
   } else if (isa<BlockExpr>(stackE)) { // local block.
-    Diag(diagLoc, diag::err_ret_local_block) << diagRange;
+    S.Diag(diagLoc, diag::err_ret_local_block) << diagRange;
   } else if (isa<AddrLabelExpr>(stackE)) { // address of label.
-    Diag(diagLoc, diag::warn_ret_addr_label) << diagRange;
+    S.Diag(diagLoc, diag::warn_ret_addr_label) << diagRange;
   } else { // local temporary.
-    Diag(diagLoc, lhsType->isReferenceType() ? diag::warn_ret_local_temp_ref
-                                             : diag::warn_ret_local_temp_addr)
+    S.Diag(diagLoc, lhsType->isReferenceType() ? diag::warn_ret_local_temp_ref
+                                               : diag::warn_ret_local_temp_addr)
      << diagRange;
   }
 
@@ -4075,8 +4086,8 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
     // show the range of the expression.
     SourceRange range = (i < e-1) ? refVars[i+1]->getSourceRange()
                                   : stackE->getSourceRange();
-    Diag(VD->getLocation(), diag::note_ref_var_local_bind)
-      << VD->getDeclName() << range;
+    S.Diag(VD->getLocation(), diag::note_ref_var_local_bind)
+        << VD->getDeclName() << range;
   }
 }
 
@@ -4369,6 +4380,26 @@ do {
     return NULL;
   }
 } while (true);
+}
+
+void
+Sema::CheckReturnValExpr(Expr *RetValExp, QualType lhsType,
+                         SourceLocation ReturnLoc,
+                         bool isObjCMethod,
+                         const AttrVec *Attrs) {
+  CheckReturnStackAddr(*this, RetValExp, lhsType, ReturnLoc);
+
+  // Check if the return value is null but should not be.
+  if (Attrs)
+    for (specific_attr_iterator<ReturnsNonNullAttr>
+          I = specific_attr_iterator<ReturnsNonNullAttr>(Attrs->begin()),
+          E = specific_attr_iterator<ReturnsNonNullAttr>(Attrs->end());
+          I != E; ++I) {
+      if (CheckNonNullExpr(*this, RetValExp))
+        Diag(ReturnLoc, diag::warn_null_ret)
+          << (isObjCMethod ? 1 : 0) << RetValExp->getSourceRange();
+      break;
+    }
 }
 
 //===--- CHECK: Floating-Point comparisons (-Wfloat-equal) ---------------===//

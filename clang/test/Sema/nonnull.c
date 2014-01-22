@@ -39,3 +39,9 @@ void *test_ptr_returns_nonnull(void) __attribute__((returns_nonnull)); // no-war
 int i __attribute__((nonnull)); // expected-warning {{'nonnull' attribute only applies to functions, methods, and parameters}}
 int j __attribute__((returns_nonnull)); // expected-warning {{'returns_nonnull' attribute only applies to functions and methods}}
 void *test_no_fn_proto() __attribute__((returns_nonnull));  // expected-warning {{'returns_nonnull' attribute only applies to functions and methods}}
+
+__attribute__((returns_nonnull))
+void *test_bad_returns_null(void) {
+  return 0; // expected-warning {{null returned from function that requires a non-null return value}}
+}
+

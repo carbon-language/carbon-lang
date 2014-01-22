@@ -7899,8 +7899,11 @@ private:
   void CheckStrncatArguments(const CallExpr *Call,
                              IdentifierInfo *FnName);
 
-  void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
-                            SourceLocation ReturnLoc);
+  void CheckReturnValExpr(Expr *RetValExp, QualType lhsType,
+                          SourceLocation ReturnLoc,
+                          bool isObjCMethod = false,
+                          const AttrVec *Attrs = 0);
+
   void CheckFloatComparison(SourceLocation Loc, Expr* LHS, Expr* RHS);
   void CheckImplicitConversions(Expr *E, SourceLocation CC = SourceLocation());
   void CheckForIntOverflow(Expr *E);
