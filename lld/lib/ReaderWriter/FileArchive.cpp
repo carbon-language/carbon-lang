@@ -113,7 +113,10 @@ protected:
   }
 
   error_code isDataSymbol(MemoryBuffer *mb, StringRef symbol) const {
-    std::unique_ptr<ObjectFile> obj(ObjectFile::createObjectFile(mb));
+    auto objOrErr(ObjectFile::createObjectFile(mb));
+    if (auto ec = objOrErr.getError())
+      return ec;
+    std::unique_ptr<ObjectFile> obj(objOrErr.get());
     error_code ec;
     SymbolRef::Type symtype;
     uint32_t symflags;
