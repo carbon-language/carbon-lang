@@ -236,7 +236,6 @@ static const uint8_t segmentRegnums[SEG_OVERRIDE_max] = {
 /// translateSrcIndex   - Appends a source index operand to an MCInst.
 ///
 /// @param mcInst       - The MCInst to append to.
-/// @param operand      - The operand, as stored in the descriptor table.
 /// @param insn         - The internal instruction.
 static bool translateSrcIndex(MCInst &mcInst, InternalInstruction &insn) {
   unsigned baseRegNo;
