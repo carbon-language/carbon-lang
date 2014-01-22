@@ -803,7 +803,7 @@ public:
 
   bool operator<(const Cost &Other) const;
 
-  void Loose();
+  void Lose();
 
 #ifndef NDEBUG
   // Once any of the metrics loses, they must all remain losers.
@@ -863,7 +863,7 @@ void Cost::RateRegister(const SCEV *Reg,
         return;
 
       // Otherwise, do not consider this formula at all.
-      Loose();
+      Lose();
       return;
     }
     AddRecCost += 1; /// TODO: This should be a function of the stride.
@@ -902,7 +902,7 @@ void Cost::RatePrimaryRegister(const SCEV *Reg,
                                ScalarEvolution &SE, DominatorTree &DT,
                                SmallPtrSet<const SCEV *, 16> *LoserRegs) {
   if (LoserRegs && LoserRegs->count(Reg)) {
-    Loose();
+    Lose();
     return;
   }
   if (Regs.insert(Reg)) {
@@ -924,7 +924,7 @@ void Cost::RateFormula(const TargetTransformInfo &TTI,
   // Tally up the registers.
   if (const SCEV *ScaledReg = F.ScaledReg) {
     if (VisitedRegs.count(ScaledReg)) {
-      Loose();
+      Lose();
       return;
     }
     RatePrimaryRegister(ScaledReg, Regs, L, SE, DT, LoserRegs);
@@ -935,7 +935,7 @@ void Cost::RateFormula(const TargetTransformInfo &TTI,
        E = F.BaseRegs.end(); I != E; ++I) {
     const SCEV *BaseReg = *I;
     if (VisitedRegs.count(BaseReg)) {
-      Loose();
+      Lose();
       return;
     }
     RatePrimaryRegister(BaseReg, Regs, L, SE, DT, LoserRegs);
@@ -966,8 +966,8 @@ void Cost::RateFormula(const TargetTransformInfo &TTI,
   assert(isValid() && "invalid cost");
 }
 
-/// Loose - Set this cost to a losing value.
-void Cost::Loose() {
+/// Lose - Set this cost to a losing value.
+void Cost::Lose() {
   NumRegs = ~0u;
   AddRecCost = ~0u;
   NumIVMuls = ~0u;
@@ -4209,7 +4209,7 @@ void LSRInstance::SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
 void LSRInstance::Solve(SmallVectorImpl<const Formula *> &Solution) const {
   SmallVector<const Formula *, 8> Workspace;
   Cost SolutionCost;
-  SolutionCost.Loose();
+  SolutionCost.Lose();
   Cost CurCost;
   SmallPtrSet<const SCEV *, 16> CurRegs;
   DenseSet<const SCEV *> VisitedRegs;
