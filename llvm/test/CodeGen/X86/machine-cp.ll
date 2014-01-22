@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-apple-macosx -mcpu=nocona < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-macosx -mcpu=nocona -verify-machineinstrs < %s | FileCheck %s
 
 ; After tail duplication, two copies in an early exit BB can be cancelled out.
 ; rdar://10640363
@@ -33,4 +33,28 @@ entry:
 ; CHECK-NOT: movdqa
   %tmp8 = shufflevector <8 x i16> %T0, <8 x i16> %T1, <8 x i32> < i32 undef, i32 undef, i32 7, i32 2, i32 8, i32 undef, i32 undef , i32 undef >
   ret <8 x i16> %tmp8
+}
+
+define i32 @t3(i64 %a, i64 %b) nounwind  {
+entry:
+; CHECK-LABEL: t3:
+; CHECK: je [[LABEL:.*BB.*]]
+  %cmp1 = icmp eq i64 %b, 0
+  br i1 %cmp1, label %while.end, label %while.body
+
+; CHECK: [[LABEL]]:
+; CHECK-NOT: mov
+; CHECK: ret
+
+while.body:                                       ; preds = %entry, %while.body
+  %a.addr.03 = phi i64 [ %b.addr.02, %while.body ], [ %a, %entry ]
+  %b.addr.02 = phi i64 [ %rem, %while.body ], [ %b, %entry ]
+  %rem = srem i64 %a.addr.03, %b.addr.02
+  %cmp = icmp eq i64 %rem, 0
+  br i1 %cmp, label %while.end, label %while.body
+
+while.end:                                        ; preds = %while.body, %entry
+  %a.addr.0.lcssa = phi i64 [ %a, %entry ], [ %b.addr.02, %while.body ]
+  %t = trunc i64 %a.addr.0.lcssa to i32
+  ret i32 %t
 }
