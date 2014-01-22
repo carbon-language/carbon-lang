@@ -103,7 +103,8 @@ public:
     static const char *const Table[] = {
       "Allocated",
       "Released",
-      "Relinquished"
+      "Relinquished",
+      "Escaped"
     };
     OS << Table[(unsigned) K];
   }
