@@ -1625,9 +1625,11 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
     // to set which CPU subtype to launch...
     const ArchSpec &arch_spec = launch_info.GetArchitecture();
     cpu_type_t cpu = arch_spec.GetMachOCPUType();
-    if (cpu != 0 && 
+    cpu_type_t sub = arch_spec.GetMachOCPUSubType();
+    if (cpu != 0 &&
         cpu != UINT32_MAX && 
-        cpu != LLDB_INVALID_CPUTYPE)
+        cpu != LLDB_INVALID_CPUTYPE &&
+        !(cpu == 0x01000007 && sub == 8)) // If haswell is specified, don't try to set the CPU type or we will fail
     {
         size_t ocount = 0;
         error.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);

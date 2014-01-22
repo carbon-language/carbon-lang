@@ -390,6 +390,7 @@ PlatformLinux::GetSoftwareBreakpointTrapOpcode (Target &target,
 
     case ArchSpec::eCore_x86_32_i386:
     case ArchSpec::eCore_x86_64_x86_64:
+    case ArchSpec::eCore_x86_64_x86_64h:
         {
             static const uint8_t g_i386_breakpoint_opcode[] = { 0xCC };
             trap_opcode = g_i386_breakpoint_opcode;

@@ -104,6 +104,7 @@ static const CoreDefinition g_core_definitions[ArchSpec::kNumCores] =
     { eByteOrderLittle, 4, 1, 15, llvm::Triple::x86    , ArchSpec::eCore_x86_32_i486sx  , "i486sx"    },
 
     { eByteOrderLittle, 8, 1, 15, llvm::Triple::x86_64 , ArchSpec::eCore_x86_64_x86_64  , "x86_64"    },
+    { eByteOrderLittle, 8, 1, 15, llvm::Triple::x86_64 , ArchSpec::eCore_x86_64_x86_64h , "x86_64h"   },
     { eByteOrderLittle, 4, 4, 4 , llvm::Triple::UnknownArch , ArchSpec::eCore_uknownMach32  , "unknown-mach-32" },
     { eByteOrderLittle, 8, 4, 4 , llvm::Triple::UnknownArch , ArchSpec::eCore_uknownMach64  , "unknown-mach-64" }
 };
@@ -205,10 +206,11 @@ static const ArchDefinitionEntry g_macho_arch_entries[] =
     { ArchSpec::eCore_x86_32_i386     , llvm::MachO::CPU_TYPE_I386      , 3      , UINT32_MAX , SUBTYPE_MASK },
     { ArchSpec::eCore_x86_32_i486     , llvm::MachO::CPU_TYPE_I386      , 4      , UINT32_MAX , SUBTYPE_MASK },
     { ArchSpec::eCore_x86_32_i486sx   , llvm::MachO::CPU_TYPE_I386      , 0x84   , UINT32_MAX , SUBTYPE_MASK },
-    { ArchSpec::eCore_x86_32_i386     , llvm::MachO::CPU_TYPE_I386      , CPU_ANY, UINT32_MAX , UINT32_MAX  },
+    { ArchSpec::eCore_x86_32_i386     , llvm::MachO::CPU_TYPE_I386      , CPU_ANY, UINT32_MAX , UINT32_MAX   },
     { ArchSpec::eCore_x86_64_x86_64   , llvm::MachO::CPU_TYPE_X86_64    , 3      , UINT32_MAX , SUBTYPE_MASK },
     { ArchSpec::eCore_x86_64_x86_64   , llvm::MachO::CPU_TYPE_X86_64    , 4      , UINT32_MAX , SUBTYPE_MASK },
-    { ArchSpec::eCore_x86_64_x86_64   , llvm::MachO::CPU_TYPE_X86_64    , CPU_ANY, UINT32_MAX , UINT32_MAX  },
+    { ArchSpec::eCore_x86_64_x86_64h  , llvm::MachO::CPU_TYPE_X86_64    , 8      , UINT32_MAX , SUBTYPE_MASK },
+    { ArchSpec::eCore_x86_64_x86_64   , llvm::MachO::CPU_TYPE_X86_64    , CPU_ANY, UINT32_MAX , UINT32_MAX   },
     // Catch any unknown mach architectures so we can always use the object and symbol mach-o files
     { ArchSpec::eCore_uknownMach32    , 0                               , 0      , 0xFF000000u, 0x00000000u },
     { ArchSpec::eCore_uknownMach64    , llvm::MachO::CPU_ARCH_ABI64     , 0      , 0xFF000000u, 0x00000000u }
@@ -894,7 +896,7 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
         if (core2 == ArchSpec::kCore_arm_any)
             return true;
         break;
-        
+    
     case ArchSpec::kCore_x86_32_any:
         if ((core2 >= ArchSpec::kCore_x86_32_first && core2 <= ArchSpec::kCore_x86_32_last) || (core2 == ArchSpec::kCore_x86_32_any))
             return true;

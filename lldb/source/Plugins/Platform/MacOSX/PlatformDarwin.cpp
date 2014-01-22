@@ -978,22 +978,45 @@ PlatformDarwin::GetQueueIDForThreadQAddress (Process *process, lldb::addr_t disp
 bool
 PlatformDarwin::x86GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
-    if (idx == 0)
+    ArchSpec host_arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
+    if (host_arch.GetCore() == ArchSpec::eCore_x86_64_x86_64h)
     {
-        arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
-        return arch.IsValid();
-    }
-    else if (idx == 1)
-    {
-        ArchSpec platform_arch (Host::GetArchitecture (Host::eSystemDefaultArchitecture));
-        ArchSpec platform_arch64 (Host::GetArchitecture (Host::eSystemDefaultArchitecture64));
-        if (platform_arch.IsExactMatch(platform_arch64))
+        switch (idx)
         {
-            // This macosx platform supports both 32 and 64 bit. Since we already
-            // returned the 64 bit arch for idx == 0, return the 32 bit arch 
-            // for idx == 1
-            arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+            case 0:
+                arch = host_arch;
+                return true;
+
+            case 1:
+                arch.SetTriple("x86_64-apple-macosx");
+                return true;
+
+            case 2:
+                arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+                return true;
+
+            default: return false;
+        }
+    }
+    else
+    {
+        if (idx == 0)
+        {
+            arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
             return arch.IsValid();
+        }
+        else if (idx == 1)
+        {
+            ArchSpec platform_arch (Host::GetArchitecture (Host::eSystemDefaultArchitecture));
+            ArchSpec platform_arch64 (Host::GetArchitecture (Host::eSystemDefaultArchitecture64));
+            if (platform_arch.IsExactMatch(platform_arch64))
+            {
+                // This macosx platform supports both 32 and 64 bit. Since we already
+                // returned the 64 bit arch for idx == 0, return the 32 bit arch 
+                // for idx == 1
+                arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+                return arch.IsValid();
+            }
         }
     }
     return false;

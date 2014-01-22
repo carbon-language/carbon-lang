@@ -91,6 +91,7 @@ public:
         eCore_x86_32_i486sx,
         
         eCore_x86_64_x86_64,
+        eCore_x86_64_x86_64h, // Haswell enabled x86_64
         eCore_uknownMach32,
         eCore_uknownMach64,
         kNumCores,

@@ -22,11 +22,12 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Core/Error.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Core/Error.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
@@ -325,5 +326,34 @@ PlatformMacOSX::GetSharedModule (const lldb_private::ModuleSpec &module_spec,
                                  lldb::ModuleSP *old_module_sp_ptr,
                                  bool *did_create_ptr)
 {
-    return GetSharedModuleWithLocalCache(module_spec, module_sp, module_search_paths_ptr, old_module_sp_ptr, did_create_ptr);
+    Error error = GetSharedModuleWithLocalCache(module_spec, module_sp, module_search_paths_ptr, old_module_sp_ptr, did_create_ptr);
+    
+    if (module_sp)
+    {
+        if (module_spec.GetArchitecture().GetCore() == ArchSpec::eCore_x86_64_x86_64h)
+        {
+            ObjectFile *objfile = module_sp->GetObjectFile();
+            if (objfile == NULL)
+            {
+                // We didn't find an x86_64h slice, fall back to a x86_64 slice
+                ModuleSpec module_spec_x86_64 (module_spec);
+                module_spec_x86_64.GetArchitecture() = ArchSpec("x86_64-apple-macosx");
+                lldb::ModuleSP x86_64_module_sp;
+                lldb::ModuleSP old_x86_64_module_sp;
+                bool did_create = false;
+                Error x86_64_error = GetSharedModuleWithLocalCache(module_spec_x86_64, x86_64_module_sp, module_search_paths_ptr, &old_x86_64_module_sp, &did_create);
+                if (x86_64_module_sp && x86_64_module_sp->GetObjectFile())
+                {
+                    module_sp = x86_64_module_sp;
+                    if (old_module_sp_ptr)
+                        *old_module_sp_ptr = old_x86_64_module_sp;
+                    if (did_create_ptr)
+                        *did_create_ptr = did_create;
+                    return x86_64_error;
+                }
+            }
+        }
+    }
+    return error;
 }
+

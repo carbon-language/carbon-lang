@@ -1809,6 +1809,7 @@ DataExtractor::Dump (Stream *s,
                                     case ArchSpec::eCore_x86_32_i486:
                                     case ArchSpec::eCore_x86_32_i486sx:
                                     case ArchSpec::eCore_x86_64_x86_64:
+                                    case ArchSpec::eCore_x86_64_x86_64h:
                                         // clang will assert when contructing the apfloat if we use a 16 byte integer value
                                         if (GetAPInt (*this, &offset, 10, apint))
                                         {
