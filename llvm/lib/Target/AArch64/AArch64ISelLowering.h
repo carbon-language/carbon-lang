@@ -232,7 +232,11 @@ public:
                           SDLoc dl, SelectionDAG &DAG,
                           SmallVectorImpl<SDValue> &InVals) const;
 
-  bool isKnownShuffleVector(SDValue Op, SelectionDAG &DAG, SDValue &Res) const;
+  bool isConactVector(SDValue Op,SelectionDAG &DAG, SDValue V0, SDValue V1,
+                      const int* Mask, SDValue &Res) const;
+
+  bool isKnownShuffleVector(SDValue Op, SelectionDAG &DAG, SDValue &V0,
+                            SDValue &V1, int *Mask) const;
 
   SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
                             const AArch64Subtarget *ST) const;
