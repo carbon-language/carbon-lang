@@ -2358,19 +2358,6 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
     }
   }
 
-  // Transform "movs[bwl] %ds:(%esi), %es:(%edi)" into "movs[bwl]"
-  if (Name.startswith("movs") && Operands.size() == 3 &&
-      (Name == "movsb" || Name == "movsw" || Name == "movsl" ||
-       (is64BitMode() && Name == "movsq"))) {
-    X86Operand &Op = *(X86Operand*)Operands.begin()[1];
-    X86Operand &Op2 = *(X86Operand*)Operands.begin()[2];
-    if (isSrcOp(Op) && isDstOp(Op2)) {
-      Operands.pop_back();
-      Operands.pop_back();
-      delete &Op;
-      delete &Op2;
-    }
-  }
   // Transform "lods[bwlq]" into "lods[bwlq] ($SIREG)" for appropriate
   // values of $SIREG according to the mode. It would be nice if this
   // could be achieved with InstAlias in the tables.
@@ -2406,6 +2393,32 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
       } else {
         Operands.push_back(DefaultMemDIOperand(NameLoc));
         Operands.push_back(DefaultMemSIOperand(NameLoc));
+      }
+    } else if (Operands.size() == 3) {
+      X86Operand &Op = *(X86Operand*)Operands.begin()[1];
+      X86Operand &Op2 = *(X86Operand*)Operands.begin()[2];
+      if (!doSrcDstMatch(Op, Op2))
+        return Error(Op.getStartLoc(),
+                     "mismatching source and destination index registers");
+    }
+  }
+
+  // Add default SI and DI operands to "movs[bwlq]".
+  if ((Name.startswith("movs") &&
+      (Name == "movs" || Name == "movsb" || Name == "movsw" ||
+       Name == "movsl" || Name == "movsd" || Name == "movsq")) ||
+      (Name.startswith("smov") &&
+      (Name == "smov" || Name == "smovb" || Name == "smovw" ||
+       Name == "smovl" || Name == "smovd" || Name == "smovq"))) {
+    if (Operands.size() == 1) {
+      if (Name == "movsd")
+        Operands.back() = X86Operand::CreateToken("movsl", NameLoc);
+      if (isParsingIntelSyntax()) {
+        Operands.push_back(DefaultMemDIOperand(NameLoc));
+        Operands.push_back(DefaultMemSIOperand(NameLoc));
+      } else {
+        Operands.push_back(DefaultMemSIOperand(NameLoc));
+        Operands.push_back(DefaultMemDIOperand(NameLoc));
       }
     } else if (Operands.size() == 3) {
       X86Operand &Op = *(X86Operand*)Operands.begin()[1];

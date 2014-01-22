@@ -119,3 +119,13 @@ cmpsq (%rdi), (%rsi)
 // 64: cmpsq %es:(%rdi), (%rsi) # encoding: [0x48,0xa7]
 // ERR32: 64-bit
 // ERR16: 64-bit
+
+movsb (%esi), (%edi)
+// 64: movsb (%esi), %es:(%edi) # encoding: [0x67,0xa4]
+// 32: movsb (%esi), %es:(%edi) # encoding: [0xa4]
+// 16: movsb (%esi), %es:(%edi) # encoding: [0x67,0xa4]
+
+movsl %gs:(%esi), (%edi)
+// 64: movsl %gs:(%esi), %es:(%edi) # encoding: [0x65,0x67,0xa5]
+// 32: movsl %gs:(%esi), %es:(%edi) # encoding: [0x65,0xa5]
+// 16: movsl %gs:(%esi), %es:(%edi) # encoding: [0x66,0x65,0x67,0xa5]

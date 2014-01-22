@@ -824,21 +824,21 @@ pshufw $90, %mm4, %mm0
 	insl
 	insl	%dx, %es:(%di)
 
-// CHECK: movsb # encoding: [0xa4]
+// CHECK: movsb (%si), %es:(%di) # encoding: [0xa4]
 // CHECK: movsb
 // CHECK: movsb
 	movsb
 	movsb	%ds:(%si), %es:(%di)
 	movsb	(%si), %es:(%di)
 
-// CHECK: movsw # encoding: [0xa5]
+// CHECK: movsw (%si), %es:(%di) # encoding: [0xa5]
 // CHECK: movsw
 // CHECK: movsw
 	movsw
 	movsw	%ds:(%si), %es:(%di)
 	movsw	(%si), %es:(%di)
 
-// CHECK: movsl # encoding: [0x66,0xa5]
+// CHECK: movsl (%si), %es:(%di) # encoding: [0x66,0xa5]
 // CHECK: movsl
 // CHECK: movsl
 	movsl

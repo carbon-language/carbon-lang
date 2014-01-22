@@ -900,21 +900,21 @@ pshufw $90, %mm4, %mm0
 	insl
 	insl	%dx, %es:(%edi)
 
-// CHECK: movsb # encoding: [0xa4]
+// CHECK: movsb (%esi), %es:(%edi) # encoding: [0xa4]
 // CHECK: movsb
 // CHECK: movsb
 	movsb
 	movsb	%ds:(%esi), %es:(%edi)
 	movsb	(%esi), %es:(%edi)
 
-// CHECK: movsw # encoding: [0x66,0xa5]
+// CHECK: movsw (%esi), %es:(%edi) # encoding: [0x66,0xa5]
 // CHECK: movsw
 // CHECK: movsw
 	movsw
 	movsw	%ds:(%esi), %es:(%edi)
 	movsw	(%esi), %es:(%edi)
 
-// CHECK: movsl # encoding: [0xa5]
+// CHECK: movsl (%esi), %es:(%edi) # encoding: [0xa5]
 // CHECK: movsl
 // CHECK: movsl
 	movsl

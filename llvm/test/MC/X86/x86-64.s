@@ -1085,21 +1085,21 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 	insl
 	insl	%dx, %es:(%rdi)
 
-// CHECK: movsb # encoding: [0xa4]
+// CHECK: movsb (%rsi), %es:(%rdi) # encoding: [0xa4]
 // CHECK: movsb
 // CHECK: movsb
 	movsb
 	movsb	%ds:(%rsi), %es:(%rdi)
 	movsb	(%rsi), %es:(%rdi)
 
-// CHECK: movsw # encoding: [0x66,0xa5]
+// CHECK: movsw (%rsi), %es:(%rdi) # encoding: [0x66,0xa5]
 // CHECK: movsw
 // CHECK: movsw
 	movsw
 	movsw	%ds:(%rsi), %es:(%rdi)
 	movsw	(%rsi), %es:(%rdi)
 
-// CHECK: movsl # encoding: [0xa5]
+// CHECK: movsl (%rsi), %es:(%rdi) # encoding: [0xa5]
 // CHECK: movsl
 // CHECK: movsl
 	movsl
@@ -1109,7 +1109,7 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 // CHECK: movsl
 	movsl	(%rsi), (%rdi)
 
-// CHECK: movsq # encoding: [0x48,0xa5]
+// CHECK: movsq (%rsi), %es:(%rdi) # encoding: [0x48,0xa5]
 // CHECK: movsq
 // CHECK: movsq
 	movsq

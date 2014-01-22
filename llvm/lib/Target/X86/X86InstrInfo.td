@@ -1137,10 +1137,14 @@ def BSR64rm  : RI<0xBD, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
 let SchedRW = [WriteMicrocoded] in {
 // These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
 let Defs = [EDI,ESI], Uses = [EDI,ESI,EFLAGS] in {
-def MOVSB : I<0xA4, RawFrm, (outs), (ins), "movsb", [], IIC_MOVS>;
-def MOVSW : I<0xA5, RawFrm, (outs), (ins), "movsw", [], IIC_MOVS>, OpSize;
-def MOVSL : I<0xA5, RawFrm, (outs), (ins), "movs{l|d}", [], IIC_MOVS>, OpSize16;
-def MOVSQ : RI<0xA5, RawFrm, (outs), (ins), "movsq", [], IIC_MOVS>;
+def MOVSB : I<0xA4, RawFrmDstSrc, (outs dstidx8:$dst), (ins srcidx8:$src),
+              "movsb\t{$src, $dst|$dst, $src}", [], IIC_MOVS>;
+def MOVSW : I<0xA5, RawFrmDstSrc, (outs dstidx16:$dst), (ins srcidx16:$src),
+              "movsw\t{$src, $dst|$dst, $src}", [], IIC_MOVS>, OpSize;
+def MOVSL : I<0xA5, RawFrmDstSrc, (outs dstidx32:$dst), (ins srcidx32:$src),
+              "movs{l|d}\t{$src, $dst|$dst, $src}", [], IIC_MOVS>, OpSize16;
+def MOVSQ : RI<0xA5, RawFrmDstSrc, (outs dstidx64:$dst), (ins srcidx64:$src),
+               "movsq\t{$src, $dst|$dst, $src}", [], IIC_MOVS>;
 }
 
 // These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
@@ -2592,10 +2596,6 @@ def : InstAlias<"movq $src, $dst",
                 (MMX_MOVD64to64rr VR64:$dst, GR64:$src), 0>;
 def : InstAlias<"movq $src, $dst",
                 (MMX_MOVD64from64rr GR64:$dst, VR64:$src), 0>;
-
-// movsd with no operands (as opposed to the SSE scalar move of a double) is an
-// alias for movsl. (as in rep; movsd)
-def : InstAlias<"movsd", (MOVSL), 0>;
 
 // movsx aliases
 def : InstAlias<"movsx $src, $dst", (MOVSX16rr8 GR16:$dst, GR8:$src), 0>;
