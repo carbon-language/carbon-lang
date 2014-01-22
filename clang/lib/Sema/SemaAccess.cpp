@@ -1757,7 +1757,7 @@ Sema::AccessResult Sema::CheckFriendAccess(NamedDecl *target) {
   if (!getLangOpts().AccessControl || access == AS_public)
     return AR_accessible;
 
-  CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(target->getAsFunction());
+  CXXMethodDecl *method = cast<CXXMethodDecl>(target->getAsFunction());
   assert(method->getQualifier());
 
   AccessTarget entity(Context, AccessTarget::Member,
