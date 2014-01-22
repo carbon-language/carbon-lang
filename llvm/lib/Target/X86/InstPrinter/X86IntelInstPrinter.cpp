@@ -226,6 +226,14 @@ void X86IntelInstPrinter::printSrcIdx(const MCInst *MI, unsigned Op,
   O << ']';
 }
 
+void X86IntelInstPrinter::printDstIdx(const MCInst *MI, unsigned Op,
+                                      raw_ostream &O) {
+  // DI accesses are always ES-based.
+  O << "es:[";
+  printOperand(MI, Op, O);
+  O << ']';
+}
+
 void X86IntelInstPrinter::printMemOffset(const MCInst *MI, unsigned Op,
                                          raw_ostream &O) {
   const MCOperand &DispSpec = MI->getOperand(Op);

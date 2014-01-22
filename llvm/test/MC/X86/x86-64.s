@@ -1160,28 +1160,28 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 	lods	%ds:(%rsi), %rax
 	lods	(%rsi), %rax
 
-// CHECK: stosb # encoding: [0xaa]
+// CHECK: stosb %al, %es:(%rdi) # encoding: [0xaa]
 // CHECK: stosb
 // CHECK: stosb
 	stosb
 	stosb	%al, %es:(%rdi)
 	stos	%al, %es:(%rdi)
 
-// CHECK: stosw # encoding: [0x66,0xab]
+// CHECK: stosw %ax, %es:(%rdi) # encoding: [0x66,0xab]
 // CHECK: stosw
 // CHECK: stosw
 	stosw
 	stosw	%ax, %es:(%rdi)
 	stos	%ax, %es:(%rdi)
 
-// CHECK: stosl # encoding: [0xab]
+// CHECK: stosl %eax, %es:(%rdi) # encoding: [0xab]
 // CHECK: stosl
 // CHECK: stosl
 	stosl
 	stosl	%eax, %es:(%rdi)
 	stos	%eax, %es:(%rdi)
 
-// CHECK: stosq # encoding: [0x48,0xab]
+// CHECK: stosq %rax, %es:(%rdi) # encoding: [0x48,0xab]
 // CHECK: stosq
 // CHECK: stosq
 	stosq

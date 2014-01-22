@@ -1683,6 +1683,7 @@ static int readOperands(struct InternalInstruction* insn) {
     switch (x86OperandSets[insn->spec->operands][index].encoding) {
     case ENCODING_NONE:
     case ENCODING_SI:
+    case ENCODING_DI:
       break;
     case ENCODING_REG:
     case ENCODING_RM:

@@ -878,21 +878,21 @@ pshufw $90, %mm4, %mm0
 	lods	%ds:(%si), %eax
 	lods	(%si), %eax
 
-// CHECK: stosb # encoding: [0xaa]
+// CHECK: stosb %al, %es:(%di) # encoding: [0xaa]
 // CHECK: stosb
 // CHECK: stosb
 	stosb
 	stosb	%al, %es:(%di)
 	stos	%al, %es:(%di)
 
-// CHECK: stosw # encoding: [0xab]
+// CHECK: stosw %ax, %es:(%di) # encoding: [0xab]
 // CHECK: stosw
 // CHECK: stosw
 	stosw
 	stosw	%ax, %es:(%di)
 	stos	%ax, %es:(%di)
 
-// CHECK: stosl # encoding: [0x66,0xab]
+// CHECK: stosl %eax, %es:(%di) # encoding: [0x66,0xab]
 // CHECK: stosl
 // CHECK: stosl
 	stosl

@@ -465,6 +465,26 @@ def X86SrcIdx64Operand : AsmOperandClass {
   let RenderMethod = "addSrcIdxOperands";
   let SuperClasses = [X86Mem64AsmOperand];
 }
+def X86DstIdx8Operand : AsmOperandClass {
+  let Name = "DstIdx8";
+  let RenderMethod = "addDstIdxOperands";
+  let SuperClasses = [X86Mem8AsmOperand];
+}
+def X86DstIdx16Operand : AsmOperandClass {
+  let Name = "DstIdx16";
+  let RenderMethod = "addDstIdxOperands";
+  let SuperClasses = [X86Mem16AsmOperand];
+}
+def X86DstIdx32Operand : AsmOperandClass {
+  let Name = "DstIdx32";
+  let RenderMethod = "addDstIdxOperands";
+  let SuperClasses = [X86Mem32AsmOperand];
+}
+def X86DstIdx64Operand : AsmOperandClass {
+  let Name = "DstIdx64";
+  let RenderMethod = "addDstIdxOperands";
+  let SuperClasses = [X86Mem64AsmOperand];
+}
 def X86MemOffs8AsmOperand : AsmOperandClass {
   let Name = "MemOffs8";
   let RenderMethod = "addMemOffsOperands";
@@ -502,6 +522,22 @@ def srcidx64 : Operand<iPTR> {
   let ParserMatchClass = X86SrcIdx64Operand;
   let MIOperandInfo = (ops ptr_rc, i8imm);
   let PrintMethod = "printSrcIdx64"; }
+def dstidx8 : Operand<iPTR> {
+  let ParserMatchClass = X86DstIdx8Operand;
+  let MIOperandInfo = (ops ptr_rc);
+  let PrintMethod = "printDstIdx8"; }
+def dstidx16 : Operand<iPTR> {
+  let ParserMatchClass = X86DstIdx16Operand;
+  let MIOperandInfo = (ops ptr_rc);
+  let PrintMethod = "printDstIdx16"; }
+def dstidx32 : Operand<iPTR> {
+  let ParserMatchClass = X86DstIdx32Operand;
+  let MIOperandInfo = (ops ptr_rc);
+  let PrintMethod = "printDstIdx32"; }
+def dstidx64 : Operand<iPTR> {
+  let ParserMatchClass = X86DstIdx64Operand;
+  let MIOperandInfo = (ops ptr_rc);
+  let PrintMethod = "printDstIdx64"; }
 def offset8 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs8AsmOperand;
   let MIOperandInfo = (ops i64imm, i8imm);
@@ -1109,13 +1145,17 @@ def MOVSQ : RI<0xA5, RawFrm, (outs), (ins), "movsq", [], IIC_MOVS>;
 
 // These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
 let Defs = [EDI], Uses = [AL,EDI,EFLAGS] in
-def STOSB : I<0xAA, RawFrm, (outs), (ins), "stosb", [], IIC_STOS>;
+def STOSB : I<0xAA, RawFrmDst, (outs dstidx8:$dst), (ins),
+              "stosb\t{%al, $dst|$dst, al}", [], IIC_STOS>;
 let Defs = [EDI], Uses = [AX,EDI,EFLAGS] in
-def STOSW : I<0xAB, RawFrm, (outs), (ins), "stosw", [], IIC_STOS>, OpSize;
+def STOSW : I<0xAB, RawFrmDst, (outs dstidx16:$dst), (ins),
+              "stosw\t{%ax, $dst|$dst, ax}", [], IIC_STOS>, OpSize;
 let Defs = [EDI], Uses = [EAX,EDI,EFLAGS] in
-def STOSL : I<0xAB, RawFrm, (outs), (ins), "stos{l|d}", [], IIC_STOS>, OpSize16;
+def STOSL : I<0xAB, RawFrmDst, (outs dstidx32:$dst), (ins),
+              "stos{l|d}\t{%eax, $dst|$dst, eax}", [], IIC_STOS>, OpSize16;
 let Defs = [RCX,RDI], Uses = [RAX,RCX,RDI,EFLAGS] in
-def STOSQ : RI<0xAB, RawFrm, (outs), (ins), "stosq", [], IIC_STOS>;
+def STOSQ : RI<0xAB, RawFrmDst, (outs dstidx64:$dst), (ins),
+               "stosq\t{%rax, $dst|$dst, rax}", [], IIC_STOS>;
 
 def SCAS8 : I<0xAE, RawFrm, (outs), (ins), "scasb", [], IIC_SCAS>;
 def SCAS16 : I<0xAF, RawFrm, (outs), (ins), "scasw", [], IIC_SCAS>, OpSize;
@@ -2379,6 +2419,18 @@ def : InstAlias<"lods {$src, %al|al, $src}", (LODSB srcidx8:$src),  0>;
 def : InstAlias<"lods {$src, %ax|ax, $src}", (LODSW srcidx16:$src), 0>;
 def : InstAlias<"lods {$src, %eax|eax, $src}", (LODSL srcidx32:$src), 0>;
 def : InstAlias<"lods {$src, %rax|rax, $src}", (LODSQ srcidx64:$src), 0>, Requires<[In64BitMode]>;
+
+// stos aliases. Accept the source being omitted because it's implicit in
+// the mnemonic, or the mnemonic suffix being omitted because it's implicit
+// in the source.
+def : InstAlias<"stosb $dst", (STOSB dstidx8:$dst),  0>;
+def : InstAlias<"stosw $dst", (STOSW dstidx16:$dst), 0>;
+def : InstAlias<"stos{l|d} $dst", (STOSL dstidx32:$dst), 0>;
+def : InstAlias<"stosq $dst", (STOSQ dstidx64:$dst), 0>, Requires<[In64BitMode]>;
+def : InstAlias<"stos {%al, $dst|$dst, al}", (STOSB dstidx8:$dst),  0>;
+def : InstAlias<"stos {%ax, $dst|$dst, ax}", (STOSW dstidx16:$dst), 0>;
+def : InstAlias<"stos {%eax, $dst|$dst, eax}", (STOSL dstidx32:$dst), 0>;
+def : InstAlias<"stos {%rax, $dst|$dst, rax}", (STOSQ dstidx64:$dst), 0>, Requires<[In64BitMode]>;
 
 // div and idiv aliases for explicit A register.
 def : InstAlias<"div{b}\t{$src, %al|al, $src}", (DIV8r  GR8 :$src)>;

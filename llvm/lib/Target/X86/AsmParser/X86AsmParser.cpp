@@ -552,6 +552,7 @@ private:
   }
 
   X86Operand *DefaultMemSIOperand(SMLoc Loc);
+  X86Operand *DefaultMemDIOperand(SMLoc Loc);
   X86Operand *ParseOperand();
   X86Operand *ParseATTOperand();
   X86Operand *ParseIntelOperand();
@@ -942,6 +943,26 @@ struct X86Operand : public MCParsedAsmOperand {
     return isMem64() && isSrcIdx();
   }
 
+  bool isDstIdx() const {
+    return !getMemIndexReg() && getMemScale() == 1 &&
+      (getMemSegReg() == 0 || getMemSegReg() == X86::ES) &&
+      (getMemBaseReg() == X86::RDI || getMemBaseReg() == X86::EDI ||
+       getMemBaseReg() == X86::DI) && isa<MCConstantExpr>(getMemDisp()) &&
+      cast<MCConstantExpr>(getMemDisp())->getValue() == 0;
+  }
+  bool isDstIdx8() const {
+    return isMem8() && isDstIdx();
+  }
+  bool isDstIdx16() const {
+    return isMem16() && isDstIdx();
+  }
+  bool isDstIdx32() const {
+    return isMem32() && isDstIdx();
+  }
+  bool isDstIdx64() const {
+    return isMem64() && isDstIdx();
+  }
+
   bool isMemOffs8() const {
     return Kind == Memory && !getMemBaseReg() &&
       !getMemIndexReg() && getMemScale() == 1 && (!Mem.Size || Mem.Size == 8);
@@ -1038,6 +1059,10 @@ struct X86Operand : public MCParsedAsmOperand {
     assert((N == 2) && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
     Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
+  }
+  void addDstIdxOperands(MCInst &Inst, unsigned N) const {
+    assert((N == 1) && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
   }
 
   void addMemOffsOperands(MCInst &Inst, unsigned N) const {
@@ -1259,6 +1284,14 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
 X86Operand *X86AsmParser::DefaultMemSIOperand(SMLoc Loc) {
   unsigned basereg =
     is64BitMode() ? X86::RSI : (is32BitMode() ? X86::ESI : X86::SI);
+  const MCExpr *Disp = MCConstantExpr::Create(0, getContext());
+  return X86Operand::CreateMem(/*SegReg=*/0, Disp, /*BaseReg=*/basereg,
+                               /*IndexReg=*/0, /*Scale=*/1, Loc, Loc, 0);
+}
+
+X86Operand *X86AsmParser::DefaultMemDIOperand(SMLoc Loc) {
+  unsigned basereg =
+    is64BitMode() ? X86::RDI : (is32BitMode() ? X86::EDI : X86::DI);
   const MCExpr *Disp = MCConstantExpr::Create(0, getContext());
   return X86Operand::CreateMem(/*SegReg=*/0, Disp, /*BaseReg=*/basereg,
                                /*IndexReg=*/0, /*Scale=*/1, Loc, Loc, 0);
@@ -2320,36 +2353,13 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
        Name == "lodsl" || Name == "lodsd" || Name == "lodsq"))
     Operands.push_back(DefaultMemSIOperand(NameLoc));
 
-  // Transform "stos[bwl] {%al,%ax,%eax,%rax},%es:(%edi)" into "stos[bwl]"
-  if (Name.startswith("stos") && Operands.size() == 3 &&
+  // Transform "stos[bwlq]" into "stos[bwlq] ($DIREG)" for appropriate
+  // values of $DIREG according to the mode. It would be nice if this
+  // could be achieved with InstAlias in the tables.
+  if (Name.startswith("stos") && Operands.size() == 1 &&
       (Name == "stos" || Name == "stosb" || Name == "stosw" ||
-       Name == "stosl" || (is64BitMode() && Name == "stosq"))) {
-    X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
-    X86Operand *Op2 = static_cast<X86Operand*>(Operands[2]);
-    if (isDstOp(*Op2) && Op1->isReg()) {
-      const char *ins;
-      unsigned reg = Op1->getReg();
-      bool isStos = Name == "stos";
-      if (reg == X86::AL && (isStos || Name == "stosb"))
-        ins = "stosb";
-      else if (reg == X86::AX && (isStos || Name == "stosw"))
-        ins = "stosw";
-      else if (reg == X86::EAX && (isStos || Name == "stosl"))
-        ins = "stosl";
-      else if (reg == X86::RAX && (isStos || Name == "stosq"))
-        ins = "stosq";
-      else
-        ins = NULL;
-      if (ins != NULL) {
-        Operands.pop_back();
-        Operands.pop_back();
-        delete Op1;
-        delete Op2;
-        if (Name != ins)
-          static_cast<X86Operand*>(Operands[0])->setTokenValue(ins);
-      }
-    }
-  }
+       Name == "stosl" || Name == "stosd" || Name == "stosq"))
+    Operands.push_back(DefaultMemDIOperand(NameLoc));
 
   // FIXME: Hack to handle recognize s{hr,ar,hl} $1, <op>.  Canonicalize to
   // "shift <op>".

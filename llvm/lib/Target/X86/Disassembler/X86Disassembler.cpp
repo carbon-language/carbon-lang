@@ -256,6 +256,26 @@ static bool translateSrcIndex(MCInst &mcInst, InternalInstruction &insn) {
   return false;
 }
 
+/// translateDstIndex   - Appends a destination index operand to an MCInst.
+///
+/// @param mcInst       - The MCInst to append to.
+/// @param operand      - The operand, as stored in the descriptor table.
+/// @param insn         - The internal instruction.
+
+static bool translateDstIndex(MCInst &mcInst, InternalInstruction &insn) {
+  unsigned baseRegNo;
+
+  if (insn.mode == MODE_64BIT)
+    baseRegNo = insn.prefixPresent[0x67] ? X86::EDI : X86::RDI;
+  else if (insn.mode == MODE_32BIT)
+    baseRegNo = insn.prefixPresent[0x67] ? X86::DI : X86::EDI;
+  else if (insn.mode == MODE_16BIT)
+    baseRegNo = insn.prefixPresent[0x67] ? X86::EDI : X86::DI;
+  MCOperand baseReg = MCOperand::CreateReg(baseRegNo);
+  mcInst.addOperand(baseReg);
+  return false;
+}
+
 /// translateImmediate  - Appends an immediate operand to an MCInst.
 ///
 /// @param mcInst       - The MCInst to append to.
@@ -719,6 +739,8 @@ static bool translateOperand(MCInst &mcInst, const OperandSpecifier &operand,
     return false;
   case ENCODING_SI:
     return translateSrcIndex(mcInst, insn);
+  case ENCODING_DI:
+    return translateDstIndex(mcInst, insn);
   case ENCODING_RB:
   case ENCODING_RW:
   case ENCODING_RD:

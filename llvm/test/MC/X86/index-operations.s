@@ -44,3 +44,33 @@ lods (%esi), %ax
 // 64: lodsw (%esi), %ax # encoding: [0x66,0x67,0xad]
 // 32: lodsw (%esi), %ax # encoding: [0x66,0xad]
 // 16: lodsw (%esi), %ax # encoding: [0x67,0xad]
+
+stosw
+// 64: stosw %ax, %es:(%rdi) # encoding: [0x66,0xab]
+// 32: stosw %ax, %es:(%edi) # encoding: [0x66,0xab]
+// 16: stosw %ax, %es:(%di) # encoding: [0xab]
+
+stos %eax, (%edi)
+// 64: stosl %eax, %es:(%edi) # encoding: [0x67,0xab]
+// 32: stosl %eax, %es:(%edi) # encoding: [0xab]
+// 16: stosl %eax, %es:(%edi) # encoding: [0x66,0x67,0xab]
+
+stosb %al, %fs:(%edi)
+// ERR64: invalid operand for instruction
+// ERR32: invalid operand for instruction
+// ERR16: invalid operand for instruction
+
+stosb %al, %es:(%edi)
+// 64: stosb %al, %es:(%edi) # encoding: [0x67,0xaa]
+// 32: stosb %al, %es:(%edi) # encoding: [0xaa]
+// 16: stosb %al, %es:(%edi) # encoding: [0x67,0xaa]
+
+stosq
+// 64: stosq %rax, %es:(%rdi) # encoding: [0x48,0xab]
+// ERR32: 64-bit
+// ERR16: 64-bit
+
+stos %rax, (%edi)
+// 64: 	stosq %rax, %es:(%edi) # encoding: [0x48,0x67,0xab]
+// ERR32: only available in 64-bit mode
+// ERR16: only available in 64-bit mode

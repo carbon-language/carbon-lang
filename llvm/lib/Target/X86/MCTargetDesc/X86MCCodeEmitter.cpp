@@ -1330,6 +1330,16 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode, CurByte, OS);
     break;
   }
+  case X86II::RawFrmDst: {
+    unsigned siReg = MI.getOperand(0).getReg();
+    // Emit OpSize prefix as needed.
+    if ((!is32BitMode() && siReg == X86::EDI) ||
+        (is32BitMode() && siReg == X86::DI))
+      EmitByte(0x67, CurByte, OS);
+    ++CurOp; // Consume operand.
+    EmitByte(BaseOpcode, CurByte, OS);
+    break;
+  }
   case X86II::RawFrm:
     EmitByte(BaseOpcode, CurByte, OS);
     break;

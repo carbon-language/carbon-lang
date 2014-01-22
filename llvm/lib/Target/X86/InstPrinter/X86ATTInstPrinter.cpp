@@ -245,6 +245,17 @@ void X86ATTInstPrinter::printSrcIdx(const MCInst *MI, unsigned Op,
   O << markup(">");
 }
 
+void X86ATTInstPrinter::printDstIdx(const MCInst *MI, unsigned Op,
+                                    raw_ostream &O) {
+  O << markup("<mem:");
+
+  O << "%es:(";
+  printOperand(MI, Op, O);
+  O << ")";
+
+  O << markup(">");
+}
+
 void X86ATTInstPrinter::printMemOffset(const MCInst *MI, unsigned Op,
                                        raw_ostream &O) {
   const MCOperand &DispSpec = MI->getOperand(Op);

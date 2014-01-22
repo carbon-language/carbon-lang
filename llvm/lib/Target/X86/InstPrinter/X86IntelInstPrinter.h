@@ -41,6 +41,7 @@ public:
   void printPCRelImm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printMemOffset(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printSrcIdx(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printDstIdx(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printRoundingControl(const MCInst *MI, unsigned Op, raw_ostream &OS);
 
   void printopaquemem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
@@ -117,6 +118,22 @@ public:
   void printSrcIdx64(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     O << "qword ptr ";
     printSrcIdx(MI, OpNo, O);
+  }
+  void printDstIdx8(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "byte ptr ";
+    printDstIdx(MI, OpNo, O);
+  }
+  void printDstIdx16(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "word ptr ";
+    printDstIdx(MI, OpNo, O);
+  }
+  void printDstIdx32(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "dword ptr ";
+    printDstIdx(MI, OpNo, O);
+  }
+  void printDstIdx64(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "qword ptr ";
+    printDstIdx(MI, OpNo, O);
   }
   void printMemOffs8(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     O << "byte ptr ";

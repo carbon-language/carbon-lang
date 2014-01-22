@@ -954,21 +954,21 @@ pshufw $90, %mm4, %mm0
 	lods	%ds:(%esi), %eax
 	lods	(%esi), %eax
 
-// CHECK: stosb # encoding: [0xaa]
+// CHECK: stosb %al, %es:(%edi) # encoding: [0xaa]
 // CHECK: stosb
 // CHECK: stosb
 	stosb
 	stosb	%al, %es:(%edi)
 	stos	%al, %es:(%edi)
 
-// CHECK: stosw # encoding: [0x66,0xab]
+// CHECK: stosw %ax, %es:(%edi) # encoding: [0x66,0xab]
 // CHECK: stosw
 // CHECK: stosw
 	stosw
 	stosw	%ax, %es:(%edi)
 	stos	%ax, %es:(%edi)
 
-// CHECK: stosl # encoding: [0xab]
+// CHECK: stosl %eax, %es:(%edi) # encoding: [0xab]
 // CHECK: stosl
 // CHECK: stosl
 	stosl
