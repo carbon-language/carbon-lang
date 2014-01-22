@@ -593,14 +593,6 @@ private:
   /// the parsing mode (Intel vs. AT&T).
   bool doSrcDstMatch(X86Operand &Op1, X86Operand &Op2);
 
-  /// isSrcOp - Returns true if operand is either (%rsi) or %ds:%(rsi)
-  /// in 64bit mode or (%esi) or %es:(%esi) in 32bit mode.
-  bool isSrcOp(X86Operand &Op);
-
-  /// isDstOp - Returns true if operand is either (%rdi) or %es:(%rdi)
-  /// in 64bit mode or (%edi) or %es:(%edi) in 32bit mode.
-  bool isDstOp(X86Operand &Op);
-
   bool is64BitMode() const {
     // FIXME: Can tablegen auto-generate this?
     return (STI.getFeatureBits() & X86::Mode64Bit) != 0;
@@ -1174,28 +1166,6 @@ bool X86AsmParser::doSrcDstMatch(X86Operand &Op1, X86Operand &Op2)
     return X86MCRegisterClasses[X86::GR64RegClassID].contains(diReg);
   // Again, return true and let another error happen.
   return true;
-}
-
-bool X86AsmParser::isSrcOp(X86Operand &Op) {
-  unsigned basereg =
-      is64BitMode() ? X86::RSI : (is32BitMode() ? X86::ESI : X86::SI);
-
-  return (Op.isMem() &&
-    (Op.Mem.SegReg == 0 || Op.Mem.SegReg == X86::DS) &&
-    isa<MCConstantExpr>(Op.Mem.Disp) &&
-    cast<MCConstantExpr>(Op.Mem.Disp)->getValue() == 0 &&
-    Op.Mem.BaseReg == basereg && Op.Mem.IndexReg == 0);
-}
-
-bool X86AsmParser::isDstOp(X86Operand &Op) {
-  unsigned basereg =
-      is64BitMode() ? X86::RDI : (is32BitMode() ? X86::EDI : X86::DI);
-
-  return Op.isMem() &&
-    (Op.Mem.SegReg == 0 || Op.Mem.SegReg == X86::ES) &&
-    isa<MCConstantExpr>(Op.Mem.Disp) &&
-    cast<MCConstantExpr>(Op.Mem.Disp)->getValue() == 0 &&
-    Op.Mem.BaseReg == basereg && Op.Mem.IndexReg == 0;
 }
 
 bool X86AsmParser::ParseRegister(unsigned &RegNo,
