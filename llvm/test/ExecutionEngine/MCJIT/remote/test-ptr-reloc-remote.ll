@@ -1,4 +1,4 @@
-; RUN: %lli_mcjit -remote-mcjit -O0 -mcjit-remote-process=lli-child-target %s
+; RUN: %lli_mcjit -remote-mcjit -O0 -mcjit-remote-process=lli-child-target%exeext %s
 
 @.str = private unnamed_addr constant [6 x i8] c"data1\00", align 1
 @ptr = global i8* getelementptr inbounds ([6 x i8]* @.str, i32 0, i32 0), align 4
