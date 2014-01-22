@@ -63,6 +63,11 @@ def FeatureCaymanISA : SubtargetFeature<"caymanISA",
         "true",
         "Use Cayman ISA">;
 
+def FeatureCFALUBug : SubtargetFeature<"cfalubug",
+        "CFALUBug",
+        "true",
+        "GPU has CF_ALU bug">;
+
 class SubtargetFeatureFetchLimit <string Value> :
                           SubtargetFeature <"fetch"#Value,
         "TexVTXClauseSize",

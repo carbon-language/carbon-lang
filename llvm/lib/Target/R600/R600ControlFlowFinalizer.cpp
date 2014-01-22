@@ -73,6 +73,44 @@ bool CFStack::branchStackContains(CFStack::StackItem Item) {
   return false;
 }
 
+bool CFStack::requiresWorkAroundForInst(unsigned Opcode) {
+  if (Opcode == AMDGPU::CF_ALU_PUSH_BEFORE && ST.hasCaymanISA() &&
+      getLoopDepth() > 1)
+    return true;
+
+  if (!ST.hasCFAluBug())
+    return false;
+
+  switch(Opcode) {
+  default: return false;
+  case AMDGPU::CF_ALU_PUSH_BEFORE:
+  case AMDGPU::CF_ALU_ELSE_AFTER:
+  case AMDGPU::CF_ALU_BREAK:
+  case AMDGPU::CF_ALU_CONTINUE:
+    if (CurrentSubEntries == 0)
+      return false;
+    if (ST.getWavefrontSize() == 64) {
+      // We are being conservative here.  We only require this work-around if
+      // CurrentSubEntries > 3 &&
+      // (CurrentSubEntries % 4 == 3 || CurrentSubEntries % 4 == 0)
+      //
+      // We have to be conservative, because we don't know for certain that
+      // our stack allocation algorithm for Evergreen/NI is correct.  Applying this
+      // work-around when CurrentSubEntries > 3 allows us to over-allocate stack
+      // resources without any problems.
+      return CurrentSubEntries > 3;
+    } else {
+      assert(ST.getWavefrontSize() == 32);
+      // We are being conservative here.  We only require the work-around if
+      // CurrentSubEntries > 7 &&
+      // (CurrentSubEntries % 8 == 7 || CurrentSubEntries % 8 == 0)
+      // See the comment on the wavefront size == 64 case for why we are
+      // being conservative.
+      return CurrentSubEntries > 7;
+    }
+  }
+}
+
 unsigned CFStack::getSubEntrySize(CFStack::StackItem Item) {
   switch(Item) {
   default:
@@ -472,9 +510,12 @@ public:
         if (MI->getOpcode() == AMDGPU::CF_ALU)
           LastAlu.back() = MI;
         I++;
+        bool RequiresWorkAround =
+            CFStack.requiresWorkAroundForInst(MI->getOpcode());
         switch (MI->getOpcode()) {
         case AMDGPU::CF_ALU_PUSH_BEFORE:
-          if (ST.hasCaymanISA() && CFStack.getLoopDepth() > 1) {
+          if (RequiresWorkAround) {
+            DEBUG(dbgs() << "Applying bug work-around for ALU_PUSH_BEFORE\n");
             BuildMI(MBB, MI, MBB.findDebugLoc(MI), TII->get(AMDGPU::CF_PUSH_EG))
                 .addImm(CfCount + 1)
                 .addImm(1);
