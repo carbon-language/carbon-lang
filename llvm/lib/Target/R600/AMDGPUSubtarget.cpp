@@ -39,7 +39,6 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
   EnableIRStructurizer = true;
   EnableIfCvt = true;
   WavefrontSize = 0;
-  CFALUBug = false;
   ParseSubtargetFeatures(GPU, FS);
   DevName = GPU;
 }
@@ -96,11 +95,6 @@ AMDGPUSubtarget::getStackEntrySize() const {
   default:
     llvm_unreachable("Illegal wavefront size.");
   }
-}
-bool
-AMDGPUSubtarget::hasCFAluBug() const {
-  assert(getGeneration() <= NORTHERN_ISLANDS);
-  return CFALUBug;
 }
 bool
 AMDGPUSubtarget::isTargetELF() const {
