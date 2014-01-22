@@ -607,7 +607,7 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
       if (!ShouldSplit)
         continue;
       if (!PreMBB->SplitCriticalEdge(&MBB, this)) {
-        DEBUG(dbgs() << "Failed to split ciritcal edge.\n");
+        DEBUG(dbgs() << "Failed to split critical edge.\n");
         continue;
       }
       Changed = true;
