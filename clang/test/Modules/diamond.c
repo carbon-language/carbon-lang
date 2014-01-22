@@ -3,7 +3,7 @@
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodules-cache-path=%t -fmodule-name=diamond_left %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodules-cache-path=%t -fmodule-name=diamond_right %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodules-cache-path=%t -fmodule-name=diamond_bottom %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t %s -verify
+// RUN: %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -I %S/Inputs %s -verify
 // FIXME: When we have a syntax for modules in C, use that.
 
 @import diamond_bottom;

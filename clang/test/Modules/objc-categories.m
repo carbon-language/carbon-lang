@@ -4,7 +4,7 @@
 // RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -x objective-c -fmodule-name=category_right -emit-module %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -x objective-c -fmodule-name=category_bottom -emit-module %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -x objective-c -fmodule-name=category_other -emit-module %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t %s -verify
+// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I %S/Inputs %s -verify
 
 @import category_bottom;
 

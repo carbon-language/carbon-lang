@@ -8,6 +8,6 @@ int test(id x) {
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -emit-module -fmodule-name=redeclarations_left %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -emit-module -fmodule-name=weird_objc %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t %s -verify
+// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I %S/Inputs %s -verify
 // expected-no-diagnostics
 

@@ -1129,11 +1129,15 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
   } else {
     // Search for a module with the given name.
     Module = PP->getHeaderSearchInfo().lookupModule(ModuleName);
-    std::string ModuleFileName;
-    if (Module) {
-      ModuleFileName = PP->getHeaderSearchInfo().getModuleFileName(Module);
-    } else
-      ModuleFileName = PP->getHeaderSearchInfo().getModuleFileName(ModuleName);
+    if (!Module) {
+      getDiagnostics().Report(ModuleNameLoc, diag::err_module_not_found)
+      << ModuleName
+      << SourceRange(ImportLoc, ModuleNameLoc);
+      ModuleBuildFailed = true;
+      return ModuleLoadResult();
+    }
+
+    std::string ModuleFileName = PP->getHeaderSearchInfo().getModuleFileName(Module);
 
     // If we don't already have an ASTReader, create one now.
     if (!ModuleManager) {
@@ -1180,17 +1184,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     case ASTReader::OutOfDate:
     case ASTReader::Missing: {
       // The module file is missing or out-of-date. Build it.
-
-      // If we don't have a module, we don't know how to build the module file.
-      // Complain and return.
-      if (!Module) {
-        getDiagnostics().Report(ModuleNameLoc, diag::err_module_not_found)
-          << ModuleName
-          << SourceRange(ImportLoc, ModuleNameLoc);
-        ModuleBuildFailed = true;
-        return ModuleLoadResult();
-      }
-
+      assert(Module && "missing module file");
       // Check whether there is a cycle in the module graph.
       ModuleBuildStack ModPath = getSourceManager().getModuleBuildStack();
       ModuleBuildStack::iterator Pos = ModPath.begin(), PosEnd = ModPath.end();
@@ -1266,13 +1260,6 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       KnownModules[Path[0].first] = 0;
       ModuleBuildFailed = true;
       return ModuleLoadResult();
-    }
-    
-    if (!Module) {
-      // If we loaded the module directly, without finding a module map first,
-      // we'll have loaded the module's information from the module itself.
-      Module = PP->getHeaderSearchInfo().getModuleMap()
-                 .findModule((Path[0].first->getName()));
     }
 
     // Cache the result of this top-level module lookup for later.

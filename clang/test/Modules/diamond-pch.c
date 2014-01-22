@@ -3,7 +3,7 @@
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodules-cache-path=%t -fmodule-name=diamond_left %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodules-cache-path=%t -fmodule-name=diamond_right %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodules-cache-path=%t -fmodule-name=diamond_bottom %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodules -x objective-c -emit-pch -fmodules-cache-path=%t -o %t.pch %S/Inputs/diamond.h
+// RUN: %clang_cc1 -fmodules -x objective-c -emit-pch -fmodules-cache-path=%t -I %S/Inputs -o %t.pch %S/Inputs/diamond.h
 // RUN: %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -include-pch %t.pch %s -verify
 // FIXME: When we have a syntax for modules in C, use that.
 
