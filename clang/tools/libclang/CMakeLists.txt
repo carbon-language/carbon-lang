@@ -65,6 +65,13 @@ set(GENERATED_HEADERS
 
 set(LLVM_EXPORTED_SYMBOL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/libclang.exports)
 
+if(MSVC)
+  # Avoid LNK4197 not to spceify libclang.def here.
+  # Each functions is exported as "dllexport" in include/clang-c.
+  # KB835326
+  set(LLVM_EXPORTED_SYMBOL_FILE)
+endif()
+
 if( LLVM_ENABLE_PIC )
   set(SHARED_LIBRARY TRUE)
   add_clang_library(libclang ${SOURCES})
