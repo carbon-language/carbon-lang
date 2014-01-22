@@ -78,6 +78,7 @@ define void @test4(i8 *%P) {
 
 declare void @test4a(i8* align 1 byval)
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
+declare void @llvm.memcpy.p1i8.p1i8.i64(i8 addrspace(1)* nocapture, i8 addrspace(1)* nocapture, i64, i32, i1) nounwind
 
 %struct.S = type { i128, [4 x i8]}
 
@@ -151,6 +152,22 @@ declare noalias i8* @malloc(i32)
 
 ; rdar://11341081
 %struct.big = type { [50 x i32] }
+
+define void @test9_addrspacecast() nounwind ssp uwtable {
+entry:
+; CHECK-LABEL: @test9_addrspacecast(
+; CHECK: f1
+; CHECK-NOT: memcpy
+; CHECK: f2
+  %b = alloca %struct.big, align 4
+  %tmp = alloca %struct.big, align 4
+  call void @f1(%struct.big* sret %tmp)
+  %0 = addrspacecast %struct.big* %b to i8 addrspace(1)*
+  %1 = addrspacecast %struct.big* %tmp to i8 addrspace(1)*
+  call void @llvm.memcpy.p1i8.p1i8.i64(i8 addrspace(1)* %0, i8 addrspace(1)* %1, i64 200, i32 4, i1 false)
+  call void @f2(%struct.big* %b)
+  ret void
+}
 
 define void @test9() nounwind ssp uwtable {
 entry:

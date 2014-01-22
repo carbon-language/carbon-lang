@@ -662,7 +662,7 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   while (!srcUseList.empty()) {
     User *UI = srcUseList.pop_back_val();
 
-    if (isa<BitCastInst>(UI)) {
+    if (isa<BitCastInst>(UI) || isa<AddrSpaceCastInst>(UI)) {
       for (User::use_iterator I = UI->use_begin(), E = UI->use_end();
            I != E; ++I)
         srcUseList.push_back(*I);
