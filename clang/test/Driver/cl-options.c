@@ -223,6 +223,7 @@
 // RUN:     /ZI \
 // RUN:     /Zl \
 // RUN:     /Zp \
+// RUN:     /Zp1 \
 // RUN:     /ZW:nostdlib \
 // RUN:     -- %s 2>&1
 

@@ -251,5 +251,5 @@ def _SLASH_Zg : CLFlag<"Zg">;
 def _SLASH_Zi : CLFlag<"Zi">;
 def _SLASH_ZI : CLFlag<"ZI">;
 def _SLASH_Zl : CLFlag<"Zl">;
-def _SLASH_Zp : CLFlag<"Zp">;
+def _SLASH_Zp : CLJoined<"Zp">;
 def _SLASH_ZW : CLJoined<"ZW">;
