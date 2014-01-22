@@ -439,7 +439,8 @@ unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
   case Instruction::UIToFP:
   case Instruction::Trunc:
   case Instruction::FPTrunc:
-  case Instruction::BitCast: {
+  case Instruction::BitCast:
+  case Instruction::AddrSpaceCast: {
     Type *SrcTy = I->getOperand(0)->getType();
     return TTI->getCastInstrCost(I->getOpcode(), I->getType(), SrcTy);
   }
