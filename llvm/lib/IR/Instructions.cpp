@@ -2818,30 +2818,55 @@ CastInst::castIsValid(Instruction::CastOps op, Value *S, Type *DstTy) {
         return false;
     return SrcTy->getScalarType()->isIntegerTy() &&
            DstTy->getScalarType()->isPointerTy();
-  case Instruction::BitCast:
+  case Instruction::BitCast: {
+    PointerType *SrcPtrTy = dyn_cast<PointerType>(SrcTy->getScalarType());
+    PointerType *DstPtrTy = dyn_cast<PointerType>(DstTy->getScalarType());
+
     // BitCast implies a no-op cast of type only. No bits change.
     // However, you can't cast pointers to anything but pointers.
-    if (SrcTy->isPtrOrPtrVectorTy() != DstTy->isPtrOrPtrVectorTy())
+    if (!SrcPtrTy != !DstPtrTy)
       return false;
 
     // For non-pointer cases, the cast is okay if the source and destination bit
     // widths are identical.
-    if (!SrcTy->isPtrOrPtrVectorTy())
+    if (!SrcPtrTy)
       return SrcTy->getPrimitiveSizeInBits() == DstTy->getPrimitiveSizeInBits();
 
-    // If both are pointers then the address spaces must match and vector of
-    // pointers must have the same number of elements.
-    return SrcTy->getPointerAddressSpace() == DstTy->getPointerAddressSpace() &&
-           SrcTy->isVectorTy() == DstTy->isVectorTy() &&
-           (!SrcTy->isVectorTy() ||
-            SrcTy->getVectorNumElements() == SrcTy->getVectorNumElements());
+    // If both are pointers then the address spaces must match.
+    if (SrcPtrTy->getAddressSpace() != DstPtrTy->getAddressSpace())
+      return false;
 
-  case Instruction::AddrSpaceCast:
-    return SrcTy->isPtrOrPtrVectorTy() && DstTy->isPtrOrPtrVectorTy() &&
-           SrcTy->getPointerAddressSpace() != DstTy->getPointerAddressSpace() &&
-           SrcTy->isVectorTy() == DstTy->isVectorTy() &&
-           (!SrcTy->isVectorTy() ||
-            SrcTy->getVectorNumElements() == SrcTy->getVectorNumElements());
+    // A vector of pointers must have the same number of elements.
+    if (VectorType *SrcVecTy = dyn_cast<VectorType>(SrcTy)) {
+      if (VectorType *DstVecTy = dyn_cast<VectorType>(DstTy))
+        return (SrcVecTy->getNumElements() == DstVecTy->getNumElements());
+
+      return false;
+    }
+
+    return true;
+  }
+  case Instruction::AddrSpaceCast: {
+    PointerType *SrcPtrTy = dyn_cast<PointerType>(SrcTy->getScalarType());
+    if (!SrcPtrTy)
+      return false;
+
+    PointerType *DstPtrTy = dyn_cast<PointerType>(DstTy->getScalarType());
+    if (!DstPtrTy)
+      return false;
+
+    if (SrcPtrTy->getAddressSpace() == DstPtrTy->getAddressSpace())
+      return false;
+
+    if (VectorType *SrcVecTy = dyn_cast<VectorType>(SrcTy)) {
+      if (VectorType *DstVecTy = dyn_cast<VectorType>(DstTy))
+        return (SrcVecTy->getNumElements() == DstVecTy->getNumElements());
+
+      return false;
+    }
+
+    return true;
+  }
   }
 }
 

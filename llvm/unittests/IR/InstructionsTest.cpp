@@ -145,6 +145,7 @@ TEST(InstructionsTest, CastInst) {
 
   Type *V2Int64PtrTy = VectorType::get(Int64PtrTy, 2);
   Type *V2Int32PtrTy = VectorType::get(Int32PtrTy, 2);
+  Type *V4Int32PtrTy = VectorType::get(Int32PtrTy, 4);
 
   const Constant* c8 = Constant::getNullValue(V8x8Ty);
   const Constant* c64 = Constant::getNullValue(V8x64Ty);
@@ -203,6 +204,21 @@ TEST(InstructionsTest, CastInst) {
   EXPECT_TRUE(CastInst::isBitCastable(V2Int32PtrTy, V2Int64PtrTy));
   EXPECT_FALSE(CastInst::isBitCastable(V2Int32Ty, V2Int64Ty));
   EXPECT_FALSE(CastInst::isBitCastable(V2Int64Ty, V2Int32Ty));
+
+
+  EXPECT_FALSE(CastInst::castIsValid(Instruction::BitCast,
+                                     Constant::getNullValue(V4Int32PtrTy),
+                                     V2Int32PtrTy));
+  EXPECT_FALSE(CastInst::castIsValid(Instruction::BitCast,
+                                     Constant::getNullValue(V2Int32PtrTy),
+                                     V4Int32PtrTy));
+
+  EXPECT_FALSE(CastInst::castIsValid(Instruction::AddrSpaceCast,
+                                     Constant::getNullValue(V4Int32PtrAS1Ty),
+                                     V2Int32PtrTy));
+  EXPECT_FALSE(CastInst::castIsValid(Instruction::AddrSpaceCast,
+                                     Constant::getNullValue(V2Int32PtrTy),
+                                     V4Int32PtrAS1Ty));
 
 
   // Check that assertion is not hit when creating a cast with a vector of
