@@ -143,7 +143,7 @@ namespace PR13381 {
 namespace Mutable {
   struct A {
     A(const A &);
-    A(A &) = delete;
+    A(A &) = delete; // expected-note {{deleted here}}
   };
 
   struct B {
@@ -153,7 +153,7 @@ namespace Mutable {
   B::B(const B &) = default;
 
   struct C {
-    mutable A a;
+    mutable A a; // expected-note {{deleted because field 'a' has a deleted copy constructor}}
     C(const C &);
   };
   C::C(const C &) = default; // expected-error{{would delete}}

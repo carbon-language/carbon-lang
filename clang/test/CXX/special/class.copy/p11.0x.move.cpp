@@ -2,21 +2,21 @@
 
 struct Trivial {};
 struct NonTrivial {
-  NonTrivial(NonTrivial&&);
+  NonTrivial(NonTrivial&&); // expected-note{{copy constructor is implicitly deleted}}
 };
 
 // A defaulted move constructor for a class X is defined as deleted if X has:
 
 // -- a variant member with a non-trivial corresponding constructor
 union DeletedNTVariant {
-  NonTrivial NT;
+  NonTrivial NT; // expected-note{{deleted because variant field 'NT' has a non-trivial move constructor}}
   DeletedNTVariant(DeletedNTVariant&&);
 };
 DeletedNTVariant::DeletedNTVariant(DeletedNTVariant&&) = default; // expected-error{{would delete}}
 
 struct DeletedNTVariant2 {
   union {
-    NonTrivial NT;
+    NonTrivial NT; // expected-note{{deleted because variant field 'NT' has a non-trivial move constructor}}
   };
   DeletedNTVariant2(DeletedNTVariant2&&);
 };
@@ -34,7 +34,7 @@ private:
 };
 
 struct HasNoAccess {
-  NoAccess NA;
+  NoAccess NA; // expected-note{{deleted because field 'NA' has an inaccessible move constructor}}
   HasNoAccess(HasNoAccess&&);
 };
 HasNoAccess::HasNoAccess(HasNoAccess&&) = default; // expected-error{{would delete}}
@@ -51,13 +51,16 @@ struct Ambiguity {
 };
 
 struct IsAmbiguous {
-  Ambiguity A;
-  IsAmbiguous(IsAmbiguous&&);
+  Ambiguity A; // expected-note{{deleted because field 'A' has multiple move constructors}}
+  IsAmbiguous(IsAmbiguous&&); // expected-note{{copy constructor is implicitly deleted because 'IsAmbiguous' has a user-declared move constructor}}
 };
 IsAmbiguous::IsAmbiguous(IsAmbiguous&&) = default; // expected-error{{would delete}}
 
 struct Deleted {
-  IsAmbiguous IA;
+  // FIXME: This diagnostic is slightly wrong: the constructor we select to move
+  // 'IA' is deleted, but we select the copy constructor (we ignore the move
+  // constructor, because it was defaulted and deleted).
+  IsAmbiguous IA; // expected-note{{deleted because field 'IA' has a deleted move constructor}}
   Deleted(Deleted&&);
 };
 Deleted::Deleted(Deleted&&) = default; // expected-error{{would delete}}
@@ -70,12 +73,15 @@ struct ConstMember {
 };
 ConstMember::ConstMember(ConstMember&&) = default; // ok, calls copy ctor
 struct ConstMoveOnlyMember {
-  const NonTrivial cnt;
+  // FIXME: This diagnostic is slightly wrong: the constructor we select to move
+  // 'cnt' is deleted, but we select the copy constructor, because the object is
+  // const.
+  const NonTrivial cnt; // expected-note{{deleted because field 'cnt' has a deleted move constructor}}
   ConstMoveOnlyMember(ConstMoveOnlyMember&&);
 };
 ConstMoveOnlyMember::ConstMoveOnlyMember(ConstMoveOnlyMember&&) = default; // expected-error{{would delete}}
 struct VolatileMember {
-  volatile Trivial vt;
+  volatile Trivial vt; // expected-note{{deleted because field 'vt' has no move constructor}}
   VolatileMember(VolatileMember&&);
 };
 VolatileMember::VolatileMember(VolatileMember&&) = default; // expected-error{{would delete}}
@@ -83,17 +89,17 @@ VolatileMember::VolatileMember(VolatileMember&&) = default; // expected-error{{w
 // -- a direct or virtual base class B that cannot be moved because overload
 //    resolution results in an ambiguity or a function that is deleted or
 //    inaccessible
-struct AmbiguousMoveBase : Ambiguity {
-  AmbiguousMoveBase(AmbiguousMoveBase&&);
+struct AmbiguousMoveBase : Ambiguity { // expected-note{{deleted because base class 'Ambiguity' has multiple move constructors}}
+  AmbiguousMoveBase(AmbiguousMoveBase&&); // expected-note{{copy constructor is implicitly deleted}}
 };
 AmbiguousMoveBase::AmbiguousMoveBase(AmbiguousMoveBase&&) = default; // expected-error{{would delete}}
 
-struct DeletedMoveBase : AmbiguousMoveBase {
+struct DeletedMoveBase : AmbiguousMoveBase { // expected-note{{deleted because base class 'AmbiguousMoveBase' has a deleted move constructor}}
   DeletedMoveBase(DeletedMoveBase&&);
 };
 DeletedMoveBase::DeletedMoveBase(DeletedMoveBase&&) = default; // expected-error{{would delete}}
 
-struct InaccessibleMoveBase : NoAccess {
+struct InaccessibleMoveBase : NoAccess { // expected-note{{deleted because base class 'NoAccess' has an inaccessible move constructor}}
   InaccessibleMoveBase(InaccessibleMoveBase&&);
 };
 InaccessibleMoveBase::InaccessibleMoveBase(InaccessibleMoveBase&&) = default; // expected-error{{would delete}}
@@ -108,7 +114,7 @@ private:
 };
 
 struct HasNoAccessDtor {
-  NoAccessDtor NAD;
+  NoAccessDtor NAD; // expected-note {{deleted because field 'NAD' has an inaccessible destructor}}
   HasNoAccessDtor(HasNoAccessDtor&&);
 };
 HasNoAccessDtor::HasNoAccessDtor(HasNoAccessDtor&&) = default; // expected-error{{would delete}}

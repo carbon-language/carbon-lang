@@ -4917,6 +4917,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
       //   [For a] user-provided explicitly-defaulted function [...] if such a
       //   function is implicitly defined as deleted, the program is ill-formed.
       Diag(MD->getLocation(), diag::err_out_of_line_default_deletes) << CSM;
+      ShouldDeleteSpecialMember(MD, CSM, /*Diagnose*/true);
       HadError = true;
     }
   }
