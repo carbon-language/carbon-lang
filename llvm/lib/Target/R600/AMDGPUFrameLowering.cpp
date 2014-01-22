@@ -74,7 +74,10 @@ unsigned AMDGPUFrameLowering::getStackWidth(const MachineFunction &MF) const {
 int AMDGPUFrameLowering::getFrameIndexOffset(const MachineFunction &MF,
                                          int FI) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  unsigned Offset = 0;
+  // Start the offset at 2 so we don't overwrite work group information.
+  // XXX: We should only do this when the shader actually uses this
+  // information.
+  unsigned Offset = 2;
   int UpperBound = FI == -1 ? MFI->getNumObjects() : FI;
 
   for (int i = MFI->getObjectIndexBegin(); i < UpperBound; ++i) {
