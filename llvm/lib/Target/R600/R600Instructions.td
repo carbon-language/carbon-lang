@@ -1547,7 +1547,7 @@ let Predicates = [isEGorCayman] in {
   defm CUBE_eg : CUBE_Common<0xC0>;
 
 let hasSideEffects = 1 in {
-  def MOVA_INT_eg : R600_1OP <0xCC, "MOVA_INT", []>;
+  def MOVA_INT_eg : R600_1OP <0xCC, "MOVA_INT", [], VecALU>;
 }
 
   def TGSI_LIT_Z_eg : TGSI_LIT_Z_Common<MUL_LIT_eg, LOG_CLAMPED_eg, EXP_IEEE_eg>;
