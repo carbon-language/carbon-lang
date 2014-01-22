@@ -116,9 +116,12 @@ let Uses = [EAX] in
 def OUT32ir : Ii8<0xE7, RawFrm, (outs), (ins i8imm:$port),
                   "out{l}\t{%eax, $port|$port, eax}", [], IIC_OUT_IR>, OpSize16;
 
-def IN8  : I<0x6C, RawFrm, (outs), (ins), "ins{b}", [], IIC_INS>;
-def IN16 : I<0x6D, RawFrm, (outs), (ins), "ins{w}", [], IIC_INS>,  OpSize;
-def IN32 : I<0x6D, RawFrm, (outs), (ins), "ins{l}", [], IIC_INS>, OpSize16;
+def IN8  : I<0x6C, RawFrmDst, (outs dstidx8:$dst), (ins),
+             "insb\t{%dx, $dst|$dst, dx}", [], IIC_INS>;
+def IN16 : I<0x6D, RawFrmDst, (outs dstidx16:$dst), (ins),
+             "insw\t{%dx, $dst|$dst, dx}", [], IIC_INS>,  OpSize;
+def IN32 : I<0x6D, RawFrmDst, (outs dstidx32:$dst), (ins),
+             "ins{l|d}\t{%dx, $dst|$dst, dx}", [], IIC_INS>, OpSize16;
 } // SchedRW
 
 //===----------------------------------------------------------------------===//

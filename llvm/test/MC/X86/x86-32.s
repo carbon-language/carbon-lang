@@ -885,17 +885,17 @@ pshufw $90, %mm4, %mm0
 	outsl	%ds:(%esi), %dx
 	outsl	(%esi), %dx
 
-// CHECK: insb # encoding: [0x6c]
+// CHECK: insb %dx, %es:(%edi) # encoding: [0x6c]
 // CHECK: insb
 	insb
 	insb	%dx, %es:(%edi)
 
-// CHECK: insw # encoding: [0x66,0x6d]
+// CHECK: insw %dx, %es:(%edi) # encoding: [0x66,0x6d]
 // CHECK: insw
 	insw
 	insw	%dx, %es:(%edi)
 
-// CHECK: insl # encoding: [0x6d]
+// CHECK: insl %dx, %es:(%edi) # encoding: [0x6d]
 // CHECK: insl
 	insl
 	insl	%dx, %es:(%edi)

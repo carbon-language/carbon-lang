@@ -139,3 +139,8 @@ outsw %fs:(%esi), %dx
 // 64: outsw %fs:(%esi), %dx # encoding: [0x66,0x64,0x67,0x6f]
 // 32: outsw %fs:(%esi), %dx # encoding: [0x66,0x64,0x6f]
 // 16: outsw %fs:(%esi), %dx # encoding: [0x64,0x67,0x6f]
+
+insw %dx, (%edi)
+// 64: insw %dx, %es:(%edi) # encoding: [0x66,0x67,0x6d]
+// 32: insw %dx, %es:(%edi) # encoding: [0x66,0x6d]
+// 16: insw %dx, %es:(%edi) # encoding: [0x67,0x6d]

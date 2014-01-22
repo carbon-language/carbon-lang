@@ -1070,17 +1070,17 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 	outsl	%ds:(%rsi), %dx
 	outsl	(%rsi), %dx
 
-// CHECK: insb # encoding: [0x6c]
+// CHECK: insb  %dx, %es:(%rdi) # encoding: [0x6c]
 // CHECK: insb
 	insb
 	insb	%dx, %es:(%rdi)
 
-// CHECK: insw # encoding: [0x66,0x6d]
+// CHECK: insw  %dx, %es:(%rdi) # encoding: [0x66,0x6d]
 // CHECK: insw
 	insw
 	insw	%dx, %es:(%rdi)
 
-// CHECK: insl # encoding: [0x6d]
+// CHECK: insl %dx, %es:(%rdi) # encoding: [0x6d]
 // CHECK: insl
 	insl
 	insl	%dx, %es:(%rdi)

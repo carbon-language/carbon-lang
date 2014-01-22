@@ -2332,16 +2332,17 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
       delete &Op;
     }
   }
-  // Transform "ins[bwl] %dx, %es:(%edi)" into "ins[bwl]"
-  if (Name.startswith("ins") && Operands.size() == 3 &&
-      (Name == "insb" || Name == "insw" || Name == "insl")) {
-    X86Operand &Op = *(X86Operand*)Operands.begin()[1];
-    X86Operand &Op2 = *(X86Operand*)Operands.begin()[2];
-    if (Op.isReg() && Op.getReg() == X86::DX && isDstOp(Op2)) {
-      Operands.pop_back();
-      Operands.pop_back();
-      delete &Op;
-      delete &Op2;
+
+  // Append default arguments to "ins[bwld]"
+  if (Name.startswith("ins") && Operands.size() == 1 &&
+      (Name == "insb" || Name == "insw" || Name == "insl" ||
+       Name == "insd" )) {
+    if (isParsingIntelSyntax()) {
+      Operands.push_back(X86Operand::CreateReg(X86::DX, NameLoc, NameLoc));
+      Operands.push_back(DefaultMemDIOperand(NameLoc));
+    } else {
+      Operands.push_back(X86Operand::CreateReg(X86::DX, NameLoc, NameLoc));
+      Operands.push_back(DefaultMemDIOperand(NameLoc));
     }
   }
 
