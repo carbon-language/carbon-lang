@@ -38,6 +38,7 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
   CaymanISA = false;
   EnableIRStructurizer = true;
   EnableIfCvt = true;
+  WavefrontSize = 0;
   ParseSubtargetFeatures(GPU, FS);
   DevName = GPU;
 }
@@ -73,6 +74,10 @@ AMDGPUSubtarget::IsIRStructurizerEnabled() const {
 bool
 AMDGPUSubtarget::isIfCvtEnabled() const {
   return EnableIfCvt;
+}
+unsigned
+AMDGPUSubtarget::getWavefrontSize() const {
+  return WavefrontSize;
 }
 bool
 AMDGPUSubtarget::isTargetELF() const {

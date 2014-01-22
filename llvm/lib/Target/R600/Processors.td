@@ -17,45 +17,49 @@ def : Proc<"",           R600_VLIW5_Itin,
     [FeatureR600, FeatureVertexCache]>;
 
 def : Proc<"r600",       R600_VLIW5_Itin,
-    [FeatureR600 , FeatureVertexCache]>;
+    [FeatureR600 , FeatureVertexCache, FeatureWavefrontSize64]>;
+
+def : Proc<"r630",       R600_VLIW5_Itin,
+    [FeatureR600, FeatureVertexCache, FeatureWavefrontSize32]>;
 
 def : Proc<"rs880",      R600_VLIW5_Itin,
-    [FeatureR600]>;
+    [FeatureR600, FeatureWavefrontSize16]>;
 
 def : Proc<"rv670",      R600_VLIW5_Itin,
-    [FeatureR600, FeatureFP64, FeatureVertexCache]>;
+    [FeatureR600, FeatureFP64, FeatureVertexCache, FeatureWavefrontSize64]>;
 
 //===----------------------------------------------------------------------===//
 // R700
 //===----------------------------------------------------------------------===//
 
 def : Proc<"rv710",      R600_VLIW5_Itin,
-    [FeatureR700, FeatureVertexCache]>;
+    [FeatureR700, FeatureVertexCache, FeatureWavefrontSize32]>;
 
 def : Proc<"rv730",      R600_VLIW5_Itin,
-    [FeatureR700, FeatureVertexCache]>;
+    [FeatureR700, FeatureVertexCache, FeatureWavefrontSize32]>;
 
 def : Proc<"rv770",      R600_VLIW5_Itin,
-    [FeatureR700, FeatureFP64, FeatureVertexCache]>;
+    [FeatureR700, FeatureFP64, FeatureVertexCache, FeatureWavefrontSize64]>;
 
 //===----------------------------------------------------------------------===//
 // Evergreen
 //===----------------------------------------------------------------------===//
 
 def : Proc<"cedar",      R600_VLIW5_Itin,
-    [FeatureEvergreen, FeatureVertexCache]>;
+    [FeatureEvergreen, FeatureVertexCache, FeatureWavefrontSize32]>;
 
 def : Proc<"redwood",    R600_VLIW5_Itin,
-    [FeatureEvergreen, FeatureVertexCache]>;
+    [FeatureEvergreen, FeatureVertexCache, FeatureWavefrontSize64]>;
 
 def : Proc<"sumo",       R600_VLIW5_Itin,
-    [FeatureEvergreen]>;
+    [FeatureEvergreen, FeatureWavefrontSize64]>;
 
 def : Proc<"juniper",    R600_VLIW5_Itin,
-    [FeatureEvergreen, FeatureVertexCache]>;
+    [FeatureEvergreen, FeatureVertexCache, FeatureWavefrontSize64]>;
 
 def : Proc<"cypress",    R600_VLIW5_Itin,
-    [FeatureEvergreen, FeatureFP64, FeatureVertexCache]>;
+    [FeatureEvergreen, FeatureFP64, FeatureVertexCache,
+     FeatureWavefrontSize64]>;
 
 //===----------------------------------------------------------------------===//
 // Northern Islands

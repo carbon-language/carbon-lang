@@ -72,6 +72,16 @@ class SubtargetFeatureFetchLimit <string Value> :
 def FeatureFetchLimit8 : SubtargetFeatureFetchLimit <"8">;
 def FeatureFetchLimit16 : SubtargetFeatureFetchLimit <"16">;
 
+class SubtargetFeatureWavefrontSize <int Value> : SubtargetFeature<
+        "wavefrontsize"#Value,
+        "WavefrontSize",
+        !cast<string>(Value),
+        "The number of threads per wavefront">;
+
+def FeatureWavefrontSize16 : SubtargetFeatureWavefrontSize<16>;
+def FeatureWavefrontSize32 : SubtargetFeatureWavefrontSize<32>;
+def FeatureWavefrontSize64 : SubtargetFeatureWavefrontSize<64>;
+
 class SubtargetFeatureGeneration <string Value,
                                   list<SubtargetFeature> Implies> :
         SubtargetFeature <Value, "Gen", "AMDGPUSubtarget::"#Value,
@@ -87,7 +97,7 @@ def FeatureEvergreen : SubtargetFeatureGeneration<"EVERGREEN",
         [FeatureFetchLimit16]>;
 
 def FeatureNorthernIslands : SubtargetFeatureGeneration<"NORTHERN_ISLANDS",
-        [FeatureFetchLimit16]>;
+        [FeatureFetchLimit16, FeatureWavefrontSize64]>;
 
 def FeatureSouthernIslands : SubtargetFeatureGeneration<"SOUTHERN_ISLANDS",
         [Feature64BitPtr, FeatureFP64]>;
