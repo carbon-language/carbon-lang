@@ -1794,6 +1794,10 @@ def LDS_USHORT_READ_RET : R600_LDS_1A <0x39, "LDS_USHORT_READ_RET",
   "JUMP @$ADDR POP:$POP_COUNT"> {
     let COUNT = 0;
   }
+  def CF_PUSH_EG : CF_CLAUSE_EG<11, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
+                                "PUSH @$ADDR POP:$POP_COUNT"> {
+    let COUNT = 0;
+  }
   def CF_ELSE_EG : CF_CLAUSE_EG<13, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
   "ELSE @$ADDR POP:$POP_COUNT"> {
     let COUNT = 0;
@@ -1870,9 +1874,6 @@ def : Pat <
     let COUNT = 0;
   }
 
-  def CF_PUSH_CM : CF_CLAUSE_EG<11, (ins i32imm:$ADDR, i32imm:$POP_COUNT), "PUSH @$ADDR POP:$POP_COUNT"> {
-    let COUNT = 0;
-  }
 
 def : Pat<(fsqrt f32:$src), (MUL R600_Reg32:$src, (RECIPSQRT_CLAMPED_cm $src))>;
 

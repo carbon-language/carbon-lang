@@ -372,7 +372,7 @@ public:
           MaxStack = std::max(MaxStack, CurrentStack);
           HasPush = true;
           if (ST.hasCaymanISA() && CurrentLoopDepth > 1) {
-            BuildMI(MBB, MI, MBB.findDebugLoc(MI), TII->get(AMDGPU::CF_PUSH_CM))
+            BuildMI(MBB, MI, MBB.findDebugLoc(MI), TII->get(AMDGPU::CF_PUSH_EG))
                 .addImm(CfCount + 1)
                 .addImm(1);
             MI->setDesc(TII->get(AMDGPU::CF_ALU));
