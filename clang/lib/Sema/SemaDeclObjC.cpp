@@ -3514,6 +3514,13 @@ void Sema::DiagnoseUnusedBackingIvarInAccessor(Scope *S,
     const ObjCIvarDecl *IV = GetIvarBackingPropertyAccessor(CurMethod, PDecl);
     if (!IV)
       continue;
+    // Property declared as @dynamic must be ignored.
+    if (ObjCPropertyImplDecl *PropertyImpDecl =
+          Context.getObjCPropertyImplDeclForPropertyDecl(PDecl, ImplD))
+      if (PropertyImpDecl->getPropertyImplementation() ==
+            ObjCPropertyImplDecl::Dynamic)
+        continue;
+      
 
     UnusedBackingIvarChecker Checker(*this, CurMethod, IV);
     Checker.TraverseStmt(CurMethod->getBody());

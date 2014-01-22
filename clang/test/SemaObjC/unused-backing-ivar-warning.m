@@ -147,3 +147,26 @@ typedef char BOOL;
   return [o Meth];
 }
 @end
+
+// rdar://15873425
+@protocol MyProtocol
+@property (nonatomic, readonly) int myProperty;
+@end
+
+@interface MyFirstClass : NSObject <MyProtocol>
+@end
+
+@interface MySecondClass : NSObject <MyProtocol>
+@end
+
+@implementation MyFirstClass
+@synthesize myProperty;
+@end
+
+@implementation MySecondClass
+@dynamic myProperty;
+-(int)myProperty  // should not warn; property is dynamic
+{
+    return 0;
+}
+@end

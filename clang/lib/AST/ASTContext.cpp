@@ -4960,6 +4960,34 @@ bool ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
   return false;
 }
 
+ObjCPropertyImplDecl *
+ASTContext::getObjCPropertyImplDeclForPropertyDecl(
+                                      const ObjCPropertyDecl *PD,
+                                      const Decl *Container) const {
+  if (!Container)
+    return 0;
+  if (const ObjCCategoryImplDecl *CID =
+      dyn_cast<ObjCCategoryImplDecl>(Container)) {
+    for (ObjCCategoryImplDecl::propimpl_iterator
+         i = CID->propimpl_begin(), e = CID->propimpl_end();
+         i != e; ++i) {
+      ObjCPropertyImplDecl *PID = *i;
+        if (PID->getPropertyDecl() == PD)
+          return PID;
+      }
+    } else {
+      const ObjCImplementationDecl *OID=cast<ObjCImplementationDecl>(Container);
+      for (ObjCCategoryImplDecl::propimpl_iterator
+           i = OID->propimpl_begin(), e = OID->propimpl_end();
+           i != e; ++i) {
+        ObjCPropertyImplDecl *PID = *i;
+        if (PID->getPropertyDecl() == PD)
+          return PID;
+      }
+    }
+  return 0;
+}
+
 /// getObjCEncodingForPropertyDecl - Return the encoded type for this
 /// property declaration. If non-NULL, Container must be either an
 /// ObjCCategoryImplDecl or ObjCImplementationDecl; it should only be
@@ -4992,37 +5020,12 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
   bool Dynamic = false;
   ObjCPropertyImplDecl *SynthesizePID = 0;
 
-  // FIXME: Duplicated code due to poor abstraction.
-  if (Container) {
-    if (const ObjCCategoryImplDecl *CID =
-        dyn_cast<ObjCCategoryImplDecl>(Container)) {
-      for (ObjCCategoryImplDecl::propimpl_iterator
-             i = CID->propimpl_begin(), e = CID->propimpl_end();
-           i != e; ++i) {
-        ObjCPropertyImplDecl *PID = *i;
-        if (PID->getPropertyDecl() == PD) {
-          if (PID->getPropertyImplementation()==ObjCPropertyImplDecl::Dynamic) {
-            Dynamic = true;
-          } else {
-            SynthesizePID = PID;
-          }
-        }
-      }
-    } else {
-      const ObjCImplementationDecl *OID=cast<ObjCImplementationDecl>(Container);
-      for (ObjCCategoryImplDecl::propimpl_iterator
-             i = OID->propimpl_begin(), e = OID->propimpl_end();
-           i != e; ++i) {
-        ObjCPropertyImplDecl *PID = *i;
-        if (PID->getPropertyDecl() == PD) {
-          if (PID->getPropertyImplementation()==ObjCPropertyImplDecl::Dynamic) {
-            Dynamic = true;
-          } else {
-            SynthesizePID = PID;
-          }
-        }
-      }
-    }
+  if (ObjCPropertyImplDecl *PropertyImpDecl =
+      getObjCPropertyImplDeclForPropertyDecl(PD, Container)) {
+    if (PropertyImpDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic)
+      Dynamic = true;
+    else
+      SynthesizePID = PropertyImpDecl;
   }
 
   // FIXME: This is not very efficient.
