@@ -15,6 +15,7 @@
 #ifndef LLVM_SUPPORT_CASTING_H
 #define LLVM_SUPPORT_CASTING_H
 
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/type_traits.h"
 #include <cassert>
 
@@ -131,7 +132,7 @@ struct isa_impl_wrap<To, FromTy, FromTy> {
 //  if (isa<Type>(myVal)) { ... }
 //
 template <class X, class Y>
-inline bool isa(const Y &Val) {
+LLVM_ATTRIBUTE_UNUSED_RESULT inline bool isa(const Y &Val) {
   return isa_impl_wrap<X, const Y,
                        typename simplify_type<const Y>::SimpleType>::doit(Val);
 }
@@ -245,7 +246,8 @@ inline typename cast_retty<X, Y *>::ret_type cast(Y *Val) {
 // accepted.
 //
 template <class X, class Y>
-inline typename cast_retty<X, Y*>::ret_type cast_or_null(Y *Val) {
+LLVM_ATTRIBUTE_UNUSED_RESULT inline typename cast_retty<X, Y *>::ret_type
+cast_or_null(Y *Val) {
   if (Val == 0) return 0;
   assert(isa<X>(Val) && "cast_or_null<Ty>() argument of incompatible type!");
   return cast<X>(Val);
@@ -261,19 +263,21 @@ inline typename cast_retty<X, Y*>::ret_type cast_or_null(Y *Val) {
 //
 
 template <class X, class Y>
-inline typename enable_if_c<!is_simple_type<Y>::value,
-                            typename cast_retty<X, const Y>::ret_type>::type
+LLVM_ATTRIBUTE_UNUSED_RESULT inline typename enable_if_c<
+    !is_simple_type<Y>::value, typename cast_retty<X, const Y>::ret_type>::type
 dyn_cast(const Y &Val) {
   return isa<X>(Val) ? cast<X>(Val) : 0;
 }
 
 template <class X, class Y>
-inline typename cast_retty<X, Y>::ret_type dyn_cast(Y &Val) {
+LLVM_ATTRIBUTE_UNUSED_RESULT inline typename cast_retty<X, Y>::ret_type
+dyn_cast(Y &Val) {
   return isa<X>(Val) ? cast<X>(Val) : 0;
 }
 
 template <class X, class Y>
-inline typename cast_retty<X, Y *>::ret_type dyn_cast(Y *Val) {
+LLVM_ATTRIBUTE_UNUSED_RESULT inline typename cast_retty<X, Y *>::ret_type
+dyn_cast(Y *Val) {
   return isa<X>(Val) ? cast<X>(Val) : 0;
 }
 
@@ -281,7 +285,8 @@ inline typename cast_retty<X, Y *>::ret_type dyn_cast(Y *Val) {
 // value is accepted.
 //
 template <class X, class Y>
-inline typename cast_retty<X, Y*>::ret_type dyn_cast_or_null(Y *Val) {
+LLVM_ATTRIBUTE_UNUSED_RESULT inline typename cast_retty<X, Y *>::ret_type
+dyn_cast_or_null(Y *Val) {
   return (Val && isa<X>(Val)) ? cast<X>(Val) : 0;
 }
 
