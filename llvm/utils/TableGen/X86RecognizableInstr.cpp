@@ -62,6 +62,7 @@ namespace X86Local {
     RawFrmMemOffs = 7,
     RawFrmSrc   = 8,
     RawFrmDst   = 9,
+    RawFrmDstSrc = 10,
     MRM0r = 16, MRM1r = 17, MRM2r = 18, MRM3r = 19,
     MRM4r = 20, MRM5r = 21, MRM6r = 22, MRM7r = 23,
     MRM0m = 24, MRM1m = 25, MRM2m = 26, MRM3m = 27,
@@ -636,6 +637,10 @@ void RecognizableInstr::emitInstructionSpecifier() {
     HANDLE_OPERAND(relocation);
     return;
   case X86Local::RawFrmDst:
+    HANDLE_OPERAND(relocation);
+    return;
+  case X86Local::RawFrmDstSrc:
+    HANDLE_OPERAND(relocation);
     HANDLE_OPERAND(relocation);
     return;
   case X86Local::RawFrm:

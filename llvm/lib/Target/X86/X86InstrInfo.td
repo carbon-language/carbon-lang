@@ -1166,11 +1166,14 @@ def SCAS32 : I<0xAF, RawFrmDst, (outs), (ins dstidx32:$dst),
 def SCAS64 : RI<0xAF, RawFrmDst, (outs), (ins dstidx64:$dst),
                 "scasq\t{$dst, %rax|rax, $dst}", [], IIC_SCAS>;
 
-def CMPS8 : I<0xA6, RawFrm, (outs), (ins), "cmpsb", [], IIC_CMPS>;
-def CMPS16 : I<0xA7, RawFrm, (outs), (ins), "cmpsw", [], IIC_CMPS>, OpSize;
-def CMPS32 : I<0xA7, RawFrm, (outs), (ins), "cmps{l|d}", [], IIC_CMPS>,
-               OpSize16;
-def CMPS64 : RI<0xA7, RawFrm, (outs), (ins), "cmpsq", [], IIC_CMPS>;
+def CMPS8 : I<0xA6, RawFrmDstSrc, (outs), (ins dstidx8:$dst, srcidx8:$src),
+              "cmpsb\t{$dst, $src|$src, $dst}", [], IIC_CMPS>;
+def CMPS16 : I<0xA7, RawFrmDstSrc, (outs), (ins dstidx16:$dst, srcidx16:$src),
+               "cmpsw\t{$dst, $src|$src, $dst}", [], IIC_CMPS>, OpSize;
+def CMPS32 : I<0xA7, RawFrmDstSrc, (outs), (ins dstidx32:$dst, srcidx32:$src),
+               "cmps{l|d}\t{$dst, $src|$src, $dst}", [], IIC_CMPS>, OpSize16;
+def CMPS64 : RI<0xA7, RawFrmDstSrc, (outs), (ins dstidx64:$dst, srcidx64:$src),
+                "cmpsq\t{$dst, $src|$src, $dst}", [], IIC_CMPS>;
 } // SchedRW
 
 //===----------------------------------------------------------------------===//

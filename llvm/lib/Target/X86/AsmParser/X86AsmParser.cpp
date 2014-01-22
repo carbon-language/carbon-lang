@@ -588,6 +588,11 @@ private:
                                MCStreamer &Out, unsigned &ErrorInfo,
                                bool MatchingInlineAsm);
 
+  /// doSrcDstMatch - Returns true if operands are matching in their
+  /// word size (%si and %di, %esi and %edi, etc.). Order depends on
+  /// the parsing mode (Intel vs. AT&T).
+  bool doSrcDstMatch(X86Operand &Op1, X86Operand &Op2);
+
   /// isSrcOp - Returns true if operand is either (%rsi) or %ds:%(rsi)
   /// in 64bit mode or (%esi) or %es:(%esi) in 32bit mode.
   bool isSrcOp(X86Operand &Op);
@@ -1149,6 +1154,27 @@ struct X86Operand : public MCParsedAsmOperand {
 };
 
 } // end anonymous namespace.
+
+bool X86AsmParser::doSrcDstMatch(X86Operand &Op1, X86Operand &Op2)
+{
+  // Return true and let a normal complaint about bogus operands happen.
+  if (!Op1.isMem() || !Op2.isMem())
+    return true;
+
+  // Actually these might be the other way round if Intel syntax is
+  // being used. It doesn't matter.
+  unsigned diReg = Op1.Mem.BaseReg;
+  unsigned siReg = Op2.Mem.BaseReg;
+
+  if (X86MCRegisterClasses[X86::GR16RegClassID].contains(siReg))
+    return X86MCRegisterClasses[X86::GR16RegClassID].contains(diReg);
+  if (X86MCRegisterClasses[X86::GR32RegClassID].contains(siReg))
+    return X86MCRegisterClasses[X86::GR32RegClassID].contains(diReg);
+  if (X86MCRegisterClasses[X86::GR64RegClassID].contains(siReg))
+    return X86MCRegisterClasses[X86::GR64RegClassID].contains(diReg);
+  // Again, return true and let another error happen.
+  return true;
+}
 
 bool X86AsmParser::isSrcOp(X86Operand &Op) {
   unsigned basereg =
@@ -2368,6 +2394,27 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
       (Name == "scas" || Name == "scasb" || Name == "scasw" ||
        Name == "scasl" || Name == "scasd" || Name == "scasq"))
     Operands.push_back(DefaultMemDIOperand(NameLoc));
+
+  // Add default SI and DI operands to "cmps[bwlq]".
+  if (Name.startswith("cmps") &&
+      (Name == "cmps" || Name == "cmpsb" || Name == "cmpsw" ||
+       Name == "cmpsl" || Name == "cmpsd" || Name == "cmpsq")) {
+    if (Operands.size() == 1) {
+      if (isParsingIntelSyntax()) {
+        Operands.push_back(DefaultMemSIOperand(NameLoc));
+        Operands.push_back(DefaultMemDIOperand(NameLoc));
+      } else {
+        Operands.push_back(DefaultMemDIOperand(NameLoc));
+        Operands.push_back(DefaultMemSIOperand(NameLoc));
+      }
+    } else if (Operands.size() == 3) {
+      X86Operand &Op = *(X86Operand*)Operands.begin()[1];
+      X86Operand &Op2 = *(X86Operand*)Operands.begin()[2];
+      if (!doSrcDstMatch(Op, Op2))
+        return Error(Op.getStartLoc(),
+                     "mismatching source and destination index registers");
+    }
+  }
 
   // FIXME: Hack to handle recognize s{hr,ar,hl} $1, <op>.  Canonicalize to
   // "shift <op>".

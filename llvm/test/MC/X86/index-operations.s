@@ -94,3 +94,28 @@ scas %es:(%di), %ax
 // ERR64: invalid 16-bit base register
 // 16: scasw %es:(%di), %ax # encoding: [0xaf]
 // 32: scasw %es:(%di), %ax # encoding: [0x66,0x67,0xaf]
+
+cmpsb
+// 64: cmpsb %es:(%rdi), (%rsi) # encoding: [0xa6]
+// 32: cmpsb %es:(%edi), (%esi) # encoding: [0xa6]
+// 16: cmpsb %es:(%di), (%si) # encoding: [0xa6]
+
+cmpsw (%edi), (%esi)
+// 64: cmpsw %es:(%edi), (%esi) # encoding: [0x66,0x67,0xa7]
+// 32: cmpsw %es:(%edi), (%esi) # encoding: [0x66,0xa7]
+// 16: cmpsw %es:(%edi), (%esi) # encoding: [0x67,0xa7]
+
+cmpsb (%di), (%esi)
+// ERR64: invalid 16-bit base register
+// ERR32: mismatching source and destination
+// ERR16: mismatching source and destination
+
+cmpsl %es:(%edi), %ss:(%esi)
+// 64: cmpsl %es:(%edi), %ss:(%esi) # encoding: [0x36,0x67,0xa7]
+// 32: cmpsl %es:(%edi), %ss:(%esi) # encoding: [0x36,0xa7]
+// 16: cmpsl %es:(%edi), %ss:(%esi) # encoding: [0x66,0x36,0x67,0xa7]
+
+cmpsq (%rdi), (%rsi)
+// 64: cmpsq %es:(%rdi), (%rsi) # encoding: [0x48,0xa7]
+// ERR32: 64-bit
+// ERR16: 64-bit
