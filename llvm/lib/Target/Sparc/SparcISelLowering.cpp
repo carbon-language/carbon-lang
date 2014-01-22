@@ -2923,10 +2923,70 @@ SparcTargetLowering::getConstraintType(const std::string &Constraint) const {
     switch (Constraint[0]) {
     default:  break;
     case 'r': return C_RegisterClass;
+    case 'I': // SIMM13
+      return C_Other;
     }
   }
 
   return TargetLowering::getConstraintType(Constraint);
+}
+
+TargetLowering::ConstraintWeight SparcTargetLowering::
+getSingleConstraintMatchWeight(AsmOperandInfo &info,
+                               const char *constraint) const {
+  ConstraintWeight weight = CW_Invalid;
+  Value *CallOperandVal = info.CallOperandVal;
+  // If we don't have a value, we can't do a match,
+  // but allow it at the lowest weight.
+  if (CallOperandVal == NULL)
+    return CW_Default;
+
+  // Look at the constraint type.
+  switch (*constraint) {
+  default:
+    weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
+    break;
+  case 'I': // SIMM13
+    if (ConstantInt *C = dyn_cast<ConstantInt>(info.CallOperandVal)) {
+      if (isInt<13>(C->getSExtValue()))
+        weight = CW_Constant;
+    }
+    break;
+  }
+  return weight;
+}
+
+/// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
+/// vector.  If it is invalid, don't add anything to Ops.
+void SparcTargetLowering::
+LowerAsmOperandForConstraint(SDValue Op,
+                             std::string &Constraint,
+                             std::vector<SDValue> &Ops,
+                             SelectionDAG &DAG) const {
+  SDValue Result(0, 0);
+
+  // Only support length 1 constraints for now.
+  if (Constraint.length() > 1)
+    return;
+
+  char ConstraintLetter = Constraint[0];
+  switch (ConstraintLetter) {
+  default: break;
+  case 'I':
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      if (isInt<13>(C->getSExtValue())) {
+        Result = DAG.getTargetConstant(C->getSExtValue(), Op.getValueType());
+        break;
+      }
+      return;
+    }
+  }
+
+  if (Result.getNode()) {
+    Ops.push_back(Result);
+    return;
+  }
+  TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, Ops, DAG);
 }
 
 std::pair<unsigned, const TargetRegisterClass*>
