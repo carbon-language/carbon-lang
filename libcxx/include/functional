@@ -1221,7 +1221,7 @@ public:
     template <class... _ArgTypes>
        _LIBCPP_INLINE_VISIBILITY
        typename __invoke_return<type, _ArgTypes...>::type
-          operator() (_ArgTypes&&... __args)
+          operator() (_ArgTypes&&... __args) const
           {
               return __invoke(__f_, _VSTD::forward<_ArgTypes>(__args)...);
           }

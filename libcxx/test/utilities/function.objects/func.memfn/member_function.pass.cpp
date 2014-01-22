@@ -31,6 +31,8 @@ test0(F f)
     assert(f(a) == 'a');
     A* ap = &a;
     assert(f(ap) == 'a');
+    const F& cf = f;
+    assert(cf(ap) == 'a');
     }
 }
 
@@ -43,6 +45,8 @@ test1(F f)
     assert(f(a, 1) == 'b');
     A* ap = &a;
     assert(f(ap, 2) == 'b');
+    const F& cf = f;
+    assert(cf(ap, 2) == 'b');
     }
 }
 
@@ -55,6 +59,8 @@ test2(F f)
     assert(f(a, 1, 2) == 'c');
     A* ap = &a;
     assert(f(ap, 2, 3.5) == 'c');
+    const F& cf = f;
+    assert(cf(ap, 2, 3.5) == 'c');
     }
 }
 
