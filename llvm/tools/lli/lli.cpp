@@ -668,8 +668,9 @@ int main(int argc, char **argv, char * const *envp) {
                << "  Defaulting to simulated remote execution\n";
         Target.reset(RemoteTarget::createRemoteTarget());
       } else {
-        if (!sys::fs::exists(ChildExecPath)) {
-          errs() << "Unable to find child target: '" << ChildExecPath << "'\n";
+        if (!sys::fs::can_execute(ChildExecPath)) {
+          errs() << "Unable to find usable child executable: '" << ChildExecPath
+                 << "'\n";
           return -1;
         }
         Target.reset(RemoteTarget::createExternalRemoteTarget(ChildExecPath));
