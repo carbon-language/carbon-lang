@@ -1085,12 +1085,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     LexTemplateFunctionForLateParsing(Toks);
 
     if (DP) {
-      FunctionDecl *FnD = 0;
-      if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(DP))
-        FnD = FunTmpl->getTemplatedDecl();
-      else
-        FnD = cast<FunctionDecl>(DP);
-
+      FunctionDecl *FnD = DP->getAsFunction();
       Actions.CheckForFunctionRedefinition(FnD);
       Actions.MarkAsLateParsedTemplate(FnD, DP, Toks);
     }

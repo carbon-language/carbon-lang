@@ -1081,15 +1081,15 @@ static bool TryDiagnoseProtectedAccess(Sema &S, const EffectiveContext &EC,
         (isa<FunctionTemplateDecl>(D) &&
          isa<CXXConstructorDecl>(
                 cast<FunctionTemplateDecl>(D)->getTemplatedDecl()))) {
-      S.Diag(D->getLocation(), diag::note_access_protected_restricted_ctordtor)
-        << isa<CXXDestructorDecl>(D);
-      return true;
+      return S.Diag(D->getLocation(),
+                    diag::note_access_protected_restricted_ctordtor)
+             << isa<CXXDestructorDecl>(D->getAsFunction());
     }
 
     // Otherwise, use the generic diagnostic.
-    S.Diag(D->getLocation(), diag::note_access_protected_restricted_object)
-      << S.Context.getTypeDeclType(ECRecord);
-    return true;
+    return S.Diag(D->getLocation(),
+                  diag::note_access_protected_restricted_object)
+           << S.Context.getTypeDeclType(ECRecord);
   }
 
   return false;
@@ -1748,10 +1748,7 @@ Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
 
 /// Checks access to the target of a friend declaration.
 Sema::AccessResult Sema::CheckFriendAccess(NamedDecl *target) {
-  assert(isa<CXXMethodDecl>(target) ||
-         (isa<FunctionTemplateDecl>(target) &&
-          isa<CXXMethodDecl>(cast<FunctionTemplateDecl>(target)
-                               ->getTemplatedDecl())));
+  assert(isa<CXXMethodDecl>(target->getAsFunction()));
 
   // Friendship lookup is a redeclaration lookup, so there's never an
   // inheritance path modifying access.
@@ -1760,10 +1757,7 @@ Sema::AccessResult Sema::CheckFriendAccess(NamedDecl *target) {
   if (!getLangOpts().AccessControl || access == AS_public)
     return AR_accessible;
 
-  CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(target);
-  if (!method)
-    method = cast<CXXMethodDecl>(
-                     cast<FunctionTemplateDecl>(target)->getTemplatedDecl());
+  CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(target->getAsFunction());
   assert(method->getQualifier());
 
   AccessTarget entity(Context, AccessTarget::Member,

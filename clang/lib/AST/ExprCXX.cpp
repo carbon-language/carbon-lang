@@ -1291,16 +1291,11 @@ static bool hasOnlyNonStaticMemberFunctions(UnresolvedSetIterator begin,
     NamedDecl *decl = *begin;
     if (isa<UnresolvedUsingValueDecl>(decl))
       return false;
-    if (isa<UsingShadowDecl>(decl))
-      decl = cast<UsingShadowDecl>(decl)->getUnderlyingDecl();
 
     // Unresolved member expressions should only contain methods and
     // method templates.
-    assert(isa<CXXMethodDecl>(decl) || isa<FunctionTemplateDecl>(decl));
-
-    if (isa<FunctionTemplateDecl>(decl))
-      decl = cast<FunctionTemplateDecl>(decl)->getTemplatedDecl();
-    if (cast<CXXMethodDecl>(decl)->isStatic())
+    if (cast<CXXMethodDecl>(decl->getUnderlyingDecl()->getAsFunction())
+            ->isStatic())
       return false;
   } while (++begin != end);
 

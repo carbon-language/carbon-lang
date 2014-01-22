@@ -19,13 +19,6 @@
 #include "clang/Sema/Scope.h"
 using namespace clang;
 
-/// Get the FunctionDecl for a function or function template decl.
-static FunctionDecl *getFunctionDecl(Decl *D) {
-  if (FunctionDecl *fn = dyn_cast<FunctionDecl>(D))
-    return fn;
-  return cast<FunctionTemplateDecl>(D)->getTemplatedDecl();
-}
-
 /// ParseCXXInlineMethodDef - We parsed and verified that the specified
 /// Declarator is a well formed C++ inline method definition. Now lex its body
 /// and store its tokens for parsing after the C++ class is complete.
@@ -109,9 +102,9 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
   // the tokens and store them for parsing at the end of the translation unit.
   if (getLangOpts().DelayedTemplateParsing &&
       DefinitionKind == FDK_Definition &&
-      !D.getDeclSpec().isConstexprSpecified() && 
-      !(FnD && getFunctionDecl(FnD) && 
-          getFunctionDecl(FnD)->getResultType()->getContainedAutoType()) &&
+      !D.getDeclSpec().isConstexprSpecified() &&
+      !(FnD && FnD->getAsFunction() &&
+        FnD->getAsFunction()->getResultType()->getContainedAutoType()) &&
       ((Actions.CurContext->isDependentContext() ||
         (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
          TemplateInfo.Kind != ParsedTemplateInfo::ExplicitSpecialization)) &&
@@ -121,7 +114,7 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
     LexTemplateFunctionForLateParsing(Toks);
 
     if (FnD) {
-      FunctionDecl *FD = getFunctionDecl(FnD);
+      FunctionDecl *FD = FnD->getAsFunction();
       Actions.CheckForFunctionRedefinition(FD);
       Actions.MarkAsLateParsedTemplate(FD, FnD, Toks);
     }
@@ -173,7 +166,7 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
     // If you remove this, you can remove the code that clears the flag
     // after parsing the member.
     if (D.getDeclSpec().isFriendSpecified()) {
-      FunctionDecl *FD = getFunctionDecl(FnD);
+      FunctionDecl *FD = FnD->getAsFunction();
       Actions.CheckForFunctionRedefinition(FD);
       FD->setLateTemplateParsed(true);
     }
@@ -456,7 +449,8 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
   ParseFunctionStatementBody(LM.D, FnScope);
 
   // Clear the late-template-parsed bit if we set it before.
-  if (LM.D) getFunctionDecl(LM.D)->setLateTemplateParsed(false);
+  if (LM.D)
+    LM.D->getAsFunction()->setLateTemplateParsed(false);
 
   if (Tok.getLocation() != origLoc) {
     // Due to parsing error, we either went over the cached tokens or

@@ -561,16 +561,10 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
       if (PrevVar->getStorageClass() == SC_Static)
         return LinkageInfo::internal();
     }
-  } else if (isa<FunctionDecl>(D) || isa<FunctionTemplateDecl>(D)) {
+  } else if (const FunctionDecl *Function = D->getAsFunction()) {
     // C++ [temp]p4:
     //   A non-member function template can have internal linkage; any
     //   other template name shall have external linkage.
-    const FunctionDecl *Function = 0;
-    if (const FunctionTemplateDecl *FunTmpl
-                                        = dyn_cast<FunctionTemplateDecl>(D))
-      Function = FunTmpl->getTemplatedDecl();
-    else
-      Function = cast<FunctionDecl>(D);
 
     // Explicitly declared static.
     if (Function->getCanonicalDecl()->getStorageClass() == SC_Static)
@@ -1456,11 +1450,9 @@ bool NamedDecl::isCXXInstanceMember() const {
 
   if (isa<FieldDecl>(D) || isa<IndirectFieldDecl>(D) || isa<MSPropertyDecl>(D))
     return true;
-  if (isa<CXXMethodDecl>(D))
-    return cast<CXXMethodDecl>(D)->isInstance();
-  if (isa<FunctionTemplateDecl>(D))
-    return cast<CXXMethodDecl>(cast<FunctionTemplateDecl>(D)
-                                 ->getTemplatedDecl())->isInstance();
+  if (const CXXMethodDecl *MD =
+          dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()))
+    return MD->isInstance();
   return false;
 }
 

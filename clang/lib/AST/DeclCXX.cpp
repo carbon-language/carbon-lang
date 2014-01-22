@@ -1030,13 +1030,9 @@ CXXRecordDecl::getGenericLambdaTemplateParameterList() const {
 }
 
 static CanQualType GetConversionType(ASTContext &Context, NamedDecl *Conv) {
-  QualType T;
-  if (isa<UsingShadowDecl>(Conv))
-    Conv = cast<UsingShadowDecl>(Conv)->getTargetDecl();
-  if (FunctionTemplateDecl *ConvTemp = dyn_cast<FunctionTemplateDecl>(Conv))
-    T = ConvTemp->getTemplatedDecl()->getResultType();
-  else 
-    T = cast<CXXConversionDecl>(Conv)->getConversionType();
+  QualType T =
+      cast<CXXConversionDecl>(Conv->getUnderlyingDecl()->getAsFunction())
+          ->getConversionType();
   return Context.getCanonicalType(T);
 }
 

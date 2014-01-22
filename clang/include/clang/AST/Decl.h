@@ -110,7 +110,7 @@ class NamedDecl : public Decl {
   DeclarationName Name;
 
 private:
-  NamedDecl *getUnderlyingDeclImpl();
+  NamedDecl *getUnderlyingDeclImpl() LLVM_READONLY;
 
 protected:
   NamedDecl(Kind DK, DeclContext *DC, SourceLocation L, DeclarationName N)

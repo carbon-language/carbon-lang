@@ -660,13 +660,10 @@ QualType clang::getDeclUsageType(ASTContext &C, const NamedDecl *ND) {
     return C.getObjCInterfaceType(Iface);
   
   QualType T;
-  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(ND))
+  if (const FunctionDecl *Function = ND->getAsFunction())
     T = Function->getCallResultType();
   else if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND))
     T = Method->getSendResultType();
-  else if (const FunctionTemplateDecl *FunTmpl =
-               dyn_cast<FunctionTemplateDecl>(ND))
-    T = FunTmpl->getTemplatedDecl()->getCallResultType();
   else if (const EnumConstantDecl *Enumerator = dyn_cast<EnumConstantDecl>(ND))
     T = C.getTypeDeclType(cast<EnumDecl>(Enumerator->getDeclContext()));
   else if (const ObjCPropertyDecl *Property = dyn_cast<ObjCPropertyDecl>(ND))
@@ -2066,14 +2063,11 @@ static void AddResultTypeChunk(ASTContext &Context,
     return;
 
   // Determine the type of the declaration (if it has a type).
-  QualType T;  
-  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(ND))
+  QualType T;
+  if (const FunctionDecl *Function = ND->getAsFunction())
     T = Function->getResultType();
   else if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND))
     T = Method->getResultType();
-  else if (const FunctionTemplateDecl *FunTmpl =
-               dyn_cast<FunctionTemplateDecl>(ND))
-    T = FunTmpl->getTemplatedDecl()->getResultType();
   else if (const EnumConstantDecl *Enumerator = dyn_cast<EnumConstantDecl>(ND))
     T = Context.getTypeDeclType(cast<TypeDecl>(Enumerator->getDeclContext()));
   else if (isa<UnresolvedUsingValueDecl>(ND)) {

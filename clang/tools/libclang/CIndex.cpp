@@ -6267,13 +6267,9 @@ unsigned clang_CXXMethod_isPureVirtual(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return 0;
 
-  const CXXMethodDecl *Method = 0;
   const Decl *D = cxcursor::getCursorDecl(C);
-  if (const FunctionTemplateDecl *FunTmpl =
-          dyn_cast_or_null<FunctionTemplateDecl>(D))
-    Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
-  else
-    Method = dyn_cast_or_null<CXXMethodDecl>(D);
+  const CXXMethodDecl *Method =
+      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : 0;
   return (Method && Method->isVirtual() && Method->isPure()) ? 1 : 0;
 }
 
@@ -6281,13 +6277,9 @@ unsigned clang_CXXMethod_isStatic(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return 0;
   
-  const CXXMethodDecl *Method = 0;
   const Decl *D = cxcursor::getCursorDecl(C);
-  if (const FunctionTemplateDecl *FunTmpl =
-          dyn_cast_or_null<FunctionTemplateDecl>(D))
-    Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
-  else
-    Method = dyn_cast_or_null<CXXMethodDecl>(D);
+  const CXXMethodDecl *Method =
+      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : 0;
   return (Method && Method->isStatic()) ? 1 : 0;
 }
 
@@ -6295,13 +6287,9 @@ unsigned clang_CXXMethod_isVirtual(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return 0;
   
-  const CXXMethodDecl *Method = 0;
   const Decl *D = cxcursor::getCursorDecl(C);
-  if (const FunctionTemplateDecl *FunTmpl =
-          dyn_cast_or_null<FunctionTemplateDecl>(D))
-    Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
-  else
-    Method = dyn_cast_or_null<CXXMethodDecl>(D);
+  const CXXMethodDecl *Method =
+      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : 0;
   return (Method && Method->isVirtual()) ? 1 : 0;
 }
 } // end: extern "C"

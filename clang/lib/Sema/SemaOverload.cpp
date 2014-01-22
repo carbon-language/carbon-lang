@@ -930,24 +930,15 @@ Sema::CheckOverload(Scope *S, FunctionDecl *New, const LookupResult &Old,
       (OldIsUsingDecl || NewIsUsingDecl) && CurContext->isRecord() &&
       !New->getFriendObjectKind();
 
-    if (FunctionTemplateDecl *OldT = dyn_cast<FunctionTemplateDecl>(OldD)) {
-      if (!IsOverload(New, OldT->getTemplatedDecl(), UseMemberUsingDeclRules)) {
-        if (UseMemberUsingDeclRules && OldIsUsingDecl) {
-          HideUsingShadowDecl(S, cast<UsingShadowDecl>(*I));
-          continue;
-        }
-
-        Match = *I;
-        return Ovl_Match;
-      }
-    } else if (FunctionDecl *OldF = dyn_cast<FunctionDecl>(OldD)) {
+    if (FunctionDecl *OldF = OldD->getAsFunction()) {
       if (!IsOverload(New, OldF, UseMemberUsingDeclRules)) {
         if (UseMemberUsingDeclRules && OldIsUsingDecl) {
           HideUsingShadowDecl(S, cast<UsingShadowDecl>(*I));
           continue;
         }
 
-        if (!shouldLinkPossiblyHiddenDecl(*I, New))
+        if (!isa<FunctionTemplateDecl>(OldD) &&
+            !shouldLinkPossiblyHiddenDecl(*I, New))
           continue;
 
         Match = *I;

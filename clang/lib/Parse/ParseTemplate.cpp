@@ -1227,9 +1227,7 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
      return;
 
   // Get the FunctionDecl.
-  FunctionTemplateDecl *FunTmplD = dyn_cast<FunctionTemplateDecl>(LPT.D);
-  FunctionDecl *FunD =
-      FunTmplD ? FunTmplD->getTemplatedDecl() : cast<FunctionDecl>(LPT.D);
+  FunctionDecl *FunD = LPT.D->getAsFunction();
   // Track template parameter depth.
   TemplateParameterDepthRAII CurTemplateDepthTracker(TemplateParameterDepth);
 
@@ -1312,8 +1310,10 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
       Actions.ActOnDefaultCtorInitializers(LPT.D);
 
     if (Tok.is(tok::l_brace)) {
-      assert((!FunTmplD || FunTmplD->getTemplateParameters()->getDepth() <
-                               TemplateParameterDepth) &&
+      assert((!isa<FunctionTemplateDecl>(LPT.D) ||
+              cast<FunctionTemplateDecl>(LPT.D)
+                      ->getTemplateParameters()
+                      ->getDepth() < TemplateParameterDepth) &&
              "TemplateParameterDepth should be greater than the depth of "
              "current template being instantiated!");
       ParseFunctionStatementBody(LPT.D, FnScope);

@@ -2320,11 +2320,7 @@ void Sema::FindAssociatedClassesAndNamespaces(
     for (UnresolvedSetIterator I = ULE->decls_begin(), E = ULE->decls_end();
            I != E; ++I) {
       // Look through any using declarations to find the underlying function.
-      NamedDecl *Fn = (*I)->getUnderlyingDecl();
-
-      FunctionDecl *FDecl = dyn_cast<FunctionDecl>(Fn);
-      if (!FDecl)
-        FDecl = cast<FunctionTemplateDecl>(Fn)->getTemplatedDecl();
+      FunctionDecl *FDecl = (*I)->getUnderlyingDecl()->getAsFunction();
 
       // Add the classes and namespaces associated with the parameter
       // types and return type of this function.
@@ -2814,14 +2810,8 @@ Sema::LookupLiteralOperator(Scope *S, LookupResult &R,
   // operator template, but not both.
   if (FoundRaw && FoundTemplate) {
     Diag(R.getNameLoc(), diag::err_ovl_ambiguous_call) << R.getLookupName();
-    for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
-      Decl *D = *I;
-      if (UsingShadowDecl *USD = dyn_cast<UsingShadowDecl>(D))
-        D = USD->getTargetDecl();
-      if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D))
-        D = FunTmpl->getTemplatedDecl();
-      NoteOverloadCandidate(cast<FunctionDecl>(D));
-    }
+    for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
+      NoteOverloadCandidate((*I)->getUnderlyingDecl()->getAsFunction());
     return LOLR_Error;
   }
 
@@ -2853,14 +2843,8 @@ void ADLResult::insert(NamedDecl *New) {
   }
 
   // Otherwise, decide which is a more recent redeclaration.
-  FunctionDecl *OldFD, *NewFD;
-  if (isa<FunctionTemplateDecl>(New)) {
-    OldFD = cast<FunctionTemplateDecl>(Old)->getTemplatedDecl();
-    NewFD = cast<FunctionTemplateDecl>(New)->getTemplatedDecl();
-  } else {
-    OldFD = cast<FunctionDecl>(Old);
-    NewFD = cast<FunctionDecl>(New);
-  }
+  FunctionDecl *OldFD = Old->getAsFunction();
+  FunctionDecl *NewFD = New->getAsFunction();
 
   FunctionDecl *Cursor = NewFD;
   while (true) {
@@ -3065,8 +3049,8 @@ NamedDecl *VisibleDeclsRecord::checkHidden(NamedDecl *ND) {
       // Functions and function templates in the same scope overload
       // rather than hide.  FIXME: Look for hiding based on function
       // signatures!
-      if ((*I)->isFunctionOrFunctionTemplate() &&
-          ND->isFunctionOrFunctionTemplate() &&
+      if ((*I)->getUnderlyingDecl()->isFunctionOrFunctionTemplate() &&
+          ND->getUnderlyingDecl()->isFunctionOrFunctionTemplate() &&
           SM == ShadowMaps.rbegin())
         continue;
 
