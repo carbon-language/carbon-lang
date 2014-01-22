@@ -79,8 +79,8 @@ namespace test1 {
     -ca;
     // These are all surrogate calls
     ca(pub);
-    ca(prot); // expected-error {{'operator void (*)(class Protected &)' is a protected member}}
-    ca(priv); // expected-error {{'operator void (*)(class Private &)' is a private member}}
+    ca(prot); // expected-error {{'operator void (*)(Protected &)' is a protected member}}
+    ca(priv); // expected-error {{'operator void (*)(Private &)' is a private member}}
   }
 }
 

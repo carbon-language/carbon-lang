@@ -177,7 +177,7 @@ namespace test8 {
   };
 
   void test(A &a) {
-    if (a) return; // expected-error-re {{'operator void *(class test8::A::*)(void){{( __attribute__\(\(thiscall\)\))?}} const' is a private member of 'test8::A'}}
+    if (a) return; // expected-error-re {{'operator void *(test8::A::*)(){{( __attribute__\(\(thiscall\)\))?}} const' is a private member of 'test8::A'}}
   }
 }
 

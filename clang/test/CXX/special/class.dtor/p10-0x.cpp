@@ -7,7 +7,7 @@ template<typename T>
 void b(const T *x, const A *y) {
   x->~decltype(T())();
   x->~decltype(*x)(); // expected-error{{the type of object expression ('const int') does not match the type being destroyed ('decltype(*x)' (aka 'const int &')) in pseudo-destructor expression}} \
-                         expected-error{{no member named '~const struct A &' in 'A'}}
+                         expected-error{{no member named '~const A &' in 'A'}}
   x->~decltype(int())(); // expected-error{{no member named '~int' in 'A'}}
 
   y->~decltype(*y)(); // expected-error{{destructor type 'decltype(*y)' (aka 'const A &') in object destruction expression does not match the type 'const A' of the object being destroyed}}

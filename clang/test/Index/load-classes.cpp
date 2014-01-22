@@ -23,7 +23,7 @@ X::X(int value) {
 // CHECK: load-classes.cpp:5:11: TypeRef=struct X:3:8 Extent=[5:11 - 5:12]
 // CHECK: load-classes.cpp:7:3: CXXDestructor=~X:7:3 Extent=[7:3 - 7:7] [access=protected]
 // FIXME: missing TypeRef in the destructor name
-// CHECK: load-classes.cpp:9:3: CXXConversion=operator struct X *:9:3 Extent=[9:3 - 9:16] [access=private]
+// CHECK: load-classes.cpp:9:3: CXXConversion=operator X *:9:3 Extent=[9:3 - 9:16] [access=private]
 // CHECK: load-classes.cpp:9:12: TypeRef=struct X:3:8 Extent=[9:12 - 9:13]
 // CHECK: load-classes.cpp:12:4: CXXConstructor=X:12:4 (Definition) Extent=[12:1 - 13:2] [access=public]
 // CHECK: load-classes.cpp:12:1: TypeRef=struct X:3:8 Extent=[12:1 - 12:2]

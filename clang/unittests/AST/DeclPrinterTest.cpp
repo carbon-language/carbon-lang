@@ -558,7 +558,7 @@ TEST(DeclPrinter, TestCXXConversionDecl3) {
     "  operator Z();"
     "};",
     methodDecl(ofClass(hasName("A"))).bind("id"),
-    "Z operator struct Z()"));
+    "Z operator Z()"));
     // WRONG; Should be: "operator Z();"
 }
 
