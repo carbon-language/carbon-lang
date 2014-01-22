@@ -89,10 +89,16 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
                               SectionKind::getReadOnly());
     OutStreamer.SwitchSection(CommentSection);
 
-    OutStreamer.EmitRawText(
-      Twine("; Kernel info:\n") +
-      "; NumSgprs: " + Twine(KernelInfo.NumSGPR) + "\n" +
-      "; NumVgprs: " + Twine(KernelInfo.NumVGPR) + "\n");
+    if (STM.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
+      OutStreamer.EmitRawText(
+        Twine("; Kernel info:\n") +
+        "; NumSgprs: " + Twine(KernelInfo.NumSGPR) + "\n" +
+        "; NumVgprs: " + Twine(KernelInfo.NumVGPR) + "\n");
+    } else {
+      R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
+      OutStreamer.EmitRawText(
+        Twine("SQ_PGM_RESOURCES:STACK_SIZE = " + Twine(MFI->StackSize)));
+    }
   }
 
   if (STM.dumpCode()) {
