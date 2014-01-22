@@ -5082,9 +5082,12 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::SETCC) {
     if (!LegalOperations && VT.isVector() &&
         N0.getValueType().getVectorElementType() == MVT::i1) {
+      EVT N0VT = N0.getOperand(0).getValueType();
+      if (getSetCCResultType(N0VT) == N0.getValueType())
+        return SDValue();
+
       // zext(setcc) -> (and (vsetcc), (1, 1, ...) for vectors.
       // Only do this before legalize for now.
-      EVT N0VT = N0.getOperand(0).getValueType();
       EVT EltVT = VT.getVectorElementType();
       SmallVector<SDValue,8> OneOps(VT.getVectorNumElements(),
                                     DAG.getConstant(1, EltVT));

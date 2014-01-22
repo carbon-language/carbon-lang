@@ -122,3 +122,14 @@ define i16 @test12(<16 x i64> %a, <16 x i64> %b) nounwind {
   %res1 = bitcast <16 x i1> %res to i16
   ret i16 %res1
 }
+
+; CHECK-LABEL: test13
+; CHECK: vcmpeqps        %zmm
+; CHECK: vpbroadcastd
+; CHECK: ret
+define <16 x i32> @test13(<16 x float>%a, <16 x float>%b)
+{
+  %cmpvector_i = fcmp oeq <16 x float> %a, %b
+  %conv = zext <16 x i1> %cmpvector_i to <16 x i32>
+  ret <16 x i32> %conv
+}
