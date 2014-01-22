@@ -34,6 +34,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 namespace {
@@ -83,6 +84,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   // system assembler does.
   if (OutStreamer.hasRawTextSupport()) {
     OutStreamer.EmitRawText(Str);
+    OutStreamer.EmitInlineAsmEnd(TM.getSubtarget<MCSubtargetInfo>(), 0);
     return;
   }
 
@@ -115,14 +117,16 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
                                                   OutContext, OutStreamer,
                                                   *MAI));
 
-  // FIXME: It would be nice if we can avoid createing a new instance of
-  // MCSubtargetInfo here given TargetSubtargetInfo is available. However,
-  // we have to watch out for asm directives which can change subtarget
-  // state. e.g. .code 16, .code 32.
-  OwningPtr<MCSubtargetInfo>
-    STI(TM.getTarget().createMCSubtargetInfo(TM.getTargetTriple(),
-                                             TM.getTargetCPU(),
-                                             TM.getTargetFeatureString()));
+  // Reuse the existing Subtarget, because the AsmParser may need to
+  // modify it.  For example, when switching between ARM and
+  // Thumb mode.
+  MCSubtargetInfo* STI =
+    const_cast<MCSubtargetInfo*>(&TM.getSubtarget<MCSubtargetInfo>());
+
+  // Preserve a copy of the original STI because the parser may modify it.
+  // The target can restore the original state in EmitInlineAsmEnd().
+  MCSubtargetInfo STIOrig = *STI;
+
   OwningPtr<MCTargetAsmParser>
     TAP(TM.getTarget().createMCAsmParser(*STI, *Parser, *MII));
   if (!TAP)
@@ -134,6 +138,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   // Don't implicitly switch to the text section before the asm.
   int Res = Parser->Run(/*NoInitialTextSection*/ true,
                         /*NoFinalize*/ true);
+  OutStreamer.EmitInlineAsmEnd(STIOrig, STI);
   if (Res && !HasDiagHandler)
     report_fatal_error("Error parsing inline asm\n");
 }

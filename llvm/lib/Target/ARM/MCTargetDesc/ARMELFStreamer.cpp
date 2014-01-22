@@ -104,6 +104,25 @@ static unsigned GetArchDefaultCPUArch(unsigned ID) {
   return 0;
 }
 
+static bool isThumb(const MCSubtargetInfo& STI) {
+  return (STI.getFeatureBits() & ARM::ModeThumb) != 0;
+}
+
+void ARMTargetStreamer::anchor() {}
+
+void ARMTargetStreamer::emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
+                                         MCSubtargetInfo *EndInfo) {
+  // If either end mode is unknown (EndInfo == NULL) or different than
+  // the start mode, then restore the start mode.
+  const bool WasThumb = isThumb(StartInfo);
+  if (EndInfo == NULL || WasThumb != isThumb(*EndInfo)) {
+    assert(Streamer);
+    Streamer->EmitAssemblerFlag(WasThumb ? MCAF_Code16 : MCAF_Code32);
+    if (EndInfo)
+      EndInfo->ToggleFeature(ARM::ModeThumb);
+  }
+}
+
 namespace {
 
 class ARMELFStreamer;

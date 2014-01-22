@@ -33,6 +33,7 @@ class MCInstPrinter;
 class MCSection;
 class MCStreamer;
 class MCSymbol;
+class MCSubtargetInfo;
 class StringRef;
 class Twine;
 class raw_ostream;
@@ -74,6 +75,15 @@ public:
 
   // Allow a target to add behavior to the EmitLabel of MCStreamer.
   virtual void emitLabel(MCSymbol *Symbol);
+
+  /// Let the target do anything it needs to do after emitting inlineasm.
+  /// This callback can be used restore the original mode in case the
+  /// inlineasm contains directives to switch modes.
+  /// \p StartInfo - the original subtarget info before inline asm
+  /// \p EndInfo   - the final subtarget info after parsing the inline asm,
+  //                 or NULL if the value is unknown.
+  virtual void emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
+                                MCSubtargetInfo *EndInfo) {}
 };
 
 // FIXME: declared here because it is used from
@@ -104,6 +114,8 @@ public:
   virtual void emitArch(unsigned Arch) = 0;
   virtual void finishAttributeSection() = 0;
   virtual void emitInst(uint32_t Inst, char Suffix = '\0') = 0;
+  virtual void emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
+                                MCSubtargetInfo *EndInfo);
 };
 
 /// MCStreamer - Streaming machine code generation interface.  This interface
@@ -689,6 +701,16 @@ public:
   /// the specified string in the output .s file.  This capability is
   /// indicated by the hasRawTextSupport() predicate.  By default this aborts.
   void EmitRawText(const Twine &String);
+
+  /// EmitInlineAsmEnd - Used to perform any cleanup needed after emitting
+  /// inline assembly. Provides the start and end subtarget info values.
+  /// The end subtarget info may be NULL if it is not know, for example, when
+  /// emitting the inline assembly as raw text.
+  virtual void EmitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
+                                MCSubtargetInfo *EndInfo) {
+    if (TargetStreamer)
+      TargetStreamer->emitInlineAsmEnd(StartInfo, EndInfo);
+  }
 
   /// Flush - Causes any cached state to be written out.
   virtual void Flush() {}

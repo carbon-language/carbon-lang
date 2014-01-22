@@ -25,7 +25,6 @@ using namespace llvm;
 // Pin the vtables to this file.
 MCTargetStreamer::~MCTargetStreamer() {}
 void MCTargetStreamer::emitLabel(MCSymbol *Symbol) {}
-void ARMTargetStreamer::anchor() {}
 
 MCStreamer::MCStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer)
     : Context(Ctx), TargetStreamer(TargetStreamer), EmitEHFrame(true),
