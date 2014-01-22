@@ -1184,7 +1184,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 150;
   if (Left.Type == TT_CastRParen)
     return 100;
-  if (Left.is(tok::coloncolon))
+  if (Left.is(tok::coloncolon) ||
+      (Right.is(tok::period) && Style.Language == FormatStyle::LK_Proto))
     return 500;
   if (Left.isOneOf(tok::kw_class, tok::kw_struct))
     return 5000;
