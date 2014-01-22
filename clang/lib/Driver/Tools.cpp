@@ -1699,7 +1699,8 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
           CmdArgs.push_back("-fatal-assembler-warnings");
         } else if (Value == "--noexecstack") {
           CmdArgs.push_back("-mnoexecstack");
-        } else if (Value == "-compress-debug-sections") {
+        } else if (Value == "-compress-debug-sections" ||
+                   Value == "--compress-debug-sections") {
           D.Diag(diag::warn_missing_debug_compression);
         } else if (Value.startswith("-I")) {
           CmdArgs.push_back(Value.data());
