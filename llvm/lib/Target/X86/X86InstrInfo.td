@@ -1772,9 +1772,12 @@ def LODSQ : RI<0xAD, RawFrmSrc, (outs), (ins srcidx64:$src),
 }
 
 let SchedRW = [WriteSystem] in {
-def OUTSB : I<0x6E, RawFrm, (outs), (ins), "outsb", [], IIC_OUTS>;
-def OUTSW : I<0x6F, RawFrm, (outs), (ins), "outsw", [], IIC_OUTS>, OpSize;
-def OUTSL : I<0x6F, RawFrm, (outs), (ins), "outs{l|d}", [], IIC_OUTS>, OpSize16;
+def OUTSB : I<0x6E, RawFrmSrc, (outs), (ins srcidx8:$src),
+             "outsb\t{$src, %dx|dx, $src}", [], IIC_OUTS>;
+def OUTSW : I<0x6F, RawFrmSrc, (outs), (ins srcidx16:$src),
+              "outsw\t{$src, %dx|dx, $src}", [], IIC_OUTS>, OpSize;
+def OUTSL : I<0x6F, RawFrmSrc, (outs), (ins srcidx32:$src),
+              "outs{l|d}\t{$src, %dx|dx, $src}", [], IIC_OUTS>, OpSize16;
 }
 
 // Flag instructions

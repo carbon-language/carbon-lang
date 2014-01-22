@@ -129,3 +129,13 @@ movsl %gs:(%esi), (%edi)
 // 64: movsl %gs:(%esi), %es:(%edi) # encoding: [0x65,0x67,0xa5]
 // 32: movsl %gs:(%esi), %es:(%edi) # encoding: [0x65,0xa5]
 // 16: movsl %gs:(%esi), %es:(%edi) # encoding: [0x66,0x65,0x67,0xa5]
+
+outsb
+// 64: outsb (%rsi), %dx # encoding: [0x6e]
+// 32: outsb (%esi), %dx # encoding: [0x6e]
+// 16: outsb (%si), %dx # encoding: [0x6e]
+
+outsw %fs:(%esi), %dx
+// 64: outsw %fs:(%esi), %dx # encoding: [0x66,0x64,0x67,0x6f]
+// 32: outsw %fs:(%esi), %dx # encoding: [0x66,0x64,0x6f]
+// 16: outsw %fs:(%esi), %dx # encoding: [0x64,0x67,0x6f]

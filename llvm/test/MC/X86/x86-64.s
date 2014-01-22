@@ -1050,21 +1050,21 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 // CHECK: encoding: [0xe0,A]
 	loopnz 0
 
-// CHECK: outsb # encoding: [0x6e]
+// CHECK: outsb (%rsi), %dx # encoding: [0x6e]
 // CHECK: outsb
 // CHECK: outsb
 	outsb
 	outsb	%ds:(%rsi), %dx
 	outsb	(%rsi), %dx
 
-// CHECK: outsw # encoding: [0x66,0x6f]
+// CHECK: outsw (%rsi), %dx # encoding: [0x66,0x6f]
 // CHECK: outsw
 // CHECK: outsw
 	outsw
 	outsw	%ds:(%rsi), %dx
 	outsw	(%rsi), %dx
 
-// CHECK: outsl # encoding: [0x6f]
+// CHECK: outsl (%rsi), %dx # encoding: [0x6f]
 // CHECK: outsl
 	outsl
 	outsl	%ds:(%rsi), %dx

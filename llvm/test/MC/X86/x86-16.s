@@ -789,21 +789,21 @@ pshufw $90, %mm4, %mm0
 // CHECK: encoding: [0xe0,A]
 	loopnz 0
 
-// CHECK: outsb # encoding: [0x6e]
+// CHECK: outsb (%si), %dx # encoding: [0x6e]
 // CHECK: outsb
 // CHECK: outsb
 	outsb
 	outsb	%ds:(%si), %dx
 	outsb	(%si), %dx
 
-// CHECK: outsw # encoding: [0x6f]
+// CHECK: outsw (%si), %dx # encoding: [0x6f]
 // CHECK: outsw
 // CHECK: outsw
 	outsw
 	outsw	%ds:(%si), %dx
 	outsw	(%si), %dx
 
-// CHECK: outsl # encoding: [0x66,0x6f]
+// CHECK: outsl (%si), %dx # encoding: [0x66,0x6f]
 // CHECK: outsl
 	outsl
 	outsl	%ds:(%si), %dx

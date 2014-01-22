@@ -2345,16 +2345,16 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
     }
   }
 
-  // Transform "outs[bwl] %ds:(%esi), %dx" into "out[bwl]"
-  if (Name.startswith("outs") && Operands.size() == 3 &&
-      (Name == "outsb" || Name == "outsw" || Name == "outsl")) {
-    X86Operand &Op = *(X86Operand*)Operands.begin()[1];
-    X86Operand &Op2 = *(X86Operand*)Operands.begin()[2];
-    if (isSrcOp(Op) && Op2.isReg() && Op2.getReg() == X86::DX) {
-      Operands.pop_back();
-      Operands.pop_back();
-      delete &Op;
-      delete &Op2;
+  // Append default arguments to "outs[bwld]"
+  if (Name.startswith("outs") && Operands.size() == 1 &&
+      (Name == "outsb" || Name == "outsw" || Name == "outsl" ||
+       Name == "outsd" )) {
+    if (isParsingIntelSyntax()) {
+      Operands.push_back(DefaultMemSIOperand(NameLoc));
+      Operands.push_back(X86Operand::CreateReg(X86::DX, NameLoc, NameLoc));
+    } else {
+      Operands.push_back(DefaultMemSIOperand(NameLoc));
+      Operands.push_back(X86Operand::CreateReg(X86::DX, NameLoc, NameLoc));
     }
   }
 
