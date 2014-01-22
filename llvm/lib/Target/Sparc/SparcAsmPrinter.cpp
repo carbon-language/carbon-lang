@@ -66,17 +66,23 @@ namespace {
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode,
                                raw_ostream &O);
+
+    void LowerGETPCXAndEmitMCInsts(const MachineInstr *MI);
+
   };
 } // end of anonymous namespace
 
-static MCOperand createPCXCallOP(MCSymbol *Label,
-                                 MCContext &OutContext)
-{
-  const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::Create(Label,
+static MCOperand createSparcMCOperand(SparcMCExpr::VariantKind Kind,
+                                      MCSymbol *Sym, MCContext &OutContext) {
+  const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::Create(Sym,
                                                          OutContext);
-  const SparcMCExpr *expr = SparcMCExpr::Create(SparcMCExpr::VK_Sparc_None,
-                                                MCSym, OutContext);
+  const SparcMCExpr *expr = SparcMCExpr::Create(Kind, MCSym, OutContext);
   return MCOperand::CreateExpr(expr);
+
+}
+static MCOperand createPCXCallOP(MCSymbol *Label,
+                                 MCContext &OutContext) {
+  return createSparcMCOperand(SparcMCExpr::VK_Sparc_None, Label, OutContext);
 }
 
 static MCOperand createPCXRelExprOp(SparcMCExpr::VariantKind Kind,
@@ -116,43 +122,101 @@ static void EmitSETHI(MCStreamer &OutStreamer,
   OutStreamer.EmitInstruction(SETHIInst);
 }
 
-static void EmitOR(MCStreamer &OutStreamer, MCOperand &RS1,
-                   MCOperand &Imm, MCOperand &RD)
+static void EmitBinary(MCStreamer &OutStreamer, unsigned Opcode,
+                       MCOperand &RS1, MCOperand &Src2, MCOperand &RD)
 {
-  MCInst ORInst;
-  ORInst.setOpcode(SP::ORri);
-  ORInst.addOperand(RD);
-  ORInst.addOperand(RS1);
-  ORInst.addOperand(Imm);
-  OutStreamer.EmitInstruction(ORInst);
+  MCInst Inst;
+  Inst.setOpcode(Opcode);
+  Inst.addOperand(RD);
+  Inst.addOperand(RS1);
+  Inst.addOperand(Src2);
+  OutStreamer.EmitInstruction(Inst);
+}
+
+static void EmitOR(MCStreamer &OutStreamer,
+                   MCOperand &RS1, MCOperand &Imm, MCOperand &RD) {
+  EmitBinary(OutStreamer, SP::ORri, RS1, Imm, RD);
 }
 
 static void EmitADD(MCStreamer &OutStreamer,
-                    MCOperand &RS1, MCOperand &RS2, MCOperand &RD)
-{
-  MCInst ADDInst;
-  ADDInst.setOpcode(SP::ADDrr);
-  ADDInst.addOperand(RD);
-  ADDInst.addOperand(RS1);
-  ADDInst.addOperand(RS2);
-  OutStreamer.EmitInstruction(ADDInst);
+                    MCOperand &RS1, MCOperand &RS2, MCOperand &RD) {
+  EmitBinary(OutStreamer, SP::ADDrr, RS1, RS2, RD);
 }
 
-static void LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
-                                      MCStreamer &OutStreamer,
-                                      MCContext &OutContext)
+static void EmitSHL(MCStreamer &OutStreamer,
+                    MCOperand &RS1, MCOperand &Imm, MCOperand &RD) {
+  EmitBinary(OutStreamer, SP::SLLri, RS1, Imm, RD);
+}
+
+
+static void EmitHiLo(MCStreamer &OutStreamer,  MCSymbol *GOTSym,
+                     SparcMCExpr::VariantKind HiKind,
+                     SparcMCExpr::VariantKind LoKind,
+                     MCOperand &RD,
+                     MCContext &OutContext) {
+
+  MCOperand hi = createSparcMCOperand(HiKind, GOTSym, OutContext);
+  MCOperand lo = createSparcMCOperand(LoKind, GOTSym, OutContext);
+  EmitSETHI(OutStreamer, hi, RD);
+  EmitOR(OutStreamer, RD, lo, RD);
+}
+
+void SparcAsmPrinter::LowerGETPCXAndEmitMCInsts(const MachineInstr *MI)
 {
-  const MachineOperand &MO = MI->getOperand(0);
-  MCSymbol *StartLabel = OutContext.CreateTempSymbol();
-  MCSymbol *EndLabel   = OutContext.CreateTempSymbol();
-  MCSymbol *SethiLabel = OutContext.CreateTempSymbol();
   MCSymbol *GOTLabel   =
     OutContext.GetOrCreateSymbol(Twine("_GLOBAL_OFFSET_TABLE_"));
 
+  const MachineOperand &MO = MI->getOperand(0);
   assert(MO.getReg() != SP::O7 &&
          "%o7 is assigned as destination for getpcx!");
 
   MCOperand MCRegOP = MCOperand::CreateReg(MO.getReg());
+
+
+  if (TM.getRelocationModel() != Reloc::PIC_) {
+    // Just load the address of GOT to MCRegOP.
+    switch(TM.getCodeModel()) {
+    default:
+      llvm_unreachable("Unsupported absolute code model");
+    case CodeModel::Small:
+      EmitHiLo(OutStreamer, GOTLabel,
+               SparcMCExpr::VK_Sparc_HI, SparcMCExpr::VK_Sparc_LO,
+               MCRegOP, OutContext);
+      break;
+    case CodeModel::Medium: {
+      EmitHiLo(OutStreamer, GOTLabel,
+               SparcMCExpr::VK_Sparc_H44, SparcMCExpr::VK_Sparc_M44,
+               MCRegOP, OutContext);
+      MCOperand imm = MCOperand::CreateExpr(MCConstantExpr::Create(12,
+                                                                   OutContext));
+      EmitSHL(OutStreamer, MCRegOP, imm, MCRegOP);
+      MCOperand lo = createSparcMCOperand(SparcMCExpr::VK_Sparc_L44,
+                                          GOTLabel, OutContext);
+      EmitOR(OutStreamer, MCRegOP, lo, MCRegOP);
+      break;
+    }
+    case CodeModel::Large: {
+      EmitHiLo(OutStreamer, GOTLabel,
+               SparcMCExpr::VK_Sparc_HH, SparcMCExpr::VK_Sparc_HM,
+               MCRegOP, OutContext);
+      MCOperand imm = MCOperand::CreateExpr(MCConstantExpr::Create(32,
+                                                                   OutContext));
+      EmitSHL(OutStreamer, MCRegOP, imm, MCRegOP);
+      // Use register %o7 to load the lower 32 bits.
+      MCOperand RegO7 = MCOperand::CreateReg(SP::O7);
+      EmitHiLo(OutStreamer, GOTLabel,
+               SparcMCExpr::VK_Sparc_HI, SparcMCExpr::VK_Sparc_LO,
+               RegO7, OutContext);
+      EmitADD(OutStreamer, MCRegOP, RegO7, MCRegOP);
+    }
+    }
+    return;
+  }
+
+  MCSymbol *StartLabel = OutContext.CreateTempSymbol();
+  MCSymbol *EndLabel   = OutContext.CreateTempSymbol();
+  MCSymbol *SethiLabel = OutContext.CreateTempSymbol();
+
   MCOperand RegO7   = MCOperand::CreateReg(SP::O7);
 
   // <StartLabel>:
@@ -188,7 +252,7 @@ void SparcAsmPrinter::EmitInstruction(const MachineInstr *MI)
     // FIXME: Debug Value.
     return;
   case SP::GETPCX:
-    LowerGETPCXAndEmitMCInsts(MI, OutStreamer, OutContext);
+    LowerGETPCXAndEmitMCInsts(MI);
     return;
   }
   MachineBasicBlock::const_instr_iterator I = MI;

@@ -38,8 +38,7 @@ entry:
 
 
 ; v8abs-LABEL:  test_tls_extern
-; v8abs:        or     {{%[goli][0-7]}}, %lo(_GLOBAL_OFFSET_TABLE_+{{.+}}), [[PC:%[goli][0-7]]]
-; v8abs:        add    [[PC]], %o7, %[[GOTBASE:[goli][0-7]]]
+; v8abs:        or     {{%[goli][0-7]}}, %lo(_GLOBAL_OFFSET_TABLE_), %[[GOTBASE:[goli][0-7]]]
 ; v8abs:        sethi  %tie_hi22(extern_symbol), [[R1:%[goli][0-7]]]
 ; v8abs:        add    [[R1]], %tie_lo10(extern_symbol), %[[R2:[goli][0-7]]]
 ; v8abs:        ld     [%[[GOTBASE]]+%[[R2]]], [[R3:%[goli][0-7]]], %tie_ld(extern_symbol)
@@ -47,8 +46,7 @@ entry:
 ; v8abs:        ld     [%[[R4]]]
 
 ; v9abs-LABEL:  test_tls_extern
-; v9abs:        or     {{%[goli][0-7]}}, %lo(_GLOBAL_OFFSET_TABLE_+{{.+}}), [[PC:%[goli][0-7]]]
-; v9abs:        add    [[PC]], %o7, %[[GOTBASE:[goli][0-7]]]
+; v9abs:        or     {{%[goli][0-7]}}, %l44(_GLOBAL_OFFSET_TABLE_), %[[GOTBASE:[goli][0-7]]]
 ; v9abs:        sethi  %tie_hi22(extern_symbol), [[R1:%[goli][0-7]]]
 ; v9abs:        add    [[R1]], %tie_lo10(extern_symbol), %[[R2:[goli][0-7]]]
 ; v9abs:        ldx    [%[[GOTBASE]]+%[[R2]]], [[R3:%[goli][0-7]]], %tie_ldx(extern_symbol)
