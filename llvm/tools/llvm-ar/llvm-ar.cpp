@@ -395,17 +395,25 @@ namespace {
 class NewArchiveIterator {
   bool IsNewMember;
   StringRef Name;
+
   object::Archive::child_iterator OldI;
+
   std::string NewFilename;
+  mutable int NewFD;
+  mutable sys::fs::file_status NewStatus;
 
 public:
   NewArchiveIterator(object::Archive::child_iterator I, StringRef Name);
   NewArchiveIterator(std::string *I, StringRef Name);
   NewArchiveIterator();
   bool isNewMember() const;
-  object::Archive::child_iterator getOld() const;
-  const char *getNew() const;
   StringRef getName() const;
+
+  object::Archive::child_iterator getOld() const;
+
+  const char *getNew() const;
+  int getFD() const;
+  const sys::fs::file_status &getStatus() const;
 };
 }
 
@@ -416,7 +424,7 @@ NewArchiveIterator::NewArchiveIterator(object::Archive::child_iterator I,
     : IsNewMember(false), Name(Name), OldI(I) {}
 
 NewArchiveIterator::NewArchiveIterator(std::string *NewFilename, StringRef Name)
-    : IsNewMember(true), Name(Name), NewFilename(*NewFilename) {}
+    : IsNewMember(true), Name(Name), NewFilename(*NewFilename), NewFD(-1) {}
 
 StringRef NewArchiveIterator::getName() const { return Name; }
 
@@ -430,6 +438,31 @@ object::Archive::child_iterator NewArchiveIterator::getOld() const {
 const char *NewArchiveIterator::getNew() const {
   assert(IsNewMember);
   return NewFilename.c_str();
+}
+
+int NewArchiveIterator::getFD() const {
+  assert(IsNewMember);
+  if (NewFD != -1)
+    return NewFD;
+  failIfError(sys::fs::openFileForRead(NewFilename, NewFD), NewFilename);
+  assert(NewFD != -1);
+
+  failIfError(sys::fs::status(NewFD, NewStatus), NewFilename);
+
+  // Opening a directory doesn't make sense. Let it fail.
+  // Linux cannot open directories with open(2), although
+  // cygwin and *bsd can.
+  if (NewStatus.type() == sys::fs::file_type::directory_file)
+    failIfError(error_code(errc::is_a_directory, posix_category()),
+                NewFilename);
+
+  return NewFD;
+}
+
+const sys::fs::file_status &NewArchiveIterator::getStatus() const {
+  assert(IsNewMember);
+  assert(NewFD != -1 && "Must call getFD first");
+  return NewStatus;
 }
 
 template <typename T>
@@ -670,8 +703,16 @@ static void writeSymbolTable(
     object::ObjectFile *Obj;
     if (I->isNewMember()) {
       const char *Filename = I->getNew();
+      int FD = I->getFD();
+      const sys::fs::file_status &Status = I->getStatus();
+
+      OwningPtr<MemoryBuffer> File;
+      failIfError(MemoryBuffer::getOpenFile(FD, Filename, File,
+                                            Status.getSize(), false),
+                  Filename);
+
       if (ErrorOr<object::ObjectFile *> ObjOrErr =
-              object::ObjectFile::createObjectFile(Filename))
+              object::ObjectFile::createObjectFile(File.take()))
         Obj = ObjOrErr.get();
       else
         Obj = NULL;
@@ -786,19 +827,8 @@ static void performWriteOperation(ArchiveOperation Operation,
 
     if (I->isNewMember()) {
       const char *FileName = I->getNew();
-
-      int FD;
-      failIfError(sys::fs::openFileForRead(FileName, FD), FileName);
-
-      sys::fs::file_status Status;
-      failIfError(sys::fs::status(FD, Status), FileName);
-
-      // Opening a directory doesn't make sense. Let it failed.
-      // Linux cannot open directories with open(2), although
-      // cygwin and *bsd can.
-      if (Status.type() == sys::fs::file_type::directory_file)
-        failIfError(error_code(errc::is_a_directory, posix_category()),
-                    FileName);
+      int FD = I->getFD();
+      const sys::fs::file_status &Status = I->getStatus();
 
       OwningPtr<MemoryBuffer> File;
       failIfError(MemoryBuffer::getOpenFile(FD, FileName, File,
