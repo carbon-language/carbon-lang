@@ -40,6 +40,7 @@ public:
   void printAVXCC(const MCInst *MI, unsigned Op, raw_ostream &O);
   void printPCRelImm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printMemOffset(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printSrcIdx(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printRoundingControl(const MCInst *MI, unsigned Op, raw_ostream &OS);
 
   void printopaquemem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
@@ -100,6 +101,23 @@ public:
     printMemReference(MI, OpNo, O);
   }
 
+
+  void printSrcIdx8(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "byte ptr ";
+    printSrcIdx(MI, OpNo, O);
+  }
+  void printSrcIdx16(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "word ptr ";
+    printSrcIdx(MI, OpNo, O);
+  }
+  void printSrcIdx32(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "dword ptr ";
+    printSrcIdx(MI, OpNo, O);
+  }
+  void printSrcIdx64(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "qword ptr ";
+    printSrcIdx(MI, OpNo, O);
+  }
   void printMemOffs8(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     O << "byte ptr ";
     printMemOffset(MI, OpNo, O);

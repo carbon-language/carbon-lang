@@ -22,6 +22,7 @@ def Pseudo     : Format<0>; def RawFrm     : Format<1>;
 def AddRegFrm  : Format<2>; def MRMDestReg : Format<3>;
 def MRMDestMem : Format<4>; def MRMSrcReg  : Format<5>;
 def MRMSrcMem  : Format<6>; def RawFrmMemOffs : Format<7>;
+def RawFrmSrc  : Format<8>;
 def MRM0r  : Format<16>; def MRM1r  : Format<17>; def MRM2r  : Format<18>;
 def MRM3r  : Format<19>; def MRM4r  : Format<20>; def MRM5r  : Format<21>;
 def MRM6r  : Format<22>; def MRM7r  : Format<23>;

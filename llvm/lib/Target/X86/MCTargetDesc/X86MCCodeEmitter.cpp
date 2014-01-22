@@ -1317,6 +1317,19 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     llvm_unreachable("Unknown FormMask value in X86MCCodeEmitter!");
   case X86II::Pseudo:
     llvm_unreachable("Pseudo instruction shouldn't be emitted");
+  case X86II::RawFrmSrc: {
+    unsigned siReg = MI.getOperand(0).getReg();
+    // Emit segment override opcode prefix as needed (not for %ds).
+    if (MI.getOperand(1).getReg() != X86::DS)
+      EmitSegmentOverridePrefix(CurByte, 1, MI, OS);
+    // Emit OpSize prefix as needed.
+    if ((!is32BitMode() && siReg == X86::ESI) ||
+        (is32BitMode() && siReg == X86::SI))
+      EmitByte(0x67, CurByte, OS);
+    CurOp += 2; // Consume operands.
+    EmitByte(BaseOpcode, CurByte, OS);
+    break;
+  }
   case X86II::RawFrm:
     EmitByte(BaseOpcode, CurByte, OS);
     break;

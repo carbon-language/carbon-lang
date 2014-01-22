@@ -551,6 +551,7 @@ private:
     return 0;
   }
 
+  X86Operand *DefaultMemSIOperand(SMLoc Loc);
   X86Operand *ParseOperand();
   X86Operand *ParseATTOperand();
   X86Operand *ParseIntelOperand();
@@ -922,6 +923,25 @@ struct X86Operand : public MCParsedAsmOperand {
       !getMemIndexReg() && getMemScale() == 1;
   }
 
+  bool isSrcIdx() const {
+    return !getMemIndexReg() && getMemScale() == 1 &&
+      (getMemBaseReg() == X86::RSI || getMemBaseReg() == X86::ESI ||
+       getMemBaseReg() == X86::SI) && isa<MCConstantExpr>(getMemDisp()) &&
+      cast<MCConstantExpr>(getMemDisp())->getValue() == 0;
+  }
+  bool isSrcIdx8() const {
+    return isMem8() && isSrcIdx();
+  }
+  bool isSrcIdx16() const {
+    return isMem16() && isSrcIdx();
+  }
+  bool isSrcIdx32() const {
+    return isMem32() && isSrcIdx();
+  }
+  bool isSrcIdx64() const {
+    return isMem64() && isSrcIdx();
+  }
+
   bool isMemOffs8() const {
     return Kind == Memory && !getMemBaseReg() &&
       !getMemIndexReg() && getMemScale() == 1 && (!Mem.Size || Mem.Size == 8);
@@ -1012,6 +1032,12 @@ struct X86Operand : public MCParsedAsmOperand {
       Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
     else
       Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
+  }
+
+  void addSrcIdxOperands(MCInst &Inst, unsigned N) const {
+    assert((N == 2) && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
+    Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
   }
 
   void addMemOffsOperands(MCInst &Inst, unsigned N) const {
@@ -1228,6 +1254,14 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
 
   Parser.Lex(); // Eat identifier token.
   return false;
+}
+
+X86Operand *X86AsmParser::DefaultMemSIOperand(SMLoc Loc) {
+  unsigned basereg =
+    is64BitMode() ? X86::RSI : (is32BitMode() ? X86::ESI : X86::SI);
+  const MCExpr *Disp = MCConstantExpr::Create(0, getContext());
+  return X86Operand::CreateMem(/*SegReg=*/0, Disp, /*BaseReg=*/basereg,
+                               /*IndexReg=*/0, /*Scale=*/1, Loc, Loc, 0);
 }
 
 X86Operand *X86AsmParser::ParseOperand() {
@@ -2278,36 +2312,14 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
       delete &Op2;
     }
   }
-  // Transform "lods[bwl] %ds:(%esi),{%al,%ax,%eax,%rax}" into "lods[bwl]"
-  if (Name.startswith("lods") && Operands.size() == 3 &&
+  // Transform "lods[bwlq]" into "lods[bwlq] ($SIREG)" for appropriate
+  // values of $SIREG according to the mode. It would be nice if this
+  // could be achieved with InstAlias in the tables.
+  if (Name.startswith("lods") && Operands.size() == 1 &&
       (Name == "lods" || Name == "lodsb" || Name == "lodsw" ||
-       Name == "lodsl" || (is64BitMode() && Name == "lodsq"))) {
-    X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
-    X86Operand *Op2 = static_cast<X86Operand*>(Operands[2]);
-    if (isSrcOp(*Op1) && Op2->isReg()) {
-      const char *ins;
-      unsigned reg = Op2->getReg();
-      bool isLods = Name == "lods";
-      if (reg == X86::AL && (isLods || Name == "lodsb"))
-        ins = "lodsb";
-      else if (reg == X86::AX && (isLods || Name == "lodsw"))
-        ins = "lodsw";
-      else if (reg == X86::EAX && (isLods || Name == "lodsl"))
-        ins = "lodsl";
-      else if (reg == X86::RAX && (isLods || Name == "lodsq"))
-        ins = "lodsq";
-      else
-        ins = NULL;
-      if (ins != NULL) {
-        Operands.pop_back();
-        Operands.pop_back();
-        delete Op1;
-        delete Op2;
-        if (Name != ins)
-          static_cast<X86Operand*>(Operands[0])->setTokenValue(ins);
-      }
-    }
-  }
+       Name == "lodsl" || Name == "lodsd" || Name == "lodsq"))
+    Operands.push_back(DefaultMemSIOperand(NameLoc));
+
   // Transform "stos[bwl] {%al,%ax,%eax,%rax},%es:(%edi)" into "stos[bwl]"
   if (Name.startswith("stos") && Operands.size() == 3 &&
       (Name == "stos" || Name == "stosb" || Name == "stosw" ||

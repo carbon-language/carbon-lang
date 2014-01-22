@@ -42,6 +42,7 @@ public:
   void printSSECC(const MCInst *MI, unsigned Op, raw_ostream &OS);
   void printAVXCC(const MCInst *MI, unsigned Op, raw_ostream &OS);
   void printPCRelImm(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
+  void printSrcIdx(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printMemOffset(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printRoundingControl(const MCInst *MI, unsigned Op, raw_ostream &OS);
 
@@ -89,6 +90,18 @@ public:
     printMemReference(MI, OpNo, O);
   }
 
+  void printSrcIdx8(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    printSrcIdx(MI, OpNo, O);
+  }
+  void printSrcIdx16(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    printSrcIdx(MI, OpNo, O);
+  }
+  void printSrcIdx32(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    printSrcIdx(MI, OpNo, O);
+  }
+  void printSrcIdx64(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    printSrcIdx(MI, OpNo, O);
+  }
   void printMemOffs8(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemOffset(MI, OpNo, O);
   }

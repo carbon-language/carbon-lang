@@ -409,7 +409,8 @@ struct ContextDecision {
   ENUM_ENTRY(ENCODING_Rv,     "Register code of operand size added to the "    \
                               "opcode byte")                                   \
   ENUM_ENTRY(ENCODING_DUP,    "Duplicate of another operand; ID is encoded "   \
-                              "in type")
+                              "in type")                                       \
+  ENUM_ENTRY(ENCODING_SI,     "Source index; encoded in OpSize/Adsize prefix")
 
 #define ENUM_ENTRY(n, d) n,
   typedef enum {
@@ -460,6 +461,10 @@ struct ContextDecision {
   ENUM_ENTRY(TYPE_M16_16,     "2+2-byte (BOUND)")                              \
   ENUM_ENTRY(TYPE_M32_32,     "4+4-byte (BOUND)")                              \
   ENUM_ENTRY(TYPE_M16_64,     "2+8-byte (LIDT, LGDT)")                         \
+  ENUM_ENTRY(TYPE_SRCIDX8,    "1-byte memory at source index")                 \
+  ENUM_ENTRY(TYPE_SRCIDX16,   "2-byte memory at source index")                 \
+  ENUM_ENTRY(TYPE_SRCIDX32,   "4-byte memory at source index")                 \
+  ENUM_ENTRY(TYPE_SRCIDX64,   "8-byte memory at source index")                 \
   ENUM_ENTRY(TYPE_MOFFS8,     "1-byte memory offset (relative to segment "     \
                               "base)")                                         \
   ENUM_ENTRY(TYPE_MOFFS16,    "2-byte")                                        \

@@ -1116,7 +1116,7 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 	movsq	%ds:(%rsi), %es:(%rdi)
 	movsq	(%rsi), %es:(%rdi)
 
-// CHECK: lodsb # encoding: [0xac]
+// CHECK: lodsb (%rsi), %al # encoding: [0xac]
 // CHECK: lodsb
 // CHECK: lodsb
 // CHECK: lodsb
@@ -1127,7 +1127,7 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 	lods	%ds:(%rsi), %al
 	lods	(%rsi), %al
 
-// CHECK: lodsw # encoding: [0x66,0xad]
+// CHECK: lodsw (%rsi), %ax # encoding: [0x66,0xad]
 // CHECK: lodsw
 // CHECK: lodsw
 // CHECK: lodsw
@@ -1138,7 +1138,7 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 	lods	%ds:(%rsi), %ax
 	lods	(%rsi), %ax
 
-// CHECK: lodsl # encoding: [0xad]
+// CHECK: lodsl (%rsi), %eax # encoding: [0xad]
 // CHECK: lodsl
 // CHECK: lodsl
 // CHECK: lodsl
@@ -1149,7 +1149,7 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 	lods	%ds:(%rsi), %eax
 	lods	(%rsi), %eax
 
-// CHECK: lodsq # encoding: [0x48,0xad]
+// CHECK: lodsq (%rsi), %rax # encoding: [0x48,0xad]
 // CHECK: lodsq
 // CHECK: lodsq
 // CHECK: lodsq

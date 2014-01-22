@@ -445,6 +445,26 @@ def brtarget8 : Operand<OtherVT>;
 
 }
 
+def X86SrcIdx8Operand : AsmOperandClass {
+  let Name = "SrcIdx8";
+  let RenderMethod = "addSrcIdxOperands";
+  let SuperClasses = [X86Mem8AsmOperand];
+}
+def X86SrcIdx16Operand : AsmOperandClass {
+  let Name = "SrcIdx16";
+  let RenderMethod = "addSrcIdxOperands";
+  let SuperClasses = [X86Mem16AsmOperand];
+}
+def X86SrcIdx32Operand : AsmOperandClass {
+  let Name = "SrcIdx32";
+  let RenderMethod = "addSrcIdxOperands";
+  let SuperClasses = [X86Mem32AsmOperand];
+}
+def X86SrcIdx64Operand : AsmOperandClass {
+  let Name = "SrcIdx64";
+  let RenderMethod = "addSrcIdxOperands";
+  let SuperClasses = [X86Mem64AsmOperand];
+}
 def X86MemOffs8AsmOperand : AsmOperandClass {
   let Name = "MemOffs8";
   let RenderMethod = "addMemOffsOperands";
@@ -465,8 +485,23 @@ def X86MemOffs64AsmOperand : AsmOperandClass {
   let RenderMethod = "addMemOffsOperands";
   let SuperClasses = [X86Mem64AsmOperand];
 }
-
 let OperandType = "OPERAND_MEMORY" in {
+def srcidx8 : Operand<iPTR> {
+  let ParserMatchClass = X86SrcIdx8Operand;
+  let MIOperandInfo = (ops ptr_rc, i8imm);
+  let PrintMethod = "printSrcIdx8"; }
+def srcidx16 : Operand<iPTR> {
+  let ParserMatchClass = X86SrcIdx16Operand;
+  let MIOperandInfo = (ops ptr_rc, i8imm);
+  let PrintMethod = "printSrcIdx16"; }
+def srcidx32 : Operand<iPTR> {
+  let ParserMatchClass = X86SrcIdx32Operand;
+  let MIOperandInfo = (ops ptr_rc, i8imm);
+  let PrintMethod = "printSrcIdx32"; }
+def srcidx64 : Operand<iPTR> {
+  let ParserMatchClass = X86SrcIdx64Operand;
+  let MIOperandInfo = (ops ptr_rc, i8imm);
+  let PrintMethod = "printSrcIdx64"; }
 def offset8 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs8AsmOperand;
   let MIOperandInfo = (ops i64imm, i8imm);
@@ -1676,10 +1711,14 @@ def REPNE_PREFIX : I<0xF2, RawFrm, (outs),  (ins), "repne", []>;
 
 // String manipulation instructions
 let SchedRW = [WriteMicrocoded] in {
-def LODSB : I<0xAC, RawFrm, (outs), (ins), "lodsb", [], IIC_LODS>;
-def LODSW : I<0xAD, RawFrm, (outs), (ins), "lodsw", [], IIC_LODS>, OpSize;
-def LODSL : I<0xAD, RawFrm, (outs), (ins), "lods{l|d}", [], IIC_LODS>, OpSize16;
-def LODSQ : RI<0xAD, RawFrm, (outs), (ins), "lodsq", [], IIC_LODS>;
+def LODSB : I<0xAC, RawFrmSrc, (outs), (ins srcidx8:$src),
+              "lodsb\t{$src, %al|al, $src}", [], IIC_LODS>;
+def LODSW : I<0xAD, RawFrmSrc, (outs), (ins srcidx16:$src),
+              "lodsw\t{$src, %ax|ax, $src}", [], IIC_LODS>, OpSize;
+def LODSL : I<0xAD, RawFrmSrc, (outs), (ins srcidx32:$src),
+              "lods{l|d}\t{$src, %eax|eax, $src}", [], IIC_LODS>, OpSize16;
+def LODSQ : RI<0xAD, RawFrmSrc, (outs), (ins srcidx64:$src),
+               "lodsq\t{$src, %rax|rax, $src}", [], IIC_LODS>;
 }
 
 let SchedRW = [WriteSystem] in {
@@ -2328,6 +2367,18 @@ def : InstAlias<"clrb $reg", (XOR8rr  GR8 :$reg, GR8 :$reg), 0>;
 def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg), 0>;
 def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg), 0>;
 def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg), 0>;
+
+// lods aliases. Accept the destination being omitted because it's implicit
+// in the mnemonic, or the mnemonic suffix being omitted because it's implicit
+// in the destination.
+def : InstAlias<"lodsb $src", (LODSB srcidx8:$src),  0>;
+def : InstAlias<"lodsw $src", (LODSW srcidx16:$src), 0>;
+def : InstAlias<"lods{l|d} $src", (LODSL srcidx32:$src), 0>;
+def : InstAlias<"lodsq $src", (LODSQ srcidx64:$src), 0>, Requires<[In64BitMode]>;
+def : InstAlias<"lods {$src, %al|al, $src}", (LODSB srcidx8:$src),  0>;
+def : InstAlias<"lods {$src, %ax|ax, $src}", (LODSW srcidx16:$src), 0>;
+def : InstAlias<"lods {$src, %eax|eax, $src}", (LODSL srcidx32:$src), 0>;
+def : InstAlias<"lods {$src, %rax|rax, $src}", (LODSQ srcidx64:$src), 0>, Requires<[In64BitMode]>;
 
 // div and idiv aliases for explicit A register.
 def : InstAlias<"div{b}\t{$src, %al|al, $src}", (DIV8r  GR8 :$src)>;

@@ -259,6 +259,10 @@ namespace X86II {
     /// memory offset as an immediate with a possible segment override.
     RawFrmMemOffs  = 7,
 
+    /// RawFrmSrc - This form is for instructions that use the source index
+    /// register SI/ESI/RSI with a possible segment override.
+    RawFrmSrc      = 8,
+
     /// MRM[0-7][rm] - These forms are used to represent instructions that use
     /// a Mod/RM byte, and use the middle field to hold extended opcode
     /// information.  In the intel manual these are represented as /0, /1, ...
@@ -612,6 +616,7 @@ namespace X86II {
     case X86II::RawFrmImm8:
     case X86II::RawFrmImm16:
     case X86II::RawFrmMemOffs:
+    case X86II::RawFrmSrc:
        return -1;
     case X86II::MRMDestMem:
       return 0;

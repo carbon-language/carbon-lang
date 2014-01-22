@@ -60,6 +60,7 @@ namespace X86Local {
     MRMSrcReg   = 5,
     MRMSrcMem   = 6,
     RawFrmMemOffs = 7,
+    RawFrmSrc   = 8,
     MRM0r = 16, MRM1r = 17, MRM2r = 18, MRM3r = 19,
     MRM4r = 20, MRM5r = 21, MRM6r = 22, MRM7r = 23,
     MRM0m = 24, MRM1m = 25, MRM2m = 26, MRM3m = 27,
@@ -630,6 +631,9 @@ void RecognizableInstr::emitInstructionSpecifier() {
 
   switch (Form) {
   default: llvm_unreachable("Unhandled form");
+  case X86Local::RawFrmSrc:
+    HANDLE_OPERAND(relocation);
+    return;
   case X86Local::RawFrm:
     // Operand 1 (optional) is an address or immediate.
     // Operand 2 (optional) is an immediate.
@@ -1262,6 +1266,10 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("SEGMENT_REG",         TYPE_SEGMENTREG)
   TYPE("DEBUG_REG",           TYPE_DEBUGREG)
   TYPE("CONTROL_REG",         TYPE_CONTROLREG)
+  TYPE("srcidx8",             TYPE_SRCIDX8)
+  TYPE("srcidx16",            TYPE_SRCIDX16)
+  TYPE("srcidx32",            TYPE_SRCIDX32)
+  TYPE("srcidx64",            TYPE_SRCIDX64)
   TYPE("offset8",             TYPE_MOFFS8)
   TYPE("offset16",            TYPE_MOFFS16)
   TYPE("offset32",            TYPE_MOFFS32)
@@ -1474,6 +1482,10 @@ OperandEncoding RecognizableInstr::relocationEncodingFromString
   ENCODING("offset16",        ENCODING_Ia)
   ENCODING("offset32",        ENCODING_Ia)
   ENCODING("offset64",        ENCODING_Ia)
+  ENCODING("srcidx8",         ENCODING_SI)
+  ENCODING("srcidx16",        ENCODING_SI)
+  ENCODING("srcidx32",        ENCODING_SI)
+  ENCODING("srcidx64",        ENCODING_SI)
   errs() << "Unhandled relocation encoding " << s << "\n";
   llvm_unreachable("Unhandled relocation encoding");
 }

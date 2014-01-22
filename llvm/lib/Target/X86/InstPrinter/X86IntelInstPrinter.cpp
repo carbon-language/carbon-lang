@@ -212,6 +212,20 @@ void X86IntelInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
   O << ']';
 }
 
+void X86IntelInstPrinter::printSrcIdx(const MCInst *MI, unsigned Op,
+                                      raw_ostream &O) {
+  const MCOperand &SegReg   = MI->getOperand(Op+1);
+
+  // If this has a segment register, print it.
+  if (SegReg.getReg()) {
+    printOperand(MI, Op+1, O);
+    O << ':';
+  }
+  O << '[';
+  printOperand(MI, Op, O);
+  O << ']';
+}
+
 void X86IntelInstPrinter::printMemOffset(const MCInst *MI, unsigned Op,
                                          raw_ostream &O) {
   const MCOperand &DispSpec = MI->getOperand(Op);

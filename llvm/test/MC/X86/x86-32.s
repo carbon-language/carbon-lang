@@ -921,7 +921,7 @@ pshufw $90, %mm4, %mm0
 	movsl	%ds:(%esi), %es:(%edi)
 	movsl	(%esi), %es:(%edi)
 
-// CHECK: lodsb # encoding: [0xac]
+// CHECK: lodsb (%esi), %al # encoding: [0xac]
 // CHECK: lodsb
 // CHECK: lodsb
 // CHECK: lodsb
@@ -932,7 +932,7 @@ pshufw $90, %mm4, %mm0
 	lods	%ds:(%esi), %al
 	lods	(%esi), %al
 
-// CHECK: lodsw # encoding: [0x66,0xad]
+// CHECK: lodsw (%esi), %ax # encoding: [0x66,0xad]
 // CHECK: lodsw
 // CHECK: lodsw
 // CHECK: lodsw
@@ -943,7 +943,7 @@ pshufw $90, %mm4, %mm0
 	lods	%ds:(%esi), %ax
 	lods	(%esi), %ax
 
-// CHECK: lodsl # encoding: [0xad]
+// CHECK: lodsl (%esi), %eax # encoding: [0xad]
 // CHECK: lodsl
 // CHECK: lodsl
 // CHECK: lodsl
