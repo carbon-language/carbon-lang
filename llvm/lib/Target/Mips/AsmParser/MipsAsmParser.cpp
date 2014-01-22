@@ -203,6 +203,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetNoMacroDirective();
   bool parseSetReorderDirective();
   bool parseSetNoReorderDirective();
+  bool parseSetMips16Directive();
+  bool parseSetNoMips16Directive();
 
   bool parseSetAssignment();
 
@@ -2341,6 +2343,30 @@ bool MipsAsmParser::parseSetNoMacroDirective() {
   return false;
 }
 
+bool MipsAsmParser::parseSetMips16Directive() {
+  Parser.Lex();
+  // If this is not the end of the statement, report an error.
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    reportParseError("unexpected token in statement");
+    return false;
+  }
+  getTargetStreamer().emitDirectiveSetMips16(true);
+  Parser.Lex(); // Consume the EndOfStatement.
+  return false;
+}
+
+bool MipsAsmParser::parseSetNoMips16Directive() {
+  Parser.Lex();
+  // If this is not the end of the statement, report an error.
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    reportParseError("unexpected token in statement");
+    return false;
+  }
+  // For now do nothing.
+  Parser.Lex(); // Consume the EndOfStatement.
+  return false;
+}
+
 bool MipsAsmParser::parseSetAssignment() {
   StringRef Name;
   const MCExpr *Value;
@@ -2382,10 +2408,10 @@ bool MipsAsmParser::parseDirectiveSet() {
     return parseSetMacroDirective();
   } else if (Tok.getString() == "nomacro") {
     return parseSetNoMacroDirective();
+  } else if (Tok.getString() == "mips16") {
+    return parseSetMips16Directive();
   } else if (Tok.getString() == "nomips16") {
-    // Ignore this directive for now.
-    Parser.eatToEndOfStatement();
-    return false;
+    return parseSetNoMips16Directive();
   } else if (Tok.getString() == "nomicromips") {
     getTargetStreamer().emitDirectiveSetNoMicroMips();
     Parser.eatToEndOfStatement();

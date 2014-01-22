@@ -5,8 +5,11 @@
 
         .mips_hack_elf_flags 0x50001003
 
-// CHECK: Flags [ (0x50001005)
+// CHECK: Flags [ (0x54001005)
 
         .abicalls
 
         .option pic0
+ 
+ // Set EF_MIPS_ARCH_ASE_M16 (0x04000000)
+        .set mips16
