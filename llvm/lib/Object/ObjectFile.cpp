@@ -37,9 +37,11 @@ section_iterator ObjectFile::getRelocatedSection(DataRefImpl Sec) const {
   return section_iterator(SectionRef(Sec, this));
 }
 
-ErrorOr<ObjectFile *> ObjectFile::createObjectFile(MemoryBuffer *Object) {
+ErrorOr<ObjectFile *> ObjectFile::createObjectFile(MemoryBuffer *Object,
+                                                   sys::fs::file_magic Type) {
   OwningPtr<MemoryBuffer> ScopedObj(Object);
-  sys::fs::file_magic Type = sys::fs::identify_magic(Object->getBuffer());
+  if (Type == sys::fs::file_magic::unknown)
+    Type = sys::fs::identify_magic(Object->getBuffer());
 
   switch (Type) {
   case sys::fs::file_magic::unknown:

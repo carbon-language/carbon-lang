@@ -580,7 +580,7 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
       delete Result;
     }
   } else if (magic == sys::fs::file_magic::archive) {
-    ErrorOr<Binary *> BinaryOrErr = object::createBinary(Buffer.take());
+    ErrorOr<Binary *> BinaryOrErr = object::createBinary(Buffer.take(), magic);
     if (error(BinaryOrErr.getError(), Filename))
       return;
     OwningPtr<Binary> arch(BinaryOrErr.get());
@@ -631,7 +631,7 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
       }
     }
   } else if (magic == sys::fs::file_magic::macho_universal_binary) {
-    ErrorOr<Binary *> BinaryOrErr = object::createBinary(Buffer.take());
+    ErrorOr<Binary *> BinaryOrErr = object::createBinary(Buffer.take(), magic);
     if (error(BinaryOrErr.getError(), Filename))
       return;
     OwningPtr<Binary> Bin(BinaryOrErr.get());
@@ -649,7 +649,7 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
       }
     }
   } else if (magic.is_object()) {
-    ErrorOr<Binary *> BinaryOrErr = object::createBinary(Buffer.take());
+    ErrorOr<Binary *> BinaryOrErr = object::createBinary(Buffer.take(), magic);
     if (error(BinaryOrErr.getError(), Filename))
       return;
     OwningPtr<Binary> obj(BinaryOrErr.get());

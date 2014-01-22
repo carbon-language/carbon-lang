@@ -18,6 +18,7 @@
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cstring>
 #include <vector>
@@ -377,7 +378,9 @@ public:
   ///        return true.
   /// @brief Create ObjectFile from path.
   static ErrorOr<ObjectFile *> createObjectFile(StringRef ObjectPath);
-  static ErrorOr<ObjectFile *> createObjectFile(MemoryBuffer *Object);
+  static ErrorOr<ObjectFile *>
+  createObjectFile(MemoryBuffer *Object,
+                   sys::fs::file_magic Type = sys::fs::file_magic::unknown);
 
   static inline bool classof(const Binary *v) {
     return v->isObject();
