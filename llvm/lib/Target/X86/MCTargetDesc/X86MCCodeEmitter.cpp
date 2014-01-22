@@ -1318,11 +1318,10 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::Pseudo:
     llvm_unreachable("Pseudo instruction shouldn't be emitted");
   case X86II::RawFrmDstSrc: {
-    unsigned diReg = MI.getOperand(0).getReg();
     unsigned siReg = MI.getOperand(1).getReg();
-    assert(((siReg == X86::SI && diReg == X86::DI) ||
-           (siReg == X86::ESI && diReg == X86::EDI) ||
-            (siReg == X86::RSI && diReg == X86::RDI)) &&
+    assert(((siReg == X86::SI && MI.getOperand(0).getReg() == X86::DI) ||
+            (siReg == X86::ESI && MI.getOperand(0).getReg() == X86::EDI) ||
+            (siReg == X86::RSI && MI.getOperand(0).getReg() == X86::RDI)) &&
            "SI and DI register sizes do not match");
     // Emit segment override opcode prefix as needed (not for %ds).
     if (MI.getOperand(2).getReg() != X86::DS)
