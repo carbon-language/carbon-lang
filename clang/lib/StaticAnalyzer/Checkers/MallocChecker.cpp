@@ -100,13 +100,13 @@ public:
   }
 
   void dump(raw_ostream &OS) const {
-    static const char *const Table[] = {
-      "Allocated",
-      "Released",
-      "Relinquished",
-      "Escaped"
-    };
-    OS << Table[(unsigned) K];
+    switch (static_cast<Kind>(K)) {
+#define CASE(ID) case ID: OS << #ID; break;
+    CASE(Allocated)
+    CASE(Released)
+    CASE(Relinquished)
+    CASE(Escaped)
+    }
   }
 
   LLVM_DUMP_METHOD void dump() const { dump(llvm::errs()); }
