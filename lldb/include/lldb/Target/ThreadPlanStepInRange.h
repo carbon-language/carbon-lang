@@ -73,7 +73,7 @@ protected:
     SetFlagsToDefault ();
     
     bool
-    FrameMatchesAvoidRegexp ();
+    FrameMatchesAvoidCriteria ();
 
 private:
 

@@ -16,6 +16,7 @@
 
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/Function.h"
@@ -273,10 +274,32 @@ ThreadPlanStepInRange::SetDefaultFlagValue (uint32_t new_value)
 }
 
 bool
-ThreadPlanStepInRange::FrameMatchesAvoidRegexp ()
+ThreadPlanStepInRange::FrameMatchesAvoidCriteria ()
 {
     StackFrame *frame = GetThread().GetStackFrameAtIndex(0).get();
-
+    
+    // Check the library list first, as that's cheapest:
+    FileSpecList libraries_to_avoid (GetThread().GetLibrariesToAvoid());
+    size_t num_libraries = libraries_to_avoid.GetSize();
+    bool libraries_say_avoid = false;
+    SymbolContext sc(frame->GetSymbolContext(eSymbolContextModule));
+    FileSpec frame_library(sc.module_sp->GetFileSpec());
+    
+    if (frame_library)
+    {
+        for (size_t i = 0; i < num_libraries; i++)
+        {
+            const FileSpec &file_spec(libraries_to_avoid.GetFileSpecAtIndex(i));
+            if (FileSpec::Equal (file_spec, frame_library, false))
+            {
+                libraries_say_avoid = true;
+                break;
+            }
+        }
+    }
+    if (libraries_say_avoid)
+        return true;
+    
     const RegularExpression *avoid_regexp_to_use = m_avoid_regexp_ap.get();
     if (avoid_regexp_to_use == NULL)
         avoid_regexp_to_use = GetThread().GetSymbolsToAvoidRegexp();
@@ -368,8 +391,8 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
         if (!should_step_out)
         {
             ThreadPlanStepInRange *step_in_range_plan = static_cast<ThreadPlanStepInRange *> (current_plan);
-            // Don't log the should_step_out here, it's easier to do it in FrameMatchesAvoidRegexp.
-            should_step_out = step_in_range_plan->FrameMatchesAvoidRegexp ();
+            // Don't log the should_step_out here, it's easier to do it in FrameMatchesAvoidCriteria.
+            should_step_out = step_in_range_plan->FrameMatchesAvoidCriteria ();
         }
     }
     

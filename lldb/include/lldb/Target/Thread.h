@@ -44,6 +44,9 @@ public:
     const RegularExpression *
     GetSymbolsToAvoidRegexp();
     
+    FileSpecList &
+    GetLibrariesToAvoid() const;
+    
     bool
     GetTraceEnabledState() const;
 };

@@ -18,6 +18,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Interpreter/OptionValueFileSpecList.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -61,12 +62,14 @@ static PropertyDefinition
 g_properties[] =
 {
     { "step-avoid-regexp",  OptionValue::eTypeRegex  , true , REG_EXTENDED, "^std::", NULL, "A regular expression defining functions step-in won't stop in." },
+    { "step-avoid-libraries",  OptionValue::eTypeFileSpecList  , true , REG_EXTENDED, NULL, NULL, "A list of libraries that source stepping won't stop in." },
     { "trace-thread",       OptionValue::eTypeBoolean, false, false, NULL, NULL, "If true, this thread will single-step and log execution." },
     {  NULL               , OptionValue::eTypeInvalid, false, 0    , NULL, NULL, NULL  }
 };
 
 enum {
     ePropertyStepAvoidRegex,
+    ePropertyStepAvoidLibraries,
     ePropertyEnableThreadTrace
 };
 
@@ -130,6 +133,15 @@ ThreadProperties::GetSymbolsToAvoidRegexp()
 {
     const uint32_t idx = ePropertyStepAvoidRegex;
     return m_collection_sp->GetPropertyAtIndexAsOptionValueRegex (NULL, idx);
+}
+
+FileSpecList &
+ThreadProperties::GetLibrariesToAvoid() const
+{
+    const uint32_t idx = ePropertyStepAvoidLibraries;
+    OptionValueFileSpecList *option_value = m_collection_sp->GetPropertyAtIndexAsOptionValueFileSpecList (NULL, false, idx);
+    assert(option_value);
+    return option_value->GetCurrentValue();
 }
 
 bool
