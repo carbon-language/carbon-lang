@@ -967,19 +967,32 @@ entry:
   ret <2 x i32> %vecinit1.i
 }
 
-define <2 x float> @test_scalar_to_vector_f32_to_v2f32(<1 x float> %a) {
+
+define <2 x float> @test_scalar_to_vector_f32_to_v2f32(<2 x float> %a) {
+; CHECK-LABEL: test_scalar_to_vector_f32_to_v2f32:
+; CHECK: fmaxp s{{[0-9]+}}, v{{[0-9]+}}.2s
+; CHECK-NEXT: ret
 entry:
-  %0 = extractelement <1 x float> %a, i32 0
-  %vecinit1.i = insertelement <2 x float> undef, float %0, i32 0
+  %0 = call float @llvm.aarch64.neon.vpmax.f32.v2f32(<2 x float> %a)
+  %1 = insertelement <1 x float> undef, float %0, i32 0
+  %2 = extractelement <1 x float> %1, i32 0
+  %vecinit1.i = insertelement <2 x float> undef, float %2, i32 0
   ret <2 x float> %vecinit1.i
 }
 
-define <4 x float> @test_scalar_to_vector_f32_to_v4f32(<1 x float> %a) {
+define <4 x float> @test_scalar_to_vector_f32_to_v4f32(<2 x float> %a) {
+; CHECK-LABEL: test_scalar_to_vector_f32_to_v4f32:
+; CHECK: fmaxp s{{[0-9]+}}, v{{[0-9]+}}.2s
+; CHECK-NEXT: ret
 entry:
-  %0 = extractelement <1 x float> %a, i32 0
-  %vecinit1.i = insertelement <4 x float> undef, float %0, i32 0
+  %0 = call float @llvm.aarch64.neon.vpmax.f32.v2f32(<2 x float> %a)
+  %1 = insertelement <1 x float> undef, float %0, i32 0
+  %2 = extractelement <1 x float> %1, i32 0
+  %vecinit1.i = insertelement <4 x float> undef, float %2, i32 0
   ret <4 x float> %vecinit1.i
 }
+
+declare float @llvm.aarch64.neon.vpmax.f32.v2f32(<2 x float>)
 
 define <16 x i8> @test_concat_v16i8_v16i8_v16i8(<16 x i8> %x, <16 x i8> %y) #0 {
 ; CHECK-LABEL: test_concat_v16i8_v16i8_v16i8:
