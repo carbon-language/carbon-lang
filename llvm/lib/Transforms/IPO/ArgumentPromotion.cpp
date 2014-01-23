@@ -807,6 +807,16 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
       I->replaceAllUsesWith(TheAlloca);
       TheAlloca->takeName(I);
       AA.replaceWithNewValue(I, TheAlloca);
+
+      // If the alloca is used in a call, we must clear the tail flag since
+      // the callee now uses an alloca from the caller.
+      for (Value::use_iterator UI = TheAlloca->use_begin(),
+             E = TheAlloca->use_end(); UI != E; ++UI) {
+        CallInst *Call = dyn_cast<CallInst>(*UI);
+        if (!Call)
+          continue;
+        Call->setTailCall(false);
+      }
       continue;
     }
 
