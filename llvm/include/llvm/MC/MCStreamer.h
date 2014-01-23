@@ -344,9 +344,6 @@ public:
   /// InitSections - Create the default sections and set the initial one.
   virtual void InitSections() = 0;
 
-  /// InitToTextSection - Create a text section and switch the streamer to it.
-  virtual void InitToTextSection() = 0;
-
   /// AssignSection - Sets the symbol's section.
   ///
   /// Each emitted symbol will be tracked in the ordering table,

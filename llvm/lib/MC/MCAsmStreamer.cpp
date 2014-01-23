@@ -129,10 +129,6 @@ public:
                              const MCExpr *Subsection);
 
   virtual void InitSections() {
-    InitToTextSection();
-  }
-
-  virtual void InitToTextSection() {
     SwitchSection(getContext().getObjectFileInfo()->getTextSection());
   }
 

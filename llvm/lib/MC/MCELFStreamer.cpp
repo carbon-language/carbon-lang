@@ -53,10 +53,6 @@ inline void MCELFStreamer::SetSectionBss() {
 MCELFStreamer::~MCELFStreamer() {
 }
 
-void MCELFStreamer::InitToTextSection() {
-  SetSectionText();
-}
-
 void MCELFStreamer::InitSections() {
   // This emulates the same behavior of GNU as. This makes it easier
   // to compare the output as the major sections are in the same order.

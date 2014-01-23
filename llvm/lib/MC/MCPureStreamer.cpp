@@ -35,7 +35,6 @@ public:
   /// @{
 
   virtual void InitSections();
-  virtual void InitToTextSection();
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
@@ -106,10 +105,6 @@ public:
 } // end anonymous namespace.
 
 void MCPureStreamer::InitSections() {
-  InitToTextSection();
-}
-
-void MCPureStreamer::InitToTextSection() {
   SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 

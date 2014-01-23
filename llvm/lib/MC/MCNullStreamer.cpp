@@ -24,9 +24,6 @@ namespace {
     /// @name MCStreamer Interface
     /// @{
 
-    virtual void InitToTextSection() {
-    }
-
     virtual void InitSections() {
     }
 

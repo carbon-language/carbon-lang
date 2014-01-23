@@ -46,7 +46,6 @@ public:
   /// @{
 
   virtual void InitSections();
-  virtual void InitToTextSection();
   virtual void ChangeSection(const MCSection *Section,
                              const MCExpr *Subsection);
   virtual void EmitLabel(MCSymbol *Symbol);
