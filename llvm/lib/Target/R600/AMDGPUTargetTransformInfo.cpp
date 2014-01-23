@@ -18,7 +18,9 @@
 #define DEBUG_TYPE "AMDGPUtti"
 #include "AMDGPU.h"
 #include "AMDGPUTargetMachine.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/CostTable.h"
 #include "llvm/Target/TargetLowering.h"
@@ -73,6 +75,8 @@ public:
 
   virtual bool hasBranchDivergence() const;
 
+  virtual void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const;
+
   /// @}
 };
 
@@ -88,3 +92,28 @@ llvm::createAMDGPUTargetTransformInfoPass(const AMDGPUTargetMachine *TM) {
 }
 
 bool AMDGPUTTI::hasBranchDivergence() const { return true; }
+
+void AMDGPUTTI::getUnrollingPreferences(Loop *L,
+                                        UnrollingPreferences &UP) const {
+  for (Loop::block_iterator BI = L->block_begin(), BE = L->block_end();
+                                                  BI != BE; ++BI) {
+    BasicBlock *BB = *BI;
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
+                                                      I != E; ++I) {
+      const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I);
+      if (!GEP)
+        continue;
+      const Value *Ptr = GEP->getPointerOperand();
+      const AllocaInst *Alloca = dyn_cast<AllocaInst>(GetUnderlyingObject(Ptr));
+      if (Alloca) {
+        // We want to do whatever we can to limit the number of alloca
+        // instructions that make it through to the code generator.  allocas
+        // require us to use indirect addressing, which is slow and prone to
+        // compiler bugs.  If this loop does an address calculation on an
+        // alloca ptr, then we want to unconditionally unroll the loop.  In most
+        // cases, this will make it possible for SROA to eliminate these allocas.
+        UP.Threshold = UINT_MAX;
+      }
+    }
+  }
+}
