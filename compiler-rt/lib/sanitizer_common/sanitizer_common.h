@@ -489,7 +489,7 @@ F IndirectExternCall(F f) {
   return indirect_call_wrapper ? ((WrapF)indirect_call_wrapper)(f) : f;
 }
 #else
-inline void SetIndirectCallWrapper(uptr wrapper) {}
+INLINE void SetIndirectCallWrapper(uptr wrapper) {}
 template <typename F>
 F IndirectExternCall(F f) {
   return f;
