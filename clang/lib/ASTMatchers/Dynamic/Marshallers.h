@@ -542,8 +542,8 @@ public:
   bool isVariadic() const {
     bool Overload0Variadic = Overloads[0]->isVariadic();
 #ifndef NDEBUG
-    for (std::vector<MatcherDesc *>::const_iterator I = Overloads.begin(),
-                                                    E = Overloads.end();
+    for (std::vector<MatcherDescriptor *>::const_iterator I = Overloads.begin(),
+                                                          E = Overloads.end();
          I != E; ++I) {
       assert(Overload0Variadic == (*I)->isVariadic());
     }
@@ -554,8 +554,8 @@ public:
   unsigned getNumArgs() const {
     unsigned Overload0NumArgs = Overloads[0]->getNumArgs();
 #ifndef NDEBUG
-    for (std::vector<MatcherDesc *>::const_iterator I = Overloads.begin(),
-                                                    E = Overloads.end();
+    for (std::vector<MatcherDescriptor *>::const_iterator I = Overloads.begin(),
+                                                          E = Overloads.end();
          I != E; ++I) {
       assert(Overload0NumArgs == (*I)->getNumArgs());
     }
