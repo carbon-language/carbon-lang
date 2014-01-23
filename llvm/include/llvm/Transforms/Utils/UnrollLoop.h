@@ -21,9 +21,11 @@ namespace llvm {
 class Loop;
 class LoopInfo;
 class LPPassManager;
+class Pass;
 
 bool UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool AllowRuntime,
-                unsigned TripMultiple, LoopInfo* LI, LPPassManager* LPM);
+                unsigned TripMultiple, LoopInfo *LI, Pass *PP,
+                LPPassManager *LPM);
 
 bool UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
                              LPPassManager* LPM);
