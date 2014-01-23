@@ -3781,7 +3781,7 @@ def t2SUBS_PC_LR : T2I <(outs), (ins imm0_255:$imm), NoItinerary,
 let isReMaterializable = 1, isMoveImm = 1 in
 def t2MOVi32imm : PseudoInst<(outs rGPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                             [(set rGPR:$dst, (i32 imm:$src))]>,
-                            Requires<[IsThumb, HasV6T2]>;
+                            Requires<[IsThumb, UseMovt]>;
 
 // Pseudo instruction that combines movw + movt + add pc (if pic).
 // It also makes it possible to rematerialize the instructions.

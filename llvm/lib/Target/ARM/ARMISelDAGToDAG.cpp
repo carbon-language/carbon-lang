@@ -2472,19 +2472,21 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   case ISD::Constant: {
     unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
     bool UseCP = true;
-    if (Subtarget->hasThumb2())
+    if (Subtarget->useMovt())
       // Thumb2-aware targets have the MOVT instruction, so all immediates can
       // be done with MOV + MOVT, at worst.
-      UseCP = 0;
+      UseCP = false;
     else {
       if (Subtarget->isThumb()) {
-        UseCP = (Val > 255 &&                          // MOV
-                 ~Val > 255 &&                         // MOV + MVN
-                 !ARM_AM::isThumbImmShiftedVal(Val));  // MOV + LSL
+        UseCP = (Val > 255 &&                                  // MOV
+                 ~Val > 255 &&                                 // MOV + MVN
+                 !ARM_AM::isThumbImmShiftedVal(Val) &&         // MOV + LSL
+                 !(Subtarget->hasV6T2Ops() && Val <= 0xffff)); // MOVW
       } else
-        UseCP = (ARM_AM::getSOImmVal(Val) == -1 &&     // MOV
-                 ARM_AM::getSOImmVal(~Val) == -1 &&    // MVN
-                 !ARM_AM::isSOImmTwoPartVal(Val));     // two instrs.
+        UseCP = (ARM_AM::getSOImmVal(Val) == -1 &&             // MOV
+                 ARM_AM::getSOImmVal(~Val) == -1 &&            // MVN
+                 !ARM_AM::isSOImmTwoPartVal(Val) &&            // two instrs.
+                 !(Subtarget->hasV6T2Ops() && Val <= 0xffff)); // MOVW
     }
 
     if (UseCP) {
@@ -2494,7 +2496,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
                                       getTargetLowering()->getPointerTy());
 
       SDNode *ResNode;
-      if (Subtarget->isThumb1Only()) {
+      if (Subtarget->isThumb()) {
         SDValue Pred = getAL(CurDAG);
         SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
         SDValue Ops[] = { CPIdx, Pred, PredReg, CurDAG->getEntryNode() };
