@@ -721,6 +721,9 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
   if (IsTryBody)
     EnterCXXTryStmt(*cast<CXXTryStmt>(Body), true);
 
+  RegionCounter Cnt = getPGORegionCounter(Body);
+  Cnt.beginRegion(Builder);
+
   RunCleanupsScope RunCleanups(*this);
 
   // TODO: in restricted cases, we can emit the vbase initializers of
@@ -1318,6 +1321,9 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
       
   case Dtor_Base:
     assert(Body);
+
+    RegionCounter Cnt = getPGORegionCounter(Body);
+    Cnt.beginRegion(Builder);
 
     // Enter the cleanup scopes for fields and non-virtual bases.
     EnterDtorCleanups(Dtor, Dtor_Base);
