@@ -238,7 +238,7 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 ; On entry:
 ;  thread_state pointer is in x0
 ;
-  .align 2
+  .p2align 2
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   stp    x0, x1,  [x0, #0x000]
   stp    x2, x3,  [x0, #0x010]
@@ -288,7 +288,7 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 @ On entry:
 @  thread_state pointer is in r0
 @
-  .align 2
+  .p2align 2
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   @ 32bit thumb-2 restrictions for stm:
   @ . the sp (r13) cannot be in the list

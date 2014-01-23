@@ -266,7 +266,7 @@ Lnovec:
 ; On entry:
 ;  thread_state pointer is in x0
 ;
-  .align 2
+  .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
   ; skip restore of x0,x1 for now
   ldp    x2, x3,  [x0, #0x010]
@@ -316,7 +316,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
 @ On entry:
 @  thread_state pointer is in r0
 @
-  .align 2
+  .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm6jumptoEv)
   @ Use lr as base so that r0 can be restored.
   mov lr, r0
