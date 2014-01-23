@@ -1209,7 +1209,8 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         ElemDie = createAndAddDIE(Property.getTag(), Buffer);
         StringRef PropertyName = Property.getObjCPropertyName();
         addString(ElemDie, dwarf::DW_AT_APPLE_property_name, PropertyName);
-        addType(ElemDie, Property.getType());
+        if (Property.getType())
+          addType(ElemDie, Property.getType());
         addSourceLine(ElemDie, Property);
         StringRef GetterName = Property.getObjCPropertyGetterName();
         if (!GetterName.empty())
