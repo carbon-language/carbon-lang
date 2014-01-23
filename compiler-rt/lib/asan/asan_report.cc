@@ -91,51 +91,61 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
 
 // ---------------------- Helper functions ----------------------- {{{1
 
-static void PrintShadowByte(const char *before, u8 byte,
-                            const char *after = "\n") {
+static void PrintShadowByte(InternalScopedString *str, const char *before,
+                            u8 byte, const char *after = "\n") {
   Decorator d;
-  Printf("%s%s%x%x%s%s", before, d.ShadowByte(byte), byte >> 4, byte & 15,
-         d.EndShadowByte(), after);
+  str->append("%s%s%x%x%s%s", before, d.ShadowByte(byte), byte >> 4, byte & 15,
+              d.EndShadowByte(), after);
 }
 
-static void PrintShadowBytes(const char *before, u8 *bytes, u8 *guilty,
-                             uptr n) {
+static void PrintShadowBytes(InternalScopedString *str, const char *before,
+                             u8 *bytes, u8 *guilty, uptr n) {
   Decorator d;
-  if (before) Printf("%s%p:", before, bytes);
+  if (before) str->append("%s%p:", before, bytes);
   for (uptr i = 0; i < n; i++) {
     u8 *p = bytes + i;
     const char *before =
         p == guilty ? "[" : (p - 1 == guilty && i != 0) ? "" : " ";
     const char *after = p == guilty ? "]" : "";
-    PrintShadowByte(before, *p, after);
+    PrintShadowByte(str, before, *p, after);
   }
-  Printf("\n");
+  str->append("\n");
 }
 
-static void PrintLegend() {
-  Printf(
+static void PrintLegend(InternalScopedString *str) {
+  str->append(
       "Shadow byte legend (one shadow byte represents %d "
       "application bytes):\n",
       (int)SHADOW_GRANULARITY);
-  PrintShadowByte("  Addressable:           ", 0);
-  Printf("  Partially addressable: ");
-  for (u8 i = 1; i < SHADOW_GRANULARITY; i++) PrintShadowByte("", i, " ");
-  Printf("\n");
-  PrintShadowByte("  Heap left redzone:       ", kAsanHeapLeftRedzoneMagic);
-  PrintShadowByte("  Heap right redzone:      ", kAsanHeapRightRedzoneMagic);
-  PrintShadowByte("  Freed heap region:       ", kAsanHeapFreeMagic);
-  PrintShadowByte("  Stack left redzone:      ", kAsanStackLeftRedzoneMagic);
-  PrintShadowByte("  Stack mid redzone:       ", kAsanStackMidRedzoneMagic);
-  PrintShadowByte("  Stack right redzone:     ", kAsanStackRightRedzoneMagic);
-  PrintShadowByte("  Stack partial redzone:   ", kAsanStackPartialRedzoneMagic);
-  PrintShadowByte("  Stack after return:      ", kAsanStackAfterReturnMagic);
-  PrintShadowByte("  Stack use after scope:   ", kAsanStackUseAfterScopeMagic);
-  PrintShadowByte("  Global redzone:          ", kAsanGlobalRedzoneMagic);
-  PrintShadowByte("  Global init order:       ", kAsanInitializationOrderMagic);
-  PrintShadowByte("  Poisoned by user:        ", kAsanUserPoisonedMemoryMagic);
-  PrintShadowByte("  Contiguous container OOB:",
+  PrintShadowByte(str, "  Addressable:           ", 0);
+  str->append("  Partially addressable: ");
+  for (u8 i = 1; i < SHADOW_GRANULARITY; i++) PrintShadowByte(str, "", i, " ");
+  str->append("\n");
+  PrintShadowByte(str, "  Heap left redzone:       ",
+                  kAsanHeapLeftRedzoneMagic);
+  PrintShadowByte(str, "  Heap right redzone:      ",
+                  kAsanHeapRightRedzoneMagic);
+  PrintShadowByte(str, "  Freed heap region:       ", kAsanHeapFreeMagic);
+  PrintShadowByte(str, "  Stack left redzone:      ",
+                  kAsanStackLeftRedzoneMagic);
+  PrintShadowByte(str, "  Stack mid redzone:       ",
+                  kAsanStackMidRedzoneMagic);
+  PrintShadowByte(str, "  Stack right redzone:     ",
+                  kAsanStackRightRedzoneMagic);
+  PrintShadowByte(str, "  Stack partial redzone:   ",
+                  kAsanStackPartialRedzoneMagic);
+  PrintShadowByte(str, "  Stack after return:      ",
+                  kAsanStackAfterReturnMagic);
+  PrintShadowByte(str, "  Stack use after scope:   ",
+                  kAsanStackUseAfterScopeMagic);
+  PrintShadowByte(str, "  Global redzone:          ", kAsanGlobalRedzoneMagic);
+  PrintShadowByte(str, "  Global init order:       ",
+                  kAsanInitializationOrderMagic);
+  PrintShadowByte(str, "  Poisoned by user:        ",
+                  kAsanUserPoisonedMemoryMagic);
+  PrintShadowByte(str, "  Contiguous container OOB:",
                   kAsanContiguousContainerOOBMagic);
-  PrintShadowByte("  ASan internal:           ", kAsanInternalHeapMagic);
+  PrintShadowByte(str, "  ASan internal:           ", kAsanInternalHeapMagic);
 }
 
 static void PrintShadowMemoryForAddress(uptr addr) {
@@ -143,13 +153,15 @@ static void PrintShadowMemoryForAddress(uptr addr) {
   uptr shadow_addr = MemToShadow(addr);
   const uptr n_bytes_per_row = 16;
   uptr aligned_shadow = shadow_addr & ~(n_bytes_per_row - 1);
-  Printf("Shadow bytes around the buggy address:\n");
+  InternalScopedString str(4096);
+  str.append("Shadow bytes around the buggy address:\n");
   for (int i = -5; i <= 5; i++) {
     const char *prefix = (i == 0) ? "=>" : "  ";
-    PrintShadowBytes(prefix, (u8 *)(aligned_shadow + i * n_bytes_per_row),
+    PrintShadowBytes(&str, prefix, (u8 *)(aligned_shadow + i * n_bytes_per_row),
                      (u8 *)shadow_addr, n_bytes_per_row);
   }
-  if (flags()->print_legend) PrintLegend();
+  if (flags()->print_legend) PrintLegend(&str);
+  Printf("%s", str.data());
 }
 
 static void PrintZoneForPointer(uptr ptr, uptr zone_ptr,
