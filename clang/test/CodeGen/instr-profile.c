@@ -14,6 +14,7 @@
 // PGOGEN: @[[JMC:__llvm_pgo_ctr[0-9]*]] = private global [30 x i64] zeroinitializer
 // PGOGEN: @[[SWC:__llvm_pgo_ctr[0-9]*]] = private global [21 x i64] zeroinitializer
 // PGOGEN: @[[BSC:__llvm_pgo_ctr[0-9]*]] = private global [19 x i64] zeroinitializer
+// PGOGEN: @[[BOC:__llvm_pgo_ctr[0-9]*]] = private global [10 x i64]  zeroinitializer
 // PGOGEN: @[[NOC:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64]  zeroinitializer
 // PGOGEN: @[[MAC:__llvm_pgo_ctr[0-9]*]] = private global [1 x i64]  zeroinitializer
 
@@ -348,6 +349,39 @@ void big_switch() {
   // PGOUSE: ret void
 }
 
+// PGOGEN-LABEL: @boolean_operators()
+// PGOUSE-LABEL: @boolean_operators()
+// PGOGEN: store {{.*}} @[[BOC]], i64 0, i64 0
+void boolean_operators() {
+  int v;
+  // PGOGEN: store {{.*}} @[[BOC]], i64 0, i64 1
+  // PGOUSE: br {{.*}} !prof ![[BO1:[0-9]+]]
+  for (int i = 0; i < 100; ++i) {
+    // PGOGEN: store {{.*}} @[[BOC]], i64 0, i64 4
+    // PGOUSE: br {{.*}} !prof ![[BO2:[0-9]+]]
+    v = i % 3 || i;
+
+    // PGOGEN: store {{.*}} @[[BOC]], i64 0, i64 5
+    // PGOUSE: br {{.*}} !prof ![[BO3:[0-9]+]]
+    v = i % 3 && i;
+
+    // PGOGEN: store {{.*}} @[[BOC]], i64 0, i64 7
+    // PGOGEN: store {{.*}} @[[BOC]], i64 0, i64 6
+    // PGOUSE: br {{.*}} !prof ![[BO4:[0-9]+]]
+    // PGOUSE: br {{.*}} !prof ![[BO5:[0-9]+]]
+    v = i % 3 || i % 2 || i;
+
+    // PGOGEN: store {{.*}} @[[BOC]], i64 0, i64 9
+    // PGOGEN: store {{.*}} @[[BOC]], i64 0, i64 8
+    // PGOUSE: br {{.*}} !prof ![[BO6:[0-9]+]]
+    // PGOUSE: br {{.*}} !prof ![[BO7:[0-9]+]]
+    v = i % 2 && i % 3 && i;
+  }
+
+  // PGOGEN-NOT: store {{.*}} @[BOC]],
+  // PGOUSE-NOT: br {{.*}} !prof ![0-9]+
+}
+
 // PGOGEN-LABEL: @no_usable_data()
 // PGOUSE-LABEL: @no_usable_data()
 // PGOGEN: store {{.*}} @[[NOC]], i64 0, i64 0
@@ -416,6 +450,15 @@ void no_usable_data() {
 // PGOUSE-DAG: ![[BS10]] = metadata !{metadata !"branch_weights", i32 2, i32 1}
 // PGOUSE-DAG: ![[BS11]] = metadata !{metadata !"branch_weights", i32 3, i32 1}
 
+// PGOUSE-DAG: ![[BO1]] = metadata !{metadata !"branch_weights", i32 101, i32 2}
+// PGOUSE-DAG: ![[BO2]] = metadata !{metadata !"branch_weights", i32 67, i32 35}
+// PGOUSE-DAG: ![[BO3]] = metadata !{metadata !"branch_weights", i32 67, i32 35}
+// PGOUSE-DAG: ![[BO4]] = metadata !{metadata !"branch_weights", i32 67, i32 35}
+// PGOUSE-DAG: ![[BO5]] = metadata !{metadata !"branch_weights", i32 18, i32 18}
+// PGOUSE-DAG: ![[BO6]] = metadata !{metadata !"branch_weights", i32 51, i32 51}
+// PGOUSE-DAG: ![[BO7]] = metadata !{metadata !"branch_weights", i32 34, i32 18}
+
+
 int main(int argc, const char *argv[]) {
   simple_loops();
   conditionals();
@@ -423,6 +466,7 @@ int main(int argc, const char *argv[]) {
   jumps();
   switches();
   big_switch();
+  boolean_operators();
   no_usable_data();
   return 0;
 }

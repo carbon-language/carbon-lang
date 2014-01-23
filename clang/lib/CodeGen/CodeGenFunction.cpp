@@ -966,7 +966,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       // We have the count for entry to the RHS and for the whole expression
       // being true, so we can divy up True count between the short circuit and
       // the RHS.
-      uint64_t LHSCount = TrueCount - Cnt.getCount();
+      uint64_t LHSCount = Cnt.getParentCount() - Cnt.getCount();
       uint64_t RHSCount = TrueCount - LHSCount;
 
       ConditionalEvaluation eval(*this);
