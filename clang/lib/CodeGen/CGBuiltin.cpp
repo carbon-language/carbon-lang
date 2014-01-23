@@ -2305,6 +2305,7 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vcles_f32:
   case AArch64::BI__builtin_neon_vcled_f64:
     Int = Intrinsic::aarch64_neon_fcge; s = "vcge";
+    std::swap(Ops[0], Ops[1]);
     IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Compare Less Than Or Equal To Zero
   case AArch64::BI__builtin_neon_vclezs_f32:
