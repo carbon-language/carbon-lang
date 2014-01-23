@@ -11,9 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
@@ -118,18 +120,41 @@ void SubtargetFeatures::AddFeature(const StringRef String,
   }
 }
 
+// This needs to be shared between the instantiations of Find<>
+typedef std::pair<std::string,std::string> KeyWithType;
+static SmallSet<KeyWithType,10> reportedAsUnrecognized;
+
 /// Find KV in array using binary search.
-static const SubtargetFeatureKV *Find(StringRef S, const SubtargetFeatureKV *A,
-                                      size_t L) {
+template<typename T>
+const T *SubtargetFeatures::Find(StringRef Key, const T *Array, size_t Length,
+                                 const char* KeyType) {
   // Determine the end of the array
-  const SubtargetFeatureKV *Hi = A + L;
+  const T *Hi = Array + Length;
   // Binary search the array
-  const SubtargetFeatureKV *F = std::lower_bound(A, Hi, S);
+  const T *F = std::lower_bound(Array, Hi, Key);
   // If not found then return NULL
-  if (F == Hi || StringRef(F->Key) != S) return NULL;
+  if (F == Hi || StringRef(F->Key) != Key) {
+    // If not yet reported, report now
+    KeyWithType current(KeyType, Key);
+    if(!reportedAsUnrecognized.count(current)) {
+      SmallString<1024> storage;
+      StringRef message = ("'" + Key +
+                           "' is not a recognized " + KeyType +
+                           " for this target (ignoring " + KeyType +
+                           ")").toStringRef(storage);
+      SMDiagnostic(StringRef(), SourceMgr::DK_Warning, message)
+        .print(0, errs());
+      reportedAsUnrecognized.insert(current);
+    }
+    return NULL;
+  }
   // Return the found array item
   return F;
 }
+
+// Instantiate with <SubtargetInfoKV> for use in MCSubtargetInfo
+template const SubtargetInfoKV *SubtargetFeatures::Find<SubtargetInfoKV>
+  (StringRef Key, const SubtargetInfoKV *Array, size_t Length, const char* KeyType);
 
 /// getLongestEntryLength - Return the length of the longest entry in the table.
 ///
@@ -228,7 +253,7 @@ SubtargetFeatures::ToggleFeature(uint64_t Bits, const StringRef Feature,
                                  size_t FeatureTableSize) {
   // Find feature in table.
   const SubtargetFeatureKV *FeatureEntry =
-    Find(StripFlag(Feature), FeatureTable, FeatureTableSize);
+    Find(StripFlag(Feature), FeatureTable, FeatureTableSize, "feature");
   // If there is a match
   if (FeatureEntry) {
     if ((Bits & FeatureEntry->Value) == FeatureEntry->Value) {
@@ -242,10 +267,6 @@ SubtargetFeatures::ToggleFeature(uint64_t Bits, const StringRef Feature,
       // For each feature that this implies, set it.
       SetImpliedBits(Bits, FeatureEntry, FeatureTable, FeatureTableSize);
     }
-  } else {
-    errs() << "'" << Feature
-           << "' is not a recognized feature for this target"
-           << " (ignoring feature)\n";
   }
 
   return Bits;
@@ -280,7 +301,8 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
 
   // Find CPU entry if CPU name is specified.
   if (!CPU.empty()) {
-    const SubtargetFeatureKV *CPUEntry = Find(CPU, CPUTable, CPUTableSize);
+    const SubtargetFeatureKV *CPUEntry = Find(CPU, CPUTable, CPUTableSize,
+                                              "processor");
     // If there is a match
     if (CPUEntry) {
       // Set base feature bits
@@ -292,10 +314,6 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
         if (CPUEntry->Value & FE.Value)
           SetImpliedBits(Bits, &FE, FeatureTable, FeatureTableSize);
       }
-    } else {
-      errs() << "'" << CPU
-             << "' is not a recognized processor for this target"
-             << " (ignoring processor)\n";
     }
   }
 
@@ -309,7 +327,7 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
 
     // Find feature in table.
     const SubtargetFeatureKV *FeatureEntry =
-                       Find(StripFlag(Feature), FeatureTable, FeatureTableSize);
+            Find(StripFlag(Feature), FeatureTable, FeatureTableSize, "feature");
     // If there is a match
     if (FeatureEntry) {
       // Enable/disable feature in bits
@@ -324,10 +342,6 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
         // For each feature that implies this, clear it.
         ClearImpliedBits(Bits, FeatureEntry, FeatureTable, FeatureTableSize);
       }
-    } else {
-      errs() << "'" << Feature
-             << "' is not a recognized feature for this target"
-             << " (ignoring feature)\n";
     }
   }
 
