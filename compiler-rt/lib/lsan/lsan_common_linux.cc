@@ -130,6 +130,21 @@ static void ProcessPlatformSpecificAllocationsCb(uptr chunk, void *arg) {
 
 // Handles dynamically allocated TLS blocks by treating all chunks allocated
 // from ld-linux.so as reachable.
+// Dynamic TLS blocks contain the TLS variables of dynamically loaded modules.
+// They are allocated with a __libc_memalign() call in allocate_and_init()
+// (elf/dl-tls.c). Glibc won't tell us the address ranges occupied by those
+// blocks, but we can make sure they come from our own allocator by intercepting
+// __libc_memalign(). On top of that, there is no easy way to reach them. Their
+// addresses are stored in a dynamically allocated array (the DTV) which is
+// referenced from the static TLS. Unfortunately, we can't just rely on the DTV
+// being reachable from the static TLS, and the dynamic TLS being reachable from
+// the DTV. This is because the initial DTV is allocated before our interception
+// mechanism kicks in, and thus we don't recognize it as allocated memory. We
+// can't special-case it either, since we don't know its size.
+// Our solution is to include in the root set all allocations made from
+// ld-linux.so (which is where allocate_and_init() is implemented). This is
+// guaranteed to include all dynamic TLS blocks (and possibly other allocations
+// which we don't care about).
 void ProcessPlatformSpecificAllocations(Frontier *frontier) {
   if (!flags()->use_tls) return;
   if (!linker) return;
