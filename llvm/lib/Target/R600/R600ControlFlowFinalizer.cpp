@@ -501,6 +501,7 @@ public:
           DEBUG(dbgs() << CfCount << ":"; I->dump(););
           FetchClauses.push_back(MakeFetchClause(MBB, I));
           CfCount++;
+          LastAlu.back() = 0;
           continue;
         }
 
