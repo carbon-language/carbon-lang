@@ -220,3 +220,16 @@ entry:
   ret <2 x double> %vbsl3.i
 }
 
+define <2 x double> @test_bsl_v2f64(<2 x i1> %v1, <2 x double> %v2, <2 x double> %v3) {
+; CHECK-LABEL: test_bsl_v2f64:
+; CHECK: bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+  %1 = select <2 x i1> %v1, <2 x double> %v2, <2 x double> %v3
+  ret <2 x double> %1
+}
+
+define <4 x float> @test_bsl_v4f32(<4 x i1> %v1, <4 x float> %v2, <4 x float> %v3) {
+; CHECK-LABEL: test_bsl_v4f32:
+; CHECK: bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+  %1 = select <4 x i1> %v1, <4 x float> %v2, <4 x float> %v3
+  ret <4 x float> %1
+}

@@ -473,6 +473,10 @@ multiclass Neon_bitwise3V_patterns<SDPatternOperator opnode,
             (INST16B VPR128:$src, VPR128:$Rn, VPR128:$Rm)>;
   def : Pat<(v2i64 (opnode (v2i64 VPR128:$src), VPR128:$Rn, VPR128:$Rm)),
             (INST16B VPR128:$src, VPR128:$Rn, VPR128:$Rm)>;
+  def : Pat<(v2f64 (opnode (v2i64 VPR128:$src), VPR128:$Rn, VPR128:$Rm)),
+            (INST16B VPR128:$src, VPR128:$Rn, VPR128:$Rm)>;
+  def : Pat<(v4f32 (opnode (v4i32 VPR128:$src), VPR128:$Rn, VPR128:$Rm)),
+            (INST16B VPR128:$src, VPR128:$Rn, VPR128:$Rm)>;
 
   // Allow to match BSL instruction pattern with non-constant operand
   def : Pat<(v8i8 (or (and VPR64:$Rn, VPR64:$Rd),
