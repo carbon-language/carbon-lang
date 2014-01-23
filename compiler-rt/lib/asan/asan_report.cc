@@ -94,19 +94,18 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
 static void PrintShadowByte(const char *before, u8 byte,
                             const char *after = "\n") {
   Decorator d;
-  Printf("%s%s%x%x%s%s", before,
-         d.ShadowByte(byte), byte >> 4, byte & 15, d.EndShadowByte(), after);
+  Printf("%s%s%x%x%s%s", before, d.ShadowByte(byte), byte >> 4, byte & 15,
+         d.EndShadowByte(), after);
 }
 
-static void PrintShadowBytes(const char *before, u8 *bytes,
-                             u8 *guilty, uptr n) {
+static void PrintShadowBytes(const char *before, u8 *bytes, u8 *guilty,
+                             uptr n) {
   Decorator d;
-  if (before)
-    Printf("%s%p:", before, bytes);
+  if (before) Printf("%s%p:", before, bytes);
   for (uptr i = 0; i < n; i++) {
     u8 *p = bytes + i;
-    const char *before = p == guilty ? "[" :
-        (p - 1 == guilty && i != 0) ? "" : " ";
+    const char *before =
+        p == guilty ? "[" : (p - 1 == guilty && i != 0) ? "" : " ";
     const char *after = p == guilty ? "]" : "";
     PrintShadowByte(before, *p, after);
   }
@@ -114,12 +113,13 @@ static void PrintShadowBytes(const char *before, u8 *bytes,
 }
 
 static void PrintLegend() {
-  Printf("Shadow byte legend (one shadow byte represents %d "
-         "application bytes):\n", (int)SHADOW_GRANULARITY);
+  Printf(
+      "Shadow byte legend (one shadow byte represents %d "
+      "application bytes):\n",
+      (int)SHADOW_GRANULARITY);
   PrintShadowByte("  Addressable:           ", 0);
   Printf("  Partially addressable: ");
-  for (u8 i = 1; i < SHADOW_GRANULARITY; i++)
-    PrintShadowByte("", i, " ");
+  for (u8 i = 1; i < SHADOW_GRANULARITY; i++) PrintShadowByte("", i, " ");
   Printf("\n");
   PrintShadowByte("  Heap left redzone:       ", kAsanHeapLeftRedzoneMagic);
   PrintShadowByte("  Heap right redzone:      ", kAsanHeapRightRedzoneMagic);
@@ -139,20 +139,17 @@ static void PrintLegend() {
 }
 
 static void PrintShadowMemoryForAddress(uptr addr) {
-  if (!AddrIsInMem(addr))
-    return;
+  if (!AddrIsInMem(addr)) return;
   uptr shadow_addr = MemToShadow(addr);
   const uptr n_bytes_per_row = 16;
   uptr aligned_shadow = shadow_addr & ~(n_bytes_per_row - 1);
   Printf("Shadow bytes around the buggy address:\n");
   for (int i = -5; i <= 5; i++) {
     const char *prefix = (i == 0) ? "=>" : "  ";
-    PrintShadowBytes(prefix,
-                     (u8*)(aligned_shadow + i * n_bytes_per_row),
-                     (u8*)shadow_addr, n_bytes_per_row);
+    PrintShadowBytes(prefix, (u8 *)(aligned_shadow + i * n_bytes_per_row),
+                     (u8 *)shadow_addr, n_bytes_per_row);
   }
-  if (flags()->print_legend)
-    PrintLegend();
+  if (flags()->print_legend) PrintLegend();
 }
 
 static void PrintZoneForPointer(uptr ptr, uptr zone_ptr,
