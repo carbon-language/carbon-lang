@@ -317,6 +317,7 @@ void InternalScopedString::append(const char *format, ...) {
   VSNPrintf(data() + length_, size() - length_, format, args);
   va_end(args);
   length_ += internal_strlen(data() + length_);
+  CHECK_LT(length_, size());
 }
 
 }  // namespace __sanitizer
