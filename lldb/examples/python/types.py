@@ -178,7 +178,20 @@ def check_padding_command (debugger, command, result, dict):
         result.SetStatus (lldb.eReturnStatusFailed)
         return "option parsing failed" # returning a string is the same as returning an error whose description is the string
     verify_types(options, debugger.GetSelectedTarget(), command_args)
-    
+
+@lldb.command("parse_all_struct_class_types")
+def parse_all_struct_class_types (debugger, command, result, dict):
+    command_args = shlex.split(command)
+    for f in command_args:
+        error = lldb.SBError()
+        target = debugger.CreateTarget (f, None, None, False, error)
+        module = target.GetModuleAtIndex(0)
+        print "Parsing all types in '%s'" % (module)
+        types = module.GetTypes(lldb.eTypeClassClass | lldb.eTypeClassStruct)
+        for t in types:
+            print t
+        print ""
+        
     
 def verify_types (target, options):
 
