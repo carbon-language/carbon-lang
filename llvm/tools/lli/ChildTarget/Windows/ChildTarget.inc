@@ -28,7 +28,3 @@ int LLIChildTarget::WriteBytes(const void *Data, size_t Size) {
 int LLIChildTarget::ReadBytes(void *Data, size_t Size) {
   return 0;
 }
-
-uint64_t LLIChildTarget::allocate(uint32_t Alignment, uint32_t Size) {
-  return 0;
-}
