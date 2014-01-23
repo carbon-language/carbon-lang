@@ -381,7 +381,8 @@ static const char *maybe_parse_number_or_star(const char *p, int *out,
 // Parse printf format string. Same as scanf_parse_next.
 static const char *printf_parse_next(const char *p, PrintfDirective *dir) {
   internal_memset(dir, 0, sizeof(*dir));
-  dir->argIdx = dir->precisionIdx = -1;
+  dir->argIdx = -1;
+  dir->precisionIdx = -1;
 
   while (*p) {
     if (*p != '%') {
@@ -526,7 +527,17 @@ static void printf_common(void *ctx, const char *format, va_list aq) {
       continue;
     } else if (size == FSS_STRLEN) {
       if (void *argp = va_arg(aq, void *)) {
-        size = internal_strlen((const char *)argp) + 1;
+        if (dir.starredPrecision) {
+          // FIXME: properly support starred precision for strings.
+          size = 0;
+        } else if (dir.fieldPrecision > 0) {
+          // Won't read more than "precision" symbols.
+          size = internal_strnlen((const char *)argp, dir.fieldPrecision);
+          if (size < dir.fieldPrecision) size++;
+        } else {
+          // Whole string will be accessed.
+          size = internal_strlen((const char *)argp) + 1;
+        }
         COMMON_INTERCEPTOR_READ_RANGE(ctx, argp, size);
       }
     } else {

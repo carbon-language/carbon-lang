@@ -238,8 +238,13 @@ TEST(SanitizerCommonInterceptors, Printf) {
 
   // Precision
   testPrintf("%10.10n", 1, I);
+  testPrintf("%.3s", 1, 3);
+  testPrintf("%.20s", 1, test_buf_size);
 
   // Dynamic precision
   testPrintf("%.*n", 1, I);
   testPrintf("%10.*n", 1, I);
+
+  // Dynamic precision for strings is not implemented yet.
+  testPrintf("%.*s", 1, 0);
 }
