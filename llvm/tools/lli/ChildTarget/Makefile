@@ -14,4 +14,6 @@ include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS :=
 
+SOURCES += ../RemoteTarget.cpp
+
 include $(LLVM_SRC_ROOT)/Makefile.rules
