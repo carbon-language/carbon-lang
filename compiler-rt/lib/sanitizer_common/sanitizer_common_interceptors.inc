@@ -706,10 +706,12 @@ FORMAT_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
   {                                                                            \
     VPRINTF_INTERCEPTOR_ENTER(vname, str, size, __VA_ARGS__)                   \
     if (common_flags()->check_printf) {                                        \
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, str, size);                          \
       printf_common(ctx, format, aq);                                          \
     }                                                                          \
     int res = REAL(vname)(str, size, __VA_ARGS__);                             \
+    if (res >= 0 && common_flags()->check_printf) {                            \
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, str, Min(size, (SIZE_T)(res + 1)));  \
+    }                                                                          \
     VPRINTF_INTERCEPTOR_RETURN();                                              \
     return res;                                                                \
   }

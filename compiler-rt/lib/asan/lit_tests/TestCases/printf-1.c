@@ -9,8 +9,13 @@ int main() {
   volatile int x = 12;
   volatile float f = 1.239;
   volatile char s[] = "34";
-  printf("%c %d %.3f %s\n", c, x, f, s);
-  return 0;
   // Check that printf works fine under Asan.
+  printf("%c %d %.3f %s\n", c, x, f, s);
   // CHECK: 0 12 1.239 34
+  // Check that snprintf works fine under Asan.
+  char buf[4];
+  snprintf(buf, 1000, "qwe");
+  printf("%s\n", buf);
+  // CHECK: qwe
+  return 0;
 }
