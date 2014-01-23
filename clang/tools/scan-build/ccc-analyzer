@@ -158,9 +158,8 @@ sub GetCCArgs {
   close(FROM_CHILD);
   
   die "could not find clang line\n" if (!defined $line);
-  # Strip the newline and initial whitspace
-  chomp $line;
-  $line =~ s/^\s+//;
+  # Strip leading and trailing whitespace characters.
+  $line =~ s/^\s+|\s+$//g;
   my @items = quotewords('\s+', 0, $line);
   my $cmd = shift @items;
   die "cannot find 'clang' in 'clang' command\n" if (!($cmd =~ /clang/));
