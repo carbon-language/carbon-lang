@@ -905,9 +905,9 @@ INTERCEPTOR(int, dladdr, void *addr, dlinfo *info) {
   return res;
 }
 
-INTERCEPTOR(char *, dlerror) {
+INTERCEPTOR(char *, dlerror, int fake) {
   ENSURE_MSAN_INITED();
-  char *res = REAL(dlerror)();
+  char *res = REAL(dlerror)(fake);
   if (res != 0) __msan_unpoison(res, REAL(strlen)(res) + 1);
   return res;
 }
@@ -1149,9 +1149,9 @@ INTERCEPTOR(int, pthread_join, void *th, void **retval) {
 
 extern char *tzname[2];
 
-INTERCEPTOR(void, tzset) {
+INTERCEPTOR(void, tzset, int fake) {
   ENSURE_MSAN_INITED();
-  REAL(tzset)();
+  REAL(tzset)(fake);
   if (tzname[0])
     __msan_unpoison(tzname[0], REAL(strlen)(tzname[0]) + 1);
   if (tzname[1])
