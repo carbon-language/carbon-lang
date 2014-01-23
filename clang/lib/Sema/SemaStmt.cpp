@@ -1205,6 +1205,7 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond,
   Expr *ConditionExpr = CondResult.take();
   if (!ConditionExpr)
     return StmtError();
+  CheckBreakContinueBinding(ConditionExpr);
 
   DiagnoseUnusedExprResult(Body);
 
@@ -1221,6 +1222,7 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
                   Expr *Cond, SourceLocation CondRParen) {
   assert(Cond && "ActOnDoStmt(): missing expression");
 
+  CheckBreakContinueBinding(Cond);
   ExprResult CondResult = CheckBooleanCondition(Cond, DoLoc);
   if (CondResult.isInvalid())
     return StmtError();
@@ -1483,25 +1485,33 @@ namespace {
     return false;
   }
 
-  // A visitor to determine if a continue statement is a subexpression.
-  class ContinueFinder : public EvaluatedExprVisitor<ContinueFinder> {
-    bool Found;
+  // A visitor to determine if a continue or break statement is a
+  // subexpression.
+  class BreakContinueFinder : public EvaluatedExprVisitor<BreakContinueFinder> {
+    SourceLocation BreakLoc;
+    SourceLocation ContinueLoc;
   public:
-    ContinueFinder(Sema &S, Stmt* Body) :
-        Inherited(S.Context),
-        Found(false) {
+    BreakContinueFinder(Sema &S, Stmt* Body) :
+        Inherited(S.Context) {
       Visit(Body);
     }
 
-    typedef EvaluatedExprVisitor<ContinueFinder> Inherited;
+    typedef EvaluatedExprVisitor<BreakContinueFinder> Inherited;
 
     void VisitContinueStmt(ContinueStmt* E) {
-      Found = true;
+      ContinueLoc = E->getContinueLoc();
     }
 
-    bool ContinueFound() { return Found; }
+    void VisitBreakStmt(BreakStmt* E) {
+      BreakLoc = E->getBreakLoc();
+    }
 
-  };  // end class ContinueFinder
+    bool ContinueFound() { return ContinueLoc.isValid(); }
+    bool BreakFound() { return BreakLoc.isValid(); }
+    SourceLocation GetContinueLoc() { return ContinueLoc; }
+    SourceLocation GetBreakLoc() { return BreakLoc; }
+
+  };  // end class BreakContinueFinder
 
   // Emit a warning when a loop increment/decrement appears twice per loop
   // iteration.  The conditions which trigger this warning are:
@@ -1530,11 +1540,11 @@ namespace {
     if (!ProcessIterationStmt(S, LastStmt, LastIncrement, LastDRE)) return;
 
     // Check that the two statements are both increments or both decrements
-    // on the same varaible.
+    // on the same variable.
     if (LoopIncrement != LastIncrement ||
         LoopDRE->getDecl() != LastDRE->getDecl()) return;
 
-    if (ContinueFinder(S, Body).ContinueFound()) return;
+    if (BreakContinueFinder(S, Body).ContinueFound()) return;
 
     S.Diag(LastDRE->getLocation(), diag::warn_redundant_loop_iteration)
          << LastDRE->getDecl() << LastIncrement;
@@ -1543,6 +1553,25 @@ namespace {
   }
 
 } // end namespace
+
+
+void Sema::CheckBreakContinueBinding(Expr *E) {
+  if (!E || getLangOpts().CPlusPlus)
+    return;
+  BreakContinueFinder BCFinder(*this, E);
+  Scope *BreakParent = CurScope->getBreakParent();
+  if (BCFinder.BreakFound() && BreakParent) {
+    if (BreakParent->getFlags() & Scope::SwitchScope) {
+      Diag(BCFinder.GetBreakLoc(), diag::warn_break_binds_to_switch);
+    } else {
+      Diag(BCFinder.GetBreakLoc(), diag::warn_loop_ctrl_binds_to_inner)
+          << "break";
+    }
+  } else if (BCFinder.ContinueFound() && CurScope->getContinueParent()) {
+    Diag(BCFinder.GetContinueLoc(), diag::warn_loop_ctrl_binds_to_inner)
+        << "continue";
+  }
+}
 
 StmtResult
 Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
@@ -1566,6 +1595,9 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
       }
     }
   }
+
+  CheckBreakContinueBinding(second.get());
+  CheckBreakContinueBinding(third.get());
 
   CheckForLoopConditionalStatement(*this, second.get(), third.get(), Body);
   CheckForRedundantIteration(*this, third.get(), Body);

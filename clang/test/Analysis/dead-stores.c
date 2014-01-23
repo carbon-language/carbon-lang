@@ -480,7 +480,7 @@ int f26_nestedblocks() {
 // placed within the increment code of for loops.
 void rdar8014335() {
   for (int i = 0 ; i != 10 ; ({ break; })) {
-    for ( ; ; ({ ++i; break; })) ;
+    for ( ; ; ({ ++i; break; })) ; // expected-warning {{'break' is bound to current loop, GCC binds it to the enclosing loop}}
     // Note that the next value stored to 'i' is never executed
     // because the next statement to be executed is the 'break'
     // in the increment code of the first loop.

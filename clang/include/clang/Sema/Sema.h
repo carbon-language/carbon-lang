@@ -7917,6 +7917,10 @@ private:
   void CheckBitFieldInitialization(SourceLocation InitLoc, FieldDecl *Field,
                                    Expr *Init);
 
+  /// \brief Check if the given expression contains 'break' or 'continue'
+  /// statement that produces control flow different from GCC.
+  void CheckBreakContinueBinding(Expr *E);
+
 public:
   /// \brief Register a magic integral constant to be used as a type tag.
   void RegisterTypeTagForDatatype(const IdentifierInfo *ArgumentKind,

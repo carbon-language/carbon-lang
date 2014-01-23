@@ -6341,6 +6341,12 @@ def err_continue_not_in_loop : Error<
   "'continue' statement not in loop statement">;
 def err_break_not_in_loop_or_switch : Error<
   "'break' statement not in loop or switch statement">;
+def warn_loop_ctrl_binds_to_inner : Warning<
+  "'%0' is bound to current loop, GCC binds it to the enclosing loop">,
+  InGroup<GccCompat>;
+def warn_break_binds_to_switch : Warning<
+  "'break' is bound to loop, GCC binds it to switch">,
+  InGroup<GccCompat>;
 def err_default_not_in_switch : Error<
   "'default' statement not in switch statement">;
 def err_case_not_in_switch : Error<"'case' statement not in switch statement">;

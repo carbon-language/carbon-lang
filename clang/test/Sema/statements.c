@@ -90,9 +90,6 @@ void foo(enum x X) {
   }
 }
 
-// PR 8880
-// FIXME: Clang should reject this, since GCC does.  Previously this
-// was causing a crash in the CFG builder.
 int test_pr8880() {
   int first = 1;
   for ( ; ({ if (first) { first = 0; continue; } 0; }); )

@@ -69,3 +69,18 @@ bool Scope::containedInPrototypeScope() const {
   }
   return false;
 }
+
+void Scope::AddFlags(unsigned FlagsToSet) {
+  assert((FlagsToSet & ~(BreakScope | ContinueScope)) == 0 &&
+         "Unsupported scope flags");
+  if (FlagsToSet & BreakScope) {
+    assert((Flags & BreakScope) == 0 && "Already set");
+    BreakParent = this;
+  }
+  if (FlagsToSet & ContinueScope) {
+    assert((Flags & ContinueScope) == 0 && "Already set");
+    ContinueParent = this;
+  }
+  Flags |= FlagsToSet;
+}
+
