@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.RetainCount,debug.ExprInspection -analyzer-store=region -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.RetainCount,debug.ExprInspection -analyzer-store=region -verify -Wno-objc-root-class -fobjc-arc %s
 
 void clang_analyzer_eval(bool);
 void clang_analyzer_checkInlined(bool);
@@ -26,8 +27,6 @@ void testReferenceAssignment(IntWrapper *w) {
   clang_analyzer_eval(w.value == 42); // expected-warning{{TRUE}}
 }
 
-
-// FIXME: Handle C++ structs, which need to go through the copy constructor.
 
 struct IntWrapperStruct {
   int value;
@@ -66,7 +65,7 @@ public:
 @end
 
 @implementation CustomCopyWrapper
-@synthesize inner;
+//@synthesize inner;
 @end
 
 void testConsistencyCustomCopy(CustomCopyWrapper *w) {
