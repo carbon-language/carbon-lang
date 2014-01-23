@@ -137,6 +137,9 @@ LLVMBool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef T, LLVMModuleR
   disposed with LLVMDisposeMessage. */
 char* LLVMGetDefaultTargetTriple(void);
 
+/** Adds the target-specific analysis passes to the pass manager. */
+void LLVMAddAnalysisPasses(LLVMTargetMachineRef T, LLVMPassManagerRef PM);
+
 #ifdef __cplusplus
 }
 #endif

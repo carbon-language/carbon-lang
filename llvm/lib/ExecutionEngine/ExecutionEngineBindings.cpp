@@ -43,6 +43,11 @@ inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfo *P) {
   return reinterpret_cast<LLVMTargetLibraryInfoRef>(X);
 }
 
+inline LLVMTargetMachineRef wrap(const TargetMachine *P) {
+  return
+  reinterpret_cast<LLVMTargetMachineRef>(const_cast<TargetMachine*>(P));
+}
+
 /*===-- Operations on generic values --------------------------------------===*/
 
 LLVMGenericValueRef LLVMCreateGenericValueOfInt(LLVMTypeRef Ty,
@@ -321,6 +326,11 @@ void *LLVMRecompileAndRelinkFunction(LLVMExecutionEngineRef EE,
 
 LLVMTargetDataRef LLVMGetExecutionEngineTargetData(LLVMExecutionEngineRef EE) {
   return wrap(unwrap(EE)->getDataLayout());
+}
+
+LLVMTargetMachineRef
+LLVMGetExecutionEngineTargetMachine(LLVMExecutionEngineRef EE) {
+  return wrap(unwrap(EE)->getTargetMachine());
 }
 
 void LLVMAddGlobalMapping(LLVMExecutionEngineRef EE, LLVMValueRef Global,

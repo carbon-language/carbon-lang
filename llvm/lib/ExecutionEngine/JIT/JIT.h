@@ -193,6 +193,9 @@ public:
 
   virtual void RegisterJITEventListener(JITEventListener *L);
   virtual void UnregisterJITEventListener(JITEventListener *L);
+
+  virtual TargetMachine *getTargetMachine() { return &TM; }
+
   /// These functions correspond to the methods on JITEventListener.  They
   /// iterate over the registered listeners and call the corresponding method on
   /// each.

@@ -301,6 +301,8 @@ public:
   virtual uint64_t getGlobalValueAddress(const std::string &Name);
   virtual uint64_t getFunctionAddress(const std::string &Name);
 
+  virtual TargetMachine *getTargetMachine() { return TM; }
+
   /// @}
   /// @name (Private) Registration Interfaces
   /// @{

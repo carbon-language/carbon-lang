@@ -462,6 +462,9 @@ public:
     llvm_unreachable("No support for an object cache");
   }
 
+  /// Return the target machine (if available).
+  virtual TargetMachine *getTargetMachine() { return NULL; }
+
   /// DisableLazyCompilation - When lazy compilation is off (the default), the
   /// JIT will eagerly compile every function reachable from the argument to
   /// getPointerToFunction.  If lazy compilation is turned on, the JIT will only

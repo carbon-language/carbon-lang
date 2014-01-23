@@ -498,7 +498,6 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   PassManager codeGenPasses;
 
   codeGenPasses.add(new DataLayout(*TargetMach->getDataLayout()));
-  TargetMach->addAnalysisPasses(codeGenPasses);
 
   formatted_raw_ostream Out(out);
 

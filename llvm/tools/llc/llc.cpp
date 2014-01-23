@@ -319,9 +319,6 @@ static int compileModule(char **argv, LLVMContext &Context) {
     TLI->disableAllFunctions();
   PM.add(TLI);
 
-  // Add intenal analysis passes from the target machine.
-  Target.addAnalysisPasses(PM);
-
   // Add the target data from the target machine, if it exists, or the module.
   if (const DataLayout *TD = Target.getDataLayout())
     PM.add(new DataLayout(*TD));
