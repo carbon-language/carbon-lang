@@ -734,7 +734,7 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
         && !name.substr(1, 2).getAsInteger(10, intVal)
         && intVal >= 32 && intVal <= 62 && (intVal % 2 == 0)) {
       // FIXME: Check V9
-      RegNo = DoubleRegs[16 + intVal/2];
+      RegNo = DoubleRegs[intVal/2];
       RegKind = SparcOperand::rk_DoubleReg;
       return true;
     }
