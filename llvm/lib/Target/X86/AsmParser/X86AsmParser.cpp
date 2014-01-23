@@ -391,7 +391,7 @@ private:
         break;
       }
     }
-    void onInteger(int64_t TmpInt) {
+    bool onInteger(int64_t TmpInt, StringRef &ErrMsg) {
       IntelExprState CurrState = State;
       switch (State) {
       default:
@@ -410,6 +410,10 @@ private:
           assert (!IndexReg && "IndexReg already set!");
           IndexReg = TmpReg;
           Scale = TmpInt;
+          if(Scale != 1 && Scale != 2 && Scale != 4 && Scale != 8) {
+            ErrMsg = "scale factor in address must be 1, 2, 4 or 8";
+            return true;
+          }
           // Get the scale and replace the 'Register * Scale' with '0'.
           IC.popOperator();
         } else if ((PrevState == IES_PLUS || PrevState == IES_MINUS ||
@@ -426,6 +430,7 @@ private:
         break;
       }
       PrevState = CurrState;
+      return false;
     }
     void onStar() {
       PrevState = State;
@@ -1465,6 +1470,7 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
       return Error(Tok.getLoc(), "Unexpected identifier!");
     }
     case AsmToken::Integer: {
+      StringRef ErrMsg;
       if (isParsingInlineAsm() && SM.getAddImmPrefix())
         InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_ImmPrefix,
                                                     Tok.getLoc()));
@@ -1488,10 +1494,12 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
           SM.onIdentifierExpr(Val, Identifier);
           End = consumeToken();
         } else {
-          SM.onInteger(IntVal);
+          if (SM.onInteger(IntVal, ErrMsg))
+            return Error(Loc, ErrMsg);
         }
       } else {
-        SM.onInteger(IntVal);
+        if (SM.onInteger(IntVal, ErrMsg))
+          return Error(Loc, ErrMsg);
       }
       break;
     }
