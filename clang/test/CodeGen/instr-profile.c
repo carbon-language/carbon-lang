@@ -73,7 +73,7 @@ void conditionals() {
     if (0 || i) {}
   }
 
-  // PGOGEN-NOT: store {{.*}} @[EEC]],
+  // PGOGEN-NOT: store {{.*}} @[IFC]],
   // PGOUSE-NOT: br {{.*}} !prof ![0-9]+
 }
 
