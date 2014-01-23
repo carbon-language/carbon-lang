@@ -49,7 +49,7 @@ define <8 x double> @test4(<8 x double> %a) nounwind {
 }
 
 ; CHECK-LABEL: test5:
-; CHECK: vpermi2pd
+; CHECK: vperm2pd
 ; CHECK: ret
 define <8 x double> @test5(<8 x double> %a, <8 x double> %b) nounwind {
   %c = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 2, i32 8, i32 0, i32 1, i32 6, i32 10, i32 4, i32 5>
@@ -65,7 +65,7 @@ define <8 x i64> @test6(<8 x i64> %a) nounwind {
 }
 
 ; CHECK-LABEL: test7:
-; CHECK: vpermi2q
+; CHECK: vperm2q
 ; CHECK: ret
 define <8 x i64> @test7(<8 x i64> %a, <8 x i64> %b) nounwind {
   %c = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 2, i32 8, i32 0, i32 1, i32 6, i32 10, i32 4, i32 5>
@@ -73,7 +73,7 @@ define <8 x i64> @test7(<8 x i64> %a, <8 x i64> %b) nounwind {
 }
 
 ; CHECK-LABEL: test8:
-; CHECK: vpermi2d
+; CHECK: vperm2d
 ; CHECK: ret
 define <16 x i32> @test8(<16 x i32> %a, <16 x i32> %b) nounwind {
   %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 15, i32 31, i32 14, i32 22, i32 13, i32 29, i32 4, i32 28, i32 11, i32 27, i32 10, i32 26, i32 9, i32 25, i32 8, i32 24>
@@ -81,7 +81,7 @@ define <16 x i32> @test8(<16 x i32> %a, <16 x i32> %b) nounwind {
 }
 
 ; CHECK-LABEL: test9:
-; CHECK: vpermi2ps
+; CHECK: vperm2ps
 ; CHECK: ret
 define <16 x float> @test9(<16 x float> %a, <16 x float> %b) nounwind {
   %c = shufflevector <16 x float> %a, <16 x float> %b, <16 x i32> <i32 15, i32 31, i32 14, i32 22, i32 13, i32 29, i32 4, i32 28, i32 11, i32 27, i32 10, i32 26, i32 9, i32 25, i32 8, i32 24>
@@ -89,7 +89,7 @@ define <16 x float> @test9(<16 x float> %a, <16 x float> %b) nounwind {
 }
 
 ; CHECK-LABEL: test10:
-; CHECK: vpermi2ps (
+; CHECK: vperm2ps (
 ; CHECK: ret
 define <16 x float> @test10(<16 x float> %a, <16 x float>* %b) nounwind {
   %c = load <16 x float>* %b
@@ -98,7 +98,7 @@ define <16 x float> @test10(<16 x float> %a, <16 x float>* %b) nounwind {
 }
 
 ; CHECK-LABEL: test11:
-; CHECK: vpermi2d (
+; CHECK: vperm2d 
 ; CHECK: ret
 define <16 x i32> @test11(<16 x i32> %a, <16 x i32>* %b) nounwind {
   %c = load <16 x i32>* %b
@@ -202,7 +202,7 @@ define <16 x float> @test23(<16 x float> %a, <16 x float> %c) {
 }
 
 ; CHECK-LABEL: @test24
-; CHECK: vpermi2d
+; CHECK: vperm2d
 ; CHECK: ret
 define <16 x i32> @test24(<16 x i32> %a, <16 x i32> %b) nounwind {
   %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 0, i32 1, i32 2, i32 19, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>

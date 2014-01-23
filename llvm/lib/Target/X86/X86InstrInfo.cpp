@@ -1540,8 +1540,8 @@ static bool isFrameLoadOpcode(int Opcode) {
   case X86::VMOVDQAYrm:
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
-  case X86::VMOVDQA32rm:
-  case X86::VMOVDQA64rm:
+  case X86::VMOVAPSZrm:
+  case X86::VMOVUPSZrm:
     return true;
   }
 }
@@ -1567,6 +1567,8 @@ static bool isFrameStoreOpcode(int Opcode) {
   case X86::VMOVAPSYmr:
   case X86::VMOVAPDYmr:
   case X86::VMOVDQAYmr:
+  case X86::VMOVUPSZmr:
+  case X86::VMOVAPSZmr:
   case X86::MMX_MOVD64mr:
   case X86::MMX_MOVQ64mr:
   case X86::MMX_MOVNTQmr:

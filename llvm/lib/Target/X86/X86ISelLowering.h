@@ -339,6 +339,7 @@ namespace llvm {
       VPERMILP,
       VPERMV,
       VPERMV3,
+      VPERMIV3,
       VPERMI,
       VPERM2X128,
       VBROADCAST,
