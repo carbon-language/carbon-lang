@@ -1728,7 +1728,7 @@ Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_i
     sigemptyset (&no_signals);
     sigfillset (&all_signals);
     ::posix_spawnattr_setsigmask(&attr, &no_signals);
-#if defined (__linux__)
+#if defined (__linux__)  || defined (__FreeBSD__)
     ::posix_spawnattr_setsigdefault(&attr, &no_signals);
 #else
     ::posix_spawnattr_setsigdefault(&attr, &all_signals);
