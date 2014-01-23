@@ -8541,7 +8541,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
     // be initialized.
     if (!Var->isInvalidDecl() &&
         Var->getType().getAddressSpace() == LangAS::opencl_constant &&
-        !Var->getInit()) {
+        Var->getStorageClass() != SC_Extern && !Var->getInit()) {
       Diag(Var->getLocation(), diag::err_opencl_constant_no_init);
       Var->setInvalidDecl();
       return;
