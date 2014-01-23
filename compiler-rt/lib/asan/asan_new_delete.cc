@@ -29,9 +29,8 @@ void ReplaceOperatorsNewAndDelete() { }
 
 using namespace __asan;  // NOLINT
 
-// On Android new() goes through malloc interceptors.
-// See also https://code.google.com/p/address-sanitizer/issues/detail?id=131.
-#if !SANITIZER_ANDROID
+// This code has issues on OSX.
+// See https://code.google.com/p/address-sanitizer/issues/detail?id=131.
 
 // Fake std::nothrow_t to avoid including <new>.
 namespace std {
@@ -105,6 +104,4 @@ INTERCEPTOR(void, _ZdlPvRKSt9nothrow_t, void *ptr, std::nothrow_t const&) {
 INTERCEPTOR(void, _ZdaPvRKSt9nothrow_t, void *ptr, std::nothrow_t const&) {
   OPERATOR_DELETE_BODY(FROM_NEW_BR);
 }
-#endif
-
 #endif
