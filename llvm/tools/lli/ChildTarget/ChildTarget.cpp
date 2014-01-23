@@ -1,5 +1,6 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Memory.h"
+#include "../RPCChannel.h"
 #include "../RemoteTarget.h"
 #include "../RemoteTargetMessage.h"
 #include <assert.h>
@@ -12,11 +13,11 @@ using namespace llvm;
 
 class LLIChildTarget {
 public:
-  ~LLIChildTarget(); // OS-specific destructor
   void initialize();
   LLIMessageType waitForIncomingMessage();
   void handleMessage(LLIMessageType messageType);
   RemoteTarget *RT;
+  RPCChannel RPC;
 
 private:
   // Incoming message handlers
@@ -32,8 +33,10 @@ private:
 
   // OS-specific functions
   void initializeConnection();
-  int WriteBytes(const void *Data, size_t Size);
-  int ReadBytes(void *Data, size_t Size);
+  int WriteBytes(const void *Data, size_t Size) {
+    return RPC.WriteBytes(Data, Size);
+  }
+  int ReadBytes(void *Data, size_t Size) { return RPC.ReadBytes(Data, Size); }
 
   // Communication handles (OS-specific)
   void *ConnectionData;
@@ -55,7 +58,7 @@ int main() {
 
 // Public methods
 void LLIChildTarget::initialize() {
-  initializeConnection();
+  RPC.createClient();
   sendChildActive();
 }
 
@@ -231,9 +234,9 @@ void LLIChildTarget::sendExecutionComplete(int Result) {
 }
 
 #ifdef LLVM_ON_UNIX
-#include "Unix/ChildTarget.inc"
+#include "../Unix/RPCChannel.inc"
 #endif
 
 #ifdef LLVM_ON_WIN32
-#include "Windows/ChildTarget.inc"
+#include "../Windows/RPCChannel.inc"
 #endif

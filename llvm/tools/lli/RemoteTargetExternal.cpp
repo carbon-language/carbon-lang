@@ -111,7 +111,7 @@ bool RemoteTargetExternal::executeCode(uint64_t Address, int32_t &RetVal) {
 
 void RemoteTargetExternal::stop() {
   SendTerminate();
-  Wait();
+  RPC.Wait();
 }
 
 bool RemoteTargetExternal::SendAllocateSpace(uint32_t Alignment, uint32_t Size) {
@@ -317,9 +317,9 @@ void RemoteTargetExternal::AppendRead(void *Data, uint32_t Size) {
 }
 
 #ifdef LLVM_ON_UNIX
-#include "Unix/RemoteTargetExternal.inc"
+#include "Unix/RPCChannel.inc"
 #endif
 
 #ifdef LLVM_ON_WIN32
-#include "Windows/RemoteTargetExternal.inc"
+#include "Windows/RPCChannel.inc"
 #endif
