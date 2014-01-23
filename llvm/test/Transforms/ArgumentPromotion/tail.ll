@@ -1,4 +1,5 @@
 ; RUN: opt %s -argpromotion -S -o - | FileCheck %s
+; PR14710
 
 %pair = type { i32, i32 }
 
