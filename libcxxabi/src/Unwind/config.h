@@ -20,7 +20,7 @@
 #ifndef __has_feature
   #define __has_feature(__x) 0
 #endif
-#if !(__has_feature(cxx_static_assert))
+#if !(__has_feature(cxx_static_assert)) && !defined(static_assert)
   #define static_assert(__b, __m) \
       extern int compile_time_assert_failed[ ( __b ) ? 1 : -1 ]  \
                                                   __attribute__( ( unused ) );
