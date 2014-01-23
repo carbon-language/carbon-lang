@@ -10,8 +10,8 @@
 // RUN: %clangxx %s -o - -emit-llvm -S -fprofile-instr-generate -target %itanium_abi_triple | FileCheck -check-prefix=PGOGEN %s
 // RUN: %clangxx %s -o - -emit-llvm -S -fprofile-instr-generate -target %itanium_abi_triple | FileCheck -check-prefix=PGOGEN-EXC %s
 
-// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile.pgodata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE %s
-// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile.pgodata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE-EXC %s
+// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile-throws.pgodata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE %s
+// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile-throws.pgodata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE-EXC %s
 
 // PGOGEN: @[[THC:__llvm_pgo_ctr[0-9]*]] = private global [11 x i64] zeroinitializer
 // PGOGEN-EXC: @[[THC:__llvm_pgo_ctr[0-9]*]] = private global [11 x i64] zeroinitializer
