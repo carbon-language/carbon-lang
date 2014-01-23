@@ -662,6 +662,10 @@ StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
         // EABI is always AAPCS, and if it was not marked 'hard', it's softfp
         FloatABI = "softfp";
         break;
+      case llvm::Triple::MachO: {
+        FloatABI = "soft";
+        break;
+      }
       case llvm::Triple::Android: {
         std::string ArchName =
           arm::getLLVMArchSuffixForARM(arm::getARMTargetCPU(Args, Triple));

@@ -12,24 +12,49 @@
 // RUN: FileCheck %s < %t
 
 // ARMv6m has no float
+// CHECK-LABEL: Target:
+// CHECK-NOT: warning: unknown platform
+// CHECK: "-mfloat-abi" "soft"
 // CHECK: libclang_rt.soft_static.a
 
 // ARMv7em does, but defaults to soft
+// CHECK-LABEL: Target:
+// CHECK-NOT: warning: unknown platform
+// CHECK: "-mfloat-abi" "soft"
 // CHECK: libclang_rt.soft_static.a
 
 // Which can be overridden
+// CHECK-LABEL: Target:
+// CHECK-NOT: warning: unknown platform
+// CHECK: "-mfloat-abi" "hard"
 // CHECK: libclang_rt.hard_static.a
 
 // ARMv7m has no float either
+// CHECK-LABEL: Target:
+// CHECK-NOT: warning: unknown platform
+// CHECK: "-mfloat-abi" "soft"
 // CHECK: libclang_rt.soft_pic.a
 
 // But it can be enabled on ARMv7em
+// CHECK-LABEL: Target:
+// CHECK-NOT: warning: unknown platform
+// CHECK: "-mfloat-abi" "hard"
 // CHECK: libclang_rt.hard_pic.a
 
 // "softfp" must link against a soft-float library since that's what the
 // callers we're compiling will expect.
+// CHECK-LABEL: Target:
+// CHECK-NOT: warning: unknown platform
+// CHECK: "-mfloat-abi" "soft"
 // CHECK: libclang_rt.soft_pic.a
 
 // -arch "armv7" (== embedded v7a) can be used in a couple of variants:
+// CHECK-LABEL: Target:
+// CHECK-NOT: warning: unknown platform
+// CHECK: "-mfloat-abi" "hard"
 // CHECK: libclang_rt.hard_static.a
+
+// CHECK-LABEL: Target:
+// CHECK-NOT: warning: unknown platform
+// CHECK: "-mfloat-abi" "soft"
 // CHECK: libclang_rt.soft_pic.a
