@@ -22,31 +22,6 @@
 
 using namespace llvm;
 
-#ifndef LLI_BUILDING_CHILD
-
-// Static methods
-RemoteTarget *RemoteTarget::createRemoteTarget() {
-  return new RemoteTarget;
-}
-
-RemoteTarget *RemoteTarget::createExternalRemoteTarget(std::string &ChildName) {
-#ifdef LLVM_ON_UNIX
-  return new RemoteTargetExternal(ChildName);
-#else
-  return 0;
-#endif
-}
-
-bool RemoteTarget::hostSupportsExternalRemoteTarget() {
-#ifdef LLVM_ON_UNIX
-  return true;
-#else
-  return false;
-#endif
-}
-
-#endif
-
 ////////////////////////////////////////////////////////////////////////////////
 // Simulated remote execution
 //

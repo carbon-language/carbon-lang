@@ -17,6 +17,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "RemoteMemoryManager.h"
 #include "RemoteTarget.h"
+#include "RemoteTargetExternal.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
@@ -663,21 +664,23 @@ int main(int argc, char **argv, char * const *envp) {
 
     OwningPtr<RemoteTarget> Target;
     if (!ChildExecPath.empty()) { // Remote execution on a child process
-      if (!RemoteTarget::hostSupportsExternalRemoteTarget()) {
-        errs() << "Warning: host does not support external remote targets.\n"
-               << "  Defaulting to simulated remote execution\n";
-        Target.reset(RemoteTarget::createRemoteTarget());
-      } else {
-        if (!sys::fs::can_execute(ChildExecPath)) {
-          errs() << "Unable to find usable child executable: '" << ChildExecPath
-                 << "'\n";
-          return -1;
-        }
-        Target.reset(RemoteTarget::createExternalRemoteTarget(ChildExecPath));
+#ifndef LLVM_ON_UNIX
+      // FIXME: Remove this pointless fallback mode which causes tests to "pass"
+      // on platforms where they should XFAIL.
+      errs() << "Warning: host does not support external remote targets.\n"
+             << "  Defaulting to simulated remote execution\n";
+      Target.reset(new RemoteTarget);
+#else
+      if (!sys::fs::can_execute(ChildExecPath)) {
+        errs() << "Unable to find usable child executable: '" << ChildExecPath
+               << "'\n";
+        return -1;
       }
+      Target.reset(new RemoteTargetExternal(ChildExecPath));
+#endif
     } else {
       // No child process name provided, use simulated remote execution.
-      Target.reset(RemoteTarget::createRemoteTarget());
+      Target.reset(new RemoteTarget);
     }
 
     // Give the memory manager a pointer to our remote target interface object.

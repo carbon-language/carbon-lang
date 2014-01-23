@@ -14,8 +14,6 @@ include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS := support
 
-CXXFLAGS += -DLLI_BUILDING_CHILD
-
 SOURCES := ChildTarget.cpp ../RemoteTarget.cpp
 
 include $(LLVM_SRC_ROOT)/Makefile.rules

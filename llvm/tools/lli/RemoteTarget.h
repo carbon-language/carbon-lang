@@ -111,11 +111,6 @@ public:
 
   RemoteTarget() : IsRunning(false), ErrorMsg("") {}
   virtual ~RemoteTarget() { if (IsRunning) stop(); }
-
-  // Create an instance of the system-specific remote target class.
-  static RemoteTarget *createRemoteTarget();
-  static RemoteTarget *createExternalRemoteTarget(std::string &ChildName);
-  static bool hostSupportsExternalRemoteTarget(); 
 private:
   // Main processing function for the remote target process. Command messages
   // are received on file descriptor CmdFD and responses come back on OutFD.
