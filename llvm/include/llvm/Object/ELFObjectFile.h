@@ -783,6 +783,7 @@ error_code ELFObjectFile<ELFT>::getRelocationValueString(
   }
   case ELF::EM_ARM:
   case ELF::EM_HEXAGON:
+  case ELF::EM_MIPS:
     res = *SymName;
     break;
   default:
