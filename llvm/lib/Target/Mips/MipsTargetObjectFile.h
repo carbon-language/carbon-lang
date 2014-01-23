@@ -31,9 +31,8 @@ namespace llvm {
                                 const TargetMachine &TM) const;
 
     const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                            SectionKind Kind,
-                                            Mangler *Mang,
-                                            const TargetMachine &TM) const;
+                                            SectionKind Kind, Mangler *Mang,
+                                            TargetMachine &TM) const;
 
     // TODO: Classify globals as mips wishes.
     const MCSection *getReginfoSection() const { return ReginfoSection; }

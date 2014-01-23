@@ -103,7 +103,7 @@ IsGlobalInSmallSection(const GlobalValue *GV, const TargetMachine &TM,
 
 const MCSection *MipsTargetObjectFile::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       Mangler *Mang, const TargetMachine &TM) const {
+                       Mangler *Mang, TargetMachine &TM) const {
   // TODO: Could also support "weak" symbols as well with ".gnu.linkonce.s.*"
   // sections?
 

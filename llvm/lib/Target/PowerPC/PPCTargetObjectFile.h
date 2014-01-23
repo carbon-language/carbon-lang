@@ -22,9 +22,10 @@ namespace llvm {
 
     virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
-    virtual const MCSection *
-    SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                           Mangler *Mang, const TargetMachine &TM) const;
+    virtual const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
+                                                    SectionKind Kind,
+                                                    Mangler *Mang,
+                                                    TargetMachine &TM) const;
 
     /// \brief Describe a TLS variable address within debug info.
     virtual const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;

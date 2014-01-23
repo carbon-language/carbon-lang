@@ -130,7 +130,7 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 
 const MCSection *XCoreTargetObjectFile::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler *Mang,
-                       const TargetMachine &TM) const{
+                       TargetMachine &TM) const{
   if (Kind.isText())                      return TextSection;
   if (Kind.isMergeable1ByteCString())     return CStringSection;
   if (Kind.isMergeableConst4())           return MergeableConst4Section;

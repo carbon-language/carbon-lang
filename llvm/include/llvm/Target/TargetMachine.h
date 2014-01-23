@@ -88,6 +88,7 @@ protected: // Can only create subclasses.
   unsigned MCUseLoc : 1;
   unsigned MCUseCFI : 1;
   unsigned MCUseDwarfDirectory : 1;
+  unsigned DebugUseUniqueSections : 1;
   unsigned RequireStructuredCFG : 1;
 
 public:
@@ -159,6 +160,9 @@ public:
 
   bool requiresStructuredCFG() const { return RequireStructuredCFG; }
   void setRequiresStructuredCFG(bool Value) { RequireStructuredCFG = Value; }
+
+  bool debugUseUniqueSections() const { return DebugUseUniqueSections; }
+  void setDebugUseUniqueSections(bool Value) { DebugUseUniqueSections = Value; }
 
   /// hasMCRelaxAll - Check whether all machine code instructions should be
   /// relaxed.
