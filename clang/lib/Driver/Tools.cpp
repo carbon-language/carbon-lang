@@ -6344,10 +6344,13 @@ static bool hasMipsN32ABIArg(const ArgList &Args) {
 
 static StringRef getLinuxDynamicLinker(const ArgList &Args,
                                        const toolchains::Linux &ToolChain) {
-  if (ToolChain.getTriple().getEnvironment() == llvm::Triple::Android)
-    return "/system/bin/linker";
-  else if (ToolChain.getArch() == llvm::Triple::x86 ||
-           ToolChain.getArch() == llvm::Triple::sparc)
+  if (ToolChain.getTriple().getEnvironment() == llvm::Triple::Android) {
+    if (ToolChain.getTriple().isArch64Bit())
+      return "/system/bin/linker64";
+    else
+      return "/system/bin/linker";
+  } else if (ToolChain.getArch() == llvm::Triple::x86 ||
+             ToolChain.getArch() == llvm::Triple::sparc)
     return "/lib/ld-linux.so.2";
   else if (ToolChain.getArch() == llvm::Triple::aarch64)
     return "/lib/ld-linux-aarch64.so.1";
