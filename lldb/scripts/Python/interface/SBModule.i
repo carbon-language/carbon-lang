@@ -231,6 +231,9 @@ public:
     FindTypes (const char* type);
 
     lldb::SBType
+    GetTypeByID (lldb::user_id_t uid);
+
+    lldb::SBType
     GetBasicType(lldb::BasicType type);
 
     %feature("docstring", "

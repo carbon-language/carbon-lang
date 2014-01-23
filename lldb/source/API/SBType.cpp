@@ -186,6 +186,14 @@ SBType::GetReferenceType()
 }
 
 SBType
+SBType::GetTypedefedType()
+{
+    if (!IsValid())
+        return SBType();
+    return SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetTypedefedType())));
+}
+
+SBType
 SBType::GetDereferencedType()
 {
     if (!IsValid())

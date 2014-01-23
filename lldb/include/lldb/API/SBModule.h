@@ -235,6 +235,25 @@ public:
     lldb::SBTypeList
     FindTypes (const char* type);
     
+    //------------------------------------------------------------------
+    /// Get a type using its type ID.
+    ///
+    /// Each symbol file reader will assign different user IDs to their
+    /// types, but it is sometimes useful when debugging type issues to
+    /// be able to grab a type using its type ID.
+    ///
+    /// For DWARF debug info, the type ID is the DIE offset.
+    ///
+    /// @param[in] uid
+    ///     The type user ID.
+    ///
+    /// @return
+    ///     An SBType for the given type ID, or an empty SBType if the
+    ///     type was not found.
+    //------------------------------------------------------------------
+    lldb::SBType
+    GetTypeByID (lldb::user_id_t uid);
+
     lldb::SBType
     GetBasicType(lldb::BasicType type);
 

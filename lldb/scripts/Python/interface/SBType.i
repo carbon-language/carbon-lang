@@ -178,6 +178,9 @@ public:
     GetReferenceType();
 
     lldb::SBType
+    SBType::GetTypedefedType();
+    
+    lldb::SBType
     GetDereferencedType();
 
     lldb::SBType

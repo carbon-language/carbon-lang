@@ -579,6 +579,23 @@ SBModule::FindTypes (const char *type)
     return retval;
 }
 
+lldb::SBType
+SBModule::GetTypeByID (lldb::user_id_t uid)
+{
+    ModuleSP module_sp (GetSP ());
+    if (module_sp)
+    {
+        SymbolVendor* vendor = module_sp->GetSymbolVendor();
+        if (vendor)
+        {
+            Type *type_ptr = vendor->ResolveTypeUID(uid);
+            if (type_ptr)
+                return SBType(type_ptr->shared_from_this());
+        }
+    }
+    return SBType();
+}
+
 lldb::SBTypeList
 SBModule::GetTypes (uint32_t type_mask)
 {

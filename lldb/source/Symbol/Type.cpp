@@ -1084,6 +1084,16 @@ TypeImpl::GetReferenceType () const
 }
 
 TypeImpl
+TypeImpl::GetTypedefedType () const
+{
+    if (m_dynamic_type.IsValid())
+    {
+        return TypeImpl(m_static_type, m_dynamic_type.GetTypedefedType());
+    }
+    return TypeImpl(m_static_type.GetTypedefedType());
+}
+
+TypeImpl
 TypeImpl::GetDereferencedType () const
 {
     if (m_dynamic_type.IsValid())

@@ -417,7 +417,15 @@ public:
             return type_sp->GetClangLayoutType().GetLValueReferenceType();
         return clang_type.GetLValueReferenceType();
     }
-    
+
+    ClangASTType
+    GetTypedefedType () const
+    {
+        if (type_sp)
+            return type_sp->GetClangFullType().GetTypedefedType();
+        return clang_type.GetTypedefedType();
+    }
+
     ClangASTType
     GetDereferencedType () const
     {
@@ -512,6 +520,9 @@ public:
     TypeImpl
     GetReferenceType () const;
     
+    TypeImpl
+    GetTypedefedType () const;
+
     TypeImpl
     GetDereferencedType () const;
     
