@@ -1180,6 +1180,7 @@ def AssertExclusiveLock : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
+  let DuplicatesAllowedWhileMerging = 1;
   let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
@@ -1189,6 +1190,7 @@ def AssertSharedLock : InheritableAttr {
   let LateParsed = 1;
   let TemplateDependent = 1;
   let ParseArgumentsAsUnevaluated = 1;
+  let DuplicatesAllowedWhileMerging = 1;
   let Subjects = SubjectList<[FunctionDefinition, FunctionTemplate]>;
 }
 
