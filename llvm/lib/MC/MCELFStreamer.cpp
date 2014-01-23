@@ -22,6 +22,7 @@
 #include "llvm/MC/MCELFSymbolFlags.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -34,33 +35,18 @@
 
 using namespace llvm;
 
-
-inline void MCELFStreamer::SetSection(StringRef Section, unsigned Type,
-                                      unsigned Flags, SectionKind Kind) {
-  SwitchSection(getContext().getELFSection(Section, Type, Flags, Kind));
-}
-
 inline void MCELFStreamer::SetSectionData() {
-  SetSection(".data",
-             ELF::SHT_PROGBITS,
-             ELF::SHF_WRITE | ELF::SHF_ALLOC,
-             SectionKind::getDataRel());
+  SwitchSection(getContext().getObjectFileInfo()->getDataSection());
   EmitCodeAlignment(4, 0);
 }
 
 inline void MCELFStreamer::SetSectionText() {
-  SetSection(".text",
-             ELF::SHT_PROGBITS,
-             ELF::SHF_EXECINSTR | ELF::SHF_ALLOC,
-             SectionKind::getText());
+  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
   EmitCodeAlignment(4, 0);
 }
 
 inline void MCELFStreamer::SetSectionBss() {
-  SetSection(".bss",
-             ELF::SHT_NOBITS,
-             ELF::SHF_WRITE | ELF::SHF_ALLOC,
-             SectionKind::getBSS());
+  SwitchSection(getContext().getObjectFileInfo()->getBSSSection());
   EmitCodeAlignment(4, 0);
 }
 

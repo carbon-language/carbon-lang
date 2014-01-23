@@ -16,6 +16,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCMachOSymbolFlags.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -99,10 +100,7 @@ void MCMachOStreamer::InitSections() {
 }
 
 void MCMachOStreamer::InitToTextSection() {
-  SwitchSection(getContext().getMachOSection(
-                                    "__TEXT", "__text",
-                                    MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS, 0,
-                                    SectionKind::getText()));
+  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 
 void MCMachOStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
@@ -335,9 +333,7 @@ void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 void MCMachOStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                             unsigned ByteAlignment) {
   // '.lcomm' is equivalent to '.zerofill'.
-  return EmitZerofill(getContext().getMachOSection("__DATA", "__bss",
-                                                   MCSectionMachO::S_ZEROFILL,
-                                                   0, SectionKind::getBSS()),
+  return EmitZerofill(getContext().getObjectFileInfo()->getDataBSSSection(),
                       Symbol, Size, ByteAlignment);
 }
 

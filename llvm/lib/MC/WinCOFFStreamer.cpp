@@ -20,6 +20,7 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionCOFF.h"
@@ -95,25 +96,16 @@ private:
     DF->getContents().append(Code.begin(), Code.end());
   }
 
-  const MCSectionCOFF *getSectionText() {
-    return getContext().getCOFFSection(
-        ".text", COFF::IMAGE_SCN_CNT_CODE | COFF::IMAGE_SCN_MEM_EXECUTE |
-                     COFF::IMAGE_SCN_MEM_READ,
-        SectionKind::getText());
+  const MCSection *getSectionText() {
+    return getContext().getObjectFileInfo()->getTextSection();
   }
 
-  const MCSectionCOFF *getSectionData() {
-    return getContext().getCOFFSection(
-        ".data", COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                     COFF::IMAGE_SCN_MEM_READ | COFF::IMAGE_SCN_MEM_WRITE,
-        SectionKind::getDataRel());
+  const MCSection *getSectionData() {
+    return getContext().getObjectFileInfo()->getDataSection();
   }
 
-  const MCSectionCOFF *getSectionBSS() {
-    return getContext().getCOFFSection(
-        ".bss", COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
-                    COFF::IMAGE_SCN_MEM_READ | COFF::IMAGE_SCN_MEM_WRITE,
-        SectionKind::getBSS());
+  const MCSection *getSectionBSS() {
+    return getContext().getObjectFileInfo()->getBSSSection();
   }
 
   void SetSectionText() {
@@ -141,7 +133,7 @@ void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                       unsigned ByteAlignment, bool External) {
   assert(!Symbol->isInSection() && "Symbol must not already have a section!");
 
-  const MCSectionCOFF *Section = getSectionBSS();
+  const MCSection *Section = getSectionBSS();
   MCSectionData &SectionData = getAssembler().getOrCreateSectionData(*Section);
   if (SectionData.getAlignment() < ByteAlignment)
     SectionData.setAlignment(ByteAlignment);

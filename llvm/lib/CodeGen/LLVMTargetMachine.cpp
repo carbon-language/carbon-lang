@@ -283,7 +283,6 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
                                                        *MAB, Out, MCE,
                                                        hasMCRelaxAll(),
                                                        hasMCNoExecStack()));
-  AsmStreamer.get()->InitSections();
 
   // Create the AsmPrinter, which takes ownership of AsmStreamer if successful.
   FunctionPass *Printer = getTarget().createAsmPrinter(*this, *AsmStreamer);

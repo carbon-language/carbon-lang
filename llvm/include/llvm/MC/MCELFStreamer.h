@@ -108,9 +108,6 @@ private:
 
   SmallPtrSet<MCSymbol *, 16> BindingExplicitlySet;
 
-
-  void SetSection(StringRef Section, unsigned Type, unsigned Flags,
-                  SectionKind Kind);
   void SetSectionData();
   void SetSectionText();
   void SetSectionBss();
