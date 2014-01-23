@@ -12,8 +12,10 @@ TOOLNAME := lli-child-target
 
 include $(LEVEL)/Makefile.config
 
-LINK_COMPONENTS :=
+LINK_COMPONENTS := support
 
-SOURCES += ../RemoteTarget.cpp
+CXXFLAGS += -DLLI_BUILDING_CHILD
+
+SOURCES := ChildTarget.cpp ../RemoteTarget.cpp
 
 include $(LLVM_SRC_ROOT)/Makefile.rules

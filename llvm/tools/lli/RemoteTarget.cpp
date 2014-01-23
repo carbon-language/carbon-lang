@@ -22,6 +22,8 @@
 
 using namespace llvm;
 
+#ifndef LLI_BUILDING_CHILD
+
 // Static methods
 RemoteTarget *RemoteTarget::createRemoteTarget() {
   return new RemoteTarget;
@@ -43,6 +45,7 @@ bool RemoteTarget::hostSupportsExternalRemoteTarget() {
 #endif
 }
 
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Simulated remote execution
