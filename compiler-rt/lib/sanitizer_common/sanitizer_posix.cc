@@ -107,7 +107,7 @@ void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
   int reserrno;
   if (internal_iserror(p, &reserrno))
     Report("ERROR: "
-           "%s failed to allocate 0x%zx (%zd) bytes at address %p (%d)\n",
+           "%s failed to allocate 0x%zx (%zd) bytes at address %zu (%d)\n",
            SanitizerToolName, size, size, fixed_addr, reserrno);
   return (void *)p;
 }
@@ -122,7 +122,7 @@ void *MmapFixedOrDie(uptr fixed_addr, uptr size) {
   int reserrno;
   if (internal_iserror(p, &reserrno)) {
     Report("ERROR:"
-           " %s failed to allocate 0x%zx (%zd) bytes at address %p (%d)\n",
+           " %s failed to allocate 0x%zx (%zd) bytes at address %zu (%d)\n",
            SanitizerToolName, size, size, fixed_addr, reserrno);
     CHECK("unable to mmap" && 0);
   }
@@ -223,7 +223,7 @@ void MaybeOpenReportFile() {
   if (report_fd_pid == pid) return;
   InternalScopedBuffer<char> report_path_full(4096);
   internal_snprintf(report_path_full.data(), report_path_full.size(),
-                    "%s.%d", report_path_prefix, pid);
+                    "%s.%zu", report_path_prefix, pid);
   uptr openrv = OpenFile(report_path_full.data(), true);
   if (internal_iserror(openrv)) {
     report_fd = kStderrFd;
