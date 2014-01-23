@@ -476,7 +476,15 @@ public:
 
     static bool
     GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info);
-    
+
+#if defined (__APPLE__) || defined (__linux__) || defined (__FreeBSD__) || defined (__GLIBC__)
+    static short
+    GetPosixspawnFlags (ProcessLaunchInfo &launch_info);
+
+    static Error
+    LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t &pid);
+#endif
+
     static lldb::pid_t
     LaunchApplication (const FileSpec &app_file_spec);
 
