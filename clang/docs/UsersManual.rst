@@ -1329,8 +1329,15 @@ to correctly compile many large C, C++, Objective-C, and Objective-C++
 codebases.
 
 On ``x86_64-mingw32``, passing i128(by value) is incompatible with the
-Microsoft x64 calling conversion. You might need to tweak
+Microsoft x64 calling convention. You might need to tweak
 ``WinX86_64ABIInfo::classify()`` in lib/CodeGen/TargetInfo.cpp.
+
+For the X86 target, clang supports the :option:`-m16` command line
+argument which enables 16-bit code output. This is broadly similar to
+using ``asm(".code16gcc")`` with the GNU toolchain. The generated code
+and the ABI remains 32-bit but the assembler emits instructions
+appropriate for a CPU running in 16-bit mode, with address-size and
+operand-size prefixes to enable 32-bit addressing and operations.
 
 ARM
 ^^^
