@@ -1685,8 +1685,12 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
         // area for cases where our desired output is not backed by some other longer-term storage
         StreamString strm;
 
-        if (custom_format != eFormatInvalid)
+        bool reset_format = false;
+        if (custom_format != eFormatInvalid && GetFormat() == lldb::eFormatDefault)
+        {
+            reset_format = true;
             SetFormat(custom_format);
+        }
         
         switch(val_obj_display)
         {
@@ -1741,10 +1745,17 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
             }
         }
         
+        
         if (cstr)
+        {
             s.PutCString(cstr);
+            if (reset_format)
+                SetFormat(lldb::eFormatDefault);
+        }
         else
         {
+            if (reset_format)
+                SetFormat(lldb::eFormatDefault);
             if (m_error.Fail())
             {
                 if (do_dump_error)
@@ -1766,9 +1777,6 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
         // even if we have an error message as output, that's a success
         // from our callers' perspective, so return true
         var_success = true;
-        
-        if (custom_format != eFormatInvalid)
-            SetFormat(eFormatDefault);
     }
     
     return var_success;
