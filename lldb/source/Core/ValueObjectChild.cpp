@@ -207,7 +207,10 @@ ValueObjectChild::UpdateValue ()
             if (m_error.Success())
             {
                 ExecutionContext exe_ctx (GetExecutionContextRef().Lock());
-                m_error = m_value.GetValueAsData (&exe_ctx, m_data, 0, GetModule().get());
+                if (GetClangType().GetTypeInfo() & ClangASTType::eTypeHasValue)
+                    m_error = m_value.GetValueAsData (&exe_ctx, m_data, 0, GetModule().get());
+                else
+                    m_error.Clear(); // No value so nothing to read...
             }
         }
         else
