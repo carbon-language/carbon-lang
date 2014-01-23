@@ -4154,8 +4154,8 @@ AArch64TargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
   return false;
 }
 
-// Check whether a shuffle_vecotor could be presented as conact_vector.
-bool AArch64TargetLowering::isConactVector(SDValue Op,SelectionDAG &DAG,
+// Check whether a shuffle_vector could be presented as concat_vector.
+bool AArch64TargetLowering::isConcatVector(SDValue Op,SelectionDAG &DAG,
                                            SDValue V0, SDValue V1,
                                            const int* Mask,
                                            SDValue &Res) const {
@@ -4465,7 +4465,7 @@ AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
         return LowerVECTOR_SHUFFLE(Shuffle, DAG);
     } else {
       SDValue Res;
-      if(isConactVector(Op, DAG, V0, V1, Mask, Res))
+      if(isConcatVector(Op, DAG, V0, V1, Mask, Res))
         return Res;
     }
   }
@@ -4655,7 +4655,7 @@ AArch64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   }
 
   SDValue Res;
-  if (isConactVector(Op, DAG, V1, V2, &ShuffleMask[0], Res))
+  if (isConcatVector(Op, DAG, V1, V2, &ShuffleMask[0], Res))
     return Res;
 
   // If the element of shuffle mask are all the same constant, we can

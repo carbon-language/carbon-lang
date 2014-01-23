@@ -232,7 +232,7 @@ public:
                           SDLoc dl, SelectionDAG &DAG,
                           SmallVectorImpl<SDValue> &InVals) const;
 
-  bool isConactVector(SDValue Op,SelectionDAG &DAG, SDValue V0, SDValue V1,
+  bool isConcatVector(SDValue Op,SelectionDAG &DAG, SDValue V0, SDValue V1,
                       const int* Mask, SDValue &Res) const;
 
   bool isKnownShuffleVector(SDValue Op, SelectionDAG &DAG, SDValue &V0,
