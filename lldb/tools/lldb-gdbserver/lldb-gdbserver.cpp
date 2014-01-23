@@ -105,7 +105,7 @@ main (int argc, char *argv[])
     debugger_sp->SetOutputFileHandle(stdout, false);
     debugger_sp->SetErrorFileHandle(stderr, false);
 
-    ProcessLaunchInfo launch_info;
+    // ProcessLaunchInfo launch_info;
     ProcessAttachInfo attach_info;
 
     bool show_usage = false;
@@ -210,6 +210,9 @@ main (int argc, char *argv[])
             puts (output);
     }
 
+    const bool is_platform = false;
+    GDBRemoteCommunicationServer gdb_server (is_platform);
+
     const char *host_and_port = argv[0];
     argc -= 1;
     argv += 1;
@@ -218,31 +221,19 @@ main (int argc, char *argv[])
     // to launch a program, or a vAttach packet to attach to an existing process.
     if (argc > 0)
     {
-        // Launch the program specified on the command line
-        launch_info.SetArguments((const char **)argv, true);
-
         unsigned int launch_flags = eLaunchFlagStopAtEntry;
 #if !defined(__linux__)
         // linux doesn't yet handle eLaunchFlagDebug
         launch_flags |= eLaunchFlagDebug;
 #endif
-        launch_info.GetFlags ().Set (launch_flags);
-        error = Host::LaunchProcess (launch_info);
-
-        if (error.Success())
-        {
-            printf ("Launched '%s' as process %" PRIu64 "...\n", argv[0], launch_info.GetProcessID());
-        }
-        else
+        error = gdb_server.LaunchProcess (argv, argc, launch_flags);
+        if (error.Fail ())
         {
             fprintf (stderr, "error: failed to launch '%s': %s\n", argv[0], error.AsCString());
             exit(1);
         }
     }
-    
-    const bool is_platform = false;
-    GDBRemoteCommunicationServer gdb_server (is_platform);
-    
+
     if (host_and_port && host_and_port[0])
     {
         std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
@@ -271,7 +262,7 @@ main (int argc, char *argv[])
                     if (!gdb_server.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done))
                         break;
                 }
-                
+
                 if (error.Fail())
                 {
                     fprintf(stderr, "error: %s\n", error.AsCString());

@@ -143,6 +143,10 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
             packet_result = Handle_qKillSpawnedProcess (packet);
             break;
 
+        case StringExtractorGDBRemote::eServerPacketType_k:
+            packet_result = Handle_k (packet);
+            break;
+
         case StringExtractorGDBRemote::eServerPacketType_qLaunchSuccess:
             packet_result = Handle_qLaunchSuccess (packet);
             break;
@@ -269,6 +273,38 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
         }
     }
     return packet_result == PacketResult::Success;
+}
+
+lldb_private::Error
+GDBRemoteCommunicationServer::LaunchProcess (const char *const args[], int argc, unsigned int launch_flags)
+{
+    if ((argc < 1) || !args || !args[0] || !args[0][0])
+        lldb_private::Error ("%s: no process command line specified to launch", __FUNCTION__);
+
+    // Launch the program specified in args
+    m_process_launch_info.Clear ();
+    m_process_launch_info.SetArguments (const_cast<const char**> (args), true);
+    m_process_launch_info.GetFlags ().Set (launch_flags);
+
+    lldb_private::Error error = Host::LaunchProcess (m_process_launch_info);
+    if (!error.Success ())
+    {
+        fprintf (stderr, "%s: failed to launch executable %s", __FUNCTION__, args[0]);
+        return error;
+    }
+
+    printf ("Launched '%s' as process %" PRIu64 "...\n", args[0], m_process_launch_info.GetProcessID());
+
+    // add to list of spawned processes.  On an lldb-gdbserver, we
+    // would expect there to be only one.
+    lldb::pid_t pid;
+    if ( (pid = m_process_launch_info.GetProcessID()) != LLDB_INVALID_PROCESS_ID )
+    {
+        Mutex::Locker locker (m_spawned_pids_mutex);
+        m_spawned_pids.insert(pid);
+    }
+
+    return error;
 }
 
 GDBRemoteCommunication::PacketResult
@@ -897,57 +933,122 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
 #endif
 }
 
+bool
+GDBRemoteCommunicationServer::KillSpawnedProcess (lldb::pid_t pid)
+{
+    // make sure we know about this process
+    {
+        Mutex::Locker locker (m_spawned_pids_mutex);
+        if (m_spawned_pids.find(pid) == m_spawned_pids.end())
+            return false;
+    }
+
+    // first try a SIGTERM (standard kill)
+    Host::Kill (pid, SIGTERM);
+
+    // check if that worked
+    for (size_t i=0; i<10; ++i)
+    {
+        {
+            Mutex::Locker locker (m_spawned_pids_mutex);
+            if (m_spawned_pids.find(pid) == m_spawned_pids.end())
+            {
+                // it is now killed
+                return true;
+            }
+        }
+        usleep (10000);
+    }
+
+    // check one more time after the final usleep
+    {
+        Mutex::Locker locker (m_spawned_pids_mutex);
+        if (m_spawned_pids.find(pid) == m_spawned_pids.end())
+            return true;
+    }
+
+    // the launched process still lives.  Now try killling it again,
+    // this time with an unblockable signal.
+    Host::Kill (pid, SIGKILL);
+
+    for (size_t i=0; i<10; ++i)
+    {
+        {
+            Mutex::Locker locker (m_spawned_pids_mutex);
+            if (m_spawned_pids.find(pid) == m_spawned_pids.end())
+            {
+                // it is now killed
+                return true;
+            }
+        }
+        usleep (10000);
+    }
+
+    // check one more time after the final usleep
+    // Scope for locker
+    {
+        Mutex::Locker locker (m_spawned_pids_mutex);
+        if (m_spawned_pids.find(pid) == m_spawned_pids.end())
+            return true;
+    }
+
+    // no luck - the process still lives
+    return false;
+}
+
 GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServer::Handle_qKillSpawnedProcess (StringExtractorGDBRemote &packet)
 {
-    // Spawn a local debugserver as a platform so we can then attach or launch
-    // a process...
+    packet.SetFilePos(::strlen ("qKillSpawnedProcess:"));
 
-    if (m_is_platform)
+    lldb::pid_t pid = packet.GetU64(LLDB_INVALID_PROCESS_ID);
+
+    // verify that we know anything about this pid.
+    // Scope for locker
     {
-        packet.SetFilePos(::strlen ("qKillSpawnedProcess:"));
-
-        lldb::pid_t pid = packet.GetU64(LLDB_INVALID_PROCESS_ID);
-
-        // Scope for locker
+        Mutex::Locker locker (m_spawned_pids_mutex);
+        if (m_spawned_pids.find(pid) == m_spawned_pids.end())
         {
-            Mutex::Locker locker (m_spawned_pids_mutex);
-            if (m_spawned_pids.find(pid) == m_spawned_pids.end())
-                return SendErrorResponse (10);
-        }
-        Host::Kill (pid, SIGTERM);
-
-        for (size_t i=0; i<10; ++i)
-        {
-            // Scope for locker
-            {
-                Mutex::Locker locker (m_spawned_pids_mutex);
-                if (m_spawned_pids.find(pid) == m_spawned_pids.end())
-                    return SendOKResponse();
-            }
-            usleep (10000);
-        }
-
-        // Scope for locker
-        {
-            Mutex::Locker locker (m_spawned_pids_mutex);
-            if (m_spawned_pids.find(pid) == m_spawned_pids.end())
-                return SendOKResponse();
-        }
-        Host::Kill (pid, SIGKILL);
-
-        for (size_t i=0; i<10; ++i)
-        {
-            // Scope for locker
-            {
-                Mutex::Locker locker (m_spawned_pids_mutex);
-                if (m_spawned_pids.find(pid) == m_spawned_pids.end())
-                    return SendOKResponse();
-            }
-            usleep (10000);
+            // not a pid we know about
+            return SendErrorResponse (10);
         }
     }
-    return SendErrorResponse (11);
+
+    // go ahead and attempt to kill the spawned process
+    if (KillSpawnedProcess (pid))
+        return SendOKResponse ();
+    else
+        return SendErrorResponse (11);
+}
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationServer::Handle_k (StringExtractorGDBRemote &packet)
+{
+    // ignore for now if we're lldb_platform
+    if (m_is_platform)
+        return SendUnimplementedResponse (packet.GetStringRef().c_str());
+
+    // shutdown all spawned processes
+    std::set<lldb::pid_t> spawned_pids_copy;
+
+    // copy pids
+    {
+        Mutex::Locker locker (m_spawned_pids_mutex);
+        spawned_pids_copy.insert (m_spawned_pids.begin (), m_spawned_pids.end ());
+    }
+
+    // nuke the spawned processes
+    for (auto it = spawned_pids_copy.begin (); it != spawned_pids_copy.end (); ++it)
+    {
+        lldb::pid_t spawned_pid = *it;
+        if (!KillSpawnedProcess (spawned_pid))
+        {
+            fprintf (stderr, "%s: failed to kill spawned pid %" PRIu64 ", ignoring.\n", __FUNCTION__, spawned_pid);
+        }
+    }
+
+    // TODO figure out how to shut down gracefully at this point
+    return SendOKResponse ();
 }
 
 GDBRemoteCommunication::PacketResult
