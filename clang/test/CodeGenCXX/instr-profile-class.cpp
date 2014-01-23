@@ -29,7 +29,7 @@ public:
     if (Member) {}
     // CTRGEN-NOT: store {{.*}} @[[SCC]],
     // CTRUSE-NOT: br {{.*}} !prof ![0-9]+
-    // CTRUSE: ret void
+    // CTRUSE: ret
   }
   // CTRUSE: ![[SC1]] = metadata !{metadata !"branch_weights", i32 100, i32 2}
 
@@ -42,7 +42,7 @@ public:
     if (Member) {}
     // DTRGEN-NOT: store {{.*}} @[[SDC]],
     // DTRUSE-NOT: br {{.*}} !prof ![0-9]+
-    // DTRUSE: ret void
+    // DTRUSE: ret
   }
   // DTRUSE: ![[SD1]] = metadata !{metadata !"branch_weights", i32 100, i32 2}
 
@@ -55,7 +55,7 @@ public:
     if (Member) {}
     // MTHGEN-NOT: store {{.*}} @[[SMC]],
     // MTHUSE-NOT: br {{.*}} !prof ![0-9]+
-    // MTHUSE: ret void
+    // MTHUSE: ret
   }
   // MTHUSE: ![[SM1]] = metadata !{metadata !"branch_weights", i32 100, i32 2}
 };
@@ -72,7 +72,7 @@ void simple_wrapper() {
   }
   // WRPGEN-NOT: store {{.*}} @[[SWC]],
   // WRPUSE-NOT: br {{.*}} !prof ![0-9]+
-  // WRPUSE: ret void
+  // WRPUSE: ret
 }
 // WRPUSE: ![[SW1]] = metadata !{metadata !"branch_weights", i32 100, i32 2}
 
