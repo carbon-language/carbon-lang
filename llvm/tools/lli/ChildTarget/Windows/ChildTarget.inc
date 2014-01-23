@@ -32,13 +32,3 @@ int LLIChildTarget::ReadBytes(void *Data, size_t Size) {
 uint64_t LLIChildTarget::allocate(uint32_t Alignment, uint32_t Size) {
   return 0;
 }
-
-void LLIChildTarget::makeSectionExecutable(uint64_t Addr, uint32_t Size) {
-}
-
-void LLIChildTarget::InvalidateInstructionCache(const void *Addr,
-                                        size_t Len) {
-}
-
-void LLIChildTarget::releaseMemory(uint64_t Addr, uint32_t Size) {
-}

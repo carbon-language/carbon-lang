@@ -62,6 +62,7 @@ bool RemoteTarget::allocateSpace(size_t Size, unsigned Alignment,
     return false;
   }
   Address = reinterpret_cast<uint64_t>(Mem.base());
+  Allocations.push_back(Mem);
   return true;
 }
 

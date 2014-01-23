@@ -1,4 +1,6 @@
 #include "llvm/Config/config.h"
+#include "llvm/Support/Memory.h"
+#include "../RemoteTarget.h"
 #include "../RemoteTargetMessage.h"
 #include <assert.h>
 #include <map>
@@ -14,13 +16,13 @@ public:
   void initialize();
   LLIMessageType waitForIncomingMessage();
   void handleMessage(LLIMessageType messageType);
+  RemoteTarget *RT;
 
 private:
   // Incoming message handlers
   void handleAllocateSpace();
   void handleLoadSection(bool IsCode);
   void handleExecute();
-  void handleTerminate();
 
   // Outgoing message handlers
   void sendChildActive();
@@ -32,15 +34,6 @@ private:
   void initializeConnection();
   int WriteBytes(const void *Data, size_t Size);
   int ReadBytes(void *Data, size_t Size);
-  uint64_t allocate(uint32_t Alignment, uint32_t Size);
-  void makeSectionExecutable(uint64_t Addr, uint32_t Size);
-  void InvalidateInstructionCache(const void *Addr, size_t Len);
-  void releaseMemory(uint64_t Addr, uint32_t Size);
-  bool isAllocatedMemory(uint64_t Address, uint32_t Size);
-
-  // Store a map of allocated buffers to sizes.
-  typedef std::map<uint64_t, uint32_t> AllocMapType;
-  AllocMapType m_AllocatedBufferMap;
 
   // Communication handles (OS-specific)
   void *ConnectionData;
@@ -48,6 +41,7 @@ private:
 
 int main() {
   LLIChildTarget  ThisChild;
+  ThisChild.RT = new RemoteTarget();
   ThisChild.initialize();
   LLIMessageType MsgType;
   do {
@@ -55,6 +49,7 @@ int main() {
     ThisChild.handleMessage(MsgType);
   } while (MsgType != LLI_Terminate &&
            MsgType != LLI_Error);
+  delete ThisChild.RT;
   return 0;
 }
 
@@ -86,7 +81,7 @@ void LLIChildTarget::handleMessage(LLIMessageType messageType) {
       handleExecute();
       break;
     case LLI_Terminate:
-      handleTerminate();
+      RT->stop();
       break;
     default:
       // FIXME: Handle error!
@@ -112,7 +107,8 @@ void LLIChildTarget::handleAllocateSpace() {
   assert(rc == 4);
 
   // Allocate the memory.
-  uint64_t Addr = allocate(Alignment, AllocSize);
+  uint64_t Addr;
+  RT->allocateSpace(AllocSize, Alignment, Addr);
 
   // Send AllocationResult message.
   sendAllocationResult(Addr);
@@ -131,7 +127,7 @@ void LLIChildTarget::handleLoadSection(bool IsCode) {
   assert(rc == 8);
   size_t BufferSize = DataSize - 8;
 
-  if (!isAllocatedMemory(Addr, BufferSize))
+  if (!RT->isAllocatedMemory(Addr, BufferSize))
     return sendLoadStatus(LLI_Status_NotAllocated);
 
   // Read section data into previously allocated buffer
@@ -141,7 +137,7 @@ void LLIChildTarget::handleLoadSection(bool IsCode) {
 
   // If IsCode, mark memory executable
   if (IsCode)
-    makeSectionExecutable(Addr, BufferSize);
+    sys::Memory::InvalidateInstructionCache((void *)Addr, BufferSize);
 
   // Send MarkLoadComplete message.
   sendLoadStatus(LLI_Status_Success);
@@ -161,36 +157,11 @@ void LLIChildTarget::handleExecute() {
   assert(rc == 8);
 
   // Call function
-  int Result;
-  int (*fn)(void) = (int(*)(void))Addr;
-  Result = fn();
+  int32_t Result = -1;
+  RT->executeCode(Addr, Result);
 
   // Send ExecutionResult message.
   sendExecutionComplete(Result);
-}
-
-void LLIChildTarget::handleTerminate() {
-  // Release all allocated memory
-  AllocMapType::iterator Begin = m_AllocatedBufferMap.begin();
-  AllocMapType::iterator End = m_AllocatedBufferMap.end();
-  for (AllocMapType::iterator It = Begin; It != End; ++It) {
-    releaseMemory(It->first, It->second);
-  }
-  m_AllocatedBufferMap.clear();
-}
-
-bool LLIChildTarget::isAllocatedMemory(uint64_t Address, uint32_t Size) {
-  uint64_t End = Address+Size;
-  AllocMapType::iterator ItBegin = m_AllocatedBufferMap.begin();
-  AllocMapType::iterator ItEnd = m_AllocatedBufferMap.end();
-  for (AllocMapType::iterator It = ItBegin; It != ItEnd; ++It) {
-    uint64_t A = It->first;
-    uint64_t E = A + It->second;
-    // Starts and finishes inside allocated region
-    if (Address >= A && End <= E)
-      return true;
-  }
-  return false;
 }
 
 // Outgoing message handlers
