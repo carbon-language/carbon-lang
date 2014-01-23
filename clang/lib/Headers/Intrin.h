@@ -600,8 +600,8 @@ _InterlockedExchangeSub64(__int64 volatile *_Subend, __int64 _Value) {
 /*----------------------------------------------------------------------------*\
 |* Interlocked Increment
 \*----------------------------------------------------------------------------*/
-static __inline__ char __attribute__((__always_inline__, __nodebug__))
-_InterlockedIncrement16(char volatile *_Value) {
+static __inline__ short __attribute__((__always_inline__, __nodebug__))
+_InterlockedIncrement16(short volatile *_Value) {
   return __atomic_add_fetch(_Value, 1, 0);
 }
 static __inline__ long __attribute__((__always_inline__, __nodebug__))
@@ -617,8 +617,8 @@ _InterlockedIncrement64(__int64 volatile *_Value) {
 /*----------------------------------------------------------------------------*\
 |* Interlocked Decrement
 \*----------------------------------------------------------------------------*/
-static __inline__ char __attribute__((__always_inline__, __nodebug__))
-_InterlockedDecrement16(char volatile *_Value) {
+static __inline__ short __attribute__((__always_inline__, __nodebug__))
+_InterlockedDecrement16(short volatile *_Value) {
   return __atomic_sub_fetch(_Value, 1, 0);
 }
 static __inline__ long __attribute__((__always_inline__, __nodebug__))
