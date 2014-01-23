@@ -1,5 +1,3 @@
-set(MODULE TRUE)
-
 set( LLVM_LINK_COMPONENTS
   Support
   )
@@ -15,7 +13,7 @@ if( NOT WIN32 ) # Win32 mangles symbols differently, and
   endif()
 endif()
 
-add_clang_library(PrintFunctionNames PrintFunctionNames.cpp)
+add_clang_library(PrintFunctionNames MODULE PrintFunctionNames.cpp)
 
 add_dependencies(PrintFunctionNames
   ClangAttrClasses

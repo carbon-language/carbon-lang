@@ -73,8 +73,7 @@ if(MSVC)
 endif()
 
 if( LLVM_ENABLE_PIC )
-  set(SHARED_LIBRARY TRUE)
-  add_clang_library(libclang ${SOURCES})
+  add_clang_library(libclang SHARED ${SOURCES})
   target_link_libraries(libclang ${LIBRARIES})
   add_dependencies(libclang ${GENERATED_HEADERS} clang-headers)
 
