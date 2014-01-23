@@ -279,21 +279,25 @@ ThreadPlanStepInRange::FrameMatchesAvoidCriteria ()
     StackFrame *frame = GetThread().GetStackFrameAtIndex(0).get();
     
     // Check the library list first, as that's cheapest:
+    bool libraries_say_avoid = false;
+
     FileSpecList libraries_to_avoid (GetThread().GetLibrariesToAvoid());
     size_t num_libraries = libraries_to_avoid.GetSize();
-    bool libraries_say_avoid = false;
-    SymbolContext sc(frame->GetSymbolContext(eSymbolContextModule));
-    FileSpec frame_library(sc.module_sp->GetFileSpec());
-    
-    if (frame_library)
+    if (num_libraries > 0)
     {
-        for (size_t i = 0; i < num_libraries; i++)
+        SymbolContext sc(frame->GetSymbolContext(eSymbolContextModule));
+        FileSpec frame_library(sc.module_sp->GetFileSpec());
+        
+        if (frame_library)
         {
-            const FileSpec &file_spec(libraries_to_avoid.GetFileSpecAtIndex(i));
-            if (FileSpec::Equal (file_spec, frame_library, false))
+            for (size_t i = 0; i < num_libraries; i++)
             {
-                libraries_say_avoid = true;
-                break;
+                const FileSpec &file_spec(libraries_to_avoid.GetFileSpecAtIndex(i));
+                if (FileSpec::Equal (file_spec, frame_library, false))
+                {
+                    libraries_say_avoid = true;
+                    break;
+                }
             }
         }
     }
