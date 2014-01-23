@@ -42,6 +42,21 @@ entry:
   ret float %call
 }
 
+; Test FMA3 variant selection
+; CHECK: fma3_select231:
+; CHECK: vfmadd231ss
+define float @fma3_select231(float %x, float %y, i32 %N) #0 {
+entry:
+  br label %while.body
+while.body:                                       ; preds = %while.body, %while.body
+  %acc.01 = phi float [ 0.000000e+00, %entry ], [ %acc, %while.body ]
+  %acc = tail call float @llvm.fma.f32(float %x, float %y, float %acc.01) nounwind readnone
+  %b = fcmp ueq float %acc, 0.0
+  br i1 %b, label %while.body, label %while.end
+while.end:                                        ; preds = %while.body, %entry
+  ret float %acc
+}
+
 declare float @llvm.fma.f32(float, float, float) nounwind readnone
 declare double @llvm.fma.f64(double, double, double) nounwind readnone
 declare x86_fp80 @llvm.fma.f80(x86_fp80, x86_fp80, x86_fp80) nounwind readnone
