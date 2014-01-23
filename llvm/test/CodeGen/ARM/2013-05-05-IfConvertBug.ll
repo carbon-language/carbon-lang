@@ -72,6 +72,27 @@ KBBlockZero.exit:                                 ; preds = %bb2.i
   indirectbr i8* undef, [label %KBBlockZero_return_1, label %KBBlockZero_return_0]
 }
 
+@foo = global i32 ()* null
+define i32 @t4(i32 %x, i32 ()* %p_foo) {
+entry:
+;CHECK-LABEL: t4:
+;CHECK-V8-LABEL: t4:
+  %cmp = icmp slt i32 %x, 60
+  br i1 %cmp, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  %tmp.2 = call i32 %p_foo()
+  %sub = add nsw i32 %x, -1
+  br label %return
+
+if.else:                                          ; preds = %entry
+  %sub1 = add nsw i32 %x, -120
+  br label %return
+
+return:                                           ; preds = %if.end5, %if.then4, %if.then
+  %retval.0 = phi i32 [ %sub, %if.then ], [ %sub1, %if.else ]
+  ret i32 %retval.0
+}
 
 ; If-converter was checking for the wrong predicate subsumes pattern when doing
 ; nested predicates.

@@ -19,7 +19,7 @@
 namespace llvm {
 
 template<typename InstrType> // could be MachineInstr or MCInst
-inline bool isV8EligibleForIT(InstrType *Instr, int BLXOperandIndex = 0) {
+inline bool isV8EligibleForIT(InstrType *Instr) {
   switch (Instr->getOpcode()) {
   default:
     return false;
@@ -70,14 +70,13 @@ inline bool isV8EligibleForIT(InstrType *Instr, int BLXOperandIndex = 0) {
     return true;
 // there are some "conditionally deprecated" opcodes
   case ARM::tADDspr:
+  case ARM::tBLXr:
     return Instr->getOperand(2).getReg() != ARM::PC;
   // ADD PC, SP and BLX PC were always unpredictable,
   // now on top of it they're deprecated
   case ARM::tADDrSP:
   case ARM::tBX:
     return Instr->getOperand(0).getReg() != ARM::PC;
-  case ARM::tBLXr:
-    return Instr->getOperand(BLXOperandIndex).getReg() != ARM::PC;
   case ARM::tADDhirr:
     return Instr->getOperand(0).getReg() != ARM::PC &&
            Instr->getOperand(2).getReg() != ARM::PC;

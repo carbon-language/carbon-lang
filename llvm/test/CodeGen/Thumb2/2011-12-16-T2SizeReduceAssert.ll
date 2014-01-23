@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-ios -relocation-model=pic -disable-fp-elim -mcpu=cortex-a8 
-; RUN: llc < %s -mtriple=thumbv8-none-linux-gnueabi | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -relocation-model=pic -disable-fp-elim -mcpu=cortex-a8
+; RUN: llc < %s -mtriple=thumbv8-none-linux-gnueabi
 
 %struct.LIST_NODE.0.16 = type { %struct.LIST_NODE.0.16*, i8* }
 
@@ -31,7 +31,6 @@ bb5:                                              ; preds = %bb3, %bb
 declare void @use(i32)
 define double @find_max_double(i32 %n, double* nocapture readonly %aa) {
 entry:
-;CHECK-LABEL: find_max_double:
   br i1 undef, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.body, %entry

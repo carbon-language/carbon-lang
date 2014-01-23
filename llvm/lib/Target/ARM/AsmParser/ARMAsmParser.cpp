@@ -7956,7 +7956,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
       // Only after the instruction is fully processed, we can validate it
       if (wasInITBlock && hasV8Ops() && isThumb() &&
-          !isV8EligibleForIT(&Inst, 2)) {
+          !isV8EligibleForIT(&Inst)) {
         Warning(IDLoc, "deprecated instruction in IT block");
       }
     }
