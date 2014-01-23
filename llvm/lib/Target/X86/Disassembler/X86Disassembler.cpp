@@ -260,7 +260,6 @@ static bool translateSrcIndex(MCInst &mcInst, InternalInstruction &insn) {
 /// translateDstIndex   - Appends a destination index operand to an MCInst.
 ///
 /// @param mcInst       - The MCInst to append to.
-/// @param operand      - The operand, as stored in the descriptor table.
 /// @param insn         - The internal instruction.
 
 static bool translateDstIndex(MCInst &mcInst, InternalInstruction &insn) {
