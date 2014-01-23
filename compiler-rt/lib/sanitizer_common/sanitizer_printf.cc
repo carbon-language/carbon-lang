@@ -279,6 +279,7 @@ static void SharedPrintfCode(bool append_pid, const char *format,
   va_end(args2);
 }
 
+FORMAT(1, 2)
 void Printf(const char *format, ...) {
   va_list args;
   va_start(args, format);
@@ -287,6 +288,7 @@ void Printf(const char *format, ...) {
 }
 
 // Like Printf, but prints the current PID before the output string.
+FORMAT(1, 2)
 void Report(const char *format, ...) {
   va_list args;
   va_start(args, format);
@@ -298,6 +300,7 @@ void Report(const char *format, ...) {
 // Returns the number of symbols that should have been written to buffer
 // (not including trailing '\0'). Thus, the string is truncated
 // iff return value is not less than "length".
+FORMAT(3, 4)
 int internal_snprintf(char *buffer, uptr length, const char *format, ...) {
   va_list args;
   va_start(args, format);
@@ -306,6 +309,7 @@ int internal_snprintf(char *buffer, uptr length, const char *format, ...) {
   return needed_length;
 }
 
+FORMAT(2, 3)
 void InternalScopedString::append(const char *format, ...) {
   CHECK_LT(length_, size());
   va_list args;
