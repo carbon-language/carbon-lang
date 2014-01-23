@@ -63,6 +63,9 @@ set(GENERATED_HEADERS
   ClangStmtNodes
   )
 
+option(LIBCLANG_BUILD_STATIC
+  "Build libclang as a static library (in addition to a shared one)" OFF)
+
 set(LLVM_EXPORTED_SYMBOL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/libclang.exports)
 
 if(MSVC)
@@ -110,9 +113,6 @@ if( LLVM_ENABLE_PIC )
 else()
   set(LIBCLANG_STATIC_TARGET_NAME libclang)
 endif()
-
-option(LIBCLANG_BUILD_STATIC
-  "Build libclang as a static library (in addition to a shared one)" OFF)
 
 if( (NOT LLVM_ENABLE_PIC OR LIBCLANG_BUILD_STATIC) AND NOT WIN32 )
   add_clang_library(${LIBCLANG_STATIC_TARGET_NAME} STATIC ${SOURCES})
