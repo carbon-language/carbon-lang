@@ -48,6 +48,10 @@
 #include <sys/signal.h>
 #endif
 
+#if SANITIZER_ANDROID
+#include <android/log.h>
+#endif
+
 // <linux/time.h>
 struct kernel_timeval {
   long tv_sec;
@@ -646,6 +650,17 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
   return res;
 }
 #endif  // defined(__x86_64__)
+
+#if SANITIZER_ANDROID
+// This thing is not, strictly speaking, async signal safe, but it does not seem
+// to cause any issues. Alternative is writing to log devices directly, but
+// their location and message format might change in the future, so we'd really
+// like to avoid that.
+void AndroidLogWrite(const char *buffer) {
+  __android_log_write(ANDROID_LOG_INFO, NULL, buffer);
+}
+#endif
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LINUX

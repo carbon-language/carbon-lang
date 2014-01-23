@@ -165,6 +165,7 @@ if(ANDROID)
   set_target_properties(SanitizerTest PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   set_target_link_flags(SanitizerTest ${SANITIZER_TEST_LINK_FLAGS_COMMON})
+  target_link_libraries(SanitizerTest log)
   # Add unit test to test suite.
   add_dependencies(SanitizerUnitTests SanitizerTest)
 endif()

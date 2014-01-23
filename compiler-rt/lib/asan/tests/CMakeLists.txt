@@ -223,6 +223,7 @@ if(ANDROID)
     ${ASAN_NOINST_TEST_SOURCES})
   set_target_compile_flags(AsanNoinstTest ${ASAN_UNITTEST_COMMON_CFLAGS})
   set_target_link_flags(AsanNoinstTest ${ASAN_UNITTEST_NOINST_LINKFLAGS})
+  target_link_libraries(AsanNoinstTest log)
 
   # Test with ASan instrumentation. Link with ASan dynamic runtime.
   add_executable(AsanTest

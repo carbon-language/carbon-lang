@@ -104,7 +104,7 @@ elseif(ANDROID)
     ${ASAN_CFLAGS})
   set_property(TARGET clang_rt.asan-arm-android APPEND PROPERTY
     COMPILE_DEFINITIONS ${ASAN_COMMON_DEFINITIONS})
-  target_link_libraries(clang_rt.asan-arm-android dl)
+  target_link_libraries(clang_rt.asan-arm-android dl log)
   list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-arm-android)
 else()
   # Build separate libraries for each target.

@@ -111,7 +111,7 @@ ANDROID_COMMON_FLAGS := -target arm-linux-androideabi \
 	-B$(LLVM_ANDROID_TOOLCHAIN_DIR)
 CFLAGS.asan-arm-android := $(CFLAGS) -fPIC -fno-builtin \
 	$(ANDROID_COMMON_FLAGS) -mllvm -arm-enable-ehabi -fno-rtti
-LDFLAGS.asan-arm-android := $(LDFLAGS) $(ANDROID_COMMON_FLAGS) -ldl -lm \
+LDFLAGS.asan-arm-android := $(LDFLAGS) $(ANDROID_COMMON_FLAGS) -ldl -lm -llog \
 	-Wl,-soname=libclang_rt.asan-arm-android.so -Wl,-z,defs
 
 # Use our stub SDK as the sysroot to support more portable building. For now we

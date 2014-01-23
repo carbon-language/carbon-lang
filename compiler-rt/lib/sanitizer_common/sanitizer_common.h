@@ -495,6 +495,12 @@ F IndirectExternCall(F f) {
   return f;
 }
 #endif
+
+#if SANITIZER_ANDROID
+void AndroidLogWrite(const char *buffer);
+#else
+INLINE void AndroidLogWrite(const char *buffer_unused) {}
+#endif
 }  // namespace __sanitizer
 
 inline void *operator new(__sanitizer::operator_new_size_type size,

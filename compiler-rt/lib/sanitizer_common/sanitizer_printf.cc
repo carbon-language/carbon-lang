@@ -272,6 +272,7 @@ static void SharedPrintfCode(bool append_pid, const char *format,
     break;
   }
   RawWrite(buffer);
+  AndroidLogWrite(buffer);
   CallPrintfAndReportCallback(buffer);
   // If we had mapped any memory, clean up.
   if (buffer != local_buffer)
