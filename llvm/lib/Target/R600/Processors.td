@@ -46,13 +46,15 @@ def : Proc<"rv770",      R600_VLIW5_Itin,
 //===----------------------------------------------------------------------===//
 
 def : Proc<"cedar",      R600_VLIW5_Itin,
-    [FeatureEvergreen, FeatureVertexCache, FeatureWavefrontSize32]>;
+    [FeatureEvergreen, FeatureVertexCache, FeatureWavefrontSize32,
+     FeatureCFALUBug]>;
 
 def : Proc<"redwood",    R600_VLIW5_Itin,
-    [FeatureEvergreen, FeatureVertexCache, FeatureWavefrontSize64]>;
+    [FeatureEvergreen, FeatureVertexCache, FeatureWavefrontSize64,
+     FeatureCFALUBug]>;
 
 def : Proc<"sumo",       R600_VLIW5_Itin,
-    [FeatureEvergreen, FeatureWavefrontSize64]>;
+    [FeatureEvergreen, FeatureWavefrontSize64, FeatureCFALUBug]>;
 
 def : Proc<"juniper",    R600_VLIW5_Itin,
     [FeatureEvergreen, FeatureVertexCache, FeatureWavefrontSize64]>;
@@ -66,13 +68,13 @@ def : Proc<"cypress",    R600_VLIW5_Itin,
 //===----------------------------------------------------------------------===//
 
 def : Proc<"barts",      R600_VLIW5_Itin,
-    [FeatureNorthernIslands, FeatureVertexCache]>;
+    [FeatureNorthernIslands, FeatureVertexCache, FeatureCFALUBug]>;
 
 def : Proc<"turks",      R600_VLIW5_Itin,
-    [FeatureNorthernIslands, FeatureVertexCache]>;
+    [FeatureNorthernIslands, FeatureVertexCache, FeatureCFALUBug]>;
 
 def : Proc<"caicos",     R600_VLIW5_Itin,
-    [FeatureNorthernIslands]>;
+    [FeatureNorthernIslands, FeatureCFALUBug]>;
 
 def : Proc<"cayman",     R600_VLIW4_Itin,
     [FeatureNorthernIslands, FeatureFP64, FeatureCaymanISA]>;
