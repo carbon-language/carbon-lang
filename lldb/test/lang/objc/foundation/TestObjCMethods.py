@@ -143,7 +143,7 @@ class FoundationTestCase(TestBase):
         self.runCmd("log disable dwarf lookups")
         
         def cleanup():
-            sys.unlink (logfile)
+            os.unlink (logfile)
         
         self.addTearDownHook(cleanup)
         
