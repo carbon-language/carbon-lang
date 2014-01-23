@@ -1123,6 +1123,7 @@ operator<<(Output &yout, T &seq) {
         return seq.size();                                                  \
       }                                                                     \
       static _type& element(IO &io, std::vector<_type> &seq, size_t index) {\
+        (void)flow; /* Remove this workaround after PR17897 is fixed */     \
         if ( index >= seq.size() )                                          \
           seq.resize(index+1);                                              \
         return seq[index];                                                  \
