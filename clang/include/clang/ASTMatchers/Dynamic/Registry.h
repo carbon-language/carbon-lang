@@ -34,6 +34,22 @@ class MatcherDescriptor;
 
 typedef const internal::MatcherDescriptor *MatcherCtor;
 
+struct MatcherCompletion {
+  MatcherCompletion() {}
+  MatcherCompletion(StringRef TypedText, StringRef MatcherDecl)
+      : TypedText(TypedText), MatcherDecl(MatcherDecl) {}
+
+  /// \brief The text to type to select this matcher.
+  std::string TypedText;
+
+  /// \brief The "declaration" of the matcher, with type information.
+  std::string MatcherDecl;
+
+  bool operator==(const MatcherCompletion &Other) const {
+    return TypedText == Other.TypedText && MatcherDecl == Other.MatcherDecl;
+  }
+};
+
 class Registry {
 public:
   /// \brief Look up a matcher in the registry by name,
@@ -44,6 +60,29 @@ public:
   static llvm::Optional<MatcherCtor>
   lookupMatcherCtor(StringRef MatcherName, const SourceRange &NameRange,
                     Diagnostics *Error);
+
+  /// \brief Compute the list of completions for \p Context.
+  ///
+  /// Each element of \p Context represents a matcher invocation, going from
+  /// outermost to innermost. Elements are pairs consisting of a reference to the
+  /// matcher constructor and the index of the next element in the argument list
+  /// of that matcher (or for the last element, the index of the completion
+  /// point in the argument list). An empty list requests completion for the
+  /// root matcher.
+  ///
+  /// The completions are ordered first by decreasing relevance, then
+  /// alphabetically.  Relevance is determined by how closely the matcher's
+  /// type matches that of the context. For example, if the innermost matcher
+  /// takes a FunctionDecl matcher, the FunctionDecl matchers are returned
+  /// first, followed by the ValueDecl matchers, then NamedDecl, then Decl, then
+  /// polymorphic matchers.
+  ///
+  /// Matchers which are technically convertible to the innermost context but
+  /// which would match either all or no nodes are excluded. For example,
+  /// namedDecl and varDecl are excluded in a FunctionDecl context, because
+  /// those matchers would match respectively all or no nodes in such a context.
+  static std::vector<MatcherCompletion>
+  getCompletions(llvm::ArrayRef<std::pair<MatcherCtor, unsigned> > Context);
 
   /// \brief Construct a matcher from the registry.
   ///

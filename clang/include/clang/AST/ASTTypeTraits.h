@@ -64,6 +64,11 @@ public:
   /// \brief String representation of the kind.
   StringRef asStringRef() const;
 
+  /// \brief Strict weak ordering for ASTNodeKind.
+  bool operator<(const ASTNodeKind &Other) const {
+    return KindId < Other.KindId;
+  }
+
 private:
   /// \brief Kind ids.
   ///
@@ -136,6 +141,11 @@ KIND_TO_KIND_ID(Type)
 #define TYPE(DERIVED, BASE) KIND_TO_KIND_ID(DERIVED##Type)
 #include "clang/AST/TypeNodes.def"
 #undef KIND_TO_KIND_ID
+
+inline raw_ostream &operator<<(raw_ostream &OS, ASTNodeKind K) {
+  OS << K.asStringRef();
+  return OS;
+}
 
 /// \brief A dynamically typed AST node container.
 ///
