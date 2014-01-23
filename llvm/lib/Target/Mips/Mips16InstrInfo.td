@@ -985,7 +985,7 @@ def RestoreX16:
 //
 def Save16: 
   FI8_SVRS16<0b1, (outs), (ins variable_ops),
-             "", [], IIStore >, MayStore {
+             "", [], II_SAVE >, MayStore {
   let isCodeGenOnly = 1;
   let Uses = [SP];
   let Defs = [SP];
@@ -993,7 +993,7 @@ def Save16:
 
 def SaveX16:
   FI8_SVRS16<0b1, (outs), (ins variable_ops),
-             "", [], IIStore >, MayStore {
+             "", [], II_SAVE >, MayStore {
   let isCodeGenOnly = 1;
   let Uses = [SP];
   let Defs = [SP];
@@ -1004,7 +1004,7 @@ def SaveX16:
 // To store a byte to memory.
 //
 def SbRxRyOffMemX16:
-  FEXT_RRI16_mem2_ins<0b11000, "sb", mem16, IIStore>, MayStore;
+  FEXT_RRI16_mem2_ins<0b11000, "sb", mem16, II_SB>, MayStore;
 
 //
 // Format: SEB rx MIPS16e
@@ -1142,7 +1142,7 @@ def SelTBtneZSltiu: SeliT<"btnez", "sltiu">;
 // To store a halfword to memory.
 //
 def ShRxRyOffMemX16:
-  FEXT_RRI16_mem2_ins<0b11001, "sh", mem16, IIStore>, MayStore;
+  FEXT_RRI16_mem2_ins<0b11001, "sh", mem16, II_SH>, MayStore;
 
 //
 // Format: SLL rx, ry, sa MIPS16e
@@ -1278,7 +1278,7 @@ def SubuRxRyRz16: FRRR16_ins<0b11, "subu", IIAlu>, ArithLogic16Defs<0>;
 // To store a word to memory.
 //
 def SwRxRyOffMemX16:
-  FEXT_RRI16_mem2_ins<0b11011, "sw", mem16, IIStore>, MayStore;
+  FEXT_RRI16_mem2_ins<0b11011, "sw", mem16, II_SW>, MayStore;
 
 //
 // Format: SW rx, offset(sp) MIPS16e
@@ -1286,7 +1286,7 @@ def SwRxRyOffMemX16:
 // To store an SP-relative word to memory.
 //
 def SwRxSpImmX16: FEXT_RI16_SP_Store_explicit_ins
-  <0b11010, "sw", IIStore>, MayStore;
+  <0b11010, "sw", II_SW>, MayStore;
 
 //
 //

@@ -17,7 +17,6 @@ def IMULDIV : FuncUnit;
 // Instruction Itinerary classes used for Mips
 //===----------------------------------------------------------------------===//
 def IIAlu              : InstrItinClass;
-def IIStore            : InstrItinClass;
 def IIBranch           : InstrItinClass;
 def IIPseudo           : InstrItinClass;
 
@@ -75,10 +74,10 @@ def II_LHU              : InstrItinClass;
 def II_LUI              : InstrItinClass;
 def II_LUXC1            : InstrItinClass;
 def II_LW               : InstrItinClass;
-def II_LWU              : InstrItinClass;
 def II_LWC1             : InstrItinClass;
 def II_LWL              : InstrItinClass;
 def II_LWR              : InstrItinClass;
+def II_LWU              : InstrItinClass;
 def II_LWXC1            : InstrItinClass;
 def II_MADD             : InstrItinClass;
 def II_MADDU            : InstrItinClass;
@@ -121,15 +120,21 @@ def II_NMSUB_S          : InstrItinClass;
 def II_NOR              : InstrItinClass;
 def II_OR               : InstrItinClass;
 def II_ORI              : InstrItinClass;
-def II_RESTORE          : InstrItinClass;
 def II_RDHWR            : InstrItinClass;
+def II_RESTORE          : InstrItinClass;
 def II_ROTR             : InstrItinClass;
 def II_ROTRV            : InstrItinClass;
 def II_ROUND            : InstrItinClass;
+def II_SAVE             : InstrItinClass;
+def II_SB               : InstrItinClass;
+def II_SD               : InstrItinClass;
 def II_SDC1             : InstrItinClass;
+def II_SDL              : InstrItinClass;
+def II_SDR              : InstrItinClass;
 def II_SDXC1            : InstrItinClass;
 def II_SEB              : InstrItinClass;
 def II_SEH              : InstrItinClass;
+def II_SH               : InstrItinClass;
 def II_SLL              : InstrItinClass;
 def II_SLLV             : InstrItinClass;
 def II_SLTI_SLTIU       : InstrItinClass; // slti and sltiu
@@ -144,7 +149,10 @@ def II_SUBU             : InstrItinClass;
 def II_SUB_D            : InstrItinClass;
 def II_SUB_S            : InstrItinClass;
 def II_SUXC1            : InstrItinClass;
+def II_SW               : InstrItinClass;
 def II_SWC1             : InstrItinClass;
+def II_SWL              : InstrItinClass;
+def II_SWR              : InstrItinClass;
 def II_SWXC1            : InstrItinClass;
 def II_TRUNC            : InstrItinClass;
 def II_XOR              : InstrItinClass;
@@ -206,7 +214,15 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_LDL             , [InstrStage<3,  [ALU]>]>,
   InstrItinData<II_LDR             , [InstrStage<3,  [ALU]>]>,
   InstrItinData<II_RESTORE         , [InstrStage<3,  [ALU]>]>,
-  InstrItinData<IIStore            , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SB              , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SH              , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SW              , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SWL             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SWR             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SDL             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SDR             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SD              , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_SAVE            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IIBranch           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DMULT           , [InstrStage<17, [IMULDIV]>]>,
   InstrItinData<II_DMULTU          , [InstrStage<17, [IMULDIV]>]>,
