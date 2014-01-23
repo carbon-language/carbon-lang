@@ -515,10 +515,6 @@ static void getAArch64FPUFeatures(const Driver &D, const Arg *A,
     Features.push_back("+crypto");
   } else if (FPU == "neon") {
     Features.push_back("+neon");
-  } else if (FPU == "none") {
-    Features.push_back("-fp-armv8");
-    Features.push_back("-crypto");
-    Features.push_back("-neon");
   } else
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
@@ -1438,6 +1434,12 @@ static void getAArch64TargetFeatures(const Driver &D, const ArgList &Args,
   // Honor -mfpu=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
     getAArch64FPUFeatures(D, A, Args, Features);
+
+  if (Args.getLastArg(options::OPT_mgeneral_regs_only)) {
+    Features.push_back("-fp-armv8");
+    Features.push_back("-crypto");
+    Features.push_back("-neon");
+  }
 }
 
 static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,

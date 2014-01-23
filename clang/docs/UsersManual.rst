@@ -1061,6 +1061,13 @@ are listed below.
 
    CRC instructions are enabled by default on ARMv8.
 
+.. option:: -mgeneral_regs_only
+
+   Generate code which only uses the general purpose registers.
+
+   This option restricts the generated code to use general registers
+   only. This only applies to the AArch64 architecture.
+
 
 Controlling Size of Debug Information
 -------------------------------------
