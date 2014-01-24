@@ -7729,7 +7729,7 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
 
   bool UseAA = CombinerAA.getNumOccurrences() > 0 ? CombinerAA :
     TLI.getTargetMachine().getSubtarget<TargetSubtargetInfo>().useAA();
-  if (UseAA) {
+  if (UseAA && LD->isUnindexed()) {
     // Walk up chain skipping non-aliasing memory nodes.
     SDValue BetterChain = FindBetterChain(N, Chain);
 
@@ -9317,7 +9317,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
 
   bool UseAA = CombinerAA.getNumOccurrences() > 0 ? CombinerAA :
     TLI.getTargetMachine().getSubtarget<TargetSubtargetInfo>().useAA();
-  if (UseAA) {
+  if (UseAA && ST->isUnindexed()) {
     // Walk up chain skipping non-aliasing memory nodes.
     SDValue BetterChain = FindBetterChain(N, Chain);
 
