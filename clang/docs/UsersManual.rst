@@ -1061,7 +1061,7 @@ are listed below.
 
    CRC instructions are enabled by default on ARMv8.
 
-.. option:: -mgeneral_regs_only
+.. option:: -mgeneral-regs-only
 
    Generate code which only uses the general purpose registers.
 
