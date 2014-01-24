@@ -730,10 +730,9 @@ static bool CheckNonNullExpr(Sema &S,
   }
 
   bool Result;
-  if (Expr->EvaluateAsBooleanCondition(Result, S.Context) && !Result)
-    return true;
-
-  return false;
+  return (!Expr->isValueDependent() &&
+          Expr->EvaluateAsBooleanCondition(Result, S.Context) &&
+          !Result);
 }
 
 static void CheckNonNullArgument(Sema &S,
@@ -4386,7 +4385,8 @@ void
 Sema::CheckReturnValExpr(Expr *RetValExp, QualType lhsType,
                          SourceLocation ReturnLoc,
                          bool isObjCMethod,
-                         const AttrVec *Attrs) {
+                         const AttrVec *Attrs,
+                         const FunctionDecl *FD) {
   CheckReturnStackAddr(*this, RetValExp, lhsType, ReturnLoc);
 
   // Check if the return value is null but should not be.
@@ -4400,6 +4400,23 @@ Sema::CheckReturnValExpr(Expr *RetValExp, QualType lhsType,
           << (isObjCMethod ? 1 : 0) << RetValExp->getSourceRange();
       break;
     }
+
+  // C++11 [basic.stc.dynamic.allocation]p4:
+  //   If an allocation function declared with a non-throwing
+  //   exception-specification fails to allocate storage, it shall return
+  //   a null pointer. Any other allocation function that fails to allocate
+  //   storage shall indicate failure only by throwing an exception [...]
+  if (FD) {
+    OverloadedOperatorKind Op = FD->getOverloadedOperator();
+    if (Op == OO_New || Op == OO_Array_New) {
+      const FunctionProtoType *Proto
+        = FD->getType()->castAs<FunctionProtoType>();
+      if (!Proto->isNothrow(Context, /*ResultIfDependent*/true) &&
+          CheckNonNullExpr(*this, RetValExp))
+        Diag(ReturnLoc, diag::warn_operator_new_returns_null)
+          << FD << getLangOpts().CPlusPlus11;
+    }
+  }
 }
 
 //===--- CHECK: Floating-Point comparisons (-Wfloat-equal) ---------------===//

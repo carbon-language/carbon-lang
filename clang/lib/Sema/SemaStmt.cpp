@@ -2975,29 +2975,8 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         RetValExp = Res.takeAs<Expr>();
       }
 
-      CheckReturnValExpr(RetValExp, FnRetType, ReturnLoc, isObjCMethod, Attrs);
-
-      // C++11 [basic.stc.dynamic.allocation]p4:
-      //   If an allocation function declared with a non-throwing
-      //   exception-specification fails to allocate storage, it shall return
-      //   a null pointer. Any other allocation function that fails to allocate
-      //   storage shall indicate failure only by throwing an exception [...]
-      if (const FunctionDecl *FD = getCurFunctionDecl()) {
-        OverloadedOperatorKind Op = FD->getOverloadedOperator();
-        if (Op == OO_New || Op == OO_Array_New) {
-          const FunctionProtoType *Proto
-            = FD->getType()->castAs<FunctionProtoType>();
-          bool ReturnValueNonNull;
-
-          if (!Proto->isNothrow(Context, /*ResultIfDependent*/true) &&
-              !RetValExp->isValueDependent() &&
-              RetValExp->EvaluateAsBooleanCondition(ReturnValueNonNull,
-                                                    Context) &&
-              !ReturnValueNonNull)
-            Diag(ReturnLoc, diag::warn_operator_new_returns_null)
-              << FD << getLangOpts().CPlusPlus11;
-        }
-      }
+      CheckReturnValExpr(RetValExp, FnRetType, ReturnLoc, isObjCMethod, Attrs,
+                         getCurFunctionDecl());
     }
 
     if (RetValExp) {
