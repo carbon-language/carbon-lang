@@ -900,22 +900,29 @@ private:
 
 template <class ELFT> class RelocationTable : public Section<ELFT> {
 public:
+  typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 
   RelocationTable(const ELFLinkingContext &context, StringRef str,
                   int32_t order)
       : Section<ELFT>(context, str), _symbolTable(nullptr) {
     this->setOrder(order);
-    this->_entSize = sizeof(Elf_Rela);
-    this->_align2 = llvm::alignOf<Elf_Rela>();
-    this->_type = SHT_RELA;
     this->_flags = SHF_ALLOC;
+    if (context.isRelaOutputFormat()) {
+      this->_entSize = sizeof(Elf_Rela);
+      this->_align2 = llvm::alignOf<Elf_Rela>();
+      this->_type = SHT_RELA;
+    } else {
+      this->_entSize = sizeof(Elf_Rel);
+      this->_align2 = llvm::alignOf<Elf_Rel>();
+      this->_type = SHT_REL;
+    }
   }
 
   /// \returns the index of the relocation added.
   uint32_t addRelocation(const DefinedAtom &da, const Reference &r) {
     _relocs.emplace_back(&da, &r);
-    this->_fsize = _relocs.size() * sizeof(Elf_Rela);
+    this->_fsize = _relocs.size() * this->_entSize;
     this->_msize = this->_fsize;
     return _relocs.size() - 1;
   }
@@ -945,34 +952,52 @@ public:
   }
 
   virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
-    uint8_t *chunkBuffer = buffer.getBufferStart();
-    uint8_t *dest = chunkBuffer + this->fileOffset();
+    uint8_t *dest = buffer.getBufferStart() + this->fileOffset();
     for (const auto &rel : _relocs) {
-      Elf_Rela *r = reinterpret_cast<Elf_Rela *>(dest);
-      uint32_t index =
-          _symbolTable ? _symbolTable->getSymbolTableIndex(rel.second->target())
-                       : (uint32_t) STN_UNDEF;
-      r->setSymbolAndType(index, rel.second->kindValue());
-      r->r_offset =
-          writer->addressOfAtom(rel.first) + rel.second->offsetInAtom();
-      r->r_addend = 0;
-      // The addend is used only by relative relocations
-      if (this->_context.isRelativeReloc(*rel.second))
-        r->r_addend =
-            writer->addressOfAtom(rel.second->target()) + rel.second->addend();
-      dest += sizeof(Elf_Rela);
-      DEBUG_WITH_TYPE("ELFRelocationTable",
-                      llvm::dbgs() << rel.second->kindValue()
-                                   << " relocation at " << rel.first->name()
-                                   << "@" << r->r_offset << " to "
-                                   << rel.second->target()->name() << "@"
-                                   << r->r_addend << "\n";);
+      if (this->_context.isRelaOutputFormat())
+        writeRela(writer, *reinterpret_cast<Elf_Rela *>(dest), *rel.first,
+                  *rel.second);
+      else
+        writeRel(writer, *reinterpret_cast<Elf_Rel *>(dest), *rel.first,
+                 *rel.second);
+      dest += this->_entSize;
     }
   }
 
 private:
   std::vector<std::pair<const DefinedAtom *, const Reference *> > _relocs;
   const DynamicSymbolTable<ELFT> *_symbolTable;
+
+  void writeRela(ELFWriter *writer, Elf_Rela &r, const DefinedAtom &atom,
+                 const Reference &ref) {
+    uint32_t index =
+        _symbolTable ? _symbolTable->getSymbolTableIndex(ref.target())
+                     : (uint32_t)STN_UNDEF;
+    r.setSymbolAndType(index, ref.kindValue());
+    r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
+    r.r_addend = 0;
+    // The addend is used only by relative relocations
+    if (this->_context.isRelativeReloc(ref))
+      r.r_addend = writer->addressOfAtom(ref.target()) + ref.addend();
+    DEBUG_WITH_TYPE("ELFRelocationTable",
+                    llvm::dbgs() << ref.kindValue() << " relocation at "
+                                 << atom.name() << "@" << r.r_offset << " to "
+                                 << ref.target()->name() << "@" << r.r_addend
+                                 << "\n";);
+  }
+
+  void writeRel(ELFWriter *writer, Elf_Rel &r, const DefinedAtom &atom,
+                const Reference &ref) {
+    uint32_t index =
+        _symbolTable ? _symbolTable->getSymbolTableIndex(ref.target())
+                     : (uint32_t)STN_UNDEF;
+    r.setSymbolAndType(index, ref.kindValue());
+    r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
+    DEBUG_WITH_TYPE("ELFRelocationTable",
+                    llvm::dbgs() << ref.kindValue() << " relocation at "
+                                 << atom.name() << "@" << r.r_offset << " to "
+                                 << ref.target()->name() << "\n";);
+  }
 };
 
 template <class ELFT> class HashSection;
@@ -1017,6 +1042,8 @@ public:
   }
 
   virtual void createDefaultEntries() {
+    bool isRela = this->_context.isRelaOutputFormat();
+
     Elf_Dyn dyn;
     dyn.d_un.d_val = 0;
 
@@ -1035,11 +1062,11 @@ public:
     dyn.d_tag = DT_FINI_ARRAYSZ;
     _dt_fini_arraysz = addEntry(dyn);
     if (_layout->hasDynamicRelocationTable()) {
-      dyn.d_tag = DT_RELA;
+      dyn.d_tag = isRela ? DT_RELA : DT_REL;
       _dt_rela = addEntry(dyn);
-      dyn.d_tag = DT_RELASZ;
+      dyn.d_tag = isRela ? DT_RELASZ : DT_RELSZ;
       _dt_relasz = addEntry(dyn);
-      dyn.d_tag = DT_RELAENT;
+      dyn.d_tag = isRela ? DT_RELAENT : DT_RELENT;
       _dt_relaent = addEntry(dyn);
     }
     if (_layout->hasPLTRelocationTable()) {
@@ -1048,7 +1075,7 @@ public:
       dyn.d_tag = DT_PLTGOT;
       _dt_pltgot = addEntry(dyn);
       dyn.d_tag = DT_PLTREL;
-      dyn.d_un.d_val = DT_RELA;
+      dyn.d_un.d_val = isRela ? DT_RELA : DT_REL;
       _dt_pltrel = addEntry(dyn);
       dyn.d_un.d_val = 0;
       dyn.d_tag = DT_JMPREL;

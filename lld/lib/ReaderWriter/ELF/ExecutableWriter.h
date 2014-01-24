@@ -55,8 +55,13 @@ void ExecutableWriter<ELFT>::addDefaultAtoms() {
   _runtimeFile->addAbsoluteAtom("__preinit_array_end");
   _runtimeFile->addAbsoluteAtom("__init_array_start");
   _runtimeFile->addAbsoluteAtom("__init_array_end");
-  _runtimeFile->addAbsoluteAtom("__rela_iplt_start");
-  _runtimeFile->addAbsoluteAtom("__rela_iplt_end");
+  if (this->_context.isRelaOutputFormat()) {
+    _runtimeFile->addAbsoluteAtom("__rela_iplt_start");
+    _runtimeFile->addAbsoluteAtom("__rela_iplt_end");
+  } else {
+    _runtimeFile->addAbsoluteAtom("__rel_iplt_start");
+    _runtimeFile->addAbsoluteAtom("__rel_iplt_end");
+  }
   _runtimeFile->addAbsoluteAtom("__fini_array_start");
   _runtimeFile->addAbsoluteAtom("__fini_array_end");
 }
@@ -111,7 +116,10 @@ template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
 
   startEnd("preinit_array", ".preinit_array");
   startEnd("init_array", ".init_array");
-  startEnd("rela_iplt", ".rela.plt");
+  if (this->_context.isRelaOutputFormat())
+    startEnd("rela_iplt", ".rela.plt");
+  else
+    startEnd("rel_iplt", ".rel.plt");
   startEnd("fini_array", ".fini_array");
 
   assert(!(bssStartAtomIter == this->_layout->absoluteAtoms().end() ||

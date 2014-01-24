@@ -27,7 +27,7 @@
 # CHECK:   Type: Executable (0x2)
 # CHECK:   Machine: EM_MIPS (0x8)
 # CHECK:   Version: 1
-# CHECK:   Entry: 0x4001B0
+# CHECK:   Entry: 0x4001A0
 # CHECK:   ProgramHeaderOffset: 0x34
 # CHECK:   SectionHeaderOffset: 0x2268
 # CHECK:   Flags [ (0x70001005)

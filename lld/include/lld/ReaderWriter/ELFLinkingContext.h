@@ -93,6 +93,9 @@ public:
 
   static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
 
+  /// \brief Use Elf_Rela format to output relocation tables.
+  virtual bool isRelaOutputFormat() const { return true; }
+
   /// \brief Does this relocation belong in the dynamic plt relocation table?
   ///
   /// This table holds all of the relocations used for delayed symbol binding.

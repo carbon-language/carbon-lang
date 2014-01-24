@@ -270,7 +270,8 @@ public:
   RelocationTable<ELFT> *getDynamicRelocationTable() {
     if (!_dynamicRelocationTable) {
       _dynamicRelocationTable.reset(new (_allocator) RelocationTable<ELFT>(
-          _context, ".rela.dyn", ORDER_DYNAMIC_RELOCS));
+          _context, _context.isRelaOutputFormat() ? ".rela.dyn" : ".rel.dyn",
+          ORDER_DYNAMIC_RELOCS));
       addSection(_dynamicRelocationTable.get());
     }
     return _dynamicRelocationTable.get();
@@ -280,7 +281,8 @@ public:
   RelocationTable<ELFT> *getPLTRelocationTable() {
     if (!_pltRelocationTable) {
       _pltRelocationTable.reset(new (_allocator) RelocationTable<ELFT>(
-          _context, ".rela.plt", ORDER_DYNAMIC_PLT_RELOCS));
+          _context, _context.isRelaOutputFormat() ? ".rela.plt" : ".rel.plt",
+          ORDER_DYNAMIC_PLT_RELOCS));
       addSection(_pltRelocationTable.get());
     }
     return _pltRelocationTable.get();
