@@ -1,4 +1,4 @@
-;RUN: llc -mtriple=thumbv7-linux-gnueabi -filetype=obj < %s > %t
+;RUN: llc -mtriple=thumbv7-linux-gnueabi < %s | llvm-mc -triple=thumbv7-linux-gnueabi -filetype=obj > %t
 ; Two pass decoding needed because llvm-objdump does not respect mapping symbols
 ;RUN: llvm-objdump -triple=armv7   -d %t | FileCheck %s --check-prefix=ARM
 ;RUN: llvm-objdump -triple=thumbv7 -d %t | FileCheck %s --check-prefix=THUMB
