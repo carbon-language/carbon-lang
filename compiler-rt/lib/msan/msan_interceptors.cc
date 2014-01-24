@@ -159,6 +159,9 @@ INTERCEPTOR(void *, memalign, SIZE_T boundary, SIZE_T size) {
   return ptr;
 }
 
+INTERCEPTOR(void*, __libc_memalign, uptr align, uptr s)
+  ALIAS("memalign");
+
 INTERCEPTOR(void *, valloc, SIZE_T size) {
   GET_MALLOC_STACK_TRACE;
   void *ptr = MsanReallocate(&stack, 0, size, GetPageSizeCached(), false);
