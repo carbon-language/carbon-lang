@@ -558,7 +558,12 @@ bool CGRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *base,
   if (getTypeAlignment(subobjectType) > Alignment)
     return false;
 
-  AppendField(baseOffset, subobjectType);
+  if (LastLaidOutBase.NonVirtualSize < CharUnits::fromQuantity(
+      Types.getDataLayout().getStructLayout(subobjectType)->getSizeInBytes()))
+    AppendBytes(LastLaidOutBase.NonVirtualSize);
+  else
+    AppendField(baseOffset, subobjectType);
+
   return true;
 }
 
