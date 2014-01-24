@@ -187,7 +187,6 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfAddrSectionSym = 0;
   DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
-  TextSectionBeginSym = TextSectionEndSym = 0;
   CurFn = 0;
   CurMI = 0;
 
@@ -1062,12 +1061,9 @@ void DwarfDebug::finalizeModuleInfo() {
         addSectionLabel(Asm, U, U->getUnitDie(), dwarf::DW_AT_ranges,
                         Asm->GetTempSymbol("cu_ranges", U->getUniqueID()),
                         DwarfDebugRangeSectionSym);
-      else {
-        U->addLocalLabelAddress(U->getUnitDie(), dwarf::DW_AT_low_pc,
-                                TextSectionBeginSym);
-        U->addLocalLabelAddress(U->getUnitDie(), dwarf::DW_AT_high_pc,
-                                TextSectionEndSym);
-      }
+      else
+        U->addUInt(U->getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
+                   0);
     }
   }
 
@@ -1121,10 +1117,6 @@ void DwarfDebug::endSections() {
       Sym = Asm->GetTempSymbol("debug_end", ID);
       Asm->OutStreamer.SwitchSection(Section);
       Asm->OutStreamer.EmitLabel(Sym);
-      // If this is the end of the text section keep track of where the end of
-      // the section is so that we can use it later.
-      if (Section == Asm->getObjFileLowering().getTextSection())
-        TextSectionEndSym = Sym;
     }
 
     // Insert a final terminator.
@@ -2020,8 +2012,6 @@ void DwarfDebug::emitSectionLabels() {
 
   DwarfDebugLocSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfLocSection(), "section_debug_loc");
-
-  TextSectionBeginSym = emitSectionSym(Asm, TLOF.getTextSection(), "text_begin");
 }
 
 // Recursively emits a debug information entry.
