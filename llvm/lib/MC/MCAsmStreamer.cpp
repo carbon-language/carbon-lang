@@ -128,10 +128,6 @@ public:
   virtual void ChangeSection(const MCSection *Section,
                              const MCExpr *Subsection);
 
-  virtual void InitSections() {
-    SwitchSection(getContext().getObjectFileInfo()->getTextSection());
-  }
-
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitDebugLabel(MCSymbol *Symbol);
 

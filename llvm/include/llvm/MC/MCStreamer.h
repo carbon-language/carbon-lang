@@ -342,7 +342,7 @@ public:
   }
 
   /// InitSections - Create the default sections and set the initial one.
-  virtual void InitSections() = 0;
+  virtual void InitSections();
 
   /// AssignSection - Sets the symbol's section.
   ///

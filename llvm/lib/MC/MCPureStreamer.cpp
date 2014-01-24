@@ -34,7 +34,6 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  virtual void InitSections();
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
@@ -103,10 +102,6 @@ public:
 };
 
 } // end anonymous namespace.
-
-void MCPureStreamer::InitSections() {
-  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
-}
 
 void MCPureStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");

@@ -14,6 +14,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -198,6 +199,10 @@ void MCStreamer::EnsureValidFrame() {
 
 void MCStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
                                      MCSymbol *EHSymbol) {
+}
+
+void MCStreamer::InitSections() {
+  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 
 void MCStreamer::AssignSection(MCSymbol *Symbol, const MCSection *Section) {

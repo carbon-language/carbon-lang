@@ -43,7 +43,6 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  virtual void InitSections();
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
@@ -93,10 +92,6 @@ public:
 };
 
 } // end anonymous namespace.
-
-void MCMachOStreamer::InitSections() {
-  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
-}
 
 void MCMachOStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
                                           MCSymbol *EHSymbol) {
