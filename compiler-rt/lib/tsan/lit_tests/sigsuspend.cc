@@ -1,4 +1,10 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && not %t 2>&1 | FileCheck %s
+
+// Always enable asserts.
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 #include <assert.h>
 #include <stdlib.h>
 #include <signal.h>
