@@ -1628,6 +1628,63 @@ TSAN_INTERCEPTOR(int, epoll_wait, int epfd, void *ev, int cnt, int timeout) {
   return res;
 }
 
+namespace __tsan {
+
+static void CallUserSignalHandler(bool sigact, int sig, my_siginfo_t *info,
+    void *uctx) {
+  // Ensure that the handler does not spoil errno.
+  const int saved_errno = errno;
+  errno = 0;
+  if (sigact)
+    sigactions[sig].sa_sigaction(sig, info, uctx);
+  else
+    sigactions[sig].sa_handler(sig);
+  if (flags()->report_bugs && errno != 0) {
+    Context *ctx = CTX();
+    __tsan::StackTrace stack;
+    uptr pc = sigact ?
+        (uptr)sigactions[sig].sa_sigaction :
+        (uptr)sigactions[sig].sa_handler;
+    pc += 1;  // return address is expected, OutputReport() will undo this
+    stack.Init(&pc, 1);
+    ThreadRegistryLock l(ctx->thread_registry);
+    ScopedReport rep(ReportTypeErrnoInSignal);
+    if (!IsFiredSuppression(ctx, rep, stack)) {
+      rep.AddStack(&stack);
+      OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
+    }
+  }
+  errno = saved_errno;
+}
+
+void ProcessPendingSignals(ThreadState *thr) {
+  SignalContext *sctx = SigCtx(thr);
+  if (sctx == 0 || sctx->pending_signal_count == 0 || thr->in_signal_handler)
+    return;
+  thr->in_signal_handler = true;
+  sctx->pending_signal_count = 0;
+  // These are too big for stack.
+  static THREADLOCAL __sanitizer_sigset_t emptyset, oldset;
+  REAL(sigfillset)(&emptyset);
+  pthread_sigmask(SIG_SETMASK, &emptyset, &oldset);
+  for (int sig = 0; sig < kSigCount; sig++) {
+    SignalDesc *signal = &sctx->pending_signals[sig];
+    if (signal->armed) {
+      signal->armed = false;
+      if (sigactions[sig].sa_handler != SIG_DFL
+          && sigactions[sig].sa_handler != SIG_IGN) {
+        CallUserSignalHandler(signal->sigaction, sig, &signal->siginfo,
+            &signal->ctx);
+      }
+    }
+  }
+  pthread_sigmask(SIG_SETMASK, &oldset, 0);
+  CHECK_EQ(thr->in_signal_handler, true);
+  thr->in_signal_handler = false;
+}
+
+}  // namespace __tsan
+
 void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
     my_siginfo_t *info, void *ctx) {
   ThreadState *thr = cur_thread();
@@ -1643,10 +1700,16 @@ void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
       (sctx && sctx->in_blocking_func == 1)) {
     CHECK_EQ(thr->in_signal_handler, false);
     thr->in_signal_handler = true;
-    if (sigact)
-      sigactions[sig].sa_sigaction(sig, info, ctx);
-    else
-      sigactions[sig].sa_handler(sig);
+    if (sctx && sctx->in_blocking_func == 1) {
+      // We ignore interceptors in blocking functions,
+      // temporary enbled them again while we are calling user function.
+      int const i = thr->ignore_interceptors;
+      thr->ignore_interceptors = 0;
+      CallUserSignalHandler(sigact, sig, info, ctx);
+      thr->ignore_interceptors = i;
+    } else {
+      CallUserSignalHandler(sigact, sig, info, ctx);
+    }
     CHECK_EQ(thr->in_signal_handler, true);
     thr->in_signal_handler = false;
     return;
@@ -2031,53 +2094,6 @@ static void finalize(void *arg) {
   REAL(fflush)(0);
   if (status)
     REAL(_exit)(status);
-}
-
-void ProcessPendingSignals(ThreadState *thr) {
-  SignalContext *sctx = SigCtx(thr);
-  if (sctx == 0 || sctx->pending_signal_count == 0 || thr->in_signal_handler)
-    return;
-  Context *ctx = CTX();
-  thr->in_signal_handler = true;
-  sctx->pending_signal_count = 0;
-  // These are too big for stack.
-  static THREADLOCAL __sanitizer_sigset_t emptyset, oldset;
-  REAL(sigfillset)(&emptyset);
-  pthread_sigmask(SIG_SETMASK, &emptyset, &oldset);
-  for (int sig = 0; sig < kSigCount; sig++) {
-    SignalDesc *signal = &sctx->pending_signals[sig];
-    if (signal->armed) {
-      signal->armed = false;
-      if (sigactions[sig].sa_handler != SIG_DFL
-          && sigactions[sig].sa_handler != SIG_IGN) {
-        // Insure that the handler does not spoil errno.
-        const int saved_errno = errno;
-        errno = 0;
-        if (signal->sigaction)
-          sigactions[sig].sa_sigaction(sig, &signal->siginfo, &signal->ctx);
-        else
-          sigactions[sig].sa_handler(sig);
-        if (flags()->report_bugs && errno != 0) {
-          __tsan::StackTrace stack;
-          uptr pc = signal->sigaction ?
-              (uptr)sigactions[sig].sa_sigaction :
-              (uptr)sigactions[sig].sa_handler;
-          pc += 1;  // return address is expected, OutputReport() will undo this
-          stack.Init(&pc, 1);
-          ThreadRegistryLock l(ctx->thread_registry);
-          ScopedReport rep(ReportTypeErrnoInSignal);
-          if (!IsFiredSuppression(ctx, rep, stack)) {
-            rep.AddStack(&stack);
-            OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
-          }
-        }
-        errno = saved_errno;
-      }
-    }
-  }
-  pthread_sigmask(SIG_SETMASK, &oldset, 0);
-  CHECK_EQ(thr->in_signal_handler, true);
-  thr->in_signal_handler = false;
 }
 
 static void unreachable() {
