@@ -68,9 +68,13 @@ static MCCodeGenInfo *createSparcMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                                CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
 
-  // The default 32-bit code model is abs32/pic32.
-  if (CM == CodeModel::Default)
-    CM = RM == Reloc::PIC_ ? CodeModel::Medium : CodeModel::Small;
+  // The default 32-bit code model is abs32/pic32 and the default 32-bit
+  // code model for JIT is abs32.
+  switch (CM) {
+  default: break;
+  case CodeModel::Default:
+  case CodeModel::JITDefault: CM = CodeModel::Small; break;
+  }
 
   X->InitMCCodeGenInfo(RM, CM, OL);
   return X;
@@ -81,9 +85,17 @@ static MCCodeGenInfo *createSparcV9MCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                                  CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
 
-  // The default 64-bit code model is abs44/pic32.
-  if (CM == CodeModel::Default)
-    CM = CodeModel::Medium;
+  // The default 64-bit code model is abs44/pic32 and the default 64-bit
+  // code model for JIT is abs64.
+  switch (CM) {
+  default:  break;
+  case CodeModel::Default:
+    CM = RM == Reloc::PIC_ ? CodeModel::Small : CodeModel::Medium;
+    break;
+  case CodeModel::JITDefault:
+    CM = CodeModel::Large;
+    break;
+  }
 
   X->InitMCCodeGenInfo(RM, CM, OL);
   return X;
