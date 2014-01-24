@@ -545,6 +545,11 @@ public:
   /// addLabelAddress - Add a dwarf label attribute data and value using
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
   void addLabelAddress(DIE *Die, dwarf::Attribute Attribute, MCSymbol *Label);
+
+  /// addLocalLabelAddress - Add a dwarf label attribute data and value using
+  /// DW_FORM_addr only.
+  void addLocalLabelAddress(DIE *Die, dwarf::Attribute Attribute,
+                            MCSymbol *Label);
 };
 
 class DwarfTypeUnit : public DwarfUnit {

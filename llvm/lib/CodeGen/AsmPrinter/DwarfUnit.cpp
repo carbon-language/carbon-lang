@@ -266,21 +266,32 @@ void DwarfUnit::addSectionOffset(DIE *Die, dwarf::Attribute Attribute,
 ///
 void DwarfCompileUnit::addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
                                        MCSymbol *Label) {
+  if (!DD->useSplitDwarf())
+    return addLocalLabelAddress(Die, Attribute, Label);
+
   if (Label)
     DD->addArangeLabel(SymbolCU(this, Label));
 
-  if (!DD->useSplitDwarf()) {
-    if (Label) {
-      DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
-      Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
-    } else {
-      DIEValue *Value = new (DIEValueAllocator) DIEInteger(0);
-      Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
-    }
+  unsigned idx = DU->getAddrPoolIndex(Label);
+  DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
+  Die->addValue(Attribute, dwarf::DW_FORM_GNU_addr_index, Value);
+}
+
+/// addLocalLabelAddress - Add a dwarf label attribute data and value using
+/// DW_FORM_addr only.
+///
+void DwarfCompileUnit::addLocalLabelAddress(DIE *Die,
+                                            dwarf::Attribute Attribute,
+                                            MCSymbol *Label) {
+  if (Label)
+    DD->addArangeLabel(SymbolCU(this, Label));
+
+  if (Label) {
+    DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
+    Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
   } else {
-    unsigned idx = DU->getAddrPoolIndex(Label);
-    DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
-    Die->addValue(Attribute, dwarf::DW_FORM_GNU_addr_index, Value);
+    DIEValue *Value = new (DIEValueAllocator) DIEInteger(0);
+    Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
   }
 }
 

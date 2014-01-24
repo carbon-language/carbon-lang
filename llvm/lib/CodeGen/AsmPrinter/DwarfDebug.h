@@ -432,6 +432,7 @@ class DwarfDebug : public AsmPrinterHandler {
   MCSymbol *DwarfInfoDWOSectionSym, *DwarfAbbrevDWOSectionSym;
   MCSymbol *DwarfStrDWOSectionSym;
   MCSymbol *DwarfGnuPubNamesSectionSym, *DwarfGnuPubTypesSectionSym;
+  MCSymbol *TextSectionBeginSym, *TextSectionEndSym;
 
   // As an optimization, there is no need to emit an entry in the directory
   // table for the same directory as DW_AT_comp_dir.
