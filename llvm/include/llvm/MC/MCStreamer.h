@@ -157,8 +157,6 @@ class MCStreamer {
   /// values saved by PushSection.
   SmallVector<std::pair<MCSectionSubPair, MCSectionSubPair>, 4> SectionStack;
 
-  bool AutoInitSections;
-
 protected:
   MCStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer);
 
@@ -330,19 +328,11 @@ public:
       SectionStack.back().first = MCSectionSubPair(Section, Subsection);
   }
 
-  /// Initialize the streamer.
-  void InitStreamer() {
-    if (AutoInitSections)
-      InitSections();
-  }
-
-  /// Tell this MCStreamer to call InitSections upon initialization.
-  void setAutoInitSections(bool AutoInitSections) {
-    this->AutoInitSections = AutoInitSections;
-  }
-
-  /// InitSections - Create the default sections and set the initial one.
-  virtual void InitSections();
+  /// Create the default sections and set the initial one.
+  ///
+  /// @param Force - If false, a text streamer implementation can be a nop.
+  /// Used by CodeGen to avoid starting every file with '.text'.
+  virtual void InitSections(bool Force = true);
 
   /// AssignSection - Sets the symbol's section.
   ///

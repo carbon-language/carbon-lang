@@ -50,7 +50,7 @@ public:
 
   // MCStreamer interface
 
-  virtual void InitSections();
+  virtual void InitSections(bool Force);
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
@@ -123,7 +123,7 @@ void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
 // MCStreamer interface
 
-void WinCOFFStreamer::InitSections() {
+void WinCOFFStreamer::InitSections(bool Force) {
   // FIXME: this is identical to the ELF one.
   // This emulates the same behavior of GNU as. This makes it easier
   // to compare the output as the major sections are in the same order.

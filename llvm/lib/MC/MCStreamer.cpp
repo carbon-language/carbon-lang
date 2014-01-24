@@ -29,8 +29,7 @@ void MCTargetStreamer::emitLabel(MCSymbol *Symbol) {}
 
 MCStreamer::MCStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer)
     : Context(Ctx), TargetStreamer(TargetStreamer), EmitEHFrame(true),
-      EmitDebugFrame(false), CurrentW64UnwindInfo(0), LastSymbol(0),
-      AutoInitSections(false) {
+      EmitDebugFrame(false), CurrentW64UnwindInfo(0), LastSymbol(0) {
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
   if (TargetStreamer)
     TargetStreamer->setStreamer(this);
@@ -201,7 +200,7 @@ void MCStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
                                      MCSymbol *EHSymbol) {
 }
 
-void MCStreamer::InitSections() {
+void MCStreamer::InitSections(bool Force) {
   SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 
