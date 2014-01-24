@@ -97,7 +97,7 @@ unsigned __int64 __rdtscp(unsigned int *);
 unsigned long __readcr0(void);
 unsigned long __readcr2(void);
 unsigned long __readcr3(void);
-unsigned long __readcr5(void);
+unsigned long __readcr4(void);
 unsigned long __readcr8(void);
 unsigned int __readdr(unsigned int);
 unsigned int __readeflags(void);
@@ -146,7 +146,6 @@ static __inline__
 void *_AddressOfReturnAddress(void);
 unsigned int _andn_u32(unsigned int, unsigned int);
 unsigned int _bextr_u32(unsigned int, unsigned int, unsigned int);
-unsigned int _bextr_u32(unsigned int, unsigned int, unsigned int);
 unsigned int _bextri_u32(unsigned int, unsigned int);
 static __inline__
 unsigned char _BitScanForward(unsigned long *_Index, unsigned long _Mask);
@@ -169,8 +168,6 @@ unsigned int _blsfill_u32(unsigned int);
 unsigned int _blsi_u32(unsigned int);
 unsigned int _blsic_u32(unsigned int);
 unsigned int _blsmsk_u32(unsigned int);
-unsigned int _blsmsk_u32(unsigned int);
-unsigned int _blsr_u32(unsigned int);
 unsigned int _blsr_u32(unsigned int);
 unsigned __int64 __cdecl _byteswap_uint64(unsigned __int64);
 unsigned long __cdecl _byteswap_ulong(unsigned long);
@@ -225,6 +222,9 @@ static __inline__
 long __cdecl _InterlockedExchangeAdd(long volatile *_Addend, long _Value);
 long _InterlockedExchangeAdd_HLEAcquire(long volatile *, long);
 long _InterlockedExchangeAdd_HLERelease(long volatile *, long);
+short _InterlockedExchangeAdd16(short volatile *_Addend, short _Value);
+__int64 _InterlockedExchangeAdd64_HLEAcquire(__int64 volatile *, __int64);
+__int64 _InterlockedExchangeAdd64_HLERelease(__int64 volatile *, __int64);
 static __inline__
 char _InterlockedExchangeAdd8(char volatile *_Addend, char _Value);
 static __inline__
@@ -287,7 +287,6 @@ void _Store64_HLERelease(__int64 volatile *, __int64);
 void _StorePointer_HLERelease(void *volatile *, void *);
 unsigned int _t1mskc_u32(unsigned int);
 unsigned int _tzcnt_u32(unsigned int);
-unsigned int _tzcnt_u32(unsigned int);
 unsigned int _tzmsk_u32(unsigned int);
 static __inline__
 void _WriteBarrier(void);
@@ -313,7 +312,15 @@ void __incgsbyte(unsigned long);
 void __incgsdword(unsigned long);
 void __incgsqword(unsigned long);
 void __incgsword(unsigned long);
+unsigned char __lwpins64(unsigned __int64, unsigned int, unsigned int);
+void __lwpval64(unsigned __int64, unsigned int, unsigned int);
+unsigned __int64 __lzcnt64(unsigned __int64);
+void __movsq(unsigned long long *, unsigned long long const *, size_t);
+__int64 __mulh(__int64, __int64);
 unsigned __int64 __popcnt64(unsigned __int64);
+unsigned char __readgsbyte(unsigned long);
+unsigned long __readgsdword(unsigned long);
+unsigned short __readgsword(unsigned long);
 unsigned __int64 __shiftleft128(unsigned __int64 _LowPart,
                                 unsigned __int64 _HighPart,
                                 unsigned char _Shift);
@@ -321,6 +328,18 @@ unsigned __int64 __shiftright128(unsigned __int64 _LowPart,
                                  unsigned __int64 _HighPart,
                                  unsigned char _Shift);
 void __stosq(unsigned __int64 *, unsigned __int64, size_t);
+unsigned __int64 __umulh(unsigned __int64, unsigned __int64);
+unsigned char __vmx_on(unsigned __int64 *);
+unsigned char __vmx_vmclear(unsigned __int64 *);
+unsigned char __vmx_vmlaunch(void);
+unsigned char __vmx_vmptrld(unsigned __int64 *);
+unsigned char __vmx_vmread(size_t, size_t *);
+unsigned char __vmx_vmresume(void);
+unsigned char __vmx_vmwrite(size_t, size_t);
+void __writegsbyte(unsigned long, unsigned char);
+void __writegsdword(unsigned long, unsigned long);
+void __writegsqword(unsigned long, unsigned __int64);
+void __writegsword(unsigned long, unsigned short);
 unsigned __int64 _andn_u64(unsigned __int64, unsigned __int64);
 unsigned __int64 _bextr_u64(unsigned __int64, unsigned int, unsigned int);
 unsigned __int64 _bextri_u64(unsigned __int64, unsigned int);
@@ -344,7 +363,7 @@ unsigned __int64 _blcs_u64(unsigned __int64);
 unsigned __int64 _blsfill_u64(unsigned __int64);
 unsigned __int64 _blsi_u64(unsigned __int64);
 unsigned __int64 _blsic_u64(unsigned __int64);
-unsigned __int64 _blmsk_u64(unsigned __int64);
+unsigned __int64 _blsmsk_u64(unsigned __int64);
 unsigned __int64 _blsr_u64(unsigned __int64);
 unsigned __int64 __cdecl _byteswap_uint64(unsigned __int64);
 unsigned __int64 _bzhi_u64(unsigned __int64, unsigned int);
@@ -368,16 +387,27 @@ unsigned char _InterlockedCompareExchange128_np(__int64 volatile *_Destination,
                                                 __int64 *_ComparandResult);
 short _InterlockedCompareExchange16_np(short volatile *_Destination,
                                        short _Exchange, short _Comparand);
+__int64 _InterlockedCompareExchange64_HLEAcquire(__int64 volatile *, __int64,
+                                                 __int64);
+__int64 _InterlockedCompareExchange64_HLERelease(__int64 volatile *, __int64,
+                                                 __int64);
 __int64 _InterlockedCompareExchange64_np(__int64 volatile *_Destination,
                                          __int64 _Exchange, __int64 _Comparand);
 void *_InterlockedCompareExchangePointer_np(void *volatile *_Destination,
                                             void *_Exchange, void *_Comparand);
+__int64 _InterlockedDecrement64(__int64 volatile *_Addend);
+__int64 _InterlockedExchange64(__int64 volatile *_Target, __int64 _Value);
+__int64 _InterlockedExchangeAdd64(__int64 volatile *_Addend, __int64 _Value);
+void *_InterlockedExchangePointer(void *volatile *_Target, void *_Value);
+__int64 _InterlockedIncrement64(__int64 volatile *_Addend);
 long _InterlockedOr_np(long volatile *_Value, long _Mask);
 short _InterlockedOr16_np(short volatile *_Value, short _Mask);
+__int64 _InterlockedOr64(__int64 volatile *_Value, __int64 _Mask);
 __int64 _InterlockedOr64_np(__int64 volatile *_Value, __int64 _Mask);
 char _InterlockedOr8_np(char volatile *_Value, char _Mask);
 long _InterlockedXor_np(long volatile *_Value, long _Mask);
 short _InterlockedXor16_np(short volatile *_Value, short _Mask);
+__int64 _InterlockedXor64(__int64 volatile *_Value, __int64 _Mask);
 __int64 _InterlockedXor64_np(__int64 volatile *_Value, __int64 _Mask);
 char _InterlockedXor8_np(char volatile *_Value, char _Mask);
 unsigned __int64 _lzcnt_u64(unsigned __int64);
@@ -388,6 +418,10 @@ unsigned __int64 __cdecl _readfsbase_u64(void);
 unsigned int __cdecl _readgsbase_u32(void);
 unsigned __int64 __cdecl _readgsbase_u64(void);
 unsigned __int64 _rorx_u64(unsigned __int64, const unsigned int);
+__int64 _sarx_i64(__int64, unsigned int);
+int __cdecl _setjmpex(jmp_buf);
+unsigned __int64 _shlx_u64(unsigned __int64, unsigned int);
+unsigned __int64 shrx_u64(unsigned __int64, unsigned int);
 unsigned __int64 _tzcnt_u64(unsigned __int64);
 unsigned __int64 _tzmsk_u64(unsigned __int64);
 unsigned __int64 _umul128(unsigned __int64 _Multiplier,
