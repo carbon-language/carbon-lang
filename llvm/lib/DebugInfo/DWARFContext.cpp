@@ -27,6 +27,7 @@ DWARFContext::~DWARFContext() {
   DeleteContainerPointers(CUs);
   DeleteContainerPointers(TUs);
   DeleteContainerPointers(DWOCUs);
+  DeleteContainerPointers(DWOTUs);
 }
 
 static void dumpPubSection(raw_ostream &OS, StringRef Name, StringRef Data,
