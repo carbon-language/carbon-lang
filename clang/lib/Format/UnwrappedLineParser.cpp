@@ -641,9 +641,6 @@ void UnwrappedLineParser::parseStructuralElement() {
   case tok::kw_case:
     parseCaseLabel();
     return;
-  case tok::kw_return:
-    parseReturn();
-    return;
   case tok::kw_extern:
     nextToken();
     if (FormatTok->Tok.is(tok::string_literal)) {
@@ -888,40 +885,6 @@ bool UnwrappedLineParser::parseBracedList(bool ContinueOnSemicolons) {
     }
   } while (!eof());
   return false;
-}
-
-void UnwrappedLineParser::parseReturn() {
-  nextToken();
-
-  do {
-    switch (FormatTok->Tok.getKind()) {
-    case tok::l_brace:
-      parseBracedList();
-      if (FormatTok->Tok.isNot(tok::semi)) {
-        // Assume missing ';'.
-        addUnwrappedLine();
-        return;
-      }
-      break;
-    case tok::l_paren:
-      parseParens();
-      break;
-    case tok::r_brace:
-      // Assume missing ';'.
-      addUnwrappedLine();
-      return;
-    case tok::semi:
-      nextToken();
-      addUnwrappedLine();
-      return;
-    case tok::l_square:
-      tryToParseLambda();
-      break;
-    default:
-      nextToken();
-      break;
-    }
-  } while (!eof());
 }
 
 void UnwrappedLineParser::parseParens() {

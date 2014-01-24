@@ -82,7 +82,6 @@ private:
   void parseStructuralElement();
   bool tryToParseBracedList();
   bool parseBracedList(bool ContinueOnSemicolons = false);
-  void parseReturn();
   void parseParens();
   void parseSquare();
   void parseIfThenElse();
