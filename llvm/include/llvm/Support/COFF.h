@@ -451,6 +451,11 @@ namespace COFF {
   };
 
   struct PEHeader {
+    enum {
+      PE32 = 0x10b,
+      PE32_PLUS = 0x20b
+    };
+
     uint16_t Magic;
     uint8_t  MajorLinkerVersion;
     uint8_t  MinorLinkerVersion;
