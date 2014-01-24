@@ -18,11 +18,9 @@ bool RPCChannel::createServer() { return false; }
 
 bool RPCChannel::createClient() { return false; }
 
-void RPCChannel::ReportError(int rc, size_t Size, std::string &ErrorMsg) {}
+bool RPCChannel::WriteBytes(const void *Data, size_t Size) { return false; }
 
-int RPCChannel::WriteBytes(const void *Data, size_t Size) { return -1; }
-
-int RPCChannel::ReadBytes(void *Data, size_t Size) { return -1; }
+bool RPCChannel::ReadBytes(void *Data, size_t Size) { return false; }
 
 void RPCChannel::Wait() {}
 

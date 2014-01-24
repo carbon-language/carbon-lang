@@ -27,8 +27,6 @@ public:
   RPCChannel() {}
   ~RPCChannel();
 
-  static void ReportError(int rc, size_t Size, std::string &ErrorMsg);
-
   /// Start the remote process.
   ///
   /// @returns True on success. On failure, ErrorMsg is updated with
@@ -40,8 +38,8 @@ public:
   // This will get filled in as a point to an OS-specific structure.
   void *ConnectionData;
 
-  int WriteBytes(const void *Data, size_t Size);
-  int ReadBytes(void *Data, size_t Size);
+  bool WriteBytes(const void *Data, size_t Size);
+  bool ReadBytes(void *Data, size_t Size);
 
   void Wait();
 };

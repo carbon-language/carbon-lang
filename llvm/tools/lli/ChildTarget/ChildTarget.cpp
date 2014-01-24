@@ -34,9 +34,11 @@ private:
   // OS-specific functions
   void initializeConnection();
   int WriteBytes(const void *Data, size_t Size) {
-    return RPC.WriteBytes(Data, Size);
+    return RPC.WriteBytes(Data, Size) ? Size : -1;
   }
-  int ReadBytes(void *Data, size_t Size) { return RPC.ReadBytes(Data, Size); }
+  int ReadBytes(void *Data, size_t Size) {
+    return RPC.ReadBytes(Data, Size) ? Size : -1;
+  }
 
   // Communication handles (OS-specific)
   void *ConnectionData;

@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/Errno.h"
+#include "llvm/Support/raw_ostream.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -82,15 +85,14 @@ bool RPCChannel::createClient() {
   return true;
 }
 
-void RPCChannel::ReportError(int rc, size_t Size, std::string &ErrorMsg) {
-  if (rc == -1) {
-    if (errno == EPIPE)
-      ErrorMsg += "pipe closed";
-    else if (errno == EINTR)
-      ErrorMsg += "interrupted";
-    else
-      ErrorMsg += "file descriptor error";
-  } else {
+void RPCChannel::Wait() { wait(NULL); }
+
+static bool CheckError(int rc, size_t Size, const char *Desc) {
+  if (rc < 0) {
+    llvm::errs() << "IO Error: " << Desc << ": " << sys::StrError() << '\n';
+    return false;
+  } else if ((size_t)rc != Size) {
+    std::string ErrorMsg;
     char Number[10] = { 0 };
     ErrorMsg += "Expecting ";
     sprintf(Number, "%d", (uint32_t)Size);
@@ -98,18 +100,21 @@ void RPCChannel::ReportError(int rc, size_t Size, std::string &ErrorMsg) {
     ErrorMsg += " bytes, Got ";
     sprintf(Number, "%d", rc);
     ErrorMsg += Number;
+    llvm::errs() << "RPC Error: " << Desc << ": " << ErrorMsg << '\n';
+    return false;
   }
+  return true;
 }
 
-int RPCChannel::WriteBytes(const void *Data, size_t Size) {
-  return write(((ConnectionData_t *)ConnectionData)->OutputPipe, Data, Size);
+bool RPCChannel::WriteBytes(const void *Data, size_t Size) {
+  int rc = write(((ConnectionData_t *)ConnectionData)->OutputPipe, Data, Size);
+  return CheckError(rc, Size, "WriteBytes");
 }
 
-int RPCChannel::ReadBytes(void *Data, size_t Size) {
-  return read(((ConnectionData_t *)ConnectionData)->InputPipe, Data, Size);
+bool RPCChannel::ReadBytes(void *Data, size_t Size) {
+  int rc = read(((ConnectionData_t *)ConnectionData)->InputPipe, Data, Size);
+  return CheckError(rc, Size, "ReadBytes");
 }
-
-void RPCChannel::Wait() { wait(NULL); }
 
 RPCChannel::~RPCChannel() {
   delete static_cast<ConnectionData_t *>(ConnectionData);
