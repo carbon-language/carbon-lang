@@ -32,7 +32,7 @@ void initializeARMTTIPass(PassRegistry &);
 
 namespace {
 
-class ARMTTI : public ImmutablePass, public TargetTransformInfo {
+class ARMTTI LLVM_FINAL : public ImmutablePass, public TargetTransformInfo {
   const ARMBaseTargetMachine *TM;
   const ARMSubtarget *ST;
   const ARMTargetLowering *TLI;
@@ -52,7 +52,7 @@ public:
     initializeARMTTIPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() {
+  virtual void initializePass() LLVM_OVERRIDE {
     pushTTIStack(this);
   }
 
@@ -60,7 +60,7 @@ public:
     popTTIStack();
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const LLVM_OVERRIDE {
     TargetTransformInfo::getAnalysisUsage(AU);
   }
 
@@ -68,7 +68,7 @@ public:
   static char ID;
 
   /// Provide necessary pointer adjustments for the two base classes.
-  virtual void *getAdjustedAnalysisPointer(const void *ID) {
+  virtual void *getAdjustedAnalysisPointer(const void *ID) LLVM_OVERRIDE {
     if (ID == &TargetTransformInfo::ID)
       return (TargetTransformInfo*)this;
     return this;
@@ -77,7 +77,8 @@ public:
   /// \name Scalar TTI Implementations
   /// @{
 
-  virtual unsigned getIntImmCost(const APInt &Imm, Type *Ty) const;
+  virtual unsigned
+  getIntImmCost(const APInt &Imm, Type *Ty) const LLVM_OVERRIDE;
 
   /// @}
 
@@ -180,7 +181,7 @@ unsigned ARMTTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
 }
 
 unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
-                                    Type *Src) const {
+                                  Type *Src) const {
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
@@ -469,7 +470,8 @@ unsigned ARMTTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
   return LT.first * NEONShuffleTbl[Idx].Cost;
 }
 
-unsigned ARMTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueKind Op1Info,
+unsigned ARMTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
+                                        OperandValueKind Op1Info,
                                         OperandValueKind Op2Info) const {
 
   int ISDOpcode = TLI->InstructionOpcodeToISD(Opcode);

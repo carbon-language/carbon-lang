@@ -32,7 +32,7 @@ void initializeX86TTIPass(PassRegistry &);
 
 namespace {
 
-class X86TTI : public ImmutablePass, public TargetTransformInfo {
+class X86TTI LLVM_FINAL : public ImmutablePass, public TargetTransformInfo {
   const X86Subtarget *ST;
   const X86TargetLowering *TLI;
 
@@ -46,12 +46,12 @@ public:
   }
 
   X86TTI(const X86TargetMachine *TM)
-      : ImmutablePass(ID), ST(TM->getSubtargetImpl()),
-        TLI(TM->getTargetLowering()) {
+    : ImmutablePass(ID), ST(TM->getSubtargetImpl()),
+      TLI(TM->getTargetLowering()) {
     initializeX86TTIPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() {
+  virtual void initializePass() LLVM_OVERRIDE {
     pushTTIStack(this);
   }
 
@@ -59,7 +59,7 @@ public:
     popTTIStack();
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const LLVM_OVERRIDE {
     TargetTransformInfo::getAnalysisUsage(AU);
   }
 
@@ -67,7 +67,7 @@ public:
   static char ID;
 
   /// Provide necessary pointer adjustments for the two base classes.
-  virtual void *getAdjustedAnalysisPointer(const void *ID) {
+  virtual void *getAdjustedAnalysisPointer(const void *ID) LLVM_OVERRIDE {
     if (ID == &TargetTransformInfo::ID)
       return (TargetTransformInfo*)this;
     return this;
@@ -75,35 +75,37 @@ public:
 
   /// \name Scalar TTI Implementations
   /// @{
-  virtual PopcntSupportKind getPopcntSupport(unsigned TyWidth) const;
+  virtual PopcntSupportKind
+  getPopcntSupport(unsigned TyWidth) const LLVM_OVERRIDE;
 
   /// @}
 
   /// \name Vector TTI Implementations
   /// @{
 
-  virtual unsigned getNumberOfRegisters(bool Vector) const;
-  virtual unsigned getRegisterBitWidth(bool Vector) const;
-  virtual unsigned getMaximumUnrollFactor() const;
+  virtual unsigned getNumberOfRegisters(bool Vector) const LLVM_OVERRIDE;
+  virtual unsigned getRegisterBitWidth(bool Vector) const LLVM_OVERRIDE;
+  virtual unsigned getMaximumUnrollFactor() const LLVM_OVERRIDE;
   virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
                                           OperandValueKind,
-                                          OperandValueKind) const;
+                                          OperandValueKind) const LLVM_OVERRIDE;
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
-                                  int Index, Type *SubTp) const;
+                                  int Index, Type *SubTp) const LLVM_OVERRIDE;
   virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
-                                    Type *Src) const;
+                                    Type *Src) const LLVM_OVERRIDE;
   virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                      Type *CondTy) const;
+                                      Type *CondTy) const LLVM_OVERRIDE;
   virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
-                                      unsigned Index) const;
+                                      unsigned Index) const LLVM_OVERRIDE;
   virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
                                    unsigned Alignment,
-                                   unsigned AddressSpace) const;
+                                   unsigned AddressSpace) const LLVM_OVERRIDE;
 
-  virtual unsigned getAddressComputationCost(Type *PtrTy, bool IsComplex) const;
+  virtual unsigned
+  getAddressComputationCost(Type *PtrTy, bool IsComplex) const LLVM_OVERRIDE;
   
   virtual unsigned getReductionCost(unsigned Opcode, Type *Ty,
-                                    bool IsPairwiseForm) const;
+                                    bool IsPairwiseForm) const LLVM_OVERRIDE;
 
   /// @}
 };

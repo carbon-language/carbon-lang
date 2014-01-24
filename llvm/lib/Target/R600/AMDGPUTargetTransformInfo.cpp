@@ -35,7 +35,7 @@ void initializeAMDGPUTTIPass(PassRegistry &);
 
 namespace {
 
-class AMDGPUTTI : public ImmutablePass, public TargetTransformInfo {
+class AMDGPUTTI LLVM_FINAL : public ImmutablePass, public TargetTransformInfo {
   const AMDGPUTargetMachine *TM;
   const AMDGPUSubtarget *ST;
   const AMDGPUTargetLowering *TLI;
@@ -55,11 +55,11 @@ public:
     initializeAMDGPUTTIPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() { pushTTIStack(this); }
+  virtual void initializePass() LLVM_OVERRIDE { pushTTIStack(this); }
 
   virtual void finalizePass() { popTTIStack(); }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const LLVM_OVERRIDE {
     TargetTransformInfo::getAnalysisUsage(AU);
   }
 
@@ -67,13 +67,13 @@ public:
   static char ID;
 
   /// Provide necessary pointer adjustments for the two base classes.
-  virtual void *getAdjustedAnalysisPointer(const void *ID) {
+  virtual void *getAdjustedAnalysisPointer(const void *ID) LLVM_OVERRIDE {
     if (ID == &TargetTransformInfo::ID)
       return (TargetTransformInfo *)this;
     return this;
   }
 
-  virtual bool hasBranchDivergence() const;
+  virtual bool hasBranchDivergence() const LLVM_OVERRIDE;
 
   virtual void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const;
 
