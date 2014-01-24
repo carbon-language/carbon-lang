@@ -5,6 +5,7 @@ file(GLOB entries *)
 foreach(entry ${entries})
   if(IS_DIRECTORY ${entry} AND EXISTS ${entry}/CMakeLists.txt)
     if((NOT ${entry} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR}/compiler-rt) AND
+       (NOT ${entry} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR}/dragonegg) AND
        (NOT ${entry} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR}/libcxx))
       add_subdirectory(${entry})
     endif()
@@ -25,3 +26,5 @@ if(${LLVM_BUILD_RUNTIME})
     message(WARNING "Can't build compiler-rt, CMake 2.8.8 required!")
   endif()
 endif()
+
+add_llvm_external_project(dragonegg)
