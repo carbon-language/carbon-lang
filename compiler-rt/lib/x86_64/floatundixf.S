@@ -25,6 +25,7 @@ DEFINE_COMPILERRT_FUNCTION(__floatundixf)
 	ret
 1:	faddl	REL_ADDR(twop64)
 	ret
+END_COMPILERRT_FUNCTION(__floatundixf)
 
 #endif // __x86_64__
 
@@ -56,6 +57,7 @@ DEFINE_COMPILERRT_FUNCTION(__floatundixf)
 	faddl	-8(%rsp)	// hi - 2^52 (as double extended, no rounding occurs)
 	faddl	-16(%rsp)	// hi + lo (as double extended)
 	ret
+END_COMPILERRT_FUNCTION(__floatundixf)
 
 #endif // __x86_64__
 

@@ -29,5 +29,6 @@ DEFINE_COMPILERRT_FUNCTION(__floatundisf)
 	cvtsi2ssq	%rdi,		%xmm0
 	mulss	REL_ADDR(two),	%xmm0
 	ret
-	
+END_COMPILERRT_FUNCTION(__floatundisf)
+
 #endif // __x86_64__

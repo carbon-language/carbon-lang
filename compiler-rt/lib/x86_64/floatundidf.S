@@ -39,5 +39,6 @@ DEFINE_COMPILERRT_FUNCTION(__floatundidf)
 	subsd	REL_ADDR(twop84_plus_twop52),	%xmm1 // a_hi - 0x1p52 (no rounding occurs)
 	addsd	%xmm1,							%xmm0 // a_hi + a_lo   (round happens here)
 	ret
-	
+END_COMPILERRT_FUNCTION(__floatundidf)
+
 #endif // __x86_64__
