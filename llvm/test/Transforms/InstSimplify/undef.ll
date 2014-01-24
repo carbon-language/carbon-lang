@@ -153,3 +153,10 @@ define i64 @test18(i64 %a) {
   %r = call i64 (i64)* undef(i64 %a)
   ret i64 %r
 }
+
+; CHECK-LABEL: @test19
+; CHECK: ret <4 x i8> undef
+define <4 x i8> @test19(<4 x i8> %a) {
+  %b = shl <4 x i8> %a, <i8 8, i8 9, i8 undef, i8 -1>
+  ret <4 x i8> %b
+}

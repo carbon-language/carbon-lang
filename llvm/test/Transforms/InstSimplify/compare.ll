@@ -739,3 +739,21 @@ define i1 @non_inbounds_gep_compare2(i64* %a) {
   ret i1 %cmp
 ; CHECK-NEXT: ret i1 true
 }
+
+define <4 x i8> @vectorselectfold(<4 x i8> %a, <4 x i8> %b) {
+  %false = icmp ne <4 x i8> zeroinitializer, zeroinitializer
+  %sel = select <4 x i1> %false, <4 x i8> %a, <4 x i8> %b
+  ret <4 x i8> %sel
+
+; CHECK-LABEL: @vectorselectfold
+; CHECK-NEXT: ret <4 x i8> %b
+}
+
+define <4 x i8> @vectorselectfold2(<4 x i8> %a, <4 x i8> %b) {
+  %true = icmp eq <4 x i8> zeroinitializer, zeroinitializer
+  %sel = select <4 x i1> %true, <4 x i8> %a, <4 x i8> %b
+  ret <4 x i8> %sel
+
+; CHECK-LABEL: @vectorselectfold
+; CHECK-NEXT: ret <4 x i8> %a
+}

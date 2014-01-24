@@ -1288,6 +1288,33 @@ Value *llvm::SimplifyFRemInst(Value *Op0, Value *Op1, const DataLayout *TD,
   return ::SimplifyFRemInst(Op0, Op1, Query (TD, TLI, DT), RecursionLimit);
 }
 
+/// isUndefShift - Returns true if a shift by \c Amount always yields undef.
+static bool isUndefShift(Value *Amount) {
+  Constant *C = dyn_cast<Constant>(Amount);
+  if (!C)
+    return false;
+
+  // X shift by undef -> undef because it may shift by the bitwidth.
+  if (isa<UndefValue>(C))
+    return true;
+
+  // Shifting by the bitwidth or more is undefined.
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
+    if (CI->getValue().getLimitedValue() >=
+        CI->getType()->getScalarSizeInBits())
+      return true;
+
+  // If all lanes of a vector shift are undefined the whole shift is.
+  if (isa<ConstantVector>(C) || isa<ConstantDataVector>(C)) {
+    for (unsigned I = 0, E = C->getType()->getVectorNumElements(); I != E; ++I)
+      if (!isUndefShift(C->getAggregateElement(I)))
+        return false;
+    return true;
+  }
+
+  return false;
+}
+
 /// SimplifyShift - Given operands for an Shl, LShr or AShr, see if we can
 /// fold the result.  If not, this returns null.
 static Value *SimplifyShift(unsigned Opcode, Value *Op0, Value *Op1,
@@ -1307,15 +1334,9 @@ static Value *SimplifyShift(unsigned Opcode, Value *Op0, Value *Op1,
   if (match(Op1, m_Zero()))
     return Op0;
 
-  // X shift by undef -> undef because it may shift by the bitwidth.
-  if (match(Op1, m_Undef()))
-    return Op1;
-
-  // Shifting by the bitwidth or more is undefined.
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1))
-    if (CI->getValue().getLimitedValue() >=
-        Op0->getType()->getScalarSizeInBits())
-      return UndefValue::get(Op0->getType());
+  // Fold undefined shifts.
+  if (isUndefShift(Op1))
+    return UndefValue::get(Op0->getType());
 
   // If the operation is with the result of a select instruction, check whether
   // operating on either branch of the select always yields the same value.
@@ -2699,8 +2720,12 @@ static Value *SimplifySelectInst(Value *CondVal, Value *TrueVal,
                                  unsigned MaxRecurse) {
   // select true, X, Y  -> X
   // select false, X, Y -> Y
-  if (ConstantInt *CB = dyn_cast<ConstantInt>(CondVal))
-    return CB->getZExtValue() ? TrueVal : FalseVal;
+  if (Constant *CB = dyn_cast<Constant>(CondVal)) {
+    if (CB->isAllOnesValue())
+      return TrueVal;
+    if (CB->isNullValue())
+      return FalseVal;
+  }
 
   // select C, X, X -> X
   if (TrueVal == FalseVal)
@@ -2731,10 +2756,7 @@ Value *llvm::SimplifySelectInst(Value *Cond, Value *TrueVal, Value *FalseVal,
 /// fold the result.  If not, this returns null.
 static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
   // The type of the GEP pointer operand.
-  PointerType *PtrTy = dyn_cast<PointerType>(Ops[0]->getType());
-  // The GEP pointer operand is not a pointer, it's a vector of pointers.
-  if (!PtrTy)
-    return 0;
+  PointerType *PtrTy = cast<PointerType>(Ops[0]->getType()->getScalarType());
 
   // getelementptr P -> P.
   if (Ops.size() == 1)
@@ -2744,14 +2766,15 @@ static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
     // Compute the (pointer) type returned by the GEP instruction.
     Type *LastType = GetElementPtrInst::getIndexedType(PtrTy, Ops.slice(1));
     Type *GEPTy = PointerType::get(LastType, PtrTy->getAddressSpace());
+    if (VectorType *VT = dyn_cast<VectorType>(Ops[0]->getType()))
+      GEPTy = VectorType::get(GEPTy, VT->getNumElements());
     return UndefValue::get(GEPTy);
   }
 
   if (Ops.size() == 2) {
     // getelementptr P, 0 -> P.
-    if (ConstantInt *C = dyn_cast<ConstantInt>(Ops[1]))
-      if (C->isZero())
-        return Ops[0];
+    if (match(Ops[1], m_Zero()))
+      return Ops[0];
     // getelementptr P, N -> P if P points to a type of zero size.
     if (Q.TD) {
       Type *Ty = PtrTy->getElementType();
