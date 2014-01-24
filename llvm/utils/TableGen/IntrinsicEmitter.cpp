@@ -268,8 +268,8 @@ enum IIT_Info {
 
 static void EncodeFixedValueType(MVT::SimpleValueType VT,
                                  std::vector<unsigned char> &Sig) {
-  if (EVT(VT).isInteger()) {
-    unsigned BitWidth = EVT(VT).getSizeInBits();
+  if (MVT(VT).isInteger()) {
+    unsigned BitWidth = MVT(VT).getSizeInBits();
     switch (BitWidth) {
     default: PrintFatalError("unhandled integer type width in intrinsic!");
     case 1: return Sig.push_back(IIT_I1);
@@ -350,8 +350,8 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
   }
   }
 
-  if (EVT(VT).isVector()) {
-    EVT VVT = VT;
+  if (MVT(VT).isVector()) {
+    MVT VVT = VT;
     switch (VVT.getVectorNumElements()) {
     default: PrintFatalError("unhandled vector type width in intrinsic!");
     case 1: Sig.push_back(IIT_V1); break;
@@ -362,8 +362,7 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
     case 32: Sig.push_back(IIT_V32); break;
     }
 
-    return EncodeFixedValueType(VVT.getVectorElementType().
-                                getSimpleVT().SimpleTy, Sig);
+    return EncodeFixedValueType(VVT.getVectorElementType().SimpleTy, Sig);
   }
 
   EncodeFixedValueType(VT, Sig);

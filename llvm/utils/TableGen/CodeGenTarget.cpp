@@ -528,7 +528,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     } else {
       VT = getValueType(TyEl->getValueAsDef("VT"));
     }
-    if (EVT(VT).isOverloaded()) {
+    if (MVT(VT).isOverloaded()) {
       OverloadedVTs.push_back(VT);
       isOverloaded = true;
     }
@@ -562,7 +562,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     } else
       VT = getValueType(TyEl->getValueAsDef("VT"));
 
-    if (EVT(VT).isOverloaded()) {
+    if (MVT(VT).isOverloaded()) {
       OverloadedVTs.push_back(VT);
       isOverloaded = true;
     }

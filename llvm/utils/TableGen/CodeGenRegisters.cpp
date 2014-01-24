@@ -712,7 +712,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   unsigned Size = R->getValueAsInt("Size");
 
   Namespace = R->getValueAsString("Namespace");
-  SpillSize = Size ? Size : EVT(VTs[0]).getSizeInBits();
+  SpillSize = Size ? Size : MVT(VTs[0]).getSizeInBits();
   SpillAlignment = R->getValueAsInt("Alignment");
   CopyCost = R->getValueAsInt("CopyCost");
   Allocatable = R->getValueAsBit("isAllocatable");

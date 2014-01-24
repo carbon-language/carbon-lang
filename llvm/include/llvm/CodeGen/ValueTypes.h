@@ -237,6 +237,12 @@ namespace llvm {
       return (SimpleTy == MVT::v16i64);
     }
 
+    /// isOverloaded - Return true if this is an overloaded type for TableGen.
+    bool isOverloaded() const {
+      return (SimpleTy==MVT::iAny || SimpleTy==MVT::fAny ||
+              SimpleTy==MVT::vAny || SimpleTy==MVT::iPTRAny);
+    }
+
     /// isPow2VectorType - Returns true if the given vector is a power of 2.
     bool isPow2VectorType() const {
       unsigned NElts = getVectorNumElements();
