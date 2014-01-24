@@ -5,21 +5,23 @@
 #include <stdint.h>
 #include <unistd.h>
 
-uint64_t objs[8*2*(2 + 4 + 8)][2];
+#define NOINLINE __attribute__((noinline))
+
+volatile uint64_t objs[8*2*(2 + 4 + 8)][2];
 
 extern "C" {
-uint16_t __sanitizer_unaligned_load16(void *addr);
-uint32_t __sanitizer_unaligned_load32(void *addr);
-uint64_t __sanitizer_unaligned_load64(void *addr);
-void __sanitizer_unaligned_store16(void *addr, uint16_t v);
-void __sanitizer_unaligned_store32(void *addr, uint32_t v);
-void __sanitizer_unaligned_store64(void *addr, uint64_t v);
+uint16_t __sanitizer_unaligned_load16(volatile void *addr);
+uint32_t __sanitizer_unaligned_load32(volatile void *addr);
+uint64_t __sanitizer_unaligned_load64(volatile void *addr);
+void __sanitizer_unaligned_store16(volatile void *addr, uint16_t v);
+void __sanitizer_unaligned_store32(volatile void *addr, uint32_t v);
+void __sanitizer_unaligned_store64(volatile void *addr, uint64_t v);
 }
 
 // All this mess is to generate unique stack for each race,
 // otherwise tsan will suppress similar stacks.
 
-static void access(char *p, int sz, int rw) {
+static NOINLINE void access(volatile char *p, int sz, int rw) {
   if (rw) {
     switch (sz) {
     case 0: __sanitizer_unaligned_store16(p, 0); break;
@@ -47,7 +49,7 @@ static int accesssize(int sz) {
 }
 
 template<int off, int off2>
-static void access3(bool main, int sz1, bool rw, char *p) {
+static NOINLINE void access3(bool main, int sz1, bool rw, volatile char *p) {
   p += off;
   if (main) {
     access(p, sz1, true);
@@ -63,7 +65,8 @@ static void access3(bool main, int sz1, bool rw, char *p) {
 }
 
 template<int off>
-static void access2(bool main, int sz1, int off2, bool rw, char *obj) {
+static NOINLINE void
+access2(bool main, int sz1, int off2, bool rw, volatile char *obj) {
   if (off2 == 0)
     access3<off, 0>(main, sz1, rw, obj);
   else if (off2 == 1)
@@ -82,7 +85,8 @@ static void access2(bool main, int sz1, int off2, bool rw, char *obj) {
     access3<off, 7>(main, sz1, rw, obj);
 }
 
-static void access1(bool main, int off, int sz1, int off2, bool rw, char *obj) {
+static NOINLINE void
+access1(bool main, int off, int sz1, int off2, bool rw, char *obj) {
   if (off == 0)
     access2<0>(main, sz1, off2, rw, obj);
   else if (off == 1)
@@ -101,8 +105,8 @@ static void access1(bool main, int off, int sz1, int off2, bool rw, char *obj) {
     access2<7>(main, sz1, off2, rw, obj);
 }
 
-void Test(bool main) {
-  uint64_t *obj = objs[0];
+NOINLINE void Test(bool main) {
+  volatile uint64_t *obj = objs[0];
   for (int off = 0; off < 8; off++) {
     for (int sz1 = 0; sz1 < 3; sz1++) {
       for (int off2 = 0; off2 < accesssize(sz1); off2++) {
