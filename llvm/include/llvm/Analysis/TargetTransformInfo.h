@@ -241,20 +241,19 @@ public:
     PSK_FastHardware
   };
 
-  /// isLegalAddImmediate - Return true if the specified immediate is legal
-  /// add immediate, that is the target has add instructions which can add
-  /// a register with the immediate without having to materialize the
-  /// immediate into a register.
+  /// \brief Return true if the specified immediate is legal add immediate, that
+  /// is the target has add instructions which can add a register with the
+  /// immediate without having to materialize the immediate into a register.
   virtual bool isLegalAddImmediate(int64_t Imm) const;
 
-  /// isLegalICmpImmediate - Return true if the specified immediate is legal
-  /// icmp immediate, that is the target has icmp instructions which can compare
-  /// a register against the immediate without having to materialize the
-  /// immediate into a register.
+  /// \brief Return true if the specified immediate is legal icmp immediate,
+  /// that is the target has icmp instructions which can compare a register
+  /// against the immediate without having to materialize the immediate into a
+  /// register.
   virtual bool isLegalICmpImmediate(int64_t Imm) const;
 
-  /// isLegalAddressingMode - Return true if the addressing mode represented by
-  /// AM is legal for this target, for a load/store of the specified type.
+  /// \brief Return true if the addressing mode represented by AM is legal for
+  /// this target, for a load/store of the specified type.
   /// The type may be VoidTy, in which case only return true if the addressing
   /// mode is legal for a load/store of any legal type.
   /// TODO: Handle pre/postinc as well.
@@ -272,33 +271,32 @@ public:
                                    int64_t BaseOffset, bool HasBaseReg,
                                    int64_t Scale) const;
 
-  /// isTruncateFree - Return true if it's free to truncate a value of
-  /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
-  /// register EAX to i16 by referencing its sub-register AX.
+  /// \brief Return true if it's free to truncate a value of type Ty1 to type
+  /// Ty2. e.g. On x86 it's free to truncate a i32 value in register EAX to i16
+  /// by referencing its sub-register AX.
   virtual bool isTruncateFree(Type *Ty1, Type *Ty2) const;
 
-  /// Is this type legal.
+  /// \brief Return true if this type is legal.
   virtual bool isTypeLegal(Type *Ty) const;
 
-  /// getJumpBufAlignment - returns the target's jmp_buf alignment in bytes
+  /// \brief Returns the target's jmp_buf alignment in bytes.
   virtual unsigned getJumpBufAlignment() const;
 
-  /// getJumpBufSize - returns the target's jmp_buf size in bytes.
+  /// \brief Returns the target's jmp_buf size in bytes.
   virtual unsigned getJumpBufSize() const;
 
-  /// shouldBuildLookupTables - Return true if switches should be turned into
-  /// lookup tables for the target.
+  /// \brief Return true if switches should be turned into lookup tables for the
+  /// target.
   virtual bool shouldBuildLookupTables() const;
 
-  /// getPopcntSupport - Return hardware support for population count.
+  /// \brief Return hardware support for population count.
   virtual PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const;
 
-  /// haveFastSqrt -- Return true if the hardware has a fast square-root
-  /// instruction.
+  /// \brief Return true if the hardware has a fast square-root instruction.
   virtual bool haveFastSqrt(Type *Ty) const;
 
-  /// getIntImmCost - Return the expected cost of materializing the given
-  /// integer immediate of the specified type.
+  /// \brief Return the expected cost of materializing for the given integer
+  /// immediate of the specified type.
   virtual unsigned getIntImmCost(const APInt &Imm, Type *Ty) const;
 
   /// @}
