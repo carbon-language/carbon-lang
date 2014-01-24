@@ -3212,11 +3212,14 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
              isa<ConstantSDNode>(N0.getOperand(1))) {
     ConstantSDNode *C1 = cast<ConstantSDNode>(N0.getOperand(1));
-    if ((C1->getAPIntValue() & N1C->getAPIntValue()) != 0)
+    if ((C1->getAPIntValue() & N1C->getAPIntValue()) != 0) {
+      SDValue COR = DAG.FoldConstantArithmetic(ISD::OR, VT, N1C, C1);
+      if (!COR.getNode())
+        return SDValue();
       return DAG.getNode(ISD::AND, SDLoc(N), VT,
                          DAG.getNode(ISD::OR, SDLoc(N0), VT,
-                                     N0.getOperand(0), N1),
-                         DAG.FoldConstantArithmetic(ISD::OR, VT, N1C, C1));
+                                     N0.getOperand(0), N1), COR);
+    }
   }
   // fold (or (setcc x), (setcc y)) -> (setcc (or x, y))
   if (isSetCCEquivalent(N0, LL, LR, CC0) && isSetCCEquivalent(N1, RL, RR, CC1)){

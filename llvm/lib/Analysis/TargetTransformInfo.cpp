@@ -158,6 +158,16 @@ unsigned TargetTransformInfo::getIntImmCost(const APInt &Imm, Type *Ty) const {
   return PrevTTI->getIntImmCost(Imm, Ty);
 }
 
+unsigned TargetTransformInfo::getIntImmCost(unsigned Opcode, const APInt &Imm,
+                                            Type *Ty) const {
+  return PrevTTI->getIntImmCost(Opcode, Imm, Ty);
+}
+
+unsigned TargetTransformInfo::getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
+                                            Type *Ty) const {
+  return PrevTTI->getIntImmCost(IID, Imm, Ty);
+}
+
 unsigned TargetTransformInfo::getNumberOfRegisters(bool Vector) const {
   return PrevTTI->getNumberOfRegisters(Vector);
 }
@@ -541,7 +551,17 @@ struct NoTTI LLVM_FINAL : ImmutablePass, TargetTransformInfo {
   }
 
   unsigned getIntImmCost(const APInt &Imm, Type *Ty) const LLVM_OVERRIDE {
-    return 1;
+    return TCC_Basic;
+  }
+
+  unsigned getIntImmCost(unsigned Opcode, const APInt &Imm,
+                         Type *Ty) const LLVM_OVERRIDE {
+    return TCC_Free;
+  }
+
+  unsigned getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
+                         Type *Ty) const LLVM_OVERRIDE {
+    return TCC_Free;
   }
 
   unsigned getNumberOfRegisters(bool Vector) const LLVM_OVERRIDE {

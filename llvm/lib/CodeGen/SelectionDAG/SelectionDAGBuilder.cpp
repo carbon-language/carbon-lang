@@ -2945,6 +2945,9 @@ void SelectionDAGBuilder::visitBitCast(const User &I) {
   if (DestVT != N.getValueType())
     setValue(&I, DAG.getNode(ISD::BITCAST, getCurSDLoc(),
                              DestVT, N)); // convert types.
+  else if(ConstantSDNode *C = dyn_cast<ConstantSDNode>(N))
+    setValue(&I, DAG.getConstant(C->getAPIntValue(), C->getValueType(0),
+                                 /*isTarget=*/false, /*isOpaque*/true));
   else
     setValue(&I, N);            // noop cast.
 }

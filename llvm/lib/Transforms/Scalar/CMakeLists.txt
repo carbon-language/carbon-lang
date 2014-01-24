@@ -1,6 +1,7 @@
 add_llvm_library(LLVMScalarOpts
   ADCE.cpp
   CodeGenPrepare.cpp
+  ConstantHoisting.cpp
   ConstantProp.cpp
   CorrelatedValuePropagation.cpp
   DCE.cpp
