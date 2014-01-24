@@ -35,31 +35,22 @@
 
 using namespace llvm;
 
-inline void MCELFStreamer::SetSectionData() {
-  SwitchSection(getContext().getObjectFileInfo()->getDataSection());
-  EmitCodeAlignment(4, 0);
-}
-
-inline void MCELFStreamer::SetSectionText() {
-  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
-  EmitCodeAlignment(4, 0);
-}
-
-inline void MCELFStreamer::SetSectionBss() {
-  SwitchSection(getContext().getObjectFileInfo()->getBSSSection());
-  EmitCodeAlignment(4, 0);
-}
-
 MCELFStreamer::~MCELFStreamer() {
 }
 
 void MCELFStreamer::InitSections() {
   // This emulates the same behavior of GNU as. This makes it easier
   // to compare the output as the major sections are in the same order.
-  SetSectionText();
-  SetSectionData();
-  SetSectionBss();
-  SetSectionText();
+  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
+  EmitCodeAlignment(4, 0);
+
+  SwitchSection(getContext().getObjectFileInfo()->getDataSection());
+  EmitCodeAlignment(4, 0);
+
+  SwitchSection(getContext().getObjectFileInfo()->getBSSSection());
+  EmitCodeAlignment(4, 0);
+
+  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 
 void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {

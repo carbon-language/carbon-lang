@@ -106,10 +106,6 @@ private:
   std::vector<LocalCommon> LocalCommons;
 
   SmallPtrSet<MCSymbol *, 16> BindingExplicitlySet;
-
-  void SetSectionData();
-  void SetSectionText();
-  void SetSectionBss();
 };
 
 MCELFStreamer *createARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
