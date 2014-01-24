@@ -1263,3 +1263,14 @@ entry:
   %vecinit2 = insertelement <2 x i64> %vecinit, i64 %vecext1, i32 1
   ret <2 x i64> %vecinit2
 }
+
+declare <1 x i16> @llvm.aarch64.neon.vsqadd.v1i16(<1 x i16>, <1 x i16>)
+
+define <1 x i16> @test_copy_FPR16_FPR16(<1 x i16> %a, <1 x i16> %b) {
+; CHECK-LABEL: test_copy_FPR16_FPR16:
+; CHECK: usqadd h1, h0
+; CHECK-NEXT: fmov s0, s1
+entry:
+  %vsqadd2.i = call <1 x i16> @llvm.aarch64.neon.vsqadd.v1i16(<1 x i16> %b, <1 x i16> %a)
+  ret <1 x i16> %vsqadd2.i
+}
