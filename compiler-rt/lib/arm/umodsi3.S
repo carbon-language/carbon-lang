@@ -25,7 +25,9 @@
 #endif
 
 	.text
+#if !__ARM_ARCH_EXT_IDIV__
 	.arm
+#endif
 	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__umodsi3)
 #if __ARM_ARCH_EXT_IDIV__
