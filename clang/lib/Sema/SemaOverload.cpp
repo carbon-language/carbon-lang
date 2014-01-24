@@ -4448,7 +4448,7 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
         }
       }
     }
-    
+    ICS.UserDefined.Before.setAsIdentityConversion();
     ICS.UserDefined.After.ReferenceBinding = true;
     ICS.UserDefined.After.IsLvalueReference = !isRValRef;
     ICS.UserDefined.After.BindsToFunctionLvalue = T2->isFunctionType();
