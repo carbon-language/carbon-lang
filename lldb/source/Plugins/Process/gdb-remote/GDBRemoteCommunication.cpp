@@ -711,6 +711,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
             }
             else
             {
+                named_pipe_path[0] = '\0';
                 listen = true;
             }
         }
