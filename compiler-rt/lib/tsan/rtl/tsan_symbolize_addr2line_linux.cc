@@ -27,6 +27,9 @@
 
 namespace __tsan {
 
+void EnterSymbolizer();
+void ExitSymbolizer();
+
 struct ModuleDesc {
   const char *fullname;
   const char *name;
@@ -48,6 +51,7 @@ struct DlIteratePhdrCtx {
 };
 
 static void NOINLINE InitModule(ModuleDesc *m) {
+  EnterSymbolizer();
   int outfd[2] = {};
   if (pipe(&outfd[0])) {
     Printf("ThreadSanitizer: outfd pipe() failed (%d)\n", errno);
@@ -80,6 +84,7 @@ static void NOINLINE InitModule(ModuleDesc *m) {
   internal_close(infd[1]);
   m->inp_fd = infd[0];
   m->out_fd = outfd[1];
+  ExitSymbolizer();
 }
 
 static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {

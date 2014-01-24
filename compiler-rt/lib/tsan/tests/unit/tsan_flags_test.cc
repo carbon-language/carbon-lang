@@ -59,6 +59,7 @@ static const char *options1 =
   " running_on_valgrind=0"
   " history_size=5"
   " io_sync=1"
+  " die_after_fork=true"
 
   " symbolize=0"
   " external_symbolizer_path=asdfgh"
@@ -100,6 +101,7 @@ static const char *options2 =
   " running_on_valgrind=true"
   " history_size=6"
   " io_sync=2"
+  " die_after_fork=false"
 
   " symbolize=true"
   " external_symbolizer_path=cccccc"
@@ -141,6 +143,7 @@ void VerifyOptions1(Flags *f) {
   EXPECT_EQ(f->running_on_valgrind, 0);
   EXPECT_EQ(f->history_size, 5);
   EXPECT_EQ(f->io_sync, 1);
+  EXPECT_EQ(f->die_after_fork, true);
 
   EXPECT_EQ(f->symbolize, 0);
   EXPECT_EQ(f->external_symbolizer_path, std::string(""));
@@ -182,6 +185,7 @@ void VerifyOptions2(Flags *f) {
   EXPECT_EQ(f->running_on_valgrind, true);
   EXPECT_EQ(f->history_size, 6);
   EXPECT_EQ(f->io_sync, 2);
+  EXPECT_EQ(f->die_after_fork, false);
 
   EXPECT_EQ(f->symbolize, true);
   EXPECT_EQ(f->external_symbolizer_path, std::string("cccccc"));

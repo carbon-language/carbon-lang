@@ -863,6 +863,17 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
 TSAN_INTERCEPTOR(int, pthread_create,
     void *th, void *attr, void *(*callback)(void*), void * param) {
   SCOPED_INTERCEPTOR_RAW(pthread_create, th, attr, callback, param);
+  if (CTX()->after_multithreaded_fork) {
+    if (flags()->die_after_fork) {
+      Printf("ThreadSanitizer: starting new threads after muti-threaded"
+          " fork is not supported. Dying (set die_after_fork=0 to override)\n");
+      Die();
+    } else {
+      VPrintf(1, "ThreadSanitizer: starting new threads after muti-threaded"
+          " fork is not supported. Continuing because die_after_fork=0,"
+          " but you are on your own\n");
+    }
+  }
   __sanitizer_pthread_attr_t myattr;
   if (attr == 0) {
     pthread_attr_init(&myattr);
@@ -1793,13 +1804,21 @@ TSAN_INTERCEPTOR(int, munlockall, void) {
 }
 
 TSAN_INTERCEPTOR(int, fork, int fake) {
+  if (cur_thread()->in_symbolizer)
+    return REAL(fork)(fake);
   SCOPED_INTERCEPTOR_RAW(fork, fake);
+  ForkBefore(thr, pc);
   int pid = REAL(fork)(fake);
   if (pid == 0) {
     // child
+    ForkChildAfter(thr, pc);
     FdOnFork(thr, pc);
   } else if (pid > 0) {
     // parent
+    ForkParentAfter(thr, pc);
+  } else {
+    // error
+    ForkParentAfter(thr, pc);
   }
   return pid;
 }
@@ -1892,6 +1911,8 @@ static void HandleRecvmsg(ThreadState *thr, uptr pc,
 
 #define TSAN_SYSCALL() \
   ThreadState *thr = cur_thread(); \
+  if (thr->ignore_interceptors) \
+    return; \
   ScopedSyscall scoped_syscall(thr) \
 /**/
 
@@ -1944,15 +1965,21 @@ static USED void syscall_fd_release(uptr pc, int fd) {
 
 static void syscall_pre_fork(uptr pc) {
   TSAN_SYSCALL();
+  ForkBefore(thr, pc);
 }
 
-static void syscall_post_fork(uptr pc, int res) {
+static void syscall_post_fork(uptr pc, int pid) {
   TSAN_SYSCALL();
-  if (res == 0) {
+  if (pid == 0) {
     // child
+    ForkChildAfter(thr, pc);
     FdOnFork(thr, pc);
-  } else if (res > 0) {
+  } else if (pid > 0) {
     // parent
+    ForkParentAfter(thr, pc);
+  } else {
+    // error
+    ForkParentAfter(thr, pc);
   }
 }
 

@@ -314,6 +314,42 @@ int Finalize(ThreadState *thr) {
 }
 
 #ifndef TSAN_GO
+void ForkBefore(ThreadState *thr, uptr pc) {
+  Context *ctx = CTX();
+  ctx->report_mtx.Lock();
+  ctx->thread_registry->Lock();
+}
+
+void ForkParentAfter(ThreadState *thr, uptr pc) {
+  Context *ctx = CTX();
+  ctx->thread_registry->Unlock();
+  ctx->report_mtx.Unlock();
+}
+
+void ForkChildAfter(ThreadState *thr, uptr pc) {
+  Context *ctx = CTX();
+  ctx->thread_registry->Unlock();
+  ctx->report_mtx.Unlock();
+
+  uptr nthread = 0;
+  ctx->thread_registry->GetNumberOfThreads(0, 0, &nthread /* alive threads */);
+  VPrintf(1, "ThreadSanitizer: forked new process with pid %d,"
+      " parent had %d threads\n", (int)internal_getpid(), (int)nthread);
+  if (nthread == 1) {
+    internal_start_thread(&BackgroundThread, 0);
+  } else {
+    // We've just forked a multi-threaded process. We cannot reasonably function
+    // after that (some mutexes may be locked before fork). So just enable
+    // ignores for everything in the hope that we will exec soon.
+    ctx->after_multithreaded_fork = true;
+    thr->ignore_interceptors++;
+    ThreadIgnoreBegin(thr, pc);
+    ThreadIgnoreSyncBegin(thr, pc);
+  }
+}
+#endif
+
+#ifndef TSAN_GO
 u32 CurrentStackId(ThreadState *thr, uptr pc) {
   if (thr->shadow_stack_pos == 0)  // May happen during bootstrap.
     return 0;

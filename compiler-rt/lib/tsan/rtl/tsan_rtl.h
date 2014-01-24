@@ -529,6 +529,7 @@ struct Context {
   Context();
 
   bool initialized;
+  bool after_multithreaded_fork;
 
   SyncTab synctab;
 
@@ -614,6 +615,10 @@ void InitializeShadowMemory();
 void InitializeInterceptors();
 void InitializeLibIgnore();
 void InitializeDynamicAnnotations();
+
+void ForkBefore(ThreadState *thr, uptr pc);
+void ForkParentAfter(ThreadState *thr, uptr pc);
+void ForkChildAfter(ThreadState *thr, uptr pc);
 
 void ReportRace(ThreadState *thr);
 bool OutputReport(Context *ctx,

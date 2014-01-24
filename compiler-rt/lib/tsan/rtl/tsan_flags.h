@@ -81,6 +81,8 @@ struct Flags : CommonFlags {
   // 1 - reasonable level of synchronization (write->read)
   // 2 - global synchronization of all IO operations
   int io_sync;
+  // Die after multi-threaded fork if the child creates new threads.
+  bool die_after_fork;
 };
 
 Flags *flags();

@@ -57,6 +57,7 @@ static void ParseFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->running_on_valgrind, "running_on_valgrind");
   ParseFlag(env, &f->history_size, "history_size");
   ParseFlag(env, &f->io_sync, "io_sync");
+  ParseFlag(env, &f->die_after_fork, "die_after_fork");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
@@ -87,6 +88,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->running_on_valgrind = false;
   f->history_size = kGoMode ? 1 : 2;  // There are a lot of goroutines in Go.
   f->io_sync = 1;
+  f->die_after_fork = true;
 
   SetCommonFlagsDefaults(f);
 

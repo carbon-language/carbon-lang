@@ -539,6 +539,7 @@ class POSIXSymbolizer : public Symbolizer {
     }
     // Otherwise, fall back to external symbolizer.
     if (external_symbolizer_) {
+      SymbolizerScope sym_scope(this);
       return external_symbolizer_->SendCommand(is_data, module_name,
                                                module_offset);
     }

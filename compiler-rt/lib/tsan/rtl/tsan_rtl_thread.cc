@@ -179,6 +179,8 @@ static void ReportIgnoresEnabled(ThreadContext *tctx, IgnoreSet *set) {
 }
 
 static void ThreadCheckIgnore(ThreadState *thr) {
+  if (CTX()->after_multithreaded_fork)
+    return;
   if (thr->ignore_reads_and_writes)
     ReportIgnoresEnabled(thr->tctx, &thr->mop_ignore_set);
   if (thr->ignore_sync)
@@ -257,6 +259,14 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
   tr->Lock();
   thr->tctx = (ThreadContext*)tr->GetThreadLocked(tid);
   tr->Unlock();
+
+#ifndef TSAN_GO
+  if (ctx->after_multithreaded_fork) {
+    thr->ignore_interceptors++;
+    ThreadIgnoreBegin(thr, 0);
+    ThreadIgnoreSyncBegin(thr, 0);
+  }
+#endif
 }
 
 void ThreadFinish(ThreadState *thr) {
