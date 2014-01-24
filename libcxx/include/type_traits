@@ -2017,7 +2017,7 @@ false_type
 __is_constructible_test(__any, _Args&& ...);
 
 template <bool, class _Tp, class... _Args>
-struct __is_constructible // false, _Tp is not a scalar
+struct __libcpp_is_constructible // false, _Tp is not a scalar
     : public common_type
              <
                  decltype(__is_constructible_test(declval<_Tp>(), declval<_Args>()...))
@@ -2027,7 +2027,7 @@ struct __is_constructible // false, _Tp is not a scalar
 //      function types are not constructible
 
 template <class _Rp, class... _A1, class... _A2>
-struct __is_constructible<false, _Rp(_A1...), _A2...>
+struct __libcpp_is_constructible<false, _Rp(_A1...), _A2...>
     : public false_type
     {};
 
@@ -2036,7 +2036,7 @@ struct __is_constructible<false, _Rp(_A1...), _A2...>
 //      Scalars are default constructible, references are not
 
 template <class _Tp>
-struct __is_constructible<true, _Tp>
+struct __libcpp_is_constructible<true, _Tp>
     : public is_scalar<_Tp>
     {};
 
@@ -2051,7 +2051,7 @@ struct __is_constructible_ref
 };
 
 template <class _Tp, class _A0>
-struct __is_constructible<true, _Tp, _A0>
+struct __libcpp_is_constructible<true, _Tp, _A0>
     : public common_type
              <
                  decltype(__is_constructible_ref<_Tp>::__lxx(declval<_A0>()))
@@ -2061,7 +2061,7 @@ struct __is_constructible<true, _Tp, _A0>
 //      Scalars and references are not constructible from multiple args.
 
 template <class _Tp, class _A0, class ..._Args>
-struct __is_constructible<true, _Tp, _A0, _Args...>
+struct __libcpp_is_constructible<true, _Tp, _A0, _Args...>
     : public false_type
     {};
 
@@ -2069,7 +2069,7 @@ struct __is_constructible<true, _Tp, _A0, _Args...>
 
 template <bool, class _Tp, class... _Args>
 struct __is_constructible_void_check
-    : public __is_constructible<is_scalar<_Tp>::value || is_reference<_Tp>::value,
+    : public __libcpp_is_constructible<is_scalar<_Tp>::value || is_reference<_Tp>::value,
                                 _Tp, _Args...>
     {};
 
@@ -2104,21 +2104,21 @@ struct _LIBCPP_TYPE_VIS_ONLY is_constructible
 //      is default constructible
 
 template <class _Ap, size_t _Np>
-struct __is_constructible<false, _Ap[_Np]>
+struct __libcpp_is_constructible<false, _Ap[_Np]>
     : public is_constructible<typename remove_all_extents<_Ap>::type>
     {};
 
 //      Otherwise array types are not constructible by this syntax
 
 template <class _Ap, size_t _Np, class ..._Args>
-struct __is_constructible<false, _Ap[_Np], _Args...>
+struct __libcpp_is_constructible<false, _Ap[_Np], _Args...>
     : public false_type
     {};
 
 //      Incomplete array types are not constructible
 
 template <class _Ap, class ..._Args>
-struct __is_constructible<false, _Ap[], _Args...>
+struct __libcpp_is_constructible<false, _Ap[], _Args...>
     : public false_type
     {};
 
@@ -2559,29 +2559,29 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_destructible
 
 #if __has_feature(cxx_noexcept)
 
-template <bool, class _Tp, class... _Args> struct __is_nothrow_constructible;
+template <bool, class _Tp, class... _Args> struct __libcpp_is_nothrow_constructible;
 
 template <class _Tp, class... _Args>
-struct __is_nothrow_constructible<true, _Tp, _Args...>
+struct __libcpp_is_nothrow_constructible<true, _Tp, _Args...>
     : public integral_constant<bool, noexcept(_Tp(declval<_Args>()...))>
 {
 };
 
 template <class _Tp, class... _Args>
-struct __is_nothrow_constructible<false, _Tp, _Args...>
+struct __libcpp_is_nothrow_constructible<false, _Tp, _Args...>
     : public false_type
 {
 };
 
 template <class _Tp, class... _Args>
 struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_constructible
-    : __is_nothrow_constructible<is_constructible<_Tp, _Args...>::value, _Tp, _Args...>
+    : __libcpp_is_nothrow_constructible<is_constructible<_Tp, _Args...>::value, _Tp, _Args...>
 {
 };
 
 template <class _Tp, size_t _Ns>
 struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_constructible<_Tp[_Ns]>
-    : __is_nothrow_constructible<is_constructible<_Tp>::value, _Tp>
+    : __libcpp_is_nothrow_constructible<is_constructible<_Tp>::value, _Tp>
 {
 };
 
@@ -2720,23 +2720,23 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_move_constructible
 
 #if __has_feature(cxx_noexcept)
 
-template <bool, class _Tp, class _Arg> struct __is_nothrow_assignable;
+template <bool, class _Tp, class _Arg> struct __libcpp_is_nothrow_assignable;
 
 template <class _Tp, class _Arg>
-struct __is_nothrow_assignable<false, _Tp, _Arg>
+struct __libcpp_is_nothrow_assignable<false, _Tp, _Arg>
     : public false_type
 {
 };
 
 template <class _Tp, class _Arg>
-struct __is_nothrow_assignable<true, _Tp, _Arg>
+struct __libcpp_is_nothrow_assignable<true, _Tp, _Arg>
     : public integral_constant<bool, noexcept(_VSTD::declval<_Tp>() = _VSTD::declval<_Arg>()) >
 {
 };
 
 template <class _Tp, class _Arg>
 struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_assignable
-    : public __is_nothrow_assignable<is_assignable<_Tp, _Arg>::value, _Tp, _Arg>
+    : public __libcpp_is_nothrow_assignable<is_assignable<_Tp, _Arg>::value, _Tp, _Arg>
 {
 };
 
@@ -2806,23 +2806,23 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_move_assignable
 
 #if __has_feature(cxx_noexcept)
 
-template <bool, class _Tp> struct __is_nothrow_destructible;
+template <bool, class _Tp> struct __libcpp_is_nothrow_destructible;
 
 template <class _Tp>
-struct __is_nothrow_destructible<false, _Tp>
+struct __libcpp_is_nothrow_destructible<false, _Tp>
     : public false_type
 {
 };
 
 template <class _Tp>
-struct __is_nothrow_destructible<true, _Tp>
+struct __libcpp_is_nothrow_destructible<true, _Tp>
     : public integral_constant<bool, noexcept(_VSTD::declval<_Tp>().~_Tp()) >
 {
 };
 
 template <class _Tp>
 struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_destructible
-    : public __is_nothrow_destructible<is_destructible<_Tp>::value, _Tp>
+    : public __libcpp_is_nothrow_destructible<is_destructible<_Tp>::value, _Tp>
 {
 };
 
