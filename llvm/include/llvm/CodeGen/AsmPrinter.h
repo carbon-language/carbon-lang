@@ -45,6 +45,7 @@ namespace llvm {
   class MCInstrInfo;
   class MCSection;
   class MCStreamer;
+  class MCSubtargetInfo;
   class MCSymbol;
   class MDNode;
   class DwarfDebug;
@@ -460,6 +461,15 @@ namespace llvm {
     virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                        unsigned AsmVariant,
                                        const char *ExtraCode, raw_ostream &OS);
+
+    /// Let the target do anything it needs to do after emitting inlineasm.
+    /// This callback can be used restore the original mode in case the
+    /// inlineasm contains directives to switch modes.
+    /// \p StartInfo - the original subtarget info before inline asm
+    /// \p EndInfo   - the final subtarget info after parsing the inline asm,
+    ///                or NULL if the value is unknown.
+    virtual void emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
+                                  MCSubtargetInfo *EndInfo) const;
 
   private:
     /// Private state for PrintSpecial()
