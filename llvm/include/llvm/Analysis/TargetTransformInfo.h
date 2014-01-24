@@ -92,7 +92,6 @@ public:
   enum TargetCostConstants {
     TCC_Free = 0,       ///< Expected to fold away in lowering.
     TCC_Basic = 1,      ///< The cost of a typical 'add' instruction.
-    TCC_Load = 3,
     TCC_Expensive = 4   ///< The cost of a 'div' instruction on x86.
   };
 
@@ -300,13 +299,6 @@ public:
   /// immediate of the specified type.
   virtual unsigned getIntImmCost(const APInt &Imm, Type *Ty) const;
 
-  /// \brief Return the expected cost of materialization for the given integer
-  /// immediate of the specified type for a given instruction. The cost can be
-  /// zero if the immediate can be folded into the specified instruction.
-  virtual unsigned getIntImmCost(unsigned Opcode, const APInt &Imm,
-                                 Type *Ty) const;
-  virtual unsigned getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
-                                 Type *Ty) const;
   /// @}
 
   /// \name Vector Target Information

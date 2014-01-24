@@ -81,10 +81,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::VALUETYPE:                  return "ValueType";
   case ISD::Register:                   return "Register";
   case ISD::RegisterMask:               return "RegisterMask";
-  case ISD::Constant:
-    if (cast<ConstantSDNode>(this)->isOpaque())
-      return "OpaqueConstant";
-    return "Constant";
+  case ISD::Constant:                   return "Constant";
   case ISD::ConstantFP:                 return "ConstantFP";
   case ISD::GlobalAddress:              return "GlobalAddress";
   case ISD::GlobalTLSAddress:           return "GlobalTLSAddress";
@@ -114,10 +111,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   }
 
   case ISD::BUILD_VECTOR:               return "BUILD_VECTOR";
-  case ISD::TargetConstant:
-    if (cast<ConstantSDNode>(this)->isOpaque())
-      return "OpaqueTargetConstant";
-    return "TargetConstant";
+  case ISD::TargetConstant:             return "TargetConstant";
   case ISD::TargetConstantFP:           return "TargetConstantFP";
   case ISD::TargetGlobalAddress:        return "TargetGlobalAddress";
   case ISD::TargetGlobalTLSAddress:     return "TargetGlobalTLSAddress";

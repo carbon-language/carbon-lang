@@ -70,8 +70,6 @@ static cl::opt<bool> DisableMachineSink("disable-machine-sink", cl::Hidden,
     cl::desc("Disable Machine Sinking"));
 static cl::opt<bool> DisableLSR("disable-lsr", cl::Hidden,
     cl::desc("Disable Loop Strength Reduction Pass"));
-static cl::opt<bool> DisableConstantHoisting("disable-constant-hoisting",
-    cl::Hidden, cl::desc("Disable ConstantHoisting"));
 static cl::opt<bool> DisableCGP("disable-cgp", cl::Hidden,
     cl::desc("Disable Codegen Prepare"));
 static cl::opt<bool> DisableCopyProp("disable-copyprop", cl::Hidden,
@@ -398,10 +396,6 @@ void TargetPassConfig::addIRPasses() {
 
   // Make sure that no unreachable blocks are instruction selected.
   addPass(createUnreachableBlockEliminationPass());
-
-  // Prepare expensive constants for SelectionDAG.
-  if (getOptLevel() != CodeGenOpt::None && !DisableConstantHoisting)
-    addPass(createConstantHoistingPass());
 }
 
 /// Turn exception handling constructs into something the code generators can

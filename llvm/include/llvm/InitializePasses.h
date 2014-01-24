@@ -90,7 +90,6 @@ void initializeCFGSimplifyPassPass(PassRegistry&);
 void initializeFlattenCFGPassPass(PassRegistry&);
 void initializeStructurizeCFGPass(PassRegistry&);
 void initializeCFGViewerPass(PassRegistry&);
-void initializeConstantHoistingPass(PassRegistry&);
 void initializeCodeGenPreparePass(PassRegistry&);
 void initializeConstantMergePass(PassRegistry&);
 void initializeConstantPropagationPass(PassRegistry&);

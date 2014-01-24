@@ -384,12 +384,9 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     llvm_unreachable("Should only be used on nodes with operands");
   default: break;  // Normal nodes don't need extra info.
   case ISD::TargetConstant:
-  case ISD::Constant: {
-    const ConstantSDNode *C = cast<ConstantSDNode>(N);
-    ID.AddPointer(C->getConstantIntValue());
-    ID.AddBoolean(C->isOpaque());
+  case ISD::Constant:
+    ID.AddPointer(cast<ConstantSDNode>(N)->getConstantIntValue());
     break;
-  }
   case ISD::TargetConstantFP:
   case ISD::ConstantFP: {
     ID.AddPointer(cast<ConstantFPSDNode>(N)->getConstantFPValue());
@@ -974,21 +971,19 @@ SDValue SelectionDAG::getNOT(SDLoc DL, SDValue Val, EVT VT) {
   return getNode(ISD::XOR, DL, VT, Val, NegOne);
 }
 
-SDValue SelectionDAG::getConstant(uint64_t Val, EVT VT, bool isT, bool isO) {
+SDValue SelectionDAG::getConstant(uint64_t Val, EVT VT, bool isT) {
   EVT EltVT = VT.getScalarType();
   assert((EltVT.getSizeInBits() >= 64 ||
          (uint64_t)((int64_t)Val >> EltVT.getSizeInBits()) + 1 < 2) &&
          "getConstant with a uint64_t value that doesn't fit in the type!");
-  return getConstant(APInt(EltVT.getSizeInBits(), Val), VT, isT, isO);
+  return getConstant(APInt(EltVT.getSizeInBits(), Val), VT, isT);
 }
 
-SDValue SelectionDAG::getConstant(const APInt &Val, EVT VT, bool isT, bool isO)
-{
-  return getConstant(*ConstantInt::get(*Context, Val), VT, isT, isO);
+SDValue SelectionDAG::getConstant(const APInt &Val, EVT VT, bool isT) {
+  return getConstant(*ConstantInt::get(*Context, Val), VT, isT);
 }
 
-SDValue SelectionDAG::getConstant(const ConstantInt &Val, EVT VT, bool isT,
-                                  bool isO) {
+SDValue SelectionDAG::getConstant(const ConstantInt &Val, EVT VT, bool isT) {
   assert(VT.isInteger() && "Cannot create FP integer constant!");
 
   EVT EltVT = VT.getScalarType();
@@ -1030,7 +1025,7 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, EVT VT, bool isT,
     for (unsigned i = 0; i < ViaVecNumElts / VT.getVectorNumElements(); ++i) {
       EltParts.push_back(getConstant(NewVal.lshr(i * ViaEltSizeInBits)
                                            .trunc(ViaEltSizeInBits),
-                                     ViaEltVT, isT, isO));
+                                     ViaEltVT, isT));
     }
 
     // EltParts is currently in little endian order. If we actually want
@@ -1061,7 +1056,6 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, EVT VT, bool isT,
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
   ID.AddPointer(Elt);
-  ID.AddBoolean(isO);
   void *IP = 0;
   SDNode *N = NULL;
   if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)))
@@ -1069,7 +1063,7 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, EVT VT, bool isT,
       return SDValue(N, 0);
 
   if (!N) {
-    N = new (NodeAllocator) ConstantSDNode(isT, isO, Elt, EltVT);
+    N = new (NodeAllocator) ConstantSDNode(isT, Elt, EltVT);
     CSEMap.InsertNode(N, IP);
     AllNodes.push_back(N);
   }
@@ -2795,13 +2789,10 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, EVT VT,
 
   ConstantSDNode *Scalar1 = dyn_cast<ConstantSDNode>(Cst1);
   ConstantSDNode *Scalar2 = dyn_cast<ConstantSDNode>(Cst2);
-  if (Scalar1 && Scalar2 && (Scalar1->isOpaque() || Scalar2->isOpaque()))
-    return SDValue();
-
-  if (Scalar1 && Scalar2)
+  if (Scalar1 && Scalar2) {
     // Scalar instruction.
     Inputs.push_back(std::make_pair(Scalar1, Scalar2));
-  else {
+  } else {
     // For vectors extract each constant element into Inputs so we can constant
     // fold them individually.
     BuildVectorSDNode *BV1 = dyn_cast<BuildVectorSDNode>(Cst1);
@@ -2815,9 +2806,6 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, EVT VT,
       ConstantSDNode *V1 = dyn_cast<ConstantSDNode>(BV1->getOperand(I));
       ConstantSDNode *V2 = dyn_cast<ConstantSDNode>(BV2->getOperand(I));
       if (!V1 || !V2) // Not a constant, bail.
-        return SDValue();
-
-      if (V1->isOpaque() || V2->isOpaque())
         return SDValue();
 
       // Avoid BUILD_VECTOR nodes that perform implicit truncation.
@@ -3573,11 +3561,10 @@ static SDValue getMemsetStringVal(EVT VT, SDLoc dl, SelectionDAG &DAG,
       Val |= (uint64_t)(unsigned char)Str[i] << (NumVTBytes-i-1)*8;
   }
 
-  // If the "cost" of materializing the integer immediate is less than the cost
-  // of a load, then it is cost effective to turn the load into the immediate.
+  // If the "cost" of materializing the integer immediate is 1 or free, then
+  // it is cost effective to turn the load into the immediate.
   const TargetTransformInfo *TTI = DAG.getTargetTransformInfo();
-  if (TTI->getIntImmCost(Val, VT.getTypeForEVT(*DAG.getContext())) <
-      TargetTransformInfo::TCC_Load)
+  if (TTI->getIntImmCost(Val, VT.getTypeForEVT(*DAG.getContext())) < 2)
     return DAG.getConstant(Val, VT);
   return SDValue(0, 0);
 }

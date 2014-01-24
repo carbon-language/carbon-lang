@@ -1250,10 +1250,9 @@ public:
 class ConstantSDNode : public SDNode {
   const ConstantInt *Value;
   friend class SelectionDAG;
-  ConstantSDNode(bool isTarget, bool isOpaque, const ConstantInt *val, EVT VT)
+  ConstantSDNode(bool isTarget, const ConstantInt *val, EVT VT)
     : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant,
              0, DebugLoc(), getSDVTList(VT)), Value(val) {
-    SubclassData |= isOpaque;
   }
 public:
 
@@ -1265,8 +1264,6 @@ public:
   bool isOne() const { return Value->isOne(); }
   bool isNullValue() const { return Value->isNullValue(); }
   bool isAllOnesValue() const { return Value->isAllOnesValue(); }
-
-  bool isOpaque() const { return SubclassData & 1; }
 
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::Constant ||
