@@ -25,5 +25,6 @@ DEFINE_COMPILERRT_FUNCTION(__muldi3)
 	
 	popl	%ebx
 	retl
-	
+END_COMPILERRT_FUNCTION(__muldi3)
+
 #endif // __i386__

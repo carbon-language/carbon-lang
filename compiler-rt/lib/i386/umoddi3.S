@@ -121,5 +121,6 @@ DEFINE_COMPILERRT_FUNCTION(__umoddi3)
 	popl		%ebx					//
 	xorl		%edx,			%edx	// and return 0:rlo
 	retl								// 
-	
+END_COMPILERRT_FUNCTION(__umoddi3)
+
 #endif // __i386__

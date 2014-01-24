@@ -110,5 +110,6 @@ DEFINE_COMPILERRT_FUNCTION(__udivdi3)
 	movl		%ebx,			%edx	//		rhi:alo = qlo*b + rlo  with 0 ≤ rlo < b
 	popl		%ebx					//
 	retl								// and return qhi:qlo
-	
+END_COMPILERRT_FUNCTION(__udivdi3)
+
 #endif // __i386__

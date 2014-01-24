@@ -31,5 +31,6 @@ DEFINE_COMPILERRT_FUNCTION(__floatdidf)
 	movsd		%xmm0,			   4(%esp)
 	fldl	   4(%esp)
 	ret
-	
+END_COMPILERRT_FUNCTION(__floatdidf)
+
 #endif // __i386__

@@ -161,6 +161,6 @@ DEFINE_COMPILERRT_FUNCTION(__moddi3)
 	xorl		%esi,			%edx
 	popl		%esi
 	retl								// Return
+END_COMPILERRT_FUNCTION(__moddi3)
 
-	
 #endif // __i386__

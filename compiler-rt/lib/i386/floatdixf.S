@@ -25,5 +25,6 @@ DEFINE_COMPILERRT_FUNCTION(__floatdixf)
 #endif
 	fildll		4(%esp)
 	ret
+END_COMPILERRT_FUNCTION(__floatdixf)
 
 #endif // __i386__

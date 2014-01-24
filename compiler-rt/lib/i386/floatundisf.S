@@ -42,7 +42,8 @@ DEFINE_COMPILERRT_FUNCTION(__floatundisf)
 	fstps		4(%esp)
 	flds		4(%esp)
 	ret
-	
+END_COMPILERRT_FUNCTION(__floatundisf)
+
 #endif // __i386__
 
 */
@@ -95,5 +96,6 @@ DEFINE_COMPILERRT_FUNCTION(__floatundisf)
 	movd		%xmm0,			4(%esp)
 	flds		4(%esp)
 	ret
-	
+END_COMPILERRT_FUNCTION(__floatundisf)
+
 #endif // __i386__

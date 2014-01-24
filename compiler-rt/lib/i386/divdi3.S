@@ -157,5 +157,6 @@ DEFINE_COMPILERRT_FUNCTION(__divdi3)
 	popl		%ebx					// Restore callee-save registers
 	popl		%esi
 	retl								// Return
+END_COMPILERRT_FUNCTION(__divdi3)
 
 #endif // __i386__

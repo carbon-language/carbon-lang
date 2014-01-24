@@ -41,6 +41,7 @@ DEFINE_COMPILERRT_FUNCTION(__ashrdi3)
 	psrlq		$32,		%xmm0
 	movd		%xmm0,		%edx
 	ret
+END_COMPILERRT_FUNCTION(__ashrdi3)
 
 #else // Use GPRs instead of SSE2 instructions, if they aren't available.
 
@@ -62,6 +63,7 @@ DEFINE_COMPILERRT_FUNCTION(__ashrdi3)
 	sarl		$31,		%edx	// clear high
 	sarl		%cl,		%eax	// shift low by count - 32
 	ret
-	
+END_COMPILERRT_FUNCTION(__ashrdi3)
+
 #endif // __SSE2__
 #endif // __i386__

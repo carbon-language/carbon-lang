@@ -33,5 +33,6 @@ DEFINE_COMPILERRT_FUNCTION(__floatundixf)
 	movsd	%xmm0,				4(%esp)
 	faddl	4(%esp)
 	ret
-	
+END_COMPILERRT_FUNCTION(__floatundixf)
+
 #endif // __i386__

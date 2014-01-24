@@ -27,5 +27,6 @@ DEFINE_COMPILERRT_FUNCTION(__floatdisf)
 	fstps		4(%esp)
 	flds		4(%esp)
 	ret
+END_COMPILERRT_FUNCTION(__floatdisf)
 
 #endif // __i386__
