@@ -56,6 +56,8 @@ set(GENERATED_HEADERS
   ClangAttrClasses
   ClangAttrList
   ClangAttrParsedAttrList
+  ClangAttrVisitor
+  ClangCommentCommandList
   ClangCommentNodes
   ClangDiagnosticCommon
   ClangDiagnosticFrontend
