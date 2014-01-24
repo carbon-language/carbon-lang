@@ -101,10 +101,16 @@ unsigned long __readcr5(void);
 unsigned long __readcr8(void);
 unsigned int __readdr(unsigned int);
 unsigned int __readeflags(void);
+#ifdef __i386__
+static __inline__
 unsigned char __readfsbyte(unsigned long);
+static __inline__
 unsigned long __readfsdword(unsigned long);
+static __inline__
 unsigned __int64 __readfsqword(unsigned long);
+static __inline__
 unsigned short __readfsword(unsigned long);
+#endif
 unsigned __int64 __readmsr(unsigned long);
 unsigned __int64 __readpmc(unsigned long);
 unsigned long __segmentlimit(unsigned long);
@@ -766,6 +772,33 @@ __attribute__((deprecated("use other intrinsics or C++11 atomics instead")))
 _WriteBarrier(void) {
   __asm__ volatile ("" : : : "memory");
 }
+/*----------------------------------------------------------------------------*\
+|* readfs 
+|* (Pointers in address space #257 are relative to the FS segment register.)
+\*----------------------------------------------------------------------------*/
+#ifdef __i386__
+#define __ptr_to_addr_space(__addr_space_nbr, __type, __offset)              \
+    ((volatile __type __attribute__((__address_space__(__addr_space_nbr)))*) \
+    (__offset))
+
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+__readfsbyte(unsigned long __offset) {
+  return *__ptr_to_addr_space(257, unsigned char, __offset);
+}
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
+__readfsdword(unsigned long __offset) {
+  return *__ptr_to_addr_space(257, unsigned long, __offset);
+}
+static __inline__ unsigned __int64 __attribute__((__always_inline__, __nodebug__))
+__readfsqword(unsigned long __offset) {
+  return *__ptr_to_addr_space(257, unsigned __int64, __offset);
+}
+static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
+__readfsword(unsigned long __offset) {
+  return *__ptr_to_addr_space(257, unsigned short, __offset);
+}
+#undef __ptr_to_addr_space
+#endif
 /*----------------------------------------------------------------------------*\
 |* Misc
 \*----------------------------------------------------------------------------*/
