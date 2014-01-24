@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Visual Studio 2012 Native Debugging Visualizers for LLVM
+
+Put this file into "%USERPROFILE%\Documents\Visual Studio 2012\Visualizers"
+or create a symbolic link so it updates automatically.
+-->
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="clang::IdentifierInfo">
+    <DisplayString Condition="Entry != 0">({((llvm::StringMapEntry&lt;clang::IdentifierInfo *&gt;*)Entry)+1,s})</DisplayString>
+    <Expand>
+      <Item Condition="Entry != 0" Name="[Identifier]">((llvm::StringMapEntry&lt;clang::IdentifierInfo *&gt;*)Entry)+1,s</Item>
+      <Item Name="Token Kind">(clang::tok::TokenKind)TokenID</Item>
+    </Expand>
+  </Type>
+  <Type Name="clang::DeclarationName">
+    <DisplayString Condition="Ptr == 0">Empty</DisplayString>
+    <DisplayString Condition="(Ptr &amp; PtrMask) == StoredIdentifier">{{Identifier ({(clang::IdentifierInfo *)(Ptr &amp; ~PtrMask)})}}</DisplayString>
+    <DisplayString Condition="(Ptr &amp; PtrMask) == StoredObjCZeroArgSelector">{{ObjC Zero Arg Selector ({(clang::IdentifierInfo *)(Ptr &amp; ~PtrMask)})}}</DisplayString>
+    <DisplayString Condition="(Ptr &amp; PtrMask) == StoredObjCOneArgSelector">{{ObjC One Arg Selector ({(clang::IdentifierInfo *)(Ptr &amp; ~PtrMask)})}}</DisplayString>
+    <DisplayString Condition="(Ptr &amp; PtrMask) == StoredDeclarationNameExtra">{{Extra ({(clang::DeclarationNameExtra::ExtraKind)((clang::DeclarationNameExtra *)(Ptr &amp; ~PtrMask))-&gt;ExtraKindOrNumArgs})}}</DisplayString>
+    <Expand>
+      <Item Condition="(Ptr &amp; PtrMask) == StoredIdentifier" Name="[Identifier]">(clang::IdentifierInfo *)(Ptr &amp; ~PtrMask)</Item>
+      <Item Condition="(Ptr &amp; PtrMask) == StoredObjCZeroArgSelector" Name="[ObjC Zero Arg Selector]">(clang::IdentifierInfo *)(Ptr &amp; ~PtrMask)</Item>
+      <Item Condition="(Ptr &amp; PtrMask) == StoredObjCOneArgSelector" Name="[ObjC One Arg Selector]">(clang::IdentifierInfo *)(Ptr &amp; ~PtrMask)</Item>
+      <Item Condition="(Ptr &amp; PtrMask) == StoredDeclarationNameExtra" Name="[Extra]">(clang::DeclarationNameExtra::ExtraKind)((clang::DeclarationNameExtra *)(Ptr &amp; ~PtrMask))-&gt;ExtraKindOrNumArgs</Item>
+    </Expand>
+  </Type>
+  <Type Name="clang::Token">
+    <DisplayString>{(clang::tok::TokenKind)Kind}</DisplayString>
+  </Type>
+  <Type Name="clang::DeclSpec">
+    <DisplayString>[{(clang::DeclSpec::SCS)StorageClassSpec}], [{(clang::TypeSpecifierType)TypeSpecType}]</DisplayString>
+  </Type>
+  <Type Name="clang::PragmaHandler">
+    <DisplayString>{Name,s}</DisplayString>
+  </Type>
+  <Type Name="clang::FileEntry">
+    <DisplayString>{Name,s}</DisplayString>
+  </Type>
+  <Type Name="clang::DirectoryEntry">
+    <DisplayString>{Name,s}</DisplayString>
+  </Type>
+</AutoVisualizer>
