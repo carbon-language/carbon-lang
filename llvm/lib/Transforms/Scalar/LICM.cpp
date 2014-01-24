@@ -273,7 +273,7 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Now that all loop invariants have been removed from the loop, promote any
   // memory references to scalars that we can.
-  if (!DisablePromotion && Preheader && L->hasDedicatedExits()) {
+  if (!DisablePromotion && (Preheader || L->hasDedicatedExits())) {
     SmallVector<BasicBlock *, 8> ExitBlocks;
     SmallVector<Instruction *, 8> InsertPts;
 
