@@ -800,6 +800,18 @@ public:
         m_monitor_signals = monitor_signals;
     }
 
+    Host::MonitorChildProcessCallback
+    GetMonitorProcessCallback ()
+    {
+        return m_monitor_callback;
+    }
+
+    const void*
+    GetMonitorProcessBaton () const
+    {
+        return m_monitor_callback_baton;
+    }
+
     bool
     MonitorProcess () const
     {

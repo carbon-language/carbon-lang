@@ -276,24 +276,42 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
 }
 
 lldb_private::Error
-GDBRemoteCommunicationServer::LaunchProcess (const char *const args[], int argc, unsigned int launch_flags)
+GDBRemoteCommunicationServer::SetLaunchArguments (const char *const args[], int argc)
 {
     if ((argc < 1) || !args || !args[0] || !args[0][0])
-        lldb_private::Error ("%s: no process command line specified to launch", __FUNCTION__);
+        return lldb_private::Error ("%s: no process command line specified to launch", __FUNCTION__);
 
-    // Launch the program specified in args
-    m_process_launch_info.Clear ();
     m_process_launch_info.SetArguments (const_cast<const char**> (args), true);
+    return lldb_private::Error ();
+}
+
+lldb_private::Error
+GDBRemoteCommunicationServer::SetLaunchFlags (unsigned int launch_flags)
+{
     m_process_launch_info.GetFlags ().Set (launch_flags);
+    return lldb_private::Error ();
+}
+
+lldb_private::Error
+GDBRemoteCommunicationServer::LaunchProcess ()
+{
+    if (!m_process_launch_info.GetArguments ().GetArgumentCount ())
+        return lldb_private::Error ("%s: no process command line specified to launch", __FUNCTION__);
+
+    // specify the process monitor if not already set.  This should
+    // generally be what happens since we need to reap started
+    // processes.
+    if (!m_process_launch_info.GetMonitorProcessCallback ())
+        m_process_launch_info.SetMonitorProcessCallback(ReapDebuggedProcess, this, false);
 
     lldb_private::Error error = Host::LaunchProcess (m_process_launch_info);
     if (!error.Success ())
     {
-        fprintf (stderr, "%s: failed to launch executable %s", __FUNCTION__, args[0]);
+        fprintf (stderr, "%s: failed to launch executable %s", __FUNCTION__, m_process_launch_info.GetArguments ().GetArgumentAtIndex (0));
         return error;
     }
 
-    printf ("Launched '%s' as process %" PRIu64 "...\n", args[0], m_process_launch_info.GetProcessID());
+    printf ("Launched '%s' as process %" PRIu64 "...\n", m_process_launch_info.GetArguments ().GetArgumentAtIndex (0), m_process_launch_info.GetProcessID());
 
     // add to list of spawned processes.  On an lldb-gdbserver, we
     // would expect there to be only one.
@@ -843,6 +861,26 @@ GDBRemoteCommunicationServer::ReapDebugserverProcess (void *callback_baton,
 {
     GDBRemoteCommunicationServer *server = (GDBRemoteCommunicationServer *)callback_baton;
     server->DebugserverProcessReaped (pid);
+    return true;
+}
+
+bool
+GDBRemoteCommunicationServer::DebuggedProcessReaped (lldb::pid_t pid)
+{
+    // reap a process that we were debugging (but not debugserver)
+    Mutex::Locker locker (m_spawned_pids_mutex);
+    return m_spawned_pids.erase(pid) > 0;
+}
+
+bool
+GDBRemoteCommunicationServer::ReapDebuggedProcess (void *callback_baton,
+                                                   lldb::pid_t pid,
+                                                   bool exited,
+                                                   int signal,    // Zero for no signal
+                                                   int status)    // Exit value of process if signal is zero
+{
+    GDBRemoteCommunicationServer *server = (GDBRemoteCommunicationServer *)callback_baton;
+    server->DebuggedProcessReaped (pid);
     return true;
 }
 

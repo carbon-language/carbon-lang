@@ -221,12 +221,26 @@ main (int argc, char *argv[])
     // to launch a program, or a vAttach packet to attach to an existing process.
     if (argc > 0)
     {
+        error = gdb_server.SetLaunchArguments (argv, argc);
+        if (error.Fail ())
+        {
+            fprintf (stderr, "error: failed to set launch args for '%s': %s\n", argv[0], error.AsCString());
+            exit(1);
+        }
+
         unsigned int launch_flags = eLaunchFlagStopAtEntry;
 #if !defined(__linux__)
         // linux doesn't yet handle eLaunchFlagDebug
         launch_flags |= eLaunchFlagDebug;
 #endif
-        error = gdb_server.LaunchProcess (argv, argc, launch_flags);
+        error = gdb_server.SetLaunchFlags (launch_flags);
+        if (error.Fail ())
+        {
+            fprintf (stderr, "error: failed to set launch flags for '%s': %s\n", argv[0], error.AsCString());
+            exit(1);
+        }
+
+        error = gdb_server.LaunchProcess ();
         if (error.Fail ())
         {
             fprintf (stderr, "error: failed to launch '%s': %s\n", argv[0], error.AsCString());
