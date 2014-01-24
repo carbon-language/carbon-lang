@@ -156,6 +156,7 @@ struct ParsedAttrInfo {
                                const Decl *);
   bool (*DiagLangOpts)(Sema &S, const AttributeList &Attr);
   bool (*ExistsInTarget)(llvm::Triple T);
+  unsigned (*SpellingIndexToSemanticSpelling)(const AttributeList &Attr);
 };
 
 namespace {
@@ -200,4 +201,8 @@ bool AttributeList::existsInTarget(llvm::Triple T) const {
 
 bool AttributeList::canAppearOnFunctionDefinition() const {
   return getInfo(*this).CanAppearOnFuncDef;
+}
+
+unsigned AttributeList::getSemanticSpelling() const {
+  return getInfo(*this).SpellingIndexToSemanticSpelling(*this);
 }

@@ -495,6 +495,13 @@ public:
   bool diagnoseLangOpts(class Sema &S) const;
   bool existsInTarget(llvm::Triple T) const;
   bool canAppearOnFunctionDefinition() const;
+
+  /// \brief If the parsed attribute has a semantic equivalent, and it would
+  /// have a semantic Spelling enumeration (due to having semantically-distinct
+  /// spelling variations), return the value of that semantic spelling. If the
+  /// parsed attribute does not have a semantic equivalent, or would not have
+  /// a Spelling enumeration, the value UINT_MAX is returned.
+  unsigned getSemanticSpelling() const;
 };
 
 /// A factory, from which one makes pools, from which one creates
