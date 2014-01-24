@@ -34,3 +34,4 @@ DEFINE_COMPILERRT_FUNCTION(__bswapdi2)
 #endif
     mov r1, r2  // r1 = r2 = rev(r0)
     bx  lr
+END_COMPILERRT_FUNCTION(__bswapdi2)

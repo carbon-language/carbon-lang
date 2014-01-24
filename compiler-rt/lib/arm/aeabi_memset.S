@@ -18,14 +18,16 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_memset)
         mov     r1, r2
         mov     r2, r3
         b       memset
+END_COMPILERRT_FUNCTION(__aeabi_memset)
 
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_memset4, __aeabi_memset)
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_memset8, __aeabi_memset)
-        
+
 DEFINE_COMPILERRT_FUNCTION(__aeabi_memclr)
         mov     r2, r1
         mov     r1, #0
         b       memset
+END_COMPILERRT_FUNCTION(__aeabi_memclr)
 
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_memclr4, __aeabi_memclr)
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_memclr8, __aeabi_memclr)

@@ -40,7 +40,7 @@ DEFINE_COMPILERRT_PRIVATE_FUNCTION(__switch32)
 	ldrhs   r0, [ip, #3]             // load 32-bit element if r0 out of range
 	add     ip, lr, r0               // compute label = lr + element
 	bx      ip                       // jump to computed label
-
+END_COMPILERRT_FUNCTION(__switch32)
 
 	// tell linker it can break up file at label boundaries
 	.subsections_via_symbols

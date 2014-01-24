@@ -30,7 +30,8 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_fcmp ## cond)           \
         pop       { r4, pc }                     SEPARATOR \
 1:                                               SEPARATOR \
         mov       r0, #1                         SEPARATOR \
-        pop       { r4, pc }
+        pop       { r4, pc }                     SEPARATOR \
+END_COMPILERRT_FUNCTION(__aeabi_fcmp ## cond)
 
 DEFINE_AEABI_FCMP(eq)
 DEFINE_AEABI_FCMP(lt)

@@ -23,3 +23,4 @@ DEFINE_COMPILERRT_FUNCTION(__floatsisfvfp)
 	vcvt.f32.s32 s15, s15  // convert 32-bit int in s15 to float in s15
 	vmov	r0, s15        // move s15 to result register
 	bx	lr
+END_COMPILERRT_FUNCTION(__floatsisfvfp)

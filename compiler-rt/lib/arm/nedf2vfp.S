@@ -26,3 +26,4 @@ DEFINE_COMPILERRT_FUNCTION(__nedf2vfp)
 	movne	r0, #1		// set result register to 0 if unequal
 	moveq	r0, #0
 	bx	lr
+END_COMPILERRT_FUNCTION(__nedf2vfp)

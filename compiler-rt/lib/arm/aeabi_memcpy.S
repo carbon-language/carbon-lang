@@ -14,6 +14,7 @@
         .align 2
 DEFINE_COMPILERRT_FUNCTION(__aeabi_memcpy)
         b       memcpy
+END_COMPILERRT_FUNCTION(__aeabi_memcpy)
 
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_memcpy4, __aeabi_memcpy)
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_memcpy8, __aeabi_memcpy)

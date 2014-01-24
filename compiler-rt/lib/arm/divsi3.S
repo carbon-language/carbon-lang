@@ -49,3 +49,4 @@ ESTABLISH_FRAME
     sub     r0,     r0, r4, asr #31
     CLEAR_FRAME_AND_RETURN
 #endif
+END_COMPILERRT_FUNCTION(__divsi3)

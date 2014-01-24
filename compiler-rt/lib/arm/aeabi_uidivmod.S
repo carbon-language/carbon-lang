@@ -26,3 +26,4 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_uidivmod)
         ldr     r1, [sp]
         add     sp, sp, #4
         pop     { pc }
+END_COMPILERRT_FUNCTION(__aeabi_uidivmod)

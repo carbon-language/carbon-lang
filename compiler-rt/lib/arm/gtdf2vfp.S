@@ -26,3 +26,4 @@ DEFINE_COMPILERRT_FUNCTION(__gtdf2vfp)
 	movgt	r0, #1		// set result register to 1 if equal
 	movle	r0, #0
 	bx	lr
+END_COMPILERRT_FUNCTION(__gtdf2vfp)

@@ -23,3 +23,4 @@ DEFINE_COMPILERRT_FUNCTION(__fixsfsivfp)
 	vcvt.s32.f32 s15, s15  // convert single to 32-bit int into s15
 	vmov	r0, s15	       // move s15 to result register
 	bx	lr
+END_COMPILERRT_FUNCTION(__fixsfsivfp)

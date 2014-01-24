@@ -28,3 +28,4 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_uldivmod)
         ldr	r3, [sp, #12]
         add	sp, sp, #16
         pop	{r11, pc}
+END_COMPILERRT_FUNCTION(__aeabi_uldivmod)

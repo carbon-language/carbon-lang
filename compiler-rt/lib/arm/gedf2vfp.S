@@ -26,3 +26,4 @@ DEFINE_COMPILERRT_FUNCTION(__gedf2vfp)
 	movge	r0, #1      // set result register to 1 if greater than or equal
 	movlt	r0, #0
 	bx	lr
+END_COMPILERRT_FUNCTION(__gedf2vfp)

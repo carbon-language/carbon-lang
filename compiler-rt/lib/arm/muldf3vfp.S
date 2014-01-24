@@ -23,3 +23,4 @@ DEFINE_COMPILERRT_FUNCTION(__muldf3vfp)
 	vmul.f64 d6, d6, d7		
 	vmov 	r0, r1, d6         // move result back to r0/r1 pair
 	bx	lr
+END_COMPILERRT_FUNCTION(__muldf3vfp)

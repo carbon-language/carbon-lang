@@ -26,3 +26,4 @@ DEFINE_COMPILERRT_FUNCTION(__eqdf2vfp)
 	moveq	r0, #1		// set result register to 1 if equal
 	movne	r0, #0
 	bx	lr
+END_COMPILERRT_FUNCTION(__eqdf2vfp)

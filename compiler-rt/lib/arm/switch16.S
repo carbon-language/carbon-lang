@@ -40,6 +40,7 @@ DEFINE_COMPILERRT_PRIVATE_FUNCTION(__switch16)
 	ldrshhs r0, [ip, #1]            // load 16-bit element if r0 out of range
 	add     ip, lr, r0, lsl #1      // compute label = lr + element*2
 	bx      ip                      // jump to computed label
+END_COMPILERRT_FUNCTION(__switch16)
 
 	// tell linker it can break up file at label boundaries
 	.subsections_via_symbols

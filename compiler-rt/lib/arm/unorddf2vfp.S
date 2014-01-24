@@ -26,3 +26,4 @@ DEFINE_COMPILERRT_FUNCTION(__unorddf2vfp)
 	movvs	r0, #1      // set result register to 1 if "overflow" (any NaNs)
 	movvc	r0, #0
 	bx	lr
+END_COMPILERRT_FUNCTION(__unorddf2vfp)

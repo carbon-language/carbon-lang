@@ -23,3 +23,4 @@ DEFINE_COMPILERRT_FUNCTION(__addsf3vfp)
 	vadd.f32 s14, s14, s15
 	vmov	r0, s14		// move result back to r0
 	bx	lr
+END_COMPILERRT_FUNCTION(__addsf3vfp)

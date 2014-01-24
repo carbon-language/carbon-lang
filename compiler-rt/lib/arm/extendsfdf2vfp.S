@@ -23,3 +23,4 @@ DEFINE_COMPILERRT_FUNCTION(__extendsfdf2vfp)
 	vcvt.f64.f32 d7, s15 // convert single to double
 	vmov	r0, r1, d7   // return result in r0/r1 pair
 	bx	lr
+END_COMPILERRT_FUNCTION(__extendsfdf2vfp)

@@ -58,3 +58,4 @@ LOCAL_LABEL(divzero):
     str     r1,    [r6]
     CLEAR_FRAME_AND_RETURN
 #endif
+END_COMPILERRT_FUNCTION(__divmodsi4)

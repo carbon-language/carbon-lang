@@ -26,4 +26,4 @@ DEFINE_COMPILERRT_FUNCTION(__ltsf2vfp)
 	movmi	r0, #1      // set result register to 1 if equal
 	movpl	r0, #0
 	bx	lr
-
+END_COMPILERRT_FUNCTION(__ltsf2vfp)

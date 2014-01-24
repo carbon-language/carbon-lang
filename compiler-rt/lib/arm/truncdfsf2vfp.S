@@ -23,3 +23,4 @@ DEFINE_COMPILERRT_FUNCTION(__truncdfsf2vfp)
 	vcvt.f32.f64 s15, d7 // convert double to single (trucate precision)
 	vmov 	r0, s15      // return result in r0
 	bx	lr
+END_COMPILERRT_FUNCTION(__truncdfsf2vfp)

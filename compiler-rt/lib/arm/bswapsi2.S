@@ -26,3 +26,4 @@ DEFINE_COMPILERRT_FUNCTION(__bswapsi2)
     rev r0, r0
 #endif
     bx  lr
+END_COMPILERRT_FUNCTION(__bswapsi2)

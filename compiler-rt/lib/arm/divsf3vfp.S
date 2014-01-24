@@ -23,3 +23,4 @@ DEFINE_COMPILERRT_FUNCTION(__divsf3vfp)
 	vdiv.f32 s13, s14, s15
 	vmov	r0, s13		// move result back to r0
 	bx	lr
+END_COMPILERRT_FUNCTION(__divsf3vfp)

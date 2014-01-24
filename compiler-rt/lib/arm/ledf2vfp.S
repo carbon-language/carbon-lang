@@ -26,3 +26,4 @@ DEFINE_COMPILERRT_FUNCTION(__ledf2vfp)
 	movls	r0, #1		// set result register to 1 if equal
 	movhi	r0, #0
 	bx	lr
+END_COMPILERRT_FUNCTION(__ledf2vfp)

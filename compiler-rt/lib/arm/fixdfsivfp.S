@@ -23,3 +23,4 @@ DEFINE_COMPILERRT_FUNCTION(__fixdfsivfp)
 	vcvt.s32.f64 s15, d7  // convert double to 32-bit int into s15
 	vmov	r0, s15	      // move s15 to result register
 	bx	lr
+END_COMPILERRT_FUNCTION(__fixdfsivfp)
