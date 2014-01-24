@@ -146,7 +146,7 @@ foreach Index = 0-31 in {
 }
 
 
-def FPR8 : RegisterClass<"AArch64", [i8, v1i8], 8,
+def FPR8 : RegisterClass<"AArch64", [v1i8], 8,
                           (sequence "B%u", 0, 31)> {
 }
 
