@@ -117,7 +117,7 @@ public:
   static unsigned QuadFPRegs[32] = {
     Sparc::Q0,  Sparc::Q1,  Sparc::Q2,  Sparc::Q3,
     Sparc::Q4,  Sparc::Q5,  Sparc::Q6,  Sparc::Q7,
-    Sparc::Q8,  Sparc::Q7,  Sparc::Q8,  Sparc::Q9,
+    Sparc::Q8,  Sparc::Q9,  Sparc::Q10, Sparc::Q11,
     Sparc::Q12, Sparc::Q13, Sparc::Q14, Sparc::Q15 };
 
 

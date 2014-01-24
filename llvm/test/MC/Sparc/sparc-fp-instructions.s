@@ -64,6 +64,12 @@
         faddd %f0, %f4, %f8
         faddq %f0, %f4, %f8
 
+        ! make sure we can handle V9 double registers and their aliased quad registers.
+        ! CHECK: faddd %f32, %f34, %f62           ! encoding: [0xbf,0xa0,0x48,0x43]
+        ! CHECK: faddq %f32, %f36, %f60           ! encoding: [0xbb,0xa0,0x48,0x65]
+        faddd %f32, %f34, %f62
+        faddq %f32, %f36, %f60
+
         ! CHECK: fsubs %f0, %f4, %f8             ! encoding: [0x91,0xa0,0x08,0xa4]
         ! CHECK: fsubd %f0, %f4, %f8             ! encoding: [0x91,0xa0,0x08,0xc4]
         ! CHECK: fsubq %f0, %f4, %f8             ! encoding: [0x91,0xa0,0x08,0xe4]
