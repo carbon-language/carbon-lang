@@ -340,8 +340,10 @@ def Uninitialized  : DiagGroup<"uninitialized", [UninitializedSometimes,
 def UnknownPragmas : DiagGroup<"unknown-pragmas">;
 def UnknownWarningOption : DiagGroup<"unknown-warning-option">;
 def NSobjectAttribute : DiagGroup<"NSObject-attribute">;
-def UnknownAttributes : DiagGroup<"attributes">;
+def UnknownAttributes : DiagGroup<"unknown-attributes">;
 def IgnoredAttributes : DiagGroup<"ignored-attributes">;
+def Attributes : DiagGroup<"attributes", [UnknownAttributes,
+                                          IgnoredAttributes]>;
 def UnnamedTypeTemplateArgs : DiagGroup<"unnamed-type-template-args",
                                         [CXX98CompatUnnamedTypeTemplateArgs]>;
 def UnsupportedFriend : DiagGroup<"unsupported-friend">;
