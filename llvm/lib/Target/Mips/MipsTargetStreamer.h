@@ -26,7 +26,6 @@ public:
   virtual void emitDirectiveEnt(const MCSymbol &Symbol) = 0;
   virtual void emitDirectiveAbiCalls() = 0;
   virtual void emitDirectiveOptionPic0() = 0;
-  virtual void emitDirectiveSetMips16(bool IsMips16) = 0;
 };
 
 // This part is for ascii assembly output
@@ -43,7 +42,6 @@ public:
   virtual void emitDirectiveEnt(const MCSymbol &Symbol);
   virtual void emitDirectiveAbiCalls();
   virtual void emitDirectiveOptionPic0();
-  virtual void emitDirectiveSetMips16(bool IsMips16);
 };
 
 // This part is for ELF object output
@@ -66,7 +64,6 @@ public:
   virtual void emitDirectiveEnt(const MCSymbol &Symbol);
   virtual void emitDirectiveAbiCalls();
   virtual void emitDirectiveOptionPic0();
-  virtual void emitDirectiveSetMips16(bool IsMips16);
 };
 }
 #endif

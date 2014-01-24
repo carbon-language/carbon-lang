@@ -2350,7 +2350,7 @@ bool MipsAsmParser::parseSetMips16Directive() {
     reportParseError("unexpected token in statement");
     return false;
   }
-  getTargetStreamer().emitDirectiveSetMips16(true);
+  getTargetStreamer().emitDirectiveSetMips16();
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }

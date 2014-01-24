@@ -63,12 +63,6 @@ void MipsTargetAsmStreamer::emitDirectiveAbiCalls() { OS << "\t.abicalls\n"; }
 void MipsTargetAsmStreamer::emitDirectiveOptionPic0() {
   OS << "\t.option\tpic0\n";
 }
-void MipsTargetAsmStreamer::emitDirectiveSetMips16(bool IsMips16) {
-  if (IsMips16)
-    OS << "\t.set\tmips16\n";
-  else
-    OS << "\t.set\tnomips16\n";
-}
 
 // This part is for ELF object output.
 MipsTargetELFStreamer::MipsTargetELFStreamer() : MicroMipsEnabled(false) {}
@@ -105,7 +99,10 @@ void MipsTargetELFStreamer::emitDirectiveSetNoMicroMips() {
 }
 
 void MipsTargetELFStreamer::emitDirectiveSetMips16() {
-  // FIXME: implement.
+  MCAssembler &MCA = getStreamer().getAssembler();
+  unsigned Flags = MCA.getELFHeaderEFlags();
+  Flags |= ELF::EF_MIPS_ARCH_ASE_M16;
+  MCA.setELFHeaderEFlags(Flags);
 }
 
 void MipsTargetELFStreamer::emitDirectiveSetNoMips16() {
@@ -126,15 +123,5 @@ void MipsTargetELFStreamer::emitDirectiveOptionPic0() {
   MCAssembler &MCA = getStreamer().getAssembler();
   unsigned Flags = MCA.getELFHeaderEFlags();
   Flags &= ~ELF::EF_MIPS_PIC;
-  MCA.setELFHeaderEFlags(Flags);
-}
-void MipsTargetELFStreamer::emitDirectiveSetMips16(bool IsMips16) {
-  // Don't do anything for .set nomips16
-  if (!IsMips16)
-    return;
-
-  MCAssembler &MCA = getStreamer().getAssembler();
-  unsigned Flags = MCA.getELFHeaderEFlags();
-  Flags |= ELF::EF_MIPS_ARCH_ASE_M16;
   MCA.setELFHeaderEFlags(Flags);
 }
