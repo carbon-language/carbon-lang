@@ -692,7 +692,7 @@ static void writeStringTable(raw_fd_ostream &Out,
 
 static void writeSymbolTable(
     raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
-    ArrayRef<OwningPtr<MemoryBuffer> > Buffers,
+    ArrayRef<MemoryBuffer *> Buffers,
     std::vector<std::pair<unsigned, unsigned> > &MemberOffsetRefs) {
   unsigned StartOffset = 0;
   unsigned MemberNum = 0;
@@ -701,9 +701,9 @@ static void writeSymbolTable(
   for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),
                                               E = Members.end();
        I != E; ++I, ++MemberNum) {
-    const OwningPtr<MemoryBuffer> &MemberBuffer = Buffers[MemberNum];
+    MemoryBuffer *MemberBuffer = Buffers[MemberNum];
     ErrorOr<object::ObjectFile *> ObjOrErr =
-        object::ObjectFile::createObjectFile(MemberBuffer.get(), false);
+        object::ObjectFile::createObjectFile(MemberBuffer, false);
     if (!ObjOrErr)
       continue;  // FIXME: check only for "not an object file" errors.
     object::ObjectFile *Obj = ObjOrErr.get();
@@ -778,11 +778,11 @@ static void performWriteOperation(ArchiveOperation Operation,
 
   std::vector<std::pair<unsigned, unsigned> > MemberOffsetRefs;
 
-  std::vector<OwningPtr<MemoryBuffer> > MemberBuffers;
+  std::vector<MemoryBuffer *> MemberBuffers;
   MemberBuffers.resize(NewMembers.size());
 
   for (unsigned I = 0, N = NewMembers.size(); I < N; ++I) {
-    OwningPtr<MemoryBuffer> &MemberBuffer = MemberBuffers[I];
+    OwningPtr<MemoryBuffer> MemberBuffer;
     NewArchiveIterator &Member = NewMembers[I];
 
     if (Member.isNewMember()) {
@@ -797,6 +797,7 @@ static void performWriteOperation(ArchiveOperation Operation,
       object::Archive::child_iterator OldMember = Member.getOld();
       failIfError(OldMember->getMemoryBuffer(MemberBuffer));
     }
+    MemberBuffers[I] = MemberBuffer.take();
   }
 
   if (Symtab) {
@@ -824,7 +825,7 @@ static void performWriteOperation(ArchiveOperation Operation,
     }
     Out.seek(Pos);
 
-    const OwningPtr<MemoryBuffer> &File = MemberBuffers[MemberNum];
+    const MemoryBuffer *File = MemberBuffers[MemberNum];
     if (I->isNewMember()) {
       const char *FileName = I->getNew();
       const sys::fs::file_status &Status = I->getStatus();
@@ -859,6 +860,11 @@ static void performWriteOperation(ArchiveOperation Operation,
     if (Out.tell() % 2)
       Out << '\n';
   }
+
+  for (unsigned I = 0, N = MemberBuffers.size(); I < N; ++I) {
+    delete MemberBuffers[I];
+  }
+
   Output.keep();
   Out.close();
   sys::fs::rename(TemporaryOutput, ArchiveName);
