@@ -119,5 +119,6 @@ namespace DuplicateSpecifier {
 struct Base { virtual void f() = 0; virtual void g() = 0; virtual void h() = 0; };
 struct MemberComponentOrder : Base {
   void f() override __asm__("foobar") __attribute__(( )) {}
-  void g() __attribute__(( )) override; // expected-error {{expected ';'}}
+  void g() __attribute__(( )) override;
+  void h() __attribute__(( )) override {}
 };

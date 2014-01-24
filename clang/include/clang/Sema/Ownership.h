@@ -158,6 +158,7 @@ namespace clang {
 
     bool isInvalid() const { return Invalid; }
     bool isUsable() const { return !Invalid && Val; }
+    bool isUnset() const { return !Invalid && !Val; }
 
     PtrTy get() const { return Val; }
     // FIXME: Replace with get.
@@ -199,6 +200,7 @@ namespace clang {
 
     bool isInvalid() const { return PtrWithInvalid & 0x01; }
     bool isUsable() const { return PtrWithInvalid > 0x01; }
+    bool isUnset() const { return PtrWithInvalid == 0; }
 
     PtrTy get() const {
       void *VP = reinterpret_cast<void *>(PtrWithInvalid & ~0x01);

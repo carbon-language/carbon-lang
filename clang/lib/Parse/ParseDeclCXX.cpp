@@ -1926,6 +1926,13 @@ void Parser::ParseCXXMemberDeclaratorBeforeInitializer(
 
   // If attributes exist after the declarator, but before an '{', parse them.
   MaybeParseGNUAttributes(DeclaratorInfo, &LateParsedAttrs);
+
+  // For compatibility with code written to older Clang, also accept a
+  // virt-specifier *after* the GNU attributes.
+  // FIXME: If we saw any attributes that are known to GCC followed by a
+  // virt-specifier, issue a GCC-compat warning.
+  if (BitfieldSize.isUnset() && VS.isUnset())
+    ParseOptionalCXX11VirtSpecifierSeq(VS, getCurrentClass().IsInterface);
 }
 
 /// ParseCXXClassMemberDeclaration - Parse a C++ class member declaration.
@@ -2142,8 +2149,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
   // If this has neither a name nor a bit width, something has gone seriously
   // wrong. Skip until the semi-colon or }.
-  if (!DeclaratorInfo.hasName() && !BitfieldSize.isInvalid() &&
-      !BitfieldSize.isUsable()) {
+  if (!DeclaratorInfo.hasName() && BitfieldSize.isUnset()) {
     // If so, skip until the semi-colon or a }.
     SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
     TryConsumeToken(tok::semi);
@@ -2151,7 +2157,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   }
 
   // Check for a member function definition.
-  if (!BitfieldSize.isInvalid() && !BitfieldSize.isUsable()) {
+  if (BitfieldSize.isUnset()) {
     // MSVC permits pure specifier on inline functions defined at class scope.
     // Hence check for =0 before checking for function definition.
     if (getLangOpts().MicrosoftExt && Tok.is(tok::equal) &&
