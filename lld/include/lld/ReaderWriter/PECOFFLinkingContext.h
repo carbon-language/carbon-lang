@@ -79,6 +79,10 @@ public:
   virtual bool
   createImplicitFiles(std::vector<std::unique_ptr<File> > &result) const;
 
+  bool is64Bit() const {
+    return _machineType == llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
+  }
+
   void appendInputSearchPath(StringRef dirPath) {
     _inputSearchPaths.push_back(dirPath);
   }
