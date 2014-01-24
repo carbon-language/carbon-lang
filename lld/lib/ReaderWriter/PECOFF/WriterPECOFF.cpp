@@ -337,8 +337,8 @@ PEHeaderChunk::PEHeaderChunk(const PECOFFLinkingContext &context)
 
   _coffHeader.Characteristics = characteristics;
 
-  // 0x10b indicates a normal PE32 executable. For PE32+ it should be 0x20b.
-  _peHeader.Magic = 0x10b;
+  // A 32-bit executable has PE32 magic (0x10b).
+  _peHeader.Magic = llvm::COFF::PEHeader::PE32;
 
   // The address of entry point relative to ImageBase. Windows executable
   // usually starts at address 0x401000.
