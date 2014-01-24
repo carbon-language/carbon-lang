@@ -316,7 +316,7 @@ forgetting a ; after a struct definition much better than GCC.</p>
   a&lt;int&gt; c;
   $ <span class="cmd">gcc-4.9 t.cc</span>
   t.cc:4:8: error: invalid declarator before 'c'
-   a<int> c;
+   a&lt;int&gt; c;
            ^
   $ <span class="cmd">clang t.cc</span>
   <span class="loc">t.cc:3:12:</span> <span class="err">error:</span> <span class="msg">expected ';' after struct</span>
