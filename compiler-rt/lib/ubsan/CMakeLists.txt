@@ -53,4 +53,6 @@ else()
   endforeach()
 endif()
 
-add_subdirectory(lit_tests)
+if(UBSAN_SUPPORTED_ARCH)
+  add_subdirectory(lit_tests)
+endif()

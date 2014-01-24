@@ -10,6 +10,8 @@ set(DFSAN_RTL_CFLAGS
   # Prevent clang from generating libc calls.
   -ffreestanding)
 
+filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
+
 # Static runtime library.
 set(DFSAN_RUNTIME_LIBRARIES)
 set(arch "x86_64")
@@ -41,4 +43,6 @@ add_custom_command(OUTPUT ${CLANG_RESOURCE_DIR}/dfsan_abilist.txt
 install(FILES ${CLANG_RESOURCE_DIR}/dfsan_abilist.txt
         DESTINATION ${LIBCLANG_INSTALL_PATH})
 
-add_subdirectory(lit_tests)
+if(DFSAN_SUPPORTED_ARCH)
+  add_subdirectory(lit_tests)
+endif()
