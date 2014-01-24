@@ -7,7 +7,8 @@ void *Thread(void *x) {
 }
 
 int main() {
-  for (int i = 0; i < 5; i++) {
+  volatile int N = 5;  // prevent loop unrolling
+  for (int i = 0; i < N; i++) {
     pthread_t t;
     pthread_create(&t, 0, Thread, 0);
   }
