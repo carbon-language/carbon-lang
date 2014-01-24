@@ -1258,7 +1258,7 @@ NVPTXTargetLowering::LowerSTOREVector(SDValue Op, SelectionDAG &DAG) const {
 
     // Since StoreV2 is a target node, we cannot rely on DAG type legalization.
     // Therefore, we must ensure the type is legal.  For i1 and i8, we set the
-    // stored type to i16 and propogate the "real" type as the memory type.
+    // stored type to i16 and propagate the "real" type as the memory type.
     bool NeedExt = false;
     if (EltVT.getSizeInBits() < 16)
       NeedExt = true;
@@ -2074,7 +2074,7 @@ static void ReplaceLoadVector(SDNode *N, SelectionDAG &DAG,
 
   // Since LoadV2 is a target node, we cannot rely on DAG type legalization.
   // Therefore, we must ensure the type is legal.  For i1 and i8, we set the
-  // loaded type to i16 and propogate the "real" type as the memory type.
+  // loaded type to i16 and propagate the "real" type as the memory type.
   bool NeedTrunc = false;
   if (EltVT.getSizeInBits() < 16) {
     EltVT = MVT::i16;
@@ -2161,7 +2161,7 @@ static void ReplaceINTRINSIC_W_CHAIN(SDNode *N, SelectionDAG &DAG,
       // Since LDU/LDG are target nodes, we cannot rely on DAG type
       // legalization.
       // Therefore, we must ensure the type is legal.  For i1 and i8, we set the
-      // loaded type to i16 and propogate the "real" type as the memory type.
+      // loaded type to i16 and propagate the "real" type as the memory type.
       bool NeedTrunc = false;
       if (EltVT.getSizeInBits() < 16) {
         EltVT = MVT::i16;

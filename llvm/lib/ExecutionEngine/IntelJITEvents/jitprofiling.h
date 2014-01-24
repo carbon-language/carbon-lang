@@ -164,10 +164,10 @@ typedef struct _iJIT_Method_NIDS
 
 typedef struct _LineNumberInfo
 {
-    /* x86 Offset from the begining of the method*/
-    unsigned int        Offset;                 
-    
-    /* source line number from the begining of the source file */
+  /* x86 Offset from the beginning of the method*/
+  unsigned int Offset;
+
+  /* source line number from the beginning of the source file */
     unsigned int        LineNumber;             
 
 } *pLineNumberInfo, LineNumberInfo;
@@ -191,9 +191,9 @@ typedef struct _iJIT_Method_Load
     unsigned int        method_size;            
 
     /* Line Table size in number of entries - Zero if none */
-    unsigned int        line_number_size;       
-    
-    /* Pointer to the begining of the line numbers info array */
+    unsigned int line_number_size;
+
+    /* Pointer to the beginning of the line numbers info array */
     pLineNumberInfo     line_number_table;      
 
     /* unique class ID */

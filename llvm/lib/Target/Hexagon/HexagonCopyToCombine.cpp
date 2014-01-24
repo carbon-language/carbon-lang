@@ -285,7 +285,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
       // Update the intermediate instruction to with the kill flag.
       if (KillingInstr) {
         bool Added = KillingInstr->addRegisterKilled(KilledOperand, TRI, true);
-        (void)Added; // supress compiler warning
+        (void)Added; // suppress compiler warning
         assert(Added && "Must successfully update kill flag");
         removeKillInfo(I2, KilledOperand);
       }
@@ -343,7 +343,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
       // Update I1 to set the kill flag. This flag will later be picked up by
       // the new COMBINE instruction.
       bool Added = I1->addRegisterKilled(KilledOperand, TRI);
-      (void)Added; // supress compiler warning
+      (void)Added; // suppress compiler warning
       assert(Added && "Must successfully update kill flag");
     }
     DoInsertAtI1 = false;

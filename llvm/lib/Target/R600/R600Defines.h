@@ -52,7 +52,7 @@ namespace R600_InstFlag {
 
 #define HAS_NATIVE_OPERANDS(Flags) ((Flags) & R600_InstFlag::NATIVE_OPERANDS)
 
-/// \brief Defines for extracting register infomation from register encoding
+/// \brief Defines for extracting register information from register encoding
 #define HW_REG_MASK 0x1ff
 #define HW_CHAN_SHIFT 9
 

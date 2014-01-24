@@ -53,7 +53,7 @@ public:
 
   ~SIMCCodeEmitter() { }
 
-  /// \breif Encode the instruction and write it to the OS.
+  /// \brief Encode the instruction and write it to the OS.
   virtual void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups) const;
 

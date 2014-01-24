@@ -224,7 +224,7 @@ protected:
   /// Compute the reversed DFS post order of Blocks
   void orderBlocks(MachineFunction *MF);
 
-  // Function originaly from CFGStructTraits
+  // Function originally from CFGStructTraits
   void insertInstrEnd(MachineBasicBlock *MBB, int NewOpcode,
       DebugLoc DL = DebugLoc());
   MachineInstr *insertInstrBefore(MachineBasicBlock *MBB, int NewOpcode,

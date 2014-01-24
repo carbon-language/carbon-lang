@@ -869,7 +869,7 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
   TempInst.addOperand(MCOperand::CreateReg(BaseRegNum));
   Instructions.push_back(TempInst);
   TempInst.clear();
-  // And finaly, create original instruction with low part
+  // And finally, create original instruction with low part
   // of offset and new base.
   TempInst.setOpcode(Inst.getOpcode());
   TempInst.addOperand(MCOperand::CreateReg(RegOpNum));
@@ -1247,7 +1247,7 @@ MipsAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand *> &Operands,
       return false;
     }
     // Look for the existing symbol, we should check if
-    // we need to assigne the propper RegisterKind.
+    // we need to assigne the proper RegisterKind.
     if (searchSymbolAlias(Operands, MipsOperand::Kind_None))
       return false;
   // Else drop to expression parsing.

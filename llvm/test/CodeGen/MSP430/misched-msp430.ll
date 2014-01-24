@@ -7,7 +7,7 @@ target datalayout = "e-p:16:16:16-i8:8:8-i16:16:16-i32:16:32-n8:16"
 
 ; Test that the MI Scheduler's initPolicy does not crash when i32 is
 ; unsupported. The content of the asm check below is unimportant. It
-; only verifies that the code generator ran succesfully.
+; only verifies that the code generator ran successfully.
 ;
 ; CHECK-LABEL: @f
 ; CHECK: mov.w &y, &x

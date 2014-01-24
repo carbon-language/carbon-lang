@@ -382,7 +382,7 @@ namespace {
     void clear();
 
     /// Conservatively merge the two RRInfo. Returns true if a partial merge has
-    /// occured, false otherwise.
+    /// occurred, false otherwise.
     bool Merge(const RRInfo &Other);
 
   };
@@ -659,7 +659,7 @@ namespace {
     /// which pass through this block. This is only valid after both the
     /// top-down and bottom-up traversals are complete.
     ///
-    /// Returns true if overflow occured. Returns false if overflow did not
+    /// Returns true if overflow occurred. Returns false if overflow did not
     /// occur.
     bool GetAllPathCountWithOverflow(unsigned &PathCount) const {
       if (TopDownPathCount == OverflowOccurredValue ||
@@ -667,7 +667,7 @@ namespace {
         return true;
       unsigned long long Product =
         (unsigned long long)TopDownPathCount*BottomUpPathCount;
-      // Overflow occured if any of the upper bits of Product are set or if all
+      // Overflow occurred if any of the upper bits of Product are set or if all
       // the lower bits of Product are all set.
       return (Product >> 32) ||
              ((PathCount = Product) == OverflowOccurredValue);
@@ -711,7 +711,7 @@ void BBState::MergePred(const BBState &Other) {
 
   // In order to be consistent, we clear the top down pointers when by adding
   // TopDownPathCount becomes OverflowOccurredValue even though "true" overflow
-  // has not occured.
+  // has not occurred.
   if (TopDownPathCount == OverflowOccurredValue) {
     clearTopDownPointers();
     return;
@@ -755,7 +755,7 @@ void BBState::MergeSucc(const BBState &Other) {
 
   // In order to be consistent, we clear the top down pointers when by adding
   // BottomUpPathCount becomes OverflowOccurredValue even though "true" overflow
-  // has not occured.
+  // has not occurred.
   if (BottomUpPathCount == OverflowOccurredValue) {
     clearBottomUpPointers();
     return;
@@ -1808,13 +1808,13 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     // pointer has multiple owners implying that we must be more conservative.
     //
     // This comes up in the context of a pointer being ``KnownSafe''. In the
-    // presense of a block being initialized, the frontend will emit the
+    // presence of a block being initialized, the frontend will emit the
     // objc_retain on the original pointer and the release on the pointer loaded
     // from the alloca. The optimizer will through the provenance analysis
     // realize that the two are related, but since we only require KnownSafe in
     // one direction, will match the inner retain on the original pointer with
     // the guard release on the original pointer. This is fixed by ensuring that
-    // in the presense of allocas we only unconditionally remove pointers if
+    // in the presence of allocas we only unconditionally remove pointers if
     // both our retain and our release are KnownSafe.
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       if (AreAnyUnderlyingObjectsAnAlloca(SI->getPointerOperand())) {

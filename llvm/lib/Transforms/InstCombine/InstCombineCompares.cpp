@@ -2048,7 +2048,7 @@ static APInt DemandedBitsLHSMask(ICmpInst &I,
 
 /// \brief Check if the order of \p Op0 and \p Op1 as operand in an ICmpInst
 /// should be swapped.
-/// The descision is based on how many times these two operands are reused
+/// The decision is based on how many times these two operands are reused
 /// as subtract operands and their positions in those instructions.
 /// The rational is that several architectures use the same instruction for
 /// both subtract and cmp, thus it is better if the order of those operands
@@ -2064,7 +2064,7 @@ static bool swapMayExposeCSEOpportunities(const Value * Op0,
   // Each time Op0 is the first operand, count -1: swapping is bad, the
   // subtract has already the same layout as the compare.
   // Each time Op0 is the second operand, count +1: swapping is good, the
-  // subtract has a diffrent layout as the compare.
+  // subtract has a different layout as the compare.
   // At the end, if the benefit is greater than 0, Op0 should come second to
   // expose more CSE opportunities.
   int GlobalSwapBenefits = 0;

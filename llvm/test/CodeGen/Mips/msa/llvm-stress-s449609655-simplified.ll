@@ -10,7 +10,7 @@
 ; The legalizer legalized ; the <4 x i8>'s into <4 x i32>'s, then a call to
 ; isVSplat() returned the splat value for <i8 -1, i8 -1, ...> as a 32-bit APInt
 ; (255), but the zeroinitializer splat value as an 8-bit APInt (0). The
-; assertion occured when trying to check the values were bitwise inverses of
+; assertion occurred when trying to check the values were bitwise inverses of
 ; each-other.
 ;
 ; It should at least successfully build.

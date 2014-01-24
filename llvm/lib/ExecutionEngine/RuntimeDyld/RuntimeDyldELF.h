@@ -116,7 +116,7 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
 
   virtual void updateGOTEntries(StringRef Name, uint64_t Addr);
 
-  // Relocation entries for symbols whose position-independant offset is
+  // Relocation entries for symbols whose position-independent offset is
   // updated in a global offset table.
   typedef SmallVector<RelocationValueRef, 2> GOTRelocations;
   GOTRelocations GOTEntries; // List of entries requiring finalization.

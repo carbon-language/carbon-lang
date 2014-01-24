@@ -3776,7 +3776,7 @@ APFloat::opStatus APFloat::next(bool nextDown) {
     //                     change the payload.
     if (isSignaling()) {
       result = opInvalidOp;
-      // For consistency, propogate the sign of the sNaN to the qNaN.
+      // For consistency, propagate the sign of the sNaN to the qNaN.
       makeNaN(false, isNegative(), 0);
     }
     break;

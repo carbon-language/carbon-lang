@@ -17,7 +17,7 @@ using namespace llvm;
 
 namespace {
 
-// In these first two tests all of the origional_uintx values are truncated
+// In these first two tests all of the original_uintx values are truncated
 // except for 64. We could avoid this, but there's really no point.
 
 TEST(SwapByteOrder, UnsignedRoundTrip) {
@@ -25,21 +25,21 @@ TEST(SwapByteOrder, UnsignedRoundTrip) {
   // in every byte.
   uint64_t value = 1;
   for (std::size_t i = 0; i <= sizeof(value); ++i) {
-    uint8_t origional_uint8 = static_cast<uint8_t>(value);
-    EXPECT_EQ(origional_uint8,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_uint8)));
+    uint8_t original_uint8 = static_cast<uint8_t>(value);
+    EXPECT_EQ(original_uint8,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_uint8)));
 
-    uint16_t origional_uint16 = static_cast<uint16_t>(value);
-    EXPECT_EQ(origional_uint16,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_uint16)));
+    uint16_t original_uint16 = static_cast<uint16_t>(value);
+    EXPECT_EQ(original_uint16,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_uint16)));
 
-    uint32_t origional_uint32 = static_cast<uint32_t>(value);
-    EXPECT_EQ(origional_uint32,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_uint32)));
+    uint32_t original_uint32 = static_cast<uint32_t>(value);
+    EXPECT_EQ(original_uint32,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_uint32)));
 
-    uint64_t origional_uint64 = static_cast<uint64_t>(value);
-    EXPECT_EQ(origional_uint64,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_uint64)));
+    uint64_t original_uint64 = static_cast<uint64_t>(value);
+    EXPECT_EQ(original_uint64,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_uint64)));
 
     value = (value << 8) | 0x55; // binary 0101 0101.
   }
@@ -50,40 +50,40 @@ TEST(SwapByteOrder, SignedRoundTrip) {
   // in every byte.
   uint64_t value = 1;
   for (std::size_t i = 0; i <= sizeof(value); ++i) {
-    int8_t origional_int8 = static_cast<int8_t>(value);
-    EXPECT_EQ(origional_int8,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_int8)));
+    int8_t original_int8 = static_cast<int8_t>(value);
+    EXPECT_EQ(original_int8,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_int8)));
 
-    int16_t origional_int16 = static_cast<int16_t>(value);
-    EXPECT_EQ(origional_int16,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_int16)));
+    int16_t original_int16 = static_cast<int16_t>(value);
+    EXPECT_EQ(original_int16,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_int16)));
 
-    int32_t origional_int32 = static_cast<int32_t>(value);
-    EXPECT_EQ(origional_int32,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_int32)));
+    int32_t original_int32 = static_cast<int32_t>(value);
+    EXPECT_EQ(original_int32,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_int32)));
 
-    int64_t origional_int64 = static_cast<int64_t>(value);
-    EXPECT_EQ(origional_int64,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_int64)));
+    int64_t original_int64 = static_cast<int64_t>(value);
+    EXPECT_EQ(original_int64,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_int64)));
 
     // Test other sign.
     value *= -1;
 
-    origional_int8 = static_cast<int8_t>(value);
-    EXPECT_EQ(origional_int8,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_int8)));
+    original_int8 = static_cast<int8_t>(value);
+    EXPECT_EQ(original_int8,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_int8)));
 
-    origional_int16 = static_cast<int16_t>(value);
-    EXPECT_EQ(origional_int16,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_int16)));
+    original_int16 = static_cast<int16_t>(value);
+    EXPECT_EQ(original_int16,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_int16)));
 
-    origional_int32 = static_cast<int32_t>(value);
-    EXPECT_EQ(origional_int32,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_int32)));
+    original_int32 = static_cast<int32_t>(value);
+    EXPECT_EQ(original_int32,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_int32)));
 
-    origional_int64 = static_cast<int64_t>(value);
-    EXPECT_EQ(origional_int64,
-      sys::SwapByteOrder(sys::SwapByteOrder(origional_int64)));
+    original_int64 = static_cast<int64_t>(value);
+    EXPECT_EQ(original_int64,
+              sys::SwapByteOrder(sys::SwapByteOrder(original_int64)));
 
     // Return to normal sign and twiddle.
     value *= -1;

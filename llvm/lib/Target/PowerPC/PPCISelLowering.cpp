@@ -7205,7 +7205,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       // you might suspect (sizeof(vector) bytes after the last requested
       // load), but rather sizeof(vector) - 1 bytes after the last
       // requested vector. The point of this is to avoid a page fault if the
-      // base address happend to be aligned. This works because if the base
+      // base address happened to be aligned. This works because if the base
       // address is aligned, then adding less than a full vector length will
       // cause the last vector in the sequence to be (re)loaded. Otherwise,
       // the next vector will be fetched as you might suspect was necessary.

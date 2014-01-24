@@ -1871,7 +1871,7 @@ private:
   StoreListMap StoreRefs;
 };
 
-/// \brief Check that the Values in the slice in VL array are still existant in
+/// \brief Check that the Values in the slice in VL array are still existent in
 /// the WeakVH array.
 /// Vectorization of part of the VL array may cause later values in the VL array
 /// to become invalid. We track when this has happened in the WeakVH array.
@@ -2516,7 +2516,7 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
         break;
       }
 
-      // Start over at the next instruction of a differnt type (or the end).
+      // Start over at the next instruction of a different type (or the end).
       IncIt = SameTypeIt;
     }
   }

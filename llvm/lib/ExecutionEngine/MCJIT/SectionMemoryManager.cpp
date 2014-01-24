@@ -78,7 +78,7 @@ uint8_t *SectionMemoryManager::allocateSection(MemoryGroup &MemGroup,
                                                             sys::Memory::MF_WRITE,
                                                           ec);
   if (ec) {
-    // FIXME: Add error propogation to the interface.
+    // FIXME: Add error propagation to the interface.
     return NULL;
   }
 

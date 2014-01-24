@@ -1793,7 +1793,7 @@ bool HexagonInstrInfo::NonExtEquivalentExists (const MachineInstr *MI) const {
     return true;
 
   if (MI->getDesc().mayLoad() || MI->getDesc().mayStore()) {
-    // Check addressing mode and retreive non-ext equivalent instruction.
+    // Check addressing mode and retrieve non-ext equivalent instruction.
 
     switch (getAddrMode(MI)) {
     case HexagonII::Absolute :
@@ -1827,7 +1827,7 @@ short HexagonInstrInfo::getNonExtOpcode (const MachineInstr *MI) const {
       return NonExtOpcode;
 
   if (MI->getDesc().mayLoad() || MI->getDesc().mayStore()) {
-    // Check addressing mode and retreive non-ext equivalent instruction.
+    // Check addressing mode and retrieve non-ext equivalent instruction.
     switch (getAddrMode(MI)) {
     case HexagonII::Absolute :
       return Hexagon::getBasedWithImmOffset(MI->getOpcode());

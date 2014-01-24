@@ -2371,7 +2371,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
     setDebugLocFromInst(Builder, RdxDesc.StartValue);
 
     // We need to generate a reduction vector from the incoming scalar.
-    // To do so, we need to generate the 'identity' vector and overide
+    // To do so, we need to generate the 'identity' vector and override
     // one of the elements with the incoming scalar reduction. We need
     // to do it in the vector-loop preheader.
     Builder.SetInsertPoint(LoopBypassBlocks.front()->getTerminator());
@@ -3713,8 +3713,8 @@ void AccessAnalysis::processMemAccesses(bool UseDeferred) {
     }
 
     bool NeedDepCheck = false;
-    // Check whether there is the possiblity of dependency because of underlying
-    // objects being the same.
+    // Check whether there is the possibility of dependency because of
+    // underlying objects being the same.
     typedef SmallVector<Value*, 16> ValueVector;
     ValueVector TempObjects;
     GetUnderlyingObjects(Ptr, TempObjects, DL);

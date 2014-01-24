@@ -13,7 +13,7 @@
 ;structs at varying alignments. Each test is run for arm, thumb2 and thumb1.
 ;We check for the strings in the generated object code using llvm-objdump
 ;because it provides better assurance that we are generating instructions
-;for the correct architecture. Otherwise we could accidently generate an
+;for the correct architecture. Otherwise we could accidentally generate an
 ;ARM instruction for THUMB1 and wouldn't detect it because the assembly
 ;code representation is the same, but the object code would be generated
 ;incorrectly. For each test we check for the label, a load instruction of the

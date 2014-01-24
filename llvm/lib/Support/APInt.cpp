@@ -1096,7 +1096,7 @@ APInt APInt::ashr(unsigned shiftAmt) const {
     // to include in this word.
     val[breakWord] = pVal[breakWord+offset] >> wordShift;
 
-    // Deal with sign extenstion in the break word, and possibly the word before
+    // Deal with sign extension in the break word, and possibly the word before
     // it.
     if (isNegative()) {
       if (wordShift > bitsInWord) {

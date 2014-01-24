@@ -595,7 +595,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
     if (RC == reinterpret_cast<TargetRegisterClass *>(-1))
       AntiDepReg = 0;
 
-    // Look for a suitable register to use to break the anti-depenence.
+    // Look for a suitable register to use to break the anti-dependence.
     //
     // TODO: Instead of picking the first free register, consider which might
     // be the best.

@@ -52,7 +52,7 @@ pad_sections aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 // /1000029 == 4 + 10 + (5 * (2 + (20 * 10 * 1000) + 1))
 //             v   |     |    v    ~~~~~~~~~~~~~~    v
-//    table size   v     v   "p0"        pad         NUL seperator
+//    table size   v     v   "p0"        pad         NUL separator
 //     "s12345678\0"     # of pad sections
 //
 // CHECK:   Section {

@@ -154,7 +154,7 @@ static bool isObjectSize(const Value *V, uint64_t Size,
 /// isIdentifiedFunctionLocal - Return true if V is umabigously identified
 /// at the function-level. Different IdentifiedFunctionLocals can't alias.
 /// Further, an IdentifiedFunctionLocal can not alias with any function
-/// arguments other than itself, which is not neccessarily true for
+/// arguments other than itself, which is not necessarily true for
 /// IdentifiedObjects.
 static bool isIdentifiedFunctionLocal(const Value *V)
 {

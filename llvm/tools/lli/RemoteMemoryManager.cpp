@@ -109,7 +109,7 @@ void RemoteMemoryManager::notifyObjectLoaded(ExecutionEngine *EE,
       CurOffset += Size;
     }
   }
-  // Adjust to keep code and data aligned on seperate pages.
+  // Adjust to keep code and data aligned on separate pages.
   CurOffset = (CurOffset + MaxAlign - 1) / MaxAlign * MaxAlign;
   for (size_t i = 0, e = NumSections; i != e; ++i) {
     Allocation &Section = UnmappedSections[i];

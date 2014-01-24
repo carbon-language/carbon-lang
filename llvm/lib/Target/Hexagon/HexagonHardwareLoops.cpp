@@ -1522,7 +1522,7 @@ MachineBasicBlock *HexagonHardwareLoops::createPreheaderForLoop(
     if (PB != Latch) {
       Tmp2.clear();
       bool NotAnalyzed = TII->AnalyzeBranch(*PB, TB, FB, Tmp2, false);
-      (void)NotAnalyzed; // supress compiler warning
+      (void)NotAnalyzed; // suppress compiler warning
       assert (!NotAnalyzed && "Should be analyzable!");
       if (TB != Header && (Tmp2.empty() || FB != Header))
         TII->InsertBranch(*PB, NewPH, 0, EmptyCond, DL);
@@ -1534,7 +1534,7 @@ MachineBasicBlock *HexagonHardwareLoops::createPreheaderForLoop(
   // Insert an unconditional branch to the header.
   TB = FB = 0;
   bool LatchNotAnalyzed = TII->AnalyzeBranch(*Latch, TB, FB, Tmp2, false);
-  (void)LatchNotAnalyzed; // supress compiler warning
+  (void)LatchNotAnalyzed; // suppress compiler warning
   assert (!LatchNotAnalyzed && "Should be analyzable!");
   if (!TB && !FB)
     TII->InsertBranch(*Latch, Header, 0, EmptyCond, DL);

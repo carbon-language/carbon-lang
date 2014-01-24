@@ -32,10 +32,10 @@ namespace {
 
 #ifdef LLVM_ON_WIN32
   const char *separators = "\\/";
-  const char  prefered_separator = '\\';
+  const char preferred_separator = '\\';
 #else
   const char  separators = '/';
-  const char  prefered_separator = '/';
+  const char preferred_separator = '/';
 #endif
 
   StringRef find_first_component(StringRef path) {
@@ -403,7 +403,7 @@ void append(SmallVectorImpl<char> &path, const Twine &a,
 
     if (!component_has_sep && !(path.empty() || is_root_name)) {
       // Add a separator.
-      path.push_back(prefered_separator);
+      path.push_back(preferred_separator);
     }
 
     path.append(i->begin(), i->end());

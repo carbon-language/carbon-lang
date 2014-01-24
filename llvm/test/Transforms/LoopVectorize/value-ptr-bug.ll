@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 ; PR16073
 
-; Because we were caching value pointers accross a function call that could RAUW
+; Because we were caching value pointers across a function call that could RAUW
 ; we would generate an undefined value store below:
 ; SCEVExpander::expandCodeFor would change a value (the start value of an
 ; induction) that we cached in the induction variable list.

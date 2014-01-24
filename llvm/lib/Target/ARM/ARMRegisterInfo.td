@@ -214,7 +214,7 @@ def GPRnopc : RegisterClass<"ARM", [i32], 32, (sub GPR, PC)> {
 }
 
 // GPRs without the PC but with APSR. Some instructions allow accessing the
-// APSR, while actually encoding PC in the register field. This is usefull
+// APSR, while actually encoding PC in the register field. This is useful
 // for assembly and disassembly only.
 def GPRwithAPSR : RegisterClass<"ARM", [i32], 32, (add (sub GPR, PC), APSR_NZCV)> {
   let AltOrders = [(add LR, GPRnopc), (trunc GPRnopc, 8)];

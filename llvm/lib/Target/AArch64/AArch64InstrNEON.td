@@ -6432,7 +6432,7 @@ defm TBL2 : NI_TBL_pat<0b01, 0b0, "tbl", "VPair">;
 defm TBL3 : NI_TBL_pat<0b10, 0b0, "tbl", "VTriple">;
 defm TBL4 : NI_TBL_pat<0b11, 0b0, "tbl", "VQuad">;
 
-// Table lookup extention
+// Table lookup extension
 class NI_TBX<bit q, bits<2> op2, bits<2> len, bit op,
              string asmop, string OpS, RegisterOperand OpVPR,
              RegisterOperand VecList>

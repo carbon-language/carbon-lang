@@ -532,10 +532,10 @@ p_simp_re(struct parse *p,
 	sopno subno;
 #	define	BACKSL	(1<<CHAR_BIT)
 
-	pos = HERE();		/* repetion op, if any, covers from here */
+        pos = HERE(); /* repetition op, if any, covers from here */
 
-	assert(MORE());		/* caller should have ensured this */
-	c = GETNEXT();
+        assert(MORE()); /* caller should have ensured this */
+        c = GETNEXT();
 	if (c == '\\') {
 		REQUIRE(MORE(), REG_EESCAPE);
 		c = BACKSL | GETNEXT();

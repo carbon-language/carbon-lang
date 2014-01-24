@@ -4,7 +4,7 @@
 ; %tmp1676 = xor i32 %tmp1634, %tmp1530 have zero demanded bits after
 ; DAGCombiner optimization pass.  These are changed to undef and in turn
 ; the successor shl(s) become shl undef, 1.  This pattern then matches
-; shl x, 1 -> add x, x.  add undef, undef doesn't guarentee the low
+; shl x, 1 -> add x, x.  add undef, undef doesn't guarantee the low
 ; order bit is zero and is incorrect.
 ;
 ; See rdar://9453156 and rdar://9487392.

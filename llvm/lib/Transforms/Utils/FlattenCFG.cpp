@@ -240,7 +240,7 @@ bool FlattenCFGOpt::FlattenParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder,
       BranchInst *BI = dyn_cast<BranchInst>(CurrBlock->getTerminator());
       CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition());
       CmpInst::Predicate Predicate = CI->getPredicate();
-      // Cannonicalize icmp_ne -> icmp_eq, fcmp_one -> fcmp_oeq
+      // Canonicalize icmp_ne -> icmp_eq, fcmp_one -> fcmp_oeq
       if ((Predicate == CmpInst::ICMP_NE) || (Predicate == CmpInst::FCMP_ONE)) {
         CI->setPredicate(ICmpInst::getInversePredicate(Predicate));
         BI->swapSuccessors();

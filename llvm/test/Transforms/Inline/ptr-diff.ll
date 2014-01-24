@@ -31,7 +31,7 @@ else:
 
 define i32 @outer2(i32* %ptr) {
 ; Test that an inbounds GEP disables this -- it isn't safe in general as
-; wrapping changes the behavior of lessthan and greaterthan comparisions.
+; wrapping changes the behavior of lessthan and greaterthan comparisons.
 ; CHECK-LABEL: @outer2(
 ; CHECK: call i32 @inner2
 ; CHECK: ret i32

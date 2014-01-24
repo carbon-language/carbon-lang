@@ -1083,7 +1083,7 @@ void SITargetLowering::ensureSRegLimit(SelectionDAG &DAG, SDValue &Operand,
   else
     return;
 
-  // Nothing todo if they fit naturaly
+  // Nothing to do if they fit naturally
   if (fitsRegClass(DAG, Operand, RegClass))
     return;
 

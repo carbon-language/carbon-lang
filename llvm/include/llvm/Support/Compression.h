@@ -33,11 +33,11 @@ enum CompressionLevel {
 
 enum Status {
   StatusOK,
-  StatusUnsupported,  // zlib is unavaliable
-  StatusOutOfMemory,  // there was not enough memory
-  StatusBufferTooShort,  // there was not enough room in the output buffer
-  StatusInvalidArg,  // invalid input parameter
-  StatusInvalidData  // data was corrupted or incomplete
+  StatusUnsupported,    // zlib is unavailable
+  StatusOutOfMemory,    // there was not enough memory
+  StatusBufferTooShort, // there was not enough room in the output buffer
+  StatusInvalidArg,     // invalid input parameter
+  StatusInvalidData     // data was corrupted or incomplete
 };
 
 bool isAvailable();

@@ -563,7 +563,7 @@ struct InternalInstruction {
   uint8_t prefixPresent[0x100];
   /* contains the location (for use with the reader) of the prefix byte */
   uint64_t prefixLocations[0x100];
-  /* The value of the vector extention prefix(EVEX/VEX/XOP), if present */
+  /* The value of the vector extension prefix(EVEX/VEX/XOP), if present */
   uint8_t vectorExtensionPrefix[4];
   /* The type of the vector extension prefix */
   VectorExtensionType vectorExtensionType;

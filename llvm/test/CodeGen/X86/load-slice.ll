@@ -6,7 +6,7 @@
 %class.Complex = type { float, float }
 
 
-; Check that independant slices leads to independant loads then the slices leads to
+; Check that independent slices leads to independent loads then the slices leads to
 ; different register file.
 ;
 ; The layout is:

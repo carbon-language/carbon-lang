@@ -63,7 +63,7 @@ const MCInstrDesc *ScheduleDAG::getNodeDesc(const SDNode *Node) const {
 /// not already.  It also adds the current node as a successor of the
 /// specified node.
 bool SUnit::addPred(const SDep &D, bool Required) {
-  // If this node already has this depenence, don't add a redundant one.
+  // If this node already has this dependence, don't add a redundant one.
   for (SmallVectorImpl<SDep>::iterator I = Preds.begin(), E = Preds.end();
          I != E; ++I) {
     // Zero-latency weak edges may be added purely for heuristic ordering. Don't

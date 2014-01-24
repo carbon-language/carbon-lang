@@ -154,8 +154,8 @@ static bool replaceConstantExprOp(ConstantExpr *CE, Pass *P) {
             return false;
         }
       }
-  } while (CE->hasNUsesOrMore(1)); // We need to check becasue a recursive
-  // sibbling may have used 'CE' when createReplacementInstr was called.
+  } while (CE->hasNUsesOrMore(1)); // We need to check because a recursive
+  // sibling may have used 'CE' when createReplacementInstr was called.
   CE->destroyConstant();
   return true;
 }

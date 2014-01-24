@@ -1976,7 +1976,7 @@ void SchedBoundary::bumpNode(SUnit *SU) {
   }
   else {
     // After updating ZoneCritResIdx and ExpectedLatency, check if we're
-    // resource limited. If a stall occured, bumpCycle does this.
+    // resource limited. If a stall occurred, bumpCycle does this.
     unsigned LFactor = SchedModel->getLatencyFactor();
     IsResourceLimited =
       (int)(getCriticalCount() - (getScheduledLatency() * LFactor))

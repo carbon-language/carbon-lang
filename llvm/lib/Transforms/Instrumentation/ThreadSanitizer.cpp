@@ -487,7 +487,7 @@ bool ThreadSanitizer::instrumentMemIntrinsic(Instruction *I) {
 }
 
 // Both llvm and ThreadSanitizer atomic operations are based on C++11/C1x
-// standards.  For background see C++11 standard.  A slightly older, publically
+// standards.  For background see C++11 standard.  A slightly older, publicly
 // available draft of the standard (not entirely up-to-date, but close enough
 // for casual browsing) is available here:
 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3242.pdf

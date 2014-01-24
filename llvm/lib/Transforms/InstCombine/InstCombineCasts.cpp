@@ -1193,10 +1193,10 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
         // will not occur because the result of OpI is exact (as we will for
         // FMul, for example) is hopeless.  However, we *can* nonetheless
         // frequently know that double rounding cannot occur (or that it is
-        // innoculous) by taking advantage of the specific structure of
+        // innocuous) by taking advantage of the specific structure of
         // infinitely-precise results that admit double rounding.
         //
-        // Specifically, if OpWidth >= 2*DstWdith+1 and DstWidth is sufficent
+        // Specifically, if OpWidth >= 2*DstWdith+1 and DstWidth is sufficient
         // to represent both sources, we can guarantee that the double
         // rounding is innocuous (See p50 of Figueroa's 2000 PhD thesis,
         // "A Rigorous Framework for Fully Supporting the IEEE Standard ..."

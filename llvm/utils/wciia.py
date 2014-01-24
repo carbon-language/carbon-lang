@@ -110,7 +110,7 @@ if not os.path.exists(path):
 	
 owners_name = find_owners(path)
 
-# be gramatically correct
+# be grammatically correct
 print "The owner(s) of the (" + path + ") is(are) : " + str(owners_name)
 
 exit(0)

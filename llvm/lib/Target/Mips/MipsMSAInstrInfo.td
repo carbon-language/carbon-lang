@@ -3519,7 +3519,7 @@ class MSABitconvertPat<ValueType DstVT, ValueType SrcVT,
    MSAPat<(DstVT (bitconvert SrcVT:$src)),
           (COPY_TO_REGCLASS SrcVT:$src, DstRC), preds>;
 
-// These are endian-independant because the element size doesnt change
+// These are endian-independent because the element size doesnt change
 def : MSABitconvertPat<v8i16, v8f16, MSA128H>;
 def : MSABitconvertPat<v4i32, v4f32, MSA128W>;
 def : MSABitconvertPat<v2i64, v2f64, MSA128D>;

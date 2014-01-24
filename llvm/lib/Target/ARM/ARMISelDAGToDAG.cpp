@@ -1407,7 +1407,7 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue N,
 
 bool ARMDAGToDAGISel::SelectT2AddrModeExclusive(SDValue N, SDValue &Base,
                                                 SDValue &OffImm) {
-  // This *must* succeed since it's used for the irreplacable ldrex and strex
+  // This *must* succeed since it's used for the irreplaceable ldrex and strex
   // instructions.
   Base = N;
   OffImm = CurDAG->getTargetConstant(0, MVT::i32);

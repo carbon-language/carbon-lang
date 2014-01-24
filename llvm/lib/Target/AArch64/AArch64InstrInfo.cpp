@@ -611,7 +611,8 @@ void AArch64InstrInfo::getAddressConstraints(const MachineInstr &MI,
                                              int &AccessScale, int &MinOffset,
                                              int &MaxOffset) const {
   switch (MI.getOpcode()) {
-  default: llvm_unreachable("Unkown load/store kind");
+  default:
+    llvm_unreachable("Unknown load/store kind");
   case TargetOpcode::DBG_VALUE:
     AccessScale = 1;
     MinOffset = INT_MIN;

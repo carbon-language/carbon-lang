@@ -249,7 +249,7 @@ static ShadowMapping getShadowMapping(const Module &M, int LongSize) {
   ShadowMapping Mapping;
 
   // OR-ing shadow offset if more efficient (at least on x86),
-  // but on ppc64 we have to use add since the shadow offset is not neccesary
+  // but on ppc64 we have to use add since the shadow offset is not necessary
   // 1/8-th of the address space.
   Mapping.OrShadowOffset = !IsPPC64 && !ClShort64BitOffset;
 

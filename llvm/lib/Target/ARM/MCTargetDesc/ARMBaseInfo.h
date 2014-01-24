@@ -183,7 +183,8 @@ namespace ARM_ISB {
 
   inline static const char *InstSyncBOptToString(unsigned val) {
     switch (val) {
-      default: llvm_unreachable("Unkown memory operation");
+    default:
+      llvm_unreachable("Unknown memory operation");
       case RESERVED_0:  return "#0x0";
       case RESERVED_1:  return "#0x1";
       case RESERVED_2:  return "#0x2";

@@ -43,7 +43,7 @@ private:
   unsigned Gen;
   /// Each OpenCL kernel has nine implicit parameters that are stored in the
   /// first nine dwords of a Vertex Buffer.  These implicit parameters are
-  /// lowered to load instructions which retreive the values from the Vertex
+  /// lowered to load instructions which retrieve the values from the Vertex
   /// Buffer.
   SDValue LowerImplicitParameter(SelectionDAG &DAG, EVT VT,
                                  SDLoc DL, unsigned DwordOffset) const;

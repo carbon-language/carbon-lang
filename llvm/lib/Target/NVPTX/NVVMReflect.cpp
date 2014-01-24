@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass replaces occurences of __nvvm_reflect("string") with an
+// This pass replaces occurrences of __nvvm_reflect("string") with an
 // integer based on -nvvm-reflect-list string=<int> option given to this pass.
 // If an undefined string value is seen in a call to __nvvm_reflect("string"),
 // a default value of 0 will be used.
@@ -84,7 +84,7 @@ NVVMReflectEnabled("nvvm-reflect-enable", cl::init(true), cl::Hidden,
 
 char NVVMReflect::ID = 0;
 INITIALIZE_PASS(NVVMReflect, "nvvm-reflect",
-                "Replace occurences of __nvvm_reflect() calls with 0/1", false,
+                "Replace occurrences of __nvvm_reflect() calls with 0/1", false,
                 false)
 
 static cl::list<std::string>

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines structures to encapsulate the machine model as decribed in
+// This file defines structures to encapsulate the machine model as described in
 // the target description.
 //
 //===----------------------------------------------------------------------===//
@@ -162,7 +162,7 @@ struct CodeGenSchedClass {
 // ModelName is a unique name used to name an instantiation of MCSchedModel.
 //
 // ModelDef is NULL for inferred Models. This happens when a processor defines
-// an itinerary but no machine model. If the processer defines neither a machine
+// an itinerary but no machine model. If the processor defines neither a machine
 // model nor itinerary, then ModelDef remains pointing to NoModel. NoModel has
 // the special "NoModel" field set to true.
 //

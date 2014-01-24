@@ -138,7 +138,7 @@ namespace llvm {
   /// Same but using const index set instead of MI set.
   bool fitsConstReadLimitations(const std::vector<unsigned>&) const;
 
-  /// \breif Vector instructions are instructions that must fill all
+  /// \brief Vector instructions are instructions that must fill all
   /// instruction slots within an instruction group.
   bool isVector(const MachineInstr &MI) const;
 

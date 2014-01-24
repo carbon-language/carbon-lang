@@ -43,7 +43,7 @@ entry:
 ; OPT: define
 ; OPT: store i32 1
 ; OPT: store i16 4
-; Remove a load and propogate the value from store.
+; Remove a load and propagate the value from store.
 ; OPT: ret i32 1
   %s.addr = alloca i32*, align 8
   %A.addr = alloca %struct.StructA*, align 8
@@ -98,7 +98,7 @@ entry:
 ; OPT: define
 ; OPT: store i32 1
 ; OPT: store i16 4
-; Remove a load and propogate the value from store.
+; Remove a load and propagate the value from store.
 ; OPT: ret i32 1
   %A.addr = alloca %struct.StructA*, align 8
   %B.addr = alloca %struct.StructB*, align 8
@@ -127,7 +127,7 @@ entry:
 ; OPT: define
 ; OPT: store i32 1
 ; OPT: store i32 4
-; Remove a load and propogate the value from store.
+; Remove a load and propagate the value from store.
 ; OPT: ret i32 1
   %A.addr = alloca %struct.StructA*, align 8
   %B.addr = alloca %struct.StructB*, align 8
@@ -155,7 +155,7 @@ entry:
 ; OPT: define
 ; OPT: store i32 1
 ; OPT: store i32 4
-; Remove a load and propogate the value from store.
+; Remove a load and propagate the value from store.
 ; OPT: ret i32 1
   %A.addr = alloca %struct.StructA*, align 8
   %B.addr = alloca %struct.StructB*, align 8
@@ -184,7 +184,7 @@ entry:
 ; OPT: define
 ; OPT: store i32 1
 ; OPT: store i32 4
-; Remove a load and propogate the value from store.
+; Remove a load and propagate the value from store.
 ; OPT: ret i32 1
   %A.addr = alloca %struct.StructA*, align 8
   %S.addr = alloca %struct.StructS*, align 8
@@ -212,7 +212,7 @@ entry:
 ; OPT: define
 ; OPT: store i32 1
 ; OPT: store i16 4
-; Remove a load and propogate the value from store.
+; Remove a load and propagate the value from store.
 ; OPT: ret i32 1
   %A.addr = alloca %struct.StructA*, align 8
   %S.addr = alloca %struct.StructS*, align 8
@@ -240,7 +240,7 @@ entry:
 ; OPT: define
 ; OPT: store i32 1
 ; OPT: store i32 4
-; Remove a load and propogate the value from store.
+; Remove a load and propagate the value from store.
 ; OPT: ret i32 1
   %S.addr = alloca %struct.StructS*, align 8
   %S2.addr = alloca %struct.StructS2*, align 8
@@ -268,7 +268,7 @@ entry:
 ; OPT: define
 ; OPT: store i32 1
 ; OPT: store i16 4
-; Remove a load and propogate the value from store.
+; Remove a load and propagate the value from store.
 ; OPT: ret i32 1
   %S.addr = alloca %struct.StructS*, align 8
   %S2.addr = alloca %struct.StructS2*, align 8
@@ -296,7 +296,7 @@ entry:
 ; OPT: define
 ; OPT: store i32 1
 ; OPT: store i32 4
-; Remove a load and propogate the value from store.
+; Remove a load and propagate the value from store.
 ; OPT: ret i32 1
   %C.addr = alloca %struct.StructC*, align 8
   %D.addr = alloca %struct.StructD*, align 8

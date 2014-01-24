@@ -7143,7 +7143,7 @@ SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
   const SCEV *Start = this->getStart();
   const SCEV *Step = this->getStepRecurrence(SE);
 
-  // Build the SCEV representation of the cannonical induction variable in the
+  // Build the SCEV representation of the canonical induction variable in the
   // loop of this SCEV.
   const SCEV *Zero = SE.getConstant(this->getType(), 0);
   const SCEV *One = SE.getConstant(this->getType(), 1);
@@ -7189,13 +7189,13 @@ SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
   else
     Rem = Quotient;
 
-  // Scale up the cannonical induction variable IV by whatever remains from the
+  // Scale up the canonical induction variable IV by whatever remains from the
   // Step after division by the GCD: the GCD is the size of all the sub-array.
   if (Step != GCD) {
     Step = SCEVDivision::divide(SE, Step, GCD);
     IV = SE.getMulExpr(IV, Step);
   }
-  // The access function in the current subscript is computed as the cannonical
+  // The access function in the current subscript is computed as the canonical
   // induction variable IV (potentially scaled up by the step) and offset by
   // Rem, the offset of delinearization in the sub-array.
   const SCEV *Index = SE.getAddExpr(IV, Rem);
@@ -7652,7 +7652,7 @@ void ScalarEvolution::forgetMemoizedResults(const SCEV *S) {
 
 typedef DenseMap<const Loop *, std::string> VerifyMap;
 
-/// replaceSubString - Replaces all occurences of From in Str with To.
+/// replaceSubString - Replaces all occurrences of From in Str with To.
 static void replaceSubString(std::string &Str, StringRef From, StringRef To) {
   size_t Pos = 0;
   while ((Pos = Str.find(From, Pos)) != std::string::npos) {

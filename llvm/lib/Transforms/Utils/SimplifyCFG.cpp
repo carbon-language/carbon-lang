@@ -62,9 +62,9 @@ static cl::opt<bool>
 SinkCommon("simplifycfg-sink-common", cl::Hidden, cl::init(true),
        cl::desc("Sink common instructions down to the end block"));
 
-static cl::opt<bool>
-HoistCondStores("simplifycfg-hoist-cond-stores", cl::Hidden, cl::init(true),
-       cl::desc("Hoist conditional stores if an unconditional store preceeds"));
+static cl::opt<bool> HoistCondStores(
+    "simplifycfg-hoist-cond-stores", cl::Hidden, cl::init(true),
+    cl::desc("Hoist conditional stores if an unconditional store precedes"));
 
 STATISTIC(NumBitMaps, "Number of switch instructions turned into bitmaps");
 STATISTIC(NumLookupTables, "Number of switch instructions turned into lookup tables");

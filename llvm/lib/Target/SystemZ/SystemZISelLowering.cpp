@@ -1076,7 +1076,7 @@ static IPMConversion getIPMConversion(unsigned CCValid, unsigned CCMask) {
   if (CCMask == (CCValid & (SystemZ::CCMASK_0 | SystemZ::CCMASK_3)))
     return IPMConversion(0, -(1 << SystemZ::IPM_CC), SystemZ::IPM_CC + 1);
 
-  // The remaing cases are 1, 2, 0/1/3 and 0/2/3.  All these are
+  // The remaining cases are 1, 2, 0/1/3 and 0/2/3.  All these are
   // can be done by inverting the low CC bit and applying one of the
   // sign-based extractions above.
   if (CCMask == (CCValid & SystemZ::CCMASK_1))

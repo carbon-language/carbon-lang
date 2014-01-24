@@ -68,7 +68,7 @@ namespace ShaderType {
 /// various memory regions on the hardware. On the CPU
 /// all of the address spaces point to the same memory,
 /// however on the GPU, each address space points to
-/// a seperate piece of memory that is unique from other
+/// a separate piece of memory that is unique from other
 /// memory locations.
 namespace AMDGPUAS {
 enum AddressSpaces {

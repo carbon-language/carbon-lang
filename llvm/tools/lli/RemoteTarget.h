@@ -96,7 +96,7 @@ public:
   virtual bool executeCode(uint64_t Address,
                            int &RetVal);
 
-  /// Minimum alignment for memory permissions. Used to seperate code and
+  /// Minimum alignment for memory permissions. Used to separate code and
   /// data regions to make sure data doesn't get marked as code or vice
   /// versa.
   ///

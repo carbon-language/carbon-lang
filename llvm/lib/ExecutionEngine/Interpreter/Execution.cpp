@@ -1120,7 +1120,7 @@ void Interpreter::visitCallSite(CallSite CS) {
   callFunction((Function*)GVTOP(SRC), ArgVals);
 }
 
-// auxilary function for shift operations
+// auxiliary function for shift operations
 static unsigned getShiftAmount(uint64_t orgShiftAmount,
                                llvm::APInt valueToShift) {
   unsigned valueWidth = valueToShift.getBitWidth();

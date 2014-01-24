@@ -1,4 +1,4 @@
-; Test that compares are ommitted if CC already has the right value
+; Test that compares are omitted if CC already has the right value
 ; (z10 version).
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s

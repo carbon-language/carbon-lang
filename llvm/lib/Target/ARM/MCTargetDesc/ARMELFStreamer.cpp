@@ -1035,7 +1035,7 @@ void ARMELFStreamer::emitFnStart() {
 }
 
 void ARMELFStreamer::emitFnEnd() {
-  assert(FnStart && ".fnstart must preceeds .fnend");
+  assert(FnStart && ".fnstart must precedes .fnend");
 
   // Emit unwind opcodes if there is no .handlerdata directive
   if (!ExTab && !CantUnwind)

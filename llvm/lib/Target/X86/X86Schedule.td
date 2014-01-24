@@ -577,7 +577,7 @@ def IIC_NOP : InstrItinClass;
 //===----------------------------------------------------------------------===//
 // Processor instruction itineraries.
 
-// IssueWidth is analagous to the number of decode units. Core and its
+// IssueWidth is analogous to the number of decode units. Core and its
 // descendents, including Nehalem and SandyBridge have 4 decoders.
 // Resources beyond the decoder operate on micro-ops and are bufferred
 // so adjacent micro-ops don't directly compete.

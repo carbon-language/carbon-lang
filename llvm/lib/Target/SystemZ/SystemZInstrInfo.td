@@ -759,7 +759,7 @@ let Defs = [CC], Uses = [CC] in {
 // Subtraction
 //===----------------------------------------------------------------------===//
 
-// Plain substraction.  Although immediate forms exist, we use the
+// Plain subtraction.  Although immediate forms exist, we use the
 // add-immediate instruction instead.
 let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0x8 in {
   // Subtraction of a register.

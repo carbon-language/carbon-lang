@@ -723,7 +723,7 @@ void MergeFunctions::writeThunkOrAlias(Function *F, Function *G) {
 
 // Helper for writeThunk,
 // Selects proper bitcast operation,
-// but a bit simplier then CastInst::getCastOpcode.
+// but a bit simpler then CastInst::getCastOpcode.
 static Value* createCast(IRBuilder<false> &Builder, Value *V, Type *DestTy) {
   Type *SrcTy = V->getType();
   if (SrcTy->isIntegerTy() && DestTy->isPointerTy())

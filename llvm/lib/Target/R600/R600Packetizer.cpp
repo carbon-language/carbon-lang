@@ -66,7 +66,7 @@ private:
   }
 
   /// \returns register to PV chan mapping for bundle/single instructions that
-  /// immediatly precedes I.
+  /// immediately precedes I.
   DenseMap<unsigned, unsigned> getPreviousVector(MachineBasicBlock::iterator I)
       const {
     DenseMap<unsigned, unsigned> Result;

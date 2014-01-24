@@ -77,7 +77,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   // A single load+store correctly handles overlapping memory in the memmove
   // case.
   uint64_t Size = MemOpLength->getLimitedValue();
-  assert(Size && "0-sized memory transfering should be removed already.");
+  assert(Size && "0-sized memory transferring should be removed already.");
 
   if (Size > 8 || (Size&(Size-1)))
     return 0;  // If not 1/2/4/8 bytes, exit.
@@ -684,7 +684,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         return ReplaceInstUsesWith(CI, ConstantVector::get(NewElems));
       }
 
-      // Couldn't simplify - cannonicalize constant to the RHS.
+      // Couldn't simplify - canonicalize constant to the RHS.
       std::swap(Arg0, Arg1);
     }
 

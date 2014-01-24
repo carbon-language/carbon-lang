@@ -9,7 +9,7 @@
 @ then libunwind will reconstruct the stack pointer from the frame pointer.
 @ The reconstruction code is implemented by two different unwind opcode:
 @ (i) the unwind opcode to copy stack offset from the other register, and
-@ (ii) the unwind opcode to add or substract the stack offset.
+@ (ii) the unwind opcode to add or subtract the stack offset.
 @
 @ This file includes several cases separated by different range of -offset
 @

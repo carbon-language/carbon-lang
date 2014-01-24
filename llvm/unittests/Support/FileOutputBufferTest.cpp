@@ -68,7 +68,7 @@ TEST(FileOutputBuffer, Test) {
     memcpy(Buffer2->getBufferStart(), "AABBCCDDEEFFGGHHIIJJ", 20);
     // Do *not* commit buffer.
   }
-  // Verify file does not exist (because buffer not commited).
+  // Verify file does not exist (because buffer not committed).
   bool Exists = false;
   ASSERT_NO_ERROR(fs::exists(Twine(File2), Exists));
   EXPECT_FALSE(Exists);

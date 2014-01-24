@@ -3178,7 +3178,7 @@ void DependenceAnalysis::updateDirection(Dependence::DVEntry &Level,
 
 /// Check if we can delinearize the subscripts. If the SCEVs representing the
 /// source and destination array references are recurrences on a nested loop,
-/// this function flattens the nested recurrences into seperate recurrences
+/// this function flattens the nested recurrences into separate recurrences
 /// for each loop level.
 bool
 DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV, const SCEV *DstSCEV,

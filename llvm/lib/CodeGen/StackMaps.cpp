@@ -41,7 +41,7 @@ PatchPointOpers::PatchPointOpers(const MachineInstr *MI)
     ++CheckStartIdx;
 
   assert(getMetaIdx() == CheckStartIdx &&
-         "Unexpected additonal definition in Patchpoint intrinsic.");
+         "Unexpected additional definition in Patchpoint intrinsic.");
 #endif
 }
 

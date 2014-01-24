@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This header defines ComputeASanStackFrameLayout and auxilary data structs.
+// This header defines ComputeASanStackFrameLayout and auxiliary data structs.
 //
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_TRANSFORMS_UTILS_ASANSTACKFRAMELAYOUT_H

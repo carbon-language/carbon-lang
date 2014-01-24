@@ -28,7 +28,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata)
 declare i8* @objc_msgSend(i8*, i8*, ...)
 
 
-; In the presense of allocas, unconditionally remove retain/release pairs only
+; In the presence of allocas, unconditionally remove retain/release pairs only
 ; if they are known safe in both directions. This prevents matching up an inner
 ; retain with the boundary guarding release in the following situation:
 ; 
@@ -336,7 +336,7 @@ bb3:
   ret void
 }
 
-; Make sure in the presense of allocas, if we find a cfghazard we do not perform
+; Make sure in the presence of allocas, if we find a cfghazard we do not perform
 ; code motion even if we are known safe. These two concepts are separate and
 ; should be treated as such.
 ;

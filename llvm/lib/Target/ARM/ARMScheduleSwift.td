@@ -1721,7 +1721,7 @@ let SchedModel = SwiftModel in {
     SchedVar<SwiftLMAddr3Pred, [SwiftWriteLM9Cy, SwiftWriteLM10Cy,
                                 SwiftWriteLM13CyNo, SwiftWriteP01OneCycle,
                                 SwiftVLDMPerm3]>,
-    // Load of a Q register (not neccessarily true). We should not be mapping to
+    // Load of a Q register (not necessarily true). We should not be mapping to
     // 4 S registers, either.
     SchedVar<SwiftLMAddr4Pred, [SwiftWriteLM4Cy, SwiftWriteLM4CyNo,
                                 SwiftWriteLM4CyNo, SwiftWriteLM4CyNo]>,
@@ -1858,7 +1858,7 @@ let SchedModel = SwiftModel in {
     // Assume 5 D registers.
     SchedVar<SwiftLMAddr10Pred, [SwiftWriteSTM6]>,
     SchedVar<SwiftLMAddr11Pred, [SwiftWriteSTM12]>,
-    // Asume three Q registers.
+    // Assume three Q registers.
     SchedVar<SwiftLMAddr12Pred, [SwiftWriteSTM4]>,
     SchedVar<SwiftLMAddr13Pred, [SwiftWriteSTM14]>,
     // Assume 7 D registers.

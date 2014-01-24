@@ -4,7 +4,7 @@
 ; getUDivExpr()->getZeroExtendExpr()->isLoopBackedgeGuardedBy()
 ;
 ; We actually want SCEV simplification to fail gracefully in this
-; case, so there's no output to check, just the absense of stack overflow.
+; case, so there's no output to check, just the absence of stack overflow.
 
 @c = common global i8 0, align 1
 

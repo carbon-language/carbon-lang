@@ -5987,7 +5987,7 @@ static SDValue LowerAtomicLoadStore(SDValue Op, SelectionDAG &DAG) {
   if (cast<AtomicSDNode>(Op)->getOrdering() <= Monotonic)
     return Op;
 
-  // Aquire/Release load/store is not legal for targets without a
+  // Acquire/Release load/store is not legal for targets without a
   // dmb or equivalent available.
   return SDValue();
 }
@@ -10189,7 +10189,7 @@ bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const 
   case MVT::v2f64: {
     // For any little-endian targets with neon, we can support unaligned ld/st
     // of D and Q (e.g. {D0,D1}) registers by using vld1.i8/vst1.i8.
-    // A big-endian target may also explictly support unaligned accesses
+    // A big-endian target may also explicitly support unaligned accesses
     if (Subtarget->hasNEON() && (AllowsUnaligned || isLittleEndian())) {
       if (Fast)
         *Fast = true;

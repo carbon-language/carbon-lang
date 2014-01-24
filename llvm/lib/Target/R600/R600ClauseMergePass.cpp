@@ -50,7 +50,7 @@ private:
 
   /// IfCvt pass can generate "disabled" ALU clause marker that need to be
   /// removed and their content affected to the previous alu clause.
-  /// This function parse instructions after CFAlu untill it find a disabled
+  /// This function parse instructions after CFAlu until it find a disabled
   /// CFAlu and merge the content, or an enabled CFAlu.
   void cleanPotentialDisabledCFAlu(MachineInstr *CFAlu) const;
 

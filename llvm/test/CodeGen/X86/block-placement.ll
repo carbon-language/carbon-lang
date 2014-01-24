@@ -701,7 +701,7 @@ exit:
 
 define void @unanalyzable_branch_to_best_succ(i1 %cond) {
 ; Ensure that we can handle unanalyzable branches where the destination block
-; gets selected as the optimal sucessor to merge.
+; gets selected as the optimal successor to merge.
 ;
 ; CHECK: unanalyzable_branch_to_best_succ
 ; CHECK: %entry

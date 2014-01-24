@@ -208,7 +208,7 @@ define void @f4(i32 *%ptr, i64 %x) {
   ret void
 }
 
-; This is the largest frame size for which the prepatory increment for
+; This is the largest frame size for which the preparatory increment for
 ; "lmg %r14, %r15, ..." can be done using AGHI.
 define void @f5(i32 *%ptr, i64 %x) {
 ; CHECK-LABEL: f5:
@@ -242,7 +242,7 @@ define void @f5(i32 *%ptr, i64 %x) {
   ret void
 }
 
-; This is the smallest frame size for which the prepatory increment for
+; This is the smallest frame size for which the preparatory increment for
 ; "lmg %r14, %r15, ..." needs to be done using AGFI.
 define void @f6(i32 *%ptr, i64 %x) {
 ; CHECK-LABEL: f6:

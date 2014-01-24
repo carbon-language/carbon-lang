@@ -35,7 +35,7 @@ enum TOF {
   // Assembler: %hi(addr) or %lm(addr)
   MO_HI,
 
-  // Extract bits 43-22 of an adress. Only for sethi.
+  // Extract bits 43-22 of an address. Only for sethi.
   // Assembler: %h44(addr)
   MO_H44,
 

@@ -109,8 +109,8 @@ namespace {
     bool preliminaryScreen();
 
     /// Check if the given conditional branch is based on the comparison
-    /// beween a variable and zero, and if the variable is non-zero, the
-    /// control yeilds to the loop entry. If the branch matches the behavior,
+    /// between a variable and zero, and if the variable is non-zero, the
+    /// control yields to the loop entry. If the branch matches the behavior,
     /// the variable involved in the comparion is returned. This function will
     /// be called to see if the precondition and postcondition of the loop
     /// are in desirable form.
@@ -521,7 +521,7 @@ void NclPopcountRecognize::transform(Instruction *CntInst,
     // TripCnt is exactly the number of iterations the loop has
     TripCnt = NewCount;
 
-    // If the popoulation counter's initial value is not zero, insert Add Inst.
+    // If the population counter's initial value is not zero, insert Add Inst.
     Value *CntInitVal = CntPhi->getIncomingValueForBlock(PreHead);
     ConstantInt *InitConst = dyn_cast<ConstantInt>(CntInitVal);
     if (!InitConst || !InitConst->isZero()) {

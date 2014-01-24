@@ -246,12 +246,11 @@ static Option *LookupNearestOption(StringRef Arg,
   return Best;
 }
 
-/// CommaSeparateAndAddOccurence - A wrapper around Handler->addOccurence() that
-/// does special handling of cl::CommaSeparated options.
-static bool CommaSeparateAndAddOccurence(Option *Handler, unsigned pos,
-                                         StringRef ArgName,
-                                         StringRef Value, bool MultiArg = false)
-{
+/// CommaSeparateAndAddOccurrence - A wrapper around Handler->addOccurrence()
+/// that does special handling of cl::CommaSeparated options.
+static bool CommaSeparateAndAddOccurrence(Option *Handler, unsigned pos,
+                                          StringRef ArgName, StringRef Value,
+                                          bool MultiArg = false) {
   // Check to see if this option accepts a comma separated list of values.  If
   // it does, we have to split up the value into multiple values.
   if (Handler->getMiscFlags() & CommaSeparated) {
@@ -312,13 +311,13 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
 
   // If this isn't a multi-arg option, just run the handler.
   if (NumAdditionalVals == 0)
-    return CommaSeparateAndAddOccurence(Handler, i, ArgName, Value);
+    return CommaSeparateAndAddOccurrence(Handler, i, ArgName, Value);
 
   // If it is, run the handle several times.
   bool MultiArg = false;
 
   if (Value.data()) {
-    if (CommaSeparateAndAddOccurence(Handler, i, ArgName, Value, MultiArg))
+    if (CommaSeparateAndAddOccurrence(Handler, i, ArgName, Value, MultiArg))
       return true;
     --NumAdditionalVals;
     MultiArg = true;
@@ -329,7 +328,7 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
       return Handler->error("not enough values!");
     Value = argv[++i];
 
-    if (CommaSeparateAndAddOccurence(Handler, i, ArgName, Value, MultiArg))
+    if (CommaSeparateAndAddOccurrence(Handler, i, ArgName, Value, MultiArg))
       return true;
     MultiArg = true;
     --NumAdditionalVals;
@@ -1502,7 +1501,7 @@ protected:
     std::vector<OptionCategory *> SortedCategories;
     std::map<OptionCategory *, std::vector<Option *> > CategorizedOptions;
 
-    // Collect registered option categories into vector in preperation for
+    // Collect registered option categories into vector in preparation for
     // sorting.
     for (OptionCatSet::const_iterator I = RegisteredOptionCategories->begin(),
                                       E = RegisteredOptionCategories->end();

@@ -2263,7 +2263,7 @@ let Inst{63-32} = Word1;
 //===--------------------------------------------------------------------===//
 //===---------------------------------------------------------------------===//
 // Custom Inserter for Branches and returns, this eventually will be a
-// seperate pass
+// separate pass
 //===---------------------------------------------------------------------===//
 let isTerminator = 1, usesCustomInserter = 1, isBranch = 1, isBarrier = 1 in {
   def BRANCH : ILFormat<(outs), (ins brtarget:$target),

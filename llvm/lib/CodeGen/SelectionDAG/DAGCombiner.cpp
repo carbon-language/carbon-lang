@@ -6740,7 +6740,7 @@ SDValue DAGCombiner::visitSINT_TO_FP(SDNode *N) {
       return DAG.getNode(ISD::UINT_TO_FP, SDLoc(N), VT, N0);
   }
 
-  // The next optimizations are desireable only if SELECT_CC can be lowered.
+  // The next optimizations are desirable only if SELECT_CC can be lowered.
   // Check against MVT::Other for SELECT_CC, which is a workaround for targets
   // having to say they don't support SELECT_CC on every type the DAG knows
   // about, since there is no way to mark an opcode illegal at all value types
@@ -6797,7 +6797,7 @@ SDValue DAGCombiner::visitUINT_TO_FP(SDNode *N) {
       return DAG.getNode(ISD::SINT_TO_FP, SDLoc(N), VT, N0);
   }
 
-  // The next optimizations are desireable only if SELECT_CC can be lowered.
+  // The next optimizations are desirable only if SELECT_CC can be lowered.
   // Check against MVT::Other for SELECT_CC, which is a workaround for targets
   // having to say they don't support SELECT_CC on every type the DAG knows
   // about, since there is no way to mark an opcode illegal at all value types
@@ -8265,7 +8265,7 @@ bool DAGCombiner::SliceUpLoad(SDNode *N) {
     // The width of the type must be a power of 2 and greater than 8-bits.
     // Otherwise the load cannot be represented in LLVM IR.
     // Moreover, if we shifted with a non-8-bits multiple, the slice
-    // will be accross several bytes. We do not support that.
+    // will be across several bytes. We do not support that.
     unsigned Width = User->getValueSizeInBits(0);
     if (Width < 8 || !isPowerOf2_32(Width) || (Shift & 0x7))
       return 0;

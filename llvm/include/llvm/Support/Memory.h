@@ -95,7 +95,7 @@ namespace sys {
     /// memory was not allocated using the allocateMappedMemory method.
     /// \p Block describes the memory block to be protected.
     /// \p Flags specifies the new protection state to be assigned to the block.
-    /// \p ErrMsg [out] returns a string describing any error that occured.
+    /// \p ErrMsg [out] returns a string describing any error that occurred.
     ///
     /// If \p Flags is MF_WRITE, the actual behavior varies
     /// with the operating system (i.e. MF_READ | MF_WRITE on Windows) and the

@@ -533,7 +533,7 @@ unsigned ARMTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueK
   // creates a sequence of shift, and, or instructions to construct values.
   // These sequences are recognized by the ISel and have zero-cost. Not so for
   // the vectorized code. Because we have support for v2i64 but not i64 those
-  // sequences look particularily beneficial to vectorize.
+  // sequences look particularly beneficial to vectorize.
   // To work around this we increase the cost of v2i64 operations to make them
   // seem less beneficial.
   if (LT.second == MVT::v2i64 &&

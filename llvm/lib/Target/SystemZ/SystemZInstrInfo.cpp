@@ -53,7 +53,7 @@ void SystemZInstrInfo::splitMove(MachineBasicBlock::iterator MI,
   MachineFunction &MF = *MBB->getParent();
 
   // Get two load or store instructions.  Use the original instruction for one
-  // of them (arbitarily the second here) and create a clone for the other.
+  // of them (arbitrarily the second here) and create a clone for the other.
   MachineInstr *EarlierMI = MF.CloneMachineInstr(MI);
   MBB->insert(MI, EarlierMI);
 

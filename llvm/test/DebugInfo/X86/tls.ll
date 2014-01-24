@@ -6,7 +6,7 @@
 
 ; 10 bytes of data in this DW_FORM_block1 representation of the location of 'tls'
 ; CHECK: .byte	10{{ *}}# DW_AT_location
-; DW_OP_const8u (0x0e == 14) of adress
+; DW_OP_const8u (0x0e == 14) of address
 ; CHECK: .byte	14
 ; The debug relocation of the address of the tls variable
 ; CHECK: .quad	tls@DTPOFF

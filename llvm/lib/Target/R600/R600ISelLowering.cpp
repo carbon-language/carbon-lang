@@ -990,7 +990,7 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const 
       DAG.getCondCode(ISD::SETNE));
 }
 
-/// LLVM generates byte-addresed pointers.  For indirect addressing, we need to
+/// LLVM generates byte-addressed pointers.  For indirect addressing, we need to
 /// convert these pointers to a register index.  Each register holds
 /// 16 bytes, (4 x 32bit sub-register), but we need to take into account the
 /// \p StackWidth, which tells us how many of the 4 sub-registrers will be used
@@ -1389,8 +1389,8 @@ SDValue R600TargetLowering::LowerFormalArguments(
                                  DAG.getConstant(36 + VA.getLocMemOffset(), MVT::i32),
                                  MachinePointerInfo(UndefValue::get(PtrTy)),
                                  MemVT, false, false, 4);
-                                 // 4 is the prefered alignment for
-                                 // the CONSTANT memory space.
+    // 4 is the preferred alignment for
+    // the CONSTANT memory space.
     InVals.push_back(Arg);
   }
   return Chain;

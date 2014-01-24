@@ -1,4 +1,4 @@
-; Test that floating-point compares are ommitted if CC already has the
+; Test that floating-point compares are omitted if CC already has the
 ; right value.
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
