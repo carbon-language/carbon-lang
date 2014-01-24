@@ -9,7 +9,7 @@
 
 ModuleName := builtins
 SubDirs := 
-OnlyArchs := x86_64
+OnlyArchs := x86_64 x86_64h
 
 AsmSources := $(foreach file,$(wildcard $(Dir)/*.S),$(notdir $(file)))
 Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))

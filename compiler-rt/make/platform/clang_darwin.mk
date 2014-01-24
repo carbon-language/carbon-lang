@@ -13,14 +13,22 @@ CheckArches = \
     result=""; \
     for arch in $(1); do \
       if $(CC) -arch $$arch -c \
-	  -integrated-as \
-	  $(ProjSrcRoot)/make/platform/clang_darwin_test_input.c \
-	  -isysroot $(ProjSrcRoot)/SDKs/darwin \
-	  -o /dev/null > /dev/null 2> /dev/null; then \
-        result="$$result$$arch "; \
+          -integrated-as \
+          $(ProjSrcRoot)/make/platform/clang_darwin_test_input.c \
+          -isysroot $(ProjSrcRoot)/SDKs/darwin \
+          -o /dev/null > /dev/null 2> /dev/null; then \
+        if $(LD) -v 2>&1 | grep "configured to support" \
+           | tr ' ' '\n' | grep "^$$arch$$" >/dev/null 2>/dev/null; then \
+          result="$$result$$arch "; \
+        else \
+          printf 1>&2 \
+            "warning: clang_darwin.mk: dropping arch '$$arch' from lib '$(2)'"; \
+          printf 1>&2 " (ld does not support it)\n"; \
+        fi; \
       else \
-	printf 1>&2 \
-	  "warning: clang_darwin.mk: dropping arch '$$arch' from lib '$(2)'\n"; \
+        printf 1>&2 \
+          "warning: clang_darwin.mk: dropping arch '$$arch' from lib '$(2)'"; \
+        printf 1>&2 " (clang does not support it)\n"; \
       fi; \
     done; \
     echo $$result)
@@ -38,6 +46,7 @@ XCRunSdkPath = \
 ###
 
 CC       := $(call XCRun,clang)
+LD       := $(call XCRun,ld)
 AR       := $(call XCRun,ar)
 RANLIB   := $(call XCRun,ranlib)
 STRIP    := $(call XCRun,strip)
@@ -62,40 +71,40 @@ UniversalArchs.10.4 := $(call CheckArches,i386 x86_64,10.4)
 # Configuration for targetting iOS for a couple of functions that didn't
 # make it into libSystem.
 Configs += ios
-UniversalArchs.ios := $(call CheckArches,i386 x86_64 armv7,ios)
+UniversalArchs.ios := $(call CheckArches,i386 x86_64 x86_64h armv7,ios)
 
 # Configuration for targetting OSX. These functions may not be in libSystem
 # so we should provide our own.
 Configs += osx
-UniversalArchs.osx := $(call CheckArches,i386 x86_64,osx)
+UniversalArchs.osx := $(call CheckArches,i386 x86_64 x86_64h,osx)
 
 # Configuration for use with kernel/kexts.
 Configs += cc_kext
-UniversalArchs.cc_kext := $(call CheckArches,armv7 i386 x86_64,cc_kext)
+UniversalArchs.cc_kext := $(call CheckArches,armv7 i386 x86_64 x86_64h,cc_kext)
 
 # Configuration for use with kernel/kexts for iOS 5.0 and earlier (which used 
 # a different code generation strategy).
 Configs += cc_kext_ios5
-UniversalArchs.cc_kext_ios5 := $(call CheckArches,x86_64 armv7,cc_kext_ios5)
+UniversalArchs.cc_kext_ios5 := $(call CheckArches,x86_64 x86_64h armv7,cc_kext_ios5)
 
 # Configurations which define the profiling support functions.
 Configs += profile_osx
-UniversalArchs.profile_osx := $(call CheckArches,i386 x86_64,profile_osx)
+UniversalArchs.profile_osx := $(call CheckArches,i386 x86_64 x86_64h,profile_osx)
 Configs += profile_ios
-UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv7,profile_ios)
+UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 x86_64h armv7,profile_ios)
 
 # Configurations which define the ASAN support functions.
 Configs += asan_osx_dynamic
-UniversalArchs.asan_osx_dynamic := $(call CheckArches,i386 x86_64,asan_osx_dynamic)
+UniversalArchs.asan_osx_dynamic := $(call CheckArches,i386 x86_64 x86_64h,asan_osx_dynamic)
 
 IOSSIM_SDK_PATH := $(call XCRunSdkPath,iphonesimulator)
 ifneq ($(IOSSIM_SDK_PATH),)
 Configs += asan_iossim_dynamic
-UniversalArchs.asan_iossim_dynamic := $(call CheckArches,i386 x86_64,asan_iossim_dynamic)
+UniversalArchs.asan_iossim_dynamic := $(call CheckArches,i386 x86_64 x86_64h,asan_iossim_dynamic)
 endif
 
 Configs += ubsan_osx
-UniversalArchs.ubsan_osx := $(call CheckArches,i386 x86_64,ubsan_osx)
+UniversalArchs.ubsan_osx := $(call CheckArches,i386 x86_64 x86_64h,ubsan_osx)
 
 # Darwin 10.6 has a bug in cctools that makes it unable to use ranlib on our ARM
 # object files. If we are on that platform, strip out all ARM archs. We still
@@ -163,23 +172,28 @@ CFLAGS.ubsan_osx	:= $(CFLAGS) -mmacosx-version-min=10.6 -fno-builtin
 
 CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.x86_64	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
+CFLAGS.ios.x86_64h	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.armv7	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.ios.armv7k	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.ios.armv7s	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.osx.i386		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.osx.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.osx.x86_64h	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.i386	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext.x86_64h	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.armv7	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.armv7k	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.armv7s	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext_ios5.armv7  := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext_ios5.armv7k := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext_ios5.armv7s := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
-CFLAGS.profile_osx.i386   := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
-CFLAGS.profile_osx.x86_64 := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
-CFLAGS.profile_ios.i386   := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
-CFLAGS.profile_ios.x86_64 := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
+CFLAGS.profile_osx.i386    := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.profile_osx.x86_64  := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.profile_osx.x86_64h := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+CFLAGS.profile_ios.i386    := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
+CFLAGS.profile_ios.x86_64  := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
+CFLAGS.profile_ios.x86_64h := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.armv7  := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.armv7k := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.armv7s := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
@@ -201,10 +215,10 @@ FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
 
 FUNCTIONS.ios	    := divmodsi4 udivmodsi4 mulosi4 mulodi4 muloti4
 # On x86, the divmod functions reference divsi.
-FUNCTIONS.ios.i386   := $(FUNCTIONS.ios) \
-                        divsi3 udivsi3
-FUNCTIONS.ios.x86_64 := $(FUNCTIONS.ios) \
-                        divsi3 udivsi3
+FUNCTIONS.ios.i386    := $(FUNCTIONS.ios) \
+                         divsi3 udivsi3
+FUNCTIONS.ios.x86_64  := $(FUNCTIONS.ios.i386)
+FUNCTIONS.ios.x86_64h := $(FUNCTIONS.ios.x86_64)
 
 FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4
 
@@ -430,6 +444,8 @@ FUNCTIONS.cc_kext.x86_64 := $(CCKEXT_X86_FUNCTIONS) \
 	udivti3 \
 	umodti3
 
+FUNCTIONS.cc_kext.x86_64h := $(FUNCTIONS.cc_kext.x86_64)
+
 # FIXME: Currently, compiler-rt is missing implementations for a number of the
 # functions that need to go into libcc_kext.a. Filter them out for now.
 CCKEXT_MISSING_FUNCTIONS := \
@@ -463,6 +479,8 @@ FUNCTIONS.cc_kext.i386 := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.i386))
 FUNCTIONS.cc_kext.x86_64 := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.x86_64))
+FUNCTIONS.cc_kext.x86_64h := \
+	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.x86_64h))
 
 KERNEL_USE.cc_kext := 1
 KERNEL_USE.cc_kext_ios5 := 1
