@@ -2836,28 +2836,70 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 MachineBasicBlock *
 SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                  MachineBasicBlock *BB) const {
-  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
-  unsigned BROpcode;
-  unsigned CC;
-  DebugLoc dl = MI->getDebugLoc();
-  // Figure out the conditional branch opcode to use for this select_cc.
   switch (MI->getOpcode()) {
   default: llvm_unreachable("Unknown SELECT_CC!");
   case SP::SELECT_CC_Int_ICC:
   case SP::SELECT_CC_FP_ICC:
   case SP::SELECT_CC_DFP_ICC:
   case SP::SELECT_CC_QFP_ICC:
-    BROpcode = SP::BCOND;
-    break;
+    return expandSelectCC(MI, BB, SP::BCOND);
   case SP::SELECT_CC_Int_FCC:
   case SP::SELECT_CC_FP_FCC:
   case SP::SELECT_CC_DFP_FCC:
   case SP::SELECT_CC_QFP_FCC:
-    BROpcode = SP::FBCOND;
-    break;
-  }
+    return expandSelectCC(MI, BB, SP::FBCOND);
 
-  CC = (SPCC::CondCodes)MI->getOperand(3).getImm();
+  case SP::ATOMIC_LOAD_ADD_32:
+    return expandAtomicRMW(MI, BB, SP::ADDrr);
+  case SP::ATOMIC_LOAD_ADD_64:
+    return expandAtomicRMW(MI, BB, SP::ADDXrr);
+  case SP::ATOMIC_LOAD_SUB_32:
+    return expandAtomicRMW(MI, BB, SP::SUBrr);
+  case SP::ATOMIC_LOAD_SUB_64:
+    return expandAtomicRMW(MI, BB, SP::SUBXrr);
+  case SP::ATOMIC_LOAD_AND_32:
+    return expandAtomicRMW(MI, BB, SP::ANDrr);
+  case SP::ATOMIC_LOAD_AND_64:
+    return expandAtomicRMW(MI, BB, SP::ANDXrr);
+  case SP::ATOMIC_LOAD_OR_32:
+    return expandAtomicRMW(MI, BB, SP::ORrr);
+  case SP::ATOMIC_LOAD_OR_64:
+    return expandAtomicRMW(MI, BB, SP::ORXrr);
+  case SP::ATOMIC_LOAD_XOR_32:
+    return expandAtomicRMW(MI, BB, SP::XORrr);
+  case SP::ATOMIC_LOAD_XOR_64:
+    return expandAtomicRMW(MI, BB, SP::XORXrr);
+  case SP::ATOMIC_LOAD_NAND_32:
+    return expandAtomicRMW(MI, BB, SP::ANDrr);
+  case SP::ATOMIC_LOAD_NAND_64:
+    return expandAtomicRMW(MI, BB, SP::ANDXrr);
+
+  case SP::ATOMIC_LOAD_MAX_32:
+    return expandAtomicRMW(MI, BB, SP::MOVICCrr, SPCC::ICC_G);
+  case SP::ATOMIC_LOAD_MAX_64:
+    return expandAtomicRMW(MI, BB, SP::MOVXCCrr, SPCC::ICC_G);
+  case SP::ATOMIC_LOAD_MIN_32:
+    return expandAtomicRMW(MI, BB, SP::MOVICCrr, SPCC::ICC_LE);
+  case SP::ATOMIC_LOAD_MIN_64:
+    return expandAtomicRMW(MI, BB, SP::MOVXCCrr, SPCC::ICC_LE);
+  case SP::ATOMIC_LOAD_UMAX_32:
+    return expandAtomicRMW(MI, BB, SP::MOVICCrr, SPCC::ICC_GU);
+  case SP::ATOMIC_LOAD_UMAX_64:
+    return expandAtomicRMW(MI, BB, SP::MOVXCCrr, SPCC::ICC_GU);
+  case SP::ATOMIC_LOAD_UMIN_32:
+    return expandAtomicRMW(MI, BB, SP::MOVICCrr, SPCC::ICC_LEU);
+  case SP::ATOMIC_LOAD_UMIN_64:
+    return expandAtomicRMW(MI, BB, SP::MOVXCCrr, SPCC::ICC_LEU);
+  }
+}
+
+MachineBasicBlock*
+SparcTargetLowering::expandSelectCC(MachineInstr *MI,
+                                    MachineBasicBlock *BB,
+                                    unsigned BROpcode) const {
+  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+  unsigned CC = (SPCC::CondCodes)MI->getOperand(3).getImm();
 
   // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
   // control-flow pattern.  The incoming instruction knows the destination vreg
@@ -2909,6 +2951,100 @@ SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
   MI->eraseFromParent();   // The pseudo instruction is gone now.
   return BB;
+}
+
+MachineBasicBlock*
+SparcTargetLowering::expandAtomicRMW(MachineInstr *MI,
+                                     MachineBasicBlock *MBB,
+                                     unsigned Opcode,
+                                     unsigned CondCode) const {
+  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
+  MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
+  DebugLoc DL = MI->getDebugLoc();
+
+  // MI is an atomic read-modify-write instruction of the form:
+  //
+  //   rd = atomicrmw<op> addr, rs2
+  //
+  // All three operands are registers.
+  unsigned DestReg = MI->getOperand(0).getReg();
+  unsigned AddrReg = MI->getOperand(1).getReg();
+  unsigned Rs2Reg  = MI->getOperand(2).getReg();
+
+  // SelectionDAG has already inserted memory barriers before and after MI, so
+  // we simply have to implement the operatiuon in terms of compare-and-swap.
+  //
+  //   %val0 = load %addr
+  // loop:
+  //   %val = phi %val0, %dest
+  //   %upd = op %val, %rs2
+  //   %dest = cas %addr, %upd, %val
+  //   cmp %val, %dest
+  //   bne loop
+  // done:
+  //
+  bool is64Bit = SP::I64RegsRegClass.hasSubClassEq(MRI.getRegClass(DestReg));
+  const TargetRegisterClass *ValueRC =
+    is64Bit ? &SP::I64RegsRegClass : &SP::IntRegsRegClass;
+  unsigned Val0Reg = MRI.createVirtualRegister(ValueRC);
+
+  BuildMI(*MBB, MI, DL, TII.get(is64Bit ? SP::LDXri : SP::LDri), Val0Reg)
+    .addReg(AddrReg).addImm(0);
+
+  // Split the basic block MBB before MI and insert the loop block in the hole.
+  MachineFunction::iterator MFI = MBB;
+  const BasicBlock *LLVM_BB = MBB->getBasicBlock();
+  MachineFunction *MF = MBB->getParent();
+  MachineBasicBlock *LoopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *DoneMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  ++MFI;
+  MF->insert(MFI, LoopMBB);
+  MF->insert(MFI, DoneMBB);
+
+  // Move MI and following instructions to DoneMBB.
+  DoneMBB->splice(DoneMBB->begin(), MBB, MI, MBB->end());
+  DoneMBB->transferSuccessorsAndUpdatePHIs(MBB);
+
+  // Connect the CFG again.
+  MBB->addSuccessor(LoopMBB);
+  LoopMBB->addSuccessor(LoopMBB);
+  LoopMBB->addSuccessor(DoneMBB);
+
+  // Build the loop block.
+  unsigned ValReg = MRI.createVirtualRegister(ValueRC);
+  unsigned UpdReg = MRI.createVirtualRegister(ValueRC);
+
+  BuildMI(LoopMBB, DL, TII.get(SP::PHI), ValReg)
+    .addReg(Val0Reg).addMBB(MBB)
+    .addReg(DestReg).addMBB(LoopMBB);
+
+  if (CondCode) {
+    // This is one of the min/max operations. We need a CMPrr followed by a
+    // MOVXCC/MOVICC.
+    BuildMI(LoopMBB, DL, TII.get(SP::CMPrr)).addReg(ValReg).addReg(Rs2Reg);
+    BuildMI(LoopMBB, DL, TII.get(Opcode), UpdReg)
+      .addReg(ValReg).addReg(Rs2Reg).addImm(CondCode);
+  } else {
+    BuildMI(LoopMBB, DL, TII.get(Opcode), UpdReg)
+      .addReg(ValReg).addReg(Rs2Reg);
+  }
+
+  if (MI->getOpcode() == SP::ATOMIC_LOAD_NAND_32 ||
+      MI->getOpcode() == SP::ATOMIC_LOAD_NAND_64) {
+    unsigned TmpReg = UpdReg;
+    UpdReg = MRI.createVirtualRegister(ValueRC);
+    BuildMI(LoopMBB, DL, TII.get(SP::XORri), UpdReg).addReg(TmpReg).addImm(-1);
+  }
+
+  BuildMI(LoopMBB, DL, TII.get(is64Bit ? SP::CASXrr : SP::CASrr), DestReg)
+    .addReg(AddrReg).addReg(UpdReg).addReg(ValReg)
+    .setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
+  BuildMI(LoopMBB, DL, TII.get(SP::CMPrr)).addReg(ValReg).addReg(DestReg);
+  BuildMI(LoopMBB, DL, TII.get(is64Bit ? SP::BPXCC : SP::BCOND))
+    .addMBB(LoopMBB).addImm(SPCC::ICC_NE);
+
+  MI->eraseFromParent();
+  return DoneMBB;
 }
 
 //===----------------------------------------------------------------------===//

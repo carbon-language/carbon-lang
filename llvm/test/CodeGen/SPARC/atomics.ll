@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=sparcv9 | FileCheck %s
+; RUN: llc < %s -march=sparcv9 -verify-machineinstrs | FileCheck %s
 
 ; CHECK-LABEL: test_atomic_i32
 ; CHECK:       ld [%o0]
@@ -60,4 +60,85 @@ define i32 @test_swap_i32(i32 %a, i32* %ptr) {
 entry:
   %b = atomicrmw xchg i32* %ptr, i32 42 monotonic
   ret i32 %b
+}
+
+; CHECK-LABEL: test_load_add_32
+; CHECK: membar
+; CHECK: add
+; CHECK: cas [%o0]
+; CHECK: membar
+define zeroext i32 @test_load_add_32(i32* %p, i32 zeroext %v) {
+entry:
+  %0 = atomicrmw add i32* %p, i32 %v seq_cst
+  ret i32 %0
+}
+
+; CHECK-LABEL: test_load_sub_64
+; CHECK: membar
+; CHECK: sub
+; CHECK: casx [%o0]
+; CHECK: membar
+define zeroext i64 @test_load_sub_64(i64* %p, i64 zeroext %v) {
+entry:
+  %0 = atomicrmw sub i64* %p, i64 %v seq_cst
+  ret i64 %0
+}
+
+; CHECK-LABEL: test_load_xor_32
+; CHECK: membar
+; CHECK: xor
+; CHECK: cas [%o0]
+; CHECK: membar
+define zeroext i32 @test_load_xor_32(i32* %p, i32 zeroext %v) {
+entry:
+  %0 = atomicrmw xor i32* %p, i32 %v seq_cst
+  ret i32 %0
+}
+
+; CHECK-LABEL: test_load_and_32
+; CHECK: membar
+; CHECK: and
+; CHECK-NOT: xor
+; CHECK: cas [%o0]
+; CHECK: membar
+define zeroext i32 @test_load_and_32(i32* %p, i32 zeroext %v) {
+entry:
+  %0 = atomicrmw and i32* %p, i32 %v seq_cst
+  ret i32 %0
+}
+
+; CHECK-LABEL: test_load_nand_32
+; CHECK: membar
+; CHECK: and
+; CHECK: xor
+; CHECK: cas [%o0]
+; CHECK: membar
+define zeroext i32 @test_load_nand_32(i32* %p, i32 zeroext %v) {
+entry:
+  %0 = atomicrmw nand i32* %p, i32 %v seq_cst
+  ret i32 %0
+}
+
+; CHECK-LABEL: test_load_max_64
+; CHECK: membar
+; CHECK: cmp
+; CHECK: movg %xcc
+; CHECK: casx [%o0]
+; CHECK: membar
+define zeroext i64 @test_load_max_64(i64* %p, i64 zeroext %v) {
+entry:
+  %0 = atomicrmw max i64* %p, i64 %v seq_cst
+  ret i64 %0
+}
+
+; CHECK-LABEL: test_load_umin_32
+; CHECK: membar
+; CHECK: cmp
+; CHECK: movleu %icc
+; CHECK: cas [%o0]
+; CHECK: membar
+define zeroext i32 @test_load_umin_32(i32* %p, i32 zeroext %v) {
+entry:
+  %0 = atomicrmw umin i32* %p, i32 %v seq_cst
+  ret i32 %0
 }

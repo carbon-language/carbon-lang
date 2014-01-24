@@ -165,6 +165,13 @@ namespace llvm {
     virtual void ReplaceNodeResults(SDNode *N,
                                     SmallVectorImpl<SDValue>& Results,
                                     SelectionDAG &DAG) const;
+
+    MachineBasicBlock *expandSelectCC(MachineInstr *MI, MachineBasicBlock *BB,
+                                      unsigned BROpcode) const;
+    MachineBasicBlock *expandAtomicRMW(MachineInstr *MI,
+                                       MachineBasicBlock *BB,
+                                       unsigned Opcode,
+                                       unsigned CondCode = 0) const;
   };
 } // end namespace llvm
 
