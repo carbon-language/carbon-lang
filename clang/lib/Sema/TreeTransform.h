@@ -8339,7 +8339,8 @@ TreeTransform<Derived>::TransformLambdaScope(LambdaExpr *E,
   bool Invalid = false;
 
   // Introduce the context of the call operator.
-  Sema::ContextRAII SavedContext(getSema(), CallOperator);
+  Sema::ContextRAII SavedContext(getSema(), CallOperator,
+                                 /*NewThisContext*/false);
 
   LambdaScopeInfo *const LSI = getSema().getCurLambda();
   // Enter the scope of the lambda.

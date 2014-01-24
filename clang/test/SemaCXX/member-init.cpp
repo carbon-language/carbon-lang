@@ -100,3 +100,13 @@ namespace rdar14084171 {
   };
   void f(Sprite& x) { x = x; }
 }
+
+namespace PR18560 {
+  struct X { int m; };
+
+  template<typename T = X,
+           typename U = decltype(T::m)>
+  int f();
+
+  struct Y { int b = f(); };
+}

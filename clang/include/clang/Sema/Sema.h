@@ -479,13 +479,15 @@ public:
     QualType SavedCXXThisTypeOverride;
 
   public:
-    ContextRAII(Sema &S, DeclContext *ContextToPush)
+    ContextRAII(Sema &S, DeclContext *ContextToPush, bool NewThisContext = true)
       : S(S), SavedContext(S.CurContext),
         SavedContextState(S.DelayedDiagnostics.pushUndelayed()),
         SavedCXXThisTypeOverride(S.CXXThisTypeOverride)
     {
       assert(ContextToPush && "pushing null context");
       S.CurContext = ContextToPush;
+      if (NewThisContext)
+        S.CXXThisTypeOverride = QualType();
     }
 
     void pop() {
