@@ -463,11 +463,12 @@ error_code COFFObjectFile::initExportTablePtr() {
   return object_error::success;
 }
 
-COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &EC)
-  : ObjectFile(Binary::ID_COFF, Object), COFFHeader(0), PE32Header(0),
-    DataDirectory(0), SectionTable(0), SymbolTable(0), StringTable(0),
-    StringTableSize(0), ImportDirectory(0), NumberOfImportDirectory(0),
-    ExportDirectory(0) {
+COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &EC,
+                               bool BufferOwned)
+    : ObjectFile(Binary::ID_COFF, Object, BufferOwned), COFFHeader(0),
+      PE32Header(0), DataDirectory(0), SectionTable(0), SymbolTable(0),
+      StringTable(0), StringTableSize(0), ImportDirectory(0),
+      NumberOfImportDirectory(0), ExportDirectory(0) {
   // Check that we at least have enough room for a header.
   if (!checkSize(Data, EC, sizeof(coff_file_header))) return;
 
@@ -1015,9 +1016,10 @@ error_code ExportDirectoryEntryRef::getSymbolName(StringRef &Result) const {
   return object_error::success;
 }
 
-ErrorOr<ObjectFile *> ObjectFile::createCOFFObjectFile(MemoryBuffer *Object) {
+ErrorOr<ObjectFile *> ObjectFile::createCOFFObjectFile(MemoryBuffer *Object,
+                                                       bool BufferOwned) {
   error_code EC;
-  OwningPtr<COFFObjectFile> Ret(new COFFObjectFile(Object, EC));
+  OwningPtr<COFFObjectFile> Ret(new COFFObjectFile(Object, EC, BufferOwned));
   if (EC)
     return EC;
   return Ret.take();

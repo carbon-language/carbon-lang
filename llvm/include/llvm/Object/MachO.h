@@ -57,7 +57,7 @@ public:
   };
 
   MachOObjectFile(MemoryBuffer *Object, bool IsLittleEndian, bool Is64Bits,
-                  error_code &ec);
+                  error_code &EC, bool BufferOwned = true);
 
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;

@@ -165,7 +165,7 @@ protected:
   bool isDyldELFObject;
 
 public:
-  ELFObjectFile(MemoryBuffer *Object, error_code &ec);
+  ELFObjectFile(MemoryBuffer *Object, error_code &EC, bool BufferOwned = true);
 
   const Elf_Sym *getSymbol(DataRefImpl Symb) const;
 
@@ -813,11 +813,12 @@ ELFObjectFile<ELFT>::getRela(DataRefImpl Rela) const {
 }
 
 template <class ELFT>
-ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec)
+ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec,
+                                   bool BufferOwned)
     : ObjectFile(getELFType(static_cast<endianness>(ELFT::TargetEndianness) ==
                                 support::little,
                             ELFT::Is64Bits),
-                 Object),
+                 Object, BufferOwned),
       EF(Object, ec) {}
 
 template <class ELFT>

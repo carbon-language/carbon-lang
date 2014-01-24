@@ -23,9 +23,9 @@ using namespace object;
 
 void ObjectFile::anchor() { }
 
-ObjectFile::ObjectFile(unsigned int Type, MemoryBuffer *source)
-  : Binary(Type, source) {
-}
+ObjectFile::ObjectFile(unsigned int Type, MemoryBuffer *Source,
+                       bool BufferOwned)
+    : Binary(Type, Source, BufferOwned) {}
 
 error_code ObjectFile::getSymbolAlignment(DataRefImpl DRI,
                                           uint32_t &Result) const {
@@ -38,8 +38,8 @@ section_iterator ObjectFile::getRelocatedSection(DataRefImpl Sec) const {
 }
 
 ErrorOr<ObjectFile *> ObjectFile::createObjectFile(MemoryBuffer *Object,
+                                                   bool BufferOwned,
                                                    sys::fs::file_magic Type) {
-  OwningPtr<MemoryBuffer> ScopedObj(Object);
   if (Type == sys::fs::file_magic::unknown)
     Type = sys::fs::identify_magic(Object->getBuffer());
 
@@ -49,12 +49,14 @@ ErrorOr<ObjectFile *> ObjectFile::createObjectFile(MemoryBuffer *Object,
   case sys::fs::file_magic::archive:
   case sys::fs::file_magic::macho_universal_binary:
   case sys::fs::file_magic::windows_resource:
+    if (BufferOwned)
+      delete Object;
     return object_error::invalid_file_type;
   case sys::fs::file_magic::elf_relocatable:
   case sys::fs::file_magic::elf_executable:
   case sys::fs::file_magic::elf_shared_object:
   case sys::fs::file_magic::elf_core:
-    return createELFObjectFile(ScopedObj.take());
+    return createELFObjectFile(Object, BufferOwned);
   case sys::fs::file_magic::macho_object:
   case sys::fs::file_magic::macho_executable:
   case sys::fs::file_magic::macho_fixed_virtual_memory_shared_lib:
@@ -65,11 +67,11 @@ ErrorOr<ObjectFile *> ObjectFile::createObjectFile(MemoryBuffer *Object,
   case sys::fs::file_magic::macho_bundle:
   case sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
   case sys::fs::file_magic::macho_dsym_companion:
-    return createMachOObjectFile(ScopedObj.take());
+    return createMachOObjectFile(Object, BufferOwned);
   case sys::fs::file_magic::coff_object:
   case sys::fs::file_magic::coff_import_library:
   case sys::fs::file_magic::pecoff_executable:
-    return createCOFFObjectFile(ScopedObj.take());
+    return createCOFFObjectFile(Object, BufferOwned);
   }
   llvm_unreachable("Unexpected Object File Type");
 }

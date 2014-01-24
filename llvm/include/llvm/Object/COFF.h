@@ -320,7 +320,7 @@ protected:
                                     StringRef &Result) const;
 
 public:
-  COFFObjectFile(MemoryBuffer *Object, error_code &ec);
+  COFFObjectFile(MemoryBuffer *Object, error_code &EC, bool BufferOwned = true);
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
   virtual symbol_iterator begin_dynamic_symbols() const;

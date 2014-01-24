@@ -31,11 +31,12 @@ private:
   Binary(const Binary &other) LLVM_DELETED_FUNCTION;
 
   unsigned int TypeID;
+  bool BufferOwned;
 
 protected:
   MemoryBuffer *Data;
 
-  Binary(unsigned int Type, MemoryBuffer *Source);
+  Binary(unsigned int Type, MemoryBuffer *Source, bool BufferOwned = true);
 
   enum {
     ID_Archive,

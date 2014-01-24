@@ -26,12 +26,12 @@ using namespace llvm;
 using namespace object;
 
 Binary::~Binary() {
-  delete Data;
+  if (BufferOwned)
+    delete Data;
 }
 
-Binary::Binary(unsigned int Type, MemoryBuffer *Source)
-  : TypeID(Type)
-  , Data(Source) {}
+Binary::Binary(unsigned int Type, MemoryBuffer *Source, bool BufferOwned)
+  : TypeID(Type), BufferOwned(BufferOwned), Data(Source) {}
 
 StringRef Binary::getData() const {
   return Data->getBuffer();

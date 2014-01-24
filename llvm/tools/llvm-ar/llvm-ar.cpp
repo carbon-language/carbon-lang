@@ -692,6 +692,7 @@ static void writeStringTable(raw_fd_ostream &Out,
 
 static void writeSymbolTable(
     raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
+    ArrayRef<OwningPtr<MemoryBuffer> > Buffers,
     std::vector<std::pair<unsigned, unsigned> > &MemberOffsetRefs) {
   unsigned StartOffset = 0;
   unsigned MemberNum = 0;
@@ -700,36 +701,13 @@ static void writeSymbolTable(
   for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),
                                               E = Members.end();
        I != E; ++I, ++MemberNum) {
-    object::ObjectFile *Obj;
-    if (I->isNewMember()) {
-      const char *Filename = I->getNew();
-      int FD = I->getFD();
-      const sys::fs::file_status &Status = I->getStatus();
+    const OwningPtr<MemoryBuffer> &MemberBuffer = Buffers[MemberNum];
+    ErrorOr<object::ObjectFile *> ObjOrErr =
+        object::ObjectFile::createObjectFile(MemberBuffer.get(), false);
+    if (!ObjOrErr)
+      continue;  // FIXME: check only for "not an object file" errors.
+    object::ObjectFile *Obj = ObjOrErr.get();
 
-      OwningPtr<MemoryBuffer> File;
-      failIfError(MemoryBuffer::getOpenFile(FD, Filename, File,
-                                            Status.getSize(), false),
-                  Filename);
-
-      if (ErrorOr<object::ObjectFile *> ObjOrErr =
-              object::ObjectFile::createObjectFile(File.take()))
-        Obj = ObjOrErr.get();
-      else
-        Obj = NULL;
-    } else {
-      object::Archive::child_iterator OldMember = I->getOld();
-      OwningPtr<object::Binary> Binary;
-      error_code EC = OldMember->getAsBinary(Binary);
-      if (EC) { // FIXME: check only for "not an object file" errors.
-        Obj = NULL;
-      } else {
-        Obj = dyn_cast<object::ObjectFile>(Binary.get());
-        if (Obj)
-          Binary.take();
-      }
-    }
-    if (!Obj)
-      continue;
     DeleteIt.push_back(Obj);
     if (!StartOffset) {
       printMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);
@@ -800,8 +778,29 @@ static void performWriteOperation(ArchiveOperation Operation,
 
   std::vector<std::pair<unsigned, unsigned> > MemberOffsetRefs;
 
+  std::vector<OwningPtr<MemoryBuffer> > MemberBuffers;
+  MemberBuffers.resize(NewMembers.size());
+
+  for (unsigned I = 0, N = NewMembers.size(); I < N; ++I) {
+    OwningPtr<MemoryBuffer> &MemberBuffer = MemberBuffers[I];
+    NewArchiveIterator &Member = NewMembers[I];
+
+    if (Member.isNewMember()) {
+      const char *Filename = Member.getNew();
+      int FD = Member.getFD();
+      const sys::fs::file_status &Status = Member.getStatus();
+      failIfError(MemoryBuffer::getOpenFile(FD, Filename, MemberBuffer,
+                                            Status.getSize(), false),
+                  Filename);
+
+    } else {
+      object::Archive::child_iterator OldMember = Member.getOld();
+      failIfError(OldMember->getMemoryBuffer(MemberBuffer));
+    }
+  }
+
   if (Symtab) {
-    writeSymbolTable(Out, NewMembers, MemberOffsetRefs);
+    writeSymbolTable(Out, NewMembers, MemberBuffers, MemberOffsetRefs);
   }
 
   std::vector<unsigned> StringMapIndexes;
@@ -825,15 +824,10 @@ static void performWriteOperation(ArchiveOperation Operation,
     }
     Out.seek(Pos);
 
+    const OwningPtr<MemoryBuffer> &File = MemberBuffers[MemberNum];
     if (I->isNewMember()) {
       const char *FileName = I->getNew();
-      int FD = I->getFD();
       const sys::fs::file_status &Status = I->getStatus();
-
-      OwningPtr<MemoryBuffer> File;
-      failIfError(MemoryBuffer::getOpenFile(FD, FileName, File,
-                                            Status.getSize(), false),
-                  FileName);
 
       StringRef Name = sys::path::filename(FileName);
       if (Name.size() < 16)
@@ -845,7 +839,6 @@ static void performWriteOperation(ArchiveOperation Operation,
                           Status.getLastModificationTime(), Status.getUser(),
                           Status.getGroup(), Status.permissions(),
                           Status.getSize());
-      Out << File->getBuffer();
     } else {
       object::Archive::child_iterator OldMember = I->getOld();
       StringRef Name = I->getName();
@@ -859,8 +852,9 @@ static void performWriteOperation(ArchiveOperation Operation,
                           OldMember->getLastModified(), OldMember->getUID(),
                           OldMember->getGID(), OldMember->getAccessMode(),
                           OldMember->getSize());
-      Out << OldMember->getBuffer();
     }
+
+    Out << File->getBuffer();
 
     if (Out.tell() % 2)
       Out << '\n';
