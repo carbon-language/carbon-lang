@@ -94,33 +94,6 @@ private:
     }
     DF->getContents().append(Code.begin(), Code.end());
   }
-
-  const MCSection *getSectionText() {
-    return getContext().getObjectFileInfo()->getTextSection();
-  }
-
-  const MCSection *getSectionData() {
-    return getContext().getObjectFileInfo()->getDataSection();
-  }
-
-  const MCSection *getSectionBSS() {
-    return getContext().getObjectFileInfo()->getBSSSection();
-  }
-
-  void SetSectionText() {
-    SwitchSection(getSectionText());
-    EmitCodeAlignment(4, 0);
-  }
-
-  void SetSectionData() {
-    SwitchSection(getSectionData());
-    EmitCodeAlignment(4, 0);
-  }
-
-  void SetSectionBSS() {
-    SwitchSection(getSectionBSS());
-    EmitCodeAlignment(4, 0);
-  }
 };
 } // end anonymous namespace.
 
@@ -132,7 +105,7 @@ void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                       unsigned ByteAlignment, bool External) {
   assert(!Symbol->isInSection() && "Symbol must not already have a section!");
 
-  const MCSection *Section = getSectionBSS();
+  const MCSection *Section = getContext().getObjectFileInfo()->getBSSSection();
   MCSectionData &SectionData = getAssembler().getOrCreateSectionData(*Section);
   if (SectionData.getAlignment() < ByteAlignment)
     SectionData.setAlignment(ByteAlignment);
@@ -151,10 +124,19 @@ void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 // MCStreamer interface
 
 void WinCOFFStreamer::InitSections() {
-  SetSectionText();
-  SetSectionData();
-  SetSectionBSS();
-  SetSectionText();
+  // FIXME: this is identical to the ELF one.
+  // This emulates the same behavior of GNU as. This makes it easier
+  // to compare the output as the major sections are in the same order.
+  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
+  EmitCodeAlignment(4, 0);
+
+  SwitchSection(getContext().getObjectFileInfo()->getDataSection());
+  EmitCodeAlignment(4, 0);
+
+  SwitchSection(getContext().getObjectFileInfo()->getBSSSection());
+  EmitCodeAlignment(4, 0);
+
+  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 
 void WinCOFFStreamer::EmitLabel(MCSymbol *Symbol) {
