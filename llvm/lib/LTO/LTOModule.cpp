@@ -534,30 +534,9 @@ LTOModule::addPotentialUndefinedSymbol(const GlobalValue *decl, bool isFunc) {
 
 namespace {
 
-// Common infrastructure is allowed to assume the existence of a current
-// section. Since this streamer doesn't need one itself, we just provide
-// a dummy one.
-class DummySection : public MCSection {
-public:
-  DummySection() : MCSection(SV_ELF, SectionKind::getText()) {}
-
-  virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
-                                    const MCExpr *Subsection) const {}
-
-  virtual std::string getLabelBeginName() const { return ""; }
-
-  virtual std::string getLabelEndName() const { return ""; }
-
-  virtual bool UseCodeAlign() const { return false; }
-
-  virtual bool isVirtualSection() const { return false; }
-};
-
   class RecordStreamer : public MCStreamer {
   public:
     enum State { NeverSeen, Global, Defined, DefinedGlobal, Used };
-
-    DummySection TheSection;
 
   private:
     StringMap<State> Symbols;
@@ -644,9 +623,7 @@ public:
       return Symbols.end();
     }
 
-    RecordStreamer(MCContext &Context) : MCStreamer(Context, 0) {
-      SwitchSection(&TheSection);
-    }
+    RecordStreamer(MCContext &Context) : MCStreamer(Context, 0) {}
 
     virtual void EmitInstruction(const MCInst &Inst) {
       // Scan for values.
@@ -686,7 +663,9 @@ public:
     // Noop calls.
     virtual void ChangeSection(const MCSection *Section,
                                const MCExpr *Subsection) {}
-    virtual void InitSections() {}
+    virtual void InitSections() {
+      SwitchSection(getContext().getObjectFileInfo()->getTextSection());
+    }
     virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {}
     virtual void EmitThumbFunc(MCSymbol *Func) {}
     virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
