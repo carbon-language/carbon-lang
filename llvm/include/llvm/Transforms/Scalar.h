@@ -312,6 +312,12 @@ Pass *createLoopDeletionPass();
   
 //===----------------------------------------------------------------------===//
 //
+// ConstantHoisting - This pass prepares a function for expensive constants.
+//
+FunctionPass *createConstantHoistingPass();
+
+//===----------------------------------------------------------------------===//
+//
 // CodeGenPrepare - This pass prepares a function for instruction selection.
 //
 FunctionPass *createCodeGenPreparePass(const TargetMachine *TM = 0);
