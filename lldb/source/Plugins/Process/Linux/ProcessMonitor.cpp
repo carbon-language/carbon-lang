@@ -2062,7 +2062,12 @@ ProcessMonitor::ServeOperation(OperationArgs *args)
     for(;;)
     {
         // wait for next pending operation
-        sem_wait(&monitor->m_operation_pending);
+        if (sem_wait(&monitor->m_operation_pending))
+        {
+            if (errno == EINTR)
+                continue;
+            assert(false && "Unexpected errno from sem_wait");
+        }
 
         monitor->m_operation->Execute(monitor);
 
@@ -2082,7 +2087,12 @@ ProcessMonitor::DoOperation(Operation *op)
     sem_post(&m_operation_pending);
 
     // wait for operation to complete
-    sem_wait(&m_operation_done);
+    while (sem_wait(&m_operation_done))
+    {
+        if (errno == EINTR)
+            continue;
+        assert(false && "Unexpected errno from sem_wait");
+    }
 }
 
 size_t
