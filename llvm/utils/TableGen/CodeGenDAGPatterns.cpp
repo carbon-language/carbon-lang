@@ -374,7 +374,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
   if (!Other.hasVectorTypes())
     MadeChange |= EnforceScalar(TP);
 
-  if (TypeVec.size() == 1 && Other.TypeVec.size() == 1) {
+  if (isConcrete() && Other.isConcrete()) {
     // If we are down to concrete types, this code does not currently
     // handle nodes which have multiple types, where some types are
     // integer, and some are fp.  Assert that this is not the case.
@@ -385,8 +385,8 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
     // Otherwise, if these are both vector types, either this vector
     // must have a larger bitsize than the other, or this element type
     // must be larger than the other.
-    MVT Type(TypeVec[0]);
-    MVT OtherType(Other.TypeVec[0]);
+    MVT Type(getConcrete());
+    MVT OtherType(Other.getConcrete());
 
     if (hasVectorTypes() && Other.hasVectorTypes()) {
       if (Type.getSizeInBits() >= OtherType.getSizeInBits())
