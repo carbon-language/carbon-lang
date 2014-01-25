@@ -8331,9 +8331,19 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   case Expr::MaterializeTemporaryExprClass:
   case Expr::PseudoObjectExprClass:
   case Expr::AtomicExprClass:
-  case Expr::InitListExprClass:
   case Expr::LambdaExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
+
+  case Expr::InitListExprClass: {
+    // C++03 [dcl.init]p13: If T is a scalar type, then a declaration of the
+    // form "T x = { a };" is equivalent to "T x = a;".
+    // Unless we're initializing a reference, T is a scalar as it is known to be
+    // of integral or enumeration type.
+    if (E->isRValue())
+      if (cast<InitListExpr>(E)->getNumInits() == 1)
+        return CheckICE(cast<InitListExpr>(E)->getInit(0), Ctx);
+    return ICEDiag(IK_NotICE, E->getLocStart());
+  }
 
   case Expr::SizeOfPackExprClass:
   case Expr::GNUNullExprClass:
