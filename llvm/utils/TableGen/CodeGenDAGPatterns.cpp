@@ -580,27 +580,78 @@ bool EEVT::TypeSet::EnforceVectorEltTypeIs(EEVT::TypeSet &VTOperand,
 /// vector type specified by VTOperand.
 bool EEVT::TypeSet::EnforceVectorSubVectorTypeIs(EEVT::TypeSet &VTOperand,
                                                  TreePattern &TP) {
+  if (TP.hasError())
+    return false;
+
   // "This" must be a vector and "VTOperand" must be a vector.
   bool MadeChange = false;
   MadeChange |= EnforceVector(TP);
   MadeChange |= VTOperand.EnforceVector(TP);
 
-  // "This" must be larger than "VTOperand."
-  MadeChange |= VTOperand.EnforceSmallerThan(*this, TP);
+  // If one side is known to be integer or known to be FP but the other side has
+  // no information, get at least the type integrality info in there.
+  if (!hasFloatingPointTypes())
+    MadeChange |= VTOperand.EnforceInteger(TP);
+  else if (!hasIntegerTypes())
+    MadeChange |= VTOperand.EnforceFloatingPoint(TP);
+  if (!VTOperand.hasFloatingPointTypes())
+    MadeChange |= EnforceInteger(TP);
+  else if (!VTOperand.hasIntegerTypes())
+    MadeChange |= EnforceFloatingPoint(TP);
+
+  assert(!isCompletelyUnknown() && !VTOperand.isCompletelyUnknown() &&
+         "Should have a type list now");
 
   // If we know the vector type, it forces the scalar types to agree.
+  // Also force one vector to have more elements than the other.
   if (isConcrete()) {
     MVT IVT = getConcrete();
+    unsigned NumElems = IVT.getVectorNumElements();
     IVT = IVT.getVectorElementType();
 
     EEVT::TypeSet EltTypeSet(IVT.SimpleTy, TP);
     MadeChange |= VTOperand.EnforceVectorEltTypeIs(EltTypeSet, TP);
+
+    // Only keep types that have less elements than VTOperand.
+    TypeSet InputSet(VTOperand);
+
+    for (unsigned i = 0; i != VTOperand.TypeVec.size(); ++i) {
+      assert(isVector(VTOperand.TypeVec[i]) && "EnforceVector didn't work");
+      if (MVT(VTOperand.TypeVec[i]).getVectorNumElements() >= NumElems) {
+        VTOperand.TypeVec.erase(VTOperand.TypeVec.begin()+i--);
+        MadeChange = true;
+      }
+    }
+    if (VTOperand.TypeVec.empty()) {  // FIXME: Really want an SMLoc here!
+      TP.error("Type inference contradiction found, forcing '" +
+               InputSet.getName() + "' to have less vector elements than '" +
+               getName() + "'");
+      return false;
+    }
   } else if (VTOperand.isConcrete()) {
     MVT IVT = VTOperand.getConcrete();
+    unsigned NumElems = IVT.getVectorNumElements();
     IVT = IVT.getVectorElementType();
 
     EEVT::TypeSet EltTypeSet(IVT.SimpleTy, TP);
     MadeChange |= EnforceVectorEltTypeIs(EltTypeSet, TP);
+
+    // Only keep types that have more elements than 'this'.
+    TypeSet InputSet(*this);
+
+    for (unsigned i = 0; i != TypeVec.size(); ++i) {
+      assert(isVector(TypeVec[i]) && "EnforceVector didn't work");
+      if (MVT(TypeVec[i]).getVectorNumElements() <= NumElems) {
+        TypeVec.erase(TypeVec.begin()+i--);
+        MadeChange = true;
+      }
+    }
+    if (TypeVec.empty()) {  // FIXME: Really want an SMLoc here!
+      TP.error("Type inference contradiction found, forcing '" +
+               InputSet.getName() + "' to have more vector elements than '" +
+               VTOperand.getName() + "'");
+      return false;
+    }
   }
 
   return MadeChange;
