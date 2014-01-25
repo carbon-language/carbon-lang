@@ -23,15 +23,15 @@ target triple = "x86_64-apple-macosx"
 @b = common global i32 0, align 4
 
 ; Check that the def-use chain that leads to the bad SCEV is still
-; there, and part of it is hoisted to the entry block.
+; there.
 ;
 ; CHECK-LABEL: @foo
 ; CHECK-LABEL: entry:
-; CHECK: %cmp4
 ; CHECK-LABEL: for.cond1.preheader:
 ; CHECK-LABEL: for.body3:
-; CHECK: %1 = zext i1 %cmp4 to i32
-; CHECK: %xor = xor i32 %1, 1
+; CHECK: %cmp4
+; CHECK: %conv = zext i1 %cmp4 to i32
+; CHECK: %xor = xor i32 %conv6, 1
 define void @foo() {
 entry:
   br label %for.cond

@@ -76,7 +76,8 @@ Out:		; preds = %Loop
 	ret i32 %tmp.7
 ; CHECK-LABEL: @test4(
 ; CHECK:     Out:
-; CHECK-NEXT:  mul i32 %N, %N_addr.0.pn
+; CHECK-NEXT:  %[[LCSSAPHI:.*]] = phi i32 [ %N_addr.0.pn
+; CHECK-NEXT:  mul i32 %N, %[[LCSSAPHI]]
 ; CHECK-NEXT:  sub i32 %tmp.6, %N
 ; CHECK-NEXT:  ret i32
 }
@@ -152,12 +153,14 @@ Out2:		; preds = %ContLoop
 	ret i32 %tmp.7
 ; CHECK-LABEL: @test7(
 ; CHECK:     Out1:
-; CHECK-NEXT:  mul i32 %N, %N_addr.0.pn
+; CHECK-NEXT:  %[[LCSSAPHI:.*]] = phi i32 [ %N_addr.0.pn
+; CHECK-NEXT:  mul i32 %N, %[[LCSSAPHI]]
 ; CHECK-NEXT:  sub i32 %tmp.6, %N
 ; CHECK-NEXT:  ret
 ; CHECK:     Out2:
-; CHECK-NEXT:  mul i32 %N, %N_addr.0.pn
-; CHECK-NEXT:  sub i32 %tmp.6
+; CHECK-NEXT:  %[[LCSSAPHI:.*]] = phi i32 [ %N_addr.0.pn
+; CHECK-NEXT:  mul i32 %N, %[[LCSSAPHI]]
+; CHECK-NEXT:  sub i32 %tmp.6.le, %N
 ; CHECK-NEXT:  ret
 }
 
@@ -183,7 +186,8 @@ exit2:		; preds = %Cont
 ; CHECK:     exit1:
 ; CHECK-NEXT:  ret i32 0
 ; CHECK:     exit2:
-; CHECK-NEXT:  %V = add i32 %X, 1
+; CHECK-NEXT:  %[[LCSSAPHI:.*]] = phi i32 [ %X
+; CHECK-NEXT:  %V = add i32 %[[LCSSAPHI]], 1
 ; CHECK-NEXT:  ret i32 %V
 }
 
@@ -229,7 +233,8 @@ Out:		; preds = %Loop
         
 ; CHECK-LABEL: @test10(
 ; CHECK: Out: 
-; CHECK-NEXT:  %tmp.6 = sdiv i32 %N, %N_addr.0.pn
+; CHECK-NEXT:  %[[LCSSAPHI:.*]] = phi i32 [ %N_addr.0.pn
+; CHECK-NEXT:  %tmp.6 = sdiv i32 %N, %[[LCSSAPHI]]
 ; CHECK-NEXT:  ret i32 %tmp.6
 }
 

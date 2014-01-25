@@ -54,6 +54,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include <algorithm>
 using namespace llvm;
@@ -85,10 +86,12 @@ namespace {
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
+      AU.addPreservedID(LoopSimplifyID);
+      AU.addRequiredID(LCSSAID);
+      AU.addPreservedID(LCSSAID);
       AU.addRequired<AliasAnalysis>();
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<ScalarEvolution>();
-      AU.addPreservedID(LoopSimplifyID);
       AU.addRequired<TargetLibraryInfo>();
     }
 
@@ -193,6 +196,8 @@ INITIALIZE_PASS_BEGIN(LICM, "licm", "Loop Invariant Code Motion", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
+INITIALIZE_PASS_DEPENDENCY(LCSSA)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(LICM, "licm", "Loop Invariant Code Motion", false, false)
@@ -281,6 +286,14 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
     for (AliasSetTracker::iterator I = CurAST->begin(), E = CurAST->end();
          I != E; ++I)
       PromoteAliasSet(*I, ExitBlocks, InsertPts);
+  }
+
+  // If we have successfully changed the loop, re-form LCSSA and also re-form
+  // LCSSA in the parent loop as hoisting or sinking may have broken it.
+  if (Changed) {
+    formLCSSA(*L, *DT, getAnalysisIfAvailable<ScalarEvolution>());
+    if (Loop *ParentL = L->getParentLoop())
+      formLCSSA(*ParentL, *DT, getAnalysisIfAvailable<ScalarEvolution>());
   }
 
   // Clear out loops state information for the next iteration
@@ -451,6 +464,19 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
   return isSafeToExecuteUnconditionally(I);
 }
 
+/// \brief Returns true if a PHINode is a trivially replaceable with an
+/// Instruction.
+///
+/// This is true when all incoming values are that instruction. This pattern
+/// occurs most often with LCSSA PHI nodes.
+static bool isTriviallyReplacablePHI(PHINode &PN, Instruction &I) {
+  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+    if (PN.getIncomingValue(i) != &I)
+      return false;
+
+  return true;
+}
+
 /// isNotUsedInLoop - Return true if the only users of this instruction are
 /// outside of the loop.  If this is true, we can sink the instruction to the
 /// exit blocks of the loop.
@@ -459,18 +485,48 @@ bool LICM::isNotUsedInLoop(Instruction &I) {
   for (Value::use_iterator UI = I.use_begin(), E = I.use_end(); UI != E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
     if (PHINode *PN = dyn_cast<PHINode>(User)) {
-      // PHI node uses occur in predecessor blocks!
+      // A PHI node where all of the incoming values are this instruction are
+      // special -- they can just be RAUW'ed with the instruction and thus
+      // don't require a use in the predecessor. This is a particular important
+      // special case because it is the pattern found in LCSSA form.
+      if (isTriviallyReplacablePHI(*PN, I)) {
+        if (CurLoop->contains(PN))
+          return false;
+        else
+          continue;
+      }
+
+      // Otherwise, PHI node uses occur in predecessor blocks if the incoming
+      // values. Check for such a use being inside the loop.
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         if (PN->getIncomingValue(i) == &I)
           if (CurLoop->contains(PN->getIncomingBlock(i)))
             return false;
-    } else if (CurLoop->contains(User)) {
-      return false;
+
+      continue;
     }
+
+    if (CurLoop->contains(User))
+      return false;
   }
   return true;
 }
 
+static BasicBlock::iterator
+replaceTrivialPHIsAndGetInsertionPt(BasicBlock &BB, Instruction &I) {
+  BasicBlock::iterator II = BB.begin();
+  while (PHINode *PN = dyn_cast<PHINode>(II)) {
+    ++II;
+    if (isTriviallyReplacablePHI(*PN, I)) {
+      PN->replaceAllUsesWith(&I);
+      PN->eraseFromParent();
+    }
+  }
+  if (isa<LandingPadInst>(II))
+    ++II;
+
+  return II;
+}
 
 /// sink - When an instruction is found to only be used outside of the loop,
 /// this function moves it to the exit blocks and patches up SSA form as needed.
@@ -502,9 +558,14 @@ void LICM::sink(Instruction &I) {
         I.replaceAllUsesWith(UndefValue::get(I.getType()));
       I.eraseFromParent();
     } else {
+      // Look for any LCSSA PHI nodes for this instruction in the exit blocks
+      // and replace them.
+      BasicBlock::iterator II =
+          replaceTrivialPHIsAndGetInsertionPt(*ExitBlocks[0], I);
+
       // Move the instruction to the start of the exit block, after any PHI
       // nodes in it.
-      I.moveBefore(ExitBlocks[0]->getFirstInsertionPt());
+      I.moveBefore(II);
 
       // This instruction is no longer in the AST for the current loop, because
       // we just sunk it out of the loop.  If we just sunk it into an outer
@@ -546,8 +607,10 @@ void LICM::sink(Instruction &I) {
     if (!DT->dominates(InstOrigBB, ExitBlock))
       continue;
 
-    // Insert the code after the last PHI node.
-    BasicBlock::iterator InsertPt = ExitBlock->getFirstInsertionPt();
+    // Look for any LCSSA PHI nodes for this instruction in the exit blocks
+    // and replace them. Then get the insertion point after the last PHI.
+    BasicBlock::iterator InsertPt =
+      replaceTrivialPHIsAndGetInsertionPt(*ExitBlock, I);
 
     // If this is the first exit block processed, just move the original
     // instruction, otherwise clone the original instruction and insert

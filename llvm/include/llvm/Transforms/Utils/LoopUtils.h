@@ -34,6 +34,19 @@ BasicBlock *InsertPreheaderForLoop(Loop *L, Pass *P);
 bool simplifyLoop(Loop *L, DominatorTree *DT, LoopInfo *LI, Pass *PP,
                   AliasAnalysis *AA = 0, ScalarEvolution *SE = 0);
 
+/// \brief Put loop into LCSSA form.
+///
+/// Looks at all instructions in the loop which have uses outside of the
+/// current loop. For each, an LCSSA PHI node is inserted and the uses outside
+/// the loop are rewritten to use this node.
+///
+/// LoopInfo and DominatorTree are required and preserved.
+///
+/// If ScalarEvolution is passed in, it will be preserved.
+///
+/// Returns true if any modifications are made to the loop.
+bool formLCSSA(Loop &L, DominatorTree &DT, ScalarEvolution *SE = 0);
+
 }
 
 #endif
