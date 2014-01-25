@@ -393,6 +393,8 @@ __int64 _InterlockedCompareExchange64_HLERelease(__int64 volatile *, __int64,
                                                  __int64);
 __int64 _InterlockedCompareExchange64_np(__int64 volatile *_Destination,
                                          __int64 _Exchange, __int64 _Comparand);
+void *_InterlockedCompareExchangePointer(void *volatile *_Destination,
+                                         void *_Exchange, void *_Comparand);
 void *_InterlockedCompareExchangePointer_np(void *volatile *_Destination,
                                             void *_Exchange, void *_Comparand);
 __int64 _InterlockedDecrement64(__int64 volatile *_Addend);
