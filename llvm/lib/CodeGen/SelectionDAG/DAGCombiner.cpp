@@ -56,6 +56,13 @@ namespace {
     CombinerGlobalAA("combiner-global-alias-analysis", cl::Hidden,
                cl::desc("Enable DAG combiner's use of IR alias analysis"));
 
+#ifndef NDEBUG
+  static cl::opt<std::string>
+    CombinerAAOnlyFunc("combiner-aa-only-func", cl::Hidden,
+               cl::desc("Only use DAG-combiner alias analysis in this"
+                        " function"));
+#endif
+
   /// Hidden option to stress test load slicing, i.e., when this option
   /// is enabled, load slicing bypasses most of its profitability guards.
   static cl::opt<bool>
@@ -7729,6 +7736,11 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
 
   bool UseAA = CombinerAA.getNumOccurrences() > 0 ? CombinerAA :
     TLI.getTargetMachine().getSubtarget<TargetSubtargetInfo>().useAA();
+#ifndef NDEBUG
+  if (CombinerAAOnlyFunc.getNumOccurrences() &&
+      CombinerAAOnlyFunc != DAG.getMachineFunction().getName())
+    UseAA = false;
+#endif
   if (UseAA && LD->isUnindexed()) {
     // Walk up chain skipping non-aliasing memory nodes.
     SDValue BetterChain = FindBetterChain(N, Chain);
@@ -9317,6 +9329,11 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
 
   bool UseAA = CombinerAA.getNumOccurrences() > 0 ? CombinerAA :
     TLI.getTargetMachine().getSubtarget<TargetSubtargetInfo>().useAA();
+#ifndef NDEBUG
+  if (CombinerAAOnlyFunc.getNumOccurrences() &&
+      CombinerAAOnlyFunc != DAG.getMachineFunction().getName())
+    UseAA = false;
+#endif
   if (UseAA && ST->isUnindexed()) {
     // Walk up chain skipping non-aliasing memory nodes.
     SDValue BetterChain = FindBetterChain(N, Chain);
@@ -11051,6 +11068,11 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1, bool IsVolatile1,
 
   bool UseAA = CombinerGlobalAA.getNumOccurrences() > 0 ? CombinerGlobalAA :
     TLI.getTargetMachine().getSubtarget<TargetSubtargetInfo>().useAA();
+#ifndef NDEBUG
+  if (CombinerAAOnlyFunc.getNumOccurrences() &&
+      CombinerAAOnlyFunc != DAG.getMachineFunction().getName())
+    UseAA = false;
+#endif
   if (UseAA && SrcValue1 && SrcValue2) {
     // Use alias analysis information.
     int64_t MinOffset = std::min(SrcValueOffset1, SrcValueOffset2);
