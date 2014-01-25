@@ -739,8 +739,8 @@ std::vector<uint8_t> BaseRelocChunk::createBaseRelocBlock(
 class PECOFFWriter : public Writer {
 public:
   explicit PECOFFWriter(const PECOFFLinkingContext &context)
-      : _PECOFFLinkingContext(context), _numSections(0),
-        _imageSizeInMemory(PAGE_SIZE), _imageSizeOnDisk(0) {}
+      : _ctx(context), _numSections(0), _imageSizeInMemory(PAGE_SIZE),
+        _imageSizeOnDisk(0) {}
 
   void build(const File &linkedFile);
   virtual error_code writeFile(const File &linkedFile, StringRef path);
@@ -768,7 +768,7 @@ private:
   }
 
   std::vector<std::unique_ptr<Chunk> > _chunks;
-  const PECOFFLinkingContext &_PECOFFLinkingContext;
+  const PECOFFLinkingContext &_ctx;
   uint32_t _numSections;
 
   // The size of the image in memory. This is initialized with PAGE_SIZE, as the
@@ -831,11 +831,11 @@ void groupAtoms(const PECOFFLinkingContext &ctx, const File &file,
 // Create all chunks that consist of the output file.
 void PECOFFWriter::build(const File &linkedFile) {
   AtomVectorMap atoms;
-  groupAtoms(_PECOFFLinkingContext, linkedFile, atoms);
+  groupAtoms(_ctx, linkedFile, atoms);
 
   // Create file chunks and add them to the list.
-  auto *dosStub = new DOSStubChunk(_PECOFFLinkingContext);
-  auto *peHeader = new PEHeaderChunk(_PECOFFLinkingContext);
+  auto *dosStub = new DOSStubChunk(_ctx);
+  auto *peHeader = new PEHeaderChunk(_ctx);
   auto *dataDirectory = new DataDirectoryChunk();
   auto *sectionTable = new SectionHeaderTableChunk();
   addChunk(dosStub);
@@ -846,14 +846,14 @@ void PECOFFWriter::build(const File &linkedFile) {
   for (auto i : atoms) {
     StringRef sectionName = i.first;
     std::vector<const DefinedAtom *> &contents = i.second;
-    auto *section = new AtomChunk(_PECOFFLinkingContext, sectionName, contents);
+    auto *section = new AtomChunk(_ctx, sectionName, contents);
     addSectionChunk(section, sectionTable);
   }
 
   // Now that we know the addresses of all defined atoms that needs to be
   // relocated. So we can create the ".reloc" section which contains all the
   // relocation sites.
-  if (_PECOFFLinkingContext.getBaseRelocationEnabled()) {
+  if (_ctx.getBaseRelocationEnabled()) {
     BaseRelocChunk *baseReloc = new BaseRelocChunk(_chunks);
     if (baseReloc->size()) {
       addSectionChunk(baseReloc, sectionTable);
@@ -911,8 +911,8 @@ error_code PECOFFWriter::writeFile(const File &linkedFile, StringRef path) {
   applyAllRelocations(buffer->getBufferStart());
   DEBUG(printAllAtomAddresses());
 
-  if (_PECOFFLinkingContext.isDll())
-    writeImportLibrary(_PECOFFLinkingContext);
+  if (_ctx.isDll())
+    writeImportLibrary(_ctx);
 
   return buffer->commit();
 }
@@ -939,14 +939,14 @@ void PECOFFWriter::applyAllRelocations(uint8_t *bufferStart) {
   for (auto &cp : _chunks)
     if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
       chunk->applyRelocations(bufferStart, atomRva, sectionRva,
-                              _PECOFFLinkingContext.getBaseAddress());
+                              _ctx.getBaseAddress());
 }
 
 /// Print atom VAs. Used only for debugging.
 void PECOFFWriter::printAllAtomAddresses() const {
   for (auto &cp : _chunks)
     if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
-      chunk->printAtomAddresses(_PECOFFLinkingContext.getBaseAddress());
+      chunk->printAtomAddresses(_ctx.getBaseAddress());
 }
 
 void PECOFFWriter::addChunk(Chunk *chunk) {
@@ -982,12 +982,11 @@ void PECOFFWriter::setAddressOfEntryPoint(AtomChunk *text,
   // Find the virtual address of the entry point symbol if any.
   // PECOFF spec says that entry point for dll images is optional, in which
   // case it must be set to 0.
-  if (_PECOFFLinkingContext.entrySymbolName().empty() &&
-      _PECOFFLinkingContext.isDll()) {
+  if (_ctx.entrySymbolName().empty() && _ctx.isDll()) {
     peHeader->setAddressOfEntryPoint(0);
   } else {
     uint64_t entryPointAddress =
-        text->getAtomVirtualAddress(_PECOFFLinkingContext.entrySymbolName());
+        text->getAtomVirtualAddress(_ctx.entrySymbolName());
     if (entryPointAddress != 0)
       peHeader->setAddressOfEntryPoint(entryPointAddress);
   }
