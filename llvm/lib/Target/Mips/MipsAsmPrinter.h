@@ -50,6 +50,10 @@ private:
   /// pool entries so we can properly mark them as data regions.
   bool InConstantPool;
 
+  // If object output, set initial eflags.
+  // This includes both default and commandline flags that affect the output
+  // ELF header flags.
+  void processInitialEFlags();
 
 public:
 
@@ -61,6 +65,7 @@ public:
     : AsmPrinter(TM, Streamer), MCP(0), InConstantPool(false),
       MCInstLowering(*this) {
     Subtarget = &TM.getSubtarget<MipsSubtarget>();
+    processInitialEFlags();
   }
 
   virtual const char *getPassName() const {
@@ -103,6 +108,7 @@ public:
   void EmitStartOfAsmFile(Module &M);
   void EmitEndOfAsmFile(Module &M);
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
+
 };
 }
 

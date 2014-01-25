@@ -21,23 +21,13 @@
 
 using namespace llvm;
 
-static cl::opt<bool> PrintHackDirectives("print-hack-directives",
-                                         cl::init(false), cl::Hidden);
-
 // Pin vtable to this file.
 void MipsTargetStreamer::anchor() {}
 
 MipsTargetAsmStreamer::MipsTargetAsmStreamer(formatted_raw_ostream &OS)
     : OS(OS) {}
 
-void MipsTargetAsmStreamer::emitMipsHackELFFlags(unsigned Flags) {
-  if (!PrintHackDirectives)
-    return;
-
-  OS << "\t.mips_hack_elf_flags 0x";
-  OS.write_hex(Flags);
-  OS << '\n';
-}
+void MipsTargetAsmStreamer::emitMipsELFFlags(unsigned Flags) { return; }
 
 void MipsTargetAsmStreamer::emitDirectiveSetMicroMips() {
   OS << "\t.set\tmicromips\n";
@@ -85,7 +75,7 @@ MCELFStreamer &MipsTargetELFStreamer::getStreamer() {
   return static_cast<MCELFStreamer &>(*Streamer);
 }
 
-void MipsTargetELFStreamer::emitMipsHackELFFlags(unsigned Flags) {
+void MipsTargetELFStreamer::emitMipsELFFlags(unsigned Flags) {
   MCAssembler &MCA = getStreamer().getAssembler();
   MCA.setELFHeaderEFlags(Flags);
 }
