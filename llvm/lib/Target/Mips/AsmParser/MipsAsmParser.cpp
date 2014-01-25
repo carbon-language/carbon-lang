@@ -21,9 +21,6 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
-#include "llvm/Support/ELF.h"
-#include "llvm/Support/TargetRegistry.h"
-#include "llvm/ADT/APInt.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/TargetRegistry.h"
 
@@ -197,6 +194,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool isEvaluated(const MCExpr *Expr);
   bool parseDirectiveSet();
+  bool parseDirectiveMipsHackELFFlags();
   bool parseDirectiveOption();
 
   bool parseSetAtDirective();
@@ -259,9 +257,6 @@ class MipsAsmParser : public MCTargetAsmParser {
   // Example: INSERT.B $w0[n], $1 => 16 > n >= 0
   bool validateMSAIndex(int Val, int RegKind);
 
-  // Set ELF flags based on defaults and commandline arguments.
-  void processInitialEFlags();
-
 public:
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
                 const MCInstrInfo &MII)
@@ -269,7 +264,6 @@ public:
         hasConsumedDollar(false) {
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
-    processInitialEFlags();
   }
 
   MCAsmParser &getParser() const { return Parser; }
@@ -2435,6 +2429,17 @@ bool MipsAsmParser::parseDirectiveSet() {
   return true;
 }
 
+bool MipsAsmParser::parseDirectiveMipsHackELFFlags() {
+  int64_t Flags = 0;
+  if (Parser.parseAbsoluteExpression(Flags)) {
+    TokError("unexpected token");
+    return false;
+  }
+
+  getTargetStreamer().emitMipsHackELFFlags(Flags);
+  return false;
+}
+
 /// parseDirectiveWord
 ///  ::= .word [ expression (, expression)* ]
 bool MipsAsmParser::parseDirectiveWord(unsigned Size, SMLoc L) {
@@ -2553,6 +2558,9 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
     return false;
   }
 
+  if (IDVal == ".mips_hack_elf_flags")
+    return parseDirectiveMipsHackELFFlags();
+
   if (IDVal == ".option")
     return parseDirectiveOption();
 
@@ -2567,43 +2575,6 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   }
 
   return true;
-}
-
-void MipsAsmParser::processInitialEFlags() {
-  // Start will a clean slate.
-  unsigned EFlags = 0;
-  unsigned FeatureBits = STI.getFeatureBits();
-
-  // Default settings
-  EFlags |= ELF::EF_MIPS_NOREORDER | ELF::EF_MIPS_PIC | ELF::EF_MIPS_ABI_O32;
-
-  // ISA
-  if (FeatureBits & Mips::FeatureMips64r2) {
-    EFlags |= ELF::EF_MIPS_ARCH_64R2;
-    EFlags &= ~ELF::EF_MIPS_ABI_O32;
-  } else if (FeatureBits & Mips::FeatureMips64) {
-    EFlags |= ELF::EF_MIPS_ARCH_64;
-    EFlags &= ~ELF::EF_MIPS_ABI_O32;
-  } else if (FeatureBits & Mips::FeatureMips32r2)
-    EFlags |= ELF::EF_MIPS_ARCH_32R2;
-  else if (FeatureBits & Mips::FeatureMips32)
-    EFlags |= ELF::EF_MIPS_ARCH_32;
-  else if (FeatureBits & Mips::FeatureO32)
-    EFlags |= ELF::EF_MIPS_ABI_O32; // This is really a zero
-
-  // ASE
-  if (FeatureBits & Mips::FeatureMicroMips)
-    EFlags |= ELF::EF_MIPS_MICROMIPS;
-  else if (FeatureBits & Mips::FeatureMips16)
-    EFlags |= ELF::EF_MIPS_ARCH_ASE_M16;
-
-  // ABI
-  // TODO: n32/eabi
-
-  // Linkage model
-  // TODO: pic/cpic/static
-
-  getTargetStreamer().emitMipsELFFlags(EFlags);
 }
 
 extern "C" void LLVMInitializeMipsAsmParser() {
