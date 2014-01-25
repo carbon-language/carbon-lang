@@ -5346,8 +5346,8 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   if (Target->isSpecificBuiltinType(BuiltinType::Bool)) {
     if (isa<StringLiteral>(E))
       // Warn on string literal to bool.  Checks for string literals in logical
-      // expressions, for instances, assert(0 && "error here"), are prevented
-      // by a check in AnalyzeImplicitConversions().
+      // and expressions, for instance, assert(0 && "error here"), are
+      // prevented by a check in AnalyzeImplicitConversions().
       return DiagnoseImpCast(S, E, T, CC,
                              diag::warn_impcast_string_literal_to_bool);
     if (Source->isFunctionType()) {
@@ -5698,15 +5698,16 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
   // Now just recurse over the expression's children.
   CC = E->getExprLoc();
   BinaryOperator *BO = dyn_cast<BinaryOperator>(E);
-  bool IsLogicalOperator = BO && BO->isLogicalOp();
+  bool IsLogicalAndOperator = BO && BO->getOpcode() == BO_LAnd;
   for (Stmt::child_range I = E->children(); I; ++I) {
     Expr *ChildExpr = dyn_cast_or_null<Expr>(*I);
     if (!ChildExpr)
       continue;
 
-    if (IsLogicalOperator &&
+    if (IsLogicalAndOperator &&
         isa<StringLiteral>(ChildExpr->IgnoreParenImpCasts()))
-      // Ignore checking string literals that are in logical operators.
+      // Ignore checking string literals that are in logical and operators.
+      // This is a common pattern for asserts.
       continue;
     AnalyzeImplicitConversions(S, ChildExpr, CC);
   }
