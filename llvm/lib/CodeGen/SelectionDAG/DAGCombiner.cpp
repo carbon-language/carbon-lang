@@ -50,11 +50,11 @@ STATISTIC(SlicedLoads, "Number of load sliced");
 namespace {
   static cl::opt<bool>
     CombinerAA("combiner-alias-analysis", cl::Hidden,
-               cl::desc("Turn on alias analysis during testing"));
+               cl::desc("Enable DAG combiner alias-analysis heuristics"));
 
   static cl::opt<bool>
     CombinerGlobalAA("combiner-global-alias-analysis", cl::Hidden,
-               cl::desc("Include global information in alias analysis"));
+               cl::desc("Enable DAG combiner's use of IR alias analysis"));
 
   /// Hidden option to stress test load slicing, i.e., when this option
   /// is enabled, load slicing bypasses most of its profitability guards.
