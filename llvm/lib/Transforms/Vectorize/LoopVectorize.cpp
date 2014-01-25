@@ -930,13 +930,21 @@ private:
   }
 };
 
+static void addInnerLoop(Loop *L, SmallVectorImpl<Loop *> &V) {
+  if (L->empty())
+    return V.push_back(L);
+
+  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+    addInnerLoop(*I, V);
+}
+
 /// The LoopVectorize Pass.
-struct LoopVectorize : public LoopPass {
+struct LoopVectorize : public FunctionPass {
   /// Pass identification, replacement for typeid
   static char ID;
 
   explicit LoopVectorize(bool NoUnrolling = false, bool AlwaysVectorize = true)
-    : LoopPass(ID),
+    : FunctionPass(ID),
       DisableUnrolling(NoUnrolling),
       AlwaysVectorize(AlwaysVectorize) {
     initializeLoopVectorizePass(*PassRegistry::getPassRegistry());
@@ -951,11 +959,7 @@ struct LoopVectorize : public LoopPass {
   bool DisableUnrolling;
   bool AlwaysVectorize;
 
-  virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
-    // We only vectorize innermost loops.
-    if (!L->empty())
-      return false;
-
+  virtual bool runOnFunction(Function &F) {
     SE = &getAnalysis<ScalarEvolution>();
     DL = getAnalysisIfAvailable<DataLayout>();
     LI = &getAnalysis<LoopInfo>();
@@ -971,6 +975,32 @@ struct LoopVectorize : public LoopPass {
     if (DL == NULL) {
       DEBUG(dbgs() << "LV: Not vectorizing: Missing data layout\n");
       return false;
+    }
+
+    // Build up a worklist of inner-loops to vectorize. This is necessary as
+    // the act of vectorizing or partially unrolling a loop creates new loops
+    // and can invalidate iterators across the loops.
+    SmallVector<Loop *, 8> Worklist;
+
+    for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
+      addInnerLoop(*I, Worklist);
+
+    // Now walk the identified inner loops.
+    bool Changed = false;
+    while (!Worklist.empty())
+      Changed |= processLoop(Worklist.pop_back_val());
+
+    // Process each loop nest in the function.
+    return Changed;
+  }
+
+  bool processLoop(Loop *L) {
+    // We only handle inner loops, so if there are children just recurse.
+    if (!L->empty()) {
+      bool Changed = false;
+      for (Loop::iterator I = L->begin(), E = L->begin(); I != E; ++I)
+        Changed |= processLoop(*I);
+      return Changed;
     }
 
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
@@ -1052,7 +1082,6 @@ struct LoopVectorize : public LoopPass {
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    LoopPass::getAnalysisUsage(AU);
     AU.addRequiredID(LoopSimplifyID);
     AU.addRequiredID(LCSSAID);
     AU.addRequired<DominatorTreeWrapperPass>();
