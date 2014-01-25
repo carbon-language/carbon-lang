@@ -51,7 +51,7 @@ ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMSubtarget &sti)
 
 const uint16_t*
 ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  const uint16_t *RegList = (STI.isTargetIOS() && !STI.isAAPCS_ABI())
+  const uint16_t *RegList = STI.isTargetIOS()
                                 ? CSR_iOS_SaveList
                                 : CSR_AAPCS_SaveList;
 
@@ -86,8 +86,7 @@ ARMBaseRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
   if (CC == CallingConv::GHC)
     // This is academic becase all GHC calls are (supposed to be) tail calls
     return CSR_NoRegs_RegMask;
-  return (STI.isTargetIOS() && !STI.isAAPCS_ABI())
-    ? CSR_iOS_RegMask : CSR_AAPCS_RegMask;
+  return STI.isTargetIOS() ? CSR_iOS_RegMask : CSR_AAPCS_RegMask;
 }
 
 const uint32_t*
