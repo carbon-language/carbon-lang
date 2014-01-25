@@ -101,12 +101,6 @@ public:
 
   /// Adds the default features for the specified target triple.
   void getDefaultSubtargetFeatures(const Triple& Triple);
-
-  /// Find KV in array using binary search.
-  /// T should be either SubtargetFeatureKV or SubtargetInfoKV
-  template<typename T>
-  static const T *Find(StringRef Key, const T *Array, size_t Length,
-                       const char* KeyType);
 };
 
 } // End namespace llvm
