@@ -217,3 +217,38 @@
 // RUN:   | FileCheck --check-prefix=ANDROID-X86_64 %s
 // ANDROID-X86_64: clang
 // ANDROID-X86_64: "-target-cpu" "core2"
+
+// RUN: %clang -target mips-linux-gnu -### -S %s 2>&1 | \
+// RUN: FileCheck -check-prefix=MIPS %s
+// MIPS: clang
+// MIPS: "-cc1"
+// MIPS: "-target-cpu" "mips32"
+// MIPS: "-mfloat-abi" "hard"
+
+// RUN: %clang -target mipsel-linux-gnu -### -S %s 2>&1 | \
+// RUN: FileCheck -check-prefix=MIPSEL %s
+// MIPSEL: clang
+// MIPSEL: "-cc1"
+// MIPSEL: "-target-cpu" "mips32"
+// MIPSEL: "-mfloat-abi" "hard"
+
+// RUN: %clang -target mipsel-linux-android -### -S %s 2>&1 | \
+// RUN: FileCheck -check-prefix=MIPSEL-ANDROID %s
+// MIPSEL-ANDROID: clang
+// MIPSEL-ANDROID: "-cc1"
+// MIPSEL-ANDROID: "-target-cpu" "mips32"
+// MIPSEL-ANDROID: "-mfloat-abi" "hard"
+
+// RUN: %clang -target mips64-linux-gnu -### -S %s 2>&1 | \
+// RUN: FileCheck -check-prefix=MIPS64 %s
+// MIPS64: clang
+// MIPS64: "-cc1"
+// MIPS64: "-target-cpu" "mips64"
+// MIPS64: "-mfloat-abi" "hard"
+
+// RUN: %clang -target mips64el-linux-gnu -### -S %s 2>&1 | \
+// RUN: FileCheck -check-prefix=MIPS64EL %s
+// MIPS64EL: clang
+// MIPS64EL: "-cc1"
+// MIPS64EL: "-target-cpu" "mips64"
+// MIPS64EL: "-mfloat-abi" "hard"
