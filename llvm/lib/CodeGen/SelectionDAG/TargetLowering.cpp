@@ -1470,17 +1470,23 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
     if (Cond == ISD::SETGE || Cond == ISD::SETUGE) {
       if (C1 == MinVal) return DAG.getConstant(1, VT);   // X >= MIN --> true
       // X >= C0 --> X > (C0-1)
-      return DAG.getSetCC(dl, VT, N0,
-                          DAG.getConstant(C1-1, N1.getValueType()),
-                          (Cond == ISD::SETGE) ? ISD::SETGT : ISD::SETUGT);
+      APInt C = C1-1;
+      if (!N1C->isOpaque() || (N1C->isOpaque() && C.getBitWidth() <= 64 &&
+                               isLegalICmpImmediate(C.getSExtValue())))
+        return DAG.getSetCC(dl, VT, N0,
+                            DAG.getConstant(C, N1.getValueType()),
+                            (Cond == ISD::SETGE) ? ISD::SETGT : ISD::SETUGT);
     }
 
     if (Cond == ISD::SETLE || Cond == ISD::SETULE) {
       if (C1 == MaxVal) return DAG.getConstant(1, VT);   // X <= MAX --> true
       // X <= C0 --> X < (C0+1)
-      return DAG.getSetCC(dl, VT, N0,
-                          DAG.getConstant(C1+1, N1.getValueType()),
-                          (Cond == ISD::SETLE) ? ISD::SETLT : ISD::SETULT);
+      APInt C = C1+1;
+      if (!N1C->isOpaque() || (N1C->isOpaque() && C.getBitWidth() <= 64 &&
+                               isLegalICmpImmediate(C.getSExtValue())))
+        return DAG.getSetCC(dl, VT, N0,
+                            DAG.getConstant(C, N1.getValueType()),
+                            (Cond == ISD::SETLE) ? ISD::SETLT : ISD::SETULT);
     }
 
     if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C1 == MinVal)

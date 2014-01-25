@@ -76,7 +76,7 @@ public:
 
   /// \name Scalar TTI Implementations
   /// @{
-
+  using TargetTransformInfo::getIntImmCost;
   virtual unsigned
   getIntImmCost(const APInt &Imm, Type *Ty) const LLVM_OVERRIDE;
 

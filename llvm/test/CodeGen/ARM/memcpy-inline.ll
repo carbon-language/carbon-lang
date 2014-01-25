@@ -38,7 +38,8 @@ entry:
 define void @t2(i8* nocapture %C) nounwind {
 entry:
 ; CHECK-LABEL: t2:
-; CHECK: ldr [[REG2:r[0-9]+]], [r1, #32]
+; CHECK: movw [[REG2:r[0-9]+]], #16716
+; CHECK: movt [[REG2:r[0-9]+]], #72
 ; CHECK: str [[REG2]], [r0, #32]
 ; CHECK: vld1.8 {d{{[0-9]+}}, d{{[0-9]+}}}, [r1]
 ; CHECK: vst1.8 {d{{[0-9]+}}, d{{[0-9]+}}}, [r0]
@@ -79,7 +80,8 @@ entry:
 ; CHECK: strb [[REG5]], [r0, #6]
 ; CHECK: movw [[REG6:r[0-9]+]], #21587
 ; CHECK: strh [[REG6]], [r0, #4]
-; CHECK: ldr [[REG7:r[0-9]+]], 
+; CHECK: movw [[REG7:r[0-9]+]], #18500
+; CHECK: movt [[REG7:r[0-9]+]], #22866
 ; CHECK: str [[REG7]]
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %C, i8* getelementptr inbounds ([7 x i8]* @.str5, i64 0, i64 0), i64 7, i32 1, i1 false)
   ret void
