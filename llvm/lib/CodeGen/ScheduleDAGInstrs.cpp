@@ -45,6 +45,15 @@ static cl::opt<bool> EnableAASchedMI("enable-aa-sched-mi", cl::Hidden,
     cl::ZeroOrMore, cl::init(false),
     cl::desc("Enable use of AA during MI GAD construction"));
 
+// FIXME: Enable the use of TBAA. There are two known issues preventing this:
+//   1. Stack coloring does not update TBAA when merging allocas
+//   2. CGP inserts ptrtoint/inttoptr pairs when sinking address computations.
+//      Because BasicAA does not handle inttoptr, we'll often miss basic type
+//      punning idioms that we need to catch so we don't miscompile real-world
+//      code.
+static cl::opt<bool> UseTBAA("use-tbaa-in-sched-mi", cl::Hidden,
+    cl::init(false), cl::desc("Enable use of TBAA during MI GAD construction"));
+
 ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineLoopInfo &mli,
                                      const MachineDominatorTree &mdt,
@@ -556,9 +565,9 @@ static bool MIsNeedChainEdge(AliasAnalysis *AA, const MachineFrameInfo *MFI,
 
   AliasAnalysis::AliasResult AAResult = AA->alias(
   AliasAnalysis::Location(MMOa->getValue(), Overlapa,
-                          MMOa->getTBAAInfo()),
+                          UseTBAA ? MMOa->getTBAAInfo() : 0),
   AliasAnalysis::Location(MMOb->getValue(), Overlapb,
-                          MMOb->getTBAAInfo()));
+                          UseTBAA ? MMOb->getTBAAInfo() : 0));
 
   return (AAResult != AliasAnalysis::NoAlias);
 }

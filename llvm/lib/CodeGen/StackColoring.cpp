@@ -553,6 +553,13 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
         if (!V)
           continue;
 
+        // FIXME: In order to enable the use of TBAA when using AA in CodeGen,
+        // we'll also need to update the TBAA nodes in MMOs with values
+        // derived from the merged allocas. When doing this, we'll need to use
+        // the same variant of GetUnderlyingObjects that is used by the
+        // instruction scheduler (that can look through ptrtoint/inttoptr
+        // pairs).
+
         // We've replaced IR-level uses of the remapped allocas, so we only
         // need to replace direct uses here.
         if (!isa<AllocaInst>(V))

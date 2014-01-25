@@ -56,6 +56,16 @@ namespace {
     CombinerGlobalAA("combiner-global-alias-analysis", cl::Hidden,
                cl::desc("Enable DAG combiner's use of IR alias analysis"));
 
+// FIXME: Enable the use of TBAA. There are two known issues preventing this:
+//   1. Stack coloring does not update TBAA when merging allocas
+//   2. CGP inserts ptrtoint/inttoptr pairs when sinking address computations.
+//      Because BasicAA does not handle inttoptr, we'll often miss basic type
+//      punning idioms that we need to catch so we don't miscompile real-world
+//      code.
+  static cl::opt<bool>
+    UseTBAA("combiner-use-tbaa", cl::Hidden, cl::init(false),
+               cl::desc("Enable DAG combiner's use of TBAA"));
+
 #ifndef NDEBUG
   static cl::opt<std::string>
     CombinerAAOnlyFunc("combiner-aa-only-func", cl::Hidden,
@@ -11079,8 +11089,10 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1, bool IsVolatile1,
     int64_t Overlap1 = Size1 + SrcValueOffset1 - MinOffset;
     int64_t Overlap2 = Size2 + SrcValueOffset2 - MinOffset;
     AliasAnalysis::AliasResult AAResult =
-      AA.alias(AliasAnalysis::Location(SrcValue1, Overlap1, TBAAInfo1),
-               AliasAnalysis::Location(SrcValue2, Overlap2, TBAAInfo2));
+      AA.alias(AliasAnalysis::Location(SrcValue1, Overlap1,
+                                       UseTBAA ? TBAAInfo1 : 0),
+               AliasAnalysis::Location(SrcValue2, Overlap2,
+                                       UseTBAA ? TBAAInfo2 : 0));
     if (AAResult == AliasAnalysis::NoAlias)
       return false;
   }
