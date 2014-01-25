@@ -4248,6 +4248,11 @@ TEST_F(FormatTest, UnderstandsOverloadedOperators) {
   verifyGoogleFormat("operator ::A();");
 
   verifyFormat("using A::operator+;");
+
+  verifyFormat("Deleted &operator=(const Deleted &)& = default;");
+  verifyFormat("Deleted &operator=(const Deleted &)&& = delete;");
+  verifyGoogleFormat("Deleted& operator=(const Deleted&)& = default;");
+  verifyGoogleFormat("Deleted& operator=(const Deleted&)&& = delete;");
 }
 
 TEST_F(FormatTest, UnderstandsNewAndDelete) {

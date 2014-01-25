@@ -1403,7 +1403,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
            (Tok.Type != TT_DictLiteral || Style.SpacesInContainerLiterals);
   if (Tok.Previous->Type == TT_UnaryOperator ||
       Tok.Previous->Type == TT_CastRParen)
-    return false;
+    return Tok.Type == TT_BinaryOperator;
   if (Tok.Previous->is(tok::greater) && Tok.is(tok::greater)) {
     return Tok.Type == TT_TemplateCloser &&
            Tok.Previous->Type == TT_TemplateCloser &&
