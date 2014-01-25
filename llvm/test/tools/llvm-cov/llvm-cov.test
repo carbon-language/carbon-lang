@@ -35,4 +35,4 @@ RUN: not llvm-cov -gcno=test.gcno -gcda=test_file_checksum_fail.gcda
 
 RUN: not llvm-cov -gcno=test.gcno -gcda=test_func_checksum_fail.gcda
 
-XFAIL: powerpc64, s390x, mips
+XFAIL: powerpc64, s390x, mips, sparc
