@@ -2,6 +2,9 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
+; The use of TBAA in CodeGen has been temporarily disabled pending correctness fixes.
+; XFAIL: *
+
 ; Check that there are no spills.
 define void @f1(<16 x i32> *%src1, <16 x float> *%dest) {
 ; CHECK-LABEL: f1:
