@@ -24,7 +24,7 @@ static void expectFailure(StringRef JSONDatabase, StringRef Explanation) {
   std::string ErrorMessage;
   EXPECT_EQ(NULL, JSONCompilationDatabase::loadFromBuffer(JSONDatabase,
                                                           ErrorMessage))
-    << "Expected an error because of: " << Explanation;
+    << "Expected an error because of: " << Explanation.str();
 }
 
 TEST(JSONCompilationDatabase, ErrsOnInvalidFormat) {

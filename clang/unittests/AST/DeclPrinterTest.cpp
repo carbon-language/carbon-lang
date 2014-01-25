@@ -77,7 +77,8 @@ public:
   OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
 
   if (!runToolOnCodeWithArgs(Factory->create(), Code, Args, FileName))
-    return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
+    return testing::AssertionFailure()
+      << "Parsing error in \"" << Code.str() << "\"";
 
   if (Printer.getNumFoundDecls() == 0)
     return testing::AssertionFailure()
@@ -90,8 +91,8 @@ public:
 
   if (Printer.getPrinted() != ExpectedPrinted)
     return ::testing::AssertionFailure()
-      << "Expected \"" << ExpectedPrinted << "\", "
-         "got \"" << Printer.getPrinted() << "\"";
+      << "Expected \"" << ExpectedPrinted.str() << "\", "
+         "got \"" << Printer.getPrinted().str() << "\"";
 
   return ::testing::AssertionSuccess();
 }
