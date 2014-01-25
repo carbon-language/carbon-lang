@@ -66,6 +66,9 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_prepare_for_reg_writing_reply (eLazyBoolCalculate),
     m_supports_p (eLazyBoolCalculate),
     m_supports_QSaveRegisterState (eLazyBoolCalculate),
+    m_supports_qXfer_libraries_read (eLazyBoolCalculate),
+    m_supports_qXfer_libraries_svr4_read (eLazyBoolCalculate),
+    m_supports_augmented_libraries_svr4_read (eLazyBoolCalculate),
     m_supports_qProcessInfoPID (true),
     m_supports_qfProcessInfo (true),
     m_supports_qUserName (true),
@@ -96,7 +99,8 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_os_build (),
     m_os_kernel (),
     m_hostname (),
-    m_default_packet_timeout (0)
+    m_default_packet_timeout (0),
+    m_max_packet_size (0)
 {
 }
 
@@ -146,6 +150,46 @@ GDBRemoteCommunicationClient::HandshakeWithServer (Error *error_ptr)
             error_ptr->SetErrorString("failed to send the handshake ack");
     }
     return false;
+}
+
+bool
+GDBRemoteCommunicationClient::GetAugmentedLibrariesSVR4ReadSupported ()
+{
+    if (m_supports_augmented_libraries_svr4_read == eLazyBoolCalculate)
+    {
+        GetRemoteQSupported();
+    }
+    return (m_supports_augmented_libraries_svr4_read == eLazyBoolYes);
+}
+
+bool
+GDBRemoteCommunicationClient::GetQXferLibrariesSVR4ReadSupported ()
+{
+    if (m_supports_qXfer_libraries_svr4_read == eLazyBoolCalculate)
+    {
+        GetRemoteQSupported();
+    }
+    return (m_supports_qXfer_libraries_svr4_read == eLazyBoolYes);
+}
+
+bool
+GDBRemoteCommunicationClient::GetQXferLibrariesReadSupported ()
+{
+    if (m_supports_qXfer_libraries_read == eLazyBoolCalculate)
+    {
+        GetRemoteQSupported();
+    }
+    return (m_supports_qXfer_libraries_read == eLazyBoolYes);
+}
+
+uint64_t
+GDBRemoteCommunicationClient::GetRemoteMaxPacketSize()
+{
+    if (m_max_packet_size == 0)
+    {
+        GetRemoteQSupported();
+    }
+    return m_max_packet_size;
 }
 
 bool
@@ -245,6 +289,9 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_memory_region_info = eLazyBoolCalculate;
     m_prepare_for_reg_writing_reply = eLazyBoolCalculate;
     m_attach_or_wait_reply = eLazyBoolCalculate;
+    m_supports_qXfer_libraries_read = eLazyBoolCalculate;
+    m_supports_qXfer_libraries_svr4_read = eLazyBoolCalculate;
+    m_supports_augmented_libraries_svr4_read = eLazyBoolCalculate;
 
     m_supports_qProcessInfoPID = true;
     m_supports_qfProcessInfo = true;
@@ -260,8 +307,50 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_QEnvironmentHexEncoded = true;
     m_host_arch.Clear();
     m_process_arch.Clear();
+
+    m_max_packet_size = 0;
 }
 
+void
+GDBRemoteCommunicationClient::GetRemoteQSupported ()
+{
+    // Clear out any capabilities we expect to see in the qSupported response
+    m_supports_qXfer_libraries_svr4_read = eLazyBoolNo;
+    m_supports_qXfer_libraries_read = eLazyBoolNo;
+    m_supports_augmented_libraries_svr4_read = eLazyBoolNo;
+    m_max_packet_size = UINT64_MAX;  // It's supposed to always be there, but if not, we assume no limit
+
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse("qSupported",
+                                     response,
+                                     /*send_async=*/false) == PacketResult::Success)
+    {
+        const char *response_cstr = response.GetStringRef().c_str();
+        if (::strstr (response_cstr, "qXfer:libraries-svr4:read+"))
+            m_supports_qXfer_libraries_svr4_read = eLazyBoolYes;
+        if (::strstr (response_cstr, "augmented-libraries-svr4-read"))
+        {
+            m_supports_qXfer_libraries_svr4_read = eLazyBoolYes;  // implied
+            m_supports_augmented_libraries_svr4_read = eLazyBoolYes;
+        }
+        if (::strstr (response_cstr, "qXfer:libraries:read+"))
+            m_supports_qXfer_libraries_read = eLazyBoolYes;
+
+        const char *packet_size_str = ::strstr (response_cstr, "PacketSize=");
+        if (packet_size_str)
+        {
+            StringExtractorGDBRemote packet_response(packet_size_str + strlen("PacketSize="));
+            m_max_packet_size = packet_response.GetHexMaxU64(/*little_endian=*/false, UINT64_MAX);
+            if (m_max_packet_size == 0)
+            {
+                m_max_packet_size = UINT64_MAX;  // Must have been a garbled response
+                Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+                if (log)
+                    log->Printf ("Garbled PacketSize spec in qSupported response");
+            }
+        }
+    }
+}
 
 bool
 GDBRemoteCommunicationClient::GetThreadSuffixSupported ()
@@ -361,6 +450,62 @@ GDBRemoteCommunicationClient::GetpPacketSupported (lldb::tid_t tid)
         }
     }
     return m_supports_p;
+}
+
+GDBRemoteCommunicationClient::PacketResult
+GDBRemoteCommunicationClient::SendPacketsAndConcatenateResponses
+(
+    const char *payload_prefix,
+    std::string &response_string
+)
+{
+    Mutex::Locker locker;
+    if (!GetSequenceMutex(locker,
+                          "ProcessGDBRemote::SendPacketsAndConcatenateResponses() failed due to not getting the sequence mutex"))
+    {
+        Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS | GDBR_LOG_PACKETS));
+        if (log)
+            log->Printf("error: failed to get packet sequence mutex, not sending packets with prefix '%s'",
+                        payload_prefix);
+        return PacketResult::ErrorNoSequenceLock;
+    }
+
+    response_string = "";
+    std::string payload_prefix_str(payload_prefix);
+    unsigned int response_size = 0x1000;
+    if (response_size > GetRemoteMaxPacketSize()) {  // May send qSupported packet
+        response_size = GetRemoteMaxPacketSize();
+    }
+
+    for (unsigned int offset = 0; true; offset += response_size)
+    {
+        StringExtractorGDBRemote this_response;
+        // Construct payload
+        char sizeDescriptor[128];
+        snprintf(sizeDescriptor, sizeof(sizeDescriptor), "%x,%x", offset, response_size);
+        PacketResult result = SendPacketAndWaitForResponse((payload_prefix_str + sizeDescriptor).c_str(),
+                                                           this_response,
+                                                           /*send_async=*/false);
+        if (result != PacketResult::Success)
+            return result;
+
+        const std::string &this_string = this_response.GetStringRef();
+
+        // Check for m or l as first character; l seems to mean this is the last chunk
+        char first_char = *this_string.c_str();
+        if (first_char != 'm' && first_char != 'l')
+        {
+            return PacketResult::ErrorReplyInvalid;
+        }
+        // Skip past m or l
+        const char *s = this_string.c_str() + 1;
+
+        // Concatenate the result so far
+        response_string += s;
+        if (first_char == 'l')
+            // We're done
+            return PacketResult::Success;
+    }
 }
 
 GDBRemoteCommunicationClient::PacketResult
