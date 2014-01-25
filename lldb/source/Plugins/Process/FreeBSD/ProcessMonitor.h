@@ -104,8 +104,6 @@ public:
     /// dependent) offset.
     ///
     /// This method is provided for use by RegisterContextFreeBSD derivatives.
-    /// FIXME: The FreeBSD implementation of this function should use tid in order
-    ///        to enable support for debugging threaded programs.
     bool
     ReadRegisterValue(lldb::tid_t tid, unsigned offset, const char *reg_name,
                       unsigned size, lldb_private::RegisterValue &value);
@@ -114,49 +112,35 @@ public:
     /// (architecture dependent) offset.
     ///
     /// This method is provided for use by RegisterContextFreeBSD derivatives.
-    /// FIXME: The FreeBSD implementation of this function should use tid in order
-    ///        to enable support for debugging threaded programs.
     bool
     WriteRegisterValue(lldb::tid_t tid, unsigned offset, const char *reg_name,
                        const lldb_private::RegisterValue &value);
 
     /// Reads all general purpose registers into the specified buffer.
-    /// FIXME: The FreeBSD implementation of this function should use tid in order
-    ///        to enable support for debugging threaded programs.
     bool
     ReadGPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
     /// Reads all floating point registers into the specified buffer.
-    /// FIXME: The FreeBSD implementation of this function should use tid in order
-    ///        to enable support for debugging threaded programs.
     bool
     ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
     /// Reads the specified register set into the specified buffer.
     ///
     /// This method is provided for use by RegisterContextFreeBSD derivatives.
-    /// FIXME: The FreeBSD implementation of this function should use tid in order
-    ///        to enable support for debugging threaded programs.
     bool
     ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
 
     /// Writes all general purpose registers into the specified buffer.
-    /// FIXME: The FreeBSD implementation of this function should use tid in order
-    ///        to enable support for debugging threaded programs.
     bool
     WriteGPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
     /// Writes all floating point registers into the specified buffer.
-    /// FIXME: The FreeBSD implementation of this function should use tid in order
-    ///        to enable support for debugging threaded programs.
     bool
     WriteFPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
     /// Writes the specified register set into the specified buffer.
     ///
     /// This method is provided for use by RegisterContextFreeBSD derivatives.
-    /// FIXME: The FreeBSD implementation of this function should use tid in order
-    ///        to enable support for debugging threaded programs.
     bool
     WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
 
