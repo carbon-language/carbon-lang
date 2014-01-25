@@ -13,6 +13,7 @@
 
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/PlistSupport.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Version.h"
 #include "clang/Lex/Preprocessor.h"
@@ -21,12 +22,8 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 using namespace ento;
-
-typedef llvm::DenseMap<FileID, unsigned> FIDMap;
-
 
 namespace {
   class PlistDiagnostics : public PathDiagnosticConsumer {
@@ -80,50 +77,6 @@ void ento::createPlistMultiFileDiagnosticConsumer(AnalyzerOptions &AnalyzerOpts,
                                    PP.getLangOpts(), true));
 }
 
-static void AddFID(FIDMap &FIDs, SmallVectorImpl<FileID> &V,
-                   const SourceManager* SM, SourceLocation L) {
-
-  FileID FID = SM->getFileID(SM->getExpansionLoc(L));
-  FIDMap::iterator I = FIDs.find(FID);
-  if (I != FIDs.end()) return;
-  FIDs[FID] = V.size();
-  V.push_back(FID);
-}
-
-static unsigned GetFID(const FIDMap& FIDs, const SourceManager &SM,
-                       SourceLocation L) {
-  FileID FID = SM.getFileID(SM.getExpansionLoc(L));
-  FIDMap::const_iterator I = FIDs.find(FID);
-  assert(I != FIDs.end());
-  return I->second;
-}
-
-static raw_ostream &Indent(raw_ostream &o, const unsigned indent) {
-  for (unsigned i = 0; i < indent; ++i) o << ' ';
-  return o;
-}
-
-static void EmitLocation(raw_ostream &o, const SourceManager &SM,
-                         const LangOptions &LangOpts,
-                         SourceLocation L, const FIDMap &FM,
-                         unsigned indent, bool extend = false) {
-
-  FullSourceLoc Loc(SM.getExpansionLoc(L), const_cast<SourceManager&>(SM));
-
-  // Add in the length of the token, so that we cover multi-char tokens.
-  unsigned offset =
-    extend ? Lexer::MeasureTokenLength(Loc, SM, LangOpts) - 1 : 0;
-
-  Indent(o, indent) << "<dict>\n";
-  Indent(o, indent) << " <key>line</key><integer>"
-                    << Loc.getExpansionLineNumber() << "</integer>\n";
-  Indent(o, indent) << " <key>col</key><integer>"
-                    << Loc.getExpansionColumnNumber() + offset << "</integer>\n";
-  Indent(o, indent) << " <key>file</key><integer>"
-                    << GetFID(FM, SM, Loc) << "</integer>\n";
-  Indent(o, indent) << "</dict>\n";
-}
-
 static void EmitLocation(raw_ostream &o, const SourceManager &SM,
                          const LangOptions &LangOpts,
                          const PathDiagnosticLocation &L, const FIDMap& FM,
@@ -139,23 +92,6 @@ static void EmitRange(raw_ostream &o, const SourceManager &SM,
   EmitLocation(o, SM, LangOpts, R.getBegin(), FM, indent+1);
   EmitLocation(o, SM, LangOpts, R.getEnd(), FM, indent+1, !R.isPoint);
   Indent(o, indent) << "</array>\n";
-}
-
-static raw_ostream &EmitString(raw_ostream &o, StringRef s) {
-  o << "<string>";
-  for (StringRef::const_iterator I = s.begin(), E = s.end(); I != E; ++I) {
-    char c = *I;
-    switch (c) {
-    default:   o << c; break;
-    case '&':  o << "&amp;"; break;
-    case '<':  o << "&lt;"; break;
-    case '>':  o << "&gt;"; break;
-    case '\'': o << "&apos;"; break;
-    case '\"': o << "&quot;"; break;
-    }
-  }
-  o << "</string>";
-  return o;
 }
 
 static void ReportControlFlow(raw_ostream &o,
@@ -387,12 +323,12 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
       for (PathPieces::const_iterator I = path.begin(), E = path.end(); I != E;
            ++I) {
         const PathDiagnosticPiece *piece = I->getPtr();
-        AddFID(FM, Fids, SM, piece->getLocation().asLocation());
+        AddFID(FM, Fids, *SM, piece->getLocation().asLocation());
         ArrayRef<SourceRange> Ranges = piece->getRanges();
         for (ArrayRef<SourceRange>::iterator I = Ranges.begin(),
                                              E = Ranges.end(); I != E; ++I) {
-          AddFID(FM, Fids, SM, I->getBegin());
-          AddFID(FM, Fids, SM, I->getEnd());
+          AddFID(FM, Fids, *SM, I->getBegin());
+          AddFID(FM, Fids, *SM, I->getEnd());
         }
 
         if (const PathDiagnosticCallPiece *call =
@@ -400,7 +336,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
           IntrusiveRefCntPtr<PathDiagnosticEventPiece>
             callEnterWithin = call->getCallEnterWithinCallerEvent();
           if (callEnterWithin)
-            AddFID(FM, Fids, SM, callEnterWithin->getLocation().asLocation());
+            AddFID(FM, Fids, *SM, callEnterWithin->getLocation().asLocation());
 
           WorkList.push_back(&call->path);
         }
@@ -421,10 +357,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
   }
 
   // Write the plist header.
-  o << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-  "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" "
-  "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
-  "<plist version=\"1.0\">\n";
+  o << PlistHeader;
 
   // Write the root object: a <dict> containing...
   //  - "clang_version", the string representation of clang version
