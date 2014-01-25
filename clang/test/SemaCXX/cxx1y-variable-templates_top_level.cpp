@@ -436,3 +436,8 @@ namespace nested_name {
   class a<int> {}; // expected-error {{identifier followed by '<' indicates a class template specialization but 'a' refers to a variable template}}
   enum a<int> {}; // expected-error {{expected identifier or '{'}} expected-warning {{does not declare anything}}
 }
+
+namespace PR18530 {
+  template<typename T> int a;
+  int a<int>; // expected-error {{requires 'template<>'}}
+}

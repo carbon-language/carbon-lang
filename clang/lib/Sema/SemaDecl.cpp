@@ -5129,7 +5129,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           << SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc)
           << FixItHint::CreateInsertion(D.getDeclSpec().getLocStart(),
                                         "template<> ");
-      IsVariableTemplateSpecialization = true;
+      IsExplicitSpecialization = true;
       TemplateParams = TemplateParameterList::Create(Context, SourceLocation(),
                                                      SourceLocation(), 0, 0,
                                                      SourceLocation());
@@ -5206,18 +5206,13 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     SetNestedNameSpecifier(NewVD, D);
 
-    // FIXME: Do we need D.getCXXScopeSpec().isSet()?
-    if (TemplateParams && TemplateParamLists.size() > 1 &&
-        (!IsVariableTemplateSpecialization || D.getCXXScopeSpec().isSet())) {
+    // If we have any template parameter lists that don't directly belong to
+    // the variable (matching the scope specifier), store them.
+    unsigned VDTemplateParamLists = TemplateParams ? 1 : 0;
+    if (TemplateParamLists.size() > VDTemplateParamLists)
       NewVD->setTemplateParameterListsInfo(
-          Context, TemplateParamLists.size() - 1, TemplateParamLists.data());
-    } else if (IsVariableTemplateSpecialization ||
-               (!TemplateParams && TemplateParamLists.size() > 0 &&
-                (D.getCXXScopeSpec().isSet()))) {
-      NewVD->setTemplateParameterListsInfo(Context,
-                                           TemplateParamLists.size(),
-                                           TemplateParamLists.data());
-    }
+          Context, TemplateParamLists.size() - VDTemplateParamLists,
+          TemplateParamLists.data());
 
     if (D.getDeclSpec().isConstexprSpecified())
       NewVD->setConstexpr(true);
