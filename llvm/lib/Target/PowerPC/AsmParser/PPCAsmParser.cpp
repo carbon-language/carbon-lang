@@ -9,6 +9,7 @@
 
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCMCExpr.h"
+#include "PPCTargetStreamer.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1436,6 +1437,10 @@ bool PPCAsmParser::ParseDirectiveMachine(SMLoc L) {
     Error(L, "unexpected token in directive");
     return false;
   }
+  PPCTargetStreamer &TStreamer =
+      *static_cast<PPCTargetStreamer *>(
+           getParser().getStreamer().getTargetStreamer());
+  TStreamer.emitMachine(CPU);
 
   return false;
 }

@@ -120,12 +120,19 @@ public:
     OS << S.getName();
     OS << '\n';
   }
+  virtual void emitMachine(StringRef CPU) {
+    OS << "\t.machine " << CPU << '\n';
+  }
 };
 
 class PPCTargetELFStreamer : public PPCTargetStreamer {
   virtual void emitTCEntry(const MCSymbol &S) {
     // Creates a R_PPC64_TOC relocation
     Streamer->EmitSymbolValue(&S, 8);
+  }
+  virtual void emitMachine(StringRef CPU) {
+    // FIXME: Is there anything to do in here or does this directive only
+    // limit the parser?
   }
 };
 }
