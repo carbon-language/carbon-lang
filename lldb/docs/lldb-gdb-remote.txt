@@ -523,8 +523,8 @@ read packet: $cputype:16777223;cpusubtype:3;ostype:darwin;vendor:apple;endian:li
 
 Key value pairs are one of:
 
-cputype: is a number that is the mach-o CPU type that is being debugged
-cpusubtype: is a number that is the mach-o CPU subtype type that is being debugged
+cputype: is a number that is the mach-o CPU type that is being debugged (base 10)
+cpusubtype: is a number that is the mach-o CPU subtype type that is being debugged (base 10)
 triple: a string for the target triple (x86_64-apple-macosx) that can be used to specify arch + vendor + os in one entry
 vendor: a string for the vendor (apple), not needed if "triple" is specified
 ostype: a string for the OS being debugged (darwin, linux, freebsd), not needed if "triple" is specified
@@ -621,8 +621,8 @@ real-uid: the real user id of the process
 real-gid: the real group id of the process
 effective-uid: the effective user id of the process
 effective-gid: the effective group id of the process
-cputype: the Mach-O CPU type of the process
-cpusubtype: the Mach-O CPU subtype of the process
+cputype: the Mach-O CPU type of the process  (base 16)
+cpusubtype: the Mach-O CPU subtype of the process  (base 16)
 ostype: is a string the represents the OS being debugged (darwin, linux, freebsd)
 vendor: is a string that represents the vendor (apple)
 endian: is one of "little", "big", or "pdp"
