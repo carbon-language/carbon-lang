@@ -419,7 +419,7 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
 void MatcherGen::EmitMatchCode(const TreePatternNode *N,
                                TreePatternNode *NodeNoTypes) {
   // If N and NodeNoTypes don't agree on a type, then this is a case where we
-  // need to do a type check.  Emit the check, apply the tyep to NodeNoTypes and
+  // need to do a type check.  Emit the check, apply the type to NodeNoTypes and
   // reinfer any correlated types.
   SmallVector<unsigned, 2> ResultsToTypeCheck;
 
