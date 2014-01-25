@@ -1311,6 +1311,7 @@ static int readModRM(struct InternalInstruction* insn) {
     case 0x1:
       insn->eaBase = (EABase)(insn->eaBaseBase + rm);
       insn->eaDisplacement = EA_DISP_8;
+      insn->displacementSize = 1;
       if (readDisplacement(insn))
         return -1;
       break;
@@ -1356,6 +1357,8 @@ static int readModRM(struct InternalInstruction* insn) {
       }
       break;
     case 0x1:
+      insn->displacementSize = 1;
+      // FALLTHROUGH
     case 0x2:
       insn->eaDisplacement = (mod == 0x1 ? EA_DISP_8 : EA_DISP_32);
       switch (rm) {
