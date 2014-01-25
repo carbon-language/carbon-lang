@@ -7,13 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_PLISTSUPPORT_H
+#define LLVM_CLANG_PLISTSUPPORT_H
+
 #include "llvm/Support/raw_ostream.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
 
 namespace clang {
-
+namespace markup {
 typedef llvm::DenseMap<FileID, unsigned> FIDMap;
 
 static const char *PlistHeader =
@@ -24,7 +27,6 @@ static const char *PlistHeader =
 
 static void AddFID(FIDMap &FIDs, SmallVectorImpl<FileID> &V,
                    const SourceManager &SM, SourceLocation L) {
-
   FileID FID = SM.getFileID(SM.getExpansionLoc(L));
   FIDMap::iterator I = FIDs.find(FID);
   if (I != FIDs.end())
@@ -51,7 +53,6 @@ static void EmitLocation(raw_ostream &o, const SourceManager &SM,
                          const LangOptions &LangOpts, SourceLocation L,
                          const FIDMap &FM, unsigned indent,
                          bool extend = false) {
-
   FullSourceLoc Loc(SM.getExpansionLoc(L), const_cast<SourceManager &>(SM));
 
   // Add in the length of the token, so that we cover multi-char tokens.
@@ -107,3 +108,6 @@ static raw_ostream &EmitString(raw_ostream &o, StringRef s) {
   return o;
 }
 }
+}
+
+#endif

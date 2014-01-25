@@ -24,6 +24,7 @@
 #include "llvm/Support/Casting.h"
 using namespace clang;
 using namespace ento;
+using namespace markup;
 
 namespace {
   class PlistDiagnostics : public PathDiagnosticConsumer {
@@ -77,23 +78,6 @@ void ento::createPlistMultiFileDiagnosticConsumer(AnalyzerOptions &AnalyzerOpts,
                                    PP.getLangOpts(), true));
 }
 
-static void EmitLocation(raw_ostream &o, const SourceManager &SM,
-                         const LangOptions &LangOpts,
-                         const PathDiagnosticLocation &L, const FIDMap& FM,
-                         unsigned indent, bool extend = false) {
-  EmitLocation(o, SM, LangOpts, L.asLocation(), FM, indent, extend);
-}
-
-static void EmitRange(raw_ostream &o, const SourceManager &SM,
-                      const LangOptions &LangOpts,
-                      PathDiagnosticRange R, const FIDMap &FM,
-                      unsigned indent) {
-  Indent(o, indent) << "<array>\n";
-  EmitLocation(o, SM, LangOpts, R.getBegin(), FM, indent+1);
-  EmitLocation(o, SM, LangOpts, R.getEnd(), FM, indent+1, !R.isPoint);
-  Indent(o, indent) << "</array>\n";
-}
-
 static void ReportControlFlow(raw_ostream &o,
                               const PathDiagnosticControlFlowPiece& P,
                               const FIDMap& FM,
@@ -121,11 +105,13 @@ static void ReportControlFlow(raw_ostream &o,
     // logic for clients.
     Indent(o, indent) << "<key>start</key>\n";
     SourceLocation StartEdge = I->getStart().asRange().getBegin();
-    EmitRange(o, SM, LangOpts, SourceRange(StartEdge, StartEdge), FM, indent+1);
+    EmitRange(o, SM, LangOpts, CharSourceRange::getTokenRange(StartEdge), FM,
+              indent + 1);
 
     Indent(o, indent) << "<key>end</key>\n";
     SourceLocation EndEdge = I->getEnd().asRange().getBegin();
-    EmitRange(o, SM, LangOpts, SourceRange(EndEdge, EndEdge), FM, indent+1);
+    EmitRange(o, SM, LangOpts, CharSourceRange::getTokenRange(EndEdge), FM,
+              indent + 1);
 
     --indent;
     Indent(o, indent) << "</dict>\n";
@@ -177,7 +163,8 @@ static void ReportEvent(raw_ostream &o, const PathDiagnosticPiece& P,
     ++indent;
     for (ArrayRef<SourceRange>::iterator I = Ranges.begin(), E = Ranges.end();
          I != E; ++I) {
-      EmitRange(o, SM, LangOpts, *I, FM, indent+1);
+      EmitRange(o, SM, LangOpts, CharSourceRange::getTokenRange(*I), FM,
+                indent + 1);
     }
     --indent;
     Indent(o, indent) << "</array>\n";
@@ -468,7 +455,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
 
     // Output the location of the bug.
     o << "  <key>location</key>\n";
-    EmitLocation(o, *SM, LangOpts, D->getLocation(), FM, 2);
+    EmitLocation(o, *SM, LangOpts, D->getLocation().asLocation(), FM, 2);
 
     // Output the diagnostic to the sub-diagnostic client, if any.
     if (!filesMade->empty()) {

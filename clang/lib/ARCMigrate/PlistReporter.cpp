@@ -14,6 +14,7 @@
 #include "clang/Lex/Lexer.h"
 using namespace clang;
 using namespace arcmt;
+using namespace markup;
 
 void arcmt::writeARCDiagsToPlist(const std::string &outPath,
                                  ArrayRef<StoredDiagnostic> diags,
