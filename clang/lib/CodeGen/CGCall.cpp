@@ -79,7 +79,7 @@ const CGFunctionInfo &
 CodeGenTypes::arrangeFreeFunctionType(CanQual<FunctionNoProtoType> FTNP) {
   // When translating an unprototyped function type, always use a
   // variadic type.
-  return arrangeLLVMFunctionInfo(FTNP->getResultType().getUnqualifiedType(),
+  return arrangeLLVMFunctionInfo(FTNP->getReturnType().getUnqualifiedType(),
                                  None, FTNP->getExtInfo(), RequiredArgs(0));
 }
 
@@ -94,7 +94,7 @@ static const CGFunctionInfo &arrangeLLVMFunctionInfo(CodeGenTypes &CGT,
   // FIXME: Kill copy.
   for (unsigned i = 0, e = FTP->getNumParams(); i != e; ++i)
     prefix.push_back(FTP->getParamType(i));
-  CanQualType resultType = FTP->getResultType().getUnqualifiedType();
+  CanQualType resultType = FTP->getReturnType().getUnqualifiedType();
   return CGT.arrangeLLVMFunctionInfo(resultType, prefix, extInfo, required);
 }
 
@@ -263,7 +263,7 @@ CodeGenTypes::arrangeFunctionDeclaration(const FunctionDecl *FD) {
   // non-variadic type.
   if (isa<FunctionNoProtoType>(FTy)) {
     CanQual<FunctionNoProtoType> noProto = FTy.getAs<FunctionNoProtoType>();
-    return arrangeLLVMFunctionInfo(noProto->getResultType(), None,
+    return arrangeLLVMFunctionInfo(noProto->getReturnType(), None,
                                    noProto->getExtInfo(), RequiredArgs::All);
   }
 
@@ -309,7 +309,7 @@ CodeGenTypes::arrangeObjCMessageSendSignature(const ObjCMethodDecl *MD,
   RequiredArgs required =
     (MD->isVariadic() ? RequiredArgs(argTys.size()) : RequiredArgs::All);
 
-  return arrangeLLVMFunctionInfo(GetReturnType(MD->getResultType()), argTys,
+  return arrangeLLVMFunctionInfo(GetReturnType(MD->getReturnType()), argTys,
                                  einfo, required);
 }
 
@@ -356,7 +356,7 @@ arrangeFreeFunctionLikeCall(CodeGenTypes &CGT,
     required = RequiredArgs(args.size());
   }
 
-  return CGT.arrangeFreeFunctionCall(fnType->getResultType(), args,
+  return CGT.arrangeFreeFunctionCall(fnType->getReturnType(), args,
                                      fnType->getExtInfo(), required);
 }
 
@@ -404,8 +404,8 @@ CodeGenTypes::arrangeCXXMethodCall(const CallArgList &args,
     argTypes.push_back(Context.getCanonicalParamType(i->Ty));
 
   FunctionType::ExtInfo info = FPT->getExtInfo();
-  return arrangeLLVMFunctionInfo(GetReturnType(FPT->getResultType()),
-                                 argTypes, info, required);
+  return arrangeLLVMFunctionInfo(GetReturnType(FPT->getReturnType()), argTypes,
+                                 info, required);
 }
 
 const CGFunctionInfo &
@@ -1232,7 +1232,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   // return statements.
   if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CurCodeDecl)) {
     if (FD->hasImplicitReturnZero()) {
-      QualType RetTy = FD->getResultType().getUnqualifiedType();
+      QualType RetTy = FD->getReturnType().getUnqualifiedType();
       llvm::Type* LLVMTy = CGM.getTypes().ConvertType(RetTy);
       llvm::Constant* Zero = llvm::Constant::getNullValue(LLVMTy);
       Builder.CreateStore(Zero, ReturnValue);

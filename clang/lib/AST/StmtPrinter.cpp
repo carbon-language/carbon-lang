@@ -1527,7 +1527,7 @@ void StmtPrinter::VisitLambdaExpr(LambdaExpr *Node) {
     // Print the trailing return type if it was specified in the source.
     if (Node->hasExplicitResultType()) {
       OS << " -> ";
-      Proto->getResultType().print(OS, Policy);
+      Proto->getReturnType().print(OS, Policy);
     }
   }
 

@@ -559,7 +559,7 @@ void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
   if (!Traits.getCommandInfo(Command->getCommandID())->IsReturnsCommand)
     return;
   if (isFunctionDecl()) {
-    if (ThisDeclInfo->ResultType->isVoidType()) {
+    if (ThisDeclInfo->ReturnType->isVoidType()) {
       unsigned DiagKind;
       switch (ThisDeclInfo->CommentDecl->getKind()) {
       default:

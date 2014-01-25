@@ -1327,7 +1327,7 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
     }
     Out << '@';
   } else {
-    QualType ResultType = Proto->getResultType();
+    QualType ResultType = Proto->getReturnType();
     if (ResultType->isVoidType())
       ResultType = ResultType.getUnqualifiedType();
     mangleType(ResultType, Range, QMM_Result);

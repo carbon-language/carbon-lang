@@ -49,8 +49,8 @@ bool Sema::checkInitMethod(ObjCMethodDecl *method,
 
   // We ignore protocols here.  Should we?  What about Class?
 
-  const ObjCObjectType *result = method->getResultType()
-    ->castAs<ObjCObjectPointerType>()->getObjectType();
+  const ObjCObjectType *result =
+      method->getReturnType()->castAs<ObjCObjectPointerType>()->getObjectType();
 
   if (result->isObjCId()) {
     return false;
@@ -118,10 +118,10 @@ void Sema::CheckObjCMethodOverride(ObjCMethodDecl *NewMethod,
     // implies a related result type, and the original (overridden) method has
     // a suitable return type, but the new (overriding) method does not have
     // a suitable return type.
-    QualType ResultType = NewMethod->getResultType();
+    QualType ResultType = NewMethod->getReturnType();
     SourceRange ResultTypeRange;
-    if (const TypeSourceInfo *ResultTypeInfo 
-                                        = NewMethod->getResultTypeSourceInfo())
+    if (const TypeSourceInfo *ResultTypeInfo =
+            NewMethod->getReturnTypeSourceInfo())
       ResultTypeRange = ResultTypeInfo->getTypeLoc().getSourceRange();
     
     // Figure out which class this method is part of, if any.
@@ -209,19 +209,19 @@ bool Sema::CheckARCMethodDecl(ObjCMethodDecl *method) {
     return false;
 
   case OMF_dealloc:
-    if (!Context.hasSameType(method->getResultType(), Context.VoidTy)) {
+    if (!Context.hasSameType(method->getReturnType(), Context.VoidTy)) {
       SourceRange ResultTypeRange;
-      if (const TypeSourceInfo *ResultTypeInfo
-          = method->getResultTypeSourceInfo())
+      if (const TypeSourceInfo *ResultTypeInfo =
+              method->getReturnTypeSourceInfo())
         ResultTypeRange = ResultTypeInfo->getTypeLoc().getSourceRange();
       if (ResultTypeRange.isInvalid())
-        Diag(method->getLocation(), diag::error_dealloc_bad_result_type) 
-          << method->getResultType() 
-          << FixItHint::CreateInsertion(method->getSelectorLoc(0), "(void)");
+        Diag(method->getLocation(), diag::error_dealloc_bad_result_type)
+            << method->getReturnType()
+            << FixItHint::CreateInsertion(method->getSelectorLoc(0), "(void)");
       else
-        Diag(method->getLocation(), diag::error_dealloc_bad_result_type) 
-          << method->getResultType() 
-          << FixItHint::CreateReplacement(ResultTypeRange, "void");
+        Diag(method->getLocation(), diag::error_dealloc_bad_result_type)
+            << method->getReturnType()
+            << FixItHint::CreateReplacement(ResultTypeRange, "void");
       return true;
     }
     return false;
@@ -1341,21 +1341,21 @@ static bool CheckMethodOverrideReturn(Sema &S,
       (MethodDecl->getObjCDeclQualifier() !=
        MethodImpl->getObjCDeclQualifier())) {
     if (Warn) {
-        S.Diag(MethodImpl->getLocation(), 
-               (IsOverridingMode ? 
-                 diag::warn_conflicting_overriding_ret_type_modifiers 
-                 : diag::warn_conflicting_ret_type_modifiers))
+      S.Diag(MethodImpl->getLocation(),
+             (IsOverridingMode
+                  ? diag::warn_conflicting_overriding_ret_type_modifiers
+                  : diag::warn_conflicting_ret_type_modifiers))
           << MethodImpl->getDeclName()
-          << getTypeRange(MethodImpl->getResultTypeSourceInfo());
-        S.Diag(MethodDecl->getLocation(), diag::note_previous_declaration)
-          << getTypeRange(MethodDecl->getResultTypeSourceInfo());
+          << getTypeRange(MethodImpl->getReturnTypeSourceInfo());
+      S.Diag(MethodDecl->getLocation(), diag::note_previous_declaration)
+          << getTypeRange(MethodDecl->getReturnTypeSourceInfo());
     }
     else
       return false;
   }
-  
-  if (S.Context.hasSameUnqualifiedType(MethodImpl->getResultType(),
-                                       MethodDecl->getResultType()))
+
+  if (S.Context.hasSameUnqualifiedType(MethodImpl->getReturnType(),
+                                       MethodDecl->getReturnType()))
     return true;
   if (!Warn)
     return false;
@@ -1367,9 +1367,9 @@ static bool CheckMethodOverrideReturn(Sema &S,
   // Mismatches between ObjC pointers go into a different warning
   // category, and sometimes they're even completely whitelisted.
   if (const ObjCObjectPointerType *ImplPtrTy =
-        MethodImpl->getResultType()->getAs<ObjCObjectPointerType>()) {
+          MethodImpl->getReturnType()->getAs<ObjCObjectPointerType>()) {
     if (const ObjCObjectPointerType *IfacePtrTy =
-          MethodDecl->getResultType()->getAs<ObjCObjectPointerType>()) {
+            MethodDecl->getReturnType()->getAs<ObjCObjectPointerType>()) {
       // Allow non-matching return types as long as they don't violate
       // the principle of substitutability.  Specifically, we permit
       // return types that are subclasses of the declared return type,
@@ -1384,14 +1384,13 @@ static bool CheckMethodOverrideReturn(Sema &S,
   }
 
   S.Diag(MethodImpl->getLocation(), DiagID)
-    << MethodImpl->getDeclName()
-    << MethodDecl->getResultType()
-    << MethodImpl->getResultType()
-    << getTypeRange(MethodImpl->getResultTypeSourceInfo());
-  S.Diag(MethodDecl->getLocation(), 
-         IsOverridingMode ? diag::note_previous_declaration 
-                          : diag::note_previous_definition)
-    << getTypeRange(MethodDecl->getResultTypeSourceInfo());
+      << MethodImpl->getDeclName() << MethodDecl->getReturnType()
+      << MethodImpl->getReturnType()
+      << getTypeRange(MethodImpl->getReturnTypeSourceInfo());
+  S.Diag(MethodDecl->getLocation(), IsOverridingMode
+                                        ? diag::note_previous_declaration
+                                        : diag::note_previous_definition)
+      << getTypeRange(MethodDecl->getReturnTypeSourceInfo());
   return false;
 }
 
@@ -1523,7 +1522,7 @@ static bool checkMethodFamilyMismatch(Sema &S, ObjCMethodDecl *impl,
 
   // The only reason these methods don't fall within their families is
   // due to unusual result types.
-  if (unmatched->getResultType()->isObjCObjectPointerType()) {
+  if (unmatched->getReturnType()->isObjCObjectPointerType()) {
     reasonSelector = R_UnrelatedReturn;
   } else {
     reasonSelector = R_NonObjectReturn;
@@ -2148,8 +2147,8 @@ static bool tryMatchRecordTypes(ASTContext &Context,
 bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *left,
                                       const ObjCMethodDecl *right,
                                       MethodMatchStrategy strategy) {
-  if (!matchTypes(Context, strategy,
-                  left->getResultType(), right->getResultType()))
+  if (!matchTypes(Context, strategy, left->getReturnType(),
+                  right->getReturnType()))
     return false;
 
   // If either is hidden, it is not considered to match.
@@ -2278,7 +2277,7 @@ static bool isAcceptableMethodMismatch(ObjCMethodDecl *chosen,
 
   // Don't complain about mismatches for -length if the method we
   // chose has an integral result type.
-  return (chosen->getResultType()->isIntegerType());
+  return (chosen->getReturnType()->isIntegerType());
 }
 
 ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
@@ -2738,8 +2737,8 @@ CvtQTToAstBitMask(ObjCDeclSpec::ObjCDeclQualifier PQTVal) {
 static Sema::ResultTypeCompatibilityKind 
 CheckRelatedResultTypeCompatibility(Sema &S, ObjCMethodDecl *Method,
                                     ObjCInterfaceDecl *CurrentClass) {
-  QualType ResultType = Method->getResultType();
-  
+  QualType ResultType = Method->getReturnType();
+
   // If an Objective-C method inherits its related result type, then its 
   // declared result type must be compatible with its own class type. The
   // declared result type is compatible if:
@@ -3047,9 +3046,9 @@ Decl *Sema::ActOnMethodDeclaration(
   QualType resultDeclType;
 
   bool HasRelatedResultType = false;
-  TypeSourceInfo *ResultTInfo = 0;
+  TypeSourceInfo *ReturnTInfo = 0;
   if (ReturnType) {
-    resultDeclType = GetTypeFromParser(ReturnType, &ResultTInfo);
+    resultDeclType = GetTypeFromParser(ReturnType, &ReturnTInfo);
 
     if (CheckFunctionReturnType(resultDeclType, MethodLoc))
       return 0;
@@ -3061,18 +3060,14 @@ Decl *Sema::ActOnMethodDeclaration(
       << FixItHint::CreateInsertion(SelectorLocs.front(), "(id)");
   }
 
-  ObjCMethodDecl* ObjCMethod =
-    ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel,
-                           resultDeclType,
-                           ResultTInfo,
-                           CurContext,
-                           MethodType == tok::minus, isVariadic,
-                           /*isPropertyAccessor=*/false,
-                           /*isImplicitlyDeclared=*/false, /*isDefined=*/false,
-                           MethodDeclKind == tok::objc_optional 
-                             ? ObjCMethodDecl::Optional
-                             : ObjCMethodDecl::Required,
-                           HasRelatedResultType);
+  ObjCMethodDecl *ObjCMethod = ObjCMethodDecl::Create(
+      Context, MethodLoc, EndLoc, Sel, resultDeclType, ReturnTInfo, CurContext,
+      MethodType == tok::minus, isVariadic,
+      /*isPropertyAccessor=*/false,
+      /*isImplicitlyDeclared=*/false, /*isDefined=*/false,
+      MethodDeclKind == tok::objc_optional ? ObjCMethodDecl::Optional
+                                           : ObjCMethodDecl::Required,
+      HasRelatedResultType);
 
   SmallVector<ParmVarDecl*, 16> Params;
 

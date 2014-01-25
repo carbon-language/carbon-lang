@@ -269,11 +269,11 @@ ComputeReturnAdjustmentBaseOffset(ASTContext &Context,
   const FunctionType *DerivedFT = DerivedMD->getType()->getAs<FunctionType>();
   
   // Canonicalize the return types.
-  CanQualType CanDerivedReturnType = 
-    Context.getCanonicalType(DerivedFT->getResultType());
-  CanQualType CanBaseReturnType = 
-    Context.getCanonicalType(BaseFT->getResultType());
-  
+  CanQualType CanDerivedReturnType =
+      Context.getCanonicalType(DerivedFT->getReturnType());
+  CanQualType CanBaseReturnType =
+      Context.getCanonicalType(BaseFT->getReturnType());
+
   assert(CanDerivedReturnType->getTypeClass() == 
          CanBaseReturnType->getTypeClass() && 
          "Types must have same type class!");

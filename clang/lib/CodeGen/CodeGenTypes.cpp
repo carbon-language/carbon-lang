@@ -221,7 +221,7 @@ bool CodeGenTypes::isFuncParamTypeConvertible(QualType Ty) {
 /// pended.  If so, we don't want to ask the ABI lowering code to handle a type
 /// that cannot be converted to an IR type.
 bool CodeGenTypes::isFuncTypeConvertible(const FunctionType *FT) {
-  if (!isFuncParamTypeConvertible(FT->getResultType()))
+  if (!isFuncParamTypeConvertible(FT->getReturnType()))
     return false;
   
   if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT))
@@ -478,7 +478,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
 
       // Force conversion of all the relevant record types, to make sure
       // we re-convert the FunctionType when appropriate.
-      if (const RecordType *RT = FT->getResultType()->getAs<RecordType>())
+      if (const RecordType *RT = FT->getReturnType()->getAs<RecordType>())
         ConvertRecordDeclType(RT->getDecl());
       if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT))
         for (unsigned i = 0, e = FPT->getNumParams(); i != e; i++)

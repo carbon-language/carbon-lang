@@ -89,8 +89,8 @@ static QualType getFunctionOrMethodParamType(const Decl *D, unsigned Idx) {
 
 static QualType getFunctionOrMethodResultType(const Decl *D) {
   if (const FunctionType *FnTy = D->getFunctionType())
-    return cast<FunctionProtoType>(FnTy)->getResultType();
-  return cast<ObjCMethodDecl>(D)->getResultType();
+    return cast<FunctionProtoType>(FnTy)->getReturnType();
+  return cast<ObjCMethodDecl>(D)->getReturnType();
 }
 
 static bool isFunctionOrMethodVariadic(const Decl *D) {
@@ -1463,7 +1463,7 @@ static void handleTLSModelAttr(Sema &S, Decl *D,
 
 static void handleMallocAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    QualType RetTy = FD->getResultType();
+    QualType RetTy = FD->getReturnType();
     if (RetTy->isAnyPointerType() || RetTy->isBlockPointerType()) {
       D->addAttr(::new (S.Context)
                  MallocAttr(Attr.getRange(), S.Context,
@@ -2006,10 +2006,10 @@ static void handleObjCMethodFamilyAttr(Sema &S, Decl *decl,
     return;
   }
 
-  if (F == ObjCMethodFamilyAttr::OMF_init && 
-      !method->getResultType()->isObjCObjectPointerType()) {
+  if (F == ObjCMethodFamilyAttr::OMF_init &&
+      !method->getReturnType()->isObjCObjectPointerType()) {
     S.Diag(method->getLocation(), diag::err_init_method_bad_return_type)
-      << method->getResultType();
+        << method->getReturnType();
     // Ignore the attribute.
     return;
   }
@@ -2167,13 +2167,14 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleWarnUnusedResult(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (D->getFunctionType() && D->getFunctionType()->getResultType()->isVoidType()) {
+  if (D->getFunctionType() &&
+      D->getFunctionType()->getReturnType()->isVoidType()) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_void_function_method)
       << Attr.getName() << 0;
     return;
   }
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
-    if (MD->getResultType()->isVoidType()) {
+    if (MD->getReturnType()->isVoidType()) {
       S.Diag(Attr.getLoc(), diag::warn_attribute_void_function_method)
       << Attr.getName() << 1;
       return;
@@ -3009,7 +3010,7 @@ static void handleNoDebugAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
 static void handleGlobalAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   FunctionDecl *FD = cast<FunctionDecl>(D);
-  if (!FD->getResultType()->isVoidType()) {
+  if (!FD->getReturnType()->isVoidType()) {
     TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc().IgnoreParens();
     if (FunctionTypeLoc FTL = TL.getAs<FunctionTypeLoc>()) {
       S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)
@@ -3374,14 +3375,14 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
   QualType returnType;
 
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
-    returnType = MD->getResultType();
+    returnType = MD->getReturnType();
   else if (S.getLangOpts().ObjCAutoRefCount && hasDeclarator(D) &&
            (Attr.getKind() == AttributeList::AT_NSReturnsRetained))
     return; // ignore: was handled as a type attribute
   else if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(D))
     returnType = PD->getType();
   else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    returnType = FD->getResultType();
+    returnType = FD->getReturnType();
   else {
     S.Diag(D->getLocStart(), diag::warn_attribute_wrong_decl_type)
         << Attr.getRange() << Attr.getName()
@@ -3452,7 +3453,7 @@ static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
   SourceLocation loc = attr.getLoc();
   QualType resultType;
   if (isa<ObjCMethodDecl>(D))
-    resultType = cast<ObjCMethodDecl>(D)->getResultType();
+    resultType = cast<ObjCMethodDecl>(D)->getReturnType();
   else
     resultType = cast<ObjCPropertyDecl>(D)->getType();
 

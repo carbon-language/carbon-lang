@@ -570,8 +570,8 @@ CXType clang_getResultType(CXType X) {
     return MakeCXType(QualType(), GetTU(X));
   
   if (const FunctionType *FD = T->getAs<FunctionType>())
-    return MakeCXType(FD->getResultType(), GetTU(X));
-  
+    return MakeCXType(FD->getReturnType(), GetTU(X));
+
   return MakeCXType(QualType(), GetTU(X));
 }
 
@@ -579,7 +579,7 @@ CXType clang_getCursorResultType(CXCursor C) {
   if (clang_isDeclaration(C.kind)) {
     const Decl *D = cxcursor::getCursorDecl(C);
     if (const ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(D))
-      return MakeCXType(MD->getResultType(), cxcursor::getCursorTU(C));
+      return MakeCXType(MD->getReturnType(), cxcursor::getCursorTU(C));
 
     return clang_getResultType(clang_getCursorType(C));
   }

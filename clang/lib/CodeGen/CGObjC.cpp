@@ -79,10 +79,10 @@ CodeGenFunction::EmitObjCBoxedExpr(const ObjCBoxedExpr *E) {
   RValue RV = EmitAnyExpr(SubExpr);
   CallArgList Args;
   Args.add(RV, ArgQT);
-  
-  RValue result = Runtime.GenerateMessageSend(*this, ReturnValueSlot(), 
-                                              BoxingMethod->getResultType(), Sel, Receiver, Args, 
-                                              ClassDecl, BoxingMethod);
+
+  RValue result = Runtime.GenerateMessageSend(
+      *this, ReturnValueSlot(), BoxingMethod->getReturnType(), Sel, Receiver,
+      Args, ClassDecl, BoxingMethod);
   return Builder.CreateBitCast(result.getScalarVal(), 
                                ConvertType(E->getType()));
 }
@@ -186,12 +186,9 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
   llvm::Value *Receiver = Runtime.GetClass(*this, Class);
 
   // Generate the message send.
-  RValue result
-    = Runtime.GenerateMessageSend(*this, ReturnValueSlot(), 
-                                  MethodWithObjects->getResultType(),
-                                  Sel,
-                                  Receiver, Args, Class,
-                                  MethodWithObjects);
+  RValue result = Runtime.GenerateMessageSend(
+      *this, ReturnValueSlot(), MethodWithObjects->getReturnType(), Sel,
+      Receiver, Args, Class, MethodWithObjects);
 
   // The above message send needs these objects, but in ARC they are
   // passed in a buffer that is essentially __unsafe_unretained.
@@ -238,7 +235,7 @@ static RValue AdjustRelatedResultType(CodeGenFunction &CGF,
     return Result;
 
   if (!Method->hasRelatedResultType() ||
-      CGF.getContext().hasSameType(ExpT, Method->getResultType()) ||
+      CGF.getContext().hasSameType(ExpT, Method->getReturnType()) ||
       !Result.isScalar())
     return Result;
   
@@ -369,8 +366,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
       shouldExtendReceiverForInnerPointerMessage(E))
     Receiver = EmitARCRetainAutorelease(ReceiverType, Receiver);
 
-  QualType ResultType =
-    method ? method->getResultType() : E->getType();
+  QualType ResultType = method ? method->getReturnType() : E->getType();
 
   CallArgList Args;
   EmitCallArgs(Args, method, E->arg_begin(), E->arg_end());
@@ -486,7 +482,7 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
 
   CurGD = OMD;
 
-  StartFunction(OMD, OMD->getResultType(), Fn, FI, args, StartLoc);
+  StartFunction(OMD, OMD->getReturnType(), Fn, FI, args, StartLoc);
 
   // In ARC, certain methods get an extra cleanup.
   if (CGM.getLangOpts().ObjCAutoRefCount &&
@@ -904,8 +900,9 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
     // We need to fix the type here. Ivars with copy & retain are
     // always objects so we don't need to worry about complex or
     // aggregates.
-    RV = RValue::get(Builder.CreateBitCast(RV.getScalarVal(),
-           getTypes().ConvertType(getterMethod->getResultType())));
+    RV = RValue::get(Builder.CreateBitCast(
+        RV.getScalarVal(),
+        getTypes().ConvertType(getterMethod->getReturnType())));
 
     EmitReturnOfRValue(RV, propType);
 
@@ -956,8 +953,8 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
         }
 
         value = Builder.CreateBitCast(value, ConvertType(propType));
-        value = Builder.CreateBitCast(value, 
-                  ConvertType(GetterMethodDecl->getResultType()));
+        value = Builder.CreateBitCast(
+            value, ConvertType(GetterMethodDecl->getReturnType()));
       }
       
       EmitReturnOfRValue(RValue::get(value), propType);

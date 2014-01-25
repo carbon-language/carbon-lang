@@ -239,9 +239,9 @@ bool CallEvent::isCallStmt(const Stmt *S) {
 QualType CallEvent::getDeclaredResultType(const Decl *D) {
   assert(D);
   if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D))
-    return FD->getResultType();
+    return FD->getReturnType();
   if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D))
-    return MD->getResultType();
+    return MD->getReturnType();
   if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
     // Blocks are difficult because the return type may not be stored in the
     // BlockDecl itself. The AST should probably be enhanced, but for now we
@@ -254,7 +254,7 @@ QualType CallEvent::getDeclaredResultType(const Decl *D) {
     if (const TypeSourceInfo *TSI = BD->getSignatureAsWritten()) {
       QualType Ty = TSI->getType();
       if (const FunctionType *FT = Ty->getAs<FunctionType>())
-        Ty = FT->getResultType();
+        Ty = FT->getReturnType();
       if (!Ty->isDependentType())
         return Ty;
     }

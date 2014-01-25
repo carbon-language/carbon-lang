@@ -627,7 +627,7 @@ void USRGenerator::VisitType(QualType T) {
     }
     if (const FunctionProtoType *FT = T->getAs<FunctionProtoType>()) {
       Out << 'F';
-      VisitType(FT->getResultType());
+      VisitType(FT->getReturnType());
       for (FunctionProtoType::param_type_iterator I = FT->param_type_begin(),
                                                   E = FT->param_type_end();
            I != E; ++I) {

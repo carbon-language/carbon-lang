@@ -35,7 +35,7 @@ static bool isDispatchBlock(QualType Ty) {
   // returns void.
   const FunctionProtoType *FT =
   BPT->getPointeeType()->getAs<FunctionProtoType>();
-  if (!FT || !FT->getResultType()->isVoidType() || FT->getNumParams() != 0)
+  if (!FT || !FT->getReturnType()->isVoidType() || FT->getNumParams() != 0)
     return false;
 
   return true;
@@ -289,8 +289,8 @@ static Stmt *create_OSAtomicCompareAndSwap(ASTContext &C, const FunctionDecl *D)
   //    return YES;
   //   }
   //   else return NO;
-  
-  QualType ResultTy = D->getResultType();
+
+  QualType ResultTy = D->getReturnType();
   bool isBoolean = ResultTy->isBooleanType();
   if (!isBoolean && !ResultTy->isIntegralType(C))
     return 0;

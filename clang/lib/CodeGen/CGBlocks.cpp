@@ -1123,10 +1123,9 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
 
   // Create the function declaration.
   const FunctionProtoType *fnType = blockInfo.getBlockExpr()->getFunctionType();
-  const CGFunctionInfo &fnInfo =
-    CGM.getTypes().arrangeFunctionDeclaration(fnType->getResultType(), args,
-                                              fnType->getExtInfo(),
-                                              fnType->isVariadic());
+  const CGFunctionInfo &fnInfo = CGM.getTypes().arrangeFunctionDeclaration(
+      fnType->getReturnType(), args, fnType->getExtInfo(),
+      fnType->isVariadic());
   if (CGM.ReturnTypeUsesSRet(fnInfo))
     blockInfo.UsesStret = true;
 
@@ -1140,7 +1139,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   CGM.SetInternalFunctionAttributes(blockDecl, fn, fnInfo);
 
   // Begin generating the function.
-  StartFunction(blockDecl, fnType->getResultType(), fn, fnInfo, args,
+  StartFunction(blockDecl, fnType->getReturnType(), fn, fnInfo, args,
                 blockInfo.getBlockExpr()->getBody()->getLocStart());
 
   // Okay.  Undo some of what StartFunction did.

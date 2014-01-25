@@ -1251,7 +1251,7 @@ public:
     return llvm::alignOf<ParmVarDecl*>();
   }
 
-  QualType getInnerType() const { return getTypePtr()->getResultType(); }
+  QualType getInnerType() const { return getTypePtr()->getReturnType(); }
 };
 
 class FunctionProtoTypeLoc :

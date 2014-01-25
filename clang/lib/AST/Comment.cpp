@@ -159,7 +159,7 @@ void DeclInfo::fill() {
     Kind = FunctionKind;
     ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
                                               FD->getNumParams());
-    ResultType = FD->getResultType();
+    ReturnType = FD->getReturnType();
     unsigned NumLists = FD->getNumTemplateParameterLists();
     if (NumLists != 0) {
       TemplateKind = TemplateSpecialization;
@@ -180,7 +180,7 @@ void DeclInfo::fill() {
     Kind = FunctionKind;
     ParamVars = ArrayRef<const ParmVarDecl *>(MD->param_begin(),
                                               MD->param_size());
-    ResultType = MD->getResultType();
+    ReturnType = MD->getReturnType();
     IsObjCMethod = true;
     IsInstanceMethod = MD->isInstanceMethod();
     IsClassMethod = !IsInstanceMethod;
@@ -193,7 +193,7 @@ void DeclInfo::fill() {
     const FunctionDecl *FD = FTD->getTemplatedDecl();
     ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
                                               FD->getNumParams());
-    ResultType = FD->getResultType();
+    ReturnType = FD->getReturnType();
     TemplateParameters = FTD->getTemplateParameters();
     break;
   }
@@ -281,7 +281,7 @@ void DeclInfo::fill() {
         ArrayRef<ParmVarDecl *> Params = FTL.getParams();
         ParamVars = ArrayRef<const ParmVarDecl *>(Params.data(),
                                                   Params.size());
-        ResultType = FTL.getResultLoc().getType();
+        ReturnType = FTL.getResultLoc().getType();
         break;
       }
       if (TemplateSpecializationTypeLoc STL =
@@ -302,7 +302,7 @@ void DeclInfo::fill() {
           ArrayRef<ParmVarDecl *> Params = FTL.getParams();
           ParamVars = ArrayRef<const ParmVarDecl *>(Params.data(),
                                                     Params.size());
-          ResultType = FTL.getResultLoc().getType();
+          ReturnType = FTL.getResultLoc().getType();
         }
         break;
       }

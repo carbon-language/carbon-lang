@@ -1270,7 +1270,7 @@ void ASTDumper::VisitObjCMethodDecl(const ObjCMethodDecl *D) {
   else
     OS << " +";
   dumpName(D);
-  dumpType(D->getResultType());
+  dumpType(D->getReturnType());
 
   bool OldMoreChildren = hasMoreChildren();
   bool IsVariadic = D->isVariadic();

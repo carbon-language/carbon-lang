@@ -54,7 +54,7 @@ void NSErrorMethodChecker::checkASTDecl(const ObjCMethodDecl *D,
                                         BugReporter &BR) const {
   if (!D->isThisDeclarationADefinition())
     return;
-  if (!D->getResultType()->isVoidType())
+  if (!D->getReturnType()->isVoidType())
     return;
 
   if (!II)
@@ -102,7 +102,7 @@ void CFErrorFunctionChecker::checkASTDecl(const FunctionDecl *D,
                                         BugReporter &BR) const {
   if (!D->doesThisDeclarationHaveABody())
     return;
-  if (!D->getResultType()->isVoidType())
+  if (!D->getReturnType()->isVoidType())
     return;
 
   if (!II)

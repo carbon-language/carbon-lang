@@ -2231,7 +2231,7 @@ AST_MATCHER_P(FunctionDecl, parameterCountIs, unsigned, N) {
 ///   matches int f() { return 1; }
 AST_MATCHER_P(FunctionDecl, returns,
               internal::Matcher<QualType>, InnerMatcher) {
-  return InnerMatcher.matches(Node.getResultType(), Finder, Builder);
+  return InnerMatcher.matches(Node.getReturnType(), Finder, Builder);
 }
 
 /// \brief Matches extern "C" function declarations.

@@ -3618,7 +3618,7 @@ static bool HandleFunctionCall(SourceLocation CallLoc,
 
   EvalStmtResult ESR = EvaluateStmt(Result, Info, Body);
   if (ESR == ESR_Succeeded) {
-    if (Callee->getResultType()->isVoidType())
+    if (Callee->getReturnType()->isVoidType())
       return true;
     Info.Diag(Callee->getLocEnd(), diag::note_constexpr_no_return);
   }

@@ -203,7 +203,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
       Old->isExternC()) {
     FunctionProtoType::ExtProtoInfo EPI = NewProto->getExtProtoInfo();
     EPI.ExceptionSpecType = EST_DynamicNone;
-    QualType NewType = Context.getFunctionType(NewProto->getResultType(),
+    QualType NewType = Context.getFunctionType(NewProto->getReturnType(),
                                                NewProto->getParamTypes(), EPI);
     New->setType(NewType);
     return false;
@@ -224,7 +224,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
 
   // Update the type of the function with the appropriate exception
   // specification.
-  QualType NewType = Context.getFunctionType(NewProto->getResultType(),
+  QualType NewType = Context.getFunctionType(NewProto->getReturnType(),
                                              NewProto->getParamTypes(), EPI);
   New->setType(NewType);
 
@@ -711,11 +711,10 @@ bool Sema::CheckParamExceptionSpec(const PartialDiagnostic & NoteID,
     const FunctionProtoType *Target, SourceLocation TargetLoc,
     const FunctionProtoType *Source, SourceLocation SourceLoc)
 {
-  if (CheckSpecForTypesEquivalent(*this,
-                           PDiag(diag::err_deep_exception_specs_differ) << 0, 
-                                  PDiag(),
-                                  Target->getResultType(), TargetLoc,
-                                  Source->getResultType(), SourceLoc))
+  if (CheckSpecForTypesEquivalent(
+          *this, PDiag(diag::err_deep_exception_specs_differ) << 0, PDiag(),
+          Target->getReturnType(), TargetLoc, Source->getReturnType(),
+          SourceLoc))
     return true;
 
   // We shouldn't even be testing this unless the arguments are otherwise

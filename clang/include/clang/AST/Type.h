@@ -2779,8 +2779,7 @@ protected:
   unsigned getTypeQuals() const { return FunctionTypeBits.TypeQuals; }
 
 public:
-
-  QualType getResultType() const { return ResultType; }
+  QualType getReturnType() const { return ResultType; }
 
   bool getHasRegParm() const { return getExtInfo().getHasRegParm(); }
   unsigned getRegParmType() const { return getExtInfo().getRegParm(); }
@@ -2797,7 +2796,7 @@ public:
   /// \brief Determine the type of an expression that calls a function of
   /// this type.
   QualType getCallResultType(ASTContext &Context) const {
-    return getResultType().getNonLValueExprType(Context);
+    return getReturnType().getNonLValueExprType(Context);
   }
 
   static StringRef getNameForCallConv(CallingConv CC);
@@ -2826,7 +2825,7 @@ public:
   QualType desugar() const { return QualType(this, 0); }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getResultType(), getExtInfo());
+    Profile(ID, getReturnType(), getExtInfo());
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ResultType,
                       ExtInfo Info) {

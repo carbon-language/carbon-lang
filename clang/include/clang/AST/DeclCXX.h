@@ -2353,7 +2353,7 @@ public:
 
   /// \brief Returns the type that this conversion function is converting to.
   QualType getConversionType() const {
-    return getType()->getAs<FunctionType>()->getResultType();
+    return getType()->getAs<FunctionType>()->getReturnType();
   }
 
   /// \brief Determine whether this conversion function is a conversion from

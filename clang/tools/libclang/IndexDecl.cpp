@@ -55,7 +55,7 @@ public:
     if (D->isImplicit())
       return;
 
-    IndexCtx.indexTypeSourceInfo(D->getResultTypeSourceInfo(), D);
+    IndexCtx.indexTypeSourceInfo(D->getReturnTypeSourceInfo(), D);
     for (ObjCMethodDecl::param_const_iterator I = D->param_begin(),
                                               E = D->param_end();
          I != E; ++I)

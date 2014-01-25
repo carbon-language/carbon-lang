@@ -162,11 +162,11 @@ private:
   /// \brief Indicates if the method was a definition but its body was skipped.
   unsigned HasSkippedBody : 1;
 
-  // Result type of this method.
+  // Return type of this method.
   QualType MethodDeclType;
 
-  // Type source information for the result type.
-  TypeSourceInfo *ResultTInfo;
+  // Type source information for the return type.
+  TypeSourceInfo *ReturnTInfo;
 
   /// \brief Array of ParmVarDecls for the formal parameters of this method
   /// and optionally followed by selector locations.
@@ -224,27 +224,22 @@ private:
                            ArrayRef<SourceLocation> SelLocs);
 
   ObjCMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
-                 Selector SelInfo, QualType T,
-                 TypeSourceInfo *ResultTInfo,
-                 DeclContext *contextDecl,
-                 bool isInstance = true,
-                 bool isVariadic = false,
-                 bool isPropertyAccessor = false,
-                 bool isImplicitlyDeclared = false,
-                 bool isDefined = false,
+                 Selector SelInfo, QualType T, TypeSourceInfo *ReturnTInfo,
+                 DeclContext *contextDecl, bool isInstance = true,
+                 bool isVariadic = false, bool isPropertyAccessor = false,
+                 bool isImplicitlyDeclared = false, bool isDefined = false,
                  ImplementationControl impControl = None,
                  bool HasRelatedResultType = false)
-  : NamedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo),
-    DeclContext(ObjCMethod), Family(InvalidObjCMethodFamily),
-    IsInstance(isInstance), IsVariadic(isVariadic),
-    IsPropertyAccessor(isPropertyAccessor),
-    IsDefined(isDefined), IsRedeclaration(0), HasRedeclaration(0),
-    DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
-    RelatedResultType(HasRelatedResultType),
-    SelLocsKind(SelLoc_StandardNoSpace), IsOverriding(0), HasSkippedBody(0),
-    MethodDeclType(T), ResultTInfo(ResultTInfo),
-    ParamsAndSelLocs(0), NumParams(0),
-    DeclEndLoc(endLoc), Body(), SelfDecl(0), CmdDecl(0) {
+      : NamedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo),
+        DeclContext(ObjCMethod), Family(InvalidObjCMethodFamily),
+        IsInstance(isInstance), IsVariadic(isVariadic),
+        IsPropertyAccessor(isPropertyAccessor), IsDefined(isDefined),
+        IsRedeclaration(0), HasRedeclaration(0), DeclImplementation(impControl),
+        objcDeclQualifier(OBJC_TQ_None),
+        RelatedResultType(HasRelatedResultType),
+        SelLocsKind(SelLoc_StandardNoSpace), IsOverriding(0), HasSkippedBody(0),
+        MethodDeclType(T), ReturnTInfo(ReturnTInfo), ParamsAndSelLocs(0),
+        NumParams(0), DeclEndLoc(endLoc), Body(), SelfDecl(0), CmdDecl(0) {
     setImplicit(isImplicitlyDeclared);
   }
 
@@ -254,20 +249,14 @@ private:
   virtual ObjCMethodDecl *getNextRedeclaration();
 
 public:
-  static ObjCMethodDecl *Create(ASTContext &C,
-                                SourceLocation beginLoc,
-                                SourceLocation endLoc,
-                                Selector SelInfo,
-                                QualType T,
-                                TypeSourceInfo *ResultTInfo,
-                                DeclContext *contextDecl,
-                                bool isInstance = true,
-                                bool isVariadic = false,
-                                bool isPropertyAccessor = false,
-                                bool isImplicitlyDeclared = false,
-                                bool isDefined = false,
-                                ImplementationControl impControl = None,
-                                bool HasRelatedResultType = false);
+  static ObjCMethodDecl *
+  Create(ASTContext &C, SourceLocation beginLoc, SourceLocation endLoc,
+         Selector SelInfo, QualType T, TypeSourceInfo *ReturnTInfo,
+         DeclContext *contextDecl, bool isInstance = true,
+         bool isVariadic = false, bool isPropertyAccessor = false,
+         bool isImplicitlyDeclared = false, bool isDefined = false,
+         ImplementationControl impControl = None,
+         bool HasRelatedResultType = false);
 
   static ObjCMethodDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
@@ -337,17 +326,17 @@ public:
 
   Selector getSelector() const { return getDeclName().getObjCSelector(); }
 
-  QualType getResultType() const { return MethodDeclType; }
-  void setResultType(QualType T) { MethodDeclType = T; }
+  QualType getReturnType() const { return MethodDeclType; }
+  void setReturnType(QualType T) { MethodDeclType = T; }
 
   /// \brief Determine the type of an expression that sends a message to this
   /// function.
   QualType getSendResultType() const {
-    return getResultType().getNonLValueExprType(getASTContext());
+    return getReturnType().getNonLValueExprType(getASTContext());
   }
 
-  TypeSourceInfo *getResultTypeSourceInfo() const { return ResultTInfo; }
-  void setResultTypeSourceInfo(TypeSourceInfo *TInfo) { ResultTInfo = TInfo; }
+  TypeSourceInfo *getReturnTypeSourceInfo() const { return ReturnTInfo; }
+  void setReturnTypeSourceInfo(TypeSourceInfo *TInfo) { ReturnTInfo = TInfo; }
 
   // Iterator access to formal parameters.
   unsigned param_size() const { return NumParams; }

@@ -585,7 +585,7 @@ namespace {
       return Visit(T->getElementType());
     }
     AutoType *VisitFunctionType(const FunctionType *T) {
-      return Visit(T->getResultType());
+      return Visit(T->getReturnType());
     }
     AutoType *VisitParenType(const ParenType *T) {
       return Visit(T->getInnerType());
@@ -1776,7 +1776,7 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID,
                                 const ASTContext &Ctx) {
-  Profile(ID, getResultType(), param_type_begin(), NumParams, getExtProtoInfo(),
+  Profile(ID, getReturnType(), param_type_begin(), NumParams, getExtProtoInfo(),
           Ctx);
 }
 
@@ -2226,10 +2226,10 @@ static CachedProperties computeCachedProperties(const Type *T) {
   case Type::ExtVector:
     return Cache::get(cast<VectorType>(T)->getElementType());
   case Type::FunctionNoProto:
-    return Cache::get(cast<FunctionType>(T)->getResultType());
+    return Cache::get(cast<FunctionType>(T)->getReturnType());
   case Type::FunctionProto: {
     const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
-    CachedProperties result = Cache::get(FPT->getResultType());
+    CachedProperties result = Cache::get(FPT->getReturnType());
     for (FunctionProtoType::param_type_iterator ai = FPT->param_type_begin(),
                                                 ae = FPT->param_type_end();
          ai != ae; ++ai)
@@ -2312,10 +2312,10 @@ static LinkageInfo computeLinkageInfo(const Type *T) {
   case Type::ExtVector:
     return computeLinkageInfo(cast<VectorType>(T)->getElementType());
   case Type::FunctionNoProto:
-    return computeLinkageInfo(cast<FunctionType>(T)->getResultType());
+    return computeLinkageInfo(cast<FunctionType>(T)->getReturnType());
   case Type::FunctionProto: {
     const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
-    LinkageInfo LV = computeLinkageInfo(FPT->getResultType());
+    LinkageInfo LV = computeLinkageInfo(FPT->getReturnType());
     for (FunctionProtoType::param_type_iterator ai = FPT->param_type_begin(),
                                                 ae = FPT->param_type_end();
          ai != ae; ++ai)

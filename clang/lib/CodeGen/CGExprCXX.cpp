@@ -119,8 +119,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     // type of MD and has a prefix.
     // For now we just avoid devirtualizing these covariant cases.
     if (DevirtualizedMethod &&
-        DevirtualizedMethod->getResultType().getCanonicalType() !=
-        MD->getResultType().getCanonicalType())
+        DevirtualizedMethod->getReturnType().getCanonicalType() !=
+            MD->getReturnType().getCanonicalType())
       DevirtualizedMethod = NULL;
   }
 

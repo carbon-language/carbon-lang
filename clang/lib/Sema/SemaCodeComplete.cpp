@@ -697,7 +697,7 @@ QualType clang::getDeclUsageType(ASTContext &C, const NamedDecl *ND) {
     }
 
     if (const FunctionType *Function = T->getAs<FunctionType>()) {
-      T = Function->getResultType();
+      T = Function->getReturnType();
       continue;
     }
 
@@ -1781,10 +1781,10 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
     // know the function is void or not.
     bool isVoid = false;
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(SemaRef.CurContext))
-      isVoid = Function->getResultType()->isVoidType();
+      isVoid = Function->getReturnType()->isVoidType();
     else if (ObjCMethodDecl *Method
                                  = dyn_cast<ObjCMethodDecl>(SemaRef.CurContext))
-      isVoid = Method->getResultType()->isVoidType();
+      isVoid = Method->getReturnType()->isVoidType();
     else if (SemaRef.getCurBlock() && 
              !SemaRef.getCurBlock()->ReturnType.isNull())
       isVoid = SemaRef.getCurBlock()->ReturnType->isVoidType();
@@ -2065,9 +2065,9 @@ static void AddResultTypeChunk(ASTContext &Context,
   // Determine the type of the declaration (if it has a type).
   QualType T;
   if (const FunctionDecl *Function = ND->getAsFunction())
-    T = Function->getResultType();
+    T = Function->getReturnType();
   else if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND))
-    T = Method->getResultType();
+    T = Method->getReturnType();
   else if (const EnumConstantDecl *Enumerator = dyn_cast<EnumConstantDecl>(ND))
     T = Context.getTypeDeclType(cast<TypeDecl>(Enumerator->getDeclContext()));
   else if (isa<UnresolvedUsingValueDecl>(ND)) {
@@ -2200,7 +2200,7 @@ static std::string FormatFunctionParameter(ASTContext &Context,
   // We have the function prototype behind the block pointer type, as it was
   // written in the source.
   std::string Result;
-  QualType ResultType = Block.getTypePtr()->getResultType();
+  QualType ResultType = Block.getTypePtr()->getReturnType();
   if (!ResultType->isVoidType() || SuppressBlock)
     ResultType.getAsStringInternal(Result, Policy);
 
@@ -2830,9 +2830,8 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
     // Function without a prototype. Just give the return type and a 
     // highlighted ellipsis.
     const FunctionType *FT = getFunctionType();
-    Result.AddTextChunk(GetCompletionTypeString(FT->getResultType(),
-                                                S.Context, Policy, 
-                                                Result.getAllocator()));
+    Result.AddTextChunk(GetCompletionTypeString(FT->getReturnType(), S.Context,
+                                                Policy, Result.getAllocator()));
     Result.AddChunk(CodeCompletionString::CK_LeftParen);
     Result.AddChunk(CodeCompletionString::CK_CurrentParameter, "...");
     Result.AddChunk(CodeCompletionString::CK_RightParen);
@@ -2843,10 +2842,9 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
     Result.AddTextChunk(
                     Result.getAllocator().CopyString(FDecl->getNameAsString()));
   else
-    Result.AddTextChunk(
-         Result.getAllocator().CopyString(
-                                  Proto->getResultType().getAsString(Policy)));
-  
+    Result.AddTextChunk(Result.getAllocator().CopyString(
+        Proto->getReturnType().getAsString(Policy)));
+
   Result.AddChunk(CodeCompletionString::CK_LeftParen);
   unsigned NumParams = FDecl ? FDecl->getNumParams() : Proto->getNumParams();
   for (unsigned I = 0; I != NumParams; ++I) {
@@ -3977,10 +3975,10 @@ void Sema::CodeCompleteReturn(Scope *S) {
     if (BlockScopeInfo *BSI = getCurBlock())
       ResultType = BSI->ReturnType;
   } else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(CurContext))
-    ResultType = Function->getResultType();
+    ResultType = Function->getReturnType();
   else if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(CurContext))
-    ResultType = Method->getResultType();
-  
+    ResultType = Method->getReturnType();
+
   if (ResultType.isNull())
     CodeCompleteOrdinaryName(S, PCC_Expression);
   else
@@ -6196,7 +6194,7 @@ static void FindImplementableMethods(ASTContext &Context,
        M != MEnd; ++M) {
     if (M->isInstanceMethod() == WantInstanceMethods) {
       if (!ReturnType.isNull() &&
-          !Context.hasSameUnqualifiedType(ReturnType, M->getResultType()))
+          !Context.hasSameUnqualifiedType(ReturnType, M->getReturnType()))
         continue;
 
       KnownMethods[M->getSelector()] =
@@ -6921,10 +6919,9 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
     // If the result type was not already provided, add it to the
     // pattern as (type).
     if (ReturnType.isNull())
-      AddObjCPassingTypeChunk(Method->getResultType(),
-                              Method->getObjCDeclQualifier(),
-                              Context, Policy,
-                              Builder); 
+      AddObjCPassingTypeChunk(Method->getReturnType(),
+                              Method->getObjCDeclQualifier(), Context, Policy,
+                              Builder);
 
     Selector Sel = Method->getSelector();
 
@@ -6968,7 +6965,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
       Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Builder.AddChunk(CodeCompletionString::CK_LeftBrace);
       Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
-      if (!Method->getResultType()->isVoidType()) {
+      if (!Method->getReturnType()->isVoidType()) {
         // If the result type is not void, add a return clause.
         Builder.AddTextChunk("return");
         Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);

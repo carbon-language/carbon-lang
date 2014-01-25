@@ -608,7 +608,7 @@ void TypePrinter::printFunctionProtoBefore(const FunctionProtoType *T,
   } else {
     // If needed for precedence reasons, wrap the inner part in grouping parens.
     SaveAndRestore<bool> PrevPHIsEmpty(HasEmptyPlaceHolder, false);
-    printBefore(T->getResultType(), OS);
+    printBefore(T->getReturnType(), OS);
     if (!PrevPHIsEmpty.get())
       OS << '(';
   }
@@ -713,17 +713,17 @@ void TypePrinter::printFunctionProtoAfter(const FunctionProtoType *T,
   T->printExceptionSpecification(OS, Policy);
 
   if (T->hasTrailingReturn()) {
-    OS << " -> "; 
-    print(T->getResultType(), OS, StringRef());
+    OS << " -> ";
+    print(T->getReturnType(), OS, StringRef());
   } else
-    printAfter(T->getResultType(), OS);
+    printAfter(T->getReturnType(), OS);
 }
 
 void TypePrinter::printFunctionNoProtoBefore(const FunctionNoProtoType *T, 
                                              raw_ostream &OS) { 
   // If needed for precedence reasons, wrap the inner part in grouping parens.
   SaveAndRestore<bool> PrevPHIsEmpty(HasEmptyPlaceHolder, false);
-  printBefore(T->getResultType(), OS);
+  printBefore(T->getReturnType(), OS);
   if (!PrevPHIsEmpty.get())
     OS << '(';
 }
@@ -737,7 +737,7 @@ void TypePrinter::printFunctionNoProtoAfter(const FunctionNoProtoType *T,
   OS << "()";
   if (T->getNoReturnAttr())
     OS << " __attribute__((noreturn))";
-  printAfter(T->getResultType(), OS);
+  printAfter(T->getReturnType(), OS);
 }
 
 void TypePrinter::printTypeSpec(const NamedDecl *D, raw_ostream &OS) {

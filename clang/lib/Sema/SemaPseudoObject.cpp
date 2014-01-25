@@ -540,7 +540,7 @@ bool ObjCPropertyOpBuilder::isWeakProperty() const {
 
     T = Prop->getType();
   } else if (Getter) {
-    T = Getter->getResultType();
+    T = Getter->getReturnType();
   } else {
     return false;
   }
@@ -813,7 +813,7 @@ bool ObjCPropertyOpBuilder::tryBuildGetOfReference(Expr *op,
   assert(Getter && "property has no setter and no getter!");
 
   // Only do this if the getter returns an l-value reference type.
-  QualType resultType = Getter->getResultType();
+  QualType resultType = Getter->getReturnType();
   if (!resultType->isLValueReferenceType()) return false;
 
   result = buildRValueOperation(op);
@@ -1170,7 +1170,7 @@ bool ObjCSubscriptOpBuilder::findAtIndexGetter() {
              diag::note_parameter_type) << T;
       return false;
     }
-    QualType R = AtIndexGetter->getResultType();
+    QualType R = AtIndexGetter->getReturnType();
     if (!R->isObjCObjectPointerType()) {
       S.Diag(RefExpr->getKeyExpr()->getExprLoc(),
              diag::err_objc_indexing_method_result_type) << R << arrayRef;
@@ -1237,18 +1237,15 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
                          BaseT->isObjCQualifiedIdType());
 
   if (!AtIndexSetter && S.getLangOpts().DebuggerObjCLiteral) {
-    TypeSourceInfo *ResultTInfo = 0;
+    TypeSourceInfo *ReturnTInfo = 0;
     QualType ReturnType = S.Context.VoidTy;
-    AtIndexSetter = ObjCMethodDecl::Create(S.Context, SourceLocation(),
-                           SourceLocation(), AtIndexSetterSelector,
-                           ReturnType,
-                           ResultTInfo,
-                           S.Context.getTranslationUnitDecl(),
-                           true /*Instance*/, false/*isVariadic*/,
-                           /*isPropertyAccessor=*/false,
-                           /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
-                           ObjCMethodDecl::Required,
-                           false); 
+    AtIndexSetter = ObjCMethodDecl::Create(
+        S.Context, SourceLocation(), SourceLocation(), AtIndexSetterSelector,
+        ReturnType, ReturnTInfo, S.Context.getTranslationUnitDecl(),
+        true /*Instance*/, false /*isVariadic*/,
+        /*isPropertyAccessor=*/false,
+        /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
+        ObjCMethodDecl::Required, false);
     SmallVector<ParmVarDecl *, 2> Params;
     ParmVarDecl *object = ParmVarDecl::Create(S.Context, AtIndexSetter,
                                                 SourceLocation(), SourceLocation(),

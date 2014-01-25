@@ -114,7 +114,7 @@ static QualType GetBaseType(QualType T) {
     else if (const ArrayType* ATy = dyn_cast<ArrayType>(BaseType))
       BaseType = ATy->getElementType();
     else if (const FunctionType* FTy = BaseType->getAs<FunctionType>())
-      BaseType = FTy->getResultType();
+      BaseType = FTy->getReturnType();
     else if (const VectorType *VTy = BaseType->getAs<VectorType>())
       BaseType = VTy->getElementType();
     else if (const ReferenceType *RTy = BaseType->getAs<ReferenceType>())
@@ -543,7 +543,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
         Out << "auto " << Proto << " -> ";
         Proto.clear();
       }
-      AFT->getResultType().print(Out, Policy, Proto);
+      AFT->getReturnType().print(Out, Policy, Proto);
     }
   } else {
     Ty.print(Out, Policy, Proto);
@@ -905,9 +905,10 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
     Out << "- ";
   else
     Out << "+ ";
-  if (!OMD->getResultType().isNull())
-    Out << '(' << OMD->getASTContext().getUnqualifiedObjCPointerType(OMD->getResultType()).
-                    getAsString(Policy) << ")";
+  if (!OMD->getReturnType().isNull())
+    Out << '(' << OMD->getASTContext()
+                      .getUnqualifiedObjCPointerType(OMD->getReturnType())
+                      .getAsString(Policy) << ")";
 
   std::string name = OMD->getSelector().getAsString();
   std::string::size_type pos, lastPos = 0;

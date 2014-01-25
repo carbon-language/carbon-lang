@@ -379,9 +379,8 @@ static bool MightInstantiateTo(Sema &S,
   if (FriendTy->getNumParams() != ContextTy->getNumParams())
     return false;
 
-  if (!MightInstantiateTo(S,
-                          ContextTy->getResultType(),
-                          FriendTy->getResultType()))
+  if (!MightInstantiateTo(S, ContextTy->getReturnType(),
+                          FriendTy->getReturnType()))
     return false;
 
   for (unsigned I = 0, E = FriendTy->getNumParams(); I != E; ++I)

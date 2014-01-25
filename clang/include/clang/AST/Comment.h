@@ -981,9 +981,9 @@ struct DeclInfo {
   /// that we consider a "function".
   ArrayRef<const ParmVarDecl *> ParamVars;
 
-  /// Function result type if \c CommentDecl is something that we consider
+  /// Function return type if \c CommentDecl is something that we consider
   /// a "function".
-  QualType ResultType;
+  QualType ReturnType;
 
   /// Template parameters that can be referenced by \\tparam if \c CommentDecl is
   /// a template (\c IsTemplateDecl or \c IsTemplatePartialSpecialization is

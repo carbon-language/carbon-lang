@@ -570,9 +570,8 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
   case Type::FunctionNoProto: {
     const FunctionType *Function1 = cast<FunctionType>(T1);
     const FunctionType *Function2 = cast<FunctionType>(T2);
-    if (!IsStructurallyEquivalent(Context, 
-                                  Function1->getResultType(),
-                                  Function2->getResultType()))
+    if (!IsStructurallyEquivalent(Context, Function1->getReturnType(),
+                                  Function2->getReturnType()))
       return false;
       if (Function1->getExtInfo() != Function2->getExtInfo())
         return false;
@@ -1586,7 +1585,7 @@ QualType
 ASTNodeImporter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {
   // FIXME: What happens if we're importing a function without a prototype 
   // into C++? Should we make it variadic?
-  QualType ToResultType = Importer.Import(T->getResultType());
+  QualType ToResultType = Importer.Import(T->getReturnType());
   if (ToResultType.isNull())
     return QualType();
 
@@ -1595,7 +1594,7 @@ ASTNodeImporter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {
 }
 
 QualType ASTNodeImporter::VisitFunctionProtoType(const FunctionProtoType *T) {
-  QualType ToResultType = Importer.Import(T->getResultType());
+  QualType ToResultType = Importer.Import(T->getReturnType());
   if (ToResultType.isNull())
     return QualType();
   
@@ -2717,7 +2716,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
         FromEPI.NoexceptExpr) {
       FunctionProtoType::ExtProtoInfo DefaultEPI;
       FromTy = Importer.getFromContext().getFunctionType(
-          FromFPT->getResultType(), FromFPT->getParamTypes(), DefaultEPI);
+          FromFPT->getReturnType(), FromFPT->getParamTypes(), DefaultEPI);
       usedDifferentExceptionSpec = true;
     }
   }
@@ -3215,11 +3214,11 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
         continue;
 
       // Check return types.
-      if (!Importer.IsStructurallyEquivalent(D->getResultType(),
-                                             FoundMethod->getResultType())) {
+      if (!Importer.IsStructurallyEquivalent(D->getReturnType(),
+                                             FoundMethod->getReturnType())) {
         Importer.ToDiag(Loc, diag::err_odr_objc_method_result_type_inconsistent)
-          << D->isInstanceMethod() << Name
-          << D->getResultType() << FoundMethod->getResultType();
+            << D->isInstanceMethod() << Name << D->getReturnType()
+            << FoundMethod->getReturnType();
         Importer.ToDiag(FoundMethod->getLocation(), 
                         diag::note_odr_objc_method_here)
           << D->isInstanceMethod() << Name;
@@ -3270,25 +3269,17 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   }
 
   // Import the result type.
-  QualType ResultTy = Importer.Import(D->getResultType());
+  QualType ResultTy = Importer.Import(D->getReturnType());
   if (ResultTy.isNull())
     return 0;
 
-  TypeSourceInfo *ResultTInfo = Importer.Import(D->getResultTypeSourceInfo());
+  TypeSourceInfo *ReturnTInfo = Importer.Import(D->getReturnTypeSourceInfo());
 
-  ObjCMethodDecl *ToMethod
-    = ObjCMethodDecl::Create(Importer.getToContext(),
-                             Loc,
-                             Importer.Import(D->getLocEnd()),
-                             Name.getObjCSelector(),
-                             ResultTy, ResultTInfo, DC,
-                             D->isInstanceMethod(),
-                             D->isVariadic(),
-                             D->isPropertyAccessor(),
-                             D->isImplicit(),
-                             D->isDefined(),
-                             D->getImplementationControl(),
-                             D->hasRelatedResultType());
+  ObjCMethodDecl *ToMethod = ObjCMethodDecl::Create(
+      Importer.getToContext(), Loc, Importer.Import(D->getLocEnd()),
+      Name.getObjCSelector(), ResultTy, ReturnTInfo, DC, D->isInstanceMethod(),
+      D->isVariadic(), D->isPropertyAccessor(), D->isImplicit(), D->isDefined(),
+      D->getImplementationControl(), D->hasRelatedResultType());
 
   // FIXME: When we decide to merge method definitions, we'll need to
   // deal with implicit parameters.

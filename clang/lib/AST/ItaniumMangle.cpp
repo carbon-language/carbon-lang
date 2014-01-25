@@ -2013,7 +2013,7 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
   // <bare-function-type> ::= <signature type>+
   if (MangleReturnType) {
     FunctionTypeDepth.enterResultType();
-    mangleType(Proto->getResultType());
+    mangleType(Proto->getReturnType());
     FunctionTypeDepth.leaveResultType();
   }
 
