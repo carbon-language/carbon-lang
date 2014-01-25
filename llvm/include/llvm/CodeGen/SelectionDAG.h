@@ -401,22 +401,18 @@ public:
   //===--------------------------------------------------------------------===//
   // Node creation methods.
   //
-  SDValue getConstant(uint64_t Val, EVT VT, bool isTarget = false,
-                      bool isOpaque = false);
-  SDValue getConstant(const APInt &Val, EVT VT, bool isTarget = false,
-                      bool isOpaque = false);
-  SDValue getConstant(const ConstantInt &Val, EVT VT, bool isTarget = false,
-                      bool isOpaque = false);
+  SDValue getConstant(uint64_t Val, EVT VT, bool isTarget = false);
+  SDValue getConstant(const APInt &Val, EVT VT, bool isTarget = false);
+  SDValue getConstant(const ConstantInt &Val, EVT VT, bool isTarget = false);
   SDValue getIntPtrConstant(uint64_t Val, bool isTarget = false);
-  SDValue getTargetConstant(uint64_t Val, EVT VT, bool isOpaque = false) {
-    return getConstant(Val, VT, true, isOpaque);
+  SDValue getTargetConstant(uint64_t Val, EVT VT) {
+    return getConstant(Val, VT, true);
   }
-  SDValue getTargetConstant(const APInt &Val, EVT VT, bool isOpaque = false) {
-    return getConstant(Val, VT, true, isOpaque);
+  SDValue getTargetConstant(const APInt &Val, EVT VT) {
+    return getConstant(Val, VT, true);
   }
-  SDValue getTargetConstant(const ConstantInt &Val, EVT VT,
-                            bool isOpaque = false) {
-    return getConstant(Val, VT, true, isOpaque);
+  SDValue getTargetConstant(const ConstantInt &Val, EVT VT) {
+    return getConstant(Val, VT, true);
   }
   // The forms below that take a double should only be used for simple
   // constants that can be exactly represented in VT.  No checks are made.
