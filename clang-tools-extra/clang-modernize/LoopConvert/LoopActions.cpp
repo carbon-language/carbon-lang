@@ -1074,7 +1074,7 @@ void LoopFixer::run(const MatchFinder::MatchResult &Result) {
         Nodes.getNodeAs<CXXMemberCallExpr>(BeginCallName);
     assert(BeginCall != 0 && "Bad Callback. No begin call expression.");
     QualType CanonicalBeginType =
-        BeginCall->getMethodDecl()->getResultType().getCanonicalType();
+        BeginCall->getMethodDecl()->getReturnType().getCanonicalType();
 
     if (CanonicalBeginType->isPointerType() &&
         CanonicalInitVarType->isPointerType()) {
