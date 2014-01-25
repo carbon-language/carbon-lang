@@ -371,7 +371,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
   // If one contains vectors but the other doesn't pull vectors out.
   if (!hasVectorTypes())
     MadeChange |= Other.EnforceScalar(TP);
-  if (!hasVectorTypes())
+  if (!Other.hasVectorTypes())
     MadeChange |= EnforceScalar(TP);
 
   if (TypeVec.size() == 1 && Other.TypeVec.size() == 1) {
