@@ -1315,7 +1315,8 @@ void Generic_GCC::GCCInstallationDetector::print(raw_ostream &OS) const {
                                                "mips-mti-linux-gnu" };
   static const char *const MIPS64ELLibDirs[] = { "/lib64", "/lib" };
   static const char *const MIPS64ELTriples[] = { "mips64el-linux-gnu",
-                                                 "mips-mti-linux-gnu" };
+                                                 "mips-mti-linux-gnu",
+                                                 "mips64el-linux-android" };
 
   static const char *const PPCLibDirs[] = { "/lib32", "/lib" };
   static const char *const PPCTriples[] = {
