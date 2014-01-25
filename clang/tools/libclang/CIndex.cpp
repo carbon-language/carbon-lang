@@ -769,7 +769,7 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
     // If we have a function declared directly (without the use of a typedef),
     // visit just the return type. Otherwise, just visit the function's type
     // now.
-    if ((FTL && !isa<CXXConversionDecl>(ND) && Visit(FTL.getResultLoc())) ||
+    if ((FTL && !isa<CXXConversionDecl>(ND) && Visit(FTL.getReturnLoc())) ||
         (!FTL && Visit(TL)))
       return true;
     
@@ -1517,7 +1517,7 @@ bool CursorVisitor::VisitAttributedTypeLoc(AttributedTypeLoc TL) {
 
 bool CursorVisitor::VisitFunctionTypeLoc(FunctionTypeLoc TL, 
                                          bool SkipResultType) {
-  if (!SkipResultType && Visit(TL.getResultLoc()))
+  if (!SkipResultType && Visit(TL.getReturnLoc()))
     return true;
 
   for (unsigned I = 0, N = TL.getNumParams(); I != N; ++I)
@@ -2442,7 +2442,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
                   return true;
             } else {
               // Visit result type.
-              if (Visit(Proto.getResultLoc()))
+              if (Visit(Proto.getReturnLoc()))
                 return true;
             }
           }

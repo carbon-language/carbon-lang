@@ -281,7 +281,7 @@ void DeclInfo::fill() {
         ArrayRef<ParmVarDecl *> Params = FTL.getParams();
         ParamVars = ArrayRef<const ParmVarDecl *>(Params.data(),
                                                   Params.size());
-        ReturnType = FTL.getResultLoc().getType();
+        ReturnType = FTL.getReturnLoc().getType();
         break;
       }
       if (TemplateSpecializationTypeLoc STL =
@@ -302,7 +302,7 @@ void DeclInfo::fill() {
           ArrayRef<ParmVarDecl *> Params = FTL.getParams();
           ParamVars = ArrayRef<const ParmVarDecl *>(Params.data(),
                                                     Params.size());
-          ReturnType = FTL.getResultLoc().getType();
+          ReturnType = FTL.getReturnLoc().getType();
         }
         break;
       }

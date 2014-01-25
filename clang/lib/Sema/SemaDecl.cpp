@@ -7652,7 +7652,7 @@ static SourceRange getResultSourceRange(const FunctionDecl *FD) {
   if (!FunctionTL)
     return SourceRange();
 
-  TypeLoc ResultTL = FunctionTL.getResultLoc();
+  TypeLoc ResultTL = FunctionTL.getReturnLoc();
   if (ResultTL.getUnqualifiedLoc().getAs<BuiltinTypeLoc>())
     return ResultTL.getSourceRange();
 
@@ -9732,7 +9732,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       } else {
         // Substitute 'void' for the 'auto' in the type.
         TypeLoc ResultType = FD->getTypeSourceInfo()->getTypeLoc().
-            IgnoreParens().castAs<FunctionProtoTypeLoc>().getResultLoc();
+            IgnoreParens().castAs<FunctionProtoTypeLoc>().getReturnLoc();
         Context.adjustDeducedFunctionResultType(
             FD, SubstAutoType(ResultType.getType(), Context.VoidTy));
       }

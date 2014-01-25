@@ -3015,7 +3015,7 @@ static void handleGlobalAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     if (FunctionTypeLoc FTL = TL.getAs<FunctionTypeLoc>()) {
       S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)
         << FD->getType()
-        << FixItHint::CreateReplacement(FTL.getResultLoc().getSourceRange(),
+        << FixItHint::CreateReplacement(FTL.getReturnLoc().getSourceRange(),
                                         "void");
     } else {
       S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)

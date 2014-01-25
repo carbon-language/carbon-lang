@@ -4246,7 +4246,7 @@ struct CheckAbstractUsage {
   }
 
   void Check(FunctionProtoTypeLoc TL, Sema::AbstractDiagSelID Sel) {
-    Visit(TL.getResultLoc(), Sema::AbstractReturnType);
+    Visit(TL.getReturnLoc(), Sema::AbstractReturnType);
     for (unsigned I = 0, E = TL.getNumParams(); I != E; ++I) {
       if (!TL.getParam(I))
         continue;
@@ -12656,7 +12656,7 @@ bool Sema::checkThisInStaticMemberFunctionType(CXXMethodDecl *Method) {
   
   // If the return type came after the cv-qualifier-seq, check it now.
   if (Proto->hasTrailingReturn() &&
-      !Finder.TraverseTypeLoc(ProtoTL.getResultLoc()))
+      !Finder.TraverseTypeLoc(ProtoTL.getReturnLoc()))
     return true;
 
   // Check the exception specification.

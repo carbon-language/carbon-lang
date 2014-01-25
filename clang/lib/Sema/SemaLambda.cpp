@@ -1210,7 +1210,7 @@ static void addFunctionPointerConversion(Sema &S,
       ConvTSI->getTypeLoc().getAs<FunctionProtoTypeLoc>();
   // Get the result of the conversion function which is a pointer-to-function.
   PointerTypeLoc PtrToFunctionTL = 
-      ConvTL.getResultLoc().getAs<PointerTypeLoc>();
+      ConvTL.getReturnLoc().getAs<PointerTypeLoc>();
   // Do the same for the TypeSourceInfo that is used to name the conversion
   // operator.
   PointerTypeLoc ConvNamePtrToFunctionTL = 

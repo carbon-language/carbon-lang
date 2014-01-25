@@ -1174,12 +1174,12 @@ DEF_TRAVERSE_TYPELOC(ExtVectorType, {
   })
 
 DEF_TRAVERSE_TYPELOC(FunctionNoProtoType, {
-    TRY_TO(TraverseTypeLoc(TL.getResultLoc()));
+    TRY_TO(TraverseTypeLoc(TL.getReturnLoc()));
   })
 
 // FIXME: location of exception specifications (attributes?)
 DEF_TRAVERSE_TYPELOC(FunctionProtoType, {
-    TRY_TO(TraverseTypeLoc(TL.getResultLoc()));
+    TRY_TO(TraverseTypeLoc(TL.getReturnLoc()));
 
     const FunctionProtoType *T = TL.getTypePtr();
 
@@ -2218,7 +2218,7 @@ bool RecursiveASTVisitor<Derived>::TraverseLambdaExpr(LambdaExpr *S) {
           TRY_TO(TraverseDecl(Proto.getParam(I)));
         }
       } else {
-        TRY_TO(TraverseTypeLoc(Proto.getResultLoc()));
+        TRY_TO(TraverseTypeLoc(Proto.getReturnLoc()));
       }        
     }
   }

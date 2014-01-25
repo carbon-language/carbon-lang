@@ -2712,7 +2712,7 @@ bool Sema::DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
                                             Expr *&RetExpr,
                                             AutoType *AT) {
   TypeLoc OrigResultType = FD->getTypeSourceInfo()->getTypeLoc().
-    IgnoreParens().castAs<FunctionProtoTypeLoc>().getResultLoc();
+    IgnoreParens().castAs<FunctionProtoTypeLoc>().getReturnLoc();
   QualType Deduced;
 
   if (RetExpr && isa<InitListExpr>(RetExpr)) {
