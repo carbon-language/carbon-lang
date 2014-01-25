@@ -18,6 +18,8 @@
 # vim swap files
 .*.swp
 .sw?
+#OS X specific files.
+.DS_store
 
 #==============================================================================#
 # Explicit files to ignore (only matches one).
