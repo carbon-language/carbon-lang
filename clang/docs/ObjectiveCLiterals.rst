@@ -91,7 +91,7 @@ Previously, the ``BOOL`` type was simply a typedef for ``signed char``,
 and ``YES`` and ``NO`` were macros that expand to ``(BOOL)1`` and
 ``(BOOL)0`` respectively. To support ``@YES`` and ``@NO`` expressions,
 these macros are now defined using new language keywords in
-``&LT;objc/objc.h&GT;``:
+``<objc/objc.h>``:
 
 .. code-block:: objc
 
@@ -251,7 +251,7 @@ This creates an ``NSDictionary`` with 3 key/value pairs. Value
 sub-expressions of a dictionary literal must be Objective-C object
 pointer typed, as in array literals. Key sub-expressions must be of an
 Objective-C object pointer type that implements the
-``&LT;NSCopying&GT;`` protocol.
+``<NSCopying>`` protocol.
 
 Discussion
 ----------
