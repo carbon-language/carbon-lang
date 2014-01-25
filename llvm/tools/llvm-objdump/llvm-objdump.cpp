@@ -382,7 +382,19 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     }
   }
 
+  // Create a mapping, RelocSecs = SectionRelocMap[S], where sections
+  // in RelocSecs contain the relocations for section S.
   error_code EC;
+  std::map<SectionRef, SmallVector<SectionRef, 1> > SectionRelocMap;
+  for (section_iterator I = Obj->begin_sections(), E = Obj->end_sections();
+       I != E; I.increment(EC)) {
+    if (error(EC))
+      break;
+    section_iterator Sec2 = I->getRelocatedSection();
+    if (Sec2 != Obj->end_sections())
+      SectionRelocMap[*Sec2].push_back(*I);
+  }
+
   for (section_iterator I = Obj->begin_sections(), E = Obj->end_sections();
        I != E; I.increment(EC)) {
     if (error(EC))
@@ -423,12 +435,17 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     // Make a list of all the relocations for this section.
     std::vector<RelocationRef> Rels;
     if (InlineRelocs) {
-      for (relocation_iterator RI = I->begin_relocations(),
-                               RE = I->end_relocations();
-           RI != RE; RI.increment(EC)) {
-        if (error(EC))
-          break;
-        Rels.push_back(*RI);
+      SmallVectorImpl<SectionRef> *RelocSecs = &SectionRelocMap[*I];
+      for (SmallVectorImpl<SectionRef>::iterator RelocSec = RelocSecs->begin(),
+                                                 E = RelocSecs->end();
+           RelocSec != E; ++RelocSec) {
+        for (relocation_iterator RI = RelocSec->begin_relocations(),
+                                 RE = RelocSec->end_relocations();
+             RI != RE; RI.increment(EC)) {
+          if (error(EC))
+            break;
+          Rels.push_back(*RI);
+        }
       }
     }
 
