@@ -1146,7 +1146,6 @@ enum {
   R_SPARC_REGISTER    = 53,
   R_SPARC_UA64        = 54,
   R_SPARC_UA16        = 55,
-  R_SPARC_UA16        = 55,
   R_SPARC_TLS_GD_HI22   = 56,
   R_SPARC_TLS_GD_LO10   = 57,
   R_SPARC_TLS_GD_ADD    = 58,
