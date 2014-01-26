@@ -2,7 +2,7 @@
 # Extra parameters for `tblgen' may come after `ofn' parameter.
 # Adds the name of the generated file to TABLEGEN_OUTPUT.
 
-macro(tablegen project ofn)
+function(tablegen project ofn)
   file(GLOB local_tds "*.td")
   file(GLOB_RECURSE global_tds "${LLVM_MAIN_INCLUDE_DIR}/llvm/*.td")
 
@@ -40,10 +40,10 @@ macro(tablegen project ofn)
   set_property(DIRECTORY APPEND
     PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${ofn}.tmp ${ofn})
 
-  set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} ${CMAKE_CURRENT_BINARY_DIR}/${ofn})
+  set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} ${CMAKE_CURRENT_BINARY_DIR}/${ofn} PARENT_SCOPE)
   set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${ofn} 
     PROPERTIES GENERATED 1)
-endmacro(tablegen)
+endfunction(tablegen)
 
 macro(add_public_tablegen_target target)
   # Creates a target for publicly exporting tablegen dependencies.
