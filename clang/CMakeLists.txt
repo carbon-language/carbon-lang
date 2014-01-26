@@ -70,10 +70,11 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
   set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib)
 
-  option(LLVM_INSTALL_TOOLCHAIN_ONLY "Only include toolchain files in the 'install' target." OFF)
+  option(LLVM_INSTALL_TOOLCHAIN_ONLY
+    "Only include toolchain files in the 'install' target." OFF)
 
   option(LLVM_FORCE_USE_OLD_HOST_TOOLCHAIN
-         "Set to ON to force using an old, unsupported host toolchain." OFF)
+    "Set to ON to force using an old, unsupported host toolchain." OFF)
 
   include(AddLLVM)
   include(TableGen)
