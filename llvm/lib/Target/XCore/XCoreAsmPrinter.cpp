@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "XCore.h"
+#include "XCoreTargetStreamer.h"
 #include "InstPrinter/XCoreInstPrinter.h"
 #include "XCoreInstrInfo.h"
 #include "XCoreMCInstLower.h"
@@ -50,6 +51,8 @@ namespace {
   class XCoreAsmPrinter : public AsmPrinter {
     const XCoreSubtarget &Subtarget;
     XCoreMCInstLower MCInstLowering;
+    XCoreTargetStreamer &getTargetStreamer();
+
   public:
     explicit XCoreAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
       : AsmPrinter(TM, Streamer), Subtarget(TM.getSubtarget<XCoreSubtarget>()),
@@ -78,6 +81,10 @@ namespace {
     void EmitFunctionBodyEnd();
   };
 } // end of anonymous namespace
+
+XCoreTargetStreamer &XCoreAsmPrinter::getTargetStreamer() {
+  return static_cast<XCoreTargetStreamer&>(*OutStreamer.getTargetStreamer());
+}
 
 void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
   assert(((GV->hasExternalLinkage() ||
@@ -114,8 +121,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   unsigned Align = (unsigned)TD->getPreferredTypeAlignmentShift(C->getType());
   
   // Mark the start of the global
-  OutStreamer.EmitRawText("\t.cc_top " + Twine(GVSym->getName()) + ".data," +
-                          GVSym->getName());
+  getTargetStreamer().emitCCTopData(GVSym->getName());
 
   switch (GV->getLinkage()) {
   case GlobalValue::AppendingLinkage:
@@ -147,8 +153,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   unsigned Size = TD->getTypeAllocSize(C->getType());
   if (MAI->hasDotTypeDotSizeDirective()) {
     OutStreamer.EmitSymbolAttribute(GVSym, MCSA_ELF_TypeObject);
-    OutStreamer.EmitRawText("\t.size " + Twine(GVSym->getName()) + "," +
-                            Twine(Size));
+    OutStreamer.EmitELFSize(GVSym, MCConstantExpr::Create(Size, OutContext));
   }
   OutStreamer.EmitLabel(GVSym);
   
@@ -159,7 +164,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     OutStreamer.EmitZeros(4 - Size);
   
   // Mark the end of the global
-  OutStreamer.EmitRawText("\t.cc_bottom " + Twine(GVSym->getName()) + ".data");
+  getTargetStreamer().emitCCBottonData(GVSym->getName());
 }
 
 void XCoreAsmPrinter::EmitFunctionBodyStart() {
@@ -170,14 +175,12 @@ void XCoreAsmPrinter::EmitFunctionBodyStart() {
 /// the last basic block in the function.
 void XCoreAsmPrinter::EmitFunctionBodyEnd() {
   // Emit function end directives
-  OutStreamer.EmitRawText("\t.cc_bottom " + Twine(CurrentFnSym->getName()) +
-                          ".function");
+  getTargetStreamer().emitCCBottonFunction(CurrentFnSym->getName());
 }
 
 void XCoreAsmPrinter::EmitFunctionEntryLabel() {
   // Mark the start of the function
-  OutStreamer.EmitRawText("\t.cc_top " + Twine(CurrentFnSym->getName()) +
-                          ".function," + CurrentFnSym->getName());
+  getTargetStreamer().emitCCTopFunction(CurrentFnSym->getName());
   OutStreamer.EmitLabel(CurrentFnSym);
 }
 

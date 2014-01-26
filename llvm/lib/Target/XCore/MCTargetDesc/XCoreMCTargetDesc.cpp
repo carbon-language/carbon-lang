@@ -14,11 +14,13 @@
 #include "XCoreMCTargetDesc.h"
 #include "InstPrinter/XCoreInstPrinter.h"
 #include "XCoreMCAsmInfo.h"
+#include "XCoreTargetStreamer.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
 
 #define GET_INSTRINFO_MC_DESC
@@ -88,6 +90,54 @@ static MCInstPrinter *createXCoreMCInstPrinter(const Target &T,
   return new XCoreInstPrinter(MAI, MII, MRI);
 }
 
+XCoreTargetStreamer::XCoreTargetStreamer(MCStreamer &S) : MCTargetStreamer(S) {}
+XCoreTargetStreamer::~XCoreTargetStreamer() {}
+
+namespace {
+
+class XCoreTargetAsmStreamer : public XCoreTargetStreamer {
+  formatted_raw_ostream &OS;
+public:
+  XCoreTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS);
+  virtual void emitCCTopData(StringRef Name);
+  virtual void emitCCTopFunction(StringRef Name);
+  virtual void emitCCBottonData(StringRef Name);
+  virtual void emitCCBottonFunction(StringRef Name);
+};
+
+XCoreTargetAsmStreamer::XCoreTargetAsmStreamer(MCStreamer &S,
+                                               formatted_raw_ostream &OS)
+    : XCoreTargetStreamer(S), OS(OS) {}
+
+void XCoreTargetAsmStreamer::emitCCTopData(StringRef Name) {
+  OS << "\t.cc_top " << Name << ".data," << Name << '\n';
+}
+
+void XCoreTargetAsmStreamer::emitCCTopFunction(StringRef Name) {
+  OS << "\t.cc_top " << Name << ".function," << Name << '\n';
+}
+
+void XCoreTargetAsmStreamer::emitCCBottonData(StringRef Name) {
+  OS << "\t.cc_bottom " << Name << ".data\n";
+}
+
+void XCoreTargetAsmStreamer::emitCCBottonFunction(StringRef Name) {
+  OS << "\t.cc_bottom " << Name << ".function\n";
+}
+}
+
+static MCStreamer *
+createXCoreMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
+                         bool isVerboseAsm, bool useLoc, bool useCFI,
+                         bool useDwarfDirectory, MCInstPrinter *InstPrint,
+                         MCCodeEmitter *CE, MCAsmBackend *TAB, bool ShowInst) {
+  MCStreamer *S =
+      llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useLoc, useCFI,
+                              useDwarfDirectory, InstPrint, CE, TAB, ShowInst);
+  new XCoreTargetAsmStreamer(*S, OS);
+  return S;
+}
+
 // Force static initialization.
 extern "C" void LLVMInitializeXCoreTargetMC() {
   // Register the MC asm info.
@@ -110,4 +160,6 @@ extern "C" void LLVMInitializeXCoreTargetMC() {
   // Register the MCInstPrinter
   TargetRegistry::RegisterMCInstPrinter(TheXCoreTarget,
                                         createXCoreMCInstPrinter);
+
+  TargetRegistry::RegisterAsmStreamer(TheXCoreTarget, createXCoreMCAsmStreamer);
 }
