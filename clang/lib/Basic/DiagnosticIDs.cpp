@@ -312,12 +312,12 @@ DiagnosticIDs::~DiagnosticIDs() {
 /// and level.  If this is the first request for this diagnostic, it is
 /// registered and created, otherwise the existing ID is returned.
 ///
-/// \param Message A fixed diagnostic format string that will be hashed and
+/// \param FormatString A fixed diagnostic format string that will be hashed and
 /// mapped to a unique DiagID.
-unsigned DiagnosticIDs::getCustomDiagID(Level L, StringRef Message) {
+unsigned DiagnosticIDs::getCustomDiagID(Level L, StringRef FormatString) {
   if (CustomDiagInfo == 0)
     CustomDiagInfo = new diag::CustomDiagInfo();
-  return CustomDiagInfo->getOrCreateDiagID(L, Message, *this);
+  return CustomDiagInfo->getOrCreateDiagID(L, FormatString, *this);
 }
 
 
