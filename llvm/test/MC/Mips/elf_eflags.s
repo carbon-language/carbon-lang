@@ -1,15 +1,20 @@
-// RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux %s -o -| llvm-readobj -h | FileCheck %s
-// The initial value will be set at 0x50001003 and
-// we will override that with the negation of 0x2 (option pic0
-// the addition of 0x4 (.abicalls)
+# These *MUST* match the output of gas compiled with the same triple and
+# corresponding options (-mcpu=mips32 -> -mips32 for example).
 
-        .mips_hack_elf_flags 0x50001003
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips64r2 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS64R2 %s
+# MIPSEL-MIPS64R2: Flags [ (0x80001100)
 
-// CHECK: Flags [ (0x54001005)
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips64 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS64 %s
+# MIPSEL-MIPS64: Flags [ (0x60001100)
 
-        .abicalls
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips32r2 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS32R2 %s
+# MIPSEL-MIPS32R2: Flags [ (0x70001000)
 
-        .option pic0
- 
- // Set EF_MIPS_ARCH_ASE_M16 (0x04000000)
-        .set mips16
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips32 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS32 %s
+# MIPSEL-MIPS32: Flags [ (0x50001000)
+
+# RUN: llvm-mc -filetype=obj -triple mips64el-unknown-linux -mcpu=mips64r2 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPS64EL-MIPS64R2 %s
+# MIPS64EL-MIPS64R2: Flags [ (0x80000020)
+
+# RUN: llvm-mc -filetype=obj -triple mips64el-unknown-linux -mcpu=mips64 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPS64EL-MIPS64 %s
+# MIPS64EL-MIPS64: Flags [ (0x60000020)

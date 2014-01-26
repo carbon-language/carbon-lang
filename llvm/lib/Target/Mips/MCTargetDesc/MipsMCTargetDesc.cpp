@@ -134,7 +134,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     bool RelaxAll, bool NoExecStack) {
   MCStreamer *S =
       createELFStreamer(Context, MAB, OS, Emitter, RelaxAll, NoExecStack);
-  new MipsTargetELFStreamer(*S);
+  new MipsTargetELFStreamer(*S, STI);
   return S;
 }
 

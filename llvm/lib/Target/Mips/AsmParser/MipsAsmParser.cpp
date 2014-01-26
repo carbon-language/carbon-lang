@@ -194,7 +194,6 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool isEvaluated(const MCExpr *Expr);
   bool parseDirectiveSet();
-  bool parseDirectiveMipsHackELFFlags();
   bool parseDirectiveOption();
 
   bool parseSetAtDirective();
@@ -2311,6 +2310,7 @@ bool MipsAsmParser::parseSetNoReorderDirective() {
     return false;
   }
   Options.setNoreorder();
+  getTargetStreamer().emitDirectiveSetNoReorder();
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }
@@ -2427,17 +2427,6 @@ bool MipsAsmParser::parseDirectiveSet() {
   }
 
   return true;
-}
-
-bool MipsAsmParser::parseDirectiveMipsHackELFFlags() {
-  int64_t Flags = 0;
-  if (Parser.parseAbsoluteExpression(Flags)) {
-    TokError("unexpected token");
-    return false;
-  }
-
-  getTargetStreamer().emitMipsHackELFFlags(Flags);
-  return false;
 }
 
 /// parseDirectiveWord
@@ -2557,9 +2546,6 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
     parseDirectiveWord(4, DirectiveID.getLoc());
     return false;
   }
-
-  if (IDVal == ".mips_hack_elf_flags")
-    return parseDirectiveMipsHackELFFlags();
 
   if (IDVal == ".option")
     return parseDirectiveOption();

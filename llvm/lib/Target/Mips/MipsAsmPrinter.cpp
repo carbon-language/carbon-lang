@@ -636,54 +636,10 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
 }
 
-static void emitELFHeaderFlagsCG(MipsTargetStreamer &TargetStreamer,
-                                 const MipsSubtarget &Subtarget) {
-  // Update e_header flags
-  unsigned EFlags = 0;
-
-  // TODO: Need to add -mabicalls and -mno-abicalls flags.
-  // Currently we assume that -mabicalls is the default.
-  EFlags |= ELF::EF_MIPS_CPIC;
-
-  if (Subtarget.inMips16Mode())
-    EFlags |= ELF::EF_MIPS_ARCH_ASE_M16;
-  else
-    EFlags |= ELF::EF_MIPS_NOREORDER;
-
-  // Architecture
-  if (Subtarget.hasMips64r2())
-    EFlags |= ELF::EF_MIPS_ARCH_64R2;
-  else if (Subtarget.hasMips64())
-    EFlags |= ELF::EF_MIPS_ARCH_64;
-  else if (Subtarget.hasMips32r2())
-    EFlags |= ELF::EF_MIPS_ARCH_32R2;
-  else
-    EFlags |= ELF::EF_MIPS_ARCH_32;
-
-  if (Subtarget.inMicroMipsMode())
-    EFlags |= ELF::EF_MIPS_MICROMIPS;
-
-  // ABI
-  if (Subtarget.isABI_O32())
-    EFlags |= ELF::EF_MIPS_ABI_O32;
-
-  // Relocation Model
-  Reloc::Model RM = Subtarget.getRelocationModel();
-  if (RM == Reloc::PIC_ || RM == Reloc::Default)
-    EFlags |= ELF::EF_MIPS_PIC;
-  else if (RM == Reloc::Static)
-    ; // Do nothing for Reloc::Static
-  else
-    llvm_unreachable("Unsupported relocation model for e_flags");
-
-  TargetStreamer.emitMipsHackELFFlags(EFlags);
-}
-
 void MipsAsmPrinter::EmitEndOfAsmFile(Module &M) {
   // Emit Mips ELF register info
   Subtarget->getMReginfo().emitMipsReginfoSectionCG(
              OutStreamer, getObjFileLowering(), *Subtarget);
-  emitELFHeaderFlagsCG(getTargetStreamer(), *Subtarget);
 }
 
 void MipsAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,

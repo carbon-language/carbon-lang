@@ -19,7 +19,6 @@ class MipsTargetStreamer : public MCTargetStreamer {
 
 public:
   MipsTargetStreamer(MCStreamer &S);
-  virtual void emitMipsHackELFFlags(unsigned Flags) = 0;
   virtual void emitDirectiveSetMicroMips() = 0;
   virtual void emitDirectiveSetNoMicroMips() = 0;
   virtual void emitDirectiveSetMips16() = 0;
@@ -44,7 +43,6 @@ class MipsTargetAsmStreamer : public MipsTargetStreamer {
 
 public:
   MipsTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS);
-  virtual void emitMipsHackELFFlags(unsigned Flags);
   virtual void emitDirectiveSetMicroMips();
   virtual void emitDirectiveSetNoMicroMips();
   virtual void emitDirectiveSetMips16();
@@ -70,12 +68,10 @@ class MipsTargetELFStreamer : public MipsTargetStreamer {
 public:
   bool isMicroMipsEnabled() const { return MicroMipsEnabled; }
   MCELFStreamer &getStreamer();
-  MipsTargetELFStreamer(MCStreamer &S);
+  MipsTargetELFStreamer(MCStreamer &S, const MCSubtargetInfo &STI);
 
   virtual void emitLabel(MCSymbol *Symbol) LLVM_OVERRIDE;
 
-  // FIXME: emitMipsHackELFFlags() will be removed from this class.
-  virtual void emitMipsHackELFFlags(unsigned Flags);
   virtual void emitDirectiveSetMicroMips();
   virtual void emitDirectiveSetNoMicroMips();
   virtual void emitDirectiveSetMips16();
