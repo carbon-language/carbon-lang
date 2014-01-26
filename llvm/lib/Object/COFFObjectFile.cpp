@@ -466,8 +466,8 @@ error_code COFFObjectFile::initExportTablePtr() {
 COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &EC,
                                bool BufferOwned)
     : ObjectFile(Binary::ID_COFF, Object, BufferOwned), COFFHeader(0),
-      PE32Header(0), DataDirectory(0), SectionTable(0), SymbolTable(0),
-      StringTable(0), StringTableSize(0), ImportDirectory(0),
+      PE32Header(0), PE32PlusHeader(0), DataDirectory(0), SectionTable(0),
+      SymbolTable(0), StringTable(0), StringTableSize(0), ImportDirectory(0),
       NumberOfImportDirectory(0), ExportDirectory(0) {
   // Check that we at least have enough room for a header.
   if (!checkSize(Data, EC, sizeof(coff_file_header))) return;
@@ -499,19 +499,27 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &EC,
   CurPtr += sizeof(coff_file_header);
 
   if (HasPEHeader) {
-    if ((EC = getObject(PE32Header, Data, base() + CurPtr)))
+    const pe32_header *Header;
+    if ((EC = getObject(Header, Data, base() + CurPtr)))
       return;
-    if (PE32Header->Magic != 0x10b) {
-      // We only support PE32. If this is PE32 (not PE32+), the magic byte
-      // should be 0x10b. If this is not PE32, continue as if there's no PE
-      // header in this file.
-      PE32Header = 0;
-    } else if (PE32Header->NumberOfRvaAndSize > 0) {
-      const uint8_t *Addr = base() + CurPtr + sizeof(pe32_header);
-      uint64_t size = sizeof(data_directory) * PE32Header->NumberOfRvaAndSize;
-      if ((EC = getObject(DataDirectory, Data, Addr, size)))
-        return;
+
+    const uint8_t *DataDirAddr;
+    uint64_t DataDirSize;
+    if (Header->Magic == 0x10b) {
+      PE32Header = Header;
+      DataDirAddr = base() + CurPtr + sizeof(pe32_header);
+      DataDirSize = sizeof(data_directory) * PE32Header->NumberOfRvaAndSize;
+    } else if (Header->Magic == 0x20b) {
+      PE32PlusHeader = reinterpret_cast<const pe32plus_header *>(Header);
+      DataDirAddr = base() + CurPtr + sizeof(pe32plus_header);
+      DataDirSize = sizeof(data_directory) * PE32PlusHeader->NumberOfRvaAndSize;
+    } else {
+      // It's neither PE32 nor PE32+.
+      EC = object_error::parse_failed;
+      return;
     }
+    if ((EC = getObject(DataDirectory, Data, DataDirAddr, DataDirSize)))
+      return;
     CurPtr += COFFHeader->SizeOfOptionalHeader;
   }
 
@@ -655,10 +663,21 @@ error_code COFFObjectFile::getPE32Header(const pe32_header *&Res) const {
   return object_error::success;
 }
 
+error_code
+COFFObjectFile::getPE32PlusHeader(const pe32plus_header *&Res) const {
+  Res = PE32PlusHeader;
+  return object_error::success;
+}
+
 error_code COFFObjectFile::getDataDirectory(uint32_t Index,
                                             const data_directory *&Res) const {
   // Error if if there's no data directory or the index is out of range.
-  if (!DataDirectory || Index > PE32Header->NumberOfRvaAndSize)
+  if (!DataDirectory)
+    return object_error::parse_failed;
+  assert(PE32Header || PE32PlusHeader);
+  uint32_t NumEnt = PE32Header ? PE32Header->NumberOfRvaAndSize
+                               : PE32PlusHeader->NumberOfRvaAndSize;
+  if (Index > NumEnt)
     return object_error::parse_failed;
   Res = &DataDirectory[Index];
   return object_error::success;

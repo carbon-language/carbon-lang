@@ -56,12 +56,13 @@ public:
 
 private:
   void printSymbol(symbol_iterator SymI);
-
   void printRelocation(section_iterator SecI, relocation_iterator RelI);
-
   void printDataDirectory(uint32_t Index, const std::string &FieldName);
-
   void printX64UnwindInfo();
+
+  template <class PEHeader> void printPEHeader(const PEHeader *Hdr);
+  void printBaseOfDataField(const pe32_header *Hdr);
+  void printBaseOfDataField(const pe32plus_header *Hdr);
 
   void printRuntimeFunction(
     const RuntimeFunction& RTF,
@@ -599,55 +600,69 @@ void COFFDumper::printFileHeaders() {
   const pe32_header *PEHeader = 0;
   if (error(Obj->getPE32Header(PEHeader)))
     return;
+  if (PEHeader)
+    printPEHeader<pe32_header>(PEHeader);
 
-  if (PEHeader) {
-    DictScope D(W, "ImageOptionalHeader");
-    W.printNumber("MajorLinkerVersion", PEHeader->MajorLinkerVersion);
-    W.printNumber("MinorLinkerVersion", PEHeader->MinorLinkerVersion);
-    W.printNumber("SizeOfCode", PEHeader->SizeOfCode);
-    W.printNumber("SizeOfInitializedData", PEHeader->SizeOfInitializedData);
-    W.printNumber("SizeOfUninitializedData", PEHeader->SizeOfUninitializedData);
-    W.printHex   ("AddressOfEntryPoint", PEHeader->AddressOfEntryPoint);
-    W.printHex   ("BaseOfCode", PEHeader->BaseOfCode);
-    W.printHex   ("BaseOfData", PEHeader->BaseOfData);
-    W.printHex   ("ImageBase", PEHeader->ImageBase);
-    W.printNumber("SectionAlignment", PEHeader->SectionAlignment);
-    W.printNumber("FileAlignment", PEHeader->FileAlignment);
-    W.printNumber("MajorOperatingSystemVersion",
-                  PEHeader->MajorOperatingSystemVersion);
-    W.printNumber("MinorOperatingSystemVersion",
-                  PEHeader->MinorOperatingSystemVersion);
-    W.printNumber("MajorImageVersion", PEHeader->MajorImageVersion);
-    W.printNumber("MinorImageVersion", PEHeader->MinorImageVersion);
-    W.printNumber("MajorSubsystemVersion", PEHeader->MajorSubsystemVersion);
-    W.printNumber("MinorSubsystemVersion", PEHeader->MinorSubsystemVersion);
-    W.printNumber("SizeOfImage", PEHeader->SizeOfImage);
-    W.printNumber("SizeOfHeaders", PEHeader->SizeOfHeaders);
-    W.printEnum  ("Subsystem", PEHeader->Subsystem,
-                    makeArrayRef(PEWindowsSubsystem));
-    W.printFlags ("Subsystem", PEHeader->DLLCharacteristics,
-                    makeArrayRef(PEDLLCharacteristics));
-    W.printNumber("SizeOfStackReserve", PEHeader->SizeOfStackReserve);
-    W.printNumber("SizeOfStackCommit", PEHeader->SizeOfStackCommit);
-    W.printNumber("SizeOfHeapReserve", PEHeader->SizeOfHeapReserve);
-    W.printNumber("SizeOfHeapCommit", PEHeader->SizeOfHeapCommit);
-    W.printNumber("NumberOfRvaAndSize", PEHeader->NumberOfRvaAndSize);
+  const pe32plus_header *PEPlusHeader = 0;
+  if (error(Obj->getPE32PlusHeader(PEPlusHeader)))
+    return;
+  if (PEPlusHeader)
+    printPEHeader<pe32plus_header>(PEPlusHeader);
+}
 
-    if (PEHeader->NumberOfRvaAndSize > 0) {
-      DictScope D(W, "DataDirectory");
-      static const char * const directory[] = {
-        "ExportTable", "ImportTable", "ResourceTable", "ExceptionTable",
-        "CertificateTable", "BaseRelocationTable", "Debug", "Architecture",
-        "GlobalPtr", "TLSTable", "LoadConfigTable", "BoundImport", "IAT",
-        "DelayImportDescriptor", "CLRRuntimeHeader", "Reserved"
-      };
+template <class PEHeader>
+void COFFDumper::printPEHeader(const PEHeader *Hdr) {
+  DictScope D(W, "ImageOptionalHeader");
+  W.printNumber("MajorLinkerVersion", Hdr->MajorLinkerVersion);
+  W.printNumber("MinorLinkerVersion", Hdr->MinorLinkerVersion);
+  W.printNumber("SizeOfCode", Hdr->SizeOfCode);
+  W.printNumber("SizeOfInitializedData", Hdr->SizeOfInitializedData);
+  W.printNumber("SizeOfUninitializedData", Hdr->SizeOfUninitializedData);
+  W.printHex   ("AddressOfEntryPoint", Hdr->AddressOfEntryPoint);
+  W.printHex   ("BaseOfCode", Hdr->BaseOfCode);
+  printBaseOfDataField(Hdr);
+  W.printHex   ("ImageBase", Hdr->ImageBase);
+  W.printNumber("SectionAlignment", Hdr->SectionAlignment);
+  W.printNumber("FileAlignment", Hdr->FileAlignment);
+  W.printNumber("MajorOperatingSystemVersion",
+                Hdr->MajorOperatingSystemVersion);
+  W.printNumber("MinorOperatingSystemVersion",
+                Hdr->MinorOperatingSystemVersion);
+  W.printNumber("MajorImageVersion", Hdr->MajorImageVersion);
+  W.printNumber("MinorImageVersion", Hdr->MinorImageVersion);
+  W.printNumber("MajorSubsystemVersion", Hdr->MajorSubsystemVersion);
+  W.printNumber("MinorSubsystemVersion", Hdr->MinorSubsystemVersion);
+  W.printNumber("SizeOfImage", Hdr->SizeOfImage);
+  W.printNumber("SizeOfHeaders", Hdr->SizeOfHeaders);
+  W.printEnum  ("Subsystem", Hdr->Subsystem, makeArrayRef(PEWindowsSubsystem));
+  W.printFlags ("Subsystem", Hdr->DLLCharacteristics,
+                makeArrayRef(PEDLLCharacteristics));
+  W.printNumber("SizeOfStackReserve", Hdr->SizeOfStackReserve);
+  W.printNumber("SizeOfStackCommit", Hdr->SizeOfStackCommit);
+  W.printNumber("SizeOfHeapReserve", Hdr->SizeOfHeapReserve);
+  W.printNumber("SizeOfHeapCommit", Hdr->SizeOfHeapCommit);
+  W.printNumber("NumberOfRvaAndSize", Hdr->NumberOfRvaAndSize);
 
-      for (uint32_t i = 0; i < PEHeader->NumberOfRvaAndSize; ++i) {
-        printDataDirectory(i, directory[i]);
-      }
+  if (Hdr->NumberOfRvaAndSize > 0) {
+    DictScope D(W, "DataDirectory");
+    static const char * const directory[] = {
+      "ExportTable", "ImportTable", "ResourceTable", "ExceptionTable",
+      "CertificateTable", "BaseRelocationTable", "Debug", "Architecture",
+      "GlobalPtr", "TLSTable", "LoadConfigTable", "BoundImport", "IAT",
+      "DelayImportDescriptor", "CLRRuntimeHeader", "Reserved"
+    };
+
+    for (uint32_t i = 0; i < Hdr->NumberOfRvaAndSize; ++i) {
+      printDataDirectory(i, directory[i]);
     }
   }
 }
+
+void COFFDumper::printBaseOfDataField(const pe32_header *Hdr) {
+  W.printHex("BaseOfData", Hdr->BaseOfData);
+}
+
+void COFFDumper::printBaseOfDataField(const pe32plus_header *) {}
 
 void COFFDumper::printCodeViewLineTables(section_iterator SecI) {
   StringRef Data;

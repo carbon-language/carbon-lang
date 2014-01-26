@@ -250,6 +250,7 @@ private:
   friend class ExportDirectoryEntryRef;
   const coff_file_header *COFFHeader;
   const pe32_header      *PE32Header;
+  const pe32plus_header  *PE32PlusHeader;
   const data_directory   *DataDirectory;
   const coff_section     *SectionTable;
   const coff_symbol      *SymbolTable;
@@ -347,6 +348,7 @@ public:
   error_code getHeader(const coff_file_header *&Res) const;
   error_code getCOFFHeader(const coff_file_header *&Res) const;
   error_code getPE32Header(const pe32_header *&Res) const;
+  error_code getPE32PlusHeader(const pe32plus_header *&Res) const;
   error_code getDataDirectory(uint32_t index, const data_directory *&Res) const;
   error_code getSection(int32_t index, const coff_section *&Res) const;
   error_code getSymbol(uint32_t index, const coff_symbol *&Res) const;
