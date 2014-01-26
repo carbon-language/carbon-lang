@@ -44,7 +44,6 @@ int main()
     test<unsigned long long, false>();
     test<float, true>();
     test<double, true>();
-    test<long double, true>();
 #if (defined(__ppc__) || defined(__ppc64__))
     test<long double, false>();
 #else
