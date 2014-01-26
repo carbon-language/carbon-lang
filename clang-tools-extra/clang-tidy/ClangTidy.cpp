@@ -251,10 +251,10 @@ static void reportDiagnostic(const ClangTidyMessage &Message,
     Loc = Loc.getLocWithOffset(Message.FileOffset);
   }
   if (CheckName.empty())
-    Diags.Report(Loc, Diags.getCustomDiagID(Level, Message.Message));
+    Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0")) << Message.Message;
   else
-    Diags.Report(Loc, Diags.getCustomDiagID(Level, (Message.Message + " [" +
-                                                    CheckName + "]").str()));
+    Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0 [%1]"))
+        << Message.Message << CheckName;
 }
 
 void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {
