@@ -436,6 +436,22 @@ if( CLANG_INCLUDE_TESTS )
       )
   endif()
   add_subdirectory(test)
+
+  if(CLANG_BUILT_STANDALONE)
+    # Add a global check rule now that all subdirectories have been traversed
+    # and we know the total set of lit testsuites.
+    get_property(LLVM_LIT_TESTSUITES GLOBAL PROPERTY LLVM_LIT_TESTSUITES)
+    get_property(LLVM_LIT_PARAMS GLOBAL PROPERTY LLVM_LIT_PARAMS)
+    get_property(LLVM_LIT_DEPENDS GLOBAL PROPERTY LLVM_LIT_DEPENDS)
+    get_property(LLVM_LIT_EXTRA_ARGS GLOBAL PROPERTY LLVM_LIT_EXTRA_ARGS)
+    add_lit_target(check-all
+      "Running all regression tests"
+      ${LLVM_LIT_TESTSUITES}
+      PARAMS ${LLVM_LIT_PARAMS}
+      DEPENDS ${LLVM_LIT_DEPENDS}
+      ARGS ${LLVM_LIT_EXTRA_ARGS}
+      )
+  endif()
 endif()
 
 option(CLANG_INCLUDE_DOCS "Generate build targets for the Clang docs."
