@@ -1463,7 +1463,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BR_CC, MVT::i64, Custom);
     setOperationAction(ISD::SELECT_CC, MVT::i64, Custom);
 
-    setOperationAction(ISD::CTPOP, MVT::i64, Legal);
+    if (Subtarget->usePopc())
+      setOperationAction(ISD::CTPOP, MVT::i64, Legal);
     setOperationAction(ISD::CTTZ , MVT::i64, Expand);
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
     setOperationAction(ISD::CTLZ , MVT::i64, Expand);
@@ -1569,7 +1570,7 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   setStackPointerRegisterToSaveRestore(SP::O6);
 
-  if (Subtarget->isV9())
+  if (Subtarget->isV9() && Subtarget->usePopc())
     setOperationAction(ISD::CTPOP, MVT::i32, Legal);
 
   if (Subtarget->isV9() && Subtarget->hasHardQuad()) {
