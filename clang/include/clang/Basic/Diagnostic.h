@@ -546,22 +546,12 @@ public:
   bool setDiagnosticGroupMapping(StringRef Group, diag::Mapping Map,
                                  SourceLocation Loc = SourceLocation());
 
-  /// \brief Set the warning-as-error flag for the given diagnostic.
-  ///
-  /// This function always only operates on the current diagnostic state.
-  void setDiagnosticWarningAsError(diag::kind Diag, bool Enabled);
-
   /// \brief Set the warning-as-error flag for the given diagnostic group.
   ///
   /// This function always only operates on the current diagnostic state.
   ///
   /// \returns True if the given group is unknown, false otherwise.
   bool setDiagnosticGroupWarningAsError(StringRef Group, bool Enabled);
-
-  /// \brief Set the error-as-fatal flag for the given diagnostic.
-  ///
-  /// This function always only operates on the current diagnostic state.
-  void setDiagnosticErrorAsFatal(diag::kind Diag, bool Enabled);
 
   /// \brief Set the error-as-fatal flag for the given diagnostic group.
   ///

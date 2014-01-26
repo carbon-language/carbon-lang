@@ -245,24 +245,6 @@ bool DiagnosticsEngine::setDiagnosticGroupMapping(
   return false;
 }
 
-void DiagnosticsEngine::setDiagnosticWarningAsError(diag::kind Diag,
-                                                    bool Enabled) {
-  // If we are enabling this feature, just set the diagnostic mappings to map to
-  // errors.
-  if (Enabled) 
-    setDiagnosticMapping(Diag, diag::MAP_ERROR, SourceLocation());
-
-  // Otherwise, we want to set the diagnostic mapping's "no Werror" bit, and
-  // potentially downgrade anything already mapped to be a warning.
-  DiagnosticMappingInfo &Info = GetCurDiagState()->getOrAddMappingInfo(Diag);
-
-  if (Info.getMapping() == diag::MAP_ERROR ||
-      Info.getMapping() == diag::MAP_FATAL)
-    Info.setMapping(diag::MAP_WARNING);
-
-  Info.setNoWarningAsError(true);
-}
-
 bool DiagnosticsEngine::setDiagnosticGroupWarningAsError(StringRef Group,
                                                          bool Enabled) {
   // If we are enabling this feature, just set the diagnostic mappings to map to
@@ -291,23 +273,6 @@ bool DiagnosticsEngine::setDiagnosticGroupWarningAsError(StringRef Group,
   }
 
   return false;
-}
-
-void DiagnosticsEngine::setDiagnosticErrorAsFatal(diag::kind Diag,
-                                                  bool Enabled) {
-  // If we are enabling this feature, just set the diagnostic mappings to map to
-  // errors.
-  if (Enabled)
-    setDiagnosticMapping(Diag, diag::MAP_FATAL, SourceLocation());
-  
-  // Otherwise, we want to set the diagnostic mapping's "no Werror" bit, and
-  // potentially downgrade anything already mapped to be a warning.
-  DiagnosticMappingInfo &Info = GetCurDiagState()->getOrAddMappingInfo(Diag);
-  
-  if (Info.getMapping() == diag::MAP_FATAL)
-    Info.setMapping(diag::MAP_ERROR);
-  
-  Info.setNoErrorAsFatal(true);
 }
 
 bool DiagnosticsEngine::setDiagnosticGroupErrorAsFatal(StringRef Group,
