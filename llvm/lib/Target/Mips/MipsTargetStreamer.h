@@ -23,6 +23,15 @@ public:
   virtual void emitDirectiveSetNoMicroMips() = 0;
   virtual void emitDirectiveSetMips16() = 0;
   virtual void emitDirectiveSetNoMips16() = 0;
+
+  virtual void emitDirectiveSetReorder() = 0;
+  virtual void emitDirectiveSetNoReorder() = 0;
+  virtual void emitDirectiveSetMacro() = 0;
+  virtual void emitDirectiveSetNoMacro() = 0;
+  virtual void emitDirectiveSetAt() = 0;
+  virtual void emitDirectiveSetNoAt() = 0;
+  virtual void emitDirectiveEnd(StringRef Name) = 0;
+
   virtual void emitDirectiveEnt(const MCSymbol &Symbol) = 0;
   virtual void emitDirectiveAbiCalls() = 0;
   virtual void emitDirectiveOptionPic0() = 0;
@@ -39,6 +48,15 @@ public:
   virtual void emitDirectiveSetNoMicroMips();
   virtual void emitDirectiveSetMips16();
   virtual void emitDirectiveSetNoMips16();
+
+  virtual void emitDirectiveSetReorder();
+  virtual void emitDirectiveSetNoReorder();
+  virtual void emitDirectiveSetMacro();
+  virtual void emitDirectiveSetNoMacro();
+  virtual void emitDirectiveSetAt();
+  virtual void emitDirectiveSetNoAt();
+  virtual void emitDirectiveEnd(StringRef Name);
+
   virtual void emitDirectiveEnt(const MCSymbol &Symbol);
   virtual void emitDirectiveAbiCalls();
   virtual void emitDirectiveOptionPic0();
@@ -61,6 +79,15 @@ public:
   virtual void emitDirectiveSetNoMicroMips();
   virtual void emitDirectiveSetMips16();
   virtual void emitDirectiveSetNoMips16();
+
+  virtual void emitDirectiveSetReorder();
+  virtual void emitDirectiveSetNoReorder();
+  virtual void emitDirectiveSetMacro();
+  virtual void emitDirectiveSetNoMacro();
+  virtual void emitDirectiveSetAt();
+  virtual void emitDirectiveSetNoAt();
+  virtual void emitDirectiveEnd(StringRef Name);
+
   virtual void emitDirectiveEnt(const MCSymbol &Symbol);
   virtual void emitDirectiveAbiCalls();
   virtual void emitDirectiveOptionPic0();

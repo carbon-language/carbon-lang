@@ -55,6 +55,34 @@ void MipsTargetAsmStreamer::emitDirectiveSetNoMips16() {
   OS << "\t.set\tnomips16\n";
 }
 
+void MipsTargetAsmStreamer::emitDirectiveSetReorder() {
+  OS << "\t.set\treorder\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetNoReorder() {
+  OS << "\t.set\tnoreorder\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMacro() {
+  OS << "\t.set\tmacro\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetNoMacro() {
+  OS << "\t.set\tnomacro\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetAt() {
+  OS << "\t.set\tat\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetNoAt() {
+  OS << "\t.set\tnoat\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveEnd(StringRef Name) {
+  OS << "\t.end\t" << Name << '\n';
+}
+
 void MipsTargetAsmStreamer::emitDirectiveEnt(const MCSymbol &Symbol) {
   OS << "\t.ent\t" << Symbol.getName() << '\n';
 }
@@ -106,6 +134,34 @@ void MipsTargetELFStreamer::emitDirectiveSetMips16() {
 }
 
 void MipsTargetELFStreamer::emitDirectiveSetNoMips16() {
+  // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetReorder() {
+  // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetNoReorder() {
+  // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetMacro() {
+  // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetNoMacro() {
+  // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetAt() {
+  // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetNoAt() {
+  // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitDirectiveEnd(StringRef Name) {
   // FIXME: implement.
 }
 

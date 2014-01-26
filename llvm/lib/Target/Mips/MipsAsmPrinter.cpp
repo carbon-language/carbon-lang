@@ -284,6 +284,8 @@ void MipsAsmPrinter::EmitFunctionEntryLabel() {
 /// EmitFunctionBodyStart - Targets can override this to emit stuff before
 /// the first basic block in the function.
 void MipsAsmPrinter::EmitFunctionBodyStart() {
+  MipsTargetStreamer &TS = getTargetStreamer();
+
   MCInstLowering.Initialize(&MF->getContext());
 
   bool IsNakedFunction =
@@ -299,28 +301,28 @@ void MipsAsmPrinter::EmitFunctionBodyStart() {
     if (!IsNakedFunction)
       printSavedRegsBitmask(OS);
     OutStreamer.EmitRawText(OS.str());
-    if (!Subtarget->inMips16Mode()) {
-      OutStreamer.EmitRawText(StringRef("\t.set\tnoreorder"));
-      OutStreamer.EmitRawText(StringRef("\t.set\tnomacro"));
-      OutStreamer.EmitRawText(StringRef("\t.set\tnoat"));
-    }
+  }
+  if (!Subtarget->inMips16Mode()) {
+    TS.emitDirectiveSetNoReorder();
+    TS.emitDirectiveSetNoMacro();
+    TS.emitDirectiveSetNoAt();
   }
 }
 
 /// EmitFunctionBodyEnd - Targets can override this to emit stuff after
 /// the last basic block in the function.
 void MipsAsmPrinter::EmitFunctionBodyEnd() {
+  MipsTargetStreamer &TS = getTargetStreamer();
+
   // There are instruction for this macros, but they must
   // always be at the function end, and we can't emit and
   // break with BB logic.
-  if (OutStreamer.hasRawTextSupport()) {
-    if (!Subtarget->inMips16Mode()) {
-      OutStreamer.EmitRawText(StringRef("\t.set\tat"));
-      OutStreamer.EmitRawText(StringRef("\t.set\tmacro"));
-      OutStreamer.EmitRawText(StringRef("\t.set\treorder"));
-    }
-    OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
+  if (!Subtarget->inMips16Mode()) {
+    TS.emitDirectiveSetAt();
+    TS.emitDirectiveSetMacro();
+    TS.emitDirectiveSetReorder();
   }
+  TS.emitDirectiveEnd(CurrentFnSym->getName());
   // Make sure to terminate any constant pools that were at the end
   // of the function.
   if (!InConstantPool)
