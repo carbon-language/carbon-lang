@@ -125,7 +125,7 @@ private:
 /// A PEHeaderChunk represents PE header including COFF header.
 class PEHeaderChunk : public HeaderChunk {
 public:
-  explicit PEHeaderChunk(const PECOFFLinkingContext &context);
+  explicit PEHeaderChunk(const PECOFFLinkingContext &ctx);
 
   virtual void write(uint8_t *buffer);
 
@@ -310,14 +310,14 @@ private:
   std::vector<uint8_t> _contents;
 };
 
-PEHeaderChunk::PEHeaderChunk(const PECOFFLinkingContext &context)
+PEHeaderChunk::PEHeaderChunk(const PECOFFLinkingContext &ctx)
     : HeaderChunk() {
   // Set the size of the chunk and initialize the header with null bytes.
   _size = sizeof(llvm::COFF::PEMagic) + sizeof(_coffHeader) + sizeof(_peHeader);
   std::memset(&_coffHeader, 0, sizeof(_coffHeader));
   std::memset(&_peHeader, 0, sizeof(_peHeader));
 
-  _coffHeader.Machine = context.getMachineType();
+  _coffHeader.Machine = ctx.getMachineType();
   _coffHeader.TimeDateStamp = time(nullptr);
 
   // The size of PE header including optional data directory is always 224.
@@ -326,19 +326,19 @@ PEHeaderChunk::PEHeaderChunk(const PECOFFLinkingContext &context)
   // Attributes of the executable.
   uint16_t characteristics = llvm::COFF::IMAGE_FILE_32BIT_MACHINE |
                              llvm::COFF::IMAGE_FILE_EXECUTABLE_IMAGE;
-  if (context.getLargeAddressAware())
+  if (ctx.getLargeAddressAware())
     characteristics |= llvm::COFF::IMAGE_FILE_LARGE_ADDRESS_AWARE;
-  if (context.getSwapRunFromCD())
+  if (ctx.getSwapRunFromCD())
     characteristics |= llvm::COFF::IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP;
-  if (context.getSwapRunFromNet())
+  if (ctx.getSwapRunFromNet())
     characteristics |= llvm::COFF::IMAGE_FILE_NET_RUN_FROM_SWAP;
-  if (!context.getBaseRelocationEnabled())
+  if (!ctx.getBaseRelocationEnabled())
     characteristics |= llvm::COFF::IMAGE_FILE_RELOCS_STRIPPED;
 
   _coffHeader.Characteristics = characteristics;
 
-  _peHeader.Magic = context.is64Bit() ? llvm::COFF::PE32Header::PE32_PLUS
-                                      : llvm::COFF::PE32Header::PE32;
+  _peHeader.Magic = ctx.is64Bit() ? llvm::COFF::PE32Header::PE32_PLUS
+                                  : llvm::COFF::PE32Header::PE32;
 
   // The address of entry point relative to ImageBase. Windows executable
   // usually starts at address 0x401000.
@@ -346,11 +346,11 @@ PEHeaderChunk::PEHeaderChunk(const PECOFFLinkingContext &context)
 
   // The address of the executable when loaded into memory. The default for
   // DLLs is 0x10000000. The default for executables is 0x400000.
-  _peHeader.ImageBase = context.getBaseAddress();
+  _peHeader.ImageBase = ctx.getBaseAddress();
 
   // Sections should be page-aligned when loaded into memory, which is 4KB on
   // x86.
-  _peHeader.SectionAlignment = context.getSectionDefaultAlignment();
+  _peHeader.SectionAlignment = ctx.getSectionDefaultAlignment();
 
   // Sections in an executable file on disk should be sector-aligned (512 byte).
   _peHeader.FileAlignment = SECTOR_SIZE;
@@ -358,43 +358,43 @@ PEHeaderChunk::PEHeaderChunk(const PECOFFLinkingContext &context)
   // The version number of the resultant executable/DLL. The number is purely
   // informative, and neither the linker nor the loader won't use it. User can
   // set the value using /version command line option. Default is 0.0.
-  PECOFFLinkingContext::Version imageVersion = context.getImageVersion();
+  PECOFFLinkingContext::Version imageVersion = ctx.getImageVersion();
   _peHeader.MajorImageVersion = imageVersion.majorVersion;
   _peHeader.MinorImageVersion = imageVersion.minorVersion;
 
   // The required Windows version number. This is the internal version and
   // shouldn't be confused with product name. Windows 7 is version 6.1 and
   // Windows 8 is 6.2, for example.
-  PECOFFLinkingContext::Version minOSVersion = context.getMinOSVersion();
+  PECOFFLinkingContext::Version minOSVersion = ctx.getMinOSVersion();
   _peHeader.MajorOperatingSystemVersion = minOSVersion.majorVersion;
   _peHeader.MinorOperatingSystemVersion = minOSVersion.minorVersion;
   _peHeader.MajorSubsystemVersion = minOSVersion.majorVersion;
   _peHeader.MinorSubsystemVersion = minOSVersion.minorVersion;
 
-  _peHeader.Subsystem = context.getSubsystem();
+  _peHeader.Subsystem = ctx.getSubsystem();
 
   // Despite its name, DLL characteristics field has meaning both for
   // executables and DLLs. We are not very sure if the following bits must
   // be set, but regular binaries seem to have these bits, so we follow
   // them.
   uint16_t dllCharacteristics = llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_SEH;
-  if (context.isTerminalServerAware())
+  if (ctx.isTerminalServerAware())
     dllCharacteristics |=
         llvm::COFF::IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE;
-  if (context.isNxCompat())
+  if (ctx.isNxCompat())
     dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NX_COMPAT;
-  if (context.getDynamicBaseEnabled())
+  if (ctx.getDynamicBaseEnabled())
     dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE;
-  if (!context.getAllowBind())
+  if (!ctx.getAllowBind())
     dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_BIND;
-  if (!context.getAllowIsolation())
+  if (!ctx.getAllowIsolation())
     dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION;
   _peHeader.DLLCharacteristics = dllCharacteristics;
 
-  _peHeader.SizeOfStackReserve = context.getStackReserve();
-  _peHeader.SizeOfStackCommit = context.getStackCommit();
-  _peHeader.SizeOfHeapReserve = context.getHeapReserve();
-  _peHeader.SizeOfHeapCommit = context.getHeapCommit();
+  _peHeader.SizeOfStackReserve = ctx.getStackReserve();
+  _peHeader.SizeOfStackCommit = ctx.getStackCommit();
+  _peHeader.SizeOfHeapReserve = ctx.getHeapReserve();
+  _peHeader.SizeOfHeapCommit = ctx.getHeapCommit();
 
   // The number of data directory entries. We always have 16 entries.
   _peHeader.NumberOfRvaAndSize = 16;
