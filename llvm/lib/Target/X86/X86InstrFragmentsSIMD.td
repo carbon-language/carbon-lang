@@ -25,7 +25,8 @@ def bc_mmx  : PatFrag<(ops node:$in), (x86mmx  (bitconvert node:$in))>;
 def SDTX86FPShiftOp : SDTypeProfile<1, 2, [ SDTCisSameAs<0, 1>,
                                             SDTCisFP<0>, SDTCisInt<2> ]>;
 def SDTX86VFCMP : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<1, 2>,
-                                       SDTCisFP<1>, SDTCisVT<3, i8>]>;
+                                       SDTCisFP<1>, SDTCisVT<3, i8>,
+                                       SDTCisVec<1>]>;
 
 def X86umin    : SDNode<"X86ISD::UMIN",      SDTIntBinOp>;
 def X86umax    : SDNode<"X86ISD::UMAX",      SDTIntBinOp>;
@@ -88,39 +89,48 @@ def X86vzmovl  : SDNode<"X86ISD::VZEXT_MOVL",
 
 def X86vzmovly  : SDNode<"X86ISD::VZEXT_MOVL",
                  SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
+                                      SDTCisInt<0>, SDTCisInt<1>,
                                       SDTCisOpSmallerThanOp<1, 0> ]>>;
 
 def X86vsmovl  : SDNode<"X86ISD::VSEXT_MOVL",
                  SDTypeProfile<1, 1,
-                 [SDTCisVec<0>, SDTCisInt<1>, SDTCisInt<0>]>>;
+                 [SDTCisVec<0>, SDTCisVec<1>, SDTCisInt<0>, SDTCisInt<1>,
+                  SDTCisOpSmallerThanOp<1, 0>]>>;
 
 def X86vzload  : SDNode<"X86ISD::VZEXT_LOAD", SDTLoad,
                         [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 
 def X86vzext   : SDNode<"X86ISD::VZEXT",
                          SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
-                                              SDTCisInt<0>, SDTCisInt<1>]>>;
+                                              SDTCisInt<0>, SDTCisInt<1>,
+                                              SDTCisOpSmallerThanOp<1, 0>]>>;
 
 def X86vsext   : SDNode<"X86ISD::VSEXT",
                          SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
-                                              SDTCisInt<0>, SDTCisInt<1>]>>;
+                                              SDTCisInt<0>, SDTCisInt<1>,
+                                              SDTCisOpSmallerThanOp<1, 0>]>>;
 
 def X86vtrunc   : SDNode<"X86ISD::VTRUNC",
                          SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
-                                              SDTCisInt<0>, SDTCisInt<1>]>>;
+                                              SDTCisInt<0>, SDTCisInt<1>,
+                                              SDTCisOpSmallerThanOp<0, 1>]>>;
 def X86trunc    : SDNode<"X86ISD::TRUNC",
-                         SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisInt<1>]>>;
-                                              
+                         SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisInt<1>,
+                                              SDTCisOpSmallerThanOp<0, 1>]>>;
+
 def X86vtruncm   : SDNode<"X86ISD::VTRUNCM",
                          SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
                                               SDTCisInt<0>, SDTCisInt<1>,
-                                              SDTCisVec<2>, SDTCisInt<2>]>>;
+                                              SDTCisVec<2>, SDTCisInt<2>,
+                                              SDTCisOpSmallerThanOp<0, 2>]>>;
 def X86vfpext  : SDNode<"X86ISD::VFPEXT",
                         SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
-                                             SDTCisFP<0>, SDTCisFP<1>]>>;
+                                             SDTCisFP<0>, SDTCisFP<1>,
+                                             SDTCisOpSmallerThanOp<1, 0>]>>;
 def X86vfpround: SDNode<"X86ISD::VFPROUND",
                         SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
-                                             SDTCisFP<0>, SDTCisFP<1>]>>;
+                                             SDTCisFP<0>, SDTCisFP<1>,
+                                             SDTCisOpSmallerThanOp<0, 1>]>>;
 
 def X86vshldq  : SDNode<"X86ISD::VSHLDQ",    SDTIntShiftOp>;
 def X86vshrdq  : SDNode<"X86ISD::VSRLDQ",    SDTIntShiftOp>;
@@ -134,7 +144,8 @@ def X86pcmpeqm  : SDNode<"X86ISD::PCMPEQM", X86IntCmpMask, [SDNPCommutative]>;
 def X86pcmpgtm  : SDNode<"X86ISD::PCMPGTM", X86IntCmpMask>;
 
 def X86CmpMaskCC :
-      SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<1, 2>, SDTCisVT<3, i8>]>;
+      SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisInt<0>, SDTCisVec<1>,
+                           SDTCisSameAs<1, 2>, SDTCisVT<3, i8>]>;
 def X86CmpMaskCCScalar :
       SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<1, 2>, SDTCisVT<3, i8>]>;
 
