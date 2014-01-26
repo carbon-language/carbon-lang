@@ -222,7 +222,7 @@ void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
 
   // Create a new state/point and fit it into the vector of DiagStatePoints
   // so that the vector is always ordered according to location.
-  Pos->Loc.isBeforeInTranslationUnitThan(Loc);
+  assert(Pos->Loc.isBeforeInTranslationUnitThan(Loc));
   DiagStates.push_back(*Pos->State);
   DiagState *NewState = &DiagStates.back();
   GetCurDiagState()->setMappingInfo(Diag, MappingInfo);

@@ -54,6 +54,7 @@ struct ArgKind {
     case AK_String:
       return "string";
     }
+    llvm_unreachable("unhandled ArgKind");
   }
 
   Kind getArgKind() const { return K; }
