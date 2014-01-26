@@ -38,14 +38,8 @@ public:
     TransformActions &TA = MigrateCtx.Pass.TA;
 
     if (MigrateCtx.isGCOwnedNonObjC(E->getType())) {
-      if (MigrateCtx.Pass.noNSAllocReallocError())
-        TA.reportWarning("call returns pointer to GC managed memory; "
-                       "it will become unmanaged in ARC",
-                       E->getLocStart(), E->getSourceRange());
-      else 
-        TA.reportError("call returns pointer to GC managed memory; "
-                       "it will become unmanaged in ARC",
-                       E->getLocStart(), E->getSourceRange());
+      TA.report(E->getLocStart(), diag::err_arcmt_nsalloc_realloc,
+                E->getSourceRange());
       return true;
     }
 

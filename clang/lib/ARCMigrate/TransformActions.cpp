@@ -673,60 +673,35 @@ void TransformActions::applyRewrites(RewriteReceiver &receiver) {
   static_cast<TransformActionsImpl*>(Impl)->applyRewrites(receiver);
 }
 
-void TransformActions::reportError(StringRef error, SourceLocation loc,
-                                   SourceRange range) {
-  assert(!static_cast<TransformActionsImpl*>(Impl)->isInTransaction() &&
+DiagnosticBuilder TransformActions::report(SourceLocation loc, unsigned diagId,
+                                           SourceRange range) {
+  assert(!static_cast<TransformActionsImpl *>(Impl)->isInTransaction() &&
          "Errors should be emitted out of a transaction");
 
-  SourceManager &SM = static_cast<TransformActionsImpl*>(Impl)->
-                                             getASTContext().getSourceManager();
-  if (SM.isInSystemHeader(SM.getExpansionLoc(loc)))
-    return;
-
-  // FIXME: Use a custom category name to distinguish rewriter errors.
-  std::string rewriteErr = "[rewriter] ";
-  rewriteErr += error;
-  unsigned diagID
-     = Diags.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Error,
-                                                 rewriteErr);
-  Diags.Report(loc, diagID) << range;
-  ReportedErrors = true;
+  SourceManager &SM = static_cast<TransformActionsImpl *>(Impl)
+                          ->getASTContext()
+                          .getSourceManager();
+  DiagnosticsEngine::Level L = Diags.getDiagnosticLevel(diagId, loc);
+  // TODO: Move this check to the caller to ensure consistent note attachments.
+  if (L == DiagnosticsEngine::Ignored ||
+      SM.isInSystemHeader(SM.getExpansionLoc(loc)))
+    return DiagnosticBuilder::getEmpty();
+  if (L >= DiagnosticsEngine::Error)
+    ReportedErrors = true;
+  return Diags.Report(loc, diagId) << range;
 }
 
-void TransformActions::reportWarning(StringRef warning, SourceLocation loc,
+void TransformActions::reportError(StringRef message, SourceLocation loc,
                                    SourceRange range) {
-  assert(!static_cast<TransformActionsImpl*>(Impl)->isInTransaction() &&
-         "Warning should be emitted out of a transaction");
-  
-  SourceManager &SM = static_cast<TransformActionsImpl*>(Impl)->
-    getASTContext().getSourceManager();
-  if (SM.isInSystemHeader(SM.getExpansionLoc(loc)))
-    return;
-  
-  // FIXME: Use a custom category name to distinguish rewriter errors.
-  std::string rewriterWarn = "[rewriter] ";
-  rewriterWarn += warning;
-  unsigned diagID
-  = Diags.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Warning,
-                                              rewriterWarn);
-  Diags.Report(loc, diagID) << range;
+  report(loc, diag::err_mt_message, range) << message;
 }
 
-void TransformActions::reportNote(StringRef note, SourceLocation loc,
+void TransformActions::reportWarning(StringRef message, SourceLocation loc,
+                                     SourceRange range) {
+  report(loc, diag::warn_mt_message, range) << message;
+}
+
+void TransformActions::reportNote(StringRef message, SourceLocation loc,
                                   SourceRange range) {
-  assert(!static_cast<TransformActionsImpl*>(Impl)->isInTransaction() &&
-         "Errors should be emitted out of a transaction");
-
-  SourceManager &SM = static_cast<TransformActionsImpl*>(Impl)->
-                                             getASTContext().getSourceManager();
-  if (SM.isInSystemHeader(SM.getExpansionLoc(loc)))
-    return;
-
-  // FIXME: Use a custom category name to distinguish rewriter errors.
-  std::string rewriteNote = "[rewriter] ";
-  rewriteNote += note;
-  unsigned diagID
-     = Diags.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Note,
-                                                 rewriteNote);
-  Diags.Report(loc, diagID) << range;
+  report(loc, diag::note_mt_message, range) << message;
 }

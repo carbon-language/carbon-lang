@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (132):
+CHECK: Warnings without flags (133):
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_expected_semi_decl_list
 CHECK-NEXT:   ext_explicit_specialization_storage_class
@@ -95,6 +95,7 @@ CHECK-NEXT:   warn_missing_case_for_condition
 CHECK-NEXT:   warn_missing_dependent_template_keyword
 CHECK-NEXT:   warn_missing_exception_specification
 CHECK-NEXT:   warn_missing_whitespace_after_macro_name
+CHECK-NEXT:   warn_mt_message
 CHECK-NEXT:   warn_multiple_method_decl
 CHECK-NEXT:   warn_no_constructor_for_refconst
 CHECK-NEXT:   warn_not_compound_assign
