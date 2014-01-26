@@ -253,3 +253,38 @@ int64_t test_vqdmlsls_laneq_s32(int64_t a, int32_t b, int32x4_t c) {
 // CHECK: sqdmlsl {{d[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[3]
 }
 
+// CHECK-LABEL: test_vmulx_lane_f64_0:
+float64x1_t test_vmulx_lane_f64_0() {
+      float64x1_t arg1;
+      float64x1_t arg2;
+      float64x1_t result;
+      float64_t sarg1, sarg2, sres;
+      arg1 = vcreate_f64(UINT64_C(0x3fd6304bc43ab5c2));
+      arg2 = vcreate_f64(UINT64_C(0x3fee211e215aeef3));
+      result = vmulx_lane_f64(arg1, arg2, 0);
+// CHECK: adrp	x0
+// CHECK: ldr	d0, [x0,
+// CHECK: adrp	x0
+// CHECK: ldr	d1, [x0,
+// CHECK: fmulx	d0, d1, d0
+      return result;
+}
+
+// CHECK-LABEL: test_vmulx_laneq_f64_2:
+float64x1_t test_vmulx_laneq_f64_2() {
+      float64x1_t arg1;
+      float64x1_t arg2;
+      float64x2_t arg3;
+      float64x1_t result;
+      float64_t sarg1, sarg2, sres;
+      arg1 = vcreate_f64(UINT64_C(0x3fd6304bc43ab5c2));
+      arg2 = vcreate_f64(UINT64_C(0x3fee211e215aeef3));
+      arg3 = vcombine_f64(arg1, arg2);
+      result = vmulx_laneq_f64(arg1, arg3, 1);
+// CHECK: adrp	x0
+// CHECK: ldr	d0, [x0,
+// CHECK: adrp	x0
+// CHECK: ldr	d1, [x0,
+// CHECK: fmulx	d0, d1, d0
+      return result;
+}

@@ -1483,9 +1483,6 @@ static std::string GenArgs(const std::string &proto, StringRef typestr,
       s += TypeString(proto[i], typestr) + " __";
     }
     s.push_back(arg);
-    //To avoid argument being multiple defined, add extra number for renaming.
-    if (name == "vcopy_lane" || name == "vcopy_laneq")
-      s.push_back('1');
     if ((i + 1) < e)
       s += ", ";
   }
@@ -1508,18 +1505,10 @@ static std::string GenMacroLocals(const std::string &proto, StringRef typestr,
     if (MacroArgUsedDirectly(proto, i))
       continue;
     generatedLocal = true;
-    bool extranumber = false;
-    if (name == "vcopy_lane" || name == "vcopy_laneq")
-      extranumber = true;
-
     s += TypeString(proto[i], typestr) + " __";
     s.push_back(arg);
-    if(extranumber)
-      s.push_back('1');
     s += " = (";
     s.push_back(arg);
-    if(extranumber)
-      s.push_back('1');
     s += "); ";
   }
 
@@ -1640,6 +1629,18 @@ static unsigned GetNumElements(StringRef typestr, bool &quad) {
 }
 
 // Generate the definition for this intrinsic, e.g. "a + b" for OpAdd.
+//
+// Note that some intrinsic definitions around 'lane' are being implemented
+// with macros, because they all contain constant integer argument, and we
+// statically check the range of the lane index to meet the semantic
+// requirement of different intrinsics.
+//
+// For the intrinsics implemented with macro, if they contain another intrinsic
+// implemented with maco, we have to avoid using the same argument names for
+// the nested instrinsics. For example, macro vfms_lane is being implemented
+// with another macor vfma_lane, so we rename all arguments for vfms_lane by
+// adding a suffix '1'.
+
 static std::string GenOpString(const std::string &name, OpKind op,
                                const std::string &proto, StringRef typestr) {
   bool quad;
@@ -2109,23 +2110,29 @@ static std::string GenOpString(const std::string &name, OpKind op,
     break;
   }
   case OpCopyLane: {
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[3], typestr) + " __c1 = __c; \\\n  ";
     s += TypeString('s', typestr) + " __c2 = " +
-         MangleName("vget_lane", typestr, ClassS) + "(__c1, __d1); \\\n  " +
-         MangleName("vset_lane", typestr, ClassS) + "(__c2, __a1, __b1);";
+         MangleName("vget_lane", typestr, ClassS) + "(__c1, __d); \\\n  " +
+         MangleName("vset_lane", typestr, ClassS) + "(__c2, __a1, __b);";
     break;
   }
   case OpCopyQLane: {
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[3], typestr) + " __c1 = __c; \\\n  ";
     s += TypeString('s', typestr) + " __c2 = vget_lane_" + typeCode +
-         "(__c1, __d1); \\\n  vsetq_lane_" + typeCode + "(__c2, __a1, __b1);";
+         "(__c1, __d); \\\n  vsetq_lane_" + typeCode + "(__c2, __a1, __b);";
     break;
   }
   case OpCopyLaneQ: {
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[3], typestr) + " __c1 = __c; \\\n  ";
     s += TypeString('s', typestr) + " __c2 = vgetq_lane_" + typeCode +
-         "(__c1, __d1); \\\n  vset_lane_" + typeCode + "(__c2, __a1, __b1);";
+         "(__c1, __d); \\\n  vset_lane_" + typeCode + "(__c2, __a1, __b);";
     break;
   }
   case OpScalarMulLane: {
@@ -2138,8 +2145,10 @@ static std::string GenOpString(const std::string &name, OpKind op,
   case OpScalarMulLaneQ: {
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
-        s += TypeString('s', typestr) + " __d1 = vgetq_lane_" + typeCode +
-          "(__b, __c);\\\n  __a * __d1;";
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[2], typestr) + " __b1 = __b; \\\n  ";
+    s += TypeString('s', typestr) + " __d1 = vgetq_lane_" + typeCode +
+      "(__b1, __c);\\\n  __a1 * __d1;";
     break;
   }
   case OpScalarMulXLane: {
@@ -2148,9 +2157,11 @@ static std::string GenOpString(const std::string &name, OpKind op,
     if (type == 'f') type = 's';
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[2], typestr) + " __b1 = __b; \\\n  ";
     s += TypeString('s', typestr) + " __d1 = vget_lane_" + typeCode +
-      "(__b, __c);\\\n  vmulx" + type + "_" +
-      typeCode +  "(__a, __d1);";
+      "(__b1, __c);\\\n  vmulx" + type + "_" +
+      typeCode +  "(__a1, __d1);";
     break;
   }
   case OpScalarMulXLaneQ: {
@@ -2159,9 +2170,11 @@ static std::string GenOpString(const std::string &name, OpKind op,
     if (type == 'f') type = 's';
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[2], typestr) + " __b1 = __b; \\\n  ";
     s += TypeString('s', typestr) + " __d1 = vgetq_lane_" +
-      typeCode + "(__b, __c);\\\n  vmulx" + type +
-      "_" + typeCode +  "(__a, __d1);";
+      typeCode + "(__b1, __c);\\\n  vmulx" + type +
+      "_" + typeCode +  "(__a1, __d1);";
     break;
   }
 
@@ -2171,10 +2184,12 @@ static std::string GenOpString(const std::string &name, OpKind op,
     if (type == 'f') type = 's';
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[2], typestr) + " __b1 = __b; \\\n  ";
     s += TypeString('s', typestr) + " __d1 = vget_lane_" +
-      typeCode + "(__a, 0);\\\n" +
+      typeCode + "(__a1, 0);\\\n" +
       "  " + TypeString('s', typestr) + " __e1 = vget_lane_" +
-      typeCode + "(__b, __c);\\\n" +
+      typeCode + "(__b1, __c);\\\n" +
       "  " + TypeString('s', typestr) + " __f1 = vmulx" + type + "_" +
       typeCode + "(__d1, __e1);\\\n" +
       "  " + TypeString('d', typestr) + " __g1;\\\n" +
@@ -2188,10 +2203,12 @@ static std::string GenOpString(const std::string &name, OpKind op,
     if (type == 'f') type = 's';
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[2], typestr) + " __b1 = __b; \\\n  ";
     s += TypeString('s', typestr) + " __d1 = vget_lane_" +
-      typeCode + "(__a, 0);\\\n" +
+      typeCode + "(__a1, 0);\\\n" +
       "  " + TypeString('s', typestr) + " __e1 = vgetq_lane_" +
-      typeCode + "(__b, __c);\\\n" +
+      typeCode + "(__b1, __c);\\\n" +
       "  " + TypeString('s', typestr) + " __f1 = vmulx" + type + "_" +
       typeCode + "(__d1, __e1);\\\n" +
       "  " + TypeString('d', typestr) + " __g1;\\\n" +
@@ -2201,69 +2218,82 @@ static std::string GenOpString(const std::string &name, OpKind op,
   case OpScalarQDMullLane: {
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
-    s += MangleName("vqdmull", typestr, ClassS) + "(__a, " +
-    "vget_lane_" + typeCode + "(b, __c));";
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[2], typestr) + " __b1 = __b; \\\n  ";
+    s += MangleName("vqdmull", typestr, ClassS) + "(__a1, " +
+    "vget_lane_" + typeCode + "(__b1, __c));";
     break;
   }
   case OpScalarQDMullLaneQ: {
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
-    s += MangleName("vqdmull", typestr, ClassS) + "(__a, " +
-    "vgetq_lane_" + typeCode + "(b, __c));";
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[2], typestr) + " __b1 = __b; \\\n  ";
+    s += MangleName("vqdmull", typestr, ClassS) + "(__a1, " +
+    "vgetq_lane_" + typeCode + "(__b1, __c));";
     break;
   }
   case OpScalarQDMulHiLane: {
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
-    s += MangleName("vqdmulh", typestr, ClassS) + "(__a, " +
-    "vget_lane_" + typeCode + "(__b, __c));";
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[2], typestr) + " __b1 = __b; \\\n  ";
+    s += MangleName("vqdmulh", typestr, ClassS) + "(__a1, " +
+    "vget_lane_" + typeCode + "(__b1, __c));";
     break;
   }
   case OpScalarQDMulHiLaneQ: {
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
-    s += MangleName("vqdmulh", typestr, ClassS) + "(__a, " +
-    "vgetq_lane_" + typeCode + "(__b, __c));";
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[2], typestr) + " __b1 = __b; \\\n  ";
+    s += MangleName("vqdmulh", typestr, ClassS) + "(__a1, " +
+    "vgetq_lane_" + typeCode + "(__b1, __c));";
     break;
   }
   case OpScalarQRDMulHiLane: {
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
-    s += MangleName("vqrdmulh", typestr, ClassS) + "(__a, " +
-    "vget_lane_" + typeCode + "(__b, __c));";
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[2], typestr) + " __b1 = __b; \\\n  ";
+    s += MangleName("vqrdmulh", typestr, ClassS) + "(__a1, " +
+    "vget_lane_" + typeCode + "(__b1, __c));";
     break;
   }
   case OpScalarQRDMulHiLaneQ: {
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
-    s += MangleName("vqrdmulh", typestr, ClassS) + "(__a, " +
-    "vgetq_lane_" + typeCode + "(__b, __c));";
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
+    s += TypeString(proto[2], typestr) + " __b1 = __b; \\\n  ";
+    s += MangleName("vqrdmulh", typestr, ClassS) + "(__a1, " +
+    "vgetq_lane_" + typeCode + "(__b1, __c));";
     break;
   }
   case OpScalarGetLane:{
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
     if (quad) {
-     s += "int16x8_t __a1 = vreinterpretq_s16_f16(__a);\\\n";
-     s += "  vgetq_lane_s16(__a1, __b);";
+     s += "int16x8_t __a2 = vreinterpretq_s16_f16(__a1);\\\n";
+     s += "  vgetq_lane_s16(__a2, __b);";
     } else {
-     s += "int16x4_t __a1 = vreinterpret_s16_f16(__a);\\\n";
-     s += "  vget_lane_s16(__a1, __b);";
+     s += "int16x4_t __a2 = vreinterpret_s16_f16(__a1);\\\n";
+     s += "  vget_lane_s16(__a2, __b);";
     }
     break;
   }
   case OpScalarSetLane:{
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
-    s += "int16_t __a1 = (int16_t)__a;\\\n";
+    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
     if (quad) {
-     s += "  int16x8_t __b1 = vreinterpretq_s16_f16(b);\\\n";
-     s += "  int16x8_t __b2 = vsetq_lane_s16(__a1, __b1, __c);\\\n";
-     s += "  vreinterpretq_f16_s16(__b2);";
+     s += "  int16x8_t __b2 = vreinterpretq_s16_f16(b);\\\n";
+     s += "  int16x8_t __b3 = vsetq_lane_s16(__a1, __b2, __c);\\\n";
+     s += "  vreinterpretq_f16_s16(__b3);";
     } else {
-     s += "  int16x4_t __b1 = vreinterpret_s16_f16(b);\\\n";
-     s += "  int16x4_t __b2 = vset_lane_s16(__a1, __b1, __c);\\\n";
-     s += "  vreinterpret_f16_s16(__b2);";
+     s += "  int16x4_t __b2 = vreinterpret_s16_f16(b);\\\n";
+     s += "  int16x4_t __b3 = vset_lane_s16(__a1, __b2, __c);\\\n";
+     s += "  vreinterpret_f16_s16(__b3);";
     }
     break;
   }
