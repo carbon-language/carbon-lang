@@ -384,6 +384,9 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::STORE:
       Res = ScalarizeVecOp_STORE(cast<StoreSDNode>(N), OpNo);
       break;
+    case ISD::FP_ROUND:
+      Res = ScalarizeVecOp_FP_ROUND(N, OpNo);
+      break;
     }
   }
 
@@ -467,6 +470,15 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo){
                       N->getOriginalAlignment(), N->getTBAAInfo());
 }
 
+/// ScalarizeVecOp_FP_ROUND - If the value to round is a vector that needs
+/// to be scalarized, it must be <1 x ty>.  Convert the element instead.
+SDValue DAGTypeLegalizer::ScalarizeVecOp_FP_ROUND(SDNode *N, unsigned OpNo) {
+  SDValue Elt = GetScalarizedVector(N->getOperand(0));
+  SDValue Res = DAG.getNode(ISD::FP_ROUND, SDLoc(N),
+                            N->getValueType(0).getVectorElementType(), Elt,
+                            N->getOperand(1));
+  return DAG.getNode(ISD::SCALAR_TO_VECTOR, SDLoc(N), N->getValueType(0), Res);
+}
 
 //===----------------------------------------------------------------------===//
 //  Result Vector Splitting
