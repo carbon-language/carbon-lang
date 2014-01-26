@@ -19,9 +19,6 @@
 #include "CreateELF.h"
 #include "DynamicFile.h"
 #include "File.h"
-#include "X86/X86TargetHandler.h"
-#include "X86_64/X86_64TargetHandler.h"
-#include "Hexagon/HexagonTargetHandler.h"
 
 #include "lld/Core/Reference.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
