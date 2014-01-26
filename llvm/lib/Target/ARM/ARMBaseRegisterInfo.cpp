@@ -107,7 +107,7 @@ ARMBaseRegisterInfo::getThisReturnPreservedMask(CallingConv::ID CC) const {
   if (CC == CallingConv::GHC)
     // This is academic becase all GHC calls are (supposed to be) tail calls
     return NULL;
-  return (STI.isTargetIOS() && !STI.isAAPCS_ABI())
+  return STI.isTargetIOS()
     ? CSR_iOS_ThisReturn_RegMask : CSR_AAPCS_ThisReturn_RegMask;
 }
 
