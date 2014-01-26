@@ -126,6 +126,7 @@ namespace llvm {
                                                   MCAsmBackend &TAB,
                                                   raw_ostream &_OS,
                                                   MCCodeEmitter *_Emitter,
+                                                  const MCSubtargetInfo &STI,
                                                   bool RelaxAll,
                                                   bool NoExecStack);
     typedef MCStreamer *(*AsmStreamerCtorTy)(MCContext &Ctx,
@@ -418,11 +419,12 @@ namespace llvm {
                                        MCAsmBackend &TAB,
                                        raw_ostream &_OS,
                                        MCCodeEmitter *_Emitter,
+                                       const MCSubtargetInfo &STI,
                                        bool RelaxAll,
                                        bool NoExecStack) const {
       if (!MCObjectStreamerCtorFn)
         return 0;
-      return MCObjectStreamerCtorFn(*this, TT, Ctx, TAB, _OS, _Emitter,
+      return MCObjectStreamerCtorFn(*this, TT, Ctx, TAB, _OS, _Emitter, STI,
                                     RelaxAll, NoExecStack);
     }
 

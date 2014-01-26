@@ -448,7 +448,7 @@ int main(int argc, char **argv) {
     MCCodeEmitter *CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, *STI, Ctx);
     MCAsmBackend *MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, MCPU);
     Str.reset(TheTarget->createMCObjectStreamer(TripleName, Ctx, *MAB,
-                                                FOS, CE, RelaxAll,
+                                                FOS, CE, *STI, RelaxAll,
                                                 NoExecStack));
   }
 
