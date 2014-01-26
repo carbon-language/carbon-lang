@@ -359,7 +359,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     MCAsmBackend *MAB = TheTarget->createMCAsmBackend(*MRI, Opts.Triple,
                                                       Opts.CPU);
     Str.reset(TheTarget->createMCObjectStreamer(Opts.Triple, Ctx, *MAB, *Out,
-                                                CE, Opts.RelaxAll,
+                                                CE, *STI, Opts.RelaxAll,
                                                 Opts.NoExecStack));
     Str.get()->InitSections();
   }
