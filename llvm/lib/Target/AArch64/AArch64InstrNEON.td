@@ -6233,22 +6233,20 @@ multiclass NeonI_ext<string prefix, SDNode ExtOp> {
               (v8i16 (!cast<Instruction>(prefix # "_8B")
                 (v8i8 (SUBREG_TO_REG (i64 0), $Rn, sub_8)), 0)),
               sub_16)>;
-  
-  // v1i8 -> v1i32
-  def : Pat<(v1i32 (ExtOp (v1i8 FPR8:$Rn))),
-            (EXTRACT_SUBREG
-              (v4i32 (!cast<Instruction>(prefix # "_4H")
-                (v4i16 (SUBREG_TO_REG (i64 0),
-                  (v1i16 (EXTRACT_SUBREG 
-                    (v8i16 (!cast<Instruction>(prefix # "_8B")
-                      (v8i8 (SUBREG_TO_REG (i64 0), $Rn, sub_8)), 0)),
-                    sub_16)),
-                  sub_16)), 0)),
-              sub_32)>;
 }
 
 defm NeonI_zext : NeonI_ext<"USHLLvvi", zext>;
 defm NeonI_sext : NeonI_ext<"SSHLLvvi", sext>;
+
+// zext v1i8 -> v1i32
+def : Pat<(v1i32 (zext (v1i8 FPR8:$Rn))),
+          (v1i32 (EXTRACT_SUBREG
+            (v1i64 (SUBREG_TO_REG (i64 0),
+              (v1i8 (DUPbv_B
+                (v16i8 (SUBREG_TO_REG (i64 0), $Rn, sub_8)),
+                0)),
+              sub_8)),
+            sub_32))>;
 
 // zext v1i8 -> v1i64
 def : Pat<(v1i64 (zext (v1i8 FPR8:$Rn))),
@@ -6266,6 +6264,18 @@ def : Pat<(v1i64 (zext (v1i16 FPR16:$Rn))),
               0)),
             sub_16))>;
 
+// sext v1i8 -> v1i32
+def : Pat<(v1i32 (sext (v1i8 FPR8:$Rn))),
+          (EXTRACT_SUBREG
+            (v4i32 (SSHLLvvi_4H
+              (v4i16 (SUBREG_TO_REG (i64 0),
+                (v1i16 (EXTRACT_SUBREG 
+                  (v8i16 (SSHLLvvi_8B
+                    (v8i8 (SUBREG_TO_REG (i64 0), $Rn, sub_8)), 0)),
+                  sub_16)),
+                sub_16)), 0)),
+            sub_32)>;
+              
 // sext v1i8 -> v1i64
 def : Pat<(v1i64 (sext (v1i8 FPR8:$Rn))),
           (EXTRACT_SUBREG 
