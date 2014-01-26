@@ -1845,6 +1845,8 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
    std::string Error;
    llvm::raw_fd_ostream OS(MigrateDir.c_str(), Error, llvm::sys::fs::F_Binary);
     if (!Error.empty()) {
+      // FIXME: It's not safe to pass arbitrary user-generated strings into
+      // getCustomDiagID(). Use a constant diagnostic ID instead.
       unsigned ID = Ctx.getDiagnostics().getDiagnosticIDs()->
           getCustomDiagID(DiagnosticIDs::Error, Error);
       Ctx.getDiagnostics().Report(ID);
@@ -2061,6 +2063,8 @@ private:
 
 static bool reportDiag(const Twine &Err, DiagnosticsEngine &Diag) {
   SmallString<128> Buf;
+  // FIXME: It's not safe to pass arbitrary user-generated strings into
+  // getCustomDiagID(). Use a constant diagnostic ID instead.
   unsigned ID = Diag.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Error,
                                                          Err.toStringRef(Buf));
   Diag.Report(ID);
