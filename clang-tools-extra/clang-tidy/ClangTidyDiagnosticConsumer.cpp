@@ -39,9 +39,9 @@ ClangTidyError::ClangTidyError(StringRef CheckName,
 
 DiagnosticBuilder ClangTidyContext::diag(StringRef CheckName,
                                          SourceLocation Loc,
-                                         StringRef Message) {
-  unsigned ID =
-      DiagEngine->getCustomDiagID(DiagnosticsEngine::Warning, Message);
+                                         StringRef Description) {
+  unsigned ID = DiagEngine->getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Warning, Description);
   if (CheckNamesByDiagnosticID.count(ID) == 0)
     CheckNamesByDiagnosticID.insert(std::make_pair(ID, CheckName.str()));
   return DiagEngine->Report(Loc, ID);
