@@ -3669,7 +3669,7 @@ class ARMTargetInfo : public TargetInfo {
     DoubleAlign = LongLongAlign = LongDoubleAlign = SuitableAlign = 64;
     const llvm::Triple &T = getTriple();
 
-    // size_t is unsigned long on Darwin and netbsd.
+    // size_t is unsigned long on Darwin and NetBSD.
     if (T.isOSDarwin() || T.getOS() == llvm::Triple::NetBSD)
       SizeType = UnsignedLong;
     else
