@@ -1,4 +1,17 @@
 ! RUN: llvm-mc %s -arch=sparcv9 -show-encoding | FileCheck %s
+! RUN: llvm-mc %s -arch=sparcv9 -filetype=obj | llvm-readobj -r | FileCheck %s --check-prefix=CHECK-OBJ
+
+        ! CHECK-OBJ: Format: ELF64-sparc
+        ! CHECK-OBJ: Relocations [
+        ! CHECK-OBJ: 0x{{[0-9,A-F]+}} R_SPARC_WDISP30 foo
+        ! CHECK-OBJ: 0x{{[0-9,A-F]+}} R_SPARC_LO10 sym
+        ! CHECK-OBJ: 0x{{[0-9,A-F]+}} R_SPARC_HI22 sym
+        ! CHECK-OBJ: 0x{{[0-9,A-F]+}} R_SPARC_H44 sym
+        ! CHECK-OBJ: 0x{{[0-9,A-F]+}} R_SPARC_M44 sym
+        ! CHECK-OBJ: 0x{{[0-9,A-F]+}} R_SPARC_L44 sym
+        ! CHECK-OBJ: 0x{{[0-9,A-F]+}} R_SPARC_HH22 sym
+        ! CHECK-OBJ: 0x{{[0-9,A-F]+}} R_SPARC_HM10 sym
+        ! CHECK-ELF: ]
 
         ! CHECK: call foo     ! encoding: [0b01AAAAAA,A,A,A]
         ! CHECK:              !   fixup A - offset: 0, value: foo, kind: fixup_sparc_call30

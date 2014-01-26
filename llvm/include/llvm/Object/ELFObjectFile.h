@@ -924,6 +924,9 @@ StringRef ELFObjectFile<ELFT>::getFileFormatName() const {
       return "ELF32-mips";
     case ELF::EM_PPC:
       return "ELF32-ppc";
+    case ELF::EM_SPARC:
+    case ELF::EM_SPARC32PLUS:
+      return "ELF32-sparc";
     default:
       return "ELF32-unknown";
     }
@@ -939,6 +942,8 @@ StringRef ELFObjectFile<ELFT>::getFileFormatName() const {
       return "ELF64-ppc64";
     case ELF::EM_S390:
       return "ELF64-s390";
+    case ELF::EM_SPARCV9:
+      return "ELF64-sparc";
     default:
       return "ELF64-unknown";
     }
@@ -969,6 +974,13 @@ unsigned ELFObjectFile<ELFT>::getArch() const {
                                                        : Triple::ppc64;
   case ELF::EM_S390:
     return Triple::systemz;
+
+  case ELF::EM_SPARC:
+  case ELF::EM_SPARC32PLUS:
+    return Triple::sparc;
+  case ELF::EM_SPARCV9:
+    return Triple::sparcv9;
+
   default:
     return Triple::UnknownArch;
   }
