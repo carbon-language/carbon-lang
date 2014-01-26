@@ -64,8 +64,8 @@ entry:
 
 ; CHECK-LABEL: test_load_add_32
 ; CHECK: membar
-; CHECK: add
-; CHECK: cas [%o0]
+; CHECK: add [[V:%[gilo][0-7]]], %o1, [[U:%[gilo][0-7]]]
+; CHECK: cas [%o0], [[V]], [[U]]
 ; CHECK: membar
 define zeroext i32 @test_load_add_32(i32* %p, i32 zeroext %v) {
 entry:

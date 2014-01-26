@@ -2977,7 +2977,7 @@ SparcTargetLowering::expandAtomicRMW(MachineInstr *MI,
   // loop:
   //   %val = phi %val0, %dest
   //   %upd = op %val, %rs2
-  //   %dest = cas %addr, %upd, %val
+  //   %dest = cas %addr, %val, %upd
   //   cmp %val, %dest
   //   bne loop
   // done:
@@ -3036,7 +3036,7 @@ SparcTargetLowering::expandAtomicRMW(MachineInstr *MI,
   }
 
   BuildMI(LoopMBB, DL, TII.get(is64Bit ? SP::CASXrr : SP::CASrr), DestReg)
-    .addReg(AddrReg).addReg(UpdReg).addReg(ValReg)
+    .addReg(AddrReg).addReg(ValReg).addReg(UpdReg)
     .setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
   BuildMI(LoopMBB, DL, TII.get(SP::CMPrr)).addReg(ValReg).addReg(DestReg);
   BuildMI(LoopMBB, DL, TII.get(is64Bit ? SP::BPXCC : SP::BCOND))
