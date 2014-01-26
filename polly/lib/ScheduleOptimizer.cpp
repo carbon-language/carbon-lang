@@ -396,7 +396,7 @@ IslScheduleOptimizer::getScheduleForBandList(isl_band_list *BandList) {
       isl_band_list_free(Children);
     } else if (PollyVectorizerChoice != VECTORIZER_NONE) {
       for (int j = 0; j < isl_band_n_member(Band); j++) {
-        if (isl_band_member_is_zero_distance(Band, j)) {
+        if (isl_band_member_is_coincident(Band, j)) {
           isl_map *TileMap;
           isl_union_map *TileUMap;
 
@@ -514,8 +514,17 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   isl_options_set_schedule_max_coefficient(S.getIslCtx(), MaxCoefficient);
 
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_CONTINUE);
+
+  isl_schedule_constraints *ScheduleConstraints;
+  ScheduleConstraints = isl_schedule_constraints_on_domain(Domain);
+  ScheduleConstraints =
+      isl_schedule_constraints_set_proximity(ScheduleConstraints, Proximity);
+  ScheduleConstraints = isl_schedule_constraints_set_validity(
+      ScheduleConstraints, isl_union_map_copy(Validity));
+  ScheduleConstraints =
+      isl_schedule_constraints_set_coincidence(ScheduleConstraints, Validity);
   isl_schedule *Schedule;
-  Schedule = isl_union_set_compute_schedule(Domain, Validity, Proximity);
+  Schedule = isl_schedule_constraints_compute_schedule(ScheduleConstraints);
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_ABORT);
 
   // In cases the scheduler is not able to optimize the code, we just do not
