@@ -26,8 +26,10 @@
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
 #include <isl/aff.h>
+#include <isl/ctx.h>
 #include <isl/flow.h>
 #include <isl/map.h>
+#include <isl/options.h>
 #include <isl/set.h>
 
 #define DEBUG_TYPE "polly-dependence"
@@ -35,6 +37,12 @@
 
 using namespace polly;
 using namespace llvm;
+
+static cl::opt<int>
+OptComputeOut("polly-dependences-computeout",
+              cl::desc("Bound the dependence analysis by a maximal amount of "
+                       "computational steps"),
+              cl::Hidden, cl::init(100000), cl::cat(PollyCategory));
 
 static cl::opt<bool>
 LegalityCheckDisabled("disable-polly-legality",
@@ -96,10 +104,16 @@ void Dependences::calculateDependences(Scop &S) {
   Write = isl_union_map_coalesce(Write);
   MayWrite = isl_union_map_coalesce(MayWrite);
 
+  long MaxOpsOld = isl_ctx_get_max_operations(S.getIslCtx());
+  isl_ctx_set_max_operations(S.getIslCtx(), OptComputeOut);
+  isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_CONTINUE);
+
   DEBUG(dbgs() << "Read: " << Read << "\n";
         dbgs() << "Write: " << Write << "\n";
         dbgs() << "MayWrite: " << MayWrite << "\n";
         dbgs() << "Schedule: " << Schedule << "\n");
+
+  WAW = WAW = WAR;
 
   if (OptAnalysisType == VALUE_BASED_ANALYSIS) {
     isl_union_map_compute_flow(
@@ -142,6 +156,17 @@ void Dependences::calculateDependences(Scop &S) {
   RAW = isl_union_map_coalesce(RAW);
   WAW = isl_union_map_coalesce(WAW);
   WAR = isl_union_map_coalesce(WAR);
+
+  if (isl_ctx_last_error(S.getIslCtx()) == isl_error_quota) {
+    isl_union_map_free(RAW);
+    isl_union_map_free(WAW);
+    isl_union_map_free(WAR);
+    RAW = WAW = WAR = NULL;
+    isl_ctx_reset_error(S.getIslCtx());
+  }
+  isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_ABORT);
+  isl_ctx_reset_operations(S.getIslCtx());
+  isl_ctx_set_max_operations(S.getIslCtx(), MaxOpsOld);
 
   DEBUG(printScop(dbgs()));
 }
@@ -262,9 +287,23 @@ bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
 }
 
 void Dependences::printScop(raw_ostream &OS) const {
-  OS << "\tRAW dependences:\n\t\t" << RAW << "\n";
-  OS << "\tWAR dependences:\n\t\t" << WAR << "\n";
-  OS << "\tWAW dependences:\n\t\t" << WAW << "\n";
+  OS << "\tRAW dependences:\n\t\t";
+  if (RAW)
+    OS << RAW << "\n";
+  else
+    OS << "n/a\n";
+
+  OS << "\tWAR dependences:\n\t\t";
+  if (WAR)
+    OS << WAR << "\n";
+  else
+    OS << "n/a\n";
+
+  OS << "\tWAW dependences:\n\t\t";
+  if (WAW)
+    OS << WAW << "\n";
+  else
+    OS << "n/a\n";
 }
 
 void Dependences::releaseMemory() {
