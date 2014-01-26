@@ -123,6 +123,7 @@ private:
 };
 
 /// A PEHeaderChunk represents PE header including COFF header.
+template <class PEHeader>
 class PEHeaderChunk : public HeaderChunk {
 public:
   explicit PEHeaderChunk(const PECOFFLinkingContext &ctx);
@@ -136,7 +137,7 @@ public:
 
   void setSizeOfCode(uint64_t size) { _peHeader.SizeOfCode = size; }
   void setBaseOfCode(uint32_t rva) { _peHeader.BaseOfCode = rva; }
-  void setBaseOfData(uint32_t rva) { _peHeader.BaseOfData = rva; }
+  void setBaseOfData(uint32_t rva);
   void setSizeOfImage(uint32_t size) { _peHeader.SizeOfImage = size; }
 
   void setSizeOfInitializedData(uint64_t size) {
@@ -155,7 +156,7 @@ public:
 
 private:
   llvm::object::coff_file_header _coffHeader;
-  llvm::object::pe32_header _peHeader;
+  PEHeader _peHeader;
 };
 
 /// A SectionHeaderTableChunk represents Section Table Header of PE/COFF
@@ -310,7 +311,8 @@ private:
   std::vector<uint8_t> _contents;
 };
 
-PEHeaderChunk::PEHeaderChunk(const PECOFFLinkingContext &ctx)
+template <class PEHeader>
+PEHeaderChunk<PEHeader>::PEHeaderChunk(const PECOFFLinkingContext &ctx)
     : HeaderChunk() {
   // Set the size of the chunk and initialize the header with null bytes.
   _size = sizeof(llvm::COFF::PEMagic) + sizeof(_coffHeader) + sizeof(_peHeader);
@@ -400,7 +402,18 @@ PEHeaderChunk::PEHeaderChunk(const PECOFFLinkingContext &ctx)
   _peHeader.NumberOfRvaAndSize = 16;
 }
 
-void PEHeaderChunk::write(uint8_t *buffer) {
+template <>
+void PEHeaderChunk<llvm::object::pe32_header>::setBaseOfData(uint32_t rva) {
+  _peHeader.BaseOfData = rva;
+}
+
+template <>
+void PEHeaderChunk<llvm::object::pe32plus_header>::setBaseOfData(uint32_t rva) {
+  // BaseOfData field does not exist in PE32+ header.
+}
+
+template <class PEHeader>
+void PEHeaderChunk<PEHeader>::write(uint8_t *buffer) {
   std::memcpy(buffer, llvm::COFF::PEMagic, sizeof(llvm::COFF::PEMagic));
   buffer += sizeof(llvm::COFF::PEMagic);
   std::memcpy(buffer, &_coffHeader, sizeof(_coffHeader));
@@ -742,7 +755,7 @@ public:
       : _ctx(context), _numSections(0), _imageSizeInMemory(PAGE_SIZE),
         _imageSizeOnDisk(0) {}
 
-  void build(const File &linkedFile);
+  template <class PEHeader> void build(const File &linkedFile);
   virtual error_code writeFile(const File &linkedFile, StringRef path);
 
 private:
@@ -751,7 +764,6 @@ private:
   void addChunk(Chunk *chunk);
   void addSectionChunk(SectionChunk *chunk, SectionHeaderTableChunk *table);
   void setImageSizeOnDisk();
-  void setAddressOfEntryPoint(AtomChunk *text, PEHeaderChunk *peHeader);
   uint64_t
   calcSectionSize(llvm::COFF::SectionCharacteristics sectionType) const;
 
@@ -829,13 +841,14 @@ void groupAtoms(const PECOFFLinkingContext &ctx, const File &file,
 }
 
 // Create all chunks that consist of the output file.
+template <class PEHeader>
 void PECOFFWriter::build(const File &linkedFile) {
   AtomVectorMap atoms;
   groupAtoms(_ctx, linkedFile, atoms);
 
   // Create file chunks and add them to the list.
   auto *dosStub = new DOSStubChunk(_ctx);
-  auto *peHeader = new PEHeaderChunk(_ctx);
+  auto *peHeader = new PEHeaderChunk<PEHeader>(_ctx);
   auto *dataDirectory = new DataDirectoryChunk();
   auto *sectionTable = new SectionHeaderTableChunk();
   addChunk(dosStub);
@@ -871,7 +884,19 @@ void PECOFFWriter::build(const File &linkedFile) {
       continue;
     if (section->getSectionName() == ".text") {
       peHeader->setBaseOfCode(section->getVirtualAddress());
-      setAddressOfEntryPoint(dyn_cast<AtomChunk>(section), peHeader);
+
+      // Find the virtual address of the entry point symbol if any.  PECOFF spec
+      // says that entry point for dll images is optional, in which case it must
+      // be set to 0.
+      if (_ctx.entrySymbolName().empty() && _ctx.isDll()) {
+        peHeader->setAddressOfEntryPoint(0);
+      } else {
+        uint64_t entryPointAddress =
+            dyn_cast<AtomChunk>(section)
+                ->getAtomVirtualAddress(_ctx.entrySymbolName());
+        if (entryPointAddress != 0)
+          peHeader->setAddressOfEntryPoint(entryPointAddress);
+      }
     }
     if (section->getSectionName() == ".data")
       peHeader->setBaseOfData(section->getVirtualAddress());
@@ -897,7 +922,11 @@ void PECOFFWriter::build(const File &linkedFile) {
 }
 
 error_code PECOFFWriter::writeFile(const File &linkedFile, StringRef path) {
-  this->build(linkedFile);
+  if (_ctx.is64Bit()) {
+    this->build<llvm::object::pe32plus_header>(linkedFile);
+  } else {
+    this->build<llvm::object::pe32_header>(linkedFile);
+  }
 
   uint64_t totalSize = _chunks.back()->fileOffset() + _chunks.back()->size();
   OwningPtr<llvm::FileOutputBuffer> buffer;
@@ -974,21 +1003,6 @@ void PECOFFWriter::setImageSizeOnDisk() {
         llvm::RoundUpToAlignment(_imageSizeOnDisk, chunk->align());
     chunk->setFileOffset(_imageSizeOnDisk);
     _imageSizeOnDisk += chunk->size();
-  }
-}
-
-void PECOFFWriter::setAddressOfEntryPoint(AtomChunk *text,
-                                          PEHeaderChunk *peHeader) {
-  // Find the virtual address of the entry point symbol if any.
-  // PECOFF spec says that entry point for dll images is optional, in which
-  // case it must be set to 0.
-  if (_ctx.entrySymbolName().empty() && _ctx.isDll()) {
-    peHeader->setAddressOfEntryPoint(0);
-  } else {
-    uint64_t entryPointAddress =
-        text->getAtomVirtualAddress(_ctx.entrySymbolName());
-    if (entryPointAddress != 0)
-      peHeader->setAddressOfEntryPoint(entryPointAddress);
   }
 }
 
