@@ -125,6 +125,7 @@ void FrameEntry::parseInstructions(uint32_t *Offset, uint32_t EndOffset) {
         case DW_CFA_nop:
         case DW_CFA_remember_state:
         case DW_CFA_restore_state:
+        case DW_CFA_GNU_window_save:
           // No operands
           addInstruction(Opcode);
           break;
