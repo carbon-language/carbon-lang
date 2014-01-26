@@ -271,9 +271,7 @@ void FileRemapper::resetTarget(Target &targ) {
 }
 
 bool FileRemapper::report(const Twine &err, DiagnosticsEngine &Diag) {
-  SmallString<128> buf;
-  unsigned ID = Diag.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Error,
-                                                         err.toStringRef(buf));
-  Diag.Report(ID);
+  Diag.Report(Diag.getCustomDiagID(DiagnosticsEngine::Error, "%0"))
+      << err.str();
   return true;
 }

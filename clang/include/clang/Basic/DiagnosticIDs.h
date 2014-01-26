@@ -124,11 +124,16 @@ public:
   DiagnosticIDs();
   ~DiagnosticIDs();
 
-  /// \brief Return an ID for a diagnostic with the specified message and level.
+  /// \brief Return an ID for a diagnostic with the specified format string and
+  /// level.
   ///
   /// If this is the first request for this diagnostic, it is registered and
   /// created, otherwise the existing ID is returned.
-  unsigned getCustomDiagID(Level L, StringRef Message);
+
+  // FIXME: Replace this function with a create-only facilty like
+  // createCustomDiagIDFromFormatString() to enforce safe usage. At the time of
+  // writing, nearly all callers of this function were invalid.
+  unsigned getCustomDiagID(Level L, StringRef FormatString);
 
   //===--------------------------------------------------------------------===//
   // Diagnostic classification and reporting interfaces.

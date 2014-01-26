@@ -419,7 +419,7 @@ PTHManager::~PTHManager() {
 }
 
 static void InvalidPTH(DiagnosticsEngine &Diags, const char *Msg) {
-  Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Error, Msg));
+  Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Error, "%0")) << Msg;
 }
 
 PTHManager *PTHManager::Create(const std::string &file,

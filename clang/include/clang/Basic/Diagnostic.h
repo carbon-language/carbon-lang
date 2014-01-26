@@ -587,15 +587,18 @@ public:
     this->NumWarnings = NumWarnings;
   }
 
-  /// \brief Return an ID for a diagnostic with the specified message and level.
+  /// \brief Return an ID for a diagnostic with the specified format string and
+  /// level.
   ///
   /// If this is the first request for this diagnostic, it is registered and
   /// created, otherwise the existing ID is returned.
   ///
   /// \param Message A fixed diagnostic format string that will be hashed and
   /// mapped to a unique DiagID.
-  unsigned getCustomDiagID(Level L, StringRef Message) {
-    return Diags->getCustomDiagID((DiagnosticIDs::Level)L, Message);
+  template <unsigned N>
+  unsigned getCustomDiagID(Level L, const char (&FormatString)[N]) {
+    return Diags->getCustomDiagID((DiagnosticIDs::Level)L,
+                                  StringRef(FormatString, N));
   }
 
   /// \brief Converts a diagnostic argument (as an intptr_t) into the string

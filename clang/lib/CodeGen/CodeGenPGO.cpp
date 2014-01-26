@@ -24,8 +24,8 @@ using namespace CodeGen;
 
 static void ReportBadPGOData(CodeGenModule &CGM, const char *Message) {
   DiagnosticsEngine &Diags = CGM.getDiags();
-  unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error, Message);
-  Diags.Report(DiagID);
+  unsigned diagID = Diags.getCustomDiagID(DiagnosticsEngine::Error, "%0");
+  Diags.Report(diagID) << Message;
 }
 
 PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
