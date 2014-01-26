@@ -27,8 +27,11 @@ static cl::opt<bool> PrintHackDirectives("print-hack-directives",
 // Pin vtable to this file.
 void MipsTargetStreamer::anchor() {}
 
-MipsTargetAsmStreamer::MipsTargetAsmStreamer(formatted_raw_ostream &OS)
-    : OS(OS) {}
+MipsTargetStreamer::MipsTargetStreamer(MCStreamer &S) : MCTargetStreamer(S) {}
+
+MipsTargetAsmStreamer::MipsTargetAsmStreamer(MCStreamer &S,
+                                             formatted_raw_ostream &OS)
+    : MipsTargetStreamer(S), OS(OS) {}
 
 void MipsTargetAsmStreamer::emitMipsHackELFFlags(unsigned Flags) {
   if (!PrintHackDirectives)
@@ -93,7 +96,8 @@ void MipsTargetAsmStreamer::emitDirectiveOptionPic0() {
 }
 
 // This part is for ELF object output.
-MipsTargetELFStreamer::MipsTargetELFStreamer() : MicroMipsEnabled(false) {}
+MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S)
+    : MipsTargetStreamer(S), MicroMipsEnabled(false) {}
 
 void MipsTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
   if (!isMicroMipsEnabled())
@@ -110,7 +114,7 @@ void MipsTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
 }
 
 MCELFStreamer &MipsTargetELFStreamer::getStreamer() {
-  return static_cast<MCELFStreamer &>(*Streamer);
+  return static_cast<MCELFStreamer &>(Streamer);
 }
 
 void MipsTargetELFStreamer::emitMipsHackELFFlags(unsigned Flags) {

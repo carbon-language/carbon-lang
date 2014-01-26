@@ -25,14 +25,17 @@ using namespace llvm;
 
 // Pin the vtables to this file.
 MCTargetStreamer::~MCTargetStreamer() {}
+
+MCTargetStreamer::MCTargetStreamer(MCStreamer &S) : Streamer(S) {
+  S.setTargetStreamer(this);
+}
+
 void MCTargetStreamer::emitLabel(MCSymbol *Symbol) {}
 
-MCStreamer::MCStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer)
-    : Context(Ctx), TargetStreamer(TargetStreamer), EmitEHFrame(true),
-      EmitDebugFrame(false), CurrentW64UnwindInfo(0), LastSymbol(0) {
+MCStreamer::MCStreamer(MCContext &Ctx)
+    : Context(Ctx), EmitEHFrame(true), EmitDebugFrame(false),
+      CurrentW64UnwindInfo(0), LastSymbol(0) {
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
-  if (TargetStreamer)
-    TargetStreamer->setStreamer(this);
 }
 
 MCStreamer::~MCStreamer() {

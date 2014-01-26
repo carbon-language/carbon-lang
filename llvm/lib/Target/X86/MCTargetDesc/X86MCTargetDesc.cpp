@@ -371,7 +371,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
   if (TheTriple.isOSWindows() && TheTriple.getEnvironment() != Triple::ELF)
     return createWinCOFFStreamer(Ctx, MAB, *_Emitter, _OS, RelaxAll);
 
-  return createELFStreamer(Ctx, 0, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
+  return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
 }
 
 static MCInstPrinter *createX86MCInstPrinter(const Target &T,

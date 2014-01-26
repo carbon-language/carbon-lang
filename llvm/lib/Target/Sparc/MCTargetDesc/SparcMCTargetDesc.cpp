@@ -105,8 +105,10 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Context, MCAsmBackend &MAB,
                                     raw_ostream &OS, MCCodeEmitter *Emitter,
                                     bool RelaxAll, bool NoExecStack) {
-  SparcTargetELFStreamer *S = new SparcTargetELFStreamer();
-  return createELFStreamer(Context, S, MAB, OS, Emitter, RelaxAll, NoExecStack);
+  MCStreamer *S =
+      createELFStreamer(Context, MAB, OS, Emitter, RelaxAll, NoExecStack);
+  new SparcTargetELFStreamer(*S);
+  return S;
 }
 
 static MCStreamer *
@@ -114,11 +116,12 @@ createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                     bool isVerboseAsm, bool useLoc, bool useCFI,
                     bool useDwarfDirectory, MCInstPrinter *InstPrint,
                     MCCodeEmitter *CE, MCAsmBackend *TAB, bool ShowInst) {
-  SparcTargetAsmStreamer *S = new SparcTargetAsmStreamer(OS);
 
-  return llvm::createAsmStreamer(Ctx, S, OS, isVerboseAsm, useLoc, useCFI,
-                                 useDwarfDirectory, InstPrint, CE, TAB,
-                                 ShowInst);
+  MCStreamer *S =
+      llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useLoc, useCFI,
+                              useDwarfDirectory, InstPrint, CE, TAB, ShowInst);
+  new SparcTargetAsmStreamer(*S, OS);
+  return S;
 }
 
 static MCInstPrinter *createSparcMCInstPrinter(const Target &T,

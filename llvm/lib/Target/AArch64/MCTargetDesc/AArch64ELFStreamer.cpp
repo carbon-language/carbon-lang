@@ -57,7 +57,7 @@ class AArch64ELFStreamer : public MCELFStreamer {
 public:
   AArch64ELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
                      MCCodeEmitter *Emitter)
-      : MCELFStreamer(Context, 0, TAB, OS, Emitter), MappingSymbolCounter(0),
+      : MCELFStreamer(Context, TAB, OS, Emitter), MappingSymbolCounter(0),
         LastEMS(EMS_None) {}
 
   ~AArch64ELFStreamer() {}

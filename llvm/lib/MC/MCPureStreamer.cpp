@@ -29,7 +29,7 @@ private:
 public:
   MCPureStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
                  MCCodeEmitter *Emitter)
-      : MCObjectStreamer(Context, 0, TAB, OS, Emitter) {}
+      : MCObjectStreamer(Context, TAB, OS, Emitter) {}
 
   /// @name MCStreamer Interface
   /// @{

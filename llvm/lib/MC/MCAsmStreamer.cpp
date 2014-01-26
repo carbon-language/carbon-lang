@@ -66,11 +66,11 @@ private:
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame);
 
 public:
-  MCAsmStreamer(MCContext &Context, MCTargetStreamer *TargetStreamer,
-                formatted_raw_ostream &os, bool isVerboseAsm, bool useLoc,
-                bool useCFI, bool useDwarfDirectory, MCInstPrinter *printer,
+  MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
+                bool isVerboseAsm, bool useLoc, bool useCFI,
+                bool useDwarfDirectory, MCInstPrinter *printer,
                 MCCodeEmitter *emitter, MCAsmBackend *asmbackend, bool showInst)
-      : MCStreamer(Context, TargetStreamer), OS(os), MAI(Context.getAsmInfo()),
+      : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
         InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
         CommentStream(CommentToEmit), IsVerboseAsm(isVerboseAsm),
         ShowInst(showInst), UseLoc(useLoc), UseCFI(useCFI),
@@ -1381,12 +1381,11 @@ void MCAsmStreamer::FinishImpl() {
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
-                                    MCTargetStreamer *TargetStreamer,
                                     formatted_raw_ostream &OS,
                                     bool isVerboseAsm, bool useLoc, bool useCFI,
                                     bool useDwarfDirectory, MCInstPrinter *IP,
                                     MCCodeEmitter *CE, MCAsmBackend *MAB,
                                     bool ShowInst) {
-  return new MCAsmStreamer(Context, TargetStreamer, OS, isVerboseAsm, useLoc,
+  return new MCAsmStreamer(Context, OS, isVerboseAsm, useLoc,
                            useCFI, useDwarfDirectory, IP, CE, MAB, ShowInst);
 }

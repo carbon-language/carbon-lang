@@ -39,6 +39,7 @@ using namespace llvm;
 
 // Pin the vtable to this file.
 PPCTargetStreamer::~PPCTargetStreamer() {}
+PPCTargetStreamer::PPCTargetStreamer(MCStreamer &S) : MCTargetStreamer(S) {}
 
 static MCInstrInfo *createPPCMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
@@ -112,7 +113,8 @@ class PPCTargetAsmStreamer : public PPCTargetStreamer {
   formatted_raw_ostream &OS;
 
 public:
-  PPCTargetAsmStreamer(formatted_raw_ostream &OS) : OS(OS) {}
+  PPCTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS)
+      : PPCTargetStreamer(S), OS(OS) {}
   virtual void emitTCEntry(const MCSymbol &S) {
     OS << "\t.tc ";
     OS << S.getName();
@@ -126,9 +128,11 @@ public:
 };
 
 class PPCTargetELFStreamer : public PPCTargetStreamer {
+public:
+  PPCTargetELFStreamer(MCStreamer &S) : PPCTargetStreamer(S) {}
   virtual void emitTCEntry(const MCSymbol &S) {
     // Creates a R_PPC64_TOC relocation
-    Streamer->EmitSymbolValue(&S, 8);
+    Streamer.EmitSymbolValue(&S, 8);
   }
   virtual void emitMachine(StringRef CPU) {
     // FIXME: Is there anything to do in here or does this directive only
@@ -147,8 +151,10 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
   if (Triple(TT).isOSDarwin())
     return createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
 
-  PPCTargetStreamer *S = new PPCTargetELFStreamer();
-  return createELFStreamer(Ctx, S, MAB, OS, Emitter, RelaxAll, NoExecStack);
+  MCStreamer *S =
+      createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll, NoExecStack);
+  new PPCTargetELFStreamer(*S);
+  return S;
 }
 
 static MCStreamer *
@@ -156,11 +162,12 @@ createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                     bool isVerboseAsm, bool useLoc, bool useCFI,
                     bool useDwarfDirectory, MCInstPrinter *InstPrint,
                     MCCodeEmitter *CE, MCAsmBackend *TAB, bool ShowInst) {
-  PPCTargetStreamer *S = new PPCTargetAsmStreamer(OS);
 
-  return llvm::createAsmStreamer(Ctx, S, OS, isVerboseAsm, useLoc, useCFI,
-                                 useDwarfDirectory, InstPrint, CE, TAB,
-                                 ShowInst);
+  MCStreamer *S =
+      llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useLoc, useCFI,
+                              useDwarfDirectory, InstPrint, CE, TAB, ShowInst);
+  new PPCTargetAsmStreamer(*S, OS);
+  return S;
 }
 
 static MCInstPrinter *createPPCMCInstPrinter(const Target &T,

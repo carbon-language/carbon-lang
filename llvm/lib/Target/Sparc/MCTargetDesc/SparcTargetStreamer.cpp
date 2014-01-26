@@ -18,10 +18,13 @@
 using namespace llvm;
 
 // pin vtable to this file
+SparcTargetStreamer::SparcTargetStreamer(MCStreamer &S) : MCTargetStreamer(S) {}
+
 void SparcTargetStreamer::anchor() {}
 
-SparcTargetAsmStreamer::SparcTargetAsmStreamer(formatted_raw_ostream &OS)
-    : OS(OS) {}
+SparcTargetAsmStreamer::SparcTargetAsmStreamer(MCStreamer &S,
+                                               formatted_raw_ostream &OS)
+    : SparcTargetStreamer(S), OS(OS) {}
 
 void SparcTargetAsmStreamer::emitSparcRegisterIgnore(unsigned reg) {
   OS << "\t.register "
@@ -35,6 +38,9 @@ void SparcTargetAsmStreamer::emitSparcRegisterScratch(unsigned reg) {
      << ", #scratch\n";
 }
 
+SparcTargetELFStreamer::SparcTargetELFStreamer(MCStreamer &S)
+    : SparcTargetStreamer(S) {}
+
 MCELFStreamer &SparcTargetELFStreamer::getStreamer() {
-  return static_cast<MCELFStreamer &>(*Streamer);
+  return static_cast<MCELFStreamer &>(Streamer);
 }

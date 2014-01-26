@@ -46,13 +46,11 @@ namespace llvm {
   class MCRelocationInfo;
   class MCTargetAsmParser;
   class TargetMachine;
-  class MCTargetStreamer;
   class TargetOptions;
   class raw_ostream;
   class formatted_raw_ostream;
 
   MCStreamer *createAsmStreamer(MCContext &Ctx,
-                                MCTargetStreamer *TargetStreamer,
                                 formatted_raw_ostream &OS, bool isVerboseAsm,
                                 bool useLoc, bool useCFI,
                                 bool useDwarfDirectory,
@@ -443,7 +441,7 @@ namespace llvm {
         return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useLoc, useCFI,
                                  useDwarfDirectory, InstPrint, CE, TAB,
                                  ShowInst);
-      return llvm::createAsmStreamer(Ctx, 0, OS, isVerboseAsm, useLoc, useCFI,
+      return llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useLoc, useCFI,
                                      useDwarfDirectory, InstPrint, CE, TAB,
                                      ShowInst);
     }

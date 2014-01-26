@@ -105,6 +105,7 @@ static unsigned GetArchDefaultCPUArch(unsigned ID) {
 }
 
 void ARMTargetStreamer::anchor() {}
+ARMTargetStreamer::ARMTargetStreamer(MCStreamer &S) : MCTargetStreamer(S) {}
 
 namespace {
 
@@ -139,14 +140,16 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   virtual void finishAttributeSection();
 
 public:
-  ARMTargetAsmStreamer(formatted_raw_ostream &OS, MCInstPrinter &InstPrinter,
-                       bool VerboseAsm);
+  ARMTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS,
+                       MCInstPrinter &InstPrinter, bool VerboseAsm);
 };
 
-ARMTargetAsmStreamer::ARMTargetAsmStreamer(formatted_raw_ostream &OS,
+ARMTargetAsmStreamer::ARMTargetAsmStreamer(MCStreamer &S,
+                                           formatted_raw_ostream &OS,
                                            MCInstPrinter &InstPrinter,
                                            bool VerboseAsm)
-    : OS(OS), InstPrinter(InstPrinter), IsVerboseAsm(VerboseAsm) {}
+    : ARMTargetStreamer(S), OS(OS), InstPrinter(InstPrinter),
+      IsVerboseAsm(VerboseAsm) {}
 void ARMTargetAsmStreamer::emitFnStart() { OS << "\t.fnstart\n"; }
 void ARMTargetAsmStreamer::emitFnEnd() { OS << "\t.fnend\n"; }
 void ARMTargetAsmStreamer::emitCantUnwind() { OS << "\t.cantunwind\n"; }
@@ -397,10 +400,9 @@ private:
   size_t calculateContentSize() const;
 
 public:
-  ARMTargetELFStreamer()
-    : ARMTargetStreamer(), CurrentVendor("aeabi"), FPU(ARM::INVALID_FPU),
-      Arch(ARM::INVALID_ARCH), AttributeSection(0) {
-  }
+  ARMTargetELFStreamer(MCStreamer &S)
+      : ARMTargetStreamer(S), CurrentVendor("aeabi"), FPU(ARM::INVALID_FPU),
+        Arch(ARM::INVALID_ARCH), AttributeSection(0) {}
 };
 
 /// Extend the generic ELFStreamer class so that it can emit mapping symbols at
@@ -419,11 +421,10 @@ class ARMELFStreamer : public MCELFStreamer {
 public:
   friend class ARMTargetELFStreamer;
 
-  ARMELFStreamer(MCContext &Context, MCTargetStreamer *TargetStreamer,
-                 MCAsmBackend &TAB, raw_ostream &OS, MCCodeEmitter *Emitter,
-                 bool IsThumb)
-      : MCELFStreamer(Context, TargetStreamer, TAB, OS, Emitter),
-        IsThumb(IsThumb), MappingSymbolCounter(0), LastEMS(EMS_None) {
+  ARMELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
+                 MCCodeEmitter *Emitter, bool IsThumb)
+      : MCELFStreamer(Context, TAB, OS, Emitter), IsThumb(IsThumb),
+        MappingSymbolCounter(0), LastEMS(EMS_None) {
     Reset();
   }
 
@@ -627,8 +628,7 @@ private:
 } // end anonymous namespace
 
 ARMELFStreamer &ARMTargetELFStreamer::getStreamer() {
-  ARMELFStreamer *S = static_cast<ARMELFStreamer *>(Streamer);
-  return *S;
+  return static_cast<ARMELFStreamer &>(Streamer);
 }
 
 void ARMTargetELFStreamer::emitFnStart() { getStreamer().emitFnStart(); }
@@ -1237,21 +1237,19 @@ MCStreamer *createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 bool useDwarfDirectory,
                                 MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                                 MCAsmBackend *TAB, bool ShowInst) {
-  ARMTargetAsmStreamer *S = new ARMTargetAsmStreamer(OS, *InstPrint,
-                                                     isVerboseAsm);
-
-  return llvm::createAsmStreamer(Ctx, S, OS, isVerboseAsm, useLoc, useCFI,
-                                 useDwarfDirectory, InstPrint, CE, TAB,
-                                 ShowInst);
+  MCStreamer *S =
+      llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useLoc, useCFI,
+                              useDwarfDirectory, InstPrint, CE, TAB, ShowInst);
+  new ARMTargetAsmStreamer(*S, OS, *InstPrint, isVerboseAsm);
+  return S;
 }
 
   MCELFStreamer* createARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                                       raw_ostream &OS, MCCodeEmitter *Emitter,
                                       bool RelaxAll, bool NoExecStack,
                                       bool IsThumb) {
-    ARMTargetELFStreamer *TS = new ARMTargetELFStreamer();
-    ARMELFStreamer *S =
-        new ARMELFStreamer(Context, TS, TAB, OS, Emitter, IsThumb);
+    ARMELFStreamer *S = new ARMELFStreamer(Context, TAB, OS, Emitter, IsThumb);
+    new ARMTargetELFStreamer(*S);
     // FIXME: This should eventually end up somewhere else where more
     // intelligent flag decisions can be made. For now we are just maintaining
     // the status quo for ARM and setting EF_ARM_EABI_VER5 as the default.

@@ -18,6 +18,7 @@ class SparcTargetStreamer : public MCTargetStreamer {
   virtual void anchor();
 
 public:
+  SparcTargetStreamer(MCStreamer &S);
   /// Emit ".register <reg>, #ignore".
   virtual void emitSparcRegisterIgnore(unsigned reg) = 0;
   /// Emit ".register <reg>, #scratch".
@@ -29,7 +30,7 @@ class SparcTargetAsmStreamer : public SparcTargetStreamer {
   formatted_raw_ostream &OS;
 
 public:
-  SparcTargetAsmStreamer(formatted_raw_ostream &OS);
+  SparcTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS);
   virtual void emitSparcRegisterIgnore(unsigned reg);
   virtual void emitSparcRegisterScratch(unsigned reg);
 
@@ -38,6 +39,7 @@ public:
 // This part is for ELF object output
 class SparcTargetELFStreamer : public SparcTargetStreamer {
 public:
+  SparcTargetELFStreamer(MCStreamer &S);
   MCELFStreamer &getStreamer();
   virtual void emitSparcRegisterIgnore(unsigned reg) {}
   virtual void emitSparcRegisterScratch(unsigned reg) {}

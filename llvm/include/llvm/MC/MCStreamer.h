@@ -67,11 +67,11 @@ typedef std::pair<const MCSection *, const MCExpr *> MCSectionSubPair;
 /// be treated differently. Callers should always talk to a FooTargetStreamer.
 class MCTargetStreamer {
 protected:
-  MCStreamer *Streamer;
+  MCStreamer &Streamer;
 
 public:
+  MCTargetStreamer(MCStreamer &S);
   virtual ~MCTargetStreamer();
-  void setStreamer(MCStreamer *S) { Streamer = S; }
 
   // Allow a target to add behavior to the EmitLabel of MCStreamer.
   virtual void emitLabel(MCSymbol *Symbol);
@@ -82,6 +82,8 @@ public:
 class ARMTargetStreamer : public MCTargetStreamer {
   virtual void anchor();
 public:
+  ARMTargetStreamer(MCStreamer &S);
+
   virtual void emitFnStart() = 0;
   virtual void emitFnEnd() = 0;
   virtual void emitCantUnwind() = 0;
@@ -147,7 +149,7 @@ class MCStreamer {
   SmallVector<std::pair<MCSectionSubPair, MCSectionSubPair>, 4> SectionStack;
 
 protected:
-  MCStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer);
+  MCStreamer(MCContext &Ctx);
 
   const MCExpr *BuildSymbolDiff(MCContext &Context, const MCSymbol *A,
                                 const MCSymbol *B);
@@ -169,6 +171,10 @@ protected:
 
 public:
   virtual ~MCStreamer();
+
+  void setTargetStreamer(MCTargetStreamer *TS) {
+    TargetStreamer.reset(TS);
+  }
 
   /// State management
   ///
@@ -708,9 +714,9 @@ MCStreamer *createNullStreamer(MCContext &Ctx);
 ///
 /// \param ShowInst - Whether to show the MCInst representation inline with
 /// the assembly.
-MCStreamer *createAsmStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer,
-                              formatted_raw_ostream &OS, bool isVerboseAsm,
-                              bool useLoc, bool useCFI, bool useDwarfDirectory,
+MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
+                              bool isVerboseAsm, bool useLoc, bool useCFI,
+                              bool useDwarfDirectory,
                               MCInstPrinter *InstPrint = 0,
                               MCCodeEmitter *CE = 0, MCAsmBackend *TAB = 0,
                               bool ShowInst = false);
@@ -733,9 +739,8 @@ MCStreamer *createWinCOFFStreamer(MCContext &Ctx, MCAsmBackend &TAB,
 
 /// createELFStreamer - Create a machine code streamer which will generate
 /// ELF format object files.
-MCStreamer *createELFStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer,
-                              MCAsmBackend &TAB, raw_ostream &OS,
-                              MCCodeEmitter *CE, bool RelaxAll,
+MCStreamer *createELFStreamer(MCContext &Ctx, MCAsmBackend &TAB,
+                              raw_ostream &OS, MCCodeEmitter *CE, bool RelaxAll,
                               bool NoExecStack);
 
 /// createPureStreamer - Create a machine code streamer which will generate
