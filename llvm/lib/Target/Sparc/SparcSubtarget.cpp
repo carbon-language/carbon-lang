@@ -41,6 +41,10 @@ SparcSubtarget::SparcSubtarget(const std::string &TT, const std::string &CPU,
 
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);
+
+  // Popc is a v9-only instruction.
+  if (!IsV9)
+    UsePopc = false;
 }
 
 

@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=sparcv9 -disable-sparc-delay-filler -disable-sparc-leaf-proc | FileCheck %s
-; RUN: llc < %s -march=sparcv9  | FileCheck %s -check-prefix=OPT
+; RUN: llc < %s -march=sparcv9 -mattr=+popc -disable-sparc-delay-filler -disable-sparc-leaf-proc | FileCheck %s
+; RUN: llc < %s -march=sparcv9 -mattr=+popc | FileCheck %s -check-prefix=OPT
 
 ; CHECK-LABEL: ret2:
 ; CHECK: or %g0, %i1, %i0

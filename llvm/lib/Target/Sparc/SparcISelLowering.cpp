@@ -1463,8 +1463,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BR_CC, MVT::i64, Custom);
     setOperationAction(ISD::SELECT_CC, MVT::i64, Custom);
 
-    if (Subtarget->usePopc())
-      setOperationAction(ISD::CTPOP, MVT::i64, Legal);
+    setOperationAction(ISD::CTPOP, MVT::i64,
+                       Subtarget->usePopc() ? Legal : Expand);
     setOperationAction(ISD::CTTZ , MVT::i64, Expand);
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
     setOperationAction(ISD::CTLZ , MVT::i64, Expand);
@@ -1520,7 +1520,6 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
   setOperationAction(ISD::FREM , MVT::f32, Expand);
   setOperationAction(ISD::FMA  , MVT::f32, Expand);
-  setOperationAction(ISD::CTPOP, MVT::i32, Expand);
   setOperationAction(ISD::CTTZ , MVT::i32, Expand);
   setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
   setOperationAction(ISD::CTLZ , MVT::i32, Expand);
@@ -1570,8 +1569,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   setStackPointerRegisterToSaveRestore(SP::O6);
 
-  if (Subtarget->isV9() && Subtarget->usePopc())
-    setOperationAction(ISD::CTPOP, MVT::i32, Legal);
+  setOperationAction(ISD::CTPOP, MVT::i32,
+                     Subtarget->usePopc() ? Legal : Expand);
 
   if (Subtarget->isV9() && Subtarget->hasHardQuad()) {
     setOperationAction(ISD::LOAD, MVT::f128, Legal);
