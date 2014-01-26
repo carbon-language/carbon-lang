@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "File.h"
+#include "ELFFile.h"
 #include "MipsLinkingContext.h"
 #include "MipsTargetHandler.h"
 

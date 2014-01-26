@@ -18,7 +18,7 @@
 #include "Atoms.h"
 #include "CreateELF.h"
 #include "DynamicFile.h"
-#include "File.h"
+#include "ELFFile.h"
 
 #include "lld/Core/Reference.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"

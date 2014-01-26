@@ -10,7 +10,7 @@
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "ArrayOrderPass.h"
-#include "File.h"
+#include "ELFFile.h"
 #include "TargetHandler.h"
 #include "Targets.h"
 

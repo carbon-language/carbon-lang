@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/File.h ----------------------------------------===//
+//===- lib/ReaderWriter/ELF/ELFFile.h -------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -828,4 +828,4 @@ protected:
 } // end namespace elf
 } // end namespace lld
 
-#endif
+#endif // LLD_READER_WRITER_ELF_FILE_H

@@ -17,7 +17,7 @@
 #include "llvm/ADT/StringSet.h"
 
 #include "DefaultLayout.h"
-#include "File.h"
+#include "ELFFile.h"
 #include "TargetLayout.h"
 
 namespace lld {
