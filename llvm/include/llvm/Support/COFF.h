@@ -488,8 +488,6 @@ namespace COFF {
     uint32_t NumberOfRvaAndSize;
   };
 
-  typedef PE32Header PEHeader;
-
   struct DataDirectory {
     uint32_t RelativeVirtualAddress;
     uint32_t Size;
