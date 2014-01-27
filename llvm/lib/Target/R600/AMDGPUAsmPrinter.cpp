@@ -90,10 +90,11 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     OutStreamer.SwitchSection(CommentSection);
 
     if (STM.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
-      OutStreamer.EmitRawText(
-        Twine("; Kernel info:\n") +
-        "; NumSgprs: " + Twine(KernelInfo.NumSGPR) + "\n" +
-        "; NumVgprs: " + Twine(KernelInfo.NumVGPR) + "\n");
+      OutStreamer.emitRawComment("Kernel info:", false);
+      OutStreamer.emitRawComment("NumSgprs: " + Twine(KernelInfo.NumSGPR),
+                                 false);
+      OutStreamer.emitRawComment("NumVgprs: " + Twine(KernelInfo.NumVGPR),
+                                 false);
     } else {
       R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
       OutStreamer.EmitRawText(
