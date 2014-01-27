@@ -55,6 +55,7 @@ lit.site.cfg: FORCE
 Unit/lit.site.cfg: FORCE
 	@echo "Making Clang 'Unit/lit.site.cfg' file..."
 	@$(MKDIR) $(dir $@)
+	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> unit.tmp
 	@$(ECHOPATH) s=@LLVM_LIBS_DIR@=$(LibDir)=g >> unit.tmp
 	@$(ECHOPATH) s=@CLANG_SOURCE_DIR@=$(PROJ_SRC_DIR)/..=g >> unit.tmp
 	@$(ECHOPATH) s=@CLANG_BINARY_DIR@=$(PROJ_OBJ_DIR)/..=g >> unit.tmp
