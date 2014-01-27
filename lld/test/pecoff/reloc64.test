@@ -1,0 +1,7 @@
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /machine:x64 \
+# RUN:   /entry:fn1 -- %p/Inputs/reloc64-1.obj %p/Inputs/reloc64-2.obj
+# RUN: llvm-objdump -d %t.exe | FileCheck %s
+
+CHECK:      Disassembly of section .text:
+CHECK-NEXT: .text:
+CHECK-NEXT:   2000:  e8 15 00 00 00   callq 21

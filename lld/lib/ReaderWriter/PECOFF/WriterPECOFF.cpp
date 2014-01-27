@@ -22,6 +22,7 @@
 #define DEBUG_TYPE "WriterPECOFF"
 
 #include <algorithm>
+#include <cstdlib>
 #include <map>
 #include <time.h>
 #include <vector>
@@ -209,10 +210,16 @@ public:
 
   void appendAtom(const DefinedAtom *atom);
   void buildAtomRvaMap(std::map<const Atom *, uint64_t> &atomRva) const;
-  void applyRelocations(uint8_t *buffer,
-                        std::map<const Atom *, uint64_t> &atomRva,
-                        std::vector<uint64_t> &sectionRva,
-                        uint64_t imageBaseAddress);
+
+  void applyRelocations32(uint8_t *buffer,
+                          std::map<const Atom *, uint64_t> &atomRva,
+                          std::vector<uint64_t> &sectionRva,
+                          uint64_t imageBaseAddress);
+  void applyRelocations64(uint8_t *buffer,
+                          std::map<const Atom *, uint64_t> &atomRva,
+                          std::vector<uint64_t> &sectionRva,
+                          uint64_t imageBaseAddress);
+
   void printAtomAddresses(uint64_t baseAddr) const;
   void addBaseRelocations(std::vector<uint64_t> &relocSites) const;
 
@@ -460,10 +467,10 @@ AtomChunk::buildAtomRvaMap(std::map<const Atom *, uint64_t> &atomRva) const {
     atomRva[layout->_atom] = layout->_virtualAddr;
 }
 
-void AtomChunk::applyRelocations(uint8_t *buffer,
-                                 std::map<const Atom *, uint64_t> &atomRva,
-                                 std::vector<uint64_t> &sectionRva,
-                                 uint64_t imageBaseAddress) {
+void AtomChunk::applyRelocations32(uint8_t *buffer,
+                                   std::map<const Atom *, uint64_t> &atomRva,
+                                   std::vector<uint64_t> &sectionRva,
+                                   uint64_t imageBaseAddress) {
   buffer += _fileOffset;
   for (const auto *layout : _atomLayouts) {
     const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
@@ -521,6 +528,49 @@ void AtomChunk::applyRelocations(uint8_t *buffer,
         }
         break;
       default:
+        llvm_unreachable("Unsupported relocation kind");
+      }
+    }
+  }
+}
+
+void AtomChunk::applyRelocations64(uint8_t *buffer,
+                                   std::map<const Atom *, uint64_t> &atomRva,
+                                   std::vector<uint64_t> &sectionRva,
+                                   uint64_t imageBase) {
+  buffer += _fileOffset;
+  for (const auto *layout : _atomLayouts) {
+    const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
+    for (const Reference *ref : *atom) {
+      if (ref->kindNamespace() != Reference::KindNamespace::COFF)
+        continue;
+
+      auto relocSite32 = reinterpret_cast<ulittle32_t *>(
+          buffer + layout->_fileOffset + ref->offsetInAtom());
+      uint64_t targetAddr = atomRva[ref->target()];
+
+      switch (ref->kindValue()) {
+      case llvm::COFF::IMAGE_REL_AMD64_ADDR32NB:
+        *relocSite32 = targetAddr - imageBase;
+        break;
+      case llvm::COFF::IMAGE_REL_AMD64_REL32:
+        *relocSite32 = targetAddr - atomRva[atom] + ref->offsetInAtom() + 4;
+        break;
+
+#define REL32(x)                                                             \
+      case llvm::COFF::IMAGE_REL_AMD64_REL32_ ## x: {                        \
+        uint32_t off = targetAddr - atomRva[atom] + ref->offsetInAtom() + 4; \
+        *relocSite32 = off + x;                                              \
+      }
+      REL32(1);
+      REL32(2);
+      REL32(3);
+      REL32(4);
+      REL32(5);
+#undef CASE
+
+      default:
+        llvm::errs() << "Kind: " << (int)ref->kindValue() << "\n";
         llvm_unreachable("Unsupported relocation kind");
       }
     }
@@ -965,10 +1015,16 @@ void PECOFFWriter::applyAllRelocations(uint8_t *bufferStart) {
       chunk->buildAtomRvaMap(atomRva);
 
   // Pass 2
-  for (auto &cp : _chunks)
-    if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
-      chunk->applyRelocations(bufferStart, atomRva, sectionRva,
-                              _ctx.getBaseAddress());
+  uint64_t base = _ctx.getBaseAddress();
+  for (auto &cp : _chunks) {
+    if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp)) {
+      if (_ctx.is64Bit()) {
+        chunk->applyRelocations64(bufferStart, atomRva, sectionRva, base);
+      } else {
+        chunk->applyRelocations32(bufferStart, atomRva, sectionRva, base);
+      }
+    }
+  }
 }
 
 /// Print atom VAs. Used only for debugging.
