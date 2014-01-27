@@ -26,6 +26,54 @@
 
 using namespace llvm;
 
+class FlattenedSpelling {
+  std::string V, N, NS;
+  bool K;
+
+public:
+  FlattenedSpelling(const std::string &Variety, const std::string &Name,
+                    const std::string &Namespace, bool KnownToGCC) :
+    V(Variety), N(Name), NS(Namespace), K(KnownToGCC) {}
+  explicit FlattenedSpelling(const Record &Spelling) :
+    V(Spelling.getValueAsString("Variety")),
+    N(Spelling.getValueAsString("Name")) {
+
+    assert(V != "GCC" && "Given a GCC spelling, which means this hasn't been"
+           "flattened!");
+    if (V == "CXX11")
+      NS = Spelling.getValueAsString("Namespace");
+    bool Unset;
+    K = Spelling.getValueAsBitOrUnset("KnownToGCC", Unset);
+  }
+
+  const std::string &variety() const { return V; }
+  const std::string &name() const { return N; }
+  const std::string &nameSpace() const { return NS; }
+  bool knownToGCC() const { return K; }
+};
+
+std::vector<FlattenedSpelling> GetFlattenedSpellings(const Record &Attr) {
+  std::vector<Record *> Spellings = Attr.getValueAsListOfDefs("Spellings");
+  std::vector<FlattenedSpelling> Ret;
+
+  for (std::vector<Record *>::const_iterator I = Spellings.begin(),
+       E = Spellings.end(); I != E; ++I) {
+    const Record &Spelling = **I;
+
+    if (Spelling.getValueAsString("Variety") == "GCC") {
+      // Gin up two new spelling objects to add into the list.
+      Ret.push_back(FlattenedSpelling("GNU", Spelling.getValueAsString("Name"),
+                                      "", true));
+      Ret.push_back(FlattenedSpelling("CXX11",
+                                      Spelling.getValueAsString("Name"),
+                                      "gnu", true));
+    } else
+      Ret.push_back(FlattenedSpelling(Spelling));
+  }
+
+  return Ret;
+}
+
 static std::string ReadPCHRecord(StringRef type) {
   return StringSwitch<std::string>(type)
     .EndsWith("Decl *", "GetLocalDeclAs<" 
@@ -980,7 +1028,7 @@ static void writeAvailabilityValue(raw_ostream &OS) {
 }
 
 static void writeGetSpellingFunction(Record &R, raw_ostream &OS) {
-  std::vector<Record *> Spellings = R.getValueAsListOfDefs("Spellings");
+  std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(R);
 
   OS << "const char *" << R.getName() << "Attr::getSpelling() const {\n";
   if (Spellings.empty()) {
@@ -995,7 +1043,7 @@ static void writeGetSpellingFunction(Record &R, raw_ostream &OS) {
 
   for (unsigned I = 0; I < Spellings.size(); ++I)
     OS << "  case " << I << ":\n"
-          "    return \"" << Spellings[I]->getValueAsString("Name") << "\";\n";
+          "    return \"" << Spellings[I].name() << "\";\n";
   // End of the switch statement.
   OS << "  }\n";
   // End of the getSpelling function.
@@ -1004,7 +1052,7 @@ static void writeGetSpellingFunction(Record &R, raw_ostream &OS) {
 
 static void writePrettyPrintFunction(Record &R, std::vector<Argument*> &Args,
                                      raw_ostream &OS) {
-  std::vector<Record*> Spellings = R.getValueAsListOfDefs("Spellings");
+  std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(R);
 
   OS << "void " << R.getName() << "Attr::printPretty("
     << "raw_ostream &OS, const PrintingPolicy &Policy) const {\n";
@@ -1026,8 +1074,8 @@ static void writePrettyPrintFunction(Record &R, std::vector<Argument*> &Args,
     // The actual spelling of the name and namespace (if applicable)
     // of an attribute without considering prefix and suffix.
     llvm::SmallString<64> Spelling;
-    std::string Name = Spellings[I]->getValueAsString("Name");
-    std::string Variety = Spellings[I]->getValueAsString("Variety");
+    std::string Name = Spellings[I].name();
+    std::string Variety = Spellings[I].variety();
 
     if (Variety == "GNU") {
       Prefix = " __attribute__((";
@@ -1035,7 +1083,7 @@ static void writePrettyPrintFunction(Record &R, std::vector<Argument*> &Args,
     } else if (Variety == "CXX11") {
       Prefix = " [[";
       Suffix = "]]";
-      std::string Namespace = Spellings[I]->getValueAsString("Namespace");
+      std::string Namespace = Spellings[I].nameSpace();
       if (Namespace != "") {
         Spelling += Namespace;
         Spelling += "::";
@@ -1082,19 +1130,18 @@ static void writePrettyPrintFunction(Record &R, std::vector<Argument*> &Args,
 }
 
 /// \brief Return the index of a spelling in a spelling list.
-static unsigned getSpellingListIndex(const std::vector<Record*> &SpellingList,
-                                     const Record &Spelling) {
+static unsigned
+getSpellingListIndex(const std::vector<FlattenedSpelling> &SpellingList,
+                     const FlattenedSpelling &Spelling) {
   assert(SpellingList.size() && "Spelling list is empty!");
 
   for (unsigned Index = 0; Index < SpellingList.size(); ++Index) {
-    Record *S = SpellingList[Index];
-    if (S->getValueAsString("Variety") != Spelling.getValueAsString("Variety"))
+    const FlattenedSpelling &S = SpellingList[Index];
+    if (S.variety() != Spelling.variety())
       continue;
-    if (S->getValueAsString("Variety") == "CXX11" &&
-        S->getValueAsString("Namespace") !=
-        Spelling.getValueAsString("Namespace"))
+    if (S.nameSpace() != Spelling.nameSpace())
       continue;
-    if (S->getValueAsString("Name") != Spelling.getValueAsString("Name"))
+    if (S.name() != Spelling.name())
       continue;
 
     return Index;
@@ -1109,15 +1156,15 @@ static void writeAttrAccessorDefinition(Record &R, raw_ostream &OS) {
        E = Accessors.end(); I != E; ++I) {
     Record *Accessor = *I;
     std::string Name = Accessor->getValueAsString("Name");
-    std::vector<Record*> Spellings = Accessor->getValueAsListOfDefs(
-      "Spellings");
-    std::vector<Record*> SpellingList = R.getValueAsListOfDefs("Spellings");
+    std::vector<FlattenedSpelling> Spellings = 
+      GetFlattenedSpellings(*Accessor);
+    std::vector<FlattenedSpelling> SpellingList = GetFlattenedSpellings(R);
     assert(SpellingList.size() &&
            "Attribute with empty spelling list can't have accessors!");
 
     OS << "  bool " << Name << "() const { return SpellingListIndex == ";
     for (unsigned Index = 0; Index < Spellings.size(); ++Index) {
-      OS << getSpellingListIndex(SpellingList, *Spellings[Index]);
+      OS << getSpellingListIndex(SpellingList, Spellings[Index]);
       if (Index != Spellings.size() -1)
         OS << " ||\n    SpellingListIndex == ";
       else
@@ -1126,14 +1173,14 @@ static void writeAttrAccessorDefinition(Record &R, raw_ostream &OS) {
   }
 }
 
-static bool SpellingNamesAreCommon(const std::vector<Record *>& Spellings) {
+static bool
+SpellingNamesAreCommon(const std::vector<FlattenedSpelling>& Spellings) {
   assert(!Spellings.empty() && "An empty list of spellings was provided");
   std::string FirstName = NormalizeNameForSpellingComparison(
-    Spellings.front()->getValueAsString("Name"));
-  for (std::vector<Record *>::const_iterator I = llvm::next(Spellings.begin()),
-       E = Spellings.end(); I != E; ++I) {
-    std::string Name = NormalizeNameForSpellingComparison(
-      (*I)->getValueAsString("Name"));
+    Spellings.front().name());
+  for (std::vector<FlattenedSpelling>::const_iterator
+       I = llvm::next(Spellings.begin()), E = Spellings.end(); I != E; ++I) {
+    std::string Name = NormalizeNameForSpellingComparison(I->name());
     if (Name != FirstName)
       return false;
   }
@@ -1142,7 +1189,7 @@ static bool SpellingNamesAreCommon(const std::vector<Record *>& Spellings) {
 
 typedef std::map<unsigned, std::string> SemanticSpellingMap;
 static std::string
-CreateSemanticSpellings(const std::vector<Record *> &Spellings,
+CreateSemanticSpellings(const std::vector<FlattenedSpelling> &Spellings,
                         SemanticSpellingMap &Map) {
   // The enumerants are automatically generated based on the variety,
   // namespace (if present) and name for each attribute spelling. However,
@@ -1151,16 +1198,13 @@ CreateSemanticSpellings(const std::vector<Record *> &Spellings,
   std::string Ret("  enum Spelling {\n");
   std::set<std::string> Uniques;
   unsigned Idx = 0;
-  for (std::vector<Record *>::const_iterator I = Spellings.begin(),
+  for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
         E = Spellings.end(); I != E; ++I, ++Idx) {
-    const Record &S = **I;
-    std::string Variety = S.getValueAsString("Variety");
-    std::string Spelling = S.getValueAsString("Name");
-    std::string Namespace = "";
+    const FlattenedSpelling &S = *I;
+    std::string Variety = S.variety();
+    std::string Spelling = S.name();
+    std::string Namespace = S.nameSpace();
     std::string EnumName = "";
-
-    if (Variety == "CXX11")
-      Namespace = S.getValueAsString("Namespace");
 
     EnumName += (Variety + "_");
     if (!Namespace.empty())
@@ -1250,7 +1294,7 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
 
     OS << "\npublic:\n";
 
-    std::vector<Record *> Spellings = R.getValueAsListOfDefs("Spellings");
+    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(R);
 
     // If there are zero or one spellings, all spelling-related functionality
     // can be elided. If all of the spellings share the same name, the spelling
@@ -1425,13 +1469,12 @@ void EmitClangAttrTypeArgList(RecordKeeper &Records, raw_ostream &OS) {
       continue;
 
     // All these spellings take a single type argument.
-    std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
+    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
     std::set<std::string> Emitted;
-    for (std::vector<Record*>::const_iterator I = Spellings.begin(),
+    for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
          E = Spellings.end(); I != E; ++I) {
-      if (Emitted.insert((*I)->getValueAsString("Name")).second)
-        OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", "
-           << "true" << ")\n";
+      if (Emitted.insert(I->name()).second)
+        OS << ".Case(\"" << I->name() << "\", " << "true" << ")\n";
     }
   }
 }
@@ -1451,13 +1494,12 @@ void EmitClangAttrArgContextList(RecordKeeper &Records, raw_ostream &OS) {
       continue;
 
     // All these spellings take are parsed unevaluated.
-    std::vector<Record *> Spellings = Attr.getValueAsListOfDefs("Spellings");
+    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
     std::set<std::string> Emitted;
-    for (std::vector<Record*>::const_iterator I = Spellings.begin(),
+    for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
          E = Spellings.end(); I != E; ++I) {
-      if (Emitted.insert((*I)->getValueAsString("Name")).second)
-        OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", "
-        << "true" << ")\n";
+      if (Emitted.insert(I->name()).second)
+        OS << ".Case(\"" << I->name() << "\", " << "true" << ")\n";
     }
 
   }
@@ -1480,13 +1522,12 @@ void EmitClangAttrIdentifierArgList(RecordKeeper &Records, raw_ostream &OS) {
       continue;
 
     // All these spellings take an identifier argument.
-    std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
+    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
     std::set<std::string> Emitted;
-    for (std::vector<Record*>::const_iterator I = Spellings.begin(),
+    for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
          E = Spellings.end(); I != E; ++I) {
-      if (Emitted.insert((*I)->getValueAsString("Name")).second)
-        OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", "
-           << "true" << ")\n";
+      if (Emitted.insert(I->name()).second)
+        OS << ".Case(\"" << I->name() << "\", " << "true" << ")\n";
     }
   }
 }
@@ -1728,12 +1769,10 @@ void EmitClangAttrSpellingList(RecordKeeper &Records, raw_ostream &OS) {
     } else
       Test = "true";
 
-    std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
-    for (std::vector<Record*>::const_iterator I = Spellings.begin(),
-         E = Spellings.end(); I != E; ++I) {
-      OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", " << Test;
-      OS << ")\n";
-    }
+    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
+    for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
+         E = Spellings.end(); I != E; ++I)
+      OS << ".Case(\"" << I->name() << "\", " << Test << ")\n";
   }
 
 }
@@ -1752,25 +1791,19 @@ void EmitClangAttrSpellingListIndex(RecordKeeper &Records, raw_ostream &OS) {
   for (ParsedAttrMap::const_iterator I = Attrs.begin(), E = Attrs.end();
        I != E; ++I) {
     Record &R = *I->second;
-    std::vector<Record*> Spellings = R.getValueAsListOfDefs("Spellings");
+    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(R);
     OS << "  case AT_" << I->first << ": {\n";
     for (unsigned I = 0; I < Spellings.size(); ++ I) {
-      SmallString<16> Namespace;
-      if (Spellings[I]->getValueAsString("Variety") == "CXX11")
-        Namespace = Spellings[I]->getValueAsString("Namespace");
-      else
-        Namespace = "";
-
       OS << "    if (Name == \""
-        << Spellings[I]->getValueAsString("Name") << "\" && "
+        << Spellings[I].name() << "\" && "
         << "SyntaxUsed == "
-        << StringSwitch<unsigned>(Spellings[I]->getValueAsString("Variety"))
+        << StringSwitch<unsigned>(Spellings[I].variety())
           .Case("GNU", 0)
           .Case("CXX11", 1)
           .Case("Declspec", 2)
           .Case("Keyword", 3)
           .Default(0)
-        << " && Scope == \"" << Namespace << "\")\n"
+        << " && Scope == \"" << Spellings[I].nameSpace() << "\")\n"
         << "        return " << I << ";\n";
     }
 
@@ -1875,16 +1908,14 @@ void EmitClangAttrLateParsedList(RecordKeeper &Records, raw_ostream &OS) {
     bool LateParsed = Attr.getValueAsBit("LateParsed");
 
     if (LateParsed) {
-      std::vector<Record*> Spellings =
-        Attr.getValueAsListOfDefs("Spellings");
+      std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
 
       // FIXME: Handle non-GNU attributes
-      for (std::vector<Record*>::const_iterator I = Spellings.begin(),
-           E = Spellings.end(); I != E; ++I) {
-        if ((*I)->getValueAsString("Variety") != "GNU")
+      for (std::vector<FlattenedSpelling>::const_iterator
+           I = Spellings.begin(), E = Spellings.end(); I != E; ++I) {
+        if (I->variety() != "GNU")
           continue;
-        OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", "
-           << LateParsed << ")\n";
+        OS << ".Case(\"" << I->name() << "\", " << LateParsed << ")\n";
       }
     }
   }
@@ -2044,7 +2075,6 @@ static std::string CalculateDiagnostic(const Record &S) {
 
     uint32_t V = StringSwitch<uint32_t>(Name)
                    .Case("Function", Func)
-                   .Case("FunctionDefinition", Func)
                    .Case("Var", Var)
                    .Case("ObjCMethod", ObjCMethod)
                    .Case("ParmVar", Param)
@@ -2120,8 +2150,6 @@ static std::string GetSubjectWithSuffix(const Record *R) {
   std::string B = R->getName();
   if (B == "DeclBase")
     return "Decl";
-  else if (B == "FunctionDefinition")
-    return "FunctionDecl";
   return B + "Decl";
 }
 static std::string GenerateCustomAppertainsTo(const Record &Subject,
@@ -2365,7 +2393,7 @@ static std::string GenerateSpellingIndexToSemanticSpelling(const Record &Attr,
   if (!Attr.getValueAsBit("ASTNode"))
     return "defaultSpellingIndexToSemanticSpelling";
 
-  std::vector<Record *> Spellings = Attr.getValueAsListOfDefs("Spellings");
+  std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
 
   // If there are zero or one spellings, or all of the spellings share the same
   // name, we can also bail out early.
@@ -2386,19 +2414,13 @@ static std::string GenerateSpellingIndexToSemanticSpelling(const Record &Attr,
   return Name;
 }
 
-static bool CanAppearOnFuncDef(const Record &Attr) {
-  // Look at the subjects this function appertains to; if a FunctionDefinition
-  // appears in the list, then this attribute can appear on a function
-  // definition.
-  if (Attr.isValueUnset("Subjects"))
-    return false;
-
-  std::vector<Record *> Subjects = Attr.getValueAsDef("Subjects")->
-                                        getValueAsListOfDefs("Subjects");
-  for (std::vector<Record *>::const_iterator I = Subjects.begin(),
-       E = Subjects.end(); I != E; ++I) {
-    const Record &Subject = **I;
-    if (Subject.getName() == "FunctionDefinition")
+static bool IsKnownToGCC(const Record &Attr) {
+  // Look at the spellings for this subject; if there are any spellings which
+  // claim to be known to GCC, the attribute is known to GCC.
+  std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
+  for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
+       E = Spellings.end(); I != E; ++I) {
+    if (I->knownToGCC())
       return true;
   }
   return false;
@@ -2440,7 +2462,7 @@ void EmitClangAttrParsedAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     SS << ", " << I->second->getValueAsBit("HasCustomParsing");
     SS << ", " << I->second->isSubClassOf("TargetSpecificAttr");
     SS << ", " << I->second->isSubClassOf("TypeAttr");
-    SS << ", " << CanAppearOnFuncDef(*I->second);
+    SS << ", " << IsKnownToGCC(*I->second);
     SS << ", " << GenerateAppertainsTo(*I->second, OS);
     SS << ", " << GenerateLangOptRequirements(*I->second, OS);
     SS << ", " << GenerateTargetRequirements(*I->second, Dupes, OS);
@@ -2492,15 +2514,15 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
       } else
         AttrName = NormalizeAttrName(StringRef(Attr.getName())).str();
 
-      std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
-      for (std::vector<Record*>::const_iterator I = Spellings.begin(),
-           E = Spellings.end(); I != E; ++I) {
-        std::string RawSpelling = (*I)->getValueAsString("Name");
+      std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
+      for (std::vector<FlattenedSpelling>::const_iterator
+           I = Spellings.begin(), E = Spellings.end(); I != E; ++I) {
+        std::string RawSpelling = I->name();
         std::vector<StringMatcher::StringPair> *Matches = 0;
-        std::string Spelling, Variety = (*I)->getValueAsString("Variety");
+        std::string Spelling, Variety = I->variety();
         if (Variety == "CXX11") {
           Matches = &CXX11;
-          Spelling += (*I)->getValueAsString("Namespace");
+          Spelling += I->nameSpace();
           Spelling += "::";
         } else if (Variety == "GNU")
           Matches = &GNU;
@@ -2557,7 +2579,7 @@ void EmitClangAttrDump(RecordKeeper &Records, raw_ostream &OS) {
     // If the attribute has a semantically-meaningful name (which is determined
     // by whether there is a Spelling enumeration for it), then write out the
     // spelling used for the attribute.
-    std::vector<Record *> Spellings = R.getValueAsListOfDefs("Spellings");
+    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(R);
     if (Spellings.size() > 1 && !SpellingNamesAreCommon(Spellings))
       OS << "    OS << \" \" << A->getSpelling();\n";
 

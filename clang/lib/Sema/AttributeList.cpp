@@ -150,7 +150,7 @@ struct ParsedAttrInfo {
   unsigned HasCustomParsing : 1;
   unsigned IsTargetSpecific : 1;
   unsigned IsType : 1;
-  unsigned CanAppearOnFuncDef : 1;
+  unsigned IsKnownToGCC : 1;
 
   bool (*DiagAppertainsToDecl)(Sema &S, const AttributeList &Attr,
                                const Decl *);
@@ -199,8 +199,8 @@ bool AttributeList::existsInTarget(llvm::Triple T) const {
   return getInfo(*this).ExistsInTarget(T);
 }
 
-bool AttributeList::canAppearOnFunctionDefinition() const {
-  return getInfo(*this).CanAppearOnFuncDef;
+bool AttributeList::isKnownToGCC() const {
+  return getInfo(*this).IsKnownToGCC;
 }
 
 unsigned AttributeList::getSemanticSpelling() const {

@@ -494,7 +494,7 @@ public:
   bool diagnoseAppertainsTo(class Sema &S, const Decl *D) const;
   bool diagnoseLangOpts(class Sema &S) const;
   bool existsInTarget(llvm::Triple T) const;
-  bool canAppearOnFunctionDefinition() const;
+  bool isKnownToGCC() const;
 
   /// \brief If the parsed attribute has a semantic equivalent, and it would
   /// have a semantic Spelling enumeration (due to having semantically-distinct
