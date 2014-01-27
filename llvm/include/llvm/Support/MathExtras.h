@@ -552,6 +552,13 @@ inline uint64_t NextPowerOf2(uint64_t A) {
   return A + 1;
 }
 
+/// Returns the power of two which is less than or equal to the given value.
+/// Essentially, it is a floor operation across the domain of powers of two.
+inline uint64_t PowerOf2Floor(uint64_t A) {
+  if (!A) return 0;
+  return 1ull << (63 - countLeadingZeros(A, ZB_Undefined));
+}
+
 /// Returns the next integer (mod 2**64) that is greater than or equal to
 /// \p Value and is a multiple of \p Align. \p Align must be non-zero.
 ///

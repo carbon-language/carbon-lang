@@ -5004,8 +5004,11 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   // registers. These registers are used by all of the unrolled instances.
   // Next, divide the remaining registers by the number of registers that is
   // required by the loop, in order to estimate how many parallel instances
-  // fit without causing spills.
-  unsigned UF = (TargetNumRegisters - R.LoopInvariantRegs) / R.MaxLocalUsers;
+  // fit without causing spills. All of this is rounded down if necessary to be
+  // a power of two. We want power of two unroll factors to simplify any
+  // addressing operations or alignment considerations.
+  unsigned UF = PowerOf2Floor((TargetNumRegisters - R.LoopInvariantRegs) /
+                              R.MaxLocalUsers);
 
   // Clamp the unroll factor ranges to reasonable factors.
   unsigned MaxUnrollSize = TTI.getMaximumUnrollFactor();
@@ -5045,7 +5048,7 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   DEBUG(dbgs() << "LV: Loop cost is " << LoopCost << '\n');
   if (LoopCost < SmallLoopCost) {
     DEBUG(dbgs() << "LV: Unrolling to reduce branch cost.\n");
-    unsigned NewUF = SmallLoopCost / (LoopCost + 1);
+    unsigned NewUF = PowerOf2Floor(SmallLoopCost / LoopCost);
     return std::min(NewUF, UF);
   }
 
