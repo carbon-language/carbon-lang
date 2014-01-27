@@ -43,6 +43,7 @@ namespace elf {
 /// \brief Read a binary, find out based on the symbol table contents what kind
 /// of symbol it is and create corresponding atoms for it
 template <class ELFT> class ELFFile : public File {
+
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
@@ -53,8 +54,7 @@ template <class ELFT> class ELFFile : public File {
   // after reading the section that contains Merge String attributes
   struct MergeSectionKey {
     MergeSectionKey(const Elf_Shdr *shdr, int32_t offset)
-        : _shdr(shdr), _offset(offset) {
-    }
+        : _shdr(shdr), _offset(offset) {}
     // Data members
     const Elf_Shdr *_shdr;
     int32_t _offset;
@@ -62,7 +62,7 @@ template <class ELFT> class ELFFile : public File {
   struct MergeSectionEq {
     int64_t operator()(const MergeSectionKey &k) const {
       return llvm::hash_combine((int64_t)(k._shdr->sh_name),
-                                (int64_t) k._offset);
+                                (int64_t)k._offset);
     }
     bool operator()(const MergeSectionKey &lhs,
                     const MergeSectionKey &rhs) const {
@@ -75,8 +75,7 @@ template <class ELFT> class ELFFile : public File {
     MergeString(int32_t offset, StringRef str, const Elf_Shdr *shdr,
                 StringRef sectionName)
         : _offset(offset), _string(str), _shdr(shdr),
-          _sectionName(sectionName) {
-    }
+          _sectionName(sectionName) {}
     // the offset of this atom
     int32_t _offset;
     // The content
@@ -96,8 +95,7 @@ template <class ELFT> class ELFFile : public File {
     const Elf_Shdr *_shdr;
     uint64_t _offset;
     FindByOffset(const Elf_Shdr *shdr, uint64_t offset)
-        : _shdr(shdr), _offset(offset) {
-    }
+        : _shdr(shdr), _offset(offset) {}
     bool operator()(const ELFMergeAtom<ELFT> *a) {
       uint64_t off = a->offset();
       return (_shdr->sh_name == a->section()) &&
@@ -118,12 +116,13 @@ template <class ELFT> class ELFFile : public File {
   typedef typename MergedSectionMapT::iterator MergedSectionMapIterT;
 
 public:
-  ELFFile(StringRef name)
-      : File(name, kindObject), _ordinal(0), _doStringsMerge(false),
+  ELFFile(StringRef name, bool atomizeStrings = false)
+      : File(name, kindObject), _ordinal(0), _doStringsMerge(atomizeStrings),
         _targetHandler(nullptr) {}
 
-  ELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
-          TargetHandlerBase *handler, error_code &ec);
+  static ErrorOr<std::unique_ptr<ELFFile>>
+  create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
+         TargetHandlerBase *handler);
 
   virtual Reference::KindArch kindArch();
 
@@ -210,6 +209,10 @@ protected:
 
   virtual void createEdge(ELFDefinedAtom<ELFT> *from, ELFDefinedAtom<ELFT> *to,
                           uint32_t edgeKind);
+
+  virtual void setTargetHandler(TargetHandlerBase *handler) {
+    _targetHandler = reinterpret_cast<TargetHandler<ELFT> *>(handler);
+  }
 
   llvm::BumpPtrAllocator _readerStorage;
   std::unique_ptr<llvm::object::ELFFile<ELFT> > _objFile;
@@ -305,42 +308,40 @@ protected:
 };
 
 template <class ELFT>
-ELFFile<ELFT>::ELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
-                       TargetHandlerBase *handler, error_code &ec)
-    : File(mb->getBufferIdentifier(), kindObject), _ordinal(0),
-      _doStringsMerge(atomizeStrings),
-      _targetHandler(reinterpret_cast<TargetHandler<ELFT> *>(handler)) {
-  _objFile.reset(new llvm::object::ELFFile<ELFT>(mb.release(), ec));
+ErrorOr<std::unique_ptr<ELFFile<ELFT>>>
+ELFFile<ELFT>::create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
+                      TargetHandlerBase *handler) {
+  error_code ec;
+  std::unique_ptr<ELFFile<ELFT>> file(
+      new ELFFile<ELFT>(mb->getBufferIdentifier(), atomizeStrings));
+
+  file->setTargetHandler(handler);
+
+  file->_objFile.reset(new llvm::object::ELFFile<ELFT>(mb.release(), ec));
 
   if (ec)
-    return;
+    return ec;
 
   // Read input sections from the input file that need to be converted to
   // atoms
-  if (auto err = createAtomizableSections()) {
-    ec = err;
-    return;
-  }
+  if ((ec = file->createAtomizableSections()))
+    return ec;
 
   // For mergeable strings, we would need to split the section into various
   // atoms
-  if (auto err = createMergeableAtoms()) {
-    ec = err;
-    return;
-  }
+  if ((ec = file->createMergeableAtoms()))
+    return ec;
 
   // Create the necessary symbols that are part of the section that we
   // created in createAtomizableSections function
-  if (auto err = createSymbolsFromAtomizableSections()) {
-    ec = err;
-    return;
-  }
+  if ((ec = file->createSymbolsFromAtomizableSections()))
+    return ec;
 
   // Create the appropriate atoms from the file
-  if (auto err = createAtoms()) {
-    ec = err;
-    return;
-  }
+  if ((ec = file->createAtoms()))
+    return ec;
+
+  return std::move(file);
 }
 
 template <class ELFT> Reference::KindArch ELFFile<ELFT>::kindArch() {

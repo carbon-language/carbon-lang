@@ -60,14 +60,13 @@ struct DynamicFileCreateELFTraits {
 };
 
 struct ELFFileCreateELFTraits {
-  typedef std::unique_ptr<lld::File> result_type;
+  typedef llvm::ErrorOr<std::unique_ptr<lld::File>> result_type;
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool atomizeStrings, TargetHandlerBase *handler,
-                            lld::error_code &ec) {
-    return std::unique_ptr<lld::File>(new lld::elf::ELFFile<ELFT>(
-        std::move(mb), atomizeStrings, handler, ec));
+                            bool atomizeStrings, TargetHandlerBase *handler) {
+    return lld::elf::ELFFile<ELFT>::create(std::move(mb), atomizeStrings,
+                                           handler);
   }
 };
 
@@ -87,12 +86,12 @@ public:
     error_code ec;
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    std::unique_ptr<File> f(createELF<ELFFileCreateELFTraits>(
-        getElfArchType(&*mb), maxAlignment, std::move(mb), _atomizeStrings,
-        _handler, ec));
-    if (ec)
+    auto f = createELF<ELFFileCreateELFTraits>(getElfArchType(&*mb),
+                                               maxAlignment, std::move(mb),
+                                               _atomizeStrings, _handler);
+    if (error_code ec = f.getError())
       return ec;
-    result.push_back(std::move(f));
+    result.push_back(std::move(*f));
     return error_code::success();
   }
 
