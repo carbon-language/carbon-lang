@@ -212,10 +212,16 @@ static MCRegisterInfo *createARMMCRegisterInfo(StringRef Triple) {
 static MCAsmInfo *createARMMCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   Triple TheTriple(TT);
 
+  MCAsmInfo *MAI;
   if (TheTriple.isOSBinFormatMachO())
-    return new ARMMCAsmInfoDarwin();
+    MAI = new ARMMCAsmInfoDarwin();
+  else
+    MAI = new ARMELFMCAsmInfo();
 
-  return new ARMELFMCAsmInfo();
+  unsigned Reg = MRI.getDwarfRegNum(ARM::SP, true);
+  MAI->addInitialFrameState(MCCFIInstruction::createDefCfa(0, Reg, 0));
+
+  return MAI;
 }
 
 static MCCodeGenInfo *createARMMCCodeGenInfo(StringRef TT, Reloc::Model RM,
