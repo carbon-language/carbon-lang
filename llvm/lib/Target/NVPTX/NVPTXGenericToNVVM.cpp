@@ -63,7 +63,7 @@ private:
   GVMapTy GVMap;
   ConstantToValueMapTy ConstantToValueMap;
 };
-}
+} // end namespace
 
 char GenericToNVVM::ID = 0;
 
