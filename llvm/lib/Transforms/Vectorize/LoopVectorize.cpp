@@ -139,11 +139,30 @@ static const unsigned RuntimeMemoryCheckThreshold = 8;
 /// Maximum simd width.
 static const unsigned MaxVectorWidth = 64;
 
+static cl::opt<unsigned> ForceTargetNumScalarRegs(
+    "force-target-num-scalar-regs", cl::init(0), cl::Hidden,
+    cl::desc("A flag that overrides the target's number of scalar registers."));
+
+static cl::opt<unsigned> ForceTargetNumVectorRegs(
+    "force-target-num-vector-regs", cl::init(0), cl::Hidden,
+    cl::desc("A flag that overrides the target's number of vector registers."));
+
 /// Maximum vectorization unroll count.
 static const unsigned MaxUnrollFactor = 16;
 
-/// The cost of a loop that is considered 'small' by the unroller.
-static const unsigned SmallLoopCost = 20;
+static cl::opt<unsigned> ForceTargetMaxScalarUnrollFactor(
+    "force-target-max-scalar-unroll", cl::init(0), cl::Hidden,
+    cl::desc("A flag that overrides the target's max unroll factor for scalar "
+             "loops."));
+
+static cl::opt<unsigned> ForceTargetMaxVectorUnrollFactor(
+    "force-target-max-vector-unroll", cl::init(0), cl::Hidden,
+    cl::desc("A flag that overrides the target's max unroll factor for "
+             "vectorized loops."));
+
+static cl::opt<unsigned> SmallLoopCost(
+    "small-loop-cost", cl::init(20), cl::Hidden,
+    cl::desc("The cost of a loop that is considered 'small' by the unroller."));
 
 namespace {
 
@@ -4966,6 +4985,14 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   DEBUG(dbgs() << "LV: The target has " << TargetNumRegisters <<
         " registers\n");
 
+  if (VF == 1) {
+    if (ForceTargetNumScalarRegs.getNumOccurrences() > 0)
+      TargetNumRegisters = ForceTargetNumScalarRegs;
+  } else {
+    if (ForceTargetNumVectorRegs.getNumOccurrences() > 0)
+      TargetNumRegisters = ForceTargetNumVectorRegs;
+  }
+
   LoopVectorizationCostModel::RegisterUsage R = calculateRegisterUsage();
   // We divide by these constants so assume that we have at least one
   // instruction that uses at least one register.
@@ -4982,6 +5009,15 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
 
   // Clamp the unroll factor ranges to reasonable factors.
   unsigned MaxUnrollSize = TTI.getMaximumUnrollFactor();
+
+  // Check if the user has overridden the unroll max.
+  if (VF == 1) {
+    if (ForceTargetMaxScalarUnrollFactor.getNumOccurrences() > 0)
+      MaxUnrollSize = ForceTargetMaxScalarUnrollFactor;
+  } else {
+    if (ForceTargetMaxVectorUnrollFactor.getNumOccurrences() > 0)
+      MaxUnrollSize = ForceTargetMaxVectorUnrollFactor;
+  }
 
   // If we did not calculate the cost for VF (because the user selected the VF)
   // then we calculate the cost of VF here.
