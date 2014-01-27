@@ -3449,8 +3449,14 @@ Sema::GetIvarBackingPropertyAccessor(const ObjCMethodDecl *Method,
   if (!Method || !Method->isPropertyAccessor())
     return 0;
   if ((PDecl = Method->findPropertyDecl()))
-    return PDecl->getPropertyIvarDecl();
-
+    if (ObjCIvarDecl *IV = PDecl->getPropertyIvarDecl()) {
+      // property backing ivar must belong to property's class
+      // or be a private ivar in class's implementation.
+      // FIXME. fix the const-ness issue.
+      IV = const_cast<ObjCInterfaceDecl *>(IDecl)->lookupInstanceVariable(
+                                                        IV->getIdentifier());
+      return IV;
+    }
   return 0;
 }
 
@@ -3509,13 +3515,6 @@ void Sema::DiagnoseUnusedBackingIvarInAccessor(Scope *S,
     const ObjCIvarDecl *IV = GetIvarBackingPropertyAccessor(CurMethod, PDecl);
     if (!IV)
       continue;
-    // Property declared as @dynamic must be ignored.
-    if (ObjCPropertyImplDecl *PropertyImpDecl =
-          Context.getObjCPropertyImplDeclForPropertyDecl(PDecl, ImplD))
-      if (PropertyImpDecl->getPropertyImplementation() ==
-            ObjCPropertyImplDecl::Dynamic)
-        continue;
-      
 
     UnusedBackingIvarChecker Checker(*this, CurMethod, IV);
     Checker.TraverseStmt(CurMethod->getBody());

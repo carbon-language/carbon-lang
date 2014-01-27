@@ -170,3 +170,28 @@ typedef char BOOL;
     return 0;
 }
 @end
+
+// rdar://15890251
+@class NSURL;
+
+@protocol MCCIDURLProtocolDataProvider
+@required
+@property(strong, atomic, readonly) NSURL *cidURL;
+@end
+
+@interface UnrelatedClass : NSObject <MCCIDURLProtocolDataProvider>
+@end
+
+@implementation UnrelatedClass
+@synthesize cidURL = _cidURL;
+@end
+
+@interface MUIWebAttachmentController : NSObject <MCCIDURLProtocolDataProvider>
+@end
+
+
+@implementation MUIWebAttachmentController
+- (NSURL *)cidURL {
+    return 0;
+}
+@end
