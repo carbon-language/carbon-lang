@@ -158,3 +158,9 @@
 // RUN: %clang -target arm -mcpu=cortex-a53 -mthumb -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-CPUV8A-THUMB %s
 // RUN: %clang -target arm -mcpu=cortex-a57 -mthumb -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-CPUV8A-THUMB %s
 // CHECK-CPUV8A-THUMB: "-cc1"{{.*}} "-triple" "thumbv8-{{.*}}
+
+// ================== Check that Cortex-M cores don't enable hwdiv-arm (and don't emit Tag_DIV_use)
+// RUN: %clang -target arm-linux-gnueabi -mcpu=cortex-m3 -S %s -o - | FileCheck -check-prefix=CHECK-HWDIV-ARM %s
+// RUN: %clang -target arm-linux-gnueabi -mcpu=cortex-m4 -S %s -o - | FileCheck -check-prefix=CHECK-HWDIV-ARM %s
+// CHECK-HWDIV-ARM-NOT: .eabi_attribute	44
+
