@@ -307,16 +307,6 @@ registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
   if (!shouldEnablePolly(Builder.OptLevel))
     return;
 
-  // We only run Polly at optimization level '-O3'.
-  //
-  // This is to ensure that scalar overhead that may be introduced by Polly is
-  // properly cleaned up by LLVM later on. We may reinvestigate this decision
-  // later on.
-  if (Builder.OptLevel != 3) {
-    errs() << "Polly should only be run with -O3. Disabling Polly.\n";
-    return;
-  }
-
   registerPollyPasses(PM);
 }
 
