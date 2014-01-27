@@ -164,7 +164,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     OutStreamer.EmitZeros(4 - Size);
   
   // Mark the end of the global
-  getTargetStreamer().emitCCBottonData(GVSym->getName());
+  getTargetStreamer().emitCCBottomData(GVSym->getName());
 }
 
 void XCoreAsmPrinter::EmitFunctionBodyStart() {
@@ -175,7 +175,7 @@ void XCoreAsmPrinter::EmitFunctionBodyStart() {
 /// the last basic block in the function.
 void XCoreAsmPrinter::EmitFunctionBodyEnd() {
   // Emit function end directives
-  getTargetStreamer().emitCCBottonFunction(CurrentFnSym->getName());
+  getTargetStreamer().emitCCBottomFunction(CurrentFnSym->getName());
 }
 
 void XCoreAsmPrinter::EmitFunctionEntryLabel() {

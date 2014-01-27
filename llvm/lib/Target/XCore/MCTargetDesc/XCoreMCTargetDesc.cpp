@@ -99,10 +99,10 @@ class XCoreTargetAsmStreamer : public XCoreTargetStreamer {
   formatted_raw_ostream &OS;
 public:
   XCoreTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS);
-  virtual void emitCCTopData(StringRef Name);
-  virtual void emitCCTopFunction(StringRef Name);
-  virtual void emitCCBottonData(StringRef Name);
-  virtual void emitCCBottonFunction(StringRef Name);
+  virtual void emitCCTopData(StringRef Name) LLVM_OVERRIDE;
+  virtual void emitCCTopFunction(StringRef Name) LLVM_OVERRIDE;
+  virtual void emitCCBottomData(StringRef Name) LLVM_OVERRIDE;
+  virtual void emitCCBottomFunction(StringRef Name) LLVM_OVERRIDE;
 };
 
 XCoreTargetAsmStreamer::XCoreTargetAsmStreamer(MCStreamer &S,
@@ -117,11 +117,11 @@ void XCoreTargetAsmStreamer::emitCCTopFunction(StringRef Name) {
   OS << "\t.cc_top " << Name << ".function," << Name << '\n';
 }
 
-void XCoreTargetAsmStreamer::emitCCBottonData(StringRef Name) {
+void XCoreTargetAsmStreamer::emitCCBottomData(StringRef Name) {
   OS << "\t.cc_bottom " << Name << ".data\n";
 }
 
-void XCoreTargetAsmStreamer::emitCCBottonFunction(StringRef Name) {
+void XCoreTargetAsmStreamer::emitCCBottomFunction(StringRef Name) {
   OS << "\t.cc_bottom " << Name << ".function\n";
 }
 }
