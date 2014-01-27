@@ -1,3 +1,4 @@
+// REQUIRES: xcore-registered-target
 // RUN: %clang_cc1 -triple xcore -verify %s
 _Static_assert(sizeof(long long) == 8, "sizeof long long is wrong");
 _Static_assert(_Alignof(long long) == 4, "alignof long long is wrong");
@@ -112,10 +113,18 @@ void testbuiltin (void) {
   // CHECK: call i32 @llvm.xcore.getps(i32 {{%[a-z0-9]+}})
   // CHECK: call i32 @llvm.xcore.bitrev(i32 {{%[a-z0-9]+}})
   // CHECK: call void @llvm.xcore.setps(i32 {{%[a-z0-9]+}}, i32 {{%[a-z0-9]+}})
-  int i = __builtin_getid();
-  unsigned int ui = __builtin_getps(i);
+  volatile int i = __builtin_getid();
+  volatile unsigned int ui = __builtin_getps(i);
   ui = __builtin_bitrev(ui);
   __builtin_setps(i,ui);
+
+  // CHECK: store volatile i32 0, i32* {{%[a-z0-9]+}}, align 4
+  // CHECK: store volatile i32 1, i32* {{%[a-z0-9]+}}, align 4
+  // CHECK: store volatile i32 -1, i32* {{%[a-z0-9]+}}, align 4
+  volatile int res;
+  res = __builtin_eh_return_data_regno(0);
+  res = __builtin_eh_return_data_regno(1);
+  res = __builtin_eh_return_data_regno(2);
 }
 
 // CHECK-LABEL: define zeroext i8 @testchar()

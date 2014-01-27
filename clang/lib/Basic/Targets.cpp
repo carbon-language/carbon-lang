@@ -5514,6 +5514,10 @@ public:
                                      TargetInfo::ConstraintInfo &Info) const {
     return false;
   }
+  virtual int getEHDataRegisterNumber(unsigned RegNo) const {
+    // R0=ExceptionPointerRegister R1=ExceptionSelectorRegister
+    return (RegNo < 2)? RegNo : -1;
+  }
 };
 
 const Builtin::Info XCoreTargetInfo::BuiltinInfo[] = {
