@@ -4962,9 +4962,9 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   if (TC > 1 && TC < TinyTripCountUnrollThreshold)
     return 1;
 
-  unsigned TargetVectorRegisters = TTI.getNumberOfRegisters(true);
-  DEBUG(dbgs() << "LV: The target has " << TargetVectorRegisters <<
-        " vector registers\n");
+  unsigned TargetNumRegisters = TTI.getNumberOfRegisters(VF > 1);
+  DEBUG(dbgs() << "LV: The target has " << TargetNumRegisters <<
+        " registers\n");
 
   LoopVectorizationCostModel::RegisterUsage R = calculateRegisterUsage();
   // We divide by these constants so assume that we have at least one
@@ -4978,7 +4978,7 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   // Next, divide the remaining registers by the number of registers that is
   // required by the loop, in order to estimate how many parallel instances
   // fit without causing spills.
-  unsigned UF = (TargetVectorRegisters - R.LoopInvariantRegs) / R.MaxLocalUsers;
+  unsigned UF = (TargetNumRegisters - R.LoopInvariantRegs) / R.MaxLocalUsers;
 
   // Clamp the unroll factor ranges to reasonable factors.
   unsigned MaxUnrollSize = TTI.getMaximumUnrollFactor();
