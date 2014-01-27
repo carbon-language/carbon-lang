@@ -403,7 +403,6 @@ ValueObjectPrinter::ShouldPrintChildren (bool is_failed_description,
         
         // Use a new temporary pointer depth in case we override the
         // current pointer depth below...
-        uint32_t curr_ptr_depth = m_ptr_depth;
         
         if (is_ptr || is_ref)
         {
@@ -413,7 +412,7 @@ ValueObjectPrinter::ShouldPrintChildren (bool is_failed_description,
             if (m_valobj->GetPointerValue (&ptr_address_type) == 0)
                 return false;
             
-            else if (is_ref && m_curr_depth == 0)
+            else if (is_ref && m_curr_depth == 0 && curr_ptr_depth == 0)
             {
                 // If this is the root object (depth is zero) that we are showing
                 // and it is a reference, and no pointer depth has been supplied
@@ -468,7 +467,7 @@ ValueObjectPrinter::PrintChild (ValueObjectSP child_sp,
         ValueObjectPrinter child_printer(child_sp.get(),
                                          m_stream,
                                          child_options,
-                                         (IsPtr() || IsRef()) ? curr_ptr_depth - 1 : curr_ptr_depth,
+                                         (IsPtr() || IsRef()) && curr_ptr_depth >= 1 ? curr_ptr_depth - 1 : curr_ptr_depth,
                                          m_curr_depth + 1);
         child_printer.PrintValueObject();
     }
