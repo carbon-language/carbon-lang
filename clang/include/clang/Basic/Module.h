@@ -255,16 +255,6 @@ public:
   /// \brief The list of conflicts.
   std::vector<Conflict> Conflicts;
 
-  /// \brief Construct a top-level module.
-  explicit Module(StringRef Name, SourceLocation DefinitionLoc,
-                  bool IsFramework)
-    : Name(Name), DefinitionLoc(DefinitionLoc), Parent(0),Umbrella(),ASTFile(0),
-      IsAvailable(true), IsFromModuleFile(false), IsFramework(IsFramework), 
-      IsExplicit(false), IsSystem(false),
-      InferSubmodules(false), InferExplicitSubmodules(false),
-      InferExportWildcard(false), ConfigMacrosExhaustive(false),
-      NameVisibility(Hidden) { }
-  
   /// \brief Construct a new module or submodule.
   Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 
          bool IsFramework, bool IsExplicit);
