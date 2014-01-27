@@ -4901,7 +4901,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
       }
     }
 
-    // sext(setcc x, y, cc) -> (select_cc x, y, -1, 0, cc)
+    // sext(setcc x, y, cc) -> (select (setcc x, y, cc), -1, 0)
     unsigned ElementWidth = VT.getScalarType().getSizeInBits();
     SDValue NegOne =
       DAG.getConstant(APInt::getAllOnesValue(ElementWidth), VT);
@@ -4910,15 +4910,21 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
                        NegOne, DAG.getConstant(0, VT),
                        cast<CondCodeSDNode>(N0.getOperand(2))->get(), true);
     if (SCC.getNode()) return SCC;
-    if (!VT.isVector() &&
-        (!LegalOperations ||
-         TLI.isOperationLegal(ISD::SETCC, getSetCCResultType(VT)))) {
-      return DAG.getSelect(SDLoc(N), VT,
-                           DAG.getSetCC(SDLoc(N),
-                           getSetCCResultType(VT),
-                           N0.getOperand(0), N0.getOperand(1),
-                           cast<CondCodeSDNode>(N0.getOperand(2))->get()),
-                           NegOne, DAG.getConstant(0, VT));
+
+    if (!VT.isVector()) {
+      EVT SetCCVT = getSetCCResultType(N0.getOperand(0).getValueType());
+      if (!LegalOperations || TLI.isOperationLegal(ISD::SETCC, SetCCVT)) {
+        SDLoc DL(N);
+        ISD::CondCode CC = cast<CondCodeSDNode>(N0.getOperand(2))->get();
+        SDValue SetCC = DAG.getSetCC(DL,
+                                     SetCCVT,
+                                     N0.getOperand(0), N0.getOperand(1), CC);
+        EVT SelectVT = getSetCCResultType(VT);
+        return DAG.getSelect(DL, VT,
+                             DAG.getSExtOrTrunc(SetCC, DL, SelectVT),
+                             NegOne, DAG.getConstant(0, VT));
+
+      }
     }
   }
 
