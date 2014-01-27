@@ -234,7 +234,8 @@ public:
 
   range<atom_iter> atoms() { return _atoms; }
 
-  virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
+  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+                     llvm::FileOutputBuffer &buffer);
 
   static bool classof(const Chunk<ELFT> *c) {
     return c->kind() == Chunk<ELFT>::Kind::AtomSection;
@@ -359,7 +360,7 @@ template <class ELFT> StringRef Section<ELFT>::segmentKindToStr() const {
 
 /// \brief Write the section and the atom contents to the buffer
 template <class ELFT>
-void AtomSection<ELFT>::write(ELFWriter *writer,
+void AtomSection<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
                               llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   parallel_for_each(_atoms.begin(), _atoms.end(), [&](lld::AtomLayout * ai) {
@@ -524,7 +525,8 @@ public:
 
   uint64_t addString(StringRef symname);
 
-  virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
+  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+                     llvm::FileOutputBuffer &buffer);
 
   inline void setNumEntries(int64_t numEntries) {
     _stringMap.resize(numEntries);
@@ -583,7 +585,7 @@ template <class ELFT> uint64_t StringTable<ELFT>::addString(StringRef symname) {
 }
 
 template <class ELFT>
-void StringTable<ELFT>::write(ELFWriter *writer,
+void StringTable<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &,
                               llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
@@ -649,7 +651,8 @@ public:
 
   virtual void finalize(bool sort = true);
 
-  virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
+  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+                     llvm::FileOutputBuffer &buffer);
 
   void setStringSection(StringTable<ELFT> *s) { _stringSection = s; }
 
@@ -842,7 +845,7 @@ template <class ELFT> void SymbolTable<ELFT>::finalize(bool sort) {
 }
 
 template <class ELFT>
-void SymbolTable<ELFT>::write(ELFWriter *writer,
+void SymbolTable<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &,
                               llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
@@ -856,9 +859,10 @@ template <class ELFT> class HashSection;
 
 template <class ELFT> class DynamicSymbolTable : public SymbolTable<ELFT> {
 public:
-  DynamicSymbolTable(const ELFLinkingContext &context, const char *str,
-                     int32_t order)
-      : SymbolTable<ELFT>(context, str, order), _hashTable(nullptr) {
+  DynamicSymbolTable(const ELFLinkingContext &context,
+                     TargetLayout<ELFT> &layout, const char *str, int32_t order)
+      : SymbolTable<ELFT>(context, str, order), _hashTable(nullptr),
+        _layout(layout) {
     this->_type = SHT_DYNSYM;
     this->_flags = SHF_ALLOC;
     this->_msize = this->_fsize;
@@ -894,8 +898,9 @@ public:
     SymbolTable<ELFT>::finalize(false);
   }
 
-private:
+protected:
   HashSection<ELFT> *_hashTable;
+  TargetLayout<ELFT> &_layout;
 };
 
 template <class ELFT> class RelocationTable : public Section<ELFT> {
@@ -951,8 +956,10 @@ public:
       this->_parent->setLink(this->_link);
   }
 
-  virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
-    uint8_t *dest = buffer.getBufferStart() + this->fileOffset();
+  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+                     llvm::FileOutputBuffer &buffer) {
+    uint8_t *chunkBuffer = buffer.getBufferStart();
+    uint8_t *dest = chunkBuffer + this->fileOffset();
     for (const auto &rel : _relocs) {
       if (this->_context.isRelaOutputFormat())
         writeRela(writer, *reinterpret_cast<Elf_Rela *>(dest), *rel.first,
@@ -1007,8 +1014,9 @@ public:
   typedef llvm::object::Elf_Dyn_Impl<ELFT> Elf_Dyn;
   typedef std::vector<Elf_Dyn> EntriesT;
 
-  DynamicTable(const ELFLinkingContext &context, StringRef str, int32_t order)
-      : Section<ELFT>(context, str) {
+  DynamicTable(const ELFLinkingContext &context, TargetLayout<ELFT> &layout,
+               StringRef str, int32_t order)
+      : Section<ELFT>(context, str), _layout(layout) {
     this->setOrder(order);
     this->_entSize = sizeof(Elf_Dyn);
     this->_align2 = llvm::alignOf<Elf_Dyn>();
@@ -1017,7 +1025,6 @@ public:
     this->_msize = sizeof(Elf_Dyn);
     this->_type = SHT_DYNAMIC;
     this->_flags = SHF_ALLOC;
-    _layout = &context.getTargetHandler<ELFT>().targetLayout();
   }
 
   range<typename EntriesT::iterator> entries() { return _entries; }
@@ -1030,7 +1037,8 @@ public:
     return _entries.size() - 1;
   }
 
-  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer) {
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
     // Add the null entry.
@@ -1061,7 +1069,7 @@ public:
     _dt_fini_array = addEntry(dyn);
     dyn.d_tag = DT_FINI_ARRAYSZ;
     _dt_fini_arraysz = addEntry(dyn);
-    if (_layout->hasDynamicRelocationTable()) {
+    if (_layout.hasDynamicRelocationTable()) {
       dyn.d_tag = isRela ? DT_RELA : DT_REL;
       _dt_rela = addEntry(dyn);
       dyn.d_tag = isRela ? DT_RELASZ : DT_RELSZ;
@@ -1069,7 +1077,7 @@ public:
       dyn.d_tag = isRela ? DT_RELAENT : DT_RELENT;
       _dt_relaent = addEntry(dyn);
     }
-    if (_layout->hasPLTRelocationTable()) {
+    if (_layout.hasPLTRelocationTable()) {
       dyn.d_tag = DT_PLTRELSZ;
       _dt_pltrelsz = addEntry(dyn);
       dyn.d_tag = DT_PLTGOT;
@@ -1111,30 +1119,28 @@ public:
     _entries[_dt_symtab].d_un.d_val = _dynamicSymbolTable->virtualAddr();
     _entries[_dt_strsz].d_un.d_val = dynamicStringTable->memSize();
     _entries[_dt_syment].d_un.d_val = _dynamicSymbolTable->getEntSize();
-    auto finiArray = _layout->findOutputSection(".fini_array");
+    auto finiArray = _layout.findOutputSection(".fini_array");
     if (finiArray) {
       _entries[_dt_fini_array].d_un.d_val = finiArray->virtualAddr();
       _entries[_dt_fini_arraysz].d_un.d_val = finiArray->memSize();
     }
-    if (_layout->hasDynamicRelocationTable()) {
-      auto relaTbl = _layout->getDynamicRelocationTable();
+    if (_layout.hasDynamicRelocationTable()) {
+      auto relaTbl = _layout.getDynamicRelocationTable();
       _entries[_dt_rela].d_un.d_val = relaTbl->virtualAddr();
       _entries[_dt_relasz].d_un.d_val = relaTbl->memSize();
       _entries[_dt_relaent].d_un.d_val = relaTbl->getEntSize();
     }
-    if (_layout->hasPLTRelocationTable()) {
-      auto relaTbl = _layout->getPLTRelocationTable();
+    if (_layout.hasPLTRelocationTable()) {
+      auto relaTbl = _layout.getPLTRelocationTable();
       _entries[_dt_jmprel].d_un.d_val = relaTbl->virtualAddr();
       _entries[_dt_pltrelsz].d_un.d_val = relaTbl->memSize();
-      auto gotplt = _layout->findOutputSection(".got.plt");
+      auto gotplt = _layout.findOutputSection(".got.plt");
       _entries[_dt_pltgot].d_un.d_val = gotplt->virtualAddr();
     }
   }
 
 protected:
   EntriesT _entries;
-
-private:
   std::size_t _dt_hash;
   std::size_t _dt_strtab;
   std::size_t _dt_symtab;
@@ -1149,7 +1155,7 @@ private:
   std::size_t _dt_jmprel;
   std::size_t _dt_fini_array;
   std::size_t _dt_fini_arraysz;
-  TargetLayout<ELFT> *_layout;
+  TargetLayout<ELFT> &_layout;
   DynamicSymbolTable<ELFT> *_dynamicSymbolTable;
   HashSection<ELFT> *_hashTable;
 };
@@ -1168,7 +1174,8 @@ public:
     this->_flags = SHF_ALLOC;
   }
 
-  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer) {
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
     std::memcpy(dest, _interp.data(), _interp.size());
@@ -1280,7 +1287,8 @@ public:
       this->_parent->setLink(this->_link);
   }
 
-  virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
+  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+                     llvm::FileOutputBuffer &buffer) {
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
     uint32_t bucketChainCounts[2];
@@ -1311,8 +1319,9 @@ private:
 
 template <class ELFT> class EHFrameHeader : public Section<ELFT> {
 public:
-  EHFrameHeader(const ELFLinkingContext &context, StringRef name, int32_t order)
-      : Section<ELFT>(context, name) {
+  EHFrameHeader(const ELFLinkingContext &context, StringRef name,
+                TargetLayout<ELFT> &layout, int32_t order)
+      : Section<ELFT>(context, name), _layout(layout) {
     this->setOrder(order);
     this->_entSize = 0;
     this->_type = SHT_PROGBITS;
@@ -1332,13 +1341,11 @@ public:
   }
 
   virtual void finalize() LLVM_OVERRIDE {
-    MergedSections<ELFT> *s = this->_context.template getTargetHandler<ELFT>()
-                                  .targetLayout()
-                                  .findOutputSection(".eh_frame");
+    MergedSections<ELFT> *s = _layout.findOutputSection(".eh_frame");
     _ehFrameAddr = s ? s->virtualAddr() : 0;
   }
 
-  virtual void write(ELFWriter *writer,
+  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
                      llvm::FileOutputBuffer &buffer) LLVM_OVERRIDE {
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
@@ -1353,6 +1360,7 @@ public:
 
 private:
   uint64_t _ehFrameAddr;
+  TargetLayout<ELFT> &_layout;
 };
 } // end namespace elf
 } // end namespace lld

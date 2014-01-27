@@ -6,14 +6,13 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_SECTION_CHUNKS_H
-#define LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_SECTION_CHUNKS_H
+#ifndef HEXAGON_SECTION_CHUNKS_H
+#define HEXAGON_SECTION_CHUNKS_H
 
 #include "HexagonTargetHandler.h"
 
 namespace lld {
 namespace elf {
-typedef llvm::object::ELFType<llvm::support::little, 2, false> HexagonELFType;
 template <typename ELFT> class HexagonTargetLayout;
 class HexagonLinkingContext;
 

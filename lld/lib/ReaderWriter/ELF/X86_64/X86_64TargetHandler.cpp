@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Atoms.h"
+#include "X86_64ExecutableWriter.h"
+#include "X86_64DynamicLibraryWriter.h"
 #include "X86_64TargetHandler.h"
 #include "X86_64LinkingContext.h"
 
@@ -15,22 +17,30 @@ using namespace lld;
 using namespace elf;
 
 X86_64TargetHandler::X86_64TargetHandler(X86_64LinkingContext &context)
-    : DefaultTargetHandler(context), _gotFile(new GOTFile(context)),
-      _relocationHandler(context), _targetLayout(context) {}
-
-bool X86_64TargetHandler::createImplicitFiles(
-    std::vector<std::unique_ptr<File> > &result) {
-  _gotFile->addAtom(*new (_gotFile->_alloc) GLOBAL_OFFSET_TABLEAtom(*_gotFile));
-  _gotFile->addAtom(*new (_gotFile->_alloc) TLSGETADDRAtom(*_gotFile));
-  if (_context.isDynamic())
-    _gotFile->addAtom(*new (_gotFile->_alloc) DYNAMICAtom(*_gotFile));
-  result.push_back(std::move(_gotFile));
-  return true;
-}
+    : DefaultTargetHandler(context), _context(context),
+      _x86_64TargetLayout(new X86_64TargetLayout<X86_64ELFType>(context)),
+      _x86_64RelocationHandler(new X86_64TargetRelocationHandler(
+          context, *_x86_64TargetLayout.get())) {}
 
 void X86_64TargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF,
                         Reference::KindArch::x86_64, kindStrings);
+}
+
+std::unique_ptr<Writer> X86_64TargetHandler::getWriter() {
+  switch (this->_context.getOutputELFType()) {
+  case llvm::ELF::ET_EXEC:
+    return std::unique_ptr<Writer>(new X86_64ExecutableWriter<X86_64ELFType>(
+        _context, *_x86_64TargetLayout.get()));
+  case llvm::ELF::ET_DYN:
+    return std::unique_ptr<Writer>(
+        new X86_64DynamicLibraryWriter<X86_64ELFType>(
+            _context, *_x86_64TargetLayout.get()));
+  case llvm::ELF::ET_REL:
+    llvm_unreachable("TODO: support -r mode");
+  default:
+    llvm_unreachable("unsupported output type");
+  }
 }
 
 const Registry::KindStrings X86_64TargetHandler::kindStrings[] = {

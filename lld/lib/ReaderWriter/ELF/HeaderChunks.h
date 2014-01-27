@@ -52,7 +52,8 @@ public:
 
   inline int getContentType() const { return Chunk<ELFT>::ContentType::Header; }
 
-  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer);
 
   virtual void doPreFlight() {}
 
@@ -78,7 +79,8 @@ ELFHeader<ELFT>::ELFHeader(const ELFLinkingContext &context)
 }
 
 template <class ELFT>
-void ELFHeader<ELFT>::write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
+void ELFHeader<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+                            llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *atomContent = chunkBuffer + this->fileOffset();
   memcpy(atomContent, &_eh, fileSize());
@@ -132,7 +134,8 @@ public:
     return c->Kind() == Chunk<ELFT>::Kind::ProgramHeader;
   }
 
-  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer);
 
   /// \brief find a program header entry in the list of program headers
   ReversePhIterT
@@ -231,8 +234,8 @@ bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
 }
 
 template <class ELFT>
-void ProgramHeader<ELFT>::write(ELFWriter *writer,
-                                   llvm::FileOutputBuffer &buffer) {
+void ProgramHeader<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+                                llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
   for (auto phi : _ph) {
@@ -262,7 +265,8 @@ public:
     _stringSection = s;
   }
 
-  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer);
 
   virtual void doPreFlight() {}
 
@@ -336,15 +340,15 @@ SectionHeader<ELFT>::updateSection(Section<ELFT> *section) {
 }
 
 template <class ELFT>
-void SectionHeader<ELFT>::write(ELFWriter *writer,
-                                   llvm::FileOutputBuffer &buffer) {
+void SectionHeader<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+                                llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
   for (auto shi : _sectionInfo) {
     memcpy(dest, shi, sizeof(Elf_Shdr));
     dest += sizeof(Elf_Shdr);
   }
-  _stringSection->write(writer, buffer);
+  _stringSection->write(writer, layout, buffer);
 }
 } // end namespace elf
 } // end namespace lld

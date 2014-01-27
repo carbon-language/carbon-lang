@@ -19,8 +19,9 @@ class MipsTargetHandler;
 class MipsTargetRelocationHandler LLVM_FINAL
     : public TargetRelocationHandler<Mips32ElELFType> {
 public:
-  MipsTargetRelocationHandler(const MipsLinkingContext &context,
-                              const MipsTargetHandler &handler);
+  MipsTargetRelocationHandler(MipsLinkingContext &context,
+                              MipsTargetLayout<Mips32ElELFType> &layout)
+      : _mipsLinkingContext(context), _mipsTargetLayout(layout) {}
 
   ~MipsTargetRelocationHandler();
 
@@ -29,8 +30,6 @@ public:
                                      const Reference &) const;
 
 private:
-  const MipsTargetHandler &_targetHandler;
-
   typedef std::vector<const Reference *> PairedRelocationsT;
   typedef std::unordered_map<const lld::AtomLayout *, PairedRelocationsT>
   PairedRelocationMapT;
@@ -40,8 +39,11 @@ private:
   void savePairedRelocation(const lld::AtomLayout &atom,
                             const Reference &ref) const;
   void applyPairedRelocations(ELFWriter &writer, llvm::FileOutputBuffer &buf,
-                              const lld::AtomLayout &atom,
+                              const lld::AtomLayout &atom, int64_t gpAddr,
                               int64_t loAddend) const;
+
+  MipsLinkingContext &_mipsLinkingContext LLVM_ATTRIBUTE_UNUSED;
+  MipsTargetLayout<Mips32ElELFType> &_mipsTargetLayout;
 };
 
 } // elf

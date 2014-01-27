@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "HexagonExecutableWriter.h"
+#include "HexagonDynamicLibraryWriter.h"
 #include "HexagonTargetHandler.h"
 #include "HexagonLinkingContext.h"
 
@@ -17,11 +19,28 @@ using namespace llvm::ELF;
 using llvm::makeArrayRef;
 
 HexagonTargetHandler::HexagonTargetHandler(HexagonLinkingContext &context)
-    : DefaultTargetHandler(context), _targetLayout(context),
-      _relocationHandler(context, *this, _targetLayout),
-      _hexagonRuntimeFile(new HexagonRuntimeFile<HexagonELFType>(context)) {}
+    : DefaultTargetHandler(context), _hexagonLinkingContext(context),
+      _hexagonRuntimeFile(new HexagonRuntimeFile<HexagonELFType>(context)),
+      _hexagonTargetLayout(new HexagonTargetLayout<HexagonELFType>(context)),
+      _hexagonRelocationHandler(new HexagonTargetRelocationHandler(
+          context, *_hexagonTargetLayout.get())) {}
 
-namespace {
+std::unique_ptr<Writer> HexagonTargetHandler::getWriter() {
+  switch (_hexagonLinkingContext.getOutputELFType()) {
+  case llvm::ELF::ET_EXEC:
+    return std::unique_ptr<Writer>(
+        new elf::HexagonExecutableWriter<HexagonELFType>(
+            _hexagonLinkingContext, *_hexagonTargetLayout.get()));
+  case llvm::ELF::ET_DYN:
+    return std::unique_ptr<Writer>(
+        new elf::HexagonDynamicLibraryWriter<HexagonELFType>(
+            _hexagonLinkingContext, *_hexagonTargetLayout.get()));
+  case llvm::ELF::ET_REL:
+    llvm_unreachable("TODO: support -r mode");
+  default:
+    llvm_unreachable("unsupported output type");
+  }
+}
 
 using namespace llvm::ELF;
 
@@ -297,7 +316,6 @@ public:
     return error_code::success();
   }
 };
-} // end anonymous namespace
 
 void elf::HexagonLinkingContext::addPasses(PassManager &pm) {
   if (isDynamic())

@@ -90,8 +90,7 @@ error_code X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_TPOFF64:
   case R_X86_64_DTPOFF32:
   case R_X86_64_TPOFF32: {
-    _tlsSize =
-        _context.getTargetHandler<X86_64ELFType>().targetLayout().getTLSSize();
+    _tlsSize = _x86_64Layout.getTLSSize();
     if (ref.kindValue() == R_X86_64_TPOFF32 ||
         ref.kindValue() == R_X86_64_DTPOFF32) {
       int32_t result = (int32_t)(targetVAddress - _tlsSize);
@@ -115,8 +114,8 @@ error_code X86_64TargetRelocationHandler::applyRelocation(
     for (const Reference *r : *target) {
       if (r->kindValue() == R_X86_64_JUMP_SLOT) {
         uint32_t index;
-        if (!_context.getTargetHandler<X86_64ELFType>().targetLayout()
-                .getPLTRelocationTable()->getRelocationIndex(*r, index))
+        if (!_x86_64Layout.getPLTRelocationTable()->getRelocationIndex(*r,
+                                                                       index))
           llvm_unreachable("Relocation doesn't exist");
         reloc32(location, 0, index, 0);
         break;

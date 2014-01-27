@@ -25,11 +25,11 @@ class ExecutableWriter;
 template<class ELFT>
 class ExecutableWriter : public OutputELFWriter<ELFT> {
 public:
-  ExecutableWriter(const ELFLinkingContext &context)
-      : OutputELFWriter<ELFT>(context),
+  ExecutableWriter(const ELFLinkingContext &context, TargetLayout<ELFT> &layout)
+      : OutputELFWriter<ELFT>(context, layout),
         _runtimeFile(new CRuntimeFile<ELFT>(context)) {}
 
-private:
+protected:
   virtual void addDefaultAtoms();
   virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
   virtual void finalizeDefaultAtomValues();
@@ -71,7 +71,7 @@ template <class ELFT>
 bool ExecutableWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File> > &result) {
   // Add the default atoms as defined by executables
-  addDefaultAtoms();
+  ExecutableWriter<ELFT>::addDefaultAtoms();
   OutputELFWriter<ELFT>::createImplicitFiles(result);
   result.push_back(std::move(_runtimeFile));
   return true;
@@ -83,17 +83,17 @@ template <class ELFT> void ExecutableWriter<ELFT>::createDefaultSections() {
     _interpSection.reset(new (this->_alloc) InterpSection<ELFT>(
         this->_context, ".interp", DefaultLayout<ELFT>::ORDER_INTERP,
         this->_context.getInterpreter()));
-    this->_layout->addSection(_interpSection.get());
+    this->_layout.addSection(_interpSection.get());
   }
 }
 
 /// Finalize the value of all the absolute symbols that we
 /// created
 template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
-  auto bssStartAtomIter = this->_layout->findAbsoluteAtom("__bss_start");
-  auto bssEndAtomIter = this->_layout->findAbsoluteAtom("__bss_end");
-  auto underScoreEndAtomIter = this->_layout->findAbsoluteAtom("_end");
-  auto endAtomIter = this->_layout->findAbsoluteAtom("end");
+  auto bssStartAtomIter = this->_layout.findAbsoluteAtom("__bss_start");
+  auto bssEndAtomIter = this->_layout.findAbsoluteAtom("__bss_end");
+  auto underScoreEndAtomIter = this->_layout.findAbsoluteAtom("_end");
+  auto endAtomIter = this->_layout.findAbsoluteAtom("end");
 
   auto startEnd = [&](StringRef sym, StringRef sec) -> void {
     // TODO: This looks like a good place to use Twine...
@@ -102,9 +102,9 @@ template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
     start += "_start";
     end += sym;
     end += "_end";
-    auto s = this->_layout->findAbsoluteAtom(start);
-    auto e = this->_layout->findAbsoluteAtom(end);
-    auto section = this->_layout->findOutputSection(sec);
+    auto s = this->_layout.findAbsoluteAtom(start);
+    auto e = this->_layout.findAbsoluteAtom(end);
+    auto section = this->_layout.findOutputSection(sec);
     if (section) {
       (*s)->_virtualAddr = section->virtualAddr();
       (*e)->_virtualAddr = section->virtualAddr() + section->memSize();
@@ -122,13 +122,13 @@ template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
     startEnd("rel_iplt", ".rel.plt");
   startEnd("fini_array", ".fini_array");
 
-  assert(!(bssStartAtomIter == this->_layout->absoluteAtoms().end() ||
-           bssEndAtomIter == this->_layout->absoluteAtoms().end() ||
-           underScoreEndAtomIter == this->_layout->absoluteAtoms().end() ||
-           endAtomIter == this->_layout->absoluteAtoms().end()) &&
+  assert(!(bssStartAtomIter == this->_layout.absoluteAtoms().end() ||
+           bssEndAtomIter == this->_layout.absoluteAtoms().end() ||
+           underScoreEndAtomIter == this->_layout.absoluteAtoms().end() ||
+           endAtomIter == this->_layout.absoluteAtoms().end()) &&
          "Unable to find the absolute atoms that have been added by lld");
 
-  auto bssSection = this->_layout->findOutputSection(".bss");
+  auto bssSection = this->_layout.findOutputSection(".bss");
 
   // If we don't find a bss section, then don't set these values
   if (bssSection) {
@@ -137,14 +137,11 @@ template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
         bssSection->virtualAddr() + bssSection->memSize();
     (*underScoreEndAtomIter)->_virtualAddr = (*bssEndAtomIter)->_virtualAddr;
     (*endAtomIter)->_virtualAddr = (*bssEndAtomIter)->_virtualAddr;
-  } else if (auto dataSection = this->_layout->findOutputSection(".data")) {
+  } else if (auto dataSection = this->_layout.findOutputSection(".data")) {
     (*underScoreEndAtomIter)->_virtualAddr =
         dataSection->virtualAddr() + dataSection->memSize();
     (*endAtomIter)->_virtualAddr = (*underScoreEndAtomIter)->_virtualAddr;
   }
-
-  // Give a chance for the target to finalize its atom values
-  this->_targetHandler.finalizeSymbolValues();
 }
 
 } // namespace elf

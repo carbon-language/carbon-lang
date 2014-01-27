@@ -63,13 +63,30 @@ error_code PPCTargetRelocationHandler::applyRelocation(
   return error_code::success();
 }
 
-PPCTargetHandler::PPCTargetHandler(PPCLinkingContext &targetInfo)
-    : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo),
-      _targetLayout(targetInfo) {}
+PPCTargetHandler::PPCTargetHandler(PPCLinkingContext &context)
+    : DefaultTargetHandler(context), _ppcLinkingContext(context),
+      _ppcTargetLayout(new PPCTargetLayout<PPCELFType>(context)),
+      _ppcRelocationHandler(
+          new PPCTargetRelocationHandler(context, *_ppcTargetLayout.get())) {}
 
 void PPCTargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF,
                         Reference::KindArch::PowerPC, kindStrings);
+}
+
+std::unique_ptr<Writer> PPCTargetHandler::getWriter() {
+  switch (_ppcLinkingContext.getOutputELFType()) {
+  case llvm::ELF::ET_EXEC:
+    return std::unique_ptr<Writer>(new elf::ExecutableWriter<PPCELFType>(
+        _ppcLinkingContext, *_ppcTargetLayout.get()));
+  case llvm::ELF::ET_DYN:
+    return std::unique_ptr<Writer>(new elf::DynamicLibraryWriter<PPCELFType>(
+        _ppcLinkingContext, *_ppcTargetLayout.get()));
+  case llvm::ELF::ET_REL:
+    llvm_unreachable("TODO: support -r mode");
+  default:
+    llvm_unreachable("unsupported output type");
+  }
 }
 
 const Registry::KindStrings PPCTargetHandler::kindStrings[] = {

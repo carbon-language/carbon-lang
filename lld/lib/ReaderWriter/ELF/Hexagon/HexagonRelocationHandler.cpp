@@ -264,19 +264,19 @@ error_code HexagonTargetRelocationHandler::applyRelocation(
     break;
   case R_HEX_GPREL16_0:
     relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
-                   _targetLayout.getSDataSection()->virtualAddr(), 0);
+                   _hexagonTargetLayout.getSDataSection()->virtualAddr(), 0);
     break;
   case R_HEX_GPREL16_1:
     relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
-                   _targetLayout.getSDataSection()->virtualAddr(), 1);
+                   _hexagonTargetLayout.getSDataSection()->virtualAddr(), 1);
     break;
   case R_HEX_GPREL16_2:
     relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
-                   _targetLayout.getSDataSection()->virtualAddr(), 2);
+                   _hexagonTargetLayout.getSDataSection()->virtualAddr(), 2);
     break;
   case R_HEX_GPREL16_3:
     relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
-                   _targetLayout.getSDataSection()->virtualAddr(), 3);
+                   _hexagonTargetLayout.getSDataSection()->virtualAddr(), 3);
     break;
   case R_HEX_16_X:
   case R_HEX_12_X:
@@ -296,45 +296,52 @@ error_code HexagonTargetRelocationHandler::applyRelocation(
     break;
   case R_HEX_GOTREL_32:
     relocHexGOTREL_32(location, relocVAddress, targetVAddress, ref.addend(),
-                      _targetHandler.getGOTSymAddr());
+                      _hexagonTargetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOTREL_LO16:
     relocHexGOTREL_HILO16(location, relocVAddress, targetVAddress, ref.addend(),
-                          _targetHandler.getGOTSymAddr());
+                          _hexagonTargetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOTREL_HI16:
     relocHexGOTREL_HILO16(location, relocVAddress, targetVAddress, ref.addend(),
-                          _targetHandler.getGOTSymAddr(), 16);
+                          _hexagonTargetLayout.getGOTSymAddr(), 16);
     break;
   case R_HEX_GOT_LO16:
-    relocHexGOTLO16(location, targetVAddress, _targetHandler.getGOTSymAddr());
+    relocHexGOTLO16(location, targetVAddress,
+                    _hexagonTargetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_HI16:
-    relocHexGOTHI16(location, targetVAddress, _targetHandler.getGOTSymAddr());
+    relocHexGOTHI16(location, targetVAddress,
+                    _hexagonTargetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_32:
-    relocHexGOT32(location, targetVAddress, _targetHandler.getGOTSymAddr());
+    relocHexGOT32(location, targetVAddress,
+                  _hexagonTargetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_16:
-    relocHexGOT16(location, targetVAddress, _targetHandler.getGOTSymAddr());
+    relocHexGOT16(location, targetVAddress,
+                  _hexagonTargetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_32_6_X:
-    relocHexGOT32_6_X(location, targetVAddress, _targetHandler.getGOTSymAddr());
+    relocHexGOT32_6_X(location, targetVAddress,
+                      _hexagonTargetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_16_X:
-    relocHexGOT16_X(location, targetVAddress, _targetHandler.getGOTSymAddr());
+    relocHexGOT16_X(location, targetVAddress,
+                    _hexagonTargetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_11_X:
-    relocHexGOT11_X(location, targetVAddress, _targetHandler.getGOTSymAddr());
+    relocHexGOT11_X(location, targetVAddress,
+                    _hexagonTargetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOTREL_32_6_X:
     relocHexGOTRELSigned(location, relocVAddress, targetVAddress, ref.addend(),
-                   _targetHandler.getGOTSymAddr(), 6);
+                         _hexagonTargetLayout.getGOTSymAddr(), 6);
     break;
   case R_HEX_GOTREL_16_X:
   case R_HEX_GOTREL_11_X:
-    relocHexGOTRELUnsigned(location, relocVAddress, targetVAddress, ref.addend(),
-                   _targetHandler.getGOTSymAddr());
+    relocHexGOTRELUnsigned(location, relocVAddress, targetVAddress,
+                           ref.addend(), _hexagonTargetLayout.getGOTSymAddr());
     break;
 
   default : {
@@ -349,4 +356,4 @@ error_code HexagonTargetRelocationHandler::applyRelocation(
   return error_code::success();
 }
 
- 
+

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_TARGET_HANDLER_H
-#define LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_TARGET_HANDLER_H
+#ifndef HEXAGON_TARGET_HANDLER_H
+#define HEXAGON_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
 #include "HexagonExecutableAtoms.h"
@@ -25,14 +25,14 @@ class HexagonLinkingContext;
 /// \brief TargetLayout for Hexagon
 template <class HexagonELFType>
 class HexagonTargetLayout LLVM_FINAL : public TargetLayout<HexagonELFType> {
-
 public:
   enum HexagonSectionOrder {
     ORDER_SDATA = 205
   };
 
   HexagonTargetLayout(const HexagonLinkingContext &hti)
-      : TargetLayout<HexagonELFType>(hti), _sdataSection(nullptr) {
+      : TargetLayout<HexagonELFType>(hti), _sdataSection(nullptr),
+        _gotSymAtom(nullptr), _cachedGotSymAtom(false) {
     _sdataSection = new (_alloc) SDataSection<HexagonELFType>(hti);
   }
 
@@ -84,9 +84,22 @@ public:
     return _sdataSection;
   }
 
+  uint64_t getGOTSymAddr() {
+    if (!_cachedGotSymAtom) {
+      auto gotAtomIter = this->findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+      _gotSymAtom = (*gotAtomIter);
+      _cachedGotSymAtom = true;
+    }
+    if (_gotSymAtom)
+      return _gotSymAtom->_virtualAddr;
+    return 0;
+  }
+
 private:
   llvm::BumpPtrAllocator _alloc;
   SDataSection<HexagonELFType> *_sdataSection;
+  AtomLayout *_gotSymAtom;
+  bool _cachedGotSymAtom;
 };
 
 /// \brief TargetHandler for Hexagon
@@ -97,64 +110,12 @@ public:
 
   virtual void registerRelocationNames(Registry &registry);
 
-  bool doesOverrideELFHeader() { return true; }
-
-  void setELFHeader(ELFHeader<HexagonELFType> *elfHeader) {
-    elfHeader->e_ident(llvm::ELF::EI_VERSION, 1);
-    elfHeader->e_ident(llvm::ELF::EI_OSABI, 0);
-    elfHeader->e_version(1);
-    elfHeader->e_flags(0x3);
-  }
-
-  virtual HexagonTargetLayout<HexagonELFType> &targetLayout() {
-    return _targetLayout;
-  }
-
   virtual const HexagonTargetRelocationHandler &getRelocationHandler() const {
-    return _relocationHandler;
+    return *(_hexagonRelocationHandler.get());
   }
 
-  void addDefaultAtoms() {
-    _hexagonRuntimeFile->addAbsoluteAtom("_SDA_BASE_");
-    if (_context.isDynamic()) {
-      _hexagonRuntimeFile->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-      _hexagonRuntimeFile->addAbsoluteAtom("_DYNAMIC");
-    }
-  }
-
-  virtual bool
-  createImplicitFiles(std::vector<std::unique_ptr<File> > &result) {
-    // Add the default atoms as defined for hexagon
-    addDefaultAtoms();
-    result.push_back(std::move(_hexagonRuntimeFile));
-    return true;
-  }
-
-  void finalizeSymbolValues() {
-    auto sdabaseAtomIter = _targetLayout.findAbsoluteAtom("_SDA_BASE_");
-    (*sdabaseAtomIter)->_virtualAddr =
-        _targetLayout.getSDataSection()->virtualAddr();
-    if (_context.isDynamic()) {
-      auto gotAtomIter =
-          _targetLayout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-      _gotSymAtom = (*gotAtomIter);
-      auto gotpltSection = _targetLayout.findOutputSection(".got.plt");
-      if (gotpltSection)
-        _gotSymAtom->_virtualAddr = gotpltSection->virtualAddr();
-      else
-        _gotSymAtom->_virtualAddr = 0;
-      auto dynamicAtomIter = _targetLayout.findAbsoluteAtom("_DYNAMIC");
-      auto dynamicSection = _targetLayout.findOutputSection(".dynamic");
-      if (dynamicSection)
-        (*dynamicAtomIter)->_virtualAddr = dynamicSection->virtualAddr();
-      else
-        (*dynamicAtomIter)->_virtualAddr = 0;
-    }
-  }
-
-  uint64_t getGOTSymAddr() const {
-    if (!_gotSymAtom) return 0;
-    return _gotSymAtom->_virtualAddr;
+  virtual HexagonTargetLayout<HexagonELFType> &getTargetLayout() {
+    return *(_hexagonTargetLayout.get());
   }
 
   virtual std::unique_ptr<Reader> getObjReader(bool atomizeStrings) {
@@ -165,13 +126,15 @@ public:
     return std::unique_ptr<Reader>(new HexagonELFDSOReader(useShlibUndefines));
   }
 
-private:
-  static const Registry::KindStrings kindStrings[];
+  virtual std::unique_ptr<Writer> getWriter();
 
-  HexagonTargetLayout<HexagonELFType> _targetLayout;
-  HexagonTargetRelocationHandler _relocationHandler;
+private:
+  llvm::BumpPtrAllocator _alloc;
+  static const Registry::KindStrings kindStrings[];
+  HexagonLinkingContext &_hexagonLinkingContext;
   std::unique_ptr<HexagonRuntimeFile<HexagonELFType> > _hexagonRuntimeFile;
-  AtomLayout *_gotSymAtom;
+  std::unique_ptr<HexagonTargetLayout<HexagonELFType>> _hexagonTargetLayout;
+  std::unique_ptr<HexagonTargetRelocationHandler> _hexagonRelocationHandler;
 };
 } // end namespace elf
 } // end namespace lld

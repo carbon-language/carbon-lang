@@ -25,17 +25,18 @@ class DynamicLibraryWriter;
 template<class ELFT>
 class DynamicLibraryWriter : public OutputELFWriter<ELFT> {
 public:
-  DynamicLibraryWriter(const ELFLinkingContext &context)
-      : OutputELFWriter<ELFT>(context),
+  DynamicLibraryWriter(const ELFLinkingContext &context,
+                       TargetLayout<ELFT> &layout)
+      : OutputELFWriter<ELFT>(context, layout),
         _runtimeFile(new CRuntimeFile<ELFT>(context)) {}
 
-private:
-  void buildDynamicSymbolTable(const File &file);
-  void addDefaultAtoms();
+protected:
+  virtual void buildDynamicSymbolTable(const File &file);
+  virtual void addDefaultAtoms();
   virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
-  void finalizeDefaultAtomValues();
+  virtual void finalizeDefaultAtomValues();
 
-  llvm::BumpPtrAllocator _alloc;
+protected:
   std::unique_ptr<CRuntimeFile<ELFT> > _runtimeFile;
 };
 
@@ -47,7 +48,7 @@ void DynamicLibraryWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   // Add all the defined symbols to the dynamic symbol table
   // we need hooks into the Atom to find out which atoms need
   // to be exported
-  for (auto sec : this->_layout->sections())
+  for (auto sec : this->_layout.sections())
     if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
       for (const auto &atom : section->atoms()) {
         const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom->_atom);
@@ -71,7 +72,7 @@ template <class ELFT>
 bool DynamicLibraryWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File> > &result) {
   // Add the default atoms as defined by executables
-  addDefaultAtoms();
+  DynamicLibraryWriter<ELFT>::addDefaultAtoms();
   OutputELFWriter<ELFT>::createImplicitFiles(result);
   result.push_back(std::move(_runtimeFile));
   return true;
@@ -79,17 +80,15 @@ bool DynamicLibraryWriter<ELFT>::createImplicitFiles(
 
 template <class ELFT>
 void DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
-  auto underScoreEndAtomIter = this->_layout->findAbsoluteAtom("_end");
+  auto underScoreEndAtomIter = this->_layout.findAbsoluteAtom("_end");
 
-  if (auto bssSection = this->_layout->findOutputSection(".bss")) {
+  if (auto bssSection = this->_layout.findOutputSection(".bss")) {
     (*underScoreEndAtomIter)->_virtualAddr =
         bssSection->virtualAddr() + bssSection->memSize();
-  } else if (auto dataSection = this->_layout->findOutputSection(".data")) {
+  } else if (auto dataSection = this->_layout.findOutputSection(".data")) {
     (*underScoreEndAtomIter)->_virtualAddr =
         dataSection->virtualAddr() + dataSection->memSize();
   }
-
-  this->_targetHandler.finalizeSymbolValues();
 }
 
 } // namespace elf

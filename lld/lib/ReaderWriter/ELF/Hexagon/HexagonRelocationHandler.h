@@ -18,23 +18,21 @@ namespace elf {
 
 class HexagonLinkingContext;
 class HexagonTargetHandler;
-template <class HexagonELFType> class HexagonTargetLayout;
 
 class HexagonTargetRelocationHandler LLVM_FINAL :
     public TargetRelocationHandler<HexagonELFType> {
 public:
-  HexagonTargetRelocationHandler(
-      const HexagonLinkingContext &context, const HexagonTargetHandler &tH,
-      const HexagonTargetLayout<HexagonELFType> &layout)
-      : _targetHandler(tH), _targetLayout(layout) {}
+  HexagonTargetRelocationHandler(HexagonLinkingContext &context,
+                                 HexagonTargetLayout<HexagonELFType> &layout)
+      : _hexagonLinkingContext(context), _hexagonTargetLayout(layout) {}
 
-  virtual error_code
-  applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                  const lld::AtomLayout &, const Reference &) const;
+  virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                                     const lld::AtomLayout &,
+                                     const Reference &) const;
 
 private:
-  const HexagonTargetHandler &_targetHandler;
-  const HexagonTargetLayout<HexagonELFType> &_targetLayout;
+  HexagonLinkingContext &_hexagonLinkingContext LLVM_ATTRIBUTE_UNUSED;
+  HexagonTargetLayout<HexagonELFType> &_hexagonTargetLayout;
 };
 } // elf
 } // lld

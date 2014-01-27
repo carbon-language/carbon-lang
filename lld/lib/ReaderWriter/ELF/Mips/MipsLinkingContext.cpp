@@ -19,17 +19,6 @@ MipsLinkingContext::MipsLinkingContext(llvm::Triple triple)
     : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
                                     new MipsTargetHandler(*this))) {}
 
-MipsTargetLayout<Mips32ElELFType> &MipsLinkingContext::getTargetLayout() {
-  auto &layout = getTargetHandler<Mips32ElELFType>().targetLayout();
-  return static_cast<MipsTargetLayout<Mips32ElELFType> &>(layout);
-}
-
-const MipsTargetLayout<Mips32ElELFType> &
-MipsLinkingContext::getTargetLayout() const {
-  auto &layout = getTargetHandler<Mips32ElELFType>().targetLayout();
-  return static_cast<MipsTargetLayout<Mips32ElELFType> &>(layout);
-}
-
 bool MipsLinkingContext::isLittleEndian() const {
   return Mips32ElELFType::TargetEndianness == llvm::support::little;
 }

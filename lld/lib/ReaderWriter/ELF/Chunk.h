@@ -27,6 +27,8 @@ class ELFLinkingContext;
 namespace elf {
 class ELFWriter;
 
+template <class ELFT> class TargetLayout;
+
 /// \brief A chunk is a contiguous region of space
 template<class ELFT>
 class Chunk {
@@ -73,7 +75,8 @@ public:
   // Whats the contentType of the chunk ?
   virtual int getContentType() const = 0;
   // Writer the chunk
-  virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) = 0;
+  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+                     llvm::FileOutputBuffer &buffer) = 0;
   // Finalize the chunk before assigning offsets/virtual addresses
   virtual void doPreFlight() = 0;
   // Finalize the chunk before writing

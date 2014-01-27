@@ -42,63 +42,38 @@ template <class ELFT> class TargetLayout;
 
 template <class ELFT> class TargetRelocationHandler {
 public:
-  virtual error_code
-  applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                  const lld::AtomLayout &, const Reference &) const = 0;
+  virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                                     const lld::AtomLayout &,
+                                     const Reference &) const = 0;
 
   virtual ~TargetRelocationHandler() {}
 };
 
-/// \brief An interface to override functions that are provided by the
-/// the default ELF Layout
+/// \brief TargetHandler contains all the information responsible to handle a
+/// a particular target on ELF. A target might wish to override implementation
+/// of creating atoms and how the atoms are written to the output file.
 template <class ELFT> class TargetHandler : public TargetHandlerBase {
 
 public:
+  /// Constructor
   TargetHandler(ELFLinkingContext &targetInfo) : _context(targetInfo) {}
 
-  /// If the target overrides ELF header information, this API would
-  /// return true, so that the target can set all fields specific to
-  /// that target
-  virtual bool doesOverrideELFHeader() = 0;
+  /// The layout determined completely by the Target.
+  virtual TargetLayout<ELFT> &getTargetLayout() = 0;
 
-  /// Set the ELF Header information
-  virtual void setELFHeader(ELFHeader<ELFT> *elfHeader) = 0;
-
-  /// TargetLayout
-  virtual TargetLayout<ELFT> &targetLayout() = 0;
-
+  /// Determine how relocations need to be applied.
   virtual const TargetRelocationHandler<ELFT> &getRelocationHandler() const = 0;
 
-  /// Create a set of Default target sections that a target might needj
-  virtual void createDefaultSections() = 0;
-
-  /// \brief Add a section to the current Layout
-  virtual void addSection(Section<ELFT> *section) = 0;
-
-  /// \brief add new symbol file
-  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &) = 0;
-
-  /// \brief Finalize the symbol values
-  virtual void finalizeSymbolValues() = 0;
-
-  /// \brief allocate Commons, some architectures may move small common
-  /// symbols over to small data, this would also be used
-  virtual void allocateCommons() = 0;
-
-  /// \brief create dynamic table
-  virtual LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) createDynamicTable() = 0;
-
-  /// \brief create dynamic symbol table
-  virtual LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
-  createDynamicSymbolTable() = 0;
-
+  /// How does the target deal with reading input files.
   virtual std::unique_ptr<Reader> getObjReader(bool) = 0;
 
+  /// How does the target deal with reading dynamic libraries.
   virtual std::unique_ptr<Reader> getDSOReader(bool) = 0;
 
+  /// How does the target deal with writing ELF output.
   virtual std::unique_ptr<Writer> getWriter() = 0;
 
-protected:
+private:
   ELFLinkingContext &_context;
 };
 } // end namespace elf

@@ -22,35 +22,36 @@ namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 2, true> X86_64ELFType;
 class X86_64LinkingContext;
 
+template <class ELFT> class X86_64TargetLayout : public TargetLayout<ELFT> {
+public:
+  X86_64TargetLayout(X86_64LinkingContext &context)
+      : TargetLayout<ELFT>(context) {}
+};
+
 class X86_64TargetHandler LLVM_FINAL
     : public DefaultTargetHandler<X86_64ELFType> {
 public:
-  X86_64TargetHandler(X86_64LinkingContext &targetInfo);
+  X86_64TargetHandler(X86_64LinkingContext &context);
+
+  virtual X86_64TargetLayout<X86_64ELFType> &getTargetLayout() {
+    return *(_x86_64TargetLayout.get());
+  }
 
   virtual void registerRelocationNames(Registry &registry);
 
-  virtual TargetLayout<X86_64ELFType> &targetLayout() {
-    return _targetLayout;
-  }
-
   virtual const X86_64TargetRelocationHandler &getRelocationHandler() const {
-    return _relocationHandler;
+    return *(_x86_64RelocationHandler.get());
   }
 
-  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
+  virtual std::unique_ptr<Writer> getWriter();
 
 private:
-  class GOTFile : public SimpleFile {
-  public:
-    GOTFile(const ELFLinkingContext &eti) : SimpleFile("GOTFile") {}
-    llvm::BumpPtrAllocator _alloc;
-  };
-
   static const Registry::KindStrings kindStrings[];
-  std::unique_ptr<GOTFile> _gotFile;
-  X86_64TargetRelocationHandler _relocationHandler;
-  TargetLayout<X86_64ELFType> _targetLayout;
+  X86_64LinkingContext &_context;
+  std::unique_ptr<X86_64TargetLayout<X86_64ELFType>> _x86_64TargetLayout;
+  std::unique_ptr<X86_64TargetRelocationHandler> _x86_64RelocationHandler;
 };
+
 } // end namespace elf
 } // end namespace lld
 

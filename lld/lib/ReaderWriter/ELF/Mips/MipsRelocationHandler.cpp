@@ -112,10 +112,6 @@ void relocLldLo16(uint8_t *location, uint64_t S) {
 
 } // end anon namespace
 
-MipsTargetRelocationHandler::MipsTargetRelocationHandler(
-    const MipsLinkingContext &context, const MipsTargetHandler &handler)
-    : _targetHandler(handler) {}
-
 MipsTargetRelocationHandler::~MipsTargetRelocationHandler() {
   assert(_pairedRelocations.empty());
 }
@@ -132,7 +128,7 @@ MipsTargetRelocationHandler::savePairedRelocation(const lld::AtomLayout &atom,
 
 void MipsTargetRelocationHandler::applyPairedRelocations(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
-    int64_t loAddend) const {
+    int64_t gpAddr, int64_t loAddend) const {
   auto pi = _pairedRelocations.find(&atom);
   if (pi == _pairedRelocations.end())
     return;
@@ -150,13 +146,11 @@ void MipsTargetRelocationHandler::applyPairedRelocations(
     assert(ri->kindArch() == Reference::KindArch::Mips);
     switch (ri->kindValue()) {
     case R_MIPS_HI16:
-      relocHi16(location, relocVAddress, targetVAddress, ahl,
-                _targetHandler.getGPDispSymAddr(),
+      relocHi16(location, relocVAddress, targetVAddress, ahl, gpAddr,
                 ri->target()->name() == "_gp_disp");
       break;
     case R_MIPS_GOT16:
-      relocGOT16(location, relocVAddress, targetVAddress, ahl,
-                 _targetHandler.getGPDispSymAddr());
+      relocGOT16(location, relocVAddress, targetVAddress, ahl, gpAddr);
       break;
     default:
       llvm_unreachable("Unknown type of paired relocation.");
@@ -169,6 +163,9 @@ void MipsTargetRelocationHandler::applyPairedRelocations(
 error_code MipsTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
+  AtomLayout *gpAtom = _mipsTargetLayout.getGP();
+  uint64_t gpAddr = gpAtom ? gpAtom->_virtualAddr : 0;
+
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
   uint8_t *location = atomContent + ref.offsetInAtom();
   uint64_t targetVAddress = writer.addressOfAtom(ref.target());
@@ -191,16 +188,14 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     break;
   case R_MIPS_LO16:
     relocLo16(location, relocVAddress, targetVAddress, calcAHL(0, ref.addend()),
-              _targetHandler.getGPDispSymAddr(),
-              ref.target()->name() == "_gp_disp");
-    applyPairedRelocations(writer, buf, atom, ref.addend());
+              gpAddr, ref.target()->name() == "_gp_disp");
+    applyPairedRelocations(writer, buf, atom, gpAddr, ref.addend());
     break;
   case R_MIPS_GOT16:
     savePairedRelocation(atom, ref);
     break;
   case R_MIPS_CALL16:
-    relocCall16(location, relocVAddress, targetVAddress, ref.addend(),
-                _targetHandler.getGPDispSymAddr());
+    relocCall16(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
     break;
   case R_MIPS_JALR:
     // We do not do JALR optimization now.
@@ -212,8 +207,7 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     // Do nothing.
     break;
   case LLD_R_MIPS_GLOBAL_GOT16:
-    relocGOT16(location, relocVAddress, targetVAddress, ref.addend(),
-               _targetHandler.getGPDispSymAddr());
+    relocGOT16(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
     break;
   case LLD_R_MIPS_GLOBAL_26:
     reloc26(location, relocVAddress, targetVAddress, false);
