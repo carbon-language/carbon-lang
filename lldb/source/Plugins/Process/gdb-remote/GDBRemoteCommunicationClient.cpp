@@ -2054,6 +2054,11 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
         std::string name;
         std::string value;
         StringExtractor extractor;
+
+        uint32_t cpu = LLDB_INVALID_CPUTYPE;
+        uint32_t sub = 0;
+        std::string vendor;
+        std::string os_type;
         
         while (response.GetNameColonValue(name, value))
         {
@@ -2098,6 +2103,32 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
                 extractor.SetFilePos(0);
                 extractor.GetHexByteString (value);
                 process_info.GetExecutableFile().SetFile (value.c_str(), false);
+            }
+            else if (name.compare("cputype") == 0)
+            {
+                cpu = Args::StringToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 16);
+            }
+            else if (name.compare("cpusubtype") == 0)
+            {
+                sub = Args::StringToUInt32 (value.c_str(), 0, 16);
+            }
+            else if (name.compare("vendor") == 0)
+            {
+                vendor = value;
+            }
+            else if (name.compare("ostype") == 0)
+            {
+                os_type = value;
+            }
+        }
+
+        if (cpu != LLDB_INVALID_CPUTYPE && !vendor.empty() && !os_type.empty())
+        {
+            if (vendor == "apple")
+            {
+                process_info.GetArchitecture().SetArchitecture (eArchTypeMachO, cpu, sub);
+                process_info.GetArchitecture().GetTriple().setVendorName (llvm::StringRef (vendor));
+                process_info.GetArchitecture().GetTriple().setOSName (llvm::StringRef (os_type));
             }
         }
         
