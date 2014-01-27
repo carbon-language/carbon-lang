@@ -72,6 +72,7 @@ function(add_llvm_symbol_exports target_name export_file)
   endif()
 
   add_custom_target(${target_name}_exports DEPENDS ${native_export_file})
+  set_target_properties(${target_name}_exports PROPERTIES FOLDER "Misc")
 
   get_property(srcs TARGET ${target_name} PROPERTY SOURCES)
   foreach(src ${srcs})
