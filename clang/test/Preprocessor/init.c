@@ -868,8 +868,8 @@
 // MIPS32BE:#define _ABIO32 1
 // MIPS32BE-NOT:#define _LP64
 // MIPS32BE:#define _MIPSEB 1
-// MIPS32BE:#define _MIPS_ARCH "mips32"
-// MIPS32BE:#define _MIPS_ARCH_MIPS32 1
+// MIPS32BE:#define _MIPS_ARCH "mips32r2"
+// MIPS32BE:#define _MIPS_ARCH_MIPS32R2 1
 // MIPS32BE:#define _MIPS_FPSET 16
 // MIPS32BE:#define _MIPS_SIM _ABIO32
 // MIPS32BE:#define _MIPS_SZINT 32
@@ -987,8 +987,8 @@
 // MIPS32EL:#define _ABIO32 1
 // MIPS32EL-NOT:#define _LP64
 // MIPS32EL:#define _MIPSEL 1
-// MIPS32EL:#define _MIPS_ARCH "mips32"
-// MIPS32EL:#define _MIPS_ARCH_MIPS32 1
+// MIPS32EL:#define _MIPS_ARCH "mips32r2"
+// MIPS32EL:#define _MIPS_ARCH_MIPS32R2 1
 // MIPS32EL:#define _MIPS_FPSET 16
 // MIPS32EL:#define _MIPS_SIM _ABIO32
 // MIPS32EL:#define _MIPS_SZINT 32
@@ -1103,8 +1103,8 @@
 // MIPS64BE:#define _ABI64 3
 // MIPS64BE:#define _LP64 1
 // MIPS64BE:#define _MIPSEB 1
-// MIPS64BE:#define _MIPS_ARCH "mips64"
-// MIPS64BE:#define _MIPS_ARCH_MIPS64 1
+// MIPS64BE:#define _MIPS_ARCH "mips64r2"
+// MIPS64BE:#define _MIPS_ARCH_MIPS64R2 1
 // MIPS64BE:#define _MIPS_FPSET 32
 // MIPS64BE:#define _MIPS_SIM _ABI64
 // MIPS64BE:#define _MIPS_SZINT 32
@@ -1221,8 +1221,8 @@
 // MIPS64EL:#define _ABI64 3
 // MIPS64EL:#define _LP64 1
 // MIPS64EL:#define _MIPSEL 1
-// MIPS64EL:#define _MIPS_ARCH "mips64"
-// MIPS64EL:#define _MIPS_ARCH_MIPS64 1
+// MIPS64EL:#define _MIPS_ARCH "mips64r2"
+// MIPS64EL:#define _MIPS_ARCH_MIPS64R2 1
 // MIPS64EL:#define _MIPS_FPSET 32
 // MIPS64EL:#define _MIPS_SIM _ABI64
 // MIPS64EL:#define _MIPS_SZINT 32
@@ -1339,8 +1339,8 @@
 // RUN:            < /dev/null \
 // RUN:   | FileCheck -check-prefix MIPS-ARCH-DEF32 %s
 //
-// MIPS-ARCH-DEF32:#define _MIPS_ARCH "mips32"
-// MIPS-ARCH-DEF32:#define _MIPS_ARCH_MIPS32 1
+// MIPS-ARCH-DEF32:#define _MIPS_ARCH "mips32r2"
+// MIPS-ARCH-DEF32:#define _MIPS_ARCH_MIPS32R2 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips-none-nones \
 // RUN:            -target-cpu mips32 < /dev/null \
@@ -1360,8 +1360,8 @@
 // RUN:            < /dev/null \
 // RUN:   | FileCheck -check-prefix MIPS-ARCH-DEF64 %s
 //
-// MIPS-ARCH-DEF64:#define _MIPS_ARCH "mips64"
-// MIPS-ARCH-DEF64:#define _MIPS_ARCH_MIPS64 1
+// MIPS-ARCH-DEF64:#define _MIPS_ARCH "mips64r2"
+// MIPS-ARCH-DEF64:#define _MIPS_ARCH_MIPS64R2 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips64-none-none \
 // RUN:            -target-cpu mips64 < /dev/null \
