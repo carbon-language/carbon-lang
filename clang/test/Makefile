@@ -38,6 +38,8 @@ FORCE:
 
 lit.site.cfg: FORCE
 	@echo "Making Clang 'lit.site.cfg' file..."
+	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g > lit.tmp
+	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_LIBS_DIR@=$(LibDir)=g >> lit.tmp
 	@$(ECHOPATH) s=@CLANG_SOURCE_DIR@=$(PROJ_SRC_DIR)/..=g >> lit.tmp
@@ -55,6 +57,8 @@ lit.site.cfg: FORCE
 Unit/lit.site.cfg: FORCE
 	@echo "Making Clang 'Unit/lit.site.cfg' file..."
 	@$(MKDIR) $(dir $@)
+	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g > unit.tmp
+	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> unit.tmp
 	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> unit.tmp
 	@$(ECHOPATH) s=@LLVM_LIBS_DIR@=$(LibDir)=g >> unit.tmp
 	@$(ECHOPATH) s=@CLANG_SOURCE_DIR@=$(PROJ_SRC_DIR)/..=g >> unit.tmp
