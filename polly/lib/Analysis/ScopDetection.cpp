@@ -84,6 +84,13 @@ OnlyFunction("polly-only-func", cl::desc("Only run on a single function"),
              cl::value_desc("function-name"), cl::ValueRequired, cl::init(""),
              cl::cat(PollyCategory));
 
+static cl::opt<std::string>
+OnlyRegion("polly-only-region",
+           cl::desc("Only run on certain regions (The provided identifier must "
+                    "appear in the name of the region's entry block"),
+           cl::value_desc("identifier"), cl::ValueRequired, cl::init(""),
+           cl::cat(PollyCategory));
+
 static cl::opt<bool>
 IgnoreAliasing("polly-ignore-aliasing",
                cl::desc("Ignore possible aliasing of the array bases"),
@@ -626,9 +633,16 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
 
   DEBUG(dbgs() << "Checking region: " << R.getNameStr() << "\n\t");
 
-  // The toplevel region is no valid region.
   if (R.isTopLevelRegion()) {
     DEBUG(dbgs() << "Top level region is invalid"; dbgs() << "\n");
+    return false;
+  }
+
+  if (!R.getEntry()->getName().count(OnlyRegion)) {
+    DEBUG({
+      dbgs() << "Region entry does not match -polly-region-only";
+      dbgs() << "\n";
+    });
     return false;
   }
 
