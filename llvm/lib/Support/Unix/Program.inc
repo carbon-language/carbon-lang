@@ -418,6 +418,7 @@ ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
 #else
   if (ErrMsg)
     *ErrMsg = "Program::Wait is not implemented on this platform yet!";
+  ProcessInfo WaitResult;
   WaitResult.ReturnCode = -2;
 #endif
   return WaitResult;
