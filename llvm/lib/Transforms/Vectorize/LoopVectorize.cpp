@@ -160,6 +160,12 @@ static cl::opt<unsigned> ForceTargetMaxVectorUnrollFactor(
     cl::desc("A flag that overrides the target's max unroll factor for "
              "vectorized loops."));
 
+static cl::opt<unsigned> ForceTargetInstructionCost(
+    "force-target-instruction-cost", cl::init(0), cl::Hidden,
+    cl::desc("A flag that overrides the target's expected cost for "
+             "an instruction to a single constant value. Mostly "
+             "useful for getting consistent testing."));
+
 static cl::opt<unsigned> SmallLoopCost(
     "small-loop-cost", cl::init(20), cl::Hidden,
     cl::desc("The cost of a loop that is considered 'small' by the unroller."));
@@ -5185,6 +5191,11 @@ unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
         continue;
 
       unsigned C = getInstructionCost(it, VF);
+
+      // Check if we should override the cost.
+      if (ForceTargetInstructionCost.getNumOccurrences() > 0)
+        C = ForceTargetInstructionCost;
+
       BlockCost += C;
       DEBUG(dbgs() << "LV: Found an estimated cost of " << C << " for VF " <<
             VF << " For instruction: " << *it << '\n');
