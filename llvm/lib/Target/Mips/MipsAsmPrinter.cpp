@@ -34,8 +34,10 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -606,8 +608,6 @@ printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
 }
 
 void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
-  // FIXME: Use SwitchSection.
-
   // TODO: Need to add -mabicalls and -mno-abicalls flags.
   // Currently we assume that -mabicalls is the default.
   getTargetStreamer().emitDirectiveAbiCalls();
@@ -616,24 +616,25 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
     getTargetStreamer().emitDirectiveOptionPic0();
 
   // Tell the assembler which ABI we are using
-  if (OutStreamer.hasRawTextSupport())
-    OutStreamer.EmitRawText("\t.section .mdebug." +
-                            Twine(getCurrentABIString()));
+  std::string SectionName = std::string(".mdebug.") + getCurrentABIString();
+  OutStreamer.SwitchSection(OutContext.getELFSection(
+      SectionName, ELF::SHT_PROGBITS, 0, SectionKind::getDataRel()));
 
   // TODO: handle O64 ABI
-  if (OutStreamer.hasRawTextSupport()) {
-    if (Subtarget->isABI_EABI()) {
-      if (Subtarget->isGP32bit())
-        OutStreamer.EmitRawText(StringRef("\t.section .gcc_compiled_long32"));
-      else
-        OutStreamer.EmitRawText(StringRef("\t.section .gcc_compiled_long64"));
-    }
+
+  if (Subtarget->isABI_EABI()) {
+    if (Subtarget->isGP32bit())
+      OutStreamer.SwitchSection(
+          OutContext.getELFSection(".gcc_compiled_long32", ELF::SHT_PROGBITS, 0,
+                                   SectionKind::getDataRel()));
+    else
+      OutStreamer.SwitchSection(
+          OutContext.getELFSection(".gcc_compiled_long64", ELF::SHT_PROGBITS, 0,
+                                   SectionKind::getDataRel()));
   }
 
-  // return to previous section
-  if (OutStreamer.hasRawTextSupport())
-    OutStreamer.EmitRawText(StringRef("\t.previous"));
-
+  // return to the text section
+  OutStreamer.SwitchSection(OutContext.getObjectFileInfo()->getTextSection());
 }
 
 void MipsAsmPrinter::EmitEndOfAsmFile(Module &M) {
