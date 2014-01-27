@@ -1055,14 +1055,14 @@ struct LoopVectorize : public FunctionPass {
     // Check the function attributes to find out if this function should be
     // optimized for size.
     Function *F = L->getHeader()->getParent();
-    Attribute::AttrKind SzAttr = Attribute::OptimizeForSize;
-    Attribute::AttrKind FlAttr = Attribute::NoImplicitFloat;
-    unsigned FnIndex = AttributeSet::FunctionIndex;
-    bool OptForSize = Hints.Force != 1 &&
-                      F->getAttributes().hasAttribute(FnIndex, SzAttr);
-    bool NoFloat = F->getAttributes().hasAttribute(FnIndex, FlAttr);
+    bool OptForSize =
+        Hints.Force != 1 && F->hasFnAttribute(Attribute::OptimizeForSize);
 
-    if (NoFloat) {
+    // Check the function attributes to see if implicit floats are allowed.a
+    // FIXME: This check doesn't seem possibly correct -- what if the loop is
+    // an integer loop and the vector instructions selected are purely integer
+    // vector instructions?
+    if (F->hasFnAttribute(Attribute::NoImplicitFloat)) {
       DEBUG(dbgs() << "LV: Can't vectorize when the NoImplicitFloat"
             "attribute is used.\n");
       return false;
