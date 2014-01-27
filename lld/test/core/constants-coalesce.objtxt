@@ -11,7 +11,7 @@ defined-atoms:
       type:              constant
       merge:             by-content
       content:           [ 01, 02, 03, 04 ]
-      
+
     - ref-name:          L8-byte
       type:              constant
       merge:             by-content

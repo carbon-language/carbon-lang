@@ -94,7 +94,7 @@
 # RAW:   178:  24 80 84 8f  lw      $4, -32732($gp)
 
 # RAW: SYMBOL TABLE:
-# RAW: 00000000       *UND*  00000000 
+# RAW: 00000000       *UND*  00000000
 # RAW: 00002000 l     .data  00000000 local
 
     .global glob

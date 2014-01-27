@@ -11,7 +11,7 @@
 #
 RUN: lld -flavor gnu --output-filetype=yaml -r %p/Inputs/abs-test.i386 | FileCheck -check-prefix=YAML %s
 
-YAML:  absolute-atoms: 
+YAML:  absolute-atoms:
 YAML:    - name:              absLocalSymbol
 YAML:      value:             {{0x[0]+C0000}}
 YAML:    - name:              absGlobalSymbol

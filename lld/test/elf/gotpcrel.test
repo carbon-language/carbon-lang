@@ -12,7 +12,7 @@ YAML: kind: R_X86_64_64
 YAML: target: main
 
 YAML: name: main
-YAML: references:      
+YAML: references:
 YAML:   kind:    R_X86_64_GOTPCREL
 YAML:   offset:  3
 YAML:   target:  [[NULLGOT]]

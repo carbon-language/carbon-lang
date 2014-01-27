@@ -251,7 +251,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     }
   }
 
-  // Handle -mllvm 
+  // Handle -mllvm
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_mllvm),
                                ie = parsedArgs->filtered_end();
                                it != ie; ++it) {

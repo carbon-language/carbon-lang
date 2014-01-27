@@ -8,11 +8,11 @@
 defined-atoms:
     - name:              foo
       type:              code
-      content:           [ 48, 8B, 0D, 00, 00, 00, 00, 
-                           48, 8B, 0D, 00, 00, 00, 00, 
-                           48, 8B, 0D, 00, 00, 00, 00, 
+      content:           [ 48, 8B, 0D, 00, 00, 00, 00,
+                           48, 8B, 0D, 00, 00, 00, 00,
+                           48, 8B, 0D, 00, 00, 00, 00,
                            48, 83, 3D, 00, 00, 00, 00, 00,
-                           48, 83, 3D, 00, 00, 00, 00, 00, 
+                           48, 83, 3D, 00, 00, 00, 00, 00,
                            48, 83, 3D, 00, 00, 00, 00, 00,
                            48, 83, 3D, 00, 00, 00, 00, 00 ]
       references:
@@ -46,12 +46,12 @@ defined-atoms:
 shared-library-atoms:
     - name:              malloc
       load-name:         libc.so
-      
+
 ...
 
 # CHECK:  defined-atoms:
 # CHECK:       name:         foo
-# CHECK:       references: 
+# CHECK:       references:
 # CHECK:        kind:         pcrel32
 # CHECK:        offset:       3
 # CHECK:        target:       L

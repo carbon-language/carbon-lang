@@ -5,7 +5,7 @@ RUN: FileCheck -check-prefix=CHECKGOTPLT %s < %t
 
               - name:            __got0
 CHECKGOTPLT:    type:            got
-CHECKGOTPLT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 
+CHECKGOTPLT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00,
 CHECKGOTPLT:                       00, 00, 00, 00 ]
 CHECKGOTPLT:    alignment:       2^3
 CHECKGOTPLT:    section-name:    .got.plt
@@ -16,7 +16,7 @@ CHECKGOTPLT:    content:         [ 00, 00, 00, 00 ]
 CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got
 CHECKGOTPLT:    permissions:     rw-
-CHECKGOTPLT:    references:      
+CHECKGOTPLT:    references:
 CHECKGOTPLT:      - kind:            R_HEX_GLOB_DAT
 CHECKGOTPLT:        offset:          0
 CHECKGOTPLT:        target:          c
@@ -26,7 +26,7 @@ CHECKGOTPLT:    content:         [ 00, 00, 00, 00 ]
 CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got
 CHECKGOTPLT:    permissions:     rw-
-CHECKGOTPLT:    references:      
+CHECKGOTPLT:    references:
 CHECKGOTPLT:      - kind:            R_HEX_GLOB_DAT
 CHECKGOTPLT:        offset:          0
 CHECKGOTPLT:        target:          shankar
@@ -36,7 +36,7 @@ CHECKGOTPLT:    content:         [ 00, 00, 00, 00 ]
 CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got.plt
 CHECKGOTPLT:    permissions:     rw-
-CHECKGOTPLT:    references:      
+CHECKGOTPLT:    references:
 CHECKGOTPLT:      - kind:            R_HEX_JMP_SLOT
 CHECKGOTPLT:        offset:          0
 CHECKGOTPLT:        target:          fn
@@ -49,7 +49,7 @@ CHECKGOTPLT:    content:         [ 00, 00, 00, 00 ]
 CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got.plt
 CHECKGOTPLT:    permissions:     rw-
-CHECKGOTPLT:    references:      
+CHECKGOTPLT:    references:
 CHECKGOTPLT:      - kind:            R_HEX_JMP_SLOT
 CHECKGOTPLT:        offset:          0
 CHECKGOTPLT:        target:          fn1
@@ -62,7 +62,7 @@ CHECKGOTPLT:    content:         [ 00, 00, 00, 00 ]
 CHECKGOTPLT:    alignment:       2^2
 CHECKGOTPLT:    section-name:    .got.plt
 CHECKGOTPLT:    permissions:     rw-
-CHECKGOTPLT:    references:      
+CHECKGOTPLT:    references:
 CHECKGOTPLT:      - kind:            R_HEX_JMP_SLOT
 CHECKGOTPLT:        offset:          0
 CHECKGOTPLT:        target:          fn2
@@ -71,12 +71,12 @@ CHECKGOTPLT:        offset:          0
                     target:          .PLT0
               - name:            .PLT0
 CHECKGOTPLT:    type:            stub
-CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 1C, C0, 49, 6A, 0E, 42, 9C, E2, 
-CHECKGOTPLT:                       4F, 40, 9C, 91, 3C, C0, 9C, 91, 0E, 42, 0E, 8C, 
+CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 1C, C0, 49, 6A, 0E, 42, 9C, E2,
+CHECKGOTPLT:                       4F, 40, 9C, 91, 3C, C0, 9C, 91, 0E, 42, 0E, 8C,
 CHECKGOTPLT:                       00, C0, 9C, 52 ]
 CHECKGOTPLT:    alignment:       2^4
 CHECKGOTPLT:    section-name:    .plt
-CHECKGOTPLT:    references:      
+CHECKGOTPLT:    references:
 CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
 CHECKGOTPLT:        offset:          0
                     target:          __got0
@@ -86,11 +86,11 @@ CHECKGOTPLT:        offset:          4
 CHECKGOTPLT:        addend:          4
               - name:            __plt_fn
 CHECKGOTPLT:    type:            stub
-CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91, 
+CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91,
 CHECKGOTPLT:                       00, C0, 9C, 52 ]
 CHECKGOTPLT:    alignment:       2^4
 CHECKGOTPLT:    section-name:    .plt
-CHECKGOTPLT:    references:      
+CHECKGOTPLT:    references:
 CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
 CHECKGOTPLT:        offset:          0
                     target:          __got_fn
@@ -100,11 +100,11 @@ CHECKGOTPLT:        offset:          4
 CHECKGOTPLT:        addend:          4
               - name:            __plt_fn1
 CHECKGOTPLT:    type:            stub
-CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91, 
+CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91,
 CHECKGOTPLT:                       00, C0, 9C, 52 ]
 CHECKGOTPLT:    alignment:       2^4
 CHECKGOTPLT:    section-name:    .plt
-CHECKGOTPLT:    references:      
+CHECKGOTPLT:    references:
 CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
 CHECKGOTPLT:        offset:          0
                     target:          __got_fn1
@@ -114,11 +114,11 @@ CHECKGOTPLT:        offset:          4
 CHECKGOTPLT:        addend:          4
               - name:            __plt_fn2
 CHECKGOTPLT:    type:            stub
-CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91, 
+CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91,
 CHECKGOTPLT:                       00, C0, 9C, 52 ]
 CHECKGOTPLT:    alignment:       2^4
 CHECKGOTPLT:    section-name:    .plt
-CHECKGOTPLT:    references:      
+CHECKGOTPLT:    references:
 CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
 CHECKGOTPLT:        offset:          0
                     target:          __got_fn2

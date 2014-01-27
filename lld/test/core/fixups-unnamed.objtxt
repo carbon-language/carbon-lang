@@ -8,7 +8,7 @@
 defined-atoms:
     - name:              foo
       type:              code
-      content:           [ 48, 8D, 3D, 00, 00, 00, 00, 
+      content:           [ 48, 8D, 3D, 00, 00, 00, 00,
                            48, 8D, 3D, 00, 00, 00, 00 ]
       references:
       - offset:          3
@@ -17,7 +17,7 @@ defined-atoms:
       - offset:          10
         kind:            pcrel32
         target:          LC2
-  
+
 
     - ref-name:          LC1
       type:              c-string
@@ -28,7 +28,7 @@ defined-atoms:
       type:              c-string
       merge:             by-content
       content:           [ 74, 68, 65, 72, 65, 00 ]
-  
+
 
 ...
 

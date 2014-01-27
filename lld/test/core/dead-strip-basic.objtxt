@@ -17,7 +17,7 @@ defined-atoms:
       - offset:          6
         kind:            pcrel32
         target:          baz
-  
+
     - name:         mydead1
       scope:        global
 

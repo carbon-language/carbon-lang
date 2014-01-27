@@ -20,7 +20,7 @@ following pieces in order to fit into lld:
 
    .. cpp:class:: ReaderOptionsFoo : public ReaderOptions
 
-      This Options class is the only way to configure how the Reader will 
+      This Options class is the only way to configure how the Reader will
       parse any file into an `lld::Reader`:cpp:class: object.  This class
       should be declared in the `lld`:cpp:class: namespace.
 

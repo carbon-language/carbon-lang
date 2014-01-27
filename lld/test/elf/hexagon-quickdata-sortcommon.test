@@ -1,5 +1,5 @@
 RUN: lld -flavor gnu -target hexagon -o %t1 --noinhibit-exec \
-RUN:     %p/Inputs/quickdata-sortcommon-test.o.elf-hexagon 
+RUN:     %p/Inputs/quickdata-sortcommon-test.o.elf-hexagon
 RUN: llvm-nm -n %t1 | FileCheck %s -check-prefix=quickdataSortCommon
 
 quickdataSortCommon: 00002000 D AA1

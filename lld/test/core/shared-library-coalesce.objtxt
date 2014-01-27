@@ -8,14 +8,14 @@
 shared-library-atoms:
     - name:              foo1
       load-name:         libc.so
-      
+
     - name:              foo2
       load-name:         libc.so
 
     - name:              bar1
       load-name:         libc.so
       can-be-null:       at-runtime
-      
+
     - name:              bar2
       load-name:         libc.so
       can-be-null:       at-runtime
@@ -23,13 +23,13 @@ shared-library-atoms:
     - name:              mismatchNull1
       load-name:         libc.so
       can-be-null:       at-runtime
-      
+
     - name:              mismatchNull2
       load-name:         libc.so
-  
+
     - name:              mismatchload1
       load-name:         liba.so
-      
+
     - name:              mismatchload2
       load-name:         libb.so
 
@@ -37,7 +37,7 @@ shared-library-atoms:
 shared-library-atoms:
     - name:              foo2
       load-name:         libc.so
-      
+
     - name:              foo3
       load-name:         libc.so
 
@@ -51,14 +51,14 @@ shared-library-atoms:
 
     - name:              mismatchNull1
       load-name:         libc.so
-      
+
     - name:              mismatchNull2
       load-name:         libc.so
       can-be-null:       at-runtime
-  
+
     - name:              mismatchload1
       load-name:         libb.so
-      
+
     - name:              mismatchload2
       load-name:         liba.so
 

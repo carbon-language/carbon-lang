@@ -8,7 +8,7 @@
 # CHECK: Format: ELF32-mips
 # CHECK: Arch: mipsel
 # CHECK: AddressSize: 32bit
-# CHECK: LoadName: 
+# CHECK: LoadName:
 # CHECK: ElfHeader {
 # CHECK:   Ident {
 # CHECK:    Magic: (7F 45 4C 46)

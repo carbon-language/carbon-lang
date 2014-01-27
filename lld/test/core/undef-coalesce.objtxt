@@ -9,7 +9,7 @@
 defined-atoms:
     - name:              foo
       type:              code
-      
+
 undefined-atoms:
     - name:              malloc
     - name:              free
@@ -17,7 +17,7 @@ undefined-atoms:
 defined-atoms:
     - name:              bar
       type:              code
-      
+
 undefined-atoms:
     - name:              malloc
     - name:              myfunc
@@ -26,7 +26,7 @@ defined-atoms:
     - name:              myfunc
       scope:             global
       type:              code
-      
+
 undefined-atoms:
     - name:              free
 ...

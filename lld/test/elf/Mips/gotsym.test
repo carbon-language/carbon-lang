@@ -6,7 +6,7 @@
 
 # SHARED: Sections:
 # SHARED: Idx Name          Size      Address          Type
-# SHARED:   6 .got          00000008 0000000000001000 DATA 
+# SHARED:   6 .got          00000008 0000000000001000 DATA
 # SHARED: SYMBOL TABLE:
 # SHARED: 00001000 g       *ABS*  00000000 _GLOBAL_OFFSET_TABLE_
 # SHARED: 00008ff0 g       *ABS*  00000000 _gp

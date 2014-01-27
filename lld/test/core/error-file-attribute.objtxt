@@ -10,7 +10,7 @@ aardvark:           true
 defined-atoms:
     - name:         entry
       scope:        hidden
-  
+
 ...
 
 

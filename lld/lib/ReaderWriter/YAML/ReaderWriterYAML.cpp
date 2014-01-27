@@ -150,7 +150,7 @@ private:
   typedef llvm::StringMap<const lld::Atom *> NameToAtom;
   typedef llvm::DenseMap<const lld::Atom *, std::string> AtomToRefName;
 
-  // Allocate a new copy of this string in _storage, so the strings 
+  // Allocate a new copy of this string in _storage, so the strings
   // can be freed when RefNameBuilder is destroyed.
   StringRef copyString(StringRef str) {
     char *s = _storage.Allocate<char>(str.size());
@@ -635,7 +635,7 @@ template <> struct MappingTraits<const lld::File *> {
       return _absoluteAtoms;
     }
 
-    // Allocate a new copy of this string in _storage, so the strings 
+    // Allocate a new copy of this string in _storage, so the strings
     // can be freed when File is destroyed.
     StringRef copyString(StringRef str) {
       char *s = _storage.Allocate<char>(str.size());
@@ -659,7 +659,7 @@ template <> struct MappingTraits<const lld::File *> {
     // Let any register tag handler process this.
     if (info->_registry && info->_registry->handleTaggedDoc(io, file))
       return;
-    // If no registered handler claims this tag and there is no tag, 
+    // If no registered handler claims this tag and there is no tag,
     // grandfather in as "!native".
     if (io.mapTag("!native", true) || io.mapTag("tag:yaml.org,2002:map"))
       mappingAtoms(io, file);
@@ -890,7 +890,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     io.mapOptional("ref-name",         keys->_refName, StringRef());
     io.mapOptional("scope",            keys->_scope,
                                          DefinedAtom::scopeTranslationUnit);
-    io.mapOptional("type",             keys->_contentType, 
+    io.mapOptional("type",             keys->_contentType,
                                          DefinedAtom::typeCode);
     io.mapOptional("content",          keys->_content);
     io.mapOptional("size",             keys->_size, (uint64_t)keys->_content.size());

@@ -8,7 +8,7 @@
 defined-atoms:
     - name:              foo
       type:              code
-      content:           [ E8, 00, 00, 00, 00, E8, 00, 00, 00, 
+      content:           [ E8, 00, 00, 00, 00, E8, 00, 00, 00,
                            00, 48 ,8B, 05, 00, 00, 00, 00 ]
       references:
       - offset:          1
@@ -24,14 +24,14 @@ defined-atoms:
 shared-library-atoms:
     - name:              malloc
       load-name:         libc.so
-      
+
     - name:              free
       load-name:         libc.so
 
 ...
 
 # CHECK:       name:         foo
-# CHECK:       references: 
+# CHECK:       references:
 # CHECK:       kind:         call32
 # CHECK:       target:       L
 # CHECK:       kind:         call32

@@ -34,18 +34,18 @@ public:
   }
 
   virtual void updateReferenceToGOT(const Reference*, bool targetIsNowGOT) {
-  
+
   }
 
   virtual const DefinedAtom* makeGOTEntry(const Atom&) {
     return nullptr;
   }
-  
+
 };
 
 
-} // namespace mach_o 
-} // namespace lld 
+} // namespace mach_o
+} // namespace lld
 
 
 #endif // LLD_READER_WRITER_MACHO_GOT_PASS_H

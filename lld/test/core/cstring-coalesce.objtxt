@@ -10,7 +10,7 @@ defined-atoms:
       type:              c-string
       merge:             by-content
       content:           [ 68, 65, 6c, 6c, 6f, 00 ]
-      
+
     - ref-name:          L1
       type:              c-string
       merge:             by-content

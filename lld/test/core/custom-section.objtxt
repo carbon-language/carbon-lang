@@ -24,7 +24,7 @@ defined-atoms:
 
 
 # CHECK:        name: _foo1
-# CHECK-NOT:    section-name: 
+# CHECK-NOT:    section-name:
 # CHECK:        name: _foo2
 # CHECK:        section-choice:   custom
 # CHECK:        section-name:   __foozle

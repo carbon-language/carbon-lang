@@ -10,7 +10,7 @@ defined-atoms:
     - name:         entry
       scope:        hidden
       content:      [ A5, 00, 4G, 1F ]
-  
+
 ...
 
 

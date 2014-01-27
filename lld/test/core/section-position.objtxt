@@ -23,7 +23,7 @@ defined-atoms:
     - name:              data_start
       type:              data
       section-position:  start
-      
+
 ---
 defined-atoms:
     - name:              data_end_too
@@ -33,7 +33,7 @@ defined-atoms:
     - name:              some_more_data
       type:              data
       content:           [ 03, 04 ]
-      
+
 ---
 defined-atoms:
     - name:              early_data_too
@@ -44,7 +44,7 @@ defined-atoms:
 ...
 
 
-# CHKUNORD: defined-atoms:   
+# CHKUNORD: defined-atoms:
 # CHKUNORD:   - name:             data_end
 # CHKUNORD:     section-position: end
 # CHKUNORD:   - name:             some_data
@@ -63,7 +63,7 @@ defined-atoms:
 # CHKUNORD:     section-position: early
 # CHKUNORD: ...
 
-# CHKORDER: defined-atoms:   
+# CHKORDER: defined-atoms:
 # CHKORDER:   - name:             data_start
 # CHKORDER:     section-position: start
 # CHKORDER:   - name:             early_data

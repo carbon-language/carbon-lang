@@ -45,7 +45,7 @@ members:
          - name:              baz1
            scope:             global
            type:              code
- 
+
          - name:              baz1b
            type:              code
 

@@ -23,7 +23,7 @@ Flavors
 -------
 
 Each of these different interfaces is referred to as a flavor. There is also an
-extra flavor "core" which is used to exercise the core functionality of the 
+extra flavor "core" which is used to exercise the core functionality of the
 linker it the test suite.
 
 * gnu
@@ -51,7 +51,7 @@ Adding an Option to an existing Flavor
 
 #. Add to :cpp:class:`lld::FlavorLinkingContext` a getter and setter method
    for the option.
-   
+
 #. Modify :cpp:func:`lld::FlavorDriver::parse` in :file:
    `lib/Driver/{Flavor}Driver.cpp` to call the targetInfo setter
    for corresponding to the option.
@@ -66,7 +66,7 @@ Adding a Flavor
    :cpp:class:`lld::UniversalDriver::Flavor`.
 
 #. Add an entry in :file:`lib/Driver/UniversalDriver.cpp` to
-   :cpp:func:`lld::Driver::strToFlavor` and 
+   :cpp:func:`lld::Driver::strToFlavor` and
    :cpp:func:`lld::UniversalDriver::link`.
    This allows the flavor to be selected via symlink and :option:`-flavor`.
 
@@ -76,4 +76,4 @@ Adding a Flavor
    must also be added to :file:`lib/Driver/CMakeLists.txt`.
 
 #. Add a ``{flavor}Driver`` as a subclass of :cpp:class:`lld::Driver`
-   in :file:`lib/Driver/{flavor}Driver.cpp`. 
+   in :file:`lib/Driver/{flavor}Driver.cpp`.

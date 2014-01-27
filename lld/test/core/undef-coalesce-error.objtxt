@@ -3,7 +3,7 @@
 # RUN: lld -core %s | FileCheck %s
 
 #
-# Test that -undefines-are-errors triggers and error 
+# Test that -undefines-are-errors triggers and error
 # and that not using that option results in undefined atoms.
 #
 
@@ -11,7 +11,7 @@
 defined-atoms:
     - name:              foo
       type:              code
-      
+
 undefined-atoms:
     - name:              malloc
     - name:              free
@@ -19,7 +19,7 @@ undefined-atoms:
 defined-atoms:
     - name:              bar
       type:              code
-      
+
 undefined-atoms:
     - name:              malloc
     - name:              myfunc
@@ -28,7 +28,7 @@ defined-atoms:
     - name:              myfunc
       scope:             global
       type:              code
-      
+
 undefined-atoms:
     - name:              free
 ...

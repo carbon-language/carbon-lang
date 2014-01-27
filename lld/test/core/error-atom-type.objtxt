@@ -11,7 +11,7 @@ defined-atoms:
       scope:        hidden
       type:         superluminal
       dead-strip:   never
-  
+
 ...
 
 

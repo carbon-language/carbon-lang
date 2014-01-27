@@ -10,14 +10,14 @@ shared-library-atoms:
       load-name:         libc.so
       type:              code
       size:              0
-      
+
     - name:              free
       load-name:         libc.so
 
     - name:              fast_malloc
       load-name:         libc.so
       can-be-null:       at-runtime
-      
+
     - name:              stdout
       load-name:         libc.so
       type:              data

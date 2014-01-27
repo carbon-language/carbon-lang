@@ -11,13 +11,13 @@ defined-atoms:
     - name:              two
       type:              data
       permissions:       rw-
-      
+
     - name:              three
       type:              const-data
-      
+
     - name:              four
       type:              unknown
-      
+
     - name:              oddCode
       type:              code
       permissions:       rwx
@@ -25,15 +25,15 @@ defined-atoms:
     - name:              oddData
       type:              data
       permissions:       rwx
-     
+
     - name:              oddConstData
       type:              const-data
       permissions:       rw-
-      
+
     - name:              oddUnknown
       type:              unknown
       permissions:       rw-
-      
+
 ...
 
 # CHECK:     ---

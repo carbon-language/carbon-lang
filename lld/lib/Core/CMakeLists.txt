@@ -11,7 +11,7 @@ add_lld_library(lldCore
   SymbolTable.cpp
   )
 
-target_link_libraries(lldCore 
+target_link_libraries(lldCore
   lldNative
   lldYAML
   )

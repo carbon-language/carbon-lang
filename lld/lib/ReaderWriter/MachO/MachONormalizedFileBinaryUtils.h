@@ -194,30 +194,30 @@ inline uint64_t read64(bool swap, uint64_t value) {
 
 
 
-inline uint32_t 
-bitFieldExtract(uint32_t value, bool isBigEndianBigField, uint8_t firstBit, 
+inline uint32_t
+bitFieldExtract(uint32_t value, bool isBigEndianBigField, uint8_t firstBit,
                                                           uint8_t bitCount) {
-  const uint32_t mask = ((1<<bitCount)-1); 
+  const uint32_t mask = ((1<<bitCount)-1);
   const uint8_t shift = isBigEndianBigField ? (32-firstBit-bitCount) : firstBit;
   return (value >> shift) & mask;
 }
 
-inline void 
-bitFieldSet(uint32_t &bits, bool isBigEndianBigField, uint32_t newBits, 
+inline void
+bitFieldSet(uint32_t &bits, bool isBigEndianBigField, uint32_t newBits,
                             uint8_t firstBit, uint8_t bitCount) {
-  const uint32_t mask = ((1<<bitCount)-1); 
+  const uint32_t mask = ((1<<bitCount)-1);
   assert((newBits & mask) == newBits);
   const uint8_t shift = isBigEndianBigField ? (32-firstBit-bitCount) : firstBit;
   bits &= ~(mask << shift);
   bits |= (newBits << shift);
 }
 
-inline Relocation 
-unpackRelocation(const llvm::MachO::any_relocation_info &r, bool swap, 
+inline Relocation
+unpackRelocation(const llvm::MachO::any_relocation_info &r, bool swap,
                                                             bool isBigEndian) {
   uint32_t r0 = read32(swap, r.r_word0);
   uint32_t r1 = read32(swap, r.r_word1);
- 
+
   Relocation result;
   if (r0 & llvm::MachO::R_SCATTERED) {
     // scattered relocation record always laid out like big endian bit field
@@ -242,14 +242,14 @@ unpackRelocation(const llvm::MachO::any_relocation_info &r, bool swap,
     result.symbol     = bitFieldExtract(r1, isBigEndian, 0, 24);
   }
   return result;
-} 
+}
 
 
-inline llvm::MachO::any_relocation_info 
+inline llvm::MachO::any_relocation_info
 packRelocation(const Relocation &r, bool swap, bool isBigEndian) {
   uint32_t r0 = 0;
   uint32_t r1 = 0;
-  
+
   if (r.scattered) {
     r1 = r.value;
     bitFieldSet(r0, true, r.offset,    8, 24);
@@ -265,12 +265,12 @@ packRelocation(const Relocation &r, bool swap, bool isBigEndian) {
     bitFieldSet(r1, isBigEndian, r.pcRel,    24, 1);
     bitFieldSet(r1, isBigEndian, r.symbol,   0,  24);
   }
-  
+
   llvm::MachO::any_relocation_info result;
   result.r_word0 = swap ? SwapByteOrder(r0) : r0;
   result.r_word1 = swap ? SwapByteOrder(r1) : r1;
   return result;
-} 
+}
 
 inline StringRef getString16(const char s[16]) {
   StringRef x = s;

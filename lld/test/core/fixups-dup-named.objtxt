@@ -16,7 +16,7 @@ defined-atoms:
       - offset:          6
         kind:            pcrel32
         target:          bar_2
-  
+
     - name:              bar
       ref-name:          bar_1
       scope:             static
@@ -24,7 +24,7 @@ defined-atoms:
     - name:              bar
       ref-name:          bar_2
       scope:             static
-  
+
 
 ...
 

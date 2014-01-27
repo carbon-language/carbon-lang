@@ -9,7 +9,7 @@
 undefined-atoms:
     - name:         foo
       type:         code
-  
+
 ...
 
 

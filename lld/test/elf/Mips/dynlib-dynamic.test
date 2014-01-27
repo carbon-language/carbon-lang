@@ -8,7 +8,7 @@
 # CHECK: Format: ELF32-mips
 # CHECK: Arch: mipsel
 # CHECK: AddressSize: 32bit
-# CHECK: LoadName: 
+# CHECK: LoadName:
 # CHECK: DynamicSection [ (15 entries)
 # CHECK:   Tag        Type                 Name/Value
 # CHECK:   0x00000004 HASH                 0xD4

@@ -9,7 +9,7 @@
 absolute-atoms:
     - name:              putchar
       value:             0xFFFF0040
-      
+
     - name:              reset
       value:             0xFFFF0080
 

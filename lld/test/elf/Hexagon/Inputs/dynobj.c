@@ -1,5 +1,5 @@
 extern int shankar;
-static int a; 
+static int a;
 static int b;
 int c;
 int fn2() {

@@ -16,9 +16,9 @@
 ///                        ^
 ///                        |
 ///                        |
-///                    +-------+ 
+///                    +-------+
 ///                    | Atoms |
-///                    +-------+ 
+///                    +-------+
 
 #include "MachONormalizedFile.h"
 #include "ReferenceKinds.h"
@@ -53,7 +53,7 @@ struct AtomInfo {
 
 struct SectionInfo {
   SectionInfo(StringRef seg, StringRef sect, SectionType type, uint32_t attr=0);
-  
+
   StringRef                 segmentName;
   StringRef                 sectionName;
   SectionType               type;
@@ -66,15 +66,15 @@ struct SectionInfo {
   uint32_t                  finalSectionIndex;
 };
 
-SectionInfo::SectionInfo(StringRef sg, StringRef sct, SectionType t, uint32_t a) 
- : segmentName(sg), sectionName(sct), type(t), attributes(a), 
-                 address(0), size(0), alignment(0), 
+SectionInfo::SectionInfo(StringRef sg, StringRef sct, SectionType t, uint32_t a)
+ : segmentName(sg), sectionName(sct), type(t), attributes(a),
+                 address(0), size(0), alignment(0),
                  normalizedSectionIndex(0), finalSectionIndex(0) {
 }
 
 struct SegmentInfo {
   SegmentInfo(StringRef name);
-  
+
   StringRef                  name;
   uint64_t                   address;
   uint64_t                   size;
@@ -82,7 +82,7 @@ struct SegmentInfo {
   std::vector<SectionInfo*>  sections;
 };
 
-SegmentInfo::SegmentInfo(StringRef n) 
+SegmentInfo::SegmentInfo(StringRef n)
  : name(n), address(0), size(0), access(0) {
 }
 
@@ -108,10 +108,10 @@ public:
 private:
   typedef std::map<DefinedAtom::ContentType, SectionInfo*> TypeToSection;
   typedef llvm::DenseMap<const Atom*, uint64_t> AtomToAddress;
-  
+
   struct DylibInfo { int ordinal; bool hasWeak; bool hasNonWeak; };
   typedef llvm::StringMap<DylibInfo> DylibPathToInfo;
-  
+
   SectionInfo *sectionForAtom(const DefinedAtom*);
   SectionInfo *makeSection(DefinedAtom::ContentType);
   void         appendAtom(SectionInfo *sect, const DefinedAtom *atom);
@@ -121,15 +121,15 @@ private:
   void         copySectionContent(SectionInfo *si, ContentBytes &content);
   uint8_t      scopeBits(const DefinedAtom* atom);
   int          dylibOrdinal(const SharedLibraryAtom *sa);
-  void         segIndexForSection(const SectionInfo *sect, 
+  void         segIndexForSection(const SectionInfo *sect,
                              uint8_t &segmentIndex, uint64_t &segmentStartAddr);
   const Atom  *targetOfLazyPointer(const DefinedAtom *lpAtom);
   const Atom  *targetOfStub(const DefinedAtom *stubAtom);
   bool         belongsInGlobalSymbolsSection(const DefinedAtom* atom);
   void         appendSection(SectionInfo *si, NormalizedFile &file);
-  void         appendReloc(const DefinedAtom *atom, const Reference *ref, 
+  void         appendReloc(const DefinedAtom *atom, const Reference *ref,
                                                       Relocations &relocations);
-  
+
   static uint64_t alignTo(uint64_t value, uint8_t align2);
   typedef llvm::DenseMap<const Atom*, uint32_t> AtomToIndex;
   struct AtomAndIndex { const Atom *atom; uint32_t index; };
@@ -160,7 +160,7 @@ SectionInfo *Util::makeSection(DefinedAtom::ContentType type) {
   switch ( type ) {
   case DefinedAtom::typeCode:
     return new (_allocator) SectionInfo("__TEXT", "__text",
-                             S_REGULAR, S_ATTR_PURE_INSTRUCTIONS 
+                             S_REGULAR, S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
   case DefinedAtom::typeCString:
      return new (_allocator) SectionInfo("__TEXT", "__cstring",
@@ -195,7 +195,7 @@ SectionInfo *Util::sectionForAtom(const DefinedAtom *atom) {
   _sectionMap[type] = si;
   return si;
 }
-  
+
 
 void Util::appendAtom(SectionInfo *sect, const DefinedAtom *atom) {
   // Figure out offset for atom in this section given alignment constraints.
@@ -250,7 +250,7 @@ unsigned Util::SegmentSorter::weight(const SegmentInfo *seg) {
     .Default(100);
 }
 
-bool Util::SegmentSorter::operator()(const SegmentInfo *left, 
+bool Util::SegmentSorter::operator()(const SegmentInfo *left,
                                   const SegmentInfo *right) {
   return (weight(left) < weight(right));
 }
@@ -267,7 +267,7 @@ unsigned Util::TextSectionSorter::weight(const SectionInfo *sect) {
     .Default(10);
 }
 
-bool Util::TextSectionSorter::operator()(const SectionInfo *left, 
+bool Util::TextSectionSorter::operator()(const SectionInfo *left,
                                          const SectionInfo *right) {
   return (weight(left) < weight(right));
 }
@@ -291,15 +291,15 @@ void Util::organizeSections() {
     }
     // Sort segments.
     std::sort(_segmentInfos.begin(), _segmentInfos.end(), SegmentSorter());
-    
+
     // Sort sections within segments.
     for (SegmentInfo *seg : _segmentInfos) {
       if (seg->name.equals("__TEXT")) {
-        std::sort(seg->sections.begin(), seg->sections.end(), 
+        std::sort(seg->sections.begin(), seg->sections.end(),
                                                           TextSectionSorter());
       }
     }
-    
+
     // Record final section indexes.
     uint32_t sectionIndex = 1;
     for (SegmentInfo *seg : _segmentInfos) {
@@ -331,7 +331,7 @@ void Util::layoutSectionsInTextSegment(SegmentInfo *seg, uint64_t &addr) {
   seg->address = addr;
   // Walks sections starting at end to calculate padding for start.
   int64_t taddr = 0;
-  for (auto it = seg->sections.rbegin(); it != seg->sections.rend(); ++it) { 
+  for (auto it = seg->sections.rbegin(); it != seg->sections.rend(); ++it) {
     SectionInfo *sect = *it;
     taddr -= sect->size;
     taddr = taddr & (0 - (1 << sect->alignment));
@@ -362,17 +362,17 @@ void Util::assignAddressesToSections() {
       else
         layoutSectionsInSegment(seg, address);
     }
-    DEBUG_WITH_TYPE("WriterMachO-norm", 
+    DEBUG_WITH_TYPE("WriterMachO-norm",
       llvm::dbgs() << "assignAddressesToSections()\n";
       for (SegmentInfo *sgi : _segmentInfos) {
         llvm::dbgs()  << "   address=" << llvm::format("0x%08llX", sgi->address)
                       << ", size="  << llvm::format("0x%08llX", sgi->size)
-                      << ", segment-name='" << sgi->name 
+                      << ", segment-name='" << sgi->name
                       << "'\n";
         for (SectionInfo *si : sgi->sections) {
           llvm::dbgs()<< "      addr="  << llvm::format("0x%08llX", si->address)
                       << ", size="  << llvm::format("0x%08llX", si->size)
-                      << ", section-name='" << si->sectionName 
+                      << ", section-name='" << si->sectionName
                       << "\n";
         }
       }
@@ -382,10 +382,10 @@ void Util::assignAddressesToSections() {
       sect->address = alignTo(address, sect->alignment);
       address = sect->address + sect->size;
     }
-    DEBUG_WITH_TYPE("WriterMachO-norm", 
+    DEBUG_WITH_TYPE("WriterMachO-norm",
       llvm::dbgs() << "assignAddressesToSections()\n";
       for (SectionInfo *si : _sectionInfos) {
-        llvm::dbgs()  << "      section=" << si->sectionName 
+        llvm::dbgs()  << "      section=" << si->sectionName
                       << " address= "  << llvm::format("0x%08X", si->address)
                       << " size= "  << llvm::format("0x%08X", si->size)
                       << "\n";
@@ -499,19 +499,19 @@ uint8_t Util::scopeBits(const DefinedAtom* atom) {
   llvm_unreachable("Unknown scope");
 }
 
-bool Util::AtomSorter::operator()(const AtomAndIndex &left, 
+bool Util::AtomSorter::operator()(const AtomAndIndex &left,
                                   const AtomAndIndex &right) {
   return (left.atom->name().compare(right.atom->name()) < 0);
 }
 
- 
+
 bool Util::belongsInGlobalSymbolsSection(const DefinedAtom* atom) {
   return (atom->scope() == Atom::scopeGlobal);
 }
 
 void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
   // Mach-O symbol table has three regions: locals, globals, undefs.
-  
+
   // Add all local (non-global) symbols in address order
   std::vector<AtomAndIndex> globals;
   globals.reserve(512);
@@ -525,7 +525,7 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
         } else {
           Symbol sym;
           sym.name  = atom->name();
-          sym.type  = N_SECT; 
+          sym.type  = N_SECT;
           sym.scope = scopeBits(atom);
           sym.sect  = sect->finalSectionIndex;
           sym.desc  = 0;
@@ -535,21 +535,21 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
       }
     }
   }
-  
+
   // Sort global symbol alphabetically, then add to symbol table.
   std::sort(globals.begin(), globals.end(), AtomSorter());
   for (AtomAndIndex &ai : globals) {
     Symbol sym;
     sym.name  = ai.atom->name();
-    sym.type  = N_SECT; 
+    sym.type  = N_SECT;
     sym.scope = scopeBits(static_cast<const DefinedAtom*>(ai.atom));
     sym.sect  = ai.index;
     sym.desc  = 0;
     sym.value = _atomToAddress[ai.atom];
     file.globalSymbols.push_back(sym);
   }
-  
-  
+
+
   // Sort undefined symbol alphabetically, then add to symbol table.
   std::vector<AtomAndIndex> undefs;
   undefs.reserve(128);
@@ -566,7 +566,7 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
   for (AtomAndIndex &ai : undefs) {
     Symbol sym;
     sym.name  = ai.atom->name();
-    sym.type  = N_UNDF; 
+    sym.type  = N_UNDF;
     sym.scope = N_EXT;
     sym.sect  = 0;
     sym.desc  = 0;
@@ -690,7 +690,7 @@ void Util::segIndexForSection(const SectionInfo *sect, uint8_t &segmentIndex,
                                                   uint64_t &segmentStartAddr) {
   segmentIndex = 0;
   for (const SegmentInfo *seg : _segmentInfos) {
-    if ((seg->address <= sect->address) 
+    if ((seg->address <= sect->address)
       && (seg->address+seg->size >= sect->address+sect->size)) {
       segmentStartAddr = seg->address;
       return;
@@ -701,7 +701,7 @@ void Util::segIndexForSection(const SectionInfo *sect, uint8_t &segmentIndex,
 }
 
 
-void Util::appendReloc(const DefinedAtom *atom, const Reference *ref, 
+void Util::appendReloc(const DefinedAtom *atom, const Reference *ref,
                                                      Relocations &relocations) {
   // TODO: convert Reference to normalized relocation
 }
@@ -709,7 +709,7 @@ void Util::appendReloc(const DefinedAtom *atom, const Reference *ref,
 void Util::addSectionRelocs(const lld::File &, NormalizedFile &file) {
   if (_context.outputFileType() != llvm::MachO::MH_OBJECT)
     return;
-  
+
   for (SectionInfo *si : _sectionInfos) {
     Section &normSect = file.sections[si->normalizedSectionIndex];
     for (const AtomInfo &info : si->atomsAndOffsets) {
@@ -721,7 +721,7 @@ void Util::addSectionRelocs(const lld::File &, NormalizedFile &file) {
   }
 }
 
-void Util::addRebaseAndBindingInfo(const lld::File &atomFile, 
+void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
                                                         NormalizedFile &nFile) {
   if (_context.outputFileType() == llvm::MachO::MH_OBJECT)
     return;
@@ -733,7 +733,7 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
     for (const AtomInfo &info : sect->atomsAndOffsets) {
       const DefinedAtom *atom = info.atom;
       for (const Reference *ref : *atom) {
-        uint64_t segmentOffset = _atomToAddress[atom] + ref->offsetInAtom() 
+        uint64_t segmentOffset = _atomToAddress[atom] + ref->offsetInAtom()
                                 - segmentStartAddr;
         const Atom* targ = ref->target();
         if (_context.kindHandler().isPointer(*ref)) {
@@ -753,7 +753,7 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
             bind.kind = llvm::MachO::BIND_TYPE_POINTER;
             bind.canBeNull = sa->canBeNullAtRuntime();
             bind.ordinal = dylibOrdinal(sa);
-            bind.symbolName = targ->name(); 
+            bind.symbolName = targ->name();
             bind.addend = ref->addend();
             nFile.bindingInfo.push_back(bind);
           }
@@ -765,7 +765,7 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
             bind.kind = llvm::MachO::BIND_TYPE_POINTER;
             bind.canBeNull = false; //sa->canBeNullAtRuntime();
             bind.ordinal = 1;
-            bind.symbolName = targ->name(); 
+            bind.symbolName = targ->name();
             bind.addend = ref->addend();
             nFile.lazyBindingInfo.push_back(bind);
         }
@@ -786,16 +786,16 @@ namespace mach_o {
 namespace normalized {
 
 /// Convert a set of Atoms into a normalized mach-o file.
-ErrorOr<std::unique_ptr<NormalizedFile>> 
-normalizedFromAtoms(const lld::File &atomFile, 
+ErrorOr<std::unique_ptr<NormalizedFile>>
+normalizedFromAtoms(const lld::File &atomFile,
                                            const MachOLinkingContext &context) {
-  // The util object buffers info until the normalized file can be made. 
+  // The util object buffers info until the normalized file can be made.
   Util util(context);
   util.assignAtomsToSections(atomFile);
   util.organizeSections();
   util.assignAddressesToSections();
   util.buildAtomToAddressMap();
-  
+
   std::unique_ptr<NormalizedFile> f(new NormalizedFile());
   NormalizedFile &normFile = *f.get();
   f->arch = context.arch();
@@ -809,7 +809,7 @@ normalizedFromAtoms(const lld::File &atomFile,
   util.addRebaseAndBindingInfo(atomFile, normFile);
   util.addSectionRelocs(atomFile, normFile);
   util.copyEntryPointAddress(normFile);
- 
+
   return std::move(f);
 }
 

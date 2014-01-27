@@ -9,13 +9,13 @@ defined-atoms:
     - name:              _main
       type:              code
       scope:             global
-      content:           [ 55, 48, 89, E5, 30, C0, E8, 00, 
+      content:           [ 55, 48, 89, E5, 30, C0, E8, 00,
                            00, 00, 00, 31, C0, 5D, C3 ]
       references:
       - offset:          7
         kind:            X86_64_RELOC_BRANCH
         target:          _foo
-        
+
 undefined-atoms:
  - name:                _foo
 

@@ -21,7 +21,7 @@ to omit (such as final or = delete) may be conditionally used via macros.
 * Forward enum declarations
 * Lambdas
 * Local and unnamed types as template args
-* Trailing return type 
+* Trailing return type
 * nullptr
 * >> instead of > >
 * R-Value references excluding R-Value references for this

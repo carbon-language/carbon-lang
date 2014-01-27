@@ -1,19 +1,19 @@
 # RUN: lld -core --add-pass layout %s | FileCheck %s -check-prefix=CHKORDER
 
 ---
-defined-atoms:   
+defined-atoms:
   - name:            fn
     scope:           global
 
   - name:            fn1
     scope:           global
-    references:      
+    references:
       - kind:            layout-before
         offset:          0
         target:          fn
   - name:            fn2
     scope:           global
-    references:      
+    references:
       - kind:            layout-before
         offset:          0
         target:          fn1

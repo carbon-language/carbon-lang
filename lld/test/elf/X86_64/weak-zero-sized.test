@@ -17,7 +17,7 @@ WEAKATOMSORDER:  - name:            _start
 WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    merge:           as-weak
 WEAKATOMSORDER:    alignment:       2^2
-WEAKATOMSORDER:    references:      
+WEAKATOMSORDER:    references:
 WEAKATOMSORDER:      - kind:            layout-after
 WEAKATOMSORDER:        offset:          0
 WEAKATOMSORDER:        target:          [[TARGETB]]
@@ -25,7 +25,7 @@ WEAKATOMSORDER:  - ref-name:        [[TARGETB]]
 WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    content:         [ C3 ]
 WEAKATOMSORDER:    alignment:       2^2
-WEAKATOMSORDER:    references:      
+WEAKATOMSORDER:    references:
 WEAKATOMSORDER:      - kind:            layout-before
 WEAKATOMSORDER:        offset:          0
 WEAKATOMSORDER:        target:          [[TARGETA]]

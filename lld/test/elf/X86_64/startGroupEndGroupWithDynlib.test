@@ -1,4 +1,4 @@
-# This tests functionality of --start-group, --end-group with a dynamic library 
+# This tests functionality of --start-group, --end-group with a dynamic library
 
 # Mix dynamic libraries/object files in group
 RUN: lld -flavor gnu -target x86_64 %p/Inputs/group/1.o --start-group \

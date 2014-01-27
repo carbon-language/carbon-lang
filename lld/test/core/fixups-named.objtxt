@@ -8,7 +8,7 @@
 defined-atoms:
     - name:              foo
       type:              code
-      content:           [ E8, 00, 00, 00, 00, 
+      content:           [ E8, 00, 00, 00, 00,
                            E8, 00, 00, 00, 00 ]
       references:
       - offset:          1
@@ -17,14 +17,14 @@ defined-atoms:
       - offset:          6
         kind:            pcrel32
         target:          baz
-  
+
     - name:              baz
       scope:             static
       type:              code
 
 undefined-atoms:
     - name:              bar
-  
+
 
 ...
 

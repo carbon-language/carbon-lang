@@ -34,18 +34,18 @@ public:
 
   virtual error_code writeFile(const lld::File &file, StringRef path) {
     // Construct empty normalized file from atoms.
-    ErrorOr<std::unique_ptr<NormalizedFile>> nFile = 
+    ErrorOr<std::unique_ptr<NormalizedFile>> nFile =
                                 normalized::normalizedFromAtoms(file, _context);
     if (error_code ec = nFile.getError())
       return ec;
-    
+
     // For debugging, write out yaml form of normalized file.
     //writeYaml(*nFile->get(), llvm::errs());
-    
+
     // Write normalized file as mach-o binary.
     return writeBinary(*nFile->get(), path);
   }
-  
+
   virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &r) {
     if (_context.outputFileType() == llvm::MachO::MH_EXECUTE) {
       // When building main executables, add _main as required entry point.

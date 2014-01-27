@@ -31,9 +31,9 @@ namespace mach_o {
 //
 class StubBinderAtom : public SharedLibraryAtom {
 public:
-  StubBinderAtom(const File &f) : _file(f) { 
+  StubBinderAtom(const File &f) : _file(f) {
   }
-          
+
   virtual const File& file() const {
     return _file;
   }
@@ -45,7 +45,7 @@ public:
   virtual StringRef loadName() const {
     return StringRef("/usr/lib/libSystem.B.dylib");
   }
-  
+
   virtual bool canBeNullAtRuntime() const {
     return false;
   }
@@ -57,15 +57,15 @@ public:
   virtual uint64_t size() const LLVM_OVERRIDE {
     return 0;
   }
-  
+
 private:
   const File  &_file;
 };
 
 
 
-} // namespace mach_o 
-} // namespace lld 
+} // namespace mach_o
+} // namespace lld
 
 
 #endif // LLD_READER_WRITER_MACHO_STUB_ATOMS_H

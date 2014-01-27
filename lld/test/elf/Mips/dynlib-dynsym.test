@@ -14,7 +14,7 @@
 # CHECK-DYN: Format: ELF32-mips
 # CHECK-DYN: Arch: mipsel
 # CHECK-DYN: AddressSize: 32bit
-# CHECK-DYN: LoadName: 
+# CHECK-DYN: LoadName:
 # CHECK-DYN: DynamicSymbols [
 # CHECK-DYN:   Symbol {
 # CHECK-DYN:     Name: @ (0)

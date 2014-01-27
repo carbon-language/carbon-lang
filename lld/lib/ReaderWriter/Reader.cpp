@@ -64,7 +64,7 @@ Registry::Registry() {
                kindStrings);
 }
 
-bool Registry::handleTaggedDoc(llvm::yaml::IO &io, 
+bool Registry::handleTaggedDoc(llvm::yaml::IO &io,
                                const lld::File *&file) const {
   for (const std::unique_ptr<YamlIOTaggedDocumentHandler> &h : _yamlHandlers) {
     if (h->handledDocTag(io, file))

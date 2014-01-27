@@ -189,7 +189,7 @@ def use_shlib_undefs: Flag<["--"], "use-shlib-undefines">,
     Group<grp_resolveropt>;
 
 //===----------------------------------------------------------------------===//
-/// Custom Options 
+/// Custom Options
 //===----------------------------------------------------------------------===//
 def grp_customopts : OptionGroup<"opts">,
      HelpText<"CUSTOM OPTIONS">;

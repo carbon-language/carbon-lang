@@ -50,9 +50,9 @@ namespace mach_o {
 namespace normalized {
 
 // Utility to call a lambda expression on each load command.
-static error_code 
+static error_code
 forEachLoadCommand(StringRef lcRange, unsigned lcCount, bool swap, bool is64,
-                   std::function<bool (uint32_t cmd, uint32_t size, 
+                   std::function<bool (uint32_t cmd, uint32_t size,
                                                       const char* lc)> func) {
   const char* p = lcRange.begin();
   for (unsigned i=0; i < lcCount; ++i) {
@@ -66,25 +66,25 @@ forEachLoadCommand(StringRef lcRange, unsigned lcCount, bool swap, bool is64,
     }
     if ( (p + slc->cmdsize) > lcRange.end() )
       return llvm::make_error_code(llvm::errc::executable_format_error);
-  
+
     if (func(slc->cmd, slc->cmdsize, p))
       return error_code::success();
-  
+
     p += slc->cmdsize;
-  } 
-  
+  }
+
   return error_code::success();
 }
 
 
-static error_code 
-appendRelocations(Relocations &relocs, StringRef buffer, bool swap, 
+static error_code
+appendRelocations(Relocations &relocs, StringRef buffer, bool swap,
                              bool bigEndian, uint32_t reloff, uint32_t nreloc) {
   if ((reloff + nreloc*8) > buffer.size())
     return llvm::make_error_code(llvm::errc::executable_format_error);
-  const any_relocation_info* relocsArray = 
+  const any_relocation_info* relocsArray =
             reinterpret_cast<const any_relocation_info*>(buffer.begin()+reloff);
-  
+
   for(uint32_t i=0; i < nreloc; ++i) {
     relocs.push_back(unpackRelocation(relocsArray[i], swap, bigEndian));
   }
@@ -186,27 +186,27 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
 
 
   // Walk load commands looking for segments/sections and the symbol table.
-  error_code ec = forEachLoadCommand(lcRange, lcCount, swap, is64, 
+  error_code ec = forEachLoadCommand(lcRange, lcCount, swap, is64,
                     [&] (uint32_t cmd, uint32_t size, const char* lc) -> bool {
     if (is64) {
       if (cmd == LC_SEGMENT_64) {
-        const segment_command_64 *seg = 
+        const segment_command_64 *seg =
                               reinterpret_cast<const segment_command_64*>(lc);
         const unsigned sectionCount = (swap ? SwapByteOrder(seg->nsects)
                                             : seg->nsects);
         const section_64 *sects = reinterpret_cast<const section_64*>
                                   (lc + sizeof(segment_command_64));
-        const unsigned lcSize = sizeof(segment_command_64) 
+        const unsigned lcSize = sizeof(segment_command_64)
                                               + sectionCount*sizeof(section_64);
         // Verify sections don't extend beyond end of segment load command.
-        if (lcSize > size) 
+        if (lcSize > size)
           return llvm::make_error_code(llvm::errc::executable_format_error);
         for (unsigned i=0; i < sectionCount; ++i) {
           const section_64 *sect = &sects[i];
           Section section;
           section.segmentName = getString16(sect->segname);
           section.sectionName = getString16(sect->sectname);
-          section.type        = (SectionType)(read32(swap, sect->flags) 
+          section.type        = (SectionType)(read32(swap, sect->flags)
                                                                 & SECTION_TYPE);
           section.attributes  = read32(swap, sect->flags) & SECTION_ATTRIBUTES;
           section.alignment   = read32(swap, sect->align);
@@ -217,31 +217,31 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           // Note: this assign() is copying the content bytes.  Ideally,
           // we can use a custom allocator for vector to avoid the copy.
           section.content = llvm::makeArrayRef(content, contentSize);
-          appendRelocations(section.relocations, mb->getBuffer(), 
-                            swap, isBigEndianArch, read32(swap, sect->reloff), 
+          appendRelocations(section.relocations, mb->getBuffer(),
+                            swap, isBigEndianArch, read32(swap, sect->reloff),
                                                    read32(swap, sect->nreloc));
           f->sections.push_back(section);
         }
       }
     } else {
       if (cmd == LC_SEGMENT) {
-        const segment_command *seg = 
+        const segment_command *seg =
                               reinterpret_cast<const segment_command*>(lc);
         const unsigned sectionCount = (swap ? SwapByteOrder(seg->nsects)
                                             : seg->nsects);
         const section *sects = reinterpret_cast<const section*>
                                   (lc + sizeof(segment_command));
-        const unsigned lcSize = sizeof(segment_command) 
+        const unsigned lcSize = sizeof(segment_command)
                                               + sectionCount*sizeof(section);
         // Verify sections don't extend beyond end of segment load command.
-        if (lcSize > size) 
+        if (lcSize > size)
           return llvm::make_error_code(llvm::errc::executable_format_error);
         for (unsigned i=0; i < sectionCount; ++i) {
           const section *sect = &sects[i];
           Section section;
           section.segmentName = getString16(sect->segname);
           section.sectionName = getString16(sect->sectname);
-          section.type        = (SectionType)(read32(swap, sect->flags) 
+          section.type        = (SectionType)(read32(swap, sect->flags)
                                                                 & SECTION_TYPE);
           section.attributes  = read32(swap, sect->flags) & SECTION_ATTRIBUTES;
           section.alignment   = read32(swap, sect->align);
@@ -252,8 +252,8 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           // Note: this assign() is copying the content bytes.  Ideally,
           // we can use a custom allocator for vector to avoid the copy.
           section.content = llvm::makeArrayRef(content, contentSize);
-          appendRelocations(section.relocations, mb->getBuffer(), 
-                            swap, isBigEndianArch, read32(swap, sect->reloff), 
+          appendRelocations(section.relocations, mb->getBuffer(),
+                            swap, isBigEndianArch, read32(swap, sect->reloff),
                                                    read32(swap, sect->nreloc));
           f->sections.push_back(section);
         }
@@ -264,7 +264,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       const char *strings = start + read32(swap, st->stroff);
       const uint32_t strSize = read32(swap, st->strsize);
       // Validate string pool and symbol table all in buffer.
-      if ( read32(swap, st->stroff)+read32(swap, st->strsize) 
+      if ( read32(swap, st->stroff)+read32(swap, st->strsize)
                                                         > objSize )
         return llvm::make_error_code(llvm::errc::executable_format_error);
       if (is64) {
@@ -282,7 +282,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
             tempSym = *sin; swapStruct(tempSym); sin = &tempSym;
           }
           Symbol sout;
-          if (sin->n_strx > strSize) 
+          if (sin->n_strx > strSize)
             return llvm::make_error_code(llvm::errc::executable_format_error);
           sout.name  = &strings[sin->n_strx];
           sout.type  = (NListType)(sin->n_type & N_TYPE);
@@ -297,7 +297,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           else
             f->localSymbols.push_back(sout);
         }
-      } else { 
+      } else {
         const uint32_t symOffset = read32(swap, st->symoff);
         const uint32_t symCount = read32(swap, st->nsyms);
         if ( symOffset+(symCount*sizeof(nlist)) > objSize)
@@ -312,7 +312,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
             tempSym = *sin; swapStruct(tempSym); sin = &tempSym;
           }
           Symbol sout;
-          if (sin->n_strx > strSize) 
+          if (sin->n_strx > strSize)
             return llvm::make_error_code(llvm::errc::executable_format_error);
           sout.name  = &strings[sin->n_strx];
           sout.type  = (NListType)(sin->n_type & N_TYPE);
@@ -329,12 +329,12 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
         }
       }
     } else if (cmd == LC_DYSYMTAB) {
-      // TODO: indirect symbols 
+      // TODO: indirect symbols
     }
 
     return false;
   });
-  if (ec) 
+  if (ec)
     return ec;
 
   return std::move(f);

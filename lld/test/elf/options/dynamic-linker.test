@@ -1,5 +1,5 @@
 # This tests the functionality of specifying dynamic-linker argument in the
-# command line 
+# command line
 RUN: lld -flavor gnu -target x86_64 --dynamic-linker="/xyz.so" \
 RUN:   %p/../Inputs/foo.o.x86-64 --noinhibit-exec -o %t
 RUN: llvm-objdump -s %t | FileCheck -check-prefix=DYNAMICINTERP1 %s

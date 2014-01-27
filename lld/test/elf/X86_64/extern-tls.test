@@ -10,7 +10,7 @@ CHECKGOT:    alignment:       2^3
 CHECKGOT:    section-choice:  custom-required
 CHECKGOT:    section-name:    .got
 CHECKGOT:    permissions:     rw-
-CHECKGOT:    references:      
+CHECKGOT:    references:
 CHECKGOT:      - kind:            R_X86_64_TPOFF64
 CHECKGOT:        offset:          0
 CHECKGOT:        target:          extern_tls
