@@ -119,6 +119,7 @@ private:
                                     const coff_section *section,
                                     const vector<COFFDefinedFileAtom *> &atoms);
 
+  error_code getReferenceArch(Reference::KindArch &result);
   error_code addRelocationReferenceToAtoms();
   error_code findSection(StringRef name, const coff_section *&result);
   StringRef ArrayRefToString(ArrayRef<uint8_t> array);
@@ -128,6 +129,9 @@ private:
   atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
+
+  // The target type of the object.
+  Reference::KindArch _referenceArch;
 
   // The contents of .drectve section.
   StringRef _directives;
@@ -278,6 +282,9 @@ FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, error_code &ec)
 }
 
 error_code FileCOFF::parse(StringMap &altNames) {
+  if (error_code ec = getReferenceArch(_referenceArch))
+    return ec;
+
   // Read the symbol table and atomize them if possible. Defined atoms
   // cannot be atomized in one pass, so they will be not be atomized but
   // added to symbolToAtom.
@@ -712,8 +719,27 @@ FileCOFF::addRelocationReference(const coff_relocation *rel,
   if (error_code ec = findAtomAt(section, itemAddress, atom, offsetInAtom))
     return ec;
   atom->addReference(std::unique_ptr<COFFReference>(
-      new COFFReference(targetAtom, offsetInAtom, rel->Type)));
+      new COFFReference(targetAtom, offsetInAtom, rel->Type,
+                        Reference::KindNamespace::COFF,
+                        _referenceArch)));
   return error_code::success();
+}
+
+/// Returns the target machine type of the current object file.
+error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
+  const llvm::object::coff_file_header *header = nullptr;
+  if (error_code ec = _obj->getHeader(header))
+    return ec;
+  switch (header->Machine) {
+  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
+    result = Reference::KindArch::x86;
+    return error_code::success();
+  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+    result = Reference::KindArch::x86_64;
+    return error_code::success();
+  }
+  llvm::errs() << "Unsupported machine type: " << header->Machine << "\n";
+  return llvm::object::object_error::parse_failed;
 }
 
 /// Add relocation information to atoms.
