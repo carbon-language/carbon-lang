@@ -19,6 +19,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/State.h"
+#include "lldb/Core/StreamFile.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/RegisterContext.h"
@@ -717,7 +718,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::ReadMemoryModule (Process *process)
             {
                 if (m_uuid != exe_module->GetUUID())
                 {
-                    Stream *s = &process->GetTarget().GetDebugger().GetOutputStream();
+                    Stream *s = process->GetTarget().GetDebugger().GetOutputFile().get();
                     if (s)
                     {
                         s->Printf ("warning: Host-side kernel file has Mach-O UUID of %s but remote kernel has a UUID of %s -- a mismatched kernel file will result in a poor debugger experience.\n", 
@@ -765,7 +766,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
 
     if (IsKernel() && uuid_is_valid && m_memory_module_sp.get())
     {
-        Stream *s = &target.GetDebugger().GetOutputStream();
+        Stream *s = target.GetDebugger().GetOutputFile().get();
         if (s)
         {
             s->Printf ("Kernel UUID: %s\n", m_memory_module_sp->GetUUID().GetAsString().c_str());
@@ -834,7 +835,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
 
             if (IsKernel() && !m_module_sp)
             {
-                Stream *s = &target.GetDebugger().GetOutputStream();
+                Stream *s = target.GetDebugger().GetOutputFile().get();
                 if (s)
                 {
                     s->Printf ("WARNING: Unable to locate kernel binary on the debugger system.\n");
@@ -867,7 +868,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
     
     if (!m_module_sp && !IsKernel() && m_uuid.IsValid() && !m_name.empty())
     {
-        Stream *s = &target.GetDebugger().GetOutputStream();
+        Stream *s = target.GetDebugger().GetOutputFile().get();
         if (s)
         {
             s->Printf ("warning: Can't find binary/dSYM for %s (%s)\n", 
@@ -945,7 +946,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
     
     if (is_loaded && m_module_sp && IsKernel())
     {
-        Stream *s = &target.GetDebugger().GetOutputStream();
+        Stream *s = target.GetDebugger().GetOutputFile().get();
         if (s)
         {
             ObjectFile *kernel_object_file = m_module_sp->GetObjectFile();
@@ -1248,7 +1249,7 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
     if (number_of_new_kexts_being_added == 0 && number_of_old_kexts_being_removed == 0)
         return true;
 
-    Stream *s = &m_process->GetTarget().GetDebugger().GetOutputStream();
+    Stream *s = m_process->GetTarget().GetDebugger().GetOutputFile().get();
     if (s && load_kexts)
     {
         if (number_of_new_kexts_being_added > 0 && number_of_old_kexts_being_removed > 0)

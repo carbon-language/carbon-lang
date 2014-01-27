@@ -34,6 +34,9 @@ public:
     AppendString (const std::string &s);
     
     void
+    AppendString (std::string &&s);
+    
+    void
     AppendString (const char *str);
 
     void
@@ -51,6 +54,34 @@ public:
     size_t
     GetSize () const;
 
+    void
+    SetSize (size_t n)
+    {
+        m_strings.resize(n);
+    }
+
+    size_t
+    GetMaxStringLength () const;
+    
+    std::string &
+    operator [](size_t idx)
+    {
+        // No bounds checking, verify "idx" is good prior to calling this function
+        return m_strings[idx];
+    }
+    
+    const std::string &
+    operator [](size_t idx) const
+    {
+        // No bounds checking, verify "idx" is good prior to calling this function
+        return m_strings[idx];
+    }
+
+    void
+    PopBack ()
+    {
+        m_strings.pop_back();
+    }
     const char *
     GetStringAtIndex (size_t idx) const;
 
@@ -64,6 +95,12 @@ public:
     LongestCommonPrefix (std::string &common_prefix);
 
     void
+    InsertStringAtIndex (size_t idx, const std::string &str);
+    
+    void
+    InsertStringAtIndex (size_t idx, std::string &&str);
+    
+    void
     InsertStringAtIndex (size_t id, const char *str);
 
     void
@@ -73,11 +110,14 @@ public:
     RemoveBlankLines ();
 
     size_t
+    SplitIntoLines (const std::string &lines);
+
+    size_t
     SplitIntoLines (const char *lines, size_t len);
     
     std::string
     CopyList(const char* item_preamble = NULL,
-             const char* items_sep = "\n");
+             const char* items_sep = "\n") const;
     
     StringList&
     operator << (const char* str);

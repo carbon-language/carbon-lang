@@ -17,6 +17,16 @@
 
 namespace lldb {
 
+    
+class SBInputReader
+{
+public:
+    SBInputReader();
+    ~SBInputReader();
+    SBError Initialize(lldb::SBDebugger&, unsigned long (*)(void*, lldb::SBInputReader*, lldb::InputReaderAction, char const*, unsigned long), void*, lldb::InputReaderGranularity, char const*, char const*, bool);
+    void SetIsDone(bool);
+    bool IsActive() const;
+};
 class SBDebugger
 {
 public:
@@ -231,12 +241,6 @@ public:
     void
     PushInputReader (lldb::SBInputReader &reader);
 
-    void
-    NotifyTopInputReader (lldb::InputReaderAction notification);
-
-    bool
-    InputReaderIsTopReader (const lldb::SBInputReader &reader);
-
     const char *
     GetInstanceName  ();
 
@@ -312,6 +316,10 @@ public:
     SBTypeSynthetic
     GetSyntheticForType (SBTypeNameSpecifier);
 #endif
+
+    void
+    RunCommandInterpreter (bool auto_handle_events,
+                           bool spawn_thread);
 
 private:
 

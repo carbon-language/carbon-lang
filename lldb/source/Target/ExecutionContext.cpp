@@ -154,7 +154,7 @@ ExecutionContext::ExecutionContext (const ExecutionContextRef &exe_ctx_ref) :
 {
 }
 
-ExecutionContext::ExecutionContext (const ExecutionContextRef *exe_ctx_ref_ptr) :
+ExecutionContext::ExecutionContext (const ExecutionContextRef *exe_ctx_ref_ptr, bool thread_and_frame_only_if_stopped) :
     m_target_sp (),
     m_process_sp (),
     m_thread_sp (),
@@ -164,8 +164,11 @@ ExecutionContext::ExecutionContext (const ExecutionContextRef *exe_ctx_ref_ptr) 
     {
         m_target_sp  = exe_ctx_ref_ptr->GetTargetSP();
         m_process_sp = exe_ctx_ref_ptr->GetProcessSP();
-        m_thread_sp = exe_ctx_ref_ptr->GetThreadSP();
-        m_frame_sp = exe_ctx_ref_ptr->GetFrameSP();
+        if (!thread_and_frame_only_if_stopped || (m_process_sp && StateIsStoppedState(m_process_sp->GetState(), true)))
+        {
+            m_thread_sp = exe_ctx_ref_ptr->GetThreadSP();
+            m_frame_sp = exe_ctx_ref_ptr->GetFrameSP();
+        }
     }
 }
 
@@ -824,9 +827,9 @@ ExecutionContextRef::GetFrameSP () const
 }
 
 ExecutionContext
-ExecutionContextRef::Lock () const
+ExecutionContextRef::Lock (bool thread_and_frame_only_if_stopped) const
 {
-    return ExecutionContext(this);
+    return ExecutionContext(this, thread_and_frame_only_if_stopped);
 }
 
 

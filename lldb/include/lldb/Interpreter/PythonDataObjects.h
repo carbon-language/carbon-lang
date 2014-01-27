@@ -31,7 +31,7 @@ namespace lldb_private {
         {
         }
         
-        PythonObject (PyObject* py_obj) :
+        explicit PythonObject (PyObject* py_obj) :
             m_py_obj(NULL)
         {
             Reset (py_obj);
@@ -43,7 +43,7 @@ namespace lldb_private {
             Reset (rhs.m_py_obj);
         }
         
-        PythonObject (const lldb::ScriptInterpreterObjectSP &script_object_sp);
+        explicit PythonObject (const lldb::ScriptInterpreterObjectSP &script_object_sp);
 
         virtual
         ~PythonObject ()
@@ -51,18 +51,10 @@ namespace lldb_private {
             Reset (NULL);
         }
 
-        const PythonObject &
-        operator = (const PythonObject &rhs)
-        {
-            if (this != &rhs)
-                Reset (rhs.m_py_obj);
-            return *this;
-        }
-
         bool
         Reset (const PythonObject &object)
         {
-            return Reset(object.GetPythonObject());
+            return Reset(object.get());
         }
 
         virtual bool
@@ -90,11 +82,11 @@ namespace lldb_private {
         Dump (Stream &strm) const;
 
         PyObject*
-        GetPythonObject () const
+        get () const
         {
             return m_py_obj;
         }
-        
+
         PythonString
         Repr ();
         
@@ -159,7 +151,7 @@ namespace lldb_private {
     {
     public:
         
-        PythonList ();
+        PythonList (bool create_empty);
         PythonList (PyObject* py_obj);
         PythonList (const PythonObject &object);
         PythonList (const lldb::ScriptInterpreterObjectSP &script_object_sp);
@@ -186,7 +178,7 @@ namespace lldb_private {
     {
     public:
         
-        PythonDictionary ();
+        explicit PythonDictionary (bool create_empty);
         PythonDictionary (PyObject* object);
         PythonDictionary (const PythonObject &object);
         PythonDictionary (const lldb::ScriptInterpreterObjectSP &script_object_sp);
@@ -220,6 +212,9 @@ namespace lldb_private {
         PythonObject
         GetValueAtPosition (uint32_t pos) const;
         
+        void
+        SetItemForKey (const PythonString &key, PyObject *value);
+
         void
         SetItemForKey (const PythonString &key, const PythonObject& value);
     };

@@ -206,7 +206,8 @@ ValueObjectChild::UpdateValue ()
 
             if (m_error.Success())
             {
-                ExecutionContext exe_ctx (GetExecutionContextRef().Lock());
+                const bool thread_and_frame_only_if_stopped = true;
+                ExecutionContext exe_ctx (GetExecutionContextRef().Lock(thread_and_frame_only_if_stopped));
                 if (GetClangType().GetTypeInfo() & ClangASTType::eTypeHasValue)
                     m_error = m_value.GetValueAsData (&exe_ctx, m_data, 0, GetModule().get());
                 else

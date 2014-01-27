@@ -13,7 +13,6 @@
 #include <string>
 
 #include "lldb/Core/Stream.h"
-#include "lldb/Core/StreamString.h"
 
 namespace lldb_private {
 
@@ -35,7 +34,7 @@ public:
 private:
     Broadcaster &m_broadcaster;
     uint32_t m_broadcast_event_type;
-    StreamString m_accumulated_data;
+    std::string m_accumulated_data;
 };
 
 } // namespace lldb_private

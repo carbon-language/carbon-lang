@@ -29,6 +29,7 @@
 #include "lldb/Core/Section.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Core/State.h"
+#include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
@@ -1006,11 +1007,11 @@ LoadScriptingResourceForModule (const ModuleSP &module_sp, Target *target)
     if (module_sp && !module_sp->LoadScriptingResourceInTarget(target, error, &feedback_stream))
     {
         if (error.AsCString())
-            target->GetDebugger().GetErrorStream().Printf("unable to load scripting data for module %s - error reported was %s\n",
+            target->GetDebugger().GetErrorFile()->Printf("unable to load scripting data for module %s - error reported was %s\n",
                                                            module_sp->GetFileSpec().GetFileNameStrippingExtension().GetCString(),
                                                            error.AsCString());
         if (feedback_stream.GetSize())
-            target->GetDebugger().GetOutputStream().Printf("%s\n",
+            target->GetDebugger().GetErrorFile()->Printf("%s\n",
                                                            feedback_stream.GetData());
     }
 }
@@ -1998,13 +1999,13 @@ Target::GetSourceManager ()
 }
 
 
-lldb::user_id_t
-Target::AddStopHook (Target::StopHookSP &new_hook_sp)
+Target::StopHookSP
+Target::CreateStopHook ()
 {
     lldb::user_id_t new_uid = ++m_stop_hook_next_id;
-    new_hook_sp.reset (new StopHook(shared_from_this(), new_uid));
-    m_stop_hooks[new_uid] = new_hook_sp;
-    return new_uid;
+    Target::StopHookSP stop_hook_sp (new StopHook(shared_from_this(), new_uid));
+    m_stop_hooks[new_uid] = stop_hook_sp;
+    return stop_hook_sp;
 }
 
 bool
@@ -2323,7 +2324,6 @@ Error
 Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
 {
     Error error;
-    Error error2;
     
     StateType state = eStateInvalid;
     
@@ -2399,28 +2399,34 @@ Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
     {
         if (launch_info.GetFlags().Test(eLaunchFlagStopAtEntry) == false)
         {
-            StateType state = m_process_sp->WaitForProcessToStop (NULL, NULL, false);
+            ListenerSP hijack_listener_sp (launch_info.GetHijackListener());
+            
+            StateType state = m_process_sp->WaitForProcessToStop (NULL, NULL, false, hijack_listener_sp.get());
             
             if (state == eStateStopped)
             {
-                error = m_process_sp->Resume();
+                if (!synchronous_execution)
+                    m_process_sp->RestoreProcessEvents ();
+
+                error = m_process_sp->PrivateResume();
+    
                 if (error.Success())
                 {
                     if (synchronous_execution)
                     {
-                        state = m_process_sp->WaitForProcessToStop (NULL);
+                        state = m_process_sp->WaitForProcessToStop (NULL, NULL, true, hijack_listener_sp.get());
                         const bool must_be_alive = false; // eStateExited is ok, so this must be false
                         if (!StateIsStoppedState(state, must_be_alive))
                         {
-                            error2.SetErrorStringWithFormat("process isn't stopped: %s", StateAsCString(state));
-                            return error2;
+                            error.SetErrorStringWithFormat("process isn't stopped: %s", StateAsCString(state));
                         }
                     }
                 }
                 else
                 {
+                    Error error2;
                     error2.SetErrorStringWithFormat("process resume at entry point failed: %s", error.AsCString());
-                    return error2;
+                    error = error2;
                 }
             }
             else
@@ -2428,11 +2434,13 @@ Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
                 error.SetErrorStringWithFormat ("initial process state wasn't stopped: %s", StateAsCString(state));
             }
         }
+        m_process_sp->RestoreProcessEvents ();
     }
     else
     {
+        Error error2;
         error2.SetErrorStringWithFormat ("process launch failed: %s", error.AsCString());
-        return error2;
+        error = error2;
     }
     return error;
 }

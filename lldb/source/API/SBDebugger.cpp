@@ -20,7 +20,6 @@
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBFrame.h"
-#include "lldb/API/SBInputReader.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBSourceManager.h"
 #include "lldb/API/SBStream.h"
@@ -37,6 +36,7 @@
 
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/State.h"
+#include "lldb/Core/StreamFile.h"
 #include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/Host/DynamicLibrary.h"
 #include "lldb/Interpreter/Args.h"
@@ -48,6 +48,29 @@
 using namespace lldb;
 using namespace lldb_private;
 
+
+SBInputReader::SBInputReader()
+{
+}
+SBInputReader::~SBInputReader()
+{
+}
+
+SBError
+SBInputReader::Initialize(lldb::SBDebugger& sb_debugger, unsigned long (*)(void*, lldb::SBInputReader*, lldb::InputReaderAction, char const*, unsigned long), void*, lldb::InputReaderGranularity, char const*, char const*, bool)
+{
+    return SBError();
+}
+
+void
+SBInputReader::SetIsDone(bool)
+{
+}
+bool
+SBInputReader::IsActive() const
+{
+    return false;
+}
 
 static lldb::DynamicLibrarySP
 LoadPlugin (const lldb::DebuggerSP &debugger_sp, const FileSpec& spec, Error& error)
@@ -111,7 +134,7 @@ SBDebugger::Clear ()
         log->Printf ("SBDebugger(%p)::Clear ()", m_opaque_sp.get());
         
     if (m_opaque_sp)
-        m_opaque_sp->CleanUpInputReaders ();
+        m_opaque_sp->ClearIOHandlers ();
 
     m_opaque_sp.reset();
 }
@@ -309,7 +332,11 @@ FILE *
 SBDebugger::GetInputFileHandle ()
 {
     if (m_opaque_sp)
-        return m_opaque_sp->GetInputFile().GetStream();
+    {
+        StreamFileSP stream_file_sp (m_opaque_sp->GetInputFile());
+        if (stream_file_sp)
+            return stream_file_sp->GetFile().GetStream();
+    }
     return NULL;
 }
 
@@ -317,7 +344,11 @@ FILE *
 SBDebugger::GetOutputFileHandle ()
 {
     if (m_opaque_sp)
-        return m_opaque_sp->GetOutputFile().GetStream();
+    {
+        StreamFileSP stream_file_sp (m_opaque_sp->GetOutputFile());
+        if (stream_file_sp)
+            return stream_file_sp->GetFile().GetStream();
+    }
     return NULL;
 }
 
@@ -325,7 +356,12 @@ FILE *
 SBDebugger::GetErrorFileHandle ()
 {
     if (m_opaque_sp)
-        return m_opaque_sp->GetErrorFile().GetStream();
+        if (m_opaque_sp)
+        {
+            StreamFileSP stream_file_sp (m_opaque_sp->GetErrorFile());
+            if (stream_file_sp)
+                return stream_file_sp->GetFile().GetStream();
+        }
     return NULL;
 }
 
@@ -885,17 +921,17 @@ SBDebugger::DispatchInput (void* baton, const void *data, size_t data_len)
 void
 SBDebugger::DispatchInput (const void *data, size_t data_len)
 {
-    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-
-    if (log)
-        log->Printf ("SBDebugger(%p)::DispatchInput (data=\"%.*s\", size_t=%" PRIu64 ")",
-                     m_opaque_sp.get(),
-                     (int) data_len,
-                     (const char *) data,
-                     (uint64_t)data_len);
-
-    if (m_opaque_sp)
-        m_opaque_sp->DispatchInput ((const char *) data, data_len);
+//    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+//
+//    if (log)
+//        log->Printf ("SBDebugger(%p)::DispatchInput (data=\"%.*s\", size_t=%" PRIu64 ")",
+//                     m_opaque_sp.get(),
+//                     (int) data_len,
+//                     (const char *) data,
+//                     (uint64_t)data_len);
+//
+//    if (m_opaque_sp)
+//        m_opaque_sp->DispatchInput ((const char *) data, data_len);
 }
 
 void
@@ -911,54 +947,18 @@ SBDebugger::DispatchInputEndOfFile ()
     if (m_opaque_sp)
         m_opaque_sp->DispatchInputEndOfFile ();
 }
-    
-bool
-SBDebugger::InputReaderIsTopReader (const lldb::SBInputReader &reader)
-{
-    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-
-    if (log)
-        log->Printf ("SBDebugger(%p)::InputReaderIsTopReader (SBInputReader(%p))", m_opaque_sp.get(), &reader);
-
-    if (m_opaque_sp && reader.IsValid())
-    {
-        InputReaderSP reader_sp (*reader);
-        return m_opaque_sp->InputReaderIsTopReader (reader_sp);
-    }
-
-    return false;
-}
-
 
 void
 SBDebugger::PushInputReader (SBInputReader &reader)
 {
-    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-
-    if (log)
-        log->Printf ("SBDebugger(%p)::PushInputReader (SBInputReader(%p))", m_opaque_sp.get(), &reader);
-
-    if (m_opaque_sp && reader.IsValid())
-    {
-        TargetSP target_sp (m_opaque_sp->GetSelectedTarget());
-        Mutex::Locker api_locker;
-        if (target_sp)
-            api_locker.Lock(target_sp->GetAPIMutex());
-        InputReaderSP reader_sp(*reader);
-        m_opaque_sp->PushInputReader (reader_sp);
-    }
 }
 
 void
-SBDebugger::NotifyTopInputReader (InputReaderAction notification)
+SBDebugger::RunCommandInterpreter (bool auto_handle_events,
+                                   bool spawn_thread)
 {
-    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-
-    if (log)
-        log->Printf ("SBDebugger(%p)::NotifyTopInputReader (%d)", m_opaque_sp.get(), notification);
-        
     if (m_opaque_sp)
-        m_opaque_sp->NotifyTopInputReader (notification);
+        m_opaque_sp->GetCommandInterpreter().RunCommandInterpreter(auto_handle_events, spawn_thread);
 }
 
 void
@@ -1050,7 +1050,7 @@ SBDebugger::GetInternalVariableValue (const char *var_name, const char *debugger
             if (!value_str.empty())
             {
                 StringList string_list;
-                string_list.SplitIntoLines(value_str.c_str(), value_str.size());
+                string_list.SplitIntoLines(value_str);
                 return SBStringList(&string_list);
             }
         }

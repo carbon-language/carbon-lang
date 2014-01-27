@@ -535,7 +535,8 @@ public:
         m_resume_count (0),
         m_monitor_callback (NULL),
         m_monitor_callback_baton (NULL),
-        m_monitor_signals (false)
+        m_monitor_signals (false),
+        m_hijack_listener_sp ()
     {
     }
 
@@ -554,7 +555,8 @@ public:
         m_resume_count (0),
         m_monitor_callback (NULL),
         m_monitor_callback_baton (NULL),
-        m_monitor_signals (false)
+        m_monitor_signals (false),
+        m_hijack_listener_sp ()
     {
         if (stdin_path)
         {
@@ -781,6 +783,7 @@ public:
         m_flags.Clear();
         m_file_actions.clear();
         m_resume_count = 0;
+        m_hijack_listener_sp.reset();
     }
 
     bool
@@ -831,6 +834,19 @@ public:
     {
         return m_pty;
     }
+    
+    lldb::ListenerSP
+    GetHijackListener () const
+    {
+        return m_hijack_listener_sp;
+    }
+    
+    void
+    SetHijackListener (const lldb::ListenerSP &listener_sp)
+    {
+        m_hijack_listener_sp = listener_sp;
+    }
+
 
 protected:
     std::string m_working_dir;
@@ -843,7 +859,7 @@ protected:
     Host::MonitorChildProcessCallback m_monitor_callback;
     void *m_monitor_callback_baton;
     bool m_monitor_signals;
-
+    lldb::ListenerSP m_hijack_listener_sp;
 };
 
 //----------------------------------------------------------------------
@@ -876,6 +892,7 @@ public:
         ProcessInfo::operator= (launch_info);
         SetProcessPluginName (launch_info.GetProcessPluginName());
         SetResumeCount (launch_info.GetResumeCount());
+        SetHijackListener(launch_info.GetHijackListener());
     }
     
     bool
@@ -965,7 +982,22 @@ public:
             return true;
         return false;
     }
+    
+    lldb::ListenerSP
+    GetHijackListener () const
+    {
+        return m_hijack_listener_sp;
+    }
+    
+    void
+    SetHijackListener (const lldb::ListenerSP &listener_sp)
+    {
+        m_hijack_listener_sp = listener_sp;
+    }
+    
+
 protected:
+    lldb::ListenerSP m_hijack_listener_sp;
     std::string m_plugin_name;
     uint32_t m_resume_count; // How many times do we resume after launching
     bool m_wait_for_launch;
@@ -1379,10 +1411,11 @@ class Process :
     public ExecutionContextScope,
     public PluginInterface
 {
-friend class ThreadList;
-friend class ClangFunction; // For WaitForStateChangeEventsPrivate
-friend class ProcessEventData;
-friend class StopInfo;
+    friend class ClangFunction; // For WaitForStateChangeEventsPrivate
+    friend class ProcessEventData;
+    friend class StopInfo;
+    friend class Target;
+    friend class ThreadList;
 
 public:
 
@@ -3376,10 +3409,15 @@ public:
     // is set to the event which triggered the stop. If wait_always = false,
     // and the process is already stopped, this function returns immediately.
     lldb::StateType
-    WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp_ptr = NULL, bool wait_always = true);
+    WaitForProcessToStop (const TimeValue *timeout,
+                          lldb::EventSP *event_sp_ptr = NULL,
+                          bool wait_always = true,
+                          Listener *hijack_listener = NULL);
 
     lldb::StateType
-    WaitForStateChangedEvents (const TimeValue *timeout, lldb::EventSP &event_sp);
+    WaitForStateChangedEvents (const TimeValue *timeout,
+                               lldb::EventSP &event_sp,
+                               Listener *hijack_listener); // Pass NULL to use builtin listener
     
     Event *
     PeekAtStateChangedEvents ();
@@ -3546,6 +3584,12 @@ public:
     void
     SetSTDIOFileDescriptor (int file_descriptor);
 
+    void
+    WatchForSTDIN (IOHandler &io_handler);
+    
+    void
+    CancelWatchForSTDIN (bool exited);
+    
     //------------------------------------------------------------------
     // Add a permanent region of memory that should never be read or 
     // written to. This can be used to ensure that memory reads or writes
@@ -3738,7 +3782,7 @@ protected:
     std::unique_ptr<SystemRuntime> m_system_runtime_ap;
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     lldb::ABISP                 m_abi_sp;
-    lldb::InputReaderSP         m_process_input_reader;
+    lldb::IOHandlerSP           m_process_input_reader;
     Communication               m_stdio_communication;
     Mutex                       m_stdio_communication_mutex;
     std::string                 m_stdout_data;
@@ -3835,21 +3879,14 @@ protected:
     STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);
     
     void
-    PushProcessInputReader ();
+    PushProcessIOHandler ();
     
     void 
-    PopProcessInputReader ();
+    PopProcessIOHandler ();
     
     void
-    ResetProcessInputReader ();
-    
-    static size_t
-    ProcessInputReaderCallback (void *baton,
-                                InputReader &reader,
-                                lldb::InputReaderAction notification,
-                                const char *bytes,
-                                size_t bytes_len);
-    
+    ResetProcessIOHandler ();
+        
     Error
     HaltForDestroyOrDetach(lldb::EventSP &exit_event_sp);
     

@@ -21,7 +21,6 @@ add_lldb_library(lldbAPI
   SBFrame.cpp
   SBFunction.cpp
   SBHostOS.cpp
-  SBInputReader.cpp
   SBInstruction.cpp
   SBInstructionList.cpp
   SBLineEntry.cpp

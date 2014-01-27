@@ -777,15 +777,6 @@
 //                 Py_XDECREF($self->GetCallbackBaton());
 //         }
 // }
-// %extend lldb::SBInputReader {
-//         // FIXME: m_callback_function is private and we have no other
-//         // way to access it.
-//         PyObject *lldb::SBInputReader::__del__ (){
-//             // Only call Py_XDECREF if we have a Python object (or NULL)
-//             if (LLDBSwigPythonCallSBInputReaderCallback == $self->m_callback_function)
-//                 Py_XDECREF($self->m_callback_baton);
-//         }
-// }
 
 %pythoncode %{
 

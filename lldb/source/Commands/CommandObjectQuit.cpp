@@ -92,7 +92,8 @@ CommandObjectQuit::DoExecute (Args& command, CommandReturnObject &result)
             return false;
         }
     }
-    m_interpreter.BroadcastEvent (CommandInterpreter::eBroadcastBitQuitCommandReceived);
+    const uint32_t event_type = CommandInterpreter::eBroadcastBitQuitCommandReceived;
+    m_interpreter.BroadcastEvent (event_type);
     result.SetStatus (eReturnStatusQuit);
     return true;
 }

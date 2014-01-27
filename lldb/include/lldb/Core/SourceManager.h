@@ -70,6 +70,15 @@ public:
             return m_source_map_mod_id;
         }
         
+        const char *
+        PeekLineData (uint32_t line);
+
+        uint32_t
+        GetLineLength (uint32_t line, bool include_newline_chars);
+
+        uint32_t
+        GetNumLines ();
+        
     protected:
 
         bool
@@ -167,11 +176,11 @@ public:
                             uint32_t start_line, 
                             uint32_t end_line, 
                             std::vector<uint32_t> &match_lines);
-
-protected:
-
+    
     FileSP
     GetFile (const FileSpec &file_spec);
+
+protected:
     
     //------------------------------------------------------------------
     // Classes that inherit from SourceManager can see and modify these

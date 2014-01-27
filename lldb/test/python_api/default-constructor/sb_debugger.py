@@ -38,9 +38,6 @@ def fuzz_obj(obj):
         pass
     obj.DispatchInputInterrupt()
     obj.DispatchInputEndOfFile()
-    obj.PushInputReader(lldb.SBInputReader())
-    obj.NotifyTopInputReader(lldb.eInputReaderActivate)
-    obj.InputReaderIsTopReader(lldb.SBInputReader())
     obj.GetInstanceName()
     obj.GetDescription(lldb.SBStream())
     obj.GetTerminalWidth()

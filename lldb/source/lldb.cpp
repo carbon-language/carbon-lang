@@ -19,6 +19,7 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Interpreter/ScriptInterpreterPython.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -120,6 +121,7 @@ lldb_private::Initialize ()
         SymbolFileDWARFDebugMap::Initialize();
         ItaniumABILanguageRuntime::Initialize();
 #ifndef LLDB_DISABLE_PYTHON
+        ScriptInterpreterPython::InitializePrivate();
         OperatingSystemPython::Initialize();
 #endif
 

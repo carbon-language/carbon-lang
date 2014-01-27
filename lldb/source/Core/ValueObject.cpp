@@ -3721,7 +3721,8 @@ ValueObject::EvaluationPoint::SyncWithProcessState()
 {
 
     // Start with the target, if it is NULL, then we're obviously not going to get any further:
-    ExecutionContext exe_ctx(m_exe_ctx_ref.Lock());
+    const bool thread_and_frame_only_if_stopped = true;
+    ExecutionContext exe_ctx(m_exe_ctx_ref.Lock(thread_and_frame_only_if_stopped));
     
     if (exe_ctx.GetTargetPtr() == NULL)
         return false;

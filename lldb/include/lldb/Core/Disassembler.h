@@ -175,6 +175,9 @@ public:
     uint32_t
     GetIndexOfInstructionAtLoadAddress (lldb::addr_t load_addr, Target &target);
 
+    uint32_t
+    GetIndexOfInstructionAtAddress (const Address &addr);
+
     void
     Clear();
 

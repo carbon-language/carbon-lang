@@ -580,3 +580,40 @@ Symbol::ResolveReExportedSymbol (Target &target)
     }
     return NULL;
 }
+
+
+lldb::DisassemblerSP
+Symbol::GetInstructions (const ExecutionContext &exe_ctx,
+                         const char *flavor,
+                         bool prefer_file_cache)
+{
+    ModuleSP module_sp (m_addr_range.GetBaseAddress().GetModule());
+    if (module_sp)
+    {
+        const bool prefer_file_cache = false;
+        return Disassembler::DisassembleRange (module_sp->GetArchitecture(),
+                                               NULL,
+                                               flavor,
+                                               exe_ctx,
+                                               m_addr_range,
+                                               prefer_file_cache);
+    }
+    return lldb::DisassemblerSP();
+}
+
+bool
+Symbol::GetDisassembly (const ExecutionContext &exe_ctx,
+                        const char *flavor,
+                        bool prefer_file_cache,
+                        Stream &strm)
+{
+    lldb::DisassemblerSP disassembler_sp = GetInstructions (exe_ctx, flavor, prefer_file_cache);
+    if (disassembler_sp)
+    {
+        const bool show_address = true;
+        const bool show_bytes = false;
+        disassembler_sp->GetInstructionList().Dump (&strm, show_address, show_bytes, &exe_ctx);
+        return true;
+    }
+    return false;
+}

@@ -22,9 +22,9 @@ class Rdar12586188TestCase(TestBase):
         """Check that we handle an ImportError in a special way when command script importing files."""
 
         self.expect("command script import ./fail12586188.py --allow-reload",
-                error=True, substrs = ['error: module importing failed: I do not want to be imported'])
+                error=True, substrs = ['raise ImportError("I do not want to be imported")'])
         self.expect("command script import ./fail212586188.py --allow-reload",
-                error=True, substrs = ['error: module importing failed: Python error raised while importing module: I do not want to be imported'])
+                error=True, substrs = ['raise ValueError("I do not want to be imported")'])
 
 if __name__ == '__main__':
     import atexit

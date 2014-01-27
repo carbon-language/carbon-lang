@@ -18,15 +18,16 @@
 #include "lldb/Core/Event.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/Debugger.h"
-#include "lldb/Core/InputReader.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
+#include "lldb/Core/StreamFile.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/Terminal.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/OperatingSystem.h"
@@ -1244,7 +1245,7 @@ Process::GetNextEvent (EventSP &event_sp)
 
 
 StateType
-Process::WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp_ptr, bool wait_always)
+Process::WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp_ptr, bool wait_always, Listener *hijack_listener)
 {
     // We can't just wait for a "stopped" event, because the stopped event may have restarted the target.
     // We have to actually check each event, and in the case of a stopped event check the restarted flag
@@ -1273,7 +1274,7 @@ Process::WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp
     while (state != eStateInvalid)
     {
         EventSP event_sp;
-        state = WaitForStateChangedEvents (timeout, event_sp);
+        state = WaitForStateChangedEvents (timeout, event_sp, hijack_listener);
         if (event_sp_ptr && event_sp)
             *event_sp_ptr = event_sp;
 
@@ -1283,12 +1284,22 @@ Process::WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp
         case eStateDetached:
         case eStateExited:
         case eStateUnloaded:
+            // We need to toggle the run lock as this won't get done in
+            // SetPublicState() if the process is hijacked.
+            if (hijack_listener)
+                m_public_run_lock.SetStopped();
             return state;
         case eStateStopped:
             if (Process::ProcessEventData::GetRestartedFromEvent(event_sp.get()))
                 continue;
             else
+            {
+                // We need to toggle the run lock as this won't get done in
+                // SetPublicState() if the process is hijacked.
+                if (hijack_listener)
+                    m_public_run_lock.SetStopped();
                 return state;
+            }
         default:
             continue;
         }
@@ -1301,7 +1312,8 @@ StateType
 Process::WaitForState
 (
     const TimeValue *timeout,
-    const StateType *match_states, const uint32_t num_match_states
+    const StateType *match_states,
+    const uint32_t num_match_states
 )
 {
     EventSP event_sp;
@@ -1314,7 +1326,7 @@ Process::WaitForState
         if (state == eStateDetached || state == eStateExited)
             return state;
 
-        state = WaitForStateChangedEvents (timeout, event_sp);
+        state = WaitForStateChangedEvents (timeout, event_sp, NULL);
 
         for (i=0; i<num_match_states; ++i)
         {
@@ -1360,18 +1372,22 @@ Process::RestorePrivateProcessEvents ()
 }
 
 StateType
-Process::WaitForStateChangedEvents (const TimeValue *timeout, EventSP &event_sp)
+Process::WaitForStateChangedEvents (const TimeValue *timeout, EventSP &event_sp, Listener *hijack_listener)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
     if (log)
         log->Printf ("Process::%s (timeout = %p, event_sp)...", __FUNCTION__, timeout);
 
+    Listener *listener = hijack_listener;
+    if (listener == NULL)
+        listener = &m_listener;
+    
     StateType state = eStateInvalid;
-    if (m_listener.WaitForEventForBroadcasterWithType (timeout,
-                                                       this,
-                                                       eBroadcastBitStateChanged | eBroadcastBitInterrupt,
-                                                       event_sp))
+    if (listener->WaitForEventForBroadcasterWithType (timeout,
+                                                      this,
+                                                      eBroadcastBitStateChanged | eBroadcastBitInterrupt,
+                                                      event_sp))
     {
         if (event_sp && event_sp->GetType() == eBroadcastBitStateChanged)
             state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
@@ -1509,6 +1525,7 @@ Process::SetExitStatus (int status, const char *cstr)
     DidExit ();
 
     SetPrivateState (eStateExited);
+    CancelWatchForSTDIN (true);
     return true;
 }
 
@@ -2183,11 +2200,11 @@ Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardw
             load_addr = ResolveIndirectFunction (&symbol->GetAddress(), error);
             if (!error.Success() && show_error)
             {
-                m_target.GetDebugger().GetErrorFile().Printf ("warning: failed to resolve indirect function at 0x%" PRIx64 " for breakpoint %i.%i: %s\n",
-                                                              symbol->GetAddress().GetLoadAddress(&m_target),
-                                                              owner->GetBreakpoint().GetID(),
-                                                              owner->GetID(),
-                                                              error.AsCString() ? error.AsCString() : "unkown error");
+                m_target.GetDebugger().GetErrorFile()->Printf ("warning: failed to resolve indirect function at 0x%" PRIx64 " for breakpoint %i.%i: %s\n",
+                                                               symbol->GetAddress().GetLoadAddress(&m_target),
+                                                               owner->GetBreakpoint().GetID(),
+                                                               owner->GetID(),
+                                                               error.AsCString() ? error.AsCString() : "unkown error");
                 return LLDB_INVALID_BREAK_ID;
             }
             Address resolved_address(load_addr);
@@ -2231,11 +2248,11 @@ Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardw
                     if (show_error)
                     {
                         // Report error for setting breakpoint...
-                        m_target.GetDebugger().GetErrorFile().Printf ("warning: failed to set breakpoint site at 0x%" PRIx64 " for breakpoint %i.%i: %s\n",
-                                                                      load_addr,
-                                                                      owner->GetBreakpoint().GetID(),
-                                                                      owner->GetID(),
-                                                                      error.AsCString() ? error.AsCString() : "unkown error");
+                        m_target.GetDebugger().GetErrorFile()->Printf ("warning: failed to set breakpoint site at 0x%" PRIx64 " for breakpoint %i.%i: %s\n",
+                                                                       load_addr,
+                                                                       owner->GetBreakpoint().GetID(),
+                                                                       owner->GetID(),
+                                                                       error.AsCString() ? error.AsCString() : "unkown error");
                     }
                 }
             }
@@ -3756,8 +3773,6 @@ Process::Destroy ()
         }
         m_stdio_communication.StopReadThread();
         m_stdio_communication.Disconnect();
-        if (m_process_input_reader && m_process_input_reader->IsActive())
-            m_target.GetDebugger().PopInputReader (m_process_input_reader);
         if (m_process_input_reader)
             m_process_input_reader.reset();
         
@@ -4147,9 +4162,14 @@ Process::HandlePrivateEvent (EventSP &event_sp)
         }
         Process::ProcessEventData::SetUpdateStateOnRemoval(event_sp.get());
         if (StateIsRunningState (new_state))
-            PushProcessInputReader ();
+        {
+            // Only push the input handler if we aren't fowarding events,
+            // as this means the curses GUI is in use...
+            if (!GetTarget().GetDebugger().IsForwardingEvents())
+                PushProcessIOHandler ();
+        }
         else if (!Process::ProcessEventData::GetRestartedFromEvent(event_sp.get()))
-            PopProcessInputReader ();
+            PopProcessIOHandler ();
 
         BroadcastEvent (event_sp);
     }
@@ -4695,64 +4715,187 @@ Process::STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_
     process->AppendSTDOUT (static_cast<const char *>(src), src_len);
 }
 
-size_t
-Process::ProcessInputReaderCallback (void *baton,
-                                     InputReader &reader,
-                                     lldb::InputReaderAction notification,
-                                     const char *bytes,
-                                     size_t bytes_len)
-{
-    Process *process = (Process *) baton;
-    
-    switch (notification)
-    {
-    case eInputReaderActivate:
-        break;
-        
-    case eInputReaderDeactivate:
-        break;
-        
-    case eInputReaderReactivate:
-        break;
-        
-    case eInputReaderAsynchronousOutputWritten:
-        break;
-        
-    case eInputReaderGotToken:
-        {
-            Error error;
-            process->PutSTDIN (bytes, bytes_len, error);
-        }
-        break;
-        
-    case eInputReaderInterrupt:
-        process->SendAsyncInterrupt();
-        break;
-            
-    case eInputReaderEndOfFile:
-        process->AppendSTDOUT ("^D", 2);
-        break;
-        
-    case eInputReaderDone:
-        break;
-        
-    }
-    
-    return bytes_len;
-}
-
 void
-Process::ResetProcessInputReader ()
+Process::ResetProcessIOHandler ()
 {   
     m_process_input_reader.reset();
 }
 
+
+class IOHandlerProcessSTDIO :
+    public IOHandler
+{
+public:
+    IOHandlerProcessSTDIO (Process *process,
+                           int write_fd) :
+        IOHandler(process->GetTarget().GetDebugger()),
+        m_process (process),
+        m_read_file (),
+        m_write_file (write_fd, false),
+        m_pipe_read(),
+        m_pipe_write()
+    {
+        m_read_file.SetDescriptor(GetInputFD(), false);
+    }
+
+    virtual
+    ~IOHandlerProcessSTDIO ()
+    {
+        
+    }
+    
+    bool
+    OpenPipes ()
+    {
+        if (m_pipe_read.IsValid() && m_pipe_write.IsValid())
+            return true;
+
+        int fds[2];
+        int err = pipe(fds);
+        if (err == 0)
+        {
+            m_pipe_read.SetDescriptor(fds[0], true);
+            m_pipe_write.SetDescriptor(fds[1], true);
+            return true;
+        }
+        return false;
+    }
+
+    void
+    ClosePipes()
+    {
+        m_pipe_read.Close();
+        m_pipe_write.Close();
+    }
+    
+    // Each IOHandler gets to run until it is done. It should read data
+    // from the "in" and place output into "out" and "err and return
+    // when done.
+    virtual void
+    Run ()
+    {
+        if (m_read_file.IsValid() && m_write_file.IsValid())
+        {
+            SetIsDone(false);
+            if (OpenPipes())
+            {
+                const int read_fd = m_read_file.GetDescriptor();
+                const int pipe_read_fd = m_pipe_read.GetDescriptor();
+                TerminalState terminal_state;
+                terminal_state.Save (read_fd, false);
+                Terminal terminal(read_fd);
+                terminal.SetCanonical(false);
+                terminal.SetEcho(false);
+                while (!GetIsDone())
+                {
+                    fd_set read_fdset;
+                    FD_ZERO (&read_fdset);
+                    FD_SET (read_fd, &read_fdset);
+                    FD_SET (pipe_read_fd, &read_fdset);
+                    const int nfds = std::max<int>(read_fd, pipe_read_fd) + 1;
+                    int num_set_fds = select (nfds, &read_fdset, NULL, NULL, NULL);
+                    if (num_set_fds < 0)
+                    {
+                        const int select_errno = errno;
+                        
+                        if (select_errno != EINTR)
+                            SetIsDone(true);
+                    }
+                    else if (num_set_fds > 0)
+                    {
+                        char ch = 0;
+                        size_t n;
+                        if (FD_ISSET (read_fd, &read_fdset))
+                        {
+                            n = 1;
+                            if (m_read_file.Read(&ch, n).Success() && n == 1)
+                            {
+                                if (m_write_file.Write(&ch, n).Fail() || n != 1)
+                                    SetIsDone(true);
+                            }
+                            else
+                                SetIsDone(true);
+                        }
+                        if (FD_ISSET (pipe_read_fd, &read_fdset))
+                        {
+                            // Consume the interrupt byte
+                            n = 1;
+                            m_pipe_read.Read (&ch, n);
+                            SetIsDone(true);
+                        }
+                    }
+                }
+                terminal_state.Restore();
+
+            }
+            else
+                SetIsDone(true);
+        }
+        else
+            SetIsDone(true);
+    }
+    
+    // Hide any characters that have been displayed so far so async
+    // output can be displayed. Refresh() will be called after the
+    // output has been displayed.
+    virtual void
+    Hide ()
+    {
+        
+    }
+    // Called when the async output has been received in order to update
+    // the input reader (refresh the prompt and redisplay any current
+    // line(s) that are being edited
+    virtual void
+    Refresh ()
+    {
+        
+    }
+    virtual void
+    Interrupt ()
+    {
+        size_t n = 1;
+        char ch = 'q';
+        m_pipe_write.Write (&ch, n);
+    }
+    
+    virtual void
+    GotEOF()
+    {
+        
+    }
+    
+protected:
+    Process *m_process;
+    File m_read_file;   // Read from this file (usually actual STDIN for LLDB
+    File m_write_file;  // Write to this file (usually the master pty for getting io to debuggee)
+    File m_pipe_read;
+    File m_pipe_write;
+
+};
+
 void
-Process::SetSTDIOFileDescriptor (int file_descriptor)
+Process::WatchForSTDIN (IOHandler &io_handler)
+{
+}
+
+void
+Process::CancelWatchForSTDIN (bool exited)
+{
+    if (m_process_input_reader)
+    {
+        if (exited)
+            m_process_input_reader->SetIsDone(true);
+        m_process_input_reader->Interrupt();
+    }
+}
+
+void
+Process::SetSTDIOFileDescriptor (int fd)
 {
     // First set up the Read Thread for reading/handling process I/O
     
-    std::unique_ptr<ConnectionFileDescriptor> conn_ap (new ConnectionFileDescriptor (file_descriptor, true));
+    std::unique_ptr<ConnectionFileDescriptor> conn_ap (new ConnectionFileDescriptor (fd, true));
     
     if (conn_ap.get())
     {
@@ -4765,70 +4908,37 @@ Process::SetSTDIOFileDescriptor (int file_descriptor)
             // Now read thread is set up, set up input reader.
             
             if (!m_process_input_reader.get())
-            {
-                m_process_input_reader.reset (new InputReader(m_target.GetDebugger()));
-                Error err (m_process_input_reader->Initialize (Process::ProcessInputReaderCallback,
-                                                               this,
-                                                               eInputReaderGranularityByte,
-                                                               NULL,
-                                                               NULL,
-                                                               false));
-                
-                if  (err.Fail())
-                    m_process_input_reader.reset();
-            }
+                m_process_input_reader.reset (new IOHandlerProcessSTDIO (this, fd));
         }
     }
 }
 
 void
-Process::PushProcessInputReader ()
+Process::PushProcessIOHandler ()
 {
-    if (m_process_input_reader && !m_process_input_reader->IsActive())
-        m_target.GetDebugger().PushInputReader (m_process_input_reader);
+    IOHandlerSP io_handler_sp (m_process_input_reader);
+    if (io_handler_sp)
+    {
+        io_handler_sp->SetIsDone(false);
+        m_target.GetDebugger().PushIOHandler (io_handler_sp);
+    }
 }
 
 void
-Process::PopProcessInputReader ()
+Process::PopProcessIOHandler ()
 {
-    if (m_process_input_reader && m_process_input_reader->IsActive())
-        m_target.GetDebugger().PopInputReader (m_process_input_reader);
+    IOHandlerSP io_handler_sp (m_process_input_reader);
+    if (io_handler_sp)
+    {
+        io_handler_sp->Interrupt();
+        m_target.GetDebugger().PopIOHandler (io_handler_sp);
+    }
 }
 
 // The process needs to know about installed plug-ins
 void
 Process::SettingsInitialize ()
 {
-//    static std::vector<OptionEnumValueElement> g_plugins;
-//    
-//    int i=0; 
-//    const char *name;
-//    OptionEnumValueElement option_enum;
-//    while ((name = PluginManager::GetProcessPluginNameAtIndex (i)) != NULL)
-//    {
-//        if (name)
-//        {
-//            option_enum.value = i;
-//            option_enum.string_value = name;
-//            option_enum.usage = PluginManager::GetProcessPluginDescriptionAtIndex (i);
-//            g_plugins.push_back (option_enum);
-//        }
-//        ++i;
-//    }
-//    option_enum.value = 0;
-//    option_enum.string_value = NULL;
-//    option_enum.usage = NULL;
-//    g_plugins.push_back (option_enum);
-//    
-//    for (i=0; (name = SettingsController::instance_settings_table[i].var_name); ++i)
-//    {
-//        if (::strcmp (name, "plugin") == 0)
-//        {
-//            SettingsController::instance_settings_table[i].enum_values = &g_plugins[0];
-//            break;
-//        }
-//    }
-//                                                          
     Thread::SettingsInitialize ();
 }
 

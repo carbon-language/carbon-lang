@@ -608,6 +608,17 @@ public:
     size_t
     MemorySize () const;
 
+    lldb::DisassemblerSP
+    GetInstructions (const ExecutionContext &exe_ctx,
+                     const char *flavor,
+                     bool prefer_file_cache);
+
+    bool
+    GetDisassembly (const ExecutionContext &exe_ctx,
+                    const char *flavor,
+                    bool prefer_file_cache,
+                    Stream &strm);
+
 protected:
 
     enum

@@ -1172,7 +1172,7 @@ public:
         std::unique_ptr<ThreadSpec> m_thread_spec_ap;
         bool m_active;
         
-        // Use AddStopHook to make a new empty stop hook.  The GetCommandPointer and fill it with commands,
+        // Use CreateStopHook to make a new empty stop hook. The GetCommandPointer and fill it with commands,
         // and SetSpecifier to set the specifier shared pointer (can be null, that will match anything.)
         StopHook (lldb::TargetSP target_sp, lldb::user_id_t uid);
         friend class Target;
@@ -1181,8 +1181,8 @@ public:
     
     // Add an empty stop hook to the Target's stop hook list, and returns a shared pointer to it in new_hook.  
     // Returns the id of the new hook.        
-    lldb::user_id_t
-    AddStopHook (StopHookSP &new_hook);
+    StopHookSP
+    CreateStopHook ();
     
     void
     RunStopHooks ();

@@ -812,7 +812,12 @@ PlatformDarwin::Attach (ProcessAttachInfo &attach_info,
             process_sp = target->CreateProcess (listener, attach_info.GetProcessPluginName(), NULL);
             
             if (process_sp)
+            {
+                ListenerSP listener_sp (new Listener("lldb.PlatformDarwin.attach.hijack"));
+                attach_info.SetHijackListener(listener_sp);
+                process_sp->HijackProcessEvents(listener_sp.get());
                 error = process_sp->Attach (attach_info);
+            }
         }
     }
     else

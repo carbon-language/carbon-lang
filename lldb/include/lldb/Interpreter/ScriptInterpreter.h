@@ -245,11 +245,13 @@ public:
         return true;
     }
 
-    virtual bool
+    virtual Error
     ExecuteMultipleLines (const char *in_string,
                           const ExecuteScriptOptions &options = ExecuteScriptOptions())
     {
-        return true;
+        Error error;
+        error.SetErrorString("not implemented");
+        return error;
     }
 
     virtual bool

@@ -10,6 +10,7 @@ add_lldb_library(lldbCommands
   CommandObjectDisassemble.cpp
   CommandObjectExpression.cpp
   CommandObjectFrame.cpp
+  CommandObjectGUI.cpp
   CommandObjectHelp.cpp
   CommandObjectLog.cpp
   CommandObjectMemory.cpp

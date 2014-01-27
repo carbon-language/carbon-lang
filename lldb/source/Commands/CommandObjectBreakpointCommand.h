@@ -19,7 +19,6 @@
 
 #include "lldb/lldb-types.h"
 #include "lldb/Interpreter/Options.h"
-#include "lldb/Core/InputReader.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/CommandObjectMultiword.h"

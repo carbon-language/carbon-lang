@@ -21,7 +21,6 @@
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
-#include "lldb/Core/InputReader.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Core/ThreadSafeValue.h"
@@ -377,13 +376,6 @@ protected:
     const char *
     GetDispatchQueueNameForThread (lldb::addr_t thread_dispatch_qaddr,
                                    std::string &dispatch_queue_name);
-
-    static size_t
-    AttachInputReaderCallback (void *baton, 
-                               lldb_private::InputReader *reader, 
-                               lldb::InputReaderAction notification,
-                               const char *bytes, 
-                               size_t bytes_len);
 
     lldb_private::DynamicLoader *
     GetDynamicLoader ();

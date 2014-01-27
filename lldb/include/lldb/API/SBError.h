@@ -71,7 +71,6 @@ protected:
     friend class SBDebugger;
     friend class SBCommunication;
     friend class SBHostOS;
-    friend class SBInputReader;
     friend class SBPlatform;
     friend class SBProcess;
     friend class SBThread;

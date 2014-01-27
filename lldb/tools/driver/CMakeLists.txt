@@ -4,7 +4,6 @@ add_lldb_executable(lldb
   #DriverEvents.cpp
   #DriverOptions.cpp
   #DriverPosix.cpp
-  IOChannel.cpp
   ELWrapper.cpp
   Platform.cpp
   GetOptWrapper.cpp

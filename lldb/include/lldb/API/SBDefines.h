@@ -48,7 +48,6 @@ class SBFileSpecList;
 class SBFrame;
 class SBFunction;
 class SBHostOS;
-class SBInputReader;
 class SBInstruction;
 class SBInstructionList;
 class SBLineEntry;

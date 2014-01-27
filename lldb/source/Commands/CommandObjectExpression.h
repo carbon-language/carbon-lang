@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/IOHandler.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
@@ -21,7 +22,9 @@
 
 namespace lldb_private {
 
-class CommandObjectExpression : public CommandObjectRaw
+class CommandObjectExpression :
+    public CommandObjectRaw,
+    public IOHandlerDelegate
 {
 public:
 
@@ -71,16 +74,25 @@ public:
     GetOptions ();
 
 protected:
+    
+    //------------------------------------------------------------------
+    // IOHandler::Delegate functions
+    //------------------------------------------------------------------
+    virtual void
+    IOHandlerActivated (IOHandler &io_handler);
+
+    virtual void
+    IOHandlerInputComplete (IOHandler &io_handler,
+                            std::string &line);
+
+    virtual LineStatus
+    IOHandlerLinesUpdated (IOHandler &io_handler,
+                           StringList &lines,
+                           uint32_t line_idx,
+                           Error &error);
     virtual bool
     DoExecute (const char *command,
                CommandReturnObject &result);
-
-    static size_t
-    MultiLineExpressionCallback (void *baton, 
-                                 InputReader &reader, 
-                                 lldb::InputReaderAction notification,
-                                 const char *bytes, 
-                                 size_t bytes_len);
 
     bool
     EvaluateExpression (const char *expr,

@@ -76,8 +76,9 @@ FILE * File::kInvalidStream = NULL;
 File::File(const char *path, uint32_t options, uint32_t permissions) :
     m_descriptor (kInvalidDescriptor),
     m_stream (kInvalidStream),
-    m_options (0),
-    m_owned (false)
+    m_options (),
+    m_own_stream (false),
+    m_own_descriptor (false)
 {
     Open (path, options, permissions);
 }
@@ -88,7 +89,8 @@ File::File (const FileSpec& filespec,
     m_descriptor (kInvalidDescriptor),
     m_stream (kInvalidStream),
     m_options (0),
-    m_owned (false)
+    m_own_stream (false),
+    m_own_descriptor (false)
 {
     if (filespec)
     {
@@ -100,7 +102,8 @@ File::File (const File &rhs) :
     m_descriptor (kInvalidDescriptor),
     m_stream (kInvalidStream),
     m_options (0),
-    m_owned (false)
+    m_own_stream (false),
+    m_own_descriptor (false)
 {
     Duplicate (rhs);
 }
@@ -141,7 +144,7 @@ File::SetDescriptor (int fd, bool transfer_ownership)
     if (IsValid())
         Close();
     m_descriptor = fd;
-    m_owned = transfer_ownership;
+    m_own_descriptor = transfer_ownership;
 }
 
 
@@ -155,10 +158,31 @@ File::GetStream ()
             const char *mode = GetStreamOpenModeFromOptions (m_options);
             if (mode)
             {
+                if (!m_own_descriptor)
+                {
+                    // We must duplicate the file descriptor if we don't own it because
+                    // when you call fdopen, the stream will own the fd
+#ifdef _WIN32
+                    m_descriptor = ::_dup(GetDescriptor());
+#else
+                    m_descriptor = ::fcntl(GetDescriptor(), F_DUPFD);
+#endif
+                    m_own_descriptor = true;
+                }
+
                 do
                 {
                     m_stream = ::fdopen (m_descriptor, mode);
                 } while (m_stream == NULL && errno == EINTR);
+
+                // If we got a stream, then we own the stream and should no
+                // longer own the descriptor because fclose() will close it for us
+
+                if (m_stream)
+                {
+                    m_own_stream = true;
+                    m_own_descriptor = false;
+                }
             }
         }
     }
@@ -172,7 +196,7 @@ File::SetStream (FILE *fh, bool transfer_ownership)
     if (IsValid())
         Close();
     m_stream = fh;
-    m_owned = transfer_ownership;
+    m_own_stream = transfer_ownership;
 }
 
 Error
@@ -194,7 +218,7 @@ File::Duplicate (const File &rhs)
         else
         {
             m_options = rhs.m_options;
-            m_owned = true;
+            m_own_descriptor = true;
         }
     }
     else
@@ -272,7 +296,10 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
     if (!DescriptorIsValid())
         error.SetErrorToErrno();
     else
-        m_owned = true;
+    {
+        m_own_descriptor = true;
+        m_options = options;
+    }
     
     return error;
 }
@@ -328,27 +355,22 @@ Error
 File::Close ()
 {
     Error error;
-    if (IsValid ())
+    if (StreamIsValid() && m_own_stream)
     {
-        if (m_owned)
-        {
-            if (StreamIsValid())
-            {
-                if (::fclose (m_stream) == EOF)
-                    error.SetErrorToErrno();
-            }
-            
-            if (DescriptorIsValid())
-            {
-                if (::close (m_descriptor) != 0)
-                    error.SetErrorToErrno();
-            }
-        }
-        m_descriptor = kInvalidDescriptor;
-        m_stream = kInvalidStream;
-        m_options = 0;
-        m_owned = false;
+        if (::fclose (m_stream) == EOF)
+            error.SetErrorToErrno();
     }
+    
+    if (DescriptorIsValid() && m_own_descriptor)
+    {
+        if (::close (m_descriptor) != 0)
+            error.SetErrorToErrno();
+    }
+    m_descriptor = kInvalidDescriptor;
+    m_stream = kInvalidStream;
+    m_options = 0;
+    m_own_stream = false;
+    m_own_descriptor = false;
     return error;
 }
 

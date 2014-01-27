@@ -22,7 +22,6 @@ def stop_if_called_from_a(frame, bp_loc, dict):
         if (thread.frames[0].function.name == 'c' and thread.frames[1].function.name == 'a'):
             should_stop = True
         else:
-            process.Continue()
             should_stop = False
 
     dbg.SetAsync(old_async)

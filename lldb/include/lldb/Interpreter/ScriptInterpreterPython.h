@@ -19,15 +19,20 @@
 
 #include "lldb/lldb-python.h"
 #include "lldb/lldb-private.h"
+#include "lldb/Core/IOHandler.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
-#include "lldb/Core/InputReader.h"
+#include "lldb/Interpreter/PythonDataObjects.h"
 #include "lldb/Host/Terminal.h"
 
 namespace lldb_private {
     
-class ScriptInterpreterPython : public ScriptInterpreter
+class ScriptInterpreterPython :
+    public ScriptInterpreter,
+    public IOHandlerDelegateMultiline
 {
 public:
+
+    friend class IOHandlerPythonInterpreter;
 
     ScriptInterpreterPython (CommandInterpreter &interpreter);
 
@@ -47,7 +52,7 @@ public:
                               void *ret_value,
                               const ExecuteScriptOptions &options = ExecuteScriptOptions());
 
-    bool
+    lldb_private::Error
     ExecuteMultipleLines (const char *in_string,
                           const ExecuteScriptOptions &options = ExecuteScriptOptions());
 
@@ -134,20 +139,20 @@ public:
     bool
     GenerateWatchpointCommandCallbackData (StringList &input, std::string& output);
 
-    static size_t
-    GenerateBreakpointOptionsCommandCallback (void *baton, 
-                                              InputReader &reader, 
-                                              lldb::InputReaderAction notification,
-                                              const char *bytes, 
-                                              size_t bytes_len);
-        
-    static size_t
-    GenerateWatchpointOptionsCommandCallback (void *baton, 
-                                              InputReader &reader, 
-                                              lldb::InputReaderAction notification,
-                                              const char *bytes, 
-                                              size_t bytes_len);
-        
+//    static size_t
+//    GenerateBreakpointOptionsCommandCallback (void *baton, 
+//                                              InputReader &reader, 
+//                                              lldb::InputReaderAction notification,
+//                                              const char *bytes, 
+//                                              size_t bytes_len);
+//    
+//    static size_t
+//    GenerateWatchpointOptionsCommandCallback (void *baton, 
+//                                              InputReader &reader, 
+//                                              lldb::InputReaderAction notification,
+//                                              const char *bytes, 
+//                                              size_t bytes_len);
+    
     static bool
     BreakpointCallbackFunction (void *baton, 
                                 StoppointCallbackContext *context, 
@@ -238,9 +243,6 @@ public:
     virtual void
     ResetOutputFileHandle (FILE *new_fh);
     
-    static lldb::thread_result_t
-    RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton);
-
     static void
     InitializePrivate ();
 
@@ -266,10 +268,29 @@ public:
                            SWIGPythonScriptKeyword_Frame swig_run_script_keyword_frame,
                            SWIGPython_GetDynamicSetting swig_plugin_get);
 
+    const char *
+    GetDictionaryName ()
+    {
+        return m_dictionary_name.c_str();
+    }
+
+    
+    //----------------------------------------------------------------------
+    // IOHandlerDelegate
+    //----------------------------------------------------------------------
+    virtual void
+    IOHandlerActivated (IOHandler &io_handler);
+
+    virtual void
+    IOHandlerInputComplete (IOHandler &io_handler, std::string &data);
+
 protected:
 
     bool
-    EnterSession (bool init_lldb_globals);
+    EnterSession (bool init_lldb_globals,
+                  FILE *in,
+                  FILE *out,
+                  FILE *err);
     
     void
     LeaveSession ();
@@ -279,8 +300,6 @@ protected:
 
     void
     RestoreTerminalState ();
-
-private:
     
     class SynchronicityHandler
     {
@@ -322,7 +341,7 @@ private:
         private:
             DISALLOW_COPY_AND_ASSIGN (ScriptInterpreterPythonObject);
     };
-    
+public:
 	class Locker : public ScriptInterpreterLocker
 	{
 	public:
@@ -344,7 +363,9 @@ private:
         Locker (ScriptInterpreterPython *py_interpreter = NULL,
                 uint16_t on_entry = AcquireLock | InitSession,
                 uint16_t on_leave = FreeLock | TearDownSession,
-                FILE* wait_msg_handle = NULL);
+                FILE *in = NULL,
+                FILE *out = NULL,
+                FILE *err = NULL);
         
     	~Locker ();
 
@@ -354,7 +375,7 @@ private:
         DoAcquireLock ();
         
         bool
-        DoInitSession (bool init_lldb_globals);
+        DoInitSession (bool init_lldb_globals, FILE *in, FILE *out, FILE *err);
         
         bool
         DoFreeLock ();
@@ -367,59 +388,40 @@ private:
         
     	bool                     m_teardown_session;
     	ScriptInterpreterPython *m_python_interpreter;
-    	FILE*                    m_tmp_fh;
+//    	FILE*                    m_tmp_fh;
         PyGILState_STATE         m_GILState;
 	};
-    
-    class PythonInputReaderManager
-    {
-    public:
-        PythonInputReaderManager (ScriptInterpreterPython *interpreter);
-        
-        explicit operator bool()
-        {
-            return m_error;
-        }
-        
-        ~PythonInputReaderManager();
-        
-    private:
-        
-        static size_t
-        InputReaderCallback (void *baton,
-                                           InputReader &reader,
-                                           lldb::InputReaderAction notification,
-                                           const char *bytes,
-                                           size_t bytes_len);
-        
-        static lldb::thread_result_t
-        RunPythonInputReader (lldb::thread_arg_t baton);
-        
-        ScriptInterpreterPython *m_interpreter;
-        lldb::DebuggerSP m_debugger_sp;
-        lldb::InputReaderSP m_reader_sp;
-        bool m_error;
+private:
+
+    enum ActiveIOHandler {
+        eIOHandlerNone,
+        eIOHandlerBreakpoint,
+        eIOHandlerWatchpoint
     };
+    PythonObject &
+    GetMainModule ();
+    
+    PythonDictionary &
+    GetSessionDictionary ();
+    
+    PythonDictionary &
+    GetSysModuleDictionary ();
 
-    static size_t
-    InputReaderCallback (void *baton, 
-                         InputReader &reader, 
-                         lldb::InputReaderAction notification,
-                         const char *bytes, 
-                         size_t bytes_len);
-
-
-    lldb_utility::PseudoTerminal m_embedded_thread_pty;
-    lldb_utility::PseudoTerminal m_embedded_python_pty;
-    lldb::InputReaderSP m_embedded_thread_input_reader_sp;
-    lldb::InputReaderSP m_embedded_python_input_reader_sp;
-    FILE *m_dbg_stdout;
-    PyObject *m_new_sysout;
-    PyObject *m_old_sysout;
-    PyObject *m_old_syserr;
-    PyObject *m_run_one_line;
+    bool
+    GetEmbeddedInterpreterModuleObjects ();
+    
+    PythonObject m_saved_stdin;
+    PythonObject m_saved_stdout;
+    PythonObject m_saved_stderr;
+    PythonObject m_main_module;
+    PythonObject m_lldb_module;
+    PythonDictionary m_session_dict;
+    PythonDictionary m_sys_module_dict;
+    PythonObject m_run_one_line_function;
+    PythonObject m_run_one_line_str_global;
     std::string m_dictionary_name;
     TerminalState m_terminal_state;
+    ActiveIOHandler m_active_io_handler;
     bool m_session_is_active;
     bool m_pty_slave_is_open;
     bool m_valid_session;

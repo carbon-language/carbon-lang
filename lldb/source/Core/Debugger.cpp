@@ -18,13 +18,13 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
-#include "lldb/Core/InputReader.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamAsynchronousIO.h"
 #include "lldb/Core/StreamCallback.h"
+#include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
@@ -180,6 +180,7 @@ Debugger::SetPropertyValue (const ExecutionContext *exe_ctx,
             std::string str = lldb_utility::ansi::FormatAnsiTerminalCodes (new_prompt, GetUseColor());
             if (str.length())
                 new_prompt = str.c_str();
+            GetCommandInterpreter().UpdatePrompt(new_prompt);
             EventSP prompt_change_event_sp (new Event(CommandInterpreter::eBroadcastBitResetPrompt, new EventDataBytes (new_prompt)));
             GetCommandInterpreter().BroadcastEvent (prompt_change_event_sp);
         }
@@ -196,12 +197,16 @@ Debugger::SetPropertyValue (const ExecutionContext *exe_ctx,
                 StreamString feedback_stream;
                 if (!target_sp->LoadScriptingResources(errors,&feedback_stream))
                 {
-                    for (auto error : errors)
+                    StreamFileSP stream_sp (GetErrorFile());
+                    if (stream_sp)
                     {
-                        GetErrorStream().Printf("%s\n",error.AsCString());
+                        for (auto error : errors)
+                        {
+                            stream_sp->Printf("%s\n",error.AsCString());
+                        }
+                        if (feedback_stream.GetSize())
+                            stream_sp->Printf("%s",feedback_stream.GetData());
                     }
-                    if (feedback_stream.GetSize())
-                        GetErrorStream().Printf("%s",feedback_stream.GetData());
                 }
             }
         }
@@ -246,8 +251,7 @@ Debugger::SetPrompt(const char *p)
     std::string str = lldb_utility::ansi::FormatAnsiTerminalCodes (new_prompt, GetUseColor());
     if (str.length())
         new_prompt = str.c_str();
-    EventSP prompt_change_event_sp (new Event(CommandInterpreter::eBroadcastBitResetPrompt, new EventDataBytes (new_prompt)));;
-    GetCommandInterpreter().BroadcastEvent (prompt_change_event_sp);
+    GetCommandInterpreter().UpdatePrompt(new_prompt);
 }
 
 const char *
@@ -611,10 +615,9 @@ Debugger::FindTargetWithProcess (Process *process)
 Debugger::Debugger (lldb::LogOutputCallback log_callback, void *baton) :
     UserID (g_unique_id++),
     Properties(OptionValuePropertiesSP(new OptionValueProperties())), 
-    m_input_comm("debugger.input"),
-    m_input_file (),
-    m_output_file (),
-    m_error_file (),
+    m_input_file_sp (new StreamFile (stdin, false)),
+    m_output_file_sp (new StreamFile (stdout, false)),
+    m_error_file_sp (new StreamFile (stderr, false)),
     m_terminal_state (),
     m_target_list (*this),
     m_platform_list (),
@@ -623,8 +626,11 @@ Debugger::Debugger (lldb::LogOutputCallback log_callback, void *baton) :
     m_source_file_cache(),
     m_command_interpreter_ap (new CommandInterpreter (*this, eScriptLanguageDefault, false)),
     m_input_reader_stack (),
-    m_input_reader_data (),
-    m_instance_name()
+    m_instance_name (),
+    m_loaded_plugins (),
+    m_event_handler_thread (LLDB_INVALID_HOST_THREAD),
+    m_io_handler_thread (LLDB_INVALID_HOST_THREAD),
+    m_event_handler_thread_alive(false)
 {
     char instance_cstr[256];
     snprintf(instance_cstr, sizeof(instance_cstr), "debugger_%d", (int)GetID());
@@ -667,7 +673,9 @@ Debugger::~Debugger ()
 void
 Debugger::Clear()
 {
-    CleanUpInputReaders();
+    ClearIOHandlers();
+    StopIOHandlerThread();
+    StopEventHandlerThread();
     m_listener.Clear();
     int num_targets = m_target_list.GetNumTargets();
     for (int i = 0; i < num_targets; i++)
@@ -686,23 +694,21 @@ Debugger::Clear()
     // Close the input file _before_ we close the input read communications class
     // as it does NOT own the input file, our m_input_file does.
     m_terminal_state.Clear();
-    GetInputFile().Close ();
-    // Now that we have closed m_input_file, we can now tell our input communication
-    // class to close down. Its read thread should quickly exit after we close
-    // the input file handle above.
-    m_input_comm.Clear ();
+    if (m_input_file_sp)
+        m_input_file_sp->GetFile().Close ();
 }
 
 bool
 Debugger::GetCloseInputOnEOF () const
 {
-    return m_input_comm.GetCloseOnEOF();
+//    return m_input_comm.GetCloseOnEOF();
+    return false;
 }
 
 void
 Debugger::SetCloseInputOnEOF (bool b)
 {
-    m_input_comm.SetCloseOnEOF(b);
+//    m_input_comm.SetCloseOnEOF(b);
 }
 
 bool
@@ -721,37 +727,28 @@ Debugger::SetAsyncExecution (bool async_execution)
 void
 Debugger::SetInputFileHandle (FILE *fh, bool tranfer_ownership)
 {
-    File &in_file = GetInputFile();
-    in_file.SetStream (fh, tranfer_ownership);
+    if (m_input_file_sp)
+        m_input_file_sp->GetFile().SetStream (fh, tranfer_ownership);
+    else
+        m_input_file_sp.reset (new StreamFile (fh, tranfer_ownership));
+
+    File &in_file = m_input_file_sp->GetFile();
     if (in_file.IsValid() == false)
         in_file.SetStream (stdin, true);
 
-    // Disconnect from any old connection if we had one
-    m_input_comm.Disconnect ();
-    // Pass false as the second argument to ConnectionFileDescriptor below because
-    // our "in_file" above will already take ownership if requested and we don't
-    // want to objects trying to own and close a file descriptor.
-    m_input_comm.SetConnection (new ConnectionFileDescriptor (in_file.GetDescriptor(), false));
-    m_input_comm.SetReadThreadBytesReceivedCallback (Debugger::DispatchInputCallback, this);
-    
     // Save away the terminal state if that is relevant, so that we can restore it in RestoreInputState.
     SaveInputTerminalState ();
-    
-    Error error;
-    if (m_input_comm.StartReadThread (&error) == false)
-    {
-        File &err_file = GetErrorFile();
-
-        err_file.Printf ("error: failed to main input read thread: %s", error.AsCString() ? error.AsCString() : "unkown error");
-        exit(1);
-    }
 }
 
 void
 Debugger::SetOutputFileHandle (FILE *fh, bool tranfer_ownership)
 {
-    File &out_file = GetOutputFile();
-    out_file.SetStream (fh, tranfer_ownership);
+    if (m_output_file_sp)
+        m_output_file_sp->GetFile().SetStream (fh, tranfer_ownership);
+    else
+        m_output_file_sp.reset (new StreamFile (fh, tranfer_ownership));
+    
+    File &out_file = m_output_file_sp->GetFile();
     if (out_file.IsValid() == false)
         out_file.SetStream (stdout, false);
     
@@ -766,8 +763,12 @@ Debugger::SetOutputFileHandle (FILE *fh, bool tranfer_ownership)
 void
 Debugger::SetErrorFileHandle (FILE *fh, bool tranfer_ownership)
 {
-    File &err_file = GetErrorFile();
-    err_file.SetStream (fh, tranfer_ownership);
+    if (m_error_file_sp)
+        m_error_file_sp->GetFile().SetStream (fh, tranfer_ownership);
+    else
+        m_error_file_sp.reset (new StreamFile (fh, tranfer_ownership));
+    
+    File &err_file = m_error_file_sp->GetFile();
     if (err_file.IsValid() == false)
         err_file.SetStream (stderr, false);
 }
@@ -775,9 +776,12 @@ Debugger::SetErrorFileHandle (FILE *fh, bool tranfer_ownership)
 void
 Debugger::SaveInputTerminalState ()
 {
-    File &in_file = GetInputFile();
-    if (in_file.GetDescriptor() != File::kInvalidDescriptor)
-        m_terminal_state.Save(in_file.GetDescriptor(), true);
+    if (m_input_file_sp)
+    {
+        File &in_file = m_input_file_sp->GetFile();
+        if (in_file.GetDescriptor() != File::kInvalidDescriptor)
+            m_terminal_state.Save(in_file.GetDescriptor(), true);
+    }
 }
 
 void
@@ -812,244 +816,210 @@ Debugger::GetSelectedExecutionContext ()
     return exe_ctx;
 }
 
-InputReaderSP 
-Debugger::GetCurrentInputReader ()
-{
-    InputReaderSP reader_sp;
-    
-    if (!m_input_reader_stack.IsEmpty())
-    {
-        // Clear any finished readers from the stack
-        while (CheckIfTopInputReaderIsDone()) ;
-        
-        if (!m_input_reader_stack.IsEmpty())
-            reader_sp = m_input_reader_stack.Top();
-    }
-    
-    return reader_sp;
-}
-
-void
-Debugger::DispatchInputCallback (void *baton, const void *bytes, size_t bytes_len)
-{
-    if (bytes_len > 0)
-        ((Debugger *)baton)->DispatchInput ((char *)bytes, bytes_len);
-    else
-        ((Debugger *)baton)->DispatchInputEndOfFile ();
-}   
-
-
-void
-Debugger::DispatchInput (const char *bytes, size_t bytes_len)
-{
-    if (bytes == NULL || bytes_len == 0)
-        return;
-
-    WriteToDefaultReader (bytes, bytes_len);
-}
-
 void
 Debugger::DispatchInputInterrupt ()
 {
-    m_input_reader_data.clear();
-    
-    InputReaderSP reader_sp (GetCurrentInputReader ());
+    Mutex::Locker locker (m_input_reader_stack.GetMutex());
+    IOHandlerSP reader_sp (m_input_reader_stack.Top());
     if (reader_sp)
-    {
-        reader_sp->Notify (eInputReaderInterrupt);
-        
-        // If notifying the reader of the interrupt finished the reader, we should pop it off the stack.
-        while (CheckIfTopInputReaderIsDone ()) ;
-    }
+        reader_sp->Interrupt();
 }
 
 void
 Debugger::DispatchInputEndOfFile ()
 {
-    m_input_reader_data.clear();
-    
-    InputReaderSP reader_sp (GetCurrentInputReader ());
+    Mutex::Locker locker (m_input_reader_stack.GetMutex());
+    IOHandlerSP reader_sp (m_input_reader_stack.Top());
     if (reader_sp)
-    {
-        reader_sp->Notify (eInputReaderEndOfFile);
-        
-        // If notifying the reader of the end-of-file finished the reader, we should pop it off the stack.
-        while (CheckIfTopInputReaderIsDone ()) ;
-    }
+        reader_sp->GotEOF();
 }
 
 void
-Debugger::CleanUpInputReaders ()
+Debugger::ClearIOHandlers ()
 {
-    m_input_reader_data.clear();
-    
     // The bottom input reader should be the main debugger input reader.  We do not want to close that one here.
+    Mutex::Locker locker (m_input_reader_stack.GetMutex());
     while (m_input_reader_stack.GetSize() > 1)
     {
-        InputReaderSP reader_sp (GetCurrentInputReader ());
+        IOHandlerSP reader_sp (m_input_reader_stack.Top());
         if (reader_sp)
         {
-            reader_sp->Notify (eInputReaderEndOfFile);
-            reader_sp->SetIsDone (true);
+            m_input_reader_stack.Pop();
+            reader_sp->SetIsDone(true);
+            reader_sp->Interrupt();
         }
     }
 }
 
 void
-Debugger::NotifyTopInputReader (InputReaderAction notification)
+Debugger::ExecuteIOHanders()
 {
-    InputReaderSP reader_sp (GetCurrentInputReader());
-    if (reader_sp)
-	{
-        reader_sp->Notify (notification);
-
-        // Flush out any input readers that are done.
-        while (CheckIfTopInputReaderIsDone ())
-            /* Do nothing. */;
-    }
-}
-
-bool
-Debugger::InputReaderIsTopReader (const InputReaderSP& reader_sp)
-{
-    InputReaderSP top_reader_sp (GetCurrentInputReader());
-
-    return (reader_sp.get() == top_reader_sp.get());
-}
     
-
-void
-Debugger::WriteToDefaultReader (const char *bytes, size_t bytes_len)
-{
-    if (bytes && bytes_len)
-        m_input_reader_data.append (bytes, bytes_len);
-
-    if (m_input_reader_data.empty())
-        return;
-
-    while (!m_input_reader_stack.IsEmpty() && !m_input_reader_data.empty())
+    while (1)
     {
-        // Get the input reader from the top of the stack
-        InputReaderSP reader_sp (GetCurrentInputReader ());
+        IOHandlerSP reader_sp(m_input_reader_stack.Top());
         if (!reader_sp)
             break;
 
-        size_t bytes_handled = reader_sp->HandleRawBytes (m_input_reader_data.c_str(), 
-                                                          m_input_reader_data.size());
-        if (bytes_handled)
+        reader_sp->Activate();
+        reader_sp->Run();
+        reader_sp->Deactivate();
+
+        // Remove all input readers that are done from the top of the stack
+        while (1)
         {
-            m_input_reader_data.erase (0, bytes_handled);
-        }
-        else
-        {
-            // No bytes were handled, we might not have reached our 
-            // granularity, just return and wait for more data
-            break;
+            IOHandlerSP top_reader_sp = m_input_reader_stack.Top();
+            if (top_reader_sp && top_reader_sp->GetIsDone())
+                m_input_reader_stack.Pop();
+            else
+                break;
         }
     }
-    
-    // Flush out any input readers that are done.
-    while (CheckIfTopInputReaderIsDone ())
-        /* Do nothing. */;
+    ClearIOHandlers();
+}
 
+bool
+Debugger::IsTopIOHandler (const lldb::IOHandlerSP& reader_sp)
+{
+    return m_input_reader_stack.IsTop (reader_sp);
+}
+
+
+ConstString
+Debugger::GetTopIOHandlerControlSequence(char ch)
+{
+    return m_input_reader_stack.GetTopIOHandlerControlSequence (ch);
 }
 
 void
-Debugger::PushInputReader (const InputReaderSP& reader_sp)
+Debugger::RunIOHandler (const IOHandlerSP& reader_sp)
+{
+    Mutex::Locker locker (m_input_reader_stack.GetMutex());
+    PushIOHandler (reader_sp);
+    reader_sp->Activate();
+    reader_sp->Run();
+    PopIOHandler (reader_sp);
+}
+
+void
+Debugger::AdoptTopIOHandlerFilesIfInvalid (StreamFileSP &in, StreamFileSP &out, StreamFileSP &err)
+{
+    // Before an IOHandler runs, it must have in/out/err streams.
+    // This function is called when one ore more of the streams
+    // are NULL. We use the top input reader's in/out/err streams,
+    // or fall back to the debugger file handles, or we fall back
+    // onto stdin/stdout/stderr as a last resort.
+    
+    Mutex::Locker locker (m_input_reader_stack.GetMutex());
+    IOHandlerSP top_reader_sp (m_input_reader_stack.Top());
+    // If no STDIN has been set, then set it appropriately
+    if (!in)
+    {
+        if (top_reader_sp)
+            in = top_reader_sp->GetInputStreamFile();
+        else
+            in = GetInputFile();
+        
+        // If there is nothing, use stdin
+        if (!in)
+            in = StreamFileSP(new StreamFile(stdin, false));
+    }
+    // If no STDOUT has been set, then set it appropriately
+    if (!out)
+    {
+        if (top_reader_sp)
+            out = top_reader_sp->GetOutputStreamFile();
+        else
+            out = GetOutputFile();
+        
+        // If there is nothing, use stdout
+        if (!out)
+            out = StreamFileSP(new StreamFile(stdout, false));
+    }
+    // If no STDERR has been set, then set it appropriately
+    if (!err)
+    {
+        if (top_reader_sp)
+            err = top_reader_sp->GetErrorStreamFile();
+        else
+            err = GetErrorFile();
+        
+        // If there is nothing, use stderr
+        if (!err)
+            err = StreamFileSP(new StreamFile(stdout, false));
+        
+    }
+}
+
+void
+Debugger::PushIOHandler (const IOHandlerSP& reader_sp)
 {
     if (!reader_sp)
         return;
  
-    // Deactivate the old top reader
-    InputReaderSP top_reader_sp (GetCurrentInputReader ());
+    // Got the current top input reader...
+    IOHandlerSP top_reader_sp (m_input_reader_stack.Top());
     
-    if (top_reader_sp)
-        top_reader_sp->Notify (eInputReaderDeactivate);
-
+    // Push our new input reader
     m_input_reader_stack.Push (reader_sp);
-    reader_sp->Notify (eInputReaderActivate);
-    ActivateInputReader (reader_sp);
+
+    // Interrupt the top input reader to it will exit its Run() function
+    // and let this new input reader take over
+    if (top_reader_sp)
+        top_reader_sp->Deactivate();
 }
 
 bool
-Debugger::PopInputReader (const InputReaderSP& pop_reader_sp)
+Debugger::PopIOHandler (const IOHandlerSP& pop_reader_sp)
 {
     bool result = false;
+    
+    Mutex::Locker locker (m_input_reader_stack.GetMutex());
 
     // The reader on the stop of the stack is done, so let the next
     // read on the stack referesh its prompt and if there is one...
     if (!m_input_reader_stack.IsEmpty())
     {
-        // Cannot call GetCurrentInputReader here, as that would cause an infinite loop.
-        InputReaderSP reader_sp(m_input_reader_stack.Top());
+        IOHandlerSP reader_sp(m_input_reader_stack.Top());
         
         if (!pop_reader_sp || pop_reader_sp.get() == reader_sp.get())
         {
+            reader_sp->Deactivate();
             m_input_reader_stack.Pop ();
-            reader_sp->Notify (eInputReaderDeactivate);
-            reader_sp->Notify (eInputReaderDone);
-            result = true;
+            
+            reader_sp = m_input_reader_stack.Top();
+            if (reader_sp)
+                reader_sp->Activate();
 
-            if (!m_input_reader_stack.IsEmpty())
-            {
-                reader_sp = m_input_reader_stack.Top();
-                if (reader_sp)
-                {
-                    ActivateInputReader (reader_sp);
-                    reader_sp->Notify (eInputReaderReactivate);
-                }
-            }
+            result = true;
         }
     }
     return result;
 }
 
 bool
-Debugger::CheckIfTopInputReaderIsDone ()
+Debugger::HideTopIOHandler()
 {
-    bool result = false;
-    if (!m_input_reader_stack.IsEmpty())
+    Mutex::Locker locker;
+    
+    if (locker.TryLock(m_input_reader_stack.GetMutex()))
     {
-        // Cannot call GetCurrentInputReader here, as that would cause an infinite loop.
-        InputReaderSP reader_sp(m_input_reader_stack.Top());
-        
-        if (reader_sp && reader_sp->IsDone())
-        {
-            result = true;
-            PopInputReader (reader_sp);
-        }
+        IOHandlerSP reader_sp(m_input_reader_stack.Top());
+        if (reader_sp)
+            reader_sp->Hide();
+        return true;
     }
-    return result;
+    return false;
 }
 
 void
-Debugger::ActivateInputReader (const InputReaderSP &reader_sp)
+Debugger::RefreshTopIOHandler()
 {
-    int input_fd = m_input_file.GetFile().GetDescriptor();
-
-    if (input_fd >= 0)
-    {
-        Terminal tty(input_fd);
-        
-        tty.SetEcho(reader_sp->GetEcho());
-                
-        switch (reader_sp->GetGranularity())
-        {
-        case eInputReaderGranularityByte:
-        case eInputReaderGranularityWord:
-            tty.SetCanonical (false);
-            break;
-
-        case eInputReaderGranularityLine:
-        case eInputReaderGranularityAll:
-            tty.SetCanonical (true);
-            break;
-
-        default:
-            break;
-        }
-    }
+    IOHandlerSP reader_sp(m_input_reader_stack.Top());
+    if (reader_sp)
+        reader_sp->Refresh();
 }
+
 
 StreamSP
 Debugger::GetAsyncOutputStream ()
@@ -2624,7 +2594,7 @@ Debugger::EnableLog (const char *channel, const char **categories, const char *l
     }
     else if (log_file == NULL || *log_file == '\0')
     {
-        log_stream_sp.reset(new StreamFile(GetOutputFile().GetDescriptor(), false));
+        log_stream_sp = GetOutputFile();
     }
     else
     {
@@ -2677,6 +2647,516 @@ Debugger::GetSourceManager ()
     if (m_source_manager_ap.get() == NULL)
         m_source_manager_ap.reset (new SourceManager (shared_from_this()));
     return *m_source_manager_ap;
+}
+
+
+
+// This function handles events that were broadcast by the process.
+void
+Debugger::HandleBreakpointEvent (const EventSP &event_sp)
+{
+    using namespace lldb;
+    const uint32_t event_type = Breakpoint::BreakpointEventData::GetBreakpointEventTypeFromEvent (event_sp);
+    
+//    if (event_type & eBreakpointEventTypeAdded
+//        || event_type & eBreakpointEventTypeRemoved
+//        || event_type & eBreakpointEventTypeEnabled
+//        || event_type & eBreakpointEventTypeDisabled
+//        || event_type & eBreakpointEventTypeCommandChanged
+//        || event_type & eBreakpointEventTypeConditionChanged
+//        || event_type & eBreakpointEventTypeIgnoreChanged
+//        || event_type & eBreakpointEventTypeLocationsResolved)
+//    {
+//        // Don't do anything about these events, since the breakpoint commands already echo these actions.
+//    }
+//    
+    if (event_type & eBreakpointEventTypeLocationsAdded)
+    {
+        uint32_t num_new_locations = Breakpoint::BreakpointEventData::GetNumBreakpointLocationsFromEvent(event_sp);
+        if (num_new_locations > 0)
+        {
+            BreakpointSP breakpoint = Breakpoint::BreakpointEventData::GetBreakpointFromEvent(event_sp);
+            StreamFileSP output_sp (GetOutputFile());
+            if (output_sp)
+            {
+                output_sp->Printf("%d location%s added to breakpoint %d\n",
+                                  num_new_locations,
+                                  num_new_locations == 1 ? "" : "s",
+                                  breakpoint->GetID());
+                RefreshTopIOHandler();
+            }
+        }
+    }
+//    else if (event_type & eBreakpointEventTypeLocationsRemoved)
+//    {
+//        // These locations just get disabled, not sure it is worth spamming folks about this on the command line.
+//    }
+//    else if (event_type & eBreakpointEventTypeLocationsResolved)
+//    {
+//        // This might be an interesting thing to note, but I'm going to leave it quiet for now, it just looked noisy.
+//    }
+}
+
+size_t
+Debugger::GetProcessSTDOUT (Process *process, Stream *stream)
+{
+    size_t total_bytes = 0;
+    if (stream == NULL)
+        stream = GetOutputFile().get();
+
+    if (stream)
+    {
+        //  The process has stuff waiting for stdout; get it and write it out to the appropriate place.
+        if (process == NULL)
+        {
+            TargetSP target_sp = GetTargetList().GetSelectedTarget();
+            if (target_sp)
+                process = target_sp->GetProcessSP().get();
+        }
+        if (process)
+        {
+            Error error;
+            size_t len;
+            char stdio_buffer[1024];
+            while ((len = process->GetSTDOUT (stdio_buffer, sizeof (stdio_buffer), error)) > 0)
+            {
+                stream->Write(stdio_buffer, len);
+                total_bytes += len;
+            }
+        }
+        stream->Flush();
+    }
+    return total_bytes;
+}
+
+size_t
+Debugger::GetProcessSTDERR (Process *process, Stream *stream)
+{
+    size_t total_bytes = 0;
+    if (stream == NULL)
+        stream = GetOutputFile().get();
+    
+    if (stream)
+    {
+        //  The process has stuff waiting for stderr; get it and write it out to the appropriate place.
+        if (process == NULL)
+        {
+            TargetSP target_sp = GetTargetList().GetSelectedTarget();
+            if (target_sp)
+                process = target_sp->GetProcessSP().get();
+        }
+        if (process)
+        {
+            Error error;
+            size_t len;
+            char stdio_buffer[1024];
+            while ((len = process->GetSTDERR (stdio_buffer, sizeof (stdio_buffer), error)) > 0)
+            {
+                stream->Write(stdio_buffer, len);
+                total_bytes += len;
+            }
+        }
+        stream->Flush();
+    }
+    return total_bytes;
+}
+
+// This function handles events that were broadcast by the process.
+void
+Debugger::HandleProcessEvent (const EventSP &event_sp)
+{
+    using namespace lldb;
+    const uint32_t event_type = event_sp->GetType();
+    ProcessSP process_sp = Process::ProcessEventData::GetProcessFromEvent(event_sp.get());
+    
+    const bool gui_enabled = IsForwardingEvents();
+    bool top_io_handler_hid = false;
+    if (gui_enabled == false)
+        top_io_handler_hid = HideTopIOHandler();
+
+    assert (process_sp);
+    
+    if (event_type & Process::eBroadcastBitSTDOUT)
+    {
+        // The process has stdout available, get it and write it out to the
+        // appropriate place.
+        if (top_io_handler_hid)
+            GetProcessSTDOUT (process_sp.get(), NULL);
+    }
+    else if (event_type & Process::eBroadcastBitSTDERR)
+    {
+        // The process has stderr available, get it and write it out to the
+        // appropriate place.
+        if (top_io_handler_hid)
+            GetProcessSTDERR (process_sp.get(), NULL);
+    }
+    else if (event_type & Process::eBroadcastBitStateChanged)
+    {
+        // Drain all stout and stderr so we don't see any output come after
+        // we print our prompts
+        if (top_io_handler_hid)
+        {
+            StreamFileSP stream_sp (GetOutputFile());
+            GetProcessSTDOUT (process_sp.get(), stream_sp.get());
+            GetProcessSTDERR (process_sp.get(), NULL);
+            // Something changed in the process;  get the event and report the process's current status and location to
+            // the user.
+            StateType event_state = Process::ProcessEventData::GetStateFromEvent (event_sp.get());
+            if (event_state == eStateInvalid)
+                return;
+            
+            switch (event_state)
+            {
+                case eStateInvalid:
+                case eStateUnloaded:
+                case eStateConnected:
+                case eStateAttaching:
+                case eStateLaunching:
+                case eStateStepping:
+                case eStateDetached:
+                    {
+                        stream_sp->Printf("Process %" PRIu64 " %s\n",
+                                          process_sp->GetID(),
+                                          StateAsCString (event_state));
+                    }
+                    break;
+                    
+                case eStateRunning:
+                    // Don't be chatty when we run...
+                    break;
+                    
+                case eStateExited:
+                    process_sp->GetStatus(*stream_sp);
+                    break;
+                    
+                case eStateStopped:
+                case eStateCrashed:
+                case eStateSuspended:
+                    // Make sure the program hasn't been auto-restarted:
+                    if (Process::ProcessEventData::GetRestartedFromEvent (event_sp.get()))
+                    {
+                        size_t num_reasons = Process::ProcessEventData::GetNumRestartedReasons(event_sp.get());
+                        if (num_reasons > 0)
+                        {
+                            // FIXME: Do we want to report this, or would that just be annoyingly chatty?
+                            if (num_reasons == 1)
+                            {
+                                const char *reason = Process::ProcessEventData::GetRestartedReasonAtIndex (event_sp.get(), 0);
+                                stream_sp->Printf("Process %" PRIu64 " stopped and restarted: %s\n",
+                                                  process_sp->GetID(),
+                                                  reason ? reason : "<UNKNOWN REASON>");
+                            }
+                            else
+                            {
+                                stream_sp->Printf("Process %" PRIu64 " stopped and restarted, reasons:\n",
+                                                   process_sp->GetID());
+                                
+
+                                for (size_t i = 0; i < num_reasons; i++)
+                                {
+                                    const char *reason = Process::ProcessEventData::GetRestartedReasonAtIndex (event_sp.get(), i);
+                                    stream_sp->Printf("\t%s\n", reason ? reason : "<UNKNOWN REASON>");
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Lock the thread list so it doesn't change on us
+                        ThreadList &thread_list = process_sp->GetThreadList();
+                        Mutex::Locker locker (thread_list.GetMutex());
+                        
+                        ThreadSP curr_thread (thread_list.GetSelectedThread());
+                        ThreadSP thread;
+                        StopReason curr_thread_stop_reason = eStopReasonInvalid;
+                        if (curr_thread)
+                            curr_thread_stop_reason = curr_thread->GetStopReason();
+                        if (!curr_thread->IsValid() ||
+                            curr_thread_stop_reason == eStopReasonInvalid ||
+                            curr_thread_stop_reason == eStopReasonNone)
+                        {
+                            // Prefer a thread that has just completed its plan over another thread as current thread.
+                            ThreadSP plan_thread;
+                            ThreadSP other_thread;
+                            const size_t num_threads = thread_list.GetSize();
+                            size_t i;
+                            for (i = 0; i < num_threads; ++i)
+                            {
+                                thread = thread_list.GetThreadAtIndex(i);
+                                StopReason thread_stop_reason = thread->GetStopReason();
+                                switch (thread_stop_reason)
+                                {
+                                    case eStopReasonInvalid:
+                                    case eStopReasonNone:
+                                        break;
+                                        
+                                    case eStopReasonTrace:
+                                    case eStopReasonBreakpoint:
+                                    case eStopReasonWatchpoint:
+                                    case eStopReasonSignal:
+                                    case eStopReasonException:
+                                    case eStopReasonExec:
+                                    case eStopReasonThreadExiting:
+                                        if (!other_thread)
+                                            other_thread = thread;
+                                        break;
+                                    case eStopReasonPlanComplete:
+                                        if (!plan_thread)
+                                            plan_thread = thread;
+                                        break;
+                                }
+                            }
+                            if (plan_thread)
+                                thread_list.SetSelectedThreadByID (plan_thread->GetID());
+                            else if (other_thread)
+                                thread_list.SetSelectedThreadByID (other_thread->GetID());
+                            else
+                            {
+                                if (curr_thread->IsValid())
+                                    thread = curr_thread;
+                                else
+                                    thread = thread_list.GetThreadAtIndex(0);
+                                
+                                if (thread)
+                                    thread_list.SetSelectedThreadByID (thread->GetID());
+                            }
+                        }
+
+                        if (GetTargetList().GetSelectedTarget().get() == &process_sp->GetTarget())
+                        {
+                            const bool only_threads_with_stop_reason = true;
+                            const uint32_t start_frame = 0;
+                            const uint32_t num_frames = 1;
+                            const uint32_t num_frames_with_source = 1;
+                            process_sp->GetStatus(*stream_sp);
+                            process_sp->GetThreadStatus (*stream_sp,
+                                                         only_threads_with_stop_reason,
+                                                         start_frame,
+                                                         num_frames,
+                                                         num_frames_with_source);
+                        }
+                        else
+                        {
+                            uint32_t target_idx = GetTargetList().GetIndexOfTarget(process_sp->GetTarget().shared_from_this());
+                            if (target_idx != UINT32_MAX)
+                                stream_sp->Printf ("Target %d: (", target_idx);
+                            else
+                                stream_sp->Printf ("Target <unknown index>: (");
+                            process_sp->GetTarget().Dump (stream_sp.get(), eDescriptionLevelBrief);
+                            stream_sp->Printf (") stopped.\n");
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+    
+    if (top_io_handler_hid)
+        RefreshTopIOHandler();
+}
+
+void
+Debugger::HandleThreadEvent (const EventSP &event_sp)
+{
+    // At present the only thread event we handle is the Frame Changed event,
+    // and all we do for that is just reprint the thread status for that thread.
+    using namespace lldb;
+    const uint32_t event_type = event_sp->GetType();
+    if (event_type == Thread::eBroadcastBitStackChanged   ||
+        event_type == Thread::eBroadcastBitThreadSelected )
+    {
+        ThreadSP thread_sp (Thread::ThreadEventData::GetThreadFromEvent (event_sp.get()));
+        if (thread_sp)
+        {
+            HideTopIOHandler();
+            StreamFileSP stream_sp (GetOutputFile());
+            thread_sp->GetStatus(*stream_sp, 0, 1, 1);
+            RefreshTopIOHandler();
+        }
+    }
+}
+
+bool
+Debugger::IsForwardingEvents ()
+{
+    return (bool)m_forward_listener_sp;
+}
+
+void
+Debugger::EnableForwardEvents (const ListenerSP &listener_sp)
+{
+    m_forward_listener_sp = listener_sp;
+}
+
+void
+Debugger::CancelForwardEvents (const ListenerSP &listener_sp)
+{
+    m_forward_listener_sp.reset();
+}
+
+
+void
+Debugger::DefaultEventHandler()
+{
+    Listener& listener(GetListener());
+    ConstString broadcaster_class_target(Target::GetStaticBroadcasterClass());
+    ConstString broadcaster_class_process(Process::GetStaticBroadcasterClass());
+    ConstString broadcaster_class_thread(Thread::GetStaticBroadcasterClass());
+    BroadcastEventSpec target_event_spec (broadcaster_class_target,
+                                          Target::eBroadcastBitBreakpointChanged);
+
+    BroadcastEventSpec process_event_spec (broadcaster_class_process,
+                                           Process::eBroadcastBitStateChanged   |
+                                           Process::eBroadcastBitSTDOUT         |
+                                           Process::eBroadcastBitSTDERR);
+
+    BroadcastEventSpec thread_event_spec (broadcaster_class_thread,
+                                          Thread::eBroadcastBitStackChanged     |
+                                          Thread::eBroadcastBitThreadSelected   );
+    
+    listener.StartListeningForEventSpec (*this, target_event_spec);
+    listener.StartListeningForEventSpec (*this, process_event_spec);
+    listener.StartListeningForEventSpec (*this, thread_event_spec);
+    listener.StartListeningForEvents (m_command_interpreter_ap.get(),
+                                      CommandInterpreter::eBroadcastBitQuitCommandReceived      |
+                                      CommandInterpreter::eBroadcastBitAsynchronousOutputData   |
+                                      CommandInterpreter::eBroadcastBitAsynchronousErrorData    );
+    
+    bool done = false;
+    while (!done)
+    {
+//        Mutex::Locker locker;
+//        if (locker.TryLock(m_input_reader_stack.GetMutex()))
+//        {
+//            if (m_input_reader_stack.IsEmpty())
+//                break;
+//        }
+//
+        EventSP event_sp;
+        if (listener.WaitForEvent(NULL, event_sp))
+        {
+            if (event_sp)
+            {
+                Broadcaster *broadcaster = event_sp->GetBroadcaster();
+                if (broadcaster)
+                {
+                    uint32_t event_type = event_sp->GetType();
+                    ConstString broadcaster_class (broadcaster->GetBroadcasterClass());
+                    if (broadcaster_class == broadcaster_class_process)
+                    {
+                        HandleProcessEvent (event_sp);
+                    }
+                    else if (broadcaster_class == broadcaster_class_target)
+                    {
+                        if (Breakpoint::BreakpointEventData::GetEventDataFromEvent(event_sp.get()))
+                        {
+                            HandleBreakpointEvent (event_sp);
+                        }
+                    }
+                    else if (broadcaster_class == broadcaster_class_thread)
+                    {
+                        HandleThreadEvent (event_sp);
+                    }
+                    else if (broadcaster == m_command_interpreter_ap.get())
+                    {
+                        if (event_type & CommandInterpreter::eBroadcastBitQuitCommandReceived)
+                        {
+                            done = true;
+                        }
+                        else if (event_type & CommandInterpreter::eBroadcastBitAsynchronousErrorData)
+                        {
+                            const char *data = reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event_sp.get()));
+                            if (data && data[0])
+                            {
+                                StreamFileSP error_sp (GetErrorFile());
+                                if (error_sp)
+                                {
+                                    HideTopIOHandler();
+                                    error_sp->PutCString(data);
+                                    error_sp->Flush();
+                                    RefreshTopIOHandler();
+                                }
+                            }
+                        }
+                        else if (event_type & CommandInterpreter::eBroadcastBitAsynchronousOutputData)
+                        {
+                            const char *data = reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event_sp.get()));
+                            if (data && data[0])
+                            {
+                                StreamFileSP output_sp (GetOutputFile());
+                                if (output_sp)
+                                {
+                                    HideTopIOHandler();
+                                    output_sp->PutCString(data);
+                                    output_sp->Flush();
+                                    RefreshTopIOHandler();
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (m_forward_listener_sp)
+                    m_forward_listener_sp->AddEvent(event_sp);
+            }
+        }
+    }
+}
+
+lldb::thread_result_t
+Debugger::EventHandlerThread (lldb::thread_arg_t arg)
+{
+    ((Debugger *)arg)->DefaultEventHandler();
+    return NULL;
+}
+
+bool
+Debugger::StartEventHandlerThread()
+{
+    if (!IS_VALID_LLDB_HOST_THREAD(m_event_handler_thread))
+        m_event_handler_thread = Host::ThreadCreate("lldb.debugger.event-handler", EventHandlerThread, this, NULL);
+    return IS_VALID_LLDB_HOST_THREAD(m_event_handler_thread);
+}
+
+void
+Debugger::StopEventHandlerThread()
+{
+    if (IS_VALID_LLDB_HOST_THREAD(m_event_handler_thread))
+    {
+        GetCommandInterpreter().BroadcastEvent(CommandInterpreter::eBroadcastBitQuitCommandReceived);
+        Host::ThreadJoin(m_event_handler_thread, NULL, NULL);
+        m_event_handler_thread = LLDB_INVALID_HOST_THREAD;
+    }
+}
+
+
+lldb::thread_result_t
+Debugger::IOHandlerThread (lldb::thread_arg_t arg)
+{
+    Debugger *debugger = (Debugger *)arg;
+    debugger->ExecuteIOHanders();
+    debugger->StopEventHandlerThread();
+    return NULL;
+}
+
+bool
+Debugger::StartIOHandlerThread()
+{
+    if (!IS_VALID_LLDB_HOST_THREAD(m_io_handler_thread))
+        m_io_handler_thread = Host::ThreadCreate("lldb.debugger.io-handler", IOHandlerThread, this, NULL);
+    return IS_VALID_LLDB_HOST_THREAD(m_io_handler_thread);
+}
+
+void
+Debugger::StopIOHandlerThread()
+{
+    if (IS_VALID_LLDB_HOST_THREAD(m_io_handler_thread))
+    {
+        if (m_input_file_sp)
+            m_input_file_sp->GetFile().Close();
+        Host::ThreadJoin(m_io_handler_thread, NULL, NULL);
+        m_io_handler_thread = LLDB_INVALID_HOST_THREAD;
+    }
 }
 
 

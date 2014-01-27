@@ -33,7 +33,6 @@
 #include "lldb/API/SBFrame.h"
 #include "lldb/API/SBFunction.h"
 #include "lldb/API/SBHostOS.h"
-#include "lldb/API/SBInputReader.h"
 #include "lldb/API/SBInstruction.h"
 #include "lldb/API/SBInstructionList.h"
 #include "lldb/API/SBLineEntry.h"

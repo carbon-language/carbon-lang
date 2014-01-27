@@ -323,8 +323,10 @@ Broadcaster::RestoreBroadcaster ()
                      listener->m_name.c_str(),
                      listener);
     }
-    m_hijacking_listeners.pop_back();
-    m_hijacking_masks.pop_back();
+    if (!m_hijacking_listeners.empty())
+        m_hijacking_listeners.pop_back();
+    if (!m_hijacking_masks.empty())
+        m_hijacking_masks.pop_back();
 }
 
 ConstString &

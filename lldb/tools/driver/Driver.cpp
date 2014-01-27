@@ -18,7 +18,6 @@
 #include <string>
 
 #include <thread>
-#include "IOChannel.h"
 #include "lldb/API/SBBreakpoint.h"
 #include "lldb/API/SBCommandInterpreter.h"
 #include "lldb/API/SBCommandReturnObject.h"
@@ -121,14 +120,7 @@ static const uint32_t last_option_set_with_args = 2;
 Driver::Driver () :
     SBBroadcaster ("Driver"),
     m_debugger (SBDebugger::Create(false)),
-    m_editline_pty (),
-    m_editline_slave_fh (NULL),
-    m_editline_reader (),
-    m_io_channel_ap (),
-    m_option_data (),
-    m_executing_user_command (false),
-    m_waiting_for_command (false),
-    m_done(false)
+    m_option_data ()
 {
     // We want to be able to handle CTRL+D in the terminal to have it terminate
     // certain input
@@ -145,24 +137,6 @@ Driver::~Driver ()
     g_debugger_name = NULL;
 }
 
-void
-Driver::CloseIOChannelFile ()
-{
-    // Write an End of File sequence to the file descriptor to ensure any
-    // read functions can exit.
-    char eof_str[] = "\x04";
-    int mfd = m_editline_pty.GetMasterFileDescriptor();
-    if (mfd != -1)
-        ::write (m_editline_pty.GetMasterFileDescriptor(), eof_str, strlen(eof_str));
-
-    m_editline_pty.CloseMasterFileDescriptor();
-
-    if (m_editline_slave_fh)
-    {
-        ::fclose (m_editline_slave_fh);
-        m_editline_slave_fh = NULL;
-    }
-}
 
 // This function takes INDENT, which tells how many spaces to output at the front
 // of each line; TEXT, which is the text that is to be output. It outputs the 
@@ -530,23 +504,27 @@ Driver::ExecuteInitialCommands (bool before_file)
         {
             const size_t output_size = result.GetOutputSize();
             if (output_size > 0)
-                m_io_channel_ap->OutWrite (result.GetOutput(dump_stream_only_if_no_immediate), output_size, NO_ASYNC);
+            {
+                const char *cstr = result.GetOutput(dump_stream_only_if_no_immediate);
+                if (cstr)
+                    printf ("%s", cstr);
+            }
             const size_t error_size = result.GetErrorSize();
             if (error_size > 0)
-                m_io_channel_ap->OutWrite (result.GetError(dump_stream_only_if_no_immediate), error_size, NO_ASYNC);
+            {
+                const char *cstr = result.GetError(dump_stream_only_if_no_immediate);
+                if (cstr)
+                    printf ("%s", cstr);
+            }
         }
         
         if (result.Succeeded() == false)
         {
-            char error_buffer[1024];
-            size_t error_size;
             const char *type = before_file ? "before file" : "after_file";
             if (is_file)
-                error_size = ::snprintf(error_buffer, sizeof(error_buffer), "Aborting %s command execution, command file: '%s' failed.\n", type, command);
+                ::fprintf(stderr, "Aborting %s command execution, command file: '%s' failed.\n", type, command);
             else
-                error_size = ::snprintf(error_buffer, sizeof(error_buffer), "Aborting %s command execution, command: '%s' failed.\n", type, command);
-            
-            m_io_channel_ap->OutWrite(error_buffer, error_size, NO_ASYNC);
+                ::fprintf(stderr, "Aborting %s command execution, command: '%s' failed.\n", type, command);
             break;
         }
         result.Clear();
@@ -861,524 +839,9 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exiting)
     return error;
 }
 
-size_t
-Driver::GetProcessSTDOUT ()
-{
-    //  The process has stuff waiting for stdout; get it and write it out to the appropriate place.
-    char stdio_buffer[1024];
-    size_t len;
-    size_t total_bytes = 0;
-    while ((len = m_debugger.GetSelectedTarget().GetProcess().GetSTDOUT (stdio_buffer, sizeof (stdio_buffer))) > 0)
-    {
-        m_io_channel_ap->OutWrite (stdio_buffer, len, NO_ASYNC);
-        total_bytes += len;
-    }
-    return total_bytes;
-}
-
-size_t
-Driver::GetProcessSTDERR ()
-{
-    //  The process has stuff waiting for stderr; get it and write it out to the appropriate place.
-    char stdio_buffer[1024];
-    size_t len;
-    size_t total_bytes = 0;
-    while ((len = m_debugger.GetSelectedTarget().GetProcess().GetSTDERR (stdio_buffer, sizeof (stdio_buffer))) > 0)
-    {
-        m_io_channel_ap->ErrWrite (stdio_buffer, len, NO_ASYNC);
-        total_bytes += len;
-    }
-    return total_bytes;
-}
-
-void
-Driver::UpdateSelectedThread ()
-{
-    using namespace lldb;
-    SBProcess process(m_debugger.GetSelectedTarget().GetProcess());
-    if (process.IsValid())
-    {
-        SBThread curr_thread (process.GetSelectedThread());
-        SBThread thread;
-        StopReason curr_thread_stop_reason = eStopReasonInvalid;
-        curr_thread_stop_reason = curr_thread.GetStopReason();
-
-        if (!curr_thread.IsValid() ||
-            curr_thread_stop_reason == eStopReasonInvalid ||
-            curr_thread_stop_reason == eStopReasonNone)
-        {
-            // Prefer a thread that has just completed its plan over another thread as current thread.
-            SBThread plan_thread;
-            SBThread other_thread;
-            const size_t num_threads = process.GetNumThreads();
-            size_t i;
-            for (i = 0; i < num_threads; ++i)
-            {
-                thread = process.GetThreadAtIndex(i);
-                StopReason thread_stop_reason = thread.GetStopReason();
-                switch (thread_stop_reason)
-                {
-                case eStopReasonInvalid:
-                case eStopReasonNone:
-                    break;
-
-                case eStopReasonTrace:
-                case eStopReasonBreakpoint:
-                case eStopReasonWatchpoint:
-                case eStopReasonSignal:
-                case eStopReasonException:
-                case eStopReasonExec:
-                case eStopReasonThreadExiting:
-                    if (!other_thread.IsValid())
-                        other_thread = thread;
-                    break;
-                case eStopReasonPlanComplete:
-                    if (!plan_thread.IsValid())
-                        plan_thread = thread;
-                    break;
-                }
-            }
-            if (plan_thread.IsValid())
-                process.SetSelectedThread (plan_thread);
-            else if (other_thread.IsValid())
-                process.SetSelectedThread (other_thread);
-            else
-            {
-                if (curr_thread.IsValid())
-                    thread = curr_thread;
-                else
-                    thread = process.GetThreadAtIndex(0);
-
-                if (thread.IsValid())
-                    process.SetSelectedThread (thread);
-            }
-        }
-    }
-}
-
-// This function handles events that were broadcast by the process.
-void
-Driver::HandleBreakpointEvent (const SBEvent &event)
-{
-    using namespace lldb;
-    const uint32_t event_type = SBBreakpoint::GetBreakpointEventTypeFromEvent (event);
-    
-    if (event_type & eBreakpointEventTypeAdded
-        || event_type & eBreakpointEventTypeRemoved
-        || event_type & eBreakpointEventTypeEnabled
-        || event_type & eBreakpointEventTypeDisabled
-        || event_type & eBreakpointEventTypeCommandChanged
-        || event_type & eBreakpointEventTypeConditionChanged
-        || event_type & eBreakpointEventTypeIgnoreChanged
-        || event_type & eBreakpointEventTypeLocationsResolved)
-    {
-        // Don't do anything about these events, since the breakpoint commands already echo these actions.
-    }              
-    else if (event_type & eBreakpointEventTypeLocationsAdded)
-    {
-        char message[256];
-        uint32_t num_new_locations = SBBreakpoint::GetNumBreakpointLocationsFromEvent(event);
-        if (num_new_locations > 0)
-        {
-            SBBreakpoint breakpoint = SBBreakpoint::GetBreakpointFromEvent(event);
-            int message_len = ::snprintf (message, sizeof(message), "%d location%s added to breakpoint %d\n", 
-                                          num_new_locations,
-                                          num_new_locations == 1 ? "" : "s",
-                                          breakpoint.GetID());
-            m_io_channel_ap->OutWrite(message, message_len, ASYNC);
-        }
-    }
-    else if (event_type & eBreakpointEventTypeLocationsRemoved)
-    {
-       // These locations just get disabled, not sure it is worth spamming folks about this on the command line.
-    }
-    else if (event_type & eBreakpointEventTypeLocationsResolved)
-    {
-       // This might be an interesting thing to note, but I'm going to leave it quiet for now, it just looked noisy.
-    }
-}
-
-// This function handles events that were broadcast by the process.
-void
-Driver::HandleProcessEvent (const SBEvent &event)
-{
-    using namespace lldb;
-    const uint32_t event_type = event.GetType();
-
-    if (event_type & SBProcess::eBroadcastBitSTDOUT)
-    {
-        // The process has stdout available, get it and write it out to the
-        // appropriate place.
-        GetProcessSTDOUT ();
-    }
-    else if (event_type & SBProcess::eBroadcastBitSTDERR)
-    {
-        // The process has stderr available, get it and write it out to the
-        // appropriate place.
-        GetProcessSTDERR ();
-    }
-    else if (event_type & SBProcess::eBroadcastBitStateChanged)
-    {
-        // Drain all stout and stderr so we don't see any output come after
-        // we print our prompts
-        GetProcessSTDOUT ();
-        GetProcessSTDERR ();
-        // Something changed in the process;  get the event and report the process's current status and location to
-        // the user.
-        StateType event_state = SBProcess::GetStateFromEvent (event);
-        if (event_state == eStateInvalid)
-            return;
-
-        SBProcess process (SBProcess::GetProcessFromEvent (event));
-        assert (process.IsValid());
-
-        switch (event_state)
-        {
-        case eStateInvalid:
-        case eStateUnloaded:
-        case eStateConnected:
-        case eStateAttaching:
-        case eStateLaunching:
-        case eStateStepping:
-        case eStateDetached:
-            {
-                char message[1024];
-                int message_len = ::snprintf (message, sizeof(message), "Process %" PRIu64 " %s\n", process.GetProcessID(),
-                                              m_debugger.StateAsCString (event_state));
-                m_io_channel_ap->OutWrite(message, message_len, ASYNC);
-            }
-            break;
-
-        case eStateRunning:
-            // Don't be chatty when we run...
-            break;
-
-        case eStateExited:
-            {
-                SBCommandReturnObject result;
-                m_debugger.GetCommandInterpreter().HandleCommand("process status", result, false);
-                m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize(), ASYNC);
-                m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize(), ASYNC);
-            }
-            break;
-
-        case eStateStopped:
-        case eStateCrashed:
-        case eStateSuspended:
-            // Make sure the program hasn't been auto-restarted:
-            if (SBProcess::GetRestartedFromEvent (event))
-            {
-                size_t num_reasons = SBProcess::GetNumRestartedReasonsFromEvent(event);
-                if (num_reasons > 0)
-                {
-                // FIXME: Do we want to report this, or would that just be annoyingly chatty?
-                    if (num_reasons == 1)
-                    {
-                        char message[1024];
-                        const char *reason = SBProcess::GetRestartedReasonAtIndexFromEvent (event, 0);
-                        int message_len = ::snprintf (message, sizeof(message), "Process %" PRIu64 " stopped and restarted: %s\n",
-                                              process.GetProcessID(), reason ? reason : "<UNKNOWN REASON>");
-                        m_io_channel_ap->OutWrite(message, message_len, ASYNC);
-                    }
-                    else
-                    {
-                        char message[1024];
-                        int message_len = ::snprintf (message, sizeof(message), "Process %" PRIu64 " stopped and restarted, reasons:\n",
-                                              process.GetProcessID());
-                        m_io_channel_ap->OutWrite(message, message_len, ASYNC);
-                        for (size_t i = 0; i < num_reasons; i++)
-                        {
-                            const char *reason = SBProcess::GetRestartedReasonAtIndexFromEvent (event, i);
-                            int message_len = ::snprintf(message, sizeof(message), "\t%s\n", reason ? reason : "<UNKNOWN REASON>");
-                            m_io_channel_ap->OutWrite(message, message_len, ASYNC);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (GetDebugger().GetSelectedTarget() == process.GetTarget())
-                {
-                    SBCommandReturnObject result;
-                    UpdateSelectedThread ();
-                    m_debugger.GetCommandInterpreter().HandleCommand("process status", result, false);
-                    m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize(), ASYNC);
-                    m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize(), ASYNC);
-                }
-                else
-                {
-                    SBStream out_stream;
-                    uint32_t target_idx = GetDebugger().GetIndexOfTarget(process.GetTarget());
-                    if (target_idx != UINT32_MAX)
-                        out_stream.Printf ("Target %d: (", target_idx);
-                    else
-                        out_stream.Printf ("Target <unknown index>: (");
-                    process.GetTarget().GetDescription (out_stream, eDescriptionLevelBrief);
-                    out_stream.Printf (") stopped.\n");
-                    m_io_channel_ap->OutWrite (out_stream.GetData(), out_stream.GetSize(), ASYNC);
-                }
-            }
-            break;
-        }
-    }
-}
-
-void
-Driver::HandleThreadEvent (const SBEvent &event)
-{
-    // At present the only thread event we handle is the Frame Changed event, and all we do for that is just
-    // reprint the thread status for that thread.
-    using namespace lldb;
-    const uint32_t event_type = event.GetType();
-    if (event_type == SBThread::eBroadcastBitStackChanged
-        || event_type == SBThread::eBroadcastBitThreadSelected)
-    {
-        SBThread thread = SBThread::GetThreadFromEvent (event);
-        if (thread.IsValid())
-        {
-            SBStream out_stream;
-            thread.GetStatus(out_stream);
-            m_io_channel_ap->OutWrite (out_stream.GetData (), out_stream.GetSize (), ASYNC);
-        }
-    }
-}
-
-//  This function handles events broadcast by the IOChannel (HasInput, UserInterrupt, or ThreadShouldExit).
-
-bool
-Driver::HandleIOEvent (const SBEvent &event)
-{
-    bool quit = false;
-
-    const uint32_t event_type = event.GetType();
-
-    if (event_type & IOChannel::eBroadcastBitHasUserInput)
-    {
-        // We got some input (i.e. a command string) from the user; pass it off to the command interpreter for
-        // handling.
-
-        const char *command_string = SBEvent::GetCStringFromEvent(event);
-        if (command_string == NULL)
-            command_string = "";
-        SBCommandReturnObject result;
-        
-        // We don't want the result to bypass the OutWrite function in IOChannel, as this can result in odd
-        // output orderings and problems with the prompt.
-        
-        // Note that we are in the process of executing a command
-        m_executing_user_command = true;
-
-        m_debugger.GetCommandInterpreter().HandleCommand (command_string, result, true);
-
-        // Note that we are back from executing a user command
-        m_executing_user_command = false;
-
-        // Display any STDOUT/STDERR _prior_ to emitting the command result text
-        GetProcessSTDOUT ();
-        GetProcessSTDERR ();
-
-        const bool only_if_no_immediate = true;
-
-        // Now emit the command output text from the command we just executed
-        const size_t output_size = result.GetOutputSize();
-        if (output_size > 0)
-            m_io_channel_ap->OutWrite (result.GetOutput(only_if_no_immediate), output_size, NO_ASYNC);
-
-        // Now emit the command error text from the command we just executed
-        const size_t error_size = result.GetErrorSize();
-        if (error_size > 0)
-            m_io_channel_ap->OutWrite (result.GetError(only_if_no_immediate), error_size, NO_ASYNC);
-
-        // We are done getting and running our command, we can now clear the
-        // m_waiting_for_command so we can get another one.
-        m_waiting_for_command = false;
-
-        // If our editline input reader is active, it means another input reader
-        // got pushed onto the input reader and caused us to become deactivated.
-        // When the input reader above us gets popped, we will get re-activated
-        // and our prompt will refresh in our callback
-        if (m_editline_reader.IsActive())
-        {
-            ReadyForCommand ();
-        }
-    }
-    else if (event_type & IOChannel::eBroadcastBitUserInterrupt)
-    {
-        // This is here to handle control-c interrupts from the user.  It has not yet really been implemented.
-        // TO BE DONE:  PROPERLY HANDLE CONTROL-C FROM USER
-        //m_io_channel_ap->CancelInput();
-        // Anything else?  Send Interrupt to process?
-    }
-    else if ((event_type & IOChannel::eBroadcastBitThreadShouldExit) ||
-             (event_type & IOChannel::eBroadcastBitThreadDidExit))
-    {
-        // If the IOChannel thread is trying to go away, then it is definitely
-        // time to end the debugging session.
-        quit = true;
-    }
-
-    return quit;
-}
-
-void
-Driver::MasterThreadBytesReceived (void *baton, const void *src, size_t src_len)
-{
-    Driver *driver = (Driver*)baton;
-    driver->GetFromMaster ((const char *)src, src_len);
-}
-
-void
-Driver::GetFromMaster (const char *src, size_t src_len)
-{
-    // Echo the characters back to the Debugger's stdout, that way if you
-    // type characters while a command is running, you'll see what you've typed.
-    FILE *out_fh = m_debugger.GetOutputFileHandle();
-    if (out_fh)
-        ::fwrite (src, 1, src_len, out_fh);
-}
-
-size_t
-Driver::EditLineInputReaderCallback 
-(
-    void *baton, 
-    SBInputReader *reader, 
-    InputReaderAction notification,
-    const char *bytes, 
-    size_t bytes_len
-)
-{
-    Driver *driver = (Driver *)baton;
-
-    switch (notification)
-    {
-    case eInputReaderActivate:
-        break;
-
-    case eInputReaderReactivate:
-        if (driver->m_executing_user_command == false)
-            driver->ReadyForCommand();
-        break;
-
-    case eInputReaderDeactivate:
-        break;
-        
-    case eInputReaderAsynchronousOutputWritten:
-        if (driver->m_io_channel_ap.get() != NULL)
-            driver->m_io_channel_ap->RefreshPrompt();
-        break;
-
-    case eInputReaderInterrupt:
-        if (driver->m_io_channel_ap.get() != NULL)
-        {
-            SBProcess process(driver->GetDebugger().GetSelectedTarget().GetProcess());
-            if (!driver->m_io_channel_ap->EditLineHasCharacters()
-                &&  process.IsValid()
-                && (process.GetState() == lldb::eStateRunning || process.GetState() == lldb::eStateAttaching))
-            {
-                process.SendAsyncInterrupt ();
-            }
-            else
-            {
-                driver->m_io_channel_ap->OutWrite ("^C\n", 3, NO_ASYNC);
-                // I wish I could erase the entire input line, but there's no public API for that.
-                driver->m_io_channel_ap->EraseCharsBeforeCursor();
-                driver->m_io_channel_ap->RefreshPrompt();
-            }
-        }
-        break;
-        
-    case eInputReaderEndOfFile:
-        if (driver->m_io_channel_ap.get() != NULL)
-        {
-            driver->m_io_channel_ap->OutWrite ("^D\n", 3, NO_ASYNC);
-            driver->m_io_channel_ap->RefreshPrompt ();
-        }
-        write (driver->m_editline_pty.GetMasterFileDescriptor(), "quit\n", 5);
-        break;
-
-    case eInputReaderGotToken:
-        write (driver->m_editline_pty.GetMasterFileDescriptor(), bytes, bytes_len);
-        break;
-        
-    case eInputReaderDone:
-        break;
-    }
-    return bytes_len;
-}
-
 void
 Driver::MainLoop ()
 {
-#if defined(_MSC_VER)
-    m_editline_slave_fh = stdin;
-    FILE *editline_output_slave_fh = stdout;
-    lldb_utility::PseudoTerminal editline_output_pty;
-#else
-
-    char error_str[1024];
-    if (m_editline_pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY, error_str, sizeof(error_str)) == false)
-    {
-        ::fprintf (stderr, "error: failed to open driver pseudo terminal : %s", error_str);
-        exit(1);
-    }
-    else
-    {
-        const char *driver_slave_name = m_editline_pty.GetSlaveName (error_str, sizeof(error_str));
-        if (driver_slave_name == NULL)
-        {
-            ::fprintf (stderr, "error: failed to get slave name for driver pseudo terminal : %s", error_str);
-            exit(2);
-        }
-        else
-        {
-            m_editline_slave_fh = ::fopen (driver_slave_name, "r+");
-            if (m_editline_slave_fh == NULL)
-            {
-                SBError error;
-                error.SetErrorToErrno();
-                ::fprintf (stderr, "error: failed to get open slave for driver pseudo terminal : %s",
-                           error.GetCString());
-                exit(3);
-            }
-
-            ::setbuf (m_editline_slave_fh, NULL);
-        }
-    }
-
-    lldb_utility::PseudoTerminal editline_output_pty;
-    FILE *editline_output_slave_fh = NULL;
-    
-    if (editline_output_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, error_str, sizeof (error_str)) == false)
-    {
-        ::fprintf (stderr, "error: failed to open output pseudo terminal : %s", error_str);
-        exit(1);
-    }
-    else
-    {
-        const char *output_slave_name = editline_output_pty.GetSlaveName (error_str, sizeof(error_str));
-        if (output_slave_name == NULL)
-        {
-            ::fprintf (stderr, "error: failed to get slave name for output pseudo terminal : %s", error_str);
-            exit(2);
-        }
-        else
-        {
-            editline_output_slave_fh = ::fopen (output_slave_name, "r+");
-            if (editline_output_slave_fh == NULL)
-            {
-                SBError error;
-                error.SetErrorToErrno();
-                ::fprintf (stderr, "error: failed to get open slave for output pseudo terminal : %s",
-                           error.GetCString());
-                exit(3);
-            }
-            ::setbuf (editline_output_slave_fh, NULL);
-        }
-    }
-#endif
-
-   // struct termios stdin_termios;
-
     if (::tcgetattr(STDIN_FILENO, &g_old_stdin_termios) == 0)
     {
         g_old_stdin_termios_is_valid = true;
@@ -1394,43 +857,6 @@ Driver::MainLoop ()
     
     m_debugger.SetUseExternalEditor(m_option_data.m_use_external_editor);
 
-    // You have to drain anything that comes to the master side of the PTY.  master_out_comm is
-    // for that purpose.  The reason you need to do this is a curious reason...  editline will echo
-    // characters to the PTY when it gets characters while el_gets is not running, and then when
-    // you call el_gets (or el_getc) it will try to reset the terminal back to raw mode which blocks
-    // if there are unconsumed characters in the out buffer.
-    // However, you don't need to do anything with the characters, since editline will dump these
-    // unconsumed characters after printing the prompt again in el_gets.
-
-    SBCommunication master_out_comm("driver.editline");
-    master_out_comm.SetCloseOnEOF (false);
-    master_out_comm.AdoptFileDesriptor(m_editline_pty.GetMasterFileDescriptor(), false);
-    master_out_comm.SetReadThreadBytesReceivedCallback(Driver::MasterThreadBytesReceived, this);
-
-    if (master_out_comm.ReadThreadStart () == false)
-    {
-        ::fprintf (stderr, "error: failed to start master out read thread");
-        exit(5);
-    }
-
-    SBCommandInterpreter sb_interpreter = m_debugger.GetCommandInterpreter();
-
-    m_io_channel_ap.reset (new IOChannel(m_editline_slave_fh, editline_output_slave_fh, stdout, stderr, this));
-
-#if !defined (_MSC_VER)
-    SBCommunication out_comm_2("driver.editline_output");
-    out_comm_2.SetCloseOnEOF (false);
-    out_comm_2.AdoptFileDesriptor (editline_output_pty.GetMasterFileDescriptor(), false);
-    out_comm_2.SetReadThreadBytesReceivedCallback (IOChannel::LibeditOutputBytesReceived, m_io_channel_ap.get());
-
-    if (out_comm_2.ReadThreadStart () == false)
-    {
-        ::fprintf (stderr, "error: failed to start libedit output read thread");
-        exit (5);
-    }
-#endif
-
-
     struct winsize window_size;
     if (isatty (STDIN_FILENO)
         && ::ioctl (STDIN_FILENO, TIOCGWINSZ, &window_size) == 0)
@@ -1439,286 +865,97 @@ Driver::MainLoop ()
             m_debugger.SetTerminalWidth (window_size.ws_col);
     }
 
-    // Since input can be redirected by the debugger, we must insert our editline
-    // input reader in the queue so we know when our reader should be active
-    // and so we can receive bytes only when we are supposed to.
-    SBError err (m_editline_reader.Initialize (m_debugger, 
-                                               Driver::EditLineInputReaderCallback, // callback
-                                               this,                              // baton
-                                               eInputReaderGranularityByte,       // token_size
-                                               NULL,                              // end token - NULL means never done
-                                               NULL,                              // prompt - taken care of elsewhere
-                                               false));                           // echo input - don't need Debugger 
-                                                                                  // to do this, we handle it elsewhere
+    SBCommandInterpreter sb_interpreter = m_debugger.GetCommandInterpreter();
     
-    if (err.Fail())
+    // Before we handle any options from the command line, we parse the
+    // .lldbinit file in the user's home directory.
+    SBCommandReturnObject result;
+    sb_interpreter.SourceInitFileInHomeDirectory(result);
+    if (GetDebugMode())
     {
-        ::fprintf (stderr, "error: %s", err.GetCString());
-        exit (6);
+        result.PutError (m_debugger.GetErrorFileHandle());
+        result.PutOutput (m_debugger.GetOutputFileHandle());
     }
+
+    // Now we handle options we got from the command line
+    // First source in the commands specified to be run before the file arguments are processed.
+    ExecuteInitialCommands(true);
     
-    m_debugger.PushInputReader (m_editline_reader);
-
-    SBListener listener(m_debugger.GetListener());
-    if (listener.IsValid())
+    // Was there a core file specified?
+    std::string core_file_spec("");
+    if (!m_option_data.m_core_file.empty())
+        core_file_spec.append("--core ").append(m_option_data.m_core_file);
+    
+    char command_string[PATH_MAX * 2];
+    const size_t num_args = m_option_data.m_args.size();
+    if (num_args > 0)
     {
-
-        listener.StartListeningForEventClass(m_debugger, 
-                                         SBTarget::GetBroadcasterClassName(), 
-                                         SBTarget::eBroadcastBitBreakpointChanged);
-        listener.StartListeningForEventClass(m_debugger, 
-                                         SBThread::GetBroadcasterClassName(),
-                                         SBThread::eBroadcastBitStackChanged |
-                                         SBThread::eBroadcastBitThreadSelected);
-        listener.StartListeningForEvents (*m_io_channel_ap,
-                                          IOChannel::eBroadcastBitHasUserInput |
-                                          IOChannel::eBroadcastBitUserInterrupt |
-                                          IOChannel::eBroadcastBitThreadShouldExit |
-                                          IOChannel::eBroadcastBitThreadDidStart |
-                                          IOChannel::eBroadcastBitThreadDidExit);
-
-        if (m_io_channel_ap->Start ())
+        char arch_name[64];
+        if (m_debugger.GetDefaultArchitecture (arch_name, sizeof (arch_name)))
+            ::snprintf (command_string,
+                        sizeof (command_string),
+                        "target create --arch=%s %s \"%s\"",
+                        arch_name,
+                        core_file_spec.c_str(),
+                        m_option_data.m_args[0].c_str());
+        else
+            ::snprintf (command_string,
+                        sizeof(command_string),
+                        "target create %s \"%s\"",
+                        core_file_spec.c_str(),
+                        m_option_data.m_args[0].c_str());
+        
+        m_debugger.HandleCommand (command_string);
+        
+        if (num_args > 1)
         {
-            bool iochannel_thread_exited = false;
-
-            listener.StartListeningForEvents (sb_interpreter.GetBroadcaster(),
-                                              SBCommandInterpreter::eBroadcastBitQuitCommandReceived |
-                                              SBCommandInterpreter::eBroadcastBitAsynchronousOutputData |
-                                              SBCommandInterpreter::eBroadcastBitAsynchronousErrorData);
-
-            // Before we handle any options from the command line, we parse the
-            // .lldbinit file in the user's home directory.
-            SBCommandReturnObject result;
-            sb_interpreter.SourceInitFileInHomeDirectory(result);
-            if (GetDebugMode())
+            m_debugger.HandleCommand ("settings clear target.run-args");
+            char arg_cstr[1024];
+            for (size_t arg_idx = 1; arg_idx < num_args; ++arg_idx)
             {
-                result.PutError (m_debugger.GetErrorFileHandle());
-                result.PutOutput (m_debugger.GetOutputFileHandle());
+                ::snprintf (arg_cstr,
+                            sizeof(arg_cstr),
+                            "settings append target.run-args \"%s\"",
+                            m_option_data.m_args[arg_idx].c_str());
+                m_debugger.HandleCommand (arg_cstr);
             }
-
-            // Now we handle options we got from the command line
-            // First source in the commands specified to be run before the file arguments are processed.
-            ExecuteInitialCommands(true);
-            
-            // Was there a core file specified?
-            std::string core_file_spec("");
-            if (!m_option_data.m_core_file.empty())
-                core_file_spec.append("--core ").append(m_option_data.m_core_file);
-
-            char command_string[PATH_MAX * 2];
-            const size_t num_args = m_option_data.m_args.size();
-            if (num_args > 0)
-            {
-                char arch_name[64];
-                if (m_debugger.GetDefaultArchitecture (arch_name, sizeof (arch_name)))
-                    ::snprintf (command_string, 
-                                sizeof (command_string), 
-                                "target create --arch=%s %s \"%s\"", 
-                                arch_name,
-                                core_file_spec.c_str(),
-                                m_option_data.m_args[0].c_str());
-                else
-                    ::snprintf (command_string, 
-                                sizeof(command_string), 
-                                "target create %s \"%s\"", 
-                                core_file_spec.c_str(),
-                                m_option_data.m_args[0].c_str());
-
-                m_debugger.HandleCommand (command_string);
-                
-                if (num_args > 1)
-                {
-                    m_debugger.HandleCommand ("settings clear target.run-args");
-                    char arg_cstr[1024];
-                    for (size_t arg_idx = 1; arg_idx < num_args; ++arg_idx)
-                    {
-                        ::snprintf (arg_cstr, 
-                                    sizeof(arg_cstr), 
-                                    "settings append target.run-args \"%s\"", 
-                                    m_option_data.m_args[arg_idx].c_str());
-                        m_debugger.HandleCommand (arg_cstr);
-                    }
-                }
-            }
-            else if (!core_file_spec.empty())
-            {
-                ::snprintf (command_string, 
-                            sizeof(command_string), 
-                            "target create %s", 
-                            core_file_spec.c_str());
-                m_debugger.HandleCommand (command_string);;
-            }
-
-            // Now that all option parsing is done, we try and parse the .lldbinit
-            // file in the current working directory
-            sb_interpreter.SourceInitFileInCurrentWorkingDirectory (result);
-            if (GetDebugMode())
-            {
-                result.PutError(m_debugger.GetErrorFileHandle());
-                result.PutOutput(m_debugger.GetOutputFileHandle());
-            }
-            
-            // Now execute the commands specified for after the file arguments are processed.
-            ExecuteInitialCommands(false);
-
-            SBEvent event;
-
-            // Make sure the IO channel is started up before we try to tell it we
-            // are ready for input
-            listener.WaitForEventForBroadcasterWithType (UINT32_MAX, 
-                                                         *m_io_channel_ap,
-                                                         IOChannel::eBroadcastBitThreadDidStart, 
-                                                         event);
-            // If we were asked to attach, then do that here:
-            // I'm going to use the command string rather than directly
-            // calling the API's because then I don't have to recode the
-            // event handling here.
-            if (!m_option_data.m_process_name.empty()
-                || m_option_data.m_process_pid != LLDB_INVALID_PROCESS_ID)
-            {
-                std::string command_str("process attach ");
-                if (m_option_data.m_process_pid != LLDB_INVALID_PROCESS_ID)
-                {
-                    command_str.append("-p ");
-                    char pid_buffer[32];
-                    ::snprintf (pid_buffer, sizeof(pid_buffer), "%" PRIu64, m_option_data.m_process_pid);
-                    command_str.append(pid_buffer);
-                }
-                else 
-                {
-                    command_str.append("-n \"");
-                    command_str.append(m_option_data.m_process_name);
-                    command_str.push_back('\"');
-                    if (m_option_data.m_wait_for)
-                        command_str.append(" -w");
-                }
-                
-                if (m_debugger.GetOutputFileHandle())
-                    ::fprintf (m_debugger.GetOutputFileHandle(), 
-                               "Attaching to process with:\n    %s\n", 
-                               command_str.c_str());
-                                               
-                // Force the attach to be synchronous:
-                bool orig_async = m_debugger.GetAsync();
-                m_debugger.SetAsync(true);
-                m_debugger.HandleCommand(command_str.c_str());
-                m_debugger.SetAsync(orig_async);                
-            }
-                        
-            ReadyForCommand ();
-
-            while (!GetIsDone())
-            {
-                listener.WaitForEvent (UINT32_MAX, event);
-                if (event.IsValid())
-                {
-                    if (event.GetBroadcaster().IsValid())
-                    {
-                        uint32_t event_type = event.GetType();
-                        if (event.BroadcasterMatchesRef (*m_io_channel_ap))
-                        {
-                            if ((event_type & IOChannel::eBroadcastBitThreadShouldExit) ||
-                                (event_type & IOChannel::eBroadcastBitThreadDidExit))
-                            {
-                                SetIsDone();
-                                if (event_type & IOChannel::eBroadcastBitThreadDidExit)
-                                    iochannel_thread_exited = true;
-                            }
-                            else
-                            {
-                                if (HandleIOEvent (event))
-                                    SetIsDone();
-                            }
-                        }
-                        else if (SBProcess::EventIsProcessEvent (event))
-                        {
-                            HandleProcessEvent (event);
-                        }
-                        else if (SBBreakpoint::EventIsBreakpointEvent (event))
-                        {
-                            HandleBreakpointEvent (event);
-                        }
-                        else if (SBThread::EventIsThreadEvent (event))
-                        {
-                            HandleThreadEvent (event);
-                        }
-                        else if (event.BroadcasterMatchesRef (sb_interpreter.GetBroadcaster()))
-                        {
-                            // TODO: deprecate the eBroadcastBitQuitCommandReceived event
-                            // now that we have SBCommandInterpreter::SetCommandOverrideCallback()
-                            // that can take over a command
-                            if (event_type & SBCommandInterpreter::eBroadcastBitQuitCommandReceived)
-                            {
-                                SetIsDone();
-                            }
-                            else if (event_type & SBCommandInterpreter::eBroadcastBitAsynchronousErrorData)
-                            {
-                                const char *data = SBEvent::GetCStringFromEvent (event);
-                                m_io_channel_ap->ErrWrite (data, strlen(data), ASYNC);
-                            }
-                            else if (event_type & SBCommandInterpreter::eBroadcastBitAsynchronousOutputData)
-                            {
-                                const char *data = SBEvent::GetCStringFromEvent (event);
-                                m_io_channel_ap->OutWrite (data, strlen(data), ASYNC);
-                            }
-                        }
-                    }
-                }
-            }
-
-            master_out_comm.SetReadThreadBytesReceivedCallback(NULL, NULL);
-            master_out_comm.Disconnect();
-            master_out_comm.ReadThreadStop();
-
-#if !defined(_MSC_VER)
-            out_comm_2.SetReadThreadBytesReceivedCallback(NULL, NULL);
-            out_comm_2.Disconnect();
-            out_comm_2.ReadThreadStop();
-#endif
-
-            editline_output_pty.CloseMasterFileDescriptor();
-            reset_stdin_termios();
-            fclose (stdin);
-
-            CloseIOChannelFile ();
-
-            if (!iochannel_thread_exited)
-            {
-                event.Clear();
-                listener.GetNextEventForBroadcasterWithType (*m_io_channel_ap,
-                                                             IOChannel::eBroadcastBitThreadDidExit,
-                                                             event);
-                if (!event.IsValid())
-                {
-                    // Send end EOF to the driver file descriptor
-                    m_io_channel_ap->Stop();
-                }
-            }
-
-            SBDebugger::Destroy (m_debugger);
         }
     }
-}
-
-
-void
-Driver::ReadyForCommand ()
-{
-    if (m_waiting_for_command == false)
+    else if (!core_file_spec.empty())
     {
-        m_waiting_for_command = true;
-        BroadcastEventByType (Driver::eBroadcastBitReadyForInput, true);
+        ::snprintf (command_string,
+                    sizeof(command_string),
+                    "target create %s",
+                    core_file_spec.c_str());
+        m_debugger.HandleCommand (command_string);;
     }
+
+    ExecuteInitialCommands(false);
+
+    // Now that all option parsing is done, we try and parse the .lldbinit
+    // file in the current working directory
+    sb_interpreter.SourceInitFileInCurrentWorkingDirectory (result);
+    if (GetDebugMode())
+    {
+        result.PutError(m_debugger.GetErrorFileHandle());
+        result.PutOutput(m_debugger.GetOutputFileHandle());
+    }
+    
+    bool handle_events = true;
+    bool spawn_thread = false;
+    m_debugger.RunCommandInterpreter(handle_events, spawn_thread);
+    
+    reset_stdin_termios();
+    fclose (stdin);
+    
+    SBDebugger::Destroy (m_debugger);
 }
+
 
 void
 Driver::ResizeWindow (unsigned short col)
 {
     GetDebugger().SetTerminalWidth (col);
-    if (m_io_channel_ap.get() != NULL)
-    {
-        m_io_channel_ap->ElResize();
-    }
 }
 
 void

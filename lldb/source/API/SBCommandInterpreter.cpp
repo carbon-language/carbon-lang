@@ -107,6 +107,22 @@ SBCommandInterpreter::AliasExists (const char *cmd)
     return false;
 }
 
+bool
+SBCommandInterpreter::IsActive ()
+{
+    if (m_opaque_ptr)
+        return m_opaque_ptr->IsActive ();
+    return false;
+}
+
+const char *
+SBCommandInterpreter::GetIOHandlerControlSequence(char ch)
+{
+    if (m_opaque_ptr)
+        return m_opaque_ptr->GetDebugger().GetTopIOHandlerControlSequence (ch).GetCString();
+    return NULL;
+}
+
 lldb::ReturnStatus
 SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnObject &result, bool add_to_history)
 {

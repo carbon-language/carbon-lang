@@ -28,25 +28,26 @@ StreamAsynchronousIO::StreamAsynchronousIO (Broadcaster &broadcaster, uint32_t b
 
 StreamAsynchronousIO::~StreamAsynchronousIO ()
 {
+    // Flush when we destroy to make sure we display the data
+    Flush();
 }
 
 void
 StreamAsynchronousIO::Flush ()
 {
-    if (m_accumulated_data.GetSize() > 0)
+    if (!m_accumulated_data.empty())
     {
         std::unique_ptr<EventDataBytes> data_bytes_ap (new EventDataBytes);
         // Let's swap the bytes to avoid LARGE string copies.
-        data_bytes_ap->SwapBytes (m_accumulated_data.GetString());
+        data_bytes_ap->SwapBytes (m_accumulated_data);
         EventSP new_event_sp (new Event (m_broadcast_event_type, data_bytes_ap.release()));
         m_broadcaster.BroadcastEvent (new_event_sp);
-        m_accumulated_data.Clear();
     }
 }
 
 size_t
 StreamAsynchronousIO::Write (const void *s, size_t length)
 {
-    m_accumulated_data.Write (s, length);
+    m_accumulated_data.append ((const char *)s, length);
     return length;
 }

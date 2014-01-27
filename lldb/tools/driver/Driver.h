@@ -22,27 +22,15 @@
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBError.h"
-#include "lldb/API/SBInputReader.h"
 
 #define ASYNC true
 #define NO_ASYNC false
 
 class IOChannel;
 
-namespace lldb
-{
-    class SBInputReader;
-}
-
-
 class Driver : public lldb::SBBroadcaster
 {
 public:
-    enum {
-        eBroadcastBitReadyForInput    = (1 << 0),
-        eBroadcastBitThreadShouldExit = (1 << 1)
-    };
-
     Driver ();
 
     virtual
@@ -50,24 +38,6 @@ public:
 
     void
     MainLoop ();
-
-    void
-    PutSTDIN (const char *src, size_t src_len);
-
-    void
-    GetFromMaster (const char *src, size_t src_len);
-
-    bool
-    HandleIOEvent (const lldb::SBEvent &event);
-
-    void
-    HandleProcessEvent (const lldb::SBEvent &event);
-
-    void
-    HandleBreakpointEvent (const lldb::SBEvent &event);
-
-    void
-    HandleThreadEvent (const lldb::SBEvent &event);
 
     lldb::SBError
     ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &do_exit);
@@ -137,66 +107,16 @@ public:
         return m_debugger;
     }
     
-    bool
-    EditlineReaderIsTop ()
-    {
-        return m_debugger.InputReaderIsTopReader (m_editline_reader);
-    }
-
-    bool
-    GetIsDone () const
-    {
-        return m_done;
-    }
-
-    void
-    SetIsDone ()
-    {
-        m_done = true;
-    }
-    
     void
     ResizeWindow (unsigned short col);
 
 private:
     lldb::SBDebugger m_debugger;
-    lldb_utility::PseudoTerminal m_editline_pty;
-    FILE *m_editline_slave_fh;
-    lldb::SBInputReader m_editline_reader;
-    std::unique_ptr<IOChannel> m_io_channel_ap;
     OptionData m_option_data;
-    bool m_executing_user_command;
-    bool m_waiting_for_command;
-    bool m_done;
 
     void
     ResetOptionValues ();
 
-    size_t
-    GetProcessSTDOUT ();
-
-    size_t
-    GetProcessSTDERR ();
-
-    void
-    UpdateSelectedThread ();
-
-    void
-    CloseIOChannelFile ();
-
-    static size_t
-    EditLineInputReaderCallback (void *baton, 
-                                 lldb::SBInputReader *reader, 
-                                 lldb::InputReaderAction notification,
-                                 const char *bytes, 
-                                 size_t bytes_len);
-
-    static void
-    ReadThreadBytesReceived (void *baton, const void *src, size_t src_len);
-
-    static void
-    MasterThreadBytesReceived (void *baton, const void *src, size_t src_len);
-    
     void
     ReadyForCommand ();
 };

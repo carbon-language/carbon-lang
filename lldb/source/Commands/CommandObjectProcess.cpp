@@ -532,37 +532,36 @@ protected:
 
                 if (error.Success())
                 {
+                    ListenerSP listener_sp (new Listener("lldb.CommandObjectProcessAttach.DoExecute.attach.hijack"));
+                    m_options.attach_info.SetHijackListener(listener_sp);
+                    process->HijackProcessEvents(listener_sp.get());
                     error = process->Attach (m_options.attach_info);
                     
                     if (error.Success())
                     {
                         result.SetStatus (eReturnStatusSuccessContinuingNoResult);
+                        StateType state = process->WaitForProcessToStop (NULL, NULL, false, listener_sp.get());
+
+                        process->RestoreProcessEvents();
+
+                        result.SetDidChangeProcessState (true);
+                        
+                        if (state == eStateStopped)
+                        {
+                            result.AppendMessageWithFormat ("Process %" PRIu64 " %s\n", process->GetID(), StateAsCString (state));
+                            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                        }
+                        else
+                        {
+                            result.AppendError ("attach failed: process did not stop (no such process or permission problem?)");
+                            process->Destroy();
+                            result.SetStatus (eReturnStatusFailed);
+                        }
                     }
                     else
                     {
                         result.AppendErrorWithFormat ("attach failed: %s\n", error.AsCString());
                         result.SetStatus (eReturnStatusFailed);
-                        return false;                
-                    }
-                    // If we're synchronous, wait for the stopped event and report that.
-                    // Otherwise just return.  
-                    // FIXME: in the async case it will now be possible to get to the command
-                    // interpreter with a state eStateAttaching.  Make sure we handle that correctly.
-                    StateType state = process->WaitForProcessToStop (NULL);
-                    
-                    result.SetDidChangeProcessState (true);
-
-                    if (state == eStateStopped)
-                    {
-                        result.AppendMessageWithFormat ("Process %" PRIu64 " %s\n", process->GetID(), StateAsCString (state));
-                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                    }
-                    else
-                    {
-                        result.AppendError ("attach failed: process did not stop (no such process or permission problem?)");
-                        process->Destroy();
-                        result.SetStatus (eReturnStatusFailed);
-                        return false;                
                     }
                 }
             }
@@ -1087,7 +1086,7 @@ protected:
             
             if (process)
             {
-                error = process->ConnectRemote (&process->GetTarget().GetDebugger().GetOutputStream(), remote_url);
+                error = process->ConnectRemote (process->GetTarget().GetDebugger().GetOutputFile().get(), remote_url);
 
                 if (error.Fail())
                 {

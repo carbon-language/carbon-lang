@@ -291,6 +291,17 @@ public:
     virtual void
     DumpSymbolContext (Stream *s);
 
+    lldb::DisassemblerSP
+    GetInstructions (const ExecutionContext &exe_ctx,
+                     const char *flavor,
+                     bool prefer_file_cache);
+    
+    bool
+    GetDisassembly (const ExecutionContext &exe_ctx,
+                    const char *flavor,
+                    bool prefer_file_cache,
+                    Stream &strm);
+
 protected:
 
     uint32_t        m_uid;                  // User ID (usually the original symbol table index)

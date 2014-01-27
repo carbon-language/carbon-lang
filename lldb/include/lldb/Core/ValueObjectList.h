@@ -75,6 +75,12 @@ public:
     void
     Swap (ValueObjectList &value_object_list);
     
+    void
+    Clear ()
+    {
+        m_value_objects.clear();
+    }
+
 protected:
     typedef std::vector<lldb::ValueObjectSP> collection;
     //------------------------------------------------------------------

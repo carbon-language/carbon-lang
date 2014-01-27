@@ -355,28 +355,6 @@
     free($1);
 }
 
-// For lldb::SBInputReader::Callback
-%typemap(in) (lldb::SBInputReader::Callback callback, void *callback_baton) {
-  if (!($input == Py_None || PyCallable_Check(reinterpret_cast<PyObject*>($input)))) {
-    PyErr_SetString(PyExc_TypeError, "Need a callable object or None!");
-    return NULL;
-  }
-
-  // FIXME (filcab): We can't currently check if our callback is already
-  // LLDBSwigPythonCallPythonLogOutputCallback (to DECREF the previous
-  // baton) nor can we just remove all traces of a callback, if we want to
-  // revert to a file logging mechanism.
-
-  // Don't lose the callback reference
-  Py_INCREF($input);
-  $1 = LLDBSwigPythonCallSBInputReaderCallback;
-  $2 = $input;
-}
-
-%typemap(typecheck) (lldb::SBInputReader::Callback callback, void *baton) {
-  $1 = $input == Py_None;
-  $1 = $1 || PyCallable_Check(reinterpret_cast<PyObject*>($input));
-}
 
 // For Log::LogOutputCallback
 %typemap(in) (lldb::LogOutputCallback log_callback, void *baton) {

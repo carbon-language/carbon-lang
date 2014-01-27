@@ -84,7 +84,8 @@ lldb_private::formatters::LibcxxStdUnorderedMapSyntheticFrontEnd::GetChildAtInde
     stream.Printf("[%zu]",idx);
     DataExtractor data;
     val_hash.first->GetData(data);
-    ExecutionContext exe_ctx = val_hash.first->GetExecutionContextRef().Lock();
+    const bool thread_and_frame_only_if_stopped = true;
+    ExecutionContext exe_ctx = val_hash.first->GetExecutionContextRef().Lock(thread_and_frame_only_if_stopped);
     return val_hash.first->CreateValueObjectFromData(stream.GetData(),
                                                      data,
                                                      exe_ctx,

@@ -19,9 +19,8 @@
 #include "lldb/lldb-public.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Communication.h"
-#include "lldb/Core/InputReaderStack.h"
+#include "lldb/Core/IOHandler.h"
 #include "lldb/Core/Listener.h"
-#include "lldb/Core/StreamFile.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/UserSettingsController.h"
@@ -91,23 +90,25 @@ public:
     void
     SetAsyncExecution (bool async);
 
-    File &
+    lldb::StreamFileSP
     GetInputFile ()
     {
-        return m_input_file.GetFile();
+        return m_input_file_sp;
     }
 
-    File &
+    lldb::StreamFileSP
     GetOutputFile ()
     {
-        return m_output_file.GetFile();
+        return m_output_file_sp;
     }
 
-    File &
+    lldb::StreamFileSP
     GetErrorFile ()
     {
-        return m_error_file.GetFile();
+        return m_error_file_sp;
     }
+
+    
     
     void
     SetInputFileHandle (FILE *fh, bool tranfer_ownership);
@@ -123,18 +124,6 @@ public:
     
     void
     RestoreInputTerminalState();
-
-    Stream&
-    GetOutputStream ()
-    {
-        return m_output_file;
-    }
-
-    Stream&
-    GetErrorStream ()
-    {
-        return m_error_file;
-    }
 
     lldb::StreamSP
     GetAsyncOutputStream ();
@@ -200,24 +189,38 @@ public:
     void
     DispatchInputEndOfFile ();
 
+    //------------------------------------------------------------------
+    // If any of the streams are not set, set them to the in/out/err
+    // stream of the top most input reader to ensure they at least have
+    // something
+    //------------------------------------------------------------------
     void
-    DispatchInput (const char *bytes, size_t bytes_len);
+    AdoptTopIOHandlerFilesIfInvalid (lldb::StreamFileSP &in,
+                                     lldb::StreamFileSP &out,
+                                     lldb::StreamFileSP &err);
 
     void
-    WriteToDefaultReader (const char *bytes, size_t bytes_len);
-
-    void
-    PushInputReader (const lldb::InputReaderSP& reader_sp);
+    PushIOHandler (const lldb::IOHandlerSP& reader_sp);
 
     bool
-    PopInputReader (const lldb::InputReaderSP& reader_sp);
-
-    void
-    NotifyTopInputReader (lldb::InputReaderAction notification);
-
-    bool
-    InputReaderIsTopReader (const lldb::InputReaderSP& reader_sp);
+    PopIOHandler (const lldb::IOHandlerSP& reader_sp);
     
+    // Synchronously run an input reader until it is done
+    void
+    RunIOHandler (const lldb::IOHandlerSP& reader_sp);
+    
+    bool
+    IsTopIOHandler (const lldb::IOHandlerSP& reader_sp);
+
+    ConstString
+    GetTopIOHandlerControlSequence(char ch);
+
+    bool
+    HideTopIOHandler();
+
+    void
+    RefreshTopIOHandler();
+
     static lldb::DebuggerSP
     FindDebuggerWithID (lldb::user_id_t id);
     
@@ -240,7 +243,7 @@ public:
 
 
     void
-    CleanUpInputReaders ();
+    ClearIOHandlers ();
 
     static int
     TestDebuggerRefCount ();
@@ -338,29 +341,65 @@ public:
     bool
     LoadPlugin (const FileSpec& spec, Error& error);
 
+    void
+    ExecuteIOHanders();
+    
+    bool
+    IsForwardingEvents ();
+
+    void
+    EnableForwardEvents (const lldb::ListenerSP &listener_sp);
+
+    void
+    CancelForwardEvents (const lldb::ListenerSP &listener_sp);
 protected:
 
-    static void
-    DispatchInputCallback (void *baton, const void *bytes, size_t bytes_len);
-
-    lldb::InputReaderSP
-    GetCurrentInputReader ();
-    
-    void
-    ActivateInputReader (const lldb::InputReaderSP &reader_sp);
+    friend class CommandInterpreter;
 
     bool
-    CheckIfTopInputReaderIsDone ();
+    StartEventHandlerThread();
+
+    void
+    StopEventHandlerThread();
+
+    static lldb::thread_result_t
+    EventHandlerThread (lldb::thread_arg_t arg);
+
+    bool
+    StartIOHandlerThread();
     
+    void
+    StopIOHandlerThread();
+    
+    static lldb::thread_result_t
+    IOHandlerThread (lldb::thread_arg_t arg);
+
+    void
+    DefaultEventHandler();
+
+    void
+    HandleBreakpointEvent (const lldb::EventSP &event_sp);
+    
+    void
+    HandleProcessEvent (const lldb::EventSP &event_sp);
+
+    void
+    HandleThreadEvent (const lldb::EventSP &event_sp);
+
+    size_t
+    GetProcessSTDOUT (Process *process, Stream *stream);
+    
+    size_t
+    GetProcessSTDERR (Process *process, Stream *stream);
+
     SourceManager::SourceFileCache &
     GetSourceFileCache ()
     {
         return m_source_file_cache;
     }
-    Communication m_input_comm;
-    StreamFile m_input_file;
-    StreamFile m_output_file;
-    StreamFile m_error_file;
+    lldb::StreamFileSP m_input_file_sp;
+    lldb::StreamFileSP m_output_file_sp;
+    lldb::StreamFileSP m_error_file_sp;
     TerminalState m_terminal_state;
     TargetList m_target_list;
     PlatformList m_platform_list;
@@ -370,8 +409,7 @@ protected:
                                                         // source file cache.
     std::unique_ptr<CommandInterpreter> m_command_interpreter_ap;
 
-    InputReaderStack m_input_reader_stack;
-    std::string m_input_reader_data;
+    IOHandlerStack m_input_reader_stack;
     typedef std::map<std::string, lldb::StreamWP> LogStreamMap;
     LogStreamMap m_log_streams;
     lldb::StreamSP m_log_callback_stream_sp;
@@ -379,7 +417,10 @@ protected:
     static LoadPluginCallbackType g_load_plugin_callback;
     typedef std::vector<lldb::DynamicLibrarySP> LoadedPluginsList;
     LoadedPluginsList m_loaded_plugins;
-    
+    lldb::thread_t m_event_handler_thread;
+    lldb::thread_t m_io_handler_thread;
+    lldb::ListenerSP m_forward_listener_sp;
+    bool m_event_handler_thread_alive;
     void
     InstanceInitialize ();
     

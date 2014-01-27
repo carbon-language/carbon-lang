@@ -254,7 +254,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   find_library(DEBUG_SYMBOLS_LIBRARY DebugSymbols PATHS "/System/Library/PrivateFrameworks")
 
   set(LIBXML2_INCLUDE_DIR "/usr/include/libxml2")
-  list(APPEND system_libs xml2)
+  list(APPEND system_libs xml2 ncurses panel)
   list(APPEND system_libs ${CARBON_LIBRARY} ${FOUNDATION_LIBRARY}
   ${CORE_FOUNDATION_LIBRARY} ${CORE_SERVICES_LIBRARY} ${SECURITY_LIBRARY}
   ${DEBUG_SYMBOLS_LIBRARY})
@@ -262,7 +262,11 @@ endif()
 
 # On FreeBSD, link libexecinfo because libc is missing  backtrace()
 if (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-  list(APPEND system_libs execinfo)
+  list(APPEND system_libs execinfo ncurses panel)
+endif()
+
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+  list(APPEND system_libs ncurses panel)
 endif()
 
 #add_subdirectory(include)

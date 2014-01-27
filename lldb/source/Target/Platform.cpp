@@ -1039,6 +1039,8 @@ Platform::DebugProcess (ProcessLaunchInfo &launch_info,
             process_sp = Attach (attach_info, debugger, target, listener, error);
             if (process_sp)
             {
+                launch_info.SetHijackListener(attach_info.GetHijackListener());
+                
                 // Since we attached to the process, it will think it needs to detach
                 // if the process object just goes away without an explicit call to
                 // Process::Kill() or Process::Detach(), so let it know to kill the 

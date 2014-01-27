@@ -51,7 +51,8 @@ public:
         m_descriptor (kInvalidDescriptor),
         m_stream (kInvalidStream),
         m_options (0),
-        m_owned (false)
+        m_own_stream (false),
+        m_own_descriptor (false)
     {
     }
     
@@ -59,7 +60,8 @@ public:
         m_descriptor (kInvalidDescriptor),
         m_stream (fh),
         m_options (0),
-        m_owned (transfer_ownership)
+        m_own_stream (transfer_ownership),
+        m_own_descriptor (false)
     {
     }
 
@@ -111,13 +113,15 @@ public:
           uint32_t options,
           uint32_t permissions = lldb::eFilePermissionsFileDefault);
     
-    File (int fd, bool tranfer_ownership) : 
+    File (int fd, bool transfer_ownership) :
         m_descriptor (fd),
         m_stream (kInvalidStream),
         m_options (0),
-        m_owned (tranfer_ownership)
+        m_own_stream (false),
+        m_own_descriptor (transfer_ownership)
     {
     }
+
     //------------------------------------------------------------------
     /// Destructor.
     ///
@@ -476,6 +480,12 @@ public:
     size_t
     PrintfVarArg(const char *format, va_list args);
 
+    
+    void
+    SetOptions (uint32_t options)
+    {
+        m_options = options;
+    }
 protected:
     
     
@@ -497,7 +507,8 @@ protected:
     int m_descriptor;
     FILE *m_stream;
     uint32_t m_options;
-    bool m_owned;
+    bool m_own_stream;
+    bool m_own_descriptor;
 };
 
 } // namespace lldb_private

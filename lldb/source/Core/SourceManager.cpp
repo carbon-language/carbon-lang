@@ -432,6 +432,56 @@ SourceManager::File::GetLineOffset (uint32_t line)
     return UINT32_MAX;
 }
 
+uint32_t
+SourceManager::File::GetNumLines ()
+{
+    CalculateLineOffsets();
+    return m_offsets.size();
+}
+
+const char *
+SourceManager::File::PeekLineData (uint32_t line)
+{
+    if (!LineIsValid(line))
+        return NULL;
+    
+    size_t line_offset = GetLineOffset (line);
+    if (line_offset < m_data_sp->GetByteSize())
+        return (const char *)m_data_sp->GetBytes() + line_offset;
+    return NULL;
+}
+
+uint32_t
+SourceManager::File::GetLineLength (uint32_t line, bool include_newline_chars)
+{
+    if (!LineIsValid(line))
+        return false;
+    
+    size_t start_offset = GetLineOffset (line);
+    size_t end_offset = GetLineOffset (line + 1);
+    if (end_offset == UINT32_MAX)
+        end_offset = m_data_sp->GetByteSize();
+    
+    if (end_offset > start_offset)
+    {
+        uint32_t length = end_offset - start_offset;
+        if (include_newline_chars == false)
+        {
+            const char *line_start = (const char *)m_data_sp->GetBytes() + start_offset;
+            while (length > 0)
+            {
+                const char last_char = line_start[length-1];
+                if ((last_char == '\r') || (last_char == '\n'))
+                    --length;
+                else
+                    break;
+            }
+        }
+        return length;
+    }
+    return 0;
+}
+
 bool
 SourceManager::File::LineIsValid (uint32_t line)
 {

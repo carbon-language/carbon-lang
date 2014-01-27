@@ -1,4 +1,4 @@
-//===-- CommandObjectWatchpointCommand.h ------------------------*- C++ -*-===//
+//===-- CommandObjectGUI.h --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,37 +7,37 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_CommandObjectWatchpointCommand_h_
-#define liblldb_CommandObjectWatchpointCommand_h_
+#ifndef liblldb_CommandObjectGUI_h_
+#define liblldb_CommandObjectGUI_h_
 
 // C Includes
 // C++ Includes
-
-
 // Other libraries and framework includes
 // Project includes
-
-#include "lldb/lldb-types.h"
-#include "lldb/Interpreter/Options.h"
-#include "lldb/Interpreter/CommandObjectMultiword.h"
-
+#include "lldb/Interpreter/CommandObject.h"
 
 namespace lldb_private {
 
 //-------------------------------------------------------------------------
-// CommandObjectMultiwordWatchpoint
+// CommandObjectGUI
 //-------------------------------------------------------------------------
 
-class CommandObjectWatchpointCommand : public CommandObjectMultiword
+class CommandObjectGUI : public CommandObjectParsed
 {
 public:
-    CommandObjectWatchpointCommand (CommandInterpreter &interpreter);
+
+    CommandObjectGUI (CommandInterpreter &interpreter);
 
     virtual
-    ~CommandObjectWatchpointCommand ();
+    ~CommandObjectGUI ();
+
+protected:
+    virtual bool
+    DoExecute (Args& args,
+               CommandReturnObject &result);
 
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectWatchpointCommand_h_
+#endif  // liblldb_CommandObjectGUI_h_

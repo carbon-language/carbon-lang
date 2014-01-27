@@ -298,7 +298,7 @@ public:
     ///     any valid weak references in this object.
     //------------------------------------------------------------------
     ExecutionContext
-    Lock () const;
+    Lock (bool thread_and_frame_only_if_stopped) const;
 
     //------------------------------------------------------------------
     /// Returns true if this object has a weak reference to a thread.
@@ -402,7 +402,7 @@ public:
     ExecutionContext (const lldb::ThreadWP &thread_wp);
     ExecutionContext (const lldb::StackFrameWP &frame_wp);    
     ExecutionContext (const ExecutionContextRef &exe_ctx_ref);
-    ExecutionContext (const ExecutionContextRef *exe_ctx_ref);
+    ExecutionContext (const ExecutionContextRef *exe_ctx_ref, bool thread_and_frame_only_if_stopped = false);
     
     // These two variants take in a locker, and grab the target, lock the API mutex into locker, then
     // fill in the rest of the shared pointers.

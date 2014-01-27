@@ -16,6 +16,7 @@
 #include "CommandObjectBreakpointCommand.h"
 #include "CommandObjectBreakpoint.h"
 
+#include "lldb/Core/IOHandler.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Target.h"
@@ -34,7 +35,9 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 
 
-class CommandObjectBreakpointCommandAdd : public CommandObjectParsed
+class CommandObjectBreakpointCommandAdd :
+    public CommandObjectParsed,
+    public IOHandlerDelegateMultiline
 {
 public:
 
@@ -43,6 +46,7 @@ public:
                              "add",
                              "Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit.",
                              NULL),
+    IOHandlerDelegateMultiline ("DONE", IOHandlerDelegate::Completion::LLDBCommand),
         m_options (interpreter)
     {
         SetHelpLong (
@@ -207,40 +211,45 @@ one command per line.\n" );
         return &m_options;
     }
 
+    virtual void
+    IOHandlerActivated (IOHandler &io_handler)
+    {
+        StreamFileSP output_sp(io_handler.GetOutputStreamFile());
+        if (output_sp)
+        {
+            output_sp->PutCString(g_reader_instructions);
+            output_sp->Flush();
+        }
+    }
+    
+    
+    virtual void
+    IOHandlerInputComplete (IOHandler &io_handler, std::string &line)
+    {
+        io_handler.SetIsDone(true);
+        
+        BreakpointOptions *bp_options = (BreakpointOptions *) io_handler.GetUserData();
+        if (bp_options)
+        {
+            std::unique_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
+            if (data_ap.get())
+            {
+                data_ap->user_source.SplitIntoLines (line.c_str(), line.size());
+                BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
+                bp_options->SetCallback (BreakpointOptionsCallbackFunction, baton_sp);
+            }
+        }
+
+    }
+    
     void
     CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options, 
                                              CommandReturnObject &result)
     {
-        InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
-        std::unique_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
-        if (reader_sp && data_ap.get())
-        {
-            BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
-            bp_options->SetCallback (BreakpointOptionsCallbackFunction, baton_sp);
-
-            Error err (reader_sp->Initialize (CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback,
-                                              bp_options,                   // baton
-                                              eInputReaderGranularityLine,  // token size, to pass to callback function
-                                              "DONE",                       // end token
-                                              "> ",                         // prompt
-                                              true));                       // echo input
-            if (err.Success())
-            {
-                m_interpreter.GetDebugger().PushInputReader (reader_sp);
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
-            }
-            else
-            {
-                result.AppendError (err.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-            }
-        }
-        else
-        {
-            result.AppendError("out of memory");
-            result.SetStatus (eReturnStatusFailed);
-        }
-
+        m_interpreter.GetLLDBCommandsFromIOHandler ("> ",           // Prompt
+                                                    *this,          // IOHandlerDelegate
+                                                    true,           // Run IOHandler in async mode
+                                                    bp_options);    // Baton for the "io_handler" that will be passed back into our IOHandlerDelegate functions
     }
     
     /// Set a one-liner as the callback for the breakpoint.
@@ -261,93 +270,6 @@ one command per line.\n" );
         bp_options->SetCallback (BreakpointOptionsCallbackFunction, baton_sp);
 
         return;
-    }
-
-    static size_t
-    GenerateBreakpointCommandCallback (void *baton, 
-                                       InputReader &reader, 
-                                       lldb::InputReaderAction notification,
-                                       const char *bytes, 
-                                       size_t bytes_len)
-    {
-        StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-        bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
-        
-        switch (notification)
-        {
-        case eInputReaderActivate:
-            if (!batch_mode)
-            {
-                out_stream->Printf ("%s\n", g_reader_instructions);
-                if (reader.GetPrompt())
-                    out_stream->Printf ("%s", reader.GetPrompt());
-                out_stream->Flush();
-            }
-            break;
-
-        case eInputReaderDeactivate:
-            break;
-
-        case eInputReaderReactivate:
-            if (reader.GetPrompt() && !batch_mode)
-            {
-                out_stream->Printf ("%s", reader.GetPrompt());
-                out_stream->Flush();
-            }
-            break;
-
-        case eInputReaderAsynchronousOutputWritten:
-            break;
-            
-        case eInputReaderGotToken:
-            if (bytes && bytes_len && baton)
-            {
-                BreakpointOptions *bp_options = (BreakpointOptions *) baton;
-                if (bp_options)
-                {
-                    Baton *bp_options_baton = bp_options->GetBaton();
-                    if (bp_options_baton)
-                        ((BreakpointOptions::CommandData *)bp_options_baton->m_data)->user_source.AppendString (bytes, bytes_len); 
-                }
-            }
-            if (!reader.IsDone() && reader.GetPrompt() && !batch_mode)
-            {
-                out_stream->Printf ("%s", reader.GetPrompt());
-                out_stream->Flush();
-            }
-            break;
-            
-        case eInputReaderInterrupt:
-            {
-                // Finish, and cancel the breakpoint command.
-                reader.SetIsDone (true);
-                BreakpointOptions *bp_options = (BreakpointOptions *) baton;
-                if (bp_options)
-                {
-                    Baton *bp_options_baton = bp_options->GetBaton ();
-                    if (bp_options_baton)
-                    {
-                        ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->user_source.Clear();
-                        ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->script_source.clear();
-                    }
-                }
-                if (!batch_mode)
-                {
-                    out_stream->Printf ("Warning: No command attached to breakpoint.\n");
-                    out_stream->Flush();
-                }
-            }
-            break;
-            
-        case eInputReaderEndOfFile:
-            reader.SetIsDone (true);
-            break;
-            
-        case eInputReaderDone:
-            break;
-        }
-
-        return bytes_len;
     }
     
     static bool
@@ -623,7 +545,7 @@ private:
 };
 
 const char *
-CommandObjectBreakpointCommandAdd::g_reader_instructions = "Enter your debugger command(s).  Type 'DONE' to end.";
+CommandObjectBreakpointCommandAdd::g_reader_instructions = "Enter your debugger command(s).  Type 'DONE' to end.\n";
 
 // FIXME: "script-type" needs to have its contents determined dynamically, so somebody can add a new scripting
 // language to lldb and have it pickable here without having to change this enumeration by hand and rebuild lldb proper.

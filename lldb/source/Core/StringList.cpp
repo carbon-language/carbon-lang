@@ -56,6 +56,12 @@ StringList::AppendString (const std::string &s)
 }
 
 void
+StringList::AppendString (std::string &&s)
+{
+    m_strings.push_back (s);
+}
+
+void
 StringList::AppendString (const char *str, size_t str_len)
 {
     if (str)
@@ -93,6 +99,20 @@ StringList::GetSize () const
     return m_strings.size();
 }
 
+size_t
+StringList::GetMaxStringLength () const
+{
+    size_t max_length = 0;
+    for (const auto &s : m_strings)
+    {
+        const size_t len = s.size();
+        if (max_length < len)
+            max_length = len;
+    }
+    return max_length;
+}
+
+
 const char *
 StringList::GetStringAtIndex (size_t idx) const
 {
@@ -126,37 +146,39 @@ StringList::Clear ()
 void
 StringList::LongestCommonPrefix (std::string &common_prefix)
 {
-    //arg_sstr_collection::iterator pos, end = m_args.end();
-    size_t pos = 0;
-    size_t end = m_strings.size();
+    const size_t num_strings = m_strings.size();
 
-    if (pos == end)
-        common_prefix.clear();
-    else
-        common_prefix = m_strings[pos];
-
-    for (++pos; pos != end; ++pos)
+    if (num_strings == 0)
     {
-        size_t new_size = strlen (m_strings[pos].c_str());
+        common_prefix.clear();
+    }
+    else
+    {
+        common_prefix = m_strings.front();
 
-        // First trim common_prefix if it is longer than the current element:
-        if (common_prefix.size() > new_size)
-            common_prefix.erase (new_size);
-
-        // Then trim it at the first disparity:
-
-        for (size_t i = 0; i < common_prefix.size(); i++)
+        for (size_t idx = 1; idx < num_strings; ++idx)
         {
-            if (m_strings[pos][i]  != common_prefix[i])
-            {
-                common_prefix.erase(i);
-                break;
-            }
-        }
+            std::string &curr_string = m_strings[idx];
+            size_t new_size = curr_string.size();
 
-        // If we've emptied the common prefix, we're done.
-        if (common_prefix.empty())
-            break;
+            // First trim common_prefix if it is longer than the current element:
+            if (common_prefix.size() > new_size)
+                common_prefix.erase (new_size);
+
+            // Then trim it at the first disparity:
+            for (size_t i = 0; i < common_prefix.size(); i++)
+            {
+                if (curr_string[i] != common_prefix[i])
+                {
+                    common_prefix.erase(i);
+                    break;
+                }
+            }
+
+            // If we've emptied the common prefix, we're done.
+            if (common_prefix.empty())
+                break;
+        }
     }
 }
 
@@ -173,10 +195,34 @@ StringList::InsertStringAtIndex (size_t idx, const char *str)
 }
 
 void
+StringList::InsertStringAtIndex (size_t idx, const std::string &str)
+{
+    if (idx < m_strings.size())
+        m_strings.insert (m_strings.begin() + idx, str);
+    else
+        m_strings.push_back (str);
+}
+
+void
+StringList::InsertStringAtIndex (size_t idx, std::string &&str)
+{
+    if (idx < m_strings.size())
+        m_strings.insert (m_strings.begin() + idx, str);
+    else
+        m_strings.push_back (str);
+}
+
+void
 StringList::DeleteStringAtIndex (size_t idx)
 {
     if (idx < m_strings.size())
         m_strings.erase (m_strings.begin() + idx);
+}
+
+size_t
+StringList::SplitIntoLines (const std::string &lines)
+{
+    return SplitIntoLines (lines.c_str(), lines.size());
 }
 
 size_t
@@ -231,8 +277,7 @@ StringList::RemoveBlankLines ()
 }
 
 std::string
-StringList::CopyList(const char* item_preamble,
-                     const char* items_sep)
+StringList::CopyList(const char* item_preamble, const char* items_sep) const
 {
     StreamString strm;
     for (size_t i = 0; i < GetSize(); i++)

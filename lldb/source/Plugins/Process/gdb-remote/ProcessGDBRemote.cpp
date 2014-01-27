@@ -34,7 +34,6 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Host/FileSpec.h"
-#include "lldb/Core/InputReader.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
@@ -1071,27 +1070,6 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid, const Process
         }
     }
     return error;
-}
-
-size_t
-ProcessGDBRemote::AttachInputReaderCallback
-(
-    void *baton, 
-    InputReader *reader, 
-    lldb::InputReaderAction notification,
-    const char *bytes, 
-    size_t bytes_len
-)
-{
-    if (notification == eInputReaderGotToken)
-    {
-        ProcessGDBRemote *gdb_process = (ProcessGDBRemote *)baton;
-        if (gdb_process->m_waiting_for_attach)
-            gdb_process->m_waiting_for_attach = false;
-        reader->SetIsDone(true);
-        return 1;
-    }
-    return 0;
 }
 
 Error

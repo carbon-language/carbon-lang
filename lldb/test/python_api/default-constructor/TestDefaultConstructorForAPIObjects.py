@@ -164,16 +164,6 @@ class APIDefaultConstructorTestCase(TestBase):
         sb_function.fuzz_obj(obj)
 
     @python_api_test
-    def test_SBInputReader(self):
-        obj = lldb.SBInputReader()
-        if self.TraceOn():
-            print obj
-        self.assertFalse(obj)
-        # Do fuzz testing on the invalid obj, it should not crash lldb.
-        import sb_inputreader
-        sb_inputreader.fuzz_obj(obj)
-
-    @python_api_test
     def test_SBInstruction(self):
         obj = lldb.SBInstruction()
         if self.TraceOn():

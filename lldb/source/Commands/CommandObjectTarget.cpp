@@ -19,7 +19,7 @@
 // Project includes
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
-#include "lldb/Core/InputReader.h"
+#include "lldb/Core/IOHandler.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Section.h"
@@ -4759,7 +4759,9 @@ private:
 // CommandObjectTargetStopHookAdd
 //-------------------------------------------------------------------------
 
-class CommandObjectTargetStopHookAdd : public CommandObjectParsed
+class CommandObjectTargetStopHookAdd :
+    public CommandObjectParsed,
+    public IOHandlerDelegateMultiline
 {
 public:
 
@@ -4926,9 +4928,10 @@ public:
 
     CommandObjectTargetStopHookAdd (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
-                             "target stop-hook add ",
+                             "target stop-hook add",
                              "Add a hook to be executed when the target stops.",
                              "target stop-hook add"),
+        IOHandlerDelegateMultiline ("DONE", IOHandlerDelegate::Completion::LLDBCommand),
         m_options (interpreter)
     {
     }
@@ -4937,102 +4940,61 @@ public:
     {
     }
 
-    static size_t 
-    ReadCommandsCallbackFunction (void *baton, 
-                                  InputReader &reader, 
-                                  lldb::InputReaderAction notification,
-                                  const char *bytes, 
-                                  size_t bytes_len)
-    {
-        StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-        Target::StopHook *new_stop_hook = ((Target::StopHook *) baton);
-        static bool got_interrupted;
-        bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
-
-        switch (notification)
-        {
-        case eInputReaderActivate:
-            if (!batch_mode)
-            {
-                out_stream->Printf ("%s\n", "Enter your stop hook command(s).  Type 'DONE' to end.");
-                if (reader.GetPrompt())
-                    out_stream->Printf ("%s", reader.GetPrompt());
-                out_stream->Flush();
-            }
-            got_interrupted = false;
-            break;
-
-        case eInputReaderDeactivate:
-            break;
-
-        case eInputReaderReactivate:
-            if (reader.GetPrompt() && !batch_mode)
-            {
-                out_stream->Printf ("%s", reader.GetPrompt());
-                out_stream->Flush();
-            }
-            got_interrupted = false;
-            break;
-
-        case eInputReaderAsynchronousOutputWritten:
-            break;
-            
-        case eInputReaderGotToken:
-            if (bytes && bytes_len && baton)
-            {
-                StringList *commands = new_stop_hook->GetCommandPointer();
-                if (commands)
-                {
-                    commands->AppendString (bytes, bytes_len); 
-                }
-            }
-            if (!reader.IsDone() && reader.GetPrompt() && !batch_mode)
-            {
-                out_stream->Printf ("%s", reader.GetPrompt());
-                out_stream->Flush();
-            }
-            break;
-            
-        case eInputReaderInterrupt:
-            {
-                // Finish, and cancel the stop hook.
-                new_stop_hook->GetTarget()->RemoveStopHookByID(new_stop_hook->GetID());
-                if (!batch_mode)
-                {
-                    out_stream->Printf ("Stop hook cancelled.\n");
-                    out_stream->Flush();
-                }
-                
-                reader.SetIsDone (true);
-            }
-            got_interrupted = true;
-            break;
-            
-        case eInputReaderEndOfFile:
-            reader.SetIsDone (true);
-            break;
-            
-        case eInputReaderDone:
-            if (!got_interrupted && !batch_mode)
-            {
-                out_stream->Printf ("Stop hook #%" PRIu64 " added.\n", new_stop_hook->GetID());
-                out_stream->Flush();
-            }
-            break;
-        }
-
-        return bytes_len;
-    }
-
 protected:
+    
+    virtual void
+    IOHandlerActivated (IOHandler &io_handler)
+    {
+        StreamFileSP output_sp(io_handler.GetOutputStreamFile());
+        if (output_sp)
+        {
+            output_sp->PutCString("Enter your stop hook command(s).  Type 'DONE' to end.\n");
+            output_sp->Flush();
+        }
+    }
+    
+    
+    virtual void
+    IOHandlerInputComplete (IOHandler &io_handler, std::string &line)
+    {
+        if (m_stop_hook_sp)
+        {
+            if (line.empty())
+            {
+                StreamFileSP error_sp(io_handler.GetErrorStreamFile());
+                if (error_sp)
+                {
+                    error_sp->Printf("error: stop hook #%" PRIu64 " aborted, no commands.\n", m_stop_hook_sp->GetID());
+                    error_sp->Flush();
+                }
+                Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+                if (target)
+                    target->RemoveStopHookByID(m_stop_hook_sp->GetID());
+            }
+            else
+            {
+                m_stop_hook_sp->GetCommandPointer()->SplitIntoLines(line);
+                StreamFileSP output_sp(io_handler.GetOutputStreamFile());
+                if (output_sp)
+                {
+                    output_sp->Printf("Stop hook #%" PRIu64 " added.\n", m_stop_hook_sp->GetID());
+                    output_sp->Flush();
+                }
+            }
+            m_stop_hook_sp.reset();
+        }
+        io_handler.SetIsDone(true);
+    }
+    
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
+        m_stop_hook_sp.reset();
+        
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target)
         {
-            Target::StopHookSP new_hook_sp;
-            target->AddStopHook (new_hook_sp);
+            Target::StopHookSP new_hook_sp = target->CreateStopHook();
 
             //  First step, make the specifier.
             std::unique_ptr<SymbolContextSpecifier> specifier_ap;
@@ -5105,31 +5067,12 @@ protected:
             }
             else
             {
-                // Otherwise gather up the command list, we'll push an input reader and suck the data from that directly into
-                // the new stop hook's command string.
-                InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
-                if (!reader_sp)
-                {
-                    result.AppendError("out of memory\n");
-                    result.SetStatus (eReturnStatusFailed);
-                    target->RemoveStopHookByID (new_hook_sp->GetID());
-                    return false;
-                }
-                
-                Error err (reader_sp->Initialize (CommandObjectTargetStopHookAdd::ReadCommandsCallbackFunction,
-                                                  new_hook_sp.get(), // baton
-                                                  eInputReaderGranularityLine,  // token size, to pass to callback function
-                                                  "DONE",                       // end token
-                                                  "> ",                         // prompt
-                                                  true));                       // echo input
-                if (!err.Success())
-                {
-                    result.AppendError (err.AsCString());
-                    result.SetStatus (eReturnStatusFailed);
-                    target->RemoveStopHookByID (new_hook_sp->GetID());
-                    return false;
-                }
-                m_interpreter.GetDebugger().PushInputReader (reader_sp);
+                m_stop_hook_sp = new_hook_sp;
+                m_interpreter.GetLLDBCommandsFromIOHandler ("> ",   // Prompt
+                                                            *this,  // IOHandlerDelegate
+                                                            true,   // Run IOHandler in async mode
+                                                            NULL);  // Baton for the "io_handler" that will be passed back into our IOHandlerDelegate functions
+
             }
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
@@ -5143,6 +5086,7 @@ protected:
     }
 private:
     CommandOptions m_options;
+    Target::StopHookSP m_stop_hook_sp;
 };
 
 OptionDefinition

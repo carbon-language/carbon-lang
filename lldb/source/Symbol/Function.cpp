@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Symbol/Function.h"
+#include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Host/Host.h"
@@ -403,6 +404,43 @@ Function::CalculateSymbolContextFunction ()
 {
     return this;
 }
+
+lldb::DisassemblerSP
+Function::GetInstructions (const ExecutionContext &exe_ctx,
+                           const char *flavor,
+                           bool prefer_file_cache)
+{
+    ModuleSP module_sp (GetAddressRange().GetBaseAddress().GetModule());
+    if (module_sp)
+    {
+        const bool prefer_file_cache = false;
+        return Disassembler::DisassembleRange (module_sp->GetArchitecture(),
+                                               NULL,
+                                               flavor,
+                                               exe_ctx,
+                                               GetAddressRange(),
+                                               prefer_file_cache);
+    }
+    return lldb::DisassemblerSP();
+}
+
+bool
+Function::GetDisassembly (const ExecutionContext &exe_ctx,
+                          const char *flavor,
+                          bool prefer_file_cache,
+                          Stream &strm)
+{
+    lldb::DisassemblerSP disassembler_sp = GetInstructions (exe_ctx, flavor, prefer_file_cache);
+    if (disassembler_sp)
+    {
+        const bool show_address = true;
+        const bool show_bytes = false;
+        disassembler_sp->GetInstructionList().Dump (&strm, show_address, show_bytes, &exe_ctx);
+        return true;
+    }
+    return false;
+}
+
 
 //Symbol *
 //Function::CalculateSymbolContextSymbol ()

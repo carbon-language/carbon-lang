@@ -97,7 +97,7 @@ PythonString::PythonString (PyObject *py_obj) :
 PythonString::PythonString (const PythonObject &object) :
     PythonObject()
 {
-    Reset(object.GetPythonObject()); // Use "Reset()" to ensure that py_obj is a string
+    Reset(object.get()); // Use "Reset()" to ensure that py_obj is a string
 }
 
 PythonString::PythonString (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
@@ -166,7 +166,7 @@ PythonInteger::PythonInteger (PyObject *py_obj) :
 PythonInteger::PythonInteger (const PythonObject &object) :
     PythonObject()
 {
-    Reset(object.GetPythonObject()); // Use "Reset()" to ensure that py_obj is a integer type
+    Reset(object.get()); // Use "Reset()" to ensure that py_obj is a integer type
 }
 
 PythonInteger::PythonInteger (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
@@ -223,8 +223,8 @@ PythonInteger::SetInteger (int64_t value)
 // PythonList
 //----------------------------------------------------------------------
 
-PythonList::PythonList () :
-    PythonObject(PyList_New(0))
+PythonList::PythonList (bool create_empty) :
+    PythonObject(create_empty ? PyList_New(0) : NULL)
 {
 }
 
@@ -243,7 +243,7 @@ PythonList::PythonList (PyObject *py_obj) :
 PythonList::PythonList (const PythonObject &object) :
     PythonObject()
 {
-    Reset(object.GetPythonObject()); // Use "Reset()" to ensure that py_obj is a list
+    Reset(object.get()); // Use "Reset()" to ensure that py_obj is a list
 }
 
 PythonList::PythonList (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
@@ -280,29 +280,29 @@ PythonList::GetItemAtIndex (uint32_t index)
 {
     if (m_py_obj)
         return PythonObject(PyList_GetItem(m_py_obj, index));
-    return NULL;
+    return PythonObject();
 }
 
 void
 PythonList::SetItemAtIndex (uint32_t index, const PythonObject & object)
 {
     if (m_py_obj && object)
-        PyList_SetItem(m_py_obj, index, object.GetPythonObject());
+        PyList_SetItem(m_py_obj, index, object.get());
 }
 
 void
 PythonList::AppendItem (const PythonObject &object)
 {
     if (m_py_obj && object)
-        PyList_Append(m_py_obj, object.GetPythonObject());
+        PyList_Append(m_py_obj, object.get());
 }
 
 //----------------------------------------------------------------------
 // PythonDictionary
 //----------------------------------------------------------------------
 
-PythonDictionary::PythonDictionary () :
-    PythonObject(PyDict_New())
+PythonDictionary::PythonDictionary (bool create_empty) :
+PythonObject(create_empty ? PyDict_New() : NULL)
 {
 }
 
@@ -316,7 +316,7 @@ PythonDictionary::PythonDictionary (PyObject *py_obj) :
 PythonDictionary::PythonDictionary (const PythonObject &object) :
     PythonObject()
 {
-    Reset(object.GetPythonObject()); // Use "Reset()" to ensure that py_obj is a dictionary
+    Reset(object.get()); // Use "Reset()" to ensure that py_obj is a dictionary
 }
 
 PythonDictionary::PythonDictionary (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
@@ -356,7 +356,7 @@ PythonDictionary::GetItemForKey (const char *key) const
         PythonString python_key(key);
         return GetItemForKey(python_key);
     }
-    return NULL;
+    return PythonObject();
 }
 
 
@@ -364,7 +364,7 @@ PythonObject
 PythonDictionary::GetItemForKey (const PythonString &key) const
 {
     if (m_py_obj && key)
-        return PythonObject(PyDict_GetItem(m_py_obj, key.GetPythonObject()));
+        return PythonObject(PyDict_GetItem(m_py_obj, key.get()));
     return PythonObject();
 }
 
@@ -374,7 +374,7 @@ PythonDictionary::GetItemForKeyAsString (const PythonString &key, const char *fa
 {
     if (m_py_obj && key)
     {
-        PyObject *py_obj = PyDict_GetItem(m_py_obj, key.GetPythonObject());
+        PyObject *py_obj = PyDict_GetItem(m_py_obj, key.get());
         if (py_obj && PyString_Check(py_obj))
             return PyString_AsString(py_obj);
     }
@@ -386,7 +386,7 @@ PythonDictionary::GetItemForKeyAsInteger (const PythonString &key, int64_t fail_
 {
     if (m_py_obj && key)
     {
-        PyObject *py_obj = PyDict_GetItem(m_py_obj, key.GetPythonObject());
+        PyObject *py_obj = PyDict_GetItem(m_py_obj, key.get());
         if (py_obj)
         {
             if (PyInt_Check(py_obj))
@@ -404,7 +404,7 @@ PythonDictionary::GetKeys () const
 {
     if (m_py_obj)
         return PythonList(PyDict_Keys(m_py_obj));
-    return PythonList();
+    return PythonList(true);
 }
 
 PythonString
@@ -431,7 +431,7 @@ PythonDictionary::GetValueAtPosition (uint32_t pos) const
     Py_ssize_t pos_iter = 0;
     
     if (!m_py_obj)
-        return NULL;
+        return PythonObject();
     
     while (PyDict_Next(m_py_obj, &pos_iter, &key, &value)) {
         if (pos-- == 0)
@@ -441,10 +441,17 @@ PythonDictionary::GetValueAtPosition (uint32_t pos) const
 }
 
 void
+PythonDictionary::SetItemForKey (const PythonString &key, PyObject *value)
+{
+    if (m_py_obj && key && value)
+        PyDict_SetItem(m_py_obj, key.get(), value);
+}
+
+void
 PythonDictionary::SetItemForKey (const PythonString &key, const PythonObject &value)
 {
     if (m_py_obj && key && value)
-        PyDict_SetItem(m_py_obj, key.GetPythonObject(), value.GetPythonObject());
+        PyDict_SetItem(m_py_obj, key.get(), value.get());
 }
 
 #endif

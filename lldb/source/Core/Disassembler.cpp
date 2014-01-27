@@ -1045,10 +1045,8 @@ InstructionList::GetIndexOfNextBranchInstruction(uint32_t start) const
 }
 
 uint32_t
-InstructionList::GetIndexOfInstructionAtLoadAddress (lldb::addr_t load_addr, Target &target)
+InstructionList::GetIndexOfInstructionAtAddress (const Address &address)
 {
-    Address address;
-    address.SetLoadAddress(load_addr, &target);
     size_t num_instructions = m_instructions.size();
     uint32_t index = UINT32_MAX;
     for (size_t i = 0; i < num_instructions; i++)
@@ -1060,6 +1058,15 @@ InstructionList::GetIndexOfInstructionAtLoadAddress (lldb::addr_t load_addr, Tar
         }
     }
     return index;
+}
+
+
+uint32_t
+InstructionList::GetIndexOfInstructionAtLoadAddress (lldb::addr_t load_addr, Target &target)
+{
+    Address address;
+    address.SetLoadAddress(load_addr, &target);
+    return GetIndexOfInstructionAtAddress(address);
 }
 
 size_t
