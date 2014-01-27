@@ -32,12 +32,9 @@ define void @false_v2f64(<2 x i64>* %c, <2 x double>* %a, <2 x double>* %b) noun
   store <2 x i64> %4, <2 x i64>* %c
   ret void
 
-  ; FIXME: This code is correct, but poor. Ideally it would be similar to
-  ;        the code in @false_v4f32
+  ; (setcc $a, $b, SETFALSE) is always folded
   ; CHECK-DAG: ldi.b [[R1:\$w[0-9]+]], 0
-  ; CHECK-DAG: slli.d [[R3:\$w[0-9]+]], [[R1]], 63
-  ; CHECK-DAG: srai.d [[R4:\$w[0-9]+]], [[R3]], 63
-  ; CHECK-DAG: st.d [[R4]], 0($4)
+  ; CHECK-DAG: st.w [[R1]], 0($4)
   ; CHECK: .size false_v2f64
 }
 
@@ -509,12 +506,9 @@ define void @true_v2f64(<2 x i64>* %c, <2 x double>* %a, <2 x double>* %b) nounw
   store <2 x i64> %4, <2 x i64>* %c
   ret void
 
-  ; FIXME: This code is correct, but poor. Ideally it would be similar to
-  ;        the code in @true_v4f32
-  ; CHECK-DAG: ldi.d [[R1:\$w[0-9]+]], 1
-  ; CHECK-DAG: slli.d [[R3:\$w[0-9]+]], [[R1]], 63
-  ; CHECK-DAG: srai.d [[R4:\$w[0-9]+]], [[R3]], 63
-  ; CHECK-DAG: st.d [[R4]], 0($4)
+  ; (setcc $a, $b, SETTRUE) is always folded.
+  ; CHECK-DAG: ldi.b [[R1:\$w[0-9]+]], -1
+  ; CHECK-DAG: st.w [[R1]], 0($4)
   ; CHECK: .size true_v2f64
 }
 
