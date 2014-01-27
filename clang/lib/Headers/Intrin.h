@@ -222,6 +222,7 @@ static __inline__
 long __cdecl _InterlockedExchangeAdd(long volatile *_Addend, long _Value);
 long _InterlockedExchangeAdd_HLEAcquire(long volatile *, long);
 long _InterlockedExchangeAdd_HLERelease(long volatile *, long);
+static __inline__
 short _InterlockedExchangeAdd16(short volatile *_Addend, short _Value);
 __int64 _InterlockedExchangeAdd64_HLEAcquire(__int64 volatile *, __int64);
 __int64 _InterlockedExchangeAdd64_HLERelease(__int64 volatile *, __int64);
@@ -317,6 +318,7 @@ void __lwpval64(unsigned __int64, unsigned int, unsigned int);
 unsigned __int64 __lzcnt64(unsigned __int64);
 void __movsq(unsigned long long *, unsigned long long const *, size_t);
 __int64 __mulh(__int64, __int64);
+static __inline__
 unsigned __int64 __popcnt64(unsigned __int64);
 unsigned char __readgsbyte(unsigned long);
 unsigned long __readgsdword(unsigned long);
@@ -397,21 +399,28 @@ void *_InterlockedCompareExchangePointer(void *volatile *_Destination,
                                          void *_Exchange, void *_Comparand);
 void *_InterlockedCompareExchangePointer_np(void *volatile *_Destination,
                                             void *_Exchange, void *_Comparand);
+static __inline__
 __int64 _InterlockedDecrement64(__int64 volatile *_Addend);
+static __inline__
 __int64 _InterlockedExchange64(__int64 volatile *_Target, __int64 _Value);
+static __inline__
 __int64 _InterlockedExchangeAdd64(__int64 volatile *_Addend, __int64 _Value);
 void *_InterlockedExchangePointer(void *volatile *_Target, void *_Value);
+static __inline__
 __int64 _InterlockedIncrement64(__int64 volatile *_Addend);
 long _InterlockedOr_np(long volatile *_Value, long _Mask);
 short _InterlockedOr16_np(short volatile *_Value, short _Mask);
+static __inline__
 __int64 _InterlockedOr64(__int64 volatile *_Value, __int64 _Mask);
 __int64 _InterlockedOr64_np(__int64 volatile *_Value, __int64 _Mask);
 char _InterlockedOr8_np(char volatile *_Value, char _Mask);
 long _InterlockedXor_np(long volatile *_Value, long _Mask);
 short _InterlockedXor16_np(short volatile *_Value, short _Mask);
+static __inline__
 __int64 _InterlockedXor64(__int64 volatile *_Value, __int64 _Mask);
 __int64 _InterlockedXor64_np(__int64 volatile *_Value, __int64 _Mask);
 char _InterlockedXor8_np(char volatile *_Value, char _Mask);
+static __inline__
 unsigned __int64 _lzcnt_u64(unsigned __int64);
 __int64 _mul128(__int64 _Multiplier, __int64 _Multiplicand,
                 __int64 *_HighProduct);
