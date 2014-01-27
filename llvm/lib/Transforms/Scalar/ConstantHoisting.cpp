@@ -311,6 +311,20 @@ FindConstantInsertionPoint(Function &F, const ConstantInfo &CI) const {
   return (*BBs.begin())->getFirstInsertionPt();
 }
 
+/// \brief Find the instruction we should insert the constant materialization
+/// before.
+static Instruction *getMatInsertPt(Instruction *I, const DominatorTree *DT) {
+  if (!isa<PHINode>(I) && !isa<LandingPadInst>(I)) // Simple case.
+    return I;
+
+  // We can't insert directly before a phi node or landing pad. Insert before
+  // the terminator of the dominating block.
+  assert(&I->getParent()->getParent()->getEntryBlock() != I->getParent() &&
+         "PHI or landing pad in entry block!");
+  BasicBlock *IDom = DT->getNode(I->getParent())->getIDom()->getBlock();
+  return IDom->getTerminator();
+}
+
 /// \brief Emit materialization code for all rebased constants and update their
 /// users.
 void ConstantHoisting::EmitBaseConstants(Function &F, User *U,
@@ -320,7 +334,7 @@ void ConstantHoisting::EmitBaseConstants(Function &F, User *U,
     Instruction *Mat = Base;
     if (!Offset->isNullValue()) {
       Mat = BinaryOperator::Create(Instruction::Add, Base, Offset,
-                                   "const_mat", I);
+                                   "const_mat", getMatInsertPt(I, DT));
 
       // Use the same debug location as the instruction we are about to update.
       Mat->setDebugLoc(I->getDebugLoc());
@@ -346,9 +360,10 @@ void ConstantHoisting::EmitBaseConstants(Function &F, User *U,
         continue;
 
       Instruction *Mat = Base;
+      Instruction *InsertBefore = getMatInsertPt(I, DT);
       if (!Offset->isNullValue()) {
         Mat = BinaryOperator::Create(Instruction::Add, Base, Offset,
-                                     "const_mat", I);
+                                     "const_mat", InsertBefore);
 
         // Use the same debug location as the instruction we are about to
         // update.
@@ -360,7 +375,7 @@ void ConstantHoisting::EmitBaseConstants(Function &F, User *U,
       }
       Instruction *ICE = CE->getAsInstruction();
       ICE->replaceUsesOfWith(OriginalConstant, Mat);
-      ICE->insertBefore(I);
+      ICE->insertBefore(InsertBefore);
 
       // Use the same debug location as the instruction we are about to update.
       ICE->setDebugLoc(I->getDebugLoc());
