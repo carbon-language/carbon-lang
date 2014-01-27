@@ -1253,7 +1253,7 @@ class ConstantSDNode : public SDNode {
   ConstantSDNode(bool isTarget, bool isOpaque, const ConstantInt *val, EVT VT)
     : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant,
              0, DebugLoc(), getSDVTList(VT)), Value(val) {
-    SubclassData |= isOpaque;
+    SubclassData |= (uint16_t)isOpaque;
   }
 public:
 
