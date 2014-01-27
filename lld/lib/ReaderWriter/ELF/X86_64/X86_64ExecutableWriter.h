@@ -1,5 +1,4 @@
-//===- lib/ReaderWriter/ELF/X86/X86_64ExecutableWriter.h
-//-----------------------===//
+//===- lib/ReaderWriter/ELF/X86/X86_64ExecutableWriter.h ------------------===//
 //
 //                             The LLVM Linker
 //

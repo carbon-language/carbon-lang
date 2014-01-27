@@ -1,5 +1,4 @@
-//===- lib/ReaderWriter/ELF/HexagonELFReader.h
-//------------------------------===//
+//===- lib/ReaderWriter/ELF/HexagonELFReader.h ----------------------------===//
 //
 //                             The LLVM Linker
 //

@@ -1,5 +1,4 @@
-//===- lib/ReaderWriter/ELF/X86_64/X86_64RelocationHandler.h
-//------------------===//
+//===- lib/ReaderWriter/ELF/X86_64/X86_64RelocationHandler.h --------------===//
 //
 //                             The LLVM Linker
 //

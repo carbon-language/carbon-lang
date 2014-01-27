@@ -1,5 +1,4 @@
-//===- lib/ReaderWriter/ELF/Hexagon/HexagonDynamicLibraryWriter.h
-//-------------===//
+//===- lib/ReaderWriter/ELF/Hexagon/HexagonDynamicLibraryWriter.h ---------===//
 //
 //                             The LLVM Linker
 //
