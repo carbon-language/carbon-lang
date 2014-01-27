@@ -27,6 +27,7 @@
 namespace llvm {
   // ADT's.
   class StringRef;
+  class ConstStringRef;
   class Twine;
   template<typename T> class ArrayRef;
   template<typename T> class OwningPtr;
@@ -61,6 +62,7 @@ namespace clang {
   using llvm::None;
   using llvm::Optional;
   using llvm::StringRef;
+  using llvm::ConstStringRef;
   using llvm::Twine;
   using llvm::ArrayRef;
   using llvm::OwningPtr;

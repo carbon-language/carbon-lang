@@ -595,10 +595,8 @@ public:
   ///
   /// \param FormatString A fixed diagnostic format string that will be hashed
   /// and mapped to a unique DiagID.
-  template <unsigned N>
-  unsigned getCustomDiagID(Level L, const char (&FormatString)[N]) {
-    return Diags->getCustomDiagID((DiagnosticIDs::Level)L,
-                                  StringRef(FormatString, N));
+  unsigned getCustomDiagID(Level L, ConstStringRef FormatString) {
+    return Diags->getCustomDiagID((DiagnosticIDs::Level)L, FormatString);
   }
 
   /// \brief Converts a diagnostic argument (as an intptr_t) into the string
