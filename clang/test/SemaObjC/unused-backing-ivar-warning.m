@@ -177,6 +177,7 @@ typedef char BOOL;
 @protocol MCCIDURLProtocolDataProvider
 @required
 @property(strong, atomic, readonly) NSURL *cidURL;
+@property(strong, atomic, readonly) NSURL *cidURL1; // expected-note {{property declared here}}
 @end
 
 @interface UnrelatedClass : NSObject <MCCIDURLProtocolDataProvider>
@@ -184,6 +185,7 @@ typedef char BOOL;
 
 @implementation UnrelatedClass
 @synthesize cidURL = _cidURL;
+@synthesize cidURL1 = _cidURL1;
 @end
 
 @interface MUIWebAttachmentController : NSObject <MCCIDURLProtocolDataProvider>
@@ -192,6 +194,10 @@ typedef char BOOL;
 
 @implementation MUIWebAttachmentController
 - (NSURL *)cidURL {
+    return 0;
+}
+@synthesize cidURL1  = _cidURL1;
+- (NSURL *)cidURL1 { // expected-warning {{ivar '_cidURL1' which backs the property is not referenced in this property's accessor}}
     return 0;
 }
 @end
