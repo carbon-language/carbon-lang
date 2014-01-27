@@ -4995,19 +4995,9 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   else if (UF < 1)
     UF = 1;
 
-  bool HasReductions = Legal->getReductionVars()->size();
-
-  // Decide if we want to unroll if we decided that it is legal to vectorize
-  // but not profitable.
-  if (VF == 1) {
-    if (TheLoop->getNumBlocks() > 1 || !HasReductions ||
-        LoopCost > SmallLoopCost)
-      return 1;
-
-    return UF;
-  }
-
-  if (HasReductions) {
+  // Unroll if we vectorized this loop and there is a reduction that could
+  // benefit from unrolling.
+  if (VF > 1 && Legal->getReductionVars()->size()) {
     DEBUG(dbgs() << "LV: Unrolling because of reductions.\n");
     return UF;
   }
