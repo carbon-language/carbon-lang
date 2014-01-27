@@ -48,6 +48,7 @@
 
 using llvm::support::ulittle16_t;
 using llvm::support::ulittle32_t;
+using llvm::support::ulittle64_t;
 using llvm::COFF::DataDirectoryIndex;
 
 namespace lld {
@@ -467,6 +468,25 @@ AtomChunk::buildAtomRvaMap(std::map<const Atom *, uint64_t> &atomRva) const {
     atomRva[layout->_atom] = layout->_virtualAddr;
 }
 
+static int getSectionIndex(uint64_t targetAddr,
+                           const std::vector<uint64_t> &sectionRva) {
+  int i = 1;
+  for (uint64_t rva : sectionRva) {
+    if (targetAddr < rva)
+      return i;
+    ++i;
+  }
+  return i;
+}
+
+static uint32_t getSectionStartAddr(uint64_t targetAddr,
+                                    const std::vector<uint64_t> &sectionRva) {
+  for (int i = 0, e = sectionRva.size(); i < e; ++i)
+    if (i == e - 1 || (sectionRva[i] <= targetAddr && targetAddr <= sectionRva[i + 1]))
+      return sectionRva[i];
+  llvm_unreachable("Section missing");
+}
+
 void AtomChunk::applyRelocations32(uint8_t *buffer,
                                    std::map<const Atom *, uint64_t> &atomRva,
                                    std::vector<uint64_t> &sectionRva,
@@ -504,28 +524,14 @@ void AtomChunk::applyRelocations32(uint8_t *buffer,
         *relocSite32 = targetAddr - disp;
         break;
       }
-      case llvm::COFF::IMAGE_REL_I386_SECTION: {
+      case llvm::COFF::IMAGE_REL_I386_SECTION:
         // The 16-bit section index that contains the target symbol.
-        uint16_t i = 1;
-        for (uint64_t rva : sectionRva) {
-          if (targetAddr < rva) {
-            *relocSite16 = i;
-            break;
-          }
-          ++i;
-        }
+        *relocSite16 = getSectionIndex(targetAddr, sectionRva);
         break;
-      }
       case llvm::COFF::IMAGE_REL_I386_SECREL:
         // The 32-bit relative address from the beginning of the section that
         // contains the target symbol.
-        for (int i = 0, e = sectionRva.size(); i < e; ++i) {
-          if (i == e - 1 || (sectionRva[i] <= targetAddr &&
-                             targetAddr <= sectionRva[i + 1])) {
-            *relocSite32 = targetAddr - sectionRva[i];
-            break;
-          }
-        }
+        *relocSite32 = targetAddr - getSectionStartAddr(targetAddr, sectionRva);
         break;
       default:
         llvm_unreachable("Unsupported relocation kind");
@@ -545,11 +551,19 @@ void AtomChunk::applyRelocations64(uint8_t *buffer,
       if (ref->kindNamespace() != Reference::KindNamespace::COFF)
         continue;
 
-      auto relocSite32 = reinterpret_cast<ulittle32_t *>(
-          buffer + layout->_fileOffset + ref->offsetInAtom());
+      uint8_t *loc = buffer + layout->_fileOffset + ref->offsetInAtom();
+      auto relocSite16 = reinterpret_cast<ulittle16_t *>(loc);
+      auto relocSite32 = reinterpret_cast<ulittle32_t *>(loc);
+      auto relocSite64 = reinterpret_cast<ulittle64_t *>(loc);
       uint64_t targetAddr = atomRva[ref->target()];
 
       switch (ref->kindValue()) {
+      case llvm::COFF::IMAGE_REL_AMD64_ADDR64:
+        *relocSite64 = targetAddr;
+        break;
+      case llvm::COFF::IMAGE_REL_AMD64_ADDR32:
+        *relocSite32 = targetAddr;
+        break;
       case llvm::COFF::IMAGE_REL_AMD64_ADDR32NB:
         *relocSite32 = targetAddr - imageBase;
         break;
@@ -568,6 +582,13 @@ void AtomChunk::applyRelocations64(uint8_t *buffer,
       REL32(4);
       REL32(5);
 #undef CASE
+
+      case llvm::COFF::IMAGE_REL_AMD64_SECTION:
+        *relocSite16 = getSectionIndex(targetAddr, sectionRva);
+        break;
+      case llvm::COFF::IMAGE_REL_AMD64_SECREL:
+        *relocSite32 = targetAddr - getSectionStartAddr(targetAddr, sectionRva);
+        break;
 
       default:
         llvm::errs() << "Kind: " << (int)ref->kindValue() << "\n";
