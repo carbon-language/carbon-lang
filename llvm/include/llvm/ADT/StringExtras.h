@@ -28,6 +28,11 @@ static inline char hexdigit(unsigned X, bool LowerCase = false) {
   return X < 10 ? '0' + X : HexChar + X - 10;
 }
 
+/// Construct a string ref from a boolean.
+static inline StringRef toStringRef(bool B) {
+  return StringRef(B ? "true" : "false");
+}
+
 /// Interpret the given character \p C as a hexadecimal digit and return its
 /// value.
 ///
