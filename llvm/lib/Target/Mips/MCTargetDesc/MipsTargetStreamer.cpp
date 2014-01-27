@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "InstPrinter/MipsInstPrinter.h"
 #include "MipsTargetStreamer.h"
 #include "MipsMCTargetDesc.h"
 #include "llvm/MC/MCELF.h"
@@ -83,6 +84,14 @@ void MipsTargetAsmStreamer::emitDirectiveEnt(const MCSymbol &Symbol) {
 void MipsTargetAsmStreamer::emitDirectiveAbiCalls() { OS << "\t.abicalls\n"; }
 void MipsTargetAsmStreamer::emitDirectiveOptionPic0() {
   OS << "\t.option\tpic0\n";
+}
+
+void MipsTargetAsmStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
+                                      unsigned ReturnReg) {
+  OS << "\t.frame\t$"
+     << StringRef(MipsInstPrinter::getRegisterName(StackReg)).lower() << ","
+     << StackSize << ",$"
+     << StringRef(MipsInstPrinter::getRegisterName(ReturnReg)).lower();
 }
 
 // This part is for ELF object output.
@@ -207,4 +216,9 @@ void MipsTargetELFStreamer::emitDirectiveOptionPic0() {
   unsigned Flags = MCA.getELFHeaderEFlags();
   Flags &= ~ELF::EF_MIPS_PIC;
   MCA.setELFHeaderEFlags(Flags);
+}
+
+void MipsTargetELFStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
+                                      unsigned ReturnReg) {
+  // FIXME: implement.
 }

@@ -248,11 +248,7 @@ void MipsAsmPrinter::emitFrameDirective() {
   unsigned returnReg = RI.getRARegister();
   unsigned stackSize = MF->getFrameInfo()->getStackSize();
 
-  if (OutStreamer.hasRawTextSupport())
-    OutStreamer.EmitRawText("\t.frame\t$" +
-           StringRef(MipsInstPrinter::getRegisterName(stackReg)).lower() +
-           "," + Twine(stackSize) + ",$" +
-           StringRef(MipsInstPrinter::getRegisterName(returnReg)).lower());
+  getTargetStreamer().emitFrame(stackReg, stackSize, returnReg);
 }
 
 /// Emit Set directives.
