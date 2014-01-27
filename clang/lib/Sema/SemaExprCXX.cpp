@@ -4399,41 +4399,20 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   bool LVoid = LTy->isVoidType();
   bool RVoid = RTy->isVoidType();
   if (LVoid || RVoid) {
-    //   ... then the [l2r] conversions are performed on the second and third
-    //   operands ...
-    LHS = DefaultFunctionArrayLvalueConversion(LHS.take());
-    RHS = DefaultFunctionArrayLvalueConversion(RHS.take());
-    if (LHS.isInvalid() || RHS.isInvalid())
-      return QualType();
-
-    // Finish off the lvalue-to-rvalue conversion by copy-initializing a
-    // temporary if necessary. DefaultFunctionArrayLvalueConversion doesn't
-    // do this part for us.
-    ExprResult &NonVoid = LVoid ? RHS : LHS;
-    if (NonVoid.get()->getType()->isRecordType() &&
-        NonVoid.get()->isGLValue()) {
-      if (RequireNonAbstractType(QuestionLoc, NonVoid.get()->getType(),
-                             diag::err_allocation_of_abstract_type))
-        return QualType();
-      InitializedEntity Entity =
-          InitializedEntity::InitializeTemporary(NonVoid.get()->getType());
-      NonVoid = PerformCopyInitialization(Entity, SourceLocation(), NonVoid);
-      if (NonVoid.isInvalid())
-        return QualType();
+    //   ... one of the following shall hold:
+    //   -- The second or the third operand (but not both) is a (possibly
+    //      parenthesized) throw-expression; the result is of the type
+    //      and value category of the other.
+    bool LThrow = isa<CXXThrowExpr>(LHS.get()->IgnoreParenImpCasts());
+    bool RThrow = isa<CXXThrowExpr>(RHS.get()->IgnoreParenImpCasts());
+    if (LThrow != RThrow) {
+      Expr *NonThrow = LThrow ? RHS.get() : LHS.get();
+      VK = NonThrow->getValueKind();
+      // DR (no number yet): the result is a bit-field if the
+      // non-throw-expression operand is a bit-field.
+      OK = NonThrow->getObjectKind();
+      return NonThrow->getType();
     }
-
-    LTy = LHS.get()->getType();
-    RTy = RHS.get()->getType();
-
-    //   ... and one of the following shall hold:
-    //   -- The second or the third operand (but not both) is a throw-
-    //      expression; the result is of the type of the other and is a prvalue.
-    bool LThrow = isa<CXXThrowExpr>(LHS.get()->IgnoreParenCasts());
-    bool RThrow = isa<CXXThrowExpr>(RHS.get()->IgnoreParenCasts());
-    if (LThrow && !RThrow)
-      return RTy;
-    if (RThrow && !LThrow)
-      return LTy;
 
     //   -- Both the second and third operands have type void; the result is of
     //      type void and is a prvalue.

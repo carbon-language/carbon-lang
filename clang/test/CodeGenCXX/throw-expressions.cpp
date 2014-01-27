@@ -67,3 +67,16 @@ int test6(bool x, bool y, int z) {
 //
 // end:
 // CHECK: ret i32
+
+namespace DR1560 {
+  struct A {
+    ~A();
+  };
+  extern bool b;
+  A get();
+  // CHECK-LABEL: @_ZN6DR15601bE
+  const A &r = b ? get() : throw 0;
+  // CHECK-NOT: call {{.*}}@_ZN6DR15601AD1Ev
+  // CHECK: call {{.*}} @__cxa_atexit({{.*}} @_ZN6DR15601AD1Ev {{.*}} @_ZGRN6DR15601rE
+  // CHECK-NOT: call {{.*}}@_ZN6DR15601AD1Ev
+}

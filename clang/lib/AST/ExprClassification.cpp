@@ -541,10 +541,21 @@ static Cl::Kinds ClassifyConditional(ASTContext &Ctx, const Expr *True,
          "This is only relevant for C++.");
 
   // C++ [expr.cond]p2
-  //   If either the second or the third operand has type (cv) void, [...]
-  //   the result [...] is a prvalue.
-  if (True->getType()->isVoidType() || False->getType()->isVoidType())
+  //   If either the second or the third operand has type (cv) void,
+  //   one of the following shall hold:
+  if (True->getType()->isVoidType() || False->getType()->isVoidType()) {
+    // The second or the third operand (but not both) is a (possibly
+    // parenthesized) throw-expression; the result is of the [...] value
+    // category of the other.
+    bool TrueIsThrow = isa<CXXThrowExpr>(True->IgnoreParenImpCasts());
+    bool FalseIsThrow = isa<CXXThrowExpr>(False->IgnoreParenImpCasts());
+    if (const Expr *NonThrow = TrueIsThrow ? (FalseIsThrow ? 0    : False)
+                                           : (FalseIsThrow ? True : 0))
+      return ClassifyInternal(Ctx, NonThrow);
+
+    //   [Otherwise] the result [...] is a prvalue.
     return Cl::CL_PRValue;
+  }
 
   // Note that at this point, we have already performed all conversions
   // according to [expr.cond]p3.
