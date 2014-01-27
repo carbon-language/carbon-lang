@@ -316,6 +316,37 @@ void AMDGPUInstPrinter::printKCache(const MCInst *MI, unsigned OpNo,
   }
 }
 
+void AMDGPUInstPrinter::printSendMsg(const MCInst *MI, unsigned OpNo,
+                                     raw_ostream &O) {
+  unsigned SImm16 = MI->getOperand(OpNo).getImm();
+  unsigned Msg = SImm16 & 0xF;
+  if (Msg == 2 || Msg == 3) {
+    unsigned Op = (SImm16 >> 4) & 0xF;
+    if (Msg == 3)
+      O << "Gs_done(";
+    else
+      O << "Gs(";
+    if (Op == 0) {
+      O << "nop";
+    } else {
+      unsigned Stream = (SImm16 >> 8) & 0x3;
+      if (Op == 1)
+	O << "cut";
+      else if (Op == 2)
+	O << "emit";
+      else if (Op == 3)
+	O << "emit-cut";
+      O << " stream " << Stream;
+    }
+    O << "), [m0] ";
+  } else if (Msg == 1)
+    O << "interrupt ";
+  else if (Msg == 15)
+    O << "system ";
+  else
+    O << "unknown(" << Msg << ") ";
+}
+
 void AMDGPUInstPrinter::printWaitFlag(const MCInst *MI, unsigned OpNo,
                                       raw_ostream &O) {
   // Note: Mask values are taken from SIInsertWaits.cpp and not from ISA docs

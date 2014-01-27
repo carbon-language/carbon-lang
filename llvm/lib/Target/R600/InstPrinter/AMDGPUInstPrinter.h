@@ -53,6 +53,7 @@ private:
   void printRSel(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printCT(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printKCache(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printSendMsg(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printWaitFlag(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 };
 
