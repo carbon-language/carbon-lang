@@ -55,7 +55,7 @@ long double __gcc_qsub(long double x, long double y)
 	h = A + (B - (A + B));
 	t = a + (b - (a + b));
 	
-	if (fabs(A) <= fabs(B))
+	if (local_fabs(A) <= local_fabs(B))
 		w = (a + b) + h;
 	else
 		w = (a + b) + H;
@@ -64,7 +64,7 @@ long double __gcc_qsub(long double x, long double y)
 	Y = (A + B) - W;
 	Y += w;
 	
-	if (fabs(a) <= fabs(b))
+	if (local_fabs(a) <= local_fabs(b))
 		w = t + Y;
 	else
 		w = T + Y;

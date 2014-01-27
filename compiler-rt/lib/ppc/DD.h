@@ -20,7 +20,7 @@ typedef union {
 	(((((xHi)*(yHi) - (xy)) + (xHi)*(yLo)) + (xLo)*(yHi)) + (xLo)*(yLo))
 
 static inline double __attribute__((always_inline))
-fabs(double x)
+local_fabs(double x)
 {
 	doublebits result = { .d = x };
 	result.x &= UINT64_C(0x7fffffffffffffff);
