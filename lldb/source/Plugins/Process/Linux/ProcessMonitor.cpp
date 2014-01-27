@@ -1798,14 +1798,23 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
         int ptrace_err;
         if (!GetSignalInfo(wait_pid, &info, ptrace_err))
         {
-            if (log)
+            // another signal causing a StopAllThreads may have been received
+            // before wait_pid's group-stop was processed, handle it now
+            if (ptrace_err == EINVAL)
             {
-                log->Printf ("ProcessMonitor::%s() GetSignalInfo failed.", __FUNCTION__);
+                assert(WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP);
 
-                // This would be a particularly interesting case
-                if (ptrace_err == EINVAL)
-                    log->Printf ("ProcessMonitor::%s() in group-stop", __FUNCTION__);
+                if (log)
+                  log->Printf ("ProcessMonitor::%s() resuming from group-stop", __FUNCTION__);
+                // inferior process is in 'group-stop', so deliver SIGSTOP signal
+                if (!Resume(wait_pid, SIGSTOP)) {
+                  assert(0 && "SIGSTOP delivery failed while in 'group-stop' state");
+                }
+                continue;
             }
+
+            if (log)
+                log->Printf ("ProcessMonitor::%s() GetSignalInfo failed.", __FUNCTION__);
             return false;
         }
 
