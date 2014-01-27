@@ -37,6 +37,8 @@ public:
   virtual void emitDirectiveOptionPic0() = 0;
   virtual void emitFrame(unsigned StackReg, unsigned StackSize,
                          unsigned ReturnReg) = 0;
+  virtual void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff) = 0;
+  virtual void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff) = 0;
 };
 
 // This part is for ascii assembly output
@@ -63,6 +65,8 @@ public:
   virtual void emitDirectiveOptionPic0();
   virtual void emitFrame(unsigned StackReg, unsigned StackSize,
                          unsigned ReturnReg);
+  virtual void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff);
+  virtual void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff);
 };
 
 // This part is for ELF object output
@@ -94,6 +98,8 @@ public:
   virtual void emitDirectiveOptionPic0();
   virtual void emitFrame(unsigned StackReg, unsigned StackSize,
                          unsigned ReturnReg);
+  virtual void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff);
+  virtual void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff);
 };
 }
 #endif

@@ -172,7 +172,7 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
 // Create a bitmask with all callee saved registers for CPU or Floating Point
 // registers. For CPU registers consider RA, GP and FP for saving if necessary.
-void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
+void MipsAsmPrinter::printSavedRegsBitmask() {
   // CPU and FPU Saved Registers Bitmasks
   unsigned CPUBitmask = 0, FPUBitmask = 0;
   int CPUTopSavedRegOff, FPUTopSavedRegOff;
@@ -220,20 +220,12 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
   // CPU Regs are saved below FP Regs.
   CPUTopSavedRegOff = CPUBitmask ? -CSFPRegsSize - CPURegSize : 0;
 
+  MipsTargetStreamer &TS = getTargetStreamer();
   // Print CPUBitmask
-  O << "\t.mask \t"; printHex32(CPUBitmask, O);
-  O << ',' << CPUTopSavedRegOff << '\n';
+  TS.emitMask(CPUBitmask, CPUTopSavedRegOff);
 
   // Print FPUBitmask
-  O << "\t.fmask\t"; printHex32(FPUBitmask, O);
-  O << "," << FPUTopSavedRegOff << '\n';
-}
-
-// Print a 32 bit hex number with all numbers.
-void MipsAsmPrinter::printHex32(unsigned Value, raw_ostream &O) {
-  O << "0x";
-  for (int i = 7; i >= 0; i--)
-    O.write_hex((Value & (0xF << (i*4))) >> (i*4));
+  TS.emitFMask(FPUBitmask, FPUTopSavedRegOff);
 }
 
 //===----------------------------------------------------------------------===//
@@ -293,13 +285,9 @@ void MipsAsmPrinter::EmitFunctionBodyStart() {
   if (!IsNakedFunction)
     emitFrameDirective();
 
-  if (OutStreamer.hasRawTextSupport()) {
-    SmallString<128> Str;
-    raw_svector_ostream OS(Str);
-    if (!IsNakedFunction)
-      printSavedRegsBitmask(OS);
-    OutStreamer.EmitRawText(OS.str());
-  }
+  if (!IsNakedFunction)
+    printSavedRegsBitmask();
+
   if (!Subtarget->inMips16Mode()) {
     TS.emitDirectiveSetNoReorder();
     TS.emitDirectiveSetNoMacro();

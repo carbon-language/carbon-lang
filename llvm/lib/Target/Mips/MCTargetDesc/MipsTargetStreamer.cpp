@@ -91,7 +91,28 @@ void MipsTargetAsmStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
   OS << "\t.frame\t$"
      << StringRef(MipsInstPrinter::getRegisterName(StackReg)).lower() << ","
      << StackSize << ",$"
-     << StringRef(MipsInstPrinter::getRegisterName(ReturnReg)).lower();
+     << StringRef(MipsInstPrinter::getRegisterName(ReturnReg)).lower() << '\n';
+}
+
+// Print a 32 bit hex number with all numbers.
+static void printHex32(unsigned Value, raw_ostream &OS) {
+  OS << "0x";
+  for (int i = 7; i >= 0; i--)
+    OS.write_hex((Value & (0xF << (i*4))) >> (i*4));
+}
+
+void MipsTargetAsmStreamer::emitMask(unsigned CPUBitmask,
+                                     int CPUTopSavedRegOff) {
+  OS << "\t.mask \t";
+  printHex32(CPUBitmask, OS);
+  OS << ',' << CPUTopSavedRegOff << '\n';
+}
+
+void MipsTargetAsmStreamer::emitFMask(unsigned FPUBitmask,
+                                      int FPUTopSavedRegOff) {
+  OS << "\t.fmask\t";
+  printHex32(FPUBitmask, OS);
+  OS << "," << FPUTopSavedRegOff << '\n';
 }
 
 // This part is for ELF object output.
@@ -220,5 +241,15 @@ void MipsTargetELFStreamer::emitDirectiveOptionPic0() {
 
 void MipsTargetELFStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
                                       unsigned ReturnReg) {
+  // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitMask(unsigned CPUBitmask,
+                                     int CPUTopSavedRegOff) {
+  // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitFMask(unsigned FPUBitmask,
+                                      int FPUTopSavedRegOff) {
   // FIXME: implement.
 }

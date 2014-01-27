@@ -78,8 +78,7 @@ public:
   }
 
   void EmitInstruction(const MachineInstr *MI);
-  void printSavedRegsBitmask(raw_ostream &O);
-  void printHex32(unsigned int Value, raw_ostream &O);
+  void printSavedRegsBitmask();
   void emitFrameDirective();
   const char *getCurrentABIString() const;
   virtual void EmitFunctionEntryLabel();
