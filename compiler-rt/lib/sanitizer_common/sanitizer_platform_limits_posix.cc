@@ -33,6 +33,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <stddef.h>
+#include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -194,6 +195,8 @@ namespace __sanitizer {
   int shmctl_shm_info = (int)SHM_INFO;
   int shmctl_shm_stat = (int)SHM_INFO;
 #endif
+
+  int map_fixed = MAP_FIXED;
 
   int af_inet = (int)AF_INET;
   int af_inet6 = (int)AF_INET6;

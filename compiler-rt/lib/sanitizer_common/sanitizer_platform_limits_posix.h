@@ -501,6 +501,8 @@ namespace __sanitizer {
   extern int shmctl_shm_stat;
 #endif
 
+  extern int map_fixed;
+
   // ioctl arguments
   struct __sanitizer_ifconf {
     int ifc_len;

@@ -873,6 +873,11 @@ void __msan_allocated_memory(const void* data, uptr size) {
 INTERCEPTOR(void *, mmap, void *addr, SIZE_T length, int prot, int flags,
             int fd, OFF_T offset) {
   ENSURE_MSAN_INITED();
+  if (addr && !MEM_IS_APP(addr)) {
+    CHECK(!(flags & map_fixed) &&
+          "mmap(..., MAP_FIXED) outside of application memory range.");
+    addr = 0;
+  }
   void *res = REAL(mmap)(addr, length, prot, flags, fd, offset);
   if (res != (void*)-1)
     __msan_unpoison(res, RoundUpTo(length, GetPageSize()));
