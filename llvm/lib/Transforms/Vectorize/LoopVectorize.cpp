@@ -56,6 +56,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -78,6 +79,7 @@
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/PatternMatch.h"
@@ -980,9 +982,12 @@ struct LoopVectorize : public FunctionPass {
   LoopInfo *LI;
   TargetTransformInfo *TTI;
   DominatorTree *DT;
+  BlockFrequencyInfo *BFI;
   TargetLibraryInfo *TLI;
   bool DisableUnrolling;
   bool AlwaysVectorize;
+
+  BlockFrequency ColdEntryFreq;
 
   virtual bool runOnFunction(Function &F) {
     SE = &getAnalysis<ScalarEvolution>();
@@ -990,7 +995,13 @@ struct LoopVectorize : public FunctionPass {
     LI = &getAnalysis<LoopInfo>();
     TTI = &getAnalysis<TargetTransformInfo>();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    BFI = &getAnalysis<BlockFrequencyInfo>();
     TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
+
+    // Compute some weights outside of the loop over the loops. Compute this
+    // using a BranchProbability to re-use its scaling math.
+    const BranchProbability ColdProb(1, 5); // 20%
+    ColdEntryFreq = BlockFrequency(BFI->getEntryFreq()) * ColdProb;
 
     // If the target claims to have no vector registers don't attempt
     // vectorization.
@@ -1064,6 +1075,13 @@ struct LoopVectorize : public FunctionPass {
     bool OptForSize =
         Hints.Force != 1 && F->hasFnAttribute(Attribute::OptimizeForSize);
 
+    // Compute the weighted frequency of this loop being executed and see if it
+    // is less than 20% of the function entry baseline frequency. Note that we
+    // always have a canonical loop here because we think we *can* vectoriez.
+    BlockFrequency LoopEntryFreq = BFI->getBlockFreq(L->getLoopPreheader());
+    if (Hints.Force != 1 && LoopEntryFreq < ColdEntryFreq)
+      OptForSize = true;
+
     // Check the function attributes to see if implicit floats are allowed.a
     // FIXME: This check doesn't seem possibly correct -- what if the loop is
     // an integer loop and the vector instructions selected are purely integer
@@ -1109,6 +1127,7 @@ struct LoopVectorize : public FunctionPass {
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequiredID(LoopSimplifyID);
     AU.addRequiredID(LCSSAID);
+    AU.addRequired<BlockFrequencyInfo>();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<LoopInfo>();
     AU.addRequired<ScalarEvolution>();
@@ -5469,6 +5488,7 @@ char LoopVectorize::ID = 0;
 static const char lv_name[] = "Loop Vectorization";
 INITIALIZE_PASS_BEGIN(LoopVectorize, LV_NAME, lv_name, false, false)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(BlockFrequencyInfo)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
