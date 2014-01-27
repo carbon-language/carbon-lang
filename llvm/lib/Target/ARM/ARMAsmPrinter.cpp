@@ -751,28 +751,6 @@ void ARMAsmPrinter::emitAttributes() {
   ATS.finishAttributeSection();
 }
 
-void ARMAsmPrinter::emitARMAttributeSection() {
-  // <format-version>
-  // [ <section-length> "vendor-name"
-  // [ <file-tag> <size> <attribute>*
-  //   | <section-tag> <size> <section-number>* 0 <attribute>*
-  //   | <symbol-tag> <size> <symbol-number>* 0 <attribute>*
-  //   ]+
-  // ]*
-
-  if (OutStreamer.hasRawTextSupport())
-    return;
-
-  const ARMElfTargetObjectFile &TLOFELF =
-    static_cast<const ARMElfTargetObjectFile &>
-    (getObjFileLowering());
-
-  OutStreamer.SwitchSection(TLOFELF.getAttributesSection());
-
-  // Format version
-  OutStreamer.EmitIntValue(0x41, 1);
-}
-
 //===----------------------------------------------------------------------===//
 
 static MCSymbol *getPICLabel(const char *Prefix, unsigned FunctionNumber,

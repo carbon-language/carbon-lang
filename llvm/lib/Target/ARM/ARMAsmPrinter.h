@@ -87,9 +87,6 @@ private:
   // Helpers for EmitStartOfAsmFile() and EmitEndOfAsmFile()
   void emitAttributes();
 
-  // Helper for ELF .o only
-  void emitARMAttributeSection();
-
   // Generic helper used to emit e.g. ARMv5 mul pseudos
   void EmitPatchedInstruction(const MachineInstr *MI, unsigned TargetOpc);
 
