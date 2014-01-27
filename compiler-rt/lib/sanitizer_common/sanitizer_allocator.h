@@ -469,7 +469,7 @@ class SizeClassAllocator64 {
   // or with one element if its size is greater.
   static const uptr kPopulateSize = 1 << 14;
   // Call mmap for user memory with at least this size.
-  static const uptr kUserMapSize = 1 << 18;
+  static const uptr kUserMapSize = 1 << 16;
   // Call mmap for metadata memory with at least this size.
   static const uptr kMetaMapSize = 1 << 16;
 
