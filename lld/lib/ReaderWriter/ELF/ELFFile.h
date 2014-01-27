@@ -39,6 +39,7 @@
 #include <unordered_map>
 
 namespace lld {
+
 namespace elf {
 /// \brief Read a binary, find out based on the symbol table contents what kind
 /// of symbol it is and create corresponding atoms for it

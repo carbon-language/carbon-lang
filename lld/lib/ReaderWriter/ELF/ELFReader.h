@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/Reader.cpp ------------------------------------===//
+//===- lib/ReaderWriter/ELF/ELFReader.h -----------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -6,23 +6,18 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-///
-/// \file
-/// \brief Defines the ELF Reader and all helper sub classes to consume an ELF
-/// file and produces atoms out of it.
-///
-//===----------------------------------------------------------------------===//
 
-#include "ELFReader.h"
+#ifndef LLD_READER_WRITER_ELF_READER_H
+#define LLD_READER_WRITER_ELF_READER_H
 
-#include <map>
-#include <vector>
+#include "CreateELF.h"
+#include "DynamicFile.h"
+#include "ELFFile.h"
 
-using llvm::support::endianness;
-using namespace llvm::object;
+#include "lld/ReaderWriter/Reader.h"
 
 namespace lld {
-namespace {
+namespace elf {
 
 struct DynamicFileCreateELFTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
@@ -58,12 +53,11 @@ public:
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const {
-    error_code ec;
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<ELFFileCreateELFTraits>(getElfArchType(&*mb),
-                                               maxAlignment, std::move(mb),
-                                               _atomizeStrings, _handler);
+    auto f = createELF<ELFFileCreateELFTraits>(
+        llvm::object::getElfArchType(&*mb), maxAlignment, std::move(mb),
+        _atomizeStrings, _handler);
     if (error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
@@ -90,7 +84,8 @@ public:
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
     auto f = createELF<DynamicFileCreateELFTraits>(
-        getElfArchType(&*mb), maxAlignment, std::move(mb), _useUndefines);
+        llvm::object::getElfArchType(&*mb), maxAlignment, std::move(mb),
+        _useUndefines);
     if (error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
@@ -101,25 +96,7 @@ private:
   bool _useUndefines;
 };
 
-} // anonymous
+} // namespace elf
+} // namespace lld
 
-// This dynamic registration of a handler causes support for all ELF
-// architectures to be pulled into the linker.  If we want to support making a
-// linker that only supports one ELF architecture, we'd need to change this
-// to have a different registration method for each architecture.
-void Registry::addSupportELFObjects(bool atomizeStrings,
-                                    TargetHandlerBase *handler) {
-
-  // Tell registry about the ELF object file parser.
-  add(std::unique_ptr<Reader>(
-      new elf::ELFObjectReader(atomizeStrings, handler)));
-
-  // Tell registry about the relocation name to number mapping for this arch.
-  handler->registerRelocationNames(*this);
-}
-
-void Registry::addSupportELFDynamicSharedObjects(bool useShlibUndefines) {
-  add(std::unique_ptr<Reader>(new elf::ELFDSOReader(useShlibUndefines)));
-}
-
-} // end namespace lld
+#endif // LLD_READER_WRITER_ELF_READER_H
