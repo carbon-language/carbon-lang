@@ -42,6 +42,8 @@ public:
   virtual std::unique_ptr<Reader> getObjReader(bool) = 0;
 
   virtual std::unique_ptr<Reader> getDSOReader(bool) = 0;
+
+  virtual std::unique_ptr<Writer> getWriter() = 0;
 };
 
 class ELFLinkingContext : public LinkingContext {

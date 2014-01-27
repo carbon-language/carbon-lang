@@ -13,6 +13,8 @@
 #include "DefaultLayout.h"
 #include "TargetHandler.h"
 #include "ELFReader.h"
+#include "DynamicLibraryWriter.h"
+#include "ExecutableWriter.h"
 
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
@@ -78,10 +80,64 @@ public:
     return std::unique_ptr<Reader>(new ELFDSOReader(useShlibUndefines));
   }
 
+  virtual std::unique_ptr<Writer> getWriter();
+
 protected:
   llvm::BumpPtrAllocator _alloc;
 };
+
+template <class ELFT>
+std::unique_ptr<Writer> DefaultTargetHandler<ELFT>::getWriter() {
+  switch (this->_context.getOutputELFType()) {
+  case llvm::ELF::ET_EXEC:
+    if (this->_context.is64Bits()) {
+      if (this->_context.isLittleEndian())
+        return std::unique_ptr<Writer>(
+            new elf::ExecutableWriter<ELFType<support::little, 8, true>>(
+                this->_context));
+      else
+        return std::unique_ptr<Writer>(
+            new elf::ExecutableWriter<ELFType<support::big, 8, true>>(
+                this->_context));
+    } else {
+      if (this->_context.isLittleEndian())
+        return std::unique_ptr<Writer>(
+            new elf::ExecutableWriter<ELFType<support::little, 4, false>>(
+                this->_context));
+      else
+        return std::unique_ptr<Writer>(
+            new elf::ExecutableWriter<ELFType<support::big, 4, false>>(
+                this->_context));
+    }
+    break;
+  case llvm::ELF::ET_DYN:
+    if (this->_context.is64Bits()) {
+      if (this->_context.isLittleEndian())
+        return std::unique_ptr<Writer>(
+            new elf::DynamicLibraryWriter<ELFType<support::little, 8, true>>(
+                this->_context));
+      else
+        return std::unique_ptr<Writer>(
+            new elf::DynamicLibraryWriter<ELFType<support::big, 8, true>>(
+                this->_context));
+    } else {
+      if (this->_context.isLittleEndian())
+        return std::unique_ptr<Writer>(
+            new elf::DynamicLibraryWriter<ELFType<support::little, 4, false>>(
+                this->_context));
+      else
+        return std::unique_ptr<Writer>(
+            new elf::DynamicLibraryWriter<ELFType<support::big, 4, false>>(
+                this->_context));
+    }
+    break;
+  case llvm::ELF::ET_REL:
+    llvm_unreachable("TODO: support -r mode");
+  default:
+    llvm_unreachable("unsupported output type");
+  }
+}
+
 } // end namespace elf
 } // end namespace lld
-
 #endif

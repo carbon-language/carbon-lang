@@ -53,8 +53,17 @@ protected:
   // Build the output file
   virtual error_code buildOutput(const File &file);
 
+  // Setup the ELF header.
+  virtual error_code setELFHeader();
+
   // Write the file to the path specified
   virtual error_code writeFile(const File &File, StringRef path);
+
+  // Write to the output file.
+  virtual error_code writeOutput(const File &file, StringRef path);
+
+  // Get the size of the output file that the linker would emit.
+  virtual uint64_t outputFileSize() const;
 
   // Build the atom to address map, this has to be called
   // before applying relocations
@@ -365,22 +374,7 @@ error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
   return error_code::success();
 }
 
-template <class ELFT>
-error_code OutputELFWriter<ELFT>::writeFile(const File &file, StringRef path) {
-  buildOutput(file);
-
-  uint64_t totalSize = _shdrtab->fileOffset() + _shdrtab->fileSize();
-
-  OwningPtr<FileOutputBuffer> buffer;
-  ScopedTask createOutputTask(getDefaultDomain(), "ELF Writer Create Output");
-  error_code ec = FileOutputBuffer::create(path,
-                                           totalSize, buffer,
-                                           FileOutputBuffer::F_executable);
-  createOutputTask.end();
-
-  if (ec)
-    return ec;
-
+template <class ELFT> error_code OutputELFWriter<ELFT>::setELFHeader() {
   _elfHeader->e_ident(ELF::EI_CLASS,
                       _context.is64Bits() ? ELF::ELFCLASS64 : ELF::ELFCLASS32);
   _elfHeader->e_ident(ELF::EI_DATA, _context.isLittleEndian()
@@ -388,15 +382,9 @@ error_code OutputELFWriter<ELFT>::writeFile(const File &file, StringRef path) {
                                         : ELF::ELFDATA2MSB);
   _elfHeader->e_type(_context.getOutputELFType());
   _elfHeader->e_machine(_context.getOutputMachine());
-
-  if (!_targetHandler.doesOverrideELFHeader()) {
-    _elfHeader->e_ident(ELF::EI_VERSION, 1);
-    _elfHeader->e_ident(ELF::EI_OSABI, 0);
-    _elfHeader->e_version(1);
-  } else {
-    // override the contents of the ELF Header
-    _targetHandler.setELFHeader(_elfHeader.get());
-  }
+  _elfHeader->e_ident(ELF::EI_VERSION, 1);
+  _elfHeader->e_ident(ELF::EI_OSABI, 0);
+  _elfHeader->e_version(1);
   _elfHeader->e_phoff(_programHeader->fileOffset());
   _elfHeader->e_shoff(_shdrtab->fileOffset());
   _elfHeader->e_phentsize(_programHeader->entsize());
@@ -408,19 +396,52 @@ error_code OutputELFWriter<ELFT>::writeFile(const File &file, StringRef path) {
   _layout->findAtomAddrByName(_context.entrySymbolName(), virtualAddr);
   _elfHeader->e_entry(virtualAddr);
 
+  return error_code::success();
+}
+
+template <class ELFT> uint64_t OutputELFWriter<ELFT>::outputFileSize() const {
+  return _shdrtab->fileOffset() + _shdrtab->fileSize();
+}
+
+template <class ELFT>
+error_code OutputELFWriter<ELFT>::writeOutput(const File &file,
+                                              StringRef path) {
+  OwningPtr<FileOutputBuffer> buffer;
+  ScopedTask createOutputTask(getDefaultDomain(), "ELF Writer Create Output");
+  error_code ec = FileOutputBuffer::create(path, outputFileSize(), buffer,
+                                           FileOutputBuffer::F_executable);
+  createOutputTask.end();
+
+  if (ec)
+    return ec;
+
+  ScopedTask writeTask(getDefaultDomain(), "ELF Writer write to memory");
+
   // HACK: We have to write out the header and program header here even though
   // they are a member of a segment because only sections are written in the
   // following loop.
-  ScopedTask writeTask(getDefaultDomain(), "ELF Writer write to memory");
   _elfHeader->write(this, *buffer);
   _programHeader->write(this, *buffer);
 
   for (auto section : _layout->sections())
-      section->write(this, *buffer);
+    section->write(this, *buffer);
   writeTask.end();
 
   ScopedTask commitTask(getDefaultDomain(), "ELF Writer commit to disk");
   return buffer->commit();
+}
+
+template <class ELFT>
+error_code OutputELFWriter<ELFT>::writeFile(const File &file, StringRef path) {
+  error_code ec = buildOutput(file);
+  if (ec)
+    return ec;
+
+  ec = setELFHeader();
+  if (ec)
+    return ec;
+
+  return writeOutput(file, path);
 }
 } // namespace elf
 } // namespace lld
