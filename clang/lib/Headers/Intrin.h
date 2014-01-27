@@ -307,6 +307,7 @@ void __addgsbyte(unsigned long, unsigned char);
 void __addgsdword(unsigned long, unsigned long);
 void __addgsqword(unsigned long, unsigned __int64);
 void __addgsword(unsigned long, unsigned short);
+static __inline__
 void __faststorefence(void);
 void __incgsbyte(unsigned long);
 void __incgsdword(unsigned long);
@@ -394,6 +395,7 @@ __int64 _InterlockedCompareExchange64_HLERelease(__int64 volatile *, __int64,
                                                  __int64);
 __int64 _InterlockedCompareExchange64_np(__int64 volatile *_Destination,
                                          __int64 _Exchange, __int64 _Comparand);
+static __inline__
 void *_InterlockedCompareExchangePointer(void *volatile *_Destination,
                                          void *_Exchange, void *_Comparand);
 void *_InterlockedCompareExchangePointer_np(void *volatile *_Destination,
@@ -791,6 +793,14 @@ _InterlockedCompareExchange(long volatile *_Destination,
   return _Comparand;
 }
 #ifdef __x86_64__
+static __inline__ void *__attribute__((__always_inline__, __nodebug__))
+_InterlockedCompareExchangePointer(void *volatile *_Destination,
+                                   void *_Exchange, void *_Comparand) {
+  __atomic_compare_exchange(_Destination, &_Comparand, &_Exchange, 0, 0, 0);
+  return _Comparand;
+}
+#endif
+#ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedCompareExchange64(__int64 volatile *_Destination,
                               __int64 _Exchange, __int64 _Comparand) {
@@ -816,6 +826,12 @@ __attribute__((deprecated("use other intrinsics or C++11 atomics instead")))
 _WriteBarrier(void) {
   __asm__ volatile ("" : : : "memory");
 }
+#ifdef __x86_64__
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__faststorefence(void) {
+  __asm__ volatile("lock orq $0, (%%rsp)" : : : "memory");
+}
+#endif
 /*----------------------------------------------------------------------------*\
 |* readfs 
 |* (Pointers in address space #257 are relative to the FS segment register.)
