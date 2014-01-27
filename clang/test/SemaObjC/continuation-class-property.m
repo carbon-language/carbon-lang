@@ -61,3 +61,15 @@ struct S1;
 @property (nonatomic, readwrite, assign) struct S1 *httpRequest3;
 @property (nonatomic, readwrite, assign) struct S2 *httpRequest4;
 @end
+
+// rdar://15859862
+@protocol ADCameraJSO_Bindings
+@property (nonatomic, readonly) NSString *currentPictureURI;
+@end
+
+@interface ADCameraJSO
+@end
+
+@interface ADCameraJSO()  <ADCameraJSO_Bindings>
+@property (nonatomic, copy) NSString *currentPictureURI;
+@end

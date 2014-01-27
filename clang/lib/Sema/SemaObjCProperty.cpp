@@ -463,6 +463,18 @@ Sema::HandlePropertyInClassExtension(Scope *S,
     DeclContext *DC = cast<DeclContext>(CCPrimary);
     if (!ObjCPropertyDecl::findPropertyDecl(DC,
                                  PIDecl->getDeclName().getAsIdentifierInfo())) {
+      // In mrr mode, 'readwrite' property must have an explicit
+      // memory attribute. If none specified, select the default (assign).
+      if (!getLangOpts().ObjCAutoRefCount) {
+        if (!(PIkind & (ObjCDeclSpec::DQ_PR_assign |
+                        ObjCDeclSpec::DQ_PR_retain |
+                        ObjCDeclSpec::DQ_PR_strong |
+                        ObjCDeclSpec::DQ_PR_copy |
+                        ObjCDeclSpec::DQ_PR_unsafe_unretained |
+                        ObjCDeclSpec::DQ_PR_weak)))
+          PIkind |= ObjCPropertyDecl::OBJC_PR_assign;
+      }
+      
       // Protocol is not in the primary class. Must build one for it.
       ObjCDeclSpec ProtocolPropertyODS;
       // FIXME. Assuming that ObjCDeclSpec::ObjCPropertyAttributeKind
