@@ -58,7 +58,7 @@ void llvm::report_fatal_error(const std::string &Reason, bool GenCrashDiag) {
   report_fatal_error(Twine(Reason), GenCrashDiag);
 }
 
-void llvm::report_fatal_error(StringRef Reason, bool GenCrashDiag) {
+void llvm::report_fatal_error(const StringRef &Reason, bool GenCrashDiag) {
   report_fatal_error(Twine(Reason), GenCrashDiag);
 }
 

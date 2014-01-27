@@ -10,6 +10,8 @@
 #ifndef LLVM_ADT_STRINGREF_H
 #define LLVM_ADT_STRINGREF_H
 
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/type_traits.h"
 #include <algorithm>
 #include <cassert>
@@ -70,7 +72,7 @@ namespace llvm {
     /// @{
 
     /// Construct an empty string ref.
-    /*implicit*/ StringRef() : Data(0), Length(0) {}
+    /*implicit*/ LLVM_CONSTEXPR StringRef() : Data(0), Length(0) {}
 
     /// Construct a string ref from a cstring.
     /*implicit*/ StringRef(const char *Str)
@@ -80,11 +82,8 @@ namespace llvm {
       }
 
     /// Construct a string ref from a pointer and length.
-    /*implicit*/ StringRef(const char *data, size_t length)
-      : Data(data), Length(length) {
-        assert((data || length == 0) &&
-        "StringRef cannot be built from a NULL argument with non-null length");
-      }
+      /*implicit*/ LLVM_CONSTEXPR StringRef(const char *data, size_t length)
+          : Data(data), Length((llvm_expect(data || length == 0), length)) {}
 
     /// Construct a string ref from an std::string.
     /*implicit*/ StringRef(const std::string &Str)
@@ -104,24 +103,20 @@ namespace llvm {
 
     /// data - Get a pointer to the start of the string (which may not be null
     /// terminated).
-    const char *data() const { return Data; }
+    LLVM_CONSTEXPR const char *data() const { return Data; }
 
     /// empty - Check if the string is empty.
-    bool empty() const { return Length == 0; }
+    LLVM_CONSTEXPR bool empty() const { return Length == 0; }
 
     /// size - Get the string size.
-    size_t size() const { return Length; }
+    LLVM_CONSTEXPR size_t size() const { return Length; }
 
     /// front - Get the first character in the string.
-    char front() const {
-      assert(!empty());
-      return Data[0];
-    }
+    LLVM_CONSTEXPR char front() const { return llvm_expect(!empty()), Data[0]; }
 
     /// back - Get the last character in the string.
-    char back() const {
-      assert(!empty());
-      return Data[Length-1];
+    LLVM_CONSTEXPR char back() const {
+      return llvm_expect(!empty()), Data[Length - 1];
     }
 
     /// equals - Check for string equality, this is more efficient than
@@ -187,9 +182,8 @@ namespace llvm {
     /// @name Operator Overloads
     /// @{
 
-    char operator[](size_t Index) const {
-      assert(Index < Length && "Invalid index!");
-      return Data[Index];
+    LLVM_CONSTEXPR char operator[](size_t Index) const {
+      return llvm_expect(Index < Length), Data[Index];
     }
 
     /// @}
@@ -546,6 +540,20 @@ namespace llvm {
   }
 
   /// @}
+
+  /// ConstStringRef - A \c StringRef carrying the additional stipulation that
+  /// the referenced string is a compile-time constant.
+  ///
+  /// Use this to specify function parameters that require fixed inputs such
+  /// as debug and diagnostic messages or format strings.
+  class ConstStringRef : public StringRef {
+  public:
+    /*implicit*/ LLVM_CONSTEXPR ConstStringRef() : StringRef() {}
+
+    template <size_t N>
+    /*implicit*/ LLVM_CONSTEXPR ConstStringRef(const char (&data)[N])
+        : StringRef(data, (llvm_expect(N > 0 && data[N - 1] == '\0'), N - 1)) {}
+  };
 
   /// \brief Compute a hash_code for a StringRef.
   hash_code hash_value(StringRef S);

@@ -531,4 +531,22 @@ TEST(StringRefTest, joinStrings) {
   EXPECT_TRUE(v2_join3);
 }
 
+static void fn_stringref(StringRef str) {
+  EXPECT_TRUE(str == "hello");
+}
+static void fn_conststringref(ConstStringRef str) {
+  fn_stringref(str);
+}
+
+TEST(StringRefTest, constStringRef) {
+  LLVM_CONSTEXPR ConstStringRef csr("hello");
+#if __has_feature(cxx_constexpr) || defined(__GXX_EXPERIMENTAL_CXX0X__)
+  LLVM_STATIC_ASSERT(csr[0] != csr[1], "");
+  LLVM_STATIC_ASSERT(csr[2] == csr[3], "");
+  LLVM_STATIC_ASSERT(csr.size() == 5, "");
+#endif
+  llvm_expect(csr[2] == csr[3]);
+  fn_conststringref(csr);
+}
+
 } // end anonymous namespace

@@ -15,11 +15,11 @@
 #ifndef LLVM_SUPPORT_ERRORHANDLING_H
 #define LLVM_SUPPORT_ERRORHANDLING_H
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
 #include <string>
 
 namespace llvm {
+  class StringRef;
   class Twine;
 
   /// An error handler callback.
@@ -78,7 +78,7 @@ namespace llvm {
                                                   bool gen_crash_diag = true);
   LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const std::string &reason,
                                                   bool gen_crash_diag = true);
-  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(StringRef reason,
+  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const StringRef &reason,
                                                   bool gen_crash_diag = true);
   LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const Twine &reason,
                                                   bool gen_crash_diag = true);
@@ -107,5 +107,15 @@ namespace llvm {
 #else
 #define llvm_unreachable(msg) ::llvm::llvm_unreachable_internal()
 #endif
+
+/// An assert macro that's usable in constexprs and that becomes an optimizer
+/// hint in NDEBUG builds.
+///
+/// Unlike \c assert() the \param test expression may be evaluated in optimized
+/// builds and so should be simple, accurate and never have side effects.
+#define llvm_expect(test) (void)(!!(test) ? 0 : (llvm_unreachable(#test), 0))
+
+// TODO: Update other headers to explicitly include StringRef.h and drop this.
+#include "llvm/ADT/StringRef.h"
 
 #endif
