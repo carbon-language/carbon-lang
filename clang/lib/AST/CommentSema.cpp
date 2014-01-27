@@ -68,8 +68,12 @@ void Sema::actOnBlockCommandFinish(BlockCommandComment *Command,
   Command->setParagraph(Paragraph);
   checkBlockCommandEmptyParagraph(Command);
   checkBlockCommandDuplicate(Command);
-  checkReturnsCommand(Command);
-  checkDeprecatedCommand(Command);
+  if (ThisDeclInfo) {
+    // These checks only make sense if the comment is attached to a
+    // declaration.
+    checkReturnsCommand(Command);
+    checkDeprecatedCommand(Command);
+  }
 }
 
 ParamCommandComment *Sema::actOnParamCommandStart(
@@ -558,6 +562,9 @@ void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
 void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
   if (!Traits.getCommandInfo(Command->getCommandID())->IsReturnsCommand)
     return;
+
+  assert(ThisDeclInfo && "should not call this check on a bare comment");
+
   if (isFunctionDecl()) {
     if (ThisDeclInfo->ReturnType->isVoidType()) {
       unsigned DiagKind;
@@ -635,6 +642,8 @@ void Sema::checkBlockCommandDuplicate(const BlockCommandComment *Command) {
 void Sema::checkDeprecatedCommand(const BlockCommandComment *Command) {
   if (!Traits.getCommandInfo(Command->getCommandID())->IsDeprecatedCommand)
     return;
+
+  assert(ThisDeclInfo && "should not call this check on a bare comment");
 
   const Decl *D = ThisDeclInfo->CommentDecl;
   if (!D)

@@ -1420,6 +1420,26 @@ TEST_F(CommentParserTest, VerbatimLine2) {
   }
 }
 
+TEST_F(CommentParserTest, Deprecated) {
+  const char *Sources[] = {
+    "/** @deprecated*/",
+    "/// @deprecated\n"
+  };
+
+  for (size_t i = 0, e = array_lengthof(Sources); i != e; i++) {
+    FullComment *FC = parseString(Sources[i]);
+    ASSERT_TRUE(HasChildCount(FC, 2));
+
+    ASSERT_TRUE(HasParagraphCommentAt(FC, 0, " "));
+    {
+      BlockCommandComment *BCC;
+      ParagraphComment *PC;
+      ASSERT_TRUE(HasBlockCommandAt(FC, Traits, 1, BCC, "deprecated", PC));
+      ASSERT_TRUE(HasChildCount(PC, 0));
+    }
+  }
+}
+
 } // unnamed namespace
 
 } // end namespace comments
