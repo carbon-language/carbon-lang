@@ -32,8 +32,6 @@
 /* First include the standard intrinsics. */
 #include <x86intrin.h>
 
-#include <setjmp.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -279,7 +277,10 @@ unsigned __int64 __cdecl _rotr64(unsigned __int64 _Value, int _Shift);
 static __inline__
 unsigned char _rotr8(unsigned char _Value, unsigned char _Shift);
 int _sarx_i32(int, unsigned int);
-int __cdecl _setjmp(jmp_buf);
+
+/* FIXME: Need definition for jmp_buf.
+   int __cdecl _setjmp(jmp_buf); */
+
 unsigned int _shlx_u32(unsigned int, unsigned int);
 unsigned int _shrx_u32(unsigned int, unsigned int);
 void _Store_HLERelease(long volatile *, long);
@@ -431,7 +432,8 @@ unsigned int __cdecl _readgsbase_u32(void);
 unsigned __int64 __cdecl _readgsbase_u64(void);
 unsigned __int64 _rorx_u64(unsigned __int64, const unsigned int);
 __int64 _sarx_i64(__int64, unsigned int);
-int __cdecl _setjmpex(jmp_buf);
+/* FIXME: Need definition for jmp_buf.
+  int __cdecl _setjmpex(jmp_buf); */
 unsigned __int64 _shlx_u64(unsigned __int64, unsigned int);
 unsigned __int64 shrx_u64(unsigned __int64, unsigned int);
 unsigned __int64 _tzcnt_u64(unsigned __int64);
