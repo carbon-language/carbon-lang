@@ -873,6 +873,8 @@ def fno_data_sections : Flag <["-"], "fno-data-sections">, Group<f_Group>,
   Flags<[CC1Option]>;
 def fdebug_types_section: Flag <["-"], "fdebug-types-section">, Group<f_Group>,
   Flags<[CC1Option]>, HelpText<"Place debug types in their own section (ELF Only)">;
+def fno_debug_types_section: Flag<["-"], "fno-debug-types-section">, Group<f_Group>,
+  Flags<[CC1Option]>;
 def g_Flag : Flag<["-"], "g">, Group<g_Group>,
   HelpText<"Generate source level debug information">, Flags<[CC1Option]>;
 def gline_tables_only : Flag<["-"], "gline-tables-only">, Group<g_Group>,

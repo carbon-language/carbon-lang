@@ -53,6 +53,10 @@
 // RUN: %clang -### -fdebug-types-section %s 2>&1 \
 // RUN:        | FileCheck -check-prefix=FDTS %s
 //
+// RUN: %clang -### -fdebug-types-section -fno-debug-types-section %s 2>&1 \
+// RUN:        | FileCheck -check-prefix=NOFDTS %s
+//
+//
 // G: "-cc1"
 // G: "-g"
 //
@@ -94,3 +98,5 @@
 // GOPT: -generate-gnu-dwarf-pub-sections
 //
 // FDTS: "-backend-option" "-generate-type-units"
+//
+// NOFDTS-NOT: "-backend-option" "-generate-type-units"
