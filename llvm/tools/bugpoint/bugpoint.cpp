@@ -72,15 +72,15 @@ StandardLinkOpts("std-link-opts",
 
 static cl::opt<bool>
 OptLevelO1("O1",
-           cl::desc("Optimization level 1. Similar to llvm-gcc -O1"));
+           cl::desc("Optimization level 1. Identical with 'opt -O1'"));
 
 static cl::opt<bool>
 OptLevelO2("O2",
-           cl::desc("Optimization level 2. Similar to llvm-gcc -O2"));
+           cl::desc("Optimization level 2. Identical with 'opt -O2'"));
 
 static cl::opt<bool>
 OptLevelO3("O3",
-           cl::desc("Optimization level 3. Similar to llvm-gcc -O3"));
+           cl::desc("Optimization level 3. Identical with 'opt -O3'"));
 
 static cl::opt<std::string>
 OverrideTriple("mtriple", cl::desc("Override target triple for module"));
