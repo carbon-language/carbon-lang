@@ -4154,70 +4154,21 @@ AArch64TargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
   return false;
 }
 
-// Check whether a shuffle_vector could be presented as concat_vector.
-bool AArch64TargetLowering::isConcatVector(SDValue Op,SelectionDAG &DAG,
-                                           SDValue V0, SDValue V1,
-                                           const int* Mask,
-                                           SDValue &Res) const {
-  SDLoc DL(Op);
-  EVT VT = Op.getValueType();
-  unsigned NumElts = VT.getVectorNumElements();
-  unsigned V0NumElts = V0.getValueType().getVectorNumElements();
-  bool isContactVector = true;
-  bool splitV0 = false;
-  int offset = 0;
-  for (int I = 0, E = NumElts; I != E; I++){
-    if (Mask[I] != I + offset) {
-      if(I && !splitV0 && Mask[I] == I + (int)V0NumElts / 2) {
-        splitV0 = true;
-        offset = V0NumElts / 2;
-      } else {
-        isContactVector = false;
-        break;
-      }
-    }
-  }
-  if (isContactVector) {
-    EVT CastVT = EVT::getVectorVT(*DAG.getContext(),
-                                  VT.getVectorElementType(), NumElts / 2);
-    if(CastVT.getSizeInBits() < 64)
-      return false;
-
-    if (splitV0) {
-      assert(V0NumElts >= NumElts / 2 &&
-             "invalid operand for extract_subvector!");
-      V0 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, CastVT, V0,
-                       DAG.getConstant(0, MVT::i64));
-    }
-    if (NumElts != V1.getValueType().getVectorNumElements() * 2) {
-      assert(V1.getValueType().getVectorNumElements() >= NumElts / 2 &&
-             "invalid operand for extract_subvector!");
-      V1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, CastVT, V1,
-                       DAG.getConstant(0, MVT::i64));
-    }
-    Res = DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, V0, V1);
-    return true;
-  }
-  return false;
-}
-
-// Check whether a Build Vector could be presented as Shuffle Vector.
-// This Shuffle Vector maybe not legalized, so the length of its operand and
-// the length of result may not equal.
+// Check whether a Build Vector could be presented as Shuffle Vector. If yes,
+// try to call LowerVECTOR_SHUFFLE to lower it.
 bool AArch64TargetLowering::isKnownShuffleVector(SDValue Op, SelectionDAG &DAG,
-                                                 SDValue &V0, SDValue &V1,
-                                                 int *Mask) const {
+                                                 SDValue &Res) const {
   SDLoc DL(Op);
   EVT VT = Op.getValueType();
   unsigned NumElts = VT.getVectorNumElements();
   unsigned V0NumElts = 0;
+  int Mask[16];
+  SDValue V0, V1;
 
   // Check if all elements are extracted from less than 3 vectors.
   for (unsigned i = 0; i < NumElts; ++i) {
     SDValue Elt = Op.getOperand(i);
-    if (Elt.getOpcode() != ISD::EXTRACT_VECTOR_ELT ||
-        Elt.getOperand(0).getValueType().getVectorElementType() !=
-            VT.getVectorElementType())
+    if (Elt.getOpcode() != ISD::EXTRACT_VECTOR_ELT)
       return false;
 
     if (V0.getNode() == 0) {
@@ -4238,7 +4189,25 @@ bool AArch64TargetLowering::isKnownShuffleVector(SDValue Op, SelectionDAG &DAG,
       return false;
     }
   }
-  return true;
+
+  if (!V1.getNode() && V0NumElts == NumElts * 2) {
+    V1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, V0,
+                     DAG.getConstant(NumElts, MVT::i64));
+    V0 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, V0,
+                     DAG.getConstant(0, MVT::i64));
+    V0NumElts = V0.getValueType().getVectorNumElements();
+  }
+
+  if (V1.getNode() && NumElts == V0NumElts &&
+      V0NumElts == V1.getValueType().getVectorNumElements()) {
+    SDValue Shuffle = DAG.getVectorShuffle(VT, DL, V0, V1, Mask);
+    if(Shuffle.getOpcode() != ISD::VECTOR_SHUFFLE)
+      Res = Shuffle;
+    else
+      Res = LowerVECTOR_SHUFFLE(Shuffle, DAG);
+    return true;
+  } else
+    return false;
 }
 
 // If this is a case we can't handle, return null and let the default
@@ -4444,31 +4413,9 @@ AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
     return SDValue();
 
   // Try to lower this in lowering ShuffleVector way.
-  SDValue V0, V1;
-  int Mask[16];
-  if (isKnownShuffleVector(Op, DAG, V0, V1, Mask)) {
-    unsigned V0NumElts = V0.getValueType().getVectorNumElements();
-    if (!V1.getNode() && V0NumElts == NumElts * 2) {
-      V1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, V0,
-                       DAG.getConstant(NumElts, MVT::i64));
-      V0 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, V0,
-                       DAG.getConstant(0, MVT::i64));
-      V0NumElts = V0.getValueType().getVectorNumElements();
-    }
-
-    if (V1.getNode() && NumElts == V0NumElts &&
-        V0NumElts == V1.getValueType().getVectorNumElements()) {
-      SDValue Shuffle = DAG.getVectorShuffle(VT, DL, V0, V1, Mask);
-      if(Shuffle.getOpcode() != ISD::VECTOR_SHUFFLE)
-        return Shuffle;
-      else
-        return LowerVECTOR_SHUFFLE(Shuffle, DAG);
-    } else {
-      SDValue Res;
-      if(isConcatVector(Op, DAG, V0, V1, Mask, Res))
-        return Res;
-    }
-  }
+  SDValue Shuf;
+  if (isKnownShuffleVector(Op, DAG, Shuf))
+    return Shuf;
 
   // If all else fails, just use a sequence of INSERT_VECTOR_ELT when we
   // know the default expansion would otherwise fall back on something even
@@ -4653,10 +4600,6 @@ AArch64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
     else
       return DAG.getNode(ISDNo, dl, VT, V1, V2);
   }
-
-  SDValue Res;
-  if (isConcatVector(Op, DAG, V1, V2, &ShuffleMask[0], Res))
-    return Res;
 
   // If the element of shuffle mask are all the same constant, we can
   // transform it into either NEON_VDUP or NEON_VDUPLANE
