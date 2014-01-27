@@ -125,14 +125,11 @@ bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP,
   return true;
 }
 
-MacroDirective::DefInfo MacroDirective::getDefinition(bool AllowHidden) {
+MacroDirective::DefInfo MacroDirective::getDefinition() {
   MacroDirective *MD = this;
   SourceLocation UndefLoc;
   Optional<bool> isPublic;
   for (; MD; MD = MD->getPrevious()) {
-    if (!AllowHidden && MD->isHidden())
-      continue;
-
     if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD))
       return DefInfo(DefMD, UndefLoc,
                      !isPublic.hasValue() || isPublic.getValue());

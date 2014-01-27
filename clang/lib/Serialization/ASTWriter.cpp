@@ -1951,8 +1951,6 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
 
     // Emit the macro directives in reverse source order.
     for (; MD; MD = MD->getPrevious()) {
-      if (MD->isHidden())
-        continue;
       if (shouldIgnoreMacro(MD, IsModule, PP))
         continue;
 
@@ -2995,9 +2993,6 @@ class ASTIdentifierTableTrait {
     bool isUndefined = false;
     Optional<bool> isPublic;
     for (; MD; MD = MD->getPrevious()) {
-      if (MD->isHidden())
-        continue;
-
       SubmoduleID ThisModID = getSubmoduleID(MD);
       if (ThisModID == 0) {
         isUndefined = false;

@@ -21,7 +21,7 @@
 #include <cassert>
 
 namespace clang {
-  class Preprocessor;
+class Preprocessor;
 
 /// \brief Encapsulates the data about a macro definition (e.g. its tokens).
 ///
@@ -338,12 +338,6 @@ protected:
   /// \brief True if the macro directive was loaded from a PCH file.
   bool IsFromPCH : 1;
 
-  /// \brief Whether the macro directive is currently "hidden".
-  ///
-  /// Note that this is transient state that is never serialized to the AST
-  /// file.
-  bool IsHidden : 1;
-
   // Used by DefMacroDirective -----------------------------------------------//
 
   /// \brief True if this macro was imported from a module.
@@ -360,10 +354,10 @@ protected:
   bool IsPublic : 1;
 
   MacroDirective(Kind K, SourceLocation Loc)
-    : Previous(0), Loc(Loc), MDKind(K), IsFromPCH(false), IsHidden(false),
+    : Previous(0), Loc(Loc), MDKind(K), IsFromPCH(false),
       IsImported(false), IsAmbiguous(false),
       IsPublic(true) {
-  }
+  } 
 
 public:
   Kind getKind() const { return Kind(MDKind); }
@@ -385,12 +379,6 @@ public:
   bool isFromPCH() const { return IsFromPCH; }
 
   void setIsFromPCH() { IsFromPCH = true; }
-
-  /// \brief Determine whether this macro directive is hidden.
-  bool isHidden() const { return IsHidden; }
-
-  /// \brief Set whether this macro directive is hidden.
-  void setHidden(bool Val) { IsHidden = Val; }
 
   class DefInfo {
     DefMacroDirective *DefDirective;
@@ -423,31 +411,31 @@ public:
 
     LLVM_EXPLICIT operator bool() const { return isValid(); }
 
-    inline DefInfo getPreviousDefinition(bool AllowHidden = false);
-    const DefInfo getPreviousDefinition(bool AllowHidden = false) const {
-      return const_cast<DefInfo*>(this)->getPreviousDefinition(AllowHidden);
+    inline DefInfo getPreviousDefinition();
+    const DefInfo getPreviousDefinition() const {
+      return const_cast<DefInfo*>(this)->getPreviousDefinition();
     }
   };
 
   /// \brief Traverses the macro directives history and returns the next
   /// macro definition directive along with info about its undefined location
   /// (if there is one) and if it is public or private.
-  DefInfo getDefinition(bool AllowHidden = false);
-  const DefInfo getDefinition(bool AllowHidden = false) const {
-    return const_cast<MacroDirective*>(this)->getDefinition(AllowHidden);
+  DefInfo getDefinition();
+  const DefInfo getDefinition() const {
+    return const_cast<MacroDirective*>(this)->getDefinition();
   }
 
-  bool isDefined(bool AllowHidden = false) const {
-    if (const DefInfo Def = getDefinition(AllowHidden))
+  bool isDefined() const {
+    if (const DefInfo Def = getDefinition())
       return !Def.isUndefined();
     return false;
   }
 
-  const MacroInfo *getMacroInfo(bool AllowHidden = false) const {
-    return getDefinition(AllowHidden).getMacroInfo();
+  const MacroInfo *getMacroInfo() const {
+    return getDefinition().getMacroInfo();
   }
-  MacroInfo *getMacroInfo(bool AllowHidden = false) {
-    return getDefinition(AllowHidden).getMacroInfo();
+  MacroInfo *getMacroInfo() {
+    return getDefinition().getMacroInfo();
   }
 
   /// \brief Find macro definition active in the specified source location. If
@@ -538,10 +526,10 @@ inline MacroInfo *MacroDirective::DefInfo::getMacroInfo() {
 }
 
 inline MacroDirective::DefInfo
-MacroDirective::DefInfo::getPreviousDefinition(bool AllowHidden) {
+MacroDirective::DefInfo::getPreviousDefinition() {
   if (isInvalid() || DefDirective->getPrevious() == 0)
     return DefInfo();
-  return DefDirective->getPrevious()->getDefinition(AllowHidden);
+  return DefDirective->getPrevious()->getDefinition();
 }
 
 }  // end namespace clang
