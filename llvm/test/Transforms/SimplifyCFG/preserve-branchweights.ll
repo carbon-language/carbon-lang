@@ -338,6 +338,32 @@ c:
  ret void
 }
 
+;; When folding branches to common destination, the updated branch weights
+;; can exceed uint32 by more than factor of 2. We should keep halving the
+;; weights until they can fit into uint32.
+@max_regno = common global i32 0, align 4
+define void @test14(i32* %old, i32 %final) {
+; CHECK-LABEL: @test14
+; CHECK: br i1 %or.cond, label %for.exit, label %for.inc, !prof !10
+for.cond:
+  br label %for.cond2
+for.cond2:
+  %i.1 = phi i32 [ %inc19, %for.inc ], [ 0, %for.cond ]
+  %bit.0 = phi i32 [ %shl, %for.inc ], [ 1, %for.cond ]
+  %tobool = icmp eq i32 %bit.0, 0
+  br i1 %tobool, label %for.exit, label %for.body3, !prof !10
+for.body3:
+  %v3 = load i32* @max_regno, align 4
+  %cmp4 = icmp eq i32 %i.1, %v3
+  br i1 %cmp4, label %for.exit, label %for.inc, !prof !11
+for.inc:
+  %shl = shl i32 %bit.0, 1
+  %inc19 = add nsw i32 %i.1, 1
+  br label %for.cond2
+for.exit:
+  ret void
+}
+
 !0 = metadata !{metadata !"branch_weights", i32 3, i32 5}
 !1 = metadata !{metadata !"branch_weights", i32 1, i32 1}
 !2 = metadata !{metadata !"branch_weights", i32 1, i32 2}
@@ -348,6 +374,8 @@ c:
 !7 = metadata !{metadata !"branch_weights", i32 33, i32 9, i32 8, i32 7}
 !8 = metadata !{metadata !"branch_weights", i32 33, i32 9, i32 8}
 !9 = metadata !{metadata !"branch_weights", i32 7, i32 6}
+!10 = metadata !{metadata !"branch_weights", i32 672646, i32 21604207}
+!11 = metadata !{metadata !"branch_weights", i32 6960, i32 21597248}
 
 ; CHECK: !0 = metadata !{metadata !"branch_weights", i32 5, i32 11}
 ; CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 5}
@@ -359,4 +387,6 @@ c:
 ; CHECK: !7 = metadata !{metadata !"branch_weights", i32 17, i32 9, i32 8, i32 7, i32 17}
 ; CHECK: !8 = metadata !{metadata !"branch_weights", i32 24, i32 33}
 ; CHECK: !9 = metadata !{metadata !"branch_weights", i32 8, i32 33}
-; CHECK-NOT: !9
+;; The false weight prints out as a negative integer here, but inside llvm, we
+;; treat the weight as an unsigned integer.
+; CHECK: !10 = metadata !{metadata !"branch_weights", i32 112017436, i32 -735157296}
