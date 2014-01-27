@@ -77,3 +77,12 @@ define void @test5(i32 %i) {
 ; CHECK: -->  (-2147483648 * (%i /u -2147483648))
   ret void
 }
+
+define void @test6(i8 %x) {
+; CHECK-LABEL: @test6
+  %A = zext i8 %x to i16
+  %B = shl nuw i16 %A, 8
+  %C = and i16 %B, -2048
+; CHECK: -->  (2048 * ((zext i8 %x to i16) /u 8))
+  ret void
+}

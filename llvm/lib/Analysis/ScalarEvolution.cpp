@@ -2292,7 +2292,9 @@ const SCEV *ScalarEvolution::getUDivExactExpr(const SCEV *LHS,
         Operands.append(Mul->op_begin() + 1, Mul->op_end());
         LHS = getMulExpr(Operands);
         RHS = RHSCst;
-        Mul = cast<SCEVMulExpr>(LHS);
+        Mul = dyn_cast<SCEVMulExpr>(LHS);
+        if (!Mul)
+          return getUDivExactExpr(LHS, RHS);
       }
     }
   }
