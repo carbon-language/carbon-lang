@@ -889,7 +889,8 @@ namespace {
                             unsigned personalityEncoding,
                             const MCSymbol *lsda,
                             bool IsSignalFrame,
-                            unsigned lsdaEncoding);
+                            unsigned lsdaEncoding,
+                            bool IsSimple);
     MCSymbol *EmitFDE(MCStreamer &streamer,
                       const MCSymbol &cieStart,
                       const MCDwarfFrameInfo &frame);
@@ -1199,7 +1200,8 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
                                           unsigned personalityEncoding,
                                           const MCSymbol *lsda,
                                           bool IsSignalFrame,
-                                          unsigned lsdaEncoding) {
+                                          unsigned lsdaEncoding,
+                                          bool IsSimple) {
   MCContext &context = streamer.getContext();
   const MCRegisterInfo *MRI = context.getRegisterInfo();
   const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
@@ -1298,9 +1300,11 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   // Initial Instructions
 
   const MCAsmInfo *MAI = context.getAsmInfo();
-  const std::vector<MCCFIInstruction> &Instructions =
-      MAI->getInitialFrameState();
-  EmitCFIInstructions(streamer, Instructions, NULL);
+  if (!IsSimple) {
+    const std::vector<MCCFIInstruction> &Instructions =
+        MAI->getInitialFrameState();
+    EmitCFIInstructions(streamer, Instructions, NULL);
+  }
 
   // Padding
   streamer.EmitValueToAlignment(IsEH ? 4 : MAI->getPointerSize());
@@ -1386,18 +1390,20 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
 
 namespace {
   struct CIEKey {
-    static const CIEKey getEmptyKey() { return CIEKey(0, 0, -1, false); }
-    static const CIEKey getTombstoneKey() { return CIEKey(0, -1, 0, false); }
+    static const CIEKey getEmptyKey() { return CIEKey(0, 0, -1, false, false); }
+    static const CIEKey getTombstoneKey() { return CIEKey(0, -1, 0, false, false); }
 
     CIEKey(const MCSymbol* Personality_, unsigned PersonalityEncoding_,
-           unsigned LsdaEncoding_, bool IsSignalFrame_) :
+           unsigned LsdaEncoding_, bool IsSignalFrame_, bool IsSimple_) :
       Personality(Personality_), PersonalityEncoding(PersonalityEncoding_),
-      LsdaEncoding(LsdaEncoding_), IsSignalFrame(IsSignalFrame_) {
+      LsdaEncoding(LsdaEncoding_), IsSignalFrame(IsSignalFrame_),
+      IsSimple(IsSimple_) {
     }
     const MCSymbol* Personality;
     unsigned PersonalityEncoding;
     unsigned LsdaEncoding;
     bool IsSignalFrame;
+    bool IsSimple;
   };
 }
 
@@ -1414,14 +1420,16 @@ namespace llvm {
       return static_cast<unsigned>(hash_combine(Key.Personality,
                                                 Key.PersonalityEncoding,
                                                 Key.LsdaEncoding,
-                                                Key.IsSignalFrame));
+                                                Key.IsSignalFrame,
+                                                Key.IsSimple));
     }
     static bool isEqual(const CIEKey &LHS,
                         const CIEKey &RHS) {
       return LHS.Personality == RHS.Personality &&
         LHS.PersonalityEncoding == RHS.PersonalityEncoding &&
         LHS.LsdaEncoding == RHS.LsdaEncoding &&
-        LHS.IsSignalFrame == RHS.IsSignalFrame;
+        LHS.IsSignalFrame == RHS.IsSignalFrame &&
+        LHS.IsSimple == RHS.IsSimple;
     }
   };
 }
@@ -1465,13 +1473,14 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
   for (unsigned i = 0, n = FrameArray.size(); i < n; ++i) {
     const MCDwarfFrameInfo &Frame = FrameArray[i];
     CIEKey Key(Frame.Personality, Frame.PersonalityEncoding,
-               Frame.LsdaEncoding, Frame.IsSignalFrame);
+               Frame.LsdaEncoding, Frame.IsSignalFrame, Frame.IsSimple);
     const MCSymbol *&CIEStart = IsEH ? CIEStarts[Key] : DummyDebugKey;
     if (!CIEStart)
       CIEStart = &Emitter.EmitCIE(Streamer, Frame.Personality,
                                   Frame.PersonalityEncoding, Frame.Lsda,
                                   Frame.IsSignalFrame,
-                                  Frame.LsdaEncoding);
+                                  Frame.LsdaEncoding,
+                                  Frame.IsSimple);
 
     FDEEnd = Emitter.EmitFDE(Streamer, *CIEStart, Frame);
 

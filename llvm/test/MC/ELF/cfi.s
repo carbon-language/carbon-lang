@@ -212,6 +212,11 @@ f36:
         nop
         .cfi_endproc
 
+f37:
+        .cfi_startproc simple
+        nop
+        .cfi_endproc
+
 // CHECK:        Section {
 // CHECK:          Index: 4
 // CHECK-NEXT:     Name: .eh_frame
@@ -221,7 +226,7 @@ f36:
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
 // CHECK-NEXT:     Offset: 0x68
-// CHECK-NEXT:     Size: 1736
+// CHECK-NEXT:     Size: 1776
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
 // CHECK-NEXT:     AddressAlignment: 8
@@ -337,7 +342,9 @@ f36:
 // CHECK-NEXT:       0690: 00000000 1C000000 00000000 017A5052
 // CHECK-NEXT:       06A0: 00017810 0A980000 00000000 00001B0C
 // CHECK-NEXT:       06B0: 07089001 10000000 24000000 00000000
-// CHECK-NEXT:       06C0: 01000000 00000000
+// CHECK-NEXT:       06C0: 01000000 00000000 10000000 00000000
+// CHECK-NEXT:       06D0: 017A5200 01781001 1B000000 10000000
+// CHECK-NEXT:       06E0: 18000000 00000000 01000000 00000000
 // CHECK-NEXT:     )
 // CHECK-NEXT:   }
 
@@ -348,8 +355,8 @@ f36:
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0xE30
-// CHECK-NEXT:     Size: 1728
+// CHECK-NEXT:     Offset: 0xE70
+// CHECK-NEXT:     Size: 1752
 // CHECK-NEXT:     Link: 7
 // CHECK-NEXT:     Info: 4
 // CHECK-NEXT:     AddressAlignment: 8
@@ -427,5 +434,6 @@ f36:
 // CHECK-NEXT:       0x688 R_X86_64_PC32 .text 0x21
 // CHECK-NEXT:       0x6A6 R_X86_64_PC64 foo   0x0
 // CHECK-NEXT:       0x6BC R_X86_64_PC32 .text 0x22
+// CHECK-NEXT:       0x6E4 R_X86_64_PC32 .text 0x23
 // CHECK-NEXT:     ]
 // CHECK:        }

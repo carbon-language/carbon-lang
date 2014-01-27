@@ -438,7 +438,7 @@ struct MCDwarfFrameInfo {
   MCDwarfFrameInfo()
       : Begin(0), End(0), Personality(0), Lsda(0), Function(0), Instructions(),
         PersonalityEncoding(), LsdaEncoding(0), CompactUnwindEncoding(0),
-        IsSignalFrame(false) {}
+        IsSignalFrame(false), IsSimple(false) {}
   MCSymbol *Begin;
   MCSymbol *End;
   const MCSymbol *Personality;
@@ -449,6 +449,7 @@ struct MCDwarfFrameInfo {
   unsigned LsdaEncoding;
   uint32_t CompactUnwindEncoding;
   bool IsSignalFrame;
+  bool IsSimple;
 };
 
 class MCDwarfFrameEmitter {
