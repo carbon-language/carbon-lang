@@ -68,11 +68,7 @@ GenerateGnuPubSections("generate-gnu-dwarf-pub-sections", cl::Hidden,
                        cl::init(false));
 
 namespace {
-enum DefaultOnOff {
-  Default,
-  Enable,
-  Disable
-};
+enum DefaultOnOff { Default, Enable, Disable };
 }
 
 static cl::opt<DefaultOnOff>
