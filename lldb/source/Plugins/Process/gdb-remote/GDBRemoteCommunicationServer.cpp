@@ -811,8 +811,11 @@ GDBRemoteCommunicationServer::Handle_A (StringExtractorGDBRemote &packet)
 
     if (success)
     {
+        // FIXME: remove linux restriction once eLaunchFlagDebug is supported
+#if !defined (__linux__)
         m_process_launch_info.GetFlags().Set (eLaunchFlagDebug);
-        m_process_launch_error = Host::LaunchProcess (m_process_launch_info);
+#endif
+        m_process_launch_error = LaunchProcess ();
         if (m_process_launch_info.GetProcessID() != LLDB_INVALID_PROCESS_ID)
         {
             return SendOKResponse ();
