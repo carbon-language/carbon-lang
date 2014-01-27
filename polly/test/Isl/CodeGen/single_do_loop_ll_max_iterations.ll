@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly %defaultOpts -polly-ast -analyze  -S < %s | FileCheck %s
-; RUN: opt %loadPolly %defaultOpts -polly-codegen-isl -O3 %s
+; RUN: opt %loadPolly -polly-ast -analyze  -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen-isl < %s
 
 ;#define N 20
 ;#include "limits.h"
