@@ -19,6 +19,7 @@
 
 namespace lld {
 namespace elf {
+
 class PPCLinkingContext LLVM_FINAL : public ELFLinkingContext {
 public:
   PPCLinkingContext(llvm::Triple triple)

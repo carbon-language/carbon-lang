@@ -25,7 +25,6 @@ namespace lld {
 namespace elf {
 template <class ELFT> class DynamicFile;
 template <typename ELFT> class ELFFile;
-template <typename ELFT> class TargetAtomHandler;
 
 /// \brief Relocation References: Defined Atoms may contain references that will
 /// need to be patched before the executable is written.
@@ -36,7 +35,7 @@ template <typename ELFT> class TargetAtomHandler;
 /// (not target atom) about a relocation, so we store the index to
 /// ELFREference. In the second pass, ELFReferences are revisited to update
 /// target atoms by target symbol indexes.
-template <class ELFT> class ELFReference LLVM_FINAL : public Reference {
+template <class ELFT> class ELFReference : public Reference {
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 public:
@@ -88,8 +87,7 @@ private:
 /// \brief These atoms store symbols that are fixed to a particular address.
 /// This atom has no content its address will be used by the writer to fixup
 /// references that point to it.
-template<class ELFT>
-class ELFAbsoluteAtom LLVM_FINAL : public AbsoluteAtom {
+template <class ELFT> class ELFAbsoluteAtom : public AbsoluteAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:
@@ -128,8 +126,7 @@ private:
 
 /// \brief ELFUndefinedAtom: These atoms store undefined symbols and are place
 /// holders that will be replaced by defined atoms later in the linking process.
-template<class ELFT>
-class ELFUndefinedAtom LLVM_FINAL : public lld::UndefinedAtom {
+template <class ELFT> class ELFUndefinedAtom : public lld::UndefinedAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:
@@ -158,8 +155,7 @@ private:
 
 /// \brief This atom stores defined symbols and will contain either data or
 /// code.
-template<class ELFT>
-class ELFDefinedAtom LLVM_FINAL : public DefinedAtom {
+template <class ELFT> class ELFDefinedAtom : public DefinedAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
@@ -172,8 +168,8 @@ public:
       : _owningFile(file), _symbolName(symbolName), _sectionName(sectionName),
         _symbol(symbol), _section(section), _contentData(contentData),
         _referenceStartIndex(referenceStart), _referenceEndIndex(referenceEnd),
-        _referenceList(referenceList), _targetAtomHandler(nullptr),
-        _contentType(typeUnknown), _permissions(permUnknown) {}
+        _referenceList(referenceList), _contentType(typeUnknown),
+        _permissions(permUnknown) {}
 
   ~ELFDefinedAtom() {}
 
@@ -196,15 +192,6 @@ public:
   virtual uint64_t size() const {
     // Common symbols are not allocated in object files,
     // so use st_size to tell how many bytes are required.
-
-    // Treat target defined common symbols
-    if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
-         _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
-      if (!_targetAtomHandler)
-        _targetAtomHandler = &_owningFile.targetHandler()->targetAtomHandler();
-      if (_targetAtomHandler->getType(_symbol) == llvm::ELF::STT_COMMON)
-        return (uint64_t) _symbol->st_size;
-    }
     if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
         _symbol->st_shndx == llvm::ELF::SHN_COMMON)
       return (uint64_t) _symbol->st_size;
@@ -231,17 +218,6 @@ public:
     if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return mergeAsWeak;
 
-    // If the symbol is a target defined and if the target
-    // defines the symbol as a common symbol treat it as
-    // mergeTentative
-    if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
-         _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
-      if (!_targetAtomHandler)
-        _targetAtomHandler = &_owningFile.targetHandler()->targetAtomHandler();
-      if (_targetAtomHandler->getType(_symbol) == llvm::ELF::STT_COMMON)
-        return mergeAsTentative;
-    }
-
     if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
         _symbol->st_shndx == llvm::ELF::SHN_COMMON)
       return mergeAsTentative;
@@ -255,15 +231,6 @@ public:
 
     ContentType ret = typeUnknown;
     uint64_t flags = _section->sh_flags;
-
-    // Treat target defined symbols
-    if ((_section->sh_flags & llvm::ELF::SHF_MASKPROC) ||
-        ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
-          _symbol->st_shndx < llvm::ELF::SHN_HIPROC))) {
-      if (!_targetAtomHandler)
-        _targetAtomHandler = &_owningFile.targetHandler()->targetAtomHandler();
-      return _contentType = _targetAtomHandler->contentType(this);
-    }
 
     if (!(flags & llvm::ELF::SHF_ALLOC))
       return _contentType = typeNoAlloc;
@@ -337,16 +304,6 @@ public:
   virtual Alignment alignment() const {
     // Unallocated common symbols specify their alignment constraints in
     // st_value.
-
-    // Treat target defined common symbols
-    if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
-         _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
-      if (!_targetAtomHandler)
-        _targetAtomHandler = &_owningFile.targetHandler()->targetAtomHandler();
-      if (_targetAtomHandler->getType(_symbol) == llvm::ELF::STT_COMMON)
-        return Alignment(llvm::Log2_64(_symbol->st_value));
-    }
-
     if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
         _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
       return Alignment(llvm::Log2_64(_symbol->st_value));
@@ -396,13 +353,6 @@ public:
       return _permissions;
 
     uint64_t flags = _section->sh_flags;
-    // Treat target defined symbols
-    if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
-         _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
-      if (!_targetAtomHandler)
-        _targetAtomHandler = &_owningFile.targetHandler()->targetAtomHandler();
-      return _permissions = _targetAtomHandler->contentPermissions(this);
-    }
 
     if (!(flags & llvm::ELF::SHF_ALLOC))
       return _permissions = perm___;
@@ -492,7 +442,7 @@ public:
 
   virtual void setOrdinal(uint64_t ord) { _ordinal = ord; }
 
-private:
+protected:
   const ELFFile<ELFT> &_owningFile;
   StringRef _symbolName;
   StringRef _sectionName;
@@ -505,14 +455,12 @@ private:
   unsigned int _referenceStartIndex;
   unsigned int _referenceEndIndex;
   std::vector<ELFReference<ELFT> *> &_referenceList;
-  // Cached size of the TLS segment.
-  mutable TargetAtomHandler<ELFT> *_targetAtomHandler;
   mutable ContentType _contentType;
   mutable ContentPermissions _permissions;
 };
 
 /// \brief This atom stores mergeable Strings
-template <class ELFT> class ELFMergeAtom LLVM_FINAL : public DefinedAtom {
+template <class ELFT> class ELFMergeAtom : public DefinedAtom {
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
 public:
@@ -596,8 +544,7 @@ private:
   uint64_t _offset;
 };
 
-template <class ELFT>
-class ELFCommonAtom LLVM_FINAL : public DefinedAtom {
+template <class ELFT> class ELFCommonAtom : public DefinedAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 public:
   ELFCommonAtom(const ELFFile<ELFT> &file,
@@ -643,10 +590,6 @@ public:
   }
 
   virtual ContentType contentType() const {
-    if (_symbol->st_shndx >= llvm::ELF::SHN_LORESERVE &&
-        _symbol->st_shndx <= llvm::ELF::SHN_HIOS)
-      return _owningFile.targetHandler()->targetAtomHandler().contentType(
-          nullptr, _symbol);
     return typeZeroFill;
   }
 
@@ -703,7 +646,6 @@ protected:
 
   virtual void incrementIterator(const void *&iter) const {}
 
-private:
   const ELFFile<ELFT> &_owningFile;
   StringRef _symbolName;
   const Elf_Sym *_symbol;
@@ -711,8 +653,7 @@ private:
 };
 
 /// \brief An atom from a shared library.
-template <class ELFT>
-class ELFDynamicAtom LLVM_FINAL : public SharedLibraryAtom {
+template <class ELFT> class ELFDynamicAtom : public SharedLibraryAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:

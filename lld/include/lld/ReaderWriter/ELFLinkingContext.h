@@ -14,6 +14,7 @@
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/range.h"
+#include "lld/Core/STDExtras.h"
 
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
@@ -37,6 +38,10 @@ class TargetHandlerBase {
 public:
   virtual ~TargetHandlerBase() {}
   virtual void registerRelocationNames(Registry &) = 0;
+
+  virtual std::unique_ptr<Reader> getObjReader(bool) = 0;
+
+  virtual std::unique_ptr<Reader> getDSOReader(bool) = 0;
 };
 
 class ELFLinkingContext : public LinkingContext {

@@ -10,8 +10,6 @@
 #ifndef LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_LINKING_CONTEXT_H
 #define LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_LINKING_CONTEXT_H
 
-#include "HexagonTargetHandler.h"
-
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "llvm/Object/ELF.h"
@@ -22,9 +20,7 @@ namespace elf {
 
 class HexagonLinkingContext LLVM_FINAL : public ELFLinkingContext {
 public:
-  HexagonLinkingContext(llvm::Triple triple)
-      : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                                      new HexagonTargetHandler(*this))) {}
+  HexagonLinkingContext(llvm::Triple triple);
 
   virtual void addPasses(PassManager &);
 

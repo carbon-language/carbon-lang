@@ -40,43 +40,11 @@ template <class ELFT> class ELFHeader;
 template <class ELFT> class Section;
 template <class ELFT> class TargetLayout;
 
-/// \brief The target registers a set of handlers for overriding target specific
-/// attributes for a DefinedAtom. The Reader uses this class to query for the
-/// type of atom and its permissions
-template <class ELFT> class TargetAtomHandler {
-public:
-  typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
-  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-
-  virtual DefinedAtom::ContentType
-  contentType(const ELFDefinedAtom<ELFT> *atom) const {
-    return atom->contentType();
-  }
-
-  virtual DefinedAtom::ContentType
-  contentType(const Elf_Shdr *shdr, const Elf_Sym *sym) const {
-    return DefinedAtom::typeZeroFill;
-  }
-
-  virtual DefinedAtom::ContentPermissions
-  contentPermissions(const ELFDefinedAtom<ELFT> *atom) const {
-    return atom->permissions();
-  }
-
-  virtual int64_t getType(const Elf_Sym *sym) const {
-    return llvm::ELF::STT_NOTYPE;
-  }
-
-  virtual ~TargetAtomHandler() {}
-};
-
 template <class ELFT> class TargetRelocationHandler {
 public:
   virtual error_code
   applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                   const lld::AtomLayout &, const Reference &) const = 0;
-
-  virtual int64_t relocAddend(const Reference &)const { return 0; }
 
   virtual ~TargetRelocationHandler() {}
 };
@@ -98,9 +66,6 @@ public:
 
   /// TargetLayout
   virtual TargetLayout<ELFT> &targetLayout() = 0;
-
-  /// TargetAtomHandler
-  virtual TargetAtomHandler<ELFT> &targetAtomHandler() = 0;
 
   virtual const TargetRelocationHandler<ELFT> &getRelocationHandler() const = 0;
 
@@ -126,6 +91,10 @@ public:
   /// \brief create dynamic symbol table
   virtual LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
   createDynamicSymbolTable() = 0;
+
+  virtual std::unique_ptr<Reader> getObjReader(bool) = 0;
+
+  virtual std::unique_ptr<Reader> getDSOReader(bool) = 0;
 
 protected:
   ELFLinkingContext &_context;

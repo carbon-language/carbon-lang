@@ -22,7 +22,7 @@
 
 namespace lld {
 namespace elf {
-template <class ELFT> class DynamicFile LLVM_FINAL : public SharedLibraryFile {
+template <class ELFT> class DynamicFile : public SharedLibraryFile {
 public:
   static ErrorOr<std::unique_ptr<DynamicFile>>
   create(std::unique_ptr<llvm::MemoryBuffer> mb, bool useShlibUndefines);

@@ -12,6 +12,7 @@
 
 #include "DefaultLayout.h"
 #include "TargetHandler.h"
+#include "ELFReader.h"
 
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
@@ -29,11 +30,6 @@ public:
   bool doesOverrideELFHeader() { return false; }
 
   void setELFHeader(ELFHeader<ELFT> *elfHeader) {
-    llvm_unreachable("Target should provide implementation for function ");
-  }
-
-  /// TargetAtomHandler
-  TargetAtomHandler<ELFT> &targetAtomHandler() {
     llvm_unreachable("Target should provide implementation for function ");
   }
 
@@ -74,7 +70,15 @@ public:
             DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS));
   }
 
-private:
+  virtual std::unique_ptr<Reader> getObjReader(bool atomizeStrings) {
+    return std::unique_ptr<Reader>(new ELFObjectReader(atomizeStrings));
+  }
+
+  virtual std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) {
+    return std::unique_ptr<Reader>(new ELFDSOReader(useShlibUndefines));
+  }
+
+protected:
   llvm::BumpPtrAllocator _alloc;
 };
 } // end namespace elf

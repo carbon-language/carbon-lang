@@ -119,7 +119,7 @@ bool GnuLdDriver::linkELF(int argc, const char *argv[],
   options->registry().addSupportNativeObjects();
   if (options->allowLinkWithDynamicLibraries())
     options->registry().addSupportELFDynamicSharedObjects(
-        options->useShlibUndefines());
+        options->useShlibUndefines(), options->targetHandler());
 
   return link(*options, diagnostics);
 }

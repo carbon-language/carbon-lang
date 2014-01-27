@@ -39,16 +39,14 @@ struct ELFFileCreateELFTraits {
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool atomizeStrings, TargetHandlerBase *handler) {
-    return lld::elf::ELFFile<ELFT>::create(std::move(mb), atomizeStrings,
-                                           handler);
+                            bool atomizeStrings) {
+    return lld::elf::ELFFile<ELFT>::create(std::move(mb), atomizeStrings);
   }
 };
 
 class ELFObjectReader : public Reader {
 public:
-  ELFObjectReader(bool atomizeStrings, TargetHandlerBase *handler)
-      : _atomizeStrings(atomizeStrings), _handler(handler) {}
+  ELFObjectReader(bool atomizeStrings) : _atomizeStrings(atomizeStrings) {}
 
   virtual bool canParse(file_magic magic, StringRef,
                         const MemoryBuffer &) const {
@@ -61,9 +59,8 @@ public:
     error_code ec;
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<ELFFileCreateELFTraits>(getElfArchType(&*mb),
-                                               maxAlignment, std::move(mb),
-                                               _atomizeStrings, _handler);
+    auto f = createELF<ELFFileCreateELFTraits>(
+        getElfArchType(&*mb), maxAlignment, std::move(mb), _atomizeStrings);
     if (error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
@@ -72,7 +69,6 @@ public:
 
 private:
   bool _atomizeStrings;
-  TargetHandlerBase *_handler;
 };
 
 class ELFDSOReader : public Reader {
@@ -111,15 +107,16 @@ void Registry::addSupportELFObjects(bool atomizeStrings,
                                     TargetHandlerBase *handler) {
 
   // Tell registry about the ELF object file parser.
-  add(std::unique_ptr<Reader>(
-      new elf::ELFObjectReader(atomizeStrings, handler)));
+  add(std::move(handler->getObjReader(atomizeStrings)));
 
   // Tell registry about the relocation name to number mapping for this arch.
   handler->registerRelocationNames(*this);
 }
 
-void Registry::addSupportELFDynamicSharedObjects(bool useShlibUndefines) {
-  add(std::unique_ptr<Reader>(new elf::ELFDSOReader(useShlibUndefines)));
+void Registry::addSupportELFDynamicSharedObjects(bool useShlibUndefines,
+                                                 TargetHandlerBase *handler) {
+  // Tell registry about the ELF dynamic shared library file parser.
+  add(handler->getDSOReader(useShlibUndefines));
 }
 
 } // end namespace lld

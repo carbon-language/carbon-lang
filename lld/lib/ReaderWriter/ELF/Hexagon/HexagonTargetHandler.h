@@ -15,67 +15,12 @@
 #include "HexagonRelocationHandler.h"
 #include "HexagonSectionChunks.h"
 #include "TargetLayout.h"
+#include "HexagonELFReader.h"
 
 namespace lld {
 namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 2, false> HexagonELFType;
 class HexagonLinkingContext;
-
-/// \brief Handle Hexagon specific Atoms
-template <class HexagonELFType>
-class HexagonTargetAtomHandler LLVM_FINAL :
-    public TargetAtomHandler<HexagonELFType> {
-  typedef llvm::object::Elf_Sym_Impl<HexagonELFType> Elf_Sym;
-  typedef llvm::object::Elf_Shdr_Impl<HexagonELFType> Elf_Shdr;
-public:
-
-  virtual DefinedAtom::ContentType
-  contentType(const ELFDefinedAtom<HexagonELFType> *atom) const {
-    return contentType(atom->section(), atom->symbol());
-  }
-
-  virtual DefinedAtom::ContentType
-  contentType(const Elf_Shdr *section, const Elf_Sym *sym) const {
-    switch (sym->st_shndx) {
-    // Common symbols
-    case llvm::ELF::SHN_HEXAGON_SCOMMON:
-    case llvm::ELF::SHN_HEXAGON_SCOMMON_1:
-    case llvm::ELF::SHN_HEXAGON_SCOMMON_2:
-    case llvm::ELF::SHN_HEXAGON_SCOMMON_4:
-    case llvm::ELF::SHN_HEXAGON_SCOMMON_8:
-      return DefinedAtom::typeZeroFillFast;
-
-    default:
-      if (section->sh_type == llvm::ELF::SHT_NOBITS)
-        return DefinedAtom::typeZeroFillFast;
-      else if (section->sh_flags & llvm::ELF::SHF_HEX_GPREL)
-        return DefinedAtom::typeDataFast;
-      else
-        llvm_unreachable("unknown symbol type");
-    }
-  }
-
-  virtual DefinedAtom::ContentPermissions
-  contentPermissions(const ELFDefinedAtom<HexagonELFType> *atom) const {
-    // All of the hexagon specific symbols belong in the data segment
-    return DefinedAtom::permRW_;
-  }
-
-  virtual int64_t getType(const Elf_Sym *sym) const {
-    switch (sym->st_shndx) {
-    // Common symbols
-    case llvm::ELF::SHN_HEXAGON_SCOMMON:
-    case llvm::ELF::SHN_HEXAGON_SCOMMON_1:
-    case llvm::ELF::SHN_HEXAGON_SCOMMON_2:
-    case llvm::ELF::SHN_HEXAGON_SCOMMON_4:
-    case llvm::ELF::SHN_HEXAGON_SCOMMON_8:
-      return llvm::ELF::STT_COMMON;
-
-    default:
-      return sym->getType();
-    }
-  }
-};
 
 /// \brief TargetLayout for Hexagon
 template <class HexagonELFType>
@@ -165,10 +110,6 @@ public:
     return _targetLayout;
   }
 
-  virtual HexagonTargetAtomHandler<HexagonELFType> &targetAtomHandler() {
-    return _targetAtomHandler;
-  }
-
   virtual const HexagonTargetRelocationHandler &getRelocationHandler() const {
     return _relocationHandler;
   }
@@ -216,12 +157,19 @@ public:
     return _gotSymAtom->_virtualAddr;
   }
 
+  virtual std::unique_ptr<Reader> getObjReader(bool atomizeStrings) {
+    return std::unique_ptr<Reader>(new HexagonELFObjectReader(atomizeStrings));
+  }
+
+  virtual std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) {
+    return std::unique_ptr<Reader>(new HexagonELFDSOReader(useShlibUndefines));
+  }
+
 private:
   static const Registry::KindStrings kindStrings[];
 
   HexagonTargetLayout<HexagonELFType> _targetLayout;
   HexagonTargetRelocationHandler _relocationHandler;
-  HexagonTargetAtomHandler<HexagonELFType> _targetAtomHandler;
   std::unique_ptr<HexagonRuntimeFile<HexagonELFType> > _hexagonRuntimeFile;
   AtomLayout *_gotSymAtom;
 };

@@ -118,12 +118,10 @@ template <class ELFT> class ELFFile : public File {
 
 public:
   ELFFile(StringRef name, bool atomizeStrings = false)
-      : File(name, kindObject), _ordinal(0), _doStringsMerge(atomizeStrings),
-        _targetHandler(nullptr) {}
+      : File(name, kindObject), _ordinal(0), _doStringsMerge(atomizeStrings) {}
 
   static ErrorOr<std::unique_ptr<ELFFile>>
-  create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
-         TargetHandlerBase *handler);
+  create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings);
 
   virtual Reference::KindArch kindArch();
 
@@ -159,8 +157,6 @@ public:
     return _absoluteAtoms;
   }
 
-  TargetHandler<ELFT> *targetHandler() const { return _targetHandler; }
-
   Atom *findAtom(const Elf_Sym *symbol) {
     return _symbolToAtomMapping.lookup(symbol);
   }
@@ -195,12 +191,8 @@ protected:
                                                   StringRef sectionName,
                                                   StringRef sectionContents);
 
-  /// Returns true if the symbol is common symbol. A common symbol represents a
-  /// tentive definition in C. It has name, size and alignment constraint, but
-  /// actual storage has not yet been allocated. (The linker will allocate
-  /// storage for them in the later pass after coalescing tentative symbols by
-  /// name.)
-  virtual bool isCommonSymbol(const Elf_Sym *symbol);
+  /// Return the default reloc addend for references.
+  virtual int64_t defaultRelocAddend(const Reference &) const;
 
   /// Returns the symbol's content size. The nextSymbol should be null if the
   /// symbol is the last one in the section.
@@ -211,8 +203,113 @@ protected:
   virtual void createEdge(ELFDefinedAtom<ELFT> *from, ELFDefinedAtom<ELFT> *to,
                           uint32_t edgeKind);
 
-  virtual void setTargetHandler(TargetHandlerBase *handler) {
-    _targetHandler = reinterpret_cast<TargetHandler<ELFT> *>(handler);
+  /// Determines if the reader needs to create atoms for the section.
+  virtual bool ignoreCreateAtomsForSection(const Elf_Shdr *shdr) {
+    return false;
+  }
+
+  /// Get the section name for a section.
+  virtual ErrorOr<StringRef> getSectionName(const Elf_Shdr *shdr) const {
+    if (!shdr)
+      return StringRef();
+    return _objFile->getSectionName(shdr);
+  }
+
+  /// Determines if the section occupy memory space.
+  virtual bool sectionOccupiesMemorySpace(const Elf_Shdr *shdr) const {
+    return (shdr->sh_type != llvm::ELF::SHT_NOBITS);
+  }
+
+  /// Return the section contents.
+  virtual ErrorOr<ArrayRef<uint8_t>>
+  getSectionContents(const Elf_Shdr *shdr) const {
+    if (!shdr || !sectionOccupiesMemorySpace(shdr))
+      return ArrayRef<uint8_t>();
+    return _objFile->getSectionContents(shdr);
+  }
+
+  /// Returns true if the symbol is a undefined symbol.
+  virtual bool isUndefinedSymbol(const Elf_Sym *sym) const {
+    return (sym->st_shndx == llvm::ELF::SHN_UNDEF);
+  }
+
+  /// Determines if the target wants to create an atom for a section that has no
+  /// symbol references.
+  virtual bool
+  handleSectionWithNoSymbols(const Elf_Shdr *shdr,
+                             std::vector<Elf_Sym_Iter> &symbols) const {
+    if (shdr && shdr->sh_type == llvm::ELF::SHT_PROGBITS && symbols.empty())
+      return true;
+    return false;
+  }
+
+  /// Process the Undefined symbol and create an atom for it.
+  virtual ErrorOr<ELFUndefinedAtom<ELFT> *>
+  handleUndefinedSymbol(StringRef symName, const Elf_Sym *sym) {
+    return new (_readerStorage) ELFUndefinedAtom<ELFT>(*this, symName, sym);
+  }
+
+  /// Returns true if the symbol is a absolute symbol.
+  virtual bool isAbsoluteSymbol(const Elf_Sym *sym) const {
+    return (sym->st_shndx == llvm::ELF::SHN_ABS);
+  }
+
+  /// Process the Absolute symbol and create an atom for it.
+  virtual ErrorOr<ELFAbsoluteAtom<ELFT> *>
+  handleAbsoluteSymbol(StringRef symName, const Elf_Sym *sym, int64_t value) {
+    return new (_readerStorage)
+        ELFAbsoluteAtom<ELFT>(*this, symName, sym, value);
+  }
+
+  /// Returns true if the symbol is common symbol. A common symbol represents a
+  /// tentive definition in C. It has name, size and alignment constraint, but
+  /// actual storage has not yet been allocated. (The linker will allocate
+  /// storage for them in the later pass after coalescing tentative symbols by
+  /// name.)
+  virtual bool isCommonSymbol(const Elf_Sym *symbol) const {
+    return symbol->getType() == llvm::ELF::STT_COMMON ||
+           symbol->st_shndx == llvm::ELF::SHN_COMMON;
+  }
+
+  /// Process the common symbol and create an atom for it.
+  virtual ErrorOr<ELFCommonAtom<ELFT> *>
+  handleCommonSymbol(StringRef symName, const Elf_Sym *sym) {
+    return new (_readerStorage) ELFCommonAtom<ELFT>(*this, symName, sym);
+  }
+
+  /// Returns true if the symbol is a defined symbol.
+  virtual bool isDefinedSymbol(const Elf_Sym *sym) const {
+    return (sym->getType() == llvm::ELF::STT_NOTYPE ||
+            sym->getType() == llvm::ELF::STT_OBJECT ||
+            sym->getType() == llvm::ELF::STT_FUNC ||
+            sym->getType() == llvm::ELF::STT_GNU_IFUNC ||
+            sym->getType() == llvm::ELF::STT_SECTION ||
+            sym->getType() == llvm::ELF::STT_FILE ||
+            sym->getType() == llvm::ELF::STT_TLS);
+  }
+
+  /// Process the Defined symbol and create an atom for it.
+  virtual ErrorOr<ELFDefinedAtom<ELFT> *>
+  handleDefinedSymbol(StringRef symName, StringRef sectionName,
+                      const Elf_Sym *sym, const Elf_Shdr *sectionHdr,
+                      ArrayRef<uint8_t> contentData,
+                      unsigned int referenceStart, unsigned int referenceEnd,
+                      std::vector<ELFReference<ELFT> *> &referenceList) {
+    return new (_readerStorage) ELFDefinedAtom<ELFT>(
+        *this, symName, sectionName, sym, sectionHdr, contentData,
+        referenceStart, referenceEnd, referenceList);
+  }
+
+  /// Process the Merge string and create an atom for it.
+  virtual ErrorOr<ELFMergeAtom<ELFT> *>
+  handleMergeString(StringRef sectionName, const Elf_Shdr *sectionHdr,
+                    ArrayRef<uint8_t> contentData, unsigned int offset) {
+    ELFMergeAtom<ELFT> *mergeAtom = new (_readerStorage)
+        ELFMergeAtom<ELFT>(*this, sectionName, sectionHdr, contentData, offset);
+    const MergeSectionKey mergedSectionKey(sectionHdr, offset);
+    if (_mergedSectionMap.find(mergedSectionKey) == _mergedSectionMap.end())
+      _mergedSectionMap.insert(std::make_pair(mergedSectionKey, mergeAtom));
+    return mergeAtom;
   }
 
   llvm::BumpPtrAllocator _readerStorage;
@@ -225,8 +322,7 @@ protected:
   /// \brief _relocationAddendReferences and _relocationReferences contain the
   /// list of relocations references.  In ELF, if a section named, ".text" has
   /// relocations will also have a section named ".rel.text" or ".rela.text"
-  /// which will hold the entries. -- .rel or .rela is prepended to create
-  /// the SHT_REL(A) section name.
+  /// which will hold the entries.
   std::unordered_map<
       StringRef,
       range<typename llvm::object::ELFFile<ELFT>::Elf_Rela_Iter> >
@@ -254,7 +350,6 @@ protected:
 
   /// \brief the cached options relevant while reading the ELF File
   bool _doStringsMerge;
-  TargetHandler<ELFT> *_targetHandler;
 };
 
 /// \brief All atoms are owned by a File. To add linker specific atoms
@@ -271,52 +366,44 @@ public:
   /// \brief add a global absolute atom
   virtual Atom *addAbsoluteAtom(StringRef symbolName) {
     assert(!symbolName.empty() && "AbsoluteAtoms must have a name");
-    Elf_Sym *symbol = new (_allocator) Elf_Sym;
+    Elf_Sym *symbol = new (this->_readerStorage) Elf_Sym;
     symbol->st_name = 0;
     symbol->st_value = 0;
     symbol->st_shndx = llvm::ELF::SHN_ABS;
     symbol->setBindingAndType(llvm::ELF::STB_GLOBAL, llvm::ELF::STT_OBJECT);
     symbol->st_other = llvm::ELF::STV_DEFAULT;
     symbol->st_size = 0;
-    auto *newAtom =
-        new (_allocator) ELFAbsoluteAtom<ELFT>(*this, symbolName, symbol, -1);
-    this->_absoluteAtoms._atoms.push_back(newAtom);
-    return newAtom;
+    auto newAtom = this->handleAbsoluteSymbol(symbolName, symbol, -1);
+    this->_absoluteAtoms._atoms.push_back(*newAtom);
+    return *newAtom;
   }
 
   /// \brief add an undefined atom
   virtual Atom *addUndefinedAtom(StringRef symbolName) {
     assert(!symbolName.empty() && "UndefinedAtoms must have a name");
-    Elf_Sym *symbol = new (_allocator) Elf_Sym;
+    Elf_Sym *symbol = new (this->_readerStorage) Elf_Sym;
     symbol->st_name = 0;
     symbol->st_value = 0;
     symbol->st_shndx = llvm::ELF::SHN_UNDEF;
     symbol->st_other = llvm::ELF::STV_DEFAULT;
     symbol->st_size = 0;
-    auto *newAtom =
-        new (_allocator) ELFUndefinedAtom<ELFT>(*this, symbolName, symbol);
-    this->_undefinedAtoms._atoms.push_back(newAtom);
-    return newAtom;
+    auto newAtom = this->handleUndefinedSymbol(symbolName, symbol);
+    this->_undefinedAtoms._atoms.push_back(*newAtom);
+    return *newAtom;
   }
 
   // cannot add atoms to C Runtime file
   virtual void addAtom(const Atom &) {
     llvm_unreachable("cannot add atoms to Runtime files");
   }
-
-protected:
-  llvm::BumpPtrAllocator _allocator;
 };
 
 template <class ELFT>
 ErrorOr<std::unique_ptr<ELFFile<ELFT>>>
-ELFFile<ELFT>::create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
-                      TargetHandlerBase *handler) {
+ELFFile<ELFT>::create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
   error_code ec;
   std::unique_ptr<ELFFile<ELFT>> file(
       new ELFFile<ELFT>(mb->getBufferIdentifier(), atomizeStrings));
-
-  file->setTargetHandler(handler);
 
   file->_objFile.reset(new llvm::object::ELFFile<ELFT>(mb.release(), ec));
 
@@ -426,11 +513,11 @@ template <class ELFT> error_code ELFFile<ELFT>::createMergeableAtoms() {
   // b) Create a separate section chunk to write mergeable atoms
   std::vector<MergeString *> tokens;
   for (const Elf_Shdr *msi : _mergeStringSections) {
-    auto sectionName = _objFile->getSectionName(msi);
+    auto sectionName = getSectionName(msi);
     if (error_code ec = sectionName.getError())
       return ec;
 
-    auto sectionContents = _objFile->getSectionContents(msi);
+    auto sectionContents = getSectionContents(msi);
     if (error_code ec = sectionContents.getError())
       return ec;
 
@@ -451,14 +538,11 @@ template <class ELFT> error_code ELFFile<ELFT>::createMergeableAtoms() {
   for (const MergeString *tai : tokens) {
     ArrayRef<uint8_t> content((const uint8_t *)tai->_string.data(),
                               tai->_string.size());
-    ELFMergeAtom<ELFT> *mergeAtom = new (_readerStorage) ELFMergeAtom<ELFT>(
-        *this, tai->_sectionName, tai->_shdr, content, tai->_offset);
-    const MergeSectionKey mergedSectionKey(tai->_shdr, tai->_offset);
-    if (_mergedSectionMap.find(mergedSectionKey) == _mergedSectionMap.end())
-      _mergedSectionMap.insert(std::make_pair(mergedSectionKey, mergeAtom));
-    mergeAtom->setOrdinal(++_ordinal);
-    _definedAtoms._atoms.push_back(mergeAtom);
-    _mergeAtoms.push_back(mergeAtom);
+    ErrorOr<ELFMergeAtom<ELFT> *> mergeAtom =
+        handleMergeString(tai->_sectionName, tai->_shdr, content, tai->_offset);
+    (*mergeAtom)->setOrdinal(++_ordinal);
+    _definedAtoms._atoms.push_back(*mergeAtom);
+    _mergeAtoms.push_back(*mergeAtom);
   }
   return error_code::success();
 }
@@ -480,50 +564,41 @@ error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
     if (error_code ec = symbolName.getError())
       return ec;
 
-    if (SymI->st_shndx == llvm::ELF::SHN_ABS) {
-      // Create an absolute atom.
-      auto *newAtom = new (_readerStorage)
-          ELFAbsoluteAtom<ELFT>(*this, *symbolName, &*SymI, SymI->st_value);
-
-      _absoluteAtoms._atoms.push_back(newAtom);
-      _symbolToAtomMapping.insert(std::make_pair(&*SymI, newAtom));
-    } else if (SymI->st_shndx == llvm::ELF::SHN_UNDEF) {
-      // Create an undefined atom.
-      auto *newAtom = new (_readerStorage)
-          ELFUndefinedAtom<ELFT>(*this, *symbolName, &*SymI);
-
-      _undefinedAtoms._atoms.push_back(newAtom);
-      _symbolToAtomMapping.insert(std::make_pair(&*SymI, newAtom));
+    if (isAbsoluteSymbol(&*SymI)) {
+      ErrorOr<ELFAbsoluteAtom<ELFT> *> absAtom =
+          handleAbsoluteSymbol(*symbolName, &*SymI, SymI->st_value);
+      _absoluteAtoms._atoms.push_back(*absAtom);
+      _symbolToAtomMapping.insert(std::make_pair(&*SymI, *absAtom));
+    } else if (isUndefinedSymbol(&*SymI)) {
+      ErrorOr<ELFUndefinedAtom<ELFT> *> undefAtom =
+          handleUndefinedSymbol(*symbolName, &*SymI);
+      _undefinedAtoms._atoms.push_back(*undefAtom);
+      _symbolToAtomMapping.insert(std::make_pair(&*SymI, *undefAtom));
     } else if (isCommonSymbol(&*SymI)) {
-      auto *newAtom =
-          new (_readerStorage) ELFCommonAtom<ELFT>(*this, *symbolName, &*SymI);
-      newAtom->setOrdinal(++_ordinal);
-      _definedAtoms._atoms.push_back(newAtom);
-      _symbolToAtomMapping.insert(std::make_pair(&*SymI, newAtom));
+      ErrorOr<ELFCommonAtom<ELFT> *> commonAtom =
+          handleCommonSymbol(*symbolName, &*SymI);
+      (*commonAtom)->setOrdinal(++_ordinal);
+      _definedAtoms._atoms.push_back(*commonAtom);
+      _symbolToAtomMapping.insert(std::make_pair(&*SymI, *commonAtom));
+    } else if (isDefinedSymbol(&*SymI)) {
+      _sectionSymbols[section].push_back(SymI);
     } else {
-      assert(section && "Symbol not defined in a section!");
-      // This is actually a defined symbol. Add it to its section's list of
-      // symbols.
-      if (SymI->getType() == llvm::ELF::STT_NOTYPE ||
-          SymI->getType() == llvm::ELF::STT_OBJECT ||
-          SymI->getType() == llvm::ELF::STT_FUNC ||
-          SymI->getType() == llvm::ELF::STT_GNU_IFUNC ||
-          SymI->getType() == llvm::ELF::STT_SECTION ||
-          SymI->getType() == llvm::ELF::STT_FILE ||
-          SymI->getType() == llvm::ELF::STT_TLS) {
-        _sectionSymbols[section].push_back(SymI);
-      } else {
-        llvm::errs() << "Unable to create atom for: " << *symbolName << "\n";
-        return llvm::object::object_error::parse_failed;
-      }
+      llvm::errs() << "Unable to create atom for: " << *symbolName << "\n";
+      return llvm::object::object_error::parse_failed;
     }
   }
+
   return error_code::success();
 }
 
 template <class ELFT> error_code ELFFile<ELFT>::createAtoms() {
   for (auto &i : _sectionSymbols) {
     const Elf_Shdr *section = i.first;
+
+    // Check if need to create atoms for this section ?
+    if ((ignoreCreateAtomsForSection(section)))
+      continue;
+
     std::vector<Elf_Sym_Iter> &symbols = i.second;
 
     // Sort symbols by position.
@@ -531,25 +606,18 @@ template <class ELFT> error_code ELFFile<ELFT>::createAtoms() {
                      [](Elf_Sym_Iter A,
                         Elf_Sym_Iter B) { return A->st_value < B->st_value; });
 
-    auto sectionName =
-        section ? _objFile->getSectionName(section) : StringRef();
+    ErrorOr<StringRef> sectionName = this->getSectionName(section);
     if (error_code ec = sectionName.getError())
       return ec;
 
-    auto sectionContents =
-        (section && section->sh_type != llvm::ELF::SHT_NOBITS)
-            ? _objFile->getSectionContents(section)
-            : ArrayRef<uint8_t>();
-
+    auto sectionContents = getSectionContents(section);
     if (error_code ec = sectionContents.getError())
       return ec;
 
     StringRef secCont(reinterpret_cast<const char *>(sectionContents->begin()),
                       sectionContents->size());
 
-    // If the section has no symbols, create a custom atom for it.
-    if (section && section->sh_type == llvm::ELF::SHT_PROGBITS &&
-        symbols.empty()) {
+    if (handleSectionWithNoSymbols(section, symbols)) {
       ELFDefinedAtom<ELFT> *newAtom =
           createSectionAtom(section, *sectionName, secCont);
       _definedAtoms._atoms.push_back(newAtom);
@@ -597,11 +665,11 @@ template <class ELFT> error_code ELFFile<ELFT>::createAtoms() {
       // resolution
       if (isMergeableStringSection(section)) {
         if (symbol->getBinding() == llvm::ELF::STB_GLOBAL) {
-          auto definedMergeAtom = new (_readerStorage) ELFDefinedAtom<ELFT>(
-              *this, symbolName, *sectionName, &**si, section, symbolData,
+          auto definedMergeAtom = handleDefinedSymbol(
+              symbolName, *sectionName, &**si, section, symbolData,
               _references.size(), _references.size(), _references);
-          _definedAtoms._atoms.push_back(definedMergeAtom);
-          definedMergeAtom->setOrdinal(++_ordinal);
+          _definedAtoms._atoms.push_back(*definedMergeAtom);
+          (*definedMergeAtom)->setOrdinal(++_ordinal);
         }
         continue;
       }
@@ -711,17 +779,16 @@ ELFDefinedAtom<ELFT> *ELFFile<ELFT>::createDefinedAtomAndAssignRelocations(
   }
 
   // Create the DefinedAtom and add it to the list of DefinedAtoms.
-  return new (_readerStorage) ELFDefinedAtom<ELFT>(
-      *this, symbolName, sectionName, symbol, section, content, referenceStart,
-      _references.size(), _references);
+  return *handleDefinedSymbol(symbolName, sectionName, symbol, section, content,
+                              referenceStart, _references.size(), _references);
+}
+
+template <class ELFT>
+int64_t ELFFile<ELFT>::defaultRelocAddend(const Reference &) const {
+  return 0;
 }
 
 template <class ELFT> void ELFFile<ELFT>::updateReferences() {
-  /// cached value of target relocation handler
-  assert(_targetHandler);
-  const TargetRelocationHandler<ELFT> &targetRelocationHandler =
-      _targetHandler->getRelocationHandler();
-
   for (auto &ri : _references) {
     if (ri->kindNamespace() == lld::Reference::KindNamespace::ELF) {
       const Elf_Sym *symbol = _objFile->getSymbol(ri->targetSymbolIndex());
@@ -737,8 +804,7 @@ template <class ELFT> void ELFFile<ELFT>::updateReferences() {
       // If the target atom is mergeable string atom, the atom might have been
       // merged with other atom having the same contents. Try to find the
       // merged one if that's the case.
-      int64_t relocAddend = targetRelocationHandler.relocAddend(*ri);
-      uint64_t addend = ri->addend() + relocAddend;
+      uint64_t addend = ri->addend() + defaultRelocAddend(*ri);
       const MergeSectionKey ms(shdr, addend);
       auto msec = _mergedSectionMap.find(ms);
       if (msec != _mergedSectionMap.end()) {
@@ -813,20 +879,6 @@ ELFFile<ELFT>::createSectionAtom(const Elf_Shdr *section, StringRef sectionName,
       *this, "", sectionName, sym, section, content, 0, 0, _references);
   newAtom->setOrdinal(++_ordinal);
   return newAtom;
-}
-
-template <class ELFT>
-bool ELFFile<ELFT>::isCommonSymbol(const Elf_Sym *symbol) {
-  // This method handles only architecture independent stuffs, and don't know
-  // whether an architecture dependent section is for common symbols or
-  // not. Let the TargetHandler to make a decision if that's the case.
-  if (isTargetSpecificAtom(nullptr, symbol)) {
-    assert(_targetHandler);
-    TargetAtomHandler<ELFT> &atomHandler = _targetHandler->targetAtomHandler();
-    return atomHandler.getType(symbol) == llvm::ELF::STT_COMMON;
-  }
-  return symbol->getType() == llvm::ELF::STT_COMMON ||
-         symbol->st_shndx == llvm::ELF::SHN_COMMON;
 }
 
 template <class ELFT>

@@ -44,7 +44,7 @@ public:
 
 private:
   static const Registry::KindStrings kindStrings[];
-  
+
   PPCTargetRelocationHandler _relocationHandler;
   TargetLayout<PPCELFType> _targetLayout;
 };
