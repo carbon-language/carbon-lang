@@ -322,8 +322,8 @@ PEHeaderChunk<PEHeader>::PEHeaderChunk(const PECOFFLinkingContext &ctx)
   _coffHeader.Machine = ctx.getMachineType();
   _coffHeader.TimeDateStamp = time(nullptr);
 
-  // The size of PE header including optional data directory is always 224.
-  _coffHeader.SizeOfOptionalHeader = 224;
+  // The size of PE header including optional data directory.
+  _coffHeader.SizeOfOptionalHeader = ctx.is64Bit() ? 240 : 224;
 
   // Attributes of the executable.
   uint16_t characteristics = llvm::COFF::IMAGE_FILE_32BIT_MACHINE |
