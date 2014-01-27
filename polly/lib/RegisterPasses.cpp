@@ -289,7 +289,7 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
     PM.add(llvm::createCFGPrinterPass());
 }
 
-static bool shouldEnablePolly(unsigned OptLevel) {
+static bool shouldEnablePolly() {
   if (PollyOnlyPrinter || PollyPrinter || PollyOnlyViewer || PollyViewer)
     PollyTrackFailures = true;
 
@@ -304,7 +304,7 @@ static void
 registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
                                    llvm::PassManagerBase &PM) {
 
-  if (!shouldEnablePolly(Builder.OptLevel))
+  if (!shouldEnablePolly())
     return;
 
   registerPollyPasses(PM);
