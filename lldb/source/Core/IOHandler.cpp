@@ -1313,7 +1313,12 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                             bounds.size.height -= 2*inset_h;
                         }
                     }
-                    WindowSP help_window_sp = GetParent()->CreateSubWindow("Help", bounds, true);
+                    WindowSP help_window_sp;
+                    Window *parent_window = GetParent();
+                    if (parent_window)
+                        help_window_sp = parent_window->CreateSubWindow("Help", bounds, true);
+                    else
+                        help_window_sp = CreateSubWindow("Help", bounds, true);
                     help_window_sp->SetDelegate(WindowDelegateSP(help_delegate_ap.release()));
                     return true;
                 }
@@ -3806,6 +3811,7 @@ CursesKeyToCString (int ch)
         case KEY_EVENT:     return "We were interrupted by an event";
         case KEY_RETURN:    return "return";
         case ' ':           return "space";
+        case '\t':          return "tab";
         case KEY_ESCAPE:    return "escape";
         default:
             if (isprint(ch))
@@ -3977,16 +3983,56 @@ public:
     {
         return false; // Drawing not handled, let standard window drawing happen
     }
-
+    
     virtual HandleCharResult
     WindowDelegateHandleChar (Window &window, int key)
     {
-        if (key == '\t')
+        switch (key)
         {
-            window.SelectNextWindowAsActive();
-            return eKeyHandled;
+            case '\t':
+                window.SelectNextWindowAsActive();
+                return eKeyHandled;
+
+            case 'h':
+                window.CreateHelpSubwindow();
+                return eKeyHandled;
+
+            case KEY_ESCAPE:
+                return eQuitApplication;
+
+            default:
+                break;
         }
         return eKeyNotHandled;
+    }
+    
+    
+    virtual const char *
+    WindowDelegateGetHelpText ()
+    {
+        return "Welcome to the LLDB curses GUI.\n\n"
+        "Press the TAB key to change the selected view.\n"
+        "Each view has its own keyboard shortcuts, press 'h' to open a dialog to display them.\n\n"
+        "Common key bindings for all views:";
+    }
+    
+    virtual KeyHelp *
+    WindowDelegateGetKeyHelp ()
+    {
+        static curses::KeyHelp g_source_view_key_help[] = {
+            { '\t', "Select next view" },
+            { 'h', "Show help dialog with view specific key bindings" },
+            { ',', "Page up" },
+            { '.', "Page down" },
+            { KEY_UP, "Select previous" },
+            { KEY_DOWN, "Select next" },
+            { KEY_LEFT, "Unexpand or select parent" },
+            { KEY_RIGHT, "Expand" },
+            { KEY_PPAGE, "Page up" },
+            { KEY_NPAGE, "Page down" },
+            { '\0', NULL }
+        };
+        return g_source_view_key_help;
     }
     
     virtual MenuActionResult
@@ -4241,6 +4287,7 @@ public:
                 return MenuActionResult::Handled;
                 
             case eMenuID_HelpGUIHelp:
+                m_app.GetMainWindow ()->CreateHelpSubwindow();
                 return MenuActionResult::Handled;
         
             default:
@@ -5167,7 +5214,15 @@ IOHandlerCursesGUI::Activate ()
         TreeDelegateSP thread_delegate_sp (new ThreadTreeDelegate(m_debugger));
         threads_window_sp->SetDelegate (WindowDelegateSP(new TreeWindowDelegate(m_debugger, thread_delegate_sp)));
         status_window_sp->SetDelegate (WindowDelegateSP(new StatusBarWindowDelegate(m_debugger)));
-        
+
+        // Show the main help window once the first time the curses GUI is launched
+        static bool g_showed_help = false;
+        if (!g_showed_help)
+        {
+            g_showed_help = true;
+            main_window_sp->CreateHelpSubwindow();
+        }
+
         init_pair (1, COLOR_WHITE   , COLOR_BLUE  );
         init_pair (2, COLOR_BLACK   , COLOR_WHITE );
         init_pair (3, COLOR_MAGENTA , COLOR_WHITE );
