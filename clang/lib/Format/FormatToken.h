@@ -27,6 +27,7 @@ namespace format {
 enum TokenType {
   TT_ArrayInitializerLSquare,
   TT_ArraySubscriptLSquare,
+  TT_AttributeParen,
   TT_BinaryOperator,
   TT_BitFieldColon,
   TT_BlockComment,

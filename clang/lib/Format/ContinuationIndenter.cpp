@@ -384,7 +384,8 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
   } else if (Previous.is(tok::comma) && State.Stack.back().VariablePos != 0) {
     State.Column = State.Stack.back().VariablePos;
   } else if ((PreviousNonComment &&
-              PreviousNonComment->ClosesTemplateDeclaration) ||
+              (PreviousNonComment->ClosesTemplateDeclaration ||
+               PreviousNonComment->Type == TT_AttributeParen)) ||
              ((Current.Type == TT_StartOfName ||
                Current.is(tok::kw_operator)) &&
               State.ParenLevel == 0 &&
