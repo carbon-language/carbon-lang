@@ -17,6 +17,7 @@ namespace llvm {
 class MCAssembler;
 class MCCodeEmitter;
 class MCSectionData;
+class MCSubtargetInfo;
 class MCExpr;
 class MCFragment;
 class MCDataFragment;
@@ -35,7 +36,7 @@ class MCObjectStreamer : public MCStreamer {
   MCSectionData *CurSectionData;
   MCSectionData::iterator CurInsertionPoint;
 
-  virtual void EmitInstToData(const MCInst &Inst) = 0;
+  virtual void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo&) = 0;
   virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame);
 
@@ -87,7 +88,7 @@ public:
 
   /// \brief Emit an instruction to a special fragment, because this instruction
   /// can change its size during relaxation.
-  virtual void EmitInstToFragment(const MCInst &Inst);
+  virtual void EmitInstToFragment(const MCInst &Inst, const MCSubtargetInfo &);
 
   virtual void EmitBundleAlignMode(unsigned AlignPow2);
   virtual void EmitBundleLock(bool AlignToEnd);

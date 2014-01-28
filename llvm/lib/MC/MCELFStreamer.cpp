@@ -397,15 +397,17 @@ void MCELFStreamer::fixSymbolsInTLSFixups(const MCExpr *expr) {
   }
 }
 
-void MCELFStreamer::EmitInstToFragment(const MCInst &Inst) {
-  this->MCObjectStreamer::EmitInstToFragment(Inst);
+void MCELFStreamer::EmitInstToFragment(const MCInst &Inst,
+                                       const MCSubtargetInfo &STI) {
+  this->MCObjectStreamer::EmitInstToFragment(Inst, STI);
   MCRelaxableFragment &F = *cast<MCRelaxableFragment>(getCurrentFragment());
 
   for (unsigned i = 0, e = F.getFixups().size(); i != e; ++i)
     fixSymbolsInTLSFixups(F.getFixups()[i].getValue());
 }
 
-void MCELFStreamer::EmitInstToData(const MCInst &Inst) {
+void MCELFStreamer::EmitInstToData(const MCInst &Inst,
+                                   const MCSubtargetInfo &STI) {
   MCAssembler &Assembler = getAssembler();
   SmallVector<MCFixup, 4> Fixups;
   SmallString<256> Code;

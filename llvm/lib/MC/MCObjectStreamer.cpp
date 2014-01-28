@@ -203,7 +203,7 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo
   // If this instruction doesn't need relaxation, just emit it as data.
   MCAssembler &Assembler = getAssembler();
   if (!Assembler.getBackend().mayNeedRelaxation(Inst)) {
-    EmitInstToData(Inst);
+    EmitInstToData(Inst, STI);
     return;
   }
 
@@ -218,15 +218,16 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo
     getAssembler().getBackend().relaxInstruction(Inst, Relaxed);
     while (getAssembler().getBackend().mayNeedRelaxation(Relaxed))
       getAssembler().getBackend().relaxInstruction(Relaxed, Relaxed);
-    EmitInstToData(Relaxed);
+    EmitInstToData(Relaxed, STI);
     return;
   }
 
   // Otherwise emit to a separate fragment.
-  EmitInstToFragment(Inst);
+  EmitInstToFragment(Inst, STI);
 }
 
-void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
+void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst,
+                                          const MCSubtargetInfo &STI) {
   // Always create a new, separate fragment here, because its size can change
   // during relaxation.
   MCRelaxableFragment *IF = new MCRelaxableFragment(Inst);

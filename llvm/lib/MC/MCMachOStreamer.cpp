@@ -31,7 +31,7 @@ namespace {
 
 class MCMachOStreamer : public MCObjectStreamer {
 private:
-  virtual void EmitInstToData(const MCInst &Inst);
+  virtual void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo &STI);
 
   void EmitDataRegion(DataRegionData::KindTy Kind);
   void EmitDataRegionEnd();
@@ -364,7 +364,8 @@ void MCMachOStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
   return;
 }
 
-void MCMachOStreamer::EmitInstToData(const MCInst &Inst) {
+void MCMachOStreamer::EmitInstToData(const MCInst &Inst,
+                                     const MCSubtargetInfo &STI) {
   MCDataFragment *DF = getOrCreateDataFragment();
 
   SmallVector<MCFixup, 4> Fixups;

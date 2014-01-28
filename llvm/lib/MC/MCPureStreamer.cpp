@@ -23,8 +23,9 @@ namespace {
 
 class MCPureStreamer : public MCObjectStreamer {
 private:
-  virtual void EmitInstToFragment(const MCInst &Inst);
-  virtual void EmitInstToData(const MCInst &Inst);
+  virtual void EmitInstToFragment(const MCInst &Inst,
+                                  const MCSubtargetInfo &STI);
+  virtual void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo &STI);
 
 public:
   MCPureStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
@@ -178,7 +179,8 @@ bool MCPureStreamer::EmitValueToOffset(const MCExpr *Offset,
   return false;
 }
 
-void MCPureStreamer::EmitInstToFragment(const MCInst &Inst) {
+void MCPureStreamer::EmitInstToFragment(const MCInst &Inst,
+                                        const MCSubtargetInfo &STI) {
   MCRelaxableFragment *IF = new MCRelaxableFragment(Inst);
   insert(IF);
 
@@ -196,7 +198,8 @@ void MCPureStreamer::EmitInstToFragment(const MCInst &Inst) {
   IF->getFixups() = Fixups;
 }
 
-void MCPureStreamer::EmitInstToData(const MCInst &Inst) {
+void MCPureStreamer::EmitInstToData(const MCInst &Inst,
+                                    const MCSubtargetInfo &STI) {
   MCDataFragment *DF = getOrCreateDataFragment();
 
   SmallVector<MCFixup, 4> Fixups;
