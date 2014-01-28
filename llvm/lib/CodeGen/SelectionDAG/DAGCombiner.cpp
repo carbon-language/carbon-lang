@@ -4583,7 +4583,8 @@ SDValue DAGCombiner::visitSETCC(SDNode *N) {
 // dag nodes (see for example method DAGCombiner::visitSIGN_EXTEND). 
 // Vector extends are not folded if operations are legal; this is to
 // avoid introducing illegal build_vector dag nodes.
-static SDNode *tryToFoldExtendOfConstant(SDNode *N, SelectionDAG &DAG,
+static SDNode *tryToFoldExtendOfConstant(SDNode *N, const TargetLowering &TLI,
+                                         SelectionDAG &DAG, bool LegalTypes,
                                          bool LegalOperations) {
   unsigned Opcode = N->getOpcode();
   SDValue N0 = N->getOperand(0);
@@ -4601,12 +4602,14 @@ static SDNode *tryToFoldExtendOfConstant(SDNode *N, SelectionDAG &DAG,
   // fold (sext (build_vector AllConstants) -> (build_vector AllConstants)
   // fold (zext (build_vector AllConstants) -> (build_vector AllConstants)
   // fold (aext (build_vector AllConstants) -> (build_vector AllConstants)
-  if (!(VT.isVector() && !LegalOperations &&
+  EVT SVT = VT.getScalarType();
+  if (!(VT.isVector() &&
+      (!LegalTypes || (!LegalOperations && TLI.isTypeLegal(SVT))) &&
       ISD::isBuildVectorOfConstantSDNodes(N0.getNode())))
     return 0;
   
   // We can fold this node into a build_vector.
-  unsigned VTBits = VT.getScalarType().getSizeInBits();
+  unsigned VTBits = SVT.getSizeInBits();
   unsigned EVTBits = N0->getValueType(0).getScalarType().getSizeInBits();
   unsigned ShAmt = VTBits - EVTBits;
   SmallVector<SDValue, 8> Elts;
@@ -4616,7 +4619,7 @@ static SDNode *tryToFoldExtendOfConstant(SDNode *N, SelectionDAG &DAG,
   for (unsigned i=0; i != NumElts; ++i) {
     SDValue Op = N0->getOperand(i);
     if (Op->getOpcode() == ISD::UNDEF) {
-      Elts.push_back(DAG.getUNDEF(VT.getScalarType()));
+      Elts.push_back(DAG.getUNDEF(SVT));
       continue;
     }
 
@@ -4624,10 +4627,10 @@ static SDNode *tryToFoldExtendOfConstant(SDNode *N, SelectionDAG &DAG,
     const APInt &C = APInt(VTBits, CurrentND->getAPIntValue().getZExtValue());
     if (Opcode == ISD::SIGN_EXTEND)
       Elts.push_back(DAG.getConstant(C.shl(ShAmt).ashr(ShAmt).getZExtValue(),
-                                     VT.getScalarType()));
+                                     SVT));
     else
       Elts.push_back(DAG.getConstant(C.shl(ShAmt).lshr(ShAmt).getZExtValue(),
-                                     VT.getScalarType()));
+                                     SVT));
   }
 
   return DAG.getNode(ISD::BUILD_VECTOR, DL, VT, &Elts[0], NumElts).getNode();
@@ -4723,7 +4726,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
 
-  if (SDNode *Res = tryToFoldExtendOfConstant(N, DAG, LegalOperations))
+  if (SDNode *Res = tryToFoldExtendOfConstant(N, TLI, DAG, LegalTypes,
+                                              LegalOperations))
     return SDValue(Res, 0);
 
   // fold (sext (sext x)) -> (sext x)
@@ -4978,7 +4982,8 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
 
-  if (SDNode *Res = tryToFoldExtendOfConstant(N, DAG, LegalOperations))
+  if (SDNode *Res = tryToFoldExtendOfConstant(N, TLI, DAG, LegalTypes,
+                                              LegalOperations))
     return SDValue(Res, 0);
 
   // fold (zext (zext x)) -> (zext x)
@@ -5247,7 +5252,8 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
 
-  if (SDNode *Res = tryToFoldExtendOfConstant(N, DAG, LegalOperations))
+  if (SDNode *Res = tryToFoldExtendOfConstant(N, TLI, DAG, LegalTypes,
+                                              LegalOperations))
     return SDValue(Res, 0);
 
   // fold (aext (aext x)) -> (aext x)
