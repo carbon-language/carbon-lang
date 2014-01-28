@@ -1432,7 +1432,7 @@ available in C.
 .. code-block:: c++
 
   int isdigit(int c);
-  int isdigit(int c) __attribute__((enable_if(c <= -1 && c > 255, "chosen when 'c' is out of range"))) __attribute__((unavailable("'c' must have the value of an unsigned char or EOF")));
+  int isdigit(int c) __attribute__((enable_if(c <= -1 || c > 255, "chosen when 'c' is out of range"))) __attribute__((unavailable("'c' must have the value of an unsigned char or EOF")));
   
   void foo(char c) {
     isdigit(c);
