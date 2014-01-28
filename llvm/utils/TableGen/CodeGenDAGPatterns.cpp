@@ -120,6 +120,14 @@ bool EEVT::TypeSet::hasFloatingPointTypes() const {
   return false;
 }
 
+/// hasScalarTypes - Return true if this TypeSet contains a scalar value type.
+bool EEVT::TypeSet::hasScalarTypes() const {
+  for (unsigned i = 0, e = TypeVec.size(); i != e; ++i)
+    if (isScalar(TypeVec[i]))
+      return true;
+  return false;
+}
+
 /// hasVectorTypes - Return true if this TypeSet contains a vAny or a vector
 /// value type.
 bool EEVT::TypeSet::hasVectorTypes() const {
@@ -339,8 +347,9 @@ bool EEVT::TypeSet::EnforceVector(TreePattern &TP) {
 
 
 
-/// EnforceSmallerThan - 'this' must be a smaller VT than Other.  Update
-/// this an other based on this information.
+/// EnforceSmallerThan - 'this' must be a smaller VT than Other. For vectors
+/// this shoud be based on the element type. Update this and other based on
+/// this information.
 bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
   if (TP.hasError())
     return false;
@@ -371,159 +380,100 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
   // If one contains vectors but the other doesn't pull vectors out.
   if (!hasVectorTypes())
     MadeChange |= Other.EnforceScalar(TP);
+  else if (!hasScalarTypes())
+    MadeChange |= Other.EnforceVector(TP);
   if (!Other.hasVectorTypes())
     MadeChange |= EnforceScalar(TP);
+  else if (!Other.hasScalarTypes())
+    MadeChange |= EnforceVector(TP);
 
-  if (isConcrete() && Other.isConcrete()) {
-    // If we are down to concrete types, this code does not currently
-    // handle nodes which have multiple types, where some types are
-    // integer, and some are fp.  Assert that this is not the case.
-    assert(!(hasIntegerTypes() && hasFloatingPointTypes()) &&
-           !(Other.hasIntegerTypes() && Other.hasFloatingPointTypes()) &&
-           "SDTCisOpSmallerThanOp does not handle mixed int/fp types!");
+  // For vectors we need to ensure that smaller size doesn't produce larger
+  // vector and vice versa.
+  if (isConcrete() && isVector(getConcrete())) {
+    MVT IVT = getConcrete();
+    unsigned Size = IVT.getSizeInBits();
 
-    // Otherwise, if these are both vector types, either this vector
-    // must have a larger bitsize than the other, or this element type
-    // must be larger than the other.
-    MVT Type(getConcrete());
-    MVT OtherType(Other.getConcrete());
+    // Only keep types that have at least as many bits.
+    TypeSet InputSet(Other);
 
-    if (hasVectorTypes() && Other.hasVectorTypes()) {
-      if (Type.getSizeInBits() >= OtherType.getSizeInBits())
-        if (Type.getVectorElementType().getSizeInBits()
-            >= OtherType.getVectorElementType().getSizeInBits()) {
-          TP.error("Type inference contradiction found, '" +
-                   getName() + "' element type not smaller than '" +
-                   Other.getName() +"'!");
-          return false;
-        }
-    } else
-      // For scalar types, the bitsize of this type must be larger
-      // than that of the other.
-      if (Type.getSizeInBits() >= OtherType.getSizeInBits()) {
-        TP.error("Type inference contradiction found, '" +
-                 getName() + "' is not smaller than '" +
-                 Other.getName() +"'!");
-        return false;
-      }
-  }
-  
-
-  // Handle int and fp as disjoint sets.  This won't work for patterns
-  // that have mixed fp/int types but those are likely rare and would
-  // not have been accepted by this code previously.
-
-  // Okay, find the smallest type from the current set and remove it from the
-  // largest set.
-  MVT::SimpleValueType SmallestInt = MVT::LAST_VALUETYPE;
-  for (unsigned i = 0, e = TypeVec.size(); i != e; ++i)
-    if (isInteger(TypeVec[i])) {
-      SmallestInt = TypeVec[i];
-      break;
-    }
-  for (unsigned i = 1, e = TypeVec.size(); i != e; ++i)
-    if (isInteger(TypeVec[i]) && TypeVec[i] < SmallestInt)
-      SmallestInt = TypeVec[i];
-
-  MVT::SimpleValueType SmallestFP = MVT::LAST_VALUETYPE;
-  for (unsigned i = 0, e = TypeVec.size(); i != e; ++i)
-    if (isFloatingPoint(TypeVec[i])) {
-      SmallestFP = TypeVec[i];
-      break;
-    }
-  for (unsigned i = 1, e = TypeVec.size(); i != e; ++i)
-    if (isFloatingPoint(TypeVec[i]) && TypeVec[i] < SmallestFP)
-      SmallestFP = TypeVec[i];
-
-  int OtherIntSize = 0;
-  int OtherFPSize = 0;
-  for (SmallVectorImpl<MVT::SimpleValueType>::iterator TVI =
-         Other.TypeVec.begin();
-       TVI != Other.TypeVec.end();
-       /* NULL */) {
-    if (isInteger(*TVI)) {
-      ++OtherIntSize;
-      if (*TVI == SmallestInt) {
-        TVI = Other.TypeVec.erase(TVI);
-        --OtherIntSize;
+    for (unsigned i = 0; i != Other.TypeVec.size(); ++i) {
+      assert(isVector(Other.TypeVec[i]) && "EnforceVector didn't work");
+      if (MVT(Other.TypeVec[i]).getSizeInBits() < Size) {
+        Other.TypeVec.erase(Other.TypeVec.begin()+i--);
         MadeChange = true;
-        continue;
-      }
-    } else if (isFloatingPoint(*TVI)) {
-      ++OtherFPSize;
-      if (*TVI == SmallestFP) {
-        TVI = Other.TypeVec.erase(TVI);
-        --OtherFPSize;
-        MadeChange = true;
-        continue;
       }
     }
-    ++TVI;
+
+    if (Other.TypeVec.empty()) {  // FIXME: Really want an SMLoc here!
+      TP.error("Type inference contradiction found, forcing '" +
+               InputSet.getName() + "' to have at least as many bits as " +
+               getName() + "'");
+      return false;
+    }
+  } else if (Other.isConcrete() && isVector(Other.getConcrete())) {
+    MVT IVT = Other.getConcrete();
+    unsigned Size = IVT.getSizeInBits();
+
+    // Only keep types with the same or fewer total bits
+    TypeSet InputSet(*this);
+
+    for (unsigned i = 0; i != TypeVec.size(); ++i) {
+      assert(isVector(TypeVec[i]) && "EnforceVector didn't work");
+      if (MVT(TypeVec[i]).getSizeInBits() > Size) {
+        TypeVec.erase(TypeVec.begin()+i--);
+        MadeChange = true;
+      }
+    }
+
+    if (TypeVec.empty()) {  // FIXME: Really want an SMLoc here!
+      TP.error("Type inference contradiction found, forcing '" +
+               InputSet.getName() + "' to have the same or fewer bits than " +
+               Other.getName() + "'");
+      return false;
+    }
   }
 
-  // If this is the only type in the large set, the constraint can never be
-  // satisfied.
-  if ((Other.hasIntegerTypes() && OtherIntSize == 0) ||
-      (Other.hasFloatingPointTypes() && OtherFPSize == 0)) {
-    TP.error("Type inference contradiction found, '" +
-             Other.getName() + "' has nothing larger than '" + getName() +"'!");
+  // This code does not currently handle nodes which have multiple types,
+  // where some types are integer, and some are fp.  Assert that this is not
+  // the case.
+  assert(!(hasIntegerTypes() && hasFloatingPointTypes()) &&
+         !(Other.hasIntegerTypes() && Other.hasFloatingPointTypes()) &&
+         "SDTCisOpSmallerThanOp does not handle mixed int/fp types!");
+
+  if (TP.hasError())
+    return false;
+
+  // Okay, find the smallest scalar type from the other set and remove
+  // anything the same or smaller from the current set.
+  TypeSet InputSet(Other);
+  MVT::SimpleValueType Smallest = TypeVec[0];
+  for (unsigned i = 0; i != Other.TypeVec.size(); ++i) {
+    if (Other.TypeVec[i] <= Smallest) {
+      Other.TypeVec.erase(Other.TypeVec.begin()+i--);
+      MadeChange = true;
+    }
+  }
+
+  if (Other.TypeVec.empty()) {
+    TP.error("Type inference contradiction found, '" + InputSet.getName() +
+             "' has nothing larger than '" + getName() +"'!");
     return false;
   }
 
-  // Okay, find the largest type in the Other set and remove it from the
-  // current set.
-  MVT::SimpleValueType LargestInt = MVT::Other;
-  for (unsigned i = 0, e = Other.TypeVec.size(); i != e; ++i)
-    if (isInteger(Other.TypeVec[i])) {
-      LargestInt = Other.TypeVec[i];
-      break;
+  // Okay, find the largest scalar type from the other set and remove
+  // anything the same or larger from the current set.
+  InputSet = TypeSet(*this);
+  MVT::SimpleValueType Largest = Other.TypeVec[Other.TypeVec.size()-1];
+  for (unsigned i = 0; i != TypeVec.size(); ++i) {
+    if (TypeVec[i] >= Largest) {
+      TypeVec.erase(TypeVec.begin()+i--);
+      MadeChange = true;
     }
-  for (unsigned i = 1, e = Other.TypeVec.size(); i != e; ++i)
-    if (isInteger(Other.TypeVec[i]) && Other.TypeVec[i] > LargestInt)
-      LargestInt = Other.TypeVec[i];
-
-  MVT::SimpleValueType LargestFP = MVT::Other;
-  for (unsigned i = 0, e = Other.TypeVec.size(); i != e; ++i)
-    if (isFloatingPoint(Other.TypeVec[i])) {
-      LargestFP = Other.TypeVec[i];
-      break;
-    }
-  for (unsigned i = 1, e = Other.TypeVec.size(); i != e; ++i)
-    if (isFloatingPoint(Other.TypeVec[i]) && Other.TypeVec[i] > LargestFP)
-      LargestFP = Other.TypeVec[i];
-
-  int IntSize = 0;
-  int FPSize = 0;
-  for (SmallVectorImpl<MVT::SimpleValueType>::iterator TVI =
-         TypeVec.begin();
-       TVI != TypeVec.end();
-       /* NULL */) {
-    if (isInteger(*TVI)) {
-      ++IntSize;
-      if (*TVI == LargestInt) {
-        TVI = TypeVec.erase(TVI);
-        --IntSize;
-        MadeChange = true;
-        continue;
-      }
-    } else if (isFloatingPoint(*TVI)) {
-      ++FPSize;
-      if (*TVI == LargestFP) {
-        TVI = TypeVec.erase(TVI);
-        --FPSize;
-        MadeChange = true;
-        continue;
-      }
-    }
-    ++TVI;
   }
 
-  // If this is the only type in the small set, the constraint can never be
-  // satisfied.
-  if ((hasIntegerTypes() && IntSize == 0) ||
-      (hasFloatingPointTypes() && FPSize == 0)) {
-    TP.error("Type inference contradiction found, '" +
-             getName() + "' has nothing smaller than '" + Other.getName()+"'!");
+  if (TypeVec.empty()) {
+    TP.error("Type inference contradiction found, '" + InputSet.getName() +
+             "' has nothing smaller than '" + Other.getName() +"'!");
     return false;
   }
 
