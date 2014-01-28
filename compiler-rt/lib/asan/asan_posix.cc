@@ -42,7 +42,7 @@ static void MaybeInstallSigaction(int signum,
   REAL(memset)(&sigact, 0, sizeof(sigact));
   sigact.sa_sigaction = handler;
   sigact.sa_flags = SA_SIGINFO;
-  if (flags()->use_sigaltstack) sigact.sa_flags |= SA_ONSTACK;
+  if (common_flags()->use_sigaltstack) sigact.sa_flags |= SA_ONSTACK;
   CHECK_EQ(0, REAL(sigaction)(signum, &sigact, 0));
   VReport(1, "Installed the sigaction for signal %d\n", signum);
 }
@@ -87,7 +87,7 @@ void InstallSignalHandlers() {
   // Set the alternate signal stack for the main thread.
   // This will cause SetAlternateSignalStack to be called twice, but the stack
   // will be actually set only once.
-  if (flags()->use_sigaltstack) SetAlternateSignalStack();
+  if (common_flags()->use_sigaltstack) SetAlternateSignalStack();
   MaybeInstallSigaction(SIGSEGV, ASAN_OnSIGSEGV);
   MaybeInstallSigaction(SIGBUS, ASAN_OnSIGSEGV);
 }

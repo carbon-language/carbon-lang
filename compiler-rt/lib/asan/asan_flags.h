@@ -70,12 +70,6 @@ struct Flags {
   // terminating application. Useful for debug purposes (when one needs
   // to attach gdb, for example).
   int  sleep_before_dying;
-  // If set, registers ASan custom segv handler.
-  bool handle_segv;
-  // If set, allows user register segv handler even if ASan registers one.
-  bool allow_user_segv_handler;
-  // If set, uses alternate stack for signal handling.
-  bool use_sigaltstack;
   // Allow the users to work around the bug in Nvidia drivers prior to 295.*.
   bool check_malloc_usable_size;
   // If set, explicitly unmaps (huge) shadow at exit.

@@ -99,7 +99,7 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 }
 
 bool AsanInterceptsSignal(int signum) {
-  return signum == SIGSEGV && flags()->handle_segv;
+  return signum == SIGSEGV && common_flags()->handle_segv;
 }
 
 void AsanPlatformThreadInit() {

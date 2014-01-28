@@ -121,9 +121,6 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->exitcode, "exitcode");
   ParseFlag(str, &f->allow_user_poisoning, "allow_user_poisoning");
   ParseFlag(str, &f->sleep_before_dying, "sleep_before_dying");
-  ParseFlag(str, &f->handle_segv, "handle_segv");
-  ParseFlag(str, &f->allow_user_segv_handler, "allow_user_segv_handler");
-  ParseFlag(str, &f->use_sigaltstack, "use_sigaltstack");
   ParseFlag(str, &f->check_malloc_usable_size, "check_malloc_usable_size");
   ParseFlag(str, &f->unmap_shadow_on_exit, "unmap_shadow_on_exit");
   ParseFlag(str, &f->abort_on_error, "abort_on_error");
@@ -167,9 +164,6 @@ void InitializeFlags(Flags *f, const char *env) {
   f->exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;
   f->allow_user_poisoning = true;
   f->sleep_before_dying = 0;
-  f->handle_segv = ASAN_NEEDS_SEGV;
-  f->allow_user_segv_handler = false;
-  f->use_sigaltstack = false;
   f->check_malloc_usable_size = true;
   f->unmap_shadow_on_exit = false;
   f->abort_on_error = false;

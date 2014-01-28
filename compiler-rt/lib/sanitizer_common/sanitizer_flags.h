@@ -58,6 +58,14 @@ struct CommonFlags {
   bool print_summary;
   // Check printf arguments.
   bool check_printf;
+  // If set, registers the tool's custom SEGV handler (both SIGBUS and SIGSEGV
+  // on OSX).
+  bool handle_segv;
+  // If set, allows user to register a SEGV handler even if the tool registers
+  // one.
+  bool allow_user_segv_handler;
+  // If set, uses alternate stack for signal handling.
+  bool use_sigaltstack;
 };
 
 inline CommonFlags *common_flags() {

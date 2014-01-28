@@ -30,15 +30,6 @@
 
 // Build-time configuration options.
 
-// If set, asan will install its own SEGV signal handler.
-#ifndef ASAN_NEEDS_SEGV
-# if SANITIZER_ANDROID == 1
-#  define ASAN_NEEDS_SEGV 0
-# else
-#  define ASAN_NEEDS_SEGV 1
-# endif
-#endif
-
 // If set, asan will intercept C++ exception api call(s).
 #ifndef ASAN_HAS_EXCEPTIONS
 # define ASAN_HAS_EXCEPTIONS 1
