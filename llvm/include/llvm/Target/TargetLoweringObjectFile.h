@@ -38,7 +38,7 @@ class TargetLoweringObjectFile : public MCObjectFileInfo {
   const DataLayout *DL;
 
   TargetLoweringObjectFile(
-      const TargetLoweringObjectFile &) LLVM_DELETED_FUNCTION;
+    const TargetLoweringObjectFile&) LLVM_DELETED_FUNCTION;
   void operator=(const TargetLoweringObjectFile&) LLVM_DELETED_FUNCTION;
 
 public:
@@ -91,14 +91,14 @@ public:
   /// be passed external (or available externally) globals.
   const MCSection *SectionForGlobal(const GlobalValue *GV,
                                     SectionKind Kind, Mangler *Mang,
-                                    TargetMachine &TM) const;
+                                    const TargetMachine &TM) const;
   
   /// SectionForGlobal - This method computes the appropriate section to emit
   /// the specified global variable or function definition.  This should not
   /// be passed external (or available externally) globals.
   const MCSection *SectionForGlobal(const GlobalValue *GV,
                                     Mangler *Mang,
-                                    TargetMachine &TM) const {
+                                    const TargetMachine &TM) const {
     return SectionForGlobal(GV, getKindForGlobal(GV, TM), Mang, TM);
   }
 
@@ -167,7 +167,7 @@ public:
 protected:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                         Mangler *Mang, TargetMachine &TM) const;
+                         Mangler *Mang, const TargetMachine &TM) const;
 };
 
 } // end namespace llvm

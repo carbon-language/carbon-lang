@@ -53,7 +53,7 @@ public:
 
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                         Mangler *Mang, TargetMachine &TM) const;
+                         Mangler *Mang, const TargetMachine &TM) const;
 
   /// getTTypeGlobalReference - Return an MCExpr to use for a reference to the
   /// specified type info global variable from exception handling information.
@@ -92,7 +92,7 @@ public:
 
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                         Mangler *Mang, TargetMachine &TM) const;
+                         Mangler *Mang, const TargetMachine &TM) const;
 
   virtual const MCSection *
   getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
@@ -131,7 +131,7 @@ public:
 
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                         Mangler *Mang, TargetMachine &TM) const;
+                         Mangler *Mang, const TargetMachine &TM) const;
 
   /// getDepLibFromLinkerOpt - Extract the dependent library name from a linker
   /// option string. Returns StringRef() if the option does not specify a library.

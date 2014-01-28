@@ -265,7 +265,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
 /// be passed external (or available externally) globals.
 const MCSection *TargetLoweringObjectFile::
 SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler *Mang,
-                 TargetMachine &TM) const {
+                 const TargetMachine &TM) const {
   // Select section name.
   if (GV->hasSection())
     return getExplicitSectionGlobal(GV, Kind, Mang, TM);
@@ -277,9 +277,11 @@ SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler *Mang,
 
 
 // Lame default implementation. Calculate the section name for global.
-const MCSection *TargetLoweringObjectFile::SelectSectionForGlobal(
-    const GlobalValue *GV, SectionKind Kind, Mangler *Mang,
-    TargetMachine &TM) const {
+const MCSection *
+TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
+                                                 SectionKind Kind,
+                                                 Mangler *Mang,
+                                                 const TargetMachine &TM) const{
   assert(!Kind.isThreadLocal() && "Doesn't support TLS");
 
   if (Kind.isText())

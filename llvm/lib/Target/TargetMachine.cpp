@@ -55,7 +55,6 @@ TargetMachine::TargetMachine(const Target &T,
     MCUseLoc(true),
     MCUseCFI(true),
     MCUseDwarfDirectory(false),
-    DebugUseUniqueSections(false),
     RequireStructuredCFG(false),
     Options(Options) {
 }

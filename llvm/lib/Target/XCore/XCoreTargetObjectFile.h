@@ -27,10 +27,9 @@ static const unsigned CodeModelLargeSize = 256;
     getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
                              Mangler *Mang, const TargetMachine &TM) const;
 
-    virtual const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                                    SectionKind Kind,
-                                                    Mangler *Mang,
-                                                    TargetMachine &TM) const;
+    virtual const MCSection *
+    SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+                           Mangler *Mang, const TargetMachine &TM) const;
 
     virtual const MCSection *getSectionForConstant(SectionKind Kind) const;
   };

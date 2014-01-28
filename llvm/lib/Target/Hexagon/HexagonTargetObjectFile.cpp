@@ -87,7 +87,7 @@ IsGlobalInSmallSection(const GlobalValue *GV, const TargetMachine &TM,
 
 const MCSection *HexagonTargetObjectFile::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       Mangler *Mang, TargetMachine &TM) const {
+                       Mangler *Mang, const TargetMachine &TM) const {
 
   // Handle Small Section classification here.
   if (Kind.isBSS() && IsGlobalInSmallSection(GV, TM, Kind))

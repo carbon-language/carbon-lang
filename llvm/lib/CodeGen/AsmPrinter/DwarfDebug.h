@@ -461,6 +461,10 @@ class DwarfDebug : public AsmPrinterHandler {
   // Whether or not to use AT_ranges for compilation units.
   bool HasCURanges;
 
+  // Whether we emitted a function into a section other than the default
+  // text.
+  bool UsedNonDefaultText;
+
   // Version of dwarf we're emitting.
   unsigned DwarfVersion;
 

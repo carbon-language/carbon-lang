@@ -176,6 +176,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     : Asm(A), MMI(Asm->MMI), FirstCU(0), SourceIdMap(DIEValueAllocator),
       PrevLabel(NULL), GlobalRangeCount(0),
       InfoHolder(A, "info_string", DIEValueAllocator), HasCURanges(false),
+      UsedNonDefaultText(false),
       SkeletonHolder(A, "skel_string", DIEValueAllocator) {
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = DwarfStrSectionSym = 0;
@@ -1123,7 +1124,7 @@ void DwarfDebug::endSections() {
   // we have -ffunction-sections enabled, or we've emitted a function
   // into a unique section. At this point all sections should be finalized
   // except for dwarf sections.
-  HasCURanges = DwarfCURanges || Asm->TM.debugUseUniqueSections() ||
+  HasCURanges = DwarfCURanges || UsedNonDefaultText ||
                 TargetMachine::getFunctionSections();
 }
 
@@ -1579,6 +1580,12 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
   else
     Asm->OutStreamer.getContext().setDwarfCompileUnitID(TheCU->getUniqueID());
+
+  // Check the current section against the standard text section. If different
+  // keep track so that we will know when we're emitting functions into multiple
+  // sections.
+  if (Asm->getObjFileLowering().getTextSection() != Asm->getCurrentSection())
+    UsedNonDefaultText = true;
 
   // Emit a label for the function so that we have a beginning address.
   FunctionBeginSym = Asm->GetTempSymbol("func_begin", Asm->getFunctionNumber());

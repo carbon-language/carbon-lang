@@ -30,9 +30,10 @@ namespace llvm {
                                 const TargetMachine &TM) const;
 
     bool IsSmallDataEnabled () const;
-    const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                            SectionKind Kind, Mangler *Mang,
-                                            TargetMachine &TM) const;
+    const MCSection* SelectSectionForGlobal(const GlobalValue *GV,
+                                            SectionKind Kind,
+                                            Mangler *Mang,
+                                            const TargetMachine &TM) const;
   };
 
 } // namespace llvm

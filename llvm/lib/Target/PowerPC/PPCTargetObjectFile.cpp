@@ -24,7 +24,7 @@ Initialize(MCContext &Ctx, const TargetMachine &TM) {
 
 const MCSection * PPC64LinuxTargetObjectFile::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       Mangler *Mang, TargetMachine &TM) const {
+                       Mangler *Mang, const TargetMachine &TM) const {
 
   const MCSection *DefaultSection = 
     TargetLoweringObjectFileELF::SelectSectionForGlobal(GV, Kind, Mang, TM);
