@@ -294,132 +294,54 @@ INTERCEPTOR(char *, strncat, char *dest, const char *src, SIZE_T n) {  // NOLINT
   return res;
 }
 
-INTERCEPTOR(long, strtol, const char *nptr, char **endptr,  // NOLINT
-            int base) {
-  ENSURE_MSAN_INITED();
-  long res = REAL(strtol)(nptr, endptr, base);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
-  }
+// Hack: always pass nptr and endptr as part of __VA_ARGS_ to avoid having to
+// deal with empty __VA_ARGS__ in the case of INTERCEPTOR_STRTO.
+#define INTERCEPTOR_STRTO_BODY(ret_type, func, ...) \
+  ENSURE_MSAN_INITED();                             \
+  ret_type res = REAL(func)(__VA_ARGS__);           \
+  if (!__msan_has_dynamic_component()) {            \
+    __msan_unpoison(endptr, sizeof(*endptr));       \
+  }                                                 \
   return res;
-}
 
-INTERCEPTOR(long long, strtoll, const char *nptr, char **endptr,  // NOLINT
-            int base) {
-  ENSURE_MSAN_INITED();
-  long res = REAL(strtoll)(nptr, endptr, base);  //NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
+#define INTERCEPTOR_STRTO(ret_type, func)                        \
+  INTERCEPTOR(ret_type, func, const char *nptr, char **endptr) { \
+    INTERCEPTOR_STRTO_BODY(ret_type, func, nptr, endptr);        \
   }
-  return res;
-}
 
-INTERCEPTOR(unsigned long, strtoul, const char *nptr, char **endptr,  // NOLINT
-            int base) {
-  ENSURE_MSAN_INITED();
-  unsigned long res = REAL(strtoul)(nptr, endptr, base);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
+#define INTERCEPTOR_STRTO_BASE(ret_type, func)                             \
+  INTERCEPTOR(ret_type, func, const char *nptr, char **endptr, int base) { \
+    INTERCEPTOR_STRTO_BODY(ret_type, func, nptr, endptr, base);            \
   }
-  return res;
-}
 
-INTERCEPTOR(unsigned long long, strtoull, const char *nptr,  // NOLINT
-            char **endptr, int base) {
-  ENSURE_MSAN_INITED();
-  unsigned long res = REAL(strtoull)(nptr, endptr, base);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
+#define INTERCEPTOR_STRTO_LOC(ret_type, func)                               \
+  INTERCEPTOR(ret_type, func, const char *nptr, char **endptr, void *loc) { \
+    INTERCEPTOR_STRTO_BODY(ret_type, func, nptr, endptr, loc);              \
   }
-  return res;
-}
 
-INTERCEPTOR(double, strtod, const char *nptr, char **endptr) {  // NOLINT
-  ENSURE_MSAN_INITED();
-  double res = REAL(strtod)(nptr, endptr);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
+#define INTERCEPTOR_STRTO_BASE_LOC(ret_type, func)                       \
+  INTERCEPTOR(ret_type, func, const char *nptr, char **endptr, int base, \
+              void *loc) {                                               \
+    INTERCEPTOR_STRTO_BODY(ret_type, func, nptr, endptr, base, loc);     \
   }
-  return res;
-}
 
-INTERCEPTOR(double, strtod_l, const char *nptr, char **endptr,
-            void *loc) {  // NOLINT
-  ENSURE_MSAN_INITED();
-  double res = REAL(strtod_l)(nptr, endptr, loc);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
-  }
-  return res;
-}
-
-INTERCEPTOR(double, __strtod_l, const char *nptr, char **endptr,
-            void *loc) {  // NOLINT
-  ENSURE_MSAN_INITED();
-  double res = REAL(__strtod_l)(nptr, endptr, loc);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
-  }
-  return res;
-}
-
-INTERCEPTOR(float, strtof, const char *nptr, char **endptr) {  // NOLINT
-  ENSURE_MSAN_INITED();
-  float res = REAL(strtof)(nptr, endptr);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
-  }
-  return res;
-}
-
-INTERCEPTOR(float, strtof_l, const char *nptr, char **endptr,
-            void *loc) {  // NOLINT
-  ENSURE_MSAN_INITED();
-  float res = REAL(strtof_l)(nptr, endptr, loc);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
-  }
-  return res;
-}
-
-INTERCEPTOR(float, __strtof_l, const char *nptr, char **endptr,
-            void *loc) {  // NOLINT
-  ENSURE_MSAN_INITED();
-  float res = REAL(__strtof_l)(nptr, endptr, loc);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
-  }
-  return res;
-}
-
-INTERCEPTOR(long double, strtold, const char *nptr, char **endptr) {  // NOLINT
-  ENSURE_MSAN_INITED();
-  long double res = REAL(strtold)(nptr, endptr);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
-  }
-  return res;
-}
-
-INTERCEPTOR(long double, strtold_l, const char *nptr, char **endptr,
-            void *loc) {  // NOLINT
-  ENSURE_MSAN_INITED();
-  long double res = REAL(strtold_l)(nptr, endptr, loc);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
-  }
-  return res;
-}
-
-INTERCEPTOR(long double, __strtold_l, const char *nptr, char **endptr,
-            void *loc) {  // NOLINT
-  ENSURE_MSAN_INITED();
-  long double res = REAL(__strtold_l)(nptr, endptr, loc);  // NOLINT
-  if (!__msan_has_dynamic_component()) {
-    __msan_unpoison(endptr, sizeof(*endptr));
-  }
-  return res;
-}
+INTERCEPTOR_STRTO(double, strtod)                           // NOLINT
+INTERCEPTOR_STRTO(float, strtof)                            // NOLINT
+INTERCEPTOR_STRTO(long double, strtold)                     // NOLINT
+INTERCEPTOR_STRTO_BASE(long, strtol)                        // NOLINT
+INTERCEPTOR_STRTO_BASE(long long, strtoll)                  // NOLINT
+INTERCEPTOR_STRTO_BASE(unsigned long, strtoul)              // NOLINT
+INTERCEPTOR_STRTO_BASE(unsigned long long, strtoull)        // NOLINT
+INTERCEPTOR_STRTO_LOC(double, strtod_l)                     // NOLINT
+INTERCEPTOR_STRTO_LOC(double, __strtod_l)                   // NOLINT
+INTERCEPTOR_STRTO_LOC(float, strtof_l)                      // NOLINT
+INTERCEPTOR_STRTO_LOC(float, __strtof_l)                    // NOLINT
+INTERCEPTOR_STRTO_LOC(long double, strtold_l)               // NOLINT
+INTERCEPTOR_STRTO_LOC(long double, __strtold_l)             // NOLINT
+INTERCEPTOR_STRTO_BASE_LOC(long, strtol_l)                  // NOLINT
+INTERCEPTOR_STRTO_BASE_LOC(long long, strtoll_l)            // NOLINT
+INTERCEPTOR_STRTO_BASE_LOC(unsigned long, strtoul_l)        // NOLINT
+INTERCEPTOR_STRTO_BASE_LOC(unsigned long long, strtoull_l)  // NOLINT
 
 INTERCEPTOR(int, vasprintf, char **strp, const char *format, va_list ap) {
   ENSURE_MSAN_INITED();
@@ -1498,6 +1420,10 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(strtold);
   INTERCEPT_FUNCTION(strtold_l);
   INTERCEPT_FUNCTION(__strtold_l);
+  INTERCEPT_FUNCTION(strtol_l);
+  INTERCEPT_FUNCTION(strtoll_l);
+  INTERCEPT_FUNCTION(strtoul_l);
+  INTERCEPT_FUNCTION(strtoull_l);
   INTERCEPT_FUNCTION(vasprintf);
   INTERCEPT_FUNCTION(asprintf);
   INTERCEPT_FUNCTION(vsprintf);

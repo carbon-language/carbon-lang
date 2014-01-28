@@ -1528,29 +1528,55 @@ TEST(MemorySanitizer, strncat_overflow) {  // NOLINT
   EXPECT_POISONED(a[7]);
 }
 
-TEST(MemorySanitizer, strtol) {
-  char *e;
-  ASSERT_EQ(1, strtol("1", &e, 10));
-  EXPECT_NOT_POISONED((S8) e);
-}
+#define TEST_STRTO_INT(func_name)         \
+  TEST(MemorySanitizer, func_name) {      \
+    char *e;                              \
+    EXPECT_EQ(1, func_name("1", &e, 10)); \
+    EXPECT_NOT_POISONED((S8)e);           \
+  }
 
-TEST(MemorySanitizer, strtoll) {
-  char *e;
-  ASSERT_EQ(1, strtoll("1", &e, 10));
-  EXPECT_NOT_POISONED((S8) e);
-}
+#define TEST_STRTO_FLOAT(func_name)     \
+  TEST(MemorySanitizer, func_name) {    \
+    char *e;                            \
+    EXPECT_NE(0, func_name("1.5", &e)); \
+    EXPECT_NOT_POISONED((S8)e);         \
+  }
 
-TEST(MemorySanitizer, strtoul) {
-  char *e;
-  ASSERT_EQ(1, strtoul("1", &e, 10));
-  EXPECT_NOT_POISONED((S8) e);
-}
+#define TEST_STRTO_FLOAT_LOC(func_name)                          \
+  TEST(MemorySanitizer, func_name) {                             \
+    locale_t loc = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0); \
+    char *e;                                                     \
+    EXPECT_NE(0, func_name("1.5", &e, loc));                     \
+    EXPECT_NOT_POISONED((S8)e);                                  \
+    freelocale(loc);                                             \
+  }
 
-TEST(MemorySanitizer, strtoull) {
-  char *e;
-  ASSERT_EQ(1, strtoull("1", &e, 10));
-  EXPECT_NOT_POISONED((S8) e);
-}
+#define TEST_STRTO_INT_LOC(func_name)                            \
+  TEST(MemorySanitizer, func_name) {                             \
+    locale_t loc = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0); \
+    char *e;                                                     \
+    ASSERT_EQ(1, func_name("1", &e, 10, loc));                   \
+    EXPECT_NOT_POISONED((S8)e);                                  \
+    freelocale(loc);                                             \
+  }
+
+TEST_STRTO_INT(strtol)
+TEST_STRTO_INT(strtoll)
+TEST_STRTO_INT(strtoul)
+TEST_STRTO_INT(strtoull)
+
+TEST_STRTO_FLOAT(strtof)
+TEST_STRTO_FLOAT(strtod)
+TEST_STRTO_FLOAT(strtold)
+
+TEST_STRTO_FLOAT_LOC(strtof_l)
+TEST_STRTO_FLOAT_LOC(strtod_l)
+TEST_STRTO_FLOAT_LOC(strtold_l)
+
+TEST_STRTO_INT_LOC(strtol_l)
+TEST_STRTO_INT_LOC(strtoll_l)
+TEST_STRTO_INT_LOC(strtoul_l)
+TEST_STRTO_INT_LOC(strtoull_l)
 
 // https://code.google.com/p/memory-sanitizer/issues/detail?id=36
 TEST(MemorySanitizer, DISABLED_strtoimax) {
@@ -1566,34 +1592,15 @@ TEST(MemorySanitizer, DISABLED_strtoumax) {
   EXPECT_NOT_POISONED((S8) e);
 }
 
-TEST(MemorySanitizer, strtod) {
-  char *e;
-  ASSERT_NE(0, strtod("1.5", &e));
-  EXPECT_NOT_POISONED((S8) e);
-}
-
 #ifdef __GLIBC__
+extern "C" float __strtof_l(const char *nptr, char **endptr, locale_t loc);
+TEST_STRTO_FLOAT_LOC(__strtof_l)
 extern "C" double __strtod_l(const char *nptr, char **endptr, locale_t loc);
-TEST(MemorySanitizer, __strtod_l) {
-  locale_t loc = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0);
-  char *e;
-  ASSERT_NE(0, __strtod_l("1.5", &e, loc));
-  EXPECT_NOT_POISONED((S8) e);
-  freelocale(loc);
-}
+TEST_STRTO_FLOAT_LOC(__strtod_l)
+extern "C" long double __strtold_l(const char *nptr, char **endptr,
+                                   locale_t loc);
+TEST_STRTO_FLOAT_LOC(__strtold_l)
 #endif  // __GLIBC__
-
-TEST(MemorySanitizer, strtof) {
-  char *e;
-  ASSERT_NE(0, strtof("1.5", &e));
-  EXPECT_NOT_POISONED((S8) e);
-}
-
-TEST(MemorySanitizer, strtold) {
-  char *e;
-  ASSERT_NE(0, strtold("1.5", &e));
-  EXPECT_NOT_POISONED((S8) e);
-}
 
 TEST(MemorySanitizer, modf) {
   double x, y;
