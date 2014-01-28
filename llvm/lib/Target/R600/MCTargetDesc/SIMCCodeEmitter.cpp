@@ -55,7 +55,8 @@ public:
 
   /// \brief Encode the instruction and write it to the OS.
   virtual void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                         SmallVectorImpl<MCFixup> &Fixups) const;
+                         SmallVectorImpl<MCFixup> &Fixups,
+                         const MCSubtargetInfo &STI) const;
 
   /// \returns the encoding for an MCOperand.
   virtual uint64_t getMachineOpValue(const MCInst &MI, const MCOperand &MO,
@@ -125,7 +126,8 @@ uint32_t SIMCCodeEmitter::getLitEncoding(const MCOperand &MO) const {
 }
 
 void SIMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
 
   uint64_t Encoding = getBinaryCodeForInstr(MI, Fixups);
   const MCInstrDesc &Desc = MCII.get(MI.getOpcode());

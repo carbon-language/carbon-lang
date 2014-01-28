@@ -121,7 +121,8 @@ public:
 
 
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                         SmallVectorImpl<MCFixup> &Fixups) const;
+                         SmallVectorImpl<MCFixup> &Fixups,
+                         const MCSubtargetInfo &STI) const;
 
   template<int hasRs, int hasRt2> unsigned
   fixLoadStoreExclusive(const MCInst &MI, unsigned EncodedValue) const;
@@ -545,7 +546,8 @@ MCCodeEmitter *llvm::createAArch64MCCodeEmitter(const MCInstrInfo &MCII,
 
 void AArch64MCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                  SmallVectorImpl<MCFixup> &Fixups) const {
+                  SmallVectorImpl<MCFixup> &Fixups,
+                  const MCSubtargetInfo &STI) const {
   if (MI.getOpcode() == AArch64::TLSDESCCALL) {
     // This is a directive which applies an R_AARCH64_TLSDESC_CALL to the
     // following (BLR) instruction. It doesn't emit any code itself so it

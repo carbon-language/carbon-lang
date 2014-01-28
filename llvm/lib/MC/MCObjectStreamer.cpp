@@ -235,7 +235,8 @@ void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst,
 
   SmallString<128> Code;
   raw_svector_ostream VecOS(Code);
-  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, IF->getFixups());
+  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, IF->getFixups(),
+                                                STI);
   VecOS.flush();
   IF->getContents().append(Code.begin(), Code.end());
 }

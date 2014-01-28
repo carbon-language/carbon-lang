@@ -76,7 +76,8 @@ public:
   uint64_t getBinaryCodeForInstr(const MCInst &MI,
                                  SmallVectorImpl<MCFixup> &Fixups) const;
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                         SmallVectorImpl<MCFixup> &Fixups) const {
+                         SmallVectorImpl<MCFixup> &Fixups,
+                         const MCSubtargetInfo &STI) const {
     // For fast-isel, a float COPY_TO_REGCLASS can survive this long.
     // It's just a nop to keep the register classes happy, so don't
     // generate anything.

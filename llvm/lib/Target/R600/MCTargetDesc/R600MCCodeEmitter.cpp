@@ -44,7 +44,8 @@ public:
 
   /// \brief Encode the instruction and write it to the OS.
   virtual void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                         SmallVectorImpl<MCFixup> &Fixups) const;
+                         SmallVectorImpl<MCFixup> &Fixups,
+                         const MCSubtargetInfo &STI) const;
 
   /// \returns the encoding for an MCOperand.
   virtual uint64_t getMachineOpValue(const MCInst &MI, const MCOperand &MO,
@@ -87,7 +88,8 @@ MCCodeEmitter *llvm::createR600MCCodeEmitter(const MCInstrInfo &MCII,
 }
 
 void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
   const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
   if (MI.getOpcode() == AMDGPU::RETURN ||
     MI.getOpcode() == AMDGPU::FETCH_CLAUSE ||

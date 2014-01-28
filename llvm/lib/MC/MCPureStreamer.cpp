@@ -191,7 +191,7 @@ void MCPureStreamer::EmitInstToFragment(const MCInst &Inst,
   SmallVector<MCFixup, 4> Fixups;
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
-  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups, STI);
   VecOS.flush();
 
   IF->getContents() = Code;
@@ -205,7 +205,7 @@ void MCPureStreamer::EmitInstToData(const MCInst &Inst,
   SmallVector<MCFixup, 4> Fixups;
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
-  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups, STI);
   VecOS.flush();
 
   // Add the fixups and data.

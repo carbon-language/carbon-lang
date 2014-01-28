@@ -412,7 +412,7 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst,
   SmallVector<MCFixup, 4> Fixups;
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
-  Assembler.getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+  Assembler.getEmitter().EncodeInstruction(Inst, VecOS, Fixups, STI);
   VecOS.flush();
 
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i)

@@ -35,7 +35,8 @@ public:
 
   // OVerride MCCodeEmitter.
   virtual void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                                 SmallVectorImpl<MCFixup> &Fixups) const
+                                 SmallVectorImpl<MCFixup> &Fixups,
+                                 const MCSubtargetInfo &STI) const
     LLVM_OVERRIDE;
 
 private:
@@ -91,7 +92,8 @@ MCCodeEmitter *llvm::createSystemZMCCodeEmitter(const MCInstrInfo &MCII,
 
 void SystemZMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                  SmallVectorImpl<MCFixup> &Fixups) const {
+                  SmallVectorImpl<MCFixup> &Fixups,
+                  const MCSubtargetInfo &STI) const {
   uint64_t Bits = getBinaryCodeForInstr(MI, Fixups);
   unsigned Size = MCII.get(MI.getOpcode()).getSize();
   // Big-endian insertion of Size bytes.
