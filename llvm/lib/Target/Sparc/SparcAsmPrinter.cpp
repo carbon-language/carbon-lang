@@ -23,7 +23,9 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -55,6 +57,7 @@ namespace {
 
     virtual void EmitFunctionBodyStart();
     virtual void EmitInstruction(const MachineInstr *MI);
+    virtual void EmitEndOfAsmFile(Module &M);
 
     static const char *getRegisterName(unsigned RegNo) {
       return SparcInstPrinter::getRegisterName(RegNo);
@@ -450,6 +453,23 @@ bool SparcAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   O << ']';
 
   return false;
+}
+
+void SparcAsmPrinter::EmitEndOfAsmFile(Module &M) {
+  const TargetLoweringObjectFileELF &TLOFELF =
+    static_cast<const TargetLoweringObjectFileELF &>(getObjFileLowering());
+  MachineModuleInfoELF &MMIELF = MMI->getObjFileInfo<MachineModuleInfoELF>();
+
+  // Generate stubs for global variables.
+  MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
+  if (!Stubs.empty()) {
+    OutStreamer.SwitchSection(TLOFELF.getDataSection());
+    unsigned PtrSize = TM.getDataLayout()->getPointerSize(0);
+    for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+      OutStreamer.EmitLabel(Stubs[i].first);
+      OutStreamer.EmitSymbolValue(Stubs[i].second.getPointer(), PtrSize);
+    }
+  }
 }
 
 // Force static initialization.

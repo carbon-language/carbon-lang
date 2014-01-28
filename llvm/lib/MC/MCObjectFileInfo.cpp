@@ -311,6 +311,33 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
     FDEEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata8;
     TTypeEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
       dwarf::DW_EH_PE_udata8;
+  } else if (T.getArch() == Triple::sparc) {
+    if (RelocM == Reloc::PIC_) {
+      LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+      PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+        dwarf::DW_EH_PE_sdata4;
+      FDEEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+      TTypeEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+        dwarf::DW_EH_PE_sdata4;
+    } else {
+      LSDAEncoding = dwarf::DW_EH_PE_absptr;
+      PersonalityEncoding = dwarf::DW_EH_PE_absptr;
+      FDEEncoding = dwarf::DW_EH_PE_udata4;
+      TTypeEncoding = dwarf::DW_EH_PE_absptr;
+    }
+  } else if (T.getArch() == Triple::sparcv9) {
+    LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+    if (RelocM == Reloc::PIC_) {
+      PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+        dwarf::DW_EH_PE_sdata4;
+      FDEEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+      TTypeEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+        dwarf::DW_EH_PE_sdata4;
+    } else {
+      PersonalityEncoding = dwarf::DW_EH_PE_absptr;
+      FDEEncoding = dwarf::DW_EH_PE_udata4;
+      TTypeEncoding = dwarf::DW_EH_PE_absptr;
+    }
   } else if (T.getArch() == Triple::systemz) {
     // All currently-defined code models guarantee that 4-byte PC-relative
     // values will be in range.

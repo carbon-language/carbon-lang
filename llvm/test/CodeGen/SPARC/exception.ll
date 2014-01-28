@@ -1,4 +1,7 @@
-; RUN: llc < %s -march=sparc | FileCheck %s
+; RUN: llc < %s -march=sparc   -relocation-model=static | FileCheck -check-prefix=V8ABS %s
+; RUN: llc < %s -march=sparc   -relocation-model=pic    | FileCheck -check-prefix=V8PIC %s
+; RUN: llc < %s -march=sparcv9 -relocation-model=static | FileCheck -check-prefix=V9ABS %s
+; RUN: llc < %s -march=sparcv9 -relocation-model=pic    | FileCheck -check-prefix=V9PIC %s
 
 
 %struct.__fundamental_type_info_pseudo = type { %struct.__type_info_pseudo }
@@ -9,22 +12,63 @@
 @.cst = linker_private unnamed_addr constant [12 x i8] c"catched int\00", align 64
 @.cst1 = linker_private unnamed_addr constant [14 x i8] c"catched float\00", align 64
 
-; CHECK-LABEL: main:
-; CHECK:       .cfi_startproc
-; CHECK:       .cfi_def_cfa_register {{30|%fp}}
-; CHECK:       .cfi_window_save
-; CHECK:       .cfi_register 15, 31
+; V8ABS-LABEL: main:
+; V8ABS:        .cfi_startproc
+; V8ABS:        .cfi_personality 0, __gxx_personality_v0
+; V8ABS:        .cfi_lsda 0,
+; V8ABS:        .cfi_def_cfa_register {{30|%fp}}
+; V8ABS:        .cfi_window_save
+; V8ABS:        .cfi_register 15, 31
 
-; CHECK:        call __cxa_throw
-; CHECK:        call __cxa_throw
+; V8ABS:        call __cxa_throw
+; V8ABS:        call __cxa_throw
 
-; CHECK:        call __cxa_begin_catch
-; CHECK:        call __cxa_end_catch
+; V8ABS:        call __cxa_begin_catch
+; V8ABS:        call __cxa_end_catch
 
-; CHECK:        call __cxa_begin_catch
-; CHECK:        call __cxa_end_catch
+; V8ABS:        call __cxa_begin_catch
+; V8ABS:        call __cxa_end_catch
 
-; CHECK:        .cfi_endproc
+; V8ABS:        .cfi_endproc
+
+; V8PIC-LABEL: main:
+; V8PIC:        .cfi_startproc
+; V8PIC:        .cfi_personality 155, DW.ref.__gxx_personality_v0
+; V8PIC:        .cfi_lsda 27,
+; V8PIC:        .cfi_def_cfa_register {{30|%fp}}
+; V8PIC:        .cfi_window_save
+; V8PIC:        .cfi_register 15, 31
+; V8PIC:        .section .gcc_except_table
+; V8PIC-NOT:    .section
+; V8PIC:        .word .L_ZTIi.DW.stub-
+; V8PIC:        .data
+; V8PIC: .L_ZTIi.DW.stub:
+; V8PIC-NEXT:   .word _ZTIi
+
+; V9ABS-LABEL: main:
+; V9ABS:        .cfi_startproc
+; V9ABS:        .cfi_personality 0, __gxx_personality_v0
+; V9ABS:        .cfi_lsda 27,
+; V9ABS:        .cfi_def_cfa_register {{30|%fp}}
+; V9ABS:        .cfi_window_save
+; V9ABS:        .cfi_register 15, 31
+; V9ABS:        .section .gcc_except_table
+; V9ABS-NOT:    .section
+; V9ABS:        .xword _ZTIi
+
+; V9PIC-LABEL: main:
+; V9PIC:        .cfi_startproc
+; V9PIC:        .cfi_personality 155, DW.ref.__gxx_personality_v0
+; V9PIC:        .cfi_lsda 27,
+; V9PIC:        .cfi_def_cfa_register {{30|%fp}}
+; V9PIC:        .cfi_window_save
+; V9PIC:        .cfi_register 15, 31
+; V9PIC:        .section .gcc_except_table
+; V9PIC-NOT:    .section
+; V9PIC:        .word .L_ZTIi.DW.stub-
+; V9PIC:        .data
+; V9PIC: .L_ZTIi.DW.stub:
+; V9PIC-NEXT:   .xword _ZTIi
 
 define i32 @main(i32 %argc, i8** nocapture readnone %argv) unnamed_addr #0 {
 entry:
