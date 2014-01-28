@@ -4047,7 +4047,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                 : diag::err_typecheck_call_too_few_args_at_least_suggest;
         diagnoseTypo(TC, PDiag(diag_id) << FnKind << MinArgs
                                         << static_cast<unsigned>(Args.size())
-                                        << Fn->getSourceRange());
+                                        << TC.getCorrectionRange());
       } else if (MinArgs == 1 && FDecl && FDecl->getParamDecl(0)->getDeclName())
         Diag(RParenLoc,
              MinArgs == NumParams && !Proto->isVariadic()
@@ -4075,10 +4075,12 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   // them.
   if (Args.size() > NumParams) {
     if (!Proto->isVariadic()) {
+      MemberExpr *ME = dyn_cast<MemberExpr>(Fn);
       TypoCorrection TC;
       if (FDecl && (TC = TryTypoCorrectionForCall(
                         *this, DeclarationNameInfo(FDecl->getDeclName(),
-                                                   Fn->getLocStart()),
+                                                   (ME ? ME->getMemberLoc()
+                                                       : Fn->getLocStart())),
                         Args))) {
         unsigned diag_id =
             MinArgs == NumParams && !Proto->isVariadic()
@@ -4086,7 +4088,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                 : diag::err_typecheck_call_too_many_args_at_most_suggest;
         diagnoseTypo(TC, PDiag(diag_id) << FnKind << NumParams
                                         << static_cast<unsigned>(Args.size())
-                                        << Fn->getSourceRange());
+                                        << TC.getCorrectionRange());
       } else if (NumParams == 1 && FDecl &&
                  FDecl->getParamDecl(0)->getDeclName())
         Diag(Args[NumParams]->getLocStart(),

@@ -19,3 +19,18 @@ void m() {
   pb->f(); // expected-error{{too few arguments to function call, expected 1, have 0; did you mean 'A::f'?}}
 }
 }
+
+namespace PR18608 {
+struct A {
+virtual void f() const;
+virtual void f(int x) const;  // expected-note{{'A::f' declared here}}
+};
+
+struct B : public A {
+virtual void f() const;
+};
+
+void test(B b) {
+  b.f(1);  // expected-error{{too many arguments to function call, expected 0, have 1; did you mean 'A::f'?}}
+}
+}
