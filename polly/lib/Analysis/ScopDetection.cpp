@@ -420,8 +420,11 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   // Check that the base address of the access is invariant in the current
   // region.
   if (!isInvariant(*BaseValue, Context.CurRegion)) {
-    INVALID(AffFunc,
-            "Base address not invariant in current region:" << *BaseValue);
+    // Verification of this property is difficult as the independent blocks
+    // pass may introduce aliasing that we did not have when running the
+    // scop detection.
+    INVALID_NOVERIFY(
+        AffFunc, "Base address not invariant in current region:" << *BaseValue);
     return false;
   }
 
