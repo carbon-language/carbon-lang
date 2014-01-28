@@ -348,6 +348,53 @@ std::string ScopDetection::formatInvalidAlias(AliasSet &AS) const {
   return OS.str();
 }
 
+bool ScopDetection::isInvariant(const Value &Val, const Region &Reg) const {
+  // A reference to function argument or constant value is invariant.
+  if (isa<Argument>(Val) || isa<Constant>(Val))
+    return true;
+
+  const Instruction *I = dyn_cast<Instruction>(&Val);
+  if (!I)
+    return false;
+
+  if (!Reg.contains(I))
+    return true;
+
+  if (I->mayHaveSideEffects())
+    return false;
+
+  // When Val is a Phi node, it is likely not invariant. We do not check whether
+  // Phi nodes are actually invariant, we assume that Phi nodes are usually not
+  // invariant. Recursively checking the operators of Phi nodes would lead to
+  // infinite recursion.
+  if (isa<PHINode>(*I))
+    return false;
+
+  // Check that all operands of the instruction are
+  // themselves invariant.
+  const Instruction::const_op_iterator OE = I->op_end();
+  for (Instruction::const_op_iterator OI = I->op_begin(); OI != OE; ++OI) {
+    if (!isInvariant(**OI, Reg))
+      return false;
+  }
+
+  // When the instruction is a load instruction, check that no write to memory
+  // in the region aliases with the load.
+  if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
+    AliasAnalysis::Location Loc = AA->getLocation(LI);
+    const Region::const_block_iterator BE = Reg.block_end();
+    // Check if any basic block in the region can modify the location pointed to
+    // by 'Loc'.  If so, 'Val' is (likely) not invariant in the region.
+    for (Region::const_block_iterator BI = Reg.block_begin(); BI != BE; ++BI) {
+      const BasicBlock &BB = **BI;
+      if (AA->canBasicBlockModify(BB, Loc))
+        return false;
+    }
+  }
+
+  return true;
+}
+
 bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
                                         DetectionContext &Context) const {
   Value *Ptr = getPointerOperand(Inst);
@@ -367,6 +414,14 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   if (isa<UndefValue>(BaseValue)) {
     INVALID(AffFunc, "Undefined base pointer");
+    return false;
+  }
+
+  // Check that the base address of the access is invariant in the current
+  // region.
+  if (!isInvariant(*BaseValue, Context.CurRegion)) {
+    INVALID(AffFunc,
+            "Base address not invariant in current region:" << *BaseValue);
     return false;
   }
 

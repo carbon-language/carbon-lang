@@ -152,6 +152,15 @@ class ScopDetection : public FunctionPass {
   /// @return The failure message why the alias is invalid.
   std::string formatInvalidAlias(AliasSet &AS) const;
 
+  /// @brief Check if a value is invariant in the region Reg.
+  ///
+  /// @param Val Value to check for invariance.
+  /// @param Reg The region to consider for the invariance of Val.
+  ///
+  /// @return True if the value represented by Val is invariant in the region
+  ///         identified by Reg.
+  bool isInvariant(const Value &Val, const Region &Reg) const;
+
   /// @brief Check if a memory access can be part of a Scop.
   ///
   /// @param Inst The instruction accessing the memory.

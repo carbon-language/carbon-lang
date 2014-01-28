@@ -151,9 +151,9 @@ entry:
 for.i:
   %indvar.i = phi i64 [ %indvar.i.next, %for.i.inc ], [ 0, %entry ]
   %ptr = phi float* [ %ptr.next, %for.i.inc ], [ %A, %entry ]
-; To get a PHI node inside a SCoP, that can not be analyzed but
-; for which the surrounding scop is normally still valid we use a function
-; without any sideeffects.
+; To get a PHI node inside a SCoP that can not be analyzed but
+; for which the surrounding SCoP is normally still valid we use a function
+; without any side effects.
   %ptr.next = call float* @getNextBasePtr(float* %ptr)
   br label %S1
 
@@ -182,8 +182,8 @@ entry:
 for.i:
   %indvar.i = phi i64 [ %indvar.i.next, %for.i.inc ], [ 0, %entry ]
 ; To get an instruction inside a region, we use a function without side
-; effects on which SCEV blocks, but for which still is clear that the return
-; value remains invariant throughout the whole loop.
+; effects on which SCEV blocks, but for which it is still clear that the
+; return value remains invariant throughout the whole loop.
   %ptr = call float* @getNextBasePtr(float* %A)
   br label %S1
 
@@ -234,3 +234,64 @@ exit:
 
 ; CHECK-LABEL: base_pointer_is_inst_inside_invariant_2
 ; CHECK: Valid Region for Scop: for.i => exit
+
+declare float* @getNextBasePtr3(float*, i64) readnone nounwind
+
+define void @base_pointer_is_inst_inside_variant(i64 %n, float* %A) {
+entry:
+  br label %for.i
+
+for.i:
+  %indvar.i = phi i64 [ %indvar.i.next, %for.i.inc ], [ 0, %entry ]
+  %ptr = call float* @getNextBasePtr3(float* %A, i64 %indvar.i)
+  %ptr2 = call float* @getNextBasePtr(float* %ptr)
+  br label %S1
+
+S1:
+  %conv = sitofp i64 %indvar.i to float
+  %arrayidx5 = getelementptr float* %ptr2, i64 %indvar.i
+  store float %conv, float* %arrayidx5, align 4
+  br label %for.i.inc
+
+for.i.inc:
+  %indvar.i.next = add i64 %indvar.i, 1
+  %exitcond.i = icmp ne i64 %indvar.i.next, %n
+  br i1 %exitcond.i, label %for.i, label %exit
+
+exit:
+  ret void
+}
+
+; CHECK: base_pointer_is_inst_inside_variant
+; CHECK-NOT: Valid Region for Scop
+
+define void @base_pointer_is_ptr2ptr(float** noalias %A, i64 %n) {
+entry:
+  br label %for.i
+
+for.i:
+  %indvar.i = phi i64 [ %indvar.i.next, %for.i.inc ], [ 0, %entry ]
+  %arrayidx = getelementptr float** %A, i64 %indvar.i
+  br label %for.j
+
+for.j:
+  %indvar.j = phi i64 [ 0, %for.i ], [ %indvar.j.next, %for.j ]
+  %conv = sitofp i64 %indvar.i to float
+  %basepointer = load float** %arrayidx, align 8
+  %arrayidx5 = getelementptr float* %basepointer, i64 %indvar.j
+  store float %conv, float* %arrayidx5, align 4
+  %indvar.j.next = add i64 %indvar.j, 1
+  %exitcond.j = icmp ne i64 %indvar.j.next, %n
+  br i1 %exitcond.j, label %for.j, label %for.i.inc
+
+for.i.inc:
+  %indvar.i.next = add i64 %indvar.i, 1
+  %exitcond.i = icmp ne i64 %indvar.i.next, %n
+  br i1 %exitcond.i, label %for.i, label %exit
+
+exit:
+  ret void
+}
+
+; CHECK: base_pointer_is_ptr2ptr
+; CHECK-NOT: Valid Region for Scop
