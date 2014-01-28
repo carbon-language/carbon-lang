@@ -32,6 +32,9 @@
 /* First include the standard intrinsics. */
 #include <x86intrin.h>
 
+/* For the definition of jmp_buf. */
+#include <setjmp.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -279,10 +282,7 @@ unsigned __int64 __cdecl _rotr64(unsigned __int64 _Value, int _Shift);
 static __inline__
 unsigned char _rotr8(unsigned char _Value, unsigned char _Shift);
 int _sarx_i32(int, unsigned int);
-
-/* FIXME: Need definition for jmp_buf.
-   int __cdecl _setjmp(jmp_buf); */
-
+int __cdecl _setjmp(jmp_buf);
 unsigned int _shlx_u32(unsigned int, unsigned int);
 unsigned int _shrx_u32(unsigned int, unsigned int);
 void _Store_HLERelease(long volatile *, long);
