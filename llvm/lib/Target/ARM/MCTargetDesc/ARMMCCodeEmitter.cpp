@@ -39,25 +39,22 @@ class ARMMCCodeEmitter : public MCCodeEmitter {
   ARMMCCodeEmitter(const ARMMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   void operator=(const ARMMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
-  const MCSubtargetInfo &STI;
   const MCContext &CTX;
 
 public:
-  ARMMCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
-                   MCContext &ctx)
-    : MCII(mcii), STI(sti), CTX(ctx) {
+  ARMMCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx)
+    : MCII(mcii), CTX(ctx) {
   }
 
   ~ARMMCCodeEmitter() {}
 
-  bool isThumb() const {
-    // FIXME: Can tablegen auto-generate this?
+  bool isThumb(const MCSubtargetInfo &STI) const {
     return (STI.getFeatureBits() & ARM::ModeThumb) != 0;
   }
-  bool isThumb2() const {
-    return isThumb() && (STI.getFeatureBits() & ARM::FeatureThumb2) != 0;
+  bool isThumb2(const MCSubtargetInfo &STI) const {
+    return isThumb(STI) && (STI.getFeatureBits() & ARM::FeatureThumb2) != 0;
   }
-  bool isTargetMachO() const {
+  bool isTargetMachO(const MCSubtargetInfo &STI) const {
     Triple TT(STI.getTargetTriple());
     return TT.isOSBinFormatMachO();
   }
@@ -404,7 +401,7 @@ MCCodeEmitter *llvm::createARMMCCodeEmitter(const MCInstrInfo &MCII,
                                             const MCRegisterInfo &MRI,
                                             const MCSubtargetInfo &STI,
                                             MCContext &Ctx) {
-  return new ARMMCCodeEmitter(MCII, STI, Ctx);
+  return new ARMMCCodeEmitter(MCII, Ctx);
 }
 
 /// NEONThumb2DataIPostEncoder - Post-process encoded NEON data-processing
@@ -413,7 +410,7 @@ MCCodeEmitter *llvm::createARMMCCodeEmitter(const MCInstrInfo &MCII,
 unsigned ARMMCCodeEmitter::NEONThumb2DataIPostEncoder(const MCInst &MI,
                                                  unsigned EncodedValue,
                                                  const MCSubtargetInfo &STI) const {
-  if (isThumb2()) {
+  if (isThumb2(STI)) {
     // NEON Thumb2 data-processsing encodings are very simple: bit 24 is moved
     // to bit 12 of the high half-word (i.e. bit 28), and bits 27-24 are
     // set to 1111.
@@ -433,7 +430,7 @@ unsigned ARMMCCodeEmitter::NEONThumb2DataIPostEncoder(const MCInst &MI,
 unsigned ARMMCCodeEmitter::NEONThumb2LoadStorePostEncoder(const MCInst &MI,
                                                  unsigned EncodedValue,
                                                  const MCSubtargetInfo &STI) const {
-  if (isThumb2()) {
+  if (isThumb2(STI)) {
     EncodedValue &= 0xF0FFFFFF;
     EncodedValue |= 0x09000000;
   }
@@ -447,7 +444,7 @@ unsigned ARMMCCodeEmitter::NEONThumb2LoadStorePostEncoder(const MCInst &MI,
 unsigned ARMMCCodeEmitter::NEONThumb2DupPostEncoder(const MCInst &MI,
                                                  unsigned EncodedValue,
                                                  const MCSubtargetInfo &STI) const {
-  if (isThumb2()) {
+  if (isThumb2(STI)) {
     EncodedValue &= 0x00FFFFFF;
     EncodedValue |= 0xEE000000;
   }
@@ -460,7 +457,7 @@ unsigned ARMMCCodeEmitter::NEONThumb2DupPostEncoder(const MCInst &MI,
 unsigned ARMMCCodeEmitter::NEONThumb2V8PostEncoder(const MCInst &MI,
                                                  unsigned EncodedValue,
                                                  const MCSubtargetInfo &STI) const {
-  if (isThumb2()) {
+  if (isThumb2(STI)) {
     EncodedValue |= 0xC000000; // Set bits 27-26
   }
 
@@ -472,7 +469,7 @@ unsigned ARMMCCodeEmitter::NEONThumb2V8PostEncoder(const MCInst &MI,
 unsigned ARMMCCodeEmitter::
 VFPThumb2PostEncoder(const MCInst &MI, unsigned EncodedValue,
                      const MCSubtargetInfo &STI) const {
-  if (isThumb2()) {
+  if (isThumb2(STI)) {
     EncodedValue &= 0x0FFFFFFF;
     EncodedValue |= 0xE0000000;
   }
@@ -661,7 +658,7 @@ getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
                        const MCSubtargetInfo &STI) const {
   // FIXME: This really, really shouldn't use TargetMachine. We don't want
   // coupling between MC and TM anywhere we can help it.
-  if (isThumb2())
+  if (isThumb2(STI))
     return
       ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_condbranch, Fixups, STI);
   return getARMBranchTargetOpValue(MI, OpIdx, Fixups, STI);
@@ -852,7 +849,7 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
       isAdd = false ; // 'U' bit is set as part of the fixup.
 
       MCFixupKind Kind;
-      if (isThumb2())
+      if (isThumb2(STI))
         Kind = MCFixupKind(ARM::fixup_t2_ldst_pcrel_12);
       else
         Kind = MCFixupKind(ARM::fixup_arm_ldst_pcrel_12);
@@ -1018,22 +1015,22 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
     switch (ARM16Expr->getKind()) {
     default: llvm_unreachable("Unsupported ARMFixup");
     case ARMMCExpr::VK_ARM_HI16:
-      if (!isTargetMachO() && EvaluateAsPCRel(E))
-        Kind = MCFixupKind(isThumb2()
+      if (!isTargetMachO(STI) && EvaluateAsPCRel(E))
+        Kind = MCFixupKind(isThumb2(STI)
                            ? ARM::fixup_t2_movt_hi16_pcrel
                            : ARM::fixup_arm_movt_hi16_pcrel);
       else
-        Kind = MCFixupKind(isThumb2()
+        Kind = MCFixupKind(isThumb2(STI)
                            ? ARM::fixup_t2_movt_hi16
                            : ARM::fixup_arm_movt_hi16);
       break;
     case ARMMCExpr::VK_ARM_LO16:
-      if (!isTargetMachO() && EvaluateAsPCRel(E))
-        Kind = MCFixupKind(isThumb2()
+      if (!isTargetMachO(STI) && EvaluateAsPCRel(E))
+        Kind = MCFixupKind(isThumb2(STI)
                            ? ARM::fixup_t2_movw_lo16_pcrel
                            : ARM::fixup_arm_movw_lo16_pcrel);
       else
-        Kind = MCFixupKind(isThumb2()
+        Kind = MCFixupKind(isThumb2(STI)
                            ? ARM::fixup_t2_movw_lo16
                            : ARM::fixup_arm_movw_lo16);
       break;
@@ -1045,12 +1042,12 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
   // it's just a plain immediate expression, and those evaluate to
   // the lower 16 bits of the expression regardless of whether
   // we have a movt or a movw.
-  if (!isTargetMachO() && EvaluateAsPCRel(E))
-    Kind = MCFixupKind(isThumb2()
+  if (!isTargetMachO(STI) && EvaluateAsPCRel(E))
+    Kind = MCFixupKind(isThumb2(STI)
                        ? ARM::fixup_t2_movw_lo16_pcrel
                        : ARM::fixup_arm_movw_lo16_pcrel);
   else
-    Kind = MCFixupKind(isThumb2()
+    Kind = MCFixupKind(isThumb2(STI)
                        ? ARM::fixup_t2_movw_lo16
                        : ARM::fixup_arm_movw_lo16);
   Fixups.push_back(MCFixup::Create(0, E, Kind, MI.getLoc()));
@@ -1259,7 +1256,7 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
     assert(MO.isExpr() && "Unexpected machine operand type!");
     const MCExpr *Expr = MO.getExpr();
     MCFixupKind Kind;
-    if (isThumb2())
+    if (isThumb2(STI))
       Kind = MCFixupKind(ARM::fixup_t2_pcrel_10);
     else
       Kind = MCFixupKind(ARM::fixup_arm_pcrel_10);
@@ -1671,7 +1668,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   uint32_t Binary = getBinaryCodeForInstr(MI, Fixups, STI);
   // Thumb 32-bit wide instructions need to emit the high order halfword
   // first.
-  if (isThumb() && Size == 4) {
+  if (isThumb(STI) && Size == 4) {
     EmitConstant(Binary >> 16, 2, OS);
     EmitConstant(Binary & 0xffff, 2, OS);
   } else

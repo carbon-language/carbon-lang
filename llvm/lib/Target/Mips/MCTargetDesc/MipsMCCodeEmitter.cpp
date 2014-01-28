@@ -37,16 +37,15 @@ class MipsMCCodeEmitter : public MCCodeEmitter {
   void operator=(const MipsMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
   MCContext &Ctx;
-  const MCSubtargetInfo &STI;
   bool IsLittleEndian;
-  bool IsMicroMips;
+
+  bool isMicroMips(const MCSubtargetInfo &STI) const {
+    return STI.getFeatureBits() & Mips::FeatureMicroMips;
+  }
 
 public:
-  MipsMCCodeEmitter(const MCInstrInfo &mcii, MCContext &Ctx_,
-                    const MCSubtargetInfo &sti, bool IsLittle) :
-    MCII(mcii), Ctx(Ctx_), STI (sti), IsLittleEndian(IsLittle) {
-      IsMicroMips = STI.getFeatureBits() & Mips::FeatureMicroMips;
-    }
+  MipsMCCodeEmitter(const MCInstrInfo &mcii, MCContext &Ctx_, bool IsLittle) :
+    MCII(mcii), Ctx(Ctx_), IsLittleEndian(IsLittle) { }
 
   ~MipsMCCodeEmitter() {}
 
@@ -54,14 +53,15 @@ public:
     OS << (char)C;
   }
 
-  void EmitInstruction(uint64_t Val, unsigned Size, raw_ostream &OS) const {
+  void EmitInstruction(uint64_t Val, unsigned Size, const MCSubtargetInfo &STI,
+                       raw_ostream &OS) const {
     // Output the instruction encoding in little endian byte order.
     // Little-endian byte ordering:
     //   mips32r2:   4 | 3 | 2 | 1
     //   microMIPS:  2 | 1 | 4 | 3
-    if (IsLittleEndian && Size == 4 && IsMicroMips) {
-      EmitInstruction(Val>>16, 2, OS);
-      EmitInstruction(Val, 2, OS);
+    if (IsLittleEndian && Size == 4 && isMicroMips(STI)) {
+      EmitInstruction(Val>>16, 2, STI, OS);
+      EmitInstruction(Val, 2, STI, OS);
     } else {
       for (unsigned i = 0; i < Size; ++i) {
         unsigned Shift = IsLittleEndian ? i * 8 : (Size - 1 - i) * 8;
@@ -148,7 +148,7 @@ MCCodeEmitter *llvm::createMipsMCCodeEmitterEB(const MCInstrInfo &MCII,
                                                const MCSubtargetInfo &STI,
                                                MCContext &Ctx)
 {
-  return new MipsMCCodeEmitter(MCII, Ctx, STI, false);
+  return new MipsMCCodeEmitter(MCII, Ctx, false);
 }
 
 MCCodeEmitter *llvm::createMipsMCCodeEmitterEL(const MCInstrInfo &MCII,
@@ -156,7 +156,7 @@ MCCodeEmitter *llvm::createMipsMCCodeEmitterEL(const MCInstrInfo &MCII,
                                                const MCSubtargetInfo &STI,
                                                MCContext &Ctx)
 {
-  return new MipsMCCodeEmitter(MCII, Ctx, STI, true);
+  return new MipsMCCodeEmitter(MCII, Ctx, true);
 }
 
 
@@ -280,7 +280,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   if (!Size)
     llvm_unreachable("Desc.getSize() returns 0");
 
-  EmitInstruction(Binary, Size, OS);
+  EmitInstruction(Binary, Size, STI, OS);
 }
 
 /// getBranchTargetOpValue - Return binary encoding of the branch
@@ -398,65 +398,65 @@ getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups,
       FixupKind = Mips::fixup_Mips_GPOFF_LO;
       break;
     case MCSymbolRefExpr::VK_Mips_GOT_PAGE :
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_PAGE
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_GOT_PAGE
                               : Mips::fixup_Mips_GOT_PAGE;
       break;
     case MCSymbolRefExpr::VK_Mips_GOT_OFST :
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_OFST
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_GOT_OFST
                               : Mips::fixup_Mips_GOT_OFST;
       break;
     case MCSymbolRefExpr::VK_Mips_GOT_DISP :
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_DISP
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_GOT_DISP
                               : Mips::fixup_Mips_GOT_DISP;
       break;
     case MCSymbolRefExpr::VK_Mips_GPREL:
       FixupKind = Mips::fixup_Mips_GPREL16;
       break;
     case MCSymbolRefExpr::VK_Mips_GOT_CALL:
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_CALL16
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_CALL16
                               : Mips::fixup_Mips_CALL16;
       break;
     case MCSymbolRefExpr::VK_Mips_GOT16:
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT16
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_GOT16
                               : Mips::fixup_Mips_GOT_Global;
       break;
     case MCSymbolRefExpr::VK_Mips_GOT:
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT16
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_GOT16
                               : Mips::fixup_Mips_GOT_Local;
       break;
     case MCSymbolRefExpr::VK_Mips_ABS_HI:
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_HI16
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_HI16
                               : Mips::fixup_Mips_HI16;
       break;
     case MCSymbolRefExpr::VK_Mips_ABS_LO:
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_LO16
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_LO16
                               : Mips::fixup_Mips_LO16;
       break;
     case MCSymbolRefExpr::VK_Mips_TLSGD:
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_GD
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_TLS_GD
                               : Mips::fixup_Mips_TLSGD;
       break;
     case MCSymbolRefExpr::VK_Mips_TLSLDM:
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_LDM
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_TLS_LDM
                               : Mips::fixup_Mips_TLSLDM;
       break;
     case MCSymbolRefExpr::VK_Mips_DTPREL_HI:
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_DTPREL_HI16
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_TLS_DTPREL_HI16
                               : Mips::fixup_Mips_DTPREL_HI;
       break;
     case MCSymbolRefExpr::VK_Mips_DTPREL_LO:
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_DTPREL_LO16
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_TLS_DTPREL_LO16
                               : Mips::fixup_Mips_DTPREL_LO;
       break;
     case MCSymbolRefExpr::VK_Mips_GOTTPREL:
       FixupKind = Mips::fixup_Mips_GOTTPREL;
       break;
     case MCSymbolRefExpr::VK_Mips_TPREL_HI:
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_TPREL_HI16
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_TLS_TPREL_HI16
                               : Mips::fixup_Mips_TPREL_HI;
       break;
     case MCSymbolRefExpr::VK_Mips_TPREL_LO:
-      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_TPREL_LO16
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_TLS_TPREL_LO16
                               : Mips::fixup_Mips_TPREL_LO;
       break;
     case MCSymbolRefExpr::VK_Mips_HIGHER:

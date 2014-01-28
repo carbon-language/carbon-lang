@@ -33,14 +33,10 @@ class PPCMCCodeEmitter : public MCCodeEmitter {
   PPCMCCodeEmitter(const PPCMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   void operator=(const PPCMCCodeEmitter &) LLVM_DELETED_FUNCTION;
 
-  const MCSubtargetInfo &STI;
   const MCContext &CTX;
-  Triple TT;
 
 public:
-  PPCMCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
-                   MCContext &ctx)
-    : STI(sti), CTX(ctx), TT(STI.getTargetTriple()) {
+  PPCMCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx) : CTX(ctx) {
   }
   
   ~PPCMCCodeEmitter() {}
@@ -123,7 +119,7 @@ MCCodeEmitter *llvm::createPPCMCCodeEmitter(const MCInstrInfo &MCII,
                                             const MCRegisterInfo &MRI,
                                             const MCSubtargetInfo &STI,
                                             MCContext &Ctx) {
-  return new PPCMCCodeEmitter(MCII, STI, Ctx);
+  return new PPCMCCodeEmitter(MCII, Ctx);
 }
 
 unsigned PPCMCCodeEmitter::
@@ -238,6 +234,7 @@ unsigned PPCMCCodeEmitter::getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
   // Return the thread-pointer register's encoding.
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_nofixup));
+  Triple TT(STI.getTargetTriple());
   bool isPPC64 = TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le;
   return CTX.getRegisterInfo()->getEncodingValue(isPPC64 ? PPC::X13 : PPC::R2);
 }

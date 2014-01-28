@@ -48,7 +48,7 @@ class SIMCCodeEmitter : public  AMDGPUMCCodeEmitter {
 
 public:
   SIMCCodeEmitter(const MCInstrInfo &mcii, const MCRegisterInfo &mri,
-                  const MCSubtargetInfo &sti, MCContext &ctx)
+                  MCContext &ctx)
     : MCII(mcii), MRI(mri) { }
 
   ~SIMCCodeEmitter() { }
@@ -70,7 +70,7 @@ MCCodeEmitter *llvm::createSIMCCodeEmitter(const MCInstrInfo &MCII,
                                            const MCRegisterInfo &MRI,
                                            const MCSubtargetInfo &STI,
                                            MCContext &Ctx) {
-  return new SIMCCodeEmitter(MCII, MRI, STI, Ctx);
+  return new SIMCCodeEmitter(MCII, MRI, Ctx);
 }
 
 bool SIMCCodeEmitter::isSrcOperand(const MCInstrDesc &Desc,
