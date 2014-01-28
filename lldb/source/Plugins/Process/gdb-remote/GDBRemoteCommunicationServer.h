@@ -37,6 +37,9 @@ public:
     //------------------------------------------------------------------
     GDBRemoteCommunicationServer(bool is_platform);
 
+    GDBRemoteCommunicationServer(bool is_platform,
+                                 const lldb::PlatformSP& platform_sp); 
+
     virtual
     ~GDBRemoteCommunicationServer();
 
@@ -186,6 +189,7 @@ public:
     LaunchProcess ();
 
 protected:
+    lldb::PlatformSP m_platform_sp;
     lldb::thread_t m_async_thread;
     lldb_private::ProcessLaunchInfo m_process_launch_info;
     lldb_private::Error m_process_launch_error;
@@ -195,7 +199,7 @@ protected:
     uint32_t m_proc_infos_index;
     PortMap m_port_map;
     uint16_t m_port_offset;
-    
+
 
     PacketResult
     SendUnimplementedResponse (const char *packet);

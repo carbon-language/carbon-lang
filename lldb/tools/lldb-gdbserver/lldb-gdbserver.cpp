@@ -26,12 +26,14 @@
 #include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/ConnectionMachPort.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServer.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -45,6 +47,7 @@ int g_verbose = 0;
 static struct option g_long_options[] =
 {
     { "debug",              no_argument,        &g_debug,           1   },
+    { "platform",           required_argument,  NULL,               'p' },
     { "verbose",            no_argument,        &g_verbose,         1   },
     { "lldb-command",       required_argument,  NULL,               'c' },
     { "log-file",           required_argument,  NULL,               'l' },
@@ -78,9 +81,47 @@ signal_handler(int signo)
 static void
 display_usage (const char *progname)
 {
-    fprintf(stderr, "Usage:\n  %s [--log-file log-file-path] [--log-flags flags] [--lldb-command command]* HOST:PORT "
+    fprintf(stderr, "Usage:\n  %s [--log-file log-file-path] [--log-flags flags] [--lldb-command command]* [--platform platform_name] HOST:PORT "
             "[-- PROGRAM ARG1 ARG2 ...]\n", progname);
     exit(0);
+}
+
+static void
+dump_available_platforms (FILE *output_file)
+{
+    fprintf (output_file, "Available platform plugins:\n");
+    for (int i = 0; ; ++i)
+    {
+        const char *plugin_name = PluginManager::GetPlatformPluginNameAtIndex (i);
+        const char *plugin_desc = PluginManager::GetPlatformPluginDescriptionAtIndex (i);
+
+        if (!plugin_name || !plugin_desc)
+            break;
+
+        fprintf (output_file, "%s\t%s\n", plugin_name, plugin_desc);
+    }
+
+    if ( Platform::GetDefaultPlatform () )
+    {
+        // add this since the default platform doesn't necessarily get registered by
+        // the plugin name (e.g. 'host' doesn't show up as a
+        // registered platform plugin even though it's the default).
+        fprintf (output_file, "%s\tDefault platform for this host.\n", Platform::GetDefaultPlatform ()->GetPluginName ().AsCString ());
+    }
+}
+
+static void
+initialize_lldb_gdbserver ()
+{
+    PluginManager::Initialize ();
+    Debugger::Initialize (NULL);
+}
+
+static void
+terminate_lldb_gdbserver ()
+{
+    Debugger::Terminate();
+    PluginManager::Terminate ();
 }
 
 //----------------------------------------------------------------------
@@ -97,7 +138,9 @@ main (int argc, char *argv[])
     Args log_args;
     Error error;
     int ch;
-    Debugger::Initialize(NULL);
+    std::string platform_name;
+
+    initialize_lldb_gdbserver ();
 
     lldb::DebuggerSP debugger_sp = Debugger::CreateInstance ();
 
@@ -167,6 +210,11 @@ main (int argc, char *argv[])
                 lldb_commands.push_back(optarg);
             break;
 
+        case 'p': // platform name
+            if (optarg && optarg[0])
+                platform_name = optarg;
+            break;
+
         case 'h':   /* fall-through is intentional */
         case '?':
             show_usage = true;
@@ -210,8 +258,39 @@ main (int argc, char *argv[])
             puts (output);
     }
 
+    // setup the platform that GDBRemoteCommunicationServer will use
+    lldb::PlatformSP platform_sp;
+    if (platform_name.empty())
+    {
+        printf ("using the default platform: ");
+        platform_sp = Platform::GetDefaultPlatform ();
+        printf ("%s\n", platform_sp->GetPluginName ().AsCString ());
+    }
+    else
+    {
+        Error error;
+        platform_sp = Platform::Create (platform_name.c_str(), error);
+        if (error.Fail ())
+        {
+            // the host platform isn't registered with that name (at
+            // least, not always.  Check if the given name matches
+            // the default platform name.  If so, use it.
+            if ( Platform::GetDefaultPlatform () && ( Platform::GetDefaultPlatform ()->GetPluginName () == ConstString (platform_name.c_str()) ) )
+            {
+                platform_sp = Platform::GetDefaultPlatform ();
+            }
+            else
+            {
+                fprintf (stderr, "error: failed to create platform with name '%s'\n", platform_name.c_str());
+                dump_available_platforms (stderr);
+                exit (1);
+            }
+        }
+        printf ("using platform: %s\n", platform_name.c_str ());
+    }
+
     const bool is_platform = false;
-    GDBRemoteCommunicationServer gdb_server (is_platform);
+    GDBRemoteCommunicationServer gdb_server (is_platform, platform_sp);
 
     const char *host_and_port = argv[0];
     argc -= 1;
@@ -289,7 +368,7 @@ main (int argc, char *argv[])
         }
     }
 
-    Debugger::Terminate();
+    terminate_lldb_gdbserver ();
 
     fprintf(stderr, "lldb-gdbserver exiting...\n");
 

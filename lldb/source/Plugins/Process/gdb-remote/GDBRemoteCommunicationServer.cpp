@@ -25,6 +25,7 @@
 #include "lldb/Host/File.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/TimeValue.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 
 // Project includes
@@ -40,6 +41,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 GDBRemoteCommunicationServer::GDBRemoteCommunicationServer(bool is_platform) :
     GDBRemoteCommunication ("gdb-remote.server", "gdb-remote.server.rx_packet", is_platform),
+    m_platform_sp (Platform::GetDefaultPlatform ()),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
     m_process_launch_info (),
     m_process_launch_error (),
@@ -50,6 +52,23 @@ GDBRemoteCommunicationServer::GDBRemoteCommunicationServer(bool is_platform) :
     m_port_map (),
     m_port_offset(0)
 {
+}
+
+GDBRemoteCommunicationServer::GDBRemoteCommunicationServer(bool is_platform,
+                                                           const lldb::PlatformSP& platform_sp) :
+    GDBRemoteCommunication ("gdb-remote.server", "gdb-remote.server.rx_packet", is_platform),
+    m_platform_sp (platform_sp),
+    m_async_thread (LLDB_INVALID_HOST_THREAD),
+    m_process_launch_info (),
+    m_process_launch_error (),
+    m_spawned_pids (),
+    m_spawned_pids_mutex (Mutex::eMutexTypeRecursive),
+    m_proc_infos (),
+    m_proc_infos_index (0),
+    m_port_map (),
+    m_port_offset(0)
+{
+    assert(platform_sp);
 }
 
 //----------------------------------------------------------------------
@@ -304,7 +323,7 @@ GDBRemoteCommunicationServer::LaunchProcess ()
     if (!m_process_launch_info.GetMonitorProcessCallback ())
         m_process_launch_info.SetMonitorProcessCallback(ReapDebuggedProcess, this, false);
 
-    lldb_private::Error error = Host::LaunchProcess (m_process_launch_info);
+    lldb_private::Error error = m_platform_sp->LaunchProcess (m_process_launch_info);
     if (!error.Success ())
     {
         fprintf (stderr, "%s: failed to launch executable %s", __FUNCTION__, m_process_launch_info.GetArguments ().GetArgumentAtIndex (0));
