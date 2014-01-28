@@ -17,6 +17,7 @@
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
 #include <algorithm>
@@ -33,6 +34,7 @@ class MCFragment;
 class MCObjectWriter;
 class MCSection;
 class MCSectionData;
+class MCSubtargetInfo;
 class MCSymbol;
 class MCSymbolData;
 class MCValue;
@@ -288,6 +290,11 @@ class MCRelaxableFragment : public MCEncodedFragmentWithFixups {
   /// Inst - The instruction this is a fragment for.
   MCInst Inst;
 
+  /// STI - The MCSubtargetInfo in effect when the instruction was encoded.
+  /// Keep a copy instead of a reference to make sure that updates to STI
+  /// in the assembler are not seen here.
+  const MCSubtargetInfo STI;
+
   /// Contents - Binary data for the currently encoded instruction.
   SmallVector<char, 8> Contents;
 
@@ -295,8 +302,10 @@ class MCRelaxableFragment : public MCEncodedFragmentWithFixups {
   SmallVector<MCFixup, 1> Fixups;
 
 public:
-  MCRelaxableFragment(const MCInst &_Inst, MCSectionData *SD = 0)
-    : MCEncodedFragmentWithFixups(FT_Relaxable, SD), Inst(_Inst) {
+  MCRelaxableFragment(const MCInst &_Inst,
+                      const MCSubtargetInfo &_STI,
+                      MCSectionData *SD = 0)
+    : MCEncodedFragmentWithFixups(FT_Relaxable, SD), Inst(_Inst), STI(_STI) {
   }
 
   virtual SmallVectorImpl<char> &getContents() { return Contents; }
@@ -304,6 +313,8 @@ public:
 
   const MCInst &getInst() const { return Inst; }
   void setInst(const MCInst& Value) { Inst = Value; }
+
+  const MCSubtargetInfo &getSubtargetInfo() { return STI; }
 
   SmallVectorImpl<MCFixup> &getFixups() {
     return Fixups;

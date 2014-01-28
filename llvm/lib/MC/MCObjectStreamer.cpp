@@ -230,7 +230,7 @@ void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst,
                                           const MCSubtargetInfo &STI) {
   // Always create a new, separate fragment here, because its size can change
   // during relaxation.
-  MCRelaxableFragment *IF = new MCRelaxableFragment(Inst);
+  MCRelaxableFragment *IF = new MCRelaxableFragment(Inst, STI);
   insert(IF);
 
   SmallString<128> Code;
