@@ -307,7 +307,7 @@ void NVPTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   MCInst Inst;
   lowerToMCInst(MI, Inst);
-  OutStreamer.EmitInstruction(Inst);
+  EmitToStreamer(OutStreamer, Inst);
 }
 
 void NVPTXAsmPrinter::lowerToMCInst(const MachineInstr *MI, MCInst &OutMI) {

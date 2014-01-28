@@ -51,7 +51,8 @@ public:
 static bool PrintInsts(const MCDisassembler &DisAsm,
                        const ByteArrayTy &Bytes,
                        SourceMgr &SM, raw_ostream &Out,
-                       MCStreamer &Streamer, bool InAtomicBlock) {
+                       MCStreamer &Streamer, bool InAtomicBlock,
+                       const MCSubtargetInfo &STI) {
   // Wrap the vector in a MemoryObject.
   VectorMemoryObject memoryObject(Bytes);
 
@@ -86,7 +87,7 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
       // Fall through
 
     case MCDisassembler::Success:
-      Streamer.EmitInstruction(Inst);
+      Streamer.EmitInstruction(Inst, STI);
       break;
     }
   }
@@ -202,7 +203,7 @@ int Disassembler::disassemble(const Target &T,
 
     if (!ByteArray.empty())
       ErrorOccurred |= PrintInsts(*DisAsm, ByteArray, SM, Out, Streamer,
-                                  InAtomicBlock);
+                                  InAtomicBlock, STI);
   }
 
   if (InAtomicBlock) {

@@ -259,7 +259,7 @@ void PseudoLoweringEmitter::emitLoweringEmitter(raw_ostream &o) {
         << "        if (lowerOperand(MI->getOperand(i), MCOp))\n"
         << "          TmpInst.addOperand(MCOp);\n";
     }
-    o << "      OutStreamer.EmitInstruction(TmpInst);\n"
+    o << "      EmitToStreamer(OutStreamer, TmpInst);\n"
       << "      break;\n"
       << "    }\n";
   }

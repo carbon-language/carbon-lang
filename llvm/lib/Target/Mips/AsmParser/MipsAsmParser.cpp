@@ -906,7 +906,7 @@ bool MipsAsmParser::MatchAndEmitInstruction(
     if (processInstruction(Inst, IDLoc, Instructions))
       return true;
     for (unsigned i = 0; i < Instructions.size(); i++)
-      Out.EmitInstruction(Instructions[i]);
+      Out.EmitInstruction(Instructions[i], STI);
     return false;
   }
   case Match_MissingFeature:

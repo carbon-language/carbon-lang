@@ -42,6 +42,7 @@ namespace llvm {
   class MCAsmInfo;
   class MCCFIInstruction;
   class MCContext;
+  class MCInst;
   class MCInstrInfo;
   class MCSection;
   class MCStreamer;
@@ -148,6 +149,11 @@ namespace llvm {
 
     /// getDataLayout - Return information about data layout.
     const DataLayout &getDataLayout() const;
+
+    /// getSubtargetInfo - Return information about subtarget.
+    const MCSubtargetInfo &getSubtargetInfo() const;
+
+    void EmitToStreamer(MCStreamer &S, const MCInst &Inst);
 
     /// getTargetTriple - Return the target triple string.
     StringRef getTargetTriple() const;

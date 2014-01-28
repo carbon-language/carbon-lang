@@ -48,6 +48,7 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 #include "WinCodeViewLineTables.h"
 using namespace llvm;
@@ -135,6 +136,14 @@ const TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
 /// getDataLayout - Return information about data layout.
 const DataLayout &AsmPrinter::getDataLayout() const {
   return *TM.getDataLayout();
+}
+
+const MCSubtargetInfo &AsmPrinter::getSubtargetInfo() const {
+  return TM.getSubtarget<MCSubtargetInfo>();
+}
+
+void AsmPrinter::EmitToStreamer(MCStreamer &S, const MCInst &Inst) {
+  S.EmitInstruction(Inst, getSubtargetInfo());
 }
 
 StringRef AsmPrinter::getTargetTriple() const {
@@ -789,7 +798,7 @@ void AsmPrinter::EmitFunctionBody() {
     TM.getInstrInfo()->getNoopForMachoTarget(Noop);
     if (Noop.getOpcode()) {
       OutStreamer.AddComment("avoids zero-length function");
-      OutStreamer.EmitInstruction(Noop);
+      OutStreamer.EmitInstruction(Noop, getSubtargetInfo());
     } else  // Target not mc-ized yet.
       OutStreamer.EmitRawText(StringRef("\tnop\n"));
   }

@@ -83,7 +83,7 @@ public:
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
   virtual void ChangeSection(const MCSection *Section,
                              const MCExpr *Subsection);
-  virtual void EmitInstruction(const MCInst &Inst);
+  virtual void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo& STI);
 
   /// \brief Emit an instruction to a special fragment, because this instruction
   /// can change its size during relaxation.

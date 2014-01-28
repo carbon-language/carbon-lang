@@ -187,7 +187,7 @@ void MCObjectStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   Symbol->setVariableValue(AddValueSymbols(Value));
 }
 
-void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
+void MCObjectStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) {
   // Scan for values.
   for (unsigned i = Inst.getNumOperands(); i--; )
     if (Inst.getOperand(i).isExpr())

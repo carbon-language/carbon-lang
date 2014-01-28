@@ -164,7 +164,7 @@ void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     Lower.lower(MI, LoweredMI);
     break;
   }
-  OutStreamer.EmitInstruction(LoweredMI);
+  EmitToStreamer(OutStreamer, LoweredMI);
 }
 
 // Convert a SystemZ-specific constant pool modifier into the associated

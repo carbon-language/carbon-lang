@@ -264,7 +264,7 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   MCInst TmpInst;
   LowerAArch64MachineInstrToMCInst(MI, TmpInst, *this);
-  OutStreamer.EmitInstruction(TmpInst);
+  EmitToStreamer(OutStreamer, TmpInst);
 }
 
 void AArch64AsmPrinter::EmitEndOfAsmFile(Module &M) {

@@ -2607,7 +2607,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     Inst.setOpcode(X86::WAIT);
     Inst.setLoc(IDLoc);
     if (!MatchingInlineAsm)
-      Out.EmitInstruction(Inst);
+      Out.EmitInstruction(Inst, STI);
 
     const char *Repl =
       StringSwitch<const char*>(Op->getToken())
@@ -2643,7 +2643,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
     Inst.setLoc(IDLoc);
     if (!MatchingInlineAsm)
-      Out.EmitInstruction(Inst);
+      Out.EmitInstruction(Inst, STI);
     Opcode = Inst.getOpcode();
     return false;
   case Match_MissingFeature: {
@@ -2730,7 +2730,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   if (NumSuccessfulMatches == 1) {
     Inst.setLoc(IDLoc);
     if (!MatchingInlineAsm)
-      Out.EmitInstruction(Inst);
+      Out.EmitInstruction(Inst, STI);
     Opcode = Inst.getOpcode();
     return false;
   }

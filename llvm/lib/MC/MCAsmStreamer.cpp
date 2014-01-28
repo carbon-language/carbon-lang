@@ -246,7 +246,7 @@ public:
   virtual void EmitWin64EHPushFrame(bool Code);
   virtual void EmitWin64EHEndProlog();
 
-  virtual void EmitInstruction(const MCInst &Inst);
+  virtual void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI);
 
   virtual void EmitBundleAlignMode(unsigned AlignPow2);
   virtual void EmitBundleLock(bool AlignToEnd);
@@ -1318,7 +1318,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
   }
 }
 
-void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
+void MCAsmStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) {
   assert(getCurrentSection().first &&
          "Cannot emit contents before setting section!");
 

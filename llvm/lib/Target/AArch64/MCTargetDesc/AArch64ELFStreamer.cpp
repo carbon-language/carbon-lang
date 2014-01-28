@@ -76,9 +76,9 @@ public:
   /// This function is the one used to emit instruction data into the ELF
   /// streamer. We override it to add the appropriate mapping symbol if
   /// necessary.
-  virtual void EmitInstruction(const MCInst& Inst) {
+  virtual void EmitInstruction(const MCInst& Inst, const MCSubtargetInfo &STI) {
     EmitA64MappingSymbol();
-    MCELFStreamer::EmitInstruction(Inst);
+    MCELFStreamer::EmitInstruction(Inst, STI);
   }
 
   /// This is one of the functions used to emit data into an ELF section, so the

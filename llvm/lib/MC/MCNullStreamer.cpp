@@ -92,7 +92,7 @@ namespace {
                                        unsigned Column, unsigned Flags,
                                        unsigned Isa, unsigned Discriminator,
                                        StringRef FileName) {}
-    virtual void EmitInstruction(const MCInst &Inst) {}
+    virtual void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo&) {}
 
     virtual void EmitBundleAlignMode(unsigned AlignPow2) {}
     virtual void EmitBundleLock(bool AlignToEnd) {}

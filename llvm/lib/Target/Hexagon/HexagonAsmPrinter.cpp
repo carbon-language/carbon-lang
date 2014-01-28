@@ -199,7 +199,7 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       MCI.setPacketEnd(Index == (Size-1));
 
       HexagonLowerToMC(BundleMIs[Index], MCI, *this);
-      OutStreamer.EmitInstruction(MCI);
+      EmitToStreamer(OutStreamer, MCI);
     }
   }
   else {
@@ -209,7 +209,7 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       MCI.setPacketEnd(true);
     }
     HexagonLowerToMC(MI, MCI, *this);
-    OutStreamer.EmitInstruction(MCI);
+    EmitToStreamer(OutStreamer, MCI);
   }
 
   return;

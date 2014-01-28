@@ -80,7 +80,7 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   } else {
     MCInst TmpInst;
     MCInstLowering.lower(MI, TmpInst);
-    OutStreamer.EmitInstruction(TmpInst);
+    EmitToStreamer(OutStreamer, TmpInst);
 
     if (DisasmEnabled) {
       // Disassemble instruction/operands to text.

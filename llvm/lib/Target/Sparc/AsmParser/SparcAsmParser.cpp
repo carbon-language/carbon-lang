@@ -393,7 +393,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
   case Match_Success: {
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst);
+    Out.EmitInstruction(Inst, STI);
     return false;
   }
 

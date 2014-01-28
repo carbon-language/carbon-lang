@@ -602,7 +602,8 @@ ReSimplify:
 
 static void LowerTlsAddr(MCStreamer &OutStreamer,
                          X86MCInstLower &MCInstLowering,
-                         const MachineInstr &MI) {
+                         const MachineInstr &MI,
+                         const MCSubtargetInfo& STI) {
 
   bool is64Bits = MI.getOpcode() == X86::TLS_addr64 ||
                   MI.getOpcode() == X86::TLS_base_addr64;
@@ -612,7 +613,7 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
   MCContext &context = OutStreamer.getContext();
 
   if (needsPadding)
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::DATA16_PREFIX));
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::DATA16_PREFIX), STI);
 
   MCSymbolRefExpr::VariantKind SRVK;
   switch (MI.getOpcode()) {
@@ -659,12 +660,12 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
     LEA.addOperand(MCOperand::CreateExpr(symRef));  // disp
     LEA.addOperand(MCOperand::CreateReg(0));        // seg
   }
-  OutStreamer.EmitInstruction(LEA);
+  OutStreamer.EmitInstruction(LEA, STI);
 
   if (needsPadding) {
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::DATA16_PREFIX));
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::DATA16_PREFIX));
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::REX64_PREFIX));
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::DATA16_PREFIX), STI);
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::DATA16_PREFIX), STI);
+    OutStreamer.EmitInstruction(MCInstBuilder(X86::REX64_PREFIX), STI);
   }
 
   StringRef name = is64Bits ? "__tls_get_addr" : "___tls_get_addr";
@@ -676,11 +677,11 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
 
   OutStreamer.EmitInstruction(MCInstBuilder(is64Bits ? X86::CALL64pcrel32
                                                      : X86::CALLpcrel32)
-    .addExpr(tlsRef));
+    .addExpr(tlsRef), STI);
 }
 
 /// \brief Emit the optimal amount of multi-byte nops on X86.
-static void EmitNops(MCStreamer &OS, unsigned NumBytes, bool Is64Bit) {
+static void EmitNops(MCStreamer &OS, unsigned NumBytes, bool Is64Bit, const MCSubtargetInfo &STI) {
   // This works only for 64bit. For 32bit we have to do additional checking if
   // the CPU supports multi-byte nops.
   assert(Is64Bit && "EmitNops only supports X86-64");
@@ -715,17 +716,17 @@ static void EmitNops(MCStreamer &OS, unsigned NumBytes, bool Is64Bit) {
     switch (Opc) {
     default: llvm_unreachable("Unexpected opcode"); break;
     case X86::NOOP:
-      OS.EmitInstruction(MCInstBuilder(Opc));
+      OS.EmitInstruction(MCInstBuilder(Opc), STI);
       break;
     case X86::XCHG16ar:
-      OS.EmitInstruction(MCInstBuilder(Opc).addReg(X86::AX));
+      OS.EmitInstruction(MCInstBuilder(Opc).addReg(X86::AX), STI);
       break;
     case X86::NOOPL:
     case X86::NOOPW:
       OS.EmitInstruction(MCInstBuilder(Opc).addReg(BaseReg).addImm(ScaleVal)
                                            .addReg(IndexReg)
                                            .addImm(Displacement)
-                                           .addReg(SegmentReg));
+                                           .addReg(SegmentReg), STI);
       break;
     }
   } // while (NumBytes)
@@ -734,20 +735,20 @@ static void EmitNops(MCStreamer &OS, unsigned NumBytes, bool Is64Bit) {
 // Lower a stackmap of the form:
 // <id>, <shadowBytes>, ...
 static void LowerSTACKMAP(MCStreamer &OS, StackMaps &SM,
-                          const MachineInstr &MI, bool Is64Bit) {
+                          const MachineInstr &MI, bool Is64Bit, const MCSubtargetInfo& STI) {
   unsigned NumBytes = MI.getOperand(1).getImm();
   SM.recordStackMap(MI);
   // Emit padding.
   // FIXME: These nops ensure that the stackmap's shadow is covered by
   // instructions from the same basic block, but the nops should not be
   // necessary if instructions from the same block follow the stackmap.
-  EmitNops(OS, NumBytes, Is64Bit);
+  EmitNops(OS, NumBytes, Is64Bit, STI);
 }
 
 // Lower a patchpoint of the form:
 // [<def>], <id>, <numBytes>, <target>, <numArgs>, <cc>, ...
 static void LowerPATCHPOINT(MCStreamer &OS, StackMaps &SM,
-                            const MachineInstr &MI, bool Is64Bit) {
+                            const MachineInstr &MI, bool Is64Bit, const MCSubtargetInfo& STI) {
   assert(Is64Bit && "Patchpoint currently only supports X86-64");
   SM.recordPatchPoint(MI);
 
@@ -764,15 +765,15 @@ static void LowerPATCHPOINT(MCStreamer &OS, StackMaps &SM,
     else
       EncodedBytes = 12;
     OS.EmitInstruction(MCInstBuilder(X86::MOV64ri).addReg(ScratchReg)
-                                                  .addImm(CallTarget));
-    OS.EmitInstruction(MCInstBuilder(X86::CALL64r).addReg(ScratchReg));
+                                                  .addImm(CallTarget), STI);
+    OS.EmitInstruction(MCInstBuilder(X86::CALL64r).addReg(ScratchReg), STI);
   }
   // Emit padding.
   unsigned NumBytes = opers.getMetaOper(PatchPointOpers::NBytesPos).getImm();
   assert(NumBytes >= EncodedBytes &&
          "Patchpoint can't request size less than the length of a call.");
 
-  EmitNops(OS, NumBytes - EncodedBytes, Is64Bit);
+  EmitNops(OS, NumBytes - EncodedBytes, Is64Bit, STI);
 }
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
@@ -806,7 +807,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case X86::TLS_addr64:
   case X86::TLS_base_addr32:
   case X86::TLS_base_addr64:
-    return LowerTlsAddr(OutStreamer, MCInstLowering, *MI);
+    return LowerTlsAddr(OutStreamer, MCInstLowering, *MI, getSubtargetInfo());
 
   case X86::MOVPC32r: {
     // This is a pseudo op for a two instruction sequence with a label, which
@@ -819,14 +820,14 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCSymbol *PICBase = MF->getPICBaseSymbol();
     // FIXME: We would like an efficient form for this, so we don't have to do a
     // lot of extra uniquing.
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::CALLpcrel32)
+    EmitToStreamer(OutStreamer, MCInstBuilder(X86::CALLpcrel32)
       .addExpr(MCSymbolRefExpr::Create(PICBase, OutContext)));
 
     // Emit the label.
     OutStreamer.EmitLabel(PICBase);
 
     // popl $reg
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::POP32r)
+    EmitToStreamer(OutStreamer, MCInstBuilder(X86::POP32r)
       .addReg(MI->getOperand(0).getReg()));
     return;
   }
@@ -857,7 +858,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     DotExpr = MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(OpSym,OutContext),
                                       DotExpr, OutContext);
 
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::ADD32ri)
+    EmitToStreamer(OutStreamer, MCInstBuilder(X86::ADD32ri)
       .addReg(MI->getOperand(0).getReg())
       .addReg(MI->getOperand(1).getReg())
       .addExpr(DotExpr));
@@ -865,19 +866,19 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
 
   case TargetOpcode::STACKMAP:
-    return LowerSTACKMAP(OutStreamer, SM, *MI, Subtarget->is64Bit());
+    return LowerSTACKMAP(OutStreamer, SM, *MI, Subtarget->is64Bit(), getSubtargetInfo());
 
   case TargetOpcode::PATCHPOINT:
-    return LowerPATCHPOINT(OutStreamer, SM, *MI, Subtarget->is64Bit());
+    return LowerPATCHPOINT(OutStreamer, SM, *MI, Subtarget->is64Bit(), getSubtargetInfo());
 
   case X86::MORESTACK_RET:
-    OutStreamer.EmitInstruction(MCInstBuilder(getRetOpcode(*Subtarget)));
+    EmitToStreamer(OutStreamer, MCInstBuilder(getRetOpcode(*Subtarget)));
     return;
 
   case X86::MORESTACK_RET_RESTORE_R10:
     // Return, then restore R10.
-    OutStreamer.EmitInstruction(MCInstBuilder(getRetOpcode(*Subtarget)));
-    OutStreamer.EmitInstruction(MCInstBuilder(X86::MOV64rr)
+    EmitToStreamer(OutStreamer, MCInstBuilder(getRetOpcode(*Subtarget)));
+    EmitToStreamer(OutStreamer, MCInstBuilder(X86::MOV64rr)
       .addReg(X86::R10)
       .addReg(X86::RAX));
     return;
@@ -885,5 +886,5 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);
-  OutStreamer.EmitInstruction(TmpInst);
+  EmitToStreamer(OutStreamer, TmpInst);
 }

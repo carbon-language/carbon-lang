@@ -625,7 +625,7 @@ namespace {
 
     RecordStreamer(MCContext &Context) : MCStreamer(Context) {}
 
-    virtual void EmitInstruction(const MCInst &Inst) {
+    virtual void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) {
       // Scan for values.
       for (unsigned i = Inst.getNumOperands(); i--; )
         if (Inst.getOperand(i).isExpr())

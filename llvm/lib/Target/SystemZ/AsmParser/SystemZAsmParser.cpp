@@ -715,7 +715,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   default: break;
   case Match_Success:
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst);
+    Out.EmitInstruction(Inst, STI);
     return false;
 
   case Match_MissingFeature: {

@@ -131,7 +131,7 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     MCInst TmpInst0;
     MCInstLowering.Lower(I, TmpInst0);
-    OutStreamer.EmitInstruction(TmpInst0);
+    EmitToStreamer(OutStreamer, TmpInst0);
   } while ((++I != E) && I->isInsideBundle()); // Delay slot check
 }
 
