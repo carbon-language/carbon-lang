@@ -356,6 +356,6 @@ endif()
 # flags instead if LLVM_NO_DEAD_STRIP is set.
 if(NOT CYGWIN AND NOT WIN32)
   if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    append("-ffunction-sections -fdata-sections" CMAKE_CXX_FLAGS)
+    append("-ffunction-sections -fdata-sections" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
   endif()
 endif()
