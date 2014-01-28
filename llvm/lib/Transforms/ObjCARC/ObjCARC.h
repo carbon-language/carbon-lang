@@ -308,6 +308,7 @@ static inline bool IsPotentialRetainableObjPtr(const Value *Op) {
   // Special arguments can not be a valid retainable object pointer.
   if (const Argument *Arg = dyn_cast<Argument>(Op))
     if (Arg->hasByValAttr() ||
+        Arg->hasInAllocaAttr() ||
         Arg->hasNestAttr() ||
         Arg->hasStructRetAttr())
       return false;

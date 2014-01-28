@@ -105,6 +105,15 @@ define void @test9(%struct.x* byval  %a) nounwind  {
 ; CHECK-NEXT: ret void
 }
 
+; Test for inalloca handling.
+define void @test9_2(%struct.x* inalloca  %a) nounwind  {
+	%tmp2 = getelementptr %struct.x* %a, i32 0, i32 0
+	store i32 1, i32* %tmp2, align 4
+	ret void
+; CHECK-LABEL: @test9_2(
+; CHECK-NEXT: ret void
+}
+
 ; va_arg has fuzzy dependence, the store shouldn't be zapped.
 define double @test10(i8* %X) {
         %X_addr = alloca i8*

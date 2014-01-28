@@ -81,10 +81,14 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
       if (CS.isCallee(UI))
         continue;
 
+      // Inalloca arguments are clobbered by the call.
+      unsigned ArgNo = CS.getArgumentNo(UI);
+      if (CS.isInAllocaArgument(ArgNo))
+        return false;
+
       // If this is a readonly/readnone call site, then we know it is just a
       // load (but one that potentially returns the value itself), so we can
       // ignore it if we know that the value isn't captured.
-      unsigned ArgNo = CS.getArgumentNo(UI);
       if (CS.onlyReadsMemory() &&
           (CS.getInstruction()->use_empty() || CS.doesNotCapture(ArgNo)))
         continue;

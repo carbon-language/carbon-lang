@@ -155,7 +155,8 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
     Type *AgTy = cast<PointerType>(PtrArg->getType())->getElementType();
 
     // If this is a byval argument, and if the aggregate type is small, just
-    // pass the elements, which is always safe.
+    // pass the elements, which is always safe.  This does not apply to
+    // inalloca.
     if (PtrArg->hasByValAttr()) {
       if (StructType *STy = dyn_cast<StructType>(AgTy)) {
         if (maxElements > 0 && STy->getNumElements() > maxElements) {
@@ -201,7 +202,7 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
     }
     
     // Otherwise, see if we can promote the pointer to its value.
-    if (isSafeToPromoteArgument(PtrArg, PtrArg->hasByValAttr()))
+    if (isSafeToPromoteArgument(PtrArg, PtrArg->hasByValOrInAllocaAttr()))
       ArgsToPromote.insert(PtrArg);
   }
 
@@ -301,7 +302,8 @@ static void MarkIndicesSafe(const ArgPromotion::IndicesVector &ToMark,
 /// This method limits promotion of aggregates to only promote up to three
 /// elements of the aggregate in order to avoid exploding the number of
 /// arguments passed in.
-bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
+bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
+                                           bool isByValOrInAlloca) const {
   typedef std::set<IndicesVector> GEPIndicesSet;
 
   // Quick exit for unused arguments
@@ -323,6 +325,9 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
   //
   // This set will contain all sets of indices that are loaded in the entry
   // block, and thus are safe to unconditionally load in the caller.
+  //
+  // This optimization is also safe for InAlloca parameters, because it verifies
+  // that the address isn't captured.
   GEPIndicesSet SafeToUnconditionallyLoad;
 
   // This set contains all the sets of indices that we are planning to promote.
@@ -330,7 +335,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
   GEPIndicesSet ToPromote;
 
   // If the pointer is always valid, any load with first index 0 is valid.
-  if (isByVal || AllCallersPassInValidPointerForArgument(Arg))
+  if (isByValOrInAlloca || AllCallersPassInValidPointerForArgument(Arg))
     SafeToUnconditionallyLoad.insert(IndicesVector(1, 0));
 
   // First, iterate the entry block and mark loads of (geps of) arguments as
@@ -389,7 +394,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
         // TODO: This runs the above loop over and over again for dead GEPs
         // Couldn't we just do increment the UI iterator earlier and erase the
         // use?
-        return isSafeToPromoteArgument(Arg, isByVal);
+        return isSafeToPromoteArgument(Arg, isByValOrInAlloca);
       }
 
       // Ensure that all of the indices are constants.

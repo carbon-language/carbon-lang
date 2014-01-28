@@ -414,6 +414,10 @@ determinePointerReadAttrs(Argument *A,
   SmallSet<Use*, 32> Visited;
   int Count = 0;
 
+  // inalloca arguments are always clobbered by the call.
+  if (A->hasInAllocaAttr())
+    return Attribute::None;
+
   bool IsRead = false;
   // We don't need to track IsWritten. If A is written to, return immediately.
 

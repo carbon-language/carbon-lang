@@ -378,7 +378,7 @@ bool DAE::RemoveDeadArgumentsFromCallers(Function &Fn)
        I != E; ++I) {
     Argument *Arg = I;
 
-    if (Arg->use_empty() && !Arg->hasByValAttr())
+    if (Arg->use_empty() && !Arg->hasByValOrInAllocaAttr())
       UnusedArgs.push_back(Arg->getArgNo());
   }
 

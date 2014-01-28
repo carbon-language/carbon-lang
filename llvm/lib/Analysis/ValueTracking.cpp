@@ -311,8 +311,9 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
   if (Argument *A = dyn_cast<Argument>(V)) {
     unsigned Align = 0;
 
-    if (A->hasByValAttr()) {
-      // Get alignment information off byval arguments if specified in the IR.
+    if (A->hasByValOrInAllocaAttr()) {
+      // Get alignment information off byval/inalloca arguments if specified in
+      // the IR.
       Align = A->getParamAlignment();
     } else if (TD && A->hasStructRetAttr()) {
       // An sret parameter has at least the ABI alignment of the return type.
@@ -2070,9 +2071,9 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
   // Alloca never returns null, malloc might.
   if (isa<AllocaInst>(V)) return true;
 
-  // A byval argument is never null.
+  // A byval or inalloca argument is never null.
   if (const Argument *A = dyn_cast<Argument>(V))
-    return A->hasByValAttr();
+    return A->hasByValOrInAllocaAttr();
 
   // Global values are not null unless extern weak.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))

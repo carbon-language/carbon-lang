@@ -767,10 +767,10 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
   if (!CI->isLosslessCast())
     return false;
 
-  // The size of ByVal arguments is derived from the type, so we
+  // The size of ByVal or InAlloca arguments is derived from the type, so we
   // can't change to a type with a different size.  If the size were
   // passed explicitly we could avoid this check.
-  if (!CS.isByValArgument(ix))
+  if (!CS.isByValOrInAllocaArgument(ix))
     return true;
 
   Type* SrcTy =
@@ -1048,6 +1048,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
           hasAttributes(AttributeFuncs::
                         typeIncompatible(ParamTy, i + 1), i + 1))
       return false;   // Attribute not compatible with transformed value.
+
+    if (CS.isInAllocaArgument(i))
+      return false;   // Cannot transform to and from inalloca.
 
     // If the parameter is passed as a byval argument, then we have to have a
     // sized type and the sized type has to have the same size as the old type.

@@ -374,8 +374,8 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
     return OverwriteUnknown;
 
   // Check to see if the later store is to the entire object (either a global,
-  // an alloca, or a byval argument).  If so, then it clearly overwrites any
-  // other store to the same object.
+  // an alloca, or a byval/inalloca argument).  If so, then it clearly
+  // overwrites any other store to the same object.
   const DataLayout *TD = AA.getDataLayout();
 
   const Value *UO1 = GetUnderlyingObject(P1, TD),
@@ -742,11 +742,11 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       DeadStackObjects.insert(I);
   }
 
-  // Treat byval arguments the same, stores to them are dead at the end of the
-  // function.
+  // Treat byval or inalloca arguments the same, stores to them are dead at the
+  // end of the function.
   for (Function::arg_iterator AI = BB.getParent()->arg_begin(),
        AE = BB.getParent()->arg_end(); AI != AE; ++AI)
-    if (AI->hasByValAttr())
+    if (AI->hasByValOrInAllocaAttr())
       DeadStackObjects.insert(AI);
 
   // Scan the basic block backwards
