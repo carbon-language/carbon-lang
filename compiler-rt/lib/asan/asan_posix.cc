@@ -56,33 +56,6 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
   ReportSIGSEGV(pc, sp, bp, addr);
 }
 
-void SetAlternateSignalStack() {
-  stack_t altstack, oldstack;
-  CHECK_EQ(0, sigaltstack(0, &oldstack));
-  // If the alternate stack is already in place, do nothing.
-  if ((oldstack.ss_flags & SS_DISABLE) == 0) return;
-  // TODO(glider): the mapped stack should have the MAP_STACK flag in the
-  // future. It is not required by man 2 sigaltstack now (they're using
-  // malloc()).
-  void* base = MmapOrDie(kAltStackSize, __FUNCTION__);
-  altstack.ss_sp = base;
-  altstack.ss_flags = 0;
-  altstack.ss_size = kAltStackSize;
-  CHECK_EQ(0, sigaltstack(&altstack, 0));
-  VReport(1, "Alternative stack for T%d set: [%p,%p)\n",
-          GetCurrentTidOrInvalid(), altstack.ss_sp,
-          (char *)altstack.ss_sp + altstack.ss_size);
-}
-
-void UnsetAlternateSignalStack() {
-  stack_t altstack, oldstack;
-  altstack.ss_sp = 0;
-  altstack.ss_flags = SS_DISABLE;
-  altstack.ss_size = 0;
-  CHECK_EQ(0, sigaltstack(&altstack, &oldstack));
-  UnmapOrDie(oldstack.ss_sp, oldstack.ss_size);
-}
-
 void InstallSignalHandlers() {
   // Set the alternate signal stack for the main thread.
   // This will cause SetAlternateSignalStack to be called twice, but the stack

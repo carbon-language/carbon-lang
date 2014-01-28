@@ -74,8 +74,6 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp);
 
 void MaybeReexec();
 bool AsanInterceptsSignal(int signum);
-void SetAlternateSignalStack();
-void UnsetAlternateSignalStack();
 void InstallSignalHandlers();
 void ReadContextStack(void *context, uptr *stack, uptr *ssize);
 void AsanPlatformThreadInit();

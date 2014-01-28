@@ -413,6 +413,14 @@ void RawWrite(const char *buffer) {
   }
 }
 
+void SetAlternateSignalStack() {
+  // FIXME: Decide what to do on Windows.
+}
+
+void UnsetAlternateSignalStack() {
+  // FIXME: Decide what to do on Windows.
+}
+
 }  // namespace __sanitizer
 
 #endif  // _WIN32

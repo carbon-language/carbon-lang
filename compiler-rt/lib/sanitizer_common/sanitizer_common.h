@@ -213,6 +213,10 @@ typedef void (*CheckFailedCallbackType)(const char *, int, const char *,
                                        u64, u64);
 void SetCheckFailedCallback(CheckFailedCallbackType callback);
 
+// Functions related to signal handling.
+void SetAlternateSignalStack();
+void UnsetAlternateSignalStack();
+
 // We don't want a summary too long.
 const int kMaxSummaryLength = 1024;
 // Construct a one-line string:

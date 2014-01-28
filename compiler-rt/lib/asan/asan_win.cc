@@ -70,14 +70,6 @@ void *AsanDoesNotSupportStaticLinkage() {
   return 0;
 }
 
-void SetAlternateSignalStack() {
-  // FIXME: Decide what to do on Windows.
-}
-
-void UnsetAlternateSignalStack() {
-  // FIXME: Decide what to do on Windows.
-}
-
 void InstallSignalHandlers() {
   // FIXME: Decide what to do on Windows.
 }
