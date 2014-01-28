@@ -330,9 +330,6 @@ PEHeaderChunk<PEHeader>::PEHeaderChunk(const PECOFFLinkingContext &ctx)
   _coffHeader.Machine = ctx.getMachineType();
   _coffHeader.TimeDateStamp = time(nullptr);
 
-  // The size of PE header including optional data directory.
-  _coffHeader.SizeOfOptionalHeader = ctx.is64Bit() ? 240 : 224;
-
   // Attributes of the executable.
   uint16_t characteristics = llvm::COFF::IMAGE_FILE_32BIT_MACHINE |
                              llvm::COFF::IMAGE_FILE_EXECUTABLE_IMAGE;
@@ -408,6 +405,10 @@ PEHeaderChunk<PEHeader>::PEHeaderChunk(const PECOFFLinkingContext &ctx)
 
   // The number of data directory entries. We always have 16 entries.
   _peHeader.NumberOfRvaAndSize = 16;
+
+  // The size of PE header including optional data directory.
+  _coffHeader.SizeOfOptionalHeader = sizeof(PEHeader) +
+      _peHeader.NumberOfRvaAndSize * sizeof(llvm::object::data_directory);
 }
 
 template <>
