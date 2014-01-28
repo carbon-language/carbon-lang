@@ -171,10 +171,10 @@ if [ "$ARM_HOSTED_BUILD" = yes ]; then
 else
 # not $ARM_HOSTED_BUILD
 
-  export CC=`xcrun -find clang`
-  export CXX=`xcrun -find clang++`
-
   if [ "$IOS_SIM_BUILD" = yes ]; then
+    export CC=`xcrun -sdk iphonesimulator -find clang`
+    export CXX=`xcrun -sdk iphonesimulator -find clang++`
+
     # Use a non-standard "darwin_sim" host triple to trigger a cross-build.
     configure_opts="--enable-targets=x86 --host=i686-apple-darwin_sim \
                     --build=i686-apple-darwin10"
@@ -183,6 +183,9 @@ else
         DEPLOYMENT_TARGET=-mios-simulator-version-min=$IPHONEOS_DEPLOYMENT_TARGET"
     fi
   else
+    export CC=`xcrun -sdk macosx -find clang`
+    export CXX=`xcrun -sdk macosx -find clang++`
+
     configure_opts="--enable-targets=arm,x86"
     if [ -n "$MACOSX_DEPLOYMENT_TARGET" ]; then
       COMMON_MAKEFLAGS="$COMMON_MAKEFLAGS \
