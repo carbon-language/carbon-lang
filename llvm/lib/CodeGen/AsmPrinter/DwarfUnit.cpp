@@ -1881,7 +1881,7 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
         Offset = FieldSize - (Offset + Size);
       addUInt(MemberDie, dwarf::DW_AT_bit_offset, None, Offset);
 
-      // Here WD_AT_data_member_location points to the anonymous
+      // Here DW_AT_data_member_location points to the anonymous
       // field that includes this bit field.
       OffsetInBytes = FieldOffset >> 3;
     } else
