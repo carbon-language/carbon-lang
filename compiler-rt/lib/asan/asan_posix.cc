@@ -30,8 +30,6 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-static const uptr kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
-
 namespace __asan {
 
 static void MaybeInstallSigaction(int signum,
