@@ -193,8 +193,6 @@ ScopedInterceptor::~ScopedInterceptor() {
 
 #define SCOPED_INTERCEPTOR_RAW(func, ...) \
     ThreadState *thr = cur_thread(); \
-    StatInc(thr, StatInterceptor); \
-    StatInc(thr, StatInt_##func); \
     const uptr caller_pc = GET_CALLER_PC(); \
     ScopedInterceptor si(thr, #func, caller_pc); \
     const uptr pc = __sanitizer::StackTrace::GetCurrentPc(); \
