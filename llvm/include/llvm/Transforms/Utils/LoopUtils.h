@@ -47,6 +47,17 @@ bool simplifyLoop(Loop *L, DominatorTree *DT, LoopInfo *LI, Pass *PP,
 /// Returns true if any modifications are made to the loop.
 bool formLCSSA(Loop &L, DominatorTree &DT, ScalarEvolution *SE = 0);
 
+/// \brief Put a loop nest into LCSSA form.
+///
+/// This recursively forms LCSSA for a loop nest.
+///
+/// LoopInfo and DominatorTree are required and preserved.
+///
+/// If ScalarEvolution is passed in, it will be preserved.
+///
+/// Returns true if any modifications are made to the loop.
+bool formLCSSARecursively(Loop &L, DominatorTree &DT, ScalarEvolution *SE = 0);
+
 }
 
 #endif

@@ -226,6 +226,19 @@ bool llvm::formLCSSA(Loop &L, DominatorTree &DT, ScalarEvolution *SE) {
   return Changed;
 }
 
+/// Process a loop nest depth first.
+bool llvm::formLCSSARecursively(Loop &L, DominatorTree &DT,
+                                ScalarEvolution *SE) {
+  bool Changed = false;
+
+  // Recurse depth-first through inner loops.
+  for (Loop::iterator LI = L.begin(), LE = L.end(); LI != LE; ++LI)
+    Changed |= formLCSSARecursively(**LI, DT, SE);
+
+  Changed |= formLCSSA(L, DT, SE);
+  return Changed;
+}
+
 namespace {
 struct LCSSA : public FunctionPass {
   static char ID; // Pass identification, replacement for typeid
@@ -278,20 +291,8 @@ bool LCSSA::runOnFunction(Function &F) {
 
   // Simplify each loop nest in the function.
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
-    Changed |= processLoop(**I);
+    Changed |= formLCSSARecursively(**I, *DT, SE);
 
-  return Changed;
-}
-
-/// Process a loop nest depth first.
-bool LCSSA::processLoop(Loop &L) {
-  bool Changed = false;
-
-  // Recurse depth-first through inner loops.
-  for (Loop::iterator LI = L.begin(), LE = L.end(); LI != LE; ++LI)
-    Changed |= processLoop(**LI);
-
-  Changed |= formLCSSA(L, *DT, SE);
   return Changed;
 }
 

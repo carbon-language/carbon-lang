@@ -468,9 +468,11 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   if (PP && DT) {
     if (!OuterL && !CompletelyUnroll)
       OuterL = L;
-    if (OuterL)
-      simplifyLoop(OuterL, DT, LI, PP, /*AliasAnalysis*/ 0,
-                   PP->getAnalysisIfAvailable<ScalarEvolution>());
+    if (OuterL) {
+      ScalarEvolution *SE = PP->getAnalysisIfAvailable<ScalarEvolution>();
+      simplifyLoop(OuterL, DT, LI, PP, /*AliasAnalysis*/ 0, SE);
+      formLCSSARecursively(*OuterL, *DT, SE);
+    }
   }
 
   return true;
