@@ -359,3 +359,11 @@ if(NOT CYGWIN AND NOT WIN32)
     append("-ffunction-sections -fdata-sections" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
   endif()
 endif()
+
+if(MSVC)
+  # Remove flags here, for exceptions and RTTI.
+  # Each target property of source proerty should be responsible to control them.
+  # CL.EXE complains to override flags like "/GR /GR-".
+  string(REGEX REPLACE "(^| ) */EH[-cs]+ *( |$)" "\\1 \\2" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  string(REGEX REPLACE "(^| ) */GR-? *( |$)" "\\1 \\2" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+endif()
