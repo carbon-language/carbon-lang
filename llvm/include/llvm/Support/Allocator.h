@@ -14,6 +14,8 @@
 #ifndef LLVM_SUPPORT_ALLOCATOR_H
 #define LLVM_SUPPORT_ALLOCATOR_H
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
@@ -179,6 +181,40 @@ public:
 
   void PrintStats() const;
   
+  
+  /// Allocate space and copy content into it.
+  void *allocateCopy(const void *Src, size_t Size, size_t Alignment=1) {
+    void *P = Allocate(Size, Alignment);
+    memcpy(P, Src, Size);
+    return P;
+  }
+  
+  /// Allocate space for an array of type T, and use std::copy()
+  /// to copy the array contents.
+  template <typename T>
+  typename enable_if<isPodLike<T>, T*>::type
+  allocateCopy(const T Src[], size_t Num) {
+    T *P = Allocate<T>(Num);
+    std::copy(Src, &Src[Num], P);
+    return P;
+  }
+
+  /// Copy a StringRef by allocating copy in BumpPtrAllocator.
+  StringRef allocateCopy(StringRef Str) {
+    size_t Length = Str.size();
+    char *P = allocateCopy<char>(Str.data(), Length);
+    return StringRef(P, Length);
+  }
+
+  /// Copy a ArrayRef<T> by allocating copy in BumpPtrAllocator.
+  template <typename T>
+  typename enable_if<isPodLike<T>, ArrayRef<T>>::type
+  allocateCopy(ArrayRef<T> Src) {
+    size_t Length = Src.size();
+    T *P = allocateCopy(Src.data(), Length*sizeof(T));
+    return makeArrayRef(P, Length);
+  }
+
   /// Compute the total physical memory allocated by this allocator.
   size_t getTotalMemory() const;
 };
