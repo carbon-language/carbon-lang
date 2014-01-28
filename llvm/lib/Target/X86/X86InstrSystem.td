@@ -455,8 +455,13 @@ def LMSW16r : I<0x01, MRM6r, (outs), (ins GR16:$src),
                 "lmsw{w}\t$src", [], IIC_LMSW_MEM>, TB;
 def LMSW16m : I<0x01, MRM6m, (outs), (ins i16mem:$src),
                 "lmsw{w}\t$src", [], IIC_LMSW_REG>, TB;
-                
-def CPUID : I<0xA2, RawFrm, (outs), (ins), "cpuid", [], IIC_CPUID>, TB;
+
+let Defs = [EAX, EBX, ECX, EDX], Uses = [EAX, ECX] in
+  def CPUID32 : I<0xA2, RawFrm, (outs), (ins), "cpuid", [], IIC_CPUID>, TB,
+  Requires<[Not64BitMode]>;
+let Defs = [RAX, RBX, RCX, RDX], Uses = [RAX, RCX] in
+  def CPUID64 : I<0xA2, RawFrm, (outs), (ins), "cpuid", [], IIC_CPUID>, TB,
+  Requires<[In64BitMode]>;
 } // SchedRW
 
 //===----------------------------------------------------------------------===//
