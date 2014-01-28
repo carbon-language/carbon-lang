@@ -39,3 +39,17 @@
 - (void)dealloc { // expected-warning {{-dealloc is being overridden in a category}}
 }
 @end
+
+// rdar://15919775
+@interface NSObject @end
+@interface NSError:NSObject
+@end
+
+@interface NSError(CAT)
+- (NSError *)MCCopyAsPrimaryError __attribute__((objc_method_family(new)));
+@end
+@implementation NSError(CAT)
+- (NSError *)MCCopyAsPrimaryError {
+  return 0;
+}
+@end

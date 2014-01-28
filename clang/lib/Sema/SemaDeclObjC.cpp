@@ -3165,7 +3165,8 @@ Decl *Sema::ActOnMethodDeclaration(
                                                    ObjCMethod->getLocation()));
     }
     if (isa<ObjCCategoryImplDecl>(ImpDecl)) {
-      ObjCMethodFamily family = ObjCMethod->getMethodFamily();
+      ObjCMethodFamily family = 
+        ObjCMethod->getSelector().getMethodFamily();
       if (family == OMF_dealloc && IMD && IMD->isOverriding()) 
         Diag(ObjCMethod->getLocation(), diag::warn_dealloc_in_category)
           << ObjCMethod->getDeclName();
