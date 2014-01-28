@@ -37,6 +37,11 @@ endif()
 set(ASAN_COMMON_DEFINITIONS
   ASAN_HAS_EXCEPTIONS=1)
 
+if(ANDROID)
+  list(APPEND ASAN_COMMON_DEFINITIONS
+    ASAN_LOW_MEMORY=1)
+endif()
+
 # Architectures supported by ASan.
 filter_available_targets(ASAN_SUPPORTED_ARCH
   x86_64 i386 powerpc64)
