@@ -70,4 +70,22 @@ typedef union {
   int4 vec; // expected-warning{{first field of a transparent union cannot have vector type 'int4'; transparent_union attribute ignored}}
 } TU5 __attribute__((transparent_union));
 
-  
+union pr15134 {
+  unsigned int u;
+  struct {
+    unsigned int expo:2;
+    unsigned int mant:30;
+  } __attribute__((packed));
+  // The packed attribute is acceptable because it defines a less strict
+  // alignment than required by the first field of the transparent union.
+} __attribute__((transparent_union));
+
+union pr15134v2 {
+  struct { // expected-note {{alignment of first field is 32 bits}}
+    unsigned int u1;
+    unsigned int u2;
+  };
+  struct {  // expected-warning {{alignment of field '' (64 bits) does not match the alignment of the first field in transparent union; transparent_union attribute ignored}}
+    unsigned int u3;
+  } __attribute__((aligned(8)));
+} __attribute__((transparent_union));

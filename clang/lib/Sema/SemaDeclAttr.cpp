@@ -2664,8 +2664,13 @@ static void handleTransparentUnionAttr(Sema &S, Decl *D,
   uint64_t FirstAlign = S.Context.getTypeAlign(FirstType);
   for (; Field != FieldEnd; ++Field) {
     QualType FieldType = Field->getType();
+    // FIXME: this isn't fully correct; we also need to test whether the
+    // members of the union would all have the same calling convention as the
+    // first member of the union. Checking just the size and alignment isn't
+    // sufficient (consider structs passed on the stack instead of in registers
+    // as an example).
     if (S.Context.getTypeSize(FieldType) != FirstSize ||
-        S.Context.getTypeAlign(FieldType) != FirstAlign) {
+        S.Context.getTypeAlign(FieldType) > FirstAlign) {
       // Warn if we drop the attribute.
       bool isSize = S.Context.getTypeSize(FieldType) != FirstSize;
       unsigned FieldBits = isSize? S.Context.getTypeSize(FieldType)
