@@ -74,6 +74,10 @@ TEST_F(FormatTestProto, UnderstandsReturns) {
 
 TEST_F(FormatTestProto, MessageFieldAttributes) {
   verifyFormat("optional string test = 1 [default = \"test\"];");
+  verifyFormat("optional bool a = 1 [default = true, deprecated = true];");
+  verifyFormat("optional LongMessageType long_proto_field = 1\n"
+               "    [default = REALLY_REALLY_LONG_CONSTANT_VALUE,\n"
+               "     deprecated = true];");
   verifyFormat("optional LongMessageType long_proto_field = 1\n"
                "    [default = REALLY_REALLY_LONG_CONSTANT_VALUE];");
 }

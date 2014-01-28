@@ -248,6 +248,7 @@ private:
       if (CurrentToken->is(tok::colon))
         ColonFound = true;
       if (CurrentToken->is(tok::comma) &&
+          Style.Language != FormatStyle::LK_Proto &&
           (Left->Type == TT_ArraySubscriptLSquare ||
            (Left->Type == TT_ObjCMethodExpr && !ColonFound)))
         Left->Type = TT_ArrayInitializerLSquare;
