@@ -66,11 +66,10 @@ struct file_type {
   };
 
   file_type(_ v) : v_(v) {}
-  explicit file_type(int v) : v_(_(v)) {}
-  operator int() const {return v_;}
+  operator _() const {return v_;}
 
 private:
-  int v_;
+  _ v_;
 };
 
 /// space_info - Self explanatory.
