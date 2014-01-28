@@ -56,6 +56,7 @@ __int64 __emul(int, int);
 unsigned __int64 __emulu(unsigned int, unsigned int);
 void __cdecl __fastfail(unsigned int);
 unsigned int __getcallerseflags(void);
+static __inline__
 void __halt(void);
 unsigned char __inbyte(unsigned short);
 void __inbytestring(unsigned short, unsigned char *, unsigned long);
@@ -92,6 +93,7 @@ static __inline__
 unsigned int __popcnt(unsigned int);
 static __inline__
 unsigned short __popcnt16(unsigned short);
+static __inline__
 unsigned __int64 __rdtsc(void);
 unsigned __int64 __rdtscp(unsigned int *);
 unsigned long __readcr0(void);
@@ -888,6 +890,16 @@ _xgetbv(unsigned int __xcr_no) {
   unsigned int __eax, __edx;
   __asm__ ("xgetbv" : "=a" (__eax), "=d" (__edx) : "c" (__xcr_no));
   return ((unsigned __int64)__edx << 32) | __eax;
+}
+static __inline__ unsigned __int64 __attribute__((__always_inline__, __nodebug__))
+__rdtsc(void) {
+  unsigned int __eax, __edx;
+  __asm__ ("rdtsc" : "=a" (__eax), "=d" (__edx));
+  return ((unsigned __int64)__edx << 32) | __eax;
+}
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__halt(void) {
+  __asm__ volatile ("hlt");
 }
 
 #ifdef __cplusplus
