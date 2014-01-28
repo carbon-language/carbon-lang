@@ -609,6 +609,13 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         SectionKind::getReadOnly());
 
   // Debug info.
+  COFFDebugSymbolsSection =
+    Ctx->getCOFFSection(".debug$S",
+                        COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                        COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                        COFF::IMAGE_SCN_MEM_READ,
+                        SectionKind::getMetadata());
+
   DwarfAbbrevSection =
     Ctx->getCOFFSection(".debug_abbrev",
                         COFF::IMAGE_SCN_MEM_DISCARDABLE |

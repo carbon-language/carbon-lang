@@ -129,6 +129,8 @@ protected:
   const MCSection *DwarfGnuPubNamesSection;
   const MCSection *DwarfGnuPubTypesSection;
 
+  const MCSection *COFFDebugSymbolsSection;
+
   // Extra TLS Variable Data section.  If the target needs to put additional
   // information for a TLS variable, it'll go here.
   const MCSection *TLSExtraDataSection;
@@ -281,6 +283,10 @@ public:
   }
   const MCSection *getDwarfAddrSection() const {
     return DwarfAddrSection;
+  }
+
+  const MCSection *getCOFFDebugSymbolsSection() const {
+    return COFFDebugSymbolsSection;
   }
 
   const MCSection *getTLSExtraDataSection() const {
