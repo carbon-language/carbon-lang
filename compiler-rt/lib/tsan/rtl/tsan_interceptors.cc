@@ -186,8 +186,8 @@ ScopedInterceptor::~ScopedInterceptor() {
     ThreadIgnoreEnd(thr_, pc_);
   }
   if (!thr_->ignore_interceptors) {
-    FuncExit(thr_);
     ProcessPendingSignals(thr_);
+    FuncExit(thr_);
   }
 }
 
@@ -1630,23 +1630,24 @@ TSAN_INTERCEPTOR(int, epoll_wait, int epfd, void *ev, int cnt, int timeout) {
 
 namespace __tsan {
 
-static void CallUserSignalHandler(bool sigact, int sig, my_siginfo_t *info,
-    void *uctx) {
+static void CallUserSignalHandler(ThreadState *thr, bool sync, bool sigact,
+    int sig, my_siginfo_t *info, void *uctx) {
   // Ensure that the handler does not spoil errno.
   const int saved_errno = errno;
-  errno = 0;
+  errno = 99;
+  // Need to remember pc before the call, because the handler can reset it.
+  uptr pc = sigact ?
+     (uptr)sigactions[sig].sa_sigaction :
+     (uptr)sigactions[sig].sa_handler;
+  pc += 1;  // return address is expected, OutputReport() will undo this
   if (sigact)
     sigactions[sig].sa_sigaction(sig, info, uctx);
   else
     sigactions[sig].sa_handler(sig);
-  if (flags()->report_bugs && errno != 0) {
+  if (flags()->report_bugs && !sync && errno != 99) {
     Context *ctx = CTX();
     __tsan::StackTrace stack;
-    uptr pc = sigact ?
-        (uptr)sigactions[sig].sa_sigaction :
-        (uptr)sigactions[sig].sa_handler;
-    pc += 1;  // return address is expected, OutputReport() will undo this
-    stack.Init(&pc, 1);
+    stack.ObtainCurrent(thr, pc);
     ThreadRegistryLock l(ctx->thread_registry);
     ScopedReport rep(ReportTypeErrnoInSignal);
     if (!IsFiredSuppression(ctx, rep, stack)) {
@@ -1673,8 +1674,8 @@ void ProcessPendingSignals(ThreadState *thr) {
       signal->armed = false;
       if (sigactions[sig].sa_handler != SIG_DFL
           && sigactions[sig].sa_handler != SIG_IGN) {
-        CallUserSignalHandler(signal->sigaction, sig, &signal->siginfo,
-            &signal->ctx);
+        CallUserSignalHandler(thr, false, signal->sigaction,
+            sig, &signal->siginfo, &signal->ctx);
       }
     }
   }
@@ -1685,15 +1686,20 @@ void ProcessPendingSignals(ThreadState *thr) {
 
 }  // namespace __tsan
 
+static bool is_sync_signal(SignalContext *sctx, int sig) {
+  return sig == SIGSEGV || sig == SIGBUS || sig == SIGILL ||
+      sig == SIGABRT || sig == SIGFPE || sig == SIGPIPE || sig == SIGSYS ||
+      // If we are sending signal to ourselves, we must process it now.
+      (sctx && sig == sctx->int_signal_send);
+}
+
 void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
     my_siginfo_t *info, void *ctx) {
   ThreadState *thr = cur_thread();
   SignalContext *sctx = SigCtx(thr);
   // Don't mess with synchronous signals.
-  if (sig == SIGSEGV || sig == SIGBUS || sig == SIGILL ||
-      sig == SIGABRT || sig == SIGFPE || sig == SIGPIPE || sig == SIGSYS ||
-      // If we are sending signal to ourselves, we must process it now.
-      (sctx && sig == sctx->int_signal_send) ||
+  const bool sync = is_sync_signal(sctx, sig);
+  if (sync ||
       // If we are in blocking function, we can safely process it now
       // (but check if we are in a recursive interceptor,
       // i.e. pthread_join()->munmap()).
@@ -1705,10 +1711,10 @@ void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
       // temporary enbled them again while we are calling user function.
       int const i = thr->ignore_interceptors;
       thr->ignore_interceptors = 0;
-      CallUserSignalHandler(sigact, sig, info, ctx);
+      CallUserSignalHandler(thr, sync, sigact, sig, info, ctx);
       thr->ignore_interceptors = i;
     } else {
-      CallUserSignalHandler(sigact, sig, info, ctx);
+      CallUserSignalHandler(thr, sync, sigact, sig, info, ctx);
     }
     CHECK_EQ(thr->in_signal_handler, true);
     thr->in_signal_handler = false;
