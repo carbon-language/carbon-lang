@@ -169,3 +169,11 @@ const char g11[] = @encode(void);
 // PR14628
 // CHECK: @g12 = constant [3 x i8] c"Ai\00"
 const char g12[] = @encode(_Atomic(int));
+
+// rdar://15824769
+id test_id = 0;
+Class test_class = 0;
+const char g13[] = @encode(__typeof__(*test_class));
+const char g14[] = @encode(__typeof__(*test_id));
+// CHECK: constant [14 x i8] c"{objc_class=}\00"
+// CHECK: constant [15 x i8] c"{objc_object=}\00"

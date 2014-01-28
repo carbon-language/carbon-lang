@@ -5440,7 +5440,19 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
 
-  case Type::ObjCObject:
+  case Type::ObjCObject: {
+    // hack to match legacy encoding of *id and *Class
+    QualType Ty = getObjCObjectPointerType(CT);
+    if (Ty->isObjCIdType()) {
+      S += "{objc_object=}";
+      return;
+    }
+    else if (Ty->isObjCClassType()) {
+      S += "{objc_class=}";
+      return;
+    }
+  }
+  
   case Type::ObjCInterface: {
     // Ignore protocol qualifiers when mangling at this level.
     T = T->castAs<ObjCObjectType>()->getBaseType();
