@@ -165,13 +165,15 @@ protected:
   class atom_collection_vector : public atom_collection<T> {
   public:
     virtual atom_iterator<T> begin() const {
-      return atom_iterator<T>(*this,
-          _atoms.empty() ? 0 : reinterpret_cast<const void *>(_atoms.data()));
+      auto *it = _atoms.empty() ? nullptr
+                                : reinterpret_cast<const void *>(_atoms.data());
+      return atom_iterator<T>(*this, it);
     }
 
     virtual atom_iterator<T> end() const{
-      return atom_iterator<T>(*this, _atoms.empty() ? 0 :
-          reinterpret_cast<const void *>(_atoms.data() + _atoms.size()));
+      auto *it = _atoms.empty() ? nullptr : reinterpret_cast<const void *>(
+                                                _atoms.data() + _atoms.size());
+      return atom_iterator<T>(*this, it);
     }
 
     virtual const T *deref(const void *it) const {
