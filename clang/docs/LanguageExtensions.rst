@@ -1448,12 +1448,12 @@ whether it is a redeclaration (following the rules used when determining
 whether a C++ template specialization is ODR-equivalent), but is not part of
 the type.
 
-An enable_if expression will be evaluated by substituting the values of the
-parameters from the call site into the arguments in the expression and
-determining whether the result is true. If the result is false or could not be
-determined through constant expression evaluation, then this overload will not
-be chosen and the reason supplied in the string will be given to the user if
-their code does not compile as a result.
+The enable_if expression is evaluated as if it were the body of a
+bool-returning constexpr function declared with the arguments of the function
+it is being applied to, then called with the parameters at the callsite. If the
+result is false or could not be determined through constant expression
+evaluation, then this overload will not be chosen and the provided string may
+be used in a diagnostic if the compile fails as a result.
 
 Because the enable_if expression is an unevaluated context, there are no global
 state changes, nor the ability to pass information from the enable_if
