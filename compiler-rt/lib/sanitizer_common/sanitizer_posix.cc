@@ -21,7 +21,6 @@
 #include "sanitizer_stacktrace.h"
 
 #include <sys/mman.h>
-#include <signal.h>
 
 namespace __sanitizer {
 
