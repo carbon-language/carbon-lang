@@ -41,3 +41,33 @@ return:                                           ; preds = %entry
 ; CHECK-LABEL: @test5(
 ; CHECK-NEXT: ret void
 }
+
+
+; PR14893
+define i8 @test6f() {
+; CHECK-LABEL: @test6f
+; CHECK: alloca i8, align 1
+; CHECK-NEXT: call i8 @test6g
+; CHECK-NEXT: icmp eq i8 %tmp, 0
+; CHECK-NEXT: load i8* %r, align 1{{$}}
+
+bb0:
+  %r = alloca i8, align 1
+  %tmp = call i8 @test6g(i8* %r)
+  %tmp1 = icmp eq i8 %tmp, 0
+  br i1 %tmp1, label %bb2, label %bb1
+bb1:
+  %tmp3 = load i8* %r, align 1, !range !2, !tbaa !1
+  %tmp4 = icmp eq i8 %tmp3, 1
+  br i1 %tmp4, label %bb2, label %bb3
+bb2:
+  br label %bb3
+bb3:
+  %tmp6 = phi i8 [ 0, %bb2 ], [ 1, %bb1 ]
+  ret i8 %tmp6
+}
+declare i8 @test6g(i8*)
+
+!0 = metadata !{metadata !1, metadata !1, i64 0}
+!1 = metadata !{metadata !"foo"}
+!2 = metadata !{i8 0, i8 2}

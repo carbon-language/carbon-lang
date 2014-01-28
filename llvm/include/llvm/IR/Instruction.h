@@ -15,6 +15,7 @@
 #ifndef LLVM_IR_INSTRUCTION_H
 #define LLVM_IR_INSTRUCTION_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/IR/User.h"
 #include "llvm/Support/DebugLoc.h"
@@ -170,6 +171,21 @@ public:
   /// Node is null.
   void setMetadata(unsigned KindID, MDNode *Node);
   void setMetadata(StringRef Kind, MDNode *Node);
+
+  /// \brief Drop unknown metadata.
+  /// Passes are required to drop metadata they don't understand. This is a
+  /// convenience method for passes to do so.
+  void dropUnknownMetadata(ArrayRef<unsigned> KnownIDs);
+  void dropUnknownMetadata() {
+    return dropUnknownMetadata(ArrayRef<unsigned>());
+  }
+  void dropUnknownMetadata(unsigned ID1) {
+    return dropUnknownMetadata(makeArrayRef(ID1));
+  }
+  void dropUnknownMetadata(unsigned ID1, unsigned ID2) {
+    unsigned IDs[] = {ID1, ID2};
+    return dropUnknownMetadata(IDs);
+  }
 
   /// setDebugLoc - Set the debug location information for this instruction.
   void setDebugLoc(const DebugLoc &Loc) { DbgLoc = Loc; }

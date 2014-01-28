@@ -2154,6 +2154,14 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     Instruction *NewBonus = 0;
     if (BonusInst) {
       NewBonus = BonusInst->clone();
+
+      // If we moved a load, we cannot any longer claim any knowledge about
+      // its potential value. The previous information might have been valid
+      // only given the branch precondition.
+      // For an analogous reason, we must also drop all the metadata whose
+      // semantics we don't understand.
+      NewBonus->dropUnknownMetadata(LLVMContext::MD_dbg);
+
       PredBlock->getInstList().insert(PBI, NewBonus);
       NewBonus->takeName(BonusInst);
       BonusInst->setName(BonusInst->getName()+".old");
