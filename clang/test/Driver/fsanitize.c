@@ -113,7 +113,7 @@
 // CHECK-ANDROID-ASAN-NO-PIE: "-pie"
 
 // RUN: %clang -target arm-linux-androideabi %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ANDROID-NO-ASAN
-// CHECK-ANDROID-NO-ASAN: "-mrelocation-model" "static"
+// CHECK-ANDROID-NO-ASAN: "-mrelocation-model" "pic"
 
 // RUN: %clang -target x86_64-linux-gnu %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-RECOVER
 // RUN: %clang -target x86_64-linux-gnu %s -fsanitize-recover -### 2>&1 | FileCheck %s --check-prefix=CHECK-RECOVER

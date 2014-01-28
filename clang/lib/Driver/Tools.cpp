@@ -2136,6 +2136,29 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   bool PIC = PIE || getToolChain().isPICDefault();
   bool IsPICLevelTwo = PIC;
 
+  // Android-specific defaults for PIC/PIE
+  if (getToolChain().getTriple().getEnvironment() == llvm::Triple::Android) {
+    switch (getToolChain().getTriple().getArch()) {
+    case llvm::Triple::arm:
+    case llvm::Triple::thumb:
+    case llvm::Triple::mips:
+    case llvm::Triple::mipsel:
+    case llvm::Triple::mips64:
+    case llvm::Triple::mips64el:
+      PIC = true; // "-fpic"
+      break;
+
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
+      PIC = true; // "-fPIC"
+      IsPICLevelTwo = true;
+      break;
+
+    default:
+      break;
+    }
+  }
+
   // For the PIC and PIE flag options, this logic is different from the
   // legacy logic in very old versions of GCC, as that logic was just
   // a bug no one had ever fixed. This logic is both more rational and
