@@ -3099,10 +3099,10 @@ public:
   ABIKind getABIKind() const { return Kind; }
 
 private:
-  ABIArgInfo classifyReturnType(QualType RetTy) const;
+  ABIArgInfo classifyReturnType(QualType RetTy, bool isVariadic) const;
   ABIArgInfo classifyArgumentType(QualType RetTy, int *VFPRegs,
                                   unsigned &AllocatedVFP,
-                                  bool &IsHA) const;
+                                  bool &IsHA, bool isVariadic) const;
   bool isIllegalVectorType(QualType Ty) const;
 
   virtual void computeInfo(CGFunctionInfo &FI) const;
@@ -3198,7 +3198,7 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
   // unallocated are marked as unavailable. 
   unsigned AllocatedVFP = 0;
   int VFPRegs[16] = { 0 };
-  FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
+  FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), FI.isVariadic());
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
     unsigned PreAllocation = AllocatedVFP;
@@ -3206,10 +3206,12 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
     // 6.1.2.3 There is one VFP co-processor register class using registers
     // s0-s15 (d0-d7) for passing arguments.
     const unsigned NumVFPs = 16;
-    it->info = classifyArgumentType(it->type, VFPRegs, AllocatedVFP, IsHA);
+    it->info = classifyArgumentType(it->type, VFPRegs, AllocatedVFP, IsHA, FI.isVariadic());
     // If we do not have enough VFP registers for the HA, any VFP registers
     // that are unallocated are marked as unavailable. To achieve this, we add
     // padding of (NumVFPs - PreAllocation) floats.
+    // Note that IsHA will only be set when using the AAPCS-VFP calling convention,
+    // and the callee is not variadic.
     if (IsHA && AllocatedVFP > NumVFPs && PreAllocation < NumVFPs) {
       llvm::Type *PaddingTy = llvm::ArrayType::get(
           llvm::Type::getFloatTy(getVMContext()), NumVFPs - PreAllocation);
@@ -3360,7 +3362,7 @@ static void markAllocatedVFPs(int *VFPRegs, unsigned &AllocatedVFP,
 
 ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
                                             unsigned &AllocatedVFP,
-                                            bool &IsHA) const {
+                                            bool &IsHA, bool isVariadic) const {
   // We update number of allocated VFPs according to
   // 6.1.2.1 The following argument types are VFP CPRCs:
   //   A single-precision floating-point type (including promoted
@@ -3424,7 +3426,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
   if (isEmptyRecord(getContext(), Ty, true))
     return ABIArgInfo::getIgnore();
 
-  if (getABIKind() == ARMABIInfo::AAPCS_VFP) {
+  if (getABIKind() == ARMABIInfo::AAPCS_VFP && !isVariadic) {
     // Homogeneous Aggregates need to be expanded when we can fit the aggregate
     // into VFP registers.
     const Type *Base = 0;
@@ -3566,7 +3568,7 @@ static bool isIntegerLikeType(QualType Ty, ASTContext &Context,
   return true;
 }
 
-ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
+ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy, bool isVariadic) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
@@ -3622,7 +3624,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
     return ABIArgInfo::getIgnore();
 
   // Check for homogeneous aggregates with AAPCS-VFP.
-  if (getABIKind() == AAPCS_VFP) {
+  if (getABIKind() == AAPCS_VFP && !isVariadic) {
     const Type *Base = 0;
     if (isHomogeneousAggregate(RetTy, Base, getContext())) {
       assert(Base && "Base class should be set for homogeneous aggregate");

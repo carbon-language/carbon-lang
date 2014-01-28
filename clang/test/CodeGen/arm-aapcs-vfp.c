@@ -25,6 +25,11 @@ struct homogeneous_struct test_struct(struct homogeneous_struct arg) {
   return struct_callee(arg);
 }
 
+// CHECK: define arm_aapcs_vfpcc void @test_struct_variadic(%struct.homogeneous_struct* {{.*}}, [4 x i32] %{{.*}}, ...)
+struct homogeneous_struct test_struct_variadic(struct homogeneous_struct arg, ...) {
+  return struct_callee(arg);
+}
+
 struct nested_array {
   double d[4];
 };

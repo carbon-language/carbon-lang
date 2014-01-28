@@ -173,6 +173,14 @@ void test_struct_of_four_doubles(void) {
   takes_struct_of_four_doubles(3.0, g_s4d, g_s4d, 4.0);
 }
 
+extern void takes_struct_of_four_doubles_variadic(double a, struct_of_four_doubles b, struct_of_four_doubles c, double d, ...);
+
+void test_struct_of_four_doubles_variadic(void) {
+// CHECK: test_struct_of_four_doubles_variadic
+// CHECK: call arm_aapcs_vfpcc void (double, [4 x i64], [4 x i64], double, ...)* @takes_struct_of_four_doubles_variadic(double {{.*}}, [4 x i64] {{.*}}, [4 x i64] {{.*}}, double {{.*}})
+  takes_struct_of_four_doubles_variadic(3.0, g_s4d, g_s4d, 4.0);
+}
+
 extern void takes_struct_with_backfill(float f1, double a, float f2, struct_of_four_doubles b, struct_of_four_doubles c, double d);
 void test_struct_with_backfill(void) {
 // CHECK: test_struct_with_backfill
