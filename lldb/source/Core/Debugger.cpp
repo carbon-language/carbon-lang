@@ -2871,7 +2871,8 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
                         StopReason curr_thread_stop_reason = eStopReasonInvalid;
                         if (curr_thread)
                             curr_thread_stop_reason = curr_thread->GetStopReason();
-                        if (!curr_thread->IsValid() ||
+                        if (!curr_thread ||
+                            !curr_thread->IsValid() ||
                             curr_thread_stop_reason == eStopReasonInvalid ||
                             curr_thread_stop_reason == eStopReasonNone)
                         {
