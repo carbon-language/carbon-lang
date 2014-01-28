@@ -163,6 +163,10 @@ struct FormatStyle {
   /// line.
   bool AllowShortFunctionsOnASingleLine;
 
+  /// \brief Add a space after \c @property in Objective-C, i.e. use
+  /// <tt>@property (readonly)</tt> instead of <tt>@property(readonly)</tt>.
+  bool ObjCSpaceAfterProperty;
+
   /// \brief Add a space in front of an Objective-C protocol list, i.e. use
   /// <tt>Foo <Protocol></tt> instead of \c Foo<Protocol>.
   bool ObjCSpaceBeforeProtocolList;
@@ -329,6 +333,7 @@ struct FormatStyle {
            IndentWidth == R.IndentWidth && Language == R.Language &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
            NamespaceIndentation == R.NamespaceIndentation &&
+           ObjCSpaceAfterProperty == R.ObjCSpaceAfterProperty &&
            ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
            PenaltyBreakComment == R.PenaltyBreakComment &&
            PenaltyBreakFirstLessLess == R.PenaltyBreakFirstLessLess &&

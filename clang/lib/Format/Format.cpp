@@ -164,6 +164,7 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("IndentCaseLabels", Style.IndentCaseLabels);
     IO.mapOptional("MaxEmptyLinesToKeep", Style.MaxEmptyLinesToKeep);
     IO.mapOptional("NamespaceIndentation", Style.NamespaceIndentation);
+    IO.mapOptional("ObjCSpaceAfterProperty", Style.ObjCSpaceAfterProperty);
     IO.mapOptional("ObjCSpaceBeforeProtocolList",
                    Style.ObjCSpaceBeforeProtocolList);
     IO.mapOptional("PenaltyBreakBeforeFirstCallParameter",
@@ -267,6 +268,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.TabWidth = 8;
   LLVMStyle.MaxEmptyLinesToKeep = 1;
   LLVMStyle.NamespaceIndentation = FormatStyle::NI_None;
+  LLVMStyle.ObjCSpaceAfterProperty = false;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
   LLVMStyle.PointerBindsToType = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
@@ -305,6 +307,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.DerivePointerBinding = true;
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.IndentFunctionDeclarationAfterType = true;
+  GoogleStyle.ObjCSpaceAfterProperty = false;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   GoogleStyle.PointerBindsToType = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
@@ -349,6 +352,7 @@ FormatStyle getMozillaStyle() {
   MozillaStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   MozillaStyle.DerivePointerBinding = true;
   MozillaStyle.IndentCaseLabels = true;
+  MozillaStyle.ObjCSpaceAfterProperty = true;
   MozillaStyle.ObjCSpaceBeforeProtocolList = false;
   MozillaStyle.PenaltyReturnTypeOnItsOwnLine = 200;
   MozillaStyle.PointerBindsToType = true;
@@ -365,6 +369,7 @@ FormatStyle getWebKitStyle() {
   Style.ColumnLimit = 0;
   Style.IndentWidth = 4;
   Style.NamespaceIndentation = FormatStyle::NI_Inner;
+  Style.ObjCSpaceAfterProperty = true;
   Style.PointerBindsToType = true;
   return Style;
 }

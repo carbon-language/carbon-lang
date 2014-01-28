@@ -1260,6 +1260,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
         (Left.TokenText == "returns" || Left.TokenText == "option"))
       return true;
   }
+  if (Style.ObjCSpaceAfterProperty && Line.Type == LT_ObjCProperty &&
+      Left.Tok.getObjCKeywordID() == tok::objc_property)
+    return true;
   if (Right.is(tok::hashhash))
     return Left.is(tok::hash);
   if (Left.isOneOf(tok::hashhash, tok::hash))
