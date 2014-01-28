@@ -211,7 +211,7 @@ public:
   typename enable_if<isPodLike<T>, ArrayRef<T> >::type
   allocateCopy(ArrayRef<T> Src) {
     size_t Length = Src.size();
-    T *P = allocateCopy(Src.data(), Length*sizeof(T));
+    T *P = allocateCopy<T>(Src.data(), Length);
     return makeArrayRef(P, Length);
   }
 
