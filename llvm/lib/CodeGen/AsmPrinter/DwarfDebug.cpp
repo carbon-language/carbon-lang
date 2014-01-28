@@ -1525,30 +1525,6 @@ void DwarfDebug::identifyScopeMarkers() {
   }
 }
 
-// Get MDNode for DebugLoc's scope.
-static MDNode *getScopeNode(DebugLoc DL, const LLVMContext &Ctx) {
-  if (MDNode *InlinedAt = DL.getInlinedAt(Ctx))
-    return getScopeNode(DebugLoc::getFromDILocation(InlinedAt), Ctx);
-  return DL.getScope(Ctx);
-}
-
-// Walk up the scope chain of given debug loc and find line number info
-// for the function.
-static DebugLoc getFnDebugLoc(DebugLoc DL, const LLVMContext &Ctx) {
-  const MDNode *Scope = getScopeNode(DL, Ctx);
-  DISubprogram SP = getDISubprogram(Scope);
-  if (SP.isSubprogram()) {
-    // Check for number of operands since the compatibility is
-    // cheap here.
-    if (SP->getNumOperands() > 19)
-      return DebugLoc::get(SP.getScopeLineNumber(), 0, SP);
-    else
-      return DebugLoc::get(SP.getLineNumber(), 0, SP);
-  }
-
-  return DebugLoc();
-}
-
 // Gather pre-function debug information.  Assumes being called immediately
 // after the function entry point has been emitted.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
@@ -1743,7 +1719,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   // Record beginning of function.
   if (!PrologEndLoc.isUnknown()) {
     DebugLoc FnStartDL =
-        getFnDebugLoc(PrologEndLoc, MF->getFunction()->getContext());
+        PrologEndLoc.getFnDebugLoc(MF->getFunction()->getContext());
     recordSourceLine(
         FnStartDL.getLine(), FnStartDL.getCol(),
         FnStartDL.getScope(MF->getFunction()->getContext()),

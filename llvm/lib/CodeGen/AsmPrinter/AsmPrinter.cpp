@@ -49,11 +49,13 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
+#include "WinCodeViewLineTables.h"
 using namespace llvm;
 
 static const char *const DWARFGroupName = "DWARF Emission";
-static const char *const DbgTimerName = "DWARF Debug Writer";
+static const char *const DbgTimerName = "Debug Info Emission";
 static const char *const EHTimerName = "DWARF Exception Writer";
+static const char *const CodeViewLineTablesGroupName = "CodeView Line Tables";
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
@@ -193,8 +195,14 @@ bool AsmPrinter::doInitialization(Module &M) {
   }
 
   if (MAI->doesSupportDebugInformation()) {
-    DD = new DwarfDebug(this, &M);
-    Handlers.push_back(HandlerInfo(DD, DbgTimerName, DWARFGroupName));
+    if (Triple(TM.getTargetTriple()).getOS() == Triple::Win32) {
+      Handlers.push_back(HandlerInfo(new WinCodeViewLineTables(this),
+                                     DbgTimerName,
+                                     CodeViewLineTablesGroupName));
+    } else {
+      DD = new DwarfDebug(this, &M);
+      Handlers.push_back(HandlerInfo(DD, DbgTimerName, DWARFGroupName));
+    }
   }
 
   DwarfException *DE = 0;
