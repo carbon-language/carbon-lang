@@ -208,7 +208,7 @@ public:
 
   /// Copy a ArrayRef<T> by allocating copy in BumpPtrAllocator.
   template <typename T>
-  typename enable_if<isPodLike<T>, ArrayRef<T>>::type
+  typename enable_if<isPodLike<T>, ArrayRef<T> >::type
   allocateCopy(ArrayRef<T> Src) {
     size_t Length = Src.size();
     T *P = allocateCopy(Src.data(), Length*sizeof(T));
