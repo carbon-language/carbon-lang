@@ -1287,6 +1287,15 @@ public:
     return false;
   }
 
+  /// \brief Return true if it is beneficial to convert a load of a constant to
+  /// just the constant itself.
+  /// On some targets it might be more efficient to use a combination of
+  /// arithmetic instructions to materialize the constant instead of loading it
+  /// from a constant pool.
+  virtual bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
+                                                 Type *Ty) const {
+    return false;
+  }
   //===--------------------------------------------------------------------===//
   // Runtime Library hooks
   //

@@ -30,7 +30,6 @@ namespace llvm {
   class MachineInstr;
   class TargetLowering;
   class TargetLibraryInfo;
-  class TargetTransformInfo;
   class FunctionLoweringInfo;
   class ScheduleHazardRecognizer;
   class GCFunctionInfo;
@@ -43,7 +42,6 @@ class SelectionDAGISel : public MachineFunctionPass {
 public:
   TargetMachine &TM;
   const TargetLibraryInfo *LibInfo;
-  const TargetTransformInfo *TTI;
   FunctionLoweringInfo *FuncInfo;
   MachineFunction *MF;
   MachineRegisterInfo *RegInfo;

@@ -385,6 +385,12 @@ namespace llvm {
     virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info,
                                     const CallInst &I,
                                     unsigned Intrinsic) const;
+
+    /// \brief Returns true if it is beneficial to convert a load of a constant
+    /// to just the constant itself.
+    virtual bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
+                                                   Type *Ty) const;
+
   protected:
     std::pair<const TargetRegisterClass*, uint8_t>
     findRepresentativeClass(MVT VT) const;
