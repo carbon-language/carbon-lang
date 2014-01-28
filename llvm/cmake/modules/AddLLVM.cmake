@@ -100,21 +100,12 @@ function(add_llvm_symbol_exports target_name export_file)
 endfunction(add_llvm_symbol_exports)
 
 function(add_dead_strip target_name)
-  # FIXME: With MSVS, consider compiling with /Gy and linking with /OPT:REF?
-  # But MinSizeRel seems to add that automatically, so maybe disable these
-  # flags instead if LLVM_NO_DEAD_STRIP is set.
-  if(NOT CYGWIN AND NOT MINGW AND NOT MSVC)
-    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-       SET(CMAKE_CXX_FLAGS
-           "${CMAKE_CXX_FLAGS}  -ffunction-sections -fdata-sections"
-           PARENT_SCOPE)
-    endif()
-  endif()
   if(NOT LLVM_NO_DEAD_STRIP)
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
                    LINK_FLAGS " -Wl,-dead_strip")
     elseif(NOT WIN32)
+      # Object files are compiled with -ffunction-data-sections.
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
                    LINK_FLAGS " -Wl,--gc-sections")
     endif()

@@ -349,3 +349,13 @@ if (UNIX AND
     CMAKE_GENERATOR STREQUAL "Ninja")
   append("-fcolor-diagnostics" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
 endif()
+
+# Add flags for add_dead_strip().
+# FIXME: With MSVS, consider compiling with /Gy and linking with /OPT:REF?
+# But MinSizeRel seems to add that automatically, so maybe disable these
+# flags instead if LLVM_NO_DEAD_STRIP is set.
+if(NOT CYGWIN AND NOT WIN32)
+  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    append("-ffunction-sections -fdata-sections" CMAKE_CXX_FLAGS)
+  endif()
+endif()
