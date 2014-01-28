@@ -172,6 +172,12 @@ static cl::opt<unsigned> SmallLoopCost(
     "small-loop-cost", cl::init(20), cl::Hidden,
     cl::desc("The cost of a loop that is considered 'small' by the unroller."));
 
+static cl::opt<bool> LoopVectorizeWithBlockFrequency(
+    "loop-vectorize-with-block-frequency", cl::init(false), cl::Hidden,
+    cl::desc("Enable the use of the block frequency analysis to access PGO "
+             "heuristics minimizing code growth in cold regions and being more "
+             "aggressive in hot regions."));
+
 // Runtime unroll loops for load/store throughput.
 static cl::opt<bool> EnableLoadStoreRuntimeUnroll(
     "enable-loadstore-runtime-unroll", cl::init(false), cl::Hidden,
@@ -1099,9 +1105,13 @@ struct LoopVectorize : public FunctionPass {
     // Compute the weighted frequency of this loop being executed and see if it
     // is less than 20% of the function entry baseline frequency. Note that we
     // always have a canonical loop here because we think we *can* vectoriez.
-    BlockFrequency LoopEntryFreq = BFI->getBlockFreq(L->getLoopPreheader());
-    if (Hints.Force != 1 && LoopEntryFreq < ColdEntryFreq)
-      OptForSize = true;
+    // FIXME: This is hidden behind a flag due to pervasive problems with
+    // exactly what block frequency models.
+    if (LoopVectorizeWithBlockFrequency) {
+      BlockFrequency LoopEntryFreq = BFI->getBlockFreq(L->getLoopPreheader());
+      if (Hints.Force != 1 && LoopEntryFreq < ColdEntryFreq)
+        OptForSize = true;
+    }
 
     // Check the function attributes to see if implicit floats are allowed.a
     // FIXME: This check doesn't seem possibly correct -- what if the loop is
