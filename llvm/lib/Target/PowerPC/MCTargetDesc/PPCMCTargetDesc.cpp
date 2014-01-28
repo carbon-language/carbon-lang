@@ -139,6 +139,18 @@ public:
     // limit the parser?
   }
 };
+
+class PPCTargetMachOStreamer : public PPCTargetStreamer {
+public:
+  PPCTargetMachOStreamer(MCStreamer &S) : PPCTargetStreamer(S) {}
+  virtual void emitTCEntry(const MCSymbol &S) {
+    llvm_unreachable("Unknown pseudo-op: .tc");
+  }
+  virtual void emitMachine(StringRef CPU) {
+    // FIXME: We should update the CPUType, CPUSubType in the Object file if
+    // the new values are different from the defaults.
+  }
+};
 }
 
 // This is duplicated code. Refactor this.
@@ -149,8 +161,11 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     const MCSubtargetInfo &STI,
                                     bool RelaxAll,
                                     bool NoExecStack) {
-  if (Triple(TT).isOSDarwin())
-    return createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
+  if (Triple(TT).isOSDarwin()) {
+    MCStreamer *S = createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
+    new PPCTargetMachOStreamer(*S);
+    return S;
+  }
 
   MCStreamer *S =
       createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll, NoExecStack);
