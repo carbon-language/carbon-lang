@@ -70,7 +70,8 @@ namespace {
                                unsigned AsmVariant, const char *ExtraCode,
                                raw_ostream &O);
 
-    void LowerGETPCXAndEmitMCInsts(const MachineInstr *MI);
+    void LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
+                                   const MCSubtargetInfo &STI);
 
   };
 } // end of anonymous namespace
@@ -192,33 +193,33 @@ void SparcAsmPrinter::LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
     case CodeModel::Small:
       EmitHiLo(OutStreamer, GOTLabel,
                SparcMCExpr::VK_Sparc_HI, SparcMCExpr::VK_Sparc_LO,
-               MCRegOP, OutContext);
+               MCRegOP, OutContext, STI);
       break;
     case CodeModel::Medium: {
       EmitHiLo(OutStreamer, GOTLabel,
                SparcMCExpr::VK_Sparc_H44, SparcMCExpr::VK_Sparc_M44,
-               MCRegOP, OutContext);
+               MCRegOP, OutContext, STI);
       MCOperand imm = MCOperand::CreateExpr(MCConstantExpr::Create(12,
                                                                    OutContext));
-      EmitSHL(OutStreamer, MCRegOP, imm, MCRegOP);
+      EmitSHL(OutStreamer, MCRegOP, imm, MCRegOP, STI);
       MCOperand lo = createSparcMCOperand(SparcMCExpr::VK_Sparc_L44,
                                           GOTLabel, OutContext);
-      EmitOR(OutStreamer, MCRegOP, lo, MCRegOP);
+      EmitOR(OutStreamer, MCRegOP, lo, MCRegOP, STI);
       break;
     }
     case CodeModel::Large: {
       EmitHiLo(OutStreamer, GOTLabel,
                SparcMCExpr::VK_Sparc_HH, SparcMCExpr::VK_Sparc_HM,
-               MCRegOP, OutContext);
+               MCRegOP, OutContext, STI);
       MCOperand imm = MCOperand::CreateExpr(MCConstantExpr::Create(32,
                                                                    OutContext));
-      EmitSHL(OutStreamer, MCRegOP, imm, MCRegOP);
+      EmitSHL(OutStreamer, MCRegOP, imm, MCRegOP, STI);
       // Use register %o7 to load the lower 32 bits.
       MCOperand RegO7 = MCOperand::CreateReg(SP::O7);
       EmitHiLo(OutStreamer, GOTLabel,
                SparcMCExpr::VK_Sparc_HI, SparcMCExpr::VK_Sparc_LO,
-               RegO7, OutContext);
-      EmitADD(OutStreamer, MCRegOP, RegO7, MCRegOP);
+               RegO7, OutContext, STI);
+      EmitADD(OutStreamer, MCRegOP, RegO7, MCRegOP, STI);
     }
     }
     return;
