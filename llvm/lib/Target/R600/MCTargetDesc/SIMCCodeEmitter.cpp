@@ -60,7 +60,8 @@ public:
 
   /// \returns the encoding for an MCOperand.
   virtual uint64_t getMachineOpValue(const MCInst &MI, const MCOperand &MO,
-                                     SmallVectorImpl<MCFixup> &Fixups) const;
+                                     SmallVectorImpl<MCFixup> &Fixups,
+                                     const MCSubtargetInfo &STI) const;
 };
 
 } // End anonymous namespace
@@ -129,7 +130,7 @@ void SIMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                                        SmallVectorImpl<MCFixup> &Fixups,
                                        const MCSubtargetInfo &STI) const {
 
-  uint64_t Encoding = getBinaryCodeForInstr(MI, Fixups);
+  uint64_t Encoding = getBinaryCodeForInstr(MI, Fixups, STI);
   const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
   unsigned bytes = Desc.getSize();
 
@@ -170,7 +171,8 @@ void SIMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
 uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                             const MCOperand &MO,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
   if (MO.isReg())
     return MRI.getEncodingValue(MO.getReg());
 

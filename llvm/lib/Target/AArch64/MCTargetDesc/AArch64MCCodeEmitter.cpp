@@ -39,72 +39,92 @@ public:
   ~AArch64MCCodeEmitter() {}
 
   unsigned getAddSubImmOpValue(const MCInst &MI, unsigned OpIdx,
-                               SmallVectorImpl<MCFixup> &Fixups) const;
+                               SmallVectorImpl<MCFixup> &Fixups,
+                               const MCSubtargetInfo &STI) const;
 
   unsigned getAdrpLabelOpValue(const MCInst &MI, unsigned OpIdx,
-                               SmallVectorImpl<MCFixup> &Fixups) const;
+                               SmallVectorImpl<MCFixup> &Fixups,
+                               const MCSubtargetInfo &STI) const;
 
   template<int MemSize>
   unsigned getOffsetUImm12OpValue(const MCInst &MI, unsigned OpIdx,
-                                    SmallVectorImpl<MCFixup> &Fixups) const {
-    return getOffsetUImm12OpValue(MI, OpIdx, Fixups, MemSize);
+                                    SmallVectorImpl<MCFixup> &Fixups,
+                                    const MCSubtargetInfo &STI) const {
+    return getOffsetUImm12OpValue(MI, OpIdx, Fixups, STI, MemSize);
   }
 
   unsigned getOffsetUImm12OpValue(const MCInst &MI, unsigned OpIdx,
                                     SmallVectorImpl<MCFixup> &Fixups,
+                                    const MCSubtargetInfo &STI,
                                     int MemSize) const;
 
   unsigned getBitfield32LSLOpValue(const MCInst &MI, unsigned OpIdx,
-                                   SmallVectorImpl<MCFixup> &Fixups) const;
+                                   SmallVectorImpl<MCFixup> &Fixups,
+                                   const MCSubtargetInfo &STI) const;
   unsigned getBitfield64LSLOpValue(const MCInst &MI, unsigned OpIdx,
-                                   SmallVectorImpl<MCFixup> &Fixups) const;
+                                   SmallVectorImpl<MCFixup> &Fixups,
+                                   const MCSubtargetInfo &STI) const;
 
   unsigned getShiftRightImm8(const MCInst &MI, unsigned Op,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
   unsigned getShiftRightImm16(const MCInst &MI, unsigned Op,
-                              SmallVectorImpl<MCFixup> &Fixups) const;
+                              SmallVectorImpl<MCFixup> &Fixups,
+                              const MCSubtargetInfo &STI) const;
   unsigned getShiftRightImm32(const MCInst &MI, unsigned Op,
-                              SmallVectorImpl<MCFixup> &Fixups) const;
+                              SmallVectorImpl<MCFixup> &Fixups,
+                              const MCSubtargetInfo &STI) const;
   unsigned getShiftRightImm64(const MCInst &MI, unsigned Op,
-                              SmallVectorImpl<MCFixup> &Fixups) const;
+                              SmallVectorImpl<MCFixup> &Fixups,
+                              const MCSubtargetInfo &STI) const;
 
   unsigned getShiftLeftImm8(const MCInst &MI, unsigned Op,
-                            SmallVectorImpl<MCFixup> &Fixups) const;
+                            SmallVectorImpl<MCFixup> &Fixups,
+                            const MCSubtargetInfo &STI) const;
   unsigned getShiftLeftImm16(const MCInst &MI, unsigned Op,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
   unsigned getShiftLeftImm32(const MCInst &MI, unsigned Op,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
   unsigned getShiftLeftImm64(const MCInst &MI, unsigned Op,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
 
   // Labels are handled mostly the same way: a symbol is needed, and
   // just gets some fixup attached.
   template<AArch64::Fixups fixupDesired>
   unsigned getLabelOpValue(const MCInst &MI, unsigned OpIdx,
-                           SmallVectorImpl<MCFixup> &Fixups) const;
+                           SmallVectorImpl<MCFixup> &Fixups,
+                           const MCSubtargetInfo &STI) const;
 
   unsigned  getLoadLitLabelOpValue(const MCInst &MI, unsigned OpIdx,
-                                   SmallVectorImpl<MCFixup> &Fixups) const;
+                                   SmallVectorImpl<MCFixup> &Fixups,
+                                   const MCSubtargetInfo &STI) const;
 
 
   unsigned getMoveWideImmOpValue(const MCInst &MI, unsigned OpIdx,
-                                 SmallVectorImpl<MCFixup> &Fixups) const;
+                                 SmallVectorImpl<MCFixup> &Fixups,
+                                 const MCSubtargetInfo &STI) const;
 
 
   unsigned getAddressWithFixup(const MCOperand &MO,
                                unsigned FixupKind,
-                               SmallVectorImpl<MCFixup> &Fixups) const;
+                               SmallVectorImpl<MCFixup> &Fixups,
+                               const MCSubtargetInfo &STI) const;
 
 
   // getBinaryCodeForInstr - TableGen'erated function for getting the
   // binary encoding for an instruction.
   uint64_t getBinaryCodeForInstr(const MCInst &MI,
-                                 SmallVectorImpl<MCFixup> &Fixups) const;
+                                 SmallVectorImpl<MCFixup> &Fixups,
+                                 const MCSubtargetInfo &STI) const;
 
   /// getMachineOpValue - Return binary encoding of operand. If the machine
   /// operand requires relocation, record the relocation and return zero.
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
 
 
   void EmitByte(unsigned char C, raw_ostream &OS) const {
@@ -125,11 +145,14 @@ public:
                          const MCSubtargetInfo &STI) const;
 
   template<int hasRs, int hasRt2> unsigned
-  fixLoadStoreExclusive(const MCInst &MI, unsigned EncodedValue) const;
+  fixLoadStoreExclusive(const MCInst &MI, unsigned EncodedValue,
+                        const MCSubtargetInfo &STI) const;
 
-  unsigned fixMOVZ(const MCInst &MI, unsigned EncodedValue) const;
+  unsigned fixMOVZ(const MCInst &MI, unsigned EncodedValue,
+                   const MCSubtargetInfo &STI) const;
 
-  unsigned fixMulHigh(const MCInst &MI, unsigned EncodedValue) const;
+  unsigned fixMulHigh(const MCInst &MI, unsigned EncodedValue,
+                      const MCSubtargetInfo &STI) const;
 
 
 };
@@ -138,7 +161,8 @@ public:
 
 unsigned AArch64MCCodeEmitter::getAddressWithFixup(const MCOperand &MO,
                                        unsigned FixupKind,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
   if (!MO.isExpr()) {
     // This can occur for manually decoded or constructed MCInsts, but neither
     // the assembly-parser nor instruction selection will currently produce an
@@ -157,6 +181,7 @@ unsigned AArch64MCCodeEmitter::getAddressWithFixup(const MCOperand &MO,
 unsigned AArch64MCCodeEmitter::
 getOffsetUImm12OpValue(const MCInst &MI, unsigned OpIdx,
                        SmallVectorImpl<MCFixup> &Fixups,
+                       const MCSubtargetInfo &STI,
                        int MemSize) const {
   const MCOperand &ImmOp = MI.getOperand(OpIdx);
   if (ImmOp.isImm())
@@ -237,12 +262,13 @@ getOffsetUImm12OpValue(const MCInst &MI, unsigned OpIdx,
     break;
   }
 
-  return getAddressWithFixup(ImmOp, FixupKind, Fixups);
+  return getAddressWithFixup(ImmOp, FixupKind, Fixups, STI);
 }
 
 unsigned
 AArch64MCCodeEmitter::getAddSubImmOpValue(const MCInst &MI, unsigned OpIdx,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpIdx);
   if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
@@ -270,12 +296,13 @@ AArch64MCCodeEmitter::getAddSubImmOpValue(const MCInst &MI, unsigned OpIdx,
     FixupKind = AArch64::fixup_a64_tlsdesc_add_lo12_nc; break;
   }
 
-  return getAddressWithFixup(MO, FixupKind, Fixups);
+  return getAddressWithFixup(MO, FixupKind, Fixups, STI);
 }
 
 unsigned
 AArch64MCCodeEmitter::getAdrpLabelOpValue(const MCInst &MI, unsigned OpIdx,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
 
   const MCOperand &MO = MI.getOperand(OpIdx);
   if (MO.isImm())
@@ -305,12 +332,13 @@ AArch64MCCodeEmitter::getAdrpLabelOpValue(const MCInst &MI, unsigned OpIdx,
     llvm_unreachable("Unknown symbol reference kind for ADRP instruction");
   }
 
-  return getAddressWithFixup(MO, FixupKind, Fixups);
+  return getAddressWithFixup(MO, FixupKind, Fixups, STI);
 }
 
 unsigned
 AArch64MCCodeEmitter::getBitfield32LSLOpValue(const MCInst &MI, unsigned OpIdx,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
 
   const MCOperand &MO = MI.getOperand(OpIdx);
   assert(MO.isImm() && "Only immediate expected for shift");
@@ -320,7 +348,8 @@ AArch64MCCodeEmitter::getBitfield32LSLOpValue(const MCInst &MI, unsigned OpIdx,
 
 unsigned
 AArch64MCCodeEmitter::getBitfield64LSLOpValue(const MCInst &MI, unsigned OpIdx,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
 
   const MCOperand &MO = MI.getOperand(OpIdx);
   assert(MO.isImm() && "Only immediate expected for shift");
@@ -329,53 +358,62 @@ AArch64MCCodeEmitter::getBitfield64LSLOpValue(const MCInst &MI, unsigned OpIdx,
 }
 
 unsigned AArch64MCCodeEmitter::getShiftRightImm8(
-    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups,
+ const MCSubtargetInfo &STI) const {
   return 8 - MI.getOperand(Op).getImm();
 }
 
 unsigned AArch64MCCodeEmitter::getShiftRightImm16(
-    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups,
+ const MCSubtargetInfo &STI) const {
   return 16 - MI.getOperand(Op).getImm();
 }
 
 unsigned AArch64MCCodeEmitter::getShiftRightImm32(
-    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups,
+ const MCSubtargetInfo &STI) const {
   return 32 - MI.getOperand(Op).getImm();
 }
 
 unsigned AArch64MCCodeEmitter::getShiftRightImm64(
-    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups,
+ const MCSubtargetInfo &STI) const {
   return 64 - MI.getOperand(Op).getImm();
 }
 
 unsigned AArch64MCCodeEmitter::getShiftLeftImm8(
-    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups,
+ const MCSubtargetInfo &STI) const {
   return MI.getOperand(Op).getImm() - 8;
 }
 
 unsigned AArch64MCCodeEmitter::getShiftLeftImm16(
-    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups,
+ const MCSubtargetInfo &STI) const {
   return MI.getOperand(Op).getImm() - 16;
 }
 
 unsigned AArch64MCCodeEmitter::getShiftLeftImm32(
-    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups,
+ const MCSubtargetInfo &STI) const {
   return MI.getOperand(Op).getImm() - 32;
 }
 
 unsigned AArch64MCCodeEmitter::getShiftLeftImm64(
-    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups) const {
+    const MCInst &MI, unsigned Op, SmallVectorImpl<MCFixup> &Fixups,
+ const MCSubtargetInfo &STI) const {
   return MI.getOperand(Op).getImm() - 64;
 }
 
 template<AArch64::Fixups fixupDesired> unsigned
 AArch64MCCodeEmitter::getLabelOpValue(const MCInst &MI,
                                       unsigned OpIdx,
-                                      SmallVectorImpl<MCFixup> &Fixups) const {
+                                      SmallVectorImpl<MCFixup> &Fixups,
+                                      const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpIdx);
 
   if (MO.isExpr())
-    return getAddressWithFixup(MO, fixupDesired, Fixups);
+    return getAddressWithFixup(MO, fixupDesired, Fixups, STI);
 
   assert(MO.isImm());
   return MO.getImm();
@@ -384,7 +422,8 @@ AArch64MCCodeEmitter::getLabelOpValue(const MCInst &MI,
 unsigned
 AArch64MCCodeEmitter::getLoadLitLabelOpValue(const MCInst &MI,
                                        unsigned OpIdx,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpIdx);
 
   if (MO.isImm())
@@ -402,14 +441,15 @@ AArch64MCCodeEmitter::getLoadLitLabelOpValue(const MCInst &MI,
     FixupKind = AArch64::fixup_a64_ld_prel;
   }
 
-  return getAddressWithFixup(MO, FixupKind, Fixups);
+  return getAddressWithFixup(MO, FixupKind, Fixups, STI);
 }
 
 
 unsigned
 AArch64MCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                        const MCOperand &MO,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
   if (MO.isReg()) {
     return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg());
   } else if (MO.isImm()) {
@@ -422,7 +462,8 @@ AArch64MCCodeEmitter::getMachineOpValue(const MCInst &MI,
 
 unsigned
 AArch64MCCodeEmitter::getMoveWideImmOpValue(const MCInst &MI, unsigned OpIdx,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
   const MCOperand &UImm16MO = MI.getOperand(OpIdx);
   const MCOperand &ShiftMO = MI.getOperand(OpIdx + 1);
 
@@ -483,12 +524,13 @@ AArch64MCCodeEmitter::getMoveWideImmOpValue(const MCInst &MI, unsigned OpIdx,
     requestedFixup = AArch64::fixup_a64_movw_tprel_g0_nc; break;
   }
 
-  return Result | getAddressWithFixup(UImm16MO, requestedFixup, Fixups);
+  return Result | getAddressWithFixup(UImm16MO, requestedFixup, Fixups, STI);
 }
 
 template<int hasRs, int hasRt2> unsigned
 AArch64MCCodeEmitter::fixLoadStoreExclusive(const MCInst &MI,
-                                            unsigned EncodedValue) const {
+                                            unsigned EncodedValue,
+                                            const MCSubtargetInfo &STI) const {
   if (!hasRs) EncodedValue |= 0x001F0000;
   if (!hasRt2) EncodedValue |= 0x00007C00;
 
@@ -496,7 +538,8 @@ AArch64MCCodeEmitter::fixLoadStoreExclusive(const MCInst &MI,
 }
 
 unsigned
-AArch64MCCodeEmitter::fixMOVZ(const MCInst &MI, unsigned EncodedValue) const {
+AArch64MCCodeEmitter::fixMOVZ(const MCInst &MI, unsigned EncodedValue,
+                              const MCSubtargetInfo &STI) const {
   // If one of the signed fixup kinds is applied to a MOVZ instruction, the
   // eventual result could be either a MOVZ or a MOVN. It's the MCCodeEmitter's
   // job to ensure that any bits possibly affected by this are 0. This means we
@@ -530,7 +573,8 @@ AArch64MCCodeEmitter::fixMOVZ(const MCInst &MI, unsigned EncodedValue) const {
 
 unsigned
 AArch64MCCodeEmitter::fixMulHigh(const MCInst &MI,
-                                 unsigned EncodedValue) const {
+                                 unsigned EncodedValue,
+                                 const MCSubtargetInfo &STI) const {
   // The Ra field of SMULH and UMULH is unused: it should be assembled as 31
   // (i.e. all bits 1) but is ignored by the processor.
   EncodedValue |= 0x1f << 10;
@@ -559,7 +603,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     return;
   }
 
-  uint32_t Binary = getBinaryCodeForInstr(MI, Fixups);
+  uint32_t Binary = getBinaryCodeForInstr(MI, Fixups, STI);
 
   EmitInstruction(Binary, OS);
 }

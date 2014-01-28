@@ -46,35 +46,47 @@ public:
   ~PPCMCCodeEmitter() {}
 
   unsigned getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
-                               SmallVectorImpl<MCFixup> &Fixups) const;
+                               SmallVectorImpl<MCFixup> &Fixups,
+                               const MCSubtargetInfo &STI) const;
   unsigned getCondBrEncoding(const MCInst &MI, unsigned OpNo,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
   unsigned getAbsDirectBrEncoding(const MCInst &MI, unsigned OpNo,
-                                  SmallVectorImpl<MCFixup> &Fixups) const;
+                                  SmallVectorImpl<MCFixup> &Fixups,
+                                  const MCSubtargetInfo &STI) const;
   unsigned getAbsCondBrEncoding(const MCInst &MI, unsigned OpNo,
-                                SmallVectorImpl<MCFixup> &Fixups) const;
+                                SmallVectorImpl<MCFixup> &Fixups,
+                                const MCSubtargetInfo &STI) const;
   unsigned getImm16Encoding(const MCInst &MI, unsigned OpNo,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
   unsigned getMemRIEncoding(const MCInst &MI, unsigned OpNo,
-                            SmallVectorImpl<MCFixup> &Fixups) const;
+                            SmallVectorImpl<MCFixup> &Fixups,
+                            const MCSubtargetInfo &STI) const;
   unsigned getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
   unsigned getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
   unsigned getTLSCallEncoding(const MCInst &MI, unsigned OpNo,
-                              SmallVectorImpl<MCFixup> &Fixups) const;
+                              SmallVectorImpl<MCFixup> &Fixups,
+                              const MCSubtargetInfo &STI) const;
   unsigned get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
-                               SmallVectorImpl<MCFixup> &Fixups) const;
+                               SmallVectorImpl<MCFixup> &Fixups,
+                               const MCSubtargetInfo &STI) const;
 
   /// getMachineOpValue - Return binary encoding of operand. If the machine
   /// operand requires relocation, record the relocation and return zero.
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
   
   // getBinaryCodeForInstr - TableGen'erated function for getting the
   // binary encoding for an instruction.
   uint64_t getBinaryCodeForInstr(const MCInst &MI,
-                                 SmallVectorImpl<MCFixup> &Fixups) const;
+                                 SmallVectorImpl<MCFixup> &Fixups,
+                                 const MCSubtargetInfo &STI) const;
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const {
@@ -85,7 +97,7 @@ public:
     if (Opcode == TargetOpcode::COPY_TO_REGCLASS)
       return;
 
-    uint64_t Bits = getBinaryCodeForInstr(MI, Fixups);
+    uint64_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
 
     // BL8_NOP etc. all have a size of 8 because of the following 'nop'.
     unsigned Size = 4; // FIXME: Have Desc.getSize() return the correct value!
@@ -116,9 +128,10 @@ MCCodeEmitter *llvm::createPPCMCCodeEmitter(const MCInstrInfo &MCII,
 
 unsigned PPCMCCodeEmitter::
 getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
-                    SmallVectorImpl<MCFixup> &Fixups) const {
+                    SmallVectorImpl<MCFixup> &Fixups,
+                    const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpNo);
-  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups, STI);
   
   // Add a fixup for the branch target.
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
@@ -127,9 +140,10 @@ getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
 }
 
 unsigned PPCMCCodeEmitter::getCondBrEncoding(const MCInst &MI, unsigned OpNo,
-                                     SmallVectorImpl<MCFixup> &Fixups) const {
+                                     SmallVectorImpl<MCFixup> &Fixups,
+                                     const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpNo);
-  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups, STI);
 
   // Add a fixup for the branch target.
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
@@ -139,9 +153,10 @@ unsigned PPCMCCodeEmitter::getCondBrEncoding(const MCInst &MI, unsigned OpNo,
 
 unsigned PPCMCCodeEmitter::
 getAbsDirectBrEncoding(const MCInst &MI, unsigned OpNo,
-                       SmallVectorImpl<MCFixup> &Fixups) const {
+                       SmallVectorImpl<MCFixup> &Fixups,
+                       const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpNo);
-  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups, STI);
 
   // Add a fixup for the branch target.
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
@@ -151,9 +166,10 @@ getAbsDirectBrEncoding(const MCInst &MI, unsigned OpNo,
 
 unsigned PPCMCCodeEmitter::
 getAbsCondBrEncoding(const MCInst &MI, unsigned OpNo,
-                     SmallVectorImpl<MCFixup> &Fixups) const {
+                     SmallVectorImpl<MCFixup> &Fixups,
+                     const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpNo);
-  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups, STI);
 
   // Add a fixup for the branch target.
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
@@ -162,9 +178,10 @@ getAbsCondBrEncoding(const MCInst &MI, unsigned OpNo,
 }
 
 unsigned PPCMCCodeEmitter::getImm16Encoding(const MCInst &MI, unsigned OpNo,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpNo);
-  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups, STI);
   
   // Add a fixup for the immediate field.
   Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
@@ -173,15 +190,16 @@ unsigned PPCMCCodeEmitter::getImm16Encoding(const MCInst &MI, unsigned OpNo,
 }
 
 unsigned PPCMCCodeEmitter::getMemRIEncoding(const MCInst &MI, unsigned OpNo,
-                                            SmallVectorImpl<MCFixup> &Fixups) const {
+                                            SmallVectorImpl<MCFixup> &Fixups,
+                                            const MCSubtargetInfo &STI) const {
   // Encode (imm, reg) as a memri, which has the low 16-bits as the
   // displacement and the next 5 bits as the register #.
   assert(MI.getOperand(OpNo+1).isReg());
-  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups) << 16;
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups, STI) << 16;
   
   const MCOperand &MO = MI.getOperand(OpNo);
   if (MO.isImm())
-    return (getMachineOpValue(MI, MO, Fixups) & 0xFFFF) | RegBits;
+    return (getMachineOpValue(MI, MO, Fixups, STI) & 0xFFFF) | RegBits;
   
   // Add a fixup for the displacement field.
   Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
@@ -191,15 +209,16 @@ unsigned PPCMCCodeEmitter::getMemRIEncoding(const MCInst &MI, unsigned OpNo,
 
 
 unsigned PPCMCCodeEmitter::getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
   // Encode (imm, reg) as a memrix, which has the low 14-bits as the
   // displacement and the next 5 bits as the register #.
   assert(MI.getOperand(OpNo+1).isReg());
-  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups) << 14;
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups, STI) << 14;
   
   const MCOperand &MO = MI.getOperand(OpNo);
   if (MO.isImm())
-    return ((getMachineOpValue(MI, MO, Fixups) >> 2) & 0x3FFF) | RegBits;
+    return ((getMachineOpValue(MI, MO, Fixups, STI) >> 2) & 0x3FFF) | RegBits;
   
   // Add a fixup for the displacement field.
   Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
@@ -209,9 +228,10 @@ unsigned PPCMCCodeEmitter::getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
 
 
 unsigned PPCMCCodeEmitter::getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpNo);
-  if (MO.isReg()) return getMachineOpValue(MI, MO, Fixups);
+  if (MO.isReg()) return getMachineOpValue(MI, MO, Fixups, STI);
   
   // Add a fixup for the TLS register, which simply provides a relocation
   // hint to the linker that this statement is part of a relocation sequence.
@@ -223,19 +243,21 @@ unsigned PPCMCCodeEmitter::getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
 }
 
 unsigned PPCMCCodeEmitter::getTLSCallEncoding(const MCInst &MI, unsigned OpNo,
-                                       SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const {
   // For special TLS calls, we need two fixups; one for the branch target
   // (__tls_get_addr), which we create via getDirectBrEncoding as usual,
   // and one for the TLSGD or TLSLD symbol, which is emitted here.
   const MCOperand &MO = MI.getOperand(OpNo+1);
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_nofixup));
-  return getDirectBrEncoding(MI, OpNo, Fixups);
+  return getDirectBrEncoding(MI, OpNo, Fixups, STI);
 }
 
 unsigned PPCMCCodeEmitter::
 get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
-                    SmallVectorImpl<MCFixup> &Fixups) const {
+                    SmallVectorImpl<MCFixup> &Fixups,
+                    const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpNo);
   assert((MI.getOpcode() == PPC::MTOCRF || MI.getOpcode() == PPC::MTOCRF8 ||
           MI.getOpcode() == PPC::MFOCRF || MI.getOpcode() == PPC::MFOCRF8) &&
@@ -246,7 +268,8 @@ get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
 
 unsigned PPCMCCodeEmitter::
 getMachineOpValue(const MCInst &MI, const MCOperand &MO,
-                  SmallVectorImpl<MCFixup> &Fixups) const {
+                  SmallVectorImpl<MCFixup> &Fixups,
+                  const MCSubtargetInfo &STI) const {
   if (MO.isReg()) {
     // MTOCRF/MFOCRF should go through get_crbitm_encoding for the CR operand.
     // The GPR operand should come through here though.

@@ -45,17 +45,21 @@ public:
   // getBinaryCodeForInstr - TableGen'erated function for getting the
   // binary encoding for an instruction.
   uint64_t getBinaryCodeForInstr(const MCInst &MI,
-                                 SmallVectorImpl<MCFixup> &Fixups) const;
+                                 SmallVectorImpl<MCFixup> &Fixups,
+                                 const MCSubtargetInfo &STI) const;
 
   /// getMachineOpValue - Return binary encoding of operand. If the machine
   /// operand requires relocation, record the relocation and return zero.
   unsigned getMachineOpValue(const MCInst &MI, const MCOperand &MO,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
 
   unsigned getCallTargetOpValue(const MCInst &MI, unsigned OpNo,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
   unsigned getBranchTargetOpValue(const MCInst &MI, unsigned OpNo,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
 
 };
 } // end anonymous namespace
@@ -71,7 +75,7 @@ void SparcMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups,
                   const MCSubtargetInfo &STI) const {
-  unsigned Bits = getBinaryCodeForInstr(MI, Fixups);
+  unsigned Bits = getBinaryCodeForInstr(MI, Fixups, STI);
 
   // Output the constant in big endian byte order.
   for (unsigned i = 0; i != 4; ++i) {
@@ -85,7 +89,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
 unsigned SparcMCCodeEmitter::
 getMachineOpValue(const MCInst &MI, const MCOperand &MO,
-                  SmallVectorImpl<MCFixup> &Fixups) const {
+                  SmallVectorImpl<MCFixup> &Fixups,
+                  const MCSubtargetInfo &STI) const {
 
   if (MO.isReg())
     return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg());
@@ -140,10 +145,11 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
 
 unsigned SparcMCCodeEmitter::
 getCallTargetOpValue(const MCInst &MI, unsigned OpNo,
-                     SmallVectorImpl<MCFixup> &Fixups) const {
+                     SmallVectorImpl<MCFixup> &Fixups,
+                     const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpNo);
   if (MO.isReg() || MO.isImm())
-    return getMachineOpValue(MI, MO, Fixups);
+    return getMachineOpValue(MI, MO, Fixups, STI);
 
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
                                    (MCFixupKind)Sparc::fixup_sparc_call30));
@@ -152,10 +158,11 @@ getCallTargetOpValue(const MCInst &MI, unsigned OpNo,
 
 unsigned SparcMCCodeEmitter::
 getBranchTargetOpValue(const MCInst &MI, unsigned OpNo,
-                  SmallVectorImpl<MCFixup> &Fixups) const {
+                  SmallVectorImpl<MCFixup> &Fixups,
+                  const MCSubtargetInfo &STI) const {
   const MCOperand &MO = MI.getOperand(OpNo);
   if (MO.isReg() || MO.isImm())
-    return getMachineOpValue(MI, MO, Fixups);
+    return getMachineOpValue(MI, MO, Fixups, STI);
 
   Sparc::Fixups fixup = Sparc::fixup_sparc_br22;
   if (MI.getOpcode() == SP::BPXCC)

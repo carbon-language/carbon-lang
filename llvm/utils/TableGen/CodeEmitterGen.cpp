@@ -122,14 +122,14 @@ AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
       Case += "      // op: " + VarName + "\n" +
               "      op = " + EncoderMethodName + "(MI, " + utostr(OpIdx);
       if (MCEmitter)
-        Case += ", Fixups";
+        Case += ", Fixups, STI";
       Case += ");\n";
     }
   } else {
     Case += "      // op: " + VarName + "\n" +
       "      op = getMachineOpValue(MI, MI.getOperand(" + utostr(OpIdx) + ")";
     if (MCEmitter)
-      Case += ", Fixups";
+      Case += ", Fixups, STI";
     Case += ");\n";
   }
   
@@ -192,8 +192,12 @@ std::string CodeEmitterGen::getInstructionCase(Record *R,
   }
   
   std::string PostEmitter = R->getValueAsString("PostEncoderMethod");
-  if (!PostEmitter.empty())
-    Case += "      Value = " + PostEmitter + "(MI, Value);\n";
+  if (!PostEmitter.empty()) {
+    Case += "      Value = " + PostEmitter + "(MI, Value";
+    if (MCEmitter)
+      Case += ", STI";
+    Case += ");\n";
+  }
   
   return Case;
 }
@@ -212,7 +216,8 @@ void CodeEmitterGen::run(raw_ostream &o) {
   o << "uint64_t " << Target.getName();
   if (MCEmitter)
     o << "MCCodeEmitter::getBinaryCodeForInstr(const MCInst &MI,\n"
-      << "    SmallVectorImpl<MCFixup> &Fixups) const {\n";
+      << "    SmallVectorImpl<MCFixup> &Fixups,\n"
+      << "    const MCSubtargetInfo &STI) const {\n";
   else
     o << "CodeEmitter::getBinaryCodeForInstr(const MachineInstr &MI) const {\n";
 

@@ -49,7 +49,8 @@ public:
 
   /// \returns the encoding for an MCOperand.
   virtual uint64_t getMachineOpValue(const MCInst &MI, const MCOperand &MO,
-                                     SmallVectorImpl<MCFixup> &Fixups) const;
+                                     SmallVectorImpl<MCFixup> &Fixups,
+                                     const MCSubtargetInfo &STI) const;
 private:
 
   void EmitByte(unsigned int byte, raw_ostream &OS) const;
@@ -98,7 +99,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     MI.getOpcode() == AMDGPU::KILL) {
     return;
   } else if (IS_VTX(Desc)) {
-    uint64_t InstWord01 = getBinaryCodeForInstr(MI, Fixups);
+    uint64_t InstWord01 = getBinaryCodeForInstr(MI, Fixups, STI);
     uint32_t InstWord2 = MI.getOperand(2).getImm(); // Offset
     if (!(STI.getFeatureBits() & AMDGPU::FeatureCaymanISA)) {
       InstWord2 |= 1 << 19; // Mega-Fetch bit
@@ -122,7 +123,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
         MI.getOperand(8).getImm() & 0x1F
       };
 
-      uint64_t Word01 = getBinaryCodeForInstr(MI, Fixups);
+      uint64_t Word01 = getBinaryCodeForInstr(MI, Fixups, STI);
       uint32_t Word2 = Sampler << 15 | SrcSelect[ELEMENT_X] << 20 |
           SrcSelect[ELEMENT_Y] << 23 | SrcSelect[ELEMENT_Z] << 26 |
           SrcSelect[ELEMENT_W] << 29 | Offsets[0] << 0 | Offsets[1] << 5 |
@@ -132,7 +133,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       Emit(Word2, OS);
       Emit((uint32_t) 0, OS);
   } else {
-    uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
+    uint64_t Inst = getBinaryCodeForInstr(MI, Fixups, STI);
     if ((STI.getFeatureBits() & AMDGPU::FeatureR600ALUInst) &&
        ((Desc.TSFlags & R600_InstFlag::OP1) ||
          Desc.TSFlags & R600_InstFlag::OP2)) {
@@ -170,7 +171,8 @@ unsigned R600MCCodeEmitter::getHWReg(unsigned RegNo) const {
 
 uint64_t R600MCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                               const MCOperand &MO,
-                                        SmallVectorImpl<MCFixup> &Fixup) const {
+                                        SmallVectorImpl<MCFixup> &Fixup,
+                                        const MCSubtargetInfo &STI) const {
   if (MO.isReg()) {
     if (HAS_NATIVE_OPERANDS(MCII.get(MI.getOpcode()).TSFlags)) {
       return MRI.getEncodingValue(MO.getReg());
