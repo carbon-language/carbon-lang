@@ -10,6 +10,7 @@
 #define MIPS_DYNAMIC_LIBRARY_WRITER_H
 
 #include "DynamicLibraryWriter.h"
+#include "MipsDynamicTable.h"
 #include "MipsELFWriters.h"
 #include "MipsLinkingContext.h"
 
@@ -85,7 +86,7 @@ template <class ELFT>
 LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>)
     MipsDynamicLibraryWriter<ELFT>::createDynamicTable() {
   return LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>)(new (
-      this->_alloc) MipsDynamicTable(_mipsContext, _mipsTargetLayout));
+      this->_alloc) MipsDynamicTable<ELFT>(_mipsContext, _mipsTargetLayout));
 }
 
 /// \brief create dynamic symbol table
