@@ -89,10 +89,21 @@ bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func) {
   size_t head = 0;
   while (head < 5) {
     switch (old_bytes[head]) {
+      case '\x51':  // push ecx
+      case '\x52':  // push edx
+      case '\x53':  // push ebx
+      case '\x54':  // push esp
       case '\x55':  // push ebp
       case '\x56':  // push esi
       case '\x57':  // push edi
+      case '\x5D':  // pop ebp
         head++;
+        continue;
+      case '\x6A':  // 6A XX = push XX
+        head += 2;
+        continue;
+      case '\xE9':  // E9 XX YY ZZ WW = jmp WWZZYYXX
+        head += 5;
         continue;
     }
     switch (*(unsigned short*)(old_bytes + head)) {  // NOLINT
@@ -101,23 +112,34 @@ bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func) {
       case 0xC033:  // 33 C0 = xor eax, eax
         head += 2;
         continue;
+      case 0x458B:  // 8B 45 XX = mov eax, dword ptr [ebp+XXh]
+      case 0x5D8B:  // 8B 5D XX = mov ebx, dword ptr [ebp+XXh]
       case 0xEC83:  // 83 EC XX = sub esp, XX
         head += 3;
         continue;
       case 0xC1F7:  // F7 C1 XX YY ZZ WW = test ecx, WWZZYYXX
         head += 6;
         continue;
+      case 0x3D83:  // 83 3D XX YY ZZ WW TT = cmp TT, WWZZYYXX
+        head += 7;
+        continue;
     }
     switch (0x00FFFFFF & *(unsigned int*)(old_bytes + head)) {
       case 0x24448A:  // 8A 44 24 XX = mov eal, dword ptr [esp+XXh]
       case 0x244C8B:  // 8B 4C 24 XX = mov ecx, dword ptr [esp+XXh]
       case 0x24548B:  // 8B 54 24 XX = mov edx, dword ptr [esp+XXh]
+      case 0x24748B:  // 8B 74 24 XX = mov esi, dword ptr [esp+XXh]
       case 0x247C8B:  // 8B 7C 24 XX = mov edi, dword ptr [esp+XXh]
         head += 4;
         continue;
     }
 
     // Unknown instruction!
+    // FIXME: Unknown instruction failures might happen when we add a new
+    // interceptor or a new compiler version. In either case, they should result
+    // in visible and readable error messages. However, merely calling abort()
+    // or __debugbreak() leads to an infinite recursion in CheckFailed.
+    // Do we have a good way to abort with an error message here?
     return false;
   }
 
