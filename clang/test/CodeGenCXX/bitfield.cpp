@@ -426,3 +426,55 @@ namespace N6 {
     s->b2 = x;
   }
 }
+
+namespace N7 {
+  // Similar to N4 except that this adds a virtual base to the picture. (PR18430)
+  // Do NOT widen loads and stores to bitfields into padding at the end of
+  // a class which might end up with members inside of it when inside a derived
+  // class.
+  struct B1 {
+    virtual void f();
+    unsigned b1 : 24;
+  };
+  struct B2 : virtual B1 {
+    virtual ~B2();
+    unsigned b : 24;
+  };
+  // Imagine some other translation unit introduces:
+#if 0
+  struct Derived : public B2 {
+    char c;
+  };
+#endif
+  unsigned read(B2* s) {
+    // FIXME: We should widen this load as long as the function isn't being
+    // instrumented by thread-sanitizer.
+    //
+    // CHECK-X86-64-LABEL: define i32 @_ZN2N74read
+    // CHECK-X86-64:   %[[gep:.*]] = getelementptr inbounds {{.*}}* %{{.*}}, i32 0, i32 1
+    // CHECK-X86-64:   %[[ptr:.*]] = bitcast [3 x i8]* %[[gep]] to i24*
+    // CHECK-X86-64:   %[[val:.*]] = load i24* %[[ptr]]
+    // CHECK-X86-64:   %[[ext:.*]] = zext i24 %[[val]] to i32
+    // CHECK-X86-64:                 ret i32 %[[ext]]
+    // CHECK-PPC64-LABEL: define zeroext i32 @_ZN2N74read
+    // CHECK-PPC64:   %[[gep:.*]] = getelementptr inbounds {{.*}}* %{{.*}}, i32 0, i32 1
+    // CHECK-PPC64:   %[[ptr:.*]] = bitcast [3 x i8]* %[[gep]] to i24*
+    // CHECK-PPC64:   %[[val:.*]] = load i24* %[[ptr]]
+    // CHECK-PPC64:   %[[ext:.*]] = zext i24 %[[val]] to i32
+    // CHECK-PPC64:                 ret i32 %[[ext]]
+    return s->b;
+  }
+  void write(B2* s, unsigned x) {
+    // CHECK-X86-64-LABEL: define void @_ZN2N75write
+    // CHECK-X86-64:   %[[gep:.*]] = getelementptr inbounds {{.*}}* %{{.*}}, i32 0, i32 1
+    // CHECK-X86-64:   %[[ptr:.*]] = bitcast [3 x i8]* %[[gep]] to i24*
+    // CHECK-X86-64:   %[[new:.*]] = trunc i32 %{{.*}} to i24
+    // CHECK-X86-64:                 store i24 %[[new]], i24* %[[ptr]]
+    // CHECK-PPC64-LABEL: define void @_ZN2N75write
+    // CHECK-PPC64:   %[[gep:.*]] = getelementptr inbounds {{.*}}* %{{.*}}, i32 0, i32 1
+    // CHECK-PPC64:   %[[ptr:.*]] = bitcast [3 x i8]* %[[gep]] to i24*
+    // CHECK-PPC64:   %[[new:.*]] = trunc i32 %{{.*}} to i24
+    // CHECK-PPC64:                 store i24 %[[new]], i24* %[[ptr]]
+    s->b = x;
+  }
+}

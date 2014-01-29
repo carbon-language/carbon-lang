@@ -344,7 +344,12 @@ bool CGRecordLayoutBuilder::LayoutBitfields(const ASTRecordLayout &Layout,
   // maximum latitude the language provides, and rely on the backend to lower
   // these in conjunction with shifts and masks to narrower operations where
   // beneficial.
-  uint64_t EndOffset = Types.getContext().toBits(Layout.getDataSize());
+  uint64_t EndOffset;
+  if (Types.getContext().getLangOpts().CPlusPlus)
+    // Do not grow the bitfield storage into the following virtual base.
+    EndOffset = Types.getContext().toBits(Layout.getNonVirtualSize());
+  else
+    EndOffset = Types.getContext().toBits(Layout.getDataSize());
   if (BFE != FE)
     // If there are more fields to be laid out, the offset at the end of the
     // bitfield is the offset of the next field in the record.
