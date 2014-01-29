@@ -99,7 +99,7 @@ DEFINE_COMPILERRT_FUNCTION(__eqsf2)
     ite ls
     cmpls   r3,         #0xff000000
     movhi   r0,         #1
-    bx      lr
+    JMP(lr)
 END_COMPILERRT_FUNCTION(__eqsf2)
 DEFINE_COMPILERRT_FUNCTION_ALIAS(__lesf2, __eqsf2)
 DEFINE_COMPILERRT_FUNCTION_ALIAS(__ltsf2, __eqsf2)
@@ -128,7 +128,7 @@ DEFINE_COMPILERRT_FUNCTION(__gtsf2)
     ite ls
     cmpls   r3,         #0xff000000
     movhi   r0,         #-1
-    bx      lr
+    JMP(lr)
 END_COMPILERRT_FUNCTION(__gtsf2)
 DEFINE_COMPILERRT_FUNCTION_ALIAS(__gesf2, __gtsf2)
 
@@ -142,7 +142,7 @@ DEFINE_COMPILERRT_FUNCTION(__unordsf2)
     ite ls
     cmpls   r3,         #0xff000000
     movhi   r0,         #1
-    bx      lr
+    JMP(lr)
 END_COMPILERRT_FUNCTION(__unordsf2)
 
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_fcmpun, __unordsf2)

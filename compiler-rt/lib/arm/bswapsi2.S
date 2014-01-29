@@ -16,7 +16,7 @@
 //
 .align 2
 DEFINE_COMPILERRT_FUNCTION(__bswapsi2)
-#if __ARM_ARCH_5TEJ__ || __ARM_ARCH_4T__
+#if __ARM_ARCH < 6
     // before armv6 does not have "rev" instruction
  	eor	r1, r0, r0, ror #16
  	bic	r1, r1, #0xff0000
@@ -25,5 +25,5 @@ DEFINE_COMPILERRT_FUNCTION(__bswapsi2)
 #else
     rev r0, r0
 #endif
-    bx  lr
+    JMP(lr)
 END_COMPILERRT_FUNCTION(__bswapsi2)
