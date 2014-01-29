@@ -1054,11 +1054,17 @@ void DwarfDebug::finalizeModuleInfo() {
       // FIXME: We should use ranges if we have multiple compile units or
       // allow reordering of code ala .subsections_via_symbols in mach-o.
       DwarfCompileUnit *U = SkCU ? SkCU : static_cast<DwarfCompileUnit *>(TheU);
-      if (useCURanges() && TheU->getRanges().size())
+      if (useCURanges() && TheU->getRanges().size()) {
         addSectionLabel(Asm, U, U->getUnitDie(), dwarf::DW_AT_ranges,
                         Asm->GetTempSymbol("cu_ranges", U->getUniqueID()),
                         DwarfDebugRangeSectionSym);
-      else
+
+        // A DW_AT_low_pc attribute may also be specified in combination with
+        // DW_AT_ranges to specify the default base address for use in location
+        // lists (see Section 2.6.2) and range lists (see Section 2.17.3).
+        U->addUInt(U->getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
+                   0);
+      } else
         U->addUInt(U->getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
                    0);
     }
