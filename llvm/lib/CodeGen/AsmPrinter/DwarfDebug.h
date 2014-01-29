@@ -21,6 +21,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/LexicalScopes.h"
 #include "llvm/DebugInfo.h"
@@ -334,7 +335,7 @@ class DwarfDebug : public AsmPrinterHandler {
   DwarfCompileUnit *FirstCU;
 
   // Maps MDNode with its corresponding DwarfCompileUnit.
-  DenseMap<const MDNode *, DwarfCompileUnit *> CUMap;
+  MapVector<const MDNode *, DwarfCompileUnit *> CUMap;
 
   // Maps subprogram MDNode with its corresponding DwarfCompileUnit.
   DenseMap<const MDNode *, DwarfCompileUnit *> SPMap;

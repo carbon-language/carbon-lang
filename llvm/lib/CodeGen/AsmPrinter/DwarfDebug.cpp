@@ -2880,8 +2880,9 @@ void DwarfDebug::emitDebugRanges() {
   unsigned char Size = Asm->getDataLayout().getPointerSize();
 
   // Grab the specific ranges for the compile units in the module.
-  for (DenseMap<const MDNode *, DwarfCompileUnit *>::iterator I = CUMap.begin(),
-                                                              E = CUMap.end();
+  for (MapVector<const MDNode *, DwarfCompileUnit *>::iterator
+           I = CUMap.begin(),
+           E = CUMap.end();
        I != E; ++I) {
     DwarfCompileUnit *TheCU = I->second;
 
