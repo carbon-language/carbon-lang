@@ -3832,14 +3832,15 @@ public:
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
       Features["crc"] = true;
-    } else if (CPU == "cortex-r5" || CPU == "cortex-m3" ||
-               CPU == "cortex-m4" ||
+    } else if (CPU == "cortex-r5" ||
                // Enable the hwdiv extension for all v8a AArch32 cores by
                // default.
                ArchName == "armv8a" || ArchName == "armv8" ||
                ArchName == "thumbv8a" || ArchName == "thumbv8") {
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
+    } else if (CPU == "cortex-m3" || CPU == "cortex-m4") {
+      Features["hwdiv"] = true;
     }
   }
 
