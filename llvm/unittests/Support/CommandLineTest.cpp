@@ -44,7 +44,7 @@ class TempEnvVar {
 
 template <typename T>
 class StackOption : public cl::opt<T> {
-  using Base = cl::opt<T>;
+  typedef cl::opt<T> Base;
 public:
   // One option...
   template<class M0t>
