@@ -46,7 +46,11 @@ define void @FindFreeHorzSeg(i64 %startCol, i64 %row, i64* %rowStart) {
 ; CHECK-LABEL: define void @FindFreeHorzSeg(
 ; CHECK: %dec = add
 ; CHECK-NEXT: tail call void @llvm.dbg.value
-; CHECK-NEXT: br i1 %tobool, label %for.cond, label %for.end
+; CHECK-NEXT: br i1 %tobool, label %for.cond, label %[[LOOP_EXIT:[^,]*]]
+; CHECK: [[LOOP_EXIT]]:
+; CHECK-NEXT: phi i64 [ %{{[^,]*}}, %{{[^,]*}} ]
+; CHECK-NEXT: br label %for.end
+
 
 entry:
   br label %for.cond

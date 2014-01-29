@@ -463,9 +463,24 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
     NewPH->setName(NewHeader->getName() + ".lr.ph");
 
     // Preserve canonical loop form, which means that 'Exit' should have only
-    // one predecessor.
-    BasicBlock *ExitSplit = SplitCriticalEdge(L->getLoopLatch(), Exit, this);
-    ExitSplit->moveBefore(Exit);
+    // one predecessor. Note that Exit could be an exit block for multiple
+    // nested loops, causing both of the edges to now be critical and need to
+    // be split.
+    SmallVector<BasicBlock *, 4> ExitPreds(pred_begin(Exit), pred_end(Exit));
+    bool SplitLatchEdge = false;
+    for (SmallVectorImpl<BasicBlock *>::iterator PI = ExitPreds.begin(),
+                                                 PE = ExitPreds.end();
+         PI != PE; ++PI) {
+      // We only need to split loop exit edges.
+      Loop *PredLoop = LI->getLoopFor(*PI);
+      if (!PredLoop || PredLoop->contains(Exit))
+        continue;
+      SplitLatchEdge |= L->getLoopLatch() == *PI;
+      BasicBlock *ExitSplit = SplitCriticalEdge(*PI, Exit, this);
+      ExitSplit->moveBefore(Exit);
+    }
+    assert(SplitLatchEdge &&
+           "Despite splitting all preds, failed to split latch exit?");
   } else {
     // We can fold the conditional branch in the preheader, this makes things
     // simpler. The first step is to remove the extra edge to the Exit block.
