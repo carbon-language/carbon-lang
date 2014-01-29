@@ -422,10 +422,6 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit *SPCU,
   SPCU->addLabelAddress(SPDie, dwarf::DW_AT_low_pc, FunctionBeginSym);
   SPCU->addLabelAddress(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym);
 
-  // Add this range to the list of ranges for the CU.
-  RangeSpan Span(FunctionBeginSym, FunctionEndSym);
-  SPCU->addRange(llvm_move(Span));
-
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   MachineLocation Location(RI->getFrameRegister(*Asm->MF));
   SPCU->addAddress(SPDie, dwarf::DW_AT_frame_base, Location);
@@ -1810,6 +1806,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   FunctionEndSym = Asm->GetTempSymbol("func_end", Asm->getFunctionNumber());
   // Assumes in correct section after the entry point.
   Asm->OutStreamer.EmitLabel(FunctionEndSym);
+
   // Set DwarfDwarfCompileUnitID in MCContext to default value.
   Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
 
@@ -1847,9 +1844,12 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   }
 
   DIE *CurFnDIE = constructScopeDIE(TheCU, FnScope);
-
   if (!CurFn->getTarget().Options.DisableFramePointerElim(*CurFn))
     TheCU->addFlag(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr);
+
+  // Add the range of this function to the list of ranges for the CU.
+  RangeSpan Span(FunctionBeginSym, FunctionEndSym);
+  TheCU->addRange(llvm_move(Span));
 
   // Clear debug info
   for (ScopeVariablesMap::iterator I = ScopeVariables.begin(),
