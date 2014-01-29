@@ -117,9 +117,7 @@ struct ForwardDecl2 : B {
 
 static_assert(sizeof(variable_forces_sizing) == kUnspecifiedDataSize, "");
 static_assert(sizeof(MemPtr1) == kUnspecifiedDataSize, "");
-// FIXME: Clang fails this assert because it locks in the inheritance model at
-// the point of the typedef instead of the first usage, while MSVC does not.
-//static_assert(sizeof(MemPtr2) == kSingleDataSize, "");
+static_assert(sizeof(MemPtr2) == kSingleDataSize, "");
 
 struct MemPtrInBody {
   typedef int MemPtrInBody::*MemPtr;
@@ -166,3 +164,17 @@ struct MemPtrInTemplate {
 
 int Virtual::*CastTest = reinterpret_cast<int Virtual::*>(&AA::x);
   // expected-error@-1 {{cannot reinterpret_cast from member pointer type}}
+
+namespace ErrorTest {
+template <typename T, typename U> struct __single_inheritance A;
+  // expected-warning@-1 {{inheritance model ignored on primary template}}
+template <typename T> struct __multiple_inheritance A<T, T>;
+  // expected-warning@-1 {{inheritance model ignored on partial specialization}}
+template <> struct __single_inheritance A<int, float>;
+
+struct B {}; // expected-note {{B defined here}}
+struct __multiple_inheritance B; // expected-error{{inheritance model does not match definition}}
+
+struct __multiple_inheritance C {}; // expected-error{{inheritance model does not match definition}}
+ // expected-note@-1 {{C defined here}}
+}

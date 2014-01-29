@@ -1401,10 +1401,6 @@ def MSInheritance : InheritableAttr {
                    Keyword<"__multiple_inheritance">,
                    Keyword<"__virtual_inheritance">,
                    Keyword<"__unspecified_inheritance">];
-  let Accessors = [Accessor<"IsSingle", [Keyword<"__single_inheritance">]>,
-                   Accessor<"IsMultiple", [Keyword<"__multiple_inheritance">]>,
-                   Accessor<"IsVirtual", [Keyword<"__virtual_inheritance">]>,
-                   Accessor<"IsUnspecified", [Keyword<"__unspecified_inheritance">]>];
 }
 
 def Unaligned : IgnoredAttr {

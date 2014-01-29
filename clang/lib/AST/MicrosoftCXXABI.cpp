@@ -92,26 +92,12 @@ static bool usesMultipleInheritanceModel(const CXXRecordDecl *RD) {
   return false;
 }
 
-static MSInheritanceAttr::Spelling
-MSInheritanceAttrToModel(const MSInheritanceAttr *Attr) {
-  if (Attr->IsSingle())
-    return MSInheritanceAttr::Keyword_single_inheritance;
-  else if (Attr->IsMultiple())
-    return MSInheritanceAttr::Keyword_multiple_inheritance;
-  else if (Attr->IsVirtual())
-    return MSInheritanceAttr::Keyword_virtual_inheritance;
-  
-  assert(Attr->IsUnspecified() && "Expected unspecified inheritance attr");
-  return MSInheritanceAttr::Keyword_unspecified_inheritance;
-}
-
-static MSInheritanceAttr::Spelling
-calculateInheritanceModel(const CXXRecordDecl *RD) {
-  if (!RD->hasDefinition())
+MSInheritanceAttr::Spelling CXXRecordDecl::calculateInheritanceModel() const {
+  if (!hasDefinition())
     return MSInheritanceAttr::Keyword_unspecified_inheritance;
-  if (RD->getNumVBases() > 0)
+  if (getNumVBases() > 0)
     return MSInheritanceAttr::Keyword_virtual_inheritance;
-  if (usesMultipleInheritanceModel(RD))
+  if (usesMultipleInheritanceModel(this))
     return MSInheritanceAttr::Keyword_multiple_inheritance;
   return MSInheritanceAttr::Keyword_single_inheritance;
 }
@@ -120,7 +106,7 @@ MSInheritanceAttr::Spelling
 CXXRecordDecl::getMSInheritanceModel() const {
   MSInheritanceAttr *IA = getAttr<MSInheritanceAttr>();
   assert(IA && "Expected MSInheritanceAttr on the CXXRecordDecl!");
-  return MSInheritanceAttrToModel(IA);
+  return IA->getSemanticSpelling();
 }
 
 void CXXRecordDecl::setMSInheritanceModel() {
@@ -128,7 +114,7 @@ void CXXRecordDecl::setMSInheritanceModel() {
     return;
 
   addAttr(MSInheritanceAttr::CreateImplicit(
-      getASTContext(), calculateInheritanceModel(this), getSourceRange()));
+      getASTContext(), calculateInheritanceModel(), getSourceRange()));
 }
 
 // Returns the number of pointer and integer slots used to represent a member
