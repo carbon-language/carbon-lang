@@ -15,6 +15,10 @@ class MSAInst : MipsInst<(outs), (ins), "", [], NoItinerary, FrmOther> {
   let Inst{31-26} = 0b011110;
 }
 
+class MSA64Inst : MSAInst {
+  let Predicates = [HasMSA, HasMips64];
+}
+
 class MSACBranch : MSAInst {
   let Inst{31-26} = 0b010001;
 }
@@ -269,6 +273,19 @@ class MSA_ELM_COPY_W_FMT<bits<4> major, bits<6> minor>: MSAInst {
   let Inst{25-22} = major;
   let Inst{21-18} = 0b1100;
   let Inst{17-16} = n{1-0};
+  let Inst{15-11} = ws;
+  let Inst{10-6} = rd;
+  let Inst{5-0} = minor;
+}
+
+class MSA_ELM_COPY_D_FMT<bits<4> major, bits<6> minor>: MSA64Inst {
+  bits<4> n;
+  bits<5> ws;
+  bits<5> rd;
+
+  let Inst{25-22} = major;
+  let Inst{21-17} = 0b11100;
+  let Inst{16} = n{0};
   let Inst{15-11} = ws;
   let Inst{10-6} = rd;
   let Inst{5-0} = minor;

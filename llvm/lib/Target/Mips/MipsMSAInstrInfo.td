@@ -137,6 +137,8 @@ def vextract_sext_i16 : PatFrag<(ops node:$vec, node:$idx),
                                 (MipsVExtractSExt node:$vec, node:$idx, i16)>;
 def vextract_sext_i32 : PatFrag<(ops node:$vec, node:$idx),
                                 (MipsVExtractSExt node:$vec, node:$idx, i32)>;
+def vextract_sext_i64 : PatFrag<(ops node:$vec, node:$idx),
+                                (MipsVExtractSExt node:$vec, node:$idx, i64)>;
 
 def vextract_zext_i8  : PatFrag<(ops node:$vec, node:$idx),
                                 (MipsVExtractZExt node:$vec, node:$idx, i8)>;
@@ -144,6 +146,8 @@ def vextract_zext_i16 : PatFrag<(ops node:$vec, node:$idx),
                                 (MipsVExtractZExt node:$vec, node:$idx, i16)>;
 def vextract_zext_i32 : PatFrag<(ops node:$vec, node:$idx),
                                 (MipsVExtractZExt node:$vec, node:$idx, i32)>;
+def vextract_zext_i64 : PatFrag<(ops node:$vec, node:$idx),
+                                (MipsVExtractZExt node:$vec, node:$idx, i64)>;
 
 def vinsert_v16i8 : PatFrag<(ops node:$vec, node:$val, node:$idx),
     (v16i8 (vector_insert node:$vec, node:$val, node:$idx))>;
@@ -614,10 +618,12 @@ class CLTI_U_D_ENC : MSA_I5_FMT<0b011, 0b11, 0b000111>;
 class COPY_S_B_ENC : MSA_ELM_COPY_B_FMT<0b0010, 0b011001>;
 class COPY_S_H_ENC : MSA_ELM_COPY_H_FMT<0b0010, 0b011001>;
 class COPY_S_W_ENC : MSA_ELM_COPY_W_FMT<0b0010, 0b011001>;
+class COPY_S_D_ENC : MSA_ELM_COPY_D_FMT<0b0010, 0b011001>;
 
 class COPY_U_B_ENC : MSA_ELM_COPY_B_FMT<0b0011, 0b011001>;
 class COPY_U_H_ENC : MSA_ELM_COPY_H_FMT<0b0011, 0b011001>;
 class COPY_U_W_ENC : MSA_ELM_COPY_W_FMT<0b0011, 0b011001>;
+class COPY_U_D_ENC : MSA_ELM_COPY_D_FMT<0b0011, 0b011001>;
 
 class CTCMSA_ENC : MSA_ELM_CTCMSA_FMT<0b0000111110, 0b011001>;
 
@@ -1877,6 +1883,8 @@ class COPY_S_H_DESC : MSA_COPY_DESC_BASE<"copy_s.h", vextract_sext_i16, v8i16,
                                          GPR32Opnd, MSA128HOpnd>;
 class COPY_S_W_DESC : MSA_COPY_DESC_BASE<"copy_s.w", vextract_sext_i32, v4i32,
                                          GPR32Opnd, MSA128WOpnd>;
+class COPY_S_D_DESC : MSA_COPY_DESC_BASE<"copy_s.d", vextract_sext_i64, v2i64,
+                                         GPR64Opnd, MSA128DOpnd>;
 
 class COPY_U_B_DESC : MSA_COPY_DESC_BASE<"copy_u.b", vextract_zext_i8,  v16i8,
                                          GPR32Opnd, MSA128BOpnd>;
@@ -1884,6 +1892,8 @@ class COPY_U_H_DESC : MSA_COPY_DESC_BASE<"copy_u.h", vextract_zext_i16, v8i16,
                                          GPR32Opnd, MSA128HOpnd>;
 class COPY_U_W_DESC : MSA_COPY_DESC_BASE<"copy_u.w", vextract_zext_i32, v4i32,
                                          GPR32Opnd, MSA128WOpnd>;
+class COPY_U_D_DESC : MSA_COPY_DESC_BASE<"copy_u.d", vextract_zext_i64, v2i64,
+                                         GPR64Opnd, MSA128DOpnd>;
 
 class COPY_FW_PSEUDO_DESC : MSA_COPY_PSEUDO_BASE<vector_extract, v4f32, FGR32,
                                                  MSA128W>;
@@ -2898,10 +2908,12 @@ def CLTI_U_D : CLTI_U_D_ENC, CLTI_U_D_DESC;
 def COPY_S_B : COPY_S_B_ENC, COPY_S_B_DESC;
 def COPY_S_H : COPY_S_H_ENC, COPY_S_H_DESC;
 def COPY_S_W : COPY_S_W_ENC, COPY_S_W_DESC;
+def COPY_S_D : COPY_S_D_ENC, COPY_S_D_DESC;
 
 def COPY_U_B : COPY_U_B_ENC, COPY_U_B_DESC;
 def COPY_U_H : COPY_U_H_ENC, COPY_U_H_DESC;
 def COPY_U_W : COPY_U_W_ENC, COPY_U_W_DESC;
+def COPY_U_D : COPY_U_D_ENC, COPY_U_D_DESC;
 
 def COPY_FW_PSEUDO : COPY_FW_PSEUDO_DESC;
 def COPY_FD_PSEUDO : COPY_FD_PSEUDO_DESC;
