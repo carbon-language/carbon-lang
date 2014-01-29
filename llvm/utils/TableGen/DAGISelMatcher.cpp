@@ -84,6 +84,15 @@ ScopeMatcher::~ScopeMatcher() {
     delete Children[i];
 }
 
+SwitchOpcodeMatcher::~SwitchOpcodeMatcher() {
+  for (unsigned i = 0, e = Cases.size(); i != e; ++i)
+    delete Cases[i].second;
+}
+
+SwitchTypeMatcher::~SwitchTypeMatcher() {
+  for (unsigned i = 0, e = Cases.size(); i != e; ++i)
+    delete Cases[i].second;
+}
 
 CheckPredicateMatcher::CheckPredicateMatcher(const TreePredicateFn &pred)
   : Matcher(CheckPredicate), Pred(pred.getOrigPatFragRecord()) {}

@@ -505,6 +505,7 @@ class SwitchOpcodeMatcher : public Matcher {
 public:
   SwitchOpcodeMatcher(ArrayRef<std::pair<const SDNodeInfo*, Matcher*> > cases)
     : Matcher(SwitchOpcode), Cases(cases.begin(), cases.end()) {}
+  virtual ~SwitchOpcodeMatcher();
 
   static inline bool classof(const Matcher *N) {
     return N->getKind() == SwitchOpcode;
@@ -558,6 +559,7 @@ class SwitchTypeMatcher : public Matcher {
 public:
   SwitchTypeMatcher(ArrayRef<std::pair<MVT::SimpleValueType, Matcher*> > cases)
   : Matcher(SwitchType), Cases(cases.begin(), cases.end()) {}
+  virtual ~SwitchTypeMatcher();
 
   static inline bool classof(const Matcher *N) {
     return N->getKind() == SwitchType;
