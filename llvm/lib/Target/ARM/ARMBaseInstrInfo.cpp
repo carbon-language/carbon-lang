@@ -1243,6 +1243,7 @@ static unsigned duplicateCPV(MachineFunction &MF, unsigned &CPI) {
 
   unsigned PCLabelId = AFI->createPICLabelUId();
   ARMConstantPoolValue *NewCPV = 0;
+
   // FIXME: The below assumes PIC relocation model and that the function
   // is Thumb mode (t1 or t2). PCAdjustment would be 8 for ARM mode PIC, and
   // zero for non-PIC in ARM or Thumb. The callers are all of thumb LDR
