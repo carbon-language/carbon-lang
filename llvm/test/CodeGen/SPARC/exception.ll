@@ -57,6 +57,7 @@
 ; V8PIC_NOCFI:        .section .eh_frame
 ; V8PIC_NOCFI-NOT:    .section
 ; V8PIC_NOCFI:        .word %r_disp32(DW.ref.__gxx_personality_v0)
+; V8PIC_NOCFI:        .word %r_disp32(.Ltmp{{.+}}) ! FDE initial location
 
 
 ; V9ABS-LABEL: main:
@@ -94,6 +95,7 @@
 ; V9PIC_NOCFI:        .section .eh_frame
 ; V9PIC_NOCFI-NOT:    .section
 ; V9PIC_NOCFI:        .word %r_disp32(DW.ref.__gxx_personality_v0)
+; V9PIC_NOCFI:        .word %r_disp32(.Ltmp{{.+}}) ! FDE initial location
 
 define i32 @main(i32 %argc, i8** nocapture readnone %argv) unnamed_addr #0 {
 entry:
