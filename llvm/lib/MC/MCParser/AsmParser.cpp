@@ -1863,29 +1863,40 @@ static bool isOperator(AsmToken::TokenKind kind) {
   }
 }
 
+namespace {
+class AsmLexerSkipSpaceRAII {
+public:
+  AsmLexerSkipSpaceRAII(AsmLexer &Lexer, bool SkipSpace) : Lexer(Lexer) {
+    Lexer.setSkipSpace(SkipSpace);
+  }
+
+  ~AsmLexerSkipSpaceRAII() {
+    Lexer.setSkipSpace(true);
+  }
+
+private:
+  AsmLexer &Lexer;
+};
+}
+
 bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA,
                                    AsmToken::TokenKind &ArgumentDelimiter) {
   unsigned ParenLevel = 0;
   unsigned AddTokens = 0;
 
-  // gas accepts arguments separated by whitespace, except on Darwin
-  if (!IsDarwin)
-    Lexer.setSkipSpace(false);
+  // Darwin doesn't use spaces to delmit arguments.
+  AsmLexerSkipSpaceRAII ScopedSkipSpace(Lexer, IsDarwin);
 
   for (;;) {
-    if (Lexer.is(AsmToken::Eof) || Lexer.is(AsmToken::Equal)) {
-      Lexer.setSkipSpace(true);
+    if (Lexer.is(AsmToken::Eof) || Lexer.is(AsmToken::Equal))
       return TokError("unexpected token in macro instantiation");
-    }
 
     if (ParenLevel == 0 && Lexer.is(AsmToken::Comma)) {
       // Spaces and commas cannot be mixed to delimit parameters
       if (ArgumentDelimiter == AsmToken::Eof)
         ArgumentDelimiter = AsmToken::Comma;
-      else if (ArgumentDelimiter != AsmToken::Comma) {
-        Lexer.setSkipSpace(true);
+      else if (ArgumentDelimiter != AsmToken::Comma)
         return TokError("expected ' ' for macro argument separator");
-      }
       break;
     }
 
@@ -1932,7 +1943,6 @@ bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA,
     Lex();
   }
 
-  Lexer.setSkipSpace(true);
   if (ParenLevel != 0)
     return TokError("unbalanced parentheses in macro argument");
   return false;
