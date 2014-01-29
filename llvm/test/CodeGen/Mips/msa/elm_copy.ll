@@ -1,8 +1,10 @@
 ; Test the MSA intrinsics that are encoded with the ELM instruction format and
 ; are element extraction operations.
 
-; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck %s
-; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | FileCheck %s
+; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | \
+; RUN:   FileCheck %s -check-prefix=MIPS-ANY -check-prefix=MIPS32
+; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | \
+; RUN:   FileCheck %s -check-prefix=MIPS-ANY -check-prefix=MIPS32
 
 @llvm_mips_copy_s_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_copy_s_b_RES  = global i32 0, align 16
@@ -17,11 +19,13 @@ entry:
 
 declare i32 @llvm.mips.copy.s.b(<16 x i8>, i32) nounwind
 
-; CHECK: llvm_mips_copy_s_b_test:
-; CHECK: ld.b
-; CHECK: copy_s.b
-; CHECK: sw
-; CHECK: .size llvm_mips_copy_s_b_test
+; MIPS-ANY: llvm_mips_copy_s_b_test:
+; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_copy_s_b_ARG1)
+; MIPS-ANY-DAG: ld.b [[WS:\$w[0-9]+]], 0([[R1]])
+; MIPS-ANY-DAG: copy_s.b [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_s_b_RES)
+; MIPS-ANY-DAG: sw [[RD]], 0([[RES]])
+; MIPS-ANY: .size llvm_mips_copy_s_b_test
 ;
 @llvm_mips_copy_s_h_ARG1 = global <8 x i16> <i16 0, i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7>, align 16
 @llvm_mips_copy_s_h_RES  = global i32 0, align 16
@@ -36,11 +40,13 @@ entry:
 
 declare i32 @llvm.mips.copy.s.h(<8 x i16>, i32) nounwind
 
-; CHECK: llvm_mips_copy_s_h_test:
-; CHECK: ld.h
-; CHECK: copy_s.h
-; CHECK: sw
-; CHECK: .size llvm_mips_copy_s_h_test
+; MIPS-ANY: llvm_mips_copy_s_h_test:
+; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_copy_s_h_ARG1)
+; MIPS-ANY-DAG: ld.h [[WS:\$w[0-9]+]], 0([[R1]])
+; MIPS-ANY-DAG: copy_s.h [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_s_h_RES)
+; MIPS-ANY-DAG: sw [[RD]], 0([[RES]])
+; MIPS-ANY: .size llvm_mips_copy_s_h_test
 ;
 @llvm_mips_copy_s_w_ARG1 = global <4 x i32> <i32 0, i32 1, i32 2, i32 3>, align 16
 @llvm_mips_copy_s_w_RES  = global i32 0, align 16
@@ -55,11 +61,13 @@ entry:
 
 declare i32 @llvm.mips.copy.s.w(<4 x i32>, i32) nounwind
 
-; CHECK: llvm_mips_copy_s_w_test:
-; CHECK: ld.w
-; CHECK: copy_s.w
-; CHECK: sw
-; CHECK: .size llvm_mips_copy_s_w_test
+; MIPS-ANY: llvm_mips_copy_s_w_test:
+; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_copy_s_w_ARG1)
+; MIPS-ANY-DAG: ld.w [[WS:\$w[0-9]+]], 0([[R1]])
+; MIPS-ANY-DAG: copy_s.w [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_s_w_RES)
+; MIPS-ANY-DAG: sw [[RD]], 0([[RES]])
+; MIPS-ANY: .size llvm_mips_copy_s_w_test
 ;
 @llvm_mips_copy_s_d_ARG1 = global <2 x i64> <i64 0, i64 1>, align 16
 @llvm_mips_copy_s_d_RES  = global i64 0, align 16
@@ -74,13 +82,15 @@ entry:
 
 declare i64 @llvm.mips.copy.s.d(<2 x i64>, i32) nounwind
 
-; CHECK: llvm_mips_copy_s_d_test:
-; CHECK: ld.w
-; CHECK: copy_s.w
-; CHECK: copy_s.w
-; CHECK: sw
-; CHECK: sw
-; CHECK: .size llvm_mips_copy_s_d_test
+; MIPS-ANY: llvm_mips_copy_s_d_test:
+; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_copy_s_d_ARG1)
+; MIPS32-DAG: ld.w [[WS:\$w[0-9]+]], 0([[R1]])
+; MIPS32-DAG: copy_s.w [[RD1:\$[0-9]+]], [[WS]][2]
+; MIPS32-DAG: copy_s.w [[RD2:\$[0-9]+]], [[WS]][3]
+; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_s_d_RES)
+; MIPS32-DAG: sw [[RD1]], 0([[RES]])
+; MIPS32-DAG: sw [[RD2]], 4([[RES]])
+; MIPS-ANY: .size llvm_mips_copy_s_d_test
 ;
 @llvm_mips_copy_u_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_copy_u_b_RES  = global i32 0, align 16
@@ -95,11 +105,13 @@ entry:
 
 declare i32 @llvm.mips.copy.u.b(<16 x i8>, i32) nounwind
 
-; CHECK: llvm_mips_copy_u_b_test:
-; CHECK: ld.b
-; CHECK: copy_u.b
-; CHECK: sw
-; CHECK: .size llvm_mips_copy_u_b_test
+; MIPS-ANY: llvm_mips_copy_u_b_test:
+; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_copy_u_b_ARG1)
+; MIPS-ANY-DAG: ld.b [[WS:\$w[0-9]+]], 0([[R1]])
+; MIPS-ANY-DAG: copy_u.b [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_u_b_RES)
+; MIPS-ANY-DAG: sw [[RD]], 0([[RES]])
+; MIPS-ANY: .size llvm_mips_copy_u_b_test
 ;
 @llvm_mips_copy_u_h_ARG1 = global <8 x i16> <i16 0, i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7>, align 16
 @llvm_mips_copy_u_h_RES  = global i32 0, align 16
@@ -114,11 +126,13 @@ entry:
 
 declare i32 @llvm.mips.copy.u.h(<8 x i16>, i32) nounwind
 
-; CHECK: llvm_mips_copy_u_h_test:
-; CHECK: ld.h
-; CHECK: copy_u.h
-; CHECK: sw
-; CHECK: .size llvm_mips_copy_u_h_test
+; MIPS-ANY: llvm_mips_copy_u_h_test:
+; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_copy_u_h_ARG1)
+; MIPS-ANY-DAG: ld.h [[WS:\$w[0-9]+]], 0([[R1]])
+; MIPS-ANY-DAG: copy_u.h [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_u_h_RES)
+; MIPS-ANY-DAG: sw [[RD]], 0([[RES]])
+; MIPS-ANY: .size llvm_mips_copy_u_h_test
 ;
 @llvm_mips_copy_u_w_ARG1 = global <4 x i32> <i32 0, i32 1, i32 2, i32 3>, align 16
 @llvm_mips_copy_u_w_RES  = global i32 0, align 16
@@ -133,11 +147,13 @@ entry:
 
 declare i32 @llvm.mips.copy.u.w(<4 x i32>, i32) nounwind
 
-; CHECK: llvm_mips_copy_u_w_test:
-; CHECK: ld.w
-; CHECK: copy_u.w
-; CHECK: sw
-; CHECK: .size llvm_mips_copy_u_w_test
+; MIPS-ANY: llvm_mips_copy_u_w_test:
+; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_copy_u_w_ARG1)
+; MIPS-ANY-DAG: ld.w [[WS:\$w[0-9]+]], 0([[R1]])
+; MIPS-ANY-DAG: copy_u.w [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_u_w_RES)
+; MIPS-ANY-DAG: sw [[RD]], 0([[RES]])
+; MIPS-ANY: .size llvm_mips_copy_u_w_test
 ;
 @llvm_mips_copy_u_d_ARG1 = global <2 x i64> <i64 0, i64 1>, align 16
 @llvm_mips_copy_u_d_RES  = global i64 0, align 16
@@ -152,11 +168,13 @@ entry:
 
 declare i64 @llvm.mips.copy.u.d(<2 x i64>, i32) nounwind
 
-; CHECK: llvm_mips_copy_u_d_test:
-; CHECK: ld.w
-; CHECK: copy_s.w
-; CHECK: copy_s.w
-; CHECK: sw
-; CHECK: sw
-; CHECK: .size llvm_mips_copy_u_d_test
+; MIPS-ANY: llvm_mips_copy_u_d_test:
+; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_copy_u_d_ARG1)
+; MIPS32-DAG: ld.w [[WS:\$w[0-9]+]], 0([[R1]])
+; MIPS32-DAG: copy_s.w [[RD1:\$[0-9]+]], [[WS]][2]
+; MIPS32-DAG: copy_s.w [[RD2:\$[0-9]+]], [[WS]][3]
+; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_u_d_RES)
+; MIPS32-DAG: sw [[RD1]], 0([[RES]])
+; MIPS32-DAG: sw [[RD2]], 4([[RES]])
+; MIPS-ANY: .size llvm_mips_copy_u_d_test
 ;
