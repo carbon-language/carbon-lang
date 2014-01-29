@@ -3064,6 +3064,12 @@ INTERCEPTOR(__sanitizer_clock_t, times, void *tms) {
   return res;
 }
 #define INIT_TIMES COMMON_INTERCEPT_FUNCTION(times);
+#else
+#define INIT_TIMES
+#endif
+
+#if SANITIZER_INTERCEPT_TLS_GET_ADDR
+#define INIT_TLS_GET_ADDR COMMON_INTERCEPT_FUNCTION(__tls_get_addr)
 INTERCEPTOR(void *, __tls_get_addr, void *arg) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, __tls_get_addr, arg);
@@ -3071,12 +3077,6 @@ INTERCEPTOR(void *, __tls_get_addr, void *arg) {
   DTLS_on_tls_get_addr(arg, res);
   return res;
 }
-#else
-#define INIT_TIMES
-#endif
-
-#if SANITIZER_INTERCEPT_TLS_GET_ADDR
-#define INIT_TLS_GET_ADDR COMMON_INTERCEPT_FUNCTION(__tls_get_addr)
 #else
 #define INIT_TLS_GET_ADDR
 #endif
