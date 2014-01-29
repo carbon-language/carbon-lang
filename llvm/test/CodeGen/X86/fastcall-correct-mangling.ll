@@ -24,3 +24,10 @@ define x86_fastcallcc i32 @"\01DoNotMangle"(i32 %a) {
 entry:
   ret i32 %a
 }
+
+define private x86_fastcallcc void @dontCrash() {
+; The name is fairly arbitrary since it is private. Just don't crash.
+; CHECK32-LABEL: {{^}}L@dontCrash@0:
+; CHECK64-LABEL: {{^}}.LdontCrash:
+  ret void
+}

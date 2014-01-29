@@ -15,6 +15,7 @@
 #define LLVM_TARGET_MANGLER_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 
@@ -47,14 +48,16 @@ private:
 public:
   Mangler(const DataLayout *DL) : DL(DL), NextAnonGlobalID(1) {}
 
-  /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
-  /// and the specified global variable's name.  If the global variable doesn't
-  /// have a name, this fills in a unique name for the global.
+  /// Print the appropriate prefix and the specified global variable's name.
+  /// If the global variable doesn't have a name, this fills in a unique name
+  /// for the global.
+  void getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV);
   void getNameWithPrefix(SmallVectorImpl<char> &OutName, const GlobalValue *GV);
 
-  /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
-  /// and the specified name as the global variable name.  GVName must not be
-  /// empty.
+  /// Print the appropriate prefix and the specified name as the global variable
+  /// name. GVName must not be empty.
+  void getNameWithPrefix(raw_ostream &OS, const Twine &GVName,
+                         ManglerPrefixTy PrefixTy = Mangler::Default);
   void getNameWithPrefix(SmallVectorImpl<char> &OutName, const Twine &GVName,
                          ManglerPrefixTy PrefixTy = Mangler::Default);
 };
