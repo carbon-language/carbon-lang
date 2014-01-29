@@ -458,6 +458,32 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::FREM, MVT::v1f64, Expand);
     setOperationAction(ISD::FREM, MVT::v2f64, Expand);
 
+    setOperationAction(ISD::SELECT, MVT::v8i8, Expand);
+    setOperationAction(ISD::SELECT, MVT::v16i8, Expand);
+    setOperationAction(ISD::SELECT, MVT::v4i16, Expand);
+    setOperationAction(ISD::SELECT, MVT::v8i16, Expand);
+    setOperationAction(ISD::SELECT, MVT::v2i32, Expand);
+    setOperationAction(ISD::SELECT, MVT::v4i32, Expand);
+    setOperationAction(ISD::SELECT, MVT::v1i64, Expand);
+    setOperationAction(ISD::SELECT, MVT::v2i64, Expand);
+    setOperationAction(ISD::SELECT, MVT::v2f32, Expand);
+    setOperationAction(ISD::SELECT, MVT::v4f32, Expand);
+    setOperationAction(ISD::SELECT, MVT::v1f64, Expand);
+    setOperationAction(ISD::SELECT, MVT::v2f64, Expand);
+
+    setOperationAction(ISD::SELECT_CC, MVT::v8i8, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::v16i8, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::v4i16, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::v8i16, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::v2i32, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::v4i32, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::v1i64, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::v2i64, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::v2f32, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::v4f32, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::v1f64, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::v2f64, Custom);
+
     // Vector ExtLoad and TruncStore are expanded.
     for (unsigned I = MVT::FIRST_VECTOR_VALUETYPE;
          I <= MVT::LAST_VECTOR_VALUETYPE; ++I) {
@@ -2661,62 +2687,6 @@ AArch64TargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) const {
   }
 }
 
-// (SELECT_CC lhs, rhs, iftrue, iffalse, condcode)
-SDValue
-AArch64TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
-  SDLoc dl(Op);
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  SDValue IfTrue = Op.getOperand(2);
-  SDValue IfFalse = Op.getOperand(3);
-  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
-
-  if (LHS.getValueType() == MVT::f128) {
-    // f128 comparisons are lowered to libcalls, but slot in nicely here
-    // afterwards.
-    softenSetCCOperands(DAG, MVT::f128, LHS, RHS, CC, dl);
-
-    // If softenSetCCOperands returned a scalar, we need to compare the result
-    // against zero to select between true and false values.
-    if (RHS.getNode() == 0) {
-      RHS = DAG.getConstant(0, LHS.getValueType());
-      CC = ISD::SETNE;
-    }
-  }
-
-  if (LHS.getValueType().isInteger()) {
-    SDValue A64cc;
-
-    // Integers are handled in a separate function because the combinations of
-    // immediates and tests can get hairy and we may want to fiddle things.
-    SDValue CmpOp = getSelectableIntSetCC(LHS, RHS, CC, A64cc, DAG, dl);
-
-    return DAG.getNode(AArch64ISD::SELECT_CC, dl, Op.getValueType(),
-                       CmpOp, IfTrue, IfFalse, A64cc);
-  }
-
-  // Note that some LLVM floating-point CondCodes can't be lowered to a single
-  // conditional branch, hence FPCCToA64CC can set a second test, where either
-  // passing is sufficient.
-  A64CC::CondCodes CondCode, Alternative = A64CC::Invalid;
-  CondCode = FPCCToA64CC(CC, Alternative);
-  SDValue A64cc = DAG.getConstant(CondCode, MVT::i32);
-  SDValue SetCC = DAG.getNode(AArch64ISD::SETCC, dl, MVT::i32, LHS, RHS,
-                              DAG.getCondCode(CC));
-  SDValue A64SELECT_CC = DAG.getNode(AArch64ISD::SELECT_CC, dl,
-                                     Op.getValueType(),
-                                     SetCC, IfTrue, IfFalse, A64cc);
-
-  if (Alternative != A64CC::Invalid) {
-    A64cc = DAG.getConstant(Alternative, MVT::i32);
-    A64SELECT_CC = DAG.getNode(AArch64ISD::SELECT_CC, dl, Op.getValueType(),
-                               SetCC, IfTrue, A64SELECT_CC, A64cc);
-
-  }
-
-  return A64SELECT_CC;
-}
-
 // (SELECT testbit, iftrue, iffalse)
 SDValue
 AArch64TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
@@ -2999,6 +2969,158 @@ AArch64TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
     A64cc = DAG.getConstant(Alternative, MVT::i32);
     A64SELECT_CC = DAG.getNode(AArch64ISD::SELECT_CC, dl, VT, CmpOp,
                                DAG.getConstant(1, VT), A64SELECT_CC, A64cc);
+  }
+
+  return A64SELECT_CC;
+}
+
+static SDValue LowerVectorSELECT_CC(SDValue Op, SelectionDAG &DAG) {
+  SDLoc dl(Op);
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue IfTrue = Op.getOperand(2);
+  SDValue IfFalse = Op.getOperand(3);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+
+  // If LHS & RHS are floating point and IfTrue & IfFalse are vectors, we will
+  // use NEON compare.
+  if ((LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::f64)) {
+    EVT EltVT = LHS.getValueType();
+    unsigned EltNum = 128 / EltVT.getSizeInBits();
+    EVT VT = EVT::getVectorVT(*DAG.getContext(), EltVT, EltNum);
+    unsigned SubConstant =
+        (LHS.getValueType() == MVT::f32) ? AArch64::sub_32 :AArch64::sub_64;
+    EVT CEltT = (LHS.getValueType() == MVT::f32) ? MVT::i32 : MVT::i64;
+    EVT CVT = EVT::getVectorVT(*DAG.getContext(), CEltT, EltNum);
+
+    LHS
+      = SDValue(DAG.getMachineNode(TargetOpcode::SUBREG_TO_REG, dl,
+                  VT, DAG.getTargetConstant(0, MVT::i32), LHS,
+                  DAG.getTargetConstant(SubConstant, MVT::i32)), 0);
+    RHS
+      = SDValue(DAG.getMachineNode(TargetOpcode::SUBREG_TO_REG, dl,
+                  VT, DAG.getTargetConstant(0, MVT::i32), RHS,
+                  DAG.getTargetConstant(SubConstant, MVT::i32)), 0);
+
+    SDValue VSetCC = DAG.getSetCC(dl, CVT, LHS, RHS, CC);
+    SDValue ResCC = LowerVectorSETCC(VSetCC, DAG);
+    EVT IfTrueVT = IfTrue.getValueType();
+    EVT CastEltT =
+        MVT::getIntegerVT(IfTrueVT.getVectorElementType().getSizeInBits());
+    EVT CastVT = EVT::getVectorVT(*DAG.getContext(), CastEltT,
+                                  IfTrueVT.getVectorNumElements());
+    if (CEltT.getSizeInBits() < IfTrueVT.getSizeInBits()) {
+      EVT DUPVT =
+          EVT::getVectorVT(*DAG.getContext(), CEltT,
+                           IfTrueVT.getSizeInBits() / CEltT.getSizeInBits());
+      ResCC = DAG.getNode(AArch64ISD::NEON_VDUPLANE, dl, DUPVT, ResCC,
+                          DAG.getConstant(0, MVT::i64, false));
+
+      ResCC = DAG.getNode(ISD::BITCAST, dl, CastVT, ResCC);
+    } else {
+      // FIXME: If IfTrue & IfFalse hold v1i8, v1i16 or v1i32, this function
+      // can't handle them and will hit this assert.
+      assert(CEltT.getSizeInBits() == IfTrueVT.getSizeInBits() &&
+             "Vector of IfTrue & IfFalse is too small.");
+
+      unsigned ExEltNum =
+          EltNum * IfTrueVT.getSizeInBits() / ResCC.getValueSizeInBits();
+      EVT ExVT = EVT::getVectorVT(*DAG.getContext(), CEltT, ExEltNum);
+      ResCC = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ExVT, ResCC,
+                          DAG.getConstant(0, MVT::i64, false));
+      ResCC = DAG.getNode(ISD::BITCAST, dl, CastVT, ResCC);
+    }
+    SDValue VSelect = DAG.getNode(ISD::VSELECT, dl, IfTrue.getValueType(),
+                                  ResCC, IfTrue, IfFalse);
+    return VSelect;
+  }
+
+  // Here we handle the case that LHS & RHS are integer and IfTrue & IfFalse are
+  // vectors.
+  A64CC::CondCodes CondCode, Alternative = A64CC::Invalid;
+  CondCode = FPCCToA64CC(CC, Alternative);
+  SDValue A64cc = DAG.getConstant(CondCode, MVT::i32);
+  SDValue SetCC = DAG.getNode(AArch64ISD::SETCC, dl, MVT::i32, LHS, RHS,
+                              DAG.getCondCode(CC));
+  EVT SEVT = MVT::i32;
+  if (IfTrue.getValueType().getVectorElementType().getSizeInBits() > 32)
+    SEVT = MVT::i64;
+  SDValue AllOne = DAG.getConstant(-1, SEVT);
+  SDValue AllZero = DAG.getConstant(0, SEVT);
+  SDValue A64SELECT_CC = DAG.getNode(AArch64ISD::SELECT_CC, dl, SEVT, SetCC,
+                                     AllOne, AllZero, A64cc);
+
+  if (Alternative != A64CC::Invalid) {
+    A64cc = DAG.getConstant(Alternative, MVT::i32);
+    A64SELECT_CC = DAG.getNode(AArch64ISD::SELECT_CC, dl, Op.getValueType(),
+                               SetCC, AllOne, A64SELECT_CC, A64cc);
+  }
+  SDValue VDup;
+  if (IfTrue.getValueType().getVectorNumElements() == 1)
+    VDup = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, IfTrue.getValueType(),
+                       A64SELECT_CC);
+  else
+    VDup = DAG.getNode(AArch64ISD::NEON_VDUP, dl, IfTrue.getValueType(),
+                       A64SELECT_CC);
+  SDValue VSelect = DAG.getNode(ISD::VSELECT, dl, IfTrue.getValueType(),
+                                VDup, IfTrue, IfFalse);
+  return VSelect;
+}
+
+// (SELECT_CC lhs, rhs, iftrue, iffalse, condcode)
+SDValue
+AArch64TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc dl(Op);
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue IfTrue = Op.getOperand(2);
+  SDValue IfFalse = Op.getOperand(3);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+
+  if (IfTrue.getValueType().isVector())
+    return LowerVectorSELECT_CC(Op, DAG);
+
+  if (LHS.getValueType() == MVT::f128) {
+    // f128 comparisons are lowered to libcalls, but slot in nicely here
+    // afterwards.
+    softenSetCCOperands(DAG, MVT::f128, LHS, RHS, CC, dl);
+
+    // If softenSetCCOperands returned a scalar, we need to compare the result
+    // against zero to select between true and false values.
+    if (RHS.getNode() == 0) {
+      RHS = DAG.getConstant(0, LHS.getValueType());
+      CC = ISD::SETNE;
+    }
+  }
+
+  if (LHS.getValueType().isInteger()) {
+    SDValue A64cc;
+
+    // Integers are handled in a separate function because the combinations of
+    // immediates and tests can get hairy and we may want to fiddle things.
+    SDValue CmpOp = getSelectableIntSetCC(LHS, RHS, CC, A64cc, DAG, dl);
+
+    return DAG.getNode(AArch64ISD::SELECT_CC, dl, Op.getValueType(), CmpOp,
+                       IfTrue, IfFalse, A64cc);
+  }
+
+  // Note that some LLVM floating-point CondCodes can't be lowered to a single
+  // conditional branch, hence FPCCToA64CC can set a second test, where either
+  // passing is sufficient.
+  A64CC::CondCodes CondCode, Alternative = A64CC::Invalid;
+  CondCode = FPCCToA64CC(CC, Alternative);
+  SDValue A64cc = DAG.getConstant(CondCode, MVT::i32);
+  SDValue SetCC = DAG.getNode(AArch64ISD::SETCC, dl, MVT::i32, LHS, RHS,
+                              DAG.getCondCode(CC));
+  SDValue A64SELECT_CC = DAG.getNode(AArch64ISD::SELECT_CC, dl,
+                                     Op.getValueType(),
+                                     SetCC, IfTrue, IfFalse, A64cc);
+
+  if (Alternative != A64CC::Invalid) {
+    A64cc = DAG.getConstant(Alternative, MVT::i32);
+    A64SELECT_CC = DAG.getNode(AArch64ISD::SELECT_CC, dl, Op.getValueType(),
+                               SetCC, IfTrue, A64SELECT_CC, A64cc);
+
   }
 
   return A64SELECT_CC;

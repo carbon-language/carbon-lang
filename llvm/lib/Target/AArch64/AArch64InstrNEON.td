@@ -461,9 +461,13 @@ multiclass Neon_bitwise3V_patterns<SDPatternOperator opnode,
             (INST8B VPR64:$src, VPR64:$Rn, VPR64:$Rm)>;
   def : Pat<(v2i32 (opnode (v2i32 VPR64:$src), VPR64:$Rn, VPR64:$Rm)),
             (INST8B VPR64:$src, VPR64:$Rn, VPR64:$Rm)>;
+  def : Pat<(v2f32 (opnode (v2i32 VPR64:$src), VPR64:$Rn, VPR64:$Rm)),
+            (INST8B VPR64:$src, VPR64:$Rn, VPR64:$Rm)>;
   def : Pat<(v4i16 (opnode (v4i16 VPR64:$src), VPR64:$Rn, VPR64:$Rm)),
             (INST8B VPR64:$src, VPR64:$Rn, VPR64:$Rm)>;
   def : Pat<(v1i64 (opnode (v1i64 VPR64:$src), VPR64:$Rn, VPR64:$Rm)),
+            (INST8B VPR64:$src, VPR64:$Rn, VPR64:$Rm)>;
+  def : Pat<(v1f64 (opnode (v1i64 VPR64:$src), VPR64:$Rn, VPR64:$Rm)),
             (INST8B VPR64:$src, VPR64:$Rn, VPR64:$Rm)>;
   def : Pat<(v16i8 (opnode (v16i8 VPR128:$src), VPR128:$Rn, VPR128:$Rm)),
             (INST16B VPR128:$src, VPR128:$Rn, VPR128:$Rm)>;
