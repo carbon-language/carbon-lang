@@ -9,8 +9,8 @@ entry:
 ; CHECK: @read_4_bytes
 ; CHECK-NOT: ret
 ; CHECK: lshr {{.*}} 3
-; Check for ASAN's Offset for 64-bit (2^44 or 7fff8000)
-; CHECK-NEXT: {{17592186044416|2147450880}}
+; Check for ASAN's Offset for 64-bit (7fff8000)
+; CHECK-NEXT: add{{.*}}2147450880
 ; CHECK: ret
 
 define void @example_atomicrmw(i64* %ptr) nounwind uwtable sanitize_address {
