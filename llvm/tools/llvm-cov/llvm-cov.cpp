@@ -21,6 +21,9 @@
 #include "llvm/Support/system_error.h"
 using namespace llvm;
 
+static cl::opt<std::string> SourceFile(cl::Positional, cl::Required,
+                                       cl::desc("SOURCEFILE"));
+
 static cl::opt<bool>
 DumpGCOV("dump", cl::init(false), cl::desc("dump gcov file"));
 
@@ -56,9 +59,12 @@ int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv, "llvm coverage tool\n");
 
-  GCOVFile GF;
   if (InputGCNO.empty())
-    errs() << " " << argv[0] << ": No gcov input file!\n";
+    InputGCNO = SourceFile.substr(0, SourceFile.rfind(".")) + ".gcno";
+  if (InputGCDA.empty())
+    InputGCDA = SourceFile.substr(0, SourceFile.rfind(".")) + ".gcda";
+
+  GCOVFile GF;
 
   OwningPtr<MemoryBuffer> GCNO_Buff;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCNO, GCNO_Buff)) {
@@ -71,17 +77,15 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (!InputGCDA.empty()) {
-    OwningPtr<MemoryBuffer> GCDA_Buff;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCDA, GCDA_Buff)) {
-      errs() << InputGCDA << ": " << ec.message() << "\n";
-      return 1;
-    }
-    GCOVBuffer GCDA_GB(GCDA_Buff.get());
-    if (!GF.readGCDA(GCDA_GB)) {
-      errs() << "Invalid .gcda File!\n";
-      return 1;
-    }
+  OwningPtr<MemoryBuffer> GCDA_Buff;
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCDA, GCDA_Buff)) {
+    errs() << InputGCDA << ": " << ec.message() << "\n";
+    return 1;
+  }
+  GCOVBuffer GCDA_GB(GCDA_Buff.get());
+  if (!GF.readGCDA(GCDA_GB)) {
+    errs() << "Invalid .gcda File!\n";
+    return 1;
   }
 
   if (DumpGCOV)

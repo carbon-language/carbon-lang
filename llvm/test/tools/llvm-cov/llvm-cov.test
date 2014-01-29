@@ -5,34 +5,34 @@ RUN: mkdir %t
 RUN: cd %t
 RUN: cp %p/Inputs/test* .
 
-RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda | diff test_no_options.output -
-RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -f | diff test_-f.output -
+RUN: llvm-cov test.c | diff test_no_options.output -
+RUN: llvm-cov test.c -f | diff test_-f.output -
 RUN: diff -aub test_no_options.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_no_options.h.gcov test.h.gcov
 
-RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -a
+RUN: llvm-cov test.c -a
 RUN: diff -aub test_-a.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a.h.gcov test.h.gcov
 
-RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -a -b | diff test_-b.output -
+RUN: llvm-cov test.c -a -b | diff test_-b.output -
 # This is expected to fail because gcov doesn't actually output real branch or
 # call statistics on a per function basis.
-RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -a -b -f | not diff test_-b_-f.output -
+RUN: llvm-cov test.c -a -b -f | not diff test_-b_-f.output -
 RUN: diff -aub test_-a_-b.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a_-b.h.gcov test.h.gcov
 
-RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -a -b -u
+RUN: llvm-cov test.c -a -b -u
 RUN: diff -aub test_-a_-b_-u.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a_-b_-u.h.gcov test.h.gcov
 
-RUN: llvm-cov -gcno=test.gcno -gcda=test.gcda -a -b -c -u
+RUN: llvm-cov test.c -a -b -c -u
 RUN: diff -aub test_-a_-b_-c_-u.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a_-b_-c_-u.h.gcov test.h.gcov
 
-RUN: not llvm-cov -gcno=test_read_fail.gcno -gcda=test.gcda
+RUN: not llvm-cov test.c -gcno=test_read_fail.gcno
 
-RUN: not llvm-cov -gcno=test.gcno -gcda=test_file_checksum_fail.gcda
+RUN: not llvm-cov test.c -gcda=test_file_checksum_fail.gcda
 
-RUN: not llvm-cov -gcno=test.gcno -gcda=test_func_checksum_fail.gcda
+RUN: not llvm-cov test.c -gcda=test_func_checksum_fail.gcda
 
 XFAIL: powerpc64, s390x, mips, sparc
