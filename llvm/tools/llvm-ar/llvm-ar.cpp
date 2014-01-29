@@ -703,7 +703,8 @@ static void writeSymbolTable(
        I != E; ++I, ++MemberNum) {
     MemoryBuffer *MemberBuffer = Buffers[MemberNum];
     ErrorOr<object::ObjectFile *> ObjOrErr =
-        object::ObjectFile::createObjectFile(MemberBuffer, false);
+        object::ObjectFile::createObjectFile(MemberBuffer, false,
+                                             sys::fs::file_magic::unknown);
     if (!ObjOrErr)
       continue;  // FIXME: check only for "not an object file" errors.
     object::ObjectFile *Obj = ObjOrErr.get();

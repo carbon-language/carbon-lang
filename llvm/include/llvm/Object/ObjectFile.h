@@ -378,9 +378,13 @@ public:
   ///        return true.
   /// @brief Create ObjectFile from path.
   static ErrorOr<ObjectFile *> createObjectFile(StringRef ObjectPath);
-  static ErrorOr<ObjectFile *>
-  createObjectFile(MemoryBuffer *Object, bool BufferOwned = true,
-                   sys::fs::file_magic Type = sys::fs::file_magic::unknown);
+  static ErrorOr<ObjectFile *> createObjectFile(MemoryBuffer *Object,
+                                                bool BufferOwned,
+                                                sys::fs::file_magic Type);
+  static ErrorOr<ObjectFile *> createObjectFile(MemoryBuffer *Object) {
+    return createObjectFile(Object, true, sys::fs::file_magic::unknown);
+  }
+
 
   static inline bool classof(const Binary *v) {
     return v->isObject();
