@@ -8,6 +8,7 @@ use Python.
 """
 
 import textwrap
+import re
 
 class Writer(object):
     def __init__(self, output, width=78):
@@ -31,7 +32,7 @@ class Writer(object):
     def rule(self, name, command, description=None, depfile=None,
              generator=False):
         self._line('rule %s' % name)
-        self.variable('command', command, indent=1)
+        self.variable('command', escape(command), indent=1)
         if description:
             self.variable('description', description, indent=1)
         if depfile:
@@ -103,8 +104,15 @@ class Writer(object):
 
 
 def escape(string):
-    """Escape a string such that it can be embedded into a Ninja file without
-    further interpretation."""
+    """Escape a string such that Makefile and shell variables are
+       correctly escaped for use in a Ninja file.
+    """
     assert '\n' not in string, 'Ninja syntax does not allow newlines'
     # We only have one special metacharacter: '$'.
-    return string.replace('$', '$$')
+
+    # We should leave $in and $out untouched.
+    # Just look for makefile/shell style substitutions
+    return re.sub(r'(\$[{(][a-z_]+[})])',
+                  r'$\1',
+                  string,
+                  flags=re.IGNORECASE)
