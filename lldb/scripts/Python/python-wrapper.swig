@@ -135,6 +135,7 @@ public:
         {
             if (!arg)
                 return retval;
+            Py_INCREF(arg); // _SetItem steals a reference
             PyTuple_SetItem(pargs,idx,arg);
             idx++;
         }
