@@ -24,31 +24,30 @@ using namespace llvm;
 static cl::opt<std::string> SourceFile(cl::Positional, cl::Required,
                                        cl::desc("SOURCEFILE"));
 
-static cl::opt<bool>
-DumpGCOV("dump", cl::init(false), cl::desc("dump gcov file"));
+static cl::opt<bool> AllBlocks("a", cl::init(false),
+                               cl::desc("Display all basic blocks"));
 
-static cl::opt<std::string>
-InputGCNO("gcno", cl::desc("<input gcno file>"), cl::init(""));
+static cl::opt<bool> BranchProb("b", cl::init(false),
+                                cl::desc("Display branch probabilities"));
 
-static cl::opt<std::string>
-InputGCDA("gcda", cl::desc("<input gcda file>"), cl::init(""));
+static cl::opt<bool> BranchCount("c", cl::init(false),
+                                 cl::desc("Display branch counts instead "
+                                           "of percentages (requires -b)"));
 
-static cl::opt<bool>
-AllBlocks("a", cl::init(false), cl::desc("display all block info"));
+static cl::opt<bool> FuncSummary("f", cl::init(false),
+                                 cl::desc("Show coverage for each function"));
 
-static cl::opt<bool>
-BranchInfo("b", cl::init(false), cl::desc("display branch info"));
+static cl::opt<bool> UncondBranch("u", cl::init(false),
+                                  cl::desc("Display unconditional branch info "
+                                           "(requires -b)"));
 
-static cl::opt<bool>
-BranchCount("c", cl::init(false), cl::desc("display branch counts instead of \
-                                            probabilities (requires -b)"));
-
-static cl::opt<bool>
-FuncCoverage("f", cl::init(false), cl::desc("output function coverage"));
-
-static cl::opt<bool>
-UncondBranch("u", cl::init(false), cl::desc("display unconditional branch info \
-                                             (requires -b)"));
+static cl::OptionCategory DebugCat("Internal and debugging options");
+static cl::opt<bool> DumpGCOV("dump", cl::init(false), cl::cat(DebugCat),
+                              cl::desc("Dump the gcov file to stderr"));
+static cl::opt<std::string> InputGCNO("gcno", cl::cat(DebugCat), cl::init(""),
+                                      cl::desc("Override inferred gcno file"));
+static cl::opt<std::string> InputGCDA("gcda", cl::cat(DebugCat), cl::init(""),
+                                      cl::desc("Override inferred gcda file"));
 
 //===----------------------------------------------------------------------===//
 int main(int argc, char **argv) {
@@ -57,7 +56,7 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
-  cl::ParseCommandLineOptions(argc, argv, "llvm coverage tool\n");
+  cl::ParseCommandLineOptions(argc, argv, "LLVM code coverage tool\n");
 
   if (InputGCNO.empty())
     InputGCNO = SourceFile.substr(0, SourceFile.rfind(".")) + ".gcno";
@@ -91,7 +90,7 @@ int main(int argc, char **argv) {
   if (DumpGCOV)
     GF.dump();
 
-  GCOVOptions Options(AllBlocks, BranchInfo, BranchCount, FuncCoverage,
+  GCOVOptions Options(AllBlocks, BranchProb, BranchCount, FuncSummary,
                       UncondBranch);
   FileInfo FI(Options);
   GF.collectLineCounts(FI);
