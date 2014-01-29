@@ -164,7 +164,7 @@ for target in targets:
                      "-emit-llvm" % (target, clang_cl_includes)
     if device['gpu'] != '':
       clang_bc_flags += ' -mcpu=' + device['gpu']
-    clang_bc_rule = "CLANG_CL_BC_" + target
+    clang_bc_rule = "CLANG_CL_BC_" + target + "_" + device['gpu']
     c_compiler_rule(b, clang_bc_rule, "LLVM-CC", llvm_clang, clang_bc_flags)
 
     objects = []
@@ -210,11 +210,13 @@ for target in targets:
     install_files_bc.append((builtins_bc, builtins_bc))
     install_deps.append(builtins_bc)
     for alias in device['aliases']:
-      b.rule("CREATE_ALIAS", "ln -fs %s $out" % os.path.basename(builtins_bc)
+      # Ninja cannot have multiple rules with same name so append suffix
+      ruleName = "CREATE_ALIAS_{0}_for_{1}".format(alias, device['gpu'])
+      b.rule(ruleName, "ln -fs %s $out" % os.path.basename(builtins_bc)
              ,"CREATE-ALIAS $out")
 
       alias_file = os.path.join('built_libs', alias + '-' + target + '.bc')
-      b.build(alias_file, "CREATE_ALIAS", builtins_bc)
+      b.build(alias_file, ruleName, builtins_bc)
       install_files_bc.append((alias_file, alias_file))
       install_deps.append(alias_file)
     b.default(builtins_bc)
