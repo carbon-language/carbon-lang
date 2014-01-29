@@ -80,6 +80,8 @@ TEST_F(FormatTestProto, MessageFieldAttributes) {
                "     deprecated = true];");
   verifyFormat("optional LongMessageType long_proto_field = 1\n"
                "    [default = REALLY_REALLY_LONG_CONSTANT_VALUE];");
+  verifyFormat("repeated double value = 1\n"
+               "    [(aaaaaaa.aaaaaaaaa) = {aaaaaaaaaaaaaaaaa : AAAAAAAA}];");
 }
 
 TEST_F(FormatTestProto, FormatsOptions) {
