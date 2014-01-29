@@ -2427,6 +2427,11 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
                "#endif");
 }
 
+TEST_F(FormatTest, GraciouslyHandleIncorrectPreprocessorConditions) {
+  verifyFormat("#endif\n"
+               "#if B");
+}
+
 TEST_F(FormatTest, FormatsJoinedLinesOnSubsequentRuns) {
   FormatStyle SingleLine = getLLVMStyle();
   SingleLine.AllowShortIfStatementsOnASingleLine = true;

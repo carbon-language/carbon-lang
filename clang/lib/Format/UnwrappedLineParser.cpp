@@ -509,7 +509,9 @@ void UnwrappedLineParser::parsePPEndIf() {
       PPLevelBranchCount[PPBranchLevel] = PPChainBranchIndex.top() + 1;
     }
   }
-  --PPBranchLevel;
+  // Guard against #endif's without #if.
+  if (PPBranchLevel > 0)
+    --PPBranchLevel;
   if (!PPChainBranchIndex.empty())
     PPChainBranchIndex.pop();
   if (!PPStack.empty())
