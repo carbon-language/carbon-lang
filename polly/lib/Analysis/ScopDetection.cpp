@@ -590,6 +590,24 @@ static bool regionWithoutLoops(Region &R, LoopInfo *LI) {
   return true;
 }
 
+// Remove all direct and indirect children of region R from the region set Regs,
+// but do not recurse further if the first child has been found.
+//
+// Return the number of regions erased from Regs.
+static unsigned eraseAllChildren(std::set<const Region *> &Regs,
+                                 const Region *R) {
+  unsigned Count = 0;
+  for (Region::const_iterator I = R->begin(), E = R->end(); I != E; ++I) {
+    if (Regs.find(*I) != Regs.end()) {
+      ++Count;
+      Regs.erase(*I);
+    } else {
+      Count += eraseAllChildren(Regs, *I);
+    }
+  }
+  return Count;
+}
+
 void ScopDetection::findScops(Region &R) {
 
   if (!DetectRegionsWithoutLoops && regionWithoutLoops(R, LI))
@@ -640,9 +658,9 @@ void ScopDetection::findScops(Region &R) {
     ValidRegions.insert(ExpandedR);
     ValidRegions.erase(CurrentRegion);
 
-    for (Region::iterator I = ExpandedR->begin(), E = ExpandedR->end(); I != E;
-         ++I)
-      ValidRegions.erase(*I);
+    // Erase all (direct and indirect) children of ExpandedR from the valid
+    // regions and update the number of valid regions.
+    ValidRegion -= eraseAllChildren(ValidRegions, ExpandedR);
   }
 }
 
