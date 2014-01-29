@@ -1,12 +1,10 @@
 Test that llvm-nm returns an error because of the unknown file type, but
 keeps processing subsequent files.
 
-Note: We use a temporary file since the tests don't run with pipefail.
-
 RUN: touch %t
 RUN: not llvm-nm %p/Inputs/trivial-object-test.elf-i386 %t \
-RUN:             %p/Inputs/trivial-object-test.elf-i386 > %t.log
-RUN: FileCheck %s < %t.log
+RUN:             %p/Inputs/trivial-object-test.elf-i386 | \
+RUN: FileCheck %s
 
 CHECK:          U SomeOtherFunction
 CHECK: 00000000 T main
