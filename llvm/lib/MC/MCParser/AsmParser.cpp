@@ -287,11 +287,8 @@ private:
   /// \brief Handle exit from macro instantiation.
   void handleMacroExit();
 
-  /// \brief Extract AsmTokens for a macro argument. If the argument delimiter
-  /// is initially unknown, set it to AsmToken::Eof. It will be set to the
-  /// correct delimiter by the method.
-  bool parseMacroArgument(MCAsmMacroArgument &MA,
-                          AsmToken::TokenKind &ArgumentDelimiter);
+  /// \brief Extract AsmTokens for a macro argument.
+  bool parseMacroArgument(MCAsmMacroArgument &MA);
 
   /// \brief Parse all macro arguments for a given macro.
   bool parseMacroArguments(const MCAsmMacro *M, MCAsmMacroArguments &A);
@@ -1879,8 +1876,7 @@ private:
 };
 }
 
-bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA,
-                                   AsmToken::TokenKind &ArgumentDelimiter) {
+bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA) {
   unsigned ParenLevel = 0;
   unsigned AddTokens = 0;
 
@@ -1891,14 +1887,8 @@ bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA,
     if (Lexer.is(AsmToken::Eof) || Lexer.is(AsmToken::Equal))
       return TokError("unexpected token in macro instantiation");
 
-    if (ParenLevel == 0 && Lexer.is(AsmToken::Comma)) {
-      // Spaces and commas cannot be mixed to delimit parameters
-      if (ArgumentDelimiter == AsmToken::Eof)
-        ArgumentDelimiter = AsmToken::Comma;
-      else if (ArgumentDelimiter != AsmToken::Comma)
-        return TokError("expected ' ' for macro argument separator");
+    if (ParenLevel == 0 && Lexer.is(AsmToken::Comma))
       break;
-    }
 
     if (Lexer.is(AsmToken::Space)) {
       Lex(); // Eat spaces
@@ -1906,8 +1896,7 @@ bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA,
       // Spaces can delimit parameters, but could also be part an expression.
       // If the token after a space is an operator, add the token and the next
       // one into this argument
-      if (ArgumentDelimiter == AsmToken::Space ||
-          ArgumentDelimiter == AsmToken::Eof) {
+      if (!IsDarwin) {
         if (isOperator(Lexer.getKind())) {
           // Check to see whether the token is used as an operator,
           // or part of an identifier
@@ -1917,9 +1906,6 @@ bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA,
         }
 
         if (!AddTokens && ParenLevel == 0) {
-          if (ArgumentDelimiter == AsmToken::Eof &&
-              !isOperator(Lexer.getKind()))
-            ArgumentDelimiter = AsmToken::Space;
           break;
         }
       }
@@ -1952,9 +1938,6 @@ bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA,
 bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
                                     MCAsmMacroArguments &A) {
   const unsigned NParameters = M ? M->Parameters.size() : 0;
-  // Argument delimiter is initially unknown. It will be set by
-  // parseMacroArgument()
-  AsmToken::TokenKind ArgumentDelimiter = AsmToken::Eof;
 
   // Parse two kinds of macro invocations:
   // - macros defined without any parameters accept an arbitrary number of them
@@ -1963,14 +1946,16 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
        ++Parameter) {
     MCAsmMacroArgument MA;
 
-    if (parseMacroArgument(MA, ArgumentDelimiter))
+    if (parseMacroArgument(MA))
       return true;
 
-    if (!MA.empty() || !NParameters)
+    if (!MA.empty() || (!NParameters && !Lexer.is(AsmToken::EndOfStatement)))
       A.push_back(MA);
     else if (NParameters) {
       if (!M->Parameters[Parameter].second.empty())
         A.push_back(M->Parameters[Parameter].second);
+      else
+        A.push_back(MA);
     }
 
     // At the end of the statement, fill in remaining arguments that have
@@ -1978,12 +1963,7 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
     // required but missing
     if (Lexer.is(AsmToken::EndOfStatement)) {
       if (NParameters && Parameter < NParameters - 1) {
-        if (M->Parameters[Parameter + 1].second.empty())
-          return TokError("macro argument '" +
-                          Twine(M->Parameters[Parameter + 1].first) +
-                          "' is missing");
-        else
-          continue;
+        continue;
       }
       return false;
     }
@@ -2020,12 +2000,6 @@ bool AsmParser::handleMacroEntry(const MCAsmMacro *M, SMLoc NameLoc) {
   MCAsmMacroArguments A;
   if (parseMacroArguments(M, A))
     return true;
-
-  // Remove any trailing empty arguments. Do this after-the-fact as we have
-  // to keep empty arguments in the middle of the list or positionality
-  // gets off. e.g.,  "foo 1, , 2" vs. "foo 1, 2,"
-  while (!A.empty() && A.back().empty())
-    A.pop_back();
 
   // Macro instantiation is lexical, unfortunately. We construct a new buffer
   // to hold the macro body with substitutions.
@@ -3113,28 +3087,21 @@ bool AsmParser::parseDirectiveMacro(SMLoc DirectiveLoc) {
     return TokError("expected identifier in '.macro' directive");
 
   MCAsmMacroParameters Parameters;
-  // Argument delimiter is initially unknown. It will be set by
-  // parseMacroArgument()
-  AsmToken::TokenKind ArgumentDelimiter = AsmToken::Eof;
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    for (;;) {
-      MCAsmMacroParameter Parameter;
-      if (parseIdentifier(Parameter.first))
-        return TokError("expected identifier in '.macro' directive");
+  while (getLexer().isNot(AsmToken::EndOfStatement)) {
+    MCAsmMacroParameter Parameter;
+    if (parseIdentifier(Parameter.first))
+      return TokError("expected identifier in '.macro' directive");
 
-      if (getLexer().is(AsmToken::Equal)) {
-        Lex();
-        if (parseMacroArgument(Parameter.second, ArgumentDelimiter))
-          return true;
-      }
-
-      Parameters.push_back(Parameter);
-
-      if (getLexer().is(AsmToken::Comma))
-        Lex();
-      else if (getLexer().is(AsmToken::EndOfStatement))
-        break;
+    if (getLexer().is(AsmToken::Equal)) {
+      Lex();
+      if (parseMacroArgument(Parameter.second))
+        return true;
     }
+
+    Parameters.push_back(Parameter);
+
+    if (getLexer().is(AsmToken::Comma))
+      Lex();
   }
 
   // Eat the end of statement.

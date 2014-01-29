@@ -32,17 +32,21 @@ test2 10
 // CHECK: .ascii "1 2 3 \003"
 test3 1, 2, 3
 
-// FIXME: test3 1, 2 3 should be treated like test 1, 2, 3
+// CHECK: .ascii "1 2 3 \003"
+test3 1, 2 3
 
-// FIXME: remove the n argument from the remaining test3 examples
-// CHECK: .ascii "1 (23) n \n"
-test3 1, (2 3), n
+.macro test3_prime _a _b _c
+.ascii "\_a \_b \_c"
+.endm
 
-// CHECK: .ascii "1 (23) n \n"
-test3 1 (2 3) n
+// CHECK: .ascii "1 (23) "
+test3_prime 1, (2 3)
 
-// CHECK: .ascii "1 2 n \n"
-test3 1 2 n
+// CHECK: .ascii "1 (23) "
+test3_prime 1 (2 3)
+
+// CHECK: .ascii "1 2 "
+test3_prime 1 2
 
 .macro test5 _a
 .globl \_a
@@ -82,12 +86,8 @@ test8 x - y z 1
 // CHECK: .ascii "1 2 3"
 test9 1, 2,3
 
+// CHECK: .ascii "1,2,3"
 test8 1,2 3
-// CHECK-ERRORS: error: macro argument '_c' is missing
-// CHECK-ERRORS-NEXT: test8 1,2 3
-// CHECK-ERRORS-NEXT:           ^
 
+// CHECK: .ascii "1,2,3"
 test8 1 2, 3
-// CHECK-ERRORS: error: expected ' ' for macro argument separator
-// CHECK-ERRORS-NEXT:test8 1 2, 3
-// CHECK-ERRORS-NEXT:         ^

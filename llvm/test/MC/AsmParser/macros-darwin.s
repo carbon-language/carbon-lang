@@ -86,12 +86,8 @@ test8 x - y, z, 1
 // CHECK: .globl  "1 2 3"
 test9 1, 2,3
 
+// CHECK: .globl "1,23,"
 test8 1,2 3
-// CHECK-ERRORS: error: macro argument '_c' is missing
-// CHECK-ERRORS-NEXT: test8 1,2 3
-// CHECK-ERRORS-NEXT:           ^
 
+// CHECK: .globl "12,3,"
 test8 1 2, 3
-// CHECK-ERRORS: error: macro argument '_c' is missing
-// CHECK-ERRORS-NEXT:test8 1 2, 3
-// CHECK-ERRORS-NEXT:           ^
