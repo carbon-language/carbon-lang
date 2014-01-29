@@ -236,7 +236,7 @@ def vsplati32 : PatFrag<(ops node:$e0),
                         (v4i32 (build_vector node:$e0, node:$e0,
                                              node:$e0, node:$e0))>;
 def vsplati64 : PatFrag<(ops node:$e0),
-                        (v2i64 (build_vector:$v0 node:$e0, node:$e0))>;
+                        (v2i64 (build_vector node:$e0, node:$e0))>;
 def vsplatf32 : PatFrag<(ops node:$e0),
                         (v4f32 (build_vector node:$e0, node:$e0,
                                              node:$e0, node:$e0))>;
@@ -730,6 +730,7 @@ class FFQR_D_ENC : MSA_2RF_FMT<0b110011011, 0b1, 0b011110>;
 class FILL_B_ENC : MSA_2R_FILL_FMT<0b11000000, 0b00, 0b011110>;
 class FILL_H_ENC : MSA_2R_FILL_FMT<0b11000000, 0b01, 0b011110>;
 class FILL_W_ENC : MSA_2R_FILL_FMT<0b11000000, 0b10, 0b011110>;
+class FILL_D_ENC : MSA_2R_FILL_D_FMT<0b11000000, 0b11, 0b011110>;
 
 class FLOG2_W_ENC : MSA_2RF_FMT<0b110010111, 0b0, 0b011110>;
 class FLOG2_D_ENC : MSA_2RF_FMT<0b110010111, 0b1, 0b011110>;
@@ -2093,6 +2094,8 @@ class FILL_H_DESC : MSA_2R_FILL_DESC_BASE<"fill.h", v8i16, vsplati16,
                                           MSA128HOpnd, GPR32Opnd>;
 class FILL_W_DESC : MSA_2R_FILL_DESC_BASE<"fill.w", v4i32, vsplati32,
                                           MSA128WOpnd, GPR32Opnd>;
+class FILL_D_DESC : MSA_2R_FILL_DESC_BASE<"fill.d", v2i64, vsplati64,
+                                          MSA128DOpnd, GPR64Opnd>;
 
 class FILL_FW_PSEUDO_DESC : MSA_2R_FILL_PSEUDO_BASE<v4f32, vsplatf32, MSA128W,
                                                     FGR32>;
@@ -3025,6 +3028,7 @@ def FFQR_D : FFQR_D_ENC, FFQR_D_DESC;
 def FILL_B : FILL_B_ENC, FILL_B_DESC;
 def FILL_H : FILL_H_ENC, FILL_H_DESC;
 def FILL_W : FILL_W_ENC, FILL_W_DESC;
+def FILL_D : FILL_D_ENC, FILL_D_DESC;
 def FILL_FW_PSEUDO : FILL_FW_PSEUDO_DESC;
 def FILL_FD_PSEUDO : FILL_FD_PSEUDO_DESC;
 
