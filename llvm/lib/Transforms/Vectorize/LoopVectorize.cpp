@@ -188,6 +188,10 @@ static cl::opt<unsigned> NumberOfStoresToPredicate(
     "vectorize-num-stores-pred", cl::init(0), cl::Hidden,
     cl::desc("Max number of stores to be predicated behind an if."));
 
+static cl::opt<bool> EnableIndVarRegisterHeur(
+    "enable-ind-var-reg-heur", cl::init(false), cl::Hidden,
+    cl::desc("Count the induction variable only once when unrolling"));
+
 static cl::opt<bool> EnableCondStoresVectorization(
     "enable-cond-stores-vec", cl::init(false), cl::Hidden,
     cl::desc("Enable if predication of stores during vectorization."));
@@ -5154,6 +5158,11 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   // addressing operations or alignment considerations.
   unsigned UF = PowerOf2Floor((TargetNumRegisters - R.LoopInvariantRegs) /
                               R.MaxLocalUsers);
+
+  // Don't count the induction variable as unrolled.
+  if (EnableIndVarRegisterHeur)
+    UF = PowerOf2Floor((TargetNumRegisters - R.LoopInvariantRegs - 1) /
+                       std::max(1U, (R.MaxLocalUsers - 1)));
 
   // Clamp the unroll factor ranges to reasonable factors.
   unsigned MaxUnrollSize = TTI.getMaximumUnrollFactor();
