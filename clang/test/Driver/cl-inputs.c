@@ -33,3 +33,11 @@
 // WARN: warning: overriding '/TC' option with '/TP'
 // WARN: note: The last /TC or /TP option takes precedence over earlier instances
 // WARN-NOT: note
+
+// RUN: not %clang_cl - 2>&1 | FileCheck -check-prefix=STDIN %s
+// STDIN: error: use /Tc or /Tp
+
+// RUN: %clang_cl -### /Tc - 2>&1 | FileCheck -check-prefix=STDINTc %s
+// STDINTc: "-x" "c"
+
+void f();
