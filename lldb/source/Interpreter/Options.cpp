@@ -952,7 +952,7 @@ Options::HandleOptionArgumentCompletion
 
             // If this is the "shlib" option and there was an argument provided,
             // restrict it to that shared library.
-            if (strcmp(cur_opt_name, "shlib") == 0 && cur_arg_pos != -1)
+            if (cur_opt_name && strcmp(cur_opt_name, "shlib") == 0 && cur_arg_pos != -1)
             {
                 const char *module_name = input.GetArgumentAtIndex(cur_arg_pos);
                 if (module_name)
