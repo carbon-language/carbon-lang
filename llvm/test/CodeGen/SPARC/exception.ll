@@ -1,7 +1,9 @@
 ; RUN: llc < %s -march=sparc   -relocation-model=static | FileCheck -check-prefix=V8ABS %s
 ; RUN: llc < %s -march=sparc   -relocation-model=pic    | FileCheck -check-prefix=V8PIC %s
+; RUN: llc < %s -march=sparc   -relocation-model=pic -disable-cfi    | FileCheck -check-prefix=V8PIC_NOCFI %s
 ; RUN: llc < %s -march=sparcv9 -relocation-model=static | FileCheck -check-prefix=V9ABS %s
 ; RUN: llc < %s -march=sparcv9 -relocation-model=pic    | FileCheck -check-prefix=V9PIC %s
+; RUN: llc < %s -march=sparcv9 -relocation-model=pic -disable-cfi    | FileCheck -check-prefix=V9PIC_NOCFI %s
 
 
 %struct.__fundamental_type_info_pseudo = type { %struct.__type_info_pseudo }
@@ -40,10 +42,22 @@
 ; V8PIC:        .cfi_register 15, 31
 ; V8PIC:        .section .gcc_except_table
 ; V8PIC-NOT:    .section
-; V8PIC:        .word .L_ZTIi.DW.stub-
+; V8PIC:        .word %r_disp32(.L_ZTIi.DW.stub)
 ; V8PIC:        .data
 ; V8PIC: .L_ZTIi.DW.stub:
 ; V8PIC-NEXT:   .word _ZTIi
+
+; V8PIC_NOCFI-LABEL: main:
+; V8PIC_NOCFI:        .section .gcc_except_table
+; V8PIC_NOCFI-NOT:    .section
+; V8PIC_NOCFI:        .word %r_disp32(.L_ZTIi.DW.stub)
+; V8PIC_NOCFI:        .data
+; V8PIC_NOCFI: .L_ZTIi.DW.stub:
+; V8PIC_NOCFI-NEXT:   .word _ZTIi
+; V8PIC_NOCFI:        .section .eh_frame
+; V8PIC_NOCFI-NOT:    .section
+; V8PIC_NOCFI:        .word %r_disp32(DW.ref.__gxx_personality_v0)
+
 
 ; V9ABS-LABEL: main:
 ; V9ABS:        .cfi_startproc
@@ -65,10 +79,21 @@
 ; V9PIC:        .cfi_register 15, 31
 ; V9PIC:        .section .gcc_except_table
 ; V9PIC-NOT:    .section
-; V9PIC:        .word .L_ZTIi.DW.stub-
+; V9PIC:        .word %r_disp32(.L_ZTIi.DW.stub)
 ; V9PIC:        .data
 ; V9PIC: .L_ZTIi.DW.stub:
 ; V9PIC-NEXT:   .xword _ZTIi
+
+; V9PIC_NOCFI-LABEL: main:
+; V9PIC_NOCFI:        .section .gcc_except_table
+; V9PIC_NOCFI-NOT:    .section
+; V9PIC_NOCFI:        .word %r_disp32(.L_ZTIi.DW.stub)
+; V9PIC_NOCFI:        .data
+; V9PIC_NOCFI: .L_ZTIi.DW.stub:
+; V9PIC_NOCFI-NEXT:   .xword _ZTIi
+; V9PIC_NOCFI:        .section .eh_frame
+; V9PIC_NOCFI-NOT:    .section
+; V9PIC_NOCFI:        .word %r_disp32(DW.ref.__gxx_personality_v0)
 
 define i32 @main(i32 %argc, i8** nocapture readnone %argv) unnamed_addr #0 {
 entry:

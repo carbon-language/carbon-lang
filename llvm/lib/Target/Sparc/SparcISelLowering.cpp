@@ -17,6 +17,7 @@
 #include "SparcMachineFunctionInfo.h"
 #include "SparcRegisterInfo.h"
 #include "SparcTargetMachine.h"
+#include "SparcTargetObjectFile.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -1363,7 +1364,7 @@ static SPCC::CondCodes FPCondCCodeToFCC(ISD::CondCode CC) {
 }
 
 SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
-  : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
+  : TargetLowering(TM, new SparcELFTargetObjectFile()) {
   Subtarget = &TM.getSubtarget<SparcSubtarget>();
 
   // Set up the register classes.

@@ -41,6 +41,7 @@ void SparcMCExpr::PrintImpl(raw_ostream &OS) const
   case VK_Sparc_L44:      OS << "%l44("; break;
   case VK_Sparc_HH:       OS << "%hh(";  break;
   case VK_Sparc_HM:       OS << "%hm(";  break;
+  case VK_Sparc_R_DISP32: OS << "%r_disp32("; break;
   case VK_Sparc_TLS_GD_HI22:   OS << "%tgd_hi22(";   break;
   case VK_Sparc_TLS_GD_LO10:   OS << "%tgd_lo10(";   break;
   case VK_Sparc_TLS_GD_ADD:    OS << "%tgd_add(";    break;
@@ -77,6 +78,7 @@ SparcMCExpr::VariantKind SparcMCExpr::parseVariantKind(StringRef name)
     .Case("l44", VK_Sparc_L44)
     .Case("hh",  VK_Sparc_HH)
     .Case("hm",  VK_Sparc_HM)
+    .Case("r_disp32",   VK_Sparc_R_DISP32)
     .Case("tgd_hi22",   VK_Sparc_TLS_GD_HI22)
     .Case("tgd_lo10",   VK_Sparc_TLS_GD_LO10)
     .Case("tgd_add",    VK_Sparc_TLS_GD_ADD)
@@ -101,6 +103,8 @@ SparcMCExpr::VariantKind SparcMCExpr::parseVariantKind(StringRef name)
 bool
 SparcMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
                                          const MCAsmLayout *Layout) const {
+  if (!Layout)
+    return false;
   return getSubExpr()->EvaluateAsRelocatable(Res, *Layout);
 }
 

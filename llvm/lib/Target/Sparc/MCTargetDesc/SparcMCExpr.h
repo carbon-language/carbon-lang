@@ -31,6 +31,7 @@ public:
     VK_Sparc_L44,
     VK_Sparc_HH,
     VK_Sparc_HM,
+    VK_Sparc_R_DISP32,
     VK_Sparc_TLS_GD_HI22,
     VK_Sparc_TLS_GD_LO10,
     VK_Sparc_TLS_GD_ADD,
