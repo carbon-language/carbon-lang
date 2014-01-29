@@ -26,10 +26,25 @@ functions.
 libclc currently only supports the PTX target, but support for more
 targets is welcome.
 
-Compiling
----------
+Compiling and installing with Make
+----------------------------------
 
-./configure.py --with-llvm-config=/path/to/llvm-config && make
+$ ./configure.py --with-llvm-config=/path/to/llvm-config && make
+$ make install
+
+Note you can use the DESTDIR Makefile variable to do staged installs.
+
+$ make install DESTDIR=/path/for/staged/install
+
+Compiling and installing with Ninja
+-----------------------------------
+
+$ ./configure.py -g ninja --with-llvm-config=/path/to/llvm-config && ninja
+$ ninja install
+
+Note you can use the DESTDIR environment variable to do staged installs.
+
+$ DESTDIR=/path/for/staged/install ninja install
 
 Website
 -------
