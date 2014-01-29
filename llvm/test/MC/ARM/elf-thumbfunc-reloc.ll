@@ -32,6 +32,10 @@ entry:
 ; CHECK-NEXT:   Section (2) .rel.text {
 ; CHECK-NEXT:     0x8 R_ARM_THM_CALL foo 0x0
 ; CHECK-NEXT:   }
+; CHECK-NEXT:   Section (7) .rel.ARM.exidx {
+; CHECK-NEXT:     0x0 R_ARM_PREL31 .text 0x0
+; CHECK-NEXT:     0x8 R_ARM_PREL31 .text 0x0
+; CHECK-NEXT:   }
 ; CHECK-NEXT: ]
 
 ; make sure foo is thumb function: bit 0 = 1

@@ -481,8 +481,11 @@ void RuntimeDyldELF::resolveARMRelocation(const SectionEntry &Section,
   default:
     llvm_unreachable("Not implemented relocation type!");
 
+  case ELF::R_ARM_NONE:
+    break;
   // Write a 32bit value to relocation address, taking into account the
   // implicit addend encoded in the target.
+  case ELF::R_ARM_PREL31:
   case ELF::R_ARM_TARGET1:
   case ELF::R_ARM_ABS32:
     *TargetPtr = *Placeholder + Value;

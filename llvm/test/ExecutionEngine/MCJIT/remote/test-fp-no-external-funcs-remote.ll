@@ -1,6 +1,6 @@
 ; RUN: %lli_mcjit -remote-mcjit -mcjit-remote-process=lli-child-target%exeext %s > /dev/null
 
-define double @test(double* %DP, double %Arg) {
+define double @test(double* %DP, double %Arg) nounwind {
 	%D = load double* %DP		; <double> [#uses=1]
 	%V = fadd double %D, 1.000000e+00		; <double> [#uses=2]
 	%W = fsub double %V, %V		; <double> [#uses=3]
@@ -12,7 +12,7 @@ define double @test(double* %DP, double %Arg) {
 	ret double %Y
 }
 
-define i32 @main() {
+define i32 @main() nounwind {
 	%X = alloca double		; <double*> [#uses=2]
 	store double 0.000000e+00, double* %X
 	call double @test( double* %X, double 2.000000e+00 )		; <double>:1 [#uses=0]

@@ -1106,7 +1106,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
   }
 }
 
-extern cl::opt<bool> EnableARMEHABI;
+extern cl::opt<bool> DisableARMEHABI;
 
 // Simple pseudo-instructions have their lowering (with expansion to real
 // instructions) auto-generated.
@@ -1122,7 +1122,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
 
   // Emit unwinding stuff for frame-related instructions
-  if (EnableARMEHABI && MI->getFlag(MachineInstr::FrameSetup))
+  if (Subtarget->isTargetEHABICompatible() && !DisableARMEHABI &&
+       MI->getFlag(MachineInstr::FrameSetup))
     EmitUnwindingInstruction(MI);
 
   // Do any auto-generated pseudo lowerings.
