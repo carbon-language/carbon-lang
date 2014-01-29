@@ -280,7 +280,8 @@ private:
         if (CurrentToken->isOneOf(tok::r_paren, tok::r_square))
           return false;
         updateParameterCount(Left, CurrentToken);
-        if (CurrentToken->is(tok::colon))
+        if (CurrentToken->is(tok::colon) &&
+            Style.Language != FormatStyle::LK_Proto)
           Left->Type = TT_DictLiteral;
         if (!consumeToken())
           return false;
