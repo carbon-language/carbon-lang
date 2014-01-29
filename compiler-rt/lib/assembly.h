@@ -74,6 +74,14 @@
      (__ARM_ARCH >= 6 || (__ARM_ARCH == 5 && !defined(__ARM_ARCH_5__)))
 # define __ARM_FEATURE_CLZ
 # endif
+
+# ifdef ARM_HAS_BX
+# define JMP(r)		bx	r
+# define JMPc(r,c)	bx##c	r
+# else
+# define JMP(r)		mov	pc, r
+# define JMPc(r,c)	mov##c	pc, r
+# endif
 #endif
 
 #define GLUE2(a, b) a ## b

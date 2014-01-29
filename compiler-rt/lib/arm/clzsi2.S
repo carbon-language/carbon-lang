@@ -13,12 +13,6 @@
  */
 #include "../assembly.h"
 
-#ifdef ARM_HAS_BX
-#define	JMP(r)	bx	r
-#else
-#define	JMP(r)	mov	pc, r
-#endif
-
 	.syntax unified
 
 	.text
