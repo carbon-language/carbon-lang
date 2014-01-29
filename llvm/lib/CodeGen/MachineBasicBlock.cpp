@@ -1123,6 +1123,13 @@ uint32_t MachineBasicBlock::getSuccWeight(const_succ_iterator Succ) const {
   return *getWeightIterator(Succ);
 }
 
+/// Set successor weight of a given iterator.
+void MachineBasicBlock::setSuccWeight(succ_iterator I, uint32_t weight) {
+  if (Weights.empty())
+    return;
+  *getWeightIterator(I) = weight;
+}
+
 /// getWeightIterator - Return wight iterator corresonding to the I successor
 /// iterator
 MachineBasicBlock::weight_iterator MachineBasicBlock::

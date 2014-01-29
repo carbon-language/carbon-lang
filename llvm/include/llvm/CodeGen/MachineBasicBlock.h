@@ -363,6 +363,9 @@ public:
   ///
   void addSuccessor(MachineBasicBlock *succ, uint32_t weight = 0);
 
+  /// Set successor weight of a given iterator.
+  void setSuccWeight(succ_iterator I, uint32_t weight);
+
   /// removeSuccessor - Remove successor from the successors list of this
   /// MachineBasicBlock. The Predecessors list of succ is automatically updated.
   ///

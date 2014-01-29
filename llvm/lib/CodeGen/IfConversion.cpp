@@ -1102,6 +1102,28 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
   return true;
 }
 
+/// Scale down weights to fit into uint32_t. NewTrue is the new weight
+/// for successor TrueBB, and NewFalse is the new weight for successor
+/// FalseBB.
+static void ScaleWeights(uint64_t NewTrue, uint64_t NewFalse,
+                         MachineBasicBlock *MBB,
+                         const MachineBasicBlock *TrueBB,
+                         const MachineBasicBlock *FalseBB,
+                         const MachineBranchProbabilityInfo *MBPI) {
+  uint64_t NewMax = (NewTrue > NewFalse) ? NewTrue : NewFalse;
+  uint32_t Scale = (NewMax / UINT32_MAX) + 1;
+  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+                                        SE = MBB->succ_end();
+       SI != SE; ++SI) {
+    if (*SI == TrueBB)
+      MBB->setSuccWeight(SI, (uint32_t)(NewTrue / Scale));
+    else if (*SI == FalseBB)
+      MBB->setSuccWeight(SI, (uint32_t)(NewFalse / Scale));
+    else
+      MBB->setSuccWeight(SI, MBPI->getEdgeWeight(MBB, SI) / Scale);
+  }
+}
+
 /// IfConvertTriangle - If convert a triangle sub-CFG.
 ///
 bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
@@ -1158,6 +1180,14 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
   DontKill.clear();
 
   bool HasEarlyExit = CvtBBI->FalseBB != NULL;
+  uint64_t CvtNext = 0, CvtFalse = 0, SumWeight = 0;
+  uint32_t WeightScale = 0;
+  if (HasEarlyExit) {
+    // Get weights before modifying CvtBBI->BB.
+    CvtNext = MBPI->getEdgeWeight(CvtBBI->BB, NextBBI->BB);
+    CvtFalse = MBPI->getEdgeWeight(CvtBBI->BB, CvtBBI->FalseBB);
+    SumWeight = MBPI->getSumForBlock(CvtBBI->BB, WeightScale);
+  }
   if (CvtBBI->BB->pred_size() > 1) {
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
     // Copy instructions in the true block, predicate them, and add them to
@@ -1185,6 +1215,23 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
       llvm_unreachable("Unable to reverse branch condition!");
     TII->InsertBranch(*BBI.BB, CvtBBI->FalseBB, NULL, RevCond, dl);
     BBI.BB->addSuccessor(CvtBBI->FalseBB);
+    // Update the edge weight for both CvtBBI->FalseBB and NextBBI.
+    // New_Weight(BBI.BB, NextBBI->BB) =
+    //   Weight(BBI.BB, NextBBI->BB) * getSumForBlock(CvtBBI->BB) +
+    //   Weight(BBI.BB, CvtBBI->BB) * Weight(CvtBBI->BB, NextBBI->BB)
+    // New_Weight(BBI.BB, CvtBBI->FalseBB) =
+    //   Weight(BBI.BB, CvtBBI->BB) * Weight(CvtBBI->BB, CvtBBI->FalseBB)
+
+    uint64_t BBNext = MBPI->getEdgeWeight(BBI.BB, NextBBI->BB);
+    uint64_t BBCvt = MBPI->getEdgeWeight(BBI.BB, CvtBBI->BB);
+
+    uint64_t NewNext = BBNext * SumWeight + (BBCvt * CvtNext) / WeightScale;
+    uint64_t NewFalse = (BBCvt * CvtFalse) / WeightScale;
+    // We need to scale down all weights of BBI.BB to fit uint32_t.
+    // Here BBI.BB is connected to CvtBBI->FalseBB and will fall through to
+    // the next block.
+    ScaleWeights(NewNext, NewFalse, BBI.BB, getNextBlock(BBI.BB),
+                 CvtBBI->FalseBB, MBPI);
   }
 
   // Merge in the 'false' block if the 'false' block has no other
