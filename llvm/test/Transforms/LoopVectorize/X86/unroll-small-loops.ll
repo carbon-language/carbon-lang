@@ -48,3 +48,26 @@ define i32 @bar(i32* nocapture %A, i32 %n) nounwind uwtable ssp {
 ._crit_edge:                                      ; preds = %.lr.ph, %0
   ret i32 undef
 }
+
+; Also unroll if we need a runtime check.
+; CHECK-LABEL: runtime_chk
+; CHECK: store <4 x float>
+; CHECK: store <4 x float>
+define void @runtime_chk(float* %A, float* %B, float %N) {
+entry:
+  br label %for.body
+
+for.body:
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %arrayidx = getelementptr inbounds float* %B, i64 %indvars.iv
+  %0 = load float* %arrayidx, align 4
+  %mul = fmul float %0, %N
+  %arrayidx2 = getelementptr inbounds float* %A, i64 %indvars.iv
+  store float %mul, float* %arrayidx2, align 4
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %exitcond = icmp eq i64 %indvars.iv.next, 256
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:
+  ret void
+}
