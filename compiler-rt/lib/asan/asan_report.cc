@@ -153,7 +153,7 @@ static void PrintShadowMemoryForAddress(uptr addr) {
   uptr shadow_addr = MemToShadow(addr);
   const uptr n_bytes_per_row = 16;
   uptr aligned_shadow = shadow_addr & ~(n_bytes_per_row - 1);
-  InternalScopedString str(4096);
+  InternalScopedString str(4096 * 8);
   str.append("Shadow bytes around the buggy address:\n");
   for (int i = -5; i <= 5; i++) {
     const char *prefix = (i == 0) ? "=>" : "  ";

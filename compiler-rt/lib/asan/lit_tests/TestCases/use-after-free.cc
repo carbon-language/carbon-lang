@@ -28,4 +28,7 @@ int main() {
 
   // CHECK-Darwin: {{    #0 0x.* in wrap_malloc.*}}
   // CHECK-Darwin: {{    #1 0x.* in main .*use-after-free.cc:8}}
+  // CHECK: Shadow byte legend (one shadow byte represents 8 application bytes):
+  // CHECK: Global redzone:
+  // CHECK: ASan internal:
 }
