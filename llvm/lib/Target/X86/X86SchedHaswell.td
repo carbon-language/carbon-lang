@@ -29,7 +29,7 @@ let SchedModel = HaswellModel in {
 
 // Haswell can issue micro-ops to 8 different ports in one cycle.
 
-// Ports 0, 1, 5, 6 and 7 handle all computation.
+// Ports 0, 1, 5, and 6 handle all computation.
 // Port 4 gets the data half of stores. Store data can be available later than
 // the store address, but since we don't model the latency of stores, we can
 // ignore that.
@@ -48,7 +48,7 @@ def HWPort7 : ProcResource<1>;
 def HWPort23  : ProcResGroup<[HWPort2, HWPort3]>;
 def HWPort237 : ProcResGroup<[HWPort2, HWPort3, HWPort7]>;
 def HWPort05  : ProcResGroup<[HWPort0, HWPort5]>;
-def HWPort056 : ProcResGroup<[HWPort0, HWPort5, HWPort6]>;
+def HWPort06 : ProcResGroup<[HWPort0, HWPort6]>;
 def HWPort15  : ProcResGroup<[HWPort1, HWPort5]>;
 def HWPort015 : ProcResGroup<[HWPort0, HWPort1, HWPort5]>;
 def HWPort0156: ProcResGroup<[HWPort0, HWPort1, HWPort5, HWPort6]>;
@@ -88,6 +88,8 @@ multiclass HWWriteResPair<X86FoldableSchedWrite SchedRW,
 // need an extra port 2/3 cycle to recompute the address.
 def : WriteRes<WriteRMW, [HWPort4]>;
 
+// Store_addr on 237.
+// Store_data on 4.
 def : WriteRes<WriteStore, [HWPort237, HWPort4]>;
 def : WriteRes<WriteLoad,  [HWPort23]> { let Latency = 4; }
 def : WriteRes<WriteMove,  [HWPort0156]>;
@@ -96,8 +98,8 @@ def : WriteRes<WriteZero,  []>;
 defm : HWWriteResPair<WriteALU,   HWPort0156, 1>;
 defm : HWWriteResPair<WriteIMul,  HWPort1,   3>;
 def  : WriteRes<WriteIMulH, []> { let Latency = 3; }
-defm : HWWriteResPair<WriteShift, HWPort056,  1>;
-defm : HWWriteResPair<WriteJump,  HWPort5,   1>;
+defm : HWWriteResPair<WriteShift, HWPort06,  1>;
+defm : HWWriteResPair<WriteJump,  HWPort06,   1>;
 
 // This is for simple LEAs with one or two input operands.
 // The complex ones can only execute on port 1, and they require two cycles on
@@ -125,11 +127,11 @@ defm : HWWriteResPair<WriteCvtI2F, HWPort1, 4>;
 defm : HWWriteResPair<WriteCvtF2F, HWPort1, 3>;
 
 // Vector integer operations.
-defm : HWWriteResPair<WriteVecShift, HWPort05,  1>;
+defm : HWWriteResPair<WriteVecShift, HWPort0,  1>;
 defm : HWWriteResPair<WriteVecLogic, HWPort015, 1>;
 defm : HWWriteResPair<WriteVecALU,   HWPort15,  1>;
 defm : HWWriteResPair<WriteVecIMul,  HWPort0,   5>;
-defm : HWWriteResPair<WriteShuffle,  HWPort15,  1>;
+defm : HWWriteResPair<WriteShuffle,  HWPort5,  1>;
 
 def : WriteRes<WriteSystem,     [HWPort0156]> { let Latency = 100; }
 def : WriteRes<WriteMicrocoded, [HWPort0156]> { let Latency = 100; }
