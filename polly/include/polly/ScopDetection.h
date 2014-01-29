@@ -115,7 +115,9 @@ class ScopDetection : public FunctionPass {
   // region, NULL otherwise.
   Region *expandRegion(Region &R);
 
-  // Find the Scops in this region tree.
+  /// Find the Scops in this region tree.
+  ///
+  /// @param The region tree to scan for scops.
   void findScops(Region &R);
 
   /// @brief Check if all basic block in the region are valid.
