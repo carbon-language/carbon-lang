@@ -1243,6 +1243,119 @@ void WriteSemanticSpellingSwitch(const std::string &VarName,
   OS << "  }\n";
 }
 
+// Emits the LateParsed property for attributes.
+static void emitClangAttrLateParsedList(RecordKeeper &Records, raw_ostream &OS) {
+  OS << "#if defined(CLANG_ATTR_LATE_PARSED_LIST)\n";
+  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
+
+  for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end();
+       I != E; ++I) {
+    Record &Attr = **I;
+
+    bool LateParsed = Attr.getValueAsBit("LateParsed");
+
+    if (LateParsed) {
+      std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
+
+      // FIXME: Handle non-GNU attributes
+      for (std::vector<FlattenedSpelling>::const_iterator
+           I = Spellings.begin(), E = Spellings.end(); I != E; ++I) {
+        if (I->variety() != "GNU")
+          continue;
+        OS << ".Case(\"" << I->name() << "\", " << LateParsed << ")\n";
+      }
+    }
+  }
+  OS << "#endif // CLANG_ATTR_LATE_PARSED_LIST\n\n";
+}
+
+/// \brief Emits the first-argument-is-type property for attributes.
+static void emitClangAttrTypeArgList(RecordKeeper &Records, raw_ostream &OS) {
+  OS << "#if defined(CLANG_ATTR_TYPE_ARG_LIST)\n";
+  std::vector<Record *> Attrs = Records.getAllDerivedDefinitions("Attr");
+
+  for (std::vector<Record *>::iterator I = Attrs.begin(), E = Attrs.end();
+       I != E; ++I) {
+    Record &Attr = **I;
+
+    // Determine whether the first argument is a type.
+    std::vector<Record *> Args = Attr.getValueAsListOfDefs("Args");
+    if (Args.empty())
+      continue;
+
+    if (Args[0]->getSuperClasses().back()->getName() != "TypeArgument")
+      continue;
+
+    // All these spellings take a single type argument.
+    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
+    std::set<std::string> Emitted;
+    for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
+         E = Spellings.end(); I != E; ++I) {
+      if (Emitted.insert(I->name()).second)
+        OS << ".Case(\"" << I->name() << "\", " << "true" << ")\n";
+    }
+  }
+  OS << "#endif // CLANG_ATTR_TYPE_ARG_LIST\n\n";
+}
+
+/// \brief Emits the parse-arguments-in-unevaluated-context property for
+/// attributes.
+static void emitClangAttrArgContextList(RecordKeeper &Records, raw_ostream &OS) {
+  OS << "#if defined(CLANG_ATTR_ARG_CONTEXT_LIST)\n";
+  ParsedAttrMap Attrs = getParsedAttrList(Records);
+  for (ParsedAttrMap::const_iterator I = Attrs.begin(), E = Attrs.end();
+       I != E; ++I) {
+    const Record &Attr = *I->second;
+
+    if (!Attr.getValueAsBit("ParseArgumentsAsUnevaluated"))
+      continue;
+
+    // All these spellings take are parsed unevaluated.
+    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
+    std::set<std::string> Emitted;
+    for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
+         E = Spellings.end(); I != E; ++I) {
+      if (Emitted.insert(I->name()).second)
+        OS << ".Case(\"" << I->name() << "\", " << "true" << ")\n";
+    }
+  }
+  OS << "#endif // CLANG_ATTR_ARG_CONTEXT_LIST\n\n";
+}
+
+static bool isIdentifierArgument(Record *Arg) {
+  return !Arg->getSuperClasses().empty() &&
+    llvm::StringSwitch<bool>(Arg->getSuperClasses().back()->getName())
+    .Case("IdentifierArgument", true)
+    .Case("EnumArgument", true)
+    .Default(false);
+}
+
+// Emits the first-argument-is-identifier property for attributes.
+static void emitClangAttrIdentifierArgList(RecordKeeper &Records, raw_ostream &OS) {
+  OS << "#if defined(CLANG_ATTR_IDENTIFIER_ARG_LIST)\n";
+  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
+
+  for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end();
+       I != E; ++I) {
+    Record &Attr = **I;
+
+    // Determine whether the first argument is an identifier.
+    std::vector<Record *> Args = Attr.getValueAsListOfDefs("Args");
+    if (Args.empty() || !isIdentifierArgument(Args[0]))
+      continue;
+
+    // All these spellings take an identifier argument.
+    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
+    std::set<std::string> Emitted;
+    for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
+         E = Spellings.end(); I != E; ++I) {
+      if (Emitted.insert(I->name()).second)
+        OS << ".Case(\"" << I->name() << "\", " << "true" << ")\n";
+    }
+  }
+  OS << "#endif // CLANG_ATTR_IDENTIFIER_ARG_LIST\n\n";
+}
+
 namespace clang {
 
 // Emits the class definitions for attributes.
@@ -1439,97 +1552,6 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
   }
 
   OS << "#endif\n";
-}
-
-static bool isIdentifierArgument(Record *Arg) {
-  return !Arg->getSuperClasses().empty() &&
-         llvm::StringSwitch<bool>(Arg->getSuperClasses().back()->getName())
-             .Case("IdentifierArgument", true)
-             .Case("EnumArgument", true)
-             .Default(false);
-}
-
-/// \brief Emits the first-argument-is-type property for attributes.
-void EmitClangAttrTypeArgList(RecordKeeper &Records, raw_ostream &OS) {
-  emitSourceFileHeader("llvm::StringSwitch code to match attributes with a "
-                       "type argument", OS);
-
-  std::vector<Record *> Attrs = Records.getAllDerivedDefinitions("Attr");
-
-  for (std::vector<Record *>::iterator I = Attrs.begin(), E = Attrs.end();
-       I != E; ++I) {
-    Record &Attr = **I;
-
-    // Determine whether the first argument is a type.
-    std::vector<Record *> Args = Attr.getValueAsListOfDefs("Args");
-    if (Args.empty())
-      continue;
-
-    if (Args[0]->getSuperClasses().back()->getName() != "TypeArgument")
-      continue;
-
-    // All these spellings take a single type argument.
-    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
-    std::set<std::string> Emitted;
-    for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
-         E = Spellings.end(); I != E; ++I) {
-      if (Emitted.insert(I->name()).second)
-        OS << ".Case(\"" << I->name() << "\", " << "true" << ")\n";
-    }
-  }
-}
-
-/// \brief Emits the parse-arguments-in-unevaluated-context property for
-/// attributes.
-void EmitClangAttrArgContextList(RecordKeeper &Records, raw_ostream &OS) {
-  emitSourceFileHeader("StringSwitch code to match attributes which require "
-                       "an unevaluated context", OS);
-
-  ParsedAttrMap Attrs = getParsedAttrList(Records);
-  for (ParsedAttrMap::const_iterator I = Attrs.begin(), E = Attrs.end();
-       I != E; ++I) {
-    const Record &Attr = *I->second;
-
-    if (!Attr.getValueAsBit("ParseArgumentsAsUnevaluated"))
-      continue;
-
-    // All these spellings take are parsed unevaluated.
-    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
-    std::set<std::string> Emitted;
-    for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
-         E = Spellings.end(); I != E; ++I) {
-      if (Emitted.insert(I->name()).second)
-        OS << ".Case(\"" << I->name() << "\", " << "true" << ")\n";
-    }
-
-  }
-}
-
-// Emits the first-argument-is-identifier property for attributes.
-void EmitClangAttrIdentifierArgList(RecordKeeper &Records, raw_ostream &OS) {
-  emitSourceFileHeader("llvm::StringSwitch code to match attributes with "
-                       "an identifier argument", OS);
-
-  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
-
-  for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end();
-       I != E; ++I) {
-    Record &Attr = **I;
-
-    // Determine whether the first argument is an identifier.
-    std::vector<Record *> Args = Attr.getValueAsListOfDefs("Args");
-    if (Args.empty() || !isIdentifierArgument(Args[0]))
-      continue;
-
-    // All these spellings take an identifier argument.
-    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
-    std::set<std::string> Emitted;
-    for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
-         E = Spellings.end(); I != E; ++I) {
-      if (Emitted.insert(I->name()).second)
-        OS << ".Case(\"" << I->name() << "\", " << "true" << ")\n";
-    }
-  }
 }
 
 // Emits the class method definitions for attributes.
@@ -1891,34 +1913,6 @@ void EmitClangAttrASTVisitor(RecordKeeper &Records, raw_ostream &OS) {
   OS << "  }\n";  // end case
   OS << "}\n";  // end function
   OS << "#endif  // ATTR_VISITOR_DECLS_ONLY\n";
-}
-
-
-// Emits the LateParsed property for attributes.
-void EmitClangAttrLateParsedList(RecordKeeper &Records, raw_ostream &OS) {
-  emitSourceFileHeader("llvm::StringSwitch code to match late parsed "
-                       "attributes", OS);
-
-  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
-
-  for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end();
-       I != E; ++I) {
-    Record &Attr = **I;
-
-    bool LateParsed = Attr.getValueAsBit("LateParsed");
-
-    if (LateParsed) {
-      std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
-
-      // FIXME: Handle non-GNU attributes
-      for (std::vector<FlattenedSpelling>::const_iterator
-           I = Spellings.begin(), E = Spellings.end(); I != E; ++I) {
-        if (I->variety() != "GNU")
-          continue;
-        OS << ".Case(\"" << I->name() << "\", " << LateParsed << ")\n";
-      }
-    }
-  }
 }
 
 // Emits code to instantiate dependent attributes on templates.
@@ -2617,6 +2611,15 @@ void EmitClangAttrDump(RecordKeeper &Records, raw_ostream &OS) {
       "  }\n";
   }
   OS << "  }\n";
+}
+
+void EmitClangAttrParserStringSwitches(RecordKeeper &Records,
+                                       raw_ostream &OS) {
+  emitSourceFileHeader("Parser-related llvm::StringSwitch cases", OS);
+  emitClangAttrArgContextList(Records, OS);
+  emitClangAttrIdentifierArgList(Records, OS);
+  emitClangAttrTypeArgList(Records, OS);
+  emitClangAttrLateParsedList(Records, OS);
 }
 
 } // end namespace clang

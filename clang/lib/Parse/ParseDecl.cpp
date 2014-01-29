@@ -69,9 +69,11 @@ TypeResult Parser::ParseTypeName(SourceRange *Range,
 /// isAttributeLateParsed - Return true if the attribute has arguments that
 /// require late parsing.
 static bool isAttributeLateParsed(const IdentifierInfo &II) {
+#define CLANG_ATTR_LATE_PARSED_LIST
     return llvm::StringSwitch<bool>(II.getName())
-#include "clang/Parse/AttrLateParsed.inc"
+#include "clang/Parse/AttrParserStringSwitches.inc"
         .Default(false);
+#undef CLANG_ATTR_LATE_PARSED_LIST
 }
 
 /// ParseGNUAttributes - Parse a non-empty attributes list.
@@ -196,24 +198,30 @@ static StringRef normalizeAttrName(StringRef Name) {
 
 /// \brief Determine whether the given attribute has an identifier argument.
 static bool attributeHasIdentifierArg(const IdentifierInfo &II) {
+#define CLANG_ATTR_IDENTIFIER_ARG_LIST
   return llvm::StringSwitch<bool>(normalizeAttrName(II.getName()))
-#include "clang/Parse/AttrIdentifierArg.inc"
+#include "clang/Parse/AttrParserStringSwitches.inc"
            .Default(false);
+#undef CLANG_ATTR_IDENTIFIER_ARG_LIST
 }
 
 /// \brief Determine whether the given attribute parses a type argument.
 static bool attributeIsTypeArgAttr(const IdentifierInfo &II) {
+#define CLANG_ATTR_TYPE_ARG_LIST
   return llvm::StringSwitch<bool>(normalizeAttrName(II.getName()))
-#include "clang/Parse/AttrTypeArg.inc"
+#include "clang/Parse/AttrParserStringSwitches.inc"
            .Default(false);
+#undef CLANG_ATTR_TYPE_ARG_LIST
 }
 
 /// \brief Determine whether the given attribute requires parsing its arguments
 /// in an unevaluated context or not.
 static bool attributeParsedArgsUnevaluated(const IdentifierInfo &II) {
+#define CLANG_ATTR_ARG_CONTEXT_LIST
   return llvm::StringSwitch<bool>(normalizeAttrName(II.getName()))
-#include "clang/Parse/AttrArgContext.inc"
+#include "clang/Parse/AttrParserStringSwitches.inc"
            .Default(false);
+#undef CLANG_ATTR_ARG_CONTEXT_LIST
 }
 
 IdentifierLoc *Parser::ParseIdentifierLoc() {
