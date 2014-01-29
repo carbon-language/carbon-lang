@@ -180,7 +180,7 @@ def tlscall       : SDNode<"SPISD::TLS_CALL", SDT_SPCall,
                             [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                              SDNPVariadic]>;
 
-def getPCX        : Operand<i32> {
+def getPCX        : Operand<iPTR> {
   let PrintMethod = "printGetPCX";
 }
 
