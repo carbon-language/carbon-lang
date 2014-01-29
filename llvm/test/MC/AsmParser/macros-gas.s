@@ -1,12 +1,12 @@
-// RUN: not llvm-mc -triple i386-unknown-unknown %s 2> %t.err | FileCheck %s
+// RUN: not llvm-mc -triple i386-linux-gnu %s 2> %t.err | FileCheck %s
 // RUN: FileCheck --check-prefix=CHECK-ERRORS %s < %t.err
 
 .macro .test0
 .macrobody0
-.endmacro
+.endm
 .macro .test1
 .test0
-.endmacro
+.endm
 
 .test1
 // CHECK-ERRORS: <instantiation>:1:1: error: unknown directive
@@ -19,67 +19,67 @@
 // CHECK-ERRORS-NEXT: .test1
 // CHECK-ERRORS-NEXT: ^
 
-.macro test2
-.byte $0
-.endmacro
+.macro test2 _a
+.byte \_a
+.endm
+// CHECK: .byte 10
 test2 10
 
-.macro test3
-.globl "$0 $1 $2 $$3 $n"
-.endmacro
+.macro test3 _a _b _c
+.ascii "\_a \_b \_c \\_c"
+.endm
 
-// CHECK: .globl	"1 (23)  $3 2"
-test3 1, (2 3)
+// CHECK: .ascii "1 2 3 \003"
+test3 1, 2, 3
 
-// CHECK: .globl "1 2  $3 2"
-test3 1 2
+// FIXME: test3 1, 2 3 should be treated like test 1, 2, 3
 
-.macro test4
-.globl "$0 -- $1"
-.endmacro
+// FIXME: remove the n argument from the remaining test3 examples
+// CHECK: .ascii "1 (23) n \n"
+test3 1, (2 3), n
 
-// CHECK: .globl  "(ab)(,)) -- (cd)"
-test4 (a b)(,)),(cd)
+// CHECK: .ascii "1 (23) n \n"
+test3 1 (2 3) n
 
-// CHECK: .globl  "(ab)(,)) -- (cd)"
-test4 (a b)(,)),(cd)
+// CHECK: .ascii "1 2 n \n"
+test3 1 2 n
 
 .macro test5 _a
-.globl "\_a"
+.globl \_a
 .endm
 
 // CHECK: .globl zed1
 test5 zed1
 
 .macro test6 $a
-.globl "\$a"
+.globl \$a
 .endm
 
 // CHECK: .globl zed2
 test6 zed2
 
 .macro test7 .a
-.globl "\.a"
+.globl \.a
 .endm
 
 // CHECK: .globl zed3
 test7 zed3
 
 .macro test8 _a, _b, _c
-.globl "\_a,\_b,\_c"
-.endmacro
+.ascii "\_a,\_b,\_c"
+.endm
 
 .macro test9 _a _b _c
-.globl "\_a \_b \_c"
-.endmacro
+.ascii "\_a \_b \_c"
+.endm
 
-// CHECK: .globl  "a,b,c"
+// CHECK: .ascii "a,b,c"
 test8 a, b, c
-// CHECK: .globl  "%1,%2,%3"
+// CHECK: .ascii "%1,%2,%3"
 test8 %1 %2 %3 #a comment
-// CHECK: .globl "x-y,z,1"
+// CHECK: .ascii "x-y,z,1"
 test8 x - y z 1
-// CHECK: .globl  "1 2 3"
+// CHECK: .ascii "1 2 3"
 test9 1, 2,3
 
 test8 1,2 3
