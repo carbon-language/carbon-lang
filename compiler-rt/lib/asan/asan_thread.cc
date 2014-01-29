@@ -20,6 +20,7 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
+#include "sanitizer_common/sanitizer_tls_get_addr.h"
 #include "lsan/lsan_common.h"
 
 namespace __asan {
@@ -107,6 +108,7 @@ void AsanThread::Destroy() {
   DeleteFakeStack(tid);
   uptr size = RoundUpTo(sizeof(AsanThread), GetPageSizeCached());
   UnmapOrDie(this, size);
+  DTLS_Destroy();
 }
 
 // We want to create the FakeStack lazyly on the first use, but not eralier

@@ -22,6 +22,7 @@ set(SANITIZER_SOURCES
   sanitizer_symbolizer.cc
   sanitizer_symbolizer_libbacktrace.cc
   sanitizer_symbolizer_win.cc
+  sanitizer_tls_get_addr.cc
   sanitizer_thread_registry.cc
   sanitizer_win.cc)
 

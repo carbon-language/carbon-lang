@@ -29,6 +29,7 @@
 //===----------------------------------------------------------------------===//
 #include "interception/interception.h"
 #include "sanitizer_platform_interceptors.h"
+#include "sanitizer_tls_get_addr.h"
 
 #include <stdarg.h>
 
@@ -3063,8 +3064,21 @@ INTERCEPTOR(__sanitizer_clock_t, times, void *tms) {
   return res;
 }
 #define INIT_TIMES COMMON_INTERCEPT_FUNCTION(times);
+INTERCEPTOR(void *, __tls_get_addr, void *arg) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __tls_get_addr, arg);
+  void *res = REAL(__tls_get_addr)(arg);
+  DTLS_on_tls_get_addr(arg, res);
+  return res;
+}
 #else
 #define INIT_TIMES
+#endif
+
+#if SANITIZER_INTERCEPT_TLS_GET_ADDR
+#define INIT_TLS_GET_ADDR COMMON_INTERCEPT_FUNCTION(__tls_get_addr)
+#else
+#define INIT_TLS_GET_ADDR
 #endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
@@ -3182,4 +3196,5 @@ INTERCEPTOR(__sanitizer_clock_t, times, void *tms) {
   INIT_GETLINE;                            \
   INIT_ICONV;                              \
   INIT_TIMES;                              \
+  INIT_TLS_GET_ADDR;                       \
 /**/
