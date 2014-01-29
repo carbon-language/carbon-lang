@@ -1107,10 +1107,8 @@ void DwarfDebug::endSections() {
     if (Section) {
       // We can't call MCSection::getLabelEndName, as it's only safe to do so
       // if we know the section name up-front. For user-created sections, the
-      // resulting
-      // label may not be valid to use as a label. (section names can use a
-      // greater
-      // set of characters on some systems)
+      // resulting label may not be valid to use as a label. (section names can
+      // use a greater set of characters on some systems)
       Sym = Asm->GetTempSymbol("debug_end", ID);
       Asm->OutStreamer.SwitchSection(Section);
       Asm->OutStreamer.EmitLabel(Sym);
