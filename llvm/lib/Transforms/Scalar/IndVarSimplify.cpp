@@ -497,6 +497,21 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
 
     unsigned NumPreds = PN->getNumIncomingValues();
 
+    // We would like to be able to RAUW single-incoming value PHI nodes. We
+    // have to be certain this is safe even when this is an LCSSA PHI node.
+    // While the computed exit value is no longer varying in *this* loop, the
+    // exit block may be an exit block for an outer containing loop as well,
+    // the exit value may be varying in the outer loop, and thus it may still
+    // require an LCSSA PHI node. The safe case is when this is
+    // single-predecessor PHI node (LCSSA) and the exit block containing it is
+    // part of the enclosing loop, or this is the outer most loop of the nest.
+    // In either case the exit value could (at most) be varying in the same
+    // loop body as the phi node itself. Thus if it is in turn used outside of
+    // an enclosing loop it will only be via a separate LCSSA node.
+    bool LCSSASafePhiForRAUW =
+        NumPreds == 1 &&
+        (!L->getParentLoop() || L->getParentLoop() == LI->getLoopFor(ExitBB));
+
     // Iterate over all of the PHI nodes.
     BasicBlock::iterator BBI = ExitBB->begin();
     while ((PN = dyn_cast<PHINode>(BBI++))) {
@@ -597,17 +612,18 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
         if (isInstructionTriviallyDead(Inst, TLI))
           DeadInsts.push_back(Inst);
 
-        if (NumPreds == 1) {
-          // Completely replace a single-pred PHI. This is safe, because the
-          // NewVal won't be variant in the loop, so we don't need an LCSSA phi
-          // node anymore.
+        // If we determined that this PHI is safe to replace even if an LCSSA
+        // PHI, do so.
+        if (LCSSASafePhiForRAUW) {
           PN->replaceAllUsesWith(ExitVal);
           PN->eraseFromParent();
         }
       }
-      if (NumPreds != 1) {
-        // Clone the PHI and delete the original one. This lets IVUsers and
-        // any other maps purge the original user from their records.
+
+      // If we were unable to completely replace the PHI node, clone the PHI
+      // and delete the original one. This lets IVUsers and any other maps
+      // purge the original user from their records.
+      if (!LCSSASafePhiForRAUW) {
         PHINode *NewPN = cast<PHINode>(PN->clone());
         NewPN->takeName(PN);
         NewPN->insertBefore(PN);
