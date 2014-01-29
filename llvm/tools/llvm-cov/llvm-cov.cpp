@@ -26,20 +26,26 @@ static cl::opt<std::string> SourceFile(cl::Positional, cl::Required,
 
 static cl::opt<bool> AllBlocks("a", cl::init(false),
                                cl::desc("Display all basic blocks"));
+static cl::alias AllBlocksA("all-blocks", cl::aliasopt(AllBlocks));
 
 static cl::opt<bool> BranchProb("b", cl::init(false),
                                 cl::desc("Display branch probabilities"));
+static cl::alias BranchProbA("branch-probabilities", cl::aliasopt(BranchProb));
 
 static cl::opt<bool> BranchCount("c", cl::init(false),
                                  cl::desc("Display branch counts instead "
                                            "of percentages (requires -b)"));
+static cl::alias BranchCountA("branch-counts", cl::aliasopt(BranchCount));
 
 static cl::opt<bool> FuncSummary("f", cl::init(false),
                                  cl::desc("Show coverage for each function"));
+static cl::alias FuncSummaryA("function-summaries", cl::aliasopt(FuncSummary));
 
 static cl::opt<bool> UncondBranch("u", cl::init(false),
                                   cl::desc("Display unconditional branch info "
                                            "(requires -b)"));
+static cl::alias UncondBranchA("unconditional-branches",
+                               cl::aliasopt(UncondBranch));
 
 static cl::OptionCategory DebugCat("Internal and debugging options");
 static cl::opt<bool> DumpGCOV("dump", cl::init(false), cl::cat(DebugCat),
