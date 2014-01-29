@@ -37,6 +37,9 @@ Non-comprehensive list of changes in this release
 * All backends have been changed to use the MC asm printer and support for the
   non MC one has been removed.
 
+* The ARM back-end now has the EHABI exception handling enabled by default. Use
+  `-arm-disable-ehabi` to turn it off (both landing pads and unwind tables).
+
 .. NOTE
    For small 1-3 sentence descriptions, just add an entry at the end of
    this list. If your description won't fit comfortably in one bullet
