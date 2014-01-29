@@ -288,6 +288,7 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
     case DefinedAtom::typeConstant:
     case DefinedAtom::typeData:
     case DefinedAtom::typeDataFast:
+    case DefinedAtom::typeZeroFillFast:
     case DefinedAtom::typeGOT:
     case DefinedAtom::typeStub:
     case DefinedAtom::typeResolver:
@@ -312,7 +313,6 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
       break;
     case DefinedAtom::typeThreadZeroFill:
     case DefinedAtom::typeZeroFill:
-    case DefinedAtom::typeZeroFillFast:
       _atoms.push_back(new (_alloc) lld::AtomLayout(atom, mOffset, 0));
       this->_msize = mOffset + definedAtom->size();
       break;
