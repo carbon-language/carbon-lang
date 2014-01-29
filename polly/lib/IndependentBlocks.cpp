@@ -419,7 +419,6 @@ bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
 
     while (!LoadOutside.empty()) {
       Instruction *U = LoadOutside.pop_back_val();
-      assert(!isa<PHINode>(U) && "Can not handle PHI node outside!");
       SE->forgetValue(U);
       U->replaceUsesOfWith(Inst, ExitLoad);
     }
