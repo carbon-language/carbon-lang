@@ -111,6 +111,13 @@ void Option::addArgument() {
   MarkOptionsChanged();
 }
 
+void Option::removeArgument() {
+  assert(NextRegistered != 0 && "argument never registered");
+  assert(RegisteredOptionList == this && "argument is not the last registered");
+  RegisteredOptionList = NextRegistered;
+  MarkOptionsChanged();
+}
+
 // This collects the different option categories that have been registered.
 typedef SmallPtrSet<OptionCategory*,16> OptionCatSet;
 static ManagedStatic<OptionCatSet> RegisteredOptionCategories;

@@ -42,6 +42,33 @@ class TempEnvVar {
   const char *const name;
 };
 
+template <typename T>
+class StackOption : public cl::opt<T> {
+  using Base = cl::opt<T>;
+public:
+  // One option...
+  template<class M0t>
+  explicit StackOption(const M0t &M0) : Base(M0) {}
+
+  // Two options...
+  template<class M0t, class M1t>
+  StackOption(const M0t &M0, const M1t &M1) : Base(M0, M1) {}
+
+  // Three options...
+  template<class M0t, class M1t, class M2t>
+  StackOption(const M0t &M0, const M1t &M1, const M2t &M2) : Base(M0, M1, M2) {}
+
+  // Four options...
+  template<class M0t, class M1t, class M2t, class M3t>
+  StackOption(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
+    : Base(M0, M1, M2, M3) {}
+
+  ~StackOption() {
+    this->removeArgument();
+  }
+};
+
+
 cl::OptionCategory TestCategory("Test Options", "Description");
 cl::opt<int> TestOption("test-option", cl::desc("old description"));
 TEST(CommandLineTest, ModifyExisitingOption) {
@@ -103,7 +130,7 @@ TEST(CommandLineTest, ParseEnvironment) {
 // command line system will still hold a pointer to a deallocated cl::Option.
 TEST(CommandLineTest, ParseEnvironmentToLocalVar) {
   // Put cl::opt on stack to check for proper initialization of fields.
-  cl::opt<std::string> EnvironmentTestOptionLocal("env-test-opt-local");
+  StackOption<std::string> EnvironmentTestOptionLocal("env-test-opt-local");
   TempEnvVar TEV(test_env_var, "-env-test-opt-local=hello-local");
   EXPECT_EQ("", EnvironmentTestOptionLocal);
   cl::ParseEnvironmentOptions("CommandLineTest", test_env_var);
@@ -113,7 +140,7 @@ TEST(CommandLineTest, ParseEnvironmentToLocalVar) {
 #endif  // SKIP_ENVIRONMENT_TESTS
 
 TEST(CommandLineTest, UseOptionCategory) {
-  cl::opt<int> TestOption2("test-option", cl::cat(TestCategory));
+  StackOption<int> TestOption2("test-option", cl::cat(TestCategory));
 
   ASSERT_EQ(&TestCategory,TestOption2.Category) << "Failed to assign Option "
                                                   "Category.";
@@ -159,6 +186,30 @@ TEST(CommandLineTest, TokenizeWindowsCommandLine) {
                                  "lmn", "o", "pqr", "st \"u", "\\v" };
   testCommandLineTokenizer(cl::TokenizeWindowsCommandLine, Input, Output,
                            array_lengthof(Output));
+}
+
+TEST(CommandLineTest, AliasesWithArguments) {
+  static const size_t ARGC = 3;
+  const char *const Inputs[][ARGC] = {
+    { "-tool", "-actual=x", "-extra" },
+    { "-tool", "-actual", "x" },
+    { "-tool", "-alias=x", "-extra" },
+    { "-tool", "-alias", "x" }
+  };
+
+  for (size_t i = 0, e = array_lengthof(Inputs); i < e; ++i) {
+    StackOption<std::string> Actual("actual");
+    StackOption<bool> Extra("extra");
+    StackOption<std::string> Input(cl::Positional);
+
+    cl::alias Alias("alias", llvm::cl::aliasopt(Actual));
+
+    cl::ParseCommandLineOptions(ARGC, Inputs[i]);
+    EXPECT_EQ("x", Actual);
+    EXPECT_EQ(0, Input.getNumOccurrences());
+
+    Alias.removeArgument();
+  }
 }
 
 }  // anonymous namespace

@@ -249,6 +249,12 @@ public:
   //
   void addArgument();
 
+  /// Unregisters this option from the CommandLine system.
+  ///
+  /// This option must have been the last option registered.
+  /// For testing purposes only.
+  void removeArgument();
+
   Option *getNextRegisteredOption() const { return NextRegistered; }
 
   // Return the width of the option tag for printing...
@@ -1645,6 +1651,10 @@ class alias : public Option {
   // Aliases do not need to print their values.
   virtual void printOptionValue(size_t /*GlobalWidth*/,
                                 bool /*Force*/) const LLVM_OVERRIDE {}
+
+  virtual ValueExpected getValueExpectedFlagDefault() const LLVM_OVERRIDE {
+    return AliasFor->getValueExpectedFlag();
+  }
 
   void done() {
     if (!hasArgStr())
