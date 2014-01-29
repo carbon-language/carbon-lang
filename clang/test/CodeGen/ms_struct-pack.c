@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only  -triple i386-apple-darwin9 %s
+// RUN: %clang_cc1 -emit-llvm-only  -triple i386-apple-darwin9 -fdump-record-layouts %s | FileCheck %s
 // rdar://8823265
 
 #pragma pack(1)
@@ -123,3 +123,22 @@ typedef struct _eight_ms eight_ms;
 
 static int a8[(sizeof(eight_ms) == 48) - 1];
 
+// rdar://15926990
+#pragma pack(2)
+struct test0 {
+  unsigned long a : 8;
+  unsigned long b : 8;
+  unsigned long c : 8;
+  unsigned long d : 10;
+  unsigned long e : 1;
+} __attribute__((__ms_struct__));
+
+// CHECK:      Type: struct test0
+// CHECK-NEXT: Record:
+// CHECK-NEXT: Layout:
+// CHECK-NEXT:   Size:64
+// CHECK-NEXT:   DataSize:64
+// CHECK-NEXT:   Alignment:16
+// CHECK-NEXT:   FieldOffsets: [0, 8, 16, 32, 42]>
+
+static int test0[(sizeof(struct test0) == 8) ? 1 : -1];
