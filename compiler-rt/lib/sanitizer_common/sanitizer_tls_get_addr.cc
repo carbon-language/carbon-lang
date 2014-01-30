@@ -74,8 +74,8 @@ void DTLS_on_tls_get_addr(void *arg_void, void *res) {
     return;
   uptr tls_size = 0;
   uptr tls_beg = reinterpret_cast<uptr>(res) - arg->offset;
-  VPrintf(2, "__tls_get_addr: %p {%p,%p} => %p; tls_beg: %p\n", arg,
-          arg->dso_id, arg->offset, res, tls_beg);
+  VPrintf(2, "__tls_get_addr: %p {%p,%p} => %p; tls_beg: %p; sp: %p\n", arg,
+          arg->dso_id, arg->offset, res, tls_beg, &tls_beg);
   if (dtls.last_memalign_ptr == tls_beg) {
     tls_size = dtls.last_memalign_size;
     VPrintf(2, "__tls_get_addr: glibc <=2.18 suspected; tls={%p,%p}\n", tls_beg,

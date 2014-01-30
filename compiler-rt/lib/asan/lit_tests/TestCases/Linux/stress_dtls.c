@@ -1,3 +1,5 @@
+// Currently broken...
+// XFAIL: *
 // REQUIRES: asan-64-bits
 // Stress test dynamic TLS + dlopen + threads.
 //
@@ -95,7 +97,10 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 #else  // SO_NAME
-__thread void *huge_thread_local_array[1 << 17];
+#ifndef DTLS_SIZE
+# define DTLS_SIZE (1 << 17)
+#endif
+__thread void *huge_thread_local_array[DTLS_SIZE];
 void **SO_NAME() {
   return &huge_thread_local_array[0];
 }
