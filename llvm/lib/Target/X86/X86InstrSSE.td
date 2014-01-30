@@ -3055,24 +3055,26 @@ let isCodeGenOnly = 1 in {
 // we now generate:
 //   addss %xmm1, %xmm0
 
-def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), (v4f32 (scalar_to_vector (fadd
-                    (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
-                    FR32:$src))))),
-          (ADDSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
-def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), (v4f32 (scalar_to_vector (fsub
-                    (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
-                    FR32:$src))))),
-          (SUBSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
-def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), (v4f32 (scalar_to_vector (fmul
-                    (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
-                    FR32:$src))))),
-          (MULSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
-def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), (v4f32 (scalar_to_vector (fdiv
-                    (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
-                    FR32:$src))))),
-          (DIVSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
+let Predicates = [UseSSE1] in {
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), (v4f32 (scalar_to_vector (fadd
+                      (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
+                      FR32:$src))))),
+            (ADDSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), (v4f32 (scalar_to_vector (fsub
+                      (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
+                      FR32:$src))))),
+            (SUBSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), (v4f32 (scalar_to_vector (fmul
+                      (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
+                      FR32:$src))))),
+            (MULSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), (v4f32 (scalar_to_vector (fdiv
+                      (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
+                      FR32:$src))))),
+            (DIVSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
+}
 
-let Predicates = [HasSSE2] in {
+let Predicates = [UseSSE2] in {
   // SSE2 patterns to select scalar double-precision fp arithmetic instructions
 
   def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst), (v2f64 (scalar_to_vector (fadd
@@ -3117,11 +3119,9 @@ let Predicates = [UseSSE41] in {
             (DIVSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
 }
 
-let AddedComplexity = 20, Predicates = [HasAVX] in {
+let Predicates = [HasAVX] in {
   // The following patterns select AVX Scalar single/double precision fp
   // arithmetic instructions.
-  // The 'AddedComplexity' is required to give them higher priority over
-  // the equivalent SSE/SSE2 patterns.
 
   def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst), (v2f64 (scalar_to_vector (fadd
                       (f64 (vector_extract (v2f64 VR128:$dst), (iPTR 0))),
@@ -3176,20 +3176,22 @@ let AddedComplexity = 20, Predicates = [HasAVX] in {
 // we now generate:
 //   addss %xmm1, %xmm0
 
-def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst),
-                 (fadd (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
-          (ADDSSrr_Int v4f32:$dst, v4f32:$src)>;
-def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), 
-                 (fsub (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
-          (SUBSSrr_Int v4f32:$dst, v4f32:$src)>;
-def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst),
-                 (fmul (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
-          (MULSSrr_Int v4f32:$dst, v4f32:$src)>;
-def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), 
-                 (fdiv (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
-          (DIVSSrr_Int v4f32:$dst, v4f32:$src)>;
+let Predicates = [UseSSE1] in {
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst),
+                   (fadd (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+            (ADDSSrr_Int v4f32:$dst, v4f32:$src)>;
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), 
+                   (fsub (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+            (SUBSSrr_Int v4f32:$dst, v4f32:$src)>;
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst),
+                   (fmul (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+            (MULSSrr_Int v4f32:$dst, v4f32:$src)>;
+  def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst), 
+                   (fdiv (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
+            (DIVSSrr_Int v4f32:$dst, v4f32:$src)>;
+}
 
-let Predicates = [HasSSE2] in {
+let Predicates = [UseSSE2] in {
   // SSE2 patterns to select scalar double-precision fp arithmetic instructions
   // from a packed double-precision fp instruction plus movsd.
 
@@ -3207,12 +3209,10 @@ let Predicates = [HasSSE2] in {
             (DIVSDrr_Int v2f64:$dst, v2f64:$src)>;
 }
 
-let AddedComplexity = 20, Predicates = [HasAVX] in {
+let Predicates = [HasAVX] in {
   // The following patterns select AVX Scalar single/double precision fp
   // arithmetic instructions from a packed single precision fp instruction
   // plus movss/movsd.
-  // The 'AddedComplexity' is required to give them higher priority over
-  // the equivalent SSE/SSE2 patterns.
 
   def : Pat<(v4f32 (X86Movss (v4f32 VR128:$dst),
                    (fadd (v4f32 VR128:$dst), (v4f32 VR128:$src)))),
