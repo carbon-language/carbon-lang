@@ -144,8 +144,16 @@ public:
   static bool parseExpression(StringRef Code, Sema *S,
                               VariantValue *Value, Diagnostics *Error);
 
+  /// \brief Complete an expression at the given offset.
+  ///
+  /// \return The list of completions, which may be empty if there are no
+  /// available completions or if an error occurred.
+  static std::vector<MatcherCompletion>
+  completeExpression(StringRef Code, unsigned CompletionOffset);
+
 private:
   class CodeTokenizer;
+  struct ScopedContextEntry;
   struct TokenInfo;
 
   Parser(CodeTokenizer *Tokenizer, Sema *S,
@@ -154,9 +162,17 @@ private:
   bool parseExpressionImpl(VariantValue *Value);
   bool parseMatcherExpressionImpl(VariantValue *Value);
 
+  void addCompletion(const TokenInfo &CompToken, StringRef TypedText,
+                     StringRef Decl);
+  void addExpressionCompletions();
+
   CodeTokenizer *const Tokenizer;
   Sema *const S;
   Diagnostics *const Error;
+
+  typedef std::vector<std::pair<MatcherCtor, unsigned> > ContextStackTy;
+  ContextStackTy ContextStack;
+  std::vector<MatcherCompletion> Completions;
 };
 
 }  // namespace dynamic

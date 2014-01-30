@@ -245,6 +245,20 @@ TEST(ParserTest, OverloadErrors) {
             ParseWithError("callee(\"A\")"));
 }
 
+TEST(ParserTest, Completion) {
+  std::vector<MatcherCompletion> Comps =
+      Parser::completeExpression("while", 5);
+  ASSERT_EQ(1u, Comps.size());
+  EXPECT_EQ("Stmt(", Comps[0].TypedText);
+  EXPECT_EQ("Matcher<Stmt> whileStmt(Matcher<WhileStmt>...)",
+            Comps[0].MatcherDecl);
+
+  Comps = Parser::completeExpression("whileStmt().", 12);
+  ASSERT_EQ(1u, Comps.size());
+  EXPECT_EQ("bind(\"", Comps[0].TypedText);
+  EXPECT_EQ("bind", Comps[0].MatcherDecl);
+}
+
 }  // end anonymous namespace
 }  // end namespace dynamic
 }  // end namespace ast_matchers
