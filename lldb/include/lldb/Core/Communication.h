@@ -286,6 +286,8 @@ public:
     virtual bool
     StopReadThread (Error *error_ptr = NULL);
 
+    virtual bool
+    JoinReadThread (Error *error_ptr = NULL);
     //------------------------------------------------------------------
     /// Checks if there is a currently running read thread.
     ///
