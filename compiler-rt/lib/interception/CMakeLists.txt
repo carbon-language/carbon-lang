@@ -9,7 +9,15 @@ set(INTERCEPTION_SOURCES
 
 include_directories(..)
 
-set(INTERCEPTION_CFLAGS ${SANITIZER_COMMON_CFLAGS})
+if (NOT MSVC)
+  set(INTERCEPTION_CFLAGS
+    ${SANITIZER_COMMON_CFLAGS})
+    -fno-rtti)
+else()
+  set(INTERCEPTION_CFLAGS
+    ${SANITIZER_COMMON_CFLAGS}
+    /GR- /FS)
+endif()
 
 if(APPLE)
   # Build universal binary on APPLE.
