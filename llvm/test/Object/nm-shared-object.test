@@ -1,7 +1,5 @@
 RUN: llvm-nm -D %p/Inputs/shared-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF-32
-RUN: llvm-nm -D %p/Inputs/shared-object-test.elf-x86-64 \
-RUN:         | FileCheck %s -check-prefix ELF-64
 
 ELF-32: 0012c8 A __bss_start
 ELF-32: 0012c8 A _edata
@@ -11,6 +9,9 @@ ELF-32: 0012c4 D defined_sym
 ELF-32: 0001f0 T global_func
 ELF-32: 000000 D tls_sym
 
+RUN: llvm-nm -D %p/Inputs/shared-object-test.elf-x86-64 \
+RUN:         | FileCheck %s -check-prefix ELF-64
+
 ELF-64: 200454 A __bss_start
 ELF-64: 200454 A _edata
 ELF-64: 200458 A _end
@@ -18,3 +19,11 @@ ELF-64: 200454 B common_sym
 ELF-64: 200450 D defined_sym
 ELF-64: 0002f0 T global_func
 ELF-64: 000000 D tls_sym
+
+RUN: not llvm-nm -D %p/Inputs/weak-global-symbol.macho-i386 2>&1 \
+RUN:         | FileCheck %s -check-prefix ERROR
+
+RUN: not llvm-nm -D %p/Inputs/trivial-object-test.coff-i386 2>&1 \
+RUN:         | FileCheck %s -check-prefix ERROR
+
+ERROR: File format has no dynamic symbol table.

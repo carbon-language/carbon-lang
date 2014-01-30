@@ -527,12 +527,38 @@ static char getNMTypeChar(ObjectFile *Obj, symbol_iterator I) {
   return Res;
 }
 
+static void getDynamicSymbolIterators(ObjectFile *Obj, symbol_iterator &Begin,
+                                      symbol_iterator &End) {
+  if (ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(Obj)) {
+    Begin = ELF->begin_dynamic_symbols();
+    End = ELF->end_dynamic_symbols();
+    return;
+  }
+  if (ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(Obj)) {
+    Begin = ELF->begin_dynamic_symbols();
+    End = ELF->end_dynamic_symbols();
+    return;
+  }
+  if (ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(Obj)) {
+    Begin = ELF->begin_dynamic_symbols();
+    End = ELF->end_dynamic_symbols();
+    return;
+  }
+  ELF64BEObjectFile *ELF = cast<ELF64BEObjectFile>(Obj);
+  Begin = ELF->begin_dynamic_symbols();
+  End = ELF->end_dynamic_symbols();
+  return;
+}
+
 static void dumpSymbolNamesFromObject(ObjectFile *Obj) {
   symbol_iterator IBegin = Obj->begin_symbols();
   symbol_iterator IEnd = Obj->end_symbols();
   if (DynamicSyms) {
-    IBegin = Obj->begin_dynamic_symbols();
-    IEnd = Obj->end_dynamic_symbols();
+    if (!Obj->isELF()) {
+      error("File format has no dynamic symbol table", Obj->getFileName());
+      return;
+    }
+    getDynamicSymbolIterators(Obj, IBegin, IEnd);
   }
   for (symbol_iterator I = IBegin; I != IEnd; ++I) {
     uint32_t SymFlags;

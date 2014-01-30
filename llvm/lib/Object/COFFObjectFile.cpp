@@ -550,16 +550,6 @@ symbol_iterator COFFObjectFile::end_symbols() const {
   return symbol_iterator(SymbolRef(Ret, this));
 }
 
-symbol_iterator COFFObjectFile::begin_dynamic_symbols() const {
-  // TODO: implement
-  report_fatal_error("Dynamic symbols unimplemented in COFFObjectFile");
-}
-
-symbol_iterator COFFObjectFile::end_dynamic_symbols() const {
-  // TODO: implement
-  report_fatal_error("Dynamic symbols unimplemented in COFFObjectFile");
-}
-
 library_iterator COFFObjectFile::begin_libraries_needed() const {
   // TODO: implement
   report_fatal_error("Libraries needed unimplemented in COFFObjectFile");

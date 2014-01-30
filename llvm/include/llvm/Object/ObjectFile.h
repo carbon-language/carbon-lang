@@ -347,9 +347,6 @@ public:
   virtual symbol_iterator begin_symbols() const = 0;
   virtual symbol_iterator end_symbols() const = 0;
 
-  virtual symbol_iterator begin_dynamic_symbols() const = 0;
-  virtual symbol_iterator end_dynamic_symbols() const = 0;
-
   virtual section_iterator begin_sections() const = 0;
   virtual section_iterator end_sections() const = 0;
 

@@ -130,9 +130,6 @@ public:
   symbol_iterator begin_symbols() const LLVM_OVERRIDE;
   symbol_iterator end_symbols() const LLVM_OVERRIDE;
 
-  symbol_iterator begin_dynamic_symbols() const LLVM_OVERRIDE;
-  symbol_iterator end_dynamic_symbols() const LLVM_OVERRIDE;
-
   section_iterator begin_sections() const LLVM_OVERRIDE;
   section_iterator end_sections() const LLVM_OVERRIDE;
 
