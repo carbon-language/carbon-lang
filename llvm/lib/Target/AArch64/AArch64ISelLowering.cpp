@@ -332,6 +332,12 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::CONCAT_VECTORS, MVT::v4f32, Legal);
     setOperationAction(ISD::CONCAT_VECTORS, MVT::v2f64, Legal);
 
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v8i8, Custom);
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i16, Custom);
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v16i8, Custom);
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v8i16, Custom);
+    setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i32, Custom);
+
     setOperationAction(ISD::SETCC, MVT::v8i8, Custom);
     setOperationAction(ISD::SETCC, MVT::v16i8, Custom);
     setOperationAction(ISD::SETCC, MVT::v4i16, Custom);
@@ -2259,6 +2265,52 @@ static SDValue LowerVectorFP_TO_INT(SDValue Op, SelectionDAG &DAG,
   return DAG.getNode(Opc, dl, VT, Vec);
 }
 
+static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
+  // We custom lower concat_vectors with 4, 8, or 16 operands that are all the
+  // same operand and of type v1* using the DUP instruction.
+  unsigned NumOps = Op->getNumOperands();
+  if (NumOps != 4 && NumOps != 8 && NumOps != 16)
+    return Op;
+
+  // Must be a single value for VDUP.
+  bool isConstant = true;
+  SDValue Op0 = Op.getOperand(0);
+  for (unsigned i = 1; i < NumOps; ++i) {
+    SDValue OpN = Op.getOperand(i);
+    if (Op0 != OpN)
+      return Op;
+
+    if (!isa<ConstantSDNode>(OpN->getOperand(0)))
+      isConstant = false;
+  }
+
+  // Verify the value type.
+  EVT EltVT = Op0.getValueType();
+  switch (NumOps) {
+  default: llvm_unreachable("Unexpected number of operands");
+  case 4:
+    if (EltVT != MVT::v1i16 && EltVT != MVT::v1i32)
+      return Op;
+    break;
+  case 8:
+    if (EltVT != MVT::v1i8 && EltVT != MVT::v1i16)
+      return Op;
+    break;
+  case 16:
+    if (EltVT != MVT::v1i8)
+      return Op;
+    break;
+  }
+
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+  // VDUP produces better code for constants.
+  if (isConstant)
+    return DAG.getNode(AArch64ISD::NEON_VDUP, DL, VT, Op0->getOperand(0));
+  return DAG.getNode(AArch64ISD::NEON_VDUPLANE, DL, VT, Op0,
+                     DAG.getConstant(0, MVT::i64));
+}
+
 SDValue
 AArch64TargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
                                       bool IsSigned) const {
@@ -3241,6 +3293,7 @@ AArch64TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::VASTART: return LowerVASTART(Op, DAG);
   case ISD::BUILD_VECTOR:
     return LowerBUILD_VECTOR(Op, DAG, getSubtarget());
+  case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
   case ISD::VECTOR_SHUFFLE: return LowerVECTOR_SHUFFLE(Op, DAG);
   }
 

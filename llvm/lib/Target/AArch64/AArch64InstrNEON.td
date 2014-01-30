@@ -7106,6 +7106,20 @@ def : Pat<(v2f64 (Neon_vdup (f64 FPR64:$Rn))),
             (SUBREG_TO_REG (i64 0), FPR64:$Rn, sub_64),
             (i64 0)))>;
 
+multiclass NeonI_DUP_pattern<Instruction DUPELT, ValueType ResTy,
+                             ValueType OpTy, RegisterClass OpRC,
+                             Operand OpNImm, SubRegIndex SubIndex> {
+def : Pat<(ResTy (Neon_vduplane (OpTy OpRC:$Rn), OpNImm:$Imm)),
+          (ResTy (DUPELT
+            (SUBREG_TO_REG (i64 0), OpRC:$Rn, SubIndex), OpNImm:$Imm))>;
+}
+
+defm : NeonI_DUP_pattern<DUPELT4h, v4i16, v1i16, FPR16, neon_uimm2_bare,sub_16>;
+defm : NeonI_DUP_pattern<DUPELT4s, v4i32, v1i32, FPR32, neon_uimm2_bare,sub_32>;
+defm : NeonI_DUP_pattern<DUPELT8b, v8i8, v1i8, FPR8, neon_uimm3_bare, sub_8>;
+defm : NeonI_DUP_pattern<DUPELT8h, v8i16, v1i16, FPR16, neon_uimm3_bare,sub_16>;
+defm : NeonI_DUP_pattern<DUPELT16b, v16i8, v1i8, FPR8, neon_uimm4_bare, sub_8>;
+
 class NeonI_DUP<bit Q, string asmop, string rdlane,
                 RegisterOperand ResVPR, ValueType ResTy,
                 RegisterClass OpGPR, ValueType OpTy>

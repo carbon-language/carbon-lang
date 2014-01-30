@@ -1301,3 +1301,89 @@ entry:
   %vsqadd2.i = call <1 x i16> @llvm.aarch64.neon.vsqadd.v1i16(<1 x i16> %b, <1 x i16> %a)
   ret <1 x i16> %vsqadd2.i
 }
+
+define <4 x i16> @concat_vector_v4i16_const() {
+; CHECK-LABEL: concat_vector_v4i16_const:
+; CHECK: dup {{v[0-9]+}}.4h, wzr
+ %r = shufflevector <1 x i16> zeroinitializer, <1 x i16> undef, <4 x i32> zeroinitializer
+ ret <4 x i16> %r
+}
+
+define <4 x i16> @concat_vector_v4i16_const_one() {
+; CHECK-LABEL: concat_vector_v4i16_const_one:
+; CHECK: movz {{w[0-9]+}}, #1
+; CHECK: dup {{v[0-9]+}}.4h, {{w[0-9]+}}
+ %r = shufflevector <1 x i16> <i16 1>, <1 x i16> undef, <4 x i32> zeroinitializer
+ ret <4 x i16> %r
+}
+
+define <4 x i32> @concat_vector_v4i32_const() {
+; CHECK-LABEL: concat_vector_v4i32_const:
+; CHECK: dup {{v[0-9]+}}.4s, wzr
+ %r = shufflevector <1 x i32> zeroinitializer, <1 x i32> undef, <4 x i32> zeroinitializer
+ ret <4 x i32> %r
+}
+
+define <8 x i8> @concat_vector_v8i8_const() {
+; CHECK-LABEL: concat_vector_v8i8_const:
+; CHECK: dup {{v[0-9]+}}.8b, wzr
+ %r = shufflevector <1 x i8> zeroinitializer, <1 x i8> undef, <8 x i32> zeroinitializer
+ ret <8 x i8> %r
+}
+
+define <8 x i16> @concat_vector_v8i16_const() {
+; CHECK-LABEL: concat_vector_v8i16_const:
+; CHECK: dup {{v[0-9]+}}.8h, wzr
+ %r = shufflevector <1 x i16> zeroinitializer, <1 x i16> undef, <8 x i32> zeroinitializer
+ ret <8 x i16> %r
+}
+
+define <8 x i16> @concat_vector_v8i16_const_one() {
+; CHECK-LABEL: concat_vector_v8i16_const_one:
+; CHECK: movz {{w[0-9]+}}, #1
+; CHECK: dup {{v[0-9]+}}.8h, {{w[0-9]+}}
+ %r = shufflevector <1 x i16> <i16 1>, <1 x i16> undef, <8 x i32> zeroinitializer
+ ret <8 x i16> %r
+}
+
+define <16 x i8> @concat_vector_v16i8_const() {
+; CHECK-LABEL: concat_vector_v16i8_const:
+; CHECK: dup {{v[0-9]+}}.16b, wzr
+ %r = shufflevector <1 x i8> zeroinitializer, <1 x i8> undef, <16 x i32> zeroinitializer
+ ret <16 x i8> %r
+}
+
+define <4 x i16> @concat_vector_v4i16(<1 x i16> %a) {
+; CHECK-LABEL: concat_vector_v4i16:
+; CHECK: dup {{v[0-9]+}}.4h, {{v[0-9]+}}.h[0]
+ %r = shufflevector <1 x i16> %a, <1 x i16> undef, <4 x i32> zeroinitializer
+ ret <4 x i16> %r
+}
+
+define <4 x i32> @concat_vector_v4i32(<1 x i32> %a) {
+; CHECK-LABEL: concat_vector_v4i32:
+; CHECK: dup {{v[0-9]+}}.4s, {{v[0-9]+}}.s[0]
+ %r = shufflevector <1 x i32> %a, <1 x i32> undef, <4 x i32> zeroinitializer
+ ret <4 x i32> %r
+}
+
+define <8 x i8> @concat_vector_v8i8(<1 x i8> %a) {
+; CHECK-LABEL: concat_vector_v8i8:
+; CHECK: dup {{v[0-9]+}}.8b, {{v[0-9]+}}.b[0]
+ %r = shufflevector <1 x i8> %a, <1 x i8> undef, <8 x i32> zeroinitializer
+ ret <8 x i8> %r
+}
+
+define <8 x i16> @concat_vector_v8i16(<1 x i16> %a) {
+; CHECK-LABEL: concat_vector_v8i16:
+; CHECK: dup {{v[0-9]+}}.8h, {{v[0-9]+}}.h[0]
+ %r = shufflevector <1 x i16> %a, <1 x i16> undef, <8 x i32> zeroinitializer
+ ret <8 x i16> %r
+}
+
+define <16 x i8> @concat_vector_v16i8(<1 x i8> %a) {
+; CHECK-LABEL: concat_vector_v16i8:
+; CHECK: dup {{v[0-9]+}}.16b, {{v[0-9]+}}.b[0]
+ %r = shufflevector <1 x i8> %a, <1 x i8> undef, <16 x i32> zeroinitializer
+ ret <16 x i8> %r
+}
