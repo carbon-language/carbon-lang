@@ -298,6 +298,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveUnwindRaw(SMLoc L);
   bool parseDirectiveTLSDescSeq(SMLoc L);
   bool parseDirectiveMovSP(SMLoc L);
+  bool parseDirectiveObjectArch(SMLoc L);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -8090,6 +8091,8 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveTLSDescSeq(DirectiveID.getLoc());
   else if (IDVal == ".movsp")
     return parseDirectiveMovSP(DirectiveID.getLoc());
+  else if (IDVal == ".object_arch")
+    return parseDirectiveObjectArch(DirectiveID.getLoc());
   return true;
 }
 
@@ -9090,6 +9093,45 @@ bool ARMAsmParser::parseDirectiveMovSP(SMLoc L) {
 
   getTargetStreamer().emitMovSP(SPReg, Offset);
   UC.saveFPReg(SPReg);
+
+  return false;
+}
+
+/// parseDirectiveObjectArch
+///   ::= .object_arch name
+bool ARMAsmParser::parseDirectiveObjectArch(SMLoc L) {
+  if (getLexer().isNot(AsmToken::Identifier)) {
+    Error(getLexer().getLoc(), "unexpected token");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  StringRef Arch = Parser.getTok().getString();
+  SMLoc ArchLoc = Parser.getTok().getLoc();
+  getLexer().Lex();
+
+  unsigned ID = StringSwitch<unsigned>(Arch)
+#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
+    .Case(NAME, ARM::ID)
+#define ARM_ARCH_ALIAS(NAME, ID) \
+    .Case(NAME, ARM::ID)
+#include "MCTargetDesc/ARMArchName.def"
+#undef ARM_ARCH_NAME
+#undef ARM_ARCH_ALIAS
+    .Default(ARM::INVALID_ARCH);
+
+  if (ID == ARM::INVALID_ARCH) {
+    Error(ArchLoc, "unknown architecture '" + Arch + "'");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  getTargetStreamer().emitObjectArch(ID);
+
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    Error(getLexer().getLoc(), "unexpected token");
+    Parser.eatToEndOfStatement();
+  }
 
   return false;
 }

@@ -136,6 +136,7 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   virtual void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
                                     StringRef StrinValue);
   virtual void emitArch(unsigned Arch);
+  virtual void emitObjectArch(unsigned Arch);
   virtual void emitFPU(unsigned FPU);
   virtual void emitInst(uint32_t Inst, char Suffix = '\0');
   virtual void finishAttributeSection();
@@ -249,6 +250,9 @@ void ARMTargetAsmStreamer::emitIntTextAttribute(unsigned Attribute,
 void ARMTargetAsmStreamer::emitArch(unsigned Arch) {
   OS << "\t.arch\t" << GetArchName(Arch) << "\n";
 }
+void ARMTargetAsmStreamer::emitObjectArch(unsigned Arch) {
+  OS << "\t.object_arch\t" << GetArchName(Arch) << '\n';
+}
 void ARMTargetAsmStreamer::emitFPU(unsigned FPU) {
   OS << "\t.fpu\t" << GetFPUName(FPU) << "\n";
 }
@@ -300,6 +304,7 @@ private:
   StringRef CurrentVendor;
   unsigned FPU;
   unsigned Arch;
+  unsigned EmittedArch;
   SmallVector<AttributeItem, 64> Contents;
 
   const MCSection *AttributeSection;
@@ -411,6 +416,7 @@ private:
   virtual void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
                                     StringRef StringValue);
   virtual void emitArch(unsigned Arch);
+  virtual void emitObjectArch(unsigned Arch);
   virtual void emitFPU(unsigned FPU);
   virtual void emitInst(uint32_t Inst, char Suffix = '\0');
   virtual void finishAttributeSection();
@@ -421,8 +427,9 @@ private:
 
 public:
   ARMTargetELFStreamer(MCStreamer &S)
-      : ARMTargetStreamer(S), CurrentVendor("aeabi"), FPU(ARM::INVALID_FPU),
-        Arch(ARM::INVALID_ARCH), AttributeSection(0) {}
+    : ARMTargetStreamer(S), CurrentVendor("aeabi"), FPU(ARM::INVALID_FPU),
+      Arch(ARM::INVALID_ARCH), EmittedArch(ARM::INVALID_ARCH),
+      AttributeSection(0) {}
 };
 
 /// Extend the generic ELFStreamer class so that it can emit mapping symbols at
@@ -714,10 +721,17 @@ void ARMTargetELFStreamer::emitIntTextAttribute(unsigned Attribute,
 void ARMTargetELFStreamer::emitArch(unsigned Value) {
   Arch = Value;
 }
+void ARMTargetELFStreamer::emitObjectArch(unsigned Value) {
+  EmittedArch = Value;
+}
 void ARMTargetELFStreamer::emitArchDefaultAttributes() {
   using namespace ARMBuildAttrs;
+
   setAttributeItem(CPU_name, GetArchDefaultCPUName(Arch), false);
-  setAttributeItem(CPU_arch, GetArchDefaultCPUArch(Arch), false);
+  if (EmittedArch == ARM::INVALID_ARCH)
+    setAttributeItem(CPU_arch, GetArchDefaultCPUArch(Arch), false);
+  else
+    setAttributeItem(CPU_arch, GetArchDefaultCPUArch(EmittedArch), false);
 
   switch (Arch) {
   case ARM::ARMV2:
