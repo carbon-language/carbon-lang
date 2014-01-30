@@ -93,6 +93,7 @@ public:
   virtual void emitHandlerData() = 0;
   virtual void emitSetFP(unsigned FpReg, unsigned SpReg,
                          int64_t Offset = 0) = 0;
+  virtual void emitMovSP(unsigned Reg, int64_t Offset = 0) = 0;
   virtual void emitPad(int64_t Offset) = 0;
   virtual void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
                            bool isVector) = 0;

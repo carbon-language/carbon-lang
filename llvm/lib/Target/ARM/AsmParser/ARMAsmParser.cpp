@@ -127,7 +127,7 @@ class UnwindContext {
   int FPReg;
 
 public:
-  UnwindContext(MCAsmParser &P) : Parser(P), FPReg(-1) {}
+  UnwindContext(MCAsmParser &P) : Parser(P), FPReg(ARM::SP) {}
 
   bool hasFnStart() const { return !FnStartLocs.empty(); }
   bool cantUnwind() const { return !CantUnwindLocs.empty(); }
@@ -182,7 +182,7 @@ public:
     PersonalityLocs = Locs();
     HandlerDataLocs = Locs();
     PersonalityIndexLocs = Locs();
-    FPReg = -1;
+    FPReg = ARM::SP;
   }
 };
 
@@ -297,6 +297,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectivePersonalityIndex(SMLoc L);
   bool parseDirectiveUnwindRaw(SMLoc L);
   bool parseDirectiveTLSDescSeq(SMLoc L);
+  bool parseDirectiveMovSP(SMLoc L);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -8087,6 +8088,8 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveUnwindRaw(DirectiveID.getLoc());
   else if (IDVal == ".tlsdescseq")
     return parseDirectiveTLSDescSeq(DirectiveID.getLoc());
+  else if (IDVal == ".movsp")
+    return parseDirectiveMovSP(DirectiveID.getLoc());
   return true;
 }
 
@@ -8616,7 +8619,7 @@ bool ARMAsmParser::parseDirectiveSetFP(SMLoc L) {
   }
 
   // Consume comma
-  if (!Parser.getTok().is(AsmToken::Comma)) {
+  if (Parser.getTok().isNot(AsmToken::Comma)) {
     Error(Parser.getTok().getLoc(), "comma expected");
     return false;
   }
@@ -9025,6 +9028,69 @@ bool ARMAsmParser::parseDirectiveTLSDescSeq(SMLoc L) {
   }
 
   getTargetStreamer().AnnotateTLSDescriptorSequence(SRE);
+  return false;
+}
+
+/// parseDirectiveMovSP
+///  ::= .movsp reg [, #offset]
+bool ARMAsmParser::parseDirectiveMovSP(SMLoc L) {
+  if (!UC.hasFnStart()) {
+    Parser.eatToEndOfStatement();
+    Error(L, ".fnstart must precede .movsp directives");
+    return false;
+  }
+  if (UC.getFPReg() != ARM::SP) {
+    Parser.eatToEndOfStatement();
+    Error(L, "unexpected .movsp directive");
+    return false;
+  }
+
+  SMLoc SPRegLoc = Parser.getTok().getLoc();
+  int SPReg = tryParseRegister();
+  if (SPReg == -1) {
+    Parser.eatToEndOfStatement();
+    Error(SPRegLoc, "register expected");
+    return false;
+  }
+
+  if (SPReg == ARM::SP || SPReg == ARM::PC) {
+    Parser.eatToEndOfStatement();
+    Error(SPRegLoc, "sp and pc are not permitted in .movsp directive");
+    return false;
+  }
+
+  int64_t Offset = 0;
+  if (Parser.getTok().is(AsmToken::Comma)) {
+    Parser.Lex();
+
+    if (Parser.getTok().isNot(AsmToken::Hash)) {
+      Error(Parser.getTok().getLoc(), "expected #constant");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+    Parser.Lex();
+
+    const MCExpr *OffsetExpr;
+    SMLoc OffsetLoc = Parser.getTok().getLoc();
+    if (Parser.parseExpression(OffsetExpr)) {
+      Parser.eatToEndOfStatement();
+      Error(OffsetLoc, "malformed offset expression");
+      return false;
+    }
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(OffsetExpr);
+    if (!CE) {
+      Parser.eatToEndOfStatement();
+      Error(OffsetLoc, "offset must be an immediate constant");
+      return false;
+    }
+
+    Offset = CE->getValue();
+  }
+
+  getTargetStreamer().emitMovSP(SPReg, Offset);
+  UC.saveFPReg(SPReg);
+
   return false;
 }
 

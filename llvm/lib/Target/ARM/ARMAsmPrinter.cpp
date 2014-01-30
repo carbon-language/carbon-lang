@@ -1091,11 +1091,11 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
         // instruction.
         ATS.emitPad(Offset);
       } else {
-        MI->dump();
-        llvm_unreachable("Unsupported opcode for unwinding information");
+        // Move of SP to a register.  Positive values correspond to an "add"
+        // instruction.
+        ATS.emitMovSP(DstReg, -Offset);
       }
     } else if (DstReg == ARM::SP) {
-      // FIXME: .movsp goes here
       MI->dump();
       llvm_unreachable("Unsupported opcode for unwinding information");
     }
