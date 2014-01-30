@@ -90,10 +90,11 @@ def AVX512_512_SET0 : I<0, Pseudo, (outs VR512:$dst), (ins), "",
                [(set VR512:$dst, (v16f32 immAllZerosV))]>;
 }
 
+let Predicates = [HasAVX512] in {
 def : Pat<(v8i64 immAllZerosV), (AVX512_512_SET0)>;
 def : Pat<(v16i32 immAllZerosV), (AVX512_512_SET0)>;
 def : Pat<(v8f64 immAllZerosV), (AVX512_512_SET0)>;
-def : Pat<(v16f32 immAllZerosV), (AVX512_512_SET0)>;
+}
 
 //===----------------------------------------------------------------------===//
 // AVX-512 - VECTOR INSERT
