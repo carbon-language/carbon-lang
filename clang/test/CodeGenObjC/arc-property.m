@@ -67,7 +67,7 @@ static Class theGlobalClass;
 
 // CHECK:    define internal i8* @"\01-[Test2 theClass]"(
 // CHECK:      [[OFFSET:%.*]] = load i64* @"OBJC_IVAR_$_Test2._theClass"
-// CHECK-NEXT: [[T0:%.*]] = call i8* @objc_getProperty(i8* {{.*}}, i8* {{.*}}, i64 [[OFFSET]], i1 zeroext true)
+// CHECK-NEXT: [[T0:%.*]] = tail call i8* @objc_getProperty(i8* {{.*}}, i8* {{.*}}, i64 [[OFFSET]], i1 zeroext true)
 // CHECK-NEXT: ret i8* [[T0]]
 
 // CHECK:    define internal void @"\01-[Test2 setTheClass:]"(

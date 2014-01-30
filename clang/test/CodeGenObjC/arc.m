@@ -1004,7 +1004,7 @@ void test37(void) {
 @synthesize x;
 @end
 // CHECK:    define internal i8* @"\01-[Test45 x]"(
-// CHECK:      [[CALL:%.*]] = call i8* @objc_getProperty(
+// CHECK:      [[CALL:%.*]] = tail call i8* @objc_getProperty(
 // CHECK-NEXT: ret i8* [[CALL]]
 
 // rdar://problem/9315552
@@ -1352,7 +1352,7 @@ void test62(void) {
 @implementation Person
 @synthesize address;
 @end
-// CHECK: call i8* @objc_getProperty
+// CHECK: tail call i8* @objc_getProperty
 // CHECK: call void @objc_setProperty 
 
 // Verify that we successfully parse and preserve this attribute in

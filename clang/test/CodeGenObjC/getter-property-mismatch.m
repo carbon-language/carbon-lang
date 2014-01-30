@@ -13,7 +13,7 @@
 @synthesize filenamesToServerLocation=_filenamesToServerLocation;
 @end
 
-// CHECK:  [[CALL:%.*]] = call i8* @objc_getProperty
+// CHECK:  [[CALL:%.*]] = tail call i8* @objc_getProperty
 // CHECK:  [[ONE:%.*]] = bitcast i8* [[CALL:%.*]] to [[T1:%.*]]*
 // CHECK:  [[TWO:%.*]] = bitcast [[T1]]* [[ONE]] to [[T2:%.*]]*
 // CHECK:  ret [[T2]]* [[TWO]]
