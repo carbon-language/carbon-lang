@@ -366,7 +366,9 @@ added in the future:
     calling convention on how arguments and return values are passed, but it
     uses a different set of caller/callee-saved registers. This alleviates the
     burden of saving and recovering a large register set before and after the
-    call in the caller.
+    call in the caller. If the arguments are passed in callee-saved registers,
+    then they will be preserved by the callee across the call. This doesn't
+    apply for values returned in callee-saved registers.
 
     - On X86-64 the callee preserves all general purpose registers, except for
       R11. R11 can be used as a scratch register. Floating-point registers
@@ -397,7 +399,10 @@ added in the future:
     convention also behaves identical to the `C` calling convention on how
     arguments and return values are passed, but it uses a different set of
     caller/callee-saved registers. This removes the burden of saving and
-    recovering a large register set before and after the call in the caller.
+    recovering a large register set before and after the call in the caller. If
+    the arguments are passed in callee-saved registers, then they will be
+    preserved by the callee across the call. This doesn't apply for values
+    returned in callee-saved registers.
 
     - On X86-64 the callee preserves all general purpose registers, except for
       R11. R11 can be used as a scratch register. Furthermore it also preserves
