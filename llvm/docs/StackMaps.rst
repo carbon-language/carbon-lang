@@ -314,6 +314,11 @@ format of this section follows:
 .. code-block:: none
 
   uint32 : Reserved (header)
+  uint32 : NumFunctions
+  StkSizeRecord[NumFunctions] {
+    uint32 : Function Offset
+    uint32 : Stack Size
+  }
   uint32 : NumConstants
   Constants[NumConstants] {
     uint64 : LargeConstant

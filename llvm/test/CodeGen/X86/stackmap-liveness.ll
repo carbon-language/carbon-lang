@@ -6,7 +6,13 @@
 
 ; CHECK-LABEL:  .section  __LLVM_STACKMAPS,__llvm_stackmaps
 ; CHECK-NEXT:   __LLVM_StackMaps:
-; CHECK-NEXT:   .long   0
+; CHECK-NEXT:   .long 0
+; Num Functions
+; CHECK-NEXT:   .long 2
+; CHECK-NEXT:   .long _stackmap_liveness
+; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _mixed_liveness
+; CHECK-NEXT:   .long 8
 ; Num LargeConstants
 ; CHECK-NEXT:   .long   0
 ; Num Callsites
