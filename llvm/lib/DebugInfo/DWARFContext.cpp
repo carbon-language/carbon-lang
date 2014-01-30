@@ -603,10 +603,9 @@ static bool consumeCompressedDebugSectionHeader(StringRef &data,
 DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
   IsLittleEndian(Obj->isLittleEndian()),
   AddressSize(Obj->getBytesInAddress()) {
-  error_code ec;
   for (object::section_iterator i = Obj->begin_sections(),
-         e = Obj->end_sections();
-       i != e; i.increment(ec)) {
+                                e = Obj->end_sections();
+       i != e; ++i) {
     StringRef name;
     i->getName(name);
     StringRef data;
@@ -697,8 +696,8 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
       uint64_t SectionSize;
       RelocatedSection->getSize(SectionSize);
       for (object::relocation_iterator reloc_i = i->begin_relocations(),
-             reloc_e = i->end_relocations();
-           reloc_i != reloc_e; reloc_i.increment(ec)) {
+                                       reloc_e = i->end_relocations();
+           reloc_i != reloc_e; ++reloc_i) {
         uint64_t Address;
         reloc_i->getOffset(Address);
         uint64_t Type;

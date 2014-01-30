@@ -52,10 +52,8 @@ MCMachObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
     : MCObjectSymbolizer(Ctx, RelInfo, MOOF), MOOF(MOOF),
       StubsStart(0), StubsCount(0), StubSize(0), StubsIndSymIndex(0) {
 
-  error_code ec;
   for (section_iterator SI = MOOF->begin_sections(), SE = MOOF->end_sections();
-       SI != SE; SI.increment(ec)) {
-    if (ec) break;
+       SI != SE; ++SI) {
     StringRef Name; SI->getName(Name);
     if (Name == "__stubs") {
       SectionRef StubsSec = *SI;
@@ -91,10 +89,8 @@ StringRef MCMachObjectSymbolizer::findExternalFunctionAt(uint64_t Addr) {
 
   StringRef SymName;
   symbol_iterator SI = MOOF->begin_symbols();
-  error_code ec;
-  for (uint32_t i = 0; i != SymtabIdx; ++i) {
-    SI.increment(ec);
-  }
+  for (uint32_t i = 0; i != SymtabIdx; ++i)
+    ++SI;
   SI->getName(SymName);
   assert(SI != MOOF->end_symbols() && "Stub wasn't found in the symbol table!");
   assert(SymName.front() == '_' && "Mach-O symbol doesn't start with '_'!");
@@ -159,10 +155,8 @@ tryAddingSymbolicOperand(MCInst &MI, raw_ostream &cStream,
     return false;
   uint64_t UValue = Value;
   // FIXME: map instead of looping each time?
-  error_code ec;
   for (symbol_iterator SI = Obj->begin_symbols(), SE = Obj->end_symbols();
-       SI != SE; SI.increment(ec)) {
-    if (ec) break;
+       SI != SE; ++SI) {
     uint64_t SymAddr; SI->getAddress(SymAddr);
     uint64_t SymSize; SI->getSize(SymSize);
     StringRef SymName; SI->getName(SymName);
@@ -239,11 +233,8 @@ const RelocationRef *MCObjectSymbolizer::findRelocationAt(uint64_t Addr) {
 }
 
 void MCObjectSymbolizer::buildSectionList() {
-  error_code ec;
   for (section_iterator SI = Obj->begin_sections(), SE = Obj->end_sections();
-                        SI != SE; SI.increment(ec)) {
-    if (ec) break;
-
+       SI != SE; ++SI) {
     bool RequiredForExec; SI->isRequiredForExecution(RequiredForExec);
     if (RequiredForExec == false)
       continue;
@@ -263,11 +254,8 @@ void MCObjectSymbolizer::buildSectionList() {
 }
 
 void MCObjectSymbolizer::buildRelocationByAddrMap() {
-  error_code ec;
   for (section_iterator SI = Obj->begin_sections(), SE = Obj->end_sections();
-                        SI != SE; SI.increment(ec)) {
-    if (ec) break;
-
+       SI != SE; ++SI) {
     section_iterator RelSecI = SI->getRelocatedSection();
     if (RelSecI == Obj->end_sections())
       continue;
@@ -279,9 +267,7 @@ void MCObjectSymbolizer::buildRelocationByAddrMap() {
       continue;
     for (relocation_iterator RI = SI->begin_relocations(),
                              RE = SI->end_relocations();
-                             RI != RE;
-                             RI.increment(ec)) {
-      if (ec) break;
+         RI != RE; ++RI) {
       // FIXME: libObject is inconsistent regarding error handling. The
       // overwhelming majority of methods always return object_error::success,
       // and assert for simple errors.. Here, ELFObjectFile::getRelocationOffset

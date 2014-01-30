@@ -532,16 +532,13 @@ static char getNMTypeChar(ObjectFile *Obj, symbol_iterator I) {
 }
 
 static void dumpSymbolNamesFromObject(ObjectFile *Obj) {
-  error_code EC;
   symbol_iterator IBegin = Obj->begin_symbols();
   symbol_iterator IEnd = Obj->end_symbols();
   if (DynamicSyms) {
     IBegin = Obj->begin_dynamic_symbols();
     IEnd = Obj->end_dynamic_symbols();
   }
-  for (symbol_iterator I = IBegin; I != IEnd; I.increment(EC)) {
-    if (error(EC))
-      break;
+  for (symbol_iterator I = IBegin; I != IEnd; ++I) {
     uint32_t SymFlags;
     if (error(I->getFlags(SymFlags)))
       break;

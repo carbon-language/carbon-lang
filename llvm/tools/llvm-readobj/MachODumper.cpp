@@ -222,12 +222,9 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
   ListScope Group(W, "Sections");
 
   int SectionIndex = -1;
-  error_code EC;
   for (section_iterator SecI = Obj->begin_sections(),
                         SecE = Obj->end_sections();
-                        SecI != SecE; SecI.increment(EC)) {
-    if (error(EC)) break;
-
+       SecI != SecE; ++SecI) {
     ++SectionIndex;
 
     MachOSection Section;
@@ -263,20 +260,15 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
       ListScope D(W, "Relocations");
       for (relocation_iterator RelI = SecI->begin_relocations(),
                                RelE = SecI->end_relocations();
-                               RelI != RelE; RelI.increment(EC)) {
-        if (error(EC)) break;
-
+           RelI != RelE; ++RelI)
         printRelocation(SecI, RelI);
-      }
     }
 
     if (opts::SectionSymbols) {
       ListScope D(W, "Symbols");
       for (symbol_iterator SymI = Obj->begin_symbols(),
                            SymE = Obj->end_symbols();
-                           SymI != SymE; SymI.increment(EC)) {
-        if (error(EC)) break;
-
+           SymI != SymE; ++SymI) {
         bool Contained = false;
         if (SecI->containsSymbol(*SymI, Contained) || !Contained)
           continue;
@@ -300,9 +292,7 @@ void MachODumper::printRelocations() {
   error_code EC;
   for (section_iterator SecI = Obj->begin_sections(),
                         SecE = Obj->end_sections();
-                        SecI != SecE; SecI.increment(EC)) {
-    if (error(EC)) break;
-
+       SecI != SecE; ++SecI) {
     StringRef Name;
     if (error(SecI->getName(Name)))
       continue;
@@ -310,9 +300,7 @@ void MachODumper::printRelocations() {
     bool PrintedGroup = false;
     for (relocation_iterator RelI = SecI->begin_relocations(),
                              RelE = SecI->end_relocations();
-                             RelI != RelE; RelI.increment(EC)) {
-      if (error(EC)) break;
-
+         RelI != RelE; ++RelI) {
       if (!PrintedGroup) {
         W.startLine() << "Section " << Name << " {\n";
         W.indent();
@@ -382,12 +370,8 @@ void MachODumper::printRelocation(const MachOObjectFile *Obj,
 void MachODumper::printSymbols() {
   ListScope Group(W, "Symbols");
 
-  error_code EC;
-  for (symbol_iterator SymI = Obj->begin_symbols(),
-                       SymE = Obj->end_symbols();
-                       SymI != SymE; SymI.increment(EC)) {
-    if (error(EC)) break;
-
+  for (symbol_iterator SymI = Obj->begin_symbols(), SymE = Obj->end_symbols();
+       SymI != SymE; ++SymI) {
     printSymbol(SymI);
   }
 }

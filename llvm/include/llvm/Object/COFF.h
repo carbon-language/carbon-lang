@@ -271,8 +271,7 @@ private:
         error_code        initExportTablePtr();
 
 protected:
-  error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const
-      LLVM_OVERRIDE;
+  void moveSymbolNext(DataRefImpl &Symb) const LLVM_OVERRIDE;
   error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const
       LLVM_OVERRIDE;
   error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const
@@ -288,8 +287,7 @@ protected:
       LLVM_OVERRIDE;
   error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const
       LLVM_OVERRIDE;
-  error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const
-      LLVM_OVERRIDE;
+  void moveSectionNext(DataRefImpl &Sec) const LLVM_OVERRIDE;
   error_code getSectionName(DataRefImpl Sec, StringRef &Res) const
       LLVM_OVERRIDE;
   error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const
@@ -313,8 +311,7 @@ protected:
   relocation_iterator section_rel_begin(DataRefImpl Sec) const LLVM_OVERRIDE;
   relocation_iterator section_rel_end(DataRefImpl Sec) const LLVM_OVERRIDE;
 
-  error_code getRelocationNext(DataRefImpl Rel, RelocationRef &Res) const
-      LLVM_OVERRIDE;
+  void moveRelocationNext(DataRefImpl &Rel) const LLVM_OVERRIDE;
   error_code getRelocationAddress(DataRefImpl Rel, uint64_t &Res) const
       LLVM_OVERRIDE;
   error_code getRelocationOffset(DataRefImpl Rel, uint64_t &Res) const
@@ -397,7 +394,7 @@ public:
       : ImportTable(Table), Index(I), OwningObject(Owner) {}
 
   bool operator==(const ImportDirectoryEntryRef &Other) const;
-  error_code getNext(ImportDirectoryEntryRef &Result) const;
+  void moveNext();
   error_code getName(StringRef &Result) const;
 
   error_code
@@ -421,7 +418,7 @@ public:
       : ExportTable(Table), Index(I), OwningObject(Owner) {}
 
   bool operator==(const ExportDirectoryEntryRef &Other) const;
-  error_code getNext(ExportDirectoryEntryRef &Result) const;
+  void moveNext();
 
   error_code getDllName(StringRef &Result) const;
   error_code getOrdinalBase(uint32_t &Result) const;

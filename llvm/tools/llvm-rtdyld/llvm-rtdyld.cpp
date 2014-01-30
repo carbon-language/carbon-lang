@@ -151,11 +151,9 @@ static int printLineInfoForInput() {
     OwningPtr<DIContext> Context(DIContext::getDWARFContext(LoadedObject->getObjectFile()));
 
     // Use symbol info to iterate functions in the object.
-    error_code ec;
     for (object::symbol_iterator I = LoadedObject->begin_symbols(),
                                  E = LoadedObject->end_symbols();
-                          I != E && !ec;
-                          I.increment(ec)) {
+         I != E; ++I) {
       object::SymbolRef::Type SymType;
       if (I->getType(SymType)) continue;
       if (SymType == object::SymbolRef::ST_Function) {

@@ -55,8 +55,7 @@ public:
 protected:
   ELFFile<ELFT> EF;
 
-  error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const
-      LLVM_OVERRIDE;
+  void moveSymbolNext(DataRefImpl &Symb) const LLVM_OVERRIDE;
   error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const
       LLVM_OVERRIDE;
   error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res) const
@@ -78,8 +77,7 @@ protected:
   error_code getLibraryPath(DataRefImpl Data, StringRef &Res) const
       LLVM_OVERRIDE;
 
-  error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const
-      LLVM_OVERRIDE;
+  void moveSectionNext(DataRefImpl &Sec) const LLVM_OVERRIDE;
   error_code getSectionName(DataRefImpl Sec, StringRef &Res) const
       LLVM_OVERRIDE;
   error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const
@@ -102,8 +100,7 @@ protected:
   relocation_iterator section_rel_end(DataRefImpl Sec) const LLVM_OVERRIDE;
   section_iterator getRelocatedSection(DataRefImpl Sec) const LLVM_OVERRIDE;
 
-  error_code getRelocationNext(DataRefImpl Rel, RelocationRef &Res) const
-      LLVM_OVERRIDE;
+  void moveRelocationNext(DataRefImpl &Rel) const LLVM_OVERRIDE;
   error_code getRelocationAddress(DataRefImpl Rel, uint64_t &Res) const
       LLVM_OVERRIDE;
   error_code getRelocationOffset(DataRefImpl Rel, uint64_t &Res) const
@@ -222,10 +219,8 @@ typedef ELFObjectFile<ELFType<support::big, 2, false> > ELF32BEObjectFile;
 typedef ELFObjectFile<ELFType<support::big, 2, true> > ELF64BEObjectFile;
 
 template <class ELFT>
-error_code ELFObjectFile<ELFT>::getSymbolNext(DataRefImpl Symb,
-                                              SymbolRef &Result) const {
-  Result = SymbolRef(toDRI(++toELFSymIter(Symb)), this);
-  return object_error::success;
+void ELFObjectFile<ELFT>::moveSymbolNext(DataRefImpl &Symb) const {
+  Symb = toDRI(++toELFSymIter(Symb));
 }
 
 template <class ELFT>
@@ -439,10 +434,8 @@ error_code ELFObjectFile<ELFT>::getSymbolValue(DataRefImpl Symb,
 }
 
 template <class ELFT>
-error_code ELFObjectFile<ELFT>::getSectionNext(DataRefImpl Sec,
-                                               SectionRef &Result) const {
-  Result = SectionRef(toDRI(++toELFShdrIter(Sec)), this);
-  return object_error::success;
+void ELFObjectFile<ELFT>::moveSectionNext(DataRefImpl &Sec) const {
+  Sec = toDRI(++toELFShdrIter(Sec));
 }
 
 template <class ELFT>
@@ -594,11 +587,8 @@ ELFObjectFile<ELFT>::getRelocatedSection(DataRefImpl Sec) const {
 
 // Relocations
 template <class ELFT>
-error_code ELFObjectFile<ELFT>::getRelocationNext(DataRefImpl Rel,
-                                                  RelocationRef &Result) const {
+void ELFObjectFile<ELFT>::moveRelocationNext(DataRefImpl &Rel) const {
   ++Rel.d.b;
-  Result = RelocationRef(Rel, this);
-  return object_error::success;
 }
 
 template <class ELFT>

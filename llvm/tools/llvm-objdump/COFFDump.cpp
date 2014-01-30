@@ -241,11 +241,7 @@ static void printImportTables(const COFFObjectFile *Obj) {
   if (I == E)
     return;
   outs() << "The Import Tables:\n";
-  error_code EC;
-  for (; I != E; I = I.increment(EC)) {
-    if (EC)
-      return;
-
+  for (; I != E; I = ++I) {
     const import_directory_table_entry *Dir;
     StringRef Name;
     if (I->getImportTableEntry(Dir)) return;
@@ -294,10 +290,7 @@ static void printExportTable(const COFFObjectFile *Obj) {
   outs() << " DLL name: " << DllName << "\n";
   outs() << " Ordinal base: " << OrdinalBase << "\n";
   outs() << " Ordinal      RVA  Name\n";
-  error_code EC;
-  for (; I != E; I = I.increment(EC)) {
-    if (EC)
-      return;
+  for (; I != E; I = ++I) {
     uint32_t Ordinal;
     if (I->getOrdinal(Ordinal))
       return;
@@ -327,12 +320,8 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
 
   const coff_section *Pdata = 0;
 
-  error_code EC;
-  for (section_iterator SI = Obj->begin_sections(),
-                        SE = Obj->end_sections();
-                        SI != SE; SI.increment(EC)) {
-    if (error(EC)) return;
-
+  for (section_iterator SI = Obj->begin_sections(), SE = Obj->end_sections();
+       SI != SE; ++SI) {
     StringRef Name;
     if (error(SI->getName(Name))) continue;
 
@@ -342,10 +331,8 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
     std::vector<RelocationRef> Rels;
     for (relocation_iterator RI = SI->begin_relocations(),
                              RE = SI->end_relocations();
-                             RI != RE; RI.increment(EC)) {
-      if (error(EC)) break;
+         RI != RE; ++RI)
       Rels.push_back(*RI);
-    }
 
     // Sort relocations by address.
     std::sort(Rels.begin(), Rels.end(), RelocAddressLess);

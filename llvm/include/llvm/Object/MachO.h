@@ -38,7 +38,7 @@ public:
   bool operator==(const DiceRef &Other) const;
   bool operator<(const DiceRef &Other) const;
 
-  error_code getNext(DiceRef &Result) const;
+  void moveNext();
 
   error_code getOffset(uint32_t &Result) const;
   error_code getLength(uint16_t &Result) const;
@@ -59,8 +59,7 @@ public:
   MachOObjectFile(MemoryBuffer *Object, bool IsLittleEndian, bool Is64Bits,
                   error_code &EC, bool BufferOwned = true);
 
-  error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const
-      LLVM_OVERRIDE;
+  void moveSymbolNext(DataRefImpl &Symb) const LLVM_OVERRIDE;
   error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const
       LLVM_OVERRIDE;
   error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const
@@ -79,8 +78,7 @@ public:
   error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const
       LLVM_OVERRIDE;
 
-  error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const
-      LLVM_OVERRIDE;
+  void moveSectionNext(DataRefImpl &Sec) const LLVM_OVERRIDE;
   error_code getSectionName(DataRefImpl Sec, StringRef &Res) const
       LLVM_OVERRIDE;
   error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const
@@ -104,8 +102,7 @@ public:
   relocation_iterator section_rel_begin(DataRefImpl Sec) const LLVM_OVERRIDE;
   relocation_iterator section_rel_end(DataRefImpl Sec) const LLVM_OVERRIDE;
 
-  error_code getRelocationNext(DataRefImpl Rel, RelocationRef &Res) const
-      LLVM_OVERRIDE;
+  void moveRelocationNext(DataRefImpl &Rel) const LLVM_OVERRIDE;
   error_code getRelocationAddress(DataRefImpl Rel, uint64_t &Res) const
       LLVM_OVERRIDE;
   error_code getRelocationOffset(DataRefImpl Rel, uint64_t &Res) const
@@ -244,13 +241,10 @@ inline bool DiceRef::operator<(const DiceRef &Other) const {
   return DicePimpl < Other.DicePimpl;
 }
 
-inline error_code DiceRef::getNext(DiceRef &Result) const {
-  DataRefImpl Rel = DicePimpl;
+inline void DiceRef::moveNext() {
   const MachO::data_in_code_entry *P =
-    reinterpret_cast<const MachO::data_in_code_entry *>(Rel.p);
-  Rel.p = reinterpret_cast<uintptr_t>(P + 1);
-  Result = DiceRef(Rel, OwningObject);
-  return object_error::success;
+    reinterpret_cast<const MachO::data_in_code_entry *>(DicePimpl.p);
+  DicePimpl.p = reinterpret_cast<uintptr_t>(P + 1);
 }
 
 // Since a Mach-O data in code reference, a DiceRef, can only be created when

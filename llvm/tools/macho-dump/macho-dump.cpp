@@ -96,9 +96,9 @@ static int DumpSectionData(const MachOObjectFile &Obj, unsigned Index,
   // Dump the relocation entries.
   outs() << "  ('_relocations', [\n";
   unsigned RelNum = 0;
-  error_code EC;
   for (relocation_iterator I = Obj.section_rel_begin(Index),
-         E = Obj.section_rel_end(Index); I != E; I.increment(EC), ++RelNum) {
+                           E = Obj.section_rel_end(Index);
+       I != E; ++I, ++RelNum) {
     MachO::any_relocation_info RE = Obj.getRelocation(I->getRawDataRefImpl());
     outs() << "    # Relocation " << RelNum << "\n";
     outs() << "    (('word-0', " << format("0x%x", RE.r_word0) << "),\n";
@@ -201,10 +201,9 @@ static int DumpSymtabCommand(const MachOObjectFile &Obj) {
 
   // Dump the symbol table.
   outs() << "  ('_symbols', [\n";
-  error_code EC;
   unsigned SymNum = 0;
   for (symbol_iterator I = Obj.begin_symbols(), E = Obj.end_symbols(); I != E;
-       I.increment(EC), ++SymNum) {
+       ++I, ++SymNum) {
     DataRefImpl DRI = I->getRawDataRefImpl();
     if (Obj.is64Bit()) {
       MachO::nlist_64 STE = Obj.getSymbol64TableEntry(DRI);

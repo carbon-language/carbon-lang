@@ -63,12 +63,8 @@ public:
     return !(*this == other);
   }
 
-  content_iterator& increment(error_code &err) {
-    content_type next;
-    if (error_code ec = Current.getNext(next))
-      err = ec;
-    else
-      Current = next;
+  content_iterator &operator++() { // preincrement
+    Current.moveNext();
     return *this;
   }
 };
@@ -101,7 +97,7 @@ public:
 
   bool operator==(const RelocationRef &Other) const;
 
-  error_code getNext(RelocationRef &Result) const;
+  void moveNext();
 
   error_code getAddress(uint64_t &Result) const;
   error_code getOffset(uint64_t &Result) const;
@@ -146,7 +142,7 @@ public:
   bool operator==(const SectionRef &Other) const;
   bool operator<(const SectionRef &Other) const;
 
-  error_code getNext(SectionRef &Result) const;
+  void moveNext();
 
   error_code getName(StringRef &Result) const;
   error_code getAddress(uint64_t &Result) const;
@@ -210,7 +206,7 @@ public:
   bool operator==(const SymbolRef &Other) const;
   bool operator<(const SymbolRef &Other) const;
 
-  error_code getNext(SymbolRef &Result) const;
+  void moveNext();
 
   error_code getName(StringRef &Result) const;
   /// Returns the symbol virtual address (i.e. address at which it will be
@@ -285,7 +281,7 @@ protected:
   // Implementations assume that the DataRefImpl is valid and has not been
   // modified externally. It's UB otherwise.
   friend class SymbolRef;
-  virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const = 0;
+  virtual void moveSymbolNext(DataRefImpl &Symb) const = 0;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const = 0;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const = 0;
   virtual error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res)const=0;
@@ -301,7 +297,7 @@ protected:
 
   // Same as above for SectionRef.
   friend class SectionRef;
-  virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const = 0;
+  virtual void moveSectionNext(DataRefImpl &Sec) const = 0;
   virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const = 0;
   virtual error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const =0;
   virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const = 0;
@@ -324,8 +320,7 @@ protected:
 
   // Same as above for RelocationRef.
   friend class RelocationRef;
-  virtual error_code getRelocationNext(DataRefImpl Rel,
-                                       RelocationRef &Res) const = 0;
+  virtual void moveRelocationNext(DataRefImpl &Rel) const = 0;
   virtual error_code getRelocationAddress(DataRefImpl Rel,
                                           uint64_t &Res) const =0;
   virtual error_code getRelocationOffset(DataRefImpl Rel,
@@ -412,8 +407,8 @@ inline bool SymbolRef::operator<(const SymbolRef &Other) const {
   return SymbolPimpl < Other.SymbolPimpl;
 }
 
-inline error_code SymbolRef::getNext(SymbolRef &Result) const {
-  return OwningObject->getSymbolNext(SymbolPimpl, Result);
+inline void SymbolRef::moveNext() {
+  return OwningObject->moveSymbolNext(SymbolPimpl);
 }
 
 inline error_code SymbolRef::getName(StringRef &Result) const {
@@ -471,8 +466,8 @@ inline bool SectionRef::operator<(const SectionRef &Other) const {
   return SectionPimpl < Other.SectionPimpl;
 }
 
-inline error_code SectionRef::getNext(SectionRef &Result) const {
-  return OwningObject->getSectionNext(SectionPimpl, Result);
+inline void SectionRef::moveNext() {
+  return OwningObject->moveSectionNext(SectionPimpl);
 }
 
 inline error_code SectionRef::getName(StringRef &Result) const {
@@ -554,8 +549,8 @@ inline bool RelocationRef::operator==(const RelocationRef &Other) const {
   return RelocationPimpl == Other.RelocationPimpl;
 }
 
-inline error_code RelocationRef::getNext(RelocationRef &Result) const {
-  return OwningObject->getRelocationNext(RelocationPimpl, Result);
+inline void RelocationRef::moveNext() {
+  return OwningObject->moveRelocationNext(RelocationPimpl);
 }
 
 inline error_code RelocationRef::getAddress(uint64_t &Result) const {

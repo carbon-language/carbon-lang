@@ -37,11 +37,8 @@ MCObjectDisassembler::MCObjectDisassembler(const ObjectFile &Obj,
     : Obj(Obj), Dis(Dis), MIA(MIA), MOS(0) {}
 
 uint64_t MCObjectDisassembler::getEntrypoint() {
-  error_code ec;
   for (symbol_iterator SI = Obj.begin_symbols(), SE = Obj.end_symbols();
-       SI != SE; SI.increment(ec)) {
-    if (ec)
-      break;
+       SI != SE; ++SI) {
     StringRef Name;
     SI->getName(Name);
     if (Name == "main" || Name == "_main") {
@@ -90,13 +87,8 @@ MCModule *MCObjectDisassembler::buildModule(bool withCFG) {
 }
 
 void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
-  error_code ec;
-  for (section_iterator SI = Obj.begin_sections(),
-                        SE = Obj.end_sections();
-                        SI != SE;
-                        SI.increment(ec)) {
-    if (ec) break;
-
+  for (section_iterator SI = Obj.begin_sections(), SE = Obj.end_sections();
+       SI != SE; ++SI) {
     bool isText; SI->isText(isText);
     bool isData; SI->isData(isData);
     if (!isData && !isText)
@@ -184,11 +176,8 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
   AddressSetTy Splits;
   AddressSetTy Calls;
 
-  error_code ec;
   for (symbol_iterator SI = Obj.begin_symbols(), SE = Obj.end_symbols();
-       SI != SE; SI.increment(ec)) {
-    if (ec)
-      break;
+       SI != SE; ++SI) {
     SymbolRef::Type SymType;
     SI->getType(SymType);
     if (SymType == SymbolRef::ST_Function) {
@@ -506,11 +495,8 @@ MCMachOObjectDisassembler::MCMachOObjectDisassembler(
     : MCObjectDisassembler(MOOF, Dis, MIA), MOOF(MOOF),
       VMAddrSlide(VMAddrSlide), HeaderLoadAddress(HeaderLoadAddress) {
 
-  error_code ec;
   for (section_iterator SI = MOOF.begin_sections(), SE = MOOF.end_sections();
-       SI != SE; SI.increment(ec)) {
-    if (ec)
-      break;
+       SI != SE; ++SI) {
     StringRef Name;
     SI->getName(Name);
     // FIXME: We should use the S_ section type instead of the name.

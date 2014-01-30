@@ -621,10 +621,8 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
                                          RelocationValueRef &Rel) {
   // Get the ELF symbol value (st_value) to compare with Relocation offset in
   // .opd entries
-
-  error_code err;
-  for (section_iterator si = Obj.begin_sections(),
-     se = Obj.end_sections(); si != se; si.increment(err)) {
+  for (section_iterator si = Obj.begin_sections(), se = Obj.end_sections();
+       si != se; ++si) {
     section_iterator RelSecI = si->getRelocatedSection();
     if (RelSecI == Obj.end_sections())
       continue;
@@ -636,14 +634,12 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
 
     for (relocation_iterator i = si->begin_relocations(),
          e = si->end_relocations(); i != e;) {
-      check(err);
-
       // The R_PPC64_ADDR64 relocation indicates the first field
       // of a .opd entry
       uint64_t TypeFunc;
       check(i->getType(TypeFunc));
       if (TypeFunc != ELF::R_PPC64_ADDR64) {
-        i.increment(err);
+        ++i;
         continue;
       }
 
@@ -653,10 +649,9 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
       int64_t Addend;
       check(getELFRelocationAddend(*i, Addend));
 
-      i = i.increment(err);
+      ++i;
       if (i == e)
         break;
-      check(err);
 
       // Just check if following relocation is a R_PPC64_TOC
       uint64_t TypeTOC;

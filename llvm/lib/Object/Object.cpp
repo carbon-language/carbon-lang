@@ -84,9 +84,7 @@ LLVMBool LLVMIsSectionIteratorAtEnd(LLVMObjectFileRef ObjectFile,
 }
 
 void LLVMMoveToNextSection(LLVMSectionIteratorRef SI) {
-  error_code ec;
-  unwrap(SI)->increment(ec);
-  if (ec) report_fatal_error("LLVMMoveToNextSection failed: " + ec.message());
+  ++(*unwrap(SI));
 }
 
 void LLVMMoveToContainingSection(LLVMSectionIteratorRef Sect,
@@ -111,9 +109,7 @@ LLVMBool LLVMIsSymbolIteratorAtEnd(LLVMObjectFileRef ObjectFile,
 }
 
 void LLVMMoveToNextSymbol(LLVMSymbolIteratorRef SI) {
-  error_code ec;
-  unwrap(SI)->increment(ec);
-  if (ec) report_fatal_error("LLVMMoveToNextSymbol failed: " + ec.message());
+  ++(*unwrap(SI));
 }
 
 // SectionRef accessors
@@ -169,10 +165,7 @@ LLVMBool LLVMIsRelocationIteratorAtEnd(LLVMSectionIteratorRef Section,
 }
 
 void LLVMMoveToNextRelocation(LLVMRelocationIteratorRef SI) {
-  error_code ec;
-  unwrap(SI)->increment(ec);
-  if (ec) report_fatal_error("LLVMMoveToNextRelocation failed: " +
-                             ec.message());
+  ++(*unwrap(SI));
 }
 
 
