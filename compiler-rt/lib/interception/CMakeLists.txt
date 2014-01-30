@@ -11,7 +11,7 @@ include_directories(..)
 
 if (NOT MSVC)
   set(INTERCEPTION_CFLAGS
-    ${SANITIZER_COMMON_CFLAGS})
+    ${SANITIZER_COMMON_CFLAGS}
     -fno-rtti)
 else()
   set(INTERCEPTION_CFLAGS
