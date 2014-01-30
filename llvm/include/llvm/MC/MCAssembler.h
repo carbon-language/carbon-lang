@@ -1153,6 +1153,10 @@ public:
     return *Entry;
   }
 
+  bool hasSymbolData(const MCSymbol &Symbol) const {
+    return SymbolMap.lookup(&Symbol) != 0;
+  }
+
   MCSymbolData &getSymbolData(const MCSymbol &Symbol) const {
     MCSymbolData *Entry = SymbolMap.lookup(&Symbol);
     assert(Entry && "Missing symbol data!");

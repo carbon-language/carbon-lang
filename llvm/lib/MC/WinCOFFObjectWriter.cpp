@@ -636,6 +636,11 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   const MCSymbol &Symbol = Target.getSymA()->getSymbol();
   const MCSymbol &A = Symbol.AliasedSymbol();
+  if (!Asm.hasSymbolData(A))
+    Asm.getContext().FatalError(
+        Fixup.getLoc(),
+        Twine("symbol '") + A.getName() + "' can not be undefined");
+
   MCSymbolData &A_SD = Asm.getSymbolData(A);
 
   MCSectionData const *SectionData = Fragment->getParent();
