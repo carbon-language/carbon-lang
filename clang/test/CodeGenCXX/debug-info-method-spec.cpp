@@ -1,4 +1,5 @@
-// RUN: %clang -fverbose-asm -g -S %s -o - | grep DW_AT_specification
+// FIXME: Check IR rather than asm, then triple is not needed.
+// RUN: %clang -Xclang -triple=%itanium_abi_triple -fverbose-asm -g -S %s -o - | grep DW_AT_specification
 // Radar 9254491
 class A {
 public:

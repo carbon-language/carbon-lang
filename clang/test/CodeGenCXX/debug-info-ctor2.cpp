@@ -1,4 +1,5 @@
-// RUN: %clang -fverbose-asm -g -S %s -o - | grep AT_explicit
+// FIXME: Check IR rather than asm, then triple is not needed.
+// RUN: %clang -Xclang -triple=%itanium_abi_triple -fverbose-asm -g -S %s -o - | grep AT_explicit
 
 
 class MyClass

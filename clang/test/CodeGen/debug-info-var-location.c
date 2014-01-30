@@ -1,4 +1,5 @@
-// RUN: %clang -S -g -fverbose-asm %s -o - | FileCheck %s
+// FIXME: Check IR rather than asm, then triple is not needed.
+// RUN: %clang -Xclang -triple=%itanium_abi_triple -S -g -fverbose-asm %s -o - | FileCheck %s
 // Radar 8461032
 // CHECK: DW_AT_location
 // CHECK-NEXT: byte 145

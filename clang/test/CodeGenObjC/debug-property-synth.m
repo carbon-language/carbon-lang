@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -masm-verbose -S -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -masm-verbose -S -g %s -o - | FileCheck %s
 // Radar 9468526
 @interface I {
   int _p1;
