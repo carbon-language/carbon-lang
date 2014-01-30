@@ -97,23 +97,15 @@
   <h3 id="debuggingVisualStudio">Debugging using Visual Studio</h3>
   <!--=====================================================================-->
 
-  <p>The file <tt>utils/clangVisualizers.txt</tt> provides debugger visualizers that make debugging
-  of more complex data types much easier.</p>
-  <p>There are two ways to install them:</p>
-  
-  <ul>
-      <li>Put the path to <tt>clangVisualizers.txt</tt> in the environment variable called
-      <tt>_vcee_autoexp</tt>. This method should work for Visual Studio 2008 and above.
-      </li>
-      <li>Edit your local <tt>autoexp.dat</tt> (make sure you make a backup first!), 
-      located in <tt>Visual Studio Directory\Common7\Packages\Debugger</tt> and append 
-      the contents of <tt>clangVisuailzers.txt</tt> to it. This method should work for 
-      Visual Studio 2008 and above.
-       </li>
-  </ul>
-
-  <p><i>[Note: To disable the visualizer for any specific variable, type 
-  <tt>variable_name,!</tt> inside the watch window.]</i></p>
+  <p>The files 
+    <a href="http://llvm.org/svn/llvm-project/llvm/trunk/utils/llvm.natvis">
+      <tt>utils/llvm.natvis</tt></a> and 
+    <a href="http://llvm.org/svn/llvm-project/cfe/trunk/utils/clang.natvis">
+      <tt>utils/clang.natvis</tt></a> provide debugger visualizers 
+      that make debugging of more complex data types much easier.</p>
+  <p>Put the files into 
+    <tt>%USERPROFILE%\Documents\Visual Studio 2012\Visualizers</tt> or 
+    create a symbolic link so they update automatically.</p>
 
   <!--=====================================================================-->
   <h2 id="testing">Testing</h2>
