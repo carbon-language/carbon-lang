@@ -33,8 +33,8 @@ struct Glibc_2_19_tls_header {
   uptr start;
 };
 
-// This must be static TLS, i.e. the run-time should be build with
-// -ftls-model=initial-exec or equivalent.
+// This must be static TLS
+__attribute__((tls_model("initial-exec")))
 static __thread DTLS dtls;
 
 // Make sure we properly destroy the DTLS objects:

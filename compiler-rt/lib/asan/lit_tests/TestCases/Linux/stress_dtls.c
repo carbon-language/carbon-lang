@@ -1,5 +1,3 @@
-// Currently broken...
-// XFAIL: *
 // REQUIRES: asan-64-bits
 // Stress test dynamic TLS + dlopen + threads.
 //
