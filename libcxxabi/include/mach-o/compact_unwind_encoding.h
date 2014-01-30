@@ -265,8 +265,6 @@ enum {
 //
 
 
-#ifndef __OPEN_SOURCE__
-
 // ARM64
 //
 // 1-bit: start
@@ -332,8 +330,6 @@ enum {
 //    linker in final linked images which have only dwarf unwind info for a
 //    function.
 //
-
-#endif // __OPEN_SOURCE__
 
 
 
