@@ -317,16 +317,16 @@ void ARMAttributeParser::ABI_align_needed(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
 
-  Twine Description;
+  std::string Description;
   if (Value < countof(Strings))
-    Description = StringRef(Strings[Value]);
+    Description = std::string(Strings[Value]);
   else if (Value <= 12)
-    Description = Twine("8-byte alignment, ") + utostr(1 << Value)
-                + Twine("-byte extended alignment");
+    Description = std::string("8-byte alignment, ") + utostr(1 << Value)
+                + std::string("-byte extended alignment");
   else
     Description = "Invalid";
 
-  PrintAttribute(Tag, Value, Description.str());
+  PrintAttribute(Tag, Value, Description);
 }
 
 void ARMAttributeParser::ABI_align_preserved(AttrType Tag, const uint8_t *Data,
@@ -338,16 +338,16 @@ void ARMAttributeParser::ABI_align_preserved(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
 
-  Twine Description;
+  std::string Description;
   if (Value < countof(Strings))
-    Description = StringRef(Strings[Value]);
+    Description = std::string(Strings[Value]);
   else if (Value <= 12)
-    Description = Twine("8-byte stack alignment, ") + utostr(1 << Value)
-                + Twine("-byte data alignment");
+    Description = std::string("8-byte stack alignment, ") + utostr(1 << Value)
+                + std::string("-byte data alignment");
   else
     Description = "Invalid";
 
-  PrintAttribute(Tag, Value, Description.str());
+  PrintAttribute(Tag, Value, Description);
 }
 
 void ARMAttributeParser::ABI_enum_size(AttrType Tag, const uint8_t *Data,
