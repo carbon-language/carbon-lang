@@ -65,9 +65,4 @@ BUILTIN(__builtin_arm_sevl, "v", "")
 BUILTIN(__builtin_arm_dmb, "vUi", "nc")
 BUILTIN(__builtin_arm_dsb, "vUi", "nc")
 
-// NEON
-#define GET_NEON_BUILTINS
-#include "clang/Basic/arm_neon.inc"
-#undef GET_NEON_BUILTINS
-
 #undef BUILTIN

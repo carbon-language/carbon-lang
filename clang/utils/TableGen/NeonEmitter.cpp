@@ -374,8 +374,7 @@ public:
 private:
   void emitIntrinsic(raw_ostream &OS, Record *R,
                      StringMap<ClassKind> &EmittedMap);
-  void genBuiltinsDef(raw_ostream &OS, StringMap<ClassKind> &A64IntrinsicMap,
-                      bool isA64GenBuiltinDef);
+  void genBuiltinsDef(raw_ostream &OS);
   void genOverloadTypeCheckCode(raw_ostream &OS,
                                 StringMap<ClassKind> &A64IntrinsicMap,
                                 bool isA64TypeCheck);
@@ -3040,10 +3039,7 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
           break;
         }
       }
-      if (isA64RangeCheck)
-        OS << "case AArch64::BI__builtin_neon_";
-      else
-        OS << "case ARM::BI__builtin_neon_";
+      OS << "case NEON::BI__builtin_neon_";
       OS << MangleName(name, TypeVec[ti], ck) << ": i = " << immidx << "; "
          << rangestr << "; break;\n";
     }
@@ -3154,10 +3150,7 @@ NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS,
     }
 
     if (mask) {
-      if (isA64TypeCheck)
-        OS << "case AArch64::BI__builtin_neon_";
-      else
-        OS << "case ARM::BI__builtin_neon_";
+      OS << "case NEON::BI__builtin_neon_";
       OS << MangleName(name, TypeVec[si], ClassB) << ": mask = "
          << "0x" << utohexstr(mask) << "ULL";
       if (PtrArgNum >= 0)
@@ -3167,10 +3160,7 @@ NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS,
       OS << "; break;\n";
     }
     if (qmask) {
-      if (isA64TypeCheck)
-        OS << "case AArch64::BI__builtin_neon_";
-      else
-        OS << "case ARM::BI__builtin_neon_";
+      OS << "case NEON::BI__builtin_neon_";
       OS << MangleName(name, TypeVec[qi], ClassB) << ": mask = "
          << "0x" << utohexstr(qmask) << "ULL";
       if (PtrArgNum >= 0)
@@ -3185,17 +3175,12 @@ NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS,
 
 /// genBuiltinsDef: Generate the BuiltinsARM.def and  BuiltinsAArch64.def
 /// declaration of builtins, checking for unique builtin declarations.
-void NeonEmitter::genBuiltinsDef(raw_ostream &OS,
-                                 StringMap<ClassKind> &A64IntrinsicMap,
-                                 bool isA64GenBuiltinDef) {
+void NeonEmitter::genBuiltinsDef(raw_ostream &OS) {
   std::vector<Record *> RV = Records.getAllDerivedDefinitions("Inst");
   StringMap<OpKind> EmittedMap;
 
-  // Generate BuiltinsARM.def and BuiltinsAArch64.def
-  if (isA64GenBuiltinDef)
-    OS << "#ifdef GET_NEON_AARCH64_BUILTINS\n";
-  else
-    OS << "#ifdef GET_NEON_BUILTINS\n";
+  // Generate BuiltinsNEON.
+  OS << "#ifdef GET_NEON_BUILTINS\n";
 
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
@@ -3220,21 +3205,6 @@ void NeonEmitter::genBuiltinsDef(raw_ostream &OS,
       PrintFatalError(R->getLoc(), "Builtin has no class kind");
 
     ClassKind ck = ClassMap[R->getSuperClasses()[1]];
-
-    // Do not include AArch64 BUILTIN() macros if not generating
-    // code for AArch64
-    bool isA64 = R->getValueAsBit("isA64");
-    if (!isA64GenBuiltinDef && isA64)
-      continue;
-
-    // Include ARM  BUILTIN() macros  in AArch64 but only if ARM intrinsics
-    // are not redefined in AArch64 to handle new types, e.g. "vabd" is a SIntr
-    // redefined in AArch64 to handle an additional 2 x f64 type.
-    if (isA64GenBuiltinDef && !isA64 && A64IntrinsicMap.count(Rename)) {
-      ClassKind &A64CK = A64IntrinsicMap[Rename];
-      if (A64CK == ck && ck != ClassNone)
-        continue;
-    }
 
     for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
       // Generate the declaration for this builtin, ensuring
@@ -3279,11 +3249,8 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     A64IntrinsicMap[Rename] = CK;
   }
 
-  // Generate BuiltinsARM.def for ARM
-  genBuiltinsDef(OS, A64IntrinsicMap, false);
-
-  // Generate BuiltinsAArch64.def for AArch64
-  genBuiltinsDef(OS, A64IntrinsicMap, true);
+  // Generate shared BuiltinsXXX.def
+  genBuiltinsDef(OS);
 
   // Generate ARM overloaded type checking code for SemaChecking.cpp
   genOverloadTypeCheckCode(OS, A64IntrinsicMap, false);
