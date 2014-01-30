@@ -527,9 +527,8 @@ error_code FileCOFF::cacheSectionAttributes() {
 
   // The sections that does not have auxiliary symbol are regular sections, in
   // which symbols are not allowed to be merged.
-  error_code ec;
   for (auto si = _obj->begin_sections(), se = _obj->end_sections(); si != se;
-       si.increment(ec)) {
+       ++si) {
     const coff_section *sec = _obj->getCOFFSection(si);
     if (!_merge.count(sec))
       _merge[sec] = DefinedAtom::mergeNo;
@@ -745,9 +744,8 @@ error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
 /// Add relocation information to atoms.
 error_code FileCOFF::addRelocationReferenceToAtoms() {
   // Relocation entries are defined for each section.
-  error_code ec;
   for (auto si = _obj->begin_sections(), se = _obj->end_sections(); si != se;
-       si.increment(ec)) {
+       ++si) {
     const coff_section *section = _obj->getCOFFSection(si);
 
     // Skip there's no atom for the section. Currently we do not create any
@@ -757,9 +755,10 @@ error_code FileCOFF::addRelocationReferenceToAtoms() {
       continue;
 
     for (auto ri = si->begin_relocations(), re = si->end_relocations();
-         ri != re; ri.increment(ec)) {
+         ri != re; ++ri) {
       const coff_relocation *rel = _obj->getCOFFRelocation(ri);
-      if ((ec = addRelocationReference(rel, section, _sectionAtoms[section])))
+      if (auto ec =
+              addRelocationReference(rel, section, _sectionAtoms[section]))
         return ec;
     }
   }
@@ -768,12 +767,11 @@ error_code FileCOFF::addRelocationReferenceToAtoms() {
 
 /// Find a section by name.
 error_code FileCOFF::findSection(StringRef name, const coff_section *&result) {
-  error_code ec;
   for (auto si = _obj->begin_sections(), se = _obj->end_sections(); si != se;
-       si.increment(ec)) {
+       ++si) {
     const coff_section *section = _obj->getCOFFSection(si);
     StringRef sectionName;
-    if ((ec = _obj->getSectionName(section, sectionName)))
+    if (auto ec = _obj->getSectionName(section, sectionName))
       return ec;
     if (sectionName == name) {
       result = section;

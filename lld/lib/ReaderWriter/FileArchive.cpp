@@ -117,16 +117,14 @@ protected:
     if (auto ec = objOrErr.getError())
       return ec;
     std::unique_ptr<ObjectFile> obj(objOrErr.get());
-    error_code ec;
     SymbolRef::Type symtype;
     uint32_t symflags;
     symbol_iterator ibegin = obj->begin_symbols();
     symbol_iterator iend = obj->end_symbols();
     StringRef symbolname;
 
-    for (symbol_iterator i = ibegin; i != iend; i.increment(ec)) {
-      if (ec)
-        return ec;
+    for (symbol_iterator i = ibegin; i != iend; ++i) {
+      error_code ec;
 
       // Get symbol name
       if ((ec = (i->getName(symbolname))))
