@@ -1,4 +1,4 @@
-/*===-- udivmodsi4.S - 32-bit unsigned integer divide ---------------------===//
+/*===-- udivsi3.S - 32-bit unsigned integer divide ------------------------===//
  *
  *                     The LLVM Compiler Infrastructure
  *

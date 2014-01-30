@@ -1,4 +1,4 @@
-/*===-- udivmodsi4.S - 32-bit unsigned integer modulus --------------------===//
+/*===-- umodsi3.S - 32-bit unsigned integer modulus -----------------------===//
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -7,8 +7,8 @@
  *
  *===----------------------------------------------------------------------===//
  *
- * This file implements the __udivmodsi4 (32-bit unsigned integer divide and
- * modulus) function for the ARM 32-bit architecture.
+ * This file implements the __umodsi3 (32-bit unsigned integer modulus)
+ * function for the ARM 32-bit architecture.
  *
  *===----------------------------------------------------------------------===*/
 
