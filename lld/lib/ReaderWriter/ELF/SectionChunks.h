@@ -1141,6 +1141,8 @@ public:
 
 protected:
   EntriesT _entries;
+
+private:
   std::size_t _dt_hash;
   std::size_t _dt_strtab;
   std::size_t _dt_symtab;
