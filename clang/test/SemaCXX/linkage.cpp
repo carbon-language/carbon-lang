@@ -5,6 +5,8 @@
 
 // RUN: %clang_cc1 -Werror -triple x86_64-apple-darwin10 -emit-llvm %s -o - | FileCheck %s
 
+// CHECK: @_ZZN5test61A3fooEvE3bar = linkonce_odr global i32 0, align 4
+
 // PR8926
 namespace test0 {
   typedef struct {
@@ -108,8 +110,15 @@ namespace test5 {
 // processing a record decl.  rdar://15928125
 namespace test6 {
   typedef struct {
-    void foo() {
-      static int bar = 0; 
+    int foo() {
+      // Tested at top of file.
+      static int bar = 0;
+      return bar++;
     }
   } A;
+
+  void test() {
+    A a;
+    a.foo();
+  }
 }
