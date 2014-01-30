@@ -236,6 +236,8 @@ INSTANTIATE_TYPED_TEST_CASE_P(My, FooTest, MyTypes);
   template <typename gtest_TypeParam_> \
   void GTEST_CASE_NAMESPACE_(CaseName)::TestName<gtest_TypeParam_>::TestBody()
 
+// Silencing C99 build warnings
+#if 0
 # define REGISTER_TYPED_TEST_CASE_P(CaseName, ...) \
   namespace GTEST_CASE_NAMESPACE_(CaseName) { \
   typedef ::testing::internal::Templates<__VA_ARGS__>::type gtest_AllTests_; \
@@ -243,6 +245,7 @@ INSTANTIATE_TYPED_TEST_CASE_P(My, FooTest, MyTypes);
   static const char* const GTEST_REGISTERED_TEST_NAMES_(CaseName) = \
       GTEST_TYPED_TEST_CASE_P_STATE_(CaseName).VerifyRegisteredTestNames(\
           __FILE__, __LINE__, #__VA_ARGS__)
+#endif
 
 // The 'Types' template argument below must have spaces around it
 // since some compilers may choke on '>>' when passing a template
