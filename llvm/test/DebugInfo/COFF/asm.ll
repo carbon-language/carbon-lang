@@ -70,7 +70,7 @@
 ; OBJ32-NEXT:     Filename: D:\asm.c
 ; FIXME: An empty __asm stmt creates an extra entry.
 ; We seem to know that these offsets are the same statically during the
-; execution of endModule().
+; execution of endModule().  See PR18679 for the details.
 ; OBJ32-NEXT:     +0x0: 4
 ; OBJ32-NEXT:     +0x0: 5
 ; OBJ32-NEXT:     +0x5: 6
@@ -141,6 +141,7 @@
 ; OBJ64-NEXT:     Filename: D:\asm.c
 ; OBJ64-NEXT:     +0x0: 3
 ; FIXME: An empty __asm stmt creates an extra entry.
+; See PR18679 for the details.
 ; OBJ64-NEXT:     +0x4: 4
 ; OBJ64-NEXT:     +0x4: 5
 ; OBJ64-NEXT:     +0x9: 6
