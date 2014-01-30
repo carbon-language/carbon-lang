@@ -258,6 +258,16 @@ public:
   /// checking. Should always return true.
   bool isLinkageValid() const;
 
+  /// \brief True if something has required us to compute the linkage
+  /// of this declaration.
+  ///
+  /// Language features which can retroactively change linkage (like a
+  /// typedef name for linkage purposes) may need to consider this,
+  /// but hopefully only in transitory ways during parsing.
+  bool hasLinkageBeenComputed() const {
+    return hasCachedLinkage();
+  }
+
   /// \brief Looks through UsingDecls and ObjCCompatibleAliasDecls for
   /// the underlying named decl.
   NamedDecl *getUnderlyingDecl() {

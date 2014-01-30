@@ -447,6 +447,10 @@ def ext_no_declarators : ExtWarn<"declaration does not declare anything">,
 def ext_typedef_without_a_name : ExtWarn<"typedef requires a name">,
   InGroup<MissingDeclarations>;
 def err_typedef_not_identifier : Error<"typedef name must be an identifier">;
+def err_typedef_changes_linkage : Error<"unsupported: typedef changes linkage"
+  " of anonymous type, but linkage was already computed">;
+def note_typedef_changes_linkage : Note<"use a tag name here to establish "
+  "linkage prior to definition">;
 def err_statically_allocated_object : Error<
   "interface type cannot be statically allocated">;
 def err_object_cannot_be_passed_returned_by_value : Error<
