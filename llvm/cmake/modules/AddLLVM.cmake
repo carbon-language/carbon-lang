@@ -12,21 +12,26 @@ function(llvm_update_compile_flags name)
     set(LLVM_REQUIRES_RTTI ON)
   else()
     if(LLVM_COMPILER_IS_GCC_COMPATIBLE)
-      set(target_compile_flags "${target_compile_flags} -fno-exceptions")
+      list(APPEND LLVM_COMPILE_FLAGS "-fno-exceptions")
     elseif(MSVC)
       list(APPEND LLVM_COMPILE_DEFINITIONS _HAS_EXCEPTIONS=0)
-      set(target_compile_flags "${target_compile_flags} /EHs-c-")
+      list(APPEND LLVM_COMPILE_FLAGS "/EHs-c-")
     endif()
   endif()
 
   if(NOT LLVM_REQUIRES_RTTI)
     list(APPEND LLVM_COMPILE_DEFINITIONS GTEST_HAS_RTTI=0)
     if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
-      set(target_compile_flags "${target_compile_flags} -fno-rtti")
+      list(APPEND LLVM_COMPILE_FLAGS "-fno-rtti")
     elseif (MSVC)
-      set(target_compile_flags "${target_compile_flags} /GR-")
+      list(APPEND LLVM_COMPILE_FLAGS "/GR-")
     endif ()
   endif()
+
+  # Assume that;
+  #   - LLVM_COMPILE_FLAGS is list.
+  #   - PROPERTY COMPILE_FLAGS is string.
+  string(REPLACE ";" " " target_compile_flags "${LLVM_COMPILE_FLAGS}")
 
   if(update_src_props)
     foreach(fn ${sources})
@@ -399,7 +404,7 @@ function(add_unittest test_suite test_name)
   endif ()
 
   if (SUPPORTS_NO_VARIADIC_MACROS_FLAG)
-    set(LLVM_COMPILE_FLAGS "-Wno-variadic-macros")
+    list(APPEND LLVM_COMPILE_FLAGS "-Wno-variadic-macros")
   endif ()
 
   set(LLVM_REQUIRES_RTTI OFF)
