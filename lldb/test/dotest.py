@@ -873,10 +873,13 @@ def setupSysPath():
     pluginPath = os.path.join(scriptPath, 'plugins')
     pexpectPath = os.path.join(scriptPath, 'pexpect-2.4')
 
-    # Append script dir, plugin dir, and pexpect dir to the sys.path.
+    # Put embedded pexpect at front of the load path so we ensure we
+    # use that version.
+    sys.path.insert(0, pexpectPath)
+
+    # Append script dir and plugin dir to the sys.path.
     sys.path.append(scriptPath)
     sys.path.append(pluginPath)
-    sys.path.append(pexpectPath)
 
     # This is our base name component.
     base = os.path.abspath(os.path.join(scriptPath, os.pardir))

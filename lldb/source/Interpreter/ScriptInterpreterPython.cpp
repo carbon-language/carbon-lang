@@ -352,11 +352,20 @@ ScriptInterpreterPython::LeaveSession ()
         if (sys_module_dict)
         {
             if (m_saved_stdin)
+            {
                 sys_module_dict.SetItemForKey("stdin", m_saved_stdin);
+                m_saved_stdin.Reset ();
+            }
             if (m_saved_stdout)
+            {
                 sys_module_dict.SetItemForKey("stdout", m_saved_stdout);
+                m_saved_stdout.Reset ();
+            }
             if (m_saved_stderr)
+            {
                 sys_module_dict.SetItemForKey("stderr", m_saved_stderr);
+                m_saved_stderr.Reset ();
+            }
         }
     }
 
@@ -422,8 +431,10 @@ ScriptInterpreterPython::EnterSession (bool init_lldb_globals,
         if (in)
         {
             m_saved_stdin.Reset(sys_module_dict.GetItemForKey("stdin"));
-            
-            sys_module_dict.SetItemForKey ("stdin", PyFile_FromFile (in, (char *) "", (char *) "r", 0));
+
+            PyObject *new_file = PyFile_FromFile (in, (char *) "", (char *) "r", 0);
+            sys_module_dict.SetItemForKey ("stdin", new_file);
+            Py_DECREF (new_file);
         }
         else
             m_saved_stdin.Reset();
@@ -433,7 +444,10 @@ ScriptInterpreterPython::EnterSession (bool init_lldb_globals,
         if (out)
         {
             m_saved_stdout.Reset(sys_module_dict.GetItemForKey("stdout"));
-            sys_module_dict.SetItemForKey ("stdout", PyFile_FromFile (out, (char *) "", (char *) "w", 0));
+
+            PyObject *new_file = PyFile_FromFile (out, (char *) "", (char *) "w", 0);
+            sys_module_dict.SetItemForKey ("stdout", new_file);
+            Py_DECREF (new_file);
         }
         else
             m_saved_stdout.Reset();
@@ -443,10 +457,13 @@ ScriptInterpreterPython::EnterSession (bool init_lldb_globals,
         if (err)
         {
             m_saved_stderr.Reset(sys_module_dict.GetItemForKey("stderr"));
-            sys_module_dict.SetItemForKey ("stderr", PyFile_FromFile (err, (char *) "", (char *) "w", 0));
+
+            PyObject *new_file = PyFile_FromFile (err, (char *) "", (char *) "w", 0);
+            sys_module_dict.SetItemForKey ("stderr", new_file);
+            Py_DECREF (new_file);
         }
         else
-            m_saved_stdout.Reset();
+            m_saved_stderr.Reset();
     }
 
     if (PyErr_Occurred())
