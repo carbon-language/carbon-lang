@@ -332,7 +332,6 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       // Emit the VBR.
       CurrentIdx += EmitVBRValue(ChildSize, OS);
 
-      OS << ' ';
       if (const SwitchOpcodeMatcher *SOM = dyn_cast<SwitchOpcodeMatcher>(N))
         OS << "TARGET_VAL(" << SOM->getCaseOpcode(i).getEnumName() << "),";
       else
@@ -809,7 +808,7 @@ void llvm::EmitMatcherTable(const Matcher *TheMatcher,
   OS << "  // this.\n";
   OS << "  #define TARGET_VAL(X) X & 255, unsigned(X) >> 8\n";
   OS << "  static const unsigned char MatcherTable[] = {\n";
-  unsigned TotalSize = MatcherEmitter.EmitMatcherList(TheMatcher, 5, 0, OS);
+  unsigned TotalSize = MatcherEmitter.EmitMatcherList(TheMatcher, 6, 0, OS);
   OS << "    0\n  }; // Total Array size is " << (TotalSize+1) << " bytes\n\n";
 
   MatcherEmitter.EmitHistogram(TheMatcher, OS);
