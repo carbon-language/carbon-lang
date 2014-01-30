@@ -3,9 +3,6 @@ RUN:         | FileCheck %s -check-prefix ELF-32
 RUN: llvm-nm -D %p/Inputs/shared-object-test.elf-x86-64 \
 RUN:         | FileCheck %s -check-prefix ELF-64
 
-; Note: tls_sym should be 'D' (not '?'), but TLS is not
-; yet recognized by ObjectFile.
-
 ELF-32: 0012c8 A __bss_start
 ELF-32: 0012c8 A _edata
 ELF-32: 0012cc A _end
