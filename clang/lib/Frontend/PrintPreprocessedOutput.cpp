@@ -342,6 +342,7 @@ void PrintPPOutputPPCallbacks::InclusionDirective(SourceLocation HashLoc,
     OS << "@import " << Imported->getFullModuleName() << ";"
        << " /* clang -E: implicit import for \"" << File->getName() << "\" */";
     EmittedTokensOnThisLine = true;
+    setEmittedDirectiveOnThisLine();
   }
 }
 
@@ -657,11 +658,9 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
       // -traditional-cpp the lexer keeps /all/ whitespace, including comments.
       SourceLocation StartLoc = Tok.getLocation();
       Callbacks->MoveToLine(StartLoc.getLocWithOffset(Tok.getLength()));
-    } else if (Tok.is(tok::annot_module_include) ||
-               Tok.is(tok::annot_module_begin) ||
-               Tok.is(tok::annot_module_end)) {
-      // PrintPPOutputPPCallbacks::InclusionDirective handles producing
-      // appropriate output here. Ignore this token entirely.
+    } else if (Tok.isAnnotation()) {
+      // PrintPPOutputPPCallbacks handles producing appropriate output here.
+      // Ignore this token entirely.
       PP.Lex(Tok);
       continue;
     } else if (IdentifierInfo *II = Tok.getIdentifierInfo()) {

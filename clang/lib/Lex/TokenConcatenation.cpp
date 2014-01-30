@@ -163,8 +163,8 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
     return false;
 
   tok::TokenKind PrevKind = PrevTok.getKind();
-  if (PrevTok.getIdentifierInfo())  // Language keyword or named operator.
-    PrevKind = tok::identifier;
+  if (!PrevTok.isAnnotation() && PrevTok.getIdentifierInfo())
+    PrevKind = tok::identifier; // Language keyword or named operator.
 
   // Look up information on when we should avoid concatenation with prevtok.
   unsigned ConcatInfo = TokenInfo[PrevKind];
@@ -212,7 +212,7 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
 
     // In C++11, a string or character literal followed by an identifier is a
     // single token.
-    if (Tok.getIdentifierInfo())
+    if (!Tok.isAnnotation() && Tok.getIdentifierInfo())
       return true;
 
     // A ud-suffix is an identifier. If the previous token ends with one, treat
@@ -224,6 +224,9 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
     // id+'.'... will not append.
     if (Tok.is(tok::numeric_constant))
       return GetFirstChar(PP, Tok) != '.';
+
+    if (Tok.isAnnotation()) // token will be put on its own line.
+      return false;
 
     if (Tok.getIdentifierInfo() || Tok.is(tok::wide_string_literal) ||
         Tok.is(tok::utf8_string_literal) || Tok.is(tok::utf16_string_literal) ||
