@@ -3695,11 +3695,6 @@ def MOVNTI_64mr : RI<0xC3, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                   TB, Requires<[HasSSE2]>;
 } // SchedRW = [WriteStore]
 
-def : Pat<(alignednontemporalstore (v2i64 VR128:$src), addr:$dst),
-          (VMOVNTDQmr addr:$dst, VR128:$src)>, Requires<[HasAVX]>;
-
-def : Pat<(alignednontemporalstore (v2i64 VR128:$src), addr:$dst),
-          (MOVNTDQmr addr:$dst, VR128:$src)>, Requires<[UseSSE2]>;
 } // AddedComplexity
 
 //===----------------------------------------------------------------------===//
