@@ -571,7 +571,7 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
                 int err = pipe(pipe_fds);
                 if (err == 0)
                 {
-                    std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor(pipe_fds[0], false));
+                    std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor(pipe_fds[0], true));
                     if (conn_ap->IsConnected())
                     {
                         output_comm.SetConnection(conn_ap.release());
@@ -654,13 +654,15 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
         
         if (pipe_fds[0] != -1)
         {
-            // Close write end of pipe so our communication thread exits
+            // Close the write end of the pipe since we are done with our
+            // one line script. This should cause the read thread that
+            // output_comm is using to exit
+            output_file_sp->GetFile().Close();
+            // The close above should cause this thread to exit when it gets
+            // to the end of file, so let it get all its data
+            output_comm.JoinReadThread();
+            // Now we can close the read end of the pipe
             output_comm.Disconnect();
-            output_comm.StopReadThread();
-            // Close the read end of the pipe and don't close the write end
-            // since we called fdopen on it and gave the ownership to the
-            // connection in "output_comm"
-            ::close (pipe_fds[0]);
         }
         
         
