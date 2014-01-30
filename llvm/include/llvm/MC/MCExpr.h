@@ -167,6 +167,7 @@ public:
     VK_ARM_PREL31,
     VK_ARM_TLSLDO,         // symbol(tlsldo)
     VK_ARM_TLSCALL,        // symbol(tlscall)
+    VK_ARM_TLSDESC,        // symbol(tlsdesc)
 
     VK_PPC_LO,             // symbol@l
     VK_PPC_HI,             // symbol@h

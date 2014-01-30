@@ -77,3 +77,9 @@ bl f05(plt)
 @ CHECK: 88 R_ARM_TLS_CALL f22
 @ CHECK: 92 R_ARM_TLS_CALL f23
 
+@ tlsdesc
+.word f24(TLSDESC)
+.word f25(tlsdesc)
+@ CHECK: 96 R_ARM_TLS_GOTDESC f24
+@ CHECK: 100 R_ARM_TLS_GOTDESC f25
+
