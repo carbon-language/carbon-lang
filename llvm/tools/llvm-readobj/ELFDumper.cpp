@@ -875,8 +875,8 @@ void ELFDumper<ELFType<support::little, 2, false> >::printAttributes() {
   }
 
   DictScope BA(W, "BuildAttributes");
-  for (typename ELFO::Elf_Shdr_Iter SI = Obj->begin_sections(),
-                                    SE = Obj->end_sections(); SI != SE; ++SI) {
+  for (ELFO::Elf_Shdr_Iter SI = Obj->begin_sections(), SE = Obj->end_sections();
+       SI != SE; ++SI) {
     if (SI->sh_type != ELF::SHT_ARM_ATTRIBUTES)
       continue;
 
