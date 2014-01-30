@@ -172,6 +172,19 @@ public:
     startLine() << Label << ": " << int(Value) << "\n";
   }
 
+  template <typename T_>
+  void printList(StringRef Label, const SmallVectorImpl<T_> &List) {
+    startLine() << Label << ": [";
+    bool Comma = false;
+    for (unsigned LI = 0, LE = List.size(); LI != LE; ++LI) {
+      if (Comma)
+        OS << ", ";
+      OS << List[LI];
+      Comma = true;
+    }
+    OS << "]\n";
+  }
+
   template<typename T>
   void printHex(StringRef Label, T Value) {
     startLine() << Label << ": " << hex(Value) << "\n";

@@ -13,12 +13,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-readobj.h"
+#include "ARMAttributeParser.h"
 #include "ARMEHABIPrinter.h"
 #include "Error.h"
 #include "ObjDumper.h"
 #include "StreamWriter.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Object/ELFObjectFile.h"
+#include "llvm/Support/ARMBuildAttributes.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MathExtras.h"
@@ -49,6 +52,8 @@ public:
   virtual void printDynamicTable() LLVM_OVERRIDE;
   virtual void printNeededLibraries() LLVM_OVERRIDE;
   virtual void printProgramHeaders() LLVM_OVERRIDE;
+
+  virtual void printAttributes() LLVM_OVERRIDE;
 
 private:
   typedef ELFFile<ELFT> ELFO;
@@ -855,3 +860,42 @@ void ELFDumper<ELFT>::printProgramHeaders() {
     W.printNumber("Alignment", PI->p_align);
   }
 }
+
+template <class ELFT>
+void ELFDumper<ELFT>::printAttributes() {
+  W.startLine() << "Attributes not implemented.\n";
+}
+
+namespace {
+template <>
+void ELFDumper<ELFType<support::little, 2, false> >::printAttributes() {
+  if (Obj->getHeader()->e_machine != EM_ARM) {
+    W.startLine() << "Attributes not implemented.\n";
+    return;
+  }
+
+  DictScope BA(W, "BuildAttributes");
+  for (typename ELFO::Elf_Shdr_Iter SI = Obj->begin_sections(),
+                                    SE = Obj->end_sections(); SI != SE; ++SI) {
+    if (SI->sh_type != ELF::SHT_ARM_ATTRIBUTES)
+      continue;
+
+    ErrorOr<ArrayRef<uint8_t> > Contents = Obj->getSectionContents(&(*SI));
+    if (!Contents)
+      continue;
+
+    if ((*Contents)[0] != ARMBuildAttrs::Format_Version) {
+      errs() << "unrecognised FormatVersion: 0x" << utohexstr((*Contents)[0])
+             << '\n';
+      continue;
+    }
+
+    W.printHex("FormatVersion", (*Contents)[0]);
+    if (Contents->size() == 1)
+      continue;
+
+    ARMAttributeParser(W).Parse(*Contents);
+  }
+}
+}
+

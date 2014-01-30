@@ -12,4 +12,5 @@ add_llvm_tool(llvm-readobj
   MachODumper.cpp
   Error.cpp
   StreamWriter.cpp
+  ARMAttributeParser.cpp
   )

@@ -129,6 +129,12 @@ namespace opts {
   // -codeview-linetables
   cl::opt<bool> CodeViewLineTables("codeview-linetables",
     cl::desc("Display CodeView line table information"));
+
+  // -arm-attributes, -a
+  cl::opt<bool> ARMAttributes("arm-attributes",
+                              cl::desc("Display the ARM attributes section"));
+  cl::alias ARMAttributesShort("-a", cl::desc("Alias for --arm-attributes"),
+                               cl::aliasopt(ARMAttributes));
 } // namespace opts
 
 static int ReturnValue = EXIT_SUCCESS;
@@ -227,6 +233,9 @@ static void dumpObject(const ObjectFile *Obj) {
     Dumper->printNeededLibraries();
   if (opts::ProgramHeaders)
     Dumper->printProgramHeaders();
+  if (Obj->getArch() == llvm::Triple::arm && Obj->isELF())
+    if (opts::ARMAttributes)
+      Dumper->printAttributes();
 }
 
 
