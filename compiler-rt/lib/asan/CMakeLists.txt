@@ -31,7 +31,7 @@ if (NOT MSVC)
 else()
   set(ASAN_CFLAGS
     ${SANITIZER_COMMON_CFLAGS}
-    /GR- /FS)
+    /GR-)
 endif()
 
 set(ASAN_COMMON_DEFINITIONS

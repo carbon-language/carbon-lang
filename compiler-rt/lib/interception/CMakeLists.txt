@@ -16,7 +16,7 @@ if (NOT MSVC)
 else()
   set(INTERCEPTION_CFLAGS
     ${SANITIZER_COMMON_CFLAGS}
-    /GR- /FS)
+    /GR-)
 endif()
 
 if(APPLE)

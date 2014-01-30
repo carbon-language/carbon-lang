@@ -94,7 +94,7 @@ if (NOT MSVC)
 else()
   set(SANITIZER_CFLAGS
     ${SANITIZER_COMMON_CFLAGS}
-    /GR- /FS)
+    /GR-)
 endif()
 
 if(SUPPORTS_GLOBAL_CONSTRUCTORS_FLAG)
