@@ -3081,6 +3081,79 @@ INTERCEPTOR(void *, __tls_get_addr, void *arg) {
 #define INIT_TLS_GET_ADDR
 #endif
 
+#if SANITIZER_INTERCEPT_LISTXATTR
+INTERCEPTOR(SSIZE_T, listxattr, const char *path, char *list, SIZE_T size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, listxattr, path, list, size);
+  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  SSIZE_T res = REAL(listxattr)(path, list, size);
+  // Here and below, size == 0 is a special case where nothing is written to the
+  // buffer, and res contains the desired buffer size.
+  if (size && res > 0 && list) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, list, res);
+  return res;
+}
+INTERCEPTOR(SSIZE_T, llistxattr, const char *path, char *list, SIZE_T size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, llistxattr, path, list, size);
+  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  SSIZE_T res = REAL(llistxattr)(path, list, size);
+  if (size && res > 0 && list) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, list, res);
+  return res;
+}
+INTERCEPTOR(SSIZE_T, flistxattr, int fd, char *list, SIZE_T size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, flistxattr, fd, list, size);
+  SSIZE_T res = REAL(flistxattr)(fd, list, size);
+  if (size && res > 0 && list) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, list, res);
+  return res;
+}
+#define INIT_LISTXATTR                   \
+  COMMON_INTERCEPT_FUNCTION(listxattr);  \
+  COMMON_INTERCEPT_FUNCTION(llistxattr); \
+  COMMON_INTERCEPT_FUNCTION(flistxattr);
+#else
+#define INIT_LISTXATTR
+#endif
+
+#if SANITIZER_INTERCEPT_GETXATTR
+INTERCEPTOR(SSIZE_T, getxattr, const char *path, const char *name, char *value,
+            SIZE_T size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getxattr, path, name, value, size);
+  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  if (name) COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
+  SSIZE_T res = REAL(getxattr)(path, name, value, size);
+  if (size && res > 0 && value) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, value, res);
+  return res;
+}
+INTERCEPTOR(SSIZE_T, lgetxattr, const char *path, const char *name, char *value,
+            SIZE_T size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, lgetxattr, path, name, value, size);
+  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  if (name) COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
+  SSIZE_T res = REAL(lgetxattr)(path, name, value, size);
+  if (size && res > 0 && value) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, value, res);
+  return res;
+}
+INTERCEPTOR(SSIZE_T, fgetxattr, int fd, const char *name, char *value,
+            SIZE_T size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fgetxattr, fd, name, value, size);
+  if (name) COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
+  SSIZE_T res = REAL(fgetxattr)(fd, name, value, size);
+  if (size && res > 0 && value) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, value, res);
+  return res;
+}
+#define INIT_GETXATTR                   \
+  COMMON_INTERCEPT_FUNCTION(getxattr);  \
+  COMMON_INTERCEPT_FUNCTION(lgetxattr); \
+  COMMON_INTERCEPT_FUNCTION(fgetxattr);
+#else
+#define INIT_GETXATTR
+#endif
+
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
@@ -3197,4 +3270,6 @@ INTERCEPTOR(void *, __tls_get_addr, void *arg) {
   INIT_ICONV;                              \
   INIT_TIMES;                              \
   INIT_TLS_GET_ADDR;                       \
+  INIT_LISTXATTR;                          \
+  INIT_GETXATTR;
 /**/

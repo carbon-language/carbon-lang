@@ -1004,8 +1004,8 @@ PRE_SYSCALL(getxattr)(const void *path, const void *name, void *value,
 
 POST_SYSCALL(getxattr)(long res, const void *path, const void *name,
                        void *value, long size) {
-  if (res >= 0) {
-    if (value) POST_WRITE(value, size);
+  if (size && res > 0) {
+    if (value) POST_WRITE(value, res);
   }
 }
 
@@ -1019,8 +1019,8 @@ PRE_SYSCALL(lgetxattr)(const void *path, const void *name, void *value,
 
 POST_SYSCALL(lgetxattr)(long res, const void *path, const void *name,
                         void *value, long size) {
-  if (res >= 0) {
-    if (value) POST_WRITE(value, size);
+  if (size && res > 0) {
+    if (value) POST_WRITE(value, res);
   }
 }
 
@@ -1031,8 +1031,8 @@ PRE_SYSCALL(fgetxattr)(long fd, const void *name, void *value, long size) {
 
 POST_SYSCALL(fgetxattr)(long res, long fd, const void *name, void *value,
                         long size) {
-  if (res >= 0) {
-    if (value) POST_WRITE(value, size);
+  if (size && res > 0) {
+    if (value) POST_WRITE(value, res);
   }
 }
 
@@ -1042,8 +1042,8 @@ PRE_SYSCALL(listxattr)(const void *path, void *list, long size) {
 }
 
 POST_SYSCALL(listxattr)(long res, const void *path, void *list, long size) {
-  if (res >= 0) {
-    if (list) POST_WRITE(list, size);
+  if (size && res > 0) {
+    if (list) POST_WRITE(list, res);
   }
 }
 
@@ -1053,16 +1053,16 @@ PRE_SYSCALL(llistxattr)(const void *path, void *list, long size) {
 }
 
 POST_SYSCALL(llistxattr)(long res, const void *path, void *list, long size) {
-  if (res >= 0) {
-    if (list) POST_WRITE(list, size);
+  if (size && res > 0) {
+    if (list) POST_WRITE(list, res);
   }
 }
 
 PRE_SYSCALL(flistxattr)(long fd, void *list, long size) {}
 
 POST_SYSCALL(flistxattr)(long res, long fd, void *list, long size) {
-  if (res >= 0) {
-    if (list) POST_WRITE(list, size);
+  if (size && res > 0) {
+    if (list) POST_WRITE(list, res);
   }
 }
 
