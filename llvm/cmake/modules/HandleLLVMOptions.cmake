@@ -362,7 +362,7 @@ endif()
 
 if(MSVC)
   # Remove flags here, for exceptions and RTTI.
-  # Each target property of source proerty should be responsible to control them.
+  # Each target property or source proerty should be responsible to control them.
   # CL.EXE complains to override flags like "/GR /GR-".
   string(REGEX REPLACE "(^| ) */EH[-cs]+ *( |$)" "\\1 \\2" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   string(REGEX REPLACE "(^| ) */GR-? *( |$)" "\\1 \\2" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
