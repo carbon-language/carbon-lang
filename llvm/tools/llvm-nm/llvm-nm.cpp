@@ -215,15 +215,15 @@ static void sortAndPrintSymbolList() {
     char SymbolAddrStr[10] = "";
     char SymbolSizeStr[10] = "";
 
-    if (OutputFormat == sysv || I->Address == object::UnknownAddressOrSize)
+    if (OutputFormat == sysv || I->Address == UnknownAddressOrSize)
       strcpy(SymbolAddrStr, "        ");
     if (OutputFormat == sysv)
       strcpy(SymbolSizeStr, "        ");
 
-    if (I->Address != object::UnknownAddressOrSize)
+    if (I->Address != UnknownAddressOrSize)
       format("%08" PRIx64, I->Address)
           .print(SymbolAddrStr, sizeof(SymbolAddrStr));
-    if (I->Size != object::UnknownAddressOrSize)
+    if (I->Size != UnknownAddressOrSize)
       format("%08" PRIx64, I->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
 
     if (OutputFormat == posix) {
@@ -234,7 +234,7 @@ static void sortAndPrintSymbolList() {
         outs() << SymbolAddrStr << ' ';
       if (PrintSize) {
         outs() << SymbolSizeStr;
-        if (I->Size != object::UnknownAddressOrSize)
+        if (I->Size != UnknownAddressOrSize)
           outs() << ' ';
       }
       outs() << I->TypeChar << " " << I->Name << "\n";
@@ -287,8 +287,8 @@ static void dumpSymbolNameForGlobalValue(GlobalValue &GV) {
     return;
 
   NMSymbol S;
-  S.Address = object::UnknownAddressOrSize;
-  S.Size = object::UnknownAddressOrSize;
+  S.Address = UnknownAddressOrSize;
+  S.Size = UnknownAddressOrSize;
   S.TypeChar = TypeChar;
   S.Name = GV.getName();
   SymbolList.push_back(S);
@@ -567,8 +567,8 @@ static void dumpSymbolNamesFromObject(ObjectFile *Obj) {
     if (!DebugSyms && (SymFlags & SymbolRef::SF_FormatSpecific))
       continue;
     NMSymbol S;
-    S.Size = object::UnknownAddressOrSize;
-    S.Address = object::UnknownAddressOrSize;
+    S.Size = UnknownAddressOrSize;
+    S.Address = UnknownAddressOrSize;
     if (PrintSize || SizeSort) {
       if (error(I->getSize(S.Size)))
         break;
@@ -606,20 +606,19 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
     return;
   }
 
-  ErrorOr<Binary *> BinaryOrErr = object::createBinary(Buffer.take(), Magic);
+  ErrorOr<Binary *> BinaryOrErr = createBinary(Buffer.take(), Magic);
   if (error(BinaryOrErr.getError(), Filename))
     return;
   OwningPtr<Binary> Bin(BinaryOrErr.get());
 
-  if (object::Archive *A = dyn_cast<object::Archive>(Bin.get())) {
+  if (Archive *A = dyn_cast<Archive>(Bin.get())) {
     if (ArchiveMap) {
-      object::Archive::symbol_iterator I = A->symbol_begin();
-      object::Archive::symbol_iterator E = A->symbol_end();
+      Archive::symbol_iterator I = A->symbol_begin();
+      Archive::symbol_iterator E = A->symbol_end();
       if (I != E) {
-        outs() << "Archive map"
-               << "\n";
+        outs() << "Archive map\n";
         for (; I != E; ++I) {
-          object::Archive::child_iterator C;
+          Archive::child_iterator C;
           StringRef SymName;
           StringRef FileName;
           if (error(I->getMember(C)))
@@ -634,8 +633,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
       }
     }
 
-    for (object::Archive::child_iterator I = A->child_begin(),
-                                         E = A->child_end();
+    for (Archive::child_iterator I = A->child_begin(), E = A->child_end();
          I != E; ++I) {
       OwningPtr<Binary> Child;
       if (I->getAsBinary(Child)) {
@@ -652,17 +650,17 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
         }
         continue;
       }
-      if (object::ObjectFile *O = dyn_cast<ObjectFile>(Child.get())) {
+      if (ObjectFile *O = dyn_cast<ObjectFile>(Child.get())) {
         outs() << O->getFileName() << ":\n";
         dumpSymbolNamesFromObject(O);
       }
     }
     return;
   }
-  if (object::MachOUniversalBinary *UB =
+  if (MachOUniversalBinary *UB =
           dyn_cast<object::MachOUniversalBinary>(Bin.get())) {
-    for (object::MachOUniversalBinary::object_iterator I = UB->begin_objects(),
-                                                       E = UB->end_objects();
+    for (MachOUniversalBinary::object_iterator I = UB->begin_objects(),
+                                               E = UB->end_objects();
          I != E; ++I) {
       OwningPtr<ObjectFile> Obj;
       if (!I->getAsObjectFile(Obj)) {
@@ -672,7 +670,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
     }
     return;
   }
-  if (object::ObjectFile *O = dyn_cast<ObjectFile>(Bin.get())) {
+  if (ObjectFile *O = dyn_cast<ObjectFile>(Bin.get())) {
     dumpSymbolNamesFromObject(O);
     return;
   }
