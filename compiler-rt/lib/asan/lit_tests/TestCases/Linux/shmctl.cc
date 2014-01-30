@@ -15,4 +15,10 @@ int main() {
   printf("shm_segsz: %zd\n", ds.shm_segsz);
   assert(ds.shm_segsz == 4096);
   assert(-1 != shmctl(id, IPC_RMID, 0));
+
+  struct shm_info shmInfo;
+  res = shmctl(0, SHM_INFO, (struct shmid_ds *)&shmInfo);
+  assert(res > -1);
+  
+  return 0;
 }

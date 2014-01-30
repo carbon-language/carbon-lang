@@ -193,7 +193,7 @@ namespace __sanitizer {
   int shmctl_ipc_stat = (int)IPC_STAT;
   int shmctl_ipc_info = (int)IPC_INFO;
   int shmctl_shm_info = (int)SHM_INFO;
-  int shmctl_shm_stat = (int)SHM_INFO;
+  int shmctl_shm_stat = (int)SHM_STAT;
 #endif
 
   int map_fixed = MAP_FIXED;
