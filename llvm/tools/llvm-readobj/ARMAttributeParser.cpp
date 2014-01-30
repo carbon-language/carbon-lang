@@ -321,7 +321,7 @@ void ARMAttributeParser::ABI_align_needed(AttrType Tag, const uint8_t *Data,
   if (Value < countof(Strings))
     Description = StringRef(Strings[Value]);
   else if (Value <= 12)
-    Description = Twine("8-byte alignment, ") + utostr(exp2(Value))
+    Description = Twine("8-byte alignment, ") + utostr(1 << Value)
                 + Twine("-byte extended alignment");
   else
     Description = "Invalid";
@@ -342,7 +342,7 @@ void ARMAttributeParser::ABI_align_preserved(AttrType Tag, const uint8_t *Data,
   if (Value < countof(Strings))
     Description = StringRef(Strings[Value]);
   else if (Value <= 12)
-    Description = Twine("8-byte stack alignment, ") + utostr(exp2(Value))
+    Description = Twine("8-byte stack alignment, ") + utostr(1 << Value)
                 + Twine("-byte data alignment");
   else
     Description = "Invalid";
