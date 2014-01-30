@@ -2178,8 +2178,7 @@ public:
   llvm::Value *EmitAArch64BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   llvm::Value *EmitARMBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   llvm::Value *EmitCommonNeonBuiltinExpr(unsigned BuiltinID, const CallExpr *E,
-                                         SmallVectorImpl<llvm::Value *> &Ops,
-                                         llvm::VectorType *VTy);
+                                         SmallVectorImpl<llvm::Value *> &Ops);
   llvm::Value *EmitNeonCall(llvm::Function *F,
                             SmallVectorImpl<llvm::Value*> &O,
                             const char *name,
