@@ -630,7 +630,21 @@ Editline::GetCharFromInputFileCallback (EditLine *e, char *c)
     if (editline && editline->m_got_eof == false)
     {
         char ch = ::fgetc(editline->GetInputFile());
-        if (ch == '\x04' || ch == EOF)
+        if (ch == '\x04')
+        {
+            // Only turn a CTRL+D into a EOF if we receive the
+            // CTRL+D an empty line, otherwise it will forward
+            // delete the character at the cursor
+            const LineInfo *line_info = ::el_line(e);
+            if (line_info != NULL &&
+                line_info->buffer == line_info->cursor &&
+                line_info->cursor == line_info->lastchar)
+            {
+                ch = EOF;
+            }
+        }
+    
+        if (ch == EOF)
         {
             editline->m_got_eof = true;
         }
