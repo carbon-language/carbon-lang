@@ -331,6 +331,7 @@ static error_code getSymbolNMTypeChar(ELFObjectFile<ELFT> &Obj,
       case(ELF::SHF_ALLOC | ELF::SHF_EXECINSTR) :
         Ret = 't';
         break;
+      case(ELF::SHF_TLS | ELF::SHF_ALLOC | ELF::SHF_WRITE) :
       case(ELF::SHF_ALLOC | ELF::SHF_WRITE) :
         Ret = 'd';
         break;

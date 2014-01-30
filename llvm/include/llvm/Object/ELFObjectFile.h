@@ -295,6 +295,7 @@ error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
   case ELF::STT_FUNC:
   case ELF::STT_OBJECT:
   case ELF::STT_NOTYPE:
+  case ELF::STT_TLS:
     bool IsRelocatable;
     switch (EF.getHeader()->e_type) {
     case ELF::ET_EXEC:
