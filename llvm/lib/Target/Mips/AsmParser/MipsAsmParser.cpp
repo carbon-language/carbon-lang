@@ -1246,7 +1246,7 @@ MipsAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand *> &Operands,
       return false;
     }
     // Look for the existing symbol, we should check if
-    // we need to assigne the proper RegisterKind.
+    // we need to assign the proper RegisterKind.
     if (searchSymbolAlias(Operands, MipsOperand::Kind_None))
       return false;
   // Else drop to expression parsing.
