@@ -4,7 +4,37 @@
 
 ; CHECK-LABEL:  .section  __LLVM_STACKMAPS,__llvm_stackmaps
 ; CHECK-NEXT:  __LLVM_StackMaps:
-; CHECK-NEXT:   .long   0
+; CHECK-NEXT:   .long 0
+; Num Functions
+; CHECK-NEXT:   .long 14
+; CHECK-NEXT:   .long _constantargs
+; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _osrinline
+; CHECK-NEXT:   .long 24
+; CHECK-NEXT:   .long _osrcold
+; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _propertyRead
+; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _propertyWrite
+; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _jsVoidCall
+; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _jsIntCall
+; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _spilledValue
+; CHECK-NEXT:   .long 56
+; CHECK-NEXT:   .long _spilledStackMapValue
+; CHECK-NEXT:   .long 56
+; CHECK-NEXT:   .long _spillSubReg
+; CHECK-NEXT:   .long 56
+; CHECK-NEXT:   .long _subRegOffset
+; CHECK-NEXT:   .long 56
+; CHECK-NEXT:   .long _liveConstant
+; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _directFrameIdx
+; CHECK-NEXT:   .long 56
+; CHECK-NEXT:   .long _longid
+; CHECK-NEXT:   .long 8
 ; Num LargeConstants
 ; CHECK-NEXT:   .long   3
 ; CHECK-NEXT:   .quad   2147483648

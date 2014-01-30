@@ -1,13 +1,31 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -disable-fp-elim | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=corei7     | FileCheck --check-prefix=SSE %s
-; RUN: llc < %s -march=x86-64 -mcpu=corei7-avx | FileCheck --check-prefix=AVX %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin                  -disable-fp-elim | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7     -disable-fp-elim | FileCheck --check-prefix=SSE %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -disable-fp-elim | FileCheck --check-prefix=AVX %s
 
 
 ; Stackmap Header: no constants - 6 callsites
-; CHECK-LABEL: .section	__LLVM_STACKMAPS,__llvm_stackmaps
-; CHECK-NEXT:  __LLVM_StackMaps:
+; CHECK-LABEL:  .section __LLVM_STACKMAPS,__llvm_stackmaps
+; CHECK-NEXT:   __LLVM_StackMaps:
 ; Header
-; CHECK-NEXT:   .long   0
+; CHECK-NEXT:   .long 0
+; Num Functions
+; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _test
+; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _property_access1
+; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _property_access2
+; CHECK-NEXT:   .long 24
+; CHECK-NEXT:   .long _property_access3
+; CHECK-NEXT:   .long 24
+; CHECK-NEXT:   .long _anyreg_test1
+; CHECK-NEXT:   .long 56
+; CHECK-NEXT:   .long _anyreg_test2
+; CHECK-NEXT:   .long 56
+; CHECK-NEXT:   .long _patchpoint_spilldef
+; CHECK-NEXT:   .long 56
+; CHECK-NEXT:   .long _patchpoint_spillargs
+; CHECK-NEXT:   .long 88
 ; Num Constants
 ; CHECK-NEXT:   .long   0
 ; Num Callsites
@@ -343,8 +361,8 @@ entry:
 define anyregcc void @anyregcc1() {
 entry:
 ;SSE-LABEL: anyregcc1
-;SSE:      pushq %rax
 ;SSE:      pushq %rbp
+;SSE:      pushq %rax
 ;SSE:      pushq %r15
 ;SSE:      pushq %r14
 ;SSE:      pushq %r13
@@ -375,8 +393,8 @@ entry:
 ;SSE-NEXT: movaps %xmm1
 ;SSE-NEXT: movaps %xmm0
 ;AVX-LABEL:anyregcc1
-;AVX:      pushq %rax
 ;AVX:      pushq %rbp
+;AVX:      pushq %rax
 ;AVX:      pushq %r15
 ;AVX:      pushq %r14
 ;AVX:      pushq %r13
@@ -390,22 +408,22 @@ entry:
 ;AVX:      pushq %rdx
 ;AVX:      pushq %rcx
 ;AVX:      pushq %rbx
-;AVX:      vmovups %ymm15
-;AVX-NEXT: vmovups %ymm14
-;AVX-NEXT: vmovups %ymm13
-;AVX-NEXT: vmovups %ymm12
-;AVX-NEXT: vmovups %ymm11
-;AVX-NEXT: vmovups %ymm10
-;AVX-NEXT: vmovups %ymm9
-;AVX-NEXT: vmovups %ymm8
-;AVX-NEXT: vmovups %ymm7
-;AVX-NEXT: vmovups %ymm6
-;AVX-NEXT: vmovups %ymm5
-;AVX-NEXT: vmovups %ymm4
-;AVX-NEXT: vmovups %ymm3
-;AVX-NEXT: vmovups %ymm2
-;AVX-NEXT: vmovups %ymm1
-;AVX-NEXT: vmovups %ymm0
+;AVX:      vmovaps %ymm15
+;AVX-NEXT: vmovaps %ymm14
+;AVX-NEXT: vmovaps %ymm13
+;AVX-NEXT: vmovaps %ymm12
+;AVX-NEXT: vmovaps %ymm11
+;AVX-NEXT: vmovaps %ymm10
+;AVX-NEXT: vmovaps %ymm9
+;AVX-NEXT: vmovaps %ymm8
+;AVX-NEXT: vmovaps %ymm7
+;AVX-NEXT: vmovaps %ymm6
+;AVX-NEXT: vmovaps %ymm5
+;AVX-NEXT: vmovaps %ymm4
+;AVX-NEXT: vmovaps %ymm3
+;AVX-NEXT: vmovaps %ymm2
+;AVX-NEXT: vmovaps %ymm1
+;AVX-NEXT: vmovaps %ymm0
   call void asm sideeffect "", "~{rax},~{rbx},~{rcx},~{rdx},~{rsi},~{rdi},~{r8},~{r9},~{r10},~{r11},~{r12},~{r13},~{r14},~{r15},~{rbp},~{xmm0},~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15}"()
   ret void
 }

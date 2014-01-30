@@ -11,6 +11,8 @@
 
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCContext.h"
@@ -216,12 +218,19 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
     }
   }
 
+  // Create an expression to calculate the offset of the callsite from function
+  // entry.
   const MCExpr *CSOffsetExpr = MCBinaryExpr::CreateSub(
     MCSymbolRefExpr::Create(MILabel, OutContext),
     MCSymbolRefExpr::Create(AP.CurrentFnSym, OutContext),
     OutContext);
 
   CSInfos.push_back(CallsiteInfo(CSOffsetExpr, ID, Locations, LiveOuts));
+
+  // Record the stack size of the current function.
+  const MachineFrameInfo *MFI = AP.MF->getFrameInfo();
+  FnStackSize[AP.CurrentFnSym] =
+    MFI->hasVarSizedObjects() ? ~0U : MFI->getStackSize();
 }
 
 void StackMaps::recordStackMap(const MachineInstr &MI) {
@@ -258,6 +267,11 @@ void StackMaps::recordPatchPoint(const MachineInstr &MI) {
 /// serializeToStackMapSection conceptually populates the following fields:
 ///
 /// uint32 : Reserved (header)
+/// uint32 : NumFunctions
+/// StkSizeRecord[NumFunctions] {
+///   uint32 : Function Offset
+///   uint32 : Stack Size
+/// }
 /// uint32 : NumConstants
 /// int64  : Constants[NumConstants]
 /// uint32 : NumRecords
@@ -312,6 +326,16 @@ void StackMaps::serializeToStackMapSection() {
 
   // Header.
   AP.OutStreamer.EmitIntValue(0, 4);
+
+  // Num functions.
+  AP.OutStreamer.EmitIntValue(FnStackSize.size(), 4);
+
+  // Stack size entries.
+  for (FnStackSizeMap::iterator I = FnStackSize.begin(), E = FnStackSize.end();
+       I != E; ++I) {
+    AP.EmitLabelReference(I->first, 4, true);
+    AP.OutStreamer.EmitIntValue(I->second, 4);
+  }
 
   // Num constants.
   AP.OutStreamer.EmitIntValue(ConstPool.getNumConstants(), 4);
