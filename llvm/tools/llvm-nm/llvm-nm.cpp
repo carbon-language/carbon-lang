@@ -44,11 +44,7 @@ using namespace llvm;
 using namespace object;
 
 namespace {
-enum OutputFormatTy {
-  bsd,
-  sysv,
-  posix
-};
+enum OutputFormatTy { bsd, sysv, posix };
 cl::opt<OutputFormatTy> OutputFormat(
     "format", cl::desc("Specify output format"),
     cl::values(clEnumVal(bsd, "BSD format"), clEnumVal(sysv, "System V format"),
@@ -581,67 +577,64 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
       dumpSymbolNamesFromModule(Result);
       delete Result;
     }
-  } else if (Magic == sys::fs::file_magic::archive) {
-    ErrorOr<Binary *> BinaryOrErr = object::createBinary(Buffer.take(), Magic);
-    if (error(BinaryOrErr.getError(), Filename))
-      return;
-    OwningPtr<Binary> Arch(BinaryOrErr.get());
+    return;
+  }
 
-    if (object::Archive *A = dyn_cast<object::Archive>(Arch.get())) {
-      if (ArchiveMap) {
-        object::Archive::symbol_iterator I = A->symbol_begin();
-        object::Archive::symbol_iterator E = A->symbol_end();
-        if (I != E) {
-          outs() << "Archive map"
-                 << "\n";
-          for (; I != E; ++I) {
-            object::Archive::child_iterator C;
-            StringRef SymName;
-            StringRef FileName;
-            if (error(I->getMember(C)))
-              return;
-            if (error(I->getName(SymName)))
-              return;
-            if (error(C->getName(FileName)))
-              return;
-            outs() << SymName << " in " << FileName << "\n";
-          }
-          outs() << "\n";
-        }
-      }
+  ErrorOr<Binary *> BinaryOrErr = object::createBinary(Buffer.take(), Magic);
+  if (error(BinaryOrErr.getError(), Filename))
+    return;
+  OwningPtr<Binary> Bin(BinaryOrErr.get());
 
-      for (object::Archive::child_iterator I = A->child_begin(),
-                                           E = A->child_end();
-           I != E; ++I) {
-        OwningPtr<Binary> Child;
-        if (I->getAsBinary(Child)) {
-          // Try opening it as a bitcode file.
-          OwningPtr<MemoryBuffer> Buff;
-          if (error(I->getMemoryBuffer(Buff)))
+  if (object::Archive *A = dyn_cast<object::Archive>(Bin.get())) {
+    if (ArchiveMap) {
+      object::Archive::symbol_iterator I = A->symbol_begin();
+      object::Archive::symbol_iterator E = A->symbol_end();
+      if (I != E) {
+        outs() << "Archive map"
+               << "\n";
+        for (; I != E; ++I) {
+          object::Archive::child_iterator C;
+          StringRef SymName;
+          StringRef FileName;
+          if (error(I->getMember(C)))
             return;
-
-          ErrorOr<Module *> ModuleOrErr = parseBitcodeFile(Buff.get(), Context);
-          if (ModuleOrErr) {
-            Module *Result = ModuleOrErr.get();
-            dumpSymbolNamesFromModule(Result);
-            delete Result;
-          }
-          continue;
+          if (error(I->getName(SymName)))
+            return;
+          if (error(C->getName(FileName)))
+            return;
+          outs() << SymName << " in " << FileName << "\n";
         }
-        if (object::ObjectFile *O = dyn_cast<ObjectFile>(Child.get())) {
-          outs() << O->getFileName() << ":\n";
-          dumpSymbolNamesFromObject(O);
-        }
+        outs() << "\n";
       }
     }
-  } else if (Magic == sys::fs::file_magic::macho_universal_binary) {
-    ErrorOr<Binary *> BinaryOrErr = object::createBinary(Buffer.take(), Magic);
-    if (error(BinaryOrErr.getError(), Filename))
-      return;
-    OwningPtr<Binary> Bin(BinaryOrErr.get());
 
-    object::MachOUniversalBinary *UB =
-        cast<object::MachOUniversalBinary>(Bin.get());
+    for (object::Archive::child_iterator I = A->child_begin(),
+                                         E = A->child_end();
+         I != E; ++I) {
+      OwningPtr<Binary> Child;
+      if (I->getAsBinary(Child)) {
+        // Try opening it as a bitcode file.
+        OwningPtr<MemoryBuffer> Buff;
+        if (error(I->getMemoryBuffer(Buff)))
+          return;
+
+        ErrorOr<Module *> ModuleOrErr = parseBitcodeFile(Buff.get(), Context);
+        if (ModuleOrErr) {
+          Module *Result = ModuleOrErr.get();
+          dumpSymbolNamesFromModule(Result);
+          delete Result;
+        }
+        continue;
+      }
+      if (object::ObjectFile *O = dyn_cast<ObjectFile>(Child.get())) {
+        outs() << O->getFileName() << ":\n";
+        dumpSymbolNamesFromObject(O);
+      }
+    }
+    return;
+  }
+  if (object::MachOUniversalBinary *UB =
+          dyn_cast<object::MachOUniversalBinary>(Bin.get())) {
     for (object::MachOUniversalBinary::object_iterator I = UB->begin_objects(),
                                                        E = UB->end_objects();
          I != E; ++I) {
@@ -651,17 +644,14 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
         dumpSymbolNamesFromObject(Obj.get());
       }
     }
-  } else if (Magic.is_object()) {
-    ErrorOr<Binary *> BinaryOrErr = object::createBinary(Buffer.take(), Magic);
-    if (error(BinaryOrErr.getError(), Filename))
-      return;
-    OwningPtr<Binary> Obj(BinaryOrErr.get());
-    if (object::ObjectFile *O = dyn_cast<ObjectFile>(Obj.get()))
-      dumpSymbolNamesFromObject(O);
-  } else {
-    error("unrecognizable file type", Filename);
     return;
   }
+  if (object::ObjectFile *O = dyn_cast<ObjectFile>(Bin.get())) {
+    dumpSymbolNamesFromObject(O);
+    return;
+  }
+  error("unrecognizable file type", Filename);
+  return;
 }
 
 int main(int argc, char **argv) {
