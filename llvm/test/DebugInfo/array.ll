@@ -1,4 +1,4 @@
-; RUN: llc -O0 < %s | FileCheck %s
+; RUN: %llc_dwarf -O0 < %s | FileCheck %s
 ; Do not emit AT_upper_bound for an unbounded array.
 ; radar 9241695
 define i32 @main() nounwind ssp {

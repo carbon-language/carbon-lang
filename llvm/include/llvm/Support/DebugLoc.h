@@ -89,6 +89,12 @@ namespace llvm {
     void getScopeAndInlinedAt(MDNode *&Scope, MDNode *&IA,
                               const LLVMContext &Ctx) const;
 
+    /// getScopeNode - Get MDNode for DebugLoc's scope, or null if invalid.
+    MDNode *getScopeNode(const LLVMContext &Ctx) const;
+
+    // getFnDebugLoc - Walk up the scope chain of given debug loc and find line
+    // number info for the function.
+    DebugLoc getFnDebugLoc(const LLVMContext &Ctx);
 
     /// getAsMDNode - This method converts the compressed DebugLoc node into a
     /// DILocation compatible MDNode.

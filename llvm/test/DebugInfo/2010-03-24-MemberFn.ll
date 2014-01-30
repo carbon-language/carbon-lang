@@ -1,4 +1,4 @@
-; RUN: llc -O0 < %s | grep AT_decl_file |  grep 2
+; RUN: %llc_dwarf -O0 < %s | grep AT_decl_file |  grep 2
 ; Here _ZN1S3fooEv is defined in header file identified as AT_decl_file no. 2 in debug info.
 %struct.S = type <{ i8 }>
 

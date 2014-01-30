@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: llc -filetype=obj < %s > %t
+; RUN: %llc_dwarf -filetype=obj < %s > %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
 ; IR generated from clang -O -g with the following source

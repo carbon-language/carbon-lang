@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: llc -filetype=obj -O0 < %s > %t
+; RUN: %llc_dwarf -filetype=obj -O0 < %s > %t
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 ; CHECK: [[TYPE:.*]]: DW_TAG_structure_type
 ; Make sure we correctly handle containing type of a struct being a type identifier.

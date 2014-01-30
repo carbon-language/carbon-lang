@@ -1,7 +1,7 @@
 ; REQUIRES: object-emission
 ; XFAIL: hexagon
 
-; RUN: llc -filetype=obj -O0 < %s > %t
+; RUN: %llc_dwarf -filetype=obj -O0 < %s > %t
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 ; CHECK: DW_TAG_ptr_to_member_type
 ; CHECK: DW_TAG_ptr_to_member_type

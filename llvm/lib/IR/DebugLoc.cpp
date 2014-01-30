@@ -70,6 +70,26 @@ void DebugLoc::getScopeAndInlinedAt(MDNode *&Scope, MDNode *&IA,
   IA    = Ctx.pImpl->ScopeInlinedAtRecords[-ScopeIdx-1].second.get();
 }
 
+MDNode *DebugLoc::getScopeNode(const LLVMContext &Ctx) const {
+  if (MDNode *InlinedAt = getInlinedAt(Ctx))
+    return DebugLoc::getFromDILocation(InlinedAt).getScopeNode(Ctx);
+  return getScope(Ctx);
+}
+
+DebugLoc DebugLoc::getFnDebugLoc(const LLVMContext &Ctx) {
+  const MDNode *Scope = getScopeNode(Ctx);
+  DISubprogram SP = getDISubprogram(Scope);
+  if (SP.isSubprogram()) {
+    // Check for number of operands since the compatibility is
+    // cheap here.  FIXME: Name the magic constant.
+    if (SP->getNumOperands() > 19)
+      return DebugLoc::get(SP.getScopeLineNumber(), 0, SP);
+    else
+      return DebugLoc::get(SP.getLineNumber(), 0, SP);
+  }
+
+  return DebugLoc();
+}
 
 DebugLoc DebugLoc::get(unsigned Line, unsigned Col,
                        MDNode *Scope, MDNode *InlinedAt) {

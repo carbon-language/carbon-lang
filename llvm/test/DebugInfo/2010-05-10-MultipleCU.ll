@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: llc -O0 -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: %llc_dwarf -O0 -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
 
 ; Check that two compile units are generated
 

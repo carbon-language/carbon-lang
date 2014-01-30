@@ -1,5 +1,5 @@
-; RUN: llc -O0 < %s | FileCheck %s -check-prefix ARGUMENT
-; RUN: llc -O0 < %s | FileCheck %s -check-prefix VARIABLE
+; RUN: %llc_dwarf -O0 < %s | FileCheck %s -check-prefix ARGUMENT
+; RUN: %llc_dwarf -O0 < %s | FileCheck %s -check-prefix VARIABLE
 ; PR 13202
 
 define i32 @main() uwtable {

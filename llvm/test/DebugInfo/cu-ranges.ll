@@ -1,5 +1,5 @@
 ; REQUIRES: object-emission
-; RUN: llc -O0 -filetype=obj -generate-dwarf-cu-ranges %s -o %t
+; RUN: %llc_dwarf -O0 -filetype=obj -generate-dwarf-cu-ranges %s -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
 ; Check that we emit ranges for this when the -generate-dwarf-cu-ranges flag is passed.

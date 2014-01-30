@@ -1,4 +1,4 @@
-; RUN: llc -march=x86 -asm-verbose < %s | grep DW_TAG_formal_parameter
+; RUN: %llc_dwarf -march=x86 -asm-verbose < %s | grep DW_TAG_formal_parameter
 
 
 %struct.Pt = type { double, double }

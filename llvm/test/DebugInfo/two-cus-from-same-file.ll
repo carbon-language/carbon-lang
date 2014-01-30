@@ -5,7 +5,7 @@
 
 ; REQUIRES: object-emission
 
-; RUN: llc %s -o %t -filetype=obj -O0
+; RUN: %llc_dwarf %s -o %t -filetype=obj -O0
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ; ModuleID = 'test.bc'

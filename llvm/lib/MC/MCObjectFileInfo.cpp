@@ -150,6 +150,8 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   LSDASection = Ctx->getMachOSection("__TEXT", "__gcc_except_tab", 0,
                                      SectionKind::getReadOnlyWithRel());
 
+  COFFDebugSymbolsSection = 0;
+
   if (T.isMacOSX() && !T.isMacOSXVersionLT(10, 6)) {
     CompactUnwindSection =
       Ctx->getMachOSection("__LD", "__compact_unwind",
@@ -457,6 +459,8 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
     Ctx->getELFSection(".gcc_except_table", ELF::SHT_PROGBITS,
                        ELF::SHF_ALLOC,
                        SectionKind::getReadOnly());
+
+  COFFDebugSymbolsSection = 0;
 
   // Debug Info Sections.
   DwarfAbbrevSection =

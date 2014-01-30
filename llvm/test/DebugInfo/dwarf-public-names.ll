@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: llc -generate-dwarf-pub-sections=Enable -filetype=obj -o %t.o < %s
+; RUN: %llc_dwarf -generate-dwarf-pub-sections=Enable -filetype=obj -o %t.o < %s
 ; RUN: llvm-dwarfdump -debug-dump=pubnames %t.o | FileCheck %s
 ; ModuleID = 'dwarf-public-names.cpp'
 ;

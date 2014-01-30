@@ -1,8 +1,11 @@
+; RUN: llc -mtriple=i686-pc-mingw32 -filetype=asm -O0 < %s | FileCheck %s
+; RUN: llc -mtriple=i686-pc-cygwin -filetype=asm -O0 < %s | FileCheck %s
 ; RUN: llc -mtriple=i686-w64-mingw32 -filetype=asm -O0 < %s | FileCheck %s
+; CHECK:    .section  .debug_info
 
-; CHECK:  	.secrel32 Linfo_string0
-; CHECK:  	.secrel32 Linfo_string1
-;
+; RUN: llc -mtriple=i686-pc-win32 -filetype=asm -O0 < %s | FileCheck -check-prefix=WIN32 %s
+; WIN32:    .section .debug$S,"rn"
+
 ; generated from:
 ; clang -g -S -emit-llvm test.c -o test.ll
 ; int main()
@@ -10,7 +13,6 @@
 ; 	return 0;
 ; }
 
-; Function Attrs: nounwind
 define i32 @main() #0 {
 entry:
   %retval = alloca i32, align 4
