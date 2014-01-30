@@ -1754,6 +1754,76 @@ CodeGenFunction::EmitPointerWithAlignment(const Expr *Addr) {
   return std::make_pair(EmitScalarExpr(Addr), Align);
 }
 
+Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(unsigned BuiltinID,
+                                                  const CallExpr *E,
+                                                  SmallVectorImpl<Value *> &Ops,
+                                                  llvm::VectorType *VTy) {
+  switch (BuiltinID) {
+  default: break;
+  case NEON::BI__builtin_neon_vtrn_v:
+  case NEON::BI__builtin_neon_vtrnq_v: {
+    Ops[0] = Builder.CreateBitCast(Ops[0], llvm::PointerType::getUnqual(VTy));
+    Ops[1] = Builder.CreateBitCast(Ops[1], VTy);
+    Ops[2] = Builder.CreateBitCast(Ops[2], VTy);
+    Value *SV = 0;
+
+    for (unsigned vi = 0; vi != 2; ++vi) {
+      SmallVector<Constant*, 16> Indices;
+      for (unsigned i = 0, e = VTy->getNumElements(); i != e; i += 2) {
+        Indices.push_back(Builder.getInt32(i+vi));
+        Indices.push_back(Builder.getInt32(i+e+vi));
+      }
+      Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
+      SV = llvm::ConstantVector::get(Indices);
+      SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vtrn");
+      SV = Builder.CreateStore(SV, Addr);
+    }
+    return SV;
+  }
+  case NEON::BI__builtin_neon_vuzp_v:
+  case NEON::BI__builtin_neon_vuzpq_v: {
+    Ops[0] = Builder.CreateBitCast(Ops[0], llvm::PointerType::getUnqual(VTy));
+    Ops[1] = Builder.CreateBitCast(Ops[1], VTy);
+    Ops[2] = Builder.CreateBitCast(Ops[2], VTy);
+    Value *SV = 0;
+
+    for (unsigned vi = 0; vi != 2; ++vi) {
+      SmallVector<Constant*, 16> Indices;
+      for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i)
+        Indices.push_back(ConstantInt::get(Int32Ty, 2*i+vi));
+
+      Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
+      SV = llvm::ConstantVector::get(Indices);
+      SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vuzp");
+      SV = Builder.CreateStore(SV, Addr);
+    }
+    return SV;
+  }
+  case NEON::BI__builtin_neon_vzip_v:
+  case NEON::BI__builtin_neon_vzipq_v: {
+    Ops[0] = Builder.CreateBitCast(Ops[0], llvm::PointerType::getUnqual(VTy));
+    Ops[1] = Builder.CreateBitCast(Ops[1], VTy);
+    Ops[2] = Builder.CreateBitCast(Ops[2], VTy);
+    Value *SV = 0;
+
+    for (unsigned vi = 0; vi != 2; ++vi) {
+      SmallVector<Constant*, 16> Indices;
+      for (unsigned i = 0, e = VTy->getNumElements(); i != e; i += 2) {
+        Indices.push_back(ConstantInt::get(Int32Ty, (i + vi*e) >> 1));
+        Indices.push_back(ConstantInt::get(Int32Ty, ((i + vi*e) >> 1)+e));
+      }
+      Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
+      SV = llvm::ConstantVector::get(Indices);
+      SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vzip");
+      SV = Builder.CreateStore(SV, Addr);
+    }
+    return SV;
+  }
+  }
+
+  return 0;
+}
+
 static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
                                            unsigned BuiltinID,
                                            const CallExpr *E) {
@@ -2981,6 +3051,11 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   if (!Ty)
     return 0;
 
+  // Many NEON builtins have identical semantics and uses in ARM and
+  // AArch64. Emit these in a single function.
+  if (Value *Result = EmitCommonNeonBuiltinExpr(BuiltinID, E, Ops, VTy))
+    return Result;
+
   unsigned Int;
   switch (BuiltinID) {
   default:
@@ -2989,18 +3064,6 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   // AArch64 builtins mapping to legacy ARM v7 builtins.
   // FIXME: the mapped builtins listed correspond to what has been tested
   // in aarch64-neon-intrinsics.c so far.
-  case NEON::BI__builtin_neon_vuzp_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vuzp_v, E);
-  case NEON::BI__builtin_neon_vuzpq_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vuzpq_v, E);
-  case NEON::BI__builtin_neon_vzip_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vzip_v, E);
-  case NEON::BI__builtin_neon_vzipq_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vzipq_v, E);
-  case NEON::BI__builtin_neon_vtrn_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vtrn_v, E);
-  case NEON::BI__builtin_neon_vtrnq_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vtrnq_v, E);
   case NEON::BI__builtin_neon_vext_v:
     return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vext_v, E);
   case NEON::BI__builtin_neon_vextq_v:
@@ -4213,6 +4276,11 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   if (!Ty)
     return 0;
 
+  // Many NEON builtins have identical semantics and uses in ARM and
+  // AArch64. Emit these in a single function.
+  if (Value *Result = EmitCommonNeonBuiltinExpr(BuiltinID, E, Ops, VTy))
+    return Result;
+
   unsigned Int;
   switch (BuiltinID) {
   default: return 0;
@@ -4868,65 +4936,6 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops[0] = Builder.CreateICmp(ICmpInst::ICMP_NE, Ops[0],
                                 ConstantAggregateZero::get(Ty));
     return Builder.CreateSExt(Ops[0], Ty, "vtst");
-  }
-  case NEON::BI__builtin_neon_vtrn_v:
-  case NEON::BI__builtin_neon_vtrnq_v: {
-    Ops[0] = Builder.CreateBitCast(Ops[0], llvm::PointerType::getUnqual(Ty));
-    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
-    Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
-    Value *SV = 0;
-
-    for (unsigned vi = 0; vi != 2; ++vi) {
-      SmallVector<Constant*, 16> Indices;
-      for (unsigned i = 0, e = VTy->getNumElements(); i != e; i += 2) {
-        Indices.push_back(Builder.getInt32(i+vi));
-        Indices.push_back(Builder.getInt32(i+e+vi));
-      }
-      Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
-      SV = llvm::ConstantVector::get(Indices);
-      SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vtrn");
-      SV = Builder.CreateStore(SV, Addr);
-    }
-    return SV;
-  }
-  case NEON::BI__builtin_neon_vuzp_v:
-  case NEON::BI__builtin_neon_vuzpq_v: {
-    Ops[0] = Builder.CreateBitCast(Ops[0], llvm::PointerType::getUnqual(Ty));
-    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
-    Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
-    Value *SV = 0;
-
-    for (unsigned vi = 0; vi != 2; ++vi) {
-      SmallVector<Constant*, 16> Indices;
-      for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i)
-        Indices.push_back(ConstantInt::get(Int32Ty, 2*i+vi));
-
-      Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
-      SV = llvm::ConstantVector::get(Indices);
-      SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vuzp");
-      SV = Builder.CreateStore(SV, Addr);
-    }
-    return SV;
-  }
-  case NEON::BI__builtin_neon_vzip_v:
-  case NEON::BI__builtin_neon_vzipq_v: {
-    Ops[0] = Builder.CreateBitCast(Ops[0], llvm::PointerType::getUnqual(Ty));
-    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
-    Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
-    Value *SV = 0;
-
-    for (unsigned vi = 0; vi != 2; ++vi) {
-      SmallVector<Constant*, 16> Indices;
-      for (unsigned i = 0, e = VTy->getNumElements(); i != e; i += 2) {
-        Indices.push_back(ConstantInt::get(Int32Ty, (i + vi*e) >> 1));
-        Indices.push_back(ConstantInt::get(Int32Ty, ((i + vi*e) >> 1)+e));
-      }
-      Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
-      SV = llvm::ConstantVector::get(Indices);
-      SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vzip");
-      SV = Builder.CreateStore(SV, Addr);
-    }
-    return SV;
   }
   }
 }
