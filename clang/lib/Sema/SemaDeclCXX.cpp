@@ -10909,11 +10909,10 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   //   increment operator ++ for objects of that type.
   if ((Op == OO_PlusPlus || Op == OO_MinusMinus) && NumParams == 2) {
     ParmVarDecl *LastParam = FnDecl->getParamDecl(FnDecl->getNumParams() - 1);
-    bool ParamIsInt = false;
-    if (const BuiltinType *BT = LastParam->getType()->getAs<BuiltinType>())
-      ParamIsInt = BT->getKind() == BuiltinType::Int;
+    QualType ParamType = LastParam->getType();
 
-    if (!ParamIsInt)
+    if (!ParamType->isSpecificBuiltinType(BuiltinType::Int) &&
+        !ParamType->isDependentType())
       return Diag(LastParam->getLocation(),
                   diag::err_operator_overload_post_incdec_must_be_int)
         << LastParam->getType() << (Op == OO_MinusMinus);

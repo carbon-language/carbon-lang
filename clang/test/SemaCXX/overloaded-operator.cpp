@@ -452,3 +452,58 @@ namespace PR7681 {
     Result = 1; // expected-error {{no viable overloaded '='}} // expected-note {{type 'PointerUnion<int *, float *>' is incomplete}}
   }
 }
+
+namespace PR14995 {
+  struct B {};
+  template<typename ...T> void operator++(B, T...) {}
+
+  void f() {
+    B b;
+    b++;  // ok
+    ++b;  // ok
+  }
+
+  template<typename... T>
+  struct C {
+    void operator-- (T...) {}
+  };
+
+  void g() {
+    C<int> postfix;
+    C<> prefix;
+    postfix--;  // ok
+    --prefix;  // ok
+  }
+
+  struct D {};
+  template<typename T> void operator++(D, T) {}
+
+  void h() {
+    D d;
+    d++;  // ok
+    ++d; // expected-error{{cannot increment value of type 'PR14995::D'}}
+  }
+
+  template<typename...T> struct E {
+    void operator++(T...) {} // expected-error{{parameter of overloaded post-increment operator must have type 'int' (not 'char')}}
+  };
+
+  E<char> e; // expected-note {{in instantiation of template class 'PR14995::E<char>' requested here}}
+  
+  struct F {
+    template<typename... T>
+    int operator++ (T...) {}
+  };
+
+  int k1 = F().operator++(0, 0);
+  int k2 = F().operator++('0');
+  // expected-error@-5 {{overloaded 'operator++' must be a unary or binary operator}}
+  // expected-note@-3 {{in instantiation of function template specialization 'PR14995::F::operator++<int, int>' requested here}}
+  // expected-error@-4 {{no matching member function for call to 'operator++'}}
+  // expected-note@-8 {{candidate template ignored: substitution failure}}
+  // expected-error@-9 {{parameter of overloaded post-increment operator must have type 'int' (not 'char')}}
+  // expected-note@-6 {{in instantiation of function template specialization 'PR14995::F::operator++<char>' requested here}}
+  // expected-error@-7 {{no matching member function for call to 'operator++'}}
+  // expected-note@-12 {{candidate template ignored: substitution failure}}
+} // namespace PR14995
+
