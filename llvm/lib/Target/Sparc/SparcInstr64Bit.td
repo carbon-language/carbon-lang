@@ -463,6 +463,14 @@ defm ATOMIC_LOAD_MAX  : AtomicRMW<atomic_load_max_32,  atomic_load_max_64>;
 defm ATOMIC_LOAD_UMIN : AtomicRMW<atomic_load_umin_32, atomic_load_umin_64>;
 defm ATOMIC_LOAD_UMAX : AtomicRMW<atomic_load_umax_32, atomic_load_umax_64>;
 
+// There is no 64-bit variant of SWAP, so use a pseudo.
+let usesCustomInserter = 1, hasCtrlDep = 1, mayLoad = 1, mayStore = 1,
+    Defs = [ICC], Predicates = [Is64Bit] in
+def ATOMIC_SWAP_64 : Pseudo<(outs I64Regs:$rd),
+                            (ins ptr_rc:$addr, I64Regs:$rs2), "",
+                            [(set i64:$rd,
+                                  (atomic_swap_64 iPTR:$addr, i64:$rs2))]>;
+
 // Global addresses, constant pool entries
 let Predicates = [Is64Bit] in {
 

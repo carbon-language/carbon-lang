@@ -62,6 +62,15 @@ entry:
   ret i32 %b
 }
 
+; CHECK-LABEL: test_swap_i64
+; CHECK:       casx [%o1],
+
+define i64 @test_swap_i64(i64 %a, i64* %ptr) {
+entry:
+  %b = atomicrmw xchg i64* %ptr, i64 42 monotonic
+  ret i64 %b
+}
+
 ; CHECK-LABEL: test_load_add_32
 ; CHECK: membar
 ; CHECK: add [[V:%[gilo][0-7]]], %o1, [[U:%[gilo][0-7]]]

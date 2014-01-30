@@ -1495,7 +1495,7 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i64, Legal);
-    setOperationAction(ISD::ATOMIC_SWAP, MVT::i64, Expand);
+    setOperationAction(ISD::ATOMIC_SWAP, MVT::i64, Legal);
     setOperationAction(ISD::ATOMIC_LOAD, MVT::i64, Custom);
     setOperationAction(ISD::ATOMIC_STORE, MVT::i64, Custom);
   }
@@ -2874,6 +2874,9 @@ SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case SP::ATOMIC_LOAD_NAND_64:
     return expandAtomicRMW(MI, BB, SP::ANDXrr);
 
+  case SP::ATOMIC_SWAP_64:
+    return expandAtomicRMW(MI, BB, 0);
+
   case SP::ATOMIC_LOAD_MAX_32:
     return expandAtomicRMW(MI, BB, SP::MOVICCrr, SPCC::ICC_G);
   case SP::ATOMIC_LOAD_MAX_64:
@@ -3012,7 +3015,8 @@ SparcTargetLowering::expandAtomicRMW(MachineInstr *MI,
 
   // Build the loop block.
   unsigned ValReg = MRI.createVirtualRegister(ValueRC);
-  unsigned UpdReg = MRI.createVirtualRegister(ValueRC);
+  // Opcode == 0 means try to write Rs2Reg directly (ATOMIC_SWAP).
+  unsigned UpdReg = (Opcode ? MRI.createVirtualRegister(ValueRC) : Rs2Reg);
 
   BuildMI(LoopMBB, DL, TII.get(SP::PHI), ValReg)
     .addReg(Val0Reg).addMBB(MBB)
@@ -3024,7 +3028,7 @@ SparcTargetLowering::expandAtomicRMW(MachineInstr *MI,
     BuildMI(LoopMBB, DL, TII.get(SP::CMPrr)).addReg(ValReg).addReg(Rs2Reg);
     BuildMI(LoopMBB, DL, TII.get(Opcode), UpdReg)
       .addReg(ValReg).addReg(Rs2Reg).addImm(CondCode);
-  } else {
+  } else if (Opcode) {
     BuildMI(LoopMBB, DL, TII.get(Opcode), UpdReg)
       .addReg(ValReg).addReg(Rs2Reg);
   }
