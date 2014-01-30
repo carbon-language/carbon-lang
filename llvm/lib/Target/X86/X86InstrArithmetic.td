@@ -229,10 +229,10 @@ def IMUL32rri8 : Ii8<0x6B, MRMSrcReg,                       // GR32 = GR32*I8
                      [(set GR32:$dst, EFLAGS,
                            (X86smul_flag GR32:$src1, i32immSExt8:$src2))],
                            IIC_IMUL32_RRI>, OpSize16;
-def IMUL64rri32 : RIi32<0x69, MRMSrcReg,                    // GR64 = GR64*I32
-                        (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
-                        "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       [(set GR64:$dst, EFLAGS,
+def IMUL64rri32 : RIi32S<0x69, MRMSrcReg,                    // GR64 = GR64*I32
+                         (outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
+                         "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         [(set GR64:$dst, EFLAGS,
                              (X86smul_flag GR64:$src1, i64immSExt32:$src2))],
                              IIC_IMUL64_RRI>;
 def IMUL64rri8 : RIi8<0x6B, MRMSrcReg,                      // GR64 = GR64*I8
@@ -272,10 +272,10 @@ def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR32 = [mem32]*I8
                            (X86smul_flag (load addr:$src1),
                                          i32immSExt8:$src2))],
                                          IIC_IMUL32_RMI>, OpSize16;
-def IMUL64rmi32 : RIi32<0x69, MRMSrcMem,                   // GR64 = [mem64]*I32
-                        (outs GR64:$dst), (ins i64mem:$src1, i64i32imm:$src2),
-                        "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set GR64:$dst, EFLAGS,
+def IMUL64rmi32 : RIi32S<0x69, MRMSrcMem,                   // GR64 = [mem64]*I32
+                         (outs GR64:$dst), (ins i64mem:$src1, i64i32imm:$src2),
+                         "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         [(set GR64:$dst, EFLAGS,
                               (X86smul_flag (load addr:$src1),
                                             i64immSExt32:$src2))],
                                             IIC_IMUL64_RMI>;
@@ -681,7 +681,7 @@ def Xi32 : X86TypeInfo<i32, "l", GR32, loadi32, i32mem,
                        Imm32, i32imm,    imm,          i32i8imm, i32immSExt8,
                        1, 0, 1, 0>;
 def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem,
-                       Imm32, i64i32imm, i64immSExt32, i64i8imm, i64immSExt8,
+                       Imm32S, i64i32imm, i64immSExt32, i64i8imm, i64immSExt8,
                        1, 0, 0, 1>;
 
 /// ITy - This instruction base class takes the type info for the instruction.

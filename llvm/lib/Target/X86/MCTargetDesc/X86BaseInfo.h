@@ -395,20 +395,21 @@ namespace X86II {
     // This three-bit field describes the size of an immediate operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
     ImmShift = REXShift + 1,
-    ImmMask    = 7 << ImmShift,
+    ImmMask    = 15 << ImmShift,
     Imm8       = 1 << ImmShift,
     Imm8PCRel  = 2 << ImmShift,
     Imm16      = 3 << ImmShift,
     Imm16PCRel = 4 << ImmShift,
     Imm32      = 5 << ImmShift,
     Imm32PCRel = 6 << ImmShift,
-    Imm64      = 7 << ImmShift,
+    Imm32S     = 7 << ImmShift,
+    Imm64      = 8 << ImmShift,
 
     //===------------------------------------------------------------------===//
     // FP Instruction Classification...  Zero is non-fp instruction.
 
     // FPTypeMask - Mask for all of the FP types...
-    FPTypeShift = ImmShift + 3,
+    FPTypeShift = ImmShift + 4,
     FPTypeMask  = 7 << FPTypeShift,
 
     // NotFP - The default, set for instructions that do not use FP registers.
@@ -557,6 +558,7 @@ namespace X86II {
     case X86II::Imm16:
     case X86II::Imm16PCRel: return 2;
     case X86II::Imm32:
+    case X86II::Imm32S:
     case X86II::Imm32PCRel: return 4;
     case X86II::Imm64:      return 8;
     }
@@ -574,6 +576,25 @@ namespace X86II {
     case X86II::Imm8:
     case X86II::Imm16:
     case X86II::Imm32:
+    case X86II::Imm32S:
+    case X86II::Imm64:
+      return false;
+    }
+  }
+
+  /// isImmSigned - Return true if the immediate of the specified instruction's
+  /// TSFlags indicates that it is signed.
+  inline unsigned isImmSigned(uint64_t TSFlags) {
+    switch (TSFlags & X86II::ImmMask) {
+    default: llvm_unreachable("Unknown immediate signedness");
+    case X86II::Imm32S:
+      return true;
+    case X86II::Imm8:
+    case X86II::Imm8PCRel:
+    case X86II::Imm16:
+    case X86II::Imm16PCRel:
+    case X86II::Imm32:
+    case X86II::Imm32PCRel:
     case X86II::Imm64:
       return false;
     }

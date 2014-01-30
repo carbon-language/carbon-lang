@@ -233,6 +233,12 @@ static MCFixupKind getImmFixupKind(uint64_t TSFlags) {
   unsigned Size = X86II::getSizeOfImm(TSFlags);
   bool isPCRel = X86II::isImmPCRel(TSFlags);
 
+  if (X86II::isImmSigned(TSFlags)) {
+    switch (Size) {
+    default: llvm_unreachable("Unsupported signed fixup size!");
+    case 4: return MCFixupKind(X86::reloc_signed_4byte);
+    }
+  }
   return MCFixup::getKindForSize(Size, isPCRel);
 }
 
@@ -1566,17 +1572,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       EmitImmediate(MCOperand::CreateImm(RegNum), MI.getLoc(), 1, FK_Data_1,
                     CurByte, OS, Fixups);
     } else {
-      unsigned FixupKind;
-      // FIXME: Is there a better way to know that we need a signed relocation?
-      if (MI.getOpcode() == X86::ADD64ri32 ||
-          MI.getOpcode() == X86::MOV64ri32 ||
-          MI.getOpcode() == X86::MOV64mi32 ||
-          MI.getOpcode() == X86::PUSH64i32)
-        FixupKind = X86::reloc_signed_4byte;
-      else
-        FixupKind = getImmFixupKind(TSFlags);
       EmitImmediate(MI.getOperand(CurOp++), MI.getLoc(),
-                    X86II::getSizeOfImm(TSFlags), MCFixupKind(FixupKind),
+                    X86II::getSizeOfImm(TSFlags), getImmFixupKind(TSFlags),
                     CurByte, OS, Fixups);
     }
   }

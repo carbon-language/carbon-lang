@@ -1039,7 +1039,7 @@ def PUSH64i8   : Ii8<0x6a, RawFrm, (outs), (ins i64i8imm:$imm),
 def PUSH64i16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm),
                     "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize,
                     Requires<[In64BitMode]>;
-def PUSH64i32  : Ii32<0x68, RawFrm, (outs), (ins i64i32imm:$imm),
+def PUSH64i32  : Ii32S<0x68, RawFrm, (outs), (ins i64i32imm:$imm),
                     "push{q}\t$imm", [], IIC_PUSH_IMM>, Requires<[In64BitMode]>;
 }
 
@@ -1208,9 +1208,9 @@ def MOV32ri : Ii32<0xB8, AddRegFrm, (outs GR32:$dst), (ins i32imm:$src),
 def MOV64ri : RIi64<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64imm:$src),
                     "movabs{q}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, imm:$src)], IIC_MOV>;
-def MOV64ri32 : RIi32<0xC7, MRM0r, (outs GR64:$dst), (ins i64i32imm:$src),
-                      "mov{q}\t{$src, $dst|$dst, $src}",
-                      [(set GR64:$dst, i64immSExt32:$src)], IIC_MOV>;
+def MOV64ri32 : RIi32S<0xC7, MRM0r, (outs GR64:$dst), (ins i64i32imm:$src),
+                       "mov{q}\t{$src, $dst|$dst, $src}",
+                       [(set GR64:$dst, i64immSExt32:$src)], IIC_MOV>;
 }
 } // SchedRW
 
@@ -1224,9 +1224,9 @@ def MOV16mi : Ii16<0xC7, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src),
 def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
                    [(store (i32 imm:$src), addr:$dst)], IIC_MOV_MEM>, OpSize16;
-def MOV64mi32 : RIi32<0xC7, MRM0m, (outs), (ins i64mem:$dst, i64i32imm:$src),
-                      "mov{q}\t{$src, $dst|$dst, $src}",
-                      [(store i64immSExt32:$src, addr:$dst)], IIC_MOV_MEM>;
+def MOV64mi32 : RIi32S<0xC7, MRM0m, (outs), (ins i64mem:$dst, i64i32imm:$src),
+                       "mov{q}\t{$src, $dst|$dst, $src}",
+                       [(store i64immSExt32:$src, addr:$dst)], IIC_MOV_MEM>;
 } // SchedRW
 
 let hasSideEffects = 0 in {
@@ -2100,6 +2100,7 @@ multiclass tbm_ternary_imm_intr<bits<8> opc, RegisterClass RC, string OpcodeStr,
 
 defm BEXTRI32 : tbm_ternary_imm_intr<0x10, GR32, "bextr", i32mem, loadi32,
                                      int_x86_tbm_bextri_u32, i32imm, imm>;
+let ImmT = Imm32S in
 defm BEXTRI64 : tbm_ternary_imm_intr<0x10, GR64, "bextr", i64mem, loadi64,
                                      int_x86_tbm_bextri_u64, i64i32imm,
                                      i64immSExt32>, VEX_W;

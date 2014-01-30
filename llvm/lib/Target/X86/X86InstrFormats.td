@@ -61,8 +61,8 @@ def MRM_DF : Format<59>;
 // ImmType - This specifies the immediate type used by an instruction. This is
 // part of the ad-hoc solution used to emit machine instruction encodings by our
 // machine code emitter.
-class ImmType<bits<3> val> {
-  bits<3> Value = val;
+class ImmType<bits<4> val> {
+  bits<4> Value = val;
 }
 def NoImm      : ImmType<0>;
 def Imm8       : ImmType<1>;
@@ -71,7 +71,8 @@ def Imm16      : ImmType<3>;
 def Imm16PCRel : ImmType<4>;
 def Imm32      : ImmType<5>;
 def Imm32PCRel : ImmType<6>;
-def Imm64      : ImmType<7>;
+def Imm32S     : ImmType<7>;
+def Imm64      : ImmType<8>;
 
 // FPFormat - This specifies what form this FP instruction has.  This is used by
 // the Floating-Point stackifier pass.
@@ -232,29 +233,29 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{8}     = hasAdSizePrefix;
   let TSFlags{13-9}  = Prefix;
   let TSFlags{14}    = hasREX_WPrefix;
-  let TSFlags{17-15} = ImmT.Value;
-  let TSFlags{20-18} = FPForm.Value;
-  let TSFlags{21}    = hasLockPrefix;
-  let TSFlags{23-22} = ExeDomain.Value;
-  let TSFlags{31-24} = Opcode;
-  let TSFlags{32}    = hasVEXPrefix;
-  let TSFlags{33}    = hasVEX_WPrefix;
-  let TSFlags{34}    = hasVEX_4VPrefix;
-  let TSFlags{35}    = hasVEX_4VOp3Prefix;
-  let TSFlags{36}    = hasVEX_i8ImmReg;
-  let TSFlags{37}    = hasVEX_L;
-  let TSFlags{38}    = ignoresVEX_L;
-  let TSFlags{39}    = hasEVEXPrefix;
-  let TSFlags{40}    = hasEVEX_K;
-  let TSFlags{41}    = hasEVEX_Z;
-  let TSFlags{42}    = hasEVEX_L2;
-  let TSFlags{43}    = hasEVEX_B;
-  let TSFlags{45-44} = EVEX_CD8E;
-  let TSFlags{48-46} = EVEX_CD8V;
-  let TSFlags{49}    = has3DNow0F0FOpcode;
-  let TSFlags{50}    = hasMemOp4Prefix;
-  let TSFlags{51}    = hasXOP_Prefix;
-  let TSFlags{52}    = hasEVEX_RC;
+  let TSFlags{18-15} = ImmT.Value;
+  let TSFlags{21-19} = FPForm.Value;
+  let TSFlags{22}    = hasLockPrefix;
+  let TSFlags{24-23} = ExeDomain.Value;
+  let TSFlags{32-25} = Opcode;
+  let TSFlags{33}    = hasVEXPrefix;
+  let TSFlags{34}    = hasVEX_WPrefix;
+  let TSFlags{35}    = hasVEX_4VPrefix;
+  let TSFlags{36}    = hasVEX_4VOp3Prefix;
+  let TSFlags{37}    = hasVEX_i8ImmReg;
+  let TSFlags{38}    = hasVEX_L;
+  let TSFlags{39}    = ignoresVEX_L;
+  let TSFlags{40}    = hasEVEXPrefix;
+  let TSFlags{41}    = hasEVEX_K;
+  let TSFlags{42}    = hasEVEX_Z;
+  let TSFlags{43}    = hasEVEX_L2;
+  let TSFlags{44}    = hasEVEX_B;
+  let TSFlags{46-45} = EVEX_CD8E;
+  let TSFlags{49-47} = EVEX_CD8V;
+  let TSFlags{50}    = has3DNow0F0FOpcode;
+  let TSFlags{51}    = hasMemOp4Prefix;
+  let TSFlags{52}    = hasXOP_Prefix;
+  let TSFlags{53}    = hasEVEX_RC;
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>
@@ -291,6 +292,12 @@ class Ii16<bits<8> o, Format f, dag outs, dag ins, string asm,
 class Ii32<bits<8> o, Format f, dag outs, dag ins, string asm, 
            list<dag> pattern, InstrItinClass itin = NoItinerary>
   : X86Inst<o, f, Imm32, outs, ins, asm, itin> {
+  let Pattern = pattern;
+  let CodeSize = 3;
+}
+class Ii32S<bits<8> o, Format f, dag outs, dag ins, string asm,
+            list<dag> pattern, InstrItinClass itin = NoItinerary>
+  : X86Inst<o, f, Imm32S, outs, ins, asm, itin> {
   let Pattern = pattern;
   let CodeSize = 3;
 }
@@ -743,6 +750,9 @@ class RIi16 <bits<8> o, Format F, dag outs, dag ins, string asm,
 class RIi32 <bits<8> o, Format F, dag outs, dag ins, string asm,
              list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii32<o, F, outs, ins, asm, pattern, itin>, REX_W;
+class RIi32S <bits<8> o, Format F, dag outs, dag ins, string asm,
+              list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : Ii32S<o, F, outs, ins, asm, pattern, itin>, REX_W;
 
 class RIi64<bits<8> o, Format f, dag outs, dag ins, string asm,
             list<dag> pattern, InstrItinClass itin = NoItinerary>
