@@ -185,6 +185,7 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_ARM_TARGET2: return "target2";
   case VK_ARM_PREL31: return "prel31";
   case VK_ARM_TLSLDO: return "tlsldo";
+  case VK_ARM_TLSCALL: return "tlscall";
   case VK_PPC_LO: return "l";
   case VK_PPC_HI: return "h";
   case VK_PPC_HA: return "ha";
@@ -408,6 +409,8 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("prel31", VK_ARM_PREL31)
     .Case("TLSLDO", VK_ARM_TLSLDO)
     .Case("tlsldo", VK_ARM_TLSLDO)
+    .Case("TLSCALL", VK_ARM_TLSCALL)
+    .Case("tlscall", VK_ARM_TLSCALL)
     .Default(VK_Invalid);
 }
 
