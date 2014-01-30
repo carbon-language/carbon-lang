@@ -139,6 +139,8 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   virtual void emitInst(uint32_t Inst, char Suffix = '\0');
   virtual void finishAttributeSection();
 
+  virtual void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE);
+
 public:
   ARMTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS,
                        MCInstPrinter &InstPrinter, bool VerboseAsm);
@@ -240,6 +242,10 @@ void ARMTargetAsmStreamer::emitFPU(unsigned FPU) {
   OS << "\t.fpu\t" << GetFPUName(FPU) << "\n";
 }
 void ARMTargetAsmStreamer::finishAttributeSection() {
+}
+void
+ARMTargetAsmStreamer::AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *S) {
+  OS << "\t.tlsdescseq\t" << S->getSymbol().getName();
 }
 
 void ARMTargetAsmStreamer::emitInst(uint32_t Inst, char Suffix) {
@@ -396,6 +402,8 @@ private:
   virtual void emitFPU(unsigned FPU);
   virtual void emitInst(uint32_t Inst, char Suffix = '\0');
   virtual void finishAttributeSection();
+
+  virtual void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE);
 
   size_t calculateContentSize() const;
 
@@ -604,6 +612,8 @@ private:
                          SectionKind Kind, const MCSymbol &Fn);
   void SwitchToExTabSection(const MCSymbol &FnStart);
   void SwitchToExIdxSection(const MCSymbol &FnStart);
+
+  void EmitFixup(const MCExpr *Expr, MCFixupKind Kind);
 
   bool IsThumb;
   int64_t MappingSymbolCounter;
@@ -953,6 +963,10 @@ void ARMTargetELFStreamer::finishAttributeSection() {
   Contents.clear();
   FPU = ARM::INVALID_FPU;
 }
+void
+ARMTargetELFStreamer::AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *S) {
+  getStreamer().EmitFixup(S, FK_Data_4);
+}
 void ARMTargetELFStreamer::emitInst(uint32_t Inst, char Suffix) {
   getStreamer().emitInst(Inst, Suffix);
 }
@@ -1010,6 +1024,11 @@ inline void ARMELFStreamer::SwitchToExIdxSection(const MCSymbol &FnStart) {
                     ELF::SHF_ALLOC | ELF::SHF_LINK_ORDER,
                     SectionKind::getDataRel(),
                     FnStart);
+}
+void ARMELFStreamer::EmitFixup(const MCExpr *Expr, MCFixupKind Kind) {
+  MCDataFragment *Frag = getOrCreateDataFragment();
+  Frag->getFixups().push_back(MCFixup::Create(Frag->getContents().size(), Expr,
+                                              Kind));
 }
 
 void ARMELFStreamer::Reset() {

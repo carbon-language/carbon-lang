@@ -187,6 +187,7 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_ARM_TLSLDO: return "tlsldo";
   case VK_ARM_TLSCALL: return "tlscall";
   case VK_ARM_TLSDESC: return "tlsdesc";
+  case VK_ARM_TLSDESCSEQ: return "tlsdescseq";
   case VK_PPC_LO: return "l";
   case VK_PPC_HI: return "h";
   case VK_PPC_HA: return "ha";
