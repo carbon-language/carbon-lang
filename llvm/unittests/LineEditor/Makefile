@@ -1,4 +1,4 @@
-##===- unittests/Makefile ----------------------------------*- Makefile -*-===##
+##===- unittests/LineEditor/Makefile -----------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,13 +7,9 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ..
-
-PARALLEL_DIRS = ADT Analysis Bitcode CodeGen DebugInfo ExecutionEngine IR \
-		LineEditor Linker MC Object Option Support Transforms
+LEVEL = ../..
+TESTNAME = LineEditor
+LINK_COMPONENTS := lineeditor
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
-
-clean::
-	$(Verb) $(RM) -f *Tests

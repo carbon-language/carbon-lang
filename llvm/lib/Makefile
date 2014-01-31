@@ -12,6 +12,6 @@ include $(LEVEL)/Makefile.config
 
 PARALLEL_DIRS := IR AsmParser Bitcode Analysis Transforms CodeGen Target \
                  ExecutionEngine Linker LTO MC Object Option DebugInfo   \
-                 IRReader
+                 IRReader LineEditor
 
 include $(LEVEL)/Makefile.common

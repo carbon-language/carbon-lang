@@ -1,4 +1,4 @@
-;===- ./lib/LLVMBuild.txt --------------------------------------*- Conf -*--===;
+;===- ./lib/LineEditor/LLVMBuild.txt ---------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,10 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = Analysis AsmParser Bitcode CodeGen DebugInfo ExecutionEngine LineEditor Linker IR IRReader LTO MC Object Option Support TableGen Target Transforms
-
 [component_0]
-type = Group
-name = Libraries
-parent = $ROOT
+type = Library
+name = LineEditor
+parent = Libraries
+required_libraries = Support

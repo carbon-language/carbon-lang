@@ -1451,6 +1451,7 @@ Optional Features:
                           all,auto,none,{binding-name} (default=auto)
   --enable-terminfo       Query the terminfo database if available (default is
                           YES)
+  --enable-libedit        Use libedit if available (default is YES)
   --enable-libffi         Check for the presence of libffi (default is NO)
   --enable-ltdl-install   install libltdl
 
@@ -5678,6 +5679,20 @@ echo "$as_me: error: Invalid setting for --enable-terminfo. Use \"yes\" or \"no\
   esac
 else
   llvm_cv_enable_terminfo="yes"
+fi
+
+
+# Check whether --enable-libedit was given.
+if test "${enable_libedit+set}" = set; then
+  enableval=$enable_libedit; case "$enableval" in
+    yes) llvm_cv_enable_libedit="yes" ;;
+    no)  llvm_cv_enable_libedit="no"  ;;
+    *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-libedit. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-libedit. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+  esac
+else
+  llvm_cv_enable_libedit="yes"
 fi
 
 
@@ -10663,7 +10678,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10666 "configure"
+#line 10681 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12552,6 +12567,112 @@ if test "$ac_res" != no; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_TERMINFO 1
+_ACEOF
+
+fi
+
+fi
+
+if test "$llvm_cv_enable_libedit" = "yes" ; then
+  { echo "$as_me:$LINENO: checking for library containing el_init" >&5
+echo $ECHO_N "checking for library containing el_init... $ECHO_C" >&6; }
+if test "${ac_cv_search_el_init+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char el_init ();
+int
+main ()
+{
+return el_init ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' edit; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_el_init=$ac_res
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext \
+      conftest$ac_exeext
+  if test "${ac_cv_search_el_init+set}" = set; then
+  break
+fi
+done
+if test "${ac_cv_search_el_init+set}" = set; then
+  :
+else
+  ac_cv_search_el_init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_search_el_init" >&5
+echo "${ECHO_T}$ac_cv_search_el_init" >&6; }
+ac_res=$ac_cv_search_el_init
+if test "$ac_res" != no; then
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBEDIT 1
 _ACEOF
 
 fi

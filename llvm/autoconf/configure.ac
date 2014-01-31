@@ -1190,6 +1190,17 @@ AC_ARG_ENABLE(terminfo,AS_HELP_STRING(
   esac],
   llvm_cv_enable_terminfo="yes")
 
+dnl --enable-libedit: check whether the user wants to turn off libedit.
+AC_ARG_ENABLE(libedit,AS_HELP_STRING(
+  [--enable-libedit],
+  [Use libedit if available (default is YES)]),
+  [case "$enableval" in
+    yes) llvm_cv_enable_libedit="yes" ;;
+    no)  llvm_cv_enable_libedit="no"  ;;
+    *) AC_MSG_ERROR([Invalid setting for --enable-libedit. Use "yes" or "no"]) ;;
+  esac],
+  llvm_cv_enable_libedit="yes")
+
 dnl --enable-libffi : check whether the user wants to turn off libffi:
 AC_ARG_ENABLE(libffi,AS_HELP_STRING(
   --enable-libffi,[Check for the presence of libffi (default is NO)]),
@@ -1504,6 +1515,13 @@ if test "$llvm_cv_enable_terminfo" = "yes" ; then
   AC_SEARCH_LIBS(setupterm,tinfo terminfo curses ncurses ncursesw,
                  AC_DEFINE([HAVE_TERMINFO],[1],
                            [Define if the setupterm() function is supported this platform.]))
+fi
+
+dnl The libedit library is optional; used by lib/LineEditor
+if test "$llvm_cv_enable_libedit" = "yes" ; then
+  AC_SEARCH_LIBS(el_init,edit,
+                 AC_DEFINE([HAVE_LIBEDIT],[1],
+                           [Define if libedit is available on this platform.]))
 fi
 
 dnl libffi is optional; used to call external functions from the interpreter
