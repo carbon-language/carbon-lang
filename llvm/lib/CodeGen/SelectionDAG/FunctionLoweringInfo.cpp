@@ -74,7 +74,12 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
   // them.
   Function::const_iterator BB = Fn->begin(), EB = Fn->end();
   for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-    if (const AllocaInst *AI = dyn_cast<AllocaInst>(I))
+    if (const AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
+      // Don't fold inalloca allocas or other dynamic allocas into the initial
+      // stack frame allocation, even if they are in the entry block.
+      if (!AI->isStaticAlloca())
+        continue;
+
       if (const ConstantInt *CUI = dyn_cast<ConstantInt>(AI->getArraySize())) {
         Type *Ty = AI->getAllocatedType();
         uint64_t TySize = TLI->getDataLayout()->getTypeAllocSize(Ty);
@@ -88,6 +93,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
         StaticAllocaMap[AI] =
           MF->getFrameInfo()->CreateStackObject(TySize, Align, false, AI);
       }
+    }
 
   for (; BB != EB; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();

@@ -2483,6 +2483,7 @@ unsigned X86FastISel::TargetMaterializeAlloca(const AllocaInst *C) {
   // X86SelectAddrss, and TargetMaterializeAlloca.
   if (!FuncInfo.StaticAllocaMap.count(C))
     return 0;
+  assert(C->isStaticAlloca() && "dynamic alloca in the static alloca map?");
 
   X86AddressMode AM;
   if (!X86SelectAddress(C, AM))
