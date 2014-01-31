@@ -12,5 +12,6 @@ config.name = 'AddressSanitizer-Unit'
 config.test_exec_root = "@ASAN_BINARY_DIR@/tests"
 config.test_source_root = config.test_exec_root
 
-if config.host_os == 'Linux':
+# Enable leak detection in ASan unit tests on x86_64-linux.
+if config.host_os == 'Linux' and config.host_arch == 'x86_64':
   config.environment['ASAN_OPTIONS'] = 'detect_leaks=1'

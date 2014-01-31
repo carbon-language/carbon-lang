@@ -8,6 +8,7 @@ config.llvm_obj_root = "@LLVM_BINARY_DIR@"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.compiler_rt_src_root = "@COMPILER_RT_SOURCE_DIR@"
 config.llvm_build_mode = "@LLVM_BUILD_MODE@"
+config.host_arch = "@HOST_ARCH@"
 config.host_os = "@HOST_OS@"
 
 # LLVM tools dir and build mode can be passed in lit parameters,
