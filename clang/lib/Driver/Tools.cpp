@@ -830,6 +830,12 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
       CmdArgs.push_back("-backend-option");
       CmdArgs.push_back("-arm-reserve-r9");
     }
+
+    // Exception handling
+    if (Args.hasArg(options::OPT_fno_exceptions)) {
+      CmdArgs.push_back("-backend-option");
+      CmdArgs.push_back("-arm-disable-ehabi");
+    }
 }
 
 // Get CPU and ABI names. They are not independent
