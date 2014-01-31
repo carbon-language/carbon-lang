@@ -48,9 +48,9 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   }
 
   // It's an error if the base address is not multiple of 64K.
-  if (_baseAddress & 0xffff) {
+  if (getBaseAddress() & 0xffff) {
     diagnostics << "Base address have to be multiple of 64K, but got "
-                << _baseAddress << "\n";
+                << getBaseAddress() << "\n";
     return false;
   }
 
@@ -201,8 +201,13 @@ StringRef PECOFFLinkingContext::undecorateSymbol(StringRef name) const {
   return name.substr(1);
 }
 
-Writer &PECOFFLinkingContext::writer() const { return *_writer; }
+uint64_t PECOFFLinkingContext::getBaseAddress() const {
+  if (_baseAddress == invalidBaseAddress)
+    return is64Bit() ? 0x140000000UL : 0x400000UL;
+  return _baseAddress;
+}
 
+Writer &PECOFFLinkingContext::writer() const { return *_writer; }
 
 void PECOFFLinkingContext::setSectionSetMask(StringRef sectionName,
                                              uint32_t newFlags) {

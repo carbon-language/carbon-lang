@@ -27,7 +27,7 @@ CHECK-NEXT:   SizeOfInitializedData: 108
 CHECK-NEXT:   SizeOfUninitializedData: 0
 CHECK-NEXT:   AddressOfEntryPoint: 0x2000
 CHECK-NEXT:   BaseOfCode: 0x2000
-CHECK-NEXT:   ImageBase: 0x400000
+CHECK-NEXT:   ImageBase: 0x140000000
 CHECK-NEXT:   SectionAlignment: 4096
 CHECK-NEXT:   FileAlignment: 512
 CHECK-NEXT:   MajorOperatingSystemVersion: 6

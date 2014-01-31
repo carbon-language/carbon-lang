@@ -35,9 +35,9 @@ class Group;
 class PECOFFLinkingContext : public LinkingContext {
 public:
   PECOFFLinkingContext()
-      : _baseAddress(0x400000), _stackReserve(1024 * 1024), _stackCommit(4096),
-        _heapReserve(1024 * 1024), _heapCommit(4096), _noDefaultLibAll(false),
-        _sectionDefaultAlignment(4096),
+      : _baseAddress(invalidBaseAddress), _stackReserve(1024 * 1024),
+        _stackCommit(4096), _heapReserve(1024 * 1024), _heapCommit(4096),
+        _noDefaultLibAll(false), _sectionDefaultAlignment(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
         _machineType(llvm::COFF::IMAGE_FILE_MACHINE_I386), _imageVersion(0, 0),
         _minOSVersion(6, 0), _nxCompat(true), _largeAddressAware(false),
@@ -108,7 +108,7 @@ public:
   }
 
   void setBaseAddress(uint64_t addr) { _baseAddress = addr; }
-  uint64_t getBaseAddress() const { return _baseAddress; }
+  uint64_t getBaseAddress() const;
 
   void setStackReserve(uint64_t size) { _stackReserve = size; }
   void setStackCommit(uint64_t size) { _stackCommit = size; }
@@ -250,6 +250,8 @@ protected:
   virtual std::unique_ptr<File> createUndefinedSymbolFile() const;
 
 private:
+  enum { invalidBaseAddress = UINT64_MAX };
+
   // The start address for the program. The default value for the executable is
   // 0x400000, but can be altered using /base command line option.
   uint64_t _baseAddress;
