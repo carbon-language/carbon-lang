@@ -32,6 +32,8 @@ MCTargetStreamer::MCTargetStreamer(MCStreamer &S) : Streamer(S) {
 
 void MCTargetStreamer::emitLabel(MCSymbol *Symbol) {}
 
+void MCTargetStreamer::finish() {}
+
 MCStreamer::MCStreamer(MCContext &Ctx)
     : Context(Ctx), EmitEHFrame(true), EmitDebugFrame(false),
       CurrentW64UnwindInfo(0), LastSymbol(0) {
@@ -623,6 +625,10 @@ void MCStreamer::EmitW64Tables() {
 void MCStreamer::Finish() {
   if (!FrameInfos.empty() && !FrameInfos.back().End)
     report_fatal_error("Unfinished frame!");
+
+  MCTargetStreamer *TS = getTargetStreamer();
+  if (TS)
+    TS->finish();
 
   FinishImpl();
 }

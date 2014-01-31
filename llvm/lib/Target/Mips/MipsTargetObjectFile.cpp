@@ -37,21 +37,6 @@ void MipsTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
     getContext().getELFSection(".sbss", ELF::SHT_NOBITS,
                                ELF::SHF_WRITE |ELF::SHF_ALLOC,
                                SectionKind::getBSS());
-
-  // Register info information
-  const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
-  if (Subtarget.isABI_N64() || Subtarget.isABI_N32())
-    ReginfoSection =
-      getContext().getELFSection(".MIPS.options",
-                                 ELF::SHT_MIPS_OPTIONS,
-                                 ELF::SHF_ALLOC |ELF::SHF_MIPS_NOSTRIP,
-                                 SectionKind::getMetadata());
-  else
-    ReginfoSection =
-      getContext().getELFSection(".reginfo",
-                                 ELF::SHT_MIPS_REGINFO,
-                                 ELF::SHF_ALLOC,
-                                 SectionKind::getMetadata());
 }
 
 // A address must be loaded from a small section if its size is less than the

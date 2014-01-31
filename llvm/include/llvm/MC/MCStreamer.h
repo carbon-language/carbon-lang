@@ -76,6 +76,8 @@ public:
 
   // Allow a target to add behavior to the EmitLabel of MCStreamer.
   virtual void emitLabel(MCSymbol *Symbol);
+
+  virtual void finish();
 };
 
 // FIXME: declared here because it is used from

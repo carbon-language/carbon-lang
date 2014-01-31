@@ -17,7 +17,6 @@ namespace llvm {
   class MipsTargetObjectFile : public TargetLoweringObjectFileELF {
     const MCSection *SmallDataSection;
     const MCSection *SmallBSSSection;
-    const MCSection *ReginfoSection;
   public:
 
     void Initialize(MCContext &Ctx, const TargetMachine &TM);
@@ -34,9 +33,6 @@ namespace llvm {
                                             SectionKind Kind,
                                             Mangler *Mang,
                                             const TargetMachine &TM) const;
-
-    // TODO: Classify globals as mips wishes.
-    const MCSection *getReginfoSection() const { return ReginfoSection; }
   };
 } // end namespace llvm
 

@@ -12,9 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstPrinter/MipsInstPrinter.h"
+#include "MipsTargetObjectFile.h"
 #include "MipsTargetStreamer.h"
 #include "MipsMCTargetDesc.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELF.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -118,7 +121,7 @@ void MipsTargetAsmStreamer::emitFMask(unsigned FPUBitmask,
 // This part is for ELF object output.
 MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
                                              const MCSubtargetInfo &STI)
-    : MipsTargetStreamer(S), MicroMipsEnabled(false) {
+    : MipsTargetStreamer(S), MicroMipsEnabled(false), STI(STI) {
   MCAssembler &MCA = getStreamer().getAssembler();
   uint64_t Features = STI.getFeatureBits();
   Triple T(STI.getTargetTriple());
@@ -168,6 +171,45 @@ void MipsTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
   // The traditional defines for STO values assume the full byte and thus
   // the shift to pack it.
   MCELF::setOther(Data, ELF::STO_MIPS_MICROMIPS >> 2);
+}
+
+void MipsTargetELFStreamer::finish() {
+  MCAssembler &MCA = getStreamer().getAssembler();
+  MCContext &Context = MCA.getContext();
+  MCStreamer &OS = getStreamer();
+  Triple T(STI.getTargetTriple());
+  uint64_t Features = STI.getFeatureBits();
+
+  if (T.isArch64Bit() && (Features & Mips::FeatureN64)) {
+    const MCSectionELF *Sec = Context.getELFSection(
+        ".MIPS.options", ELF::SHT_MIPS_OPTIONS,
+        ELF::SHF_ALLOC | ELF::SHF_MIPS_NOSTRIP, SectionKind::getMetadata());
+    OS.SwitchSection(Sec);
+
+    OS.EmitIntValue(1, 1); // kind
+    OS.EmitIntValue(40, 1); // size
+    OS.EmitIntValue(0, 2); // section
+    OS.EmitIntValue(0, 4); // info
+    OS.EmitIntValue(0, 4); // ri_gprmask
+    OS.EmitIntValue(0, 4); // pad
+    OS.EmitIntValue(0, 4); // ri_cpr[0]mask
+    OS.EmitIntValue(0, 4); // ri_cpr[1]mask
+    OS.EmitIntValue(0, 4); // ri_cpr[2]mask
+    OS.EmitIntValue(0, 4); // ri_cpr[3]mask
+    OS.EmitIntValue(0, 8); // ri_gp_value
+  } else {
+    const MCSectionELF *Sec =
+        Context.getELFSection(".reginfo", ELF::SHT_MIPS_REGINFO, ELF::SHF_ALLOC,
+                              SectionKind::getMetadata());
+    OS.SwitchSection(Sec);
+
+    OS.EmitIntValue(0, 4); // ri_gprmask
+    OS.EmitIntValue(0, 4); // ri_cpr[0]mask
+    OS.EmitIntValue(0, 4); // ri_cpr[1]mask
+    OS.EmitIntValue(0, 4); // ri_cpr[2]mask
+    OS.EmitIntValue(0, 4); // ri_cpr[3]mask
+    OS.EmitIntValue(0, 4); // ri_gp_value
+  }
 }
 
 MCELFStreamer &MipsTargetELFStreamer::getStreamer() {

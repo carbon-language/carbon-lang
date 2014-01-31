@@ -72,6 +72,7 @@ public:
 // This part is for ELF object output
 class MipsTargetELFStreamer : public MipsTargetStreamer {
   bool MicroMipsEnabled;
+  const MCSubtargetInfo &STI;
 
 public:
   bool isMicroMipsEnabled() const { return MicroMipsEnabled; }
@@ -79,6 +80,7 @@ public:
   MipsTargetELFStreamer(MCStreamer &S, const MCSubtargetInfo &STI);
 
   virtual void emitLabel(MCSymbol *Symbol) LLVM_OVERRIDE;
+  void finish() LLVM_OVERRIDE;
 
   virtual void emitDirectiveSetMicroMips();
   virtual void emitDirectiveSetNoMicroMips();
