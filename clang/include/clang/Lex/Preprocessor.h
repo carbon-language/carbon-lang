@@ -286,25 +286,26 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
     CLK_LexAfterModuleImport
   } CurLexerKind;
 
-  /// \brief True if the current lexer is for a submodule.
-  bool CurIsSubmodule;
+  /// \brief If the current lexer is for a submodule that is being built, this
+  /// is that submodule.
+  Module *CurSubmodule;
 
   /// \brief Keeps track of the stack of files currently
   /// \#included, and macros currently being expanded from, not counting
   /// CurLexer/CurTokenLexer.
   struct IncludeStackInfo {
     enum CurLexerKind     CurLexerKind;
-    bool                  IsSubmodule;
+    Module                *TheSubmodule;
     Lexer                 *TheLexer;
     PTHLexer              *ThePTHLexer;
     PreprocessorLexer     *ThePPLexer;
     TokenLexer            *TheTokenLexer;
     const DirectoryLookup *TheDirLookup;
 
-    IncludeStackInfo(enum CurLexerKind K, bool SM, Lexer *L, PTHLexer *P,
+    IncludeStackInfo(enum CurLexerKind K, Module *M, Lexer *L, PTHLexer *P,
                      PreprocessorLexer *PPL, TokenLexer *TL,
                      const DirectoryLookup *D)
-        : CurLexerKind(K), IsSubmodule(SM), TheLexer(L), ThePTHLexer(P),
+        : CurLexerKind(K), TheSubmodule(M), TheLexer(L), ThePTHLexer(P),
           ThePPLexer(PPL), TheTokenLexer(TL), TheDirLookup(D) {}
   };
   std::vector<IncludeStackInfo> IncludeMacroStack;
@@ -686,14 +687,14 @@ public:
   void EndSourceFile();
 
   /// \brief Add a source file to the top of the include stack and
-  /// start lexing tokens from it instead of the current buffer. 
+  /// start lexing tokens from it instead of the current buffer.
   ///
-  /// Emit an error and don't enter the file on error.
-  void EnterSourceFile(FileID CurFileID, const DirectoryLookup *Dir,
-                       SourceLocation Loc, bool IsSubmodule = false);
+  /// Emits a diagnostic, doesn't enter the file, and returns true on error.
+  bool EnterSourceFile(FileID CurFileID, const DirectoryLookup *Dir,
+                       SourceLocation Loc);
 
   /// \brief Add a Macro to the top of the include stack and start lexing
-  /// tokens from it instead of the current buffer. 
+  /// tokens from it instead of the current buffer.
   ///
   /// \param Args specifies the tokens input to a function-like macro.
   /// \param ILEnd specifies the location of the ')' for a function-like macro
@@ -1317,7 +1318,7 @@ private:
 
   void PushIncludeMacroStack() {
     IncludeMacroStack.push_back(IncludeStackInfo(CurLexerKind,
-                                                 CurIsSubmodule,
+                                                 CurSubmodule,
                                                  CurLexer.take(),
                                                  CurPTHLexer.take(),
                                                  CurPPLexer,
@@ -1332,8 +1333,8 @@ private:
     CurPPLexer = IncludeMacroStack.back().ThePPLexer;
     CurTokenLexer.reset(IncludeMacroStack.back().TheTokenLexer);
     CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
+    CurSubmodule = IncludeMacroStack.back().TheSubmodule;
     CurLexerKind = IncludeMacroStack.back().CurLexerKind;
-    CurIsSubmodule = IncludeMacroStack.back().IsSubmodule;
     IncludeMacroStack.pop_back();
   }
 
@@ -1435,13 +1436,11 @@ private:
 
   /// \brief Add a lexer to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.
-  void EnterSourceFileWithLexer(Lexer *TheLexer, const DirectoryLookup *Dir,
-                                bool IsSubmodule = false);
+  void EnterSourceFileWithLexer(Lexer *TheLexer, const DirectoryLookup *Dir);
 
   /// \brief Add a lexer to the top of the include stack and
   /// start getting tokens from it using the PTH cache.
-  void EnterSourceFileWithPTH(PTHLexer *PL, const DirectoryLookup *Dir,
-                              bool IsSubmodule = false);
+  void EnterSourceFileWithPTH(PTHLexer *PL, const DirectoryLookup *Dir);
 
   /// \brief Set the FileID for the preprocessor predefines.
   void setPredefinesFileID(FileID FID) {
