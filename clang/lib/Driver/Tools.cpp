@@ -1223,10 +1223,9 @@ static const char *getX86TargetCPU(const ArgList &Args,
     return Is64Bit ? "core2" : "yonah";
   }
 
-  // All x86 devices running Android have core2 as their common
-  // denominator. This makes a better choice than pentium4.
+  // On Android use targets compatible with gcc
   if (Triple.getEnvironment() == llvm::Triple::Android)
-    return "core2";
+    return Is64Bit ? "x86-64" : "i686";
 
   // Everything else goes to x86-64 in 64-bit mode.
   if (Is64Bit)
@@ -1337,6 +1336,11 @@ static void getX86TargetFeatures(const llvm::Triple &Triple,
     Features.push_back("-rtm");
     Features.push_back("-hle");
     Features.push_back("-fsgsbase");
+  }
+
+  if (Triple.getEnvironment() == llvm::Triple::Android) {
+    // Add sse3 feature to comply with gcc on Android
+    Features.push_back("+sse3");
   }
 
   // Now add any that the user explicitly requested on the command line,

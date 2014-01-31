@@ -210,13 +210,15 @@
 // RUN:        --sysroot=%S/Inputs/basic_android_tree/sysroot \
 // RUN:   | FileCheck --check-prefix=ANDROID-X86 %s
 // ANDROID-X86: clang
-// ANDROID-X86: "-target-cpu" "core2"
+// ANDROID-X86: "-target-cpu" "i686"
+// ANDROID-X86: "-target-feature" "+sse3"
 
 // RUN: %clang -target x86_64-linux-android -### -S %s 2>&1 \
 // RUN:        --sysroot=%S/Inputs/basic_android_tree/sysroot \
 // RUN:   | FileCheck --check-prefix=ANDROID-X86_64 %s
 // ANDROID-X86_64: clang
-// ANDROID-X86_64: "-target-cpu" "core2"
+// ANDROID-X86_64: "-target-cpu" "x86-64"
+// ANDROID-X86_64: "-target-feature" "+sse3"
 
 // RUN: %clang -target mips-linux-gnu -### -S %s 2>&1 | \
 // RUN: FileCheck -check-prefix=MIPS %s
