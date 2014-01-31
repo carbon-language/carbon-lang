@@ -134,8 +134,7 @@ protected:
         continue;
 
       // Get symbol flags
-      if ((ec = (i->getFlags(symflags))))
-        return ec;
+      symflags = i->getFlags();
 
       if (symflags <= SymbolRef::SF_Undefined)
         continue;
