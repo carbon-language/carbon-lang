@@ -11,7 +11,7 @@
 
 // C Includes
 #include <errno.h>
-#include <getopt.h>
+#include "lldb/Host/HostGetOpt.h"
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>

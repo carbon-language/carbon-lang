@@ -1,10 +1,14 @@
 if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
   set(LLDB_DEFAULT_DISABLE_PYTHON 1)
+  set(LLDB_DEFAULT_DISABLE_CURSES 1)
 else()
   set(LLDB_DEFAULT_DISABLE_PYTHON 0)
+  set(LLDB_DEFAULT_DISABLE_CURSES 0)
 endif()
 set(LLDB_DISABLE_PYTHON ${LLDB_DEFAULT_DISABLE_PYTHON} CACHE BOOL
   "Disables the Python scripting integration.")
+set(LLDB_DISABLE_CURSES ${LLDB_DEFAULT_DISABLE_CURSES} CACHE BOOL
+  "Disables the Curses integration.")
 
 # If we are not building as a part of LLVM, build LLDB as an
 # standalone project, using LLVM as an external library:
@@ -75,6 +79,10 @@ endif()
 
 if (LLDB_DISABLE_PYTHON)
   add_definitions( -DLLDB_DISABLE_PYTHON )
+endif()
+
+if (LLDB_DISABLE_CURSES)
+  add_definitions( -DLLDB_DISABLE_CURSES )
 endif()
 
 macro(add_lldb_definitions)
@@ -182,7 +190,10 @@ macro(add_lldb_library name)
   else()
     set(libkind STATIC)
   endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  #PIC not needed on Win
+  if (NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  endif()
   add_library(${name} ${libkind} ${srcs})
   #if (LLVM_COMMON_DEPENDS)
   ##add_dependencies(${name} ${LLVM_COMMON_DEPENDS})
@@ -267,6 +278,22 @@ endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
   list(APPEND system_libs ncurses panel)
+endif()
+
+
+# Disable RTTI by default
+if(NOT LLDB_REQUIRES_RTTI)
+  if (NOT MSVC)
+    if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR
+        "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+      #gnu && clang compilers
+      set(LLDB_COMPILE_FLAGS "-fno-rtti")
+    endif() #GNU or CLANG
+  else()
+    #MSVC
+    set(LLDB_COMPILE_FLAGS "/GR-")
+  endif() #NOT MSVC
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLDB_COMPILE_FLAGS}")
 endif()
 
 #add_subdirectory(include)

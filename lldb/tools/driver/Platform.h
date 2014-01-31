@@ -18,9 +18,8 @@
     #include <io.h>
     #include <eh.h>
     #include <inttypes.h>
-    #include "ELWrapper.h"
     #include "lldb/Host/windows/Windows.h"
-    #include "GetOptWrapper.h"
+    #include "lldb/Host/HostGetOpt.h"
 
     struct timeval
     {

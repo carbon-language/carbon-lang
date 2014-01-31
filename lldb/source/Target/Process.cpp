@@ -4751,7 +4751,12 @@ public:
             return true;
 
         int fds[2];
+#ifdef _MSC_VER
+        // pipe is not supported on windows so default to a fail condition
+        int err = 1;
+#else
         int err = pipe(fds);
+#endif
         if (err == 0)
         {
             m_pipe_read.SetDescriptor(fds[0], true);
@@ -4786,6 +4791,8 @@ public:
                 Terminal terminal(read_fd);
                 terminal.SetCanonical(false);
                 terminal.SetEcho(false);
+// FD_ZERO, FD_SET are not supported on windows
+#ifndef _MSC_VER
                 while (!GetIsDone())
                 {
                     fd_set read_fdset;
@@ -4825,6 +4832,7 @@ public:
                         }
                     }
                 }
+#endif
                 terminal_state.Restore();
 
             }

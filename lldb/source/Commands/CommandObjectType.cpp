@@ -195,6 +195,7 @@ public:
     {
         StreamFileSP error_sp = io_handler.GetErrorStreamFile();
         
+#ifndef LLDB_DISABLE_PYTHON
         ScriptInterpreter *interpreter = m_interpreter.GetScriptInterpreter();
         if (interpreter)
         {
@@ -309,7 +310,7 @@ public:
             error_sp->Printf ("error: script interpreter missing, didn't add python command.\n");
             error_sp->Flush();
         }
-        
+#endif // #ifndef LLDB_DISABLE_PYTHON
         io_handler.SetIsDone(true);
     }
     
@@ -482,6 +483,7 @@ protected:
     {
         StreamFileSP error_sp = io_handler.GetErrorStreamFile();
         
+#ifndef LLDB_DISABLE_PYTHON
         ScriptInterpreter *interpreter = m_interpreter.GetScriptInterpreter();
         if (interpreter)
         {
@@ -577,9 +579,8 @@ protected:
             error_sp->Flush();
         }
         
+#endif // #ifndef LLDB_DISABLE_PYTHON
         io_handler.SetIsDone(true);
-        
-        
     }
 
 public:

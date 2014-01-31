@@ -12,7 +12,7 @@
 
 #include "lldb/Host/windows/windows.h"
 
-#include "ELWrapper.h"
+#include "lldb/Host/windows/editlinewin.h"
 #include <vector>
 #include <assert.h>
 
@@ -303,8 +303,8 @@ el_set (EditLine *el, int code, ...)
             clientData = GETARG( 0 );
         }
         break;
-    default:
-        assert( !"Not Implemented!" );
+//    default:
+//        assert( !"Not Implemented!" );
     }
     return 0;
 }
@@ -329,9 +329,9 @@ el_getc (EditLine *, char *)
 }
 
 void
-el_push (EditLine *, char *)
+el_push (EditLine *, const char *)
 {
-    assert( !"Not implemented!" );
+//    assert( !"Not implemented!" );
 }
 
 void

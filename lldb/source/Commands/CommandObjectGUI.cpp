@@ -38,6 +38,7 @@ CommandObjectGUI::~CommandObjectGUI ()
 bool
 CommandObjectGUI::DoExecute (Args& args, CommandReturnObject &result)
 {
+#ifndef LLDB_DISABLE_CURSES
     if (args.GetArgumentCount() == 0)
     {
         Debugger &debugger = m_interpreter.GetDebugger();
@@ -52,5 +53,9 @@ CommandObjectGUI::DoExecute (Args& args, CommandReturnObject &result)
         result.SetStatus (eReturnStatusFailed);
     }
     return true;
+#else
+    result.AppendError("lldb was not build with gui support");
+    return false;
+#endif
 }
 

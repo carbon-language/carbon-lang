@@ -11,8 +11,10 @@
 #include "lldb/lldb-python.h"
 
 #include <stdio.h>	/* ioctl, TIOCGWINSZ */
-#include <sys/ioctl.h>	/* ioctl, TIOCGWINSZ */
 
+#ifndef _MSC_VER
+#include <sys/ioctl.h>	/* ioctl, TIOCGWINSZ */
+#endif
 
 #include <string>
 
@@ -31,8 +33,10 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/ThreadPlan.h"
 
+#ifndef LLDB_DISABLE_CURSES
 #include <ncurses.h>
 #include <panel.h>
+#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -328,9 +332,10 @@ IOHandlerEditline::IOHandlerEditline (Debugger &debugger,
 {
     SetPrompt(prompt);
 
+    bool use_editline = false;
+#ifndef _MSC_VER
     const int in_fd = GetInputFD();
     struct winsize window_size;
-    bool use_editline = false;
     if (isatty (in_fd))
     {
         m_interactive = true;
@@ -340,6 +345,9 @@ IOHandlerEditline::IOHandlerEditline (Debugger &debugger,
                 use_editline = true;
         }
     }
+#else
+    use_editline = true;
+#endif
 
     if (use_editline)
     {
@@ -587,6 +595,10 @@ IOHandlerEditline::GotEOF()
     if (m_editline_ap)
         m_editline_ap->Interrupt();
 }
+
+// we may want curses to be disabled for some builds
+// for instance, windows
+#ifndef LLDB_DISABLE_CURSES
 
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Symbol/VariableList.h"
@@ -5274,3 +5286,4 @@ IOHandlerCursesGUI::GotEOF()
 {
 }
 
+#endif // #ifndef LLDB_DISABLE_CURSES

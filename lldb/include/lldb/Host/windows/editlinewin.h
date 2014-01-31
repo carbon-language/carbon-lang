@@ -46,6 +46,7 @@
 #define EL_GETFP         18   // , int, FILE **
 #define EL_SETFP         19   // , int, FILE *
 #define EL_REFRESH       20   // , void
+#define EL_PROMPT_ESC	 21   // , prompt_func, Char);              set/get
 
 #define EL_BUILTIN_GETCFN (NULL)
 
@@ -105,7 +106,7 @@ extern "C"
     void             el_end      ( EditLine * );
     void             el_reset    ( EditLine * );
     int              el_getc     ( EditLine *, char * );
-    void             el_push     ( EditLine *, char * );
+    void             el_push     ( EditLine *, const char * );
     void             el_beep     ( EditLine * );
     int              el_parse    ( EditLine *, int, const char ** );
     int              el_get      ( EditLine *, int, ... );

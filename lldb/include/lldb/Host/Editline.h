@@ -15,7 +15,7 @@
 
 #include <stdio.h>
 #ifdef _WIN32
-#include "ELWrapper.h"
+#include "lldb/Host/windows/editlinewin.h"
 #else
 #include <histedit.h>
 #endif
