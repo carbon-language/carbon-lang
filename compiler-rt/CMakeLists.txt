@@ -150,10 +150,8 @@ else()
   set(SANITIZER_COMMON_CFLAGS
     /MT
     /Zi
-    /FS
     /Oy-
     /GS-
-    /wd4221
     /wd4722
     )
 endif()
