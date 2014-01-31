@@ -18,6 +18,8 @@
 
 namespace __sanitizer {
 
+CommonFlags common_flags_dont_use;
+
 void SetCommonFlagsDefaults(CommonFlags *f) {
   f->symbolize = true;
   f->external_symbolizer_path = 0;

@@ -69,8 +69,8 @@ struct CommonFlags {
 };
 
 inline CommonFlags *common_flags() {
-  static CommonFlags f;
-  return &f;
+  extern CommonFlags common_flags_dont_use;
+  return &common_flags_dont_use;
 }
 
 void SetCommonFlagsDefaults(CommonFlags *f);
