@@ -428,8 +428,8 @@ int internal_sigaction_norestorer(int signum, const void *act, void *oldact) {
   }
 
   uptr result = internal_syscall(__NR_rt_sigaction, (uptr)signum,
-      (uptr)(u_act ? &k_act : (uptr)NULL),
-      (uptr)(u_oldact ? &k_oldact : (uptr)NULL),
+      (uptr)(u_act ? &k_act : NULL),
+      (uptr)(u_oldact ? &k_oldact : NULL),
       (uptr)sizeof(__sanitizer_kernel_sigset_t));
 
   if ((result == 0) && u_oldact) {
