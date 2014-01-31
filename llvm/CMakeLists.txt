@@ -472,6 +472,10 @@ add_subdirectory(utils/not)
 add_subdirectory(utils/llvm-lit)
 add_subdirectory(utils/yaml-bench)
 
+if(LLVM_INCLUDE_TESTS)
+  add_subdirectory(utils/unittest)
+endif()
+
 add_subdirectory(projects)
 
 if( LLVM_INCLUDE_TOOLS )
@@ -484,7 +488,6 @@ endif()
 
 if( LLVM_INCLUDE_TESTS )
   add_subdirectory(test)
-  add_subdirectory(utils/unittest)
   add_subdirectory(unittests)
   if (MSVC)
     # This utility is used to prevent crashing tests from calling Dr. Watson on
