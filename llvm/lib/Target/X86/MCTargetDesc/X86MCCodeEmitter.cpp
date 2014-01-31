@@ -966,10 +966,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     break;
   }
 
-  // Emit segment override opcode prefix as needed.
-  if (MemOperand >= 0)
-    EmitSegmentOverridePrefix(CurByte, MemOperand+X86::AddrSegmentReg, MI, OS);
-
   if (!HasEVEX) {
     // VEX opcode prefix can have 2 or 3 bytes
     //
@@ -1152,48 +1148,6 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
                                         const MCSubtargetInfo &STI,
                                         raw_ostream &OS) const {
 
-  // Emit the lock opcode prefix as needed.
-  if (TSFlags & X86II::LOCK)
-    EmitByte(0xF0, CurByte, OS);
-
-  // Emit segment override opcode prefix as needed.
-  if (MemOperand >= 0)
-    EmitSegmentOverridePrefix(CurByte, MemOperand+X86::AddrSegmentReg, MI, OS);
-
-  // Emit the repeat opcode prefix as needed.
-  if ((TSFlags & X86II::Op0Mask) == X86II::REP)
-    EmitByte(0xF3, CurByte, OS);
-
-  // Emit the address size opcode prefix as needed.
-  bool need_address_override;
-  // The AdSize prefix is only for 32-bit and 64-bit modes. Hm, perhaps we
-  // should introduce an AdSize16 bit instead of having seven special cases?
-  if ((!is16BitMode(STI) && TSFlags & X86II::AdSize) ||
-      (is16BitMode(STI) && (MI.getOpcode() == X86::JECXZ_32 ||
-                         MI.getOpcode() == X86::MOV8o8a ||
-                         MI.getOpcode() == X86::MOV16o16a ||
-                         MI.getOpcode() == X86::MOV32o32a ||
-                         MI.getOpcode() == X86::MOV8ao8 ||
-                         MI.getOpcode() == X86::MOV16ao16 ||
-                         MI.getOpcode() == X86::MOV32ao32))) {
-    need_address_override = true;
-  } else if (MemOperand == -1) {
-    need_address_override = false;
-  } else if (is64BitMode(STI)) {
-    assert(!Is16BitMemOperand(MI, MemOperand, STI));
-    need_address_override = Is32BitMemOperand(MI, MemOperand);
-  } else if (is32BitMode(STI)) {
-    assert(!Is64BitMemOperand(MI, MemOperand));
-    need_address_override = Is16BitMemOperand(MI, MemOperand, STI);
-  } else {
-    assert(is16BitMode(STI));
-    assert(!Is64BitMemOperand(MI, MemOperand));
-    need_address_override = !Is16BitMemOperand(MI, MemOperand, STI);
-  }
-
-  if (need_address_override)
-    EmitByte(0x67, CurByte, OS);
-
   // Emit the operand size opcode prefix as needed.
   if (TSFlags & (is16BitMode(STI) ? X86II::OpSize16 : X86II::OpSize))
     EmitByte(0x66, CurByte, OS);
@@ -1308,6 +1262,49 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // Determine where the memory operand starts, if present.
   int MemoryOperand = X86II::getMemoryOperandNo(TSFlags, Opcode);
   if (MemoryOperand != -1) MemoryOperand += CurOp;
+
+  // Emit the lock opcode prefix as needed.
+  if (TSFlags & X86II::LOCK)
+    EmitByte(0xF0, CurByte, OS);
+
+  // Emit segment override opcode prefix as needed.
+  if (MemoryOperand >= 0)
+    EmitSegmentOverridePrefix(CurByte, MemoryOperand+X86::AddrSegmentReg,
+                              MI, OS);
+
+  // Emit the repeat opcode prefix as needed.
+  if ((TSFlags & X86II::Op0Mask) == X86II::REP)
+    EmitByte(0xF3, CurByte, OS);
+
+  // Emit the address size opcode prefix as needed.
+  bool need_address_override;
+  // The AdSize prefix is only for 32-bit and 64-bit modes. Hm, perhaps we
+  // should introduce an AdSize16 bit instead of having seven special cases?
+  if ((!is16BitMode(STI) && TSFlags & X86II::AdSize) ||
+      (is16BitMode(STI) && (MI.getOpcode() == X86::JECXZ_32 ||
+                         MI.getOpcode() == X86::MOV8o8a ||
+                         MI.getOpcode() == X86::MOV16o16a ||
+                         MI.getOpcode() == X86::MOV32o32a ||
+                         MI.getOpcode() == X86::MOV8ao8 ||
+                         MI.getOpcode() == X86::MOV16ao16 ||
+                         MI.getOpcode() == X86::MOV32ao32))) {
+    need_address_override = true;
+  } else if (MemoryOperand < 0) {
+    need_address_override = false;
+  } else if (is64BitMode(STI)) {
+    assert(!Is16BitMemOperand(MI, MemoryOperand, STI));
+    need_address_override = Is32BitMemOperand(MI, MemoryOperand);
+  } else if (is32BitMode(STI)) {
+    assert(!Is64BitMemOperand(MI, MemoryOperand));
+    need_address_override = Is16BitMemOperand(MI, MemoryOperand, STI);
+  } else {
+    assert(is16BitMode(STI));
+    assert(!Is64BitMemOperand(MI, MemoryOperand));
+    need_address_override = !Is16BitMemOperand(MI, MemoryOperand, STI);
+  }
+
+  if (need_address_override)
+    EmitByte(0x67, CurByte, OS);
 
   if (!HasVEXPrefix)
     EmitOpcodePrefix(TSFlags, CurByte, MemoryOperand, MI, Desc, STI, OS);

@@ -1557,7 +1557,7 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
           vcvtdq2ps  %xmm13, %xmm10
 
 // CHECK: vcvtdq2ps  (%ecx), %xmm13
-// CHECK: encoding: [0xc5,0x78,0x5b,0x29]
+// CHECK: encoding: [0x67,0xc5,0x78,0x5b,0x29]
           vcvtdq2ps  (%ecx), %xmm13
 
 // CHECK: vcvttps2dq  %xmm12, %xmm11
