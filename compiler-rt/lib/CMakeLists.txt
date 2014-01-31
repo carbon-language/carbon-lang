@@ -195,8 +195,72 @@ set(i386_SOURCES
   i386/umoddi3.S
   ${GENERIC_SOURCES})
 
+set(arm_SOURCES
+  arm/adddf3vfp.S
+  arm/extendsfdf2vfp.S
+  arm/nedf2vfp.S
+  arm/addsf3vfp.S
+  arm/fixdfsivfp.S
+  arm/negdf2vfp.S
+  arm/aeabi_dcmp.S
+  arm/fixsfsivfp.S
+  arm/negsf2vfp.S
+  arm/aeabi_fcmp.S
+  arm/fixunsdfsivfp.S
+  arm/nesf2vfp.S
+  arm/aeabi_idivmod.S
+  arm/fixunssfsivfp.S
+  arm/restore_vfp_d8_d15_regs.S
+  arm/aeabi_ldivmod.S
+  arm/floatsidfvfp.S
+  arm/save_vfp_d8_d15_regs.S
+  arm/aeabi_memcmp.S
+  arm/floatsisfvfp.S
+  arm/aeabi_memcpy.S
+  arm/floatunssidfvfp.S
+  arm/subdf3vfp.S
+  arm/aeabi_memmove.S
+  arm/floatunssisfvfp.S
+  arm/subsf3vfp.S
+  arm/aeabi_memset.S
+  arm/gedf2vfp.S
+  arm/switch16.S
+  arm/aeabi_uidivmod.S
+  arm/gesf2vfp.S
+  arm/switch32.S
+  arm/aeabi_uldivmod.S
+  arm/gtdf2vfp.S
+  arm/switch8.S
+  arm/bswapdi2.S
+  arm/gtsf2vfp.S
+  arm/switchu8.S
+  arm/bswapsi2.S
+  arm/ledf2vfp.S
+  arm/sync_synchronize.S
+  arm/comparesf2.S
+  arm/lesf2vfp.S
+  arm/truncdfsf2vfp.S
+  arm/divdf3vfp.S
+  arm/ltdf2vfp.S
+  arm/udivmodsi4.S
+  arm/divmodsi4.S
+  arm/ltsf2vfp.S
+  arm/udivsi3.S
+  arm/divsf3vfp.S
+  arm/Makefile.mk
+  arm/umodsi3.S
+  arm/divsi3.S
+  arm/modsi3.S
+  arm/unorddf2vfp.S
+  arm/eqdf2vfp.S
+  arm/muldf3vfp.S
+  arm/unordsf2vfp.S
+  arm/eqsf2vfp.S
+  arm/mulsf3vfp.S
+  ${GENERIC_SOURCES})
+
 if (NOT WIN32)
-  foreach(arch x86_64 i386)
+  foreach(arch x86_64 i386 arm)
     if(CAN_TARGET_${arch})
       add_compiler_rt_static_runtime(clang_rt.${arch} ${arch}
         SOURCES ${${arch}_SOURCES}

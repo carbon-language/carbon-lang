@@ -2,7 +2,7 @@ set(PROFILE_SOURCES
   GCDAProfiling.c
   PGOProfiling.c)
 
-filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386)
+filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 arm)
 
 if(APPLE)
   add_compiler_rt_osx_static_runtime(clang_rt.profile_osx

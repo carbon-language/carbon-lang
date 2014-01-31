@@ -20,7 +20,7 @@ set(LSAN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 # The common files need to build on every arch supported by ASan.
 # (Even if they build into dummy object files.)
 filter_available_targets(LSAN_COMMON_SUPPORTED_ARCH
-  x86_64 i386 powerpc64)
+  x86_64 i386 powerpc64 arm)
 
 # Architectures supported by the standalone LSan.
 filter_available_targets(LSAN_SUPPORTED_ARCH
