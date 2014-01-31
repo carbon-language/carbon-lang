@@ -331,9 +331,10 @@ PEHeaderChunk<PEHeader>::PEHeaderChunk(const PECOFFLinkingContext &ctx)
   _coffHeader.TimeDateStamp = time(nullptr);
 
   // Attributes of the executable.
-  uint16_t characteristics = llvm::COFF::IMAGE_FILE_32BIT_MACHINE |
-                             llvm::COFF::IMAGE_FILE_EXECUTABLE_IMAGE;
-  if (ctx.getLargeAddressAware())
+  uint16_t characteristics = llvm::COFF::IMAGE_FILE_EXECUTABLE_IMAGE;
+  if (!ctx.is64Bit())
+    characteristics |= llvm::COFF::IMAGE_FILE_32BIT_MACHINE;
+  if (ctx.getLargeAddressAware() || ctx.is64Bit())
     characteristics |= llvm::COFF::IMAGE_FILE_LARGE_ADDRESS_AWARE;
   if (ctx.getSwapRunFromCD())
     characteristics |= llvm::COFF::IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP;

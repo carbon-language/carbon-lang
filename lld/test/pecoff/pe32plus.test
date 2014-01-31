@@ -14,9 +14,9 @@ CHECK-NEXT:   TimeDateStamp:
 CHECK-NEXT:   PointerToSymbolTable: 0x0
 CHECK-NEXT:   SymbolCount: 0
 CHECK-NEXT:   OptionalHeaderSize: 240
-CHECK-NEXT:   Characteristics [ (0x102)
-CHECK-NEXT:     IMAGE_FILE_32BIT_MACHINE (0x100)
+CHECK-NEXT:   Characteristics [ (0x22)
 CHECK-NEXT:     IMAGE_FILE_EXECUTABLE_IMAGE (0x2)
+CHECK-NEXT:     IMAGE_FILE_LARGE_ADDRESS_AWARE (0x20)
 CHECK-NEXT:   ]
 CHECK-NEXT: }
 CHECK-NEXT: ImageOptionalHeader {
