@@ -53,6 +53,7 @@ void __addfsword(unsigned long, unsigned short);
 void __code_seg(const char *);
 static __inline__
 void __cpuid(int[4], int);
+static __inline__
 void __cpuidex(int[4], int, int);
 void __debugbreak(void);
 __int64 __emul(int, int);
@@ -876,14 +877,13 @@ _ReturnAddress(void) {
 }
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
 __cpuid(int __info[4], int __level) {
-#if __i386__
-  __asm__ ("cpuid"
-         : "=a"(__info[0]), "=b" (__info[1]), "=c"(__info[2]), "=d"(__info[3])
-         : "0"(__level));
-#else
   __asm__ ("cpuid" : "=a"(__info[0]), "=b" (__info[1]), "=c"(__info[2]), "=d"(__info[3])
-                   : "0"(__level));
-#endif
+                   : "a"(__level));
+}
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__cpuidex(int __info[4], int __level, int __ecx) {
+  __asm__ ("cpuid" : "=a"(__info[0]), "=b" (__info[1]), "=c"(__info[2]), "=d"(__info[3])
+                   : "a"(__level), "c"(__ecx));
 }
 static __inline__ unsigned __int64 __cdecl __attribute__((__always_inline__, __nodebug__))
 _xgetbv(unsigned int __xcr_no) {
