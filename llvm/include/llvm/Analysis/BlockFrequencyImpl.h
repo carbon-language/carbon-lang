@@ -159,7 +159,7 @@ class BlockFrequencyImpl {
       return;
     }
 
-    if(BlockT *Pred = getSingleBlockPred(BB)) {
+    if (BlockT *Pred = getSingleBlockPred(BB)) {
       if (BlocksInLoop.count(Pred))
         setBlockFreq(BB, getEdgeFreq(Pred, BB));
       // TODO: else? irreducible, ignore it for now.

@@ -602,7 +602,7 @@ TEST(APIntTest, arrayAccess) {
   // Single word check.
   uint64_t E1 = 0x2CA7F46BF6569915ULL;
   APInt A1(64, E1);
-  for (unsigned i = 0, e = 64; i < e; ++i) {    
+  for (unsigned i = 0, e = 64; i < e; ++i) {
     EXPECT_EQ(bool(E1 & (1ULL << i)),
               A1[i]);
   }
@@ -632,7 +632,7 @@ TEST(APIntTest, LargeAPIntConstruction) {
 }
 
 TEST(APIntTest, nearestLogBase2) {
-  // Single word check.  
+  // Single word check.
 
   // Test round up.
   uint64_t I1 = 0x1800001;
