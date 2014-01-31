@@ -47,8 +47,7 @@ extern "C" void LLVMInitializeR600AsmPrinter() {
 
 AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
     : AsmPrinter(TM, Streamer) {
-  DisasmEnabled = TM.getSubtarget<AMDGPUSubtarget>().dumpCode() &&
-                  ! Streamer.hasRawTextSupport();
+  DisasmEnabled = TM.getSubtarget<AMDGPUSubtarget>().dumpCode();
 }
 
 /// We need to override this function so we can avoid
