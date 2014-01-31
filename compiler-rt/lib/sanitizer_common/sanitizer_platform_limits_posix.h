@@ -1055,8 +1055,7 @@ namespace __sanitizer {
   extern unsigned IOCTL_TIOCSERGETMULTI;
   extern unsigned IOCTL_TIOCSERSETMULTI;
   extern unsigned IOCTL_TIOCSSERIAL;
-#endif
-#if SANITIZER_LINUX
+
   extern unsigned IOCTL_SNDRV_HWDEP_IOCTL_PVERSION;
   extern unsigned IOCTL_SNDRV_HWDEP_IOCTL_INFO;
   extern unsigned IOCTL_SNDRV_HWDEP_IOCTL_DSP_STATUS;

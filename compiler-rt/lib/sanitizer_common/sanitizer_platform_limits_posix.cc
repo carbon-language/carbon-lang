@@ -119,7 +119,7 @@
 #include <sys/sockio.h>
 #endif
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 #include <sound/asound.h>
 #include <sound/asound_fm.h>
 #include <sound/hdsp.h>
@@ -825,8 +825,7 @@ namespace __sanitizer {
   unsigned IOCTL_TIOCSERGETMULTI = TIOCSERGETMULTI;
   unsigned IOCTL_TIOCSERSETMULTI = TIOCSERSETMULTI;
   unsigned IOCTL_TIOCSSERIAL = TIOCSSERIAL;
-#endif
-#if SANITIZER_LINUX
+
   unsigned IOCTL_SNDRV_HWDEP_IOCTL_PVERSION = SNDRV_HWDEP_IOCTL_PVERSION;
   unsigned IOCTL_SNDRV_HWDEP_IOCTL_INFO = SNDRV_HWDEP_IOCTL_INFO;
   unsigned IOCTL_SNDRV_HWDEP_IOCTL_DSP_STATUS = SNDRV_HWDEP_IOCTL_DSP_STATUS;

@@ -356,7 +356,9 @@ static void ioctl_table_fill() {
   _(VT_SENDSIG, NONE, 0);
   _(VT_SETMODE, READ, struct_vt_mode_sz);
   _(VT_WAITACTIVE, NONE, 0);
+#endif
 
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
   // <sound/asound.h>. READWRITE is used correctly in this group.
   _(SNDRV_HWDEP_IOCTL_PVERSION, WRITE, sizeof(int))
   _(SNDRV_HWDEP_IOCTL_INFO, WRITE, struct_snd_hwdep_info_sz)
@@ -479,9 +481,7 @@ static void ioctl_table_fill() {
   _(SNDRV_EMUX_IOCTL_REMOVE_LAST_SAMPLES, NONE, 0)
   _(SNDRV_EMUX_IOCTL_MEM_AVAIL, READ, sizeof(int))
   _(SNDRV_EMUX_IOCTL_MISC_MODE, READWRITE, struct_snd_emux_misc_mode_sz)
-#endif
 
-#if SANITIZER_LINUX && !SANITIZER_ANDROID
   // _(SIOCDEVPLIP, WRITE, struct_ifreq_sz); // the same as EQL_ENSLAVE
   _(CYGETDEFTHRESH, WRITE, sizeof(int));
   _(CYGETDEFTIMEOUT, WRITE, sizeof(int));
