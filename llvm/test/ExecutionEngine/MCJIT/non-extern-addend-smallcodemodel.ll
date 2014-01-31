@@ -1,5 +1,9 @@
-; RUN: %lli_mcjit %s > /dev/null
-
+; RUN: %lli_mcjit -code-model=small %s > /dev/null
+; XFAIL: aarch64
+;
+; FIXME: Merge this file with non-extern-addend.ll once AArch64 supports PC-rel
+;        relocations in ELF. (The code is identical, only the run line differs).
+;
 define i32 @foo(i32 %x, i32 %y, double %d) {
 entry:
   %d.int64 = bitcast double %d to i64
