@@ -242,6 +242,9 @@ class CGFunctionInfo : public llvm::FoldingSetNode {
   /// The clang::CallingConv that this was originally created with.
   unsigned ASTCallingConvention : 8;
 
+  /// Whether this is an instance method.
+  unsigned InstanceMethod : 1;
+
   /// Whether this function is noreturn.
   unsigned NoReturn : 1;
 
@@ -266,6 +269,7 @@ class CGFunctionInfo : public llvm::FoldingSetNode {
 
 public:
   static CGFunctionInfo *create(unsigned llvmCC,
+                                bool InstanceMethod,
                                 const FunctionType::ExtInfo &extInfo,
                                 CanQualType resultType,
                                 ArrayRef<CanQualType> argTypes,
@@ -283,6 +287,8 @@ public:
 
   bool isVariadic() const { return Required.allowsOptionalArgs(); }
   RequiredArgs getRequiredArgs() const { return Required; }
+
+  bool isInstanceMethod() const { return InstanceMethod; }
 
   bool isNoReturn() const { return NoReturn; }
 
@@ -326,6 +332,7 @@ public:
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     ID.AddInteger(getASTCallingConvention());
+    ID.AddBoolean(InstanceMethod);
     ID.AddBoolean(NoReturn);
     ID.AddBoolean(ReturnsRetained);
     ID.AddBoolean(HasRegParm);
@@ -336,11 +343,13 @@ public:
       it->type.Profile(ID);
   }
   static void Profile(llvm::FoldingSetNodeID &ID,
+                      bool InstanceMethod,
                       const FunctionType::ExtInfo &info,
                       RequiredArgs required,
                       CanQualType resultType,
                       ArrayRef<CanQualType> argTypes) {
     ID.AddInteger(info.getCC());
+    ID.AddBoolean(InstanceMethod);
     ID.AddBoolean(info.getNoReturn());
     ID.AddBoolean(info.getProducesResult());
     ID.AddBoolean(info.getHasRegParm());

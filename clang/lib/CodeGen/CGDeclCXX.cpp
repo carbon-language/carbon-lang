@@ -502,11 +502,9 @@ llvm::Function *CodeGenFunction::generateDestroyHelper(
   FunctionArgList args;
   ImplicitParamDecl dst(0, SourceLocation(), 0, getContext().VoidPtrTy);
   args.push_back(&dst);
-  
-  const CGFunctionInfo &FI = 
-    CGM.getTypes().arrangeFunctionDeclaration(getContext().VoidTy, args,
-                                              FunctionType::ExtInfo(),
-                                              /*variadic*/ false);
+
+  const CGFunctionInfo &FI = CGM.getTypes().arrangeFreeFunctionDeclaration(
+      getContext().VoidTy, args, FunctionType::ExtInfo(), /*variadic=*/false);
   llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI);
   llvm::Function *fn = 
     CreateGlobalInitOrDestructFunction(CGM, FTy, "__cxx_global_array_dtor");

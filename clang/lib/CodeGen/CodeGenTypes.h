@@ -175,10 +175,10 @@ public:
 
   const CGFunctionInfo &arrangeGlobalDeclaration(GlobalDecl GD);
   const CGFunctionInfo &arrangeFunctionDeclaration(const FunctionDecl *FD);
-  const CGFunctionInfo &arrangeFunctionDeclaration(QualType ResTy,
-                                                   const FunctionArgList &Args,
-                                             const FunctionType::ExtInfo &Info,
-                                                   bool isVariadic);
+  const CGFunctionInfo &
+  arrangeFreeFunctionDeclaration(QualType ResTy, const FunctionArgList &Args,
+                                 const FunctionType::ExtInfo &Info,
+                                 bool isVariadic);
 
   const CGFunctionInfo &arrangeObjCMethodDeclaration(const ObjCMethodDecl *MD);
   const CGFunctionInfo &arrangeObjCMessageSendSignature(const ObjCMethodDecl *MD,
@@ -216,6 +216,7 @@ public:
   ///
   /// \param argTypes - must all actually be canonical as params
   const CGFunctionInfo &arrangeLLVMFunctionInfo(CanQualType returnType,
+                                                bool IsInstanceMethod,
                                                 ArrayRef<CanQualType> argTypes,
                                                 FunctionType::ExtInfo info,
                                                 RequiredArgs args);

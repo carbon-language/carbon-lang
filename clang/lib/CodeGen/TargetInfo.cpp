@@ -552,8 +552,8 @@ class X86_32ABIInfo : public ABIInfo {
     return (Size == 8 || Size == 16 || Size == 32 || Size == 64);
   }
 
-  static bool shouldReturnTypeInRegister(QualType Ty, ASTContext &Context, 
-                                          unsigned callingConvention);
+  bool shouldReturnTypeInRegister(QualType Ty, ASTContext &Context,
+                                  bool IsInstanceMethod) const;
 
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be passed in memory.
@@ -565,7 +565,8 @@ class X86_32ABIInfo : public ABIInfo {
   unsigned getTypeStackAlignInBytes(QualType Ty, unsigned Align) const;
 
   Class classify(QualType Ty) const;
-  ABIArgInfo classifyReturnType(QualType RetTy, CCState &State) const;
+  ABIArgInfo classifyReturnType(QualType RetTy, CCState &State,
+                                bool IsInstanceMethod) const;
   ABIArgInfo classifyArgumentType(QualType RetTy, CCState &State) const;
   bool shouldUseInReg(QualType Ty, CCState &State, bool &NeedsPadding) const;
 
@@ -622,9 +623,8 @@ public:
 
 /// shouldReturnTypeInRegister - Determine if the given type should be
 /// passed in a register (for the Darwin ABI).
-bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
-                                               ASTContext &Context,
-                                               unsigned callingConvention) {
+bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty, ASTContext &Context,
+                                               bool IsInstanceMethod) const {
   uint64_t Size = Context.getTypeSize(Ty);
 
   // Type must be register sized.
@@ -650,7 +650,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
   // Arrays are treated like records.
   if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty))
     return shouldReturnTypeInRegister(AT->getElementType(), Context,
-                                      callingConvention);
+                                      IsInstanceMethod);
 
   // Otherwise, it must be a record type.
   const RecordType *RT = Ty->getAs<RecordType>();
@@ -660,10 +660,8 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
 
   // For thiscall conventions, structures will never be returned in
   // a register.  This is for compatibility with the MSVC ABI
-  if (callingConvention == llvm::CallingConv::X86_ThisCall && 
-      RT->isStructureType()) {
+  if (IsWin32StructABI && IsInstanceMethod && RT->isStructureType())
     return false;
-  }
 
   // Structure types are passed in register if all fields would be
   // passed in a register.
@@ -676,8 +674,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
       continue;
 
     // Check fields recursively.
-    if (!shouldReturnTypeInRegister(FD->getType(), Context, 
-                                    callingConvention))
+    if (!shouldReturnTypeInRegister(FD->getType(), Context, IsInstanceMethod))
       return false;
   }
   return true;
@@ -693,8 +690,8 @@ ABIArgInfo X86_32ABIInfo::getIndirectReturnResult(CCState &State) const {
   return ABIArgInfo::getIndirect(/*Align=*/0, /*ByVal=*/false);
 }
 
-ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
-                                             CCState &State) const {
+ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy, CCState &State,
+                                             bool IsInstanceMethod) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
@@ -739,8 +736,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
 
     // Small structures which are register sized are generally returned
     // in a register.
-    if (X86_32ABIInfo::shouldReturnTypeInRegister(RetTy, getContext(),
-                                                  State.CC)) {
+    if (shouldReturnTypeInRegister(RetTy, getContext(), IsInstanceMethod)) {
       uint64_t Size = getContext().getTypeSize(RetTy);
 
       // As a special-case, if the struct is a "single-element" struct, and
@@ -987,7 +983,16 @@ void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   else
     State.FreeRegs = DefaultNumRegisterParameters;
 
-  FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), State);
+  FI.getReturnInfo() =
+      classifyReturnType(FI.getReturnType(), State, FI.isInstanceMethod());
+
+  // On win32, use the x86_cdeclmethodcc convention for cdecl methods that use
+  // sret.  This convention swaps the order of the first two parameters behind
+  // the scenes to match MSVC.
+  if (IsWin32StructABI && FI.isInstanceMethod() &&
+      FI.getCallingConvention() == llvm::CallingConv::C &&
+      FI.getReturnInfo().isIndirect())
+    FI.setEffectiveCallingConvention(llvm::CallingConv::X86_CDeclMethod);
 
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it)

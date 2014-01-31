@@ -167,10 +167,7 @@ class Class {
 
   Small __cdecl cdecl_method_small() { return Small(); }
   // LINUX: define {{.*}} void @_ZN5Class18cdecl_method_smallEv(%struct.Small* noalias sret %agg.result, %class.Class* %this)
-  // FIXME: Interesting, cdecl returns structures differently for instance
-  // methods and global functions. This is not supported by Clang yet...
-  // FIXME: Replace WIN32-NOT with WIN32 when this is fixed.
-  // WIN32-NOT: define {{.*}} void @"\01?cdecl_method_small@Class@@QAA?AUSmall@@XZ"(%struct.Small* noalias sret %agg.result, %class.Class* %this)
+  // WIN32: define {{.*}} void @"\01?cdecl_method_small@Class@@QAA?AUSmall@@XZ"(%struct.Small* noalias sret %agg.result, %class.Class* %this)
 
   Big __cdecl cdecl_method_big() { return Big(); }
   // LINUX: define {{.*}} void @_ZN5Class16cdecl_method_bigEv(%struct.Big* noalias sret %agg.result, %class.Class* %this)

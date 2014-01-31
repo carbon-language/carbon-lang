@@ -62,7 +62,7 @@ public:
                                              CanQual<FunctionNoProtoType> Ty);
   const CGFunctionInfo &arrangeCXXMethodType(const CXXRecordDecl *RD,
                                              const FunctionProtoType *FTP);
-  const CGFunctionInfo &arrangeLLVMFunctionInfo(CanQualType returnType,
+  const CGFunctionInfo &arrangeFreeFunctionCall(CanQualType returnType,
                                          llvm::ArrayRef<CanQualType> argTypes,
                                          FunctionType::ExtInfo info,
                                          RequiredArgs args);
