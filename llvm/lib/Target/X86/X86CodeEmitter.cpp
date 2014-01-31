@@ -667,7 +667,6 @@ void Emitter<CodeEmitter>::emitOpcodePrefix(uint64_t TSFlags,
     case X86II::A7:  // 0F A7
       Need0FPrefix = true;
       break;
-    case X86II::REP: break; // already handled.
     case X86II::PD:   // 66 0F
     case X86II::T8PD: // 66 0F 38
     case X86II::TAPD: // 66 0F 3A
@@ -1125,7 +1124,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   emitSegmentOverridePrefix(TSFlags, MemoryOperand, MI);
 
   // Emit the repeat opcode prefix as needed.
-  if ((Desc->TSFlags & X86II::Op0Mask) == X86II::REP)
+  if (Desc->TSFlags & X86II::REP)
     MCE.emitByte(0xF3);
 
   // Emit the address size opcode prefix as needed.

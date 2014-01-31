@@ -324,9 +324,9 @@ namespace X86II {
 
     //===------------------------------------------------------------------===//
     // Op0Mask - There are several prefix bytes that are used to form two byte
-    // opcodes.  These are currently 0x0F, 0xF3, and 0xD8-0xDF.  This mask is
-    // used to obtain the setting of this field.  If no bits in this field is
-    // set, there is no prefix byte for obtaining a multibyte opcode.
+    // opcodes.  This mask is used to obtain the setting of this field.  If no
+    // bits in this field is set, there is no prefix byte for obtaining a
+    // multibyte opcode.
     //
     Op0Shift    = 9,
     Op0Mask     = 0x1F << Op0Shift,
@@ -334,10 +334,6 @@ namespace X86II {
     // TB - TwoByte - Set if this instruction has a two byte opcode, which
     // starts with a 0x0F byte before the real opcode.
     TB          = 1 << Op0Shift,
-
-    // REP - The 0xF3 prefix byte indicating repetition of the following
-    // instruction.
-    REP         = 2 << Op0Shift,
 
     // D8-DF - These escape opcodes are used by the floating point unit.  These
     // values must remain sequential.
@@ -445,9 +441,13 @@ namespace X86II {
     LOCKShift = FPTypeShift + 3,
     LOCK = 1 << LOCKShift,
 
-    // Execution domain for SSE instructions in bits 23, 24.
-    // 0 in bits 23-24 means normal, non-SSE instruction.
-    SSEDomainShift = LOCKShift + 1,
+    // REP prefix
+    REPShift = LOCKShift + 1,
+    REP = 1 << REPShift,
+
+    // Execution domain for SSE instructions.
+    // 0 means normal, non-SSE instruction.
+    SSEDomainShift = REPShift + 1,
 
     OpcodeShift   = SSEDomainShift + 2,
 

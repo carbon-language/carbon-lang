@@ -1156,7 +1156,6 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   switch (TSFlags & X86II::Op0Mask) {
   default: llvm_unreachable("Invalid prefix!");
   case 0: break;  // No prefix!
-  case X86II::REP: break; // already handled.
   case X86II::TB:  // Two-byte opcode prefix
   case X86II::T8:  // 0F 38
   case X86II::TA:  // 0F 3A
@@ -1273,7 +1272,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                               MI, OS);
 
   // Emit the repeat opcode prefix as needed.
-  if ((TSFlags & X86II::Op0Mask) == X86II::REP)
+  if (TSFlags & X86II::REP)
     EmitByte(0xF3, CurByte, OS);
 
   // Emit the address size opcode prefix as needed.

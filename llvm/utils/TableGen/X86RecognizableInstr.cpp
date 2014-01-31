@@ -77,7 +77,6 @@ namespace X86Local {
 
   enum {
     TB  = 1,
-    REP = 2,
     D8 = 3, D9 = 4, DA = 5, DB = 6,
     DC = 7, DD = 8, DE = 9, DF = 10,
     XD = 11,  XS = 12,
@@ -250,6 +249,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasEVEX_KZ       = Rec->getValueAsBit("hasEVEX_Z");
   HasEVEX_B        = Rec->getValueAsBit("hasEVEX_B");
   HasLockPrefix    = Rec->getValueAsBit("hasLockPrefix");
+  HasREPPrefix     = Rec->getValueAsBit("hasREPPrefix");
   IsCodeGenOnly    = Rec->getValueAsBit("isCodeGenOnly");
   ForceDisassemble = Rec->getValueAsBit("ForceDisassemble");
 
@@ -480,7 +480,7 @@ InstructionContext RecognizableInstr::insnContext() const {
              Prefix == X86Local::TAXD)
       insnContext = IC_XD;
     else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS ||
-             Prefix == X86Local::REP)
+             HasREPPrefix)
       insnContext = IC_XS;
     else
       insnContext = IC;
@@ -1090,7 +1090,6 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     filter = new ExactFilter(Opcode);
     opcodeToSet = 0xd8 + (Prefix - X86Local::D8);
     break;
-  case X86Local::REP:
   case 0:
     opcodeType = ONEBYTE;
     switch (Opcode) {

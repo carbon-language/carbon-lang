@@ -78,6 +78,8 @@ private:
   bool HasEVEX_B;
   /// The hasLockPrefix field from the record
   bool HasLockPrefix;
+  /// The hasREPPrefix field from the record
+  bool HasREPPrefix;
   /// The isCodeGenOnly field from the record
   bool IsCodeGenOnly;
   /// The ForceDisassemble field from the record
