@@ -1803,6 +1803,37 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vbslq_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vbsl, Ty),
                         Ops, "vbsl");
+  case NEON::BI__builtin_neon_vcls_v:
+  case NEON::BI__builtin_neon_vclsq_v: {
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vcls, Ty);
+    return EmitNeonCall(F, Ops, "vcls");
+  }
+  case NEON::BI__builtin_neon_vclz_v:
+  case NEON::BI__builtin_neon_vclzq_v: {
+    // Generate target-independent intrinsic; also need to add second argument
+    // for whether or not clz of zero is undefined; on ARM it isn't.
+    Function *F = CGM.getIntrinsic(Intrinsic::ctlz, Ty);
+    Ops.push_back(Builder.getInt1(getTarget().isCLZForZeroUndef()));
+    return EmitNeonCall(F, Ops, "vclz");
+  }
+  case NEON::BI__builtin_neon_vcnt_v:
+  case NEON::BI__builtin_neon_vcntq_v: {
+    // generate target-independent intrinsic
+    Function *F = CGM.getIntrinsic(Intrinsic::ctpop, Ty);
+    return EmitNeonCall(F, Ops, "vctpop");
+  }
+  case NEON::BI__builtin_neon_vcvt_f16_v: {
+    assert(Type.getEltType() == NeonTypeFlags::Float16 && !Quad &&
+           "unexpected vcvt_f16_v builtin");
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vcvtfp2hf);
+    return EmitNeonCall(F, Ops, "vcvt");
+  }
+  case NEON::BI__builtin_neon_vcvt_f32_f16: {
+    assert(Type.getEltType() == NeonTypeFlags::Float16 && !Quad &&
+           "unexpected vcvt_f32_f16 builtin");
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vcvthf2fp);
+    return EmitNeonCall(F, Ops, "vcvt");
+  }
   case NEON::BI__builtin_neon_vcvt_n_f32_v:
   case NEON::BI__builtin_neon_vcvtq_n_f32_v: {
     llvm::Type *FloatTy =
@@ -1824,6 +1855,16 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(unsigned BuiltinID,
                : Intrinsic::arm_neon_vcvtfp2fxs;
     Function *F = CGM.getIntrinsic(Int, Tys);
     return EmitNeonCall(F, Ops, "vcvt_n");
+  }
+  case NEON::BI__builtin_neon_vcvt_s32_v:
+  case NEON::BI__builtin_neon_vcvt_u32_v:
+  case NEON::BI__builtin_neon_vcvtq_s32_v:
+  case NEON::BI__builtin_neon_vcvtq_u32_v: {
+    llvm::Type *FloatTy =
+      GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float32, false, quad));
+    Ops[0] = Builder.CreateBitCast(Ops[0], FloatTy);
+    return usgn ? Builder.CreateFPToUI(Ops[0], Ty, "vcvt")
+                : Builder.CreateFPToSI(Ops[0], Ty, "vcvt");
   }
   case NEON::BI__builtin_neon_vext_v:
   case NEON::BI__builtin_neon_vextq_v: {
@@ -1946,6 +1987,11 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(unsigned BuiltinID,
       return Builder.CreateZExt(Ops[0], Ty, "vmovl");
     return Builder.CreateSExt(Ops[0], Ty, "vmovl");
   }
+  case NEON::BI__builtin_neon_vmovn_v: {
+    llvm::Type *QTy = llvm::VectorType::getExtendedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], QTy);
+    return Builder.CreateTrunc(Ops[0], Ty, "vmovn");
+  }
   case NEON::BI__builtin_neon_vmul_v:
   case NEON::BI__builtin_neon_vmulq_v:
     assert(Type.isPoly() && "vmul builtin only supported for polynomial types");
@@ -1960,19 +2006,56 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(unsigned BuiltinID,
     Int = Usgn ? Intrinsic::arm_neon_vmullu : Intrinsic::arm_neon_vmulls;
     Int = Type.isPoly() ? (unsigned)Intrinsic::arm_neon_vmullp : Int;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vmull");
+  case NEON::BI__builtin_neon_vpadal_v:
+  case NEON::BI__builtin_neon_vpadalq_v: {
+    Int = Usgn ? Intrinsic::arm_neon_vpadalu : Intrinsic::arm_neon_vpadals;
+    // The source operand type has twice as many elements of half the size.
+    unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
+    llvm::Type *EltTy =
+      llvm::IntegerType::get(getLLVMContext(), EltBits / 2);
+    llvm::Type *NarrowTy =
+      llvm::VectorType::get(EltTy, VTy->getNumElements() * 2);
+    llvm::Type *Tys[2] = { Ty, NarrowTy };
+    return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vpadal");
+  }
   case NEON::BI__builtin_neon_vpadd_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vpadd, Ty),
                         Ops, "vpadd");
+  case NEON::BI__builtin_neon_vpaddl_v:
+  case NEON::BI__builtin_neon_vpaddlq_v: {
+    Int = Usgn ? Intrinsic::arm_neon_vpaddlu : Intrinsic::arm_neon_vpaddls;
+    // The source operand type has twice as many elements of half the size.
+    unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
+    llvm::Type *EltTy = llvm::IntegerType::get(getLLVMContext(), EltBits / 2);
+    llvm::Type *NarrowTy =
+      llvm::VectorType::get(EltTy, VTy->getNumElements() * 2);
+    llvm::Type *Tys[2] = { Ty, NarrowTy };
+    return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vpaddl");
+  }
   case NEON::BI__builtin_neon_vpmax_v:
     Int = Usgn ? Intrinsic::arm_neon_vpmaxu : Intrinsic::arm_neon_vpmaxs;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vpmax");
   case NEON::BI__builtin_neon_vpmin_v:
     Int = Usgn ? Intrinsic::arm_neon_vpminu : Intrinsic::arm_neon_vpmins;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vpmin");
+  case NEON::BI__builtin_neon_vqabs_v:
+  case NEON::BI__builtin_neon_vqabsq_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqabs, Ty),
+                        Ops, "vqabs");
   case NEON::BI__builtin_neon_vqadd_v:
   case NEON::BI__builtin_neon_vqaddq_v:
     Int = Usgn ? Intrinsic::arm_neon_vqaddu : Intrinsic::arm_neon_vqadds;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vqadd");
+  case NEON::BI__builtin_neon_vqmovn_v:
+    Int = Usgn ? Intrinsic::arm_neon_vqmovnu : Intrinsic::arm_neon_vqmovns;
+    return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vqmovn");
+  case NEON::BI__builtin_neon_vqmovun_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqmovnsu, Ty),
+                        Ops, "vqdmull");
+  case NEON::BI__builtin_neon_vqneg_v:
+  case NEON::BI__builtin_neon_vqnegq_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqneg, Ty),
+                        Ops, "vqneg");
   case NEON::BI__builtin_neon_vqsub_v:
   case NEON::BI__builtin_neon_vqsubq_v:
     Int = Usgn ? Intrinsic::arm_neon_vqsubu : Intrinsic::arm_neon_vqsubs;
@@ -3919,18 +4002,6 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     Int = Intrinsic::aarch64_neon_vmulx;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vmulx");
   }
-  case NEON::BI__builtin_neon_vpaddl_v:
-  case NEON::BI__builtin_neon_vpaddlq_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vpaddl_v, E);
-  case NEON::BI__builtin_neon_vpadal_v:
-  case NEON::BI__builtin_neon_vpadalq_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vpadal_v, E);
-  case NEON::BI__builtin_neon_vqabs_v:
-  case NEON::BI__builtin_neon_vqabsq_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vqabs_v, E);
-  case NEON::BI__builtin_neon_vqneg_v:
-  case NEON::BI__builtin_neon_vqnegq_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vqneg_v, E);
   case NEON::BI__builtin_neon_vabs_v:
   case NEON::BI__builtin_neon_vabsq_v: {
     if (VTy->getElementType()->isFloatingPointTy()) {
@@ -3948,29 +4019,10 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     Int = Intrinsic::aarch64_neon_suqadd;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vuqadd");
   }
-  case NEON::BI__builtin_neon_vcls_v:
-  case NEON::BI__builtin_neon_vclsq_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vcls_v, E);
-  case NEON::BI__builtin_neon_vclz_v:
-  case NEON::BI__builtin_neon_vclzq_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vclz_v, E);
-  case NEON::BI__builtin_neon_vcnt_v:
-  case NEON::BI__builtin_neon_vcntq_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vcnt_v, E);
   case NEON::BI__builtin_neon_vrbit_v:
   case NEON::BI__builtin_neon_vrbitq_v:
     Int = Intrinsic::aarch64_neon_rbit;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vrbit");
-  case NEON::BI__builtin_neon_vmovn_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vmovn_v, E);
-  case NEON::BI__builtin_neon_vqmovun_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vqmovun_v, E);
-  case NEON::BI__builtin_neon_vqmovn_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vqmovn_v, E);
-  case NEON::BI__builtin_neon_vcvt_f16_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vcvt_f16_v, E);
-  case NEON::BI__builtin_neon_vcvt_f32_f16:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vcvt_f32_f16, E);
   case NEON::BI__builtin_neon_vcvt_f32_f64: {
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     Ty = GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float32, false, false));
@@ -4031,11 +4083,6 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     Int = Intrinsic::nearbyint;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vrndi");
   }
-  case NEON::BI__builtin_neon_vcvt_s32_v:
-  case NEON::BI__builtin_neon_vcvt_u32_v:
-  case NEON::BI__builtin_neon_vcvtq_s32_v:
-  case NEON::BI__builtin_neon_vcvtq_u32_v:
-    return EmitARMBuiltinExpr(NEON::BI__builtin_neon_vcvtq_u32_v, E);
   case NEON::BI__builtin_neon_vcvt_s64_v:
   case NEON::BI__builtin_neon_vcvt_u64_v:
   case NEON::BI__builtin_neon_vcvtq_s64_v:
@@ -4507,53 +4554,12 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vacgtq);
     return EmitNeonCall(F, Ops, "vcagt");
   }
-  case NEON::BI__builtin_neon_vcls_v:
-  case NEON::BI__builtin_neon_vclsq_v: {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vcls, Ty);
-    return EmitNeonCall(F, Ops, "vcls");
-  }
-  case NEON::BI__builtin_neon_vclz_v:
-  case NEON::BI__builtin_neon_vclzq_v: {
-    // Generate target-independent intrinsic; also need to add second argument
-    // for whether or not clz of zero is undefined; on ARM it isn't.
-    Function *F = CGM.getIntrinsic(Intrinsic::ctlz, Ty);
-    Ops.push_back(Builder.getInt1(getTarget().isCLZForZeroUndef()));
-    return EmitNeonCall(F, Ops, "vclz");
-  }
-  case NEON::BI__builtin_neon_vcnt_v:
-  case NEON::BI__builtin_neon_vcntq_v: {
-    // generate target-independent intrinsic
-    Function *F = CGM.getIntrinsic(Intrinsic::ctpop, Ty);
-    return EmitNeonCall(F, Ops, "vctpop");
-  }
-  case NEON::BI__builtin_neon_vcvt_f16_v: {
-    assert(Type.getEltType() == NeonTypeFlags::Float16 && !quad &&
-           "unexpected vcvt_f16_v builtin");
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vcvtfp2hf);
-    return EmitNeonCall(F, Ops, "vcvt");
-  }
-  case NEON::BI__builtin_neon_vcvt_f32_f16: {
-    assert(Type.getEltType() == NeonTypeFlags::Float16 && !quad &&
-           "unexpected vcvt_f32_f16 builtin");
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vcvthf2fp);
-    return EmitNeonCall(F, Ops, "vcvt");
-  }
   case NEON::BI__builtin_neon_vcvt_f32_v:
   case NEON::BI__builtin_neon_vcvtq_f32_v:
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     Ty = GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float32, false, quad));
     return usgn ? Builder.CreateUIToFP(Ops[0], Ty, "vcvt")
                 : Builder.CreateSIToFP(Ops[0], Ty, "vcvt");
-  case NEON::BI__builtin_neon_vcvt_s32_v:
-  case NEON::BI__builtin_neon_vcvt_u32_v:
-  case NEON::BI__builtin_neon_vcvtq_s32_v:
-  case NEON::BI__builtin_neon_vcvtq_u32_v: {
-    llvm::Type *FloatTy =
-      GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float32, false, quad));
-    Ops[0] = Builder.CreateBitCast(Ops[0], FloatTy);
-    return usgn ? Builder.CreateFPToUI(Ops[0], Ty, "vcvt")
-                : Builder.CreateFPToSI(Ops[0], Ty, "vcvt");
-  }
   case NEON::BI__builtin_neon_vld1q_lane_v:
     // Handle 64-bit integer elements as a special case.  Use shuffles of
     // one-element vectors to avoid poor code for i64 in the backend.
@@ -4642,48 +4648,6 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     return Builder.CreateStore(Ops[1], Ops[0]);
   }
-  case NEON::BI__builtin_neon_vmovn_v: {
-    llvm::Type *QTy = llvm::VectorType::getExtendedElementVectorType(VTy);
-    Ops[0] = Builder.CreateBitCast(Ops[0], QTy);
-    return Builder.CreateTrunc(Ops[0], Ty, "vmovn");
-  }
-  case NEON::BI__builtin_neon_vpadal_v:
-  case NEON::BI__builtin_neon_vpadalq_v: {
-    Int = usgn ? Intrinsic::arm_neon_vpadalu : Intrinsic::arm_neon_vpadals;
-    // The source operand type has twice as many elements of half the size.
-    unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
-    llvm::Type *EltTy =
-      llvm::IntegerType::get(getLLVMContext(), EltBits / 2);
-    llvm::Type *NarrowTy =
-      llvm::VectorType::get(EltTy, VTy->getNumElements() * 2);
-    llvm::Type *Tys[2] = { Ty, NarrowTy };
-    return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vpadal");
-  }
-  case NEON::BI__builtin_neon_vpaddl_v:
-  case NEON::BI__builtin_neon_vpaddlq_v: {
-    Int = usgn ? Intrinsic::arm_neon_vpaddlu : Intrinsic::arm_neon_vpaddls;
-    // The source operand type has twice as many elements of half the size.
-    unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
-    llvm::Type *EltTy = llvm::IntegerType::get(getLLVMContext(), EltBits / 2);
-    llvm::Type *NarrowTy =
-      llvm::VectorType::get(EltTy, VTy->getNumElements() * 2);
-    llvm::Type *Tys[2] = { Ty, NarrowTy };
-    return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vpaddl");
-  }
-  case NEON::BI__builtin_neon_vqabs_v:
-  case NEON::BI__builtin_neon_vqabsq_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqabs, Ty),
-                        Ops, "vqabs");
-  case NEON::BI__builtin_neon_vqmovn_v:
-    Int = usgn ? Intrinsic::arm_neon_vqmovnu : Intrinsic::arm_neon_vqmovns;
-    return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vqmovn");
-  case NEON::BI__builtin_neon_vqmovun_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqmovnsu, Ty),
-                        Ops, "vqdmull");
-  case NEON::BI__builtin_neon_vqneg_v:
-  case NEON::BI__builtin_neon_vqnegq_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqneg, Ty),
-                        Ops, "vqneg");
   case NEON::BI__builtin_neon_vqrshrn_n_v:
     Int =
       usgn ? Intrinsic::arm_neon_vqrshiftnu : Intrinsic::arm_neon_vqrshiftns;
