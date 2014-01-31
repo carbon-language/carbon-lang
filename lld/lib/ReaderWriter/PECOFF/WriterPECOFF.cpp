@@ -932,7 +932,8 @@ void PECOFFWriter::build(const File &linkedFile) {
     StringRef sectionName = i.first;
     std::vector<const DefinedAtom *> &contents = i.second;
     auto *section = new AtomChunk(_ctx, sectionName, contents);
-    addSectionChunk(section, sectionTable);
+    if (section->size() > 0)
+      addSectionChunk(section, sectionTable);
   }
 
   // Now that we know the addresses of all defined atoms that needs to be

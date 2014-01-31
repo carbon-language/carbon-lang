@@ -9,7 +9,7 @@ CHECK-NEXT: Arch: x86_64
 CHECK-NEXT: AddressSize: 64bit
 CHECK-NEXT: ImageFileHeader {
 CHECK-NEXT:   Machine: IMAGE_FILE_MACHINE_AMD64 (0x8664)
-CHECK-NEXT:   SectionCount: 3
+CHECK-NEXT:   SectionCount: 2
 CHECK-NEXT:   TimeDateStamp:
 CHECK-NEXT:   PointerToSymbolTable: 0x0
 CHECK-NEXT:   SymbolCount: 0
