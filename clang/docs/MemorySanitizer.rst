@@ -157,7 +157,7 @@ Supported Platforms
 
 MemorySanitizer is supported on
 
-* Linux x86\_64 (tested on Ubuntu 10.04 and 12.04);
+* Linux x86\_64 (tested on Ubuntu 12.04);
 
 Limitations
 ===========

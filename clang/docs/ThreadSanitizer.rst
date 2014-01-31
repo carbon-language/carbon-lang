@@ -18,9 +18,9 @@ supported.
 Supported Platforms
 -------------------
 
-ThreadSanitizer is supported on Linux x86_64 (tested on Ubuntu 10.04 and 12.04).
-Support for MacOS 10.7 (64-bit only) is planned for 2013.  Support for 32-bit
-platforms is problematic and not yet planned.
+ThreadSanitizer is supported on Linux x86_64 (tested on Ubuntu 12.04).
+Support for other 64-bit architectures is possible, contributions are welcome.
+Support for 32-bit platforms is problematic and is not planned.
 
 Usage
 -----
