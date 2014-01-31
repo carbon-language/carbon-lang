@@ -1,13 +1,26 @@
-; RUN: opt < %s  -loop-vectorize -mtriple=x86_64-apple-macosx10.8.0 -mcpu=corei7-avx -force-vector-width=4 -force-vector-unroll=0 -dce -S | FileCheck %s
+; RUN: opt < %s  -loop-vectorize -mtriple=x86_64-apple-macosx10.8.0 -mcpu=corei7-avx -force-vector-width=4 -force-vector-unroll=0 -dce -S \
+; RUN:   | FileCheck %s --check-prefix=CHECK-VECTOR
+; RUN: opt < %s  -loop-vectorize -mtriple=x86_64-apple-macosx10.8.0 -mcpu=corei7-avx -force-vector-width=1 -force-vector-unroll=0 -dce -S \
+; RUN:   | FileCheck %s --check-prefix=CHECK-SCALAR
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.8.0"
-;CHECK-LABEL: @foo(
-;CHECK: load <4 x i32>
-;CHECK-NOT: load <4 x i32>
-;CHECK: store <4 x i32>
-;CHECK-NOT: store <4 x i32>
-;CHECK: ret
+
+; We don't unroll this loop because it has a small constant trip count.
+;
+; CHECK-VECTOR-LABEL: @foo(
+; CHECK-VECTOR: load <4 x i32>
+; CHECK-VECTOR-NOT: load <4 x i32>
+; CHECK-VECTOR: store <4 x i32>
+; CHECK-VECTOR-NOT: store <4 x i32>
+; CHECK-VECTOR: ret
+;
+; CHECK-SCALAR-LABEL: @foo(
+; CHECK-SCALAR: load i32*
+; CHECK-SCALAR-NOT: load i32*
+; CHECK-SCALAR: store i32
+; CHECK-SCALAR-NOT: store i32
+; CHECK-SCALAR: ret
 define i32 @foo(i32* nocapture %A) nounwind uwtable ssp {
   br label %1
 
@@ -26,10 +39,18 @@ define i32 @foo(i32* nocapture %A) nounwind uwtable ssp {
   ret i32 undef
 }
 
-;CHECK-LABEL: @bar(
-;CHECK: store <4 x i32>
-;CHECK: store <4 x i32>
-;CHECK: ret
+; But this is a good small loop to unroll as we don't know of a bound on its
+; trip count.
+;
+; CHECK-VECTOR-LABEL: @bar(
+; CHECK-VECTOR: store <4 x i32>
+; CHECK-VECTOR: store <4 x i32>
+; CHECK-VECTOR: ret
+;
+; CHECK-SCALAR-LABEL: @bar(
+; CHECK-SCALAR: store i32
+; CHECK-SCALAR: store i32
+; CHECK-SCALAR: ret
 define i32 @bar(i32* nocapture %A, i32 %n) nounwind uwtable ssp {
   %1 = icmp sgt i32 %n, 0
   br i1 %1, label %.lr.ph, label %._crit_edge
@@ -49,10 +70,16 @@ define i32 @bar(i32* nocapture %A, i32 %n) nounwind uwtable ssp {
   ret i32 undef
 }
 
-; Also unroll if we need a runtime check.
-; CHECK-LABEL: runtime_chk
-; CHECK: store <4 x float>
-; CHECK: store <4 x float>
+; Also unroll if we need a runtime check but it was going to be added for
+; vectorization anyways.
+; CHECK-VECTOR-LABEL: @runtime_chk(
+; CHECK-VECTOR: store <4 x float>
+; CHECK-VECTOR: store <4 x float>
+;
+; But not if the unrolling would introduce the runtime check.
+; CHECK-SCALAR-LABEL: @runtime_chk(
+; CHECK-SCALAR: store float
+; CHECK-SCALAR-NOT: store float
 define void @runtime_chk(float* %A, float* %B, float %N) {
 entry:
   br label %for.body

@@ -5195,26 +5195,33 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
     return UF;
   }
 
-  if (EnableLoadStoreRuntimeUnroll &&
-      !Legal->getRuntimePointerCheck()->Need &&
+  // Note that if we've already vectorized the loop we will have done the
+  // runtime check and so unrolling won't require further checks.
+  bool UnrollingRequiresRuntimePointerCheck =
+      (VF == 1 && Legal->getRuntimePointerCheck()->Need);
+
+  // We want to unroll small loops in order to reduce the loop overhead and
+  // potentially expose ILP opportunities.
+  DEBUG(dbgs() << "LV: Loop cost is " << LoopCost << '\n');
+  if (!UnrollingRequiresRuntimePointerCheck &&
       LoopCost < SmallLoopCost) {
+    // We assume that the cost overhead is 1 and we use the cost model
+    // to estimate the cost of the loop and unroll until the cost of the
+    // loop overhead is about 5% of the cost of the loop.
+    unsigned SmallUF = std::min(UF, (unsigned)PowerOf2Floor(SmallLoopCost / LoopCost));
+
     // Unroll until store/load ports (estimated by max unroll factor) are
     // saturated.
-    unsigned UnrollStores = UF / (Legal->NumStores ? Legal->NumStores : 1);
-    unsigned UnrollLoads = UF /  (Legal->NumLoads ? Legal->NumLoads : 1);
-    UF = std::max(std::min(UnrollStores, UnrollLoads), 1u);
-    return UF;
-  }
+    unsigned StoresUF = UF / (Legal->NumStores ? Legal->NumStores : 1);
+    unsigned LoadsUF = UF /  (Legal->NumLoads ? Legal->NumLoads : 1);
 
-  // We want to unroll tiny loops in order to reduce the loop overhead.
-  // We assume that the cost overhead is 1 and we use the cost model
-  // to estimate the cost of the loop and unroll until the cost of the
-  // loop overhead is about 5% of the cost of the loop.
-  DEBUG(dbgs() << "LV: Loop cost is " << LoopCost << '\n');
-  if (LoopCost < SmallLoopCost) {
+    if (EnableLoadStoreRuntimeUnroll && std::max(StoresUF, LoadsUF) > SmallUF) {
+      DEBUG(dbgs() << "LV: Unrolling to saturate store or load ports.\n");
+      return std::max(StoresUF, LoadsUF);
+    }
+
     DEBUG(dbgs() << "LV: Unrolling to reduce branch cost.\n");
-    unsigned NewUF = PowerOf2Floor(SmallLoopCost / LoopCost);
-    return std::min(NewUF, UF);
+    return SmallUF;
   }
 
   DEBUG(dbgs() << "LV: Not Unrolling.\n");
