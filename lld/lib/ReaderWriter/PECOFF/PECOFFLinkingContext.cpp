@@ -203,7 +203,7 @@ StringRef PECOFFLinkingContext::undecorateSymbol(StringRef name) const {
 
 uint64_t PECOFFLinkingContext::getBaseAddress() const {
   if (_baseAddress == invalidBaseAddress)
-    return is64Bit() ? 0x140000000UL : 0x400000UL;
+    return is64Bit() ? pe32PlusDefaultBaseAddress : pe32DefaultBaseAddress;
   return _baseAddress;
 }
 
