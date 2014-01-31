@@ -274,6 +274,7 @@ namespace {
     SDValue visitCONCAT_VECTORS(SDNode *N);
     SDValue visitEXTRACT_SUBVECTOR(SDNode *N);
     SDValue visitVECTOR_SHUFFLE(SDNode *N);
+    SDValue visitINSERT_SUBVECTOR(SDNode *N);
 
     SDValue XformToShuffleWithZero(SDNode *N);
     SDValue ReassociateOps(unsigned Opc, SDLoc DL, SDValue LHS, SDValue RHS);
@@ -1230,6 +1231,7 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::CONCAT_VECTORS:     return visitCONCAT_VECTORS(N);
   case ISD::EXTRACT_SUBVECTOR:  return visitEXTRACT_SUBVECTOR(N);
   case ISD::VECTOR_SHUFFLE:     return visitVECTOR_SHUFFLE(N);
+  case ISD::INSERT_SUBVECTOR:   return visitINSERT_SUBVECTOR(N);
   }
   return SDValue();
 }
@@ -10428,6 +10430,33 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     }
 
     return OtherSV->getOperand(0);
+  }
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitINSERT_SUBVECTOR(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N2 = N->getOperand(2);
+
+  // If the input vector is a concatenation, and the insert replaces
+  // one of the halves, we can optimize into a single concat_vectors.
+  if (N0.getOpcode() == ISD::CONCAT_VECTORS &&
+      N0->getNumOperands() == 2 && N2.getOpcode() == ISD::Constant) {
+    APInt InsIdx = cast<ConstantSDNode>(N2)->getAPIntValue();
+    EVT VT = N->getValueType(0);
+
+    // Lower half: fold (insert_subvector (concat_vectors X, Y), Z) ->
+    // (concat_vectors Z, Y)
+    if (InsIdx == 0)
+      return DAG.getNode(ISD::CONCAT_VECTORS, SDLoc(N), VT,
+                         N->getOperand(1), N0.getOperand(1));
+
+    // Upper half: fold (insert_subvector (concat_vectors X, Y), Z) ->
+    // (concat_vectors X, Z)
+    if (InsIdx == VT.getVectorNumElements()/2)
+      return DAG.getNode(ISD::CONCAT_VECTORS, SDLoc(N), VT,
+                         N0.getOperand(0), N->getOperand(1));
   }
 
   return SDValue();
