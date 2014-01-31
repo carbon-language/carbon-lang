@@ -160,5 +160,6 @@ ifeq ($(HOST_OS),FreeBSD)
     # Allow unresolved symbols.
     LLVMLibsOptions += -Wl,--allow-shlib-undefined
     # Link in python
-    LLVMLibsOptions += $(PYTHON_BUILD_FLAGS) -lrt -L/usr/local/lib -lexecinfo
+    LLVMLibsOptions += $(PYTHON_BUILD_FLAGS) -lrt -L/usr/local/lib -lexecinfo \
+                       -ledit -lncurses -lpanel
 endif
