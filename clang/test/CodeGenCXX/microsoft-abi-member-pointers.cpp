@@ -56,20 +56,20 @@ int UnspecSingle::*us_d_memptr;
 // CHECK: @"\01?p_d_memptr@@3PQPolymorphic@@HQ1@" = global i32 0, align 4
 // CHECK: @"\01?m_d_memptr@@3PQMultiple@@HQ1@" = global i32 -1, align 4
 // CHECK: @"\01?v_d_memptr@@3PQVirtual@@HQ1@" = global { i32, i32 }
-// CHECK:   { i32 0, i32 -1 }, align 4
+// CHECK:   { i32 0, i32 -1 }, align 8
 // CHECK: @"\01?n_d_memptr@@3PQNonZeroVBPtr@@HQ1@" = global { i32, i32 }
-// CHECK:   { i32 0, i32 -1 }, align 4
+// CHECK:   { i32 0, i32 -1 }, align 8
 // CHECK: @"\01?u_d_memptr@@3PQUnspecified@@HQ1@" = global { i32, i32, i32 }
-// CHECK:   { i32 0, i32 0, i32 -1 }, align 4
+// CHECK:   { i32 0, i32 0, i32 -1 }, align 8
 // CHECK: @"\01?us_d_memptr@@3PQUnspecSingle@@HQ1@" = global { i32, i32, i32 }
-// CHECK:   { i32 0, i32 0, i32 -1 }, align 4
+// CHECK:   { i32 0, i32 0, i32 -1 }, align 8
 
 void (Single  ::*s_f_memptr)();
 void (Multiple::*m_f_memptr)();
 void (Virtual ::*v_f_memptr)();
 // CHECK: @"\01?s_f_memptr@@3P8Single@@AEXXZQ1@" = global i8* null, align 4
-// CHECK: @"\01?m_f_memptr@@3P8Multiple@@AEXXZQ1@" = global { i8*, i32 } zeroinitializer, align 4
-// CHECK: @"\01?v_f_memptr@@3P8Virtual@@AEXXZQ1@" = global { i8*, i32, i32 } zeroinitializer, align 4
+// CHECK: @"\01?m_f_memptr@@3P8Multiple@@AEXXZQ1@" = global { i8*, i32 } zeroinitializer, align 8
+// CHECK: @"\01?v_f_memptr@@3P8Virtual@@AEXXZQ1@" = global { i8*, i32, i32 } zeroinitializer, align 8
 
 // We can define Unspecified after locking in the inheritance model.
 struct Unspecified : Multiple, Virtual {
@@ -91,13 +91,13 @@ void (UnspecSingle::*us_f_mp)() = &UnspecSingle::foo;
 // CHECK: @"\01?s_f_mp@Const@@3P8Single@@AEXXZQ2@" =
 // CHECK:   global i8* bitcast ({{.*}} @"\01?foo@Single@@QAEXXZ" to i8*), align 4
 // CHECK: @"\01?m_f_mp@Const@@3P8Multiple@@AEXXZQ2@" =
-// CHECK:   global { i8*, i32 } { i8* bitcast ({{.*}} @"\01?foo@B2@@QAEXXZ" to i8*), i32 4 }, align 4
+// CHECK:   global { i8*, i32 } { i8* bitcast ({{.*}} @"\01?foo@B2@@QAEXXZ" to i8*), i32 4 }, align 8
 // CHECK: @"\01?v_f_mp@Const@@3P8Virtual@@AEXXZQ2@" =
-// CHECK:   global { i8*, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Virtual@@QAEXXZ" to i8*), i32 0, i32 0 }, align 4
+// CHECK:   global { i8*, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Virtual@@QAEXXZ" to i8*), i32 0, i32 0 }, align 8
 // CHECK: @"\01?u_f_mp@Const@@3P8Unspecified@@AEXXZQ2@" =
-// CHECK:   global { i8*, i32, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 12, i32 0 }, align 4
+// CHECK:   global { i8*, i32, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 12, i32 0 }, align 8
 // CHECK: @"\01?us_f_mp@Const@@3P8UnspecSingle@@AEXXZQ2@" =
-// CHECK:   global { i8*, i32, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@UnspecSingle@@QAEXXZ" to i8*), i32 0, i32 0, i32 0 }, align 4
+// CHECK:   global { i8*, i32, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@UnspecSingle@@QAEXXZ" to i8*), i32 0, i32 0, i32 0 }, align 8
 }
 
 namespace CastParam {
@@ -119,11 +119,11 @@ void (A::*ptr1)(void *) = (void (A::*)(void *)) &A::foo;
 // Try a reinterpret_cast followed by a memptr conversion.
 void (C::*ptr2)(void *) = (void (C::*)(void *)) (void (A::*)(void *)) &A::foo;
 // CHECK: @"\01?ptr2@CastParam@@3P8C@1@AEXPAX@ZQ21@" =
-// CHECK:   global { i8*, i32 } { i8* bitcast (void ({{.*}})* @"\01?foo@A@CastParam@@QAEXPAU12@@Z" to i8*), i32 4 }, align 4
+// CHECK:   global { i8*, i32 } { i8* bitcast (void ({{.*}})* @"\01?foo@A@CastParam@@QAEXPAU12@@Z" to i8*), i32 4 }, align 8
 
 void (C::*ptr3)(void *) = (void (C::*)(void *)) (void (A::*)(void *)) (void (A::*)(A *)) 0;
 // CHECK: @"\01?ptr3@CastParam@@3P8C@1@AEXPAX@ZQ21@" =
-// CHECK:   global { i8*, i32 } zeroinitializer, align 4
+// CHECK:   global { i8*, i32 } zeroinitializer, align 8
 
 struct D : C {
   virtual void isPolymorphic();
@@ -156,23 +156,23 @@ void EmitNonVirtualMemberPointers() {
   void (UnspecWithVBPtr::*u2_f_memptr)() = &UnspecWithVBPtr::foo;
 // CHECK: define void @"\01?EmitNonVirtualMemberPointers@@YAXXZ"() {{.*}} {
 // CHECK:   alloca i8*, align 4
-// CHECK:   alloca { i8*, i32 }, align 4
-// CHECK:   alloca { i8*, i32, i32 }, align 4
-// CHECK:   alloca { i8*, i32, i32, i32 }, align 4
+// CHECK:   alloca { i8*, i32 }, align 8
+// CHECK:   alloca { i8*, i32, i32 }, align 8
+// CHECK:   alloca { i8*, i32, i32, i32 }, align 8
 // CHECK:   store i8* bitcast (void (%{{.*}}*)* @"\01?foo@Single@@QAEXXZ" to i8*), i8** %{{.*}}, align 4
 // CHECK:   store { i8*, i32 }
 // CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Multiple@@QAEXXZ" to i8*), i32 0 },
-// CHECK:     { i8*, i32 }* %{{.*}}, align 4
+// CHECK:     { i8*, i32 }* %{{.*}}, align 8
 // CHECK:   store { i8*, i32, i32 }
 // CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Virtual@@QAEXXZ" to i8*), i32 0, i32 0 },
-// CHECK:     { i8*, i32, i32 }* %{{.*}}, align 4
+// CHECK:     { i8*, i32, i32 }* %{{.*}}, align 8
 // CHECK:   store { i8*, i32, i32, i32 }
 // CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 12, i32 0 },
-// CHECK:     { i8*, i32, i32, i32 }* %{{.*}}, align 4
+// CHECK:     { i8*, i32, i32, i32 }* %{{.*}}, align 8
 // CHECK:   store { i8*, i32, i32, i32 }
 // CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@UnspecWithVBPtr@@QAEXXZ" to i8*),
 // CHECK:       i32 0, i32 4, i32 0 },
-// CHECK:     { i8*, i32, i32, i32 }* %{{.*}}, align 4
+// CHECK:     { i8*, i32, i32, i32 }* %{{.*}}, align 8
 // CHECK:   ret void
 // CHECK: }
 }
@@ -219,9 +219,9 @@ void polymorphicMemPtrs() {
 bool nullTestDataUnspecified(int Unspecified::*mp) {
   return mp;
 // CHECK: define zeroext i1 @"\01?nullTestDataUnspecified@@YA_NPQUnspecified@@H@Z"{{.*}} {
-// CHECK:   %{{.*}} = load { i32, i32, i32 }* %{{.*}}, align 4
-// CHECK:   store { i32, i32, i32 } {{.*}} align 4
-// CHECK:   %[[mp:.*]] = load { i32, i32, i32 }* %{{.*}}, align 4
+// CHECK:   %{{.*}} = load { i32, i32, i32 }* %{{.*}}, align 8
+// CHECK:   store { i32, i32, i32 } {{.*}} align 8
+// CHECK:   %[[mp:.*]] = load { i32, i32, i32 }* %{{.*}}, align 8
 // CHECK:   %[[mp0:.*]] = extractvalue { i32, i32, i32 } %[[mp]], 0
 // CHECK:   %[[cmp0:.*]] = icmp ne i32 %[[mp0]], 0
 // CHECK:   %[[mp1:.*]] = extractvalue { i32, i32, i32 } %[[mp]], 1
@@ -237,9 +237,9 @@ bool nullTestDataUnspecified(int Unspecified::*mp) {
 bool nullTestFunctionUnspecified(void (Unspecified::*mp)()) {
   return mp;
 // CHECK: define zeroext i1 @"\01?nullTestFunctionUnspecified@@YA_NP8Unspecified@@AEXXZ@Z"{{.*}} {
-// CHECK:   %{{.*}} = load { i8*, i32, i32, i32 }* %{{.*}}, align 4
-// CHECK:   store { i8*, i32, i32, i32 } {{.*}} align 4
-// CHECK:   %[[mp:.*]] = load { i8*, i32, i32, i32 }* %{{.*}}, align 4
+// CHECK:   %{{.*}} = load { i8*, i32, i32, i32 }* %{{.*}}, align 8
+// CHECK:   store { i8*, i32, i32, i32 } {{.*}} align 8
+// CHECK:   %[[mp:.*]] = load { i8*, i32, i32, i32 }* %{{.*}}, align 8
 // CHECK:   %[[mp0:.*]] = extractvalue { i8*, i32, i32, i32 } %[[mp]], 0
 // CHECK:   %[[cmp0:.*]] = icmp ne i8* %[[mp0]], null
 // CHECK:   ret i1 %[[cmp0]]
@@ -252,7 +252,7 @@ int loadDataMemberPointerVirtual(Virtual *o, int Virtual::*memptr) {
 // data pointer.
 // CHECK: define i32 @"\01?loadDataMemberPointerVirtual@@YAHPAUVirtual@@PQ1@H@Z"{{.*}} {
 // CHECK:   %[[o:.*]] = load %{{.*}}** %{{.*}}, align 4
-// CHECK:   %[[memptr:.*]] = load { i32, i32 }* %{{.*}}, align 4
+// CHECK:   %[[memptr:.*]] = load { i32, i32 }* %{{.*}}, align 8
 // CHECK:   %[[memptr0:.*]] = extractvalue { i32, i32 } %[[memptr:.*]], 0
 // CHECK:   %[[memptr1:.*]] = extractvalue { i32, i32 } %[[memptr:.*]], 1
 // CHECK:   %[[v6:.*]] = bitcast %{{.*}}* %[[o]] to i8*
@@ -276,7 +276,7 @@ int loadDataMemberPointerUnspecified(Unspecified *o, int Unspecified::*memptr) {
 // data pointer.
 // CHECK: define i32 @"\01?loadDataMemberPointerUnspecified@@YAHPAUUnspecified@@PQ1@H@Z"{{.*}} {
 // CHECK:   %[[o:.*]] = load %{{.*}}** %{{.*}}, align 4
-// CHECK:   %[[memptr:.*]] = load { i32, i32, i32 }* %{{.*}}, align 4
+// CHECK:   %[[memptr:.*]] = load { i32, i32, i32 }* %{{.*}}, align 8
 // CHECK:   %[[memptr0:.*]] = extractvalue { i32, i32, i32 } %[[memptr:.*]], 0
 // CHECK:   %[[memptr1:.*]] = extractvalue { i32, i32, i32 } %[[memptr:.*]], 1
 // CHECK:   %[[memptr2:.*]] = extractvalue { i32, i32, i32 } %[[memptr:.*]], 2
@@ -462,7 +462,7 @@ void (B2::*convertMultipleFuncToB2(void (Multiple::*mp)()))() {
 //
 // CHECK: define i32 @"\01?convertMultipleFuncToB2@@YAP8B2@@AEXXZP8Multiple@@AEXXZ@Z"{{.*}} {
 // CHECK:   store
-// CHECK:   %[[src:.*]] = load { i8*, i32 }* %{{.*}}, align 4
+// CHECK:   %[[src:.*]] = load { i8*, i32 }* %{{.*}}, align 8
 // CHECK:   extractvalue { i8*, i32 } %[[src]], 0
 // CHECK:   icmp ne i8* %{{.*}}, null
 // CHECK:   br i1 %{{.*}}, label %{{.*}}, label %{{.*}}
@@ -487,7 +487,7 @@ void (D::*convertCToD(void (C::*mp)()))() {
   return mp;
 // CHECK: define void @"\01?convertCToD@Test1@@YAP8D@1@AEXXZP8C@1@AEXXZ@Z"{{.*}} {
 // CHECK:   store
-// CHECK:   load { i8*, i32, i32 }* %{{.*}}, align 4
+// CHECK:   load { i8*, i32, i32 }* %{{.*}}, align 8
 // CHECK:   extractvalue { i8*, i32, i32 } %{{.*}}, 0
 // CHECK:   icmp ne i8* %{{.*}}, null
 // CHECK:   br i1 %{{.*}}, label %{{.*}}, label %{{.*}}
