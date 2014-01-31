@@ -1358,10 +1358,14 @@ private:
                               Tok.Tok.getLength());
     // For formatting, treat unterminated string literals like normal string
     // literals.
-    if (Tok.is(tok::unknown) && !Tok.TokenText.empty() &&
-        Tok.TokenText[0] == '"') {
-      Tok.Tok.setKind(tok::string_literal);
-      Tok.IsUnterminatedLiteral = true;
+    if (Tok.is(tok::unknown)) {
+      if (!Tok.TokenText.empty() && Tok.TokenText[0] == '"') {
+        Tok.Tok.setKind(tok::string_literal);
+        Tok.IsUnterminatedLiteral = true;
+      } else if (Style.Language == FormatStyle::LK_JavaScript &&
+                 Tok.TokenText == "''") {
+        Tok.Tok.setKind(tok::char_constant);
+      }
     }
   }
 };

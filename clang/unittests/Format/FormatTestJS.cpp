@@ -84,5 +84,9 @@ TEST_F(FormatTestJS, SpacesInContainerLiterals) {
   verifyFormat("var obj = {a: 1, b: 2, c: 3};");
 }
 
+TEST_F(FormatTestJS, SingleQuoteStrings) {
+  verifyFormat("this.function('', true);");
+}
+
 } // end namespace tooling
 } // end namespace clang
