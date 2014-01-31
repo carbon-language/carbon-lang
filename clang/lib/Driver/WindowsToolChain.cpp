@@ -324,7 +324,6 @@ void Windows::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                        VSDir + "\\VC\\PlatformSDK\\Include");
     return;
   }
-#endif // _MSC_VER
 
   // As a fallback, select default install paths.
   const StringRef Paths[] = {
@@ -335,6 +334,7 @@ void Windows::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     "C:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK/Include"
   };
   addSystemIncludes(DriverArgs, CC1Args, Paths);
+#endif // _MSC_VER
 }
 
 void Windows::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
