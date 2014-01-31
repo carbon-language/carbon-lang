@@ -2145,6 +2145,10 @@ The following target-specific calling conventions are known to backend:
   others via stack. Callee is responsible for stack cleaning. This convention is
   used by MSVC by default for methods in its ABI (CC ID = 70).
 
+* **X86_CDeclMethod** --- Identical to the standard x86_32 C calling convention,
+  except that an sret paramter, if present, is placed on the stack after the
+  second parameter, which must an integer or pointer.  (CC ID = 80).
+
 .. _X86 addressing mode:
 
 Representing X86 addressing modes in MachineInstrs
