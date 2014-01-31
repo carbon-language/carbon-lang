@@ -155,6 +155,8 @@ def vinsert_v8i16 : PatFrag<(ops node:$vec, node:$val, node:$idx),
     (v8i16 (vector_insert node:$vec, node:$val, node:$idx))>;
 def vinsert_v4i32 : PatFrag<(ops node:$vec, node:$val, node:$idx),
     (v4i32 (vector_insert node:$vec, node:$val, node:$idx))>;
+def vinsert_v2i64 : PatFrag<(ops node:$vec, node:$val, node:$idx),
+    (v2i64 (vector_insert node:$vec, node:$val, node:$idx))>;
 
 class vfsetcc_type<ValueType ResTy, ValueType OpTy, CondCode CC> :
   PatFrag<(ops node:$lhs, node:$rhs),
@@ -858,6 +860,7 @@ class ILVR_D_ENC : MSA_3R_FMT<0b101, 0b11, 0b010100>;
 class INSERT_B_ENC : MSA_ELM_INSERT_B_FMT<0b0100, 0b011001>;
 class INSERT_H_ENC : MSA_ELM_INSERT_H_FMT<0b0100, 0b011001>;
 class INSERT_W_ENC : MSA_ELM_INSERT_W_FMT<0b0100, 0b011001>;
+class INSERT_D_ENC : MSA_ELM_INSERT_D_FMT<0b0100, 0b011001>;
 
 class INSVE_B_ENC : MSA_ELM_B_FMT<0b0101, 0b011001>;
 class INSVE_H_ENC : MSA_ELM_H_FMT<0b0101, 0b011001>;
@@ -2269,6 +2272,8 @@ class INSERT_H_DESC : MSA_INSERT_DESC_BASE<"insert.h", vinsert_v8i16,
                                            MSA128HOpnd, GPR32Opnd>;
 class INSERT_W_DESC : MSA_INSERT_DESC_BASE<"insert.w", vinsert_v4i32,
                                            MSA128WOpnd, GPR32Opnd>;
+class INSERT_D_DESC : MSA_INSERT_DESC_BASE<"insert.d", vinsert_v2i64,
+                                           MSA128DOpnd, GPR64Opnd>;
 
 class INSERT_FW_PSEUDO_DESC : MSA_INSERT_PSEUDO_BASE<vector_insert, v4f32,
                                                      MSA128WOpnd, FGR32Opnd>;
@@ -3158,6 +3163,7 @@ def ILVR_D : ILVR_D_ENC, ILVR_D_DESC;
 def INSERT_B : INSERT_B_ENC, INSERT_B_DESC;
 def INSERT_H : INSERT_H_ENC, INSERT_H_DESC;
 def INSERT_W : INSERT_W_ENC, INSERT_W_DESC;
+def INSERT_D : INSERT_D_ENC, INSERT_D_DESC;
 
 // INSERT_FW_PSEUDO defined after INSVE_W
 // INSERT_FD_PSEUDO defined after INSVE_D

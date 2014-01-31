@@ -5,6 +5,10 @@
 ; RUN:   FileCheck %s -check-prefix=MIPS-ANY -check-prefix=MIPS32
 ; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | \
 ; RUN:   FileCheck %s -check-prefix=MIPS-ANY -check-prefix=MIPS32
+; RUN: llc -march=mips64 -mcpu=mips64r2 -mattr=+msa,+fp64 < %s | \
+; RUN:   FileCheck %s -check-prefix=MIPS-ANY -check-prefix=MIPS64
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=+msa,+fp64 < %s | \
+; RUN:   FileCheck %s -check-prefix=MIPS-ANY -check-prefix=MIPS64
 
 @llvm_mips_insert_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_insert_b_ARG3 = global i32 27, align 16
@@ -90,10 +94,14 @@ declare <2 x i64> @llvm.mips.insert.d(<2 x i64>, i32, i64) nounwind
 ; MIPS-ANY: llvm_mips_insert_d_test:
 ; MIPS32-DAG: lw [[R1:\$[0-9]+]], 0(
 ; MIPS32-DAG: lw [[R2:\$[0-9]+]], 4(
+; MIPS64-DAG: ld [[R1:\$[0-9]+]], 0(
 ; MIPS32-DAG: ld.w [[R3:\$w[0-9]+]],
+; MIPS64-DAG: ld.d [[W1:\$w[0-9]+]],
 ; MIPS32-DAG: insert.w [[R3]][2], [[R1]]
 ; MIPS32-DAG: insert.w [[R3]][3], [[R2]]
+; MIPS64-DAG: insert.d [[W1]][1], [[R1]]
 ; MIPS32-DAG: st.w [[R3]],
+; MIPS64-DAG: st.d [[W1]],
 ; MIPS-ANY: .size llvm_mips_insert_d_test
 ;
 @llvm_mips_insve_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
@@ -114,6 +122,8 @@ declare <16 x i8> @llvm.mips.insve.b(<16 x i8>, i32, <16 x i8>) nounwind
 ; MIPS-ANY: llvm_mips_insve_b_test:
 ; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_insve_b_ARG1)(
 ; MIPS32-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_insve_b_ARG3)(
+; MIPS64-DAG: ld [[R1:\$[0-9]+]], %got_disp(llvm_mips_insve_b_ARG1)(
+; MIPS64-DAG: ld [[R2:\$[0-9]+]], %got_disp(llvm_mips_insve_b_ARG3)(
 ; MIPS-ANY-DAG: ld.b [[R3:\$w[0-9]+]], 0([[R1]])
 ; MIPS-ANY-DAG: ld.b [[R4:\$w[0-9]+]], 0([[R2]])
 ; MIPS-ANY-DAG: insve.b [[R3]][1], [[R4]][0]
@@ -138,6 +148,8 @@ declare <8 x i16> @llvm.mips.insve.h(<8 x i16>, i32, <8 x i16>) nounwind
 ; MIPS-ANY: llvm_mips_insve_h_test:
 ; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_insve_h_ARG1)(
 ; MIPS32-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_insve_h_ARG3)(
+; MIPS64-DAG: ld [[R1:\$[0-9]+]], %got_disp(llvm_mips_insve_h_ARG1)(
+; MIPS64-DAG: ld [[R2:\$[0-9]+]], %got_disp(llvm_mips_insve_h_ARG3)(
 ; MIPS-ANY-DAG: ld.h [[R3:\$w[0-9]+]], 0([[R1]])
 ; MIPS-ANY-DAG: ld.h [[R4:\$w[0-9]+]], 0([[R2]])
 ; MIPS-ANY-DAG: insve.h [[R3]][1], [[R4]][0]
@@ -162,6 +174,8 @@ declare <4 x i32> @llvm.mips.insve.w(<4 x i32>, i32, <4 x i32>) nounwind
 ; MIPS-ANY: llvm_mips_insve_w_test:
 ; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_insve_w_ARG1)(
 ; MIPS32-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_insve_w_ARG3)(
+; MIPS64-DAG: ld [[R1:\$[0-9]+]], %got_disp(llvm_mips_insve_w_ARG1)(
+; MIPS64-DAG: ld [[R2:\$[0-9]+]], %got_disp(llvm_mips_insve_w_ARG3)(
 ; MIPS-ANY-DAG: ld.w [[R3:\$w[0-9]+]], 0([[R1]])
 ; MIPS-ANY-DAG: ld.w [[R4:\$w[0-9]+]], 0([[R2]])
 ; MIPS-ANY-DAG: insve.w [[R3]][1], [[R4]][0]
@@ -186,6 +200,8 @@ declare <2 x i64> @llvm.mips.insve.d(<2 x i64>, i32, <2 x i64>) nounwind
 ; MIPS-ANY: llvm_mips_insve_d_test:
 ; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_insve_d_ARG1)(
 ; MIPS32-DAG: lw [[R2:\$[0-9]+]], %got(llvm_mips_insve_d_ARG3)(
+; MIPS64-DAG: ld [[R1:\$[0-9]+]], %got_disp(llvm_mips_insve_d_ARG1)(
+; MIPS64-DAG: ld [[R2:\$[0-9]+]], %got_disp(llvm_mips_insve_d_ARG3)(
 ; MIPS-ANY-DAG: ld.d [[R3:\$w[0-9]+]], 0([[R1]])
 ; MIPS-ANY-DAG: ld.d [[R4:\$w[0-9]+]], 0([[R2]])
 ; MIPS-ANY-DAG: insve.d [[R3]][1], [[R4]][0]
