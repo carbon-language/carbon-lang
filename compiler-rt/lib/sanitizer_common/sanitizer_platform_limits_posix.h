@@ -361,10 +361,11 @@ namespace __sanitizer {
   };
 #endif
 
+  // Linux system headers define the 'sa_handler' and 'sa_sigaction' macros.
   struct __sanitizer_sigaction {
     union {
-      void (*sa_handler)(int sig);
-      void (*sa_sigaction)(int sig, void *siginfo, void *uctx);
+      void (*sigaction)(int sig, void *siginfo, void *uctx);
+      void (*handler)(int sig);
     };
     __sanitizer_sigset_t sa_mask;
     int sa_flags;
@@ -377,10 +378,11 @@ namespace __sanitizer {
     u8 sig[8];
   };
 
+  // Linux system headers define the 'sa_handler' and 'sa_sigaction' macros.
   struct __sanitizer_kernel_sigaction_t {
     union {
-      void (*sigaction)(int signo, void *info, void *ctx);
       void (*handler)(int signo);
+      void (*sigaction)(int signo, void *info, void *ctx);
     };
     unsigned long sa_flags;
     void (*sa_restorer)(void);

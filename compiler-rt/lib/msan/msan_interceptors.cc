@@ -943,20 +943,20 @@ INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
     __sanitizer_sigaction *pnew_act = act ? &new_act : 0;
     if (act) {
       internal_memcpy(pnew_act, act, sizeof(__sanitizer_sigaction));
-      uptr cb = (uptr)pnew_act->sa_sigaction;
+      uptr cb = (uptr)pnew_act->sigaction;
       uptr new_cb = (pnew_act->sa_flags & __sanitizer::sa_siginfo)
                         ? (uptr)SignalAction
                         : (uptr)SignalHandler;
       if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
         atomic_store(&sigactions[signo], cb, memory_order_relaxed);
-        pnew_act->sa_sigaction = (void (*)(int, void *, void *))new_cb;
+        pnew_act->sigaction = (void (*)(int, void *, void *))new_cb;
       }
     }
     res = REAL(sigaction)(signo, pnew_act, oldact);
     if (res == 0 && oldact) {
-      uptr cb = (uptr)oldact->sa_sigaction;
+      uptr cb = (uptr)oldact->sigaction;
       if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
-        oldact->sa_sigaction = (void (*)(int, void *, void *))old_cb;
+        oldact->sigaction = (void (*)(int, void *, void *))old_cb;
       }
     }
   } else {

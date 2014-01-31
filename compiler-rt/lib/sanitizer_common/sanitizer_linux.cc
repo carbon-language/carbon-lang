@@ -403,29 +403,66 @@ uptr internal_sigaltstack(const struct sigaltstack *ss,
   return internal_syscall(__NR_sigaltstack, (uptr)ss, (uptr)oss);
 }
 
-uptr internal_sigaction(int signum, const __sanitizer_kernel_sigaction_t *act,
-    __sanitizer_kernel_sigaction_t *oldact) {
-  return internal_syscall(__NR_rt_sigaction, signum, act, oldact,
-      sizeof(__sanitizer_kernel_sigset_t));
+// Doesn't set sa_restorer, use with caution (see below).
+int internal_sigaction_norestorer(int signum, const void *act, void *oldact) {
+  __sanitizer_kernel_sigaction_t k_act, k_oldact;
+  internal_memset(&k_act, 0, sizeof(__sanitizer_kernel_sigaction_t));
+  internal_memset(&k_oldact, 0, sizeof(__sanitizer_kernel_sigaction_t));
+  const __sanitizer_sigaction *u_act = (__sanitizer_sigaction *)act;
+  __sanitizer_sigaction *u_oldact = (__sanitizer_sigaction *)oldact;
+  if (u_act) {
+    k_act.handler = u_act->handler;
+    k_act.sigaction = u_act->sigaction;
+    internal_memcpy(&k_act.sa_mask, &u_act->sa_mask,
+                    sizeof(__sanitizer_kernel_sigset_t));
+    k_act.sa_flags = u_act->sa_flags;
+    // FIXME: most often sa_restorer is unset, however the kernel requires it
+    // to point to a valid signal restorer that calls the rt_sigreturn syscall.
+    // If sa_restorer passed to the kernel is NULL, the program may crash upon
+    // signal delivery or fail to unwind the stack in the signal handler.
+    // libc implementation of sigaction() passes its own restorer to
+    // rt_sigaction, so we need to do the same (we'll need to reimplement the
+    // restorers; for x86_64 the restorer address can be obtained from
+    // oldact->sa_restorer upon a call to sigaction(xxx, NULL, oldact).
+    k_act.sa_restorer = u_act->sa_restorer;
+  }
+
+  uptr result = internal_syscall(__NR_rt_sigaction, (uptr)signum,
+      (uptr)(u_act ? &k_act : (uptr)NULL),
+      (uptr)(u_oldact ? &k_oldact : (uptr)NULL),
+      (uptr)sizeof(__sanitizer_kernel_sigset_t));
+
+  if ((result == 0) && u_oldact) {
+    u_oldact->handler = k_oldact.handler;
+    u_oldact->sigaction = k_oldact.sigaction;
+    internal_memcpy(&u_oldact->sa_mask, &k_oldact.sa_mask,
+                    sizeof(__sanitizer_kernel_sigset_t));
+    u_oldact->sa_flags = k_oldact.sa_flags;
+    u_oldact->sa_restorer = k_oldact.sa_restorer;
+  }
+  return result;
 }
 
-uptr internal_sigprocmask(int how, __sanitizer_kernel_sigset_t *set,
-    __sanitizer_kernel_sigset_t *oldset) {
-  return internal_syscall(__NR_rt_sigprocmask, (uptr)how, &set->sig[0],
-      &oldset->sig[0], sizeof(__sanitizer_kernel_sigset_t));
+uptr internal_sigprocmask(int how, __sanitizer_sigset_t *set,
+    __sanitizer_sigset_t *oldset) {
+  __sanitizer_kernel_sigset_t *k_set = (__sanitizer_kernel_sigset_t *)set;
+  __sanitizer_kernel_sigset_t *k_oldset = (__sanitizer_kernel_sigset_t *)oldset;
+  return internal_syscall(__NR_rt_sigprocmask, (uptr)how, &k_set->sig[0],
+      &k_oldset->sig[0], sizeof(__sanitizer_kernel_sigset_t));
 }
 
-void internal_sigfillset(__sanitizer_kernel_sigset_t *set) {
+void internal_sigfillset(__sanitizer_sigset_t *set) {
   internal_memset(set, 0xff, sizeof(*set));
 }
 
-void internal_sigdelset(__sanitizer_kernel_sigset_t *set, int signum) {
+void internal_sigdelset(__sanitizer_sigset_t *set, int signum) {
   signum -= 1;
   CHECK_GE(signum, 0);
   CHECK_LT(signum, sizeof(*set) * 8);
-  const uptr idx = signum / (sizeof(set->sig[0]) * 8);
-  const uptr bit = signum % (sizeof(set->sig[0]) * 8);
-  set->sig[idx] &= ~(1 << bit);
+  __sanitizer_kernel_sigset_t *k_set = (__sanitizer_kernel_sigset_t *)set;
+  const uptr idx = signum / (sizeof(k_set->sig[0]) * 8);
+  const uptr bit = signum % (sizeof(k_set->sig[0]) * 8);
+  k_set->sig[idx] &= ~(1 << bit);
 }
 
 // ThreadLister implementation.

@@ -2299,7 +2299,7 @@ void InitializeInterceptors() {
 
 void internal_start_thread(void(*func)(void *arg), void *arg) {
   // Start the thread with signals blocked, otherwise it can steal user signals.
-  __sanitizer_kernel_sigset_t set, old;
+  __sanitizer_sigset_t set, old;
   internal_sigfillset(&set);
   internal_sigprocmask(SIG_SETMASK, &set, &old);
   void *th;

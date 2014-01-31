@@ -32,12 +32,14 @@ uptr internal_getdents(fd_t fd, struct linux_dirent *dirp, unsigned int count);
 uptr internal_prctl(int option, uptr arg2, uptr arg3, uptr arg4, uptr arg5);
 uptr internal_sigaltstack(const struct sigaltstack* ss,
                           struct sigaltstack* oss);
-uptr internal_sigaction(int signum, const __sanitizer_kernel_sigaction_t *act,
-    __sanitizer_kernel_sigaction_t *oldact);
-uptr internal_sigprocmask(int how, __sanitizer_kernel_sigset_t *set,
-    __sanitizer_kernel_sigset_t *oldset);
-void internal_sigfillset(__sanitizer_kernel_sigset_t *set);
-void internal_sigdelset(__sanitizer_kernel_sigset_t *set, int signum);
+uptr internal_sigprocmask(int how, __sanitizer_sigset_t *set,
+    __sanitizer_sigset_t *oldset);
+void internal_sigfillset(__sanitizer_sigset_t *set);
+void internal_sigdelset(__sanitizer_sigset_t *set, int signum);
+// Used only by sanitizer_stoptheworld. Signal handlers that are actually used
+// (like the process-wide error reporting SEGV handler) must use
+// internal_sigaction instead.
+int internal_sigaction_norestorer(int signum, const void *act, void *oldact);
 
 #ifdef __x86_64__
 uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,

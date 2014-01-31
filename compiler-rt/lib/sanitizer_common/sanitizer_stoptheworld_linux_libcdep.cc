@@ -246,12 +246,13 @@ static int TracerThread(void* argument) {
   // the mask we inherited from the caller thread.
   for (uptr signal_index = 0; signal_index < ARRAY_SIZE(kUnblockedSignals);
        signal_index++) {
-    __sanitizer_kernel_sigaction_t new_sigaction;
+    __sanitizer_sigaction new_sigaction;
     internal_memset(&new_sigaction, 0, sizeof(new_sigaction));
     new_sigaction.sigaction = TracerThreadSignalHandler;
     new_sigaction.sa_flags = SA_ONSTACK | SA_SIGINFO;
     internal_sigfillset(&new_sigaction.sa_mask);
-    internal_sigaction(kUnblockedSignals[signal_index], &new_sigaction, NULL);
+    internal_sigaction_norestorer(kUnblockedSignals[signal_index],
+                                  &new_sigaction, NULL);
   }
 
   int exit_code = 0;
@@ -296,9 +297,9 @@ class ScopedStackSpaceWithGuard {
 
 // We have a limitation on the stack frame size, so some stuff had to be moved
 // into globals.
-static __sanitizer_kernel_sigset_t blocked_sigset;
-static __sanitizer_kernel_sigset_t old_sigset;
-static __sanitizer_kernel_sigaction_t old_sigactions
+static __sanitizer_sigset_t blocked_sigset;
+static __sanitizer_sigset_t old_sigset;
+static __sanitizer_sigaction old_sigactions
     [ARRAY_SIZE(kUnblockedSignals)];
 
 class StopTheWorldScope {
@@ -315,12 +316,12 @@ class StopTheWorldScope {
       // Remove the signal from the set of blocked signals.
       internal_sigdelset(&blocked_sigset, kUnblockedSignals[signal_index]);
       // Install the default handler.
-      __sanitizer_kernel_sigaction_t new_sigaction;
+      __sanitizer_sigaction new_sigaction;
       internal_memset(&new_sigaction, 0, sizeof(new_sigaction));
       new_sigaction.handler = SIG_DFL;
       internal_sigfillset(&new_sigaction.sa_mask);
-      internal_sigaction(kUnblockedSignals[signal_index], &new_sigaction,
-                      &old_sigactions[signal_index]);
+      internal_sigaction_norestorer(kUnblockedSignals[signal_index],
+          &new_sigaction, &old_sigactions[signal_index]);
     }
     int sigprocmask_status =
         internal_sigprocmask(SIG_BLOCK, &blocked_sigset, &old_sigset);
@@ -341,8 +342,8 @@ class StopTheWorldScope {
     // Restore the signal handlers.
     for (uptr signal_index = 0; signal_index < ARRAY_SIZE(kUnblockedSignals);
          signal_index++) {
-      internal_sigaction(kUnblockedSignals[signal_index],
-                &old_sigactions[signal_index], NULL);
+      internal_sigaction_norestorer(kUnblockedSignals[signal_index],
+                                    &old_sigactions[signal_index], NULL);
     }
     internal_sigprocmask(SIG_SETMASK, &old_sigset, &old_sigset);
   }
