@@ -56,9 +56,7 @@ AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
 
-  if (OutStreamer.hasRawTextSupport()) {
-    OutStreamer.EmitRawText("@" + MF.getName() + ":");
-  }
+  OutStreamer.emitRawComment(Twine('@') + MF.getName() + Twine(':'));
 
   MCContext &Context = getObjFileLowering().getContext();
   const MCSectionELF *ConfigSection = Context.getELFSection(".AMDGPU.config",
