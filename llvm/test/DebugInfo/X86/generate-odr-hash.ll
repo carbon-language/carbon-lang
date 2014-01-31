@@ -51,8 +51,10 @@
 ; CHECK: Compile Unit: length = [[CU_SIZE:[0-9a-f]+]]
 
 ; CHECK: DW_TAG_structure_type
+; CHECK-NEXT: DW_AT_declaration
 ; CHECK-NEXT: DW_AT_signature
 ; CHECK: DW_TAG_class_type
+; CHECK-NEXT: DW_AT_declaration
 ; CHECK-NEXT: DW_AT_signature
 
 ; Ensure the CU-local type 'walrus' is not placed in a type unit.
