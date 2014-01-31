@@ -379,7 +379,8 @@ error_code ELFObjectFile<ELFT>::getSymbolType(DataRefImpl Symb,
 
 template <class ELFT>
 uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Symb) const {
-  const Elf_Sym *ESym = getSymbol(Symb);
+  Elf_Sym_Iter EIter = toELFSymIter(Symb);
+  const Elf_Sym *ESym = &*EIter;
 
   uint32_t Result = SymbolRef::SF_None;
 
@@ -393,7 +394,7 @@ uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Symb) const {
     Result |= SymbolRef::SF_Absolute;
 
   if (ESym->getType() == ELF::STT_FILE || ESym->getType() == ELF::STT_SECTION ||
-      ESym == &*EF.begin_symbols())
+      EIter == EF.begin_symbols() || EIter == EF.begin_dynamic_symbols())
     Result |= SymbolRef::SF_FormatSpecific;
 
   if (EF.getSymbolTableIndex(ESym) == ELF::SHN_UNDEF)
