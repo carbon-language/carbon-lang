@@ -340,7 +340,7 @@ namespace __sanitizer {
   unsigned struct_sioc_vif_req_sz = sizeof(struct sioc_vif_req);
 #endif
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
   unsigned snd_pcm_sframes_t_sz = sizeof(snd_pcm_sframes_t);
   unsigned snd_pcm_uframes_t_sz = sizeof(snd_pcm_uframes_t);
   unsigned struct_hdsp_9632_aeb_sz = sizeof(struct hdsp_9632_aeb);

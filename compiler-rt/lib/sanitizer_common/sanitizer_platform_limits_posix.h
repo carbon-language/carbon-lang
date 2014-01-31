@@ -591,7 +591,7 @@ namespace __sanitizer {
   extern unsigned struct_sioc_vif_req_sz;
 #endif
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
   extern unsigned snd_pcm_sframes_t_sz;
   extern unsigned snd_pcm_uframes_t_sz;
   extern unsigned struct_hdsp_9632_aeb_sz;
