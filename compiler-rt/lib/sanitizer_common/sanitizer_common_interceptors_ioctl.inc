@@ -14,14 +14,18 @@
 
 struct ioctl_desc {
   unsigned req;
-  // FIXME: support read+write arguments. Those are currently marked as WRITE.
+  // FIXME: support read+write arguments. Currently READWRITE and WRITE do the
+  // same thing.
+  // XXX: The declarations below may use WRITE instead of READWRITE, unless
+  // explicitly noted.
   enum {
     NONE,
     READ,
     WRITE,
+    READWRITE,
     CUSTOM
-  } type : 2;
-  unsigned size : 30;
+  } type : 3;
+  unsigned size : 29;
   const char* name;
 };
 
@@ -352,6 +356,129 @@ static void ioctl_table_fill() {
   _(VT_SENDSIG, NONE, 0);
   _(VT_SETMODE, READ, struct_vt_mode_sz);
   _(VT_WAITACTIVE, NONE, 0);
+
+  // <sound/asound.h>. READWRITE is used correctly in this group.
+  _(SNDRV_HWDEP_IOCTL_PVERSION, WRITE, sizeof(int))
+  _(SNDRV_HWDEP_IOCTL_INFO, WRITE, struct_snd_hwdep_info_sz)
+  _(SNDRV_HWDEP_IOCTL_DSP_STATUS, WRITE, struct_snd_hwdep_dsp_status_sz)
+  _(SNDRV_HWDEP_IOCTL_DSP_LOAD, READ, struct_snd_hwdep_dsp_image_sz)
+  _(SNDRV_PCM_IOCTL_PVERSION, WRITE, sizeof(int))
+  _(SNDRV_PCM_IOCTL_INFO, WRITE, struct_snd_pcm_info_sz)
+  _(SNDRV_PCM_IOCTL_TSTAMP, READ, sizeof(int))
+  _(SNDRV_PCM_IOCTL_TTSTAMP, READ, sizeof(int))
+  _(SNDRV_PCM_IOCTL_HW_REFINE, READWRITE, struct_snd_pcm_hw_params_sz)
+  _(SNDRV_PCM_IOCTL_HW_PARAMS, READWRITE, struct_snd_pcm_hw_params_sz)
+  _(SNDRV_PCM_IOCTL_HW_FREE, NONE, 0)
+  _(SNDRV_PCM_IOCTL_SW_PARAMS, READWRITE, struct_snd_pcm_sw_params_sz)
+  _(SNDRV_PCM_IOCTL_STATUS, WRITE, struct_snd_pcm_status_sz)
+  _(SNDRV_PCM_IOCTL_DELAY, WRITE, snd_pcm_sframes_t_sz)
+  _(SNDRV_PCM_IOCTL_HWSYNC, NONE, 0)
+  _(SNDRV_PCM_IOCTL_SYNC_PTR, READWRITE, struct_snd_pcm_sync_ptr_sz)
+  _(SNDRV_PCM_IOCTL_CHANNEL_INFO, WRITE, struct_snd_pcm_channel_info_sz)
+  _(SNDRV_PCM_IOCTL_PREPARE, NONE, 0)
+  _(SNDRV_PCM_IOCTL_RESET, NONE, 0)
+  _(SNDRV_PCM_IOCTL_START, NONE, 0)
+  _(SNDRV_PCM_IOCTL_DROP, NONE, 0)
+  _(SNDRV_PCM_IOCTL_DRAIN, NONE, 0)
+  _(SNDRV_PCM_IOCTL_PAUSE, READ, sizeof(int))
+  _(SNDRV_PCM_IOCTL_REWIND, READ, snd_pcm_uframes_t_sz)
+  _(SNDRV_PCM_IOCTL_RESUME, NONE, 0)
+  _(SNDRV_PCM_IOCTL_XRUN, NONE, 0)
+  _(SNDRV_PCM_IOCTL_FORWARD, READ, snd_pcm_uframes_t_sz)
+  _(SNDRV_PCM_IOCTL_WRITEI_FRAMES, READ, struct_snd_xferi_sz)
+  _(SNDRV_PCM_IOCTL_READI_FRAMES, WRITE, struct_snd_xferi_sz)
+  _(SNDRV_PCM_IOCTL_WRITEN_FRAMES, READ, struct_snd_xfern_sz)
+  _(SNDRV_PCM_IOCTL_READN_FRAMES, WRITE, struct_snd_xfern_sz)
+  _(SNDRV_PCM_IOCTL_LINK, READ, sizeof(int))
+  _(SNDRV_PCM_IOCTL_UNLINK, NONE, 0)
+  _(SNDRV_RAWMIDI_IOCTL_PVERSION, WRITE, sizeof(int))
+  _(SNDRV_RAWMIDI_IOCTL_INFO, WRITE, struct_snd_rawmidi_info_sz)
+  _(SNDRV_RAWMIDI_IOCTL_PARAMS, READWRITE, struct_snd_rawmidi_params_sz)
+  _(SNDRV_RAWMIDI_IOCTL_STATUS, READWRITE, struct_snd_rawmidi_status_sz)
+  _(SNDRV_RAWMIDI_IOCTL_DROP, READ, sizeof(int))
+  _(SNDRV_RAWMIDI_IOCTL_DRAIN, READ, sizeof(int))
+  _(SNDRV_TIMER_IOCTL_PVERSION, WRITE, sizeof(int))
+  _(SNDRV_TIMER_IOCTL_NEXT_DEVICE, READWRITE, struct_snd_timer_id_sz)
+  _(SNDRV_TIMER_IOCTL_TREAD, READ, sizeof(int))
+  _(SNDRV_TIMER_IOCTL_GINFO, READWRITE, struct_snd_timer_ginfo_sz)
+  _(SNDRV_TIMER_IOCTL_GPARAMS, READ, struct_snd_timer_gparams_sz)
+  _(SNDRV_TIMER_IOCTL_GSTATUS, READWRITE, struct_snd_timer_gstatus_sz)
+  _(SNDRV_TIMER_IOCTL_SELECT, READ, struct_snd_timer_select_sz)
+  _(SNDRV_TIMER_IOCTL_INFO, WRITE, struct_snd_timer_info_sz)
+  _(SNDRV_TIMER_IOCTL_PARAMS, READ, struct_snd_timer_params_sz)
+  _(SNDRV_TIMER_IOCTL_STATUS, WRITE, struct_snd_timer_status_sz)
+  _(SNDRV_TIMER_IOCTL_START, NONE, 0)
+  _(SNDRV_TIMER_IOCTL_STOP, NONE, 0)
+  _(SNDRV_TIMER_IOCTL_CONTINUE, NONE, 0)
+  _(SNDRV_TIMER_IOCTL_PAUSE, NONE, 0)
+  _(SNDRV_CTL_IOCTL_PVERSION, WRITE, sizeof(int))
+  _(SNDRV_CTL_IOCTL_CARD_INFO, WRITE, struct_snd_ctl_card_info_sz)
+  _(SNDRV_CTL_IOCTL_ELEM_LIST, READWRITE, struct_snd_ctl_elem_list_sz)
+  _(SNDRV_CTL_IOCTL_ELEM_INFO, READWRITE, struct_snd_ctl_elem_info_sz)
+  _(SNDRV_CTL_IOCTL_ELEM_READ, READWRITE, struct_snd_ctl_elem_value_sz)
+  _(SNDRV_CTL_IOCTL_ELEM_WRITE, READWRITE, struct_snd_ctl_elem_value_sz)
+  _(SNDRV_CTL_IOCTL_ELEM_LOCK, READ, struct_snd_ctl_elem_id_sz)
+  _(SNDRV_CTL_IOCTL_ELEM_UNLOCK, READ, struct_snd_ctl_elem_id_sz)
+  _(SNDRV_CTL_IOCTL_SUBSCRIBE_EVENTS, READWRITE, sizeof(int))
+  _(SNDRV_CTL_IOCTL_ELEM_ADD, READWRITE, struct_snd_ctl_elem_info_sz)
+  _(SNDRV_CTL_IOCTL_ELEM_REPLACE, READWRITE, struct_snd_ctl_elem_info_sz)
+  _(SNDRV_CTL_IOCTL_ELEM_REMOVE, READWRITE, struct_snd_ctl_elem_id_sz)
+  _(SNDRV_CTL_IOCTL_TLV_READ, READWRITE, struct_snd_ctl_tlv_sz)
+  _(SNDRV_CTL_IOCTL_TLV_WRITE, READWRITE, struct_snd_ctl_tlv_sz)
+  _(SNDRV_CTL_IOCTL_TLV_COMMAND, READWRITE, struct_snd_ctl_tlv_sz)
+  _(SNDRV_CTL_IOCTL_HWDEP_NEXT_DEVICE, READWRITE, sizeof(int))
+  _(SNDRV_CTL_IOCTL_HWDEP_INFO, WRITE, struct_snd_hwdep_info_sz)
+  _(SNDRV_CTL_IOCTL_PCM_NEXT_DEVICE, WRITE, sizeof(int))
+  _(SNDRV_CTL_IOCTL_PCM_INFO, READWRITE, struct_snd_pcm_info_sz)
+  _(SNDRV_CTL_IOCTL_PCM_PREFER_SUBDEVICE, READ, sizeof(int))
+  _(SNDRV_CTL_IOCTL_RAWMIDI_NEXT_DEVICE, READWRITE, sizeof(int))
+  _(SNDRV_CTL_IOCTL_RAWMIDI_INFO, READWRITE, struct_snd_rawmidi_info_sz)
+  _(SNDRV_CTL_IOCTL_RAWMIDI_PREFER_SUBDEVICE, READ, sizeof(int))
+  _(SNDRV_CTL_IOCTL_POWER, READWRITE, sizeof(int))
+  _(SNDRV_CTL_IOCTL_POWER_STATE, WRITE, sizeof(int))
+
+  // <sound/asound_fm.h>. READWRITE is used correctly in this group.
+  _(SNDRV_DM_FM_IOCTL_INFO, WRITE, struct_snd_dm_fm_info_sz)
+  _(SNDRV_DM_FM_IOCTL_RESET, NONE, 0)
+  _(SNDRV_DM_FM_IOCTL_PLAY_NOTE, READ, struct_snd_dm_fm_note_sz)
+  _(SNDRV_DM_FM_IOCTL_SET_VOICE, READ, struct_snd_dm_fm_voice_sz)
+  _(SNDRV_DM_FM_IOCTL_SET_PARAMS, READ, struct_snd_dm_fm_params_sz)
+  _(SNDRV_DM_FM_IOCTL_SET_MODE, READ, sizeof(int))
+  _(SNDRV_DM_FM_IOCTL_SET_CONNECTION, READ, sizeof(int))
+  _(SNDRV_DM_FM_IOCTL_CLEAR_PATCHES, NONE, 0)
+
+  // <sound/hdsp.h>. READWRITE is used correctly in this group.
+  _(SNDRV_HDSP_IOCTL_GET_PEAK_RMS, WRITE, struct_hdsp_peak_rms_sz)
+  _(SNDRV_HDSP_IOCTL_GET_CONFIG_INFO, WRITE, struct_hdsp_config_info_sz)
+  _(SNDRV_HDSP_IOCTL_UPLOAD_FIRMWARE, READ, struct_hdsp_firmware_sz)
+  _(SNDRV_HDSP_IOCTL_GET_VERSION, WRITE, struct_hdsp_version_sz)
+  _(SNDRV_HDSP_IOCTL_GET_MIXER, WRITE, struct_hdsp_mixer_sz)
+  _(SNDRV_HDSP_IOCTL_GET_9632_AEB, WRITE, struct_hdsp_9632_aeb_sz)
+
+  // <sound/hdspm.h>. READWRITE is used correctly in this group.
+  _(SNDRV_HDSPM_IOCTL_GET_PEAK_RMS, WRITE, struct_hdspm_peak_rms_sz)
+  _(SNDRV_HDSPM_IOCTL_GET_CONFIG, WRITE, struct_hdspm_config_sz)
+  _(SNDRV_HDSPM_IOCTL_GET_LTC, WRITE, struct_hdspm_mixer_ioctl_sz)
+  _(SNDRV_HDSPM_IOCTL_GET_STATUS, WRITE, struct_hdspm_status_sz)
+  _(SNDRV_HDSPM_IOCTL_GET_VERSION, WRITE, struct_hdspm_version_sz)
+  _(SNDRV_HDSPM_IOCTL_GET_MIXER, WRITE, struct_hdspm_mixer_ioctl_sz)
+
+  // <sound/sb16_csp.h>. READWRITE is used correctly in this group.
+  _(SNDRV_SB_CSP_IOCTL_INFO, WRITE, struct_snd_sb_csp_info_sz)
+  _(SNDRV_SB_CSP_IOCTL_LOAD_CODE, READ, struct_snd_sb_csp_microcode_sz)
+  _(SNDRV_SB_CSP_IOCTL_UNLOAD_CODE, NONE, 0)
+  _(SNDRV_SB_CSP_IOCTL_START, READ, struct_snd_sb_csp_start_sz)
+  _(SNDRV_SB_CSP_IOCTL_STOP, NONE, 0)
+  _(SNDRV_SB_CSP_IOCTL_PAUSE, NONE, 0)
+  _(SNDRV_SB_CSP_IOCTL_RESTART, NONE, 0)
+
+  // <sound/sfnt_info.h>. READWRITE is used correctly in this group.
+  _(SNDRV_EMUX_IOCTL_VERSION, WRITE, sizeof(unsigned int))
+  _(SNDRV_EMUX_IOCTL_LOAD_PATCH, READWRITE, struct_soundfont_patch_info_sz)
+  _(SNDRV_EMUX_IOCTL_RESET_SAMPLES, NONE, 0)
+  _(SNDRV_EMUX_IOCTL_REMOVE_LAST_SAMPLES, NONE, 0)
+  _(SNDRV_EMUX_IOCTL_MEM_AVAIL, READ, sizeof(int))
+  _(SNDRV_EMUX_IOCTL_MISC_MODE, READWRITE, struct_snd_emux_misc_mode_sz)
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
@@ -525,14 +652,15 @@ static const ioctl_desc *ioctl_lookup(unsigned req) {
   // Sanity check: requests that encode access size are either read or write and
   // have size of 0 in the table.
   if (desc && desc->size == 0 &&
-      (desc->type == ioctl_desc::WRITE || desc->type == ioctl_desc::READ))
+      (desc->type == ioctl_desc::READWRITE || desc->type == ioctl_desc::WRITE ||
+       desc->type == ioctl_desc::READ))
     return desc;
   return 0;
 }
 
 static void ioctl_common_pre(void *ctx, const ioctl_desc *desc, int d,
                              unsigned request, void *arg) {
-  if (desc->type == ioctl_desc::READ) {
+  if (desc->type == ioctl_desc::READ || desc->type == ioctl_desc::READWRITE) {
     unsigned size = desc->size ? desc->size : IOC_SIZE(request);
     COMMON_INTERCEPTOR_READ_RANGE(ctx, arg, size);
   }
@@ -550,7 +678,7 @@ static void ioctl_common_pre(void *ctx, const ioctl_desc *desc, int d,
 
 static void ioctl_common_post(void *ctx, const ioctl_desc *desc, int res, int d,
                               unsigned request, void *arg) {
-  if (desc->type == ioctl_desc::WRITE) {
+  if (desc->type == ioctl_desc::WRITE || desc->type == ioctl_desc::READWRITE) {
     // FIXME: add verbose output
     unsigned size = desc->size ? desc->size : IOC_SIZE(request);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, arg, size);
