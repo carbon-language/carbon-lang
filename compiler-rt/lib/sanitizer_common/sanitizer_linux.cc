@@ -51,6 +51,7 @@
 
 #if SANITIZER_ANDROID
 #include <android/log.h>
+#include <sys/system_properties.h>
 #endif
 
 // <linux/time.h>
@@ -696,6 +697,11 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
 // like to avoid that.
 void AndroidLogWrite(const char *buffer) {
   __android_log_write(ANDROID_LOG_INFO, NULL, buffer);
+}
+
+void GetExtraActivationFlags(char *buf, uptr size) {
+  CHECK(size > PROP_VALUE_MAX);
+  __system_property_get("asan.options", buf);
 }
 #endif
 

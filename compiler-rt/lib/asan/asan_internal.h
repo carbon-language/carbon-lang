@@ -87,6 +87,8 @@ void PlatformTSDDtor(void *tsd);
 
 void AppendToErrorMessageBuffer(const char *buffer);
 
+void ParseExtraActivationFlags();
+
 // Platfrom-specific options.
 #if SANITIZER_MAC
 bool PlatformHasDifferentMemcpyAndMemmove();

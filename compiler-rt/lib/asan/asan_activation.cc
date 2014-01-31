@@ -57,6 +57,8 @@ void AsanActivate() {
   common_flags()->malloc_context_size =
       asan_deactivated_flags.malloc_context_size;
 
+  ParseExtraActivationFlags();
+
   asan_is_deactivated = false;
   VReport(
       1,

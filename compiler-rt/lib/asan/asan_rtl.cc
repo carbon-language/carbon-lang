@@ -209,6 +209,17 @@ void InitializeFlags(Flags *f, const char *env) {
   }
 }
 
+// Parse flags that may change between startup and activation.
+// On Android they come from a system property.
+// On other platforms this is no-op.
+void ParseExtraActivationFlags() {
+  char buf[100];
+  GetExtraActivationFlags(buf, sizeof(buf));
+  ParseFlagsFromString(flags(), buf);
+  if (buf[0] != '\0')
+    VReport(1, "Extra activation flags: %s\n", buf);
+}
+
 // -------------------------- Globals --------------------- {{{1
 int asan_inited;
 bool asan_init_is_running;
@@ -413,6 +424,10 @@ static void AsanInitInternal() {
   // initialization steps look at flags().
   const char *options = GetEnv("ASAN_OPTIONS");
   InitializeFlags(flags(), options);
+
+  if (!flags()->start_deactivated)
+    ParseExtraActivationFlags();
+
   __sanitizer_set_report_path(common_flags()->log_path);
   __asan_option_detect_stack_use_after_return =
       flags()->detect_stack_use_after_return;

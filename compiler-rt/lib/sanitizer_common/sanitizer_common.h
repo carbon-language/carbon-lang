@@ -506,8 +506,10 @@ F IndirectExternCall(F f) {
 
 #if SANITIZER_ANDROID
 void AndroidLogWrite(const char *buffer);
+void GetExtraActivationFlags(char *buf, uptr size);
 #else
 INLINE void AndroidLogWrite(const char *buffer_unused) {}
+INLINE void GetExtraActivationFlags(char *buf, uptr size) { *buf = '\0'; }
 #endif
 }  // namespace __sanitizer
 
