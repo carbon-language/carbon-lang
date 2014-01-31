@@ -702,11 +702,10 @@ static void PrintSymbolTable(const ObjectFile *o) {
       uint64_t Address;
       SymbolRef::Type Type;
       uint64_t Size;
-      uint32_t Flags;
+      uint32_t Flags = si->getFlags();
       section_iterator Section = o->end_sections();
       if (error(si->getName(Name))) continue;
       if (error(si->getAddress(Address))) continue;
-      if (error(si->getFlags(Flags))) continue;
       if (error(si->getType(Type))) continue;
       if (error(si->getSize(Size))) continue;
       if (error(si->getSection(Section))) continue;

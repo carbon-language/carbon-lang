@@ -495,8 +495,7 @@ MachOObjectFile::getSymbolFileOffset(DataRefImpl Symb,
 
 error_code MachOObjectFile::getSymbolAlignment(DataRefImpl DRI,
                                                uint32_t &Result) const {
-  uint32_t flags;
-  this->getSymbolFlags(DRI, flags);
+  uint32_t flags = getSymbolFlags(DRI);
   if (flags & SymbolRef::SF_Common) {
     nlist_base Entry = getSymbolTableEntryBase(this, DRI);
     Result = 1 << MachO::GET_COMM_ALIGN(Entry.n_desc);
@@ -520,8 +519,7 @@ error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
 
   SectionIndex = Entry.n_sect;
   if (!SectionIndex) {
-    uint32_t flags = SymbolRef::SF_None;
-    this->getSymbolFlags(DRI, flags);
+    uint32_t flags = getSymbolFlags(DRI);
     if (flags & SymbolRef::SF_Common)
       Result = Value;
     else
@@ -574,15 +572,14 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
   return object_error::success;
 }
 
-error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
-                                           uint32_t &Result) const {
+uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
   nlist_base Entry = getSymbolTableEntryBase(this, DRI);
 
   uint8_t MachOType = Entry.n_type;
   uint16_t MachOFlags = Entry.n_desc;
 
   // TODO: Correctly set SF_ThreadLocal
-  Result = SymbolRef::SF_None;
+  uint32_t Result = SymbolRef::SF_None;
 
   if ((MachOType & MachO::N_TYPE) == MachO::N_UNDF)
     Result |= SymbolRef::SF_Undefined;
@@ -606,7 +603,7 @@ error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
   if ((MachOType & MachO::N_TYPE) == MachO::N_ABS)
     Result |= SymbolRef::SF_Absolute;
 
-  return object_error::success;
+  return Result;
 }
 
 error_code

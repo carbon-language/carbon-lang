@@ -124,8 +124,7 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
     Check(i->getType(SymType));
     Check(i->getName(Name));
 
-    uint32_t flags;
-    Check(i->getFlags(flags));
+    uint32_t flags = i->getFlags();
 
     bool isCommon = flags & SymbolRef::SF_Common;
     if (isCommon) {

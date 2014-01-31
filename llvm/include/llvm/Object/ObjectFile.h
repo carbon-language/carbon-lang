@@ -219,7 +219,7 @@ public:
   error_code getType(SymbolRef::Type &Result) const;
 
   /// Get symbol flags (bitwise OR of SymbolRef::Flags)
-  error_code getFlags(uint32_t &Result) const;
+  uint32_t getFlags() const;
 
   /// @brief Get section this symbol is defined in reference to. Result is
   /// end_sections() if it is undefined or is an absolute symbol.
@@ -289,8 +289,7 @@ protected:
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const = 0;
   virtual error_code getSymbolType(DataRefImpl Symb,
                                    SymbolRef::Type &Res) const = 0;
-  virtual error_code getSymbolFlags(DataRefImpl Symb,
-                                    uint32_t &Res) const = 0;
+  virtual uint32_t getSymbolFlags(DataRefImpl Symb) const = 0;
   virtual error_code getSymbolSection(DataRefImpl Symb,
                                       section_iterator &Res) const = 0;
   virtual error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const = 0;
@@ -428,8 +427,8 @@ inline error_code SymbolRef::getSize(uint64_t &Result) const {
   return OwningObject->getSymbolSize(SymbolPimpl, Result);
 }
 
-inline error_code SymbolRef::getFlags(uint32_t &Result) const {
-  return OwningObject->getSymbolFlags(SymbolPimpl, Result);
+inline uint32_t SymbolRef::getFlags() const {
+  return OwningObject->getSymbolFlags(SymbolPimpl);
 }
 
 inline error_code SymbolRef::getSection(section_iterator &Result) const {

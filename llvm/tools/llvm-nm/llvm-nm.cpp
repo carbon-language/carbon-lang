@@ -561,9 +561,7 @@ static void dumpSymbolNamesFromObject(ObjectFile *Obj) {
     getDynamicSymbolIterators(Obj, IBegin, IEnd);
   }
   for (symbol_iterator I = IBegin; I != IEnd; ++I) {
-    uint32_t SymFlags;
-    if (error(I->getFlags(SymFlags)))
-      break;
+    uint32_t SymFlags = I->getFlags();
     if (!DebugSyms && (SymFlags & SymbolRef::SF_FormatSpecific))
       continue;
     NMSymbol S;
