@@ -92,6 +92,7 @@ int internal_isatty(fd_t fd) {
   return isatty(fd);
 }
 
+#ifndef SANITIZER_GO
 // TODO(glider): different tools may require different altstack size.
 static const uptr kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
 
@@ -141,6 +142,7 @@ void InstallDeadlySignalHandlers(SignalHandlerType handler) {
   MaybeInstallSigaction(SIGSEGV, handler);
   MaybeInstallSigaction(SIGBUS, handler);
 }
+#endif  // SANITIZER_GO
 
 }  // namespace __sanitizer
 

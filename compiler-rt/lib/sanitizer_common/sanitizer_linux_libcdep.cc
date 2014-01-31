@@ -50,6 +50,7 @@ static int my_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
 
 namespace __sanitizer {
 
+#ifndef SANITIZER_GO
 extern "C" SANITIZER_WEAK_ATTRIBUTE int
 __sanitizer_sigaction_f(int signum, const void *act, void *oldact);
 
@@ -59,7 +60,6 @@ int internal_sigaction(int signum, const void *act, void *oldact) {
   return sigaction(signum, (struct sigaction *)act, (struct sigaction *)oldact);
 }
 
-#ifndef SANITIZER_GO
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom) {
   static const uptr kMaxThreadStackSize = 1 << 30;  // 1Gb
