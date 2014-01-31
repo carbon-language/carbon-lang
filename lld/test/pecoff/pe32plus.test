@@ -1,7 +1,7 @@
 # RUN: yaml2obj %p/Inputs/nop64.obj.yaml > %t.obj
 
-# RUN: lld -flavor link /out:%t.exe /subsystem:console /machine:x64 \
-# RUN:   /entry:start -- %t.obj
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:start \
+# RUN:   /machine:x64 -- %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck %s
 
 CHECK:      Format: COFF-x86-64

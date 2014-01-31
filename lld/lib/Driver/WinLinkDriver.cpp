@@ -698,6 +698,19 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     return false;
   }
 
+  // Handle /machine before parsing all the other options, as the target machine
+  // type affects how to handle other options. For example, x86 needs the
+  // leading underscore to mangle symbols, while x64 doesn't need it.
+  if (llvm::opt::Arg *inputArg = parsedArgs->getLastArg(OPT_machine)) {
+    StringRef arg = inputArg->getValue();
+    llvm::COFF::MachineTypes type = stringToMachineType(arg);
+    if (type == llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN) {
+      diagnostics << "error: unknown machine type: " << arg << "\n";
+      return false;
+    }
+    ctx.setMachineType(type);
+  }
+
   // Handle /nodefaultlib:<lib>. The same option without argument is handled in
   // the following for loop.
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_nodefaultlib),
@@ -783,17 +796,6 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
         return false;
       }
       ctx.setSectionDefaultAlignment(align);
-      break;
-    }
-
-    case OPT_machine: {
-      StringRef arg = inputArg->getValue();
-      llvm::COFF::MachineTypes type = stringToMachineType(arg);
-      if (type == llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN) {
-        diagnostics << "error: unknown machine type: " << arg << "\n";
-        return false;
-      }
-      ctx.setMachineType(type);
       break;
     }
 
