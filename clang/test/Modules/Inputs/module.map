@@ -166,6 +166,11 @@ module autolink {
     header "autolink-sub2.h"
     link framework "autolink_framework"
   }
+
+  explicit module sub3 {
+    header "autolink-sub3.h"
+    link "autolink_from_pch"
+  }
 }
 
 module weird_objc {

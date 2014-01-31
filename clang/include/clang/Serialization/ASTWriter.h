@@ -297,16 +297,15 @@ private:
   /// \brief Declarations encountered that might be external
   /// definitions.
   ///
-  /// We keep track of external definitions (as well as tentative
-  /// definitions) as we are emitting declarations to the AST
-  /// file. The AST file contains a separate record for these external
-  /// definitions, which are provided to the AST consumer by the AST
-  /// reader. This is behavior is required to properly cope with,
+  /// We keep track of external definitions and other 'interesting' declarations
+  /// as we are emitting declarations to the AST file. The AST file contains a
+  /// separate record for these declarations, which are provided to the AST
+  /// consumer by the AST reader. This is behavior is required to properly cope with,
   /// e.g., tentative variable definitions that occur within
   /// headers. The declarations themselves are stored as declaration
-  /// IDs, since they will be written out to an EXTERNAL_DEFINITIONS
+  /// IDs, since they will be written out to an EAGERLY_DESERIALIZED_DECLS
   /// record.
-  SmallVector<uint64_t, 16> ExternalDefinitions;
+  SmallVector<uint64_t, 16> EagerlyDeserializedDecls;
 
   /// \brief DeclContexts that have received extensions since their serialized
   /// form.
