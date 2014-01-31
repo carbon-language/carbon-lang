@@ -1274,8 +1274,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VFMADDSDr132r,         X86::VFMADDSDr132m,         0 },
     { X86::VFMADDSSr213r,         X86::VFMADDSSr213m,         0 },
     { X86::VFMADDSDr213r,         X86::VFMADDSDr213m,         0 },
-    { X86::VFMADDSSr213r_Int,     X86::VFMADDSSr213m_Int,     0 },
-    { X86::VFMADDSDr213r_Int,     X86::VFMADDSDr213m_Int,     0 },
 
     { X86::VFMADDPSr231r,         X86::VFMADDPSr231m,         TB_ALIGN_16 },
     { X86::VFMADDPDr231r,         X86::VFMADDPDr231m,         TB_ALIGN_16 },
@@ -1296,8 +1294,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VFNMADDSDr132r,        X86::VFNMADDSDr132m,        0 },
     { X86::VFNMADDSSr213r,        X86::VFNMADDSSr213m,        0 },
     { X86::VFNMADDSDr213r,        X86::VFNMADDSDr213m,        0 },
-    { X86::VFNMADDSSr213r_Int,    X86::VFNMADDSSr213m_Int,    0 },
-    { X86::VFNMADDSDr213r_Int,    X86::VFNMADDSDr213m_Int,    0 },
 
     { X86::VFNMADDPSr231r,        X86::VFNMADDPSr231m,        TB_ALIGN_16 },
     { X86::VFNMADDPDr231r,        X86::VFNMADDPDr231m,        TB_ALIGN_16 },
@@ -1318,8 +1314,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VFMSUBSDr132r,         X86::VFMSUBSDr132m,         0 },
     { X86::VFMSUBSSr213r,         X86::VFMSUBSSr213m,         0 },
     { X86::VFMSUBSDr213r,         X86::VFMSUBSDr213m,         0 },
-    { X86::VFMSUBSSr213r_Int,     X86::VFMSUBSSr213m_Int,     0 },
-    { X86::VFMSUBSDr213r_Int,     X86::VFMSUBSDr213m_Int,     0 },
 
     { X86::VFMSUBPSr231r,         X86::VFMSUBPSr231m,         TB_ALIGN_16 },
     { X86::VFMSUBPDr231r,         X86::VFMSUBPDr231m,         TB_ALIGN_16 },
@@ -1340,8 +1334,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VFNMSUBSDr132r,        X86::VFNMSUBSDr132m,        0 },
     { X86::VFNMSUBSSr213r,        X86::VFNMSUBSSr213m,        0 },
     { X86::VFNMSUBSDr213r,        X86::VFNMSUBSDr213m,        0 },
-    { X86::VFNMSUBSSr213r_Int,    X86::VFNMSUBSSr213m_Int,    0 },
-    { X86::VFNMSUBSDr213r_Int,    X86::VFNMSUBSDr213m_Int,    0 },
 
     { X86::VFNMSUBPSr231r,        X86::VFNMSUBPSr231m,        TB_ALIGN_16 },
     { X86::VFNMSUBPDr231r,        X86::VFNMSUBPDr231m,        TB_ALIGN_16 },
