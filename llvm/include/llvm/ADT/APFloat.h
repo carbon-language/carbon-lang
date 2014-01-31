@@ -1,4 +1,4 @@
-//== llvm/Support/APFloat.h - Arbitrary Precision Floating Point -*- C++ -*-==//
+//===- llvm/ADT/APFloat.h - Arbitrary Precision Floating Point ---*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
