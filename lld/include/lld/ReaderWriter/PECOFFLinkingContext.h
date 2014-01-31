@@ -250,10 +250,10 @@ protected:
   virtual std::unique_ptr<File> createUndefinedSymbolFile() const;
 
 private:
-  enum {
+  enum : uint64_t {
     invalidBaseAddress = UINT64_MAX,
-    pe32DefaultBaseAddress = 0x400000UL,
-    pe32PlusDefaultBaseAddress = 0x140000000UL
+    pe32DefaultBaseAddress = 0x400000U,
+    pe32PlusDefaultBaseAddress = 0x140000000U
  };
 
   // The start address for the program. The default value for the executable is
