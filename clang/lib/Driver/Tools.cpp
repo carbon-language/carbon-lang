@@ -832,9 +832,12 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     }
 
     // Exception handling
-    if (Args.hasArg(options::OPT_fno_exceptions)) {
-      CmdArgs.push_back("-backend-option");
-      CmdArgs.push_back("-arm-disable-ehabi");
+    if (Arg *A = Args.getLastArg(options::OPT_fexceptions,
+                                 options::OPT_fno_exceptions)) {
+      if (A->getOption().matches(options::OPT_fno_exceptions)) {
+        CmdArgs.push_back("-backend-option");
+        CmdArgs.push_back("-arm-disable-ehabi");
+      }
     }
 }
 
