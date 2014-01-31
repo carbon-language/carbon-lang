@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 LIBRARYNAME := LTO
-LINK_COMPONENTS := all-targets core lto mc support
+LINK_COMPONENTS := all-targets core lto mc mcdisassembler support
 LINK_LIBS_IN_SHARED := 1
 SHARED_LIBRARY := 1
 
