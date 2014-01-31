@@ -27,6 +27,7 @@
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
@@ -478,8 +479,14 @@ void GCOVProfiler::emitProfileNotes() {
 
       Function *F = SP.getFunction();
       if (!F) continue;
+
+      // gcov expects every function to start with an entry block that has a
+      // single successor, so split the entry block to make sure of that.
       BasicBlock &EntryBlock = F->getEntryBlock();
-      EntryBlock.splitBasicBlock(EntryBlock.begin());
+      BasicBlock::iterator It = EntryBlock.begin();
+      while (isa<AllocaInst>(*It) || isa<DbgInfoIntrinsic>(*It))
+        ++It;
+      EntryBlock.splitBasicBlock(It);
 
       GCOVFunction *Func =
         new GCOVFunction(SP, &out, i, Options.UseCfgChecksum);
