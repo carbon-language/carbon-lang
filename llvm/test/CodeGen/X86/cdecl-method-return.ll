@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-pc-win32 | FileCheck %s
+; RUN: llc < %s -mtriple=i686-pc-win32 -mcpu=core2 | FileCheck %s
 
 ; The sret flag causes the first two parameters to be reordered on the stack.
 
