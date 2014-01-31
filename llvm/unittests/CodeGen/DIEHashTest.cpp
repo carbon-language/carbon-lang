@@ -478,7 +478,7 @@ TEST(DIEHashTest, RefUnnamedType) {
   ASSERT_EQ(0x954e026f01c02529ULL, MD5Res);
 }
 
-// struct { struct bar { }; };
+// struct { struct foo { }; };
 TEST(DIEHashTest, NestedType) {
   DIE Unnamed(dwarf::DW_TAG_structure_type);
   DIEInteger One(1);
