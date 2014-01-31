@@ -2666,23 +2666,21 @@ public:
                 "unique_ptr constructed with null function pointer deleter");
         }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _Pp,
-              class = typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value>::type
-             >
-    _LIBCPP_INLINE_VISIBILITY explicit unique_ptr(_Pp __p) _NOEXCEPT
+    template <class _Pp>
+    _LIBCPP_INLINE_VISIBILITY explicit unique_ptr(_Pp __p,
+            typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value, __nat>::type = __nat()) _NOEXCEPT
         : __ptr_(__p)
         {
             static_assert(!is_pointer<deleter_type>::value,
                 "unique_ptr constructed with null function pointer deleter");
         }
 
-    template <class _Pp,
-              class = typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value>::type
-             >
+    template <class _Pp>
     _LIBCPP_INLINE_VISIBILITY unique_ptr(_Pp __p, typename conditional<
                                        is_reference<deleter_type>::value,
                                        deleter_type,
-                                       typename add_lvalue_reference<const deleter_type>::type>::type __d)
+                                       typename add_lvalue_reference<const deleter_type>::type>::type __d,
+                                       typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value, __nat>::type = __nat())
              _NOEXCEPT
         : __ptr_(__p, __d) {}
 
@@ -2693,10 +2691,10 @@ public:
              _NOEXCEPT
         : __ptr_(pointer(), __d) {}
 
-    template <class _Pp,
-              class = typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value>::type
-             >
-    _LIBCPP_INLINE_VISIBILITY unique_ptr(_Pp __p, typename remove_reference<deleter_type>::type&& __d)
+    template <class _Pp>
+    _LIBCPP_INLINE_VISIBILITY unique_ptr(_Pp __p,
+                                         typename remove_reference<deleter_type>::type&& __d,
+                                         typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value, __nat>::type = __nat())
              _NOEXCEPT
         : __ptr_(__p, _VSTD::move(__d))
         {
@@ -2811,10 +2809,10 @@ public:
     }
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _Pp,
-              class = typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value>::type
-             >
-    _LIBCPP_INLINE_VISIBILITY void reset(_Pp __p) _NOEXCEPT
+    template <class _Pp>
+    _LIBCPP_INLINE_VISIBILITY
+    typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value, void>::type
+    reset(_Pp __p) _NOEXCEPT
     {
         pointer __tmp = __ptr_.first();
         __ptr_.first() = __p;
@@ -3759,27 +3757,15 @@ private:
 public:
     _LIBCPP_CONSTEXPR shared_ptr() _NOEXCEPT;
     _LIBCPP_CONSTEXPR shared_ptr(nullptr_t) _NOEXCEPT;
-    template<class _Yp,
-             class = typename enable_if
-                     <
-                        is_convertible<_Yp*, element_type*>::value
-                     >::type
-            >
-        explicit shared_ptr(_Yp* __p);
-    template<class _Yp, class _Dp,
-             class = typename enable_if
-                     <
-                        is_convertible<_Yp*, element_type*>::value
-                     >::type
-            >
-        shared_ptr(_Yp* __p, _Dp __d);
-    template<class _Yp, class _Dp, class _Alloc,
-             class = typename enable_if
-                     <
-                        is_convertible<_Yp*, element_type*>::value
-                     >::type
-            >
-        shared_ptr(_Yp* __p, _Dp __d, _Alloc __a);
+    template<class _Yp>
+        explicit shared_ptr(_Yp* __p,
+                            typename enable_if<is_convertible<_Yp*, element_type*>::value, __nat>::type = __nat());
+    template<class _Yp, class _Dp>
+        shared_ptr(_Yp* __p, _Dp __d,
+                   typename enable_if<is_convertible<_Yp*, element_type*>::value, __nat>::type = __nat());
+    template<class _Yp, class _Dp, class _Alloc>
+        shared_ptr(_Yp* __p, _Dp __d, _Alloc __a,
+                   typename enable_if<is_convertible<_Yp*, element_type*>::value, __nat>::type = __nat());
     template <class _Dp> shared_ptr(nullptr_t __p, _Dp __d);
     template <class _Dp, class _Alloc> shared_ptr(nullptr_t __p, _Dp __d, _Alloc __a);
     template<class _Yp> shared_ptr(const shared_ptr<_Yp>& __r, element_type* __p) _NOEXCEPT;
@@ -3797,59 +3783,52 @@ public:
     template<class _Yp> explicit shared_ptr(const weak_ptr<_Yp>& __r,
                    typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type= __nat());
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template<class _Yp,
-             class = typename enable_if
-                     <
-                        is_convertible<_Yp*, element_type*>::value
-                     >::type
-            >
-        shared_ptr(auto_ptr<_Yp>&& __r);
+    template<class _Yp>
+        shared_ptr(auto_ptr<_Yp>&& __r,
+                   typename enable_if<is_convertible<_Yp*, element_type*>::value, __nat>::type = __nat());
 #else
-    template<class _Yp,
-             class = typename enable_if
-                     <
-                        is_convertible<_Yp*, element_type*>::value
-                     >::type
-            >
-        shared_ptr(auto_ptr<_Yp> __r);
+    template<class _Yp>
+        shared_ptr(auto_ptr<_Yp> __r,
+                   typename enable_if<is_convertible<_Yp*, element_type*>::value, __nat>::type = __nat());
 #endif
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _Yp, class _Dp,
-                 class = typename enable_if
-                 <
-                    !is_array<_Yp>::value &&
-                    is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value
-                 >::type
-             >
-       shared_ptr(unique_ptr<_Yp, _Dp>&&,
-       typename enable_if<!is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
-    template <class _Yp, class _Dp,
-                 class = typename enable_if
-                 <
-                    !is_array<_Yp>::value &&
-                    is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value
-                 >::type
-             >
-       shared_ptr(unique_ptr<_Yp, _Dp>&&,
-       typename enable_if<is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
+    template <class _Yp, class _Dp>
+        shared_ptr(unique_ptr<_Yp, _Dp>&&,
+                   typename enable_if
+                   <
+                       !is_lvalue_reference<_Dp>::value &&
+                       !is_array<_Yp>::value &&
+                       is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value,
+                       __nat
+                   >::type = __nat());
+    template <class _Yp, class _Dp>
+        shared_ptr(unique_ptr<_Yp, _Dp>&&,
+                   typename enable_if
+                   <
+                       is_lvalue_reference<_Dp>::value &&
+                       !is_array<_Yp>::value &&
+                       is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value,
+                       __nat
+                   >::type = __nat());
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _Yp, class _Dp,
-                 class = typename enable_if
-                 <
-                    !is_array<_Yp>::value &&
-                    is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value
-                 >::type
-             > shared_ptr(unique_ptr<_Yp, _Dp>,
-       typename enable_if<!is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
-    template <class _Yp, class _Dp,
-                 class = typename enable_if
-                 <
-                    !is_array<_Yp>::value &&
-                    is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value
-                 >::type
-             >
-       shared_ptr(unique_ptr<_Yp, _Dp>,
-       typename enable_if<is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
+    template <class _Yp, class _Dp>
+        shared_ptr(unique_ptr<_Yp, _Dp>,
+                   typename enable_if
+                   <
+                       !is_lvalue_reference<_Dp>::value &&
+                       !is_array<_Yp>::value &&
+                       is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value,
+                       __nat
+                   >::type = __nat());
+    template <class _Yp, class _Dp>
+        shared_ptr(unique_ptr<_Yp, _Dp>,
+                   typename enable_if
+                   <
+                       is_lvalue_reference<_Dp>::value &&
+                       !is_array<_Yp>::value &&
+                       is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value,
+                       __nat
+                   >::type = __nat());
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     ~shared_ptr();
@@ -4039,8 +4018,9 @@ shared_ptr<_Tp>::shared_ptr(nullptr_t) _NOEXCEPT
 }
 
 template<class _Tp>
-template<class _Yp, class>
-shared_ptr<_Tp>::shared_ptr(_Yp* __p)
+template<class _Yp>
+shared_ptr<_Tp>::shared_ptr(_Yp* __p,
+                            typename enable_if<is_convertible<_Yp*, element_type*>::value, __nat>::type)
     : __ptr_(__p)
 {
     unique_ptr<_Yp> __hold(__p);
@@ -4051,8 +4031,9 @@ shared_ptr<_Tp>::shared_ptr(_Yp* __p)
 }
 
 template<class _Tp>
-template<class _Yp, class _Dp, class>
-shared_ptr<_Tp>::shared_ptr(_Yp* __p, _Dp __d)
+template<class _Yp, class _Dp>
+shared_ptr<_Tp>::shared_ptr(_Yp* __p, _Dp __d,
+                            typename enable_if<is_convertible<_Yp*, element_type*>::value, __nat>::type)
     : __ptr_(__p)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -4094,8 +4075,9 @@ shared_ptr<_Tp>::shared_ptr(nullptr_t __p, _Dp __d)
 }
 
 template<class _Tp>
-template<class _Yp, class _Dp, class _Alloc, class>
-shared_ptr<_Tp>::shared_ptr(_Yp* __p, _Dp __d, _Alloc __a)
+template<class _Yp, class _Dp, class _Alloc>
+shared_ptr<_Tp>::shared_ptr(_Yp* __p, _Dp __d, _Alloc __a,
+                            typename enable_if<is_convertible<_Yp*, element_type*>::value, __nat>::type)
     : __ptr_(__p)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -4208,12 +4190,13 @@ shared_ptr<_Tp>::shared_ptr(shared_ptr<_Yp>&& __r,
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _Tp>
-template<class _Yp, class>
+template<class _Yp>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp>&& __r)
+shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp>&& __r,
 #else
-shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp> __r)
+shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp> __r,
 #endif
+                            typename enable_if<is_convertible<_Yp*, element_type*>::value, __nat>::type)
     : __ptr_(__r.get())
 {
     typedef __shared_ptr_pointer<_Yp*, default_delete<_Yp>, allocator<_Yp> > _CntrlBlk;
@@ -4223,13 +4206,19 @@ shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp> __r)
 }
 
 template<class _Tp>
-template <class _Yp, class _Dp, class>
+template <class _Yp, class _Dp>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp>&& __r,
 #else
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp> __r,
 #endif
-           typename enable_if<!is_lvalue_reference<_Dp>::value, __nat>::type)
+                            typename enable_if
+                            <
+                                !is_lvalue_reference<_Dp>::value &&
+                                !is_array<_Yp>::value &&
+                                is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value,
+                                __nat
+                            >::type)
     : __ptr_(__r.get())
 {
     typedef __shared_ptr_pointer<_Yp*, _Dp, allocator<_Yp> > _CntrlBlk;
@@ -4239,13 +4228,19 @@ shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp> __r,
 }
 
 template<class _Tp>
-template <class _Yp, class _Dp, class>
+template <class _Yp, class _Dp>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp>&& __r,
 #else
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp> __r,
 #endif
-           typename enable_if<is_lvalue_reference<_Dp>::value, __nat>::type)
+                            typename enable_if
+                            <
+                                is_lvalue_reference<_Dp>::value &&
+                                !is_array<_Yp>::value &&
+                                is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value,
+                                __nat
+                            >::type)
     : __ptr_(__r.get())
 {
     typedef __shared_ptr_pointer<_Yp*,
