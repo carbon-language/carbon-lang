@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "sanitizer_common.h"
+#include "sanitizer_flags.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
 #include "sanitizer_placement_new.h"
@@ -32,6 +33,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <sched.h>
+#include <signal.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -116,6 +118,11 @@ void internal__exit(int exitcode) {
 
 uptr internal_getpid() {
   return getpid();
+}
+
+int internal_sigaction(int signum, const void *act, void *oldact) {
+  return sigaction(signum,
+                   (struct sigaction *)act, (struct sigaction *)oldact);
 }
 
 // ----------------- sanitizer_common.h
@@ -236,6 +243,10 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter) {
   MemoryMappingLayout memory_mapping(false);
   return memory_mapping.DumpListOfModules(modules, max_modules, filter);
+}
+
+bool IsDeadlySignal(int signum) {
+  return (signum == SIGSEGV || signum == SIGBUS) && common_flags()->handle_segv;
 }
 
 }  // namespace __sanitizer

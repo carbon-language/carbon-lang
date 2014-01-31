@@ -214,6 +214,10 @@ typedef void (*CheckFailedCallbackType)(const char *, int, const char *,
 void SetCheckFailedCallback(CheckFailedCallbackType callback);
 
 // Functions related to signal handling.
+typedef void (*SignalHandlerType)(int, void *, void *);
+bool IsDeadlySignal(int signum);
+void InstallDeadlySignalHandlers(SignalHandlerType handler);
+// Alternative signal stack (POSIX-only).
 void SetAlternateSignalStack();
 void UnsetAlternateSignalStack();
 

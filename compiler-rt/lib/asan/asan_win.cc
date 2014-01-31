@@ -70,10 +70,6 @@ void *AsanDoesNotSupportStaticLinkage() {
   return 0;
 }
 
-void InstallSignalHandlers() {
-  // FIXME: Decide what to do on Windows.
-}
-
 void AsanPlatformThreadInit() {
   // Nothing here for now.
 }

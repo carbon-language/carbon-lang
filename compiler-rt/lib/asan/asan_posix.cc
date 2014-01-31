@@ -32,35 +32,13 @@
 
 namespace __asan {
 
-static void MaybeInstallSigaction(int signum,
-                                  void (*handler)(int, siginfo_t *, void *)) {
-  if (!AsanInterceptsSignal(signum))
-    return;
-  struct sigaction sigact;
-  REAL(memset)(&sigact, 0, sizeof(sigact));
-  sigact.sa_sigaction = handler;
-  sigact.sa_flags = SA_SIGINFO;
-  if (common_flags()->use_sigaltstack) sigact.sa_flags |= SA_ONSTACK;
-  CHECK_EQ(0, REAL(sigaction)(signum, &sigact, 0));
-  VReport(1, "Installed the sigaction for signal %d\n", signum);
-}
-
-static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
-  uptr addr = (uptr)siginfo->si_addr;
+void AsanOnSIGSEGV(int, void *siginfo, void *context) {
+  uptr addr = (uptr)((siginfo_t*)siginfo)->si_addr;
   // Write the first message using the bullet-proof write.
   if (13 != internal_write(2, "ASAN:SIGSEGV\n", 13)) Die();
   uptr pc, sp, bp;
   GetPcSpBp(context, &pc, &sp, &bp);
   ReportSIGSEGV(pc, sp, bp, addr);
-}
-
-void InstallSignalHandlers() {
-  // Set the alternate signal stack for the main thread.
-  // This will cause SetAlternateSignalStack to be called twice, but the stack
-  // will be actually set only once.
-  if (common_flags()->use_sigaltstack) SetAlternateSignalStack();
-  MaybeInstallSigaction(SIGSEGV, ASAN_OnSIGSEGV);
-  MaybeInstallSigaction(SIGBUS, ASAN_OnSIGSEGV);
 }
 
 // ---------------------- TSD ---------------- {{{1

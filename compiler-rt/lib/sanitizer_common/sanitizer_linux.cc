@@ -16,6 +16,7 @@
 #if SANITIZER_LINUX
 
 #include "sanitizer_common.h"
+#include "sanitizer_flags.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
 #include "sanitizer_linux.h"
@@ -697,6 +698,10 @@ void AndroidLogWrite(const char *buffer) {
   __android_log_write(ANDROID_LOG_INFO, NULL, buffer);
 }
 #endif
+
+bool IsDeadlySignal(int signum) {
+  return (signum == SIGSEGV) && common_flags()->handle_segv;
+}
 
 }  // namespace __sanitizer
 

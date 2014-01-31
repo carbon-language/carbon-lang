@@ -24,6 +24,7 @@
 
 #include <dlfcn.h>
 #include <pthread.h>
+#include <signal.h>
 #include <sys/prctl.h>
 #include <sys/resource.h>
 #include <unwind.h>
@@ -39,7 +40,6 @@ extern "C" SANITIZER_WEAK_ATTRIBUTE int
 __sanitizer_pthread_attr_getstack(void *attr, void **addr, size_t *size);
 
 static int my_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
-#
   if (__sanitizer_pthread_attr_getstack)
     return __sanitizer_pthread_attr_getstack((pthread_attr_t *)attr, addr,
                                              size);
@@ -49,6 +49,15 @@ static int my_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
 #endif  // #ifndef SANITIZER_GO
 
 namespace __sanitizer {
+
+extern "C" SANITIZER_WEAK_ATTRIBUTE int
+__sanitizer_sigaction_f(int signum, const void *act, void *oldact);
+
+int internal_sigaction(int signum, const void *act, void *oldact) {
+  if (__sanitizer_sigaction_f)
+    return __sanitizer_sigaction_f(signum, act, oldact);
+  return sigaction(signum, (struct sigaction *)act, (struct sigaction *)oldact);
+}
 
 #ifndef SANITIZER_GO
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,

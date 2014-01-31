@@ -486,7 +486,7 @@ static void AsanInitInternal() {
   }
 
   AsanTSDInit(PlatformTSDDtor);
-  InstallSignalHandlers();
+  InstallDeadlySignalHandlers(AsanOnSIGSEGV);
 
   // Allocator should be initialized before starting external symbolizer, as
   // fork() on Mac locks the allocator.

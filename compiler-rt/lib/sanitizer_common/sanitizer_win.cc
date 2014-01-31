@@ -421,6 +421,15 @@ void UnsetAlternateSignalStack() {
   // FIXME: Decide what to do on Windows.
 }
 
+void InstallDeadlySignalHandlers() {
+  // FIXME: Decide what to do on Windows.
+}
+
+bool IsDeadlySignal(int signum) {
+  // FIXME: Decide what to do on Windows.
+  return false;
+}
+
 }  // namespace __sanitizer
 
 #endif  // _WIN32
