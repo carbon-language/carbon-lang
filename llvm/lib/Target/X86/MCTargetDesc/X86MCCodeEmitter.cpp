@@ -651,7 +651,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //  0b01000: XOP map select - 08h instructions with imm byte
   //  0b01001: XOP map select - 09h instructions with no imm byte
   //  0b01010: XOP map select - 0Ah instructions with imm dword
-  unsigned char VEX_5M = 0x1;
+  unsigned char VEX_5M = 0;
 
   // VEX_4V (VEX vvvv field): a register specifier
   // (in 1's complement form) or 1111 if unused.
@@ -707,56 +707,22 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   if (HasEVEX && ((TSFlags >> X86II::VEXShift) & X86II::EVEX_B))
     EVEX_b = 1;
 
-  switch (TSFlags & X86II::Op0Mask) {
-  default: llvm_unreachable("Invalid prefix!");
-  case X86II::T8:  // 0F 38
-    VEX_5M = 0x2;
-    break;
-  case X86II::TA:  // 0F 3A
-    VEX_5M = 0x3;
-    break;
-  case X86II::T8PD: // 66 0F 38
-    VEX_PP = 0x1;
-    VEX_5M = 0x2;
-    break;
-  case X86II::T8XS: // F3 0F 38
-    VEX_PP = 0x2;
-    VEX_5M = 0x2;
-    break;
-  case X86II::T8XD: // F2 0F 38
-    VEX_PP = 0x3;
-    VEX_5M = 0x2;
-    break;
-  case X86II::TAPD: // 66 0F 3A
-    VEX_PP = 0x1;
-    VEX_5M = 0x3;
-    break;
-  case X86II::TAXD: // F2 0F 3A
-    VEX_PP = 0x3;
-    VEX_5M = 0x3;
-    break;
-  case X86II::PD:  // 66 0F
-    VEX_PP = 0x1;
-    break;
-  case X86II::XS:  // F3 0F
-    VEX_PP = 0x2;
-    break;
-  case X86II::XD:  // F2 0F
-    VEX_PP = 0x3;
-    break;
-  case X86II::XOP8:
-    VEX_5M = 0x8;
-    break;
-  case X86II::XOP9:
-    VEX_5M = 0x9;
-    break;
-  case X86II::XOPA:
-    VEX_5M = 0xA;
-    break;
-  case X86II::TB: // VEX_5M/VEX_PP already correct
-    break;
+  switch (TSFlags & X86II::OpPrefixMask) {
+  default: break; // VEX_PP already correct
+  case X86II::PD: VEX_PP = 0x1; break; // 66
+  case X86II::XS: VEX_PP = 0x2; break; // F3
+  case X86II::XD: VEX_PP = 0x3; break; // F2
   }
 
+  switch (TSFlags & X86II::OpMapMask) {
+  default: llvm_unreachable("Invalid prefix!");
+  case X86II::TB:   VEX_5M = 0x1; break; // 0F
+  case X86II::T8:   VEX_5M = 0x2; break; // 0F 38
+  case X86II::TA:   VEX_5M = 0x3; break; // 0F 3A
+  case X86II::XOP8: VEX_5M = 0x8; break;
+  case X86II::XOP9: VEX_5M = 0x9; break;
+  case X86II::XOPA: VEX_5M = 0xA; break;
+  }
 
   // Classify VEX_B, VEX_4V, VEX_R, VEX_X
   unsigned NumOps = Desc.getNumOperands();
@@ -1152,44 +1118,15 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   if (TSFlags & (is16BitMode(STI) ? X86II::OpSize16 : X86II::OpSize))
     EmitByte(0x66, CurByte, OS);
 
-  bool Need0FPrefix = false;
-  switch (TSFlags & X86II::Op0Mask) {
-  default: llvm_unreachable("Invalid prefix!");
-  case 0: break;  // No prefix!
-  case X86II::TB:  // Two-byte opcode prefix
-  case X86II::T8:  // 0F 38
-  case X86II::TA:  // 0F 3A
-  case X86II::A6:  // 0F A6
-  case X86II::A7:  // 0F A7
-    Need0FPrefix = true;
-    break;
-  case X86II::PD:   // 66 0F
-  case X86II::T8PD: // 66 0F 38
-  case X86II::TAPD: // 66 0F 3A
+  switch (TSFlags & X86II::OpPrefixMask) {
+  case X86II::PD:   // 66
     EmitByte(0x66, CurByte, OS);
-    Need0FPrefix = true;
     break;
-  case X86II::XS:   // F3 0F
-  case X86II::T8XS: // F3 0F 38
+  case X86II::XS:   // F3
     EmitByte(0xF3, CurByte, OS);
-    Need0FPrefix = true;
     break;
-  case X86II::XD:   // F2 0F
-  case X86II::T8XD: // F2 0F 38
-  case X86II::TAXD: // F2 0F 3A
+  case X86II::XD:   // F2
     EmitByte(0xF2, CurByte, OS);
-    Need0FPrefix = true;
-    break;
-  case X86II::D8:
-  case X86II::D9:
-  case X86II::DA:
-  case X86II::DB:
-  case X86II::DC:
-  case X86II::DD:
-  case X86II::DE:
-  case X86II::DF:
-    EmitByte(0xD8+(((TSFlags & X86II::Op0Mask) - X86II::D8) >> X86II::Op0Shift),
-             CurByte, OS);
     break;
   }
 
@@ -1201,19 +1138,25 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   }
 
   // 0x0F escape code must be emitted just before the opcode.
-  if (Need0FPrefix)
+  switch (TSFlags & X86II::OpMapMask) {
+  case X86II::TB:  // Two-byte opcode map
+  case X86II::T8:  // 0F 38
+  case X86II::TA:  // 0F 3A
+  case X86II::A6:  // 0F A6
+  case X86II::A7:  // 0F A7
     EmitByte(0x0F, CurByte, OS);
+    break;
+  case X86II::D8: case X86II::D9: case X86II::DA: case X86II::DB:
+  case X86II::DC: case X86II::DD: case X86II::DE: case X86II::DF:
+    EmitByte(0xD8+(((TSFlags & X86II::OpMapMask) - X86II::D8) >>
+                   X86II::OpMapShift), CurByte, OS);
+    break;
+  }
 
-  // FIXME: Pull this up into previous switch if REX can be moved earlier.
-  switch (TSFlags & X86II::Op0Mask) {
-  case X86II::T8PD:  // 66 0F 38
-  case X86II::T8XS:  // F3 0F 38
-  case X86II::T8XD:  // F2 0F 38
+  switch (TSFlags & X86II::OpMapMask) {
   case X86II::T8:    // 0F 38
     EmitByte(0x38, CurByte, OS);
     break;
-  case X86II::TAPD:  // 66 0F 3A
-  case X86II::TAXD:  // F2 0F 3A
   case X86II::TA:    // 0F 3A
     EmitByte(0x3A, CurByte, OS);
     break;

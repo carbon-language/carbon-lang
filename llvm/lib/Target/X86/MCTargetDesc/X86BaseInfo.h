@@ -323,60 +323,56 @@ namespace X86II {
     AdSize      = 1 << 8,
 
     //===------------------------------------------------------------------===//
-    // Op0Mask - There are several prefix bytes that are used to form two byte
-    // opcodes.  This mask is used to obtain the setting of this field.  If no
-    // bits in this field is set, there is no prefix byte for obtaining a
-    // multibyte opcode.
+    // OpPrefix - There are several prefix bytes that are used as opcode
+    // extensions. These are 0x66, 0xF3, and 0xF2. If this field is 0 there is
+    // no prefix.
     //
-    Op0Shift    = 9,
-    Op0Mask     = 0x1F << Op0Shift,
-
-    // TB - TwoByte - Set if this instruction has a two byte opcode, which
-    // starts with a 0x0F byte before the real opcode.
-    TB          = 1 << Op0Shift,
-
-    // D8-DF - These escape opcodes are used by the floating point unit.  These
-    // values must remain sequential.
-    D8 = 3 << Op0Shift,   D9 = 4 << Op0Shift,
-    DA = 5 << Op0Shift,   DB = 6 << Op0Shift,
-    DC = 7 << Op0Shift,   DD = 8 << Op0Shift,
-    DE = 9 << Op0Shift,   DF = 10 << Op0Shift,
-
-    // XS, XD - These prefix codes are for single and double precision scalar
-    // floating point operations performed in the SSE registers.
-    XD = 11 << Op0Shift,  XS = 12 << Op0Shift,
-
-    // T8, TA, A6, A7 - Prefix after the 0x0F prefix.
-    T8 = 13 << Op0Shift,  TA = 14 << Op0Shift,
-    A6 = 15 << Op0Shift,  A7 = 16 << Op0Shift,
-
-    // T8XD - Prefix before and after 0x0F. Combination of T8 and XD.
-    T8XD = 17 << Op0Shift,
-
-    // T8XS - Prefix before and after 0x0F. Combination of T8 and XS.
-    T8XS = 18 << Op0Shift,
-
-    // TAXD - Prefix before and after 0x0F. Combination of TA and XD.
-    TAXD = 19 << Op0Shift,
-
-    // XOP8 - Prefix to include use of imm byte.
-    XOP8 = 20 << Op0Shift,
-
-    // XOP9 - Prefix to exclude use of imm byte.
-    XOP9 = 21 << Op0Shift,
-
-    // XOPA - Prefix to encode 0xA in VEX.MMMM of XOP instructions.
-    XOPA = 22 << Op0Shift,
+    OpPrefixShift = 9,
+    OpPrefixMask  = 0x3 << OpPrefixShift,
 
     // PD - Prefix code for packed double precision vector floating point
     // operations performed in the SSE registers.
-    PD = 23 << Op0Shift,
+    PD = 1 << OpPrefixShift,
 
-    // T8PD - Prefix before and after 0x0F. Combination of T8 and PD.
-    T8PD = 24 << Op0Shift,
+    // XS, XD - These prefix codes are for single and double precision scalar
+    // floating point operations performed in the SSE registers.
+    XS = 2 << OpPrefixShift,  XD = 3 << OpPrefixShift,
 
-    // TAPD - Prefix before and after 0x0F. Combination of TA and PD.
-    TAPD = 25 << Op0Shift,
+    //===------------------------------------------------------------------===//
+    // OpMap - This field determines which opcode map this instruction
+    // belongs to. i.e. one-byte, two-byte, 0x0f 0x38, 0x0f 0x3a, etc.
+    //
+    OpMapShift = OpPrefixShift + 2,
+    OpMapMask  = 0x1f << OpMapShift,
+
+    // OB - OneByte - Set if this instruction has a one byte opcode.
+    OB = 0 << OpMapShift,
+
+    // TB - TwoByte - Set if this instruction has a two byte opcode, which
+    // starts with a 0x0F byte before the real opcode.
+    TB = 1 << OpMapShift,
+
+    // T8, TA - Prefix after the 0x0F prefix.
+    T8 = 2 << OpMapShift,  TA = 3 << OpMapShift,
+
+    // XOP8 - Prefix to include use of imm byte.
+    XOP8 = 4 << OpMapShift,
+
+    // XOP9 - Prefix to exclude use of imm byte.
+    XOP9 = 5 << OpMapShift,
+
+    // XOPA - Prefix to encode 0xA in VEX.MMMM of XOP instructions.
+    XOPA = 6 << OpMapShift,
+
+    // D8-DF - These escape opcodes are used by the floating point unit.  These
+    // values must remain sequential.
+    D8 =  7 << OpMapShift, D9 =  8 << OpMapShift,
+    DA =  9 << OpMapShift, DB = 10 << OpMapShift,
+    DC = 11 << OpMapShift, DD = 12 << OpMapShift,
+    DE = 13 << OpMapShift, DF = 14 << OpMapShift,
+
+    // A6, A7 - Prefix after the 0x0F prefix.
+    A6 = 15 << OpMapShift, A7 = 16 << OpMapShift,
 
     //===------------------------------------------------------------------===//
     // REX_W - REX prefixes are instruction prefixes used in 64-bit mode.
@@ -384,7 +380,7 @@ namespace X86II {
     // etc. We only cares about REX.W and REX.R bits and only the former is
     // statically determined.
     //
-    REXShift    = Op0Shift + 5,
+    REXShift    = OpMapShift + 5,
     REX_W       = 1 << REXShift,
 
     //===------------------------------------------------------------------===//

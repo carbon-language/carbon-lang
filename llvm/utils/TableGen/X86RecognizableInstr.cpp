@@ -76,13 +76,14 @@ namespace X86Local {
   };
 
   enum {
-    TB  = 1,
-    D8 = 3, D9 = 4, DA = 5, DB = 6,
-    DC = 7, DD = 8, DE = 9, DF = 10,
-    XD = 11,  XS = 12,
-    T8 = 13,  P_TA = 14,
-    A6 = 15,  A7 = 16, T8XD = 17, T8XS = 18, TAXD = 19,
-    XOP8 = 20, XOP9 = 21, XOPA = 22, PD = 23, T8PD = 24, TAPD = 25
+    OB = 0, TB = 1, T8 = 2, TA = 3, XOP8 = 4, XOP9 = 5, XOPA = 6,
+    D8 = 7,  D9 = 8,  DA = 9,  DB = 10,
+    DC = 11, DD = 12, DE = 13, DF = 14,
+    A6 = 15, A7 = 16
+  };
+
+  enum {
+    PD = 1, XS = 2, XD = 3
   };
 }
 
@@ -152,15 +153,12 @@ using namespace X86Disassembler;
 /// @return     - true if the form implies that a ModR/M byte is required, false
 ///               otherwise.
 static bool needsModRMForDecode(uint8_t form) {
-  if (form == X86Local::MRMDestReg    ||
-     form == X86Local::MRMDestMem    ||
-     form == X86Local::MRMSrcReg     ||
-     form == X86Local::MRMSrcMem     ||
-     (form >= X86Local::MRM0r && form <= X86Local::MRM7r) ||
-     (form >= X86Local::MRM0m && form <= X86Local::MRM7m))
-    return true;
-  else
-    return false;
+  return (form == X86Local::MRMDestReg    ||
+          form == X86Local::MRMDestMem    ||
+          form == X86Local::MRMSrcReg     ||
+          form == X86Local::MRMSrcMem     ||
+          (form >= X86Local::MRM0r && form <= X86Local::MRM7r) ||
+          (form >= X86Local::MRM0m && form <= X86Local::MRM7m));
 }
 
 /// isRegFormat - Indicates whether a particular form requires the Mod field of
@@ -170,12 +168,9 @@ static bool needsModRMForDecode(uint8_t form) {
 /// @return     - true if the form implies that Mod must be 0b11, false
 ///               otherwise.
 static bool isRegFormat(uint8_t form) {
-  if (form == X86Local::MRMDestReg ||
-     form == X86Local::MRMSrcReg  ||
-     (form >= X86Local::MRM0r && form <= X86Local::MRM7r))
-    return true;
-  else
-    return false;
+  return (form == X86Local::MRMDestReg ||
+          form == X86Local::MRMSrcReg  ||
+          (form >= X86Local::MRM0r && form <= X86Local::MRM7r));
 }
 
 /// byteFromBitsInit - Extracts a value at most 8 bits in width from a BitsInit.
@@ -229,7 +224,8 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
     return;
   }
 
-  Prefix   = byteFromRec(Rec, "Prefix");
+  OpPrefix = byteFromRec(Rec->getValueAsDef("OpPrefix"), "Value");
+  OpMap    = byteFromRec(Rec->getValueAsDef("OpMap"), "Value");
   Opcode   = byteFromRec(Rec, "Opcode");
   Form     = byteFromRec(Rec, "FormBits");
 
@@ -311,176 +307,136 @@ InstructionContext RecognizableInstr::insnContext() const {
     }
     // VEX_L & VEX_W
     if (HasVEX_LPrefix && HasVEX_WPrefix) {
-      if (HasOpSizePrefix || Prefix == X86Local::PD)
+      if (HasOpSizePrefix || OpPrefix == X86Local::PD)
         insnContext = EVEX_KB(IC_EVEX_L_W_OPSIZE);
-      else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
+      else if (OpPrefix == X86Local::XS)
         insnContext = EVEX_KB(IC_EVEX_L_W_XS);
-      else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
-               Prefix == X86Local::TAXD)
+      else if (OpPrefix == X86Local::XD)
         insnContext = EVEX_KB(IC_EVEX_L_W_XD);
       else
         insnContext = EVEX_KB(IC_EVEX_L_W);
     } else if (HasVEX_LPrefix) {
       // VEX_L
-      if (HasOpSizePrefix || Prefix == X86Local::PD ||
-          Prefix == X86Local::T8PD || Prefix == X86Local::TAPD)
+      if (HasOpSizePrefix || OpPrefix == X86Local::PD)
         insnContext = EVEX_KB(IC_EVEX_L_OPSIZE);
-      else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
+      else if (OpPrefix == X86Local::XS)
         insnContext = EVEX_KB(IC_EVEX_L_XS);
-      else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
-               Prefix == X86Local::TAXD)
+      else if (OpPrefix == X86Local::XD)
         insnContext = EVEX_KB(IC_EVEX_L_XD);
       else
         insnContext = EVEX_KB(IC_EVEX_L);
     }
     else if (HasEVEX_L2Prefix && HasVEX_WPrefix) {
       // EVEX_L2 & VEX_W
-      if (HasOpSizePrefix || Prefix == X86Local::PD ||
-          Prefix == X86Local::T8PD || Prefix == X86Local::TAPD)
+      if (HasOpSizePrefix || OpPrefix == X86Local::PD)
         insnContext = EVEX_KB(IC_EVEX_L2_W_OPSIZE);
-      else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
+      else if (OpPrefix == X86Local::XS)
         insnContext = EVEX_KB(IC_EVEX_L2_W_XS);
-      else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
-               Prefix == X86Local::TAXD)
+      else if (OpPrefix == X86Local::XD)
         insnContext = EVEX_KB(IC_EVEX_L2_W_XD);
       else
         insnContext = EVEX_KB(IC_EVEX_L2_W);
     } else if (HasEVEX_L2Prefix) {
       // EVEX_L2
-      if (HasOpSizePrefix || Prefix == X86Local::PD ||
-          Prefix == X86Local::T8PD || Prefix == X86Local::TAPD)
+      if (HasOpSizePrefix || OpPrefix == X86Local::PD)
         insnContext = EVEX_KB(IC_EVEX_L2_OPSIZE);
-      else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
-               Prefix == X86Local::TAXD)
+      else if (OpPrefix == X86Local::XD)
         insnContext = EVEX_KB(IC_EVEX_L2_XD);
-      else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
+      else if (OpPrefix == X86Local::XS)
         insnContext = EVEX_KB(IC_EVEX_L2_XS);
-      else 
+      else
         insnContext = EVEX_KB(IC_EVEX_L2);
     }
     else if (HasVEX_WPrefix) {
       // VEX_W
-      if (HasOpSizePrefix || Prefix == X86Local::PD ||
-          Prefix == X86Local::T8PD || Prefix == X86Local::TAPD)
+      if (HasOpSizePrefix || OpPrefix == X86Local::PD)
         insnContext = EVEX_KB(IC_EVEX_W_OPSIZE);
-      else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
+      else if (OpPrefix == X86Local::XS)
         insnContext = EVEX_KB(IC_EVEX_W_XS);
-      else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
-               Prefix == X86Local::TAXD)
+      else if (OpPrefix == X86Local::XD)
         insnContext = EVEX_KB(IC_EVEX_W_XD);
       else
         insnContext = EVEX_KB(IC_EVEX_W);
     }
     // No L, no W
-    else if (HasOpSizePrefix || Prefix == X86Local::PD ||
-          Prefix == X86Local::T8PD || Prefix == X86Local::TAPD)
+    else if (HasOpSizePrefix || OpPrefix == X86Local::PD)
       insnContext = EVEX_KB(IC_EVEX_OPSIZE);
-    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
-             Prefix == X86Local::TAXD)
+    else if (OpPrefix == X86Local::XD)
       insnContext = EVEX_KB(IC_EVEX_XD);
-    else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
+    else if (OpPrefix == X86Local::XS)
       insnContext = EVEX_KB(IC_EVEX_XS);
     else
       insnContext = EVEX_KB(IC_EVEX);
     /// eof EVEX
   } else if (HasVEX_4VPrefix || HasVEX_4VOp3Prefix|| HasVEXPrefix) {
     if (HasVEX_LPrefix && HasVEX_WPrefix) {
-      if (HasOpSizePrefix || Prefix == X86Local::PD ||
-          Prefix == X86Local::T8PD || Prefix == X86Local::TAPD)
+      if (HasOpSizePrefix || OpPrefix == X86Local::PD)
         insnContext = IC_VEX_L_W_OPSIZE;
-      else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
+      else if (OpPrefix == X86Local::XS)
         insnContext = IC_VEX_L_W_XS;
-      else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
-               Prefix == X86Local::TAXD)
+      else if (OpPrefix == X86Local::XD)
         insnContext = IC_VEX_L_W_XD;
       else
         insnContext = IC_VEX_L_W;
-    } else if ((HasOpSizePrefix || Prefix == X86Local::PD ||
-                Prefix == X86Local::T8PD || Prefix == X86Local::TAPD) &&
-               HasVEX_LPrefix)
+    } else if ((HasOpSizePrefix || OpPrefix == X86Local::PD) && HasVEX_LPrefix)
       insnContext = IC_VEX_L_OPSIZE;
-    else if ((HasOpSizePrefix || Prefix == X86Local::PD ||
-              Prefix == X86Local::T8PD || Prefix == X86Local::TAPD) &&
-             HasVEX_WPrefix)
+    else if ((HasOpSizePrefix || OpPrefix == X86Local::PD) && HasVEX_WPrefix)
       insnContext = IC_VEX_W_OPSIZE;
-    else if (HasOpSizePrefix || Prefix == X86Local::PD ||
-             Prefix == X86Local::T8PD || Prefix == X86Local::TAPD)
+    else if (HasOpSizePrefix || OpPrefix == X86Local::PD)
       insnContext = IC_VEX_OPSIZE;
-    else if (HasVEX_LPrefix &&
-             (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
+    else if (HasVEX_LPrefix && OpPrefix == X86Local::XS)
       insnContext = IC_VEX_L_XS;
-    else if (HasVEX_LPrefix && (Prefix == X86Local::XD ||
-                                Prefix == X86Local::T8XD ||
-                                Prefix == X86Local::TAXD))
+    else if (HasVEX_LPrefix && OpPrefix == X86Local::XD)
       insnContext = IC_VEX_L_XD;
-    else if (HasVEX_WPrefix &&
-             (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
+    else if (HasVEX_WPrefix && OpPrefix == X86Local::XS)
       insnContext = IC_VEX_W_XS;
-    else if (HasVEX_WPrefix && (Prefix == X86Local::XD ||
-                                Prefix == X86Local::T8XD ||
-                                Prefix == X86Local::TAXD))
+    else if (HasVEX_WPrefix && OpPrefix == X86Local::XD)
       insnContext = IC_VEX_W_XD;
     else if (HasVEX_WPrefix)
       insnContext = IC_VEX_W;
     else if (HasVEX_LPrefix)
       insnContext = IC_VEX_L;
-    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
-             Prefix == X86Local::TAXD)
+    else if (OpPrefix == X86Local::XD)
       insnContext = IC_VEX_XD;
-    else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
+    else if (OpPrefix == X86Local::XS)
       insnContext = IC_VEX_XS;
     else
       insnContext = IC_VEX;
   } else if (Is64Bit || HasREX_WPrefix) {
-    if (HasREX_WPrefix && (HasOpSizePrefix || Prefix == X86Local::PD ||
-                           Prefix == X86Local::T8PD || Prefix == X86Local::TAPD))
+    if (HasREX_WPrefix && (HasOpSizePrefix || OpPrefix == X86Local::PD))
       insnContext = IC_64BIT_REXW_OPSIZE;
-    else if (HasOpSizePrefix && (Prefix == X86Local::XD ||
-                                 Prefix == X86Local::T8XD ||
-                                 Prefix == X86Local::TAXD))
+    else if (HasOpSizePrefix && OpPrefix == X86Local::XD)
       insnContext = IC_64BIT_XD_OPSIZE;
-    else if (HasOpSizePrefix &&
-             (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
+    else if (HasOpSizePrefix && OpPrefix == X86Local::XS)
       insnContext = IC_64BIT_XS_OPSIZE;
-    else if (HasOpSizePrefix || Prefix == X86Local::PD ||
-             Prefix == X86Local::T8PD || Prefix == X86Local::TAPD)
+    else if (HasOpSizePrefix || OpPrefix == X86Local::PD)
       insnContext = IC_64BIT_OPSIZE;
     else if (HasAdSizePrefix)
       insnContext = IC_64BIT_ADSIZE;
-    else if (HasREX_WPrefix &&
-             (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
+    else if (HasREX_WPrefix && OpPrefix == X86Local::XS)
       insnContext = IC_64BIT_REXW_XS;
-    else if (HasREX_WPrefix && (Prefix == X86Local::XD ||
-                                Prefix == X86Local::T8XD ||
-                                Prefix == X86Local::TAXD))
+    else if (HasREX_WPrefix && OpPrefix == X86Local::XD)
       insnContext = IC_64BIT_REXW_XD;
-    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
-             Prefix == X86Local::TAXD)
+    else if (OpPrefix == X86Local::XD)
       insnContext = IC_64BIT_XD;
-    else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS)
+    else if (OpPrefix == X86Local::XS)
       insnContext = IC_64BIT_XS;
     else if (HasREX_WPrefix)
       insnContext = IC_64BIT_REXW;
     else
       insnContext = IC_64BIT;
   } else {
-    if (HasOpSizePrefix && (Prefix == X86Local::XD ||
-                            Prefix == X86Local::T8XD ||
-                            Prefix == X86Local::TAXD))
+    if (HasOpSizePrefix && OpPrefix == X86Local::XD)
       insnContext = IC_XD_OPSIZE;
-    else if (HasOpSizePrefix &&
-             (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
+    else if (HasOpSizePrefix && OpPrefix == X86Local::XS)
       insnContext = IC_XS_OPSIZE;
-    else if (HasOpSizePrefix || Prefix == X86Local::PD ||
-             Prefix == X86Local::T8PD || Prefix == X86Local::TAPD)
+    else if (HasOpSizePrefix || OpPrefix == X86Local::PD)
       insnContext = IC_OPSIZE;
     else if (HasAdSizePrefix)
       insnContext = IC_ADSIZE;
-    else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
-             Prefix == X86Local::TAXD)
+    else if (OpPrefix == X86Local::XD)
       insnContext = IC_XD;
-    else if (Prefix == X86Local::XS || Prefix == X86Local::T8XS ||
-             HasREPPrefix)
+    else if (OpPrefix == X86Local::XS || HasREPPrefix)
       insnContext = IC_XS;
     else
       insnContext = IC;
@@ -901,12 +857,9 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   ModRMFilter*  filter      = NULL;
   uint8_t       opcodeToSet = 0;
 
-  switch (Prefix) {
-  default: llvm_unreachable("Invalid prefix!");
+  switch (OpMap) {
+  default: llvm_unreachable("Invalid map!");
   // Extended two-byte opcodes can start with 66 0f, f2 0f, f3 0f, or 0f
-  case X86Local::PD:
-  case X86Local::XD:
-  case X86Local::XS:
   case X86Local::TB:
     opcodeType = TWOBYTE;
 
@@ -950,9 +903,6 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     opcodeToSet = Opcode;
     break;
   case X86Local::T8:
-  case X86Local::T8PD:
-  case X86Local::T8XD:
-  case X86Local::T8XS:
     opcodeType = THREEBYTE_38;
     switch (Opcode) {
     default:
@@ -993,9 +943,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     } // switch (Opcode)
     opcodeToSet = Opcode;
     break;
-  case X86Local::P_TA:
-  case X86Local::TAPD:
-  case X86Local::TAXD:
+  case X86Local::TA:
     opcodeType = THREEBYTE_3A;
     if (needsModRMForDecode(Form))
       filter = new ModFilter(isRegFormat(Form));
@@ -1088,9 +1036,9 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     assert(Form == X86Local::RawFrm);
     opcodeType = ONEBYTE;
     filter = new ExactFilter(Opcode);
-    opcodeToSet = 0xd8 + (Prefix - X86Local::D8);
+    opcodeToSet = 0xd8 + (OpMap - X86Local::D8);
     break;
-  case 0:
+  case X86Local::OB:
     opcodeType = ONEBYTE;
     switch (Opcode) {
 #define EXTENSION_TABLE(n) case 0x##n:
@@ -1164,7 +1112,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
       break;
     } // switch (Opcode)
     opcodeToSet = Opcode;
-  } // switch (Prefix)
+  } // switch (OpMap)
 
   assert(opcodeType != (OpcodeType)-1 &&
          "Opcode type not set");

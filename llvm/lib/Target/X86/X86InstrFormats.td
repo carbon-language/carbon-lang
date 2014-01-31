@@ -112,6 +112,37 @@ def CD8VT2 : CD8VForm<5>;  // v := 2
 def CD8VT4 : CD8VForm<6>;  // v := 4
 def CD8VT8 : CD8VForm<7>;  // v := 8
 
+// Class specifying the prefix used an opcode extension.
+class Prefix<bits<2> val> {
+  bits<2> Value = val;
+}
+def NoPrfx : Prefix<0>;
+def PD     : Prefix<1>;
+def XS     : Prefix<2>;
+def XD     : Prefix<3>;
+
+// Class specifying the opcode map.
+class Map<bits<5> val> {
+  bits<5> Value = val;
+}
+def OB   : Map<0>;
+def TB   : Map<1>;
+def T8   : Map<2>;
+def TA   : Map<3>;
+def XOP8 : Map<4>;
+def XOP9 : Map<5>;
+def XOPA : Map<6>;
+def D8   : Map<7>;
+def D9   : Map<8>;
+def DA   : Map<9>;
+def DB   : Map<10>;
+def DC   : Map<11>;
+def DD   : Map<12>;
+def DE   : Map<13>;
+def DF   : Map<14>;
+def A6   : Map<15>;
+def A7   : Map<16>;
+
 // Prefix byte classes which are used to indicate to the ad-hoc machine code
 // emitter that various prefix bytes are required.
 class OpSize { bit hasOpSizePrefix = 1; }
@@ -120,30 +151,30 @@ class AdSize { bit hasAdSizePrefix = 1; }
 class REX_W  { bit hasREX_WPrefix = 1; }
 class LOCK   { bit hasLockPrefix = 1; }
 class REP    { bit hasREPPrefix = 1; }
-class TB     { bits<5> Prefix = 1; }
-class D8     { bits<5> Prefix = 3; }
-class D9     { bits<5> Prefix = 4; }
-class DA     { bits<5> Prefix = 5; }
-class DB     { bits<5> Prefix = 6; }
-class DC     { bits<5> Prefix = 7; }
-class DD     { bits<5> Prefix = 8; }
-class DE     { bits<5> Prefix = 9; }
-class DF     { bits<5> Prefix = 10; }
-class XD     { bits<5> Prefix = 11; }
-class XS     { bits<5> Prefix = 12; }
-class T8     { bits<5> Prefix = 13; }
-class TA     { bits<5> Prefix = 14; }
-class A6     { bits<5> Prefix = 15; }
-class A7     { bits<5> Prefix = 16; }
-class T8XD   { bits<5> Prefix = 17; }
-class T8XS   { bits<5> Prefix = 18; }
-class TAXD   { bits<5> Prefix = 19; }
-class XOP8   { bits<5> Prefix = 20; }
-class XOP9   { bits<5> Prefix = 21; }
-class XOPA   { bits<5> Prefix = 22; }
-class PD     { bits<5> Prefix = 23; }
-class T8PD   { bits<5> Prefix = 24; }
-class TAPD   { bits<5> Prefix = 25; }
+class TB     { Prefix OpPrefix = NoPrfx; Map OpMap = TB; }
+class D8     { Map OpMap = D8; }
+class D9     { Map OpMap = D9; }
+class DA     { Map OpMap = DA; }
+class DB     { Map OpMap = DB; }
+class DC     { Map OpMap = DC; }
+class DD     { Map OpMap = DD; }
+class DE     { Map OpMap = DE; }
+class DF     { Map OpMap = DF; }
+class XD     { Map OpMap = TB; Prefix OpPrefix = XD; }
+class XS     { Map OpMap = TB; Prefix OpPrefix = XS; }
+class T8     { Map OpMap = T8; }
+class TA     { Map OpMap = TA; }
+class A6     { Map OpMap = A6; }
+class A7     { Map OpMap = A7; }
+class T8XD   { Map OpMap = T8; Prefix OpPrefix = XD; }
+class T8XS   { Map OpMap = T8; Prefix OpPrefix = XS; }
+class TAXD   { Map OpMap = TA; Prefix OpPrefix = XD; }
+class XOP8   { Map OpMap = XOP8; }
+class XOP9   { Map OpMap = XOP9; }
+class XOPA   { Map OpMap = XOPA; }
+class PD     { Map OpMap = TB; Prefix OpPrefix = PD; }
+class T8PD   { Map OpMap = T8; Prefix OpPrefix = PD; }
+class TAPD   { Map OpMap = TA; Prefix OpPrefix = PD; }
 class VEX    { bit hasVEXPrefix = 1; }
 class VEX_W  { bit hasVEX_WPrefix = 1; }
 class VEX_4V : VEX { bit hasVEX_4VPrefix = 1; }
@@ -200,7 +231,8 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasOpSize16Prefix = 0;// Does this inst have a 0x66 prefix in 16-bit mode?
   bit hasAdSizePrefix = 0;  // Does this inst have a 0x67 prefix?
 
-  bits<5> Prefix = 0;       // Which prefix byte does this inst have?
+  Prefix OpPrefix = NoPrfx; // Which prefix byte does this inst have?
+  Map OpMap = OB;           // Which opcode map does this inst have?
   bit hasREX_WPrefix  = 0;  // Does this inst require the REX.W prefix?
   FPFormat FPForm = NotFP;  // What flavor of FP instruction is this?
   bit hasLockPrefix = 0;    // Does this inst have a 0xF0 prefix?
@@ -232,32 +264,33 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{6}     = hasOpSizePrefix;
   let TSFlags{7}     = hasOpSize16Prefix;
   let TSFlags{8}     = hasAdSizePrefix;
-  let TSFlags{13-9}  = Prefix;
-  let TSFlags{14}    = hasREX_WPrefix;
-  let TSFlags{18-15} = ImmT.Value;
-  let TSFlags{21-19} = FPForm.Value;
-  let TSFlags{22}    = hasLockPrefix;
-  let TSFlags{23}    = hasREPPrefix;
-  let TSFlags{25-24} = ExeDomain.Value;
-  let TSFlags{33-26} = Opcode;
-  let TSFlags{34}    = hasVEXPrefix;
-  let TSFlags{35}    = hasVEX_WPrefix;
-  let TSFlags{36}    = hasVEX_4VPrefix;
-  let TSFlags{37}    = hasVEX_4VOp3Prefix;
-  let TSFlags{38}    = hasVEX_i8ImmReg;
-  let TSFlags{39}    = hasVEX_L;
-  let TSFlags{40}    = ignoresVEX_L;
-  let TSFlags{41}    = hasEVEXPrefix;
-  let TSFlags{42}    = hasEVEX_K;
-  let TSFlags{43}    = hasEVEX_Z;
-  let TSFlags{44}    = hasEVEX_L2;
-  let TSFlags{45}    = hasEVEX_B;
-  let TSFlags{47-46} = EVEX_CD8E;
-  let TSFlags{50-48} = EVEX_CD8V;
-  let TSFlags{51}    = has3DNow0F0FOpcode;
-  let TSFlags{52}    = hasMemOp4Prefix;
-  let TSFlags{53}    = hasXOP_Prefix;
-  let TSFlags{54}    = hasEVEX_RC;
+  let TSFlags{10-9}  = OpPrefix.Value;
+  let TSFlags{15-11} = OpMap.Value;
+  let TSFlags{16}    = hasREX_WPrefix;
+  let TSFlags{20-17} = ImmT.Value;
+  let TSFlags{23-21} = FPForm.Value;
+  let TSFlags{24}    = hasLockPrefix;
+  let TSFlags{25}    = hasREPPrefix;
+  let TSFlags{27-26} = ExeDomain.Value;
+  let TSFlags{35-28} = Opcode;
+  let TSFlags{36}    = hasVEXPrefix;
+  let TSFlags{37}    = hasVEX_WPrefix;
+  let TSFlags{38}    = hasVEX_4VPrefix;
+  let TSFlags{39}    = hasVEX_4VOp3Prefix;
+  let TSFlags{40}    = hasVEX_i8ImmReg;
+  let TSFlags{41}    = hasVEX_L;
+  let TSFlags{42}    = ignoresVEX_L;
+  let TSFlags{43}    = hasEVEXPrefix;
+  let TSFlags{44}    = hasEVEX_K;
+  let TSFlags{45}    = hasEVEX_Z;
+  let TSFlags{46}    = hasEVEX_L2;
+  let TSFlags{47}    = hasEVEX_B;
+  let TSFlags{49-48} = EVEX_CD8E;
+  let TSFlags{52-50} = EVEX_CD8V;
+  let TSFlags{53}    = has3DNow0F0FOpcode;
+  let TSFlags{54}    = hasMemOp4Prefix;
+  let TSFlags{55}    = hasXOP_Prefix;
+  let TSFlags{56}    = hasEVEX_RC;
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>
@@ -362,9 +395,10 @@ class SI<bits<8> o, Format F, dag outs, dag ins, string asm,
       : I<o, F, outs, ins, asm, pattern, itin> {
   let Predicates = !if(hasEVEXPrefix /* EVEX */, [HasAVX512],
                    !if(hasVEXPrefix /* VEX */, [UseAVX],
-                   !if(!eq(Prefix, __xs.Prefix), [UseSSE1],
-                   !if(!eq(Prefix, __xd.Prefix), [UseSSE2],
-                   !if(!eq(Prefix, __pd.Prefix), [UseSSE2], [UseSSE1])))));
+                   !if(!eq(OpPrefix.Value, __xs.OpPrefix.Value), [UseSSE1],
+                   !if(!eq(OpPrefix.Value, __xd.OpPrefix.Value), [UseSSE2],
+                   !if(!eq(OpPrefix.Value, __pd.OpPrefix.Value), [UseSSE2],
+                   [UseSSE1])))));
 
   // AVX instructions have a 'v' prefix in the mnemonic
   let AsmString = !if(hasVEXPrefix, !strconcat("v", asm), asm);
@@ -376,7 +410,8 @@ class SIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
       : Ii8<o, F, outs, ins, asm, pattern, itin> {
   let Predicates = !if(hasEVEXPrefix /* EVEX */, [HasAVX512],
                    !if(hasVEXPrefix /* VEX */, [UseAVX],
-                   !if(!eq(Prefix, __xs.Prefix), [UseSSE1], [UseSSE2])));
+                   !if(!eq(OpPrefix.Value, __xs.OpPrefix.Value), [UseSSE1],
+                   [UseSSE2])));
 
   // AVX instructions have a 'v' prefix in the mnemonic
   let AsmString = !if(hasVEXPrefix, !strconcat("v", asm), asm);
@@ -388,7 +423,8 @@ class PI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern,
       : I<o, F, outs, ins, asm, pattern, itin, d> {
   let Predicates = !if(hasEVEXPrefix /* EVEX */, [HasAVX512],
                    !if(hasVEXPrefix /* VEX */, [HasAVX],
-                   !if(!eq(Prefix, __pd.Prefix), [UseSSE2], [UseSSE1])));
+                   !if(!eq(OpPrefix.Value, __pd.OpPrefix.Value), [UseSSE2],
+                   [UseSSE1])));
 
   // AVX instructions have a 'v' prefix in the mnemonic
   let AsmString = !if(hasVEXPrefix, !strconcat("v", asm), asm);
@@ -398,7 +434,8 @@ class PI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern,
 class MMXPI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern,
             InstrItinClass itin, Domain d>
       : I<o, F, outs, ins, asm, pattern, itin, d> {
-  let Predicates = !if(!eq(Prefix, __pd.Prefix), [HasSSE2], [HasSSE1]);
+  let Predicates = !if(!eq(OpPrefix.Value, __pd.OpPrefix.Value), [HasSSE2],
+                       [HasSSE1]);
 }
 
 // PIi8 - SSE 1 & 2 packed instructions with immediate
@@ -407,7 +444,8 @@ class PIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
       : Ii8<o, F, outs, ins, asm, pattern, itin, d> {
   let Predicates = !if(hasEVEXPrefix /* EVEX */, [HasAVX512],
                    !if(hasVEXPrefix /* VEX */, [HasAVX],
-                   !if(!eq(Prefix, __pd.Prefix), [UseSSE2], [UseSSE1])));
+                   !if(!eq(OpPrefix.Value, __pd.OpPrefix.Value), [UseSSE2],
+                   [UseSSE1])));
 
   // AVX instructions have a 'v' prefix in the mnemonic
   let AsmString = !if(hasVEXPrefix, !strconcat("v", asm), asm);

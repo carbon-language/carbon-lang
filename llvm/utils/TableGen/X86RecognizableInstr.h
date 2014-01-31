@@ -37,8 +37,10 @@ private:
   InstrUID UID;
   /// The record from the .td files corresponding to this instruction
   const Record* Rec;
-  /// The prefix field from the record
-  uint8_t Prefix;
+  /// The OpPrefix field from the record
+  uint8_t OpPrefix;
+  /// The OpMap field from the record
+  uint8_t OpMap;
   /// The opcode field from the record; this is the opcode used in the Intel
   /// encoding and therefore distinct from the UID
   uint8_t Opcode;
