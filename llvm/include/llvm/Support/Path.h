@@ -306,6 +306,12 @@ bool is_separator(char value);
 /// @param result Holds the resulting path name.
 void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result);
 
+/// @brief Get the user's home directory.
+///
+/// @param result Holds the resulting path name.
+/// @result True if a home directory is set, false otherwise.
+bool home_directory(SmallVectorImpl<char> &result);
+
 /// @brief Has root name?
 ///
 /// root_name != ""

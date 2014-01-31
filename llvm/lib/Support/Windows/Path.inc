@@ -19,6 +19,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include <fcntl.h>
 #include <io.h>
+#include <shlobj.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -1062,6 +1063,22 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
   return error_code::success();
 }
 } // end namespace fs
+
+namespace path {
+
+bool home_directory(SmallVectorImpl<char> &result) {
+  wchar_t Path[MAX_PATH];
+  if (::SHGetFolderPathW(0, CSIDL_APPDATA | CSIDL_FLAG_CREATE, 0,
+                         SHGFP_TYPE_CURRENT, Path) != S_OK)
+    return false;
+
+  if (UTF16ToUTF8(Path, ::wcslen(Path), result))
+    return false;
+
+  return true;
+}
+
+} // end namespace path
 
 namespace windows {
 llvm::error_code UTF8ToUTF16(llvm::StringRef utf8,

@@ -797,5 +797,20 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
 }
 
 } // end namespace fs
+
+namespace path {
+
+bool home_directory(SmallVectorImpl<char> &result) {
+  if (char *RequestedDir = getenv("HOME")) {
+    result.clear();
+    result.append(RequestedDir, RequestedDir + strlen(RequestedDir));
+    return true;
+  }
+
+  return false;
+}
+
+} // end namespace path
+
 } // end namespace sys
 } // end namespace llvm

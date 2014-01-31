@@ -210,6 +210,19 @@ TEST(Support, AbsolutePathIteratorWin32) {
 }
 #endif // LLVM_ON_WIN32
 
+TEST(Support, HomeDirectory) {
+#ifdef LLVM_ON_UNIX
+  // This test only makes sense on Unix if $HOME is set.
+  if (::getenv("HOME")) {
+#endif
+    SmallString<128> HomeDir;
+    EXPECT_TRUE(path::home_directory(HomeDir));
+    EXPECT_FALSE(HomeDir.empty());
+#ifdef LLVM_ON_UNIX
+  }
+#endif
+}
+
 class FileSystemTest : public testing::Test {
 protected:
   /// Unique temporary directory in which all created filesystem entities must
