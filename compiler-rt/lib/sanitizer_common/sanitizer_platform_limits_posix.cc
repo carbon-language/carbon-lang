@@ -119,15 +119,6 @@
 #include <sys/sockio.h>
 #endif
 
-#if SANITIZER_LINUX && !SANITIZER_ANDROID
-#include <sound/asound.h>
-#include <sound/asound_fm.h>
-#include <sound/hdsp.h>
-#include <sound/hdspm.h>
-#include <sound/sb16_csp.h>
-#include <sound/sfnt_info.h>
-#endif
-
 namespace __sanitizer {
   unsigned struct_utsname_sz = sizeof(struct utsname);
   unsigned struct_stat_sz = sizeof(struct stat);
@@ -338,59 +329,6 @@ namespace __sanitizer {
 #if !SANITIZER_ANDROID && !SANITIZER_MAC
   unsigned struct_sioc_sg_req_sz = sizeof(struct sioc_sg_req);
   unsigned struct_sioc_vif_req_sz = sizeof(struct sioc_vif_req);
-#endif
-
-#if SANITIZER_LINUX && !SANITIZER_ANDROID
-  unsigned snd_pcm_sframes_t_sz = sizeof(snd_pcm_sframes_t);
-  unsigned snd_pcm_uframes_t_sz = sizeof(snd_pcm_uframes_t);
-  unsigned struct_hdsp_9632_aeb_sz = sizeof(struct hdsp_9632_aeb);
-  unsigned struct_hdsp_config_info_sz = sizeof(struct hdsp_config_info);
-  unsigned struct_hdsp_firmware_sz = sizeof(struct hdsp_firmware);
-  unsigned struct_hdspm_config_sz = sizeof(struct hdspm_config);
-  unsigned struct_hdsp_mixer_sz = sizeof(struct hdsp_mixer);
-  unsigned struct_hdspm_mixer_ioctl_sz = sizeof(struct hdspm_mixer_ioctl);
-  unsigned struct_hdspm_peak_rms_sz = sizeof(struct hdspm_peak_rms);
-  unsigned struct_hdspm_status_sz = sizeof(struct hdspm_status);
-  unsigned struct_hdspm_version_sz = sizeof(struct hdspm_version);
-  unsigned struct_hdsp_peak_rms_sz = sizeof(struct hdsp_peak_rms);
-  unsigned struct_hdsp_version_sz = sizeof(struct hdsp_version);
-  unsigned struct_snd_ctl_card_info_sz = sizeof(struct snd_ctl_card_info);
-  unsigned struct_snd_ctl_elem_id_sz = sizeof(struct snd_ctl_elem_id);
-  unsigned struct_snd_ctl_elem_info_sz = sizeof(struct snd_ctl_elem_info);
-  unsigned struct_snd_ctl_elem_list_sz = sizeof(struct snd_ctl_elem_list);
-  unsigned struct_snd_ctl_elem_value_sz = sizeof(struct snd_ctl_elem_value);
-  unsigned struct_snd_ctl_tlv_sz = sizeof(struct snd_ctl_tlv);
-  unsigned struct_snd_dm_fm_info_sz = sizeof(struct snd_dm_fm_info);
-  unsigned struct_snd_dm_fm_note_sz = sizeof(struct snd_dm_fm_note);
-  unsigned struct_snd_dm_fm_params_sz = sizeof(struct snd_dm_fm_params);
-  unsigned struct_snd_dm_fm_voice_sz = sizeof(struct snd_dm_fm_voice);
-  unsigned struct_snd_emux_misc_mode_sz = sizeof(struct snd_emux_misc_mode);
-  unsigned struct_snd_hwdep_dsp_image_sz = sizeof(struct snd_hwdep_dsp_image);
-  unsigned struct_snd_hwdep_dsp_status_sz = sizeof(struct snd_hwdep_dsp_status);
-  unsigned struct_snd_hwdep_info_sz = sizeof(struct snd_hwdep_info);
-  unsigned struct_snd_pcm_channel_info_sz = sizeof(struct snd_pcm_channel_info);
-  unsigned struct_snd_pcm_hw_params_sz = sizeof(struct snd_pcm_hw_params);
-  unsigned struct_snd_pcm_info_sz = sizeof(struct snd_pcm_info);
-  unsigned struct_snd_pcm_status_sz = sizeof(struct snd_pcm_status);
-  unsigned struct_snd_pcm_sw_params_sz = sizeof(struct snd_pcm_sw_params);
-  unsigned struct_snd_pcm_sync_ptr_sz = sizeof(struct snd_pcm_sync_ptr);
-  unsigned struct_snd_rawmidi_info_sz = sizeof(struct snd_rawmidi_info);
-  unsigned struct_snd_rawmidi_params_sz = sizeof(struct snd_rawmidi_params);
-  unsigned struct_snd_rawmidi_status_sz = sizeof(struct snd_rawmidi_status);
-  unsigned struct_snd_sb_csp_info_sz = sizeof(struct snd_sb_csp_info);
-  unsigned struct_snd_sb_csp_microcode_sz = sizeof(struct snd_sb_csp_microcode);
-  unsigned struct_snd_sb_csp_start_sz = sizeof(struct snd_sb_csp_start);
-  unsigned struct_snd_timer_ginfo_sz = sizeof(struct snd_timer_ginfo);
-  unsigned struct_snd_timer_gparams_sz = sizeof(struct snd_timer_gparams);
-  unsigned struct_snd_timer_gstatus_sz = sizeof(struct snd_timer_gstatus);
-  unsigned struct_snd_timer_id_sz = sizeof(struct snd_timer_id);
-  unsigned struct_snd_timer_info_sz = sizeof(struct snd_timer_info);
-  unsigned struct_snd_timer_params_sz = sizeof(struct snd_timer_params);
-  unsigned struct_snd_timer_select_sz = sizeof(struct snd_timer_select);
-  unsigned struct_snd_timer_status_sz = sizeof(struct snd_timer_status);
-  unsigned struct_snd_xferi_sz = sizeof(struct snd_xferi);
-  unsigned struct_snd_xfern_sz = sizeof(struct snd_xfern);
-  unsigned struct_soundfont_patch_info_sz = sizeof(struct soundfont_patch_info);
 #endif
 
   unsigned IOCTL_NOT_PRESENT = 0;
@@ -825,132 +763,6 @@ namespace __sanitizer {
   unsigned IOCTL_TIOCSERGETMULTI = TIOCSERGETMULTI;
   unsigned IOCTL_TIOCSERSETMULTI = TIOCSERSETMULTI;
   unsigned IOCTL_TIOCSSERIAL = TIOCSSERIAL;
-
-  unsigned IOCTL_SNDRV_HWDEP_IOCTL_PVERSION = SNDRV_HWDEP_IOCTL_PVERSION;
-  unsigned IOCTL_SNDRV_HWDEP_IOCTL_INFO = SNDRV_HWDEP_IOCTL_INFO;
-  unsigned IOCTL_SNDRV_HWDEP_IOCTL_DSP_STATUS = SNDRV_HWDEP_IOCTL_DSP_STATUS;
-  unsigned IOCTL_SNDRV_HWDEP_IOCTL_DSP_LOAD = SNDRV_HWDEP_IOCTL_DSP_LOAD;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_PVERSION = SNDRV_PCM_IOCTL_PVERSION;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_INFO = SNDRV_PCM_IOCTL_INFO;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_TSTAMP = SNDRV_PCM_IOCTL_TSTAMP;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_TTSTAMP = SNDRV_PCM_IOCTL_TTSTAMP;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_HW_REFINE = SNDRV_PCM_IOCTL_HW_REFINE;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_HW_PARAMS = SNDRV_PCM_IOCTL_HW_PARAMS;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_HW_FREE = SNDRV_PCM_IOCTL_HW_FREE;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_SW_PARAMS = SNDRV_PCM_IOCTL_SW_PARAMS;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_STATUS = SNDRV_PCM_IOCTL_STATUS;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_DELAY = SNDRV_PCM_IOCTL_DELAY;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_HWSYNC = SNDRV_PCM_IOCTL_HWSYNC;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_SYNC_PTR = SNDRV_PCM_IOCTL_SYNC_PTR;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_CHANNEL_INFO = SNDRV_PCM_IOCTL_CHANNEL_INFO;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_PREPARE = SNDRV_PCM_IOCTL_PREPARE;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_RESET = SNDRV_PCM_IOCTL_RESET;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_START = SNDRV_PCM_IOCTL_START;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_DROP = SNDRV_PCM_IOCTL_DROP;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_DRAIN = SNDRV_PCM_IOCTL_DRAIN;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_PAUSE = SNDRV_PCM_IOCTL_PAUSE;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_REWIND = SNDRV_PCM_IOCTL_REWIND;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_RESUME = SNDRV_PCM_IOCTL_RESUME;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_XRUN = SNDRV_PCM_IOCTL_XRUN;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_FORWARD = SNDRV_PCM_IOCTL_FORWARD;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_WRITEI_FRAMES = SNDRV_PCM_IOCTL_WRITEI_FRAMES;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_READI_FRAMES = SNDRV_PCM_IOCTL_READI_FRAMES;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_WRITEN_FRAMES = SNDRV_PCM_IOCTL_WRITEN_FRAMES;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_READN_FRAMES = SNDRV_PCM_IOCTL_READN_FRAMES;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_LINK = SNDRV_PCM_IOCTL_LINK;
-  unsigned IOCTL_SNDRV_PCM_IOCTL_UNLINK = SNDRV_PCM_IOCTL_UNLINK;
-  unsigned IOCTL_SNDRV_RAWMIDI_IOCTL_PVERSION = SNDRV_RAWMIDI_IOCTL_PVERSION;
-  unsigned IOCTL_SNDRV_RAWMIDI_IOCTL_INFO = SNDRV_RAWMIDI_IOCTL_INFO;
-  unsigned IOCTL_SNDRV_RAWMIDI_IOCTL_PARAMS = SNDRV_RAWMIDI_IOCTL_PARAMS;
-  unsigned IOCTL_SNDRV_RAWMIDI_IOCTL_STATUS = SNDRV_RAWMIDI_IOCTL_STATUS;
-  unsigned IOCTL_SNDRV_RAWMIDI_IOCTL_DROP = SNDRV_RAWMIDI_IOCTL_DROP;
-  unsigned IOCTL_SNDRV_RAWMIDI_IOCTL_DRAIN = SNDRV_RAWMIDI_IOCTL_DRAIN;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_PVERSION = SNDRV_TIMER_IOCTL_PVERSION;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_NEXT_DEVICE = SNDRV_TIMER_IOCTL_NEXT_DEVICE;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_TREAD = SNDRV_TIMER_IOCTL_TREAD;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_GINFO = SNDRV_TIMER_IOCTL_GINFO;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_GPARAMS = SNDRV_TIMER_IOCTL_GPARAMS;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_GSTATUS = SNDRV_TIMER_IOCTL_GSTATUS;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_SELECT = SNDRV_TIMER_IOCTL_SELECT;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_INFO = SNDRV_TIMER_IOCTL_INFO;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_PARAMS = SNDRV_TIMER_IOCTL_PARAMS;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_STATUS = SNDRV_TIMER_IOCTL_STATUS;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_START = SNDRV_TIMER_IOCTL_START;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_STOP = SNDRV_TIMER_IOCTL_STOP;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_CONTINUE = SNDRV_TIMER_IOCTL_CONTINUE;
-  unsigned IOCTL_SNDRV_TIMER_IOCTL_PAUSE = SNDRV_TIMER_IOCTL_PAUSE;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_PVERSION = SNDRV_CTL_IOCTL_PVERSION;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_CARD_INFO = SNDRV_CTL_IOCTL_CARD_INFO;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_ELEM_LIST = SNDRV_CTL_IOCTL_ELEM_LIST;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_ELEM_INFO = SNDRV_CTL_IOCTL_ELEM_INFO;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_ELEM_READ = SNDRV_CTL_IOCTL_ELEM_READ;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_ELEM_WRITE = SNDRV_CTL_IOCTL_ELEM_WRITE;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_ELEM_LOCK = SNDRV_CTL_IOCTL_ELEM_LOCK;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_ELEM_UNLOCK = SNDRV_CTL_IOCTL_ELEM_UNLOCK;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_SUBSCRIBE_EVENTS =
-      SNDRV_CTL_IOCTL_SUBSCRIBE_EVENTS;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_ELEM_ADD = SNDRV_CTL_IOCTL_ELEM_ADD;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_ELEM_REPLACE = SNDRV_CTL_IOCTL_ELEM_REPLACE;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_ELEM_REMOVE = SNDRV_CTL_IOCTL_ELEM_REMOVE;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_TLV_READ = SNDRV_CTL_IOCTL_TLV_READ;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_TLV_WRITE = SNDRV_CTL_IOCTL_TLV_WRITE;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_TLV_COMMAND = SNDRV_CTL_IOCTL_TLV_COMMAND;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_HWDEP_NEXT_DEVICE =
-      SNDRV_CTL_IOCTL_HWDEP_NEXT_DEVICE;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_HWDEP_INFO = SNDRV_CTL_IOCTL_HWDEP_INFO;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_PCM_NEXT_DEVICE =
-      SNDRV_CTL_IOCTL_PCM_NEXT_DEVICE;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_PCM_INFO = SNDRV_CTL_IOCTL_PCM_INFO;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_PCM_PREFER_SUBDEVICE =
-      SNDRV_CTL_IOCTL_PCM_PREFER_SUBDEVICE;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_RAWMIDI_NEXT_DEVICE =
-      SNDRV_CTL_IOCTL_RAWMIDI_NEXT_DEVICE;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_RAWMIDI_INFO = SNDRV_CTL_IOCTL_RAWMIDI_INFO;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_RAWMIDI_PREFER_SUBDEVICE =
-      SNDRV_CTL_IOCTL_RAWMIDI_PREFER_SUBDEVICE;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_POWER = SNDRV_CTL_IOCTL_POWER;
-  unsigned IOCTL_SNDRV_CTL_IOCTL_POWER_STATE = SNDRV_CTL_IOCTL_POWER_STATE;
-  unsigned IOCTL_SNDRV_DM_FM_IOCTL_INFO = SNDRV_DM_FM_IOCTL_INFO;
-  unsigned IOCTL_SNDRV_DM_FM_IOCTL_RESET = SNDRV_DM_FM_IOCTL_RESET;
-  unsigned IOCTL_SNDRV_DM_FM_IOCTL_PLAY_NOTE = SNDRV_DM_FM_IOCTL_PLAY_NOTE;
-  unsigned IOCTL_SNDRV_DM_FM_IOCTL_SET_VOICE = SNDRV_DM_FM_IOCTL_SET_VOICE;
-  unsigned IOCTL_SNDRV_DM_FM_IOCTL_SET_PARAMS = SNDRV_DM_FM_IOCTL_SET_PARAMS;
-  unsigned IOCTL_SNDRV_DM_FM_IOCTL_SET_MODE = SNDRV_DM_FM_IOCTL_SET_MODE;
-  unsigned IOCTL_SNDRV_DM_FM_IOCTL_SET_CONNECTION =
-      SNDRV_DM_FM_IOCTL_SET_CONNECTION;
-  unsigned IOCTL_SNDRV_DM_FM_IOCTL_CLEAR_PATCHES =
-      SNDRV_DM_FM_IOCTL_CLEAR_PATCHES;
-  unsigned IOCTL_SNDRV_HDSP_IOCTL_GET_PEAK_RMS = SNDRV_HDSP_IOCTL_GET_PEAK_RMS;
-  unsigned IOCTL_SNDRV_HDSP_IOCTL_GET_CONFIG_INFO =
-      SNDRV_HDSP_IOCTL_GET_CONFIG_INFO;
-  unsigned IOCTL_SNDRV_HDSP_IOCTL_UPLOAD_FIRMWARE =
-      SNDRV_HDSP_IOCTL_UPLOAD_FIRMWARE;
-  unsigned IOCTL_SNDRV_HDSP_IOCTL_GET_VERSION = SNDRV_HDSP_IOCTL_GET_VERSION;
-  unsigned IOCTL_SNDRV_HDSP_IOCTL_GET_MIXER = SNDRV_HDSP_IOCTL_GET_MIXER;
-  unsigned IOCTL_SNDRV_HDSP_IOCTL_GET_9632_AEB = SNDRV_HDSP_IOCTL_GET_9632_AEB;
-  unsigned IOCTL_SNDRV_HDSPM_IOCTL_GET_PEAK_RMS =
-      SNDRV_HDSPM_IOCTL_GET_PEAK_RMS;
-  unsigned IOCTL_SNDRV_HDSPM_IOCTL_GET_CONFIG = SNDRV_HDSPM_IOCTL_GET_CONFIG;
-  unsigned IOCTL_SNDRV_HDSPM_IOCTL_GET_LTC = SNDRV_HDSPM_IOCTL_GET_LTC;
-  unsigned IOCTL_SNDRV_HDSPM_IOCTL_GET_STATUS = SNDRV_HDSPM_IOCTL_GET_STATUS;
-  unsigned IOCTL_SNDRV_HDSPM_IOCTL_GET_VERSION = SNDRV_HDSPM_IOCTL_GET_VERSION;
-  unsigned IOCTL_SNDRV_HDSPM_IOCTL_GET_MIXER = SNDRV_HDSPM_IOCTL_GET_MIXER;
-  unsigned IOCTL_SNDRV_SB_CSP_IOCTL_INFO = SNDRV_SB_CSP_IOCTL_INFO;
-  unsigned IOCTL_SNDRV_SB_CSP_IOCTL_LOAD_CODE = SNDRV_SB_CSP_IOCTL_LOAD_CODE;
-  unsigned IOCTL_SNDRV_SB_CSP_IOCTL_UNLOAD_CODE =
-      SNDRV_SB_CSP_IOCTL_UNLOAD_CODE;
-  unsigned IOCTL_SNDRV_SB_CSP_IOCTL_START = SNDRV_SB_CSP_IOCTL_START;
-  unsigned IOCTL_SNDRV_SB_CSP_IOCTL_STOP = SNDRV_SB_CSP_IOCTL_STOP;
-  unsigned IOCTL_SNDRV_SB_CSP_IOCTL_PAUSE = SNDRV_SB_CSP_IOCTL_PAUSE;
-  unsigned IOCTL_SNDRV_SB_CSP_IOCTL_RESTART = SNDRV_SB_CSP_IOCTL_RESTART;
-  unsigned IOCTL_SNDRV_EMUX_IOCTL_VERSION = SNDRV_EMUX_IOCTL_VERSION;
-  unsigned IOCTL_SNDRV_EMUX_IOCTL_LOAD_PATCH = SNDRV_EMUX_IOCTL_LOAD_PATCH;
-  unsigned IOCTL_SNDRV_EMUX_IOCTL_RESET_SAMPLES =
-      SNDRV_EMUX_IOCTL_RESET_SAMPLES;
-  unsigned IOCTL_SNDRV_EMUX_IOCTL_REMOVE_LAST_SAMPLES =
-      SNDRV_EMUX_IOCTL_REMOVE_LAST_SAMPLES;
-  unsigned IOCTL_SNDRV_EMUX_IOCTL_MEM_AVAIL = SNDRV_EMUX_IOCTL_MEM_AVAIL;
-  unsigned IOCTL_SNDRV_EMUX_IOCTL_MISC_MODE = SNDRV_EMUX_IOCTL_MISC_MODE;
 #endif
 
 // EOWNERDEAD is not present in some older platforms.
