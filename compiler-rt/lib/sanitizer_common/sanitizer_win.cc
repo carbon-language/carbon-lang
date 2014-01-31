@@ -421,7 +421,8 @@ void UnsetAlternateSignalStack() {
   // FIXME: Decide what to do on Windows.
 }
 
-void InstallDeadlySignalHandlers() {
+void InstallDeadlySignalHandlers(SignalHandlerType handler) {
+  (void)handler;
   // FIXME: Decide what to do on Windows.
 }
 
