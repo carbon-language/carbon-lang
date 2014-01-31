@@ -1178,6 +1178,9 @@ void CallAnalyzer::dump() {
   DEBUG_PRINT_STAT(SROACostSavings);
   DEBUG_PRINT_STAT(SROACostSavingsLost);
   DEBUG_PRINT_STAT(ContainsNoDuplicateCall);
+  DEBUG_PRINT_STAT(Cost);
+  DEBUG_PRINT_STAT(Threshold);
+  DEBUG_PRINT_STAT(VectorBonus);
 #undef DEBUG_PRINT_STAT
 }
 #endif
