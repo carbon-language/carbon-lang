@@ -28,17 +28,59 @@ extern "C" void SparcCompilationCallback();
 
 extern "C" {
 #if defined (__sparc__)
+
+#if defined(__arch64__)
+#define FRAME_PTR(X) #X "+2047"
+#else
+#define FRAME_PTR(X) #X
+#endif
+
   asm(
       ".text\n"
       "\t.align 4\n"
       "\t.global SparcCompilationCallback\n"
       "\t.type SparcCompilationCallback, #function\n"
       "SparcCompilationCallback:\n"
-      // Save current register window.
-      "\tsave %sp, -192, %sp\n"
+      // Save current register window and create stack.
+      // 128 (save area) + 6*8 (for arguments) + 16*8 (for float regfile) = 304
+      "\tsave %sp, -304, %sp\n"
+      // save float regfile to the stack.
+      "\tstd %f0,  [" FRAME_PTR(%fp) "-0]\n"
+      "\tstd %f2,  [" FRAME_PTR(%fp) "-8]\n"
+      "\tstd %f4,  [" FRAME_PTR(%fp) "-16]\n"
+      "\tstd %f6,  [" FRAME_PTR(%fp) "-24]\n"
+      "\tstd %f8,  [" FRAME_PTR(%fp) "-32]\n"
+      "\tstd %f10, [" FRAME_PTR(%fp) "-40]\n"
+      "\tstd %f12, [" FRAME_PTR(%fp) "-48]\n"
+      "\tstd %f14, [" FRAME_PTR(%fp) "-56]\n"
+      "\tstd %f16, [" FRAME_PTR(%fp) "-64]\n"
+      "\tstd %f18, [" FRAME_PTR(%fp) "-72]\n"
+      "\tstd %f20, [" FRAME_PTR(%fp) "-80]\n"
+      "\tstd %f22, [" FRAME_PTR(%fp) "-88]\n"
+      "\tstd %f24, [" FRAME_PTR(%fp) "-96]\n"
+      "\tstd %f26, [" FRAME_PTR(%fp) "-104]\n"
+      "\tstd %f28, [" FRAME_PTR(%fp) "-112]\n"
+      "\tstd %f30, [" FRAME_PTR(%fp) "-120]\n"
       // stubaddr is in %g1.
       "\tcall SparcCompilationCallbackC\n"
       "\t  mov %g1, %o0\n"
+      // restore float regfile from the stack.
+      "\tldd [" FRAME_PTR(%fp) "-0],   %f0\n"
+      "\tldd [" FRAME_PTR(%fp) "-8],   %f2\n"
+      "\tldd [" FRAME_PTR(%fp) "-16],  %f4\n"
+      "\tldd [" FRAME_PTR(%fp) "-24],  %f6\n"
+      "\tldd [" FRAME_PTR(%fp) "-32],  %f8\n"
+      "\tldd [" FRAME_PTR(%fp) "-40],  %f10\n"
+      "\tldd [" FRAME_PTR(%fp) "-48],  %f12\n"
+      "\tldd [" FRAME_PTR(%fp) "-56],  %f14\n"
+      "\tldd [" FRAME_PTR(%fp) "-64],  %f16\n"
+      "\tldd [" FRAME_PTR(%fp) "-72],  %f18\n"
+      "\tldd [" FRAME_PTR(%fp) "-80],  %f20\n"
+      "\tldd [" FRAME_PTR(%fp) "-88],  %f22\n"
+      "\tldd [" FRAME_PTR(%fp) "-96],  %f24\n"
+      "\tldd [" FRAME_PTR(%fp) "-104], %f26\n"
+      "\tldd [" FRAME_PTR(%fp) "-112], %f28\n"
+      "\tldd [" FRAME_PTR(%fp) "-120], %f30\n"
       // restore original register window and
       // copy %o0 to %g1
       "\trestore %o0, 0, %g1\n"
