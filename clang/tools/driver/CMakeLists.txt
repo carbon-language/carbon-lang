@@ -32,27 +32,6 @@ target_link_libraries(clang
   clangFrontendTool
   )
 
-if(CLANG_ENABLE_STATIC_ANALYZER)
-  target_link_libraries(clang
-    clangStaticAnalyzerFrontend
-    clangStaticAnalyzerCheckers
-    clangStaticAnalyzerCore
-    )
-endif()
-
-if(CLANG_ENABLE_ARCMT)
-  target_link_libraries(clang
-    clangARCMigrate
-    )
-endif()
-
-if(CLANG_ENABLE_REWRITER)
-  target_link_libraries(clang
-    clangRewriteCore
-    clangRewriteFrontend
-    )
-endif()
-
 set_target_properties(clang PROPERTIES VERSION ${CLANG_EXECUTABLE_VERSION})
 set_target_properties(clang PROPERTIES ENABLE_EXPORTS 1)
 
