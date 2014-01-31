@@ -792,7 +792,10 @@ Currently, only the following parameter attributes are defined:
     An argument allocation may be used by a call at most once because
     the call may deallocate it.  The ``inalloca`` attribute cannot be
     used in conjunction with other attributes that affect argument
-    storage, like ``inreg``, ``nest``, ``sret``, or ``byval``.
+    storage, like ``inreg``, ``nest``, ``sret``, or ``byval``.  The
+    ``inalloca`` attribute also disables LLVM's implicit lowering of
+    large aggregate return values, which means that frontend authors
+    must lower them with ``sret`` pointers.
 
     When the call site is reached, the argument allocation must have
     been the most recent stack allocation that is still live, or the

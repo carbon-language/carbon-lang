@@ -75,6 +75,7 @@ void TargetLowering::ArgListEntry::setAttributes(ImmutableCallSite *CS,
   isSRet     = CS->paramHasAttr(AttrIdx, Attribute::StructRet);
   isNest     = CS->paramHasAttr(AttrIdx, Attribute::Nest);
   isByVal    = CS->paramHasAttr(AttrIdx, Attribute::ByVal);
+  isInAlloca = CS->paramHasAttr(AttrIdx, Attribute::InAlloca);
   isReturned = CS->paramHasAttr(AttrIdx, Attribute::Returned);
   Alignment  = CS->getParamAlignment(AttrIdx);
 }

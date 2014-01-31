@@ -1910,6 +1910,10 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   if (isVarArg && isWin64)
     return false;
 
+  // Don't know about inalloca yet.
+  if (CS.hasInAllocaArgument())
+    return false;
+
   // Fast-isel doesn't know about callee-pop yet.
   if (X86::isCalleePop(CC, Subtarget->is64Bit(), isVarArg,
                        TM.Options.GuaranteedTailCallOpt))

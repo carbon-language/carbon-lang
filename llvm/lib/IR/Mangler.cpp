@@ -65,8 +65,8 @@ static void AddFastCallStdCallSuffix(raw_ostream &OS, const Function *F,
   for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
        AI != AE; ++AI) {
     Type *Ty = AI->getType();
-    // 'Dereference' type in case of byval parameter attribute
-    if (AI->hasByValAttr())
+    // 'Dereference' type in case of byval or inalloca parameter attribute.
+    if (AI->hasByValOrInAllocaAttr())
       Ty = cast<PointerType>(Ty)->getElementType();
     // Size should be aligned to DWORD boundary
     ArgWords += ((TD.getTypeAllocSize(Ty) + 3)/4)*4;

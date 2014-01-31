@@ -268,9 +268,10 @@ public:
            paramHasAttr(ArgNo + 1, Attribute::InAlloca);
   }
 
-  /// @brief Determine if there are any inalloca arguments.
+  /// @brief Determine if there are is an inalloca argument.  Only the last
+  /// argument can have the inalloca attribute.
   bool hasInAllocaArgument() const {
-    return getAttributes().hasAttrSomewhere(Attribute::InAlloca);
+    return paramHasAttr(arg_size(), Attribute::InAlloca);
   }
 
   bool doesNotAccessMemory(unsigned ArgNo) const {
