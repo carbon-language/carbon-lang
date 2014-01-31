@@ -2913,7 +2913,7 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
                                 thread_list.SetSelectedThreadByID (other_thread->GetID());
                             else
                             {
-                                if (curr_thread->IsValid())
+                                if (curr_thread && curr_thread->IsValid())
                                     thread = curr_thread;
                                 else
                                     thread = thread_list.GetThreadAtIndex(0);
