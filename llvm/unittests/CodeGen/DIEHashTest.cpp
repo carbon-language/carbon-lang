@@ -514,4 +514,35 @@ TEST(DIEHashTest, MemberFunc) {
   // The exact same hash GCC produces for this DIE.
   ASSERT_EQ(0xd36a1b6dfb604ba0ULL, MD5Res);
 }
+
+// struct A {
+//   static void func();
+// };
+TEST(DIEHashTest, MemberFuncFlag) {
+  DIE A(dwarf::DW_TAG_structure_type);
+  DIEInteger One(1);
+  DIEString AStr(&One, "A");
+  A.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &AStr);
+  A.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
+  A.addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
+  A.addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &One);
+
+  DIE *Func = new DIE(dwarf::DW_TAG_subprogram);
+  DIEString FuncStr(&One, "func");
+  DIEString FuncLinkage(&One, "_ZN1A4funcEv");
+  DIEInteger Two(2);
+  Func->addValue(dwarf::DW_AT_external, dwarf::DW_FORM_flag_present, &One);
+  Func->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FuncStr);
+  Func->addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
+  Func->addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &Two);
+  Func->addValue(dwarf::DW_AT_linkage_name, dwarf::DW_FORM_strp, &FuncLinkage);
+  Func->addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, &One);
+
+  A.addChild(Func);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(A);
+
+  // The exact same hash GCC produces for this DIE.
+  ASSERT_EQ(0x8f78211ddce3df10ULL, MD5Res);
+}
 }
