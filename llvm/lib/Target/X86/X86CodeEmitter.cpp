@@ -654,34 +654,6 @@ void Emitter<CodeEmitter>::emitOpcodePrefix(uint64_t TSFlags,
                                             int MemOperand,
                                             const MachineInstr &MI,
                                             const MCInstrDesc *Desc) const {
-  // Emit the lock opcode prefix as needed.
-  if (Desc->TSFlags & X86II::LOCK)
-    MCE.emitByte(0xF0);
-
-  // Emit segment override opcode prefix as needed.
-  emitSegmentOverridePrefix(TSFlags, MemOperand, MI);
-
-  // Emit the repeat opcode prefix as needed.
-  if ((Desc->TSFlags & X86II::Op0Mask) == X86II::REP)
-    MCE.emitByte(0xF3);
-
-  // Emit the address size opcode prefix as needed.
-  bool need_address_override;
-  if (TSFlags & X86II::AdSize) {
-    need_address_override = true;
-  } else if (MemOperand == -1) {
-    need_address_override = false;
-  } else if (Is64BitMode) {
-    assert(!Is16BitMemOperand(MI, MemOperand));
-    need_address_override = Is32BitMemOperand(MI, MemOperand);
-  } else {
-    assert(!Is64BitMemOperand(MI, MemOperand));
-    need_address_override = Is16BitMemOperand(MI, MemOperand);
-  }
-
-  if (need_address_override)
-    MCE.emitByte(0x67);
-
   // Emit the operand size opcode prefix as needed.
   if (TSFlags & X86II::OpSize)
     MCE.emitByte(0x66);
@@ -1144,6 +1116,34 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   // Determine where the memory operand starts, if present.
   int MemoryOperand = X86II::getMemoryOperandNo(TSFlags, Opcode);
   if (MemoryOperand != -1) MemoryOperand += CurOp;
+
+  // Emit the lock opcode prefix as needed.
+  if (Desc->TSFlags & X86II::LOCK)
+    MCE.emitByte(0xF0);
+
+  // Emit segment override opcode prefix as needed.
+  emitSegmentOverridePrefix(TSFlags, MemoryOperand, MI);
+
+  // Emit the repeat opcode prefix as needed.
+  if ((Desc->TSFlags & X86II::Op0Mask) == X86II::REP)
+    MCE.emitByte(0xF3);
+
+  // Emit the address size opcode prefix as needed.
+  bool need_address_override;
+  if (TSFlags & X86II::AdSize) {
+    need_address_override = true;
+  } else if (MemoryOperand < 0) {
+    need_address_override = false;
+  } else if (Is64BitMode) {
+    assert(!Is16BitMemOperand(MI, MemoryOperand));
+    need_address_override = Is32BitMemOperand(MI, MemoryOperand);
+  } else {
+    assert(!Is64BitMemOperand(MI, MemoryOperand));
+    need_address_override = Is16BitMemOperand(MI, MemoryOperand);
+  }
+
+  if (need_address_override)
+    MCE.emitByte(0x67);
 
   if (!HasVEXPrefix)
     emitOpcodePrefix(TSFlags, MemoryOperand, MI, Desc);
