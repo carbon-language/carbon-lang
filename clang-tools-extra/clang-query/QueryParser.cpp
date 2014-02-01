@@ -15,6 +15,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 
+#include <set>
+
 using namespace llvm;
 using namespace clang::ast_matchers::dynamic;
 
@@ -25,10 +27,10 @@ namespace query {
 // non-whitespace characters) from the start of region [Begin,End).  If no word
 // is found before End, return StringRef().  Begin is adjusted to exclude the
 // lexed region.
-static StringRef LexWord(const char *&Begin, const char *End) {
+StringRef QueryParser::lexWord() {
   while (true) {
     if (Begin == End)
-      return StringRef();
+      return StringRef(Begin, 0);
 
     if (!isWhitespace(*Begin))
       break;
@@ -46,8 +48,60 @@ static StringRef LexWord(const char *&Begin, const char *End) {
   }
 }
 
-static QueryRef ParseSetBool(bool QuerySession::*Var, StringRef ValStr) {
-  unsigned Value = StringSwitch<unsigned>(ValStr)
+// This is the StringSwitch-alike used by lexOrCompleteWord below. See that
+// function for details.
+template <typename T> struct QueryParser::LexOrCompleteWord {
+  StringSwitch<T> Switch;
+
+  QueryParser *P;
+  StringRef Word;
+  // Set to the completion point offset in Word, or StringRef::npos if
+  // completion point not in Word.
+  size_t WordCompletionPos;
+
+  LexOrCompleteWord(QueryParser *P, StringRef Word, size_t WCP)
+      : Switch(Word), P(P), Word(Word), WordCompletionPos(WCP) {}
+
+  template <unsigned N>
+  LexOrCompleteWord &Case(const char (&S)[N], const T &Value,
+                          bool IsCompletion = true) {
+    StringRef CaseStr(S, N - 1);
+
+    if (WordCompletionPos == StringRef::npos)
+      Switch.Case(S, Value);
+    else if (N != 1 && IsCompletion && WordCompletionPos <= CaseStr.size() &&
+             CaseStr.substr(0, WordCompletionPos) ==
+                 Word.substr(0, WordCompletionPos))
+      P->Completions.push_back(LineEditor::Completion(
+          (CaseStr.substr(WordCompletionPos) + " ").str(), CaseStr));
+    return *this;
+  }
+
+  T Default(const T& Value) const {
+    return Switch.Default(Value);
+  }
+};
+
+// Lexes a word and stores it in Word. Returns a LexOrCompleteWord<T> object
+// that can be used like a llvm::StringSwitch<T>, but adds cases as possible
+// completions if the lexed word contains the completion point.
+template <typename T>
+QueryParser::LexOrCompleteWord<T>
+QueryParser::lexOrCompleteWord(StringRef &Word) {
+  Word = lexWord();
+  size_t WordCompletionPos = StringRef::npos;
+  if (CompletionPos && CompletionPos <= Word.data() + Word.size()) {
+    if (CompletionPos < Word.data())
+      WordCompletionPos = 0;
+    else
+      WordCompletionPos = CompletionPos - Word.data();
+  }
+  return LexOrCompleteWord<T>(this, Word, WordCompletionPos);
+}
+
+QueryRef QueryParser::parseSetBool(bool QuerySession::*Var) {
+  StringRef ValStr;
+  unsigned Value = lexOrCompleteWord<unsigned>(ValStr)
                       .Case("false", 0)
                       .Case("true", 1)
                       .Default(~0u);
@@ -57,8 +111,9 @@ static QueryRef ParseSetBool(bool QuerySession::*Var, StringRef ValStr) {
   return new SetQuery<bool>(Var, Value);
 }
 
-static QueryRef ParseSetOutputKind(StringRef ValStr) {
-  unsigned OutKind = StringSwitch<unsigned>(ValStr)
+QueryRef QueryParser::parseSetOutputKind() {
+  StringRef ValStr;
+  unsigned OutKind = lexOrCompleteWord<unsigned>(ValStr)
                          .Case("diag", OK_Diag)
                          .Case("print", OK_Print)
                          .Case("dump", OK_Dump)
@@ -70,9 +125,9 @@ static QueryRef ParseSetOutputKind(StringRef ValStr) {
   return new SetQuery<OutputKind>(&QuerySession::OutKind, OutputKind(OutKind));
 }
 
-static QueryRef EndQuery(const char *Begin, const char *End, QueryRef Q) {
+QueryRef QueryParser::endQuery(QueryRef Q) {
   const char *Extra = Begin;
-  if (!LexWord(Begin, End).empty())
+  if (!lexWord().empty())
     return new InvalidQuery("unexpected extra input: '" +
                             StringRef(Extra, End - Extra) + "'");
   return Q;
@@ -92,15 +147,12 @@ enum ParsedQueryVariable {
   PQV_BindRoot
 };
 
-QueryRef ParseQuery(StringRef Line) {
-  const char *Begin = Line.data();
-  const char *End = Line.data() + Line.size();
-
-  StringRef CommandStr = LexWord(Begin, End);
-  ParsedQueryKind QKind = StringSwitch<ParsedQueryKind>(CommandStr)
+QueryRef QueryParser::doParse() {
+  StringRef CommandStr;
+  ParsedQueryKind QKind = lexOrCompleteWord<ParsedQueryKind>(CommandStr)
                               .Case("", PQK_NoOp)
                               .Case("help", PQK_Help)
-                              .Case("m", PQK_Match)
+                              .Case("m", PQK_Match, /*IsCompletion=*/false)
                               .Case("match", PQK_Match)
                               .Case("set", PQK_Set)
                               .Default(PQK_Invalid);
@@ -110,50 +162,57 @@ QueryRef ParseQuery(StringRef Line) {
     return new NoOpQuery;
 
   case PQK_Help:
-    return EndQuery(Begin, End, new HelpQuery);
+    return endQuery(new HelpQuery);
 
   case PQK_Match: {
-    Diagnostics Diag;
-    Optional<DynTypedMatcher> Matcher =
-        Parser::parseMatcherExpression(StringRef(Begin, End - Begin), &Diag);
-    if (!Matcher) {
-      std::string ErrStr;
-      llvm::raw_string_ostream OS(ErrStr);
-      Diag.printToStreamFull(OS);
-      return new InvalidQuery(OS.str());
+    if (CompletionPos) {
+      std::vector<MatcherCompletion> Comps = Parser::completeExpression(
+          StringRef(Begin, End - Begin), CompletionPos - Begin);
+      for (std::vector<MatcherCompletion>::iterator I = Comps.begin(),
+                                                    E = Comps.end();
+           I != E; ++I) {
+        Completions.push_back(
+            LineEditor::Completion(I->TypedText, I->MatcherDecl));
+      }
+      return QueryRef();
+    } else {
+      Diagnostics Diag;
+      Optional<DynTypedMatcher> Matcher =
+          Parser::parseMatcherExpression(StringRef(Begin, End - Begin), &Diag);
+      if (!Matcher) {
+        std::string ErrStr;
+        llvm::raw_string_ostream OS(ErrStr);
+        Diag.printToStreamFull(OS);
+        return new InvalidQuery(OS.str());
+      }
+      return new MatchQuery(*Matcher);
     }
-    return new MatchQuery(*Matcher);
   }
 
   case PQK_Set: {
-    StringRef VarStr = LexWord(Begin, End);
+    StringRef VarStr;
+    ParsedQueryVariable Var = lexOrCompleteWord<ParsedQueryVariable>(VarStr)
+                                  .Case("output", PQV_Output)
+                                  .Case("bind-root", PQV_BindRoot)
+                                  .Default(PQV_Invalid);
     if (VarStr.empty())
       return new InvalidQuery("expected variable name");
-
-    ParsedQueryVariable Var = StringSwitch<ParsedQueryVariable>(VarStr)
-                .Case("output", PQV_Output)
-                .Case("bind-root", PQV_BindRoot)
-                .Default(PQV_Invalid);
     if (Var == PQV_Invalid)
       return new InvalidQuery("unknown variable: '" + VarStr + "'");
-
-    StringRef ValStr = LexWord(Begin, End);
-    if (ValStr.empty())
-      return new InvalidQuery("expected variable value");
 
     QueryRef Q;
     switch (Var) {
     case PQV_Output:
-      Q = ParseSetOutputKind(ValStr);
+      Q = parseSetOutputKind();
       break;
     case PQV_BindRoot:
-      Q = ParseSetBool(&QuerySession::BindRoot, ValStr);
+      Q = parseSetBool(&QuerySession::BindRoot);
       break;
     case PQV_Invalid:
       llvm_unreachable("Invalid query kind");
     }
 
-    return EndQuery(Begin, End, Q);
+    return endQuery(Q);
   }
 
   case PQK_Invalid:
@@ -161,6 +220,19 @@ QueryRef ParseQuery(StringRef Line) {
   }
 
   llvm_unreachable("Invalid query kind");
+}
+
+QueryRef QueryParser::parse(StringRef Line) {
+  return QueryParser(Line).doParse();
+}
+
+std::vector<LineEditor::Completion> QueryParser::complete(StringRef Line,
+                                                          size_t Pos) {
+  QueryParser P(Line);
+  P.CompletionPos = Line.data() + Pos;
+
+  P.doParse();
+  return P.Completions;
 }
 
 } // namespace query

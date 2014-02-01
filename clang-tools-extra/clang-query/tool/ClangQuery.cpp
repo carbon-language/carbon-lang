@@ -96,7 +96,7 @@ int main(int argc, const char **argv) {
     for (cl::list<std::string>::iterator I = Commands.begin(),
                                          E = Commands.end();
          I != E; ++I) {
-      QueryRef Q = ParseQuery(I->c_str());
+      QueryRef Q = QueryParser::parse(I->c_str());
       if (!Q->run(llvm::outs(), QS))
         return 1;
     }
@@ -113,15 +113,16 @@ int main(int argc, const char **argv) {
         std::string Line;
         std::getline(Input, Line);
 
-        QueryRef Q = ParseQuery(Line.c_str());
+        QueryRef Q = QueryParser::parse(Line.c_str());
         if (!Q->run(llvm::outs(), QS))
           return 1;
       }
     }
   } else {
     LineEditor LE("clang-query");
+    LE.setListCompleter(QueryParser::complete);
     while (llvm::Optional<std::string> Line = LE.readLine()) {
-      QueryRef Q = ParseQuery(*Line);
+      QueryRef Q = QueryParser::parse(*Line);
       Q->run(llvm::outs(), QS);
     }
   }
