@@ -872,6 +872,16 @@ bool CallAnalyzer::visitInstruction(Instruction &I) {
 /// viable, and true if inlining remains viable.
 bool CallAnalyzer::analyzeBlock(BasicBlock *BB) {
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+    // FIXME: Currently, the number of instructions in a function regardless of
+    // our ability to simplify them during inline to constants or dead code,
+    // are actually used by the vector bonus heuristic. As long as that's true,
+    // we have to special case debug intrinsics here to prevent differences in
+    // inlining due to debug symbols. Eventually, the number of unsimplified
+    // instructions shouldn't factor into the cost computation, but until then,
+    // hack around it here.
+    if (isa<DbgInfoIntrinsic>(I))
+      continue;
+
     ++NumInstructions;
     if (isa<ExtractElementInst>(I) || I->getType()->isVectorTy())
       ++NumVectorInstructions;
