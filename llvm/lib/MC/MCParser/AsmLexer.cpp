@@ -238,6 +238,13 @@ static unsigned doLookAhead(const char *&CurPtr, unsigned DefaultRadix) {
   return DefaultRadix;
 }
 
+static AsmToken intToken(StringRef Ref, APInt &Value)
+{
+  if (Value.isIntN(64))
+    return AsmToken(AsmToken::Integer, Ref, Value);
+  return AsmToken(AsmToken::BigNum, Ref, Value);
+}
+
 /// LexDigit: First character is [0-9].
 ///   Local Label: [0-9][:]
 ///   Forward/Backward Label: [0-9][fb]
@@ -258,16 +265,10 @@ AsmToken AsmLexer::LexDigit() {
 
     StringRef Result(TokStart, CurPtr - TokStart);
 
-    long long Value;
-    if (Result.getAsInteger(Radix, Value)) {
-      // Allow positive values that are too large to fit into a signed 64-bit
-      // integer, but that do fit in an unsigned one, we just convert them over.
-      unsigned long long UValue;
-      if (Result.getAsInteger(Radix, UValue))
-        return ReturnError(TokStart, !isHex ? "invalid decimal number" :
+    APInt Value(128, 0, true);
+    if (Result.getAsInteger(Radix, Value))
+      return ReturnError(TokStart, !isHex ? "invalid decimal number" :
                            "invalid hexdecimal number");
-      Value = (long long)UValue;
-    }
 
     // Consume the [bB][hH].
     if (Radix == 2 || Radix == 16)
@@ -277,7 +278,7 @@ AsmToken AsmLexer::LexDigit() {
     // suffices on integer literals.
     SkipIgnoredIntegerSuffix(CurPtr);
 
-    return AsmToken(AsmToken::Integer, Result, Value);
+    return intToken(Result, Value);
   }
 
   if (*CurPtr == 'b') {
@@ -298,7 +299,7 @@ AsmToken AsmLexer::LexDigit() {
 
     StringRef Result(TokStart, CurPtr - TokStart);
 
-    long long Value;
+    APInt Value(128, 0, true);
     if (Result.substr(2).getAsInteger(2, Value))
       return ReturnError(TokStart, "invalid binary number");
 
@@ -306,7 +307,7 @@ AsmToken AsmLexer::LexDigit() {
     // suffixes on integer literals.
     SkipIgnoredIntegerSuffix(CurPtr);
 
-    return AsmToken(AsmToken::Integer, Result, Value);
+    return intToken(Result, Value);
   }
 
   if (*CurPtr == 'x') {
@@ -324,7 +325,7 @@ AsmToken AsmLexer::LexDigit() {
     if (CurPtr == NumStart)
       return ReturnError(CurPtr-2, "invalid hexadecimal number");
 
-    unsigned long long Result;
+    APInt Result(128, 0);
     if (StringRef(TokStart, CurPtr - TokStart).getAsInteger(0, Result))
       return ReturnError(TokStart, "invalid hexadecimal number");
 
@@ -336,12 +337,11 @@ AsmToken AsmLexer::LexDigit() {
     // suffixes on integer literals.
     SkipIgnoredIntegerSuffix(CurPtr);
 
-    return AsmToken(AsmToken::Integer, StringRef(TokStart, CurPtr - TokStart),
-                    (int64_t)Result);
+    return intToken(StringRef(TokStart, CurPtr - TokStart), Result);
   }
 
   // Either octal or hexadecimal.
-  long long Value;
+  APInt Value(128, 0, true);
   unsigned Radix = doLookAhead(CurPtr, 8);
   bool isHex = Radix == 16;
   StringRef Result(TokStart, CurPtr - TokStart);
@@ -357,7 +357,7 @@ AsmToken AsmLexer::LexDigit() {
   // suffixes on integer literals.
   SkipIgnoredIntegerSuffix(CurPtr);
 
-  return AsmToken(AsmToken::Integer, Result, Value);
+  return intToken(Result, Value);
 }
 
 /// LexSingleQuote: Integer: 'b'
