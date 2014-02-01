@@ -1069,7 +1069,7 @@ namespace path {
 bool home_directory(SmallVectorImpl<char> &result) {
   wchar_t Path[MAX_PATH];
   if (::SHGetFolderPathW(0, CSIDL_APPDATA | CSIDL_FLAG_CREATE, 0,
-                         SHGFP_TYPE_CURRENT, Path) != S_OK)
+                         /*SHGFP_TYPE_CURRENT*/0, Path) != S_OK)
     return false;
 
   if (UTF16ToUTF8(Path, ::wcslen(Path), result))
