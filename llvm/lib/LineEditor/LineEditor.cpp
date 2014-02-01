@@ -131,7 +131,7 @@ static unsigned char ElCompletionFn(EditLine *EL, int ch) {
       // Push a sequence of Ctrl-B characters to move the cursor back to its
       // original position.
       std::string Prevs(Data->PrevCount, '\02');
-      ::el_push(EL, (char *)Prevs.c_str());
+      ::el_push(EL, const_cast<char *>(Prevs.c_str()));
 
       Data->ContinuationOutput.clear();
 
@@ -158,7 +158,7 @@ static unsigned char ElCompletionFn(EditLine *EL, int ch) {
         // from here to cause libedit to move the cursor immediately. This will
         // break horribly if the user has rebound their keys, so for now we do
         // not permit user rebinding.
-        ::el_push(EL, (char *)"\05\t");
+        ::el_push(EL, const_cast<char *>("\05\t"));
 
         // This assembles the output for the continuation block above.
         raw_string_ostream OS(Data->ContinuationOutput);
@@ -186,9 +186,8 @@ static unsigned char ElCompletionFn(EditLine *EL, int ch) {
         return CC_REFRESH;
       }
     }
-  } else {
-    return CC_ERROR;
   }
+  return CC_ERROR;
 }
 
 LineEditor::LineEditor(StringRef ProgName, StringRef HistoryPath, FILE *In,
