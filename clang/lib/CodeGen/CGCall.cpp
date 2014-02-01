@@ -1328,7 +1328,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   // inalloca).  If already have a pointer, EmitParmDecl doesn't need to copy it
   // into a local alloca for us.
   enum ValOrPointer { HaveValue = 0, HavePointer = 1 };
-  typedef llvm::PointerIntPair<llvm::Value *, 1, ValOrPointer> ValueAndIsPtr;
+  typedef llvm::PointerIntPair<llvm::Value *, 1> ValueAndIsPtr;
   SmallVector<ValueAndIsPtr, 16> ArgVals;
   ArgVals.reserve(Args.size());
 
