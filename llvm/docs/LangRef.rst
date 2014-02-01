@@ -1112,6 +1112,9 @@ example:
     - Calls to alloca() with variable sizes or constant sizes greater than
       ``ssp-buffer-size``.
 
+    Variables that are identified as requiring a protector will be arranged
+    on the stack such that they are adjacent to the stack protector guard.
+
     If a function that has an ``ssp`` attribute is inlined into a
     function that doesn't have an ``ssp`` attribute, then the resulting
     function will have an ``ssp`` attribute.
@@ -1119,6 +1122,17 @@ example:
     This attribute indicates that the function should *always* emit a
     stack smashing protector. This overrides the ``ssp`` function
     attribute.
+
+    Variables that are identified as requiring a protector will be arranged
+    on the stack such that they are adjacent to the stack protector guard.
+    The specific layout rules are:
+
+    #. Large arrays and structures containing large arrays
+       (``>= ssp-buffer-size``) are closest to the stack protector.
+    #. Small arrays and structures containing small arrays
+       (``< ssp-buffer-size``) are 2nd closest to the protector.
+    #. Variables that have had their address taken are 3rd closest to the
+       protector.
 
     If a function that has an ``sspreq`` attribute is inlined into a
     function that doesn't have an ``sspreq`` attribute or which has an
@@ -1134,6 +1148,17 @@ example:
     - Aggregates containing an array of any size and type.
     - Calls to alloca().
     - Local variables that have had their address taken.
+
+    Variables that are identified as requiring a protector will be arranged
+    on the stack such that they are adjacent to the stack protector guard.
+    The specific layout rules are:
+
+    #. Large arrays and structures containing large arrays
+       (``>= ssp-buffer-size``) are closest to the stack protector.
+    #. Small arrays and structures containing small arrays
+       (``< ssp-buffer-size``) are 2nd closest to the protector.
+    #. Variables that have had their address taken are 3rd closest to the
+       protector.
 
     This overrides the ``ssp`` function attribute.
 
