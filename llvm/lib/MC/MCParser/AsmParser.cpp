@@ -2397,18 +2397,27 @@ bool AsmParser::parseDirectiveZero() {
 bool AsmParser::parseDirectiveFill() {
   checkForValidSection();
 
+  SMLoc RepeatLoc = getLexer().getLoc();
   int64_t NumValues;
   if (parseAbsoluteExpression(NumValues))
     return true;
 
+  if (NumValues < 0) {
+    Warning(RepeatLoc,
+            "'.fill' directive with negative repeat count has no effect");
+    NumValues = 0;
+  }
+
   int64_t FillSize = 1;
   int64_t FillExpr = 0;
 
+  SMLoc SizeLoc, ExprLoc;
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     if (getLexer().isNot(AsmToken::Comma))
       return TokError("unexpected token in '.fill' directive");
     Lex();
 
+    SizeLoc = getLexer().getLoc();
     if (parseAbsoluteExpression(FillSize))
       return true;
 
@@ -2417,6 +2426,7 @@ bool AsmParser::parseDirectiveFill() {
         return TokError("unexpected token in '.fill' directive");
       Lex();
 
+      ExprLoc = getLexer().getLoc();
       if (parseAbsoluteExpression(FillExpr))
         return true;
 
@@ -2427,11 +2437,25 @@ bool AsmParser::parseDirectiveFill() {
     }
   }
 
-  if (FillSize != 1 && FillSize != 2 && FillSize != 4 && FillSize != 8)
-    return TokError("invalid '.fill' size, expected 1, 2, 4, or 8");
+  if (FillSize < 0) {
+    Warning(SizeLoc, "'.fill' directive with negative size has no effect");
+    NumValues = 0;
+  }
+  if (FillSize > 8) {
+    Warning(SizeLoc, "'.fill' directive with size greater than 8 has been truncated to 8");
+    FillSize = 8;
+  }
 
-  for (uint64_t i = 0, e = NumValues; i != e; ++i)
-    getStreamer().EmitIntValue(FillExpr, FillSize);
+  if (!isUInt<32>(FillExpr) && FillSize > 4)
+    Warning(ExprLoc, "'.fill' directive pattern has been truncated to 32-bits");
+
+  int64_t NonZeroFillSize = FillSize > 4 ? 4 : FillSize;
+  FillExpr &= ~0ULL >> (64 - NonZeroFillSize * 8);
+
+  for (uint64_t i = 0, e = NumValues; i != e; ++i) {
+    getStreamer().EmitIntValue(FillExpr, NonZeroFillSize);
+    getStreamer().EmitIntValue(0, FillSize - NonZeroFillSize);
+  }
 
   return false;
 }

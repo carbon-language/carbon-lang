@@ -673,6 +673,7 @@ void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size) {
 }
 
 void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size) {
+  assert(Size <= 8 && "Invalid size");
   assert(getCurrentSection().first &&
          "Cannot emit contents before setting section!");
   const char *Directive = 0;
@@ -681,19 +682,37 @@ void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size) {
   case 1: Directive = MAI->getData8bitsDirective();  break;
   case 2: Directive = MAI->getData16bitsDirective(); break;
   case 4: Directive = MAI->getData32bitsDirective(); break;
-  case 8:
-    Directive = MAI->getData64bitsDirective();
-    // If the target doesn't support 64-bit data, emit as two 32-bit halves.
-    if (Directive) break;
+  case 8: Directive = MAI->getData64bitsDirective(); break;
+  }
+
+  if (!Directive) {
     int64_t IntValue;
     if (!Value->EvaluateAsAbsolute(IntValue))
       report_fatal_error("Don't know how to emit this value.");
-    if (MAI->isLittleEndian()) {
-      EmitIntValue((uint32_t)(IntValue >> 0 ), 4);
-      EmitIntValue((uint32_t)(IntValue >> 32), 4);
-    } else {
-      EmitIntValue((uint32_t)(IntValue >> 32), 4);
-      EmitIntValue((uint32_t)(IntValue >> 0 ), 4);
+
+    // We couldn't handle the requested integer size so we fallback by breaking
+    // the request down into several, smaller, integers.  Since sizes greater
+    // than eight are invalid and size equivalent to eight should have been
+    // handled earlier, we use four bytes as our largest piece of granularity.
+    bool IsLittleEndian = MAI->isLittleEndian();
+    for (unsigned Emitted = 0; Emitted != Size;) {
+      unsigned Remaining = Size - Emitted;
+      // The size of our partial emission must be a power of two less than
+      // eight.
+      unsigned EmissionSize = PowerOf2Floor(Remaining);
+      if (EmissionSize > 4)
+        EmissionSize = 4;
+      // Calculate the byte offset of our partial emission taking into account
+      // the endianness of the target.
+      unsigned ByteOffset =
+          IsLittleEndian ? Emitted : (Remaining - EmissionSize);
+      uint64_t ValueToEmit = IntValue >> (ByteOffset * 8);
+      // We truncate our partial emission to fit within the bounds of the
+      // emission domain.  This produces nicer output and silences potential
+      // truncation warnings when round tripping through another assembler.
+      ValueToEmit &= ~0ULL >> (64 - EmissionSize * 8);
+      EmitIntValue(ValueToEmit, EmissionSize);
+      Emitted += EmissionSize;
     }
     return;
   }
