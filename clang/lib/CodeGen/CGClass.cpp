@@ -1714,9 +1714,8 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
 
   // Emit the call.
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
-  RequiredArgs Required = RequiredArgs::forPrototypePlus(FPT, 1 + ExtraArgs);
   const CGFunctionInfo &Info =
-      CGM.getTypes().arrangeCXXMethodCall(Args, FPT, Required);
+      CGM.getTypes().arrangeCXXConstructorCall(Args, D, Type, ExtraArgs);
   EmitCall(Info, Callee, ReturnValueSlot(), Args, D);
 }
 

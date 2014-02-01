@@ -47,6 +47,14 @@ struct Big {
   int a, b, c, d, e, f;
 };
 
+// WIN32: declare void @"{{.*take_bools_and_chars.*}}"
+// WIN32:       (<{ i8, [3 x i8], i8, [3 x i8], %struct.SmallWithDtor,
+// WIN32:           i8, [3 x i8], i8, [3 x i8], i32, i8 }>* inalloca)
+void take_bools_and_chars(char a, char b, SmallWithDtor c, char d, bool e, int f, bool g);
+void call_bools_and_chars() {
+  take_bools_and_chars('A', 'B', SmallWithDtor(), 'D', true, 13, false);
+}
+
 // Returning structs that fit into a register.
 Small small_return() { return Small(); }
 // LINUX-LABEL: define void @_Z12small_returnv(%struct.Small* noalias sret %agg.result)
@@ -103,11 +111,11 @@ void small_arg_with_ctor(SmallWithCtor s) {}
 
 // Test that dtors are invoked in the callee.
 void small_arg_with_dtor(SmallWithDtor s) {}
-// WIN32: define void @"\01?small_arg_with_dtor@@YAXUSmallWithDtor@@@Z"(%struct.SmallWithDtor* byval align 4 %s) {{.*}} {
-// WIN32:   call x86_thiscallcc void @"\01??1SmallWithDtor@@QAE@XZ"(%struct.SmallWithDtor* %s)
+// WIN32: define void @"\01?small_arg_with_dtor@@YAXUSmallWithDtor@@@Z"(<{ %struct.SmallWithDtor }>* inalloca) {{.*}} {
+// WIN32:   call x86_thiscallcc void @"\01??1SmallWithDtor@@QAE@XZ"
 // WIN32: }
-// WIN64: define void @"\01?small_arg_with_dtor@@YAXUSmallWithDtor@@@Z"(%struct.SmallWithDtor* byval %s) {{.*}} {
-// WIN64:   call void @"\01??1SmallWithDtor@@QEAA@XZ"(%struct.SmallWithDtor* %s)
+// WIN64: define void @"\01?small_arg_with_dtor@@YAXUSmallWithDtor@@@Z"(%struct.SmallWithDtor* %s) {{.*}} {
+// WIN64:   call void @"\01??1SmallWithDtor@@QEAA@XZ"
 // WIN64: }
 
 // Test that references aren't destroyed in the callee.
@@ -141,13 +149,13 @@ void eh_cleanup_arg_with_dtor() {
 
 void small_arg_with_vftable(SmallWithVftable s) {}
 // LINUX-LABEL: define void @_Z22small_arg_with_vftable16SmallWithVftable(%struct.SmallWithVftable* %s)
-// WIN32: define void @"\01?small_arg_with_vftable@@YAXUSmallWithVftable@@@Z"(%struct.SmallWithVftable* byval align 4 %s)
-// WIN64: define void @"\01?small_arg_with_vftable@@YAXUSmallWithVftable@@@Z"(%struct.SmallWithVftable* byval %s)
+// WIN32: define void @"\01?small_arg_with_vftable@@YAXUSmallWithVftable@@@Z"(<{ %struct.SmallWithVftable }>* inalloca)
+// WIN64: define void @"\01?small_arg_with_vftable@@YAXUSmallWithVftable@@@Z"(%struct.SmallWithVftable* %s)
 
 void medium_arg_with_copy_ctor(MediumWithCopyCtor s) {}
 // LINUX-LABEL: define void @_Z25medium_arg_with_copy_ctor18MediumWithCopyCtor(%struct.MediumWithCopyCtor* %s)
-// WIN32: define void @"\01?medium_arg_with_copy_ctor@@YAXUMediumWithCopyCtor@@@Z"(%struct.MediumWithCopyCtor* byval align 4 %s)
-// WIN64: define void @"\01?medium_arg_with_copy_ctor@@YAXUMediumWithCopyCtor@@@Z"(%struct.MediumWithCopyCtor* byval %s)
+// WIN32: define void @"\01?medium_arg_with_copy_ctor@@YAXUMediumWithCopyCtor@@@Z"(<{ %struct.MediumWithCopyCtor }>* inalloca)
+// WIN64: define void @"\01?medium_arg_with_copy_ctor@@YAXUMediumWithCopyCtor@@@Z"(%struct.MediumWithCopyCtor* %s)
 
 void big_arg(Big s) {}
 // LINUX-LABEL: define void @_Z7big_arg3Big(%struct.Big* byval align 4 %s)
@@ -215,8 +223,8 @@ struct X {
 };
 void g(X) {
 }
-// WIN32: define void @"\01?g@@YAXUX@@@Z"(%struct.X* byval align 4) {{.*}} {
-// WIN32:   call x86_thiscallcc void @"\01??1X@@QAE@XZ"(%struct.X* %0)
+// WIN32: define void @"\01?g@@YAXUX@@@Z"(<{ %struct.X }>* inalloca) {{.*}} {
+// WIN32:   call x86_thiscallcc void @"\01??1X@@QAE@XZ"(%struct.X* {{.*}})
 // WIN32: }
 void f() {
   g(X());
@@ -224,3 +232,34 @@ void f() {
 // WIN32: define void @"\01?f@@YAXXZ"() {{.*}} {
 // WIN32-NOT: call {{.*}} @"\01??1X@@QAE@XZ"
 // WIN32: }
+
+
+namespace test2 {
+// We used to crash on this due to the mixture of POD byval and non-trivial
+// byval.
+
+struct NonTrivial {
+  NonTrivial();
+  NonTrivial(const NonTrivial &o);
+  ~NonTrivial();
+  int a;
+};
+struct POD { int b; };
+
+int foo(NonTrivial a, POD b);
+void bar() {
+  POD b;
+  b.b = 13;
+  int c = foo(NonTrivial(), b);
+}
+// WIN32-LABEL: define void @"\01?bar@test2@@YAXXZ"() {{.*}} {
+// WIN32:   %[[argmem:[^ ]*]] = alloca [[argmem_ty:<{ %"struct.test2::NonTrivial", %"struct.test2::POD" }>]], inalloca
+// WIN32:   getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 1
+// WIN32:   call void @llvm.memcpy
+// WIN32:   getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 0
+// WIN32:   call x86_thiscallcc %"struct.test2::NonTrivial"* @"\01??0NonTrivial@test2@@QAE@XZ"
+// WIN32:   call i32 @"\01?foo@test2@@YAHUNonTrivial@1@UPOD@1@@Z"([[argmem_ty]]* inalloca %argmem)
+// WIN32:   ret void
+// WIN32: }
+
+}

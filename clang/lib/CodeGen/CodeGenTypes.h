@@ -188,6 +188,10 @@ public:
   const CGFunctionInfo &arrangeCXXConstructorDeclaration(
                                                     const CXXConstructorDecl *D,
                                                     CXXCtorType Type);
+  const CGFunctionInfo &arrangeCXXConstructorCall(const CallArgList &Args,
+                                                  const CXXConstructorDecl *D,
+                                                  CXXCtorType CtorKind,
+                                                  unsigned ExtraArgs);
   const CGFunctionInfo &arrangeCXXDestructor(const CXXDestructorDecl *D,
                                              CXXDtorType Type);
 

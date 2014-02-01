@@ -23,9 +23,12 @@
 
 namespace llvm {
   class Type;
+  class StructType;
 }
 
 namespace clang {
+class Decl;
+
 namespace CodeGen {
 
 /// ABIArgInfo - Helper class to encapsulate information about how a
@@ -59,7 +62,15 @@ public:
     /// are all scalar types or are themselves expandable types.
     Expand,
 
-    KindFirst=Direct, KindLast=Expand
+    /// InAlloca - Pass the argument directly using the LLVM inalloca attribute.
+    /// This is similar to 'direct', except it only applies to arguments stored
+    /// in memory and forbids any implicit copies.  When applied to a return
+    /// type, it means the value is returned indirectly via an implicit sret
+    /// parameter stored in the argument struct.
+    InAlloca,
+
+    KindFirst = Direct,
+    KindLast = InAlloca
   };
 
 private:
@@ -102,6 +113,9 @@ public:
     return ABIArgInfo(Indirect, 0, Alignment, ByVal, Realign, false, false,
                       Padding);
   }
+  static ABIArgInfo getInAlloca(unsigned FieldIndex) {
+    return ABIArgInfo(InAlloca, 0, FieldIndex, false, false, false, false, 0);
+  }
   static ABIArgInfo getIndirectInReg(unsigned Alignment, bool ByVal = true
                                 , bool Realign = false) {
     return ABIArgInfo(Indirect, 0, Alignment, ByVal, Realign, true, false, 0);
@@ -117,6 +131,7 @@ public:
 
   Kind getKind() const { return TheKind; }
   bool isDirect() const { return TheKind == Direct; }
+  bool isInAlloca() const { return TheKind == InAlloca; }
   bool isExtend() const { return TheKind == Extend; }
   bool isIgnore() const { return TheKind == Ignore; }
   bool isIndirect() const { return TheKind == Indirect; }
@@ -169,6 +184,11 @@ public:
   bool getIndirectRealign() const {
     assert(TheKind == Indirect && "Invalid kind!");
     return BoolData1;
+  }
+
+  unsigned getInAllocaFieldIndex() const {
+    assert(TheKind == InAlloca && "Invalid kind!");
+    return UIntData;
   }
 
   void dump() const;
@@ -257,6 +277,10 @@ class CGFunctionInfo : public llvm::FoldingSetNode {
 
   RequiredArgs Required;
 
+  /// The struct representing all arguments passed in memory.  Only used when
+  /// passing non-trivial types with inalloca.  Not part of the profile.
+  llvm::StructType *ArgStruct;
+
   unsigned NumArgs;
   ArgInfo *getArgsBuffer() {
     return reinterpret_cast<ArgInfo*>(this+1);
@@ -329,6 +353,13 @@ public:
 
   ABIArgInfo &getReturnInfo() { return getArgsBuffer()[0].info; }
   const ABIArgInfo &getReturnInfo() const { return getArgsBuffer()[0].info; }
+
+  /// \brief Return true if this function uses inalloca arguments.
+  bool usesInAlloca() const { return ArgStruct; }
+
+  /// \brief Get the struct type used to represent all the arguments in memory.
+  llvm::StructType *getArgStruct() const { return ArgStruct; }
+  void setArgStruct(llvm::StructType *Ty) { ArgStruct = Ty; }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     ID.AddInteger(getASTCallingConvention());

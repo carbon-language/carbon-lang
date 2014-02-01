@@ -45,8 +45,14 @@ public:
   }
 
   RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const {
-    if (RD->hasNonTrivialCopyConstructor() || RD->hasNonTrivialDestructor())
-      return RAA_DirectInMemory;
+    if (RD->hasNonTrivialCopyConstructor() || RD->hasNonTrivialDestructor()) {
+      llvm::Triple::ArchType Arch = CGM.getTarget().getTriple().getArch();
+      if (Arch == llvm::Triple::x86)
+        return RAA_DirectInMemory;
+      // On x64, pass non-trivial records indirectly.
+      // FIXME: Test other Windows architectures.
+      return RAA_Indirect;
+    }
     return RAA_Default;
   }
 

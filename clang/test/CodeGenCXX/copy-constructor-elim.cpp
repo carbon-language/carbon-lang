@@ -1,6 +1,9 @@
-// RUN: %clang_cc1 -emit-llvm -o %t %s
-// RUN: not grep "_ZN1CC1ERK1C" %t
-// RUN: not grep "_ZN1SC1ERK1S" %t
+// RUN: %clang_cc1 -triple %itanium_abi_triple -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK
+// RUN: %clang_cc1 -triple %ms_abi_triple -emit-llvm -o - %s | FileCheck %s -check-prefix MS
+// CHECK-NOT: _ZN1CC1ERK1C
+// CHECK-NOT: _ZN1SC1ERK1S
+// MS-NOT: ?0C@@QAE@ABV0
+// MS-NOT: ?0S@@QAE@ABV0
 
 extern "C" int printf(...);
 

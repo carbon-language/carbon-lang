@@ -114,6 +114,9 @@ void ABIArgInfo::dump() const {
   case Ignore:
     OS << "Ignore";
     break;
+  case InAlloca:
+    OS << "InAlloca Offset=" << getInAllocaFieldIndex();
+    break;
   case Indirect:
     OS << "Indirect Align=" << getIndirectAlign()
        << " ByVal=" << getIndirectByVal()
@@ -532,6 +535,8 @@ struct CCState {
 
   unsigned CC;
   unsigned FreeRegs;
+  unsigned StackOffset;
+  bool UseInAlloca;
 };
 
 /// X86_32ABIInfo - The X86-32 ABI information.
@@ -569,6 +574,14 @@ class X86_32ABIInfo : public ABIInfo {
                                 bool IsInstanceMethod) const;
   ABIArgInfo classifyArgumentType(QualType RetTy, CCState &State) const;
   bool shouldUseInReg(QualType Ty, CCState &State, bool &NeedsPadding) const;
+
+  /// \brief Rewrite the function info so that all memory arguments use
+  /// inalloca.
+  void rewriteWithInAlloca(CGFunctionInfo &FI) const;
+
+  void addFieldToArgStruct(SmallVector<llvm::Type *, 6> &FrameFields,
+                           unsigned &StackOffset, ABIArgInfo &Info,
+                           QualType Type) const;
 
 public:
 
@@ -831,15 +844,12 @@ ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty, bool ByVal,
   unsigned TypeAlign = getContext().getTypeAlign(Ty) / 8;
   unsigned StackAlign = getTypeStackAlignInBytes(Ty, TypeAlign);
   if (StackAlign == 0)
-    return ABIArgInfo::getIndirect(4);
+    return ABIArgInfo::getIndirect(4, /*ByVal=*/true);
 
   // If the stack alignment is less than the type alignment, realign the
   // argument.
-  if (StackAlign < TypeAlign)
-    return ABIArgInfo::getIndirect(StackAlign, /*ByVal=*/true,
-                                   /*Realign=*/true);
-
-  return ABIArgInfo::getIndirect(StackAlign);
+  bool Realign = TypeAlign > StackAlign;
+  return ABIArgInfo::getIndirect(StackAlign, /*ByVal=*/true, Realign);
 }
 
 X86_32ABIInfo::Class X86_32ABIInfo::classify(QualType Ty) const {
@@ -897,16 +907,23 @@ bool X86_32ABIInfo::shouldUseInReg(QualType Ty, CCState &State,
   return true;
 }
 
-ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty, CCState &State) const {
+ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
+                                               CCState &State) const {
   // FIXME: Set alignment on indirect arguments.
   if (isAggregateTypeForABI(Ty)) {
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
+      // Check with the C++ ABI first.
+      CGCXXABI::RecordArgABI RAA = getRecordArgABI(RT, getCXXABI());
+      if (RAA == CGCXXABI::RAA_Indirect) {
+        return getIndirectResult(Ty, false, State);
+      } else if (RAA == CGCXXABI::RAA_DirectInMemory) {
+        // The field index doesn't matter, we'll fix it up later.
+        return ABIArgInfo::getInAlloca(/*FieldIndex=*/0);
+      }
+
+      // Structs are always byval on win32, regardless of what they contain.
       if (IsWin32StructABI)
         return getIndirectResult(Ty, true, State);
-
-      if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(RT, getCXXABI()))
-        return getIndirectResult(Ty, RAA == CGCXXABI::RAA_DirectInMemory,
-                                 State);
 
       // Structures with flexible arrays are always indirect.
       if (RT->getDecl()->hasFlexibleArrayMember())
@@ -994,9 +1011,87 @@ void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
       FI.getReturnInfo().isIndirect())
     FI.setEffectiveCallingConvention(llvm::CallingConv::X86_CDeclMethod);
 
+  bool UsedInAlloca = false;
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
-       it != ie; ++it)
+       it != ie; ++it) {
     it->info = classifyArgumentType(it->type, State);
+    UsedInAlloca |= (it->info.getKind() == ABIArgInfo::InAlloca);
+  }
+
+  // If we needed to use inalloca for any argument, do a second pass and rewrite
+  // all the memory arguments to use inalloca.
+  if (UsedInAlloca)
+    rewriteWithInAlloca(FI);
+}
+
+void
+X86_32ABIInfo::addFieldToArgStruct(SmallVector<llvm::Type *, 6> &FrameFields,
+                                   unsigned &StackOffset,
+                                   ABIArgInfo &Info, QualType Type) const {
+  // Insert padding bytes to respect alignment.  For x86_32, each argument is 4
+  // byte aligned.
+  unsigned Align = 4U;
+  if (Info.getKind() == ABIArgInfo::Indirect && Info.getIndirectByVal())
+    Align = std::max(Align, Info.getIndirectAlign());
+  if (StackOffset & (Align - 1)) {
+    unsigned OldOffset = StackOffset;
+    StackOffset = llvm::RoundUpToAlignment(StackOffset, Align);
+    unsigned NumBytes = StackOffset - OldOffset;
+    assert(NumBytes);
+    llvm::Type *Ty = llvm::Type::getInt8Ty(getVMContext());
+    Ty = llvm::ArrayType::get(Ty, NumBytes);
+    FrameFields.push_back(Ty);
+  }
+
+  Info = ABIArgInfo::getInAlloca(FrameFields.size());
+  FrameFields.push_back(CGT.ConvertTypeForMem(Type));
+  StackOffset += getContext().getTypeSizeInChars(Type).getQuantity();
+}
+
+void X86_32ABIInfo::rewriteWithInAlloca(CGFunctionInfo &FI) const {
+  assert(IsWin32StructABI && "inalloca only supported on win32");
+
+  // Build a packed struct type for all of the arguments in memory.
+  SmallVector<llvm::Type *, 6> FrameFields;
+
+  unsigned StackOffset = 0;
+
+  // Put the sret parameter into the inalloca struct if it's in memory.
+  ABIArgInfo &Ret = FI.getReturnInfo();
+  if (Ret.isIndirect() && !Ret.getInReg()) {
+    CanQualType PtrTy = getContext().getPointerType(FI.getReturnType());
+    addFieldToArgStruct(FrameFields, StackOffset, Ret, PtrTy);
+  }
+
+  // Skip the 'this' parameter in ecx.
+  CGFunctionInfo::arg_iterator I = FI.arg_begin(), E = FI.arg_end();
+  if (FI.getCallingConvention() == llvm::CallingConv::X86_ThisCall)
+    ++I;
+
+  // Put arguments passed in memory into the struct.
+  for (; I != E; ++I) {
+
+    // Leave ignored and inreg arguments alone.
+    switch (I->info.getKind()) {
+    case ABIArgInfo::Indirect:
+      assert(I->info.getIndirectByVal());
+      break;
+    case ABIArgInfo::Ignore:
+      continue;
+    case ABIArgInfo::Direct:
+    case ABIArgInfo::Extend:
+      if (I->info.getInReg())
+        continue;
+      break;
+    default:
+      break;
+    }
+
+    addFieldToArgStruct(FrameFields, StackOffset, I->info, I->type);
+  }
+
+  FI.setArgStruct(llvm::StructType::get(getVMContext(), FrameFields,
+                                        /*isPacked=*/true));
 }
 
 llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
@@ -5413,6 +5508,7 @@ llvm::Value *SparcV9ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 
   switch (AI.getKind()) {
   case ABIArgInfo::Expand:
+  case ABIArgInfo::InAlloca:
     llvm_unreachable("Unsupported ABI kind for va_arg");
 
   case ABIArgInfo::Extend:
@@ -5499,6 +5595,7 @@ llvm::Value *XCoreABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   uint64_t ArgSize = 0;
   switch (AI.getKind()) {
   case ABIArgInfo::Expand:
+  case ABIArgInfo::InAlloca:
     llvm_unreachable("Unsupported ABI kind for va_arg");
   case ABIArgInfo::Ignore:
     Val = llvm::UndefValue::get(ArgPtrTy);
