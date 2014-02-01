@@ -151,7 +151,7 @@ class AdSize { bit hasAdSizePrefix = 1; }
 class REX_W  { bit hasREX_WPrefix = 1; }
 class LOCK   { bit hasLockPrefix = 1; }
 class REP    { bit hasREPPrefix = 1; }
-class TB     { Prefix OpPrefix = NoPrfx; Map OpMap = TB; }
+class TB     { Map OpMap = TB; }
 class D8     { Map OpMap = D8; }
 class D9     { Map OpMap = D9; }
 class DA     { Map OpMap = DA; }
@@ -160,21 +160,21 @@ class DC     { Map OpMap = DC; }
 class DD     { Map OpMap = DD; }
 class DE     { Map OpMap = DE; }
 class DF     { Map OpMap = DF; }
-class XD     { Map OpMap = TB; Prefix OpPrefix = XD; }
-class XS     { Map OpMap = TB; Prefix OpPrefix = XS; }
 class T8     { Map OpMap = T8; }
 class TA     { Map OpMap = TA; }
 class A6     { Map OpMap = A6; }
 class A7     { Map OpMap = A7; }
-class T8XD   { Map OpMap = T8; Prefix OpPrefix = XD; }
-class T8XS   { Map OpMap = T8; Prefix OpPrefix = XS; }
-class TAXD   { Map OpMap = TA; Prefix OpPrefix = XD; }
 class XOP8   { Map OpMap = XOP8; }
 class XOP9   { Map OpMap = XOP9; }
 class XOPA   { Map OpMap = XOPA; }
-class PD     { Map OpMap = TB; Prefix OpPrefix = PD; }
-class T8PD   { Map OpMap = T8; Prefix OpPrefix = PD; }
-class TAPD   { Map OpMap = TA; Prefix OpPrefix = PD; }
+class PD   : TB { Prefix OpPrefix = PD; }
+class XD   : TB { Prefix OpPrefix = XD; }
+class XS   : TB { Prefix OpPrefix = XS; }
+class T8PD : T8 { Prefix OpPrefix = PD; }
+class T8XD : T8 { Prefix OpPrefix = XD; }
+class T8XS : T8 { Prefix OpPrefix = XS; }
+class TAPD : TA { Prefix OpPrefix = PD; }
+class TAXD : TA { Prefix OpPrefix = XD; }
 class VEX    { bit hasVEXPrefix = 1; }
 class VEX_W  { bit hasVEX_WPrefix = 1; }
 class VEX_4V : VEX { bit hasVEX_4VPrefix = 1; }
@@ -699,7 +699,7 @@ class AVX512AIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
         Requires<[HasAVX512]>;
 class AVX512Ii8<bits<8> o, Format F, dag outs, dag ins, string asm,
               list<dag> pattern, InstrItinClass itin = NoItinerary>
-      : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TB,
+      : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>,
         Requires<[HasAVX512]>;
 class AVX512PDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
@@ -711,10 +711,10 @@ class AVX512PSI<bits<8> o, Format F, dag outs, dag ins, string asm,
         Requires<[HasAVX512]>;
 class AVX512PIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
               list<dag> pattern, Domain d, InstrItinClass itin = NoItinerary>
-      : Ii8<o, F, outs, ins, asm, pattern, itin, d>, TB, Requires<[HasAVX512]>;
+      : Ii8<o, F, outs, ins, asm, pattern, itin, d>, Requires<[HasAVX512]>;
 class AVX512PI<bits<8> o, Format F, dag outs, dag ins, string asm,
               list<dag> pattern, Domain d, InstrItinClass itin = NoItinerary>
-      : I<o, F, outs, ins, asm, pattern, itin, d>, TB, Requires<[HasAVX512]>;
+      : I<o, F, outs, ins, asm, pattern, itin, d>, Requires<[HasAVX512]>;
 class AVX512FMA3<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag>pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin>, T8PD,
