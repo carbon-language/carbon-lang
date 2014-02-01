@@ -173,3 +173,11 @@
 //
 // LINK_X86_64H_MULTIARCH: {{ld(.exe)?"}}
 // LINK_X86_64H_MULTIARCH: "x86_64h"
+
+// Check that clang passes -iphoneos_version_min to the linker when building
+// for the iOS simulator but when -mios-simulator-version-min is not
+// explicitly specified (<rdar://problem/15959009>).
+// RUN: env IPHONEOS_DEPLOYMENT_TARGET=7.0 \
+// RUN:   %clang -target i386-apple-darwin -### %t.o 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_IPHONEOS_VERSION_MIN %s < %t.log
+// LINK_IPHONEOS_VERSION_MIN: -iphoneos_version_min

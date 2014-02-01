@@ -991,7 +991,7 @@ void Darwin::addMinVersionArgs(const llvm::opt::ArgList &Args,
   // it.
   if (Args.hasArg(options::OPT_mios_simulator_version_min_EQ))
     CmdArgs.push_back("-ios_simulator_version_min");
-  else if (isTargetIPhoneOS())
+  else if (isTargetIOSBased())
     CmdArgs.push_back("-iphoneos_version_min");
   else {
     assert(isTargetMacOS() && "unexpected target");
