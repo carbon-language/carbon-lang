@@ -83,6 +83,37 @@ RegisterContextLLDB::RegisterContextLLDB
     }
 }
 
+bool
+RegisterContextLLDB::IsUnwindPlanValidForCurrentPC(lldb::UnwindPlanSP unwind_plan_sp, int &valid_pc_offset)
+{
+    if (!unwind_plan_sp)
+        return false;
+
+    // check if m_current_pc is valid
+    if (unwind_plan_sp->PlanValidAtAddress(m_current_pc))
+    {
+        // yes - current offset can be used as is
+        valid_pc_offset = m_current_offset;
+        return true;
+    }
+
+    // if m_current_offset <= 0, we've got nothing else to try
+    if (m_current_offset <= 0)
+        return false;
+
+    // check pc - 1 to see if it's valid
+    Address pc_minus_one (m_current_pc);
+    pc_minus_one.SetOffset(m_current_pc.GetOffset() - 1);
+    if (unwind_plan_sp->PlanValidAtAddress(pc_minus_one))
+    {
+        // *valid_pc_offset = m_current_offset - 1;
+        valid_pc_offset = m_current_pc.GetOffset() - 1;
+        return true;
+    }
+
+    return false;
+}
+
 // Initialize a RegisterContextLLDB which is the first frame of a stack -- the zeroth frame or currently
 // executing frame.
 
@@ -500,9 +531,10 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     else
     {
         m_full_unwind_plan_sp = GetFullUnwindPlanForFrame ();
-        if (m_full_unwind_plan_sp && m_full_unwind_plan_sp->PlanValidAtAddress (m_current_pc))
+        int valid_offset = -1;
+        if (IsUnwindPlanValidForCurrentPC(m_full_unwind_plan_sp, valid_offset))
         {
-            active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
+            active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (valid_offset);
             row_register_kind = m_full_unwind_plan_sp->GetRegisterKind ();
             if (active_row.get() && log)
             {
@@ -769,7 +801,8 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
 
     // Typically this is unwind info from an eh_frame section intended for exception handling; only valid at call sites
     unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (m_current_offset_backed_up_one);
-    if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))
+    int valid_offset = -1;
+    if (IsUnwindPlanValidForCurrentPC(unwind_plan_sp, valid_offset))
     {
         UnwindLogMsgVerbose ("frame uses %s for full UnwindPlan", unwind_plan_sp->GetSourceName().GetCString());
         return unwind_plan_sp;
@@ -778,7 +811,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     // We'd prefer to use an UnwindPlan intended for call sites when we're at a call site but if we've
     // struck out on that, fall back to using the non-call-site assembly inspection UnwindPlan if possible.
     unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtNonCallSite (m_thread);
-    if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))
+    if (IsUnwindPlanValidForCurrentPC(unwind_plan_sp, valid_offset))
     {
         UnwindLogMsgVerbose ("frame uses %s for full UnwindPlan", unwind_plan_sp->GetSourceName().GetCString());
         return unwind_plan_sp;
