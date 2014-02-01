@@ -2335,7 +2335,8 @@ bool AsmParser::parseDirectiveOctaValue() {
         hi = 0;
         lo = IntValue.getZExtValue();
       } else if (IntValue.isIntN(128)) {
-        hi = IntValue.getHiBits(64).getZExtValue();
+        // It might actually have more than 128 bits, but the top ones are zero.
+        hi = IntValue.getHiBits(IntValue.getBitWidth() - 64).getZExtValue();
         lo = IntValue.getLoBits(64).getZExtValue();
       } else
         return Error(ExprLoc, "literal value out of range for directive");
