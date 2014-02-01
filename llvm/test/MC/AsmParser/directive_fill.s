@@ -13,7 +13,8 @@ TEST1:
         .fill 2, 2, 3
 
 # CHECK: TEST2:
-# CHECK: .quad 4
+# CHECK: .long 4
+# CHECK: .long 0
 TEST2:  
         .fill 1, 8, 4
 
