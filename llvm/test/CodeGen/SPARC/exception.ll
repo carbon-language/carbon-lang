@@ -56,7 +56,11 @@
 ; V8PIC_NOCFI-NEXT:   .word _ZTIi
 ; V8PIC_NOCFI:        .section .eh_frame
 ; V8PIC_NOCFI-NOT:    .section
+; V8PIC_NOCFI:        .byte 15                     ! CIE Return Address Column
 ; V8PIC_NOCFI:        .word %r_disp32(DW.ref.__gxx_personality_v0)
+; V8PIC_NOCFI:        .byte 12                     ! DW_CFA_def_cfa
+; V8PIC_NOCFI:        .byte 14                     ! Reg 14
+; V8PIC_NOCFI-NEXT:   .byte 0                      ! Offset 0
 ; V8PIC_NOCFI:        .word %r_disp32(.Ltmp{{.+}}) ! FDE initial location
 
 
@@ -94,7 +98,11 @@
 ; V9PIC_NOCFI-NEXT:   .xword _ZTIi
 ; V9PIC_NOCFI:        .section .eh_frame
 ; V9PIC_NOCFI-NOT:    .section
+; V9PIC_NOCFI:        .byte 15                     ! CIE Return Address Column
 ; V9PIC_NOCFI:        .word %r_disp32(DW.ref.__gxx_personality_v0)
+; V9PIC_NOCFI:        .byte 12                     ! DW_CFA_def_cfa
+; V9PIC_NOCFI-NEXT:   .byte 14                     ! Reg 14
+; V9PIC_NOCFI:        .ascii "\377\017"            ! Offset 2047
 ; V9PIC_NOCFI:        .word %r_disp32(.Ltmp{{.+}}) ! FDE initial location
 
 define i32 @main(i32 %argc, i8** nocapture readnone %argv) unnamed_addr #0 {

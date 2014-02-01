@@ -33,6 +33,25 @@
 
 using namespace llvm;
 
+
+static MCAsmInfo *createSparcMCAsmInfo(const MCRegisterInfo &MRI,
+                                       StringRef TT) {
+  MCAsmInfo *MAI = new SparcELFMCAsmInfo(TT);
+  unsigned Reg = MRI.getDwarfRegNum(SP::O6, true);
+  MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(0, Reg, 0);
+  MAI->addInitialFrameState(Inst);
+  return MAI;
+}
+
+static MCAsmInfo *createSparcV9MCAsmInfo(const MCRegisterInfo &MRI,
+                                       StringRef TT) {
+  MCAsmInfo *MAI = new SparcELFMCAsmInfo(TT);
+  unsigned Reg = MRI.getDwarfRegNum(SP::O6, true);
+  MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(0, Reg, 2047);
+  MAI->addInitialFrameState(Inst);
+  return MAI;
+}
+
 static MCInstrInfo *createSparcMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitSparcMCInstrInfo(X);
@@ -41,7 +60,7 @@ static MCInstrInfo *createSparcMCInstrInfo() {
 
 static MCRegisterInfo *createSparcMCRegisterInfo(StringRef TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitSparcMCRegisterInfo(X, SP::I7);
+  InitSparcMCRegisterInfo(X, SP::O7);
   return X;
 }
 
@@ -136,8 +155,8 @@ static MCInstPrinter *createSparcMCInstPrinter(const Target &T,
 
 extern "C" void LLVMInitializeSparcTargetMC() {
   // Register the MC asm info.
-  RegisterMCAsmInfo<SparcELFMCAsmInfo> X(TheSparcTarget);
-  RegisterMCAsmInfo<SparcELFMCAsmInfo> Y(TheSparcV9Target);
+  RegisterMCAsmInfoFn X(TheSparcTarget, createSparcMCAsmInfo);
+  RegisterMCAsmInfoFn Y(TheSparcV9Target, createSparcV9MCAsmInfo);
 
   // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheSparcTarget,
