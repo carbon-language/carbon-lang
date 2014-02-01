@@ -1,5 +1,6 @@
 set(LLVM_LINK_COMPONENTS
-  Support
+  lineeditor
+  support
   )
 
 add_clang_library(clangQuery

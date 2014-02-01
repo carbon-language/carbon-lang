@@ -1,6 +1,3 @@
-include(CheckLibraryExists)
-check_library_exists(edit el_init "" HAVE_LIBEDIT)
-
 add_subdirectory(clang-apply-replacements)
 add_subdirectory(clang-modernize)
 add_subdirectory(clang-query)

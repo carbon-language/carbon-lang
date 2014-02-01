@@ -33,11 +33,11 @@
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/LineEditor/LineEditor.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
 #include <fstream>
-#include <histedit.h>
 #include <string>
 
 using namespace clang;
@@ -60,11 +60,6 @@ static cl::list<std::string> CommandFiles("f",
 static cl::list<std::string> SourcePaths(cl::Positional,
                                          cl::desc("<source0> [... <sourceN>]"),
                                          cl::OneOrMore);
-
-static char *ReturnPrompt(EditLine *EL) {
-  static char Prompt[] = "clang-query> ";
-  return Prompt;
-}
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
@@ -124,30 +119,11 @@ int main(int argc, const char **argv) {
       }
     }
   } else {
-    History *Hist = history_init();
-    HistEvent Event;
-    history(Hist, &Event, H_SETSIZE, 100);
-
-    EditLine *EL = el_init("clang-query", stdin, stdout, stderr);
-    el_set(EL, EL_PROMPT, ReturnPrompt);
-    el_set(EL, EL_EDITOR, "emacs");
-    el_set(EL, EL_HIST, history, Hist);
-
-    int Count;
-    while (const char *Line = el_gets(EL, &Count)) {
-      if (Count == 0)
-        break;
-
-      history(Hist, &Event, H_ENTER, Line);
-
-      QueryRef Q = ParseQuery(Line);
+    LineEditor LE("clang-query");
+    while (llvm::Optional<std::string> Line = LE.readLine()) {
+      QueryRef Q = ParseQuery(*Line);
       Q->run(llvm::outs(), QS);
     }
-
-    history_end(Hist);
-    el_end(EL);
-
-    llvm::outs() << "\n";
   }
 
   llvm::DeleteContainerPointers(ASTs);
