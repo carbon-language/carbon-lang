@@ -701,6 +701,9 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
   // Handle /machine before parsing all the other options, as the target machine
   // type affects how to handle other options. For example, x86 needs the
   // leading underscore to mangle symbols, while x64 doesn't need it.
+  //
+  // TODO: If /machine option is missing, we probably should take a look at
+  // the magic byte of the first object file to set machine type.
   if (llvm::opt::Arg *inputArg = parsedArgs->getLastArg(OPT_machine)) {
     StringRef arg = inputArg->getValue();
     llvm::COFF::MachineTypes type = stringToMachineType(arg);
