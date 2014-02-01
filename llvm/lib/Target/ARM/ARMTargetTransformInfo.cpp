@@ -95,7 +95,7 @@ public:
 
     if (ST->isThumb1Only())
       return 8;
-    return 16;
+    return 13;
   }
 
   unsigned getRegisterBitWidth(bool Vector) const {
