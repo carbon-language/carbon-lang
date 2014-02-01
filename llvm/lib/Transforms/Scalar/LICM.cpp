@@ -286,15 +286,28 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
     for (AliasSetTracker::iterator I = CurAST->begin(), E = CurAST->end();
          I != E; ++I)
       PromoteAliasSet(*I, ExitBlocks, InsertPts);
+
+    // Once we have promoted values across the loop body we have to recursively
+    // reform LCSSA as any nested loop may now have values defined within the
+    // loop used in the outer loop.
+    // FIXME: This is really heavy handed. It would be a bit better to use an
+    // SSAUpdater strategy during promotion that was LCSSA aware and reformed
+    // it as it went.
+    if (Changed)
+      formLCSSARecursively(*L, *DT, getAnalysisIfAvailable<ScalarEvolution>());
+
+  } else if (Changed) {
+    // If we have successfully changed the loop but not used SSAUpdater to
+    // re-write instructions throughout the loop body, re-form LCSSA just for
+    // this loop.
+    formLCSSA(*L, *DT, getAnalysisIfAvailable<ScalarEvolution>());
   }
 
-  // If we have successfully changed the loop, re-form LCSSA and also re-form
-  // LCSSA in the parent loop as hoisting or sinking may have broken it.
-  if (Changed) {
-    formLCSSA(*L, *DT, getAnalysisIfAvailable<ScalarEvolution>());
+  // Regardless of how we changed the loop, reform LCSSA on its parent as
+  // hoisting or sinking could have disrupted it.
+  if (Changed)
     if (Loop *ParentL = L->getParentLoop())
       formLCSSA(*ParentL, *DT, getAnalysisIfAvailable<ScalarEvolution>());
-  }
 
   // Clear out loops state information for the next iteration
   CurLoop = 0;
