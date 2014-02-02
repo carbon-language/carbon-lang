@@ -71,8 +71,8 @@ void test4() {
 // CHECK: Keyword: "operator" [9:5 - 9:13] CXXMethod=operator++:9:5
 // CHECK: Punctuation: "++" [9:13 - 9:15] CXXMethod=operator++:9:5
 // CHECK: Punctuation: "(" [9:15 - 9:16] CXXMethod=operator++:9:5
-// CHECK: Keyword: "int" [9:16 - 9:19] ParmDecl=:9:19 (Definition)
-// CHECK: Punctuation: ")" [9:19 - 9:20] ParmDecl=:9:19 (Definition)
+// CHECK: Keyword: "int" [9:16 - 9:19] ParmDecl=:9:19 (Definition
+// CHECK: Punctuation: ")" [9:19 - 9:20] CXXMethod=operator++:9:5
 // CHECK: Punctuation: ";" [9:20 - 9:21] StructDecl=X:7:8 (Definition)
 // CHECK: Punctuation: "}" [10:1 - 10:2] StructDecl=X:7:8 (Definition)
 // CHECK: Punctuation: ";" [10:2 - 10:3]
@@ -143,7 +143,7 @@ void test4() {
 // CHECK: Punctuation: "(" [23:22 - 23:23] NonTypeTemplateParameter=tfn:23:18 (Definition)
 // CHECK: Identifier: "X" [23:23 - 23:24] TypeRef=struct X:7:8
 // CHECK: Punctuation: "*" [23:24 - 23:25] ParmDecl=:23:25 (Definition)
-// CHECK: Punctuation: ")" [23:25 - 23:26] ParmDecl=:23:25 (Definition)
+// CHECK: Punctuation: ")" [23:25 - 23:26] NonTypeTemplateParameter=tfn:23:18 (Definition)
 // CHECK: Punctuation: ">" [23:26 - 23:27] ClassTemplate=TS:24:8 (Definition)
 // CHECK: Keyword: "struct" [24:1 - 24:7] ClassTemplate=TS:24:8 (Definition)
 // CHECK: Identifier: "TS" [24:8 - 24:10] ClassTemplate=TS:24:8 (Definition)
@@ -165,7 +165,7 @@ void test4() {
 // CHECK: Punctuation: "(" [28:22 - 28:23] NonTypeTemplateParameter=tfn:28:18 (Definition)
 // CHECK: Identifier: "X" [28:23 - 28:24] TypeRef=struct X:7:8
 // CHECK: Punctuation: "*" [28:24 - 28:25] ParmDecl=:28:25 (Definition)
-// CHECK: Punctuation: ")" [28:25 - 28:26] ParmDecl=:28:25 (Definition)
+// CHECK: Punctuation: ")" [28:25 - 28:26] NonTypeTemplateParameter=tfn:28:18 (Definition)
 // CHECK: Punctuation: ">" [28:26 - 28:27] CXXMethod=foo:29:15 (Definition)
 // CHECK: Keyword: "void" [29:1 - 29:5] CXXMethod=foo:29:15 (Definition)
 // CHECK: Identifier: "TS" [29:6 - 29:8] TemplateRef=TS:24:8

@@ -225,13 +225,13 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "const" [7:14 - 7:19] ParmDecl=:7:26 (Definition)
 // CHECK-tokens: Keyword: "void" [7:20 - 7:24] ParmDecl=:7:26 (Definition)
 // CHECK-tokens: Punctuation: "*" [7:25 - 7:26] ParmDecl=:7:26 (Definition)
-// CHECK-tokens: Punctuation: "," [7:26 - 7:27] ParmDecl=:7:26 (Definition)
+// CHECK-tokens: Punctuation: "," [7:26 - 7:27] FunctionDecl=memcmp:7:7
 // CHECK-tokens: Keyword: "const" [7:28 - 7:33] ParmDecl=:7:40 (Definition)
 // CHECK-tokens: Keyword: "void" [7:34 - 7:38] ParmDecl=:7:40 (Definition)
 // CHECK-tokens: Punctuation: "*" [7:39 - 7:40] ParmDecl=:7:40 (Definition)
-// CHECK-tokens: Punctuation: "," [7:40 - 7:41] ParmDecl=:7:40 (Definition)
+// CHECK-tokens: Punctuation: "," [7:40 - 7:41] FunctionDecl=memcmp:7:7
 // CHECK-tokens: Identifier: "size_t" [7:42 - 7:48] TypeRef=size_t:2:25
-// CHECK-tokens: Punctuation: ")" [7:48 - 7:49] ParmDecl=:7:48 (Definition)
+// CHECK-tokens: Punctuation: ")" [7:48 - 7:49] FunctionDecl=memcmp:7:7
 // CHECK-tokens: Punctuation: ";" [7:49 - 7:50] UnexposedDecl=:6:8 (Definition)
 // CHECK-tokens: Identifier: "size_t" [8:3 - 8:9] TypeRef=size_t:2:25
 // CHECK-tokens: Identifier: "strlen" [8:10 - 8:16] FunctionDecl=strlen:8:10
@@ -239,7 +239,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "const" [8:17 - 8:22] ParmDecl=:8:29 (Definition)
 // CHECK-tokens: Keyword: "char" [8:23 - 8:27] ParmDecl=:8:29 (Definition)
 // CHECK-tokens: Punctuation: "*" [8:28 - 8:29] ParmDecl=:8:29 (Definition)
-// CHECK-tokens: Punctuation: ")" [8:29 - 8:30] ParmDecl=:8:29 (Definition)
+// CHECK-tokens: Punctuation: ")" [8:29 - 8:30] FunctionDecl=strlen:8:10
 // CHECK-tokens: Punctuation: ";" [8:30 - 8:31]
 // CHECK-tokens: Punctuation: "}" [9:1 - 9:2]
 // CHECK-tokens: Keyword: "namespace" [10:1 - 10:10]
@@ -1534,13 +1534,13 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 4:55: FieldDecl=second:4:55 (Definition) Extent=[4:51 - 4:61]
 // CHECK: 6:8: UnexposedDecl=:6:8 (Definition) Extent=[6:1 - 9:2]
 // CHECK: 7:7: FunctionDecl=memcmp:7:7 Extent=[7:3 - 7:49]
-// CHECK: 7:26: ParmDecl=:7:26 (Definition) Extent=[7:14 - 7:27]
-// CHECK: 7:40: ParmDecl=:7:40 (Definition) Extent=[7:28 - 7:41]
-// CHECK: 7:48: ParmDecl=:7:48 (Definition) Extent=[7:42 - 7:49]
+// CHECK: 7:26: ParmDecl=:7:26 (Definition) Extent=[7:14 - 7:26]
+// CHECK: 7:40: ParmDecl=:7:40 (Definition) Extent=[7:28 - 7:40]
+// CHECK: 7:48: ParmDecl=:7:48 (Definition) Extent=[7:42 - 7:48]
 // CHECK: 7:42: TypeRef=size_t:2:25 Extent=[7:42 - 7:48]
 // CHECK: 8:10: FunctionDecl=strlen:8:10 Extent=[8:3 - 8:30]
 // CHECK: 8:3: TypeRef=size_t:2:25 Extent=[8:3 - 8:9]
-// CHECK: 8:29: ParmDecl=:8:29 (Definition) Extent=[8:17 - 8:30]
+// CHECK: 8:29: ParmDecl=:8:29 (Definition) Extent=[8:17 - 8:29]
 // CHECK: 10:17: Namespace=clang:10:17 (Definition) Extent=[10:1 - 35:2]
 // CHECK: 11:9: ClassDecl=IdentifierInfo:11:9 Extent=[11:3 - 11:23]
 // CHECK: 12:9: ClassDecl=AttributeList:12:9 (Definition) Extent=[12:3 - 34:4]

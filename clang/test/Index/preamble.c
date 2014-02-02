@@ -17,7 +17,7 @@ void f(int x) {
 // CHECK: preamble.h:4:9: DeclRefExpr=ptr1:3:10 Extent=[4:9 - 4:13]
 // CHECK: preamble.h:5:10: IntegerLiteral= Extent=[5:10 - 5:11]
 // CHECK: preamble.c:5:5: FunctionDecl=wibble:5:5 Extent=[5:1 - 5:16]
-// CHECK: preamble.c:5:15: ParmDecl=:5:15 (Definition) Extent=[5:12 - 5:16]
+// CHECK: preamble.c:5:15: ParmDecl=:5:15 (Definition) Extent=[5:12 - 5:15]
 // CHECK-DIAG: preamble.h:4:7:{4:9-4:13}: warning: incompatible pointer types assigning to 'int *' from 'float *'
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -code-completion-at=%s:8:1 -I %S/Inputs -include %t %s 2> %t.stderr.txt | FileCheck -check-prefix CHECK-CC %s
 // CHECK-CC: FunctionDecl:{ResultType int}{TypedText bar}{LeftParen (}{Placeholder int i}{RightParen )} (50)

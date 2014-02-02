@@ -1569,7 +1569,9 @@ bool typeIsPostfix(clang::QualType QT) {
 SourceRange DeclaratorDecl::getSourceRange() const {
   SourceLocation RangeEnd = getLocation();
   if (TypeSourceInfo *TInfo = getTypeSourceInfo()) {
-    if (typeIsPostfix(TInfo->getType()))
+    // If the declaration has no name or the type extends past the name take the
+    // end location of the type.
+    if (!getDeclName() || typeIsPostfix(TInfo->getType()))
       RangeEnd = TInfo->getTypeLoc().getSourceRange().getEnd();
   }
   return SourceRange(getOuterLocStart(), RangeEnd);
