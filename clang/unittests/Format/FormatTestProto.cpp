@@ -32,7 +32,7 @@ protected:
   }
 
   static std::string format(llvm::StringRef Code) {
-    FormatStyle Style = getGoogleProtoStyle();
+    FormatStyle Style = getGoogleStyle(FormatStyle::LK_Proto);
     Style.ColumnLimit = 60; // To make writing tests easier.
     return format(Code, 0, Code.size(), Style);
   }

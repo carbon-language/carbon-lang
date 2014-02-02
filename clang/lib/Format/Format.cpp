@@ -294,8 +294,10 @@ FormatStyle getLLVMStyle() {
   return LLVMStyle;
 }
 
-FormatStyle getGoogleStyle() {
+FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
   FormatStyle GoogleStyle = getLLVMStyle();
+  GoogleStyle.Language = Language;
+
   GoogleStyle.AccessModifierOffset = -1;
   GoogleStyle.AlignEscapedNewlinesLeft = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = true;
@@ -316,27 +318,19 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
   GoogleStyle.PenaltyBreakBeforeFirstCallParameter = 1;
 
+  if (Language == FormatStyle::LK_JavaScript) {
+    GoogleStyle.BreakBeforeTernaryOperators = false;
+    GoogleStyle.MaxEmptyLinesToKeep = 2;
+    GoogleStyle.SpacesInContainerLiterals = false;
+  } else if (Language == FormatStyle::LK_Proto) {
+    GoogleStyle.AllowShortFunctionsOnASingleLine = false;
+  }
+
   return GoogleStyle;
 }
 
-FormatStyle getGoogleJSStyle() {
-  FormatStyle GoogleJSStyle = getGoogleStyle();
-  GoogleJSStyle.Language = FormatStyle::LK_JavaScript;
-  GoogleJSStyle.BreakBeforeTernaryOperators = false;
-  GoogleJSStyle.MaxEmptyLinesToKeep = 2;
-  GoogleJSStyle.SpacesInContainerLiterals = false;
-  return GoogleJSStyle;
-}
-
-FormatStyle getGoogleProtoStyle() {
-  FormatStyle GoogleProtoStyle = getGoogleStyle();
-  GoogleProtoStyle.Language = FormatStyle::LK_Proto;
-  GoogleProtoStyle.AllowShortFunctionsOnASingleLine = false;
-  return GoogleProtoStyle;
-}
-
-FormatStyle getChromiumStyle() {
-  FormatStyle ChromiumStyle = getGoogleStyle();
+FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language) {
+  FormatStyle ChromiumStyle = getGoogleStyle(Language);
   ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
   ChromiumStyle.AllowShortIfStatementsOnASingleLine = false;
   ChromiumStyle.AllowShortLoopsOnASingleLine = false;
@@ -389,20 +383,11 @@ bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
   if (Name.equals_lower("llvm")) {
     *Style = getLLVMStyle();
   } else if (Name.equals_lower("chromium")) {
-    *Style = getChromiumStyle();
+    *Style = getChromiumStyle(Language);
   } else if (Name.equals_lower("mozilla")) {
     *Style = getMozillaStyle();
   } else if (Name.equals_lower("google")) {
-    switch (Language) {
-    case FormatStyle::LK_JavaScript:
-      *Style = getGoogleJSStyle();
-      break;
-    case FormatStyle::LK_Proto:
-      *Style = getGoogleProtoStyle();
-      break;
-    default:
-      *Style = getGoogleStyle();
-    }
+    *Style = getGoogleStyle(Language);
   } else if (Name.equals_lower("webkit")) {
     *Style = getWebKitStyle();
   } else if (Name.equals_lower("gnu")) {

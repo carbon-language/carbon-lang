@@ -17,6 +17,10 @@
 namespace clang {
 namespace format {
 
+FormatStyle getGoogleStyle() {
+  return getGoogleStyle(FormatStyle::LK_Cpp);
+}
+
 class FormatTest : public ::testing::Test {
 protected:
   std::string format(llvm::StringRef Code, unsigned Offset, unsigned Length,
@@ -5783,7 +5787,7 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
                "                  backing:NSBackingStoreBuffered\n"
                "                    defer:NO]);\n"
                "}",
-               getChromiumStyle());
+               getChromiumStyle(FormatStyle::LK_Cpp));
   verifyFormat("[contentsContainer replaceSubview:[subviews objectAtIndex:0]\n"
                "                             with:contentsNativeView];");
 
@@ -7250,14 +7254,14 @@ TEST_F(FormatTest, GetsPredefinedStyleByName) {
   EXPECT_TRUE(getPredefinedStyle("gOOgle", FormatStyle::LK_Cpp, &Styles[2]));
   EXPECT_ALL_STYLES_EQUAL(Styles);
 
-  Styles[0] = getGoogleJSStyle();
+  Styles[0] = getGoogleStyle(FormatStyle::LK_JavaScript);
   EXPECT_TRUE(
       getPredefinedStyle("Google", FormatStyle::LK_JavaScript, &Styles[1]));
   EXPECT_TRUE(
       getPredefinedStyle("gOOgle", FormatStyle::LK_JavaScript, &Styles[2]));
   EXPECT_ALL_STYLES_EQUAL(Styles);
 
-  Styles[0] = getChromiumStyle();
+  Styles[0] = getChromiumStyle(FormatStyle::LK_Cpp);
   EXPECT_TRUE(getPredefinedStyle("Chromium", FormatStyle::LK_Cpp, &Styles[1]));
   EXPECT_TRUE(getPredefinedStyle("cHRoMiUM", FormatStyle::LK_Cpp, &Styles[2]));
   EXPECT_ALL_STYLES_EQUAL(Styles);
@@ -7290,7 +7294,7 @@ TEST_F(FormatTest, GetsCorrectBasedOnStyle) {
   EXPECT_ALL_STYLES_EQUAL(Styles);
 
   Styles.resize(5);
-  Styles[0] = getGoogleJSStyle();
+  Styles[0] = getGoogleStyle(FormatStyle::LK_JavaScript);
   Styles[1] = getLLVMStyle();
   Styles[1].Language = FormatStyle::LK_JavaScript;
   EXPECT_EQ(0, parseConfiguration("BasedOnStyle: Google", &Styles[1]).value());
