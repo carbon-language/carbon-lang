@@ -2622,19 +2622,6 @@ bool Sema::FunctionParamTypesAreEqual(const FunctionProtoType *OldType,
   return true;
 }
 
-static Expr *ignoreIntegerCasts(Expr *E) {
-  while (true) {
-    if (ExplicitCastExpr *ECE = dyn_cast<ExplicitCastExpr>(E)) {
-      if (ECE->getType()->isIntegerType()) {
-        E = ECE->getSubExpr();
-        continue;
-      }
-    }
-
-    return E;
-  }
-}
-
 /// CheckPointerConversion - Check the pointer conversion from the
 /// expression From to the type ToType. This routine checks for
 /// ambiguous or inaccessible derived-to-base pointer
@@ -2651,8 +2638,7 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
   Kind = CK_BitCast;
 
   if (!IsCStyleOrFunctionalCast && !FromType->isAnyPointerType() &&
-      ignoreIntegerCasts(From)->
-        isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull) ==
+      From->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull) ==
       Expr::NPCK_ZeroExpression) {
     if (Context.hasSameUnqualifiedType(From->getType(), Context.BoolTy))
       DiagRuntimeBehavior(From->getExprLoc(), From,
