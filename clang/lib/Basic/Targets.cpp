@@ -3375,6 +3375,10 @@ public:
     DescriptionString = "e-m:e-i64:64-i128:128-n32:64-S128";
 
     WCharType = UnsignedInt;
+    if (getTriple().getOS() == llvm::Triple::NetBSD)
+      WCharType = SignedInt;
+    else
+      WCharType = UnsignedInt;
     LongDoubleFormat = &llvm::APFloat::IEEEquad;
 
     // AArch64 backend supports 64-bit operations at the moment. In principle
@@ -3426,6 +3430,13 @@ public:
 
     if (BigEndian)
       Builder.defineMacro("__AARCH_BIG_ENDIAN");
+
+    if (getTriple().getOS() == llvm::Triple::NetBSD) {
+      if (BigEndian)
+        Builder.defineMacro("__BIG_ENDIAN__");
+      else
+        Builder.defineMacro("__LITTLE_ENDIAN__");
+    }
 
     if (FPU == NeonMode) {
       Builder.defineMacro("__ARM_NEON");
