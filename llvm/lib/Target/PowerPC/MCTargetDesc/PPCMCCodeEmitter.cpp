@@ -33,10 +33,12 @@ class PPCMCCodeEmitter : public MCCodeEmitter {
   PPCMCCodeEmitter(const PPCMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   void operator=(const PPCMCCodeEmitter &) LLVM_DELETED_FUNCTION;
 
+  const MCInstrInfo &MCII;
   const MCContext &CTX;
 
 public:
-  PPCMCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx) : CTX(ctx) {
+  PPCMCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx)
+    : MCII(mcii), CTX(ctx) {
   }
   
   ~PPCMCCodeEmitter() {}
@@ -90,18 +92,14 @@ public:
     // It's just a nop to keep the register classes happy, so don't
     // generate anything.
     unsigned Opcode = MI.getOpcode();
+    const MCInstrDesc &Desc = MCII.get(Opcode);
     if (Opcode == TargetOpcode::COPY_TO_REGCLASS)
       return;
 
     uint64_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
 
-    // BL8_NOP etc. all have a size of 8 because of the following 'nop'.
-    unsigned Size = 4; // FIXME: Have Desc.getSize() return the correct value!
-    if (Opcode == PPC::BL8_NOP || Opcode == PPC::BLA8_NOP ||
-        Opcode == PPC::BL8_NOP_TLS)
-      Size = 8;
-    
     // Output the constant in big endian byte order.
+    unsigned Size = Desc.getSize();
     int ShiftValue = (Size * 8) - 8;
     for (unsigned i = 0; i != Size; ++i) {
       OS << (char)(Bits >> ShiftValue);

@@ -1436,22 +1436,15 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
 /// instruction may be.  This returns the maximum number of bytes.
 ///
 unsigned PPCInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
-  switch (MI->getOpcode()) {
-  case PPC::INLINEASM: {       // Inline Asm: Variable size.
+  unsigned Opcode = MI->getOpcode();
+
+  if (Opcode == PPC::INLINEASM) {
     const MachineFunction *MF = MI->getParent()->getParent();
     const char *AsmStr = MI->getOperand(0).getSymbolName();
     return getInlineAsmLength(AsmStr, *MF->getTarget().getMCAsmInfo());
-  }
-  case PPC::PROLOG_LABEL:
-  case PPC::EH_LABEL:
-  case PPC::GC_LABEL:
-  case PPC::DBG_VALUE:
-    return 0;
-  case PPC::BL8_NOP:
-  case PPC::BLA8_NOP:
-    return 8;
-  default:
-    return 4; // PowerPC instructions are all 4 bytes
+  } else {
+    const MCInstrDesc &Desc = get(Opcode);
+    return Desc.getSize();
   }
 }
 
