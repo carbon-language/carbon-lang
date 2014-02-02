@@ -24,7 +24,7 @@
 # CHECK:   0x0000001A FINI_ARRAY           0x0
 # CHECK:   0x0000001C FINI_ARRAYSZ         0 (bytes)
 # CHECK:   0x00000002 PLTRELSZ             8 (bytes)
-# CHECK:   0x00000003 PLTGOT               0x402000
+# CHECK:   0x70000032 MIPS_PLTGOT          0x402000
 # CHECK:   0x00000014 PLTREL               REL
 # CHECK:   0x00000017 JMPREL               0x400162
 # CHECK:   0x70000001 MIPS_RLD_VERSION     1
@@ -33,6 +33,7 @@
 # CHECK:   0x7000000A MIPS_LOCAL_GOTNO     2
 # CHECK:   0x70000011 MIPS_SYMTABNO        2
 # CHECK:   0x70000013 MIPS_GOTSYM          0x2
+# CHECK:   0x00000003 PLTGOT               0x401000
 # CHECK:   0x00000001 NEEDED               SharedLibrary (exe-dynamic.test.{{.*}})
 # CHECK:   0x00000000 NULL                 0x0
 # CHECK: ]

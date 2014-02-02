@@ -1080,7 +1080,7 @@ public:
     if (_layout.hasPLTRelocationTable()) {
       dyn.d_tag = DT_PLTRELSZ;
       _dt_pltrelsz = addEntry(dyn);
-      dyn.d_tag = DT_PLTGOT;
+      dyn.d_tag = getGotPltTag();
       _dt_pltgot = addEntry(dyn);
       dyn.d_tag = DT_PLTREL;
       dyn.d_un.d_val = isRela ? DT_RELA : DT_REL;
@@ -1090,6 +1090,10 @@ public:
       _dt_jmprel = addEntry(dyn);
     }
   }
+
+  /// \brief Dynamic table tag for .got.plt section referencing.
+  /// Usually but not always targets use DT_PLTGOT for that.
+  virtual int64_t getGotPltTag() { return DT_PLTGOT; }
 
   virtual void finalize() {
     StringTable<ELFT> *dynamicStringTable =

@@ -89,6 +89,8 @@ public:
         _mipsTargetLayout.findOutputSection(".got")->virtualAddr();
   }
 
+  virtual int64_t getGotPltTag() { return DT_MIPS_PLTGOT; }
+
 private:
   std::size_t _dt_symtabno;
   std::size_t _dt_localgot;
