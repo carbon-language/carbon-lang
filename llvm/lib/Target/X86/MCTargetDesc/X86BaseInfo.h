@@ -310,12 +310,15 @@ namespace X86II {
     //===------------------------------------------------------------------===//
     // Actual flags...
 
-    // OpSize - Set if this instruction requires an operand size prefix (0x66),
-    // which most often indicates that the instruction operates on 16 bit data
-    // instead of 32 bit data. OpSize16 in 16 bit mode indicates that the
-    // instruction operates on 32 bit data instead of 16 bit data.
-    OpSize      = 1 << 6,
-    OpSize16    = 1 << 7,
+    // OpSize - OpSizeFixed implies instruction never needs a 0x66 prefix.
+    // OpSize16 means this is a 16-bit instruction and needs 0x66 prefix in
+    // 32-bit mode. OpSize32 means this is a 32-bit instruction needs a 0x66
+    // prefix in 16-bit mode.
+    OpSizeShift = 6,
+    OpSizeMask = 0x3 << OpSizeShift,
+
+    OpSize16 = 1,
+    OpSize32 = 2,
 
     // AsSize - Set if this instruction requires an operand size prefix (0x67),
     // which most often indicates that the instruction address 16 bit address

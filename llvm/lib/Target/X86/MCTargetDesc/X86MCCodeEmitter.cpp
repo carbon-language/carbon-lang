@@ -1119,7 +1119,8 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
                                         raw_ostream &OS) const {
 
   // Emit the operand size opcode prefix as needed.
-  if (TSFlags & (is16BitMode(STI) ? X86II::OpSize16 : X86II::OpSize))
+  unsigned char OpSize = (TSFlags & X86II::OpSizeMask) >> X86II::OpSizeShift;
+  if (OpSize == (is16BitMode(STI) ? X86II::OpSize32 : X86II::OpSize16))
     EmitByte(0x66, CurByte, OS);
 
   switch (TSFlags & X86II::OpPrefixMask) {
@@ -1277,7 +1278,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     // Emit segment override opcode prefix as needed (not for %ds).
     if (MI.getOperand(2).getReg() != X86::DS)
       EmitSegmentOverridePrefix(CurByte, 2, MI, OS);
-    // Emit OpSize prefix as needed.
+    // Emit AdSize prefix as needed.
     if ((!is32BitMode(STI) && siReg == X86::ESI) ||
         (is32BitMode(STI) && siReg == X86::SI))
       EmitByte(0x67, CurByte, OS);
@@ -1290,7 +1291,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     // Emit segment override opcode prefix as needed (not for %ds).
     if (MI.getOperand(1).getReg() != X86::DS)
       EmitSegmentOverridePrefix(CurByte, 1, MI, OS);
-    // Emit OpSize prefix as needed.
+    // Emit AdSize prefix as needed.
     if ((!is32BitMode(STI) && siReg == X86::ESI) ||
         (is32BitMode(STI) && siReg == X86::SI))
       EmitByte(0x67, CurByte, OS);
@@ -1300,7 +1301,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   }
   case X86II::RawFrmDst: {
     unsigned siReg = MI.getOperand(0).getReg();
-    // Emit OpSize prefix as needed.
+    // Emit AdSize prefix as needed.
     if ((!is32BitMode(STI) && siReg == X86::EDI) ||
         (is32BitMode(STI) && siReg == X86::DI))
       EmitByte(0x67, CurByte, OS);

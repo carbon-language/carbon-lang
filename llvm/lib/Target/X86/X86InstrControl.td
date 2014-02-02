@@ -23,16 +23,16 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, FPForm = SpecialFP, SchedRW = [WriteJumpLd] in {
   def RETL   : I   <0xC3, RawFrm, (outs), (ins variable_ops),
                     "ret{l}",
-                    [(X86retflag 0)], IIC_RET>, OpSize16, Requires<[Not64BitMode]>;
+                    [(X86retflag 0)], IIC_RET>, OpSize32, Requires<[Not64BitMode]>;
   def RETQ   : I   <0xC3, RawFrm, (outs), (ins variable_ops),
                     "ret{q}",
                     [(X86retflag 0)], IIC_RET>, Requires<[In64BitMode]>;
   def RETW   : I   <0xC3, RawFrm, (outs), (ins),
                     "ret{w}",
-                    [], IIC_RET>, OpSize;
+                    [], IIC_RET>, OpSize16;
   def RETIL  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "ret{l}\t$amt",
-                    [(X86retflag timm:$amt)], IIC_RET_IMM>, OpSize16,
+                    [(X86retflag timm:$amt)], IIC_RET_IMM>, OpSize32,
                Requires<[Not64BitMode]>;
   def RETIQ  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "ret{q}\t$amt",
@@ -40,27 +40,27 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
                Requires<[In64BitMode]>;
   def RETIW  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt),
                     "ret{w}\t$amt",
-                    [], IIC_RET_IMM>, OpSize;
+                    [], IIC_RET_IMM>, OpSize16;
   def LRETL  : I   <0xCB, RawFrm, (outs), (ins),
-                    "{l}ret{l|f}", [], IIC_RET>, OpSize16;
+                    "{l}ret{l|f}", [], IIC_RET>, OpSize32;
   def LRETQ  : RI  <0xCB, RawFrm, (outs), (ins),
                     "{l}ret{|f}q", [], IIC_RET>, Requires<[In64BitMode]>;
   def LRETW  : I   <0xCB, RawFrm, (outs), (ins),
-                    "{l}ret{w|f}", [], IIC_RET>, OpSize;
+                    "{l}ret{w|f}", [], IIC_RET>, OpSize16;
   def LRETIL : Ii16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
-                    "{l}ret{l|f}\t$amt", [], IIC_RET>, OpSize16;
+                    "{l}ret{l|f}\t$amt", [], IIC_RET>, OpSize32;
   def LRETIQ : RIi16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
                     "{l}ret{|f}q\t$amt", [], IIC_RET>, Requires<[In64BitMode]>;
   def LRETIW : Ii16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
-                    "{l}ret{w|f}\t$amt", [], IIC_RET>, OpSize;
+                    "{l}ret{w|f}\t$amt", [], IIC_RET>, OpSize16;
 }
 
 // Unconditional branches.
 let isBarrier = 1, isBranch = 1, isTerminator = 1, SchedRW = [WriteJump] in {
   def JMP_4 : Ii32PCRel<0xE9, RawFrm, (outs), (ins brtarget:$dst),
-                        "jmp\t$dst", [(br bb:$dst)], IIC_JMP_REL>, OpSize16;
+                        "jmp\t$dst", [(br bb:$dst)], IIC_JMP_REL>, OpSize32;
   def JMP_2 : Ii16PCRel<0xE9, RawFrm, (outs), (ins brtarget:$dst),
-                        "jmp\t$dst", [(br bb:$dst)], IIC_JMP_REL>, OpSize,
+                        "jmp\t$dst", [(br bb:$dst)], IIC_JMP_REL>, OpSize16,
                         Requires<[In16BitMode]>;
   let hasSideEffects = 0 in
   def JMP_1 : Ii8PCRel<0xEB, RawFrm, (outs), (ins brtarget8:$dst),
@@ -74,11 +74,11 @@ let isBranch = 1, isTerminator = 1, Uses = [EFLAGS], SchedRW = [WriteJump] in {
     def _1 : Ii8PCRel <opc1, RawFrm, (outs), (ins brtarget8:$dst), asm, [],
                        IIC_Jcc>;
     def _2 : Ii16PCRel<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
-                       [(X86brcond bb:$dst, Cond, EFLAGS)], IIC_Jcc>, OpSize,
+                       [(X86brcond bb:$dst, Cond, EFLAGS)], IIC_Jcc>, OpSize16,
 		       TB, Requires<[In16BitMode]>;
     def _4 : Ii32PCRel<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
                        [(X86brcond bb:$dst, Cond, EFLAGS)], IIC_Jcc>, TB,
-             OpSize16;
+             OpSize32;
   }
 }
 
@@ -126,17 +126,17 @@ let isBranch = 1, isTerminator = 1, hasSideEffects = 0, SchedRW = [WriteJump] in
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def JMP16r     : I<0xFF, MRM4r, (outs), (ins GR16:$dst), "jmp{w}\t{*}$dst",
                      [(brind GR16:$dst)], IIC_JMP_REG>, Requires<[Not64BitMode]>,
-                   OpSize, Sched<[WriteJump]>;
+                   OpSize16, Sched<[WriteJump]>;
   def JMP16m     : I<0xFF, MRM4m, (outs), (ins i16mem:$dst), "jmp{w}\t{*}$dst",
                      [(brind (loadi16 addr:$dst))], IIC_JMP_MEM>,
-                   Requires<[Not64BitMode]>, OpSize, Sched<[WriteJumpLd]>;
+                   Requires<[Not64BitMode]>, OpSize16, Sched<[WriteJumpLd]>;
 
   def JMP32r     : I<0xFF, MRM4r, (outs), (ins GR32:$dst), "jmp{l}\t{*}$dst",
                      [(brind GR32:$dst)], IIC_JMP_REG>, Requires<[Not64BitMode]>,
-                   OpSize16, Sched<[WriteJump]>;
+                   OpSize32, Sched<[WriteJump]>;
   def JMP32m     : I<0xFF, MRM4m, (outs), (ins i32mem:$dst), "jmp{l}\t{*}$dst",
                      [(brind (loadi32 addr:$dst))], IIC_JMP_MEM>,
-                   Requires<[Not64BitMode]>, OpSize16, Sched<[WriteJumpLd]>;
+                   Requires<[Not64BitMode]>, OpSize32, Sched<[WriteJumpLd]>;
 
   def JMP64r     : I<0xFF, MRM4r, (outs), (ins GR64:$dst), "jmp{q}\t{*}$dst",
                      [(brind GR64:$dst)], IIC_JMP_REG>, Requires<[In64BitMode]>,
@@ -148,20 +148,20 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def FARJMP16i  : Iseg16<0xEA, RawFrmImm16, (outs),
                           (ins i16imm:$off, i16imm:$seg),
                           "ljmp{w}\t{$seg, $off|$off, $seg}", [],
-                          IIC_JMP_FAR_PTR>, OpSize, Sched<[WriteJump]>;
+                          IIC_JMP_FAR_PTR>, OpSize16, Sched<[WriteJump]>;
   def FARJMP32i  : Iseg32<0xEA, RawFrmImm16, (outs),
                           (ins i32imm:$off, i16imm:$seg),
                           "ljmp{l}\t{$seg, $off|$off, $seg}", [],
-                          IIC_JMP_FAR_PTR>, OpSize16, Sched<[WriteJump]>;
+                          IIC_JMP_FAR_PTR>, OpSize32, Sched<[WriteJump]>;
   def FARJMP64   : RI<0xFF, MRM5m, (outs), (ins opaque80mem:$dst),
                       "ljmp{q}\t{*}$dst", [], IIC_JMP_FAR_MEM>,
                    Sched<[WriteJump]>;
 
   def FARJMP16m  : I<0xFF, MRM5m, (outs), (ins opaque32mem:$dst),
-                     "ljmp{w}\t{*}$dst", [], IIC_JMP_FAR_MEM>, OpSize,
+                     "ljmp{w}\t{*}$dst", [], IIC_JMP_FAR_MEM>, OpSize16,
                    Sched<[WriteJumpLd]>;
   def FARJMP32m  : I<0xFF, MRM5m, (outs), (ins opaque48mem:$dst),
-                     "ljmp{l}\t{*}$dst", [], IIC_JMP_FAR_MEM>, OpSize16,
+                     "ljmp{l}\t{*}$dst", [], IIC_JMP_FAR_MEM>, OpSize32,
                    Sched<[WriteJumpLd]>;
 }
 
@@ -184,43 +184,43 @@ let isCall = 1 in
   let Uses = [ESP] in {
     def CALLpcrel32 : Ii32PCRel<0xE8, RawFrm,
                            (outs), (ins i32imm_pcrel:$dst),
-                           "call{l}\t$dst", [], IIC_CALL_RI>, OpSize16,
+                           "call{l}\t$dst", [], IIC_CALL_RI>, OpSize32,
                       Requires<[Not64BitMode]>, Sched<[WriteJump]>;
     def CALLpcrel16 : Ii16PCRel<0xE8, RawFrm,
                            (outs), (ins i16imm_pcrel:$dst),
-                           "call{w}\t$dst", [], IIC_CALL_RI>, OpSize,
+                           "call{w}\t$dst", [], IIC_CALL_RI>, OpSize16,
                       Sched<[WriteJump]>;
     def CALL16r     : I<0xFF, MRM2r, (outs), (ins GR16:$dst),
                         "call{w}\t{*}$dst", [(X86call GR16:$dst)], IIC_CALL_RI>,
-                      OpSize, Requires<[Not64BitMode]>, Sched<[WriteJump]>;
+                      OpSize16, Requires<[Not64BitMode]>, Sched<[WriteJump]>;
     def CALL16m     : I<0xFF, MRM2m, (outs), (ins i16mem:$dst),
                         "call{w}\t{*}$dst", [(X86call (loadi16 addr:$dst))],
-                        IIC_CALL_MEM>, OpSize,
+                        IIC_CALL_MEM>, OpSize16,
                       Requires<[Not64BitMode,FavorMemIndirectCall]>,
                       Sched<[WriteJumpLd]>;
     def CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst),
                         "call{l}\t{*}$dst", [(X86call GR32:$dst)], IIC_CALL_RI>,
-                      OpSize16, Requires<[Not64BitMode]>, Sched<[WriteJump]>;
+                      OpSize32, Requires<[Not64BitMode]>, Sched<[WriteJump]>;
     def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst),
                         "call{l}\t{*}$dst", [(X86call (loadi32 addr:$dst))],
-                        IIC_CALL_MEM>, OpSize16,
+                        IIC_CALL_MEM>, OpSize32,
                       Requires<[Not64BitMode,FavorMemIndirectCall]>,
                       Sched<[WriteJumpLd]>;
 
     def FARCALL16i  : Iseg16<0x9A, RawFrmImm16, (outs),
                              (ins i16imm:$off, i16imm:$seg),
                              "lcall{w}\t{$seg, $off|$off, $seg}", [],
-                             IIC_CALL_FAR_PTR>, OpSize, Sched<[WriteJump]>;
+                             IIC_CALL_FAR_PTR>, OpSize16, Sched<[WriteJump]>;
     def FARCALL32i  : Iseg32<0x9A, RawFrmImm16, (outs),
                              (ins i32imm:$off, i16imm:$seg),
                              "lcall{l}\t{$seg, $off|$off, $seg}", [],
-                             IIC_CALL_FAR_PTR>, OpSize16, Sched<[WriteJump]>;
+                             IIC_CALL_FAR_PTR>, OpSize32, Sched<[WriteJump]>;
 
     def FARCALL16m  : I<0xFF, MRM3m, (outs), (ins opaque32mem:$dst),
-                        "lcall{w}\t{*}$dst", [], IIC_CALL_FAR_MEM>, OpSize,
+                        "lcall{w}\t{*}$dst", [], IIC_CALL_FAR_MEM>, OpSize16,
                       Sched<[WriteJumpLd]>;
     def FARCALL32m  : I<0xFF, MRM3m, (outs), (ins opaque48mem:$dst),
-                        "lcall{l}\t{*}$dst", [], IIC_CALL_FAR_MEM>, OpSize16,
+                        "lcall{l}\t{*}$dst", [], IIC_CALL_FAR_MEM>, OpSize32,
                       Sched<[WriteJumpLd]>;
   }
 

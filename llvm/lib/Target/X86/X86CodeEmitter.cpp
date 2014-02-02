@@ -655,7 +655,7 @@ void Emitter<CodeEmitter>::emitOpcodePrefix(uint64_t TSFlags,
                                             const MachineInstr &MI,
                                             const MCInstrDesc *Desc) const {
   // Emit the operand size opcode prefix as needed.
-  if (TSFlags & X86II::OpSize)
+  if (((TSFlags & X86II::OpSizeMask) >> X86II::OpSizeShift) == X86II::OpSize16)
     MCE.emitByte(0x66);
 
   switch (Desc->TSFlags & X86II::OpPrefixMask) {

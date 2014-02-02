@@ -89,6 +89,10 @@ namespace X86Local {
   enum {
     VEX = 1, XOP = 2, EVEX = 3
   };
+
+  enum {
+    OpSize16 = 1, OpSize32 = 2
+  };
 }
 
 // If rows are added to the opcode extension tables, then corresponding entries
@@ -234,8 +238,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   Form     = byteFromRec(Rec, "FormBits");
   Encoding = byteFromRec(Rec->getValueAsDef("OpEnc"), "Value");
 
-  HasOpSizePrefix  = Rec->getValueAsBit("hasOpSizePrefix");
-  HasOpSize16Prefix = Rec->getValueAsBit("hasOpSize16Prefix");
+  OpSize           = byteFromRec(Rec->getValueAsDef("OpSize"), "Value");
   HasAdSizePrefix  = Rec->getValueAsBit("hasAdSizePrefix");
   HasREX_WPrefix   = Rec->getValueAsBit("hasREX_WPrefix");
   HasVEX_4V        = Rec->getValueAsBit("hasVEX_4V");
@@ -406,13 +409,13 @@ InstructionContext RecognizableInstr::insnContext() const {
     else
       insnContext = IC_VEX;
   } else if (Is64Bit || HasREX_WPrefix) {
-    if (HasREX_WPrefix && (HasOpSizePrefix || OpPrefix == X86Local::PD))
+    if (HasREX_WPrefix && (OpSize == X86Local::OpSize16 || OpPrefix == X86Local::PD))
       insnContext = IC_64BIT_REXW_OPSIZE;
-    else if (HasOpSizePrefix && OpPrefix == X86Local::XD)
+    else if (OpSize == X86Local::OpSize16 && OpPrefix == X86Local::XD)
       insnContext = IC_64BIT_XD_OPSIZE;
-    else if (HasOpSizePrefix && OpPrefix == X86Local::XS)
+    else if (OpSize == X86Local::OpSize16 && OpPrefix == X86Local::XS)
       insnContext = IC_64BIT_XS_OPSIZE;
-    else if (HasOpSizePrefix || OpPrefix == X86Local::PD)
+    else if (OpSize == X86Local::OpSize16 || OpPrefix == X86Local::PD)
       insnContext = IC_64BIT_OPSIZE;
     else if (HasAdSizePrefix)
       insnContext = IC_64BIT_ADSIZE;
@@ -429,11 +432,11 @@ InstructionContext RecognizableInstr::insnContext() const {
     else
       insnContext = IC_64BIT;
   } else {
-    if (HasOpSizePrefix && OpPrefix == X86Local::XD)
+    if (OpSize == X86Local::OpSize16 && OpPrefix == X86Local::XD)
       insnContext = IC_XD_OPSIZE;
-    else if (HasOpSizePrefix && OpPrefix == X86Local::XS)
+    else if (OpSize == X86Local::OpSize16 && OpPrefix == X86Local::XS)
       insnContext = IC_XS_OPSIZE;
-    else if (HasOpSizePrefix || OpPrefix == X86Local::PD)
+    else if (OpSize == X86Local::OpSize16 || OpPrefix == X86Local::PD)
       insnContext = IC_OPSIZE;
     else if (HasAdSizePrefix)
       insnContext = IC_ADSIZE;
@@ -495,7 +498,7 @@ void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
                                       const unsigned *operandMapping,
                                       OperandEncoding (*encodingFromString)
                                         (const std::string&,
-                                         bool hasOpSizePrefix)) {
+                                         uint8_t OpSize)) {
   if (optional) {
     if (physicalOperandIndex >= numPhysicalOperands)
       return;
@@ -513,11 +516,9 @@ void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
   const std::string &typeName = (*Operands)[operandIndex].Rec->getName();
 
   Spec->operands[operandIndex].encoding = encodingFromString(typeName,
-                                                              HasOpSizePrefix);
+                                                              OpSize);
   Spec->operands[operandIndex].type = typeFromString(typeName,
-                                                     HasREX_WPrefix,
-                                                     HasOpSizePrefix,
-                                                     HasOpSize16Prefix);
+                                                     HasREX_WPrefix, OpSize);
 
   ++operandIndex;
   ++physicalOperandIndex;
@@ -1151,21 +1152,19 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
 #define TYPE(str, type) if (s == str) return type;
 OperandType RecognizableInstr::typeFromString(const std::string &s,
                                               bool hasREX_WPrefix,
-                                              bool hasOpSizePrefix,
-                                              bool hasOpSize16Prefix) {
+                                              uint8_t OpSize) {
   if(hasREX_WPrefix) {
     // For instructions with a REX_W prefix, a declared 32-bit register encoding
     // is special.
     TYPE("GR32",              TYPE_R32)
   }
-  if(hasOpSizePrefix) {
-    // For instructions with an OpSize prefix, a declared 16-bit register or
+  if(OpSize == X86Local::OpSize16) {
+    // For OpSize16 instructions, a declared 16-bit register or
     // immediate encoding is special.
     TYPE("GR16",              TYPE_Rv)
     TYPE("i16imm",            TYPE_IMMv)
-  }
-  if(hasOpSize16Prefix) {
-    // For instructions with an OpSize16 prefix, a declared 32-bit register or
+  } else if(OpSize == X86Local::OpSize32) {
+    // For OpSize32 instructions, a declared 32-bit register or
     // immediate encoding is special.
     TYPE("GR32",              TYPE_Rv)
   }
@@ -1262,10 +1261,10 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
 #undef TYPE
 
 #define ENCODING(str, encoding) if (s == str) return encoding;
-OperandEncoding RecognizableInstr::immediateEncodingFromString
-  (const std::string &s,
-   bool hasOpSizePrefix) {
-  if(!hasOpSizePrefix) {
+OperandEncoding
+RecognizableInstr::immediateEncodingFromString(const std::string &s,
+                                               uint8_t OpSize) {
+  if(OpSize != X86Local::OpSize16) {
     // For instructions without an OpSize prefix, a declared 16-bit register or
     // immediate encoding is special.
     ENCODING("i16imm",        ENCODING_IW)
@@ -1296,9 +1295,9 @@ OperandEncoding RecognizableInstr::immediateEncodingFromString
   llvm_unreachable("Unhandled immediate encoding");
 }
 
-OperandEncoding RecognizableInstr::rmRegisterEncodingFromString
-  (const std::string &s,
-   bool hasOpSizePrefix) {
+OperandEncoding
+RecognizableInstr::rmRegisterEncodingFromString(const std::string &s,
+                                                uint8_t OpSize) {
   ENCODING("RST",             ENCODING_FP)
   ENCODING("GR16",            ENCODING_RM)
   ENCODING("GR32",            ENCODING_RM)
@@ -1322,9 +1321,9 @@ OperandEncoding RecognizableInstr::rmRegisterEncodingFromString
   llvm_unreachable("Unhandled R/M register encoding");
 }
 
-OperandEncoding RecognizableInstr::roRegisterEncodingFromString
-  (const std::string &s,
-   bool hasOpSizePrefix) {
+OperandEncoding
+RecognizableInstr::roRegisterEncodingFromString(const std::string &s,
+                                                uint8_t OpSize) {
   ENCODING("GR16",            ENCODING_REG)
   ENCODING("GR32",            ENCODING_REG)
   ENCODING("GR32orGR64",      ENCODING_REG)
@@ -1353,9 +1352,9 @@ OperandEncoding RecognizableInstr::roRegisterEncodingFromString
   llvm_unreachable("Unhandled reg/opcode register encoding");
 }
 
-OperandEncoding RecognizableInstr::vvvvRegisterEncodingFromString
-  (const std::string &s,
-   bool hasOpSizePrefix) {
+OperandEncoding
+RecognizableInstr::vvvvRegisterEncodingFromString(const std::string &s,
+                                                  uint8_t OpSize) {
   ENCODING("GR32",            ENCODING_VVVV)
   ENCODING("GR64",            ENCODING_VVVV)
   ENCODING("FR32",            ENCODING_VVVV)
@@ -1374,9 +1373,9 @@ OperandEncoding RecognizableInstr::vvvvRegisterEncodingFromString
   llvm_unreachable("Unhandled VEX.vvvv register encoding");
 }
 
-OperandEncoding RecognizableInstr::writemaskRegisterEncodingFromString
-  (const std::string &s,
-   bool hasOpSizePrefix) {
+OperandEncoding
+RecognizableInstr::writemaskRegisterEncodingFromString(const std::string &s,
+                                                       uint8_t OpSize) {
   ENCODING("VK1WM",           ENCODING_WRITEMASK)
   ENCODING("VK8WM",           ENCODING_WRITEMASK)
   ENCODING("VK16WM",          ENCODING_WRITEMASK)
@@ -1384,9 +1383,9 @@ OperandEncoding RecognizableInstr::writemaskRegisterEncodingFromString
   llvm_unreachable("Unhandled mask register encoding");
 }
 
-OperandEncoding RecognizableInstr::memoryEncodingFromString
-  (const std::string &s,
-   bool hasOpSizePrefix) {
+OperandEncoding
+RecognizableInstr::memoryEncodingFromString(const std::string &s,
+                                            uint8_t OpSize) {
   ENCODING("i16mem",          ENCODING_RM)
   ENCODING("i32mem",          ENCODING_RM)
   ENCODING("i64mem",          ENCODING_RM)
@@ -1420,10 +1419,10 @@ OperandEncoding RecognizableInstr::memoryEncodingFromString
   llvm_unreachable("Unhandled memory encoding");
 }
 
-OperandEncoding RecognizableInstr::relocationEncodingFromString
-  (const std::string &s,
-   bool hasOpSizePrefix) {
-  if(!hasOpSizePrefix) {
+OperandEncoding
+RecognizableInstr::relocationEncodingFromString(const std::string &s,
+                                                uint8_t OpSize) {
+  if(OpSize != X86Local::OpSize16) {
     // For instructions without an OpSize prefix, a declared 16-bit register or
     // immediate encoding is special.
     ENCODING("i16imm",        ENCODING_IW)
@@ -1457,9 +1456,9 @@ OperandEncoding RecognizableInstr::relocationEncodingFromString
   llvm_unreachable("Unhandled relocation encoding");
 }
 
-OperandEncoding RecognizableInstr::opcodeModifierEncodingFromString
-  (const std::string &s,
-   bool hasOpSizePrefix) {
+OperandEncoding
+RecognizableInstr::opcodeModifierEncodingFromString(const std::string &s,
+                                                    uint8_t OpSize) {
   ENCODING("GR32",            ENCODING_Rv)
   ENCODING("GR64",            ENCODING_RO)
   ENCODING("GR16",            ENCODING_Rv)

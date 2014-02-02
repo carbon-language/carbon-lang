@@ -320,10 +320,10 @@ def REP_MOVSB_32 : I<0xA4, RawFrm, (outs), (ins), "{rep;movsb|rep movsb}",
                     [(X86rep_movs i8)], IIC_REP_MOVS>, REP,
                    Requires<[Not64BitMode]>;
 def REP_MOVSW_32 : I<0xA5, RawFrm, (outs), (ins), "{rep;movsw|rep movsw}",
-                    [(X86rep_movs i16)], IIC_REP_MOVS>, REP, OpSize,
+                    [(X86rep_movs i16)], IIC_REP_MOVS>, REP, OpSize16,
                    Requires<[Not64BitMode]>;
 def REP_MOVSD_32 : I<0xA5, RawFrm, (outs), (ins), "{rep;movsl|rep movsd}",
-                    [(X86rep_movs i32)], IIC_REP_MOVS>, REP, OpSize16,
+                    [(X86rep_movs i32)], IIC_REP_MOVS>, REP, OpSize32,
                    Requires<[Not64BitMode]>;
 }
 
@@ -332,10 +332,10 @@ def REP_MOVSB_64 : I<0xA4, RawFrm, (outs), (ins), "{rep;movsb|rep movsb}",
                     [(X86rep_movs i8)], IIC_REP_MOVS>, REP,
                    Requires<[In64BitMode]>;
 def REP_MOVSW_64 : I<0xA5, RawFrm, (outs), (ins), "{rep;movsw|rep movsw}",
-                    [(X86rep_movs i16)], IIC_REP_MOVS>, REP, OpSize,
+                    [(X86rep_movs i16)], IIC_REP_MOVS>, REP, OpSize16,
                    Requires<[In64BitMode]>;
 def REP_MOVSD_64 : I<0xA5, RawFrm, (outs), (ins), "{rep;movsl|rep movsd}",
-                    [(X86rep_movs i32)], IIC_REP_MOVS>, REP,
+                    [(X86rep_movs i32)], IIC_REP_MOVS>, REP, OpSize32,
                    Requires<[In64BitMode]>;
 def REP_MOVSQ_64 : RI<0xA5, RawFrm, (outs), (ins), "{rep;movsq|rep movsq}",
                     [(X86rep_movs i64)], IIC_REP_MOVS>, REP,
@@ -350,11 +350,11 @@ let Defs = [ECX,EDI], isCodeGenOnly = 1 in {
                      Requires<[Not64BitMode]>;
   let Uses = [AX,ECX,EDI] in
   def REP_STOSW_32 : I<0xAB, RawFrm, (outs), (ins), "{rep;stosw|rep stosw}",
-                      [(X86rep_stos i16)], IIC_REP_STOS>, REP, OpSize,
+                      [(X86rep_stos i16)], IIC_REP_STOS>, REP, OpSize16,
                      Requires<[Not64BitMode]>;
   let Uses = [EAX,ECX,EDI] in
   def REP_STOSD_32 : I<0xAB, RawFrm, (outs), (ins), "{rep;stosl|rep stosd}",
-                      [(X86rep_stos i32)], IIC_REP_STOS>, REP, OpSize16,
+                      [(X86rep_stos i32)], IIC_REP_STOS>, REP, OpSize32,
                      Requires<[Not64BitMode]>;
 }
 
@@ -365,11 +365,11 @@ let Defs = [RCX,RDI], isCodeGenOnly = 1 in {
                      Requires<[In64BitMode]>;
   let Uses = [AX,RCX,RDI] in
   def REP_STOSW_64 : I<0xAB, RawFrm, (outs), (ins), "{rep;stosw|rep stosw}",
-                      [(X86rep_stos i16)], IIC_REP_STOS>, REP, OpSize,
+                      [(X86rep_stos i16)], IIC_REP_STOS>, REP, OpSize16,
                      Requires<[In64BitMode]>;
   let Uses = [RAX,RCX,RDI] in
   def REP_STOSD_64 : I<0xAB, RawFrm, (outs), (ins), "{rep;stosl|rep stosd}",
-                      [(X86rep_stos i32)], IIC_REP_STOS>, REP,
+                      [(X86rep_stos i32)], IIC_REP_STOS>, REP, OpSize32,
                      Requires<[In64BitMode]>;
  
   let Uses = [RAX,RCX,RDI] in
@@ -618,13 +618,13 @@ def NAME#16mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
                    MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
                    !strconcat(mnemonic, "{w}\t",
                               "{$src2, $dst|$dst, $src2}"),
-                   [], IIC_ALU_NONMEM>, OpSize, LOCK;
+                   [], IIC_ALU_NONMEM>, OpSize16, LOCK;
 def NAME#32mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
                    RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
                    MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
                    !strconcat(mnemonic, "{l}\t",
                               "{$src2, $dst|$dst, $src2}"),
-                   [], IIC_ALU_NONMEM>, OpSize16, LOCK;
+                   [], IIC_ALU_NONMEM>, OpSize32, LOCK;
 def NAME#64mr : RI<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
                     RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
                     MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
@@ -644,14 +644,14 @@ def NAME#16mi : Ii16<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
                       ImmMod, (outs), (ins i16mem :$dst, i16imm :$src2),
                       !strconcat(mnemonic, "{w}\t",
                                  "{$src2, $dst|$dst, $src2}"),
-                      [], IIC_ALU_MEM>, OpSize, LOCK;
+                      [], IIC_ALU_MEM>, OpSize16, LOCK;
 
 def NAME#32mi : Ii32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
                       ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
                       ImmMod, (outs), (ins i32mem :$dst, i32imm :$src2),
                       !strconcat(mnemonic, "{l}\t",
                                  "{$src2, $dst|$dst, $src2}"),
-                      [], IIC_ALU_MEM>, OpSize16, LOCK;
+                      [], IIC_ALU_MEM>, OpSize32, LOCK;
 
 def NAME#64mi32 : RIi32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
                          ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
@@ -665,13 +665,13 @@ def NAME#16mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
                       ImmMod, (outs), (ins i16mem :$dst, i16i8imm :$src2),
                       !strconcat(mnemonic, "{w}\t",
                                  "{$src2, $dst|$dst, $src2}"),
-                      [], IIC_ALU_MEM>, OpSize, LOCK;
+                      [], IIC_ALU_MEM>, OpSize16, LOCK;
 def NAME#32mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
                       ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
                       ImmMod, (outs), (ins i32mem :$dst, i32i8imm :$src2),
                       !strconcat(mnemonic, "{l}\t",
                                  "{$src2, $dst|$dst, $src2}"),
-                      [], IIC_ALU_MEM>, OpSize16, LOCK;
+                      [], IIC_ALU_MEM>, OpSize32, LOCK;
 def NAME#64mi8 : RIi8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
                        ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
                        ImmMod, (outs), (ins i64mem :$dst, i64i8imm :$src2),
@@ -700,10 +700,10 @@ def NAME#8m  : I<Opc8, Form, (outs), (ins i8mem :$dst),
                  [], IIC_UNARY_MEM>, LOCK;
 def NAME#16m : I<Opc, Form, (outs), (ins i16mem:$dst),
                  !strconcat(mnemonic, "{w}\t$dst"),
-                 [], IIC_UNARY_MEM>, OpSize, LOCK;
+                 [], IIC_UNARY_MEM>, OpSize16, LOCK;
 def NAME#32m : I<Opc, Form, (outs), (ins i32mem:$dst),
                  !strconcat(mnemonic, "{l}\t$dst"),
-                 [], IIC_UNARY_MEM>, OpSize16, LOCK;
+                 [], IIC_UNARY_MEM>, OpSize32, LOCK;
 def NAME#64m : RI<Opc, Form, (outs), (ins i64mem:$dst),
                   !strconcat(mnemonic, "{q}\t$dst"),
                   [], IIC_UNARY_MEM>, LOCK;
@@ -735,11 +735,11 @@ let isCodeGenOnly = 1, SchedRW = [WriteALULd, WriteRMW] in {
   let Defs = [AX, EFLAGS], Uses = [AX] in
   def NAME#16 : I<Opc, Form, (outs), (ins i16mem:$ptr, GR16:$swap),
                   !strconcat(mnemonic, "{w}\t{$swap, $ptr|$ptr, $swap}"),
-                  [(frag addr:$ptr, GR16:$swap, 2)], itin>, TB, OpSize, LOCK;
+                  [(frag addr:$ptr, GR16:$swap, 2)], itin>, TB, OpSize16, LOCK;
   let Defs = [EAX, EFLAGS], Uses = [EAX] in
   def NAME#32 : I<Opc, Form, (outs), (ins i32mem:$ptr, GR32:$swap),
                   !strconcat(mnemonic, "{l}\t{$swap, $ptr|$ptr, $swap}"),
-                  [(frag addr:$ptr, GR32:$swap, 4)], itin>, TB, OpSize16, LOCK;
+                  [(frag addr:$ptr, GR32:$swap, 4)], itin>, TB, OpSize32, LOCK;
   let Defs = [RAX, EFLAGS], Uses = [RAX] in
   def NAME#64 : RI<Opc, Form, (outs), (ins i64mem:$ptr, GR64:$swap),
                    !strconcat(mnemonic, "{q}\t{$swap, $ptr|$ptr, $swap}"),
@@ -782,14 +782,14 @@ multiclass ATOMIC_LOAD_BINOP<bits<8> opc8, bits<8> opc, string mnemonic,
                     [(set
                        GR16:$dst,
                        (!cast<PatFrag>(frag # "_16") addr:$ptr, GR16:$val))],
-                    itin>, OpSize;
+                    itin>, OpSize16;
     def NAME#32 : I<opc, MRMSrcMem, (outs GR32:$dst),
                     (ins GR32:$val, i32mem:$ptr),
                     !strconcat(mnemonic, "{l}\t{$val, $ptr|$ptr, $val}"),
                     [(set
                        GR32:$dst,
                        (!cast<PatFrag>(frag # "_32") addr:$ptr, GR32:$val))],
-                    itin>, OpSize16;
+                    itin>, OpSize32;
     def NAME#64 : RI<opc, MRMSrcMem, (outs GR64:$dst),
                      (ins GR64:$val, i64mem:$ptr),
                      !strconcat(mnemonic, "{q}\t{$val, $ptr|$ptr, $val}"),

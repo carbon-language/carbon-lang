@@ -932,9 +932,9 @@ def trunc_su : PatFrag<(ops node:$src), (trunc node:$src), [{
 let neverHasSideEffects = 1, SchedRW = [WriteZero] in {
   def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", [], IIC_NOP>;
   def NOOPW : I<0x1f, MRM0m, (outs), (ins i16mem:$zero),
-                "nop{w}\t$zero", [], IIC_NOP>, TB, OpSize;
+                "nop{w}\t$zero", [], IIC_NOP>, TB, OpSize16;
   def NOOPL : I<0x1f, MRM0m, (outs), (ins i32mem:$zero),
-                "nop{l}\t$zero", [], IIC_NOP>, TB;
+                "nop{l}\t$zero", [], IIC_NOP>, TB, OpSize32;
 }
 
 
@@ -961,54 +961,55 @@ def LEAVE64  : I<0xC9, RawFrm,
 let Defs = [ESP], Uses = [ESP], neverHasSideEffects=1 in {
 let mayLoad = 1, SchedRW = [WriteLoad] in {
 def POP16r  : I<0x58, AddRegFrm, (outs GR16:$reg), (ins), "pop{w}\t$reg", [],
-                IIC_POP_REG16>, OpSize;
+                IIC_POP_REG16>, OpSize16;
 def POP32r  : I<0x58, AddRegFrm, (outs GR32:$reg), (ins), "pop{l}\t$reg", [],
-                IIC_POP_REG>, OpSize16, Requires<[Not64BitMode]>;
+                IIC_POP_REG>, OpSize32, Requires<[Not64BitMode]>;
 def POP16rmr: I<0x8F, MRM0r, (outs GR16:$reg), (ins), "pop{w}\t$reg", [],
-                IIC_POP_REG>, OpSize;
+                IIC_POP_REG>, OpSize16;
 def POP16rmm: I<0x8F, MRM0m, (outs), (ins i16mem:$dst), "pop{w}\t$dst", [],
-                IIC_POP_MEM>, OpSize;
+                IIC_POP_MEM>, OpSize16;
 def POP32rmr: I<0x8F, MRM0r, (outs GR32:$reg), (ins), "pop{l}\t$reg", [],
-                IIC_POP_REG>, OpSize16, Requires<[Not64BitMode]>;
+                IIC_POP_REG>, OpSize32, Requires<[Not64BitMode]>;
 def POP32rmm: I<0x8F, MRM0m, (outs), (ins i32mem:$dst), "pop{l}\t$dst", [],
                 IIC_POP_MEM>, Requires<[Not64BitMode]>;
 
-def POPF16   : I<0x9D, RawFrm, (outs), (ins), "popf{w}", [], IIC_POP_F>, OpSize;
+def POPF16   : I<0x9D, RawFrm, (outs), (ins), "popf{w}", [], IIC_POP_F>,
+                OpSize16;
 def POPF32   : I<0x9D, RawFrm, (outs), (ins), "popf{l|d}", [], IIC_POP_FD>,
-                OpSize16, Requires<[Not64BitMode]>;
+                OpSize32, Requires<[Not64BitMode]>;
 } // mayLoad, SchedRW
 
 let mayStore = 1, SchedRW = [WriteStore] in {
 def PUSH16r  : I<0x50, AddRegFrm, (outs), (ins GR16:$reg), "push{w}\t$reg",[],
-                 IIC_PUSH_REG>, OpSize;
+                 IIC_PUSH_REG>, OpSize16;
 def PUSH32r  : I<0x50, AddRegFrm, (outs), (ins GR32:$reg), "push{l}\t$reg",[],
-                 IIC_PUSH_REG>, OpSize16, Requires<[Not64BitMode]>;
+                 IIC_PUSH_REG>, OpSize32, Requires<[Not64BitMode]>;
 def PUSH16rmr: I<0xFF, MRM6r, (outs), (ins GR16:$reg), "push{w}\t$reg",[],
-                 IIC_PUSH_REG>, OpSize;
+                 IIC_PUSH_REG>, OpSize16;
 def PUSH16rmm: I<0xFF, MRM6m, (outs), (ins i16mem:$src), "push{w}\t$src",[],
-                 IIC_PUSH_MEM>, OpSize;
+                 IIC_PUSH_MEM>, OpSize16;
 def PUSH32rmr: I<0xFF, MRM6r, (outs), (ins GR32:$reg), "push{l}\t$reg",[],
-                 IIC_PUSH_REG>, OpSize16, Requires<[Not64BitMode]>;
+                 IIC_PUSH_REG>, OpSize32, Requires<[Not64BitMode]>;
 def PUSH32rmm: I<0xFF, MRM6m, (outs), (ins i32mem:$src), "push{l}\t$src",[],
-                 IIC_PUSH_MEM>, OpSize16, Requires<[Not64BitMode]>;
+                 IIC_PUSH_MEM>, OpSize32, Requires<[Not64BitMode]>;
 
 def PUSH16i8 : Ii8<0x6a, RawFrm, (outs), (ins i16i8imm:$imm),
-                   "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize,
+                   "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize16,
                    Requires<[Not64BitMode]>;
 def PUSH32i8 : Ii8<0x6a, RawFrm, (outs), (ins i32i8imm:$imm),
-                   "push{l}\t$imm", [], IIC_PUSH_IMM>, OpSize16,
+                   "push{l}\t$imm", [], IIC_PUSH_IMM>, OpSize32,
                    Requires<[Not64BitMode]>;
 def PUSHi16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm),
-                   "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize,
+                   "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize16,
                    Requires<[Not64BitMode]>;
 def PUSHi32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm),
-                   "push{l}\t$imm", [], IIC_PUSH_IMM>, OpSize16,
+                   "push{l}\t$imm", [], IIC_PUSH_IMM>, OpSize32,
                    Requires<[Not64BitMode]>;
 
 def PUSHF16  : I<0x9C, RawFrm, (outs), (ins), "pushf{w}", [], IIC_PUSH_F>,
-                 OpSize;
+                 OpSize16;
 def PUSHF32  : I<0x9C, RawFrm, (outs), (ins), "pushf{l|d}", [], IIC_PUSH_F>,
-               OpSize16, Requires<[Not64BitMode]>;
+               OpSize32, Requires<[Not64BitMode]>;
 
 } // mayStore, SchedRW
 }
@@ -1037,7 +1038,7 @@ let Defs = [RSP], Uses = [RSP], neverHasSideEffects = 1, mayStore = 1,
 def PUSH64i8   : Ii8<0x6a, RawFrm, (outs), (ins i64i8imm:$imm),
                     "push{q}\t$imm", [], IIC_PUSH_IMM>, Requires<[In64BitMode]>;
 def PUSH64i16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm),
-                    "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize,
+                    "push{w}\t$imm", [], IIC_PUSH_IMM>, OpSize16,
                     Requires<[In64BitMode]>;
 def PUSH64i32  : Ii32S<0x68, RawFrm, (outs), (ins i64i32imm:$imm),
                     "push{q}\t$imm", [], IIC_PUSH_IMM>, Requires<[In64BitMode]>;
@@ -1053,16 +1054,16 @@ def PUSHF64    : I<0x9C, RawFrm, (outs), (ins), "pushfq", [], IIC_PUSH_F>,
 let Defs = [EDI, ESI, EBP, EBX, EDX, ECX, EAX, ESP], Uses = [ESP],
     mayLoad = 1, neverHasSideEffects = 1, SchedRW = [WriteLoad] in {
 def POPA32   : I<0x61, RawFrm, (outs), (ins), "popal", [], IIC_POP_A>,
-               OpSize16, Requires<[Not64BitMode]>;
+               OpSize32, Requires<[Not64BitMode]>;
 def POPA16   : I<0x61, RawFrm, (outs), (ins), "popaw", [], IIC_POP_A>,
-               OpSize, Requires<[Not64BitMode]>;
+               OpSize16, Requires<[Not64BitMode]>;
 }
 let Defs = [ESP], Uses = [EDI, ESI, EBP, EBX, EDX, ECX, EAX, ESP],
     mayStore = 1, neverHasSideEffects = 1, SchedRW = [WriteStore] in {
 def PUSHA32  : I<0x60, RawFrm, (outs), (ins), "pushal", [], IIC_PUSH_A>,
-               OpSize16, Requires<[Not64BitMode]>;
+               OpSize32, Requires<[Not64BitMode]>;
 def PUSHA16  : I<0x60, RawFrm, (outs), (ins), "pushaw", [], IIC_PUSH_A>,
-               OpSize, Requires<[Not64BitMode]>;
+               OpSize16, Requires<[Not64BitMode]>;
 }
 
 let Constraints = "$src = $dst", SchedRW = [WriteALU] in {
@@ -1070,7 +1071,7 @@ let Constraints = "$src = $dst", SchedRW = [WriteALU] in {
 def BSWAP32r : I<0xC8, AddRegFrm,
                  (outs GR32:$dst), (ins GR32:$src),
                  "bswap{l}\t$dst",
-                 [(set GR32:$dst, (bswap GR32:$src))], IIC_BSWAP>, OpSize16, TB;
+                 [(set GR32:$dst, (bswap GR32:$src))], IIC_BSWAP>, OpSize32, TB;
 
 def BSWAP64r : RI<0xC8, AddRegFrm, (outs GR64:$dst), (ins GR64:$src),
                   "bswap{q}\t$dst",
@@ -1082,20 +1083,20 @@ let Defs = [EFLAGS] in {
 def BSF16rr  : I<0xBC, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
                  "bsf{w}\t{$src, $dst|$dst, $src}",
                  [(set GR16:$dst, EFLAGS, (X86bsf GR16:$src))],
-                  IIC_BIT_SCAN_REG>, TB, OpSize, Sched<[WriteShift]>;
+                  IIC_BIT_SCAN_REG>, TB, OpSize16, Sched<[WriteShift]>;
 def BSF16rm  : I<0xBC, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                  "bsf{w}\t{$src, $dst|$dst, $src}",
                  [(set GR16:$dst, EFLAGS, (X86bsf (loadi16 addr:$src)))],
-                  IIC_BIT_SCAN_MEM>, TB, OpSize, Sched<[WriteShiftLd]>;
+                  IIC_BIT_SCAN_MEM>, TB, OpSize16, Sched<[WriteShiftLd]>;
 def BSF32rr  : I<0xBC, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
                  "bsf{l}\t{$src, $dst|$dst, $src}",
                  [(set GR32:$dst, EFLAGS, (X86bsf GR32:$src))],
-                 IIC_BIT_SCAN_REG>, TB, OpSize16,
+                 IIC_BIT_SCAN_REG>, TB, OpSize32,
                Sched<[WriteShift]>;
 def BSF32rm  : I<0xBC, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                  "bsf{l}\t{$src, $dst|$dst, $src}",
                  [(set GR32:$dst, EFLAGS, (X86bsf (loadi32 addr:$src)))],
-                 IIC_BIT_SCAN_MEM>, TB, OpSize16, Sched<[WriteShiftLd]>;
+                 IIC_BIT_SCAN_MEM>, TB, OpSize32, Sched<[WriteShiftLd]>;
 def BSF64rr  : RI<0xBC, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                   "bsf{q}\t{$src, $dst|$dst, $src}",
                   [(set GR64:$dst, EFLAGS, (X86bsf GR64:$src))],
@@ -1109,21 +1110,21 @@ def BSR16rr  : I<0xBD, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
                  "bsr{w}\t{$src, $dst|$dst, $src}",
                  [(set GR16:$dst, EFLAGS, (X86bsr GR16:$src))],
                  IIC_BIT_SCAN_REG>,
-                 TB, OpSize, Sched<[WriteShift]>;
+                 TB, OpSize16, Sched<[WriteShift]>;
 def BSR16rm  : I<0xBD, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                  "bsr{w}\t{$src, $dst|$dst, $src}",
                  [(set GR16:$dst, EFLAGS, (X86bsr (loadi16 addr:$src)))],
                  IIC_BIT_SCAN_MEM>, TB,
-                 OpSize, Sched<[WriteShiftLd]>;
+                 OpSize16, Sched<[WriteShiftLd]>;
 def BSR32rr  : I<0xBD, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
                  "bsr{l}\t{$src, $dst|$dst, $src}",
                  [(set GR32:$dst, EFLAGS, (X86bsr GR32:$src))],
-                 IIC_BIT_SCAN_REG>, TB, OpSize16,
+                 IIC_BIT_SCAN_REG>, TB, OpSize32,
                Sched<[WriteShift]>;
 def BSR32rm  : I<0xBD, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                  "bsr{l}\t{$src, $dst|$dst, $src}",
                  [(set GR32:$dst, EFLAGS, (X86bsr (loadi32 addr:$src)))],
-                 IIC_BIT_SCAN_MEM>, TB, OpSize16, Sched<[WriteShiftLd]>;
+                 IIC_BIT_SCAN_MEM>, TB, OpSize32, Sched<[WriteShiftLd]>;
 def BSR64rr  : RI<0xBD, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                   "bsr{q}\t{$src, $dst|$dst, $src}",
                   [(set GR64:$dst, EFLAGS, (X86bsr GR64:$src))], IIC_BIT_SCAN_REG>, TB,
@@ -1140,9 +1141,9 @@ let Defs = [EDI,ESI], Uses = [EDI,ESI,EFLAGS] in {
 def MOVSB : I<0xA4, RawFrmDstSrc, (outs dstidx8:$dst), (ins srcidx8:$src),
               "movsb\t{$src, $dst|$dst, $src}", [], IIC_MOVS>;
 def MOVSW : I<0xA5, RawFrmDstSrc, (outs dstidx16:$dst), (ins srcidx16:$src),
-              "movsw\t{$src, $dst|$dst, $src}", [], IIC_MOVS>, OpSize;
+              "movsw\t{$src, $dst|$dst, $src}", [], IIC_MOVS>, OpSize16;
 def MOVSL : I<0xA5, RawFrmDstSrc, (outs dstidx32:$dst), (ins srcidx32:$src),
-              "movs{l|d}\t{$src, $dst|$dst, $src}", [], IIC_MOVS>, OpSize16;
+              "movs{l|d}\t{$src, $dst|$dst, $src}", [], IIC_MOVS>, OpSize32;
 def MOVSQ : RI<0xA5, RawFrmDstSrc, (outs dstidx64:$dst), (ins srcidx64:$src),
                "movsq\t{$src, $dst|$dst, $src}", [], IIC_MOVS>;
 }
@@ -1153,10 +1154,10 @@ def STOSB : I<0xAA, RawFrmDst, (outs dstidx8:$dst), (ins),
               "stosb\t{%al, $dst|$dst, al}", [], IIC_STOS>;
 let Defs = [EDI], Uses = [AX,EDI,EFLAGS] in
 def STOSW : I<0xAB, RawFrmDst, (outs dstidx16:$dst), (ins),
-              "stosw\t{%ax, $dst|$dst, ax}", [], IIC_STOS>, OpSize;
+              "stosw\t{%ax, $dst|$dst, ax}", [], IIC_STOS>, OpSize16;
 let Defs = [EDI], Uses = [EAX,EDI,EFLAGS] in
 def STOSL : I<0xAB, RawFrmDst, (outs dstidx32:$dst), (ins),
-              "stos{l|d}\t{%eax, $dst|$dst, eax}", [], IIC_STOS>, OpSize16;
+              "stos{l|d}\t{%eax, $dst|$dst, eax}", [], IIC_STOS>, OpSize32;
 let Defs = [RCX,RDI], Uses = [RAX,RCX,RDI,EFLAGS] in
 def STOSQ : RI<0xAB, RawFrmDst, (outs dstidx64:$dst), (ins),
                "stosq\t{%rax, $dst|$dst, rax}", [], IIC_STOS>;
@@ -1164,18 +1165,18 @@ def STOSQ : RI<0xAB, RawFrmDst, (outs dstidx64:$dst), (ins),
 def SCAS8 : I<0xAE, RawFrmDst, (outs), (ins dstidx8:$dst),
               "scasb\t{$dst, %al|al, $dst}", [], IIC_SCAS>;
 def SCAS16 : I<0xAF, RawFrmDst, (outs), (ins dstidx16:$dst),
-               "scasw\t{$dst, %ax|ax, $dst}", [], IIC_SCAS>, OpSize;
+               "scasw\t{$dst, %ax|ax, $dst}", [], IIC_SCAS>, OpSize16;
 def SCAS32 : I<0xAF, RawFrmDst, (outs), (ins dstidx32:$dst),
-               "scas{l|d}\t{$dst, %eax|eax, $dst}", [], IIC_SCAS>, OpSize16;
+               "scas{l|d}\t{$dst, %eax|eax, $dst}", [], IIC_SCAS>, OpSize32;
 def SCAS64 : RI<0xAF, RawFrmDst, (outs), (ins dstidx64:$dst),
                 "scasq\t{$dst, %rax|rax, $dst}", [], IIC_SCAS>;
 
 def CMPS8 : I<0xA6, RawFrmDstSrc, (outs), (ins dstidx8:$dst, srcidx8:$src),
               "cmpsb\t{$dst, $src|$src, $dst}", [], IIC_CMPS>;
 def CMPS16 : I<0xA7, RawFrmDstSrc, (outs), (ins dstidx16:$dst, srcidx16:$src),
-               "cmpsw\t{$dst, $src|$src, $dst}", [], IIC_CMPS>, OpSize;
+               "cmpsw\t{$dst, $src|$src, $dst}", [], IIC_CMPS>, OpSize16;
 def CMPS32 : I<0xA7, RawFrmDstSrc, (outs), (ins dstidx32:$dst, srcidx32:$src),
-               "cmps{l|d}\t{$dst, $src|$src, $dst}", [], IIC_CMPS>, OpSize16;
+               "cmps{l|d}\t{$dst, $src|$src, $dst}", [], IIC_CMPS>, OpSize32;
 def CMPS64 : RI<0xA7, RawFrmDstSrc, (outs), (ins dstidx64:$dst, srcidx64:$src),
                 "cmpsq\t{$dst, $src|$src, $dst}", [], IIC_CMPS>;
 } // SchedRW
@@ -1188,9 +1189,9 @@ let neverHasSideEffects = 1 in {
 def MOV8rr  : I<0x88, MRMDestReg, (outs GR8 :$dst), (ins GR8 :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}", [], IIC_MOV>;
 def MOV16rr : I<0x89, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}", [], IIC_MOV>, OpSize;
+                "mov{w}\t{$src, $dst|$dst, $src}", [], IIC_MOV>, OpSize16;
 def MOV32rr : I<0x89, MRMDestReg, (outs GR32:$dst), (ins GR32:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV>, OpSize16;
+                "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV>, OpSize32;
 def MOV64rr : RI<0x89, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
                  "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV>;
 }
@@ -1201,10 +1202,10 @@ def MOV8ri  : Ii8 <0xB0, AddRegFrm, (outs GR8 :$dst), (ins i8imm :$src),
                    [(set GR8:$dst, imm:$src)], IIC_MOV>;
 def MOV16ri : Ii16<0xB8, AddRegFrm, (outs GR16:$dst), (ins i16imm:$src),
                    "mov{w}\t{$src, $dst|$dst, $src}",
-                   [(set GR16:$dst, imm:$src)], IIC_MOV>, OpSize;
+                   [(set GR16:$dst, imm:$src)], IIC_MOV>, OpSize16;
 def MOV32ri : Ii32<0xB8, AddRegFrm, (outs GR32:$dst), (ins i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
-                   [(set GR32:$dst, imm:$src)], IIC_MOV>, OpSize16;
+                   [(set GR32:$dst, imm:$src)], IIC_MOV>, OpSize32;
 def MOV64ri : RIi64<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64imm:$src),
                     "movabs{q}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, imm:$src)], IIC_MOV>;
@@ -1220,10 +1221,10 @@ def MOV8mi  : Ii8 <0xC6, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src),
                    [(store (i8 imm:$src), addr:$dst)], IIC_MOV_MEM>;
 def MOV16mi : Ii16<0xC7, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src),
                    "mov{w}\t{$src, $dst|$dst, $src}",
-                   [(store (i16 imm:$src), addr:$dst)], IIC_MOV_MEM>, OpSize;
+                   [(store (i16 imm:$src), addr:$dst)], IIC_MOV_MEM>, OpSize16;
 def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
-                   [(store (i32 imm:$src), addr:$dst)], IIC_MOV_MEM>, OpSize16;
+                   [(store (i32 imm:$src), addr:$dst)], IIC_MOV_MEM>, OpSize32;
 def MOV64mi32 : RIi32S<0xC7, MRM0m, (outs), (ins i64mem:$dst, i64i32imm:$src),
                        "mov{q}\t{$src, $dst|$dst, $src}",
                        [(store i64immSExt32:$src, addr:$dst)], IIC_MOV_MEM>;
@@ -1239,42 +1240,42 @@ def MOV8o8a : Ii32 <0xA0, RawFrmMemOffs, (outs), (ins offset8:$src),
                    "mov{b}\t{$src, %al|al, $src}", [], IIC_MOV_MEM>,
                    Requires<[In32BitMode]>;
 def MOV16o16a : Ii32 <0xA1, RawFrmMemOffs, (outs), (ins offset16:$src),
-                      "mov{w}\t{$src, %ax|ax, $src}", [], IIC_MOV_MEM>, OpSize,
-                     Requires<[In32BitMode]>;
+                      "mov{w}\t{$src, %ax|ax, $src}", [], IIC_MOV_MEM>,
+                      OpSize16, Requires<[In32BitMode]>;
 def MOV32o32a : Ii32 <0xA1, RawFrmMemOffs, (outs), (ins offset32:$src),
                       "mov{l}\t{$src, %eax|eax, $src}", [], IIC_MOV_MEM>,
-                      OpSize16, Requires<[In32BitMode]>;
+                      OpSize32, Requires<[In32BitMode]>;
 
 def MOV8o8a_16 : Ii16 <0xA0, RawFrmMemOffs, (outs), (ins offset8:$src),
                    "mov{b}\t{$src, %al|al, $src}", [], IIC_MOV_MEM>,
                    AdSize, Requires<[In16BitMode]>;
 def MOV16o16a_16 : Ii16 <0xA1, RawFrmMemOffs, (outs), (ins offset16:$src),
-                      "mov{w}\t{$src, %ax|ax, $src}", [], IIC_MOV_MEM>, OpSize,
-                     AdSize, Requires<[In16BitMode]>;
+                      "mov{w}\t{$src, %ax|ax, $src}", [], IIC_MOV_MEM>,
+                      OpSize16, AdSize, Requires<[In16BitMode]>;
 def MOV32o32a_16 : Ii16 <0xA1, RawFrmMemOffs, (outs), (ins offset32:$src),
                       "mov{l}\t{$src, %eax|eax, $src}", [], IIC_MOV_MEM>,
-                      AdSize, OpSize16, Requires<[In16BitMode]>;
+                      AdSize, OpSize32, Requires<[In16BitMode]>;
 }
 let mayStore = 1 in {
 def MOV8ao8 : Ii32 <0xA2, RawFrmMemOffs, (outs offset8:$dst), (ins),
                    "mov{b}\t{%al, $dst|$dst, al}", [], IIC_MOV_MEM>,
                   Requires<[In32BitMode]>;
 def MOV16ao16 : Ii32 <0xA3, RawFrmMemOffs, (outs offset16:$dst), (ins),
-                      "mov{w}\t{%ax, $dst|$dst, ax}", [], IIC_MOV_MEM>, OpSize,
-                     Requires<[In32BitMode]>;
+                      "mov{w}\t{%ax, $dst|$dst, ax}", [], IIC_MOV_MEM>,
+                      OpSize16, Requires<[In32BitMode]>;
 def MOV32ao32 : Ii32 <0xA3, RawFrmMemOffs, (outs offset32:$dst), (ins),
                       "mov{l}\t{%eax, $dst|$dst, eax}", [], IIC_MOV_MEM>,
-                     OpSize16, Requires<[In32BitMode]>;
+                     OpSize32, Requires<[In32BitMode]>;
 
 def MOV8ao8_16 : Ii16 <0xA2, RawFrmMemOffs, (outs offset8:$dst), (ins),
                    "mov{b}\t{%al, $dst|$dst, al}", [], IIC_MOV_MEM>,
                   AdSize, Requires<[In16BitMode]>;
 def MOV16ao16_16 : Ii16 <0xA3, RawFrmMemOffs, (outs offset16:$dst), (ins),
-                      "mov{w}\t{%ax, $dst|$dst, ax}", [], IIC_MOV_MEM>, OpSize,
-                     AdSize, Requires<[In16BitMode]>;
+                      "mov{w}\t{%ax, $dst|$dst, ax}", [], IIC_MOV_MEM>,
+                      OpSize16, AdSize, Requires<[In16BitMode]>;
 def MOV32ao32_16 : Ii16 <0xA3, RawFrmMemOffs, (outs offset32:$dst), (ins),
                       "mov{l}\t{%eax, $dst|$dst, eax}", [], IIC_MOV_MEM>,
-                     OpSize16, AdSize, Requires<[In16BitMode]>;
+                     OpSize32, AdSize, Requires<[In16BitMode]>;
 }
 }
 
@@ -1285,10 +1286,10 @@ def MOV64o8a : RIi64_NOREX<0xA0, RawFrmMemOffs, (outs), (ins offset8:$src),
                      "movabs{b}\t{$src, %al|al, $src}", []>,
                      Requires<[In64BitMode]>;
 def MOV64o16a : RIi64_NOREX<0xA1, RawFrmMemOffs, (outs), (ins offset16:$src),
-                     "movabs{w}\t{$src, %ax|ax, $src}", []>, OpSize,
+                     "movabs{w}\t{$src, %ax|ax, $src}", []>, OpSize16,
                      Requires<[In64BitMode]>;
 def MOV64o32a : RIi64_NOREX<0xA1, RawFrmMemOffs, (outs), (ins offset32:$src),
-                     "movabs{l}\t{$src, %eax|eax, $src}", []>,
+                     "movabs{l}\t{$src, %eax|eax, $src}", []>, OpSize32,
                      Requires<[In64BitMode]>;
 def MOV64o64a : RIi64<0xA1, RawFrmMemOffs, (outs), (ins offset64:$src),
                      "movabs{q}\t{$src, %rax|rax, $src}", []>,
@@ -1300,10 +1301,10 @@ def MOV64ao8 : RIi64_NOREX<0xA2, RawFrmMemOffs, (outs offset8:$dst), (ins),
                      "movabs{b}\t{%al, $dst|$dst, al}", []>,
                      Requires<[In64BitMode]>;
 def MOV64ao16 : RIi64_NOREX<0xA3, RawFrmMemOffs, (outs offset16:$dst), (ins),
-                     "movabs{w}\t{%ax, $dst|$dst, ax}", []>, OpSize,
+                     "movabs{w}\t{%ax, $dst|$dst, ax}", []>, OpSize16,
                      Requires<[In64BitMode]>;
 def MOV64ao32 : RIi64_NOREX<0xA3, RawFrmMemOffs, (outs offset32:$dst), (ins),
-                     "movabs{l}\t{%eax, $dst|$dst, eax}", []>,
+                     "movabs{l}\t{%eax, $dst|$dst, eax}", []>, OpSize32,
                      Requires<[In64BitMode]>;
 def MOV64ao64 : RIi64<0xA3, RawFrmMemOffs, (outs offset64:$dst), (ins),
                      "movabs{q}\t{%rax, $dst|$dst, rax}", []>,
@@ -1316,9 +1317,9 @@ let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0,
 def MOV8rr_REV : I<0x8A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src),
                    "mov{b}\t{$src, $dst|$dst, $src}", [], IIC_MOV>;
 def MOV16rr_REV : I<0x8B, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
-                    "mov{w}\t{$src, $dst|$dst, $src}", [], IIC_MOV>, OpSize;
+                    "mov{w}\t{$src, $dst|$dst, $src}", [], IIC_MOV>, OpSize16;
 def MOV32rr_REV : I<0x8B, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
-                    "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV>, OpSize16;
+                    "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV>, OpSize32;
 def MOV64rr_REV : RI<0x8B, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                      "mov{q}\t{$src, $dst|$dst, $src}", [], IIC_MOV>;
 }
@@ -1329,10 +1330,10 @@ def MOV8rm  : I<0x8A, MRMSrcMem, (outs GR8 :$dst), (ins i8mem :$src),
                 [(set GR8:$dst, (loadi8 addr:$src))], IIC_MOV_MEM>;
 def MOV16rm : I<0x8B, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}",
-                [(set GR16:$dst, (loadi16 addr:$src))], IIC_MOV_MEM>, OpSize;
+                [(set GR16:$dst, (loadi16 addr:$src))], IIC_MOV_MEM>, OpSize16;
 def MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}",
-                [(set GR32:$dst, (loadi32 addr:$src))], IIC_MOV_MEM>, OpSize16;
+                [(set GR32:$dst, (loadi32 addr:$src))], IIC_MOV_MEM>, OpSize32;
 def MOV64rm : RI<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
                  "mov{q}\t{$src, $dst|$dst, $src}",
                  [(set GR64:$dst, (load addr:$src))], IIC_MOV_MEM>;
@@ -1344,10 +1345,10 @@ def MOV8mr  : I<0x88, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src),
                 [(store GR8:$src, addr:$dst)], IIC_MOV_MEM>;
 def MOV16mr : I<0x89, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}",
-                [(store GR16:$src, addr:$dst)], IIC_MOV_MEM>, OpSize;
+                [(store GR16:$src, addr:$dst)], IIC_MOV_MEM>, OpSize16;
 def MOV32mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}",
-                [(store GR32:$src, addr:$dst)], IIC_MOV_MEM>, OpSize16;
+                [(store GR32:$src, addr:$dst)], IIC_MOV_MEM>, OpSize32;
 def MOV64mr : RI<0x89, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                  "mov{q}\t{$src, $dst|$dst, $src}",
                  [(store GR64:$src, addr:$dst)], IIC_MOV_MEM>;
@@ -1394,11 +1395,11 @@ let SchedRW = [WriteALU] in {
 def BT16rr : I<0xA3, MRMDestReg, (outs), (ins GR16:$src1, GR16:$src2),
                "bt{w}\t{$src2, $src1|$src1, $src2}",
                [(set EFLAGS, (X86bt GR16:$src1, GR16:$src2))], IIC_BT_RR>,
-               OpSize, TB;
+               OpSize16, TB;
 def BT32rr : I<0xA3, MRMDestReg, (outs), (ins GR32:$src1, GR32:$src2),
                "bt{l}\t{$src2, $src1|$src1, $src2}",
                [(set EFLAGS, (X86bt GR32:$src1, GR32:$src2))], IIC_BT_RR>,
-               OpSize16, TB;
+               OpSize32, TB;
 def BT64rr : RI<0xA3, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                "bt{q}\t{$src2, $src1|$src1, $src2}",
                [(set EFLAGS, (X86bt GR64:$src1, GR64:$src2))], IIC_BT_RR>, TB;
@@ -1415,13 +1416,13 @@ let mayLoad = 1, hasSideEffects = 0, SchedRW = [WriteALULd] in {
   //               [(X86bt (loadi16 addr:$src1), GR16:$src2),
   //                (implicit EFLAGS)]
                  [], IIC_BT_MR
-                 >, OpSize, TB, Requires<[FastBTMem]>;
+                 >, OpSize16, TB, Requires<[FastBTMem]>;
   def BT32mr : I<0xA3, MRMDestMem, (outs), (ins i32mem:$src1, GR32:$src2),
                  "bt{l}\t{$src2, $src1|$src1, $src2}",
   //               [(X86bt (loadi32 addr:$src1), GR32:$src2),
   //                (implicit EFLAGS)]
                  [], IIC_BT_MR
-                 >, OpSize16, TB, Requires<[FastBTMem]>;
+                 >, OpSize32, TB, Requires<[FastBTMem]>;
   def BT64mr : RI<0xA3, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
                  "bt{q}\t{$src2, $src1|$src1, $src2}",
   //               [(X86bt (loadi64 addr:$src1), GR64:$src2),
@@ -1434,11 +1435,11 @@ let SchedRW = [WriteALU] in {
 def BT16ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR16:$src1, i16i8imm:$src2),
                 "bt{w}\t{$src2, $src1|$src1, $src2}",
                 [(set EFLAGS, (X86bt GR16:$src1, i16immSExt8:$src2))],
-                IIC_BT_RI>, OpSize, TB;
+                IIC_BT_RI>, OpSize16, TB;
 def BT32ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR32:$src1, i32i8imm:$src2),
                 "bt{l}\t{$src2, $src1|$src1, $src2}",
                 [(set EFLAGS, (X86bt GR32:$src1, i32immSExt8:$src2))],
-                IIC_BT_RI>, OpSize16, TB;
+                IIC_BT_RI>, OpSize32, TB;
 def BT64ri8 : RIi8<0xBA, MRM4r, (outs), (ins GR64:$src1, i64i8imm:$src2),
                 "bt{q}\t{$src2, $src1|$src1, $src2}",
                 [(set EFLAGS, (X86bt GR64:$src1, i64immSExt8:$src2))],
@@ -1452,11 +1453,11 @@ let SchedRW = [WriteALU] in {
 def BT16mi8 : Ii8<0xBA, MRM4m, (outs), (ins i16mem:$src1, i16i8imm:$src2),
                 "bt{w}\t{$src2, $src1|$src1, $src2}",
                 [(set EFLAGS, (X86bt (loadi16 addr:$src1), i16immSExt8:$src2))
-                 ], IIC_BT_MI>, OpSize, TB;
+                 ], IIC_BT_MI>, OpSize16, TB;
 def BT32mi8 : Ii8<0xBA, MRM4m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
                 "bt{l}\t{$src2, $src1|$src1, $src2}",
                 [(set EFLAGS, (X86bt (loadi32 addr:$src1), i32immSExt8:$src2))
-                 ], IIC_BT_MI>, OpSize16, TB;
+                 ], IIC_BT_MI>, OpSize32, TB;
 def BT64mi8 : RIi8<0xBA, MRM4m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
                 "bt{q}\t{$src2, $src1|$src1, $src2}",
                 [(set EFLAGS, (X86bt (loadi64 addr:$src1),
@@ -1467,10 +1468,10 @@ let hasSideEffects = 0 in {
 let SchedRW = [WriteALU] in {
 def BTC16rr : I<0xBB, MRMDestReg, (outs), (ins GR16:$src1, GR16:$src2),
                 "btc{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RR>,
-                OpSize, TB;
+                OpSize16, TB;
 def BTC32rr : I<0xBB, MRMDestReg, (outs), (ins GR32:$src1, GR32:$src2),
                 "btc{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RR>,
-                OpSize16, TB;
+                OpSize32, TB;
 def BTC64rr : RI<0xBB, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                  "btc{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RR>, TB;
 } // SchedRW
@@ -1478,10 +1479,10 @@ def BTC64rr : RI<0xBB, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
 let mayLoad = 1, mayStore = 1, SchedRW = [WriteALULd, WriteRMW] in {
 def BTC16mr : I<0xBB, MRMDestMem, (outs), (ins i16mem:$src1, GR16:$src2),
                 "btc{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MR>,
-                OpSize, TB;
+                OpSize16, TB;
 def BTC32mr : I<0xBB, MRMDestMem, (outs), (ins i32mem:$src1, GR32:$src2),
                 "btc{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MR>,
-                OpSize16, TB;
+                OpSize32, TB;
 def BTC64mr : RI<0xBB, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
                  "btc{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MR>, TB;
 }
@@ -1489,10 +1490,10 @@ def BTC64mr : RI<0xBB, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
 let SchedRW = [WriteALU] in {
 def BTC16ri8 : Ii8<0xBA, MRM7r, (outs), (ins GR16:$src1, i16i8imm:$src2),
                     "btc{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RI>,
-                    OpSize, TB;
+                    OpSize16, TB;
 def BTC32ri8 : Ii8<0xBA, MRM7r, (outs), (ins GR32:$src1, i32i8imm:$src2),
                     "btc{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RI>,
-                    OpSize16, TB;
+                    OpSize32, TB;
 def BTC64ri8 : RIi8<0xBA, MRM7r, (outs), (ins GR64:$src1, i64i8imm:$src2),
                     "btc{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RI>, TB;
 } // SchedRW
@@ -1500,10 +1501,10 @@ def BTC64ri8 : RIi8<0xBA, MRM7r, (outs), (ins GR64:$src1, i64i8imm:$src2),
 let mayLoad = 1, mayStore = 1, SchedRW = [WriteALULd, WriteRMW] in {
 def BTC16mi8 : Ii8<0xBA, MRM7m, (outs), (ins i16mem:$src1, i16i8imm:$src2),
                     "btc{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MI>,
-                    OpSize, TB;
+                    OpSize16, TB;
 def BTC32mi8 : Ii8<0xBA, MRM7m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
                     "btc{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MI>,
-                    OpSize16, TB;
+                    OpSize32, TB;
 def BTC64mi8 : RIi8<0xBA, MRM7m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
                     "btc{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MI>, TB;
 }
@@ -1511,10 +1512,10 @@ def BTC64mi8 : RIi8<0xBA, MRM7m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
 let SchedRW = [WriteALU] in {
 def BTR16rr : I<0xB3, MRMDestReg, (outs), (ins GR16:$src1, GR16:$src2),
                 "btr{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RR>,
-                OpSize, TB;
+                OpSize16, TB;
 def BTR32rr : I<0xB3, MRMDestReg, (outs), (ins GR32:$src1, GR32:$src2),
                 "btr{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RR>,
-                OpSize16, TB;
+                OpSize32, TB;
 def BTR64rr : RI<0xB3, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                  "btr{q}\t{$src2, $src1|$src1, $src2}", []>, TB;
 } // SchedRW
@@ -1522,10 +1523,10 @@ def BTR64rr : RI<0xB3, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
 let mayLoad = 1, mayStore = 1, SchedRW = [WriteALULd, WriteRMW] in {
 def BTR16mr : I<0xB3, MRMDestMem, (outs), (ins i16mem:$src1, GR16:$src2),
                 "btr{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MR>,
-                OpSize, TB;
+                OpSize16, TB;
 def BTR32mr : I<0xB3, MRMDestMem, (outs), (ins i32mem:$src1, GR32:$src2),
                 "btr{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MR>,
-                OpSize16, TB;
+                OpSize32, TB;
 def BTR64mr : RI<0xB3, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
                  "btr{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MR>, TB;
 }
@@ -1533,10 +1534,10 @@ def BTR64mr : RI<0xB3, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
 let SchedRW = [WriteALU] in {
 def BTR16ri8 : Ii8<0xBA, MRM6r, (outs), (ins GR16:$src1, i16i8imm:$src2),
                     "btr{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RI>,
-                    OpSize, TB;
+                    OpSize16, TB;
 def BTR32ri8 : Ii8<0xBA, MRM6r, (outs), (ins GR32:$src1, i32i8imm:$src2),
                     "btr{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RI>,
-                    OpSize16, TB;
+                    OpSize32, TB;
 def BTR64ri8 : RIi8<0xBA, MRM6r, (outs), (ins GR64:$src1, i64i8imm:$src2),
                     "btr{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RI>, TB;
 } // SchedRW
@@ -1544,10 +1545,10 @@ def BTR64ri8 : RIi8<0xBA, MRM6r, (outs), (ins GR64:$src1, i64i8imm:$src2),
 let mayLoad = 1, mayStore = 1, SchedRW = [WriteALULd, WriteRMW] in {
 def BTR16mi8 : Ii8<0xBA, MRM6m, (outs), (ins i16mem:$src1, i16i8imm:$src2),
                     "btr{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MI>,
-                    OpSize, TB;
+                    OpSize16, TB;
 def BTR32mi8 : Ii8<0xBA, MRM6m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
                     "btr{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MI>,
-                    OpSize16, TB;
+                    OpSize32, TB;
 def BTR64mi8 : RIi8<0xBA, MRM6m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
                     "btr{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MI>, TB;
 }
@@ -1555,21 +1556,21 @@ def BTR64mi8 : RIi8<0xBA, MRM6m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
 let SchedRW = [WriteALU] in {
 def BTS16rr : I<0xAB, MRMDestReg, (outs), (ins GR16:$src1, GR16:$src2),
                 "bts{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RR>,
-                OpSize, TB;
+                OpSize16, TB;
 def BTS32rr : I<0xAB, MRMDestReg, (outs), (ins GR32:$src1, GR32:$src2),
                 "bts{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RR>,
-                OpSize16, TB;
+              OpSize32, TB;
 def BTS64rr : RI<0xAB, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
-                 "bts{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RR>, TB;
+               "bts{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RR>, TB;
 } // SchedRW
 
 let mayLoad = 1, mayStore = 1, SchedRW = [WriteALULd, WriteRMW] in {
 def BTS16mr : I<0xAB, MRMDestMem, (outs), (ins i16mem:$src1, GR16:$src2),
-                "bts{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MR>,
-                OpSize, TB;
+              "bts{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MR>,
+              OpSize16, TB;
 def BTS32mr : I<0xAB, MRMDestMem, (outs), (ins i32mem:$src1, GR32:$src2),
-                "bts{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MR>,
-                OpSize16, TB;
+              "bts{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MR>,
+              OpSize32, TB;
 def BTS64mr : RI<0xAB, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
                  "bts{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MR>, TB;
 }
@@ -1577,10 +1578,10 @@ def BTS64mr : RI<0xAB, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
 let SchedRW = [WriteALU] in {
 def BTS16ri8 : Ii8<0xBA, MRM5r, (outs), (ins GR16:$src1, i16i8imm:$src2),
                     "bts{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RI>,
-                    OpSize, TB;
+                    OpSize16, TB;
 def BTS32ri8 : Ii8<0xBA, MRM5r, (outs), (ins GR32:$src1, i32i8imm:$src2),
                     "bts{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RI>,
-                    OpSize16, TB;
+                    OpSize32, TB;
 def BTS64ri8 : RIi8<0xBA, MRM5r, (outs), (ins GR64:$src1, i64i8imm:$src2),
                     "bts{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_RI>, TB;
 } // SchedRW
@@ -1588,10 +1589,10 @@ def BTS64ri8 : RIi8<0xBA, MRM5r, (outs), (ins GR64:$src1, i64i8imm:$src2),
 let mayLoad = 1, mayStore = 1, SchedRW = [WriteALULd, WriteRMW] in {
 def BTS16mi8 : Ii8<0xBA, MRM5m, (outs), (ins i16mem:$src1, i16i8imm:$src2),
                     "bts{w}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MI>,
-                    OpSize, TB;
+                    OpSize16, TB;
 def BTS32mi8 : Ii8<0xBA, MRM5m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
                     "bts{l}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MI>,
-                    OpSize16, TB;
+                    OpSize32, TB;
 def BTS64mi8 : RIi8<0xBA, MRM5m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
                     "bts{q}\t{$src2, $src1|$src1, $src2}", [], IIC_BTX_MI>, TB;
 }
@@ -1621,14 +1622,14 @@ multiclass ATOMIC_SWAP<bits<8> opc8, bits<8> opc, string mnemonic, string frag,
                       [(set
                          GR16:$dst,
                          (!cast<PatFrag>(frag # "_16") addr:$ptr, GR16:$val))],
-                      itin>, OpSize;
+                      itin>, OpSize16;
     def NAME#32rm : I<opc, MRMSrcMem, (outs GR32:$dst),
                       (ins GR32:$val, i32mem:$ptr),
                       !strconcat(mnemonic, "{l}\t{$val, $ptr|$ptr, $val}"),
                       [(set
                          GR32:$dst,
                          (!cast<PatFrag>(frag # "_32") addr:$ptr, GR32:$val))],
-                      itin>, OpSize16;
+                      itin>, OpSize32;
     def NAME#64rm : RI<opc, MRMSrcMem, (outs GR64:$dst),
                        (ins GR64:$val, i64mem:$ptr),
                        !strconcat(mnemonic, "{q}\t{$val, $ptr|$ptr, $val}"),
@@ -1647,20 +1648,21 @@ let Constraints = "$val = $dst" in {
 def XCHG8rr : I<0x86, MRMSrcReg, (outs GR8:$dst), (ins GR8:$val, GR8:$src),
                 "xchg{b}\t{$val, $src|$src, $val}", [], IIC_XCHG_REG>;
 def XCHG16rr : I<0x87, MRMSrcReg, (outs GR16:$dst), (ins GR16:$val, GR16:$src),
-                 "xchg{w}\t{$val, $src|$src, $val}", [], IIC_XCHG_REG>, OpSize;
+                 "xchg{w}\t{$val, $src|$src, $val}", [], IIC_XCHG_REG>,
+                 OpSize16;
 def XCHG32rr : I<0x87, MRMSrcReg, (outs GR32:$dst), (ins GR32:$val, GR32:$src),
                  "xchg{l}\t{$val, $src|$src, $val}", [], IIC_XCHG_REG>,
-                 OpSize16;
+                 OpSize32;
 def XCHG64rr : RI<0x87, MRMSrcReg, (outs GR64:$dst), (ins GR64:$val,GR64:$src),
                   "xchg{q}\t{$val, $src|$src, $val}", [], IIC_XCHG_REG>;
 }
 
 // Swap between EAX and other registers.
 def XCHG16ar : I<0x90, AddRegFrm, (outs), (ins GR16:$src),
-                  "xchg{w}\t{$src, %ax|ax, $src}", [], IIC_XCHG_REG>, OpSize;
+                  "xchg{w}\t{$src, %ax|ax, $src}", [], IIC_XCHG_REG>, OpSize16;
 def XCHG32ar : I<0x90, AddRegFrm, (outs), (ins GR32:$src),
                   "xchg{l}\t{$src, %eax|eax, $src}", [], IIC_XCHG_REG>,
-                  OpSize16, Requires<[Not64BitMode]>;
+                  OpSize32, Requires<[Not64BitMode]>;
 // Uses GR32_NOAX in 64-bit mode to prevent encoding using the 0x90 NOP encoding.
 // xchg %eax, %eax needs to clear upper 32-bits of RAX so is not a NOP.
 def XCHG32ar64 : I<0x90, AddRegFrm, (outs), (ins GR32_NOAX:$src),
@@ -1675,10 +1677,10 @@ def XADD8rr : I<0xC0, MRMDestReg, (outs GR8:$dst), (ins GR8:$src),
                 "xadd{b}\t{$src, $dst|$dst, $src}", [], IIC_XADD_REG>, TB;
 def XADD16rr : I<0xC1, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
                  "xadd{w}\t{$src, $dst|$dst, $src}", [], IIC_XADD_REG>, TB,
-                 OpSize;
+                 OpSize16;
 def XADD32rr  : I<0xC1, MRMDestReg, (outs GR32:$dst), (ins GR32:$src),
                  "xadd{l}\t{$src, $dst|$dst, $src}", [], IIC_XADD_REG>, TB,
-                 OpSize16;
+                 OpSize32;
 def XADD64rr  : RI<0xC1, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
                    "xadd{q}\t{$src, $dst|$dst, $src}", [], IIC_XADD_REG>, TB;
 } // SchedRW
@@ -1688,10 +1690,10 @@ def XADD8rm   : I<0xC0, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src),
                  "xadd{b}\t{$src, $dst|$dst, $src}", [], IIC_XADD_MEM>, TB;
 def XADD16rm  : I<0xC1, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
                  "xadd{w}\t{$src, $dst|$dst, $src}", [], IIC_XADD_MEM>, TB,
-                 OpSize;
+                 OpSize16;
 def XADD32rm  : I<0xC1, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                  "xadd{l}\t{$src, $dst|$dst, $src}", [], IIC_XADD_MEM>, TB,
-                 OpSize16;
+                 OpSize32;
 def XADD64rm  : RI<0xC1, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                    "xadd{q}\t{$src, $dst|$dst, $src}", [], IIC_XADD_MEM>, TB;
 
@@ -1703,10 +1705,10 @@ def CMPXCHG8rr : I<0xB0, MRMDestReg, (outs GR8:$dst), (ins GR8:$src),
                    IIC_CMPXCHG_REG8>, TB;
 def CMPXCHG16rr : I<0xB1, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
                     "cmpxchg{w}\t{$src, $dst|$dst, $src}", [],
-                    IIC_CMPXCHG_REG>, TB, OpSize;
+                    IIC_CMPXCHG_REG>, TB, OpSize16;
 def CMPXCHG32rr  : I<0xB1, MRMDestReg, (outs GR32:$dst), (ins GR32:$src),
                      "cmpxchg{l}\t{$src, $dst|$dst, $src}", [],
-                     IIC_CMPXCHG_REG>, TB, OpSize16;
+                     IIC_CMPXCHG_REG>, TB, OpSize32;
 def CMPXCHG64rr  : RI<0xB1, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
                       "cmpxchg{q}\t{$src, $dst|$dst, $src}", [],
                       IIC_CMPXCHG_REG>, TB;
@@ -1719,10 +1721,10 @@ def CMPXCHG8rm   : I<0xB0, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src),
                      IIC_CMPXCHG_MEM8>, TB;
 def CMPXCHG16rm  : I<0xB1, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
                      "cmpxchg{w}\t{$src, $dst|$dst, $src}", [],
-                     IIC_CMPXCHG_MEM>, TB, OpSize;
+                     IIC_CMPXCHG_MEM>, TB, OpSize16;
 def CMPXCHG32rm  : I<0xB1, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                      "cmpxchg{l}\t{$src, $dst|$dst, $src}", [],
-                     IIC_CMPXCHG_MEM>, TB, OpSize16;
+                     IIC_CMPXCHG_MEM>, TB, OpSize32;
 def CMPXCHG64rm  : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                       "cmpxchg{q}\t{$src, $dst|$dst, $src}", [],
                       IIC_CMPXCHG_MEM>, TB;
@@ -1764,9 +1766,9 @@ let SchedRW = [WriteMicrocoded] in {
 def LODSB : I<0xAC, RawFrmSrc, (outs), (ins srcidx8:$src),
               "lodsb\t{$src, %al|al, $src}", [], IIC_LODS>;
 def LODSW : I<0xAD, RawFrmSrc, (outs), (ins srcidx16:$src),
-              "lodsw\t{$src, %ax|ax, $src}", [], IIC_LODS>, OpSize;
+              "lodsw\t{$src, %ax|ax, $src}", [], IIC_LODS>, OpSize16;
 def LODSL : I<0xAD, RawFrmSrc, (outs), (ins srcidx32:$src),
-              "lods{l|d}\t{$src, %eax|eax, $src}", [], IIC_LODS>, OpSize16;
+              "lods{l|d}\t{$src, %eax|eax, $src}", [], IIC_LODS>, OpSize32;
 def LODSQ : RI<0xAD, RawFrmSrc, (outs), (ins srcidx64:$src),
                "lodsq\t{$src, %rax|rax, $src}", [], IIC_LODS>;
 }
@@ -1775,9 +1777,9 @@ let SchedRW = [WriteSystem] in {
 def OUTSB : I<0x6E, RawFrmSrc, (outs), (ins srcidx8:$src),
              "outsb\t{$src, %dx|dx, $src}", [], IIC_OUTS>;
 def OUTSW : I<0x6F, RawFrmSrc, (outs), (ins srcidx16:$src),
-              "outsw\t{$src, %dx|dx, $src}", [], IIC_OUTS>, OpSize;
+              "outsw\t{$src, %dx|dx, $src}", [], IIC_OUTS>, OpSize16;
 def OUTSL : I<0x6F, RawFrmSrc, (outs), (ins srcidx32:$src),
-              "outs{l|d}\t{$src, %dx|dx, $src}", [], IIC_OUTS>, OpSize16;
+              "outs{l|d}\t{$src, %dx|dx, $src}", [], IIC_OUTS>, OpSize32;
 }
 
 // Flag instructions
@@ -1832,10 +1834,10 @@ def DAS : I<0x2F, RawFrm, (outs), (ins), "das", [], IIC_DAS>,
 let SchedRW = [WriteSystem] in {
 // Check Array Index Against Bounds
 def BOUNDS16rm : I<0x62, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
-                   "bound\t{$src, $dst|$dst, $src}", [], IIC_BOUND>, OpSize,
+                   "bound\t{$src, $dst|$dst, $src}", [], IIC_BOUND>, OpSize16,
                    Requires<[Not64BitMode]>;
 def BOUNDS32rm : I<0x62, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
-                   "bound\t{$src, $dst|$dst, $src}", [], IIC_BOUND>, OpSize16,
+                   "bound\t{$src, $dst|$dst, $src}", [], IIC_BOUND>, OpSize32,
                    Requires<[Not64BitMode]>;
 
 // Adjust RPL Field of Segment Selector
@@ -1855,11 +1857,11 @@ let Predicates = [HasMOVBE] in {
   def MOVBE16rm : I<0xF0, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                     "movbe{w}\t{$src, $dst|$dst, $src}",
                     [(set GR16:$dst, (bswap (loadi16 addr:$src)))], IIC_MOVBE>,
-                    OpSize, T8;
+                    OpSize16, T8;
   def MOVBE32rm : I<0xF0, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                     "movbe{l}\t{$src, $dst|$dst, $src}",
                     [(set GR32:$dst, (bswap (loadi32 addr:$src)))], IIC_MOVBE>,
-                    OpSize16, T8;
+                    OpSize32, T8;
   def MOVBE64rm : RI<0xF0, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
                      "movbe{q}\t{$src, $dst|$dst, $src}",
                      [(set GR64:$dst, (bswap (loadi64 addr:$src)))], IIC_MOVBE>,
@@ -1869,11 +1871,11 @@ let Predicates = [HasMOVBE] in {
   def MOVBE16mr : I<0xF1, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
                     "movbe{w}\t{$src, $dst|$dst, $src}",
                     [(store (bswap GR16:$src), addr:$dst)], IIC_MOVBE>,
-                    OpSize, T8;
+                    OpSize16, T8;
   def MOVBE32mr : I<0xF1, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                     "movbe{l}\t{$src, $dst|$dst, $src}",
                     [(store (bswap GR32:$src), addr:$dst)], IIC_MOVBE>,
-                    OpSize16, T8;
+                    OpSize32, T8;
   def MOVBE64mr : RI<0xF1, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                      "movbe{q}\t{$src, $dst|$dst, $src}",
                      [(store (bswap GR64:$src), addr:$dst)], IIC_MOVBE>,
@@ -1887,10 +1889,10 @@ let Predicates = [HasMOVBE] in {
 let Predicates = [HasRDRAND], Defs = [EFLAGS] in {
   def RDRAND16r : I<0xC7, MRM6r, (outs GR16:$dst), (ins),
                     "rdrand{w}\t$dst",
-                    [(set GR16:$dst, EFLAGS, (X86rdrand))]>, OpSize, TB;
+                    [(set GR16:$dst, EFLAGS, (X86rdrand))]>, OpSize16, TB;
   def RDRAND32r : I<0xC7, MRM6r, (outs GR32:$dst), (ins),
                     "rdrand{l}\t$dst",
-                    [(set GR32:$dst, EFLAGS, (X86rdrand))]>, OpSize16, TB;
+                    [(set GR32:$dst, EFLAGS, (X86rdrand))]>, OpSize32, TB;
   def RDRAND64r : RI<0xC7, MRM6r, (outs GR64:$dst), (ins),
                      "rdrand{q}\t$dst",
                      [(set GR64:$dst, EFLAGS, (X86rdrand))]>, TB;
@@ -1902,10 +1904,10 @@ let Predicates = [HasRDRAND], Defs = [EFLAGS] in {
 let Predicates = [HasRDSEED], Defs = [EFLAGS] in {
   def RDSEED16r : I<0xC7, MRM7r, (outs GR16:$dst), (ins),
                     "rdseed{w}\t$dst",
-                    [(set GR16:$dst, EFLAGS, (X86rdseed))]>, OpSize, TB;
+                    [(set GR16:$dst, EFLAGS, (X86rdseed))]>, OpSize16, TB;
   def RDSEED32r : I<0xC7, MRM7r, (outs GR32:$dst), (ins),
                     "rdseed{l}\t$dst",
-                    [(set GR32:$dst, EFLAGS, (X86rdseed))]>, OpSize16, TB;
+                    [(set GR32:$dst, EFLAGS, (X86rdseed))]>, OpSize32, TB;
   def RDSEED64r : RI<0xC7, MRM7r, (outs GR64:$dst), (ins),
                      "rdseed{q}\t$dst",
                      [(set GR64:$dst, EFLAGS, (X86rdseed))]>, TB;
@@ -1918,20 +1920,20 @@ let Predicates = [HasLZCNT], Defs = [EFLAGS] in {
   def LZCNT16rr : I<0xBD, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
                     "lzcnt{w}\t{$src, $dst|$dst, $src}",
                     [(set GR16:$dst, (ctlz GR16:$src)), (implicit EFLAGS)]>, XS,
-                    OpSize;
+                    OpSize16;
   def LZCNT16rm : I<0xBD, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                     "lzcnt{w}\t{$src, $dst|$dst, $src}",
                     [(set GR16:$dst, (ctlz (loadi16 addr:$src))),
-                     (implicit EFLAGS)]>, XS, OpSize;
+                     (implicit EFLAGS)]>, XS, OpSize16;
 
   def LZCNT32rr : I<0xBD, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
                     "lzcnt{l}\t{$src, $dst|$dst, $src}",
                     [(set GR32:$dst, (ctlz GR32:$src)), (implicit EFLAGS)]>, XS,
-                    OpSize16;
+                    OpSize32;
   def LZCNT32rm : I<0xBD, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                     "lzcnt{l}\t{$src, $dst|$dst, $src}",
                     [(set GR32:$dst, (ctlz (loadi32 addr:$src))),
-                     (implicit EFLAGS)]>, XS, OpSize16;
+                     (implicit EFLAGS)]>, XS, OpSize32;
 
   def LZCNT64rr : RI<0xBD, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                      "lzcnt{q}\t{$src, $dst|$dst, $src}",
@@ -1950,20 +1952,20 @@ let Predicates = [HasBMI], Defs = [EFLAGS] in {
   def TZCNT16rr : I<0xBC, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
                     "tzcnt{w}\t{$src, $dst|$dst, $src}",
                     [(set GR16:$dst, (cttz GR16:$src)), (implicit EFLAGS)]>, XS,
-                    OpSize;
+                    OpSize16;
   def TZCNT16rm : I<0xBC, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                     "tzcnt{w}\t{$src, $dst|$dst, $src}",
                     [(set GR16:$dst, (cttz (loadi16 addr:$src))),
-                     (implicit EFLAGS)]>, XS, OpSize;
+                     (implicit EFLAGS)]>, XS, OpSize16;
 
   def TZCNT32rr : I<0xBC, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
                     "tzcnt{l}\t{$src, $dst|$dst, $src}",
                     [(set GR32:$dst, (cttz GR32:$src)), (implicit EFLAGS)]>, XS,
-                    OpSize16;
+                    OpSize32;
   def TZCNT32rm : I<0xBC, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                     "tzcnt{l}\t{$src, $dst|$dst, $src}",
                     [(set GR32:$dst, (cttz (loadi32 addr:$src))),
-                     (implicit EFLAGS)]>, XS, OpSize16;
+                     (implicit EFLAGS)]>, XS, OpSize32;
 
   def TZCNT64rr : RI<0xBC, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                      "tzcnt{q}\t{$src, $dst|$dst, $src}",

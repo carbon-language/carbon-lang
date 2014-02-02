@@ -152,10 +152,18 @@ def EncVEX    : Encoding<1>;
 def EncXOP    : Encoding<2>;
 def EncEVEX   : Encoding<3>;
 
+// Operand size for encodings that change based on mode.
+class OperandSize<bits<2> val> {
+  bits<2> Value = val;
+}
+def OpSizeFixed : OperandSize<0>; // Never needs a 0x66 prefix.
+def OpSize16    : OperandSize<1>; // Needs 0x66 prefix in 32-bit mode.
+def OpSize32    : OperandSize<2>; // Needs 0x66 prefix in 16-bit mode.
+
 // Prefix byte classes which are used to indicate to the ad-hoc machine code
 // emitter that various prefix bytes are required.
-class OpSize { bit hasOpSizePrefix = 1; }
-class OpSize16 { bit hasOpSize16Prefix = 1; }
+class OpSize16 { OperandSize OpSize = OpSize16; }
+class OpSize32 { OperandSize OpSize = OpSize32; }
 class AdSize { bit hasAdSizePrefix = 1; }
 class REX_W  { bit hasREX_WPrefix = 1; }
 class LOCK   { bit hasLockPrefix = 1; }
@@ -239,8 +247,8 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
                             // isCodeGenonly. Needed to hide an ambiguous
                             // AsmString from the parser, but still disassemble.
 
-  bit hasOpSizePrefix = 0;  // Does this inst have a 0x66 prefix?
-  bit hasOpSize16Prefix = 0;// Does this inst have a 0x66 prefix in 16-bit mode?
+  OperandSize OpSize = OpSizeFixed; // Does this instruction's encoding change
+                                    // based on operand size of the mode
   bit hasAdSizePrefix = 0;  // Does this inst have a 0x67 prefix?
 
   Prefix OpPrefix = NoPrfx; // Which prefix byte does this inst have?
@@ -271,8 +279,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
 
   // TSFlags layout should be kept in sync with X86InstrInfo.h.
   let TSFlags{5-0}   = FormBits;
-  let TSFlags{6}     = hasOpSizePrefix;
-  let TSFlags{7}     = hasOpSize16Prefix;
+  let TSFlags{7-6}   = OpSize.Value;
   let TSFlags{8}     = hasAdSizePrefix;
   let TSFlags{10-9}  = OpPrefix.Value;
   let TSFlags{15-11} = OpMap.Value;
