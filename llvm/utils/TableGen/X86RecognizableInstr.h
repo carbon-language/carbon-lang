@@ -138,10 +138,6 @@ private:
   ///
   /// @param s              - The string, as extracted by calling Rec->getName()
   ///                         on a CodeGenInstruction::OperandInfo.
-  /// @param isSSE          - Indicates whether the instruction is an SSE 
-  ///                         instruction.  For SSE instructions, immediates are 
-  ///                         fixed-size rather than being affected by the
-  ///                         mandatory OpSize prefix.
   /// @param hasREX_WPrefix - Indicates whether the instruction has a REX.W
   ///                         prefix.  If it does, 32-bit register operands stay
   ///                         32-bit regardless of the operand size.
