@@ -98,8 +98,9 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
     processSymbol(normalizedFile, *file, sym, copyRefs);
   }
 
-  assert(normalizedFile.undefinedSymbols.empty() &&
-         "undefined symbols not supported yet!");
+  for (auto &sym : normalizedFile.undefinedSymbols) {
+    file->addUndefinedAtom(sym.name, copyRefs);
+  }
 
   return std::unique_ptr<File>(std::move(file));
 }

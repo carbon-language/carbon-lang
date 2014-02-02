@@ -37,6 +37,18 @@ public:
     addAtom(*atom);
   }
 
+  void addUndefinedAtom(StringRef name, bool copyRefs) {
+    if (copyRefs) {
+      // Make a copy of the atom's name and content that is owned by this file.
+      char *s = _allocator.Allocate<char>(name.size());
+      memcpy(s, name.data(), name.size());
+      name = StringRef(s, name.size());
+    }
+    SimpleUndefinedAtom *atom =
+        new (_allocator) SimpleUndefinedAtom(*this, name);
+    addAtom(*atom);
+  }
+
 private:
   llvm::BumpPtrAllocator _allocator;
 };

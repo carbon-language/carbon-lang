@@ -23,8 +23,8 @@ using namespace llvm::MachO;
 TEST(ToAtomsTest, empty_obj_x86_64) {
   NormalizedFile f;
   f.arch = lld::MachOLinkingContext::arch_x86_64;
-  ErrorOr<std::unique_ptr<const lld::File>> atom_f = normalizedToAtoms(f, "",
-                                                                       false);
+  ErrorOr<std::unique_ptr<const lld::File>> atom_f =
+      normalizedToAtoms(f, "", false);
   EXPECT_FALSE(!atom_f);
   EXPECT_EQ(0U, (*atom_f)->defined().size());
 }
@@ -51,6 +51,10 @@ TEST(ToAtomsTest, basic_obj_x86_64) {
   barSymbol.sect = 1;
   barSymbol.value = 2;
   f.globalSymbols.push_back(barSymbol);
+  Symbol undefSym;
+  undefSym.name = "_undef";
+  undefSym.type = N_UNDF;
+  f.undefinedSymbols.push_back(undefSym);
   Symbol bazSymbol;
   bazSymbol.name = "_baz";
   bazSymbol.type = N_SECT;
@@ -59,8 +63,8 @@ TEST(ToAtomsTest, basic_obj_x86_64) {
   bazSymbol.value = 3;
   f.localSymbols.push_back(bazSymbol);
 
-  ErrorOr<std::unique_ptr<const lld::File>> atom_f = normalizedToAtoms(f, "",
-                                                                       false);
+  ErrorOr<std::unique_ptr<const lld::File>> atom_f =
+      normalizedToAtoms(f, "", false);
   EXPECT_FALSE(!atom_f);
   const lld::File &file = **atom_f;
   EXPECT_EQ(3U, file.defined().size());
@@ -70,6 +74,7 @@ TEST(ToAtomsTest, basic_obj_x86_64) {
   const lld::DefinedAtom *atom2 = *it;
   ++it;
   const lld::DefinedAtom *atom3 = *it;
+  const lld::UndefinedAtom *atom4 = *file.undefined().begin();
   EXPECT_TRUE(atom1->name().equals("_foo"));
   EXPECT_EQ(2U, atom1->rawContent().size());
   EXPECT_EQ(0x90, atom1->rawContent()[0]);
@@ -85,4 +90,7 @@ TEST(ToAtomsTest, basic_obj_x86_64) {
   EXPECT_EQ(1U, atom3->rawContent().size());
   EXPECT_EQ(0xC4, atom3->rawContent()[0]);
   EXPECT_EQ(lld::Atom::scopeLinkageUnit, atom3->scope());
+
+  EXPECT_TRUE(atom4->name().equals("_undef"));
+  EXPECT_EQ(lld::Atom::definitionUndefined, atom4->definition());
 }
