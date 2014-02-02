@@ -14,6 +14,13 @@ extern "C" {
   template<typename T> class D; // expected-error{{templates must have C++ linkage}}
 }
 
+extern "C" {
+  class PR17968 {
+    template<typename T> class D; // expected-error{{templates must have C++ linkage}}
+    template<typename T> void f(); // expected-error{{templates must have C++ linkage}}
+  };
+}
+
 template<class U> class A; // expected-note{{previous template declaration is here}}
 
 template<int N> class A; // expected-error{{template parameter has a different kind in template redeclaration}}

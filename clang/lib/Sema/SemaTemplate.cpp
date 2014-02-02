@@ -5453,18 +5453,19 @@ Sema::CheckTemplateDeclScope(Scope *S, TemplateParameterList *TemplateParams) {
          (S->getFlags() & Scope::TemplateParamScope) != 0)
     S = S->getParent();
 
-  // C++ [temp]p2:
-  //   A template-declaration can appear only as a namespace scope or
-  //   class scope declaration.
+  // C++ [temp]p4:
+  //   A template [...] shall not have C linkage.
   DeclContext *Ctx = S->getEntity();
-  if (Ctx && isa<LinkageSpecDecl>(Ctx) &&
-      cast<LinkageSpecDecl>(Ctx)->getLanguage() != LinkageSpecDecl::lang_cxx)
+  if (Ctx && Ctx->isExternCContext())
     return Diag(TemplateParams->getTemplateLoc(), diag::err_template_linkage)
              << TemplateParams->getSourceRange();
 
   while (Ctx && isa<LinkageSpecDecl>(Ctx))
     Ctx = Ctx->getParent();
 
+  // C++ [temp]p2:
+  //   A template-declaration can appear only as a namespace scope or
+  //   class scope declaration.
   if (Ctx) {
     if (Ctx->isFileContext())
       return false;

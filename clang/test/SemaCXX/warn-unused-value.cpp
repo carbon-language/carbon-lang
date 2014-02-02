@@ -32,7 +32,7 @@ void b(Foo f1, Foo f2) {
 }
 
 namespace test2 {
-  extern "C" {
+  extern "C++" {
     namespace std {
       template<typename T> struct basic_string {
         struct X {};
