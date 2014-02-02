@@ -41,12 +41,12 @@ function(is_llvm_target_library library return_var)
   string(TOUPPER "${LLVM_ALL_TARGETS}" targets)
   foreach(t ${targets})
     if( capitalized_lib STREQUAL t OR
-	capitalized_lib STREQUAL "LLVM${t}" OR
-	capitalized_lib STREQUAL "LLVM${t}CODEGEN" OR
-	capitalized_lib STREQUAL "LLVM${t}ASMPARSER" OR
-	capitalized_lib STREQUAL "LLVM${t}ASMPRINTER" OR
-	capitalized_lib STREQUAL "LLVM${t}DISASSEMBLER" OR
-	capitalized_lib STREQUAL "LLVM${t}INFO" )
+        capitalized_lib STREQUAL "LLVM${t}" OR
+        capitalized_lib STREQUAL "LLVM${t}CODEGEN" OR
+        capitalized_lib STREQUAL "LLVM${t}ASMPARSER" OR
+        capitalized_lib STREQUAL "LLVM${t}ASMPRINTER" OR
+        capitalized_lib STREQUAL "LLVM${t}DISASSEMBLER" OR
+        capitalized_lib STREQUAL "LLVM${t}INFO" )
       set(${return_var} ON PARENT_SCOPE)
       break()
     endif()
@@ -106,14 +106,14 @@ function(explicit_map_components_to_libraries out_libs)
     if( NOT idx LESS 0 )
       list(FIND llvm_libs "LLVM${c}CodeGen" idx)
       if( NOT idx LESS 0 )
-	list(APPEND expanded_components "LLVM${c}CodeGen")
+        list(APPEND expanded_components "LLVM${c}CodeGen")
       else()
-	list(FIND llvm_libs "LLVM${c}" idx)
-	if( NOT idx LESS 0 )
-	  list(APPEND expanded_components "LLVM${c}")
-	else()
-	  message(FATAL_ERROR "Target ${c} is not in the set of libraries.")
-	endif()
+        list(FIND llvm_libs "LLVM${c}" idx)
+        if( NOT idx LESS 0 )
+          list(APPEND expanded_components "LLVM${c}")
+        else()
+          message(FATAL_ERROR "Target ${c} is not in the set of libraries.")
+        endif()
       endif()
       list(FIND llvm_libs "LLVM${c}AsmPrinter" asmidx)
       if( NOT asmidx LESS 0 )
