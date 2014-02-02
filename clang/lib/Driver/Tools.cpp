@@ -6110,16 +6110,15 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  // When building 32-bit code on NetBSD/amd64, we have to explicitly
-  // instruct ld in the base system to link 32-bit code.
-  if (getToolChain().getArch() == llvm::Triple::x86) {
+  // Many NetBSD architectures support more than one ABI.
+  // Determine the correct emulation for ld.
+  switch (getToolChain().getArch()) {
+  case llvm::Triple::x86:
     CmdArgs.push_back("-m");
     CmdArgs.push_back("elf_i386");
-  }
-
-  // On ARM, the linker can generate either EABI or the older APCS.
-  // Instruct it to use the correct emulation.
-  if (getToolChain().getArch() == llvm::Triple::arm) {
+    break;
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
     CmdArgs.push_back("-m");
     switch (getToolChain().getTriple().getEnvironment()) {
     case llvm::Triple::EABI:
@@ -6132,6 +6131,9 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("armelf_nbsd");
       break;
     }
+    break;
+  default:
+    break;
   }
 
   if (Output.isFilename()) {
