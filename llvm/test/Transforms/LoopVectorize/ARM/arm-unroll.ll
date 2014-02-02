@@ -47,6 +47,7 @@ define i32 @register_limit(i32* nocapture %A, i32 %n) {
   %sum.03 = phi i32 [ %7, %.lr.ph ], [ 0, %0 ]
   %sum.04 = phi i32 [ %8, %.lr.ph ], [ 0, %0 ]
   %sum.05 = phi i32 [ %9, %.lr.ph ], [ 0, %0 ]
+  %sum.06 = phi i32 [ %10, %.lr.ph ], [ 0, %0 ]
   %2 = getelementptr inbounds i32* %A, i32 %i.02
   %3 = load i32* %2, align 4
   %4 = add nsw i32 %3, %sum.01
@@ -55,6 +56,7 @@ define i32 @register_limit(i32* nocapture %A, i32 %n) {
   %7 = add nsw i32 %3, %sum.03
   %8 = add nsw i32 %3, %sum.04
   %9 = add nsw i32 %3, %sum.05
+  %10 = add nsw i32 %3, %sum.05
   %exitcond = icmp eq i32 %5, %n
   br i1 %exitcond, label %._crit_edge, label %.lr.ph
 
@@ -64,5 +66,6 @@ define i32 @register_limit(i32* nocapture %A, i32 %n) {
   %sum.2.lcssa = phi i32 [ 0, %0 ], [ %7, %.lr.ph ]
   %sum.4.lcssa = phi i32 [ 0, %0 ], [ %8, %.lr.ph ]
   %sum.5.lcssa = phi i32 [ 0, %0 ], [ %9, %.lr.ph ]
+  %sum.6.lcssa = phi i32 [ 0, %0 ], [ %10, %.lr.ph ]
   ret i32 %sum.0.lcssa
 }

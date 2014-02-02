@@ -180,16 +180,16 @@ static cl::opt<bool> LoopVectorizeWithBlockFrequency(
 
 // Runtime unroll loops for load/store throughput.
 static cl::opt<bool> EnableLoadStoreRuntimeUnroll(
-    "enable-loadstore-runtime-unroll", cl::init(false), cl::Hidden,
+    "enable-loadstore-runtime-unroll", cl::init(true), cl::Hidden,
     cl::desc("Enable runtime unrolling until load/store ports are saturated"));
 
 /// The number of stores in a loop that are allowed to need predication.
 static cl::opt<unsigned> NumberOfStoresToPredicate(
-    "vectorize-num-stores-pred", cl::init(0), cl::Hidden,
+    "vectorize-num-stores-pred", cl::init(1), cl::Hidden,
     cl::desc("Max number of stores to be predicated behind an if."));
 
 static cl::opt<bool> EnableIndVarRegisterHeur(
-    "enable-ind-var-reg-heur", cl::init(false), cl::Hidden,
+    "enable-ind-var-reg-heur", cl::init(true), cl::Hidden,
     cl::desc("Count the induction variable only once when unrolling"));
 
 static cl::opt<bool> EnableCondStoresVectorization(
