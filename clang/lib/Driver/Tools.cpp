@@ -6117,6 +6117,23 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("elf_i386");
   }
 
+  // On ARM, the linker can generate either EABI or the older APCS.
+  // Instruct it to use the correct emulation.
+  if (getToolChain().getArch() == llvm::Triple::arm) {
+    CmdArgs.push_back("-m");
+    switch (getToolChain().getTriple().getEnvironment()) {
+    case llvm::Triple::EABI:
+    case llvm::Triple::EABIHF:
+    case llvm::Triple::GNUEABI:
+    case llvm::Triple::GNUEABIHF:
+      CmdArgs.push_back("armelf_nbsd_eabi");
+      break;
+    default:
+      CmdArgs.push_back("armelf_nbsd");
+      break;
+    }
+  }
+
   if (Output.isFilename()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back(Output.getFilename());

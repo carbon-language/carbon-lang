@@ -2230,8 +2230,27 @@ NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
     // doesn't work.
     // FIXME: It'd be nicer to test if this directory exists, but I'm not sure
     // what all logic is needed to emulate the '=' prefix here.
-    if (Triple.getArch() == llvm::Triple::x86)
+    switch (Triple.getArch()) {
+    case llvm::Triple::x86:
       getFilePaths().push_back("=/usr/lib/i386");
+      break;
+    case llvm::Triple::arm:
+    case llvm::Triple::thumb:
+      switch (Triple.getEnvironment()) {
+      case llvm::Triple::EABI:
+      case llvm::Triple::EABIHF:
+      case llvm::Triple::GNUEABI:
+      case llvm::Triple::GNUEABIHF:
+        getFilePaths().push_back("=/usr/lib/eabi");
+        break;
+      default:
+        getFilePaths().push_back("=/usr/lib/oabi");
+        break;
+      }
+      break;
+    default:
+      break;
+    }
 
     getFilePaths().push_back("=/usr/lib");
   }
