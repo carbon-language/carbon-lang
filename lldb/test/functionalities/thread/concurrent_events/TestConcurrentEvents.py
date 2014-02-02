@@ -63,21 +63,18 @@ class ConcurrentEventsTestCase(TestBase):
     #
     ## Tests for concurrent signal and breakpoint
     #
-    @expectedFailureFreeBSD("llvm.org/pr17910") # fails to build
     @dwarf_test
     def test_signal_break_dwarf(self):
         """Test signal and a breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=1, num_signal_threads=1)
 
-    @expectedFailureFreeBSD("llvm.org/pr17910") # fails to build
     @dwarf_test
     def test_delay_signal_break_dwarf(self):
         """Test (1-second delay) signal and a breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=1, num_delay_signal_threads=1)
 
-    @expectedFailureFreeBSD("llvm.org/pr17910") # fails to build
     @dwarf_test
     def test_signal_delay_break_dwarf(self):
         """Test signal and a (1 second delay) breakpoint in multiple threads."""
@@ -164,14 +161,12 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_breakpoint_threads=1,
                                num_delay_breakpoint_threads=1)
 
-    @expectedFailureFreeBSD("llvm.org/pr17910") # fails to build
     @dwarf_test
     def test_two_breakpoints_one_signal_dwarf(self):
         """Test two threads that trigger a breakpoint and one signal thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=2, num_signal_threads=1)
 
-    @expectedFailureFreeBSD("llvm.org/pr17910") # fails to build
     @dwarf_test
     def test_breakpoint_delay_breakpoint_one_signal_dwarf(self):
         """Test two threads that trigger a breakpoint (one with a 1 second delay) and one signal thread. """
