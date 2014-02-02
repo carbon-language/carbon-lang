@@ -7,10 +7,6 @@ add_clang_library(clangDynamicASTMatchers
   Registry.cpp
   )
 
-add_dependencies(clangDynamicASTMatchers
-  clangASTMatchers
-  )
-
 target_link_libraries(clangDynamicASTMatchers
   clangAST
   clangASTMatchers
