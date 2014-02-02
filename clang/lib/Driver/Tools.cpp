@@ -6025,7 +6025,8 @@ void netbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Pass the target CPU to GNU as for ARM, since the source code might
   // not have the correct .cpu annotation.
-  if (getToolChain().getArch() == llvm::Triple::arm) {
+  if (getToolChain().getArch() == llvm::Triple::arm ||
+      getToolChain().getArch() == llvm::Triple::thumb) {
     std::string MArch(arm::getARMTargetCPU(Args, getToolChain().getTriple()));
     CmdArgs.push_back(Args.MakeArgString("-mcpu=" + MArch));
   }
