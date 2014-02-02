@@ -8975,8 +8975,12 @@ on the ``min`` argument).
 Syntax:
 """""""
 
+This is an overloaded intrinsic. You can use ``llvm.expect`` on any
+integer bit width.
+
 ::
 
+      declare i1 @llvm.expect.i1(i1 <val>, i1 <expected_val>)
       declare i32 @llvm.expect.i32(i32 <val>, i32 <expected_val>)
       declare i64 @llvm.expect.i64(i64 <val>, i64 <expected_val>)
 
