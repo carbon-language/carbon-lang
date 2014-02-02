@@ -6508,8 +6508,8 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("elf_x86_64");
 
   if (Args.hasArg(options::OPT_static)) {
-    if (ToolChain.getArch() == llvm::Triple::arm
-        || ToolChain.getArch() == llvm::Triple::thumb)
+    if (ToolChain.getArch() == llvm::Triple::arm ||
+        ToolChain.getArch() == llvm::Triple::thumb)
       CmdArgs.push_back("-Bstatic");
     else
       CmdArgs.push_back("-static");
