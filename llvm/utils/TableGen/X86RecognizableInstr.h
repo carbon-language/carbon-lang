@@ -46,6 +46,8 @@ private:
   uint8_t Opcode;
   /// The form field from the record
   uint8_t Form;
+  // The encoding field from the record
+  uint8_t Encoding;
   /// The hasOpSizePrefix field from the record
   bool HasOpSizePrefix;
   /// The hasOpSize16Prefix field from the record
@@ -54,12 +56,10 @@ private:
   bool HasAdSizePrefix;
   /// The hasREX_WPrefix field from the record
   bool HasREX_WPrefix;
-  /// The hasVEXPrefix field from the record
-  bool HasVEXPrefix;
-  /// The hasVEX_4VPrefix field from the record
-  bool HasVEX_4VPrefix;
-  /// The hasVEX_4VOp3Prefix field from the record
-  bool HasVEX_4VOp3Prefix;
+  /// The hasVEX_4V field from the record
+  bool HasVEX_4V;
+  /// The hasVEX_4VOp3 field from the record
+  bool HasVEX_4VOp3;
   /// The hasVEX_WPrefix field from the record
   bool HasVEX_WPrefix;
   /// Inferred from the operands; indicates whether the L bit in the VEX prefix is set
@@ -68,8 +68,6 @@ private:
   bool HasMemOp4Prefix;
   /// The ignoreVEX_L field from the record
   bool IgnoresVEX_L;
-  /// The hasEVEXPrefix field from the record
-  bool HasEVEXPrefix;
   /// The hasEVEX_L2Prefix field from the record
   bool HasEVEX_L2Prefix;
   /// The hasEVEX_K field from the record

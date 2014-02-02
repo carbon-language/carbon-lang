@@ -85,6 +85,10 @@ namespace X86Local {
   enum {
     PD = 1, XS = 2, XD = 3
   };
+
+  enum {
+    VEX = 1, XOP = 2, EVEX = 3
+  };
 }
 
 // If rows are added to the opcode extension tables, then corresponding entries
@@ -228,18 +232,17 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   OpMap    = byteFromRec(Rec->getValueAsDef("OpMap"), "Value");
   Opcode   = byteFromRec(Rec, "Opcode");
   Form     = byteFromRec(Rec, "FormBits");
+  Encoding = byteFromRec(Rec->getValueAsDef("OpEnc"), "Value");
 
   HasOpSizePrefix  = Rec->getValueAsBit("hasOpSizePrefix");
   HasOpSize16Prefix = Rec->getValueAsBit("hasOpSize16Prefix");
   HasAdSizePrefix  = Rec->getValueAsBit("hasAdSizePrefix");
   HasREX_WPrefix   = Rec->getValueAsBit("hasREX_WPrefix");
-  HasVEXPrefix     = Rec->getValueAsBit("hasVEXPrefix");
-  HasVEX_4VPrefix  = Rec->getValueAsBit("hasVEX_4VPrefix");
-  HasVEX_4VOp3Prefix = Rec->getValueAsBit("hasVEX_4VOp3Prefix");
+  HasVEX_4V        = Rec->getValueAsBit("hasVEX_4V");
+  HasVEX_4VOp3     = Rec->getValueAsBit("hasVEX_4VOp3");
   HasVEX_WPrefix   = Rec->getValueAsBit("hasVEX_WPrefix");
   HasMemOp4Prefix  = Rec->getValueAsBit("hasMemOp4Prefix");
   IgnoresVEX_L     = Rec->getValueAsBit("ignoresVEX_L");
-  HasEVEXPrefix    = Rec->getValueAsBit("hasEVEXPrefix");
   HasEVEX_L2Prefix = Rec->getValueAsBit("hasEVEX_L2");
   HasEVEX_K        = Rec->getValueAsBit("hasEVEX_K");
   HasEVEX_KZ       = Rec->getValueAsBit("hasEVEX_Z");
@@ -300,7 +303,7 @@ void RecognizableInstr::processInstr(DisassemblerTables &tables,
 InstructionContext RecognizableInstr::insnContext() const {
   InstructionContext insnContext;
 
-  if (HasEVEXPrefix) {
+  if (Encoding == X86Local::EVEX) {
     if (HasVEX_LPrefix && HasEVEX_L2Prefix) {
       errs() << "Don't support VEX.L if EVEX_L2 is enabled: " << Name << "\n";
       llvm_unreachable("Don't support VEX.L if EVEX_L2 is enabled");
@@ -368,7 +371,7 @@ InstructionContext RecognizableInstr::insnContext() const {
     else
       insnContext = EVEX_KB(IC_EVEX);
     /// eof EVEX
-  } else if (HasVEX_4VPrefix || HasVEX_4VOp3Prefix|| HasVEXPrefix) {
+  } else if (Encoding == X86Local::VEX || Encoding == X86Local::XOP) {
     if (HasVEX_LPrefix && HasVEX_WPrefix) {
       if (HasOpSizePrefix || OpPrefix == X86Local::PD)
         insnContext = IC_VEX_L_W_OPSIZE;
@@ -624,7 +627,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
     // Operand 2 is a register operand in the Reg/Opcode field.
     // - In AVX, there is a register operand in the VEX.vvvv field here -
     // Operand 3 (optional) is an immediate.
-    if (HasVEX_4VPrefix)
+    if (HasVEX_4V)
       assert(numPhysicalOperands >= 3 && numPhysicalOperands <= 4 &&
              "Unexpected number of operands for MRMDestRegFrm with VEX_4V");
     else
@@ -633,7 +636,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
 
     HANDLE_OPERAND(rmRegister)
 
-    if (HasVEX_4VPrefix)
+    if (HasVEX_4V)
       // FIXME: In AVX, the register below becomes the one encoded
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
@@ -646,7 +649,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
     // Operand 2 is a register operand in the Reg/Opcode field.
     // - In AVX, there is a register operand in the VEX.vvvv field here -
     // Operand 3 (optional) is an immediate.
-    if (HasVEX_4VPrefix)
+    if (HasVEX_4V)
       assert(numPhysicalOperands >= 3 && numPhysicalOperands <= 4 &&
              "Unexpected number of operands for MRMDestMemFrm with VEX_4V");
     else
@@ -657,7 +660,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
     if (HasEVEX_K)
       HANDLE_OPERAND(writemaskRegister)
 
-    if (HasVEX_4VPrefix)
+    if (HasVEX_4V)
       // FIXME: In AVX, the register below becomes the one encoded
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
@@ -672,7 +675,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
     // Operand 3 (optional) is an immediate.
     // Operand 4 (optional) is an immediate.
 
-    if (HasVEX_4VPrefix || HasVEX_4VOp3Prefix)
+    if (HasVEX_4V || HasVEX_4VOp3)
       assert(numPhysicalOperands >= 3 && numPhysicalOperands <= 5 &&
              "Unexpected number of operands for MRMSrcRegFrm with VEX_4V");
     else
@@ -684,7 +687,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
     if (HasEVEX_K)
       HANDLE_OPERAND(writemaskRegister)
 
-    if (HasVEX_4VPrefix)
+    if (HasVEX_4V)
       // FIXME: In AVX, the register below becomes the one encoded
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
@@ -694,7 +697,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
 
     HANDLE_OPERAND(rmRegister)
 
-    if (HasVEX_4VOp3Prefix)
+    if (HasVEX_4VOp3)
       HANDLE_OPERAND(vvvvRegister)
 
     if (!HasMemOp4Prefix)
@@ -708,7 +711,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
     // - In AVX, there is a register operand in the VEX.vvvv field here -
     // Operand 3 (optional) is an immediate.
 
-    if (HasVEX_4VPrefix || HasVEX_4VOp3Prefix)
+    if (HasVEX_4V || HasVEX_4VOp3)
       assert(numPhysicalOperands >= 3 && numPhysicalOperands <= 5 &&
              "Unexpected number of operands for MRMSrcMemFrm with VEX_4V");
     else
@@ -720,7 +723,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
     if (HasEVEX_K)
       HANDLE_OPERAND(writemaskRegister)
 
-    if (HasVEX_4VPrefix)
+    if (HasVEX_4V)
       // FIXME: In AVX, the register below becomes the one encoded
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
@@ -730,7 +733,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
 
     HANDLE_OPERAND(memory)
 
-    if (HasVEX_4VOp3Prefix)
+    if (HasVEX_4VOp3)
       HANDLE_OPERAND(vvvvRegister)
 
     if (!HasMemOp4Prefix)
@@ -750,11 +753,11 @@ void RecognizableInstr::emitInstructionSpecifier() {
       // Operand 2 (optional) is an immediate or relocation.
       // Operand 3 (optional) is an immediate.
       unsigned kOp = (HasEVEX_K) ? 1:0;
-      unsigned Op4v = (HasVEX_4VPrefix) ? 1:0;
+      unsigned Op4v = (HasVEX_4V) ? 1:0;
       if (numPhysicalOperands > 3 + kOp + Op4v)
         llvm_unreachable("Unexpected number of operands for MRMnr");
     }
-    if (HasVEX_4VPrefix)
+    if (HasVEX_4V)
       HANDLE_OPERAND(vvvvRegister)
 
     if (HasEVEX_K)
@@ -775,12 +778,12 @@ void RecognizableInstr::emitInstructionSpecifier() {
       // Operand 1 is a memory operand (possibly SIB-extended)
       // Operand 2 (optional) is an immediate or relocation.
       unsigned kOp = (HasEVEX_K) ? 1:0;
-      unsigned Op4v = (HasVEX_4VPrefix) ? 1:0;
+      unsigned Op4v = (HasVEX_4V) ? 1:0;
       if (numPhysicalOperands < 1 + kOp + Op4v ||
           numPhysicalOperands > 2 + kOp + Op4v)
         llvm_unreachable("Unexpected number of operands for MRMnm");
     }
-    if (HasVEX_4VPrefix)
+    if (HasVEX_4V)
       HANDLE_OPERAND(vvvvRegister)
     if (HasEVEX_K)
       HANDLE_OPERAND(writemaskRegister)

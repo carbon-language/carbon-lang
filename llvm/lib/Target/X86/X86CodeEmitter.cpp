@@ -758,6 +758,8 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
                                                int MemOperand,
                                                const MachineInstr &MI,
                                                const MCInstrDesc *Desc) const {
+  unsigned char Encoding = (TSFlags & X86II::EncodingMask) >>
+                           X86II::EncodingShift;
   bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
   bool HasVEX_4VOp3 = (TSFlags >> X86II::VEXShift) & X86II::VEX_4VOp3;
   bool HasMemOp4 = (TSFlags >> X86II::VEXShift) & X86II::MemOp4;
@@ -787,9 +789,6 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
   // VEX_W: opcode specific (use like REX.W, or used for
   // opcode extension, or ignored, depending on the opcode byte)
   unsigned char VEX_W = 0;
-
-  // XOP: Use XOP prefix byte 0x8f instead of VEX.
-  bool XOP = (TSFlags >> X86II::VEXShift) & X86II::XOP;
 
   // VEX_5M (VEX m-mmmmm field):
   //
@@ -995,16 +994,21 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
   //    | C5h | | R | vvvv | L | pp |
   //    +-----+ +-------------------+
   //
+  //  XOP uses a similar prefix:
+  //    +-----+ +--------------+ +-------------------+
+  //    | 8Fh | | RXB | m-mmmm | | W | vvvv | L | pp |
+  //    +-----+ +--------------+ +-------------------+
   unsigned char LastByte = VEX_PP | (VEX_L << 2) | (VEX_4V << 3);
 
-  if (VEX_B && VEX_X && !VEX_W && !XOP && (VEX_5M == 1)) { // 2 byte VEX prefix
+  // Can this use the 2 byte VEX prefix?
+  if (Encoding == X86II::VEX && VEX_B && VEX_X && !VEX_W && (VEX_5M == 1)) {
     MCE.emitByte(0xC5);
     MCE.emitByte(LastByte | (VEX_R << 7));
     return;
   }
 
   // 3 byte VEX prefix
-  MCE.emitByte(XOP ? 0x8F : 0xC4);
+  MCE.emitByte(Encoding == X86II::XOP ? 0x8F : 0xC4);
   MCE.emitByte(VEX_R << 7 | VEX_X << 6 | VEX_B << 5 | VEX_5M);
   MCE.emitByte(LastByte | (VEX_W << 7));
 }
@@ -1054,8 +1058,10 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
 
   uint64_t TSFlags = Desc->TSFlags;
 
-  // Is this instruction encoded using the AVX VEX prefix?
-  bool HasVEXPrefix = (TSFlags >> X86II::VEXShift) & X86II::VEX;
+  // Encoding type for this instruction.
+  unsigned char Encoding = (TSFlags & X86II::EncodingMask) >>
+                           X86II::EncodingShift;
+
   // It uses the VEX.VVVV field?
   bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
   bool HasVEX_4VOp3 = (TSFlags >> X86II::VEXShift) & X86II::VEX_4VOp3;
@@ -1094,7 +1100,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   if (need_address_override)
     MCE.emitByte(0x67);
 
-  if (!HasVEXPrefix)
+  if (Encoding == 0)
     emitOpcodePrefix(TSFlags, MemoryOperand, MI, Desc);
   else
     emitVEXOpcodePrefix(TSFlags, MemoryOperand, MI, Desc);
