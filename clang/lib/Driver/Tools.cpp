@@ -6132,6 +6132,22 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       break;
     }
     break;
+  case llvm::Triple::mips64:
+  case llvm::Triple::mips64el:
+    if (hasMipsABIArg(Args, "32")) {
+      CmdArgs.push_back("-m");
+      if (getToolChain().getArch() == llvm::Triple::mips64)
+        CmdArgs.push_back("elf32btsmip");
+      else
+        CmdArgs.push_back("elf32ltsmip");
+   } else if (hasMipsABIArg(Args, "64")) {
+     CmdArgs.push_back("-m");
+     if (getToolChain().getArch() == llvm::Triple::mips64)
+       CmdArgs.push_back("elf64btsmip");
+     else
+       CmdArgs.push_back("elf64ltsmip");
+   }
+   break;
   default:
     break;
   }

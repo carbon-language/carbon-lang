@@ -2248,6 +2248,13 @@ NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
         break;
       }
       break;
+    case llvm::Triple::mips64:
+    case llvm::Triple::mips64el:
+      if (hasMipsABIArg(Args, "o32"))
+        getFilePaths().push_back("=/usr/lib/o32");
+      else if (hasMipsABIArg(Args, "64"))
+        getFilePaths().push_back("=/usr/lib/64");
+      break;
     default:
       break;
     }
