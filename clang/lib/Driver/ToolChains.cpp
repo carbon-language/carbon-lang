@@ -1546,9 +1546,9 @@ static bool isMipsNan2008(const ArgList &Args) {
 }
 
 // FIXME: There is the same routine in the Tools.cpp.
-static bool hasMipsN32ABIArg(const ArgList &Args) {
+static bool hasMipsABIArg(const ArgList &Args, const char *Value) {
   Arg *A = Args.getLastArg(options::OPT_mabi_EQ);
-  return A && (A->getValue() == StringRef("n32"));
+  return A && (A->getValue() == StringRef(Value));
 }
 
 static bool hasCrtBeginObj(Twine Path) {
@@ -1561,7 +1561,7 @@ static bool findTargetBiarchSuffix(std::string &Suffix, StringRef Path,
   // FIXME: This routine was only intended to model bi-arch toolchains which
   // use -m32 and -m64 to swap between variants of a target. It shouldn't be
   // doing ABI-based builtin location for MIPS.
-  if (hasMipsN32ABIArg(Args))
+  if (hasMipsABIArg(Args, "n32"))
     Suffix = "/n32";
   else if (TargetArch == llvm::Triple::x86_64 ||
            TargetArch == llvm::Triple::ppc64 ||
@@ -1619,9 +1619,9 @@ void Generic_GCC::GCCInstallationDetector::findMIPSABIDirSuffix(
       Suffix += "/mips16";
   } else {
     if (isMips64r2(Args))
-      Suffix += hasMipsN32ABIArg(Args) ? "/mips64r2" : "/mips64r2/64";
+      Suffix += hasMipsABIArg(Args, "n32") ? "/mips64r2" : "/mips64r2/64";
     else
-      Suffix += hasMipsN32ABIArg(Args) ? "/mips64" : "/mips64/64";
+      Suffix += hasMipsABIArg(Args, "n32") ? "/mips64" : "/mips64/64";
   }
 
   if (TargetArch == llvm::Triple::mipsel ||
@@ -2565,7 +2565,7 @@ static StringRef getMultilibDir(const llvm::Triple &Triple,
     // lib32 directory has a special meaning on MIPS targets.
     // It contains N32 ABI binaries. Use this folder if produce
     // code for N32 ABI only.
-    if (hasMipsN32ABIArg(Args))
+    if (hasMipsABIArg(Args, "n32"))
       return "lib32";
     return Triple.isArch32Bit() ? "lib" : "lib64";
   }
