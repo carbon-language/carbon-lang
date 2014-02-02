@@ -135,18 +135,18 @@
     .global foo
     .ent    foo
 foo:
-    lw      $gp, %got($.str1)($1)
+    lw      $gp, %got($.str1)($t0)
     addiu   $4, $gp, %lo($.str1)
-    lw      $4, %got($.str2)($1)
+    lw      $4, %got($.str2)($t0)
     addiu   $4, $4, %lo($.str2)
-    lw      $25, %call16(foo)($1)
-    lw      $25, %call16(ext1)($1)
+    lw      $25, %call16(foo)($t0)
+    lw      $25, %call16(ext1)($t0)
     .end    foo
 
     .global bar
-    .ent    brar
+    .ent    bar
 bar:
-    lw      $25, %call16(ext2)($1)
+    lw      $25, %call16(ext2)($t0)
     .end    bar
 
     .section  .rodata.str1
