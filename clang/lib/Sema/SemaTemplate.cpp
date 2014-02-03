@@ -2777,10 +2777,13 @@ ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
   assert(!R.isAmbiguous() && "ambiguous lookup when building templateid");
 
   // In C++1y, check variable template ids.
-  if (R.getAsSingle<VarTemplateDecl>()) {
-    return Owned(CheckVarTemplateId(SS, R.getLookupNameInfo(),
-                                    R.getAsSingle<VarTemplateDecl>(),
-                                    TemplateKWLoc, TemplateArgs));
+  bool InstantiationDependent;
+  if (R.getAsSingle<VarTemplateDecl>() &&
+      !TemplateSpecializationType::anyDependentTemplateArguments(
+           *TemplateArgs, InstantiationDependent)) {
+    return CheckVarTemplateId(SS, R.getLookupNameInfo(),
+                              R.getAsSingle<VarTemplateDecl>(),
+                              TemplateKWLoc, TemplateArgs);
   }
 
   // We don't want lookup warnings at this point.
