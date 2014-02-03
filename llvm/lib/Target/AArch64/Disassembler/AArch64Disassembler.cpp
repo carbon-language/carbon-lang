@@ -245,7 +245,6 @@ static DecodeStatus DecodeSHLLInstruction(MCInst &Inst, unsigned Insn,
 static bool Check(DecodeStatus &Out, DecodeStatus In);
 
 #include "AArch64GenDisassemblerTables.inc"
-#include "AArch64GenInstrInfo.inc"
 
 static bool Check(DecodeStatus &Out, DecodeStatus In) {
   switch (In) {
