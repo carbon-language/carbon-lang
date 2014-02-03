@@ -233,7 +233,7 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
     UnsafeToFree(false) { 
   if (getenv("LIBCLANG_OBJTRACKING")) {
     llvm::sys::AtomicIncrement(&ActiveASTUnitObjects);
-    fprintf(stderr, "+++ %d translation units\n", ActiveASTUnitObjects);
+    fprintf(stderr, "+++ %d translation units\n", (int)ActiveASTUnitObjects);
   }    
 }
 
@@ -269,7 +269,7 @@ ASTUnit::~ASTUnit() {
   
   if (getenv("LIBCLANG_OBJTRACKING")) {
     llvm::sys::AtomicDecrement(&ActiveASTUnitObjects);
-    fprintf(stderr, "--- %d translation units\n", ActiveASTUnitObjects);
+    fprintf(stderr, "--- %d translation units\n", (int)ActiveASTUnitObjects);
   }    
 }
 
