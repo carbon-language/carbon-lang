@@ -20,7 +20,7 @@
 
 using namespace llvm;
 
-void SmallPtrSetImpl::shrink_and_clear() {
+void SmallPtrSetImplBase::shrink_and_clear() {
   assert(!isSmall() && "Can't shrink a small set!");
   free(CurArray);
 
@@ -34,7 +34,7 @@ void SmallPtrSetImpl::shrink_and_clear() {
   memset(CurArray, -1, CurArraySize*sizeof(void*));
 }
 
-bool SmallPtrSetImpl::insert_imp(const void * Ptr) {
+bool SmallPtrSetImplBase::insert_imp(const void * Ptr) {
   if (isSmall()) {
     // Check to see if it is already in the set.
     for (const void **APtr = SmallArray, **E = SmallArray+NumElements;
@@ -71,7 +71,7 @@ bool SmallPtrSetImpl::insert_imp(const void * Ptr) {
   return true;
 }
 
-bool SmallPtrSetImpl::erase_imp(const void * Ptr) {
+bool SmallPtrSetImplBase::erase_imp(const void * Ptr) {
   if (isSmall()) {
     // Check to see if it is in the set.
     for (const void **APtr = SmallArray, **E = SmallArray+NumElements;
@@ -98,7 +98,7 @@ bool SmallPtrSetImpl::erase_imp(const void * Ptr) {
   return true;
 }
 
-const void * const *SmallPtrSetImpl::FindBucketFor(const void *Ptr) const {
+const void * const *SmallPtrSetImplBase::FindBucketFor(const void *Ptr) const {
   unsigned Bucket = DenseMapInfo<void *>::getHashValue(Ptr) & (CurArraySize-1);
   unsigned ArraySize = CurArraySize;
   unsigned ProbeAmt = 1;
@@ -127,7 +127,7 @@ const void * const *SmallPtrSetImpl::FindBucketFor(const void *Ptr) const {
 
 /// Grow - Allocate a larger backing store for the buckets and move it over.
 ///
-void SmallPtrSetImpl::Grow(unsigned NewSize) {
+void SmallPtrSetImplBase::Grow(unsigned NewSize) {
   // Allocate at twice as many buckets, but at least 128.
   unsigned OldSize = CurArraySize;
   
@@ -163,8 +163,8 @@ void SmallPtrSetImpl::Grow(unsigned NewSize) {
   }
 }
 
-SmallPtrSetImpl::SmallPtrSetImpl(const void **SmallStorage,
-                                 const SmallPtrSetImpl& that) {
+SmallPtrSetImplBase::SmallPtrSetImplBase(const void **SmallStorage,
+                                 const SmallPtrSetImplBase& that) {
   SmallArray = SmallStorage;
 
   // If we're becoming small, prepare to insert into our stack space
@@ -187,8 +187,9 @@ SmallPtrSetImpl::SmallPtrSetImpl(const void **SmallStorage,
 }
 
 #if LLVM_HAS_RVALUE_REFERENCES
-SmallPtrSetImpl::SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize,
-                                 SmallPtrSetImpl &&that) {
+SmallPtrSetImplBase::SmallPtrSetImplBase(const void **SmallStorage,
+                                         unsigned SmallSize,
+                                         SmallPtrSetImplBase &&that) {
   SmallArray = SmallStorage;
 
   // Copy over the basic members.
@@ -217,7 +218,7 @@ SmallPtrSetImpl::SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize,
 
 /// CopyFrom - implement operator= from a smallptrset that has the same pointer
 /// type, but may have a different small size.
-void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
+void SmallPtrSetImplBase::CopyFrom(const SmallPtrSetImplBase &RHS) {
   assert(&RHS != this && "Self-copy should be handled by the caller.");
 
   if (isSmall() && RHS.isSmall())
@@ -254,7 +255,8 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
 }
 
 #if LLVM_HAS_RVALUE_REFERENCES
-void SmallPtrSetImpl::MoveFrom(unsigned SmallSize, SmallPtrSetImpl &&RHS) {
+void SmallPtrSetImplBase::MoveFrom(unsigned SmallSize,
+                                   SmallPtrSetImplBase &&RHS) {
   assert(&RHS != this && "Self-move should be handled by the caller.");
 
   if (!isSmall())
@@ -282,7 +284,7 @@ void SmallPtrSetImpl::MoveFrom(unsigned SmallSize, SmallPtrSetImpl &&RHS) {
 }
 #endif
 
-void SmallPtrSetImpl::swap(SmallPtrSetImpl &RHS) {
+void SmallPtrSetImplBase::swap(SmallPtrSetImplBase &RHS) {
   if (this == &RHS) return;
 
   // We can only avoid copying elements if neither set is small.
@@ -332,7 +334,7 @@ void SmallPtrSetImpl::swap(SmallPtrSetImpl &RHS) {
   std::swap(this->NumElements, RHS.NumElements);
 }
 
-SmallPtrSetImpl::~SmallPtrSetImpl() {
+SmallPtrSetImplBase::~SmallPtrSetImplBase() {
   if (!isSmall())
     free(CurArray);
 }
