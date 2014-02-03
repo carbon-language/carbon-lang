@@ -1797,7 +1797,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
       else
         Matches.erase(Matches.begin() + 1);
       assert(Matches[0].second->getNumParams() == 2 &&
-             "found an unexpected uusal deallocation function");
+             "found an unexpected usual deallocation function");
     }
   }
 
@@ -2158,7 +2158,7 @@ FunctionDecl *Sema::FindUsualDeallocationFunction(SourceLocation StartLoc,
     else
       Matches.erase(Matches.begin() + 1);
     assert(Matches[0]->getNumParams() == NumArgs &&
-           "found an unexpected uusal deallocation function");
+           "found an unexpected usual deallocation function");
   }
 
   assert(Matches.size() == 1 &&
