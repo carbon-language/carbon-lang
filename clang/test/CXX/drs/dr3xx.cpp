@@ -316,25 +316,17 @@ namespace dr328 { // dr328: yes
   A *p = new A[0]; // expected-error {{incomplete}}
 }
 
-namespace dr329 { // dr329: no
-  // FIXME: The C++98 behavior here is right, the C++11-onwards behavior
-  // is wrong.
+namespace dr329 { // dr329: 3.5
   struct B {};
   template<typename T> struct A : B {
     friend void f(A a) { g(a); }
     friend void h(A a) { g(a); } // expected-error {{undeclared}}
-    friend void i(B b) {}
+    friend void i(B b) {} // expected-error {{redefinition}} expected-note {{previous}}
   };
   A<int> a;
-  A<char> b;
-#if __cplusplus < 201103L
-  // expected-error@-5 {{redefinition}} expected-note@-5 {{previous}}
-  // expected-note@-3 {{instantiation}}
-#endif
+  A<char> b; // expected-note {{instantiation}}
 
   void test() {
     h(a); // expected-note {{instantiation}}
-    i(a);
-    i(b);
   }
 }

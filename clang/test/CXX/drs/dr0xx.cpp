@@ -464,23 +464,15 @@ namespace dr46 { // dr46: yes
   template template struct A<int>::B<int>; // expected-error {{expected unqualified-id}}
 }
 
-namespace dr47 { // dr47: no
+namespace dr47 { // dr47: sup 329
   template<typename T> struct A {
-    friend void f() { T t; }
+    friend void f() { T t; } // expected-error {{redefinition}} expected-note {{previous}}
   };
   A<int> a;
-  A<float> b;
-#if __cplusplus < 201103L
-  // expected-error@-5 {{redefinition}} expected-note@-5 {{previous}}
-  // expected-note@-3 {{instantiation of}}
-#else
+  A<float> b; // expected-note {{instantiation of}}
+
   void f();
-  // FIXME: We should produce some kind of error here. C++11 [temp.friend]p4
-  // says we instantiate 'f' when it's odr-used, but that doesn't imply that
-  // this is valid; we still have multiple definitions of 'f' even if we never
-  // instantiate any of them.
   void g() { f(); }
-#endif
 }
 
 namespace dr48 { // dr48: yes

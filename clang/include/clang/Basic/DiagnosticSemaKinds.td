@@ -3586,9 +3586,6 @@ def err_definition_of_explicitly_defaulted_member : Error<
 def err_redefinition_extern_inline : Error<
   "redefinition of a 'extern inline' function %0 is not supported in "
   "%select{C99 mode|C++}1">;
-def warn_cxx98_compat_friend_redefinition : Warning<
-  "friend function %0 would be implicitly redefined in C++98">,
-  InGroup<CXX98Compat>, DefaultIgnore;
 
 def note_deleted_dtor_no_operator_delete : Note<
   "virtual destructor requires an unambiguous, accessible 'operator delete'">;

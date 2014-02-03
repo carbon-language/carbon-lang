@@ -1225,7 +1225,6 @@ static QualType adjustFunctionTypeForInstantiation(ASTContext &Context,
 /// don't make it here.  This function serves two purposes:
 ///   1) instantiating function templates
 ///   2) substituting friend declarations
-/// FIXME: preserve function definitions in case #2
 Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                                        TemplateParameterList *TemplateParams) {
   // Check whether there is already a function template specialization for
@@ -1435,35 +1434,22 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     PrincipalDecl->setObjectOfFriendDecl();
     DC->makeDeclVisibleInContext(PrincipalDecl);
 
-    bool queuedInstantiation = false;
+    bool QueuedInstantiation = false;
 
-    // C++98 [temp.friend]p5: When a function is defined in a friend function
-    //   declaration in a class template, the function is defined at each
-    //   instantiation of the class template. The function is defined even if it
-    //   is never used.
-    // C++11 [temp.friend]p4: When a function is defined in a friend function
-    //   declaration in a class template, the function is instantiated when the
-    //   function is odr-used.
-    //
-    // If -Wc++98-compat is enabled, we go through the motions of checking for a
-    // redefinition, but don't instantiate the function.
-    if ((!SemaRef.getLangOpts().CPlusPlus11 ||
-         SemaRef.Diags.getDiagnosticLevel(
-             diag::warn_cxx98_compat_friend_redefinition,
-             Function->getLocation())
-           != DiagnosticsEngine::Ignored) &&
-        D->isThisDeclarationADefinition()) {
+    // C++11 [temp.friend]p4 (DR329):
+    //   When a function is defined in a friend function declaration in a class
+    //   template, the function is instantiated when the function is odr-used.
+    //   The same restrictions on multiple declarations and definitions that
+    //   apply to non-template function declarations and definitions also apply
+    //   to these implicit definitions.
+    if (D->isThisDeclarationADefinition()) {
       // Check for a function body.
       const FunctionDecl *Definition = 0;
       if (Function->isDefined(Definition) &&
           Definition->getTemplateSpecializationKind() == TSK_Undeclared) {
-        SemaRef.Diag(Function->getLocation(),
-                     SemaRef.getLangOpts().CPlusPlus11 ?
-                       diag::warn_cxx98_compat_friend_redefinition :
-                       diag::err_redefinition) << Function->getDeclName();
+        SemaRef.Diag(Function->getLocation(), diag::err_redefinition)
+            << Function->getDeclName();
         SemaRef.Diag(Definition->getLocation(), diag::note_previous_definition);
-        if (!SemaRef.getLangOpts().CPlusPlus11)
-          Function->setInvalidDecl();
       }
       // Check for redefinitions due to other instantiations of this or
       // a similar friend function.
@@ -1472,36 +1458,34 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                 R != REnd; ++R) {
         if (*R == Function)
           continue;
-        switch (R->getFriendObjectKind()) {
-        case Decl::FOK_None:
-          if (!SemaRef.getLangOpts().CPlusPlus11 &&
-              !queuedInstantiation && R->isUsed(false)) {
-            if (MemberSpecializationInfo *MSInfo
-                = Function->getMemberSpecializationInfo()) {
-              if (MSInfo->getPointOfInstantiation().isInvalid()) {
-                SourceLocation Loc = R->getLocation(); // FIXME
-                MSInfo->setPointOfInstantiation(Loc);
-                SemaRef.PendingLocalImplicitInstantiations.push_back(
-                                                 std::make_pair(Function, Loc));
-                queuedInstantiation = true;
-              }
+
+        // If some prior declaration of this function has been used, we need
+        // to instantiate its definition.
+        if (!QueuedInstantiation && R->isUsed(false)) {
+          if (MemberSpecializationInfo *MSInfo =
+                  Function->getMemberSpecializationInfo()) {
+            if (MSInfo->getPointOfInstantiation().isInvalid()) {
+              SourceLocation Loc = R->getLocation(); // FIXME
+              MSInfo->setPointOfInstantiation(Loc);
+              SemaRef.PendingLocalImplicitInstantiations.push_back(
+                                               std::make_pair(Function, Loc));
+              QueuedInstantiation = true;
             }
           }
-          break;
-        default:
-          if (const FunctionDecl *RPattern
-              = R->getTemplateInstantiationPattern())
+        }
+
+        // If some prior declaration of this function was a friend with an
+        // uninstantiated definition, reject it.
+        if (R->getFriendObjectKind()) {
+          if (const FunctionDecl *RPattern =
+                  R->getTemplateInstantiationPattern()) {
             if (RPattern->isDefined(RPattern)) {
-              SemaRef.Diag(Function->getLocation(),
-                           SemaRef.getLangOpts().CPlusPlus11 ?
-                             diag::warn_cxx98_compat_friend_redefinition :
-                             diag::err_redefinition)
+              SemaRef.Diag(Function->getLocation(), diag::err_redefinition)
                 << Function->getDeclName();
               SemaRef.Diag(R->getLocation(), diag::note_previous_definition);
-              if (!SemaRef.getLangOpts().CPlusPlus11)
-                Function->setInvalidDecl();
               break;
             }
+          }
         }
       }
     }
