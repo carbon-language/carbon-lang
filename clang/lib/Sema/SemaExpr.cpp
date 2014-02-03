@@ -12141,42 +12141,39 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
          "Invalid Expr argument to DoMarkVarDeclReferenced");
   Var->setReferenced();
 
-  // If the context is not PotentiallyEvaluated and not Unevaluated 
-  // (i.e PotentiallyEvaluatedIfUsed) do not bother to consider variables 
-  // in this context for odr-use unless we are within a lambda.  
-  // If we don't know whether the context is potentially evaluated or not 
-  // (for e.g., if we're in a generic lambda), we want to add a potential 
-  // capture and eventually analyze for odr-use.
-  // We should also be able to analyze certain constructs in a non-generic 
-  // lambda setting for potential odr-use and capture violation:
-  // template<class T> void foo(T t) {
-  //    auto L = [](int i) { return t; };
-  // }
-  // 
+  // If the context is not potentially evaluated, this is not an odr-use and
+  // does not trigger instantiation.
   if (!IsPotentiallyEvaluatedContext(SemaRef)) {
+    if (SemaRef.isUnevaluatedContext())
+      return;
 
-    if (SemaRef.isUnevaluatedContext()) return;
+    // If we don't yet know whether this context is going to end up being an
+    // evaluated context, and we're referencing a variable from an enclosing
+    // scope, add a potential capture.
+    //
+    // FIXME: Is this necessary? These contexts are only used for default
+    // arguments, where local variables can't be used.
+    const bool RefersToEnclosingScope =
+        (SemaRef.CurContext != Var->getDeclContext() &&
+         Var->getDeclContext()->isFunctionOrMethod() &&
+         Var->hasLocalStorage());
+    if (!RefersToEnclosingScope)
+      return;
 
-    const bool refersToEnclosingScope =
-      (SemaRef.CurContext != Var->getDeclContext() &&
-           Var->getDeclContext()->isFunctionOrMethod());
-    if (!refersToEnclosingScope) return;
-    
     if (LambdaScopeInfo *const LSI = SemaRef.getCurLambda()) {
       // If a variable could potentially be odr-used, defer marking it so
-      // until we finish analyzing the full expression for any lvalue-to-rvalue 
+      // until we finish analyzing the full expression for any lvalue-to-rvalue
       // or discarded value conversions that would obviate odr-use.
       // Add it to the list of potential captures that will be analyzed
       // later (ActOnFinishFullExpr) for eventual capture and odr-use marking
       // unless the variable is a reference that was initialized by a constant
       // expression (this will never need to be captured or odr-used).
-      const bool IsConstantExpr = IsVariableNonDependentAndAConstantExpression(
-          Var, SemaRef.Context);
       assert(E && "Capture variable should be used in an expression.");
-      if (!IsConstantExpr || !Var->getType()->isReferenceType())
-        LSI->addPotentialCapture(E->IgnoreParens());      
-    } 
-    return;  
+      if (!Var->getType()->isReferenceType() ||
+          !IsVariableNonDependentAndAConstantExpression(Var, SemaRef.Context))
+        LSI->addPotentialCapture(E->IgnoreParens());
+    }
+    return;
   }
 
   VarTemplateSpecializationDecl *VarSpec =
@@ -12184,10 +12181,10 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
   assert(!isa<VarTemplatePartialSpecializationDecl>(Var) &&
          "Can't instantiate a partial template specialization.");
 
-  // Implicit instantiation of static data members, static data member
-  // templates of class templates, and variable template specializations.
-  // Delay instantiations of variable templates, except for those
-  // that could be used in a constant expression.
+  // Perform implicit instantiation of static data members, static data member
+  // templates of class templates, and variable template specializations. Delay
+  // instantiations of variable templates, except for those that could be used
+  // in a constant expression.
   TemplateSpecializationKind TSK = Var->getTemplateSpecializationKind();
   if (isTemplateInstantiation(TSK)) {
     bool TryInstantiating = TSK == TSK_ImplicitInstantiation;
@@ -12227,6 +12224,7 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
       }
     }
   }
+
   // Per C++11 [basic.def.odr], a variable is odr-used "unless it satisfies
   // the requirements for appearing in a constant expression (5.19) and, if
   // it is an object, the lvalue-to-rvalue conversion (4.1)
@@ -12236,14 +12234,11 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
   // C++03 depends on whether we get the C++03 version correct. The second
   // part does not apply to references, since they are not objects.
   if (E && IsVariableAConstantExpression(Var, SemaRef.Context)) {
-    // A reference initialized by a constant expression can never be 
+    // A reference initialized by a constant expression can never be
     // odr-used, so simply ignore it.
-    // But a non-reference might get odr-used if it doesn't undergo
-    // an lvalue-to-rvalue or is discarded, so track it.
     if (!Var->getType()->isReferenceType())
       SemaRef.MaybeODRUseExprs.insert(E);
-  }
-  else
+  } else
     MarkVarDeclODRUsed(Var, Loc, SemaRef, /*MaxFunctionScopeIndex ptr*/0);
 }
 
