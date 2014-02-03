@@ -82,7 +82,9 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
   // FIXME: Demultiplex diagnostics.
   // FIXME: Ensure that we don't get notes from user code related to errors
   // from non-user code.
-  if (Diags->getSourceManager().isInSystemHeader(Info.getLocation()))
+  // Let argument parsing-related warnings through.
+  if (Diags->hasSourceManager() &&
+      Diags->getSourceManager().isInSystemHeader(Info.getLocation()))
     return;
   if (DiagLevel != DiagnosticsEngine::Note) {
     Errors.push_back(
