@@ -136,10 +136,8 @@ public:
                                 InitType InitVal) {
     unsigned KeyLength = static_cast<unsigned>(KeyEnd-KeyStart);
 
-    // Okay, the item doesn't already exist, and 'Bucket' is the bucket to fill
-    // in.  Allocate a new item with space for the string at the end and a null
+    // Allocate a new item with space for the string at the end and a null
     // terminator.
-
     unsigned AllocSize = static_cast<unsigned>(sizeof(StringMapEntry))+
       KeyLength+1;
     unsigned Alignment = alignOf<StringMapEntry>();
