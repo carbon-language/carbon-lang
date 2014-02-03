@@ -327,7 +327,7 @@ void Sema::AddCFAuditedAttribute(Decl *D) {
 }
 
 typedef std::vector<std::pair<unsigned, SourceLocation> > VisStack;
-enum { NoVisibility = (unsigned) -1 };
+enum LLVM_ENUM_INT_TYPE(unsigned) { NoVisibility = ~0U };
 
 void Sema::AddPushedVisibilityAttribute(Decl *D) {
   if (!VisContext)
