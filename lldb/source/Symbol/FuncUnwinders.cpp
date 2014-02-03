@@ -28,7 +28,7 @@ using namespace lldb_private;
 FuncUnwinders::FuncUnwinders
 (
     UnwindTable& unwind_table, 
-    UnwindAssembly *assembly_profiler, 
+    const lldb::UnwindAssemblySP& assembly_profiler,
     AddressRange range
 ) : 
     m_unwind_table(unwind_table), 

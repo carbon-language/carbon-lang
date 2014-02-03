@@ -17,10 +17,11 @@
 namespace lldb_private {
 
 class UnwindAssembly :
+   public std::enable_shared_from_this<UnwindAssembly>,
    public PluginInterface
 {
 public:
-    static UnwindAssembly*
+    static lldb::UnwindAssemblySP
     FindPlugin (const ArchSpec &arch);
 
     virtual

@@ -15,7 +15,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-UnwindAssembly*
+UnwindAssemblySP
 UnwindAssembly::FindPlugin (const ArchSpec &arch)
 {
     UnwindAssemblyCreateInstance create_callback;
@@ -24,9 +24,9 @@ UnwindAssembly::FindPlugin (const ArchSpec &arch)
          (create_callback = PluginManager::GetUnwindAssemblyCreateCallbackAtIndex(idx)) != NULL;
          ++idx)
     {
-        std::unique_ptr<UnwindAssembly> assembly_profiler_ap (create_callback (arch));
+        UnwindAssemblySP assembly_profiler_ap (create_callback (arch));
         if (assembly_profiler_ap.get ())
-            return assembly_profiler_ap.release ();
+            return assembly_profiler_ap;
     }
     return NULL;
 }

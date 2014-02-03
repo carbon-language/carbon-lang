@@ -31,7 +31,7 @@ public:
     // instructions are finished for migrating breakpoints past the 
     // stack frame setup instructions when we don't have line table information.
 
-    FuncUnwinders (lldb_private::UnwindTable& unwind_table, lldb_private::UnwindAssembly *assembly_profiler, AddressRange range);
+    FuncUnwinders (lldb_private::UnwindTable& unwind_table, const lldb::UnwindAssemblySP& assembly_profiler, AddressRange range);
 
     ~FuncUnwinders ();
 
@@ -77,7 +77,7 @@ public:
 
 private:
     UnwindTable& m_unwind_table;
-    UnwindAssembly *m_assembly_profiler;
+    lldb::UnwindAssemblySP m_assembly_profiler;
     AddressRange m_range;
 
     Mutex m_mutex;

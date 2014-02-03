@@ -384,6 +384,7 @@ namespace lldb {
 #ifndef LLDB_DISABLE_PYTHON
     typedef std::shared_ptr<lldb_private::ScriptedSyntheticChildren> ScriptedSyntheticChildrenSP;
 #endif
+    typedef std::shared_ptr<lldb_private::UnwindAssembly> UnwindAssemblySP;
     typedef std::shared_ptr<lldb_private::UnwindPlan> UnwindPlanSP;
     typedef lldb_private::SharingPtr<lldb_private::ValueObject> ValueObjectSP;
     typedef std::shared_ptr<lldb_private::Value> ValueSP;

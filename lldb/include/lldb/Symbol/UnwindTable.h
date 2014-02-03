@@ -57,7 +57,7 @@ private:
 
     bool                m_initialized;  // delay some initialization until ObjectFile is set up
 
-    UnwindAssembly* m_assembly_profiler;
+    lldb::UnwindAssemblySP m_assembly_profiler;
 
     DWARFCallFrameInfo* m_eh_frame;
     
