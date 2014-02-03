@@ -28,4 +28,20 @@ define void @caller() {
         ret void
 }
 
+; We can't remove 'this' here, as that would put argmem in ecx instead of
+; memory.
+define internal x86_thiscallcc i32 @unused_this(i32* %this, i32* inalloca %argmem) {
+	%v = load i32* %argmem
+	ret i32 %v
+}
+; CHECK-LABEL: define internal x86_thiscallcc i32 @unused_this(i32* %this, i32* inalloca %argmem)
+
+define i32 @caller2() {
+	%t = alloca i32
+	%m = alloca i32, inalloca
+	store i32 42, i32* %m
+	%v = call x86_thiscallcc i32 @unused_this(i32* %t, i32* inalloca %m)
+	ret i32 %v
+}
+
 ; CHECK: attributes #0 = { nounwind }

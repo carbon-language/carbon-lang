@@ -531,6 +531,13 @@ DAE::Liveness DAE::SurveyUses(const Value *V, UseVector &MaybeLiveUses) {
 // well as arguments to functions which have their "address taken".
 //
 void DAE::SurveyFunction(const Function &F) {
+  // Functions with inalloca parameters are expecting args in a particular
+  // register and memory layout.
+  if (F.getAttributes().hasAttrSomewhere(Attribute::InAlloca)) {
+    MarkLive(F);
+    return;
+  }
+
   unsigned RetCount = NumRetVals(&F);
   // Assume all return values are dead
   typedef SmallVector<Liveness, 5> RetVals;
