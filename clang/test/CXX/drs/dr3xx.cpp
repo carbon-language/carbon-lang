@@ -253,3 +253,88 @@ namespace dr320 { // dr320: yes
   static_assert(f(X()).copies == g(X()) + 1, "expected one extra copy for return value");
 #endif
 }
+
+namespace dr321 { // dr321: dup 557
+  namespace N {
+    template<int> struct A {
+      template<int> struct B;
+    };
+    template<> template<> struct A<0>::B<0>;
+    void f(A<0>::B<0>);
+  }
+  template<> template<> struct N::A<0>::B<0> {};
+
+  template<typename T> void g(T t) { f(t); }
+  template void g(N::A<0>::B<0>);
+
+  namespace N {
+    template<typename> struct I { friend bool operator==(const I&, const I&); };
+  }
+  N::I<int> i, j;
+  bool x = i == j;
+}
+
+namespace dr322 { // dr322: yes
+  struct A {
+    template<typename T> operator T&();
+  } a;
+  int &r = static_cast<int&>(a);
+  int &s = a;
+}
+
+// dr323: no
+
+namespace dr324 { // dr324: yes
+  struct S { int n : 1; } s; // expected-note 3{{bit-field is declared here}}
+  int &a = s.n; // expected-error {{non-const reference cannot bind to bit-field}}
+  int *b = &s.n; // expected-error {{address of bit-field}}
+  int &c = (s.n = 0); // expected-error {{non-const reference cannot bind to bit-field}}
+  int *d = &(s.n = 0); // expected-error {{address of bit-field}}
+  int &e = true ? s.n : s.n; // expected-error {{non-const reference cannot bind to bit-field}}
+  int *f = &(true ? s.n : s.n); // expected-error {{address of bit-field}}
+  int &g = (void(), s.n); // expected-error {{non-const reference cannot bind to bit-field}}
+  int *h = &(void(), s.n); // expected-error {{address of bit-field}}
+}
+
+namespace dr326 { // dr326: yes
+  struct S {};
+  int test[__is_trivially_constructible(S, const S&) ? 1 : -1];
+}
+
+namespace dr327 { // dr327: dup 538
+  struct A;
+  class A {};
+
+  class B;
+  struct B {};
+}
+
+namespace dr328 { // dr328: yes
+  struct A; // expected-note 3{{forward declaration}}
+  struct B { A a; }; // expected-error {{incomplete}}
+  template<typename> struct C { A a; }; // expected-error {{incomplete}}
+  A *p = new A[0]; // expected-error {{incomplete}}
+}
+
+namespace dr329 { // dr329: no
+  // FIXME: The C++98 behavior here is right, the C++11-onwards behavior
+  // is wrong.
+  struct B {};
+  template<typename T> struct A : B {
+    friend void f(A a) { g(a); }
+    friend void h(A a) { g(a); } // expected-error {{undeclared}}
+    friend void i(B b) {}
+  };
+  A<int> a;
+  A<char> b;
+#if __cplusplus < 201103L
+  // expected-error@-5 {{redefinition}} expected-note@-5 {{previous}}
+  // expected-note@-3 {{instantiation}}
+#endif
+
+  void test() {
+    h(a); // expected-note {{instantiation}}
+    i(a);
+    i(b);
+  }
+}
