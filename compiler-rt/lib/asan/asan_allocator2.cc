@@ -309,6 +309,10 @@ void InitializeAllocator() {
   quarantine.Init((uptr)flags()->quarantine_size, kMaxThreadLocalQuarantine);
 }
 
+void ReInitializeAllocator() {
+  quarantine.Init((uptr)flags()->quarantine_size, kMaxThreadLocalQuarantine);
+}
+
 static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
                       AllocType alloc_type, bool can_fill) {
   if (!asan_inited)

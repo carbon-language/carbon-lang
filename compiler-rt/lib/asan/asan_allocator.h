@@ -31,6 +31,7 @@ static const uptr kNumberOfSizeClasses = 255;
 struct AsanChunk;
 
 void InitializeAllocator();
+void ReInitializeAllocator();
 
 class AsanChunkView {
  public:
