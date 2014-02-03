@@ -902,10 +902,6 @@ DIBuilder::createForwardDecl(unsigned Tag, StringRef Name, DIDescriptor Scope,
 
 /// getOrCreateArray - Get a DIArray, create one if required.
 DIArray DIBuilder::getOrCreateArray(ArrayRef<Value *> Elements) {
-  if (Elements.empty()) {
-    Value *Null = Constant::getNullValue(Type::getInt32Ty(VMContext));
-    return DIArray(MDNode::get(VMContext, Null));
-  }
   return DIArray(MDNode::get(VMContext, Elements));
 }
 
