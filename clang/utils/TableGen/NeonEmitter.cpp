@@ -2776,20 +2776,21 @@ void NeonEmitter::run(raw_ostream &OS) {
     emitIntrinsic(OS, R, EmittedMap);
   }
 
+  OS << "#endif\n\n";
+
+  // Now emit all the crypto intrinsics together
   OS << "#ifdef __ARM_FEATURE_CRYPTO\n";
 
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
 
-    // Skip crypto temporarily, and will emit them all together at the end.
     bool isCrypto = R->getValueAsBit("isCrypto");
     if (!isCrypto)
       continue;
 
     emitIntrinsic(OS, R, EmittedMap);
   }
-  
-  OS << "#endif\n\n";
+
 
   OS << "#endif\n\n";
 

@@ -3641,6 +3641,7 @@ class ARMTargetInfo : public TargetInfo {
   unsigned SoftFloatABI : 1;
 
   unsigned CRC : 1;
+  unsigned Crypto : 1;
 
   static const Builtin::Info BuiltinInfo[];
 
@@ -3850,6 +3851,7 @@ public:
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
       Features["crc"] = true;
+      Features["crypto"] = true;
     } else if (CPU == "cortex-r5" ||
                // Enable the hwdiv extension for all v8a AArch32 cores by
                // default.
@@ -3866,6 +3868,7 @@ public:
                                     DiagnosticsEngine &Diags) {
     FPU = 0;
     CRC = 0;
+    Crypto = 0;
     SoftFloat = SoftFloatABI = false;
     HWDiv = 0;
     for (unsigned i = 0, e = Features.size(); i != e; ++i) {
@@ -3889,6 +3892,8 @@ public:
         HWDiv |= HWDivARM;
       else if (Features[i] == "+crc")
         CRC = 1;
+      else if (Features[i] == "+crypto")
+        Crypto = 1;
     }
 
     if (!(FPU & NeonFPU) && FPMath == FP_Neon) {
@@ -4053,6 +4058,9 @@ public:
 
     if (CRC)
       Builder.defineMacro("__ARM_FEATURE_CRC32");
+
+    if (Crypto)
+      Builder.defineMacro("__ARM_FEATURE_CRYPTO");
 
     if (CPUArchVer >= 6 && CPUArch != "6M") {
       Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_1");
