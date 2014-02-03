@@ -2427,15 +2427,15 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   // Crypto
   case NEON::BI__builtin_neon_vsha1h_u32:
     Int = Intrinsic::arm_neon_sha1h;
-    s = "sha1h"; IntTypes = VectorRet; break;
+    s = "sha1h"; break;
   case NEON::BI__builtin_neon_vsha1cq_u32:
-    Int = Intrinsic::aarch64_neon_sha1c;
+    Int = Intrinsic::arm_neon_sha1c;
     s = "sha1c"; break;
   case NEON::BI__builtin_neon_vsha1pq_u32:
-    Int = Intrinsic::aarch64_neon_sha1p;
+    Int = Intrinsic::arm_neon_sha1p;
     s = "sha1p"; break;
   case NEON::BI__builtin_neon_vsha1mq_u32:
-    Int = Intrinsic::aarch64_neon_sha1m;
+    Int = Intrinsic::arm_neon_sha1m;
     s = "sha1m"; break;
   // Scalar Add
   case NEON::BI__builtin_neon_vaddd_s64:
@@ -3849,34 +3849,34 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
 
   // Crypto
   case NEON::BI__builtin_neon_vaeseq_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_aese, Ty),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_aese),
                         Ops, "aese");
   case NEON::BI__builtin_neon_vaesdq_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_aesd, Ty),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_aesd),
                         Ops, "aesd");
   case NEON::BI__builtin_neon_vaesmcq_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_aesmc, Ty),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_aesmc),
                         Ops, "aesmc");
   case NEON::BI__builtin_neon_vaesimcq_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_aesimc, Ty),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_aesimc),
                         Ops, "aesimc");
   case NEON::BI__builtin_neon_vsha1su1q_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha1su1, Ty),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha1su1),
                         Ops, "sha1su1");
   case NEON::BI__builtin_neon_vsha256su0q_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha256su0, Ty),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha256su0),
                         Ops, "sha256su0");
   case NEON::BI__builtin_neon_vsha1su0q_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha1su0, Ty),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha1su0),
                         Ops, "sha1su0");
   case NEON::BI__builtin_neon_vsha256hq_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha256h, Ty),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha256h),
                         Ops, "sha256h");
   case NEON::BI__builtin_neon_vsha256h2q_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha256h2, Ty),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha256h2),
                         Ops, "sha256h2");
   case NEON::BI__builtin_neon_vsha256su1q_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha256su1, Ty),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_sha256su1),
                         Ops, "sha256su1");
   case NEON::BI__builtin_neon_vmul_lane_v:
   case NEON::BI__builtin_neon_vmul_laneq_v: {
