@@ -330,3 +330,200 @@ namespace dr329 { // dr329: 3.5
     h(a); // expected-note {{instantiation}}
   }
 }
+
+namespace dr331 { // dr331: yes
+  struct A {
+    A(volatile A&); // expected-note {{candidate}}
+  } const a, b(a); // expected-error {{no matching constructor}}
+}
+
+namespace dr332 { // dr332: dup 557
+  void f(volatile void); // expected-error {{'void' as parameter must not have type qualifiers}}
+  void g(const void); // expected-error {{'void' as parameter must not have type qualifiers}}
+  void h(int n, volatile void); // expected-error {{'void' must be the first and only parameter}}
+}
+
+namespace dr333 { // dr333: yes
+  int n = 0;
+  int f(int(n));
+  int g((int(n)));
+  int h = f(g);
+}
+
+namespace dr334 { // dr334: yes
+  template<typename T> void f() {
+    T x;
+    f((x, 123));
+  }
+  struct S {
+    friend S operator,(S, int);
+    friend void f(S);
+  };
+  template void f<S>();
+}
+
+// dr335: no
+
+namespace dr336 { // dr336: yes
+  namespace Pre {
+    template<class T1> class A {
+      template<class T2> class B {
+        template<class T3> void mf1(T3);
+        void mf2();
+      };
+    };
+    template<> template<class X> class A<int>::B {};
+    template<> template<> template<class T> void A<int>::B<double>::mf1(T t) {} // expected-error {{does not match}}
+    template<class Y> template<> void A<Y>::B<double>::mf2() {} // expected-error {{does not refer into a class}}
+  }
+  namespace Post {
+    template<class T1> class A {
+      template<class T2> class B {
+        template<class T3> void mf1(T3);
+        void mf2();
+      };
+    };
+    template<> template<class X> class A<int>::B {
+      template<class T> void mf1(T);
+    };
+    template<> template<> template<class T> void A<int>::B<double>::mf1(T t) {}
+    // FIXME: This diagnostic isn't very good.
+    template<class Y> template<> void A<Y>::B<double>::mf2() {} // expected-error {{does not refer into a class}}
+  }
+}
+
+namespace dr337 { // dr337: yes
+  template<typename T> void f(T (*)[1]);
+  template<typename T> int &f(...);
+
+  struct A { virtual ~A() = 0; };
+  int &r = f<A>(0);
+
+  // FIXME: The language rules here are completely broken. We cannot determine
+  // whether an incomplete type is abstract. See DR1640, which will probably
+  // supersede this one and remove this rule.
+  struct B;
+  int &s = f<B>(0); // expected-error {{of type 'void'}}
+  struct B { virtual ~B() = 0; };
+}
+
+namespace dr339 { // dr339: yes
+  template <int I> struct A { static const int value = I; };
+
+  char xxx(int);
+  char (&xxx(float))[2];
+
+  template<class T> A<sizeof(xxx((T)0))> f(T) {} // expected-note {{candidate}}
+
+  void test() {
+    A<1> a = f(0);
+    A<2> b = f(0.0f);
+    A<3> c = f("foo"); // expected-error {{no matching function}}
+  }
+
+
+  char f(int);
+  int f(...);
+
+  template <class T> struct conv_int {
+    static const bool value = sizeof(f(T())) == 1;
+  };
+
+  template <class T> bool conv_int2(A<sizeof(f(T()))> p);
+
+  template<typename T> A<sizeof(f(T()))> make_A();
+
+  int a[conv_int<char>::value ? 1 : -1];
+  bool b = conv_int2<char>(A<1>());
+  A<1> c = make_A<char>();
+}
+
+namespace dr340 { // dr340: yes
+  struct A { A(int); };
+  struct B { B(A, A, int); };
+  int x, y;
+  B b(A(x), A(y), 3);
+}
+
+namespace dr341 { // dr341: sup 1708
+  namespace A {
+    int n;
+    extern "C" int &dr341_a = n; // expected-note {{previous}} expected-note {{declared with C language linkage here}}
+  }
+  namespace B {
+    extern "C" int &dr341_a = dr341_a; // expected-error {{redefinition}}
+  }
+  extern "C" void dr341_b(); // expected-note {{declared with C language linkage here}}
+}
+int dr341_a; // expected-error {{declaration of 'dr341_a' in global scope conflicts with declaration with C language linkage}}
+int dr341_b; // expected-error {{declaration of 'dr341_b' in global scope conflicts with declaration with C language linkage}}
+int dr341_c; // expected-note {{declared in global scope here}}
+int dr341_d; // expected-note {{declared in global scope here}}
+namespace dr341 {
+  extern "C" int dr341_c; // expected-error {{declaration of 'dr341_c' with C language linkage conflicts with declaration in global scope}}
+  extern "C" void dr341_d(); // expected-error {{declaration of 'dr341_d' with C language linkage conflicts with declaration in global scope}}
+
+  namespace A { extern "C" int dr341_e; } // expected-note {{previous}}
+  namespace B { extern "C" void dr341_e(); } // expected-error {{redefinition of 'dr341_e' as different kind of symbol}}
+}
+
+// dr342: na
+
+namespace dr345 { // dr345: yes
+  struct A {
+    struct X {};
+    int X; // expected-note {{here}}
+  };
+  struct B {
+    struct X {};
+  };
+  template <class T> void f(T t) { typename T::X x; } // expected-error {{refers to non-type member 'X'}}
+  void f(A a, B b) {
+    f(b);
+    f(a); // expected-note {{instantiation}}
+  }
+}
+
+// dr346: na
+
+namespace dr347 { // dr347: yes
+  struct base {
+    struct nested;
+    static int n;
+    static void f();
+    void g();
+  };
+
+  struct derived : base {};
+
+  struct derived::nested {}; // expected-error {{no struct named 'nested'}}
+  int derived::n; // expected-error {{no member named 'n'}}
+  void derived::f() {} // expected-error {{does not match any}}
+  void derived::g() {} // expected-error {{does not match any}}
+}
+
+// dr348: na
+
+namespace dr349 { // dr349: no
+  struct A {
+    template <class T> operator T ***() {
+      int ***p = 0;
+      return p; // expected-error {{cannot initialize return object of type 'const int ***' with an lvalue of type 'int ***'}}
+    }
+  };
+
+  // FIXME: This is valid.
+  A a;
+  const int *const *const *p1 = a; // expected-note {{in instantiation of}}
+
+  struct B {
+    template <class T> operator T ***() {
+      const int ***p = 0;
+      return p;
+    }
+  };
+
+  // FIXME: This is invalid.
+  B b;
+  const int *const *const *p2 = b;
+}
