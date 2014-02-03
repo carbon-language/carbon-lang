@@ -35,6 +35,9 @@ public:
   /// \brief Number of global GOT entries.
   std::size_t getGlobalCount() const { return _globalCount; }
 
+  /// \brief Does the atom have a global GOT entry?
+  bool hasGlobalGOTEntry(const Atom *a) const { return _posMap.count(a); }
+
   /// \brief Compare two atoms accordingly theirs positions in the GOT.
   bool compare(const Atom *a, const Atom *b) const {
     auto ia = _posMap.find(a);

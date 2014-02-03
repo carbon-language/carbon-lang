@@ -27,6 +27,8 @@ public:
                        MipsTargetLayout<ELFT> &layout);
 
 protected:
+  virtual void buildDynamicSymbolTable(const File &file);
+
   // Add any runtime files and their atoms to the output
   virtual bool createImplicitFiles(std::vector<std::unique_ptr<File>> &);
 
@@ -63,6 +65,20 @@ MipsExecutableWriter<ELFT>::MipsExecutableWriter(MipsLinkingContext &context,
       MipsELFWriter<ELFT>(context, layout),
       _mipsRuntimeFile(new MipsRuntimeFile<ELFT>(context)),
       _mipsContext(context), _mipsTargetLayout(layout) {}
+
+template <class ELFT>
+void MipsExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
+  // MIPS ABI requires to add to dynsym even undefined symbols
+  // if they have a corresponding entries in a global part of GOT.
+  for (const UndefinedAtom *a : file.undefined())
+    // FIXME (simon): Consider to move this check to the
+    // MipsELFUndefinedAtom class method. That allows to
+    // handle more complex coditions in the future.
+    if (this->hasGlobalGOTEntry(a))
+      this->_dynamicSymbolTable->addSymbol(a, ELF::SHN_UNDEF);
+
+  ExecutableWriter<ELFT>::buildDynamicSymbolTable(file);
+}
 
 template <class ELFT>
 bool MipsExecutableWriter<ELFT>::createImplicitFiles(

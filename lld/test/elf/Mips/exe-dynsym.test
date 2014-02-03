@@ -1,0 +1,69 @@
+# Check that symbol referenced by an entry in the global part of GOT
+# has a corresponded entry in the .dynsym section.
+
+# Build executable
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-main %s
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t-exe %t-main
+# RUN: llvm-readobj -dyn-symbols %t-exe | FileCheck -check-prefix=CHECK-DYN %s
+
+# Build executabl (yaml format)e
+# RUN: lld -flavor gnu -target mipsel -e glob \
+# RUN:     --output-filetype=yaml -o %t-yaml %t-main
+# RUN: FileCheck -check-prefix=CHECK-GOT %s < %t-yaml
+
+# CHECK-DYN: Format: ELF32-mips
+# CHECK-DYN: Arch: mipsel
+# CHECK-DYN: AddressSize: 32bit
+# CHECK-DYN: LoadName:
+# CHECK-DYN: DynamicSymbols [
+# CHECK-DYN:   Symbol {
+# CHECK-DYN:     Name: @ (0)
+# CHECK-DYN:     Value: 0x0
+# CHECK-DYN:     Size: 0
+# CHECK-DYN:     Binding: Local (0x0)
+# CHECK-DYN:     Type: None (0x0)
+# CHECK-DYN:     Other: 0
+# CHECK-DYN:     Section:  (0x0)
+# CHECK-DYN:   }
+# CHECK-DYN:   Symbol {
+# CHECK-DYN:     Name: weakf@ (1)
+# CHECK-DYN:     Value: 0x0
+# CHECK-DYN:     Size: 0
+# CHECK-DYN:     Binding: Weak (0x2)
+# CHECK-DYN:     Type: None (0x0)
+# CHECK-DYN:     Other: 0
+# CHECK-DYN:     Section:  (0x0)
+# CHECK-DYN:   }
+# CHECK-DYN: ]
+
+# CHECK-GOT: - type:            got
+# CHECK-GOT:   content:         [ 00, 00, 00, 00 ]
+# CHECK-GOT:   alignment:       2^2
+# CHECK-GOT:   section-choice:  custom-required
+# CHECK-GOT:   section-name:    .got
+# CHECK-GOT:   permissions:     rw-
+# CHECK-GOT: - type:            got
+# CHECK-GOT:   content:         [ 00, 00, 00, 80 ]
+# CHECK-GOT:   alignment:       2^2
+# CHECK-GOT:   section-choice:  custom-required
+# CHECK-GOT:   section-name:    .got
+# CHECK-GOT:   permissions:     rw-
+# CHECK-GOT: - ref-name:        L000
+# CHECK-GOT:   type:            got
+# CHECK-GOT:   content:         [ 00, 00, 00, 00 ]
+# CHECK-GOT:   alignment:       2^2
+# CHECK-GOT:   section-choice:  custom-required
+# CHECK-GOT:   section-name:    .got
+# CHECK-GOT:   permissions:     rw-
+# CHECK-GOT:   references:
+# CHECK-GOT:     - kind:            LLD_R_MIPS_GLOBAL_GOT
+# CHECK-GOT:       offset:          0
+# CHECK-GOT:       target:          weakf
+
+    .abicalls
+    .global glob
+    .ent    glob
+glob:
+    lw      $4,%got(weakf)($28)
+    .end    glob
+    .weak   weakf

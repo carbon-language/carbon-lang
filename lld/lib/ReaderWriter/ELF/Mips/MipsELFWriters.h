@@ -64,6 +64,10 @@ protected:
     }
   }
 
+  bool hasGlobalGOTEntry(const Atom *a) const {
+    return _mipsTargetLayout.getGOTSection().hasGlobalGOTEntry(a);
+  }
+
 private:
   MipsLinkingContext &_mipsLinkingContext LLVM_ATTRIBUTE_UNUSED;
   MipsTargetLayout<ELFT> &_mipsTargetLayout;
