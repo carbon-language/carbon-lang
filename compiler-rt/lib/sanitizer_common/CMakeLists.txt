@@ -56,6 +56,7 @@ set(SANITIZER_HEADERS
   sanitizer_libignore.h
   sanitizer_linux.h
   sanitizer_list.h
+  sanitizer_mac.h
   sanitizer_mutex.h
   sanitizer_placement_new.h
   sanitizer_platform.h

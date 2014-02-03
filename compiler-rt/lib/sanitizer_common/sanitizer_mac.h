@@ -13,6 +13,9 @@
 #ifndef SANITIZER_MAC_H
 #define SANITIZER_MAC_H
 
+#include "sanitizer_platform.h"
+#if SANITIZER_MAC
+
 namespace __sanitizer {
 
 enum MacosVersion {
@@ -29,4 +32,5 @@ MacosVersion GetMacosVersion();
 
 }  // namespace __sanitizer
 
+#endif  // SANITIZER_MAC
 #endif  // SANITIZER_MAC_H
