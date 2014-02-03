@@ -18,6 +18,7 @@
 
 // mingw-w64 tends to define it as 0x0502 in its headers.
 #undef _WIN32_WINNT
+#undef _WIN32_IE
 
 // Require at least Windows XP(5.1) API.
 #define _WIN32_WINNT 0x0501
