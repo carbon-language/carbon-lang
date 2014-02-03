@@ -22,9 +22,6 @@ WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    content:         [ 55, 48, 89, E5, BF, 00, 00, 00, 00, E8, 00, 00,
 WEAKATOMSORDER:                       00, 00, 5D, C3 ]
 WEAKATOMSORDER:    references:
-WEAKATOMSORDER:      - kind:            layout-before
-WEAKATOMSORDER:        offset:          0
-WEAKATOMSORDER:        target:          fn
 WEAKATOMSORDER:      - kind:            layout-after
 WEAKATOMSORDER:        offset:          0
 WEAKATOMSORDER:        target:          main
@@ -37,9 +34,6 @@ WEAKATOMSORDER:      - kind:            R_X86_64_PC32
 WEAKATOMSORDER:        offset:          10
 WEAKATOMSORDER:        target:          f
 WEAKATOMSORDER:        addend:          -4
-WEAKATOMSORDER:      - kind:            layout-before
-WEAKATOMSORDER:        offset:          0
-WEAKATOMSORDER:        target:          [[CONSTSTRA]]
 WEAKATOMSORDER:  - ref-name:            {{[0-9A-Z]+}}
 WEAKATOMSORDER:    references:
 WEAKATOMSORDER:      - kind:            layout-after
@@ -49,6 +43,3 @@ WEAKATOMSORDER:  - name:            f
 WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    content:         [ 55, 48, 89, E5, BF, 00, 00, 00, 00, E8, 00, 00,
 WEAKATOMSORDER:                       00, 00, 5D, C3 ]
-WEAKATOMSORDER:    references:
-WEAKATOMSORDER:      - kind:            layout-before
-WEAKATOMSORDER:        offset:          0

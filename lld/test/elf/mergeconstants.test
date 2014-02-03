@@ -18,6 +18,3 @@ mergeAtoms:    references:
 mergeAtoms:      - kind:            R_X86_64_64
 mergeAtoms:        offset:          3
 mergeAtoms:        target:          [[CONSTANT]]
-mergeAtoms:      - kind:            layout-before
-mergeAtoms:        offset:          0
-mergeAtoms:        target:          bar

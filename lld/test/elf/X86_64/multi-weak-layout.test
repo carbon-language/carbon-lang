@@ -5,42 +5,48 @@ RUN: lld -flavor gnu -target x86_64 %p/Inputs/multiweaksyms.o  \
 RUN: --noinhibit-exec -static --output-filetype=yaml -o %t
 RUN: FileCheck %s -check-prefix=WEAKSYMS < %t
 
-WEAKSYMS:  - ref-name:        [[SYMA:[-a-zA-Z0-9_]+]]
-WEAKSYMS:    type:            data
+WEAKSYMS:  - type:            data
+WEAKSYMS:    alignment:       2^3
 WEAKSYMS:    references:
 WEAKSYMS:      - kind:            layout-after
-WEAKSYMS:        target:          [[SYMB:[-a-zA-Z0-9_]+]]
+WEAKSYMS:        offset:          0
+WEAKSYMS:        target:          [[L001:[-a-zA-Z0-9_]+]]
 WEAKSYMS:  - name:            myfn2
 WEAKSYMS:    scope:           global
 WEAKSYMS:    type:            data
 WEAKSYMS:    merge:           as-weak
+WEAKSYMS:    alignment:       2^3
 WEAKSYMS:    references:
 WEAKSYMS:      - kind:            layout-after
-WEAKSYMS:        target:          [[SYMB]]
-WEAKSYMS:  - ref-name:        [[SYMB]]
+WEAKSYMS:        offset:          0
+WEAKSYMS:        target:          [[L001]]
+WEAKSYMS:  - ref-name:        [[L001]]
 WEAKSYMS:    scope:           global
 WEAKSYMS:    type:            data
 WEAKSYMS:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
+WEAKSYMS:    alignment:       2^3
 WEAKSYMS:    references:
 WEAKSYMS:      - kind:            R_X86_64_64
+WEAKSYMS:        offset:          0
 WEAKSYMS:        target:          test
-WEAKSYMS:      - kind:            layout-before
-WEAKSYMS:        target:          [[SYMA]]
 WEAKSYMS:      - kind:            layout-after
-WEAKSYMS:        target:          [[SYMC:[-a-zA-Z0-9_]+]]
+WEAKSYMS:        offset:          0
+WEAKSYMS:        target:          [[L003:[-a-zA-Z0-9_]+]]
 WEAKSYMS:  - name:            myfn1
 WEAKSYMS:    scope:           global
 WEAKSYMS:    type:            data
 WEAKSYMS:    merge:           as-weak
+WEAKSYMS:    alignment:       2^3
 WEAKSYMS:    references:
 WEAKSYMS:      - kind:            layout-after
-WEAKSYMS:        target:          [[SYMC]]
-WEAKSYMS:  - ref-name:        [[SYMC]]
+WEAKSYMS:        offset:          0
+WEAKSYMS:        target:          [[L003]]
+WEAKSYMS:  - ref-name:        [[L003]]
 WEAKSYMS:    scope:           global
 WEAKSYMS:    type:            data
 WEAKSYMS:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
+WEAKSYMS:    alignment:       2^3
 WEAKSYMS:    references:
 WEAKSYMS:      - kind:            R_X86_64_64
+WEAKSYMS:        offset:          0
 WEAKSYMS:        target:          test
-WEAKSYMS:      - kind:            layout-before
-WEAKSYMS:        target:          [[SYMB]]

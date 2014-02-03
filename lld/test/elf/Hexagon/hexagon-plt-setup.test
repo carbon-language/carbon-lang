@@ -10,6 +10,3 @@ CHECK:        offset:          4
 CHECK:      - kind:            R_HEX_B22_PCREL
 CHECK:        offset:          8
               target:
-CHECK:      - kind:            layout-before
-CHECK:        offset:          0
-CHECK:        target:          fn1

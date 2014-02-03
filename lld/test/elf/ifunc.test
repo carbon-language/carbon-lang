@@ -30,8 +30,6 @@ PLT: scope: global
 PLT: references:
 PLT:   kind:   R_X86_64_PC32
 PLT:   target: [[PLTNAME:[-a-zA-Z0-9_]+]]
-PLT:   kind: layout-before
-PLT:   target: __hey_1
 
 PLT: name: main
 PLT: scope: global

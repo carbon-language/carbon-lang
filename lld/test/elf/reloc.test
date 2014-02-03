@@ -30,9 +30,6 @@ ELF-i386:       - kind:            R_386_PC32
 ELF-i386:         offset:          17
 ELF-i386:         target:          puts
 ELF-i386:         addend:          252
-ELF-i386:       - kind:            layout-before
-ELF-i386:         offset:          0
-ELF-i386:         target:          [[STRNAMEB]]
 ELF-i386: undefined-atoms:
 ELF-i386:   - name:            puts
 ELF-i386: absolute-atoms:

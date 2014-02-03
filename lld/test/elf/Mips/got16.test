@@ -6,84 +6,78 @@
 # RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t2 %t1
 # RUN: llvm-objdump -t -disassemble %t2 | FileCheck -check-prefix RAW %s
 
-# YAML:   - ref-name:        L003
-# YAML:     type:            got
-# YAML:     content:         [ 00, 00, 00, 00 ]
-# YAML:     alignment:       2^2
-# YAML:     section-choice:  custom-required
-# YAML:     section-name:    .got
-# YAML:     permissions:     rw-
-# YAML:     references:
-# YAML:       - kind:            R_MIPS_32
-# YAML:         offset:          0
-# YAML:         target:          L004
-# YAML:   - ref-name:        L005
-# YAML:     type:            got
-# YAML:     content:         [ 00, 00, 00, 00 ]
-# YAML:     alignment:       2^2
-# YAML:     section-choice:  custom-required
-# YAML:     section-name:    .got
-# YAML:     permissions:     rw-
-# YAML:     references:
-# YAML:       - kind:            R_MIPS_32
-# YAML:         offset:          0
-# YAML:         target:          hidden
-# YAML:   - ref-name:        L006
-# YAML:     type:            got
-# YAML:     content:         [ 00, 00, 00, 00 ]
-# YAML:     alignment:       2^2
-# YAML:     section-choice:  custom-required
-# YAML:     section-name:    .got
-# YAML:     permissions:     rw-
-# YAML:     references:
-# YAML:       - kind:            LLD_R_MIPS_GLOBAL_GOT
-# YAML:         offset:          0
-# YAML:         target:          glob
-# YAML:       - kind:            R_MIPS_32
-# YAML:         offset:          0
-# YAML:         target:          glob
-# YAML:   - ref-name:        L007
-# YAML:     type:            got
-# YAML:     content:         [ 00, 00, 00, 00 ]
-# YAML:     alignment:       2^2
-# YAML:     section-choice:  custom-required
-# YAML:     section-name:    .got
-# YAML:     permissions:     rw-
-# YAML:     references:
-# YAML:       - kind:            LLD_R_MIPS_GLOBAL_GOT
-# YAML:         offset:          0
-# YAML:         target:          extern
-# YAML:   - ref-name:        L008
-# YAML:     alignment:       2^2
-# YAML:     references:
-# YAML:       - kind:            layout-after
-# YAML:         offset:          0
-# YAML:         target:          glob
 
-# YAML:   - name:            glob
-# YAML:     scope:           global
-# YAML:     content:         [ 00, 00, 84, 8F, 00, 00, 84, 24, 00, 00, 84, 8F,
-# YAML:                        00, 00, 84, 8F, 00, 00, 84, 8F ]
-# YAML:     alignment:       2^2
-# YAML:     references:
-# YAML:       - kind:            R_MIPS_GOT16
-# YAML:         offset:          0
-# YAML:         target:          L003
-# YAML:       - kind:            R_MIPS_LO16
-# YAML:         offset:          4
-# YAML:         target:          L004
-# YAML:       - kind:            LLD_R_MIPS_GLOBAL_GOT16
-# YAML:         offset:          8
-# YAML:         target:          L005
-# YAML:       - kind:            R_MIPS_CALL16
-# YAML:         offset:          12
-# YAML:         target:          L006
-# YAML:       - kind:            R_MIPS_CALL16
-# YAML:         offset:          16
-# YAML:         target:          L007
-# YAML:       - kind:            layout-before
-# YAML:         offset:          0
-# YAML:         target:          L008
+# YAML: - ref-name:        [[L002:[-a-zA-Z0-9_]+]]
+# YAML:   type:            got
+# YAML:   content:         [ 00, 00, 00, 00 ]
+# YAML:   alignment:       2^2
+# YAML:   section-choice:  custom-required
+# YAML:   section-name:    .got
+# YAML:   permissions:     rw-
+# YAML:   references:
+# YAML:     - kind:            R_MIPS_32
+# YAML:       offset:          0
+# YAML:       target:          [[L003:[-a-zA-Z0-9_]+]]
+# YAML: - ref-name:        [[L004:[-a-zA-Z0-9_]+]]
+# YAML:   type:            got
+# YAML:   content:         [ 00, 00, 00, 00 ]
+# YAML:   alignment:       2^2
+# YAML:   section-choice:  custom-required
+# YAML:   section-name:    .got
+# YAML:   permissions:     rw-
+# YAML:   references:
+# YAML:     - kind:            R_MIPS_32
+# YAML:       offset:          0
+# YAML:       target:          hidden
+# YAML: - ref-name:        [[L005:[-a-zA-Z0-9_]+]]
+# YAML:   type:            got
+# YAML:   content:         [ 00, 00, 00, 00 ]
+# YAML:   alignment:       2^2
+# YAML:   section-choice:  custom-required
+# YAML:   section-name:    .got
+# YAML:   permissions:     rw-
+# YAML:   references:
+# YAML:     - kind:            LLD_R_MIPS_GLOBAL_GOT
+# YAML:       offset:          0
+# YAML:       target:          glob
+# YAML:     - kind:            R_MIPS_32
+# YAML:       offset:          0
+# YAML:       target:          glob
+# YAML: - ref-name:        [[L006:[-a-zA-Z0-9_]+]]
+# YAML:   type:            got
+# YAML:   content:         [ 00, 00, 00, 00 ]
+# YAML:   alignment:       2^2
+# YAML:   section-choice:  custom-required
+# YAML:   section-name:    .got
+# YAML:   permissions:     rw-
+# YAML:   references:
+# YAML:     - kind:            LLD_R_MIPS_GLOBAL_GOT
+# YAML:       offset:          0
+# YAML:       target:          extern
+# YAML: - ref-name:        [[L007:[-a-zA-Z0-9_]+]]
+# YAML:   alignment:       2^2
+# YAML:   references:
+# YAML:     - kind:            layout-after
+# YAML:       offset:          0
+# YAML:       target:          glob
+# YAML: - name:            glob
+# YAML:   scope:           global
+# YAML:   content:         [ 00, 00, 84, 8F, 00, 00, 84, 24, 00, 00, 84, 8F,
+# YAML:                      00, 00, 84, 8F, 00, 00, 84, 8F ]
+# YAML:   alignment:       2^2
+# YAML:   references:
+# YAML:     - kind:            R_MIPS_LO16
+# YAML:       offset:          4
+# YAML:       target:          [[L003]]
+# YAML:     - kind:            LLD_R_MIPS_GLOBAL_GOT16
+# YAML:       offset:          8
+# YAML:       target:          [[L004]]
+# YAML:     - kind:            R_MIPS_CALL16
+# YAML:       offset:          12
+# YAML:       target:          [[L005]]
+# YAML:     - kind:            R_MIPS_CALL16
+# YAML:       offset:          16
+# YAML:       target:          [[L006]]
 
 # RAW: Disassembly of section .text:
 # RAW: glob:

@@ -626,6 +626,7 @@ template <class ELFT> error_code ELFFile<ELFT>::createAtoms() {
     }
 
     ELFDefinedAtom<ELFT> *previousAtom = nullptr;
+    ELFDefinedAtom<ELFT> *inGroupAtom = nullptr;
     ELFReference<ELFT> *anonFollowedBy = nullptr;
 
     for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
@@ -688,8 +689,6 @@ template <class ELFT> error_code ELFFile<ELFT>::createAtoms() {
         anonAtom->setOrdinal(++_ordinal);
         symbolData = ArrayRef<uint8_t>();
 
-        if (previousAtom)
-          createEdge(anonAtom, previousAtom, lld::Reference::kindLayoutBefore);
         // If this is the last atom, let's not create a followon reference.
         if (anonAtom && (si + 1) != se) {
           anonFollowedBy = new (_readerStorage)
@@ -715,12 +714,15 @@ template <class ELFT> error_code ELFFile<ELFT>::createAtoms() {
         // Add a preceded-by reference only if the current atom is not a weak
         // atom.
         if (symbol->getBinding() != llvm::ELF::STB_WEAK)
-          createEdge(newAtom, previousAtom, lld::Reference::kindLayoutBefore);
+          createEdge(newAtom, inGroupAtom, lld::Reference::kindInGroup);
       }
 
       // The previous atom is always the atom created before unless the atom
       // is a weak atom.
       previousAtom = anonAtom ? anonAtom : newAtom;
+
+      if (!inGroupAtom)
+        inGroupAtom = previousAtom;
 
       _definedAtoms._atoms.push_back(newAtom);
       _symbolToAtomMapping.insert(std::make_pair(&*symbol, newAtom));
