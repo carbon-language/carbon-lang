@@ -350,11 +350,11 @@ cannot cope.</p>
        f&lt;A&gt;(a);
           ^
   $ <span class="cmd">clang t.cc</span>
-  <span class="loc">t.cc:1:26:</span> <span class="error">error:</span> <span class="msg">missing 'typename' prior to dependent type name 'T::type'</span>
+  <span class="loc">t.cc:1:26:</span> <span class="err">error:</span> <span class="msg">missing 'typename' prior to dependent type name 'T::type'</span>
   <span class="snip" >template&lt;class T&gt; void f(T::type) { }</span>
   <span class="point">                         ^~~~~~~</span>
   <span class="point">                         typename </span>
-  <span class="loc">t.cc:6:5:</span> <span class="error">error:</span> <span class="msg">no matching function for call to 'f'</span>
+  <span class="loc">t.cc:6:5:</span> <span class="err">error:</span> <span class="msg">no matching function for call to 'f'</span>
   <span class="snip" >    f&lt;A&gt;(a);</span>
   <span class="point">    ^~~~</span>
   <span class="loc">t.cc:1:24:</span> <span class="note">note:</span> <span class="msg">candidate template ignored: substitution failure [with T = A]: no type named 'type' in 'A'</span>
