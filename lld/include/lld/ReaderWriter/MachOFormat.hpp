@@ -384,8 +384,8 @@ public:
 //
 class thread_command : public load_command {
 public:
-	uint32_t	fields_flavor;
-	uint32_t	fields_count;
+  uint32_t   fields_flavor;
+  uint32_t   fields_count;
 private:
   uint32_t   _cpuType;
   uint8_t   *_registerArray;
@@ -624,4 +624,3 @@ public:
 
 
 #endif // LLD_READER_WRITER_MACHO_FORMAT_H
-
