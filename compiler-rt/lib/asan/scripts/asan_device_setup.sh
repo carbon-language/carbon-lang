@@ -65,9 +65,9 @@ while [[ $# > 0 ]]; do
   shift
 done
 
-ADB="adb"
+ADB=${ADB:-adb}
 if [[ x$device != x ]]; then
-    ADB="adb -s $device"
+    ADB="$ADB -s $device"
 fi
 
 ASAN_RT="libclang_rt.asan-arm-android.so"
