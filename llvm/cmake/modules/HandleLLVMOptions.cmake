@@ -350,13 +350,23 @@ if (UNIX AND
   append("-fcolor-diagnostics" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
 endif()
 
+# Clang prior to 3.5 ignored -fno-function-sections.
+# It's pretty hard to test directly, so we rely on the version number.
+if( ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") AND (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.5) )
+  set(LLVM_COMPILER_HAS_BROKEN_FNO_FUNCTION_SECTIONS ON)
+endif()
+
 # Add flags for add_dead_strip().
 # FIXME: With MSVS, consider compiling with /Gy and linking with /OPT:REF?
 # But MinSizeRel seems to add that automatically, so maybe disable these
 # flags instead if LLVM_NO_DEAD_STRIP is set.
 if(NOT CYGWIN AND NOT WIN32)
   if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    append("-ffunction-sections -fdata-sections" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    # Don't add -ffunction-section if it can be disabled with -fno-function-sections.
+    # Doing so will break sanitizers.
+    if (NOT LLVM_COMPILER_HAS_BROKEN_FNO_FUNCTION_SECTIONS)
+      append("-ffunction-sections -fdata-sections" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    endif()
   endif()
 endif()
 
