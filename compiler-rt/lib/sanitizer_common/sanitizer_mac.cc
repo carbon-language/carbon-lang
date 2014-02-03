@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file is shared between AddressSanitizer and ThreadSanitizer
-// run-time libraries and implements mac-specific functions from
-// sanitizer_libc.h.
+// This file is shared between various sanitizers' runtime libraries and
+// implements OSX-specific functions.
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
@@ -26,6 +25,7 @@
 #include "sanitizer_flags.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_mac.h"
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
 
@@ -37,6 +37,7 @@
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <libkern/OSAtomic.h>
@@ -247,6 +248,44 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
 
 bool IsDeadlySignal(int signum) {
   return (signum == SIGSEGV || signum == SIGBUS) && common_flags()->handle_segv;
+}
+
+MacosVersion cached_macos_version = MACOS_VERSION_UNINITIALIZED;
+
+MacosVersion GetMacosVersionInternal() {
+  int mib[2] = { CTL_KERN, KERN_OSRELEASE };
+  char version[100];
+  uptr len = 0, maxlen = sizeof(version) / sizeof(version[0]);
+  for (uptr i = 0; i < maxlen; i++) version[i] = '\0';
+  // Get the version length.
+  CHECK_NE(sysctl(mib, 2, 0, &len, 0, 0), -1);
+  CHECK_LT(len, maxlen);
+  CHECK_NE(sysctl(mib, 2, version, &len, 0, 0), -1);
+  switch (version[0]) {
+    case '9': return MACOS_VERSION_LEOPARD;
+    case '1': {
+      switch (version[1]) {
+        case '0': return MACOS_VERSION_SNOW_LEOPARD;
+        case '1': return MACOS_VERSION_LION;
+        case '2': return MACOS_VERSION_MOUNTAIN_LION;
+        case '3': return MACOS_VERSION_MAVERICKS;
+        default: return MACOS_VERSION_UNKNOWN;
+      }
+    }
+    default: return MACOS_VERSION_UNKNOWN;
+  }
+}
+
+MacosVersion GetMacosVersion() {
+  atomic_uint32_t *cache =
+      reinterpret_cast<atomic_uint32_t*>(&cached_macos_version);
+  MacosVersion result =
+      static_cast<MacosVersion>(atomic_load(cache, memory_order_acquire));
+  if (result == MACOS_VERSION_UNINITIALIZED) {
+    result = GetMacosVersionInternal();
+    atomic_store(cache, result, memory_order_release);
+  }
+  return result;
 }
 
 }  // namespace __sanitizer
