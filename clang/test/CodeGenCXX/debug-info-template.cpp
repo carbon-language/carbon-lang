@@ -1,7 +1,7 @@
 // RUN: %clang -S -emit-llvm -target x86_64-unknown_unknown -g %s -o - -std=c++11 | FileCheck %s
 
 // CHECK: {{.*}}, i1 false, metadata !"", i32 0, metadata !{{[0-9]]*}}, metadata [[RETAIN:![0-9]*]], {{.*}} ; [ DW_TAG_compile_unit ]
-// CHECK: [[EMPTY:![0-9]*]] = metadata !{i32 0}
+// CHECK: [[EMPTY:![0-9]*]] = metadata !{}
 // CHECK: [[RETAIN]] = metadata !{metadata !{{[0-9]]*}}, metadata [[FOO:![0-9]*]],
 
 

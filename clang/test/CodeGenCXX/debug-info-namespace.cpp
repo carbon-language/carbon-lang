@@ -68,7 +68,7 @@ int func(bool b) {
 // CHECK: [[M12]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[M11]], i32 {{[0-9]*}}, metadata !"Y"} ; [ DW_TAG_imported_module ]
 
 // CHECK-GMLT: [[CU:![0-9]*]] = {{.*}}[[MODULES:![0-9]*]], metadata !""} ; [ DW_TAG_compile_unit ]
-// CHECK-GMLT: [[MODULES]] = metadata !{i32 0}
+// CHECK-GMLT: [[MODULES]] = metadata !{}
 
 // CHECK-NOLIMIT: ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [def] [from ]
 
