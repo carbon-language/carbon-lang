@@ -362,14 +362,14 @@ struct KB : KA { __declspec(align(2)) char a; };
 // CHECK-NEXT:    2 |   char a
 // CHECK-NEXT:      | [sizeof=4, align=2
 // CHECK-NEXT:      |  nvsize=3, nvalign=2]
-// CHECK-x64: *** Dumping AST Record Layout
-// CHECK-x64: *** Dumping AST Record Layout
-// CHECK-x64-NEXT:    0 | struct KB
-// CHECK-x64-NEXT:    0 |   struct KA (base)
-// CHECK-x64-NEXT:    0 |     char a
-// CHECK-x64-NEXT:    2 |   char a
-// CHECK-x64-NEXT:      | [sizeof=4, align=2
-// CHECK-x64-NEXT:      |  nvsize=3, nvalign=2]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct KB
+// CHECK-X64-NEXT:    0 |   struct KA (base)
+// CHECK-X64-NEXT:    0 |     char a
+// CHECK-X64-NEXT:    2 |   char a
+// CHECK-X64-NEXT:      | [sizeof=4, align=2
+// CHECK-X64-NEXT:      |  nvsize=3, nvalign=2]
 
 int a[
 sizeof(X)+
