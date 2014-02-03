@@ -62,7 +62,6 @@ int internal_sigaction(int signum, const void *act, void *oldact) {
 
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom) {
-  static const uptr kMaxThreadStackSize = 1 << 30;  // 1Gb
   CHECK(stack_top);
   CHECK(stack_bottom);
   if (at_initialization) {

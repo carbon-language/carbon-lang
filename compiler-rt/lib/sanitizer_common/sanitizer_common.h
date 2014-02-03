@@ -31,6 +31,8 @@ const uptr kCacheLineSize = 64;
 
 const uptr kMaxPathLength = 512;
 
+const uptr kMaxThreadStackSize = 1 << 30;  // 1Gb
+
 extern const char *SanitizerToolName;  // Can be changed by the tool.
 
 uptr GetPageSize();
