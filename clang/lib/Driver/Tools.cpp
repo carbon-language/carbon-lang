@@ -2653,8 +2653,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-generate-type-units");
   }
 
-  Args.AddAllArgs(CmdArgs, options::OPT_ffunction_sections);
-  Args.AddAllArgs(CmdArgs, options::OPT_fdata_sections);
+  if (Args.hasFlag(options::OPT_ffunction_sections,
+                   options::OPT_fno_function_sections, false)) {
+    CmdArgs.push_back("-ffunction-sections");
+  }
+
+  if (Args.hasFlag(options::OPT_fdata_sections,
+                   options::OPT_fno_data_sections, false)) {
+    CmdArgs.push_back("-fdata-sections");
+  }
 
   Args.AddAllArgs(CmdArgs, options::OPT_finstrument_functions);
 
