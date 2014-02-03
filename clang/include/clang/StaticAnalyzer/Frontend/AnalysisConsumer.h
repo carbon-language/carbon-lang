@@ -15,26 +15,32 @@
 #ifndef LLVM_CLANG_GR_ANALYSISCONSUMER_H
 #define LLVM_CLANG_GR_ANALYSISCONSUMER_H
 
+#include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include <string>
 
 namespace clang {
 
-class ASTConsumer;
 class Preprocessor;
 class DiagnosticsEngine;
 
 namespace ento {
 class CheckerManager;
 
+class AnalysisASTConsumer : public ASTConsumer {
+public:
+  virtual void AddDiagnosticConsumer(PathDiagnosticConsumer *Consumer) = 0;
+};
+
 /// CreateAnalysisConsumer - Creates an ASTConsumer to run various code
 /// analysis passes.  (The set of analyses run is controlled by command-line
 /// options.)
-ASTConsumer* CreateAnalysisConsumer(const Preprocessor &pp,
-                                    const std::string &output,
-                                    AnalyzerOptionsRef opts,
-                                    ArrayRef<std::string> plugins);
+AnalysisASTConsumer *CreateAnalysisConsumer(const Preprocessor &pp,
+                                            const std::string &output,
+                                            AnalyzerOptionsRef opts,
+                                            ArrayRef<std::string> plugins);
 
 } // end GR namespace
 

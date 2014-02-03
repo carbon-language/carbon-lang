@@ -145,7 +145,7 @@ public:
 
 namespace {
 
-class AnalysisConsumer : public ASTConsumer,
+class AnalysisConsumer : public AnalysisASTConsumer,
                          public DataRecursiveASTVisitor<AnalysisConsumer> {
   enum {
     AM_None = 0,
@@ -208,21 +208,24 @@ public:
   }
 
   void DigestAnalyzerOptions() {
-    // Create the PathDiagnosticConsumer.
-    ClangDiagPathDiagConsumer *clangDiags =
-      new ClangDiagPathDiagConsumer(PP.getDiagnostics());
-    PathConsumers.push_back(clangDiags);
+    if (Opts->AnalysisDiagOpt != PD_NONE) {
+      // Create the PathDiagnosticConsumer.
+      ClangDiagPathDiagConsumer *clangDiags =
+          new ClangDiagPathDiagConsumer(PP.getDiagnostics());
+      PathConsumers.push_back(clangDiags);
 
-    if (Opts->AnalysisDiagOpt == PD_TEXT) {
-      clangDiags->enablePaths();
+      if (Opts->AnalysisDiagOpt == PD_TEXT) {
+        clangDiags->enablePaths();
 
-    } else if (!OutDir.empty()) {
-      switch (Opts->AnalysisDiagOpt) {
-      default:
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN) \
-        case PD_##NAME: CREATEFN(*Opts.getPtr(), PathConsumers, OutDir, PP);\
-        break;
+      } else if (!OutDir.empty()) {
+        switch (Opts->AnalysisDiagOpt) {
+        default:
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN)                    \
+  case PD_##NAME:                                                              \
+    CREATEFN(*Opts.getPtr(), PathConsumers, OutDir, PP);                       \
+    break;
 #include "clang/StaticAnalyzer/Core/Analyses.def"
+        }
       }
     }
 
@@ -375,6 +378,11 @@ public:
       HandleCode(BD, RecVisitorMode);
     }
     return true;
+  }
+
+  virtual void
+  AddDiagnosticConsumer(PathDiagnosticConsumer *Consumer) LLVM_OVERRIDE {
+    PathConsumers.push_back(Consumer);
   }
 
 private:
@@ -687,10 +695,10 @@ void AnalysisConsumer::RunPathSensitiveChecks(Decl *D,
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//
 
-ASTConsumer* ento::CreateAnalysisConsumer(const Preprocessor& pp,
-                                          const std::string& outDir,
-                                          AnalyzerOptionsRef opts,
-                                          ArrayRef<std::string> plugins) {
+AnalysisASTConsumer *
+ento::CreateAnalysisConsumer(const Preprocessor &pp, const std::string &outDir,
+                             AnalyzerOptionsRef opts,
+                             ArrayRef<std::string> plugins) {
   // Disable the effects of '-Werror' when using the AnalysisConsumer.
   pp.getDiagnostics().setWarningsAsErrors(false);
 
