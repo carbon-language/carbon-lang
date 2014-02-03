@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLD_READER_WRITER_ELF_MIPS_DYNAMIC_TABLE_H
-#define LLD_READER_WRITER_ELF_MIPS_DYNAMIC_TABLE_H
+#ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_DYNAMIC_TABLE_H
+#define LLD_READER_WRITER_ELF_MIPS_MIPS_DYNAMIC_TABLE_H
 
 #include "DefaultLayout.h"
 #include "SectionChunks.h"
@@ -99,6 +99,7 @@ private:
   std::size_t _dt_baseaddr;
   MipsTargetLayout<MipsELFType> &_mipsTargetLayout;
 };
+
 } // end namespace elf
 } // end namespace lld
 

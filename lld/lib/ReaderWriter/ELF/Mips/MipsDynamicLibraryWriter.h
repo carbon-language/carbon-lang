@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef MIPS_DYNAMIC_LIBRARY_WRITER_H
-#define MIPS_DYNAMIC_LIBRARY_WRITER_H
+#ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_DYNAMIC_LIBRARY_WRITER_H
+#define LLD_READER_WRITER_ELF_MIPS_MIPS_DYNAMIC_LIBRARY_WRITER_H
 
 #include "DynamicLibraryWriter.h"
 #include "MipsDynamicTable.h"
@@ -100,4 +100,4 @@ LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
 } // namespace elf
 } // namespace lld
 
-#endif // MIPS_DYNAMIC_LIBRARY_WRITER_H
+#endif

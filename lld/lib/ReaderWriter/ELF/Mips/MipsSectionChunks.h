@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLD_READER_WRITER_ELF_MIPS_SECTION_CHUNKS_H
-#define LLD_READER_WRITER_ELF_MIPS_SECTION_CHUNKS_H
+#ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_SECTION_CHUNKS_H
+#define LLD_READER_WRITER_ELF_MIPS_MIPS_SECTION_CHUNKS_H
 
 namespace lld {
 namespace elf {
