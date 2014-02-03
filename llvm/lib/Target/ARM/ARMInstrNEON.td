@@ -5876,7 +5876,7 @@ defm VRINTPN : VRINT_FPI<"p", 0b111, int_arm_neon_vrintp>;
 
 // Cryptography instructions
 let PostEncoderMethod = "NEONThumb2DataIPostEncoder",
-    DecoderNamespace = "v8Crypto" in {
+    DecoderNamespace = "v8Crypto", hasSideEffects = 0 in {
   class AES<string op, bit op7, bit op6, SDPatternOperator Int>
     : N2VQIntXnp<0b00, 0b00, 0b011, op6, op7, NoItinerary,
                  !strconcat("aes", op), "8", v16i8, v16i8, Int>,
@@ -5906,16 +5906,44 @@ def AESE : AES2Op<"e", 0, 0, int_arm_neon_aese>;
 def AESIMC : AES<"imc", 1, 1, int_arm_neon_aesimc>;
 def AESMC : AES<"mc", 1, 0, int_arm_neon_aesmc>;
 
-def SHA1H : N2SHA<"1h", 0b01, 0b010, 1, 1, int_arm_neon_sha1h>;
+def SHA1H : N2SHA<"1h", 0b01, 0b010, 1, 1, null_frag>;
 def SHA1SU1 : N2SHA2Op<"1su1", 0b10, 0b011, 1, 0, int_arm_neon_sha1su1>;
 def SHA256SU0 : N2SHA2Op<"256su0", 0b10, 0b011, 1, 1, int_arm_neon_sha256su0>;
-def SHA1C : N3SHA3Op<"1c", 0b00100, 0b00, int_arm_neon_sha1c>;
-def SHA1M : N3SHA3Op<"1m", 0b00100, 0b10, int_arm_neon_sha1m>;
-def SHA1P : N3SHA3Op<"1p", 0b00100, 0b01, int_arm_neon_sha1p>;
+def SHA1C : N3SHA3Op<"1c", 0b00100, 0b00, null_frag>;
+def SHA1M : N3SHA3Op<"1m", 0b00100, 0b10, null_frag>;
+def SHA1P : N3SHA3Op<"1p", 0b00100, 0b01, null_frag>;
 def SHA1SU0 : N3SHA3Op<"1su0", 0b00100, 0b11, int_arm_neon_sha1su0>;
 def SHA256H : N3SHA3Op<"256h", 0b00110, 0b00, int_arm_neon_sha256h>;
 def SHA256H2 : N3SHA3Op<"256h2", 0b00110, 0b01, int_arm_neon_sha256h2>;
 def SHA256SU1 : N3SHA3Op<"256su1", 0b00110, 0b10, int_arm_neon_sha256su1>;
+
+def : Pat<(i32 (int_arm_neon_sha1h i32:$Rn)),
+          (COPY_TO_REGCLASS (f32 (EXTRACT_SUBREG
+              (SHA1H (SUBREG_TO_REG (i64 0),
+                                    (f32 (COPY_TO_REGCLASS i32:$Rn, SPR)),
+                                    ssub_0)),
+              ssub_0)), GPR)>;
+
+def : Pat<(v4i32 (int_arm_neon_sha1c v4i32:$hash_abcd, i32:$hash_e, v4i32:$wk)),
+          (SHA1C v4i32:$hash_abcd,
+                 (SUBREG_TO_REG (i64 0),
+                                (f32 (COPY_TO_REGCLASS i32:$hash_e, SPR)),
+                                ssub_0),
+                 v4i32:$wk)>;
+
+def : Pat<(v4i32 (int_arm_neon_sha1m v4i32:$hash_abcd, i32:$hash_e, v4i32:$wk)),
+          (SHA1M v4i32:$hash_abcd,
+                 (SUBREG_TO_REG (i64 0),
+                                (f32 (COPY_TO_REGCLASS i32:$hash_e, SPR)),
+                                ssub_0),
+                 v4i32:$wk)>;
+
+def : Pat<(v4i32 (int_arm_neon_sha1p v4i32:$hash_abcd, i32:$hash_e, v4i32:$wk)),
+          (SHA1P v4i32:$hash_abcd,
+                 (SUBREG_TO_REG (i64 0),
+                                (f32 (COPY_TO_REGCLASS i32:$hash_e, SPR)),
+                                ssub_0),
+                 v4i32:$wk)>;
 
 //===----------------------------------------------------------------------===//
 // NEON instructions for single-precision FP math

@@ -404,11 +404,4 @@ def int_aarch64_neon_vcvtfp2fxs_n :
 def int_aarch64_neon_vcvtfp2fxu_n :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty, llvm_i32_ty], [IntrNoMem]>;
 
-class Neon_SHA_Intrinsic
-  : Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v1i32_ty, llvm_v4i32_ty],
-              [IntrNoMem]>;
-
-def int_aarch64_neon_sha1c : Neon_SHA_Intrinsic;
-def int_aarch64_neon_sha1m : Neon_SHA_Intrinsic;
-def int_aarch64_neon_sha1p : Neon_SHA_Intrinsic;
 }
