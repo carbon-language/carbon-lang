@@ -142,7 +142,6 @@ if (NOT MSVC)
     -fno-stack-protector
     -Wno-gnu  # Variadic macros with 0 arguments for ...
     -fvisibility=hidden
-    -fno-function-sections
     )
   if (NOT COMPILER_RT_DEBUG)
     list(APPEND SANITIZER_COMMON_CFLAGS -O3)
