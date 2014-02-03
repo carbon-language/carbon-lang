@@ -187,10 +187,14 @@ void CodeGenModule::applyReplacements() {
     llvm::Function *OldF = cast<llvm::Function>(Entry);
     llvm::Function *NewF = dyn_cast<llvm::Function>(Replacement);
     if (!NewF) {
-      llvm::ConstantExpr *CE = cast<llvm::ConstantExpr>(Replacement);
-      assert(CE->getOpcode() == llvm::Instruction::BitCast ||
-             CE->getOpcode() == llvm::Instruction::GetElementPtr);
-      NewF = dyn_cast<llvm::Function>(CE->getOperand(0));
+      if (llvm::GlobalAlias *Alias = dyn_cast<llvm::GlobalAlias>(Replacement)) {
+        NewF = dyn_cast<llvm::Function>(Alias->getAliasedGlobal());
+      } else {
+        llvm::ConstantExpr *CE = cast<llvm::ConstantExpr>(Replacement);
+        assert(CE->getOpcode() == llvm::Instruction::BitCast ||
+               CE->getOpcode() == llvm::Instruction::GetElementPtr);
+        NewF = dyn_cast<llvm::Function>(CE->getOperand(0));
+      }
     }
 
     // Replace old with new, but keep the old order.
