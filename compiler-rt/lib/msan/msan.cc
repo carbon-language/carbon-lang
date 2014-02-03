@@ -216,7 +216,8 @@ void ScopedThreadLocalStateBackup::Restore() {
   internal_memset(__msan_va_arg_tls, 0, sizeof(__msan_va_arg_tls));
 
   if (__msan_get_track_origins()) {
-    internal_memset(&__msan_retval_origin_tls, 0, sizeof(__msan_retval_tls));
+    internal_memset(&__msan_retval_origin_tls, 0,
+                    sizeof(__msan_retval_origin_tls));
     internal_memset(__msan_param_origin_tls, 0,
                     sizeof(__msan_param_origin_tls));
   }
