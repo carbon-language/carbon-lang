@@ -183,6 +183,9 @@ void TokenLexer::ExpandFunctionArguments() {
     // preprocessor already verified that the following token is a macro name
     // when the #define was parsed.
     const Token &CurTok = Tokens[i];
+    if (i != 0 && !Tokens[i-1].is(tok::hashhash) && CurTok.hasLeadingSpace())
+      NextTokGetsSpace = true;
+
     if (CurTok.is(tok::hash) || CurTok.is(tok::hashat)) {
       int ArgNo = Macro->getArgumentNum(Tokens[i+1].getIdentifierInfo());
       assert(ArgNo != -1 && "Token following # is not an argument?");
@@ -207,7 +210,7 @@ void TokenLexer::ExpandFunctionArguments() {
 
       // The stringified/charified string leading space flag gets set to match
       // the #/#@ operator.
-      if (CurTok.hasLeadingSpace() || NextTokGetsSpace)
+      if (NextTokGetsSpace)
         Res.setFlag(Token::LeadingSpace);
 
       ResultToks.push_back(Res);
@@ -301,14 +304,8 @@ void TokenLexer::ExpandFunctionArguments() {
         // before the first token should match the whitespace of the arg
         // identifier.
         ResultToks[FirstResult].setFlagValue(Token::LeadingSpace,
-                                             CurTok.hasLeadingSpace() ||
                                              NextTokGetsSpace);
         NextTokGetsSpace = false;
-      } else {
-        // If this is an empty argument, if there was whitespace before the
-        // formal token, and this is not the first token in the macro
-        // definition, make sure the next token gets whitespace before it.
-        NextTokGetsSpace |= i != 0 && CurTok.hasLeadingSpace();
       }
       continue;
     }
@@ -356,8 +353,7 @@ void TokenLexer::ExpandFunctionArguments() {
       // assembler-with-cpp mode, invalid pastes are allowed through: in this
       // case, we do not want the extra whitespace to be added.  For example,
       // we want ". ## foo" -> ".foo" not ". foo".
-      if ((CurTok.hasLeadingSpace() && !PasteBefore) ||
-          (NextTokGetsSpace && !NonEmptyPasteBefore))
+      if (NextTokGetsSpace)
         ResultToks[ResultToks.size()-NumToks].setFlag(Token::LeadingSpace);
 
       NextTokGetsSpace = false;
@@ -368,8 +364,6 @@ void TokenLexer::ExpandFunctionArguments() {
     // 6.10.3.3p2,3) calls for a bunch of placemarker stuff to occur.  We
     // implement this by eating ## operators when a LHS or RHS expands to
     // empty.
-    if (!PasteBefore)
-      NextTokGetsSpace |= i != 0 && CurTok.hasLeadingSpace();
     if (PasteAfter) {
       // Discard the argument token and skip (don't copy to the expansion
       // buffer) the paste operator after it.
