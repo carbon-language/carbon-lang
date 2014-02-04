@@ -74,8 +74,8 @@ function(llvm_map_components_to_libraries OUT_VAR)
   set( ${OUT_VAR} ${result} ${sys_result} PARENT_SCOPE )
 endfunction(llvm_map_components_to_libraries)
 
-
-function(explicit_map_components_to_libraries out_libs)
+# Map LINK_COMPONENTS to actual libnames.
+function(llvm_map_components_to_libnames out_libs)
   set( link_components ${ARGN} )
   get_property(llvm_libs GLOBAL PROPERTY LLVM_LIBS)
   string(TOUPPER "${llvm_libs}" capitalized_libs)
@@ -157,7 +157,13 @@ function(explicit_map_components_to_libraries out_libs)
       endif( lib_idx LESS 0 )
     endif( NOT idx LESS 0 )
   endforeach(c)
-  # Expand dependencies while topologically sorting the list of libraries:
+
+  set(${out_libs} ${expanded_components} PARENT_SCOPE)
+endfunction()
+
+# Expand dependencies while topologically sorting the list of libraries:
+function(llvm_expand_dependencies out_libs)
+  set(expanded_components ${ARGN})
   list(LENGTH expanded_components lst_size)
   set(cursor 0)
   set(processed)
@@ -177,6 +183,13 @@ function(explicit_map_components_to_libraries out_libs)
     list(LENGTH processed cursor)
     list(LENGTH expanded_components lst_size)
   endwhile( cursor LESS lst_size )
+  set(${out_libs} ${expanded_components} PARENT_SCOPE)
+endfunction()
+
+function(explicit_map_components_to_libraries out_libs)
+  llvm_map_components_to_libnames(link_libs ${ARGN})
+  llvm_expand_dependencies(expanded_components ${link_libs})
+  get_property(llvm_libs GLOBAL PROPERTY LLVM_LIBS)
   # Return just the libraries included in this build:
   set(result)
   foreach(c ${expanded_components})
