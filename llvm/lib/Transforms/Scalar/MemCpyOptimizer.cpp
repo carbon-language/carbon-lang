@@ -816,9 +816,8 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
 /// circumstances). This allows later passes to remove the first memcpy
 /// altogether.
 bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
-  // We can only optimize statically-sized memcpy's that are non-volatile.
-  ConstantInt *CopySize = dyn_cast<ConstantInt>(M->getLength());
-  if (CopySize == 0 || M->isVolatile()) return false;
+  // We can only optimize non-volatile memcpy's.
+  if (M->isVolatile()) return false;
 
   // If the source and destination of the memcpy are the same, then zap it.
   if (M->getSource() == M->getDest()) {
@@ -832,13 +831,17 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
     if (GV->isConstant() && GV->hasDefinitiveInitializer())
       if (Value *ByteVal = isBytewiseValue(GV->getInitializer())) {
         IRBuilder<> Builder(M);
-        Builder.CreateMemSet(M->getRawDest(), ByteVal, CopySize,
+        Builder.CreateMemSet(M->getRawDest(), ByteVal, M->getLength(),
                              M->getAlignment(), false);
         MD->removeInstruction(M);
         M->eraseFromParent();
         ++NumCpyToSet;
         return true;
       }
+
+  // The optimizations after this point require the memcpy size.
+  ConstantInt *CopySize = dyn_cast<ConstantInt>(M->getLength());
+  if (CopySize == 0) return false;
 
   // The are two possible optimizations we can do for memcpy:
   //   a) memcpy-memcpy xform which exposes redundance for DSE.
