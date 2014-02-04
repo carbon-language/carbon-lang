@@ -391,6 +391,11 @@ recommend using the system GCC to compile LLVM and Clang in this case.
 **Clang 3.0 on Mageia 2**.  There's a packaging issue: Clang can not find at
 least some (``cxxabi.h``) libstdc++ headers.
 
+**Clang in C++11 mode and libstdc++ 4.7.2**.  This version of libstdc++
+contained `a bug <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=53841>`__ which
+causes Clang to refuse to compile condition_variable header file.  At the time
+of writing, this breaks LLD build.
+
 .. _Getting Started with LLVM:
 
 Getting Started with LLVM
