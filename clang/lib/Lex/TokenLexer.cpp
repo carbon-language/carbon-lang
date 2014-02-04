@@ -477,9 +477,13 @@ bool TokenLexer::Lex(Token &Tok) {
   if (isFirstToken) {
     Tok.setFlagValue(Token::StartOfLine , AtStartOfLine);
     Tok.setFlagValue(Token::LeadingSpace, HasLeadingSpace);
-    AtStartOfLine = false;
-    HasLeadingSpace = false;
+  } else {
+    // If this is not the first token, we may still need to pass through
+    // leading whitespace if we've expanded a macro.
+    if (HasLeadingSpace) Tok.setFlag(Token::LeadingSpace);
   }
+  AtStartOfLine = false;
+  HasLeadingSpace = false;
 
   // Handle recursive expansion!
   if (!Tok.isAnnotation() && Tok.getIdentifierInfo() != 0) {
