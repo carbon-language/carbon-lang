@@ -28,8 +28,14 @@ int main()
     assert( (id0 <= id1));
     assert(!(id0 >  id1));
     assert( (id0 >= id1));
-    assert( (id0 <  id2));
-    assert( (id0 <= id2));
-    assert(!(id0 >  id2));
-    assert(!(id0 >= id2));
+    assert(!(id0 == id2));
+    if (id0 < id2) {
+      assert( (id0 <= id2));
+      assert(!(id0 >  id2));
+      assert(!(id0 >= id2));
+    } else {
+      assert(!(id0 <= id2));
+      assert( (id0 >  id2));
+      assert( (id0 >= id2));
+    }
 }
