@@ -61,7 +61,7 @@ struct SymbolizeContext {
 };
 
 // Callback into Go.
-extern "C" void __tsan_symbolize(SymbolizeContext *ctx);
+static void (*symbolize_cb)(SymbolizeContext *ctx);
 
 ReportStack *SymbolizeCode(uptr addr) {
   ReportStack *s = (ReportStack*)internal_alloc(MBlockReportStack,
@@ -71,7 +71,7 @@ ReportStack *SymbolizeCode(uptr addr) {
   SymbolizeContext ctx;
   internal_memset(&ctx, 0, sizeof(ctx));
   ctx.pc = addr;
-  __tsan_symbolize(&ctx);
+  symbolize_cb(&ctx);
   if (ctx.res) {
     s->offset = ctx.off;
     s->func = internal_strdup(ctx.func ? ctx.func : "??");
@@ -93,7 +93,8 @@ static ThreadState *AllocGoroutine() {
   return thr;
 }
 
-void __tsan_init(ThreadState **thrp) {
+void __tsan_init(ThreadState **thrp, void (*cb)(SymbolizeContext *cb)) {
+  symbolize_cb = cb;
   ThreadState *thr = AllocGoroutine();
   main_thr = *thrp = thr;
   Initialize(thr);

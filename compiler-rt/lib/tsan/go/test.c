@@ -13,7 +13,7 @@
 
 #include <stdio.h>
 
-void __tsan_init(void **thr);
+void __tsan_init(void **thr, void (*cb)(void*));
 void __tsan_fini();
 void __tsan_map_shadow(void *addr, unsigned long size);
 void __tsan_go_start(void *thr, void **chthr, void *pc);
@@ -27,9 +27,7 @@ void __tsan_acquire(void *thr, void *addr);
 void __tsan_release(void *thr, void *addr);
 void __tsan_release_merge(void *thr, void *addr);
 
-int __tsan_symbolize(void *pc, char **img, char **rtn, char **file, int *l) {
-  return 0;
-}
+void symbolize_cb(void *ctx) {}
 
 char buf[10];
 
@@ -38,7 +36,7 @@ void barfoo() {}
 
 int main(void) {
   void *thr0 = 0;
-  __tsan_init(&thr0);
+  __tsan_init(&thr0, symbolize_cb);
   __tsan_map_shadow(buf, sizeof(buf) + 4096);
   __tsan_func_enter(thr0, (char*)&main + 1);
   __tsan_malloc(thr0, buf, 10, 0);
