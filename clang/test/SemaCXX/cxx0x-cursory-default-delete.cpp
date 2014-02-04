@@ -80,3 +80,7 @@ struct except_spec_d_match : except_spec_a, except_spec_b {
 // (but not normal definitions)
 struct S { S(); };
 S::S() __attribute((pure)) = default;
+
+using size_t = decltype(sizeof(0));
+void *operator new(size_t) = delete; // expected-error {{deleted definition must be first declaration}} expected-note {{implicit}}
+void operator delete(void *) = delete; // expected-error {{deleted definition must be first declaration}} expected-note {{implicit}}

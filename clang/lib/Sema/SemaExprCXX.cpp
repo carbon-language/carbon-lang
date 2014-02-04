@@ -2111,11 +2111,13 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
     Alloc->addAttr(MallocAttr::CreateImplicit(Context));
 
   ParmVarDecl *ParamDecls[2];
-  for (unsigned I = 0; I != NumParams; ++I)
+  for (unsigned I = 0; I != NumParams; ++I) {
     ParamDecls[I] = ParmVarDecl::Create(Context, Alloc, SourceLocation(),
                                         SourceLocation(), 0,
                                         Params[I], /*TInfo=*/0,
                                         SC_None, 0);
+    ParamDecls[I]->setImplicit();
+  }
   Alloc->setParams(ArrayRef<ParmVarDecl*>(ParamDecls, NumParams));
 
   // FIXME: Also add this declaration to the IdentifierResolver, but

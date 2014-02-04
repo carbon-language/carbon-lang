@@ -9,7 +9,8 @@ namespace NS {
   void *operator new(size_t);; // expected-error {{'operator new' cannot be declared inside a namespace}}
 }
 
-static void *operator new(size_t); // expected-error {{'operator new' cannot be declared static in global scope}}
+static void *operator new(size_t); // expected-error {{static declaration of 'operator new' follows non-static declaration}} expected-note {{previous}}
+static void *operator new(size_t, int, int); // expected-error {{'operator new' cannot be declared static in global scope}}
 
 struct B {
   void operator new(size_t);  // expected-error {{'operator new' must return type 'void *'}}
