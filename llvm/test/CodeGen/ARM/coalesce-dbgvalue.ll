@@ -81,7 +81,7 @@ attributes #3 = { nounwind }
 
 !0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.4 (trunk 182024) (llvm/trunk 182023)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !15, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/d/b/pr16110.c] [DW_LANG_C99]
 !1 = metadata !{metadata !"pr16110.c", metadata !"/d/b"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4}
 !4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"pr16110", metadata !"pr16110", metadata !"", i32 7, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 true, i32 ()* @pr16110, null, null, metadata !9, i32 7} ; [ DW_TAG_subprogram ] [line 7] [def] [pr16110]
 !5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/d/b/pr16110.c]

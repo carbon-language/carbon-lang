@@ -40,7 +40,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2,  metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/scratch/list0.c] [DW_LANG_C99]
 !1 = metadata !{metadata !"list0.c", metadata !"/usr/local/google/home/blaikie/dev/scratch"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !10}
 !4 = metadata !{i32 786478, metadata !5, metadata !6, metadata !"foo", metadata !"foo", metadata !"", i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @foo, null, null, metadata !2, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
 !5 = metadata !{metadata !"./list0.h", metadata !"/usr/local/google/home/blaikie/dev/scratch"}

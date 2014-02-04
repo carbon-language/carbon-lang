@@ -27,7 +27,7 @@
 
 !0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 (trunk 187958) (llvm/trunk 187964)", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !2, metadata !3, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/debug-info-template-recursive.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"debug-info-template-recursive.cpp", metadata !"/usr/local/google/home/echristo/tmp"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4}
 !4 = metadata !{i32 786484, i32 0, null, metadata !"filters", metadata !"filters", metadata !"", metadata !5, i32 10, metadata !6, i32 0, i32 1, %class.bar* @filters, null} ; [ DW_TAG_variable ] [filters] [line 10] [def]
 !5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/usr/local/google/home/echristo/tmp/debug-info-template-recursive.cpp]

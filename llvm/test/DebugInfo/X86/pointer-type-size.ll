@@ -11,8 +11,8 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!14}
 
-!0 = metadata !{i32 786449, metadata !13, i32 12, metadata !"clang version 3.1 (trunk 147882)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !3,  metadata !3, metadata !""} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{i32 0}
+!0 = metadata !{i32 786449, metadata !13, i32 12, metadata !"clang version 3.1 (trunk 147882)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !3,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
+!1 = metadata !{}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 720948, i32 0, null, metadata !"crass", metadata !"crass", metadata !"", metadata !6, i32 1, metadata !7, i32 0, i32 1, %struct.crass* @crass, null} ; [ DW_TAG_variable ]
 !6 = metadata !{i32 720937, metadata !13} ; [ DW_TAG_file_type ]

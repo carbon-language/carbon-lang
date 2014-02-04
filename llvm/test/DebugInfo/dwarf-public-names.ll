@@ -88,8 +88,8 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!38}
 
-!0 = metadata !{i32 786449, metadata !37, i32 4, metadata !"clang version 3.3 (http://llvm.org/git/clang.git a09cd8103a6a719cb2628cdf0c91682250a17bd2) (http://llvm.org/git/llvm.git 47d03cec0afca0c01ae42b82916d1d731716cd20)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !2, metadata !24,  metadata !24, metadata !""} ; [ DW_TAG_compile_unit ] [/usr2/kparzysz/s.hex/t/dwarf-public-names.cpp] [DW_LANG_C_plus_plus]
-!1 = metadata !{i32 0}
+!0 = metadata !{i32 786449, metadata !37, i32 4, metadata !"clang version 3.3 (http://llvm.org/git/clang.git a09cd8103a6a719cb2628cdf0c91682250a17bd2) (http://llvm.org/git/llvm.git 47d03cec0afca0c01ae42b82916d1d731716cd20)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !2, metadata !24,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/usr2/kparzysz/s.hex/t/dwarf-public-names.cpp] [DW_LANG_C_plus_plus]
+!1 = metadata !{}
 !2 = metadata !{metadata !3, metadata !18, metadata !19, metadata !20}
 !3 = metadata !{i32 786478, metadata !4, null, metadata !"member_function", metadata !"member_function", metadata !"_ZN1C15member_functionEv", i32 9, metadata !5, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%struct.C*)* @_ZN1C15member_functionEv, null, metadata !12, metadata !1, i32 9} ; [ DW_TAG_subprogram ] [line 9] [def] [member_function]
 !4 = metadata !{i32 786473, metadata !37} ; [ DW_TAG_file_type ]

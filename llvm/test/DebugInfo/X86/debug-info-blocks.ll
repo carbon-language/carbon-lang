@@ -264,7 +264,7 @@ attributes #3 = { nounwind }
 
 !0 = metadata !{i32 786449, metadata !1, i32 16, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 2, metadata !2, metadata !3, metadata !12, metadata !2,  metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [llvm/tools/clang/test/CodeGenObjC/<unknown>] [DW_LANG_ObjC]
 !1 = metadata !{metadata !"llvm/tools/clang/test/CodeGenObjC/<unknown>", metadata !"llvm/_build.ninja.Debug"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4}
 !4 = metadata !{i32 786451, metadata !5, metadata !6, metadata !"A", i32 33, i64 32, i64 32, i32 0, i32 512, null, metadata !7, i32 16, null, null, null} ; [ DW_TAG_structure_type ] [A] [line 33, size 32, align 32, offset 0] [def] [from ]
 !5 = metadata !{metadata !"llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m", metadata !"llvm/_build.ninja.Debug"}

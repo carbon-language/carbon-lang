@@ -6,8 +6,8 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!9}
 
-!0 = metadata !{i32 786449, metadata !8, i32 4, metadata !"clang version 3.2 (trunk 165274) (llvm/trunk 165272)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !3,  metadata !3, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp/foo.cpp] [DW_LANG_C_plus_plus]
-!1 = metadata !{i32 0}
+!0 = metadata !{i32 786449, metadata !8, i32 4, metadata !"clang version 3.2 (trunk 165274) (llvm/trunk 165272)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !3,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp/foo.cpp] [DW_LANG_C_plus_plus]
+!1 = metadata !{}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786484, i32 0, null, metadata !"e", metadata !"e", metadata !"", metadata !6, i32 2, metadata !7, i32 0, i32 1, i16* @e, null} ; [ DW_TAG_variable ] [e] [line 2] [def]
 !6 = metadata !{i32 786473, metadata !8} ; [ DW_TAG_file_type ]

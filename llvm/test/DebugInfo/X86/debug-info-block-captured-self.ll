@@ -83,7 +83,7 @@ define internal void @"__24-[Main initWithContext:]_block_invoke_2"(i8* %.block_
 !2 = metadata !{metadata !3}
 !3 = metadata !{i32 786436, metadata !107, null, metadata !"", i32 20, i64 32, i64 32, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_enumeration_type ] [line 20, size 32, align 32, offset 0] [def] [from ]
 !4 = metadata !{}
-!15 = metadata !{i32 0}
+!15 = metadata !{}
 !23 = metadata !{metadata !38, metadata !42}
 !27 = metadata !{i32 786454, metadata !107, null, metadata !"id", i32 31, i64 0, i64 0, i64 0, i32 0, metadata !28} ; [ DW_TAG_typedef ] [id] [line 31, size 0, align 0, offset 0] [from ]
 !28 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !29} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from objc_object]

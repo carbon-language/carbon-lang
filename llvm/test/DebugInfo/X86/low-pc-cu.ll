@@ -16,7 +16,7 @@ entry:
 !llvm.module.flags = !{!16}
 
 !0 = metadata !{i32 786449, metadata !15, i32 4, metadata !"clang version 3.1 (trunk 153454) (llvm/trunk 153471)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{i32 0}
+!1 = metadata !{}
 !3 = metadata !{metadata !5, metadata !12}
 !5 = metadata !{i32 786478, metadata !6, null, metadata !"q", metadata !"q", metadata !"_Z1qv", i32 5, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @_Z1qv, null, null, metadata !10, i32 0} ; [ DW_TAG_subprogram ] [line 5] [def] [scope 0] [q]
 !6 = metadata !{i32 786473, metadata !15} ; [ DW_TAG_file_type ]

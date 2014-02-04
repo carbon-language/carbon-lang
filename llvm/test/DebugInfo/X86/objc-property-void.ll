@@ -74,7 +74,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = metadata !{i32 786449, metadata !1, i32 16, metadata !"", i1 false, metadata !"", i32 2, metadata !2, metadata !3, metadata !9, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [] [DW_LANG_ObjC]
 !1 = metadata !{metadata !"-", metadata !""}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4}
 !4 = metadata !{i32 786451, metadata !5, metadata !6, metadata !"Foo", i32 1, i64 0, i64 8, i32 0, i32 512, null, metadata !7, i32 16, null, null, null} ; [ DW_TAG_structure_type ] [Foo] [line 1, size 0, align 8, offset 0] [def] [from ]
 !5 = metadata !{metadata !"<stdin>", metadata !""}

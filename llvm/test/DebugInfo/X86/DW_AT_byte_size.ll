@@ -27,7 +27,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !llvm.module.flags = !{!21}
 
 !0 = metadata !{i32 786449, metadata !20, i32 4, metadata !"clang version 3.1 (trunk 150996)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{i32 0}
+!1 = metadata !{}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !20, metadata !6, metadata !"foo", metadata !"foo", metadata !"_Z3fooP1A", i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (%struct.A*)* @_Z3fooP1A, null, null, metadata !14, i32 3} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !20} ; [ DW_TAG_file_type ]

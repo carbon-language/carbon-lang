@@ -34,7 +34,7 @@ declare void @_ZN4SValD2Ev(%class.SVal* %this)
 
 !0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [aggregate-indirect-arg.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"aggregate-indirect-arg.cpp", metadata !""}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !29, metadata !33, metadata !34, metadata !35}
 !4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"bar", metadata !"bar", metadata !"_Z3barR4SVal", i32 19, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%class.SVal*)* @_Z3barR4SVal, null, null, metadata !2, i32 19} ; [ DW_TAG_subprogram ] [line 19] [def] [bar]
 !5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [aggregate-indirect-arg.cpp]

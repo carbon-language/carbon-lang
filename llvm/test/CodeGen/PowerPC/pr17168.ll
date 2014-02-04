@@ -56,7 +56,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.4 (trunk 190311)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !298, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/home/hfinkel/src/NPB2.3-omp-C/BT/bt.c] [DW_LANG_C99]
 !1 = metadata !{metadata !"bt.c", metadata !"/home/hfinkel/src/NPB2.3-omp-C/BT"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !82, metadata !102, metadata !114, metadata !132, metadata !145, metadata !154, metadata !155, metadata !162, metadata !183, metadata !200, metadata !201, metadata !207, metadata !208, metadata !215, metadata !221, metadata !230, metadata !238, metadata !246, metadata !255, metadata !260, metadata !261, metadata !268, metadata !274, metadata !279, metadata !280, metadata !287, metadata !293}
 !4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"main", metadata !"main", metadata !"", i32 74, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, null, null, null, metadata !12, i32 74} ; [ DW_TAG_subprogram ] [line 74] [def] [main]
 !5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/home/hfinkel/src/NPB2.3-omp-C/BT/bt.c]

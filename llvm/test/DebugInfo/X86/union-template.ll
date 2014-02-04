@@ -29,9 +29,9 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!28}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.3 (trunk 178499) (llvm/trunk 178472)", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !9,  metadata !9, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/foo.cc] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.3 (trunk 178499) (llvm/trunk 178472)", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !9,  metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/foo.cc] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"foo.cc", metadata !"/usr/local/google/home/echristo/tmp"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4}
 !4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"g", metadata !"g", metadata !"_ZN7PR156371gEf", i32 3, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (float)* @_ZN7PR156371gEf, null, null, metadata !2, i32 3} ; [ DW_TAG_subprogram ] [line 3] [def] [g]
 !5 = metadata !{i32 786489, metadata !1, null, metadata !"PR15637", i32 1} ; [ DW_TAG_namespace ] [PR15637] [line 1]

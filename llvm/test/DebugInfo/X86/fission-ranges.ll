@@ -44,7 +44,7 @@ entry:
 define internal fastcc void @foo() #0 {
 entry:
   tail call void @llvm.dbg.value(metadata !29, i64 0, metadata !13), !dbg !30
-  tail call void @llvm.dbg.value(metadata !2, i64 0, metadata !14), !dbg !31
+  tail call void @llvm.dbg.value(metadata !44, i64 0, metadata !14), !dbg !31
   %c.promoted9 = load i32* @c, align 4, !dbg !32, !tbaa !33
   br label %for.cond1.preheader, !dbg !31
 
@@ -107,7 +107,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.4 (trunk 191700) (llvm/trunk 191710)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !"small.dwo"} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/small.c] [DW_LANG_C99]
 !1 = metadata !{metadata !"small.c", metadata !"/usr/local/google/home/echristo/tmp"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !8}
 !4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"bar", metadata !"bar", metadata !"", i32 18, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 true, void ()* @bar, null, null, metadata !2, i32 19} ; [ DW_TAG_subprogram ] [line 18] [def] [scope 19] [bar]
 !5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/usr/local/google/home/echristo/tmp/small.c]
@@ -149,3 +149,4 @@ attributes #1 = { nounwind readnone }
 !41 = metadata !{i32* @c}
 !42 = metadata !{i32 15, i32 0, metadata !8, null}
 !43 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!44 = metadata !{i32 0}

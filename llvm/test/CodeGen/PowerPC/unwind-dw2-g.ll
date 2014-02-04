@@ -23,7 +23,7 @@ attributes #0 = { nounwind }
 
 !0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.4", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp/unwind-dw2.c] [DW_LANG_C99]
 !1 = metadata !{metadata !"/tmp/unwind-dw2.c", metadata !"/tmp"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4}
 !4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"foo", metadata !"foo", metadata !"", i32 1, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, void ()* @foo, null, null, metadata !2, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
 !5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/tmp/unwind-dw2.c]

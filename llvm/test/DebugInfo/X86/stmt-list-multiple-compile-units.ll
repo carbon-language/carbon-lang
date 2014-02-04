@@ -74,7 +74,7 @@ entry:
 !llvm.dbg.cu = !{!0, !10}
 !llvm.module.flags = !{!25}
 !0 = metadata !{i32 786449, metadata !23, i32 12, metadata !"clang version 3.3", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{i32 0}
+!1 = metadata !{}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !23, metadata !6, metadata !"test", metadata !"test", metadata !"", i32 2, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @test, null, null, metadata !1, i32 3} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 3] [test]
 !6 = metadata !{i32 786473, metadata !23} ; [ DW_TAG_file_type ]

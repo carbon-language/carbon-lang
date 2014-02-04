@@ -90,7 +90,7 @@ entry:
 !llvm.module.flags = !{!83}
 
 !0 = metadata !{i32 720913, metadata !82, i32 4, metadata !"clang version 3.1 (trunk 146596)", i1 false, metadata !"", i32 0, metadata !1, metadata !3, metadata !27, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{i32 0}
+!1 = metadata !{}
 !3 = metadata !{metadata !5, metadata !9}
 !5 = metadata !{i32 720898, metadata !82, null, metadata !"bar", i32 9, i64 128, i64 64, i32 0, i32 0, null, metadata !7, i32 0, null, null, null} ; [ DW_TAG_class_type ] [bar] [line 9, size 128, align 64, offset 0] [def] [from ]
 !6 = metadata !{i32 720937, metadata !82} ; [ DW_TAG_file_type ]

@@ -8,7 +8,7 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!23}
 
-!0 = metadata !{i32 786449, metadata !22, i32 4, metadata !"clang version 3.2 (trunk 157269) (llvm/trunk 157264)", i1 false, metadata !"", i32 0, metadata !1, metadata !15, metadata !15, metadata !17,  metadata !17, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !22, i32 4, metadata !"clang version 3.2 (trunk 157269) (llvm/trunk 157264)", i1 false, metadata !"", i32 0, metadata !1, metadata !15, metadata !15, metadata !17,  metadata !15, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{metadata !3, metadata !8, metadata !12}
 !3 = metadata !{i32 786436, metadata !4, null, metadata !"A", i32 1, i64 32, i64 32, i32 0, i32 0, metadata !5, metadata !6, i32 0, null, null, null} ; [ DW_TAG_enumeration_type ] [A] [line 1, size 32, align 32, offset 0] [def] [from int]
 !4 = metadata !{i32 786473, metadata !22} ; [ DW_TAG_file_type ]
@@ -22,7 +22,7 @@
 !12 = metadata !{i32 786436, metadata !4, null, metadata !"C", i32 3, i64 32, i64 32, i32 0, i32 0, null, metadata !13, i32 0, null, null, null} ; [ DW_TAG_enumeration_type ] [C] [line 3, size 32, align 32, offset 0] [def] [from ]
 !13 = metadata !{metadata !14}
 !14 = metadata !{i32 786472, metadata !"C1", i64 1} ; [ DW_TAG_enumerator ]
-!15 = metadata !{i32 0}
+!15 = metadata !{}
 !17 = metadata !{metadata !19, metadata !20, metadata !21}
 !19 = metadata !{i32 786484, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !4, i32 4, metadata !3, i32 0, i32 1, i32* @a, null} ; [ DW_TAG_variable ]
 !20 = metadata !{i32 786484, i32 0, null, metadata !"b", metadata !"b", metadata !"", metadata !4, i32 5, metadata !8, i32 0, i32 1, i64* @b, null} ; [ DW_TAG_variable ]

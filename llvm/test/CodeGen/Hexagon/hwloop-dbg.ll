@@ -7,7 +7,7 @@ define void @foo(i32* nocapture %a, i32* nocapture %b) nounwind {
 entry:
   tail call void @llvm.dbg.value(metadata !{i32* %a}, i64 0, metadata !13), !dbg !17
   tail call void @llvm.dbg.value(metadata !{i32* %b}, i64 0, metadata !14), !dbg !18
-  tail call void @llvm.dbg.value(metadata !2, i64 0, metadata !15), !dbg !19
+  tail call void @llvm.dbg.value(metadata !30, i64 0, metadata !15), !dbg !19
   br label %for.body, !dbg !19
 
 for.body:                                         ; preds = %for.body, %entry
@@ -38,7 +38,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !llvm.module.flags = !{!29}
 
 !0 = metadata !{i32 786449, metadata !28, i32 12, metadata !"QuIC LLVM Hexagon Clang version 6.1-pre-unknown, (git://git-hexagon-aus.quicinc.com/llvm/clang-mainline.git e9382867661454cdf44addb39430741578e9765c) (llvm/llvm-mainline.git 36412bb1fcf03ed426d4437b41198bae066675ac)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, null, metadata !""} ; [ DW_TAG_compile_unit ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c] [DW_LANG_C99]
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !28, null, metadata !"foo", metadata !"foo", metadata !"", i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, void (i32*, i32*)* @foo, null, null, metadata !11, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
 !6 = metadata !{i32 786473, metadata !28} ; [ DW_TAG_file_type ]
@@ -62,3 +62,4 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !27 = metadata !{i32 6, i32 1, metadata !16, null}
 !28 = metadata !{metadata !"hwloop-dbg.c", metadata !"/usr2/kparzysz/s.hex/t"}
 !29 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!30 = metadata !{i32 0}

@@ -1532,8 +1532,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
   if (getDIE(GV))
     return;
 
-  if (!GV.isGlobalVariable())
-    return;
+  assert(GV.isGlobalVariable());
 
   DIScope GVContext = GV.getContext();
   DIType GTy = GV.getType();

@@ -12,7 +12,6 @@ target triple = "thumbv7-apple-ios"
 !llvm.dbg.cu = !{!0}
 
 !0 = metadata !{i32 786449, i32 0, i32 12, metadata !"test.c", metadata !"/Volumes/Data/radar/15623193", metadata !"LLVM", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !1} ; [ DW_TAG_compile_unit ] [/Volumes/Data/radar/15623193/test.c] [DW_LANG_C99]
-!1 = metadata !{metadata !2}
-!2 = metadata !{i32 0}
+!1 = metadata !{}
 !3 = metadata !{i32 2, metadata !"Dwarf Version", i32 2}
 !4 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

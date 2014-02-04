@@ -45,7 +45,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !3, metadata !13, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/member-order.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"member-order.cpp", metadata !"/tmp/dbginfo"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4}
 !4 = metadata !{i32 786451, metadata !1, null, metadata !"foo", i32 1, i64 8, i64 8, i32 0, i32 0, null, metadata !5, i32 0, null, null, metadata !"_ZTS3foo"} ; [ DW_TAG_structure_type ] [foo] [line 1, size 8, align 8, offset 0] [def] [from ]
 !5 = metadata !{metadata !6, metadata !11}

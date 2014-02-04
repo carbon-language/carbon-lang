@@ -22,7 +22,7 @@ declare i32 @callme(i32)
 !llvm.module.flags = !{!14}
 
 !0 = metadata !{i32 786449, metadata !13, i32 12, metadata !"clang version 3.2 (trunk 164980) (llvm/trunk 164979)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/bar.c] [DW_LANG_C99]
-!1 = metadata !{i32 0}
+!1 = metadata !{}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, metadata !13, metadata !6, metadata !"isel_line_test2", metadata !"isel_line_test2", metadata !"", i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 ()* @isel_line_test2, null, null, metadata !1, i32 4} ; [ DW_TAG_subprogram ] [line 3] [def] [scope 4] [isel_line_test2]
 !6 = metadata !{i32 786473, metadata !13} ; [ DW_TAG_file_type ]

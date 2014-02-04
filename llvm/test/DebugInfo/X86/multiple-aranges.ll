@@ -46,7 +46,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 !0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !2, metadata !3, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/home/kayamon/test1.c] [DW_LANG_C99]
 !1 = metadata !{metadata !"test1.c", metadata !"/home/kayamon"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4}
 !4 = metadata !{i32 786484, i32 0, null, metadata !"kittens", metadata !"kittens", metadata !"", metadata !5, i32 1, metadata !6, i32 0, i32 1, i32* @kittens, null} ; [ DW_TAG_variable ] [kittens] [line 1] [def]
 !5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/home/kayamon/test1.c]

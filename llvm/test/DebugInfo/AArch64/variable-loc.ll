@@ -72,7 +72,7 @@ declare i32 @printf(i8*, ...)
 !llvm.module.flags = !{!30}
 
 !0 = metadata !{i32 786449, metadata !29, i32 12, metadata !"clang version 3.2 ", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ] [/home/timnor01/a64-trunk/build/simple.c] [DW_LANG_C99]
-!1 = metadata !{i32 0}
+!1 = metadata !{}
 !3 = metadata !{metadata !5, metadata !11, metadata !14}
 !5 = metadata !{i32 786478, metadata !29, metadata !6, metadata !"populate_array", metadata !"populate_array", metadata !"", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32*, i32)* @populate_array, null, null, metadata !1, i32 4} ; [ DW_TAG_subprogram ] [line 4] [def] [populate_array]
 !6 = metadata !{i32 786473, metadata !29} ; [ DW_TAG_file_type ]

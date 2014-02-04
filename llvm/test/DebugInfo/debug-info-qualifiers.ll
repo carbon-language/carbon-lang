@@ -65,7 +65,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.5 ", i1 false, metadata !"", i32 0, metadata !2, metadata !3, metadata !16, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"", metadata !""}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4}
 !4 = metadata !{i32 786434, metadata !5, null, metadata !"A", i32 2, i64 8, i64 8, i32 0, i32 0, null, metadata !6, i32 0, null, null, metadata !"_ZTS1A"} ; [ DW_TAG_class_type ] [A] [line 2, size 8, align 8, offset 0] [def] [from ]
 !5 = metadata !{metadata !"debug-info-qualifiers.cpp", metadata !""}

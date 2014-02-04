@@ -88,7 +88,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = metadata !{i32 786449, metadata !1, i32 17, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 2, metadata !2, metadata !3, metadata !6, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/t.mm] [DW_LANG_ObjC_plus_plus]
 !1 = metadata !{metadata !"t.mm", metadata !""}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4}
 !4 = metadata !{i32 786451, metadata !1, metadata !5, metadata !"Bitmap", i32 8, i64 8, i64 8, i32 0, i32 512, null, metadata !2, i32 17, null, null, null} ; [ DW_TAG_structure_type ] [Bitmap] [line 8, size 8, align 8, offset 0] [def] [from ]
 !5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/t.mm]
