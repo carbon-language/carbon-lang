@@ -21,6 +21,7 @@
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
+#include "sanitizer_atomic.h"
 
 #include <dlfcn.h>
 #include <pthread.h>
@@ -32,6 +33,7 @@
 #if !SANITIZER_ANDROID
 #include <elf.h>
 #include <link.h>
+#include <unistd.h>
 #endif
 
 #ifndef SANITIZER_GO
@@ -226,16 +228,41 @@ uptr GetTlsSize() {
 
 #if defined(__x86_64__) || defined(__i386__)
 // sizeof(struct thread) from glibc.
-// There has been a report of this being different on glibc 2.11 and 2.13. We
-// don't know when this change happened, so 2.14 is a conservative estimate.
-#if __GLIBC_PREREQ(2, 14)
-const uptr kThreadDescriptorSize = FIRST_32_SECOND_64(1216, 2304);
-#else
-const uptr kThreadDescriptorSize = FIRST_32_SECOND_64(1168, 2304);
-#endif
+static atomic_uintptr_t kThreadDescriptorSize;
 
 uptr ThreadDescriptorSize() {
-  return kThreadDescriptorSize;
+  char buf[64];
+  uptr val = atomic_load(&kThreadDescriptorSize, memory_order_relaxed);
+  if (val)
+    return val;
+#ifdef _CS_GNU_LIBC_VERSION
+  uptr len = confstr(_CS_GNU_LIBC_VERSION, buf, sizeof(buf));
+  if (len < sizeof(buf) && internal_strncmp(buf, "glibc 2.", 8) == 0) {
+    char *end;
+    int minor = internal_simple_strtoll(buf + 8, &end, 10);
+    if (end != buf + 8 && (*end == '\0' || *end == '.')) {
+      /* sizeof(struct thread) values from various glibc versions.  */
+      if (minor <= 3)
+        val = FIRST_32_SECOND_64(1104, 1696);
+      else if (minor == 4)
+        val = FIRST_32_SECOND_64(1120, 1728);
+      else if (minor == 5)
+        val = FIRST_32_SECOND_64(1136, 1728);
+      else if (minor <= 9)
+        val = FIRST_32_SECOND_64(1136, 1712);
+      else if (minor == 10)
+        val = FIRST_32_SECOND_64(1168, 1776);
+      else if (minor <= 12)
+        val = FIRST_32_SECOND_64(1168, 2288);
+      else
+        val = FIRST_32_SECOND_64(1216, 2304);
+    }
+    if (val)
+      atomic_store(&kThreadDescriptorSize, val, memory_order_relaxed);
+    return val;
+  }
+#endif
+  return 0;
 }
 
 // The offset at which pointer to self is located in the thread descriptor.
@@ -263,7 +290,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
   *tls_addr = ThreadSelf();
   *tls_size = GetTlsSize();
   *tls_addr -= *tls_size;
-  *tls_addr += kThreadDescriptorSize;
+  *tls_addr += ThreadDescriptorSize();
 #else
   *tls_addr = 0;
   *tls_size = 0;
