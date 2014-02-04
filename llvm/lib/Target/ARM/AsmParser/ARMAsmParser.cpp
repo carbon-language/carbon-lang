@@ -8784,9 +8784,9 @@ bool ARMAsmParser::parseDirectiveEven(SMLoc L) {
   }
 
   if (Section->UseCodeAlign())
-    getStreamer().EmitCodeAlignment(2, 0);
+    getStreamer().EmitCodeAlignment(2);
   else
-    getStreamer().EmitValueToAlignment(2, 0, 1, 0);
+    getStreamer().EmitValueToAlignment(2);
 
   return false;
 }

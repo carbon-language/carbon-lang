@@ -1500,7 +1500,7 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
   if (getCurrentSection()->getKind().isText())
     OutStreamer.EmitCodeAlignment(1 << NumBits);
   else
-    OutStreamer.EmitValueToAlignment(1 << NumBits, 0, 1, 0);
+    OutStreamer.EmitValueToAlignment(1 << NumBits);
 }
 
 //===----------------------------------------------------------------------===//

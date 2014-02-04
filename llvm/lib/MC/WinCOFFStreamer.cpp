@@ -128,13 +128,13 @@ void WinCOFFStreamer::InitSections(bool Force) {
   // This emulates the same behavior of GNU as. This makes it easier
   // to compare the output as the major sections are in the same order.
   SwitchSection(getContext().getObjectFileInfo()->getTextSection());
-  EmitCodeAlignment(4, 0);
+  EmitCodeAlignment(4);
 
   SwitchSection(getContext().getObjectFileInfo()->getDataSection());
-  EmitCodeAlignment(4, 0);
+  EmitCodeAlignment(4);
 
   SwitchSection(getContext().getObjectFileInfo()->getBSSSection());
-  EmitCodeAlignment(4, 0);
+  EmitCodeAlignment(4);
 
   SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
