@@ -27,7 +27,8 @@ Flags *flags() {
 #ifdef TSAN_EXTERNAL_HOOKS
 extern "C" const char* __tsan_default_options();
 #else
-extern "C" const char *WEAK __tsan_default_options() {
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+const char *WEAK __tsan_default_options() {
   return "";
 }
 #endif

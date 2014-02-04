@@ -43,9 +43,11 @@ static char ctx_placeholder[sizeof(Context)] ALIGNED(64);
 bool OnFinalize(bool failed);
 void OnInitialize();
 #else
+SANITIZER_INTERFACE_ATTRIBUTE
 bool WEAK OnFinalize(bool failed) {
   return failed;
 }
+SANITIZER_INTERFACE_ATTRIBUTE
 void WEAK OnInitialize() {}
 #endif
 
