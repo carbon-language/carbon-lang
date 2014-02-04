@@ -313,18 +313,20 @@ Broadcaster::RestoreBroadcaster ()
 {
     Mutex::Locker event_types_locker(m_listeners_mutex);
 
-    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
-    if (log)
-    {
-        Listener *listener = m_hijacking_listeners.back();
-        log->Printf ("%p Broadcaster(\"%s\")::RestoreBroadcaster (about to pop listener(\"%s\")=%p)",
-                     this,
-                     m_broadcaster_name.AsCString(""),
-                     listener->m_name.c_str(),
-                     listener);
-    }
     if (!m_hijacking_listeners.empty())
+    {
+        Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
+        if (log)
+        {
+            Listener *listener = m_hijacking_listeners.back();
+            log->Printf ("%p Broadcaster(\"%s\")::RestoreBroadcaster (about to pop listener(\"%s\")=%p)",
+                         this,
+                         m_broadcaster_name.AsCString(""),
+                         listener->m_name.c_str(),
+                         listener);
+        }
         m_hijacking_listeners.pop_back();
+    }
     if (!m_hijacking_masks.empty())
         m_hijacking_masks.pop_back();
 }
