@@ -402,8 +402,6 @@ void MaybeOpenReportFile() {
 }
 
 void RawWrite(const char *buffer) {
-  static const char *kRawWriteError =
-      "RawWrite can't output requested buffer!\n";
   uptr length = (uptr)internal_strlen(buffer);
   if (length != internal_write(report_fd, buffer, length)) {
     // stderr may be closed, but we may be able to print to the debugger
