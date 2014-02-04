@@ -272,6 +272,14 @@ option (LLVM_BUILD_DOCS "Build the llvm documentation." OFF)
 option (LLVM_INCLUDE_DOCS "Generate build targets for llvm documentation." ON)
 option (LLVM_ENABLE_DOXYGEN "Use doxygen to generate llvm documentation." OFF)
 
+if( CMAKE_COMPILER_IS_GNUCXX )
+  set(LLVM_COMPILER_IS_GCC_COMPATIBLE ON)
+elseif( MSVC )
+  set(LLVM_COMPILER_IS_GCC_COMPATIBLE OFF)
+elseif( "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" )
+  set(LLVM_COMPILER_IS_GCC_COMPATIBLE ON)
+endif()
+
 # All options referred to from HandleLLVMOptions have to be specified
 # BEFORE this include, otherwise options will not be correctly set on
 # first cmake run

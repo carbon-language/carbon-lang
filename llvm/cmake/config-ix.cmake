@@ -34,6 +34,25 @@ function(check_type_exists type files variable)
     " ${variable})
 endfunction()
 
+function(append_if condition value)
+  if (${condition})
+    foreach(variable ${ARGN})
+      set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
+    endforeach(variable)
+  endif()
+endfunction()
+
+include(CheckCXXCompilerFlag)
+if( LLVM_COMPILER_IS_GCC_COMPATIBLE )
+  if( LLVM_ENABLE_LIBCXX )
+    check_cxx_compiler_flag("-stdlib=libc++" CXX_SUPPORTS_STDLIB)
+    append_if(CXX_SUPPORTS_STDLIB "-stdlib=libc++" CMAKE_CXX_FLAGS)
+    append_if(CXX_SUPPORTS_STDLIB "-stdlib=libc++" CMAKE_EXE_LINKER_FLAGS)
+    append_if(CXX_SUPPORTS_STDLIB "-stdlib=libc++" CMAKE_SHARED_LINKER_FLAGS)
+    append_if(CXX_SUPPORTS_STDLIB "-stdlib=libc++" CMAKE_MODULE_LINKER_FLAGS)
+  endif()
+endif()
+
 # include checks
 check_include_file_cxx(cxxabi.h HAVE_CXXABI_H)
 check_include_file(dirent.h HAVE_DIRENT_H)
@@ -316,8 +335,6 @@ if (LIBXML2_FOUND)
     endif ()
   endif ()
 endif ()
-
-include(CheckCXXCompilerFlag)
 
 check_cxx_compiler_flag("-Wno-variadic-macros" SUPPORTS_NO_VARIADIC_MACROS_FLAG)
 
