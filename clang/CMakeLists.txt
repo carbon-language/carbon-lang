@@ -325,7 +325,7 @@ macro(add_clang_library name)
     add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
   endif()
 
-  if (MODULE)
+  if (ARG_MODULE)
     set_property(TARGET ${name} PROPERTY SUFFIX ${LLVM_PLUGIN_EXT})
   endif ()
 
