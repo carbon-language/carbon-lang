@@ -37,6 +37,7 @@ void TokenLexer::Init(Token &Tok, SourceLocation ELEnd, MacroInfo *MI,
   ExpandLocEnd = ELEnd;
   AtStartOfLine = Tok.isAtStartOfLine();
   HasLeadingSpace = Tok.hasLeadingSpace();
+  NextTokGetsSpace = false;
   Tokens = &*Macro->tokens_begin();
   OwnsTokens = false;
   DisableMacroExpansion = false;
@@ -95,6 +96,7 @@ void TokenLexer::Init(const Token *TokArray, unsigned NumToks,
   ExpandLocStart = ExpandLocEnd = SourceLocation();
   AtStartOfLine = false;
   HasLeadingSpace = false;
+  NextTokGetsSpace = false;
   MacroExpansionStart = SourceLocation();
 
   // Set HasLeadingSpace/AtStartOfLine so that the first token will be
@@ -119,13 +121,10 @@ void TokenLexer::destroy() {
   if (ActualArgs) ActualArgs->destroy(PP);
 }
 
-/// Remove comma ahead of __VA_ARGS__, if present, according to compiler dialect
-/// settings.  Returns true if the comma is removed.
-static bool MaybeRemoveCommaBeforeVaArgs(SmallVectorImpl<Token> &ResultToks,
-                                         bool &NextTokGetsSpace,
-                                         bool HasPasteOperator,
-                                         MacroInfo *Macro, unsigned MacroArgNo,
-                                         Preprocessor &PP) {
+bool TokenLexer::MaybeRemoveCommaBeforeVaArgs(SmallVectorImpl<Token> &ResultToks,
+                                              bool HasPasteOperator,
+                                              MacroInfo *Macro, unsigned MacroArgNo,
+                                              Preprocessor &PP) {
   // Is the macro argument __VA_ARGS__?
   if (!Macro->isVariadic() || MacroArgNo != Macro->getNumArgs()-1)
     return false;
@@ -178,11 +177,6 @@ void TokenLexer::ExpandFunctionArguments() {
   // track of whether we change anything.  If not, no need to keep them.  If so,
   // we install the newly expanded sequence as the new 'Tokens' list.
   bool MadeChange = false;
-
-  // NextTokGetsSpace - When this is true, the next token appended to the
-  // output list will get a leading space, regardless of whether it had one to
-  // begin with or not.  This is used for placemarker support.
-  bool NextTokGetsSpace = false;
 
   for (unsigned i = 0, e = NumTokens; i != e; ++i) {
     // If we found the stringify operator, get the argument stringified.  The
@@ -256,7 +250,7 @@ void TokenLexer::ExpandFunctionArguments() {
     // In Microsoft mode, remove the comma before __VA_ARGS__ to ensure there
     // are no trailing commas if __VA_ARGS__ is empty.
     if (!PasteBefore && ActualArgs->isVarargsElidedUse() &&
-        MaybeRemoveCommaBeforeVaArgs(ResultToks, NextTokGetsSpace,
+        MaybeRemoveCommaBeforeVaArgs(ResultToks,
                                      /*HasPasteOperator=*/false,
                                      Macro, ArgNo, PP))
       continue;
@@ -311,9 +305,10 @@ void TokenLexer::ExpandFunctionArguments() {
                                              NextTokGetsSpace);
         NextTokGetsSpace = false;
       } else {
-        // If this is an empty argument, and if there was whitespace before the
-        // formal token, make sure the next token gets whitespace before it.
-        NextTokGetsSpace = CurTok.hasLeadingSpace();
+        // If this is an empty argument, if there was whitespace before the
+        // formal token, and this is not the first token in the macro
+        // definition, make sure the next token gets whitespace before it.
+        NextTokGetsSpace |= i != 0 && CurTok.hasLeadingSpace();
       }
       continue;
     }
@@ -396,7 +391,7 @@ void TokenLexer::ExpandFunctionArguments() {
     // the ## was a comma, remove the comma.  This is a GCC extension which is
     // disabled when using -std=c99.
     if (ActualArgs->isVarargsElidedUse())
-      MaybeRemoveCommaBeforeVaArgs(ResultToks, NextTokGetsSpace,
+      MaybeRemoveCommaBeforeVaArgs(ResultToks,
                                    /*HasPasteOperator=*/true,
                                    Macro, ArgNo, PP);
 
@@ -428,7 +423,7 @@ bool TokenLexer::Lex(Token &Tok) {
 
     Tok.startToken();
     Tok.setFlagValue(Token::StartOfLine , AtStartOfLine);
-    Tok.setFlagValue(Token::LeadingSpace, HasLeadingSpace);
+    Tok.setFlagValue(Token::LeadingSpace, HasLeadingSpace || NextTokGetsSpace);
     if (CurToken == 0)
       Tok.setFlag(Token::LeadingEmptyMacro);
     return PP.HandleEndOfTokenLexer(Tok);
