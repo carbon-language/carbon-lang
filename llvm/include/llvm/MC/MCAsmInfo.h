@@ -189,11 +189,6 @@ namespace llvm {
 
     //===--- Alignment Information ----------------------------------------===//
 
-    /// AlignDirective - The directive used to emit round up to an alignment
-    /// boundary.
-    ///
-    const char *AlignDirective;              // Defaults to "\t.align\t"
-
     /// AlignmentIsInBytes - If this is true (the default) then the asmprinter
     /// emits ".align N" directives, where N is the number of bytes to align to.
     /// Otherwise, it emits ".align log2(N)", e.g. 3 to align to an 8 byte
@@ -455,9 +450,6 @@ namespace llvm {
     }
     const char *getAscizDirective() const {
       return AscizDirective;
-    }
-    const char *getAlignDirective() const {
-      return AlignDirective;
     }
     bool getAlignmentIsInBytes() const {
       return AlignmentIsInBytes;

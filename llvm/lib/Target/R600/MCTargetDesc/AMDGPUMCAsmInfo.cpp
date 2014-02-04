@@ -40,7 +40,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   UsesELFSectionDirectiveForBSS = true;
 
   //===--- Alignment Information ----------------------------------------===//
-  AlignDirective = ".align\t";
   AlignmentIsInBytes = true;
   TextAlignFillValue = 0;
 
