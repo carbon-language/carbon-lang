@@ -155,6 +155,10 @@ class Neon_CvtFPToFx_Intrinsic
 class Neon_CvtFPtoInt_1Arg_Intrinsic
   : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
+class Neon_Compare_Intrinsic
+  : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, LLVMMatchType<1>],
+              [IntrNoMem]>;
+
 // The table operands for VTBL and VTBX consist of 1 to 4 v8i8 vectors.
 // Besides the table, VTBL has one other v8i8 argument and VTBX has two.
 // Overall, the classes range from 2 to 6 v8i8 arguments.
@@ -224,18 +228,8 @@ def int_arm_neon_vqsubu : Neon_2Arg_Intrinsic;
 def int_arm_neon_vrsubhn : Neon_2Arg_Narrow_Intrinsic;
 
 // Vector Absolute Compare.
-def int_arm_neon_vacged : Intrinsic<[llvm_v2i32_ty],
-                                    [llvm_v2f32_ty, llvm_v2f32_ty],
-                                    [IntrNoMem]>;
-def int_arm_neon_vacgeq : Intrinsic<[llvm_v4i32_ty],
-                                    [llvm_v4f32_ty, llvm_v4f32_ty],
-                                    [IntrNoMem]>;
-def int_arm_neon_vacgtd : Intrinsic<[llvm_v2i32_ty],
-                                    [llvm_v2f32_ty, llvm_v2f32_ty],
-                                    [IntrNoMem]>;
-def int_arm_neon_vacgtq : Intrinsic<[llvm_v4i32_ty],
-                                    [llvm_v4f32_ty, llvm_v4f32_ty],
-                                    [IntrNoMem]>;
+def int_arm_neon_vacge : Neon_Compare_Intrinsic;
+def int_arm_neon_vacgt : Neon_Compare_Intrinsic;
 
 // Vector Absolute Differences.
 def int_arm_neon_vabds : Neon_2Arg_Intrinsic;

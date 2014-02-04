@@ -122,28 +122,28 @@ entry:
 define <1 x i64> @test_vcage_f64(<1 x double> %a, <1 x double> %b) #0 {
 ; CHECK: test_vcage_f64
 ; CHECK: facge {{d[0-9]}}, {{d[0-9]}}, {{d[0-9]}}
-  %vcage2.i = tail call <1 x i64> @llvm.aarch64.neon.vcage.v1i64.v1f64.v1f64(<1 x double> %a, <1 x double> %b) #2
+  %vcage2.i = tail call <1 x i64> @llvm.arm.neon.vacge.v1i64.v1f64(<1 x double> %a, <1 x double> %b) #2
   ret <1 x i64> %vcage2.i
 }
 
 define <1 x i64> @test_vcagt_f64(<1 x double> %a, <1 x double> %b) #0 {
 ; CHECK: test_vcagt_f64
 ; CHECK: facgt {{d[0-9]}}, {{d[0-9]}}, {{d[0-9]}}
-  %vcagt2.i = tail call <1 x i64> @llvm.aarch64.neon.vcagt.v1i64.v1f64.v1f64(<1 x double> %a, <1 x double> %b) #2
+  %vcagt2.i = tail call <1 x i64> @llvm.arm.neon.vacgt.v1i64.v1f64(<1 x double> %a, <1 x double> %b) #2
   ret <1 x i64> %vcagt2.i
 }
 
 define <1 x i64> @test_vcale_f64(<1 x double> %a, <1 x double> %b) #0 {
 ; CHECK: test_vcale_f64
 ; CHECK: facge {{d[0-9]}}, {{d[0-9]}}, {{d[0-9]}}
-  %vcage2.i = tail call <1 x i64> @llvm.aarch64.neon.vcage.v1i64.v1f64.v1f64(<1 x double> %b, <1 x double> %a) #2
+  %vcage2.i = tail call <1 x i64> @llvm.arm.neon.vacge.v1i64.v1f64(<1 x double> %b, <1 x double> %a) #2
   ret <1 x i64> %vcage2.i
 }
 
 define <1 x i64> @test_vcalt_f64(<1 x double> %a, <1 x double> %b) #0 {
 ; CHECK: test_vcalt_f64
 ; CHECK: facgt {{d[0-9]}}, {{d[0-9]}}, {{d[0-9]}}
-  %vcagt2.i = tail call <1 x i64> @llvm.aarch64.neon.vcagt.v1i64.v1f64.v1f64(<1 x double> %b, <1 x double> %a) #2
+  %vcagt2.i = tail call <1 x i64> @llvm.arm.neon.vacgt.v1i64.v1f64(<1 x double> %b, <1 x double> %a) #2
   ret <1 x i64> %vcagt2.i
 }
 
@@ -331,8 +331,8 @@ define <1 x i64> @test_vcltz_s64(<1 x i64> %a) #0 {
   ret <1 x i64> %vcltz.i
 }
 
-declare <1 x i64> @llvm.aarch64.neon.vcagt.v1i64.v1f64.v1f64(<1 x double>, <1 x double>)
-declare <1 x i64> @llvm.aarch64.neon.vcage.v1i64.v1f64.v1f64(<1 x double>, <1 x double>)
+declare <1 x i64> @llvm.arm.neon.vacgt.v1i64.v1f64(<1 x double>, <1 x double>)
+declare <1 x i64> @llvm.arm.neon.vacge.v1i64.v1f64(<1 x double>, <1 x double>)
 declare <1 x i64> @llvm.aarch64.neon.vtstd.v1i64.v1i64.v1i64(<1 x i64>, <1 x i64>)
 declare <1 x i64> @llvm.aarch64.neon.vcltz.v1i64.v1i64.v1i64(<1 x i64>, <1 x i64>)
 declare <1 x i64> @llvm.aarch64.neon.vchs.v1i64.v1i64.v1i64(<1 x i64>, <1 x i64>)

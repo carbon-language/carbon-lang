@@ -4427,14 +4427,14 @@ defm VCLTz    : N2V_QHS_cmp<0b11, 0b11, 0b01, 0b00100, 0, "vclt", "s",
 
 //   VACGE    : Vector Absolute Compare Greater Than or Equal (aka VCAGE)
 def  VACGEd   : N3VDInt<1, 0, 0b00, 0b1110, 1, N3RegFrm, IIC_VBIND, "vacge",
-                        "f32", v2i32, v2f32, int_arm_neon_vacged, 0>;
+                        "f32", v2i32, v2f32, int_arm_neon_vacge, 0>;
 def  VACGEq   : N3VQInt<1, 0, 0b00, 0b1110, 1, N3RegFrm, IIC_VBINQ, "vacge",
-                        "f32", v4i32, v4f32, int_arm_neon_vacgeq, 0>;
+                        "f32", v4i32, v4f32, int_arm_neon_vacge, 0>;
 //   VACGT    : Vector Absolute Compare Greater Than (aka VCAGT)
 def  VACGTd   : N3VDInt<1, 0, 0b10, 0b1110, 1, N3RegFrm, IIC_VBIND, "vacgt",
-                        "f32", v2i32, v2f32, int_arm_neon_vacgtd, 0>;
+                        "f32", v2i32, v2f32, int_arm_neon_vacgt, 0>;
 def  VACGTq   : N3VQInt<1, 0, 0b10, 0b1110, 1, N3RegFrm, IIC_VBINQ, "vacgt",
-                        "f32", v4i32, v4f32, int_arm_neon_vacgtq, 0>;
+                        "f32", v4i32, v4f32, int_arm_neon_vacgt, 0>;
 //   VTST     : Vector Test Bits
 defm VTST     : N3V_QHS<0, 0, 0b1000, 1, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q,
                         IIC_VBINi4Q, "vtst", "", NEONvtst, 1>;

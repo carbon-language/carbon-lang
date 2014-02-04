@@ -210,9 +210,7 @@ multiclass NeonI_3VSame_BHSD_sizes<bit u, bits<5> opcode,
 // Multiclass NeonI_3VSame_SD_sizes: Operand types are floating point types,
 // but Result types can be integer or floating point types.
 multiclass NeonI_3VSame_SD_sizes<bit u, bit size, bits<5> opcode,
-                                 string asmop, SDPatternOperator opnode2S,
-                                 SDPatternOperator opnode4S,
-                                 SDPatternOperator opnode2D,
+                                 string asmop, SDPatternOperator opnode,
                                  ValueType ResTy2S, ValueType ResTy4S,
                                  ValueType ResTy2D, bit Commutable = 0> {
   let isCommutable = Commutable in {
@@ -220,21 +218,21 @@ multiclass NeonI_3VSame_SD_sizes<bit u, bit size, bits<5> opcode,
               (outs VPR64:$Rd), (ins VPR64:$Rn, VPR64:$Rm),
               asmop # "\t$Rd.2s, $Rn.2s, $Rm.2s",
               [(set (ResTy2S VPR64:$Rd),
-                 (ResTy2S (opnode2S (v2f32 VPR64:$Rn), (v2f32 VPR64:$Rm))))],
+                 (ResTy2S (opnode (v2f32 VPR64:$Rn), (v2f32 VPR64:$Rm))))],
               NoItinerary>;
 
     def _4S : NeonI_3VSame<0b1, u, {size, 0b0}, opcode,
               (outs VPR128:$Rd), (ins VPR128:$Rn, VPR128:$Rm),
               asmop # "\t$Rd.4s, $Rn.4s, $Rm.4s",
               [(set (ResTy4S VPR128:$Rd),
-                 (ResTy4S (opnode4S (v4f32 VPR128:$Rn), (v4f32 VPR128:$Rm))))],
+                 (ResTy4S (opnode (v4f32 VPR128:$Rn), (v4f32 VPR128:$Rm))))],
               NoItinerary>;
 
     def _2D : NeonI_3VSame<0b1, u, {size, 0b1}, opcode,
               (outs VPR128:$Rd), (ins VPR128:$Rn, VPR128:$Rm),
               asmop # "\t$Rd.2d, $Rn.2d, $Rm.2d",
               [(set (ResTy2D VPR128:$Rd),
-                 (ResTy2D (opnode2D (v2f64 VPR128:$Rn), (v2f64 VPR128:$Rm))))],
+                 (ResTy2D (opnode (v2f64 VPR128:$Rn), (v2f64 VPR128:$Rm))))],
                NoItinerary>;
   }
 }
@@ -248,19 +246,19 @@ multiclass NeonI_3VSame_SD_sizes<bit u, bit size, bits<5> opcode,
 // Vector Add (Integer and Floating-Point)
 
 defm ADDvvv :  NeonI_3VSame_BHSD_sizes<0b0, 0b10000, "add", add, 1>;
-defm FADDvvv : NeonI_3VSame_SD_sizes<0b0, 0b0, 0b11010, "fadd", fadd, fadd, fadd,
+defm FADDvvv : NeonI_3VSame_SD_sizes<0b0, 0b0, 0b11010, "fadd", fadd,
                                      v2f32, v4f32, v2f64, 1>;
 
 // Vector Sub (Integer and Floating-Point)
 
 defm SUBvvv :  NeonI_3VSame_BHSD_sizes<0b1, 0b10000, "sub", sub, 0>;
-defm FSUBvvv : NeonI_3VSame_SD_sizes<0b0, 0b1, 0b11010, "fsub", fsub, fsub, fsub,
+defm FSUBvvv : NeonI_3VSame_SD_sizes<0b0, 0b1, 0b11010, "fsub", fsub,
                                      v2f32, v4f32, v2f64, 0>;
 
 // Vector Multiply (Integer and Floating-Point)
 
 defm MULvvv :  NeonI_3VSame_BHS_sizes<0b0, 0b10011, "mul", mul, 1>;
-defm FMULvvv : NeonI_3VSame_SD_sizes<0b1, 0b0, 0b11011, "fmul", fmul, fmul, fmul,
+defm FMULvvv : NeonI_3VSame_SD_sizes<0b1, 0b0, 0b11011, "fmul", fmul,
                                      v2f32, v4f32, v2f64, 1>;
 
 // Vector Multiply (Polynomial)
@@ -359,7 +357,7 @@ def : Pat<(v2f64 (fma (fneg VPR128:$Rn), VPR128:$Rm, VPR128:$Ra)),
 
 // Vector Divide (Floating-Point)
 
-defm FDIVvvv : NeonI_3VSame_SD_sizes<0b1, 0b0, 0b11111, "fdiv", fdiv, fdiv, fdiv,
+defm FDIVvvv : NeonI_3VSame_SD_sizes<0b1, 0b0, 0b11111, "fdiv", fdiv,
                                      v2f32, v4f32, v2f64, 0>;
 
 // Vector Bitwise Operations
@@ -610,19 +608,15 @@ defm SABDvvv : NeonI_3VSame_BHS_sizes<0b0, 0b01110, "sabd", int_arm_neon_vabds, 
 
 // Vector Absolute Difference (Floating Point)
 defm FABDvvv: NeonI_3VSame_SD_sizes<0b1, 0b1, 0b11010, "fabd",
-                                    int_arm_neon_vabds, int_arm_neon_vabds,
                                     int_arm_neon_vabds, v2f32, v4f32, v2f64, 0>;
 
 // Vector Reciprocal Step (Floating Point)
 defm FRECPSvvv : NeonI_3VSame_SD_sizes<0b0, 0b0, 0b11111, "frecps",
-                                       int_arm_neon_vrecps, int_arm_neon_vrecps,
                                        int_arm_neon_vrecps,
                                        v2f32, v4f32, v2f64, 0>;
 
 // Vector Reciprocal Square Root Step (Floating Point)
 defm FRSQRTSvvv : NeonI_3VSame_SD_sizes<0b0, 0b1, 0b11111, "frsqrts",
-                                        int_arm_neon_vrsqrts,
-                                        int_arm_neon_vrsqrts,
                                         int_arm_neon_vrsqrts,
                                         v2f32, v4f32, v2f64, 0>;
 
@@ -795,18 +789,15 @@ defm CMLTvvi : NeonI_cmpz_sizes<0b0, 0b01010, "cmlt", SETLT>;
 // Vector Compare Mask Equal (Floating Point)
 let isCommutable =1 in {
 defm FCMEQvvv : NeonI_3VSame_SD_sizes<0b0, 0b0, 0b11100, "fcmeq", Neon_cmeq,
-                                      Neon_cmeq, Neon_cmeq,
                                       v2i32, v4i32, v2i64, 0>;
 }
 
 // Vector Compare Mask Greater Than Or Equal (Floating Point)
 defm FCMGEvvv : NeonI_3VSame_SD_sizes<0b1, 0b0, 0b11100, "fcmge", Neon_cmge,
-                                      Neon_cmge, Neon_cmge,
                                       v2i32, v4i32, v2i64, 0>;
 
 // Vector Compare Mask Greater Than (Floating Point)
 defm FCMGTvvv : NeonI_3VSame_SD_sizes<0b1, 0b1, 0b11100, "fcmgt", Neon_cmgt,
-                                      Neon_cmgt, Neon_cmgt,
                                       v2i32, v4i32, v2i64, 0>;
 
 // Vector Compare Mask Less Than Or Equal (Floating Point)
@@ -878,14 +869,12 @@ defm FCMLTvvi : NeonI_fpcmpz_sizes<0b0, 0b1, 0b01110, "fcmlt", SETLT>;
 
 // Vector Absolute Compare Mask Greater Than Or Equal (Floating Point)
 defm FACGEvvv : NeonI_3VSame_SD_sizes<0b1, 0b0, 0b11101, "facge",
-                                      int_arm_neon_vacged, int_arm_neon_vacgeq,
-                                      int_aarch64_neon_vacgeq,
+                                      int_arm_neon_vacge,
                                       v2i32, v4i32, v2i64, 0>;
 
 // Vector Absolute Compare Mask Greater Than (Floating Point)
 defm FACGTvvv : NeonI_3VSame_SD_sizes<0b1, 0b1, 0b11101, "facgt",
-                                      int_arm_neon_vacgtd, int_arm_neon_vacgtq,
-                                      int_aarch64_neon_vacgtq,
+                                      int_arm_neon_vacgt,
                                       v2i32, v4i32, v2i64, 0>;
 
 // Vector Absolute Compare Mask Less Than Or Equal (Floating Point)
@@ -964,25 +953,21 @@ defm UMINvvv : NeonI_3VSame_BHS_sizes<0b1, 0b01101, "umin", int_arm_neon_vminu, 
 
 // Vector Maximum (Floating Point)
 defm FMAXvvv : NeonI_3VSame_SD_sizes<0b0, 0b0, 0b11110, "fmax",
-                                     int_arm_neon_vmaxs, int_arm_neon_vmaxs,
-                                     int_arm_neon_vmaxs, v2f32, v4f32, v2f64, 1>;
+                                     int_arm_neon_vmaxs,
+                                     v2f32, v4f32, v2f64, 1>;
 
 // Vector Minimum (Floating Point)
 defm FMINvvv : NeonI_3VSame_SD_sizes<0b0, 0b1, 0b11110, "fmin",
-                                     int_arm_neon_vmins, int_arm_neon_vmins,
-                                     int_arm_neon_vmins, v2f32, v4f32, v2f64, 1>;
+                                     int_arm_neon_vmins,
+                                     v2f32, v4f32, v2f64, 1>;
 
 // Vector maxNum (Floating Point) -  prefer a number over a quiet NaN)
 defm FMAXNMvvv : NeonI_3VSame_SD_sizes<0b0, 0b0, 0b11000, "fmaxnm",
-                                       int_aarch64_neon_vmaxnm,
-                                       int_aarch64_neon_vmaxnm,
                                        int_aarch64_neon_vmaxnm,
                                        v2f32, v4f32, v2f64, 1>;
 
 // Vector minNum (Floating Point) - prefer a number over a quiet NaN)
 defm FMINNMvvv : NeonI_3VSame_SD_sizes<0b0, 0b1, 0b11000, "fminnm",
-                                       int_aarch64_neon_vminnm,
-                                       int_aarch64_neon_vminnm,
                                        int_aarch64_neon_vminnm,
                                        v2f32, v4f32, v2f64, 1>;
 
@@ -996,25 +981,19 @@ defm UMINPvvv : NeonI_3VSame_BHS_sizes<0b1, 0b10101, "uminp", int_arm_neon_vpmin
 
 // Vector Maximum Pairwise (Floating Point)
 defm FMAXPvvv : NeonI_3VSame_SD_sizes<0b1, 0b0, 0b11110, "fmaxp",
-                                     int_arm_neon_vpmaxs, int_arm_neon_vpmaxs,
                                      int_arm_neon_vpmaxs, v2f32, v4f32, v2f64, 1>;
 
 // Vector Minimum Pairwise (Floating Point)
 defm FMINPvvv : NeonI_3VSame_SD_sizes<0b1, 0b1, 0b11110, "fminp",
-                                     int_arm_neon_vpmins, int_arm_neon_vpmins,
                                      int_arm_neon_vpmins, v2f32, v4f32, v2f64, 1>;
 
 // Vector maxNum Pairwise (Floating Point) -  prefer a number over a quiet NaN)
 defm FMAXNMPvvv : NeonI_3VSame_SD_sizes<0b1, 0b0, 0b11000, "fmaxnmp",
                                        int_aarch64_neon_vpmaxnm,
-                                       int_aarch64_neon_vpmaxnm,
-                                       int_aarch64_neon_vpmaxnm,
                                        v2f32, v4f32, v2f64, 1>;
 
 // Vector minNum Pairwise (Floating Point) -  prefer a number over a quiet NaN)
 defm FMINNMPvvv : NeonI_3VSame_SD_sizes<0b1, 0b1, 0b11000, "fminnmp",
-                                       int_aarch64_neon_vpminnm,
-                                       int_aarch64_neon_vpminnm,
                                        int_aarch64_neon_vpminnm,
                                        v2f32, v4f32, v2f64, 1>;
 
@@ -1023,8 +1002,6 @@ defm ADDP : NeonI_3VSame_BHSD_sizes<0b0, 0b10111, "addp", int_arm_neon_vpadd, 1>
 
 // Vector Addition Pairwise (Floating Point)
 defm FADDP : NeonI_3VSame_SD_sizes<0b1, 0b0, 0b11010, "faddp",
-                                       int_arm_neon_vpadd,
-                                       int_arm_neon_vpadd,
                                        int_arm_neon_vpadd,
                                        v2f32, v4f32, v2f64, 1>;
 
@@ -1038,8 +1015,6 @@ defm SQRDMULHvvv : NeonI_3VSame_HS_sizes<0b1, 0b10110, "sqrdmulh",
 
 // Vector Multiply Extended (Floating Point)
 defm FMULXvvv : NeonI_3VSame_SD_sizes<0b0, 0b0, 0b11011, "fmulx",
-                                      int_aarch64_neon_vmulx,
-                                      int_aarch64_neon_vmulx,
                                       int_aarch64_neon_vmulx,
                                       v2f32, v4f32, v2f64, 1>;
 
@@ -5381,14 +5356,14 @@ defm : Neon_Scalar2SameMisc_cmpz_SD_size_patterns<int_aarch64_neon_fcltz, SETLT,
 defm FACGE: NeonI_Scalar3Same_SD_sizes<0b1, 0b0, 0b11101, "facge">;
 defm : Neon_Scalar3Same_SD_size_patterns<int_aarch64_neon_fcage, v1i32, f32,
                                          FACGEsss, v1i64, f64, FACGEddd>;
-def : Pat<(v1i64 (int_aarch64_neon_vcage (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
+def : Pat<(v1i64 (int_arm_neon_vacge (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
           (FACGEddd FPR64:$Rn, FPR64:$Rm)>;
 
 // Scalar Floating-point Absolute Compare Mask Greater Than
 defm FACGT: NeonI_Scalar3Same_SD_sizes<0b1, 0b1, 0b11101, "facgt">;
 defm : Neon_Scalar3Same_SD_size_patterns<int_aarch64_neon_fcagt, v1i32, f32,
                                          FACGTsss, v1i64, f64, FACGTddd>;
-def : Pat<(v1i64 (int_aarch64_neon_vcagt (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
+def : Pat<(v1i64 (int_arm_neon_vacgt (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
           (FACGTddd FPR64:$Rn, FPR64:$Rm)>;
 
 // Scalar Floating-point Absolute Difference
