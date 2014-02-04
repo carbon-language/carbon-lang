@@ -185,6 +185,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FABS, VT, Expand);
     setOperationAction(ISD::FADD, VT, Expand);
     setOperationAction(ISD::FDIV, VT, Expand);
+    setOperationAction(ISD::FPOW, VT, Expand);
     setOperationAction(ISD::FFLOOR, VT, Expand);
     setOperationAction(ISD::FTRUNC, VT, Expand);
     setOperationAction(ISD::FMUL, VT, Expand);
