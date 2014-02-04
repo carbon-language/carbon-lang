@@ -217,6 +217,7 @@ ${name} ignored.")
     # Add empty "phony" target
     add_custom_target(${name})
   else()
+    llvm_process_sources( ALL_FILES ${ARGN} )
     add_library(${name} MODULE ${ALL_FILES})
     set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
     set_target_properties( ${name} PROPERTIES PREFIX "" )
