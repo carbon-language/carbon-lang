@@ -223,6 +223,13 @@ void TokenLexer::ExpandFunctionArguments() {
       continue;
     }
 
+    // Find out if there is a paste (##) operator before or after the token.
+    bool NonEmptyPasteBefore =
+      !ResultToks.empty() && ResultToks.back().is(tok::hashhash);
+    bool PasteBefore = i != 0 && Tokens[i-1].is(tok::hashhash);
+    bool PasteAfter = i+1 != e && Tokens[i+1].is(tok::hashhash);
+    assert(!NonEmptyPasteBefore || PasteBefore);
+
     // Otherwise, if this is not an argument token, just add the token to the
     // output buffer.
     IdentifierInfo *II = CurTok.getIdentifierInfo();
@@ -234,7 +241,9 @@ void TokenLexer::ExpandFunctionArguments() {
       if (NextTokGetsSpace) {
         ResultToks.back().setFlag(Token::LeadingSpace);
         NextTokGetsSpace = false;
-      }
+      } else if (PasteBefore && !NonEmptyPasteBefore)
+        ResultToks.back().clearFlag(Token::LeadingSpace);
+
       continue;
     }
 
@@ -242,13 +251,7 @@ void TokenLexer::ExpandFunctionArguments() {
     // input.
     MadeChange = true;
 
-    // Otherwise, this is a use of the argument.  Find out if there is a paste
-    // (##) operator before or after the argument.
-    bool NonEmptyPasteBefore =
-      !ResultToks.empty() && ResultToks.back().is(tok::hashhash);
-    bool PasteBefore = i != 0 && Tokens[i-1].is(tok::hashhash);
-    bool PasteAfter = i+1 != e && Tokens[i+1].is(tok::hashhash);
-    assert(!NonEmptyPasteBefore || PasteBefore);
+    // Otherwise, this is a use of the argument.
 
     // In Microsoft mode, remove the comma before __VA_ARGS__ to ensure there
     // are no trailing commas if __VA_ARGS__ is empty.
@@ -358,8 +361,8 @@ void TokenLexer::ExpandFunctionArguments() {
       // assembler-with-cpp mode, invalid pastes are allowed through: in this
       // case, we do not want the extra whitespace to be added.  For example,
       // we want ". ## foo" -> ".foo" not ". foo".
-      if ((CurTok.hasLeadingSpace() || NextTokGetsSpace) &&
-          !NonEmptyPasteBefore)
+      if ((CurTok.hasLeadingSpace() && !PasteBefore) ||
+          (NextTokGetsSpace && !NonEmptyPasteBefore))
         ResultToks[ResultToks.size()-NumToks].setFlag(Token::LeadingSpace);
 
       NextTokGetsSpace = false;
@@ -370,11 +373,11 @@ void TokenLexer::ExpandFunctionArguments() {
     // 6.10.3.3p2,3) calls for a bunch of placemarker stuff to occur.  We
     // implement this by eating ## operators when a LHS or RHS expands to
     // empty.
-    NextTokGetsSpace |= CurTok.hasLeadingSpace();
+    if (!PasteBefore)
+      NextTokGetsSpace |= i != 0 && CurTok.hasLeadingSpace();
     if (PasteAfter) {
       // Discard the argument token and skip (don't copy to the expansion
       // buffer) the paste operator after it.
-      NextTokGetsSpace |= Tokens[i+1].hasLeadingSpace();
       ++i;
       continue;
     }
@@ -385,7 +388,7 @@ void TokenLexer::ExpandFunctionArguments() {
     assert(PasteBefore);
     if (NonEmptyPasteBefore) {
       assert(ResultToks.back().is(tok::hashhash));
-      NextTokGetsSpace |= ResultToks.pop_back_val().hasLeadingSpace();
+      ResultToks.pop_back();
     }
 
     // If this is the __VA_ARGS__ token, and if the argument wasn't provided,
