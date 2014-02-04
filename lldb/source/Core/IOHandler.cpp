@@ -397,12 +397,14 @@ IOHandlerEditline::GetLine (std::string &line)
             }
             char buffer[256];
             bool done = false;
+            bool got_line = false;
             while (!done)
             {
                 if (fgets(buffer, sizeof(buffer), in) == NULL)
                     done = true;
                 else
                 {
+                    got_line = true;
                     size_t buffer_len = strlen(buffer);
                     assert (buffer[buffer_len] == '\0');
                     char last_char = buffer[buffer_len-1];
@@ -421,6 +423,9 @@ IOHandlerEditline::GetLine (std::string &line)
                     line.append(buffer, buffer_len);
                 }
             }
+            // We might have gotten a newline on a line by itself
+            // make sure to return true in this case.
+            return got_line;
         }
         else
         {
