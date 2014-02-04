@@ -14,6 +14,13 @@ RUN: llvm-cov test.c | diff -u test_no_options.output -
 RUN: diff -aub test_no_options.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_no_options.h.gcov test.h.gcov
 
+# Same, but specifying the object directory
+RUN: mkdir -p %t/objdir
+RUN: cp test.gcno test.gcda %t/objdir
+RUN: llvm-cov -o objdir test.c | diff -u test_no_options.output -
+RUN: diff -aub test_objdir.cpp.gcov test.cpp.gcov
+RUN: diff -aub test_objdir.h.gcov test.h.gcov
+
 # Function summaries. This changes stdout, but not the gcov files.
 RUN: llvm-cov test.c -f | diff -u test_-f.output -
 RUN: diff -aub test_no_options.cpp.gcov test.cpp.gcov

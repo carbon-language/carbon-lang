@@ -12,10 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/GCOV.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryObject.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
@@ -41,6 +43,10 @@ static cl::opt<bool> FuncSummary("f", cl::init(false),
                                  cl::desc("Show coverage for each function"));
 static cl::alias FuncSummaryA("function-summaries", cl::aliasopt(FuncSummary));
 
+static cl::opt<std::string> ObjectDir("o", cl::value_desc("DIR"), cl::init(""),
+                                      cl::desc("Search for objects in DIR"));
+static cl::alias ObjectDirA("object-directory", cl::aliasopt(ObjectDir));
+
 static cl::opt<bool> UncondBranch("u", cl::init(false),
                                   cl::desc("Display unconditional branch info "
                                            "(requires -b)"));
@@ -64,10 +70,15 @@ int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM code coverage tool\n");
 
+  SmallString<128> CoverageFileStem(ObjectDir);
+  if (CoverageFileStem.empty())
+    CoverageFileStem = sys::path::parent_path(SourceFile);
+  sys::path::append(CoverageFileStem, sys::path::stem(SourceFile));
+
   if (InputGCNO.empty())
-    InputGCNO = SourceFile.substr(0, SourceFile.rfind(".")) + ".gcno";
+    InputGCNO = (CoverageFileStem.str() + ".gcno").str();
   if (InputGCDA.empty())
-    InputGCDA = SourceFile.substr(0, SourceFile.rfind(".")) + ".gcda";
+    InputGCDA = (CoverageFileStem.str() + ".gcda").str();
 
   GCOVFile GF;
 
