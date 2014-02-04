@@ -164,7 +164,7 @@ if (NOT MSVC)
   endif()
 endif()
 # Build sanitizer runtimes with -fno-function-sections.
-check_cxx_compiler_flag(-fno-function-sections SUPPORTS_FNO_FUNCTION_SECTIONS_FLAG)
+check_cxx_compiler_flag(-Werror -fno-function-sections SUPPORTS_FNO_FUNCTION_SECTIONS_FLAG)
 if(SUPPORTS_FNO_FUNCTION_SECTIONS_FLAG)
   list(APPEND SANITIZER_COMMON_CFLAGS -fno-function-sections)
 endif()
