@@ -16,8 +16,10 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/GCOV.h"
 #include "llvm/Support/MemoryObject.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/system_error.h"
 #include <algorithm>
 using namespace llvm;
@@ -429,6 +431,42 @@ static raw_ostream &operator<<(raw_ostream &OS, const formatBranchInfo &FBI) {
   return OS;
 }
 
+/// Convert a path to a gcov filename. If PreservePaths is true, this
+/// translates "/" to "#", ".." to "^", and drops ".", to match gcov.
+static std::string mangleCoveragePath(StringRef Filename, bool PreservePaths) {
+  if (!PreservePaths)
+    return (sys::path::filename(Filename) + ".gcov").str();
+
+  // This behaviour is defined by gcov in terms of text replacements, so it's
+  // not likely to do anything useful on filesystems with different textual
+  // conventions.
+  llvm::SmallString<256> Result("");
+  StringRef::iterator I, S, E;
+  for (I = S = Filename.begin(), E = Filename.end(); I != E; ++I) {
+    if (*I != '/')
+      continue;
+
+    if (I - S == 1 && *S == '.') {
+      // ".", the current directory, is skipped.
+    } else if (I - S == 2 && *S == '.' && *(S + 1) == '.') {
+      // "..", the parent directory, is replaced with "^".
+      Result.append("^#");
+    } else {
+      if (S < I)
+        // Leave other components intact,
+        Result.append(S, I);
+      // And separate with "#".
+      Result.push_back('#');
+    }
+    S = I + 1;
+  }
+
+  if (S < I)
+    Result.append(S, I);
+  Result.append(".gcov");
+  return Result.str();
+}
+
 /// print -  Print source files with collected line count information.
 void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) {
   for (StringMap<LineData>::const_iterator I = LineInfo.begin(),
@@ -441,9 +479,10 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) {
     }
     StringRef AllLines = Buff->getBuffer();
 
-    std::string CovFilename = Filename.str() + ".gcov";
+    std::string CoveragePath = mangleCoveragePath(Filename,
+                                                  Options.PreservePaths);
     std::string ErrorInfo;
-    raw_fd_ostream OS(CovFilename.c_str(), ErrorInfo);
+    raw_fd_ostream OS(CoveragePath.c_str(), ErrorInfo);
     if (!ErrorInfo.empty())
       errs() << ErrorInfo << "\n";
 
@@ -555,7 +594,7 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) {
         }
       }
     }
-    FileCoverages.push_back(FileCoverage);
+    FileCoverages.push_back(std::make_pair(CoveragePath, FileCoverage));
   }
 
   // FIXME: There is no way to detect calls given current instrumentation.
@@ -656,8 +695,8 @@ void FileInfo::printCoverage(const GCOVCoverage &Coverage) const {
 
 // printFuncCoverage - Print per-function coverage info.
 void FileInfo::printFuncCoverage() const {
-  for (MapVector<const GCOVFunction *, GCOVCoverage>::const_iterator I =
-         FuncCoverages.begin(), E = FuncCoverages.end(); I != E; ++I) {
+  for (FuncCoverageMap::const_iterator I = FuncCoverages.begin(),
+                                       E = FuncCoverages.end(); I != E; ++I) {
     const GCOVCoverage &Coverage = I->second;
     outs() << "Function '" << Coverage.Name << "'\n";
     printCoverage(Coverage);
@@ -667,12 +706,12 @@ void FileInfo::printFuncCoverage() const {
 
 // printFileCoverage - Print per-file coverage info.
 void FileInfo::printFileCoverage() const {
-  for (SmallVectorImpl<GCOVCoverage>::const_iterator I =
-         FileCoverages.begin(), E = FileCoverages.end(); I != E; ++I) {
-    const GCOVCoverage &Coverage = *I;
+  for (FileCoverageList::const_iterator I = FileCoverages.begin(),
+                                        E = FileCoverages.end(); I != E; ++I) {
+    const std::string &Filename = I->first;
+    const GCOVCoverage &Coverage = I->second;
     outs() << "File '" << Coverage.Name << "'\n";
     printCoverage(Coverage);
-    outs() << Coverage.Name << ":creating '" << Coverage.Name
-           << ".gcov'\n\n";
+    outs() << Coverage.Name << ":creating '" << Filename << "'\n\n";
   }
 }

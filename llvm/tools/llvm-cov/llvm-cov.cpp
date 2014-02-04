@@ -47,6 +47,10 @@ static cl::opt<std::string> ObjectDir("o", cl::value_desc("DIR"), cl::init(""),
                                       cl::desc("Search for objects in DIR"));
 static cl::alias ObjectDirA("object-directory", cl::aliasopt(ObjectDir));
 
+static cl::opt<bool> PreservePaths("p", cl::init(false),
+                                   cl::desc("Preserve path components"));
+static cl::alias PreservePathsA("preserve-paths", cl::aliasopt(PreservePaths));
+
 static cl::opt<bool> UncondBranch("u", cl::init(false),
                                   cl::desc("Display unconditional branch info "
                                            "(requires -b)"));
@@ -113,7 +117,7 @@ int main(int argc, char **argv) {
     GF.dump();
 
   GCOVOptions Options(AllBlocks, BranchProb, BranchCount, FuncSummary,
-                      UncondBranch);
+                      PreservePaths, UncondBranch);
   FileInfo FI(Options);
   GF.collectLineCounts(FI);
   FI.print(InputGCNO, InputGCDA);

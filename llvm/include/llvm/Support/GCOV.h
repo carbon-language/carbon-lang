@@ -37,14 +37,15 @@ namespace GCOV {
 
 /// GCOVOptions - A struct for passing gcov options between functions.
 struct GCOVOptions {
-  GCOVOptions(bool A, bool B, bool C, bool F, bool U) :
-    AllBlocks(A), BranchInfo(B), BranchCount(C), FuncCoverage(F), UncondBranch(U)
-  {}
+  GCOVOptions(bool A, bool B, bool C, bool F, bool P, bool U)
+      : AllBlocks(A), BranchInfo(B), BranchCount(C), FuncCoverage(F),
+        PreservePaths(P), UncondBranch(U) {}
 
   bool AllBlocks;
   bool BranchInfo;
   bool BranchCount;
   bool FuncCoverage;
+  bool PreservePaths;
   bool UncondBranch;
 };
 
@@ -401,8 +402,13 @@ private:
   StringMap<LineData> LineInfo;
   uint32_t RunCount;
   uint32_t ProgramCount;
-  SmallVector<GCOVCoverage, 4> FileCoverages;
-  MapVector<const GCOVFunction *, GCOVCoverage> FuncCoverages;
+
+  typedef SmallVector<std::pair<std::string, GCOVCoverage>, 4>
+      FileCoverageList;
+  typedef MapVector<const GCOVFunction *, GCOVCoverage> FuncCoverageMap;
+
+  FileCoverageList FileCoverages;
+  FuncCoverageMap FuncCoverages;
 };
 
 }

@@ -21,6 +21,18 @@ RUN: llvm-cov -o objdir test.c | diff -u test_no_options.output -
 RUN: diff -aub test_objdir.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_objdir.h.gcov test.h.gcov
 
+# Preserve paths. This mangles the output filenames.
+RUN: mkdir -p %t/srcdir/nested_dir
+RUN: cp test.cpp test.h %t/srcdir
+RUN: llvm-cov -p test_paths.cpp | diff -u test_preserve_paths.output -
+RUN: diff -aub test_paths.cpp.gcov srcdir#nested_dir#^#test.cpp.gcov
+RUN: diff -aub test_paths.h.gcov srcdir#nested_dir#^#test.h.gcov
+
+# Don't preserve paths. Same results as preserve paths, but no mangling.
+RUN: llvm-cov test_paths.cpp | diff -u test_no_preserve_paths.output -
+RUN: diff -aub test_paths.cpp.gcov test.cpp.gcov
+RUN: diff -aub test_paths.h.gcov test.h.gcov
+
 # Function summaries. This changes stdout, but not the gcov files.
 RUN: llvm-cov test.c -f | diff -u test_-f.output -
 RUN: diff -aub test_no_options.cpp.gcov test.cpp.gcov
