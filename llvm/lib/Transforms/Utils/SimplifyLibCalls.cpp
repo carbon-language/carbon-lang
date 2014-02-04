@@ -1386,7 +1386,7 @@ struct SinCosPiOpt : public LibCallOptimization {
         SinCalls.push_back(CI);
       else if (Func == LibFunc::cospif)
         CosCalls.push_back(CI);
-      else if (Func == LibFunc::sincospi_stretf)
+      else if (Func == LibFunc::sincospif_stret)
         SinCosCalls.push_back(CI);
     } else {
       if (Func == LibFunc::sinpi)
@@ -1415,7 +1415,7 @@ struct SinCosPiOpt : public LibCallOptimization {
 
     Triple T(OrigCallee->getParent()->getTargetTriple());
     if (UseFloat) {
-      Name = "__sincospi_stretf";
+      Name = "__sincospif_stret";
 
       assert(T.getArch() != Triple::x86 && "x86 messy and unsupported for now");
       // x86_64 can't use {float, float} since that would be returned in both

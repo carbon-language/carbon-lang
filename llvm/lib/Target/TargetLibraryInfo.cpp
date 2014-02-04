@@ -48,7 +48,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "__isoc99_sscanf",
     "__memcpy_chk",
     "__sincospi_stret",
-    "__sincospi_stretf",
+    "__sincospif_stret",
     "__sinpi",
     "__sinpif",
     "__sqrt_finite",
@@ -393,7 +393,7 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::cospi);
     TLI.setUnavailable(LibFunc::cospif);
     TLI.setUnavailable(LibFunc::sincospi_stret);
-    TLI.setUnavailable(LibFunc::sincospi_stretf);
+    TLI.setUnavailable(LibFunc::sincospif_stret);
   }
 
   if (T.isMacOSX() && T.getArch() == Triple::x86 &&

@@ -67,8 +67,8 @@ namespace llvm {
       memcpy_chk,
       /// double __sincospi_stret(double x);
       sincospi_stret,
-      /// float __sincospi_stretf(float x);
-      sincospi_stretf,
+      /// float __sincospif_stret(float x);
+      sincospif_stret,
       /// double __sinpi(double x);
       sinpi,
       /// float __sinpif(float x);

@@ -23,12 +23,12 @@ define float @test_instbased_f32() {
        %res = fadd float %sin, %cos
        ret float %res
 ; CHECK-FLOAT-IN-VEC: [[VAL:%[a-z0-9]+]] = load float* @var32
-; CHECK-FLOAT-IN-VEC: [[SINCOS:%[a-z0-9]+]] = call <2 x float> @__sincospi_stretf(float [[VAL]])
+; CHECK-FLOAT-IN-VEC: [[SINCOS:%[a-z0-9]+]] = call <2 x float> @__sincospif_stret(float [[VAL]])
 ; CHECK-FLOAT-IN-VEC: extractelement <2 x float> [[SINCOS]], i32 0
 ; CHECK-FLOAT-IN-VEC: extractelement <2 x float> [[SINCOS]], i32 1
 
 ; CHECK: [[VAL:%[a-z0-9]+]] = load float* @var32
-; CHECK: [[SINCOS:%[a-z0-9]+]] = call { float, float } @__sincospi_stretf(float [[VAL]])
+; CHECK: [[SINCOS:%[a-z0-9]+]] = call { float, float } @__sincospif_stret(float [[VAL]])
 ; CHECK: extractvalue { float, float } [[SINCOS]], 0
 ; CHECK: extractvalue { float, float } [[SINCOS]], 1
 
@@ -41,11 +41,11 @@ define float @test_constant_f32() {
        %cos = call float @__cospif(float 1.0) #0
        %res = fadd float %sin, %cos
        ret float %res
-; CHECK-FLOAT-IN-VEC: [[SINCOS:%[a-z0-9]+]] = call <2 x float> @__sincospi_stretf(float 1.000000e+00)
+; CHECK-FLOAT-IN-VEC: [[SINCOS:%[a-z0-9]+]] = call <2 x float> @__sincospif_stret(float 1.000000e+00)
 ; CHECK-FLOAT-IN-VEC: extractelement <2 x float> [[SINCOS]], i32 0
 ; CHECK-FLOAT-IN-VEC: extractelement <2 x float> [[SINCOS]], i32 1
 
-; CHECK: [[SINCOS:%[a-z0-9]+]] = call { float, float } @__sincospi_stretf(float 1.000000e+00)
+; CHECK: [[SINCOS:%[a-z0-9]+]] = call { float, float } @__sincospif_stret(float 1.000000e+00)
 ; CHECK: extractvalue { float, float } [[SINCOS]], 0
 ; CHECK: extractvalue { float, float } [[SINCOS]], 1
 
