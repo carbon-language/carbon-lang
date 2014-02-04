@@ -51,9 +51,3 @@ getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
                                  MCSymbolRefExpr::VK_ARM_TARGET2,
                                  getContext());
 }
-
-const MCExpr *ARMElfTargetObjectFile::
-getDebugThreadLocalSymbol(const MCSymbol *Sym) const {
-  return MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_ARM_TLSLDO,
-                                 getContext());
-}
