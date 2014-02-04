@@ -579,7 +579,7 @@ INTERCEPTOR(char *, strptime, char *s, char *format, __sanitizer_tm *tm) {
     va_list ap;                                                                \
     va_start(ap, format);                                                      \
     COMMON_INTERCEPTOR_ENTER(ctx, vname, __VA_ARGS__, ap);                     \
-    int res = vname(__VA_ARGS__, ap);                                          \
+    int res = WRAP(vname)(__VA_ARGS__, ap);                                    \
     va_end(ap);                                                                \
     return res;                                                                \
   }
