@@ -360,3 +360,10 @@ const char *Process::ResetColor() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), defaultColors());
   return 0;
 }
+
+unsigned Process::GetRandomNumber() {
+  unsigned int result;
+  const errno_t ec = rand_s(&result);
+  assert(ec == 0 && "rand_s failed");
+  return result;
+}

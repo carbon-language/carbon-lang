@@ -12,6 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
+#if LLVM_ON_WIN32
+  // This define makes stdlib.h declare the rand_s function.
+#define _CRT_RAND_S
+#include <stdlib.h>
+#endif
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Process.h"
 
