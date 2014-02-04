@@ -20,7 +20,7 @@ multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
                     PatFrag MemFrag128, PatFrag MemFrag256,
                     ValueType OpVT128, ValueType OpVT256,
                     SDPatternOperator Op = null_frag> {
-  let isCommutable = 1, usesCustomInserter = 1 in
+  let usesCustomInserter = 1 in
   def r     : FMA3<opc, MRMSrcReg, (outs VR128:$dst),
                    (ins VR128:$src1, VR128:$src2, VR128:$src3),
                    !strconcat(OpcodeStr,
@@ -36,7 +36,7 @@ multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
                    [(set VR128:$dst, (OpVT128 (Op VR128:$src2, VR128:$src1,
                                                (MemFrag128 addr:$src3))))]>;
 
-  let isCommutable = 1, usesCustomInserter = 1 in
+  let usesCustomInserter = 1 in
   def rY    : FMA3<opc, MRMSrcReg, (outs VR256:$dst),
                    (ins VR256:$src1, VR256:$src2, VR256:$src3),
                    !strconcat(OpcodeStr,
@@ -59,6 +59,7 @@ multiclass fma3p_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
                        string OpcodeStr, string PackTy,
                        PatFrag MemFrag128, PatFrag MemFrag256,
                        SDNode Op, ValueType OpTy128, ValueType OpTy256> {
+  let isCommutable = 1 in
   defm r213 : fma3p_rm<opc213,
                        !strconcat(OpcodeStr, "213", PackTy),
                        MemFrag128, MemFrag256, OpTy128, OpTy256, Op>;
@@ -118,7 +119,7 @@ let Constraints = "$src1 = $dst" in {
 multiclass fma3s_rm<bits<8> opc, string OpcodeStr, X86MemOperand x86memop,
                     RegisterClass RC, ValueType OpVT, PatFrag mem_frag,
                     SDPatternOperator OpNode = null_frag> {
-  let isCommutable = 1, usesCustomInserter = 1 in
+  let usesCustomInserter = 1 in
   def r     : FMA3<opc, MRMSrcReg, (outs RC:$dst),
                    (ins RC:$src1, RC:$src2, RC:$src3),
                    !strconcat(OpcodeStr,
@@ -149,6 +150,7 @@ let neverHasSideEffects = 1 in {
                        x86memop, RC, OpVT, mem_frag>;
 }
 
+let isCommutable = 1 in
 defm r213 : fma3s_rm<opc213, !strconcat(OpStr, "213", PackTy),
                      x86memop, RC, OpVT, mem_frag, OpNode>;
 }
