@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "mccodeemitter"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "MCTargetDesc/MipsFixupKinds.h"
+#include "MCTargetDesc/MipsMCExpr.h"
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/Statistic.h"
@@ -385,6 +386,26 @@ getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups,
     Res += getExprOpValue(cast<MCBinaryExpr>(Expr)->getRHS(), Fixups, STI);
     return Res;
   }
+
+  if (Kind == MCExpr::Target) {
+    const MipsMCExpr *MipsExpr = cast<MipsMCExpr>(Expr);
+
+    Mips::Fixups FixupKind = Mips::Fixups(0);
+    switch (MipsExpr->getKind()) {
+    default: llvm_unreachable("Unsupported fixup kind for target expression!");
+    case MipsMCExpr::VK_Mips_ABS_HI:
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_HI16
+                                   : Mips::fixup_Mips_HI16;
+      break;
+    case MipsMCExpr::VK_Mips_ABS_LO:
+      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_LO16
+                                   : Mips::fixup_Mips_LO16;
+      break;
+    }
+    Fixups.push_back(MCFixup::Create(0, MipsExpr, MCFixupKind(FixupKind)));
+    return 0;
+  }
+
   if (Kind == MCExpr::SymbolRef) {
     Mips::Fixups FixupKind = Mips::Fixups(0);
 

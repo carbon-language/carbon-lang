@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCTargetDesc/MipsMCExpr.h"
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "MipsRegisterInfo.h"
 #include "MipsTargetStreamer.h"
@@ -1313,6 +1314,18 @@ const MCExpr *MipsAsmParser::evaluateRelocExpr(const MCExpr *Expr,
   }
 
   if (const MCBinaryExpr *BE = dyn_cast<MCBinaryExpr>(Expr)) {
+    MCSymbolRefExpr::VariantKind VK = getVariantKind(RelocStr);
+
+    // Check for %hi(sym1-sym2) and %lo(sym1-sym2) expressions.
+    if (isa<MCSymbolRefExpr>(BE->getLHS()) && isa<MCSymbolRefExpr>(BE->getRHS())
+        && (VK == MCSymbolRefExpr::VK_Mips_ABS_HI
+            || VK == MCSymbolRefExpr::VK_Mips_ABS_LO)) {
+      // Create target expression for %hi(sym1-sym2) and %lo(sym1-sym2).
+      if (VK == MCSymbolRefExpr::VK_Mips_ABS_HI)
+        return MipsMCExpr::CreateHi(Expr, getContext());
+      return MipsMCExpr::CreateLo(Expr, getContext());
+    }
+
     const MCExpr *LExp = evaluateRelocExpr(BE->getLHS(), RelocStr);
     const MCExpr *RExp = evaluateRelocExpr(BE->getRHS(), RelocStr);
     Res = MCBinaryExpr::Create(BE->getOpcode(), LExp, RExp, getContext());
@@ -1343,8 +1356,8 @@ bool MipsAsmParser::isEvaluated(const MCExpr *Expr) {
     }
   case MCExpr::Unary:
     return isEvaluated(cast<MCUnaryExpr>(Expr)->getSubExpr());
-  default:
-    return false;
+  case MCExpr::Target:
+    return true;
   }
   return false;
 }
