@@ -360,8 +360,12 @@ static char getSymbolNMTypeChar(ELFObjectFile<ELFT> &Obj, symbol_iterator I) {
     Ret = ::toupper(Ret);
     break;
   case ELF::STB_WEAK:
-    if (EF.getSymbolTableIndex(ESym) == ELF::SHN_UNDEF)
-      Ret = 'w';
+    if (EF.getSymbolTableIndex(ESym) == ELF::SHN_UNDEF) {
+      if (ESym->getType() == ELF::STT_OBJECT)
+        Ret = 'v';
+      else
+        Ret = 'w';
+    }
     else if (ESym->getType() == ELF::STT_OBJECT)
       Ret = 'V';
     else

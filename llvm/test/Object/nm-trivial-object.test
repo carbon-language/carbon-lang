@@ -6,6 +6,8 @@ RUN: llvm-nm %p/Inputs/trivial-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF
 RUN: llvm-nm %p/Inputs/trivial-object-test.elf-x86-64 \
 RUN:         | FileCheck %s -check-prefix ELF
+RUN: llvm-nm %p/Inputs/weak.elf-x86-64 \
+RUN:         | FileCheck %s -check-prefix WEAK-ELF
 RUN: llvm-nm %p/Inputs/trivial-object-test.macho-i386 \
 RUN:         | FileCheck %s -check-prefix macho
 RUN: llvm-nm %p/Inputs/trivial-object-test.macho-x86-64 \
@@ -34,6 +36,10 @@ ELF:          U SomeOtherFunction
 ELF: 00000000 T main
 ELF:          U puts
 
+WEAK-ELF:          w f1
+WEAK-ELF: 00000000 W f2
+WEAK-ELF:          v x1
+WEAK-ELF: 00000000 V x2
 
 macho: 00000000 U _SomeOtherFunction
 macho: 00000000 T _main
