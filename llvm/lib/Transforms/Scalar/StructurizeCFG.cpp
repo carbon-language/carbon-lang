@@ -277,9 +277,8 @@ bool StructurizeCFG::doInitialization(Region *R, RGPassManager &RGM) {
 
 /// \brief Build up the general order of nodes
 void StructurizeCFG::orderNodes() {
-  scc_iterator<Region *> I = scc_begin(ParentRegion),
-                         E = scc_end(ParentRegion);
-  for (Order.clear(); I != E; ++I) {
+  scc_iterator<Region *> I = scc_begin(ParentRegion);
+  for (Order.clear(); !I.isAtEnd(); ++I) {
     std::vector<RegionNode *> &Nodes = *I;
     Order.append(Nodes.begin(), Nodes.end());
   }

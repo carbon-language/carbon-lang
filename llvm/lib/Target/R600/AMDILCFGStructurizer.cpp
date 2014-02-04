@@ -934,8 +934,8 @@ bool AMDGPUCFGStructurizer::run() {
 void AMDGPUCFGStructurizer::orderBlocks(MachineFunction *MF) {
   int SccNum = 0;
   MachineBasicBlock *MBB;
-  for (scc_iterator<MachineFunction *> It = scc_begin(MF), E = scc_end(MF);
-      It != E; ++It, ++SccNum) {
+  for (scc_iterator<MachineFunction *> It = scc_begin(MF); !It.isAtEnd();
+       ++It, ++SccNum) {
     std::vector<MachineBasicBlock *> &SccNext = *It;
     for (std::vector<MachineBasicBlock *>::const_iterator
          blockIter = SccNext.begin(), blockEnd = SccNext.end();
