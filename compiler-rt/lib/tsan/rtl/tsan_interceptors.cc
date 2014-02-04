@@ -73,6 +73,7 @@ const int SIGABRT = 6;
 const int SIGFPE = 8;
 const int SIGSEGV = 11;
 const int SIGPIPE = 13;
+const int SIGTERM = 15;
 const int SIGBUS = 7;
 const int SIGSYS = 31;
 void *const MAP_FAILED = (void*)-1;
@@ -1642,7 +1643,14 @@ static void CallUserSignalHandler(ThreadState *thr, bool sync, bool sigact,
     sigactions[sig].sa_sigaction(sig, info, uctx);
   else
     sigactions[sig].sa_handler(sig);
-  if (flags()->report_bugs && !sync && errno != 99) {
+  // We do not detect errno spoiling for SIGTERM,
+  // because some SIGTERM handlers do spoil errno but reraise SIGTERM,
+  // tsan reports false positive in such case.
+  // It's difficult to properly detect this situation (reraise),
+  // because in async signal processing case (when handler is called directly
+  // from rtl_generic_sighandler) we have not yet received the reraised
+  // signal; and it looks too fragile to intercept all ways to reraise a signal.
+  if (flags()->report_bugs && !sync && sig != SIGTERM && errno != 99) {
     Context *ctx = CTX();
     __tsan::StackTrace stack;
     stack.ObtainCurrent(thr, pc);
