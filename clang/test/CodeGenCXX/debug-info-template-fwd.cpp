@@ -1,33 +1,27 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin -g -emit-llvm -o - | FileCheck %s
-// This test is for a crash when emitting debug info for not-yet-completed types.
+// This test is for a crash when emitting debug info for not-yet-completed
+// types.
 // Test that we don't actually emit a forward decl for the offending class:
-// CHECK:  [ DW_TAG_class_type ] [Derived<Foo>] {{.*}} [def]
+// CHECK:  [ DW_TAG_structure_type ] [Derived<int>] {{.*}} [def]
 // rdar://problem/15931354
-template <class R> class Returner {};
 template <class A> class Derived;
 
-template <class A>
-class Base
-{
-  static Derived<A>* create();
+template <class A> class Base {
+  static Derived<A> *create();
 };
 
-template <class A>
-class Derived : public Base<A> {
-public:
-  static void foo();
+template <class A> struct Derived : Base<A> {
 };
 
-class Foo
-{
-  Foo();
-  static Returner<Base<Foo> > all();
-};
+Base<int> *f;
 
-Foo::Foo(){}
-
-Returner<Base<Foo> > Foo::all()
-{
-  Derived<Foo>::foo();
-  return Foo::all();
-}
+// During the instantiation of Derived<int>, Base<int> becomes required to be
+// complete - since the declaration has already been emitted (due to 'f',
+// above), we immediately try to build debug info for Base<int> which then
+// requires the (incomplete definition) of Derived<int> which is problematic.
+//
+// (if 'f' is not present, the point at which Base<int> becomes required to be
+// complete during the instantiation of Derived<int> is a no-op because
+// Base<int> was never emitted so we ignore it and carry on until we
+// wire up the base class of Derived<int> in the debug info later on)
+Derived<int> d;
