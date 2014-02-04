@@ -247,8 +247,11 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     bool NoExecStack) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSBinFormatMachO())
-    return createMachOStreamer(Ctx, MAB, OS, Emitter, false);
+  if (TheTriple.isOSBinFormatMachO()) {
+    MCStreamer *S = createMachOStreamer(Ctx, MAB, OS, Emitter, false);
+    new ARMTargetStreamer(*S);
+    return S;
+  }
 
   if (TheTriple.isOSWindows()) {
     llvm_unreachable("ARM does not support Windows COFF format");

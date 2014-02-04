@@ -56,64 +56,6 @@ class ARMOperand;
 
 enum VectorLaneTy { NoLanes, AllLanes, IndexedLane };
 
-// A class to keep track of assembler-generated constant pools that are use to
-// implement the ldr-pseudo.
-class ConstantPool {
-  typedef SmallVector<std::pair<MCSymbol *, const MCExpr *>, 4> EntryVecTy;
-  EntryVecTy Entries;
-
-public:
-  // Initialize a new empty constant pool
-  ConstantPool() { }
-
-  // Add a new entry to the constant pool in the next slot.
-  // \param Value is the new entry to put in the constant pool.
-  //
-  // \returns a MCExpr that references the newly inserted value
-  const MCExpr *addEntry(const MCExpr *Value, MCContext &Context) {
-    MCSymbol *CPEntryLabel = Context.CreateTempSymbol();
-
-    Entries.push_back(std::make_pair(CPEntryLabel, Value));
-    return MCSymbolRefExpr::Create(CPEntryLabel, Context);
-  }
-
-  // Emit the contents of the constant pool using the provided streamer.
-  void emitEntries(MCStreamer &Streamer) {
-    if (Entries.empty())
-      return;
-    Streamer.EmitCodeAlignment(4); // align to 4-byte address
-    Streamer.EmitDataRegion(MCDR_DataRegion);
-    for (EntryVecTy::const_iterator I = Entries.begin(), E = Entries.end();
-         I != E; ++I) {
-      Streamer.EmitLabel(I->first);
-      Streamer.EmitValue(I->second, 4);
-    }
-    Streamer.EmitDataRegion(MCDR_DataRegionEnd);
-    Entries.clear();
-  }
-
-  // Return true if the constant pool is empty
-  bool empty() {
-    return Entries.empty();
-  }
-};
-
-// Map type used to keep track of per-Section constant pools used by the
-// ldr-pseudo opcode. The map associates a section to its constant pool. The
-// constant pool is a vector of (label, value) pairs. When the ldr
-// pseudo is parsed we insert a new (label, value) pair into the constant pool
-// for the current section and add MCSymbolRefExpr to the new label as
-// an opcode to the ldr. After we have parsed all the user input we
-// output the (label, value) pairs in each constant pool at the end of the
-// section.
-//
-// We use the MapVector for the map type to ensure stable iteration of
-// the sections at the end of the parse. We need to iterate over the
-// sections in a stable order to ensure that we have print the
-// constant pools in a deterministic order when printing an assembly
-// file.
-typedef MapVector<const MCSection *, ConstantPool> ConstantPoolMapTy;
-
 class UnwindContext {
   MCAsmParser &Parser;
 
@@ -191,21 +133,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   MCAsmParser &Parser;
   const MCInstrInfo &MII;
   const MCRegisterInfo *MRI;
-  ConstantPoolMapTy ConstantPools;
   UnwindContext UC;
-
-  // Assembler created constant pools for ldr pseudo
-  ConstantPool *getConstantPool(const MCSection *Section) {
-    ConstantPoolMapTy::iterator CP = ConstantPools.find(Section);
-    if (CP == ConstantPools.end())
-      return 0;
-
-    return &CP->second;
-  }
-
-  ConstantPool &getOrCreateConstantPool(const MCSection *Section) {
-    return ConstantPools[Section];
-  }
 
   ARMTargetStreamer &getTargetStreamer() {
     MCTargetStreamer &TS = *getParser().getStreamer().getTargetStreamer();
@@ -443,7 +371,6 @@ public:
                                MCStreamer &Out, unsigned &ErrorInfo,
                                bool MatchingInlineAsm);
   void onLabelParsed(MCSymbol *Symbol);
-  void finishParse();
 };
 } // end anonymous namespace
 
@@ -4812,17 +4739,13 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     if (Mnemonic != "ldr") // only parse for ldr pseudo (e.g. ldr r0, =val)
       return Error(Parser.getTok().getLoc(), "unexpected token in operand");
 
-    const MCSection *Section =
-        getParser().getStreamer().getCurrentSection().first;
-    assert(Section);
     Parser.Lex(); // Eat '='
     const MCExpr *SubExprVal;
     if (getParser().parseExpression(SubExprVal))
       return true;
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
 
-    const MCExpr *CPLoc =
-        getOrCreateConstantPool(Section).addEntry(SubExprVal, getContext());
+    const MCExpr *CPLoc = getTargetStreamer().addConstantPoolEntry(SubExprVal);
     Operands.push_back(ARMOperand::CreateImm(CPLoc, S, E));
     return false;
   }
@@ -8843,13 +8766,7 @@ bool ARMAsmParser::parseDirectiveInst(SMLoc Loc, char Suffix) {
 /// parseDirectiveLtorg
 ///  ::= .ltorg | .pool
 bool ARMAsmParser::parseDirectiveLtorg(SMLoc L) {
-  MCStreamer &Streamer = getParser().getStreamer();
-  const MCSection *Section = Streamer.getCurrentSection().first;
-
-  if (ConstantPool *CP = getConstantPool(Section)) {
-    if (!CP->empty())
-      CP->emitEntries(Streamer);
-  }
+  getTargetStreamer().emitCurrentConstantPool();
   return false;
 }
 
@@ -9180,21 +9097,4 @@ unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
     break;
   }
   return Match_InvalidOperand;
-}
-
-void ARMAsmParser::finishParse() {
-  // Dump contents of assembler constant pools.
-  MCStreamer &Streamer = getParser().getStreamer();
-  for (ConstantPoolMapTy::iterator CPI = ConstantPools.begin(),
-                                   CPE = ConstantPools.end();
-       CPI != CPE; ++CPI) {
-    const MCSection *Section = CPI->first;
-    ConstantPool &CP = CPI->second;
-
-    // Dump non-empty assembler constant pools at the end of the section.
-    if (!CP.empty()) {
-      Streamer.SwitchSection(Section);
-      CP.emitEntries(Streamer);
-    }
-  }
 }

@@ -104,9 +104,6 @@ static unsigned GetArchDefaultCPUArch(unsigned ID) {
   return 0;
 }
 
-void ARMTargetStreamer::anchor() {}
-ARMTargetStreamer::ARMTargetStreamer(MCStreamer &S) : MCTargetStreamer(S) {}
-
 namespace {
 
 class ARMELFStreamer;

@@ -39,6 +39,7 @@ class StringRef;
 class Twine;
 class raw_ostream;
 class formatted_raw_ostream;
+class AssemblerConstantPools;
 
 typedef std::pair<const MCSection *, const MCExpr *> MCSectionSubPair;
 
@@ -83,37 +84,51 @@ public:
 // FIXME: declared here because it is used from
 // lib/CodeGen/AsmPrinter/ARMException.cpp.
 class ARMTargetStreamer : public MCTargetStreamer {
-  virtual void anchor();
 public:
   ARMTargetStreamer(MCStreamer &S);
+  ~ARMTargetStreamer();
 
-  virtual void emitFnStart() = 0;
-  virtual void emitFnEnd() = 0;
-  virtual void emitCantUnwind() = 0;
-  virtual void emitPersonality(const MCSymbol *Personality) = 0;
-  virtual void emitPersonalityIndex(unsigned Index) = 0;
-  virtual void emitHandlerData() = 0;
+  virtual void emitFnStart();
+  virtual void emitFnEnd();
+  virtual void emitCantUnwind();
+  virtual void emitPersonality(const MCSymbol *Personality);
+  virtual void emitPersonalityIndex(unsigned Index);
+  virtual void emitHandlerData();
   virtual void emitSetFP(unsigned FpReg, unsigned SpReg,
-                         int64_t Offset = 0) = 0;
-  virtual void emitMovSP(unsigned Reg, int64_t Offset = 0) = 0;
-  virtual void emitPad(int64_t Offset) = 0;
+                         int64_t Offset = 0);
+  virtual void emitMovSP(unsigned Reg, int64_t Offset = 0);
+  virtual void emitPad(int64_t Offset);
   virtual void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
-                           bool isVector) = 0;
+                           bool isVector);
   virtual void emitUnwindRaw(int64_t StackOffset,
-                             const SmallVectorImpl<uint8_t> &Opcodes) = 0;
+                             const SmallVectorImpl<uint8_t> &Opcodes);
 
-  virtual void switchVendor(StringRef Vendor) = 0;
-  virtual void emitAttribute(unsigned Attribute, unsigned Value) = 0;
-  virtual void emitTextAttribute(unsigned Attribute, StringRef String) = 0;
+  virtual void switchVendor(StringRef Vendor);
+  virtual void emitAttribute(unsigned Attribute, unsigned Value);
+  virtual void emitTextAttribute(unsigned Attribute, StringRef String);
   virtual void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
-                                    StringRef StringValue = "") = 0;
-  virtual void emitFPU(unsigned FPU) = 0;
-  virtual void emitArch(unsigned Arch) = 0;
-  virtual void emitObjectArch(unsigned Arch) = 0;
-  virtual void finishAttributeSection() = 0;
-  virtual void emitInst(uint32_t Inst, char Suffix = '\0') = 0;
+                                    StringRef StringValue = "");
+  virtual void emitFPU(unsigned FPU);
+  virtual void emitArch(unsigned Arch);
+  virtual void emitObjectArch(unsigned Arch);
+  virtual void finishAttributeSection();
+  virtual void emitInst(uint32_t Inst, char Suffix = '\0');
 
-  virtual void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE) = 0;
+  virtual void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE);
+
+  virtual void finish();
+
+  /// Callback used to implement the ldr= pseudo.
+  /// Add a new entry to the constant pool for the current section and return an
+  /// MCExpr that can be used to refer to the constant pool location.
+  const MCExpr *addConstantPoolEntry(const MCExpr *);
+
+  /// Callback used to implemnt the .ltorg directive.
+  /// Emit contents of constant pool for the current section.
+  void emitCurrentConstantPool();
+
+private:
+  OwningPtr<AssemblerConstantPools> ConstantPools;
 };
 
 /// MCStreamer - Streaming machine code generation interface.  This interface

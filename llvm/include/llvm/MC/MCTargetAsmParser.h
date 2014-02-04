@@ -182,11 +182,6 @@ public:
     return 0;
   }
 
-  /// Allow a target to perform any actions after the parse completes
-  /// successfully.  For example, to write out constant pools for ldr pseudo on
-  /// ARM.
-  virtual void finishParse() {};
-
   virtual void onLabelParsed(MCSymbol *Symbol) { };
 };
 
