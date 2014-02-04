@@ -141,9 +141,7 @@ if (NOT MSVC)
     -funwind-tables
     -fno-stack-protector
     -Wno-gnu  # Variadic macros with 0 arguments for ...
-    -fvisibility=hidden
-    -fno-function-sections
-    )
+    -fvisibility=hidden)
   if (NOT COMPILER_RT_DEBUG)
     list(APPEND SANITIZER_COMMON_CFLAGS -O3)
   endif()
@@ -164,6 +162,11 @@ if (NOT MSVC)
   else()
     list(APPEND SANITIZER_COMMON_CFLAGS -g)
   endif()
+endif()
+# Build sanitizer runtimes with -fno-function-sections.
+check_cxx_compiler_flag(-fno-function-sections SUPPORTS_FNO_FUNCTION_SECTIONS_FLAG)
+if(SUPPORTS_FNO_FUNCTION_SECTIONS_FLAG)
+  list(APPEND SANITIZER_COMMON_CFLAGS -fno-function-sections)
 endif()
 # Warnings suppressions.
 check_cxx_compiler_flag(-Wno-variadic-macros SUPPORTS_NO_VARIADIC_MACROS_FLAG)
