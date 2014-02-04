@@ -1,7 +1,9 @@
 // RUN: %clang_asan -O2 %s -o %t
-// RUN: ASAN_OPTIONS=check_printf=1 not %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
-// RUN: ASAN_OPTIONS=check_printf=0 %t 2>&1 | FileCheck --check-prefix=CHECK-OFF %s
-// RUN: %t 2>&1 | FileCheck --check-prefix=CHECK-OFF %s
+// We need replace_str=0 and replace_intrin=0 to avoid reporting errors in
+// strlen() and memcpy() called by puts().
+// RUN: ASAN_OPTIONS=replace_str=0:replace_intrin=0:check_printf=1 not %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
+// RUN: ASAN_OPTIONS=replace_str=0:replace_intrin=0:check_printf=0 %t 2>&1 | FileCheck --check-prefix=CHECK-OFF %s
+// RUN: ASAN_OPTIONS=replace_str=0:replace_intrin=0 %t 2>&1 | FileCheck --check-prefix=CHECK-OFF %s
 
 #include <stdio.h>
 int main() {
