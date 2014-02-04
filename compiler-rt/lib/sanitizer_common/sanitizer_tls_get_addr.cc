@@ -60,9 +60,10 @@ static inline void DTLS_Resize(uptr new_size) {
 
 void DTLS_Destroy() {
   if (!dtls.dtv_size) return;
-  UnmapOrDie(dtls.dtv, dtls.dtv_size * sizeof(DTLS::DTV));
+  uptr s = dtls.dtv_size;
+  dtls.dtv_size = kDestroyedThread;  // Do this before unmap for AS-safety.
+  UnmapOrDie(dtls.dtv, s * sizeof(DTLS::DTV));
   atomic_fetch_sub(&number_of_live_dtls, 1, memory_order_relaxed);
-  dtls.dtv_size = kDestroyedThread;
 }
 
 void DTLS_on_tls_get_addr(void *arg_void, void *res) {
