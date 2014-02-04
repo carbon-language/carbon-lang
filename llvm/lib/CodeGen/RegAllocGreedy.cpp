@@ -311,7 +311,7 @@ const char *const RAGreedy::StageName[] = {
 
 // Hysteresis to use when comparing floats.
 // This helps stabilize decisions based on float comparisons.
-const float Hysteresis = 0.98f;
+const float Hysteresis = (2007 / 2048.0f); // 0.97998046875
 
 
 FunctionPass* llvm::createGreedyRegisterAllocator() {
