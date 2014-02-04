@@ -6259,8 +6259,7 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
       // If we are allowing lax vector conversions, and LHS and RHS are both
       // vectors, the total size only needs to be the same. This is a bitcast;
       // no bits are changed but the result type is different.
-      if (getLangOpts().LaxVectorConversions &&
-          (Context.getTypeSize(LHSType) == Context.getTypeSize(RHSType))) {
+      if (isLaxVectorConversion(RHSType, LHSType)) {
         Kind = CK_BitCast;
         return IncompatibleVectors;
       }
@@ -6626,44 +6625,86 @@ QualType Sema::InvalidOperands(SourceLocation Loc, ExprResult &LHS,
   return QualType();
 }
 
-static bool areVectorOperandsLaxBitCastable(ASTContext &Ctx,
-                                            QualType LHSType, QualType RHSType){
-  if (!Ctx.getLangOpts().LaxVectorConversions)
-    return false;
-
-  if (!(LHSType->isVectorType() || LHSType->isScalarType()) ||
-      !(RHSType->isVectorType() || RHSType->isScalarType()))
-    return false;
-
-  unsigned LHSSize = Ctx.getTypeSize(LHSType);
-  unsigned RHSSize = Ctx.getTypeSize(RHSType);
-  if (LHSSize != RHSSize)
-    return false;
-
-  // For a non-power-of-2 vector ASTContext::getTypeSize returns the size
-  // rounded to the next power-of-2, but the LLVM IR type that we create
-  // is considered to have num-of-elements*width-of-element width.
-  // Make sure such width is the same between the types, otherwise we may end
-  // up with an invalid bitcast.
-  unsigned LHSIRSize, RHSIRSize;
-  if (LHSType->isVectorType()) {
-    const VectorType *Vec = LHSType->getAs<VectorType>();
-    LHSIRSize = Vec->getNumElements() *
-        Ctx.getTypeSize(Vec->getElementType());
-  } else {
-    LHSIRSize = LHSSize;
+static bool breakDownVectorType(QualType type, uint64_t &len,
+                                QualType &eltType) {
+  // Vectors are simple.
+  if (const VectorType *vecType = type->getAs<VectorType>()) {
+    len = vecType->getNumElements();
+    eltType = vecType->getElementType();
+    assert(eltType->isScalarType());
+    return true;
   }
-  if (RHSType->isVectorType()) {
-    const VectorType *Vec = RHSType->getAs<VectorType>();
-    RHSIRSize = Vec->getNumElements() *
-        Ctx.getTypeSize(Vec->getElementType());
-  } else {
-    RHSIRSize = RHSSize;
-  }
-  if (LHSIRSize != RHSIRSize)
-    return false;
 
+  // We allow lax conversion to and from non-vector types, but only if
+  // they're real types (i.e. non-complex, non-pointer scalar types).
+  if (!type->isRealType()) return false;
+
+  len = 1;
+  eltType = type;
   return true;
+}
+
+/// Is this a legal conversion between two known vector types?
+bool Sema::isLaxVectorConversion(QualType srcTy, QualType destTy) {
+  assert(destTy->isVectorType() || srcTy->isVectorType());
+
+  if (!Context.getLangOpts().LaxVectorConversions)
+    return false;
+
+  uint64_t srcLen, destLen;
+  QualType srcElt, destElt;
+  if (!breakDownVectorType(srcTy, srcLen, srcElt)) return false;
+  if (!breakDownVectorType(destTy, destLen, destElt)) return false;
+
+  // ASTContext::getTypeSize will return the size rounded up to a
+  // power of 2, so instead of using that, we need to use the raw
+  // element size multiplied by the element count.
+  uint64_t srcEltSize = Context.getTypeSize(srcElt);
+  uint64_t destEltSize = Context.getTypeSize(destElt);
+
+  return (srcLen * srcEltSize == destLen * destEltSize);
+}
+
+/// Try to convert a value of non-vector type to a vector type by
+/// promoting (and only promoting) the type to the element type of the
+/// vector and then performing a vector splat.
+///
+/// \param scalar - if non-null, actually perform the conversions
+/// \return true if the operation fails (but without diagnosing the failure)
+static bool tryVectorPromoteAndSplat(Sema &S, ExprResult *scalar,
+                                     QualType scalarTy,
+                                     QualType vectorEltTy,
+                                     QualType vectorTy) {
+  // The conversion to apply to the scalar before splatting it,
+  // if necessary.
+  CastKind scalarCast = CK_Invalid;
+
+  if (vectorEltTy->isIntegralType(S.Context)) {
+    if (!scalarTy->isIntegralType(S.Context)) return true;
+    int order = S.Context.getIntegerTypeOrder(vectorEltTy, scalarTy);
+    if (order < 0) return true;
+    if (order > 0) scalarCast = CK_IntegralCast;
+  } else if (vectorEltTy->isRealFloatingType()) {
+    if (scalarTy->isRealFloatingType()) {
+      int order = S.Context.getFloatingTypeOrder(vectorEltTy, scalarTy);
+      if (order < 0) return true;
+      if (order > 0) scalarCast = CK_FloatingCast;
+    } else if (scalarTy->isIntegralType(S.Context)) {
+      scalarCast = CK_IntegralToFloating;
+    } else {
+      return true;
+    }
+  } else {
+    return true;
+  }
+
+  // Adjust scalar if desired.
+  if (scalar) {
+    if (scalarCast != CK_Invalid)
+       *scalar = S.ImpCastExprToType(scalar->take(), vectorEltTy, scalarCast);
+    *scalar = S.ImpCastExprToType(scalar->take(), vectorTy, CK_VectorSplat);
+  }
+  return false;
 }
 
 QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
@@ -6679,19 +6720,21 @@ QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
 
   // For conversion purposes, we ignore any qualifiers.
   // For example, "const float" and "float" are equivalent.
-  QualType LHSType =
-    Context.getCanonicalType(LHS.get()->getType()).getUnqualifiedType();
-  QualType RHSType =
-    Context.getCanonicalType(RHS.get()->getType()).getUnqualifiedType();
+  QualType LHSType = LHS.get()->getType().getUnqualifiedType();
+  QualType RHSType = RHS.get()->getType().getUnqualifiedType();
 
   // If the vector types are identical, return.
-  if (LHSType == RHSType)
+  if (Context.hasSameType(LHSType, RHSType))
     return LHSType;
 
-  // Handle the case of equivalent AltiVec and GCC vector types
-  if (LHSType->isVectorType() && RHSType->isVectorType() &&
+  const VectorType *LHSVecType = LHSType->getAs<VectorType>();
+  const VectorType *RHSVecType = RHSType->getAs<VectorType>();
+  assert(LHSVecType || RHSVecType);
+
+  // If we have compatible AltiVec and GCC vector types, use the AltiVec type.
+  if (LHSVecType && RHSVecType &&
       Context.areCompatibleVectorTypes(LHSType, RHSType)) {
-    if (LHSType->isExtVectorType()) {
+    if (isa<ExtVectorType>(LHSVecType)) {
       RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
       return LHSType;
     }
@@ -6701,69 +6744,43 @@ QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
     return RHSType;
   }
 
-  if (areVectorOperandsLaxBitCastable(Context, LHSType, RHSType)) {
-    // If we are allowing lax vector conversions, and LHS and RHS are both
-    // vectors, the total size only needs to be the same. This is a
-    // bitcast; no bits are changed but the result type is different.
-    // FIXME: Should we really be allowing this?
-    RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
-    return LHSType;
+  // If we're allowing lax vector conversions, only the total (data) size
+  // needs to be the same.
+  // FIXME: Should we really be allowing this?
+  // FIXME: We really just pick the LHS type arbitrarily?
+  if (isLaxVectorConversion(RHSType, LHSType)) {
+    QualType resultType = LHSType;
+    RHS = ImpCastExprToType(RHS.take(), resultType, CK_BitCast);
+    return resultType;
   }
 
-  if (!(LHSType->isVectorType() || LHSType->isScalarType()) ||
-      !(RHSType->isVectorType() || RHSType->isScalarType())) {
+  // If there's an ext-vector type and a scalar, try to promote (and
+  // only promote) and splat the scalar to the vector type.
+  if (!RHSVecType && isa<ExtVectorType>(LHSVecType)) {
+    if (!tryVectorPromoteAndSplat(*this, &RHS, RHSType,
+                                  LHSVecType->getElementType(), LHSType))
+      return LHSType;
+  }
+  if (!LHSVecType && isa<ExtVectorType>(RHSVecType)) {
+    if (!tryVectorPromoteAndSplat(*this, (IsCompAssign ? 0 : &LHS), LHSType,
+                                  RHSVecType->getElementType(), RHSType))
+      return RHSType;
+  }
+
+  // Okay, the expression is invalid.
+
+  // If there's a non-vector, non-real operand, diagnose that.
+  if ((!RHSVecType && !RHSType->isRealType()) ||
+      (!LHSVecType && !LHSType->isRealType())) {
     Diag(Loc, diag::err_typecheck_vector_not_convertable_non_scalar)
-    << LHS.get()->getType() << RHS.get()->getType()
-    << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
+      << LHSType << RHSType
+      << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
     return QualType();
   }
 
-  // Canonicalize the ExtVector to the LHS, remember if we swapped so we can
-  // swap back (so that we don't reverse the inputs to a subtract, for instance.
-  bool swapped = false;
-  if (RHSType->isExtVectorType() && !IsCompAssign) {
-    swapped = true;
-    std::swap(RHS, LHS);
-    std::swap(RHSType, LHSType);
-  }
-
-  // Handle the case of an ext vector and scalar.
-  if (const ExtVectorType *LV = LHSType->getAs<ExtVectorType>()) {
-    QualType EltTy = LV->getElementType();
-    if (EltTy->isIntegralType(Context) && RHSType->isIntegralType(Context)) {
-      int order = Context.getIntegerTypeOrder(EltTy, RHSType);
-      if (order > 0)
-        RHS = ImpCastExprToType(RHS.take(), EltTy, CK_IntegralCast);
-      if (order >= 0) {
-        RHS = ImpCastExprToType(RHS.take(), LHSType, CK_VectorSplat);
-        if (swapped) std::swap(RHS, LHS);
-        return LHSType;
-      }
-    }
-    if (EltTy->isRealFloatingType() && RHSType->isScalarType()) {
-      if (RHSType->isRealFloatingType()) {
-        int order = Context.getFloatingTypeOrder(EltTy, RHSType);
-        if (order > 0)
-          RHS = ImpCastExprToType(RHS.take(), EltTy, CK_FloatingCast);
-        if (order >= 0) {
-          RHS = ImpCastExprToType(RHS.take(), LHSType, CK_VectorSplat);
-          if (swapped) std::swap(RHS, LHS);
-          return LHSType;
-        }
-      }
-      if (RHSType->isIntegralType(Context)) {
-        RHS = ImpCastExprToType(RHS.take(), EltTy, CK_IntegralToFloating);
-        RHS = ImpCastExprToType(RHS.take(), LHSType, CK_VectorSplat);
-        if (swapped) std::swap(RHS, LHS);
-        return LHSType;
-      }
-    }
-  }
-
-  // Vectors of different size or scalar and non-ext-vector are errors.
-  if (swapped) std::swap(RHS, LHS);
+  // Otherwise, use the generic diagnostic.
   Diag(Loc, diag::err_typecheck_vector_not_convertable)
-    << LHS.get()->getType() << RHS.get()->getType()
+    << LHSType << RHSType
     << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
   return QualType();
 }

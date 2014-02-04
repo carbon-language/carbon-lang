@@ -2,6 +2,7 @@
 typedef int __v2si __attribute__((__vector_size__(8)));
 typedef short __v4hi __attribute__((__vector_size__(8)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
+typedef short __v3hi __attribute__((__ext_vector_type__(3)));
 
 struct S { }; // expected-note 2 {{candidate constructor}}
 
@@ -46,3 +47,19 @@ struct testvec {
     v = v + rhs; // expected-error {{can't convert between vector and non-scalar values}}
   }
 };
+
+// rdar://15931426
+//   Conversions for return values.
+__v4hi threeToFour(__v3hi v) { // expected-note {{not viable}}
+  return v; // expected-error {{cannot initialize return object}}
+}
+__v3hi fourToThree(__v4hi v) { // expected-note {{not viable}}
+  return v; // expected-error {{cannot initialize return object}}
+}
+//   Conversions for calls.
+void call3to4(__v4hi v) {
+  (void) threeToFour(v); // expected-error {{no matching function for call}}
+}
+void call4to3(__v3hi v) {
+  (void) fourToThree(v); // expected-error {{no matching function for call}}
+}
