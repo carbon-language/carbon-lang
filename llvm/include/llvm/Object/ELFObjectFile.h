@@ -404,9 +404,6 @@ uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Symb) const {
       EF.getSymbolTableIndex(ESym) == ELF::SHN_COMMON)
     Result |= SymbolRef::SF_Common;
 
-  if (ESym->getType() == ELF::STT_TLS)
-    Result |= SymbolRef::SF_ThreadLocal;
-
   return Result;
 }
 

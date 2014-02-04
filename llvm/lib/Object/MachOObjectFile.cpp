@@ -578,7 +578,6 @@ uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
   uint8_t MachOType = Entry.n_type;
   uint16_t MachOFlags = Entry.n_desc;
 
-  // TODO: Correctly set SF_ThreadLocal
   uint32_t Result = SymbolRef::SF_None;
 
   if ((MachOType & MachO::N_TYPE) == MachO::N_UNDF)
