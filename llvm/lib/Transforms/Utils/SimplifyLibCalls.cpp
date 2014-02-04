@@ -493,8 +493,11 @@ struct StrChrOpt : public LibCallOptimization {
     // Otherwise, the character is a constant, see if the first argument is
     // a string literal.  If so, we can constant fold.
     StringRef Str;
-    if (!getConstantStringInfo(SrcStr, Str))
+    if (!getConstantStringInfo(SrcStr, Str)) {
+      if (TD && CharC->isZero()) // strchr(p, 0) -> p + strlen(p)
+        return B.CreateGEP(SrcStr, EmitStrLen(SrcStr, B, TD, TLI), "strchr");
       return 0;
+    }
 
     // Compute the offset, make sure to handle the case when we're searching for
     // zero (a weird way to spell strlen).
@@ -2297,8 +2300,6 @@ void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) const {
 //   * sqrt(Nroot(x)) -> pow(x,1/(2*N))
 //   * sqrt(pow(x,y)) -> pow(|x|,y*0.5)
 //
-// strchr:
-//   * strchr(p, 0) -> strlen(p)
 // tan, tanf, tanl:
 //   * tan(atan(x)) -> x
 //
