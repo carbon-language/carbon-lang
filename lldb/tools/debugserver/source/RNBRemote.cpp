@@ -3011,7 +3011,9 @@ RNBRemote::HandlePacket_v (const char *p)
                 m_ctx.LaunchStatus().SetErrorString(err_str);
             else
                 m_ctx.LaunchStatus().SetErrorString("attach failed");
-            return SendPacket ("E01");  // E01 is our magic error value for attach failed.
+            SendPacket ("E01");  // E01 is our magic error value for attach failed.
+            DNBLogError ("Attach failed: \"%s\".", err_str);
+            return rnb_err;
         }
     }
 
