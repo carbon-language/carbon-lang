@@ -271,13 +271,48 @@ uptr internal_read(fd_t fd, void *buf, uptr count) {
 uptr internal_write(fd_t fd, const void *buf, uptr count) {
   if (fd != kStderrFd)
     UNIMPLEMENTED();
-  HANDLE err = GetStdHandle(STD_ERROR_HANDLE);
-  if (err == 0)
-    return 0;  // FIXME: this might not work on some apps.
-  DWORD ret;
-  if (!WriteFile(err, buf, count, &ret, 0))
+
+  static HANDLE output_stream = 0;
+  // Abort immediately if we know printing is not possible.
+  if (output_stream == INVALID_HANDLE_VALUE)
     return 0;
-  return ret;
+
+  // If called for the first time, try to use stderr to output stuff,
+  // falling back to stdout if anything goes wrong.
+  bool fallback_to_stdout = false;
+  if (output_stream == 0) {
+    output_stream = GetStdHandle(STD_ERROR_HANDLE);
+    // We don't distinguish "no such handle" from error.
+    if (output_stream == 0)
+      output_stream = INVALID_HANDLE_VALUE;
+
+    if (output_stream == INVALID_HANDLE_VALUE) {
+      // Retry with stdout?
+      output_stream = GetStdHandle(STD_OUTPUT_HANDLE);
+      if (output_stream == 0)
+        output_stream = INVALID_HANDLE_VALUE;
+      if (output_stream == INVALID_HANDLE_VALUE)
+        return 0;
+    } else {
+      // Successfully got an stderr handle.  However, if WriteFile() fails,
+      // we can still try to fallback to stdout.
+      fallback_to_stdout = true;
+    }
+  }
+
+  DWORD ret;
+  if (WriteFile(output_stream, buf, count, &ret, 0))
+    return ret;
+
+  // Re-try with stdout if using a valid stderr handle fails.
+  if (fallback_to_stdout) {
+    output_stream = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (output_stream == 0)
+      output_stream = INVALID_HANDLE_VALUE;
+    if (output_stream != INVALID_HANDLE_VALUE)
+      return internal_write(fd, buf, count);
+  }
+  return 0;
 }
 
 uptr internal_stat(const char *path, void *buf) {
