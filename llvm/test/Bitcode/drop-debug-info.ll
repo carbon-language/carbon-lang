@@ -23,6 +23,6 @@ entry:
 !9 = metadata !{i32 2, metadata !"Dwarf Version", i32 2}
 !12 = metadata !{i32 4, i32 0, metadata !4, null}
 
-; WARN: warning: invalid debug metadata version (0)
+; WARN: warning: ignoring debug info with an invalid version (0)
 ; CHECK-NOT: !dbg
 ; CHECK-NOT: !llvm.dbg.cu
