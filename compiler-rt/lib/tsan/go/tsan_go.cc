@@ -51,25 +51,33 @@ void internal_free(void *p) {
   InternalFree(p);
 }
 
+struct SymbolizeContext {
+  uptr pc;
+  char *func;
+  char *file;
+  uptr line;
+  uptr off;
+  uptr res;
+};
+
 // Callback into Go.
-extern "C" int __tsan_symbolize(uptr pc, char **func, char **file,
-    int *line, int *off);
+extern "C" void __tsan_symbolize(SymbolizeContext *ctx);
 
 ReportStack *SymbolizeCode(uptr addr) {
   ReportStack *s = (ReportStack*)internal_alloc(MBlockReportStack,
                                                 sizeof(ReportStack));
   internal_memset(s, 0, sizeof(*s));
   s->pc = addr;
-  char *func = 0, *file = 0;
-  int line = 0, off = 0;
-  if (__tsan_symbolize(addr, &func, &file, &line, &off)) {
-    s->offset = off;
-    s->func = internal_strdup(func ? func : "??");
-    s->file = internal_strdup(file ? file : "-");
-    s->line = line;
+  SymbolizeContext ctx;
+  internal_memset(&ctx, 0, sizeof(ctx));
+  ctx.pc = addr;
+  __tsan_symbolize(&ctx);
+  if (ctx.res) {
+    s->offset = ctx.off;
+    s->func = internal_strdup(ctx.func ? ctx.func : "??");
+    s->file = internal_strdup(ctx.file ? ctx.file : "-");
+    s->line = ctx.line;
     s->col = 0;
-    free(func);
-    free(file);
   }
   return s;
 }
@@ -106,20 +114,50 @@ void __tsan_read(ThreadState *thr, void *addr, void *pc) {
   MemoryRead(thr, (uptr)pc, (uptr)addr, kSizeLog1);
 }
 
+void __tsan_read_pc(ThreadState *thr, void *addr, uptr callpc, uptr pc) {
+  if (callpc != 0)
+    FuncEntry(thr, callpc);
+  MemoryRead(thr, (uptr)pc, (uptr)addr, kSizeLog1);
+  if (callpc != 0)
+    FuncExit(thr);
+}
+
 void __tsan_write(ThreadState *thr, void *addr, void *pc) {
   MemoryWrite(thr, (uptr)pc, (uptr)addr, kSizeLog1);
 }
 
-void __tsan_read_range(ThreadState *thr, void *addr, uptr size, uptr step,
-                       void *pc) {
-  (void)step;
+void __tsan_write_pc(ThreadState *thr, void *addr, uptr callpc, uptr pc) {
+  if (callpc != 0)
+    FuncEntry(thr, callpc);
+  MemoryWrite(thr, (uptr)pc, (uptr)addr, kSizeLog1);
+  if (callpc != 0)
+    FuncExit(thr);
+}
+
+void __tsan_read_range(ThreadState *thr, void *addr, uptr size, uptr pc) {
   MemoryAccessRange(thr, (uptr)pc, (uptr)addr, size, false);
 }
 
-void __tsan_write_range(ThreadState *thr, void *addr, uptr size, uptr step,
-                        void *pc) {
-  (void)step;
+void __tsan_write_range(ThreadState *thr, void *addr, uptr size, uptr pc) {
   MemoryAccessRange(thr, (uptr)pc, (uptr)addr, size, true);
+}
+
+void __tsan_read_range_pc(ThreadState *thr, void *addr, uptr size, uptr callpc,
+    uptr pc) {
+  if (callpc != 0)
+    FuncEntry(thr, callpc);
+  MemoryAccessRange(thr, (uptr)pc, (uptr)addr, size, false);
+  if (callpc != 0)
+    FuncExit(thr);
+}
+
+void __tsan_write_range_pc(ThreadState *thr, void *addr, uptr size, uptr callpc,
+    uptr pc) {
+  if (callpc != 0)
+    FuncEntry(thr, callpc);
+  MemoryAccessRange(thr, (uptr)pc, (uptr)addr, size, true);
+  if (callpc != 0)
+    FuncExit(thr);
 }
 
 void __tsan_func_enter(ThreadState *thr, void *pc) {
@@ -134,10 +172,6 @@ void __tsan_malloc(ThreadState *thr, void *p, uptr sz, void *pc) {
   if (thr == 0)  // probably before __tsan_init()
     return;
   MemoryResetRange(thr, (uptr)pc, (uptr)p, sz);
-}
-
-void __tsan_free(void *p) {
-  (void)p;
 }
 
 void __tsan_go_start(ThreadState *parent, ThreadState **pthr, void *pc) {

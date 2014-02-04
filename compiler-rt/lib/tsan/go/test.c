@@ -23,7 +23,6 @@ void __tsan_write(void *thr, void *addr, void *pc);
 void __tsan_func_enter(void *thr, void *pc);
 void __tsan_func_exit(void *thr);
 void __tsan_malloc(void *thr, void *p, unsigned long sz, void *pc);
-void __tsan_free(void *p);
 void __tsan_acquire(void *thr, void *addr);
 void __tsan_release(void *thr, void *addr);
 void __tsan_release_merge(void *thr, void *addr);
@@ -60,7 +59,6 @@ int main(void) {
   __tsan_read(thr2, buf, (char*)&barfoo + 1);
   __tsan_func_exit(thr2);
   __tsan_go_end(thr2);
-  __tsan_free(buf);
   __tsan_func_exit(thr0);
   __tsan_fini();
   return 0;
