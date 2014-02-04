@@ -62,7 +62,7 @@ endmacro(llvm_config)
 function(explicit_llvm_config executable)
   set( link_components ${ARGN} )
 
-  explicit_map_components_to_libraries(LIBRARIES ${link_components})
+  llvm_map_components_to_libnames(LIBRARIES ${link_components})
   target_link_libraries(${executable} ${LIBRARIES})
 endfunction(explicit_llvm_config)
 
