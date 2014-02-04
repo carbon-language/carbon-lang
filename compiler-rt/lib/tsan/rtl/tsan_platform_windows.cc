@@ -21,17 +21,18 @@
 
 namespace __tsan {
 
-ScopedInRtl::ScopedInRtl() {
-}
-
-ScopedInRtl::~ScopedInRtl() {
-}
-
 uptr GetShadowMemoryConsumption() {
   return 0;
 }
 
 void FlushShadowMemory() {
+}
+
+void WriteMemoryProfile(char *buf, uptr buf_size) {
+}
+
+uptr GetRSS() {
+  return 0;
 }
 
 const char *InitializePlatform() {
