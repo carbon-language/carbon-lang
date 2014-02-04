@@ -653,13 +653,14 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, MVT VT) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::t2LDRpci), DestReg)
                     .addConstantPoolIndex(Idx));
-  else
+  else {
     // The extra immediate is for addrmode2.
     DestReg = constrainOperandRegClass(TII.get(ARM::LDRcp), DestReg, 0);
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(ARM::LDRcp), DestReg)
                     .addConstantPoolIndex(Idx)
                     .addImm(0));
+  }
 
   return DestReg;
 }
