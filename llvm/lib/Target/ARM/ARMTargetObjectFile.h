@@ -36,6 +36,9 @@ public:
   virtual const MCSection *getAttributesSection() const {
     return AttributesSection;
   }
+
+  /// \brief Describe a TLS variable address within debug info.
+  virtual const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
 };
 
 } // end namespace llvm
