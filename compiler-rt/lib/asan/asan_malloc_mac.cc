@@ -24,7 +24,6 @@
 #include "asan_allocator.h"
 #include "asan_interceptors.h"
 #include "asan_internal.h"
-#include "asan_mac.h"
 #include "asan_report.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
