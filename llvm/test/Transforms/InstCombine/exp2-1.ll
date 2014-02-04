@@ -1,6 +1,7 @@
 ; Test that the exp2 library call simplifier works correctly.
 ;
 ; RUN: opt < %s -instcombine -S | FileCheck %s
+; RUN: opt < %s -instcombine -S -mtriple=i386-pc-win32 | FileCheck %s -check-prefix=CHECK-WIN
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 
@@ -72,5 +73,28 @@ define float @test_simplify8(i8 zeroext %x) {
   %conv = uitofp i8 %x to float
   %ret = call float @exp2f(float %conv)
 ; CHECK: call float @ldexpf
+  ret float %ret
+}
+
+declare double @llvm.exp2.f64(double)
+declare float @llvm.exp2.f32(float)
+
+define double @test_simplify9(i8 zeroext %x) {
+; CHECK-LABEL: @test_simplify9(
+; CHECK-WIN-LABEL: @test_simplify9(
+  %conv = uitofp i8 %x to double
+  %ret = call double @llvm.exp2.f64(double %conv)
+; CHECK: call double @ldexp
+; CHECK-WIN: call double @ldexp
+  ret double %ret
+}
+
+define float @test_simplify10(i8 zeroext %x) {
+; CHECK-LABEL: @test_simplify10(
+; CHECK-WIN-LABEL: @test_simplify10(
+  %conv = uitofp i8 %x to float
+  %ret = call float @llvm.exp2.f32(float %conv)
+; CHECK: call float @ldexpf
+; CHECK-WIN-NOT: call float @ldexpf
   ret float %ret
 }

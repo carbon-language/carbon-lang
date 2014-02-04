@@ -352,6 +352,12 @@ namespace llvm {
       labs,
       /// int lchown(const char *path, uid_t owner, gid_t group);
       lchown,
+      /// double ldexp(double x, int n);
+      ldexp,
+      /// float ldexpf(float x, int n);
+      ldexpf,
+      /// long double ldexpl(long double x, int n);
+      ldexpl,
       /// long long int llabs(long long int j);
       llabs,
       /// double log(double x);

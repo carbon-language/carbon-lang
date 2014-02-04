@@ -1274,37 +1274,37 @@ struct Exp2Opt : public UnsafeFPLibCallOptimization {
     Value *Op = CI->getArgOperand(0);
     // Turn exp2(sitofp(x)) -> ldexp(1.0, sext(x))  if sizeof(x) <= 32
     // Turn exp2(uitofp(x)) -> ldexp(1.0, zext(x))  if sizeof(x) < 32
-    Value *LdExpArg = 0;
-    if (SIToFPInst *OpC = dyn_cast<SIToFPInst>(Op)) {
-      if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() <= 32)
-        LdExpArg = B.CreateSExt(OpC->getOperand(0), B.getInt32Ty());
-    } else if (UIToFPInst *OpC = dyn_cast<UIToFPInst>(Op)) {
-      if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() < 32)
-        LdExpArg = B.CreateZExt(OpC->getOperand(0), B.getInt32Ty());
-    }
+    LibFunc::Func LdExp = LibFunc::ldexpl;
+    if (Op->getType()->isFloatTy())
+      LdExp = LibFunc::ldexpf;
+    else if (Op->getType()->isDoubleTy())
+      LdExp = LibFunc::ldexp;
 
-    if (LdExpArg) {
-      const char *Name;
-      if (Op->getType()->isFloatTy())
-        Name = "ldexpf";
-      else if (Op->getType()->isDoubleTy())
-        Name = "ldexp";
-      else
-        Name = "ldexpl";
+    if (TLI->has(LdExp)) {
+      Value *LdExpArg = 0;
+      if (SIToFPInst *OpC = dyn_cast<SIToFPInst>(Op)) {
+        if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() <= 32)
+          LdExpArg = B.CreateSExt(OpC->getOperand(0), B.getInt32Ty());
+      } else if (UIToFPInst *OpC = dyn_cast<UIToFPInst>(Op)) {
+        if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() < 32)
+          LdExpArg = B.CreateZExt(OpC->getOperand(0), B.getInt32Ty());
+      }
 
-      Constant *One = ConstantFP::get(*Context, APFloat(1.0f));
-      if (!Op->getType()->isFloatTy())
-        One = ConstantExpr::getFPExtend(One, Op->getType());
+      if (LdExpArg) {
+        Constant *One = ConstantFP::get(*Context, APFloat(1.0f));
+        if (!Op->getType()->isFloatTy())
+          One = ConstantExpr::getFPExtend(One, Op->getType());
 
-      Module *M = Caller->getParent();
-      Value *Callee = M->getOrInsertFunction(Name, Op->getType(),
-                                             Op->getType(),
-                                             B.getInt32Ty(), NULL);
-      CallInst *CI = B.CreateCall2(Callee, One, LdExpArg);
-      if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
-        CI->setCallingConv(F->getCallingConv());
+        Module *M = Caller->getParent();
+        Value *Callee =
+            M->getOrInsertFunction(TLI->getName(LdExp), Op->getType(),
+                                   Op->getType(), B.getInt32Ty(), NULL);
+        CallInst *CI = B.CreateCall2(Callee, One, LdExpArg);
+        if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
+          CI->setCallingConv(F->getCallingConv());
 
-      return CI;
+        return CI;
+      }
     }
     return Ret;
   }

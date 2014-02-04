@@ -190,6 +190,9 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "isdigit",
     "labs",
     "lchown",
+    "ldexp",
+    "ldexpf",
+    "ldexpl",
     "llabs",
     "log",
     "log10",
@@ -432,6 +435,8 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::fminl);
     TLI.setUnavailable(LibFunc::fmodl);
     TLI.setUnavailable(LibFunc::frexpl);
+    TLI.setUnavailable(LibFunc::ldexpf);
+    TLI.setUnavailable(LibFunc::ldexpl);
     TLI.setUnavailable(LibFunc::logl);
     TLI.setUnavailable(LibFunc::modfl);
     TLI.setUnavailable(LibFunc::powl);
