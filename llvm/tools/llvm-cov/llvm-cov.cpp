@@ -84,13 +84,18 @@ int main(int argc, char **argv) {
 
   OwningPtr<MemoryBuffer> GCDA_Buff;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCDA, GCDA_Buff)) {
-    errs() << InputGCDA << ": " << ec.message() << "\n";
-    return 1;
-  }
-  GCOVBuffer GCDA_GB(GCDA_Buff.get());
-  if (!GF.readGCDA(GCDA_GB)) {
-    errs() << "Invalid .gcda File!\n";
-    return 1;
+    if (ec != errc::no_such_file_or_directory) {
+      errs() << InputGCDA << ": " << ec.message() << "\n";
+      return 1;
+    }
+    // Clear the filename to make it clear we didn't read anything.
+    InputGCDA = "-";
+  } else {
+    GCOVBuffer GCDA_GB(GCDA_Buff.get());
+    if (!GF.readGCDA(GCDA_GB)) {
+      errs() << "Invalid .gcda File!\n";
+      return 1;
+    }
   }
 
   if (DumpGCOV)

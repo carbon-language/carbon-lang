@@ -48,6 +48,11 @@ RUN: llvm-cov test.c -a -b -c -u | diff -u test_-b.output -
 RUN: diff -aub test_-a_-b_-c_-u.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a_-b_-c_-u.h.gcov test.h.gcov
 
+# Missing gcda file just gives 0 counts.
+RUN: llvm-cov test.c -gcda=no_such_gcda_file | diff -u test_no_gcda.output -
+RUN: diff -aub test_no_gcda.cpp.gcov test.cpp.gcov
+RUN: diff -aub test_no_gcda.h.gcov test.h.gcov
+
 # Invalid gcno file.
 RUN: not llvm-cov test.c -gcno=test_read_fail.gcno
 
