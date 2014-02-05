@@ -315,10 +315,13 @@ CodeGenInstruction::CodeGenInstruction(Record *R)
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   isNotDuplicable = R->getValueAsBit("isNotDuplicable");
 
-  mayLoad      = R->getValueAsBitOrUnset("mayLoad", mayLoad_Unset);
-  mayStore     = R->getValueAsBitOrUnset("mayStore", mayStore_Unset);
-  hasSideEffects = R->getValueAsBitOrUnset("hasSideEffects",
-                                           hasSideEffects_Unset);
+  bool Unset;
+  mayLoad      = R->getValueAsBitOrUnset("mayLoad", Unset);
+  mayLoad_Unset = Unset;
+  mayStore     = R->getValueAsBitOrUnset("mayStore", Unset);
+  mayStore_Unset = Unset;
+  hasSideEffects = R->getValueAsBitOrUnset("hasSideEffects", Unset);
+  hasSideEffects_Unset = Unset;
   neverHasSideEffects = R->getValueAsBit("neverHasSideEffects");
 
   isAsCheapAsAMove = R->getValueAsBit("isAsCheapAsAMove");
