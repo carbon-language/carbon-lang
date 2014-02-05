@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <unistd.h>
 
 int GlobalData[10];
 int x;
@@ -13,6 +14,7 @@ namespace XXX {
 }
 
 void *Thread(void *a) {
+  sleep(1);
   GlobalData[2] = 42;
   x = 1;
   XXX::YYY::ZZZ[0] = 1;
