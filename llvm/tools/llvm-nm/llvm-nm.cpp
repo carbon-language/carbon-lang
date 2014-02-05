@@ -316,63 +316,28 @@ static char getSymbolNMTypeChar(ELFObjectFile<ELFT> &Obj, symbol_iterator I) {
   const ELFFile<ELFT> &EF = *Obj.getELFFile();
   const Elf_Shdr *ESec = EF.getSection(ESym);
 
-  char Ret = '?';
-
   if (ESec) {
     switch (ESec->sh_type) {
     case ELF::SHT_PROGBITS:
     case ELF::SHT_DYNAMIC:
       switch (ESec->sh_flags) {
       case(ELF::SHF_ALLOC | ELF::SHF_EXECINSTR) :
-        Ret = 't';
-        break;
+        return 't';
       case(ELF::SHF_TLS | ELF::SHF_ALLOC | ELF::SHF_WRITE) :
       case(ELF::SHF_ALLOC | ELF::SHF_WRITE) :
-        Ret = 'd';
-        break;
+        return 'd';
       case ELF::SHF_ALLOC:
       case(ELF::SHF_ALLOC | ELF::SHF_MERGE) :
       case(ELF::SHF_ALLOC | ELF::SHF_MERGE | ELF::SHF_STRINGS) :
-        Ret = 'r';
-        break;
+        return 'r';
       }
       break;
     case ELF::SHT_NOBITS:
-      Ret = 'b';
+      return 'b';
     }
   }
 
-  switch (EF.getSymbolTableIndex(ESym)) {
-  case ELF::SHN_UNDEF:
-    if (Ret == '?')
-      Ret = 'U';
-    break;
-  case ELF::SHN_ABS:
-    Ret = 'a';
-    break;
-  case ELF::SHN_COMMON:
-    Ret = 'c';
-    break;
-  }
-
-  switch (ESym->getBinding()) {
-  case ELF::STB_GLOBAL:
-    Ret = ::toupper(Ret);
-    break;
-  case ELF::STB_WEAK:
-    if (EF.getSymbolTableIndex(ESym) == ELF::SHN_UNDEF) {
-      if (ESym->getType() == ELF::STT_OBJECT)
-        Ret = 'v';
-      else
-        Ret = 'w';
-    }
-    else if (ESym->getType() == ELF::STT_OBJECT)
-      Ret = 'V';
-    else
-      Ret = 'W';
-  }
-
-  if (Ret == '?' && ESym->getType() == ELF::STT_SECTION) {
+  if (ESym->getType() == ELF::STT_SECTION) {
     StringRef Name;
     if (error(I->getName(Name)))
       return '?';
@@ -382,7 +347,7 @@ static char getSymbolNMTypeChar(ELFObjectFile<ELFT> &Obj, symbol_iterator I) {
         .Default('?');
   }
 
-  return Ret;
+  return '?';
 }
 
 static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
@@ -408,45 +373,29 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
   }
 
   switch (Symb->SectionNumber) {
-  case COFF::IMAGE_SYM_UNDEFINED:
-    // Check storage classes.
-    if (Symb->StorageClass == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL) {
-      return 'w';                   // Don't do ::toupper.
-    } else if (Symb->Value != 0)    // Check for common symbols.
-      Ret = 'c';
-    else
-      Ret = 'u';
-    break;
-  case COFF::IMAGE_SYM_ABSOLUTE:
-    Ret = 'a';
-    break;
   case COFF::IMAGE_SYM_DEBUG:
-    Ret = 'n';
-    break;
+    return 'n';
   default:
     // Check section type.
     if (Characteristics & COFF::IMAGE_SCN_CNT_CODE)
-      Ret = 't';
+      return 't';
     else if (Characteristics & COFF::IMAGE_SCN_MEM_READ &&
              ~Characteristics & COFF::IMAGE_SCN_MEM_WRITE) // Read only.
-      Ret = 'r';
+      return 'r';
     else if (Characteristics & COFF::IMAGE_SCN_CNT_INITIALIZED_DATA)
-      Ret = 'd';
+      return 'd';
     else if (Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
-      Ret = 'b';
+      return 'b';
     else if (Characteristics & COFF::IMAGE_SCN_LNK_INFO)
-      Ret = 'i';
+      return 'i';
 
     // Check for section symbol.
     else if (Symb->StorageClass == COFF::IMAGE_SYM_CLASS_STATIC &&
              Symb->Value == 0)
-      Ret = 's';
+      return 's';
   }
 
-  if (Symb->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL)
-    Ret = ::toupper(static_cast<unsigned char>(Ret));
-
-  return Ret;
+  return '?';
 }
 
 static uint8_t getNType(MachOObjectFile &Obj, DataRefImpl Symb) {
@@ -462,14 +411,9 @@ static char getSymbolNMTypeChar(MachOObjectFile &Obj, symbol_iterator I) {
   DataRefImpl Symb = I->getRawDataRefImpl();
   uint8_t NType = getNType(Obj, Symb);
 
-  char Char;
   switch (NType & MachO::N_TYPE) {
-  case MachO::N_UNDF:
-    Char = 'u';
-    break;
   case MachO::N_ABS:
-    Char = 's';
-    break;
+    return 's';
   case MachO::N_SECT: {
     section_iterator Sec = Obj.end_sections();
     Obj.getSymbolSection(Symb, Sec);
@@ -478,33 +422,72 @@ static char getSymbolNMTypeChar(MachOObjectFile &Obj, symbol_iterator I) {
     Obj.getSectionName(Ref, SectionName);
     StringRef SegmentName = Obj.getSectionFinalSegmentName(Ref);
     if (SegmentName == "__TEXT" && SectionName == "__text")
-      Char = 't';
+      return 't';
     else
-      Char = 's';
-  } break;
-  default:
-    Char = '?';
-    break;
+      return 's';
+  }
   }
 
-  if (NType & (MachO::N_EXT | MachO::N_PEXT))
-    Char = toupper(static_cast<unsigned char>(Char));
-  return Char;
+  return '?';
+}
+
+template <class ELFT>
+static bool isObject(ELFObjectFile<ELFT> &Obj, symbol_iterator I) {
+  typedef typename ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
+
+  DataRefImpl Symb = I->getRawDataRefImpl();
+  const Elf_Sym *ESym = Obj.getSymbol(Symb);
+
+  return ESym->getType() == ELF::STT_OBJECT;
+}
+
+static bool isObject(ObjectFile *Obj, symbol_iterator I) {
+  if (ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
+    return isObject(*ELF, I);
+  if (ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(Obj))
+    return isObject(*ELF, I);
+  if (ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(Obj))
+    return isObject(*ELF, I);
+  if (ELF64BEObjectFile *ELF = dyn_cast<ELF64BEObjectFile>(Obj))
+    return isObject(*ELF, I);
+  return false;
 }
 
 static char getNMTypeChar(ObjectFile *Obj, symbol_iterator I) {
-  if (COFFObjectFile *COFF = dyn_cast<COFFObjectFile>(Obj))
-    return getSymbolNMTypeChar(*COFF, I);
-  if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(Obj))
-    return getSymbolNMTypeChar(*MachO, I);
-  if (ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
-    return getSymbolNMTypeChar(*ELF, I);
-  if (ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(Obj))
-    return getSymbolNMTypeChar(*ELF, I);
-  if (ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(Obj))
-    return getSymbolNMTypeChar(*ELF, I);
-  ELF64BEObjectFile *ELF = cast<ELF64BEObjectFile>(Obj);
-  return getSymbolNMTypeChar(*ELF, I);
+  uint32_t Symflags = I->getFlags();
+  if ((Symflags & object::SymbolRef::SF_Weak) && !isa<MachOObjectFile>(Obj)) {
+    char Ret = isObject(Obj, I) ? 'v' : 'w';
+    if (!(Symflags & object::SymbolRef::SF_Undefined))
+      Ret = toupper(Ret);
+    return Ret;
+  }
+
+  if (Symflags & object::SymbolRef::SF_Undefined)
+    return 'U';
+
+  if (Symflags & object::SymbolRef::SF_Common)
+    return 'C';
+
+  char Ret = '?';
+  if (Symflags & object::SymbolRef::SF_Absolute)
+    Ret = 'a';
+  else if (COFFObjectFile *COFF = dyn_cast<COFFObjectFile>(Obj))
+    Ret = getSymbolNMTypeChar(*COFF, I);
+  else if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(Obj))
+    Ret = getSymbolNMTypeChar(*MachO, I);
+  else if (ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
+    Ret = getSymbolNMTypeChar(*ELF, I);
+  else if (ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(Obj))
+    Ret = getSymbolNMTypeChar(*ELF, I);
+  else if (ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(Obj))
+    Ret = getSymbolNMTypeChar(*ELF, I);
+  else
+    Ret = getSymbolNMTypeChar(*cast<ELF64BEObjectFile>(Obj), I);
+
+  if (Symflags & object::SymbolRef::SF_Global)
+    Ret = toupper(Ret);
+
+  return Ret;
 }
 
 static void getDynamicSymbolIterators(ObjectFile *Obj, symbol_iterator &Begin,
