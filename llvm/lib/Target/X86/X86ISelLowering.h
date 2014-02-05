@@ -577,7 +577,8 @@ namespace llvm {
     /// allowsUnalignedMemoryAccesses - Returns true if the target allows
     /// unaligned memory accesses. of the specified type. Returns whether it
     /// is "fast" by reference in the second argument.
-    virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const;
+    virtual bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS,
+                                               bool *Fast) const;
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///

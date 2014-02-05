@@ -159,6 +159,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 //===----------------------------------------------------------------------===//
 
 bool SITargetLowering::allowsUnalignedMemoryAccesses(EVT  VT,
+                                                     unsigned AddrSpace,
                                                      bool *IsFast) const {
   // XXX: This depends on the address space and also we may want to revist
   // the alignment values we specify in the DataLayout.

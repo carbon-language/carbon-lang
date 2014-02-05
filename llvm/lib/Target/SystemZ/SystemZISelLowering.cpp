@@ -337,6 +337,7 @@ bool SystemZTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
 }
 
 bool SystemZTargetLowering::allowsUnalignedMemoryAccesses(EVT VT,
+                                                          unsigned,
                                                           bool *Fast) const {
   // Unaligned accesses should never be slower than the expanded version.
   // We check specifically for aligned accesses in the few cases where

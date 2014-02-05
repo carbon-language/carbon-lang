@@ -7885,6 +7885,7 @@ EVT PPCTargetLowering::getOptimalMemOpType(uint64_t Size,
 }
 
 bool PPCTargetLowering::allowsUnalignedMemoryAccesses(EVT VT,
+                                                      unsigned,
                                                       bool *Fast) const {
   if (DisablePPCUnaligned)
     return false;

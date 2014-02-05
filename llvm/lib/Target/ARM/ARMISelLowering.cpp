@@ -10167,7 +10167,8 @@ bool ARMTargetLowering::isDesirableToTransformToIntegerOp(unsigned Opc,
   return (VT == MVT::f32) && (Opc == ISD::LOAD || Opc == ISD::STORE);
 }
 
-bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
+bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT, unsigned,
+                                                      bool *Fast) const {
   // The AllowsUnaliged flag models the SCTLR.A setting in ARM cpus
   bool AllowsUnaligned = Subtarget->allowsUnalignedMem();
 
@@ -10221,11 +10222,11 @@ EVT ARMTargetLowering::getOptimalMemOpType(uint64_t Size,
     bool Fast;
     if (Size >= 16 &&
         (memOpAlign(SrcAlign, DstAlign, 16) ||
-         (allowsUnalignedMemoryAccesses(MVT::v2f64, &Fast) && Fast))) {
+         (allowsUnalignedMemoryAccesses(MVT::v2f64, 0, &Fast) && Fast))) {
       return MVT::v2f64;
     } else if (Size >= 8 &&
                (memOpAlign(SrcAlign, DstAlign, 8) ||
-                (allowsUnalignedMemoryAccesses(MVT::f64, &Fast) && Fast))) {
+                (allowsUnalignedMemoryAccesses(MVT::f64, 0, &Fast) && Fast))) {
       return MVT::f64;
     }
   }

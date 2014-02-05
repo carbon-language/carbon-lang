@@ -244,7 +244,9 @@ addMSAFloatType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
 }
 
 bool
-MipsSETargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
+MipsSETargetLowering::allowsUnalignedMemoryAccesses(EVT VT,
+                                                    unsigned,
+                                                    bool *Fast) const {
   MVT::SimpleValueType SVT = VT.getSimpleVT().SimpleTy;
 
   switch (SVT) {

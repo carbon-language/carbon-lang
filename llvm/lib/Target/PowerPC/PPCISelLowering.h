@@ -461,7 +461,9 @@ namespace llvm {
 
     /// Is unaligned memory access allowed for the given type, and is it fast
     /// relative to software emulation.
-    virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast = 0) const;
+    virtual bool allowsUnalignedMemoryAccesses(EVT VT,
+                                               unsigned AddrSpace,
+                                               bool *Fast = 0) const;
 
     /// isFMAFasterThanFMulAndFAdd - Return true if an FMA operation is faster
     /// than a pair of fmul and fadd instructions. fmuladd intrinsics will be

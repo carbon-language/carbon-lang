@@ -1671,7 +1671,9 @@ bool X86TargetLowering::isSafeMemOpType(MVT VT) const {
 }
 
 bool
-X86TargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
+X86TargetLowering::allowsUnalignedMemoryAccesses(EVT VT,
+                                                 unsigned,
+                                                 bool *Fast) const {
   if (Fast)
     *Fast = Subtarget->isUnalignedMemAccessFast();
   return true;

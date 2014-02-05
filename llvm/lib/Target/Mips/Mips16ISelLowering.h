@@ -21,7 +21,8 @@ namespace llvm {
   public:
     explicit Mips16TargetLowering(MipsTargetMachine &TM);
 
-    virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const;
+    virtual bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AddrSpace,
+                                               bool *Fast) const;
 
     virtual MachineBasicBlock *
     EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;

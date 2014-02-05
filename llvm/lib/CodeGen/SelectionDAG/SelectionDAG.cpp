@@ -3693,7 +3693,7 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
       bool Fast;
       if (NumMemOps && AllowOverlap &&
           VTSize >= 8 && NewVTSize < Size &&
-          TLI.allowsUnalignedMemoryAccesses(VT, &Fast) && Fast)
+          TLI.allowsUnalignedMemoryAccesses(VT, 0, &Fast) && Fast)
         VTSize = Size;
       else {
         VT = NewVT;
