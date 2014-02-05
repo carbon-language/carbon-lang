@@ -66,7 +66,7 @@ and automatic location of the compilation database using source files paths.
 
   // Apply a custom category to all command-line options so that they are the
   // only ones displayed.
-  llvm::cl::OptionCategory MyToolCategory("my-tool options");
+  static llvm::cl::OptionCategory MyToolCategory("my-tool options");
 
   int main(int argc, const char **argv) {
     // CommonOptionsParser constructor will parse arguments and create a
@@ -122,7 +122,7 @@ version of this example tool is also checked into the clang tree at
 
   // Apply a custom category to all command-line options so that they are the
   // only ones displayed.
-  cl::OptionCategory MyToolCategory("my-tool options");
+  static cl::OptionCategory MyToolCategory("my-tool options");
 
   // CommonOptionsParser declares HelpMessage with a description of the common
   // command-line options related to the compilation database and input files.
