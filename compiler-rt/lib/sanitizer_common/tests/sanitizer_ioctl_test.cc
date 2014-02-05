@@ -47,6 +47,7 @@ static struct IoctlInit {
     // Avoid unused function warnings.
     (void)&ioctl_common_pre;
     (void)&ioctl_common_post;
+    (void)&ioctl_decode;
   }
 } ioctl_static_initializer;
 
