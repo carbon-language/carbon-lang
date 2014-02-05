@@ -155,9 +155,13 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   bool IsOperatorNew = OO == OO_New || OO == OO_Array_New;
   bool MissingExceptionSpecification = false;
   bool MissingEmptyExceptionSpecification = false;
+
   unsigned DiagID = diag::err_mismatched_exception_spec;
-  if (getLangOpts().MicrosoftExt)
+  bool ReturnValueOnError = true;
+  if (getLangOpts().MicrosoftExt) {
     DiagID = diag::warn_mismatched_exception_spec; 
+    ReturnValueOnError = false;
+  }
 
   // Check the types as written: they must match before any exception
   // specification adjustment is applied.
@@ -182,9 +186,9 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   }
 
   // The failure was something other than an missing exception
-  // specification; return an error.
+  // specification; return an error, except in MS mode where this is a warning.
   if (!MissingExceptionSpecification)
-    return true;
+    return ReturnValueOnError;
 
   const FunctionProtoType *NewProto =
     New->getType()->castAs<FunctionProtoType>();
@@ -302,10 +306,14 @@ bool Sema::CheckEquivalentExceptionSpec(
     const FunctionProtoType *New, SourceLocation NewLoc) {
   unsigned DiagID = diag::err_mismatched_exception_spec;
   if (getLangOpts().MicrosoftExt)
-    DiagID = diag::warn_mismatched_exception_spec; 
-  return CheckEquivalentExceptionSpec(PDiag(DiagID),
-                                      PDiag(diag::note_previous_declaration),
-                                      Old, OldLoc, New, NewLoc);
+    DiagID = diag::warn_mismatched_exception_spec;
+  bool Result = CheckEquivalentExceptionSpec(PDiag(DiagID),
+      PDiag(diag::note_previous_declaration), Old, OldLoc, New, NewLoc);
+
+  // In Microsoft mode, mismatching exception specifications just cause a warning.
+  if (getLangOpts().MicrosoftExt)
+    return false;
+  return Result;
 }
 
 /// CheckEquivalentExceptionSpec - Check if the two types have compatible
