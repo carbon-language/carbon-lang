@@ -29,12 +29,8 @@
 using namespace clang;
 using namespace CodeGen;
 
-CodeGenVTables::CodeGenVTables(CodeGenModule &CGM) : CGM(CGM) {
-  if (CGM.getTarget().getCXXABI().isMicrosoft())
-    VTContext.reset(new MicrosoftVTableContext(CGM.getContext()));
-  else
-    VTContext.reset(new ItaniumVTableContext(CGM.getContext()));
-}
+CodeGenVTables::CodeGenVTables(CodeGenModule &CGM)
+    : CGM(CGM), VTContext(CGM.getContext().getVTableContext()) {}
 
 llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD, 
                                               const ThunkInfo &Thunk) {

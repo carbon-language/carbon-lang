@@ -136,14 +136,14 @@ void CXXRecordDecl::setMSInheritanceModel() {
 //     // offset.
 //     int NonVirtualBaseAdjustment;
 //
+//     // The offset of the vb-table pointer within the object.  Only needed for
+//     // incomplete types.
+//     int VBPtrOffset;
+//
 //     // An offset within the vb-table that selects the virtual base containing
 //     // the member.  Loading from this offset produces a new offset that is
 //     // added to the address of the vb-table pointer to produce the base.
 //     int VirtualBaseAdjustmentOffset;
-//
-//     // The offset of the vb-table pointer within the object.  Only needed for
-//     // incomplete types.
-//     int VBPtrOffset;
 //   };
 static std::pair<unsigned, unsigned>
 getMSMemberPointerSlots(const MemberPointerType *MPT) {
@@ -151,37 +151,17 @@ getMSMemberPointerSlots(const MemberPointerType *MPT) {
   MSInheritanceAttr::Spelling Inheritance = RD->getMSInheritanceModel();
   unsigned Ptrs = 0;
   unsigned Ints = 0;
-  if (MPT->isMemberFunctionPointer()) {
-    // Member function pointers are a struct of a function pointer followed by a
-    // variable number of ints depending on the inheritance model used.  The
-    // function pointer is a real function if it is non-virtual and a vftable
-    // slot thunk if it is virtual.  The ints select the object base passed for
-    // the 'this' pointer.
-    Ptrs = 1; // First slot is always a function pointer.
-    switch (Inheritance) {
-    case MSInheritanceAttr::Keyword_unspecified_inheritance:
-      ++Ints; // VBTableOffset
-    case MSInheritanceAttr::Keyword_virtual_inheritance:
-      ++Ints; // VirtualBaseAdjustmentOffset
-    case MSInheritanceAttr::Keyword_multiple_inheritance:
-      ++Ints; // NonVirtualBaseAdjustment
-    case MSInheritanceAttr::Keyword_single_inheritance:
-      break;  // Nothing
-    }
-  } else {
-    // Data pointers are an aggregate of ints.  The first int is an offset
-    // followed by vbtable-related offsets.
-    Ints = 1; // We always have a field offset.
-    switch (Inheritance) {
-    case MSInheritanceAttr::Keyword_unspecified_inheritance:
-      ++Ints; // VBTableOffset
-    case MSInheritanceAttr::Keyword_virtual_inheritance:
-      ++Ints; // VirtualBaseAdjustmentOffset
-    case MSInheritanceAttr::Keyword_multiple_inheritance:
-    case MSInheritanceAttr::Keyword_single_inheritance:
-      break;  // Nothing
-    }
-  }
+  if (MPT->isMemberFunctionPointer())
+    Ptrs = 1;
+  else
+    Ints = 1;
+  if (MSInheritanceAttr::hasNVOffsetField(MPT->isMemberFunctionPointer(),
+                                          Inheritance))
+    Ints++;
+  if (MSInheritanceAttr::hasVBPtrOffsetField(Inheritance))
+    Ints++;
+  if (MSInheritanceAttr::hasVBTableOffsetField(Inheritance))
+    Ints++;
   return std::make_pair(Ptrs, Ints);
 }
 

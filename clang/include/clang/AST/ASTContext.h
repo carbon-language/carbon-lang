@@ -66,6 +66,7 @@ namespace clang {
   class UnresolvedSetIterator;
   class UsingDecl;
   class UsingShadowDecl;
+  class VTableContextBase;
 
   namespace Builtin { class Context; }
 
@@ -1731,6 +1732,8 @@ public:
 
   bool isNearlyEmpty(const CXXRecordDecl *RD) const;
 
+  VTableContextBase *getVTableContext();
+
   MangleContext *createMangleContext();
   
   void DeepCollectObjCIvars(const ObjCInterfaceDecl *OI, bool leafClass,
@@ -2292,6 +2295,8 @@ private:
   void ReleaseDeclContextMaps();
 
   llvm::OwningPtr<ParentMap> AllParents;
+
+  llvm::OwningPtr<VTableContextBase> VTContext;
 };
 
 /// \brief Utility function for constructing a nullary selector.

@@ -1327,44 +1327,6 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
   CGF.EmitBlock(EndBlock);
 }
 
-// Member pointer helpers.
-static bool hasVBPtrOffsetField(MSInheritanceAttr::Spelling Inheritance) {
-  return Inheritance == MSInheritanceAttr::Keyword_unspecified_inheritance;
-}
-
-static bool hasOnlyOneField(bool IsMemberFunction,
-                            MSInheritanceAttr::Spelling Inheritance) {
-  if (IsMemberFunction)
-    return Inheritance <= MSInheritanceAttr::Keyword_single_inheritance;
-  return Inheritance <= MSInheritanceAttr::Keyword_multiple_inheritance;
-}
-
-// Only member pointers to functions need a this adjustment, since it can be
-// combined with the field offset for data pointers.
-static bool
-hasNonVirtualBaseAdjustmentField(bool IsMemberFunction,
-                                 MSInheritanceAttr::Spelling Inheritance) {
-  return IsMemberFunction &&
-         Inheritance >= MSInheritanceAttr::Keyword_multiple_inheritance;
-}
-
-static bool
-hasVirtualBaseAdjustmentField(MSInheritanceAttr::Spelling Inheritance) {
-  return Inheritance >= MSInheritanceAttr::Keyword_virtual_inheritance;
-}
-
-// Use zero for the field offset of a null data member pointer if we can
-// guarantee that zero is not a valid field offset, or if the member pointer has
-// multiple fields.  Polymorphic classes have a vfptr at offset zero, so we can
-// use zero for null.  If there are multiple fields, we can use zero even if it
-// is a valid field offset because null-ness testing will check the other
-// fields.
-static bool nullFieldOffsetIsZero(const CXXRecordDecl *RD) {
-  return RD->getMSInheritanceModel() >=
-             MSInheritanceAttr::Keyword_virtual_inheritance ||
-         (RD->hasDefinition() && RD->isPolymorphic());
-}
-
 bool MicrosoftCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
   // Null-ness for function memptrs only depends on the first field, which is
   // the function pointer.  The rest don't matter, so we can zero initialize.
@@ -1376,8 +1338,8 @@ bool MicrosoftCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
   // valid field offset.
   const CXXRecordDecl *RD = MPT->getMostRecentCXXRecordDecl();
   MSInheritanceAttr::Spelling Inheritance = RD->getMSInheritanceModel();
-  return (!hasVirtualBaseAdjustmentField(Inheritance) &&
-          nullFieldOffsetIsZero(RD));
+  return (!MSInheritanceAttr::hasVBTableOffsetField(Inheritance) &&
+          RD->nullFieldOffsetIsZero());
 }
 
 llvm::Type *
@@ -1390,12 +1352,12 @@ MicrosoftCXXABI::ConvertMemberPointerType(const MemberPointerType *MPT) {
   else
     fields.push_back(CGM.IntTy);  // FieldOffset
 
-  if (hasNonVirtualBaseAdjustmentField(MPT->isMemberFunctionPointer(),
-                                       Inheritance))
+  if (MSInheritanceAttr::hasNVOffsetField(MPT->isMemberFunctionPointer(),
+                                          Inheritance))
     fields.push_back(CGM.IntTy);
-  if (hasVBPtrOffsetField(Inheritance))
+  if (MSInheritanceAttr::hasVBPtrOffsetField(Inheritance))
     fields.push_back(CGM.IntTy);
-  if (hasVirtualBaseAdjustmentField(Inheritance))
+  if (MSInheritanceAttr::hasVBTableOffsetField(Inheritance))
     fields.push_back(CGM.IntTy);  // VirtualBaseAdjustmentOffset
 
   if (fields.size() == 1)
@@ -1413,18 +1375,18 @@ GetNullMemberPointerFields(const MemberPointerType *MPT,
     // FunctionPointerOrVirtualThunk
     fields.push_back(llvm::Constant::getNullValue(CGM.VoidPtrTy));
   } else {
-    if (nullFieldOffsetIsZero(RD))
+    if (RD->nullFieldOffsetIsZero())
       fields.push_back(getZeroInt());  // FieldOffset
     else
       fields.push_back(getAllOnesInt());  // FieldOffset
   }
 
-  if (hasNonVirtualBaseAdjustmentField(MPT->isMemberFunctionPointer(),
-                                       Inheritance))
+  if (MSInheritanceAttr::hasNVOffsetField(MPT->isMemberFunctionPointer(),
+                                          Inheritance))
     fields.push_back(getZeroInt());
-  if (hasVBPtrOffsetField(Inheritance))
+  if (MSInheritanceAttr::hasVBPtrOffsetField(Inheritance))
     fields.push_back(getZeroInt());
-  if (hasVirtualBaseAdjustmentField(Inheritance))
+  if (MSInheritanceAttr::hasVBTableOffsetField(Inheritance))
     fields.push_back(getAllOnesInt());
 }
 
@@ -1449,17 +1411,17 @@ MicrosoftCXXABI::EmitFullMemberPointer(llvm::Constant *FirstField,
 
   // Single inheritance class member pointer are represented as scalars instead
   // of aggregates.
-  if (hasOnlyOneField(IsMemberFunction, Inheritance))
+  if (MSInheritanceAttr::hasOnlyOneField(IsMemberFunction, Inheritance))
     return FirstField;
 
   llvm::SmallVector<llvm::Constant *, 4> fields;
   fields.push_back(FirstField);
 
-  if (hasNonVirtualBaseAdjustmentField(IsMemberFunction, Inheritance))
+  if (MSInheritanceAttr::hasNVOffsetField(IsMemberFunction, Inheritance))
     fields.push_back(llvm::ConstantInt::get(
       CGM.IntTy, NonVirtualBaseAdjustment.getQuantity()));
 
-  if (hasVBPtrOffsetField(Inheritance)) {
+  if (MSInheritanceAttr::hasVBPtrOffsetField(Inheritance)) {
     CharUnits Offs = CharUnits::Zero();
     if (RD->getNumVBases())
       Offs = getContext().getASTRecordLayout(RD).getVBPtrOffset();
@@ -1467,7 +1429,7 @@ MicrosoftCXXABI::EmitFullMemberPointer(llvm::Constant *FirstField,
   }
 
   // The rest of the fields are adjusted by conversions to a more derived class.
-  if (hasVirtualBaseAdjustmentField(Inheritance))
+  if (MSInheritanceAttr::hasVBTableOffsetField(Inheritance))
     fields.push_back(getZeroInt());
 
   return llvm::ConstantStruct::getAnon(fields);
@@ -1552,7 +1514,7 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
           getContext().getTargetInfo().getPointerWidth(0));
       uint64_t OffsetInVFTable = ML.Index * PointerWidth.getQuantity();
       llvm::raw_svector_ostream Out(ThunkName);
-      getMangleContext().mangleVirtualMemPtrThunk(MD, OffsetInVFTable, Out);
+      getMangleContext().mangleVirtualMemPtrThunk(MD, Out);
       Out.flush();
 
       llvm::Function *Thunk = EmitVirtualMemPtrThunk(MD, ThunkName.str());
@@ -1593,7 +1555,8 @@ MicrosoftCXXABI::EmitMemberPointerComparison(CodeGenFunction &CGF,
   // single icmp.
   const CXXRecordDecl *RD = MPT->getMostRecentCXXRecordDecl();
   MSInheritanceAttr::Spelling Inheritance = RD->getMSInheritanceModel();
-  if (hasOnlyOneField(MPT->isMemberFunctionPointer(), Inheritance))
+  if (MSInheritanceAttr::hasOnlyOneField(MPT->isMemberFunctionPointer(),
+                                         Inheritance))
     return Builder.CreateICmp(Eq, L, R);
 
   // Compare the first field.
@@ -1785,9 +1748,9 @@ MicrosoftCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
     // We need to extract values.
     unsigned I = 0;
     FieldOffset = Builder.CreateExtractValue(MemPtr, I++);
-    if (hasVBPtrOffsetField(Inheritance))
+    if (MSInheritanceAttr::hasVBPtrOffsetField(Inheritance))
       VBPtrOffset = Builder.CreateExtractValue(MemPtr, I++);
-    if (hasVirtualBaseAdjustmentField(Inheritance))
+    if (MSInheritanceAttr::hasVBTableOffsetField(Inheritance))
       VirtualBaseAdjustmentOffset = Builder.CreateExtractValue(MemPtr, I++);
   }
 
@@ -1840,7 +1803,7 @@ MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   CXXRecordDecl *SrcRD = SrcTy->getMostRecentCXXRecordDecl();
   CXXRecordDecl *DstRD = DstTy->getMostRecentCXXRecordDecl();
   if (IsReinterpret &&
-      nullFieldOffsetIsZero(SrcRD) == nullFieldOffsetIsZero(DstRD))
+      SrcRD->nullFieldOffsetIsZero() == DstRD->nullFieldOffsetIsZero())
     return Src;
 
   CGBuilderTy &Builder = CGF.Builder;
@@ -1870,15 +1833,15 @@ MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   llvm::Value *VirtualBaseAdjustmentOffset = 0;
   llvm::Value *VBPtrOffset = 0;
   MSInheritanceAttr::Spelling SrcInheritance = SrcRD->getMSInheritanceModel();
-  if (!hasOnlyOneField(IsFunc, SrcInheritance)) {
+  if (!MSInheritanceAttr::hasOnlyOneField(IsFunc, SrcInheritance)) {
     // We need to extract values.
     unsigned I = 0;
     FirstField = Builder.CreateExtractValue(Src, I++);
-    if (hasNonVirtualBaseAdjustmentField(IsFunc, SrcInheritance))
+    if (MSInheritanceAttr::hasNVOffsetField(IsFunc, SrcInheritance))
       NonVirtualBaseAdjustment = Builder.CreateExtractValue(Src, I++);
-    if (hasVBPtrOffsetField(SrcInheritance))
+    if (MSInheritanceAttr::hasVBPtrOffsetField(SrcInheritance))
       VBPtrOffset = Builder.CreateExtractValue(Src, I++);
-    if (hasVirtualBaseAdjustmentField(SrcInheritance))
+    if (MSInheritanceAttr::hasVBTableOffsetField(SrcInheritance))
       VirtualBaseAdjustmentOffset = Builder.CreateExtractValue(Src, I++);
   }
 
@@ -1902,19 +1865,19 @@ MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   // Recompose dst from the null struct and the adjusted fields from src.
   MSInheritanceAttr::Spelling DstInheritance = DstRD->getMSInheritanceModel();
   llvm::Value *Dst;
-  if (hasOnlyOneField(IsFunc, DstInheritance)) {
+  if (MSInheritanceAttr::hasOnlyOneField(IsFunc, DstInheritance)) {
     Dst = FirstField;
   } else {
     Dst = llvm::UndefValue::get(DstNull->getType());
     unsigned Idx = 0;
     Dst = Builder.CreateInsertValue(Dst, FirstField, Idx++);
-    if (hasNonVirtualBaseAdjustmentField(IsFunc, DstInheritance))
+    if (MSInheritanceAttr::hasNVOffsetField(IsFunc, DstInheritance))
       Dst = Builder.CreateInsertValue(
         Dst, getValueOrZeroInt(NonVirtualBaseAdjustment), Idx++);
-    if (hasVBPtrOffsetField(DstInheritance))
+    if (MSInheritanceAttr::hasVBPtrOffsetField(DstInheritance))
       Dst = Builder.CreateInsertValue(
         Dst, getValueOrZeroInt(VBPtrOffset), Idx++);
-    if (hasVirtualBaseAdjustmentField(DstInheritance))
+    if (MSInheritanceAttr::hasVBTableOffsetField(DstInheritance))
       Dst = Builder.CreateInsertValue(
         Dst, getValueOrZeroInt(VirtualBaseAdjustmentOffset), Idx++);
   }
@@ -1955,15 +1918,15 @@ MicrosoftCXXABI::EmitMemberPointerConversion(const CastExpr *E,
   llvm::Constant *VirtualBaseAdjustmentOffset = 0;
   llvm::Constant *VBPtrOffset = 0;
   bool IsFunc = SrcTy->isMemberFunctionPointer();
-  if (!hasOnlyOneField(IsFunc, SrcInheritance)) {
+  if (!MSInheritanceAttr::hasOnlyOneField(IsFunc, SrcInheritance)) {
     // We need to extract values.
     unsigned I = 0;
     FirstField = Src->getAggregateElement(I++);
-    if (hasNonVirtualBaseAdjustmentField(IsFunc, SrcInheritance))
+    if (MSInheritanceAttr::hasNVOffsetField(IsFunc, SrcInheritance))
       NonVirtualBaseAdjustment = Src->getAggregateElement(I++);
-    if (hasVBPtrOffsetField(SrcInheritance))
+    if (MSInheritanceAttr::hasVBPtrOffsetField(SrcInheritance))
       VBPtrOffset = Src->getAggregateElement(I++);
-    if (hasVirtualBaseAdjustmentField(SrcInheritance))
+    if (MSInheritanceAttr::hasVBTableOffsetField(SrcInheritance))
       VirtualBaseAdjustmentOffset = Src->getAggregateElement(I++);
   }
 
@@ -1986,16 +1949,16 @@ MicrosoftCXXABI::EmitMemberPointerConversion(const CastExpr *E,
   // FIXME PR15713: Support conversions through virtually derived classes.
 
   // Recompose dst from the null struct and the adjusted fields from src.
-  if (hasOnlyOneField(IsFunc, DstInheritance))
+  if (MSInheritanceAttr::hasOnlyOneField(IsFunc, DstInheritance))
     return FirstField;
 
   llvm::SmallVector<llvm::Constant *, 4> Fields;
   Fields.push_back(FirstField);
-  if (hasNonVirtualBaseAdjustmentField(IsFunc, DstInheritance))
+  if (MSInheritanceAttr::hasNVOffsetField(IsFunc, DstInheritance))
     Fields.push_back(getConstantOrZeroInt(NonVirtualBaseAdjustment));
-  if (hasVBPtrOffsetField(DstInheritance))
+  if (MSInheritanceAttr::hasVBPtrOffsetField(DstInheritance))
     Fields.push_back(getConstantOrZeroInt(VBPtrOffset));
-  if (hasVirtualBaseAdjustmentField(DstInheritance))
+  if (MSInheritanceAttr::hasVBTableOffsetField(DstInheritance))
     Fields.push_back(getConstantOrZeroInt(VirtualBaseAdjustmentOffset));
   return llvm::ConstantStruct::getAnon(Fields);
 }
@@ -2026,11 +1989,11 @@ MicrosoftCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
     // We need to extract values.
     unsigned I = 0;
     FunctionPointer = Builder.CreateExtractValue(MemPtr, I++);
-    if (hasNonVirtualBaseAdjustmentField(MPT, Inheritance))
+    if (MSInheritanceAttr::hasNVOffsetField(MPT, Inheritance))
       NonVirtualBaseAdjustment = Builder.CreateExtractValue(MemPtr, I++);
-    if (hasVBPtrOffsetField(Inheritance))
+    if (MSInheritanceAttr::hasVBPtrOffsetField(Inheritance))
       VBPtrOffset = Builder.CreateExtractValue(MemPtr, I++);
-    if (hasVirtualBaseAdjustmentField(Inheritance))
+    if (MSInheritanceAttr::hasVBTableOffsetField(Inheritance))
       VirtualBaseAdjustmentOffset = Builder.CreateExtractValue(MemPtr, I++);
   }
 

@@ -21,6 +21,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/VTableBuilder.h"
 #include "clang/Basic/ABI.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/TargetInfo.h"
@@ -121,6 +122,12 @@ public:
   void mangleDeclaration(const NamedDecl *ND);
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleVariableEncoding(const VarDecl *VD);
+  void mangleMemberDataPointer(const CXXRecordDecl *RD, const FieldDecl *FD);
+  void mangleMemberFunctionPointer(const CXXRecordDecl *RD,
+                                   const CXXMethodDecl *MD);
+  void mangleVirtualMemPtrThunk(
+      const CXXMethodDecl *MD,
+      const MicrosoftVTableContext::MethodVFTableLocation &ML);
   void mangleNumber(int64_t Number);
   void mangleType(QualType T, SourceRange Range,
                   QualifierMangleMode QMM = QMM_Mangle);
@@ -181,7 +188,6 @@ public:
   virtual bool shouldMangleCXXName(const NamedDecl *D);
   virtual void mangleCXXName(const NamedDecl *D, raw_ostream &Out);
   virtual void mangleVirtualMemPtrThunk(const CXXMethodDecl *MD,
-                                        uint64_t OffsetInVFTable,
                                         raw_ostream &);
   virtual void mangleThunk(const CXXMethodDecl *MD,
                            const ThunkInfo &Thunk,
@@ -369,6 +375,130 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
     mangleType(Ty, TL.getSourceRange(), QMM_Drop);
     mangleQualifiers(Ty.getLocalQualifiers(), false);
   }
+}
+
+void MicrosoftCXXNameMangler::mangleMemberDataPointer(const CXXRecordDecl *RD,
+                                                      const FieldDecl *FD) {
+  // <member-data-pointer> ::= <integer-literal>
+  //                       ::= $F <number> <number>
+  //                       ::= $G <number> <number> <number>
+
+  int64_t FO = 0;
+  MSInheritanceAttr::Spelling IM = RD->getMSInheritanceModel();
+  if (FD) {
+    FO = getASTContext().getFieldOffset(FD);
+    assert(FO % getASTContext().getCharWidth() == 0 &&
+           "cannot take address of bitfield");
+    FO /= getASTContext().getCharWidth();
+  } else if (!RD->nullFieldOffsetIsZero()) {
+    FO = -1;
+  }
+
+  switch (IM) {
+  case MSInheritanceAttr::Keyword_single_inheritance:
+  case MSInheritanceAttr::Keyword_multiple_inheritance: {
+    // If we only have a single field, it's just an integer literal.
+    llvm::APSInt Val(64, /*isUnsigned=*/false);
+    Val = FO;
+    mangleIntegerLiteral(Val, /*IsBoolean=*/false);
+    break;
+  }
+
+  // Otherwise, we have an aggregate, but all adjusting fields should be zero,
+  // because we don't allow casts (even implicit) in the context of a template
+  // argument.
+  case MSInheritanceAttr::Keyword_virtual_inheritance:
+    Out << "$F";
+    mangleNumber(FO);
+    mangleNumber(0);
+    break;
+
+  case MSInheritanceAttr::Keyword_unspecified_inheritance:
+    Out << "$G";
+    mangleNumber(FO);
+    mangleNumber(0);
+    mangleNumber(0);
+    break;
+  }
+}
+
+void
+MicrosoftCXXNameMangler::mangleMemberFunctionPointer(const CXXRecordDecl *RD,
+                                                     const CXXMethodDecl *MD) {
+  // <member-function-pointer> ::= $1? <name>
+  //                           ::= $H? <name> <number>
+  //                           ::= $I? <name> <number> <number>
+  //                           ::= $J? <name> <number> <number> <number>
+  //                           ::= $0A@
+
+  MSInheritanceAttr::Spelling IM = RD->getMSInheritanceModel();
+
+  // The null member function pointer is $0A@ in function templates and crashes
+  // MSVC when used in class templates, so we don't know what they really look
+  // like.
+  if (!MD) {
+    Out << "$0A@";
+    return;
+  }
+
+  char Code = '\0';
+  switch (IM) {
+  case MSInheritanceAttr::Keyword_single_inheritance:      Code = '1'; break;
+  case MSInheritanceAttr::Keyword_multiple_inheritance:    Code = 'H'; break;
+  case MSInheritanceAttr::Keyword_virtual_inheritance:     Code = 'I'; break;
+  case MSInheritanceAttr::Keyword_unspecified_inheritance: Code = 'J'; break;
+  }
+
+  Out << '$' << Code << '?';
+
+  // If non-virtual, mangle the name.  If virtual, mangle as a virtual memptr
+  // thunk.
+  uint64_t NVOffset = 0;
+  uint64_t VBTableOffset = 0;
+  if (!MD) {
+    mangleNumber(0);
+  } else if (MD->isVirtual()) {
+    MicrosoftVTableContext *VTContext =
+        cast<MicrosoftVTableContext>(getASTContext().getVTableContext());
+    const MicrosoftVTableContext::MethodVFTableLocation &ML =
+        VTContext->getMethodVFTableLocation(GlobalDecl(MD));
+    mangleVirtualMemPtrThunk(MD, ML);
+    NVOffset = ML.VFPtrOffset.getQuantity();
+    VBTableOffset = ML.VBTableIndex * 4;
+    if (ML.VBase) {
+      DiagnosticsEngine &Diags = Context.getDiags();
+      unsigned DiagID = Diags.getCustomDiagID(
+          DiagnosticsEngine::Error,
+          "cannot mangle pointers to member functions from virtual bases");
+      Diags.Report(MD->getLocation(), DiagID);
+    }
+  } else {
+    mangleName(MD);
+    mangleFunctionEncoding(MD);
+  }
+
+  if (MSInheritanceAttr::hasNVOffsetField(/*IsMemberFunction=*/true, IM))
+    mangleNumber(NVOffset);
+  if (MSInheritanceAttr::hasVBPtrOffsetField(IM))
+    mangleNumber(0);
+  if (MSInheritanceAttr::hasVBTableOffsetField(IM))
+    mangleNumber(VBTableOffset);
+}
+
+void MicrosoftCXXNameMangler::mangleVirtualMemPtrThunk(
+    const CXXMethodDecl *MD,
+    const MicrosoftVTableContext::MethodVFTableLocation &ML) {
+  // Get the vftable offset.
+  CharUnits PointerWidth = getASTContext().toCharUnitsFromBits(
+      getASTContext().getTargetInfo().getPointerWidth(0));
+  uint64_t OffsetInVFTable = ML.Index * PointerWidth.getQuantity();
+
+  Out << "?_9";
+  mangleName(MD->getParent());
+  Out << "$B";
+  mangleNumber(OffsetInVFTable);
+  Out << 'A';
+  Out << (PointersAre64Bit ? 'A' : 'E');
 }
 
 void MicrosoftCXXNameMangler::mangleName(const NamedDecl *ND) {
@@ -928,7 +1058,7 @@ MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
 void
 MicrosoftCXXNameMangler::mangleTemplateArgs(const TemplateDecl *TD,
                                      const TemplateArgumentList &TemplateArgs) {
-  // <template-args> ::= {<type> | <integer-literal>}+ @
+  // <template-args> ::= <template-arg>+ @
   unsigned NumTemplateArgs = TemplateArgs.size();
   for (unsigned i = 0; i < NumTemplateArgs; ++i) {
     const TemplateArgument &TA = TemplateArgs[i];
@@ -939,6 +1069,15 @@ MicrosoftCXXNameMangler::mangleTemplateArgs(const TemplateDecl *TD,
 
 void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
                                                 const TemplateArgument &TA) {
+  // <template-arg> ::= <type>
+  //                ::= <integer-literal>
+  //                ::= <member-data-pointer>
+  //                ::= <member-function-pointer>
+  //                ::= $E? <name> <type-encoding>
+  //                ::= $1? <name> <type-encoding>
+  //                ::= $0A@
+  //                ::= <template-args>
+
   switch (TA.getKind()) {
   case TemplateArgument::Null:
     llvm_unreachable("Can't mangle null template arguments!");
@@ -951,16 +1090,31 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
   }
   case TemplateArgument::Declaration: {
     const NamedDecl *ND = cast<NamedDecl>(TA.getAsDecl());
-    mangle(ND, TA.isDeclForReferenceParam() ? "$E?" : "$1?");
+    if (const FieldDecl *FD = dyn_cast<FieldDecl>(ND))
+      mangleMemberDataPointer(cast<CXXRecordDecl>(FD->getParent()), FD);
+    else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ND))
+      mangleMemberFunctionPointer(MD->getParent(), MD);
+    else
+      mangle(ND, TA.isDeclForReferenceParam() ? "$E?" : "$1?");
     break;
   }
   case TemplateArgument::Integral:
     mangleIntegerLiteral(TA.getAsIntegral(),
                          TA.getIntegralType()->isBooleanType());
     break;
-  case TemplateArgument::NullPtr:
-    Out << "$0A@";
+  case TemplateArgument::NullPtr: {
+    QualType T = TA.getNullPtrType();
+    if (const MemberPointerType *MPT = T->getAs<MemberPointerType>()) {
+      const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+      if (MPT->isMemberFunctionPointerType())
+        mangleMemberFunctionPointer(RD, 0);
+      else
+        mangleMemberDataPointer(RD, 0);
+    } else {
+      Out << "$0A@";
+    }
     break;
+  }
   case TemplateArgument::Expression:
     mangleExpression(TA.getAsExpr());
     break;
@@ -1924,17 +2078,17 @@ static void mangleThunkThisAdjustment(const CXXMethodDecl *MD,
   }
 }
 
-void MicrosoftMangleContextImpl::mangleVirtualMemPtrThunk(
-    const CXXMethodDecl *MD, uint64_t OffsetInVFTable, raw_ostream &Out) {
-  bool Is64Bit = getASTContext().getTargetInfo().getPointerWidth(0) == 64;
+void
+MicrosoftMangleContextImpl::mangleVirtualMemPtrThunk(const CXXMethodDecl *MD,
+                                                     raw_ostream &Out) {
+  MicrosoftVTableContext *VTContext =
+      cast<MicrosoftVTableContext>(getASTContext().getVTableContext());
+  const MicrosoftVTableContext::MethodVFTableLocation &ML =
+      VTContext->getMethodVFTableLocation(GlobalDecl(MD));
 
   MicrosoftCXXNameMangler Mangler(*this, Out);
-  Mangler.getStream() << "\01??_9";
-  Mangler.mangleName(MD->getParent());
-  Mangler.getStream() << "$B";
-  Mangler.mangleNumber(OffsetInVFTable);
-  Mangler.getStream() << "A";
-  Mangler.getStream() << (Is64Bit ? "A" : "E");
+  Mangler.getStream() << "\01?";
+  Mangler.mangleVirtualMemPtrThunk(MD, ML);
 }
 
 void MicrosoftMangleContextImpl::mangleThunk(const CXXMethodDecl *MD,

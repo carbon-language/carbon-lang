@@ -1605,6 +1605,18 @@ public:
   /// \brief Calculate what the inheritance model would be for this class.
   MSInheritanceAttr::Spelling calculateInheritanceModel() const;
 
+  /// In the Microsoft C++ ABI, use zero for the field offset of a null data
+  /// member pointer if we can guarantee that zero is not a valid field offset,
+  /// or if the member pointer has multiple fields.  Polymorphic classes have a
+  /// vfptr at offset zero, so we can use zero for null.  If there are multiple
+  /// fields, we can use zero even if it is a valid field offset because
+  /// null-ness testing will check the other fields.
+  bool nullFieldOffsetIsZero() const {
+    return !MSInheritanceAttr::hasOnlyOneField(/*IsMemberFunction=*/false,
+                                               getMSInheritanceModel()) ||
+           (hasDefinition() && isPolymorphic());
+  }
+
   /// \brief Determine whether this lambda expression was known to be dependent
   /// at the time it was created, even if its context does not appear to be
   /// dependent.

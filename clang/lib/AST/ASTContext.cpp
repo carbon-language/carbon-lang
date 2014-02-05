@@ -29,6 +29,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/TypeLoc.h"
+#include "clang/AST/VTableBuilder.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -7950,6 +7951,16 @@ CallingConv ASTContext::getDefaultCallingConvention(bool IsVariadic,
 bool ASTContext::isNearlyEmpty(const CXXRecordDecl *RD) const {
   // Pass through to the C++ ABI object
   return ABI->isNearlyEmpty(RD);
+}
+
+VTableContextBase *ASTContext::getVTableContext() {
+  if (!VTContext.get()) {
+    if (Target->getCXXABI().isMicrosoft())
+      VTContext.reset(new MicrosoftVTableContext(*this));
+    else
+      VTContext.reset(new ItaniumVTableContext(*this));
+  }
+  return VTContext.get();
 }
 
 MangleContext *ASTContext::createMangleContext() {
