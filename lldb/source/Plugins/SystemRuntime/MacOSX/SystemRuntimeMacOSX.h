@@ -26,6 +26,12 @@
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/QueueItem.h"
+
+#include "AppleGetItemInfoHandler.h"
+#include "AppleGetQueuesHandler.h"
+#include "AppleGetPendingItemsHandler.h"
+#include "AppleGetThreadItemInfoHandler.h"
 
 class SystemRuntimeMacOSX : public lldb_private::SystemRuntime
 {
@@ -48,6 +54,11 @@ public:
     static lldb_private::SystemRuntime *
     CreateInstance (lldb_private::Process *process);
 
+
+    //------------------------------------------------------------------
+    // instance methods
+    //------------------------------------------------------------------
+
     SystemRuntimeMacOSX (lldb_private::Process *process);
 
     virtual
@@ -57,13 +68,7 @@ public:
     Clear (bool clear_process);
 
     void
-    DidAttach ();
-
-    void
-    DidLaunch();
-
-    void
-    ModulesDidLoad (lldb_private::ModuleList &module_list);
+    Detach ();
 
     const std::vector<lldb_private::ConstString> &
     GetExtendedBacktraceTypes ();
@@ -71,18 +76,29 @@ public:
     lldb::ThreadSP
     GetExtendedBacktraceThread (lldb::ThreadSP thread, lldb_private::ConstString type);
 
-    // REMOVE THE FOLLOWING 4
-    bool 
-    SetItemEnqueuedBreakpoint ();
+    lldb::ThreadSP
+    GetExtendedBacktraceForQueueItem (lldb::QueueItemSP queue_item_sp, lldb_private::ConstString type);
 
-    bool
-    DidSetItemEnqueuedBreakpoint () const;
+    lldb::ThreadSP
+    GetExtendedBacktraceFromItemRef (lldb::addr_t item_ref);
 
-    static bool
-    ItemEnqueuedCallback (void *baton, lldb_private::StoppointCallbackContext *context, lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
+    void
+    PopulateQueueList (lldb_private::QueueList &queue_list);
 
-    bool
-    ItemEnqueuedBreakpointHit (lldb_private::StoppointCallbackContext *context, lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
+    void
+    PopulateQueuesUsingLibBTR (lldb::addr_t queues_buffer, uint64_t queues_buffer_size, uint64_t count, lldb_private::QueueList &queue_list);
+
+    void
+    PopulatePendingQueuesUsingLibBTR (lldb::addr_t items_buffer, uint64_t items_buffer_size, uint64_t count, lldb_private::Queue *queue);
+
+    std::string
+    GetQueueNameFromThreadQAddress (lldb::addr_t dispatch_qaddr);
+
+    lldb::queue_id_t
+    GetQueueIDFromThreadQAddress (lldb::addr_t dispatch_qaddr);
+
+    void
+    PopulatePendingItemsForQueue (lldb_private::Queue *queue);
 
     //------------------------------------------------------------------
     // PluginInterface protocol
@@ -93,19 +109,6 @@ public:
     virtual uint32_t
     GetPluginVersion();
 
-private:
-    struct ArchivedBacktrace {
-        uint32_t stop_id;
-        bool stop_id_is_valid;
-        lldb::queue_id_t libdispatch_queue_id;   // LLDB_INVALID_QUEUE_ID if unavailable
-        std::vector<lldb::addr_t> pcs;
-    };
-
-    SystemRuntimeMacOSX::ArchivedBacktrace
-    GetLibdispatchExtendedBacktrace (lldb::ThreadSP thread);
-
-    void
-    PopulateQueueList (lldb_private::QueueList &queue_list);
 
 protected:
     lldb::user_id_t m_break_id;
@@ -113,73 +116,103 @@ protected:
 
 private:
 
-    void
-    ParseLdiHeaders ();
+    struct libBacktraceRecording_info {
+        uint16_t    queue_info_version;
+        uint16_t    queue_info_data_offset;
+        uint16_t    item_info_version;
+        uint16_t    item_info_data_offset;
+
+        libBacktraceRecording_info () :
+            queue_info_version(0),
+            queue_info_data_offset(0),
+            item_info_version(0),
+            item_info_data_offset(0) {}
+    };
+
+
+    // A structure which reflects the data recorded in the
+    // libBacktraceRecording introspection_dispatch_item_info_s.
+    struct ItemInfo {
+        lldb::addr_t    item_that_enqueued_this;
+        lldb::addr_t    function_or_block;
+        uint64_t        enqueuing_thread_id;
+        uint64_t        enqueuing_queue_serialnum;
+        uint64_t        target_queue_serialnum;
+        uint32_t        enqueuing_callstack_frame_count;
+        uint32_t        stop_id;
+        std::vector<lldb::addr_t>   enqueuing_callstack;
+        std::string                 enqueuing_thread_label;
+        std::string                 enqueuing_queue_label;
+        std::string                 target_queue_label;
+    };
+
+    // The offsets of different fields of the dispatch_queue_t structure in
+    // a thread/queue process.
+    // Based on libdispatch src/queue_private.h, struct dispatch_queue_offsets_s
+    // With dqo_version 1-3, the dqo_label field is a per-queue value and cannot be cached.
+    // With dqo_version 4 (Mac OS X 10.9 / iOS 7), dqo_label is a constant value that can be cached.
+    struct LibdispatchOffsets
+    {
+        uint16_t dqo_version;
+        uint16_t dqo_label;
+        uint16_t dqo_label_size;
+        uint16_t dqo_flags;
+        uint16_t dqo_flags_size;
+        uint16_t dqo_serialnum;
+        uint16_t dqo_serialnum_size;
+        uint16_t dqo_width;
+        uint16_t dqo_width_size;
+        uint16_t dqo_running;
+        uint16_t dqo_running_size;
+
+        LibdispatchOffsets ()
+        {
+            dqo_version = UINT16_MAX;
+            dqo_flags  = UINT16_MAX;
+            dqo_serialnum = UINT16_MAX;
+            dqo_label = UINT16_MAX;
+            dqo_width = UINT16_MAX;
+            dqo_running = UINT16_MAX;
+        };
+
+        bool
+        IsValid ()
+        {
+            return dqo_version != UINT16_MAX;
+        }
+
+        bool
+        LabelIsValid ()
+        {
+            return dqo_label != UINT16_MAX;
+        }
+    };
 
     bool
-    LdiHeadersInitialized ();
-
-    lldb::addr_t
-    GetQueuesHead ();
-
-    lldb::addr_t
-    GetItemsHead ();
-
-    lldb::addr_t
-    GetThreadCreatorItem (lldb::ThreadSP thread);
-
-    lldb::tid_t
-    GetNewThreadUniqueThreadID (lldb::ThreadSP original_thread_sp);
+    BacktraceRecordingHeadersInitialized ();
 
     void
-    SetNewThreadThreadName (lldb::ThreadSP original_thread_sp, lldb::ThreadSP new_extended_thread_sp);
+    ReadLibdispatchOffsetsAddress();
 
     void
-    SetNewThreadQueueName (lldb::ThreadSP original_thread_sp, lldb::ThreadSP new_extended_thread_sp);
+    ReadLibdispatchOffsets ();
 
-    void
-    SetNewThreadExtendedBacktraceToken (lldb::ThreadSP original_thread_sp, lldb::ThreadSP new_extended_thread_sp);
+    std::vector<lldb::addr_t>
+    GetPendingItemRefsForQueue (lldb::addr_t queue);
 
-    void
-    SetNewThreadQueueID (lldb::ThreadSP original_thread_sp, lldb::ThreadSP new_extended_thread_sp);
+    ItemInfo
+    ExtractItemInfoFromBuffer (lldb_private::DataExtractor &extractor);
 
-    struct ldi_queue_offsets {
-        uint16_t next;
-        uint16_t prev;
-        uint16_t queue_id;
-        uint16_t current_item_ptr;
-    };
+    lldb_private::AppleGetQueuesHandler m_get_queues_handler;
+    lldb_private::AppleGetPendingItemsHandler m_get_pending_items_handler;
+    lldb_private::AppleGetItemInfoHandler m_get_item_info_handler;
+    lldb_private::AppleGetThreadItemInfoHandler m_get_thread_item_info_handler;
 
-    struct ldi_item_offsets {
-        uint16_t next;
-        uint16_t prev;
-        uint16_t type;
-        uint16_t identifier;
-        uint16_t stop_id;
-        uint16_t backtrace_length;
-        uint16_t backtrace_ptr;
-        uint16_t thread_name_ptr;
-        uint16_t queue_name_ptr;
-        uint16_t unique_thread_id;
-        uint16_t pthread_id;
-        uint16_t enqueueing_thread_dispatch_queue_t;
-        uint16_t enqueueing_thread_dispatch_block_ptr;
-        uint16_t queue_id_from_thread_info;
-    };
-
-    struct ldi_header {
-        uint16_t                    version;
-        uint16_t                    ldi_header_size;
-        uint16_t                    initialized;        // 0 means uninitialized
-        uint16_t                    queue_size;
-        uint16_t                    item_size;
-        uint64_t                    queues_head_ptr_address;  // Address of queues head structure
-        uint64_t                    items_head_ptr_address;   // Address of items_head
-        struct ldi_queue_offsets    queue_offsets;
-        struct ldi_item_offsets     item_offsets;
-    };
-
-    struct ldi_header   m_ldi_header;
+    lldb::addr_t                        m_page_to_free;
+    uint64_t                            m_page_to_free_size;
+    libBacktraceRecording_info          m_lib_backtrace_recording_info;
+    lldb::addr_t                        m_dispatch_queue_offsets_addr;
+    struct LibdispatchOffsets           m_libdispatch_offsets;
 
     DISALLOW_COPY_AND_ASSIGN (SystemRuntimeMacOSX);
 };

@@ -32,8 +32,8 @@ namespace lldb_private
             m_queue_wp(),
             m_threads(),
             m_thread_list_fetched(false),
-            m_items(),
-            m_queue_items_fetched(false)
+            m_pending_items(),
+            m_pending_items_fetched(false)
         {
         }
 
@@ -41,8 +41,8 @@ namespace lldb_private
             m_queue_wp(),
             m_threads(),
             m_thread_list_fetched(false),
-            m_items(),
-            m_queue_items_fetched(false)
+            m_pending_items(),
+            m_pending_items_fetched(false)
         {
             m_queue_wp = queue_sp;
         }
@@ -54,8 +54,8 @@ namespace lldb_private
             m_queue_wp = rhs.m_queue_wp;
             m_threads = rhs.m_threads;
             m_thread_list_fetched = rhs.m_thread_list_fetched;
-            m_items = rhs.m_items;
-            m_queue_items_fetched = rhs.m_queue_items_fetched;
+            m_pending_items = rhs.m_pending_items;
+            m_pending_items_fetched = rhs.m_pending_items_fetched;
         }
 
         ~QueueImpl ()
@@ -74,8 +74,8 @@ namespace lldb_private
             m_queue_wp.reset();
             m_thread_list_fetched = false;
             m_threads.clear();
-            m_queue_items_fetched = false;
-            m_items.clear();
+            m_pending_items_fetched = false;
+            m_pending_items.clear();
         }
 
         void
@@ -162,7 +162,7 @@ namespace lldb_private
         void
         FetchItems ()
         {
-            if (m_queue_items_fetched == false)
+            if (m_pending_items_fetched == false)
             {
                 QueueSP queue_sp = m_queue_wp.lock();
                 if (queue_sp)
@@ -170,15 +170,15 @@ namespace lldb_private
                     Process::StopLocker stop_locker;
                     if (stop_locker.TryLock (&queue_sp->GetProcess()->GetRunLock()))
                     {
-                        const std::vector<QueueItemSP> queue_items(queue_sp->GetItems());
-                        m_queue_items_fetched = true;
-                        const uint32_t num_items = queue_items.size();
-                        for (uint32_t idx = 0; idx < num_items; ++idx)
+                        const std::vector<QueueItemSP> queue_items(queue_sp->GetPendingItems());
+                        m_pending_items_fetched = true;
+                        const uint32_t num_pending_items = queue_items.size();
+                        for (uint32_t idx = 0; idx < num_pending_items; ++idx)
                         {
                             QueueItemSP item = queue_items[idx];
                             if (item && item->IsValid())
                             {
-                                m_items.push_back (item);
+                                m_pending_items.push_back (item);
                             }
                         }
                     }
@@ -223,26 +223,26 @@ namespace lldb_private
         
         
         uint32_t
-        GetNumItems ()
+        GetNumPendingItems ()
         {
             uint32_t result = 0;
             FetchItems();
         
-            if (m_queue_items_fetched)
+            if (m_pending_items_fetched)
             {
-                result = m_items.size();
+                result = m_pending_items.size();
             }
             return result;
         }
         
         lldb::SBQueueItem
-        GetItemAtIndex (uint32_t idx)
+        GetPendingItemAtIndex (uint32_t idx)
         {
             SBQueueItem result;
             FetchItems();
-            if (m_queue_items_fetched && idx < m_items.size())
+            if (m_pending_items_fetched && idx < m_pending_items.size())
             {
-                result.SetQueueItem (m_items[idx]);
+                result.SetQueueItem (m_pending_items[idx]);
             }
             return result;
         }
@@ -263,8 +263,8 @@ namespace lldb_private
         lldb::QueueWP                   m_queue_wp;
         std::vector<lldb::ThreadWP>     m_threads;              // threads currently executing this queue's items
         bool                            m_thread_list_fetched;  // have we tried to fetch the threads list already?
-        std::vector<lldb::QueueItemSP>  m_items;       // items currently enqueued
-        bool                            m_queue_items_fetched;  // have we tried to fetch the item list already?
+        std::vector<lldb::QueueItemSP>  m_pending_items;       // items currently enqueued
+        bool                            m_pending_items_fetched;  // have we tried to fetch the item list already?
     };
 
 }
@@ -350,15 +350,15 @@ SBQueue::GetThreadAtIndex (uint32_t idx)
 
 
 uint32_t
-SBQueue::GetNumItems ()
+SBQueue::GetNumPendingItems ()
 {
-    return m_opaque_sp->GetNumItems ();
+    return m_opaque_sp->GetNumPendingItems ();
 }
 
 SBQueueItem
-SBQueue::GetItemAtIndex (uint32_t idx)
+SBQueue::GetPendingItemAtIndex (uint32_t idx)
 {
-    return m_opaque_sp->GetItemAtIndex (idx);
+    return m_opaque_sp->GetPendingItemAtIndex (idx);
 }
 
 SBProcess

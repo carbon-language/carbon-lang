@@ -38,9 +38,7 @@ using namespace lldb_private;
 //------------------------------------------------------------------
 PlatformDarwin::PlatformDarwin (bool is_host) :
     PlatformPOSIX(is_host),  // This is the local host platform
-    m_developer_directory (),
-    m_dispatch_queue_offsets_addr (LLDB_INVALID_ADDRESS),
-    m_libdispatch_offsets()
+    m_developer_directory ()
 {
 }
 
@@ -871,114 +869,6 @@ PlatformDarwin::ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Targ
     else
         return false;
 }
-
-std::string
-PlatformDarwin::GetQueueNameForThreadQAddress (Process *process, addr_t thread_dispatch_qaddr)
-{
-    std::string dispatch_queue_name;
-    if (thread_dispatch_qaddr == LLDB_INVALID_ADDRESS || thread_dispatch_qaddr == 0 || process == NULL)
-        return "";
-
-    ReadLibdispatchOffsets (process);
-    if (m_libdispatch_offsets.IsValid ())
-    {
-        Error error;
-        addr_t queue_addr = process->ReadPointerFromMemory (thread_dispatch_qaddr, error);
-        if (error.Success())
-        {
-            if (m_libdispatch_offsets.dqo_version >= 4)
-            {
-                // libdispatch versions 4+, pointer to dispatch name is in the
-                // queue structure.
-                addr_t pointer_to_label_address = queue_addr + m_libdispatch_offsets.dqo_label;
-                addr_t label_addr = process->ReadPointerFromMemory (pointer_to_label_address, error);
-                if (error.Success())
-                {
-                    process->ReadCStringFromMemory (label_addr, dispatch_queue_name, error);
-                }
-            }
-            else
-            {
-                // libdispatch versions 1-3, dispatch name is a fixed width char array
-                // in the queue structure.
-                addr_t label_addr = queue_addr + m_libdispatch_offsets.dqo_label;
-                dispatch_queue_name.resize (m_libdispatch_offsets.dqo_label_size, '\0');
-                size_t bytes_read = process->ReadMemory (label_addr, &dispatch_queue_name[0], m_libdispatch_offsets.dqo_label_size, error);
-                if (bytes_read < m_libdispatch_offsets.dqo_label_size)
-                    dispatch_queue_name.erase (bytes_read);
-            }
-        }
-    }
-    return dispatch_queue_name;
-}
-
-void
-PlatformDarwin::ReadLibdispatchOffsetsAddress (Process *process)
-{
-    if (m_dispatch_queue_offsets_addr != LLDB_INVALID_ADDRESS)
-        return;
-
-    static ConstString g_dispatch_queue_offsets_symbol_name ("dispatch_queue_offsets");
-    const Symbol *dispatch_queue_offsets_symbol = NULL;
-
-    // libdispatch symbols were in libSystem.B.dylib up through Mac OS X 10.6 ("Snow Leopard")
-    ModuleSpec libSystem_module_spec (FileSpec("libSystem.B.dylib", false));
-    ModuleSP module_sp(process->GetTarget().GetImages().FindFirstModule (libSystem_module_spec));
-    if (module_sp)
-        dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
-    
-    // libdispatch symbols are in their own dylib as of Mac OS X 10.7 ("Lion") and later
-    if (dispatch_queue_offsets_symbol == NULL)
-    {
-        ModuleSpec libdispatch_module_spec (FileSpec("libdispatch.dylib", false));
-        module_sp = process->GetTarget().GetImages().FindFirstModule (libdispatch_module_spec);
-        if (module_sp)
-            dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
-    }
-    if (dispatch_queue_offsets_symbol)
-        m_dispatch_queue_offsets_addr = dispatch_queue_offsets_symbol->GetAddress().GetLoadAddress(&process->GetTarget());
-}
-
-void
-PlatformDarwin::ReadLibdispatchOffsets (Process *process)
-{
-    if (m_libdispatch_offsets.IsValid())
-        return;
-
-    ReadLibdispatchOffsetsAddress (process);
-
-    uint8_t memory_buffer[sizeof (struct LibdispatchOffsets)];
-    DataExtractor data (memory_buffer, 
-                        sizeof(memory_buffer), 
-                        process->GetTarget().GetArchitecture().GetByteOrder(), 
-                        process->GetTarget().GetArchitecture().GetAddressByteSize());
-
-    Error error;
-    if (process->ReadMemory (m_dispatch_queue_offsets_addr, memory_buffer, sizeof(memory_buffer), error) == sizeof(memory_buffer))
-    {
-        lldb::offset_t data_offset = 0;
-
-        // The struct LibdispatchOffsets is a series of uint16_t's - extract them all
-        // in one big go.
-        data.GetU16 (&data_offset, &m_libdispatch_offsets.dqo_version, sizeof (struct LibdispatchOffsets) / sizeof (uint16_t));
-    }
-}
-
-lldb::queue_id_t
-PlatformDarwin::GetQueueIDForThreadQAddress (Process *process, lldb::addr_t dispatch_qaddr)
-{
-    if (dispatch_qaddr == LLDB_INVALID_ADDRESS || dispatch_qaddr == 0 || process == NULL)
-        return LLDB_INVALID_QUEUE_ID;
-
-    Error error;
-    uint32_t ptr_size = process->GetTarget().GetArchitecture().GetAddressByteSize();
-    uint64_t this_thread_queue_id = process->ReadUnsignedIntegerFromMemory (dispatch_qaddr, ptr_size, LLDB_INVALID_QUEUE_ID, error);
-    if (!error.Success())
-        return LLDB_INVALID_QUEUE_ID;
-
-    return this_thread_queue_id;
-}
-
 
 bool
 PlatformDarwin::x86GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)

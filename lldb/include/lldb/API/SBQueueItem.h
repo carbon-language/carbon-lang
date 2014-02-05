@@ -12,6 +12,7 @@
 
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBAddress.h"
+#include "lldb/API/SBThread.h"
 
 namespace lldb {
 

@@ -15,6 +15,7 @@
 #include "lldb/API/SBThread.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Target/QueueItem.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;

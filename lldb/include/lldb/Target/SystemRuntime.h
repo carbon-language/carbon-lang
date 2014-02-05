@@ -21,8 +21,8 @@
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Target/QueueList.h"
+#include "lldb/Target/QueueItem.h"
 #include "lldb/lldb-private.h"
-
 
 namespace lldb_private {
 
@@ -104,6 +104,14 @@ public:
     virtual void
     ModulesDidLoad(lldb_private::ModuleList &module_list);
 
+    //------------------------------------------------------------------
+    /// Called before detaching from a process.
+    ///
+    /// This will give a SystemRuntime plugin a chance to free any resources
+    /// in the inferior process before we detach.
+    //------------------------------------------------------------------
+    virtual void
+    Detach ();
 
     //------------------------------------------------------------------
     /// Return a list of thread origin extended backtraces that may 
@@ -162,6 +170,33 @@ public:
     GetExtendedBacktraceThread (lldb::ThreadSP thread, ConstString type);
 
     //------------------------------------------------------------------
+    /// Get the extended backtrace thread for a QueueItem
+    ///
+    /// A QueueItem represents a function/block that will be executed on
+    /// a libdispatch queue in the future, or it represents a function/block
+    /// that is currently executing on a thread.
+    ///
+    /// This method will report a thread backtrace of the function that 
+    /// enqueued it originally, if possible.
+    ///
+    /// @param [in] queue_item_sp
+    ///     The QueueItem that we are getting an extended backtrace for.
+    ///
+    /// @param [in] type
+    ///     The type of extended backtrace to fetch.  The types supported
+    ///     are returned from SystemRuntime::GetExtendedBacktraceTypes.
+    ///
+    /// @return
+    ///     If an extended backtrace is available, it is returned.  Else
+    ///     an empty ThreadSP is returned.
+    //------------------------------------------------------------------
+    virtual lldb::ThreadSP
+    GetExtendedBacktraceForQueueItem (lldb::QueueItemSP queue_item_sp, ConstString type)
+    {
+        return lldb::ThreadSP();
+    }
+
+    //------------------------------------------------------------------
     /// Populate the Process' QueueList with libdispatch / GCD queues that exist.
     ///
     /// When process execution is paused, the SystemRuntime may be called to fill
@@ -177,6 +212,63 @@ public:
     {
     }
 
+    //------------------------------------------------------------------
+    /// Get the queue name for a thread given a thread's dispatch_qaddr.
+    ///
+    /// On systems using libdispatch queues, a thread may be associated with a queue.
+    /// There will be a call to get the thread's dispatch_qaddr.  At the dispatch_qaddr
+    /// we will find the address of this thread's dispatch_queue_t structure.
+    /// Given the address of the dispatch_queue_t structure for a thread,
+    /// get the queue name and return it.
+    ///
+    /// @param [in] dispatch_qaddr
+    ///     The address of the dispatch_queue_t structure for this thread.
+    ///
+    /// @return
+    ///     The string of this queue's name.  An empty string is returned if the
+    ///     name could not be found.
+    //------------------------------------------------------------------
+    virtual std::string
+    GetQueueNameFromThreadQAddress (lldb::addr_t dispatch_qaddr)
+    {
+        return "";
+    }
+
+    //------------------------------------------------------------------
+    /// Get the QueueID for the libdispatch queue given the thread's dispatch_qaddr.
+    ///
+    /// On systems using libdispatch queues, a thread may be associated with a queue.
+    /// There will be a call to get the thread's dispatch_qaddr.  At the dispatch_qaddr
+    /// we will find the address of this thread's dispatch_queue_t structure.
+    /// Given the address of the dispatch_queue_t structure for a thread,
+    /// get the queue ID and return it.
+    /// 
+    /// @param [in] dispatch_qaddr
+    ///     The address of the dispatch_queue_t structure for this thread.
+    ///
+    /// @return
+    ///     The queue ID, or if it could not be retrieved, LLDB_INVALID_QUEUE_ID.
+    //------------------------------------------------------------------
+    virtual lldb::queue_id_t
+    GetQueueIDFromThreadQAddress (lldb::addr_t dispatch_qaddr)
+    {
+        return LLDB_INVALID_QUEUE_ID;
+    }
+
+    //------------------------------------------------------------------
+    /// Get the pending work items for a libdispatch Queue
+    ///
+    /// If this system/process is using libdispatch and the runtime can do so,
+    /// retrieve the list of pending work items for the specified Queue and
+    /// add it to the Queue.
+    ///
+    /// @param [in] queue
+    ///     The queue of interest.
+    //------------------------------------------------------------------
+    virtual void
+    PopulatePendingItemsForQueue (lldb_private::Queue *queue)
+    {
+    }
 
 protected:
     //------------------------------------------------------------------

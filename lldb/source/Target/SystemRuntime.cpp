@@ -56,6 +56,11 @@ SystemRuntime::DidLaunch()
 }
 
 void
+SystemRuntime::Detach()
+{
+}
+
+void
 SystemRuntime::ModulesDidLoad (ModuleList &module_list)
 {
 }

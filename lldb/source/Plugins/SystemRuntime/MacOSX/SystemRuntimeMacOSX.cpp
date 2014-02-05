@@ -26,6 +26,8 @@
 #include "lldb/Target/QueueList.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Target/Process.h"
+
 
 #include "SystemRuntimeMacOSX.h"
 
@@ -82,9 +84,17 @@ SystemRuntimeMacOSX::CreateInstance (Process* process)
 SystemRuntimeMacOSX::SystemRuntimeMacOSX (Process* process) :
     SystemRuntime(process),
     m_break_id(LLDB_INVALID_BREAK_ID),
-    m_mutex(Mutex::eMutexTypeRecursive)
+    m_mutex(Mutex::eMutexTypeRecursive),
+    m_get_queues_handler(process),
+    m_get_pending_items_handler(process),
+    m_get_item_info_handler(process),
+    m_get_thread_item_info_handler(process),
+    m_page_to_free(LLDB_INVALID_ADDRESS),
+    m_page_to_free_size(0),
+    m_lib_backtrace_recording_info(),
+    m_dispatch_queue_offsets_addr (LLDB_INVALID_ADDRESS),
+    m_libdispatch_offsets()
 {
-    m_ldi_header.initialized = 0;
 }
 
 //----------------------------------------------------------------------
@@ -93,6 +103,15 @@ SystemRuntimeMacOSX::SystemRuntimeMacOSX (Process* process) :
 SystemRuntimeMacOSX::~SystemRuntimeMacOSX()
 {
     Clear (true);
+}
+
+void
+SystemRuntimeMacOSX::Detach ()
+{
+        m_get_queues_handler.Detach();
+        m_get_pending_items_handler.Detach();
+        m_get_item_info_handler.Detach();
+        m_get_thread_item_info_handler.Detach();
 }
 
 //----------------------------------------------------------------------
@@ -109,213 +128,336 @@ SystemRuntimeMacOSX::Clear (bool clear_process)
     if (clear_process)
         m_process = NULL;
     m_break_id = LLDB_INVALID_BREAK_ID;
-    m_ldi_header.initialized = 0;
 }
 
 
-void 
-SystemRuntimeMacOSX::DidAttach ()
+std::string
+SystemRuntimeMacOSX::GetQueueNameFromThreadQAddress (addr_t dispatch_qaddr)
 {
+    std::string dispatch_queue_name;
+    if (dispatch_qaddr == LLDB_INVALID_ADDRESS || dispatch_qaddr == 0)
+        return "";
+
+    ReadLibdispatchOffsets ();
+    if (m_libdispatch_offsets.IsValid ())
+    {
+        // dispatch_qaddr is from a thread_info(THREAD_IDENTIFIER_INFO) call for a thread -
+        // deref it to get the address of the dispatch_queue_t structure for this thread's 
+        // queue.
+        Error error;
+        addr_t dispatch_queue_addr = m_process->ReadPointerFromMemory (dispatch_qaddr, error);
+        if (error.Success())
+        {
+            if (m_libdispatch_offsets.dqo_version >= 4)
+            {
+                // libdispatch versions 4+, pointer to dispatch name is in the
+                // queue structure.
+                addr_t pointer_to_label_address = dispatch_queue_addr + m_libdispatch_offsets.dqo_label;
+                addr_t label_addr = m_process->ReadPointerFromMemory (pointer_to_label_address, error);
+                if (error.Success())
+                {
+                    m_process->ReadCStringFromMemory (label_addr, dispatch_queue_name, error);
+                }
+            }
+            else
+            {
+                // libdispatch versions 1-3, dispatch name is a fixed width char array
+                // in the queue structure.
+                addr_t label_addr = dispatch_queue_addr + m_libdispatch_offsets.dqo_label;
+                dispatch_queue_name.resize (m_libdispatch_offsets.dqo_label_size, '\0');
+                size_t bytes_read = m_process->ReadMemory (label_addr, &dispatch_queue_name[0], m_libdispatch_offsets.dqo_label_size, error);
+                if (bytes_read < m_libdispatch_offsets.dqo_label_size)
+                    dispatch_queue_name.erase (bytes_read);
+            }
+        }
+    }
+    return dispatch_queue_name;
 }
 
-void 
-SystemRuntimeMacOSX::DidLaunch ()
+lldb::queue_id_t
+SystemRuntimeMacOSX::GetQueueIDFromThreadQAddress (lldb::addr_t dispatch_qaddr)
 {
+    queue_id_t queue_id = LLDB_INVALID_QUEUE_ID;
+
+    if (dispatch_qaddr == LLDB_INVALID_ADDRESS || dispatch_qaddr == 0)
+        return queue_id;
+
+    ReadLibdispatchOffsets ();
+    if (m_libdispatch_offsets.IsValid ())
+    {
+        // dispatch_qaddr is from a thread_info(THREAD_IDENTIFIER_INFO) call for a thread -
+        // deref it to get the address of the dispatch_queue_t structure for this thread's 
+        // queue.
+        Error error;
+        uint64_t dispatch_queue_addr = m_process->ReadPointerFromMemory (dispatch_qaddr, error);
+        if (error.Success())
+        {
+            addr_t serialnum_address = dispatch_queue_addr + m_libdispatch_offsets.dqo_serialnum;
+            queue_id_t serialnum = m_process->ReadUnsignedIntegerFromMemory (serialnum_address, m_libdispatch_offsets.dqo_serialnum_size, LLDB_INVALID_QUEUE_ID, error);
+            if (error.Success())
+            {
+                queue_id = serialnum;
+            }
+        }
+    }
+
+    return queue_id;
+}
+
+
+void
+SystemRuntimeMacOSX::ReadLibdispatchOffsetsAddress ()
+{
+    if (m_dispatch_queue_offsets_addr != LLDB_INVALID_ADDRESS)
+        return;
+
+    static ConstString g_dispatch_queue_offsets_symbol_name ("dispatch_queue_offsets");
+    const Symbol *dispatch_queue_offsets_symbol = NULL;
+
+    // libdispatch symbols were in libSystem.B.dylib up through Mac OS X 10.6 ("Snow Leopard")
+    ModuleSpec libSystem_module_spec (FileSpec("libSystem.B.dylib", false));
+    ModuleSP module_sp(m_process->GetTarget().GetImages().FindFirstModule (libSystem_module_spec));
+    if (module_sp)
+        dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
+    
+    // libdispatch symbols are in their own dylib as of Mac OS X 10.7 ("Lion") and later
+    if (dispatch_queue_offsets_symbol == NULL)
+    {
+        ModuleSpec libdispatch_module_spec (FileSpec("libdispatch.dylib", false));
+        module_sp = m_process->GetTarget().GetImages().FindFirstModule (libdispatch_module_spec);
+        if (module_sp)
+            dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
+    }
+    if (dispatch_queue_offsets_symbol)
+        m_dispatch_queue_offsets_addr = dispatch_queue_offsets_symbol->GetAddress().GetLoadAddress(&m_process->GetTarget());
 }
 
 void
-SystemRuntimeMacOSX::ModulesDidLoad (ModuleList &module_list)
+SystemRuntimeMacOSX::ReadLibdispatchOffsets ()
 {
+    if (m_libdispatch_offsets.IsValid())
+        return;
+
+    ReadLibdispatchOffsetsAddress ();
+
+    uint8_t memory_buffer[sizeof (struct LibdispatchOffsets)];
+    DataExtractor data (memory_buffer, 
+                        sizeof(memory_buffer), 
+                        m_process->GetByteOrder(), 
+                        m_process->GetAddressByteSize());
+
+    Error error;
+    if (m_process->ReadMemory (m_dispatch_queue_offsets_addr, memory_buffer, sizeof(memory_buffer), error) == sizeof(memory_buffer))
+    {
+        lldb::offset_t data_offset = 0;
+
+        // The struct LibdispatchOffsets is a series of uint16_t's - extract them all
+        // in one big go.
+        data.GetU16 (&data_offset, &m_libdispatch_offsets.dqo_version, sizeof (struct LibdispatchOffsets) / sizeof (uint16_t));
+    }
 }
+
+
+ThreadSP
+SystemRuntimeMacOSX::GetExtendedBacktraceThread (ThreadSP real_thread, ConstString type)
+{
+    ThreadSP originating_thread_sp;
+    if (BacktraceRecordingHeadersInitialized() && type == ConstString ("libdispatch"))
+    {
+        Error error;
+
+        // real_thread is either an actual, live thread (in which case we need to call into
+        // libBacktraceRecording to find its originator) or it is an extended backtrace itself,
+        // in which case we get the token from it and call into libBacktraceRecording to find
+        // the originator of that token.
+
+        if (real_thread->GetExtendedBacktraceToken() != LLDB_INVALID_ADDRESS)
+        {
+            originating_thread_sp = GetExtendedBacktraceFromItemRef (real_thread->GetExtendedBacktraceToken());
+        }
+        else
+        {
+            AppleGetThreadItemInfoHandler::GetThreadItemInfoReturnInfo ret = m_get_thread_item_info_handler.GetThreadItemInfo (*real_thread.get(), m_page_to_free, m_page_to_free_size, error);
+            if (ret.item_buffer_ptr != 0 &&  ret.item_buffer_ptr != LLDB_INVALID_ADDRESS && ret.item_buffer_size > 0)
+            {
+                DataBufferHeap data (ret.item_buffer_size, 0);
+                if (m_process->ReadMemory (ret.item_buffer_ptr, data.GetBytes(), ret.item_buffer_size, error) && error.Success())
+                {
+                    DataExtractor extractor (data.GetBytes(), data.GetByteSize(), m_process->GetByteOrder(), m_process->GetAddressByteSize());
+                    ItemInfo item = ExtractItemInfoFromBuffer (extractor);
+                    bool stop_id_is_valid = true;
+                    if (item.stop_id == 0)
+                        stop_id_is_valid = false;
+                    originating_thread_sp.reset (new HistoryThread (*m_process,
+                                                                    item.enqueuing_thread_id,
+                                                                    item.enqueuing_callstack,
+                                                                    item.stop_id,
+                                                                    stop_id_is_valid));
+                    originating_thread_sp->SetExtendedBacktraceToken (item.item_that_enqueued_this);
+                    originating_thread_sp->SetQueueName (item.enqueuing_queue_label.c_str());
+                    originating_thread_sp->SetQueueID (item.enqueuing_queue_serialnum);
+//                    originating_thread_sp->SetThreadName (item.enqueuing_thread_label.c_str());
+                }
+            }
+        }
+    }
+    return originating_thread_sp;
+}
+
+ThreadSP
+SystemRuntimeMacOSX::GetExtendedBacktraceFromItemRef (lldb::addr_t item_ref)
+{
+    ThreadSP return_thread_sp;
+
+    AppleGetItemInfoHandler::GetItemInfoReturnInfo ret;
+    ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
+    Error error;
+    ret = m_get_item_info_handler.GetItemInfo (*cur_thread_sp.get(), item_ref, m_page_to_free, m_page_to_free_size, error);
+    if (ret.item_buffer_ptr != 0 &&  ret.item_buffer_ptr != LLDB_INVALID_ADDRESS && ret.item_buffer_size > 0)
+    {
+        DataBufferHeap data (ret.item_buffer_size, 0);
+        if (m_process->ReadMemory (ret.item_buffer_ptr, data.GetBytes(), ret.item_buffer_size, error) && error.Success())
+        {
+            DataExtractor extractor (data.GetBytes(), data.GetByteSize(), m_process->GetByteOrder(), m_process->GetAddressByteSize());
+            ItemInfo item = ExtractItemInfoFromBuffer (extractor);
+            bool stop_id_is_valid = true;
+            if (item.stop_id == 0)
+                stop_id_is_valid = false;
+            return_thread_sp.reset (new HistoryThread (*m_process,
+                                                            item.enqueuing_thread_id,
+                                                            item.enqueuing_callstack,
+                                                            item.stop_id,
+                                                            stop_id_is_valid));
+            return_thread_sp->SetExtendedBacktraceToken (item.item_that_enqueued_this);
+            return_thread_sp->SetQueueName (item.enqueuing_queue_label.c_str());
+            return_thread_sp->SetQueueID (item.enqueuing_queue_serialnum);
+//            return_thread_sp->SetThreadName (item.enqueuing_thread_label.c_str());
+
+        }
+    }
+    return return_thread_sp;
+}
+
+ThreadSP
+SystemRuntimeMacOSX::GetExtendedBacktraceForQueueItem (QueueItemSP queue_item_sp, ConstString type)
+{
+    ThreadSP extended_thread_sp;
+    if (type != ConstString("libdispatch"))
+        return extended_thread_sp;
+
+    bool stop_id_is_valid = true;
+    if (queue_item_sp->GetStopID() == 0)
+        stop_id_is_valid = false;
+
+    extended_thread_sp.reset (new HistoryThread (*m_process, 
+                                                 queue_item_sp->GetEnqueueingThreadID(),
+                                                 queue_item_sp->GetEnqueueingBacktrace(),
+                                                 queue_item_sp->GetStopID(),
+                                                 stop_id_is_valid));
+    extended_thread_sp->SetExtendedBacktraceToken (queue_item_sp->GetItemThatEnqueuedThis());
+    extended_thread_sp->SetQueueName (queue_item_sp->GetQueueLabel().c_str());
+    extended_thread_sp->SetQueueID (queue_item_sp->GetEnqueueingQueueID());
+//    extended_thread_sp->SetThreadName (queue_item_sp->GetThreadLabel().c_str());
+
+    return extended_thread_sp;
+}
+
+/* Returns true if we were able to get the version / offset information
+ * out of libBacktraceRecording.  false means we were unable to retrieve
+ * this; the queue_info_version field will be 0.
+ */
 
 bool
-SystemRuntimeMacOSX::LdiHeadersInitialized ()
+SystemRuntimeMacOSX::BacktraceRecordingHeadersInitialized ()
 {
-    ParseLdiHeaders();
-    return m_ldi_header.initialized;
-}
+    if (m_lib_backtrace_recording_info.queue_info_version != 0)
+        return true;
 
-void
-SystemRuntimeMacOSX::ParseLdiHeaders ()
-{
-    if (m_ldi_header.initialized)
-        return;
-    static ConstString ldi_header_symbol ("ldi_infos");
+    addr_t queue_info_version_address = LLDB_INVALID_ADDRESS;
+    addr_t queue_info_data_offset_address = LLDB_INVALID_ADDRESS;
+    addr_t item_info_version_address = LLDB_INVALID_ADDRESS;
+    addr_t item_info_data_offset_address = LLDB_INVALID_ADDRESS;
+    Target &target = m_process->GetTarget();
+
+
+    static ConstString introspection_dispatch_queue_info_version ("__introspection_dispatch_queue_info_version");
     SymbolContextList sc_list;
-    if (m_process->GetTarget().GetImages().FindSymbolsWithNameAndType (ldi_header_symbol, eSymbolTypeData, sc_list) > 0)
+    if (m_process->GetTarget().GetImages().FindSymbolsWithNameAndType (introspection_dispatch_queue_info_version, eSymbolTypeData, sc_list) > 0)
     {
         SymbolContext sc;
         sc_list.GetContextAtIndex (0, sc);
         AddressRange addr_range;
         sc.GetAddressRange (eSymbolContextSymbol, 0, false, addr_range);
+        queue_info_version_address = addr_range.GetBaseAddress().GetLoadAddress(&target);
+    }
+    sc_list.Clear();
 
+    static ConstString introspection_dispatch_queue_info_data_offset ("__introspection_dispatch_queue_info_data_offset");
+    if (m_process->GetTarget().GetImages().FindSymbolsWithNameAndType (introspection_dispatch_queue_info_data_offset, eSymbolTypeData, sc_list) > 0)
+    {
+        SymbolContext sc;
+        sc_list.GetContextAtIndex (0, sc);
+        AddressRange addr_range;
+        sc.GetAddressRange (eSymbolContextSymbol, 0, false, addr_range);
+        queue_info_data_offset_address = addr_range.GetBaseAddress().GetLoadAddress(&target);
+    }
+    sc_list.Clear();
+
+    static ConstString introspection_dispatch_item_info_version ("__introspection_dispatch_item_info_version");
+    if (m_process->GetTarget().GetImages().FindSymbolsWithNameAndType (introspection_dispatch_item_info_version, eSymbolTypeData, sc_list) > 0)
+    {
+        SymbolContext sc;
+        sc_list.GetContextAtIndex (0, sc);
+        AddressRange addr_range;
+        sc.GetAddressRange (eSymbolContextSymbol, 0, false, addr_range);
+        item_info_version_address = addr_range.GetBaseAddress().GetLoadAddress(&target);
+    }
+    sc_list.Clear();
+
+    static ConstString introspection_dispatch_item_info_data_offset ("__introspection_dispatch_item_info_data_offset");
+    if (m_process->GetTarget().GetImages().FindSymbolsWithNameAndType (introspection_dispatch_item_info_data_offset, eSymbolTypeData, sc_list) > 0)
+    {
+        SymbolContext sc;
+        sc_list.GetContextAtIndex (0, sc);
+        AddressRange addr_range;
+        sc.GetAddressRange (eSymbolContextSymbol, 0, false, addr_range);
+        item_info_data_offset_address = addr_range.GetBaseAddress().GetLoadAddress(&target);
+    }
+
+    if (queue_info_version_address != LLDB_INVALID_ADDRESS
+        && queue_info_data_offset_address != LLDB_INVALID_ADDRESS
+        && item_info_version_address != LLDB_INVALID_ADDRESS
+        && item_info_data_offset_address != LLDB_INVALID_ADDRESS)
+    {
         Error error;
-        Address ldi_header_addr = addr_range.GetBaseAddress();
-        uint8_t version_buf[6];   // version, ldi_header_size, initialized fields
-        DataExtractor data (version_buf, sizeof(version_buf), m_process->GetByteOrder(), m_process->GetAddressByteSize());
-        const size_t count = sizeof (version_buf);
-        const bool prefer_file_cache = false;
-        if (m_process->GetTarget().ReadMemory (ldi_header_addr, prefer_file_cache, version_buf, count, error) == sizeof (version_buf))
+        m_lib_backtrace_recording_info.queue_info_version = m_process->ReadUnsignedIntegerFromMemory (queue_info_version_address, 2, 0, error);
+        if (error.Success())
         {
-            int version, initialized, ldi_header_size;
-            offset_t offset = 0;
-            version = data.GetU16(&offset);
-            ldi_header_size = data.GetU16(&offset);
-            initialized = data.GetU16(&offset);
-            if (initialized)
+            m_lib_backtrace_recording_info.queue_info_data_offset = m_process->ReadUnsignedIntegerFromMemory (queue_info_data_offset_address, 2, 0, error);
+            if (error.Success())
             {
-                DataBufferHeap ldi_header (ldi_header_size, 0);
-                DataExtractor ldi_extractor (ldi_header.GetBytes(), ldi_header.GetByteSize(), m_process->GetByteOrder(), m_process->GetAddressByteSize());
-                if (m_process->GetTarget().ReadMemory (ldi_header_addr, prefer_file_cache, ldi_header.GetBytes(), ldi_header.GetByteSize(), error) == ldi_header.GetByteSize())
+                m_lib_backtrace_recording_info.item_info_version = m_process->ReadUnsignedIntegerFromMemory (item_info_version_address, 2, 0, error);
+                if (error.Success())
                 {
-                    offset = 0;
-                    m_ldi_header.version = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.ldi_header_size = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.initialized = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.queue_size = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_size = ldi_extractor.GetU16(&offset);
-
-                    // 6 bytes of padding here
-                    offset += 6;
-
-                    m_ldi_header.queues_head_ptr_address = ldi_extractor.GetU64(&offset);
-                    m_ldi_header.items_head_ptr_address = ldi_extractor.GetU64(&offset);
-
-                    m_ldi_header.queue_offsets.next = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.queue_offsets.prev = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.queue_offsets.queue_id = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.queue_offsets.current_item_ptr = ldi_extractor.GetU16(&offset);
-
-                    m_ldi_header.item_offsets.next = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.prev = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.type = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.identifier = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.stop_id = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.backtrace_length = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.backtrace_ptr = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.thread_name_ptr = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.queue_name_ptr = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.unique_thread_id = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.pthread_id = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.enqueueing_thread_dispatch_queue_t = ldi_extractor.GetU16(&offset);
-                    m_ldi_header.item_offsets.enqueueing_thread_dispatch_block_ptr = ldi_extractor.GetU16(&offset);
-
-                    if (ldi_header.GetByteSize () > offset)
+                    m_lib_backtrace_recording_info.item_info_data_offset = m_process->ReadUnsignedIntegerFromMemory (item_info_data_offset_address, 2, 0, error);
+                    if (!error.Success())
                     {
-                        m_ldi_header.item_offsets.queue_id_from_thread_info = ldi_extractor.GetU16(&offset);
-                    }
-                    else
-                    {
-                        m_ldi_header.item_offsets.queue_id_from_thread_info = 0xffff;
+                        m_lib_backtrace_recording_info.queue_info_version = 0;
                     }
                 }
-            }
-        }
-    }
-}
-
-lldb::addr_t
-SystemRuntimeMacOSX::GetQueuesHead ()
-{
-    if (!LdiHeadersInitialized())
-        return LLDB_INVALID_ADDRESS;
-
-    Error error;
-    addr_t queues_head = m_process->ReadPointerFromMemory (m_ldi_header.queues_head_ptr_address, error);
-    if (error.Success() == false || queues_head == LLDB_INVALID_ADDRESS || queues_head == 0)
-        return LLDB_INVALID_ADDRESS;
-
-    return queues_head;
-}
-
-lldb::addr_t
-SystemRuntimeMacOSX::GetItemsHead ()
-{
-    if (!LdiHeadersInitialized())
-        return LLDB_INVALID_ADDRESS;
-
-    Error error;
-    addr_t items_head = m_process->ReadPointerFromMemory (m_ldi_header.items_head_ptr_address, error);
-    if (error.Success() == false || items_head == LLDB_INVALID_ADDRESS || items_head == 0)
-        return LLDB_INVALID_ADDRESS;
-
-    return items_head;
-}
-
-addr_t
-SystemRuntimeMacOSX::GetThreadCreatorItem (ThreadSP thread_sp)
-{
-    addr_t enqueued_item_ptr = thread_sp->GetExtendedBacktraceToken();
-    if (enqueued_item_ptr == LLDB_INVALID_ADDRESS)
-    {
-        if (thread_sp->GetQueueID() == LLDB_INVALID_QUEUE_ID || thread_sp->GetQueueID() == 0)
-            return LLDB_INVALID_ADDRESS;
-    
-        Error error;
-        uint64_t this_thread_queue_id = thread_sp->GetQueueID();
-    
-        addr_t queues_head = GetQueuesHead();
-        if (queues_head == LLDB_INVALID_ADDRESS)
-            return LLDB_INVALID_ADDRESS;
-    
-        // Step through the queues_head linked list looking for a queue matching this thread, if any
-        uint64_t queue_obj_ptr = queues_head;
-        enqueued_item_ptr = LLDB_INVALID_ADDRESS;
-    
-        while (queue_obj_ptr != 0)
-        {
-            uint64_t queue_id = m_process->ReadUnsignedIntegerFromMemory (queue_obj_ptr + m_ldi_header.queue_offsets.queue_id, 8, LLDB_INVALID_ADDRESS, error);
-            if (error.Success() && queue_id != LLDB_INVALID_ADDRESS)
-            {
-                if (queue_id == this_thread_queue_id)
+                else
                 {
-                    enqueued_item_ptr = m_process->ReadPointerFromMemory (queue_obj_ptr + m_ldi_header.queue_offsets.current_item_ptr, error);
-                    break;
+                    m_lib_backtrace_recording_info.queue_info_version = 0;
                 }
             }
-            queue_obj_ptr = m_process->ReadPointerFromMemory (queue_obj_ptr + m_ldi_header.queue_offsets.next, error);
-            if (error.Success() == false || queue_obj_ptr == LLDB_INVALID_ADDRESS)
+            else
             {
-                break;
+                m_lib_backtrace_recording_info.queue_info_version = 0;
             }
         }
     }
-    
-    return enqueued_item_ptr;
-}
 
-SystemRuntimeMacOSX::ArchivedBacktrace
-SystemRuntimeMacOSX::GetLibdispatchExtendedBacktrace (ThreadSP thread_sp)
-{
-    ArchivedBacktrace bt;
-    bt.stop_id = 0;
-    bt.stop_id_is_valid = false;
-    bt.libdispatch_queue_id = LLDB_INVALID_QUEUE_ID;
-
-    addr_t enqueued_item_ptr = GetThreadCreatorItem (thread_sp);
-    
-    if (enqueued_item_ptr == LLDB_INVALID_ADDRESS)
-        return bt;
-
-    Error error;
-    uint32_t ptr_size = m_process->GetTarget().GetArchitecture().GetAddressByteSize();
-
-    uint32_t backtrace_length = m_process->ReadUnsignedIntegerFromMemory (enqueued_item_ptr + m_ldi_header.item_offsets.backtrace_length, 4, 0, error);
-    addr_t pc_array_address = m_process->ReadPointerFromMemory (enqueued_item_ptr + m_ldi_header.item_offsets.backtrace_ptr, error);
-
-    if (backtrace_length == 0 || pc_array_address == LLDB_INVALID_ADDRESS)
-        return bt;
-
-    for (uint32_t idx = 0; idx < backtrace_length; idx++)
-    {
-        addr_t pc_val = m_process->ReadPointerFromMemory (pc_array_address + (ptr_size * idx), error);
-        if (error.Success() && pc_val != LLDB_INVALID_ADDRESS)
-        {
-            bt.pcs.push_back (pc_val);
-        }
-    }
-
-    return bt;
+    return m_lib_backtrace_recording_info.queue_info_version != 0;
 }
 
 const std::vector<ConstString> &
@@ -324,146 +466,233 @@ SystemRuntimeMacOSX::GetExtendedBacktraceTypes ()
     if (m_types.size () == 0)
     {
         m_types.push_back(ConstString("libdispatch"));
-        m_types.push_back(ConstString("pthread"));
+        // We could have pthread as another type in the future if we have a way of
+        // gathering that information & it's useful to distinguish between them.
     }
     return m_types;
 }
 
 void
-SystemRuntimeMacOSX::SetNewThreadQueueName (ThreadSP original_thread_sp, ThreadSP new_extended_thread_sp)
-{
-    addr_t enqueued_item_ptr = GetThreadCreatorItem (original_thread_sp);
-
-    if (enqueued_item_ptr != LLDB_INVALID_ADDRESS)
-    {
-        Error error;
-        addr_t queue_name_ptr = m_process->ReadPointerFromMemory (enqueued_item_ptr + m_ldi_header.item_offsets.queue_name_ptr, error);
-        if (queue_name_ptr != LLDB_INVALID_ADDRESS && error.Success())
-        {
-            char namebuf[512];
-            if (m_process->ReadCStringFromMemory (queue_name_ptr, namebuf, sizeof (namebuf), error) > 0 && error.Success())
-            {
-                new_extended_thread_sp->SetQueueName (namebuf);
-            }
-        }
-    }
-}
-
-void
-SystemRuntimeMacOSX::SetNewThreadThreadName (ThreadSP original_thread_sp, ThreadSP new_extended_thread_sp)
-{
-    addr_t enqueued_item_ptr = GetThreadCreatorItem (original_thread_sp);
-
-    if (enqueued_item_ptr != LLDB_INVALID_ADDRESS)
-    {
-        Error error;
-        addr_t thread_name_ptr = m_process->ReadPointerFromMemory (enqueued_item_ptr + m_ldi_header.item_offsets.thread_name_ptr, error);
-        if (thread_name_ptr != LLDB_INVALID_ADDRESS && error.Success())
-        {
-            char namebuf[512];
-            if (m_process->ReadCStringFromMemory (thread_name_ptr, namebuf, sizeof (namebuf), error) > 0 && error.Success())
-            {
-                new_extended_thread_sp->SetName (namebuf);
-            }
-        }
-    }
-}
-
-
-void
-SystemRuntimeMacOSX::SetNewThreadExtendedBacktraceToken (ThreadSP original_thread_sp, ThreadSP new_extended_thread_sp)
-{
-    addr_t enqueued_item_ptr = GetThreadCreatorItem (original_thread_sp);
-    if (enqueued_item_ptr != LLDB_INVALID_ADDRESS)
-    {
-        Error error;
-        uint64_t further_extended_backtrace = m_process->ReadPointerFromMemory (enqueued_item_ptr + m_ldi_header.item_offsets.enqueueing_thread_dispatch_block_ptr, error);
-        if (error.Success() && further_extended_backtrace != 0 && further_extended_backtrace != LLDB_INVALID_ADDRESS)
-        {
-            new_extended_thread_sp->SetExtendedBacktraceToken (further_extended_backtrace);
-        }
-    }
-}
-
-void
-SystemRuntimeMacOSX::SetNewThreadQueueID (ThreadSP original_thread_sp, ThreadSP new_extended_thread_sp)
-{
-    queue_id_t queue_id = LLDB_INVALID_QUEUE_ID;
-    addr_t enqueued_item_ptr = GetThreadCreatorItem (original_thread_sp);
-    if (enqueued_item_ptr != LLDB_INVALID_ADDRESS && m_ldi_header.item_offsets.queue_id_from_thread_info != 0xffff)
-    {
-        Error error;
-        queue_id = m_process->ReadUnsignedIntegerFromMemory (enqueued_item_ptr + m_ldi_header.item_offsets.queue_id_from_thread_info, 8, LLDB_INVALID_QUEUE_ID, error);
-        if (!error.Success())
-            queue_id = LLDB_INVALID_QUEUE_ID;
-    }
-
-    if (queue_id != LLDB_INVALID_QUEUE_ID)
-    {
-        new_extended_thread_sp->SetQueueID (queue_id);
-    }
-}
-
-
-lldb::tid_t
-SystemRuntimeMacOSX::GetNewThreadUniqueThreadID (ThreadSP original_thread_sp)
-{
-    tid_t ret = LLDB_INVALID_THREAD_ID;
-    addr_t enqueued_item_ptr = GetThreadCreatorItem (original_thread_sp);
-    if (enqueued_item_ptr != LLDB_INVALID_ADDRESS)
-    {
-        Error error;
-        ret = m_process->ReadUnsignedIntegerFromMemory (enqueued_item_ptr + m_ldi_header.item_offsets.unique_thread_id, 8, LLDB_INVALID_THREAD_ID, error);
-        if (!error.Success())
-            ret = LLDB_INVALID_THREAD_ID;
-    }
-    return ret;
-}
-
-ThreadSP
-SystemRuntimeMacOSX::GetExtendedBacktraceThread (ThreadSP original_thread_sp, ConstString type)
-{
-    ThreadSP new_extended_thread_sp;
-
-    if (type != ConstString("libdispatch"))
-        return new_extended_thread_sp;
-
-    ArchivedBacktrace bt = GetLibdispatchExtendedBacktrace (original_thread_sp);
-
-    if (bt.pcs.size() == 0)
-        return new_extended_thread_sp;
-
-    tid_t unique_thread_id = GetNewThreadUniqueThreadID (original_thread_sp);
-
-    new_extended_thread_sp.reset (new HistoryThread (*m_process, unique_thread_id, bt.pcs, bt.stop_id, bt.stop_id_is_valid));
-
-    SetNewThreadThreadName (original_thread_sp, new_extended_thread_sp);
-    SetNewThreadQueueName (original_thread_sp, new_extended_thread_sp);
-    SetNewThreadQueueID (original_thread_sp, new_extended_thread_sp);
-    SetNewThreadExtendedBacktraceToken (original_thread_sp, new_extended_thread_sp);
-    return new_extended_thread_sp;
-}
-
-void
 SystemRuntimeMacOSX::PopulateQueueList (lldb_private::QueueList &queue_list)
 {
-    // For now, iterate over the threads and see what queue each thread is associated with.
-    // If we haven't already added this queue, add it to the QueueList.
-    // (a single libdispatch queue may be using multiple threads simultaneously.)
-
-    for (ThreadSP thread_sp : m_process->Threads())
+    if (!BacktraceRecordingHeadersInitialized())
     {
-        if (thread_sp->GetQueueID() != LLDB_INVALID_QUEUE_ID)
+        // We don't have libBacktraceRecording -- build the list of queues by looking at
+        // all extant threads, and the queues that they currently belong to.
+
+        for (ThreadSP thread_sp : m_process->Threads())
         {
-            if (queue_list.FindQueueByID (thread_sp->GetQueueID()).get() == NULL)
+            if (thread_sp->GetQueueID() != LLDB_INVALID_QUEUE_ID)
             {
-                QueueSP queue_sp (new Queue(m_process->shared_from_this(), thread_sp->GetQueueID(), thread_sp->GetQueueName()));
-                queue_list.AddQueue (queue_sp);
+                if (queue_list.FindQueueByID (thread_sp->GetQueueID()).get() == NULL)
+                {
+                    QueueSP queue_sp (new Queue(m_process->shared_from_this(), thread_sp->GetQueueID(), thread_sp->GetQueueName()));
+                    queue_list.AddQueue (queue_sp);
+                }
+            }
+        }
+    }
+    else
+    {
+        AppleGetQueuesHandler::GetQueuesReturnInfo queue_info_pointer;
+        ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
+        if (cur_thread_sp)
+        { 
+            Error error;
+            queue_info_pointer = m_get_queues_handler.GetCurrentQueues (*cur_thread_sp.get(), m_page_to_free, m_page_to_free_size, error);
+            if (error.Success())
+            {
+                m_page_to_free = LLDB_INVALID_ADDRESS;
+                m_page_to_free_size = 0;
+
+                if (queue_info_pointer.count > 0 
+                    && queue_info_pointer.queues_buffer_size > 0
+                    && queue_info_pointer.queues_buffer_ptr != 0 
+                    && queue_info_pointer.queues_buffer_ptr != LLDB_INVALID_ADDRESS)
+                {
+                    PopulateQueuesUsingLibBTR (queue_info_pointer.queues_buffer_ptr, queue_info_pointer.queues_buffer_size, queue_info_pointer.count, queue_list);
+                }
             }
         }
     }
 }
 
+void
+SystemRuntimeMacOSX::PopulatePendingItemsForQueue (Queue *queue)
+{
+    if (BacktraceRecordingHeadersInitialized())
+    {
+        std::vector<addr_t> pending_item_refs = GetPendingItemRefsForQueue (queue->GetLibdispatchQueueAddress());
+        for (addr_t pending_item : pending_item_refs)
+        {
+            AppleGetItemInfoHandler::GetItemInfoReturnInfo ret;
+            ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
+            Error error;
+            ret = m_get_item_info_handler.GetItemInfo (*cur_thread_sp.get(), pending_item, m_page_to_free, m_page_to_free_size, error);
+            if (ret.item_buffer_ptr != 0 &&  ret.item_buffer_ptr != LLDB_INVALID_ADDRESS && ret.item_buffer_size > 0)
+            {
+                DataBufferHeap data (ret.item_buffer_size, 0);
+                if (m_process->ReadMemory (ret.item_buffer_ptr, data.GetBytes(), ret.item_buffer_size, error) && error.Success())
+                {
+                    DataExtractor extractor (data.GetBytes(), data.GetByteSize(), m_process->GetByteOrder(), m_process->GetAddressByteSize());
+                    ItemInfo item = ExtractItemInfoFromBuffer (extractor);
+                    QueueItemSP queue_item_sp (new QueueItem (queue->shared_from_this()));
+                    queue_item_sp->SetItemThatEnqueuedThis (item.item_that_enqueued_this);
+
+                    Address addr;
+                    if (!m_process->GetTarget().ResolveLoadAddress (item.function_or_block, addr, item.stop_id))
+                    {
+                        m_process->GetTarget().ResolveLoadAddress (item.function_or_block, addr);
+                    }
+                    queue_item_sp->SetAddress (addr);
+                    queue_item_sp->SetEnqueueingThreadID (item.enqueuing_thread_id);
+                    queue_item_sp->SetTargetQueueID (item.enqueuing_thread_id);
+                    queue_item_sp->SetStopID (item.stop_id);
+                    queue_item_sp->SetEnqueueingBacktrace (item.enqueuing_callstack);
+                    queue_item_sp->SetThreadLabel (item.enqueuing_thread_label);
+                    queue_item_sp->SetQueueLabel (item.enqueuing_queue_label);
+                    queue_item_sp->SetTargetQueueLabel (item.target_queue_label);
+
+                    queue->PushPendingQueueItem (queue_item_sp);
+                }
+            }
+        }
+    }
+}
+
+// Returns an array of introspection_dispatch_item_info_ref's for the pending items on
+// a queue.  The information about each of these pending items then needs to be fetched
+// individually by passing the ref to libBacktraceRecording.
+
+std::vector<lldb::addr_t>
+SystemRuntimeMacOSX::GetPendingItemRefsForQueue (lldb::addr_t queue)
+{
+    std::vector<addr_t> pending_item_refs;
+    AppleGetPendingItemsHandler::GetPendingItemsReturnInfo pending_items_pointer;
+    ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
+    if (cur_thread_sp)
+    { 
+        Error error;
+        pending_items_pointer = m_get_pending_items_handler.GetPendingItems (*cur_thread_sp.get(), queue, m_page_to_free, m_page_to_free_size, error);
+        if (error.Success())
+        {
+            m_page_to_free = LLDB_INVALID_ADDRESS;
+            m_page_to_free_size = 0;
+            if (pending_items_pointer.count > 0
+                && pending_items_pointer.items_buffer_size > 0
+                && pending_items_pointer.items_buffer_ptr != 0
+                && pending_items_pointer.items_buffer_ptr != LLDB_INVALID_ADDRESS)
+            {
+                DataBufferHeap data (pending_items_pointer.items_buffer_size, 0);
+                if (m_process->ReadMemory (pending_items_pointer.items_buffer_ptr, data.GetBytes(), pending_items_pointer.items_buffer_size, error))
+                {
+                    offset_t offset = 0;
+                    DataExtractor extractor (data.GetBytes(), data.GetByteSize(), m_process->GetByteOrder(), m_process->GetAddressByteSize());
+                    int i = 0;
+                    while (offset < pending_items_pointer.items_buffer_size && i < pending_items_pointer.count)
+                    {
+                        pending_item_refs.push_back (extractor.GetPointer (&offset));
+                        i++;
+                    }
+                }
+                m_page_to_free = pending_items_pointer.items_buffer_ptr;
+                m_page_to_free_size = pending_items_pointer.items_buffer_size;
+            }
+        }
+    }
+    return pending_item_refs;
+}
+
+
+void
+SystemRuntimeMacOSX::PopulateQueuesUsingLibBTR (lldb::addr_t queues_buffer, uint64_t queues_buffer_size, 
+                                                uint64_t count, lldb_private::QueueList &queue_list)
+{
+    Error error;
+    DataBufferHeap data (queues_buffer_size, 0);
+    if (m_process->ReadMemory (queues_buffer, data.GetBytes(), queues_buffer_size, error) == queues_buffer_size && error.Success())
+    {
+        // We've read the information out of inferior memory; free it on the next call we make
+        m_page_to_free = queues_buffer;
+        m_page_to_free_size = queues_buffer_size;
+
+        DataExtractor extractor (data.GetBytes(), data.GetByteSize(), m_process->GetByteOrder(), m_process->GetAddressByteSize());
+        offset_t offset = 0;
+        uint64_t queues_read = 0;
+
+        // The information about the queues is stored in this format (v1):
+        // typedef struct introspection_dispatch_queue_info_s {
+        //     uint32_t offset_to_next;
+        //     dispatch_queue_t queue;
+        //     uint64_t serialnum;     // queue's serialnum in the process, as provided by libdispatch
+        //     uint32_t running_work_items_count;
+        //     uint32_t pending_work_items_count;
+        // 
+        //     char data[];     // Starting here, we have variable-length data:
+        //     // char queue_label[];
+        // } introspection_dispatch_queue_info_s;
+
+        while (queues_read < count && offset < queues_buffer_size)
+        {
+            offset_t    start_of_this_item = offset;
+
+            uint32_t    offset_to_next = extractor.GetU32 (&offset);
+            /* on 64-bit architectures, the pointer will be 8-byte aligned so there's 4 bytes of
+             * padding between these fields. 
+             */
+            if (m_process->GetAddressByteSize() == 8)
+                offset += 4;
+            addr_t      queue = extractor.GetPointer (&offset);
+            uint64_t    serialnum = extractor.GetU64 (&offset);
+            uint32_t    running_work_items_count = extractor.GetU32 (&offset);
+            uint32_t    pending_work_items_count = extractor.GetU32 (&offset);
+
+            // Read the first field of the variable length data
+            offset = start_of_this_item + m_lib_backtrace_recording_info.queue_info_data_offset;
+            const char *queue_label = extractor.GetCStr (&offset);
+            if (queue_label == NULL)
+                queue_label = "";
+
+            offset_t    start_of_next_item = start_of_this_item + offset_to_next;
+            offset = start_of_next_item;
+
+            QueueSP queue_sp (new Queue (m_process->shared_from_this(), serialnum, queue_label));
+            queue_sp->SetNumRunningWorkItems (running_work_items_count);
+            queue_sp->SetNumPendingWorkItems (pending_work_items_count);
+            queue_sp->SetLibdispatchQueueAddress (queue);
+            queue_list.AddQueue (queue_sp);
+            queues_read++;
+        }
+    }
+}
+
+SystemRuntimeMacOSX::ItemInfo
+SystemRuntimeMacOSX::ExtractItemInfoFromBuffer (lldb_private::DataExtractor &extractor)
+{
+    ItemInfo item;
+
+    offset_t offset = 0;
+    
+    item.item_that_enqueued_this = extractor.GetPointer (&offset);
+    item.function_or_block = extractor.GetPointer (&offset);
+    item.enqueuing_thread_id = extractor.GetU64 (&offset);
+    item.enqueuing_queue_serialnum = extractor.GetU64 (&offset);
+    item.target_queue_serialnum = extractor.GetU64 (&offset);
+    item.enqueuing_callstack_frame_count = extractor.GetU32 (&offset);
+    item.stop_id = extractor.GetU32 (&offset);
+
+    offset = m_lib_backtrace_recording_info.item_info_data_offset;
+
+    for (uint32_t i = 0; i < item.enqueuing_callstack_frame_count; i++)
+    {
+        item.enqueuing_callstack.push_back (extractor.GetPointer (&offset));
+    }
+    item.enqueuing_thread_label = extractor.GetCStr (&offset);
+    item.enqueuing_queue_label = extractor.GetCStr (&offset);
+    item.target_queue_label = extractor.GetCStr (&offset);
+
+    return item;
+}
 
 void
 SystemRuntimeMacOSX::Initialize()

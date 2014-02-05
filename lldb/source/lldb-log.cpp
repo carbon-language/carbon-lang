@@ -141,6 +141,7 @@ lldb_private::DisableLog (const char **categories, Stream *feedback_strm)
                 else if (0 == ::strncasecmp(arg, "unwind", 6))  flag_bits &= ~LIBLLDB_LOG_UNWIND;
                 else if (0 == ::strncasecmp(arg, "types", 5))   flag_bits &= ~LIBLLDB_LOG_TYPES;
                 else if (0 == ::strncasecmp(arg, "symbol", 6))  flag_bits &= ~LIBLLDB_LOG_SYMBOLS;
+                else if (0 == ::strcasecmp(arg, "system-runtime"))  flag_bits &= ~LIBLLDB_LOG_SYSTEM_RUNTIME;
                 else if (0 == ::strncasecmp(arg, "module", 6))  flag_bits &= ~LIBLLDB_LOG_MODULES;
                 else if (0 == ::strncasecmp(arg, "mmap", 4))    flag_bits &= ~LIBLLDB_LOG_MMAP;
                 else if (0 == ::strcasecmp(arg, "os"))          flag_bits &= ~LIBLLDB_LOG_OS;
@@ -208,6 +209,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const ch
             else if (0 == ::strcasecmp(arg, "state"))       flag_bits |= LIBLLDB_LOG_STATE;
             else if (0 == ::strcasecmp(arg, "step"))        flag_bits |= LIBLLDB_LOG_STEP;
             else if (0 == ::strncasecmp(arg, "symbol", 6))  flag_bits |= LIBLLDB_LOG_SYMBOLS;
+            else if (0 == ::strcasecmp(arg, "system-runtime"))  flag_bits |= LIBLLDB_LOG_SYSTEM_RUNTIME;
             else if (0 == ::strcasecmp(arg, "target"))      flag_bits |= LIBLLDB_LOG_TARGET;
             else if (0 == ::strncasecmp(arg, "temp", 4))    flag_bits |= LIBLLDB_LOG_TEMPORARY;
             else if (0 == ::strcasecmp(arg, "thread"))      flag_bits |= LIBLLDB_LOG_THREAD;
@@ -256,6 +258,7 @@ lldb_private::ListLogCategories (Stream *strm)
                  "  state - log private and public process state changes\n"
                  "  step - log step related activities\n"
                  "  symbol - log symbol related issues and warnings\n"
+                 "  system-runtime - log system runtime events\n"
                  "  target - log target events and activities\n"
                  "  thread - log thread events and activities\n"
                  "  types - log type system related activities\n"

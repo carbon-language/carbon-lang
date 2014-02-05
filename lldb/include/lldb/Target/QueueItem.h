@@ -10,6 +10,8 @@
 #ifndef liblldb_QueueItem_h_
 #define liblldb_QueueItem_h_
 
+#include <vector>
+
 #include "lldb/lldb-private.h"
 #include "lldb/lldb-enumerations.h"
 
@@ -30,7 +32,8 @@ namespace lldb_private {
 //------------------------------------------------------------------
 
 
-class QueueItem
+class QueueItem :
+    public std::enable_shared_from_this<QueueItem>
 {
 public:
 
@@ -114,10 +117,118 @@ public:
     lldb::ThreadSP
     GetExtendedBacktraceThread (ConstString type);
 
+    void
+    SetItemThatEnqueuedThis (lldb::addr_t address_of_item)
+    {
+        m_item_that_enqueued_this_ref = address_of_item;
+    }
+
+    lldb::addr_t
+    GetItemThatEnqueuedThis ()
+    {
+        return m_item_that_enqueued_this_ref;
+    }
+
+    void
+    SetEnqueueingThreadID (lldb::tid_t tid)
+    {
+        m_enqueueing_thread_id = tid;
+    }
+
+    lldb::tid_t
+    GetEnqueueingThreadID ()
+    {
+        return m_enqueueing_thread_id;
+    }
+
+    void
+    SetEnqueueingQueueID (lldb::queue_id_t qid)
+    {
+        m_enqueueing_queue_id = qid;
+    }
+
+    lldb::queue_id_t
+    GetEnqueueingQueueID ()
+    {
+        return m_enqueueing_queue_id;
+    }
+
+    void
+    SetTargetQueueID (lldb::queue_id_t qid)
+    {
+        m_target_queue_id = qid;
+    }
+
+    void
+    SetStopID (uint32_t stop_id)
+    {
+        m_stop_id = stop_id;
+    }
+
+    uint32_t
+    GetStopID ()
+    {
+        return m_stop_id;
+    }
+
+    void
+    SetEnqueueingBacktrace (std::vector<lldb::addr_t> backtrace)
+    {
+        m_backtrace = backtrace;
+    }
+
+    std::vector<lldb::addr_t> &
+    GetEnqueueingBacktrace ()
+    {
+        return m_backtrace;
+    }
+
+    void
+    SetThreadLabel (std::string thread_name)
+    {
+        m_thread_label = thread_name;
+    }
+
+    std::string
+    GetThreadLabel ()
+    {
+        return m_thread_label;
+    }
+
+    void
+    SetQueueLabel (std::string queue_name)
+    {
+        m_queue_label = queue_name;
+    }
+
+    std::string
+    GetQueueLabel ()
+    {
+        return m_queue_label;
+    }
+
+    void
+    SetTargetQueueLabel (std::string queue_name)
+    {
+        m_target_queue_label = queue_name;
+    }
+
 protected:
     lldb::QueueWP           m_queue_wp;
     lldb::QueueItemKind     m_kind;
     lldb_private::Address   m_address;
+
+    lldb::addr_t            m_item_that_enqueued_this_ref;  // a handle that we can pass into libBacktraceRecording
+                                                            // to get the QueueItem that enqueued this item
+    lldb::tid_t             m_enqueueing_thread_id;    // thread that enqueued this item
+    lldb::queue_id_t        m_enqueueing_queue_id;     // Queue that enqueued this item, if it was a queue
+    lldb::queue_id_t        m_target_queue_id;
+    uint32_t                m_stop_id;                 // indicates when this backtrace was recorded in time
+    std::vector<lldb::addr_t>    m_backtrace;
+    std::string             m_thread_label;
+    std::string             m_queue_label;
+    std::string             m_target_queue_label;
+
 
 private:
     //------------------------------------------------------------------

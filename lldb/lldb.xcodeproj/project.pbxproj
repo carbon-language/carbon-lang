@@ -616,17 +616,25 @@
 		AF061F8B182C980000B6A19C /* HistoryThread.h in Headers */ = {isa = PBXBuildFile; fileRef = AF061F89182C980000B6A19C /* HistoryThread.h */; };
 		AF061F8C182C980000B6A19C /* HistoryUnwind.h in Headers */ = {isa = PBXBuildFile; fileRef = AF061F8A182C980000B6A19C /* HistoryUnwind.h */; };
 		AF0C112818580CD800C4C45B /* QueueItem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0C112718580CD800C4C45B /* QueueItem.cpp */; };
+		AF0E22F018A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0E22EE18A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp */; };
+		AF0E22F118A09FB20009B7D1 /* AppleGetItemInfoHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF0E22EF18A09FB20009B7D1 /* AppleGetItemInfoHandler.h */; };
 		AF0EBBE8185940FB0059E52F /* SBQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0EBBE6185940FB0059E52F /* SBQueue.cpp */; };
 		AF0EBBE9185940FB0059E52F /* SBQueueItem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0EBBE7185940FB0059E52F /* SBQueueItem.cpp */; };
 		AF0EBBEC185941360059E52F /* SBQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = AF0EBBEA185941360059E52F /* SBQueue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AF0EBBED185941360059E52F /* SBQueueItem.h in Headers */ = {isa = PBXBuildFile; fileRef = AF0EBBEB185941360059E52F /* SBQueueItem.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AF1729D6182C907200E0AB97 /* HistoryThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1729D4182C907200E0AB97 /* HistoryThread.cpp */; };
 		AF1729D7182C907200E0AB97 /* HistoryUnwind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */; };
+		AF1F7B07189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1F7B05189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp */; };
+		AF1F7B08189C904B0087DB9C /* AppleGetPendingItemsHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF1F7B06189C904B0087DB9C /* AppleGetPendingItemsHandler.h */; };
 		AF254E31170CCC33007AE5C9 /* PlatformDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF254E2F170CCC33007AE5C9 /* PlatformDarwinKernel.cpp */; };
 		AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */ = {isa = PBXBuildFile; fileRef = AF254E30170CCC33007AE5C9 /* PlatformDarwinKernel.h */; };
+		AF25AB26188F685C0030DEC3 /* AppleGetQueuesHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF25AB24188F685C0030DEC3 /* AppleGetQueuesHandler.cpp */; };
+		AF25AB27188F685C0030DEC3 /* AppleGetQueuesHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF25AB25188F685C0030DEC3 /* AppleGetQueuesHandler.h */; };
 		AF26703A1852D01E00B6CC36 /* Queue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2670381852D01E00B6CC36 /* Queue.cpp */; };
 		AF26703B1852D01E00B6CC36 /* QueueList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2670391852D01E00B6CC36 /* QueueList.cpp */; };
 		AF37E10A17C861F20061E18E /* ProcessRunLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF37E10917C861F20061E18E /* ProcessRunLock.cpp */; };
+		AF45FDE518A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF45FDE318A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp */; };
+		AF45FDE618A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF45FDE418A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h */; };
 		AF81DEFA1828A23F0042CF19 /* SystemRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF81DEF91828A23F0042CF19 /* SystemRuntime.cpp */; };
 		AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF90106315AB7C5700FF120D /* lldb.1 */; };
 		AF9B8F33182DB52900DA866F /* SystemRuntimeMacOSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9B8F31182DB52900DA866F /* SystemRuntimeMacOSX.cpp */; };
@@ -1791,6 +1799,8 @@
 		AF061F89182C980000B6A19C /* HistoryThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HistoryThread.h; path = Utility/HistoryThread.h; sourceTree = "<group>"; };
 		AF061F8A182C980000B6A19C /* HistoryUnwind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HistoryUnwind.h; path = Utility/HistoryUnwind.h; sourceTree = "<group>"; };
 		AF0C112718580CD800C4C45B /* QueueItem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = QueueItem.cpp; path = source/Target/QueueItem.cpp; sourceTree = "<group>"; };
+		AF0E22EE18A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleGetItemInfoHandler.cpp; sourceTree = "<group>"; };
+		AF0E22EF18A09FB20009B7D1 /* AppleGetItemInfoHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleGetItemInfoHandler.h; sourceTree = "<group>"; };
 		AF0EBBE6185940FB0059E52F /* SBQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBQueue.cpp; path = source/API/SBQueue.cpp; sourceTree = "<group>"; };
 		AF0EBBE7185940FB0059E52F /* SBQueueItem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBQueueItem.cpp; path = source/API/SBQueueItem.cpp; sourceTree = "<group>"; };
 		AF0EBBEA185941360059E52F /* SBQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBQueue.h; path = include/lldb/API/SBQueue.h; sourceTree = "<group>"; };
@@ -1799,11 +1809,17 @@
 		AF0EBBEF1859419F0059E52F /* SBQueueItem.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBQueueItem.i; sourceTree = "<group>"; };
 		AF1729D4182C907200E0AB97 /* HistoryThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HistoryThread.cpp; path = Utility/HistoryThread.cpp; sourceTree = "<group>"; };
 		AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HistoryUnwind.cpp; path = Utility/HistoryUnwind.cpp; sourceTree = "<group>"; };
+		AF1F7B05189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleGetPendingItemsHandler.cpp; sourceTree = "<group>"; };
+		AF1F7B06189C904B0087DB9C /* AppleGetPendingItemsHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleGetPendingItemsHandler.h; sourceTree = "<group>"; };
 		AF254E2F170CCC33007AE5C9 /* PlatformDarwinKernel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformDarwinKernel.cpp; sourceTree = "<group>"; };
 		AF254E30170CCC33007AE5C9 /* PlatformDarwinKernel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformDarwinKernel.h; sourceTree = "<group>"; };
+		AF25AB24188F685C0030DEC3 /* AppleGetQueuesHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleGetQueuesHandler.cpp; sourceTree = "<group>"; };
+		AF25AB25188F685C0030DEC3 /* AppleGetQueuesHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleGetQueuesHandler.h; sourceTree = "<group>"; };
 		AF2670381852D01E00B6CC36 /* Queue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Queue.cpp; path = source/Target/Queue.cpp; sourceTree = "<group>"; };
 		AF2670391852D01E00B6CC36 /* QueueList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = QueueList.cpp; path = source/Target/QueueList.cpp; sourceTree = "<group>"; };
 		AF37E10917C861F20061E18E /* ProcessRunLock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessRunLock.cpp; sourceTree = "<group>"; };
+		AF45FDE318A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleGetThreadItemInfoHandler.cpp; sourceTree = "<group>"; };
+		AF45FDE418A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleGetThreadItemInfoHandler.h; sourceTree = "<group>"; };
 		AF68D2541255416E002FF25B /* RegisterContextLLDB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextLLDB.cpp; path = Utility/RegisterContextLLDB.cpp; sourceTree = "<group>"; };
 		AF68D2551255416E002FF25B /* RegisterContextLLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextLLDB.h; path = Utility/RegisterContextLLDB.h; sourceTree = "<group>"; };
 		AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindLLDB.cpp; path = Utility/UnwindLLDB.cpp; sourceTree = "<group>"; };
@@ -3619,6 +3635,14 @@
 		AF11CB35182CA85A00D9B618 /* MacOSX */ = {
 			isa = PBXGroup;
 			children = (
+				AF0E22EE18A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp */,
+				AF0E22EF18A09FB20009B7D1 /* AppleGetItemInfoHandler.h */,
+				AF1F7B05189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp */,
+				AF1F7B06189C904B0087DB9C /* AppleGetPendingItemsHandler.h */,
+				AF25AB24188F685C0030DEC3 /* AppleGetQueuesHandler.cpp */,
+				AF25AB25188F685C0030DEC3 /* AppleGetQueuesHandler.h */,
+				AF45FDE318A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp */,
+				AF45FDE418A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h */,
 				AF9B8F31182DB52900DA866F /* SystemRuntimeMacOSX.cpp */,
 				AF9B8F32182DB52900DA866F /* SystemRuntimeMacOSX.h */,
 			);
@@ -3717,8 +3741,10 @@
 				4C6649A014EEE7F100B0316F /* StreamCallback.h in Headers */,
 				26B7564F14F89356008D9CB3 /* PlatformiOSSimulator.h in Headers */,
 				26FFC19A14FC072100087D58 /* AuxVector.h in Headers */,
+				AF25AB27188F685C0030DEC3 /* AppleGetQueuesHandler.h in Headers */,
 				26CA97A2172B1FD5005DC71B /* RegisterContextThreadMemory.h in Headers */,
 				26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */,
+				AF1F7B08189C904B0087DB9C /* AppleGetPendingItemsHandler.h in Headers */,
 				26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */,
 				AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */,
 				2694E99E14FC0BB30076DE67 /* PlatformFreeBSD.h in Headers */,
@@ -3728,12 +3754,14 @@
 				945759681534941F005A9070 /* PlatformPOSIX.h in Headers */,
 				26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */,
 				260CC62E15D04377002BF2E0 /* OptionValueArgs.h in Headers */,
+				AF0E22F118A09FB20009B7D1 /* AppleGetItemInfoHandler.h in Headers */,
 				260CC62F15D04377002BF2E0 /* OptionValueArray.h in Headers */,
 				260CC63015D04377002BF2E0 /* OptionValueBoolean.h in Headers */,
 				260CC63115D04377002BF2E0 /* OptionValueProperties.h in Headers */,
 				260CC63215D04377002BF2E0 /* OptionValueDictionary.h in Headers */,
 				262173A118395D3800C52091 /* SectionLoadHistory.h in Headers */,
 				260CC63315D04377002BF2E0 /* OptionValueEnumeration.h in Headers */,
+				AF45FDE618A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h in Headers */,
 				260A63171861008E00FECF8E /* IOHandler.h in Headers */,
 				260CC63415D04377002BF2E0 /* OptionValueFileSpec.h in Headers */,
 				26CFDCA11861638D000E63E5 /* Editline.h in Headers */,
@@ -4232,6 +4260,7 @@
 				2689004C13353E0400698AC0 /* SourceManager.cpp in Sources */,
 				2689004D13353E0400698AC0 /* State.cpp in Sources */,
 				94D0B10D16D5535900EA9C70 /* LibStdcpp.cpp in Sources */,
+				AF0E22F018A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp in Sources */,
 				2689004E13353E0400698AC0 /* Stream.cpp in Sources */,
 				2689004F13353E0400698AC0 /* StreamFile.cpp in Sources */,
 				2689005013353E0400698AC0 /* StreamString.cpp in Sources */,
@@ -4412,6 +4441,7 @@
 				2689011213353E8200698AC0 /* StringExtractorGDBRemote.cpp in Sources */,
 				2689011313353E8200698AC0 /* PseudoTerminal.cpp in Sources */,
 				94D6A0AA16CEB55F00833B6E /* NSArray.cpp in Sources */,
+				AF1F7B07189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp in Sources */,
 				26B1FCC21338115F002886E2 /* Host.mm in Sources */,
 				26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */,
 				26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */,
@@ -4422,6 +4452,7 @@
 				2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */,
 				4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */,
 				4CD0BD0F134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp in Sources */,
+				AF45FDE518A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp in Sources */,
 				26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */,
 				26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */,
 				26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */,
@@ -4523,6 +4554,7 @@
 				94BA8B6D176F8C9B005A91B5 /* Range.cpp in Sources */,
 				26DAED6315D327C200E15819 /* OptionValuePathMappings.cpp in Sources */,
 				B2B7CCEB15D1BD6700EEFB57 /* CommandObjectWatchpointCommand.cpp in Sources */,
+				AF25AB26188F685C0030DEC3 /* AppleGetQueuesHandler.cpp in Sources */,
 				B2B7CCF015D1C20F00EEFB57 /* WatchpointOptions.cpp in Sources */,
 				2640E19F15DC78FD00F23B50 /* Property.cpp in Sources */,
 				26491E3E15E1DB9F00CBFFC2 /* OptionValueRegex.cpp in Sources */,

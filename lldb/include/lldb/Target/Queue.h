@@ -16,6 +16,7 @@
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/lldb-private.h"
+#include "lldb/Target/QueueItem.h"
 
 
 namespace lldb_private {
@@ -47,9 +48,10 @@ public:
     /// Get the QueueID for this Queue
     ///
     /// A 64-bit ID number that uniquely identifies a queue at this particular
-    /// stop_id.  It is not guaranteed that the same QueueID will not be reused
-    /// for a different queue later in the process execution after this queue
-    /// has been deleted.
+    /// stop_id.  Currently the libdispatch serialnum is used for the QueueID;
+    /// it is a number that starts at 1 for each process and increments with 
+    /// each queue.  A serialnum is not reused for a different queue in the
+    /// lifetime of that process execution.
     ///
     /// @return
     ///     The QueueID for this Queue.
@@ -70,13 +72,13 @@ public:
     //------------------------------------------------------------------
     /// Get the IndexID for this Queue
     ///
-    /// An IndexID is a small integer value (starting with 1) assigned to
-    /// each queue that is seen during a Process lifetime.  Ideally an
-    /// IndexID will not be reused (although note that QueueID, which it is
-    /// based on, is not guaranteed to be unique across the run of a program
-    /// and IndexID depends on QueueID) - so if a Queue appears as IndexID 5,
-    /// it will continue to show up as IndexID 5 at every process stop while
-    /// that queue still exists.
+    /// This is currently the same as GetID().  If it changes in the future,
+    /// it will be  a small integer value (starting with 1) assigned to
+    /// each queue that is seen during a Process lifetime.  
+    /// 
+    /// Both the GetID and GetIndexID are being retained for Queues to
+    /// maintain similar API to the Thread class, and allow for the 
+    /// possibility of GetID changing to a different source in the future.
     ///
     /// @return
     ///     The IndexID for this queue.
@@ -108,10 +110,7 @@ public:
     ///     The vector of enqueued items for this queue
     //------------------------------------------------------------------
     const std::vector<lldb::QueueItemSP> &
-    GetItems() const
-    {
-        return m_enqueued_items;
-    }
+    GetPendingItems();
 
     lldb::ProcessSP
     GetProcess() const
@@ -119,20 +118,70 @@ public:
         return m_process_wp.lock(); 
     }
 
-protected:
-    lldb::ProcessWP                 m_process_wp;
-    lldb::queue_id_t                m_queue_id;
-    uint32_t                        m_index_id;
-    std::string                     m_queue_name;
-    std::vector<lldb::QueueItemSP>  m_enqueued_items;
+    //------------------------------------------------------------------
+    /// Get the number of work items that this queue is currently running
+    ///
+    /// @return
+    ///     The number of work items currently executing.  For a serial 
+    ///     queue, this will be 0 or 1.  For a concurrent queue, this 
+    ///     may be any number.
+    //------------------------------------------------------------------
+    uint32_t
+    GetNumRunningWorkItems () const;
+
+    //------------------------------------------------------------------
+    /// Get the number of work items enqueued on this queue
+    ///
+    /// @return
+    ///     The number of work items currently enqueued, waiting to
+    ///     execute.
+    //------------------------------------------------------------------
+    uint32_t
+    GetNumPendingWorkItems () const;
+
+    //------------------------------------------------------------------
+    /// Get the dispatch_queue_t structure address for this Queue
+    ///
+    /// Get the address in the inferior process' memory of this Queue's
+    /// dispatch_queue_t structure.
+    ///
+    /// @return
+    ///     The address of the dispatch_queue_t structure, if known.
+    ///     LLDB_INVALID_ADDRESS will be returned if it is unavailable.
+    //------------------------------------------------------------------
+    lldb::addr_t
+    GetLibdispatchQueueAddress () const;
+
+
+    void
+    SetNumRunningWorkItems (uint32_t count);
+
+    void
+    SetNumPendingWorkItems (uint32_t count);
+
+    void
+    SetLibdispatchQueueAddress (lldb::addr_t dispatch_queue_t_addr);
+
+    void
+    PushPendingQueueItem (lldb::QueueItemSP item)
+    {
+        m_pending_items.push_back (item);
+    }
 
 private:
     //------------------------------------------------------------------
     // For Queue only
     //------------------------------------------------------------------
 
-    DISALLOW_COPY_AND_ASSIGN (Queue);
+    lldb::ProcessWP                 m_process_wp;
+    lldb::queue_id_t                m_queue_id;
+    std::string                     m_queue_name;
+    uint32_t                        m_running_work_items_count;
+    uint32_t                        m_pending_work_items_count;
+    std::vector<lldb::QueueItemSP>  m_pending_items;
+    lldb::addr_t                    m_dispatch_queue_t_addr;  // address of libdispatch dispatch_queue_t for this Queue
 
+    DISALLOW_COPY_AND_ASSIGN (Queue);
 };
 
 } // namespace lldb_private

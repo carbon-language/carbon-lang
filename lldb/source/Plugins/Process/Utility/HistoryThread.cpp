@@ -25,7 +25,7 @@ HistoryThread::HistoryThread (lldb_private::Process &process,
                               std::vector<lldb::addr_t> pcs, 
                               uint32_t stop_id, 
                               bool stop_id_is_valid) : 
-        Thread (process, LLDB_INVALID_THREAD_ID),
+        Thread (process, tid),
         m_framelist_mutex(),
         m_framelist(),
         m_pcs (pcs),

@@ -8,7 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Target/Queue.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/QueueItem.h"
+#include "lldb/Target/SystemRuntime.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -16,7 +18,16 @@ using namespace lldb_private;
 QueueItem::QueueItem (QueueSP queue_sp) :
     m_queue_wp (),
     m_kind (eQueueItemKindUnknown),
-    m_address ()
+    m_address (),
+    m_item_that_enqueued_this_ref (LLDB_INVALID_ADDRESS),
+    m_enqueueing_thread_id (LLDB_INVALID_THREAD_ID),
+    m_enqueueing_queue_id (LLDB_INVALID_QUEUE_ID),
+    m_target_queue_id (LLDB_INVALID_QUEUE_ID),
+    m_stop_id (0),
+    m_backtrace(),
+    m_thread_label(),
+    m_queue_label(),
+    m_target_queue_label()
 {
     m_queue_wp = queue_sp;
 }
@@ -52,5 +63,15 @@ QueueItem::SetAddress (Address addr)
 ThreadSP
 QueueItem::GetExtendedBacktraceThread (ConstString type)
 {
-    return ThreadSP();
+    ThreadSP return_thread;
+    QueueSP queue_sp = m_queue_wp.lock();
+    if (queue_sp)
+    {
+        ProcessSP process_sp = queue_sp->GetProcess();
+        if (process_sp && process_sp->GetSystemRuntime())
+        {
+            return_thread = process_sp->GetSystemRuntime()->GetExtendedBacktraceForQueueItem (this->shared_from_this(), type);
+        }
+    }
+    return return_thread;
 }

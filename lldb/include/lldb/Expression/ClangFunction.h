@@ -300,7 +300,7 @@ public:
     /// @param[in] args_addr
     ///     The address of the argument struct.
     ///
-    /// @param[in] ret_value
+    /// @param[out] ret_value
     ///     The value returned by the function.
     ///
     /// @return

@@ -19,6 +19,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
+#include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Unwind.h"
 
@@ -74,10 +75,10 @@ ThreadGDBRemote::GetQueueName ()
         ProcessSP process_sp (GetProcess());
         if (process_sp)
         {
-            PlatformSP platform_sp (process_sp->GetTarget().GetPlatform());
-            if (platform_sp)
+            SystemRuntime *runtime = process_sp->GetSystemRuntime ();
+            if (runtime)
             {
-                m_dispatch_queue_name = platform_sp->GetQueueNameForThreadQAddress (process_sp.get(), m_thread_dispatch_qaddr);
+                m_dispatch_queue_name = runtime->GetQueueNameFromThreadQAddress (m_thread_dispatch_qaddr);
             }
             if (m_dispatch_queue_name.length() > 0)
             {
@@ -96,10 +97,10 @@ ThreadGDBRemote::GetQueueID ()
         ProcessSP process_sp (GetProcess());
         if (process_sp)
         {
-            PlatformSP platform_sp (process_sp->GetTarget().GetPlatform());
-            if (platform_sp)
+            SystemRuntime *runtime = process_sp->GetSystemRuntime ();
+            if (runtime)
             {
-                return platform_sp->GetQueueIDForThreadQAddress (process_sp.get(), m_thread_dispatch_qaddr);
+                return runtime->GetQueueIDFromThreadQAddress (m_thread_dispatch_qaddr);
             }
         }
     }

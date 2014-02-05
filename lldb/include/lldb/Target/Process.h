@@ -3369,15 +3369,6 @@ public:
     uint32_t
     AssignIndexIDToThread(uint64_t thread_id);
 
-    // Returns true if an index id has been assigned to a queue.
-    bool
-    HasAssignedIndexIDToQueue(lldb::queue_id_t queue_id);
-
-    // Given a queue_id, it will assign a more reasonable index id for display to the user.
-    // If the queue_id has previously been assigned, the same index id will be used.
-    uint32_t
-    AssignIndexIDToQueue(lldb::queue_id_t queue_id);
-
     //------------------------------------------------------------------
     // Queue Queries
     //------------------------------------------------------------------
@@ -3759,9 +3750,7 @@ protected:
     ProcessModID                m_mod_id;               ///< Tracks the state of the process over stops and other alterations.
     uint32_t                    m_process_unique_id;    ///< Each lldb_private::Process class that is created gets a unique integer ID that increments with each new instance
     uint32_t                    m_thread_index_id;      ///< Each thread is created with a 1 based index that won't get re-used.
-    uint32_t                    m_queue_index_id;       ///< Each queue is created with a 1 based index that won't get re-used.
     std::map<uint64_t, uint32_t> m_thread_id_to_index_id_map;
-    std::map<uint64_t, uint32_t> m_queue_id_to_index_id_map;
     int                         m_exit_status;          ///< The exit status of the process, or -1 if not set.
     std::string                 m_exit_string;          ///< A textual description of why a process exited.
     Mutex                       m_thread_mutex;

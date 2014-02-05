@@ -57,10 +57,10 @@ public:
     GetThreadAtIndex (uint32_t);
 
     uint32_t
-    GetNumItems ();
+    GetNumPendingItems ();
 
     lldb::SBQueueItem
-    GetItemAtIndex (uint32_t);
+    GetPendingItemAtIndex (uint32_t);
 
 protected:
     friend class SBProcess;
