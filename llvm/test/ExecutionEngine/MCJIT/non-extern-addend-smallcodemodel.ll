@@ -1,5 +1,5 @@
 ; RUN: %lli_mcjit -code-model=small %s > /dev/null
-; XFAIL: aarch64
+; XFAIL: aarch64, mips
 ;
 ; FIXME: Merge this file with non-extern-addend.ll once AArch64 supports PC-rel
 ;        relocations in ELF. (The code is identical, only the run line differs).
