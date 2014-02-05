@@ -29,15 +29,16 @@ void __tsan_release_merge(void *thr, void *addr);
 
 void symbolize_cb(void *ctx) {}
 
-char buf[10];
+char buf0[100<<10];
 
 void foobar() {}
 void barfoo() {}
 
 int main(void) {
   void *thr0 = 0;
+  char *buf = (char*)((unsigned long)buf0 + (64<<10) - 1 & ~((64<<10) - 1));
   __tsan_init(&thr0, symbolize_cb);
-  __tsan_map_shadow(buf, sizeof(buf) + 4096);
+  __tsan_map_shadow(buf, 4096);
   __tsan_func_enter(thr0, (char*)&main + 1);
   __tsan_malloc(thr0, buf, 10, 0);
   __tsan_release(thr0, buf);

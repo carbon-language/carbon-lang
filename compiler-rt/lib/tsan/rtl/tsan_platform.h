@@ -140,8 +140,9 @@ const char *InitializePlatform();
 void FinalizePlatform();
 
 // The additional page is to catch shadow stack overflow as paging fault.
-const uptr kTotalTraceSize = (kTraceSize * sizeof(Event) + sizeof(Trace) + 4096
-    + 4095) & ~4095;
+// Windows wants 64K alignment for mmaps.
+const uptr kTotalTraceSize = (kTraceSize * sizeof(Event) + sizeof(Trace)
+    + (64 << 10) + (64 << 10) - 1) & ~((64 << 10) - 1);
 
 uptr ALWAYS_INLINE GetThreadTrace(int tid) {
   uptr p = kTraceMemBegin + (uptr)tid * kTotalTraceSize;
