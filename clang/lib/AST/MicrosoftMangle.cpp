@@ -1093,11 +1093,11 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
     if (const FieldDecl *FD = dyn_cast<FieldDecl>(ND)) {
       mangleMemberDataPointer(cast<CXXRecordDecl>(FD->getParent()), FD);
     } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
-      const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ND);
+      const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
       if (MD && MD->isInstance())
         mangleMemberFunctionPointer(MD->getParent(), MD);
       else
-        mangle(ND, "$1?");
+        mangle(FD, "$1?");
     } else {
       mangle(ND, TA.isDeclForReferenceParam() ? "$E?" : "$1?");
     }
