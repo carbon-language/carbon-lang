@@ -4,25 +4,25 @@
 
 extern int atoi(const char *);
 
-// CHECK: hot_100_percent(i32 %i) [[HOT:#[0-9]+]]
+// CHECK: hot_100_percent(i32{{.*}}%i) [[HOT:#[0-9]+]]
 void hot_100_percent(int i) {
   while (i > 0)
     i--;
 }
 
-// CHECK: hot_40_percent(i32 %i) [[HOT]]
+// CHECK: hot_40_percent(i32{{.*}}%i) [[HOT]]
 void hot_40_percent(int i) {
   while (i > 0)
     i--;
 }
 
-// CHECK: normal_func(i32 %i) [[NORMAL:#[0-9]+]]
+// CHECK: normal_func(i32{{.*}}%i) [[NORMAL:#[0-9]+]]
 void normal_func(int i) {
   while (i > 0)
     i--;
 }
 
-// CHECK: cold_func(i32 %i) [[COLD:#[0-9]+]]
+// CHECK: cold_func(i32{{.*}}%i) [[COLD:#[0-9]+]]
 void cold_func(int i) {
   while (i > 0)
     i--;
