@@ -5,6 +5,7 @@ set(LLVM_LINK_COMPONENTS
 set(ADTSources
   APFloatTest.cpp
   APIntTest.cpp
+  ArrayRefTest.cpp
   BitVectorTest.cpp
   DAGDeltaAlgorithmTest.cpp
   DeltaAlgorithmTest.cpp

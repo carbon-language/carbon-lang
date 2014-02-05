@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Allocator.h"
 #include <vector>
 
 namespace llvm {
@@ -118,6 +119,13 @@ namespace llvm {
     const T &back() const {
       assert(!empty());
       return Data[Length-1];
+    }
+
+    // copy - Allocate copy in BumpPtrAllocator and return ArrayRef<T> to it.
+    ArrayRef<T> copy(BumpPtrAllocator &Allocator) {
+      T *Buff = Allocator.Allocate<T>(Length);
+      std::copy(begin(), end(), Buff);
+      return ArrayRef<T>(Buff, Length);
     }
 
     /// equals - Check for element-wise equality.

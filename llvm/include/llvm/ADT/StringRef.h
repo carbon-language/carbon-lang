@@ -11,6 +11,7 @@
 #define LLVM_ADT_STRINGREF_H
 
 #include "llvm/Support/type_traits.h"
+#include "llvm/Support/Allocator.h"
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -122,6 +123,13 @@ namespace llvm {
     char back() const {
       assert(!empty());
       return Data[Length-1];
+    }
+
+    // copy - Allocate copy in BumpPtrAllocator and return StringRef to it.
+    StringRef copy(BumpPtrAllocator &Allocator) {
+      char *S = Allocator.Allocate<char>(Length);
+      std::copy(begin(), end(), S);
+      return StringRef(S, Length);
     }
 
     /// equals - Check for string equality, this is more efficient than

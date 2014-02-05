@@ -147,32 +147,4 @@ TEST(AllocatorTest, TestBigAlignment) {
   EXPECT_LE(Ptr + 3000, ((uintptr_t)Slab) + Slab->Size);
 }
 
-TEST(AllocatorTest, CopyStringRef) {
-  BumpPtrAllocator Alloc;
-  StringRef Str1 = "hello";
-  StringRef Str2 = "bye";
-  StringRef Str1c = Alloc.allocateCopy(Str1);
-  StringRef Str2c = Alloc.allocateCopy(Str2);
-  EXPECT_TRUE(Str1.equals(Str1c));
-  EXPECT_NE(Str1.data(), Str1c.data());
-  EXPECT_TRUE(Str2.equals(Str2c));
-  EXPECT_NE(Str2.data(), Str2c.data());
-}
-
-TEST(AllocatorTest, CopyArrayRef) {
-  BumpPtrAllocator Alloc;
-  static const uint16_t Words1[] = { 1, 4, 200, 37 };
-  ArrayRef<uint16_t> Array1 = makeArrayRef(Words1, 4);
-  static const uint16_t Words2[] = { 11, 4003, 67, 64000, 13 };
-  ArrayRef<uint16_t> Array2 = makeArrayRef(Words2, 5);
-  ArrayRef<uint16_t> Array1c = Alloc.allocateCopy(Array1);
-  ArrayRef<uint16_t> Array2c = Alloc.allocateCopy(Array2);
-  EXPECT_TRUE(Array1.equals(Array1c));
-  EXPECT_NE(Array1.data(), Array1c.data());
-  EXPECT_TRUE(Array2.equals(Array2c));
-  EXPECT_NE(Array2.data(), Array2c.data());
-}
-
-
-
 }  // anonymous namespace

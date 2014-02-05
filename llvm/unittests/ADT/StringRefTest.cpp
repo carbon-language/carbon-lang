@@ -11,6 +11,7 @@
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 using namespace llvm;
@@ -530,5 +531,19 @@ TEST(StringRefTest, joinStrings) {
   bool v2_join3 = join(v2.begin(), v2.end(), "::") == join_result3;
   EXPECT_TRUE(v2_join3);
 }
+
+
+TEST(StringRefTest, AllocatorCopy) {
+  BumpPtrAllocator Alloc;
+  StringRef Str1 = "hello";
+  StringRef Str2 = "bye";
+  StringRef Str1c = Str1.copy(Alloc);
+  StringRef Str2c = Str2.copy(Alloc);
+  EXPECT_TRUE(Str1.equals(Str1c));
+  EXPECT_NE(Str1.data(), Str1c.data());
+  EXPECT_TRUE(Str2.equals(Str2c));
+  EXPECT_NE(Str2.data(), Str2c.data());
+}
+
 
 } // end anonymous namespace
