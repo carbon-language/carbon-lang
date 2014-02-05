@@ -2648,6 +2648,12 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_vcvtps2ph_256 : GCCBuiltin<"__builtin_ia32_vcvtps2ph256">,
               Intrinsic<[llvm_v8i16_ty], [llvm_v8f32_ty, llvm_i32_ty],
                         [IntrNoMem]>;
+  def int_x86_avx512_mask_vcvtph2ps_512 : GCCBuiltin<"__builtin_ia32_vcvtph2ps512_mask">,
+              Intrinsic<[llvm_v16f32_ty], [llvm_v16i16_ty, llvm_v16f32_ty,
+                                           llvm_i16_ty, llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_vcvtps2ph_512 : GCCBuiltin<"__builtin_ia32_vcvtps2ph512_mask">,
+              Intrinsic<[llvm_v16i16_ty], [llvm_v16f32_ty, llvm_i32_ty,
+                                           llvm_v16i16_ty, llvm_i16_ty], [IntrNoMem]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2756,12 +2762,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx512_cvtusi642sd : GCCBuiltin<"__builtin_ia32_cvtusi642sd">,
               Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty,
                          llvm_i64_ty], [IntrNoMem]>;
-
-  def int_x86_avx512_vcvtph2ps_512 : GCCBuiltin<"__builtin_ia32_vcvtph2ps512">,
-              Intrinsic<[llvm_v16f32_ty], [llvm_v16i16_ty], [IntrNoMem]>;
-  def int_x86_avx512_vcvtps2ph_512 : GCCBuiltin<"__builtin_ia32_vcvtps2ph512">,
-              Intrinsic<[llvm_v16i16_ty], [llvm_v16f32_ty, llvm_i32_ty],
-                        [IntrNoMem]>;
 }
 
 // Vector convert

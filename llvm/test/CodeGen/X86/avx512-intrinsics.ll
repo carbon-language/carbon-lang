@@ -220,19 +220,20 @@ define i64 @test_x86_avx512_cvtsd2usi64(<2 x double> %a0) {
 declare i64 @llvm.x86.avx512.cvtsd2usi64(<2 x double>) nounwind readnone
 
 define <16 x float> @test_x86_vcvtph2ps_512(<16 x i16> %a0) {
-  ; CHECK: vcvtph2ps
-  %res = call <16 x float> @llvm.x86.avx512.vcvtph2ps.512(<16 x i16> %a0)
+  ; CHECK: vcvtph2ps  %ymm0, %zmm0    ## encoding: [0x62,0xf2,0x7d,0x48,0x13,0xc0]
+  %res = call <16 x float> @llvm.x86.avx512.mask.vcvtph2ps.512(<16 x i16> %a0, <16 x float> zeroinitializer, i16 -1, i32 4)
   ret <16 x float> %res
 }
-declare <16 x float> @llvm.x86.avx512.vcvtph2ps.512(<16 x i16>) nounwind readonly
+declare <16 x float> @llvm.x86.avx512.mask.vcvtph2ps.512(<16 x i16>, <16 x float>, i16, i32) nounwind readonly
 
 
 define <16 x i16> @test_x86_vcvtps2ph_256(<16 x float> %a0) {
-  ; CHECK: vcvtps2ph
-  %res = call <16 x i16> @llvm.x86.avx512.vcvtps2ph.512(<16 x float> %a0, i32 0)
+  ; CHECK: vcvtps2ph $2, %zmm0, %ymm0  ## encoding: [0x62,0xf3,0x7d,0x48,0x1d,0xc0,0x02]
+  %res = call <16 x i16> @llvm.x86.avx512.mask.vcvtps2ph.512(<16 x float> %a0, i32 2, <16 x i16> zeroinitializer, i16 -1)
   ret <16 x i16> %res
 }
-declare <16 x i16> @llvm.x86.avx512.vcvtps2ph.512(<16 x float>, i32) nounwind readonly
+
+declare <16 x i16> @llvm.x86.avx512.mask.vcvtps2ph.512(<16 x float>, i32, <16 x i16>, i16) nounwind readonly
 
 define <16 x float> @test_x86_vbroadcast_ss_512(i8* %a0) {
   ; CHECK: vbroadcastss

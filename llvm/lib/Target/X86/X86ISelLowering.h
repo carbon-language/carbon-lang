@@ -312,8 +312,9 @@ namespace llvm {
       // TESTP - Vector packed fp sign bitwise comparisons.
       TESTP,
 
-      // TESTM - Vector "test" in AVX-512, the result is in a mask vector.
+      // TESTM, TESTNM - Vector "test" in AVX-512, the result is in a mask vector.
       TESTM,
+      TESTNM,
 
       // OR/AND test for masks
       KORTEST,
