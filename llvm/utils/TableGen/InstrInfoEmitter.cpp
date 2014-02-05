@@ -59,10 +59,10 @@ private:
                   raw_ostream &OS);
   void emitOperandTypesEnum(raw_ostream &OS, const CodeGenTarget &Target);
   void initOperandMapData(
-             const std::vector<const CodeGenInstruction *> NumberedInstructions,
-             const std::string &Namespace,
-             std::map<std::string, unsigned> &Operands,
-             OpNameMapTy &OperandMap);
+            const std::vector<const CodeGenInstruction *> &NumberedInstructions,
+            const std::string &Namespace,
+            std::map<std::string, unsigned> &Operands,
+            OpNameMapTy &OperandMap);
   void emitOperandNameMappings(raw_ostream &OS, const CodeGenTarget &Target,
             const std::vector<const CodeGenInstruction*> &NumberedInstructions);
 
@@ -200,7 +200,7 @@ void InstrInfoEmitter::EmitOperandInfo(raw_ostream &OS,
 ///        each instructions.  This is used to generate the OperandMap table as
 ///        well as the getNamedOperandIdx() function.
 void InstrInfoEmitter::initOperandMapData(
-        const std::vector<const CodeGenInstruction *> NumberedInstructions,
+        const std::vector<const CodeGenInstruction *> &NumberedInstructions,
         const std::string &Namespace,
         std::map<std::string, unsigned> &Operands,
         OpNameMapTy &OperandMap) {
