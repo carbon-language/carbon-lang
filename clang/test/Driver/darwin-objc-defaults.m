@@ -32,8 +32,16 @@
 // x86_64
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
+// RUN:   -arch x86_64 -mmacosx-version-min=10.4 2> %t
+// RUN: FileCheck --check-prefix CHECK-CHECK-X86_64_OSX10_4 < %t %s
+
+// CHECK-CHECK-X86_64_OSX10_4: "-cc1"
+// CHECK-CHECK-X86_64_OSX10_4: -fobjc-dispatch-method=non-legacy
+
+// RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
 // RUN:   -arch x86_64 -mmacosx-version-min=10.5 2> %t
 // RUN: FileCheck --check-prefix CHECK-CHECK-X86_64_OSX10_5 < %t %s
+
 
 // CHECK-CHECK-X86_64_OSX10_5: "-cc1"
 // CHECK-CHECK-X86_64_OSX10_5: -fobjc-runtime=macosx-10.5

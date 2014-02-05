@@ -100,10 +100,10 @@ public:
         return false;
     }
     else if ((getKind() ==  MacOSX) && isNonFragile() &&
-             (getVersion() >= VersionTuple(10, 5)) &&
+             (getVersion() >= VersionTuple(10, 0)) &&
              (getVersion() < VersionTuple(10, 6)))
         return Arch != llvm::Triple::x86_64;
-    // Except for deployment target of 10.5,
+    // Except for deployment target of 10.5 or less,
     // Mac runtimes use legacy dispatch everywhere now.
     return true;
   }
