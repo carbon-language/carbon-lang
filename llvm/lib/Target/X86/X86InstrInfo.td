@@ -249,9 +249,6 @@ def X86xor_flag  : SDNode<"X86ISD::XOR",  SDTBinaryArithWithFlags,
 def X86and_flag  : SDNode<"X86ISD::AND",  SDTBinaryArithWithFlags,
                           [SDNPCommutative]>;
 
-def X86blsi   : SDNode<"X86ISD::BLSI",   SDTIntUnaryOp>;
-def X86blsmsk : SDNode<"X86ISD::BLSMSK", SDTIntUnaryOp>;
-def X86blsr   : SDNode<"X86ISD::BLSR",   SDTIntUnaryOp>;
 def X86bzhi   : SDNode<"X86ISD::BZHI",   SDTIntShiftOp>;
 def X86bextr  : SDNode<"X86ISD::BEXTR",  SDTIntBinOp>;
 
@@ -1978,30 +1975,47 @@ let Predicates = [HasBMI], Defs = [EFLAGS] in {
 }
 
 multiclass bmi_bls<string mnemonic, Format RegMRM, Format MemMRM,
-                  RegisterClass RC, X86MemOperand x86memop, SDNode OpNode,
-                  PatFrag ld_frag> {
+                  RegisterClass RC, X86MemOperand x86memop> {
+let hasSideEffects = 0 in {
   def rr : I<0xF3, RegMRM, (outs RC:$dst), (ins RC:$src),
              !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"),
-             [(set RC:$dst, (OpNode RC:$src)), (implicit EFLAGS)]>, T8, VEX_4V;
+             []>, T8, VEX_4V;
+  let mayLoad = 1 in
   def rm : I<0xF3, MemMRM, (outs RC:$dst), (ins x86memop:$src),
              !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"),
-             [(set RC:$dst, (OpNode (ld_frag addr:$src))), (implicit EFLAGS)]>,
-             T8, VEX_4V;
+             []>, T8, VEX_4V;
+}
 }
 
 let Predicates = [HasBMI], Defs = [EFLAGS] in {
-  defm BLSR32 : bmi_bls<"blsr{l}", MRM1r, MRM1m, GR32, i32mem,
-                        X86blsr, loadi32>;
-  defm BLSR64 : bmi_bls<"blsr{q}", MRM1r, MRM1m, GR64, i64mem,
-                        X86blsr, loadi64>, VEX_W;
-  defm BLSMSK32 : bmi_bls<"blsmsk{l}", MRM2r, MRM2m, GR32, i32mem,
-                          X86blsmsk, loadi32>;
-  defm BLSMSK64 : bmi_bls<"blsmsk{q}", MRM2r, MRM2m, GR64, i64mem,
-                          X86blsmsk, loadi64>, VEX_W;
-  defm BLSI32 : bmi_bls<"blsi{l}", MRM3r, MRM3m, GR32, i32mem,
-                        X86blsi, loadi32>;
-  defm BLSI64 : bmi_bls<"blsi{q}", MRM3r, MRM3m, GR64, i64mem,
-                        X86blsi, loadi64>, VEX_W;
+  defm BLSR32 : bmi_bls<"blsr{l}", MRM1r, MRM1m, GR32, i32mem>;
+  defm BLSR64 : bmi_bls<"blsr{q}", MRM1r, MRM1m, GR64, i64mem>, VEX_W;
+  defm BLSMSK32 : bmi_bls<"blsmsk{l}", MRM2r, MRM2m, GR32, i32mem>;
+  defm BLSMSK64 : bmi_bls<"blsmsk{q}", MRM2r, MRM2m, GR64, i64mem>, VEX_W;
+  defm BLSI32 : bmi_bls<"blsi{l}", MRM3r, MRM3m, GR32, i32mem>;
+  defm BLSI64 : bmi_bls<"blsi{q}", MRM3r, MRM3m, GR64, i64mem>, VEX_W;
+}
+
+//===----------------------------------------------------------------------===//
+// Pattern fragments to auto generate BMI instructions.
+//===----------------------------------------------------------------------===//
+
+let Predicates = [HasBMI] in {
+  // FIXME: patterns for the load versions are not implemented
+  def : Pat<(and GR32:$src, (add GR32:$src, -1)),
+            (BLSR32rr GR32:$src)>;
+  def : Pat<(and GR64:$src, (add GR64:$src, -1)),
+            (BLSR64rr GR64:$src)>;
+
+  def : Pat<(xor GR32:$src, (add GR32:$src, -1)),
+            (BLSMSK32rr GR32:$src)>;
+  def : Pat<(xor GR64:$src, (add GR64:$src, -1)),
+            (BLSMSK64rr GR64:$src)>;
+
+  def : Pat<(and GR32:$src, (ineg GR32:$src)),
+            (BLSI32rr GR32:$src)>;
+  def : Pat<(and GR64:$src, (ineg GR64:$src)),
+            (BLSI64rr GR64:$src)>;
 }
 
 multiclass bmi_bextr_bzhi<bits<8> opc, string mnemonic, RegisterClass RC,

@@ -295,9 +295,6 @@ namespace llvm {
       ADD, SUB, ADC, SBB, SMUL,
       INC, DEC, OR, XOR, AND,
 
-      BLSI,   // BLSI - Extract lowest set isolated bit
-      BLSMSK, // BLSMSK - Get mask up to lowest set bit
-      BLSR,   // BLSR - Reset lowest set bit
       BZHI,   // BZHI - Zero high bits
       BEXTR,  // BEXTR - Bit field extract
 
