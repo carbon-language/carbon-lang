@@ -198,7 +198,9 @@ void DontNeedShadowFor(uptr addr, uptr size) {
 }
 
 void MapShadow(uptr addr, uptr size) {
-  CHECK_EQ(addr, addr & ~((64 << 10) - 1));  // windows wants 64K alignment
+  // Global data is not 64K aligned, but there are no adjacent mappings,
+  // so we can get away with unaligned mapping.
+  // CHECK_EQ(addr, addr & ~((64 << 10) - 1));  // windows wants 64K alignment
   MmapFixedNoReserve(MemToShadow(addr), size * kShadowMultiplier);
 }
 
