@@ -378,8 +378,6 @@ protected:
         {
             const char *filename = command.GetArgumentAtIndex(0);
 
-            result.AppendMessageWithFormat ("Executing commands in '%s'.\n", filename);
-
             FileSpec cmd_file (filename, true);
             ExecutionContext *exe_ctx = NULL;  // Just use the default context.
             

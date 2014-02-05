@@ -2582,7 +2582,7 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
             {
                 if (m_command_source_flags.empty())
                 {
-                    // Echo command by default
+                    // Stop on continue by default
                     flags |= eHandleCommandFlagStopOnContinue;
                 }
                 else if (m_command_source_flags.back() & eHandleCommandFlagStopOnContinue)
@@ -2633,26 +2633,32 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
             {
                 if (m_command_source_flags.empty())
                 {
-                    // Echo command by default
-                    flags |= eHandleCommandFlagEchoCommand;
+                    // Print output by default
+                    flags |= eHandleCommandFlagPrintResult;
                 }
-                else if (m_command_source_flags.back() & eHandleCommandFlagEchoCommand)
+                else if (m_command_source_flags.back() & eHandleCommandFlagPrintResult)
                 {
-                    flags |= eHandleCommandFlagEchoCommand;
+                    flags |= eHandleCommandFlagPrintResult;
                 }
             }
             else if (print_result == eLazyBoolYes)
             {
-                flags |= eHandleCommandFlagEchoCommand;
+                flags |= eHandleCommandFlagPrintResult;
+            }
+
+            if (flags & eHandleCommandFlagPrintResult)
+            {
+                m_debugger.GetOutputFile()->Printf("Executing commands in '%s'.\n", cmd_file_path.c_str());
             }
 
             // Used for inheriting the right settings when "command source" might have
             // nested "command source" commands
+            lldb::StreamFileSP empty_stream_sp;
             m_command_source_flags.push_back(flags);
             IOHandlerSP io_handler_sp (new IOHandlerEditline (debugger,
                                                               input_file_sp,
-                                                              debugger.GetOutputFile(),
-                                                              debugger.GetErrorFile(),
+                                                              empty_stream_sp, // Pass in an empty stream so we inherit the top input reader output stream
+                                                              empty_stream_sp, // Pass in an empty stream so we inherit the top input reader error stream
                                                               flags,
                                                               NULL, // Pass in NULL for "editline_name" so no history is saved, or written
                                                               m_debugger.GetPrompt(),
