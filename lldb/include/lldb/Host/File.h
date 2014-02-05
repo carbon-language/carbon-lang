@@ -52,7 +52,9 @@ public:
         m_stream (kInvalidStream),
         m_options (0),
         m_own_stream (false),
-        m_own_descriptor (false)
+        m_own_descriptor (false),
+        m_is_interactive (eLazyBoolCalculate),
+        m_is_real_terminal (eLazyBoolCalculate)
     {
     }
     
@@ -61,7 +63,9 @@ public:
         m_stream (fh),
         m_options (0),
         m_own_stream (transfer_ownership),
-        m_own_descriptor (false)
+        m_own_descriptor (false),
+        m_is_interactive (eLazyBoolCalculate),
+        m_is_real_terminal (eLazyBoolCalculate)
     {
     }
 
@@ -462,6 +466,32 @@ public:
     static uint32_t
     GetPermissions (const char *path, Error &error);
 
+    
+    //------------------------------------------------------------------
+    /// Return true if this file is interactive.
+    ///
+    /// @return
+    ///     True if this file is a terminal (tty or pty), false
+    ///     otherwise.
+    //------------------------------------------------------------------
+    bool
+    GetIsInteractive ();
+    
+    //------------------------------------------------------------------
+    /// Return true if this file from a real terminal.
+    ///
+    /// Just knowing a file is a interactive isn't enough, we also need
+    /// to know if the terminal has a width and height so we can do
+    /// cursor movement and other terminal maninpulations by sending
+    /// escape sequences.
+    ///
+    /// @return
+    ///     True if this file is a terminal (tty, not a pty) that has
+    ///     a non-zero width and height, false otherwise.
+    //------------------------------------------------------------------
+    bool
+    GetIsRealTerminal ();
+
     //------------------------------------------------------------------
     /// Output printf formatted output to the stream.
     ///
@@ -501,6 +531,9 @@ protected:
         return m_stream != kInvalidStream;
     }
     
+    void
+    CalculateInteractiveAndTerminal ();
+    
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
@@ -509,6 +542,8 @@ protected:
     uint32_t m_options;
     bool m_own_stream;
     bool m_own_descriptor;
+    LazyBool m_is_interactive;
+    LazyBool m_is_real_terminal;
 };
 
 } // namespace lldb_private

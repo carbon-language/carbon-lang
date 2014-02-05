@@ -215,10 +215,10 @@ public:
     void
     HandleCommandsFromFile (FileSpec &file, 
                             ExecutionContext *context, 
-                            bool stop_on_continue, 
-                            bool stop_on_error, 
-                            bool echo_commands,
-                            bool print_results,
+                            LazyBool stop_on_continue, 
+                            LazyBool stop_on_error,
+                            LazyBool echo_commands,
+                            LazyBool print_results,
                             LazyBool add_to_history,
                             CommandReturnObject &result);
 
@@ -515,6 +515,7 @@ private:
     bool m_batch_command_mode;
     ChildrenTruncatedWarningStatus m_truncation_warning;    // Whether we truncated children and whether the user has been told
     uint32_t m_command_source_depth;
+    std::vector<uint32_t> m_command_source_flags;
     
 };
 

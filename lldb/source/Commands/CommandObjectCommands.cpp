@@ -308,7 +308,9 @@ protected:
 
         CommandOptions (CommandInterpreter &interpreter) :
             Options (interpreter),
-            m_stop_on_error (true)
+            m_stop_on_error (true),
+            m_silent_run (false),
+            m_stop_on_continue (true)
         {
         }
 
@@ -320,23 +322,21 @@ protected:
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
-            bool success;
             
             switch (short_option)
             {
                 case 'e':
                     error = m_stop_on_error.SetValueFromCString(option_arg);
                     break;
+
                 case 'c':
-                    m_stop_on_continue = Args::StringToBoolean(option_arg, true, &success);
-                    if (!success)
-                        error.SetErrorStringWithFormat("invalid value for stop-on-continue: %s", option_arg);
+                    error = m_stop_on_continue.SetValueFromCString(option_arg);
                     break;
+
                 case 's':
-                    m_silent_run = Args::StringToBoolean(option_arg, true, &success);
-                    if (!success)
-                        error.SetErrorStringWithFormat("invalid value for silent-run: %s", option_arg);
+                    error = m_silent_run.SetValueFromCString(option_arg);
                     break;
+
                 default:
                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
@@ -349,8 +349,8 @@ protected:
         OptionParsingStarting ()
         {
             m_stop_on_error.Clear();
-            m_silent_run = false;
-            m_stop_on_continue = true;
+            m_silent_run.Clear();
+            m_stop_on_continue.Clear();
         }
 
         const OptionDefinition*
@@ -366,8 +366,8 @@ protected:
         // Instance variables to hold the values for command options.
 
         OptionValueBoolean m_stop_on_error;
-	    bool m_silent_run;
-        bool m_stop_on_continue;
+	    OptionValueBoolean m_silent_run;
+        OptionValueBoolean m_stop_on_continue;
     };
     
     bool
@@ -378,23 +378,42 @@ protected:
         {
             const char *filename = command.GetArgumentAtIndex(0);
 
-            if (!m_interpreter.GetDebugger().GetCommandInterpreter().GetBatchCommandMode())
-                result.AppendMessageWithFormat ("Executing commands in '%s'.\n", filename);
+            result.AppendMessageWithFormat ("Executing commands in '%s'.\n", filename);
 
             FileSpec cmd_file (filename, true);
             ExecutionContext *exe_ctx = NULL;  // Just use the default context.
-            bool echo_commands    = !m_options.m_silent_run;
-            bool print_results    = true;
-            bool stop_on_error = m_options.m_stop_on_error.OptionWasSet() ? (bool)m_options.m_stop_on_error : m_interpreter.GetStopCmdSourceOnError();
-
-            m_interpreter.HandleCommandsFromFile (cmd_file,
-                                                  exe_ctx, 
-                                                  m_options.m_stop_on_continue, 
-                                                  stop_on_error, 
-                                                  echo_commands, 
-                                                  print_results,
-                                                  eLazyBoolCalculate,
-                                                  result);
+            
+            // If any options were set, then use them
+            if (m_options.m_stop_on_error.OptionWasSet()    ||
+                m_options.m_silent_run.OptionWasSet()       ||
+                m_options.m_stop_on_continue.OptionWasSet())
+            {
+                // Use user set settings
+                LazyBool print_command = m_options.m_silent_run.GetCurrentValue() ? eLazyBoolNo : eLazyBoolYes;
+                m_interpreter.HandleCommandsFromFile (cmd_file,
+                                                      exe_ctx,
+                                                      m_options.m_stop_on_continue.GetCurrentValue() ? eLazyBoolYes : eLazyBoolNo, // Stop on continue
+                                                      m_options.m_stop_on_error.GetCurrentValue() ? eLazyBoolYes : eLazyBoolNo, // Stop on error
+                                                      print_command,        // Echo command
+                                                      print_command,        // Print command output
+                                                      eLazyBoolCalculate,   // Add to history
+                                                      result);
+                
+            }
+            else
+            {
+                // No options were set, inherit any settings from nested "command source" commands,
+                // or set to sane default settings...
+                m_interpreter.HandleCommandsFromFile (cmd_file,
+                                                      exe_ctx,
+                                                      eLazyBoolCalculate, // Stop on continue
+                                                      eLazyBoolCalculate, // Stop on error
+                                                      eLazyBoolCalculate, // Echo command
+                                                      eLazyBoolCalculate, // Print command output
+                                                      eLazyBoolCalculate, // Add to history
+                                                      result);
+                
+            }
         }
         else
         {

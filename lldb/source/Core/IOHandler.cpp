@@ -10,12 +10,6 @@
 
 #include "lldb/lldb-python.h"
 
-#include <stdio.h>	/* ioctl, TIOCGWINSZ */
-
-#ifndef _MSC_VER
-#include <sys/ioctl.h>	/* ioctl, TIOCGWINSZ */
-#endif
-
 #include <string>
 
 #include "lldb/Breakpoint/BreakpointLocation.h"
@@ -43,9 +37,10 @@ using namespace lldb_private;
 
 IOHandler::IOHandler (Debugger &debugger) :
     IOHandler (debugger,
-               StreamFileSP(), // Adopt STDIN from top input reader
-               StreamFileSP(), // Adopt STDOUT from top input reader
-               StreamFileSP()) // Adopt STDERR from top input reader
+               StreamFileSP(),  // Adopt STDIN from top input reader
+               StreamFileSP(),  // Adopt STDOUT from top input reader
+               StreamFileSP(),  // Adopt STDERR from top input reader
+               0)               // Flags
 {
 }
 
@@ -53,11 +48,13 @@ IOHandler::IOHandler (Debugger &debugger) :
 IOHandler::IOHandler (Debugger &debugger,
                       const lldb::StreamFileSP &input_sp,
                       const lldb::StreamFileSP &output_sp,
-                      const lldb::StreamFileSP &error_sp) :
+                      const lldb::StreamFileSP &error_sp,
+                      uint32_t flags) :
     m_debugger (debugger),
     m_input_sp (input_sp),
     m_output_sp (output_sp),
     m_error_sp (error_sp),
+    m_flags (flags),
     m_user_data (NULL),
     m_done (false),
     m_active (false)
@@ -141,6 +138,17 @@ IOHandler::GetErrorStreamFile()
     return m_error_sp;
 }
 
+bool
+IOHandler::GetIsInteractive ()
+{
+    return GetInputStreamFile()->GetFile().GetIsInteractive ();
+}
+
+bool
+IOHandler::GetIsRealTerminal ()
+{
+    return GetInputStreamFile()->GetFile().GetIsRealTerminal();
+}
 
 IOHandlerConfirm::IOHandlerConfirm (Debugger &debugger,
                                     const char *prompt,
@@ -308,6 +316,7 @@ IOHandlerEditline::IOHandlerEditline (Debugger &debugger,
                       StreamFileSP(), // Inherit input from top input reader
                       StreamFileSP(), // Inherit output from top input reader
                       StreamFileSP(), // Inherit error from top input reader
+                      0,              // Flags
                       editline_name,  // Used for saving history files
                       prompt,
                       multi_line,
@@ -319,32 +328,23 @@ IOHandlerEditline::IOHandlerEditline (Debugger &debugger,
                                       const lldb::StreamFileSP &input_sp,
                                       const lldb::StreamFileSP &output_sp,
                                       const lldb::StreamFileSP &error_sp,
+                                      uint32_t flags,
                                       const char *editline_name, // Used for saving history files
                                       const char *prompt,
                                       bool multi_line,
                                       IOHandlerDelegate &delegate) :
-    IOHandler (debugger, input_sp, output_sp, error_sp),
+    IOHandler (debugger, input_sp, output_sp, error_sp, flags),
     m_editline_ap (),
     m_delegate (delegate),
     m_prompt (),
-    m_multi_line (multi_line),
-    m_interactive (false)
+    m_multi_line (multi_line)
 {
     SetPrompt(prompt);
 
     bool use_editline = false;
+    
 #ifndef _MSC_VER
-    const int in_fd = GetInputFD();
-    struct winsize window_size;
-    if (isatty (in_fd))
-    {
-        m_interactive = true;
-        if (::ioctl (in_fd, TIOCGWINSZ, &window_size) == 0)
-        {
-            if (window_size.ws_col > 0)
-                use_editline = true;
-        }
-    }
+    use_editline = m_input_sp->GetFile().GetIsRealTerminal();
 #else
     use_editline = true;
 #endif
@@ -382,7 +382,7 @@ IOHandlerEditline::GetLine (std::string &line)
         FILE *in = GetInputFILE();
         if (in)
         {
-            if (m_interactive)
+            if (GetIsInteractive())
             {
                 const char *prompt = GetPrompt();
                 if (prompt && prompt[0])
@@ -432,7 +432,7 @@ IOHandlerEditline::GetLine (std::string &line)
             // No more input file, we are done...
             SetIsDone(true);
         }
-        return !line.empty();
+        return false;
     }
 }
 

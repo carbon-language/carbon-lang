@@ -18,6 +18,7 @@
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/Flags.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Host/Mutex.h"
@@ -38,7 +39,8 @@ namespace lldb_private {
         IOHandler (Debugger &debugger,
                    const lldb::StreamFileSP &input_sp,
                    const lldb::StreamFileSP &output_sp,
-                   const lldb::StreamFileSP &error_sp);
+                   const lldb::StreamFileSP &error_sp,
+                   uint32_t flags);
 
         virtual
         ~IOHandler ();
@@ -162,11 +164,45 @@ namespace lldb_private {
             m_user_data = user_data;
         }
 
+        Flags &
+        GetFlags ()
+        {
+            return m_flags;
+        }
+
+        const Flags &
+        GetFlags () const
+        {
+            return m_flags;
+        }
+
+        //------------------------------------------------------------------
+        /// Check if the input is being supplied interactively by a user
+        ///
+        /// This will return true if the input stream is a terminal (tty or
+        /// pty) and can cause IO handlers to do different things (like
+        /// for a comfirmation when deleting all breakpoints).
+        //------------------------------------------------------------------
+        bool
+        GetIsInteractive ();
+
+        //------------------------------------------------------------------
+        /// Check if the input is coming from a real terminal.
+        ///
+        /// A real terminal has a valid size with a certain number of rows
+        /// and colums. If this function returns true, then terminal escape
+        /// sequences are expected to work (cursor movement escape sequences,
+        /// clearning lines, etc).
+        //------------------------------------------------------------------
+        bool
+        GetIsRealTerminal ();
+
     protected:
         Debugger &m_debugger;
         lldb::StreamFileSP m_input_sp;
         lldb::StreamFileSP m_output_sp;
         lldb::StreamFileSP m_error_sp;
+        Flags m_flags;
         void *m_user_data;
         bool m_done;
         bool m_active;
@@ -340,6 +376,7 @@ namespace lldb_private {
                            const lldb::StreamFileSP &input_sp,
                            const lldb::StreamFileSP &output_sp,
                            const lldb::StreamFileSP &error_sp,
+                           uint32_t flags,
                            const char *editline_name, // Used for saving history files
                            const char *prompt,
                            bool multi_line,
@@ -408,9 +445,7 @@ namespace lldb_private {
         std::unique_ptr<Editline> m_editline_ap;
         IOHandlerDelegate &m_delegate;
         std::string m_prompt;
-        bool m_multi_line;
-        bool m_interactive;
-        
+        bool m_multi_line;        
     };
     
     class IOHandlerConfirm :

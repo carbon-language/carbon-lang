@@ -2390,14 +2390,15 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
 
     if (init_file.Exists())
     {
-        ExecutionContext *exe_ctx = NULL;  // We don't have any context yet.
-        bool stop_on_continue = true;
-        bool stop_on_error    = false;
-        bool echo_commands    = false;
-        bool print_results    = false;
-        
         const bool saved_batch = SetBatchCommandMode (true);
-        HandleCommandsFromFile (init_file, exe_ctx, stop_on_continue, stop_on_error, echo_commands, print_results, eLazyBoolNo, result);
+        HandleCommandsFromFile (init_file,
+                                NULL,           // Execution context
+                                eLazyBoolYes,   // Stop on continue
+                                eLazyBoolNo,    // Stop on error
+                                eLazyBoolNo,    // Don't echo commands
+                                eLazyBoolNo,    // Don't print command output
+                                eLazyBoolNo,    // Don't add the commands that are sourced into the history buffer
+                                result);
         SetBatchCommandMode (saved_batch);
     }
     else
@@ -2546,13 +2547,21 @@ CommandInterpreter::HandleCommands (const StringList &commands,
     return;
 }
 
+// Make flags that we can pass into the IOHandler so our delegates can do the right thing
+enum {
+    eHandleCommandFlagStopOnContinue = (1u << 0),
+    eHandleCommandFlagStopOnError    = (1u << 1),
+    eHandleCommandFlagEchoCommand    = (1u << 2),
+    eHandleCommandFlagPrintResult    = (1u << 3)
+};
+
 void
 CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file, 
                                             ExecutionContext *context, 
-                                            bool stop_on_continue,
-                                            bool stop_on_error,
-                                            bool echo_command,
-                                            bool print_result,
+                                            LazyBool stop_on_continue,
+                                            LazyBool stop_on_error,
+                                            LazyBool echo_command,
+                                            LazyBool print_result,
                                             LazyBool add_to_history,
                                             CommandReturnObject &result)
 {
@@ -2567,15 +2576,93 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
         {
             Debugger &debugger = GetDebugger();
 
+            uint32_t flags = 0;
+
+            if (stop_on_continue == eLazyBoolCalculate)
+            {
+                if (m_command_source_flags.empty())
+                {
+                    // Echo command by default
+                    flags |= eHandleCommandFlagStopOnContinue;
+                }
+                else if (m_command_source_flags.back() & eHandleCommandFlagStopOnContinue)
+                {
+                    flags |= eHandleCommandFlagStopOnContinue;
+                }
+            }
+            else if (stop_on_continue == eLazyBoolYes)
+            {
+                flags |= eHandleCommandFlagStopOnContinue;
+            }
+
+            if (stop_on_error == eLazyBoolCalculate)
+            {
+                if (m_command_source_flags.empty())
+                {
+                    if (GetStopCmdSourceOnError())
+                        flags |= eHandleCommandFlagStopOnError;
+                }
+                else if (m_command_source_flags.back() & eHandleCommandFlagStopOnError)
+                {
+                    flags |= eHandleCommandFlagStopOnError;
+                }
+            }
+            else if (stop_on_error == eLazyBoolYes)
+            {
+                flags |= eHandleCommandFlagStopOnError;
+            }
+
+            if (echo_command == eLazyBoolCalculate)
+            {
+                if (m_command_source_flags.empty())
+                {
+                    // Echo command by default
+                    flags |= eHandleCommandFlagEchoCommand;
+                }
+                else if (m_command_source_flags.back() & eHandleCommandFlagEchoCommand)
+                {
+                    flags |= eHandleCommandFlagEchoCommand;
+                }
+            }
+            else if (echo_command == eLazyBoolYes)
+            {
+                flags |= eHandleCommandFlagEchoCommand;
+            }
+
+            if (print_result == eLazyBoolCalculate)
+            {
+                if (m_command_source_flags.empty())
+                {
+                    // Echo command by default
+                    flags |= eHandleCommandFlagEchoCommand;
+                }
+                else if (m_command_source_flags.back() & eHandleCommandFlagEchoCommand)
+                {
+                    flags |= eHandleCommandFlagEchoCommand;
+                }
+            }
+            else if (print_result == eLazyBoolYes)
+            {
+                flags |= eHandleCommandFlagEchoCommand;
+            }
+
+            // Used for inheriting the right settings when "command source" might have
+            // nested "command source" commands
+            m_command_source_flags.push_back(flags);
             IOHandlerSP io_handler_sp (new IOHandlerEditline (debugger,
                                                               input_file_sp,
                                                               debugger.GetOutputFile(),
                                                               debugger.GetErrorFile(),
+                                                              flags,
                                                               NULL, // Pass in NULL for "editline_name" so no history is saved, or written
                                                               m_debugger.GetPrompt(),
                                                               false, // Not multi-line
                                                               *this));
+            m_command_source_depth++;
             m_debugger.RunIOHandler(io_handler_sp);
+            if (!m_command_source_flags.empty())
+                m_command_source_flags.pop_back();
+            m_command_source_depth--;
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
         else
@@ -2583,21 +2670,6 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
             result.AppendErrorWithFormat ("error: an error occurred read file '%s': %s\n", cmd_file_path.c_str(), error.AsCString());
             result.SetStatus (eReturnStatusFailed);
         }
-        
-#if 0
-        bool success;
-        StringList commands;
-        success = commands.ReadFileLines(cmd_file);
-        if (!success)
-        {
-            result.AppendErrorWithFormat ("Error reading commands from file: %s.\n", cmd_file.GetFilename().AsCString());
-            result.SetStatus (eReturnStatusFailed);
-            return;
-        }
-        m_command_source_depth++;
-        HandleCommands (commands, context, stop_on_continue, stop_on_error, echo_command, print_result, add_to_history, result);
-        m_command_source_depth--;
-#endif
     }
     else
     {
@@ -2886,31 +2958,59 @@ CommandInterpreter::GetProcessOutput ()
 void
 CommandInterpreter::IOHandlerInputComplete (IOHandler &io_handler, std::string &line)
 {
+    const bool is_interactive = io_handler.GetIsInteractive();
+    if (is_interactive == false)
+    {
+        // When we are not interactive, don't execute blank lines. This will happen
+        // sourcing a commands file. We don't want blank lines to repeat the previous
+        // command and cause any errors to occur (like redefining an alias, get an error
+        // and stop parsing the commands file).
+        if (line.empty())
+            return;
+        
+        // When using a non-interactive file handle (like when sourcing commands from a file)
+        // we need to echo the command out so we don't just see the command output and no
+        // command...
+        if (io_handler.GetFlags().Test(eHandleCommandFlagEchoCommand))
+            io_handler.GetOutputStreamFile()->Printf("%s%s\n", io_handler.GetPrompt(), line.c_str());
+    }
+
     lldb_private::CommandReturnObject result;
     HandleCommand(line.c_str(), eLazyBoolCalculate, result);
     
-    // Display any STDOUT/STDERR _prior_ to emitting the command result text
-    GetProcessOutput ();
-    
     // Now emit the command output text from the command we just executed
-    const char *output = result.GetOutputData();
-    if (output && output[0])
-        io_handler.GetOutputStreamFile()->PutCString(output);
+    if (io_handler.GetFlags().Test(eHandleCommandFlagPrintResult))
+    {
+        // Display any STDOUT/STDERR _prior_ to emitting the command result text
+        GetProcessOutput ();
+        
+        const char *output = result.GetOutputData();
+        if (output && output[0])
+            io_handler.GetOutputStreamFile()->PutCString(output);
     
-    // Now emit the command error text from the command we just executed
-    const char *error = result.GetErrorData();
-    if (error && error[0])
-        io_handler.GetErrorStreamFile()->PutCString(error);
+        // Now emit the command error text from the command we just executed
+        const char *error = result.GetErrorData();
+        if (error && error[0])
+            io_handler.GetErrorStreamFile()->PutCString(error);
+    }
     
     switch (result.GetStatus())
     {
         case eReturnStatusInvalid:
         case eReturnStatusSuccessFinishNoResult:
         case eReturnStatusSuccessFinishResult:
+        case eReturnStatusStarted:
+            break;
+
         case eReturnStatusSuccessContinuingNoResult:
         case eReturnStatusSuccessContinuingResult:
-        case eReturnStatusStarted:
+            if (io_handler.GetFlags().Test(eHandleCommandFlagStopOnContinue))
+                io_handler.SetIsDone(true);
+            break;
+
         case eReturnStatusFailed:
+            if (io_handler.GetFlags().Test(eHandleCommandFlagStopOnError))
+                io_handler.SetIsDone(true);
             break;
             
         case eReturnStatusQuit:
@@ -2984,6 +3084,7 @@ CommandInterpreter::RunCommandInterpreter(bool auto_handle_events,
                                                              m_debugger.GetInputFile(),
                                                              m_debugger.GetOutputFile(),
                                                              m_debugger.GetErrorFile(),
+                                                             eHandleCommandFlagEchoCommand | eHandleCommandFlagPrintResult,
                                                              "lldb",
                                                              m_debugger.GetPrompt(),
                                                              multiple_lines,
