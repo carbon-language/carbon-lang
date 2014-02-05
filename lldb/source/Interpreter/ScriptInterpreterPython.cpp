@@ -190,13 +190,17 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     run_string.Clear();
     run_string.Printf ("run_one_line (%s, 'import lldb.formatters, lldb.formatters.cpp, pydoc')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
+    run_string.Clear();
 
     int new_count = Debugger::TestDebuggerRefCount();
     
     if (new_count > old_count)
         Debugger::Terminate();
 
+    run_string.Printf ("run_one_line (%s, 'import lldb.embedded_interpreter; from lldb.embedded_interpreter import run_python_interpreter; from lldb.embedded_interpreter import run_one_line')", m_dictionary_name.c_str());
+    PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
+    
     run_string.Printf ("run_one_line (%s, 'lldb.debugger_unique_id = %" PRIu64 "; pydoc.pager = pydoc.plainpager')", m_dictionary_name.c_str(),
                        interpreter.GetDebugger().GetID());
     PyRun_SimpleString (run_string.GetData());
@@ -645,15 +649,9 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
                     PythonObject pargs (Py_BuildValue("(Os)", session_dict.get(), command));
                     if (pargs)
                     {
-                        PythonObject return_value;
-                        { // scope for PythonInputReaderManager
-                            //PythonInputReaderManager py_input(options.GetEnableIO() ? this : NULL);
-                            return_value.Reset(PyObject_CallObject (pfunc, pargs.get()));
-                        }
+                        PythonObject return_value(PyObject_CallObject (pfunc, pargs.get()));
                         if (return_value)
-                        {
                             success = true;
-                        }
                         else if (options.GetMaskoutErrors() && PyErr_Occurred ())
                         {
                             PyErr_Print();
