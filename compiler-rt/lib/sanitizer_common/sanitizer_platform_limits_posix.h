@@ -517,7 +517,36 @@ namespace __sanitizer {
   };
 #endif
 
-#define IOC_SIZE(nr) (((nr) >> 16) & 0x3fff)
+#define IOC_NRBITS 8
+#define IOC_TYPEBITS 8
+#if defined(__powerpc__) || defined(__powerpc64__)
+#define IOC_SIZEBITS 13
+#define IOC_DIRBITS 3
+#define IOC_NONE 1U
+#define IOC_WRITE 4U
+#define IOC_READ 2U
+#else
+#define IOC_SIZEBITS 14
+#define IOC_DIRBITS 2
+#define IOC_NONE 0U
+#define IOC_WRITE 1U
+#define IOC_READ 2U
+#endif
+#define IOC_NRMASK ((1 << IOC_NRBITS) - 1)
+#define IOC_TYPEMASK ((1 << IOC_TYPEBITS) - 1)
+#define IOC_SIZEMASK ((1 << IOC_SIZEBITS) - 1)
+#define IOC_DIRMASK ((1 << IOC_DIRBITS) - 1)
+#define IOC_NRSHIFT 0
+#define IOC_TYPESHIFT (IOC_NRSHIFT + IOC_NRBITS)
+#define IOC_SIZESHIFT (IOC_TYPESHIFT + IOC_TYPEBITS)
+#define IOC_DIRSHIFT (IOC_SIZESHIFT + IOC_SIZEBITS)
+#define EVIOC_EV_MAX 0x1f
+#define EVIOC_ABS_MAX 0x3f
+
+#define IOC_DIR(nr) (((nr) >> IOC_DIRSHIFT) & IOC_DIRMASK)
+#define IOC_TYPE(nr) (((nr) >> IOC_TYPESHIFT) & IOC_TYPEMASK)
+#define IOC_NR(nr) (((nr) >> IOC_NRSHIFT) & IOC_NRMASK)
+#define IOC_SIZE(nr) (((nr) >> IOC_SIZESHIFT) & IOC_SIZEMASK)
 
   extern unsigned struct_arpreq_sz;
   extern unsigned struct_ifreq_sz;

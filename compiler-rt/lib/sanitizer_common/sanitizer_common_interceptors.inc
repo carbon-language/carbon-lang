@@ -844,7 +844,14 @@ INTERCEPTOR(int, ioctl, int d, unsigned request, void *arg) {
   if (!common_flags()->handle_ioctl) return REAL(ioctl)(d, request, arg);
 
   const ioctl_desc *desc = ioctl_lookup(request);
-  if (!desc) Printf("WARNING: unknown ioctl %x\n", request);
+  ioctl_desc decoded_desc;
+  if (!desc) {
+    VPrintf(2, "Decoding unknown ioctl 0x%x\n", request);
+    if (!ioctl_decode(request, &decoded_desc))
+      Printf("WARNING: failed decoding unknown ioctl 0x%x\n", request);
+    else
+      desc = &decoded_desc;
+  }
 
   if (desc) ioctl_common_pre(ctx, desc, d, request, arg);
   int res = REAL(ioctl)(d, request, arg);

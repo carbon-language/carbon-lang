@@ -493,11 +493,15 @@ static void ioctl_init() {
 // Handle the most evil ioctls that encode argument value as part of request id.
 static unsigned ioctl_request_fixup(unsigned req) {
 #if SANITIZER_LINUX
-  if ((req & ~0x3fff001fU) == IOCTL_EVIOCGBIT)
+  // Strip size and event number.
+  const unsigned kEviocgbitMask =
+      (IOC_SIZEMASK << IOC_SIZESHIFT) | EVIOC_EV_MAX;
+  if ((req & ~kEviocgbitMask) == IOCTL_EVIOCGBIT)
     return IOCTL_EVIOCGBIT;
-  if ((req & ~0x3fU) == IOCTL_EVIOCGABS)
+  // Strip absolute axis number.
+  if ((req & ~EVIOC_ABS_MAX) == IOCTL_EVIOCGABS)
     return IOCTL_EVIOCGABS;
-  if ((req & ~0x3fU) == IOCTL_EVIOCSABS)
+  if ((req & ~EVIOC_ABS_MAX) == IOCTL_EVIOCSABS)
     return IOCTL_EVIOCSABS;
 #endif
   return req;
@@ -519,13 +523,44 @@ static const ioctl_desc *ioctl_table_lookup(unsigned req) {
     return 0;
 }
 
+static bool ioctl_decode(unsigned req, ioctl_desc *desc) {
+  CHECK(desc);
+  desc->req = req;
+  desc->name = "<DECODED_IOCTL>";
+  desc->size = IOC_SIZE(req);
+  // Sanity check.
+  if (desc->size > 1024) return false;
+  unsigned dir = IOC_DIR(req);
+  switch (dir) {
+    case IOC_NONE:
+      desc->type = ioctl_desc::NONE;
+      break;
+    case IOC_READ | IOC_WRITE:
+      desc->type = ioctl_desc::READWRITE;
+      break;
+    case IOC_READ:
+      desc->type = ioctl_desc::WRITE;
+      break;
+    case IOC_WRITE:
+      desc->type = ioctl_desc::READ;
+      break;
+    default:
+      return false;
+  }
+  if (desc->type != IOC_NONE && desc->size == 0) return false;
+  char id = IOC_TYPE(req);
+  // Sanity check.
+  if (!(id >= 'a' && id <= 'z') && !(id >= 'A' && id <= 'Z')) return false;
+  return true;
+}
+
 static const ioctl_desc *ioctl_lookup(unsigned req) {
   req = ioctl_request_fixup(req);
   const ioctl_desc *desc = ioctl_table_lookup(req);
   if (desc) return desc;
 
   // Try stripping access size from the request id.
-  desc = ioctl_table_lookup(req & ~0x3fff0000U);
+  desc = ioctl_table_lookup(req & ~(IOC_SIZEMASK << IOC_SIZESHIFT));
   // Sanity check: requests that encode access size are either read or write and
   // have size of 0 in the table.
   if (desc && desc->size == 0 &&
