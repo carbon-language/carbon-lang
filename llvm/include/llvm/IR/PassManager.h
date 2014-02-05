@@ -481,15 +481,15 @@ public:
   ///
   /// If there is not a valid cached result in the manager already, this will
   /// re-run the analysis to produce a valid result.
-  template <typename PassT> const typename PassT::Result &getResult(IRUnitT IR) {
+  template <typename PassT> typename PassT::Result &getResult(IRUnitT IR) {
     assert(AnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
-    const ResultConceptT &ResultConcept =
+    ResultConceptT &ResultConcept =
         derived_this()->getResultImpl(PassT::ID(), IR);
     typedef detail::AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
         ResultModelT;
-    return static_cast<const ResultModelT &>(ResultConcept).Result;
+    return static_cast<ResultModelT &>(ResultConcept).Result;
   }
 
   /// \brief Get the cached result of an analysis pass for this module.
@@ -498,18 +498,18 @@ public:
   ///
   /// \returns null if there is no cached result.
   template <typename PassT>
-  const typename PassT::Result *getCachedResult(IRUnitT IR) const {
+  typename PassT::Result *getCachedResult(IRUnitT IR) const {
     assert(AnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
-    const ResultConceptT *ResultConcept =
+    ResultConceptT *ResultConcept =
         derived_this()->getCachedResultImpl(PassT::ID(), IR);
     if (!ResultConcept)
       return 0;
 
     typedef detail::AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
         ResultModelT;
-    return &static_cast<const ResultModelT *>(ResultConcept)->Result;
+    return &static_cast<ResultModelT *>(ResultConcept)->Result;
   }
 
   /// \brief Register an analysis pass with the manager.
@@ -582,10 +582,10 @@ public:
 
 private:
   /// \brief Get a module pass result, running the pass if necessary.
-  const ResultConceptT &getResultImpl(void *PassID, Module *M);
+  ResultConceptT &getResultImpl(void *PassID, Module *M);
 
   /// \brief Get a cached module pass result or return null.
-  const ResultConceptT *getCachedResultImpl(void *PassID, Module *M) const;
+  ResultConceptT *getCachedResultImpl(void *PassID, Module *M) const;
 
   /// \brief Invalidate a module pass result.
   void invalidateImpl(void *PassID, Module *M);
@@ -627,10 +627,10 @@ public:
 
 private:
   /// \brief Get a function pass result, running the pass if necessary.
-  const ResultConceptT &getResultImpl(void *PassID, Function *F);
+  ResultConceptT &getResultImpl(void *PassID, Function *F);
 
   /// \brief Get a cached function pass result or return null.
-  const ResultConceptT *getCachedResultImpl(void *PassID, Function *F) const;
+  ResultConceptT *getCachedResultImpl(void *PassID, Function *F) const;
 
   /// \brief Invalidate a function pass result.
   void invalidateImpl(void *PassID, Function *F);
@@ -711,7 +711,7 @@ public:
   ~Result();
 
   /// \brief Accessor for the \c FunctionAnalysisManager.
-  FunctionAnalysisManager &getManager() const { return FAM; }
+  FunctionAnalysisManager &getManager() { return FAM; }
 
   /// \brief Handler for invalidation of the module.
   ///

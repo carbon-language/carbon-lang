@@ -40,7 +40,7 @@ PreservedAnalyses ModulePassManager::run(Module *M, ModuleAnalysisManager *AM) {
   return PA;
 }
 
-const ModuleAnalysisManager::ResultConceptT &
+ModuleAnalysisManager::ResultConceptT &
 ModuleAnalysisManager::getResultImpl(void *PassID, Module *M) {
   ModuleAnalysisResultMapT::iterator RI;
   bool Inserted;
@@ -55,7 +55,7 @@ ModuleAnalysisManager::getResultImpl(void *PassID, Module *M) {
   return *RI->second;
 }
 
-const ModuleAnalysisManager::ResultConceptT *
+ModuleAnalysisManager::ResultConceptT *
 ModuleAnalysisManager::getCachedResultImpl(void *PassID, Module *M) const {
   ModuleAnalysisResultMapT::const_iterator RI = ModuleAnalysisResults.find(PassID);
   return RI == ModuleAnalysisResults.end() ? 0 : &*RI->second;
@@ -111,7 +111,7 @@ void FunctionAnalysisManager::clear() {
   FunctionAnalysisResultLists.clear();
 }
 
-const FunctionAnalysisManager::ResultConceptT &
+FunctionAnalysisManager::ResultConceptT &
 FunctionAnalysisManager::getResultImpl(void *PassID, Function *F) {
   FunctionAnalysisResultMapT::iterator RI;
   bool Inserted;
@@ -129,7 +129,7 @@ FunctionAnalysisManager::getResultImpl(void *PassID, Function *F) {
   return *RI->second->second;
 }
 
-const FunctionAnalysisManager::ResultConceptT *
+FunctionAnalysisManager::ResultConceptT *
 FunctionAnalysisManager::getCachedResultImpl(void *PassID, Function *F) const {
   FunctionAnalysisResultMapT::const_iterator RI =
       FunctionAnalysisResults.find(std::make_pair(PassID, F));

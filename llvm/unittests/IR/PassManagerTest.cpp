@@ -126,18 +126,18 @@ struct TestFunctionPass {
 
     const ModuleAnalysisManager &MAM =
         AM->getResult<ModuleAnalysisManagerFunctionProxy>(F).getManager();
-    if (const TestModuleAnalysis::Result *TMA =
+    if (TestModuleAnalysis::Result *TMA =
             MAM.getCachedResult<TestModuleAnalysis>(F->getParent()))
       AnalyzedFunctionCount += TMA->FunctionCount;
 
     if (OnlyUseCachedResults) {
       // Hack to force the use of the cached interface.
-      if (const TestFunctionAnalysis::Result *AR =
+      if (TestFunctionAnalysis::Result *AR =
               AM->getCachedResult<TestFunctionAnalysis>(F))
         AnalyzedInstrCount += AR->InstructionCount;
     } else {
       // Typical path just runs the analysis as needed.
-      const TestFunctionAnalysis::Result &AR = AM->getResult<TestFunctionAnalysis>(F);
+      TestFunctionAnalysis::Result &AR = AM->getResult<TestFunctionAnalysis>(F);
       AnalyzedInstrCount += AR.InstructionCount;
     }
 
