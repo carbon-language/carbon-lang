@@ -125,21 +125,8 @@ static ManagedStatic<OptionCatSet> RegisteredOptionCategories;
 // Initialise the general option category.
 OptionCategory llvm::cl::GeneralCategory("General options");
 
-struct HasName {
-  HasName(StringRef Name) : Name(Name) {}
-  bool operator()(const OptionCategory *Category) const {
-    return Name == Category->getName();
-  }
-  StringRef Name;
-};
-
 void OptionCategory::registerCategory()
 {
-  assert(std::count_if(RegisteredOptionCategories->begin(),
-                       RegisteredOptionCategories->end(),
-                       HasName(getName())) == 0 &&
-         "Duplicate option categories");
-
   RegisteredOptionCategories->insert(this);
 }
 
@@ -1508,7 +1495,9 @@ public:
   // It shall return true if A's name should be lexographically
   // ordered before B's name. It returns false otherwise.
   static bool OptionCategoryCompare(OptionCategory *A, OptionCategory *B) {
-    return strcmp(A->getName(), B->getName()) < 0;
+    int Length = strcmp(A->getName(), B->getName());
+    assert(Length != 0 && "Duplicate option categories");
+    return Length < 0;
   }
 
   // Make sure we inherit our base class's operator=()

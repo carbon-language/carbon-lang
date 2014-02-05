@@ -149,8 +149,8 @@ private:
 public:
   OptionCategory(const char *const Name, const char *const Description = 0)
       : Name(Name), Description(Description) { registerCategory(); }
-  const char *getName() const { return Name; }
-  const char *getDescription() const { return Description; }
+  const char *getName() { return Name; }
+  const char *getDescription() { return Description; }
 };
 
 // The general Option Category (used as default category).
