@@ -1510,9 +1510,6 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
       FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
     } else {
       SmallString<256> ThunkName;
-      CharUnits PointerWidth = getContext().toCharUnitsFromBits(
-          getContext().getTargetInfo().getPointerWidth(0));
-      uint64_t OffsetInVFTable = ML.Index * PointerWidth.getQuantity();
       llvm::raw_svector_ostream Out(ThunkName);
       getMangleContext().mangleVirtualMemPtrThunk(MD, Out);
       Out.flush();
