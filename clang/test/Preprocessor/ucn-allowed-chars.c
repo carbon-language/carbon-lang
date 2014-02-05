@@ -17,7 +17,7 @@ extern char a\uFFFF; // none
 // Identifier initial characters
 extern char \u0E50; // C++03, C11, C++11
 extern char \u0300; // disallowed initially in C11/C++11, always in C99/C++03
-
+extern char \u0D61; // C99, C11, C++03, C++11
 
 
 
