@@ -1,4 +1,6 @@
 ; RUN: llc -march=mipsel -mcpu=mips32r2 < %s | FileCheck %s
+; RUN: llc -mtriple=mipsel-none-nacl-gnu -mcpu=mips32r2 < %s \
+; RUN:  | FileCheck %s -check-prefix=CHECK-NACL
 
 %struct.S = type <{ [4 x float] }>
 %struct.S2 = type <{ [4 x double] }>
@@ -13,6 +15,7 @@
 define float @foo0(float* nocapture %b, i32 %o) nounwind readonly {
 entry:
 ; CHECK: lwxc1
+; CHECK-NACL-NOT: lwxc1
   %arrayidx = getelementptr inbounds float* %b, i32 %o
   %0 = load float* %arrayidx, align 4
   ret float %0
@@ -21,6 +24,7 @@ entry:
 define double @foo1(double* nocapture %b, i32 %o) nounwind readonly {
 entry:
 ; CHECK: ldxc1
+; CHECK-NACL-NOT: ldxc1
   %arrayidx = getelementptr inbounds double* %b, i32 %o
   %0 = load double* %arrayidx, align 8
   ret double %0
@@ -37,6 +41,7 @@ entry:
 define void @foo3(float* nocapture %b, i32 %o) nounwind {
 entry:
 ; CHECK: swxc1
+; CHECK-NACL-NOT: swxc1
   %0 = load float* @gf, align 4
   %arrayidx = getelementptr inbounds float* %b, i32 %o
   store float %0, float* %arrayidx, align 4
@@ -46,6 +51,7 @@ entry:
 define void @foo4(double* nocapture %b, i32 %o) nounwind {
 entry:
 ; CHECK: sdxc1
+; CHECK-NACL-NOT: sdxc1
   %0 = load double* @gd, align 8
   %arrayidx = getelementptr inbounds double* %b, i32 %o
   store double %0, double* %arrayidx, align 8

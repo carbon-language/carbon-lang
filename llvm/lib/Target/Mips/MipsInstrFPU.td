@@ -390,12 +390,15 @@ let Predicates = [HasStdEnc] in {
 }
 
 // Indexed loads and stores.
-let Predicates = [HasFPIdx, HasStdEnc] in {
+// Base register + offset register addressing mode (indicated by "x" in the
+// instruction mnemonic) is disallowed under NaCl.
+let Predicates = [HasFPIdx, HasStdEnc, IsNotNaCl] in {
   def LWXC1 : MMRel, LWXC1_FT<"lwxc1", FGR32Opnd, II_LWXC1, load>, LWXC1_FM<0>;
   def SWXC1 : MMRel, SWXC1_FT<"swxc1", FGR32Opnd, II_SWXC1, store>, SWXC1_FM<8>;
 }
 
-let Predicates = [HasFPIdx, NotFP64bit, HasStdEnc, NotInMicroMips] in {
+let Predicates = [HasFPIdx, NotFP64bit, HasStdEnc, NotInMicroMips,
+                  IsNotNaCl] in {
   def LDXC1 : LWXC1_FT<"ldxc1", AFGR64Opnd, II_LDXC1, load>, LWXC1_FM<1>;
   def SDXC1 : SWXC1_FT<"sdxc1", AFGR64Opnd, II_SDXC1, store>, SWXC1_FM<9>;
 }
@@ -407,7 +410,7 @@ let Predicates = [HasFPIdx, IsFP64bit, HasStdEnc],
 }
 
 // Load/store doubleword indexed unaligned.
-let Predicates = [NotFP64bit, HasStdEnc] in {
+let Predicates = [NotFP64bit, HasStdEnc, IsNotNaCl] in {
   def LUXC1 : MMRel, LWXC1_FT<"luxc1", AFGR64Opnd, II_LUXC1>, LWXC1_FM<0x5>;
   def SUXC1 : MMRel, SWXC1_FT<"suxc1", AFGR64Opnd, II_SUXC1>, SWXC1_FM<0xd>;
 }

@@ -125,6 +125,7 @@ protected:
 
   MipsTargetMachine *TM;
 
+  Triple TargetTriple;
 public:
   virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                                      AntiDepBreakMode& Mode,
@@ -206,6 +207,8 @@ public:
                                         AllowMixed16_32;}
 
   bool os16() const { return Os16;};
+
+  bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
 
 // for now constant islands are on for the whole compilation unit but we only
 // really use them if in addition we are in mips16 mode
