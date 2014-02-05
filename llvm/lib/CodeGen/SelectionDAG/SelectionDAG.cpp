@@ -3633,8 +3633,9 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
                                    DAG.getMachineFunction());
 
   if (VT == MVT::Other) {
-    if (DstAlign >= TLI.getDataLayout()->getPointerPrefAlignment() ||
-        TLI.allowsUnalignedMemoryAccesses(VT)) {
+    unsigned AS = 0;
+    if (DstAlign >= TLI.getDataLayout()->getPointerPrefAlignment(AS) ||
+        TLI.allowsUnalignedMemoryAccesses(VT, AS)) {
       VT = TLI.getPointerTy();
     } else {
       switch (DstAlign & 7) {
@@ -3691,9 +3692,10 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
       // FIXME: Only does this for 64-bit or more since we don't have proper
       // cost model for unaligned load / store.
       bool Fast;
+      unsigned AS = 0;
       if (NumMemOps && AllowOverlap &&
           VTSize >= 8 && NewVTSize < Size &&
-          TLI.allowsUnalignedMemoryAccesses(VT, 0, &Fast) && Fast)
+          TLI.allowsUnalignedMemoryAccesses(VT, AS, &Fast) && Fast)
         VTSize = Size;
       else {
         VT = NewVT;

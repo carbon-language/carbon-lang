@@ -5723,9 +5723,13 @@ bool SelectionDAGBuilder::visitMemCmpCall(const CallInst &I) {
     // bloat the code.
     const TargetLowering *TLI = TM.getTargetLowering();
     if (ActuallyDoIt && CSize->getZExtValue() > 4) {
+      unsigned DstAS = LHS->getType()->getPointerAddressSpace();
+      unsigned SrcAS = RHS->getType()->getPointerAddressSpace();
       // TODO: Handle 5 byte compare as 4-byte + 1 byte.
       // TODO: Handle 8 byte compare on x86-32 as two 32-bit loads.
-      if (!TLI->isTypeLegal(LoadVT) ||!TLI->allowsUnalignedMemoryAccesses(LoadVT))
+      if (!TLI->isTypeLegal(LoadVT) ||
+          !TLI->allowsUnalignedMemoryAccesses(LoadVT, SrcAS) ||
+          !TLI->allowsUnalignedMemoryAccesses(LoadVT, DstAS))
         ActuallyDoIt = false;
     }
 
