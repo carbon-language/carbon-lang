@@ -3034,8 +3034,8 @@ public:
     ResolveIndirectFunction(const Address *address, Error &error);
 
     virtual Error
-    GetMemoryRegionInfo (lldb::addr_t load_addr, 
-                        MemoryRegionInfo &range_info)
+    GetMemoryRegionInfo (lldb::addr_t load_addr,
+                         MemoryRegionInfo &range_info)
     {
         Error error;
         error.SetErrorString ("Process::GetMemoryRegionInfo() not supported");
