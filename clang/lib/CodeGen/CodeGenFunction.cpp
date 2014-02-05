@@ -591,6 +591,16 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
     EmitMCountInstrumentation();
 
   PGO.assignRegionCounters(GD);
+  if (CGM.getPGOData()) {
+    if (const Decl *D = GD.getDecl()) {
+      // Turn on InlineHint attribute for hot functions.
+      if (CGM.getPGOData()->isHotFunction(CGM.getMangledName(GD)))
+        Fn->addFnAttr(llvm::Attribute::InlineHint);
+      // Turn on Cold attribute for cold functions.
+      else if (CGM.getPGOData()->isColdFunction(CGM.getMangledName(GD)))
+        Fn->addFnAttr(llvm::Attribute::Cold);
+    }
+  }
 
   if (RetTy->isVoidType()) {
     // Void type; nothing to return.

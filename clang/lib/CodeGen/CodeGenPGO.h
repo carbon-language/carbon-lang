@@ -33,12 +33,22 @@ private:
   llvm::OwningPtr<llvm::MemoryBuffer> DataBuffer;
   /// Offsets into DataBuffer for each function's counters
   llvm::StringMap<unsigned> DataOffsets;
+  /// Execution counts for each function.
+  llvm::StringMap<uint64_t> FunctionCounts;
+  /// The maximal execution count among all functions.
+  uint64_t MaxFunctionCount;
   CodeGenModule &CGM;
 public:
   PGOProfileData(CodeGenModule &CGM, std::string Path);
   /// Fill Counts with the profile data for the given function name. Returns
   /// false on success.
   bool getFunctionCounts(StringRef MangledName, std::vector<uint64_t> &Counts);
+  /// Return true if a function is hot. If we know nothing about the function,
+  /// return false.
+  bool isHotFunction(StringRef MangledName);
+  /// Return true if a function is cold. If we know nothing about the function,
+  /// return false.
+  bool isColdFunction(StringRef MangledName);
 };
 
 /// Per-function PGO state. This class should generally not be used directly,

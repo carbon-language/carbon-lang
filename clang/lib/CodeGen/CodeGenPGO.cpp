@@ -45,6 +45,7 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
   const char *BufferStart = DataBuffer->getBufferStart();
   const char *BufferEnd = DataBuffer->getBufferEnd();
   const char *CurPtr = BufferStart;
+  uint64_t MaxCount = 0;
   while (CurPtr < BufferEnd) {
     // Read the mangled function name.
     const char *FuncName = CurPtr;
@@ -65,8 +66,19 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
     }
     CurPtr = EndPtr;
 
+    // Read function count.
+    uint64_t Count = strtoll(CurPtr, &EndPtr, 10);
+    if (EndPtr == CurPtr || *EndPtr != '\n') {
+      ReportBadPGOData(CGM, "pgo-data file has bad count value");
+      return;
+    }
+    CurPtr = EndPtr + 1;
+    FunctionCounts[MangledName] = Count;
+    MaxCount = Count > MaxCount ? Count : MaxCount;
+
     // There is one line for each counter; skip over those lines.
-    for (unsigned N = 0; N < NumCounters; ++N) {
+    // Since function count is already read, we start the loop from 1.
+    for (unsigned N = 1; N < NumCounters; ++N) {
       CurPtr = strchr(++CurPtr, '\n');
       if (!CurPtr) {
         ReportBadPGOData(CGM, "pgo data file is missing some counter info");
@@ -79,6 +91,33 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
 
     DataOffsets[MangledName] = FuncName - BufferStart;
   }
+  MaxFunctionCount = MaxCount;
+}
+
+/// Return true if a function is hot. If we know nothing about the function,
+/// return false.
+bool PGOProfileData::isHotFunction(StringRef MangledName) {
+  llvm::StringMap<uint64_t>::const_iterator CountIter =
+    FunctionCounts.find(MangledName);
+  // If we know nothing about the function, return false.
+  if (CountIter == FunctionCounts.end())
+    return false;
+  // FIXME: functions with >= 30% of the maximal function count are
+  // treated as hot. This number is from preliminary tuning on SPEC.
+  return CountIter->getValue() >= (uint64_t)(0.3 * (double)MaxFunctionCount);
+}
+
+/// Return true if a function is cold. If we know nothing about the function,
+/// return false.
+bool PGOProfileData::isColdFunction(StringRef MangledName) {
+  llvm::StringMap<uint64_t>::const_iterator CountIter =
+    FunctionCounts.find(MangledName);
+  // If we know nothing about the function, return false.
+  if (CountIter == FunctionCounts.end())
+    return false;
+  // FIXME: functions with <= 1% of the maximal function count are treated as
+  // cold. This number is from preliminary tuning on SPEC.
+  return CountIter->getValue() <= (uint64_t)(0.01 * (double)MaxFunctionCount);
 }
 
 bool PGOProfileData::getFunctionCounts(StringRef MangledName,
