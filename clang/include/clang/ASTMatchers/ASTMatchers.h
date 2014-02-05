@@ -842,15 +842,6 @@ const internal::VariadicDynCastAllOfMatcher<Stmt, IfStmt> ifStmt;
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<Stmt, ForStmt> forStmt;
 
-/// \brief Matches range-based for statements.
-///
-/// forRangeStmt() matches 'for (auto a : i)'
-/// \code
-///   int i[] =  {1, 2, 3}; for (auto a : i);
-///   for(int j = 0; j < 5; ++j);
-/// \endcode
-const internal::VariadicDynCastAllOfMatcher<Stmt, CXXForRangeStmt> forRangeStmt;
-
 /// \brief Matches the increment statement of a for loop.
 ///
 /// Example:
@@ -878,6 +869,29 @@ AST_MATCHER_P(ForStmt, hasLoopInit, internal::Matcher<Stmt>,
               InnerMatcher) {
   const Stmt *const Init = Node.getInit();
   return (Init != NULL && InnerMatcher.matches(*Init, Finder, Builder));
+}
+
+/// \brief Matches range-based for statements.
+///
+/// forRangeStmt() matches 'for (auto a : i)'
+/// \code
+///   int i[] =  {1, 2, 3}; for (auto a : i);
+///   for(int j = 0; j < 5; ++j);
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<Stmt, CXXForRangeStmt> forRangeStmt;
+
+/// \brief Matches the initialization statement of a for loop.
+///
+/// Example:
+///     forStmt(hasLoopVariable(anything()))
+/// matches 'int x' in
+/// \code
+///     for (int x : a) { }
+/// \endcode
+AST_MATCHER_P(CXXForRangeStmt, hasLoopVariable, internal::Matcher<VarDecl>,
+              InnerMatcher) {
+  const VarDecl *const Var = Node.getLoopVariable();
+  return (Var != NULL && InnerMatcher.matches(*Var, Finder, Builder));
 }
 
 /// \brief Matches while statements.

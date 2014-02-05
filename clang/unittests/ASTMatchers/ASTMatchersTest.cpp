@@ -2339,6 +2339,11 @@ TEST(For, ForLoopInternals) {
                       forStmt(hasLoopInit(anything()))));
 }
 
+TEST(For, ForRangeLoopInternals) {
+  EXPECT_TRUE(matches("void f(){ int a[] {1, 2}; for (int i : a); }",
+                      forRangeStmt(hasLoopVariable(anything()))));
+}
+
 TEST(For, NegativeForLoopInternals) {
   EXPECT_TRUE(notMatches("void f(){ for (int i = 0; ; ++i); }",
                          forStmt(hasCondition(expr()))));
