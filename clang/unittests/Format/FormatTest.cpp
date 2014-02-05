@@ -4219,14 +4219,12 @@ TEST_F(FormatTest, UnderstandsUnaryOperators) {
   verifyFormat("int a = i /* confusing comment */++;");
 }
 
-TEST_F(FormatTest, IndentsRelativeToUnaryOperators) {
+TEST_F(FormatTest, DoesNotIndentRelativeToUnaryOperators) {
   verifyFormat("if (!aaaaaaaaaa( // break\n"
-               "         aaaaa)) {\n"
+               "        aaaaa)) {\n"
                "}");
   verifyFormat("aaaaaaaaaa(!aaaaaaaaaa( // break\n"
-               "                aaaaa));");
-
-  // Only indent relative to unary operators if the expression is nested.
+               "               aaaaa));");
   verifyFormat("*aaa = aaaaaaa( // break\n"
                "    bbbbbb);");
 }

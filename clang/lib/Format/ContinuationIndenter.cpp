@@ -296,7 +296,6 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
     State.Stack.back().LastSpace = State.Column;
   else if ((Previous.Type == TT_BinaryOperator ||
             Previous.Type == TT_ConditionalExpr ||
-            Previous.Type == TT_UnaryOperator ||
             Previous.Type == TT_CtorInitializerColon) &&
            (Previous.getPrecedence() != prec::Assignment ||
             Current.StartsBinaryExpression))
