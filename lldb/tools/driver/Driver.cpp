@@ -82,20 +82,12 @@ static OptionDefinition g_options[] =
         "Tells the debugger to use the file <filename> as the program to be debugged." },
     { LLDB_OPT_SET_3,    false, "core"           , 'c', required_argument, 0,  eArgTypeFilename,
         "Tells the debugger to use the fullpath to <path> as the core file." },
+    { LLDB_OPT_SET_5,    true , "attach-pid"     , 'p', required_argument, 0,  eArgTypePid,
+        "Tells the debugger to attach to a process with the given pid." },
     { LLDB_OPT_SET_4,    true , "attach-name"    , 'n', required_argument, 0,  eArgTypeProcessName,
         "Tells the debugger to attach to a process with the given name." },
     { LLDB_OPT_SET_4,    true , "wait-for"       , 'w', no_argument      , 0,  eArgTypeNone,
         "Tells the debugger to wait for a process with the given pid or name to launch before attaching." },
-    { LLDB_OPT_SET_5,    true , "attach-pid"     , 'p', required_argument, 0,  eArgTypePid,
-        "Tells the debugger to attach to a process with the given pid." },
-    { LLDB_3_TO_5,       false, "script-language", 'l', required_argument, 0,  eArgTypeScriptLang,
-        "Tells the debugger to use the specified scripting language for user-defined scripts, rather than the default.  "
-        "Valid scripting languages that can be specified include Python, Perl, Ruby and Tcl.  Currently only the Python "
-        "extensions have been implemented." },
-    { LLDB_3_TO_5,       false, "debug"          , 'd', no_argument      , 0,  eArgTypeNone,
-        "Tells the debugger to print out extra information for debugging itself." },
-    { LLDB_3_TO_5,       false, "source-quietly"          , 'b', no_argument      , 0,  eArgTypeNone,
-        "Tells the debugger to print out extra information for debugging itself." },
     { LLDB_3_TO_5,       false, "source"         , 's', required_argument, 0,  eArgTypeFilename,
         "Tells the debugger to read in and execute the lldb commands in the given file, after any file provided on the command line has been loaded." },
     { LLDB_3_TO_5,       false, "one-line"         , 'o', required_argument, 0,  eArgTypeNone,
@@ -104,6 +96,8 @@ static OptionDefinition g_options[] =
         "Tells the debugger to read in and execute the lldb commands in the given file, before any file provided on the command line has been loaded." },
     { LLDB_3_TO_5,       false, "one-line-before-file"         , 'O', required_argument, 0,  eArgTypeNone,
         "Tells the debugger to execute this one-line lldb command before any file provided on the command line has been loaded." },
+    { LLDB_3_TO_5,       false, "source-quietly"          , 'Q', no_argument      , 0,  eArgTypeNone,
+        "Tells the debugger suppress output from commands provided in the -s, -S, -O and -o commands." },
     { LLDB_3_TO_5,       false, "editor"         , 'e', no_argument      , 0,  eArgTypeNone,
         "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
     { LLDB_3_TO_5,       false, "no-lldbinit"    , 'x', no_argument      , 0,  eArgTypeNone,
@@ -112,6 +106,12 @@ static OptionDefinition g_options[] =
         "Do not use colors." },
     { LLDB_OPT_SET_6,    true , "python-path"    , 'P', no_argument      , 0,  eArgTypeNone,
         "Prints out the path to the lldb.py file for this version of lldb." },
+    { LLDB_3_TO_5,       false, "script-language", 'l', required_argument, 0,  eArgTypeScriptLang,
+        "Tells the debugger to use the specified scripting language for user-defined scripts, rather than the default.  "
+        "Valid scripting languages that can be specified include Python, Perl, Ruby and Tcl.  Currently only the Python "
+        "extensions have been implemented." },
+    { LLDB_3_TO_5,       false, "debug"          , 'd', no_argument      , 0,  eArgTypeNone,
+        "Tells the debugger to print out extra information for debugging itself." },
     { 0,                 false, NULL             , 0  , 0                , 0,  eArgTypeNone,         NULL }
 };
 
@@ -320,7 +320,11 @@ ShowUsage (FILE *out, OptionDefinition *option_table, Driver::OptionData data)
     }
 
     indent_level -= 5;
-
+    
+    fprintf (out, "\n%*sNotes:\n",
+             indent_level, "");
+    indent_level += 5;
+    
     fprintf (out, "\n%*sMultiple \"-s\" and \"-o\" options can be provided.  They will be processed from left to right in order, "
                   "\n%*swith the source files and commands interleaved.  The same is true of the \"-S\" and \"-O\" options."
                   "\n%*sThe before file and after file sets can intermixed freely, the command parser will sort them out."
@@ -330,9 +334,9 @@ ShowUsage (FILE *out, OptionDefinition *option_table, Driver::OptionData data)
              indent_level, "",
              indent_level, "");
     
-    fprintf (out, "\n%*s(If you don't provide -f then the first argument will be the file to be debugged"
-                  "\n%*s so '%s -- <filename> [<ARG1> [<ARG2>]]' also works."
-                  "\n%*s Remember to end the options with \"--\" if any of your arguments have a \"-\" in them.)\n\n",
+    fprintf (out, "\n%*sIf you don't provide -f then the first argument will be the file to be debugged"
+                  "\n%*swhich means that '%s -- <filename> [<ARG1> [<ARG2>]]' also works."
+                  "\n%*sBut remember to end the options with \"--\" if any of your arguments have a \"-\" in them.\n\n",
              indent_level, "", 
              indent_level, "",
              name, 
@@ -495,7 +499,7 @@ Driver::ExecuteInitialCommands (bool before_file)
         const char *executed_command = command;
         if (is_file)
         {
-            ::snprintf (command_string, sizeof(command_string), "command source '%s'", command);
+            ::snprintf (command_string, sizeof(command_string), "command source -s %i '%s'", m_option_data.m_source_quietly, command);
             executed_command = command_string;
         }
         
@@ -725,7 +729,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exiting)
                         m_option_data.m_debug_mode = true;
                         break;
 
-                    case 'q':
+                    case 'Q':
                         m_option_data.m_source_quietly = true;
                         break;
 
