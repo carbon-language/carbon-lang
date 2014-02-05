@@ -33,7 +33,7 @@ void test2 ()
 {
     try
      {
-    	throw &a;
+        throw &a;
         assert(false);
     }
     catch ( A* )
@@ -77,10 +77,85 @@ void test4 ()
     }
 }
 
+struct base1 {int x;};
+struct base2 {int x;};
+struct derived : base1, base2 {};
+
+void test5 ()
+{
+    try
+    {
+        throw (derived*)0;
+        assert(false);
+    }
+    catch (base2 *p) {
+        assert (p == 0);
+    }
+    catch (...)
+    {
+        assert (false);
+    }
+}
+
+void test6 ()
+{
+    try
+    {
+        throw nullptr;
+        assert(false);
+    }
+    catch (base2 *p) {
+        assert (p == nullptr);
+    }
+    catch (...)
+    {
+        assert (false);
+    }
+}
+
+void test7 ()
+{
+    try
+    {
+        throw (derived*)12;
+        assert(false);
+    }
+    catch (base2 *p) {
+        assert ((unsigned long)p == 12+sizeof(base1));
+    }
+    catch (...)
+    {
+        assert (false);
+    }
+}
+
+
+struct vA {};
+struct vC : virtual public vA {};
+
+void test8 ()
+{
+    try
+    {
+        throw (vC*)0;
+        assert(false);
+    }
+    catch (vA *p) {
+        assert(p == 0);
+    }
+    catch (...)
+    {
+        assert (false);
+    }
+}
+
 int main()
 {
     test1();
     test2();
     test3();
     test4();
+    test5();
+    test6();
+    test7();
 }

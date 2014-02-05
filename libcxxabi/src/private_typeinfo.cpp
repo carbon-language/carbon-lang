@@ -388,7 +388,8 @@ __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
     thrown_class_type->has_unambiguous_public_base(&info, adjustedPtr, public_path);
     if (info.path_dst_ptr_to_static_ptr == public_path)
     {
-        adjustedPtr = const_cast<void*>(info.dst_ptr_leading_to_static_ptr);
+        if (adjustedPtr != NULL)
+            adjustedPtr = const_cast<void*>(info.dst_ptr_leading_to_static_ptr);
         return true;
     }
     return false;
