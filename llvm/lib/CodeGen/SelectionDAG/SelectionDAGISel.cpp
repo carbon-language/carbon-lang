@@ -2198,8 +2198,7 @@ CheckType(const unsigned char *MatcherTable, unsigned &MatcherIndex,
 
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
 CheckChildType(const unsigned char *MatcherTable, unsigned &MatcherIndex,
-               SDValue N, const TargetLowering *TLI,
-               unsigned ChildNo) {
+               SDValue N, const TargetLowering *TLI, unsigned ChildNo) {
   if (ChildNo >= N.getNumOperands())
     return false;  // Match fails if out of range child #.
   return ::CheckType(MatcherTable, MatcherIndex, N.getOperand(ChildNo), TLI);
@@ -2232,6 +2231,14 @@ CheckInteger(const unsigned char *MatcherTable, unsigned &MatcherIndex,
 
   ConstantSDNode *C = dyn_cast<ConstantSDNode>(N);
   return C != 0 && C->getSExtValue() == Val;
+}
+
+LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
+CheckChildInteger(const unsigned char *MatcherTable, unsigned &MatcherIndex,
+                  SDValue N, unsigned ChildNo) {
+  if (ChildNo >= N.getNumOperands())
+    return false;  // Match fails if out of range child #.
+  return ::CheckInteger(MatcherTable, MatcherIndex, N.getOperand(ChildNo));
 }
 
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
@@ -2316,6 +2323,14 @@ static unsigned IsPredicateKnownToFail(const unsigned char *Table,
     return Index;
   case SelectionDAGISel::OPC_CheckInteger:
     Result = !::CheckInteger(Table, Index, N);
+    return Index;
+  case SelectionDAGISel::OPC_CheckChild0Integer:
+  case SelectionDAGISel::OPC_CheckChild1Integer:
+  case SelectionDAGISel::OPC_CheckChild2Integer:
+  case SelectionDAGISel::OPC_CheckChild3Integer:
+  case SelectionDAGISel::OPC_CheckChild4Integer:
+    Result = !::CheckChildInteger(Table, Index, N,
+                     Table[Index-1] - SelectionDAGISel::OPC_CheckChild0Integer);
     return Index;
   case SelectionDAGISel::OPC_CheckAndImm:
     Result = !::CheckAndImm(Table, Index, N, SDISel);
@@ -2696,6 +2711,12 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
     case OPC_CheckInteger:
       if (!::CheckInteger(MatcherTable, MatcherIndex, N)) break;
+      continue;
+    case OPC_CheckChild0Integer: case OPC_CheckChild1Integer:
+    case OPC_CheckChild2Integer: case OPC_CheckChild3Integer:
+    case OPC_CheckChild4Integer:
+      if (!::CheckChildInteger(MatcherTable, MatcherIndex, N,
+                               Opcode-OPC_CheckChild0Integer)) break;
       continue;
     case OPC_CheckAndImm:
       if (!::CheckAndImm(MatcherTable, MatcherIndex, N, *this)) break;

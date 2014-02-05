@@ -123,6 +123,8 @@ public:
     OPC_CheckChild3Type, OPC_CheckChild4Type, OPC_CheckChild5Type,
     OPC_CheckChild6Type, OPC_CheckChild7Type,
     OPC_CheckInteger,
+    OPC_CheckChild0Integer, OPC_CheckChild1Integer, OPC_CheckChild2Integer,
+    OPC_CheckChild3Integer, OPC_CheckChild4Integer,
     OPC_CheckCondCode,
     OPC_CheckValueType,
     OPC_CheckComplexPat,

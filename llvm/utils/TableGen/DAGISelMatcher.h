@@ -65,6 +65,7 @@ public:
     SwitchType,           // Dispatch based on type.
     CheckChildType,       // Fail if child has wrong type.
     CheckInteger,         // Fail if wrong val.
+    CheckChildInteger,    // Fail if child is wrong val.
     CheckCondCode,        // Fail if not condcode.
     CheckValueType,
     CheckComplexPat,
@@ -131,6 +132,7 @@ public:
     case CheckType:
     case CheckChildType:
     case CheckInteger:
+    case CheckChildInteger:
     case CheckCondCode:
     case CheckValueType:
     case CheckAndImm:
@@ -629,6 +631,34 @@ private:
     return cast<CheckIntegerMatcher>(M)->Value == Value;
   }
   virtual unsigned getHashImpl() const { return Value; }
+  virtual bool isContradictoryImpl(const Matcher *M) const;
+};
+
+/// CheckChildIntegerMatcher - This checks to see if the child node is a
+/// ConstantSDNode with a specified integer value, if not it fails to match.
+class CheckChildIntegerMatcher : public Matcher {
+  unsigned ChildNo;
+  int64_t Value;
+public:
+  CheckChildIntegerMatcher(unsigned childno, int64_t value)
+    : Matcher(CheckChildInteger), ChildNo(childno), Value(value) {}
+
+  unsigned getChildNo() const { return ChildNo; }
+  int64_t getValue() const { return Value; }
+
+  static inline bool classof(const Matcher *N) {
+    return N->getKind() == CheckChildInteger;
+  }
+
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
+private:
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
+  virtual bool isEqualImpl(const Matcher *M) const {
+    return cast<CheckChildIntegerMatcher>(M)->ChildNo == ChildNo &&
+           cast<CheckChildIntegerMatcher>(M)->Value == Value;
+  }
+  virtual unsigned getHashImpl() const { return (Value << 3) | ChildNo; }
   virtual bool isContradictoryImpl(const Matcher *M) const;
 };
 

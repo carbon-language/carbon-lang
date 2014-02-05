@@ -46,7 +46,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
       if (MC->getChildNo() < 8)  // Only have RecordChild0...7
         New = new RecordChildMatcher(MC->getChildNo(), RM->getWhatFor(),
                                      RM->getResultNo());
-    
+
     if (CheckTypeMatcher *CT = dyn_cast<CheckTypeMatcher>(MC->getNext()))
       if (MC->getChildNo() < 8 &&  // Only have CheckChildType0...7
           CT->getResNo() == 0)     // CheckChildType checks res #0
@@ -55,6 +55,10 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
     if (CheckSameMatcher *CS = dyn_cast<CheckSameMatcher>(MC->getNext()))
       if (MC->getChildNo() < 4)  // Only have CheckChildSame0...3
         New = new CheckChildSameMatcher(MC->getChildNo(), CS->getMatchNumber());
+
+    if (CheckIntegerMatcher *CS = dyn_cast<CheckIntegerMatcher>(MC->getNext()))
+      if (MC->getChildNo() < 5)  // Only have CheckChildInteger0...4
+        New = new CheckChildIntegerMatcher(MC->getChildNo(), CS->getValue());
 
     if (New) {
       // Insert the new node.

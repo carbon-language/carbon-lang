@@ -194,6 +194,11 @@ void CheckIntegerMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckInteger " << Value << '\n';
 }
 
+void CheckChildIntegerMatcher::printImpl(raw_ostream &OS,
+                                         unsigned indent) const {
+  OS.indent(indent) << "CheckChildInteger " << ChildNo << " " << Value << '\n';
+}
+
 void CheckCondCodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckCondCode ISD::" << CondCodeName << '\n';
 }
@@ -417,6 +422,18 @@ bool CheckChildTypeMatcher::isContradictoryImpl(const Matcher *M) const {
 bool CheckIntegerMatcher::isContradictoryImpl(const Matcher *M) const {
   if (const CheckIntegerMatcher *CIM = dyn_cast<CheckIntegerMatcher>(M))
     return CIM->getValue() != getValue();
+  return false;
+}
+
+bool CheckChildIntegerMatcher::isContradictoryImpl(const Matcher *M) const {
+  if (const CheckChildIntegerMatcher *CCIM = dyn_cast<CheckChildIntegerMatcher>(M)) {
+    // If the two checks are about different nodes, we don't know if they
+    // conflict!
+    if (CCIM->getChildNo() != getChildNo())
+      return false;
+
+    return CCIM->getValue() != getValue();
+  }
   return false;
 }
 

@@ -378,6 +378,14 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     OS << '\n';
     return Bytes;
   }
+  case Matcher::CheckChildInteger: {
+    OS << "OPC_CheckChild" << cast<CheckChildIntegerMatcher>(N)->getChildNo()
+       << "Integer, ";
+    unsigned Bytes=1+EmitVBRValue(cast<CheckChildIntegerMatcher>(N)->getValue(),
+                                  OS);
+    OS << '\n';
+    return Bytes;
+  }
   case Matcher::CheckCondCode:
     OS << "OPC_CheckCondCode, ISD::"
        << cast<CheckCondCodeMatcher>(N)->getCondCodeName() << ",\n";
@@ -768,6 +776,7 @@ void MatcherTableEmitter::EmitHistogram(const Matcher *M,
     case Matcher::SwitchType: OS << "OPC_SwitchType"; break;
     case Matcher::CheckChildType: OS << "OPC_CheckChildType"; break;
     case Matcher::CheckInteger: OS << "OPC_CheckInteger"; break;
+    case Matcher::CheckChildInteger: OS << "OPC_CheckChildInteger"; break;
     case Matcher::CheckCondCode: OS << "OPC_CheckCondCode"; break;
     case Matcher::CheckValueType: OS << "OPC_CheckValueType"; break;
     case Matcher::CheckComplexPat: OS << "OPC_CheckComplexPat"; break;
