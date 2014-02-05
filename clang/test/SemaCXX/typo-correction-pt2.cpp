@@ -199,3 +199,11 @@ template <>
 PR18213::WrapperInfo ::PR18213::Wrappable<int>::kWrapperInfo = { 0 };  // expected-error {{no member named 'PR18213' in 'PR18213::WrapperInfo'; did you mean simply 'PR18213'?}} \
                                                                        // expected-error {{C++ requires a type specifier for all declarations}}
 }
+
+namespace PR18651 {
+struct {
+  int x;
+} a, b;
+
+int y = x;  // expected-error-re {{use of undeclared identifier 'x'{{$}}}}
+}
