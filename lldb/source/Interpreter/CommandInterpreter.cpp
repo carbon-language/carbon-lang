@@ -2648,7 +2648,7 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
 
             if (flags & eHandleCommandFlagPrintResult)
             {
-                m_debugger.GetOutputFile()->Printf("Executing commands in '%s'.\n", cmd_file_path.c_str());
+                debugger.GetOutputFile()->Printf("Executing commands in '%s'.\n", cmd_file_path.c_str());
             }
 
             // Used for inheriting the right settings when "command source" might have
@@ -2661,21 +2661,31 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
                                                               empty_stream_sp, // Pass in an empty stream so we inherit the top input reader error stream
                                                               flags,
                                                               NULL, // Pass in NULL for "editline_name" so no history is saved, or written
-                                                              m_debugger.GetPrompt(),
+                                                              debugger.GetPrompt(),
                                                               false, // Not multi-line
                                                               *this));
+            const bool old_async_execution = debugger.GetAsyncExecution();
+            
+            // Set synchronous execution if we not stopping when we continue
+            if ((flags & eHandleCommandFlagStopOnContinue) == 0)
+                debugger.SetAsyncExecution (false);
+
             m_command_source_depth++;
-            m_debugger.RunIOHandler(io_handler_sp);
+            
+            debugger.RunIOHandler(io_handler_sp);
             if (!m_command_source_flags.empty())
                 m_command_source_flags.pop_back();
             m_command_source_depth--;
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            debugger.SetAsyncExecution (old_async_execution);
         }
         else
         {
             result.AppendErrorWithFormat ("error: an error occurred read file '%s': %s\n", cmd_file_path.c_str(), error.AsCString());
             result.SetStatus (eReturnStatusFailed);
         }
+        
+
     }
     else
     {
@@ -2990,14 +3000,20 @@ CommandInterpreter::IOHandlerInputComplete (IOHandler &io_handler, std::string &
         // Display any STDOUT/STDERR _prior_ to emitting the command result text
         GetProcessOutput ();
         
-        const char *output = result.GetOutputData();
-        if (output && output[0])
-            io_handler.GetOutputStreamFile()->PutCString(output);
+        if (!result.GetImmediateOutputStream())
+        {
+            const char *output = result.GetOutputData();
+            if (output && output[0])
+                io_handler.GetOutputStreamFile()->PutCString(output);
+        }
     
         // Now emit the command error text from the command we just executed
-        const char *error = result.GetErrorData();
-        if (error && error[0])
-            io_handler.GetErrorStreamFile()->PutCString(error);
+        if (!result.GetImmediateErrorStream())
+        {
+            const char *error = result.GetErrorData();
+            if (error && error[0])
+                io_handler.GetErrorStreamFile()->PutCString(error);
+        }
     }
     
     switch (result.GetStatus())
