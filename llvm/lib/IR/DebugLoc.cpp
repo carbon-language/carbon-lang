@@ -116,7 +116,7 @@ DebugLoc DebugLoc::get(unsigned Line, unsigned Col,
 }
 
 /// getAsMDNode - This method converts the compressed DebugLoc node into a
-/// DILocation compatible MDNode.
+/// DILocation-compatible MDNode.
 MDNode *DebugLoc::getAsMDNode(const LLVMContext &Ctx) const {
   if (isUnknown()) return 0;
   
