@@ -3789,30 +3789,21 @@ SourceLocation DesignatedInitExpr::getLocEnd() const {
 
 Expr *DesignatedInitExpr::getArrayIndex(const Designator& D) const {
   assert(D.Kind == Designator::ArrayDesignator && "Requires array designator");
-  char *Ptr = static_cast<char *>(
-                  const_cast<void *>(static_cast<const void *>(this)));
-  Ptr += sizeof(DesignatedInitExpr);
-  Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
+  Stmt *const *SubExprs = reinterpret_cast<Stmt *const *>(this + 1);
   return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 1));
 }
 
 Expr *DesignatedInitExpr::getArrayRangeStart(const Designator &D) const {
   assert(D.Kind == Designator::ArrayRangeDesignator &&
          "Requires array range designator");
-  char *Ptr = static_cast<char *>(
-                  const_cast<void *>(static_cast<const void *>(this)));
-  Ptr += sizeof(DesignatedInitExpr);
-  Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
+  Stmt *const *SubExprs = reinterpret_cast<Stmt *const *>(this + 1);
   return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 1));
 }
 
 Expr *DesignatedInitExpr::getArrayRangeEnd(const Designator &D) const {
   assert(D.Kind == Designator::ArrayRangeDesignator &&
          "Requires array range designator");
-  char *Ptr = static_cast<char *>(
-                  const_cast<void *>(static_cast<const void *>(this)));
-  Ptr += sizeof(DesignatedInitExpr);
-  Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
+  Stmt *const *SubExprs = reinterpret_cast<Stmt *const *>(this + 1);
   return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 2));
 }
 

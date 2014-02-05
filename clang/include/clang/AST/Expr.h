@@ -4205,18 +4205,14 @@ public:
   /// and array-range designators.
   unsigned getNumSubExprs() const { return NumSubExprs; }
 
-  Expr *getSubExpr(unsigned Idx) {
+  Expr *getSubExpr(unsigned Idx) const {
     assert(Idx < NumSubExprs && "Subscript out of range");
-    char* Ptr = static_cast<char*>(static_cast<void *>(this));
-    Ptr += sizeof(DesignatedInitExpr);
-    return reinterpret_cast<Expr**>(reinterpret_cast<void**>(Ptr))[Idx];
+    return cast<Expr>(reinterpret_cast<Stmt *const *>(this + 1)[Idx]);
   }
 
   void setSubExpr(unsigned Idx, Expr *E) {
     assert(Idx < NumSubExprs && "Subscript out of range");
-    char* Ptr = static_cast<char*>(static_cast<void *>(this));
-    Ptr += sizeof(DesignatedInitExpr);
-    reinterpret_cast<Expr**>(reinterpret_cast<void**>(Ptr))[Idx] = E;
+    reinterpret_cast<Stmt **>(this + 1)[Idx] = E;
   }
 
   /// \brief Replaces the designator at index @p Idx with the series
