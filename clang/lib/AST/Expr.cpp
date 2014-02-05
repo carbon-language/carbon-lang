@@ -1602,7 +1602,7 @@ const char *CastExpr::getCastKindName() const {
   case CK_ARCReclaimReturnedObject:
     return "ARCReclaimReturnedObject";
   case CK_ARCExtendBlockObject:
-    return "ARCCExtendBlockObject";
+    return "ARCExtendBlockObject";
   case CK_AtomicToNonAtomic:
     return "AtomicToNonAtomic";
   case CK_NonAtomicToAtomic:
