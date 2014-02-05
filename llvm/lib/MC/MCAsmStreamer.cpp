@@ -50,7 +50,6 @@ private:
 
   unsigned IsVerboseAsm : 1;
   unsigned ShowInst : 1;
-  unsigned UseLoc : 1;
   unsigned UseCFI : 1;
   unsigned UseDwarfDirectory : 1;
 
@@ -67,13 +66,13 @@ private:
 
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
-                bool isVerboseAsm, bool useLoc, bool useCFI,
-                bool useDwarfDirectory, MCInstPrinter *printer,
-                MCCodeEmitter *emitter, MCAsmBackend *asmbackend, bool showInst)
+                bool isVerboseAsm, bool useCFI, bool useDwarfDirectory,
+                MCInstPrinter *printer, MCCodeEmitter *emitter,
+                MCAsmBackend *asmbackend, bool showInst)
       : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
         InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
         CommentStream(CommentToEmit), IsVerboseAsm(isVerboseAsm),
-        ShowInst(showInst), UseLoc(useLoc), UseCFI(useCFI),
+        ShowInst(showInst), UseCFI(useCFI),
         UseDwarfDirectory(useDwarfDirectory) {
     if (InstPrinter && IsVerboseAsm)
       InstPrinter->setCommentStream(CommentStream);
@@ -863,17 +862,16 @@ bool MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
     return EmitDwarfFileDirective(FileNo, "", FullPathName, CUID);
   }
 
-  if (UseLoc) {
-    OS << "\t.file\t" << FileNo << ' ';
-    if (!Directory.empty()) {
-      PrintQuotedString(Directory, OS);
-      OS << ' ';
-    }
-    PrintQuotedString(Filename, OS);
-    EmitEOL();
-    // All .file will belong to a single CUID.
-    CUID = 0;
+  OS << "\t.file\t" << FileNo << ' ';
+  if (!Directory.empty()) {
+    PrintQuotedString(Directory, OS);
+    OS << ' ';
   }
+  PrintQuotedString(Filename, OS);
+  EmitEOL();
+  // All .file will belong to a single CUID.
+  CUID = 0;
+
   return this->MCStreamer::EmitDwarfFileDirective(FileNo, Directory, Filename,
                                                   CUID);
 }
@@ -885,9 +883,6 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                           StringRef FileName) {
   this->MCStreamer::EmitDwarfLocDirective(FileNo, Line, Column, Flags,
                                           Isa, Discriminator, FileName);
-  if (!UseLoc)
-    return;
-
   OS << "\t.loc\t" << FileNo << " " << Line << " " << Column;
   if (Flags & DWARF2_FLAG_BASIC_BLOCK)
     OS << " basic_block";
@@ -1395,15 +1390,9 @@ void MCAsmStreamer::EmitRawTextImpl(StringRef String) {
 }
 
 void MCAsmStreamer::FinishImpl() {
-  // FIXME: This header is duplicated with MCObjectStreamer
-  // Dump out the dwarf file & directory tables and line tables.
-  const MCSymbol *LineSectionSymbol = NULL;
-  if (getContext().hasDwarfFiles() && !UseLoc)
-    LineSectionSymbol = MCDwarfFileTable::Emit(this);
-
   // If we are generating dwarf for assembly source files dump out the sections.
   if (getContext().getGenDwarfForAssembly())
-    MCGenDwarfInfo::Emit(this, LineSectionSymbol);
+    MCGenDwarfInfo::Emit(this, NULL);
 
   if (!UseCFI)
     EmitFrames(AsmBackend.get(), false);
@@ -1411,10 +1400,10 @@ void MCAsmStreamer::FinishImpl() {
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     formatted_raw_ostream &OS,
-                                    bool isVerboseAsm, bool useLoc, bool useCFI,
+                                    bool isVerboseAsm, bool useCFI,
                                     bool useDwarfDirectory, MCInstPrinter *IP,
                                     MCCodeEmitter *CE, MCAsmBackend *MAB,
                                     bool ShowInst) {
-  return new MCAsmStreamer(Context, OS, isVerboseAsm, useLoc,
-                           useCFI, useDwarfDirectory, IP, CE, MAB, ShowInst);
+  return new MCAsmStreamer(Context, OS, isVerboseAsm, useCFI, useDwarfDirectory,
+                           IP, CE, MAB, ShowInst);
 }

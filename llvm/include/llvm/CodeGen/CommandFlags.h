@@ -85,9 +85,6 @@ FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
                         "Emit nothing, for performance testing"),
              clEnumValEnd));
 
-cl::opt<bool> DisableDotLoc("disable-dot-loc", cl::Hidden,
-                            cl::desc("Do not use .loc entries"));
-
 cl::opt<bool> DisableCFI("disable-cfi", cl::Hidden,
                          cl::desc("Do not use .cfi_* directives"));
 

@@ -288,9 +288,6 @@ static int compileModule(char **argv, LLVMContext &Context) {
   assert(mod && "Should have exited after outputting help!");
   TargetMachine &Target = *target.get();
 
-  if (DisableDotLoc)
-    Target.setMCUseLoc(false);
-
   if (DisableCFI)
     Target.setMCUseCFI(false);
 
@@ -299,11 +296,6 @@ static int compileModule(char **argv, LLVMContext &Context) {
 
   if (GenerateSoftFloatCalls)
     FloatABIForCalls = FloatABI::Soft;
-
-  // Disable .loc support for older OS X versions.
-  if (TheTriple.isMacOSX() &&
-      TheTriple.isMacOSXVersionLT(10, 6))
-    Target.setMCUseLoc(false);
 
   // Figure out where we are going to send the output.
   OwningPtr<tool_output_file> Out

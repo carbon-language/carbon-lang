@@ -435,11 +435,9 @@ int main(int argc, char **argv) {
       MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, MCPU);
     }
     bool UseCFI = !DisableCFI;
-    Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/true,
-                                           /*useLoc*/ true,
-                                           UseCFI,
-                                           /*useDwarfDirectory*/ true,
-                                           IP, CE, MAB, ShowInst));
+    Str.reset(TheTarget->createAsmStreamer(
+        Ctx, FOS, /*asmverbose*/ true, UseCFI,
+        /*useDwarfDirectory*/ true, IP, CE, MAB, ShowInst));
 
   } else if (FileType == OFT_Null) {
     Str.reset(createNullStreamer(Ctx));

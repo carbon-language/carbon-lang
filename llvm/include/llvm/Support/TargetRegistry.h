@@ -50,9 +50,8 @@ namespace llvm {
   class raw_ostream;
   class formatted_raw_ostream;
 
-  MCStreamer *createAsmStreamer(MCContext &Ctx,
-                                formatted_raw_ostream &OS, bool isVerboseAsm,
-                                bool useLoc, bool useCFI,
+  MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
+                                bool isVerboseAsm, bool useCFI,
                                 bool useDwarfDirectory,
                                 MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                                 MCAsmBackend *TAB, bool ShowInst);
@@ -132,7 +131,6 @@ namespace llvm {
     typedef MCStreamer *(*AsmStreamerCtorTy)(MCContext &Ctx,
                                              formatted_raw_ostream &OS,
                                              bool isVerboseAsm,
-                                             bool useLoc,
                                              bool useCFI,
                                              bool useDwarfDirectory,
                                              MCInstPrinter *InstPrint,
@@ -432,7 +430,6 @@ namespace llvm {
     MCStreamer *createAsmStreamer(MCContext &Ctx,
                                   formatted_raw_ostream &OS,
                                   bool isVerboseAsm,
-                                  bool useLoc,
                                   bool useCFI,
                                   bool useDwarfDirectory,
                                   MCInstPrinter *InstPrint,
@@ -440,10 +437,10 @@ namespace llvm {
                                   MCAsmBackend *TAB,
                                   bool ShowInst) const {
       if (AsmStreamerCtorFn)
-        return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useLoc, useCFI,
+        return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useCFI,
                                  useDwarfDirectory, InstPrint, CE, TAB,
                                  ShowInst);
-      return llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useLoc, useCFI,
+      return llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useCFI,
                                      useDwarfDirectory, InstPrint, CE, TAB,
                                      ShowInst);
     }
