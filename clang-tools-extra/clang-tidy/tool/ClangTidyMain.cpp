@@ -23,7 +23,7 @@ using namespace clang::driver;
 using namespace clang::tooling;
 using namespace llvm;
 
-cl::OptionCategory ClangTidyCategory("clang-tidy options");
+static cl::OptionCategory ClangTidyCategory("clang-tidy options");
 
 static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 
