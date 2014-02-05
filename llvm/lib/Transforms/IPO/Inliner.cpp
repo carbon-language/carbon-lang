@@ -50,6 +50,10 @@ static cl::opt<int>
 HintThreshold("inlinehint-threshold", cl::Hidden, cl::init(325),
               cl::desc("Threshold for inlining functions with inline hint"));
 
+static cl::opt<int>
+ColdThreshold("inlinecold-threshold", cl::Hidden, cl::init(75),
+              cl::desc("Threshold for inlining functions with cold attribute"));
+
 // Threshold to use when optsize is specified (and there is no -inline-limit).
 const int OptSizeThreshold = 75;
 
@@ -276,6 +280,13 @@ unsigned Inliner::getInlineThreshold(CallSite CS) const {
       && !Caller->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                                Attribute::MinSize))
     thres = HintThreshold;
+
+  // Listen to the cold attribute when it would decrease the threshold.
+  bool ColdCallee = Callee && !Callee->isDeclaration() &&
+    Callee->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                         Attribute::Cold);
+  if (ColdCallee && ColdThreshold < thres)
+    thres = ColdThreshold;
 
   return thres;
 }
