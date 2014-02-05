@@ -36,29 +36,25 @@
 #include <unistd.h>
 #endif
 
-#ifndef SANITIZER_GO
-// This function is defined elsewhere if we intercepted pthread_attr_getstack.
-extern "C" SANITIZER_WEAK_ATTRIBUTE int
-__sanitizer_pthread_attr_getstack(void *attr, void **addr, size_t *size);
-
-static int my_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
-  if (__sanitizer_pthread_attr_getstack)
-    return __sanitizer_pthread_attr_getstack((pthread_attr_t *)attr, addr,
-                                             size);
-
-  return pthread_attr_getstack((pthread_attr_t *)attr, addr, size);
-}
-#endif  // #ifndef SANITIZER_GO
-
 namespace __sanitizer {
 
 #ifndef SANITIZER_GO
-extern "C" SANITIZER_WEAK_ATTRIBUTE int
-__sanitizer_sigaction_f(int signum, const void *act, void *oldact);
+// This function is defined elsewhere if we intercepted pthread_attr_getstack.
+SANITIZER_WEAK_ATTRIBUTE int
+real_pthread_attr_getstack(void *attr, void **addr, size_t *size);
+
+static int my_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
+  if (real_pthread_attr_getstack)
+    return real_pthread_attr_getstack((pthread_attr_t *)attr, addr, size);
+  return pthread_attr_getstack((pthread_attr_t *)attr, addr, size);
+}
+
+SANITIZER_WEAK_ATTRIBUTE int
+real_sigaction(int signum, const void *act, void *oldact);
 
 int internal_sigaction(int signum, const void *act, void *oldact) {
-  if (__sanitizer_sigaction_f)
-    return __sanitizer_sigaction_f(signum, act, oldact);
+  if (real_sigaction)
+    return real_sigaction(signum, act, oldact);
   return sigaction(signum, (struct sigaction *)act, (struct sigaction *)oldact);
 }
 

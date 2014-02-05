@@ -203,11 +203,12 @@ INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
   return 0;
 }
 
-extern "C"
-int __sanitizer_sigaction_f(int signum, const void *act, void *oldact) {
+namespace __sanitizer {
+int real_sigaction(int signum, const void *act, void *oldact) {
   return REAL(sigaction)(signum,
                          (struct sigaction *)act, (struct sigaction *)oldact);
 }
+}  // namespace __sanitizer
 
 #elif SANITIZER_POSIX
 // We need to have defined REAL(sigaction) on posix systems.
