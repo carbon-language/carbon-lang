@@ -2,6 +2,7 @@
 # options and executing the appropriate CMake commands to realize the users'
 # selections.
 
+include(HandleLLVMStdlib)
 include(AddLLVMDefinitions)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
