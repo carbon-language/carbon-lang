@@ -117,7 +117,7 @@ if( NOT PURE_WINDOWS )
 endif()
 
 # function checks
-check_symbol_exists(arc4random "stdlib.h" HAVE_ARC4RANDOM)
+check_symbol_exists(arc4random "stdlib.h" HAVE_DECL_ARC4RANDOM)
 check_symbol_exists(backtrace "execinfo.h" HAVE_BACKTRACE)
 check_symbol_exists(getpagesize unistd.h HAVE_GETPAGESIZE)
 check_symbol_exists(getrusage sys/resource.h HAVE_GETRUSAGE)
