@@ -32,7 +32,7 @@ static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
 // Mark all our options with this category, everything else (except for -version
 // and -help) will be hidden.
-cl::OptionCategory ClangFormatCategory("Clang-format options");
+static cl::OptionCategory ClangFormatCategory("Clang-format options");
 
 static cl::list<unsigned>
     Offsets("offset",
