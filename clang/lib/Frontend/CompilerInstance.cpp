@@ -292,12 +292,14 @@ void CompilerInstance::createASTContext() {
 void CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                                   bool DisablePCHValidation,
                                                 bool AllowPCHWithCompilerErrors,
+                                                bool AllowConfigurationMismatch,
                                                  void *DeserializationListener){
   OwningPtr<ExternalASTSource> Source;
   bool Preamble = getPreprocessorOpts().PrecompiledPreambleBytes.first != 0;
   Source.reset(createPCHExternalASTSource(Path, getHeaderSearchOpts().Sysroot,
                                           DisablePCHValidation,
                                           AllowPCHWithCompilerErrors,
+                                          AllowConfigurationMismatch,
                                           getPreprocessor(), getASTContext(),
                                           DeserializationListener,
                                           Preamble,
@@ -311,6 +313,7 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                              const std::string &Sysroot,
                                              bool DisablePCHValidation,
                                              bool AllowPCHWithCompilerErrors,
+                                             bool AllowConfigurationMismatch,
                                              Preprocessor &PP,
                                              ASTContext &Context,
                                              void *DeserializationListener,
@@ -321,6 +324,7 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
                              Sysroot.empty() ? "" : Sysroot.c_str(),
                              DisablePCHValidation,
                              AllowPCHWithCompilerErrors,
+                             AllowConfigurationMismatch,
                              UseGlobalModuleIndex));
 
   Reader->setDeserializationListener(
@@ -329,7 +333,9 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
                           Preamble ? serialization::MK_Preamble
                                    : serialization::MK_PCH,
                           SourceLocation(),
-                          ASTReader::ARR_None)) {
+                          AllowConfigurationMismatch
+                            ? ASTReader::ARR_ConfigurationMismatch
+                            : ASTReader::ARR_None)) {
   case ASTReader::Success:
     // Set the predefines buffer as suggested by the PCH reader. Typically, the
     // predefines buffer will be empty.
@@ -1158,6 +1164,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
                                     Sysroot.empty() ? "" : Sysroot.c_str(),
                                     PPOpts.DisablePCHValidation,
                                     /*AllowASTWithCompilerErrors=*/false,
+                                    /*AllowConfigurationMismatch=*/false,
                                     getFrontendOpts().UseGlobalModuleIndex);
       if (hasASTConsumer()) {
         ModuleManager->setDeserializationListener(

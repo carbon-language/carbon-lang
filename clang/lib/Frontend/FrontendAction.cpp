@@ -314,6 +314,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                 CI.getPreprocessorOpts().ImplicitPCHInclude,
                                 CI.getPreprocessorOpts().DisablePCHValidation,
                             CI.getPreprocessorOpts().AllowPCHWithCompilerErrors,
+                            /*AllowConfigurationMismatch*/false,
                                 DeserialListener);
       if (!CI.getASTContext().getExternalSource())
         goto failure;

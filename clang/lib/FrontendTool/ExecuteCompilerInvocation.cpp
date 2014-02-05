@@ -65,6 +65,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case InitOnly:               return new InitOnlyAction();
   case ParseSyntaxOnly:        return new SyntaxOnlyAction();
   case ModuleFileInfo:         return new DumpModuleInfoAction();
+  case VerifyPCH:              return new VerifyPCHAction();
 
   case PluginAction: {
     for (FrontendPluginRegistry::iterator it =

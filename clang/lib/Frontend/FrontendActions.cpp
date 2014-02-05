@@ -320,6 +320,19 @@ ASTConsumer *DumpModuleInfoAction::CreateASTConsumer(CompilerInstance &CI,
   return new ASTConsumer();
 }
 
+ASTConsumer *VerifyPCHAction::CreateASTConsumer(CompilerInstance &CI,
+                                                StringRef InFile) {
+  return new ASTConsumer();
+}
+
+void VerifyPCHAction::ExecuteAction() {
+  getCompilerInstance().
+    createPCHExternalASTSource(getCurrentFile(), /*DisablePCHValidation*/false,
+                               /*AllowPCHWithCompilerErrors*/false,
+                               /*AllowConfigurationMismatch*/true,
+                               /*DeserializationListener*/0);
+}
+
 namespace {
   /// \brief AST reader listener that dumps module information for a module
   /// file.

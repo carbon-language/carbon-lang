@@ -1995,6 +1995,21 @@ static bool shouldEnableVectorizerAtOLevel(const ArgList &Args) {
   return false;
 }
 
+/// Add -x lang to \p CmdArgs for \p Input.
+static void addDashXForInput(const ArgList &Args, const InputInfo &Input,
+                             ArgStringList &CmdArgs) {
+  // When using -verify-pch, we don't want to provide the type
+  // 'precompiled-header' if it was inferred from the file extension
+  if (Args.hasArg(options::OPT_verify_pch) && Input.getType() == types::TY_PCH)
+    return;
+
+  CmdArgs.push_back("-x");
+  if (Args.hasArg(options::OPT_rewrite_objc))
+    CmdArgs.push_back(types::getTypeName(types::TY_PP_ObjCXX));
+  else
+    CmdArgs.push_back(types::getTypeName(Input.getType()));
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output,
                          const InputInfoList &Inputs,
@@ -2055,7 +2070,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     assert(isa<CompileJobAction>(JA) && "Invalid action for clang tool.");
 
     if (JA.getType() == types::TY_Nothing) {
-      CmdArgs.push_back("-fsyntax-only");
+      if (Args.hasArg(options::OPT_verify_pch))
+        CmdArgs.push_back("-verify-pch");
+      else
+        CmdArgs.push_back("-fsyntax-only");
     } else if (JA.getType() == types::TY_LLVM_IR ||
                JA.getType() == types::TY_LTO_IR) {
       CmdArgs.push_back("-emit-llvm");
@@ -3742,11 +3760,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
-    CmdArgs.push_back("-x");
-    if (Args.hasArg(options::OPT_rewrite_objc))
-      CmdArgs.push_back(types::getTypeName(types::TY_PP_ObjCXX));
-    else
-      CmdArgs.push_back(types::getTypeName(II.getType()));
+
+    addDashXForInput(Args, II, CmdArgs);
+
     if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
     else

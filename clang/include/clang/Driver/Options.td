@@ -927,6 +927,8 @@ def include_pch : Separate<["-"], "include-pch">, Group<clang_i_Group>, Flags<[C
   HelpText<"Include precompiled header file">, MetaVarName<"<file>">;
 def relocatable_pch : Flag<["-", "--"], "relocatable-pch">, Flags<[CC1Option]>,
   HelpText<"Whether to build a relocatable precompiled header">;
+def verify_pch : Flag<["-"], "verify-pch">, Group<Action_Group>, Flags<[CC1Option]>,
+  HelpText<"Load and verify that a pre-compiled header file is not stale">;
 def init : Separate<["-"], "init">;
 def install__name : Separate<["-"], "install_name">;
 def integrated_as : Flag<["-"], "integrated-as">, Flags<[DriverOption]>;

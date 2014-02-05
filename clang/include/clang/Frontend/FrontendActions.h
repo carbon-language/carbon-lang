@@ -146,6 +146,17 @@ public:
   virtual bool hasCodeCompletionSupport() const { return false; }
 };
 
+class VerifyPCHAction : public ASTFrontendAction {
+protected:
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                         StringRef InFile);
+
+  virtual void ExecuteAction();
+
+public:
+  virtual bool hasCodeCompletionSupport() const { return false; }
+};
+
 /**
  * \brief Frontend action adaptor that merges ASTs together.
  *

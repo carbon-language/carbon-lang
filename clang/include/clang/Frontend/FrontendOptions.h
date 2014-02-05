@@ -43,6 +43,7 @@ namespace frontend {
     GeneratePTH,            ///< Generate pre-tokenized header.
     InitOnly,               ///< Only execute frontend initialization.
     ModuleFileInfo,         ///< Dump information about a module file.
+    VerifyPCH,              ///< Load and verify that a PCH file is usable.
     ParseSyntaxOnly,        ///< Parse and perform semantic analysis.
     PluginAction,           ///< Run a plugin action, \see ActionName.
     PrintDeclContext,       ///< Print DeclContext and their Decls.
