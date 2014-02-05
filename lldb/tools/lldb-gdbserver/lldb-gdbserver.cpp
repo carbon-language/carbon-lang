@@ -236,7 +236,6 @@ main (int argc, char *argv[])
     }
 
     // Skip any options we consumed with getopt_long_only
-    printf ("optind = %d\n", optind);
     argc -= optind;
     argv += optind;
 
