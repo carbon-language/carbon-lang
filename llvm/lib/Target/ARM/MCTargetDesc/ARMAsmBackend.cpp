@@ -565,11 +565,18 @@ void ARMAsmBackend::processFixupValue(const MCAssembler &Asm,
         Value |= 1;
     }
   }
+  // For Thumb1 BL instruction, it is possible to be a long jump between
+  // the basic blocks of the same function.  Thus, we would like to resolve
+  // the offset when the destination has the same MCFragment.
+  if (A && (unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_bl) {
+    const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
+    MCSymbolData &SymData = Asm.getSymbolData(Sym);
+    IsResolved = (SymData.getFragment() == DF);
+  }
   // We must always generate a relocation for BL/BLX instructions if we have
   // a symbol to reference, as the linker relies on knowing the destination
   // symbol's thumb-ness to get interworking right.
   if (A && ((unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_blx ||
-            (unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_bl ||
             (unsigned)Fixup.getKind() == ARM::fixup_arm_blx ||
             (unsigned)Fixup.getKind() == ARM::fixup_arm_uncondbl ||
             (unsigned)Fixup.getKind() == ARM::fixup_arm_condbl))
