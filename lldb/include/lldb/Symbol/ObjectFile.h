@@ -451,6 +451,19 @@ public:
     }
 
     //------------------------------------------------------------------
+    /// Sets the load address for an entire module, assuming a rigid
+    /// slide of sections, if possible in the implementation.
+    ///
+    /// @return
+    ///     Returns true iff any section's load address changed.
+    //------------------------------------------------------------------
+    virtual bool
+    SetLoadAddress(Target &target, lldb::addr_t base_addr)
+    {
+        return false;
+    }
+
+    //------------------------------------------------------------------
     /// Gets whether endian swapping should occur when extracting data
     /// from this object file.
     ///

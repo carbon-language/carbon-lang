@@ -246,6 +246,60 @@ public:
 
 protected:
     //------------------------------------------------------------------
+    // Utility methods for derived classes
+    //------------------------------------------------------------------
+
+    /// Checks to see if the target module has changed, updates the target
+    /// accordingly and returns the target executable module.
+    lldb::ModuleSP
+    GetTargetExecutable();
+
+    /// Updates the load address of every allocatable section in @p module.
+    ///
+    /// @param module The module to traverse.
+    ///
+    /// @param link_map_addr The virtual address of the link map for the @p module.
+    ///
+    /// @param base_addr The virtual base address @p module is loaded at.
+    virtual void
+    UpdateLoadedSections(lldb::ModuleSP module,
+                         lldb::addr_t link_map_addr,
+                         lldb::addr_t base_addr);
+
+    // Utility method so base classes can share implementation of UpdateLoadedSections
+    void
+    UpdateLoadedSectionsCommon(lldb::ModuleSP module,
+                               lldb::addr_t base_addr);
+
+    /// Removes the loaded sections from the target in @p module.
+    ///
+    /// @param module The module to traverse.
+    virtual void
+    UnloadSections(const lldb::ModuleSP module);
+
+    // Utility method so base classes can share implementation of UnloadSections
+    void
+    UnloadSectionsCommon(const lldb::ModuleSP module);
+
+    /// Locates or creates a module given by @p file and updates/loads the
+    /// resulting module at the virtual base address @p base_addr.
+    lldb::ModuleSP
+    LoadModuleAtAddress(const lldb_private::FileSpec &file, lldb::addr_t link_map_addr, lldb::addr_t base_addr);
+
+    const lldb_private::SectionList *
+    GetSectionListFromModule(const lldb::ModuleSP module) const;
+
+    // Read an unsigned int of the given size from memory at the given addr.
+    // Return -1 if the read fails, otherwise return the result as an int64_t.
+    int64_t
+    ReadUnsignedIntWithSizeInBytes(lldb::addr_t addr, int size_in_bytes);
+
+    // Read a pointer from memory at the given addr.
+    // Return LLDB_INVALID_ADDRESS if the read fails.
+    lldb::addr_t
+    ReadPointer(lldb::addr_t addr);
+
+    //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
     Process* m_process; ///< The process that this dynamic loader plug-in is tracking.

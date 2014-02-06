@@ -150,46 +150,6 @@ DynamicLoaderPOSIXDYLD::DidLaunch()
     }
 }
 
-ModuleSP
-DynamicLoaderPOSIXDYLD::GetTargetExecutable()
-{
-    Target &target = m_process->GetTarget();
-    ModuleSP executable = target.GetExecutableModule();
-
-    if (executable.get())
-    {
-        if (executable->GetFileSpec().Exists())
-        {
-            ModuleSpec module_spec (executable->GetFileSpec(), executable->GetArchitecture());
-            ModuleSP module_sp (new Module (module_spec));
-
-            // Check if the executable has changed and set it to the target executable if they differ.
-            if (module_sp.get() && module_sp->GetUUID().IsValid() && executable->GetUUID().IsValid())
-            {
-                if (module_sp->GetUUID() != executable->GetUUID())
-                    executable.reset();
-            }
-            else if (executable->FileHasChanged())
-            {
-                executable.reset();
-            }
-
-            if (!executable.get())
-            {
-                executable = target.GetSharedModule(module_spec);
-                if (executable.get() != target.GetExecutableModulePointer())
-                {
-                    // Don't load dependent images since we are in dyld where we will know
-                    // and find out about all images that are loaded
-                    const bool get_dependent_images = false;
-                    target.SetExecutableModule(executable, get_dependent_images);
-                }
-            }
-        }
-    }
-    return executable;
-}
-
 Error
 DynamicLoaderPOSIXDYLD::ExecutePluginCommand(Args &command, Stream *strm)
 {
@@ -211,45 +171,17 @@ DynamicLoaderPOSIXDYLD::CanLoadImage()
 void
 DynamicLoaderPOSIXDYLD::UpdateLoadedSections(ModuleSP module, addr_t link_map_addr, addr_t base_addr)
 {
-    Target &target = m_process->GetTarget();
-    const SectionList *sections = GetSectionListFromModule(module);
-
-    assert(sections && "SectionList missing from loaded module.");
-
     m_loaded_modules[module] = link_map_addr;
 
-    const size_t num_sections = sections->GetSize();
-
-    for (unsigned i = 0; i < num_sections; ++i)
-    {
-        SectionSP section_sp (sections->GetSectionAtIndex(i));
-        lldb::addr_t new_load_addr = section_sp->GetFileAddress() + base_addr;
-
-        // If the file address of the section is zero then this is not an
-        // allocatable/loadable section (property of ELF sh_addr).  Skip it.
-        if (new_load_addr == base_addr)
-            continue;
-
-        target.SetSectionLoadAddress(section_sp, new_load_addr);
-    }
+    UpdateLoadedSectionsCommon(module, base_addr);
 }
 
 void
 DynamicLoaderPOSIXDYLD::UnloadSections(const ModuleSP module)
 {
-    Target &target = m_process->GetTarget();
-    const SectionList *sections = GetSectionListFromModule(module);
-
-    assert(sections && "SectionList missing from unloaded module.");
-
     m_loaded_modules.erase(module);
 
-    const size_t num_sections = sections->GetSize();
-    for (size_t i = 0; i < num_sections; ++i)
-    {
-        SectionSP section_sp (sections->GetSectionAtIndex(i));
-        target.SetSectionUnloaded(section_sp);
-    }
+    UnloadSectionsCommon(module);
 }
 
 void
@@ -467,26 +399,6 @@ DynamicLoaderPOSIXDYLD::LoadAllCurrentModules()
     m_process->GetTarget().ModulesDidLoad(module_list);
 }
 
-ModuleSP
-DynamicLoaderPOSIXDYLD::LoadModuleAtAddress(const FileSpec &file, addr_t link_map_addr, addr_t base_addr)
-{
-    Target &target = m_process->GetTarget();
-    ModuleList &modules = target.GetImages();
-    ModuleSP module_sp;
-
-    ModuleSpec module_spec (file, target.GetArchitecture());
-    if ((module_sp = modules.FindFirstModule (module_spec))) 
-    {
-        UpdateLoadedSections(module_sp, link_map_addr, base_addr);
-    }
-    else if ((module_sp = target.GetSharedModule(module_spec))) 
-    {
-        UpdateLoadedSections(module_sp, link_map_addr, base_addr);
-    }
-
-    return module_sp;
-}
-
 addr_t
 DynamicLoaderPOSIXDYLD::ComputeLoadOffset()
 {
@@ -530,41 +442,6 @@ DynamicLoaderPOSIXDYLD::GetEntryPoint()
     return m_entry_point;
 }
 
-const SectionList *
-DynamicLoaderPOSIXDYLD::GetSectionListFromModule(const ModuleSP module) const
-{
-    SectionList *sections = nullptr;
-    if (module.get())
-    {
-        ObjectFile *obj_file = module->GetObjectFile();
-        if (obj_file)
-        {
-            sections = obj_file->GetSectionList();
-        }
-    }
-    return sections;
-}
-
-static int ReadInt(Process *process, addr_t addr)
-{
-    Error error;
-    int value = (int)process->ReadUnsignedIntegerFromMemory(addr, sizeof(uint32_t), 0, error);
-    if (error.Fail())
-        return -1;
-    else
-        return value;
-}
-
-static addr_t ReadPointer(Process *process, addr_t addr)
-{
-    Error error;
-    addr_t value = process->ReadPointerFromMemory(addr, error);
-    if (error.Fail())
-        return LLDB_INVALID_ADDRESS;
-    else
-        return value;
-}
-
 lldb::addr_t
 DynamicLoaderPOSIXDYLD::GetThreadLocalData (const lldb::ModuleSP module, const lldb::ThreadSP thread)
 {
@@ -586,26 +463,27 @@ DynamicLoaderPOSIXDYLD::GetThreadLocalData (const lldb::ModuleSP module, const l
         return LLDB_INVALID_ADDRESS;
 
     // Find the module's modid.
-    int modid = ReadInt (m_process, link_map + metadata.modid_offset);
+    int modid_size = 4;  // FIXME(spucci): This isn't right for big-endian 64-bit
+    int64_t modid = ReadUnsignedIntWithSizeInBytes (link_map + metadata.modid_offset, modid_size);
     if (modid == -1)
         return LLDB_INVALID_ADDRESS;
 
     // Lookup the DTV stucture for this thread.
     addr_t dtv_ptr = tp + metadata.dtv_offset;
-    addr_t dtv = ReadPointer (m_process, dtv_ptr);
+    addr_t dtv = ReadPointer (dtv_ptr);
     if (dtv == LLDB_INVALID_ADDRESS)
         return LLDB_INVALID_ADDRESS;
 
     // Find the TLS block for this module.
     addr_t dtv_slot = dtv + metadata.dtv_slot_size*modid;
-    addr_t tls_block = ReadPointer (m_process, dtv_slot + metadata.tls_offset);
+    addr_t tls_block = ReadPointer (dtv_slot + metadata.tls_offset);
 
     Module *mod = module.get();
     Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
     if (log)
         log->Printf("DynamicLoaderPOSIXDYLD::Performed TLS lookup: "
-                    "module=%s, link_map=0x%" PRIx64 ", tp=0x%" PRIx64 ", modid=%i, tls_block=0x%" PRIx64 "\n",
-                    mod->GetObjectName().AsCString(""), link_map, tp, modid, tls_block);
+                    "module=%s, link_map=0x%" PRIx64 ", tp=0x%" PRIx64 ", modid=%ld, tls_block=0x%" PRIx64 "\n",
+                    mod->GetObjectName().AsCString(""), link_map, tp, (int64_t)modid, tls_block);
 
     return tls_block;
 }
