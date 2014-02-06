@@ -1960,6 +1960,11 @@ defm : SMRD_Pattern <S_LOAD_DWORDX16_IMM, S_LOAD_DWORDX16_SGPR, v16i32>;
 multiclass MUBUFLoad_Pattern <MUBUF Instr_ADDR64, ValueType vt,
                               PatFrag global_ld, PatFrag constant_ld> {
   def : Pat <
+    (vt (global_ld (add (add i64:$ptr, i64:$offset), IMM12bit:$imm_offset))),
+    (Instr_ADDR64 (SI_ADDR64_RSRC $ptr), $offset, (as_i16imm $imm_offset))
+  >;
+
+  def : Pat <
     (vt (global_ld (add i64:$ptr, (i64 IMM12bit:$offset)))),
     (Instr_ADDR64 (SI_ADDR64_RSRC (i64 0)), $ptr, (as_i16imm $offset))
   >;
