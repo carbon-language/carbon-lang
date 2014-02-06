@@ -135,7 +135,7 @@ version of this example tool is also checked into the clang tree at
   int main(int argc, const char **argv) {
     CommonOptionsParser OptionsParser(argc, argv, MyToolCategory);
     ClangTool Tool(OptionsParser.getCompilations(),
-    OptionsParser.getSourcePathList());
+                   OptionsParser.getSourcePathList());
     return Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>());
   }
 
