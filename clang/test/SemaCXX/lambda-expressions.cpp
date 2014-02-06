@@ -344,3 +344,18 @@ namespace PR18128 {
     int d = []{ return [=]{ return n; }(); }(); // expected-error {{'this' cannot be implicitly captured in this context}}
   };
 }
+
+namespace PR18473 {
+  template<typename T> void f() {
+    T t(0);
+    (void) [=]{ int n = t; }; // expected-error {{deleted}}
+  }
+
+  template void f<int>();
+  struct NoCopy {
+    NoCopy(int);
+    NoCopy(const NoCopy &) = delete; // expected-note {{deleted}}
+    operator int() const;
+  };
+  template void f<NoCopy>(); // expected-note {{instantiation}}
+}
