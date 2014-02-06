@@ -62,6 +62,7 @@ extern "C" void *__libc_calloc(uptr size, uptr n);
 extern "C" void *__libc_realloc(void *ptr, uptr size);
 extern "C" void __libc_free(void *ptr);
 extern "C" int mallopt(int param, int value);
+extern void *stdout, *stderr;
 const int PTHREAD_MUTEX_RECURSIVE = 1;
 const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
 const int EINVAL = 22;
@@ -2103,7 +2104,11 @@ static void finalize(void *arg) {
   uptr pc = 0;
   atexit_ctx->exit(thr, pc);
   int status = Finalize(thr);
-  REAL(fflush)(0);
+  // Make sure the output is not lost.
+  // Flushing all the streams here may freeze the process if a child thread is
+  // performing file stream operations at the same time.
+  REAL(fflush)(stdout);
+  REAL(fflush)(stderr);
   if (status)
     REAL(_exit)(status);
 }
