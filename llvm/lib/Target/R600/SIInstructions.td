@@ -2007,6 +2007,11 @@ defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX4_ADDR64, v4i32,
 multiclass MUBUFStore_Pattern <MUBUF Instr, ValueType vt, PatFrag st> {
 
   def : Pat <
+    (st vt:$value, (add i64:$ptr, IMM12bit:$offset)),
+    (Instr $value, (SI_ADDR64_RSRC (i64 0)), $ptr, (as_i16imm $offset))
+  >;
+
+  def : Pat <
     (st vt:$value, i64:$ptr),
     (Instr $value, (SI_ADDR64_RSRC (i64 0)), $ptr, 0)
   >;

@@ -49,3 +49,38 @@ entry:
   store i32 %2, i32 addrspace(1)* %out
   ret void
 }
+
+;;;==========================================================================;;;
+;;; MUBUF STORE TESTS
+;;;==========================================================================;;;
+
+; MUBUF store with an immediate byte offset that fits into 12-bits
+; CHECK-LABEL: @mubuf_store0
+; CHECK: BUFFER_STORE_DWORD v{{[0-9]}}, s[{{[0-9]:[0-9]}}] + v[{{[0-9]:[0-9]}}] + 4 ; encoding: [0x04,0x80
+define void @mubuf_store0(i32 addrspace(1)* %out) {
+entry:
+  %0 = getelementptr i32 addrspace(1)* %out, i64 1
+  store i32 0, i32 addrspace(1)* %0
+  ret void
+}
+
+; MUBUF store with the largest possible immediate offset
+; CHECK-LABEL: @mubuf_store1
+; CHECK: BUFFER_STORE_BYTE v{{[0-9]}}, s[{{[0-9]:[0-9]}}] + v[{{[0-9]:[0-9]}}] + 4095 ; encoding: [0xff,0x8f
+
+define void @mubuf_store1(i8 addrspace(1)* %out) {
+entry:
+  %0 = getelementptr i8 addrspace(1)* %out, i64 4095
+  store i8 0, i8 addrspace(1)* %0
+  ret void
+}
+
+; MUBUF store with an immediate byte offset that doesn't fit into 12-bits
+; CHECK-LABEL: @mubuf_store2
+; CHECK: BUFFER_STORE_DWORD v{{[0-9]}}, s[{{[0-9]:[0-9]}}] + v[{{[0-9]:[0-9]}}] + 0 ; encoding: [0x00,0x80
+define void @mubuf_store2(i32 addrspace(1)* %out) {
+entry:
+  %0 = getelementptr i32 addrspace(1)* %out, i64 1024
+  store i32 0, i32 addrspace(1)* %0
+  ret void
+}
