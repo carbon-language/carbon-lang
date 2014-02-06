@@ -25,6 +25,8 @@
 // RUN: echo __asan_report_store16 >> %t.interface
 // RUN: echo __asan_report_load_n >> %t.interface
 // RUN: echo __asan_report_store_n >> %t.interface
+// RUN: echo __asan_get_current_fake_stack >> %t.interface
+// RUN: echo __asan_addr_is_in_fake_stack >> %t.interface
 // RUN: cat %t.interface | sort -u | diff %t.symbols -
 
 // FIXME: nm -D on powerpc somewhy shows ASan interface symbols residing

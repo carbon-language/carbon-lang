@@ -129,7 +129,11 @@ class FakeStack {
   void PoisonAll(u8 magic);
 
   // Return the beginning of the FakeFrame or 0 if the address is not ours.
-  uptr AddrIsInFakeStack(uptr addr);
+  uptr AddrIsInFakeStack(uptr addr, uptr *frame_beg, uptr *frame_end);
+  USED uptr AddrIsInFakeStack(uptr addr) {
+    uptr t1, t2;
+    return AddrIsInFakeStack(addr, &t1, &t2);
+  }
 
   // Number of bytes in a fake frame of this size class.
   static uptr BytesInSizeClass(uptr class_id) {
