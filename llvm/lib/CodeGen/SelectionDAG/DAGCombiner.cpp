@@ -3732,6 +3732,12 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
 /// visitShiftByConstant - Handle transforms common to the three shifts, when
 /// the shift amount is a constant.
 SDValue DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
+  assert(isa<ConstantSDNode>(N->getOperand(1)) &&
+         "Expected an ConstantSDNode operand.");
+  // We can't and shouldn't fold opaque constants.
+  if (cast<ConstantSDNode>(N->getOperand(1))->isOpaque())
+    return SDValue();
+
   SDNode *LHS = N->getOperand(0).getNode();
   if (!LHS->hasOneUse()) return SDValue();
 
@@ -3757,9 +3763,9 @@ SDValue DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
     break;
   }
 
-  // We require the RHS of the binop to be a constant as well.
+  // We require the RHS of the binop to be a constant and not opaque as well.
   ConstantSDNode *BinOpCst = dyn_cast<ConstantSDNode>(LHS->getOperand(1));
-  if (!BinOpCst) return SDValue();
+  if (!BinOpCst || BinOpCst->isOpaque()) return SDValue();
 
   // FIXME: disable this unless the input to the binop is a shift by a constant.
   // If it is not a shift, it pessimizes some common cases like:
@@ -3789,6 +3795,7 @@ SDValue DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
   SDValue NewRHS = DAG.getNode(N->getOpcode(), SDLoc(LHS->getOperand(1)),
                                N->getValueType(0),
                                LHS->getOperand(1), N->getOperand(1));
+  assert(isa<ConstantSDNode>(NewRHS) && "Folding was not successful!");
 
   // Create the new shift.
   SDValue NewShift = DAG.getNode(N->getOpcode(),
