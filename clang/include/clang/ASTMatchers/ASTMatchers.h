@@ -2186,6 +2186,11 @@ AST_POLYMORPHIC_MATCHER_P(hasAnyArgument, AST_POLYMORPHIC_SUPPORTED_TYPES_2(
   return false;
 }
 
+/// \brief Matches a constructor call expression which uses list initialization.
+AST_MATCHER(CXXConstructExpr, isListInitialization) {
+  return Node.isListInitialization();
+}
+
 /// \brief Matches the n'th parameter of a function declaration.
 ///
 /// Given
