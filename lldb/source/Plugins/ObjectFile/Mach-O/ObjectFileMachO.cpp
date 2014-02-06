@@ -34,6 +34,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_arm.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_i386.h"
@@ -4701,5 +4702,60 @@ uint32_t
 ObjectFileMachO::GetPluginVersion()
 {
     return 1;
+}
+
+
+bool
+ObjectFileMachO::SetLoadAddress(Target &target, addr_t base_addr)
+{
+    bool changed = false;
+    ModuleSP module_sp = GetModule();
+    if (module_sp)
+    {
+        size_t num_loaded_sections = 0;
+        SectionList *section_list = GetSectionList ();
+        if (section_list)
+        {
+            lldb::addr_t mach_base_file_addr = LLDB_INVALID_ADDRESS;
+            const size_t num_sections = section_list->GetSize();
+
+            // First find the address of the mach header which is the first non-zero
+            // file sized section whose file offset is zero as this will be subtracted
+            // from each other valid section's vmaddr and then get "base_addr" added to
+            // it when loading the module in the target
+            for (size_t sect_idx = 0;
+                 sect_idx < num_sections && mach_base_file_addr == LLDB_INVALID_ADDRESS;
+                 ++sect_idx)
+            {
+                // Iterate through the object file sections to find all
+                // of the sections that size on disk (to avoid __PAGEZERO)
+                // and load them
+                Section *section = section_list->GetSectionAtIndex (sect_idx).get();
+                if (section && section->GetFileSize() > 0 && section->GetFileOffset() == 0)
+                {
+                    mach_base_file_addr = section->GetFileAddress();
+                }
+            }
+
+            if (mach_base_file_addr != LLDB_INVALID_ADDRESS)
+            {
+                for (size_t sect_idx = 0; sect_idx < num_sections; ++sect_idx)
+                {
+                    // Iterate through the object file sections to find all
+                    // of the sections that size on disk (to avoid __PAGEZERO)
+                    // and load them
+                    SectionSP section_sp (section_list->GetSectionAtIndex (sect_idx));
+                    if (section_sp && section_sp->GetFileSize() > 0 && !section_sp->IsThreadSpecific())
+                    {
+                        if (target.GetSectionLoadList().SetSectionLoadAddress (section_sp, section_sp->GetFileAddress() - mach_base_file_addr + base_addr))
+                            ++num_loaded_sections;
+                    }
+                }
+            }
+        }
+        changed = num_loaded_sections > 0;
+        return num_loaded_sections > 0;
+    }
+    return changed;
 }
 

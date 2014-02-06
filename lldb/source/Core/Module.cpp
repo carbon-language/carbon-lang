@@ -1505,7 +1505,12 @@ Module::SetLoadAddress (Target &target, lldb::addr_t offset, bool &changed)
     ObjectFile *object_file = GetObjectFile();
     if (object_file)
     {
-        return object_file->SetLoadAddress(target, offset);
+        changed = object_file->SetLoadAddress(target, offset);
+        return true;
+    }
+    else
+    {
+        changed = false;
     }
     return false;
 }

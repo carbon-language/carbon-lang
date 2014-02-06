@@ -89,6 +89,9 @@ public:
     virtual bool
     ParseHeader ();
 
+    virtual bool
+    SetLoadAddress(lldb_private::Target &target, lldb::addr_t base_addr);
+    
     virtual lldb::ByteOrder
     GetByteOrder () const;
     
