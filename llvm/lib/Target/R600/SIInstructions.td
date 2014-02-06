@@ -1846,7 +1846,7 @@ def : Pat <
 // 1. Offset as 8bit DWORD immediate
 def : Pat <
   (SIload_constant i128:$sbase, IMM8bitDWORD:$offset),
-  (S_BUFFER_LOAD_DWORD_IMM $sbase, IMM8bitDWORD:$offset)
+  (S_BUFFER_LOAD_DWORD_IMM $sbase, (as_dword_i32imm $offset))
 >;
 
 // 2. Offset loaded in an 32bit SGPR
@@ -1926,8 +1926,8 @@ multiclass SMRD_Pattern <SMRD Instr_IMM, SMRD Instr_SGPR, ValueType vt> {
 
   // 1. Offset as 8bit DWORD immediate
   def : Pat <
-    (constant_load (SIadd64bit32bit i64:$sbase, IMM8bitDWORD:$offset)),
-    (vt (Instr_IMM $sbase, IMM8bitDWORD:$offset))
+    (constant_load (add i64:$sbase, (i64 IMM8bitDWORD:$offset))),
+    (vt (Instr_IMM $sbase, (as_dword_i32imm $offset)))
   >;
 
   // 2. Offset loaded in an 32bit SGPR

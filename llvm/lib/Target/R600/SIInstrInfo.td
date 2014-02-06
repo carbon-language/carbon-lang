@@ -75,14 +75,13 @@ def HI32f : SDNodeXForm<fpimm, [{
   return CurDAG->getTargetConstantFP(APFloat(APFloat::IEEEsingle, V), MVT::f32);
 }]>;
 
-def IMM8bitDWORD : ImmLeaf <
-  i32, [{
-    return (Imm & ~0x3FC) == 0;
-  }], SDNodeXForm<imm, [{
-    return CurDAG->getTargetConstant(
-      N->getZExtValue() >> 2, MVT::i32);
-  }]>
+def IMM8bitDWORD : PatLeaf <(imm),
+  [{return (N->getZExtValue() & ~0x3FC) == 0;}]
 >;
+
+def as_dword_i32imm : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getZExtValue() >> 2, MVT::i32);
+}]>;
 
 def as_i1imm : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getZExtValue(), MVT::i1);
@@ -94,6 +93,10 @@ def as_i8imm : SDNodeXForm<imm, [{
 
 def as_i16imm : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i16);
+}]>;
+
+def as_i32imm: SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i32);
 }]>;
 
 def IMM12bit : PatLeaf <(imm),
