@@ -3929,7 +3929,9 @@ TreeTransform<Derived>::TransformVariableArrayType(TypeLocBuilder &TLB,
       return QualType();
   }
 
-  VariableArrayTypeLoc NewTL = TLB.push<VariableArrayTypeLoc>(Result);
+  // We might have constant size array now, but fortunately it has the same
+  // location layout.
+  ArrayTypeLoc NewTL = TLB.push<ArrayTypeLoc>(Result);
   NewTL.setLBracketLoc(TL.getLBracketLoc());
   NewTL.setRBracketLoc(TL.getRBracketLoc());
   NewTL.setSizeExpr(Size);

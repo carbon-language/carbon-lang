@@ -140,3 +140,24 @@ namespace PR11744 {
   }
   int test = f<int>(0); // expected-note {{instantiation of}}
 }
+
+namespace pr18633 {
+  struct A1 {
+    static const int sz;
+    static const int sz2;
+  };
+  const int A1::sz2 = 11;
+  template<typename T>
+  void func () {
+    int arr[A1::sz]; // expected-warning{{variable length arrays are a C99 feature}}
+  }
+  template<typename T>
+  void func2 () {
+    int arr[A1::sz2];
+  }
+  const int A1::sz = 12;
+  void func2() {
+    func<int>();
+    func2<int>();
+  }
+}
