@@ -974,6 +974,9 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
     }     
     ss.Flush();
     
+    if (strstr(ss.GetData(), "$__lldb"))
+        return; // we don't need any results
+    
     ConstString selector_name(ss.GetData());
     
     if (log)

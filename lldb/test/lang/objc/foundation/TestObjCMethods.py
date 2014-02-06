@@ -113,14 +113,12 @@ class FoundationTestCase(TestBase):
             substrs = ["Foundation`-[NSAutoreleasePool release]"])
 
     @dsym_test
-    @expectedFailureDarwin(15797390)
     def test_expression_lookups_objc_dsym(self):
         """Test running an expression detect spurious debug info lookups (dSYM)."""
         self.buildDsym()
         self.expression_lookups_objc()
 
     @dwarf_test
-    @expectedFailureDarwin(15797390)
     def test_expression_lookups_objc_dwarf(self):
         """Test running an expression detect spurious debug info lookups (DWARF)."""
         self.buildDwarf()
