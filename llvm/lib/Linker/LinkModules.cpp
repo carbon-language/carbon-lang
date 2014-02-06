@@ -19,11 +19,17 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/TypeFinder.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include <cctype>
 using namespace llvm;
+
+
+static cl::opt<bool>
+SuppressWarnings("suppress-warnings", cl::desc("Suppress all linking warnings"),
+                 cl::init(false));
 
 //===----------------------------------------------------------------------===//
 // TypeMap implementation.
@@ -1134,8 +1140,10 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     case Module::Warning: {
       // Emit a warning if the values differ.
       if (SrcOp->getOperand(2) != DstOp->getOperand(2)) {
-        errs() << "WARNING: linking module flags '" << ID->getString()
-               << "': IDs have conflicting values";
+        if (!SuppressWarnings) {
+          errs() << "WARNING: linking module flags '" << ID->getString()
+                 << "': IDs have conflicting values";
+        }
       }
       continue;
     }
@@ -1201,15 +1209,20 @@ bool ModuleLinker::run() {
     DstM->setTargetTriple(SrcM->getTargetTriple());
 
   if (!SrcM->getDataLayout().empty() && !DstM->getDataLayout().empty() &&
-      SrcM->getDataLayout() != DstM->getDataLayout())
-    errs() << "WARNING: Linking two modules of different data layouts!\n";
+      SrcM->getDataLayout() != DstM->getDataLayout()) {
+    if (!SuppressWarnings) {
+      errs() << "WARNING: Linking two modules of different data layouts!\n";
+    }
+  }
   if (!SrcM->getTargetTriple().empty() &&
       DstM->getTargetTriple() != SrcM->getTargetTriple()) {
-    errs() << "WARNING: Linking two modules of different target triples: ";
-    if (!SrcM->getModuleIdentifier().empty())
-      errs() << SrcM->getModuleIdentifier() << ": ";
-    errs() << "'" << SrcM->getTargetTriple() << "' and '" 
-           << DstM->getTargetTriple() << "'\n";
+    if (!SuppressWarnings) {
+      errs() << "WARNING: Linking two modules of different target triples: ";
+      if (!SrcM->getModuleIdentifier().empty())
+        errs() << SrcM->getModuleIdentifier() << ": ";
+      errs() << "'" << SrcM->getTargetTriple() << "' and '"
+             << DstM->getTargetTriple() << "'\n";
+    }
   }
 
   // Append the module inline asm string.
