@@ -70,6 +70,9 @@ static cl::opt<bool> DisableSelectToBranch(
   cl::desc("Disable select to branch conversion."));
 
 namespace {
+typedef SmallPtrSet<Instruction *, 16> SetOfInstrs;
+typedef DenseMap<Instruction *, Type *> InstrToOrigTy;
+
   class CodeGenPrepare : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
@@ -87,6 +90,12 @@ namespace {
     /// This allows us to avoid inserting duplicate code for blocks with
     /// multiple load/stores of the same address.
     ValueMap<Value*, Value*> SunkAddrs;
+
+    /// Keeps track of all truncates inserted for the current function.
+    SetOfInstrs InsertedTruncsSet;
+    /// Keeps track of the type of the related instruction before their
+    /// promotion for the current function.
+    InstrToOrigTy PromotedInsts;
 
     /// ModifiedDT - If CFG is modified in anyway, dominator tree may need to
     /// be updated.
@@ -149,6 +158,9 @@ FunctionPass *llvm::createCodeGenPreparePass(const TargetMachine *TM) {
 
 bool CodeGenPrepare::runOnFunction(Function &F) {
   bool EverMadeChange = false;
+  // Clear per function information.
+  InsertedTruncsSet.clear();
+  PromotedInsts.clear();
 
   ModifiedDT = false;
   if (TM) TLI = TM->getTargetLowering();
@@ -882,6 +894,415 @@ void ExtAddrMode::dump() const {
 }
 #endif
 
+/// \brief This class provides transaction based operation on the IR.
+/// Every change made through this class is recorded in the internal state and
+/// can be undone (rollback) until commit is called.
+class TypePromotionTransaction {
+
+  /// \brief This represents the common interface of the individual transaction.
+  /// Each class implements the logic for doing one specific modification on
+  /// the IR via the TypePromotionTransaction.
+  class TypePromotionAction {
+  protected:
+    /// The Instruction modified.
+    Instruction *Inst;
+
+  public:
+    /// \brief Constructor of the action.
+    /// The constructor performs the related action on the IR.
+    TypePromotionAction(Instruction *Inst) : Inst(Inst) {}
+
+    virtual ~TypePromotionAction() {}
+
+    /// \brief Undo the modification done by this action.
+    /// When this method is called, the IR must be in the same state as it was
+    /// before this action was applied.
+    /// \pre Undoing the action works if and only if the IR is in the exact same
+    /// state as it was directly after this action was applied.
+    virtual void undo() = 0;
+
+    /// \brief Advocate every change made by this action.
+    /// When the results on the IR of the action are to be kept, it is important
+    /// to call this function, otherwise hidden information may be kept forever.
+    virtual void commit() {
+      // Nothing to be done, this action is not doing anything.
+    }
+  };
+
+  /// \brief Utility to remember the position of an instruction.
+  class InsertionHandler {
+    /// Position of an instruction.
+    /// Either an instruction:
+    /// - Is the first in a basic block: BB is used.
+    /// - Has a previous instructon: PrevInst is used.
+    union {
+      Instruction *PrevInst;
+      BasicBlock *BB;
+    } Point;
+    /// Remember whether or not the instruction had a previous instruction.
+    bool HasPrevInstruction;
+
+  public:
+    /// \brief Record the position of \p Inst.
+    InsertionHandler(Instruction *Inst) {
+      BasicBlock::iterator It = Inst;
+      HasPrevInstruction = (It != (Inst->getParent()->begin()));
+      if (HasPrevInstruction)
+        Point.PrevInst = --It;
+      else
+        Point.BB = Inst->getParent();
+    }
+
+    /// \brief Insert \p Inst at the recorded position.
+    void insert(Instruction *Inst) {
+      if (HasPrevInstruction) {
+        if (Inst->getParent())
+          Inst->removeFromParent();
+        Inst->insertAfter(Point.PrevInst);
+      } else {
+        Instruction *Position = Point.BB->getFirstInsertionPt();
+        if (Inst->getParent())
+          Inst->moveBefore(Position);
+        else
+          Inst->insertBefore(Position);
+      }
+    }
+  };
+
+  /// \brief Move an instruction before another.
+  class InstructionMoveBefore : public TypePromotionAction {
+    /// Original position of the instruction.
+    InsertionHandler Position;
+
+  public:
+    /// \brief Move \p Inst before \p Before.
+    InstructionMoveBefore(Instruction *Inst, Instruction *Before)
+        : TypePromotionAction(Inst), Position(Inst) {
+      DEBUG(dbgs() << "Do: move: " << *Inst << "\nbefore: " << *Before << "\n");
+      Inst->moveBefore(Before);
+    }
+
+    /// \brief Move the instruction back to its original position.
+    void undo() {
+      DEBUG(dbgs() << "Undo: moveBefore: " << *Inst << "\n");
+      Position.insert(Inst);
+    }
+  };
+
+  /// \brief Set the operand of an instruction with a new value.
+  class OperandSetter : public TypePromotionAction {
+    /// Original operand of the instruction.
+    Value *Origin;
+    /// Index of the modified instruction.
+    unsigned Idx;
+
+  public:
+    /// \brief Set \p Idx operand of \p Inst with \p NewVal.
+    OperandSetter(Instruction *Inst, unsigned Idx, Value *NewVal)
+        : TypePromotionAction(Inst), Idx(Idx) {
+      DEBUG(dbgs() << "Do: setOperand: " << Idx << "\n"
+                   << "for:" << *Inst << "\n"
+                   << "with:" << *NewVal << "\n");
+      Origin = Inst->getOperand(Idx);
+      Inst->setOperand(Idx, NewVal);
+    }
+
+    /// \brief Restore the original value of the instruction.
+    void undo() {
+      DEBUG(dbgs() << "Undo: setOperand:" << Idx << "\n"
+                   << "for: " << *Inst << "\n"
+                   << "with: " << *Origin << "\n");
+      Inst->setOperand(Idx, Origin);
+    }
+  };
+
+  /// \brief Hide the operands of an instruction.
+  /// Do as if this instruction was not using any of its operands.
+  class OperandsHider : public TypePromotionAction {
+    /// The list of original operands.
+    SmallVector<Value *, 4> OriginalValues;
+
+  public:
+    /// \brief Remove \p Inst from the uses of the operands of \p Inst.
+    OperandsHider(Instruction *Inst) : TypePromotionAction(Inst) {
+      DEBUG(dbgs() << "Do: OperandsHider: " << *Inst << "\n");
+      unsigned NumOpnds = Inst->getNumOperands();
+      OriginalValues.reserve(NumOpnds);
+      for (unsigned It = 0; It < NumOpnds; ++It) {
+        // Save the current operand.
+        Value *Val = Inst->getOperand(It);
+        OriginalValues.push_back(Val);
+        // Set a dummy one.
+        // We could use OperandSetter here, but that would implied an overhead
+        // that we are not willing to pay.
+        Inst->setOperand(It, UndefValue::get(Val->getType()));
+      }
+    }
+
+    /// \brief Restore the original list of uses.
+    void undo() {
+      DEBUG(dbgs() << "Undo: OperandsHider: " << *Inst << "\n");
+      for (unsigned It = 0, EndIt = OriginalValues.size(); It != EndIt; ++It)
+        Inst->setOperand(It, OriginalValues[It]);
+    }
+  };
+
+  /// \brief Build a truncate instruction.
+  class TruncBuilder : public TypePromotionAction {
+  public:
+    /// \brief Build a truncate instruction of \p Opnd producing a \p Ty
+    /// result.
+    /// trunc Opnd to Ty.
+    TruncBuilder(Instruction *Opnd, Type *Ty) : TypePromotionAction(Opnd) {
+      IRBuilder<> Builder(Opnd);
+      Inst = cast<Instruction>(Builder.CreateTrunc(Opnd, Ty, "promoted"));
+      DEBUG(dbgs() << "Do: TruncBuilder: " << *Inst << "\n");
+    }
+
+    /// \brief Get the built instruction.
+    Instruction *getBuiltInstruction() { return Inst; }
+
+    /// \brief Remove the built instruction.
+    void undo() {
+      DEBUG(dbgs() << "Undo: TruncBuilder: " << *Inst << "\n");
+      Inst->eraseFromParent();
+    }
+  };
+
+  /// \brief Build a sign extension instruction.
+  class SExtBuilder : public TypePromotionAction {
+  public:
+    /// \brief Build a sign extension instruction of \p Opnd producing a \p Ty
+    /// result.
+    /// sext Opnd to Ty.
+    SExtBuilder(Instruction *InsertPt, Value *Opnd, Type *Ty)
+        : TypePromotionAction(Inst) {
+      IRBuilder<> Builder(InsertPt);
+      Inst = cast<Instruction>(Builder.CreateSExt(Opnd, Ty, "promoted"));
+      DEBUG(dbgs() << "Do: SExtBuilder: " << *Inst << "\n");
+    }
+
+    /// \brief Get the built instruction.
+    Instruction *getBuiltInstruction() { return Inst; }
+
+    /// \brief Remove the built instruction.
+    void undo() {
+      DEBUG(dbgs() << "Undo: SExtBuilder: " << *Inst << "\n");
+      Inst->eraseFromParent();
+    }
+  };
+
+  /// \brief Mutate an instruction to another type.
+  class TypeMutator : public TypePromotionAction {
+    /// Record the original type.
+    Type *OrigTy;
+
+  public:
+    /// \brief Mutate the type of \p Inst into \p NewTy.
+    TypeMutator(Instruction *Inst, Type *NewTy)
+        : TypePromotionAction(Inst), OrigTy(Inst->getType()) {
+      DEBUG(dbgs() << "Do: MutateType: " << *Inst << " with " << *NewTy
+                   << "\n");
+      Inst->mutateType(NewTy);
+    }
+
+    /// \brief Mutate the instruction back to its original type.
+    void undo() {
+      DEBUG(dbgs() << "Undo: MutateType: " << *Inst << " with " << *OrigTy
+                   << "\n");
+      Inst->mutateType(OrigTy);
+    }
+  };
+
+  /// \brief Replace the uses of an instruction by another instruction.
+  class UsesReplacer : public TypePromotionAction {
+    /// Helper structure to keep track of the replaced uses.
+    struct InstructionAndIdx {
+      /// The instruction using the instruction.
+      Instruction *Inst;
+      /// The index where this instruction is used for Inst.
+      unsigned Idx;
+      InstructionAndIdx(Instruction *Inst, unsigned Idx)
+          : Inst(Inst), Idx(Idx) {}
+    };
+
+    /// Keep track of the original uses (pair Instruction, Index).
+    SmallVector<InstructionAndIdx, 4> OriginalUses;
+    typedef SmallVectorImpl<InstructionAndIdx>::iterator use_iterator;
+
+  public:
+    /// \brief Replace all the use of \p Inst by \p New.
+    UsesReplacer(Instruction *Inst, Value *New) : TypePromotionAction(Inst) {
+      DEBUG(dbgs() << "Do: UsersReplacer: " << *Inst << " with " << *New
+                   << "\n");
+      // Record the original uses.
+      for (Value::use_iterator UseIt = Inst->use_begin(),
+                               EndIt = Inst->use_end();
+           UseIt != EndIt; ++UseIt) {
+        Instruction *Use = cast<Instruction>(*UseIt);
+        OriginalUses.push_back(InstructionAndIdx(Use, UseIt.getOperandNo()));
+      }
+      // Now, we can replace the uses.
+      Inst->replaceAllUsesWith(New);
+    }
+
+    /// \brief Reassign the original uses of Inst to Inst.
+    void undo() {
+      DEBUG(dbgs() << "Undo: UsersReplacer: " << *Inst << "\n");
+      for (use_iterator UseIt = OriginalUses.begin(),
+                        EndIt = OriginalUses.end();
+           UseIt != EndIt; ++UseIt) {
+        UseIt->Inst->setOperand(UseIt->Idx, Inst);
+      }
+    }
+  };
+
+  /// \brief Remove an instruction from the IR.
+  class InstructionRemover : public TypePromotionAction {
+    /// Original position of the instruction.
+    InsertionHandler Inserter;
+    /// Helper structure to hide all the link to the instruction. In other
+    /// words, this helps to do as if the instruction was removed.
+    OperandsHider Hider;
+    /// Keep track of the uses replaced, if any.
+    UsesReplacer *Replacer;
+
+  public:
+    /// \brief Remove all reference of \p Inst and optinally replace all its
+    /// uses with New.
+    /// \pre If !Inst->use_empty(), then New != NULL
+    InstructionRemover(Instruction *Inst, Value *New = NULL)
+        : TypePromotionAction(Inst), Inserter(Inst), Hider(Inst),
+          Replacer(NULL) {
+      if (New)
+        Replacer = new UsesReplacer(Inst, New);
+      DEBUG(dbgs() << "Do: InstructionRemover: " << *Inst << "\n");
+      Inst->removeFromParent();
+    }
+
+    ~InstructionRemover() { delete Replacer; }
+
+    /// \brief Really remove the instruction.
+    void commit() { delete Inst; }
+
+    /// \brief Resurrect the instruction and reassign it to the proper uses if
+    /// new value was provided when build this action.
+    void undo() {
+      DEBUG(dbgs() << "Undo: InstructionRemover: " << *Inst << "\n");
+      Inserter.insert(Inst);
+      if (Replacer)
+        Replacer->undo();
+      Hider.undo();
+    }
+  };
+
+public:
+  /// Restoration point.
+  /// The restoration point is a pointer to an action instead of an iterator
+  /// because the iterator may be invalidated but not the pointer.
+  typedef const TypePromotionAction *ConstRestorationPt;
+  /// Advocate every changes made in that transaction.
+  void commit();
+  /// Undo all the changes made after the given point.
+  void rollback(ConstRestorationPt Point);
+  /// Get the current restoration point.
+  ConstRestorationPt getRestorationPoint() const;
+
+  /// \name API for IR modification with state keeping to support rollback.
+  /// @{
+  /// Same as Instruction::setOperand.
+  void setOperand(Instruction *Inst, unsigned Idx, Value *NewVal);
+  /// Same as Instruction::eraseFromParent.
+  void eraseInstruction(Instruction *Inst, Value *NewVal = NULL);
+  /// Same as Value::replaceAllUsesWith.
+  void replaceAllUsesWith(Instruction *Inst, Value *New);
+  /// Same as Value::mutateType.
+  void mutateType(Instruction *Inst, Type *NewTy);
+  /// Same as IRBuilder::createTrunc.
+  Instruction *createTrunc(Instruction *Opnd, Type *Ty);
+  /// Same as IRBuilder::createSExt.
+  Instruction *createSExt(Instruction *Inst, Value *Opnd, Type *Ty);
+  /// Same as Instruction::moveBefore.
+  void moveBefore(Instruction *Inst, Instruction *Before);
+  /// @}
+
+  ~TypePromotionTransaction();
+
+private:
+  /// The ordered list of actions made so far.
+  SmallVector<TypePromotionAction *, 16> Actions;
+  typedef SmallVectorImpl<TypePromotionAction *>::iterator CommitPt;
+};
+
+void TypePromotionTransaction::setOperand(Instruction *Inst, unsigned Idx,
+                                          Value *NewVal) {
+  Actions.push_back(
+      new TypePromotionTransaction::OperandSetter(Inst, Idx, NewVal));
+}
+
+void TypePromotionTransaction::eraseInstruction(Instruction *Inst,
+                                                Value *NewVal) {
+  Actions.push_back(
+      new TypePromotionTransaction::InstructionRemover(Inst, NewVal));
+}
+
+void TypePromotionTransaction::replaceAllUsesWith(Instruction *Inst,
+                                                  Value *New) {
+  Actions.push_back(new TypePromotionTransaction::UsesReplacer(Inst, New));
+}
+
+void TypePromotionTransaction::mutateType(Instruction *Inst, Type *NewTy) {
+  Actions.push_back(new TypePromotionTransaction::TypeMutator(Inst, NewTy));
+}
+
+Instruction *TypePromotionTransaction::createTrunc(Instruction *Opnd,
+                                                   Type *Ty) {
+  TruncBuilder *TB = new TruncBuilder(Opnd, Ty);
+  Actions.push_back(TB);
+  return TB->getBuiltInstruction();
+}
+
+Instruction *TypePromotionTransaction::createSExt(Instruction *Inst,
+                                                  Value *Opnd, Type *Ty) {
+  SExtBuilder *SB = new SExtBuilder(Inst, Opnd, Ty);
+  Actions.push_back(SB);
+  return SB->getBuiltInstruction();
+}
+
+void TypePromotionTransaction::moveBefore(Instruction *Inst,
+                                          Instruction *Before) {
+  Actions.push_back(
+      new TypePromotionTransaction::InstructionMoveBefore(Inst, Before));
+}
+
+TypePromotionTransaction::ConstRestorationPt
+TypePromotionTransaction::getRestorationPoint() const {
+  return Actions.rbegin() != Actions.rend() ? *Actions.rbegin() : NULL;
+}
+
+void TypePromotionTransaction::commit() {
+  for (CommitPt It = Actions.begin(), EndIt = Actions.end(); It != EndIt;
+       ++It) {
+    (*It)->commit();
+    delete *It;
+  }
+  Actions.clear();
+}
+
+void TypePromotionTransaction::rollback(
+    TypePromotionTransaction::ConstRestorationPt Point) {
+  while (!Actions.empty() && Point != (*Actions.rbegin())) {
+    TypePromotionAction *Curr = Actions.pop_back_val();
+    Curr->undo();
+    delete Curr;
+  }
+}
+
+TypePromotionTransaction::~TypePromotionTransaction() {
+  for (CommitPt It = Actions.begin(), EndIt = Actions.end(); It != EndIt; ++It)
+    delete *It;
+  Actions.clear();
+}
 
 /// \brief A helper class for matching addressing modes.
 ///
@@ -899,6 +1320,13 @@ class AddressingModeMatcher {
   /// part of the return value of this addressing mode matching stuff.
   ExtAddrMode &AddrMode;
 
+  /// The truncate instruction inserted by other CodeGenPrepare optimizations.
+  const SetOfInstrs &InsertedTruncs;
+  /// A map from the instructions to their type before promotion.
+  InstrToOrigTy &PromotedInsts;
+  /// The ongoing transaction where every action should be registered.
+  TypePromotionTransaction &TPT;
+
   /// IgnoreProfitability - This is set to true when we should not do
   /// profitability checks.  When true, IsProfitableToFoldIntoAddressingMode
   /// always returns true.
@@ -906,8 +1334,12 @@ class AddressingModeMatcher {
 
   AddressingModeMatcher(SmallVectorImpl<Instruction*> &AMI,
                         const TargetLowering &T, Type *AT,
-                        Instruction *MI, ExtAddrMode &AM)
-    : AddrModeInsts(AMI), TLI(T), AccessTy(AT), MemoryInst(MI), AddrMode(AM) {
+                        Instruction *MI, ExtAddrMode &AM,
+                        const SetOfInstrs &InsertedTruncs,
+                        InstrToOrigTy &PromotedInsts,
+                        TypePromotionTransaction &TPT)
+      : AddrModeInsts(AMI), TLI(T), AccessTy(AT), MemoryInst(MI), AddrMode(AM),
+        InsertedTruncs(InsertedTruncs), PromotedInsts(PromotedInsts), TPT(TPT) {
     IgnoreProfitability = false;
   }
 public:
@@ -915,22 +1347,31 @@ public:
   /// Match - Find the maximal addressing mode that a load/store of V can fold,
   /// give an access type of AccessTy.  This returns a list of involved
   /// instructions in AddrModeInsts.
+  /// \p InsertedTruncs The truncate instruction inserted by other
+  /// CodeGenPrepare
+  /// optimizations.
+  /// \p PromotedInsts maps the instructions to their type before promotion.
+  /// \p The ongoing transaction where every action should be registered.
   static ExtAddrMode Match(Value *V, Type *AccessTy,
                            Instruction *MemoryInst,
                            SmallVectorImpl<Instruction*> &AddrModeInsts,
-                           const TargetLowering &TLI) {
+                           const TargetLowering &TLI,
+                           const SetOfInstrs &InsertedTruncs,
+                           InstrToOrigTy &PromotedInsts,
+                           TypePromotionTransaction &TPT) {
     ExtAddrMode Result;
 
-    bool Success =
-      AddressingModeMatcher(AddrModeInsts, TLI, AccessTy,
-                            MemoryInst, Result).MatchAddr(V, 0);
+    bool Success = AddressingModeMatcher(AddrModeInsts, TLI, AccessTy,
+                                         MemoryInst, Result, InsertedTruncs,
+                                         PromotedInsts, TPT).MatchAddr(V, 0);
     (void)Success; assert(Success && "Couldn't select *anything*?");
     return Result;
   }
 private:
   bool MatchScaledValue(Value *ScaleReg, int64_t Scale, unsigned Depth);
   bool MatchAddr(Value *V, unsigned Depth);
-  bool MatchOperationAddr(User *Operation, unsigned Opcode, unsigned Depth);
+  bool MatchOperationAddr(User *Operation, unsigned Opcode, unsigned Depth,
+                          bool *MovedAway = NULL);
   bool IsProfitableToFoldIntoAddressingMode(Instruction *I,
                                             ExtAddrMode &AMBefore,
                                             ExtAddrMode &AMAfter);
@@ -1022,13 +1463,291 @@ static bool MightBeFoldableInst(Instruction *I) {
   }
 }
 
+/// \brief Hepler class to perform type promotion.
+class TypePromotionHelper {
+  /// \brief Utility function to check whether or not a sign extension of
+  /// \p Inst with \p ConsideredSExtType can be moved through \p Inst by either
+  /// using the operands of \p Inst or promoting \p Inst.
+  /// In other words, check if:
+  /// sext (Ty Inst opnd1 opnd2 ... opndN) to ConsideredSExtType.
+  /// #1 Promotion applies:
+  /// ConsideredSExtType Inst (sext opnd1 to ConsideredSExtType, ...).
+  /// #2 Operand reuses:
+  /// sext opnd1 to ConsideredSExtType.
+  /// \p PromotedInsts maps the instructions to their type before promotion.
+  static bool canGetThrough(const Instruction *Inst, Type *ConsideredSExtType,
+                            const InstrToOrigTy &PromotedInsts);
+
+  /// \brief Utility function to determine if \p OpIdx should be promoted when
+  /// promoting \p Inst.
+  static bool shouldSExtOperand(const Instruction *Inst, int OpIdx) {
+    if (isa<SelectInst>(Inst) && OpIdx == 0)
+      return false;
+    return true;
+  }
+
+  /// \brief Utility function to promote the operand of \p SExt when this
+  /// operand is a promotable trunc or sext.
+  /// \p PromotedInsts maps the instructions to their type before promotion.
+  /// \p CreatedInsts[out] contains how many non-free instructions have been
+  /// created to promote the operand of SExt.
+  /// Should never be called directly.
+  /// \return The promoted value which is used instead of SExt.
+  static Value *promoteOperandForTruncAndSExt(Instruction *SExt,
+                                              TypePromotionTransaction &TPT,
+                                              InstrToOrigTy &PromotedInsts,
+                                              unsigned &CreatedInsts);
+
+  /// \brief Utility function to promote the operand of \p SExt when this
+  /// operand is promotable and is not a supported trunc or sext.
+  /// \p PromotedInsts maps the instructions to their type before promotion.
+  /// \p CreatedInsts[out] contains how many non-free instructions have been
+  /// created to promote the operand of SExt.
+  /// Should never be called directly.
+  /// \return The promoted value which is used instead of SExt.
+  static Value *promoteOperandForOther(Instruction *SExt,
+                                       TypePromotionTransaction &TPT,
+                                       InstrToOrigTy &PromotedInsts,
+                                       unsigned &CreatedInsts);
+
+public:
+  /// Type for the utility function that promotes the operand of SExt.
+  typedef Value *(*Action)(Instruction *SExt, TypePromotionTransaction &TPT,
+                           InstrToOrigTy &PromotedInsts,
+                           unsigned &CreatedInsts);
+  /// \brief Given a sign extend instruction \p SExt, return the approriate
+  /// action to promote the operand of \p SExt instead of using SExt.
+  /// \return NULL if no promotable action is possible with the current
+  /// sign extension.
+  /// \p InsertedTruncs keeps track of all the truncate instructions inserted by
+  /// the others CodeGenPrepare optimizations. This information is important
+  /// because we do not want to promote these instructions as CodeGenPrepare
+  /// will reinsert them later. Thus creating an infinite loop: create/remove.
+  /// \p PromotedInsts maps the instructions to their type before promotion.
+  static Action getAction(Instruction *SExt, const SetOfInstrs &InsertedTruncs,
+                          const TargetLowering &TLI,
+                          const InstrToOrigTy &PromotedInsts);
+};
+
+bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
+                                        Type *ConsideredSExtType,
+                                        const InstrToOrigTy &PromotedInsts) {
+  // We can always get through sext.
+  if (isa<SExtInst>(Inst))
+    return true;
+
+  // We can get through binary operator, if it is legal. In other words, the
+  // binary operator must have a nuw or nsw flag.
+  const BinaryOperator *BinOp = dyn_cast<BinaryOperator>(Inst);
+  if (BinOp && isa<OverflowingBinaryOperator>(BinOp) &&
+      (BinOp->hasNoUnsignedWrap() || BinOp->hasNoSignedWrap()))
+    return true;
+
+  // Check if we can do the following simplification.
+  // sext(trunc(sext)) --> sext
+  if (!isa<TruncInst>(Inst))
+    return false;
+
+  Value *OpndVal = Inst->getOperand(0);
+  // Check if we can use this operand in the sext.
+  // If the type is larger than the result type of the sign extension,
+  // we cannot.
+  if (OpndVal->getType()->getIntegerBitWidth() >
+      ConsideredSExtType->getIntegerBitWidth())
+    return false;
+
+  // If the operand of the truncate is not an instruction, we will not have
+  // any information on the dropped bits.
+  // (Actually we could for constant but it is not worth the extra logic).
+  Instruction *Opnd = dyn_cast<Instruction>(OpndVal);
+  if (!Opnd)
+    return false;
+
+  // Check if the source of the type is narrow enough.
+  // I.e., check that trunc just drops sign extended bits.
+  // #1 get the type of the operand.
+  const Type *OpndType;
+  InstrToOrigTy::const_iterator It = PromotedInsts.find(Opnd);
+  if (It != PromotedInsts.end())
+    OpndType = It->second;
+  else if (isa<SExtInst>(Opnd))
+    OpndType = cast<Instruction>(Opnd)->getOperand(0)->getType();
+  else
+    return false;
+
+  // #2 check that the truncate just drop sign extended bits.
+  if (Inst->getType()->getIntegerBitWidth() >= OpndType->getIntegerBitWidth())
+    return true;
+
+  return false;
+}
+
+TypePromotionHelper::Action TypePromotionHelper::getAction(
+    Instruction *SExt, const SetOfInstrs &InsertedTruncs,
+    const TargetLowering &TLI, const InstrToOrigTy &PromotedInsts) {
+  Instruction *SExtOpnd = dyn_cast<Instruction>(SExt->getOperand(0));
+  Type *SExtTy = SExt->getType();
+  // If the operand of the sign extension is not an instruction, we cannot
+  // get through.
+  // If it, check we can get through.
+  if (!SExtOpnd || !canGetThrough(SExtOpnd, SExtTy, PromotedInsts))
+    return NULL;
+
+  // Do not promote if the operand has been added by codegenprepare.
+  // Otherwise, it means we are undoing an optimization that is likely to be
+  // redone, thus causing potential infinite loop.
+  if (isa<TruncInst>(SExtOpnd) && InsertedTruncs.count(SExtOpnd))
+    return NULL;
+
+  // SExt or Trunc instructions.
+  // Return the related handler.
+  if (isa<SExtInst>(SExtOpnd) || isa<TruncInst>(SExtOpnd))
+    return promoteOperandForTruncAndSExt;
+
+  // Regular instruction.
+  // Abort early if we will have to insert non-free instructions.
+  if (!SExtOpnd->hasOneUse() &&
+      !TLI.isTruncateFree(SExtTy, SExtOpnd->getType()))
+    return NULL;
+  return promoteOperandForOther;
+}
+
+Value *TypePromotionHelper::promoteOperandForTruncAndSExt(
+    llvm::Instruction *SExt, TypePromotionTransaction &TPT,
+    InstrToOrigTy &PromotedInsts, unsigned &CreatedInsts) {
+  // By construction, the operand of SExt is an instruction. Otherwise we cannot
+  // get through it and this method should not be called.
+  Instruction *SExtOpnd = cast<Instruction>(SExt->getOperand(0));
+  // Replace sext(trunc(opnd)) or sext(sext(opnd))
+  // => sext(opnd).
+  TPT.setOperand(SExt, 0, SExtOpnd->getOperand(0));
+  CreatedInsts = 0;
+
+  // Remove dead code.
+  if (SExtOpnd->use_empty())
+    TPT.eraseInstruction(SExtOpnd);
+
+  // Check if the sext is still needed.
+  if (SExt->getType() != SExt->getOperand(0)->getType())
+    return SExt;
+
+  // At this point we have: sext ty opnd to ty.
+  // Reassign the uses of SExt to the opnd and remove SExt.
+  Value *NextVal = SExt->getOperand(0);
+  TPT.eraseInstruction(SExt, NextVal);
+  return NextVal;
+}
+
+Value *
+TypePromotionHelper::promoteOperandForOther(Instruction *SExt,
+                                            TypePromotionTransaction &TPT,
+                                            InstrToOrigTy &PromotedInsts,
+                                            unsigned &CreatedInsts) {
+  // By construction, the operand of SExt is an instruction. Otherwise we cannot
+  // get through it and this method should not be called.
+  Instruction *SExtOpnd = cast<Instruction>(SExt->getOperand(0));
+  CreatedInsts = 0;
+  if (!SExtOpnd->hasOneUse()) {
+    // SExtOpnd will be promoted.
+    // All its uses, but SExt, will need to use a truncated value of the
+    // promoted version.
+    // Create the truncate now.
+    Instruction *Trunc = TPT.createTrunc(SExt, SExtOpnd->getType());
+    Trunc->removeFromParent();
+    // Insert it just after the definition.
+    Trunc->insertAfter(SExtOpnd);
+
+    TPT.replaceAllUsesWith(SExtOpnd, Trunc);
+    // Restore the operand of SExt (which has been replace by the previous call
+    // to replaceAllUsesWith) to avoid creating a cycle trunc <-> sext.
+    TPT.setOperand(SExt, 0, SExtOpnd);
+  }
+
+  // Get through the Instruction:
+  // 1. Update its type.
+  // 2. Replace the uses of SExt by Inst.
+  // 3. Sign extend each operand that needs to be sign extended.
+
+  // Remember the original type of the instruction before promotion.
+  // This is useful to know that the high bits are sign extended bits.
+  PromotedInsts.insert(
+      std::pair<Instruction *, Type *>(SExtOpnd, SExtOpnd->getType()));
+  // Step #1.
+  TPT.mutateType(SExtOpnd, SExt->getType());
+  // Step #2.
+  TPT.replaceAllUsesWith(SExt, SExtOpnd);
+  // Step #3.
+  Instruction *SExtForOpnd = SExt;
+
+  DEBUG(dbgs() << "Propagate SExt to operands\n");
+  for (int OpIdx = 0, EndOpIdx = SExtOpnd->getNumOperands(); OpIdx != EndOpIdx;
+       ++OpIdx) {
+    DEBUG(dbgs() << "Operand:\n" << *(SExtOpnd->getOperand(OpIdx)) << '\n');
+    if (SExtOpnd->getOperand(OpIdx)->getType() == SExt->getType() ||
+        !shouldSExtOperand(SExtOpnd, OpIdx)) {
+      DEBUG(dbgs() << "No need to propagate\n");
+      continue;
+    }
+    // Check if we can statically sign extend the operand.
+    Value *Opnd = SExtOpnd->getOperand(OpIdx);
+    if (const ConstantInt *Cst = dyn_cast<ConstantInt>(Opnd)) {
+      DEBUG(dbgs() << "Statically sign extend\n");
+      TPT.setOperand(
+          SExtOpnd, OpIdx,
+          ConstantInt::getSigned(SExt->getType(), Cst->getSExtValue()));
+      continue;
+    }
+    // UndefValue are typed, so we have to statically sign extend them.
+    if (isa<UndefValue>(Opnd)) {
+      DEBUG(dbgs() << "Statically sign extend\n");
+      TPT.setOperand(SExtOpnd, OpIdx, UndefValue::get(SExt->getType()));
+      continue;
+    }
+
+    // Otherwise we have to explicity sign extend the operand.
+    // Check if SExt was reused to sign extend an operand.
+    if (!SExtForOpnd) {
+      // If yes, create a new one.
+      DEBUG(dbgs() << "More operands to sext\n");
+      SExtForOpnd = TPT.createSExt(SExt, Opnd, SExt->getType());
+      ++CreatedInsts;
+    }
+
+    TPT.setOperand(SExtForOpnd, 0, Opnd);
+
+    // Move the sign extension before the insertion point.
+    TPT.moveBefore(SExtForOpnd, SExtOpnd);
+    TPT.setOperand(SExtOpnd, OpIdx, SExtForOpnd);
+    // If more sext are required, new instructions will have to be created.
+    SExtForOpnd = NULL;
+  }
+  if (SExtForOpnd == SExt) {
+    DEBUG(dbgs() << "Sign extension is useless now\n");
+    TPT.eraseInstruction(SExt);
+  }
+  return SExtOpnd;
+}
+
 /// MatchOperationAddr - Given an instruction or constant expr, see if we can
 /// fold the operation into the addressing mode.  If so, update the addressing
 /// mode and return true, otherwise return false without modifying AddrMode.
+/// If \p MovedAway is not NULL, it contains the information of whether or
+/// not AddrInst has to be folded into the addressing mode on success.
+/// If \p MovedAway == true, \p AddrInst will not be part of the addressing
+/// because it has been moved away.
+/// Thus AddrInst must not be added in the matched instructions.
+/// This state can happen when AddrInst is a sext, since it may be moved away.
+/// Therefore, AddrInst may not be valid when MovedAway is true and it must
+/// not be referenced anymore.
 bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
-                                               unsigned Depth) {
+                                               unsigned Depth,
+                                               bool *MovedAway) {
   // Avoid exponential behavior on extremely deep expression trees.
   if (Depth >= 5) return false;
+
+  // By default, all matched instructions stay in place.
+  if (MovedAway)
+    *MovedAway = false;
 
   switch (Opcode) {
   case Instruction::PtrToInt:
@@ -1055,6 +1774,13 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     // Check to see if we can merge in the RHS then the LHS.  If so, we win.
     ExtAddrMode BackupAddrMode = AddrMode;
     unsigned OldSize = AddrModeInsts.size();
+    // Start a transaction at this point.
+    // The LHS may match but not the RHS.
+    // Therefore, we need a higher level restoration point to undo partially
+    // matched operation.
+    TypePromotionTransaction::ConstRestorationPt LastKnownGood =
+        TPT.getRestorationPoint();
+
     if (MatchAddr(AddrInst->getOperand(1), Depth+1) &&
         MatchAddr(AddrInst->getOperand(0), Depth+1))
       return true;
@@ -1062,6 +1788,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     // Restore the old addr mode info.
     AddrMode = BackupAddrMode;
     AddrModeInsts.resize(OldSize);
+    TPT.rollback(LastKnownGood);
 
     // Otherwise this was over-aggressive.  Try merging in the LHS then the RHS.
     if (MatchAddr(AddrInst->getOperand(0), Depth+1) &&
@@ -1071,6 +1798,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     // Otherwise we definitely can't merge the ADD in.
     AddrMode = BackupAddrMode;
     AddrModeInsts.resize(OldSize);
+    TPT.rollback(LastKnownGood);
     break;
   }
   //case Instruction::Or:
@@ -1173,6 +1901,51 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
 
     return true;
   }
+  case Instruction::SExt: {
+    // Try to move this sext out of the way of the addressing mode.
+    Instruction *SExt = cast<Instruction>(AddrInst);
+    // Ask for a method for doing so.
+    TypePromotionHelper::Action TPH = TypePromotionHelper::getAction(
+        SExt, InsertedTruncs, TLI, PromotedInsts);
+    if (!TPH)
+      return false;
+
+    TypePromotionTransaction::ConstRestorationPt LastKnownGood =
+        TPT.getRestorationPoint();
+    unsigned CreatedInsts = 0;
+    Value *PromotedOperand = TPH(SExt, TPT, PromotedInsts, CreatedInsts);
+    // SExt has been moved away.
+    // Thus either it will be rematched later in the recursive calls or it is
+    // gone. Anyway, we must not fold it into the addressing mode at this point.
+    // E.g.,
+    // op = add opnd, 1
+    // idx = sext op
+    // addr = gep base, idx
+    // is now:
+    // promotedOpnd = sext opnd           <- no match here
+    // op = promoted_add promotedOpnd, 1  <- match (later in recursive calls)
+    // addr = gep base, op                <- match
+    if (MovedAway)
+      *MovedAway = true;
+
+    assert(PromotedOperand &&
+           "TypePromotionHelper should have filtered out those cases");
+
+    ExtAddrMode BackupAddrMode = AddrMode;
+    unsigned OldSize = AddrModeInsts.size();
+
+    if (!MatchAddr(PromotedOperand, Depth) ||
+        // We fold less instructions than what we created.
+        // Undo at this point.
+        (OldSize + CreatedInsts > AddrModeInsts.size())) {
+      AddrMode = BackupAddrMode;
+      AddrModeInsts.resize(OldSize);
+      DEBUG(dbgs() << "Sign extension does not pay off: rollback\n");
+      TPT.rollback(LastKnownGood);
+      return false;
+    }
+    return true;
+  }
   }
   return false;
 }
@@ -1183,6 +1956,10 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
 /// or intptr_t for the target.
 ///
 bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
+  // Start a transaction at this point that we will rollback if the matching
+  // fails.
+  TypePromotionTransaction::ConstRestorationPt LastKnownGood =
+      TPT.getRestorationPoint();
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Addr)) {
     // Fold in immediates if legal for the target.
     AddrMode.BaseOffs += CI->getSExtValue();
@@ -1202,7 +1979,12 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
     unsigned OldSize = AddrModeInsts.size();
 
     // Check to see if it is possible to fold this operation.
-    if (MatchOperationAddr(I, I->getOpcode(), Depth)) {
+    bool MovedAway = false;
+    if (MatchOperationAddr(I, I->getOpcode(), Depth, &MovedAway)) {
+      // This instruction may have been move away. If so, there is nothing
+      // to check here.
+      if (MovedAway)
+        return true;
       // Okay, it's possible to fold this.  Check to see if it is actually
       // *profitable* to do so.  We use a simple cost model to avoid increasing
       // register pressure too much.
@@ -1216,10 +1998,12 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
       //cerr << "NOT FOLDING: " << *I;
       AddrMode = BackupAddrMode;
       AddrModeInsts.resize(OldSize);
+      TPT.rollback(LastKnownGood);
     }
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Addr)) {
     if (MatchOperationAddr(CE, CE->getOpcode(), Depth))
       return true;
+    TPT.rollback(LastKnownGood);
   } else if (isa<ConstantPointerNull>(Addr)) {
     // Null pointer gets folded without affecting the addressing mode.
     return true;
@@ -1246,6 +2030,7 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
     AddrMode.ScaledReg = 0;
   }
   // Couldn't match.
+  TPT.rollback(LastKnownGood);
   return false;
 }
 
@@ -1427,7 +2212,8 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
     // *actually* cover the shared instruction.
     ExtAddrMode Result;
     AddressingModeMatcher Matcher(MatchedAddrModeInsts, TLI, AddressAccessTy,
-                                  MemoryInst, Result);
+                                  MemoryInst, Result, InsertedTruncs,
+                                  PromotedInsts, TPT);
     Matcher.IgnoreProfitability = true;
     bool Success = Matcher.MatchAddr(Address, 0);
     (void)Success; assert(Success && "Couldn't select *anything*?");
@@ -1480,6 +2266,9 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   bool IsNumUsesConsensusValid = false;
   SmallVector<Instruction*, 16> AddrModeInsts;
   ExtAddrMode AddrMode;
+  TypePromotionTransaction TPT;
+  TypePromotionTransaction::ConstRestorationPt LastKnownGood =
+      TPT.getRestorationPoint();
   while (!worklist.empty()) {
     Value *V = worklist.back();
     worklist.pop_back();
@@ -1499,9 +2288,9 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 
     // For non-PHIs, determine the addressing mode being computed.
     SmallVector<Instruction*, 16> NewAddrModeInsts;
-    ExtAddrMode NewAddrMode =
-      AddressingModeMatcher::Match(V, AccessTy, MemoryInst,
-                                   NewAddrModeInsts, *TLI);
+    ExtAddrMode NewAddrMode = AddressingModeMatcher::Match(
+        V, AccessTy, MemoryInst, NewAddrModeInsts, *TLI, InsertedTruncsSet,
+        PromotedInsts, TPT);
 
     // This check is broken into two cases with very similar code to avoid using
     // getNumUses() as much as possible. Some values have a lot of uses, so
@@ -1538,7 +2327,11 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 
   // If the addressing mode couldn't be determined, or if multiple different
   // ones were determined, bail out now.
-  if (!Consensus) return false;
+  if (!Consensus) {
+    TPT.rollback(LastKnownGood);
+    return false;
+  }
+  TPT.commit();
 
   // Check to see if any of the instructions supersumed by this addr mode are
   // non-local to I's BB.
@@ -1789,6 +2582,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
     if (!InsertedTrunc) {
       BasicBlock::iterator InsertPt = UserBB->getFirstInsertionPt();
       InsertedTrunc = new TruncInst(I, Src->getType(), "", InsertPt);
+      InsertedTruncsSet.insert(InsertedTrunc);
     }
 
     // Replace a use of the {s|z}ext source with a use of the result.
