@@ -25,12 +25,8 @@ public:
                       Atom::Scope scope, bool copyRefs) {
     if (copyRefs) {
       // Make a copy of the atom's name and content that is owned by this file.
-      char *s = _allocator.Allocate<char>(name.size());
-      memcpy(s, name.data(), name.size());
-      name = StringRef(s, name.size());
-      uint8_t *bytes = _allocator.Allocate<uint8_t>(content.size());
-      memcpy(bytes, content.data(), content.size());
-      content = llvm::makeArrayRef(bytes, content.size());
+      name = name.copy(_allocator);
+      content = content.copy(_allocator);
     }
     MachODefinedAtom *atom =
         new (_allocator) MachODefinedAtom(*this, name, content, scope);
@@ -39,10 +35,8 @@ public:
 
   void addUndefinedAtom(StringRef name, bool copyRefs) {
     if (copyRefs) {
-      // Make a copy of the atom's name and content that is owned by this file.
-      char *s = _allocator.Allocate<char>(name.size());
-      memcpy(s, name.data(), name.size());
-      name = StringRef(s, name.size());
+      // Make a copy of the atom's name that is owned by this file.
+      name = name.copy(_allocator);
     }
     SimpleUndefinedAtom *atom =
         new (_allocator) SimpleUndefinedAtom(*this, name);
