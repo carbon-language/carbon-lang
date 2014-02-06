@@ -32,8 +32,18 @@ using namespace opt_tool;
 bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
                            tool_output_file *Out, StringRef PassPipeline,
                            OutputKind OK, VerifierKind VK) {
-  ModulePassManager MPM;
+  FunctionAnalysisManager FAM;
+  ModuleAnalysisManager MAM;
 
+  // FIXME: Lift this registration of analysis passes into a .def file adjacent
+  // to the one used to associate names with passes.
+  MAM.registerPass(LazyCallGraphAnalysis());
+
+  // Cross register the analysis managers through their proxies.
+  MAM.registerPass(FunctionAnalysisManagerModuleProxy(FAM));
+  FAM.registerPass(ModuleAnalysisManagerFunctionProxy(MAM));
+
+  ModulePassManager MPM;
   if (VK > VK_NoVerifier)
     MPM.addPass(VerifierPass());
 
@@ -61,7 +71,7 @@ bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
   cl::PrintOptionValues();
 
   // Now that we have all of the passes ready, run them.
-  MPM.run(&M);
+  MPM.run(&M, &MAM);
 
   // Declare success.
   if (OK != OK_NoOutput)
