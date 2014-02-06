@@ -37,11 +37,11 @@ ClangTidyError::ClangTidyError(StringRef CheckName,
                                const ClangTidyMessage &Message)
     : CheckName(CheckName), Message(Message) {}
 
-DiagnosticBuilder ClangTidyContext::diag(StringRef CheckName,
-                                         SourceLocation Loc,
-                                         StringRef Description) {
+DiagnosticBuilder ClangTidyContext::diag(
+    StringRef CheckName, SourceLocation Loc, StringRef Description,
+    DiagnosticIDs::Level Level /* = DiagnosticsEngine::Warning*/) {
   unsigned ID = DiagEngine->getDiagnosticIDs()->getCustomDiagID(
-      DiagnosticIDs::Warning, Description);
+      Level, (Description + " [" + CheckName + "]").str());
   if (CheckNamesByDiagnosticID.count(ID) == 0)
     CheckNamesByDiagnosticID.insert(std::make_pair(ID, CheckName.str()));
   return DiagEngine->Report(Loc, ID);
@@ -69,7 +69,7 @@ StringRef ClangTidyContext::getCheckName(unsigned DiagnosticID) const {
 }
 
 ClangTidyDiagnosticConsumer::ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx)
-    : Context(Ctx) {
+    : Context(Ctx), LastErrorRelatesToUserCode(false) {
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   Diags.reset(new DiagnosticsEngine(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs), &*DiagOpts, this,
@@ -77,31 +77,38 @@ ClangTidyDiagnosticConsumer::ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx)
   Context.setDiagnosticsEngine(Diags.get());
 }
 
+void ClangTidyDiagnosticConsumer::finalizeLastError() {
+  if (!LastErrorRelatesToUserCode && !Errors.empty())
+    Errors.pop_back();
+  LastErrorRelatesToUserCode = false;
+}
+
 void ClangTidyDiagnosticConsumer::HandleDiagnostic(
     DiagnosticsEngine::Level DiagLevel, const Diagnostic &Info) {
-  // FIXME: Demultiplex diagnostics.
-  // FIXME: Ensure that we don't get notes from user code related to errors
-  // from non-user code.
-  // Let argument parsing-related warnings through.
-  if (Diags->hasSourceManager() &&
-      Diags->getSourceManager().isInSystemHeader(Info.getLocation()))
-    return;
-  if (DiagLevel != DiagnosticsEngine::Note) {
-    Errors.push_back(
-        ClangTidyError(Context.getCheckName(Info.getID()), getMessage(Info)));
-  } else {
+  // FIXME: Deduplicate diagnostics.
+  if (DiagLevel == DiagnosticsEngine::Note) {
     assert(!Errors.empty() &&
            "A diagnostic note can only be appended to a message.");
     Errors.back().Notes.push_back(getMessage(Info));
+  } else {
+    finalizeLastError();
+    Errors.push_back(
+        ClangTidyError(Context.getCheckName(Info.getID()), getMessage(Info)));
   }
   addFixes(Info, Errors.back());
+
+  // Let argument parsing-related warnings through.
+  if (!Diags->hasSourceManager() ||
+      !Diags->getSourceManager().isInSystemHeader(Info.getLocation())) {
+    LastErrorRelatesToUserCode = true;
+  }
 }
 
 // Flushes the internal diagnostics buffer to the ClangTidyContext.
 void ClangTidyDiagnosticConsumer::finish() {
-  for (unsigned i = 0, e = Errors.size(); i != e; ++i) {
+  finalizeLastError();
+  for (unsigned i = 0, e = Errors.size(); i != e; ++i)
     Context.storeError(Errors[i]);
-  }
   Errors.clear();
 }
 

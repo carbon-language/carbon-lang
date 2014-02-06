@@ -35,6 +35,7 @@
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
 #include <algorithm>
 #include <vector>
@@ -48,15 +49,65 @@ namespace clang {
 namespace tidy {
 
 namespace {
-static const char *AnalyzerCheckerNamePrefix = "clang-analyzer-";
+static const char *AnalyzerCheckNamePrefix = "clang-analyzer-";
 
-static StringRef StaticAnalyzerCheckers[] = {
+static StringRef StaticAnalyzerChecks[] = {
 #define GET_CHECKERS
 #define CHECKER(FULLNAME, CLASS, DESCFILE, HELPTEXT, GROUPINDEX, HIDDEN)       \
   FULLNAME,
 #include "../../../lib/StaticAnalyzer/Checkers/Checkers.inc"
 #undef CHECKER
 #undef GET_CHECKERS
+};
+
+class AnalyzerDiagnosticConsumer : public ento::PathDiagnosticConsumer {
+public:
+  AnalyzerDiagnosticConsumer(ClangTidyContext &Context) : Context(Context) {}
+
+  virtual void
+  FlushDiagnosticsImpl(std::vector<const ento::PathDiagnostic *> &Diags,
+                       FilesMade *filesMade) LLVM_OVERRIDE {
+    for (std::vector<const ento::PathDiagnostic *>::iterator I = Diags.begin(),
+                                                             E = Diags.end();
+         I != E; ++I) {
+      const ento::PathDiagnostic *PD = *I;
+      StringRef CheckName(AnalyzerCheckNamePrefix);
+      addRanges(Context.diag(CheckName, PD->getLocation().asLocation(),
+                             PD->getShortDescription()),
+                PD->path.back()->getRanges());
+
+      ento::PathPieces FlatPath =
+          PD->path.flatten(/*ShouldFlattenMacros=*/true);
+      for (ento::PathPieces::const_iterator PI = FlatPath.begin(),
+                                            PE = FlatPath.end();
+           PI != PE; ++PI) {
+        addRanges(Context.diag(CheckName, (*PI)->getLocation().asLocation(),
+                               (*PI)->getString(), DiagnosticIDs::Note),
+                  (*PI)->getRanges());
+      }
+    }
+  }
+
+  virtual StringRef getName() const { return "ClangTidyDiags"; }
+
+  virtual bool supportsLogicalOpControlFlow() const LLVM_OVERRIDE {
+    return true;
+  }
+  virtual bool supportsCrossFileDiagnostics() const LLVM_OVERRIDE {
+    return true;
+  }
+
+private:
+  ClangTidyContext &Context;
+
+  // FIXME: Convert to operator<<(DiagnosticBuilder&, ArrayRef<SourceRange>).
+  static const DiagnosticBuilder &addRanges(const DiagnosticBuilder &DB,
+                                            ArrayRef<SourceRange> Ranges) {
+    for (ArrayRef<SourceRange>::iterator I = Ranges.begin(), E = Ranges.end();
+         I != E; ++I)
+      DB << *I;
+    return DB;
+  }
 };
 
 } // namespace
@@ -103,15 +154,15 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
   AnalyzerOptionsRef Options = Compiler.getAnalyzerOpts();
   Options->CheckersControlList = getCheckersControlList();
   Options->AnalysisStoreOpt = RegionStoreModel;
-  Options->AnalysisDiagOpt = PD_TEXT;
+  Options->AnalysisDiagOpt = PD_NONE;
   Options->AnalyzeNestedBlocks = true;
   Options->eagerlyAssumeBinOpBifurcation = true;
-  ASTConsumer *Consumers[] = {
-    Finder.newASTConsumer(),
-    ento::CreateAnalysisConsumer(Compiler.getPreprocessor(),
-                                 Compiler.getFrontendOpts().OutputFile, Options,
-                                 Compiler.getFrontendOpts().Plugins)
-  };
+  ento::AnalysisASTConsumer *AnalysisConsumer = ento::CreateAnalysisConsumer(
+      Compiler.getPreprocessor(), Compiler.getFrontendOpts().OutputFile,
+      Options, Compiler.getFrontendOpts().Plugins);
+  AnalysisConsumer->AddDiagnosticConsumer(
+      new AnalyzerDiagnosticConsumer(Context));
+  ASTConsumer *Consumers[] = { Finder.newASTConsumer(), AnalysisConsumer };
   return new MultiplexConsumer(Consumers);
 }
 
@@ -129,7 +180,7 @@ std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
   for (CheckersList::const_iterator I = AnalyzerChecks.begin(),
                                     E = AnalyzerChecks.end();
        I != E; ++I)
-    CheckNames.push_back(AnalyzerCheckerNamePrefix + I->first);
+    CheckNames.push_back(AnalyzerCheckNamePrefix + I->first);
 
   std::sort(CheckNames.begin(), CheckNames.end());
   return CheckNames;
@@ -138,13 +189,13 @@ std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
 ClangTidyASTConsumerFactory::CheckersList
 ClangTidyASTConsumerFactory::getCheckersControlList() {
   CheckersList List;
-  ArrayRef<StringRef> Checkers(StaticAnalyzerCheckers);
+  ArrayRef<StringRef> Checks(StaticAnalyzerChecks);
 
   bool AnalyzerChecksEnabled = false;
-  for (unsigned i = 0; i < Checkers.size(); ++i) {
-    std::string Checker((AnalyzerCheckerNamePrefix + Checkers[i]).str());
+  for (unsigned i = 0; i < Checks.size(); ++i) {
+    std::string Checker((AnalyzerCheckNamePrefix + Checks[i]).str());
     AnalyzerChecksEnabled |=
-        Filter.IsCheckEnabled(Checker) && !Checkers[i].startswith("debug");
+        Filter.IsCheckEnabled(Checker) && !Checks[i].startswith("debug");
   }
 
   if (AnalyzerChecksEnabled) {
@@ -155,12 +206,12 @@ ClangTidyASTConsumerFactory::getCheckersControlList() {
     // Always add all core checkers if any other static analyzer checks are
     // enabled. This is currently necessary, as other path sensitive checks
     // rely on the core checkers.
-    for (unsigned i = 0; i < Checkers.size(); ++i) {
-      std::string Checker((AnalyzerCheckerNamePrefix + Checkers[i]).str());
+    for (unsigned i = 0; i < Checks.size(); ++i) {
+      std::string Checker((AnalyzerCheckNamePrefix + Checks[i]).str());
 
-      if (Checkers[i].startswith("core") ||
-          (!Checkers[i].startswith("debug") && Filter.IsCheckEnabled(Checker)))
-        List.push_back(std::make_pair(Checkers[i], true));
+      if (Checks[i].startswith("core") ||
+          (!Checks[i].startswith("debug") && Filter.IsCheckEnabled(Checker)))
+        List.push_back(std::make_pair(Checks[i], true));
     }
   }
   return List;
@@ -237,29 +288,42 @@ void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
       EnableChecksRegex, DisableChecksRegex, Context)));
 }
 
+static SourceLocation getLocation(SourceManager &SourceMgr, StringRef FilePath,
+                                  unsigned Offset) {
+  if (FilePath.empty())
+    return SourceLocation();
+
+  const FileEntry *File = SourceMgr.getFileManager().getFile(FilePath);
+  FileID ID = SourceMgr.createFileID(File, SourceLocation(), SrcMgr::C_User);
+  return SourceMgr.getLocForStartOfFile(ID).getLocWithOffset(Offset);
+}
+
 static void reportDiagnostic(const ClangTidyMessage &Message,
                              SourceManager &SourceMgr,
                              DiagnosticsEngine::Level Level,
                              DiagnosticsEngine &Diags,
-                             StringRef CheckName = "") {
-  SourceLocation Loc;
-  if (!Message.FilePath.empty()) {
-    const FileEntry *File =
-        SourceMgr.getFileManager().getFile(Message.FilePath);
-    FileID ID = SourceMgr.createFileID(File, SourceLocation(), SrcMgr::C_User);
-    Loc = SourceMgr.getLocForStartOfFile(ID);
-    Loc = Loc.getLocWithOffset(Message.FileOffset);
+                             tooling::Replacements *Fixes = NULL) {
+  SourceLocation Loc =
+      getLocation(SourceMgr, Message.FilePath, Message.FileOffset);
+  DiagnosticBuilder Diag = Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0"))
+                           << Message.Message;
+  if (Fixes != NULL) {
+    for (tooling::Replacements::const_iterator I = Fixes->begin(),
+                                               E = Fixes->end();
+         I != E; ++I) {
+      SourceLocation FixLoc =
+          getLocation(SourceMgr, I->getFilePath(), I->getOffset());
+      Diag << FixItHint::CreateReplacement(
+                  SourceRange(FixLoc, FixLoc.getLocWithOffset(I->getLength())),
+                  I->getReplacementText());
+    }
   }
-  if (CheckName.empty())
-    Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0")) << Message.Message;
-  else
-    Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0 [%1]"))
-        << Message.Message << CheckName;
 }
 
 void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {
   FileManager Files((FileSystemOptions()));
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
+  DiagOpts->ShowColors = llvm::sys::Process::StandardErrHasColors();
   DiagnosticConsumer *DiagPrinter =
       new TextDiagnosticPrinter(llvm::outs(), &*DiagOpts);
   DiagnosticsEngine Diags(IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
@@ -271,7 +335,7 @@ void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {
                                                  E = Errors.end();
        I != E; ++I) {
     reportDiagnostic(I->Message, SourceMgr, DiagnosticsEngine::Warning, Diags,
-                     I->CheckName);
+                     &I->Fix);
     for (unsigned i = 0, e = I->Notes.size(); i != e; ++i) {
       reportDiagnostic(I->Notes[i], SourceMgr, DiagnosticsEngine::Note, Diags);
     }

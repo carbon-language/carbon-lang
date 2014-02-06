@@ -75,7 +75,8 @@ public:
   /// tablegen'd diagnostic IDs.
   /// FIXME: Figure out a way to manage ID spaces.
   DiagnosticBuilder diag(StringRef CheckName, SourceLocation Loc,
-                         StringRef Message);
+                         StringRef Message,
+                         DiagnosticIDs::Level Level = DiagnosticIDs::Warning);
 
   /// \brief Sets the \c DiagnosticsEngine so that Diagnostics can be generated
   /// correctly.
@@ -124,10 +125,12 @@ public:
 private:
   void addFixes(const Diagnostic &Info, ClangTidyError &Error);
   ClangTidyMessage getMessage(const Diagnostic &Info) const;
+  void finalizeLastError();
 
   ClangTidyContext &Context;
   OwningPtr<DiagnosticsEngine> Diags;
   SmallVector<ClangTidyError, 8> Errors;
+  bool LastErrorRelatesToUserCode;
 };
 
 } // end namespace tidy
