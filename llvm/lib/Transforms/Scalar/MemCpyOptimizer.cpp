@@ -843,9 +843,12 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   ConstantInt *CopySize = dyn_cast<ConstantInt>(M->getLength());
   if (CopySize == 0) return false;
 
-  // The are two possible optimizations we can do for memcpy:
+  // The are three possible optimizations we can do for memcpy:
   //   a) memcpy-memcpy xform which exposes redundance for DSE.
   //   b) call-memcpy xform for return slot optimization.
+  //   c) memcpy from freshly alloca'd space copies undefined data, and we can
+  //      therefore eliminate the memcpy in favor of the data that was already
+  //      at the destination.
   MemDepResult DepInfo = MD->getDependency(M);
   if (DepInfo.isClobber()) {
     if (CallInst *C = dyn_cast<CallInst>(DepInfo.getInst())) {
@@ -865,6 +868,13 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   if (SrcDepInfo.isClobber()) {
     if (MemCpyInst *MDep = dyn_cast<MemCpyInst>(SrcDepInfo.getInst()))
       return processMemCpyMemCpyDependence(M, MDep, CopySize->getZExtValue());
+  } else if (SrcDepInfo.isDef()) {
+    if (isa<AllocaInst>(SrcDepInfo.getInst())) {
+      MD->removeInstruction(M);
+      M->eraseFromParent();
+      ++NumMemCpyInstr;
+      return true;
+    }
   }
 
   return false;
