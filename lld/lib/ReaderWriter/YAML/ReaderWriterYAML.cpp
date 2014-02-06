@@ -96,7 +96,8 @@ public:
       buildDuplicateNameMap(*shlibAtom);
     }
     for (const lld::AbsoluteAtom *absAtom : file.absolute()) {
-      buildDuplicateNameMap(*absAtom);
+      if (!absAtom->name().empty())
+        buildDuplicateNameMap(*absAtom);
     }
   }
 
