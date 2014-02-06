@@ -1,4 +1,4 @@
-; RUN: opt < %s -inline -S | FileCheck %s
+; RUN: opt < %s -inline -S -inlinecold-threshold=75 | FileCheck %s
 
 ; Test that functions with attribute Cold are not inlined while the 
 ; same function without attribute Cold will be inlined.
