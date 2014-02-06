@@ -137,6 +137,7 @@ namespace __sanitizer {
   unsigned pid_t_sz = sizeof(pid_t);
   unsigned timeval_sz = sizeof(timeval);
   unsigned uid_t_sz = sizeof(uid_t);
+  unsigned gid_t_sz = sizeof(gid_t);
   unsigned mbstate_t_sz = sizeof(mbstate_t);
   unsigned sigset_t_sz = sizeof(sigset_t);
   unsigned struct_timezone_sz = sizeof(struct timezone);

@@ -3161,6 +3161,35 @@ INTERCEPTOR(SSIZE_T, fgetxattr, int fd, const char *name, char *value,
 #define INIT_GETXATTR
 #endif
 
+#if SANITIZER_INTERCEPT_GETRESID
+INTERCEPTOR(int, getresuid, void *ruid, void *euid, void *suid) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getresuid, ruid, euid, suid);
+  int res = REAL(getresuid)(ruid, euid, suid);
+  if (res >= 0) {
+    if (ruid) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ruid, uid_t_sz);
+    if (euid) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, euid, uid_t_sz);
+    if (suid) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, suid, uid_t_sz);
+  }
+  return res;
+}
+INTERCEPTOR(int, getresgid, void *rgid, void *egid, void *sgid) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getresgid, rgid, egid, sgid);
+  int res = REAL(getresgid)(rgid, egid, sgid);
+  if (res >= 0) {
+    if (rgid) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, rgid, gid_t_sz);
+    if (egid) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, egid, gid_t_sz);
+    if (sgid) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, sgid, gid_t_sz);
+  }
+  return res;
+}
+#define INIT_GETRESID                   \
+  COMMON_INTERCEPT_FUNCTION(getresuid); \
+  COMMON_INTERCEPT_FUNCTION(getresgid);
+#else
+#define INIT_GETRESID
+#endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
@@ -3279,5 +3308,6 @@ INTERCEPTOR(SSIZE_T, fgetxattr, int fd, const char *name, char *value,
   INIT_TIMES;                              \
   INIT_TLS_GET_ADDR;                       \
   INIT_LISTXATTR;                          \
-  INIT_GETXATTR;
+  INIT_GETXATTR;                           \
+  INIT_GETRESID;
 /**/
