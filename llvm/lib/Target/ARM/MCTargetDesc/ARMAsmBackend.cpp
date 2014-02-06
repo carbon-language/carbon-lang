@@ -683,10 +683,6 @@ public:
                                      MachO::CPU_TYPE_ARM,
                                      Subtype);
   }
-
-  virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
-    return false;
-  }
 };
 
 } // end anonymous namespace

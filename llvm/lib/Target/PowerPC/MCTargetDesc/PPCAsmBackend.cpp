@@ -170,10 +170,6 @@ namespace {
           (is64 ? MachO::CPU_TYPE_POWERPC64 : MachO::CPU_TYPE_POWERPC),
           MachO::CPU_SUBTYPE_POWERPC_ALL);
     }
-
-    virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
-      return false;
-    }
   };
 
   class ELFPPCAsmBackend : public PPCAsmBackend {
@@ -186,10 +182,6 @@ namespace {
     MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
       bool is64 = getPointerSize() == 8;
       return createPPCELFObjectWriter(OS, is64, OSABI);
-    }
-
-    virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
-      return false;
     }
   };
 

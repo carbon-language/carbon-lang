@@ -70,10 +70,6 @@ public:
     LLVM_OVERRIDE {
     return createSystemZObjectWriter(OS, OSABI);
   }
-  virtual bool doesSectionRequireSymbols(const MCSection &Section) const
-    LLVM_OVERRIDE {
-    return false;
-  }
 };
 } // end anonymous namespace
 
