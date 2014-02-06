@@ -143,6 +143,7 @@ CodeGenTarget::CodeGenTarget(RecordKeeper &records)
 }
 
 CodeGenTarget::~CodeGenTarget() {
+  DeleteContainerSeconds(Instructions);
   delete RegBank;
   delete SchedModels;
 }
