@@ -16,3 +16,7 @@
     and ecx, ((1)|2)
 // CHECK: andl	$1, %ecx
     and ecx, 1&2+3
+// CHECK: addl	$4938, %eax
+    add eax, 9876 >> 1
+// CHECK: addl	$19752, %eax
+    add eax, 9876 << 1

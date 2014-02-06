@@ -37,12 +37,14 @@ struct X86Operand;
 static const char OpPrecedence[] = {
   0, // IC_OR
   1, // IC_AND
-  2, // IC_PLUS
-  2, // IC_MINUS
-  3, // IC_MULTIPLY
-  3, // IC_DIVIDE
-  4, // IC_RPAREN
-  5, // IC_LPAREN
+  2, // IC_LSHIFT
+  2, // IC_RSHIFT
+  3, // IC_PLUS
+  3, // IC_MINUS
+  4, // IC_MULTIPLY
+  4, // IC_DIVIDE
+  5, // IC_RPAREN
+  6, // IC_LPAREN
   0, // IC_IMM
   0  // IC_REGISTER
 };
@@ -61,6 +63,8 @@ private:
   enum InfixCalculatorTok {
     IC_OR = 0,
     IC_AND,
+    IC_LSHIFT,
+    IC_RSHIFT,
     IC_PLUS,
     IC_MINUS,
     IC_MULTIPLY,
@@ -198,6 +202,18 @@ private:
             Val = Op1.second & Op2.second;
             OperandStack.push_back(std::make_pair(IC_IMM, Val));
             break;
+          case IC_LSHIFT:
+            assert (Op1.first == IC_IMM && Op2.first == IC_IMM &&
+                    "Left shift operation with an immediate and a register!");
+            Val = Op1.second << Op2.second;
+            OperandStack.push_back(std::make_pair(IC_IMM, Val));
+            break;
+          case IC_RSHIFT:
+            assert (Op1.first == IC_IMM && Op2.first == IC_IMM &&
+                    "Right shift operation with an immediate and a register!");
+            Val = Op1.second >> Op2.second;
+            OperandStack.push_back(std::make_pair(IC_IMM, Val));
+            break;
           }
         }
       }
@@ -209,6 +225,8 @@ private:
   enum IntelExprState {
     IES_OR,
     IES_AND,
+    IES_LSHIFT,
+    IES_RSHIFT,
     IES_PLUS,
     IES_MINUS,
     IES_MULTIPLY,
@@ -281,6 +299,36 @@ private:
       case IES_REGISTER:
         State = IES_AND;
         IC.pushOperator(IC_AND);
+        break;
+      }
+      PrevState = CurrState;
+    }
+    void onLShift() {
+      IntelExprState CurrState = State;
+      switch (State) {
+      default:
+        State = IES_ERROR;
+        break;
+      case IES_INTEGER:
+      case IES_RPAREN:
+      case IES_REGISTER:
+        State = IES_LSHIFT;
+        IC.pushOperator(IC_LSHIFT);
+        break;
+      }
+      PrevState = CurrState;
+    }
+    void onRShift() {
+      IntelExprState CurrState = State;
+      switch (State) {
+      default:
+        State = IES_ERROR;
+        break;
+      case IES_INTEGER:
+      case IES_RPAREN:
+      case IES_REGISTER:
+        State = IES_RSHIFT;
+        IC.pushOperator(IC_RSHIFT);
         break;
       }
       PrevState = CurrState;
@@ -401,6 +449,8 @@ private:
       case IES_MINUS:
       case IES_OR:
       case IES_AND:
+      case IES_LSHIFT:
+      case IES_RSHIFT:
       case IES_DIVIDE:
       case IES_MULTIPLY:
       case IES_LPAREN:
@@ -418,6 +468,7 @@ private:
           IC.popOperator();
         } else if ((PrevState == IES_PLUS || PrevState == IES_MINUS ||
                     PrevState == IES_OR || PrevState == IES_AND ||
+                    PrevState == IES_LSHIFT || PrevState == IES_RSHIFT ||
                     PrevState == IES_MULTIPLY || PrevState == IES_DIVIDE ||
                     PrevState == IES_LPAREN || PrevState == IES_LBRAC) &&
                    CurrState == IES_MINUS) {
@@ -506,12 +557,15 @@ private:
       case IES_MINUS:
       case IES_OR:
       case IES_AND:
+      case IES_LSHIFT:
+      case IES_RSHIFT:
       case IES_MULTIPLY:
       case IES_DIVIDE:
       case IES_LPAREN:
         // FIXME: We don't handle this type of unary minus, yet.
         if ((PrevState == IES_PLUS || PrevState == IES_MINUS ||
             PrevState == IES_OR || PrevState == IES_AND ||
+            PrevState == IES_LSHIFT || PrevState == IES_RSHIFT ||
             PrevState == IES_MULTIPLY || PrevState == IES_DIVIDE ||
             PrevState == IES_LPAREN || PrevState == IES_LBRAC) &&
             CurrState == IES_MINUS) {
@@ -1547,6 +1601,10 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
     case AsmToken::Slash:   SM.onDivide(); break;
     case AsmToken::Pipe:    SM.onOr(); break;
     case AsmToken::Amp:     SM.onAnd(); break;
+    case AsmToken::LessLess:
+                            SM.onLShift(); break;
+    case AsmToken::GreaterGreater:
+                            SM.onRShift(); break;
     case AsmToken::LBrac:   SM.onLBrac(); break;
     case AsmToken::RBrac:   SM.onRBrac(); break;
     case AsmToken::LParen:  SM.onLParen(); break;
