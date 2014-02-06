@@ -16,6 +16,7 @@
 #include "NewPMDriver.h"
 #include "Passes.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Analysis/LazyCallGraph.h"
 #include "llvm/Bitcode/BitcodeWriterPass.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
@@ -34,6 +35,10 @@ bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
                            OutputKind OK, VerifierKind VK) {
   FunctionAnalysisManager FAM;
   ModuleAnalysisManager MAM;
+
+  // FIXME: Lift this registration of analysis passes into a .def file adjacent
+  // to the one used to associate names with passes.
+  MAM.registerPass(LazyCallGraphAnalysis());
 
   // Cross register the analysis managers through their proxies.
   MAM.registerPass(FunctionAnalysisManagerModuleProxy(FAM));

@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Passes.h"
+#include "llvm/Analysis/LazyCallGraph.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Verifier.h"
@@ -43,6 +44,7 @@ struct NoOpFunctionPass {
 static bool isModulePassName(StringRef Name) {
   if (Name == "no-op-module") return true;
   if (Name == "print") return true;
+  if (Name == "print-cg") return true;
 
   return false;
 }
@@ -61,6 +63,10 @@ static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
   }
   if (Name == "print") {
     MPM.addPass(PrintModulePass(dbgs()));
+    return true;
+  }
+  if (Name == "print-cg") {
+    MPM.addPass(LazyCallGraphPrinterPass(dbgs()));
     return true;
   }
   return false;
