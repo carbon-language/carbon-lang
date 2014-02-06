@@ -21,6 +21,8 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IRReader/IRReader.h"
@@ -149,11 +151,18 @@ namespace clang {
       void *OldContext = Ctx.getInlineAsmDiagnosticContext();
       Ctx.setInlineAsmDiagnosticHandler(InlineAsmDiagHandler, this);
 
+      LLVMContext::DiagnosticHandlerTy OldDiagnosticHandler =
+          Ctx.getDiagnosticHandler();
+      void *OldDiagnosticContext = Ctx.getDiagnosticContext();
+      Ctx.setDiagnosticHandler(DiagnosticHandler, this);
+
       EmitBackendOutput(Diags, CodeGenOpts, TargetOpts, LangOpts,
                         C.getTargetInfo().getTargetDescription(),
                         TheModule.get(), Action, AsmOutStream);
 
       Ctx.setInlineAsmDiagnosticHandler(OldHandler, OldContext);
+
+      Ctx.setDiagnosticHandler(OldDiagnosticHandler, OldDiagnosticContext);
     }
 
     virtual void HandleTagDeclDefinition(TagDecl *D) {
@@ -194,8 +203,23 @@ namespace clang {
       ((BackendConsumer*)Context)->InlineAsmDiagHandler2(SM, Loc);
     }
 
+    static void DiagnosticHandler(const llvm::DiagnosticInfo &DI,
+                                  void *Context) {
+      ((BackendConsumer *)Context)->DiagnosticHandlerImpl(DI);
+    }
+
     void InlineAsmDiagHandler2(const llvm::SMDiagnostic &,
                                SourceLocation LocCookie);
+
+    void DiagnosticHandlerImpl(const llvm::DiagnosticInfo &DI);
+    /// \brief Specialized handler for InlineAsm diagnostic.
+    /// \return True if the diagnostic has been successfully reported, false
+    /// otherwise.
+    bool InlineAsmDiagHandler(const llvm::DiagnosticInfoInlineAsm &D);
+    /// \brief Specialized handler for StackSize diagnostic.
+    /// \return True if the diagnostic has been successfully reported, false
+    /// otherwise.
+    bool StackSizeDiagHandler(const llvm::DiagnosticInfoStackSize &D);
   };
   
   void BackendConsumer::anchor() {}
@@ -274,7 +298,95 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
   Diags.Report(Loc, diag::err_fe_inline_asm).AddString(Message);
 }
 
-//
+#define ComputeDiagID(Severity, GroupName, DiagID)                             \
+  do {                                                                         \
+    switch (Severity) {                                                        \
+    case llvm::DS_Error:                                                       \
+      DiagID = diag::err_fe_##GroupName;                                       \
+      break;                                                                   \
+    case llvm::DS_Warning:                                                     \
+      DiagID = diag::warn_fe_##GroupName;                                      \
+      break;                                                                   \
+    case llvm::DS_Note:                                                        \
+      DiagID = diag::note_fe_##GroupName;                                      \
+      break;                                                                   \
+    }                                                                          \
+  } while (false)
+
+bool
+BackendConsumer::InlineAsmDiagHandler(const llvm::DiagnosticInfoInlineAsm &D) {
+  unsigned DiagID;
+  ComputeDiagID(D.getSeverity(), inline_asm, DiagID);
+  std::string Message = D.getMsgStr().str();
+
+  // If this problem has clang-level source location information, report the
+  // issue as being a prbolem in the source with a note showing the instantiated
+  // code.
+  SourceLocation LocCookie =
+      SourceLocation::getFromRawEncoding(D.getLocCookie());
+  if (LocCookie.isValid())
+    Diags.Report(LocCookie, DiagID).AddString(Message);
+  else {
+    // Otherwise, report the backend diagnostic as occurring in the generated
+    // .s file.
+    // If Loc is invalid, we still need to report the diagnostic, it just gets
+    // no location info.
+    FullSourceLoc Loc;
+    Diags.Report(Loc, DiagID).AddString(Message);
+  }
+  // We handled all the possible severities.
+  return true;
+}
+
+bool
+BackendConsumer::StackSizeDiagHandler(const llvm::DiagnosticInfoStackSize &D) {
+  if (D.getSeverity() != llvm::DS_Warning)
+    // For now, the only support we have for StackSize diagnostic is warning.
+    // We do not know how to format other severities.
+    return false;
+
+  // FIXME: We should demangle the function name.
+  // FIXME: Is there a way to get a location for that function?
+  FullSourceLoc Loc;
+  Diags.Report(Loc, diag::warn_fe_backend_frame_larger_than)
+      << D.getStackSize() << D.getFunction().getName();
+  return true;
+}
+
+/// \brief This function is invoked when the backend needs
+/// to report something to the user.
+void BackendConsumer::DiagnosticHandlerImpl(const DiagnosticInfo &DI) {
+  unsigned DiagID = diag::err_fe_inline_asm;
+  llvm::DiagnosticSeverity Severity = DI.getSeverity();
+  // Get the diagnostic ID based.
+  switch (DI.getKind()) {
+  case llvm::DK_InlineAsm:
+    if (InlineAsmDiagHandler(cast<DiagnosticInfoInlineAsm>(DI)))
+      return;
+    ComputeDiagID(Severity, inline_asm, DiagID);
+    break;
+  case llvm::DK_StackSize:
+    if (StackSizeDiagHandler(cast<DiagnosticInfoStackSize>(DI)))
+      return;
+    ComputeDiagID(Severity, backend_frame_larger_than, DiagID);
+    break;
+  default:
+    // Plugin IDs are not bound to any value as they are set dynamically.
+    ComputeDiagID(Severity, backend_plugin, DiagID);
+    break;
+  }
+  std::string MsgStorage;
+  {
+    raw_string_ostream Stream(MsgStorage);
+    DiagnosticPrinterRawOStream DP(Stream);
+    DI.print(DP);
+  }
+
+  // Report the backend message using the usual diagnostic mechanism.
+  FullSourceLoc Loc;
+  Diags.Report(Loc, DiagID).AddString(MsgStorage);
+}
+#undef ComputeDiagID
 
 CodeGenAction::CodeGenAction(unsigned _Act, LLVMContext *_VMContext)
   : Act(_Act), LinkModule(0),

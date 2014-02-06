@@ -8,3 +8,4 @@
 //===----------------------------------------------------------------------===//
 
 class CatInlineAsm : DiagCategory<"Inline Assembly Issue">;
+class CatBackend : DiagCategory<"Backend Issue">;

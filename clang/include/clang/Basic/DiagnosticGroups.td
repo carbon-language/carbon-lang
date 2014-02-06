@@ -625,3 +625,8 @@ def ASM : DiagGroup<"asm", [
 
 // OpenMP warnings.
 def SourceUsesOpenMP : DiagGroup<"source-uses-openmp">;
+
+// Backend warnings.
+def BackendInlineAsm : DiagGroup<"inline-asm">;
+def BackendFrameLargerThan : DiagGroup<"frame-larger-than">;
+def BackendPlugin : DiagGroup<"backend-plugin">;
