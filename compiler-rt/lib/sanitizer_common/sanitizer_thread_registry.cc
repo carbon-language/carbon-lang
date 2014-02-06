@@ -130,8 +130,13 @@ u32 ThreadRegistry::CreateThread(uptr user_id, bool detached, u32 parent_tid,
     tctx = context_factory_(tid);
     threads_[tid] = tctx;
   } else {
+#ifndef SANITIZER_GO
     Report("%s: Thread limit (%u threads) exceeded. Dying.\n",
            SanitizerToolName, max_threads_);
+#else
+    Printf("race: limit on %u simultaneously alive goroutines is exceeded,"
+        " dying\n", max_threads_);
+#endif
     Die();
   }
   CHECK_NE(tctx, 0);
