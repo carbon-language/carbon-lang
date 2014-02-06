@@ -2066,14 +2066,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-emit-pch");
     else
       CmdArgs.push_back("-emit-pth");
+  } else if (isa<VerifyPCHJobAction>(JA)) {
+    CmdArgs.push_back("-verify-pch");
   } else {
     assert(isa<CompileJobAction>(JA) && "Invalid action for clang tool.");
 
     if (JA.getType() == types::TY_Nothing) {
-      if (Args.hasArg(options::OPT_verify_pch))
-        CmdArgs.push_back("-verify-pch");
-      else
-        CmdArgs.push_back("-fsyntax-only");
+      CmdArgs.push_back("-fsyntax-only");
     } else if (JA.getType() == types::TY_LLVM_IR ||
                JA.getType() == types::TY_LTO_IR) {
       CmdArgs.push_back("-emit-llvm");

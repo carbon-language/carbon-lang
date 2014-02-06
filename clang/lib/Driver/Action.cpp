@@ -33,7 +33,8 @@ const char *Action::getClassName(ActionClass AC) {
   case LinkJobClass: return "linker";
   case LipoJobClass: return "lipo";
   case DsymutilJobClass: return "dsymutil";
-  case VerifyJobClass: return "verify";
+  case VerifyDebugInfoJobClass: return "verify-debug-info";
+  case VerifyPCHJobClass: return "verify-pch";
   }
 
   llvm_unreachable("invalid class");
@@ -117,6 +118,29 @@ DsymutilJobAction::DsymutilJobAction(ActionList &Inputs, types::ID Type)
 
 void VerifyJobAction::anchor() {}
 
-VerifyJobAction::VerifyJobAction(ActionList &Inputs, types::ID Type)
-  : JobAction(VerifyJobClass, Inputs, Type) {
+VerifyJobAction::VerifyJobAction(ActionClass Kind, Action *Input,
+                                 types::ID Type)
+    : JobAction(Kind, Input, Type) {
+  assert((Kind == VerifyDebugInfoJobClass || Kind == VerifyPCHJobClass) &&
+         "ActionClass is not a valid VerifyJobAction");
+}
+
+VerifyJobAction::VerifyJobAction(ActionClass Kind, ActionList &Inputs,
+                                 types::ID Type)
+    : JobAction(Kind, Inputs, Type) {
+  assert((Kind == VerifyDebugInfoJobClass || Kind == VerifyPCHJobClass) &&
+           "ActionClass is not a valid VerifyJobAction");
+}
+
+void VerifyDebugInfoJobAction::anchor() {}
+
+VerifyDebugInfoJobAction::VerifyDebugInfoJobAction(Action *Input,
+                                                   types::ID Type)
+    : VerifyJobAction(VerifyDebugInfoJobClass, Input, Type) {
+}
+
+void VerifyPCHJobAction::anchor() {}
+
+VerifyPCHJobAction::VerifyPCHJobAction(Action *Input, types::ID Type)
+    : VerifyJobAction(VerifyPCHJobClass, Input, Type) {
 }

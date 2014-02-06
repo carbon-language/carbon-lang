@@ -936,13 +936,12 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
         Actions.push_back(new DsymutilJobAction(Inputs, types::TY_dSYM));
       }
 
-      // Verify the output (debug information only for now).
+      // Verify the debug info output.
       if (Args.hasArg(options::OPT_verify_debug_info)) {
-        ActionList VerifyInputs;
-        VerifyInputs.push_back(Actions.back());
+        Action *VerifyInput = Actions.back();
         Actions.pop_back();
-        Actions.push_back(new VerifyJobAction(VerifyInputs,
-                                              types::TY_Nothing));
+        Actions.push_back(new VerifyDebugInfoJobAction(VerifyInput,
+                                                       types::TY_Nothing));
       }
     }
   }
@@ -1318,7 +1317,7 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
     } else if (Args.hasArg(options::OPT_module_file_info)) {
       return new CompileJobAction(Input, types::TY_ModuleFile);
     } else if (Args.hasArg(options::OPT_verify_pch)) {
-      return new CompileJobAction(Input, types::TY_Nothing);
+      return new VerifyPCHJobAction(Input, types::TY_Nothing);
     } else if (IsUsingLTO(Args)) {
       types::ID Output =
         Args.hasArg(options::OPT_S) ? types::TY_LTO_IR : types::TY_LTO_BC;

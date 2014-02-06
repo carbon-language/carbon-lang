@@ -50,10 +50,11 @@ public:
     LinkJobClass,
     LipoJobClass,
     DsymutilJobClass,
-    VerifyJobClass,
+    VerifyDebugInfoJobClass,
+    VerifyPCHJobClass,
 
     JobClassFirst=PreprocessJobClass,
-    JobClassLast=VerifyJobClass
+    JobClassLast=VerifyPCHJobClass
   };
 
   static const char *getClassName(ActionClass AC);
@@ -233,9 +234,29 @@ public:
 class VerifyJobAction : public JobAction {
   virtual void anchor();
 public:
-  VerifyJobAction(ActionList &Inputs, types::ID Type);
+  VerifyJobAction(ActionClass Kind, Action *Input, types::ID Type);
+  VerifyJobAction(ActionClass Kind, ActionList &Inputs, types::ID Type);
   static bool classof(const Action *A) {
-    return A->getKind() == VerifyJobClass;
+    return A->getKind() == VerifyDebugInfoJobClass ||
+           A->getKind() == VerifyPCHJobClass;
+  }
+};
+
+class VerifyDebugInfoJobAction : public VerifyJobAction {
+  virtual void anchor();
+public:
+  VerifyDebugInfoJobAction(Action *Input, types::ID Type);
+  static bool classof(const Action *A) {
+    return A->getKind() == VerifyDebugInfoJobClass;
+  }
+};
+
+class VerifyPCHJobAction : public VerifyJobAction {
+  virtual void anchor();
+public:
+  VerifyPCHJobAction(Action *Input, types::ID Type);
+  static bool classof(const Action *A) {
+    return A->getKind() == VerifyPCHJobClass;
   }
 };
 

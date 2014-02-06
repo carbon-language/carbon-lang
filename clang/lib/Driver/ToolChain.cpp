@@ -114,7 +114,7 @@ Tool *ToolChain::getTool(Action::ActionClass AC) const {
   case Action::BindArchClass:
   case Action::LipoJobClass:
   case Action::DsymutilJobClass:
-  case Action::VerifyJobClass:
+  case Action::VerifyDebugInfoJobClass:
     llvm_unreachable("Invalid tool kind.");
 
   case Action::CompileJobClass:
@@ -122,6 +122,7 @@ Tool *ToolChain::getTool(Action::ActionClass AC) const {
   case Action::PreprocessJobClass:
   case Action::AnalyzeJobClass:
   case Action::MigrateJobClass:
+  case Action::VerifyPCHJobClass:
     return getClang();
   }
 

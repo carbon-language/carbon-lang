@@ -212,7 +212,7 @@ Tool *MachO::getTool(Action::ActionClass AC) const {
     if (!Dsymutil)
       Dsymutil.reset(new tools::darwin::Dsymutil(*this));
     return Dsymutil.get();
-  case Action::VerifyJobClass:
+  case Action::VerifyDebugInfoJobClass:
     if (!VerifyDebug)
       VerifyDebug.reset(new tools::darwin::VerifyDebug(*this));
     return VerifyDebug.get();
