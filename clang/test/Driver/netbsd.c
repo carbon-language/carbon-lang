@@ -25,6 +25,9 @@
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd6.0.0-eabi \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=ARM-6 %s
+// RUN: %clang -no-canonical-prefixes -target arm--netbsd-eabihf \
+// RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=ARM-HF %s
 
 // RUN: %clang -no-canonical-prefixes -target x86_64--netbsd -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
@@ -112,6 +115,9 @@
 // ARM-6: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
 // ARM-6: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // ARM-6: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// ARM-HF: clang{{.*}}" "-cc1" "-triple" "armv4t--netbsd-eabihf"
+// ARM-HF: ld{{.*}}" "-m" "armelf_nbsd_eabihf"
 
 // S-X86_64: clang{{.*}}" "-cc1" "-triple" "x86_64--netbsd"
 // S-X86_64: ld{{.*}}" "-Bstatic"
