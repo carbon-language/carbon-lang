@@ -5,12 +5,12 @@ static_assert(sizeof(void (U::*)()) == 2 * sizeof(void*) + 2 * sizeof(int), "");
 
 struct A { int a; };
 struct B { int b; };
+struct I { union { struct { int a, b; }; }; };
 
 struct S             { int a, b; void f(); virtual void g(); };
 struct M : A, B      { int a, b; void f(); virtual void g(); };
 struct V : virtual A { int a, b; void f(); virtual void g(); };
 struct U             { int a, b; void f(); virtual void g(); };
-struct I             { union { struct { int a, b; }; }; void f(); virtual void g(); };
 
 struct C        { virtual void f(); };
 struct D        { virtual void g(); };
@@ -24,16 +24,15 @@ int ReadField(T &o) {
 
 void ReadFields() {
   A a;
+  I i;
   S s;
   M m;
   V v;
   U u;
-  ReadField<I, &S::a>(s);
   ReadField<S, &S::a>(s);
   ReadField<M, &M::a>(m);
   ReadField<V, &V::a>(v);
   ReadField<U, &U::a>(u);
-  ReadField<I, &S::b>(s);
   ReadField<S, &S::b>(s);
   ReadField<M, &M::b>(m);
   ReadField<V, &V::b>(v);
@@ -46,15 +45,17 @@ void ReadFields() {
   // Non-polymorphic null data memptr vs first field memptr.
   ReadField<A, &A::a>(a);
   ReadField<A, nullptr>(a);
+
+  // Indirect fields injected from anonymous unions and structs
+  ReadField<I, &I::a>(i);
+  ReadField<I, &I::b>(i);
 }
 
 // CHECK-LABEL: define {{.*}}ReadFields
-// CHECK: call {{.*}} @"\01??$ReadField@UI@@$03@@YAHAAUS@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@US@@$03@@YAHAAUS@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UM@@$0M@@@YAHAAUM@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UV@@$F7A@@@YAHAAUV@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UU@@$G3A@A@@@YAHAAUU@@@Z"
-// CHECK: call {{.*}} @"\01??$ReadField@UI@@$07@@YAHAAUS@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@US@@$07@@YAHAAUS@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UM@@$0BA@@@YAHAAUM@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UV@@$FM@A@@@YAHAAUV@@@Z"
@@ -71,6 +72,11 @@ void ReadFields() {
 // the same.
 // CHECK: call {{.*}} @"\01??$ReadField@UA@@$0A@@@YAHAAUA@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UA@@$0?0@@YAHAAUA@@@Z"
+
+// Indirect fields are handled as-if they were simply members of their enclosing
+// record.
+// CHECK: call {{.*}} @"\01??$ReadField@UI@@$0A@@@YAHAAUI@@@Z"
+// CHECK: call {{.*}} @"\01??$ReadField@UI@@$03@@YAHAAUI@@@Z"
 
 // Test member function pointers.
 template <typename T, void (T::*MFP)()>
