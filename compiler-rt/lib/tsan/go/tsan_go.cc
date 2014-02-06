@@ -143,24 +143,6 @@ void __tsan_write_range(ThreadState *thr, void *addr, uptr size, uptr pc) {
   MemoryAccessRange(thr, (uptr)pc, (uptr)addr, size, true);
 }
 
-void __tsan_read_range_pc(ThreadState *thr, void *addr, uptr size, uptr callpc,
-    uptr pc) {
-  if (callpc != 0)
-    FuncEntry(thr, callpc);
-  MemoryAccessRange(thr, (uptr)pc, (uptr)addr, size, false);
-  if (callpc != 0)
-    FuncExit(thr);
-}
-
-void __tsan_write_range_pc(ThreadState *thr, void *addr, uptr size, uptr callpc,
-    uptr pc) {
-  if (callpc != 0)
-    FuncEntry(thr, callpc);
-  MemoryAccessRange(thr, (uptr)pc, (uptr)addr, size, true);
-  if (callpc != 0)
-    FuncExit(thr);
-}
-
 void __tsan_func_enter(ThreadState *thr, void *pc) {
   FuncEntry(thr, (uptr)pc);
 }
