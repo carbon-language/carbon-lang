@@ -848,9 +848,6 @@ bool ELFObjectWriter::isInSymtab(const MCAssembler &Asm,
   if (!Symbol.isVariable() && Symbol.isUndefined() && !IsGlobal)
     return false;
 
-  if (!Asm.isSymbolLinkerVisible(Symbol) && !Symbol.isUndefined())
-    return false;
-
   if (Symbol.isTemporary())
     return false;
 

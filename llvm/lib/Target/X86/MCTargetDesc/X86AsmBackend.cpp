@@ -350,11 +350,6 @@ public:
     : X86AsmBackend(T, CPU), OSABI(_OSABI) {
     HasReliableSymbolDifference = true;
   }
-
-  virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
-    const MCSectionELF &ES = static_cast<const MCSectionELF&>(Section);
-    return ES.getFlags() & ELF::SHF_MERGE;
-  }
 };
 
 class ELFX86_32AsmBackend : public ELFX86AsmBackend {
