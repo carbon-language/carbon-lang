@@ -87,16 +87,6 @@ def X86insrtps : SDNode<"X86ISD::INSERTPS",
 def X86vzmovl  : SDNode<"X86ISD::VZEXT_MOVL",
                  SDTypeProfile<1, 1, [SDTCisSameAs<0,1>]>>;
 
-def X86vzmovly  : SDNode<"X86ISD::VZEXT_MOVL",
-                 SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
-                                      SDTCisInt<0>, SDTCisInt<1>,
-                                      SDTCisOpSmallerThanOp<1, 0> ]>>;
-
-def X86vsmovl  : SDNode<"X86ISD::VSEXT_MOVL",
-                 SDTypeProfile<1, 1,
-                 [SDTCisVec<0>, SDTCisVec<1>, SDTCisInt<0>, SDTCisInt<1>,
-                  SDTCisOpSmallerThanOp<1, 0>]>>;
-
 def X86vzload  : SDNode<"X86ISD::VZEXT_LOAD", SDTLoad,
                         [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 

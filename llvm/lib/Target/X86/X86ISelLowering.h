@@ -245,11 +245,8 @@ namespace llvm {
       /// the list of operands.
       TC_RETURN,
 
-      // VZEXT_MOVL - Vector move low and zero extend.
+      // VZEXT_MOVL - Vector move to low scalar and zero higher vector elements.
       VZEXT_MOVL,
-
-      // VSEXT_MOVL - Vector move low and sign extend.
-      VSEXT_MOVL,
 
       // VZEXT - Vector integer zero-extend.
       VZEXT,
