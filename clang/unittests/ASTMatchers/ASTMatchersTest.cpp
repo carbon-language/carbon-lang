@@ -1000,7 +1000,7 @@ TEST(Matcher, Call) {
 }
 
 TEST(Matcher, Lambda) {
-  EXPECT_TRUE(matches("auto f = [&] (int i) { return i; };",
+  EXPECT_TRUE(matches("auto f = [] (int i) { return i; };",
                       lambdaExpr()));
 }
 

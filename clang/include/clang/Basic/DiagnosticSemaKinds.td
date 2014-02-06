@@ -952,6 +952,8 @@ def err_capture_of_abstract_type : Error<
   "by-copy capture of value of abstract type %0">;
 def err_capture_of_incomplete_type : Error<
   "by-copy capture of variable %0 with incomplete type %1">;
+def err_capture_default_non_local : Error<
+  "non-local lambda expression cannot have a capture-default">;
 
 def err_multiple_final_overriders : Error<
   "virtual function %q0 has more than one final overrider in %1">; 

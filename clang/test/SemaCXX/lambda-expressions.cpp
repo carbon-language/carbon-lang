@@ -291,7 +291,7 @@ namespace NSDMIs_in_lambdas {
   void f() { []() { S<int> s; }; }
 
   auto x = []{ struct S { int n, m = n; }; };
-  auto y = [&]{ struct S { int n, m = n; }; };
+  auto y = [&]{ struct S { int n, m = n; }; }; // expected-error {{non-local lambda expression cannot have a capture-default}}
   void g() { auto z = [&]{ struct S { int n, m = n; }; }; }
 }
 
@@ -323,4 +323,24 @@ namespace CaptureAbstract {
     // accepted (and should not capture 's').
     [=] { return s.n; }; // expected-error {{abstract}}
   }
+}
+
+namespace PR18128 {
+  auto l = [=]{}; // expected-error {{non-local lambda expression cannot have a capture-default}}
+
+  struct S {
+    int n;
+    int (*f())[true ? 1 : ([=]{ return n; }(), 0)];
+    // expected-error@-1 {{non-local lambda expression cannot have a capture-default}}
+    // expected-error@-2 {{invalid use of non-static data member 'n'}}
+    // expected-error@-3 {{a lambda expression may not appear inside of a constant expression}}
+    int g(int k = ([=]{ return n; }(), 0));
+    // expected-error@-1 {{non-local lambda expression cannot have a capture-default}}
+    // expected-error@-2 {{invalid use of non-static data member 'n'}}
+
+    int a = [=]{ return n; }(); // ok
+    int b = [=]{ return [=]{ return n; }(); }(); // ok
+    int c = []{ int k = 0; return [=]{ return k; }(); }(); // ok
+    int d = []{ return [=]{ return n; }(); }(); // expected-error {{'this' cannot be implicitly captured in this context}}
+  };
 }
