@@ -54,6 +54,9 @@ namespace {
     }
 
     virtual bool runOnFunction(Function &F) {
+      if (skipOptnoneFunction(F))
+        return false;
+
       AA = &getAnalysis<AliasAnalysis>();
       MD = &getAnalysis<MemoryDependenceAnalysis>();
       DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();

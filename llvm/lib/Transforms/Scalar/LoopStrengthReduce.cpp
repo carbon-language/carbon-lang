@@ -4912,6 +4912,9 @@ void LoopStrengthReduce::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager & /*LPM*/) {
+  if (skipOptnoneFunction(L))
+    return false;
+
   bool Changed = false;
 
   // Run the main LSR transformation.

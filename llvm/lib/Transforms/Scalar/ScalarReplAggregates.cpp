@@ -1020,6 +1020,9 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
 
 
 bool SROA::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   TD = getAnalysisIfAvailable<DataLayout>();
 
   bool Changed = performPromotion(F);

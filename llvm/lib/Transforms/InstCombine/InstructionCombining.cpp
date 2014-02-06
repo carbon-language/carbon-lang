@@ -2509,6 +2509,9 @@ public:
 }
 
 bool InstCombiner::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   TD = getAnalysisIfAvailable<DataLayout>();
   TLI = &getAnalysis<TargetLibraryInfo>();
   // Minimizing size?

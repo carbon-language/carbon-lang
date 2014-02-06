@@ -1010,6 +1010,9 @@ bool MemCpyOpt::iterateOnFunction(Function &F) {
 // function.
 //
 bool MemCpyOpt::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   bool MadeChange = false;
   MD = &getAnalysis<MemoryDependenceAnalysis>();
   TD = getAnalysisIfAvailable<DataLayout>();

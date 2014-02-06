@@ -1971,6 +1971,9 @@ void Reassociate::ReassociateExpression(BinaryOperator *I) {
 }
 
 bool Reassociate::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   // Calculate the rank map for F
   BuildRankMap(F);
 

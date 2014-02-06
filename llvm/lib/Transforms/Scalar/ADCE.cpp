@@ -50,6 +50,9 @@ char ADCE::ID = 0;
 INITIALIZE_PASS(ADCE, "adce", "Aggressive Dead Code Elimination", false, false)
 
 bool ADCE::runOnFunction(Function& F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   SmallPtrSet<Instruction*, 128> alive;
   SmallVector<Instruction*, 128> worklist;
 

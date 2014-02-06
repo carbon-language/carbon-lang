@@ -81,6 +81,11 @@ public:
 
   /// deleteAnalysisValue - Delete analysis info associated with value V.
   virtual void deleteAnalysisValue(Value *V, Loop *L) {}
+
+protected:
+  /// skipOptnoneFunction - Containing function has Attribute::OptimizeNone
+  /// and most transformation passes should skip it.
+  bool skipOptnoneFunction(Loop *L) const;
 };
 
 class LPPassManager : public FunctionPass, public PMDataManager {

@@ -388,6 +388,8 @@ namespace {
     void combineMetadata(Instruction *K, const Instruction *J);
 
     bool vectorizeBB(BasicBlock &BB) {
+      if (skipOptnoneFunction(BB))
+        return false;
       if (!DT->isReachableFromEntry(&BB)) {
         DEBUG(dbgs() << "BBV: skipping unreachable " << BB.getName() <<
               " in " << BB.getParent()->getName() << "\n");
@@ -429,6 +431,8 @@ namespace {
     }
 
     virtual bool runOnBasicBlock(BasicBlock &BB) {
+      // OptimizeNone check deferred to vectorizeBB().
+
       AA = &getAnalysis<AliasAnalysis>();
       DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
       SE = &getAnalysis<ScalarEvolution>();

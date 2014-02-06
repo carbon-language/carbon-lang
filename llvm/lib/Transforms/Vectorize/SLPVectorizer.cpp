@@ -1771,6 +1771,9 @@ struct SLPVectorizer : public FunctionPass {
   DominatorTree *DT;
 
   virtual bool runOnFunction(Function &F) {
+    if (skipOptnoneFunction(F))
+      return false;
+
     SE = &getAnalysis<ScalarEvolution>();
     DL = getAnalysisIfAvailable<DataLayout>();
     TTI = &getAnalysis<TargetTransformInfo>();

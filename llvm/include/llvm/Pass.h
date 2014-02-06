@@ -307,6 +307,11 @@ public:
 
   ///  Return what kind of Pass Manager can manage this pass.
   virtual PassManagerType getPotentialPassManagerType() const;
+
+protected:
+  /// skipOptnoneFunction - This function has Attribute::OptimizeNone
+  /// and most transformation passes should skip it.
+  bool skipOptnoneFunction(Function &F) const;
 };
 
 
@@ -351,6 +356,11 @@ public:
 
   ///  Return what kind of Pass Manager can manage this pass.
   virtual PassManagerType getPotentialPassManagerType() const;
+
+protected:
+  /// skipOptnoneFunction - Containing function has Attribute::OptimizeNone
+  /// and most transformation passes should skip it.
+  bool skipOptnoneFunction(BasicBlock &BB) const;
 };
 
 /// If the user specifies the -time-passes argument on an LLVM tool command line

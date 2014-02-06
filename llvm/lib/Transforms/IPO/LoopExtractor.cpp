@@ -79,6 +79,9 @@ INITIALIZE_PASS(SingleLoopExtractor, "loop-extract-single",
 Pass *llvm::createLoopExtractorPass() { return new LoopExtractor(); }
 
 bool LoopExtractor::runOnLoop(Loop *L, LPPassManager &LPM) {
+  if (skipOptnoneFunction(L))
+    return false;
+
   // Only visit top-level loops.
   if (L->getParentLoop())
     return false;

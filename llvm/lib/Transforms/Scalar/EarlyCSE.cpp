@@ -552,6 +552,9 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 
 
 bool EarlyCSE::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   std::vector<StackNode *> nodesToProcess;
 
   TD = getAnalysisIfAvailable<DataLayout>();

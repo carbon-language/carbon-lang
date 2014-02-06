@@ -130,6 +130,9 @@ bool LoopDeletion::isLoopDead(Loop *L,
 /// NOTE: This entire process relies pretty heavily on LoopSimplify and LCSSA
 /// in order to make various safety checks work.
 bool LoopDeletion::runOnLoop(Loop *L, LPPassManager &LPM) {
+  if (skipOptnoneFunction(L))
+    return false;
+
   // We can only remove the loop if there is a preheader that we can
   // branch from after removing it.
   BasicBlock *preheader = L->getLoopPreheader();

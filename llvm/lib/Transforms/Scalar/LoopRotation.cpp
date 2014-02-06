@@ -79,6 +79,9 @@ Pass *llvm::createLoopRotatePass() { return new LoopRotate(); }
 /// Rotate Loop L as many times as possible. Return true if
 /// the loop is rotated at least once.
 bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
+  if (skipOptnoneFunction(L))
+    return false;
+
   LI = &getAnalysis<LoopInfo>();
   TTI = &getAnalysis<TargetTransformInfo>();
 

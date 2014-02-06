@@ -1801,6 +1801,9 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
 //===----------------------------------------------------------------------===//
 
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
+  if (skipOptnoneFunction(L))
+    return false;
+
   // If LoopSimplify form is not available, stay out of trouble. Some notes:
   //  - LSR currently only supports LoopSimplify-form loops. Indvars'
   //    canonicalization can be a pessimization without LSR to "clean up"

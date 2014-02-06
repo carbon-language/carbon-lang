@@ -1553,6 +1553,9 @@ static void DeleteInstructionInBlock(BasicBlock *BB) {
 // and return true if the function was modified.
 //
 bool SCCP::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   DEBUG(dbgs() << "SCCP on function '" << F.getName() << "'\n");
   const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
   const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();

@@ -281,6 +281,9 @@ bool CorrelatedValuePropagation::processSwitch(SwitchInst *SI) {
 }
 
 bool CorrelatedValuePropagation::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   LVI = &getAnalysis<LazyValueInfo>();
 
   bool FnChanged = false;

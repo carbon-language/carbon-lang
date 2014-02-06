@@ -365,3 +365,17 @@ void LoopPass::assignPassManager(PMStack &PMS,
 
   LPPM->add(this);
 }
+
+// Containing function has Attribute::OptimizeNone and transformation
+// passes should skip it.
+bool LoopPass::skipOptnoneFunction(Loop *L) const {
+  Function *F = L->getHeader()->getParent();
+  if (F && F->hasFnAttribute(Attribute::OptimizeNone)) {
+    // FIXME: Report this to dbgs() only once per function.
+    DEBUG(dbgs() << "Skipping pass '" << getPassName()
+          << "' in function " << F->getName() << "\n");
+    // FIXME: Delete loop from pass manager's queue?
+    return true;
+  }
+  return false;
+}

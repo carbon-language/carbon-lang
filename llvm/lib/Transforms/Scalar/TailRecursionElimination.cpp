@@ -171,6 +171,9 @@ struct AllocaCaptureTracker : public CaptureTracker {
 } // end anonymous namespace
 
 bool TailCallElim::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   // If this function is a varargs function, we won't be able to PHI the args
   // right, so don't even try to convert it...
   if (F.getFunctionType()->isVarArg()) return false;

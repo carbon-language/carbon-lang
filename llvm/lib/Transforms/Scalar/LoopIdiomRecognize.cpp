@@ -707,6 +707,9 @@ bool LoopIdiomRecognize::runOnNoncountableLoop() {
 }
 
 bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
+  if (skipOptnoneFunction(L))
+    return false;
+
   CurLoop = L;
 
   // If the loop could not be converted to canonical form, it must have an

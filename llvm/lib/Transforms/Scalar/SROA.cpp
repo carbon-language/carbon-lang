@@ -3572,6 +3572,9 @@ namespace {
 }
 
 bool SROA::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   DEBUG(dbgs() << "SROA function: " << F.getName() << "\n");
   C = &F.getContext();
   DL = getAnalysisIfAvailable<DataLayout>();

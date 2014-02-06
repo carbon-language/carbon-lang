@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Pass.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/PassRegistry.h"
 #include "llvm/Support/Debug.h"
@@ -137,6 +138,15 @@ PassManagerType FunctionPass::getPotentialPassManagerType() const {
   return PMT_FunctionPassManager;
 }
 
+bool FunctionPass::skipOptnoneFunction(Function &F) const {
+  if (F.hasFnAttribute(Attribute::OptimizeNone)) {
+    DEBUG(dbgs() << "Skipping pass '" << getPassName()
+          << "' on function " << F.getName() << "\n");
+    return true;
+  }
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // BasicBlockPass Implementation
 //
@@ -153,6 +163,18 @@ bool BasicBlockPass::doInitialization(Function &) {
 
 bool BasicBlockPass::doFinalization(Function &) {
   // By default, don't do anything.
+  return false;
+}
+
+bool BasicBlockPass::skipOptnoneFunction(BasicBlock &BB) const {
+  Function *F = BB.getParent();
+  if (F && F->hasFnAttribute(Attribute::OptimizeNone)) {
+    // Report this only once per function.
+    if (&BB == &F->getEntryBlock())
+      DEBUG(dbgs() << "Skipping pass '" << getPassName()
+            << "' on function " << F->getName() << "\n");
+    return true;
+  }
   return false;
 }
 

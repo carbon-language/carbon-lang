@@ -147,6 +147,9 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
 }
 
 bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
+  if (skipOptnoneFunction(L))
+    return false;
+
   LoopInfo *LI = &getAnalysis<LoopInfo>();
   ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
   const TargetTransformInfo &TTI = getAnalysis<TargetTransformInfo>();

@@ -1134,6 +1134,9 @@ bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
 }
 
 bool LoopReroll::runOnLoop(Loop *L, LPPassManager &LPM) {
+  if (skipOptnoneFunction(L))
+    return false;
+
   AA = &getAnalysis<AliasAnalysis>();
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();

@@ -209,6 +209,9 @@ Pass *llvm::createLICMPass() { return new LICM(); }
 /// times on one loop.
 ///
 bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
+  if (skipOptnoneFunction(L))
+    return false;
+
   Changed = false;
 
   // Get our Loop and Alias Analysis information...

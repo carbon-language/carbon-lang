@@ -382,6 +382,9 @@ static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
 }
 
 bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
+  if (skipOptnoneFunction(L))
+    return false;
+
   LI = &getAnalysis<LoopInfo>();
   LPM = &LPM_Ref;
   DominatorTreeWrapperPass *DTWP =
