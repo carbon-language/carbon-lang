@@ -933,6 +933,23 @@ Driver::MainLoop ()
                     core_file_spec.c_str());
         m_debugger.HandleCommand (command_string);;
     }
+    else if (!m_option_data.m_process_name.empty())
+    {
+        ::snprintf (command_string, 
+                    sizeof(command_string), 
+                    "process attach --name '%s'%s", 
+                    m_option_data.m_process_name.c_str(), 
+                    m_option_data.m_wait_for ? " --waitfor" : "");
+        m_debugger.HandleCommand (command_string);
+    }
+    else if (LLDB_INVALID_PROCESS_ID != m_option_data.m_process_pid)
+    {
+        ::snprintf (command_string, 
+                    sizeof(command_string), 
+                    "process attach --pid %" PRIu64, 
+                    m_option_data.m_process_pid);
+        m_debugger.HandleCommand (command_string);
+    }
 
     ExecuteInitialCommands(false);
 
