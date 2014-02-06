@@ -43,7 +43,7 @@ namespace __sanitizer {
   extern unsigned struct_sched_param_sz;
   extern unsigned struct_statfs_sz;
   extern unsigned struct_statfs64_sz;
-  extern unsigned struct_ifaddrs_sz;
+  extern unsigned struct_sockaddr_sz;
 
 #if !SANITIZER_ANDROID
   extern unsigned ucontext_t_sz;
@@ -204,12 +204,27 @@ namespace __sanitizer {
     uptr __unused5;
   #endif
   };
-  #endif  // SANITIZER_LINUX && !SANITIZER_ANDROID
+#endif  // SANITIZER_LINUX && !SANITIZER_ANDROID
 
   struct __sanitizer_iovec {
-    void  *iov_base;
+    void *iov_base;
     uptr iov_len;
   };
+
+#if !SANITIZER_ANDROID
+  struct __sanitizer_ifaddrs {
+    struct __sanitizer_ifaddrs *ifa_next;
+    char *ifa_name;
+    unsigned int ifa_flags;
+    void *ifa_addr;    // (struct sockaddr *)
+    void *ifa_netmask; // (struct sockaddr *)
+    union {
+      void *ifu_broadaddr; // (struct sockaddr *)
+      void *ifu_dstaddr; // (struct sockaddr *)
+    } ifa_ifu;
+    void *ifa_data;
+  };
+#endif  // !SANITIZER_ANDROID
 
 #if SANITIZER_MAC
   typedef unsigned long __sanitizer_pthread_key_t;

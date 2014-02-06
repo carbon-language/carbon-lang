@@ -23,7 +23,6 @@
 #include <dirent.h>
 #include <errno.h>
 #include <grp.h>
-#include <ifaddrs.h>
 #include <limits.h>
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -67,6 +66,7 @@
 #endif
 
 #if !SANITIZER_ANDROID
+#include <ifaddrs.h>
 #include <sys/ucontext.h>
 #include <wordexp.h>
 #endif
@@ -146,13 +146,13 @@ namespace __sanitizer {
   unsigned struct_sigevent_sz = sizeof(struct sigevent);
   unsigned struct_sched_param_sz = sizeof(struct sched_param);
   unsigned struct_statfs_sz = sizeof(struct statfs);
-  unsigned struct_ifaddrs_sz = sizeof(struct ifaddrs);
 
 #if SANITIZER_MAC && !SANITIZER_IOS
   unsigned struct_statfs64_sz = sizeof(struct statfs64);
 #endif // SANITIZER_MAC && !SANITIZER_IOS
 
 #if !SANITIZER_ANDROID
+  unsigned struct_sockaddr_sz = sizeof(struct sockaddr);
   unsigned ucontext_t_sz = sizeof(ucontext_t);
 #endif // !SANITIZER_ANDROID
 
@@ -973,6 +973,15 @@ CHECK_SIZE_AND_OFFSET(shmid_ds, shm_nattch);
 
 CHECK_TYPE_SIZE(clock_t);
 
-COMPILER_CHECK(0 == offsetof(ifaddrs, ifa_next));
+#if !SANITIZER_ANDROID
+CHECK_TYPE_SIZE(ifaddrs);
+CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_next);
+CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_name);
+CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_addr);
+CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_netmask);
+CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_broadaddr);
+CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_dstaddr);
+CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_data);
+#endif
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

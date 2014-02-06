@@ -3195,17 +3195,29 @@ INTERCEPTOR(int, getresgid, void *rgid, void *egid, void *sgid) {
 // As long as getifaddrs()/freeifaddrs() use calloc()/free(), we don't need to
 // intercept freeifaddrs(). If that ceases to be the case, we might need to
 // intercept it to poison the memory again.
-INTERCEPTOR(int, getifaddrs, void **ifap) {
+INTERCEPTOR(int, getifaddrs, __sanitizer_ifaddrs **ifap) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getifaddrs, ifap);
   int res = REAL(getifaddrs)(ifap);
   if (res == 0 && ifap) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ifap, sizeof(void *));
-    void *p = *ifap;
+    __sanitizer_ifaddrs *p = *ifap;
     while (p) {
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, struct_ifaddrs_sz);
-      // Pointer to the next item is stored in the first field.
-      p = *reinterpret_cast<void **>(p);
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, sizeof(__sanitizer_ifaddrs));
+      if (p->ifa_name)
+        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ifa_name,
+                                       REAL(strlen)(p->ifa_name) + 1);
+      if (p->ifa_addr)
+        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ifa_addr, struct_sockaddr_sz);
+      if (p->ifa_netmask)
+        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ifa_netmask, struct_sockaddr_sz);
+      // ifa_ifu is a union, but ifa_ifu.ifu_dstaddr also points to a struct
+      // sockaddr, so the following is sufficient.
+      if (p->ifa_ifu.ifu_broadaddr)
+        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ifa_ifu.ifu_broadaddr,
+                                       struct_sockaddr_sz);
+      // FIXME(smatveev): Unpoison p->ifa_data as well.
+      p = p->ifa_next;
     }
   }
   return res;
