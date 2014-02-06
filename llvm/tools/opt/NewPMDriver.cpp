@@ -35,10 +35,6 @@ bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
   FunctionAnalysisManager FAM;
   ModuleAnalysisManager MAM;
 
-  // FIXME: Lift this registration of analysis passes into a .def file adjacent
-  // to the one used to associate names with passes.
-  MAM.registerPass(LazyCallGraphAnalysis());
-
   // Cross register the analysis managers through their proxies.
   MAM.registerPass(FunctionAnalysisManagerModuleProxy(FAM));
   FAM.registerPass(ModuleAnalysisManagerFunctionProxy(MAM));
