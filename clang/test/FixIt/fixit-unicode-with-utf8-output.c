@@ -2,6 +2,7 @@
 // systems capable of outputting Unicode characters to the standard output in
 // the UTF-8 encoding.
 // RUN: not %clang_cc1 -fsyntax-only %S/fixit-unicode.c 2>&1 | FileCheck -strict-whitespace %s
+// REQUIRES: utf8-capable-terminal
 
 // CHECK: warning: format specifies type 'int' but the argument has type 'long'
 // CHECK: {{^  printf\("∆: %d", 1L\);}}
