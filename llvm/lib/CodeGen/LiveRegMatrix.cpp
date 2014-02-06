@@ -65,7 +65,9 @@ bool LiveRegMatrix::runOnMachineFunction(MachineFunction &MF) {
 void LiveRegMatrix::releaseMemory() {
   for (unsigned i = 0, e = Matrix.size(); i != e; ++i) {
     Matrix[i].clear();
-    Queries[i].clear();
+    // No need to clear Queries here, since LiveIntervalUnion::Query doesn't
+    // have anything important to clear and LiveRegMatrix's runOnFunction()
+    // does a OwningPtr::reset anyways.
   }
 }
 
