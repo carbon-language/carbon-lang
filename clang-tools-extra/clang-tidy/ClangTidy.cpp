@@ -322,15 +322,16 @@ static void reportDiagnostic(const ClangTidyMessage &Message,
 
 void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {
   FileManager Files((FileSystemOptions()));
+  LangOptions LangOpts; // FIXME: use langopts from each original file
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   DiagOpts->ShowColors = llvm::sys::Process::StandardErrHasColors();
   DiagnosticConsumer *DiagPrinter =
       new TextDiagnosticPrinter(llvm::outs(), &*DiagOpts);
   DiagnosticsEngine Diags(IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
                           &*DiagOpts, DiagPrinter);
-  DiagPrinter->BeginSourceFile(LangOptions());
+  DiagPrinter->BeginSourceFile(LangOpts);
   SourceManager SourceMgr(Diags, Files);
-  Rewriter Rewrite(SourceMgr, LangOptions());
+  Rewriter Rewrite(SourceMgr, LangOpts);
   for (SmallVectorImpl<ClangTidyError>::iterator I = Errors.begin(),
                                                  E = Errors.end();
        I != E; ++I) {
