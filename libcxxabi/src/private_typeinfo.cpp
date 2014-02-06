@@ -301,17 +301,20 @@ __base_class_type_info::has_unambiguous_public_base(__dynamic_cast_info* info,
                                                     void* adjustedPtr,
                                                     int path_below) const
 {
-    ptrdiff_t offset_to_base = __offset_flags >> __offset_shift;
-    if (__offset_flags & __virtual_mask)
+    ptrdiff_t offset_to_base = 0;
+    if (adjustedPtr != nullptr)
     {
-        const char* vtable = *static_cast<const char*const*>(adjustedPtr);
-        offset_to_base = *reinterpret_cast<const ptrdiff_t*>(vtable + offset_to_base);
+        offset_to_base = __offset_flags >> __offset_shift;
+        if (__offset_flags & __virtual_mask)
+        {
+            const char* vtable = *static_cast<const char*const*>(adjustedPtr);
+            offset_to_base = *reinterpret_cast<const ptrdiff_t*>(vtable + offset_to_base);
+        }
     }
-    __base_type->has_unambiguous_public_base(info,
-                                             static_cast<char*>(adjustedPtr) + offset_to_base,
-                                             (__offset_flags & __public_mask) ?
-                                                 path_below :
-                                                 not_public_path);
+    __base_type->has_unambiguous_public_base(
+            info,
+            static_cast<char*>(adjustedPtr) + offset_to_base,
+            (__offset_flags & __public_mask) ? path_below : not_public_path);
 }
 
 void
@@ -358,7 +361,8 @@ __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
                                void*& adjustedPtr) const
 {
     // Do the dereference adjustment
-    adjustedPtr = *static_cast<void**>(adjustedPtr);
+    if (adjustedPtr != NULL)
+        adjustedPtr = *static_cast<void**>(adjustedPtr);
     // bullets 1 and 4
     if (__pbase_type_info::can_catch(thrown_type, adjustedPtr))
         return true;

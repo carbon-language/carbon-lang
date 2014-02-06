@@ -130,17 +130,49 @@ void test7 ()
 }
 
 
-struct vA {};
-struct vC : virtual public vA {};
+struct vBase {};
+struct vDerived : virtual public vBase {};
 
 void test8 ()
 {
     try
     {
-        throw (vC*)0;
+        throw new vDerived;
         assert(false);
     }
-    catch (vA *p) {
+    catch (vBase *p) {
+        assert(p != 0);
+    }
+    catch (...)
+    {
+        assert (false);
+    }
+}
+
+void test9 ()
+{
+    try
+    {
+        throw nullptr;
+        assert(false);
+    }
+    catch (vBase *p) {
+        assert(p == 0);
+    }
+    catch (...)
+    {
+        assert (false);
+    }
+}
+
+void test10 ()
+{
+    try
+    {
+        throw (vDerived*)0;
+        assert(false);
+    }
+    catch (vBase *p) {
         assert(p == 0);
     }
     catch (...)
@@ -158,4 +190,7 @@ int main()
     test5();
     test6();
     test7();
+    test8();
+    test9();
+    test10();
 }
