@@ -32,6 +32,8 @@
 // RUN: echo __asan_report_store16 >> %t.interface
 // RUN: echo __asan_report_load_n >> %t.interface
 // RUN: echo __asan_report_store_n >> %t.interface
+// RUN: echo __asan_get_current_fake_stack >> %t.interface
+// RUN: echo __asan_addr_is_in_fake_stack >> %t.interface
 // RUN: for i in `jot - 0 10`; do echo __asan_stack_malloc_$i >> %t.interface; done
 // RUN: for i in `jot - 0 10`; do echo __asan_stack_free_$i >> %t.interface; done
 
