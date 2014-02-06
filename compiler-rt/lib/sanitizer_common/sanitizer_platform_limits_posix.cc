@@ -23,6 +23,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <grp.h>
+#include <ifaddrs.h>
 #include <limits.h>
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -145,6 +146,7 @@ namespace __sanitizer {
   unsigned struct_sigevent_sz = sizeof(struct sigevent);
   unsigned struct_sched_param_sz = sizeof(struct sched_param);
   unsigned struct_statfs_sz = sizeof(struct statfs);
+  unsigned struct_ifaddrs_sz = sizeof(struct ifaddrs);
 
 #if SANITIZER_MAC && !SANITIZER_IOS
   unsigned struct_statfs64_sz = sizeof(struct statfs64);
@@ -970,5 +972,7 @@ CHECK_SIZE_AND_OFFSET(shmid_ds, shm_nattch);
 #endif
 
 CHECK_TYPE_SIZE(clock_t);
+
+COMPILER_CHECK(0 == offsetof(ifaddrs, ifa_next));
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

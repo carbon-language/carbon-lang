@@ -3191,6 +3191,31 @@ INTERCEPTOR(int, getresgid, void *rgid, void *egid, void *sgid) {
 #define INIT_GETRESID
 #endif
 
+#if SANITIZER_INTERCEPT_GETIFADDRS
+// As long as getifaddrs()/freeifaddrs() use calloc()/free(), we don't need to
+// intercept freeifaddrs(). If that ceases to be the case, we might need to
+// intercept it to poison the memory again.
+INTERCEPTOR(int, getifaddrs, void **ifap) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getifaddrs, ifap);
+  int res = REAL(getifaddrs)(ifap);
+  if (res == 0 && ifap) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ifap, sizeof(void *));
+    void *p = *ifap;
+    while (p) {
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, struct_ifaddrs_sz);
+      // Pointer to the next item is stored in the first field.
+      p = *reinterpret_cast<void **>(p);
+    }
+  }
+  return res;
+}
+#define INIT_GETIFADDRS                  \
+  COMMON_INTERCEPT_FUNCTION(getifaddrs);
+#else
+#define INIT_GETIFADDRS
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
@@ -3309,5 +3334,6 @@ INTERCEPTOR(int, getresgid, void *rgid, void *egid, void *sgid) {
   INIT_TLS_GET_ADDR;                       \
   INIT_LISTXATTR;                          \
   INIT_GETXATTR;                           \
-  INIT_GETRESID;
+  INIT_GETRESID;                           \
+  INIT_GETIFADDRS;
 /**/
