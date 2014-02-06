@@ -347,9 +347,7 @@ class ELFX86AsmBackend : public X86AsmBackend {
 public:
   uint8_t OSABI;
   ELFX86AsmBackend(const Target &T, uint8_t _OSABI, StringRef CPU)
-    : X86AsmBackend(T, CPU), OSABI(_OSABI) {
-    HasReliableSymbolDifference = true;
-  }
+      : X86AsmBackend(T, CPU), OSABI(_OSABI) {}
 };
 
 class ELFX86_32AsmBackend : public ELFX86AsmBackend {
