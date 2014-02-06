@@ -592,7 +592,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
 
   PGO.assignRegionCounters(GD);
   if (CGM.getPGOData()) {
-    if (const Decl *D = GD.getDecl()) {
+    if (D) {
       // Turn on InlineHint attribute for hot functions.
       if (CGM.getPGOData()->isHotFunction(CGM.getMangledName(GD)))
         Fn->addFnAttr(llvm::Attribute::InlineHint);
