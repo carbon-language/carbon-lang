@@ -443,14 +443,12 @@ static bool isThumb(const MCSubtargetInfo& STI) {
 }
 
 void ARMAsmPrinter::emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
-                                     MCSubtargetInfo *EndInfo) const {
+                                     const MCSubtargetInfo *EndInfo) const {
   // If either end mode is unknown (EndInfo == NULL) or different than
   // the start mode, then restore the start mode.
   const bool WasThumb = isThumb(StartInfo);
   if (EndInfo == NULL || WasThumb != isThumb(*EndInfo)) {
     OutStreamer.EmitAssemblerFlag(WasThumb ? MCAF_Code16 : MCAF_Code32);
-    if (EndInfo)
-      EndInfo->ToggleFeature(ARM::ModeThumb);
   }
 }
 

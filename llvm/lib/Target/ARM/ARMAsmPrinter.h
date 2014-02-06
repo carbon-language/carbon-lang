@@ -64,7 +64,8 @@ public:
                                      raw_ostream &O) LLVM_OVERRIDE;
 
   virtual void emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
-                                MCSubtargetInfo *EndInfo) const LLVM_OVERRIDE;
+                                const MCSubtargetInfo *EndInfo) const
+      LLVM_OVERRIDE;
 
   void EmitJumpTable(const MachineInstr *MI);
   void EmitJump2Table(const MachineInstr *MI);

@@ -475,7 +475,7 @@ namespace llvm {
     /// \p EndInfo   - the final subtarget info after parsing the inline asm,
     ///                or NULL if the value is unknown.
     virtual void emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
-                                  MCSubtargetInfo *EndInfo) const;
+                                  const MCSubtargetInfo *EndInfo) const;
 
   private:
     /// Private state for PrintSpecial()
