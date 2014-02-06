@@ -506,7 +506,14 @@ bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
         DeadDef = LRQ.isDeadDef();
       }
     }
-    if (!DeadDef) {
+    if (DeadDef) {
+      // LiveIntervals knows this is a dead even though it's MachineOperand is
+      // not flagged as such. Since this register will not be recorded as
+      // live-out, increase its PDiff value to avoid underflowing pressure.
+      if (PDiff)
+        PDiff->addPressureChange(Reg, false, MRI);
+    }
+    else {
       if (LiveRegs.erase(Reg))
         decreaseRegPressure(Reg);
       else
