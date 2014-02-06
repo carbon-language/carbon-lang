@@ -9,7 +9,7 @@ namespace dr100 { // dr100: yes
   B<"bar"> b; // expected-error {{does not refer to any declaration}}
 }
 
-namespace dr101 { // dr101: yes
+namespace dr101 { // dr101: 3.5
   extern "C" void dr101_f();
   typedef unsigned size_t;
   namespace X {
@@ -18,6 +18,8 @@ namespace dr101 { // dr101: yes
   }
   using X::dr101_f;
   using X::size_t;
+  extern "C" void dr101_f();
+  typedef unsigned size_t;
 }
 
 namespace dr102 { // dr102: yes

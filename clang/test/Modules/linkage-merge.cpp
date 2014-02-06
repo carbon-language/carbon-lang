@@ -7,6 +7,5 @@ static int f(int);
 int f(int);
 
 static void g(int);
-// expected-error@-1 {{declaration conflicts with target of using declaration already in scope}}
-// expected-note@Inputs/linkage-merge-foo.h:2 {{target of using declaration}}
-// expected-note@Inputs/linkage-merge-bar.h:3 {{using declaration}}
+// expected-error@-1 {{functions that differ only in their return type cannot be overloaded}}
+// expected-note@Inputs/linkage-merge-foo.h:2 {{previous declaration is here}}

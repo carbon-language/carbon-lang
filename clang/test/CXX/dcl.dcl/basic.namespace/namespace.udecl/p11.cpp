@@ -1,14 +1,16 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-// C++03 [namespace.udecl]p11:
+// C++03 [namespace.udecl]p11: (per DR101)
 //   If a function declaration in namespace scope or block scope has
 //   the same name and the same parameter types as a function
-//   introduced by a using-declaration, the program is
-//   ill-formed. [Note: two using-declarations may introduce functions
-//   with the same name and the same parameter types. If, for a call
-//   to an unqualified function name, function overload resolution
-//   selects the functions introduced by such using-declarations, the
-//   function call is ill-formed.
+//   introduced by a using-declaration, and the declarations do not declare the
+//   same function, the program is ill-formed. [Note: two using-declarations may
+//   introduce functions with the same name and the same parameter types. If,
+//   for a call to an unqualified function name, function overload resolution
+//   selects the functions introduced by such using-declarations, the function
+//   call is ill-formed.]
+//
+// FIXME: DR565 introduces parallel wording here for function templates.
 
 namespace test0 {
   namespace ns { void foo(); } // expected-note {{target of using declaration}}
@@ -88,4 +90,14 @@ namespace test5 {
 
   template class Test0<int>;
   template class Test1<int>;
+}
+
+namespace test6 {
+  namespace ns { void foo(); } // expected-note {{target of using declaration}}
+  using ns::foo; // expected-note {{using declaration}}
+  namespace ns {
+    using test6::foo;
+    void foo() {}
+  }
+  void foo(); // expected-error {{declaration conflicts with target of using declaration already in scope}}
 }
