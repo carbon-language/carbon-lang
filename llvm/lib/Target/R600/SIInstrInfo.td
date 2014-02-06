@@ -103,6 +103,11 @@ def IMM12bit : PatLeaf <(imm),
   [{return isUInt<12>(N->getZExtValue());}]
 >;
 
+def mubuf_vaddr_offset : PatFrag<
+  (ops node:$ptr, node:$offset, node:$imm_offset),
+  (add (add node:$ptr, node:$offset), node:$imm_offset)
+>;
+
 class InlineImm <ValueType vt> : PatLeaf <(vt imm), [{
   return
     (*(const SITargetLowering *)getTargetLowering()).analyzeImmediate(N) == 0;

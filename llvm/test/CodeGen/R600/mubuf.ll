@@ -84,3 +84,15 @@ entry:
   store i32 0, i32 addrspace(1)* %0
   ret void
 }
+
+; MUBUF store with a 12-bit immediate offset and a register offset
+; CHECK-LABEL: @mubuf_store3
+; CHECK-NOT: ADD
+; CHECK: BUFFER_STORE_DWORD v{{[0-9]}}, s[{{[0-9]:[0-9]}}] + v[{{[0-9]:[0-9]}}] + 4 ; encoding: [0x04,0x80
+define void @mubuf_store3(i32 addrspace(1)* %out, i64 %offset) {
+entry:
+  %0 = getelementptr i32 addrspace(1)* %out, i64 %offset
+  %1 = getelementptr i32 addrspace(1)* %0, i64 1
+  store i32 0, i32 addrspace(1)* %1
+  ret void
+}
