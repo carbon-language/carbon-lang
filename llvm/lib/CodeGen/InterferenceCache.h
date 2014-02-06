@@ -135,7 +135,8 @@ class InterferenceCache {
 
   // Point to an entry for each physreg. The entry pointed to may not be up to
   // date, and it may have been reused for a different physreg.
-  SmallVector<unsigned char, 2> PhysRegEntries;
+  unsigned char* PhysRegEntries;
+  size_t PhysRegEntriesCount;
 
   // Next round-robin entry to be picked.
   unsigned RoundRobin;
@@ -147,7 +148,14 @@ class InterferenceCache {
   Entry *get(unsigned PhysReg);
 
 public:
-  InterferenceCache() : TRI(0), LIUArray(0), MF(0), RoundRobin(0) {}
+  InterferenceCache() : TRI(0), LIUArray(0), MF(0), PhysRegEntries(NULL),
+                        PhysRegEntriesCount(0), RoundRobin(0) {}
+
+  ~InterferenceCache() {
+    free(PhysRegEntries);
+  }
+
+  void reinitPhysRegEntries();
 
   /// init - Prepare cache for a new function.
   void init(MachineFunction*, LiveIntervalUnion*, SlotIndexes*, LiveIntervals*,

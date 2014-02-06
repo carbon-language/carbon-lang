@@ -22,6 +22,22 @@ using namespace llvm;
 // Static member used for null interference cursors.
 InterferenceCache::BlockInterference InterferenceCache::Cursor::NoInterference;
 
+// Initializes PhysRegEntries (instead of a SmallVector, PhysRegEntries is a
+// buffer of size NumPhysRegs to speed up alloc/clear for targets with large
+// reg files). Calloced memory is used for good form, and quites tools like
+// Valgrind too, but zero initialized memory is not required by the algorithm:
+// this is because PhysRegEntries works like a SparseSet and its entries are
+// only valid when there is a corresponding CacheEntries assignment. There is
+// also support for when pass managers are reused for targets with different
+// numbers of PhysRegs: in this case PhysRegEntries is freed and reinitialized.
+void InterferenceCache::reinitPhysRegEntries() {
+  if (PhysRegEntriesCount == TRI->getNumRegs()) return;
+  free(PhysRegEntries);
+  PhysRegEntriesCount = TRI->getNumRegs();
+  PhysRegEntries = (unsigned char*)
+    calloc(PhysRegEntriesCount, sizeof(unsigned char));
+}
+
 void InterferenceCache::init(MachineFunction *mf,
                              LiveIntervalUnion *liuarray,
                              SlotIndexes *indexes,
@@ -30,7 +46,7 @@ void InterferenceCache::init(MachineFunction *mf,
   MF = mf;
   LIUArray = liuarray;
   TRI = tri;
-  PhysRegEntries.assign(TRI->getNumRegs(), 0);
+  reinitPhysRegEntries();
   for (unsigned i = 0; i != CacheEntries; ++i)
     Entries[i].clear(mf, indexes, lis);
 }
