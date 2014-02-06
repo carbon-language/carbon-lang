@@ -76,10 +76,7 @@ else
 fi
 
 echo gcc gotsan.cc -S -o tmp.s $FLAGS $CFLAGS
-gcc gotsan.cc -S -o tmp.s $FLAGS $CFLAGS
-cat tmp.s $ASMS > gotsan.s
-echo as gotsan.s -o race_$SUFFIX.syso
-as gotsan.s -o race_$SUFFIX.syso
+gcc gotsan.cc -c -o race_$SUFFIX.syso $FLAGS $CFLAGS
 
 gcc test.c race_$SUFFIX.syso -m64 -o test $OSLDFLAGS
 GORACE="exitcode=0 atexit_sleep_ms=0" ./test
