@@ -979,8 +979,19 @@ CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_next);
 CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_name);
 CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_addr);
 CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_netmask);
-CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_broadaddr);
+#if SANITIZER_LINUX
+// Compare against the union, because we can't reach into the union in a
+// compliant way.
+#ifdef ifa_dstaddr
+#undef ifa_dstaddr
+#endif
+COMPILER_CHECK(sizeof(((__sanitizer_ifaddrs *)NULL)->ifa_dstaddr) ==
+               sizeof(((ifaddrs *)NULL)->ifa_ifu));
+COMPILER_CHECK(offsetof(__sanitizer_ifaddrs, ifa_dstaddr) ==
+               offsetof(ifaddrs, ifa_ifu));
+#else
 CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_dstaddr);
+#endif  // SANITIZER_LINUX
 CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_data);
 #endif
 

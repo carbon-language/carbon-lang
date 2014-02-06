@@ -3211,11 +3211,10 @@ INTERCEPTOR(int, getifaddrs, __sanitizer_ifaddrs **ifap) {
         COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ifa_addr, struct_sockaddr_sz);
       if (p->ifa_netmask)
         COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ifa_netmask, struct_sockaddr_sz);
-      // ifa_ifu is a union, but ifa_ifu.ifu_dstaddr also points to a struct
-      // sockaddr, so the following is sufficient.
-      if (p->ifa_ifu.ifu_broadaddr)
-        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ifa_ifu.ifu_broadaddr,
-                                       struct_sockaddr_sz);
+      // On Linux this is a union, but the other member also points to a
+      // struct sockaddr, so the following is sufficient.
+      if (p->ifa_dstaddr)
+        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ifa_dstaddr, struct_sockaddr_sz);
       // FIXME(smatveev): Unpoison p->ifa_data as well.
       p = p->ifa_next;
     }

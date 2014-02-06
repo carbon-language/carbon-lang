@@ -218,10 +218,8 @@ namespace __sanitizer {
     unsigned int ifa_flags;
     void *ifa_addr;    // (struct sockaddr *)
     void *ifa_netmask; // (struct sockaddr *)
-    union {
-      void *ifu_broadaddr; // (struct sockaddr *)
-      void *ifu_dstaddr; // (struct sockaddr *)
-    } ifa_ifu;
+    // This is a union on Linux.
+    void *ifa_dstaddr; // (struct sockaddr *)
     void *ifa_data;
   };
 #endif  // !SANITIZER_ANDROID
