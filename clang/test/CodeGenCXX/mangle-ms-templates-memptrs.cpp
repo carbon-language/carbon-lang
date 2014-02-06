@@ -59,8 +59,8 @@ void ReadFields() {
 // them right in class templates.
 // CHECK: call {{.*}} @"\01??$ReadField@US@@$0A@@@YAHAAUS@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UM@@$0A@@@YAHAAUM@@@Z"
-// CHECK: call {{.*}} @"\01??$ReadField@UV@@$FA@A@@@YAHAAUV@@@Z"
-// CHECK: call {{.*}} @"\01??$ReadField@UU@@$GA@A@A@@@YAHAAUU@@@Z"
+// CHECK: call {{.*}} @"\01??$ReadField@UV@@$FA@?0@@YAHAAUV@@@Z"
+// CHECK: call {{.*}} @"\01??$ReadField@UU@@$GA@A@?0@@YAHAAUU@@@Z"
 
 // Non-polymorphic null data memptr vs first field memptr.  MSVC mangles these
 // the same.

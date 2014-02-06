@@ -383,43 +383,38 @@ void MicrosoftCXXNameMangler::mangleMemberDataPointer(const CXXRecordDecl *RD,
   //                       ::= $F <number> <number>
   //                       ::= $G <number> <number> <number>
 
-  int64_t FO = 0;
+  int64_t FieldOffset;
+  int64_t VBTableOffset;
   MSInheritanceAttr::Spelling IM = RD->getMSInheritanceModel();
   if (FD) {
-    FO = getASTContext().getFieldOffset(FD);
-    assert(FO % getASTContext().getCharWidth() == 0 &&
+    FieldOffset = getASTContext().getFieldOffset(FD);
+    assert(FieldOffset % getASTContext().getCharWidth() == 0 &&
            "cannot take address of bitfield");
-    FO /= getASTContext().getCharWidth();
-  } else if (!RD->nullFieldOffsetIsZero()) {
-    FO = -1;
+    FieldOffset /= getASTContext().getCharWidth();
+
+    VBTableOffset = 0;
+  } else {
+    FieldOffset = RD->nullFieldOffsetIsZero() ? 0 : -1;
+
+    VBTableOffset = -1;
   }
 
+  char Code = '\0';
   switch (IM) {
-  case MSInheritanceAttr::Keyword_single_inheritance:
-  case MSInheritanceAttr::Keyword_multiple_inheritance: {
-    // If we only have a single field, it's just an integer literal.
-    llvm::APSInt Val(64, /*isUnsigned=*/false);
-    Val = FO;
-    mangleIntegerLiteral(Val, /*IsBoolean=*/false);
-    break;
+  case MSInheritanceAttr::Keyword_single_inheritance:      Code = '0'; break;
+  case MSInheritanceAttr::Keyword_multiple_inheritance:    Code = '0'; break;
+  case MSInheritanceAttr::Keyword_virtual_inheritance:     Code = 'F'; break;
+  case MSInheritanceAttr::Keyword_unspecified_inheritance: Code = 'G'; break;
   }
 
-  // Otherwise, we have an aggregate, but all adjusting fields should be zero,
-  // because we don't allow casts (even implicit) in the context of a template
-  // argument.
-  case MSInheritanceAttr::Keyword_virtual_inheritance:
-    Out << "$F";
-    mangleNumber(FO);
-    mangleNumber(0);
-    break;
+  Out << '$' << Code;
 
-  case MSInheritanceAttr::Keyword_unspecified_inheritance:
-    Out << "$G";
-    mangleNumber(FO);
+  mangleNumber(FieldOffset);
+
+  if (MSInheritanceAttr::hasVBPtrOffsetField(IM))
     mangleNumber(0);
-    mangleNumber(0);
-    break;
-  }
+  if (MSInheritanceAttr::hasVBTableOffsetField(IM))
+    mangleNumber(VBTableOffset);
 }
 
 void
@@ -455,9 +450,7 @@ MicrosoftCXXNameMangler::mangleMemberFunctionPointer(const CXXRecordDecl *RD,
   // thunk.
   uint64_t NVOffset = 0;
   uint64_t VBTableOffset = 0;
-  if (!MD) {
-    mangleNumber(0);
-  } else if (MD->isVirtual()) {
+  if (MD->isVirtual()) {
     MicrosoftVTableContext *VTContext =
         cast<MicrosoftVTableContext>(getASTContext().getVTableContext());
     const MicrosoftVTableContext::MethodVFTableLocation &ML =
@@ -1110,7 +1103,7 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
   case TemplateArgument::NullPtr: {
     QualType T = TA.getNullPtrType();
     if (const MemberPointerType *MPT = T->getAs<MemberPointerType>()) {
-      const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+      const CXXRecordDecl *RD = MPT->getMostRecentCXXRecordDecl();
       if (MPT->isMemberFunctionPointerType())
         mangleMemberFunctionPointer(RD, 0);
       else

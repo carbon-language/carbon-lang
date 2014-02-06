@@ -1433,6 +1433,10 @@ TryStaticImplicitCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
       msg = 0;
       return TC_Failed;
     }
+  } else if (DestType->isMemberPointerType()) {
+    if (Self.Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+      Self.RequireCompleteType(OpRange.getBegin(), DestType, 0);
+    }
   }
 
   InitializedEntity Entity = InitializedEntity::InitializeTemporary(DestType);

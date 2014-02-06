@@ -20,6 +20,7 @@
 #include "clang/AST/TypeVisitor.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/PartialDiagnostic.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/ParsedTemplate.h"
@@ -4529,6 +4530,8 @@ static bool CheckTemplateArgumentPointerToMember(Sema &S,
   case NPV_NullPointer:
     S.Diag(Arg->getExprLoc(), diag::warn_cxx98_compat_template_arg_null);
     Converted = TemplateArgument(ParamType, /*isNullPtr*/true);
+    if (S.Context.getTargetInfo().getCXXABI().isMicrosoft())
+      S.RequireCompleteType(Arg->getExprLoc(), ParamType, 0);
     return false;
   case NPV_NotNullPointer:
     break;
