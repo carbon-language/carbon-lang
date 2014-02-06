@@ -3227,6 +3227,29 @@ INTERCEPTOR(int, getifaddrs, __sanitizer_ifaddrs **ifap) {
 #define INIT_GETIFADDRS
 #endif
 
+#if SANITIZER_INTERCEPT_IF_INDEXTONAME
+INTERCEPTOR(char *, if_indextoname, unsigned int ifindex, char* ifname) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, if_indextoname, ifindex, ifname);
+  char *res = REAL(if_indextoname)(ifindex, ifname);
+  if (res && ifname)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ifname, REAL(strlen)(ifname) + 1);
+  return res;
+}
+INTERCEPTOR(unsigned int, if_nametoindex, const char* ifname) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, if_nametoindex, ifname);
+  if (ifname)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, ifname, REAL(strlen)(ifname) + 1);
+  return REAL(if_nametoindex)(ifname);
+}
+#define INIT_IF_INDEXTONAME                  \
+  COMMON_INTERCEPT_FUNCTION(if_indextoname); \
+  COMMON_INTERCEPT_FUNCTION(if_nametoindex);
+#else
+#define INIT_IF_INDEXTONAME
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
@@ -3346,5 +3369,6 @@ INTERCEPTOR(int, getifaddrs, __sanitizer_ifaddrs **ifap) {
   INIT_LISTXATTR;                          \
   INIT_GETXATTR;                           \
   INIT_GETRESID;                           \
-  INIT_GETIFADDRS;
+  INIT_GETIFADDRS;                         \
+  INIT_IF_INDEXTONAME;
 /**/
