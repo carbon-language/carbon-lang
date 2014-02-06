@@ -248,7 +248,7 @@ private:
 /// callees, de-duplicate and provide fast testing of whether a function is
 /// a callee, and facilitate iteration of child nodes in the graph.
 class LazyCallGraph::Node {
-  friend LazyCallGraph;
+  friend class LazyCallGraph;
 
   LazyCallGraph &G;
   Function &F;

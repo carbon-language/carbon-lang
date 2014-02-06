@@ -115,9 +115,9 @@ LazyCallGraph::LazyCallGraph(Module &M) : M(M) {
 
 LazyCallGraph::LazyCallGraph(const LazyCallGraph &G)
     : M(G.M), EntryNodeSet(G.EntryNodeSet) {
-  EntryNodes.reserve(EntryNodes.size());
-  for (NodeVectorImplT::iterator EI = EntryNodes.begin(),
-                                 EE = EntryNodes.end();
+  EntryNodes.reserve(G.EntryNodes.size());
+  for (NodeVectorImplT::const_iterator EI = G.EntryNodes.begin(),
+                                       EE = G.EntryNodes.end();
        EI != EE; ++EI)
     if (Function *Callee = EI->dyn_cast<Function *>())
       EntryNodes.push_back(Callee);
@@ -132,12 +132,14 @@ LazyCallGraph::LazyCallGraph(const LazyCallGraph &G)
 LazyCallGraph::LazyCallGraph(LazyCallGraph &&G)
     : M(G.M), EntryNodes(std::move(G.EntryNodes)),
       EntryNodeSet(std::move(G.EntryNodeSet)) {
-  // Loop over our EntryNodes. They've been moved from another graph, but we
-  // need to move the Node*s to live under our bump ptr allocator.
-  for (NodeVectorImplT::iterator EI = EntryNodes.begin(), EE = EntryNodes.end();
+  // Loop over our EntryNodes. They've been moved from another graph, so we
+  // need to move the Node*s to live under our bump ptr allocator. We can just
+  // do this in-place.
+  for (NodeVectorImplT::iterator EI = EntryNodes.begin(),
+                                 EE = EntryNodes.end();
        EI != EE; ++EI)
     if (Node *EntryN = EI->dyn_cast<Node *>())
-      *EI = G.moveInto(std::move(*EntryN));
+      *EI = moveInto(std::move(*EntryN));
 }
 #endif
 
