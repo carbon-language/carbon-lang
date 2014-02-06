@@ -21,6 +21,7 @@
 #include "LiveDebugVariables.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SparseSet.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -160,6 +161,7 @@ class VirtRegRewriter : public MachineFunctionPass {
   SlotIndexes *Indexes;
   LiveIntervals *LIS;
   VirtRegMap *VRM;
+  SparseSet<unsigned> PhysRegs;
 
   void rewrite();
   void addMBBLiveIns();
@@ -267,6 +269,15 @@ void VirtRegRewriter::rewrite() {
   SmallVector<unsigned, 8> SuperKills;
   SmallPtrSet<const MachineInstr *, 4> NoReturnInsts;
 
+  // Here we have a SparseSet to hold which PhysRegs are actually encountered
+  // in the MF we are about to iterate over so that later when we call
+  // setPhysRegUsed, we are only doing it for physRegs that were actually found
+  // in the program and not for all of the possible physRegs for the given
+  // target architecture. If the target has a lot of physRegs, then for a small
+  // program there will be a significant compile time reduction here.
+  PhysRegs.clear();
+  PhysRegs.setUniverse(TRI->getNumRegs());
+
   for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
        MBBI != MBBE; ++MBBI) {
     DEBUG(MBBI->print(dbgs(), Indexes));
@@ -302,6 +313,15 @@ void VirtRegRewriter::rewrite() {
         // Make sure MRI knows about registers clobbered by regmasks.
         if (MO.isRegMask())
           MRI->addPhysRegsUsedFromRegMask(MO.getRegMask());
+
+        // If we encounter a VirtReg or PhysReg then get at the PhysReg and add
+        // it to the physreg bitset.  Later we use only the PhysRegs that were
+        // actually encountered in the MF to populate the MRI's used physregs.
+        if (MO.isReg() && MO.getReg())
+          PhysRegs.insert(
+              TargetRegisterInfo::isVirtualRegister(MO.getReg()) ?
+              VRM->getPhys(MO.getReg()) :
+              MO.getReg());
 
         if (!MO.isReg() || !TargetRegisterInfo::isVirtualRegister(MO.getReg()))
           continue;
@@ -376,11 +396,14 @@ void VirtRegRewriter::rewrite() {
 
   // Tell MRI about physical registers in use.
   if (NoReturnInsts.empty()) {
-    for (unsigned Reg = 1, RegE = TRI->getNumRegs(); Reg != RegE; ++Reg)
-      if (!MRI->reg_nodbg_empty(Reg))
-        MRI->setPhysRegUsed(Reg);
+    for (SparseSet<unsigned>::iterator
+        RegI = PhysRegs.begin(), E = PhysRegs.end(); RegI != E; ++RegI)
+      if (!MRI->reg_nodbg_empty(*RegI))
+        MRI->setPhysRegUsed(*RegI);
   } else {
-    for (unsigned Reg = 1, RegE = TRI->getNumRegs(); Reg != RegE; ++Reg) {
+    for (SparseSet<unsigned>::iterator
+        I = PhysRegs.begin(), E = PhysRegs.end(); I != E; ++I) {
+      unsigned Reg = *I;
       if (MRI->reg_nodbg_empty(Reg))
         continue;
       // Check if this register has a use that will impact the rest of the
@@ -397,3 +420,4 @@ void VirtRegRewriter::rewrite() {
     }
   }
 }
+
