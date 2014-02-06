@@ -10,6 +10,7 @@ struct S             { int a, b; void f(); virtual void g(); };
 struct M : A, B      { int a, b; void f(); virtual void g(); };
 struct V : virtual A { int a, b; void f(); virtual void g(); };
 struct U             { int a, b; void f(); virtual void g(); };
+struct I             { union { struct { int a, b; }; }; void f(); virtual void g(); };
 
 struct C        { virtual void f(); };
 struct D        { virtual void g(); };
@@ -27,10 +28,12 @@ void ReadFields() {
   M m;
   V v;
   U u;
+  ReadField<I, &S::a>(s);
   ReadField<S, &S::a>(s);
   ReadField<M, &M::a>(m);
   ReadField<V, &V::a>(v);
   ReadField<U, &U::a>(u);
+  ReadField<I, &S::b>(s);
   ReadField<S, &S::b>(s);
   ReadField<M, &M::b>(m);
   ReadField<V, &V::b>(v);
@@ -46,10 +49,12 @@ void ReadFields() {
 }
 
 // CHECK-LABEL: define {{.*}}ReadFields
+// CHECK: call {{.*}} @"\01??$ReadField@UI@@$03@@YAHAAUS@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@US@@$03@@YAHAAUS@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UM@@$0M@@@YAHAAUM@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UV@@$F7A@@@YAHAAUV@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UU@@$G3A@A@@@YAHAAUU@@@Z"
+// CHECK: call {{.*}} @"\01??$ReadField@UI@@$07@@YAHAAUS@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@US@@$07@@YAHAAUS@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UM@@$0BA@@@YAHAAUM@@@Z"
 // CHECK: call {{.*}} @"\01??$ReadField@UV@@$FM@A@@@YAHAAUV@@@Z"

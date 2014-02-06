@@ -122,7 +122,7 @@ public:
   void mangleDeclaration(const NamedDecl *ND);
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleVariableEncoding(const VarDecl *VD);
-  void mangleMemberDataPointer(const CXXRecordDecl *RD, const FieldDecl *FD);
+  void mangleMemberDataPointer(const CXXRecordDecl *RD, const ValueDecl *VD);
   void mangleMemberFunctionPointer(const CXXRecordDecl *RD,
                                    const CXXMethodDecl *MD);
   void mangleVirtualMemPtrThunk(
@@ -378,7 +378,7 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
 }
 
 void MicrosoftCXXNameMangler::mangleMemberDataPointer(const CXXRecordDecl *RD,
-                                                      const FieldDecl *FD) {
+                                                      const ValueDecl *VD) {
   // <member-data-pointer> ::= <integer-literal>
   //                       ::= $F <number> <number>
   //                       ::= $G <number> <number> <number>
@@ -386,8 +386,8 @@ void MicrosoftCXXNameMangler::mangleMemberDataPointer(const CXXRecordDecl *RD,
   int64_t FieldOffset;
   int64_t VBTableOffset;
   MSInheritanceAttr::Spelling IM = RD->getMSInheritanceModel();
-  if (FD) {
-    FieldOffset = getASTContext().getFieldOffset(FD);
+  if (VD) {
+    FieldOffset = getASTContext().getFieldOffset(VD);
     assert(FieldOffset % getASTContext().getCharWidth() == 0 &&
            "cannot take address of bitfield");
     FieldOffset /= getASTContext().getCharWidth();
@@ -1083,8 +1083,9 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
   }
   case TemplateArgument::Declaration: {
     const NamedDecl *ND = cast<NamedDecl>(TA.getAsDecl());
-    if (const FieldDecl *FD = dyn_cast<FieldDecl>(ND)) {
-      mangleMemberDataPointer(cast<CXXRecordDecl>(FD->getParent()), FD);
+    if (isa<FieldDecl>(ND) || isa<IndirectFieldDecl>(ND)) {
+      mangleMemberDataPointer(cast<CXXRecordDecl>(ND->getDeclContext()),
+                              cast<ValueDecl>(ND));
     } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
       const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
       if (MD && MD->isInstance())
