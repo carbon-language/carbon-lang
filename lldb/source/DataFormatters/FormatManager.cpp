@@ -821,6 +821,24 @@ static void AddCXXSynthetic  (TypeCategoryImpl::SharedPointer category_sp,
 }
 #endif
 
+#ifndef LLDB_DISABLE_PYTHON
+static void AddFilter  (TypeCategoryImpl::SharedPointer category_sp,
+                        std::vector<std::string> children,
+                        const char* description,
+                        ConstString type_name,
+                        ScriptedSyntheticChildren::Flags flags,
+                        bool regex = false)
+{
+    TypeFilterImplSP filter_sp(new TypeFilterImpl(flags));
+    for (auto child : children)
+        filter_sp->AddExpressionPath(child);
+    if (regex)
+        category_sp->GetRegexTypeFiltersContainer()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())), filter_sp);
+    else
+        category_sp->GetTypeFiltersContainer()->Add(type_name,filter_sp);
+}
+#endif
+
 void
 FormatManager::LoadLibStdcppFormatters()
 {
@@ -971,6 +989,7 @@ FormatManager::LoadLibcxxFormatters()
     
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEndCreator, "std::map iterator synthetic children", ConstString("^std::__1::__map_iterator<.+>$"), stl_synth_flags, true);
     
+    AddFilter(libcxx_category_sp, {"__a_"}, "libc++ std::atomic filter", ConstString("^std::__1::atomic<.*>$"), stl_synth_flags, true);
 #endif
 }
 
