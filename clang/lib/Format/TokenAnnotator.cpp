@@ -986,6 +986,8 @@ private:
       else if (Current->is(tok::semi) || Current->Type == TT_InlineASMColon ||
                Current->Type == TT_ObjCSelectorName)
         return 0;
+      else if (Current->Type == TT_RangeBasedForLoopColon)
+        return prec::Comma;
       else if (Current->Type == TT_BinaryOperator || Current->is(tok::comma))
         return Current->getPrecedence();
       else if (Current->isOneOf(tok::period, tok::arrow))
