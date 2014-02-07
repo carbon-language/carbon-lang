@@ -198,4 +198,7 @@ struct __multiple_inheritance B; // expected-error{{inheritance model does not m
 
 struct __multiple_inheritance C {}; // expected-error{{inheritance model does not match definition}}
  // expected-note@-1 {{C defined here}}
+
+struct __virtual_inheritance D;
+struct D : virtual B {};
 }

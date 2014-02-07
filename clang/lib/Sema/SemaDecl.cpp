@@ -12150,7 +12150,7 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
     if (Record->hasAttrs()) {
       CheckAlignasUnderalignment(Record);
 
-      if (MSInheritanceAttr *IA = Record->getAttr<MSInheritanceAttr>())
+      if (const MSInheritanceAttr *IA = Record->getAttr<MSInheritanceAttr>())
         checkMSInheritanceAttrOnDefinition(cast<CXXRecordDecl>(Record),
                                            IA->getRange(),
                                            IA->getSemanticSpelling());

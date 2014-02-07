@@ -2877,16 +2877,23 @@ bool Sema::checkMSInheritanceAttrOnDefinition(
     MSInheritanceAttr::Spelling SemanticSpelling) {
   assert(RD->hasDefinition() && "RD has no definition!");
 
-  if (SemanticSpelling != MSInheritanceAttr::Keyword_unspecified_inheritance &&
-      RD->calculateInheritanceModel() != SemanticSpelling) {
-    Diag(Range.getBegin(), diag::err_mismatched_ms_inheritance)
-        << 0 /*definition*/;
-    Diag(RD->getDefinition()->getLocation(), diag::note_defined_here)
-        << RD->getNameAsString();
-    return true;
-  }
+  // We may not have seen base specifiers or any virtual methods yet.  We will
+  // have to wait until the record is defined to catch any mismatches.
+  if (!RD->getDefinition()->isCompleteDefinition())
+    return false;
 
-  return false;
+  // The unspecified model never matches what a definition could need.
+  if (SemanticSpelling == MSInheritanceAttr::Keyword_unspecified_inheritance)
+    return false;
+
+  if (RD->calculateInheritanceModel() == SemanticSpelling)
+    return false;
+
+  Diag(Range.getBegin(), diag::err_mismatched_ms_inheritance)
+      << 0 /*definition*/;
+  Diag(RD->getDefinition()->getLocation(), diag::note_defined_here)
+      << RD->getNameAsString();
+  return true;
 }
 
 /// handleModeAttr - This attribute modifies the width of a decl with primitive
