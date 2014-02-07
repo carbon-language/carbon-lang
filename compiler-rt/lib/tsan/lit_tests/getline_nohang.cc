@@ -1,4 +1,4 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && TSAN_OPTIONS=report_thread_leaks=0 %t
+// RUN: %clangxx_tsan -O1 %s -o %t && %t
 
 // Make sure TSan doesn't deadlock on a file stream lock at program shutdown.
 // See https://code.google.com/p/thread-sanitizer/issues/detail?id=47
@@ -22,7 +22,14 @@ void *thread(void *unused) {
 
 int main() {
   pthread_t t;
-  pthread_create(&t, NULL, thread, NULL);
+  pthread_attr_t a;
+  pthread_attr_init(&a);
+  pthread_attr_setdetachstate(&a, PTHREAD_CREATE_DETACHED);
+  pthread_create(&t, &a, thread, NULL);
+  pthread_attr_destroy(&a);
+  fprintf(stderr, "DONE\n");
   return 0;
   // ThreadSanitizer used to hang here because of a deadlock on a file stream.
 }
+
+// CHECK: DONE
