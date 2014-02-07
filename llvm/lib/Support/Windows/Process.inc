@@ -363,7 +363,7 @@ const char *Process::ResetColor() {
 
 unsigned Process::GetRandomNumber() {
   unsigned int result;
-  const errno_t ec = rand_s(&result);
+  const int ec = rand_s(&result);
   assert(ec == 0 && "rand_s failed");
   return result;
 }
