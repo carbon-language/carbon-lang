@@ -1012,7 +1012,7 @@ num_get<_CharT, _InputIterator>::__do_get_signed(iter_type __b, iter_type __e,
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
     {
-        if (__a_end - __a == __buf.size())
+        if (__a_end == __a + __buf.size())
         {
             size_t __tmp = __buf.size();
             __buf.resize(2*__buf.size());
@@ -1062,7 +1062,7 @@ num_get<_CharT, _InputIterator>::__do_get_unsigned(iter_type __b, iter_type __e,
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
     {
-        if (__a_end - __a == __buf.size())
+        if (__a_end == __a + __buf.size())
         {
             size_t __tmp = __buf.size();
             __buf.resize(2*__buf.size());
@@ -1116,7 +1116,7 @@ num_get<_CharT, _InputIterator>::__do_get_floating_point(iter_type __b, iter_typ
     char __exp = 'E';
     for (; __b != __e; ++__b)
     {
-        if (__a_end - __a == __buf.size())
+        if (__a_end == __a + __buf.size())
         {
             size_t __tmp = __buf.size();
             __buf.resize(2*__buf.size());
@@ -1166,7 +1166,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     unsigned __dc = 0;
     for (; __b != __e; ++__b)
     {
-        if (__a_end - __a == __buf.size())
+        if (__a_end == __a + __buf.size())
         {
             size_t __tmp = __buf.size();
             __buf.resize(2*__buf.size());
