@@ -119,7 +119,9 @@ public:
     ParseHeader();
 
     virtual bool
-    SetLoadAddress(lldb_private::Target &target, lldb::addr_t base_addr);
+    SetLoadAddress (lldb_private::Target &target,
+                    lldb::addr_t value,
+                    bool value_is_offset);
 
     virtual lldb::ByteOrder
     GetByteOrder() const;

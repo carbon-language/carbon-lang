@@ -2499,7 +2499,7 @@ SBTarget::SetModuleLoadAddress (lldb::SBModule module, int64_t slide_offset)
         if (module_sp)
         {
             bool changed = false;
-            if (module_sp->SetLoadAddress (*target_sp, slide_offset, changed))
+            if (module_sp->SetLoadAddress (*target_sp, slide_offset, true, changed))
             {
                 // The load was successful, make sure that at least some sections
                 // changed before we notify that our module was loaded.

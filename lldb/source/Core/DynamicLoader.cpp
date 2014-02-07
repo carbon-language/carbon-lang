@@ -128,7 +128,8 @@ void
 DynamicLoader::UpdateLoadedSectionsCommon(ModuleSP module, addr_t base_addr)
 {
     bool changed;
-    module->SetLoadAddress(m_process->GetTarget(), base_addr, changed);
+    const bool base_addr_is_offset = true;
+    module->SetLoadAddress(m_process->GetTarget(), base_addr, base_addr_is_offset, changed);
 }
 
 void

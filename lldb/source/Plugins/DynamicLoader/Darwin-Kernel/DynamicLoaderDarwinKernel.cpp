@@ -542,7 +542,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageAtFileAddress (Process *proce
     if (m_module_sp)
     {
         bool changed = false;
-        if (m_module_sp->SetLoadAddress (process->GetTarget(), 0, changed))
+        if (m_module_sp->SetLoadAddress (process->GetTarget(), 0, true, changed))
             m_load_process_stop_id = process->GetStopID();
     }
     return false;

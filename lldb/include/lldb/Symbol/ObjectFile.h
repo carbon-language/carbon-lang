@@ -458,7 +458,9 @@ public:
     ///     Returns true iff any section's load address changed.
     //------------------------------------------------------------------
     virtual bool
-    SetLoadAddress(Target &target, lldb::addr_t base_addr)
+    SetLoadAddress(Target &target,
+                   lldb::addr_t value,
+                   bool value_is_offset)
     {
         return false;
     }

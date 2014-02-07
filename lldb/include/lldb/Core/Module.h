@@ -113,10 +113,18 @@ public:
     /// @param[in] target
     ///     The target in which to apply the section load addresses.
     ///
-    /// @param[in] offset
-    ///     The offset to apply to all file addresses for all top 
-    ///     level sections in the object file as each section load
-    ///     address is being set.
+    /// @param[in] value
+    ///     if \a value_is_offset is true, then value is the offset to
+    ///     apply to all file addresses for all top level sections in
+    ///     the object file as each section load address is being set.
+    ///     If \a value_is_offset is false, then "value" is the new
+    ///     absolute base address for the image.
+    ///
+    /// @param[in] value_is_offset
+    ///     If \b true, then \a value is an offset to apply to each
+    ///     file address of each top level section.
+    ///     If \b false, then \a value is the image base address that
+    ///     will be used to rigidly slide all loadable sections.
     ///
     /// @param[out] changed
     ///     If any section load addresses were changed in \a target,
@@ -133,7 +141,8 @@ public:
     //------------------------------------------------------------------
     bool
     SetLoadAddress (Target &target, 
-                    lldb::addr_t offset, 
+                    lldb::addr_t value,
+                    bool value_is_offset,
                     bool &changed);
     
     //------------------------------------------------------------------

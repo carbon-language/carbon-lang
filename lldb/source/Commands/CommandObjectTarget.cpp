@@ -2894,7 +2894,8 @@ protected:
                                     if (m_slide_option.GetOptionValue().OptionWasSet())
                                     {
                                         const addr_t slide = m_slide_option.GetOptionValue().GetCurrentValue();
-                                        module->SetLoadAddress (*target, slide, changed);
+                                        const bool slide_is_offset = true;
+                                        module->SetLoadAddress (*target, slide, slide_is_offset, changed);
                                     }
                                     else
                                     {

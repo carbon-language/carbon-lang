@@ -464,7 +464,9 @@ ObjectFileELF::IsExecutable() const
 }
 
 bool
-ObjectFileELF::SetLoadAddress(Target &target, addr_t base_addr)
+ObjectFileELF::SetLoadAddress (Target &target,
+                               lldb::addr_t value,
+                               bool value_is_offset)
 {
     bool changed = false;
     ModuleSP module_sp = GetModule();
@@ -474,23 +476,32 @@ ObjectFileELF::SetLoadAddress(Target &target, addr_t base_addr)
         SectionList *section_list = GetSectionList ();
         if (section_list)
         {
-            const size_t num_sections = section_list->GetSize();
-            size_t sect_idx = 0;
-            for (sect_idx = 0; sect_idx < num_sections; ++sect_idx)
+            if (value_is_offset)
             {
-                // Iterate through the object file sections to find all
-                // of the sections that have SHF_ALLOC in their flag bits.
-                SectionSP section_sp (section_list->GetSectionAtIndex (sect_idx));
-                // if (section_sp && !section_sp->IsThreadSpecific())
-                if (section_sp && section_sp->Test(SHF_ALLOC))
+                const size_t num_sections = section_list->GetSize();
+                size_t sect_idx = 0;
+                
+                for (sect_idx = 0; sect_idx < num_sections; ++sect_idx)
                 {
-                    if (target.GetSectionLoadList().SetSectionLoadAddress (section_sp, section_sp->GetFileAddress() + base_addr))
-                        ++num_loaded_sections;
+                    // Iterate through the object file sections to find all
+                    // of the sections that have SHF_ALLOC in their flag bits.
+                    SectionSP section_sp (section_list->GetSectionAtIndex (sect_idx));
+                    // if (section_sp && !section_sp->IsThreadSpecific())
+                    if (section_sp && section_sp->Test(SHF_ALLOC))
+                    {
+                        if (target.GetSectionLoadList().SetSectionLoadAddress (section_sp, section_sp->GetFileAddress() + value))
+                            ++num_loaded_sections;
+                    }
                 }
+                changed = num_loaded_sections > 0;
+                return num_loaded_sections > 0;
+            }
+            else
+            {
+                // Not sure how to slide an ELF file given the base address
+                // of the ELF file in memory
             }
         }
-        changed = num_loaded_sections > 0;
-        return num_loaded_sections > 0;
     }
     return changed;
 }

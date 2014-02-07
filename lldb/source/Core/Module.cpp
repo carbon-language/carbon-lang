@@ -1500,12 +1500,12 @@ Module::SetArchitecture (const ArchSpec &new_arch)
 }
 
 bool 
-Module::SetLoadAddress (Target &target, lldb::addr_t offset, bool &changed)
+Module::SetLoadAddress (Target &target, lldb::addr_t value, bool value_is_offset, bool &changed)
 {
     ObjectFile *object_file = GetObjectFile();
     if (object_file)
     {
-        changed = object_file->SetLoadAddress(target, offset);
+        changed = object_file->SetLoadAddress(target, value, value_is_offset);
         return true;
     }
     else
