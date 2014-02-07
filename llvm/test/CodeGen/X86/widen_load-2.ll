@@ -149,9 +149,9 @@ define void @add31i8(%i8vec31* nocapture sret %ret, %i8vec31* %ap, %i8vec31* %bp
 ; CHECK: movdqa
 ; CHECK: paddb
 ; CHECK: paddb
-; CHECK: movq
 ; CHECK: pextrb
 ; CHECK: pextrw
+; CHECK: movq
 ; CHECK: ret
 	%a = load %i8vec31* %ap, align 16
 	%b = load %i8vec31* %bp, align 16

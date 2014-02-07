@@ -494,11 +494,6 @@ is memory.
 
 //===---------------------------------------------------------------------===//
 
-SSE4 extract-to-mem ops aren't being pattern matched because of the AssertZext
-sitting between the truncate and the extract.
-
-//===---------------------------------------------------------------------===//
-
 INSERTPS can match any insert (extract, imm1), imm2 for 4 x float, and insert
 any number of 0.0 simultaneously.  Currently we only use it for simple
 insertions.

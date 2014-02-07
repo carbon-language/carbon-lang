@@ -64,11 +64,6 @@ def Neon_vextract : SDNode<"AArch64ISD::NEON_VEXTRACT", SDTypeProfile<1, 3,
                            [SDTCisVec<0>,  SDTCisSameAs<0, 1>,
                            SDTCisSameAs<0, 2>, SDTCisVT<3, i64>]>>;
 
-def SDT_assertext : SDTypeProfile<1, 1,
-  [SDTCisInt<0>, SDTCisInt<1>, SDTCisSameAs<1, 0>]>;
-def assertsext : SDNode<"ISD::AssertSext", SDT_assertext>;
-def assertzext : SDNode<"ISD::AssertZext", SDT_assertext>;
-
 //===----------------------------------------------------------------------===//
 // Addressing-mode instantiations
 //===----------------------------------------------------------------------===//
