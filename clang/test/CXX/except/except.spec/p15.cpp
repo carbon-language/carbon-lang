@@ -1,16 +1,20 @@
 // RUN: %clang_cc1 -std=c++11 -fexceptions -fcxx-exceptions -fsyntax-only -verify %s
+// RUN: %clang_cc1 -DUSE -std=c++11 -fexceptions -fcxx-exceptions -fsyntax-only -verify %s
+
+// Maybe force the implicit declaration of 'operator delete' and 'operator
+// delete[]'. This should make no difference to anything!
+#ifdef USE
+void f(int *p) {
+  delete p;
+  delete [] p;
+}
+#endif
 
 // Deallocation functions are implicitly noexcept.
 // Thus, explicit specs aren't allowed to conflict.
 
-void f() {
-  // Force implicit declaration of delete.
-  delete new int;
-  delete[] new int[1];
-}
-
-void operator delete(void*);
-void operator delete[](void*);
+void operator delete(void*); // expected-warning {{function previously declared with an explicit exception specification redeclared with an implicit exception specification}}
+void operator delete[](void*); // expected-warning {{function previously declared with an explicit exception specification redeclared with an implicit exception specification}}
 
 static_assert(noexcept(operator delete(0)), "");
 static_assert(noexcept(operator delete[](0)), "");

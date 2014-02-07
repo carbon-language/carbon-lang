@@ -83,4 +83,4 @@ S::S() __attribute((pure)) = default;
 
 using size_t = decltype(sizeof(0));
 void *operator new(size_t) = delete; // expected-error {{deleted definition must be first declaration}} expected-note {{implicit}}
-void operator delete(void *) = delete; // expected-error {{deleted definition must be first declaration}} expected-note {{implicit}}
+void operator delete(void *) noexcept = delete; // expected-error {{deleted definition must be first declaration}} expected-note {{implicit}}

@@ -140,10 +140,13 @@ static bool hasImplicitExceptionSpec(FunctionDecl *Decl) {
       Decl->getDeclName().getCXXOverloadedOperator() != OO_Array_Delete)
     return false;
 
-  // If the user didn't declare the function, its exception specification must
-  // be implicit.
+  // For a function that the user didn't declare:
+  //  - if this is a destructor, its exception specification is implicit.
+  //  - if this is 'operator delete' or 'operator delete[]', the exception
+  //    specification is as-if an explicit exception specification was given
+  //    (per [basic.stc.dynamic]p2).
   if (!Decl->getTypeSourceInfo())
-    return true;
+    return isa<CXXDestructorDecl>(Decl);
 
   const FunctionProtoType *Ty =
     Decl->getTypeSourceInfo()->getType()->getAs<FunctionProtoType>();
