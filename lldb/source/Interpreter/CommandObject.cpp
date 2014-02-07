@@ -261,13 +261,7 @@ CommandObject::CheckRequirements (CommandReturnObject &result)
         {
             Target *target = m_exe_ctx.GetTargetPtr();
             if (target)
-            {
-                if (m_api_locker.TryLock (target->GetAPIMutex(), NULL) == false)
-                {
-                    result.AppendError ("failed to get API lock");
-                    return false;
-                }
-            }
+                m_api_locker.Lock (target->GetAPIMutex());
         }
     }
 
