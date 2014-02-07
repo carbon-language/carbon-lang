@@ -6263,6 +6263,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_TAG_subprogram:
                                 case DW_TAG_member:
                                 case DW_TAG_APPLE_property:
+                                case DW_TAG_class_type:
+                                case DW_TAG_structure_type:
+                                case DW_TAG_enumeration_type:
+                                case DW_TAG_typedef:
+                                case DW_TAG_union_type:
                                     child_die = NULL;
                                     is_forward_declaration = false;
                                     break;
