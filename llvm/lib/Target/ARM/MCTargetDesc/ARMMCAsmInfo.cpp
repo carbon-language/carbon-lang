@@ -16,14 +16,6 @@
 
 using namespace llvm;
 
-// ARM EHABI is experimental but the quality is good enough
-// to be turned on by default on non-Darwin ARM targets.
-cl::opt<bool>
-DisableARMEHABI("arm-disable-ehabi", cl::Hidden,
-  cl::desc("Disable ARM experimental exception handling"),
-  cl::init(false));
-
-
 void ARMMCAsmInfoDarwin::anchor() { }
 
 ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() {
@@ -54,8 +46,7 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
   SupportsDebugInformation = true;
 
   // Exceptions handling
-  if (!DisableARMEHABI)
-    ExceptionsType = ExceptionHandling::ARM;
+  ExceptionsType = ExceptionHandling::ARM;
 
   // foo(plt) instead of foo@plt
   UseParensForSymbolVariant = true;

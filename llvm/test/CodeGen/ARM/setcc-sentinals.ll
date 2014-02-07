@@ -1,7 +1,8 @@
-; RUN: llc < %s -mcpu=cortex-a8 -march=arm -asm-verbose=false -arm-disable-ehabi | FileCheck %s
+; RUN: llc < %s -mcpu=cortex-a8 -march=arm -asm-verbose=false | FileCheck %s
 
 define zeroext i1 @test0(i32 %x) nounwind {
 ; CHECK-LABEL: test0:
+; CHECK-NEXT: .fnstart
 ; CHECK-NEXT: add [[REG:(r[0-9]+)|(lr)]], r0, #1
 ; CHECK-NEXT: mov r0, #0
 ; CHECK-NEXT: cmp [[REG]], #1
