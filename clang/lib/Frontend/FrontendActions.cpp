@@ -326,11 +326,22 @@ ASTConsumer *VerifyPCHAction::CreateASTConsumer(CompilerInstance &CI,
 }
 
 void VerifyPCHAction::ExecuteAction() {
-  getCompilerInstance().
-    createPCHExternalASTSource(getCurrentFile(), /*DisablePCHValidation*/false,
-                               /*AllowPCHWithCompilerErrors*/false,
-                               /*AllowConfigurationMismatch*/true,
-                               /*DeserializationListener*/0);
+  CompilerInstance &CI = getCompilerInstance();
+  bool Preamble = CI.getPreprocessorOpts().PrecompiledPreambleBytes.first != 0;
+  const std::string &Sysroot = CI.getHeaderSearchOpts().Sysroot;
+  OwningPtr<ASTReader> Reader(new ASTReader(
+    CI.getPreprocessor(), CI.getASTContext(),
+    Sysroot.empty() ? "" : Sysroot.c_str(),
+    /*DisableValidation*/false,
+    /*AllowPCHWithCompilerErrors*/false,
+    /*AllowConfigurationMismatch*/true,
+    /*ValidateSystemInputs*/true));
+
+  Reader->ReadAST(getCurrentFile(),
+                  Preamble ? serialization::MK_Preamble
+                           : serialization::MK_PCH,
+                  SourceLocation(),
+                  ASTReader::ARR_ConfigurationMismatch);
 }
 
 namespace {
