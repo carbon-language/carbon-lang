@@ -15,35 +15,37 @@ define void @bar() {
 }
 
 ; CHECK: L_foo:                                   ## @foo
+; CHECK-NEXT: Ltmp0:
 
 ; CHECK: _bar:                                   ## @bar
-; CHECK-NEXT: Ltmp2:
+; CHECK-NEXT: Ltmp3:
 
 ; CHECK: ## FDE CIE Offset
 ; CHECK-NEXT: .long
 ; CHECK-NEXT: Ltmp[[NUM1:[0-9]*]]:
-; CHECK-NEXT: Ltmp[[NUM2:[0-9]*]] = L_foo-Ltmp[[NUM1]]   ## FDE initial location
+; CHECK-NEXT: Ltmp[[NUM2:[0-9]*]] = Ltmp0-Ltmp[[NUM1]]   ## FDE initial location
 ; CHECK-NEXT: {{.quad|.long}}   Ltmp[[NUM2]]
 
 
 ; CHECK: ## FDE CIE Offset
 ; CHECK-NEXT: .long
 ; CHECK-NEXT: Ltmp[[NUM1:[0-9]*]]:
-; CHECK-NEXT: Ltmp[[NUM2:[0-9]*]] = Ltmp2-Ltmp[[NUM1]]   ## FDE initial location
+; CHECK-NEXT: Ltmp[[NUM2:[0-9]*]] = Ltmp3-Ltmp[[NUM1]]   ## FDE initial location
 ; CHECK-NEXT: {{.quad|.long}}   Ltmp[[NUM2]]
 
 
 ; OLD: L_foo:                                   ## @foo
+; OLD-NEXT: Ltmp0:
 
 ; OLD: _bar:                                   ## @bar
-; OLD-NEXT: Ltmp2:
+; OLD-NEXT: Ltmp3:
 
 ; OLD: ## FDE CIE Offset
 ; OLD-NEXT: .long
 ; OLD-NEXT: Ltmp[[NUM1:[0-9]*]]:
-; OLD-NEXT: {{.quad|.long}} L_foo-Ltmp[[NUM1]]          ## FDE initial location
+; OLD-NEXT: {{.quad|.long}} Ltmp0-Ltmp[[NUM1]]          ## FDE initial location
 
 ; OLD: ## FDE CIE Offset
 ; OLD-NEXT: .long
 ; OLD-NEXT: Ltmp[[NUM1:[0-9]*]]:
-; OLD-NEXT: {{.quad|.long}} Ltmp2-Ltmp[[NUM1]]          ## FDE initial location
+; OLD-NEXT: {{.quad|.long}} Ltmp3-Ltmp[[NUM1]]          ## FDE initial location
