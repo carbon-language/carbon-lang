@@ -245,6 +245,18 @@ static bool canBeHidden(const GlobalValue *GV, const MCAsmInfo &MAI) {
   if (GV->hasUnnamedAddr())
     return true;
 
+  // This is only used for MachO, so right now it doesn't really matter how
+  // we handle alias. Revisit this once the MachO linker implements aliases.
+  if (isa<GlobalAlias>(GV))
+    return false;
+
+  // If it is a non constant variable, it needs to be uniqued across shared
+  // objects.
+  if (const GlobalVariable *Var = dyn_cast<GlobalVariable>(GV)) {
+    if (!Var->isConstant())
+      return false;
+  }
+
   GlobalStatus GS;
   if (!GlobalStatus::analyzeGlobal(GV, GS) && !GS.IsCompared)
     return true;
