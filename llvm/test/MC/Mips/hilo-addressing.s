@@ -36,7 +36,7 @@ $L3:
 # CHECK-INSTR:    lw      $5, -8($5)
 
 
-# Check that relocation is not emitted for %hi(label1 - label2) and
+# Check that relocation isn't emitted for %hi(label1 - label2) and
 # %lo(label1 - label2) expressions.
 
 # CHECK-REL-NOT:    R_MIPS
