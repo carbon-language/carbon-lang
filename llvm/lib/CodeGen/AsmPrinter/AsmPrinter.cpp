@@ -234,6 +234,24 @@ bool AsmPrinter::doInitialization(Module &M) {
   return false;
 }
 
+static bool canBeHidden(const GlobalValue *GV, const MCAsmInfo &MAI) {
+  GlobalValue::LinkageTypes Linkage = GV->getLinkage();
+  if (Linkage != GlobalValue::LinkOnceODRLinkage)
+    return false;
+
+  if (!MAI.hasWeakDefCanBeHiddenDirective())
+    return false;
+
+  if (GV->hasUnnamedAddr())
+    return true;
+
+  GlobalStatus GS;
+  if (!GlobalStatus::analyzeGlobal(GV, GS) && !GS.IsCompared)
+    return true;
+
+  return false;
+}
+
 void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
   GlobalValue::LinkageTypes Linkage = GV->getLinkage();
   switch (Linkage) {
@@ -247,20 +265,7 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
 
-      bool CanBeHidden = false;
-
-      if (Linkage == GlobalValue::LinkOnceODRLinkage &&
-          MAI->hasWeakDefCanBeHiddenDirective()) {
-        if (GV->hasUnnamedAddr()) {
-          CanBeHidden = true;
-        } else {
-          GlobalStatus GS;
-          if (!GlobalStatus::analyzeGlobal(GV, GS) && !GS.IsCompared)
-            CanBeHidden = true;
-        }
-      }
-
-      if (!CanBeHidden)
+      if (!canBeHidden(GV, *MAI))
         // .weak_definition _foo
         OutStreamer.EmitSymbolAttribute(GVSym, MCSA_WeakDefinition);
       else
