@@ -2603,11 +2603,10 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
 
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
   ASTUnit *TU = ASTUnit::LoadFromASTFile(ast_filename, Diags, FileSystemOpts,
-                                  CXXIdx->getOnlyLocalDecls(),
-                                  0, 0,
-                                  /*CaptureDiagnostics=*/true,
-                                  /*AllowPCHWithCompilerErrors=*/true,
-                                  /*UserFilesAreVolatile=*/true);
+                                         CXXIdx->getOnlyLocalDecls(), None,
+                                         /*CaptureDiagnostics=*/true,
+                                         /*AllowPCHWithCompilerErrors=*/true,
+                                         /*UserFilesAreVolatile=*/true);
   return MakeCXTranslationUnit(CXXIdx, TU);
 }
 
@@ -2745,8 +2744,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                  CXXIdx->getClangResourcesPath(),
                                  CXXIdx->getOnlyLocalDecls(),
                                  /*CaptureDiagnostics=*/true,
-                                 RemappedFiles->size() ? &(*RemappedFiles)[0]:0,
-                                 RemappedFiles->size(),
+                                 *RemappedFiles.get(),
                                  /*RemappedFilesKeepOriginalName=*/true,
                                  PrecompilePreamble,
                                  TUKind,
@@ -2953,8 +2951,7 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
                                             Buffer));
   }
   
-  if (!CXXUnit->Reparse(RemappedFiles->size() ? &(*RemappedFiles)[0] : 0,
-                        RemappedFiles->size()))
+  if (!CXXUnit->Reparse(*RemappedFiles.get()))
     RTUI->result = 0;
 }
 

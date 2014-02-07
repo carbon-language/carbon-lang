@@ -695,8 +695,7 @@ public:
                               IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                   const FileSystemOptions &FileSystemOpts,
                                   bool OnlyLocalDecls = false,
-                                  RemappedFile *RemappedFiles = 0,
-                                  unsigned NumRemappedFiles = 0,
+                                  ArrayRef<RemappedFile> RemappedFiles = None,
                                   bool CaptureDiagnostics = false,
                                   bool AllowPCHWithCompilerErrors = false,
                                   bool UserFilesAreVolatile = false);
@@ -798,8 +797,7 @@ public:
                                       StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls = false,
                                       bool CaptureDiagnostics = false,
-                                      RemappedFile *RemappedFiles = 0,
-                                      unsigned NumRemappedFiles = 0,
+                                      ArrayRef<RemappedFile> RemappedFiles = None,
                                       bool RemappedFilesKeepOriginalName = true,
                                       bool PrecompilePreamble = false,
                                       TranslationUnitKind TUKind = TU_Complete,
@@ -816,8 +814,7 @@ public:
   ///
   /// \returns True if a failure occurred that causes the ASTUnit not to
   /// contain any translation-unit information, false otherwise.  
-  bool Reparse(RemappedFile *RemappedFiles = 0,
-               unsigned NumRemappedFiles = 0);
+  bool Reparse(ArrayRef<RemappedFile> RemappedFiles = None);
 
   /// \brief Perform code completion at the given file, line, and
   /// column within this translation unit.
@@ -840,7 +837,7 @@ public:
   /// FIXME: The Diag, LangOpts, SourceMgr, FileMgr, StoredDiagnostics, and
   /// OwnedBuffers parameters are all disgusting hacks. They will go away.
   void CodeComplete(StringRef File, unsigned Line, unsigned Column,
-                    RemappedFile *RemappedFiles, unsigned NumRemappedFiles,
+                    ArrayRef<RemappedFile> RemappedFiles,
                     bool IncludeMacros, bool IncludeCodePatterns,
                     bool IncludeBriefComments,
                     CodeCompleteConsumer &Consumer,

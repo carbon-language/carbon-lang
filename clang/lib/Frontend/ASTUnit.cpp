@@ -680,8 +680,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                               IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                   const FileSystemOptions &FileSystemOpts,
                                   bool OnlyLocalDecls,
-                                  RemappedFile *RemappedFiles,
-                                  unsigned NumRemappedFiles,
+                                  ArrayRef<RemappedFile> RemappedFiles,
                                   bool CaptureDiagnostics,
                                   bool AllowPCHWithCompilerErrors,
                                   bool UserFilesAreVolatile) {
@@ -712,7 +711,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                          AST->ASTFileLangOpts,
                                          /*Target=*/0));
   
-  for (unsigned I = 0; I != NumRemappedFiles; ++I) {
+  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
     FilenameOrMemBuf fileOrBuf = RemappedFiles[I].second;
     if (const llvm::MemoryBuffer *
           memBuf = fileOrBuf.dyn_cast<const llvm::MemoryBuffer *>()) {
@@ -2021,8 +2020,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls,
                                       bool CaptureDiagnostics,
-                                      RemappedFile *RemappedFiles,
-                                      unsigned NumRemappedFiles,
+                                      ArrayRef<RemappedFile> RemappedFiles,
                                       bool RemappedFilesKeepOriginalName,
                                       bool PrecompilePreamble,
                                       TranslationUnitKind TUKind,
@@ -2056,7 +2054,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   }
 
   // Override any files that need remapping
-  for (unsigned I = 0; I != NumRemappedFiles; ++I) {
+  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
     FilenameOrMemBuf fileOrBuf = RemappedFiles[I].second;
     if (const llvm::MemoryBuffer *
             memBuf = fileOrBuf.dyn_cast<const llvm::MemoryBuffer *>()) {
@@ -2114,7 +2112,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   return AST.take();
 }
 
-bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
+bool ASTUnit::Reparse(ArrayRef<RemappedFile> RemappedFiles) {
   if (!Invocation)
     return true;
 
@@ -2133,7 +2131,7 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
     delete R->second;
   }
   Invocation->getPreprocessorOpts().clearRemappedFiles();
-  for (unsigned I = 0; I != NumRemappedFiles; ++I) {
+  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
     FilenameOrMemBuf fileOrBuf = RemappedFiles[I].second;
     if (const llvm::MemoryBuffer *
             memBuf = fileOrBuf.dyn_cast<const llvm::MemoryBuffer *>()) {
@@ -2415,8 +2413,7 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
 
 
 void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
-                           RemappedFile *RemappedFiles, 
-                           unsigned NumRemappedFiles,
+                           ArrayRef<RemappedFile> RemappedFiles,
                            bool IncludeMacros, 
                            bool IncludeCodePatterns,
                            bool IncludeBriefComments,
@@ -2499,7 +2496,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   // Remap files.
   PreprocessorOpts.clearRemappedFiles();
   PreprocessorOpts.RetainRemappedFileBuffers = true;
-  for (unsigned I = 0; I != NumRemappedFiles; ++I) {
+  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
     FilenameOrMemBuf fileOrBuf = RemappedFiles[I].second;
     if (const llvm::MemoryBuffer *
             memBuf = fileOrBuf.dyn_cast<const llvm::MemoryBuffer *>()) {
