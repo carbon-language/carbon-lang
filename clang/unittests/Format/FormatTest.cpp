@@ -5070,6 +5070,25 @@ TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
             "    : b(0) {\n"
             "}",
             format("A()\n:b(0)\n{\n}", DoNotMergeNoColumnLimit));
+
+  verifyFormat("#define A          \\\n"
+               "  void f() {       \\\n"
+               "    int i;         \\\n"
+               "  }",
+               getLLVMStyleWithColumns(20));
+  verifyFormat("#define A           \\\n"
+               "  void f() { int i; }",
+               getLLVMStyleWithColumns(21));
+  verifyFormat("#define A            \\\n"
+               "  void f() {         \\\n"
+               "    int i;           \\\n"
+               "  }                  \\\n"
+               "  int j;",
+               getLLVMStyleWithColumns(22));
+  verifyFormat("#define A             \\\n"
+               "  void f() { int i; } \\\n"
+               "  int j;",
+               getLLVMStyleWithColumns(23));
 }
 
 TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
@@ -5182,6 +5201,17 @@ TEST_F(FormatTest, MergeHandlingInTheFaceOfPreprocessorDirectives) {
                "  // Comment\n"
                "  if (true) continue;\n"
                "}",
+               ShortMergedIf);
+  ShortMergedIf.ColumnLimit = 29;
+  verifyFormat("#define A                   \\\n"
+               "  if (aaaaaaaaaa) return 1; \\\n"
+               "  return 2;",
+               ShortMergedIf);
+  ShortMergedIf.ColumnLimit = 28;
+  verifyFormat("#define A         \\\n"
+               "  if (aaaaaaaaaa) \\\n"
+               "    return 1;     \\\n"
+               "  return 2;",
                ShortMergedIf);
 }
 
