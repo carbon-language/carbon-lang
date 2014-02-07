@@ -2188,27 +2188,6 @@ checkFormatStringExpr(Sema &S, const Expr *E, ArrayRef<const Expr *> Args,
 
     return SLCT_NotALiteral;
   }
-      
-  case Stmt::ObjCMessageExprClass: {
-    const ObjCMessageExpr *ME = cast<ObjCMessageExpr>(E);
-    if (const ObjCMethodDecl *MDecl = ME->getMethodDecl()) {
-      if (const NamedDecl *ND = dyn_cast<NamedDecl>(MDecl)) {
-        if (const FormatArgAttr *FA = ND->getAttr<FormatArgAttr>()) {
-          unsigned ArgIndex = FA->getFormatIdx();
-          if (ArgIndex <= ME->getNumArgs()) {
-            const Expr *Arg = ME->getArg(ArgIndex-1);
-            return checkFormatStringExpr(S, Arg, Args,
-                                         HasVAListArg, format_idx,
-                                         firstDataArg, Type, CallType,
-                                         InFunctionCall, CheckedVarArgs);
-          }
-        }
-      }
-    }
-
-    return SLCT_NotALiteral;
-  }
-      
   case Stmt::ObjCStringLiteralClass:
   case Stmt::StringLiteralClass: {
     const StringLiteral *StrE = NULL;
