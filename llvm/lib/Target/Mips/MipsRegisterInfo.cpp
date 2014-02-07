@@ -134,6 +134,13 @@ getReservedRegs(const MachineFunction &MF) const {
   for (unsigned I = 0; I < array_lengthof(ReservedGPR32); ++I)
     Reserved.set(ReservedGPR32[I]);
 
+  // Reserve registers for the NaCl sandbox.
+  if (Subtarget.isTargetNaCl()) {
+    Reserved.set(Mips::T6);   // Reserved for control flow mask.
+    Reserved.set(Mips::T7);   // Reserved for memory access mask.
+    Reserved.set(Mips::T8);   // Reserved for thread pointer.
+  }
+
   for (unsigned I = 0; I < array_lengthof(ReservedGPR64); ++I)
     Reserved.set(ReservedGPR64[I]);
 
