@@ -25,6 +25,6 @@
 // RUN: echo ' ' >> %t/usr/include/sys_header.h
 // RUN: not %clang_cc1 -triple x86_64-apple-darwin10 -isysroot %t -verify-pch %t.pch 2> %t.log.3
 // RUN: FileCheck -check-prefix=CHECK-STALE-SYS-H %s < %t.log.3
-// CHECK-STALE-SYS-H: file '{{.*}}/usr/include/sys_header.h' has been modified since the precompiled header '{{.*}}.pch' was built
+// CHECK-STALE-SYS-H: file '{{.*}}sys_header.h' has been modified since the precompiled header '{{.*}}.pch' was built
 
 #include <sys_header.h>
