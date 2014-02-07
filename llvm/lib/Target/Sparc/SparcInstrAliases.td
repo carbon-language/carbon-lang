@@ -134,3 +134,9 @@ def : InstAlias<"retl", (RETL 8)>;
 
 // ret -> RET 8
 def : InstAlias<"ret", (RET 8)>;
+
+// mov reg, rd -> or %g0, reg, rd
+def : InstAlias<"mov $rs2, $rd", (ORrr IntRegs:$rd, G0, IntRegs:$rs2)>;
+
+// mov simm13, rd -> or %g0, simm13, rd
+def : InstAlias<"mov $simm13, $rd", (ORri IntRegs:$rd, G0, i32imm:$simm13)>;

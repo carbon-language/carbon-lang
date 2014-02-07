@@ -70,3 +70,8 @@
         ! CHECK: subxcc %g1, %g2, %g3 ! encoding: [0x86,0xe0,0x40,0x02]
         subxcc %g1, %g2, %g3
 
+        ! CHECK: or %g0, %g1, %g3     ! encoding: [0x86,0x10,0x00,0x01]
+        mov %g1, %g3
+
+        ! CHECK: or %g0, 255, %g3     ! encoding: [0x86,0x10,0x20,0xff]
+        mov 0xff, %g3
