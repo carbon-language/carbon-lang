@@ -114,10 +114,11 @@ def CC_ARM_AAPCS_Common : CallingConv<[
   CCIfType<[i32], CCIf<"ArgFlags.getOrigAlign() != 8",
                        CCAssignToReg<[R0, R1, R2, R3]>>>,
 
-  CCIfType<[i32], CCIfAlign<"8", CCAssignToStackWithShadow<4, 8, R3>>>,
-  CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
-  CCIfType<[f64], CCAssignToStack<8, 8>>,
-  CCIfType<[v2f64], CCAssignToStack<16, 8>>
+  CCIfType<[i32], CCIfAlign<"8", CCAssignToStackWithShadow<4, 8, [R0, R1, R2, R3]>>>,
+  CCIfType<[i32], CCAssignToStackWithShadow<4, 4, [R0, R1, R2, R3]>>,
+  CCIfType<[f32], CCAssignToStackWithShadow<4, 4, [Q0, Q1, Q2, Q3]>>,
+  CCIfType<[f64], CCAssignToStackWithShadow<8, 8, [Q0, Q1, Q2, Q3]>>,
+  CCIfType<[v2f64], CCAssignToStackWithShadow<16, 8, [Q0, Q1, Q2, Q3]>>
 ]>;
 
 def RetCC_ARM_AAPCS_Common : CallingConv<[

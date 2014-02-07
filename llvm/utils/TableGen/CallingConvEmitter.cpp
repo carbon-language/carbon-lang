@@ -185,10 +185,32 @@ void CallingConvEmitter::EmitAction(Record *Action,
       else
         O << "\n" << IndentStr << "  State.getTarget().getDataLayout()"
           "->getABITypeAlignment(EVT(LocVT).getTypeForEVT(State.getContext()))";
-      if (Action->isSubClassOf("CCAssignToStackWithShadow"))
-        O << ", " << getQualifiedName(Action->getValueAsDef("ShadowReg"));
       O << ");\n" << IndentStr
         << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
+        << Counter << ", LocVT, LocInfo));\n";
+      O << IndentStr << "return false;\n";
+    } else if (Action->isSubClassOf("CCAssignToStackWithShadow")) {
+      int Size = Action->getValueAsInt("Size");
+      int Align = Action->getValueAsInt("Align");
+      ListInit *ShadowRegList = Action->getValueAsListInit("ShadowRegList");
+
+      unsigned ShadowRegListNumber = ++Counter;
+
+      O << IndentStr << "static const uint16_t ShadowRegList"
+          << ShadowRegListNumber << "[] = {\n";
+      O << IndentStr << "  ";
+      for (unsigned i = 0, e = ShadowRegList->getSize(); i != e; ++i) {
+        if (i != 0) O << ", ";
+        O << getQualifiedName(ShadowRegList->getElementAsRecord(i));
+      }
+      O << "\n" << IndentStr << "};\n";
+
+      O << IndentStr << "unsigned Offset" << ++Counter
+        << " = State.AllocateStack("
+        << Size << ", " << Align << ", "
+        << "ShadowRegList" << ShadowRegListNumber << ", "
+        << ShadowRegList->getSize() << ");\n";
+      O << IndentStr << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
         << Counter << ", LocVT, LocInfo));\n";
       O << IndentStr << "return false;\n";
     } else if (Action->isSubClassOf("CCPromoteToType")) {
