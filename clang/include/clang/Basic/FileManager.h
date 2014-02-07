@@ -245,6 +245,8 @@ public:
   ///
   /// If the path is relative, it will be resolved against the WorkingDir of the
   /// FileManager's FileSystemOptions.
+  ///
+  /// \returns false on success, true on error.
   bool getNoncachedStatValue(StringRef Path,
                              llvm::sys::fs::file_status &Result);
 
