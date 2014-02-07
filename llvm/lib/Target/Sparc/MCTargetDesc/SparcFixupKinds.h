@@ -48,6 +48,21 @@ namespace llvm {
       /// fixup_sparc_hm  -  10-bit fixup corresponding to %hm(foo)
       fixup_sparc_hm,
 
+      /// fixup_sparc_pc22 - 22-bit fixup corresponding to %pc22(foo)
+      fixup_sparc_pc22,
+
+      /// fixup_sparc_pc10 - 10-bit fixup corresponding to %pc10(foo)
+      fixup_sparc_pc10,
+
+      /// fixup_sparc_got22 - 22-bit fixup corresponding to %got22(foo)
+      fixup_sparc_got22,
+
+      /// fixup_sparc_got10 - 10-bit fixup corresponding to %got10(foo)
+      fixup_sparc_got10,
+
+      /// fixup_sparc_wplt30
+      fixup_sparc_wplt30,
+
       // Marker
       LastTargetFixupKind,
       NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind

@@ -17,6 +17,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELF.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ELF.h"
 
 
@@ -54,6 +55,13 @@ bool SparcMCExpr::printVariantKind(raw_ostream &OS, VariantKind Kind)
   case VK_Sparc_L44:      OS << "%l44("; break;
   case VK_Sparc_HH:       OS << "%hh(";  break;
   case VK_Sparc_HM:       OS << "%hm(";  break;
+    // FIXME: use %pc22/%pc10, if system assembler supports them.
+  case VK_Sparc_PC22:     OS << "%hi("; break;
+  case VK_Sparc_PC10:     OS << "%lo("; break;
+    // FIXME: use %got22/%got10, if system assembler supports them.
+  case VK_Sparc_GOT22:    OS << "%hi("; break;
+  case VK_Sparc_GOT10:    OS << "%lo("; break;
+  case VK_Sparc_WPLT30:   closeParen = false; break;
   case VK_Sparc_R_DISP32: OS << "%r_disp32("; break;
   case VK_Sparc_TLS_GD_HI22:   OS << "%tgd_hi22(";   break;
   case VK_Sparc_TLS_GD_LO10:   OS << "%tgd_lo10(";   break;
@@ -87,6 +95,10 @@ SparcMCExpr::VariantKind SparcMCExpr::parseVariantKind(StringRef name)
     .Case("l44", VK_Sparc_L44)
     .Case("hh",  VK_Sparc_HH)
     .Case("hm",  VK_Sparc_HM)
+    .Case("pc22",  VK_Sparc_PC22)
+    .Case("pc10",  VK_Sparc_PC10)
+    .Case("got22", VK_Sparc_GOT22)
+    .Case("got10", VK_Sparc_GOT10)
     .Case("r_disp32",   VK_Sparc_R_DISP32)
     .Case("tgd_hi22",   VK_Sparc_TLS_GD_HI22)
     .Case("tgd_lo10",   VK_Sparc_TLS_GD_LO10)
@@ -109,9 +121,26 @@ SparcMCExpr::VariantKind SparcMCExpr::parseVariantKind(StringRef name)
     .Default(VK_Sparc_None);
 }
 
+Sparc::Fixups SparcMCExpr::getFixupKind(SparcMCExpr::VariantKind Kind) {
+  switch (Kind) {
+  default:           assert(0 && "Unhandled SparcMCExpr::VariantKind");
+  case VK_Sparc_LO:       return Sparc::fixup_sparc_lo10;
+  case VK_Sparc_HI:       return Sparc::fixup_sparc_hi22;
+  case VK_Sparc_H44:      return Sparc::fixup_sparc_h44;
+  case VK_Sparc_M44:      return Sparc::fixup_sparc_m44;
+  case VK_Sparc_L44:      return Sparc::fixup_sparc_l44;
+  case VK_Sparc_HH:       return Sparc::fixup_sparc_hh;
+  case VK_Sparc_HM:       return Sparc::fixup_sparc_hm;
+  case VK_Sparc_PC22:     return Sparc::fixup_sparc_pc22;
+  case VK_Sparc_PC10:     return Sparc::fixup_sparc_pc10;
+  case VK_Sparc_GOT22:    return Sparc::fixup_sparc_got22;
+  case VK_Sparc_GOT10:    return Sparc::fixup_sparc_got10;
+  }
+}
+
 bool
 SparcMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
-                                         const MCAsmLayout *Layout) const {
+                                       const MCAsmLayout *Layout) const {
   if (!Layout)
     return false;
   return getSubExpr()->EvaluateAsRelocatable(Res, *Layout);

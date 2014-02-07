@@ -15,6 +15,7 @@
 #ifndef LLVM_SPARCMCEXPR_H
 #define LLVM_SPARCMCEXPR_H
 
+#include "SparcFixupKinds.h"
 #include "llvm/MC/MCExpr.h"
 
 namespace llvm {
@@ -31,6 +32,11 @@ public:
     VK_Sparc_L44,
     VK_Sparc_HH,
     VK_Sparc_HM,
+    VK_Sparc_PC22,
+    VK_Sparc_PC10,
+    VK_Sparc_GOT22,
+    VK_Sparc_GOT10,
+    VK_Sparc_WPLT30,
     VK_Sparc_R_DISP32,
     VK_Sparc_TLS_GD_HI22,
     VK_Sparc_TLS_GD_LO10,
@@ -75,6 +81,9 @@ public:
   /// getSubExpr - Get the child of this expression.
   const MCExpr *getSubExpr() const { return Expr; }
 
+  /// getFixupKind - Get the fixup kind of this expression.
+  Sparc::Fixups getFixupKind() const { return getFixupKind(Kind); }
+
   /// @}
   void PrintImpl(raw_ostream &OS) const;
   bool EvaluateAsRelocatableImpl(MCValue &Res,
@@ -94,6 +103,7 @@ public:
 
   static VariantKind parseVariantKind(StringRef name);
   static bool printVariantKind(raw_ostream &OS, VariantKind Kind);
+  static Sparc::Fixups getFixupKind(VariantKind Kind);
 };
 
 } // end namespace llvm.

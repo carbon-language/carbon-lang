@@ -101,37 +101,8 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   assert(MO.isExpr());
   const MCExpr *Expr = MO.getExpr();
   if (const SparcMCExpr *SExpr = dyn_cast<SparcMCExpr>(Expr)) {
-    switch(SExpr->getKind()) {
-    default: assert(0 && "Unhandled sparc expression!"); break;
-    case SparcMCExpr::VK_Sparc_LO:
-      Fixups.push_back(MCFixup::Create(0, Expr,
-                                       (MCFixupKind)Sparc::fixup_sparc_lo10));
-      break;
-    case SparcMCExpr::VK_Sparc_HI:
-      Fixups.push_back(MCFixup::Create(0, Expr,
-                                       (MCFixupKind)Sparc::fixup_sparc_hi22));
-      break;
-    case SparcMCExpr::VK_Sparc_H44:
-      Fixups.push_back(MCFixup::Create(0, Expr,
-                                       (MCFixupKind)Sparc::fixup_sparc_h44));
-      break;
-    case SparcMCExpr::VK_Sparc_M44:
-      Fixups.push_back(MCFixup::Create(0, Expr,
-                                       (MCFixupKind)Sparc::fixup_sparc_m44));
-      break;
-    case SparcMCExpr::VK_Sparc_L44:
-      Fixups.push_back(MCFixup::Create(0, Expr,
-                                       (MCFixupKind)Sparc::fixup_sparc_l44));
-      break;
-    case SparcMCExpr::VK_Sparc_HH:
-      Fixups.push_back(MCFixup::Create(0, Expr,
-                                       (MCFixupKind)Sparc::fixup_sparc_hh));
-      break;
-    case SparcMCExpr::VK_Sparc_HM:
-      Fixups.push_back(MCFixup::Create(0, Expr,
-                                       (MCFixupKind)Sparc::fixup_sparc_hm));
-      break;
-    }
+    MCFixupKind Kind = (MCFixupKind)SExpr->getFixupKind();
+    Fixups.push_back(MCFixup::Create(0, Expr, Kind));
     return 0;
   }
 
@@ -151,8 +122,15 @@ getCallTargetOpValue(const MCInst &MI, unsigned OpNo,
   if (MO.isReg() || MO.isImm())
     return getMachineOpValue(MI, MO, Fixups, STI);
 
-  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
-                                   (MCFixupKind)Sparc::fixup_sparc_call30));
+  MCFixupKind fixupKind = (MCFixupKind)Sparc::fixup_sparc_call30;
+
+  if (const SparcMCExpr *SExpr = dyn_cast<SparcMCExpr>(MO.getExpr())) {
+    if (SExpr->getKind() == SparcMCExpr::VK_Sparc_WPLT30)
+      fixupKind = (MCFixupKind)Sparc::fixup_sparc_wplt30;
+  }
+
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(), fixupKind));
+
   return 0;
 }
 

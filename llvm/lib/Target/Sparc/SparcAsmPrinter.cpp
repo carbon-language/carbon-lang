@@ -242,12 +242,12 @@ void SparcAsmPrinter::LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
   MCOperand Callee =  createPCXCallOP(EndLabel, OutContext);
   EmitCall(OutStreamer, Callee, STI);
   OutStreamer.EmitLabel(SethiLabel);
-  MCOperand hiImm = createPCXRelExprOp(SparcMCExpr::VK_Sparc_HI,
+  MCOperand hiImm = createPCXRelExprOp(SparcMCExpr::VK_Sparc_PC22,
                                        GOTLabel, StartLabel, SethiLabel,
                                        OutContext);
   EmitSETHI(OutStreamer, hiImm, MCRegOP, STI);
   OutStreamer.EmitLabel(EndLabel);
-  MCOperand loImm = createPCXRelExprOp(SparcMCExpr::VK_Sparc_LO,
+  MCOperand loImm = createPCXRelExprOp(SparcMCExpr::VK_Sparc_PC10,
                                        GOTLabel, StartLabel, EndLabel,
                                        OutContext);
   EmitOR(OutStreamer, MCRegOP, loImm, MCRegOP, STI);

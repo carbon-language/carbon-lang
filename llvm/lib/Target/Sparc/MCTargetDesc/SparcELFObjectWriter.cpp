@@ -7,8 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/SparcMCTargetDesc.h"
 #include "MCTargetDesc/SparcFixupKinds.h"
+#include "MCTargetDesc/SparcMCExpr.h"
+#include "MCTargetDesc/SparcMCTargetDesc.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCExpr.h"
@@ -31,6 +32,11 @@ namespace {
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend) const;
 
+    virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
+                                           const MCValue &Target,
+                                           const MCFragment &F,
+                                           const MCFixup &Fixup,
+                                           bool IsPCRel) const;
   };
 }
 
@@ -40,6 +46,12 @@ unsigned SparcELFObjectWriter::GetRelocType(const MCValue &Target,
                                             bool IsPCRel,
                                             bool IsRelocWithSymbol,
                                             int64_t Addend) const {
+
+  if (const SparcMCExpr *SExpr = dyn_cast<SparcMCExpr>(Fixup.getValue())) {
+    if (SExpr->getKind() == SparcMCExpr::VK_Sparc_R_DISP32)
+      return ELF::R_SPARC_DISP32;
+  }
+
   if (IsPCRel) {
     switch((unsigned)Fixup.getKind()) {
     default:
@@ -51,6 +63,9 @@ unsigned SparcELFObjectWriter::GetRelocType(const MCValue &Target,
     case Sparc::fixup_sparc_call30:  return ELF::R_SPARC_WDISP30;
     case Sparc::fixup_sparc_br22:    return ELF::R_SPARC_WDISP22;
     case Sparc::fixup_sparc_br19:    return ELF::R_SPARC_WDISP19;
+    case Sparc::fixup_sparc_pc22:    return ELF::R_SPARC_PC22;
+    case Sparc::fixup_sparc_pc10:    return ELF::R_SPARC_PC10;
+    case Sparc::fixup_sparc_wplt30:  return ELF::R_SPARC_WPLT30;
     }
   }
 
@@ -74,8 +89,28 @@ unsigned SparcELFObjectWriter::GetRelocType(const MCValue &Target,
   case Sparc::fixup_sparc_l44:   return ELF::R_SPARC_L44;
   case Sparc::fixup_sparc_hh:    return ELF::R_SPARC_HH22;
   case Sparc::fixup_sparc_hm:    return ELF::R_SPARC_HM10;
+  case Sparc::fixup_sparc_got22: return ELF::R_SPARC_GOT22;
+  case Sparc::fixup_sparc_got10: return ELF::R_SPARC_GOT10;
   }
+
   return ELF::R_SPARC_NONE;
+}
+
+const MCSymbol *SparcELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
+                                                     const MCValue &Target,
+                                                     const MCFragment &F,
+                                                     const MCFixup &Fixup,
+                                                     bool IsPCRel) const {
+
+  if (!Target.getSymA())
+    return NULL;
+  switch((unsigned)Fixup.getKind()) {
+  default: break;
+  case Sparc::fixup_sparc_got22:
+  case Sparc::fixup_sparc_got10:
+    return &Target.getSymA()->getSymbol().AliasedSymbol();
+  }
+  return NULL;
 }
 
 MCObjectWriter *llvm::createSparcELFObjectWriter(raw_ostream &OS,
