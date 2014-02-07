@@ -279,6 +279,8 @@ def Wnonportable_cfstrings : Joined<["-"], "Wnonportable-cfstrings">, Group<W_Gr
 def Wp_COMMA : CommaJoined<["-"], "Wp,">,
   HelpText<"Pass the comma separated arguments in <arg> to the preprocessor">,
   MetaVarName<"<arg>">;
+def Wwrite_strings : Flag<["-"], "Wwrite-strings">, Group<W_Group>, Flags<[CC1Option]>;
+def Wno_write_strings : Flag<["-"], "Wno-write-strings">, Group<W_Group>, Flags<[CC1Option]>;
 def W_Joined : Joined<["-"], "W">, Group<W_Group>, Flags<[CC1Option, CoreOption]>,
   MetaVarName<"<warning>">, HelpText<"Enable the specified warning">;
 def Xanalyzer : Separate<["-"], "Xanalyzer">,

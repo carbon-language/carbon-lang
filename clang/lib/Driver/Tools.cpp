@@ -21,7 +21,6 @@
 #include "clang/Driver/SanitizerArgs.h"
 #include "clang/Driver/ToolChain.h"
 #include "clang/Driver/Util.h"
-#include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -2881,9 +2880,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // behavior for now. FIXME: Directly diagnose uses of a string literal as
   // a non-const char* in C, rather than using this crude hack.
   if (!types::isCXX(InputType)) {
-    DiagnosticsEngine::Level DiagLevel = D.getDiags().getDiagnosticLevel(
-        diag::warn_deprecated_string_literal_conversion_c, SourceLocation());
-    if (DiagLevel > DiagnosticsEngine::Ignored)
+    // FIXME: This should behave just like a warning flag, and thus should also
+    // respect -Weverything, -Wno-everything, -Werror=write-strings, and so on.
+    Arg *WriteStrings =
+        Args.getLastArg(options::OPT_Wwrite_strings,
+                        options::OPT_Wno_write_strings, options::OPT_w);
+    if (WriteStrings &&
+        WriteStrings->getOption().matches(options::OPT_Wwrite_strings))
       CmdArgs.push_back("-fconst-strings");
   }
 
