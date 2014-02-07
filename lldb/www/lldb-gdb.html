@@ -419,6 +419,18 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Set a conditional breakpoint</td></tr>
+
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> break foo if strcmp(y,&quot;hello&quot;) == 0<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> breakpoint set --name foo --condition '(int)strcmp(y,&quot;hello&quot;) == 0'<br>
+                            <b>(lldb)</b> br s -n foo -c '(int)strcmp(y,&quot;hello&quot;) == 0'<br>
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">List all breakpoints.</td></tr>
                     <tr>
                         <td class="content">
