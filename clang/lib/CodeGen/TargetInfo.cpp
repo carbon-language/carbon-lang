@@ -3415,10 +3415,29 @@ static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
     const Type *TyPtr = Ty.getTypePtr();
     if (!Base)
       Base = TyPtr;
-    if (Base != TyPtr &&
-        (!Base->isVectorType() || !TyPtr->isVectorType() ||
-         Context.getTypeSize(Base) != Context.getTypeSize(TyPtr)))
-      return false;
+
+    if (Base != TyPtr) {
+      // Homogeneous aggregates are defined as containing members with the
+      // same machine type. There are two cases in which two members have
+      // different TypePtrs but the same machine type:
+
+      // 1) Vectors of the same length, regardless of the type and number
+      //    of their members.
+      const bool SameLengthVectors = Base->isVectorType() && TyPtr->isVectorType()
+        && (Context.getTypeSize(Base) == Context.getTypeSize(TyPtr));
+
+      // 2) In the 32-bit AAPCS, `double' and `long double' have the same
+      //    machine type. This is not the case for the 64-bit AAPCS.
+      const bool SameSizeDoubles =
+           (   (   Base->isSpecificBuiltinType(BuiltinType::Double)
+                && TyPtr->isSpecificBuiltinType(BuiltinType::LongDouble))
+            || (   Base->isSpecificBuiltinType(BuiltinType::LongDouble)
+                && TyPtr->isSpecificBuiltinType(BuiltinType::Double)))
+        && (Context.getTypeSize(Base) == Context.getTypeSize(TyPtr));
+
+      if (!SameLengthVectors && !SameSizeDoubles)
+        return false;
+    }
   }
 
   // Homogeneous Aggregates can have at most 4 members of the base type.

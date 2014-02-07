@@ -190,5 +190,10 @@ void f42(int x0, int x1, int x2, int x3, int x4, __int128 x6_7, __int128 stacked
 void variadic(int a, ...);
 void f43(__fp16 *in) {
   variadic(42, *in);
-// CHECK: call void @variadic(i32 42, double
+// PCS: call void (i32, ...)* @variadic(i32 42, double
 }
+
+// Checking: `double' and `long double' have different machine types, so cannot both be in an HFA
+struct s44 { long double a; double b; };
+// PCS: define void @f44(%struct.s44*
+struct s44 f44() {}

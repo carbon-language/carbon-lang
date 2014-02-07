@@ -205,6 +205,17 @@ void test_struct_of_vecs(void) {
   takes_struct_of_vecs(3.0, g_vec, g_vec, 4.0);
 }
 
+typedef struct {
+  double a;
+  long double b;
+} struct_of_double_and_long_double;
+struct_of_double_and_long_double g_dld;
+
+struct_of_double_and_long_double test_struct_of_double_and_long_double(void) {
+  return g_dld;
+}
+// CHECK: define arm_aapcs_vfpcc %struct.struct_of_double_and_long_double @test_struct_of_double_and_long_double()
+
 // FIXME: Tests necessary:
 //         - Vectors
 //         - C++ stuff
