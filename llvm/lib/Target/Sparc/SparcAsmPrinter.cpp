@@ -15,7 +15,6 @@
 #define DEBUG_TYPE "asm-printer"
 #include "Sparc.h"
 #include "InstPrinter/SparcInstPrinter.h"
-#include "MCTargetDesc/SparcBaseInfo.h"
 #include "MCTargetDesc/SparcMCExpr.h"
 #include "SparcInstrInfo.h"
 #include "SparcTargetMachine.h"
@@ -298,82 +297,59 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
                                    raw_ostream &O) {
   const DataLayout *DL = TM.getDataLayout();
   const MachineOperand &MO = MI->getOperand (opNum);
-  unsigned TF = MO.getTargetFlags();
+  SparcMCExpr::VariantKind TF = (SparcMCExpr::VariantKind) MO.getTargetFlags();
+
 #ifndef NDEBUG
   // Verify the target flags.
   if (MO.isGlobal() || MO.isSymbol() || MO.isCPI()) {
     if (MI->getOpcode() == SP::CALL)
-      assert(TF == SPII::MO_NO_FLAG &&
+      assert(TF == SparcMCExpr::VK_Sparc_None &&
              "Cannot handle target flags on call address");
     else if (MI->getOpcode() == SP::SETHIi || MI->getOpcode() == SP::SETHIXi)
-      assert((TF == SPII::MO_HI || TF == SPII::MO_H44 || TF == SPII::MO_HH
-              || TF == SPII::MO_TLS_GD_HI22
-              || TF == SPII::MO_TLS_LDM_HI22
-              || TF == SPII::MO_TLS_LDO_HIX22
-              || TF == SPII::MO_TLS_IE_HI22
-              || TF == SPII::MO_TLS_LE_HIX22) &&
+      assert((TF == SparcMCExpr::VK_Sparc_HI
+              || TF == SparcMCExpr::VK_Sparc_H44
+              || TF == SparcMCExpr::VK_Sparc_HH
+              || TF == SparcMCExpr::VK_Sparc_TLS_GD_HI22
+              || TF == SparcMCExpr::VK_Sparc_TLS_LDM_HI22
+              || TF == SparcMCExpr::VK_Sparc_TLS_LDO_HIX22
+              || TF == SparcMCExpr::VK_Sparc_TLS_IE_HI22
+              || TF == SparcMCExpr::VK_Sparc_TLS_LE_HIX22) &&
              "Invalid target flags for address operand on sethi");
     else if (MI->getOpcode() == SP::TLS_CALL)
-      assert((TF == SPII::MO_NO_FLAG
-              || TF == SPII::MO_TLS_GD_CALL
-              || TF == SPII::MO_TLS_LDM_CALL) &&
+      assert((TF == SparcMCExpr::VK_Sparc_None
+              || TF == SparcMCExpr::VK_Sparc_TLS_GD_CALL
+              || TF == SparcMCExpr::VK_Sparc_TLS_LDM_CALL) &&
              "Cannot handle target flags on tls call address");
     else if (MI->getOpcode() == SP::TLS_ADDrr)
-      assert((TF == SPII::MO_TLS_GD_ADD || TF == SPII::MO_TLS_LDM_ADD
-              || TF == SPII::MO_TLS_LDO_ADD || TF == SPII::MO_TLS_IE_ADD) &&
+      assert((TF == SparcMCExpr::VK_Sparc_TLS_GD_ADD
+              || TF == SparcMCExpr::VK_Sparc_TLS_LDM_ADD
+              || TF == SparcMCExpr::VK_Sparc_TLS_LDO_ADD
+              || TF == SparcMCExpr::VK_Sparc_TLS_IE_ADD) &&
              "Cannot handle target flags on add for TLS");
     else if (MI->getOpcode() == SP::TLS_LDrr)
-      assert(TF == SPII::MO_TLS_IE_LD &&
+      assert(TF == SparcMCExpr::VK_Sparc_TLS_IE_LD &&
              "Cannot handle target flags on ld for TLS");
     else if (MI->getOpcode() == SP::TLS_LDXrr)
-      assert(TF == SPII::MO_TLS_IE_LDX &&
+      assert(TF == SparcMCExpr::VK_Sparc_TLS_IE_LDX &&
              "Cannot handle target flags on ldx for TLS");
     else if (MI->getOpcode() == SP::XORri || MI->getOpcode() == SP::XORXri)
-      assert((TF == SPII::MO_TLS_LDO_LOX10 || TF == SPII::MO_TLS_LE_LOX10) &&
+      assert((TF == SparcMCExpr::VK_Sparc_TLS_LDO_LOX10
+              || TF == SparcMCExpr::VK_Sparc_TLS_LE_LOX10) &&
              "Cannot handle target flags on xor for TLS");
     else
-      assert((TF == SPII::MO_LO || TF == SPII::MO_M44 || TF == SPII::MO_L44
-              || TF == SPII::MO_HM
-              || TF == SPII::MO_TLS_GD_LO10
-              || TF == SPII::MO_TLS_LDM_LO10
-              || TF == SPII::MO_TLS_IE_LO10 ) &&
+      assert((TF == SparcMCExpr::VK_Sparc_LO
+              || TF == SparcMCExpr::VK_Sparc_M44
+              || TF == SparcMCExpr::VK_Sparc_L44
+              || TF == SparcMCExpr::VK_Sparc_HM
+              || TF == SparcMCExpr::VK_Sparc_TLS_GD_LO10
+              || TF == SparcMCExpr::VK_Sparc_TLS_LDM_LO10
+              || TF == SparcMCExpr::VK_Sparc_TLS_IE_LO10 ) &&
              "Invalid target flags for small address operand");
   }
 #endif
 
-  bool CloseParen = true;
-  switch (TF) {
-  default:
-      llvm_unreachable("Unknown target flags on operand");
-  case SPII::MO_NO_FLAG:
-    CloseParen = false;
-    break;
-  case SPII::MO_LO:  O << "%lo(";  break;
-  case SPII::MO_HI:  O << "%hi(";  break;
-  case SPII::MO_H44: O << "%h44("; break;
-  case SPII::MO_M44: O << "%m44("; break;
-  case SPII::MO_L44: O << "%l44("; break;
-  case SPII::MO_HH:  O << "%hh(";  break;
-  case SPII::MO_HM:  O << "%hm(";  break;
-  case SPII::MO_TLS_GD_HI22:   O << "%tgd_hi22(";   break;
-  case SPII::MO_TLS_GD_LO10:   O << "%tgd_lo10(";   break;
-  case SPII::MO_TLS_GD_ADD:    O << "%tgd_add(";    break;
-  case SPII::MO_TLS_GD_CALL:   O << "%tgd_call(";   break;
-  case SPII::MO_TLS_LDM_HI22:  O << "%tldm_hi22(";  break;
-  case SPII::MO_TLS_LDM_LO10:  O << "%tldm_lo10(";  break;
-  case SPII::MO_TLS_LDM_ADD:   O << "%tldm_add(";   break;
-  case SPII::MO_TLS_LDM_CALL:  O << "%tldm_call(";  break;
-  case SPII::MO_TLS_LDO_HIX22: O << "%tldo_hix22("; break;
-  case SPII::MO_TLS_LDO_LOX10: O << "%tldo_lox10("; break;
-  case SPII::MO_TLS_LDO_ADD:   O << "%tldo_add(";   break;
-  case SPII::MO_TLS_IE_HI22:   O << "%tie_hi22(";   break;
-  case SPII::MO_TLS_IE_LO10:   O << "%tie_lo10(";   break;
-  case SPII::MO_TLS_IE_LD:     O << "%tie_ld(";     break;
-  case SPII::MO_TLS_IE_LDX:    O << "%tie_ldx(";    break;
-  case SPII::MO_TLS_IE_ADD:    O << "%tie_add(";    break;
-  case SPII::MO_TLS_LE_HIX22:  O << "%tle_hix22(";  break;
-  case SPII::MO_TLS_LE_LOX10:  O << "%tle_lox10(";   break;
-  }
+
+  bool CloseParen = SparcMCExpr::printVariantKind(O, TF);
 
   switch (MO.getType()) {
   case MachineOperand::MO_Register:

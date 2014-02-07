@@ -93,7 +93,7 @@ public:
   static bool classof(const SparcMCExpr *) { return true; }
 
   static VariantKind parseVariantKind(StringRef name);
-
+  static bool printVariantKind(raw_ostream &OS, VariantKind Kind);
 };
 
 } // end namespace llvm.

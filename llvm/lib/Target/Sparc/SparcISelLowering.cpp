@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcISelLowering.h"
-#include "MCTargetDesc/SparcBaseInfo.h"
+#include "MCTargetDesc/SparcMCExpr.h"
 #include "SparcMachineFunctionInfo.h"
 #include "SparcRegisterInfo.h"
 #include "SparcTargetMachine.h"
@@ -1798,7 +1798,8 @@ SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
   // Handle PIC mode first.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     // This is the pic32 code model, the GOT is known to be smaller than 4GB.
-    SDValue HiLo = makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
+    SDValue HiLo = makeHiLoPair(Op, SparcMCExpr::VK_Sparc_HI,
+                                SparcMCExpr::VK_Sparc_LO, DAG);
     SDValue GlobalBase = DAG.getNode(SPISD::GLOBAL_BASE_REG, DL, VT);
     SDValue AbsAddr = DAG.getNode(ISD::ADD, DL, VT, GlobalBase, HiLo);
     // GLOBAL_BASE_REG codegen'ed with call. Inform MFI that this
@@ -1815,20 +1816,24 @@ SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
     llvm_unreachable("Unsupported absolute code model");
   case CodeModel::Small:
     // abs32.
-    return makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
+    return makeHiLoPair(Op, SparcMCExpr::VK_Sparc_HI,
+                        SparcMCExpr::VK_Sparc_LO, DAG);
   case CodeModel::Medium: {
     // abs44.
-    SDValue H44 = makeHiLoPair(Op, SPII::MO_H44, SPII::MO_M44, DAG);
+    SDValue H44 = makeHiLoPair(Op, SparcMCExpr::VK_Sparc_H44,
+                               SparcMCExpr::VK_Sparc_M44, DAG);
     H44 = DAG.getNode(ISD::SHL, DL, VT, H44, DAG.getConstant(12, MVT::i32));
-    SDValue L44 = withTargetFlags(Op, SPII::MO_L44, DAG);
+    SDValue L44 = withTargetFlags(Op, SparcMCExpr::VK_Sparc_L44, DAG);
     L44 = DAG.getNode(SPISD::Lo, DL, VT, L44);
     return DAG.getNode(ISD::ADD, DL, VT, H44, L44);
   }
   case CodeModel::Large: {
     // abs64.
-    SDValue Hi = makeHiLoPair(Op, SPII::MO_HH, SPII::MO_HM, DAG);
+    SDValue Hi = makeHiLoPair(Op, SparcMCExpr::VK_Sparc_HH,
+                              SparcMCExpr::VK_Sparc_HM, DAG);
     Hi = DAG.getNode(ISD::SHL, DL, VT, Hi, DAG.getConstant(32, MVT::i32));
-    SDValue Lo = makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
+    SDValue Lo = makeHiLoPair(Op, SparcMCExpr::VK_Sparc_HI,
+                              SparcMCExpr::VK_Sparc_LO, DAG);
     return DAG.getNode(ISD::ADD, DL, VT, Hi, Lo);
   }
   }
@@ -1860,14 +1865,18 @@ SDValue SparcTargetLowering::LowerGlobalTLSAddress(SDValue Op,
   TLSModel::Model model = getTargetMachine().getTLSModel(GV);
 
   if (model == TLSModel::GeneralDynamic || model == TLSModel::LocalDynamic) {
-    unsigned HiTF = ((model == TLSModel::GeneralDynamic)? SPII::MO_TLS_GD_HI22
-                     : SPII::MO_TLS_LDM_HI22);
-    unsigned LoTF = ((model == TLSModel::GeneralDynamic)? SPII::MO_TLS_GD_LO10
-                     : SPII::MO_TLS_LDM_LO10);
-    unsigned addTF = ((model == TLSModel::GeneralDynamic)? SPII::MO_TLS_GD_ADD
-                      : SPII::MO_TLS_LDM_ADD);
-    unsigned callTF = ((model == TLSModel::GeneralDynamic)? SPII::MO_TLS_GD_CALL
-                       : SPII::MO_TLS_LDM_CALL);
+    unsigned HiTF = ((model == TLSModel::GeneralDynamic)
+                     ? SparcMCExpr::VK_Sparc_TLS_GD_HI22
+                     : SparcMCExpr::VK_Sparc_TLS_LDM_HI22);
+    unsigned LoTF = ((model == TLSModel::GeneralDynamic)
+                     ? SparcMCExpr::VK_Sparc_TLS_GD_LO10
+                     : SparcMCExpr::VK_Sparc_TLS_LDM_LO10);
+    unsigned addTF = ((model == TLSModel::GeneralDynamic)
+                      ? SparcMCExpr::VK_Sparc_TLS_GD_ADD
+                      : SparcMCExpr::VK_Sparc_TLS_LDM_ADD);
+    unsigned callTF = ((model == TLSModel::GeneralDynamic)
+                       ? SparcMCExpr::VK_Sparc_TLS_GD_CALL
+                       : SparcMCExpr::VK_Sparc_TLS_LDM_CALL);
 
     SDValue HiLo = makeHiLoPair(Op, HiTF, LoTF, DAG);
     SDValue Base = DAG.getNode(SPISD::GLOBAL_BASE_REG, DL, PtrVT);
@@ -1905,17 +1914,17 @@ SDValue SparcTargetLowering::LowerGlobalTLSAddress(SDValue Op,
       return Ret;
 
     SDValue Hi = DAG.getNode(SPISD::Hi, DL, PtrVT,
-                             withTargetFlags(Op, SPII::MO_TLS_LDO_HIX22, DAG));
+                 withTargetFlags(Op, SparcMCExpr::VK_Sparc_TLS_LDO_HIX22, DAG));
     SDValue Lo = DAG.getNode(SPISD::Lo, DL, PtrVT,
-                             withTargetFlags(Op, SPII::MO_TLS_LDO_LOX10, DAG));
+                 withTargetFlags(Op, SparcMCExpr::VK_Sparc_TLS_LDO_LOX10, DAG));
     HiLo =  DAG.getNode(ISD::XOR, DL, PtrVT, Hi, Lo);
     return DAG.getNode(SPISD::TLS_ADD, DL, PtrVT, Ret, HiLo,
-                       withTargetFlags(Op, SPII::MO_TLS_LDO_ADD, DAG));
+                   withTargetFlags(Op, SparcMCExpr::VK_Sparc_TLS_LDO_ADD, DAG));
   }
 
   if (model == TLSModel::InitialExec) {
-    unsigned ldTF     = ((PtrVT == MVT::i64)? SPII::MO_TLS_IE_LDX
-                         : SPII::MO_TLS_IE_LD);
+    unsigned ldTF     = ((PtrVT == MVT::i64)? SparcMCExpr::VK_Sparc_TLS_IE_LDX
+                         : SparcMCExpr::VK_Sparc_TLS_IE_LD);
 
     SDValue Base = DAG.getNode(SPISD::GLOBAL_BASE_REG, DL, PtrVT);
 
@@ -1925,21 +1934,23 @@ SDValue SparcTargetLowering::LowerGlobalTLSAddress(SDValue Op,
     MFI->setHasCalls(true);
 
     SDValue TGA = makeHiLoPair(Op,
-                               SPII::MO_TLS_IE_HI22, SPII::MO_TLS_IE_LO10, DAG);
+                               SparcMCExpr::VK_Sparc_TLS_IE_HI22,
+                               SparcMCExpr::VK_Sparc_TLS_IE_LO10, DAG);
     SDValue Ptr = DAG.getNode(ISD::ADD, DL, PtrVT, Base, TGA);
     SDValue Offset = DAG.getNode(SPISD::TLS_LD,
                                  DL, PtrVT, Ptr,
                                  withTargetFlags(Op, ldTF, DAG));
     return DAG.getNode(SPISD::TLS_ADD, DL, PtrVT,
                        DAG.getRegister(SP::G7, PtrVT), Offset,
-                       withTargetFlags(Op, SPII::MO_TLS_IE_ADD, DAG));
+                       withTargetFlags(Op,
+                                       SparcMCExpr::VK_Sparc_TLS_IE_ADD, DAG));
   }
 
   assert(model == TLSModel::LocalExec);
   SDValue Hi = DAG.getNode(SPISD::Hi, DL, PtrVT,
-                           withTargetFlags(Op, SPII::MO_TLS_LE_HIX22, DAG));
+                  withTargetFlags(Op, SparcMCExpr::VK_Sparc_TLS_LE_HIX22, DAG));
   SDValue Lo = DAG.getNode(SPISD::Lo, DL, PtrVT,
-                           withTargetFlags(Op, SPII::MO_TLS_LE_LOX10, DAG));
+                  withTargetFlags(Op, SparcMCExpr::VK_Sparc_TLS_LE_LOX10, DAG));
   SDValue Offset =  DAG.getNode(ISD::XOR, DL, PtrVT, Hi, Lo);
 
   return DAG.getNode(ISD::ADD, DL, PtrVT,

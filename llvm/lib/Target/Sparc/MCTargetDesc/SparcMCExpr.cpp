@@ -29,7 +29,20 @@ SparcMCExpr::Create(VariantKind Kind, const MCExpr *Expr,
 }
 
 
+
 void SparcMCExpr::PrintImpl(raw_ostream &OS) const
+{
+
+  bool closeParen = printVariantKind(OS, Kind);
+
+  const MCExpr *Expr = getSubExpr();
+  Expr->print(OS);
+
+  if (closeParen)
+    OS << ')';
+}
+
+bool SparcMCExpr::printVariantKind(raw_ostream &OS, VariantKind Kind)
 {
   bool closeParen = true;
   switch (Kind) {
@@ -61,11 +74,7 @@ void SparcMCExpr::PrintImpl(raw_ostream &OS) const
   case VK_Sparc_TLS_LE_HIX22:  OS << "%tle_hix22(";  break;
   case VK_Sparc_TLS_LE_LOX10:  OS << "%tle_lox10(";  break;
   }
-
-  const MCExpr *Expr = getSubExpr();
-  Expr->print(OS);
-  if (closeParen)
-    OS << ')';
+  return closeParen;
 }
 
 SparcMCExpr::VariantKind SparcMCExpr::parseVariantKind(StringRef name)
