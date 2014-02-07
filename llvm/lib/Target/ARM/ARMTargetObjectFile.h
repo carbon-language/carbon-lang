@@ -32,10 +32,6 @@ public:
   getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
                           MachineModuleInfo *MMI, unsigned Encoding,
                           MCStreamer &Streamer) const;
-  
-  virtual const MCSection *getAttributesSection() const {
-    return AttributesSection;
-  }
 
   /// \brief Describe a TLS variable address within debug info.
   virtual const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
