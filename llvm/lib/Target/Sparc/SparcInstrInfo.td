@@ -935,19 +935,19 @@ let Predicates = [HasV9], hasSideEffects = 1, rd = 0, rs1 = 0b01111 in
  def MEMBARi : F3_2<2, 0b101000, (outs), (ins i32imm:$simm13),
                     "membar $simm13", []>;
 
-let Constraints = "$val = $rd" in {
+let Constraints = "$val = $dst" in {
   def SWAPrr : F3_1<3, 0b001111,
-                 (outs IntRegs:$rd), (ins IntRegs:$val, MEMrr:$addr),
-                 "swap [$addr], $rd",
-                 [(set i32:$rd, (atomic_swap_32 ADDRrr:$addr, i32:$val))]>;
+                 (outs IntRegs:$dst), (ins MEMrr:$addr, IntRegs:$val),
+                 "swap [$addr], $dst",
+                 [(set i32:$dst, (atomic_swap_32 ADDRrr:$addr, i32:$val))]>;
   def SWAPri : F3_2<3, 0b001111,
-                 (outs IntRegs:$rd), (ins IntRegs:$val, MEMri:$addr),
-                 "swap [$addr], $rd",
-                 [(set i32:$rd, (atomic_swap_32 ADDRri:$addr, i32:$val))]>;
+                 (outs IntRegs:$dst), (ins MEMri:$addr, IntRegs:$val),
+                 "swap [$addr], $dst",
+                 [(set i32:$dst, (atomic_swap_32 ADDRri:$addr, i32:$val))]>;
 }
 
 let Predicates = [HasV9], Constraints = "$swap = $rd" in
-  def CASrr: F3_1<3, 0b111100,
+  def CASrr: F3_1_asi<3, 0b111100, 0b10000000,
                 (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2,
                                      IntRegs:$swap),
                  "cas [$rs1], $rs2, $rd",

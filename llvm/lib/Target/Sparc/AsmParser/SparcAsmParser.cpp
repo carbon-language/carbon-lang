@@ -546,7 +546,24 @@ parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                                  Parser.getTok().getLoc()));
     Parser.Lex(); // Eat the [
 
-    ResTy = parseMEMOperand(Operands);
+    if (Mnemonic == "cas" || Mnemonic == "casx") {
+      SMLoc S = Parser.getTok().getLoc();
+      if (getLexer().getKind() != AsmToken::Percent)
+        return MatchOperand_NoMatch;
+      Parser.Lex(); // eat %
+
+      unsigned RegNo, RegKind;
+      if (!matchRegisterName(Parser.getTok(), RegNo, RegKind))
+        return MatchOperand_NoMatch;
+
+      Parser.Lex(); // Eat the identifier token.
+      SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer()-1);
+      Operands.push_back(SparcOperand::CreateReg(RegNo, RegKind, S, E));
+      ResTy = MatchOperand_Success;
+    } else {
+      ResTy = parseMEMOperand(Operands);
+    }
+
     if (ResTy != MatchOperand_Success)
       return ResTy;
 

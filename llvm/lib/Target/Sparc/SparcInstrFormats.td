@@ -100,9 +100,8 @@ class F3<dag outs, dag ins, string asmstr, list<dag> pattern>
 
 // Specific F3 classes: SparcV8 manual, page 44
 //
-class F3_1<bits<2> opVal, bits<6> op3val, dag outs, dag ins,
+class F3_1_asi<bits<2> opVal, bits<6> op3val, bits<8> asi, dag outs, dag ins,
            string asmstr, list<dag> pattern> : F3<outs, ins, asmstr, pattern> {
-  bits<8> asi = 0; // asi not currently used
   bits<5> rs2;
 
   let op         = opVal;
@@ -112,6 +111,10 @@ class F3_1<bits<2> opVal, bits<6> op3val, dag outs, dag ins,
   let Inst{12-5} = asi;   // address space identifier
   let Inst{4-0}  = rs2;
 }
+
+class F3_1<bits<2> opVal, bits<6> op3val, dag outs, dag ins, string asmstr,
+       list<dag> pattern> : F3_1_asi<opVal, op3val, 0, outs, ins,
+                                                     asmstr, pattern>;
 
 class F3_2<bits<2> opVal, bits<6> op3val, dag outs, dag ins,
            string asmstr, list<dag> pattern> : F3<outs, ins, asmstr, pattern> {

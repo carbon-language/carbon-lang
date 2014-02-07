@@ -415,7 +415,7 @@ def SETHIXi : F2_1<0b100,
 
 // ATOMICS.
 let Predicates = [Is64Bit], Constraints = "$swap = $rd" in {
-  def CASXrr: F3_1<3, 0b111110,
+  def CASXrr: F3_1_asi<3, 0b111110, 0b10000000,
                 (outs I64Regs:$rd), (ins I64Regs:$rs1, I64Regs:$rs2,
                                      I64Regs:$swap),
                  "casx [$rs1], $rs2, $rd",
