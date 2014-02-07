@@ -95,7 +95,32 @@ public:
     
 };
 
-
+static bool
+WarnOnPotentialUnquotedUnsignedType (Args& command, CommandReturnObject &result)
+{
+    for (int idx = 0; idx < command.GetArgumentCount(); idx++)
+    {
+        const char* arg = command.GetArgumentAtIndex(idx);
+        if (idx+1 < command.GetArgumentCount())
+        {
+            if (arg && 0 == strcmp(arg,"unsigned"))
+            {
+                const char* next = command.GetArgumentAtIndex(idx+1);
+                if (next &&
+                    (0 == strcmp(next, "int") ||
+                     0 == strcmp(next, "short") ||
+                     0 == strcmp(next, "char") ||
+                     0 == strcmp(next, "long")))
+                {
+                    result.AppendWarningWithFormat("%s %s being treated as two types. if you meant the combined type name use quotes, as in \"%s %s\"\n",
+                                                   arg,next,arg,next);
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
 
 class CommandObjectTypeSummaryAdd :
     public CommandObjectParsed,
@@ -454,6 +479,8 @@ protected:
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
+        WarnOnPotentialUnquotedUnsignedType(command, result);
+        
         if (m_options.handwrite_python)
             return Execute_HandwritePython(command, result);
         else if (m_options.is_class_based)
@@ -809,6 +836,8 @@ protected:
         DataVisualization::Categories::GetCategory(ConstString(m_command_options.m_category), category_sp);
         if (!category_sp)
             return false;
+        
+        WarnOnPotentialUnquotedUnsignedType(command, result);
         
         for (size_t i = 0; i < argc; i++)
         {
@@ -1769,6 +1798,8 @@ CommandObjectTypeSummaryAdd::CommandObjectTypeSummaryAdd (CommandInterpreter &in
 bool
 CommandObjectTypeSummaryAdd::DoExecute (Args& command, CommandReturnObject &result)
 {
+    WarnOnPotentialUnquotedUnsignedType(command, result);
+
     if (m_options.m_is_add_script)
     {
 #ifndef LLDB_DISABLE_PYTHON
@@ -4182,6 +4213,8 @@ protected:
         DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
         
         Error error;
+        
+        WarnOnPotentialUnquotedUnsignedType(command, result);
         
         for (size_t i = 0; i < argc; i++)
         {
