@@ -135,6 +135,25 @@ Sparc::Fixups SparcMCExpr::getFixupKind(SparcMCExpr::VariantKind Kind) {
   case VK_Sparc_PC10:     return Sparc::fixup_sparc_pc10;
   case VK_Sparc_GOT22:    return Sparc::fixup_sparc_got22;
   case VK_Sparc_GOT10:    return Sparc::fixup_sparc_got10;
+  case VK_Sparc_WPLT30:   return Sparc::fixup_sparc_wplt30;
+  case VK_Sparc_TLS_GD_HI22:   return Sparc::fixup_sparc_tls_gd_hi22;
+  case VK_Sparc_TLS_GD_LO10:   return Sparc::fixup_sparc_tls_gd_lo10;
+  case VK_Sparc_TLS_GD_ADD:    return Sparc::fixup_sparc_tls_gd_add;
+  case VK_Sparc_TLS_GD_CALL:   return Sparc::fixup_sparc_tls_gd_call;
+  case VK_Sparc_TLS_LDM_HI22:  return Sparc::fixup_sparc_tls_ldm_hi22;
+  case VK_Sparc_TLS_LDM_LO10:  return Sparc::fixup_sparc_tls_ldm_lo10;
+  case VK_Sparc_TLS_LDM_ADD:   return Sparc::fixup_sparc_tls_ldm_add;
+  case VK_Sparc_TLS_LDM_CALL:  return Sparc::fixup_sparc_tls_ldm_call;
+  case VK_Sparc_TLS_LDO_HIX22: return Sparc::fixup_sparc_tls_ldo_hix22;
+  case VK_Sparc_TLS_LDO_LOX10: return Sparc::fixup_sparc_tls_ldo_lox10;
+  case VK_Sparc_TLS_LDO_ADD:   return Sparc::fixup_sparc_tls_ldo_add;
+  case VK_Sparc_TLS_IE_HI22:   return Sparc::fixup_sparc_tls_ie_hi22;
+  case VK_Sparc_TLS_IE_LO10:   return Sparc::fixup_sparc_tls_ie_lo10;
+  case VK_Sparc_TLS_IE_LD:     return Sparc::fixup_sparc_tls_ie_ld;
+  case VK_Sparc_TLS_IE_LDX:    return Sparc::fixup_sparc_tls_ie_ldx;
+  case VK_Sparc_TLS_IE_ADD:    return Sparc::fixup_sparc_tls_ie_add;
+  case VK_Sparc_TLS_LE_HIX22:  return Sparc::fixup_sparc_tls_le_hix22;
+  case VK_Sparc_TLS_LE_LOX10:  return Sparc::fixup_sparc_tls_le_lox10;
   }
 }
 
@@ -147,7 +166,33 @@ SparcMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
 }
 
 static void fixELFSymbolsInTLSFixupsImpl(const MCExpr *Expr, MCAssembler &Asm) {
-  assert(0 && "Implement fixELFSymbolsInTLSFixupsImpl!");
+  switch (Expr->getKind()) {
+  case MCExpr::Target:
+    llvm_unreachable("Can't handle nested target expr!");
+    break;
+
+  case MCExpr::Constant:
+    break;
+
+  case MCExpr::Binary: {
+    const MCBinaryExpr *BE = cast<MCBinaryExpr>(Expr);
+    fixELFSymbolsInTLSFixupsImpl(BE->getLHS(), Asm);
+    fixELFSymbolsInTLSFixupsImpl(BE->getRHS(), Asm);
+    break;
+  }
+
+  case MCExpr::SymbolRef: {
+    const MCSymbolRefExpr &SymRef = *cast<MCSymbolRefExpr>(Expr);
+    MCSymbolData &SD = Asm.getOrCreateSymbolData(SymRef.getSymbol());
+    MCELF::SetType(SD, ELF::STT_TLS);
+    break;
+  }
+
+  case MCExpr::Unary:
+    fixELFSymbolsInTLSFixupsImpl(cast<MCUnaryExpr>(Expr)->getSubExpr(), Asm);
+    break;
+  }
+
 }
 
 void SparcMCExpr::fixELFSymbolsInTLSFixups(MCAssembler &Asm) const {

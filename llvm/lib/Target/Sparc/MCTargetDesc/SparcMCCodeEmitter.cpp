@@ -21,6 +21,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -82,6 +83,21 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     OS << (char)(Bits >> 24);
     Bits <<= 8;
   }
+  unsigned tlsOpNo = 0;
+  switch (MI.getOpcode()) {
+  default: break;
+  case SP::TLS_CALL:   tlsOpNo = 1; break;
+  case SP::TLS_ADDrr:
+  case SP::TLS_ADDXrr:
+  case SP::TLS_LDrr:
+  case SP::TLS_LDXrr:  tlsOpNo = 3; break;
+  }
+  if (tlsOpNo != 0) {
+    const MCOperand &MO = MI.getOperand(tlsOpNo);
+    uint64_t op = getMachineOpValue(MI, MO, Fixups, STI);
+    assert(op == 0 && "Unexpected operand value!");
+    (void)op; // suppress warning.
+  }
 
   ++MCNumEmitted;  // Keep track of the # of mi's emitted.
 }
@@ -121,6 +137,21 @@ getCallTargetOpValue(const MCInst &MI, unsigned OpNo,
   const MCOperand &MO = MI.getOperand(OpNo);
   if (MO.isReg() || MO.isImm())
     return getMachineOpValue(MI, MO, Fixups, STI);
+
+  if (MI.getOpcode() == SP::TLS_CALL) {
+    // No fixups for __tls_get_addr. Will emit for fixups for tls_symbol in
+    // EncodeInstruction.
+#ifndef NDEBUG
+    // Verify that the callee is actually __tls_get_addr.
+    const SparcMCExpr *SExpr = dyn_cast<SparcMCExpr>(MO.getExpr());
+    assert(SExpr && SExpr->getSubExpr()->getKind() == MCExpr::SymbolRef &&
+           "Unexpected expression in TLS_CALL");
+    const MCSymbolRefExpr *SymExpr = cast<MCSymbolRefExpr>(SExpr->getSubExpr());
+    assert(SymExpr->getSymbol().getName() == "__tls_get_addr" &&
+           "Unexpected function for TLS_CALL");
+#endif
+    return 0;
+  }
 
   MCFixupKind fixupKind = (MCFixupKind)Sparc::fixup_sparc_call30;
 

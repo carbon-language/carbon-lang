@@ -3,6 +3,10 @@
 ; RUN: llc <%s -march=sparc   -relocation-model=pic    | FileCheck %s --check-prefix=pic
 ; RUN: llc <%s -march=sparcv9 -relocation-model=pic    | FileCheck %s --check-prefix=pic
 
+; RUN: llc <%s -march=sparc   -relocation-model=static -filetype=obj | llvm-readobj -r | FileCheck %s --check-prefix=v8abs-obj
+; RUN: llc <%s -march=sparcv9 -relocation-model=static -filetype=obj | llvm-readobj -r | FileCheck %s --check-prefix=v9abs-obj
+; RUN: llc <%s -march=sparc   -relocation-model=pic    -filetype=obj | llvm-readobj -r | FileCheck %s --check-prefix=pic-obj
+; RUN: llc <%s -march=sparcv9 -relocation-model=pic    -filetype=obj | llvm-readobj -r | FileCheck %s --check-prefix=pic-obj
 
 @local_symbol = internal thread_local global i32 0
 @extern_symbol = external thread_local global i32
@@ -69,3 +73,47 @@ entry:
   store i32 %1, i32* @extern_symbol, align 4
   ret i32 %1
 }
+
+
+; v8abs-obj: Relocations [
+; v8abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LE_HIX22 local_symbol 0x0
+; v8abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LE_LOX10 local_symbol 0x0
+; v8abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_HI22 _GLOBAL_OFFSET_TABLE_ 0x0
+; v8abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_LO10 _GLOBAL_OFFSET_TABLE_ 0x0
+; v8abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_IE_HI22 extern_symbol 0x0
+; v8abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_IE_LO10 extern_symbol 0x0
+; v8abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_IE_LD extern_symbol 0x0
+; v8abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_IE_ADD extern_symbol 0x0
+; v8abs-obj: ]
+
+; v9abs-obj: Relocations [
+; v9abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LE_HIX22 local_symbol 0x0
+; v9abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LE_LOX10 local_symbol 0x0
+; v9abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_H44 _GLOBAL_OFFSET_TABLE_ 0x0
+; v9abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_M44 _GLOBAL_OFFSET_TABLE_ 0x0
+; v9abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_L44 _GLOBAL_OFFSET_TABLE_ 0x0
+; v9abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_IE_HI22 extern_symbol 0x0
+; v9abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_IE_LO10 extern_symbol 0x0
+; v9abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_IE_LDX extern_symbol 0x0
+; v9abs-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_IE_ADD extern_symbol 0x0
+; v9abs-obj: ]
+
+; pic-obj: Relocations [
+; pic-obj:  Section (2) .rela.text {
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_PC22 _GLOBAL_OFFSET_TABLE_ 0x4
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_PC10 _GLOBAL_OFFSET_TABLE_ 0x8
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDO_HIX22 local_symbol 0x0
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDO_LOX10 local_symbol 0x0
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDM_HI22 local_symbol 0x0
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDM_LO10 local_symbol 0x0
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDM_ADD local_symbol 0x0
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDM_CALL local_symbol 0x0
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDO_ADD local_symbol 0x0
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_PC22 _GLOBAL_OFFSET_TABLE_ 0x4
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_PC10 _GLOBAL_OFFSET_TABLE_ 0x8
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_GD_HI22 extern_symbol 0x0
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_GD_LO10 extern_symbol 0x0
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_GD_ADD extern_symbol 0x0
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_GD_CALL extern_symbol 0x0
+; pic-obj: ]
+
