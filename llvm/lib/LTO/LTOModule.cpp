@@ -349,6 +349,7 @@ void LTOModule::addDefinedFunctionSymbol(const Function *f) {
 }
 
 static bool canBeHidden(const GlobalValue *GV) {
+  // FIXME: this is duplicated with another static function in AsmPrinter.cpp
   GlobalValue::LinkageTypes L = GV->getLinkage();
 
   if (L != GlobalValue::LinkOnceODRLinkage)
@@ -356,6 +357,13 @@ static bool canBeHidden(const GlobalValue *GV) {
 
   if (GV->hasUnnamedAddr())
     return true;
+
+  // If it is a non constant variable, it needs to be uniqued across shared
+  // objects.
+  if (const GlobalVariable *Var = dyn_cast<GlobalVariable>(GV)) {
+    if (!Var->isConstant())
+      return false;
+  }
 
   GlobalStatus GS;
   if (GlobalStatus::analyzeGlobal(GV, GS))
