@@ -241,7 +241,6 @@ void Initialize(ThreadState *thr) {
   InitializeShadowMemory();
 #endif
   InitializeFlags(&ctx->flags, env);
-  OnInitialize();
   // Setup correct file descriptor for error reports.
   __sanitizer_set_report_path(flags()->log_path);
   InitializeSuppressions();
@@ -268,6 +267,8 @@ void Initialize(ThreadState *thr) {
            (int)internal_getpid());
     while (__tsan_resumed == 0) {}
   }
+
+  OnInitialize();
 }
 
 int Finalize(ThreadState *thr) {
