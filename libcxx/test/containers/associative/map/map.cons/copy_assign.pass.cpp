@@ -59,6 +59,21 @@ int main()
     }
     {
         typedef std::pair<const int, double> V;
+        const V ar[] =
+        {
+            V(1, 1),
+            V(2, 1),
+            V(3, 1),
+        };
+        std::map<int, double> m(ar, ar+sizeof(ar)/sizeof(ar[0]));
+        std::map<int, double> *p = &m;
+        m = *p;
+
+        assert(m.size() == 3);
+        assert(std::equal(m.begin(), m.end(), ar));
+    }
+    {
+        typedef std::pair<const int, double> V;
         V ar[] =
         {
             V(1, 1),

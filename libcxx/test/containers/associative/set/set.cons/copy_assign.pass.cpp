@@ -58,6 +58,21 @@ int main()
     }
     {
         typedef int V;
+        const V ar[] =
+        {
+            1,
+            2,
+            3
+        };
+        std::set<int> m(ar, ar+sizeof(ar)/sizeof(ar[0]));
+        std::set<int> *p = &m;
+        m = *p;
+
+        assert(m.size() == 3);
+        assert(std::equal(m.begin(), m.end(), ar));
+    }
+    {
+        typedef int V;
         V ar[] =
         {
             1,

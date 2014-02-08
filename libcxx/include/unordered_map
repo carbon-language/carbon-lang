@@ -831,12 +831,14 @@ public:
 #if __cplusplus >= 201103L
         __table_ = __u.__table_;
 #else
-        __table_.clear();
-        __table_.hash_function() = __u.__table_.hash_function();
-        __table_.key_eq() = __u.__table_.key_eq();
-        __table_.max_load_factor() = __u.__table_.max_load_factor();
-        __table_.__copy_assign_alloc(__u.__table_);
-        insert(__u.begin(), __u.end());
+        if (this != &__u) {
+            __table_.clear();
+            __table_.hash_function() = __u.__table_.hash_function();
+            __table_.key_eq() = __u.__table_.key_eq();
+            __table_.max_load_factor() = __u.__table_.max_load_factor();
+            __table_.__copy_assign_alloc(__u.__table_);
+            insert(__u.begin(), __u.end());
+        }
 #endif
         return *this;
     }
@@ -1567,12 +1569,14 @@ public:
 #if __cplusplus >= 201103L
         __table_ = __u.__table_;
 #else
-        __table_.clear();
-        __table_.hash_function() = __u.__table_.hash_function();
-        __table_.key_eq() = __u.__table_.key_eq();
-        __table_.max_load_factor() = __u.__table_.max_load_factor();
-        __table_.__copy_assign_alloc(__u.__table_);
-        insert(__u.begin(), __u.end());
+        if (this != &__u) {
+            __table_.clear();
+            __table_.hash_function() = __u.__table_.hash_function();
+            __table_.key_eq() = __u.__table_.key_eq();
+            __table_.max_load_factor() = __u.__table_.max_load_factor();
+            __table_.__copy_assign_alloc(__u.__table_);
+            insert(__u.begin(), __u.end());
+        }
 #endif
         return *this;
     }

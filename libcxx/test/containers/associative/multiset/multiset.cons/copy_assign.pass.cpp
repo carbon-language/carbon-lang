@@ -70,6 +70,26 @@ int main()
     }
     {
         typedef int V;
+        const V ar[] =
+        {
+            1,
+            1,
+            1,
+            2,
+            2,
+            2,
+            3,
+            3,
+            3
+        };
+        std::multiset<int> m(ar, ar+sizeof(ar)/sizeof(ar[0]));
+        std::multiset<int> *p = &m;
+        m = *p;
+        assert(m.size() == 9);
+        assert(std::equal(m.begin(), m.end(), ar));
+    }
+    {
+        typedef int V;
         V ar[] =
         {
             1,

@@ -884,10 +884,12 @@ public:
 #if __cplusplus >= 201103L
             __tree_ = __m.__tree_;
 #else
-            __tree_.clear();
-            __tree_.value_comp() = __m.__tree_.value_comp();
-            __tree_.__copy_assign_alloc(__m.__tree_);
-            insert(__m.begin(), __m.end());
+            if (this != &__m) {
+                __tree_.clear();
+                __tree_.value_comp() = __m.__tree_.value_comp();
+                __tree_.__copy_assign_alloc(__m.__tree_);
+                insert(__m.begin(), __m.end());
+            }
 #endif
             return *this;
         }
@@ -1616,10 +1618,12 @@ public:
 #if __cplusplus >= 201103L
             __tree_ = __m.__tree_;
 #else
-            __tree_.clear();
-            __tree_.value_comp() = __m.__tree_.value_comp();
-            __tree_.__copy_assign_alloc(__m.__tree_);
-            insert(__m.begin(), __m.end());
+            if (this != &__m) {
+                __tree_.clear();
+                __tree_.value_comp() = __m.__tree_.value_comp();
+                __tree_.__copy_assign_alloc(__m.__tree_);
+                insert(__m.begin(), __m.end());
+            }
 #endif
             return *this;
         }

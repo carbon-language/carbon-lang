@@ -80,6 +80,25 @@ int main()
         assert(c.max_load_factor() == 1);
     }
     {
+        typedef std::unordered_multiset<int> C;
+        typedef int P;
+        P a[] =
+        {
+            P(1),
+            P(2),
+            P(3),
+            P(4),
+            P(1),
+            P(2)
+        };
+        C c(a, a + sizeof(a)/sizeof(a[0]));
+        C *p = &c;
+        c = *p;
+
+        assert(c.size() == 6);
+        assert(std::is_permutation(c.begin(), c.end(), a));
+    }
+    {
         typedef other_allocator<int> A;
         typedef std::unordered_multiset<int,
                                    test_hash<std::hash<int> >,

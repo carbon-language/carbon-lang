@@ -50,6 +50,26 @@ int main()
     }
     {
         typedef std::pair<const int, double> V;
+        const V ar[] =
+        {
+            V(1, 1),
+            V(1, 1.5),
+            V(1, 2),
+            V(2, 1),
+            V(2, 1.5),
+            V(2, 2),
+            V(3, 1),
+            V(3, 1.5),
+            V(3, 2),
+        };
+        std::multimap<int, double> m(ar, ar+sizeof(ar)/sizeof(ar[0]));
+        std::multimap<int, double> *p = &m;
+        m = *p;
+        assert(m.size() == sizeof(ar)/sizeof(ar[0]));
+        assert(std::equal(m.begin(), m.end(), ar));
+    }
+    {
+        typedef std::pair<const int, double> V;
         V ar[] =
         {
             V(1, 1),
