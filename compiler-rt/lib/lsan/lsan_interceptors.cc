@@ -173,9 +173,9 @@ void *operator new[](uptr size, std::nothrow_t const&) { OPERATOR_NEW_BODY; }
   Deallocate(ptr);
 
 INTERCEPTOR_ATTRIBUTE
-void operator delete(void *ptr) { OPERATOR_DELETE_BODY; }
+void operator delete(void *ptr) throw() { OPERATOR_DELETE_BODY; }
 INTERCEPTOR_ATTRIBUTE
-void operator delete[](void *ptr) { OPERATOR_DELETE_BODY; }
+void operator delete[](void *ptr) throw() { OPERATOR_DELETE_BODY; }
 INTERCEPTOR_ATTRIBUTE
 void operator delete(void *ptr, std::nothrow_t const&) { OPERATOR_DELETE_BODY; }
 INTERCEPTOR_ATTRIBUTE
