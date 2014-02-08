@@ -671,11 +671,9 @@ public:
   /// \brief Determine what kind of translation unit this AST represents.
   TranslationUnitKind getTranslationUnitKind() const { return TUKind; }
 
-  typedef llvm::PointerUnion<const char *, const llvm::MemoryBuffer *>
-      FilenameOrMemBuf;
   /// \brief A mapping from a file name to the memory buffer that stores the
   /// remapped contents of that file.
-  typedef std::pair<std::string, FilenameOrMemBuf> RemappedFile;
+  typedef std::pair<std::string, const llvm::MemoryBuffer *> RemappedFile;
 
   /// \brief Create a ASTUnit. Gets ownership of the passed CompilerInvocation. 
   static ASTUnit *create(CompilerInvocation *CI,

@@ -710,54 +710,24 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                          AST->getDiagnostics(),
                                          AST->ASTFileLangOpts,
                                          /*Target=*/0));
-  
+
   for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
-    FilenameOrMemBuf fileOrBuf = RemappedFiles[I].second;
-    if (const llvm::MemoryBuffer *
-          memBuf = fileOrBuf.dyn_cast<const llvm::MemoryBuffer *>()) {
-      // Create the file entry for the file that we're mapping from.
-      const FileEntry *FromFile
-        = AST->getFileManager().getVirtualFile(RemappedFiles[I].first,
-                                               memBuf->getBufferSize(),
-                                               0);
-      if (!FromFile) {
-        AST->getDiagnostics().Report(diag::err_fe_remap_missing_from_file)
+    const llvm::MemoryBuffer *MemBuf = RemappedFiles[I].second;
+    // Create the file entry for the file that we're mapping from.
+    const FileEntry *FromFile = AST->getFileManager().getVirtualFile(
+        RemappedFiles[I].first, MemBuf->getBufferSize(), 0);
+    if (!FromFile) {
+      AST->getDiagnostics().Report(diag::err_fe_remap_missing_from_file)
           << RemappedFiles[I].first;
-        delete memBuf;
-        continue;
-      }
-      
-      // Override the contents of the "from" file with the contents of
-      // the "to" file.
-      AST->getSourceManager().overrideFileContents(FromFile, memBuf);
-
-    } else {
-      const char *fname = fileOrBuf.get<const char *>();
-      const FileEntry *ToFile = AST->FileMgr->getFile(fname);
-      if (!ToFile) {
-        AST->getDiagnostics().Report(diag::err_fe_remap_missing_to_file)
-        << RemappedFiles[I].first << fname;
-        continue;
-      }
-
-      // Create the file entry for the file that we're mapping from.
-      const FileEntry *FromFile
-        = AST->getFileManager().getVirtualFile(RemappedFiles[I].first,
-                                               ToFile->getSize(),
-                                               0);
-      if (!FromFile) {
-        AST->getDiagnostics().Report(diag::err_fe_remap_missing_from_file)
-          << RemappedFiles[I].first;
-        delete memBuf;
-        continue;
-      }
-      
-      // Override the contents of the "from" file with the contents of
-      // the "to" file.
-      AST->getSourceManager().overrideFileContents(FromFile, ToFile);
+      delete MemBuf;
+      continue;
     }
+
+    // Override the contents of the "from" file with the contents of
+    // the "to" file.
+    AST->getSourceManager().overrideFileContents(FromFile, MemBuf);
   }
-  
+
   // Gather Info for preprocessor construction later on.
 
   HeaderSearch &HeaderInfo = *AST->HeaderInfo.get();
@@ -2055,14 +2025,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
 
   // Override any files that need remapping
   for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
-    FilenameOrMemBuf fileOrBuf = RemappedFiles[I].second;
-    if (const llvm::MemoryBuffer *
-            memBuf = fileOrBuf.dyn_cast<const llvm::MemoryBuffer *>()) {
-      CI->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first, memBuf);
-    } else {
-      const char *fname = fileOrBuf.get<const char *>();
-      CI->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first, fname);
-    }
+    CI->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
+                                              RemappedFiles[I].second);
   }
   PreprocessorOptions &PPOpts = CI->getPreprocessorOpts();
   PPOpts.RemappedFilesKeepOriginalName = RemappedFilesKeepOriginalName;
@@ -2132,18 +2096,10 @@ bool ASTUnit::Reparse(ArrayRef<RemappedFile> RemappedFiles) {
   }
   Invocation->getPreprocessorOpts().clearRemappedFiles();
   for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
-    FilenameOrMemBuf fileOrBuf = RemappedFiles[I].second;
-    if (const llvm::MemoryBuffer *
-            memBuf = fileOrBuf.dyn_cast<const llvm::MemoryBuffer *>()) {
-      Invocation->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
-                                                        memBuf);
-    } else {
-      const char *fname = fileOrBuf.get<const char *>();
-      Invocation->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
-                                                        fname);
-    }
+    Invocation->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
+                                                      RemappedFiles[I].second);
   }
-  
+
   // If we have a preamble file lying around, or if we might try to
   // build a precompiled preamble, do so now.
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
@@ -2497,17 +2453,10 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   PreprocessorOpts.clearRemappedFiles();
   PreprocessorOpts.RetainRemappedFileBuffers = true;
   for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
-    FilenameOrMemBuf fileOrBuf = RemappedFiles[I].second;
-    if (const llvm::MemoryBuffer *
-            memBuf = fileOrBuf.dyn_cast<const llvm::MemoryBuffer *>()) {
-      PreprocessorOpts.addRemappedFile(RemappedFiles[I].first, memBuf);
-      OwnedBuffers.push_back(memBuf);
-    } else {
-      const char *fname = fileOrBuf.get<const char *>();
-      PreprocessorOpts.addRemappedFile(RemappedFiles[I].first, fname);
-    }
+    PreprocessorOpts.addRemappedFile(RemappedFiles[I].first,
+                                     RemappedFiles[I].second);
   }
-  
+
   // Use the code completion consumer we were given, but adding any cached
   // code-completion results.
   AugmentedCodeCompleteConsumer *AugmentedConsumer
