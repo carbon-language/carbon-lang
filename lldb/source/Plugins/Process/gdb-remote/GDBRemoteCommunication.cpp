@@ -560,7 +560,7 @@ GDBRemoteCommunication::StartListenThread (const char *hostname, uint16_t port)
     {
         char listen_url[512];
         if (hostname && hostname[0])
-            snprintf(listen_url, sizeof(listen_url), "listen://%s:%i", hostname ? hostname : "localhost", port);
+            snprintf(listen_url, sizeof(listen_url), "listen://%s:%i", hostname, port);
         else
             snprintf(listen_url, sizeof(listen_url), "listen://%i", port);
         m_listen_url = listen_url;
