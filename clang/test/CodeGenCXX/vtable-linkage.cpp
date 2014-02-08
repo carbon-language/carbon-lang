@@ -91,47 +91,47 @@ void use_F() {
 // and hidden visibility (rdar://problem/7523229).
 // CHECK-DAG: @_ZTV1C = linkonce_odr unnamed_addr constant
 // CHECK-DAG: @_ZTS1C = linkonce_odr constant
-// CHECK-DAG: @_ZTI1C = linkonce_odr unnamed_addr constant
+// CHECK-DAG: @_ZTI1C = linkonce_odr constant
 // CHECK-DAG: @_ZTT1C = linkonce_odr unnamed_addr constant
 
 // D has a key function that is defined in this translation unit so its vtable is
 // defined in the translation unit.
 // CHECK-DAG: @_ZTV1D = unnamed_addr constant
 // CHECK-DAG: @_ZTS1D = constant
-// CHECK-DAG: @_ZTI1D = unnamed_addr constant
+// CHECK-DAG: @_ZTI1D = constant
 
 // E<char> is an explicit specialization with a key function defined
 // in this translation unit, so its vtable should have external
 // linkage.
 // CHECK-DAG: @_ZTV1EIcE = unnamed_addr constant
 // CHECK-DAG: @_ZTS1EIcE = constant
-// CHECK-DAG: @_ZTI1EIcE = unnamed_addr constant
+// CHECK-DAG: @_ZTI1EIcE = constant
 
 // E<short> is an explicit template instantiation with a key function
 // defined in this translation unit, so its vtable should have
 // weak_odr linkage.
 // CHECK-DAG: @_ZTV1EIsE = weak_odr unnamed_addr constant
 // CHECK-DAG: @_ZTS1EIsE = weak_odr constant
-// CHECK-DAG: @_ZTI1EIsE = weak_odr unnamed_addr constant
+// CHECK-DAG: @_ZTI1EIsE = weak_odr constant
 
 // F<short> is an explicit template instantiation without a key
 // function, so its vtable should have weak_odr linkage
 // CHECK-DAG: @_ZTV1FIsE = weak_odr unnamed_addr constant
 // CHECK-DAG: @_ZTS1FIsE = weak_odr constant
-// CHECK-DAG: @_ZTI1FIsE = weak_odr unnamed_addr constant
+// CHECK-DAG: @_ZTI1FIsE = weak_odr constant
 
 // E<long> is an implicit template instantiation with a key function
 // defined in this translation unit, so its vtable should have
 // linkonce_odr linkage.
 // CHECK-DAG: @_ZTV1EIlE = linkonce_odr unnamed_addr constant
 // CHECK-DAG: @_ZTS1EIlE = linkonce_odr constant
-// CHECK-DAG: @_ZTI1EIlE = linkonce_odr unnamed_addr constant
+// CHECK-DAG: @_ZTI1EIlE = linkonce_odr constant
 
 // F<long> is an implicit template instantiation with no key function,
 // so its vtable should have linkonce_odr linkage.
 // CHECK-DAG: @_ZTV1FIlE = linkonce_odr unnamed_addr constant
 // CHECK-DAG: @_ZTS1FIlE = linkonce_odr constant
-// CHECK-DAG: @_ZTI1FIlE = linkonce_odr unnamed_addr constant
+// CHECK-DAG: @_ZTI1FIlE = linkonce_odr constant
 
 // F<int> is an explicit template instantiation declaration without a
 // key function, so its vtable should have external linkage.
@@ -148,19 +148,19 @@ void use_F() {
 // internal linkage.
 // CHECK-DAG: @"_ZTV3$_0" = internal unnamed_addr constant
 // CHECK-DAG: @"_ZTS3$_0" = internal constant
-// CHECK-DAG: @"_ZTI3$_0" = internal unnamed_addr constant
+// CHECK-DAG: @"_ZTI3$_0" = internal constant
 
 // The A vtable should have internal linkage since it is inside an anonymous 
 // namespace.
 // CHECK-DAG: @_ZTVN12_GLOBAL__N_11AE = internal unnamed_addr constant
 // CHECK-DAG: @_ZTSN12_GLOBAL__N_11AE = internal constant
-// CHECK-DAG: @_ZTIN12_GLOBAL__N_11AE = internal unnamed_addr constant
+// CHECK-DAG: @_ZTIN12_GLOBAL__N_11AE = internal constant
 
 // F<char> is an explicit specialization without a key function, so
 // its vtable should have linkonce_odr linkage.
 // CHECK-DAG: @_ZTV1FIcE = linkonce_odr unnamed_addr constant
 // CHECK-DAG: @_ZTS1FIcE = linkonce_odr constant
-// CHECK-DAG: @_ZTI1FIcE = linkonce_odr unnamed_addr constant
+// CHECK-DAG: @_ZTI1FIcE = linkonce_odr constant
 
 // CHECK-DAG: @_ZTV1GIiE = linkonce_odr unnamed_addr constant
 template <typename T>

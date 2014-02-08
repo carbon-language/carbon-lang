@@ -644,6 +644,21 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
     OldGV->eraseFromParent();
   }
 
+  // The Itanium ABI specifies that type_info objects must be globally
+  // unique, with one exception: if the type is an incomplete class
+  // type or a (possibly indirect) pointer to one.  That exception
+  // affects the general case of comparing type_info objects produced
+  // by the typeid operator, which is why the comparison operators on
+  // std::type_info generally use the type_info name pointers instead
+  // of the object addresses.  However, the language's built-in uses
+  // of RTTI generally require class types to be complete, even when
+  // manipulating pointers to those class types.  This allows the
+  // implementation of dynamic_cast to rely on address equality tests,
+  // which is much faster.
+
+  // All of this is to say that it's important that both the type_info
+  // object and the type_info name be uniqued when weakly emitted.
+
   // Give the type_info object and name the formal visibility of the
   // type itself.
   Visibility formalVisibility = Ty->getVisibility();
@@ -651,14 +666,6 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
     CodeGenModule::GetLLVMVisibility(formalVisibility);
   TypeName->setVisibility(llvmVisibility);
   GV->setVisibility(llvmVisibility);
-
-  // Contra the Itanium ABI, we do not rely or guarantee strict
-  // address-equivalence of type_info objects.
-  //
-  // The main effect of setting this flag is that LLVM will
-  // automatically decrease the visibility of linkonce_odr type_info
-  // objects.
-  GV->setUnnamedAddr(true);
 
   return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);
 }

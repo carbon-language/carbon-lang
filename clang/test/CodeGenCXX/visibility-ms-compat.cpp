@@ -27,7 +27,7 @@ namespace test0 {
 
   const std::type_info &ti = typeid(A);
   // CHECK-GLOBAL: @_ZTSN5test01AE = linkonce_odr constant
-  // CHECK-GLOBAL: @_ZTIN5test01AE = linkonce_odr unnamed_addr constant
+  // CHECK-GLOBAL: @_ZTIN5test01AE = linkonce_odr constant
   // CHECK-GLOBAL: @_ZN5test02tiE = hidden constant
 }
 
@@ -43,7 +43,7 @@ namespace test1 {
 
   const std::type_info &ti = typeid(A);
   // CHECK-GLOBAL: @_ZTSN5test11AE = linkonce_odr hidden constant
-  // CHECK-GLOBAL: @_ZTIN5test11AE = linkonce_odr hidden unnamed_addr constant
+  // CHECK-GLOBAL: @_ZTIN5test11AE = linkonce_odr hidden constant
   // CHECK-GLOBAL: @_ZN5test12tiE = hidden constant
 }
 
@@ -59,7 +59,7 @@ namespace test2 {
 
   const std::type_info &ti = typeid(A);
   // CHECK-GLOBAL: @_ZTSN5test21AE = linkonce_odr constant
-  // CHECK-GLOBAL: @_ZTIN5test21AE = linkonce_odr unnamed_addr constant
+  // CHECK-GLOBAL: @_ZTIN5test21AE = linkonce_odr constant
   // CHECK-GLOBAL: @_ZN5test22tiE = hidden constant
 }
 
@@ -76,7 +76,7 @@ namespace test3 {
 
   const std::type_info &ti = typeid(B<A>);
   // CHECK-GLOBAL: @_ZTSN5test31BINS_1AEEE = linkonce_odr constant
-  // CHECK-GLOBAL: @_ZTIN5test31BINS_1AEEE = linkonce_odr unnamed_addr constant
+  // CHECK-GLOBAL: @_ZTIN5test31BINS_1AEEE = linkonce_odr constant
 }
 
 namespace test4 {
@@ -92,7 +92,7 @@ namespace test4 {
 
   const std::type_info &ti = typeid(B<A>);
   // CHECK-GLOBAL: @_ZTSN5test41BINS_1AEEE = linkonce_odr constant
-  // CHECK-GLOBAL: @_ZTIN5test41BINS_1AEEE = linkonce_odr unnamed_addr constant
+  // CHECK-GLOBAL: @_ZTIN5test41BINS_1AEEE = linkonce_odr constant
 }
 
 namespace test5 {
@@ -108,5 +108,5 @@ namespace test5 {
 
   const std::type_info &ti = typeid(B<A>);
   // CHECK-GLOBAL: @_ZTSN5test51BINS_1AEEE = linkonce_odr hidden constant
-  // CHECK-GLOBAL: @_ZTIN5test51BINS_1AEEE = linkonce_odr hidden unnamed_addr constant
+  // CHECK-GLOBAL: @_ZTIN5test51BINS_1AEEE = linkonce_odr hidden constant
 }

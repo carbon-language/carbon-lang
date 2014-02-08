@@ -59,7 +59,7 @@ struct Test1a {
 Test1a::Test1a() { use(typeid(Test1a)); }
 // CHECK:      @_ZTV6Test1a = linkonce_odr unnamed_addr constant 
 // CHECK-LATE: @_ZTS6Test1a = linkonce_odr constant
-// CHECK-LATE: @_ZTI6Test1a = linkonce_odr unnamed_addr constant
+// CHECK-LATE: @_ZTI6Test1a = linkonce_odr constant
 
 // This defines the key function.
 inline void Test1a::foo() {}
@@ -79,7 +79,7 @@ inline void Test1b::foo() {}
 Test1b::Test1b() { use(typeid(Test1b)); }
 // CHECK: @_ZTV6Test1b = linkonce_odr unnamed_addr constant 
 // CHECK: @_ZTS6Test1b = linkonce_odr constant
-// CHECK: @_ZTI6Test1b = linkonce_odr unnamed_addr constant
+// CHECK: @_ZTI6Test1b = linkonce_odr constant
 
 /*** Test2a ******************************************************************/
 
@@ -93,7 +93,7 @@ struct Test2a {
 Test2a::Test2a() { use(typeid(Test2a)); }
 // CHECK:      @_ZTV6Test2a = linkonce_odr unnamed_addr constant
 // CHECK-LATE: @_ZTS6Test2a = linkonce_odr constant
-// CHECK-LATE: @_ZTI6Test2a = linkonce_odr unnamed_addr constant
+// CHECK-LATE: @_ZTI6Test2a = linkonce_odr constant
 
 void Test2a::bar() {}
 inline void Test2a::foo() {}
@@ -112,7 +112,7 @@ void Test2b::bar() {}
 Test2b::Test2b() { use(typeid(Test2b)); }
 // CHECK:      @_ZTV6Test2b = linkonce_odr unnamed_addr constant
 // CHECK-LATE: @_ZTS6Test2b = linkonce_odr constant
-// CHECK-LATE: @_ZTI6Test2b = linkonce_odr unnamed_addr constant
+// CHECK-LATE: @_ZTI6Test2b = linkonce_odr constant
 
 inline void Test2b::foo() {}
 
@@ -131,7 +131,7 @@ inline void Test2c::foo() {}
 Test2c::Test2c() { use(typeid(Test2c)); }
 // CHECK: @_ZTV6Test2c = linkonce_odr unnamed_addr constant
 // CHECK: @_ZTS6Test2c = linkonce_odr constant
-// CHECK: @_ZTI6Test2c = linkonce_odr unnamed_addr constant
+// CHECK: @_ZTI6Test2c = linkonce_odr constant
 
 /*** Test3a ******************************************************************/
 
@@ -145,7 +145,7 @@ struct Test3a {
 Test3a::Test3a() { use(typeid(Test3a)); }
 // CHECK:      @_ZTV6Test3a = linkonce_odr unnamed_addr constant
 // CHECK-LATE: @_ZTS6Test3a = linkonce_odr constant
-// CHECK-LATE: @_ZTI6Test3a = linkonce_odr unnamed_addr constant
+// CHECK-LATE: @_ZTI6Test3a = linkonce_odr constant
 
 // This defines the key function.
 inline void Test3a::bar() {}
@@ -165,7 +165,7 @@ inline void Test3b::bar() {}
 Test3b::Test3b() { use(typeid(Test3b)); }
 // CHECK:      @_ZTV6Test3b = linkonce_odr unnamed_addr constant
 // CHECK-LATE: @_ZTS6Test3b = linkonce_odr constant
-// CHECK-LATE: @_ZTI6Test3b = linkonce_odr unnamed_addr constant
+// CHECK-LATE: @_ZTI6Test3b = linkonce_odr constant
 
 // This defines the key function.
 inline void Test3b::foo() {}
@@ -186,4 +186,4 @@ inline void Test3c::foo() {}
 Test3c::Test3c() { use(typeid(Test3c)); }
 // CHECK: @_ZTV6Test3c = linkonce_odr unnamed_addr constant
 // CHECK: @_ZTS6Test3c = linkonce_odr constant
-// CHECK: @_ZTI6Test3c = linkonce_odr unnamed_addr constant
+// CHECK: @_ZTI6Test3c = linkonce_odr constant

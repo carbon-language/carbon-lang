@@ -1,10 +1,10 @@
 // RUN: %clang_cc1 -fno-rtti -fcxx-exceptions -fexceptions %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 
-// CHECK: @_ZTIN5test11AE = linkonce_odr unnamed_addr constant
-// CHECK: @_ZTIN5test11BE = linkonce_odr unnamed_addr constant
-// CHECK: @_ZTIN5test11CE = linkonce_odr unnamed_addr constant
-// CHECK: @_ZTIN5test11DE = linkonce_odr unnamed_addr constant
-// CHECK: @_ZTIPN5test11DE = linkonce_odr unnamed_addr constant {{.*}} @_ZTIN5test11DE
+// CHECK: @_ZTIN5test11AE = linkonce_odr constant
+// CHECK: @_ZTIN5test11BE = linkonce_odr constant
+// CHECK: @_ZTIN5test11CE = linkonce_odr constant
+// CHECK: @_ZTIN5test11DE = linkonce_odr constant
+// CHECK: @_ZTIPN5test11DE = linkonce_odr constant {{.*}} @_ZTIN5test11DE
 
 // PR6974: this shouldn't crash
 namespace test0 {
