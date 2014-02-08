@@ -148,6 +148,8 @@ void ConstantHoisting::CollectConstant(User * U, unsigned Opcode,
     ConstantCandidate &CC = ConstantMap[C];
     CC.CumulativeCost += Cost;
     CC.Uses.push_back(U);
+    DEBUG(dbgs() << "Collect constant " << *C << " with cost " << Cost
+                 << " from " << *U << '\n');
   }
 }
 
@@ -279,38 +281,6 @@ static void CollectBasicBlocks(SmallPtrSet<BasicBlock *, 4> &BBs, Function &F,
           BBs.insert(I->getParent());
 }
 
-/// \brief Find an insertion point that dominates all uses.
-Instruction *ConstantHoisting::
-FindConstantInsertionPoint(Function &F, const ConstantInfo &CI) const {
-  BasicBlock *Entry = &F.getEntryBlock();
-
-  // Collect all basic blocks.
-  SmallPtrSet<BasicBlock *, 4> BBs;
-  ConstantInfo::RebasedConstantListType::const_iterator RCI, RCE;
-  for (RCI = CI.RebasedConstants.begin(), RCE = CI.RebasedConstants.end();
-       RCI != RCE; ++RCI)
-    for (SmallVectorImpl<User *>::const_iterator U = RCI->Uses.begin(),
-         E = RCI->Uses.end(); U != E; ++U)
-        CollectBasicBlocks(BBs, F, *U);
-
-  if (BBs.count(Entry))
-    return Entry->getFirstInsertionPt();
-
-  while (BBs.size() >= 2) {
-    BasicBlock *BB, *BB1, *BB2;
-    BB1 = *BBs.begin();
-    BB2 = *llvm::next(BBs.begin());
-    BB = DT->findNearestCommonDominator(BB1, BB2);
-    if (BB == Entry)
-      return Entry->getFirstInsertionPt();
-    BBs.erase(BB1);
-    BBs.erase(BB2);
-    BBs.insert(BB);
-  }
-  assert((BBs.size() == 1) && "Expected only one element.");
-  return (*BBs.begin())->getFirstInsertionPt();
-}
-
 /// \brief Find the instruction we should insert the constant materialization
 /// before.
 static Instruction *getMatInsertPt(Instruction *I, const DominatorTree *DT) {
@@ -323,6 +293,39 @@ static Instruction *getMatInsertPt(Instruction *I, const DominatorTree *DT) {
          "PHI or landing pad in entry block!");
   BasicBlock *IDom = DT->getNode(I->getParent())->getIDom()->getBlock();
   return IDom->getTerminator();
+}
+
+/// \brief Find an insertion point that dominates all uses.
+Instruction *ConstantHoisting::
+FindConstantInsertionPoint(Function &F, const ConstantInfo &CI) const {
+  BasicBlock *Entry = &F.getEntryBlock();
+
+  // Collect all basic blocks.
+  SmallPtrSet<BasicBlock *, 4> BBs;
+  ConstantInfo::RebasedConstantListType::const_iterator RCI, RCE;
+  for (RCI = CI.RebasedConstants.begin(), RCE = CI.RebasedConstants.end();
+       RCI != RCE; ++RCI)
+    for (SmallVectorImpl<User *>::const_iterator U = RCI->Uses.begin(),
+         E = RCI->Uses.end(); U != E; ++U)
+      CollectBasicBlocks(BBs, F, *U);
+
+  if (BBs.count(Entry))
+    return getMatInsertPt(&Entry->front(), DT);
+
+  while (BBs.size() >= 2) {
+    BasicBlock *BB, *BB1, *BB2;
+    BB1 = *BBs.begin();
+    BB2 = *llvm::next(BBs.begin());
+    BB = DT->findNearestCommonDominator(BB1, BB2);
+    if (BB == Entry)
+      return getMatInsertPt(&Entry->front(), DT);
+    BBs.erase(BB1);
+    BBs.erase(BB2);
+    BBs.insert(BB);
+  }
+  assert((BBs.size() == 1) && "Expected only one element.");
+  Instruction &FirstInst = (*BBs.begin())->front();
+  return getMatInsertPt(&FirstInst, DT);
 }
 
 /// \brief Emit materialization code for all rebased constants and update their

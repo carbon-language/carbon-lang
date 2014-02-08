@@ -46,3 +46,25 @@ return:
 }
 
 declare void @foo(i8*)
+
+; PR18768
+define i32 @test3(i1 %c) {
+entry:
+  br i1 %c, label %if.then, label %if.end3
+
+if.then:                                          ; preds = %entry
+  br label %if.end3
+
+if.end3:                                          ; preds = %if.then, %entry
+  %d.0 = phi i32* [ inttoptr (i64 985162435264511 to i32*), %entry ], [ null, %if.then ]
+  %cmp4 = icmp eq i32* %d.0, inttoptr (i64 985162435264511 to i32*)
+  %cmp6 = icmp eq i32* %d.0, inttoptr (i64 985162418487296 to i32*)
+  %or = or i1 %cmp4, %cmp6
+  br i1 %or, label %if.then8, label %if.end9
+
+if.then8:                                         ; preds = %if.end3
+  ret i32 1
+
+if.end9:                                          ; preds = %if.then8, %if.end3
+  ret i32 undef
+}
