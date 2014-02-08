@@ -435,7 +435,7 @@ void PrinterContext<ET>::PrintExceptionTable(const Elf_Shdr *IT,
 
     switch (PersonalityIndex) {
     case AEABI_UNWIND_CPP_PR0:
-      llvm_unreachable("Personality 0 should be compact inline!");
+      PrintOpcodes(Contents->data() + TableEntryOffset, 3, 1);
       break;
     case AEABI_UNWIND_CPP_PR1:
     case AEABI_UNWIND_CPP_PR2:
