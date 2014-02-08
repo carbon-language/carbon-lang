@@ -350,14 +350,19 @@ void ConstantHoisting::EmitBaseConstants(Function &F, User *U,
   }
   assert(isa<ConstantExpr>(U) && "Expected a ConstantExpr.");
   ConstantExpr *CE = cast<ConstantExpr>(U);
+  SmallVector<std::pair<Instruction *, Instruction *>, 8> WorkList;
+  DEBUG(dbgs() << "Visit ConstantExpr " << *CE << '\n');
   for (Value::use_iterator UU = CE->use_begin(), E = CE->use_end();
        UU != E; ++UU) {
+    DEBUG(dbgs() << "Check user "; UU->print(dbgs()); dbgs() << '\n');
     // We only handel instructions here and won't walk down a ConstantExpr chain
     // to replace all ConstExpr with instructions.
     if (Instruction *I = dyn_cast<Instruction>(*UU)) {
       // Only update constant expressions in the current function.
-      if (I->getParent()->getParent() != &F)
+      if (I->getParent()->getParent() != &F) {
+        DEBUG(dbgs() << "Not in the same function - skip.\n");
         continue;
+      }
 
       Instruction *Mat = Base;
       Instruction *InsertBefore = getMatInsertPt(I, DT);
@@ -380,11 +385,17 @@ void ConstantHoisting::EmitBaseConstants(Function &F, User *U,
       // Use the same debug location as the instruction we are about to update.
       ICE->setDebugLoc(I->getDebugLoc());
 
-      DEBUG(dbgs() << "Create instruction: " << *ICE << '\n');
-      DEBUG(dbgs() << "Update: " << *I << '\n');
-      I->replaceUsesOfWith(CE, ICE);
-      DEBUG(dbgs() << "To: " << *I << '\n');
+      WorkList.push_back(std::make_pair(I, ICE));
+    } else {
+      DEBUG(dbgs() << "Not an instruction - skip.\n");
     }
+  }
+  SmallVectorImpl<std::pair<Instruction *, Instruction *> >::iterator I, E;
+  for (I = WorkList.begin(), E = WorkList.end(); I != E; ++I) {
+    DEBUG(dbgs() << "Create instruction: " << *I->second << '\n');
+    DEBUG(dbgs() << "Update: " << *I->first << '\n');
+    I->first->replaceUsesOfWith(CE, I->second);
+    DEBUG(dbgs() << "To: " << *I->first << '\n');
   }
 }
 
