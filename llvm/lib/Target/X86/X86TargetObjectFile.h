@@ -20,31 +20,34 @@ namespace llvm {
   /// x86-64.
   class X86_64MachoTargetObjectFile : public TargetLoweringObjectFileMachO {
   public:
-    virtual const MCExpr *
-    getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                            MachineModuleInfo *MMI, unsigned Encoding,
-                            MCStreamer &Streamer) const;
+    const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                          MachineModuleInfo *MMI,
+                                          unsigned Encoding,
+                                          MCStreamer &Streamer) const
+        LLVM_OVERRIDE;
 
     // getCFIPersonalitySymbol - The symbol that gets passed to
     // .cfi_personality.
-    virtual MCSymbol *
-    getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
-                            MachineModuleInfo *MMI) const;
+    MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
+                                      MachineModuleInfo *MMI) const
+        LLVM_OVERRIDE;
   };
 
   /// X86LinuxTargetObjectFile - This implementation is used for linux x86
   /// and x86-64.
   class X86LinuxTargetObjectFile : public TargetLoweringObjectFileELF {
-    virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+    void Initialize(MCContext &Ctx, const TargetMachine &TM) LLVM_OVERRIDE;
 
     /// \brief Describe a TLS variable address within debug info.
-    virtual const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
+    const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const
+        LLVM_OVERRIDE;
   };
 
   /// \brief This implementation is used for Windows targets on x86 and x86-64.
   class X86WindowsTargetObjectFile : public TargetLoweringObjectFileCOFF {
-    virtual const MCExpr *getExecutableRelativeSymbol(const ConstantExpr *CE,
-                                                      Mangler *Mang) const;
+    const MCExpr *getExecutableRelativeSymbol(const ConstantExpr *CE,
+                                              Mangler *Mang) const
+        LLVM_OVERRIDE;
   };
 
 } // end namespace llvm

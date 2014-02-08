@@ -26,15 +26,17 @@ public:
     AttributesSection(NULL)
   {}
 
-  virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+  void Initialize(MCContext &Ctx, const TargetMachine &TM) LLVM_OVERRIDE;
 
-  const MCExpr *
-  getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                          MachineModuleInfo *MMI, unsigned Encoding,
-                          MCStreamer &Streamer) const;
+  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                        MachineModuleInfo *MMI,
+                                        unsigned Encoding,
+                                        MCStreamer &Streamer) const
+      LLVM_OVERRIDE;
 
   /// \brief Describe a TLS variable address within debug info.
-  virtual const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
+  const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const
+      LLVM_OVERRIDE;
 };
 
 } // end namespace llvm

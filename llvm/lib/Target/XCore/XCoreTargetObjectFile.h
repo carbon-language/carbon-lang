@@ -23,15 +23,18 @@ static const unsigned CodeModelLargeSize = 256;
   public:
     void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
-    virtual const MCSection *
-    getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
-                             Mangler *Mang, const TargetMachine &TM) const;
+    const MCSection *getExplicitSectionGlobal(const GlobalValue *GV,
+                                              SectionKind Kind, Mangler *Mang,
+                                              const TargetMachine &TM) const
+        LLVM_OVERRIDE;
 
-    virtual const MCSection *
-    SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                           Mangler *Mang, const TargetMachine &TM) const;
+    const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
+                                            SectionKind Kind, Mangler *Mang,
+                                            const TargetMachine &TM) const
+        LLVM_OVERRIDE;
 
-    virtual const MCSection *getSectionForConstant(SectionKind Kind) const;
+    const MCSection *getSectionForConstant(SectionKind Kind) const
+        LLVM_OVERRIDE;
   };
 } // end namespace llvm
 

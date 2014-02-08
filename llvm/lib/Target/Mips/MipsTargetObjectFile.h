@@ -19,7 +19,7 @@ namespace llvm {
     const MCSection *SmallBSSSection;
   public:
 
-    void Initialize(MCContext &Ctx, const TargetMachine &TM);
+    void Initialize(MCContext &Ctx, const TargetMachine &TM) LLVM_OVERRIDE;
 
 
     /// IsGlobalInSmallSection - Return true if this global address should be
@@ -30,9 +30,9 @@ namespace llvm {
                                 const TargetMachine &TM) const;
 
     const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                            SectionKind Kind,
-                                            Mangler *Mang,
-                                            const TargetMachine &TM) const;
+                                            SectionKind Kind, Mangler *Mang,
+                                            const TargetMachine &TM) const
+        LLVM_OVERRIDE;
   };
 } // end namespace llvm
 
