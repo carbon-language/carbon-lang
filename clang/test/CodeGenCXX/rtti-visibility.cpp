@@ -1,8 +1,6 @@
 // RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -emit-llvm -o %t
-// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -fhidden-weak-vtables -emit-llvm -o %t.hidden
 // RUN: FileCheck --check-prefix=CHECK-TEST1 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-TEST2 %s < %t
-// RUN: FileCheck --check-prefix=CHECK-TEST2-HIDDEN %s < %t.hidden
 
 #include <typeinfo>
 
@@ -25,10 +23,6 @@ namespace Test2 {
   // CHECK-TEST2: @_ZTSN5Test21AE = linkonce_odr constant
   // CHECK-TEST2: @_ZTIN5Test21AE = linkonce_odr unnamed_addr constant
   struct A { };
-
-  // With -fhidden-weak-vtables, the typeinfo for A is marked hidden, but not its name.
-  // CHECK-TEST2-HIDDEN: _ZTSN5Test21AE = linkonce_odr constant
-  // CHECK-TEST2-HIDDEN: @_ZTIN5Test21AE = linkonce_odr hidden unnamed_addr constant
   void f() {
     (void)typeid(A);
   }

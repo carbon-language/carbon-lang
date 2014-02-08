@@ -54,48 +54,6 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
 static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
                                const ThunkInfo &Thunk, llvm::Function *Fn) {
   CGM.setGlobalVisibility(Fn, MD);
-
-  if (!CGM.getCodeGenOpts().HiddenWeakVTables)
-    return;
-
-  // If the thunk has weak/linkonce linkage, but the function must be
-  // emitted in every translation unit that references it, then we can
-  // emit its thunks with hidden visibility, since its thunks must be
-  // emitted when the function is.
-
-  // This follows CodeGenModule::setTypeVisibility; see the comments
-  // there for explanation.
-
-  if ((Fn->getLinkage() != llvm::GlobalVariable::LinkOnceODRLinkage &&
-       Fn->getLinkage() != llvm::GlobalVariable::WeakODRLinkage) ||
-      Fn->getVisibility() != llvm::GlobalVariable::DefaultVisibility)
-    return;
-
-  if (MD->getExplicitVisibility(ValueDecl::VisibilityForValue))
-    return;
-
-  switch (MD->getTemplateSpecializationKind()) {
-  case TSK_ExplicitInstantiationDefinition:
-  case TSK_ExplicitInstantiationDeclaration:
-    return;
-
-  case TSK_Undeclared:
-    break;
-
-  case TSK_ExplicitSpecialization:
-  case TSK_ImplicitInstantiation:
-    return;
-    break;
-  }
-
-  // If there's an explicit definition, and that definition is
-  // out-of-line, then we can't assume that all users will have a
-  // definition to emit.
-  const FunctionDecl *Def = 0;
-  if (MD->hasBody(Def) && Def->isOutOfLine())
-    return;
-
-  Fn->setVisibility(llvm::GlobalValue::HiddenVisibility);
 }
 
 #ifndef NDEBUG
@@ -626,7 +584,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   // Create the variable that will hold the construction vtable.
   llvm::GlobalVariable *VTable = 
     CGM.CreateOrReplaceCXXRuntimeVariable(Name, ArrayType, Linkage);
-  CGM.setTypeVisibility(VTable, RD, CodeGenModule::TVK_ForConstructionVTable);
+  CGM.setGlobalVisibility(VTable, RD);
 
   // V-tables are always unnamed_addr.
   VTable->setUnnamedAddr(true);

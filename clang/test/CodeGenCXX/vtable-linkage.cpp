@@ -1,8 +1,6 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o %t
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -fhidden-weak-vtables -emit-llvm -o %t.hidden
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -disable-llvm-optzns -O3 -emit-llvm -o %t.opt
 // RUN: FileCheck --check-prefix=CHECK %s < %t
-// RUN: FileCheck --check-prefix=CHECK-HIDDEN %s < %t.hidden
 // RUN: FileCheck --check-prefix=CHECK-OPT %s < %t.opt
 
 namespace {
@@ -95,10 +93,6 @@ void use_F() {
 // CHECK-DAG: @_ZTS1C = linkonce_odr constant
 // CHECK-DAG: @_ZTI1C = linkonce_odr unnamed_addr constant
 // CHECK-DAG: @_ZTT1C = linkonce_odr unnamed_addr constant
-// CHECK-HIDDEN-DAG: @_ZTV1C = linkonce_odr hidden unnamed_addr constant
-// CHECK-HIDDEN-DAG: @_ZTS1C = linkonce_odr constant
-// CHECK-HIDDEN-DAG: @_ZTI1C = linkonce_odr hidden unnamed_addr constant
-// CHECK-HIDDEN-DAG: @_ZTT1C = linkonce_odr hidden unnamed_addr constant
 
 // D has a key function that is defined in this translation unit so its vtable is
 // defined in the translation unit.
@@ -119,18 +113,12 @@ void use_F() {
 // CHECK-DAG: @_ZTV1EIsE = weak_odr unnamed_addr constant
 // CHECK-DAG: @_ZTS1EIsE = weak_odr constant
 // CHECK-DAG: @_ZTI1EIsE = weak_odr unnamed_addr constant
-// CHECK-HIDDEN-DAG: @_ZTV1EIsE = weak_odr unnamed_addr constant
-// CHECK-HIDDEN-DAG: @_ZTS1EIsE = weak_odr constant
-// CHECK-HIDDEN-DAG: @_ZTI1EIsE = weak_odr unnamed_addr constant
 
 // F<short> is an explicit template instantiation without a key
 // function, so its vtable should have weak_odr linkage
 // CHECK-DAG: @_ZTV1FIsE = weak_odr unnamed_addr constant
 // CHECK-DAG: @_ZTS1FIsE = weak_odr constant
 // CHECK-DAG: @_ZTI1FIsE = weak_odr unnamed_addr constant
-// CHECK-HIDDEN-DAG: @_ZTV1FIsE = weak_odr unnamed_addr constant
-// CHECK-HIDDEN-DAG: @_ZTS1FIsE = weak_odr constant
-// CHECK-HIDDEN-DAG: @_ZTI1FIsE = weak_odr unnamed_addr constant
 
 // E<long> is an implicit template instantiation with a key function
 // defined in this translation unit, so its vtable should have

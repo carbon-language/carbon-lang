@@ -644,30 +644,20 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
     OldGV->eraseFromParent();
   }
 
-  // GCC only relies on the uniqueness of the type names, not the
-  // type_infos themselves, so we can emit these as hidden symbols.
-  // But don't do this if we're worried about strict visibility
-  // compatibility.
-  if (const RecordType *RT = dyn_cast<RecordType>(Ty)) {
-    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+  // Give the type_info object and name the formal visibility of the
+  // type itself.
+  Visibility formalVisibility = Ty->getVisibility();
+  llvm::GlobalValue::VisibilityTypes llvmVisibility =
+    CodeGenModule::GetLLVMVisibility(formalVisibility);
+  TypeName->setVisibility(llvmVisibility);
+  GV->setVisibility(llvmVisibility);
 
-    CGM.setTypeVisibility(GV, RD, CodeGenModule::TVK_ForRTTI);
-    CGM.setTypeVisibility(TypeName, RD, CodeGenModule::TVK_ForRTTIName);
-  } else {
-    Visibility TypeInfoVisibility = DefaultVisibility;
-    if (CGM.getCodeGenOpts().HiddenWeakVTables &&
-        Linkage == llvm::GlobalValue::LinkOnceODRLinkage)
-      TypeInfoVisibility = HiddenVisibility;
-
-    // The type name should have the same visibility as the type itself.
-    Visibility ExplicitVisibility = Ty->getVisibility();
-    TypeName->setVisibility(CodeGenModule::
-                            GetLLVMVisibility(ExplicitVisibility));
-  
-    TypeInfoVisibility = minVisibility(TypeInfoVisibility, Ty->getVisibility());
-    GV->setVisibility(CodeGenModule::GetLLVMVisibility(TypeInfoVisibility));
-  }
-
+  // Contra the Itanium ABI, we do not rely or guarantee strict
+  // address-equivalence of type_info objects.
+  //
+  // The main effect of setting this flag is that LLVM will
+  // automatically decrease the visibility of linkonce_odr type_info
+  // objects.
   GV->setUnnamedAddr(true);
 
   return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);

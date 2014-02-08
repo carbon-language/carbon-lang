@@ -843,7 +843,7 @@ void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
     VTable->setInitializer(Init);
 
     VTable->setLinkage(Linkage);
-    CGM.setTypeVisibility(VTable, RD, CodeGenModule::TVK_ForVTable);
+    CGM.setGlobalVisibility(VTable, RD);
   }
 }
 
@@ -1117,7 +1117,7 @@ void MicrosoftCXXABI::emitVBTableDefinition(const VBTableInfo &VBT,
   GV->setInitializer(Init);
 
   // Set the right visibility.
-  CGM.setTypeVisibility(GV, RD, CodeGenModule::TVK_ForVTable);
+  CGM.setGlobalVisibility(GV, RD);
 }
 
 llvm::Value *MicrosoftCXXABI::performThisAdjustment(CodeGenFunction &CGF,
