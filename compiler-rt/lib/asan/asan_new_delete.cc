@@ -81,15 +81,21 @@ INTERCEPTOR(void *, _ZnamRKSt9nothrow_t, size_t size, std::nothrow_t const&) {
 
 #if !SANITIZER_MAC
 INTERCEPTOR_ATTRIBUTE
-void operator delete(void *ptr) { OPERATOR_DELETE_BODY(FROM_NEW); }
+void operator delete(void *ptr) noexcept {
+  OPERATOR_DELETE_BODY(FROM_NEW);
+}
 INTERCEPTOR_ATTRIBUTE
-void operator delete[](void *ptr) { OPERATOR_DELETE_BODY(FROM_NEW_BR); }
+void operator delete[](void *ptr) noexcept {
+  OPERATOR_DELETE_BODY(FROM_NEW_BR);
+}
 INTERCEPTOR_ATTRIBUTE
-void operator delete(void *ptr, std::nothrow_t const&)
-{ OPERATOR_DELETE_BODY(FROM_NEW); }
+void operator delete(void *ptr, std::nothrow_t const&) {
+  OPERATOR_DELETE_BODY(FROM_NEW);
+}
 INTERCEPTOR_ATTRIBUTE
-void operator delete[](void *ptr, std::nothrow_t const&)
-{ OPERATOR_DELETE_BODY(FROM_NEW_BR); }
+void operator delete[](void *ptr, std::nothrow_t const&) {
+  OPERATOR_DELETE_BODY(FROM_NEW_BR);
+}
 
 #else  // SANITIZER_MAC
 INTERCEPTOR(void, _ZdlPv, void *ptr) {
