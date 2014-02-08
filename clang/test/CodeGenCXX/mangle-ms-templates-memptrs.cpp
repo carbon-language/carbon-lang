@@ -22,6 +22,10 @@ int ReadField(T &o) {
   return F ? o.*F : 0;
 }
 
+// Redeclare some of the classes so that the implicit attribute goes on the most
+// recent redeclaration rather than the definition.
+struct V;
+
 void ReadFields() {
   A a;
   I i;
