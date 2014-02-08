@@ -5918,9 +5918,7 @@ Process::ResolveIndirectFunction(const Address *address, Error &error)
 {
     if (address == nullptr)
     {
-        Symbol *symbol = address->CalculateSymbolContextSymbol();
-        error.SetErrorStringWithFormat("unable to determine direct function call for indirect function %s",
-                                          symbol ? symbol->GetName().AsCString() : "<UNKNOWN>");
+        error.SetErrorString("Invalid address argument");
         return LLDB_INVALID_ADDRESS;
     }
     
