@@ -107,6 +107,9 @@ def _SLASH_WX : CLFlag<"WX">, HelpText<"Treat warnings as errors">,
 def _SLASH_WX_ : CLFlag<"WX-">, HelpText<"Do not treat warnings as errors">,
   Alias<W_Joined>, AliasArgs<["no-error"]>;
 def _SLASH_w_flag : CLFlag<"w">, HelpText<"Disable all warnings">, Alias<w>;
+def _SLASH_Z7 : CLFlag<"Z7">, Alias<gline_tables_only>;
+def _SLASH_Zi : CLFlag<"Zi">, HelpText<"Enable debug information">,
+  Alias<gline_tables_only>;
 def _SLASH_Zs : CLFlag<"Zs">, HelpText<"Syntax-check only">,
   Alias<fsyntax_only>;
 
@@ -243,12 +246,10 @@ def _SLASH_Y_ : CLFlag<"Y-">;
 def _SLASH_Yd : CLFlag<"Yd">;
 def _SLASH_Yl : CLJoined<"Yl">;
 def _SLASH_Yu : CLJoined<"Yu">;
-def _SLASH_Z7 : CLFlag<"Z7">;
 def _SLASH_Za : CLFlag<"Za">;
 def _SLASH_Zc : CLJoined<"Zc:">;
 def _SLASH_Ze : CLFlag<"Ze">;
 def _SLASH_Zg : CLFlag<"Zg">;
-def _SLASH_Zi : CLFlag<"Zi">;
 def _SLASH_ZI : CLFlag<"ZI">;
 def _SLASH_Zl : CLFlag<"Zl">;
 def _SLASH_Zp : CLJoined<"Zp">;
