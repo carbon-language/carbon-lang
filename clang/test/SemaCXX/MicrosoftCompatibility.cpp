@@ -111,6 +111,9 @@ public:
 class B : public A {
 private:   
   using A::f;
+  void g() {
+    f(); // no diagnostic
+  }
 };
 
 class C : public B { 

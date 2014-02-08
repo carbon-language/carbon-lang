@@ -1420,16 +1420,15 @@ static AccessResult CheckEffectiveAccess(Sema &S,
                                          AccessTarget &Entity) {
   assert(Entity.getAccess() != AS_public && "called for public access!");
 
-  if (S.getLangOpts().MSVCCompat &&
-      IsMicrosoftUsingDeclarationAccessBug(S, Loc, Entity))
-    return AR_accessible;
-
   switch (IsAccessible(S, EC, Entity)) {
   case AR_dependent:
     DelayDependentAccess(S, EC, Loc, Entity);
     return AR_dependent;
 
   case AR_inaccessible:
+    if (S.getLangOpts().MSVCCompat &&
+        IsMicrosoftUsingDeclarationAccessBug(S, Loc, Entity))
+      return AR_accessible;
     if (!Entity.isQuiet())
       DiagnoseBadAccess(S, Loc, EC, Entity);
     return AR_inaccessible;
