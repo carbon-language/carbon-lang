@@ -3,28 +3,36 @@
 @ This test case will check the default .ARM.attributes value for the
 @ armv6zk architecture.
 
-@ RUN: llvm-mc < %s -triple=arm-linux-gnueabi -filetype=asm \
-@ RUN:   | FileCheck %s --check-prefix=CHECK-ASM
-@ RUN: llvm-mc < %s -triple=arm-linux-gnueabi -filetype=obj \
-@ RUN:   | llvm-readobj -s -sd | FileCheck %s --check-prefix=CHECK-OBJ
+@ RUN: llvm-mc -triple arm-eabi -filetype asm %s \
+@ RUN:   | FileCheck %s -check-prefix CHECK-ASM
+@ RUN: llvm-mc -triple arm-eabi -filetype obj %s \
+@ RUN:   | llvm-readobj -arm-attributes | FileCheck %s -check-prefix CHECK-ATTR
 
 	.syntax	unified
 	.arch	armv6zk
 
 @ CHECK-ASM: 	.arch	armv6zk
 
-@ CHECK-OBJ:    Name: .ARM.attributes
-@ CHECK-OBJ:    Type: SHT_ARM_ATTRIBUTES (0x70000003)
-@ CHECK-OBJ:    Flags [ (0x0)
-@ CHECK-OBJ:    ]
-@ CHECK-OBJ:    Address: 0x0
-@ CHECK-OBJ:    Offset: 0x34
-@ CHECK-OBJ:    Size: 29
-@ CHECK-OBJ:    Link: 0
-@ CHECK-OBJ:    Info: 0
-@ CHECK-OBJ:    AddressAlignment: 1
-@ CHECK-OBJ:    EntrySize: 0
-@ CHECK-OBJ:    SectionData (
-@ CHECK-OBJ:      0000: 411C0000 00616561 62690001 12000000  |A....aeabi......|
-@ CHECK-OBJ:      0010: 05365A4B 00060708 01090144 01        |.6ZK.......D.|
-@ CHECK-OBJ:    )
+@ CHECK-ATTR: FileAttributes {
+@ CHECK-ATTR:   Attribute {
+@ CHECK-ATTR:     TagName: CPU_name
+@ CHECK-ATTR:     Value: 6ZK
+@ CHECK-ATTR:   }
+@ CHECK-ATTR:   Attribute {
+@ CHECK-ATTR:     TagName: CPU_arch
+@ CHECK-ATTR:     Description: ARM v6KZ
+@ CHECK-ATTR:   }
+@ CHECK-ATTR:   Attribute {
+@ CHECK-ATTR:     TagName: ARM_ISA_use
+@ CHECK-ATTR:     Description: Permitted
+@ CHECK-ATTR:   }
+@ CHECK-ATTR:   Attribute {
+@ CHECK-ATTR:     TagName: THUMB_ISA_use
+@ CHECK-ATTR:     Description: Thumb-1
+@ CHECK-ATTR:   }
+@ CHECK-ATTR:   Attribute {
+@ CHECK-ATTR:     TagName: Virtualization_use
+@ CHECK-ATTR:     Description: TrustZone
+@ CHECK-ATTR:   }
+@ CHECK-ATTR: }
+
