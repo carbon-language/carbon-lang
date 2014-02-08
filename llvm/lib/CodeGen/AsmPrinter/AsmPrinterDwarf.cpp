@@ -143,7 +143,7 @@ void AsmPrinter::EmitTTypeReference(const GlobalValue *GV,
     const TargetLoweringObjectFile &TLOF = getObjFileLowering();
 
     const MCExpr *Exp =
-        TLOF.getTTypeGlobalReference(GV, Mang, MMI, Encoding, OutStreamer);
+        TLOF.getTTypeGlobalReference(GV, *Mang, MMI, Encoding, OutStreamer);
     OutStreamer.EmitValue(Exp, GetSizeOfEncodedValue(Encoding));
   } else
     OutStreamer.EmitIntValue(0, GetSizeOfEncodedValue(Encoding));

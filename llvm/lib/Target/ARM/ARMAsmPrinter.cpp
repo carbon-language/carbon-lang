@@ -474,7 +474,7 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
       // Now any user defined text sections from function attributes.
       for (Module::iterator F = M.begin(), e = M.end(); F != e; ++F)
         if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage())
-          TextSections.insert(TLOFMacho.SectionForGlobal(F, Mang, TM));
+          TextSections.insert(TLOFMacho.SectionForGlobal(F, *Mang, TM));
       // Now the coalescable sections.
       TextSections.insert(TLOFMacho.getTextCoalSection());
       TextSections.insert(TLOFMacho.getConstTextCoalSection());

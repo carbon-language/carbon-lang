@@ -120,7 +120,7 @@ static unsigned getXCoreSectionFlags(SectionKind K) {
 
 const MCSection *XCoreTargetObjectFile::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
-                         Mangler *Mang, const TargetMachine &TM) const {
+                         Mangler &Mang, const TargetMachine &TM) const {
   StringRef SectionName = GV->getSection();
   // Infer section flags from the section name if we can.
   Kind = getXCoreKindForNamedSection(SectionName, Kind);
@@ -129,7 +129,7 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 }
 
 const MCSection *XCoreTargetObjectFile::
-SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler *Mang,
+SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
                        const TargetMachine &TM) const{
   if (Kind.isText())                      return TextSection;
   if (Kind.isMergeable1ByteCString())     return CStringSection;

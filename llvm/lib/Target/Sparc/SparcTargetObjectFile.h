@@ -23,7 +23,7 @@ public:
     TargetLoweringObjectFileELF()
   {}
 
-  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
                                         MachineModuleInfo *MMI,
                                         unsigned Encoding,
                                         MCStreamer &Streamer) const

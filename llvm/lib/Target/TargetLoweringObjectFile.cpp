@@ -120,9 +120,9 @@ MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
 }
 
 MCSymbol *TargetLoweringObjectFile::
-getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
+getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
                         MachineModuleInfo *MMI) const {
-  return getSymbol(*Mang, GV);
+  return getSymbol(Mang, GV);
 }
 
 void TargetLoweringObjectFile::emitPersonalityValue(MCStreamer &Streamer,
@@ -264,7 +264,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
 /// the specified global variable or function definition.  This should not
 /// be passed external (or available externally) globals.
 const MCSection *TargetLoweringObjectFile::
-SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler *Mang,
+SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
                  const TargetMachine &TM) const {
   // Select section name.
   if (GV->hasSection())
@@ -280,7 +280,7 @@ SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler *Mang,
 const MCSection *
 TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
                                                  SectionKind Kind,
-                                                 Mangler *Mang,
+                                                 Mangler &Mang,
                                                  const TargetMachine &TM) const{
   assert(!Kind.isThreadLocal() && "Doesn't support TLS");
 
@@ -311,11 +311,11 @@ TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
 /// reference to the specified global variable from exception
 /// handling information.
 const MCExpr *TargetLoweringObjectFile::
-getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
                         MachineModuleInfo *MMI, unsigned Encoding,
                         MCStreamer &Streamer) const {
   const MCSymbolRefExpr *Ref =
-    MCSymbolRefExpr::Create(getSymbol(*Mang, GV), getContext());
+    MCSymbolRefExpr::Create(getSymbol(Mang, GV), getContext());
 
   return getTTypeReference(Ref, Encoding, Streamer);
 }

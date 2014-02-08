@@ -22,9 +22,9 @@ Initialize(MCContext &Ctx, const TargetMachine &TM) {
   InitializeELF(TM.Options.UseInitArray);
 }
 
-const MCSection * PPC64LinuxTargetObjectFile::
-SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       Mangler *Mang, const TargetMachine &TM) const {
+const MCSection *PPC64LinuxTargetObjectFile::SelectSectionForGlobal(
+    const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
+    const TargetMachine &TM) const {
 
   const MCSection *DefaultSection = 
     TargetLoweringObjectFileELF::SelectSectionForGlobal(GV, Kind, Mang, TM);

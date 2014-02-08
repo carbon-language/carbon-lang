@@ -113,9 +113,9 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     return;
 
   const DataLayout *TD = TM.getDataLayout();
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GV, Mang,TM));
+  OutStreamer.SwitchSection(
+      getObjFileLowering().SectionForGlobal(GV, *Mang, TM));
 
-  
   MCSymbol *GVSym = getSymbol(GV);
   const Constant *C = GV->getInitializer();
   unsigned Align = (unsigned)TD->getPreferredTypeAlignmentShift(C->getType());

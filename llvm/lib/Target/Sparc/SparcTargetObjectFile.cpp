@@ -16,20 +16,20 @@ using namespace llvm;
 
 
 const MCExpr *SparcELFTargetObjectFile::
-getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
                         MachineModuleInfo *MMI, unsigned Encoding,
                         MCStreamer &Streamer) const {
 
   if (Encoding & dwarf::DW_EH_PE_pcrel) {
     MachineModuleInfoELF &ELFMMI = MMI->getObjFileInfo<MachineModuleInfoELF>();
 
-    MCSymbol *SSym = getSymbolWithGlobalValueBase(*Mang, GV, ".DW.stub");
+    MCSymbol *SSym = getSymbolWithGlobalValueBase(Mang, GV, ".DW.stub");
 
     // Add information about the stub reference to ELFMMI so that the stub
     // gets emitted by the asmprinter.
     MachineModuleInfoImpl::StubValueTy &StubSym = ELFMMI.getGVStubEntry(SSym);
     if (StubSym.getPointer() == 0) {
-      MCSymbol *Sym = getSymbol(*Mang, GV);
+      MCSymbol *Sym = getSymbol(Mang, GV);
       StubSym = MachineModuleInfoImpl::StubValueTy(Sym, !GV->hasLocalLinkage());
     }
 

@@ -19,14 +19,14 @@ using namespace llvm;
 using namespace dwarf;
 
 const MCExpr *X86_64MachoTargetObjectFile::
-getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
                         MachineModuleInfo *MMI, unsigned Encoding,
                         MCStreamer &Streamer) const {
 
   // On Darwin/X86-64, we can reference dwarf symbols with foo@GOTPCREL+4, which
   // is an indirect pc-relative reference.
   if (Encoding & (DW_EH_PE_indirect | DW_EH_PE_pcrel)) {
-    const MCSymbol *Sym = getSymbol(*Mang, GV);
+    const MCSymbol *Sym = getSymbol(Mang, GV);
     const MCExpr *Res =
       MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, getContext());
     const MCExpr *Four = MCConstantExpr::Create(4, getContext());
@@ -38,9 +38,9 @@ getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
 }
 
 MCSymbol *X86_64MachoTargetObjectFile::
-getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
+getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
                         MachineModuleInfo *MMI) const {
-  return getSymbol(*Mang, GV);
+  return getSymbol(Mang, GV);
 }
 
 void
@@ -57,7 +57,7 @@ X86LinuxTargetObjectFile::getDebugThreadLocalSymbol(
 
 const MCExpr *
 X86WindowsTargetObjectFile::getExecutableRelativeSymbol(const ConstantExpr *CE,
-                                                        Mangler *Mang) const {
+                                                        Mangler &Mang) const {
   // We are looking for the difference of two symbols, need a subtraction
   // operation.
   const SubOperator *Sub = dyn_cast<SubOperator>(CE);
@@ -103,5 +103,5 @@ X86WindowsTargetObjectFile::getExecutableRelativeSymbol(const ConstantExpr *CE,
     return 0;
 
   return MCSymbolRefExpr::Create(
-      getSymbol(*Mang, GVLHS), MCSymbolRefExpr::VK_COFF_IMGREL32, getContext());
+      getSymbol(Mang, GVLHS), MCSymbolRefExpr::VK_COFF_IMGREL32, getContext());
 }

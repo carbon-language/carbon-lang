@@ -45,17 +45,17 @@ using namespace dwarf;
 
 MCSymbol *
 TargetLoweringObjectFileELF::getCFIPersonalitySymbol(const GlobalValue *GV,
-                                                     Mangler *Mang,
+                                                     Mangler &Mang,
                                                 MachineModuleInfo *MMI) const {
   unsigned Encoding = getPersonalityEncoding();
   switch (Encoding & 0x70) {
   default:
     report_fatal_error("We do not support this DWARF encoding yet!");
   case dwarf::DW_EH_PE_absptr:
-    return  getSymbol(*Mang, GV);
+    return  getSymbol(Mang, GV);
   case dwarf::DW_EH_PE_pcrel: {
     return getContext().GetOrCreateSymbol(StringRef("DW.ref.") +
-                                          getSymbol(*Mang, GV)->getName());
+                                          getSymbol(Mang, GV)->getName());
   }
   }
 }
@@ -88,20 +88,20 @@ void TargetLoweringObjectFileELF::emitPersonalityValue(MCStreamer &Streamer,
 }
 
 const MCExpr *TargetLoweringObjectFileELF::
-getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
                         MachineModuleInfo *MMI, unsigned Encoding,
                         MCStreamer &Streamer) const {
 
   if (Encoding & dwarf::DW_EH_PE_indirect) {
     MachineModuleInfoELF &ELFMMI = MMI->getObjFileInfo<MachineModuleInfoELF>();
 
-    MCSymbol *SSym = getSymbolWithGlobalValueBase(*Mang, GV, ".DW.stub");
+    MCSymbol *SSym = getSymbolWithGlobalValueBase(Mang, GV, ".DW.stub");
 
     // Add information about the stub reference to ELFMMI so that the stub
     // gets emitted by the asmprinter.
     MachineModuleInfoImpl::StubValueTy &StubSym = ELFMMI.getGVStubEntry(SSym);
     if (StubSym.getPointer() == 0) {
-      MCSymbol *Sym = getSymbol(*Mang, GV);
+      MCSymbol *Sym = getSymbol(Mang, GV);
       StubSym = MachineModuleInfoImpl::StubValueTy(Sym, !GV->hasLocalLinkage());
     }
 
@@ -199,7 +199,7 @@ getELFSectionFlags(SectionKind K) {
 
 const MCSection *TargetLoweringObjectFileELF::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
-                         Mangler *Mang, const TargetMachine &TM) const {
+                         Mangler &Mang, const TargetMachine &TM) const {
   StringRef SectionName = GV->getSection();
 
   // Infer section flags from the section name if we can.
@@ -232,7 +232,7 @@ static const char *getSectionPrefixForGlobal(SectionKind Kind) {
 
 const MCSection *TargetLoweringObjectFileELF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       Mangler *Mang, const TargetMachine &TM) const {
+                       Mangler &Mang, const TargetMachine &TM) const {
   // If we have -ffunction-section or -fdata-section then we should emit the
   // global value to a uniqued section specifically for it.
   bool EmitUniquedSection;
@@ -249,7 +249,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     Prefix = getSectionPrefixForGlobal(Kind);
 
     SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
-    MCSymbol *Sym = getSymbol(*Mang, GV);
+    MCSymbol *Sym = getSymbol(Mang, GV);
     Name.append(Sym->getName().begin(), Sym->getName().end());
     StringRef Group = "";
     unsigned Flags = getELFSectionFlags(Kind);
@@ -416,7 +416,7 @@ getDepLibFromLinkerOpt(StringRef LinkerOption) const {
 void TargetLoweringObjectFileMachO::
 emitModuleFlags(MCStreamer &Streamer,
                 ArrayRef<Module::ModuleFlagEntry> ModuleFlags,
-                Mangler *Mang, const TargetMachine &TM) const {
+                Mangler &Mang, const TargetMachine &TM) const {
   unsigned VersionVal = 0;
   unsigned ImageInfoFlags = 0;
   MDNode *LinkerOptions = 0;
@@ -490,7 +490,7 @@ emitModuleFlags(MCStreamer &Streamer,
 
 const MCSection *TargetLoweringObjectFileMachO::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
-                         Mangler *Mang, const TargetMachine &TM) const {
+                         Mangler &Mang, const TargetMachine &TM) const {
   // Parse the section specifier and create it if valid.
   StringRef Segment, Section;
   unsigned TAA = 0, StubSize = 0;
@@ -529,7 +529,7 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 
 const MCSection *TargetLoweringObjectFileMachO::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       Mangler *Mang, const TargetMachine &TM) const {
+                       Mangler &Mang, const TargetMachine &TM) const {
 
   // Handle thread local data.
   if (Kind.isThreadBSS()) return TLSBSSSection;
@@ -611,7 +611,7 @@ TargetLoweringObjectFileMachO::getSectionForConstant(SectionKind Kind) const {
 /// not to emit the UsedDirective for some symbols in llvm.used.
 // FIXME: REMOVE this (rdar://7071300)
 bool TargetLoweringObjectFileMachO::
-shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
+shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler &Mang) const {
   /// On Darwin, internally linked data beginning with "L" or "l" does not have
   /// the directive emitted (this occurs in ObjC metadata).
   if (!GV) return false;
@@ -621,7 +621,7 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
     // FIXME: ObjC metadata is currently emitted as internal symbols that have
     // \1L and \0l prefixes on them.  Fix them to be Private/LinkerPrivate and
     // this horrible hack can go away.
-    MCSymbol *Sym = getSymbol(*Mang, GV);
+    MCSymbol *Sym = getSymbol(Mang, GV);
     if (Sym->getName()[0] == 'L' || Sym->getName()[0] == 'l')
       return false;
   }
@@ -630,7 +630,7 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
 }
 
 const MCExpr *TargetLoweringObjectFileMachO::
-getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
                         MachineModuleInfo *MMI, unsigned Encoding,
                         MCStreamer &Streamer) const {
   // The mach-o version of this method defaults to returning a stub reference.
@@ -639,7 +639,7 @@ getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
     MachineModuleInfoMachO &MachOMMI =
       MMI->getObjFileInfo<MachineModuleInfoMachO>();
 
-    MCSymbol *SSym = getSymbolWithGlobalValueBase(*Mang, GV, "$non_lazy_ptr");
+    MCSymbol *SSym = getSymbolWithGlobalValueBase(Mang, GV, "$non_lazy_ptr");
 
     // Add information about the stub reference to MachOMMI so that the stub
     // gets emitted by the asmprinter.
@@ -647,7 +647,7 @@ getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
       GV->hasHiddenVisibility() ? MachOMMI.getHiddenGVStubEntry(SSym) :
                                   MachOMMI.getGVStubEntry(SSym);
     if (StubSym.getPointer() == 0) {
-      MCSymbol *Sym = getSymbol(*Mang, GV);
+      MCSymbol *Sym = getSymbol(Mang, GV);
       StubSym = MachineModuleInfoImpl::StubValueTy(Sym, !GV->hasLocalLinkage());
     }
 
@@ -661,19 +661,19 @@ getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
 }
 
 MCSymbol *TargetLoweringObjectFileMachO::
-getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
+getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
                         MachineModuleInfo *MMI) const {
   // The mach-o version of this method defaults to returning a stub reference.
   MachineModuleInfoMachO &MachOMMI =
     MMI->getObjFileInfo<MachineModuleInfoMachO>();
 
-  MCSymbol *SSym = getSymbolWithGlobalValueBase(*Mang, GV, "$non_lazy_ptr");
+  MCSymbol *SSym = getSymbolWithGlobalValueBase(Mang, GV, "$non_lazy_ptr");
 
   // Add information about the stub reference to MachOMMI so that the stub
   // gets emitted by the asmprinter.
   MachineModuleInfoImpl::StubValueTy &StubSym = MachOMMI.getGVStubEntry(SSym);
   if (StubSym.getPointer() == 0) {
-    MCSymbol *Sym = getSymbol(*Mang, GV);
+    MCSymbol *Sym = getSymbol(Mang, GV);
     StubSym = MachineModuleInfoImpl::StubValueTy(Sym, !GV->hasLocalLinkage());
   }
 
@@ -721,7 +721,7 @@ getCOFFSectionFlags(SectionKind K) {
 
 const MCSection *TargetLoweringObjectFileCOFF::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
-                         Mangler *Mang, const TargetMachine &TM) const {
+                         Mangler &Mang, const TargetMachine &TM) const {
   int Selection = 0;
   unsigned Characteristics = getCOFFSectionFlags(Kind);
   StringRef Name = GV->getSection();
@@ -729,7 +729,7 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
   if (GV->isWeakForLinker()) {
     Selection = COFF::IMAGE_COMDAT_SELECT_ANY;
     Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
-    MCSymbol *Sym = getSymbol(*Mang, GV);
+    MCSymbol *Sym = getSymbol(Mang, GV);
     COMDATSymName = Sym->getName();
   }
   return getContext().getCOFFSection(Name,
@@ -754,7 +754,7 @@ static const char *getCOFFSectionNameForUniqueGlobal(SectionKind Kind) {
 
 const MCSection *TargetLoweringObjectFileCOFF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       Mangler *Mang, const TargetMachine &TM) const {
+                       Mangler &Mang, const TargetMachine &TM) const {
 
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
@@ -763,7 +763,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     unsigned Characteristics = getCOFFSectionFlags(Kind);
 
     Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
-    MCSymbol *Sym = getSymbol(*Mang, GV);
+    MCSymbol *Sym = getSymbol(Mang, GV);
     return getContext().getCOFFSection(Name, Characteristics,
                                        Kind, Sym->getName(),
                                        COFF::IMAGE_COMDAT_SELECT_ANY);
@@ -795,7 +795,7 @@ getDepLibFromLinkerOpt(StringRef LinkerOption) const {
 void TargetLoweringObjectFileCOFF::
 emitModuleFlags(MCStreamer &Streamer,
                 ArrayRef<Module::ModuleFlagEntry> ModuleFlags,
-                Mangler *Mang, const TargetMachine &TM) const {
+                Mangler &Mang, const TargetMachine &TM) const {
   MDNode *LinkerOptions = 0;
 
   // Look for the "Linker Options" flag, since it's the only one we support.

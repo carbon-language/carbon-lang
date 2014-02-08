@@ -46,25 +46,25 @@ public:
   const MCSection *getSectionForConstant(SectionKind Kind) const LLVM_OVERRIDE;
 
   const MCSection *getExplicitSectionGlobal(const GlobalValue *GV,
-                                            SectionKind Kind, Mangler *Mang,
+                                            SectionKind Kind, Mangler &Mang,
                                             const TargetMachine &TM) const
       LLVM_OVERRIDE;
 
   const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                          SectionKind Kind, Mangler *Mang,
+                                          SectionKind Kind, Mangler &Mang,
                                           const TargetMachine &TM) const
       LLVM_OVERRIDE;
 
   /// Return an MCExpr to use for a reference to the specified type info global
   /// variable from exception handling information.
-  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
                                         MachineModuleInfo *MMI,
                                         unsigned Encoding,
                                         MCStreamer &Streamer) const
       LLVM_OVERRIDE;
 
   // The symbol that gets passed to .cfi_personality.
-  MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
+  MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
                                     MachineModuleInfo *MMI) const LLVM_OVERRIDE;
 
   void InitializeELF(bool UseInitArray_);
@@ -87,16 +87,16 @@ public:
   /// Emit the module flags that specify the garbage collection information.
   void emitModuleFlags(MCStreamer &Streamer,
                        ArrayRef<Module::ModuleFlagEntry> ModuleFlags,
-                       Mangler *Mang, const TargetMachine &TM) const
+                       Mangler &Mang, const TargetMachine &TM) const
       LLVM_OVERRIDE;
 
   const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                          SectionKind Kind, Mangler *Mang,
+                                          SectionKind Kind, Mangler &Mang,
                                           const TargetMachine &TM) const
       LLVM_OVERRIDE;
 
   const MCSection *getExplicitSectionGlobal(const GlobalValue *GV,
-                                            SectionKind Kind, Mangler *Mang,
+                                            SectionKind Kind, Mangler &Mang,
                                             const TargetMachine &TM) const
       LLVM_OVERRIDE;
 
@@ -105,18 +105,18 @@ public:
   /// This hook allows targets to selectively decide not to emit the
   /// UsedDirective for some symbols in llvm.used.
   /// FIXME: REMOVE this (rdar://7071300)
-  bool shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const
+  bool shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler &Mang) const
       LLVM_OVERRIDE;
 
   /// The mach-o version of this method defaults to returning a stub reference.
-  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
                                         MachineModuleInfo *MMI,
                                         unsigned Encoding,
                                         MCStreamer &Streamer) const
       LLVM_OVERRIDE;
 
   // The symbol that gets passed to .cfi_personality.
-  MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
+  MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
                                     MachineModuleInfo *MMI) const LLVM_OVERRIDE;
 };
 
@@ -127,12 +127,12 @@ public:
   virtual ~TargetLoweringObjectFileCOFF() {}
 
   const MCSection *getExplicitSectionGlobal(const GlobalValue *GV,
-                                            SectionKind Kind, Mangler *Mang,
+                                            SectionKind Kind, Mangler &Mang,
                                             const TargetMachine &TM) const
       LLVM_OVERRIDE;
 
   const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                          SectionKind Kind, Mangler *Mang,
+                                          SectionKind Kind, Mangler &Mang,
                                           const TargetMachine &TM) const
       LLVM_OVERRIDE;
 
@@ -144,7 +144,7 @@ public:
   /// emission is implemented for COFF.
   void emitModuleFlags(MCStreamer &Streamer,
                        ArrayRef<Module::ModuleFlagEntry> ModuleFlags,
-                       Mangler *Mang, const TargetMachine &TM) const
+                       Mangler &Mang, const TargetMachine &TM) const
       LLVM_OVERRIDE;
 };
 

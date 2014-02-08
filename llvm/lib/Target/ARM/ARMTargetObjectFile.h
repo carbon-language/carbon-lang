@@ -28,7 +28,7 @@ public:
 
   void Initialize(MCContext &Ctx, const TargetMachine &TM) LLVM_OVERRIDE;
 
-  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
                                         MachineModuleInfo *MMI,
                                         unsigned Encoding,
                                         MCStreamer &Streamer) const

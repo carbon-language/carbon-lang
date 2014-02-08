@@ -92,7 +92,7 @@ public:
   }
 
   const MCSection *getExplicitSectionGlobal(const GlobalValue *GV,
-                                            SectionKind Kind, Mangler *Mang,
+                                            SectionKind Kind, Mangler &Mang,
                                             const TargetMachine &TM) const
       LLVM_OVERRIDE {
     return DataSection;

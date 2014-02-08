@@ -23,7 +23,7 @@ namespace llvm {
     void Initialize(MCContext &Ctx, const TargetMachine &TM) LLVM_OVERRIDE;
 
     const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                            SectionKind Kind, Mangler *Mang,
+                                            SectionKind Kind, Mangler &Mang,
                                             const TargetMachine &TM) const
         LLVM_OVERRIDE;
 

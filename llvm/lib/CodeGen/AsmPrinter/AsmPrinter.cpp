@@ -372,7 +372,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     // Handle local BSS symbols.
     if (MAI->hasMachoZeroFillDirective()) {
       const MCSection *TheSection =
-        getObjFileLowering().SectionForGlobal(GV, GVKind, Mang, TM);
+        getObjFileLowering().SectionForGlobal(GV, GVKind, *Mang, TM);
       // .zerofill __DATA, __bss, _foo, 400, 5
       OutStreamer.EmitZerofill(TheSection, GVSym, Size, Align);
       return;
@@ -401,7 +401,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   }
 
   const MCSection *TheSection =
-    getObjFileLowering().SectionForGlobal(GV, GVKind, Mang, TM);
+    getObjFileLowering().SectionForGlobal(GV, GVKind, *Mang, TM);
 
   // Handle the zerofill directive on darwin, which is a special form of BSS
   // emission.
@@ -492,7 +492,8 @@ void AsmPrinter::EmitFunctionHeader() {
   // Print the 'header' of function.
   const Function *F = MF->getFunction();
 
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(
+      getObjFileLowering().SectionForGlobal(F, *Mang, TM));
   EmitVisibility(CurrentFnSym, F->getVisibility());
 
   EmitLinkage(F, CurrentFnSym);
@@ -935,7 +936,7 @@ bool AsmPrinter::doFinalization(Module &M) {
   SmallVector<Module::ModuleFlagEntry, 8> ModuleFlags;
   M.getModuleFlagsMetadata(ModuleFlags);
   if (!ModuleFlags.empty())
-    getObjFileLowering().emitModuleFlags(OutStreamer, ModuleFlags, Mang, TM);
+    getObjFileLowering().emitModuleFlags(OutStreamer, ModuleFlags, *Mang, TM);
 
   // Make sure we wrote out everything we need.
   OutStreamer.Flush();
@@ -1155,7 +1156,8 @@ void AsmPrinter::EmitJumpTableInfo() {
       // FIXME: this isn't the right predicate, should be based on the MCSection
       // for the function.
       F->isWeakForLinker()) {
-    OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F,Mang,TM));
+    OutStreamer.SwitchSection(
+        getObjFileLowering().SectionForGlobal(F, *Mang, TM));
   } else {
     // Otherwise, drop it in the readonly section.
     const MCSection *ReadOnlySection =
@@ -1339,7 +1341,7 @@ void AsmPrinter::EmitLLVMUsedList(const ConstantArray *InitList) {
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
     const GlobalValue *GV =
       dyn_cast<GlobalValue>(InitList->getOperand(i)->stripPointerCasts());
-    if (GV && getObjFileLowering().shouldEmitUsedDirectiveFor(GV, Mang))
+    if (GV && getObjFileLowering().shouldEmitUsedDirectiveFor(GV, *Mang))
       OutStreamer.EmitSymbolAttribute(getSymbol(GV), MCSA_NoDeadStrip);
   }
 }
@@ -1544,7 +1546,7 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
   }
 
   if (const MCExpr *RelocExpr =
-          AP.getObjFileLowering().getExecutableRelativeSymbol(CE, AP.Mang))
+          AP.getObjFileLowering().getExecutableRelativeSymbol(CE, *AP.Mang))
     return RelocExpr;
 
   switch (CE->getOpcode()) {

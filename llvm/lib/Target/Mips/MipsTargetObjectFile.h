@@ -30,7 +30,7 @@ namespace llvm {
                                 const TargetMachine &TM) const;
 
     const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                            SectionKind Kind, Mangler *Mang,
+                                            SectionKind Kind, Mangler &Mang,
                                             const TargetMachine &TM) const
         LLVM_OVERRIDE;
   };

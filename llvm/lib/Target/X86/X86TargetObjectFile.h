@@ -20,7 +20,7 @@ namespace llvm {
   /// x86-64.
   class X86_64MachoTargetObjectFile : public TargetLoweringObjectFileMachO {
   public:
-    const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
+    const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
                                           MachineModuleInfo *MMI,
                                           unsigned Encoding,
                                           MCStreamer &Streamer) const
@@ -28,7 +28,7 @@ namespace llvm {
 
     // getCFIPersonalitySymbol - The symbol that gets passed to
     // .cfi_personality.
-    MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
+    MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
                                       MachineModuleInfo *MMI) const
         LLVM_OVERRIDE;
   };
@@ -46,7 +46,7 @@ namespace llvm {
   /// \brief This implementation is used for Windows targets on x86 and x86-64.
   class X86WindowsTargetObjectFile : public TargetLoweringObjectFileCOFF {
     const MCExpr *getExecutableRelativeSymbol(const ConstantExpr *CE,
-                                              Mangler *Mang) const
+                                              Mangler &Mang) const
         LLVM_OVERRIDE;
   };
 

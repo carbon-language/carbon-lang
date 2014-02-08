@@ -24,12 +24,12 @@ static const unsigned CodeModelLargeSize = 256;
     void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
     const MCSection *getExplicitSectionGlobal(const GlobalValue *GV,
-                                              SectionKind Kind, Mangler *Mang,
+                                              SectionKind Kind, Mangler &Mang,
                                               const TargetMachine &TM) const
         LLVM_OVERRIDE;
 
     const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                            SectionKind Kind, Mangler *Mang,
+                                            SectionKind Kind, Mangler &Mang,
                                             const TargetMachine &TM) const
         LLVM_OVERRIDE;
 
