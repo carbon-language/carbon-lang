@@ -1640,6 +1640,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr, bool IfPredic
         Cmp = Builder.CreateExtractElement(Cond[Part], Builder.getInt32(Width));
         Cmp = Builder.CreateICmp(ICmpInst::ICMP_EQ, Cmp, ConstantInt::get(Cmp->getType(), 1));
         CondBlock = IfBlock->splitBasicBlock(InsertPt, "cond.store");
+        LoopVectorBody.push_back(CondBlock);
         VectorLp->addBasicBlockToLoop(CondBlock, LI->getBase());
         // Update Builder with newly created basic block.
         Builder.SetInsertPoint(InsertPt);
@@ -1668,6 +1669,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr, bool IfPredic
       // End if-block.
       if (IfPredicateStore) {
          BasicBlock *NewIfBlock = CondBlock->splitBasicBlock(InsertPt, "else");
+         LoopVectorBody.push_back(NewIfBlock);
          VectorLp->addBasicBlockToLoop(NewIfBlock, LI->getBase());
          Builder.SetInsertPoint(InsertPt);
          Instruction *OldBr = IfBlock->getTerminator();
@@ -5736,6 +5738,7 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
       Cmp = Builder.CreateICmp(ICmpInst::ICMP_EQ, Cond[Part],
                                ConstantInt::get(Cond[Part]->getType(), 1));
       CondBlock = IfBlock->splitBasicBlock(InsertPt, "cond.store");
+      LoopVectorBody.push_back(CondBlock);
       VectorLp->addBasicBlockToLoop(CondBlock, LI->getBase());
       // Update Builder with newly created basic block.
       Builder.SetInsertPoint(InsertPt);
@@ -5761,6 +5764,7 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
     // End if-block.
       if (IfPredicateStore) {
         BasicBlock *NewIfBlock = CondBlock->splitBasicBlock(InsertPt, "else");
+        LoopVectorBody.push_back(NewIfBlock);
         VectorLp->addBasicBlockToLoop(NewIfBlock, LI->getBase());
         Builder.SetInsertPoint(InsertPt);
         Instruction *OldBr = IfBlock->getTerminator();

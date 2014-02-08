@@ -84,3 +84,43 @@ for.inc:
 for.end:
   ret i32 0
 }
+
+; Track basic blocks when unrolling conditional blocks. This code used to assert
+; because we did not update the phi nodes with the proper predecessor in the
+; vectorized loop body.
+; PR18724
+
+; UNROLL-LABEL: bug18724
+; UNROLL: store i32
+; UNROLL: store i32
+
+define void @bug18724() {
+entry:
+  br label %for.body9
+
+for.body9:
+  br i1 undef, label %for.inc26, label %for.body14
+
+for.body14:
+  %indvars.iv3 = phi i64 [ %indvars.iv.next4, %for.inc23 ], [ undef, %for.body9 ]
+  %iNewChunks.120 = phi i32 [ %iNewChunks.2, %for.inc23 ], [ undef, %for.body9 ]
+  %arrayidx16 = getelementptr inbounds [768 x i32]* undef, i64 0, i64 %indvars.iv3
+  %tmp = load i32* %arrayidx16, align 4
+  br i1 undef, label %if.then18, label %for.inc23
+
+if.then18:
+  store i32 2, i32* %arrayidx16, align 4
+  %inc21 = add nsw i32 %iNewChunks.120, 1
+  br label %for.inc23
+
+for.inc23:
+  %iNewChunks.2 = phi i32 [ %inc21, %if.then18 ], [ %iNewChunks.120, %for.body14 ]
+  %indvars.iv.next4 = add nsw i64 %indvars.iv3, 1
+  %tmp1 = trunc i64 %indvars.iv3 to i32
+  %cmp13 = icmp slt i32 %tmp1, 0
+  br i1 %cmp13, label %for.body14, label %for.inc26
+
+for.inc26:
+  %iNewChunks.1.lcssa = phi i32 [ undef, %for.body9 ], [ %iNewChunks.2, %for.inc23 ]
+  unreachable
+}
