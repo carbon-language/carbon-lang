@@ -2078,14 +2078,14 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
 
   FunctionProtoType::ExtProtoInfo EPI;
 
+  QualType BadAllocType;
   bool HasBadAllocExceptionSpec
     = (Name.getCXXOverloadedOperator() == OO_New ||
        Name.getCXXOverloadedOperator() == OO_Array_New);
   if (HasBadAllocExceptionSpec) {
     if (!getLangOpts().CPlusPlus11) {
+      BadAllocType = Context.getTypeDeclType(getStdBadAlloc());
       assert(StdBadAlloc && "Must have std::bad_alloc declared");
-      QualType BadAllocType = Context.getTypeDeclType(getStdBadAlloc());
-
       EPI.ExceptionSpecType = EST_Dynamic;
       EPI.NumExceptions = 1;
       EPI.Exceptions = &BadAllocType;
