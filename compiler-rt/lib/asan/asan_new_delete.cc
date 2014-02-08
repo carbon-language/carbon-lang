@@ -81,11 +81,11 @@ INTERCEPTOR(void *, _ZnamRKSt9nothrow_t, size_t size, std::nothrow_t const&) {
 
 #if !SANITIZER_MAC
 INTERCEPTOR_ATTRIBUTE
-void operator delete(void *ptr) noexcept {
+void operator delete(void *ptr) throw() {
   OPERATOR_DELETE_BODY(FROM_NEW);
 }
 INTERCEPTOR_ATTRIBUTE
-void operator delete[](void *ptr) noexcept {
+void operator delete[](void *ptr) throw() {
   OPERATOR_DELETE_BODY(FROM_NEW_BR);
 }
 INTERCEPTOR_ATTRIBUTE
