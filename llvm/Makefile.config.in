@@ -15,6 +15,8 @@
 # Define LLVM specific info and directories based on the autoconf variables
 LLVMPackageName   := @PACKAGE_TARNAME@
 LLVMVersion       := @PACKAGE_VERSION@
+LLVM_VERSION_MAJOR := @LLVM_VERSION_MAJOR@
+LLVM_VERSION_MINOR := @LLVM_VERSION_MINOR@
 LLVM_CONFIGTIME   := @LLVM_CONFIGTIME@
 
 ###########################################################################
@@ -118,6 +120,7 @@ HOST_ARCH=@HOST_ARCH@
 # Target hardware architecture
 ARCH=@ARCH@
 TARGET_NATIVE_ARCH := $(ARCH)
+LLVM_NATIVE_ARCH := @LLVM_NATIVE_ARCH@
 
 # Indicates, whether we're cross-compiling LLVM or not
 LLVM_CROSS_COMPILING=@LLVM_CROSS_COMPILING@
@@ -207,12 +210,21 @@ POD2MAN    := @POD2MAN@
 PDFROFF    := @PDFROFF@
 ZIP        := @ZIP@
 
+HAVE_LIBZ  := @HAVE_LIBZ@
+HAVE_DLOPEN := @HAVE_DLOPEN@
 HAVE_PTHREAD := @HAVE_PTHREAD@
+HAVE_TERMINFO := @HAVE_TERMINFO@
 
 LIBS       := @LIBS@
 
+# Targets that are possible to build
+ALL_TARGETS := @ALL_TARGETS@
+
 # Targets that we should build
 TARGETS_TO_BUILD=@TARGETS_TO_BUILD@
+
+# Targets supporting JIT
+TARGETS_WITH_JIT := @TARGETS_WITH_JIT@
 
 # Path to directory where object files should be stored during a build.
 # Set OBJ_ROOT to "." if you do not want to use a separate place for
@@ -249,6 +261,9 @@ ENABLE_CLANG_STATIC_ANALYZER = @ENABLE_CLANG_STATIC_ANALYZER@
 
 # When ENABLE_WERROR is enabled, we'll pass -Werror on the command line
 ENABLE_WERROR = @ENABLE_WERROR@
+
+# When ENABLE_TERMINFO is enabled, we use terminfo.
+ENABLE_TERMINFO = @ENABLE_TERMINFO@
 
 # When ENABLE_OPTIMIZED is enabled, LLVM code is optimized and output is put
 # into the "Release" directories. Otherwise, LLVM code is not optimized and

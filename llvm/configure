@@ -639,6 +639,8 @@ LIBS
 build_alias
 host_alias
 target_alias
+LLVM_VERSION_MAJOR
+LLVM_VERSION_MINOR
 LLVM_COPYRIGHT
 CC
 CFLAGS
@@ -674,6 +676,7 @@ NOLINKALL
 LLVM_ON_UNIX
 LLVM_ON_WIN32
 ARCH
+LLVM_NATIVE_ARCH
 HOST_ARCH
 LLVM_CROSS_COMPILING
 BUILD_CC
@@ -697,6 +700,7 @@ DEBUG_SYMBOLS
 KEEP_SYMBOLS
 JIT
 TARGET_HAS_JIT
+TARGETS_WITH_JIT
 ENABLE_DOCS
 ENABLE_DOXYGEN
 LLVM_ENABLE_THREADS
@@ -706,6 +710,7 @@ ENABLE_PIC
 ENABLE_SHARED
 ENABLE_EMBED_STDCXX
 ENABLE_TIMESTAMPS
+ALL_TARGETS
 TARGETS_TO_BUILD
 LLVM_ENUM_TARGETS
 LLVM_ENUM_ASM_PRINTERS
@@ -716,6 +721,7 @@ EXTRA_OPTIONS
 EXTRA_LD_OPTIONS
 CLANG_SRC_ROOT
 BINUTILS_INCDIR
+ENABLE_TERMINFO
 INTERNAL_PREFIX
 NM
 ifGNUmake
@@ -770,6 +776,8 @@ COVERED_SWITCH_DEFAULT
 NO_MAYBE_UNINITIALIZED
 NO_UNINITIALIZED
 PYTHON
+HAVE_DLOPEN
+HAVE_TERMINFO
 USE_UDIS86
 USE_OPROFILE
 USE_INTEL_JITEVENTS
@@ -1930,14 +1938,22 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+
 cat >>confdefs.h <<\_ACEOF
 #define LLVM_VERSION_MAJOR 3
 _ACEOF
+
+LLVM_VERSION_MAJOR='3'
+
+
 
 
 cat >>confdefs.h <<\_ACEOF
 #define LLVM_VERSION_MINOR 5
 _ACEOF
+
+LLVM_VERSION_MINOR='5'
+
 
 
 LLVM_COPYRIGHT="Copyright (c) 2003-2014 University of Illinois at Urbana-Champaign."
@@ -4160,6 +4176,8 @@ esac
 
 ARCH=$llvm_cv_target_arch
 
+LLVM_NATIVE_ARCH=$LLVM_NATIVE_ARCH
+
 
 case $host in
   i?86-*)                 host_arch="x86" ;;
@@ -5079,6 +5097,10 @@ else
   esac
 fi
 
+TARGETS_WITH_JIT="AArch64 ARM Mips PowerPC SystemZ X86"
+TARGETS_WITH_JIT=$TARGETS_WITH_JIT
+
+
 # Check whether --enable-docs was given.
 if test "${enable_docs+set}" = set; then
   enableval=$enable_docs;
@@ -5312,6 +5334,10 @@ _ACEOF
 
 fi
 
+ALL_TARGETS="X86 Sparc PowerPC AArch64 ARM Mips XCore MSP430 CppBackend NVPTX Hexagon SystemZ R600"
+ALL_TARGETS=$ALL_TARGETS
+
+
 TARGETS_TO_BUILD=""
 # Check whether --enable-targets was given.
 if test "${enable_targets+set}" = set; then
@@ -5324,7 +5350,7 @@ if test "$enableval" = host-only ; then
   enableval=host
 fi
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC AArch64 ARM Mips XCore MSP430 CppBackend NVPTX Hexagon SystemZ R600" ;;
+  all) TARGETS_TO_BUILD="$ALL_TARGETS" ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
         x86)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
@@ -5681,6 +5707,12 @@ else
   llvm_cv_enable_terminfo="yes"
 fi
 
+case "$llvm_cv_enable_terminfo" in
+  yes) ENABLE_TERMINFO=1
+ ;;
+  no)  ENABLE_TERMINFO=0
+ ;;
+esac
 
 # Check whether --enable-libedit was given.
 if test "${enable_libedit+set}" = set; then
@@ -10678,7 +10710,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10681 "configure"
+#line 10713 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12357,9 +12389,13 @@ ac_res=$ac_cv_search_dlopen
 if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
+
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_DLOPEN 1
 _ACEOF
+
+HAVE_DLOPEN='1'
+
 
 else
   { echo "$as_me:$LINENO: WARNING: dlopen() not found - disabling plugin support" >&5
@@ -12565,9 +12601,13 @@ ac_res=$ac_cv_search_setupterm
 if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
+
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_TERMINFO 1
 _ACEOF
+
+HAVE_TERMINFO='1'
+
 
 fi
 
@@ -23324,6 +23364,8 @@ LIBS!$LIBS$ac_delim
 build_alias!$build_alias$ac_delim
 host_alias!$host_alias$ac_delim
 target_alias!$target_alias$ac_delim
+LLVM_VERSION_MAJOR!$LLVM_VERSION_MAJOR$ac_delim
+LLVM_VERSION_MINOR!$LLVM_VERSION_MINOR$ac_delim
 LLVM_COPYRIGHT!$LLVM_COPYRIGHT$ac_delim
 CC!$CC$ac_delim
 CFLAGS!$CFLAGS$ac_delim
@@ -23359,6 +23401,7 @@ NOLINKALL!$NOLINKALL$ac_delim
 LLVM_ON_UNIX!$LLVM_ON_UNIX$ac_delim
 LLVM_ON_WIN32!$LLVM_ON_WIN32$ac_delim
 ARCH!$ARCH$ac_delim
+LLVM_NATIVE_ARCH!$LLVM_NATIVE_ARCH$ac_delim
 HOST_ARCH!$HOST_ARCH$ac_delim
 LLVM_CROSS_COMPILING!$LLVM_CROSS_COMPILING$ac_delim
 BUILD_CC!$BUILD_CC$ac_delim
@@ -23381,9 +23424,6 @@ DEBUG_RUNTIME!$DEBUG_RUNTIME$ac_delim
 DEBUG_SYMBOLS!$DEBUG_SYMBOLS$ac_delim
 KEEP_SYMBOLS!$KEEP_SYMBOLS$ac_delim
 JIT!$JIT$ac_delim
-TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
-ENABLE_DOCS!$ENABLE_DOCS$ac_delim
-ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -23425,6 +23465,10 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
+TARGETS_WITH_JIT!$TARGETS_WITH_JIT$ac_delim
+ENABLE_DOCS!$ENABLE_DOCS$ac_delim
+ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
 LLVM_ENABLE_THREADS!$LLVM_ENABLE_THREADS$ac_delim
 ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
 LLVM_ENABLE_ZLIB!$LLVM_ENABLE_ZLIB$ac_delim
@@ -23432,6 +23476,7 @@ ENABLE_PIC!$ENABLE_PIC$ac_delim
 ENABLE_SHARED!$ENABLE_SHARED$ac_delim
 ENABLE_EMBED_STDCXX!$ENABLE_EMBED_STDCXX$ac_delim
 ENABLE_TIMESTAMPS!$ENABLE_TIMESTAMPS$ac_delim
+ALL_TARGETS!$ALL_TARGETS$ac_delim
 TARGETS_TO_BUILD!$TARGETS_TO_BUILD$ac_delim
 LLVM_ENUM_TARGETS!$LLVM_ENUM_TARGETS$ac_delim
 LLVM_ENUM_ASM_PRINTERS!$LLVM_ENUM_ASM_PRINTERS$ac_delim
@@ -23442,6 +23487,7 @@ EXTRA_OPTIONS!$EXTRA_OPTIONS$ac_delim
 EXTRA_LD_OPTIONS!$EXTRA_LD_OPTIONS$ac_delim
 CLANG_SRC_ROOT!$CLANG_SRC_ROOT$ac_delim
 BINUTILS_INCDIR!$BINUTILS_INCDIR$ac_delim
+ENABLE_TERMINFO!$ENABLE_TERMINFO$ac_delim
 INTERNAL_PREFIX!$INTERNAL_PREFIX$ac_delim
 NM!$NM$ac_delim
 ifGNUmake!$ifGNUmake$ac_delim
@@ -23496,6 +23542,8 @@ COVERED_SWITCH_DEFAULT!$COVERED_SWITCH_DEFAULT$ac_delim
 NO_MAYBE_UNINITIALIZED!$NO_MAYBE_UNINITIALIZED$ac_delim
 NO_UNINITIALIZED!$NO_UNINITIALIZED$ac_delim
 PYTHON!$PYTHON$ac_delim
+HAVE_DLOPEN!$HAVE_DLOPEN$ac_delim
+HAVE_TERMINFO!$HAVE_TERMINFO$ac_delim
 USE_UDIS86!$USE_UDIS86$ac_delim
 USE_OPROFILE!$USE_OPROFILE$ac_delim
 USE_INTEL_JITEVENTS!$USE_INTEL_JITEVENTS$ac_delim
@@ -23514,14 +23562,6 @@ LLVM_BINDIR!$LLVM_BINDIR$ac_delim
 LLVM_DATADIR!$LLVM_DATADIR$ac_delim
 LLVM_DOCSDIR!$LLVM_DOCSDIR$ac_delim
 LLVM_ETCDIR!$LLVM_ETCDIR$ac_delim
-LLVM_INCLUDEDIR!$LLVM_INCLUDEDIR$ac_delim
-LLVM_INFODIR!$LLVM_INFODIR$ac_delim
-LLVM_MANDIR!$LLVM_MANDIR$ac_delim
-LLVM_CONFIGTIME!$LLVM_CONFIGTIME$ac_delim
-BINDINGS_TO_BUILD!$BINDINGS_TO_BUILD$ac_delim
-ALL_BINDINGS!$ALL_BINDINGS$ac_delim
-OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
-ENABLE_VISIBILITY_INLINES_HIDDEN!$ENABLE_VISIBILITY_INLINES_HIDDEN$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -23563,6 +23603,14 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+LLVM_INCLUDEDIR!$LLVM_INCLUDEDIR$ac_delim
+LLVM_INFODIR!$LLVM_INFODIR$ac_delim
+LLVM_MANDIR!$LLVM_MANDIR$ac_delim
+LLVM_CONFIGTIME!$LLVM_CONFIGTIME$ac_delim
+BINDINGS_TO_BUILD!$BINDINGS_TO_BUILD$ac_delim
+ALL_BINDINGS!$ALL_BINDINGS$ac_delim
+OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
+ENABLE_VISIBILITY_INLINES_HIDDEN!$ENABLE_VISIBILITY_INLINES_HIDDEN$ac_delim
 RPATH!$RPATH$ac_delim
 RDYNAMIC!$RDYNAMIC$ac_delim
 program_prefix!$program_prefix$ac_delim
@@ -23570,7 +23618,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 5; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 13; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
