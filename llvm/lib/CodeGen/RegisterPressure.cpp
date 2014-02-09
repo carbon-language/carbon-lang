@@ -512,8 +512,7 @@ bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
       // live-out, increase its PDiff value to avoid underflowing pressure.
       if (PDiff)
         PDiff->addPressureChange(Reg, false, MRI);
-    }
-    else {
+    } else {
       if (LiveRegs.erase(Reg))
         decreaseRegPressure(Reg);
       else

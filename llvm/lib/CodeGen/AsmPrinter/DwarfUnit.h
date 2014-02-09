@@ -534,6 +534,8 @@ private:
 };
 
 class DwarfCompileUnit : public DwarfUnit {
+  unsigned statementListIndex;
+
 public:
   DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
                    DwarfDebug *DW, DwarfFile *DWU);
@@ -545,6 +547,17 @@ public:
   /// addLabelAddress - Add a dwarf label attribute data and value using
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
   void addLabelAddress(DIE *Die, dwarf::Attribute Attribute, MCSymbol *Label);
+
+  void setStatementListIndex(unsigned statementListIndex) {
+    this->statementListIndex = statementListIndex;
+  }
+
+  void initStatementList(DIE *D) const {
+    DIE *UD = getUnitDie();
+    D->addValue(dwarf::DW_AT_stmt_list,
+                UD->getAbbrev().getData()[statementListIndex].getForm(),
+                UD->getValues()[statementListIndex]);
+  }
 };
 
 class DwarfTypeUnit : public DwarfUnit {
