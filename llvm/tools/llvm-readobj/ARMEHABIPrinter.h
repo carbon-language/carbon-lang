@@ -376,7 +376,7 @@ PrinterContext<ET>::FindExceptionTable(unsigned IndexSectionIndex,
     if (SI->sh_type == ELF::SHT_REL && SI->sh_info == IndexSectionIndex) {
       for (Elf_Rel_iterator RI = ELF->begin_rel(&*SI), RE = ELF->end_rel(&*SI);
            RI != RE; ++RI) {
-        if (RI->r_offset == IndexTableOffset) {
+        if (static_cast<unsigned>(RI->r_offset) == IndexTableOffset) {
           typename object::ELFFile<ET>::Elf_Rela RelA;
           RelA.r_offset = RI->r_offset;
           RelA.r_info = RI->r_info;
