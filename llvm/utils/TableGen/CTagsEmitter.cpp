@@ -19,7 +19,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
-#include "llvm/TableGen/TableGenBackend.h"
 #include <algorithm>
 #include <string>
 #include <vector>
