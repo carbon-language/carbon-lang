@@ -15,6 +15,16 @@ configure_file(
   ${llvm_cmake_builddir}/LLVMConfig.cmake
   @ONLY)
 
+# For compatibility with projects that include(LLVMConfig)
+# via CMAKE_MODULE_PATH, place API modules next to it.
+# This should be removed in the future.
+file(COPY .
+  DESTINATION ${llvm_cmake_builddir}
+  FILES_MATCHING PATTERN *.cmake
+  PATTERN .svn EXCLUDE
+  PATTERN CMakeFiles EXCLUDE
+  )
+
 configure_file(
   LLVMConfigVersion.cmake.in
   ${llvm_cmake_builddir}/LLVMConfigVersion.cmake
