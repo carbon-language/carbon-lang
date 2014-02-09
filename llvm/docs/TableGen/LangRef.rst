@@ -74,6 +74,9 @@ TableGen also has two string-like literals:
    TokString: '"' <non-'"' characters and C-like escapes> '"'
    TokCodeFragment: "[{" <shortest text not containing "}]"> "}]"
 
+:token:`TokCodeFragment` is essentially a multiline string literal
+delimited by ``[{`` and ``}]``.
+
 .. note::
    The current implementation accepts the following C-like escapes::
 
