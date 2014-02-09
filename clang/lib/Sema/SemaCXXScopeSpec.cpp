@@ -654,20 +654,23 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     }
   }
 
-  unsigned DiagID;
-  if (!Found.empty())
-    DiagID = diag::err_expected_class_or_namespace;
-  else if (SS.isSet()) {
-    Diag(IdentifierLoc, diag::err_no_member) 
-      << &Identifier << LookupCtx << SS.getRange();
-    return true;
-  } else
-    DiagID = diag::err_undeclared_var_use;
-
-  if (SS.isSet())
-    Diag(IdentifierLoc, DiagID) << &Identifier << SS.getRange();
+  if (!Found.empty()) {
+    if (TypeDecl *TD = Found.getAsSingle<TypeDecl>())
+      Diag(IdentifierLoc, diag::err_expected_class_or_namespace)
+          << QualType(TD->getTypeForDecl(), 0) << getLangOpts().CPlusPlus;
+    else {
+      Diag(IdentifierLoc, diag::err_expected_class_or_namespace)
+          << &Identifier << getLangOpts().CPlusPlus;
+      if (NamedDecl *ND = Found.getAsSingle<NamedDecl>())
+        Diag(ND->getLocation(),
+             diag::note_expected_class_or_namespace_declared_here)
+          << &Identifier;
+    }
+  } else if (SS.isSet())
+    Diag(IdentifierLoc, diag::err_no_member) << &Identifier << LookupCtx
+                                             << SS.getRange();
   else
-    Diag(IdentifierLoc, DiagID) << &Identifier;
+    Diag(IdentifierLoc, diag::err_undeclared_var_use) << &Identifier;
 
   return true;
 }
@@ -698,7 +701,7 @@ bool Sema::ActOnCXXNestedNameSpecifierDecltype(CXXScopeSpec &SS,
 
   QualType T = BuildDecltypeType(DS.getRepAsExpr(), DS.getTypeSpecTypeLoc());
   if (!T->isDependentType() && !T->getAs<TagType>()) {
-    Diag(DS.getTypeSpecTypeLoc(), diag::err_expected_class) 
+    Diag(DS.getTypeSpecTypeLoc(), diag::err_expected_class_or_namespace) 
       << T << getLangOpts().CPlusPlus;
     return true;
   }

@@ -105,9 +105,10 @@ namespace InhCtor {
 
   };
 
+  // FIXME: Consider reusing the same diagnostic between dependent and non-dependent contexts
   typedef int I;
   struct UsingInt {
-    using I::I; // expected-error {{expected a class or namespace}}
+    using I::I; // expected-error {{'I' (aka 'int') is not a class, namespace, or scoped enumeration}}
   };
   template<typename T> struct UsingIntTemplate {
     using T::T; // expected-error {{type 'int' cannot be used prior to '::' because it has no members}}

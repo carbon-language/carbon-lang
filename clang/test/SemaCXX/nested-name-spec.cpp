@@ -85,10 +85,13 @@ struct A2::CC::NC {
 
 void f3() {
   N::x = 0; // expected-error {{use of undeclared identifier 'N'}}
-  int N;
-  N::x = 0; // expected-error {{expected a class or namespace}}
+  // FIXME: Consider including the kind of entity that 'N' is ("variable 'N'
+  // declared here", "template 'X' declared here", etc) to help explain what it
+  // is if it's 'not a class, namespace, or scoped enumeration'.
+  int N; // expected-note {{'N' declared here}}
+  N::x = 0; // expected-error {{'N' is not a class, namespace, or scoped enumeration}}
   { int A;           A::ax = 0; }
-  { typedef int A;   A::ax = 0; } // expected-error{{expected a class or namespace}}
+  { typedef int A;   A::ax = 0; } // expected-error{{'A' (aka 'int') is not a class, namespace, or scoped enumeration}}
   { typedef A::C A;  A::ax = 0; } // expected-error {{no member named 'ax'}}
   { typedef A::C A;  A::cx = 0; }
 }
@@ -114,7 +117,7 @@ namespace E {
     };
 
     void f() {
-      return E::X; // expected-error{{expected a class or namespace}}
+      return E::X; // expected-error{{'E::Nested::E' is not a class, namespace, or scoped enumeration}}
     }
   }
 }
@@ -308,4 +311,4 @@ namespace N {
 }
 
 namespace TypedefNamespace { typedef int F; };
-TypedefNamespace::F::NonexistentName BadNNSWithCXXScopeSpec; // expected-error {{expected a class or namespace}}
+TypedefNamespace::F::NonexistentName BadNNSWithCXXScopeSpec; // expected-error {{'F' (aka 'int') is not a class, namespace, or scoped enumeration}}
