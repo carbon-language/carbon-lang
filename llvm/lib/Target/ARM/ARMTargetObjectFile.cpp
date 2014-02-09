@@ -41,13 +41,12 @@ void ARMElfTargetObjectFile::Initialize(MCContext &Ctx,
                                SectionKind::getMetadata());
 }
 
-const MCExpr *ARMElfTargetObjectFile::
-getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
-                        MachineModuleInfo *MMI, unsigned Encoding,
-                        MCStreamer &Streamer) const {
+const MCExpr *ARMElfTargetObjectFile::getTTypeGlobalReference(
+    const GlobalValue *GV, unsigned Encoding, Mangler &Mang,
+    MachineModuleInfo *MMI, MCStreamer &Streamer) const {
   assert(Encoding == DW_EH_PE_absptr && "Can handle absptr encoding only");
 
-  return MCSymbolRefExpr::Create(getSymbol(Mang, GV),
+  return MCSymbolRefExpr::Create(getSymbol(GV, Mang),
                                  MCSymbolRefExpr::VK_ARM_TARGET2,
                                  getContext());
 }

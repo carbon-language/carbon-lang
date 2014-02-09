@@ -23,9 +23,9 @@ public:
     TargetLoweringObjectFileELF()
   {}
 
-  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
+  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV,
+                                        unsigned Encoding, Mangler &Mang,
                                         MachineModuleInfo *MMI,
-                                        unsigned Encoding,
                                         MCStreamer &Streamer) const
       LLVM_OVERRIDE;
 };

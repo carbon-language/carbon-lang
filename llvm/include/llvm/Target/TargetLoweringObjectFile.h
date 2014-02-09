@@ -109,27 +109,28 @@ public:
                            Mangler &Mang, const TargetMachine &TM) const = 0;
 
   /// Allow the target to completely override section assignment of a global.
-  virtual const MCSection *
-  getSpecialCasedSectionGlobals(const GlobalValue *GV, Mangler &Mang,
-                                SectionKind Kind) const {
+  virtual const MCSection *getSpecialCasedSectionGlobals(const GlobalValue *GV,
+                                                         SectionKind Kind,
+                                                         Mangler &Mang) const {
     return 0;
   }
 
   /// Return an MCExpr to use for a reference to the specified global variable
   /// from exception handling information.
-  virtual const MCExpr *
-  getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
-                          MachineModuleInfo *MMI, unsigned Encoding,
-                          MCStreamer &Streamer) const;
+  virtual const MCExpr *getTTypeGlobalReference(const GlobalValue *GV,
+                                                unsigned Encoding,
+                                                Mangler &Mang,
+                                                MachineModuleInfo *MMI,
+                                                MCStreamer &Streamer) const;
 
   /// Return the MCSymbol for the specified global value. This symbol is the
   /// main label that is the address of the global
-  MCSymbol *getSymbol(Mangler &M, const GlobalValue *GV) const;
+  MCSymbol *getSymbol(const GlobalValue *GV, Mangler &M) const;
 
   /// Return the MCSymbol for a private symbol with global value name as its
   /// base, with the specified suffix.
-  MCSymbol *getSymbolWithGlobalValueBase(Mangler &M, const GlobalValue *GV,
-                                         StringRef Suffix) const;
+  MCSymbol *getSymbolWithGlobalValueBase(const GlobalValue *GV,
+                                         StringRef Suffix, Mangler &M) const;
 
   // The symbol that gets passed to .cfi_personality.
   virtual MCSymbol *

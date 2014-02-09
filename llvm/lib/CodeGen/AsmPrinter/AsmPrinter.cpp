@@ -312,7 +312,7 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
 }
 
 MCSymbol *AsmPrinter::getSymbol(const GlobalValue *GV) const {
-  return getObjFileLowering().getSymbol(*Mang, GV);
+  return getObjFileLowering().getSymbol(GV, *Mang);
 }
 
 /// EmitGlobalVariable - Emit the specified global variable to the .s file.
@@ -2075,7 +2075,7 @@ MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
 
 MCSymbol *AsmPrinter::getSymbolWithGlobalValueBase(const GlobalValue *GV,
                                                    StringRef Suffix) const {
-  return getObjFileLowering().getSymbolWithGlobalValueBase(*Mang, GV, Suffix);
+  return getObjFileLowering().getSymbolWithGlobalValueBase(GV, Suffix, *Mang);
 }
 
 /// GetExternalSymbolSymbol - Return the MCSymbol for the specified

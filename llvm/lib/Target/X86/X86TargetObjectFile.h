@@ -20,9 +20,9 @@ namespace llvm {
   /// x86-64.
   class X86_64MachoTargetObjectFile : public TargetLoweringObjectFileMachO {
   public:
-    const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
+    const MCExpr *getTTypeGlobalReference(const GlobalValue *GV,
+                                          unsigned Encoding, Mangler &Mang,
                                           MachineModuleInfo *MMI,
-                                          unsigned Encoding,
                                           MCStreamer &Streamer) const
         LLVM_OVERRIDE;
 

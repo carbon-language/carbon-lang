@@ -57,9 +57,9 @@ public:
 
   /// Return an MCExpr to use for a reference to the specified type info global
   /// variable from exception handling information.
-  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
+  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV,
+                                        unsigned Encoding, Mangler &Mang,
                                         MachineModuleInfo *MMI,
-                                        unsigned Encoding,
                                         MCStreamer &Streamer) const
       LLVM_OVERRIDE;
 
@@ -109,9 +109,9 @@ public:
       LLVM_OVERRIDE;
 
   /// The mach-o version of this method defaults to returning a stub reference.
-  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV, Mangler &Mang,
+  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV,
+                                        unsigned Encoding, Mangler &Mang,
                                         MachineModuleInfo *MMI,
-                                        unsigned Encoding,
                                         MCStreamer &Streamer) const
       LLVM_OVERRIDE;
 
