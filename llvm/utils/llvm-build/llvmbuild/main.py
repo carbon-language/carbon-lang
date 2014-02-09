@@ -573,6 +573,40 @@ set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)\n""" % (
 
         f.close()
 
+    def write_cmake_exports_fragment(self, output_path):
+        """
+        write_cmake_exports_fragment(output_path) -> None
+
+        Generate a CMake fragment which includes LLVMBuild library
+        dependencies expressed similarly to how CMake would write
+        them via install(EXPORT).
+        """
+
+        dependencies = list(self.get_fragment_dependencies())
+
+        # Write out the CMake exports fragment.
+        make_install_dir(os.path.dirname(output_path))
+        f = open(output_path, 'w')
+
+        f.write("""\
+# Explicit library dependency information.
+#
+# The following property assignments tell CMake about link
+# dependencies of libraries imported from LLVM.
+""")
+        for ci in self.ordered_component_infos:
+            # We only write the information for libraries currently.
+            if ci.type_name != 'Library':
+                continue
+
+            f.write("""\
+set_property(TARGET %s PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES %s)\n""" % (
+                ci.get_prefixed_library_name(), " ".join(sorted(
+                     dep.get_prefixed_library_name()
+                     for dep in self.get_required_libraries_for_component(ci)))))
+
+        f.close()
+
     def write_make_fragment(self, output_path):
         """
         write_make_fragment(output_path) -> None
@@ -780,6 +814,10 @@ def main():
                      dest="write_cmake_fragment", metavar="PATH",
                      help="Write the CMake project information to PATH",
                      action="store", default=None)
+    group.add_option("", "--write-cmake-exports-fragment",
+                     dest="write_cmake_exports_fragment", metavar="PATH",
+                     help="Write the CMake exports information to PATH",
+                     action="store", default=None)
     group.add_option("", "--write-make-fragment",
                       dest="write_make_fragment", metavar="PATH",
                      help="Write the Makefile project information to PATH",
@@ -861,6 +899,8 @@ given by --build-root) at the same SUBPATH""",
     # Write out the cmake fragment, if requested.
     if opts.write_cmake_fragment:
         project_info.write_cmake_fragment(opts.write_cmake_fragment)
+    if opts.write_cmake_exports_fragment:
+        project_info.write_cmake_exports_fragment(opts.write_cmake_exports_fragment)
 
     # Configure target definition files, if requested.
     if opts.configure_target_def_files:

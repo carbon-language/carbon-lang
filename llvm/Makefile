@@ -15,7 +15,7 @@ LEVEL := .
 #   3. Build IR, which builds the Intrinsics.inc file used by libs.
 #   4. Build libs, which are needed by llvm-config.
 #   5. Build llvm-config, which determines inter-lib dependencies for tools.
-#   6. Build tools and docs.
+#   6. Build tools, docs, and cmake modules.
 #
 # When cross-compiling, there are some things (tablegen) that need to
 # be build for the build system first.
@@ -31,7 +31,7 @@ ifeq ($(BUILD_DIRS_ONLY),1)
   OPTIONAL_DIRS := tools/clang/utils/TableGen
 else
   DIRS := lib/Support lib/TableGen utils lib/IR lib tools/llvm-shlib \
-          tools/llvm-config tools docs unittests
+          tools/llvm-config tools docs cmake unittests
   OPTIONAL_DIRS := projects bindings
 endif
 

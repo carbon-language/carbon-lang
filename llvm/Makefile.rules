@@ -78,6 +78,12 @@ LLVMBuildTool	:= $(PROJ_SRC_ROOT)/utils/llvm-build/llvm-build
 
 # The files we are going to generate using llvm-build.
 LLVMBuildMakeFrag := $(PROJ_OBJ_ROOT)/Makefile.llvmbuild
+LLVMBuildCMakeFrag := $(PROJ_OBJ_ROOT)/LLVMBuild.cmake
+LLVMBuildCMakeExportsFrag := $(PROJ_OBJ_ROOT)/cmake/modules/LLVMBuildExports.cmake
+LLVMBuildMakeFrags := \
+	$(LLVMBuildMakeFrag) \
+	$(LLVMBuildCMakeFrag) \
+	$(LLVMBuildCMakeExportsFrag)
 LLVMConfigLibraryDependenciesInc := \
 	$(PROJ_OBJ_ROOT)/tools/llvm-config/LibraryDependencies.inc
 
@@ -94,18 +100,20 @@ endif
 #
 # We include a dependency on this Makefile to ensure that changes to the
 # generation command get picked up.
-$(LLVMBuildMakeFrag): $(PROJ_SRC_ROOT)/Makefile.rules \
-		      $(PROJ_OBJ_ROOT)/Makefile.config
+$(LLVMBuildMakeFrags): $(PROJ_SRC_ROOT)/Makefile.rules \
+		       $(PROJ_OBJ_ROOT)/Makefile.config
 	$(Echo) Constructing LLVMBuild project information.
 	$(Verb)$(PYTHON) $(LLVMBuildTool) \
 	  --native-target "$(TARGET_NATIVE_ARCH)" \
 	  --enable-targets "$(TARGETS_TO_BUILD)" \
 	  --enable-optional-components "$(OPTIONAL_COMPONENTS)" \
 	  --write-library-table $(LLVMConfigLibraryDependenciesInc) \
-	  --write-make-fragment $(LLVMBuildMakeFrag)
+	  --write-make-fragment $(LLVMBuildMakeFrag) \
+	  --write-cmake-fragment $(LLVMBuildCMakeFrag) \
+	  --write-cmake-exports-fragment $(LLVMBuildCMakeExportsFrag)
 
 # For completeness, let Make know how the extra files are generated.
-$(LLVMConfigLibraryDependenciesInc): $(LLVMBuildMakeFrag)
+$(LLVMConfigLibraryDependenciesInc): $(LLVMBuildMakeFrags)
 
 # Include the generated Makefile fragment.
 #
@@ -120,7 +128,7 @@ LLVMBUILD_INCLUDE_DEPENDENCIES := 1
 
 # Clean the generated makefile fragment at the top-level.
 clean-local::
-	-$(Verb) $(RM) -f $(LLVMBuildMakeFrag)
+	-$(Verb) $(RM) -f $(LLVMBuildMakeFrags)
 endif
 -include $(LLVMBuildMakeFrag)
 
