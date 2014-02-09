@@ -1705,13 +1705,6 @@ static bool populateInstruction(CodeGenTarget &Target,
   // If all the bit positions are not specified; do not decode this instruction.
   // We are bound to fail!  For proper disassembly, the well-known encoding bits
   // of the instruction must be fully specified.
-  //
-  // This also removes pseudo instructions from considerations of disassembly,
-  // which is a better design and less fragile than the name matchings.
-  // Ignore "asm parser only" instructions.
-  if (Def.getValueAsBit("isAsmParserOnly") ||
-      Def.getValueAsBit("isCodeGenOnly"))
-    return false;
 
   BitsInit &Bits = getBitsField(Def, "Inst");
   if (Bits.allInComplete()) return false;
