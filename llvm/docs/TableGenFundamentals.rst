@@ -257,11 +257,6 @@ Class type
 ``dag``
     This type represents a nestable directed graph of elements.
 
-``code``
-    This represents a big hunk of text.  This is lexically distinct from string
-    values because it doesn't require escaping double quotes and other common
-    characters that occur in code.
-
 To date, these types have been sufficient for describing things that TableGen
 has been used for, but it is straight-forward to extend this list if needed.
 
