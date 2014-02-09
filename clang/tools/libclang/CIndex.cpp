@@ -779,8 +779,9 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
         return true;
     
     // Visit the declaration name.
-    if (VisitDeclarationNameInfo(ND->getNameInfo()))
-      return true;
+    if (!isa<CXXDestructorDecl>(ND))
+      if (VisitDeclarationNameInfo(ND->getNameInfo()))
+        return true;
     
     // FIXME: Visit explicitly-specified template arguments!
     

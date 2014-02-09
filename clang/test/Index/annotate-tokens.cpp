@@ -33,7 +33,11 @@ void test4() {
     return;
 }
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:30:1 %s -fno-delayed-template-parsing | FileCheck %s
+class C {
+  ~C();
+};
+
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:38:1 %s -fno-delayed-template-parsing | FileCheck %s
 // CHECK: Keyword: "struct" [1:1 - 1:7] StructDecl=bonk:1:8 (Definition)
 // CHECK: Identifier: "bonk" [1:8 - 1:12] StructDecl=bonk:1:8 (Definition)
 // CHECK: Punctuation: "{" [1:13 - 1:14] StructDecl=bonk:1:8 (Definition)
@@ -178,6 +182,8 @@ void test4() {
 // CHECK: Punctuation: ")" [29:19 - 29:20] CXXMethod=foo:29:15 (Definition)
 // CHECK: Punctuation: "{" [29:21 - 29:22] CompoundStmt=
 // CHECK: Punctuation: "}" [29:22 - 29:23] CompoundStmt=
+// CHECK: Punctuation: "~" [37:3 - 37:4] CXXDestructor=~C:37:3
+// CHECK: Identifier: "C" [37:4 - 37:5] CXXDestructor=~C:37:3
 
 // RUN: env LIBCLANG_DISABLE_CRASH_RECOVERY=1 c-index-test -test-annotate-tokens=%s:32:1:32:13 %s | FileCheck %s -check-prefix=CHECK2
 // CHECK2: Keyword: "if" [32:3 - 32:5] IfStmt=
