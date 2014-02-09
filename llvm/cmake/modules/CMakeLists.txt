@@ -31,6 +31,7 @@ set(LLVM_CONFIG_LIBRARY_DIRS
   "${LLVM_LIBRARY_DIR}"
   )
 set(LLVM_CONFIG_CMAKE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+set(LLVM_CONFIG_EXPORTS_FILE "${llvm_cmake_builddir}/LLVMExports.cmake")
 configure_file(
   LLVMConfig.cmake.in
   ${llvm_cmake_builddir}/LLVMConfig.cmake
@@ -60,6 +61,7 @@ endforeach(p)
 set(LLVM_CONFIG_INCLUDE_DIRS "\${LLVM_INSTALL_PREFIX}/include")
 set(LLVM_CONFIG_LIBRARY_DIRS "\${LLVM_INSTALL_PREFIX}/lib")
 set(LLVM_CONFIG_CMAKE_DIR "\${LLVM_INSTALL_PREFIX}/${LLVM_INSTALL_PACKAGE_DIR}")
+set(LLVM_CONFIG_EXPORTS_FILE "\${LLVM_CMAKE_DIR}/LLVMExports.cmake")
 configure_file(
   LLVMConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/LLVMConfig.cmake
