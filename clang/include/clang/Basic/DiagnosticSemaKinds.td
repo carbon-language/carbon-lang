@@ -3202,9 +3202,13 @@ def err_default_arg_in_partial_spec : Error<
 def err_dependent_non_type_arg_in_partial_spec : Error<
     "non-type template argument depends on a template parameter of the "
     "partial specialization">;
+def note_dependent_non_type_default_arg_in_partial_spec : Note<
+    "template parameter is used in default argument declared here">;
 def err_dependent_typed_non_type_arg_in_partial_spec : Error<
     "non-type template argument specializes a template parameter with "
     "dependent type %0">;
+def note_dependent_typed_non_type_default_arg_in_partial_spec : Note<
+    "template parameter is declared here">;
 def err_partial_spec_args_match_primary_template : Error<
     "%select{class|variable}0 template partial specialization does not "
     "specialize any template argument; to %select{declare|define}1 the "

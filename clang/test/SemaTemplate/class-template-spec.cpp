@@ -119,3 +119,61 @@ namespace rdar9676205 {
   };
 
 }
+
+namespace PR18009 {
+  template <typename T> struct A {
+    template <int N, int M> struct S;
+    template <int N> struct S<N, sizeof(T)> {};
+  };
+  A<int>::S<8, sizeof(int)> a; // ok
+
+  template <typename T> struct B {
+    template <int N, int M> struct S; // expected-note {{declared here}}
+    template <int N> struct S<N, sizeof(T) +
+        N // expected-error {{non-type template argument depends on a template parameter of the partial specialization}}
+        > {};
+  };
+  B<int>::S<8, sizeof(int) + 8> s; // expected-error {{undefined}}
+
+  template<int A> struct outer {
+    template<int B, int C> struct inner {};
+    template<int C> struct inner<A * 2, C> {};
+  };
+}
+
+namespace PR16519 {
+  template<typename T, T...N> struct integer_sequence { typedef T value_type; }; // expected-warning {{extension}}
+
+  template<typename T> struct __make_integer_sequence;
+  template<typename T, T N> using make_integer_sequence = typename __make_integer_sequence<T>::template make<N, N % 2>::type; // expected-warning {{extension}}
+
+  template<typename T, typename T::value_type ...Extra> struct __make_integer_sequence_impl; // expected-warning {{extension}}
+  template<typename T, T ...N, T ...Extra> struct __make_integer_sequence_impl<integer_sequence<T, N...>, Extra...> { // expected-warning 2{{extension}}
+    typedef integer_sequence<T, N..., sizeof...(N) + N..., Extra...> type;
+  };
+
+  template<typename T> struct __make_integer_sequence {
+    template<T N, T Parity, typename = void> struct make;
+    template<typename Dummy> struct make<0, 0, Dummy> { typedef integer_sequence<T> type; };
+    template<typename Dummy> struct make<1, 1, Dummy> { typedef integer_sequence<T, 0> type; };
+    template<T N, typename Dummy> struct make<N, 0, Dummy> : __make_integer_sequence_impl<make_integer_sequence<T, N/2> > {};
+    template<T N, typename Dummy> struct make<N, 1, Dummy> : __make_integer_sequence_impl<make_integer_sequence<T, N/2>, N - 1> {};
+  };
+
+  using X = make_integer_sequence<int, 5>; // expected-warning {{extension}}
+  using X = integer_sequence<int, 0, 1, 2, 3, 4>; // expected-warning {{extension}}
+}
+
+namespace DefaultArgVsPartialSpec {
+  // Check that the diagnostic points at the partial specialization, not just at
+  // the default argument.
+  template<typename T, int N =
+      sizeof(T) // expected-note {{template parameter is used in default argument declared here}}
+  > struct X {};
+  template<typename T> struct X<T> {}; // expected-error {{non-type template argument depends on a template parameter of the partial specialization}}
+
+  template<typename T,
+      T N = 0 // expected-note {{template parameter is declared here}}
+  > struct S;
+  template<typename T> struct S<T> {}; // expected-error {{non-type template argument specializes a template parameter with dependent type 'T'}}
+}
