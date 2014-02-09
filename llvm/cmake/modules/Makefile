@@ -53,8 +53,6 @@ $(PROJ_OBJ_DIR)/LLVMConfig.cmake: LLVMConfig.cmake.in $(LLVMBuildCMakeFrag)
 	  -e 's/@LLVM_CONFIG_EXPORTS_FILE@/$${LLVM_CMAKE_DIR}\/LLVMExports.cmake/' \
 	  -e 's/@all_llvm_lib_deps@//' \
 	 && \
-	 # TODO: Teach LLVM-Config.cmake to use builtin CMake features     \
-	 # for library dependencies.  For now add the generated fragments. \
 	 grep '^set_property.*LLVMBUILD_LIB_DEPS_' "$(LLVMBuildCMakeFrag)" \
 	) > $@
 
