@@ -1,6 +1,10 @@
 set(LLVM_INSTALL_PACKAGE_DIR share/llvm/cmake)
 set(llvm_cmake_builddir "${LLVM_BINARY_DIR}/${LLVM_INSTALL_PACKAGE_DIR}")
 
+get_property(LLVM_EXPORTS GLOBAL PROPERTY LLVM_EXPORTS)
+export(TARGETS ${LLVM_EXPORTS}
+  FILE ${llvm_cmake_builddir}/LLVMExports.cmake)
+
 get_property(llvm_libs GLOBAL PROPERTY LLVM_LIBS)
 
 foreach(lib ${llvm_libs})

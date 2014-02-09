@@ -131,4 +131,5 @@ macro(add_tablegen target project)
             EXPORT LLVMExports
             RUNTIME DESTINATION bin)
   endif()
+  set_property(GLOBAL APPEND PROPERTY LLVM_EXPORTS ${target})
 endmacro()
