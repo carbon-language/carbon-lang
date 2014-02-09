@@ -11,3 +11,23 @@ $4
 .data
 // CHECK: .byte 10
 .mybyte 10
+
+// PR18599
+.macro macro_a
+
+.macro macro_b
+.byte 10
+.macro macro_c
+.endm
+
+macro_c
+.purgem macro_c
+.endm
+
+macro_b
+.endm
+
+macro_a
+macro_b
+// CHECK: .byte 10
+// CHECK: .byte 10
