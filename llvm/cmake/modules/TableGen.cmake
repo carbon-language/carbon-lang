@@ -127,6 +127,8 @@ macro(add_tablegen target project)
   endif()
 
   if (${project} STREQUAL LLVM AND NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
-    install(TARGETS ${target} RUNTIME DESTINATION bin)
+    install(TARGETS ${target}
+            EXPORT LLVMExports
+            RUNTIME DESTINATION bin)
   endif()
 endmacro()

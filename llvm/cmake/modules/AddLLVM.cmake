@@ -195,6 +195,7 @@ macro(add_llvm_library name)
   else()
     if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "LTO")
       install(TARGETS ${name}
+        EXPORT LLVMExports
         LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
         ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
     endif()
@@ -246,6 +247,7 @@ ${name} ignored.")
     else()
       if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
         install(TARGETS ${name}
+          EXPORT LLVMExports
           LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
           ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
       endif()
@@ -294,7 +296,9 @@ macro(add_llvm_tool name)
   list(FIND LLVM_TOOLCHAIN_TOOLS ${name} LLVM_IS_${name}_TOOLCHAIN_TOOL)
   if (LLVM_IS_${name}_TOOLCHAIN_TOOL GREATER -1 OR NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     if( LLVM_BUILD_TOOLS )
-      install(TARGETS ${name} RUNTIME DESTINATION bin)
+      install(TARGETS ${name}
+              EXPORT LLVMExports
+              RUNTIME DESTINATION bin)
     endif()
   endif()
   set_target_properties(${name} PROPERTIES FOLDER "Tools")
