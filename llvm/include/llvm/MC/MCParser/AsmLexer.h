@@ -47,6 +47,8 @@ public:
   virtual StringRef LexUntilEndOfStatement();
   StringRef LexUntilEndOfLine();
 
+  virtual const AsmToken peekTok(bool ShouldSkipSpace = true);
+
   bool isAtStartOfComment(char Char);
   bool isAtStatementSeparator(const char *Ptr);
 

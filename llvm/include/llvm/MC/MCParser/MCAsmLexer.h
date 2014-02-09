@@ -160,6 +160,9 @@ public:
     return CurTok;
   }
 
+  /// peekTok - Look ahead at the next token to be lexed.
+  virtual const AsmToken peekTok(bool ShouldSkipSpace = true) = 0;
+
   /// getErrLoc - Get the current error location
   const SMLoc &getErrLoc() {
     return ErrLoc;

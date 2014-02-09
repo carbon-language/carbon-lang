@@ -439,6 +439,28 @@ StringRef AsmLexer::LexUntilEndOfLine() {
   return StringRef(TokStart, CurPtr-TokStart);
 }
 
+const AsmToken AsmLexer::peekTok(bool ShouldSkipSpace) {
+  const char *SavedTokStart = TokStart;
+  const char *SavedCurPtr = CurPtr;
+  bool SavedAtStartOfLine = isAtStartOfLine;
+  bool SavedSkipSpace = SkipSpace;
+
+  std::string SavedErr = getErr();
+  SMLoc SavedErrLoc = getErrLoc();
+
+  SkipSpace = ShouldSkipSpace;
+  AsmToken Token = LexToken();
+
+  SetError(SavedErrLoc, SavedErr);
+
+  SkipSpace = SavedSkipSpace;
+  isAtStartOfLine = SavedAtStartOfLine;
+  CurPtr = SavedCurPtr;
+  TokStart = SavedTokStart;
+
+  return Token;
+}
+
 bool AsmLexer::isAtStartOfComment(char Char) {
   // FIXME: This won't work for multi-character comment indicators like "//".
   return Char == *MAI.getCommentString();
