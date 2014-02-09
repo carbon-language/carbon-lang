@@ -6979,11 +6979,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   if (!NewFD->isInvalidDecl() && !NewFD->hasAttr<WarnUnusedResultAttr>() &&
       Ret && Ret->hasAttr<WarnUnusedResultAttr>()) {
     const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewFD);
-    // Attach the attribute to the new decl. Don't apply the attribute if it
-    // returns an instance of the class (e.g. assignment operators).
-    if (!MD || MD->getParent() != Ret) {
+    // Attach WarnUnusedResult to functions returning types with that attribute.
+    // Don't apply the attribute to that type's own non-static member functions
+    // (to avoid warning on things like assignment operators)
+    if (!MD || MD->getParent() != Ret)
       NewFD->addAttr(WarnUnusedResultAttr::CreateImplicit(Context));
-    }
   }
 
   if (getLangOpts().OpenCL) {
