@@ -289,7 +289,7 @@ supported include:
     string value
 
 ``[{ ... }]``
-    code fragment
+    usually called a "code fragment", but is just a multiline string literal
 
 ``[ X, Y, Z ]<type>``
     list value.  <type> is the type of the list element and is usually optional.
