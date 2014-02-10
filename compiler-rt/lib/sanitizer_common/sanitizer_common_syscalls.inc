@@ -234,6 +234,7 @@ POST_SYSCALL(settimeofday)(long res, void *tv, void *tz) {
   }
 }
 
+#if !SANITIZER_ANDROID
 PRE_SYSCALL(adjtimex)(void *txc_p) {}
 
 POST_SYSCALL(adjtimex)(long res, void *txc_p) {
@@ -241,6 +242,7 @@ POST_SYSCALL(adjtimex)(long res, void *txc_p) {
     if (txc_p) POST_WRITE(txc_p, struct_timex_sz);
   }
 }
+#endif
 
 PRE_SYSCALL(times)(void *tbuf) {}
 
@@ -496,6 +498,7 @@ POST_SYSCALL(clock_gettime)(long res, long which_clock, void *tp) {
   }
 }
 
+#if !SANITIZER_ANDROID
 PRE_SYSCALL(clock_adjtime)(long which_clock, void *tx) {}
 
 POST_SYSCALL(clock_adjtime)(long res, long which_clock, void *tx) {
@@ -503,6 +506,7 @@ POST_SYSCALL(clock_adjtime)(long res, long which_clock, void *tx) {
     if (tx) POST_WRITE(tx, struct_timex_sz);
   }
 }
+#endif
 
 PRE_SYSCALL(clock_getres)(long which_clock, void *tp) {}
 
@@ -2084,6 +2088,7 @@ POST_SYSCALL(msgrcv)(long res, long msqid, void *msgp, long msgsz, long msgtyp,
   }
 }
 
+#if !SANITIZER_ANDROID
 PRE_SYSCALL(msgctl)(long msqid, long cmd, void *buf) {}
 
 POST_SYSCALL(msgctl)(long res, long msqid, long cmd, void *buf) {
@@ -2091,6 +2096,7 @@ POST_SYSCALL(msgctl)(long res, long msqid, long cmd, void *buf) {
     if (buf) POST_WRITE(buf, struct_msqid_ds_sz);
   }
 }
+#endif
 
 PRE_SYSCALL(semget)(long key, long nsems, long semflg) {}
 
