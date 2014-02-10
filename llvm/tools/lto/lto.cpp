@@ -156,6 +156,17 @@ lto_module_t lto_module_create_from_memory(const void* mem, size_t length) {
   return LTOModule::makeLTOModule(mem, length, Options, sLastErrorString);
 }
 
+/// Loads an object file from memory with an extra path argument.
+/// Returns NULL on error (check lto_get_error_message() for details).
+lto_module_t lto_module_create_from_memory_with_path(const void* mem,
+                                                     size_t length,
+                                                     const char *path) {
+  lto_initialize();
+  llvm::TargetOptions Options;
+  lto_set_target_options(Options);
+  return LTOModule::makeLTOModule(mem, length, Options, sLastErrorString, path);
+}
+
 /// lto_module_dispose - Frees all memory for a module. Upon return the
 /// lto_module_t is no longer valid.
 void lto_module_dispose(lto_module_t mod) {

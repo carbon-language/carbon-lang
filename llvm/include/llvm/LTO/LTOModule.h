@@ -100,7 +100,8 @@ public:
                                   std::string& errMsg);
   static LTOModule *makeLTOModule(const void *mem, size_t length,
                                   llvm::TargetOptions options,
-                                  std::string &errMsg);
+                                  std::string &errMsg,
+                                  llvm::StringRef path = "");
 
   /// getTargetTriple - Return the Module's target triple.
   const char *getTargetTriple() {
@@ -222,8 +223,9 @@ private:
                                   llvm::TargetOptions options,
                                   std::string &errMsg);
 
-  /// makeBuffer - Create a MemoryBuffer from a memory range.
-  static llvm::MemoryBuffer *makeBuffer(const void *mem, size_t length);
+  /// Create a MemoryBuffer from a memory range with an optional name.
+  static llvm::MemoryBuffer *makeBuffer(const void *mem, size_t length,
+                                        llvm::StringRef name = "");
 };
 
 #endif // LTO_MODULE_H

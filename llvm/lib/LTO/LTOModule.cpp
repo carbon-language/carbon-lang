@@ -128,8 +128,8 @@ LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
 
 LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
                                     TargetOptions options,
-                                    std::string &errMsg) {
-  OwningPtr<MemoryBuffer> buffer(makeBuffer(mem, length));
+                                    std::string &errMsg, StringRef path) {
+  OwningPtr<MemoryBuffer> buffer(makeBuffer(mem, length, path));
   if (!buffer)
     return NULL;
   return makeLTOModule(buffer.take(), options, errMsg);
@@ -186,10 +186,11 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
   return Ret;
 }
 
-/// makeBuffer - Create a MemoryBuffer from a memory range.
-MemoryBuffer *LTOModule::makeBuffer(const void *mem, size_t length) {
+/// Create a MemoryBuffer from a memory range with an optional name.
+MemoryBuffer *LTOModule::makeBuffer(const void *mem, size_t length,
+                                    StringRef name) {
   const char *startPtr = (const char*)mem;
-  return MemoryBuffer::getMemBuffer(StringRef(startPtr, length), "", false);
+  return MemoryBuffer::getMemBuffer(StringRef(startPtr, length), name, false);
 }
 
 /// objcClassNameFromExpression - Get string that the data pointer points to.

@@ -40,7 +40,7 @@ typedef bool lto_bool_t;
  * @{
  */
 
-#define LTO_API_VERSION 8
+#define LTO_API_VERSION 9
 
 /**
  * \since prior to LTO_API_VERSION=3
@@ -174,6 +174,16 @@ lto_module_create(const char* path);
  */
 extern lto_module_t
 lto_module_create_from_memory(const void* mem, size_t length);
+
+/**
+ * Loads an object file from memory with an extra path argument.
+ * Returns NULL on error (check lto_get_error_message() for details).
+ *
+ * \since prior to LTO_API_VERSION=9
+ */
+extern lto_module_t
+lto_module_create_from_memory_with_path(const void* mem, size_t length,
+                                        const char *path);
 
 /**
  * Loads an object file from disk. The seek point of fd is not preserved.
