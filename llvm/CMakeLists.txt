@@ -517,7 +517,7 @@ endif()
 add_subdirectory(cmake/modules)
 
 if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
-  install(DIRECTORY include/
+  install(DIRECTORY include/llvm include/llvm-c
     DESTINATION include
     FILES_MATCHING
     PATTERN "*.def"
@@ -528,7 +528,7 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     PATTERN ".svn" EXCLUDE
     )
 
-  install(DIRECTORY ${LLVM_INCLUDE_DIR}/
+  install(DIRECTORY ${LLVM_INCLUDE_DIR}/llvm
     DESTINATION include
     FILES_MATCHING
     PATTERN "*.def"
