@@ -262,30 +262,21 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
       } else if (SI->getOperand(1) != OkayStoreDest) {
         return true;  // Storing the pointer
       }
-    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
-      if (AnalyzeUsesOfPointer(GEP, Readers, Writers)) return true;
-    } else if (BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
-      if (AnalyzeUsesOfPointer(BCI, Readers, Writers, OkayStoreDest))
+    } else if (Operator::getOpcode(U) == Instruction::GetElementPtr) {
+      if (AnalyzeUsesOfPointer(U, Readers, Writers))
         return true;
-    } else if (isFreeCall(U, TLI)) {
-      Writers.push_back(cast<Instruction>(U)->getParent()->getParent());
-    } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
+    } else if (Operator::getOpcode(U) == Instruction::BitCast) {
+      if (AnalyzeUsesOfPointer(U, Readers, Writers, OkayStoreDest))
+        return true;
+    } else if (CallSite CS = U) {
       // Make sure that this is just the function being called, not that it is
       // passing into the function.
-      for (unsigned i = 0, e = CI->getNumArgOperands(); i != e; ++i)
-        if (CI->getArgOperand(i) == V) return true;
-    } else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
-      // Make sure that this is just the function being called, not that it is
-      // passing into the function.
-      for (unsigned i = 0, e = II->getNumArgOperands(); i != e; ++i)
-        if (II->getArgOperand(i) == V) return true;
-    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
-      if (CE->getOpcode() == Instruction::GetElementPtr ||
-          CE->getOpcode() == Instruction::BitCast) {
-        if (AnalyzeUsesOfPointer(CE, Readers, Writers))
-          return true;
-      } else {
-        return true;
+      if (!CS.isCallee(UI)) {
+        // Detect calls to free.
+        if (isFreeCall(U, TLI))
+          Writers.push_back(CS->getParent()->getParent());
+        else
+          return true; // Argument of an unknown call.
       }
     } else if (ICmpInst *ICI = dyn_cast<ICmpInst>(U)) {
       if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
