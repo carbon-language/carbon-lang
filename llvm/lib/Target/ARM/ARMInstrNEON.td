@@ -3048,12 +3048,13 @@ class N2VLSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
 // Narrow shift by immediate.
 class N2VNSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
              InstrItinClass itin, string OpcodeStr, string Dt,
-             ValueType ResTy, ValueType OpTy, Operand ImmTy, SDNode OpNode>
+             ValueType ResTy, ValueType OpTy, Operand ImmTy,
+             SDPatternOperator OpNode>
   : N2VImm<op24, op23, op11_8, op7, op6, op4,
            (outs DPR:$Vd), (ins QPR:$Vm, ImmTy:$SIMM), N2RegVShRFrm, itin,
            OpcodeStr, Dt, "$Vd, $Vm, $SIMM", "",
            [(set DPR:$Vd, (ResTy (OpNode (OpTy QPR:$Vm),
-                                          (i32 imm:$SIMM))))]>;
+                                          (i32 ImmTy:$SIMM))))]>;
 
 // Shift right by immediate and accumulate,
 // both double- and quad-register.
@@ -3960,7 +3961,7 @@ multiclass N2VLSh_QHS<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6,
 //   element sizes of 16, 32, 64 bits:
 multiclass N2VNSh_HSD<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6,
                       bit op4, InstrItinClass itin, string OpcodeStr, string Dt,
-                      SDNode OpNode> {
+                      SDPatternOperator OpNode> {
   def v8i8 : N2VNSh<op24, op23, op11_8, op7, op6, op4, itin,
                     OpcodeStr, !strconcat(Dt, "16"),
                     v8i8, v8i16, shr_imm8, OpNode> {
@@ -4967,7 +4968,15 @@ def  VSHLLi32 : N2VLShMax<1, 1, 0b111010, 0b0011, 0, 0, 0, "vshll", "i32",
 
 //   VSHRN    : Vector Shift Right and Narrow
 defm VSHRN    : N2VNSh_HSD<0,1,0b1000,0,0,1, IIC_VSHLiD, "vshrn", "i",
-                           NEONvshrn>;
+                           PatFrag<(ops node:$Rn, node:$amt),
+                                   (trunc (NEONvshrs node:$Rn, node:$amt))>>;
+
+def : Pat<(v8i8 (trunc (NEONvshru (v8i16 QPR:$Vn), shr_imm8:$amt))),
+          (VSHRNv8i8 QPR:$Vn, shr_imm8:$amt)>;
+def : Pat<(v4i16 (trunc (NEONvshru (v4i32 QPR:$Vn), shr_imm16:$amt))),
+          (VSHRNv4i16 QPR:$Vn, shr_imm16:$amt)>;
+def : Pat<(v2i32 (trunc (NEONvshru (v2i64 QPR:$Vn), shr_imm32:$amt))),
+          (VSHRNv2i32 QPR:$Vn, shr_imm32:$amt)>;
 
 //   VRSHL    : Vector Rounding Shift
 defm VRSHLs   : N3VInt_QHSDSh<0, 0, 0b0101, 0, N3RegVShFrm,

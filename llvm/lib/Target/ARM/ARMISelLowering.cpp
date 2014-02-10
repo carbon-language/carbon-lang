@@ -1081,7 +1081,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VSHLLs:        return "ARMISD::VSHLLs";
   case ARMISD::VSHLLu:        return "ARMISD::VSHLLu";
   case ARMISD::VSHLLi:        return "ARMISD::VSHLLi";
-  case ARMISD::VSHRN:         return "ARMISD::VSHRN";
   case ARMISD::VRSHRs:        return "ARMISD::VRSHRs";
   case ARMISD::VRSHRu:        return "ARMISD::VRSHRu";
   case ARMISD::VRSHRN:        return "ARMISD::VRSHRN";
@@ -9717,7 +9716,6 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
   case Intrinsic::arm_neon_vshiftu:
   case Intrinsic::arm_neon_vshiftls:
   case Intrinsic::arm_neon_vshiftlu:
-  case Intrinsic::arm_neon_vshiftn:
   case Intrinsic::arm_neon_vrshifts:
   case Intrinsic::arm_neon_vrshiftu:
   case Intrinsic::arm_neon_vrshiftn:
@@ -9771,7 +9769,6 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
         break;
       llvm_unreachable("invalid shift count for vqshlu intrinsic");
 
-    case Intrinsic::arm_neon_vshiftn:
     case Intrinsic::arm_neon_vrshiftn:
     case Intrinsic::arm_neon_vqshiftns:
     case Intrinsic::arm_neon_vqshiftnu:
@@ -9802,8 +9799,6 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
         VShiftOpc = (IntNo == Intrinsic::arm_neon_vshiftls ?
                      ARMISD::VSHLLs : ARMISD::VSHLLu);
       break;
-    case Intrinsic::arm_neon_vshiftn:
-      VShiftOpc = ARMISD::VSHRN; break;
     case Intrinsic::arm_neon_vrshifts:
       VShiftOpc = ARMISD::VRSHRs; break;
     case Intrinsic::arm_neon_vrshiftu:
