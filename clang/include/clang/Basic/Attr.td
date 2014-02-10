@@ -99,6 +99,11 @@ class VersionArgument<string name, bit opt = 0> : Argument<name, opt>;
 // be dependent.
 class AlignedArgument<string name, bit opt = 0> : Argument<name, opt>;
 
+// A bool argument with a default value
+class DefaultBoolArgument<string name, bit default> : BoolArgument<name, 1> {
+  bit Default = default;
+}
+
 // An integer argument with a default value
 class DefaultIntArgument<string name, int default> : IntArgument<name, 1> {
   int Default = default;
@@ -1397,6 +1402,7 @@ def UPtr : TypeAttr {
 
 def MSInheritance : InheritableAttr {
   let LangOpts = [MicrosoftExt];
+  let Args = [DefaultBoolArgument<"BestCase", 1>];
   let Spellings = [Keyword<"__single_inheritance">,
                    Keyword<"__multiple_inheritance">,
                    Keyword<"__virtual_inheritance">,

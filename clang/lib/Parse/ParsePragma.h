@@ -134,6 +134,13 @@ private:
   Sema &Actions;
 };
 
+class PragmaMSPointersToMembers : public PragmaHandler {
+public:
+  explicit PragmaMSPointersToMembers() : PragmaHandler("pointers_to_members") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
 }  // end namespace clang
 
 #endif

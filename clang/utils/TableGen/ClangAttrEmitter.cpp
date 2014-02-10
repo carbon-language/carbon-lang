@@ -982,6 +982,9 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
     Ptr = new SimpleArgument(Arg, Attr, "FunctionDecl *");
   else if (ArgName == "IdentifierArgument")
     Ptr = new SimpleArgument(Arg, Attr, "IdentifierInfo *");
+  else if (ArgName == "DefaultBoolArgument")
+    Ptr = new DefaultSimpleArgument(Arg, Attr, "bool",
+                                    Arg.getValueAsBit("Default"));
   else if (ArgName == "BoolArgument") Ptr = new SimpleArgument(Arg, Attr, 
                                                                "bool");
   else if (ArgName == "DefaultIntArgument")

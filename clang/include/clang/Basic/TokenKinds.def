@@ -673,6 +673,11 @@ ANNOTATION(pragma_redefine_extname)
 // handles them.
 ANNOTATION(pragma_fp_contract)
 
+// Annotation for #pragma pointers_to_members...
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_ms_pointers_to_members)
+
 // Annotation for #pragma OPENCL EXTENSION...
 // The lexer produces these so that they only take effect when the parser
 // handles them.

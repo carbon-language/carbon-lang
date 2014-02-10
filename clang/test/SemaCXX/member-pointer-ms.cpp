@@ -202,3 +202,26 @@ struct __multiple_inheritance C {}; // expected-error{{inheritance model does no
 struct __virtual_inheritance D;
 struct D : virtual B {};
 }
+
+#pragma pointers_to_members(full_generality, multiple_inheritance)
+struct TrulySingleInheritance;
+static_assert(sizeof(int TrulySingleInheritance::*) == kMultipleDataSize, "");
+#pragma pointers_to_members(best_case)
+// This definition shouldn't conflict with the increased generality that the
+// multiple_inheritance model gave to TrulySingleInheritance.
+struct TrulySingleInheritance {};
+
+// Even if a definition proceeds the first mention of a pointer to member, we
+// still give the record the fully general representation.
+#pragma pointers_to_members(full_generality, virtual_inheritance)
+struct SingleInheritanceAsVirtualAfterPragma {};
+static_assert(sizeof(int SingleInheritanceAsVirtualAfterPragma::*) == 12, "");
+
+#pragma pointers_to_members(best_case)
+
+// The above holds even if the pragma comes after the definition.
+struct SingleInheritanceAsVirtualBeforePragma {};
+#pragma pointers_to_members(virtual_inheritance)
+static_assert(sizeof(int SingleInheritanceAsVirtualBeforePragma::*) == 12, "");
+
+#pragma pointers_to_members(single) // expected-error{{unexpected 'single'}}

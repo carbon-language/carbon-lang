@@ -177,6 +177,8 @@ def err_invalid_token_after_declarator_suggest_equal : Error<
   "invalid %0 at end of declaration; did you mean '='?">;
 def err_expected_statement : Error<"expected statement">;
 def err_expected_lparen_after : Error<"expected '(' after '%0'">;
+def err_expected_rparen_after : Error<"expected ')' after '%0'">;
+def err_expected_punc : Error<"expected ')' or ',' after '%0'">;
 def err_expected_less_after : Error<"expected '<' after '%0'">;
 def err_expected_lbrace_in_compound_literal : Error<
   "expected '{' in compound literal">;
@@ -809,6 +811,10 @@ def err_pragma_comment_unknown_kind : Error<"unknown kind of pragma comment">;
 def err_pragma_detect_mismatch_malformed : Error<
   "pragma detect_mismatch is malformed; it requires two comma-separated "
   "string literals">;
+// - #pragma pointers_to_members
+def err_pragma_pointers_to_members_unknown_kind : Error<
+  "unexpected %0, expected to see one of %select{|'best_case', 'full_generality', }1"
+  "'single_inheritance', 'multiple_inheritance', or 'virtual_inheritance'">;
 
 // OpenCL Section 6.8.g
 def err_not_opencl_storage_class_specifier : Error<

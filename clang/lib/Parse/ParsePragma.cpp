@@ -180,6 +180,14 @@ void Parser::HandlePragmaOpenCLExtension() {
   }
 }
 
+void Parser::HandlePragmaMSPointersToMembers() {
+  assert(Tok.is(tok::annot_pragma_ms_pointers_to_members));
+  Sema::PragmaMSPointersToMembersKind RepresentationMethod =
+      static_cast<Sema::PragmaMSPointersToMembersKind>(
+          reinterpret_cast<uintptr_t>(Tok.getAnnotationValue()));
+  SourceLocation PragmaLoc = ConsumeToken(); // The annotation token.
+  Actions.ActOnPragmaMSPointersToMembers(RepresentationMethod, PragmaLoc);
+}
 
 
 // #pragma GCC visibility comes in two variants:
@@ -797,6 +805,99 @@ PragmaOpenMPHandler::HandlePragma(Preprocessor &PP,
   std::copy(Pragma.begin(), Pragma.end(), Toks);
   PP.EnterTokenStream(Toks, Pragma.size(),
                       /*DisableMacroExpansion=*/true, /*OwnsTokens=*/true);
+}
+
+/// \brief Handle '#pragma pointers_to_members'
+// The grammar for this pragma is as follows:
+//
+// <inheritance model> ::= ('single' | 'multiple' | 'virtual') '_inheritance'
+//
+// #pragma pointers_to_members '(' 'best_case' ')'
+// #pragma pointers_to_members '(' 'full_generality' [',' inheritance-model] ')'
+// #pragma pointers_to_members '(' inheritance-model ')'
+void PragmaMSPointersToMembers::HandlePragma(Preprocessor &PP,
+                                             PragmaIntroducerKind Introducer,
+                                             Token &Tok) {
+  SourceLocation PointersToMembersLoc = Tok.getLocation();
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::l_paren)) {
+    PP.Diag(PointersToMembersLoc, diag::warn_pragma_expected_lparen)
+      << "pointers_to_members";
+    return;
+  }
+  PP.Lex(Tok);
+  const IdentifierInfo *Arg = Tok.getIdentifierInfo();
+  if (!Arg) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier)
+      << "pointers_to_members";
+    return;
+  }
+  PP.Lex(Tok);
+
+  Sema::PragmaMSPointersToMembersKind RepresentationMethod;
+  if (Arg->isStr("best_case")) {
+    RepresentationMethod = Sema::PPTMK_BestCase;
+  } else {
+    if (Arg->isStr("full_generality")) {
+      if (Tok.is(tok::comma)) {
+        PP.Lex(Tok);
+
+        Arg = Tok.getIdentifierInfo();
+        if (!Arg) {
+          PP.Diag(Tok.getLocation(),
+                  diag::err_pragma_pointers_to_members_unknown_kind)
+              << Tok.getKind() << /*OnlyInheritanceModels*/ 0;
+          return;
+        }
+        PP.Lex(Tok);
+      } else if (Tok.is(tok::r_paren)) {
+        // #pragma pointers_to_members(full_generality) implicitly specifies
+        // virtual_inheritance.
+        Arg = 0;
+        RepresentationMethod = Sema::PPTMK_FullGeneralityVirtualInheritance;
+      } else {
+        PP.Diag(Tok.getLocation(), diag::err_expected_punc)
+            << "full_generality";
+        return;
+      }
+    }
+
+    if (Arg) {
+      if (Arg->isStr("single_inheritance")) {
+        RepresentationMethod = Sema::PPTMK_FullGeneralitySingleInheritance;
+      } else if (Arg->isStr("multiple_inheritance")) {
+        RepresentationMethod = Sema::PPTMK_FullGeneralityMultipleInheritance;
+      } else if (Arg->isStr("virtual_inheritance")) {
+        RepresentationMethod = Sema::PPTMK_FullGeneralityVirtualInheritance;
+      } else {
+        PP.Diag(Tok.getLocation(),
+                diag::err_pragma_pointers_to_members_unknown_kind)
+            << Arg << /*HasPointerDeclaration*/ 1;
+        return;
+      }
+    }
+  }
+
+  if (Tok.isNot(tok::r_paren)) {
+    PP.Diag(Tok.getLocation(), diag::err_expected_rparen_after)
+        << (Arg ? Arg->getName() : "full_generality");
+    return;
+  }
+
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::eod)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
+      << "pointers_to_members";
+    return;
+  }
+
+  Token AnnotTok;
+  AnnotTok.startToken();
+  AnnotTok.setKind(tok::annot_pragma_ms_pointers_to_members);
+  AnnotTok.setLocation(PointersToMembersLoc);
+  AnnotTok.setAnnotationValue(
+      reinterpret_cast<void *>(static_cast<uintptr_t>(RepresentationMethod)));
+  PP.EnterToken(AnnotTok);
 }
 
 /// \brief Handle the Microsoft \#pragma detect_mismatch extension.

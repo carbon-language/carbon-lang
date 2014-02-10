@@ -5082,7 +5082,35 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
         if (!MPTy->getClass()->isDependentType()) {
           RequireCompleteType(Loc, QualType(MPTy->getClass(), 0), 0);
 
-          MPTy->getMostRecentCXXRecordDecl()->setMSInheritanceModel();
+          CXXRecordDecl *RD = MPTy->getMostRecentCXXRecordDecl();
+          if (!RD->hasAttr<MSInheritanceAttr>()) {
+            MSInheritanceAttr::Spelling InheritanceModel;
+
+            switch (MSPointerToMemberRepresentationMethod) {
+            case PPTMK_BestCase:
+              InheritanceModel = RD->calculateInheritanceModel();
+              break;
+            case PPTMK_FullGeneralitySingleInheritance:
+              InheritanceModel = MSInheritanceAttr::Keyword_single_inheritance;
+              break;
+            case PPTMK_FullGeneralityMultipleInheritance:
+              InheritanceModel =
+                  MSInheritanceAttr::Keyword_multiple_inheritance;
+              break;
+            case PPTMK_FullGeneralityVirtualInheritance:
+              InheritanceModel =
+                  MSInheritanceAttr::Keyword_unspecified_inheritance;
+              break;
+            }
+
+            RD->addAttr(MSInheritanceAttr::CreateImplicit(
+                getASTContext(), InheritanceModel,
+                /*BestCase=*/MSPointerToMemberRepresentationMethod ==
+                    PPTMK_BestCase,
+                ImplicitMSInheritanceAttrLoc.isValid()
+                    ? ImplicitMSInheritanceAttrLoc
+                    : RD->getSourceRange()));
+          }
         }
       }
     }

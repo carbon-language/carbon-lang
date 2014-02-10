@@ -345,6 +345,11 @@ Retry:
     ProhibitAttributes(Attrs);
     return ParseOpenMPDeclarativeOrExecutableDirective();
 
+  case tok::annot_pragma_ms_pointers_to_members:
+    ProhibitAttributes(Attrs);
+    HandlePragmaMSPointersToMembers();
+    return StmtEmpty();
+
   }
 
   // If we reached this code, the statement must end in a semicolon.
@@ -819,6 +824,9 @@ void Parser::ParseCompoundStatementLeadingPragmas() {
       break;
     case tok::annot_pragma_fp_contract:
       HandlePragmaFPContract();
+      break;
+    case tok::annot_pragma_ms_pointers_to_members:
+      HandlePragmaMSPointersToMembers();
       break;
     default:
       checkForPragmas = false;

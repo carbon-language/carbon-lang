@@ -1600,8 +1600,6 @@ public:
 
   /// \brief Returns the inheritance model used for this record.
   MSInheritanceAttr::Spelling getMSInheritanceModel() const;
-  /// \brief Locks-in the inheritance model for this class.
-  void setMSInheritanceModel();
   /// \brief Calculate what the inheritance model would be for this class.
   MSInheritanceAttr::Spelling calculateInheritanceModel() const;
 

@@ -1963,7 +1963,8 @@ static bool mergeDeclAttribute(Sema &S, NamedDecl *D, InheritableAttr *Attr,
     NewAttr = S.mergeSectionAttr(D, SA->getRange(), SA->getName(),
                                  AttrSpellingListIndex);
   else if (MSInheritanceAttr *IA = dyn_cast<MSInheritanceAttr>(Attr))
-    NewAttr = S.mergeMSInheritanceAttr(D, IA->getRange(), AttrSpellingListIndex,
+    NewAttr = S.mergeMSInheritanceAttr(D, IA->getRange(), IA->getBestCase(),
+                                       AttrSpellingListIndex,
                                        IA->getSemanticSpelling());
   else if (isa<AlignedAttr>(Attr))
     // AlignedAttrs are handled separately, because we need to handle all
@@ -12152,7 +12153,7 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
 
       if (const MSInheritanceAttr *IA = Record->getAttr<MSInheritanceAttr>())
         checkMSInheritanceAttrOnDefinition(cast<CXXRecordDecl>(Record),
-                                           IA->getRange(),
+                                           IA->getRange(), IA->getBestCase(),
                                            IA->getSemanticSpelling());
     }
 

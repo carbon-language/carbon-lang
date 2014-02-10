@@ -109,14 +109,6 @@ CXXRecordDecl::getMSInheritanceModel() const {
   return IA->getSemanticSpelling();
 }
 
-void CXXRecordDecl::setMSInheritanceModel() {
-  if (hasAttr<MSInheritanceAttr>())
-    return;
-
-  addAttr(MSInheritanceAttr::CreateImplicit(
-      getASTContext(), calculateInheritanceModel(), getSourceRange()));
-}
-
 // Returns the number of pointer and integer slots used to represent a member
 // pointer in the MS C++ ABI.
 //

@@ -155,6 +155,7 @@ class Parser : public CodeCompletionHandler {
   OwningPtr<PragmaHandler> OpenMPHandler;
   OwningPtr<PragmaHandler> MSCommentHandler;
   OwningPtr<PragmaHandler> MSDetectMismatchHandler;
+  OwningPtr<PragmaHandler> MSPointersToMembers;
 
   /// Whether the '>' token acts as an operator or not. This will be
   /// true except when we are parsing an expression within a C++
@@ -456,6 +457,8 @@ private:
   /// \brief Handle the annotation token produced for
   /// #pragma comment...
   void HandlePragmaMSComment();
+
+  void HandlePragmaMSPointersToMembers();
 
   /// \brief Handle the annotation token produced for
   /// #pragma align...

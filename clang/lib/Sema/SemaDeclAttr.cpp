@@ -2873,7 +2873,7 @@ void Sema::CheckAlignasUnderalignment(Decl *D) {
 }
 
 bool Sema::checkMSInheritanceAttrOnDefinition(
-    CXXRecordDecl *RD, SourceRange Range,
+    CXXRecordDecl *RD, SourceRange Range, bool BestCase,
     MSInheritanceAttr::Spelling SemanticSpelling) {
   assert(RD->hasDefinition() && "RD has no definition!");
 
@@ -2886,8 +2886,13 @@ bool Sema::checkMSInheritanceAttrOnDefinition(
   if (SemanticSpelling == MSInheritanceAttr::Keyword_unspecified_inheritance)
     return false;
 
-  if (RD->calculateInheritanceModel() == SemanticSpelling)
-    return false;
+  if (BestCase) {
+    if (RD->calculateInheritanceModel() == SemanticSpelling)
+      return false;
+  } else {
+    if (RD->calculateInheritanceModel() <= SemanticSpelling)
+      return false;
+  }
 
   Diag(Range.getBegin(), diag::err_mismatched_ms_inheritance)
       << 0 /*definition*/;
@@ -3705,7 +3710,8 @@ static void handleMSInheritanceAttr(Sema &S, Decl *D, const AttributeList &Attr)
     return;
   }
   MSInheritanceAttr *IA = S.mergeMSInheritanceAttr(
-      D, Attr.getRange(), Attr.getAttributeSpellingListIndex(),
+      D, Attr.getRange(), /*BestCase=*/true,
+      Attr.getAttributeSpellingListIndex(),
       (MSInheritanceAttr::Spelling)Attr.getSemanticSpelling());
   if (IA)
     D->addAttr(IA);
@@ -3886,7 +3892,7 @@ static void handleDLLExportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 MSInheritanceAttr *
-Sema::mergeMSInheritanceAttr(Decl *D, SourceRange Range,
+Sema::mergeMSInheritanceAttr(Decl *D, SourceRange Range, bool BestCase,
                              unsigned AttrSpellingListIndex,
                              MSInheritanceAttr::Spelling SemanticSpelling) {
   if (MSInheritanceAttr *IA = D->getAttr<MSInheritanceAttr>()) {
@@ -3900,7 +3906,8 @@ Sema::mergeMSInheritanceAttr(Decl *D, SourceRange Range,
 
   CXXRecordDecl *RD = cast<CXXRecordDecl>(D);
   if (RD->hasDefinition()) {
-    if (checkMSInheritanceAttrOnDefinition(RD, Range, SemanticSpelling)) {
+    if (checkMSInheritanceAttrOnDefinition(RD, Range, BestCase,
+                                           SemanticSpelling)) {
       return 0;
     }
   } else {
@@ -3917,7 +3924,7 @@ Sema::mergeMSInheritanceAttr(Decl *D, SourceRange Range,
   }
 
   return ::new (Context)
-      MSInheritanceAttr(Range, Context, AttrSpellingListIndex);
+      MSInheritanceAttr(Range, Context, BestCase, AttrSpellingListIndex);
 }
 
 /// Handles semantic checking for features that are common to all attributes,
