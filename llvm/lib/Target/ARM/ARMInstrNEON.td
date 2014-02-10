@@ -466,9 +466,6 @@ def SDTARMVSHINS  : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<0, 1>,
 def NEONvshl      : SDNode<"ARMISD::VSHL", SDTARMVSH>;
 def NEONvshrs     : SDNode<"ARMISD::VSHRs", SDTARMVSH>;
 def NEONvshru     : SDNode<"ARMISD::VSHRu", SDTARMVSH>;
-def NEONvshlls    : SDNode<"ARMISD::VSHLLs", SDTARMVSHX>;
-def NEONvshllu    : SDNode<"ARMISD::VSHLLu", SDTARMVSHX>;
-def NEONvshlli    : SDNode<"ARMISD::VSHLLi", SDTARMVSHX>;
 def NEONvshrn     : SDNode<"ARMISD::VSHRN", SDTARMVSHX>;
 
 def NEONvrshrs    : SDNode<"ARMISD::VRSHRs", SDTARMVSH>;
@@ -3038,12 +3035,12 @@ class N2VQSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
 // Long shift by immediate.
 class N2VLSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
              string OpcodeStr, string Dt,
-             ValueType ResTy, ValueType OpTy, Operand ImmTy, SDNode OpNode>
+             ValueType ResTy, ValueType OpTy, Operand ImmTy,
+             SDPatternOperator OpNode>
   : N2VImm<op24, op23, op11_8, op7, op6, op4,
            (outs QPR:$Vd), (ins DPR:$Vm, ImmTy:$SIMM), N2RegVShLFrm,
            IIC_VSHLiD, OpcodeStr, Dt, "$Vd, $Vm, $SIMM", "",
-           [(set QPR:$Vd, (ResTy (OpNode (OpTy DPR:$Vm),
-                                          (i32 imm:$SIMM))))]>;
+           [(set QPR:$Vd, (ResTy (OpNode (OpTy DPR:$Vm), ImmTy:$SIMM)))]>;
 
 // Narrow shift by immediate.
 class N2VNSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
@@ -3942,7 +3939,8 @@ multiclass N2VShInsR_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4,
 // Neon Shift Long operations,
 //   element sizes of 8, 16, 32 bits:
 multiclass N2VLSh_QHS<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6,
-                      bit op4, string OpcodeStr, string Dt, SDNode OpNode> {
+                      bit op4, string OpcodeStr, string Dt,
+                      SDPatternOperator OpNode> {
   def v8i16 : N2VLSh<op24, op23, op11_8, op7, op6, op4,
               OpcodeStr, !strconcat(Dt, "8"), v8i16, v8i8, imm1_7, OpNode> {
     let Inst{21-19} = 0b001; // imm6 = 001xxx
@@ -4947,24 +4945,39 @@ defm VSHRu    : N2VShR_QHSD<1, 1, 0b0000, 1, IIC_VSHLiD, "vshr", "u", "VSHRu",
                             NEONvshru>;
 
 //   VSHLL    : Vector Shift Left Long
-defm VSHLLs   : N2VLSh_QHS<0, 1, 0b1010, 0, 0, 1, "vshll", "s", NEONvshlls>;
-defm VSHLLu   : N2VLSh_QHS<1, 1, 0b1010, 0, 0, 1, "vshll", "u", NEONvshllu>;
+defm VSHLLs   : N2VLSh_QHS<0, 1, 0b1010, 0, 0, 1, "vshll", "s",
+  PatFrag<(ops node:$LHS, node:$RHS), (NEONvshl (sext node:$LHS), node:$RHS)>>;
+defm VSHLLu   : N2VLSh_QHS<1, 1, 0b1010, 0, 0, 1, "vshll", "u",
+  PatFrag<(ops node:$LHS, node:$RHS), (NEONvshl (zext node:$LHS), node:$RHS)>>;
 
 //   VSHLL    : Vector Shift Left Long (with maximum shift count)
 class N2VLShMax<bit op24, bit op23, bits<6> op21_16, bits<4> op11_8, bit op7,
                 bit op6, bit op4, string OpcodeStr, string Dt, ValueType ResTy,
-                ValueType OpTy, Operand ImmTy, SDNode OpNode>
+                ValueType OpTy, Operand ImmTy>
   : N2VLSh<op24, op23, op11_8, op7, op6, op4, OpcodeStr, Dt,
-           ResTy, OpTy, ImmTy, OpNode> {
+           ResTy, OpTy, ImmTy, null_frag> {
   let Inst{21-16} = op21_16;
   let DecoderMethod = "DecodeVSHLMaxInstruction";
 }
 def  VSHLLi8  : N2VLShMax<1, 1, 0b110010, 0b0011, 0, 0, 0, "vshll", "i8",
-                          v8i16, v8i8, imm8, NEONvshlli>;
+                          v8i16, v8i8, imm8>;
 def  VSHLLi16 : N2VLShMax<1, 1, 0b110110, 0b0011, 0, 0, 0, "vshll", "i16",
-                          v4i32, v4i16, imm16, NEONvshlli>;
+                          v4i32, v4i16, imm16>;
 def  VSHLLi32 : N2VLShMax<1, 1, 0b111010, 0b0011, 0, 0, 0, "vshll", "i32",
-                          v2i64, v2i32, imm32, NEONvshlli>;
+                          v2i64, v2i32, imm32>;
+
+def : Pat<(v8i16 (NEONvshl (zext (v8i8 DPR:$Rn)), (i32 8))),
+          (VSHLLi8 DPR:$Rn, 8)>;
+def : Pat<(v4i32 (NEONvshl (zext (v4i16 DPR:$Rn)), (i32 16))),
+          (VSHLLi16 DPR:$Rn, 16)>;
+def : Pat<(v2i64 (NEONvshl (zext (v2i32 DPR:$Rn)), (i32 32))),
+          (VSHLLi32 DPR:$Rn, 32)>;
+def : Pat<(v8i16 (NEONvshl (sext (v8i8 DPR:$Rn)), (i32 8))),
+          (VSHLLi8 DPR:$Rn, 8)>;
+def : Pat<(v4i32 (NEONvshl (sext (v4i16 DPR:$Rn)), (i32 16))),
+          (VSHLLi16 DPR:$Rn, 16)>;
+def : Pat<(v2i64 (NEONvshl (sext (v2i32 DPR:$Rn)), (i32 32))),
+          (VSHLLi32 DPR:$Rn, 32)>;
 
 //   VSHRN    : Vector Shift Right and Narrow
 defm VSHRN    : N2VNSh_HSD<0,1,0b1000,0,0,1, IIC_VSHLiD, "vshrn", "i",

@@ -287,8 +287,6 @@ def int_arm_neon_vpminu : Neon_2Arg_Intrinsic;
 // Vector Shift.
 def int_arm_neon_vshifts : Neon_2Arg_Intrinsic;
 def int_arm_neon_vshiftu : Neon_2Arg_Intrinsic;
-def int_arm_neon_vshiftls : Neon_2Arg_Long_Intrinsic;
-def int_arm_neon_vshiftlu : Neon_2Arg_Long_Intrinsic;
 
 // Vector Rounding Shift.
 def int_arm_neon_vrshifts : Neon_2Arg_Intrinsic;

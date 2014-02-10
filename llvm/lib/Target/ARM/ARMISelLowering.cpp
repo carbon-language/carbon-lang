@@ -1078,9 +1078,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VSHL:          return "ARMISD::VSHL";
   case ARMISD::VSHRs:         return "ARMISD::VSHRs";
   case ARMISD::VSHRu:         return "ARMISD::VSHRu";
-  case ARMISD::VSHLLs:        return "ARMISD::VSHLLs";
-  case ARMISD::VSHLLu:        return "ARMISD::VSHLLu";
-  case ARMISD::VSHLLi:        return "ARMISD::VSHLLi";
   case ARMISD::VRSHRs:        return "ARMISD::VRSHRs";
   case ARMISD::VRSHRu:        return "ARMISD::VRSHRu";
   case ARMISD::VRSHRN:        return "ARMISD::VRSHRN";
@@ -9714,8 +9711,6 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
   // loads from a constant pool.
   case Intrinsic::arm_neon_vshifts:
   case Intrinsic::arm_neon_vshiftu:
-  case Intrinsic::arm_neon_vshiftls:
-  case Intrinsic::arm_neon_vshiftlu:
   case Intrinsic::arm_neon_vrshifts:
   case Intrinsic::arm_neon_vrshiftu:
   case Intrinsic::arm_neon_vrshiftn:
@@ -9745,12 +9740,6 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
         break;
       }
       return SDValue();
-
-    case Intrinsic::arm_neon_vshiftls:
-    case Intrinsic::arm_neon_vshiftlu:
-      if (isVShiftLImm(N->getOperand(2), VT, true, Cnt))
-        break;
-      llvm_unreachable("invalid shift count for vshll intrinsic");
 
     case Intrinsic::arm_neon_vrshifts:
     case Intrinsic::arm_neon_vrshiftu:
@@ -9790,14 +9779,6 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
     case Intrinsic::arm_neon_vshifts:
     case Intrinsic::arm_neon_vshiftu:
       // Opcode already set above.
-      break;
-    case Intrinsic::arm_neon_vshiftls:
-    case Intrinsic::arm_neon_vshiftlu:
-      if (Cnt == VT.getVectorElementType().getSizeInBits())
-        VShiftOpc = ARMISD::VSHLLi;
-      else
-        VShiftOpc = (IntNo == Intrinsic::arm_neon_vshiftls ?
-                     ARMISD::VSHLLs : ARMISD::VSHLLu);
       break;
     case Intrinsic::arm_neon_vrshifts:
       VShiftOpc = ARMISD::VRSHRs; break;

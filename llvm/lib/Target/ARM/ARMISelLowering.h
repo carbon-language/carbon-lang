@@ -113,9 +113,6 @@ namespace llvm {
       VSHL,         // ...left
       VSHRs,        // ...right (signed)
       VSHRu,        // ...right (unsigned)
-      VSHLLs,       // ...left long (signed)
-      VSHLLu,       // ...left long (unsigned)
-      VSHLLi,       // ...left long (with maximum shift count)
 
       // Vector rounding shift by immediate:
       VRSHRs,       // ...right (signed)
