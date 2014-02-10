@@ -878,6 +878,7 @@ class LDI_W_ENC  : MSA_I10_FMT<0b110, 0b10, 0b000111>;
 class LDI_D_ENC  : MSA_I10_FMT<0b110, 0b11, 0b000111>;
 
 class LSA_ENC : SPECIAL_LSA_FMT<0b000101>;
+class DLSA_ENC : SPECIAL_DLSA_FMT<0b010101>;
 
 class MADD_Q_H_ENC : MSA_3RF_FMT<0b0101, 0b0, 0b011100>;
 class MADD_Q_W_ENC : MSA_3RF_FMT<0b0101, 0b1, 0b011100>;
@@ -2324,6 +2325,7 @@ class LSA_DESC_BASE<string instr_asm, RegisterOperand RORD,
 }
 
 class LSA_DESC : LSA_DESC_BASE<"lsa", GPR32Opnd>;
+class DLSA_DESC : LSA_DESC_BASE<"dlsa", GPR64Opnd>;
 
 class MADD_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"madd_q.h", int_mips_madd_q_h,
                                             MSA128HOpnd>;
@@ -3191,6 +3193,7 @@ def LDI_W : LDI_W_ENC, LDI_W_DESC;
 def LDI_D : LDI_D_ENC, LDI_D_DESC;
 
 def LSA : LSA_ENC, LSA_DESC;
+def DLSA : DLSA_ENC, DLSA_DESC;
 
 def MADD_Q_H : MADD_Q_H_ENC, MADD_Q_H_DESC;
 def MADD_Q_W : MADD_Q_W_ENC, MADD_Q_W_DESC;

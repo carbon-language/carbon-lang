@@ -27,6 +27,10 @@ class MSASpecial : MSAInst {
   let Inst{31-26} = 0b000000;
 }
 
+class MSA64Special : MSA64Inst {
+  let Inst{31-26} = 0b000000;
+}
+
 class MSAPseudo<dag outs, dag ins, list<dag> pattern,
                 InstrItinClass itin = IIPseudo>:
   MipsPseudo<outs, ins, pattern, itin> {
@@ -433,6 +437,20 @@ class MSA_CBRANCH_V_FMT<bits<5> major>: MSACBranch {
 }
 
 class SPECIAL_LSA_FMT<bits<6> minor>: MSASpecial {
+  bits<5> rs;
+  bits<5> rt;
+  bits<5> rd;
+  bits<2> sa;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-8} = 0b000;
+  let Inst{7-6} = sa;
+  let Inst{5-0} = minor;
+}
+
+class SPECIAL_DLSA_FMT<bits<6> minor>: MSA64Special {
   bits<5> rs;
   bits<5> rt;
   bits<5> rd;
