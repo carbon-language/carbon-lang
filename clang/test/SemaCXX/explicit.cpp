@@ -246,3 +246,8 @@ namespace pr8264 {
   explicit explicit Test(int x);  // expected-warning{{duplicate 'explicit' declaration specifier}}
   };
 }
+
+namespace PR18777 {
+  struct S { explicit operator bool() const; } s;
+  int *p = new int(s); // expected-error {{no viable conversion}}
+}
