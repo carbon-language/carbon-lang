@@ -32,8 +32,9 @@
 #include <unistd.h>
 #include <unwind.h>
 
-#if !SANITIZER_ANDROID
-// FIXME: where to get ucontext on Android?
+#if SANITIZER_ANDROID
+#include <ucontext.h>
+#else
 #include <sys/ucontext.h>
 #endif
 
@@ -51,9 +52,7 @@ void *AsanDoesNotSupportStaticLinkage() {
 }
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
-#if SANITIZER_ANDROID
-  *pc = *sp = *bp = 0;
-#elif defined(__arm__)
+#if defined(__arm__)
   ucontext_t *ucontext = (ucontext_t*)context;
   *pc = ucontext->uc_mcontext.arm_pc;
   *bp = ucontext->uc_mcontext.arm_fp;

@@ -45,6 +45,8 @@ set(COMPILER_RT_DARWIN_SDK_SYSROOT ${COMPILER_RT_SOURCE_DIR}/SDKs/darwin)
 set(COMPILER_RT_LINUX_SDK_SYSROOT ${COMPILER_RT_SOURCE_DIR}/SDKs/linux)
 include(SanitizerUtils)
 
+set(COMPILER_RT_EXTRA_ANDROID_HEADERS ${COMPILER_RT_SOURCE_DIR}/third_party/android/include)
+
 # Detect whether the current target platform is 32-bit or 64-bit, and setup
 # the correct commandline flags needed to attempt to target 32-bit and 64-bit.
 if (NOT CMAKE_SIZEOF_VOID_P EQUAL 4 AND

@@ -24,6 +24,10 @@ set(ASAN_SOURCES
 
 include_directories(..)
 
+if(ANDROID)
+  include_directories(${COMPILER_RT_EXTRA_ANDROID_HEADERS})
+endif()
+
 if (NOT MSVC)
   set(ASAN_CFLAGS
     ${SANITIZER_COMMON_CFLAGS}
