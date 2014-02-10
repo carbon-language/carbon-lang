@@ -1385,7 +1385,7 @@ template <class _Tp>
 struct _LIBCPP_TYPE_VIS_ONLY common_type<_Tp, void, void>
 {
 public:
-    typedef _Tp type;
+    typedef typename decay<_Tp>::type type;
 };
 
 template <class _Tp, class _Up>
@@ -3079,7 +3079,7 @@ template <class _Fp, class _A0, class ..._Args,
             class = typename enable_if
             <
                 is_member_function_pointer<typename remove_reference<_Fp>::type>::value &&
-                is_base_of<typename __member_pointer_traits<typename remove_reference<_Fp>::type>::_ClassType,
+                is_base_of<typename remove_reference<typename __member_pointer_traits<typename remove_reference<_Fp>::type>::_ClassType>::type,
                            typename remove_reference<_A0>::type>::value
             >::type
          >
@@ -3092,7 +3092,7 @@ template <class _Fp, class _A0, class ..._Args,
             class = typename enable_if
             <
                 is_member_function_pointer<typename remove_reference<_Fp>::type>::value &&
-                !is_base_of<typename __member_pointer_traits<typename remove_reference<_Fp>::type>::_ClassType,
+                !is_base_of<typename remove_reference<typename __member_pointer_traits<typename remove_reference<_Fp>::type>::_ClassType>::type,
                            typename remove_reference<_A0>::type>::value
             >::type
          >

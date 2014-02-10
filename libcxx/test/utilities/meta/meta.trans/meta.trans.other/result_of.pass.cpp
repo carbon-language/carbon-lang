@@ -34,6 +34,8 @@ struct wat
     void foo();
 };
 
+struct F {};
+
 template <class T, class U>
 void test_result_of_imp()
 {
@@ -55,6 +57,14 @@ int main()
     test_result_of_imp<PMD(S), char&&> ();
 #endif
     test_result_of_imp<PMD(const S*), const char&> ();
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    test_result_of_imp<int (F::* (F       &)) ()       &, int> ();
+    test_result_of_imp<int (F::* (F       &)) () const &, int> ();
+    test_result_of_imp<int (F::* (F const &)) () const &, int> ();
+    test_result_of_imp<int (F::* (F      &&)) ()      &&, int> ();
+    test_result_of_imp<int (F::* (F      &&)) () const&&, int> ();
+    test_result_of_imp<int (F::* (F const&&)) () const&&, int> ();
+#endif
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
     using type1 = std::result_of<decltype(&wat::foo)(wat)>::type;
 #endif
@@ -74,6 +84,14 @@ int main()
     static_assert((std::is_same<std::result_of<PMD(S)>::type, char&&>::value), "Error!");
 #endif
     static_assert((std::is_same<std::result_of<PMD(const S*)>::type, const char&>::value), "Error!");
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    static_assert((std::is_same<std::result_of<int (F::* (F       &)) ()       &>::type, int>::value), "Error!");
+    static_assert((std::is_same<std::result_of<int (F::* (F       &)) () const &>::type, int>::value), "Error!");
+    static_assert((std::is_same<std::result_of<int (F::* (F const &)) () const &>::type, int>::value), "Error!");
+    static_assert((std::is_same<std::result_of<int (F::* (F      &&)) ()      &&>::type, int>::value), "Error!");
+    static_assert((std::is_same<std::result_of<int (F::* (F      &&)) () const&&>::type, int>::value), "Error!");
+    static_assert((std::is_same<std::result_of<int (F::* (F const&&)) () const&&>::type, int>::value), "Error!");
+#endif
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
     using type = std::result_of<decltype(&wat::foo)(wat)>::type;
 #endif
