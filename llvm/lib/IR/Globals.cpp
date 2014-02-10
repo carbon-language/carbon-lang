@@ -184,7 +184,7 @@ void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
   assert(isa<GlobalVariable>(Src) && "Expected a GlobalVariable!");
   GlobalValue::copyAttributesFrom(Src);
   const GlobalVariable *SrcVar = cast<GlobalVariable>(Src);
-  setThreadLocal(SrcVar->isThreadLocal());
+  setThreadLocalMode(SrcVar->getThreadLocalMode());
 }
 
 
