@@ -162,33 +162,98 @@ function(set_output_directory target bindir libdir)
   endif()
 endfunction()
 
-macro(add_llvm_library name)
-  llvm_process_sources( ALL_FILES ${ARGN} )
-  add_library( ${name} ${ALL_FILES} )
+# llvm_add_library(name sources...
+#   MODULE;SHARED;STATIC
+#     STATIC by default w/o BUILD_SHARED_LIBS.
+#     SHARED by default w/  BUILD_SHARED_LIBS.
+#   OUTPUT_NAME name
+#     Corresponds to OUTPUT_NAME in target properties.
+#   DEPENDS targets...
+#     Same semantics as add_dependencies().
+#   LINK_COMPONENTS components...
+#     Same as the variable LLVM_LINK_COMPONENTS.
+#   LINK_LIBS lib_targets...
+#     Same semantics as target_link_libraries().
+#   ADDITIONAL_HEADERS (implemented in LLVMProcessSources)
+#     May specify header files for IDE generators.
+#   )
+function(llvm_add_library name)
+  cmake_parse_arguments(ARG
+    "MODULE;SHARED;STATIC"
+    "OUTPUT_NAME"
+    "DEPENDS;LINK_COMPONENTS;LINK_LIBS"
+    ${ARGN})
+  list(APPEND LLVM_COMMON_DEPENDS ${ARG_DEPENDS})
+  llvm_process_sources(ALL_FILES ${ARG_UNPARSED_ARGUMENTS})
+
+  if(ARG_MODULE)
+    if(ARG_SHARED OR ARG_STATIC)
+      message(WARNING "MODULE with SHARED|STATIC doesn't make sense.")
+    endif()
+  else()
+    if(BUILD_SHARED_LIBS AND NOT ARG_STATIC)
+      set(ARG_SHARED TRUE)
+    endif()
+    if(NOT ARG_SHARED)
+      set(ARG_STATIC TRUE)
+    endif()
+  endif()
+
+  if(ARG_MODULE)
+    add_library(${name} MODULE ${ALL_FILES})
+  elseif(ARG_SHARED)
+    add_library(${name} SHARED ${ALL_FILES})
+  else()
+    add_library(${name} STATIC ${ALL_FILES})
+  endif()
   set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
-  set_property( GLOBAL APPEND PROPERTY LLVM_LIBS ${name} )
   llvm_update_compile_flags(${name})
   add_dead_strip( ${name} )
-  if( LLVM_COMMON_DEPENDS )
-    add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
-  endif( LLVM_COMMON_DEPENDS )
+  if(ARG_OUTPUT_NAME)
+    set_target_properties(${name}
+      PROPERTIES
+      OUTPUT_NAME ${ARG_OUTPUT_NAME}
+      )
+  endif()
 
-  if( BUILD_SHARED_LIBS )
-    llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
+  if(ARG_MODULE)
+    set_property(TARGET ${name} PROPERTY SUFFIX ${LLVM_PLUGIN_EXT})
+  endif()
+
+  if(ARG_SHARED)
     if (MSVC)
       set_target_properties(${name}
         PROPERTIES
         IMPORT_SUFFIX ".imp")
     endif ()
+  endif()
 
+  if(ARG_MODULE OR ARG_SHARED)
     if (LLVM_EXPORTED_SYMBOL_FILE)
       add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
     endif()
   endif()
 
+  target_link_libraries(${name} ${ARG_LINK_LIBS})
+
+  llvm_config(${name} ${ARG_LINK_COMPONENTS} ${LLVM_LINK_COMPONENTS})
+
   # Ensure that the system libraries always comes last on the
   # list. Without this, linking the unit tests on MinGW fails.
   link_system_libs( ${name} )
+
+  if(LLVM_COMMON_DEPENDS)
+    add_dependencies(${name} ${LLVM_COMMON_DEPENDS})
+  endif()
+endfunction()
+
+macro(add_llvm_library name)
+  if( BUILD_SHARED_LIBS )
+    llvm_add_library(${name} SHARED ${ARGN})
+  else()
+    llvm_add_library(${name} ${ARGN})
+  endif()
+  set_property( GLOBAL APPEND PROPERTY LLVM_LIBS ${name} )
 
   if( EXCLUDE_FROM_ALL )
     set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
@@ -219,29 +284,14 @@ ${name} ignored.")
     # Add empty "phony" target
     add_custom_target(${name})
   else()
-    llvm_process_sources( ALL_FILES ${ARGN} )
-    add_library(${name} MODULE ${ALL_FILES})
-    set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
+    llvm_add_library(${name} MODULE ${ARGN})
     set_target_properties( ${name} PROPERTIES PREFIX "" )
-    llvm_update_compile_flags(${name})
-    add_dead_strip( ${name} )
-
-    if (LLVM_EXPORTED_SYMBOL_FILE)
-      add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
-    endif(LLVM_EXPORTED_SYMBOL_FILE)
-
-    llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
-    link_system_libs( ${name} )
 
     if (APPLE)
       # Darwin-specific linker flags for loadable modules.
       set_property(TARGET ${name} APPEND_STRING PROPERTY
         LINK_FLAGS " -Wl,-flat_namespace -Wl,-undefined -Wl,suppress")
     endif()
-
-    if (MODULE)
-      set_property(TARGET ${name} PROPERTY SUFFIX ${LLVM_PLUGIN_EXT})
-    endif ()
 
     if( EXCLUDE_FROM_ALL )
       set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
