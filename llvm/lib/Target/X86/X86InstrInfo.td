@@ -928,9 +928,9 @@ def trunc_su : PatFrag<(ops node:$src), (trunc node:$src), [{
 // Nop
 let neverHasSideEffects = 1, SchedRW = [WriteZero] in {
   def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", [], IIC_NOP>;
-  def NOOPW : I<0x1f, MRMXm, (outs), (ins i16mem:$zero),
+  def NOOPW : I<0x1f, MRM0m, (outs), (ins i16mem:$zero),
                 "nop{w}\t$zero", [], IIC_NOP>, TB, OpSize16;
-  def NOOPL : I<0x1f, MRMXm, (outs), (ins i32mem:$zero),
+  def NOOPL : I<0x1f, MRM0m, (outs), (ins i32mem:$zero),
                 "nop{l}\t$zero", [], IIC_NOP>, TB, OpSize32;
 }
 

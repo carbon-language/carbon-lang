@@ -1426,35 +1426,28 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     break;
   }
 
-  case X86II::MRMXr:
   case X86II::MRM0r: case X86II::MRM1r:
   case X86II::MRM2r: case X86II::MRM3r:
   case X86II::MRM4r: case X86II::MRM5r:
-  case X86II::MRM6r: case X86II::MRM7r: {
+  case X86II::MRM6r: case X86II::MRM7r:
     if (HasVEX_4V) // Skip the register dst (which is encoded in VEX_VVVV).
       ++CurOp;
     EmitByte(BaseOpcode, CurByte, OS);
-    uint64_t Form = TSFlags & X86II::FormMask;
     EmitRegModRMByte(MI.getOperand(CurOp++),
-                     (Form == X86II::MRMXr) ? 0 : Form-X86II::MRM0r,
+                     (TSFlags & X86II::FormMask)-X86II::MRM0r,
                      CurByte, OS);
     break;
-  }
-
-  case X86II::MRMXm:
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
-  case X86II::MRM6m: case X86II::MRM7m: {
+  case X86II::MRM6m: case X86II::MRM7m:
     if (HasVEX_4V) // Skip the register dst (which is encoded in VEX_VVVV).
       ++CurOp;
     EmitByte(BaseOpcode, CurByte, OS);
-    uint64_t Form = TSFlags & X86II::FormMask;
-    EmitMemModRMByte(MI, CurOp, (Form == X86II::MRMXm) ? 0 : Form-X86II::MRM0m,
+    EmitMemModRMByte(MI, CurOp, (TSFlags & X86II::FormMask)-X86II::MRM0m,
                      TSFlags, CurByte, OS, Fixups, STI);
     CurOp += X86::AddrNumOperands;
     break;
-  }
   case X86II::MRM_C1: case X86II::MRM_C2: case X86II::MRM_C3:
   case X86II::MRM_C4: case X86II::MRM_C8: case X86II::MRM_C9:
   case X86II::MRM_CA: case X86II::MRM_CB: case X86II::MRM_D0:

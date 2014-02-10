@@ -82,11 +82,11 @@ defm CMOVG  : CMOV<0x4F, "cmovg" , X86_COND_G>;
 // SetCC instructions.
 multiclass SETCC<bits<8> opc, string Mnemonic, PatLeaf OpNode> {
   let Uses = [EFLAGS] in {
-    def r    : I<opc, MRMXr,  (outs GR8:$dst), (ins),
+    def r    : I<opc, MRM0r,  (outs GR8:$dst), (ins),
                      !strconcat(Mnemonic, "\t$dst"),
                      [(set GR8:$dst, (X86setcc OpNode, EFLAGS))],
                      IIC_SET_R>, TB, Sched<[WriteALU]>;
-    def m    : I<opc, MRMXm,  (outs), (ins i8mem:$dst),
+    def m    : I<opc, MRM0m,  (outs), (ins i8mem:$dst),
                      !strconcat(Mnemonic, "\t$dst"),
                      [(store (X86setcc OpNode, EFLAGS), addr:$dst)],
                      IIC_SET_M>, TB, Sched<[WriteALU, WriteStore]>;
