@@ -1048,6 +1048,7 @@ namespace __sanitizer {
   extern unsigned IOCTL_TIOCSSERIAL;
 #endif
 
+  extern const int errno_EINVAL;
   extern const int errno_EOWNERDEAD;
 }  // namespace __sanitizer
 

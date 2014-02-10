@@ -42,6 +42,8 @@ static unsigned g_thread_finalize_key;
 // True if this is a nested interceptor.
 static THREADLOCAL int in_interceptor_scope;
 
+extern "C" int *__errno_location(void);
+
 struct InterceptorScope {
   InterceptorScope() { ++in_interceptor_scope; }
   ~InterceptorScope() { --in_interceptor_scope; }
@@ -796,9 +798,12 @@ INTERCEPTOR(void *, mmap, void *addr, SIZE_T length, int prot, int flags,
             int fd, OFF_T offset) {
   ENSURE_MSAN_INITED();
   if (addr && !MEM_IS_APP(addr)) {
-    CHECK(!(flags & map_fixed) &&
-          "mmap(..., MAP_FIXED) outside of application memory range.");
-    addr = 0;
+    if (flags & map_fixed) {
+      *__errno_location() = errno_EINVAL;
+      return (void *)-1;
+    } else {
+      addr = 0;
+    }
   }
   void *res = REAL(mmap)(addr, length, prot, flags, fd, offset);
   if (res != (void*)-1)
@@ -1170,8 +1175,6 @@ int OnExit() {
 }
 
 }  // namespace __msan
-
-extern "C" int *__errno_location(void);
 
 // A version of CHECK_UNPOISONED using a saved scope value. Used in common
 // interceptors.
