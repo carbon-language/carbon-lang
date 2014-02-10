@@ -117,3 +117,5 @@ add_llvm_library(LLVMSupport
   Windows/TimeValue.inc
   Windows/Watchdog.inc
   )
+
+link_system_libs(LLVMSupport)

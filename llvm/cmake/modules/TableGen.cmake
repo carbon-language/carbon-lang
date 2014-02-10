@@ -117,15 +117,10 @@ macro(add_tablegen target project)
   endif()
 
   if( MINGW )
-    target_link_libraries(${target} imagehlp psapi shell32)
     if(CMAKE_SIZEOF_VOID_P MATCHES "8")
       set_target_properties(${target} PROPERTIES LINK_FLAGS -Wl,--stack,16777216)
     endif(CMAKE_SIZEOF_VOID_P MATCHES "8")
   endif( MINGW )
-  if( LLVM_ENABLE_THREADS AND HAVE_LIBPTHREAD AND NOT BEOS )
-    target_link_libraries(${target} pthread)
-  endif()
-
   if (${project} STREQUAL LLVM AND NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     install(TARGETS ${target}
             EXPORT LLVMExports

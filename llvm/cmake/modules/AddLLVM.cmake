@@ -238,10 +238,6 @@ function(llvm_add_library name)
 
   llvm_config(${name} ${ARG_LINK_COMPONENTS} ${LLVM_LINK_COMPONENTS})
 
-  # Ensure that the system libraries always comes last on the
-  # list. Without this, linking the unit tests on MinGW fails.
-  link_system_libs( ${name} )
-
   if(LLVM_COMMON_DEPENDS)
     add_dependencies(${name} ${LLVM_COMMON_DEPENDS})
   endif()
@@ -330,7 +326,6 @@ macro(add_llvm_executable name)
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
-  link_system_libs( ${name} )
 endmacro(add_llvm_executable name)
 
 

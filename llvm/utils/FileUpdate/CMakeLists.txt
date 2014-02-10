@@ -3,9 +3,3 @@ add_llvm_utility(FileUpdate
   )
 
 target_link_libraries(FileUpdate LLVMSupport)
-if( MINGW )
-  target_link_libraries(FileUpdate imagehlp psapi shell32)
-endif( MINGW )
-if( LLVM_ENABLE_THREADS AND HAVE_LIBPTHREAD )
-  target_link_libraries(FileUpdate pthread)
-endif()
