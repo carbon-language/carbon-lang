@@ -44,13 +44,14 @@ static void getNameWithPrefixx(raw_ostream &OS, const Twine &GVName,
   OS << Name;
 }
 
-void Mangler::getNameWithPrefix(raw_ostream &OS,
-                                const Twine &GVName, ManglerPrefixTy PrefixTy) {
+void Mangler::getNameWithPrefix(raw_ostream &OS, const Twine &GVName,
+                                ManglerPrefixTy PrefixTy) const {
   return getNameWithPrefixx(OS, GVName, PrefixTy, *DL, false);
 }
 
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
-                                const Twine &GVName, ManglerPrefixTy PrefixTy) {
+                                const Twine &GVName,
+                                ManglerPrefixTy PrefixTy) const {
   raw_svector_ostream OS(OutName);
   return getNameWithPrefix(OS, GVName, PrefixTy);
 }
@@ -75,7 +76,7 @@ static void AddFastCallStdCallSuffix(raw_ostream &OS, const Function *F,
   OS << '@' << ArgWords;
 }
 
-void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV) {
+void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV) const {
   ManglerPrefixTy PrefixTy = Mangler::Default;
   if (GV->hasPrivateLinkage())
     PrefixTy = Mangler::Private;
@@ -133,7 +134,7 @@ void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV) {
 }
 
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
-                                const GlobalValue *GV) {
+                                const GlobalValue *GV) const {
   raw_svector_ostream OS(OutName);
   getNameWithPrefix(OS, GV);
 }

@@ -39,11 +39,11 @@ private:
   /// they are mangled.  This keeps track of the number we give to anonymous
   /// ones.
   ///
-  DenseMap<const GlobalValue*, unsigned> AnonGlobalIDs;
+  mutable DenseMap<const GlobalValue*, unsigned> AnonGlobalIDs;
 
   /// NextAnonGlobalID - This simple counter is used to unique value names.
   ///
-  unsigned NextAnonGlobalID;
+  mutable unsigned NextAnonGlobalID;
 
 public:
   Mangler(const DataLayout *DL) : DL(DL), NextAnonGlobalID(1) {}
@@ -51,15 +51,16 @@ public:
   /// Print the appropriate prefix and the specified global variable's name.
   /// If the global variable doesn't have a name, this fills in a unique name
   /// for the global.
-  void getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV);
-  void getNameWithPrefix(SmallVectorImpl<char> &OutName, const GlobalValue *GV);
+  void getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV) const;
+  void getNameWithPrefix(SmallVectorImpl<char> &OutName,
+                         const GlobalValue *GV) const;
 
   /// Print the appropriate prefix and the specified name as the global variable
   /// name. GVName must not be empty.
   void getNameWithPrefix(raw_ostream &OS, const Twine &GVName,
-                         ManglerPrefixTy PrefixTy = Mangler::Default);
+                         ManglerPrefixTy PrefixTy = Mangler::Default) const;
   void getNameWithPrefix(SmallVectorImpl<char> &OutName, const Twine &GVName,
-                         ManglerPrefixTy PrefixTy = Mangler::Default);
+                         ManglerPrefixTy PrefixTy = Mangler::Default) const;
 };
 
 } // End llvm namespace
