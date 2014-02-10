@@ -31,6 +31,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/IR/Constants.h"
@@ -262,6 +263,7 @@ struct LCSSA : public FunctionPass {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<LoopInfo>();
     AU.addPreservedID(LoopSimplifyID);
+    AU.addPreserved<AliasAnalysis>();
     AU.addPreserved<ScalarEvolution>();
   }
 
