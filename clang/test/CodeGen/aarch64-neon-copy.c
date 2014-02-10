@@ -1244,77 +1244,126 @@ float64x2_t test_vcopyq_laneq_f64(float64x2_t a, float64x2_t c) {
   return vcopyq_laneq_f64(a, 1, c, 1);
 }
 
-// CHECK: test_vget_lane_f16
+// CHECK-LABEL: test_vget_lane_f16
 int test_vget_lane_f16(float16x4_t v1) {
   float16_t a = vget_lane_f16(v1, 3);
   return (int)a;
 // CHECK: dup {{h[0-9]+}}, {{v[0-9]+}}.h[3]
 }
 
-// CHECK: test_vgetq_lane_f16
+// CHECK-LABEL: test_vgetq_lane_f16
 int test_vgetq_lane_f16(float16x8_t v1) {
   float16_t a = vgetq_lane_f16(v1, 7);
   return (int)a;
 // CHECK: dup {{h[0-9]+}}, {{v[0-9]+}}.h[7]
 }
 
-// CHECK: test_vget_lane_f16_2
-float test_vget_lane_f16_2(float16x4_t v1) {
+// CHECK-LABEL: test2_vget_lane_f16
+float test2_vget_lane_f16(float16x4_t v1) {
   float16_t a = vget_lane_f16(v1, 3);
   return (float)a;
 // CHECK: dup {{h[0-9]+}}, {{v[0-9]+}}.h[3]
 }
 
-// CHECK: test_vgetq_lane_f16_2
-float test_vgetq_lane_f16_2(float16x8_t v1) {
+// CHECK-LABEL: test2_vgetq_lane_f16
+float test2_vgetq_lane_f16(float16x8_t v1) {
   float16_t a = vgetq_lane_f16(v1, 7);
   return (float)a;
 // CHECK: dup {{h[0-9]+}}, {{v[0-9]+}}.h[7]
 }
 
-// CHECK: test_vset_lane_f16
+// CHECK-LABEL: test_vset_lane_f16
 float16x4_t test_vset_lane_f16(float16x4_t v1) {
-  float16_t a;
+  float16_t a = 0.0;
   return vset_lane_f16(a, v1, 3);
-// CHECK: fmov  {{s[0-9]+}}, wzr
-// CHECK-NEXT: ins {{v[0-9]+}}.h[3],  {{v[0-9]+}}.h[0]
+// CHECK: ins {{v[0-9]+}}.h[3], wzr
 }
 
-// CHECK: test_vsetq_lane_f16
+// CHECK-LABEL: test_vsetq_lane_f16
 float16x8_t test_vsetq_lane_f16(float16x8_t v1) {
-  float16_t a;
+  float16_t a = 0.0;
   return vsetq_lane_f16(a, v1, 7);
-// CHECK: fmov  {{s[0-9]+}}, wzr
-// CHECK-NEXT: ins {{v[0-9]+}}.h[7],  {{v[0-9]+}}.h[0]
+// CHECK: ins {{v[0-9]+}}.h[7], wzr
 }
 
-// CHECK: test_vset_lane_f16_2
-float16x4_t test_vset_lane_f16_2(float16x4_t v1) {
+// CHECK-LABEL: test2_vset_lane_f16
+float16x4_t test2_vset_lane_f16(float16x4_t v1) {
+  float16_t a = 1.0;
+  return vset_lane_f16(a, v1, 3);
+// CHECK:  movz    {{w[0-9]+}}, #15360
+// CHECK-NEXT: ins {{v[0-9]+}}.h[3], {{w[0-9]+}}
+}
+
+// CHECK-LABEL: test2_vsetq_lane_f16
+float16x8_t test2_vsetq_lane_f16(float16x8_t v1) {
+  float16_t a = 1.0;
+  return vsetq_lane_f16(a, v1, 7);
+// CHECK:  movz    {{w[0-9]+}}, #15360
+// CHECK-NEXT: ins {{v[0-9]+}}.h[7],  {{w[0-9]+}}
+}
+
+// CHECK-LABEL: test_vget_vset_lane_f16
+float16x4_t test_vget_vset_lane_f16(float16x4_t v1) {
   float16_t a = vget_lane_f16(v1, 0);
   return vset_lane_f16(a, v1, 3);
 // CHECK: ins {{v[0-9]+}}.h[3],  {{v[0-9]+}}.h[0]
 }
 
-// CHECK: test_vsetq_lane_f16_2
-float16x8_t test_vsetq_lane_f16_2(float16x8_t v1) {
+// CHECK-LABEL: test_vgetq_vsetq_lane_f16
+float16x8_t test_vgetq_vsetq_lane_f16(float16x8_t v1) {
   float16_t a = vgetq_lane_f16(v1, 0);
   return vsetq_lane_f16(a, v1, 7);
 // CHECK: ins {{v[0-9]+}}.h[7],  {{v[0-9]+}}.h[0]
 }
 
+// CHECK-LABEL: test4_vset_lane_f16
+float16x4_t test4_vset_lane_f16(float16x4_t v1, float b, float c) {
+  float16_t a = (float16_t)b;
+  return vset_lane_f16(a, v1, 3);
+// CHECK: fmov {{w[0-9]+}},  {{s[0-9]+}}
+// CHECK: ins {{v[0-9]+}}.h[3],  {{w[0-9]+}}
+}
 
-// CHECK: test_vsetq_lane_f16_3
-float16x8_t test_vsetq_lane_f16_3(float16x8_t v1, float b, float c) {
+// CHECK-LABEL: test4_vsetq_lane_f16
+float16x8_t test4_vsetq_lane_f16(float16x8_t v1, float b, float c) {
   float16_t a = (float16_t)b;
   return vsetq_lane_f16(a, v1, 7);
+// CHECK: fmov {{w[0-9]+}},  {{s[0-9]+}}
 // CHECK: ins {{v[0-9]+}}.h[7],  {{w[0-9]+}}
 }
 
-// CHECK: test_vsetq_lane_f16_4
-float16x8_t test_vsetq_lane_f16_4(float16x8_t v1, float b, float c) {
+// CHECK-LABEL: test5_vset_lane_f16
+float16x4_t test5_vset_lane_f16(float16x4_t v1, float b, float c) {
+  float16_t a = (float16_t)b;
+  return vset_lane_f16(a, v1, 3);
+// CHECK: fmov {{w[0-9]+}},  {{s[0-9]+}}
+// CHECK: ins {{v[0-9]+}}.h[3],  {{w[0-9]+}}
+}
+
+// CHECK-LABEL: test5_vsetq_lane_f16
+float16x8_t test5_vsetq_lane_f16(float16x8_t v1, float b, float c) {
   float16_t a = (float16_t)b + 1.0;
   return vsetq_lane_f16(a, v1, 7);
+// CHECK: fmov {{w[0-9]+}},  {{s[0-9]+}}
 // CHECK: ins {{v[0-9]+}}.h[7],  {{w[0-9]+}}
+}
+
+// CHECK-LABEL: test_vset_vget_lane_f16
+int test_vset_vget_lane_f16(float16x4_t a) {
+  float16x4_t b;
+  b = vset_lane_f16(3.5, a, 3);
+  float16_t c = vget_lane_f16(b, 3);
+  return (int)c;
+// CHECK: movz x{{[0-9]+}}, #3
+}
+
+// CHECK-LABEL: test_vsetq_vgetq_lane_f16
+int test_vsetq_vgetq_lane_f16(float16x8_t a) {
+  float16x8_t b;
+  b = vsetq_lane_f16(3.5, a, 5);
+  float16_t c = vgetq_lane_f16(b, 5);
+  return (int)c;
+// CHECK: movz x{{[0-9]+}}, #3
 }
 
 // CHECK-LABEL: test_vdup_laneq_p64:

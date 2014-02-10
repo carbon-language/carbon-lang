@@ -2272,28 +2272,39 @@ static std::string GenOpString(const std::string &name, OpKind op,
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
     s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
-    if (quad) {
-     s += "int16x8_t __a2 = vreinterpretq_s16_f16(__a1);\\\n";
-     s += "  vgetq_lane_s16(__a2, __b);";
-    } else {
-     s += "int16x4_t __a2 = vreinterpret_s16_f16(__a1);\\\n";
-     s += "  vget_lane_s16(__a2, __b);";
-    }
+
+    std::string intType = quad ? "int16x8_t" : "int16x4_t";
+    std::string intName = quad ? "vgetq" : "vget";
+
+    // reinterpret float16 vector as int16 vector
+    s += intType + " __a2 = *(" + intType + " *)(&__a1);\\\n";
+
+    s += "  int16_t __a3 = " + intName + "_lane_s16(__a2, __b);\\\n";
+
+    // reinterpret int16 vector as float16 vector
+    s += "  float16_t __a4 = *(float16_t *)(&__a3);\\\n";
+    s += "  __a4;";
     break;
   }
   case OpScalarSetLane:{
     std::string typeCode = "";
     InstructionTypeCode(typestr, ClassS, quad, typeCode);
-    s += TypeString(proto[1], typestr) + " __a1 = __a; \\\n  ";
-    if (quad) {
-     s += "  int16x8_t __b2 = vreinterpretq_s16_f16(b);\\\n";
-     s += "  int16x8_t __b3 = vsetq_lane_s16(__a1, __b2, __c);\\\n";
-     s += "  vreinterpretq_f16_s16(__b3);";
-    } else {
-     s += "  int16x4_t __b2 = vreinterpret_s16_f16(b);\\\n";
-     s += "  int16x4_t __b3 = vset_lane_s16(__a1, __b2, __c);\\\n";
-     s += "  vreinterpret_f16_s16(__b3);";
-    }
+    s += TypeString(proto[1], typestr) + " __a1 = __a;\\\n  ";
+
+    std::string origType = quad ? "float16x8_t" : "float16x4_t";
+    std::string intType = quad ? "int16x8_t" : "int16x4_t";
+    std::string intName = quad ? "vsetq" : "vset";
+
+    // reinterpret float16_t as int16_t
+    s += "int16_t __a2 = *(int16_t *)(&__a1);\\\n";
+    // reinterpret float16 vector as int16 vector
+    s += "  " + intType + " __b2 = *(" + intType + " *)(&__b);\\\n";
+
+    s += "  " + intType + " __b3 = " + intName + "_lane_s16(__a2, __b2, __c);\\\n";
+
+    // reinterpret int16 vector as float16 vector
+    s += "  " + origType + " __b4 = *(" + origType + " *)(&__b3);\\\n";
+    s += "__b4;";
     break;
   }
 
