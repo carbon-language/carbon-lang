@@ -232,6 +232,11 @@ bool AMDGPUTargetLowering::isFNegFree(EVT VT) const {
   return VT == MVT::f32;
 }
 
+bool AMDGPUTargetLowering::isTruncateFree(EVT, EVT Dest) const {
+  // Truncate is just accessing a subregister.
+  return (Dest.getSizeInBits() % 32 == 0);
+}
+
 //===---------------------------------------------------------------------===//
 // TargetLowering Callbacks
 //===---------------------------------------------------------------------===//

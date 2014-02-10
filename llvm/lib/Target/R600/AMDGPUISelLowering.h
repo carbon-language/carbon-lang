@@ -81,6 +81,7 @@ public:
 
   virtual bool isFAbsFree(EVT VT) const;
   virtual bool isFNegFree(EVT VT) const;
+  virtual bool isTruncateFree(EVT Src, EVT Dest) const LLVM_OVERRIDE;
   virtual MVT getVectorIdxTy() const;
   virtual bool isLoadBitCastBeneficial(EVT, EVT) const LLVM_OVERRIDE;
   virtual SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
