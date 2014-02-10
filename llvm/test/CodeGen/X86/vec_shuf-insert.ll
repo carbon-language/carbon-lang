@@ -3,6 +3,7 @@
 ; These tests check that an insert_subvector which replaces one of the halves
 ; of a concat_vectors is optimized into a single vinsertf128.
 
+
 declare <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float>, <4 x float>, i8)
 
 define <8 x float> @lower_half(<4 x float> %v1, <4 x float> %v2, <4 x float> %v3) {
