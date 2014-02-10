@@ -101,23 +101,45 @@ inline const_pred_iterator pred_end(const BasicBlock *BB) {
 //===----------------------------------------------------------------------===//
 
 template <class Term_, class BB_>           // Successor Iterator
-class SuccIterator : public std::iterator<std::bidirectional_iterator_tag,
-                                          BB_, ptrdiff_t, BB_*, BB_*> {
+class SuccIterator : public std::iterator<std::random_access_iterator_tag, BB_,
+                                          int, BB_ *, BB_ *> {
+  typedef std::iterator<std::random_access_iterator_tag, BB_, int, BB_ *, BB_ *>
+  super;
+
+public:
+  typedef typename super::pointer pointer;
+  typedef typename super::reference reference;
+
+private:
   const Term_ Term;
   unsigned idx;
-  typedef std::iterator<std::bidirectional_iterator_tag, BB_, ptrdiff_t, BB_*,
-                                                                    BB_*> super;
   typedef SuccIterator<Term_, BB_> Self;
 
   inline bool index_is_valid(int idx) {
     return idx >= 0 && (unsigned) idx < Term->getNumSuccessors();
   }
 
-public:
-  typedef typename super::pointer pointer;
-  typedef typename super::reference reference;
-  // TODO: This can be random access iterator, only operator[] missing.
+  /// \brief Proxy object to allow write access in operator[]
+  class SuccessorProxy {
+    Self it;
 
+  public:
+    explicit SuccessorProxy(const Self &it) : it(it) {}
+
+    SuccessorProxy &operator=(SuccessorProxy r) {
+      *this = reference(r);
+      return *this;
+    }
+
+    SuccessorProxy &operator=(reference r) {
+      it.Term->setSuccessor(it.idx, r);
+      return *this;
+    }
+
+    operator reference() const { return *it; }
+  };
+
+public:
   explicit inline SuccIterator(Term_ T) : Term(T), idx(0) {// begin iterator
   }
   inline SuccIterator(Term_ T, bool)                       // end iterator
@@ -206,15 +228,11 @@ public:
     return distance;
   }
 
-  // This works for read access, however write access is difficult as changes
-  // to Term are only possible with Term->setSuccessor(idx). Pointers that can
-  // be modified are not available.
-  //
-  // inline pointer operator[](int offset) {
-  //  Self tmp = *this;
-  //  tmp += offset;
-  //  return tmp.operator*();
-  // }
+  inline SuccessorProxy operator[](int offset) {
+   Self tmp = *this;
+   tmp += offset;
+   return SuccessorProxy(tmp);
+  }
 
   /// Get the source BB of this iterator.
   inline BB_ *getSource() {

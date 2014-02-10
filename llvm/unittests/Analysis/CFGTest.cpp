@@ -115,7 +115,7 @@ protected:
     PM.add(P);
     PM.run(*M);
   }
-private:
+
   OwningPtr<Module> M;
   Instruction *A, *B;
 };
@@ -352,27 +352,40 @@ TEST_F(IsPotentiallyReachableTest, OneLoopAfterTheOtherInsideAThirdLoop) {
   ExpectPath(true);
 }
 
+static const char *BranchInsideLoopIR =
+    "declare i1 @switch()\n"
+    "\n"
+    "define void @test() {\n"
+    "entry:\n"
+    "  br label %loop\n"
+    "loop:\n"
+    "  %x = call i1 @switch()\n"
+    "  br i1 %x, label %nextloopblock, label %exit\n"
+    "nextloopblock:\n"
+    "  %y = call i1 @switch()\n"
+    "  br i1 %y, label %left, label %right\n"
+    "left:\n"
+    "  %A = bitcast i8 undef to i8\n"
+    "  br label %loop\n"
+    "right:\n"
+    "  %B = bitcast i8 undef to i8\n"
+    "  br label %loop\n"
+    "exit:\n"
+    "  ret void\n"
+    "}";
+
 TEST_F(IsPotentiallyReachableTest, BranchInsideLoop) {
-  ParseAssembly(
-      "declare i1 @switch()\n"
-      "\n"
-      "define void @test() {\n"
-      "entry:\n"
-      "  br label %loop\n"
-      "loop:\n"
-      "  %x = call i1 @switch()\n"
-      "  br i1 %x, label %nextloopblock, label %exit\n"
-      "nextloopblock:\n"
-      "  %y = call i1 @switch()\n"
-      "  br i1 %y, label %left, label %right\n"
-      "left:\n"
-      "  %A = bitcast i8 undef to i8\n"
-      "  br label %loop\n"
-      "right:\n"
-      "  %B = bitcast i8 undef to i8\n"
-      "  br label %loop\n"
-      "exit:\n"
-      "  ret void\n"
-      "}");
+  ParseAssembly(BranchInsideLoopIR);
+  ExpectPath(true);
+}
+
+TEST_F(IsPotentiallyReachableTest, ModifyTest) {
+  ParseAssembly(BranchInsideLoopIR);
+
+  succ_iterator S = succ_begin(++M->getFunction("test")->begin());
+  BasicBlock *OldBB = S[0];
+  S[0] = S[1];
+  ExpectPath(false);
+  S[0] = OldBB;
   ExpectPath(true);
 }

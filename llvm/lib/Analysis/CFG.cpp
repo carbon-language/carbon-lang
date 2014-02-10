@@ -168,8 +168,7 @@ static bool isPotentiallyReachableInner(SmallVectorImpl<BasicBlock *> &Worklist,
       // ignoring any other blocks inside the loop body.
       Outer->getExitBlocks(Worklist);
     } else {
-      for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I)
-        Worklist.push_back(*I);
+      Worklist.append(succ_begin(BB), succ_end(BB));
     }
   } while (!Worklist.empty());
 
@@ -222,8 +221,7 @@ bool llvm::isPotentiallyReachable(const Instruction *A, const Instruction *B,
       return false;
 
     // Otherwise, continue doing the normal per-BB CFG walk.
-    for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I)
-      Worklist.push_back(*I);
+    Worklist.append(succ_begin(BB), succ_end(BB));
 
     if (Worklist.empty()) {
       // We've proven that there's no path!

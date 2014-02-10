@@ -437,12 +437,7 @@ struct NoTTI LLVM_FINAL : ImmutablePass, TargetTransformInfo {
         return TopTTI->getCallCost(cast<FunctionType>(FTy), CS.arg_size());
       }
 
-      SmallVector<const Value *, 8> Arguments;
-      for (ImmutableCallSite::arg_iterator AI = CS.arg_begin(),
-                                           AE = CS.arg_end();
-           AI != AE; ++AI)
-        Arguments.push_back(*AI);
-
+      SmallVector<const Value *, 8> Arguments(CS.arg_begin(), CS.arg_end());
       return TopTTI->getCallCost(F, Arguments);
     }
 
