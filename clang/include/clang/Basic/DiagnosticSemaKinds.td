@@ -469,22 +469,28 @@ def err_opencl_half_return : Error<
   "declaring function return value of type %0 is not allowed; did you forget * ?">;
 def warn_enum_value_overflow : Warning<"overflow in enumeration value">;
 def warn_pragma_options_align_reset_failed : Warning<
-  "#pragma options align=reset failed: %0">;
+  "#pragma options align=reset failed: %0">,
+  InGroup<IgnoredPragmas>;
 def err_pragma_options_align_mac68k_target_unsupported : Error<
   "mac68k alignment pragma is not supported on this target">;
 def warn_pragma_pack_invalid_alignment : Warning<
-  "expected #pragma pack parameter to be '1', '2', '4', '8', or '16'">;
+  "expected #pragma pack parameter to be '1', '2', '4', '8', or '16'">,
+  InGroup<IgnoredPragmas>;
 // Follow the MSVC implementation.
 def warn_pragma_pack_show : Warning<"value of #pragma pack(show) == %0">;
 def warn_pragma_pack_pop_identifer_and_alignment : Warning<
   "specifying both a name and alignment to 'pop' is undefined">;
-def warn_pragma_pack_pop_failed : Warning<"#pragma pack(pop, ...) failed: %0">;
-def warn_pragma_ms_struct_failed : Warning<"#pramga ms_struct can not be used with dynamic classes or structures">, InGroup<IgnoredAttributes>;
+def warn_pragma_pack_pop_failed : Warning<"#pragma pack(pop, ...) failed: %0">,
+  InGroup<IgnoredPragmas>;
+def warn_pragma_ms_struct_failed : Warning<"#pramga ms_struct can not be used with dynamic classes or structures">,
+  InGroup<IgnoredPragmas>;
 
 def warn_pragma_unused_undeclared_var : Warning<
-  "undeclared variable %0 used as an argument for '#pragma unused'">;
+  "undeclared variable %0 used as an argument for '#pragma unused'">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_unused_expected_var_arg : Warning<
-  "only variables can be arguments to '#pragma unused'">;
+  "only variables can be arguments to '#pragma unused'">,
+  InGroup<IgnoredPragmas>;
 def err_pragma_push_visibility_mismatch : Error<
   "#pragma visibility push with no matching #pragma visibility pop">;
 def note_surrounding_namespace_ends_here : Note<

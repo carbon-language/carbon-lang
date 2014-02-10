@@ -530,7 +530,7 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP,
     }
 
     // Illegal token!
-    PP.Diag(Tok.getLocation(), diag::warn_pragma_unused_expected_punc);
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_punc) << "unused";
     return;
   }
 

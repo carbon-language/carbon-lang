@@ -367,7 +367,7 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
     } else if (Tok.isNot(tok::r_paren) &&
                Tok.isNot(tok::annot_pragma_openmp_end)) {
       Diag(Tok, diag::err_omp_expected_punc)
-        << 1 << getOpenMPClauseName(Kind);
+        << getOpenMPClauseName(Kind);
     }
   }
 
