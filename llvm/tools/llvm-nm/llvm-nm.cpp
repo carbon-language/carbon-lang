@@ -365,7 +365,7 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
 
   uint32_t Characteristics = 0;
   if (Symb->SectionNumber > 0) {
-    section_iterator SecI = Obj.end_sections();
+    section_iterator SecI = Obj.section_end();
     if (error(I->getSection(SecI)))
       return '?';
     const coff_section *Section = Obj.getCOFFSection(SecI);
@@ -415,7 +415,7 @@ static char getSymbolNMTypeChar(MachOObjectFile &Obj, symbol_iterator I) {
   case MachO::N_ABS:
     return 's';
   case MachO::N_SECT: {
-    section_iterator Sec = Obj.end_sections();
+    section_iterator Sec = Obj.section_end();
     Obj.getSymbolSection(Symb, Sec);
     DataRefImpl Ref = Sec->getRawDataRefImpl();
     StringRef SectionName;
@@ -493,29 +493,29 @@ static char getNMTypeChar(ObjectFile *Obj, symbol_iterator I) {
 static void getDynamicSymbolIterators(ObjectFile *Obj, symbol_iterator &Begin,
                                       symbol_iterator &End) {
   if (ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(Obj)) {
-    Begin = ELF->begin_dynamic_symbols();
-    End = ELF->end_dynamic_symbols();
+    Begin = ELF->dynamic_symbol_begin();
+    End = ELF->dynamic_symbol_end();
     return;
   }
   if (ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(Obj)) {
-    Begin = ELF->begin_dynamic_symbols();
-    End = ELF->end_dynamic_symbols();
+    Begin = ELF->dynamic_symbol_begin();
+    End = ELF->dynamic_symbol_end();
     return;
   }
   if (ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(Obj)) {
-    Begin = ELF->begin_dynamic_symbols();
-    End = ELF->end_dynamic_symbols();
+    Begin = ELF->dynamic_symbol_begin();
+    End = ELF->dynamic_symbol_end();
     return;
   }
   ELF64BEObjectFile *ELF = cast<ELF64BEObjectFile>(Obj);
-  Begin = ELF->begin_dynamic_symbols();
-  End = ELF->end_dynamic_symbols();
+  Begin = ELF->dynamic_symbol_begin();
+  End = ELF->dynamic_symbol_end();
   return;
 }
 
 static void dumpSymbolNamesFromObject(ObjectFile *Obj) {
-  symbol_iterator IBegin = Obj->begin_symbols();
-  symbol_iterator IEnd = Obj->end_symbols();
+  symbol_iterator IBegin = Obj->symbol_begin();
+  symbol_iterator IEnd = Obj->symbol_end();
   if (DynamicSyms) {
     if (!Obj->isELF()) {
       error("File format has no dynamic symbol table", Obj->getFileName());

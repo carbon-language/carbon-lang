@@ -163,7 +163,7 @@ static error_code resolveSectionAndAddress(const COFFObjectFile *Obj,
                                            uint64_t &ResolvedAddr) {
   if (error_code EC = Sym.getAddress(ResolvedAddr))
     return EC;
-  section_iterator iter(Obj->begin_sections());
+  section_iterator iter(Obj->section_begin());
   if (error_code EC = Sym.getSection(iter))
     return EC;
   ResolvedSection = Obj->getCOFFSection(iter);
@@ -320,7 +320,7 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
 
   const coff_section *Pdata = 0;
 
-  for (section_iterator SI = Obj->begin_sections(), SE = Obj->end_sections();
+  for (section_iterator SI = Obj->section_begin(), SE = Obj->section_end();
        SI != SE; ++SI) {
     StringRef Name;
     if (error(SI->getName(Name))) continue;
@@ -329,8 +329,8 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
 
     Pdata = Obj->getCOFFSection(SI);
     std::vector<RelocationRef> Rels;
-    for (relocation_iterator RI = SI->begin_relocations(),
-                             RE = SI->end_relocations();
+    for (relocation_iterator RI = SI->relocation_begin(),
+                             RE = SI->relocation_end();
          RI != RE; ++RI)
       Rels.push_back(*RI);
 

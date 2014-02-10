@@ -52,7 +52,7 @@ static void patchFunctionNameInDILineInfo(const std::string &NewFunctionName,
 
 ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
     : Module(Obj), DebugInfoContext(DICtx) {
-  for (symbol_iterator si = Module->begin_symbols(), se = Module->end_symbols();
+  for (symbol_iterator si = Module->symbol_begin(), se = Module->symbol_end();
        si != se; ++si) {
     SymbolRef::Type SymbolType;
     if (error(si->getType(SymbolType)))
@@ -265,7 +265,7 @@ static bool getGNUDebuglinkContents(const Binary *Bin, std::string &DebugName,
   const ObjectFile *Obj = dyn_cast<ObjectFile>(Bin);
   if (!Obj)
     return false;
-  for (section_iterator I = Obj->begin_sections(), E = Obj->end_sections();
+  for (section_iterator I = Obj->section_begin(), E = Obj->section_end();
        I != E; ++I) {
     StringRef Name;
     I->getName(Name);

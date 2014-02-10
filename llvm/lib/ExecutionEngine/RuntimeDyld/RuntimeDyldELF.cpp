@@ -632,8 +632,8 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
     if (RelSectionName != ".opd")
       continue;
 
-    for (relocation_iterator i = si->begin_relocations(),
-         e = si->end_relocations(); i != e;) {
+    for (relocation_iterator i = si->relocation_begin(),
+         e = si->relocation_end(); i != e;) {
       // The R_PPC64_ADDR64 relocation indicates the first field
       // of a .opd entry
       uint64_t TypeFunc;

@@ -154,13 +154,13 @@ getSectionsAndSymbols(const MachO::mach_header Header,
                       std::vector<SymbolRef> &Symbols,
                       SmallVectorImpl<uint64_t> &FoundFns,
                       uint64_t &BaseSegmentAddress) {
-  for (symbol_iterator SI = MachOObj->begin_symbols(),
-                       SE = MachOObj->end_symbols();
+  for (symbol_iterator SI = MachOObj->symbol_begin(),
+                       SE = MachOObj->symbol_end();
        SI != SE; ++SI)
     Symbols.push_back(*SI);
 
-  for (section_iterator SI = MachOObj->begin_sections(),
-                        SE = MachOObj->end_sections();
+  for (section_iterator SI = MachOObj->section_begin(),
+                        SE = MachOObj->section_end();
        SI != SE; ++SI) {
     SectionRef SR = *SI;
     StringRef SectName;
@@ -329,8 +329,8 @@ static void DisassembleInputMachO2(StringRef Filename,
 
     // Parse relocations.
     std::vector<std::pair<uint64_t, SymbolRef> > Relocs;
-    for (relocation_iterator RI = Sections[SectIdx].begin_relocations(),
-                             RE = Sections[SectIdx].end_relocations();
+    for (relocation_iterator RI = Sections[SectIdx].relocation_begin(),
+                             RE = Sections[SectIdx].relocation_end();
          RI != RE; ++RI) {
       uint64_t RelocOffset, SectionAddress;
       RI->getOffset(RelocOffset);

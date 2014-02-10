@@ -70,7 +70,7 @@ void LLVMDisposeObjectFile(LLVMObjectFileRef ObjectFile) {
 
 // ObjectFile Section iterators
 LLVMSectionIteratorRef LLVMGetSections(LLVMObjectFileRef ObjectFile) {
-  section_iterator SI = unwrap(ObjectFile)->begin_sections();
+  section_iterator SI = unwrap(ObjectFile)->section_begin();
   return wrap(new section_iterator(SI));
 }
 
@@ -80,7 +80,7 @@ void LLVMDisposeSectionIterator(LLVMSectionIteratorRef SI) {
 
 LLVMBool LLVMIsSectionIteratorAtEnd(LLVMObjectFileRef ObjectFile,
                                 LLVMSectionIteratorRef SI) {
-  return (*unwrap(SI) == unwrap(ObjectFile)->end_sections()) ? 1 : 0;
+  return (*unwrap(SI) == unwrap(ObjectFile)->section_end()) ? 1 : 0;
 }
 
 void LLVMMoveToNextSection(LLVMSectionIteratorRef SI) {
@@ -95,7 +95,7 @@ void LLVMMoveToContainingSection(LLVMSectionIteratorRef Sect,
 
 // ObjectFile Symbol iterators
 LLVMSymbolIteratorRef LLVMGetSymbols(LLVMObjectFileRef ObjectFile) {
-  symbol_iterator SI = unwrap(ObjectFile)->begin_symbols();
+  symbol_iterator SI = unwrap(ObjectFile)->symbol_begin();
   return wrap(new symbol_iterator(SI));
 }
 
@@ -105,7 +105,7 @@ void LLVMDisposeSymbolIterator(LLVMSymbolIteratorRef SI) {
 
 LLVMBool LLVMIsSymbolIteratorAtEnd(LLVMObjectFileRef ObjectFile,
                                 LLVMSymbolIteratorRef SI) {
-  return (*unwrap(SI) == unwrap(ObjectFile)->end_symbols()) ? 1 : 0;
+  return (*unwrap(SI) == unwrap(ObjectFile)->symbol_end()) ? 1 : 0;
 }
 
 void LLVMMoveToNextSymbol(LLVMSymbolIteratorRef SI) {
@@ -151,7 +151,7 @@ LLVMBool LLVMGetSectionContainsSymbol(LLVMSectionIteratorRef SI,
 
 // Section Relocation iterators
 LLVMRelocationIteratorRef LLVMGetRelocations(LLVMSectionIteratorRef Section) {
-  relocation_iterator SI = (*unwrap(Section))->begin_relocations();
+  relocation_iterator SI = (*unwrap(Section))->relocation_begin();
   return wrap(new relocation_iterator(SI));
 }
 
@@ -161,7 +161,7 @@ void LLVMDisposeRelocationIterator(LLVMRelocationIteratorRef SI) {
 
 LLVMBool LLVMIsRelocationIteratorAtEnd(LLVMSectionIteratorRef Section,
                                        LLVMRelocationIteratorRef SI) {
-  return (*unwrap(SI) == (*unwrap(Section))->end_relocations()) ? 1 : 0;
+  return (*unwrap(SI) == (*unwrap(Section))->relocation_end()) ? 1 : 0;
 }
 
 void LLVMMoveToNextRelocation(LLVMRelocationIteratorRef SI) {

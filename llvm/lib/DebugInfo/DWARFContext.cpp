@@ -603,8 +603,8 @@ static bool consumeCompressedDebugSectionHeader(StringRef &data,
 DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
   IsLittleEndian(Obj->isLittleEndian()),
   AddressSize(Obj->getBytesInAddress()) {
-  for (object::section_iterator i = Obj->begin_sections(),
-                                e = Obj->end_sections();
+  for (object::section_iterator i = Obj->section_begin(),
+                                e = Obj->section_end();
        i != e; ++i) {
     StringRef name;
     i->getName(name);
@@ -665,7 +665,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
     }
 
     section_iterator RelocatedSection = i->getRelocatedSection();
-    if (RelocatedSection == Obj->end_sections())
+    if (RelocatedSection == Obj->section_end())
       continue;
 
     StringRef RelSecName;
@@ -692,11 +692,11 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
         continue;
     }
 
-    if (i->begin_relocations() != i->end_relocations()) {
+    if (i->relocation_begin() != i->relocation_end()) {
       uint64_t SectionSize;
       RelocatedSection->getSize(SectionSize);
-      for (object::relocation_iterator reloc_i = i->begin_relocations(),
-                                       reloc_e = i->end_relocations();
+      for (object::relocation_iterator reloc_i = i->relocation_begin(),
+                                       reloc_e = i->relocation_end();
            reloc_i != reloc_e; ++reloc_i) {
         uint64_t Address;
         reloc_i->getOffset(Address);

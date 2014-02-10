@@ -111,7 +111,7 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
     std::size_t max_name_len = strlen("section");
     std::size_t max_size_len = strlen("size");
     std::size_t max_addr_len = strlen("addr");
-    for (section_iterator i = o->begin_sections(), e = o->end_sections();
+    for (section_iterator i = o->section_begin(), e = o->section_end();
          i != e; ++i) {
       uint64_t size = 0;
       if (error(i->getSize(size)))
@@ -150,7 +150,7 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
         << "%#" << max_addr_len << radix_fmt << "\n";
 
     // Print each section.
-    for (section_iterator i = o->begin_sections(), e = o->end_sections();
+    for (section_iterator i = o->section_begin(), e = o->section_end();
          i != e; ++i) {
       StringRef name;
       uint64_t size = 0;
@@ -181,7 +181,7 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
     uint64_t total_bss = 0;
 
     // Make one pass over the section table to calculate sizes.
-    for (section_iterator i = o->begin_sections(), e = o->end_sections();
+    for (section_iterator i = o->section_begin(), e = o->section_end();
          i != e; ++i) {
       uint64_t size = 0;
       bool isText = false;

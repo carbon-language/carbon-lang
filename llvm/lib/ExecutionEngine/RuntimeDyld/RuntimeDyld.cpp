@@ -177,8 +177,8 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
     StubMap Stubs;
     section_iterator RelocatedSection = si->getRelocatedSection();
 
-    for (relocation_iterator i = si->begin_relocations(),
-                             e = si->end_relocations();
+    for (relocation_iterator i = si->relocation_begin(),
+                             e = si->relocation_end();
          i != e; ++i) {
       // If it's the first relocation in this section, find its SectionID
       if (isFirstRelocation) {
@@ -251,15 +251,15 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
   // necessary section allocation size in loadObject by walking all the sections
   // once.
   if (StubSize > 0) {
-    for (section_iterator SI = ObjFile->begin_sections(),
-                          SE = ObjFile->end_sections();
+    for (section_iterator SI = ObjFile->section_begin(),
+                          SE = ObjFile->section_end();
          SI != SE; ++SI) {
       section_iterator RelSecI = SI->getRelocatedSection();
       if (!(RelSecI == Section))
         continue;
 
-      for (relocation_iterator I = SI->begin_relocations(),
-                               E = SI->end_relocations();
+      for (relocation_iterator I = SI->relocation_begin(),
+                               E = SI->relocation_end();
            I != E; ++I) {
         StubBufSize += StubSize;
       }

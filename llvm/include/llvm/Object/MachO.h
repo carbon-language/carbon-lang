@@ -126,14 +126,14 @@ public:
   // TODO: Would be useful to have an iterator based version
   // of the load command interface too.
 
-  symbol_iterator begin_symbols() const LLVM_OVERRIDE;
-  symbol_iterator end_symbols() const LLVM_OVERRIDE;
+  symbol_iterator symbol_begin() const LLVM_OVERRIDE;
+  symbol_iterator symbol_end() const LLVM_OVERRIDE;
 
-  section_iterator begin_sections() const LLVM_OVERRIDE;
-  section_iterator end_sections() const LLVM_OVERRIDE;
+  section_iterator section_begin() const LLVM_OVERRIDE;
+  section_iterator section_end() const LLVM_OVERRIDE;
 
-  library_iterator begin_libraries_needed() const LLVM_OVERRIDE;
-  library_iterator end_libraries_needed() const LLVM_OVERRIDE;
+  library_iterator needed_library_begin() const LLVM_OVERRIDE;
+  library_iterator needed_library_end() const LLVM_OVERRIDE;
 
   uint8_t getBytesInAddress() const LLVM_OVERRIDE;
 

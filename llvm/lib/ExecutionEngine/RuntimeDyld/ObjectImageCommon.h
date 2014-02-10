@@ -52,14 +52,14 @@ public:
   virtual ~ObjectImageCommon() { delete ObjFile; }
 
   virtual object::symbol_iterator begin_symbols() const
-              { return ObjFile->begin_symbols(); }
+              { return ObjFile->symbol_begin(); }
   virtual object::symbol_iterator end_symbols() const
-              { return ObjFile->end_symbols(); }
+              { return ObjFile->symbol_end(); }
 
   virtual object::section_iterator begin_sections() const
-              { return ObjFile->begin_sections(); }
+              { return ObjFile->section_begin(); }
   virtual object::section_iterator end_sections() const
-              { return ObjFile->end_sections(); }
+              { return ObjFile->section_end(); }
 
   virtual /* Triple::ArchType */ unsigned getArch() const
               { return ObjFile->getArch(); }

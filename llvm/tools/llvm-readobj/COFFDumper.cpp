@@ -185,7 +185,7 @@ static error_code resolveSectionAndAddress(const COFFObjectFile *Obj,
   if (error_code EC = Sym.getAddress(ResolvedAddr))
     return EC;
 
-  section_iterator iter(Obj->begin_sections());
+  section_iterator iter(Obj->section_begin());
   if (error_code EC = Sym.getSection(iter))
     return EC;
 
@@ -541,13 +541,13 @@ error_code COFFDumper::getSection(
 }
 
 void COFFDumper::cacheRelocations() {
-  for (section_iterator SecI = Obj->begin_sections(),
-                        SecE = Obj->end_sections();
+  for (section_iterator SecI = Obj->section_begin(),
+                        SecE = Obj->section_end();
        SecI != SecE; ++SecI) {
     const coff_section *Section = Obj->getCOFFSection(SecI);
 
-    for (relocation_iterator RelI = SecI->begin_relocations(),
-                             RelE = SecI->end_relocations();
+    for (relocation_iterator RelI = SecI->relocation_begin(),
+                             RelE = SecI->relocation_end();
          RelI != RelE; ++RelI)
       RelocMap[Section].push_back(*RelI);
 
@@ -818,8 +818,8 @@ void COFFDumper::printCodeViewLineTables(section_iterator SecI) {
 void COFFDumper::printSections() {
   ListScope SectionsD(W, "Sections");
   int SectionNumber = 0;
-  for (section_iterator SecI = Obj->begin_sections(),
-                        SecE = Obj->end_sections();
+  for (section_iterator SecI = Obj->section_begin(),
+                        SecE = Obj->section_end();
        SecI != SecE; ++SecI) {
     ++SectionNumber;
     const coff_section *Section = Obj->getCOFFSection(SecI);
@@ -845,16 +845,16 @@ void COFFDumper::printSections() {
 
     if (opts::SectionRelocations) {
       ListScope D(W, "Relocations");
-      for (relocation_iterator RelI = SecI->begin_relocations(),
-                               RelE = SecI->end_relocations();
+      for (relocation_iterator RelI = SecI->relocation_begin(),
+                               RelE = SecI->relocation_end();
            RelI != RelE; ++RelI)
         printRelocation(SecI, RelI);
     }
 
     if (opts::SectionSymbols) {
       ListScope D(W, "Symbols");
-      for (symbol_iterator SymI = Obj->begin_symbols(),
-                           SymE = Obj->end_symbols();
+      for (symbol_iterator SymI = Obj->symbol_begin(),
+                           SymE = Obj->symbol_end();
            SymI != SymE; ++SymI) {
         bool Contained = false;
         if (SecI->containsSymbol(*SymI, Contained) || !Contained)
@@ -880,8 +880,8 @@ void COFFDumper::printRelocations() {
   ListScope D(W, "Relocations");
 
   int SectionNumber = 0;
-  for (section_iterator SecI = Obj->begin_sections(),
-                        SecE = Obj->end_sections();
+  for (section_iterator SecI = Obj->section_begin(),
+                        SecE = Obj->section_end();
                         SecI != SecE; ++SecI) {
     ++SectionNumber;
     StringRef Name;
@@ -889,8 +889,8 @@ void COFFDumper::printRelocations() {
       continue;
 
     bool PrintedGroup = false;
-    for (relocation_iterator RelI = SecI->begin_relocations(),
-                             RelE = SecI->end_relocations();
+    for (relocation_iterator RelI = SecI->relocation_begin(),
+                             RelE = SecI->relocation_end();
          RelI != RelE; ++RelI) {
       if (!PrintedGroup) {
         W.startLine() << "Section (" << SectionNumber << ") " << Name << " {\n";
@@ -939,7 +939,7 @@ void COFFDumper::printRelocation(section_iterator SecI,
 void COFFDumper::printSymbols() {
   ListScope Group(W, "Symbols");
 
-  for (symbol_iterator SymI = Obj->begin_symbols(), SymE = Obj->end_symbols();
+  for (symbol_iterator SymI = Obj->symbol_begin(), SymE = Obj->symbol_end();
        SymI != SymE; ++SymI)
     printSymbol(SymI);
 }
@@ -1087,8 +1087,8 @@ void COFFDumper::printUnwindInfo() {
 }
 
 void COFFDumper::printX64UnwindInfo() {
-  for (section_iterator SecI = Obj->begin_sections(),
-                        SecE = Obj->end_sections();
+  for (section_iterator SecI = Obj->section_begin(),
+                        SecE = Obj->section_end();
        SecI != SecE; ++SecI) {
     StringRef Name;
     if (error(SecI->getName(Name)))

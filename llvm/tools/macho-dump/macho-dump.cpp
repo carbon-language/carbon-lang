@@ -202,7 +202,7 @@ static int DumpSymtabCommand(const MachOObjectFile &Obj) {
   // Dump the symbol table.
   outs() << "  ('_symbols', [\n";
   unsigned SymNum = 0;
-  for (symbol_iterator I = Obj.begin_symbols(), E = Obj.end_symbols(); I != E;
+  for (symbol_iterator I = Obj.symbol_begin(), E = Obj.symbol_end(); I != E;
        ++I, ++SymNum) {
     DataRefImpl DRI = I->getRawDataRefImpl();
     if (Obj.is64Bit()) {

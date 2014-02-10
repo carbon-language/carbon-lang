@@ -205,7 +205,7 @@ error_code COFFObjectFile::getSymbolSection(DataRefImpl Ref,
                                             section_iterator &Result) const {
   const coff_symbol *Symb = toSymb(Ref);
   if (Symb->SectionNumber <= COFF::IMAGE_SYM_UNDEFINED)
-    Result = end_sections();
+    Result = section_end();
   else {
     const coff_section *Sec = 0;
     if (error_code EC = getSection(Symb->SectionNumber, Sec)) return EC;
@@ -383,7 +383,7 @@ error_code COFFObjectFile::initSymbolTablePtr() {
 
 // Returns the file offset for the given RVA.
 error_code COFFObjectFile::getRvaPtr(uint32_t Rva, uintptr_t &Res) const {
-  for (section_iterator I = begin_sections(), E = end_sections(); I != E;
+  for (section_iterator I = section_begin(), E = section_end(); I != E;
        ++I) {
     const coff_section *Section = getCOFFSection(I);
     uint32_t SectionStart = Section->VirtualAddress;
@@ -540,25 +540,25 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &EC,
   EC = object_error::success;
 }
 
-symbol_iterator COFFObjectFile::begin_symbols() const {
+symbol_iterator COFFObjectFile::symbol_begin() const {
   DataRefImpl Ret;
   Ret.p = reinterpret_cast<uintptr_t>(SymbolTable);
   return symbol_iterator(SymbolRef(Ret, this));
 }
 
-symbol_iterator COFFObjectFile::end_symbols() const {
+symbol_iterator COFFObjectFile::symbol_end() const {
   // The symbol table ends where the string table begins.
   DataRefImpl Ret;
   Ret.p = reinterpret_cast<uintptr_t>(StringTable);
   return symbol_iterator(SymbolRef(Ret, this));
 }
 
-library_iterator COFFObjectFile::begin_libraries_needed() const {
+library_iterator COFFObjectFile::needed_library_begin() const {
   // TODO: implement
   report_fatal_error("Libraries needed unimplemented in COFFObjectFile");
 }
 
-library_iterator COFFObjectFile::end_libraries_needed() const {
+library_iterator COFFObjectFile::needed_library_end() const {
   // TODO: implement
   report_fatal_error("Libraries needed unimplemented in COFFObjectFile");
 }
@@ -591,13 +591,13 @@ export_directory_iterator COFFObjectFile::export_directory_end() const {
   return export_directory_iterator(Ref);
 }
 
-section_iterator COFFObjectFile::begin_sections() const {
+section_iterator COFFObjectFile::section_begin() const {
   DataRefImpl Ret;
   Ret.p = reinterpret_cast<uintptr_t>(SectionTable);
   return section_iterator(SectionRef(Ret, this));
 }
 
-section_iterator COFFObjectFile::end_sections() const {
+section_iterator COFFObjectFile::section_end() const {
   DataRefImpl Ret;
   int NumSections = COFFHeader->isImportLibrary()
       ? 0 : COFFHeader->NumberOfSections;

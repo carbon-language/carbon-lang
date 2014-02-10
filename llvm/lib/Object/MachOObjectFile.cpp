@@ -296,7 +296,7 @@ static void printRelocationTargetName(const MachOObjectFile *O,
   if (IsScattered) {
     uint32_t Val = O->getPlainRelocationSymbolNum(RE);
 
-    for (symbol_iterator SI = O->begin_symbols(), SE = O->end_symbols();
+    for (symbol_iterator SI = O->symbol_begin(), SE = O->symbol_end();
          SI != SE; ++SI) {
       error_code ec;
       uint64_t Addr;
@@ -313,7 +313,7 @@ static void printRelocationTargetName(const MachOObjectFile *O,
 
     // If we couldn't find a symbol that this relocation refers to, try
     // to find a section beginning instead.
-    for (section_iterator SI = O->begin_sections(), SE = O->end_sections();
+    for (section_iterator SI = O->section_begin(), SE = O->section_end();
          SI != SE; ++SI) {
       error_code ec;
       uint64_t Addr;
@@ -337,11 +337,11 @@ static void printRelocationTargetName(const MachOObjectFile *O,
   uint64_t Val = O->getPlainRelocationSymbolNum(RE);
 
   if (isExtern) {
-    symbol_iterator SI = O->begin_symbols();
+    symbol_iterator SI = O->symbol_begin();
     advance(SI, Val);
     SI->getName(S);
   } else {
-    section_iterator SI = O->begin_sections();
+    section_iterator SI = O->section_begin();
     // Adjust for the fact that sections are 1-indexed.
     advance(SI, Val - 1);
     SI->getName(S);
@@ -528,7 +528,7 @@ error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
   }
   // Unfortunately symbols are unsorted so we need to touch all
   // symbols from load command
-  for (symbol_iterator I = begin_symbols(), E = end_symbols(); I != E; ++I) {
+  for (symbol_iterator I = symbol_begin(), E = symbol_end(); I != E; ++I) {
     DataRefImpl DRI = I->getRawDataRefImpl();
     Entry = getSymbolTableEntryBase(this, DRI);
     getSymbolAddress(DRI, Value);
@@ -612,7 +612,7 @@ MachOObjectFile::getSymbolSection(DataRefImpl Symb,
   uint8_t index = Entry.n_sect;
 
   if (index == 0) {
-    Res = end_sections();
+    Res = section_end();
   } else {
     DataRefImpl DRI;
     DRI.d.a = index - 1;
@@ -834,7 +834,7 @@ MachOObjectFile::getRelocationSymbol(DataRefImpl Rel) const {
   uint32_t SymbolIdx = getPlainRelocationSymbolNum(RE);
   bool isExtern = getPlainRelocationExternal(RE);
   if (!isExtern)
-    return end_symbols();
+    return symbol_end();
 
   MachO::symtab_command S = getSymtabLoadCommand();
   unsigned SymbolTableEntrySize = is64Bit() ?
@@ -1163,7 +1163,7 @@ error_code MachOObjectFile::getLibraryPath(DataRefImpl LibData,
   report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
 }
 
-symbol_iterator MachOObjectFile::begin_symbols() const {
+symbol_iterator MachOObjectFile::symbol_begin() const {
   DataRefImpl DRI;
   if (!SymtabLoadCmd)
     return symbol_iterator(SymbolRef(DRI, this));
@@ -1173,7 +1173,7 @@ symbol_iterator MachOObjectFile::begin_symbols() const {
   return symbol_iterator(SymbolRef(DRI, this));
 }
 
-symbol_iterator MachOObjectFile::end_symbols() const {
+symbol_iterator MachOObjectFile::symbol_end() const {
   DataRefImpl DRI;
   if (!SymtabLoadCmd)
     return symbol_iterator(SymbolRef(DRI, this));
@@ -1188,23 +1188,23 @@ symbol_iterator MachOObjectFile::end_symbols() const {
   return symbol_iterator(SymbolRef(DRI, this));
 }
 
-section_iterator MachOObjectFile::begin_sections() const {
+section_iterator MachOObjectFile::section_begin() const {
   DataRefImpl DRI;
   return section_iterator(SectionRef(DRI, this));
 }
 
-section_iterator MachOObjectFile::end_sections() const {
+section_iterator MachOObjectFile::section_end() const {
   DataRefImpl DRI;
   DRI.d.a = Sections.size();
   return section_iterator(SectionRef(DRI, this));
 }
 
-library_iterator MachOObjectFile::begin_libraries_needed() const {
+library_iterator MachOObjectFile::needed_library_begin() const {
   // TODO: implement
   report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
 }
 
-library_iterator MachOObjectFile::end_libraries_needed() const {
+library_iterator MachOObjectFile::needed_library_end() const {
   // TODO: implement
   report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
 }
@@ -1389,7 +1389,7 @@ SectionRef
 MachOObjectFile::getRelocationSection(
                                    const MachO::any_relocation_info &RE) const {
   if (isRelocationScattered(RE) || getPlainRelocationExternal(RE))
-    return *end_sections();
+    return *section_end();
   unsigned SecNum = getPlainRelocationSymbolNum(RE) - 1;
   DataRefImpl DRI;
   DRI.d.a = SecNum;

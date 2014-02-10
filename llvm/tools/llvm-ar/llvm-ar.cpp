@@ -716,8 +716,8 @@ static void writeSymbolTable(
       print32BE(Out, 0);
     }
 
-    for (object::symbol_iterator I = Obj->begin_symbols(),
-                                 E = Obj->end_symbols();
+    for (object::symbol_iterator I = Obj->symbol_begin(),
+                                 E = Obj->symbol_end();
          I != E; ++I) {
       uint32_t Symflags = I->getFlags();;
       if (Symflags & object::SymbolRef::SF_FormatSpecific)

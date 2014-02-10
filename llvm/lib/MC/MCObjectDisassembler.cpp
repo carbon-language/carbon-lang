@@ -37,7 +37,7 @@ MCObjectDisassembler::MCObjectDisassembler(const ObjectFile &Obj,
     : Obj(Obj), Dis(Dis), MIA(MIA), MOS(0) {}
 
 uint64_t MCObjectDisassembler::getEntrypoint() {
-  for (symbol_iterator SI = Obj.begin_symbols(), SE = Obj.end_symbols();
+  for (symbol_iterator SI = Obj.symbol_begin(), SE = Obj.symbol_end();
        SI != SE; ++SI) {
     StringRef Name;
     SI->getName(Name);
@@ -87,7 +87,7 @@ MCModule *MCObjectDisassembler::buildModule(bool withCFG) {
 }
 
 void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
-  for (section_iterator SI = Obj.begin_sections(), SE = Obj.end_sections();
+  for (section_iterator SI = Obj.section_begin(), SE = Obj.section_end();
        SI != SE; ++SI) {
     bool isText; SI->isText(isText);
     bool isData; SI->isData(isData);
@@ -176,7 +176,7 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
   AddressSetTy Splits;
   AddressSetTy Calls;
 
-  for (symbol_iterator SI = Obj.begin_symbols(), SE = Obj.end_symbols();
+  for (symbol_iterator SI = Obj.symbol_begin(), SE = Obj.symbol_end();
        SI != SE; ++SI) {
     SymbolRef::Type SymType;
     SI->getType(SymType);
@@ -495,7 +495,7 @@ MCMachOObjectDisassembler::MCMachOObjectDisassembler(
     : MCObjectDisassembler(MOOF, Dis, MIA), MOOF(MOOF),
       VMAddrSlide(VMAddrSlide), HeaderLoadAddress(HeaderLoadAddress) {
 
-  for (section_iterator SI = MOOF.begin_sections(), SE = MOOF.end_sections();
+  for (section_iterator SI = MOOF.section_begin(), SE = MOOF.section_end();
        SI != SE; ++SI) {
     StringRef Name;
     SI->getName(Name);

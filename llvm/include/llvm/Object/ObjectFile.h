@@ -163,8 +163,8 @@ public:
 
   error_code containsSymbol(SymbolRef S, bool &Result) const;
 
-  relocation_iterator begin_relocations() const;
-  relocation_iterator end_relocations() const;
+  relocation_iterator relocation_begin() const;
+  relocation_iterator relocation_end() const;
   section_iterator getRelocatedSection() const;
 
   DataRefImpl getRawDataRefImpl() const;
@@ -342,14 +342,14 @@ protected:
 
 public:
 
-  virtual symbol_iterator begin_symbols() const = 0;
-  virtual symbol_iterator end_symbols() const = 0;
+  virtual symbol_iterator symbol_begin() const = 0;
+  virtual symbol_iterator symbol_end() const = 0;
 
-  virtual section_iterator begin_sections() const = 0;
-  virtual section_iterator end_sections() const = 0;
+  virtual section_iterator section_begin() const = 0;
+  virtual section_iterator section_end() const = 0;
 
-  virtual library_iterator begin_libraries_needed() const = 0;
-  virtual library_iterator end_libraries_needed() const = 0;
+  virtual library_iterator needed_library_begin() const = 0;
+  virtual library_iterator needed_library_end() const = 0;
 
   /// @brief The number of bytes used to represent an address in this object
   ///        file format.
@@ -518,11 +518,11 @@ inline error_code SectionRef::containsSymbol(SymbolRef S, bool &Result) const {
                                              Result);
 }
 
-inline relocation_iterator SectionRef::begin_relocations() const {
+inline relocation_iterator SectionRef::relocation_begin() const {
   return OwningObject->section_rel_begin(SectionPimpl);
 }
 
-inline relocation_iterator SectionRef::end_relocations() const {
+inline relocation_iterator SectionRef::relocation_end() const {
   return OwningObject->section_rel_end(SectionPimpl);
 }
 
