@@ -119,8 +119,8 @@ protected:
     std::unique_ptr<ObjectFile> obj(objOrErr.get());
     SymbolRef::Type symtype;
     uint32_t symflags;
-    symbol_iterator ibegin = obj->begin_symbols();
-    symbol_iterator iend = obj->end_symbols();
+    symbol_iterator ibegin = obj->symbol_begin();
+    symbol_iterator iend = obj->symbol_end();
     StringRef symbolname;
 
     for (symbol_iterator i = ibegin; i != iend; ++i) {

@@ -527,7 +527,7 @@ error_code FileCOFF::cacheSectionAttributes() {
 
   // The sections that does not have auxiliary symbol are regular sections, in
   // which symbols are not allowed to be merged.
-  for (auto si = _obj->begin_sections(), se = _obj->end_sections(); si != se;
+  for (auto si = _obj->section_begin(), se = _obj->section_end(); si != se;
        ++si) {
     const coff_section *sec = _obj->getCOFFSection(si);
     if (!_merge.count(sec))
@@ -744,7 +744,7 @@ error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
 /// Add relocation information to atoms.
 error_code FileCOFF::addRelocationReferenceToAtoms() {
   // Relocation entries are defined for each section.
-  for (auto si = _obj->begin_sections(), se = _obj->end_sections(); si != se;
+  for (auto si = _obj->section_begin(), se = _obj->section_end(); si != se;
        ++si) {
     const coff_section *section = _obj->getCOFFSection(si);
 
@@ -754,7 +754,7 @@ error_code FileCOFF::addRelocationReferenceToAtoms() {
     if (_sectionAtoms.find(section) == _sectionAtoms.end())
       continue;
 
-    for (auto ri = si->begin_relocations(), re = si->end_relocations();
+    for (auto ri = si->relocation_begin(), re = si->relocation_end();
          ri != re; ++ri) {
       const coff_relocation *rel = _obj->getCOFFRelocation(ri);
       if (auto ec =
@@ -767,7 +767,7 @@ error_code FileCOFF::addRelocationReferenceToAtoms() {
 
 /// Find a section by name.
 error_code FileCOFF::findSection(StringRef name, const coff_section *&result) {
-  for (auto si = _obj->begin_sections(), se = _obj->end_sections(); si != se;
+  for (auto si = _obj->section_begin(), se = _obj->section_end(); si != se;
        ++si) {
     const coff_section *section = _obj->getCOFFSection(si);
     StringRef sectionName;
