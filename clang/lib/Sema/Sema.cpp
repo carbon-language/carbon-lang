@@ -210,7 +210,6 @@ Sema::~Sema() {
     delete I->second;
   if (PackContext) FreePackedContext();
   if (VisContext) FreeVisContext();
-  MSStructPragmaOn = false;
   // Kill all the active scopes.
   for (unsigned I = 1, E = FunctionScopes.size(); I != E; ++I)
     delete FunctionScopes[I];
