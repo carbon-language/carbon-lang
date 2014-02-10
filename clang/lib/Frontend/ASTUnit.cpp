@@ -711,22 +711,10 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                          AST->ASTFileLangOpts,
                                          /*Target=*/0));
 
-  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
-    const llvm::MemoryBuffer *MemBuf = RemappedFiles[I].second;
-    // Create the file entry for the file that we're mapping from.
-    const FileEntry *FromFile = AST->getFileManager().getVirtualFile(
-        RemappedFiles[I].first, MemBuf->getBufferSize(), 0);
-    if (!FromFile) {
-      AST->getDiagnostics().Report(diag::err_fe_remap_missing_from_file)
-          << RemappedFiles[I].first;
-      delete MemBuf;
-      continue;
-    }
+  PreprocessorOptions *PPOpts = new PreprocessorOptions();
 
-    // Override the contents of the "from" file with the contents of
-    // the "to" file.
-    AST->getSourceManager().overrideFileContents(FromFile, MemBuf);
-  }
+  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I)
+    PPOpts->addRemappedFile(RemappedFiles[I].first, RemappedFiles[I].second);
 
   // Gather Info for preprocessor construction later on.
 
@@ -735,7 +723,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
 
   OwningPtr<ASTReader> Reader;
 
-  AST->PP = new Preprocessor(new PreprocessorOptions(),
+  AST->PP = new Preprocessor(PPOpts,
                              AST->getDiagnostics(), AST->ASTFileLangOpts,
                              /*Target=*/0, AST->getSourceManager(), HeaderInfo, 
                              *AST, 
