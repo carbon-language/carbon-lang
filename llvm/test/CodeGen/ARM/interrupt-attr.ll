@@ -12,24 +12,24 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
 
   ; Also need special function return setting pc and CPSR simultaneously.
 ; CHECK-A-LABEL: irq_fn:
-; CHECK-A: push {r0, r1, r2, r3, r11, lr}
+; CHECK-A: push {r0, r1, r2, r3, r11, r12, lr}
 ; CHECK-A: add r11, sp, #16
 ; CHECK-A: sub sp, sp, #{{[0-9]+}}
 ; CHECK-A: bic sp, sp, #7
 ; CHECK-A: bl bar
 ; CHECK-A: sub sp, r11, #16
-; CHECK-A: pop {r0, r1, r2, r3, r11, lr}
+; CHECK-A: pop {r0, r1, r2, r3, r11, r12, lr}
 ; CHECK-A: subs pc, lr, #4
 
 ; CHECK-A-THUMB-LABEL: irq_fn:
-; CHECK-A-THUMB: push {r0, r1, r2, r3, r4, r7, lr}
+; CHECK-A-THUMB: push.w {r0, r1, r2, r3, r4, r7, r12, lr}
 ; CHECK-A-THUMB: mov r4, sp
 ; CHECK-A-THUMB: add r7, sp, #20
 ; CHECK-A-THUMB: bic r4, r4, #7
 ; CHECK-A-THUMB: bl bar
 ; CHECK-A-THUMB: sub.w r4, r7,  #20
 ; CHECK-A-THUMB: mov sp, r4
-; CHECK-A-THUMB: pop.w {r0, r1, r2, r3, r4, r7, lr}
+; CHECK-A-THUMB: pop.w {r0, r1, r2, r3, r4, r7, r12, lr}
 ; CHECK-A-THUMB: subs pc, lr, #4
 
   ; Normal AAPCS function (r0-r3 pushed onto stack by hardware, lr set to
@@ -49,6 +49,7 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
   ret void
 }
 
+; We don't push/pop r12, as it is banked for FIQ
 define arm_aapcscc void @fiq_fn() alignstack(8) "interrupt"="FIQ" {
 ; CHECK-A-LABEL: fiq_fn:
 ; CHECK-A: push {r0, r1, r2, r3, r4, r5, r6, r7, r11, lr}
@@ -71,13 +72,13 @@ define arm_aapcscc void @fiq_fn() alignstack(8) "interrupt"="FIQ" {
 
 define arm_aapcscc void @swi_fn() alignstack(8) "interrupt"="SWI" {
 ; CHECK-A-LABEL: swi_fn:
-; CHECK-A: push {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, lr}
+; CHECK-A: push {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr}
 ; CHECK-A: add r11, sp, #44
 ; CHECK-A: sub sp, sp, #{{[0-9]+}}
 ; CHECK-A: bic sp, sp, #7
 ; [...]
 ; CHECK-A: sub sp, r11, #44
-; CHECK-A: pop {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, lr}
+; CHECK-A: pop {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr}
 ; CHECK-A: subs pc, lr, #0
 
   %val = load volatile [16 x i32]* @bigvar
@@ -87,13 +88,13 @@ define arm_aapcscc void @swi_fn() alignstack(8) "interrupt"="SWI" {
 
 define arm_aapcscc void @undef_fn() alignstack(8) "interrupt"="UNDEF" {
 ; CHECK-A-LABEL: undef_fn:
-; CHECK-A: push {r0, r1, r2, r3, r11, lr}
+; CHECK-A: push {r0, r1, r2, r3, r11, r12, lr}
 ; CHECK-A: add r11, sp, #16
 ; CHECK-A: sub sp, sp, #{{[0-9]+}}
 ; CHECK-A: bic sp, sp, #7
 ; [...]
 ; CHECK-A: sub sp, r11, #16
-; CHECK-A: pop {r0, r1, r2, r3, r11, lr}
+; CHECK-A: pop {r0, r1, r2, r3, r11, r12, lr}
 ; CHECK-A: subs pc, lr, #0
 
   call void @bar()
@@ -102,13 +103,13 @@ define arm_aapcscc void @undef_fn() alignstack(8) "interrupt"="UNDEF" {
 
 define arm_aapcscc void @abort_fn() alignstack(8) "interrupt"="ABORT" {
 ; CHECK-A-LABEL: abort_fn:
-; CHECK-A: push {r0, r1, r2, r3, r11, lr}
+; CHECK-A: push {r0, r1, r2, r3, r11, r12, lr}
 ; CHECK-A: add r11, sp, #16
 ; CHECK-A: sub sp, sp, #{{[0-9]+}}
 ; CHECK-A: bic sp, sp, #7
 ; [...]
 ; CHECK-A: sub sp, r11, #16
-; CHECK-A: pop {r0, r1, r2, r3, r11, lr}
+; CHECK-A: pop {r0, r1, r2, r3, r11, r12, lr}
 ; CHECK-A: subs pc, lr, #4
 
   call void @bar()

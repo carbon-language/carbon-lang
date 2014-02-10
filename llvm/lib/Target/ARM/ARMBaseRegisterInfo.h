@@ -42,7 +42,7 @@ static inline bool isARMArea1Register(unsigned Reg, bool isIOS) {
     case R4:  case R5:  case R6:  case R7:
     case LR:  case SP:  case PC:
       return true;
-    case R8:  case R9:  case R10: case R11:
+    case R8:  case R9:  case R10: case R11: case R12:
       // For iOS we want r7 and lr to be next to each other.
       return !isIOS;
     default:
@@ -53,7 +53,7 @@ static inline bool isARMArea1Register(unsigned Reg, bool isIOS) {
 static inline bool isARMArea2Register(unsigned Reg, bool isIOS) {
   using namespace ARM;
   switch (Reg) {
-    case R8: case R9: case R10: case R11:
+    case R8: case R9: case R10: case R11: case R12:
       // iOS has this second area.
       return isIOS;
     default:
