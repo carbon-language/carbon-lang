@@ -52,17 +52,44 @@ int _setup_posixspawn_attributes_file_actions(xpc_object_t message, posix_spawna
     if (errorCode)
         return errorCode;
     
-    // Setup any file actions. Here we are emulating what debugserver would do normally in Host.mm since the XPC service meant only for debugserver.
+    // Setup any file actions.
     errorCode = posix_spawn_file_actions_init(file_actions);
     if (errorCode)
         return errorCode;
-    errorCode = posix_spawn_file_actions_addclose(file_actions, STDIN_FILENO);
+    
+    const char *path = xpc_dictionary_get_string(message, LauncherXPCServiceStdInPathKeyKey);
+    if (path)
+    {
+        errorCode = posix_spawn_file_actions_addopen(file_actions, STDIN_FILENO, path, O_NOCTTY | O_RDONLY, 0);
+    }
+    else
+    {
+        errorCode = posix_spawn_file_actions_addclose(file_actions, STDIN_FILENO);
+    }
     if (errorCode)
         return errorCode;
-    errorCode = posix_spawn_file_actions_addclose(file_actions, STDOUT_FILENO);
+    
+    path = xpc_dictionary_get_string(message, LauncherXPCServiceStdOutPathKeyKey);
+    if (path)
+    {
+        errorCode = posix_spawn_file_actions_addopen(file_actions, STDOUT_FILENO, path, O_NOCTTY | O_CREAT | O_WRONLY, 0640);
+    }
+    else
+    {
+        errorCode = posix_spawn_file_actions_addclose(file_actions, STDOUT_FILENO);
+    }
     if (errorCode)
         return errorCode;
-    errorCode = posix_spawn_file_actions_addclose(file_actions, STDERR_FILENO);
+    
+    path = xpc_dictionary_get_string(message, LauncherXPCServiceStdErrPathKeyKey);
+    if (path)
+    {
+        errorCode = posix_spawn_file_actions_addopen(file_actions, STDERR_FILENO, path, O_NOCTTY | O_CREAT | O_RDWR, 0640);
+    }
+    else
+    {
+        errorCode = posix_spawn_file_actions_addclose(file_actions, STDERR_FILENO);
+    }
     
     return errorCode;
 }
