@@ -25,6 +25,7 @@ add_llvm_tool(opt
   GraphPrinters.cpp
   NewPMDriver.cpp
   Passes.cpp
+  PassPrinters.cpp
   PrintSCC.cpp
   opt.cpp
   )

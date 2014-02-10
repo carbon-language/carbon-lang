@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "NewPMDriver.h"
+#include "PassPrinters.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/CallGraph.h"
@@ -183,207 +184,7 @@ DefaultDataLayout("default-data-layout",
           cl::desc("data layout string to use if not specified by module"),
           cl::value_desc("layout-string"), cl::init(""));
 
-// ---------- Define Printers for module and function passes ------------
 namespace {
-
-struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
-  static char ID;
-  const PassInfo *PassToPrint;
-  raw_ostream &Out;
-  std::string PassName;
-
-  CallGraphSCCPassPrinter(const PassInfo *PI, raw_ostream &out) :
-    CallGraphSCCPass(ID), PassToPrint(PI), Out(out) {
-      std::string PassToPrintName =  PassToPrint->getPassName();
-      PassName = "CallGraphSCCPass Printer: " + PassToPrintName;
-    }
-
-  virtual bool runOnSCC(CallGraphSCC &SCC) {
-    if (!Quiet)
-      Out << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
-
-    // Get and print pass...
-    for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-      Function *F = (*I)->getFunction();
-      if (F)
-        getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out,
-                                                              F->getParent());
-    }
-    return false;
-  }
-
-  virtual const char *getPassName() const { return PassName.c_str(); }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint->getTypeInfo());
-    AU.setPreservesAll();
-  }
-};
-
-char CallGraphSCCPassPrinter::ID = 0;
-
-struct ModulePassPrinter : public ModulePass {
-  static char ID;
-  const PassInfo *PassToPrint;
-  raw_ostream &Out;
-  std::string PassName;
-
-  ModulePassPrinter(const PassInfo *PI, raw_ostream &out)
-    : ModulePass(ID), PassToPrint(PI), Out(out) {
-      std::string PassToPrintName =  PassToPrint->getPassName();
-      PassName = "ModulePass Printer: " + PassToPrintName;
-    }
-
-  virtual bool runOnModule(Module &M) {
-    if (!Quiet)
-      Out << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
-
-    // Get and print pass...
-    getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out, &M);
-    return false;
-  }
-
-  virtual const char *getPassName() const { return PassName.c_str(); }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint->getTypeInfo());
-    AU.setPreservesAll();
-  }
-};
-
-char ModulePassPrinter::ID = 0;
-struct FunctionPassPrinter : public FunctionPass {
-  const PassInfo *PassToPrint;
-  raw_ostream &Out;
-  static char ID;
-  std::string PassName;
-
-  FunctionPassPrinter(const PassInfo *PI, raw_ostream &out)
-    : FunctionPass(ID), PassToPrint(PI), Out(out) {
-      std::string PassToPrintName =  PassToPrint->getPassName();
-      PassName = "FunctionPass Printer: " + PassToPrintName;
-    }
-
-  virtual bool runOnFunction(Function &F) {
-    if (!Quiet)
-      Out << "Printing analysis '" << PassToPrint->getPassName()
-          << "' for function '" << F.getName() << "':\n";
-
-    // Get and print pass...
-    getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out,
-            F.getParent());
-    return false;
-  }
-
-  virtual const char *getPassName() const { return PassName.c_str(); }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint->getTypeInfo());
-    AU.setPreservesAll();
-  }
-};
-
-char FunctionPassPrinter::ID = 0;
-
-struct LoopPassPrinter : public LoopPass {
-  static char ID;
-  const PassInfo *PassToPrint;
-  raw_ostream &Out;
-  std::string PassName;
-
-  LoopPassPrinter(const PassInfo *PI, raw_ostream &out) :
-    LoopPass(ID), PassToPrint(PI), Out(out) {
-      std::string PassToPrintName =  PassToPrint->getPassName();
-      PassName = "LoopPass Printer: " + PassToPrintName;
-    }
-
-
-  virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
-    if (!Quiet)
-      Out << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
-
-    // Get and print pass...
-    getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out,
-                        L->getHeader()->getParent()->getParent());
-    return false;
-  }
-
-  virtual const char *getPassName() const { return PassName.c_str(); }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint->getTypeInfo());
-    AU.setPreservesAll();
-  }
-};
-
-char LoopPassPrinter::ID = 0;
-
-struct RegionPassPrinter : public RegionPass {
-  static char ID;
-  const PassInfo *PassToPrint;
-  raw_ostream &Out;
-  std::string PassName;
-
-  RegionPassPrinter(const PassInfo *PI, raw_ostream &out) : RegionPass(ID),
-    PassToPrint(PI), Out(out) {
-    std::string PassToPrintName =  PassToPrint->getPassName();
-    PassName = "RegionPass Printer: " + PassToPrintName;
-  }
-
-  virtual bool runOnRegion(Region *R, RGPassManager &RGM) {
-    if (!Quiet) {
-      Out << "Printing analysis '" << PassToPrint->getPassName() << "' for "
-          << "region: '" << R->getNameStr() << "' in function '"
-          << R->getEntry()->getParent()->getName() << "':\n";
-    }
-    // Get and print pass...
-   getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out,
-                       R->getEntry()->getParent()->getParent());
-    return false;
-  }
-
-  virtual const char *getPassName() const { return PassName.c_str(); }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint->getTypeInfo());
-    AU.setPreservesAll();
-  }
-};
-
-char RegionPassPrinter::ID = 0;
-
-struct BasicBlockPassPrinter : public BasicBlockPass {
-  const PassInfo *PassToPrint;
-  raw_ostream &Out;
-  static char ID;
-  std::string PassName;
-
-  BasicBlockPassPrinter(const PassInfo *PI, raw_ostream &out)
-    : BasicBlockPass(ID), PassToPrint(PI), Out(out) {
-      std::string PassToPrintName =  PassToPrint->getPassName();
-      PassName = "BasicBlockPass Printer: " + PassToPrintName;
-    }
-
-  virtual bool runOnBasicBlock(BasicBlock &BB) {
-    if (!Quiet)
-      Out << "Printing Analysis info for BasicBlock '" << BB.getName()
-          << "': Pass " << PassToPrint->getPassName() << ":\n";
-
-    // Get and print pass...
-    getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out,
-            BB.getParent()->getParent());
-    return false;
-  }
-
-  virtual const char *getPassName() const { return PassName.c_str(); }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint->getTypeInfo());
-    AU.setPreservesAll();
-  }
-};
-
-char BasicBlockPassPrinter::ID = 0;
 
 struct BreakpointPrinter : public ModulePass {
   raw_ostream &Out;
@@ -815,22 +616,22 @@ int main(int argc, char **argv) {
       if (AnalyzeOnly) {
         switch (Kind) {
         case PT_BasicBlock:
-          Passes.add(new BasicBlockPassPrinter(PassInf, Out->os()));
+          Passes.add(createBasicBlockPassPrinter(PassInf, Out->os(), Quiet));
           break;
         case PT_Region:
-          Passes.add(new RegionPassPrinter(PassInf, Out->os()));
+          Passes.add(createRegionPassPrinter(PassInf, Out->os(), Quiet));
           break;
         case PT_Loop:
-          Passes.add(new LoopPassPrinter(PassInf, Out->os()));
+          Passes.add(createLoopPassPrinter(PassInf, Out->os(), Quiet));
           break;
         case PT_Function:
-          Passes.add(new FunctionPassPrinter(PassInf, Out->os()));
+          Passes.add(createFunctionPassPrinter(PassInf, Out->os(), Quiet));
           break;
         case PT_CallGraphSCC:
-          Passes.add(new CallGraphSCCPassPrinter(PassInf, Out->os()));
+          Passes.add(createCallGraphPassPrinter(PassInf, Out->os(), Quiet));
           break;
         default:
-          Passes.add(new ModulePassPrinter(PassInf, Out->os()));
+          Passes.add(createModulePassPrinter(PassInf, Out->os(), Quiet));
           break;
         }
       }
