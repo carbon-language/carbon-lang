@@ -63,6 +63,7 @@ namespace X86Local {
     RawFrmSrc   = 8,
     RawFrmDst   = 9,
     RawFrmDstSrc = 10,
+    MRMXr = 14, MRMXm = 15,
     MRM0r = 16, MRM1r = 17, MRM2r = 18, MRM3r = 19,
     MRM4r = 20, MRM5r = 21, MRM6r = 22, MRM7r = 23,
     MRM0m = 24, MRM1m = 25, MRM2m = 26, MRM3m = 27,
@@ -165,6 +166,8 @@ static bool needsModRMForDecode(uint8_t form) {
           form == X86Local::MRMDestMem    ||
           form == X86Local::MRMSrcReg     ||
           form == X86Local::MRMSrcMem     ||
+          form == X86Local::MRMXr ||
+          form == X86Local::MRMXm ||
           (form >= X86Local::MRM0r && form <= X86Local::MRM7r) ||
           (form >= X86Local::MRM0m && form <= X86Local::MRM7m));
 }
@@ -178,6 +181,7 @@ static bool needsModRMForDecode(uint8_t form) {
 static bool isRegFormat(uint8_t form) {
   return (form == X86Local::MRMDestReg ||
           form == X86Local::MRMSrcReg  ||
+          form == X86Local::MRMXr ||
           (form >= X86Local::MRM0r && form <= X86Local::MRM7r));
 }
 
@@ -741,6 +745,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
       HANDLE_OPTIONAL(immediate)
     HANDLE_OPTIONAL(immediate) // above might be a register in 7:4
     break;
+  case X86Local::MRMXr:
   case X86Local::MRM0r:
   case X86Local::MRM1r:
   case X86Local::MRM2r:
@@ -767,6 +772,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
     HANDLE_OPTIONAL(relocation)
     HANDLE_OPTIONAL(immediate)
     break;
+  case X86Local::MRMXm:
   case X86Local::MRM0m:
   case X86Local::MRM1m:
   case X86Local::MRM2m:

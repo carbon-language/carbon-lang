@@ -1295,6 +1295,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     break;
   }
 
+  case X86II::MRMXr:
   case X86II::MRM0r: case X86II::MRM1r:
   case X86II::MRM2r: case X86II::MRM3r:
   case X86II::MRM4r: case X86II::MRM5r:
@@ -1302,8 +1303,9 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     if (HasVEX_4V) // Skip the register dst (which is encoded in VEX_VVVV).
       ++CurOp;
     MCE.emitByte(BaseOpcode);
+    uint64_t Form = (Desc->TSFlags & X86II::FormMask);
     emitRegModRMByte(MI.getOperand(CurOp++).getReg(),
-                     (Desc->TSFlags & X86II::FormMask)-X86II::MRM0r);
+                     (Form == X86II::MRMXr) ? 0 : Form-X86II::MRM0r);
 
     if (CurOp == NumOps)
       break;
@@ -1332,6 +1334,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     break;
   }
 
+  case X86II::MRMXm:
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
@@ -1343,7 +1346,8 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
           X86II::getSizeOfImm(Desc->TSFlags) : 4) : 0;
 
     MCE.emitByte(BaseOpcode);
-    emitMemModRMByte(MI, CurOp, (Desc->TSFlags & X86II::FormMask)-X86II::MRM0m,
+    uint64_t Form = (Desc->TSFlags & X86II::FormMask);
+    emitMemModRMByte(MI, CurOp, (Form==X86II::MRMXm) ? 0 : Form - X86II::MRM0m,
                      PCAdj);
     CurOp += X86::AddrNumOperands;
 

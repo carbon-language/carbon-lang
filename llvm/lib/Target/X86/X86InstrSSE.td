@@ -7677,7 +7677,7 @@ defm : pclmul_alias<"lqlq", 0x00>;
 let Predicates = [HasSSE4A] in {
 
 let Constraints = "$src = $dst" in {
-def EXTRQI : Ii8<0x78, MRM0r, (outs VR128:$dst),
+def EXTRQI : Ii8<0x78, MRMXr, (outs VR128:$dst),
                  (ins VR128:$src, i8imm:$len, i8imm:$idx),
                  "extrq\t{$idx, $len, $src|$src, $len, $idx}",
                  [(set VR128:$dst, (int_x86_sse4a_extrqi VR128:$src, imm:$len,
