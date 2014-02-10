@@ -527,3 +527,267 @@ namespace dr349 { // dr349: no
   B b;
   const int *const *const *p2 = b;
 }
+
+// dr351: na
+
+namespace dr352 { // dr352: yes
+  namespace example1 {
+    namespace A {
+      enum E {};
+      template<typename R, typename A> void foo(E, R (*)(A)); // expected-note 2{{couldn't infer template argument 'R'}}
+    }
+
+    template<typename T> void arg(T);
+    template<typename T> int arg(T) = delete; // expected-note {{here}} expected-error 0-1{{extension}}
+
+    void f(A::E e) {
+      foo(e, &arg); // expected-error {{no matching function}}
+
+      using A::foo;
+      foo<int, int>(e, &arg); // expected-error {{deleted}}
+    }
+
+    int arg(int);
+
+    void g(A::E e) {
+      foo(e, &arg); // expected-error {{no matching function}}
+
+      using A::foo;
+      foo<int, int>(e, &arg); // ok, uses non-template
+    }
+  }
+
+  namespace contexts {
+    template<int I> void f1(int (&)[I]);
+    template<int I> void f2(int (&)[I+1]); // expected-note {{couldn't infer}}
+    template<int I> void f3(int (&)[I+1], int (&)[I]);
+    void f() {
+      int a[4];
+      int b[3];
+      f1(a);
+      f2(a); // expected-error {{no matching function}}
+      f3(a, b);
+    }
+
+    template<int I> struct S {};
+    template<int I> void g1(S<I>);
+    template<int I> void g2(S<I+1>); // expected-note {{couldn't infer}}
+    template<int I> void g3(S<I+1>, S<I>);
+    void g() {
+      S<4> a;
+      S<3> b;
+      g1(a);
+      g2(a); // expected-error {{no matching function}}
+      g3(a, b);
+    }
+
+    template<typename T> void h1(T = 0); // expected-note {{couldn't infer}}
+    template<typename T> void h2(T, T = 0);
+    void h() {
+      h1(); // expected-error {{no matching function}}
+      h1(0);
+      h1<int>();
+      h2(0);
+    }
+
+    template<typename T> int tmpl(T);
+    template<typename R, typename A> void i1(R (*)(A)); // expected-note 3{{couldn't infer}}
+    template<typename R, typename A> void i2(R, A, R (*)(A)); // expected-note {{not viable}}
+    void i() {
+      extern int single(int);
+      i1(single);
+      i2(0, 0, single);
+
+      extern int ambig(float), ambig(int);
+      i1(ambig); // expected-error {{no matching function}}
+      i2(0, 0, ambig);
+
+      extern void no_match(float), no_match(int);
+      i1(no_match); // expected-error {{no matching function}}
+      i2(0, 0, no_match); // expected-error {{no matching function}}
+
+      i1(tmpl); // expected-error {{no matching function}}
+      i2(0, 0, tmpl);
+    }
+  }
+
+  template<typename T> struct is_int;
+  template<> struct is_int<int> {};
+
+  namespace example2 {
+    template<typename T> int f(T (*p)(T)) { is_int<T>(); }
+    int g(int);
+    int g(char);
+    int i = f(g);
+  }
+
+  namespace example3 {
+    template<typename T> int f(T, T (*p)(T)) { is_int<T>(); }
+    int g(int);
+    char g(char);
+    int i = f(1, g);
+  }
+
+  namespace example4 {
+    template <class T> int f(T, T (*p)(T)) { is_int<T>(); }
+    char g(char);
+    template <class T> T g(T);
+    int i = f(1, g);
+  }
+
+  namespace example5 {
+    template<int I> class A {};
+    template<int I> void g(A<I+1>); // expected-note {{couldn't infer}}
+    template<int I> void f(A<I>, A<I+1>);
+    void h(A<1> a1, A<2> a2) {
+      g(a1); // expected-error {{no matching function}}
+      g<0>(a1);
+      f(a1, a2);
+    }
+  }
+}
+
+// dr353 needs an IRGen test.
+
+namespace dr354 { // dr354: yes c++11
+  // FIXME: Should we allow this in C++98 too?
+  struct S {};
+
+  template<int*> struct ptr {}; // expected-note +{{here}}
+  ptr<0> p0;
+  ptr<(int*)0> p1;
+  ptr<(float*)0> p2;
+  ptr<(int S::*)0> p3;
+#if __cplusplus < 201103L
+  // expected-error@-5 {{does not refer to any decl}}
+  // expected-error@-5 {{does not refer to any decl}}
+  // expected-error@-5 {{does not refer to any decl}}
+  // expected-error@-5 {{does not refer to any decl}}
+#else
+  // expected-error@-10 {{must be cast}}
+  // ok
+  // expected-error@-10 {{does not match}}
+  // expected-error@-10 {{does not match}}
+#endif
+
+  template<int*> int both();
+  template<int> int both();
+  int b0 = both<0>();
+  int b1 = both<(int*)0>();
+#if __cplusplus < 201103L
+  // expected-error@-2 {{no matching function}}
+  // expected-note@-6 {{candidate}}
+  // expected-note@-6 {{candidate}}
+#endif
+
+  template<int S::*> struct ptr_mem {}; // expected-note +{{here}}
+  ptr_mem<0> m0;
+  ptr_mem<(int S::*)0> m1;
+  ptr_mem<(float S::*)0> m2;
+  ptr_mem<(int *)0> m3;
+#if __cplusplus < 201103L
+  // expected-error@-5 {{cannot be converted}}
+  // expected-error@-5 {{is not a pointer to member constant}}
+  // expected-error@-5 {{cannot be converted}}
+  // expected-error@-5 {{cannot be converted}}
+#else
+  // expected-error@-10 {{must be cast}}
+  // ok
+  // expected-error@-10 {{does not match}}
+  // expected-error@-10 {{does not match}}
+#endif
+}
+
+struct dr355_S; // dr355: yes
+struct ::dr355_S {}; // expected-warning {{extra qualification}}
+namespace dr355 { struct ::dr355_S s; }
+
+// dr356: na
+
+namespace dr357 { // dr357: yes
+  template<typename T> struct A {
+    void f() const; // expected-note {{const qualified}}
+  };
+  template<typename T> void A<T>::f() {} // expected-error {{does not match}}
+
+  struct B {
+    template<typename T> void f();
+  };
+  template<typename T> void B::f() const {} // expected-error {{does not match}}
+}
+
+namespace dr358 { // dr358: yes
+  extern "C" void dr358_f();
+  namespace N {
+    int var;
+    extern "C" void dr358_f() { var = 10; }
+  }
+}
+
+namespace dr359 { // dr359: yes
+  // Note, the example in the DR is wrong; it doesn't contain an anonymous
+  // union.
+  struct E {
+    union {
+      struct {
+        int x;
+      } s;
+    } v;
+
+    union {
+      struct { // expected-error {{extension}}
+        int x;
+      } s;
+
+      struct S { // expected-error {{types cannot be declared in an anonymous union}}
+        int x;
+      } t;
+
+      union { // expected-error {{extension}}
+        int u;
+      };
+    };
+  };
+}
+
+// dr362: na
+// dr363: na
+
+namespace dr364 { // dr364: yes
+  struct S {
+    static void f(int);
+    void f(char);
+  };
+
+  void g() {
+    S::f('a'); // expected-error {{call to non-static}}
+    S::f(0);
+  }
+}
+
+#if "foo" // expected-error {{invalid token}} dr366: yes
+#endif
+
+namespace dr367 { // dr367: yes
+  // FIXME: These diagnostics are terrible. Don't diagnose an ill-formed global
+  // array as being a VLA!
+  int a[true ? throw 0 : 4]; // expected-error 2{{variable length array}}
+  int b[true ? 4 : throw 0];
+  int c[true ? *new int : 4]; // expected-error 2{{variable length array}}
+  int d[true ? 4 : *new int];
+#if __cplusplus < 201103L
+  // expected-error@-4 {{variable length array}} expected-error@-4 {{constant expression}}
+  // expected-error@-3 {{variable length array}} expected-error@-3 {{constant expression}}
+#endif
+}
+
+namespace dr368 { // dr368: yes
+  template<typename T, T> struct S {}; // expected-note {{here}}
+  template<typename T> int f(S<T, T()> *); // expected-error {{function type}}
+  //template<typename T> int g(S<T, (T())> *); // FIXME: crashes clang
+  template<typename T> int g(S<T, true ? T() : T()> *); // expected-note {{cannot have type 'dr368::X'}}
+  struct X {};
+  int n = g<X>(0); // expected-error {{no matching}}
+}
+
+// dr370: na
