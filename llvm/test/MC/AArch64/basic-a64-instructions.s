@@ -1194,6 +1194,58 @@ _func:
 // CHECK: b.al lbl                        // encoding: [0x0e'A',A,A,0x54'A']
 // CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
 
+        beq lbl
+        bne lbl
+        bcs lbl
+        bhs lbl
+        blo lbl
+        bcc lbl
+        bmi lbl
+        bpl lbl
+        bvs lbl
+        bvc lbl
+        bhi lbl
+        bls lbl
+        bge lbl
+        blt lbl
+        bgt lbl
+        ble lbl
+        bal lbl
+// CHECK: b.eq lbl                        // encoding: [A,A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.ne lbl                        // encoding: [0x01'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.hs lbl                        // encoding: [0x02'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.hs lbl                        // encoding: [0x02'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.lo lbl                        // encoding: [0x03'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.lo lbl                        // encoding: [0x03'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.mi lbl                        // encoding: [0x04'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.pl lbl                        // encoding: [0x05'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.vs lbl                        // encoding: [0x06'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.vc lbl                        // encoding: [0x07'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.hi lbl                        // encoding: [0x08'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.ls lbl                        // encoding: [0x09'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.ge lbl                        // encoding: [0x0a'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.lt lbl                        // encoding: [0x0b'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.gt lbl                        // encoding: [0x0c'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.le lbl                        // encoding: [0x0d'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+// CHECK: b.al lbl                        // encoding: [0x0e'A',A,A,0x54'A']
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_a64_condbr
+
         b.eq #0
         b.lt #-4
         b.cc #1048572
