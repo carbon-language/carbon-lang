@@ -771,7 +771,6 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
       Asm->OutStreamer.hasRawTextSupport() || (NewCU->getUniqueID() == 0);
 
   if (!useSplitDwarf()) {
-    NewCU->setStatementListIndex(Die->getValues().size());
     // DW_AT_stmt_list is a offset of line number information for this
     // compile unit in debug_line section. For split dwarf this is
     // left in the skeleton CU and so not included.
