@@ -70,6 +70,7 @@ public:
   virtual bool isMov(unsigned Opcode) const;
 
   virtual bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const;
+  bool isDS(uint16_t Opcode) const;
   int isMIMG(uint16_t Opcode) const;
   int isSMRD(uint16_t Opcode) const;
   bool isVOP1(uint16_t Opcode) const;
