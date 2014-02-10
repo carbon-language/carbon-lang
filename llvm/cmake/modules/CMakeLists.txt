@@ -73,9 +73,9 @@ configure_file(
   ${llvm_cmake_builddir}/LLVMConfigVersion.cmake
   @ONLY)
 
-install(EXPORT LLVMExports DESTINATION ${LLVM_INSTALL_PACKAGE_DIR})
-
 if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+  install(EXPORT LLVMExports DESTINATION ${LLVM_INSTALL_PACKAGE_DIR})
+
   install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/LLVMConfig.cmake
     ${llvm_cmake_builddir}/LLVMConfigVersion.cmake
