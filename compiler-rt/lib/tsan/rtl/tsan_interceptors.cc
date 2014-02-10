@@ -584,13 +584,13 @@ void operator delete(void *ptr) throw() {
 SANITIZER_INTERFACE_ATTRIBUTE
 void operator delete[](void *ptr) throw();
 void operator delete[](void *ptr) throw() {
-  OPERATOR_DELETE_BODY(_ZdlPvRKSt9nothrow_t);
+  OPERATOR_DELETE_BODY(_ZdaPv);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void operator delete(void *ptr, std::nothrow_t const&);
 void operator delete(void *ptr, std::nothrow_t const&) {
-  OPERATOR_DELETE_BODY(_ZdaPv);
+  OPERATOR_DELETE_BODY(_ZdlPvRKSt9nothrow_t);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
