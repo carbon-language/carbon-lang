@@ -45,11 +45,14 @@
 #include <time.h>
 #include <wchar.h>
 
+#if !SANITIZER_ANDROID
+#include <sys/mount.h>
+#endif
+
 #if SANITIZER_LINUX
 #include <mntent.h>
 #include <netinet/ether.h>
 #include <utime.h>
-#include <sys/mount.h>
 #include <sys/ptrace.h>
 #include <sys/sysinfo.h>
 #include <sys/vt.h>
@@ -96,7 +99,6 @@
 #include <linux/serial.h>
 #include <sys/msg.h>
 #include <sys/ipc.h>
-#include <sys/shm.h>
 #endif // SANITIZER_LINUX && !SANITIZER_ANDROID
 
 #if SANITIZER_ANDROID
@@ -116,7 +118,6 @@
 #if SANITIZER_MAC
 #include <net/ethernet.h>
 #include <sys/filio.h>
-#include <sys/mount.h>
 #include <sys/sockio.h>
 #endif
 
