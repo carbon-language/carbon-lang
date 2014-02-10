@@ -272,6 +272,10 @@ namespace X86II {
     /// destination index register DI/ESI/RDI.
     RawFrmDstSrc   = 10,
 
+    /// MRMX[rm] - The forms are used to represent instructions that use a
+    /// Mod/RM byte, and don't use the middle field for anything.
+    MRMXr = 14, MRMXm = 15,
+
     /// MRM[0-7][rm] - These forms are used to represent instructions that use
     /// a Mod/RM byte, and use the middle field to hold extended opcode
     /// information.  In the intel manual these are represented as /0, /1, ...
@@ -674,11 +678,13 @@ namespace X86II {
       //    Opcode == X86::LEA16r || Opcode == X86::LEA32r)
       return FirstMemOp;
     }
+    case X86II::MRMXr:
     case X86II::MRM0r: case X86II::MRM1r:
     case X86II::MRM2r: case X86II::MRM3r:
     case X86II::MRM4r: case X86II::MRM5r:
     case X86II::MRM6r: case X86II::MRM7r:
       return -1;
+    case X86II::MRMXm:
     case X86II::MRM0m: case X86II::MRM1m:
     case X86II::MRM2m: case X86II::MRM3m:
     case X86II::MRM4m: case X86II::MRM5m:
