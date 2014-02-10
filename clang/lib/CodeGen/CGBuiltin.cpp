@@ -2205,6 +2205,16 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vshlq_v:
     Int = Usgn ? Intrinsic::arm_neon_vshiftu : Intrinsic::arm_neon_vshifts;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vshl");
+  case NEON::BI__builtin_neon_vshrn_n_v: {
+    llvm::Type *SrcTy = llvm::VectorType::getExtendedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], SrcTy);
+    Ops[1] = EmitNeonShiftVector(Ops[1], SrcTy, false);
+    if (Usgn)
+      Ops[0] = Builder.CreateLShr(Ops[0], Ops[1]);
+    else
+      Ops[0] = Builder.CreateAShr(Ops[0], Ops[1]);
+    return Builder.CreateTrunc(Ops[0], Ty, "vshrn_n");
+  }
   case NEON::BI__builtin_neon_vshr_n_v:
   case NEON::BI__builtin_neon_vshrq_n_v:
     return EmitNeonRShiftImm(Ops[0], Ops[1], Ty, Usgn, "vshr_n");
@@ -3655,16 +3665,6 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     Ops[1] = EmitNeonShiftVector(Ops[1], VTy, false);
     return Builder.CreateShl(Ops[0], Ops[1], "vshll_n");
   }
-  case NEON::BI__builtin_neon_vshrn_n_v: {
-    llvm::Type *SrcTy = llvm::VectorType::getExtendedElementVectorType(VTy);
-    Ops[0] = Builder.CreateBitCast(Ops[0], SrcTy);
-    Ops[1] = EmitNeonShiftVector(Ops[1], SrcTy, false);
-    if (usgn)
-      Ops[0] = Builder.CreateLShr(Ops[0], Ops[1]);
-    else
-      Ops[0] = Builder.CreateAShr(Ops[0], Ops[1]);
-    return Builder.CreateTrunc(Ops[0], Ty, "vshrn_n");
-  }
   case NEON::BI__builtin_neon_vqshrun_n_v:
     Int = Intrinsic::aarch64_neon_vsqshrun;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vqshrun_n");
@@ -4648,9 +4648,6 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vshll_n_v:
     Int = usgn ? Intrinsic::arm_neon_vshiftlu : Intrinsic::arm_neon_vshiftls;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vshll", 1);
-  case NEON::BI__builtin_neon_vshrn_n_v:
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vshiftn, Ty),
-                        Ops, "vshrn_n", 1, true);
   case NEON::BI__builtin_neon_vsri_n_v:
   case NEON::BI__builtin_neon_vsriq_n_v:
     rightShift = true;
