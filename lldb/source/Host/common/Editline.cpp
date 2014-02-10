@@ -264,7 +264,8 @@ Editline::Push (const char *bytes, size_t len)
     {
         // Must NULL terminate the string for el_push() so we stick it
         // into a std::string first
-        ::el_push(m_editline, std::string (bytes, len).c_str());
+        ::el_push(m_editline,
+                  const_cast<char*>(std::string (bytes, len).c_str()));
         return len;
     }
     return 0;
@@ -340,7 +341,8 @@ Editline::GetLines(const std::string &end_line, StringList &lines)
                         // we were editing previous lines, then populate the line
                         // with the appropriate contents
                         if (line_idx+1 < lines.GetSize() && !lines[line_idx+1].empty())
-                            ::el_push (m_editline, lines[line_idx+1].c_str());
+                            ::el_push (m_editline,
+                                       const_cast<char*>(lines[line_idx+1].c_str()));
                     }
                     else if (line_status == LineStatus::Error)
                     {
@@ -356,7 +358,8 @@ Editline::GetLines(const std::string &end_line, StringList &lines)
                         //::fprintf (out_file, "\033[1A\033[%uD\033[2K", (uint32_t)(m_lines_prompt.size() + lines[line_idx].size())); // Make cursor go up a line and clear that line
                         ::fprintf (out_file, "\033[1A\033[1000D\033[2K");
                         if (!lines[line_idx-1].empty())
-                            ::el_push (m_editline, lines[line_idx-1].c_str());
+                            ::el_push (m_editline,
+                                       const_cast<char*>(lines[line_idx-1].c_str()));
                         --m_lines_curr_line;
                     }
                     break;
@@ -366,7 +369,8 @@ Editline::GetLines(const std::string &end_line, StringList &lines)
                     //::fprintf (out_file, "\033[1B\033[%uD\033[2K", (uint32_t)(m_lines_prompt.size() + lines[line_idx].size()));
                     ::fprintf (out_file, "\033[1B\033[1000D\033[2K");
                     if (line_idx+1 < lines.GetSize() && !lines[line_idx+1].empty())
-                        ::el_push (m_editline, lines[line_idx+1].c_str());
+                        ::el_push (m_editline,
+                                   const_cast<char*>(lines[line_idx+1].c_str()));
                     break;
             }
         }
