@@ -78,21 +78,17 @@ namespace __sanitizer {
     // More fields that vary with the kernel version.
   };
 
-  extern unsigned struct_utimbuf_sz;
-  extern unsigned struct_new_utsname_sz;
-  extern unsigned struct_old_utsname_sz;
-  extern unsigned struct_oldold_utsname_sz;
-  extern unsigned struct_msqid_ds_sz;
-  extern unsigned struct_mq_attr_sz;
-  extern unsigned struct_timex_sz;
-  extern unsigned struct_ustat_sz;
-
   extern unsigned struct_rlimit_sz;
   extern unsigned struct_epoll_event_sz;
   extern unsigned struct_sysinfo_sz;
   extern unsigned struct_timespec_sz;
   extern unsigned __user_cap_header_struct_sz;
   extern unsigned __user_cap_data_struct_sz;
+  extern unsigned struct_utimbuf_sz;
+  extern unsigned struct_new_utsname_sz;
+  extern unsigned struct_old_utsname_sz;
+  extern unsigned struct_oldold_utsname_sz;
+
   const unsigned old_sigset_t_sz = sizeof(unsigned long);
   const unsigned struct_kexec_segment_sz = 4 * sizeof(unsigned long);
 
@@ -134,7 +130,11 @@ namespace __sanitizer {
 #endif // SANITIZER_LINUX
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
+  extern unsigned struct_ustat_sz;
   extern unsigned struct_rlimit64_sz;
+  extern unsigned struct_timex_sz;
+  extern unsigned struct_msqid_ds_sz;
+  extern unsigned struct_mq_attr_sz;
   extern unsigned struct_statvfs_sz;
   extern unsigned struct_statvfs64_sz;
 
