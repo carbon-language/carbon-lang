@@ -1291,6 +1291,19 @@ entry:
   ret <2 x i64> %vecinit2
 }
 
+declare <1 x i8> @llvm.aarch64.neon.vsqadd.v1i8(<1 x i8>, <1 x i8>)
+
+; This case tests the copy of two FPR8 registers, which is implemented by fmov
+; of two FPR32 registers.
+define <1 x i8> @test_copy_FPR8_FPR8(<1 x i8> %a, <1 x i8> %b) {
+; CHECK-LABEL: test_copy_FPR8_FPR8:
+; CHECK: usqadd b1, b0
+; CHECK-NEXT: fmov s0, s1
+entry:
+ %vsqadd2.i = call <1 x i8> @llvm.aarch64.neon.vsqadd.v1i8(<1 x i8> %b, <1 x i8> %a)
+ ret <1 x i8> %vsqadd2.i
+}
+
 declare <1 x i16> @llvm.aarch64.neon.vsqadd.v1i16(<1 x i16>, <1 x i16>)
 
 define <1 x i16> @test_copy_FPR16_FPR16(<1 x i16> %a, <1 x i16> %b) {

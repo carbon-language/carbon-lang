@@ -132,6 +132,16 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
         .addImm(16);
       return;
     }
+  } else if (AArch64::FPR8RegClass.contains(DestReg, SrcReg)) {
+    // The copy of two FPR8 registers is implemented by the copy of two FPR32
+    const TargetRegisterInfo *TRI = &getRegisterInfo();
+    unsigned Dst = TRI->getMatchingSuperReg(DestReg, AArch64::sub_8,
+                                            &AArch64::FPR32RegClass);
+    unsigned Src = TRI->getMatchingSuperReg(SrcReg, AArch64::sub_8,
+                                            &AArch64::FPR32RegClass);
+    BuildMI(MBB, I, DL, get(AArch64::FMOVss), Dst)
+      .addReg(Src);
+    return;
   } else if (AArch64::FPR16RegClass.contains(DestReg, SrcReg)) {
     // The copy of two FPR16 registers is implemented by the copy of two FPR32
     const TargetRegisterInfo *TRI = &getRegisterInfo();
