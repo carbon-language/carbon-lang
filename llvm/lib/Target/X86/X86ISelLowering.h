@@ -340,7 +340,9 @@ namespace llvm {
       VBROADCAST,
       // masked broadcast
       VBROADCASTM,
+      // Insert/Extract vector element
       VINSERT,
+      VEXTRACT,
 
       // PMULUDQ - Vector multiply packed unsigned doubleword integers
       PMULUDQ,

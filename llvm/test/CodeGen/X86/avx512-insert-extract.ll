@@ -117,3 +117,20 @@ define <16 x i32> @test11(<16 x i32>%a, <16 x i32>%b) {
    %c = add <16 x i32>%b, %a
    ret <16 x i32>%c
 }
+
+;CHECK-LABEL: test12
+;CHECK: vpcmpgtq
+;CKECK: kshiftlw $15
+;CKECK: kshiftrw $15
+;CHECK: kortestw
+;CHECK: ret
+
+define i64 @test12(<16 x i64>%a, <16 x i64>%b, i64 %a1, i64 %b1) {
+
+  %cmpvector_func.i = icmp slt <16 x i64> %a, %b
+  %extract24vector_func.i = extractelement <16 x i1> %cmpvector_func.i, i32 0
+  %res = select i1 %extract24vector_func.i, i64 %a1, i64 %b1
+  ret i64 %res
+}
+
+

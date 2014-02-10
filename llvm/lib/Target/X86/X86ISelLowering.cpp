@@ -7751,14 +7751,12 @@ static SDValue ExtractBitFromMaskVector(SDValue Op, SelectionDAG &DAG) {
   }
 
   unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
-  if (IdxVal) {
-    unsigned MaxSift = VecVT.getSizeInBits() - 1;
-    Vec = DAG.getNode(X86ISD::VSHLI, dl, VecVT, Vec,
-                      DAG.getConstant(MaxSift - IdxVal, MVT::i8));
-    Vec = DAG.getNode(X86ISD::VSRLI, dl, VecVT, Vec,
-                      DAG.getConstant(MaxSift, MVT::i8));
-  }
-  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i1, Vec,
+  unsigned MaxSift = VecVT.getSizeInBits() - 1;
+  Vec = DAG.getNode(X86ISD::VSHLI, dl, VecVT, Vec,
+                    DAG.getConstant(MaxSift - IdxVal, MVT::i8));
+  Vec = DAG.getNode(X86ISD::VSRLI, dl, VecVT, Vec,
+                    DAG.getConstant(MaxSift, MVT::i8));
+  return DAG.getNode(X86ISD::VEXTRACT, dl, MVT::i1, Vec,
                        DAG.getIntPtrConstant(0));
 }
 

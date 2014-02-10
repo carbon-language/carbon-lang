@@ -983,9 +983,9 @@ let Predicates = [HasAVX512] in {
               (KMOVWrk (COPY_TO_REGCLASS VK8:$src, VK16)),
               sub_8bit)>;
 
-  def : Pat<(i1 (extractelt VK16:$src, (iPTR 0))),
+  def : Pat<(i1 (X86Vextract VK16:$src, (iPTR 0))),
             (COPY_TO_REGCLASS VK16:$src, VK1)>;
-  def : Pat<(i1 (extractelt VK8:$src, (iPTR 0))),
+  def : Pat<(i1 (X86Vextract VK8:$src, (iPTR 0))),
             (COPY_TO_REGCLASS VK8:$src, VK1)>;
 
 }
