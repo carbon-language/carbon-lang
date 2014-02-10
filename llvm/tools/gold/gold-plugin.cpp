@@ -153,8 +153,7 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
         switch (tv->tv_u.tv_val) {
           case LDPO_REL:  // .o
           case LDPO_DYN:  // .so
-          // FIXME: Replace 3 with LDPO_PIE once that is in a released binutils.
-          case 3: // position independent executable
+          case LDPO_PIE:  // position independent executable
             output_type = LTO_CODEGEN_PIC_MODEL_DYNAMIC;
             break;
           case LDPO_EXEC:  // .exe
