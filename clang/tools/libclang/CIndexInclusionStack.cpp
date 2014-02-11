@@ -24,7 +24,7 @@ using namespace clang;
 extern "C" {
 void clang_getInclusions(CXTranslationUnit TU, CXInclusionVisitor CB,
                          CXClientData clientData) {
-  if (cxtu::isNotUseableTU(TU)) {
+  if (cxtu::isNotUsableTU(TU)) {
     LOG_BAD_TU(TU);
     return;
   }

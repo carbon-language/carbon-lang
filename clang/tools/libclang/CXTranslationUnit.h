@@ -46,7 +46,7 @@ static inline ASTUnit *getASTUnit(CXTranslationUnit TU) {
   return TU->TheASTUnit;
 }
 
-static inline bool isNotUseableTU(CXTranslationUnit TU) {
+static inline bool isNotUsableTU(CXTranslationUnit TU) {
   return !TU;
 }
 

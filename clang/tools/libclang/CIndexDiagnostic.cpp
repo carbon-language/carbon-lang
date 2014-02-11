@@ -208,7 +208,7 @@ CXDiagnosticSetImpl *cxdiag::lazyCreateDiags(CXTranslationUnit TU,
 extern "C" {
 
 unsigned clang_getNumDiagnostics(CXTranslationUnit Unit) {
-  if (cxtu::isNotUseableTU(Unit)) {
+  if (cxtu::isNotUsableTU(Unit)) {
     LOG_BAD_TU(Unit);
     return 0;
   }
@@ -218,7 +218,7 @@ unsigned clang_getNumDiagnostics(CXTranslationUnit Unit) {
 }
 
 CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit, unsigned Index) {
-  if (cxtu::isNotUseableTU(Unit)) {
+  if (cxtu::isNotUsableTU(Unit)) {
     LOG_BAD_TU(Unit);
     return 0;
   }
@@ -235,7 +235,7 @@ CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit, unsigned Index) {
 }
 
 CXDiagnosticSet clang_getDiagnosticSetFromTU(CXTranslationUnit Unit) {
-  if (cxtu::isNotUseableTU(Unit)) {
+  if (cxtu::isNotUsableTU(Unit)) {
     LOG_BAD_TU(Unit);
     return 0;
   }

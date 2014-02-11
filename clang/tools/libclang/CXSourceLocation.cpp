@@ -122,7 +122,7 @@ CXSourceLocation clang_getLocation(CXTranslationUnit TU,
                                    CXFile file,
                                    unsigned line,
                                    unsigned column) {
-  if (cxtu::isNotUseableTU(TU)) {
+  if (cxtu::isNotUsableTU(TU)) {
     LOG_BAD_TU(TU);
     return clang_getNullLocation();
   }
@@ -155,7 +155,7 @@ CXSourceLocation clang_getLocation(CXTranslationUnit TU,
 CXSourceLocation clang_getLocationForOffset(CXTranslationUnit TU,
                                             CXFile file,
                                             unsigned offset) {
-  if (cxtu::isNotUseableTU(TU)) {
+  if (cxtu::isNotUsableTU(TU)) {
     LOG_BAD_TU(TU);
     return clang_getNullLocation();
   }
