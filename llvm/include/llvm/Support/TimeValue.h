@@ -74,8 +74,7 @@ namespace sys {
       MILLISECONDS_PER_SECOND = 1000,       ///< One Thousand
       NANOSECONDS_PER_MICROSECOND = 1000,   ///< One Thousand
       NANOSECONDS_PER_MILLISECOND = 1000000,///< One Million
-      NANOSECONDS_PER_POSIX_TICK = 100,     ///< Posix tick is 100 Hz (10ms)
-      NANOSECONDS_PER_WIN32_TICK = 100      ///< Win32 tick is 100 Hz (10ms)
+      NANOSECONDS_PER_WIN32_TICK = 100      ///< Win32 tick is 10^7 Hz (10ns)
     };
 
   /// @}
@@ -234,15 +233,6 @@ namespace sys {
     uint64_t msec() const {
       return seconds_ * MILLISECONDS_PER_SECOND +
              ( nanos_ / NANOSECONDS_PER_MILLISECOND );
-    }
-
-    /// Converts the TimeValue into the corresponding number of "ticks" for
-    /// Posix, correcting for the difference in Posix zero time.
-    /// @brief Convert to unix time (100 nanoseconds since 12:00:00a Jan 1,1970)
-    uint64_t toPosixTime() const {
-      uint64_t result = seconds_ - PosixZeroTimeSeconds;
-      result += nanos_ / NANOSECONDS_PER_POSIX_TICK;
-      return result;
     }
 
     /// Converts the TimeValue into the corresponding number of seconds
