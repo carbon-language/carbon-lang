@@ -298,7 +298,7 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
   if (Name == ".eh_frame")
     PaddingSize = 4;
 
-  unsigned Allocate;
+  uintptr_t Allocate;
   unsigned SectionID = Sections.size();
   uint8_t *Addr;
   const char *pData = 0;
