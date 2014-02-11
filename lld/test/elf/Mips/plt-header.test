@@ -14,14 +14,14 @@
 # EXE: Disassembly of section .plt:
 # EXE: .plt:
 # PLT0 entry. Points to the .got.plt[0]
-# EXE:   400170:  40 00 1c 3c  lui     $gp, 64
-# EXE:   400174:  00 20 99 8f  lw      $25, 8192($gp)
-# EXE:   400178:  00 20 9c 27  addiu   $gp, $gp, 8192
-# EXE:   40017c:  23 c0 1c 03  subu    $24, $24, $gp
-# EXE:   400180:  21 78 e0 03  move    $15, $ra
-# EXE:   400184:  82 c0 18 00  srl     $24, $24, 2
-# EXE:   400188:  09 f8 20 03  jalr    $25
-# EXE:   40018c:  fe ff 18 27  addiu   $24, $24, -2
+# EXE-NEXT:   400170:  40 00 1c 3c  lui     $gp, 64
+# EXE-NEXT:   400174:  00 20 99 8f  lw      $25, 8192($gp)
+# EXE-NEXT:   400178:  00 20 9c 27  addiu   $gp, $gp, 8192
+# EXE-NEXT:   40017c:  23 c0 1c 03  subu    $24, $24, $gp
+# EXE-NEXT:   400180:  21 78 e0 03  move    $15, $ra
+# EXE-NEXT:   400184:  82 c0 18 00  srl     $24, $24, 2
+# EXE-NEXT:   400188:  09 f8 20 03  jalr    $25
+# EXE-NEXT:   40018c:  fe ff 18 27  addiu   $24, $24, -2
 
 # EXE: Sections:
 # EXE: Idx Name          Size      Address          Type

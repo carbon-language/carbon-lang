@@ -7,22 +7,22 @@
 
 # CHECK: DynamicSection [ (15 entries)
 # CHECK:   Tag        Type                 Name/Value
-# CHECK:   0x00000004 HASH                 0x400104
-# CHECK:   0x00000005 STRTAB               0x400124
-# CHECK:   0x00000006 SYMTAB               0x400114
-# CHECK:   0x0000000A STRSZ                1 (bytes)
-# CHECK:   0x0000000B SYMENT               16 (bytes)
-# CHECK:   0x0000001A FINI_ARRAY           0x0
-# CHECK:   0x0000001C FINI_ARRAYSZ         0 (bytes)
-# CHECK:   0x70000001 MIPS_RLD_VERSION     1
-# CHECK:   0x70000005 MIPS_FLAGS           0x2
-# CHECK:   0x70000006 MIPS_BASE_ADDRESS    0x400000
-# CHECK:   0x7000000A MIPS_LOCAL_GOTNO     2
-# CHECK:   0x70000011 MIPS_SYMTABNO        1
-# CHECK:   0x70000013 MIPS_GOTSYM          0x1
-# CHECK:   0x00000003 PLTGOT               0x401000
-# CHECK:   0x00000000 NULL                 0x0
-# CHECK: ]
+# CHECK-NEXT:   0x00000004 HASH                 0x400104
+# CHECK-NEXT:   0x00000005 STRTAB               0x400124
+# CHECK-NEXT:   0x00000006 SYMTAB               0x400114
+# CHECK-NEXT:   0x0000000A STRSZ                1 (bytes)
+# CHECK-NEXT:   0x0000000B SYMENT               16 (bytes)
+# CHECK-NEXT:   0x0000001A FINI_ARRAY           0x0
+# CHECK-NEXT:   0x0000001C FINI_ARRAYSZ         0 (bytes)
+# CHECK-NEXT:   0x70000001 MIPS_RLD_VERSION     1
+# CHECK-NEXT:   0x70000005 MIPS_FLAGS           0x2
+# CHECK-NEXT:   0x70000006 MIPS_BASE_ADDRESS    0x400000
+# CHECK-NEXT:   0x7000000A MIPS_LOCAL_GOTNO     2
+# CHECK-NEXT:   0x70000011 MIPS_SYMTABNO        1
+# CHECK-NEXT:   0x70000013 MIPS_GOTSYM          0x1
+# CHECK-NEXT:   0x00000003 PLTGOT               0x401000
+# CHECK-NEXT:   0x00000000 NULL                 0x0
+# CHECK-NEXT: ]
 
 # CHECK: ProgramHeaders [
 # CHECK:   ProgramHeader {

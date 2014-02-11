@@ -5,12 +5,13 @@
 
 # CHECK: Disassembly of section .text:
 # CHECK: glob1:
-# CHECK:   134:  01 00 01 8c  lw      $1, 1($zero)
-# CHECK:   138:  01 00 02 8c  lw      $2, 1($zero)
-# CHECK:   13c:  b8 8e 21 24  addiu   $1, $1, -29000
-# CHECK:   140:  01 00 01 8c  lw      $1, 1($zero)
-# CHECK:   144:  01 00 02 8c  lw      $2, 1($zero)
-# CHECK:   148:  ac 8e 21 24  addiu   $1, $1, -29012
+# CHECK-NEXT:   134:  01 00 01 8c  lw      $1, 1($zero)
+# CHECK-NEXT:   138:  01 00 02 8c  lw      $2, 1($zero)
+# CHECK-NEXT:   13c:  b8 8e 21 24  addiu   $1, $1, -29000
+# CHECK: glob2:
+# CHECK-NEXT:   140:  01 00 01 8c  lw      $1, 1($zero)
+# CHECK-NEXT:   144:  01 00 02 8c  lw      $2, 1($zero)
+# CHECK-NEXT:   148:  ac 8e 21 24  addiu   $1, $1, -29012
 
 # CHECK: Sections:
 # CHECK: Idx Name  Size      Address          Type
