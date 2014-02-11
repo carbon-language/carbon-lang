@@ -3118,7 +3118,6 @@ bool XCore::hasBlocksRuntime() const {
   return false;
 }
 
-
 void XCore::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                       ArgStringList &CC1Args) const {
   if (DriverArgs.hasArg(options::OPT_nostdinc) ||
