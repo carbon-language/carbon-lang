@@ -177,3 +177,41 @@ if.then:
 if.end:
   ret void
 }
+
+define void @test10(i32 %a) nounwind {
+  %1 = and i32 %a, 2
+  %2 = icmp eq i32 %1, 0
+  %3 = icmp ult i32 %a, 4
+  %or.cond = and i1 %2, %3
+  br i1 %or.cond, label %if.then, label %if.end
+
+; CHECK-LABEL: @test10(
+; CHECK-NEXT: %1 = icmp ult i32 %a, 2
+; CHECK-NEXT: br i1 %1, label %if.then, label %if.end
+
+if.then:
+  tail call void @foo() nounwind
+  ret void
+
+if.end:
+  ret void
+}
+
+define void @test11(i32 %a) nounwind {
+  %1 = and i32 %a, 2
+  %2 = icmp ne i32 %1, 0
+  %3 = icmp ugt i32 %a, 3
+  %or.cond = or i1 %2, %3
+  br i1 %or.cond, label %if.then, label %if.end
+
+; CHECK-LABEL: @test11(
+; CHECK-NEXT: %1 = icmp ugt i32 %a, 1
+; CHECK-NEXT: br i1 %1, label %if.then, label %if.end
+
+if.then:
+  tail call void @foo() nounwind
+  ret void
+
+if.end:
+  ret void
+}
