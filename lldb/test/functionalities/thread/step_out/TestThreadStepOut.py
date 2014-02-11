@@ -18,7 +18,7 @@ class ThreadStepOutTestCase(TestBase):
         self.buildDsym(dictionary=self.getBuildFlags())
         self.step_out_test(self.step_out_single_thread_with_cmd)
 
-    @expectedFailureFreeBSD("llvm.org/pr17910") # fails to build
+    @expectedFailureFreeBSD("llvm.org/pr18066") # inferior does not exit
     @dwarf_test
     def test_step_single_thread_with_dwarf(self):
         """Test thread step out on one thread via command interpreter. """
