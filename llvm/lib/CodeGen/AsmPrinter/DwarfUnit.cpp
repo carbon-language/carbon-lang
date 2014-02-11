@@ -24,6 +24,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/CommandLine.h"
@@ -476,12 +477,44 @@ void DwarfUnit::addVariableAddress(const DbgVariable &DV, DIE *Die,
 /// addRegisterOp - Add register operand.
 void DwarfUnit::addRegisterOp(DIEBlock *TheDie, unsigned Reg) {
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
-  unsigned DWReg = RI->getDwarfRegNum(Reg, false);
+  int DWReg = RI->getDwarfRegNum(Reg, false);
+  bool isSubRegister = DWReg < 0;
+
+  unsigned Idx = 0;
+
+  // Go up the super-register chain until we hit a valid dwarf register number.
+  for (MCSuperRegIterator SR(Reg, RI); SR.isValid() && DWReg < 0; ++SR) {
+    DWReg = RI->getDwarfRegNum(*SR, false);
+    if (DWReg >= 0)
+      Idx = RI->getSubRegIndex(*SR, Reg);
+  }
+
+  if (DWReg < 0) {
+    DEBUG(llvm::dbgs() << "Invalid Dwarf register number.\n");
+    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_nop);
+    return;
+  }
+
+  // Emit register
   if (DWReg < 32)
     addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_reg0 + DWReg);
   else {
     addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_regx);
     addUInt(TheDie, dwarf::DW_FORM_udata, DWReg);
+  }
+
+  // Emit Mask
+  if (isSubRegister) {
+    unsigned Size = RI->getSubRegIdxSize(Idx);
+    unsigned Offset = RI->getSubRegIdxOffset(Idx);
+    if (Offset > 0) {
+      addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_bit_piece);
+      addUInt(TheDie, dwarf::DW_FORM_data1, Size);
+      addUInt(TheDie, dwarf::DW_FORM_data1, Offset);
+    } else {
+      addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_piece);
+      addUInt(TheDie, dwarf::DW_FORM_data1, Size);
+    }
   }
 }
 
