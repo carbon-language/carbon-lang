@@ -79,9 +79,6 @@ protected:
     // IOHandler::Delegate functions
     //------------------------------------------------------------------
     virtual void
-    IOHandlerActivated (IOHandler &io_handler);
-
-    virtual void
     IOHandlerInputComplete (IOHandler &io_handler,
                             std::string &line);
 
