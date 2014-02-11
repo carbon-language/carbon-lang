@@ -283,8 +283,10 @@ void SILowerControlFlowPass::EndCf(MachineInstr &MI) {
 }
 
 void SILowerControlFlowPass::Branch(MachineInstr &MI) {
-  assert(MI.getOperand(0).getMBB() == MI.getParent()->getNextNode());
-  MI.eraseFromParent();
+  if (MI.getOperand(0).getMBB() == MI.getParent()->getNextNode())
+    MI.eraseFromParent();
+
+  // If these aren't equal, this is probably an infinite loop.
 }
 
 void SILowerControlFlowPass::Kill(MachineInstr &MI) {
