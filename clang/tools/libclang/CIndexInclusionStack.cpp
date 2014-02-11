@@ -24,7 +24,11 @@ using namespace clang;
 extern "C" {
 void clang_getInclusions(CXTranslationUnit TU, CXInclusionVisitor CB,
                          CXClientData clientData) {
-  
+  if (cxtu::isNotUseableTU(TU)) {
+    LOG_BAD_TU(TU);
+    return;
+  }
+
   ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   SourceManager &SM = CXXUnit->getSourceManager();
   ASTContext &Ctx = CXXUnit->getASTContext();

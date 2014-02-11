@@ -15,6 +15,7 @@
 #define LLVM_CLANG_CXTRANSLATIONUNIT_H
 
 #include "CXString.h"
+#include "CLog.h"
 #include "clang-c/Index.h"
 
 namespace clang {
@@ -44,6 +45,17 @@ static inline ASTUnit *getASTUnit(CXTranslationUnit TU) {
     return 0;
   return TU->TheASTUnit;
 }
+
+static inline bool isNotUseableTU(CXTranslationUnit TU) {
+  return !TU;
+}
+
+#define LOG_BAD_TU(TU)                                  \
+    do {                                                \
+      LOG_FUNC_SECTION {                                \
+        *Log << "called with a bad TU: " << TU;         \
+      }                                                 \
+    } while(false)
 
 class CXTUOwner {
   CXTranslationUnitImpl *TU;

@@ -680,7 +680,12 @@ void clang_codeCompleteAt_Impl(void *UserData) {
 #endif
 
   bool EnableLogging = getenv("LIBCLANG_CODE_COMPLETION_LOGGING") != 0;
-  
+
+  if (cxtu::isNotUseableTU(TU)) {
+    LOG_BAD_TU(TU);
+    return;
+  }
+
   ASTUnit *AST = cxtu::getASTUnit(TU);
   if (!AST)
     return;

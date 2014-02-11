@@ -756,8 +756,10 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
   unsigned index_options = ITUI->index_options;
   ITUI->result = 1; // init as error.
 
-  if (!TU)
+  if (isNotUseableTU(TU)) {
+    LOG_BAD_TU(TU);
     return;
+  }
   if (!client_index_callbacks || index_callbacks_size == 0)
     return;
 
