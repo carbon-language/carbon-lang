@@ -778,7 +778,7 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
     // is not okay to use line_table_start here.
     if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
       NewCU->addSectionLabel(Die, dwarf::DW_AT_stmt_list,
-                             UseTheFirstCU ? Asm->GetTempSymbol("section_line")
+                             UseTheFirstCU ? DwarfLineSectionSym
                                            : LineTableStartSym);
     else if (UseTheFirstCU)
       NewCU->addSectionOffset(Die, dwarf::DW_AT_stmt_list, 0);
