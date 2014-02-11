@@ -288,7 +288,7 @@ void Sema::ActOnPragmaDetectMismatch(StringRef Name, StringRef Value) {
 }
 
 void Sema::ActOnPragmaMSPointersToMembers(
-    PragmaMSPointersToMembersKind RepresentationMethod,
+    LangOptions::PragmaMSPointersToMembersKind RepresentationMethod,
     SourceLocation PragmaLoc) {
   MSPointerToMemberRepresentationMethod = RepresentationMethod;
   ImplicitMSInheritanceAttrLoc = PragmaLoc;

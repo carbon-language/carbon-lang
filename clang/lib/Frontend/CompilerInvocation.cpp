@@ -1402,6 +1402,24 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     }
   }
 
+  if (Arg *A = Args.getLastArg(OPT_fms_memptr_rep_EQ)) {
+    LangOptions::PragmaMSPointersToMembersKind InheritanceModel =
+        llvm::StringSwitch<LangOptions::PragmaMSPointersToMembersKind>(
+            A->getValue())
+            .Case("single",
+                  LangOptions::PPTMK_FullGeneralitySingleInheritance)
+            .Case("multiple",
+                  LangOptions::PPTMK_FullGeneralityMultipleInheritance)
+            .Case("virtual",
+                  LangOptions::PPTMK_FullGeneralityVirtualInheritance)
+            .Default(LangOptions::PPTMK_BestCase);
+    if (InheritanceModel == LangOptions::PPTMK_BestCase)
+      Diags.Report(diag::err_drv_invalid_value)
+          << "-fms-memptr-rep=" << A->getValue();
+
+    Opts.setMSPointerToMemberRepresentationMethod(InheritanceModel);
+  }
+
   // Check if -fopenmp is specified.
   Opts.OpenMP = Args.hasArg(OPT_fopenmp);
 

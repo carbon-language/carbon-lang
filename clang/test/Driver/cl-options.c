@@ -67,6 +67,24 @@
 // RUN: %clang_cl /U mymacro -### -- %s 2>&1 | FileCheck -check-prefix=U %s
 // U: "-U" "mymacro"
 
+// RUN: %clang_cl /vmg -### -- %s 2>&1 | FileCheck -check-prefix=VMG %s
+// VMG: "-fms-memptr-rep=virtual"
+
+// RUN: %clang_cl /vmg /vms -### -- %s 2>&1 | FileCheck -check-prefix=VMS %s
+// VMS: "-fms-memptr-rep=single"
+
+// RUN: %clang_cl /vmg /vmm -### -- %s 2>&1 | FileCheck -check-prefix=VMM %s
+// VMM: "-fms-memptr-rep=multiple"
+
+// RUN: %clang_cl /vmg /vmv -### -- %s 2>&1 | FileCheck -check-prefix=VMV %s
+// VMV: "-fms-memptr-rep=virtual"
+
+// RUN: %clang_cl /vmg /vmb -### -- %s 2>&1 | FileCheck -check-prefix=VMB %s
+// VMB: '/vmg' not allowed with '/vmb'
+
+// RUN: %clang_cl /vmg /vmm /vms -### -- %s 2>&1 | FileCheck -check-prefix=VMX %s
+// VMX: '/vms' not allowed with '/vmm'
+
 // RUN: %clang_cl /W0 -### -- %s 2>&1 | FileCheck -check-prefix=W0 %s
 // W0: -w
 
@@ -197,10 +215,6 @@
 // RUN:     /u \
 // RUN:     /V \
 // RUN:     /vd2 \
-// RUN:     /vmb \
-// RUN:     /vmm \
-// RUN:     /vms \
-// RUN:     /vmv \
 // RUN:     /volatile \
 // RUN:     /wfoo \
 // RUN:     /WL \

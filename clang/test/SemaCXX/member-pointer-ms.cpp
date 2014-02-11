@@ -1,5 +1,6 @@
-// RUN: %clang_cc1 -std=c++11 -fms-compatibility -fsyntax-only -triple=i386-pc-win32 -verify %s
-// RUN: %clang_cc1 -std=c++11 -fms-compatibility -fsyntax-only -triple=x86_64-pc-win32 -verify %s
+// RUN: %clang_cc1 -std=c++11 -fms-compatibility -fsyntax-only -triple=i386-pc-win32 -verify -DVMB %s
+// RUN: %clang_cc1 -std=c++11 -fms-compatibility -fsyntax-only -triple=x86_64-pc-win32 -verify -DVMB %s
+// RUN: %clang_cc1 -std=c++11 -fms-compatibility -fsyntax-only -triple=x86_64-pc-win32 -verify -DVMV -fms-memptr-rep=virtual %s
 //
 // This file should also give no diagnostics when run through cl.exe from MSVS
 // 2012, which supports C++11 and static_assert.  It should pass for both 64-bit
@@ -18,6 +19,7 @@ struct Foo {
   int f;
 };
 
+#ifdef VMB
 enum {
   kSingleDataAlign             = 1 * sizeof(int),
   kSingleFunctionAlign         = 1 * sizeof(void *),
@@ -43,11 +45,47 @@ enum {
   kUnspecifiedDataSize        = 3 * sizeof(int),
   kUnspecifiedFunctionSize    = 2 * sizeof(int) + 2 * sizeof(void *),
 };
+#elif VMV
+enum {
+  // Everything with more than 1 field is 8 byte aligned, except virtual data
+  // member pointers on x64 (ugh).
+#ifdef _M_X64
+  kVirtualDataAlign = 4,
+#else
+  kVirtualDataAlign = 8,
+#endif
+  kMultipleDataAlign = kVirtualDataAlign,
+  kSingleDataAlign = kVirtualDataAlign,
+
+  kUnspecifiedFunctionAlign = 8,
+  kVirtualFunctionAlign = kUnspecifiedFunctionAlign,
+  kMultipleFunctionAlign = kUnspecifiedFunctionAlign,
+  kSingleFunctionAlign = kUnspecifiedFunctionAlign,
+
+  kUnspecifiedDataSize = 3 * sizeof(int),
+  kVirtualDataSize = kUnspecifiedDataSize,
+  kMultipleDataSize = kUnspecifiedDataSize,
+  kSingleDataSize = kUnspecifiedDataSize,
+
+  kUnspecifiedFunctionSize = 2 * sizeof(int) + 2 * sizeof(void *),
+  kVirtualFunctionSize = kUnspecifiedFunctionSize,
+  kMultipleFunctionSize = kUnspecifiedFunctionSize,
+  kSingleFunctionSize = kUnspecifiedFunctionSize,
+};
+#else
+#error "test doesn't yet support this mode!"
+#endif
 
 // incomplete types
+#ifdef VMB
 class __single_inheritance IncSingle;
 class __multiple_inheritance IncMultiple;
 class __virtual_inheritance IncVirtual;
+#else
+class IncSingle;
+class IncMultiple;
+class IncVirtual;
+#endif
 static_assert(sizeof(int IncSingle::*)        == kSingleDataSize, "");
 static_assert(sizeof(int IncMultiple::*)      == kMultipleDataSize, "");
 static_assert(sizeof(int IncVirtual::*)       == kVirtualDataSize, "");
@@ -83,9 +121,15 @@ static_assert(sizeof(void (Virtual::*)())  == kVirtualFunctionSize, "");
 
 // Test both declared and defined templates.
 template <typename T> class X;
+#ifdef VMB
 template <> class __single_inheritance   X<IncSingle>;
 template <> class __multiple_inheritance X<IncMultiple>;
 template <> class __virtual_inheritance  X<IncVirtual>;
+#else
+template <> class X<IncSingle>;
+template <> class X<IncMultiple>;
+template <> class X<IncVirtual>;
+#endif
 // Don't declare X<IncUnspecified>.
 static_assert(sizeof(int X<IncSingle>::*)           == kSingleDataSize, "");
 static_assert(sizeof(int X<IncMultiple>::*)         == kMultipleDataSize, "");
@@ -183,8 +227,10 @@ struct MemPtrInTemplate {
   void (T::*func_ptr)();
 };
 
+#ifdef VMB
 int Virtual::*CastTest = reinterpret_cast<int Virtual::*>(&AA::x);
   // expected-error@-1 {{cannot reinterpret_cast from member pointer type}}
+#endif
 
 namespace ErrorTest {
 template <typename T, typename U> struct __single_inheritance A;
@@ -202,7 +248,7 @@ struct __multiple_inheritance C {}; // expected-error{{inheritance model does no
 struct __virtual_inheritance D;
 struct D : virtual B {};
 }
-
+#ifdef VMB
 #pragma pointers_to_members(full_generality, multiple_inheritance)
 struct TrulySingleInheritance;
 static_assert(sizeof(int TrulySingleInheritance::*) == kMultipleDataSize, "");
@@ -225,3 +271,4 @@ struct SingleInheritanceAsVirtualBeforePragma {};
 static_assert(sizeof(int SingleInheritanceAsVirtualBeforePragma::*) == 12, "");
 
 #pragma pointers_to_members(single) // expected-error{{unexpected 'single'}}
+#endif

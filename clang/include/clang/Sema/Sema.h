@@ -262,15 +262,9 @@ public:
 
   bool MSStructPragmaOn; // True when \#pragma ms_struct on
 
-  enum PragmaMSPointersToMembersKind {
-    PPTMK_BestCase,
-    PPTMK_FullGeneralitySingleInheritance,
-    PPTMK_FullGeneralityMultipleInheritance,
-    PPTMK_FullGeneralityVirtualInheritance
-  };
-
   /// \brief Controls member pointer representation format under the MS ABI.
-  PragmaMSPointersToMembersKind MSPointerToMemberRepresentationMethod;
+  LangOptions::PragmaMSPointersToMembersKind
+      MSPointerToMemberRepresentationMethod;
 
   /// \brief Source location for newly created implicit MSInheritanceAttrs
   SourceLocation ImplicitMSInheritanceAttrLoc;
@@ -6986,8 +6980,9 @@ public:
   /// ActOnPragmaMSPointersToMembers - called on well formed \#pragma
   /// pointers_to_members(representation method[, general purpose
   /// representation]).
-  void ActOnPragmaMSPointersToMembers(PragmaMSPointersToMembersKind Kind,
-                                      SourceLocation PragmaLoc);
+  void ActOnPragmaMSPointersToMembers(
+      LangOptions::PragmaMSPointersToMembersKind Kind,
+      SourceLocation PragmaLoc);
 
   /// ActOnPragmaDetectMismatch - Call on well-formed \#pragma detect_mismatch
   void ActOnPragmaDetectMismatch(StringRef Name, StringRef Value);

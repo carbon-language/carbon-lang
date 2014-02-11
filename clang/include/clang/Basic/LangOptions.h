@@ -66,6 +66,13 @@ public:
     SOB_Trapping    // -ftrapv
   };
 
+  enum PragmaMSPointersToMembersKind {
+    PPTMK_BestCase,
+    PPTMK_FullGeneralitySingleInheritance,
+    PPTMK_FullGeneralityMultipleInheritance,
+    PPTMK_FullGeneralityVirtualInheritance
+  };
+
   enum AddrSpaceMapMangling { ASMM_Target, ASMM_On, ASMM_Off };
 
 public:

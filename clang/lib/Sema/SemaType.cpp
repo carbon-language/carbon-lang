@@ -5087,17 +5087,17 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
             MSInheritanceAttr::Spelling InheritanceModel;
 
             switch (MSPointerToMemberRepresentationMethod) {
-            case PPTMK_BestCase:
+            case LangOptions::PPTMK_BestCase:
               InheritanceModel = RD->calculateInheritanceModel();
               break;
-            case PPTMK_FullGeneralitySingleInheritance:
+            case LangOptions::PPTMK_FullGeneralitySingleInheritance:
               InheritanceModel = MSInheritanceAttr::Keyword_single_inheritance;
               break;
-            case PPTMK_FullGeneralityMultipleInheritance:
+            case LangOptions::PPTMK_FullGeneralityMultipleInheritance:
               InheritanceModel =
                   MSInheritanceAttr::Keyword_multiple_inheritance;
               break;
-            case PPTMK_FullGeneralityVirtualInheritance:
+            case LangOptions::PPTMK_FullGeneralityVirtualInheritance:
               InheritanceModel =
                   MSInheritanceAttr::Keyword_unspecified_inheritance;
               break;
@@ -5106,7 +5106,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
             RD->addAttr(MSInheritanceAttr::CreateImplicit(
                 getASTContext(), InheritanceModel,
                 /*BestCase=*/MSPointerToMemberRepresentationMethod ==
-                    PPTMK_BestCase,
+                    LangOptions::PPTMK_BestCase,
                 ImplicitMSInheritanceAttrLoc.isValid()
                     ? ImplicitMSInheritanceAttrLoc
                     : RD->getSourceRange()));

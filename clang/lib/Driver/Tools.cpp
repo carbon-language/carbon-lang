@@ -4021,6 +4021,33 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   if (Arg *A = Args.getLastArg(options::OPT_show_includes))
     A->render(Args, CmdArgs);
 
+  const Driver &D = getToolChain().getDriver();
+  Arg *MostGeneralArg = Args.getLastArg(options::OPT__SLASH_vmg);
+  Arg *BestCaseArg = Args.getLastArg(options::OPT__SLASH_vmb);
+  if (MostGeneralArg && BestCaseArg)
+    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+        << MostGeneralArg->getAsString(Args) << BestCaseArg->getAsString(Args);
+
+  if (MostGeneralArg) {
+    Arg *SingleArg = Args.getLastArg(options::OPT__SLASH_vms);
+    Arg *MultipleArg = Args.getLastArg(options::OPT__SLASH_vmm);
+    Arg *VirtualArg = Args.getLastArg(options::OPT__SLASH_vmv);
+
+    Arg *FirstConflict = SingleArg ? SingleArg : MultipleArg;
+    Arg *SecondConflict = VirtualArg ? VirtualArg : MultipleArg;
+    if (FirstConflict && SecondConflict && FirstConflict != SecondConflict)
+      D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+          << FirstConflict->getAsString(Args)
+          << SecondConflict->getAsString(Args);
+
+    if (SingleArg)
+      CmdArgs.push_back("-fms-memptr-rep=single");
+    else if (MultipleArg)
+      CmdArgs.push_back("-fms-memptr-rep=multiple");
+    else
+      CmdArgs.push_back("-fms-memptr-rep=virtual");
+  }
+
   if (!Args.hasArg(options::OPT_fdiagnostics_format_EQ)) {
     CmdArgs.push_back("-fdiagnostics-format");
     if (Args.hasArg(options::OPT__SLASH_fallback))
