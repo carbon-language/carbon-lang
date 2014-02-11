@@ -2211,12 +2211,19 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
     // will tell us if the addressing mode for the memory operation will
     // *actually* cover the shared instruction.
     ExtAddrMode Result;
+    TypePromotionTransaction::ConstRestorationPt LastKnownGood =
+        TPT.getRestorationPoint();
     AddressingModeMatcher Matcher(MatchedAddrModeInsts, TLI, AddressAccessTy,
                                   MemoryInst, Result, InsertedTruncs,
                                   PromotedInsts, TPT);
     Matcher.IgnoreProfitability = true;
     bool Success = Matcher.MatchAddr(Address, 0);
     (void)Success; assert(Success && "Couldn't select *anything*?");
+
+    // The match was to check the profitability, the changes made are not
+    // part of the original matcher. Therefore, they should be dropped
+    // otherwise the original matcher will not present the right state.
+    TPT.rollback(LastKnownGood);
 
     // If the match didn't cover I, then it won't be shared by it.
     if (std::find(MatchedAddrModeInsts.begin(), MatchedAddrModeInsts.end(),
