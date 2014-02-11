@@ -29,9 +29,9 @@ target triple = "x86_64-apple-macosx"
 ; CHECK-LABEL: entry:
 ; CHECK-LABEL: for.cond1.preheader:
 ; CHECK-LABEL: for.body3:
-; CHECK: %cmp4
-; CHECK: %conv = zext i1 %cmp4 to i32
-; CHECK: %xor = xor i32 %conv6, 1
+; CHECK: %cmp4.le.le
+; CHECK: %conv.le.le = zext i1 %cmp4.le.le to i32
+; CHECK: %xor.le.le = xor i32 %conv6.le.le, 1
 define void @foo() {
 entry:
   br label %for.cond

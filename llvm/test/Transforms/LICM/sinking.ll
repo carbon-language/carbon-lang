@@ -53,7 +53,7 @@ Exit:
         
 ; CHECK-LABEL: @test3(
 ; CHECK:     Exit.loopexit:
-; CHECK-NEXT:  %X = add i32 0, 1
+; CHECK-NEXT:  %X.le = add i32 0, 1
 ; CHECK-NEXT:  br label %Exit
 
 }
@@ -78,7 +78,7 @@ Out:		; preds = %Loop
 ; CHECK:     Out:
 ; CHECK-NEXT:  %[[LCSSAPHI:.*]] = phi i32 [ %N_addr.0.pn
 ; CHECK-NEXT:  mul i32 %N, %[[LCSSAPHI]]
-; CHECK-NEXT:  sub i32 %tmp.6, %N
+; CHECK-NEXT:  sub i32 %tmp.6.le, %N
 ; CHECK-NEXT:  ret i32
 }
 
@@ -101,8 +101,8 @@ Out:		; preds = %Loop
 	ret i32 %tmp.6
 ; CHECK-LABEL: @test5(
 ; CHECK:     Out:
-; CHECK-NEXT:  %tmp.6 = load i32* @X
-; CHECK-NEXT:  ret i32 %tmp.6
+; CHECK-NEXT:  %tmp.6.le = load i32* @X
+; CHECK-NEXT:  ret i32 %tmp.6.le
 }
 
 
@@ -125,9 +125,9 @@ Out:		; preds = %Loop
 	ret i32 %sunk2
 ; CHECK-LABEL: @test6(
 ; CHECK:     Out:
-; CHECK-NEXT:  %dead = getelementptr %Ty* @X2, i64 0, i32 0
-; CHECK-NEXT:  %sunk2 = load i32* %dead
-; CHECK-NEXT:  ret i32 %sunk2
+; CHECK-NEXT:  %dead.le = getelementptr %Ty* @X2, i64 0, i32 0
+; CHECK-NEXT:  %sunk2.le = load i32* %dead.le
+; CHECK-NEXT:  ret i32 %sunk2.le
 }
 
 
@@ -155,12 +155,12 @@ Out2:		; preds = %ContLoop
 ; CHECK:     Out1:
 ; CHECK-NEXT:  %[[LCSSAPHI:.*]] = phi i32 [ %N_addr.0.pn
 ; CHECK-NEXT:  mul i32 %N, %[[LCSSAPHI]]
-; CHECK-NEXT:  sub i32 %tmp.6, %N
+; CHECK-NEXT:  sub i32 %tmp.6.le, %N
 ; CHECK-NEXT:  ret
 ; CHECK:     Out2:
 ; CHECK-NEXT:  %[[LCSSAPHI:.*]] = phi i32 [ %N_addr.0.pn
 ; CHECK-NEXT:  mul i32 %N, %[[LCSSAPHI]]
-; CHECK-NEXT:  sub i32 %tmp.6.le, %N
+; CHECK-NEXT:  sub i32 %tmp.6.le4, %N
 ; CHECK-NEXT:  ret
 }
 
@@ -187,8 +187,8 @@ exit2:		; preds = %Cont
 ; CHECK-NEXT:  ret i32 0
 ; CHECK:     exit2:
 ; CHECK-NEXT:  %[[LCSSAPHI:.*]] = phi i32 [ %X
-; CHECK-NEXT:  %V = add i32 %[[LCSSAPHI]], 1
-; CHECK-NEXT:  ret i32 %V
+; CHECK-NEXT:  %V.le = add i32 %[[LCSSAPHI]], 1
+; CHECK-NEXT:  ret i32 %V.le
 }
 
 
@@ -212,7 +212,7 @@ return.i:		; preds = %no_exit.1.i
 
 ; CHECK-LABEL: @test9(
 ; CHECK: loopentry.3.i.preheader.loopexit:
-; CHECK-NEXT:  %inc.1.i = add i32 0, 1
+; CHECK-NEXT:  %inc.1.i.le = add i32 0, 1
 ; CHECK-NEXT:  br label %loopentry.3.i.preheader
 }
 
@@ -234,8 +234,8 @@ Out:		; preds = %Loop
 ; CHECK-LABEL: @test10(
 ; CHECK: Out: 
 ; CHECK-NEXT:  %[[LCSSAPHI:.*]] = phi i32 [ %N_addr.0.pn
-; CHECK-NEXT:  %tmp.6 = sdiv i32 %N, %[[LCSSAPHI]]
-; CHECK-NEXT:  ret i32 %tmp.6
+; CHECK-NEXT:  %tmp.6.le = sdiv i32 %N, %[[LCSSAPHI]]
+; CHECK-NEXT:  ret i32 %tmp.6.le
 }
 
 ; Should delete, not sink, dead instructions.
@@ -251,4 +251,69 @@ Out:
 ; CHECK-NEXT:  ret void
 }
 
+@c = common global [1 x i32] zeroinitializer, align 4
 
+; Test a *many* way nested loop with multiple exit blocks both of which exit
+; multiple loop nests. This exercises LCSSA corner cases.
+define i32 @PR18753(i1* %a, i1* %b, i1* %c, i1* %d) {
+entry:
+  br label %l1.header
+
+l1.header:
+  %iv = phi i64 [ %iv.next, %l1.latch ], [ 0, %entry ]
+  %arrayidx.i = getelementptr inbounds [1 x i32]* @c, i64 0, i64 %iv
+  br label %l2.header
+
+l2.header:
+  %x0 = load i1* %c, align 4
+  br i1 %x0, label %l1.latch, label %l3.preheader
+
+l3.preheader:
+  br label %l3.header
+
+l3.header:
+  %x1 = load i1* %d, align 4
+  br i1 %x1, label %l2.latch, label %l4.preheader
+
+l4.preheader:
+  br label %l4.header
+
+l4.header:
+  %x2 = load i1* %a
+  br i1 %x2, label %l3.latch, label %l4.body
+
+l4.body:
+  call void @f(i32* %arrayidx.i)
+  %x3 = load i1* %b
+  %l = trunc i64 %iv to i32
+  br i1 %x3, label %l4.latch, label %exit
+
+l4.latch:
+  call void @g()
+  %x4 = load i1* %b, align 4
+  br i1 %x4, label %l4.header, label %exit
+
+l3.latch:
+  br label %l3.header
+
+l2.latch:
+  br label %l2.header
+
+l1.latch:
+  %iv.next = add nsw i64 %iv, 1
+  br label %l1.header
+
+exit:
+  %lcssa = phi i32 [ %l, %l4.latch ], [ %l, %l4.body ]
+; CHECK-LABEL: @PR18753(
+; CHECK:       exit:
+; CHECK-NEXT:    %[[LCSSAPHI:.*]] = phi i64 [ %iv, %l4.latch ], [ %iv, %l4.body ]
+; CHECK-NEXT:    %l.le = trunc i64 %[[LCSSAPHI]] to i32
+; CHECK-NEXT:    ret i32 %l.le
+
+  ret i32 %lcssa
+}
+
+declare void @f(i32*)
+
+declare void @g()
