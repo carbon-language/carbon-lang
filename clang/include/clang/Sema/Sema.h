@@ -266,7 +266,7 @@ public:
     PPTMK_BestCase,
     PPTMK_FullGeneralitySingleInheritance,
     PPTMK_FullGeneralityMultipleInheritance,
-    PPTMK_FullGeneralityVirtualInheritance,
+    PPTMK_FullGeneralityVirtualInheritance
   };
 
   /// \brief Controls member pointer representation format under the MS ABI.
