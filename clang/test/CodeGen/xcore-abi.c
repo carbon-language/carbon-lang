@@ -10,8 +10,13 @@ _Static_assert(_Alignof(double) == 4, "alignof double is wrong");
 
 // CHECK: target triple = "xcore-unknown-unknown"
 
+// CHECK: @cgx = external constant i32, section ".cp.rodata"
+extern const int cgx;
+int fcgx() { return cgx;}
 // CHECK: @g1 = global i32 0, align 4
 int g1;
+// CHECK: @cg1 = constant i32 0, section ".cp.rodata", align 4
+const int cg1;
 
 #include <stdarg.h>
 struct x { int a[5]; };
