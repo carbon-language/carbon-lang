@@ -581,7 +581,7 @@ private:
     if (I[1]->InPPDirective != (*I)->InPPDirective ||
         (I[1]->InPPDirective && I[1]->First->HasUnescapedNewline))
       return 0;
-    Limit = LimitConsideringMacros(I + 1, E, Limit);
+    Limit = limitConsideringMacros(I + 1, E, Limit);
     AnnotatedLine &Line = **I;
     if (Line.Last->isNot(tok::r_paren))
       return 0;
@@ -625,7 +625,7 @@ private:
       // Check that we still have three lines and they fit into the limit.
       if (I + 2 == E || I[2]->Type == LT_Invalid)
         return 0;
-      Limit = LimitConsideringMacros(I + 2, E, Limit);
+      Limit = limitConsideringMacros(I + 2, E, Limit);
 
       if (!nextTwoLinesFitInto(I, Limit))
         return 0;
@@ -654,7 +654,7 @@ private:
   /// Returns the modified column limit for \p I if it is inside a macro and
   /// needs a trailing '\'.
   unsigned
-  LimitConsideringMacros(SmallVectorImpl<AnnotatedLine *>::const_iterator I,
+  limitConsideringMacros(SmallVectorImpl<AnnotatedLine *>::const_iterator I,
                          SmallVectorImpl<AnnotatedLine *>::const_iterator E,
                          unsigned Limit) {
     if (I[0]->InPPDirective && I + 1 != E &&

@@ -335,8 +335,10 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
   // breaks are chosen.
   unsigned Penalty = 0;
 
-  const FormatToken *PreviousNonComment =
-      State.NextToken->getPreviousNonComment();
+  const FormatToken *PreviousNonComment = Current.getPreviousNonComment();
+  const FormatToken *NextNonComment = Previous.getNextNonComment();
+  if (!NextNonComment)
+    NextNonComment = &Current;
   // The first line break on any ParenLevel causes an extra penalty in order
   // prefer similar line breaks.
   if (!State.Stack.back().ContainsLineBreak)
@@ -345,15 +347,18 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
 
   Penalty += State.NextToken->SplitPenalty;
 
+
   // Breaking before the first "<<" is generally not desirable if the LHS is
   // short. Also always add the penalty if the LHS is split over mutliple lines
   // to avoid unncessary line breaks that just work around this penalty.
-  if (Current.is(tok::lessless) && State.Stack.back().FirstLessLess == 0 &&
+  if (NextNonComment->is(tok::lessless) &&
+      State.Stack.back().FirstLessLess == 0 &&
       (State.Column <= Style.ColumnLimit / 3 ||
        State.Stack.back().BreakBeforeParameter))
     Penalty += Style.PenaltyBreakFirstLessLess;
 
-  if (Current.is(tok::l_brace) && Current.BlockKind == BK_Block) {
+  if (NextNonComment->is(tok::l_brace) &&
+      NextNonComment->BlockKind == BK_Block) {
     State.Column =
         State.ParenLevel == 0 ? State.FirstIndent : State.Stack.back().Indent;
   } else if (Current.isOneOf(tok::r_brace, tok::r_square)) {
@@ -363,13 +368,14 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
       State.Column = State.Stack[State.Stack.size() - 2].LastSpace;
     else
       State.Column = State.FirstIndent;
-  } else if (Current.isStringLiteral() && State.StartOfStringLiteral != 0) {
+  } else if (NextNonComment->isStringLiteral() &&
+             State.StartOfStringLiteral != 0) {
     State.Column = State.StartOfStringLiteral;
     State.Stack.back().BreakBeforeParameter = true;
-  } else if (Current.is(tok::lessless) &&
+  } else if (NextNonComment->is(tok::lessless) &&
              State.Stack.back().FirstLessLess != 0) {
     State.Column = State.Stack.back().FirstLessLess;
-  } else if (Current.isMemberAccess()) {
+  } else if (NextNonComment->isMemberAccess()) {
     if (State.Stack.back().CallContinuation == 0) {
       State.Column = ContinuationIndent;
       State.Stack.back().CallContinuation = State.Column;
@@ -377,7 +383,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
       State.Column = State.Stack.back().CallContinuation;
     }
   } else if (State.Stack.back().QuestionColumn != 0 &&
-             (Current.Type == TT_ConditionalExpr ||
+             (NextNonComment->Type == TT_ConditionalExpr ||
               Previous.Type == TT_ConditionalExpr)) {
     State.Column = State.Stack.back().QuestionColumn;
   } else if (Previous.is(tok::comma) && State.Stack.back().VariablePos != 0) {
@@ -385,37 +391,38 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
   } else if ((PreviousNonComment &&
               (PreviousNonComment->ClosesTemplateDeclaration ||
                PreviousNonComment->Type == TT_AttributeParen)) ||
-             ((Current.Type == TT_StartOfName ||
-               Current.is(tok::kw_operator)) &&
+             ((NextNonComment->Type == TT_StartOfName ||
+               NextNonComment->is(tok::kw_operator)) &&
               State.ParenLevel == 0 &&
               (!Style.IndentFunctionDeclarationAfterType ||
                State.Line->StartsDefinition))) {
     State.Column =
         std::max(State.Stack.back().LastSpace, State.Stack.back().Indent);
-  } else if (Current.Type == TT_ObjCSelectorName) {
+  } else if (NextNonComment->Type == TT_ObjCSelectorName) {
     if (!State.Stack.back().ObjCSelectorNameFound) {
-      if (Current.LongestObjCSelectorName == 0) {
+      if (NextNonComment->LongestObjCSelectorName == 0) {
         State.Column = State.Stack.back().Indent;
         State.Stack.back().AlignColons = false;
       } else {
         State.Stack.back().ColonPos =
-            State.Stack.back().Indent + Current.LongestObjCSelectorName;
-        State.Column = State.Stack.back().ColonPos - Current.ColumnWidth;
+            State.Stack.back().Indent + NextNonComment->LongestObjCSelectorName;
+        State.Column =
+            State.Stack.back().ColonPos - NextNonComment->ColumnWidth;
       }
     } else if (!State.Stack.back().AlignColons) {
       State.Column = State.Stack.back().Indent;
-    } else if (State.Stack.back().ColonPos > Current.ColumnWidth) {
-      State.Column = State.Stack.back().ColonPos - Current.ColumnWidth;
+    } else if (State.Stack.back().ColonPos > NextNonComment->ColumnWidth) {
+      State.Column = State.Stack.back().ColonPos - NextNonComment->ColumnWidth;
     } else {
       State.Column = State.Stack.back().Indent;
-      State.Stack.back().ColonPos = State.Column + Current.ColumnWidth;
+      State.Stack.back().ColonPos = State.Column + NextNonComment->ColumnWidth;
     }
-  } else if (Current.Type == TT_ArraySubscriptLSquare) {
+  } else if (NextNonComment->Type == TT_ArraySubscriptLSquare) {
     if (State.Stack.back().StartOfArraySubscripts != 0)
       State.Column = State.Stack.back().StartOfArraySubscripts;
     else
       State.Column = ContinuationIndent;
-  } else if (Current.Type == TT_StartOfName ||
+  } else if (NextNonComment->Type == TT_StartOfName ||
              Previous.isOneOf(tok::coloncolon, tok::equal)) {
     State.Column = ContinuationIndent;
   } else if (PreviousNonComment &&
@@ -432,9 +439,9 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     // when we consume all of the "}"'s FakeRParens at the "{".
     if (State.Stack.size() > 1)
       State.Stack[State.Stack.size() - 2].LastSpace = ContinuationIndent;
-  } else if (Current.Type == TT_CtorInitializerColon) {
+  } else if (NextNonComment->Type == TT_CtorInitializerColon) {
     State.Column = State.FirstIndent + Style.ConstructorInitializerIndentWidth;
-  } else if (Current.Type == TT_CtorInitializerComma) {
+  } else if (NextNonComment->Type == TT_CtorInitializerComma) {
     State.Column = State.Stack.back().Indent;
   } else {
     State.Column = State.Stack.back().Indent;
@@ -451,7 +458,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     State.Stack.back().BreakBeforeParameter = false;
   if (Previous.Type == TT_TemplateCloser && State.ParenLevel == 0)
     State.Stack.back().BreakBeforeParameter = false;
-  if (Current.is(tok::question) ||
+  if (NextNonComment->is(tok::question) ||
       (PreviousNonComment && PreviousNonComment->is(tok::question)))
     State.Stack.back().BreakBeforeParameter = true;
 
