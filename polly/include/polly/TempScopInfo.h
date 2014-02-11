@@ -16,7 +16,6 @@
 #ifndef POLLY_TEMP_SCOP_EXTRACTION_H
 #define POLLY_TEMP_SCOP_EXTRACTION_H
 
-#include "polly/MayAliasSet.h"
 #include "polly/ScopDetection.h"
 
 #include "llvm/Analysis/RegionPass.h"
@@ -142,7 +141,7 @@ class TempScop {
   explicit TempScop(Region &r, LoopBoundMapType &loopBounds,
                     BBCondMapType &BBCmps, AccFuncMapType &accFuncMap)
       : R(r), MaxLoopDepth(0), LoopBounds(loopBounds), BBConds(BBCmps),
-        AccFuncMap(accFuncMap), MayASInfo(new MayAliasSetInfo()) {}
+        AccFuncMap(accFuncMap) {}
 
 public:
   ~TempScop();
