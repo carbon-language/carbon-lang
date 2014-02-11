@@ -329,6 +329,32 @@ void ExprEngine::VisitCXXDestructor(QualType ObjectType,
                                              *Call, *this);
 }
 
+void ExprEngine::VisitCXXNewAllocatorCall(const CXXNewExpr *CNE,
+                                          ExplodedNode *Pred,
+                                          ExplodedNodeSet &Dst) {
+  ProgramStateRef State = Pred->getState();
+  const LocationContext *LCtx = Pred->getLocationContext();
+  PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
+                                CNE->getStartLoc(),
+                                "Error evaluating New Allocator Call");
+  CallEventManager &CEMgr = getStateManager().getCallEventManager();
+  CallEventRef<CXXAllocatorCall> Call =
+    CEMgr.getCXXAllocatorCall(CNE, State, LCtx);
+
+  ExplodedNodeSet DstPreCall;
+  getCheckerManager().runCheckersForPreCall(DstPreCall, Pred,
+                                            *Call, *this);
+
+  ExplodedNodeSet DstInvalidated;
+  StmtNodeBuilder Bldr(DstPreCall, DstInvalidated, *currBldrCtx);
+  for (ExplodedNodeSet::iterator I = DstPreCall.begin(), E = DstPreCall.end();
+       I != E; ++I)
+    defaultEvalCall(Bldr, *I, *Call);
+  getCheckerManager().runCheckersForPostCall(Dst, DstInvalidated,
+                                             *Call, *this);
+}
+
+
 void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
   // FIXME: Much of this should eventually migrate to CXXAllocatorCall.

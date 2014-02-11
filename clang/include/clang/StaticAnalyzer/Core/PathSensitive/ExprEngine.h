@@ -421,6 +421,10 @@ public:
                           const Stmt *S, bool IsBaseDtor,
                           ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
+  void VisitCXXNewAllocatorCall(const CXXNewExpr *CNE,
+                                ExplodedNode *Pred,
+                                ExplodedNodeSet &Dst);
+
   void VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
                        ExplodedNodeSet &Dst);
 

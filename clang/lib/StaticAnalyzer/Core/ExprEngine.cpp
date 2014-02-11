@@ -553,12 +553,20 @@ void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
 
 void ExprEngine::ProcessNewAllocator(const CXXNewExpr *NE,
                                      ExplodedNode *Pred) {
-  //TODO: Implement VisitCXXNewAllocatorCall
   ExplodedNodeSet Dst;
-  NodeBuilder Bldr(Pred, Dst, *currBldrCtx);
-  const LocationContext *LCtx = Pred->getLocationContext();
-  PostImplicitCall PP(NE->getOperatorNew(), NE->getLocStart(), LCtx);
-  Bldr.generateNode(PP, Pred->getState(), Pred);
+  AnalysisManager &AMgr = getAnalysisManager();
+  AnalyzerOptions &Opts = AMgr.options;
+  // TODO: We're not evaluating allocators for all cases just yet as
+  // we're not handling the return value correctly, which causes false
+  // positives when the alpha.cplusplus.NewDeleteLeaks check is on.
+  if (Opts.mayInlineCXXAllocator())
+    VisitCXXNewAllocatorCall(NE, Pred, Dst);
+  else {
+    NodeBuilder Bldr(Pred, Dst, *currBldrCtx);
+    const LocationContext *LCtx = Pred->getLocationContext();
+    PostImplicitCall PP(NE->getOperatorNew(), NE->getLocStart(), LCtx);
+    Bldr.generateNode(PP, Pred->getState(), Pred);
+  }
   Engine.enqueue(Dst, currBldrCtx->getBlock(), currStmtIdx);
 }
 

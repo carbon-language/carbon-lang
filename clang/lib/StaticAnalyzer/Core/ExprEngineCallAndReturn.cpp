@@ -664,6 +664,8 @@ static CallInlinePolicy mayInlineCallKind(const CallEvent &Call,
     break;
   }
   case CE_CXXAllocator:
+    if (Opts.mayInlineCXXAllocator())
+      break;
     // Do not inline allocators until we model deallocators.
     // This is unfortunate, but basically necessary for smart pointers and such.
     return CIP_DisallowedAlways;
