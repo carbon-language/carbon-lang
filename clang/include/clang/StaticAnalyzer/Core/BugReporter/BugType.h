@@ -30,24 +30,24 @@ class ExprEngine;
 
 class BugType {
 private:
-  const CheckName CheckName;
+  const CheckName Check;
   const std::string Name;
   const std::string Category;
   bool SuppressonSink;
 
   virtual void anchor();
 public:
-  BugType(class CheckName Check, StringRef name, StringRef cat)
-      : CheckName(Check), Name(name), Category(cat), SuppressonSink(false) {}
+  BugType(class CheckName check, StringRef name, StringRef cat)
+      : Check(check), Name(name), Category(cat), SuppressonSink(false) {}
   BugType(const CheckerBase *checker, StringRef name, StringRef cat)
-      : CheckName(checker->getCheckName()), Name(name), Category(cat),
+      : Check(checker->getCheckName()), Name(name), Category(cat),
         SuppressonSink(false) {}
   virtual ~BugType() {}
 
   // FIXME: Should these be made strings as well?
   StringRef getName() const { return Name; }
   StringRef getCategory() const { return Category; }
-  StringRef getCheckName() const { return CheckName.getName(); }
+  StringRef getCheckName() const { return Check.getName(); }
 
   /// isSuppressOnSink - Returns true if bug reports associated with this bug
   ///  type should be suppressed if the end node of the report is post-dominated
@@ -62,9 +62,8 @@ class BuiltinBug : public BugType {
   const std::string desc;
   virtual void anchor();
 public:
-  BuiltinBug(class CheckName CheckName, const char *name,
-             const char *description)
-      : BugType(CheckName, name, categories::LogicError), desc(description) {}
+  BuiltinBug(class CheckName check, const char *name, const char *description)
+      : BugType(check, name, categories::LogicError), desc(description) {}
 
   BuiltinBug(const CheckerBase *checker, const char *name,
              const char *description)
