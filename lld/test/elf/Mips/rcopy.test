@@ -1,0 +1,42 @@
+# Check handling of R_MIPS_COPY relocation
+
+# Build shared library
+# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
+# RUN:         -o=%t-obj %p/Inputs/ext.s
+# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-obj
+
+# Build executable
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t %t-obj %t-so
+# RUN: llvm-readobj -relocations -symbols -dyn-symbols %t | FileCheck %s
+
+# CHECK:       Relocations [
+# CHECK-NEXT:    Section ({{[0-9]+}}) .rel.dyn {
+# CHECK-NEXT:      0x{{[1-9A-F][0-9A-F]*}} R_MIPS_COPY data1 0x0
+# CHECK-NEXT:    }
+# CHECK-NEXT:  ]
+
+# CHECK:         Name: data1 ({{[0-9]+}}
+# CHECK-NEXT:    Value: 0x{{[1-9A-F][0-9A-F]*}}
+# CHECK-NEXT:    Size: 4
+# CHECK-NEXT:    Binding: Global (0x1)
+# CHECK-NEXT:    Type: Object (0x1)
+# CHECK-NEXT:    Other: 0
+# CHECK-NEXT:    Section: .bss (0x{{[1-9A-F][0-9A-F]*}})
+
+# CHECK:         Name: data1@ ({{[0-9]+}}
+# CHECK-NEXT:    Value: 0x{{[1-9A-F][0-9A-F]*}}
+# CHECK-NEXT:    Size: 4
+# CHECK-NEXT:    Binding: Global (0x1)
+# CHECK-NEXT:    Type: Object (0x1)
+# CHECK-NEXT:    Other: 0
+# CHECK-NEXT:    Section: .bss (0x{{[1-9A-F][0-9A-F]*}})
+
+    .abicalls
+    .option pic0
+    .global glob
+    .ent    glob
+glob:
+    lui     $2,%hi(data1)
+    lw      $2,%lo(data1)($2)
+    .end    glob

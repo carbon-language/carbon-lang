@@ -155,6 +155,11 @@ public:
       gotplt->setOrdinal(ordinal++);
       mf->addAtom(*gotplt);
     }
+
+    for (auto obj : _objectVector) {
+      obj->setOrdinal(ordinal++);
+      mf->addAtom(*obj);
+    }
   }
 
 private:
@@ -176,11 +181,17 @@ private:
   /// \brief Map Atoms to their PLT entries.
   llvm::DenseMap<const Atom *, PLTAtom *> _pltMap;
 
+  /// \brief Map Atoms to their Object entries.
+  llvm::DenseMap<const Atom *, ObjectAtom *> _objectMap;
+
   /// \brief the list of PLT atoms.
   std::vector<PLTAtom *> _pltVector;
 
   /// \brief the list of GOTPLT atoms.
   std::vector<GOTAtom *> _gotpltVector;
+
+  /// \brief the list of Object entries.
+  std::vector<ObjectAtom *> _objectVector;
 
   /// \brief Handle a specific reference.
   void handleReference(const DefinedAtom &atom, const Reference &ref) {
@@ -188,6 +199,12 @@ private:
       return;
     assert(ref.kindArch() == Reference::KindArch::Mips);
     switch (ref.kindValue()) {
+    case R_MIPS_32:
+    case R_MIPS_HI16:
+    case R_MIPS_LO16:
+      // FIXME (simon): Handle dynamic/static linking differently.
+      handlePlain(ref);
+      break;
     case R_MIPS_26:
       handlePLT(ref);
       break;
@@ -202,6 +219,14 @@ private:
     if (auto *da = dyn_cast<DefinedAtom>(a))
       return da->scope() == Atom::scopeTranslationUnit;
     return false;
+  }
+
+  void handlePlain(const Reference &ref) {
+    if (!ref.target())
+      return;
+    auto sla = dyn_cast<SharedLibraryAtom>(ref.target());
+    if (sla && sla->type() == SharedLibraryAtom::Type::Data)
+      const_cast<Reference &>(ref).setTarget(getObjectEntry(sla));
   }
 
   void handlePLT(const Reference &ref) {
@@ -331,6 +356,22 @@ private:
     });
 
     return pa;
+  }
+
+  const ObjectAtom *getObjectEntry(const SharedLibraryAtom *a) {
+    auto obj = _objectMap.find(a);
+    if (obj != _objectMap.end())
+      return obj->second;
+
+    auto oa = new (_file._alloc) ObjectAtom(_file);
+    oa->addReferenceELF_Mips(R_MIPS_COPY, 0, oa, 0);
+    oa->_name = a->name();
+    oa->_size = a->size();
+
+    _objectMap[a] = oa;
+    _objectVector.push_back(oa);
+
+    return oa;
   }
 };
 

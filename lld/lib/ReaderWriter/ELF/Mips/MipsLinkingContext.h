@@ -46,6 +46,8 @@ public:
   virtual StringRef getDefaultInterpreter() const;
   virtual void addPasses(PassManager &pm);
   virtual bool isRelaOutputFormat() const { return false; }
+  virtual bool isDynamicRelocation(const DefinedAtom &,
+                                   const Reference &r) const;
   virtual bool isPLTRelocation(const DefinedAtom &, const Reference &r) const;
 };
 
