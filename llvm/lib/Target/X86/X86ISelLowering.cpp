@@ -7371,7 +7371,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (V1IsUndef && V2IsUndef)
     return DAG.getUNDEF(VT);
 
-  assert(!V1IsUndef && "Op 1 of shuffle should not be undef");
+  // When we create a shuffle node we put the UNDEF node to second operand,
+  // but in some cases the first operand may be transformed to UNDEF.
+  // In this case we should just commute the node.
+  if (V1IsUndef)
+    return CommuteVectorShuffle(SVOp, DAG);
 
   // Vector shuffle lowering takes 3 steps:
   //

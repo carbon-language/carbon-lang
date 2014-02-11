@@ -297,3 +297,12 @@ entry:
 }
 declare <2 x double> @llvm.x86.avx.vextractf128.pd.256(<4 x double>, i8) nounwind readnone
 declare <4 x double> @llvm.x86.avx.vinsertf128.pd.256(<4 x double>, <2 x double>, i8) nounwind readnone
+
+; this test case just should not fail
+define void @test20() {
+  %a0 = insertelement <3 x double> <double 0.000000e+00, double 0.000000e+00, double undef>, double 0.000000e+00, i32 2
+  store <3 x double> %a0, <3 x double>* undef, align 1
+  %a1 = insertelement <3 x double> <double 0.000000e+00, double 0.000000e+00, double undef>, double undef, i32 2
+  store <3 x double> %a1, <3 x double>* undef, align 1
+  ret void
+}
