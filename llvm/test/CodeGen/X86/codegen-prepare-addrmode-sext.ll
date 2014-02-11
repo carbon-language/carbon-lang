@@ -252,3 +252,52 @@ define i8 @twoArgsNoPromotionRemove(i1 %arg1, i8 %arg2, i8* %base) {
   %res = load i8* %arrayidx
   ret i8 %res
 }
+
+; Ensure that when the profitability checks kicks in, the IR is not modified
+; will IgnoreProfitability is on.
+; The profitabily check happens when a candidate instruction has several uses.
+; The matcher will create a new matcher for each use and check if the
+; instruction is in the list of the matched instructions of this new matcher.
+; All changes made by the new matchers must be dropped before pursuing
+; otherwise the state of the original matcher will be wrong.
+;
+; Without the profitability check, when checking for the second use of
+; arrayidx, the matcher promotes everything all the way to %arg1, %arg2.
+; Check that we did not promote anything in the final matching.
+;
+; <rdar://problem/16020230>
+; CHECK-LABEL: @checkProfitability
+; CHECK-NOT: {{%[a-zA-Z_0-9-]+}} = sext i32 %arg1 to i64
+; CHECK-NOT: {{%[a-zA-Z_0-9-]+}} = sext i32 %arg2 to i64
+; CHECK: [[SHL:%[a-zA-Z_0-9-]+]] = shl nsw i32 %arg1, 1
+; CHECK: [[ADD:%[a-zA-Z_0-9-]+]] = add nsw i32 [[SHL]], %arg2
+; CHECK: [[SEXTADD:%[a-zA-Z_0-9-]+]] = sext i32 [[ADD]] to i64
+; BB then
+; CHECK: [[BASE1:%[a-zA-Z_0-9-]+]] = add i64 [[SEXTADD]], 48
+; CHECK: [[ADDR1:%[a-zA-Z_0-9-]+]] = inttoptr i64 [[BASE1]] to i32*
+; CHECK: load i32* [[ADDR1]]
+; BB else
+; CHECK: [[BASE2:%[a-zA-Z_0-9-]+]] = add i64 [[SEXTADD]], 48
+; CHECK: [[ADDR2:%[a-zA-Z_0-9-]+]] = inttoptr i64 [[BASE2]] to i32*
+; CHECK: load i32* [[ADDR2]]
+; CHECK: ret
+define i32 @checkProfitability(i32 %arg1, i32 %arg2, i1 %test) {
+  %shl = shl nsw i32 %arg1, 1
+  %add1 = add nsw i32 %shl, %arg2
+  %sextidx1 = sext i32 %add1 to i64
+  %tmpptr = inttoptr i64 %sextidx1 to i32*
+  %arrayidx1 = getelementptr i32* %tmpptr, i64 12
+  br i1 %test, label %then, label %else
+then: 
+  %res1 = load i32* %arrayidx1
+  br label %end
+else:
+  %res2 = load i32* %arrayidx1
+  br label %end
+end:
+  %tmp = phi i32 [%res1, %then], [%res2, %else]
+  %res = add i32 %tmp, %add1
+  %addr = inttoptr i32 %res to i32*
+  %final = load i32* %addr
+  ret i32 %final
+}
