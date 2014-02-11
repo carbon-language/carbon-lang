@@ -106,12 +106,13 @@ void PathPieces::flattenTo(PathPieces &Primary, PathPieces &Current,
 
 PathDiagnostic::~PathDiagnostic() {}
 
-PathDiagnostic::PathDiagnostic(const Decl *declWithIssue,
+PathDiagnostic::PathDiagnostic(StringRef CheckName, const Decl *declWithIssue,
                                StringRef bugtype, StringRef verboseDesc,
                                StringRef shortDesc, StringRef category,
                                PathDiagnosticLocation LocationToUnique,
                                const Decl *DeclToUnique)
-  : DeclWithIssue(declWithIssue),
+  : CheckName(CheckName),
+    DeclWithIssue(declWithIssue),
     BugType(StripTrailingDots(bugtype)),
     VerboseDesc(StripTrailingDots(verboseDesc)),
     ShortDesc(StripTrailingDots(shortDesc)),

@@ -187,7 +187,7 @@ void ArrayBoundCheckerV2::reportOOB(CheckerContext &checkerContext,
     return;
 
   if (!BT)
-    BT.reset(new BuiltinBug("Out-of-bound access"));
+    BT.reset(new BuiltinBug(this, "Out-of-bound access"));
 
   // FIXME: This diagnostics are preliminary.  We should get far better
   // diagnostics for explaining buffer overruns.
@@ -310,7 +310,6 @@ RegionRawOffsetV2 RegionRawOffsetV2::computeOffset(ProgramStateRef state,
   }
   return RegionRawOffsetV2();
 }
-
 
 void ento::registerArrayBoundCheckerV2(CheckerManager &mgr) {
   mgr.registerChecker<ArrayBoundCheckerV2>();

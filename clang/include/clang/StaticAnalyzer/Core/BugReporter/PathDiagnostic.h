@@ -710,6 +710,7 @@ public:
 ///  diagnostic.  It represents an ordered-collection of PathDiagnosticPieces,
 ///  each which represent the pieces of the path.
 class PathDiagnostic : public llvm::FoldingSetNode {
+  std::string CheckName;
   const Decl *DeclWithIssue;
   std::string BugType;
   std::string VerboseDesc;
@@ -730,8 +731,8 @@ class PathDiagnostic : public llvm::FoldingSetNode {
 
   PathDiagnostic() LLVM_DELETED_FUNCTION;
 public:
-  PathDiagnostic(const Decl *DeclWithIssue, StringRef bugtype,
-                 StringRef verboseDesc, StringRef shortDesc,
+  PathDiagnostic(StringRef CheckName, const Decl *DeclWithIssue,
+                 StringRef bugtype, StringRef verboseDesc, StringRef shortDesc,
                  StringRef category, PathDiagnosticLocation LocationToUnique,
                  const Decl *DeclToUnique);
 
@@ -788,6 +789,7 @@ public:
   StringRef getShortDescription() const {
     return ShortDesc.empty() ? VerboseDesc : ShortDesc;
   }
+  StringRef getCheckName() const { return CheckName; }
   StringRef getBugType() const { return BugType; }
   StringRef getCategory() const { return Category; }
 

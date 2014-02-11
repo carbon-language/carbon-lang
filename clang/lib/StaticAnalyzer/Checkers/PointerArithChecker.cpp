@@ -53,10 +53,11 @@ void PointerArithChecker::checkPreStmt(const BinaryOperator *B,
 
     if (ExplodedNode *N = C.addTransition()) {
       if (!BT)
-        BT.reset(new BuiltinBug("Dangerous pointer arithmetic",
-                            "Pointer arithmetic done on non-array variables "
-                            "means reliance on memory layout, which is "
-                            "dangerous."));
+        BT.reset(
+            new BuiltinBug(this, "Dangerous pointer arithmetic",
+                           "Pointer arithmetic done on non-array variables "
+                           "means reliance on memory layout, which is "
+                           "dangerous."));
       BugReport *R = new BugReport(*BT, BT->getDescription(), N);
       R->addRange(B->getSourceRange());
       C.emitReport(R);

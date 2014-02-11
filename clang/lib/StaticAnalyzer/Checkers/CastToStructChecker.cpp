@@ -58,10 +58,11 @@ void CastToStructChecker::checkPreStmt(const CastExpr *CE,
   if (!OrigPointeeTy->isRecordType()) {
     if (ExplodedNode *N = C.addTransition()) {
       if (!BT)
-        BT.reset(new BuiltinBug("Cast from non-struct type to struct type",
-                            "Casting a non-structure type to a structure type "
-                            "and accessing a field can lead to memory access "
-                            "errors or data corruption."));
+        BT.reset(
+            new BuiltinBug(this, "Cast from non-struct type to struct type",
+                           "Casting a non-structure type to a structure type "
+                           "and accessing a field can lead to memory access "
+                           "errors or data corruption."));
       BugReport *R = new BugReport(*BT,BT->getDescription(), N);
       R->addRange(CE->getSourceRange());
       C.emitReport(R);

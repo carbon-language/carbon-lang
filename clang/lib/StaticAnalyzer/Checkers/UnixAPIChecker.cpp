@@ -57,19 +57,13 @@ private:
                             const unsigned numArgs,
                             const unsigned sizeArg,
                             const char *fn) const;
+  void LazyInitialize(OwningPtr<BugType> &BT, const char *name) const {
+    if (BT)
+      return;
+    BT.reset(new BugType(this, name, categories::UnixAPI));
+  }
 };
 } //end anonymous namespace
-
-//===----------------------------------------------------------------------===//
-// Utility functions.
-//===----------------------------------------------------------------------===//
-
-static inline void LazyInitialize(OwningPtr<BugType> &BT,
-                                  const char *name) {
-  if (BT)
-    return;
-  BT.reset(new BugType(name, categories::UnixAPI));
-}
 
 //===----------------------------------------------------------------------===//
 // "open" (man 2 open)
@@ -217,7 +211,7 @@ bool UnixAPIChecker::ReportZeroByteAllocation(CheckerContext &C,
     return false;
 
   LazyInitialize(BT_mallocZero,
-    "Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)");
+                 "Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)");
 
   SmallString<256> S;
   llvm::raw_svector_ostream os(S);    

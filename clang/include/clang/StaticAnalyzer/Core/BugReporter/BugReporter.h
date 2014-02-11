@@ -19,6 +19,7 @@
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporterVisitor.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -463,7 +464,12 @@ public:
   /// reports.
   void emitReport(BugReport *R);
 
-  void EmitBasicReport(const Decl *DeclWithIssue,
+  void EmitBasicReport(const Decl *DeclWithIssue, const CheckerBase *Checker,
+                       StringRef BugName, StringRef BugCategory,
+                       StringRef BugStr, PathDiagnosticLocation Loc,
+                       ArrayRef<SourceRange> Ranges = None);
+
+  void EmitBasicReport(const Decl *DeclWithIssue, CheckName CheckName,
                        StringRef BugName, StringRef BugCategory,
                        StringRef BugStr, PathDiagnosticLocation Loc,
                        ArrayRef<SourceRange> Ranges = None);
@@ -473,7 +479,8 @@ private:
 
   /// \brief Returns a BugType that is associated with the given name and
   /// category.
-  BugType *getBugTypeForName(StringRef name, StringRef category);
+  BugType *getBugTypeForName(CheckName CheckName, StringRef name,
+                             StringRef category);
 };
 
 // FIXME: Get rid of GRBugReporter.  It's the wrong abstraction.

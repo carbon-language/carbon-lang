@@ -212,7 +212,7 @@ void ObjCSuperCallChecker::checkASTDecl(const ObjCImplementationDecl *D,
            << "' instance method in " << SuperclassName.str() << " subclass '"
            << *D << "' is missing a [super " << S.getAsString() << "] call";
 
-        BR.EmitBasicReport(MD, Name, categories::CoreFoundationObjectiveC,
+        BR.EmitBasicReport(MD, this, Name, categories::CoreFoundationObjectiveC,
                            os.str(), DLoc);
       }
     }

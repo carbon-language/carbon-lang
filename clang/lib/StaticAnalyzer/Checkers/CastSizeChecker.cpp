@@ -69,9 +69,10 @@ void CastSizeChecker::checkPreStmt(const CastExpr *CE,CheckerContext &C) const {
   if (regionSize % typeSize != 0) {
     if (ExplodedNode *errorNode = C.generateSink()) {
       if (!BT)
-        BT.reset(new BuiltinBug("Cast region with wrong size.",
-                            "Cast a region whose size is not a multiple of the"
-                            " destination type size."));
+        BT.reset(
+            new BuiltinBug(this, "Cast region with wrong size.",
+                           "Cast a region whose size is not a multiple of the"
+                           " destination type size."));
       BugReport *R = new BugReport(*BT, BT->getDescription(),
                                                errorNode);
       R->addRange(CE->getSourceRange());
@@ -80,7 +81,6 @@ void CastSizeChecker::checkPreStmt(const CastExpr *CE,CheckerContext &C) const {
   }
 }
 
-
 void ento::registerCastSizeChecker(CheckerManager &mgr) {
-  mgr.registerChecker<CastSizeChecker>();  
+  mgr.registerChecker<CastSizeChecker>();
 }

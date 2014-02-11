@@ -52,10 +52,11 @@ void FixedAddressChecker::checkPreStmt(const BinaryOperator *B,
 
   if (ExplodedNode *N = C.addTransition()) {
     if (!BT)
-      BT.reset(new BuiltinBug("Use fixed address", 
-                          "Using a fixed address is not portable because that "
-                          "address will probably not be valid in all "
-                          "environments or platforms."));
+      BT.reset(
+          new BuiltinBug(this, "Use fixed address",
+                         "Using a fixed address is not portable because that "
+                         "address will probably not be valid in all "
+                         "environments or platforms."));
     BugReport *R = new BugReport(*BT, BT->getDescription(), N);
     R->addRange(B->getRHS()->getSourceRange());
     C.emitReport(R);

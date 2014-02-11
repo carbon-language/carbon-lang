@@ -51,6 +51,11 @@ public:
     DefaultBool CheckCStringOutOfBounds;
     DefaultBool CheckCStringBufferOverlap;
     DefaultBool CheckCStringNotNullTerm;
+
+    CheckName CheckNameCStringNullArg;
+    CheckName CheckNameCStringOutOfBounds;
+    CheckName CheckNameCStringBufferOverlap;
+    CheckName CheckNameCStringNotNullTerm;
   };
 
   CStringChecksFilter Filter;
@@ -232,8 +237,9 @@ ProgramStateRef CStringChecker::checkNonNull(CheckerContext &C,
       return NULL;
 
     if (!BT_Null)
-      BT_Null.reset(new BuiltinBug(categories::UnixAPI,
-        "Null pointer argument in call to byte string function"));
+      BT_Null.reset(new BuiltinBug(
+          Filter.CheckNameCStringNullArg, categories::UnixAPI,
+          "Null pointer argument in call to byte string function"));
 
     SmallString<80> buf;
     llvm::raw_svector_ostream os(buf);
@@ -294,8 +300,9 @@ ProgramStateRef CStringChecker::CheckLocation(CheckerContext &C,
       return NULL;
 
     if (!BT_Bounds) {
-      BT_Bounds.reset(new BuiltinBug("Out-of-bound array access",
-        "Byte string function accesses out-of-bound array element"));
+      BT_Bounds.reset(new BuiltinBug(
+          Filter.CheckNameCStringOutOfBounds, "Out-of-bound array access",
+          "Byte string function accesses out-of-bound array element"));
     }
     BuiltinBug *BT = static_cast<BuiltinBug*>(BT_Bounds.get());
 
@@ -526,7 +533,8 @@ void CStringChecker::emitOverlapBug(CheckerContext &C, ProgramStateRef state,
     return;
 
   if (!BT_Overlap)
-    BT_Overlap.reset(new BugType(categories::UnixAPI, "Improper arguments"));
+    BT_Overlap.reset(new BugType(Filter.CheckNameCStringBufferOverlap,
+                                 categories::UnixAPI, "Improper arguments"));
 
   // Generate a report for this bug.
   BugReport *report = 
@@ -586,8 +594,9 @@ ProgramStateRef CStringChecker::checkAdditionOverflow(CheckerContext &C,
         return NULL;
 
       if (!BT_AdditionOverflow)
-        BT_AdditionOverflow.reset(new BuiltinBug("API",
-          "Sum of expressions causes overflow"));
+        BT_AdditionOverflow.reset(
+            new BuiltinBug(Filter.CheckNameCStringOutOfBounds, "API",
+                           "Sum of expressions causes overflow"));
 
       // This isn't a great error message, but this should never occur in real
       // code anyway -- you'd have to create a buffer longer than a size_t can
@@ -703,8 +712,9 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
 
       if (ExplodedNode *N = C.addTransition(state)) {
         if (!BT_NotCString)
-          BT_NotCString.reset(new BuiltinBug(categories::UnixAPI,
-            "Argument is not a null-terminated string."));
+          BT_NotCString.reset(new BuiltinBug(
+              Filter.CheckNameCStringNotNullTerm, categories::UnixAPI,
+              "Argument is not a null-terminated string."));
 
         SmallString<120> buf;
         llvm::raw_svector_ostream os(buf);
@@ -714,8 +724,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
            << "', which is not a null-terminated string";
 
         // Generate a report for this bug.
-        BugReport *report = new BugReport(*BT_NotCString,
-                                                          os.str(), N);
+        BugReport *report = new BugReport(*BT_NotCString, os.str(), N);
 
         report->addRange(Ex->getSourceRange());
         C.emitReport(report);        
@@ -763,8 +772,9 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
 
     if (ExplodedNode *N = C.addTransition(state)) {
       if (!BT_NotCString)
-        BT_NotCString.reset(new BuiltinBug(categories::UnixAPI,
-          "Argument is not a null-terminated string."));
+        BT_NotCString.reset(new BuiltinBug(
+            Filter.CheckNameCStringNotNullTerm, categories::UnixAPI,
+            "Argument is not a null-terminated string."));
 
       SmallString<120> buf;
       llvm::raw_svector_ostream os(buf);
@@ -2057,10 +2067,12 @@ void CStringChecker::checkDeadSymbols(SymbolReaper &SR,
   C.addTransition(state);
 }
 
-#define REGISTER_CHECKER(name) \
-void ento::register##name(CheckerManager &mgr) {\
-  mgr.registerChecker<CStringChecker>()->Filter.Check##name = true; \
-}
+#define REGISTER_CHECKER(name)                                                 \
+  void ento::register##name(CheckerManager &mgr) {                             \
+    CStringChecker *checker = mgr.registerChecker<CStringChecker>();           \
+    checker->Filter.Check##name = true;                                        \
+    checker->Filter.CheckName##name = mgr.getCurrentCheckName();               \
+  }
 
 REGISTER_CHECKER(CStringNullArg)
 REGISTER_CHECKER(CStringOutOfBounds)

@@ -95,7 +95,7 @@ void ExprInspectionChecker::analyzerEval(const CallExpr *CE,
     return;
 
   if (!BT)
-    BT.reset(new BugType("Checking analyzer assumptions", "debug"));
+    BT.reset(new BugType(this, "Checking analyzer assumptions", "debug"));
 
   BugReport *R = new BugReport(*BT, getArgumentValueString(CE, C), N);
   C.emitReport(R);
@@ -106,7 +106,7 @@ void ExprInspectionChecker::analyzerWarnIfReached(const CallExpr *CE,
   ExplodedNode *N = C.getPredecessor();
 
   if (!BT)
-    BT.reset(new BugType("Checking analyzer assumptions", "debug"));
+    BT.reset(new BugType(this, "Checking analyzer assumptions", "debug"));
 
   BugReport *R = new BugReport(*BT, "REACHABLE", N);
   C.emitReport(R);
@@ -126,7 +126,7 @@ void ExprInspectionChecker::analyzerCheckInlined(const CallExpr *CE,
     return;
 
   if (!BT)
-    BT.reset(new BugType("Checking analyzer assumptions", "debug"));
+    BT.reset(new BugType(this, "Checking analyzer assumptions", "debug"));
 
   BugReport *R = new BugReport(*BT, getArgumentValueString(CE, C), N);
   C.emitReport(R);

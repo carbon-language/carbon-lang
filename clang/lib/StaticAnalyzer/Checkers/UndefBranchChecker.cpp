@@ -67,8 +67,8 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
     ExplodedNode *N = Ctx.generateSink();
     if (N) {
       if (!BT)
-        BT.reset(
-               new BuiltinBug("Branch condition evaluates to a garbage value"));
+        BT.reset(new BuiltinBug(
+            this, "Branch condition evaluates to a garbage value"));
 
       // What's going on here: we want to highlight the subexpression of the
       // condition that is the most likely source of the "uninitialized

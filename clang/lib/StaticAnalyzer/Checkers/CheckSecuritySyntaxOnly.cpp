@@ -46,8 +46,18 @@ struct ChecksFilter {
   DefaultBool check_vfork;
   DefaultBool check_FloatLoopCounter;
   DefaultBool check_UncheckedReturn;
+
+  CheckName checkName_gets;
+  CheckName checkName_getpw;
+  CheckName checkName_mktemp;
+  CheckName checkName_mkstemp;
+  CheckName checkName_strcpy;
+  CheckName checkName_rand;
+  CheckName checkName_vfork;
+  CheckName checkName_FloatLoopCounter;
+  CheckName checkName_UncheckedReturn;
 };
-  
+
 class WalkAST : public StmtVisitor<WalkAST> {
   BugReporter &BR;
   AnalysisDeclContext* AC;
@@ -281,7 +291,7 @@ void WalkAST::checkLoopConditionForFloat(const ForStmt *FS) {
 
   PathDiagnosticLocation FSLoc =
     PathDiagnosticLocation::createBegin(FS, BR.getSourceManager(), AC);
-  BR.EmitBasicReport(AC->getDecl(),
+  BR.EmitBasicReport(AC->getDecl(), filter.checkName_FloatLoopCounter,
                      bugType, "Security", os.str(),
                      FSLoc, ranges);
 }
@@ -316,7 +326,7 @@ void WalkAST::checkCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
   // Issue a warning.
   PathDiagnosticLocation CELoc =
     PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
-  BR.EmitBasicReport(AC->getDecl(),
+  BR.EmitBasicReport(AC->getDecl(), filter.checkName_gets,
                      "Potential buffer overflow in call to 'gets'",
                      "Security",
                      "Call to function 'gets' is extremely insecure as it can "
@@ -356,7 +366,7 @@ void WalkAST::checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
   // Issue a warning.
   PathDiagnosticLocation CELoc =
     PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
-  BR.EmitBasicReport(AC->getDecl(),
+  BR.EmitBasicReport(AC->getDecl(), filter.checkName_getpw,
                      "Potential buffer overflow in call to 'getpw'",
                      "Security",
                      "The getpw() function is dangerous as it may overflow the "
@@ -397,7 +407,7 @@ void WalkAST::checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
   // Issue a waring.
   PathDiagnosticLocation CELoc =
     PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
-  BR.EmitBasicReport(AC->getDecl(),
+  BR.EmitBasicReport(AC->getDecl(), filter.checkName_mktemp,
                      "Potential insecure temporary file in call 'mktemp'",
                      "Security",
                      "Call to function 'mktemp' is insecure as it always "
@@ -483,7 +493,7 @@ void WalkAST::checkCall_mkstemp(const CallExpr *CE, const FunctionDecl *FD) {
     out << " used as a suffix";
   }
   out << ')';
-  BR.EmitBasicReport(AC->getDecl(),
+  BR.EmitBasicReport(AC->getDecl(), filter.checkName_mkstemp,
                      "Insecure temporary file creation", "Security",
                      out.str(), CELoc, strArg->getSourceRange());
 }
@@ -504,7 +514,7 @@ void WalkAST::checkCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
   // Issue a warning.
   PathDiagnosticLocation CELoc =
     PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
-  BR.EmitBasicReport(AC->getDecl(),
+  BR.EmitBasicReport(AC->getDecl(), filter.checkName_strcpy,
                      "Potential insecure memory buffer bounds restriction in "
                      "call 'strcpy'",
                      "Security",
@@ -531,7 +541,7 @@ void WalkAST::checkCall_strcat(const CallExpr *CE, const FunctionDecl *FD) {
   // Issue a warning.
   PathDiagnosticLocation CELoc =
     PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
-  BR.EmitBasicReport(AC->getDecl(),
+  BR.EmitBasicReport(AC->getDecl(), filter.checkName_strcpy,
                      "Potential insecure memory buffer bounds restriction in "
                      "call 'strcat'",
                      "Security",
@@ -609,8 +619,9 @@ void WalkAST::checkCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
 
   PathDiagnosticLocation CELoc =
     PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
-  BR.EmitBasicReport(AC->getDecl(), os1.str(), "Security", os2.str(),
-                     CELoc, CE->getCallee()->getSourceRange());
+  BR.EmitBasicReport(AC->getDecl(), filter.checkName_rand, os1.str(),
+                     "Security", os2.str(), CELoc,
+                     CE->getCallee()->getSourceRange());
 }
 
 //===----------------------------------------------------------------------===//
@@ -633,7 +644,7 @@ void WalkAST::checkCall_random(const CallExpr *CE, const FunctionDecl *FD) {
   // Issue a warning.
   PathDiagnosticLocation CELoc =
     PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
-  BR.EmitBasicReport(AC->getDecl(),
+  BR.EmitBasicReport(AC->getDecl(), filter.checkName_rand,
                      "'random' is not a secure random number generator",
                      "Security",
                      "The 'random' function produces a sequence of values that "
@@ -653,7 +664,7 @@ void WalkAST::checkCall_vfork(const CallExpr *CE, const FunctionDecl *FD) {
   // All calls to vfork() are insecure, issue a warning.
   PathDiagnosticLocation CELoc =
     PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
-  BR.EmitBasicReport(AC->getDecl(),
+  BR.EmitBasicReport(AC->getDecl(), filter.checkName_vfork,
                      "Potential insecure implementation-specific behavior in "
                      "call 'vfork'",
                      "Security",
@@ -724,8 +735,9 @@ void WalkAST::checkUncheckedReturnValue(CallExpr *CE) {
 
   PathDiagnosticLocation CELoc =
     PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
-  BR.EmitBasicReport(AC->getDecl(), os1.str(), "Security", os2.str(),
-                     CELoc, CE->getCallee()->getSourceRange());
+  BR.EmitBasicReport(AC->getDecl(), filter.checkName_UncheckedReturn, os1.str(),
+                     "Security", os2.str(), CELoc,
+                     CE->getCallee()->getSourceRange());
 }
 
 //===----------------------------------------------------------------------===//
@@ -745,10 +757,13 @@ public:
 };
 }
 
-#define REGISTER_CHECKER(name) \
-void ento::register##name(CheckerManager &mgr) {\
-  mgr.registerChecker<SecuritySyntaxChecker>()->filter.check_##name = true;\
-}
+#define REGISTER_CHECKER(name)                                                 \
+  void ento::register##name(CheckerManager &mgr) {                             \
+    SecuritySyntaxChecker *checker =                                           \
+        mgr.registerChecker<SecuritySyntaxChecker>();                          \
+    checker->filter.check_##name = true;                                       \
+    checker->filter.checkName_##name = mgr.getCurrentCheckName();              \
+  }
 
 REGISTER_CHECKER(gets)
 REGISTER_CHECKER(getpw)

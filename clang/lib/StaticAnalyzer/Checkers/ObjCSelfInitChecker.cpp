@@ -81,10 +81,10 @@ public:
 namespace {
 
 class InitSelfBug : public BugType {
-  const std::string desc;
 public:
-  InitSelfBug() : BugType("Missing \"self = [(super or self) init...]\"",
-                          categories::CoreFoundationObjectiveC) {}
+  InitSelfBug(const CheckerBase *Checker)
+      : BugType(Checker, "Missing \"self = [(super or self) init...]\"",
+                categories::CoreFoundationObjectiveC) {}
 };
 
 } // end anonymous namespace
@@ -147,7 +147,8 @@ static bool isInvalidSelf(const Expr *E, CheckerContext &C) {
 }
 
 static void checkForInvalidSelf(const Expr *E, CheckerContext &C,
-                                const char *errorStr) {
+                                const char *errorStr,
+                                const CheckerBase *Checker) {
   if (!E)
     return;
   
@@ -162,8 +163,7 @@ static void checkForInvalidSelf(const Expr *E, CheckerContext &C,
   if (!N)
     return;
 
-  BugReport *report =
-    new BugReport(*new InitSelfBug(), errorStr, N);
+  BugReport *report = new BugReport(*new InitSelfBug(Checker), errorStr, N);
   C.emitReport(report);
 }
 
@@ -205,9 +205,11 @@ void ObjCSelfInitChecker::checkPostStmt(const ObjCIvarRefExpr *E,
                                  C.getCurrentAnalysisDeclContext()->getDecl())))
     return;
 
-  checkForInvalidSelf(E->getBase(), C,
-    "Instance variable used while 'self' is not set to the result of "
-                                                 "'[(super or self) init...]'");
+  checkForInvalidSelf(
+      E->getBase(), C,
+      "Instance variable used while 'self' is not set to the result of "
+      "'[(super or self) init...]'",
+      this);
 }
 
 void ObjCSelfInitChecker::checkPreStmt(const ReturnStmt *S,
@@ -218,8 +220,9 @@ void ObjCSelfInitChecker::checkPreStmt(const ReturnStmt *S,
     return;
 
   checkForInvalidSelf(S->getRetValue(), C,
-    "Returning 'self' while it is not set to the result of "
-                                                 "'[(super or self) init...]'");
+                      "Returning 'self' while it is not set to the result of "
+                      "'[(super or self) init...]'",
+                      this);
 }
 
 // When a call receives a reference to 'self', [Pre/Post]Call pass

@@ -97,8 +97,9 @@ static bool scan_ivar_release(Stmt *S, ObjCIvarDecl *ID,
   return false;
 }
 
-static void checkObjCDealloc(const ObjCImplementationDecl *D,
-                             const LangOptions& LOpts, BugReporter& BR) {
+static void checkObjCDealloc(const CheckerBase *Checker,
+                             const ObjCImplementationDecl *D,
+                             const LangOptions &LOpts, BugReporter &BR) {
 
   assert (LOpts.getGC() != LangOptions::GCOnly);
 
@@ -180,7 +181,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
     llvm::raw_string_ostream os(buf);
     os << "Objective-C class '" << *D << "' lacks a 'dealloc' instance method";
 
-    BR.EmitBasicReport(D, name, categories::CoreFoundationObjectiveC,
+    BR.EmitBasicReport(D, Checker, name, categories::CoreFoundationObjectiveC,
                        os.str(), DLoc);
     return;
   }
@@ -198,7 +199,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
        << "' does not send a 'dealloc' message to its super class"
            " (missing [super dealloc])";
 
-    BR.EmitBasicReport(MD, name, categories::CoreFoundationObjectiveC,
+    BR.EmitBasicReport(MD, Checker, name, categories::CoreFoundationObjectiveC,
                        os.str(), DLoc);
     return;
   }
@@ -264,8 +265,8 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
       PathDiagnosticLocation SDLoc =
         PathDiagnosticLocation::createBegin(*I, BR.getSourceManager());
 
-      BR.EmitBasicReport(MD, name, categories::CoreFoundationObjectiveC,
-                         os.str(), SDLoc);
+      BR.EmitBasicReport(MD, Checker, name,
+                         categories::CoreFoundationObjectiveC, os.str(), SDLoc);
     }
   }
 }
@@ -282,7 +283,8 @@ public:
                     BugReporter &BR) const {
     if (mgr.getLangOpts().getGC() == LangOptions::GCOnly)
       return;
-    checkObjCDealloc(cast<ObjCImplementationDecl>(D), mgr.getLangOpts(), BR);
+    checkObjCDealloc(this, cast<ObjCImplementationDecl>(D), mgr.getLangOpts(),
+                     BR);
   }
 };
 }

@@ -124,6 +124,7 @@ class DeadStoreObs : public LiveVariables::Observer {
   const CFG &cfg;
   ASTContext &Ctx;
   BugReporter& BR;
+  const CheckerBase *Checker;
   AnalysisDeclContext* AC;
   ParentMap& Parents;
   llvm::SmallPtrSet<const VarDecl*, 20> Escaped;
@@ -134,11 +135,12 @@ class DeadStoreObs : public LiveVariables::Observer {
   enum DeadStoreKind { Standard, Enclosing, DeadIncrement, DeadInit };
 
 public:
-  DeadStoreObs(const CFG &cfg, ASTContext &ctx,
-               BugReporter& br, AnalysisDeclContext* ac, ParentMap& parents,
-               llvm::SmallPtrSet<const VarDecl*, 20> &escaped)
-    : cfg(cfg), Ctx(ctx), BR(br), AC(ac), Parents(parents),
-      Escaped(escaped), currentBlock(0) {}
+  DeadStoreObs(const CFG &cfg, ASTContext &ctx, BugReporter &br,
+               const CheckerBase *checker, AnalysisDeclContext *ac,
+               ParentMap &parents,
+               llvm::SmallPtrSet<const VarDecl *, 20> &escaped)
+      : cfg(cfg), Ctx(ctx), BR(br), Checker(checker), AC(ac), Parents(parents),
+        Escaped(escaped), currentBlock(0) {}
 
   virtual ~DeadStoreObs() {}
 
@@ -199,7 +201,8 @@ public:
         return;
     }
 
-    BR.EmitBasicReport(AC->getDecl(), BugType, "Dead store", os.str(), L, R);
+    BR.EmitBasicReport(AC->getDecl(), Checker, BugType, "Dead store", os.str(),
+                       L, R);
   }
 
   void CheckVarDecl(const VarDecl *VD, const Expr *Ex, const Expr *Val,
@@ -439,7 +442,7 @@ public:
       ParentMap &pmap = mgr.getParentMap(D);
       FindEscaped FS;
       cfg.VisitBlockStmts(FS);
-      DeadStoreObs A(cfg, BR.getContext(), BR, AC, pmap, FS.Escaped);
+      DeadStoreObs A(cfg, BR.getContext(), BR, this, AC, pmap, FS.Escaped);
       L->runOnAllBlocks(A);
     }
   }

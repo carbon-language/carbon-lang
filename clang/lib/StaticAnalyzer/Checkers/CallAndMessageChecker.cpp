@@ -52,10 +52,10 @@ public:
   void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
 
 private:
-  static bool PreVisitProcessArg(CheckerContext &C, SVal V,
-                                 SourceRange argRange, const Expr *argEx,
-                                 bool IsFirstArgument, bool checkUninitFields,
-                                 const CallEvent &Call, OwningPtr<BugType> &BT);
+  bool PreVisitProcessArg(CheckerContext &C, SVal V, SourceRange argRange,
+                          const Expr *argEx, bool IsFirstArgument,
+                          bool checkUninitFields, const CallEvent &Call,
+                          OwningPtr<BugType> &BT) const;
 
   static void emitBadCall(BugType *BT, CheckerContext &C, const Expr *BadE);
   void emitNilReceiverBug(CheckerContext &C, const ObjCMethodCall &msg,
@@ -65,9 +65,9 @@ private:
                          ProgramStateRef state,
                          const ObjCMethodCall &msg) const;
 
-  static void LazyInit_BT(const char *desc, OwningPtr<BugType> &BT) {
+  void LazyInit_BT(const char *desc, OwningPtr<BugType> &BT) const {
     if (!BT)
-      BT.reset(new BuiltinBug(desc));
+      BT.reset(new BuiltinBug(this, desc));
   }
 };
 } // end anonymous namespace
@@ -119,7 +119,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
                                                bool IsFirstArgument,
                                                bool checkUninitFields,
                                                const CallEvent &Call,
-                                               OwningPtr<BugType> &BT) {
+                                               OwningPtr<BugType> &BT) const {
   if (V.isUndef()) {
     if (ExplodedNode *N = C.generateSink()) {
       LazyInit_BT("Uninitialized argument value", BT);
@@ -234,8 +234,8 @@ void CallAndMessageChecker::checkPreStmt(const CallExpr *CE,
 
   if (L.isUndef()) {
     if (!BT_call_undef)
-      BT_call_undef.reset(new BuiltinBug("Called function pointer is an "
-                                         "uninitalized pointer value"));
+      BT_call_undef.reset(new BuiltinBug(
+          this, "Called function pointer is an uninitalized pointer value"));
     emitBadCall(BT_call_undef.get(), C, Callee);
     return;
   }
@@ -246,8 +246,8 @@ void CallAndMessageChecker::checkPreStmt(const CallExpr *CE,
 
   if (StNull && !StNonNull) {
     if (!BT_call_null)
-      BT_call_null.reset(
-        new BuiltinBug("Called function pointer is null (null dereference)"));
+      BT_call_null.reset(new BuiltinBug(
+          this, "Called function pointer is null (null dereference)"));
     emitBadCall(BT_call_null.get(), C, Callee);
     return;
   }
@@ -265,7 +265,8 @@ void CallAndMessageChecker::checkPreStmt(const CXXDeleteExpr *DE,
     if (!N)
       return;
     if (!BT_cxx_delete_undef)
-      BT_cxx_delete_undef.reset(new BuiltinBug("Uninitialized argument value"));
+      BT_cxx_delete_undef.reset(
+          new BuiltinBug(this, "Uninitialized argument value"));
     if (DE->isArrayFormAsWritten())
       Desc = "Argument to 'delete[]' is uninitialized";
     else
@@ -289,8 +290,8 @@ void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
     SVal V = CC->getCXXThisVal();
     if (V.isUndef()) {
       if (!BT_cxx_call_undef)
-        BT_cxx_call_undef.reset(new BuiltinBug("Called C++ object pointer is "
-                                               "uninitialized"));
+        BT_cxx_call_undef.reset(
+            new BuiltinBug(this, "Called C++ object pointer is uninitialized"));
       emitBadCall(BT_cxx_call_undef.get(), C, CC->getCXXThisExpr());
       return;
     }
@@ -301,8 +302,8 @@ void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
 
     if (StNull && !StNonNull) {
       if (!BT_cxx_call_null)
-        BT_cxx_call_null.reset(new BuiltinBug("Called C++ object pointer "
-                                              "is null"));
+        BT_cxx_call_null.reset(
+            new BuiltinBug(this, "Called C++ object pointer is null"));
       emitBadCall(BT_cxx_call_null.get(), C, CC->getCXXThisExpr());
       return;
     }
@@ -365,22 +366,21 @@ void CallAndMessageChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
       switch (msg.getMessageKind()) {
       case OCM_Message:
         if (!BT_msg_undef)
-          BT_msg_undef.reset(new BuiltinBug("Receiver in message expression "
+          BT_msg_undef.reset(new BuiltinBug(this,
+                                            "Receiver in message expression "
                                             "is an uninitialized value"));
         BT = BT_msg_undef.get();
         break;
       case OCM_PropertyAccess:
         if (!BT_objc_prop_undef)
-          BT_objc_prop_undef.reset(new BuiltinBug("Property access on an "
-                                                  "uninitialized object "
-                                                  "pointer"));
+          BT_objc_prop_undef.reset(new BuiltinBug(
+              this, "Property access on an uninitialized object pointer"));
         BT = BT_objc_prop_undef.get();
         break;
       case OCM_Subscript:
         if (!BT_objc_subscript_undef)
-          BT_objc_subscript_undef.reset(new BuiltinBug("Subscript access on an "
-                                                       "uninitialized object "
-                                                       "pointer"));
+          BT_objc_subscript_undef.reset(new BuiltinBug(
+              this, "Subscript access on an uninitialized object pointer"));
         BT = BT_objc_subscript_undef.get();
         break;
       }
@@ -418,7 +418,7 @@ void CallAndMessageChecker::emitNilReceiverBug(CheckerContext &C,
 
   if (!BT_msg_ret)
     BT_msg_ret.reset(
-      new BuiltinBug("Receiver in message expression is 'nil'"));
+        new BuiltinBug(this, "Receiver in message expression is 'nil'"));
 
   const ObjCMessageExpr *ME = msg.getOriginExpr();
 

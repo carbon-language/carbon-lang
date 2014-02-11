@@ -34,7 +34,7 @@ void BoolAssignmentChecker::emitReport(ProgramStateRef state,
                                        CheckerContext &C) const {
   if (ExplodedNode *N = C.addTransition(state)) {
     if (!BT)
-      BT.reset(new BuiltinBug("Assignment of a non-Boolean value"));    
+      BT.reset(new BuiltinBug(this, "Assignment of a non-Boolean value"));
     C.emitReport(new BugReport(*BT, BT->getDescription(), N));
   }
 }

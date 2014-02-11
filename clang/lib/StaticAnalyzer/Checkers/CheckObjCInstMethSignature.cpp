@@ -40,7 +40,8 @@ static bool AreTypesCompatible(QualType Derived, QualType Ancestor,
 static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
                                const ObjCMethodDecl *MethAncestor,
                                BugReporter &BR, ASTContext &Ctx,
-                               const ObjCImplementationDecl *ID) {
+                               const ObjCImplementationDecl *ID,
+                               const CheckerBase *Checker) {
 
   QualType ResDerived = MethDerived->getReturnType();
   QualType ResAncestor = MethAncestor->getReturnType();
@@ -69,15 +70,15 @@ static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
       PathDiagnosticLocation::createBegin(MethDerived,
                                           BR.getSourceManager());
 
-    BR.EmitBasicReport(MethDerived,
-                       "Incompatible instance method return type",
-                       categories::CoreFoundationObjectiveC,
-                       os.str(), MethDLoc);
+    BR.EmitBasicReport(
+        MethDerived, Checker, "Incompatible instance method return type",
+        categories::CoreFoundationObjectiveC, os.str(), MethDLoc);
   }
 }
 
 static void CheckObjCInstMethSignature(const ObjCImplementationDecl *ID,
-                                       BugReporter& BR) {
+                                       BugReporter &BR,
+                                       const CheckerBase *Checker) {
 
   const ObjCInterfaceDecl *D = ID->getClassInterface();
   const ObjCInterfaceDecl *C = D->getSuperClass();
@@ -118,7 +119,7 @@ static void CheckObjCInstMethSignature(const ObjCImplementationDecl *ID,
       ObjCMethodDecl *MethDerived = MI->second;
       MI->second = 0;
 
-      CompareReturnTypes(MethDerived, M, BR, Ctx, ID);
+      CompareReturnTypes(MethDerived, M, BR, Ctx, ID, Checker);
     }
 
     C = C->getSuperClass();
@@ -135,7 +136,7 @@ class ObjCMethSigsChecker : public Checker<
 public:
   void checkASTDecl(const ObjCImplementationDecl *D, AnalysisManager& mgr,
                     BugReporter &BR) const {
-    CheckObjCInstMethSignature(D, BR);
+    CheckObjCInstMethSignature(D, BR, this);
   }
 };
 }

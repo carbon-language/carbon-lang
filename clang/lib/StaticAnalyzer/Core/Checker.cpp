@@ -22,6 +22,8 @@ StringRef CheckerBase::getTagDescription() const {
   return "A Checker";  
 }
 
+CheckName CheckerBase::getCheckName() const { return Name; }
+
 void Checker<check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
              check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
              check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,

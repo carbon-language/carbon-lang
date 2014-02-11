@@ -36,8 +36,10 @@ namespace {
 class FindIdenticalExprVisitor
     : public RecursiveASTVisitor<FindIdenticalExprVisitor> {
 public:
-  explicit FindIdenticalExprVisitor(BugReporter &B, AnalysisDeclContext *A)
-      : BR(B), AC(A) {}
+  explicit FindIdenticalExprVisitor(BugReporter &B,
+                                    const CheckerBase *Checker,
+                                    AnalysisDeclContext *A)
+      : BR(B), Checker(Checker), AC(A) {}
   // FindIdenticalExprVisitor only visits nodes
   // that are binary operators or conditional operators.
   bool VisitBinaryOperator(const BinaryOperator *B);
@@ -45,6 +47,7 @@ public:
 
 private:
   BugReporter &BR;
+  const CheckerBase *Checker;
   AnalysisDeclContext *AC;
 };
 } // end anonymous namespace
@@ -112,7 +115,8 @@ bool FindIdenticalExprVisitor::VisitBinaryOperator(const BinaryOperator *B) {
       Message = "comparison of identical expressions always evaluates to true";
     else
       Message = "comparison of identical expressions always evaluates to false";
-    BR.EmitBasicReport(AC->getDecl(), "Compare of identical expressions",
+    BR.EmitBasicReport(AC->getDecl(), Checker,
+                       "Compare of identical expressions",
                        categories::LogicError, Message, ELoc);
   }
   // We want to visit ALL nodes (subexpressions of binary comparison
@@ -137,7 +141,8 @@ bool FindIdenticalExprVisitor::VisitConditionalOperator(
     Sr[0] = C->getTrueExpr()->getSourceRange();
     Sr[1] = C->getFalseExpr()->getSourceRange();
     BR.EmitBasicReport(
-        AC->getDecl(), "Identical expressions in conditional expression",
+        AC->getDecl(), Checker,
+        "Identical expressions in conditional expression",
         categories::LogicError,
         "identical expressions on both sides of ':' in conditional expression",
         ELoc, Sr);
@@ -245,7 +250,7 @@ class FindIdenticalExprChecker : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager &Mgr,
                         BugReporter &BR) const {
-    FindIdenticalExprVisitor Visitor(BR, Mgr.getAnalysisDeclContext(D));
+    FindIdenticalExprVisitor Visitor(BR, this, Mgr.getAnalysisDeclContext(D));
     Visitor.TraverseDecl(const_cast<Decl *>(D));
   }
 };

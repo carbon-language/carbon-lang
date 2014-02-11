@@ -67,7 +67,7 @@ void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
     return;
 
   if (!BT_dispatchOnce)
-    BT_dispatchOnce.reset(new BugType("Improper use of 'dispatch_once'",
+    BT_dispatchOnce.reset(new BugType(this, "Improper use of 'dispatch_once'",
                                       "API Misuse (Apple)"));
 
   // Handle _dispatch_once.  In some versions of the OS X SDK we have the case

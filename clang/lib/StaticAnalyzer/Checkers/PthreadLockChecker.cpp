@@ -102,7 +102,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
 
   if (state->contains<LockSet>(lockR)) {
     if (!BT_doublelock)
-      BT_doublelock.reset(new BugType("Double locking", "Lock checker"));
+      BT_doublelock.reset(new BugType(this, "Double locking", "Lock checker"));
     ExplodedNode *N = C.generateSink();
     if (!N)
       return;
@@ -165,7 +165,7 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
   const MemRegion *firstLockR = LS.getHead();
   if (firstLockR != lockR) {
     if (!BT_lor)
-      BT_lor.reset(new BugType("Lock order reversal", "Lock checker"));
+      BT_lor.reset(new BugType(this, "Lock order reversal", "Lock checker"));
     ExplodedNode *N = C.generateSink();
     if (!N)
       return;
@@ -183,7 +183,6 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
   state = state->set<LockSet>(LS.getTail());
   C.addTransition(state);
 }
-
 
 void ento::registerPthreadLockChecker(CheckerManager &mgr) {
   mgr.registerChecker<PthreadLockChecker>();

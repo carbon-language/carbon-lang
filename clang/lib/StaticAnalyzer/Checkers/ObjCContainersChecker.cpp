@@ -33,7 +33,7 @@ class ObjCContainersChecker : public Checker< check::PreStmt<CallExpr>,
   mutable OwningPtr<BugType> BT;
   inline void initBugType() const {
     if (!BT)
-      BT.reset(new BugType("CFArray API",
+      BT.reset(new BugType(this, "CFArray API",
                            categories::CoreFoundationObjectiveC));
   }
 

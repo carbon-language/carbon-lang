@@ -39,7 +39,8 @@ using namespace ento;
 namespace {
 class APIMisuse : public BugType {
 public:
-  APIMisuse(const char* name) : BugType(name, "API Misuse (Apple)") {}
+  APIMisuse(const CheckerBase *checker, const char *name)
+      : BugType(checker, name, "API Misuse (Apple)") {}
 };
 } // end anonymous namespace
 
@@ -191,7 +192,7 @@ void NilArgChecker::generateBugReport(ExplodedNode *N,
                                       const Expr *E,
                                       CheckerContext &C) const {
   if (!BT)
-    BT.reset(new APIMisuse("nil argument"));
+    BT.reset(new APIMisuse(this, "nil argument"));
 
   BugReport *R = new BugReport(*BT, Msg, N);
   R->addRange(Range);
@@ -483,8 +484,8 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
       << " bits of the input integer will be lost.";
 
     if (!BT)
-      BT.reset(new APIMisuse("Bad use of CFNumberCreate"));
-    
+      BT.reset(new APIMisuse(this, "Bad use of CFNumberCreate"));
+
     BugReport *report = new BugReport(*BT, os.str(), N);
     report->addRange(CE->getArg(2)->getSourceRange());
     C.emitReport(report);
@@ -522,8 +523,8 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
     Retain = &Ctx.Idents.get("CFRetain");
     Release = &Ctx.Idents.get("CFRelease");
     MakeCollectable = &Ctx.Idents.get("CFMakeCollectable");
-    BT.reset(
-      new APIMisuse("null passed to CFRetain/CFRelease/CFMakeCollectable"));
+    BT.reset(new APIMisuse(
+        this, "null passed to CFRetain/CFRelease/CFMakeCollectable"));
   }
 
   // Check if we called CFRetain/CFRelease/CFMakeCollectable.
@@ -600,9 +601,9 @@ void ClassReleaseChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
                                               CheckerContext &C) const {
   
   if (!BT) {
-    BT.reset(new APIMisuse("message incorrectly sent to class instead of class "
-                           "instance"));
-  
+    BT.reset(new APIMisuse(
+        this, "message incorrectly sent to class instead of class instance"));
+
     ASTContext &Ctx = C.getASTContext();
     releaseS = GetNullarySelector("release", Ctx);
     retainS = GetNullarySelector("retain", Ctx);
@@ -708,7 +709,8 @@ VariadicMethodTypeChecker::isVariadicMessage(const ObjCMethodCall &msg) const {
 void VariadicMethodTypeChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
                                                     CheckerContext &C) const {
   if (!BT) {
-    BT.reset(new APIMisuse("Arguments passed to variadic method aren't all "
+    BT.reset(new APIMisuse(this,
+                           "Arguments passed to variadic method aren't all "
                            "Objective-C pointer types"));
 
     ASTContext &Ctx = C.getASTContext();
@@ -1263,6 +1265,7 @@ void ento::registerObjCLoopChecker(CheckerManager &mgr) {
   mgr.registerChecker<ObjCLoopChecker>();
 }
 
-void ento::registerObjCNonNilReturnValueChecker(CheckerManager &mgr) {
+void
+ento::registerObjCNonNilReturnValueChecker(CheckerManager &mgr) {
   mgr.registerChecker<ObjCNonNilReturnValueChecker>();
 }

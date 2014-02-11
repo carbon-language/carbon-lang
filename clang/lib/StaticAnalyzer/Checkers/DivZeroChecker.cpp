@@ -37,7 +37,7 @@ void DivZeroChecker::reportBug(const char *Msg,
                                CheckerContext &C) const {
   if (ExplodedNode *N = C.generateSink(StateZero)) {
     if (!BT)
-      BT.reset(new BuiltinBug("Division by zero"));
+      BT.reset(new BuiltinBug(this, "Division by zero"));
 
     BugReport *R = new BugReport(*BT, Msg, N);
     bugreporter::trackNullOrUndefValue(N, bugreporter::GetDenomExpr(N), *R);

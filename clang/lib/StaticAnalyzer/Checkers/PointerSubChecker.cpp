@@ -62,9 +62,10 @@ void PointerSubChecker::checkPreStmt(const BinaryOperator *B,
 
   if (ExplodedNode *N = C.addTransition()) {
     if (!BT)
-      BT.reset(new BuiltinBug("Pointer subtraction", 
-                          "Subtraction of two pointers that do not point to "
-                          "the same memory chunk may cause incorrect result."));
+      BT.reset(
+          new BuiltinBug(this, "Pointer subtraction",
+                         "Subtraction of two pointers that do not point to "
+                         "the same memory chunk may cause incorrect result."));
     BugReport *R = new BugReport(*BT, BT->getDescription(), N);
     R->addRange(B->getSourceRange());
     C.emitReport(R);

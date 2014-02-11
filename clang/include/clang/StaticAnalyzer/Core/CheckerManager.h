@@ -29,6 +29,7 @@ namespace clang {
 
 namespace ento {
   class CheckerBase;
+  class CheckerRegistry;
   class ExprEngine;
   class AnalysisManager;
   class BugReporter;
@@ -131,9 +132,26 @@ enum PointerEscapeKind {
   PSK_EscapeOther
 };
 
+// This wrapper is used to ensure that only StringRefs originating from the
+// CheckerRegistry are used as check names. We want to make sure all check
+// name strings have a lifetime that keeps them alive at least until the path
+// diagnostics have been processed.
+class CheckName {
+  StringRef Name;
+  friend class ::clang::ento::CheckerRegistry;
+  explicit CheckName(StringRef Name) : Name(Name) {}
+
+public:
+  CheckName() {}
+  CheckName(const CheckName &Other) : Name(Other.Name) {}
+  StringRef getName() const { return Name; }
+};
+
 class CheckerManager {
   const LangOptions LangOpts;
   AnalyzerOptionsRef AOptions;
+  CheckName CurrentCheckName;
+
 public:
   CheckerManager(const LangOptions &langOpts,
                  AnalyzerOptionsRef AOptions)
@@ -141,6 +159,9 @@ public:
       AOptions(AOptions) {}
 
   ~CheckerManager();
+
+  void setCurrentCheckName(CheckName name) { CurrentCheckName = name; }
+  CheckName getCurrentCheckName() const { return CurrentCheckName; }
 
   bool hasPathSensitiveCheckers() const;
 
@@ -168,6 +189,7 @@ public:
       return static_cast<CHECKER *>(ref); // already registered.
 
     CHECKER *checker = new CHECKER();
+    checker->Name = CurrentCheckName;
     CheckerDtors.push_back(CheckerDtor(checker, destruct<CHECKER>));
     CHECKER::_register(checker, *this);
     ref = checker;
@@ -182,6 +204,7 @@ public:
       return static_cast<CHECKER *>(ref); // already registered.
 
     CHECKER *checker = new CHECKER(AOpts);
+    checker->Name = CurrentCheckName;
     CheckerDtors.push_back(CheckerDtor(checker, destruct<CHECKER>));
     CHECKER::_register(checker, *this);
     ref = checker;

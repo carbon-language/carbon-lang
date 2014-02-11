@@ -142,9 +142,9 @@ void ChrootChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
     if (isRootChanged((intptr_t) *k))
       if (ExplodedNode *N = C.addTransition()) {
         if (!BT_BreakJail)
-          BT_BreakJail.reset(new BuiltinBug("Break out of jail",
-                                        "No call of chdir(\"/\") immediately "
-                                        "after chroot"));
+          BT_BreakJail.reset(new BuiltinBug(
+              this, "Break out of jail", "No call of chdir(\"/\") immediately "
+                                         "after chroot"));
         BugReport *R = new BugReport(*BT_BreakJail, 
                                      BT_BreakJail->getDescription(), N);
         C.emitReport(R);

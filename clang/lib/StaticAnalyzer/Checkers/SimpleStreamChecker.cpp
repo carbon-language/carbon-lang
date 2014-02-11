@@ -109,11 +109,11 @@ public:
 
 SimpleStreamChecker::SimpleStreamChecker() : IIfopen(0), IIfclose(0) {
   // Initialize the bug types.
-  DoubleCloseBugType.reset(new BugType("Double fclose",
-                                       "Unix Stream API Error"));
+  DoubleCloseBugType.reset(
+      new BugType(this, "Double fclose", "Unix Stream API Error"));
 
-  LeakBugType.reset(new BugType("Resource Leak",
-                                "Unix Stream API Error"));
+  LeakBugType.reset(
+      new BugType(this, "Resource Leak", "Unix Stream API Error"));
   // Sinks are higher importance bugs as well as calls to assert() or exit(0).
   LeakBugType->setSuppressOnSink(true);
 }

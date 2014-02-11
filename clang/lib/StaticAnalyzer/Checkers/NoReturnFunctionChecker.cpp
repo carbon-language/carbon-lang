@@ -150,7 +150,6 @@ void NoReturnFunctionChecker::checkPostObjCMessage(const ObjCMethodCall &Msg,
   C.generateSink();
 }
 
-
 void ento::registerNoReturnFunctionChecker(CheckerManager &mgr) {
   mgr.registerChecker<NoReturnFunctionChecker>();
 }

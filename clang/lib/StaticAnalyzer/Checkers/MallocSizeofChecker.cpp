@@ -236,10 +236,8 @@ public:
             PathDiagnosticLocation::createBegin(i->AllocCall->getCallee(),
                 BR.getSourceManager(), ADC);
 
-        BR.EmitBasicReport(D, "Allocator sizeof operand mismatch",
-            categories::UnixAPI,
-            OS.str(),
-            L, Ranges);
+        BR.EmitBasicReport(D, this, "Allocator sizeof operand mismatch",
+                           categories::UnixAPI, OS.str(), L, Ranges);
       }
     }
   }

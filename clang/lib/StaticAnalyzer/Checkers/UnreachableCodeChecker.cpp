@@ -165,7 +165,7 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
     if (SM.isInSystemHeader(SL) || SM.isInExternCSystemHeader(SL))
       continue;
 
-    B.EmitBasicReport(D, "Unreachable code", "Dead code",
+    B.EmitBasicReport(D, this, "Unreachable code", "Dead code",
                       "This statement is never executed", DL, SR);
   }
 }

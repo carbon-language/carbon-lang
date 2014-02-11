@@ -49,6 +49,9 @@ struct ChecksFilter {
   DefaultBool check_MissingInvalidationMethod;
   /// Check that all ivars are invalidated.
   DefaultBool check_InstanceVariableInvalidation;
+
+  CheckName checkName_MissingInvalidationMethod;
+  CheckName checkName_InstanceVariableInvalidation;
 };
 
 class IvarInvalidationCheckerImpl {
@@ -200,7 +203,8 @@ class IvarInvalidationCheckerImpl {
                         const ObjCIvarDecl *IvarDecl,
                         const IvarToPropMapTy &IvarToPopertyMap);
 
-  void reportNoInvalidationMethod(const ObjCIvarDecl *FirstIvarDecl,
+  void reportNoInvalidationMethod(CheckName CheckName,
+                                  const ObjCIvarDecl *FirstIvarDecl,
                                   const IvarToPropMapTy &IvarToPopertyMap,
                                   const ObjCInterfaceDecl *InterfaceD,
                                   bool MissingDeclaration) const;
@@ -476,7 +480,8 @@ visit(const ObjCImplementationDecl *ImplD) const {
   // Report an error in case none of the invalidation methods are declared.
   if (!Info.needsInvalidation() && !PartialInfo.needsInvalidation()) {
     if (Filter.check_MissingInvalidationMethod)
-      reportNoInvalidationMethod(FirstIvarDecl, IvarToPopertyMap, InterfaceD,
+      reportNoInvalidationMethod(Filter.checkName_MissingInvalidationMethod,
+                                 FirstIvarDecl, IvarToPopertyMap, InterfaceD,
                                  /*MissingDeclaration*/ true);
     // If there are no invalidation methods, there is no ivar validation work
     // to be done.
@@ -532,17 +537,17 @@ visit(const ObjCImplementationDecl *ImplD) const {
         reportIvarNeedsInvalidation(I->first, IvarToPopertyMap, 0);
     } else {
       // Otherwise, no invalidation methods were implemented.
-      reportNoInvalidationMethod(FirstIvarDecl, IvarToPopertyMap, InterfaceD,
+      reportNoInvalidationMethod(Filter.checkName_InstanceVariableInvalidation,
+                                 FirstIvarDecl, IvarToPopertyMap, InterfaceD,
                                  /*MissingDeclaration*/ false);
     }
   }
 }
 
-void IvarInvalidationCheckerImpl::
-reportNoInvalidationMethod(const ObjCIvarDecl *FirstIvarDecl,
-                           const IvarToPropMapTy &IvarToPopertyMap,
-                           const ObjCInterfaceDecl *InterfaceD,
-                           bool MissingDeclaration) const {
+void IvarInvalidationCheckerImpl::reportNoInvalidationMethod(
+    CheckName CheckName, const ObjCIvarDecl *FirstIvarDecl,
+    const IvarToPropMapTy &IvarToPopertyMap,
+    const ObjCInterfaceDecl *InterfaceD, bool MissingDeclaration) const {
   SmallString<128> sbuf;
   llvm::raw_svector_ostream os(sbuf);
   assert(FirstIvarDecl);
@@ -557,7 +562,7 @@ reportNoInvalidationMethod(const ObjCIvarDecl *FirstIvarDecl,
   PathDiagnosticLocation IvarDecLocation =
     PathDiagnosticLocation::createBegin(FirstIvarDecl, BR.getSourceManager());
 
-  BR.EmitBasicReport(FirstIvarDecl, "Incomplete invalidation",
+  BR.EmitBasicReport(FirstIvarDecl, CheckName, "Incomplete invalidation",
                      categories::CoreFoundationObjectiveC, os.str(),
                      IvarDecLocation);
 }
@@ -575,15 +580,16 @@ reportIvarNeedsInvalidation(const ObjCIvarDecl *IvarD,
                            PathDiagnosticLocation::createEnd(MethodD->getBody(),
                            BR.getSourceManager(),
                            Mgr.getAnalysisDeclContext(MethodD));
-    BR.EmitBasicReport(MethodD, "Incomplete invalidation",
+    BR.EmitBasicReport(MethodD, Filter.checkName_InstanceVariableInvalidation,
+                       "Incomplete invalidation",
                        categories::CoreFoundationObjectiveC, os.str(),
                        MethodDecLocation);
   } else {
-    BR.EmitBasicReport(IvarD, "Incomplete invalidation",
-                       categories::CoreFoundationObjectiveC, os.str(),
-                       PathDiagnosticLocation::createBegin(IvarD,
-                                                        BR.getSourceManager()));
-                       
+    BR.EmitBasicReport(
+        IvarD, Filter.checkName_InstanceVariableInvalidation,
+        "Incomplete invalidation", categories::CoreFoundationObjectiveC,
+        os.str(),
+        PathDiagnosticLocation::createBegin(IvarD, BR.getSourceManager()));
   }
 }
 
@@ -750,10 +756,13 @@ public:
 };
 }
 
-#define REGISTER_CHECKER(name) \
-void ento::register##name(CheckerManager &mgr) {\
-  mgr.registerChecker<IvarInvalidationChecker>()->Filter.check_##name = true;\
-}
+#define REGISTER_CHECKER(name)                                                 \
+  void ento::register##name(CheckerManager &mgr) {                             \
+    IvarInvalidationChecker *checker =                                         \
+        mgr.registerChecker<IvarInvalidationChecker>();                        \
+    checker->Filter.check_##name = true;                                       \
+    checker->Filter.checkName_##name = mgr.getCurrentCheckName();              \
+  }
 
 REGISTER_CHECKER(InstanceVariableInvalidation)
 REGISTER_CHECKER(MissingInvalidationMethod)

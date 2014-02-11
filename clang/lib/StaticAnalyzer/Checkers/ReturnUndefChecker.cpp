@@ -94,9 +94,9 @@ static void emitBug(CheckerContext &C, BuiltinBug &BT, const Expr *RetE,
 
 void ReturnUndefChecker::emitUndef(CheckerContext &C, const Expr *RetE) const {
   if (!BT_Undef)
-    BT_Undef.reset(new BuiltinBug("Garbage return value",
-                                  "Undefined or garbage value "
-                                    "returned to caller"));
+    BT_Undef.reset(
+        new BuiltinBug(this, "Garbage return value",
+                       "Undefined or garbage value returned to caller"));
   emitBug(C, *BT_Undef, RetE);
 }
 
@@ -113,7 +113,7 @@ void ReturnUndefChecker::checkReference(CheckerContext &C, const Expr *RetE,
 
   // The return value is known to be null. Emit a bug report.
   if (!BT_NullReference)
-    BT_NullReference.reset(new BuiltinBug("Returning null reference"));
+    BT_NullReference.reset(new BuiltinBug(this, "Returning null reference"));
 
   emitBug(C, *BT_NullReference, RetE, bugreporter::getDerefExpr(RetE));
 }
