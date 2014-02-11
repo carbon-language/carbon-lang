@@ -23,7 +23,7 @@ class FastUnwindTest : public ::testing::Test {
   bool TryFastUnwind(uptr max_depth) {
     if (!StackTrace::WillUseFastUnwind(true))
       return false;
-    trace.Unwind(max_depth, start_pc, (uptr)&fake_stack[0], fake_top,
+    trace.Unwind(max_depth, start_pc, (uptr)&fake_stack[0], 0, fake_top,
                  fake_bottom, true);
     return true;
   }

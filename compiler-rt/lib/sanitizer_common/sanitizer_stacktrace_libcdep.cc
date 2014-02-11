@@ -71,7 +71,7 @@ void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, void *context,
       SlowUnwindStackWithContext(pc, context, max_depth);
     else
       SlowUnwindStack(pc, max_depth);
-  } else { 
+  } else {
     FastUnwindStack(pc, bp, stack_top, stack_bottom, max_depth);
   }
 
