@@ -430,6 +430,11 @@ void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
   PopStackFrames(pc_location);
 }
 
+void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
+                                            uptr max_depth) {
+  UNREACHABLE("no signal context on windows");
+}
+
 void MaybeOpenReportFile() {
   // Windows doesn't have native fork, and we don't support Cygwin or other
   // environments that try to fake it, so the initial report_fd will always be
