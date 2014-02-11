@@ -54,107 +54,6 @@ static const char *DemangleCXXABI(const char *name) {
   return name;
 }
 
-#if defined(__x86_64__)
-static const char* const kSymbolizerArch = "--default-arch=x86_64";
-#elif defined(__i386__)
-static const char* const kSymbolizerArch = "--default-arch=i386";
-#elif defined(__powerpc64__)
-static const char* const kSymbolizerArch = "--default-arch=powerpc64";
-#else
-static const char* const kSymbolizerArch = "--default-arch=unknown";
-#endif
-
-static const int kSymbolizerStartupTimeMillis = 10;
-
-// Creates external symbolizer connected via pipe, user should write
-// to output_fd and read from input_fd.
-static bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
-                                      int *input_fd, int *output_fd) {
-  if (!FileExists(path_to_symbolizer)) {
-    Report("WARNING: invalid path to external symbolizer!\n");
-    return false;
-  }
-
-  int *infd = NULL;
-  int *outfd = NULL;
-  // The client program may close its stdin and/or stdout and/or stderr
-  // thus allowing socketpair to reuse file descriptors 0, 1 or 2.
-  // In this case the communication between the forked processes may be
-  // broken if either the parent or the child tries to close or duplicate
-  // these descriptors. The loop below produces two pairs of file
-  // descriptors, each greater than 2 (stderr).
-  int sock_pair[5][2];
-  for (int i = 0; i < 5; i++) {
-    if (pipe(sock_pair[i]) == -1) {
-      for (int j = 0; j < i; j++) {
-        internal_close(sock_pair[j][0]);
-        internal_close(sock_pair[j][1]);
-      }
-      Report("WARNING: Can't create a socket pair to start "
-             "external symbolizer (errno: %d)\n", errno);
-      return false;
-    } else if (sock_pair[i][0] > 2 && sock_pair[i][1] > 2) {
-      if (infd == NULL) {
-        infd = sock_pair[i];
-      } else {
-        outfd = sock_pair[i];
-        for (int j = 0; j < i; j++) {
-          if (sock_pair[j] == infd) continue;
-          internal_close(sock_pair[j][0]);
-          internal_close(sock_pair[j][1]);
-        }
-        break;
-      }
-    }
-  }
-  CHECK(infd);
-  CHECK(outfd);
-
-  int pid = fork();
-  if (pid == -1) {
-    // Fork() failed.
-    internal_close(infd[0]);
-    internal_close(infd[1]);
-    internal_close(outfd[0]);
-    internal_close(outfd[1]);
-    Report("WARNING: failed to fork external symbolizer "
-           " (errno: %d)\n", errno);
-    return false;
-  } else if (pid == 0) {
-    // Child subprocess.
-    internal_close(STDOUT_FILENO);
-    internal_close(STDIN_FILENO);
-    internal_dup2(outfd[0], STDIN_FILENO);
-    internal_dup2(infd[1], STDOUT_FILENO);
-    internal_close(outfd[0]);
-    internal_close(outfd[1]);
-    internal_close(infd[0]);
-    internal_close(infd[1]);
-    for (int fd = getdtablesize(); fd > 2; fd--)
-      internal_close(fd);
-    execl(path_to_symbolizer, path_to_symbolizer, kSymbolizerArch, (char*)0);
-    internal__exit(1);
-  }
-
-  // Continue execution in parent process.
-  internal_close(outfd[0]);
-  internal_close(infd[1]);
-  *input_fd = infd[0];
-  *output_fd = outfd[1];
-
-  // Check that symbolizer subprocess started successfully.
-  int pid_status;
-  SleepForMillis(kSymbolizerStartupTimeMillis);
-  int exited_pid = waitpid(pid, &pid_status, WNOHANG);
-  if (exited_pid != 0) {
-    // Either waitpid failed, or child has already exited.
-    Report("WARNING: external symbolizer didn't start up correctly!\n");
-    return false;
-  }
-
-  return true;
-}
-
 // Extracts the prefix of "str" that consists of any characters not
 // present in "delims" string, and copies this prefix to "result", allocating
 // space for it.
@@ -194,29 +93,20 @@ static const char *ExtractUptr(const char *str, const char *delims,
   return ret;
 }
 
-// ExternalSymbolizer encapsulates communication between the tool and
-// external symbolizer program, running in a different subprocess,
-// For now we assume the following protocol:
-// For each request of the form
-//   <module_name> <module_offset>
-// passed to STDIN, external symbolizer prints to STDOUT response:
-//   <function_name>
-//   <file_name>:<line_number>:<column_number>
-//   <function_name>
-//   <file_name>:<line_number>:<column_number>
-//   ...
-//   <empty line>
-// ExternalSymbolizer may not be used from two threads simultaneously.
-class ExternalSymbolizer {
+// SymbolizerProcess encapsulates communication between the tool and
+// external symbolizer program, running in a different subprocess.
+// SymbolizerProcess may not be used from two threads simultaneously.
+class SymbolizerProcess {
  public:
-  explicit ExternalSymbolizer(const char *path)
+  explicit SymbolizerProcess(const char *path)
       : path_(path),
         input_fd_(kInvalidFd),
         output_fd_(kInvalidFd),
         times_restarted_(0),
-        failed_to_start_(false) {
+        failed_to_start_(false),
+        reported_invalid_path_(false) {
     CHECK(path_);
-    CHECK_NE(path[0], '\0');
+    CHECK_NE(path_[0], '\0');
   }
 
   char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
@@ -239,7 +129,7 @@ class ExternalSymbolizer {
       internal_close(input_fd_);
     if (output_fd_ != kInvalidFd)
       internal_close(output_fd_);
-    return StartSymbolizerSubprocess(path_, &input_fd_, &output_fd_);
+    return StartSymbolizerSubprocess();
   }
 
   char *SendCommandImpl(bool is_data, const char *module_name,
@@ -247,8 +137,9 @@ class ExternalSymbolizer {
     if (input_fd_ == kInvalidFd || output_fd_ == kInvalidFd)
       return 0;
     CHECK(module_name);
-    internal_snprintf(buffer_, kBufferSize, "%s\"%s\" 0x%zx\n",
-                      is_data ? "DATA " : "", module_name, module_offset);
+    if (!RenderInputCommand(buffer_, kBufferSize, is_data, module_name,
+                            module_offset))
+      return 0;
     if (!writeToSymbolizer(buffer_, internal_strlen(buffer_)))
       return 0;
     if (!readFromSymbolizer(buffer_, kBufferSize))
@@ -270,11 +161,8 @@ class ExternalSymbolizer {
         return false;
       }
       read_len += just_read;
-      // Empty line marks the end of symbolizer output.
-      if (read_len >= 2 && buffer[read_len - 1] == '\n' &&
-                           buffer[read_len - 2] == '\n') {
+      if (ReachedEndOfOutput(buffer, read_len))
         break;
-      }
     }
     return true;
   }
@@ -290,6 +178,109 @@ class ExternalSymbolizer {
     return true;
   }
 
+  bool StartSymbolizerSubprocess() {
+    if (!FileExists(path_)) {
+      if (!reported_invalid_path_) {
+        Report("WARNING: invalid path to external symbolizer!\n");
+        reported_invalid_path_ = true;
+      }
+      return false;
+    }
+
+    int *infd = NULL;
+    int *outfd = NULL;
+    // The client program may close its stdin and/or stdout and/or stderr
+    // thus allowing socketpair to reuse file descriptors 0, 1 or 2.
+    // In this case the communication between the forked processes may be
+    // broken if either the parent or the child tries to close or duplicate
+    // these descriptors. The loop below produces two pairs of file
+    // descriptors, each greater than 2 (stderr).
+    int sock_pair[5][2];
+    for (int i = 0; i < 5; i++) {
+      if (pipe(sock_pair[i]) == -1) {
+        for (int j = 0; j < i; j++) {
+          internal_close(sock_pair[j][0]);
+          internal_close(sock_pair[j][1]);
+        }
+        Report("WARNING: Can't create a socket pair to start "
+               "external symbolizer (errno: %d)\n", errno);
+        return false;
+      } else if (sock_pair[i][0] > 2 && sock_pair[i][1] > 2) {
+        if (infd == NULL) {
+          infd = sock_pair[i];
+        } else {
+          outfd = sock_pair[i];
+          for (int j = 0; j < i; j++) {
+            if (sock_pair[j] == infd) continue;
+            internal_close(sock_pair[j][0]);
+            internal_close(sock_pair[j][1]);
+          }
+          break;
+        }
+      }
+    }
+    CHECK(infd);
+    CHECK(outfd);
+
+    int pid = fork();
+    if (pid == -1) {
+      // Fork() failed.
+      internal_close(infd[0]);
+      internal_close(infd[1]);
+      internal_close(outfd[0]);
+      internal_close(outfd[1]);
+      Report("WARNING: failed to fork external symbolizer "
+             " (errno: %d)\n", errno);
+      return false;
+    } else if (pid == 0) {
+      // Child subprocess.
+      internal_close(STDOUT_FILENO);
+      internal_close(STDIN_FILENO);
+      internal_dup2(outfd[0], STDIN_FILENO);
+      internal_dup2(infd[1], STDOUT_FILENO);
+      internal_close(outfd[0]);
+      internal_close(outfd[1]);
+      internal_close(infd[0]);
+      internal_close(infd[1]);
+      for (int fd = getdtablesize(); fd > 2; fd--)
+        internal_close(fd);
+      ExecuteWithDefaultArgs(path_);
+      internal__exit(1);
+    }
+
+    // Continue execution in parent process.
+    internal_close(outfd[0]);
+    internal_close(infd[1]);
+    input_fd_ = infd[0];
+    output_fd_ = outfd[1];
+
+    // Check that symbolizer subprocess started successfully.
+    int pid_status;
+    SleepForMillis(kSymbolizerStartupTimeMillis);
+    int exited_pid = waitpid(pid, &pid_status, WNOHANG);
+    if (exited_pid != 0) {
+      // Either waitpid failed, or child has already exited.
+      Report("WARNING: external symbolizer didn't start up correctly!\n");
+      return false;
+    }
+
+    return true;
+  }
+
+  virtual bool RenderInputCommand(char *buffer, uptr max_length, bool is_data,
+                                  const char *module_name,
+                                  uptr module_offset) const {
+    UNIMPLEMENTED();
+  }
+
+  virtual bool ReachedEndOfOutput(const char *buffer, uptr length) const {
+    UNIMPLEMENTED();
+  }
+
+  virtual void ExecuteWithDefaultArgs(const char *path_to_binary) const {
+    UNIMPLEMENTED();
+  }
+
   const char *path_;
   int input_fd_;
   int output_fd_;
@@ -298,8 +289,52 @@ class ExternalSymbolizer {
   char buffer_[kBufferSize];
 
   static const uptr kMaxTimesRestarted = 5;
+  static const int kSymbolizerStartupTimeMillis = 10;
   uptr times_restarted_;
   bool failed_to_start_;
+  bool reported_invalid_path_;
+};
+
+// For now we assume the following protocol:
+// For each request of the form
+//   <module_name> <module_offset>
+// passed to STDIN, external symbolizer prints to STDOUT response:
+//   <function_name>
+//   <file_name>:<line_number>:<column_number>
+//   <function_name>
+//   <file_name>:<line_number>:<column_number>
+//   ...
+//   <empty line>
+class LLVMSymbolizerProcess : public SymbolizerProcess {
+ public:
+  explicit LLVMSymbolizerProcess(const char *path) : SymbolizerProcess(path) {}
+
+ private:
+  bool RenderInputCommand(char *buffer, uptr max_length, bool is_data,
+                          const char *module_name, uptr module_offset) const {
+    internal_snprintf(buffer, max_length, "%s\"%s\" 0x%zx\n",
+                      is_data ? "DATA " : "", module_name, module_offset);
+    return true;
+  }
+
+  bool ReachedEndOfOutput(const char *buffer, uptr length) const {
+    // Empty line marks the end of llvm-symbolizer output.
+    return length >= 2 && buffer[length - 1] == '\n' &&
+           buffer[length - 2] == '\n';
+  }
+
+  void ExecuteWithDefaultArgs(const char *path_to_binary) const {
+#if defined(__x86_64__)
+    const char* const kSymbolizerArch = "--default-arch=x86_64";
+#elif defined(__i386__)
+    const char* const kSymbolizerArch = "--default-arch=i386";
+#elif defined(__powerpc64__)
+    const char* const kSymbolizerArch = "--default-arch=powerpc64";
+#else
+    const char* const kSymbolizerArch = "--default-arch=unknown";
+#endif
+    execl(path_to_binary, path_to_binary, kSymbolizerArch, (char *)0);
+  }
 };
 
 #if SANITIZER_SUPPORTS_WEAK_HOOKS
@@ -383,7 +418,7 @@ class InternalSymbolizer {
 
 class POSIXSymbolizer : public Symbolizer {
  public:
-  POSIXSymbolizer(ExternalSymbolizer *external_symbolizer,
+  POSIXSymbolizer(SymbolizerProcess *external_symbolizer,
                   InternalSymbolizer *internal_symbolizer,
                   LibbacktraceSymbolizer *libbacktrace_symbolizer)
       : Symbolizer(),
@@ -595,7 +630,7 @@ class POSIXSymbolizer : public Symbolizer {
   bool modules_fresh_;
   BlockingMutex mu_;
 
-  ExternalSymbolizer *external_symbolizer_;        // Leaked.
+  SymbolizerProcess *external_symbolizer_;        // Leaked.
   InternalSymbolizer *const internal_symbolizer_;  // Leaked.
   LibbacktraceSymbolizer *libbacktrace_symbolizer_;  // Leaked.
 };
@@ -603,7 +638,7 @@ class POSIXSymbolizer : public Symbolizer {
 Symbolizer *Symbolizer::PlatformInit(const char *path_to_external) {
   InternalSymbolizer* internal_symbolizer =
       InternalSymbolizer::get(&symbolizer_allocator_);
-  ExternalSymbolizer *external_symbolizer = 0;
+  SymbolizerProcess *external_symbolizer = 0;
   LibbacktraceSymbolizer *libbacktrace_symbolizer = 0;
 
   if (!internal_symbolizer) {
@@ -615,7 +650,7 @@ Symbolizer *Symbolizer::PlatformInit(const char *path_to_external) {
         path_to_external = FindPathToBinary("llvm-symbolizer");
       if (path_to_external && path_to_external[0] != '\0')
         external_symbolizer = new(symbolizer_allocator_)
-            ExternalSymbolizer(path_to_external);
+            LLVMSymbolizerProcess(path_to_external);
     }
   }
 
