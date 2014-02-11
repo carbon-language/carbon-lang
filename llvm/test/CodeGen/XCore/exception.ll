@@ -29,9 +29,8 @@ entry:
 ; CHECK: .cfi_offset 15, 0
 ; CHECK: ldc r0, 4
 ; CHECK: bl __cxa_allocate_exception
-; CHECK: ldaw r11, cp[_ZTIi]
+; CHECK: ldaw r1, dp[_ZTIi]
 ; CHECK: ldc r2, 0
-; CHECK: mov r1, r11
 ; CHECK: bl __cxa_throw
 define void @fn_throw() {
 entry:

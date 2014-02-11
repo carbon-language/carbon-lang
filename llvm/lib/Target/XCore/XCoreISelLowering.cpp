@@ -275,7 +275,10 @@ getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV,
   if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
     UnderlyingGV = GA->resolveAliasedGlobal();
   if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(UnderlyingGV)) {
-    if (GVar->isConstant())
+    if (  ( GVar->isConstant() &&
+            UnderlyingGV->isLocalLinkage(GV->getLinkage()) )
+       || ( GVar->hasSection() &&
+            StringRef(GVar->getSection()).startswith(".cp.") ) )
       return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, GA);
     return DAG.getNode(XCoreISD::DPRelativeWrapper, dl, MVT::i32, GA);
   }

@@ -20,6 +20,7 @@ static const unsigned CodeModelLargeSize = 256;
    const MCSection *BSSSectionLarge;
    const MCSection *DataSectionLarge;
    const MCSection *ReadOnlySectionLarge;
+   const MCSection *DataRelROSectionLarge;
   public:
     void Initialize(MCContext &Ctx, const TargetMachine &TM);
 

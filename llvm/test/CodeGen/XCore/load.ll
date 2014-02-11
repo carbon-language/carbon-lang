@@ -40,7 +40,7 @@ entry:
 	ret i32 %2
 }
 
-@GConst = external constant i32
+@GConst = internal constant i32 42
 define i32 @load_cp() nounwind {
 entry:
 ; CHECK-LABEL: load_cp:

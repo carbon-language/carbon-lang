@@ -171,27 +171,43 @@ entry:
 ; LARGE: .space  40
 @s = global [10 x i32] zeroinitializer
 
-; CHECK: .section .cp.rodata,"ac",@progbits
+; CHECK: .section .dp.rodata,"awd",@progbits
 ; CHECK-LABEL: cl:
 ; CHECK: .space 400
-; LARGE: .section .cp.rodata.large,"ac",@progbits
+; LARGE: .section .dp.rodata.large,"awd",@progbits
 ; LARGE-LABEL: cl:
 ; LARGE: .space 400
 @cl = constant  [100 x i32] zeroinitializer
 
 ; CHECK-LABEL: cs:
 ; CHECK: .space 40
-; LARGE: .section .cp.rodata,"ac",@progbits
+; LARGE: .section .dp.rodata,"awd",@progbits
 ; LARGE-LABEL: cs:
 ; LARGE: .space 40
 @cs = constant  [10 x i32] zeroinitializer
 
+; CHECK: .section .cp.rodata,"ac",@progbits
+; CHECK-LABEL: icl:
+; CHECK: .space 400
+; LARGE: .section .cp.rodata.large,"ac",@progbits
+; LARGE-LABEL: icl:
+; LARGE: .space 400
+@icl = internal constant  [100 x i32] zeroinitializer
+
+; CHECK-LABEL: cs:
+; CHECK: .space 40
+; LARGE: .section .cp.rodata,"ac",@progbits
+; LARGE-LABEL: cs:
+; LARGE: .space 40
+@ics = internal constant  [10 x i32] zeroinitializer
+
 ; CHECK: .section  .cp.namedsection,"ac",@progbits
 ; CHECK-LABEL: cpsec:
 ; CHECK: .long 0
-@cpsec = global i32 0, section ".cp.namedsection"
+@cpsec = constant i32 0, section ".cp.namedsection"
 
 ; CHECK: .section  .dp.namedsection,"awd",@progbits
 ; CHECK-LABEL: dpsec:
 ; CHECK: .long 0
 @dpsec = global i32 0, section ".dp.namedsection"
+

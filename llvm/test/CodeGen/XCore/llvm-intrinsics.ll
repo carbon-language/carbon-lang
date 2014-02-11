@@ -119,13 +119,12 @@ entry:
 ; CHECK-LABEL: EH2
 ; CHECK: entsp 1
 ; CHECK: bl foo
-; CHECK-NEXT: ldw r0, cp[offset]
+; CHECK-NEXT: ldw r0, dp[offset]
 ; CHECK-NEXT: ldc r1, 4
 ; CHECK-NEXT: ldaw r2, sp[0]
 ; CHECK-NEXT: add r1, r2, r1
 ; CHECK-NEXT: add r2, r1, r0
-; CHECK-NEXT: ldaw r11, cp[handler]
-; CHECK-NEXT: mov r3, r11
+; CHECK-NEXT: ldaw r3, dp[handler]
 ; CHECK-NEXT: set sp, r2
 ; CHECK-NEXT: bau r3
   call void (...)* @foo()

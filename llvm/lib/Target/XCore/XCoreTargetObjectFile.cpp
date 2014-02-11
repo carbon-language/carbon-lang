@@ -41,10 +41,16 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
                       ELF::SHF_ALLOC | ELF::SHF_WRITE |
                       ELF::XCORE_SHF_DP_SECTION,
                       SectionKind::getDataRel());
-  // This is the wrong place to decide if const data should be placed
-  // in the .cp or .dp section.
-  // Ideally we should set up DataRelROSection to use the '.dp.'' and use this
-  // for const data, unless the front end explicitly states a '.cp.'' section.
+  DataRelROSection =
+    Ctx.getELFSection(".dp.rodata", ELF::SHT_PROGBITS,
+                      ELF::SHF_ALLOC | ELF::SHF_WRITE |
+                      ELF::XCORE_SHF_DP_SECTION,
+                      SectionKind::getReadOnlyWithRel());
+  DataRelROSectionLarge =
+    Ctx.getELFSection(".dp.rodata.large", ELF::SHT_PROGBITS,
+                      ELF::SHF_ALLOC | ELF::SHF_WRITE |
+                      ELF::XCORE_SHF_DP_SECTION,
+                      SectionKind::getReadOnlyWithRel());
   ReadOnlySection =
     Ctx.getELFSection(".cp.rodata", ELF::SHT_PROGBITS,
                       ELF::SHF_ALLOC |
@@ -80,19 +86,13 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
   // StaticDtorSection - see MObjectFileInfo.cpp
  }
 
-static SectionKind getXCoreKindForNamedSection(StringRef Name, SectionKind K) {
-  if (Name.startswith(".cp."))
-    return SectionKind::getReadOnly();
-  return K;
-}
-
 static unsigned getXCoreSectionType(SectionKind K) {
   if (K.isBSS())
     return ELF::SHT_NOBITS;
   return ELF::SHT_PROGBITS;
 }
 
-static unsigned getXCoreSectionFlags(SectionKind K) {
+static unsigned getXCoreSectionFlags(SectionKind K, bool IsCPRel) {
   unsigned Flags = 0;
 
   if (!K.isMetadata())
@@ -100,7 +100,7 @@ static unsigned getXCoreSectionFlags(SectionKind K) {
 
   if (K.isText())
     Flags |= ELF::SHF_EXECINSTR;
-  else if (K.isReadOnly())
+  else if (IsCPRel)
     Flags |= ELF::XCORE_SHF_CP_SECTION;
   else
     Flags |= ELF::XCORE_SHF_DP_SECTION;
@@ -123,33 +123,41 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler &Mang, const TargetMachine &TM) const {
   StringRef SectionName = GV->getSection();
   // Infer section flags from the section name if we can.
-  Kind = getXCoreKindForNamedSection(SectionName, Kind);
+  bool IsCPRel = SectionName.startswith(".cp.");
+  if (IsCPRel && !Kind.isReadOnly())
+    report_fatal_error("Using .cp. section for writeable object.");
   return getContext().getELFSection(SectionName, getXCoreSectionType(Kind),
-                                    getXCoreSectionFlags(Kind), Kind);
+                                    getXCoreSectionFlags(Kind, IsCPRel), Kind);
 }
 
 const MCSection *XCoreTargetObjectFile::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
                        const TargetMachine &TM) const{
-  if (Kind.isText())                      return TextSection;
-  if (Kind.isMergeable1ByteCString())     return CStringSection;
-  if (Kind.isMergeableConst4())           return MergeableConst4Section;
-  if (Kind.isMergeableConst8())           return MergeableConst8Section;
-  if (Kind.isMergeableConst16())          return MergeableConst16Section;
 
+  bool UseCPRel = GV->isLocalLinkage(GV->getLinkage());
+
+  if (Kind.isText())                    return TextSection;
+  if (UseCPRel) {
+    if (Kind.isMergeable1ByteCString()) return CStringSection;
+    if (Kind.isMergeableConst4())       return MergeableConst4Section;
+    if (Kind.isMergeableConst8())       return MergeableConst8Section;
+    if (Kind.isMergeableConst16())      return MergeableConst16Section;
+  }
   Type *ObjType = GV->getType()->getPointerElementType();
   if (TM.getCodeModel() == CodeModel::Small ||
       !ObjType->isSized() ||
       TM.getDataLayout()->getTypeAllocSize(ObjType) < CodeModelLargeSize) {
-    if (Kind.isReadOnly())                return ReadOnlySection;
-    if (Kind.isBSS())                     return BSSSection;
-    if (Kind.isDataRel())                 return DataSection;
-    if (Kind.isReadOnlyWithRel())         return ReadOnlySection;
+    if (Kind.isReadOnly())              return UseCPRel? ReadOnlySection
+                                                       : DataRelROSection;
+    if (Kind.isBSS())                   return BSSSection;
+    if (Kind.isDataRel())               return DataSection;
+    if (Kind.isReadOnlyWithRel())       return DataRelROSection;
   } else {
-    if (Kind.isReadOnly())                return ReadOnlySectionLarge;
-    if (Kind.isBSS())                     return BSSSectionLarge;
-    if (Kind.isDataRel())                 return DataSectionLarge;
-    if (Kind.isReadOnlyWithRel())         return ReadOnlySectionLarge;
+    if (Kind.isReadOnly())              return UseCPRel? ReadOnlySectionLarge
+                                                       : DataRelROSectionLarge;
+    if (Kind.isBSS())                   return BSSSectionLarge;
+    if (Kind.isDataRel())               return DataSectionLarge;
+    if (Kind.isReadOnlyWithRel())       return DataRelROSectionLarge;
   }
 
   assert((Kind.isThreadLocal() || Kind.isCommon()) && "Unknown section kind");
