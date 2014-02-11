@@ -153,7 +153,14 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
         switch (tv->tv_u.tv_val) {
           case LDPO_REL:  // .o
           case LDPO_DYN:  // .so
+#ifdef LDPO_PIE
           case LDPO_PIE:  // position independent executable
+#else
+          // FIXME: remove this declaration when we stop maintaining
+          // Ubuntu Quantal and Precise and Debian Wheezy (binutils 2.23 is
+          // required)
+          case 3:
+#endif
             output_type = LTO_CODEGEN_PIC_MODEL_DYNAMIC;
             break;
           case LDPO_EXEC:  // .exe
