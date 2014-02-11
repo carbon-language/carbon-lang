@@ -58,7 +58,7 @@ public:
   typedef clang::Visibility Visibility;
   
   enum GCMode { NonGC, GCOnly, HybridGC };
-  enum StackProtectorMode { SSPOff, SSPOn, SSPReq };
+  enum StackProtectorMode { SSPOff, SSPOn, SSPStrong, SSPReq };
   
   enum SignedOverflowBehaviorTy {
     SOB_Undefined,  // Default C standard behavior.
