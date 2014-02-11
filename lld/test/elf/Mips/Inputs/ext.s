@@ -30,23 +30,9 @@ ext3:
     nop
     .end    ext3
 
-    .global ext4
-    .type   ext4,@function
-    .ent    ext4
-ext4:
-    nop
-    .end    ext4
-
-    .global ext5
-    .type   ext5,@function
-    .ent    ext5
-ext5:
-    nop
-    .end    ext5
-
-    .global ext6
-    .type   ext6,@function
-    .ent    ext6
-ext6:
-    nop
-    .end    ext6
+    .type   data1,@object
+    .comm   data1,4,4
+    .type   data2,@object
+    .comm   data2,4,4
+    .type   data3,@object
+    .comm   data3,4,4
