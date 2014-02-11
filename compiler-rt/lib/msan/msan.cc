@@ -154,11 +154,11 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
   if (!StackTrace::WillUseFastUnwind(request_fast_unwind)) {
     // Block reports from our interceptors during _Unwind_Backtrace.
     SymbolizerScope sym_scope;
-    return stack->Unwind(max_s, pc, bp, 0, 0, request_fast_unwind);
+    return stack->Unwind(max_s, pc, bp, 0, 0, 0, request_fast_unwind);
   }
   uptr stack_bottom = msan_stack_bounds.stack_addr;
   uptr stack_top = stack_bottom + msan_stack_bounds.stack_size;
-  stack->Unwind(max_s, pc, bp, stack_top, stack_bottom, request_fast_unwind);
+  stack->Unwind(max_s, pc, bp, 0, stack_top, stack_bottom, request_fast_unwind);
 }
 
 void PrintWarning(uptr pc, uptr bp) {

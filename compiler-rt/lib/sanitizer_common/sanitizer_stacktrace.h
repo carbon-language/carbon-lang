@@ -58,7 +58,7 @@ struct StackTrace {
     return request_fast_unwind;
   }
 
-  void Unwind(uptr max_depth, uptr pc, uptr bp, uptr stack_top,
+  void Unwind(uptr max_depth, uptr pc, uptr bp, void *context, uptr stack_top,
               uptr stack_bottom, bool request_fast_unwind);
 
   static uptr GetCurrentPc();
@@ -68,6 +68,8 @@ struct StackTrace {
   void FastUnwindStack(uptr pc, uptr bp, uptr stack_top, uptr stack_bottom,
                        uptr max_depth);
   void SlowUnwindStack(uptr pc, uptr max_depth);
+  void SlowUnwindStackWithContext(uptr pc, void *context,
+                                  uptr max_depth);
   void PopStackFrames(uptr count);
   uptr LocatePcInTrace(uptr pc);
 };

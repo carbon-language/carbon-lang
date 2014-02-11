@@ -142,6 +142,51 @@ bool SanitizerGetThreadName(char *name, int max_len) {
 
 #ifndef SANITIZER_GO
 //------------------------- SlowUnwindStack -----------------------------------
+
+typedef struct {
+  uptr absolute_pc;
+  uptr stack_top;
+  uptr stack_size;
+} backtrace_frame_t;
+
+extern "C" {
+typedef void *(*acquire_my_map_info_list_func)();
+typedef void (*release_my_map_info_list_func)(void *map);
+typedef sptr (*unwind_backtrace_signal_arch_func)(
+    void *siginfo, void *sigcontext, void *map_info_list,
+    backtrace_frame_t *backtrace, uptr ignore_depth, uptr max_depth);
+acquire_my_map_info_list_func acquire_my_map_info_list;
+release_my_map_info_list_func release_my_map_info_list;
+unwind_backtrace_signal_arch_func unwind_backtrace_signal_arch;
+} // extern "C"
+
+#if SANITIZER_ANDROID
+void SanitizerInitializeUnwinder() {
+  void *p = dlopen("libcorkscrew.so", RTLD_LAZY);
+  if (!p) {
+    VReport(1,
+            "Failed to open libcorkscrew.so. You may see broken stack traces "
+            "in SEGV reports.");
+    return;
+  }
+  acquire_my_map_info_list =
+      (acquire_my_map_info_list_func)(uptr)dlsym(p, "acquire_my_map_info_list");
+  release_my_map_info_list =
+      (release_my_map_info_list_func)(uptr)dlsym(p, "release_my_map_info_list");
+  unwind_backtrace_signal_arch = (unwind_backtrace_signal_arch_func)(uptr)dlsym(
+      p, "unwind_backtrace_signal_arch");
+  if (!acquire_my_map_info_list || !release_my_map_info_list ||
+      !unwind_backtrace_signal_arch) {
+    VReport(1,
+            "Failed to find one of the required symbols in libcorkscrew.so. "
+            "You may see broken stack traces in SEGV reports.");
+    acquire_my_map_info_list = NULL;
+    unwind_backtrace_signal_arch = NULL;
+    release_my_map_info_list = NULL;
+  }
+}
+#endif
+
 #ifdef __arm__
 #define UNWIND_STOP _URC_END_OF_STACK
 #define UNWIND_CONTINUE _URC_NO_REASON
@@ -190,6 +235,31 @@ void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
     to_pop = 1;
   PopStackFrames(to_pop);
   trace[0] = pc;
+}
+
+void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
+                                            uptr max_depth) {
+  if (!unwind_backtrace_signal_arch) {
+    SlowUnwindStack(pc, max_depth);
+    return;
+  }
+
+  size = 0;
+  if (max_depth == 0) return;
+
+  void *map = acquire_my_map_info_list();
+  CHECK(map);
+  backtrace_frame_t frames[kStackTraceMax];
+  // siginfo argument appears to be unused.
+  sptr res =
+      unwind_backtrace_signal_arch(/* siginfo */ NULL, context, map, frames,
+                                   /* ignore_depth */ 0, max_depth);
+  release_my_map_info_list(map);
+  if (res < 0) return;
+  CHECK((uptr)res <= kStackTraceMax);
+
+  for (sptr i = 0; i < res; ++i)
+    trace[size++] = frames[i].absolute_pc;
 }
 
 #endif  // !SANITIZER_GO

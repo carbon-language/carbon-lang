@@ -532,6 +532,7 @@ static void AsanInitInternal() {
   SetCurrentThread(main_thread);
   main_thread->ThreadStart(internal_getpid());
   force_interface_symbols();  // no-op.
+  SanitizerInitializeUnwinder();
 
 #if CAN_SANITIZE_LEAKS
   __lsan::InitCommonLsan();

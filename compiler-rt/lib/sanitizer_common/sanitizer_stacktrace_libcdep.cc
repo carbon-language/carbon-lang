@@ -63,12 +63,17 @@ void StackTrace::PrintStack(const uptr *addr, uptr size) {
   Printf("\n");
 }
 
-void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, uptr stack_top,
-                        uptr stack_bottom, bool request_fast_unwind) {
-  if (!WillUseFastUnwind(request_fast_unwind))
-    SlowUnwindStack(pc, max_depth);
-  else
+void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, void *context,
+                        uptr stack_top, uptr stack_bottom,
+                        bool request_fast_unwind) {
+  if (!WillUseFastUnwind(request_fast_unwind)) {
+    if (context)
+      SlowUnwindStackWithContext(pc, context, max_depth);
+    else
+      SlowUnwindStack(pc, max_depth);
+  } else { 
     FastUnwindStack(pc, bp, stack_top, stack_bottom, max_depth);
+  }
 
   top_frame_bp = size ? bp : 0;
 }

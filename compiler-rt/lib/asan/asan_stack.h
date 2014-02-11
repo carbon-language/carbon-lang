@@ -23,11 +23,11 @@
 // The pc will be in the position 0 of the resulting stack trace.
 // The bp may refer to the current frame or to the caller's frame.
 #if SANITIZER_WINDOWS
-#define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast) \
-  StackTrace stack;                                         \
-  stack.Unwind(max_s, pc, bp, 0, 0, fast)
+#define GET_STACK_TRACE_WITH_PC_BP_AND_CONTEXT(max_s, pc, bp, context, fast) \
+  StackTrace stack;                                                          \
+  stack.Unwind(max_s, pc, bp, context, 0, 0, fast)
 #else
-#define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast)                    \
+#define GET_STACK_TRACE_WITH_PC_BP_AND_CONTEXT(max_s, pc, bp, context, fast)   \
   StackTrace stack;                                                            \
   {                                                                            \
     AsanThread *t;                                                             \
@@ -37,10 +37,10 @@
         uptr stack_top = t->stack_top();                                       \
         uptr stack_bottom = t->stack_bottom();                                 \
         ScopedUnwinding unwind_scope(t);                                       \
-        stack.Unwind(max_s, pc, bp, stack_top, stack_bottom, fast);            \
+        stack.Unwind(max_s, pc, bp, context, stack_top, stack_bottom, fast);   \
       } else if (t == 0 && !fast) {                                            \
         /* If GetCurrentThread() has failed, try to do slow unwind anyways. */ \
-        stack.Unwind(max_s, pc, bp, 0, 0, false);                              \
+        stack.Unwind(max_s, pc, bp, context, 0, 0, false);                     \
       }                                                                        \
     }                                                                          \
   }
@@ -50,13 +50,17 @@
 // as early as possible (in functions exposed to the user), as we generally
 // don't want stack trace to contain functions from ASan internals.
 
-#define GET_STACK_TRACE(max_size, fast)                       \
-  GET_STACK_TRACE_WITH_PC_AND_BP(max_size,                    \
-      StackTrace::GetCurrentPc(), GET_CURRENT_FRAME(), fast)
+#define GET_STACK_TRACE(max_size, fast)                                        \
+  GET_STACK_TRACE_WITH_PC_BP_AND_CONTEXT(max_size, StackTrace::GetCurrentPc(), \
+                                         GET_CURRENT_FRAME(), 0, fast)
 
-#define GET_STACK_TRACE_FATAL(pc, bp)                                 \
-  GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp,              \
-                                 common_flags()->fast_unwind_on_fatal)
+#define GET_STACK_TRACE_FATAL(pc, bp)                               \
+  GET_STACK_TRACE_WITH_PC_BP_AND_CONTEXT(kStackTraceMax, pc, bp, 0, \
+                                         common_flags()->fast_unwind_on_fatal)
+
+#define GET_STACK_TRACE_SIGNAL(pc, bp, context)                           \
+  GET_STACK_TRACE_WITH_PC_BP_AND_CONTEXT(kStackTraceMax, pc, bp, context, \
+                                         common_flags()->fast_unwind_on_fatal)
 
 #define GET_STACK_TRACE_FATAL_HERE                                \
   GET_STACK_TRACE(kStackTraceMax, common_flags()->fast_unwind_on_fatal)

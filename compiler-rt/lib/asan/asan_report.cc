@@ -570,7 +570,7 @@ class ScopedInErrorReport {
   }
 };
 
-void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
+void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, void *context, uptr addr) {
   ScopedInErrorReport in_report;
   Decorator d;
   Printf("%s", d.Warning());
@@ -579,7 +579,7 @@ void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
              (void*)addr, (void*)pc, (void*)sp, (void*)bp,
              GetCurrentTidOrInvalid());
   Printf("%s", d.EndWarning());
-  GET_STACK_TRACE_FATAL(pc, bp);
+  GET_STACK_TRACE_SIGNAL(pc, bp, context);
   stack.Print();
   Printf("AddressSanitizer can not provide additional info.\n");
   ReportErrorSummary("SEGV", &stack);

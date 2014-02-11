@@ -38,7 +38,7 @@ void AsanOnSIGSEGV(int, void *siginfo, void *context) {
   if (13 != internal_write(2, "ASAN:SIGSEGV\n", 13)) Die();
   uptr pc, sp, bp;
   GetPcSpBp(context, &pc, &sp, &bp);
-  ReportSIGSEGV(pc, sp, bp, addr);
+  ReportSIGSEGV(pc, sp, bp, context, addr);
 }
 
 // ---------------------- TSD ---------------- {{{1

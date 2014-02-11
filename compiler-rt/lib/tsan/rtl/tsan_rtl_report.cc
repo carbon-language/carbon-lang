@@ -713,8 +713,8 @@ void PrintCurrentStackSlow() {
 #ifndef TSAN_GO
   __sanitizer::StackTrace *ptrace = new(internal_alloc(MBlockStackTrace,
       sizeof(__sanitizer::StackTrace))) __sanitizer::StackTrace;
-  ptrace->Unwind(kStackTraceMax, __sanitizer::StackTrace::GetCurrentPc(),
-                 0, 0, 0, false);
+  ptrace->Unwind(kStackTraceMax, __sanitizer::StackTrace::GetCurrentPc(), 0, 0,
+                 0, 0, false);
   for (uptr i = 0; i < ptrace->size / 2; i++) {
     uptr tmp = ptrace->trace[i];
     ptrace->trace[i] = ptrace->trace[ptrace->size - i - 1];
