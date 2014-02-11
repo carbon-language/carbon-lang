@@ -362,8 +362,15 @@ const char *Process::ResetColor() {
 }
 
 unsigned Process::GetRandomNumber() {
-  unsigned int result;
-  const int ec = rand_s(&result);
-  assert(ec == 0 && "rand_s failed");
-  return result;
+  HCRYPTPROV HCPC;
+  if (!::CryptAcquireContextW(&HCPC, NULL, NULL, PROV_RSA_FULL,
+                              CRYPT_VERIFYCONTEXT))
+    assert(false && "Could not acquire a cryptographic context");
+
+  ScopedCryptContext CryptoProvider(HCPC);
+  unsigned Ret;
+  if (!::CryptGenRandom(CryptoProvider, sizeof(Ret),
+                        reinterpret_cast<BYTE *>(&Ret)))
+    assert(false && "Could not generate a random number");
+  return Ret;
 }
