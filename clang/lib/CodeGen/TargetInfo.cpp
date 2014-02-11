@@ -3167,10 +3167,17 @@ public:
 
 private:
   ABIKind Kind;
+  mutable int VFPRegs[16];
+  const unsigned NumVFPs;
+  const unsigned NumGPRs;
+  mutable unsigned AllocatedGPRs;
+  mutable unsigned AllocatedVFPs;
 
 public:
-  ARMABIInfo(CodeGenTypes &CGT, ABIKind _Kind) : ABIInfo(CGT), Kind(_Kind) {
+  ARMABIInfo(CodeGenTypes &CGT, ABIKind _Kind) : ABIInfo(CGT), Kind(_Kind),
+    NumVFPs(16), NumGPRs(4) {
     setRuntimeCC();
+    resetAllocatedRegs();
   }
 
   bool isEABI() const {
@@ -3200,9 +3207,8 @@ public:
 
 private:
   ABIArgInfo classifyReturnType(QualType RetTy, bool isVariadic) const;
-  ABIArgInfo classifyArgumentType(QualType RetTy, int *VFPRegs,
-                                  unsigned &AllocatedVFP,
-                                  bool &IsHA, bool isVariadic) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy, bool &IsHA, bool isVariadic,
+                                  bool &IsCPRC) const;
   bool isIllegalVectorType(QualType Ty) const;
 
   virtual void computeInfo(CGFunctionInfo &FI) const;
@@ -3213,6 +3219,10 @@ private:
   llvm::CallingConv::ID getLLVMDefaultCC() const;
   llvm::CallingConv::ID getABIDefaultCC() const;
   void setRuntimeCC();
+
+  void markAllocatedGPRs(unsigned Alignment, unsigned NumRequired) const;
+  void markAllocatedVFPs(unsigned Alignment, unsigned NumRequired) const;
+  void resetAllocatedRegs(void) const;
 };
 
 class ARMTargetCodeGenInfo : public TargetCodeGenInfo {
@@ -3296,25 +3306,40 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
   // allocated to the lowest-numbered sequence of such registers.
   // C.2.vfp If the argument is a VFP CPRC then any VFP registers that are
   // unallocated are marked as unavailable. 
-  unsigned AllocatedVFP = 0;
-  int VFPRegs[16] = { 0 };
+  resetAllocatedRegs();
+
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), FI.isVariadic());
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
-    unsigned PreAllocation = AllocatedVFP;
+    unsigned PreAllocationVFPs = AllocatedVFPs;
+    unsigned PreAllocationGPRs = AllocatedGPRs;
     bool IsHA = false;
+    bool IsCPRC = false;
     // 6.1.2.3 There is one VFP co-processor register class using registers
     // s0-s15 (d0-d7) for passing arguments.
-    const unsigned NumVFPs = 16;
-    it->info = classifyArgumentType(it->type, VFPRegs, AllocatedVFP, IsHA, FI.isVariadic());
+    it->info = classifyArgumentType(it->type, IsHA, FI.isVariadic(), IsCPRC);
+    assert((IsCPRC || !IsHA) && "Homogeneous aggregates must be CPRCs");
     // If we do not have enough VFP registers for the HA, any VFP registers
     // that are unallocated are marked as unavailable. To achieve this, we add
-    // padding of (NumVFPs - PreAllocation) floats.
+    // padding of (NumVFPs - PreAllocationVFP) floats.
     // Note that IsHA will only be set when using the AAPCS-VFP calling convention,
     // and the callee is not variadic.
-    if (IsHA && AllocatedVFP > NumVFPs && PreAllocation < NumVFPs) {
+    if (IsHA && AllocatedVFPs > NumVFPs && PreAllocationVFPs < NumVFPs) {
       llvm::Type *PaddingTy = llvm::ArrayType::get(
-          llvm::Type::getFloatTy(getVMContext()), NumVFPs - PreAllocation);
+          llvm::Type::getFloatTy(getVMContext()), NumVFPs - PreAllocationVFPs);
+      it->info = ABIArgInfo::getExpandWithPadding(false, PaddingTy);
+    }
+
+    // If we have allocated some arguments onto the stack (due to running
+    // out of VFP registers), we cannot split an argument between GPRs and
+    // the stack. If this situation occurs, we add padding to prevent the
+    // GPRs from being used. In this situiation, the current argument could
+    // only be allocated by rule C.8, so rule C.6 would mark these GPRs as
+    // unusable anyway.
+    const bool StackUsed = PreAllocationGPRs > NumGPRs || PreAllocationVFPs > NumVFPs;
+    if (!IsCPRC && PreAllocationGPRs < NumGPRs && AllocatedGPRs > NumGPRs && StackUsed) {
+      llvm::Type *PaddingTy = llvm::ArrayType::get(
+          llvm::Type::getInt32Ty(getVMContext()), NumGPRs - PreAllocationGPRs);
       it->info = ABIArgInfo::getExpandWithPadding(false, PaddingTy);
     }
   }
@@ -3449,12 +3474,15 @@ static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
 
 /// markAllocatedVFPs - update VFPRegs according to the alignment and
 /// number of VFP registers (unit is S register) requested.
-static void markAllocatedVFPs(int *VFPRegs, unsigned &AllocatedVFP,
-                              unsigned Alignment,
-                              unsigned NumRequired) {
+void ARMABIInfo::markAllocatedVFPs(unsigned Alignment,
+                                   unsigned NumRequired) const {
   // Early Exit.
-  if (AllocatedVFP >= 16)
+  if (AllocatedVFPs >= 16) {
+    // We use AllocatedVFP > 16 to signal that some CPRCs were allocated on
+    // the stack.
+    AllocatedVFPs = 17;
     return;
+  }
   // C.1.vfp If the argument is a VFP CPRC and there are sufficient consecutive
   // VFP registers of the appropriate type unallocated then the argument is
   // allocated to the lowest-numbered sequence of such registers.
@@ -3468,7 +3496,7 @@ static void markAllocatedVFPs(int *VFPRegs, unsigned &AllocatedVFP,
     if (FoundSlot) {
       for (unsigned J = I, JEnd = I + NumRequired; J < JEnd; J++)
         VFPRegs[J] = 1;
-      AllocatedVFP += NumRequired;
+      AllocatedVFPs += NumRequired;
       return;
     }
   }
@@ -3476,12 +3504,32 @@ static void markAllocatedVFPs(int *VFPRegs, unsigned &AllocatedVFP,
   // unallocated are marked as unavailable.
   for (unsigned I = 0; I < 16; I++)
     VFPRegs[I] = 1;
-  AllocatedVFP = 17; // We do not have enough VFP registers.
+  AllocatedVFPs = 17; // We do not have enough VFP registers.
 }
 
-ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
-                                            unsigned &AllocatedVFP,
-                                            bool &IsHA, bool isVariadic) const {
+/// Update AllocatedGPRs to record the number of general purpose registers
+/// which have been allocated. It is valid for AllocatedGPRs to go above 4,
+/// this represents arguments being stored on the stack.
+void ARMABIInfo::markAllocatedGPRs(unsigned Alignment,
+                                          unsigned NumRequired) const {
+  assert((Alignment == 1 || Alignment == 2) && "Alignment must be 4 or 8 bytes");
+
+  if (Alignment == 2 && AllocatedGPRs & 0x1)
+    AllocatedGPRs += 1;
+
+  AllocatedGPRs += NumRequired;
+}
+
+void ARMABIInfo::resetAllocatedRegs(void) const {
+  AllocatedGPRs = 0;
+  AllocatedVFPs = 0;
+  for (unsigned i = 0; i < NumVFPs; ++i)
+    VFPRegs[i] = 0;
+}
+
+ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool &IsHA,
+                                            bool isVariadic,
+                                            bool &IsCPRC) const {
   // We update number of allocated VFPs according to
   // 6.1.2.1 The following argument types are VFP CPRCs:
   //   A single-precision floating-point type (including promoted
@@ -3497,49 +3545,76 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
     if (Size <= 32) {
       llvm::Type *ResType =
           llvm::Type::getInt32Ty(getVMContext());
+      markAllocatedGPRs(1, 1);
       return ABIArgInfo::getDirect(ResType);
     }
     if (Size == 64) {
       llvm::Type *ResType = llvm::VectorType::get(
           llvm::Type::getInt32Ty(getVMContext()), 2);
-      markAllocatedVFPs(VFPRegs, AllocatedVFP, 2, 2);
+      if (getABIKind() == ARMABIInfo::AAPCS || isVariadic){
+        markAllocatedGPRs(2, 2);
+      } else {
+        markAllocatedVFPs(2, 2);
+        IsCPRC = true;
+      }
       return ABIArgInfo::getDirect(ResType);
     }
     if (Size == 128) {
       llvm::Type *ResType = llvm::VectorType::get(
           llvm::Type::getInt32Ty(getVMContext()), 4);
-      markAllocatedVFPs(VFPRegs, AllocatedVFP, 4, 4);
+      if (getABIKind() == ARMABIInfo::AAPCS || isVariadic) {
+        markAllocatedGPRs(2, 4);
+      } else {
+        markAllocatedVFPs(4, 4);
+        IsCPRC = true;
+      }
       return ABIArgInfo::getDirect(ResType);
     }
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
   }
   // Update VFPRegs for legal vector types.
-  if (const VectorType *VT = Ty->getAs<VectorType>()) {
-    uint64_t Size = getContext().getTypeSize(VT);
-    // Size of a legal vector should be power of 2 and above 64.
-    markAllocatedVFPs(VFPRegs, AllocatedVFP, Size >= 128 ? 4 : 2, Size / 32);
+  if (getABIKind() == ARMABIInfo::AAPCS_VFP && !isVariadic) {
+    if (const VectorType *VT = Ty->getAs<VectorType>()) {
+      uint64_t Size = getContext().getTypeSize(VT);
+      // Size of a legal vector should be power of 2 and above 64.
+      markAllocatedVFPs(Size >= 128 ? 4 : 2, Size / 32);
+      IsCPRC = true;
+    }
   }
   // Update VFPRegs for floating point types.
-  if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
-    if (BT->getKind() == BuiltinType::Half ||
-        BT->getKind() == BuiltinType::Float)
-      markAllocatedVFPs(VFPRegs, AllocatedVFP, 1, 1);
-    if (BT->getKind() == BuiltinType::Double ||
-        BT->getKind() == BuiltinType::LongDouble)
-      markAllocatedVFPs(VFPRegs, AllocatedVFP, 2, 2);
+  if (getABIKind() == ARMABIInfo::AAPCS_VFP && !isVariadic) {
+    if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
+      if (BT->getKind() == BuiltinType::Half ||
+          BT->getKind() == BuiltinType::Float) {
+        markAllocatedVFPs(1, 1);
+        IsCPRC = true;
+      }
+      if (BT->getKind() == BuiltinType::Double ||
+          BT->getKind() == BuiltinType::LongDouble) {
+        markAllocatedVFPs(2, 2);
+        IsCPRC = true;
+      }
+    }
   }
 
   if (!isAggregateTypeForABI(Ty)) {
     // Treat an enum type as its underlying type.
-    if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+    if (const EnumType *EnumTy = Ty->getAs<EnumType>()) {
       Ty = EnumTy->getDecl()->getIntegerType();
+    }
 
+    unsigned Size = getContext().getTypeSize(Ty);
+    if (!IsCPRC)
+      markAllocatedGPRs(Size > 32 ? 2 : 1, (Size + 31) / 32);
     return (Ty->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
 
-  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI()))
+  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI())) {
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
+  }
 
   // Ignore empty records.
   if (isEmptyRecord(getContext(), Ty, true))
@@ -3556,16 +3631,17 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
       if (Base->isVectorType()) {
         // ElementSize is in number of floats.
         unsigned ElementSize = getContext().getTypeSize(Base) == 64 ? 2 : 4;
-        markAllocatedVFPs(VFPRegs, AllocatedVFP, ElementSize,
+        markAllocatedVFPs(ElementSize,
                           Members * ElementSize);
       } else if (Base->isSpecificBuiltinType(BuiltinType::Float))
-        markAllocatedVFPs(VFPRegs, AllocatedVFP, 1, Members);
+        markAllocatedVFPs(1, Members);
       else {
         assert(Base->isSpecificBuiltinType(BuiltinType::Double) ||
                Base->isSpecificBuiltinType(BuiltinType::LongDouble));
-        markAllocatedVFPs(VFPRegs, AllocatedVFP, 2, Members * 2);
+        markAllocatedVFPs(2, Members * 2);
       }
       IsHA = true;
+      IsCPRC = true;
       return ABIArgInfo::getExpand();
     }
   }
@@ -3580,6 +3656,8 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
       getABIKind() == ARMABIInfo::AAPCS)
     ABIAlign = std::min(std::max(TyAlign, (uint64_t)4), (uint64_t)8);
   if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64)) {
+      // Update Allocated GPRs
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0, /*ByVal=*/true,
            /*Realign=*/TyAlign > ABIAlign);
   }
@@ -3592,9 +3670,11 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
   if (getContext().getTypeAlign(Ty) <= 32) {
     ElemTy = llvm::Type::getInt32Ty(getVMContext());
     SizeRegs = (getContext().getTypeSize(Ty) + 31) / 32;
+    markAllocatedGPRs(1, SizeRegs);
   } else {
     ElemTy = llvm::Type::getInt64Ty(getVMContext());
     SizeRegs = (getContext().getTypeSize(Ty) + 63) / 64;
+    markAllocatedGPRs(2, SizeRegs * 2);
   }
 
   llvm::Type *STy =
@@ -3687,13 +3767,16 @@ static bool isIntegerLikeType(QualType Ty, ASTContext &Context,
   return true;
 }
 
-ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy, bool isVariadic) const {
+ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
+                                          bool isVariadic) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
   // Large vector types should be returned via memory.
-  if (RetTy->isVectorType() && getContext().getTypeSize(RetTy) > 128)
+  if (RetTy->isVectorType() && getContext().getTypeSize(RetTy) > 128) {
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0);
+  }
 
   if (!isAggregateTypeForABI(RetTy)) {
     // Treat an enum type as its underlying type.
@@ -3706,8 +3789,10 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy, bool isVariadic) const
 
   // Structures with either a non-trivial destructor or a non-trivial
   // copy constructor are always indirect.
-  if (isRecordReturnIndirect(RetTy, getCXXABI()))
+  if (isRecordReturnIndirect(RetTy, getCXXABI())) {
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+  }
 
   // Are we following APCS?
   if (getABIKind() == APCS) {
@@ -3734,6 +3819,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy, bool isVariadic) const
     }
 
     // Otherwise return in memory.
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0);
   }
 
@@ -3764,6 +3850,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy, bool isVariadic) const
     return ABIArgInfo::getDirect(llvm::Type::getInt32Ty(getVMContext()));
   }
 
+  markAllocatedGPRs(1, 1);
   return ABIArgInfo::getIndirect(0);
 }
 
@@ -4596,7 +4683,7 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   llvm::Type *IndexTy = RegCount->getType();
   llvm::Value *MaxRegsV = llvm::ConstantInt::get(IndexTy, MaxRegs);
   llvm::Value *InRegs = CGF.Builder.CreateICmpULT(RegCount, MaxRegsV,
-						  "fits_in_regs");
+                                                 "fits_in_regs");
 
   llvm::BasicBlock *InRegBlock = CGF.createBasicBlock("vaarg.in_reg");
   llvm::BasicBlock *InMemBlock = CGF.createBasicBlock("vaarg.in_mem");
