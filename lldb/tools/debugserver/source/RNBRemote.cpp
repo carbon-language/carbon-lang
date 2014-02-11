@@ -2476,12 +2476,12 @@ RNBRemote::HandlePacket_m (const char *p)
         return SendPacket ("");
     }
 
-    uint8_t *buf = (uint8_t *)malloc (length);
-    if (buf == NULL)
+    std::string buf(length, '\0');
+    if (buf.empty())
     {
         return SendPacket ("E78");
     }
-    int bytes_read = DNBProcessMemoryRead (m_ctx.ProcessID(), addr, length, buf);
+    int bytes_read = DNBProcessMemoryRead (m_ctx.ProcessID(), addr, buf.size(), &buf[0]);
     if (bytes_read == 0)
     {
         return SendPacket ("E08");
@@ -2494,7 +2494,6 @@ RNBRemote::HandlePacket_m (const char *p)
     std::ostringstream ostrm;
     for (int i = 0; i < length; i++)
         ostrm << RAWHEX8(buf[i]);
-    free (buf);
     return SendPacket (ostrm.str ());
 }
 
