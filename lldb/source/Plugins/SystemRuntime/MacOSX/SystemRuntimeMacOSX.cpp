@@ -277,7 +277,8 @@ SystemRuntimeMacOSX::GetExtendedBacktraceThread (ThreadSP real_thread, ConstStri
         }
         else
         {
-            AppleGetThreadItemInfoHandler::GetThreadItemInfoReturnInfo ret = m_get_thread_item_info_handler.GetThreadItemInfo (*real_thread.get(), m_page_to_free, m_page_to_free_size, error);
+            ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
+            AppleGetThreadItemInfoHandler::GetThreadItemInfoReturnInfo ret = m_get_thread_item_info_handler.GetThreadItemInfo (*cur_thread_sp.get(), real_thread->GetID(), m_page_to_free, m_page_to_free_size, error);
             if (ret.item_buffer_ptr != 0 &&  ret.item_buffer_ptr != LLDB_INVALID_ADDRESS && ret.item_buffer_size > 0)
             {
                 DataBufferHeap data (ret.item_buffer_size, 0);
@@ -298,6 +299,8 @@ SystemRuntimeMacOSX::GetExtendedBacktraceThread (ThreadSP real_thread, ConstStri
                     originating_thread_sp->SetQueueID (item.enqueuing_queue_serialnum);
 //                    originating_thread_sp->SetThreadName (item.enqueuing_thread_label.c_str());
                 }
+                m_page_to_free = ret.item_buffer_ptr;
+                m_page_to_free_size = ret.item_buffer_size;
             }
         }
     }
@@ -333,6 +336,8 @@ SystemRuntimeMacOSX::GetExtendedBacktraceFromItemRef (lldb::addr_t item_ref)
             return_thread_sp->SetQueueID (item.enqueuing_queue_serialnum);
 //            return_thread_sp->SetThreadName (item.enqueuing_thread_label.c_str());
 
+            m_page_to_free = ret.item_buffer_ptr;
+            m_page_to_free_size = ret.item_buffer_size;
         }
     }
     return return_thread_sp;
@@ -555,6 +560,8 @@ SystemRuntimeMacOSX::PopulatePendingItemsForQueue (Queue *queue)
 
                     queue->PushPendingQueueItem (queue_item_sp);
                 }
+                m_page_to_free = ret.item_buffer_ptr;
+                m_page_to_free_size = ret.item_buffer_size;
             }
         }
     }

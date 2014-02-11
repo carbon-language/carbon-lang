@@ -67,8 +67,8 @@ public:
     /// memory that needs to be freed, pass in the address and size and it will
     /// be freed before getting the list of queues.
     ///
-    /// @param [in] thread
-    ///     The thread to run this plan on.
+    /// @param [in] thread_id
+    ///     The thread to get the extended backtrace for.
     ///
     /// @param [in] page_to_free
     ///     An address of an inferior process vm page that needs to be deallocated,
@@ -86,7 +86,7 @@ public:
     ///     the information, the item_buffer_ptr value will be LLDB_INVALID_ADDRESS.
     //----------------------------------------------------------
     GetThreadItemInfoReturnInfo
-    GetThreadItemInfo (Thread &thread, lldb::addr_t page_to_free, uint64_t page_to_free_size, lldb_private::Error &error);
+    GetThreadItemInfo (Thread &thread, lldb::tid_t thread_id, lldb::addr_t page_to_free, uint64_t page_to_free_size, lldb_private::Error &error);
 
 
     void

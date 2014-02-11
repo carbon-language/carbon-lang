@@ -67,7 +67,7 @@ extern \"C\"                                                                    
     typedef void *introspection_dispatch_queue_info_t;                                                          \n\
     typedef void *introspection_dispatch_item_info_ref;                                                         \n\
                                                                                                                 \n\
-    extern void __introspection_dispatch_thread_get_item_info (pthread_t thread,                                \n\
+    extern void __introspection_dispatch_thread_get_item_info (uint64_t  thread_id,                             \n\
                                                  introspection_dispatch_item_info_ref *returned_queues_buffer,  \n\
                                                  uint64_t *returned_queues_buffer_size);                        \n\
                                                                                                                 \n\
@@ -84,18 +84,19 @@ extern \"C\"                                                                    
     void  __lldb_backtrace_recording_get_thread_item_info                                                          \n\
                                                (struct get_thread_item_info_return_values *return_buffer,          \n\
                                                 int debug,                                                      \n\
+                                                uint64_t thread_id,                                             \n\
                                                 void *page_to_free,                                             \n\
                                                 uint64_t page_to_free_size)                                     \n\
 {                                                                                                               \n\
     void *pthread_id = pthread_self ();                                                                         \n\
     if (debug)                                                                                                  \n\
-      printf (\"entering get_thread_item_info with args return_buffer == %p, debug == %d, pthread id == 0x%llx, page_to_free == %p, page_to_free_size == 0x%llx\\n\", return_buffer, debug, (uint64_t) pthread_id, page_to_free, page_to_free_size); \n\
+      printf (\"entering get_thread_item_info with args return_buffer == %p, debug == %d, thread id == 0x%llx, page_to_free == %p, page_to_free_size == 0x%llx\\n\", return_buffer, debug, (uint64_t) thread_id, page_to_free, page_to_free_size); \n\
     if (page_to_free != 0)                                                                                      \n\
     {                                                                                                           \n\
         mach_vm_deallocate (mach_task_self(), (mach_vm_address_t) page_to_free, (mach_vm_size_t) page_to_free_size); \n\
     }                                                                                                           \n\
                                                                                                                 \n\
-    __introspection_dispatch_thread_get_item_info (pthread_id,                                                  \n\
+    __introspection_dispatch_thread_get_item_info (thread_id,                                                  \n\
                                                   (void**)&return_buffer->item_info_buffer_ptr,                 \n\
                                                   &return_buffer->item_info_buffer_size);                       \n\
 }                                                                                                               \n\
@@ -257,7 +258,7 @@ AppleGetThreadItemInfoHandler::SetupGetThreadItemInfoFunction (Thread &thread, V
 }
 
 AppleGetThreadItemInfoHandler::GetThreadItemInfoReturnInfo
-AppleGetThreadItemInfoHandler::GetThreadItemInfo (Thread &thread, addr_t page_to_free, uint64_t page_to_free_size, Error &error)
+AppleGetThreadItemInfoHandler::GetThreadItemInfo (Thread &thread, tid_t thread_id, addr_t page_to_free, uint64_t page_to_free_size, Error &error)
 {
     lldb::StackFrameSP thread_cur_frame = thread.GetStackFrameAtIndex(0);
     ProcessSP process_sp (thread.CalculateProcess());
@@ -298,11 +299,15 @@ AppleGetThreadItemInfoHandler::GetThreadItemInfo (Thread &thread, addr_t page_to
     debug_value.SetValueType (Value::eValueTypeScalar);
     debug_value.SetClangType (clang_int_type);
 
+    ClangASTType clang_uint64_type = clang_ast_context->GetBasicType(eBasicTypeUnsignedLongLong);
+    Value thread_id_value;
+    thread_id_value.SetValueType (Value::eValueTypeScalar);
+    thread_id_value.SetClangType (clang_uint64_type);
+
     Value page_to_free_value;
     page_to_free_value.SetValueType (Value::eValueTypeScalar);
     page_to_free_value.SetClangType (clang_void_ptr_type);
 
-    ClangASTType clang_uint64_type = clang_ast_context->GetBasicType(eBasicTypeUnsignedLongLong);
     Value page_to_free_size_value;
     page_to_free_size_value.SetValueType (Value::eValueTypeScalar);
     page_to_free_size_value.SetClangType (clang_uint64_type);
@@ -328,6 +333,9 @@ AppleGetThreadItemInfoHandler::GetThreadItemInfo (Thread &thread, addr_t page_to
 
     debug_value.GetScalar() = 0;
     argument_values.PushValue (debug_value);
+
+    thread_id_value.GetScalar() = thread_id;
+    argument_values.PushValue (thread_id_value);
 
     if (page_to_free != LLDB_INVALID_ADDRESS)
         page_to_free_value.GetScalar() = page_to_free;
