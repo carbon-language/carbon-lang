@@ -469,6 +469,13 @@ namespace llvm {
                                        BasicBlock *FBB,
                                        bool IsSubExpr);
 
+    /// ComputeExitLimitFromSingleExitSwitch - Compute the number of times the
+    /// backedge of the specified loop will execute if its exit condition were a
+    /// switch with a single exiting case to ExitingBB.
+    ExitLimit
+    ComputeExitLimitFromSingleExitSwitch(const Loop *L, SwitchInst *Switch,
+                               BasicBlock *ExitingBB, bool IsSubExpr);
+
     /// ComputeLoadConstantCompareExitLimit - Given an exit condition
     /// of 'icmp op load X, cst', try to see if we can compute the
     /// backedge-taken count.

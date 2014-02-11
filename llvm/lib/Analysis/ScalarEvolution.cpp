@@ -4453,12 +4453,19 @@ ScalarEvolution::ExitLimit
 ScalarEvolution::ComputeExitLimit(const Loop *L, BasicBlock *ExitingBlock) {
 
   // Okay, we've chosen an exiting block.  See what condition causes us to
-  // exit at this block.
-  //
-  // FIXME: we should be able to handle switch instructions (with a single exit)
-  BranchInst *ExitBr = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
-  if (ExitBr == 0) return getCouldNotCompute();
-  assert(ExitBr->isConditional() && "If unconditional, it can't be in loop!");
+  // exit at this block and remember the exit block and whether all other targets
+  // lead to the loop header.
+  bool MustExecuteLoopHeader = true;
+  BasicBlock *Exit = 0;
+  for (succ_iterator SI = succ_begin(ExitingBlock), SE = succ_end(ExitingBlock);
+       SI != SE; ++SI)
+    if (!L->contains(*SI)) {
+      if (Exit) // Multiple exit successors.
+        return getCouldNotCompute();
+      Exit = *SI;
+    } else if (*SI != L->getHeader()) {
+      MustExecuteLoopHeader = false;
+    }
 
   // At this point, we know we have a conditional branch that determines whether
   // the loop is exited.  However, we don't know if the branch is executed each
@@ -4477,13 +4484,11 @@ ScalarEvolution::ComputeExitLimit(const Loop *L, BasicBlock *ExitingBlock) {
   //
   //  More extensive analysis could be done to handle more cases here.
   //
-  if (ExitBr->getSuccessor(0) != L->getHeader() &&
-      ExitBr->getSuccessor(1) != L->getHeader() &&
-      ExitBr->getParent() != L->getHeader()) {
+  if (!MustExecuteLoopHeader && ExitingBlock != L->getHeader()) {
     // The simple checks failed, try climbing the unique predecessor chain
     // up to the header.
     bool Ok = false;
-    for (BasicBlock *BB = ExitBr->getParent(); BB; ) {
+    for (BasicBlock *BB = ExitingBlock; BB; ) {
       BasicBlock *Pred = BB->getUniquePredecessor();
       if (!Pred)
         return getCouldNotCompute();
@@ -4507,11 +4512,20 @@ ScalarEvolution::ComputeExitLimit(const Loop *L, BasicBlock *ExitingBlock) {
       return getCouldNotCompute();
   }
 
-  // Proceed to the next level to examine the exit condition expression.
-  return ComputeExitLimitFromCond(L, ExitBr->getCondition(),
-                                  ExitBr->getSuccessor(0),
-                                  ExitBr->getSuccessor(1),
-                                  /*IsSubExpr=*/false);
+  TerminatorInst *Term = ExitingBlock->getTerminator();
+  if (BranchInst *BI = dyn_cast<BranchInst>(Term)) {
+    assert(BI->isConditional() && "If unconditional, it can't be in loop!");
+    // Proceed to the next level to examine the exit condition expression.
+    return ComputeExitLimitFromCond(L, BI->getCondition(), BI->getSuccessor(0),
+                                    BI->getSuccessor(1),
+                                    /*IsSubExpr=*/false);
+  }
+
+  if (SwitchInst *SI = dyn_cast<SwitchInst>(Term))
+    return ComputeExitLimitFromSingleExitSwitch(L, SI, Exit,
+                                                /*IsSubExpr=*/false);
+
+  return getCouldNotCompute();
 }
 
 /// ComputeExitLimitFromCond - Compute the number of times the
@@ -4726,6 +4740,30 @@ ScalarEvolution::ComputeExitLimitFromICmp(const Loop *L,
     break;
   }
   return ComputeExitCountExhaustively(L, ExitCond, !L->contains(TBB));
+}
+
+ScalarEvolution::ExitLimit
+ScalarEvolution::ComputeExitLimitFromSingleExitSwitch(const Loop *L,
+                                                      SwitchInst *Switch,
+                                                      BasicBlock *ExitingBlock,
+                                                      bool IsSubExpr) {
+  assert(!L->contains(ExitingBlock) && "Not an exiting block!");
+
+  // Give up if the exit is the default dest of a switch.
+  if (Switch->getDefaultDest() == ExitingBlock)
+    return getCouldNotCompute();
+
+  assert(L->contains(Switch->getDefaultDest()) &&
+         "Default case must not exit the loop!");
+  const SCEV *LHS = getSCEVAtScope(Switch->getCondition(), L);
+  const SCEV *RHS = getConstant(Switch->findCaseDest(ExitingBlock));
+
+  // while (X != Y) --> while (X-Y != 0)
+  ExitLimit EL = HowFarToZero(getMinusSCEV(LHS, RHS), L, IsSubExpr);
+  if (EL.hasAnyInfo())
+    return EL;
+
+  return getCouldNotCompute();
 }
 
 static ConstantInt *
