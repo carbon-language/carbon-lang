@@ -3061,9 +3061,6 @@ Expr::isNullPointerConstant(ASTContext &Ctx,
             Pointee->isVoidType() &&                              // to void*
             CE->getSubExpr()->getType()->isIntegerType())         // from int.
           return CE->getSubExpr()->isNullPointerConstant(Ctx, NPC);
-      // Or an integer cast.
-      } else if (CE->getType()->isIntegerType()) {
-        return CE->getSubExpr()->isNullPointerConstant(Ctx, NPC);
       }
     }
   } else if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(this)) {
