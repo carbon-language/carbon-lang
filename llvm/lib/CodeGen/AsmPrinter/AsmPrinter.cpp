@@ -868,12 +868,14 @@ void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
                                 bool Indirect) const {
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
   int Reg = TRI->getDwarfRegNum(MLoc.getReg(), false);
+  bool isSubRegister = Reg < 0;
+  unsigned Idx = 0;
 
   for (MCSuperRegIterator SR(MLoc.getReg(), TRI); SR.isValid() && Reg < 0;
        ++SR) {
     Reg = TRI->getDwarfRegNum(*SR, false);
-    // FIXME: Get the bit range this register uses of the superregister
-    // so that we can produce a DW_OP_bit_piece
+    if (Reg >= 0)
+      Idx = TRI->getSubRegIndex(*SR, MLoc.getReg());
   }
 
   // FIXME: Handle cases like a super register being encoded as
@@ -910,7 +912,24 @@ void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
     }
   }
 
-  // FIXME: Produce a DW_OP_bit_piece if we used a superregister
+  // Emit Mask
+  if (isSubRegister) {
+    unsigned Size = TRI->getSubRegIdxSize(Idx);
+    unsigned Offset = TRI->getSubRegIdxOffset(Idx);
+    if (Offset > 0) {
+      OutStreamer.AddComment("DW_OP_bit_piece");
+      EmitInt8(dwarf::DW_OP_bit_piece);
+      OutStreamer.AddComment(Twine(Size));
+      EmitULEB128(Size);
+      OutStreamer.AddComment(Twine(Offset));
+      EmitULEB128(Offset);
+    } else {
+      OutStreamer.AddComment("DW_OP_piece");
+      EmitInt8(dwarf::DW_OP_piece);
+      OutStreamer.AddComment(Twine(Size));
+      EmitULEB128(Size);
+    }
+  }
 }
 
 bool AsmPrinter::doFinalization(Module &M) {
