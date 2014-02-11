@@ -116,3 +116,10 @@ void test(TestNonNullParameters *f) {
   [f doNotPassNullOnMethod:0]; // expected-warning {{null passed to a callee which requires a non-null argument}}
 }
 
+
+void PR18795(int (^g)(const char *h, ...) __attribute__((nonnull(1))) __attribute__((nonnull))) {
+  g(0); // expected-warning{{null passed to a callee which requires a non-null argument}}
+}
+void PR18795_helper() {
+  PR18795(0); // expected-warning{{null passed to a callee which requires a non-null argument}}
+}
