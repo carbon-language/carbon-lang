@@ -356,9 +356,7 @@ void DwarfUnit::addBlock(DIE *Die, dwarf::Attribute Attribute,
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfUnit::addSourceLine(DIE *Die, DIVariable V) {
-  // Verify variable.
-  if (!V.isVariable())
-    return;
+  assert(V.isVariable());
 
   unsigned Line = V.getLineNumber();
   if (Line == 0)
@@ -374,9 +372,7 @@ void DwarfUnit::addSourceLine(DIE *Die, DIVariable V) {
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfUnit::addSourceLine(DIE *Die, DIGlobalVariable G) {
-  // Verify global variable.
-  if (!G.isGlobalVariable())
-    return;
+  assert(G.isGlobalVariable());
 
   unsigned Line = G.getLineNumber();
   if (Line == 0)
@@ -391,9 +387,7 @@ void DwarfUnit::addSourceLine(DIE *Die, DIGlobalVariable G) {
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfUnit::addSourceLine(DIE *Die, DISubprogram SP) {
-  // Verify subprogram.
-  if (!SP.isSubprogram())
-    return;
+  assert(SP.isSubprogram());
 
   // If the line number is 0, don't add it.
   unsigned Line = SP.getLineNumber();
@@ -410,9 +404,7 @@ void DwarfUnit::addSourceLine(DIE *Die, DISubprogram SP) {
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfUnit::addSourceLine(DIE *Die, DIType Ty) {
-  // Verify type.
-  if (!Ty.isType())
-    return;
+  assert(Ty.isType());
 
   unsigned Line = Ty.getLineNumber();
   if (Line == 0)
@@ -427,9 +419,7 @@ void DwarfUnit::addSourceLine(DIE *Die, DIType Ty) {
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfUnit::addSourceLine(DIE *Die, DIObjCProperty Ty) {
-  // Verify type.
-  if (!Ty.isObjCProperty())
-    return;
+  assert(Ty.isObjCProperty());
 
   unsigned Line = Ty.getLineNumber();
   if (Line == 0)
@@ -445,9 +435,7 @@ void DwarfUnit::addSourceLine(DIE *Die, DIObjCProperty Ty) {
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfUnit::addSourceLine(DIE *Die, DINameSpace NS) {
-  // Verify namespace.
-  if (!NS.Verify())
-    return;
+  assert(NS.Verify());
 
   unsigned Line = NS.getLineNumber();
   if (Line == 0)
