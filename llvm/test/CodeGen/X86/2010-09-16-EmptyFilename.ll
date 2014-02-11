@@ -1,6 +1,6 @@
 ; RUN: llc -O0 -mtriple=x86_64-apple-darwin10 < %s - | FileCheck %s
 ; Radar 8286101
-; CHECK: .file   2 "<stdin>"
+; CHECK: .file   {{[0-9]+}} "<stdin>"
 
 define i32 @foo() nounwind ssp {
 entry:
