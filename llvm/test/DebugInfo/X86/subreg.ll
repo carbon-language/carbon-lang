@@ -2,10 +2,9 @@
 
 ; We are testing that a value in a 16 bit register gets reported as
 ; being in its superregister.
+; FIXME: There should be a DW_OP_bit_piece too.
 
 ; CHECK: .byte   80                      # DW_OP_reg0
-; CHECK: .byte   147                     # DW_OP_piece
-; CHECK: .byte   16                      # 16
 
 define i16 @f(i16 signext %zzz) nounwind {
 entry:
