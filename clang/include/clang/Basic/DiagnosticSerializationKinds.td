@@ -39,11 +39,11 @@ def err_pch_langopt_mismatch : Error<"%0 was %select{disabled|enabled}1 in "
 def err_pch_langopt_value_mismatch : Error<
   "%0 differs in PCH file vs. current file">;
   
-def warn_pch_version_too_old : Error<
+def err_pch_version_too_old : Error<
     "PCH file uses an older PCH format that is no longer supported">;
-def warn_pch_version_too_new : Error<
+def err_pch_version_too_new : Error<
     "PCH file uses a newer PCH format that cannot be read">;
-def warn_pch_different_branch : Error<
+def err_pch_different_branch : Error<
     "PCH file built from a different branch (%0) than the compiler (%1)">;
 def err_pch_with_compiler_errors : Error<
     "PCH file contains compiler errors">;
