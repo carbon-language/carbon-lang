@@ -800,11 +800,14 @@ _func:
 @------------------------------------------------------------------------------
         ldr.w r5, _foo
         ldr   lr, (_strcmp-4)
+        ldr sp, _foo
 
 @ CHECK: ldr.w	r5, _foo                @ encoding: [0x5f'A',0xf8'A',A,0x50'A']
 @ CHECK: @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
 @ CHECK: ldr.w	lr, _strcmp-4           @ encoding: [0x5f'A',0xf8'A',A,0xe0'A']
 @ CHECK: @   fixup A - offset: 0, value: _strcmp-4, kind: fixup_t2_ldst_pcrel_12
+@ CHECK: ldr.w sp, _foo                 @ encoding: [0x5f'A',0xf8'A',A,0xd0'A']
+@ CHECK: @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
 
         ldr r7, [pc, #8]
         ldr.n r7, [pc, #8]
@@ -818,6 +821,7 @@ _func:
         ldr r8, [pc, #132]
         ldr pc, [pc, #256]
         ldr pc, [pc, #-400]
+        ldr sp, [pc, #4]
 
 @ CHECK: ldr	r7, [pc, #8]            @ encoding: [0x02,0x4f]
 @ CHECK: ldr	r7, [pc, #8]            @ encoding: [0x02,0x4f]
@@ -831,6 +835,7 @@ _func:
 @ CHECK: ldr.w	r8, [pc, #132]        @ encoding: [0xdf,0xf8,0x84,0x80]
 @ CHECK: ldr.w	pc, [pc, #256]          @ encoding: [0xdf,0xf8,0x00,0xf1]
 @ CHECK: ldr.w	pc, [pc, #-400]         @ encoding: [0x5f,0xf8,0x90,0xf1]
+@ CHECK: ldr.w  sp, [pc, #4]            @ encoding: [0xdf,0xf8,0x04,0xd0]
 
         ldrb  r9, [pc, #-0]
         ldrsb r11, [pc, #-0]
