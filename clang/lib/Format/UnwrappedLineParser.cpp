@@ -782,6 +782,7 @@ bool UnwrappedLineParser::tryToParseLambda() {
     case tok::less:
     case tok::greater:
     case tok::identifier:
+    case tok::coloncolon:
     case tok::kw_mutable:
     case tok::arrow:
       nextToken();
