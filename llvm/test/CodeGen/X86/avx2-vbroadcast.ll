@@ -355,3 +355,61 @@ define   <16 x i8> @_inreg16xi8(<16 x i8> %a) {
   %b = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> zeroinitializer
   ret <16 x i8> %b
 }
+
+; These tests check that a vbroadcast instruction is used when we have a splat
+; formed from a concat_vectors (via the shufflevector) of two BUILD_VECTORs
+; (via the insertelements).
+
+; CHECK-LABEL: splat_concat1
+; CHECK-NOT: vinsertf128
+; CHECK: vbroadcastss
+; CHECK-NEXT: ret
+define <8 x float> @splat_concat1(float %f) {
+  %1 = insertelement <4 x float> undef, float %f, i32 0
+  %2 = insertelement <4 x float> %1, float %f, i32 1
+  %3 = insertelement <4 x float> %2, float %f, i32 2
+  %4 = insertelement <4 x float> %3, float %f, i32 3
+  %5 = shufflevector <4 x float> %4, <4 x float> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3>
+  ret <8 x float> %5
+}
+
+; CHECK-LABEL: splat_concat2
+; CHECK-NOT: vinsertf128
+; CHECK: vbroadcastss
+; CHECK-NEXT: ret
+define <8 x float> @splat_concat2(float %f) {
+  %1 = insertelement <4 x float> undef, float %f, i32 0
+  %2 = insertelement <4 x float> %1, float %f, i32 1
+  %3 = insertelement <4 x float> %2, float %f, i32 2
+  %4 = insertelement <4 x float> %3, float %f, i32 3
+  %5 = insertelement <4 x float> undef, float %f, i32 0
+  %6 = insertelement <4 x float> %5, float %f, i32 1
+  %7 = insertelement <4 x float> %6, float %f, i32 2
+  %8 = insertelement <4 x float> %7, float %f, i32 3
+  %9 = shufflevector <4 x float> %4, <4 x float> %8, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  ret <8 x float> %9
+}
+
+; CHECK-LABEL: splat_concat3
+; CHECK-NOT: vinsertf128
+; CHECK: vbroadcastsd
+; CHECK-NEXT: ret
+define <4 x double> @splat_concat3(double %d) {
+  %1 = insertelement <2 x double> undef, double %d, i32 0
+  %2 = insertelement <2 x double> %1, double %d, i32 1
+  %3 = shufflevector <2 x double> %2, <2 x double> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
+  ret <4 x double> %3
+}
+
+; CHECK-LABEL: splat_concat4
+; CHECK-NOT: vinsertf128
+; CHECK: vbroadcastsd
+; CHECK-NEXT: ret
+define <4 x double> @splat_concat4(double %d) {
+  %1 = insertelement <2 x double> undef, double %d, i32 0
+  %2 = insertelement <2 x double> %1, double %d, i32 1
+  %3 = insertelement <2 x double> undef, double %d, i32 0
+  %4 = insertelement <2 x double> %3, double %d, i32 1
+  %5 = shufflevector <2 x double> %2, <2 x double> %4, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  ret <4 x double> %5
+}

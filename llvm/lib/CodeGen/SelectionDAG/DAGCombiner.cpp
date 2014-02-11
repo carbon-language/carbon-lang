@@ -10136,6 +10136,26 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
     }
   }
 
+  // fold (concat_vectors (BUILD_VECTOR A, B, ...), (BUILD_VECTOR C, D, ...))
+  // -> (BUILD_VECTOR A, B, ..., C, D, ...)
+  if (N->getNumOperands() == 2 &&
+      N->getOperand(0).getOpcode() == ISD::BUILD_VECTOR &&
+      N->getOperand(1).getOpcode() == ISD::BUILD_VECTOR) {
+    EVT VT = N->getValueType(0);
+    SDValue N0 = N->getOperand(0);
+    SDValue N1 = N->getOperand(1);
+    SmallVector<SDValue, 8> Opnds;
+    unsigned BuildVecNumElts =  N0.getNumOperands();
+
+    for (unsigned i = 0; i != BuildVecNumElts; ++i)
+      Opnds.push_back(N0.getOperand(i));
+    for (unsigned i = 0; i != BuildVecNumElts; ++i)
+      Opnds.push_back(N1.getOperand(i));
+
+    return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), VT, &Opnds[0],
+                       Opnds.size());
+  }
+
   // Type legalization of vectors and DAG canonicalization of SHUFFLE_VECTOR
   // nodes often generate nop CONCAT_VECTOR nodes.
   // Scan the CONCAT_VECTOR operands and look for a CONCAT operations that
