@@ -606,6 +606,22 @@ namespace {
     }
   };
 
+  // Unique the enums, but maintain the original declaration ordering.
+  std::vector<std::string> uniqueEnumsInOrder(std::vector<std::string> enums) {
+    std::vector<std::string> uniques;
+    std::set<std::string> unique_set(enums.begin(), enums.end());
+    for (std::vector<std::string>::const_iterator i = enums.begin(),
+                                                  e = enums.end();
+         i != e; ++i) {
+      std::set<std::string>::iterator set_i = unique_set.find(*i);
+      if (set_i != unique_set.end()) {
+        uniques.push_back(*i);
+        unique_set.erase(set_i);
+      }
+    }
+    return uniques;
+  }
+
   class EnumArgument : public Argument {
     std::string type;
     std::vector<std::string> values, enums, uniques;
@@ -614,11 +630,8 @@ namespace {
       : Argument(Arg, Attr), type(Arg.getValueAsString("Type")),
         values(Arg.getValueAsListOfStrings("Values")),
         enums(Arg.getValueAsListOfStrings("Enums")),
-        uniques(enums)
+        uniques(uniqueEnumsInOrder(enums))
     {
-      // Calculate the various enum values
-      std::sort(uniques.begin(), uniques.end());
-      uniques.erase(std::unique(uniques.begin(), uniques.end()), uniques.end());
       // FIXME: Emit a proper error
       assert(!uniques.empty());
     }
@@ -711,12 +724,8 @@ namespace {
         type(Arg.getValueAsString("Type")),
         values(Arg.getValueAsListOfStrings("Values")),
         enums(Arg.getValueAsListOfStrings("Enums")),
-        uniques(enums)
+        uniques(uniqueEnumsInOrder(enums))
     {
-      // Calculate the various enum values
-      std::sort(uniques.begin(), uniques.end());
-      uniques.erase(std::unique(uniques.begin(), uniques.end()), uniques.end());
-      
       QualifiedTypeName = getAttrName().str() + "Attr::" + type;
       
       // FIXME: Emit a proper error
