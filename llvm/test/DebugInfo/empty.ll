@@ -1,6 +1,9 @@
 ; RUN: llc %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump -debug-dump=line %t | FileCheck %s
 
+; PR18809
+; XFAIL: cygwin,mingw32
+
 ; Expect no line table entry since there are no functions and file references in this compile unit
 ; CHECK: .debug_line contents:
 ; CHECK-NOT: Line table prologue:
