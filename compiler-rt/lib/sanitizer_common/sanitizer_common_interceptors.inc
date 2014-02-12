@@ -1176,6 +1176,19 @@ INTERCEPTOR(int, wait3, int *status, int options, void *rusage) {
   }
   return res;
 }
+#if SANITIZER_ANDROID
+INTERCEPTOR(int, __wait4, int pid, int *status, int options, void *rusage) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __wait4, pid, status, options, rusage);
+  int res = REAL(__wait4)(pid, status, options, rusage);
+  if (res != -1) {
+    if (status) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, status, sizeof(*status));
+    if (rusage) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, rusage, struct_rusage_sz);
+  }
+  return res;
+}
+#define INIT_WAIT4 COMMON_INTERCEPT_FUNCTION(__wait4);
+#else
 INTERCEPTOR(int, wait4, int pid, int *status, int options, void *rusage) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, wait4, pid, status, options, rusage);
@@ -1186,14 +1199,16 @@ INTERCEPTOR(int, wait4, int pid, int *status, int options, void *rusage) {
   }
   return res;
 }
+#define INIT_WAIT4 COMMON_INTERCEPT_FUNCTION(wait4);
+#endif  // SANITIZER_ANDROID
 #define INIT_WAIT                     \
   COMMON_INTERCEPT_FUNCTION(wait);    \
   COMMON_INTERCEPT_FUNCTION(waitid);  \
   COMMON_INTERCEPT_FUNCTION(waitpid); \
-  COMMON_INTERCEPT_FUNCTION(wait3);   \
-  COMMON_INTERCEPT_FUNCTION(wait4);
+  COMMON_INTERCEPT_FUNCTION(wait3);
 #else
 #define INIT_WAIT
+#define INIT_WAIT4
 #endif
 
 #if SANITIZER_INTERCEPT_INET
@@ -3284,6 +3299,7 @@ INTERCEPTOR(unsigned int, if_nametoindex, const char* ifname) {
   INIT_TIME;                               \
   INIT_GLOB;                               \
   INIT_WAIT;                               \
+  INIT_WAIT4;                              \
   INIT_INET;                               \
   INIT_PTHREAD_GETSCHEDPARAM;              \
   INIT_GETADDRINFO;                        \

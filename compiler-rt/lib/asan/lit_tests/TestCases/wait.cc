@@ -4,9 +4,6 @@
 // RUN: %clangxx_asan -DWAITPID -O0 %s -o %t && not %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -DWAITPID -O3 %s -o %t && not %t 2>&1 | FileCheck %s
 
-// RUN: %clangxx_asan -DWAITID -O0 %s -o %t && not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -DWAITID -O3 %s -o %t && not %t 2>&1 | FileCheck %s
-
 // RUN: %clangxx_asan -DWAIT3 -O0 %s -o %t && not %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -DWAIT3 -O3 %s -o %t && not %t 2>&1 | FileCheck %s
 
@@ -18,7 +15,6 @@
 
 // RUN: %clangxx_asan -DWAIT4_RUSAGE -O0 %s -o %t && not %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -DWAIT4_RUSAGE -O3 %s -o %t && not %t 2>&1 | FileCheck %s
-
 
 #include <assert.h>
 #include <sys/wait.h>
@@ -34,9 +30,6 @@ int main(int argc, char **argv) {
     res = wait(status);
 #elif defined(WAITPID)
     res = waitpid(pid, status, WNOHANG);
-#elif defined(WAITID)
-    siginfo_t *si = (siginfo_t*)(x + argc * 3);
-    res = waitid(P_ALL, 0, si, WEXITED | WNOHANG);
 #elif defined(WAIT3)
     res = wait3(status, WNOHANG, NULL);
 #elif defined(WAIT4)
@@ -56,7 +49,7 @@ int main(int argc, char **argv) {
     // CHECK: {{in main .*wait.cc:}}
     // CHECK: is located in stack of thread T0 at offset
     // CHECK: {{in main}}
-    return res != -1;
+    return res == -1 ? 1 : 0;
   }
   // child
   return 0;
