@@ -7,7 +7,7 @@
 //
 //
 // This file implements the "Auxiliary Runtime APIs"
-// http://www.codesourcery.com/public/cxx-abi/abi-eh.html#cxx-aux
+// http://mentorembedded.github.io/cxx-abi/abi-eh.html#cxx-aux
 //===----------------------------------------------------------------------===//
 
 #include "cxxabi.h"

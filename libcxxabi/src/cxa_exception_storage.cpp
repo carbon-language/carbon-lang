@@ -7,7 +7,7 @@
 //
 //  
 //  This file implements the storage for the "Caught Exception Stack"
-//  http://www.codesourcery.com/public/cxx-abi/abi-eh.html (section 2.2.2)
+//  http://mentorembedded.github.io/cxx-abi/abi-eh.html (section 2.2.2)
 //  
 //===----------------------------------------------------------------------===//
 

@@ -7,7 +7,7 @@
 //
 //  
 //  This file implements the "Array Construction and Destruction APIs"
-//  http://www.codesourcery.com/public/cxx-abi/abi.html#array-ctor
+//  http://mentorembedded.github.io/cxx-abi/abi.html#array-ctor
 //  
 //===----------------------------------------------------------------------===//
 
