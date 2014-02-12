@@ -19,6 +19,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -61,6 +62,7 @@ namespace {
   class TailDuplicatePass : public MachineFunctionPass {
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
+    const MachineBranchProbabilityInfo *MBPI;
     MachineModuleInfo *MMI;
     MachineRegisterInfo *MRI;
     OwningPtr<RegScavenger> RS;
@@ -79,6 +81,8 @@ namespace {
       MachineFunctionPass(ID), PreRegAlloc(false) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
   private:
     void AddSSAUpdateEntry(unsigned OrigReg, unsigned NewReg,
@@ -132,6 +136,8 @@ bool TailDuplicatePass::runOnMachineFunction(MachineFunction &MF) {
   TRI = MF.getTarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
   MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
+
   PreRegAlloc = MRI->isSSA();
   RS.reset();
   if (MRI->tracksLiveness() && TRI->trackLivenessAfterRegAlloc(MF))
@@ -142,6 +148,11 @@ bool TailDuplicatePass::runOnMachineFunction(MachineFunction &MF) {
     MadeChange = true;
 
   return MadeChange;
+}
+
+void TailDuplicatePass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<MachineBranchProbabilityInfo>();
+  MachineFunctionPass::getAnalysisUsage(AU);
 }
 
 static void VerifyPHIs(MachineFunction &MF, bool CheckExtra) {
@@ -721,11 +732,12 @@ TailDuplicatePass::duplicateSimpleBB(MachineBasicBlock *TailBB,
     if (PredTBB)
       TII->InsertBranch(*PredBB, PredTBB, PredFBB, PredCond, DebugLoc());
 
+    uint32_t Weight = MBPI->getEdgeWeight(PredBB, TailBB);
     PredBB->removeSuccessor(TailBB);
     unsigned NumSuccessors = PredBB->succ_size();
     assert(NumSuccessors <= 1);
     if (NumSuccessors == 0 || *PredBB->succ_begin() != NewTarget)
-      PredBB->addSuccessor(NewTarget);
+      PredBB->addSuccessor(NewTarget, Weight);
 
     TDBBs.push_back(PredBB);
   }
@@ -836,7 +848,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
            "TailDuplicate called on block with multiple successors!");
     for (MachineBasicBlock::succ_iterator I = TailBB->succ_begin(),
            E = TailBB->succ_end(); I != E; ++I)
-      PredBB->addSuccessor(*I);
+      PredBB->addSuccessor(*I, MBPI->getEdgeWeight(TailBB, I));
 
     Changed = true;
     ++NumTailDups;
