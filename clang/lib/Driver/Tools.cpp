@@ -4056,6 +4056,9 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
       CmdArgs.push_back("-fms-memptr-rep=virtual");
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_vtordisp_mode_EQ))
+    A->render(Args, CmdArgs);
+
   if (!Args.hasArg(options::OPT_fdiagnostics_format_EQ)) {
     CmdArgs.push_back("-fdiagnostics-format");
     if (Args.hasArg(options::OPT__SLASH_fallback))

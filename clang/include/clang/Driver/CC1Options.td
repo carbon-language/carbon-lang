@@ -474,6 +474,8 @@ def fsized_deallocation : Flag<["-"], "fsized-deallocation">,
   HelpText<"Enable C++1y sized global deallocation functions">;
 def fobjc_subscripting_legacy_runtime : Flag<["-"], "fobjc-subscripting-legacy-runtime">,
   HelpText<"Allow Objective-C array and dictionary subscripting in legacy runtime">;
+def vtordisp_mode_EQ : Joined<["-"], "vtordisp-mode=">,
+  HelpText<"Control vtordisp placement on win32 targets">;
 
 //===----------------------------------------------------------------------===//
 // Header Search Options

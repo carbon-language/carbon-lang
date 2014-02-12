@@ -130,9 +130,15 @@ void Sema::AddAlignmentAttributesForRecord(RecordDecl *RD) {
 }
 
 void Sema::AddMsStructLayoutForRecord(RecordDecl *RD) {
-  if (!MSStructPragmaOn)
-    return;
-  RD->addAttr(MsStructAttr::CreateImplicit(Context));
+  if (MSStructPragmaOn)
+    RD->addAttr(MsStructAttr::CreateImplicit(Context));
+
+  // FIXME: We should merge AddAlignmentAttributesForRecord with
+  // AddMsStructLayoutForRecord into AddPragmaAttributesForRecord, which takes
+  // all active pragmas and applies them as attributes to class definitions.
+  if (VtorDispModeStack.back() != getLangOpts().VtorDispMode)
+    RD->addAttr(
+        MSVtorDispAttr::CreateImplicit(Context, VtorDispModeStack.back()));
 }
 
 void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
@@ -246,8 +252,8 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
       // If a name was specified then failure indicates the name
       // wasn't found. Otherwise failure indicates the stack was
       // empty.
-      Diag(PragmaLoc, diag::warn_pragma_pack_pop_failed)
-        << (Name ? "no record matching name" : "stack empty");
+      Diag(PragmaLoc, diag::warn_pragma_pop_failed)
+          << "pack" << (Name ? "no record matching name" : "stack empty");
 
       // FIXME: Warn about popping named records as MSVC does.
     } else {
@@ -292,6 +298,31 @@ void Sema::ActOnPragmaMSPointersToMembers(
     SourceLocation PragmaLoc) {
   MSPointerToMemberRepresentationMethod = RepresentationMethod;
   ImplicitMSInheritanceAttrLoc = PragmaLoc;
+}
+
+void Sema::ActOnPragmaMSVtorDisp(PragmaVtorDispKind Kind,
+                                 SourceLocation PragmaLoc,
+                                 MSVtorDispAttr::Mode Mode) {
+  switch (Kind) {
+  case PVDK_Set:
+    VtorDispModeStack.back() = Mode;
+    break;
+  case PVDK_Push:
+    VtorDispModeStack.push_back(Mode);
+    break;
+  case PVDK_Reset:
+    VtorDispModeStack.clear();
+    VtorDispModeStack.push_back(MSVtorDispAttr::Mode(LangOpts.VtorDispMode));
+    break;
+  case PVDK_Pop:
+    VtorDispModeStack.pop_back();
+    if (VtorDispModeStack.empty()) {
+      Diag(PragmaLoc, diag::warn_pragma_pop_failed) << "vtordisp"
+                                                    << "stack empty";
+      VtorDispModeStack.push_back(MSVtorDispAttr::Mode(LangOpts.VtorDispMode));
+    }
+    break;
+  }
 }
 
 void Sema::ActOnPragmaUnused(const Token &IdTok, Scope *curScope,

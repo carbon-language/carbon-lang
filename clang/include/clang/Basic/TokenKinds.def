@@ -678,6 +678,11 @@ ANNOTATION(pragma_fp_contract)
 // handles them.
 ANNOTATION(pragma_ms_pointers_to_members)
 
+// Annotation for #pragma vtordisp...
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_ms_vtordisp)
+
 // Annotation for #pragma OPENCL EXTENSION...
 // The lexer produces these so that they only take effect when the parser
 // handles them.

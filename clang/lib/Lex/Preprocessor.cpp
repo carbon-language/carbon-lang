@@ -819,6 +819,24 @@ bool Preprocessor::FinishLexStringLiteral(Token &Result, std::string &String,
   return true;
 }
 
+bool Preprocessor::parseSimpleIntegerLiteral(Token &Tok, uint64_t &Value) {
+  assert(Tok.is(tok::numeric_constant));
+  SmallString<8> IntegerBuffer;
+  bool NumberInvalid = false;
+  StringRef Spelling = getSpelling(Tok, IntegerBuffer, &NumberInvalid);
+  if (NumberInvalid)
+    return false;
+  NumericLiteralParser Literal(Spelling, Tok.getLocation(), *this);
+  if (Literal.hadError || !Literal.isIntegerLiteral() || Literal.hasUDSuffix())
+    return false;
+  llvm::APInt APVal(64, 0);
+  if (Literal.GetIntegerValue(APVal))
+    return false;
+  Lex(Tok);
+  Value = APVal.getLimitedValue();
+  return true;
+}
+
 void Preprocessor::addCommentHandler(CommentHandler *Handler) {
   assert(Handler && "NULL comment handler");
   assert(std::find(CommentHandlers.begin(), CommentHandlers.end(), Handler) ==

@@ -770,6 +770,9 @@ def warn_pragma_expected_rparen : Warning<
   "missing ')' after '#pragma %0' - ignoring">, InGroup<IgnoredPragmas>;
 def warn_pragma_expected_identifier : Warning<
   "expected identifier in '#pragma %0' - ignored">, InGroup<IgnoredPragmas>;
+def warn_pragma_expected_integer : Warning<
+  "expected integer between %0 and %1 inclusive in '#pragma %2' - ignored">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_ms_struct : Warning<
   "incorrect use of '#pragma ms_struct on|off' - ignored">,
   InGroup<IgnoredPragmas>;
@@ -789,8 +792,8 @@ def warn_pragma_align_invalid_option : Warning<
   "invalid alignment option in '#pragma %select{align|options align}0' - ignored">,
   InGroup<IgnoredPragmas>;
 // - #pragma pack
-def warn_pragma_pack_invalid_action : Warning<
-  "unknown action for '#pragma pack' - ignored">,
+def warn_pragma_invalid_action : Warning<
+  "unknown action for '#pragma %0' - ignored">,
   InGroup<IgnoredPragmas>;
 def warn_pragma_pack_malformed : Warning<
   "expected integer or identifier in '#pragma pack' - ignored">,

@@ -110,6 +110,8 @@ Parser::Parser(Preprocessor &pp, Sema &actions, bool skipFunctionBodies)
     PP.AddPragmaHandler(MSDetectMismatchHandler.get());
     MSPointersToMembers.reset(new PragmaMSPointersToMembers());
     PP.AddPragmaHandler(MSPointersToMembers.get());
+    MSVtorDisp.reset(new PragmaMSVtorDisp());
+    PP.AddPragmaHandler(MSVtorDisp.get());
   }
 
   CommentSemaHandler.reset(new ActionCommentHandler(actions));
@@ -487,6 +489,8 @@ Parser::~Parser() {
     MSDetectMismatchHandler.reset();
     PP.RemovePragmaHandler(MSPointersToMembers.get());
     MSPointersToMembers.reset();
+    PP.RemovePragmaHandler(MSVtorDisp.get());
+    MSVtorDisp.reset();
   }
 
   PP.RemovePragmaHandler("STDC", FPContractHandler.get());
@@ -708,6 +712,9 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     return DeclGroupPtrTy();
   case tok::annot_pragma_ms_pointers_to_members:
     HandlePragmaMSPointersToMembers();
+    return DeclGroupPtrTy();
+  case tok::annot_pragma_ms_vtordisp:
+    HandlePragmaMSVtorDisp();
     return DeclGroupPtrTy();
   case tok::semi:
     // Either a C++11 empty-declaration or attribute-declaration.

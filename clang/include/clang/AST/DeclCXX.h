@@ -1615,6 +1615,10 @@ public:
            (hasDefinition() && isPolymorphic());
   }
 
+  /// \brief Controls when vtordisps will be emitted if this record is used as a
+  /// virtual base.
+  MSVtorDispAttr::Mode getMSVtorDispMode() const;
+
   /// \brief Determine whether this lambda expression was known to be dependent
   /// at the time it was created, even if its context does not appear to be
   /// dependent.

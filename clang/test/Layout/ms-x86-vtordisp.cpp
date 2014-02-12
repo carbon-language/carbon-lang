@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple i686-pc-win32 -fdump-record-layouts -fsyntax-only %s 2>&1 \
+// RUN: %clang_cc1 -fno-rtti -fms-extensions -emit-llvm-only -triple i686-pc-win32 -fdump-record-layouts -fsyntax-only %s 2>&1 \
 // RUN:            | FileCheck %s
 // RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple x86_64-pc-win32 -fdump-record-layouts -fsyntax-only %s 2>/dev/null \
 // RUN:            | FileCheck %s -check-prefix CHECK-X64
@@ -214,9 +214,125 @@ struct XC : virtual XB {
 // CHECK-X64-NEXT:      | [sizeof=40, align=8
 // CHECK-X64-NEXT:      |  nvsize=8, nvalign=8]
 
+namespace pragma_test1 {
+// No overrides means no vtordisps by default.
+struct A { virtual ~A(); virtual void foo(); int a; };
+struct B : virtual A { virtual ~B(); virtual void bar(); int b; };
+struct C : virtual B { int c; };
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct pragma_test1::C
+// CHECK-NEXT:    0 |   (C vbtable pointer)
+// CHECK-NEXT:    4 |   int c
+// CHECK-NEXT:    8 |   struct pragma_test1::A (virtual base)
+// CHECK-NEXT:    8 |     (A vftable pointer)
+// CHECK-NEXT:   12 |     int a
+// CHECK-NEXT:   16 |   struct pragma_test1::B (virtual base)
+// CHECK-NEXT:   16 |     (B vftable pointer)
+// CHECK-NEXT:   20 |     (B vbtable pointer)
+// CHECK-NEXT:   24 |     int b
+// CHECK-NEXT:      | [sizeof=28, align=4
+// CHECK-NEXT:      |  nvsize=8, nvalign=4]
+}
+
+namespace pragma_test2 {
+struct A { virtual ~A(); virtual void foo(); int a; };
+#pragma vtordisp(push,2)
+struct B : virtual A { virtual ~B(); virtual void bar(); int b; };
+struct C : virtual B { int c; };
+#pragma vtordisp(pop)
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct pragma_test2::C
+// CHECK-NEXT:    0 |   (C vbtable pointer)
+// CHECK-NEXT:    4 |   int c
+// CHECK-NEXT:    8 |   (vtordisp for vbase A)
+// CHECK-NEXT:   12 |   struct pragma_test2::A (virtual base)
+// CHECK-NEXT:   12 |     (A vftable pointer)
+// CHECK-NEXT:   16 |     int a
+//   By adding a virtual method and vftable to B, now we need a vtordisp.
+// CHECK-NEXT:   20 |   (vtordisp for vbase B)
+// CHECK-NEXT:   24 |   struct pragma_test2::B (virtual base)
+// CHECK-NEXT:   24 |     (B vftable pointer)
+// CHECK-NEXT:   28 |     (B vbtable pointer)
+// CHECK-NEXT:   32 |     int b
+// CHECK-NEXT:      | [sizeof=36, align=4
+// CHECK-NEXT:      |  nvsize=8, nvalign=4]
+}
+
+namespace pragma_test3 {
+struct A { virtual ~A(); virtual void foo(); int a; };
+#pragma vtordisp(push,2)
+struct B : virtual A { virtual ~B(); virtual void foo(); int b; };
+struct C : virtual B { int c; };
+#pragma vtordisp(pop)
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct pragma_test3::C
+// CHECK-NEXT:    0 |   (C vbtable pointer)
+// CHECK-NEXT:    4 |   int c
+// CHECK-NEXT:    8 |   (vtordisp for vbase A)
+// CHECK-NEXT:   12 |   struct pragma_test3::A (virtual base)
+// CHECK-NEXT:   12 |     (A vftable pointer)
+// CHECK-NEXT:   16 |     int a
+//   No vtordisp before B!  It doesn't have its own vftable.
+// CHECK-NEXT:   20 |   struct pragma_test3::B (virtual base)
+// CHECK-NEXT:   20 |     (B vbtable pointer)
+// CHECK-NEXT:   24 |     int b
+// CHECK-NEXT:      | [sizeof=28, align=4
+// CHECK-NEXT:      |  nvsize=8, nvalign=4]
+}
+
+namespace pragma_test4 {
+struct A {
+  A();
+  virtual void foo();
+  int a;
+};
+
+// Make sure the pragma applies to class template decls before they've been
+// instantiated.
+#pragma vtordisp(push,2)
+template <typename T>
+struct B : virtual A {
+  B();
+  virtual ~B();
+  virtual void bar();
+  T b;
+};
+#pragma vtordisp(pop)
+
+struct C : virtual B<int> { int c; };
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct pragma_test4::C
+// CHECK-NEXT:    0 |   (C vbtable pointer)
+// CHECK-NEXT:    4 |   int c
+//   Pragma applies to B, which has vbase A.
+// CHECK-NEXT:    8 |   (vtordisp for vbase A)
+// CHECK-NEXT:   12 |   struct pragma_test4::A (virtual base)
+// CHECK-NEXT:   12 |     (A vftable pointer)
+// CHECK-NEXT:   16 |     int a
+//   Pragma does not apply to C, and B doesn't usually need a vtordisp in C.
+// CHECK-NEXT:   20 |   struct pragma_test4::B<int> (virtual base)
+// CHECK-NEXT:   20 |     (B vftable pointer)
+// CHECK-NEXT:   24 |     (B vbtable pointer)
+// CHECK-NEXT:   28 |     int b
+// CHECK-NEXT:      | [sizeof=32, align=4
+// CHECK-NEXT:      |  nvsize=8, nvalign=4]
+}
+
 int a[
 sizeof(A)+
 sizeof(C)+
 sizeof(D)+
 sizeof(CT)+
-sizeof(XC)];
+sizeof(XC)+
+sizeof(pragma_test1::C)+
+sizeof(pragma_test2::C)+
+sizeof(pragma_test3::C)+
+sizeof(pragma_test4::C)];

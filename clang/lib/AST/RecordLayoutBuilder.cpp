@@ -2731,6 +2731,30 @@ RequiresVtordisp(const llvm::SmallPtrSet<const CXXRecordDecl *, 2> &HasVtordisp,
 llvm::SmallPtrSet<const CXXRecordDecl *, 2>
 MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
   llvm::SmallPtrSet<const CXXRecordDecl *, 2> HasVtordispSet;
+
+  // /vd0 or #pragma vtordisp(0): Never use vtordisps when used as a vbase.
+  if (RD->getMSVtorDispMode() == MSVtorDispAttr::Never)
+    return HasVtordispSet;
+
+  // /vd2 or #pragma vtordisp(2): Always use vtordisps for virtual bases with
+  // vftables.
+  if (RD->getMSVtorDispMode() == MSVtorDispAttr::ForVFTable) {
+    for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
+                                                  E = RD->vbases_end();
+         I != E; ++I) {
+      const CXXRecordDecl *BaseDecl = I->getType()->getAsCXXRecordDecl();
+      const ASTRecordLayout &Layout = Context.getASTRecordLayout(BaseDecl);
+      if (Layout.hasExtendableVFPtr())
+        HasVtordispSet.insert(BaseDecl);
+    }
+    return HasVtordispSet;
+  }
+
+  // /vd1 or #pragma vtordisp(1): Try to guess based on whether we think it's
+  // possible for a partially constructed object with virtual base overrides to
+  // escape a non-trivial constructor.
+  assert(RD->getMSVtorDispMode() == MSVtorDispAttr::ForVBaseOverride);
+
   // If any of our bases need a vtordisp for this type, so do we.  Check our
   // direct bases for vtordisp requirements.
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),

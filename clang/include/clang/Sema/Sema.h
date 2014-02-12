@@ -266,6 +266,25 @@ public:
   LangOptions::PragmaMSPointersToMembersKind
       MSPointerToMemberRepresentationMethod;
 
+  enum PragmaVtorDispKind {
+    PVDK_Push,          //< #pragma vtordisp(push, mode)
+    PVDK_Set,           //< #pragma vtordisp(mode)
+    PVDK_Pop,           //< #pragma vtordisp(pop)
+    PVDK_Reset          //< #pragma vtordisp()
+  };
+
+  /// \brief Whether to insert vtordisps prior to virtual bases in the Microsoft
+  /// C++ ABI.  Possible values are 0, 1, and 2, which mean:
+  ///
+  /// 0: Suppress all vtordisps
+  /// 1: Insert vtordisps in the presence of vbase overrides and non-trivial
+  ///    structors
+  /// 2: Always insert vtordisps to support RTTI on partially constructed
+  ///    objects
+  ///
+  /// The stack always has at least one element in it.
+  SmallVector<MSVtorDispAttr::Mode, 2> VtorDispModeStack;
+
   /// \brief Source location for newly created implicit MSInheritanceAttrs
   SourceLocation ImplicitMSInheritanceAttrLoc;
 
@@ -6983,6 +7002,10 @@ public:
   void ActOnPragmaMSPointersToMembers(
       LangOptions::PragmaMSPointersToMembersKind Kind,
       SourceLocation PragmaLoc);
+
+  /// \brief Called on well formed \#pragma vtordisp().
+  void ActOnPragmaMSVtorDisp(PragmaVtorDispKind Kind, SourceLocation PragmaLoc,
+                             MSVtorDispAttr::Mode Value);
 
   /// ActOnPragmaDetectMismatch - Call on well-formed \#pragma detect_mismatch
   void ActOnPragmaDetectMismatch(StringRef Name, StringRef Value);

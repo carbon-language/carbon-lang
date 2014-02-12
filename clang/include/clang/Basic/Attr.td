@@ -1431,6 +1431,23 @@ def MSInheritance : InheritableAttr {
   }];
 }
 
+def MSVtorDisp : InheritableAttr {
+  // This attribute has no spellings as it is only ever created implicitly.
+  let Spellings = [];
+  let Args = [UnsignedArgument<"vdm">];
+  let SemaHandler = 0;
+
+  let AdditionalMembers = [{
+  enum Mode {
+    Never,
+    ForVBaseOverride,
+    ForVFTable
+  };
+
+  Mode getVtorDispMode() const { return Mode(vdm); }
+  }];
+}
+
 def Unaligned : IgnoredAttr {
   let Spellings = [Keyword<"__unaligned">];
 }
