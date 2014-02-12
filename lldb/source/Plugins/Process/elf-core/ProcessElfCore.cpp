@@ -131,7 +131,8 @@ ProcessElfCore::AddAddressRangeFromLoadSegment(const elf::ELFProgramHeader *head
     VMRangeToFileOffset::Entry *last_entry = m_core_aranges.Back();
     if (last_entry &&
         last_entry->GetRangeEnd() == range_entry.GetRangeBase() &&
-        last_entry->data.GetRangeEnd() == range_entry.data.GetRangeBase())
+        last_entry->data.GetRangeEnd() == range_entry.data.GetRangeBase() &&
+        last_entry->GetByteSize() == last_entry->data.GetByteSize())
     {
         last_entry->SetRangeEnd (range_entry.GetRangeEnd());
         last_entry->data.SetRangeEnd (range_entry.data.GetRangeEnd());
@@ -294,9 +295,13 @@ ProcessElfCore::DoReadMemory (lldb::addr_t addr, void *buf, size_t size, Error &
     size_t zero_fill_size = 0;   // Padding
     lldb::addr_t bytes_left = 0; // Number of bytes available in the core file from the given address
 
-    if (file_end > offset)
-        bytes_left = file_end - offset;
+    // Figure out how many on-disk bytes remain in this segment
+    // starting at the given offset
+    if (file_end > file_start + offset)
+        bytes_left = file_end - (file_start + offset);
 
+    // Figure out how many bytes we need to zero-fill if we are
+    // reading more bytes than available in the on-disk segment
     if (bytes_to_read > bytes_left)
     {
         zero_fill_size = bytes_to_read - bytes_left;
