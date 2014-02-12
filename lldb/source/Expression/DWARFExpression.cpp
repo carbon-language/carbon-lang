@@ -2574,9 +2574,90 @@ DWARFExpression::Evaluate
         // variable a particular DWARF expression refers to.
         //----------------------------------------------------------------------
         case DW_OP_piece:
-            if (error_ptr)
-                error_ptr->SetErrorString ("Unimplemented opcode DW_OP_piece.");
-            return false;
+            if (stack.size() < 1)
+            {
+                if (error_ptr)
+                    error_ptr->SetErrorString("Expression stack needs at least 1 item for DW_OP_piece.");
+                return false;
+            }
+            else
+            {
+                const uint64_t piece_byte_size = opcodes.GetULEB128(&offset);
+                switch (stack.back().GetValueType())
+                {
+                    case Value::eValueTypeScalar:
+                    case Value::eValueTypeFileAddress:
+                    case Value::eValueTypeLoadAddress:
+                    case Value::eValueTypeHostAddress:
+                        {
+                            uint32_t bit_size = piece_byte_size * 8;
+                            uint32_t bit_offset = 0;
+                            if (!stack.back().GetScalar().ExtractBitfield (bit_size, bit_offset))
+                            {
+                                if (error_ptr)
+                                    error_ptr->SetErrorStringWithFormat("unable to extract %" PRIu64 " bytes from a %" PRIu64 " byte scalar value.", piece_byte_size, (uint64_t)stack.back().GetScalar().GetByteSize());
+                                return false;
+                            }
+                        }
+                        break;
+                        
+                    case Value::eValueTypeVector:
+                        {
+                            if (stack.back().GetVector().length >= piece_byte_size)
+                                stack.back().GetVector().length = piece_byte_size;
+                            else
+                            {
+                                if (error_ptr)
+                                    error_ptr->SetErrorStringWithFormat("unable to extract %" PRIu64 " bytes from a %" PRIu64 " byte vector value.", piece_byte_size, (uint64_t)stack.back().GetVector().length);
+                                return false;
+                            }
+                        }
+                        break;
+                }
+            }
+            break;
+
+        case DW_OP_bit_piece:   // 0x9d ULEB128 bit size, ULEB128 bit offset (DWARF3);
+            if (stack.size() < 1)
+            {
+                if (error_ptr)
+                    error_ptr->SetErrorString("Expression stack needs at least 1 item for DW_OP_bit_piece.");
+                return false;
+            }
+            else
+            {
+                const uint64_t piece_bit_size = opcodes.GetULEB128(&offset);
+                const uint64_t piece_bit_offset = opcodes.GetULEB128(&offset);
+                switch (stack.back().GetValueType())
+                {
+                case Value::eValueTypeScalar:
+                case Value::eValueTypeFileAddress:
+                case Value::eValueTypeLoadAddress:
+                case Value::eValueTypeHostAddress:
+                    {
+                        if (!stack.back().GetScalar().ExtractBitfield (piece_bit_size, piece_bit_offset))
+                        {
+                            if (error_ptr)
+                                error_ptr->SetErrorStringWithFormat("unable to extract %" PRIu64 " bit value with %" PRIu64 " bit offset from a %" PRIu64 " bit scalar value.",
+                                                                    piece_bit_size,
+                                                                    piece_bit_offset,
+                                                                    (uint64_t)(stack.back().GetScalar().GetByteSize()*8));
+                            return false;
+                        }
+                    }
+                    break;
+                    
+                case Value::eValueTypeVector:
+                    if (error_ptr)
+                    {
+                        error_ptr->SetErrorStringWithFormat ("unable to extract %" PRIu64 " bit value with %" PRIu64 " bit offset from a vector value.",
+                                                             piece_bit_size,
+                                                             piece_bit_offset);
+                    }
+                    return false;
+                }
+            }
+            break;
 
         //----------------------------------------------------------------------
         // OPCODE: DW_OP_push_object_address
