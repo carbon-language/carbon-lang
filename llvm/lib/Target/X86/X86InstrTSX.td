@@ -40,7 +40,8 @@ def XABORT : Ii8<0xc6, MRM_F8, (outs), (ins i8imm:$imm),
 
 // HLE prefixes
 
+let isAsmParserOnly = 1 in {
 def XACQUIRE_PREFIX : I<0xF2, RawFrm, (outs), (ins), "xacquire", []>, Requires<[HasHLE]>;
-
 def XRELEASE_PREFIX : I<0xF3, RawFrm, (outs), (ins), "xrelease", []>, Requires<[HasHLE]>;
+}
 

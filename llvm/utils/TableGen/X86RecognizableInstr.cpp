@@ -413,12 +413,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   if (Name == "VMASKMOVDQU64")
     return FILTER_WEAK;
 
-  // XACQUIRE and XRELEASE reuse REPNE and REP respectively.
-  // For now, just prefer the REP versions.
-  if (Name == "XACQUIRE_PREFIX" ||
-      Name == "XRELEASE_PREFIX")
-    return FILTER_WEAK;
-
   return FILTER_NORMAL;
 }
 
