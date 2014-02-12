@@ -74,8 +74,6 @@ private:
   bool HasEVEX_KZ;
   /// The hasEVEX_B field from the record
   bool HasEVEX_B;
-  /// The hasLockPrefix field from the record
-  bool HasLockPrefix;
   /// The hasREPPrefix field from the record
   bool HasREPPrefix;
   /// The isCodeGenOnly field from the record
