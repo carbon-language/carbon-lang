@@ -6898,24 +6898,25 @@ void SelectionDAGBuilder::visitStackmap(const CallInst &CI) {
 
   assert(CI.getType()->isVoidTy() && "Stackmap cannot return a value.");
 
-  SDValue Callee = getValue(CI.getCalledValue());
+  SDValue Chain, InFlag, Callee, NullPtr;
+  SmallVector<SDValue, 32> Ops;
 
-  // Lower into a call sequence with no args and no return value.
-  std::pair<SDValue, SDValue> Result = LowerCallOperands(CI, 0, 0, Callee);
-  // Set the root to the target-lowered call chain.
-  SDValue Chain = Result.second;
-  DAG.setRoot(Chain);
+  SDLoc DL = getCurSDLoc();
+  Callee = getValue(CI.getCalledValue());
+  NullPtr = DAG.getIntPtrConstant(0, true);
 
-  /// Get a call instruction from the call sequence chain.
-  /// Tail calls are not allowed.
-  SDNode *CallEnd = Chain.getNode();
-  assert(CallEnd->getOpcode() == ISD::CALLSEQ_END &&
-         "Expected a callseq node.");
-  SDNode *Call = CallEnd->getOperand(0).getNode();
-  bool hasGlue = Call->getGluedNode();
-
-  // Replace the target specific call node with the stackmap intrinsic.
-  SmallVector<SDValue, 8> Ops;
+  // The stackmap intrinsic only records the live variables (the arguemnts
+  // passed to it) and emits NOPS (if requested). Unlike the patchpoint
+  // intrinsic, this won't be lowered to a function call. This means we don't
+  // have to worry about calling conventions and target specific lowering code.
+  // Instead we perform the call lowering right here.
+  //
+  // chain, flag = CALLSEQ_START(chain, 0)
+  // chain, flag = STACKMAP(id, nbytes, ..., chain, flag)
+  // chain, flag = CALLSEQ_END(chain, 0, 0, flag)
+  //
+  Chain = DAG.getCALLSEQ_START(getRoot(), NullPtr, DL);
+  InFlag = Chain.getValue(1);
 
   // Add the <id> and <numBytes> constants.
   SDValue IDVal = getValue(CI.getOperand(PatchPointOpers::IDPos));
@@ -6924,30 +6925,29 @@ void SelectionDAGBuilder::visitStackmap(const CallInst &CI) {
   SDValue NBytesVal = getValue(CI.getOperand(PatchPointOpers::NBytesPos));
   Ops.push_back(DAG.getTargetConstant(
                   cast<ConstantSDNode>(NBytesVal)->getZExtValue(), MVT::i32));
+
   // Push live variables for the stack map.
   addStackMapLiveVars(CI, 2, Ops, *this);
 
-  // Push the chain (this is originally the first operand of the call, but
-  // becomes now the last or second to last operand).
-  Ops.push_back(*(Call->op_begin()));
+  // We are not pushing any register mask info here on the operands list,
+  // because the stackmap doesn't clobber anything.
 
-    // Push the glue flag (last operand).
-  if (hasGlue)
-    Ops.push_back(*(Call->op_end()-1));
+  // Push the chain and the glue flag.
+  Ops.push_back(Chain);
+  Ops.push_back(InFlag);
 
+  // Create the STACKMAP node.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+  SDNode *SM = DAG.getMachineNode(TargetOpcode::STACKMAP, DL, NodeTys, Ops);
+  Chain = SDValue(SM, 0);
+  InFlag = Chain.getValue(1);
 
-  // Replace the target specific call node with a STACKMAP node.
-  MachineSDNode *MN = DAG.getMachineNode(TargetOpcode::STACKMAP, getCurSDLoc(),
-                                         NodeTys, Ops);
+  Chain = DAG.getCALLSEQ_END(Chain, NullPtr, NullPtr, InFlag, DL);
 
-  // StackMap generates no value, so nothing goes in the NodeMap.
+  // Stackmaps don't generate values, so nothing goes into the NodeMap.
 
-  // Fixup the consumers of the intrinsic. The chain and glue may be used in the
-  // call sequence.
-  DAG.ReplaceAllUsesWith(Call, MN);
-
-  DAG.DeleteNode(Call);
+  // Set the root to the target-lowered call chain.
+  DAG.setRoot(Chain);
 
   // Inform the Frame Information that we have a stackmap in this function.
   FuncInfo.MF->getFrameInfo()->setHasStackMap();
