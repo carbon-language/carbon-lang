@@ -9,9 +9,10 @@ set(TSAN_CFLAGS
   -fPIE
   -fno-rtti)
 
-set(TSAN_RTL_CFLAGS
-  ${TSAN_CFLAGS}
-  -Wframe-larger-than=512)
+set(TSAN_RTL_CFLAGS ${TSAN_CFLAGS})
+if(SUPPORTS_FRAME_LARGER_THAN_FLAG)
+  list(APPEND TSAN_RTL_CFLAGS -Wframe-larger-than=512)
+endif()
 if(SUPPORTS_GLOBAL_CONSTRUCTORS_FLAG)
   list(APPEND TSAN_RTL_CFLAGS -Wglobal-constructors)
 endif()

@@ -193,6 +193,8 @@ if (SUPPORTS_NO_NON_VIRTUAL_DTOR_FLAG)
 endif()
 check_cxx_compiler_flag(-Wglobal-constructors SUPPORTS_GLOBAL_CONSTRUCTORS_FLAG)
 # Not all sanitizers forbid global constructors.
+check_cxx_compiler_flag("-Werror -Wframe-larger-than=512"
+  SUPPORTS_FRAME_LARGER_THAN_FLAG)
 
 if(APPLE)
   # Obtain the iOS Simulator SDK path from xcodebuild.
