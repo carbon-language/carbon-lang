@@ -2452,7 +2452,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     } else if (proto[i] >= 'B' && proto[i] <= 'D') {
       NumOfVec = proto[i] - 'A' + 1;
     }
-    
+
     if (NumOfVec > 0) {
       // Check if an explicit cast is needed.
       if (argType != 'c' || argPoly || argUsgn)
@@ -2582,7 +2582,7 @@ static std::string GenIntrinsic(const std::string &name,
 /// run - Read the records in arm_neon.td and output arm_neon.h.  arm_neon.h
 /// is comprised of type definitions and function declarations.
 void NeonEmitter::run(raw_ostream &OS) {
-  OS << 
+  OS <<
     "/*===---- arm_neon.h - ARM Neon intrinsics ------------------------------"
     "---===\n"
     " *\n"
@@ -3091,7 +3091,7 @@ NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS,
     std::string Types = R->getValueAsString("Types");
     std::string name = R->getValueAsString("Name");
     std::string Rename = name + "@" + Proto;
-    
+
     // Functions with 'a' (the splat code) in the type prototype should not get
     // their own builtin as they use the non-splat variant.
     if (Proto.find('a') != std::string::npos)
@@ -3312,9 +3312,9 @@ static std::string GenTest(const std::string &name,
   // for aarch64 instructions yet
   std::vector<std::string> FileCheckPatterns;
   if (!isA64) {
-	GenerateChecksForIntrinsic(name, proto, outTypeStr, inTypeStr, ck, InstName,
-							   isHiddenLOp, FileCheckPatterns);
-	s+= "// CHECK_ARM: test_" + mangledName + "\n";
+    GenerateChecksForIntrinsic(name, proto, outTypeStr, inTypeStr, ck, InstName,
+                               isHiddenLOp, FileCheckPatterns);
+    s+= "// CHECK_ARM: test_" + mangledName + "\n";
   }
   s += "// CHECK_AARCH64: test_" + mangledName + "\n";
 
@@ -3375,7 +3375,7 @@ static std::string GenTest(const std::string &name,
 void NeonEmitter::genTargetTest(raw_ostream &OS, StringMap<OpKind> &EmittedMap,
                                 bool isA64GenTest) {
   if (isA64GenTest)
-	OS << "#ifdef __aarch64__\n";
+    OS << "#ifdef __aarch64__\n";
 
   std::vector<Record *> RV = Records.getAllDerivedDefinitions("Inst");
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
@@ -3411,17 +3411,17 @@ void NeonEmitter::genTargetTest(raw_ostream &OS, StringMap<OpKind> &EmittedMap,
           (void)ClassifyType(TypeVec[srcti], inQuad, dummy, dummy);
           if (srcti == ti || inQuad != outQuad)
             continue;
-		  std::string testFuncProto;
+          std::string testFuncProto;
           std::string s = GenTest(name, Proto, TypeVec[ti], TypeVec[srcti],
                                   isShift, isHiddenLOp, ck, InstName, isA64,
-								  testFuncProto);
+                                  testFuncProto);
           if (EmittedMap.count(testFuncProto))
             continue;
           EmittedMap[testFuncProto] = kind;
           OS << s << "\n";
         }
       } else {
-		std::string testFuncProto;
+        std::string testFuncProto;
         std::string s = GenTest(name, Proto, TypeVec[ti], TypeVec[ti], isShift,
                                 isHiddenLOp, ck, InstName, isA64, testFuncProto);
         if (EmittedMap.count(testFuncProto))
@@ -3433,7 +3433,7 @@ void NeonEmitter::genTargetTest(raw_ostream &OS, StringMap<OpKind> &EmittedMap,
   }
 
   if (isA64GenTest)
-	OS << "#endif\n";
+    OS << "#endif\n";
 }
 /// runTests - Write out a complete set of tests for all of the Neon
 /// intrinsics.
@@ -3442,10 +3442,10 @@ void NeonEmitter::runTests(raw_ostream &OS) {
         "apcs-gnu\\\n"
         "// RUN:  -target-cpu swift -ffreestanding -Os -S -o - %s\\\n"
         "// RUN:  | FileCheck %s -check-prefix=CHECK_ARM\n"
-		"\n"
-	    "// RUN: %clang_cc1 -triple aarch64-none-linux-gnu \\\n"
-	    "// RUN -target-feature +neon  -ffreestanding -S -o - %s \\\n"
-	    "// RUN:  | FileCheck %s -check-prefix=CHECK_AARCH64\n"
+        "\n"
+        "// RUN: %clang_cc1 -triple aarch64-none-linux-gnu \\\n"
+        "// RUN -target-feature +neon  -ffreestanding -S -o - %s \\\n"
+        "// RUN:  | FileCheck %s -check-prefix=CHECK_AARCH64\n"
         "\n"
         "// REQUIRES: long_tests\n"
         "\n"
