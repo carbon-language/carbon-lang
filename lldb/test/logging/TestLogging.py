@@ -64,7 +64,15 @@ class LogTestCase(TestBase):
             "HandleCommand, wants_raw_input:'False'\n",
             "HandleCommand, command line after removing command name(s): ''\n",
             "HandleCommand, command succeeded\n",
+            "Processing command: log disable lldb\n",
+            "HandleCommand, cmd_obj : 'log disable'\n",
+            "HandleCommand, revised_command_line: 'log disable lldb'\n",
+            "HandleCommand, wants_raw_input:'False'\n",
+            "HandleCommand, command line after removing command name(s): 'lldb'\n",
+            "HandleCommand, command succeeded\n"
             ]
+
+        self.runCmd("log disable lldb")
 
         self.assertTrue (os.path.isfile (log_file))
 
@@ -73,7 +81,6 @@ class LogTestCase(TestBase):
         f = open (log_file)
         log_lines = f.readlines()
         f.close ()
-        self.runCmd("log disable lldb")
         os.remove (log_file)
 
         err_msg = ""
