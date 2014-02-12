@@ -95,9 +95,13 @@ void CovDump() {
                         module_name, internal_getpid());
       InternalFree(module_name);
       uptr fd = OpenFile(path.data(), true);
-      internal_write(fd, offsets.data(), offsets.size() * sizeof(u32));
-      internal_close(fd);
-      VReport(1, " CovDump: %s: %zd PCs written\n", path.data(), vb - old_vb);
+      if (internal_iserror(fd)) {
+        Report(" CovDump: failed to open %s for writing\n", path.data());
+      } else {
+        internal_write(fd, offsets.data(), offsets.size() * sizeof(u32));
+        internal_close(fd);
+        VReport(1, " CovDump: %s: %zd PCs written\n", path.data(), vb - old_vb);
+      }
     }
   }
 #endif  // !SANITIZER_WINDOWS
