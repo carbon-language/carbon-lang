@@ -2277,6 +2277,8 @@ void MicrosoftRecordLayoutBuilder::layout(const RecordDecl *RD) {
   initializeLayout(RD);
   layoutFields(RD);
   DataSize = Size = Size.RoundUpToAlignment(Alignment);
+  RequiredAlignment = std::max(
+      RequiredAlignment, Context.toCharUnitsFromBits(RD->getMaxAlignment()));
   finalizeLayout(RD);
 }
 
@@ -2287,6 +2289,8 @@ void MicrosoftRecordLayoutBuilder::cxxLayout(const CXXRecordDecl *RD) {
   layoutFields(RD);
   injectVPtrs(RD);
   DataSize = Size = Size.RoundUpToAlignment(Alignment);
+  RequiredAlignment = std::max(
+      RequiredAlignment, Context.toCharUnitsFromBits(RD->getMaxAlignment()));
   layoutVirtualBases(RD);
   finalizeLayout(RD);
 }
@@ -2300,8 +2304,6 @@ void MicrosoftRecordLayoutBuilder::initializeLayout(const RecordDecl *RD) {
   // In 32-bit mode we do not.  The check to see if we need to perform alignment
   // checks the RequiredAlignment field and performs alignment if it isn't 0.
   RequiredAlignment = Is64BitMode ? CharUnits::One() : CharUnits::Zero();
-  RequiredAlignment = std::max(RequiredAlignment,
-    Context.toCharUnitsFromBits(RD->getMaxAlignment()));
   // Compute the maximum field alignment.
   MaxFieldAlignment = CharUnits::Zero();
   // Honor the default struct packing maximum alignment flag.
@@ -2352,14 +2354,14 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBases(const CXXRecordDecl *RD) {
        i != e; ++i) {
     const CXXRecordDecl *BaseDecl = i->getType()->getAsCXXRecordDecl();
     const ASTRecordLayout &BaseLayout = Context.getASTRecordLayout(BaseDecl);
-    // Track RequiredAlignment for all bases in this pass.
-    RequiredAlignment = std::max(RequiredAlignment,
-                                 BaseLayout.getRequiredAlignment());
     // Mark and skip virtual bases.
     if (i->isVirtual()) {
       HasVBPtr = true;
       continue;
     }
+    // Track RequiredAlignment for all bases in this pass.
+    RequiredAlignment = std::max(RequiredAlignment,
+                                 BaseLayout.getRequiredAlignment());
     // Check fo a base to share a VBPtr with.
     if (!SharedVBPtrBase && BaseLayout.hasVBPtr()) {
       SharedVBPtrBase = BaseDecl;
@@ -2525,7 +2527,8 @@ void MicrosoftRecordLayoutBuilder::injectVBPtr(const CXXRecordDecl *RD) {
   CharUnits FieldStart = VBPtrOffset + PointerInfo.Size;
   // Make sure that the amount we push the fields back by is a multiple of the
   // alignment.
-  CharUnits Offset = (FieldStart - InjectionSite).RoundUpToAlignment(Alignment);
+  CharUnits Offset = (FieldStart - InjectionSite).RoundUpToAlignment(
+      std::max(RequiredAlignment, Alignment));
   // Increase the size of the object and push back all fields by the offset
   // amount.
   Size += Offset;
@@ -2547,11 +2550,12 @@ void MicrosoftRecordLayoutBuilder::injectVFPtr(const CXXRecordDecl *RD) {
     return;
   // Make sure that the amount we push the struct back by is a multiple of the
   // alignment.
-  CharUnits Offset = PointerInfo.Size.RoundUpToAlignment(Alignment);
+  CharUnits Offset = PointerInfo.Size.RoundUpToAlignment(
+      std::max(RequiredAlignment, Alignment));
   // Increase the size of the object and push back all fields, the vbptr and all
   // bases by the offset amount.
   Size += Offset;
-  for (SmallVector<uint64_t, 16>::iterator i = FieldOffsets.begin(),
+  for (SmallVectorImpl<uint64_t>::iterator i = FieldOffsets.begin(),
                                            e = FieldOffsets.end();
        i != e; ++i)
     *i += Context.toBits(Offset);
@@ -2646,6 +2650,14 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
   // The alignment of the vtordisp is at least the required alignment of the
   // entire record.  This requirement may be present to support vtordisp
   // injection.
+  for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
+                                                e = RD->vbases_end();
+       i != e; ++i) {
+    const CXXRecordDecl *BaseDecl = i->getType()->getAsCXXRecordDecl();
+    const ASTRecordLayout &BaseLayout = Context.getASTRecordLayout(BaseDecl);
+    RequiredAlignment =
+        std::max(RequiredAlignment, BaseLayout.getRequiredAlignment());
+  }
   VtorDispAlignment = std::max(VtorDispAlignment, RequiredAlignment);
   // Compute the vtordisp set.
   llvm::SmallPtrSet<const CXXRecordDecl *, 2> HasVtordispSet =
