@@ -3,6 +3,17 @@
 # Adds the name of the generated file to TABLEGEN_OUTPUT.
 
 function(tablegen project ofn)
+  # Validate calling context.
+  foreach(v
+      ${project}_TABLEGEN_EXE
+      LLVM_MAIN_SRC_DIR
+      LLVM_MAIN_INCLUDE_DIR
+      )
+    if(NOT ${v})
+      message(FATAL_ERROR "${v} not set")
+    endif()
+  endforeach()
+
   file(GLOB local_tds "*.td")
   file(GLOB_RECURSE global_tds "${LLVM_MAIN_INCLUDE_DIR}/llvm/*.td")
 
