@@ -20,7 +20,7 @@
 // Use it, and make sure that we did not recompile it.
 // RUN: %clang_cc1 -cc1 -fmodules -fdisable-module-hash -fmodules-cache-path=%t/modules-cache -fsyntax-only -I %t/Inputs -fbuild-session-timestamp=1390000000 -fmodules-validate-once-per-build-session %s
 // RUN: ls -R %t/modules-cache | grep Foo.pcm.timestamp
-// RUN: find %/t/modules-cache -name Foo.pcm | xargs -I {} cp {} %t/modules-to-compare/Foo-after.pcm
+// RUN: cp %t/modules-cache/Foo.pcm %t/modules-to-compare/Foo-after.pcm
 
 // RUN: diff %t/modules-to-compare/Foo-before.pcm %t/modules-to-compare/Foo-after.pcm
 
@@ -32,7 +32,7 @@
 // Use the module, and make sure that we did not recompile it, even though the sources changed.
 // RUN: %clang_cc1 -cc1 -fmodules -fdisable-module-hash -fmodules-cache-path=%t/modules-cache -fsyntax-only -I %t/Inputs -fbuild-session-timestamp=1390000000 -fmodules-validate-once-per-build-session %s
 // RUN: ls -R %t/modules-cache | grep Foo.pcm.timestamp
-// RUN: find %/t/modules-cache -name Foo.pcm | xargs -I {} cp {} %t/modules-to-compare/Foo-after.pcm
+// RUN: cp %t/modules-cache/Foo.pcm %t/modules-to-compare/Foo-after.pcm
 
 // RUN: diff %t/modules-to-compare/Foo-before.pcm %t/modules-to-compare/Foo-after.pcm
 
@@ -40,6 +40,6 @@
 // Recompile the module if the today's date is before 01 January 2030.
 // RUN: %clang_cc1 -cc1 -fmodules -fdisable-module-hash -fmodules-cache-path=%t/modules-cache -fsyntax-only -I %t/Inputs -fbuild-session-timestamp=1893456000 -fmodules-validate-once-per-build-session %s
 // RUN: ls -R %t/modules-cache | grep Foo.pcm.timestamp
-// RUN: find %/t/modules-cache -name Foo.pcm | xargs -I {} cp {} %t/modules-to-compare/Foo-after.pcm
+// RUN: cp %t/modules-cache/Foo.pcm %t/modules-to-compare/Foo-after.pcm
 
 // RUN: not diff %t/modules-to-compare/Foo-before.pcm %t/modules-to-compare/Foo-after.pcm
