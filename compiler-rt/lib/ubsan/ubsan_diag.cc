@@ -13,6 +13,7 @@
 
 #include "ubsan_diag.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_report_decorator.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
@@ -20,6 +21,22 @@
 #include <stdio.h>
 
 using namespace __ubsan;
+
+static void InitializeSanitizerCommon() {
+  static StaticSpinMutex init_mu;
+  SpinMutexLock l(&init_mu);
+  static bool initialized;
+  if (initialized)
+   return;
+  if (0 == internal_strcmp(SanitizerToolName, "SanitizerTool")) {
+    // UBSan is run in a standalone mode. Initialize it now.
+    SanitizerToolName = "UndefinedBehaviorSanitizer";
+    CommonFlags *cf = common_flags();
+    SetCommonFlagsDefaults(cf);
+    cf->print_summary = false;
+  }
+  initialized = true;
+}
 
 Location __ubsan::getCallerLocation(uptr CallerLoc) {
   if (!CallerLoc)
@@ -32,6 +49,8 @@ Location __ubsan::getCallerLocation(uptr CallerLoc) {
 Location __ubsan::getFunctionLocation(uptr Loc, const char **FName) {
   if (!Loc)
     return Location();
+  // FIXME: We may need to run initialization earlier.
+  InitializeSanitizerCommon();
 
   AddressInfo Info;
   if (!Symbolizer::GetOrInit()->SymbolizePC(Loc, &Info, 1) ||
