@@ -63,6 +63,7 @@ static const char *options1 =
 
   " symbolize=0"
   " external_symbolizer_path=asdfgh"
+  " allow_addr2line=true"
   " strip_path_prefix=zxcvb"
   " fast_unwind_on_fatal=0"
   " fast_unwind_on_malloc=0"
@@ -105,6 +106,7 @@ static const char *options2 =
 
   " symbolize=true"
   " external_symbolizer_path=cccccc"
+  " allow_addr2line=false"
   " strip_path_prefix=ddddddd"
   " fast_unwind_on_fatal=true"
   " fast_unwind_on_malloc=true"
@@ -146,7 +148,8 @@ void VerifyOptions1(Flags *f) {
   EXPECT_EQ(f->die_after_fork, true);
 
   EXPECT_EQ(f->symbolize, 0);
-  EXPECT_EQ(f->external_symbolizer_path, std::string(""));
+  EXPECT_EQ(f->external_symbolizer_path, std::string("asdfgh"));
+  EXPECT_EQ(f->allow_addr2line, true);
   EXPECT_EQ(f->strip_path_prefix, std::string("zxcvb"));
   EXPECT_EQ(f->fast_unwind_on_fatal, 0);
   EXPECT_EQ(f->fast_unwind_on_malloc, 0);
@@ -189,6 +192,7 @@ void VerifyOptions2(Flags *f) {
 
   EXPECT_EQ(f->symbolize, true);
   EXPECT_EQ(f->external_symbolizer_path, std::string("cccccc"));
+  EXPECT_EQ(f->allow_addr2line, false);
   EXPECT_EQ(f->strip_path_prefix, std::string("ddddddd"));
   EXPECT_EQ(f->fast_unwind_on_fatal, true);
   EXPECT_EQ(f->fast_unwind_on_malloc, true);

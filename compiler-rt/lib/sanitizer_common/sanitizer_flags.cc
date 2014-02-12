@@ -23,6 +23,7 @@ CommonFlags common_flags_dont_use;
 void SetCommonFlagsDefaults(CommonFlags *f) {
   f->symbolize = true;
   f->external_symbolizer_path = 0;
+  f->allow_addr2line = false;
   f->strip_path_prefix = "";
   f->fast_unwind_on_fatal = false;
   f->fast_unwind_on_malloc = true;
@@ -44,6 +45,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   ParseFlag(str, &f->symbolize, "symbolize");
   ParseFlag(str, &f->external_symbolizer_path, "external_symbolizer_path");
+  ParseFlag(str, &f->allow_addr2line, "allow_addr2line");
   ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
   ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal");
   ParseFlag(str, &f->fast_unwind_on_malloc, "fast_unwind_on_malloc");
@@ -63,8 +65,6 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)
     f->malloc_context_size = 1;
-  if (!f->symbolize)
-    f->external_symbolizer_path = "";
 }
 
 static bool GetFlagValue(const char *env, const char *name,

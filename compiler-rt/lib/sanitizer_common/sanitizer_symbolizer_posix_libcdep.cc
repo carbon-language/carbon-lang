@@ -16,6 +16,7 @@
 #if SANITIZER_POSIX
 #include "sanitizer_allocator_internal.h"
 #include "sanitizer_common.h"
+#include "sanitizer_flags.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_linux.h"
 #include "sanitizer_placement_new.h"
@@ -93,10 +94,20 @@ static const char *ExtractUptr(const char *str, const char *delims,
   return ret;
 }
 
+class ExternalSymbolizerInterface {
+ public:
+  // Can't declare pure virtual functions in sanitizer runtimes:
+  // __cxa_pure_virtual might be unavailable.
+  virtual char *SendCommand(bool is_data, const char *module_name,
+                            uptr module_offset) {
+    UNIMPLEMENTED();
+  }
+};
+
 // SymbolizerProcess encapsulates communication between the tool and
 // external symbolizer program, running in a different subprocess.
 // SymbolizerProcess may not be used from two threads simultaneously.
-class SymbolizerProcess {
+class SymbolizerProcess : public ExternalSymbolizerInterface {
  public:
   explicit SymbolizerProcess(const char *path)
       : path_(path),
@@ -153,7 +164,7 @@ class SymbolizerProcess {
     uptr read_len = 0;
     while (true) {
       uptr just_read = internal_read(input_fd_, buffer + read_len,
-                                     max_length - read_len);
+                                     max_length - read_len - 1);
       // We can't read 0 bytes, as we don't expect external symbolizer to close
       // its stdout.
       if (just_read == 0 || just_read == (uptr)-1) {
@@ -164,6 +175,7 @@ class SymbolizerProcess {
       if (ReachedEndOfOutput(buffer, read_len))
         break;
     }
+    buffer[read_len] = '\0';
     return true;
   }
 
@@ -337,6 +349,74 @@ class LLVMSymbolizerProcess : public SymbolizerProcess {
   }
 };
 
+class Addr2LineProcess : public SymbolizerProcess {
+ public:
+  Addr2LineProcess(const char *path, const char *module_name)
+      : SymbolizerProcess(path), module_name_(internal_strdup(module_name)) {}
+
+  const char *module_name() const { return module_name_; }
+
+ private:
+  bool RenderInputCommand(char *buffer, uptr max_length, bool is_data,
+                          const char *module_name, uptr module_offset) const {
+    if (is_data)
+      return false;
+    CHECK_EQ(0, internal_strcmp(module_name, module_name_));
+    internal_snprintf(buffer, max_length, "0x%zx\n", module_offset);
+    return true;
+  }
+
+  bool ReachedEndOfOutput(const char *buffer, uptr length) const {
+    // Output should consist of two lines.
+    int num_lines = 0;
+    for (uptr i = 0; i < length; ++i) {
+      if (buffer[i] == '\n')
+        num_lines++;
+      if (num_lines >= 2)
+        return true;
+    }
+    return false;
+  }
+
+  void ExecuteWithDefaultArgs(const char *path_to_binary) const {
+    execl(path_to_binary, path_to_binary, "-Cfe", module_name_, (char *)0);
+  }
+
+  const char *module_name_;  // Owned, leaked.
+};
+
+class Addr2LinePool : public ExternalSymbolizerInterface {
+ public:
+  explicit Addr2LinePool(const char *addr2line_path,
+                         LowLevelAllocator *allocator)
+      : addr2line_path_(addr2line_path), allocator_(allocator),
+        addr2line_pool_(16) {}
+
+  char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
+    if (is_data)
+      return 0;
+    Addr2LineProcess *addr2line = 0;
+    for (uptr i = 0; i < addr2line_pool_.size(); ++i) {
+      if (0 ==
+          internal_strcmp(module_name, addr2line_pool_[i]->module_name())) {
+        addr2line = addr2line_pool_[i];
+        break;
+      }
+    }
+    if (!addr2line) {
+      addr2line =
+          new(*allocator_) Addr2LineProcess(addr2line_path_, module_name);
+      addr2line_pool_.push_back(addr2line);
+    }
+    return addr2line->SendCommand(is_data, module_name, module_offset);
+  }
+
+ private:
+  const char *addr2line_path_;
+  LowLevelAllocator *allocator_;
+  InternalMmapVector<Addr2LineProcess*> addr2line_pool_;
+};
+
 #if SANITIZER_SUPPORTS_WEAK_HOOKS
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
@@ -418,7 +498,7 @@ class InternalSymbolizer {
 
 class POSIXSymbolizer : public Symbolizer {
  public:
-  POSIXSymbolizer(SymbolizerProcess *external_symbolizer,
+  POSIXSymbolizer(ExternalSymbolizerInterface *external_symbolizer,
                   InternalSymbolizer *internal_symbolizer,
                   LibbacktraceSymbolizer *libbacktrace_symbolizer)
       : Symbolizer(),
@@ -630,27 +710,41 @@ class POSIXSymbolizer : public Symbolizer {
   bool modules_fresh_;
   BlockingMutex mu_;
 
-  SymbolizerProcess *external_symbolizer_;        // Leaked.
-  InternalSymbolizer *const internal_symbolizer_;  // Leaked.
-  LibbacktraceSymbolizer *libbacktrace_symbolizer_;  // Leaked.
+  ExternalSymbolizerInterface *external_symbolizer_;  // Leaked.
+  InternalSymbolizer *const internal_symbolizer_;     // Leaked.
+  LibbacktraceSymbolizer *libbacktrace_symbolizer_;   // Leaked.
 };
 
 Symbolizer *Symbolizer::PlatformInit(const char *path_to_external) {
+  if (!common_flags()->symbolize) {
+    return new(symbolizer_allocator_) POSIXSymbolizer(0, 0, 0);
+  }
   InternalSymbolizer* internal_symbolizer =
       InternalSymbolizer::get(&symbolizer_allocator_);
-  SymbolizerProcess *external_symbolizer = 0;
+  ExternalSymbolizerInterface *external_symbolizer = 0;
   LibbacktraceSymbolizer *libbacktrace_symbolizer = 0;
 
   if (!internal_symbolizer) {
     libbacktrace_symbolizer =
         LibbacktraceSymbolizer::get(&symbolizer_allocator_);
     if (!libbacktrace_symbolizer) {
-      // Find path to llvm-symbolizer if it's not provided.
-      if (!path_to_external)
-        path_to_external = FindPathToBinary("llvm-symbolizer");
-      if (path_to_external && path_to_external[0] != '\0')
-        external_symbolizer = new(symbolizer_allocator_)
-            LLVMSymbolizerProcess(path_to_external);
+      if (path_to_external && path_to_external[0] == '\0') {
+        // External symbolizer is explicitly disabled. Do nothing.
+      } else {
+        // Find path to llvm-symbolizer if it's not provided.
+        if (!path_to_external)
+          path_to_external = FindPathToBinary("llvm-symbolizer");
+        if (path_to_external) {
+          external_symbolizer = new(symbolizer_allocator_)
+              LLVMSymbolizerProcess(path_to_external);
+        } else if (common_flags()->allow_addr2line) {
+          // If llvm-symbolizer is not found, try to use addr2line.
+          if (const char *addr2line_path = FindPathToBinary("addr2line")) {
+            external_symbolizer = new(symbolizer_allocator_)
+                Addr2LinePool(addr2line_path, &symbolizer_allocator_);
+          }
+        }
+      }
     }
   }
 

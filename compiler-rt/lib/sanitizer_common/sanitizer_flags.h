@@ -30,6 +30,10 @@ struct CommonFlags {
   // in PATH. If it is empty (or if "symbolize" is false), external symbolizer
   // will not be started.
   const char *external_symbolizer_path;
+  // If set, allows online symbolizer to run addr2line binary to symbolize
+  // stack traces (addr2line will only be used if llvm-symbolizer binary is not
+  // available.
+  bool allow_addr2line;
   // Strips this prefix from file paths in error reports.
   const char *strip_path_prefix;
   // Use fast (frame-pointer-based) unwinder on fatal errors (if available).
