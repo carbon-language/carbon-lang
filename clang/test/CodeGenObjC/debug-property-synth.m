@@ -10,12 +10,12 @@
 // Test that the linetable entries for the synthesized getter and
 // setter are correct.
 //
-// CHECK: define internal i32 {{.*}}[I p1]
-// CHECK-NOT: ret i32
+// CHECK: define {{.*}}[I p1]
+// CHECK-NOT: ret
 // CHECK: load {{.*}}, !dbg ![[DBG1:[0-9]+]]
 //
-// CHECK: define internal void {{.*}}[I setP1:]
-// CHECK-NOT: ret i32
+// CHECK: define {{.*}}[I setP1:]
+// CHECK-NOT: ret
 // CHECK: load {{.*}}, !dbg ![[DBG2:[0-9]+]]
 //
 // CHECK: [ DW_TAG_subprogram ] [line [[@LINE+4]]] [local] [def] [-[I p1]]
