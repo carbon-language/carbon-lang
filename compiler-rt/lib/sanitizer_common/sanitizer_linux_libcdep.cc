@@ -249,11 +249,11 @@ void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
 
   void *map = acquire_my_map_info_list();
   CHECK(map);
-  backtrace_frame_t frames[kStackTraceMax];
+  InternalScopedBuffer<backtrace_frame_t> frames(kStackTraceMax);
   // siginfo argument appears to be unused.
-  sptr res =
-      unwind_backtrace_signal_arch(/* siginfo */ NULL, context, map, frames,
-                                   /* ignore_depth */ 0, max_depth);
+  sptr res = unwind_backtrace_signal_arch(/* siginfo */ NULL, context, map,
+                                          frames.data(),
+                                          /* ignore_depth */ 0, max_depth);
   release_my_map_info_list(map);
   if (res < 0) return;
   CHECK((uptr)res <= kStackTraceMax);
