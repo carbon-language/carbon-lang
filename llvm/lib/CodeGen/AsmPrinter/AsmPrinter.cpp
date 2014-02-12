@@ -931,8 +931,9 @@ void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
     } else {
       OutStreamer.AddComment("DW_OP_piece");
       EmitInt8(dwarf::DW_OP_piece);
-      OutStreamer.AddComment(Twine(Size));
-      EmitULEB128(Size);
+      unsigned ByteSize = Size / 8; // Assuming 8 bits per byte.
+      OutStreamer.AddComment(Twine(ByteSize));
+      EmitULEB128(ByteSize);
     }
   }
 }

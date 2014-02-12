@@ -470,8 +470,9 @@ void DwarfUnit::addRegisterOp(DIEBlock *TheDie, unsigned Reg) {
       addUInt(TheDie, dwarf::DW_FORM_data1, Size);
       addUInt(TheDie, dwarf::DW_FORM_data1, Offset);
     } else {
+      unsigned ByteSize = Size / 8; // Assuming 8 bits per byte.
       addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_piece);
-      addUInt(TheDie, dwarf::DW_FORM_data1, Size);
+      addUInt(TheDie, dwarf::DW_FORM_data1, ByteSize);
     }
   }
 }

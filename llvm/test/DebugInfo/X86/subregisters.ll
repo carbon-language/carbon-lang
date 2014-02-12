@@ -7,7 +7,7 @@
 ; rdar://problem/16015314
 ;
 ; CHECK:  DW_AT_name [DW_FORM_strp]{{.*}} "a"
-; CHECK:    DW_AT_location [DW_FORM_block1]       (<0x03> 54 93 20 )
+; CHECK:    DW_AT_location [DW_FORM_block1]       (<0x03> 54 93 04 )
 ;
 ; struct bar {
 ;   int a;

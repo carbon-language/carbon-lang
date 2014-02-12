@@ -5,7 +5,7 @@
 
 ; CHECK: .byte   80                      # DW_OP_reg0
 ; CHECK: .byte   147                     # DW_OP_piece
-; CHECK: .byte   16                      # 16
+; CHECK: .byte   2                       # 2
 
 define i16 @f(i16 signext %zzz) nounwind {
 entry:
