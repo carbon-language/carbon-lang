@@ -1,30 +1,48 @@
-; RUN: llc -mtriple=x86_64-linux -O0 -filetype=asm < %s | FileCheck %s
-; RUN: llc -mtriple=i386-linux -O0 -filetype=asm < %s | FileCheck --check-prefix=CHECK-32 %s
+; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-unknown-linux-gnu \
+; RUN:   | FileCheck --check-prefix=CHECK --check-prefix=SINGLE --check-prefix=SINGLE-64 %s
+
+; RUN: llc %s -o - -filetype=asm -O0 -mtriple=i386-linux-gnu \
+; RUN:   | FileCheck --check-prefix=CHECK --check-prefix=SINGLE --check-prefix=SINGLE-32 %s
+
+; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-unknown-linux-gnu -split-dwarf=Enable \
+; RUN:   | FileCheck --check-prefix=CHECK --check-prefix=FISSION %s
 
 ; FIXME: add relocation and DWARF expression support to llvm-dwarfdump & use
 ; that here instead of raw assembly printing
 
+; FISSION: .section    .debug_info.dwo,
+; 3 bytes of data in this DW_FORM_block1 representation of the location of 'tls'
+; FISSION: .byte 3{{ *}}# DW_AT_location
+; DW_OP_const_index (0xfx == 252) to refer to the debug_addr table
+; FISSION-NEXT: .byte 252
+; an index of zero into the debug_addr table
+; FISSION-NEXT: .byte 0
+
+; SINGLE: .section     .debug_info,
 ; 10 bytes of data in this DW_FORM_block1 representation of the location of 'tls'
-; CHECK: .byte	10{{ *}}# DW_AT_location
+; SINGLE-64: .byte     10 # DW_AT_location
 ; DW_OP_const8u (0x0e == 14) of address
-; CHECK: .byte	14
-; The debug relocation of the address of the tls variable
-; CHECK: .quad	tls@DTPOFF
-; DW_OP_lo_user based on GCC/GDB extension presumably (by experiment) to support TLS
-; CHECK: .byte	224
+; SINGLE-64-NEXT: .byte        14
+; SINGLE-64-NEXT: .quad tls@DTPOFF
 
-; same again, except with a 32 bit address
-; CHECK-32: .byte	6{{ *}}# DW_AT_location
-; CHECK-32: .byte	12
-; CHECK-32: .long	tls@DTPOFF
-; CHECK-32: .byte	224
+; SINGLE-32: .byte     6 # DW_AT_location
+; DW_OP_const4u (0x0e == 12) of address
+; SINGLE-32-NEXT: .byte        12
+; SINGLE-32-NEXT: .long tls@DTPOFF
 
-@tls = thread_local global i32 7, align 4
+; DW_OP_GNU_push_tls_address
+; CHECK-NEXT: .byte 224
+
+; check that the expected TLS address description is the first thing in the debug_addr section
+; FISSION: .section    .debug_addr
+; FISSION-NEXT: .quad  tls@DTPOFF
+
+@tls = thread_local global i32 0, align 4
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!7, !8}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !2, metadata !3, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp/tls.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !2, metadata !3, metadata !2, metadata !"tls.dwo"} ; [ DW_TAG_compile_unit ] [/tmp/tls.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"tls.cpp", metadata !"/tmp"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4}
