@@ -2443,6 +2443,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
     PreprocessorOpts.addRemappedFile(RemappedFiles[I].first,
                                      RemappedFiles[I].second);
+    OwnedBuffers.push_back(RemappedFiles[I].second);
   }
 
   // Use the code completion consumer we were given, but adding any cached
