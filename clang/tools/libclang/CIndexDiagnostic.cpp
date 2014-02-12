@@ -450,9 +450,10 @@ CXString clang_getDiagnosticFixIt(CXDiagnostic Diag, unsigned FixIt,
 }
 
 void clang_disposeDiagnosticSet(CXDiagnosticSet Diags) {
-  CXDiagnosticSetImpl *D = static_cast<CXDiagnosticSetImpl*>(Diags);
-  if (D->isExternallyManaged())
-    delete D;
+  if (CXDiagnosticSetImpl *D = static_cast<CXDiagnosticSetImpl *>(Diags)) {
+    if (D->isExternallyManaged())
+      delete D;
+  }
 }
   
 CXDiagnostic clang_getDiagnosticInSet(CXDiagnosticSet Diags,
