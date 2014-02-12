@@ -374,7 +374,8 @@ void DwarfUnit::addSourceLine(DIE *Die, unsigned Line, StringRef File,
 void DwarfUnit::addSourceLine(DIE *Die, DIVariable V) {
   assert(V.isVariable());
 
-  addSourceLine(Die, V.getLineNumber(), V.getContext().getFilename(), V.getContext().getDirectory());
+  addSourceLine(Die, V.getLineNumber(), V.getContext().getFilename(),
+                V.getContext().getDirectory());
 }
 
 /// addSourceLine - Add location information to specified debug information
