@@ -321,9 +321,10 @@ public:
 
   /// \brief Additional information about an operand's possible values.
   enum OperandValueKind {
-    OK_AnyValue,            // Operand can have any value.
-    OK_UniformValue,        // Operand is uniform (splat of a value).
-    OK_UniformConstantValue // Operand is uniform constant.
+    OK_AnyValue,                 // Operand can have any value.
+    OK_UniformValue,             // Operand is uniform (splat of a value).
+    OK_UniformConstantValue,     // Operand is uniform constant.
+    OK_NonUniformConstantValue   // Operand is a non uniform constant value.
   };
 
   /// \return The number of scalar or vector registers that the target has.

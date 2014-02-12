@@ -1044,12 +1044,26 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
         TargetTransformInfo::OperandValueKind Op2VK =
             TargetTransformInfo::OK_UniformConstantValue;
 
-        // Check whether all second operands are constant.
-        for (unsigned i = 0; i < VL.size(); ++i)
-          if (!isa<ConstantInt>(cast<Instruction>(VL[i])->getOperand(1))) {
+        // If all operands are exactly the same ConstantInt then set the
+        // operand kind to OK_UniformConstantValue.
+        // If instead not all operands are constants, then set the operand kind
+        // to OK_AnyValue. If all operands are constants but not the same,
+        // then set the operand kind to OK_NonUniformConstantValue.
+        ConstantInt *CInt = NULL;
+        for (unsigned i = 0; i < VL.size(); ++i) {
+          const Instruction *I = cast<Instruction>(VL[i]);
+          if (!isa<ConstantInt>(I->getOperand(1))) {
             Op2VK = TargetTransformInfo::OK_AnyValue;
             break;
           }
+          if (i == 0) {
+            CInt = cast<ConstantInt>(I->getOperand(1));
+            continue;
+          }
+          if (Op2VK == TargetTransformInfo::OK_UniformConstantValue &&
+              CInt != cast<ConstantInt>(I->getOperand(1)))
+            Op2VK = TargetTransformInfo::OK_NonUniformConstantValue;
+        }
 
         ScalarCost =
             VecTy->getNumElements() *

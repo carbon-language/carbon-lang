@@ -98,15 +98,20 @@ static TargetTransformInfo::OperandValueKind getOperandInfo(Value *V) {
   TargetTransformInfo::OperandValueKind OpInfo =
     TargetTransformInfo::OK_AnyValue;
 
-  // Check for a splat of a constant.
+  // Check for a splat of a constant or for a non uniform vector of constants.
   ConstantDataVector *CDV = 0;
-  if ((CDV = dyn_cast<ConstantDataVector>(V)))
+  if ((CDV = dyn_cast<ConstantDataVector>(V))) {
+    OpInfo = TargetTransformInfo::OK_NonUniformConstantValue;
     if (CDV->getSplatValue() != NULL)
       OpInfo = TargetTransformInfo::OK_UniformConstantValue;
+  }
+
   ConstantVector *CV = 0;
-  if ((CV = dyn_cast<ConstantVector>(V)))
+  if ((CV = dyn_cast<ConstantVector>(V))) {
+    OpInfo = TargetTransformInfo::OK_NonUniformConstantValue;
     if (CV->getSplatValue() != NULL)
       OpInfo = TargetTransformInfo::OK_UniformConstantValue;
+  }
 
   return OpInfo;
 }

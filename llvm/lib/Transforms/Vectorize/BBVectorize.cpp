@@ -532,7 +532,11 @@ namespace {
 
     // Returns the cost of the provided instruction using TTI.
     // This does not handle loads and stores.
-    unsigned getInstrCost(unsigned Opcode, Type *T1, Type *T2) {
+    unsigned getInstrCost(unsigned Opcode, Type *T1, Type *T2,
+                          TargetTransformInfo::OperandValueKind Op1VK = 
+                              TargetTransformInfo::OK_AnyValue,
+                          TargetTransformInfo::OperandValueKind Op2VK =
+                              TargetTransformInfo::OK_AnyValue) {
       switch (Opcode) {
       default: break;
       case Instruction::GetElementPtr:
@@ -562,7 +566,7 @@ namespace {
       case Instruction::And:
       case Instruction::Or:
       case Instruction::Xor:
-        return TTI->getArithmeticInstrCost(Opcode, T1);
+        return TTI->getArithmeticInstrCost(Opcode, T1, Op1VK, Op2VK);
       case Instruction::Select:
       case Instruction::ICmp:
       case Instruction::FCmp:
@@ -1013,13 +1017,58 @@ namespace {
       unsigned JCost = getInstrCost(J->getOpcode(), JT1, JT2);
       Type *VT1 = getVecTypeForPair(IT1, JT1),
            *VT2 = getVecTypeForPair(IT2, JT2);
+      TargetTransformInfo::OperandValueKind Op1VK =
+          TargetTransformInfo::OK_AnyValue;
+      TargetTransformInfo::OperandValueKind Op2VK =
+          TargetTransformInfo::OK_AnyValue;
+
+      // On some targets (example X86) the cost of a vector shift may vary
+      // depending on whether the second operand is a Uniform or
+      // NonUniform Constant.
+      switch (I->getOpcode()) {
+      default : break;
+      case Instruction::Shl:
+      case Instruction::LShr:
+      case Instruction::AShr:
+
+        // If both I and J are scalar shifts by constant, then the
+        // merged vector shift count would be either a constant splat value
+        // or a non-uniform vector of constants.
+        if (ConstantInt *CII = dyn_cast<ConstantInt>(I->getOperand(1))) {
+          if (ConstantInt *CIJ = dyn_cast<ConstantInt>(J->getOperand(1)))
+            Op2VK = CII == CIJ ? TargetTransformInfo::OK_UniformConstantValue :
+                               TargetTransformInfo::OK_NonUniformConstantValue;
+        } else {
+          // Check for a splat of a constant or for a non uniform vector
+          // of constants.
+          Value *IOp = I->getOperand(1);
+          Value *JOp = J->getOperand(1);
+          if (ConstantDataVector *CDVI = dyn_cast<ConstantDataVector>(IOp)) {
+            if (ConstantDataVector *CDVJ = dyn_cast<ConstantDataVector>(JOp)) {
+              Op2VK = TargetTransformInfo::OK_NonUniformConstantValue;
+              Constant *SplatValue = CDVI->getSplatValue();
+              if (SplatValue != NULL && SplatValue == CDVJ->getSplatValue())
+                Op2VK = TargetTransformInfo::OK_UniformConstantValue;
+            }
+          }
+
+          if (ConstantVector *CVI = dyn_cast<ConstantVector>(IOp)) {
+            if (ConstantVector *CVJ = dyn_cast<ConstantVector>(JOp)) {
+              Op2VK = TargetTransformInfo::OK_NonUniformConstantValue;
+              Constant *SplatValue = CVI->getSplatValue();
+              if (SplatValue != NULL && SplatValue == CVJ->getSplatValue())
+                Op2VK = TargetTransformInfo::OK_UniformConstantValue;
+            }
+          }
+        }
+      }
 
       // Note that this procedure is incorrect for insert and extract element
       // instructions (because combining these often results in a shuffle),
       // but this cost is ignored (because insert and extract element
       // instructions are assigned a zero depth factor and are not really
       // fused in general).
-      unsigned VCost = getInstrCost(I->getOpcode(), VT1, VT2);
+      unsigned VCost = getInstrCost(I->getOpcode(), VT1, VT2, Op1VK, Op2VK);
 
       if (VCost > ICost + JCost)
         return false;

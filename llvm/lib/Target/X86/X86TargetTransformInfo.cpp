@@ -225,6 +225,13 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
 
   // Look for AVX2 lowering tricks.
   if (ST->hasAVX2()) {
+    if (ISD == ISD::SHL && LT.second == MVT::v16i16 &&
+        (Op2Info == TargetTransformInfo::OK_UniformConstantValue ||
+         Op2Info == TargetTransformInfo::OK_NonUniformConstantValue))
+      // On AVX2, a packed v16i16 shift left by a constant build_vector
+      // is lowered into a vector multiply (vpmullw).
+      return LT.first;
+
     int Idx = CostTableLookup(AVX2CostTable, ISD, LT.second);
     if (Idx != -1)
       return LT.first * AVX2CostTable[Idx].Cost;
@@ -257,6 +264,20 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
       return LT.first * SSE2UniformConstCostTable[Idx].Cost;
   }
 
+  if (ISD == ISD::SHL &&
+      Op2Info == TargetTransformInfo::OK_NonUniformConstantValue) {
+    EVT VT = LT.second;
+    if ((VT == MVT::v8i16 && ST->hasSSE2()) ||
+        (VT == MVT::v4i32 && ST->hasSSE41()))
+      // Vector shift left by non uniform constant can be lowered
+      // into vector multiply (pmullw/pmulld).
+      return LT.first;
+    if (VT == MVT::v4i32 && ST->hasSSE2())
+      // A vector shift left by non uniform constant is converted
+      // into a vector multiply; the new multiply is eventually
+      // lowered into a sequence of shuffles and 2 x pmuludq.
+      ISD = ISD::MUL;
+  }
 
   static const CostTblEntry<MVT::SimpleValueType> SSE2CostTable[] = {
     // We don't correctly identify costs of casts because they are marked as
@@ -271,6 +292,7 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
     { ISD::SHL,  MVT::v8i16,  8*10 }, // Scalarized.
     { ISD::SHL,  MVT::v4i32,  2*5 }, // We optimized this using mul.
     { ISD::SHL,  MVT::v2i64,  2*10 }, // Scalarized.
+    { ISD::SHL,  MVT::v4i64,  4*10 }, // Scalarized. 
 
     { ISD::SRL,  MVT::v16i8,  16*10 }, // Scalarized.
     { ISD::SRL,  MVT::v8i16,  8*10 }, // Scalarized.
@@ -308,6 +330,7 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
     // We don't have to scalarize unsupported ops. We can issue two half-sized
     // operations and we only need to extract the upper YMM half.
     // Two ops + 1 extract + 1 insert = 4.
+    { ISD::MUL,     MVT::v16i16,   4 },
     { ISD::MUL,     MVT::v8i32,    4 },
     { ISD::SUB,     MVT::v8i32,    4 },
     { ISD::ADD,     MVT::v8i32,    4 },
@@ -323,7 +346,15 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
 
   // Look for AVX1 lowering tricks.
   if (ST->hasAVX() && !ST->hasAVX2()) {
-    int Idx = CostTableLookup(AVX1CostTable, ISD, LT.second);
+    EVT VT = LT.second;
+
+    // v16i16 and v8i32 shifts by non-uniform constants are lowered into a
+    // sequence of extract + two vector multiply + insert.
+    if (ISD == ISD::SHL && (VT == MVT::v8i32 || VT == MVT::v16i16) &&
+        Op2Info == TargetTransformInfo::OK_NonUniformConstantValue)
+      ISD = ISD::MUL;
+
+    int Idx = CostTableLookup(AVX1CostTable, ISD, VT);
     if (Idx != -1)
       return LT.first * AVX1CostTable[Idx].Cost;
   }
@@ -343,7 +374,7 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
   // 2x pmuludq, 2x shuffle.
   if (ISD == ISD::MUL && LT.second == MVT::v4i32 && ST->hasSSE2() &&
       !ST->hasSSE41())
-    return 6;
+    return LT.first * 6;
 
   // Fallback to the default implementation.
   return TargetTransformInfo::getArithmeticInstrCost(Opcode, Ty, Op1Info,
