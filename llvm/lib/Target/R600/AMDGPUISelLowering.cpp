@@ -232,9 +232,15 @@ bool AMDGPUTargetLowering::isFNegFree(EVT VT) const {
   return VT == MVT::f32;
 }
 
-bool AMDGPUTargetLowering::isTruncateFree(EVT, EVT Dest) const {
+bool AMDGPUTargetLowering::isTruncateFree(EVT Source, EVT Dest) const {
   // Truncate is just accessing a subregister.
-  return (Dest.getSizeInBits() % 32 == 0);
+  return Dest.bitsLT(Source) && (Dest.getSizeInBits() % 32 == 0);
+}
+
+bool AMDGPUTargetLowering::isTruncateFree(Type *Source, Type *Dest) const {
+  // Truncate is just accessing a subregister.
+  return Dest->getPrimitiveSizeInBits() < Source->getPrimitiveSizeInBits() &&
+         (Dest->getPrimitiveSizeInBits() % 32 == 0);
 }
 
 //===---------------------------------------------------------------------===//
