@@ -49,8 +49,7 @@ class AbbreviationsTestCase(TestBase):
                     substrs = ["Ambiguous command 't'. Possible matches:",
                                "target", "thread", "type"])
 
-        self.expect("com sou ./change_prompt.lldb",
-                    patterns = ["Executing commands in '.*change_prompt.lldb'"])
+        self.runCmd("com sou ./change_prompt.lldb")
 
         self.expect("settings show prompt",
                     startstr = 'prompt (string) = "[with-three-trailing-spaces]   "')
