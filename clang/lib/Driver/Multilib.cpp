@@ -29,15 +29,30 @@
 using namespace clang::driver;
 using namespace clang;
 using namespace llvm::opt;
+using namespace llvm::sys;
 
+/// normalize Segment to "/foo/bar" or "".
 static void normalizePathSegment(std::string &Segment) {
-  if (Segment.empty() || Segment == "/." || Segment == "/" || Segment == ".") {
+  StringRef seg = Segment;
+
+  // Prune trailing "/" or "./"
+  while (1) {
+    StringRef last = *--path::end(seg);
+    if (last != ".")
+      break;
+    seg = path::parent_path(seg);
+  }
+
+  if (seg.empty() || seg == "/") {
     Segment = "";
+    return;
+  }
+
+  // Add leading '/'
+  if (seg.front() != '/') {
+    Segment = "/" + seg.str();
   } else {
-    if (StringRef(Segment).back() == '/')
-      Segment.erase(Segment.begin() + Segment.size() - 1);
-    if (StringRef(Segment).front() != '/')
-      Segment = "/" + Segment;
+    Segment = seg;
   }
 }
 
