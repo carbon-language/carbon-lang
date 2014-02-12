@@ -361,6 +361,8 @@ public:
 
   /// addSourceLine - Add location information to specified debug information
   /// entry.
+  void addSourceLine(DIE *Die, unsigned Line, StringRef File,
+                     StringRef Directory);
   void addSourceLine(DIE *Die, DIVariable V);
   void addSourceLine(DIE *Die, DIGlobalVariable G);
   void addSourceLine(DIE *Die, DISubprogram SP);

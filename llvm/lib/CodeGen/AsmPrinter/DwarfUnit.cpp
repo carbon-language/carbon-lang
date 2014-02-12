@@ -355,18 +355,23 @@ void DwarfUnit::addBlock(DIE *Die, dwarf::Attribute Attribute,
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfUnit::addSourceLine(DIE *Die, DIVariable V) {
-  assert(V.isVariable());
-
-  unsigned Line = V.getLineNumber();
+void DwarfUnit::addSourceLine(DIE *Die, unsigned Line, StringRef File,
+                              StringRef Directory) {
   if (Line == 0)
     return;
-  unsigned FileID =
-      DD->getOrCreateSourceID(V.getContext().getFilename(),
-                              V.getContext().getDirectory(), getUniqueID());
+
+  unsigned FileID = DD->getOrCreateSourceID(File, Directory, getUniqueID());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
+}
+
+/// addSourceLine - Add location information to specified debug information
+/// entry.
+void DwarfUnit::addSourceLine(DIE *Die, DIVariable V) {
+  assert(V.isVariable());
+
+  addSourceLine(Die, V.getLineNumber(), V.getContext().getFilename(), V.getContext().getDirectory());
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -374,14 +379,7 @@ void DwarfUnit::addSourceLine(DIE *Die, DIVariable V) {
 void DwarfUnit::addSourceLine(DIE *Die, DIGlobalVariable G) {
   assert(G.isGlobalVariable());
 
-  unsigned Line = G.getLineNumber();
-  if (Line == 0)
-    return;
-  unsigned FileID =
-      DD->getOrCreateSourceID(G.getFilename(), G.getDirectory(), getUniqueID());
-  assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
+  addSourceLine(Die, G.getLineNumber(), G.getFilename(), G.getDirectory());
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -389,16 +387,7 @@ void DwarfUnit::addSourceLine(DIE *Die, DIGlobalVariable G) {
 void DwarfUnit::addSourceLine(DIE *Die, DISubprogram SP) {
   assert(SP.isSubprogram());
 
-  // If the line number is 0, don't add it.
-  unsigned Line = SP.getLineNumber();
-  if (Line == 0)
-    return;
-
-  unsigned FileID = DD->getOrCreateSourceID(SP.getFilename(), SP.getDirectory(),
-                                            getUniqueID());
-  assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
+  addSourceLine(Die, SP.getLineNumber(), SP.getFilename(), SP.getDirectory());
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -406,14 +395,7 @@ void DwarfUnit::addSourceLine(DIE *Die, DISubprogram SP) {
 void DwarfUnit::addSourceLine(DIE *Die, DIType Ty) {
   assert(Ty.isType());
 
-  unsigned Line = Ty.getLineNumber();
-  if (Line == 0)
-    return;
-  unsigned FileID = DD->getOrCreateSourceID(Ty.getFilename(), Ty.getDirectory(),
-                                            getUniqueID());
-  assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
+  addSourceLine(Die, Ty.getLineNumber(), Ty.getFilename(), Ty.getDirectory());
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -421,15 +403,9 @@ void DwarfUnit::addSourceLine(DIE *Die, DIType Ty) {
 void DwarfUnit::addSourceLine(DIE *Die, DIObjCProperty Ty) {
   assert(Ty.isObjCProperty());
 
-  unsigned Line = Ty.getLineNumber();
-  if (Line == 0)
-    return;
   DIFile File = Ty.getFile();
-  unsigned FileID = DD->getOrCreateSourceID(File.getFilename(),
-                                            File.getDirectory(), getUniqueID());
-  assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
+  addSourceLine(Die, Ty.getLineNumber(), File.getFilename(),
+                File.getDirectory());
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -437,16 +413,7 @@ void DwarfUnit::addSourceLine(DIE *Die, DIObjCProperty Ty) {
 void DwarfUnit::addSourceLine(DIE *Die, DINameSpace NS) {
   assert(NS.Verify());
 
-  unsigned Line = NS.getLineNumber();
-  if (Line == 0)
-    return;
-  StringRef FN = NS.getFilename();
-
-  unsigned FileID =
-      DD->getOrCreateSourceID(FN, NS.getDirectory(), getUniqueID());
-  assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, None, Line);
+  addSourceLine(Die, NS.getLineNumber(), NS.getFilename(), NS.getDirectory());
 }
 
 /// addVariableAddress - Add DW_AT_location attribute for a
