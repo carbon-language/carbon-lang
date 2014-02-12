@@ -3265,6 +3265,36 @@ INTERCEPTOR(unsigned int, if_nametoindex, const char* ifname) {
 #define INIT_IF_INDEXTONAME
 #endif
 
+#if SANITIZER_INTERCEPT_CAPGET
+INTERCEPTOR(int, capget, void *hdrp, void *datap) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, capget, hdrp, datap);
+  if (hdrp)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, hdrp, __user_cap_header_struct_sz);
+  int res = REAL(capget)(hdrp, datap);
+  if (res == 0 && datap)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, datap, __user_cap_data_struct_sz);
+  // We can also return -1 and write to hdrp->version if the version passed in
+  // hdrp->version is unsupported. But that's not a trivial condition to check,
+  // and anyway COMMON_INTERCEPTOR_READ_RANGE protects us to some extent.
+  return res;
+}
+INTERCEPTOR(int, capset, void *hdrp, const void *datap) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, capset, hdrp, datap);
+  if (hdrp)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, hdrp, __user_cap_header_struct_sz);
+  if (datap)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, datap, __user_cap_data_struct_sz);
+  return REAL(capset)(hdrp, datap);
+}
+#define INIT_CAPGET                  \
+  COMMON_INTERCEPT_FUNCTION(capget); \
+  COMMON_INTERCEPT_FUNCTION(capset);
+#else
+#define INIT_CAPGET
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
@@ -3386,5 +3416,6 @@ INTERCEPTOR(unsigned int, if_nametoindex, const char* ifname) {
   INIT_GETXATTR;                           \
   INIT_GETRESID;                           \
   INIT_GETIFADDRS;                         \
-  INIT_IF_INDEXTONAME;
+  INIT_IF_INDEXTONAME;                     \
+  INIT_CAPGET;
 /**/
