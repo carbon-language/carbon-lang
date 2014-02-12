@@ -53,8 +53,7 @@ if(APPLE)
 elseif(UNIX)
   # Assume Linux
   list(APPEND TSAN_SOURCES
-    rtl/tsan_platform_linux.cc
-    rtl/tsan_symbolize_addr2line_linux.cc)
+    rtl/tsan_platform_linux.cc)
 endif()
 
 set(TSAN_RUNTIME_LIBRARIES)

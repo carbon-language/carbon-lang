@@ -105,8 +105,6 @@ ReportStack *SymbolizeCode(uptr addr) {
     ent->col = col;
     return ent;
   }
-  if (!Symbolizer::Get()->CanReturnFileLineInfo())
-    return SymbolizeCodeAddr2Line(addr);
   static const uptr kMaxAddrFrames = 16;
   InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
   for (uptr i = 0; i < kMaxAddrFrames; i++)
