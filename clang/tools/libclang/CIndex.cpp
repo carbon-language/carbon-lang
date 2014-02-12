@@ -2611,6 +2611,7 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
   CXTranslationUnit TU;
   enum CXErrorCode Result =
       clang_createTranslationUnit2(CIdx, ast_filename, &TU);
+  (void)Result;
   assert((TU && Result == CXError_Success) ||
          (!TU && Result != CXError_Success));
   return TU;
