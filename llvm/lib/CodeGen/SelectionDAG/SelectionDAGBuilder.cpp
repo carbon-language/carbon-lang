@@ -6917,12 +6917,13 @@ void SelectionDAGBuilder::visitStackmap(const CallInst &CI) {
   // Replace the target specific call node with the stackmap intrinsic.
   SmallVector<SDValue, 8> Ops;
 
-  // Add the <id> and <numShadowBytes> constants.
-  for (unsigned i = 0; i < 2; ++i) {
-    SDValue tmp = getValue(CI.getOperand(i));
-    Ops.push_back(DAG.getTargetConstant(
-        cast<ConstantSDNode>(tmp)->getZExtValue(), MVT::i32));
-  }
+  // Add the <id> and <numBytes> constants.
+  SDValue IDVal = getValue(CI.getOperand(PatchPointOpers::IDPos));
+  Ops.push_back(DAG.getTargetConstant(
+                  cast<ConstantSDNode>(IDVal)->getZExtValue(), MVT::i64));
+  SDValue NBytesVal = getValue(CI.getOperand(PatchPointOpers::NBytesPos));
+  Ops.push_back(DAG.getTargetConstant(
+                  cast<ConstantSDNode>(NBytesVal)->getZExtValue(), MVT::i32));
   // Push live variables for the stack map.
   addStackMapLiveVars(CI, 2, Ops, *this);
 
