@@ -148,6 +148,10 @@ class Inst <string n, string p, string t, Op o> {
   bit isVCVT_N = 0;
   bit isA64 = 0;
   bit isCrypto = 0;
+  // For immediate checks: the immediate will be assumed to specify the lane of
+  // a Q register. Only used for intrinsics which end up calling polymorphic
+  // builtins.
+  bit isLaneQ = 0;
 
   // Certain intrinsics have different names than their representative
   // instructions. This field allows us to handle this correctly when we
@@ -909,7 +913,9 @@ def VMLS_LANEQ   : IOpInst<"vmls_laneq", "dddji",
                            "siUsUifQsQiQUsQUiQf", OP_MLS_LN>;
 
 def VFMA_LANE    : IInst<"vfma_lane", "dddgi", "fdQfQd">;
-def VFMA_LANEQ   : IInst<"vfma_laneq", "dddji", "fdQfQd">;
+def VFMA_LANEQ   : IInst<"vfma_laneq", "dddji", "fdQfQd"> {
+  let isLaneQ = 1;
+}
 def VFMS_LANE    : IOpInst<"vfms_lane", "dddgi", "fdQfQd", OP_FMS_LN>;
 def VFMS_LANEQ   : IOpInst<"vfms_laneq", "dddji", "fdQfQd", OP_FMS_LNQ>;
 
@@ -1302,7 +1308,9 @@ def SCALAR_VMUL_N : IInst<"vmul_n", "dds", "d">;
 def SCALAR_VMUL_LANE : IInst<"vmul_lane", "ddgi", "d">;
 
 // VMUL_LANEQ d type implemented using scalar mul lane
-def SCALAR_VMUL_LANEQ   : IInst<"vmul_laneq", "ddji", "d">;
+def SCALAR_VMUL_LANEQ   : IInst<"vmul_laneq", "ddji", "d"> {
+  let isLaneQ = 1;
+}
 
 // VMULX_LANE d type implemented using scalar vmulx_lane
 def SCALAR_VMULX_LANE : IOpInst<"vmulx_lane", "ddgi", "d", OP_SCALAR_VMULX_LN>;

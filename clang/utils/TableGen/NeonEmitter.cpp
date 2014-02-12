@@ -3007,6 +3007,14 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
           rangestr = "l = 1; ";
 
         rangestr += "u = RFT(TV" + shiftstr + ")";
+      } else if (ck == ClassB) {
+        // ClassB intrinsics have a type (and hence lane number) that is only
+        // known at runtime.
+        assert(immPos > 0 && "unexpected immediate operand");
+        if (R->getValueAsBit("isLaneQ"))
+          rangestr = "u = RFT(TV, false, true)";
+        else
+          rangestr = "u = RFT(TV, false, false)";
       } else {
         // The immediate generally refers to a lane in the preceding argument.
         assert(immPos > 0 && "unexpected immediate operand");
