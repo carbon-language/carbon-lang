@@ -19,12 +19,13 @@
 #include "llvm/ADT/STLExtras.h"
 #include <fcntl.h>
 #include <io.h>
-#include <shlobj.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
-// The Windows.h header must be the last one included.
+// These two headers must be included last, and make sure shlobj is required
+// after Windows.h to make sure it picks up our definition of _WIN32_WINNT
 #include "Windows.h"
+#include <shlobj.h>
 
 #undef max
 
