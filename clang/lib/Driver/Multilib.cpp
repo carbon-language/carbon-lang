@@ -31,16 +31,14 @@ using namespace clang;
 using namespace llvm::opt;
 
 static void normalizePathSegment(std::string &Segment) {
-  StringRef SRS(Segment);
-  if (SRS.empty() || SRS == "/." || SRS == "/" || SRS == ".") {
-    SRS = "";
+  if (Segment.empty() || Segment == "/." || Segment == "/" || Segment == ".") {
+    Segment = "";
   } else {
-    if (SRS.back() == '/')
-      SRS = SRS.drop_back();
-    if (SRS.front() != '/')
-      SRS = ("/" + SRS).str();
+    if (StringRef(Segment).back() == '/')
+      Segment.erase(Segment.begin() + Segment.size() - 1);
+    if (StringRef(Segment).front() != '/')
+      Segment = "/" + Segment;
   }
-  Segment = SRS;
 }
 
 Multilib::Multilib(StringRef GCCSuffix, StringRef OSSuffix,
