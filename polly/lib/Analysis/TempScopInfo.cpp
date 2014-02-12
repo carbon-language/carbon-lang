@@ -66,8 +66,7 @@ inline raw_ostream &operator<<(raw_ostream &OS, const BBCond &Cond) {
 
 //===----------------------------------------------------------------------===//
 // TempScop implementation
-TempScop::~TempScop() {
-}
+TempScop::~TempScop() {}
 
 void TempScop::print(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI) const {
   OS << "Scop: " << R.getNameStr() << ", Max Loop Depth: " << MaxLoopDepth
