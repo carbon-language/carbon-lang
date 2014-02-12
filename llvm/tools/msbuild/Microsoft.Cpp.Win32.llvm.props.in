@@ -12,7 +12,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <!-- Set the value of _MSC_VER to claim for compatibility -->
-      <AdditionalOptions>-fmsc-version=@MSC_VERSION@ %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-@mflag@ -fmsc-version=@MSC_VERSION@ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>
