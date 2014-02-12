@@ -313,6 +313,15 @@ protected:
   virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
   virtual ObjectImage *createObjectImageFromFile(object::ObjectFile *InputObject);
 
+  // \brief Compute an upper bound of the memory that is required to load all sections
+  void computeTotalAllocSize(ObjectImage &Obj, 
+                             uint64_t& CodeSize, 
+                             uint64_t& DataSizeRO, 
+                             uint64_t& DataSizeRW); 
+  
+  // \brief Compute the stub buffer size required for a section
+  unsigned computeSectionStubBufSize(ObjectImage &Obj, const SectionRef &Section); 
+
   // This is the implementation for the two public overloads
   ObjectImage *loadObject(ObjectImage *InputObject);
 

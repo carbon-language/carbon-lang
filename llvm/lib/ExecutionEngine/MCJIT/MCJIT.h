@@ -45,6 +45,15 @@ public:
     return ClientMM->allocateDataSection(Size, Alignment,
                                          SectionID, SectionName, IsReadOnly);
   }
+  
+  virtual void reserveAllocationSpace(
+    uintptr_t CodeSize, uintptr_t DataSizeRO, uintptr_t DataSizeRW) {
+    return ClientMM->reserveAllocationSpace(CodeSize, DataSizeRO, DataSizeRW);
+  }
+  
+  virtual bool needsToReserveAllocationSpace() {
+    return ClientMM->needsToReserveAllocationSpace();
+  }
 
   virtual void notifyObjectLoaded(ExecutionEngine *EE,
                                   const ObjectImage *Obj) {

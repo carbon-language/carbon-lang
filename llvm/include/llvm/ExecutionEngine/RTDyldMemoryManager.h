@@ -52,6 +52,20 @@ public:
     uintptr_t Size, unsigned Alignment, unsigned SectionID,
     StringRef SectionName, bool IsReadOnly) = 0;
 
+  /// Inform the memory manager about the total amount of memory required to
+  /// allocate all sections to be loaded:
+  /// \p CodeSize - the total size of all code sections
+  /// \p DataSizeRO - the total size of all read-only data sections
+  /// \p DataSizeRW - the total size of all read-write data sections
+  /// 
+  /// Note that by default the callback is disabled. To enable it
+  /// redefine the method needsToReserveAllocationSpace to return true.
+  virtual void reserveAllocationSpace(
+    uintptr_t CodeSize, uintptr_t DataSizeRO, uintptr_t DataSizeRW) { }
+  
+  /// Override to return true to enable the reserveAllocationSpace callback.
+  virtual bool needsToReserveAllocationSpace() { return false; }
+
   /// Register the EH frames with the runtime so that c++ exceptions work.
   ///
   /// \p Addr parameter provides the local address of the EH frame section

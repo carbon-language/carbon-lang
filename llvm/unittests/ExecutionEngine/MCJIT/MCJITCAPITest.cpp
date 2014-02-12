@@ -21,6 +21,7 @@
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/Support/Host.h"
 #include "gtest/gtest.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
@@ -60,6 +61,54 @@ static void roundTripDestroy(void *object) {
 }
 
 namespace {
+
+// memory manager to test reserve allocation space callback
+class TestReserveAllocationSpaceMemoryManager: public SectionMemoryManager {
+public:
+  uintptr_t ReservedCodeSize;
+  uintptr_t UsedCodeSize;
+  uintptr_t ReservedDataSizeRO;
+  uintptr_t UsedDataSizeRO;
+  uintptr_t ReservedDataSizeRW;
+  uintptr_t UsedDataSizeRW;
+  
+  TestReserveAllocationSpaceMemoryManager() : 
+    ReservedCodeSize(0), UsedCodeSize(0), ReservedDataSizeRO(0), 
+    UsedDataSizeRO(0), ReservedDataSizeRW(0), UsedDataSizeRW(0) {    
+  }
+  
+  virtual bool needsToReserveAllocationSpace() {
+    return true;
+  }
+
+  virtual void reserveAllocationSpace(
+      uintptr_t CodeSize, uintptr_t DataSizeRO, uintptr_t DataSizeRW) {
+    ReservedCodeSize = CodeSize;
+    ReservedDataSizeRO = DataSizeRO;
+    ReservedDataSizeRW = DataSizeRW;
+  }
+
+  void useSpace(uintptr_t* UsedSize, uintptr_t Size, unsigned Alignment) {
+    uintptr_t AlignedSize = (Size + Alignment - 1) / Alignment * Alignment;
+    uintptr_t AlignedBegin = (*UsedSize + Alignment - 1) / Alignment * Alignment;
+    *UsedSize = AlignedBegin + AlignedSize;
+  }
+
+  virtual uint8_t* allocateDataSection(uintptr_t Size, unsigned Alignment,
+      unsigned SectionID, StringRef SectionName, bool IsReadOnly) {
+    useSpace(IsReadOnly ? &UsedDataSizeRO : &UsedDataSizeRW, Size, Alignment);
+    return SectionMemoryManager::allocateDataSection(Size, Alignment, 
+      SectionID, SectionName, IsReadOnly);
+  }
+
+  uint8_t* allocateCodeSection(uintptr_t Size, unsigned Alignment, 
+      unsigned SectionID, StringRef SectionName) {
+    useSpace(&UsedCodeSize, Size, Alignment);
+    return SectionMemoryManager::allocateCodeSection(Size, Alignment, 
+      SectionID, SectionName);
+  }
+};
+
 class MCJITCAPITest : public testing::Test, public MCJITTestAPICommon {
 protected:
   MCJITCAPITest() {
@@ -119,6 +168,54 @@ protected:
     LLVMDisposeBuilder(builder);
   }
   
+  void buildModuleWithCodeAndData() {
+    Module = LLVMModuleCreateWithName("simple_module");
+    
+    LLVMSetTarget(Module, HostTriple.c_str());
+    
+    // build a global variable initialized to "Hello World!"
+    LLVMValueRef GlobalVar = LLVMAddGlobal(Module, LLVMInt32Type(), "intVal");    
+    LLVMSetInitializer(GlobalVar, LLVMConstInt(LLVMInt32Type(), 42, 0));
+    
+    {
+        Function = LLVMAddFunction(
+          Module, "getGlobal", LLVMFunctionType(LLVMInt32Type(), 0, 0, 0));
+        LLVMSetFunctionCallConv(Function, LLVMCCallConv);
+        
+        LLVMBasicBlockRef Entry = LLVMAppendBasicBlock(Function, "entry");
+        LLVMBuilderRef Builder = LLVMCreateBuilder();
+        LLVMPositionBuilderAtEnd(Builder, Entry);
+        
+        LLVMValueRef IntVal = LLVMBuildLoad(Builder, GlobalVar, "intVal");
+        LLVMBuildRet(Builder, IntVal);
+        
+        LLVMVerifyModule(Module, LLVMAbortProcessAction, &Error);
+        LLVMDisposeMessage(Error);
+        
+        LLVMDisposeBuilder(Builder);
+    }
+    
+    {
+        LLVMTypeRef ParamTypes[] = { LLVMInt32Type() };
+        Function2 = LLVMAddFunction(
+          Module, "setGlobal", LLVMFunctionType(LLVMVoidType(), ParamTypes, 1, 0));
+        LLVMSetFunctionCallConv(Function2, LLVMCCallConv);
+        
+        LLVMBasicBlockRef Entry = LLVMAppendBasicBlock(Function2, "entry");
+        LLVMBuilderRef Builder = LLVMCreateBuilder();
+        LLVMPositionBuilderAtEnd(Builder, Entry);
+        
+        LLVMValueRef Arg = LLVMGetParam(Function2, 0);
+        LLVMBuildStore(Builder, Arg, GlobalVar);
+        LLVMBuildRetVoid(Builder);
+        
+        LLVMVerifyModule(Module, LLVMAbortProcessAction, &Error);
+        LLVMDisposeMessage(Error);
+        
+        LLVMDisposeBuilder(Builder);
+    }
+  }
+  
   void buildMCJITOptions() {
     LLVMInitializeMCJITCompilerOptions(&Options, sizeof(Options));
     Options.OptLevel = 2;
@@ -135,7 +232,7 @@ protected:
       roundTripFinalizeMemory,
       roundTripDestroy);
   }
-  
+
   void buildMCJITEngine() {
     ASSERT_EQ(
       0, LLVMCreateMCJITCompilerForModule(&Engine, Module, &Options,
@@ -153,6 +250,7 @@ protected:
   
   LLVMModuleRef Module;
   LLVMValueRef Function;
+  LLVMValueRef Function2;
   LLVMMCJITCompilerOptions Options;
   LLVMExecutionEngineRef Engine;
   char *Error;
@@ -193,4 +291,37 @@ TEST_F(MCJITCAPITest, custom_memory_manager) {
   
   EXPECT_EQ(42, functionPointer.usable());
   EXPECT_TRUE(didCallAllocateCodeSection);
+}
+
+TEST_F(MCJITCAPITest, reserve_allocation_space) {
+  SKIP_UNSUPPORTED_PLATFORM;
+  
+  TestReserveAllocationSpaceMemoryManager* MM = new TestReserveAllocationSpaceMemoryManager();
+  
+  buildModuleWithCodeAndData();
+  buildMCJITOptions();
+  Options.MCJMM = wrap(MM);
+  buildMCJITEngine();
+  buildAndRunPasses();
+  
+  union {
+    void *raw;
+    int (*usable)();
+  } GetGlobalFct;
+  GetGlobalFct.raw = LLVMGetPointerToGlobal(Engine, Function);
+  
+  union {
+    void *raw;
+    void (*usable)(int);
+  } SetGlobalFct;
+  SetGlobalFct.raw = LLVMGetPointerToGlobal(Engine, Function2);
+  
+  SetGlobalFct.usable(789);
+  EXPECT_EQ(789, GetGlobalFct.usable());
+  EXPECT_LE(MM->UsedCodeSize, MM->ReservedCodeSize);
+  EXPECT_LE(MM->UsedDataSizeRO, MM->ReservedDataSizeRO);
+  EXPECT_LE(MM->UsedDataSizeRW, MM->ReservedDataSizeRW);
+  EXPECT_TRUE(MM->UsedCodeSize > 0); 
+  EXPECT_TRUE(MM->UsedDataSizeRO > 0);
+  EXPECT_TRUE(MM->UsedDataSizeRW > 0);
 }
