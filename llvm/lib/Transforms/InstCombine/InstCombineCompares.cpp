@@ -3313,31 +3313,6 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
         if (Instruction *NV = FoldFCmp_IntToFP_Cst(I, LHSI, RHSC))
           return NV;
         break;
-      case Instruction::Select: {
-        // If either operand of the select is a constant, we can fold the
-        // comparison into the select arms, which will cause one to be
-        // constant folded and the select turned into a bitwise or.
-        Value *Op1 = 0, *Op2 = 0;
-        if (LHSI->hasOneUse()) {
-          if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1))) {
-            // Fold the known value into the constant operand.
-            Op1 = ConstantExpr::getCompare(I.getPredicate(), C, RHSC);
-            // Insert a new FCmp of the other select operand.
-            Op2 = Builder->CreateFCmp(I.getPredicate(),
-                                      LHSI->getOperand(2), RHSC, I.getName());
-          } else if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2))) {
-            // Fold the known value into the constant operand.
-            Op2 = ConstantExpr::getCompare(I.getPredicate(), C, RHSC);
-            // Insert a new FCmp of the other select operand.
-            Op1 = Builder->CreateFCmp(I.getPredicate(), LHSI->getOperand(1),
-                                      RHSC, I.getName());
-          }
-        }
-
-        if (Op1)
-          return SelectInst::Create(LHSI->getOperand(0), Op1, Op2);
-        break;
-      }
       case Instruction::FSub: {
         // fcmp pred (fneg x), C -> fcmp swap(pred) x, -C
         Value *Op;
