@@ -2968,8 +2968,8 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
 DwarfTypeUnit *DwarfDebug::constructSkeletonTU(DwarfTypeUnit *TU) {
 
   DIE *Die = new DIE(dwarf::DW_TAG_type_unit);
-  DwarfTypeUnit *NewTU = new DwarfTypeUnit(
-      TU->getUniqueID(), Die, TU->getCU(), Asm, this, &SkeletonHolder);
+  DwarfTypeUnit *NewTU = new DwarfTypeUnit(TU->getUniqueID(), Die, TU->getCU(),
+                                           Asm, this, &SkeletonHolder);
   NewTU->setTypeSignature(TU->getTypeSignature());
   NewTU->setType(NULL);
   NewTU->initSection(
@@ -3023,8 +3023,8 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   }
 
   DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
-  DwarfTypeUnit *NewTU = new DwarfTypeUnit(
-      InfoHolder.getUnits().size(), UnitDie, CU, Asm, this, &InfoHolder);
+  DwarfTypeUnit *NewTU = new DwarfTypeUnit(InfoHolder.getUnits().size(),
+                                           UnitDie, CU, Asm, this, &InfoHolder);
   TU = NewTU;
   InfoHolder.addUnit(NewTU);
 

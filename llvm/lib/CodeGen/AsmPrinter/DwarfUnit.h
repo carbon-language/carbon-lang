@@ -464,6 +464,7 @@ public:
                           const MCSymbol *ASectionSym) const;
 
   virtual DwarfCompileUnit &getCU() = 0;
+
 protected:
   /// getOrCreateStaticMemberDIE - Create new static data member DIE.
   DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
@@ -550,9 +551,7 @@ public:
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
   void addLabelAddress(DIE *Die, dwarf::Attribute Attribute, MCSymbol *Label);
 
-  DwarfCompileUnit &getCU() LLVM_OVERRIDE {
-    return *this;
-  }
+  DwarfCompileUnit &getCU() LLVM_OVERRIDE { return *this; }
 };
 
 class DwarfTypeUnit : public DwarfUnit {
@@ -578,9 +577,7 @@ public:
            sizeof(uint32_t);                               // Type DIE Offset
   }
   void initSection(const MCSection *Section);
-  DwarfCompileUnit &getCU() LLVM_OVERRIDE {
-    return CU;
-  }
+  DwarfCompileUnit &getCU() LLVM_OVERRIDE { return CU; }
 };
 } // end llvm namespace
 #endif
