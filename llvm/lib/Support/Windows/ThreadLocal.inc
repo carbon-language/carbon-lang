@@ -16,7 +16,7 @@
 //===          is guaranteed to work on *all* Win32 variants.
 //===----------------------------------------------------------------------===//
 
-#include "Windows.h"
+#include "WindowsSupport.h"
 #include "llvm/Support/ThreadLocal.h"
 
 namespace llvm {

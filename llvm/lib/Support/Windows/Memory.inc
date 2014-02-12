@@ -17,7 +17,7 @@
 #include "llvm/Support/Process.h"
 
 // The Windows.h header must be the last one included.
-#include "Windows.h"
+#include "WindowsSupport.h"
 
 namespace {
 

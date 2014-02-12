@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Windows.h"
+#include "WindowsSupport.h"
 #include <cctype>
 #include <time.h>
 

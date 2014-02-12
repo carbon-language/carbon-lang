@@ -17,7 +17,7 @@
 #include <vector>
 
 // The Windows.h header must be after LLVM and standard headers.
-#include "Windows.h"
+#include "WindowsSupport.h"
 
 #ifdef __MINGW32__
  #include <imagehlp.h>

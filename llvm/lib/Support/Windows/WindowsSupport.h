@@ -1,4 +1,4 @@
-//===- Win32/Win32.h - Common Win32 Include File ----------------*- C++ -*-===//
+//===- WindowsSupport.h - Common Windows Include File -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines things specific to Win32 implementations.
+// This file defines things specific to Windows implementations.  In addition to
+// providing some helpers for working with win32 APIs, this header wraps
+// <windows.h> with some portability macros.  Always include WindowsSupport.h
+// instead of including <windows.h> directly.
 //
 //===----------------------------------------------------------------------===//
 

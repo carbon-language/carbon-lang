@@ -103,7 +103,7 @@ void llvm::llvm_execute_on_thread(void (*Fn)(void*), void *UserData,
   ::pthread_attr_destroy(&Attr);
 }
 #elif LLVM_ENABLE_THREADS!=0 && defined(LLVM_ON_WIN32)
-#include "Windows/Windows.h"
+#include "Windows/WindowsSupport.h"
 #include <process.h>
 
 struct ThreadInfo {

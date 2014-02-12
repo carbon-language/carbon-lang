@@ -15,7 +15,7 @@
 #include <malloc.h>
 
 // The Windows.h header must be after LLVM and standard headers.
-#include "Windows.h"
+#include "WindowsSupport.h"
 
 #include <direct.h>
 #include <io.h>

@@ -24,7 +24,7 @@
 
 // These two headers must be included last, and make sure shlobj is required
 // after Windows.h to make sure it picks up our definition of _WIN32_WINNT
-#include "Windows.h"
+#include "WindowsSupport.h"
 #include <shlobj.h>
 
 #undef max

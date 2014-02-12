@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Windows.h"
+#include "WindowsSupport.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/FileSystem.h"
 #include <cstdio>

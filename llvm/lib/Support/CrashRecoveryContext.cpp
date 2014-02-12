@@ -132,7 +132,7 @@ CrashRecoveryContext::unregisterCleanup(CrashRecoveryContextCleanup *cleanup) {
 
 #ifdef LLVM_ON_WIN32
 
-#include "Windows/Windows.h"
+#include "Windows/WindowsSupport.h"
 
 // On Windows, we can make use of vectored exception handling to
 // catch most crashing situations.  Note that this does mean
