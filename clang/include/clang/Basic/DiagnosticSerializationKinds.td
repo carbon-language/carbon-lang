@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 let Component = "Serialization" in {
+let CategoryName = "AST Deserialization Issue" in {
 
 def err_fe_unable_to_read_pch_file : Error<
     "unable to read PCH file %0: '%1'">;
@@ -78,4 +79,6 @@ def note_module_odr_violation_no_possible_decls : Note<
 def note_module_odr_violation_possible_decl : Note<
   "declaration of %0 does not match">;
 
-}
+} // let CategoryName
+} // let Component
+

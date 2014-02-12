@@ -46,6 +46,10 @@ static inline ASTUnit *getASTUnit(CXTranslationUnit TU) {
   return TU->TheASTUnit;
 }
 
+/// \returns true if the ASTUnit has a diagnostic about the AST file being
+/// corrupted.
+bool isASTReadError(ASTUnit *AU);
+
 static inline bool isNotUsableTU(CXTranslationUnit TU) {
   return !TU;
 }

@@ -87,6 +87,7 @@ clang_constructUSR_ObjCProtocol
 clang_createCXCursorSet
 clang_createIndex
 clang_createTranslationUnit
+clang_createTranslationUnit2
 clang_createTranslationUnitFromSourceFile
 clang_defaultCodeCompleteOptions
 clang_defaultDiagnosticDisplayOptions
@@ -262,6 +263,7 @@ clang_loadDiagnostics
 clang_Location_isInSystemHeader
 clang_Location_isFromMainFile
 clang_parseTranslationUnit
+clang_parseTranslationUnit2
 clang_remap_dispose
 clang_remap_getFilenames
 clang_remap_getNumFiles
