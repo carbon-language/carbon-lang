@@ -607,7 +607,8 @@ namespace {
   };
 
   // Unique the enums, but maintain the original declaration ordering.
-  std::vector<std::string> uniqueEnumsInOrder(std::vector<std::string> enums) {
+  std::vector<std::string>
+  uniqueEnumsInOrder(const std::vector<std::string> &enums) {
     std::vector<std::string> uniques;
     std::set<std::string> unique_set(enums.begin(), enums.end());
     for (std::vector<std::string>::const_iterator i = enums.begin(),
