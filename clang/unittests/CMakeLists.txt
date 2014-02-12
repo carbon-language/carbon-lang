@@ -11,7 +11,6 @@ endfunction()
 
 add_subdirectory(Basic)
 add_subdirectory(Lex)
-add_subdirectory(Driver)
 if(CLANG_ENABLE_STATIC_ANALYZER)
   add_subdirectory(Frontend)
 endif()

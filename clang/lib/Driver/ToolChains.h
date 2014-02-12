@@ -13,10 +13,8 @@
 #include "Tools.h"
 #include "clang/Basic/VersionTuple.h"
 #include "clang/Driver/Action.h"
-#include "clang/Driver/Multilib.h"
 #include "clang/Driver/ToolChain.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/Support/Compiler.h"
 #include <set>
 #include <vector>
@@ -69,6 +67,7 @@ protected:
     bool operator>=(const GCCVersion &RHS) const { return !(*this < RHS); }
   };
 
+
   /// \brief This is a class to find a viable GCC installation for Clang to
   /// use.
   ///
@@ -81,22 +80,15 @@ protected:
 
     // FIXME: These might be better as path objects.
     std::string GCCInstallPath;
+    std::string GCCBiarchSuffix;
     std::string GCCParentLibPath;
-
-    /// The primary multilib appropriate for the given flags.
-    Multilib SelectedMultilib;
-    /// On Biarch systems, this corresponds to the default multilib when
-    /// targeting the non-default multilib. Otherwise, it is empty.
-    llvm::Optional<Multilib> BiarchSibling;
+    std::string GCCMIPSABIDirSuffix;
 
     GCCVersion Version;
 
     // We retain the list of install paths that were considered and rejected in
     // order to print out detailed information in verbose mode.
     std::set<std::string> CandidateGCCInstallPaths;
-
-    /// The set of multilibs that the detected installation supports.
-    MultilibSet Multilibs;
 
   public:
     GCCInstallationDetector() : IsValid(false) {}
@@ -112,18 +104,26 @@ protected:
     /// \brief Get the detected GCC installation path.
     StringRef getInstallPath() const { return GCCInstallPath; }
 
+    /// \brief Get the detected GCC installation path suffix for the bi-arch
+    /// target variant.
+    StringRef getBiarchSuffix() const { return GCCBiarchSuffix; }
+
     /// \brief Get the detected GCC parent lib path.
     StringRef getParentLibPath() const { return GCCParentLibPath; }
 
-    /// \brief Get the detected Multilib
-    const Multilib &getMultilib() const { return SelectedMultilib; }
-
-    /// \brief Get the whole MultilibSet
-    const MultilibSet &getMultilibs() const { return Multilibs; }
-
-    /// Get the biarch sibling multilib (if it exists).
-    /// \return true iff such a sibling exists
-    bool getBiarchSibling(Multilib &M) const;
+    /// \brief Get the detected GCC MIPS ABI directory suffix.
+    ///
+    /// This is used as a suffix both to the install directory of GCC and as
+    /// a suffix to its parent lib path in order to select a MIPS ABI-specific
+    /// subdirectory.
+    ///
+    /// This will always be empty for any non-MIPS target.
+    ///
+    // FIXME: This probably shouldn't exist at all, and should be factored
+    // into the multiarch and/or biarch support. Please don't add more uses of
+    // this interface, it is meant as a legacy crutch for the MIPS driver
+    // logic.
+    StringRef getMIPSABIDirSuffix() const { return GCCMIPSABIDirSuffix; }
 
     /// \brief Get the detected GCC version string.
     const GCCVersion &getVersion() const { return Version; }
@@ -140,18 +140,15 @@ protected:
                              SmallVectorImpl<StringRef> &BiarchLibDirs,
                              SmallVectorImpl<StringRef> &BiarchTripleAliases);
 
-    void ScanLibDirForGCCTriple(const llvm::Triple &TargetArch,
+    void ScanLibDirForGCCTriple(llvm::Triple::ArchType TargetArch,
                                 const llvm::opt::ArgList &Args,
                                 const std::string &LibDir,
                                 StringRef CandidateTriple,
                                 bool NeedsBiarchSuffix = false);
 
-    bool findMIPSMultilibs(const llvm::Triple &TargetArch, StringRef Path,
-                           const llvm::opt::ArgList &Args);
-
-    bool findBiarchMultilibs(const llvm::Triple &TargetArch, StringRef Path,
-                             const llvm::opt::ArgList &Args,
-                             bool NeedsBiarchSuffix);
+    void findMIPSABIDirSuffix(std::string &Suffix,
+                              llvm::Triple::ArchType TargetArch, StringRef Path,
+                              const llvm::opt::ArgList &Args);
   };
 
   GCCInstallationDetector GCCInstallation;
@@ -668,7 +665,9 @@ protected:
 
 private:
   static bool addLibStdCXXIncludePaths(Twine Base, Twine Suffix,
-                                       Twine TargetArchDir, Twine IncludeSuffix,
+                                       Twine TargetArchDir,
+                                       Twine BiarchSuffix,
+                                       Twine MIPSABIDirSuffix,
                                        const llvm::opt::ArgList &DriverArgs,
                                        llvm::opt::ArgStringList &CC1Args);
   static bool addLibStdCXXIncludePaths(Twine Base, Twine TargetArchDir,

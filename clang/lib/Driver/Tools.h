@@ -209,10 +209,6 @@ namespace arm {
   const char* getLLVMArchSuffixForARM(StringRef CPU);
 }
 
-namespace mips {
-  bool hasMipsAbiArg(const llvm::opt::ArgList &Args, const char *Value);
-}
-
 namespace darwin {
   llvm::Triple::ArchType getArchTypeForMachOArchName(StringRef Str);
   void setTripleTypeForMachOArchName(llvm::Triple &T, StringRef Str);

@@ -44,6 +44,11 @@ using namespace clang::driver::tools;
 using namespace clang;
 using namespace llvm::opt;
 
+static bool hasMipsABIArg(const ArgList &Args, const char *Value) {
+  Arg *A = Args.getLastArg(options::OPT_mabi_EQ);
+  return A && (A->getValue() == StringRef(Value));
+}
+
 /// CheckPreprocessingOptions - Perform some validation of preprocessing
 /// arguments that is shared with gcc.
 static void CheckPreprocessingOptions(const Driver &D, const ArgList &Args) {
@@ -475,7 +480,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
   case llvm::Triple::arm:
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
-    if (Triple.isOSDarwin())
+    if (Triple.isOSBinFormatMachO())
       return true;
     return false;
 
@@ -746,7 +751,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   const char *ABIName = 0;
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     ABIName = A->getValue();
-  } else if (Triple.isOSDarwin()) {
+  } else if (Triple.isOSBinFormatMachO()) {
     // The backend is hardwired to assume AAPCS for M-class processors, ensure
     // the frontend matches that.
     if (Triple.getEnvironment() == llvm::Triple::EABI ||
@@ -1192,7 +1197,7 @@ static const char *getX86TargetCPU(const ArgList &Args,
                                    const llvm::Triple &Triple) {
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
     if (StringRef(A->getValue()) != "native") {
-      if (Triple.isOSDarwin() && Triple.getArchName() == "x86_64h")
+      if (Triple.isOSBinFormatMachO() && Triple.getArchName() == "x86_64h")
         return "core-avx2";
 
       return A->getValue();
@@ -1217,7 +1222,7 @@ static const char *getX86TargetCPU(const ArgList &Args,
   bool Is64Bit = Triple.getArch() == llvm::Triple::x86_64;
 
   // FIXME: Need target hooks.
-  if (Triple.isOSDarwin()) {
+  if (Triple.isOSBinFormatMachO()) {
     if (Triple.getArchName() == "x86_64h")
       return "core-avx2";
     return Is64Bit ? "core2" : "yonah";
@@ -2619,7 +2624,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       // -gline-tables-only.
       CmdArgs.push_back("-gline-tables-only");
       // Default is dwarf-2 for darwin.
-      if (getToolChain().getTriple().isOSDarwin())
+      if (getToolChain().getTriple().isOSBinFormatMachO())
         CmdArgs.push_back("-gdwarf-2");
     } else if (A->getOption().matches(options::OPT_gdwarf_2))
       CmdArgs.push_back("-gdwarf-2");
@@ -2630,7 +2635,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else if (!A->getOption().matches(options::OPT_g0) &&
              !A->getOption().matches(options::OPT_ggdb0)) {
       // Default is dwarf-2 for darwin.
-      if (getToolChain().getTriple().isOSDarwin())
+      if (getToolChain().getTriple().isOSBinFormatMachO())
         CmdArgs.push_back("-gdwarf-2");
       else
         CmdArgs.push_back("-g");
@@ -3944,7 +3949,7 @@ ObjCRuntime Clang::AddObjCRuntimeArgs(const ArgList &args,
   // -fnext-runtime
   } else if (runtimeArg->getOption().matches(options::OPT_fnext_runtime)) {
     // On Darwin, make this use the default behavior for the toolchain.
-    if (getToolChain().getTriple().isOSDarwin()) {
+    if (getToolChain().getTriple().isOSBinFormatMachO()) {
       runtime = getToolChain().getDefaultObjCRuntime(isNonFragile);
 
     // Otherwise, build for a generic macosx port.
@@ -4218,7 +4223,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
 
   // If using a driver driver, force the arch.
   llvm::Triple::ArchType Arch = getToolChain().getArch();
-  if (getToolChain().getTriple().isOSDarwin()) {
+  if (getToolChain().getTriple().isOSBinFormatMachO()) {
     CmdArgs.push_back("-arch");
 
     // FIXME: Remove these special cases.
@@ -4711,11 +4716,6 @@ const char *arm::getLLVMArchSuffixForARM(StringRef CPU) {
     .Case("swift", "v7s")
     .Cases("cortex-a53", "cortex-a57", "v8")
     .Default("");
-}
-
-bool mips::hasMipsAbiArg(const ArgList &Args, const char *Value) {
-  Arg *A = Args.getLastArg(options::OPT_mabi_EQ);
-  return A && (A->getValue() == StringRef(Value));
 }
 
 llvm::Triple::ArchType darwin::getArchTypeForMachOArchName(StringRef Str) {
@@ -6192,13 +6192,13 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     break;
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
-    if (mips::hasMipsAbiArg(Args, "32")) {
+    if (hasMipsABIArg(Args, "32")) {
       CmdArgs.push_back("-m");
       if (getToolChain().getArch() == llvm::Triple::mips64)
         CmdArgs.push_back("elf32btsmip");
       else
         CmdArgs.push_back("elf32ltsmip");
-   } else if (mips::hasMipsAbiArg(Args, "64")) {
+   } else if (hasMipsABIArg(Args, "64")) {
      CmdArgs.push_back("-m");
      if (getToolChain().getArch() == llvm::Triple::mips64)
        CmdArgs.push_back("elf64btsmip");
@@ -6502,7 +6502,7 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
     return "/lib/ld.so.1";
   else if (ToolChain.getArch() == llvm::Triple::mips64 ||
            ToolChain.getArch() == llvm::Triple::mips64el) {
-    if (mips::hasMipsAbiArg(Args, "n32"))
+    if (hasMipsABIArg(Args, "n32"))
       return "/lib32/ld.so.1";
     else
       return "/lib64/ld.so.1";
@@ -6585,13 +6585,13 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   else if (ToolChain.getArch() == llvm::Triple::mipsel)
     CmdArgs.push_back("elf32ltsmip");
   else if (ToolChain.getArch() == llvm::Triple::mips64) {
-    if (mips::hasMipsAbiArg(Args, "n32"))
+    if (hasMipsABIArg(Args, "n32"))
       CmdArgs.push_back("elf32btsmipn32");
     else
       CmdArgs.push_back("elf64btsmip");
   }
   else if (ToolChain.getArch() == llvm::Triple::mips64el) {
-    if (mips::hasMipsAbiArg(Args, "n32"))
+    if (hasMipsABIArg(Args, "n32"))
       CmdArgs.push_back("elf32ltsmipn32");
     else
       CmdArgs.push_back("elf64ltsmip");

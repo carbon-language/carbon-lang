@@ -11,7 +11,6 @@
 #define CLANG_DRIVER_TOOLCHAIN_H_
 
 #include "clang/Driver/Action.h"
-#include "clang/Driver/Multilib.h"
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -77,8 +76,6 @@ private:
   mutable OwningPtr<SanitizerArgs> SanitizerArguments;
 
 protected:
-  MultilibSet Multilibs;
-
   ToolChain(const Driver &D, const llvm::Triple &T,
             const llvm::opt::ArgList &Args);
 
@@ -132,8 +129,6 @@ public:
 
   path_list &getProgramPaths() { return ProgramPaths; }
   const path_list &getProgramPaths() const { return ProgramPaths; }
-
-  const MultilibSet &getMultilibs() const { return Multilibs; }
 
   const SanitizerArgs& getSanitizerArgs() const;
 

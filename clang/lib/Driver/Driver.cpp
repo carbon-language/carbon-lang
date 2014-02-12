@@ -748,34 +748,51 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   }
 
   if (C.getArgs().hasArg(options::OPT_print_multi_lib)) {
-    const MultilibSet &Multilibs = TC.getMultilibs();
+    // FIXME: We need tool chain support for this.
+    llvm::outs() << ".;\n";
 
-    for (MultilibSet::const_iterator I = Multilibs.begin(), E = Multilibs.end();
-         I != E; ++I) {
-      llvm::outs() << *I << "\n";
+    switch (C.getDefaultToolChain().getTriple().getArch()) {
+    default:
+      break;
+
+    case llvm::Triple::x86_64:
+      llvm::outs() << "x86_64;@m64" << "\n";
+      break;
+
+    case llvm::Triple::ppc64:
+      llvm::outs() << "ppc64;@m64" << "\n";
+      break;
+
+    case llvm::Triple::ppc64le:
+      llvm::outs() << "ppc64le;@m64" << "\n";
+      break;
     }
     return false;
   }
 
-  if (C.getArgs().hasArg(options::OPT_print_multi_directory)) {
-    const MultilibSet &Multilibs = TC.getMultilibs();
-    for (MultilibSet::const_iterator I = Multilibs.begin(), E = Multilibs.end();
-         I != E; ++I) {
-      if (I->gccSuffix().empty())
-        llvm::outs() << ".\n";
-      else {
-        StringRef Suffix(I->gccSuffix());
-        assert(Suffix.front() == '/');
-        llvm::outs() << Suffix.substr(1) << "\n";
-      }
-    }
-    return false;
-  }
+  // FIXME: What is the difference between print-multi-directory and
+  // print-multi-os-directory?
+  if (C.getArgs().hasArg(options::OPT_print_multi_directory) ||
+      C.getArgs().hasArg(options::OPT_print_multi_os_directory)) {
+    switch (C.getDefaultToolChain().getTriple().getArch()) {
+    default:
+    case llvm::Triple::x86:
+    case llvm::Triple::ppc:
+      llvm::outs() << "." << "\n";
+      break;
 
-  if (C.getArgs().hasArg(options::OPT_print_multi_os_directory)) {
-    // FIXME: This should print out "lib/../lib", "lib/../lib64", or
-    // "lib/../lib32" as appropriate for the toolchain. For now, print
-    // nothing because it's not supported yet.
+    case llvm::Triple::x86_64:
+      llvm::outs() << "x86_64" << "\n";
+      break;
+
+    case llvm::Triple::ppc64:
+      llvm::outs() << "ppc64" << "\n";
+      break;
+
+    case llvm::Triple::ppc64le:
+      llvm::outs() << "ppc64le" << "\n";
+      break;
+    }
     return false;
   }
 

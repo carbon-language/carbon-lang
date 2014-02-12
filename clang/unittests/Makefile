@@ -14,7 +14,7 @@ ifndef CLANG_LEVEL
 
 IS_UNITTEST_LEVEL := 1
 CLANG_LEVEL := ..
-PARALLEL_DIRS = Basic Lex Driver
+PARALLEL_DIRS = Basic Lex
 
 include $(CLANG_LEVEL)/../..//Makefile.config
 
