@@ -1,4 +1,4 @@
-; RUN: llc -no-integrated-as < %s
+; RUN: llc < %s
 
 ; Test that we can have an "X" output constraint.
 

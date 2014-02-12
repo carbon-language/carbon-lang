@@ -9,4 +9,4 @@ entry:
 }
 
 ; CHECK: zed
-; CHECK: movq %mm2, foobar+8(%rip)
+; CHECK: movq %mm2,foobar+8(%rip)

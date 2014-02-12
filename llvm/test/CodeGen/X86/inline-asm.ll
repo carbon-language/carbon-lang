@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -no-integrated-as
+; RUN: llc < %s -march=x86
 
 define i32 @test1() nounwind {
 	; Dest is AX, dest type = i32.

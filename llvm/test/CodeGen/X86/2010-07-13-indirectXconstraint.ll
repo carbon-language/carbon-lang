@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -no-integrated-as | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
 ; PR 7528
 ; formerly crashed
 

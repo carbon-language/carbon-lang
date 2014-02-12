@@ -1,4 +1,4 @@
-; RUN: llc -no-integrated-as < %s
+; RUN: llc < %s
 
         %struct..0anon = type { [100 x i32] }
 

@@ -76,8 +76,6 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &T) {
   // version in use.  From at least >= ld64-97.17 (Xcode 3.2.6) the abs-ified
   // FDE relocs may be used.
   DwarfFDESymbolsUseAbsDiff = T.isMacOSX() && !T.isMacOSXVersionLT(10, 6);
-
-  UseIntegratedAssembler = true;
 }
 
 X86_64MCAsmInfoDarwin::X86_64MCAsmInfoDarwin(const Triple &Triple)
@@ -116,10 +114,6 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
   if ((T.getOS() == Triple::OpenBSD || T.getOS() == Triple::Bitrig) &&
        T.getArch() == Triple::x86)
     Data64bitsDirective = 0;
-
-  // Always enable the integrated assembler by default.
-  // Clang also enabled it when the OS is Solaris but that is redundant here.
-  UseIntegratedAssembler = true;
 }
 
 const MCExpr *
@@ -150,8 +144,6 @@ X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
   TextAlignFillValue = 0x90;
 
   AllowAtInName = true;
-
-  UseIntegratedAssembler = true;
 }
 
 void X86MCAsmInfoGNUCOFF::anchor() { }
@@ -166,6 +158,4 @@ X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
 
   // Exceptions handling
   ExceptionsType = ExceptionHandling::DwarfCFI;
-
-  UseIntegratedAssembler = true;
 }

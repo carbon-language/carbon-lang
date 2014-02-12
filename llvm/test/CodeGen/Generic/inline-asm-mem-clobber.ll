@@ -1,4 +1,4 @@
-; RUN: llc -O2 -no-integrated-as < %s | FileCheck %s
+; RUN: llc -O2 < %s | FileCheck %s
 
 @G = common global i32 0, align 4
 

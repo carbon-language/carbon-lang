@@ -42,9 +42,6 @@ SparcELFMCAsmInfo::SparcELFMCAsmInfo(StringRef TT) {
 
   SunStyleELFSectionSwitchSyntax = true;
   UsesELFSectionDirectiveForBSS = true;
-
-  if (TheTriple.getOS() == llvm::Triple::Solaris)
-    UseIntegratedAssembler = true;
 }
 
 const MCExpr*

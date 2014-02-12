@@ -1,4 +1,4 @@
-; RUN: llc -no-integrated-as < %s
+; RUN: llc < %s
 ; XFAIL: sparc-sun-solaris2
 ; PR1308
 ; PR1557

@@ -75,7 +75,7 @@ static MCAsmInfo *createPPCMCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   if (TheTriple.isOSDarwin())
     MAI = new PPCMCAsmInfoDarwin(isPPC64, TheTriple);
   else
-    MAI = new PPCLinuxMCAsmInfo(isPPC64, TheTriple);
+    MAI = new PPCLinuxMCAsmInfo(isPPC64);
 
   // Initial state of the frame pointer is R1.
   unsigned Reg = isPPC64 ? PPC::X1 : PPC::R1;

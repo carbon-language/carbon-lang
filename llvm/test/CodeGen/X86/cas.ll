@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-pc-linux-gnu %s -o - -no-integrated-as | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux-gnu %s -o - | FileCheck %s
 
 ; C code this came from
 ;bool cas(float volatile *p, float *expected, float desired) {

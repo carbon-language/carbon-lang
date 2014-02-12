@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -no-integrated-as | grep "swi 107"
+; RUN: llc < %s -march=arm | grep "swi 107"
 
 define i32 @_swilseek(i32) nounwind {
 entry:

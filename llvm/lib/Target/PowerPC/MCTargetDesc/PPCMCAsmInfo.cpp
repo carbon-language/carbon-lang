@@ -38,13 +38,11 @@ PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit, const Triple& T) {
   // rather than OS version
   if (T.isMacOSX() && T.isMacOSXVersionLT(10, 6))
     HasWeakDefCanBeHiddenDirective = false;
-
-  UseIntegratedAssembler = true;
 }
 
 void PPCLinuxMCAsmInfo::anchor() { }
 
-PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit, const Triple& T) {
+PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) {
   if (is64Bit) {
     PointerSize = CalleeSaveStackSlotSize = 8;
   }
@@ -73,9 +71,5 @@ PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit, const Triple& T) {
   ZeroDirective = "\t.space\t";
   Data64bitsDirective = is64Bit ? "\t.quad\t" : 0;
   AssemblerDialect = 1;           // New-Style mnemonics.
-
-  if (T.getOS() == llvm::Triple::FreeBSD ||
-      (T.getOS() == llvm::Triple::NetBSD && !is64Bit))
-    UseIntegratedAssembler = true;
 }
 

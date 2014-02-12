@@ -1,4 +1,4 @@
-; RUN: opt < %s -std-compile-opts -o - | llc -no-integrated-as -o - | grep bork_directive | wc -l | grep 2
+; RUN: opt < %s -std-compile-opts -o - | llc -o - | grep bork_directive | wc -l | grep 2
 
 ;; We don't want branch folding to fold asm directives.
 

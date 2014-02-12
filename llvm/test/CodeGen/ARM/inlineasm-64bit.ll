@@ -1,5 +1,5 @@
-; RUN: llc < %s -O3  -mtriple=arm-linux-gnueabi -no-integrated-as | FileCheck %s
-; RUN: llc -mtriple=thumbv7-none-linux-gnueabi -verify-machineinstrs -no-integrated-as < %s | FileCheck %s
+; RUN: llc < %s -O3  -mtriple=arm-linux-gnueabi | FileCheck %s
+; RUN: llc -mtriple=thumbv7-none-linux-gnueabi -verify-machineinstrs < %s | FileCheck %s
 ; check if regs are passing correctly
 define void @i64_write(i64* %p, i64 %val) nounwind {
 ; CHECK-LABEL: i64_write:

@@ -57,6 +57,4 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   HasNoDeadStrip = true;
 
   DwarfUsesRelocationsAcrossSections = false;
-
-  UseIntegratedAssembler = true;
 }

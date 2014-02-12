@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-macosx10.6.7 -mattr=+sse2 -no-integrated-as | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-macosx10.6.7 -mattr=+sse2 | FileCheck %s
 
 ; Simple test to make sure folding for special constants (like float zero)
 ; isn't completely broken.
