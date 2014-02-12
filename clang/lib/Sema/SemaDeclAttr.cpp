@@ -2814,14 +2814,12 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
     return;
   }
 
-  if (TmpAttr.isDeclspec()) {
-    // We've already verified it's a power of 2, now let's make sure it's
-    // 8192 or less.
-    if (Alignment.getZExtValue() > 8192) {
-      Diag(AttrLoc, diag::err_attribute_aligned_greater_than_8192)
-        << E->getSourceRange();
-      return;
-    }
+  // Alignment calculations can wrap around if it's greater than 2**28.
+  unsigned MaxValidAlignment = TmpAttr.isDeclspec() ? 8192 : 268435456;
+  if (Alignment.getZExtValue() > MaxValidAlignment) {
+    Diag(AttrLoc, diag::err_attribute_aligned_too_great) << MaxValidAlignment
+                                                         << E->getSourceRange();
+    return;
   }
 
   AlignedAttr *AA = ::new (Context) AlignedAttr(AttrRange, Context, true,

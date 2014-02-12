@@ -1982,8 +1982,8 @@ def error_cannot_find_suitable_accessor : Error<
 
 def err_attribute_aligned_not_power_of_two : Error<
   "requested alignment is not a power of 2">;
-def err_attribute_aligned_greater_than_8192 : Error<
-  "requested alignment must be 8192 bytes or smaller">;
+def err_attribute_aligned_too_great : Error<
+  "requested alignment must be %0 bytes or smaller">;
 def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<
   "%0 redeclared without %1 attribute: previous %1 ignored">;
 def warn_attribute_ignored : Warning<"%0 attribute ignored">,
