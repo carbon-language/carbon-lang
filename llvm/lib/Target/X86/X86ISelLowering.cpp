@@ -13156,6 +13156,39 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
       return Op;
   }
 
+  // If possible, lower this packed shift into a vector multiply instead of
+  // expanding it into a sequence of scalar shifts.
+  // Do this only if the vector shift count is a constant build_vector.
+  if (Op.getOpcode() == ISD::SHL && 
+      (VT == MVT::v8i16 || VT == MVT::v4i32 ||
+       (Subtarget->hasInt256() && VT == MVT::v16i16)) &&
+      ISD::isBuildVectorOfConstantSDNodes(Amt.getNode())) {
+    SmallVector<SDValue, 8> Elts;
+    EVT SVT = VT.getScalarType();
+    unsigned SVTBits = SVT.getSizeInBits();
+    const APInt &One = APInt(SVTBits, 1);
+    unsigned NumElems = VT.getVectorNumElements();
+
+    for (unsigned i=0; i !=NumElems; ++i) {
+      SDValue Op = Amt->getOperand(i);
+      if (Op->getOpcode() == ISD::UNDEF) {
+        Elts.push_back(Op);
+        continue;
+      }
+
+      ConstantSDNode *ND = cast<ConstantSDNode>(Op);
+      const APInt &C = APInt(SVTBits, ND->getAPIntValue().getZExtValue());
+      uint64_t ShAmt = C.getZExtValue();
+      if (ShAmt >= SVTBits) {
+        Elts.push_back(DAG.getUNDEF(SVT));
+        continue;
+      }
+      Elts.push_back(DAG.getConstant(One.shl(ShAmt), SVT));
+    }
+    SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Elts[0], NumElems);
+    return DAG.getNode(ISD::MUL, dl, VT, R, BV);
+  }
+
   // Lower SHL with variable shift amount.
   if (VT == MVT::v4i32 && Op->getOpcode() == ISD::SHL) {
     Op = DAG.getNode(ISD::SHL, dl, VT, Amt, DAG.getConstant(23, VT));
