@@ -606,7 +606,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Construct the split debug info compile unit for the debug info
   /// section.
-  DwarfTypeUnit *constructSkeletonTU(const DwarfTypeUnit *TU);
+  DwarfTypeUnit *constructSkeletonTU(DwarfTypeUnit *TU);
 
   /// \brief Emit the debug info dwo section.
   void emitDebugInfoDWO();
@@ -710,7 +710,7 @@ public:
 
   /// \brief Add a DIE to the set of types that we're going to pull into
   /// type units.
-  void addDwarfTypeUnitType(DICompileUnit CUNode, StringRef Identifier,
+  void addDwarfTypeUnitType(DwarfCompileUnit &CU, StringRef Identifier,
                             DIE *Die, DICompositeType CTy);
 
   /// \brief Add a label so that arange data can be generated for it.

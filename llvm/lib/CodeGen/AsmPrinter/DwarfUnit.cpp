@@ -55,9 +55,11 @@ DwarfCompileUnit::DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
   insertDIE(Node, D);
 }
 
-DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DIE *D, DICompileUnit CUNode,
+DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DIE *D, DwarfCompileUnit &CU,
                              AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU)
-    : DwarfUnit(UID, D, CUNode, A, DW, DWU) {}
+    : DwarfUnit(UID, D, CU.getCUNode(), A, DW, DWU), CU(CU) {
+  (void)CU;
+}
 
 /// ~Unit - Destructor for compile unit.
 DwarfUnit::~DwarfUnit() {
@@ -944,7 +946,7 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     DICompositeType CTy(Ty);
     if (GenerateDwarfTypeUnits && !Ty.isForwardDecl())
       if (MDString *TypeId = CTy.getIdentifier()) {
-        DD->addDwarfTypeUnitType(getCUNode(), TypeId->getString(), TyDIE, CTy);
+        DD->addDwarfTypeUnitType(getCU(), TypeId->getString(), TyDIE, CTy);
         // Skip updating the accellerator tables since this is not the full type
         return TyDIE;
       }

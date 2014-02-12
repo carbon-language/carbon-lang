@@ -31,6 +31,7 @@ class MachineOperand;
 class ConstantInt;
 class ConstantFP;
 class DbgVariable;
+class DwarfCompileUnit;
 
 // Data structure to hold a range for range lists.
 class RangeSpan {
@@ -462,6 +463,7 @@ public:
   virtual void emitHeader(const MCSection *ASection,
                           const MCSymbol *ASectionSym) const;
 
+  virtual DwarfCompileUnit &getCU() = 0;
 protected:
   /// getOrCreateStaticMemberDIE - Create new static data member DIE.
   DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
@@ -547,15 +549,20 @@ public:
   /// addLabelAddress - Add a dwarf label attribute data and value using
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
   void addLabelAddress(DIE *Die, dwarf::Attribute Attribute, MCSymbol *Label);
+
+  DwarfCompileUnit &getCU() LLVM_OVERRIDE {
+    return *this;
+  }
 };
 
 class DwarfTypeUnit : public DwarfUnit {
 private:
   uint64_t TypeSignature;
   const DIE *Ty;
+  DwarfCompileUnit &CU;
 
 public:
-  DwarfTypeUnit(unsigned UID, DIE *D, DICompileUnit CUNode, AsmPrinter *A,
+  DwarfTypeUnit(unsigned UID, DIE *D, DwarfCompileUnit &CU, AsmPrinter *A,
                 DwarfDebug *DW, DwarfFile *DWU);
   virtual ~DwarfTypeUnit() LLVM_OVERRIDE;
 
@@ -571,6 +578,9 @@ public:
            sizeof(uint32_t);                               // Type DIE Offset
   }
   void initSection(const MCSection *Section);
+  DwarfCompileUnit &getCU() LLVM_OVERRIDE {
+    return CU;
+  }
 };
 } // end llvm namespace
 #endif
