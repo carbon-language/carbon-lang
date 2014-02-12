@@ -1,7 +1,3 @@
-set( LLVM_LINK_COMPONENTS
-  Support
-  )
-
 # If we don't need RTTI or EH, there's no reason to export anything
 # from the plugin.
 if( NOT WIN32 ) # Win32 mangles symbols differently, and
@@ -13,7 +9,7 @@ if( NOT WIN32 ) # Win32 mangles symbols differently, and
   endif()
 endif()
 
-add_clang_library(PrintFunctionNames MODULE PrintFunctionNames.cpp)
+add_llvm_loadable_module(PrintFunctionNames PrintFunctionNames.cpp)
 
 add_dependencies(PrintFunctionNames
   ClangAttrClasses
@@ -23,14 +19,3 @@ add_dependencies(PrintFunctionNames
   ClangDiagnosticCommon
   ClangStmtNodes
   )
-
-target_link_libraries(PrintFunctionNames
-  clangAST
-  clangBasic
-  clangFrontend
-  )
-
-set_target_properties(PrintFunctionNames
-  PROPERTIES
-  LINKER_LANGUAGE CXX
-  PREFIX "")
