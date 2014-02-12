@@ -1,4 +1,4 @@
-; RUN: llc < %s
+; RUN: llc -no-integrated-as < %s
 ; PR1133
 ; XFAIL: hexagon
 define void @test(i32* %X) nounwind  {

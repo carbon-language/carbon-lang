@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -relocation-model=pic < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -relocation-model=pic -no-integrated-as < %s | FileCheck %s
 
 @var_simple = hidden global i32 0
 @var_got = global i32 0

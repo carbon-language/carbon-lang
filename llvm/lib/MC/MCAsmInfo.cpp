@@ -86,6 +86,20 @@ MCAsmInfo::MCAsmInfo() {
   DwarfRegNumForCFI = false;
   NeedsDwarfSectionOffsetDirective = false;
   UseParensForSymbolVariant = false;
+
+  // FIXME: Clang's logic should be synced with the logic used to initialize
+  //        this member and the two implementations should be merged.
+  // For reference:
+  // - Solaris always enables the integrated assembler by default
+  //   - SparcELFMCAsmInfo and X86ELFMCAsmInfo are handling this case
+  // - Windows always enables the integrated assembler by default
+  //   - MCAsmInfoCOFF is handling this case, should it be MCAsmInfoMicrosoft?
+  // - MachO targets always enables the integrated assembler by default
+  //   - MCAsmInfoDarwin is handling this case
+  // - Generic_GCC toolchains enable the integrated assembler on a per
+  //   architecture basis.
+  //   - The target subclasses for AArch64, ARM, and X86  handle these cases
+  UseIntegratedAssembler = false;
 }
 
 MCAsmInfo::~MCAsmInfo() {

@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin
+; RUN: llc < %s -mtriple=i386-apple-darwin -no-integrated-as
 ; rdar://6781755
 ; PR3934
 

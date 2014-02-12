@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -no-integrated-as | FileCheck %s
 ; PR 4752
 
 @n = global i32 0                                 ; <i32*> [#uses=2]

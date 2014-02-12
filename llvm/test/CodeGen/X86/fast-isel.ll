@@ -1,5 +1,5 @@
-; RUN: llc < %s -fast-isel -fast-isel-abort -verify-machineinstrs -march=x86 -mattr=sse2
-; RUN: llc < %s -fast-isel -fast-isel-abort -verify-machineinstrs -mtriple=x86_64-apple-darwin10
+; RUN: llc < %s -fast-isel -fast-isel-abort -verify-machineinstrs -march=x86 -mattr=sse2 -no-integrated-as
+; RUN: llc < %s -fast-isel -fast-isel-abort -verify-machineinstrs -mtriple=x86_64-apple-darwin10 -no-integrated-as
 
 ; This tests very minimal fast-isel functionality.
 

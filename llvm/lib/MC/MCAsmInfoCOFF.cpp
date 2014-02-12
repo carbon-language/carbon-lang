@@ -35,6 +35,8 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
   SupportsDebugInformation = true;
   NeedsDwarfSectionOffsetDirective = true;
+
+  UseIntegratedAssembler = true;
 }
 
 void MCAsmInfoMicrosoft::anchor() { }
