@@ -45,6 +45,7 @@ set(SANITIZER_HEADERS
   sanitizer_atomic_clang.h
   sanitizer_atomic_msvc.h
   sanitizer_bitvector.h
+  sanitizer_bvgraph.h
   sanitizer_common.h
   sanitizer_common_interceptors.inc
   sanitizer_common_interceptors_ioctl.inc

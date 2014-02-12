@@ -27,8 +27,18 @@ class BasicBitVector {
   // No CTOR.
   void clear() { bits_ = 0; }
   bool empty() const { return bits_ == 0; }
-  void setBit(uptr idx) { bits_ |= mask(idx); }
-  void clearBit(uptr idx) { bits_ &= ~mask(idx); }
+  // Returns true if the bit has changed from 0 to 1.
+  bool setBit(uptr idx) {
+    basic_int_t old = bits_;
+    bits_ |= mask(idx);
+    return bits_ != old;
+  }
+  // Returns true if the bit has changed from 1 to 0.
+  bool clearBit(uptr idx) {
+    basic_int_t old = bits_;
+    bits_ &= ~mask(idx);
+    return bits_ != old;
+  }
   bool getBit(uptr idx) const { return bits_ & mask(idx); }
   uptr getAndClearFirstOne() {
     CHECK(!empty());
@@ -37,6 +47,17 @@ class BasicBitVector {
     clearBit(idx);
     return idx;
   }
+
+  // Do "this |= v" and return whether new bits have been added.
+  bool setUnion(const BasicBitVector &v) {
+    basic_int_t old = bits_;
+    bits_ |= v.bits_;
+    return bits_ != old;
+  }
+
+  // Returns true if 'this' intersects with 'v'.
+  bool intersectsWith(const BasicBitVector &v) const { return bits_ & v.bits_; }
+
 
  private:
   basic_int_t mask(uptr idx) const {
@@ -70,7 +91,8 @@ class TwoLevelBitVector {
         return false;
     return true;
   }
-  void setBit(uptr idx) {
+  // Returns true if the bit has changed from 0 to 1.
+  bool setBit(uptr idx) {
     check(idx);
     uptr i0 = idx0(idx);
     uptr i1 = idx1(idx);
@@ -79,21 +101,25 @@ class TwoLevelBitVector {
       l1_[i0].setBit(i1);
       l2_[i0][i1].clear();
     }
-    l2_[i0][i1].setBit(i2);
-    // Printf("%s: %zd => %zd %zd %zd\n", __FUNCTION__, idx, i0, i1, i2);
+    bool res = l2_[i0][i1].setBit(i2);
+    // Printf("%s: %zd => %zd %zd %zd; %d\n", __FUNCTION__,
+    // idx, i0, i1, i2, res);
+    return res;
   }
-  void clearBit(uptr idx) {
+  bool clearBit(uptr idx) {
     check(idx);
     uptr i0 = idx0(idx);
     uptr i1 = idx1(idx);
     uptr i2 = idx2(idx);
+    bool res = false;
     if (l1_[i0].getBit(i1)) {
-      l2_[i0][i1].clearBit(i2);
+      res = l2_[i0][i1].clearBit(i2);
       if (l2_[i0][i1].empty())
         l1_[i0].clearBit(i1);
     }
+    return res;
   }
-  bool getBit(uptr idx) {
+  bool getBit(uptr idx) const {
     check(idx);
     uptr i0 = idx0(idx);
     uptr i1 = idx1(idx);
@@ -115,20 +141,49 @@ class TwoLevelBitVector {
     CHECK(0);
     return 0;
   }
+  // Do "this |= v" and return whether new bits have been added.
+  bool setUnion(const TwoLevelBitVector &v) {
+    bool res = false;
+    for (uptr i0 = 0; i0 < kLevel1Size; i0++) {
+      BV t = v.l1_[i0];
+      while (!t.empty()) {
+        uptr i1 = t.getAndClearFirstOne();
+        if (l1_[i0].setBit(i1))
+          l2_[i0][i1].clear();
+        if (l2_[i0][i1].setUnion(v.l2_[i0][i1]))
+          res = true;
+      }
+    }
+    return res;
+  }
+
+  // Returns true if 'this' intersects with 'v'.
+  bool intersectsWith(const TwoLevelBitVector &v) const {
+    for (uptr i0 = 0; i0 < kLevel1Size; i0++) {
+      BV t = l1_[i0];
+      while (!t.empty()) {
+        uptr i1 = t.getAndClearFirstOne();
+        if (!v.l1_[i0].getBit(i1)) continue;
+        if (l2_[i0][i1].intersectsWith(v.l2_[i0][i1]))
+          return true;
+      }
+    }
+    return false;
+  }
 
  private:
-  void check(uptr idx) { CHECK_LE(idx, size()); }
-  uptr idx0(uptr idx) {
+  void check(uptr idx) const { CHECK_LE(idx, size()); }
+  uptr idx0(uptr idx) const {
     uptr res = idx / (BV::kSize * BV::kSize);
     CHECK_LE(res, kLevel1Size);
     return res;
   }
-  uptr idx1(uptr idx) {
+  uptr idx1(uptr idx) const {
     uptr res = (idx / BV::kSize) % BV::kSize;
     CHECK_LE(res, BV::kSize);
     return res;
   }
-  uptr idx2(uptr idx) {
+  uptr idx2(uptr idx) const {
     uptr res = idx % BV::kSize;
     CHECK_LE(res, BV::kSize);
     return res;

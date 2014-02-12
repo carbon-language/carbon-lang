@@ -26,7 +26,7 @@ using namespace std;
 
 template <class BV>
 void TestBitVector(uptr expected_size) {
-  BV bv;
+  BV bv, bv1;
   EXPECT_EQ(expected_size, BV::kSize);
   bv.clear();
   EXPECT_TRUE(bv.empty());
@@ -46,31 +46,51 @@ void TestBitVector(uptr expected_size) {
     EXPECT_EQ(bv.getBit(bit), s.count(bit) == 1);
     switch (my_rand() % 2) {
       case 0:
-        bv.setBit(bit);
-        s.insert(bit);
+        EXPECT_EQ(bv.setBit(bit), s.insert(bit).second);
         break;
       case 1:
-        bv.clearBit(bit);
+        size_t old_size = s.size();
         s.erase(bit);
+        EXPECT_EQ(bv.clearBit(bit), old_size > s.size());
         break;
     }
     EXPECT_EQ(bv.getBit(bit), s.count(bit) == 1);
   }
 
-  // test getAndClearFirstOne.
   vector<uptr>bits(bv.size());
+  // Test setUnion, intersectsWith, and getAndClearFirstOne.
   for (uptr it = 0; it < 30; it++) {
     // iota
     for (size_t j = 0; j < bits.size(); j++) bits[j] = j;
     random_shuffle(bits.begin(), bits.end());
-    uptr n_bits = ((uptr)my_rand() % bv.size()) + 1;
-    EXPECT_TRUE(n_bits > 0 && n_bits <= bv.size());
+    set<uptr> s, s1;
     bv.clear();
-    set<uptr> s(bits.begin(), bits.begin() + n_bits);
+    bv1.clear();
+    uptr n_bits = ((uptr)my_rand() % bv.size()) + 1;
+    uptr n_bits1 = (uptr)my_rand() % (bv.size() / 2);
+    EXPECT_TRUE(n_bits > 0 && n_bits <= bv.size());
+    EXPECT_TRUE(n_bits1 < bv.size() / 2);
     for (uptr i = 0; i < n_bits; i++) {
       bv.setBit(bits[i]);
       s.insert(bits[i]);
     }
+    for (uptr i = 0; i < n_bits1; i++) {
+      bv1.setBit(bits[bv.size() / 2 + i]);
+      s1.insert(bits[bv.size() / 2 + i]);
+    }
+
+    vector<uptr> vec;
+    set_intersection(s.begin(), s.end(), s1.begin(), s1.end(),
+                     back_insert_iterator<vector<uptr> >(vec));
+    EXPECT_EQ(bv.intersectsWith(bv1), !vec.empty());
+
+    size_t old_size = s.size();
+    s.insert(s1.begin(), s1.end());
+    EXPECT_EQ(bv.setUnion(bv1), old_size != s.size());
+    if (0)
+      printf("union %zd %zd: %zd => %zd;  added %zd; intersection: %zd\n",
+             n_bits, n_bits1, old_size, s.size(), s.size() - old_size,
+             vec.size());
     while (!bv.empty()) {
       uptr idx = bv.getAndClearFirstOne();
       EXPECT_TRUE(s.erase(idx));
