@@ -1,5 +1,6 @@
 // REQUIRES: x86-registered-target
-// RUN: %clang_cc1 -triple x86_64-unknown-unknown -O1 -S -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -O1 -mllvm -no-integrated-as \
+// RUN:     -S -o - %s | FileCheck %s
 
 typedef long long int64_t;
 typedef unsigned char uint8_t;
