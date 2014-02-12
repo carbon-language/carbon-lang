@@ -71,7 +71,8 @@ public:
                                                              E = Diags.end();
          I != E; ++I) {
       const ento::PathDiagnostic *PD = *I;
-      StringRef CheckName(AnalyzerCheckNamePrefix);
+      SmallString<64> CheckName(AnalyzerCheckNamePrefix);
+      CheckName += PD->getCheckName();
       addRanges(Context.diag(CheckName, PD->getLocation().asLocation(),
                              PD->getShortDescription()),
                 PD->path.back()->getRanges());
