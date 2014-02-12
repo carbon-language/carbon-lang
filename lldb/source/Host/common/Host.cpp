@@ -777,8 +777,8 @@ bool
 Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
                           const char *thread_name, size_t len)
 {
-    char *namebuf = (char *)::malloc (len + 1);
-
+    std::unique_ptr<char[]> namebuf(new char[len+1]);
+    
     // Thread names are coming in like '<lldb.comm.debugger.edit>' and
     // '<lldb.comm.debugger.editline>'.  So just chopping the end of the string
     // off leads to a lot of similar named threads.  Go through the thread name
@@ -787,10 +787,10 @@ Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
 
     if (lastdot && lastdot != thread_name)
         thread_name = lastdot + 1;
-    ::strncpy (namebuf, thread_name, len);
+    ::strncpy (namebuf.get(), thread_name, len);
     namebuf[len] = 0;
 
-    int namebuflen = strlen(namebuf);
+    int namebuflen = strlen(namebuf.get());
     if (namebuflen > 0)
     {
         if (namebuf[namebuflen - 1] == '(' || namebuf[namebuflen - 1] == '>')
@@ -799,10 +799,8 @@ Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
             namebuflen--;
             namebuf[namebuflen] = 0;
         }
-        return Host::SetThreadName (pid, tid, namebuf);
+        return Host::SetThreadName (pid, tid, namebuf.get());
     }
-
-    ::free(namebuf);
     return false;
 }
 
