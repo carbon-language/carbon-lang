@@ -2,6 +2,7 @@
 
 #include "clang-c/Index.h"
 #include "clang-c/CXCompilationDatabase.h"
+#include "clang-c/BuildSystem.h"
 #include "llvm/Config/config.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -3800,6 +3801,11 @@ static int read_diagnostics(const char *filename) {
   return 0;
 }
 
+static int perform_print_build_session_timestamp(void) {
+  printf("%lld\n", clang_getBuildSessionTimestamp());
+  return 0;
+}
+
 /******************************************************************************/
 /* Command line processing.                                                   */
 /******************************************************************************/
@@ -3855,6 +3861,8 @@ static void print_usage(void) {
     "       c-index-test -write-pch <file> <compiler arguments>\n");
   fprintf(stderr,
     "       c-index-test -compilation-db [lookup <filename>] database\n");
+  fprintf(stderr,
+    "       c-index-test -print-build-session-timestamp\n");
   fprintf(stderr,
     "       c-index-test -read-diagnostics <file>\n\n");
   fprintf(stderr,
@@ -3955,6 +3963,8 @@ int cindextest_main(int argc, const char **argv) {
     return write_pch_file(argv[2], argc - 3, argv + 3);
   else if (argc > 2 && strcmp(argv[1], "-compilation-db") == 0)
     return perform_test_compilation_db(argv[argc-1], argc - 3, argv + 2);
+  else if (argc == 2 && strcmp(argv[1], "-print-build-session-timestamp") == 0)
+    return perform_print_build_session_timestamp();
 
   print_usage();
   return 1;

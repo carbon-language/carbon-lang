@@ -119,6 +119,7 @@ clang_formatDiagnostic
 clang_getArgType
 clang_getArrayElementType
 clang_getArraySize
+clang_getBuildSessionTimestamp
 clang_getCString
 clang_getCXTUResourceUsage
 clang_getCXXAccessSpecifier

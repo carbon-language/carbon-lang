@@ -86,6 +86,16 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
     NewModule = true;
     ModuleEntry = New;
 
+    New->InputFilesValidationTimestamp = 0;
+    if (New->Kind == MK_Module) {
+      std::string TimestampFilename = New->getTimestampFilename();
+      llvm::sys::fs::file_status Status;
+      // A cached stat value would be fine as well.
+      if (!FileMgr.getNoncachedStatValue(TimestampFilename, Status))
+        New->InputFilesValidationTimestamp =
+            Status.getLastModificationTime().toEpochTime();
+    }
+
     // Load the contents of the module
     if (llvm::MemoryBuffer *Buffer = lookupBuffer(FileName)) {
       // The buffer was already provided for us.

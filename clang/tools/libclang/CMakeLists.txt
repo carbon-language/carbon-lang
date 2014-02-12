@@ -5,6 +5,7 @@ set(LLVM_LINK_COMPONENTS
 
 set(SOURCES
   ARCMigrate.cpp
+  BuildSystem.cpp
   CIndex.cpp
   CIndexCXX.cpp
   CIndexCodeCompletion.cpp

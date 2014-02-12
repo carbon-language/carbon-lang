@@ -49,6 +49,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <cstdio>
@@ -1827,16 +1828,28 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     case llvm::BitstreamEntry::Error:
       Error("malformed block record in AST file");
       return Failure;
-    case llvm::BitstreamEntry::EndBlock:
-      // Validate all of the non-system input files.
-      if (!DisableValidation) {
+    case llvm::BitstreamEntry::EndBlock: {
+      // Validate input files.
+      const HeaderSearchOptions &HSOpts =
+          PP.getHeaderSearchInfo().getHeaderSearchOpts();
+      if (!DisableValidation &&
+          (!HSOpts.ModulesValidateOncePerBuildSession ||
+           F.InputFilesValidationTimestamp <= HSOpts.BuildSessionTimestamp)) {
         bool Complain = (ClientLoadCapabilities & ARR_OutOfDate) == 0;
         // All user input files reside at the index range [0, Record[1]), and
         // system input files reside at [Record[1], Record[0]).
         // Record is the one from INPUT_FILE_OFFSETS.
+        //
+        // If we are reading a module, we will create a verification timestamp,
+        // so we verify all input files.  Otherwise, verify only user input
+        // files.
         unsigned NumInputs = Record[0];
         unsigned NumUserInputs = Record[1];
-        unsigned N = ValidateSystemInputs ? NumInputs : NumUserInputs;
+        unsigned N = ValidateSystemInputs ||
+                             (HSOpts.ModulesValidateOncePerBuildSession &&
+                              F.Kind == MK_Module)
+                         ? NumInputs
+                         : NumUserInputs;
         for (unsigned I = 0; I < N; ++I) {
           InputFile IF = getInputFile(F, I+1, Complain);
           if (!IF.getFile() || IF.isOutOfDate())
@@ -1844,7 +1857,8 @@ ASTReader::ReadControlBlock(ModuleFile &F,
         }
       }
       return Success;
-      
+    }
+
     case llvm::BitstreamEntry::SubBlock:
       switch (Entry.ID) {
       case INPUT_FILES_BLOCK_ID:
@@ -2922,6 +2936,16 @@ bool ASTReader::isGlobalIndexUnavailable() const {
          !hasGlobalIndex() && TriedLoadingGlobalIndex;
 }
 
+static void updateModuleTimestamp(ModuleFile &MF) {
+  // Overwrite the timestamp file contents so that file's mtime changes.
+  std::string TimestampFilename = MF.getTimestampFilename();
+  std::string ErrorInfo;
+  llvm::raw_fd_ostream OS(TimestampFilename.c_str(), ErrorInfo);
+  if (!ErrorInfo.empty())
+    return;
+  OS << "Timestamp file\n";
+}
+
 ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                             ModuleKind Type,
                                             SourceLocation ImportLoc,
@@ -3078,6 +3102,21 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     loadObjCCategories(ObjCClassesLoaded[I]->getGlobalID(), 
                        ObjCClassesLoaded[I],
                        PreviousGeneration);
+  }
+
+  if (PP.getHeaderSearchInfo()
+          .getHeaderSearchOpts()
+          .ModulesValidateOncePerBuildSession) {
+    // Now we are certain that the module and all modules it depends on are
+    // up to date.  Create or update timestamp files for modules that are
+    // located in the module cache (not for PCH files that could be anywhere
+    // in the filesystem).
+    for (unsigned I = 0, N = Loaded.size(); I != N; ++I) {
+      ImportedModule &M = Loaded[I];
+      if (M.Mod->Kind == MK_Module) {
+        updateModuleTimestamp(*M.Mod);
+      }
+    }
   }
 
   return Success;

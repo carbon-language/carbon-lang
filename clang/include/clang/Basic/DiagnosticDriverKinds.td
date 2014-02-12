@@ -166,4 +166,8 @@ def err_analyzer_config_no_value : Error<
   "analyzer-config option '%0' has a key but no value">;
 def err_analyzer_config_multiple_values : Error<
   "analyzer-config option '%0' should contain only one '='">;
+
+def err_drv_modules_validate_once_requires_timestamp : Error<
+  "option '-fmodules-validate-once-per-build-session' requires "
+  "'-fbuild-session-timestamp=<seconds since Epoch>'">;
 }

@@ -123,6 +123,17 @@ inline int getLastArgIntValue(const llvm::opt::ArgList &Args,
   return getLastArgIntValue(Args, Id, Default, &Diags);
 }
 
+uint64_t getLastArgUInt64Value(const llvm::opt::ArgList &Args,
+                               llvm::opt::OptSpecifier Id, uint64_t Default,
+                               DiagnosticsEngine *Diags = 0);
+
+inline uint64_t getLastArgUInt64Value(const llvm::opt::ArgList &Args,
+                                      llvm::opt::OptSpecifier Id,
+                                      uint64_t Default,
+                                      DiagnosticsEngine &Diags) {
+  return getLastArgUInt64Value(Args, Id, Default, &Diags);
+}
+
 // When Clang->getFrontendOpts().DisableFree is set we don't delete some of the
 // global objects, but we don't want LeakDetectors to complain, so we bury them
 // in a globally visible array.

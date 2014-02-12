@@ -1057,41 +1057,38 @@ static void pruneModuleCache(const HeaderSearchOptions &HSOpts) {
       continue;
 
     // Walk all of the files within this directory.
-    bool RemovedAllFiles = true;
     for (llvm::sys::fs::directory_iterator File(Dir->path(), EC), FileEnd;
          File != FileEnd && !EC; File.increment(EC)) {
       // We only care about module and global module index files.
-      if (llvm::sys::path::extension(File->path()) != ".pcm" &&
-          llvm::sys::path::filename(File->path()) != "modules.idx") {
-        RemovedAllFiles = false;
+      StringRef Extension = llvm::sys::path::extension(File->path());
+      if (Extension != ".pcm" && Extension != ".timestamp" &&
+          llvm::sys::path::filename(File->path()) != "modules.idx")
         continue;
-      }
 
       // Look at this file. If we can't stat it, there's nothing interesting
       // there.
-      if (::stat(File->path().c_str(), &StatBuf)) {
-        RemovedAllFiles = false;
+      if (::stat(File->path().c_str(), &StatBuf))
         continue;
-      }
 
       // If the file has been used recently enough, leave it there.
       time_t FileAccessTime = StatBuf.st_atime;
       if (CurrentTime - FileAccessTime <=
               time_t(HSOpts.ModuleCachePruneAfter)) {
-        RemovedAllFiles = false;
         continue;
       }
 
       // Remove the file.
-      bool Existed;
-      if (llvm::sys::fs::remove(File->path(), Existed) || !Existed) {
-        RemovedAllFiles = false;
-      }
+      llvm::sys::fs::remove(File->path());
+
+      // Remove the timestamp file.
+      std::string TimpestampFilename = File->path() + ".timestamp";
+      llvm::sys::fs::remove(TimpestampFilename);
     }
 
     // If we removed all of the files in the directory, remove the directory
     // itself.
-    if (RemovedAllFiles)
+    if (llvm::sys::fs::directory_iterator(Dir->path(), EC) ==
+            llvm::sys::fs::directory_iterator() && !EC)
       llvm::sys::fs::remove(Dir->path());
   }
 }

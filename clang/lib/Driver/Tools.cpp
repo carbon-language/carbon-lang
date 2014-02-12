@@ -3289,6 +3289,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fmodules_prune_interval);
   Args.AddLastArg(CmdArgs, options::OPT_fmodules_prune_after);
 
+  Args.AddLastArg(CmdArgs, options::OPT_fbuild_session_timestamp);
+
+  if (Args.getLastArg(options::OPT_fmodules_validate_once_per_build_session)) {
+    if (!Args.getLastArg(options::OPT_fbuild_session_timestamp))
+      D.Diag(diag::err_drv_modules_validate_once_requires_timestamp);
+
+    Args.AddLastArg(CmdArgs,
+                    options::OPT_fmodules_validate_once_per_build_session);
+  }
+
   // -faccess-control is default.
   if (Args.hasFlag(options::OPT_fno_access_control,
                    options::OPT_faccess_control,

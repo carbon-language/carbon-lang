@@ -581,6 +581,13 @@ def fmodules_prune_interval : Joined<["-"], "fmodules-prune-interval=">, Group<i
 def fmodules_prune_after : Joined<["-"], "fmodules-prune-after=">, Group<i_Group>,
   Flags<[CC1Option]>, MetaVarName<"<seconds>">,
   HelpText<"Specify the interval (in seconds) after which a module file will be considered unused">;
+def fbuild_session_timestamp : Joined<["-"], "fbuild-session-timestamp=">,
+  Group<i_Group>, Flags<[CC1Option]>, MetaVarName<"<time since Epoch in seconds>">,
+  HelpText<"Time when the current build session started">;
+def fmodules_validate_once_per_build_session : Flag<["-"], "fmodules-validate-once-per-build-session">,
+  Group<i_Group>, Flags<[CC1Option]>,
+  HelpText<"Don't verify input files for the modules if the module has been "
+           "successfully validate or loaded during this build session">;
 def fmodules : Flag <["-"], "fmodules">, Group<f_Group>,
   Flags<[DriverOption, CC1Option]>,
   HelpText<"Enable the 'modules' language feature">;
