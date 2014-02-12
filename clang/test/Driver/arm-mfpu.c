@@ -63,11 +63,16 @@
 // RUN:   | FileCheck --check-prefix=CHECK-SOFT-FLOAT %s
 // CHECK-SOFT-FLOAT: "-target-feature" "-neon"
 
+// RUN: %clang -target armv8 %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-ARMV8-DEFAULT-SOFT-FP %s
+// CHECK-ARMV8-DEFAULT-SOFT-FP: "-target-feature" "-neon"
+// CHECK-ARMV8-DEFAULT-SOFT-FP: "-target-feature" "-crypto"
+
 // RUN: %clang -target armv8 -mfpu=fp-armv8 %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-ARMV8-SOFT-FLOAT %s
 // CHECK-ARMV8-SOFT-FLOAT: "-target-feature" "+fp-armv8"
-// CHECK-ARMV8-SOFT-FLOAT: "-target-feature" "-crypto"
 // CHECK-ARMV8-SOFT-FLOAT: "-target-feature" "-neon"
+// CHECK-ARMV8-SOFT-FLOAT: "-target-feature" "-crypto"
 
 // RUN: %clang -target armv8-linux-gnueabihf -mfpu=fp-armv8 %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-FP-ARMV8 %s

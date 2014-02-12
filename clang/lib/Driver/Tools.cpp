@@ -718,8 +718,11 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
 
   // Setting -msoft-float effectively disables NEON because of the GCC
   // implementation, although the same isn't true of VFP or VFP3.
-  if (FloatABI == "soft")
+  if (FloatABI == "soft") {
     Features.push_back("-neon");
+    // Also need to explicitly disable features which imply NEON.
+    Features.push_back("-crypto");
+  }
 
   // En/disable crc
   if (Arg *A = Args.getLastArg(options::OPT_mcrc,
