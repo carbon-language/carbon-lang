@@ -101,7 +101,9 @@ endif(WIN32)
 
 set(EXEEXT ${CMAKE_EXECUTABLE_SUFFIX})
 set(LTDL_SHLIB_EXT ${CMAKE_SHARED_LIBRARY_SUFFIX})
-set(LLVM_PLUGIN_EXT ${CMAKE_SHARED_MODULE_SUFFIX})
+
+# We use *.dylib rather than *.so on darwin.
+set(LLVM_PLUGIN_EXT ${CMAKE_SHARED_LIBRARY_SUFFIX})
 
 function(add_flag_or_print_warning flag)
   check_c_compiler_flag(${flag} C_SUPPORTS_FLAG)
