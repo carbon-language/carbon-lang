@@ -34,12 +34,12 @@ class BVGraph {
 
   // Returns true if a new edge was added.
   bool addEdge(uptr from, uptr to) {
-    check(from|to);
+    check(from, to);
     return v[from].setBit(to);
   }
 
   bool hasEdge(uptr from, uptr to) const {
-    check(from|to);
+    check(from, to);
     return v[from].getBit(to);
   }
 
@@ -78,7 +78,7 @@ class BVGraph {
   }
 
  private:
-  void check(uptr idx) const { CHECK_LE(idx, size()); }
+  void check(uptr idx1, uptr idx2) const { CHECK_LE(idx1|idx2, size()); }
   BV v[kSize];
 };
 

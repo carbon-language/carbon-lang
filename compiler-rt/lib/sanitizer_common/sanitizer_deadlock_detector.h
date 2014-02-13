@@ -30,10 +30,12 @@ class DeadlockDetectorTLS {
  public:
   // No CTOR.
   void clear() { n_locks_ = 0; }
+
   void addLock(uptr node) {
     CHECK_LT(n_locks_, ARRAY_SIZE(locks_));
     locks_[n_locks_++] = node;
   }
+
   void removeLock(uptr node) {
     CHECK_NE(n_locks_, 0U);
     for (sptr i = n_locks_ - 1; i >= 0; i--) {
@@ -45,7 +47,9 @@ class DeadlockDetectorTLS {
     }
     CHECK(0);
   }
+
   uptr numLocks() const { return n_locks_; }
+
   uptr getLock(uptr idx) const {
     CHECK_LT(idx, n_locks_);
     return locks_[idx];
@@ -67,6 +71,7 @@ class DeadlockDetector {
   typedef BV BitVector;
 
   uptr size() const { return g_.size(); }
+
   // No CTOR.
   void clear() {
     current_epoch_ = 0;
@@ -90,7 +95,7 @@ class DeadlockDetector {
       return getAvailableNode(data);
     }
     // We are out of vacant nodes. Flush and increment the current_epoch_.
-    uptr new_epoch = current_epoch_ + BV::kSize;
+    uptr new_epoch = current_epoch_ + size();
     clear();
     current_epoch_ = new_epoch;
     available_nodes_.setAll();
@@ -131,23 +136,28 @@ class DeadlockDetector {
 
  private:
   void check_idx(uptr idx) const { CHECK_LT(idx, size()); }
+
   void check_node(uptr node) const {
     CHECK_GE(node, size());
     CHECK_EQ(current_epoch_, node / size() * size());
   }
+
   uptr indexToNode(uptr idx) {
     check_idx(idx);
-    return idx | current_epoch_;
+    return idx + current_epoch_;
   }
+
   uptr nodeToIndex(uptr node) {
     check_node(node);
     return node % size();
   }
+
   uptr getAvailableNode(uptr data) {
     uptr idx = available_nodes_.getAndClearFirstOne();
     data_[idx] = data;
     return indexToNode(idx);
   }
+
   uptr current_epoch_;
   BV available_nodes_;
   BV recycled_nodes_;

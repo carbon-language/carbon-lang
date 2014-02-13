@@ -108,4 +108,6 @@ TEST(SanitizerCommon, TwoLevelBitVector) {
   TestBitVector<TwoLevelBitVector<> >(ws * ws);
   TestBitVector<TwoLevelBitVector<2> >(ws * ws * 2);
   TestBitVector<TwoLevelBitVector<3> >(ws * ws * 3);
+  TestBitVector<TwoLevelBitVector<3, BasicBitVector<u16> > >
+      (16 * 16 * 3);
 }

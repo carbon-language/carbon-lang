@@ -23,24 +23,29 @@ template <class basic_int_t = uptr>
 class BasicBitVector {
  public:
   enum SizeEnum { kSize = sizeof(basic_int_t) * 8 };
+
   uptr size() const { return kSize; }
   // No CTOR.
   void clear() { bits_ = 0; }
   void setAll() { bits_ = ~(basic_int_t)0; }
   bool empty() const { return bits_ == 0; }
+
   // Returns true if the bit has changed from 0 to 1.
   bool setBit(uptr idx) {
     basic_int_t old = bits_;
     bits_ |= mask(idx);
     return bits_ != old;
   }
+
   // Returns true if the bit has changed from 1 to 0.
   bool clearBit(uptr idx) {
     basic_int_t old = bits_;
     bits_ &= ~mask(idx);
     return bits_ != old;
   }
+
   bool getBit(uptr idx) const { return bits_ & mask(idx); }
+
   uptr getAndClearFirstOne() {
     CHECK(!empty());
     // FIXME: change to LeastSignificantSetBitIndex?
@@ -61,18 +66,17 @@ class BasicBitVector {
   // Returns true if 'this' intersects with 'v'.
   bool intersectsWith(const BasicBitVector &v) const { return bits_ & v.bits_; }
 
-
  private:
   basic_int_t mask(uptr idx) const {
-    CHECK_LE(idx, size());
+    CHECK_LT(idx, size());
     return (basic_int_t)1UL << idx;
   }
   basic_int_t bits_;
 };
 
 // Fixed size bit vector of (kLevel1Size*BV::kSize**2) bits.
-// The implementation is optimized for a sparse bit vector, i.e. the one
-// that has few set bits.
+// The implementation is optimized for better performance on
+// sparse bit vectors, i.e. the those with few set bits.
 template <uptr kLevel1Size = 1, class BV = BasicBitVector<> >
 class TwoLevelBitVector {
   // This is essentially a 2-level bit vector.
@@ -83,11 +87,14 @@ class TwoLevelBitVector {
  public:
   enum SizeEnum { kSize = BV::kSize * BV::kSize * kLevel1Size };
   // No CTOR.
+
   uptr size() const { return kSize; }
+
   void clear() {
     for (uptr i = 0; i < kLevel1Size; i++)
       l1_[i].clear();
   }
+
   void setAll() {
     for (uptr i0 = 0; i0 < kLevel1Size; i0++) {
       l1_[i0].setAll();
@@ -95,12 +102,14 @@ class TwoLevelBitVector {
         l2_[i0][i1].setAll();
     }
   }
+
   bool empty() {
     for (uptr i = 0; i < kLevel1Size; i++)
       if (!l1_[i].empty())
         return false;
     return true;
   }
+
   // Returns true if the bit has changed from 0 to 1.
   bool setBit(uptr idx) {
     check(idx);
@@ -116,6 +125,7 @@ class TwoLevelBitVector {
     // idx, i0, i1, i2, res);
     return res;
   }
+
   bool clearBit(uptr idx) {
     check(idx);
     uptr i0 = idx0(idx);
@@ -129,6 +139,7 @@ class TwoLevelBitVector {
     }
     return res;
   }
+
   bool getBit(uptr idx) const {
     check(idx);
     uptr i0 = idx0(idx);
@@ -137,6 +148,7 @@ class TwoLevelBitVector {
     // Printf("%s: %zd => %zd %zd %zd\n", __FUNCTION__, idx, i0, i1, i2);
     return l1_[i0].getBit(i1) && l2_[i0][i1].getBit(i2);
   }
+
   uptr getAndClearFirstOne() {
     for (uptr i0 = 0; i0 < kLevel1Size; i0++) {
       if (l1_[i0].empty()) continue;
@@ -151,6 +163,7 @@ class TwoLevelBitVector {
     CHECK(0);
     return 0;
   }
+
   // Do "this |= v" and return whether new bits have been added.
   bool setUnion(const TwoLevelBitVector &v) {
     bool res = false;
@@ -176,6 +189,7 @@ class TwoLevelBitVector {
   bool intersectsWith(const TwoLevelBitVector &v) const {
     for (uptr i0 = 0; i0 < kLevel1Size; i0++) {
       BV t = l1_[i0];
+      // FIXME: optimization: t &= v.l1_[i0]
       while (!t.empty()) {
         uptr i1 = t.getAndClearFirstOne();
         if (!v.l1_[i0].getBit(i1)) continue;
@@ -188,16 +202,19 @@ class TwoLevelBitVector {
 
  private:
   void check(uptr idx) const { CHECK_LE(idx, size()); }
+
   uptr idx0(uptr idx) const {
     uptr res = idx / (BV::kSize * BV::kSize);
     CHECK_LE(res, kLevel1Size);
     return res;
   }
+
   uptr idx1(uptr idx) const {
     uptr res = (idx / BV::kSize) % BV::kSize;
     CHECK_LE(res, BV::kSize);
     return res;
   }
+
   uptr idx2(uptr idx) const {
     uptr res = idx % BV::kSize;
     CHECK_LE(res, BV::kSize);

@@ -100,4 +100,6 @@ void TestDeadlockDetector() {
 TEST(SanitizerCommon, DeadlockDetector) {
   TestDeadlockDetector<BasicBitVector<> >();
   TestDeadlockDetector<TwoLevelBitVector<2> >();
+  TestDeadlockDetector<TwoLevelBitVector<3,
+      BasicBitVector<unsigned short> > >();
 }
