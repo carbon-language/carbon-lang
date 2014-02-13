@@ -160,6 +160,9 @@ public:
     virtual void
     GetStatus (lldb_private::Stream &strm);
 
+    virtual void
+    CalculateTrapHandlerSymbolNames ();
+
 protected:
     lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote freebsd OS
 

@@ -127,6 +127,9 @@ public:
     virtual int32_t
     GetResumeCountForLaunchInfo (lldb_private::ProcessLaunchInfo &launch_info);
 
+    virtual void
+    CalculateTrapHandlerSymbolNames ();
+
 protected:
 
     void

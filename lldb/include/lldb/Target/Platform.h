@@ -856,10 +856,7 @@ namespace lldb_private {
         ///     A list of symbol names.  The list may be empty.
         //------------------------------------------------------------------
         virtual const std::vector<ConstString> &
-        GetTrapHandlerSymbolNames ()
-        {
-            return m_trap_handlers;
-        }
+        GetTrapHandlerSymbolNames ();
 
     protected:
         bool m_is_host;
@@ -894,6 +891,23 @@ namespace lldb_private {
         bool m_ignores_remote_hostname;
         std::string m_local_cache_directory;
         std::vector<ConstString> m_trap_handlers;
+        bool m_calculated_trap_handlers;
+
+        //------------------------------------------------------------------
+        /// Ask the Platform subclass to fill in the list of trap handler names
+        ///
+        /// For most Unix user process environments, this will be a single
+        /// function name, _sigtramp.  More specialized environments may have
+        /// additional handler names.  The unwinder code needs to know when a
+        /// trap handler is on the stack because the unwind rules for the frame
+        /// that caused the trap are different.
+        ///
+        /// The base class Platform ivar m_trap_handlers should be updated by
+        /// the Platform subclass when this method is called.  If there are no
+        /// predefined trap handlers, this method may be a no-op.
+        //------------------------------------------------------------------
+        virtual void
+        CalculateTrapHandlerSymbolNames () = 0;
 
         const char *
         GetCachedUserName (uint32_t uid)

@@ -145,7 +145,6 @@ PlatformFreeBSD::PlatformFreeBSD (bool is_host) :
 Platform(is_host),
 m_remote_platform_sp()
 {
-    m_trap_handlers.push_back (ConstString ("_sigtramp"));
 }
 
 //------------------------------------------------------------------
@@ -675,4 +674,10 @@ PlatformFreeBSD::GetStatus (Stream &strm)
 #endif
 
     Platform::GetStatus(strm);
+}
+
+void
+PlatformFreeBSD::CalculateTrapHandlerSymbolNames ()
+{
+    m_trap_handlers.push_back (ConstString ("_sigtramp"));
 }

@@ -256,7 +256,8 @@ Platform::Platform (bool is_host) :
     m_supports_ssh (false),
     m_ssh_opts (),
     m_ignores_remote_hostname (false),
-    m_trap_handlers()
+    m_trap_handlers(),
+    m_calculated_trap_handlers (false)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
@@ -1391,3 +1392,15 @@ Platform::GetEnvironment (StringList &environment)
     environment.Clear();
     return false;
 }
+
+const std::vector<ConstString> &
+Platform::GetTrapHandlerSymbolNames ()
+{
+    if (!m_calculated_trap_handlers)
+    {
+        CalculateTrapHandlerSymbolNames();
+        m_calculated_trap_handlers = true;
+    }
+    return m_trap_handlers;
+}
+

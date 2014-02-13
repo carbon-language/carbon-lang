@@ -148,6 +148,12 @@ public:
         return false;
     }
 
+    // FIXME not sure what the _sigtramp equivalent would be on this platform
+    virtual void
+    CalculateTrapHandlerSymbolNames ()
+    {
+    }
+
 protected:
     lldb::PlatformSP m_remote_platform_sp;
 

@@ -100,6 +100,9 @@ namespace lldb_private {
             return false;
         }
 
+        virtual void
+        CalculateTrapHandlerSymbolNames ();
+
     protected:
         lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote darwin OS
         

@@ -209,6 +209,9 @@ public:
                      std::string *command_output,   // Pass NULL if you don't want the command output
                      uint32_t timeout_sec);         // Timeout in seconds to wait for shell program to finish
 
+    virtual void
+    CalculateTrapHandlerSymbolNames ();
+
 protected:
     GDBRemoteCommunicationClient m_gdb_client;
     std::string m_platform_description; // After we connect we can get a more complete description of what we are connected to

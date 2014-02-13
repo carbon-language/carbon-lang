@@ -161,6 +161,9 @@ protected:
     lldb_private::Error
     ExamineKextForMatchingUUID (const lldb_private::FileSpec &kext_bundle_path, const lldb_private::UUID &uuid, const lldb_private::ArchSpec &arch, lldb::ModuleSP &exe_module_sp);
 
+    virtual void
+    CalculateTrapHandlerSymbolNames ();
+
 private:
 
     BundleIDToKextMap m_name_to_kext_path_map; 

@@ -111,6 +111,9 @@ public:
                   uint64_t &low,
                   uint64_t &high);
 
+    virtual void
+    CalculateTrapHandlerSymbolNames ();
+
 protected:
     std::unique_ptr<lldb_private::OptionGroupOptions> m_options;
         
