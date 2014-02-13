@@ -83,7 +83,10 @@ Log::GetMask() const
 void
 Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
 {
-    if (m_stream_sp)
+    // Make a copy of our stream shared pointer in case someone disables our
+    // log while we are logging and releases the stream
+    StreamSP stream_sp(m_stream_sp);
+    if (stream_sp)
     {
         static uint32_t g_sequence_id = 0;
         StreamString header;
@@ -116,11 +119,11 @@ Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
         }
 
         header.PrintfVarArg (format, args);
-        m_stream_sp->Printf("%s\n", header.GetData());
+        stream_sp->Printf("%s\n", header.GetData());
         
         if (m_options.Test (LLDB_LOG_OPTION_BACKTRACE))
-            Host::Backtrace (*m_stream_sp, 1024);
-        m_stream_sp->Flush();
+            Host::Backtrace (*stream_sp, 1024);
+        stream_sp->Flush();
     }
 }
 
@@ -467,8 +470,11 @@ Log::GetVerbose() const
     if (m_options.Test(LLDB_LOG_OPTION_VERBOSE))
         return true;
         
-    if (m_stream_sp)
-        return m_stream_sp->GetVerbose();
+    // Make a copy of our stream shared pointer in case someone disables our
+    // log while we are logging and releases the stream
+    StreamSP stream_sp(m_stream_sp);
+    if (stream_sp)
+        return stream_sp->GetVerbose();
     return false;
 }
 
@@ -478,8 +484,11 @@ Log::GetVerbose() const
 bool
 Log::GetDebug() const
 {
-    if (m_stream_sp)
-        return m_stream_sp->GetDebug();
+    // Make a copy of our stream shared pointer in case someone disables our
+    // log while we are logging and releases the stream
+    StreamSP stream_sp(m_stream_sp);
+    if (stream_sp)
+        return stream_sp->GetDebug();
     return false;
 }
 

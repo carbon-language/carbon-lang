@@ -45,6 +45,8 @@ public:
     void
     AddThread (const lldb::ThreadSP &thread_sp);
 
+    void
+    InsertThread (const lldb::ThreadSP &thread_sp, uint32_t idx);
     // Return the selected thread if there is one.  Otherwise, return the thread
     // selected at index 0.
     lldb::ThreadSP

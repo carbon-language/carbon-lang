@@ -1170,7 +1170,11 @@ ProcessGDBRemote::DoResume ()
         bool continue_packet_error = false;
         if (m_gdb_comm.HasAnyVContSupport ())
         {
-            if (m_continue_c_tids.size() == num_threads)
+            if (m_continue_c_tids.size() == num_threads ||
+                (m_continue_c_tids.empty() &&
+                 m_continue_C_tids.empty() &&
+                 m_continue_s_tids.empty() &&
+                 m_continue_S_tids.empty()))
             {
                 // All threads are continuing, just send a "c" packet
                 continue_packet.PutCString ("c");

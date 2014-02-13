@@ -85,6 +85,17 @@ ThreadList::AddThread (const ThreadSP &thread_sp)
     m_threads.push_back(thread_sp);
 }
 
+void
+ThreadList::InsertThread (const lldb::ThreadSP &thread_sp, uint32_t idx)
+{
+    Mutex::Locker locker(GetMutex());
+    if (idx < m_threads.size())
+        m_threads.insert(m_threads.begin() + idx, thread_sp);
+    else
+        m_threads.push_back (thread_sp);
+}
+
+
 uint32_t
 ThreadList::GetSize (bool can_update)
 {

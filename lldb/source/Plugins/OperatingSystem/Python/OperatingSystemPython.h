@@ -93,6 +93,7 @@ protected:
     CreateThreadFromThreadInfo (lldb_private::PythonDictionary &thread_dict,
                                 lldb_private::ThreadList &core_thread_list,
                                 lldb_private::ThreadList &old_thread_list,
+                                std::vector<bool> &core_used_map,
                                 bool *did_create_ptr);
 
     DynamicRegisterInfo *

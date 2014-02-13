@@ -85,7 +85,7 @@ ScriptInterpreterPython::Locker::Locker (ScriptInterpreterPython *py_interpreter
     DoAcquireLock();
     if ((on_entry & InitSession) == InitSession)
     {
-        if (DoInitSession((on_entry & InitGlobals) == InitGlobals, in, out, err) == false)
+        if (DoInitSession(on_entry, in, out, err) == false)
         {
             // Don't teardown the session if we didn't init it.
             m_teardown_session = false;
@@ -104,11 +104,11 @@ ScriptInterpreterPython::Locker::DoAcquireLock()
 }
 
 bool
-ScriptInterpreterPython::Locker::DoInitSession(bool init_lldb_globals, FILE *in, FILE *out, FILE *err)
+ScriptInterpreterPython::Locker::DoInitSession(uint16_t on_entry_flags, FILE *in, FILE *out, FILE *err)
 {
     if (!m_python_interpreter)
         return false;
-    return m_python_interpreter->EnterSession (init_lldb_globals, in, out, err);
+    return m_python_interpreter->EnterSession (on_entry_flags, in, out, err);
 }
 
 bool
@@ -377,7 +377,7 @@ ScriptInterpreterPython::LeaveSession ()
 }
 
 bool
-ScriptInterpreterPython::EnterSession (bool init_lldb_globals,
+ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
                                        FILE *in,
                                        FILE *out,
                                        FILE *err)
@@ -388,19 +388,19 @@ ScriptInterpreterPython::EnterSession (bool init_lldb_globals,
     if (m_session_is_active)
     {
         if (log)
-            log->Printf("ScriptInterpreterPython::EnterSession(init_lldb_globals=%i) session is already active, returning without doing anything", init_lldb_globals);
+            log->Printf("ScriptInterpreterPython::EnterSession(on_entry_flags=0x%" PRIx16 ") session is already active, returning without doing anything", on_entry_flags);
         return false;
     }
 
     if (log)
-        log->Printf("ScriptInterpreterPython::EnterSession(init_lldb_globals=%i)", init_lldb_globals);
+        log->Printf("ScriptInterpreterPython::EnterSession(on_entry_flags=0x%" PRIx16 ")", on_entry_flags);
     
 
     m_session_is_active = true;
 
     StreamString run_string;
 
-    if (init_lldb_globals)
+    if (on_entry_flags & Locker::InitGlobals)
     {
         run_string.Printf (    "run_one_line (%s, 'lldb.debugger_unique_id = %" PRIu64, m_dictionary_name.c_str(), GetCommandInterpreter().GetDebugger().GetID());
         run_string.Printf (    "; lldb.debugger = lldb.SBDebugger.FindDebuggerWithID (%" PRIu64 ")", GetCommandInterpreter().GetDebugger().GetID());
@@ -430,7 +430,7 @@ ScriptInterpreterPython::EnterSession (bool init_lldb_globals,
         if (in == NULL || out == NULL || err == NULL)
             m_interpreter.GetDebugger().AdoptTopIOHandlerFilesIfInvalid (in_sp, out_sp, err_sp);
 
-        if (in == NULL && in_sp)
+        if (in == NULL && in_sp && (on_entry_flags & Locker::NoSTDIN) == 0)
             in = in_sp->GetFile().GetStream();
         if (in)
         {
@@ -1288,7 +1288,9 @@ ScriptInterpreterPython::OSPlugin_CreatePluginObject (const char *class_name, ll
     void* ret_val;
     
     {
-        Locker py_lock(this,Locker::AcquireLock,Locker::FreeLock);
+        Locker py_lock  (this,
+                         Locker::AcquireLock | Locker::NoSTDIN,
+                         Locker::FreeLock);
         ret_val = g_swig_create_os_plugin    (class_name,
                                               m_dictionary_name.c_str(),
                                               process_sp);
@@ -1300,7 +1302,9 @@ ScriptInterpreterPython::OSPlugin_CreatePluginObject (const char *class_name, ll
 lldb::ScriptInterpreterObjectSP
 ScriptInterpreterPython::OSPlugin_RegisterInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp)
 {
-    Locker py_lock(this,Locker::AcquireLock,Locker::FreeLock);
+    Locker py_lock(this,
+                   Locker::AcquireLock | Locker::NoSTDIN,
+                   Locker::FreeLock);
     
     static char callee_name[] = "get_register_info";
     
@@ -1359,7 +1363,9 @@ ScriptInterpreterPython::OSPlugin_RegisterInfo (lldb::ScriptInterpreterObjectSP 
 lldb::ScriptInterpreterObjectSP
 ScriptInterpreterPython::OSPlugin_ThreadsInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp)
 {
-    Locker py_lock(this,Locker::AcquireLock,Locker::FreeLock);
+    Locker py_lock (this,
+                    Locker::AcquireLock | Locker::NoSTDIN,
+                    Locker::FreeLock);
 
     static char callee_name[] = "get_thread_info";
     
@@ -1445,7 +1451,9 @@ lldb::ScriptInterpreterObjectSP
 ScriptInterpreterPython::OSPlugin_RegisterContextData (lldb::ScriptInterpreterObjectSP os_plugin_object_sp,
                                                        lldb::tid_t tid)
 {
-    Locker py_lock(this,Locker::AcquireLock,Locker::FreeLock);
+    Locker py_lock (this,
+                    Locker::AcquireLock | Locker::NoSTDIN,
+                    Locker::FreeLock);
 
     static char callee_name[] = "get_register_data";
     static char *param_format = const_cast<char *>(GetPythonValueFormatString(tid));
@@ -1507,7 +1515,9 @@ ScriptInterpreterPython::OSPlugin_CreateThread (lldb::ScriptInterpreterObjectSP 
                                                 lldb::tid_t tid,
                                                 lldb::addr_t context)
 {
-    Locker py_lock(this,Locker::AcquireLock,Locker::FreeLock);
+    Locker py_lock(this,
+                   Locker::AcquireLock | Locker::NoSTDIN,
+                   Locker::FreeLock);
     
     static char callee_name[] = "create_thread";
     std::string param_format;
@@ -1599,7 +1609,7 @@ ScriptInterpreterPython::GetDynamicSettings (lldb::ScriptInterpreterObjectSP plu
     PyObject *reply_pyobj = nullptr;
     
     {
-        Locker py_lock(this);
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         TargetSP target_sp(target->shared_from_this());
         reply_pyobj = (PyObject*)g_swig_plugin_get(plugin_module_sp->GetObject(),setting_name,target_sp);
     }
@@ -1633,7 +1643,7 @@ ScriptInterpreterPython::CreateSyntheticScriptedProvider (const char *class_name
     void* ret_val;
 
     {
-        Locker py_lock(this);
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         ret_val = g_swig_synthetic_script (class_name,
                                            python_interpreter->m_dictionary_name.c_str(),
                                            valobj);
@@ -1724,14 +1734,14 @@ ScriptInterpreterPython::GetScriptedSummary (const char *python_function_name,
         && *python_function_name)
     {
         {
-            Locker py_lock(this);
+            Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
             {
-            Timer scoped_timer ("g_swig_typescript_callback","g_swig_typescript_callback");
-            ret_val = g_swig_typescript_callback (python_function_name,
-                                                  GetSessionDictionary().get(),
-                                                  valobj,
-                                                  &new_callee,
-                                                  retval);
+                Timer scoped_timer ("g_swig_typescript_callback","g_swig_typescript_callback");
+                ret_val = g_swig_typescript_callback (python_function_name,
+                                                      GetSessionDictionary().get(),
+                                                      valobj,
+                                                      &new_callee,
+                                                      retval);
             }
         }
     }
@@ -1788,8 +1798,8 @@ ScriptInterpreterPython::BreakpointCallbackFunction
             {
                 bool ret_val = true;
                 {
-                    Locker py_lock(python_interpreter);
-                    ret_val = g_swig_breakpoint_callback (python_function_name, 
+                    Locker py_lock(python_interpreter, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
+                    ret_val = g_swig_breakpoint_callback (python_function_name,
                                                           python_interpreter->m_dictionary_name.c_str(),
                                                           stop_frame_sp, 
                                                           bp_loc_sp);
@@ -1840,8 +1850,8 @@ ScriptInterpreterPython::WatchpointCallbackFunction
             {
                 bool ret_val = true;
                 {
-                    Locker py_lock(python_interpreter);
-                    ret_val = g_swig_watchpoint_callback (python_function_name, 
+                    Locker py_lock(python_interpreter, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
+                    ret_val = g_swig_watchpoint_callback (python_function_name,
                                                           python_interpreter->m_dictionary_name.c_str(),
                                                           stop_frame_sp, 
                                                           wp_sp);
@@ -1872,7 +1882,7 @@ ScriptInterpreterPython::CalculateNumChildren (const lldb::ScriptInterpreterObje
     uint32_t ret_val = 0;
     
     {
-        Locker py_lock(this);
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         ret_val = g_swig_calc_children (implementor);
     }
     
@@ -1896,7 +1906,7 @@ ScriptInterpreterPython::GetChildAtIndex (const lldb::ScriptInterpreterObjectSP&
     lldb::ValueObjectSP ret_val;
     
     {
-        Locker py_lock(this);
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         void* child_ptr = g_swig_get_child_index (implementor,idx);
         if (child_ptr != NULL && child_ptr != Py_None)
         {
@@ -1932,7 +1942,7 @@ ScriptInterpreterPython::GetIndexOfChildWithName (const lldb::ScriptInterpreterO
     int ret_val = UINT32_MAX;
     
     {
-        Locker py_lock(this);
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         ret_val = g_swig_get_index_child (implementor, child_name);
     }
     
@@ -1956,7 +1966,7 @@ ScriptInterpreterPython::UpdateSynthProviderInstance (const lldb::ScriptInterpre
         return ret_val;
     
     {
-        Locker py_lock(this);
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         ret_val = g_swig_update_provider (implementor);
     }
     
@@ -1980,7 +1990,7 @@ ScriptInterpreterPython::MightHaveChildrenSynthProviderInstance (const lldb::Scr
         return ret_val;
     
     {
-        Locker py_lock(this);
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         ret_val = g_swig_mighthavechildren_provider (implementor);
     }
     
@@ -2068,7 +2078,7 @@ ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
     }
     {
         ProcessSP process_sp(process->shared_from_this());
-        Locker py_lock(this);
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         ret_val = g_swig_run_script_keyword_process (impl_function, m_dictionary_name.c_str(), process_sp, output);
         if (!ret_val)
             error.SetErrorString("python script evaluation failed");
@@ -2100,7 +2110,7 @@ ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
     }
     {
         ThreadSP thread_sp(thread->shared_from_this());
-        Locker py_lock(this);
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         ret_val = g_swig_run_script_keyword_thread (impl_function, m_dictionary_name.c_str(), thread_sp, output);
         if (!ret_val)
             error.SetErrorString("python script evaluation failed");
@@ -2132,7 +2142,7 @@ ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
     }
     {
         TargetSP target_sp(target->shared_from_this());
-        Locker py_lock(this);
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         ret_val = g_swig_run_script_keyword_target (impl_function, m_dictionary_name.c_str(), target_sp, output);
         if (!ret_val)
             error.SetErrorString("python script evaluation failed");
@@ -2164,7 +2174,7 @@ ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
     }
     {
         StackFrameSP frame_sp(frame->shared_from_this());
-        Locker py_lock(this);
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         ret_val = g_swig_run_script_keyword_frame (impl_function, m_dictionary_name.c_str(), frame_sp, output);
         if (!ret_val)
             error.SetErrorString("python script evaluation failed");
@@ -2214,7 +2224,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
 
         // Before executing Pyton code, lock the GIL.
         Locker py_lock (this,
-                        Locker::AcquireLock      | (init_session ? Locker::InitSession     : 0),
+                        Locker::AcquireLock      | (init_session ? Locker::InitSession     : 0) | Locker::NoSTDIN,
                         Locker::FreeAcquiredLock | (init_session ? Locker::TearDownSession : 0));
         
         if (target_file.GetFileType() == FileSpec::eFileTypeInvalid ||
@@ -2455,8 +2465,8 @@ std::unique_ptr<ScriptInterpreterLocker>
 ScriptInterpreterPython::AcquireInterpreterLock ()
 {
     std::unique_ptr<ScriptInterpreterLocker> py_lock(new Locker(this,
-                                                              Locker::AcquireLock | Locker::InitSession,
-                                                              Locker::FreeLock | Locker::TearDownSession));
+                                                                Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN,
+                                                                Locker::FreeLock | Locker::TearDownSession));
     return py_lock;
 }
 

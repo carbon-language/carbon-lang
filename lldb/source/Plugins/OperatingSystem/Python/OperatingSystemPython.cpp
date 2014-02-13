@@ -190,6 +190,13 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list,
     
     auto lock = m_interpreter->AcquireInterpreterLock(); // to make sure threads_list stays alive
     PythonList threads_list(m_interpreter->OSPlugin_ThreadsInfo(m_python_object_sp));
+    
+    const uint32_t num_cores = core_thread_list.GetSize(false);
+    
+    // Make a map so we can keep track of which cores were used from the
+    // core_thread list. Any real threads/cores that weren't used should
+    // later be put back into the "new_thread_list".
+    std::vector<bool> core_used_map(num_cores, false);
     if (threads_list)
     {
         if (log)
@@ -207,18 +214,26 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list,
                 PythonDictionary thread_dict(threads_list.GetItemAtIndex(i));
                 if (thread_dict)
                 {
-                    ThreadSP thread_sp (CreateThreadFromThreadInfo (thread_dict, core_thread_list, old_thread_list, NULL));
+                    ThreadSP thread_sp (CreateThreadFromThreadInfo (thread_dict, core_thread_list, old_thread_list, core_used_map, NULL));
                     if (thread_sp)
                         new_thread_list.AddThread(thread_sp);
                 }
             }
         }
     }
-    
-    // No new threads added from the thread info array gotten from python, just
-    // display the core threads.
-    if (new_thread_list.GetSize(false) == 0)
-        new_thread_list = core_thread_list;
+
+    // Any real core threads that didn't end up backing a memory thread should
+    // still be in the main thread list, and they should be inserted at the beginning
+    // of the list
+    uint32_t insert_idx = 0;
+    for (uint32_t core_idx = 0; core_idx < num_cores; ++core_idx)
+    {
+        if (core_used_map[core_idx] == false)
+        {
+            new_thread_list.InsertThread (core_thread_list.GetThreadAtIndex(core_idx, false), insert_idx);
+            ++insert_idx;
+        }
+    }
 
     return new_thread_list.GetSize(false) > 0;
 }
@@ -227,6 +242,7 @@ ThreadSP
 OperatingSystemPython::CreateThreadFromThreadInfo (PythonDictionary &thread_dict,
                                                    ThreadList &core_thread_list,
                                                    ThreadList &old_thread_list,
+                                                   std::vector<bool> &core_used_map,
                                                    bool *did_create_ptr)
 {
     ThreadSP thread_sp;
@@ -282,6 +298,10 @@ OperatingSystemPython::CreateThreadFromThreadInfo (PythonDictionary &thread_dict
                 ThreadSP core_thread_sp (core_thread_list.GetThreadAtIndex(core_number, false));
                 if (core_thread_sp)
                 {
+                    // Keep track of which cores were set as the backing thread for memory threads...
+                    if (core_number < core_used_map.size())
+                        core_used_map[core_number] = true;
+
                     ThreadSP backing_core_thread_sp (core_thread_sp->GetBackingThread());
                     if (backing_core_thread_sp)
                     {
@@ -398,12 +418,13 @@ OperatingSystemPython::CreateThread (lldb::tid_t tid, addr_t context)
         
         auto lock = m_interpreter->AcquireInterpreterLock(); // to make sure thread_info_dict stays alive
         PythonDictionary thread_info_dict (m_interpreter->OSPlugin_CreateThread(m_python_object_sp, tid, context));
+        std::vector<bool> core_used_map;
         if (thread_info_dict)
         {
             ThreadList core_threads(m_process);
             ThreadList &thread_list = m_process->GetThreadList();
             bool did_create = false;
-            ThreadSP thread_sp (CreateThreadFromThreadInfo (thread_info_dict, core_threads, thread_list, &did_create));
+            ThreadSP thread_sp (CreateThreadFromThreadInfo (thread_info_dict, core_threads, thread_list, core_used_map, &did_create));
             if (did_create)
                 thread_list.AddThread(thread_sp);
             return thread_sp;

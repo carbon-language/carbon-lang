@@ -156,7 +156,10 @@ lldb_private::DisableLog (const char **categories, Stream *feedback_strm)
         }
         log->GetMask().Reset (flag_bits);
         if (flag_bits == 0)
+        {
+            log->SetStream(lldb::StreamSP());
             g_log_enabled = false;
+        }
     }
 
     return;

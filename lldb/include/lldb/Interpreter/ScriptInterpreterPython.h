@@ -287,7 +287,7 @@ public:
 protected:
 
     bool
-    EnterSession (bool init_lldb_globals,
+    EnterSession (uint16_t on_entry_flags,
                   FILE *in,
                   FILE *out,
                   FILE *err);
@@ -350,7 +350,8 @@ public:
         {
             AcquireLock         = 0x0001,
             InitSession         = 0x0002,
-            InitGlobals         = 0x0004
+            InitGlobals         = 0x0004,
+            NoSTDIN             = 0x0008
         };
         
         enum OnLeave
@@ -375,7 +376,7 @@ public:
         DoAcquireLock ();
         
         bool
-        DoInitSession (bool init_lldb_globals, FILE *in, FILE *out, FILE *err);
+        DoInitSession (uint16_t on_entry_flags, FILE *in, FILE *out, FILE *err);
         
         bool
         DoFreeLock ();
