@@ -1,6 +1,7 @@
 if (WIN32)
   # CPack will install a registry key in this format that we wish to reference.
   set(REG_KEY "${CPACK_PACKAGE_INSTALL_REGISTRY_KEY}")
+  set(LIB_PATH_VERSION "${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}")
 
   foreach (platform "Win32" "x64")
     set(prop_file_in "Microsoft.Cpp.Win32.llvm.props.in")
@@ -45,6 +46,7 @@ if (WIN32)
     install(FILES "toolset-vs2013_xp.targets" DESTINATION "tools/msbuild/${platform}")
   endforeach()
 
+  set(LIB_PATH_VERSION)
   set(REG_KEY)
 
   install(DIRECTORY .
