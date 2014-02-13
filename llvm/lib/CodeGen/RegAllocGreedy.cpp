@@ -1931,7 +1931,7 @@ unsigned RAGreedy::tryLastChanceRecoloring(LiveInterval &VirtReg,
                                            unsigned Depth) {
   DEBUG(dbgs() << "Try last chance recoloring for " << VirtReg << '\n');
   // Ranges must be Done.
-  assert(getStage(VirtReg) >= RS_Done &&
+  assert((getStage(VirtReg) >= RS_Done || !VirtReg.isSpillable()) &&
          "Last chance recoloring should really be last chance");
   // Set the max depth to LastChanceRecoloringMaxDepth.
   // We may want to reconsider that if we end up with a too large search space
