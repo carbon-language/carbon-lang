@@ -267,10 +267,10 @@ public:
       MSPointerToMemberRepresentationMethod;
 
   enum PragmaVtorDispKind {
-    PVDK_Push,          //< #pragma vtordisp(push, mode)
-    PVDK_Set,           //< #pragma vtordisp(mode)
-    PVDK_Pop,           //< #pragma vtordisp(pop)
-    PVDK_Reset          //< #pragma vtordisp()
+    PVDK_Push,          ///< #pragma vtordisp(push, mode)
+    PVDK_Set,           ///< #pragma vtordisp(mode)
+    PVDK_Pop,           ///< #pragma vtordisp(pop)
+    PVDK_Reset          ///< #pragma vtordisp()
   };
 
   /// \brief Whether to insert vtordisps prior to virtual bases in the Microsoft
