@@ -235,12 +235,22 @@ ABIMacOSX_i386::GetRedZoneSize () const
 ABISP
 ABIMacOSX_i386::CreateInstance (const ArchSpec &arch)
 {
-    static ABISP g_abi_sp;
-     if (arch.GetTriple().getArch() == llvm::Triple::x86)
-     {
-        if (!g_abi_sp)
-            g_abi_sp.reset (new ABIMacOSX_i386);
-        return g_abi_sp;
+    static ABISP g_abi_mac_sp;
+    static ABISP g_abi_other_sp;
+    if (arch.GetTriple().getArch() == llvm::Triple::x86)
+    {
+        if (arch.GetTriple().isOSDarwin())
+        {
+            if (!g_abi_mac_sp)
+                g_abi_mac_sp.reset (new ABIMacOSX_i386(true));
+            return g_abi_mac_sp;
+        }
+        else
+        {
+            if (!g_abi_other_sp)
+                g_abi_other_sp.reset (new ABIMacOSX_i386(false));
+            return g_abi_other_sp;
+        }
     }
     return ABISP();
 }

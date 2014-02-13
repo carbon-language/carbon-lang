@@ -482,7 +482,7 @@ DynamicLoaderPOSIXDYLD::GetThreadLocalData (const lldb::ModuleSP module, const l
     Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
     if (log)
         log->Printf("DynamicLoaderPOSIXDYLD::Performed TLS lookup: "
-                    "module=%s, link_map=0x%" PRIx64 ", tp=0x%" PRIx64 ", modid=%" PRId64 ", tls_block=0x%" PRIx64 "\n",
+                    "module=%s, link_map=0x%" PRIx64 ", tp=0x%" PRIx64 ", modid=%ld, tls_block=0x%" PRIx64 "\n",
                     mod->GetObjectName().AsCString(""), link_map, tp, (int64_t)modid, tls_block);
 
     return tls_block;
