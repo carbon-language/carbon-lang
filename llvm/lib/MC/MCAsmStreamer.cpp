@@ -902,9 +902,9 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
   }
 
   if (Isa)
-    OS << "isa " << Isa;
+    OS << " isa " << Isa;
   if (Discriminator)
-    OS << "discriminator " << Discriminator;
+    OS << " discriminator " << Discriminator;
 
   if (IsVerboseAsm) {
     OS.PadToColumn(MAI->getCommentColumn());
