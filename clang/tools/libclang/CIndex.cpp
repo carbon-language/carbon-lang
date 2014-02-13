@@ -2821,6 +2821,7 @@ clang_parseTranslationUnit(CXIndex CIdx,
   enum CXErrorCode Result = clang_parseTranslationUnit2(
       CIdx, source_filename, command_line_args, num_command_line_args,
       unsaved_files, num_unsaved_files, options, &TU);
+  (void)Result;
   assert((TU && Result == CXError_Success) ||
          (!TU && Result != CXError_Success));
   return TU;
