@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm-only  -triple x86_64-apple-darwin9 %s
+// RUN: %clang_cc1 -emit-llvm -o - -triple x86_64-apple-darwin9 %s | FileCheck %s
+
 // rdar://8823265
 
 #define ATTR __attribute__((__ms_struct__))
@@ -9,6 +10,8 @@ struct
    long : 0;
    char bar;
 } ATTR t1;
+int s1 = sizeof(t1);
+// CHECK: @s1 = global i32 2
 
 struct
 {
@@ -18,6 +21,8 @@ struct
    int : 0;
    char bar;
 } ATTR t2;
+int s2 = sizeof(t2);
+// CHECK: @s2 = global i32 2
 
 struct
 {
@@ -29,12 +34,16 @@ struct
    long : 0;
    char : 0;
 } ATTR t3;
+int s3 = sizeof(t3);
+// CHECK: @s3 = global i32 2
 
 struct
 {
    long : 0;
    char bar;
 } ATTR t4;
+int s4 = sizeof(t4);
+// CHECK: @s4 = global i32 1
 
 struct
 {
@@ -43,6 +52,8 @@ struct
    char : 0;
    char bar;
 } ATTR t5;
+int s5 = sizeof(t5);
+// CHECK: @s5 = global i32 1
 
 struct
 {
@@ -51,6 +62,8 @@ struct
    char : 0;
    char bar;
 } ATTR t6;
+int s6 = sizeof(t6);
+// CHECK: @s6 = global i32 1
 
 struct
 {
@@ -69,6 +82,8 @@ struct
    char bar6;
    char bar7;
 } ATTR t7;
+int s7 = sizeof(t7);
+// CHECK: @s7 = global i32 9
 
 struct
 {
@@ -76,6 +91,8 @@ struct
    long : 0;
    char : 0;
 } ATTR t8;
+int s8 = sizeof(t8);
+// CHECK: @s8 = global i32 0
 
 struct
 {
@@ -106,6 +123,8 @@ struct
    long : 0;
    char :4;
 } ATTR t9;
+int s9 = sizeof(t9);
+// CHECK: @s9 = global i32 28
 
 struct
 {
@@ -113,19 +132,5 @@ struct
    long : 0;
    char bar;
 } ATTR t10;
-
-static int arr1[(sizeof(t1) == 2) -1];
-static int arr2[(sizeof(t2) == 2) -1];
-static int arr3[(sizeof(t3) == 2) -1];
-static int arr4[(sizeof(t4) == 1) -1];
-static int arr5[(sizeof(t5) == 1) -1];
-static int arr6[(sizeof(t6) == 1) -1];
-static int arr7[(sizeof(t7) == 9) -1];
-static int arr8[(sizeof(t8) == 0) -1];
-static int arr9[(sizeof(t9) == 28) -1];
-static int arr10[(sizeof(t10) == 16) -1];
-
-int main() {
-  return 0;
-}
-
+int s10 = sizeof(t10);
+// CHECK: @s10 = global i32 16
