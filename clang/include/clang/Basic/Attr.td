@@ -364,8 +364,7 @@ def Bounded : IgnoredAttr {
 }
 
 def CarriesDependency : InheritableParamAttr {
-  let Spellings = [GNU<"carries_dependency">, CXX11<"","carries_dependency">,
-                   CXX11<"std","carries_dependency">];
+  let Spellings = [GNU<"carries_dependency">, CXX11<"","carries_dependency">];
   let Subjects = SubjectList<[ParmVar, ObjCMethod, Function], ErrorDiag>;
 }
 
@@ -480,7 +479,7 @@ def C11NoReturn : InheritableAttr {
 }
 
 def CXX11NoReturn : InheritableAttr {
-  let Spellings = [CXX11<"","noreturn">, CXX11<"std","noreturn">];
+  let Spellings = [CXX11<"","noreturn">];
   let Subjects = SubjectList<[Function], ErrorDiag>;
 }
 

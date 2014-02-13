@@ -42,9 +42,6 @@ int f3 [[gnu::warn_unused_result]] ();
 // CHECK: {{\[}}[noreturn]];
 void f4 [[noreturn]] ();
 
-// CHECK: {{\[}}[std::noreturn]];
-void f5 [[std::noreturn]] ();
-
 // CHECK: __attribute__((gnu_inline));
 inline void f6() __attribute__((gnu_inline));
 
