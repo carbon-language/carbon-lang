@@ -24,19 +24,50 @@
 using namespace __sanitizer;
 using namespace std;
 
+
+template <class BV>
+static void SameAs(const BV &bv, const set<uptr> &s) {
+  BV t;
+  t.copyFrom(bv);
+  set<uptr> t_s(s);
+  while (!t.empty()) {
+    uptr idx = t.getAndClearFirstOne();
+    EXPECT_TRUE(t_s.erase(idx));
+  }
+  EXPECT_TRUE(t_s.empty());
+}
+
+template <class BV>
+void Print(const BV &bv) {
+  BV t;
+  t.copyFrom(bv);
+  while (!t.empty()) {
+    uptr idx = t.getAndClearFirstOne();
+    fprintf(stderr, "%zd ", idx);
+  }
+  fprintf(stderr, "\n");
+}
+
+void Print(const set<uptr> &s) {
+  for (set<uptr>::reverse_iterator it = s.rbegin(); it != s.rend(); ++it) {
+    fprintf(stderr, "%zd ", *it);
+  }
+  fprintf(stderr, "\n");
+}
+
 template <class BV>
 void TestBitVector(uptr expected_size) {
-  BV bv, bv1;
+  BV bv, bv1, t_bv;
   EXPECT_EQ(expected_size, BV::kSize);
   bv.clear();
   EXPECT_TRUE(bv.empty());
-  bv.setBit(13);
+  bv.setBit(5);
   EXPECT_FALSE(bv.empty());
-  EXPECT_FALSE(bv.getBit(12));
-  EXPECT_FALSE(bv.getBit(14));
-  EXPECT_TRUE(bv.getBit(13));
-  bv.clearBit(13);
-  EXPECT_FALSE(bv.getBit(13));
+  EXPECT_FALSE(bv.getBit(4));
+  EXPECT_FALSE(bv.getBit(6));
+  EXPECT_TRUE(bv.getBit(5));
+  bv.clearBit(5);
+  EXPECT_FALSE(bv.getBit(5));
 
   // test random bits
   bv.clear();
@@ -58,12 +89,12 @@ void TestBitVector(uptr expected_size) {
   }
 
   vector<uptr>bits(bv.size());
-  // Test setUnion, intersectsWith, and getAndClearFirstOne.
+  // Test setUnion, setIntersection, intersectsWith, and getAndClearFirstOne.
   for (uptr it = 0; it < 30; it++) {
     // iota
     for (size_t j = 0; j < bits.size(); j++) bits[j] = j;
     random_shuffle(bits.begin(), bits.end());
-    set<uptr> s, s1;
+    set<uptr> s, s1, t_s;
     bv.clear();
     bv1.clear();
     uptr n_bits = ((uptr)my_rand() % bv.size()) + 1;
@@ -74,32 +105,36 @@ void TestBitVector(uptr expected_size) {
       bv.setBit(bits[i]);
       s.insert(bits[i]);
     }
+    SameAs(bv, s);
     for (uptr i = 0; i < n_bits1; i++) {
       bv1.setBit(bits[bv.size() / 2 + i]);
       s1.insert(bits[bv.size() / 2 + i]);
     }
+    SameAs(bv1, s1);
 
     vector<uptr> vec;
     set_intersection(s.begin(), s.end(), s1.begin(), s1.end(),
                      back_insert_iterator<vector<uptr> >(vec));
     EXPECT_EQ(bv.intersectsWith(bv1), !vec.empty());
 
-    size_t old_size = s.size();
-    s.insert(s1.begin(), s1.end());
-    EXPECT_EQ(bv.setUnion(bv1), old_size != s.size());
-    if (0)
-      printf("union %zd %zd: %zd => %zd;  added %zd; intersection: %zd\n",
-             n_bits, n_bits1, old_size, s.size(), s.size() - old_size,
-             vec.size());
-    while (!bv.empty()) {
-      uptr idx = bv.getAndClearFirstOne();
-      EXPECT_TRUE(s.erase(idx));
-    }
-    EXPECT_TRUE(s.empty());
+    // setUnion
+    t_s = s;
+    t_bv.copyFrom(bv);
+    t_s.insert(s1.begin(), s1.end());
+    EXPECT_EQ(t_bv.setUnion(bv1), s.size() != t_s.size());
+    SameAs(t_bv, t_s);
+
+    // setIntersection
+    t_s = set<uptr>(vec.begin(), vec.end());
+    t_bv.copyFrom(bv);
+    EXPECT_EQ(t_bv.setIntersection(bv1), s.size() != t_s.size());
+    SameAs(t_bv, t_s);
   }
 }
 
 TEST(SanitizerCommon, BasicBitVector) {
+  TestBitVector<BasicBitVector<u8> >(8);
+  TestBitVector<BasicBitVector<u16> >(16);
   TestBitVector<BasicBitVector<> >(SANITIZER_WORDSIZE);
 }
 

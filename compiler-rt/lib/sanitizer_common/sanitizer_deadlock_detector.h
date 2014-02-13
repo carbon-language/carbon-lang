@@ -95,10 +95,10 @@ class DeadlockDetector {
       return getAvailableNode(data);
     }
     // We are out of vacant nodes. Flush and increment the current_epoch_.
-    uptr new_epoch = current_epoch_ + size();
-    clear();
-    current_epoch_ = new_epoch;
+    current_epoch_ += size();
+    recycled_nodes_.clear();
     available_nodes_.setAll();
+    g_.clear();
     return getAvailableNode(data);
   }
 

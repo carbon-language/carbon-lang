@@ -78,7 +78,10 @@ class BVGraph {
   }
 
  private:
-  void check(uptr idx1, uptr idx2) const { CHECK_LE(idx1|idx2, size()); }
+  void check(uptr idx1, uptr idx2) const {
+    CHECK_LT(idx1, size());
+    CHECK_LT(idx2, size());
+  }
   BV v[kSize];
 };
 

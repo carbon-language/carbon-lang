@@ -61,6 +61,13 @@ class BasicBitVector {
     return bits_ != old;
   }
 
+  // Do "this &= v" and return whether any bits have been removed.
+  bool setIntersection(const BasicBitVector &v) {
+    basic_int_t old = bits_;
+    bits_ &= v.bits_;
+    return bits_ != old;
+  }
+
   void copyFrom(const BasicBitVector &v) { bits_ = v.bits_; }
 
   // Returns true if 'this' intersects with 'v'.
@@ -180,6 +187,26 @@ class TwoLevelBitVector {
     return res;
   }
 
+  // Do "this &= v" and return whether any bits have been removed.
+  bool setIntersection(const TwoLevelBitVector &v) {
+    bool res = false;
+    for (uptr i0 = 0; i0 < kLevel1Size; i0++) {
+      if (l1_[i0].setIntersection(v.l1_[i0]))
+        res = true;
+      if (!l1_[i0].empty()) {
+        BV t = l1_[i0];
+        while (!t.empty()) {
+          uptr i1 = t.getAndClearFirstOne();
+          if (l2_[i0][i1].setIntersection(v.l2_[i0][i1]))
+            res = true;
+          if (l2_[i0][i1].empty())
+            l1_[i0].clearBit(i1);
+        }
+      }
+    }
+    return res;
+  }
+
   void copyFrom(const TwoLevelBitVector &v) {
     clear();
     setUnion(v);
@@ -189,7 +216,7 @@ class TwoLevelBitVector {
   bool intersectsWith(const TwoLevelBitVector &v) const {
     for (uptr i0 = 0; i0 < kLevel1Size; i0++) {
       BV t = l1_[i0];
-      // FIXME: optimization: t &= v.l1_[i0]
+      t.setIntersection(v.l1_[i0]);
       while (!t.empty()) {
         uptr i1 = t.getAndClearFirstOne();
         if (!v.l1_[i0].getBit(i1)) continue;
