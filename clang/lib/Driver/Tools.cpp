@@ -1524,6 +1524,43 @@ shouldUseExceptionTablesForObjCExceptions(const ObjCRuntime &runtime,
            Triple.getArch() == llvm::Triple::arm));
 }
 
+namespace {
+  struct ExceptionSettings {
+    bool ExceptionsEnabled;
+    bool ShouldUseExceptionTables;
+    ExceptionSettings() : ExceptionsEnabled(false),
+                          ShouldUseExceptionTables(false) {}
+  };
+} // end anonymous namespace.
+
+static ExceptionSettings exceptionSettings(const ArgList &Args,
+                                           const llvm::Triple &Triple) {
+  ExceptionSettings ES;
+
+  // Are exceptions enabled by default?
+  ES.ExceptionsEnabled = (Triple.getArch() != llvm::Triple::xcore);
+
+  // This keeps track of whether exceptions were explicitly turned on or off.
+  bool DidHaveExplicitExceptionFlag = false;
+
+  if (Arg *A = Args.getLastArg(options::OPT_fexceptions,
+                               options::OPT_fno_exceptions)) {
+    if (A->getOption().matches(options::OPT_fexceptions))
+      ES.ExceptionsEnabled = true;
+    else
+      ES.ExceptionsEnabled = false;
+
+    DidHaveExplicitExceptionFlag = true;
+  }
+
+  // Exception tables and cleanups can be enabled with -fexceptions even if the
+  // language itself doesn't support exceptions.
+  if (ES.ExceptionsEnabled && DidHaveExplicitExceptionFlag)
+    ES.ShouldUseExceptionTables = true;
+
+  return ES;
+}
+
 /// addExceptionArgs - Adds exception related arguments to the driver command
 /// arguments. There's a master flag, -fexceptions and also language specific
 /// flags to enable/disable C++ and Objective-C exceptions.
@@ -1546,28 +1583,8 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
     return;
   }
 
-  // Exceptions are enabled by default.
-  bool ExceptionsEnabled = true;
-
-  // This keeps track of whether exceptions were explicitly turned on or off.
-  bool DidHaveExplicitExceptionFlag = false;
-
-  if (Arg *A = Args.getLastArg(options::OPT_fexceptions,
-                               options::OPT_fno_exceptions)) {
-    if (A->getOption().matches(options::OPT_fexceptions))
-      ExceptionsEnabled = true;
-    else
-      ExceptionsEnabled = false;
-
-    DidHaveExplicitExceptionFlag = true;
-  }
-
-  bool ShouldUseExceptionTables = false;
-
-  // Exception tables and cleanups can be enabled with -fexceptions even if the
-  // language itself doesn't support exceptions.
-  if (ExceptionsEnabled && DidHaveExplicitExceptionFlag)
-    ShouldUseExceptionTables = true;
+   // Gather the exception settings from the command line arguments.
+   ExceptionSettings ES = exceptionSettings(Args, Triple);
 
   // Obj-C exceptions are enabled by default, regardless of -fexceptions. This
   // is not necessarily sensible, but follows GCC.
@@ -1577,12 +1594,12 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
                    true)) {
     CmdArgs.push_back("-fobjc-exceptions");
 
-    ShouldUseExceptionTables |=
+    ES.ShouldUseExceptionTables |=
       shouldUseExceptionTablesForObjCExceptions(objcRuntime, Triple);
   }
 
   if (types::isCXX(InputType)) {
-    bool CXXExceptionsEnabled = ExceptionsEnabled;
+    bool CXXExceptionsEnabled = ES.ExceptionsEnabled;
 
     if (Arg *A = Args.getLastArg(options::OPT_fcxx_exceptions,
                                  options::OPT_fno_cxx_exceptions,
@@ -1597,11 +1614,11 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
     if (CXXExceptionsEnabled) {
       CmdArgs.push_back("-fcxx-exceptions");
 
-      ShouldUseExceptionTables = true;
+      ES.ShouldUseExceptionTables = true;
     }
   }
 
-  if (ShouldUseExceptionTables)
+  if (ES.ShouldUseExceptionTables)
     CmdArgs.push_back("-fexceptions");
 }
 
@@ -7295,6 +7312,10 @@ void XCore::Link::ConstructJob(Compilation &C, const JobAction &JA,
   } else {
     assert(Output.isNothing() && "Invalid output.");
   }
+
+  ExceptionSettings EH = exceptionSettings(Args, getToolChain().getTriple());
+  if (EH.ShouldUseExceptionTables)
+    CmdArgs.push_back("-fexceptions");
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
