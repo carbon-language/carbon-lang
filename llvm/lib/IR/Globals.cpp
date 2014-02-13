@@ -53,6 +53,7 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
   setSection(Src->getSection());
   setVisibility(Src->getVisibility());
   setUnnamedAddr(Src->hasUnnamedAddr());
+  setDLLStorageClass(Src->getDLLStorageClass());
 }
 
 void GlobalValue::setAlignment(unsigned Align) {
