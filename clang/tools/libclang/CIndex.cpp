@@ -2686,16 +2686,17 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   unsigned options = PTUI->options;
   CXTranslationUnit *out_TU = PTUI->out_TU;
 
+  // Set up the initial return values.
+  if (out_TU)
+    *out_TU = NULL;
+  PTUI->result = CXError_Failure;
+
   // Check arguments.
   if (!CIdx || !out_TU ||
       (unsaved_files == NULL && num_unsaved_files != 0)) {
     PTUI->result = CXError_InvalidArguments;
     return;
   }
-
-  // Set up the initial return values.
-  *out_TU = NULL;
-  PTUI->result = CXError_Failure;
 
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
@@ -2826,12 +2827,8 @@ clang_parseTranslationUnit(CXIndex CIdx,
       CIdx, source_filename, command_line_args, num_command_line_args,
       unsaved_files, num_unsaved_files, options, &TU);
   (void)Result;
-
-  // FIXME: This probably papers over a problem. If the result is not success,
-  // no TU should be set.
-  if (Result != CXError_Success)
-    return 0;
-
+  assert((TU && Result == CXError_Success) ||
+         (!TU && Result != CXError_Success));
   return TU;
 }
 
