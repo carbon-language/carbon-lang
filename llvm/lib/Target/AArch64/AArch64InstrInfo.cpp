@@ -487,6 +487,10 @@ AArch64InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     default:
       llvm_unreachable("Unknown size for regclass");
     }
+  } else if (AArch64::FPR8RegClass.hasSubClassEq(RC)) {
+    StoreOp = AArch64::LSFP8_STR;
+  } else if (AArch64::FPR16RegClass.hasSubClassEq(RC)) {
+    StoreOp = AArch64::LSFP16_STR;
   } else if (RC->hasType(MVT::f32) || RC->hasType(MVT::f64) ||
              RC->hasType(MVT::f128)) {
     switch (RC->getSize()) {
@@ -553,6 +557,10 @@ AArch64InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     default:
       llvm_unreachable("Unknown size for regclass");
     }
+  } else if (AArch64::FPR8RegClass.hasSubClassEq(RC)) {
+    LoadOp = AArch64::LSFP8_LDR;
+  } else if (AArch64::FPR16RegClass.hasSubClassEq(RC)) {
+    LoadOp = AArch64::LSFP16_LDR;
   } else if (RC->hasType(MVT::f32) || RC->hasType(MVT::f64) ||
              RC->hasType(MVT::f128)) {
     switch (RC->getSize()) {
