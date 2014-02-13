@@ -2192,7 +2192,9 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
   // diagnostic and attempt to recover.
   ParsedType T;
   IdentifierInfo *II = Tok.getIdentifierInfo();
-  if (Actions.DiagnoseUnknownTypeName(II, Loc, getCurScope(), SS, T)) {
+  if (Actions.DiagnoseUnknownTypeName(II, Loc, getCurScope(), SS, T,
+                                      getLangOpts().CPlusPlus &&
+                                          NextToken().is(tok::less))) {
     // The action emitted a diagnostic, so we don't have to.
     if (T) {
       // The action has suggested that the type T could be used. Set that as

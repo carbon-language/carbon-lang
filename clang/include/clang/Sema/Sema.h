@@ -1354,7 +1354,8 @@ public:
                                SourceLocation IILoc,
                                Scope *S,
                                CXXScopeSpec *SS,
-                               ParsedType &SuggestedType);
+                               ParsedType &SuggestedType,
+                               bool AllowClassTemplates = false);
 
   /// \brief Describes the result of the name lookup and resolution performed
   /// by \c ClassifyName().
