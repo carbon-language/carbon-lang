@@ -26,6 +26,7 @@ class BasicBitVector {
   uptr size() const { return kSize; }
   // No CTOR.
   void clear() { bits_ = 0; }
+  void setAll() { bits_ = ~(basic_int_t)0; }
   bool empty() const { return bits_ == 0; }
   // Returns true if the bit has changed from 0 to 1.
   bool setBit(uptr idx) {
@@ -84,6 +85,13 @@ class TwoLevelBitVector {
   void clear() {
     for (uptr i = 0; i < kLevel1Size; i++)
       l1_[i].clear();
+  }
+  void setAll() {
+    for (uptr i0 = 0; i0 < kLevel1Size; i0++) {
+      l1_[i0].setAll();
+      for (uptr i1 = 0; i1 < BV::kSize; i1++)
+        l2_[i0][i1].setAll();
+    }
   }
   bool empty() {
     for (uptr i = 0; i < kLevel1Size; i++)

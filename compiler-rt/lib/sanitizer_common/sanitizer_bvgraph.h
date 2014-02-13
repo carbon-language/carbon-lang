@@ -44,8 +44,8 @@ class BVGraph {
   }
 
   // Returns true if there is a path from the node 'from'
-  // to any of the nodes in 'target'.
-  bool isReachable(uptr from, const BV &target) {
+  // to any of the nodes in 'targets'.
+  bool isReachable(uptr from, const BV &targets) {
     BV to_visit, visited;
     to_visit.clear();
     to_visit.setUnion(v[from]);
@@ -56,7 +56,7 @@ class BVGraph {
       if (visited.setBit(idx))
         to_visit.setUnion(v[idx]);
     }
-    return target.intersectsWith(visited);
+    return targets.intersectsWith(visited);
   }
 
  private:

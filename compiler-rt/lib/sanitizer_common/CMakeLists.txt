@@ -51,6 +51,7 @@ set(SANITIZER_HEADERS
   sanitizer_common_interceptors_ioctl.inc
   sanitizer_common_interceptors_format.inc
   sanitizer_common_syscalls.inc
+  sanitizer_deadlock_detector.h
   sanitizer_flags.h
   sanitizer_internal_defs.h
   sanitizer_lfstack.h
