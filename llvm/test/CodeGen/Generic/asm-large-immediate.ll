@@ -1,4 +1,4 @@
-; RUN: llc < %s | FileCheck %s
+; RUN: llc -no-integrated-as < %s | FileCheck %s
 
 define void @test() {
 entry:

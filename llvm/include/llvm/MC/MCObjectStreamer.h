@@ -51,6 +51,9 @@ public:
   /// state management
   virtual void reset();
 
+  /// Object streamers require the integrated assembler.
+  virtual bool isIntegratedAssemblerRequired() const { return true; }
+
 protected:
   MCSectionData *getCurrentSectionData() const {
     return CurSectionData;

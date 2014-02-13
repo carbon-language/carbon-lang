@@ -1,4 +1,4 @@
-;RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+;RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon -no-integrated-as < %s | FileCheck %s
 
 define i64 @test_inline_constraint_r(i64 %base, i32 %offset) {
 ; CHECK-LABEL: test_inline_constraint_r:

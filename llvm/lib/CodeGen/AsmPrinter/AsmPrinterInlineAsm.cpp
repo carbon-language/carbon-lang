@@ -79,10 +79,15 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   if (isNullTerminated)
     Str = Str.substr(0, Str.size()-1);
 
-  // If the output streamer is actually a .s file, just emit the blob textually.
+  // If the output streamer does not have mature MC support or the integrated
+  // assembler has been disabled, just emit the blob textually.
+  // Otherwise parse the asm and emit it via MC support.
   // This is useful in case the asm parser doesn't handle something but the
   // system assembler does.
-  if (OutStreamer.hasRawTextSupport()) {
+  const MCAsmInfo *MCAI = TM.getMCAsmInfo();
+  assert(MCAI && "No MCAsmInfo");
+  if (!MCAI->useIntegratedAssembler() &&
+      !OutStreamer.isIntegratedAssemblerRequired()) {
     OutStreamer.EmitRawText(Str);
     emitInlineAsmEnd(TM.getSubtarget<MCSubtargetInfo>(), 0);
     return;

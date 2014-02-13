@@ -29,6 +29,8 @@ ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() {
 
   // Exceptions handling
   ExceptionsType = ExceptionHandling::SjLj;
+
+  UseIntegratedAssembler = true;
 }
 
 void ARMELFMCAsmInfo::anchor() { }
@@ -50,4 +52,6 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
 
   // foo(plt) instead of foo@plt
   UseParensForSymbolVariant = true;
+
+  UseIntegratedAssembler = true;
 }

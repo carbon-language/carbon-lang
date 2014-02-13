@@ -75,6 +75,8 @@ public:
   MCTargetStreamer(MCStreamer &S);
   virtual ~MCTargetStreamer();
 
+  const MCStreamer &getStreamer() { return Streamer; }
+
   // Allow a target to add behavior to the EmitLabel of MCStreamer.
   virtual void emitLabel(MCSymbol *Symbol);
 
@@ -232,6 +234,10 @@ public:
   /// hasRawTextSupport - Return true if this asm streamer supports emitting
   /// unformatted text to the .s file with EmitRawText.
   virtual bool hasRawTextSupport() const { return false; }
+
+  /// Is the integrated assembler required for this streamer to function
+  /// correctly?
+  virtual bool isIntegratedAssemblerRequired() const { return false; }
 
   /// AddComment - Add a comment that can be emitted to the generated .s
   /// file if applicable as a QoI issue to make the output of the compiler

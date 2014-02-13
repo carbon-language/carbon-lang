@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+vfp2 -no-integrated-as | FileCheck %s
 
 define i32 @foo(float %scale, float %scale2) nounwind {
 entry:

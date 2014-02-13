@@ -29,7 +29,7 @@ class Triple;
   class PPCLinuxMCAsmInfo : public MCAsmInfoELF {
     virtual void anchor();
   public:
-    explicit PPCLinuxMCAsmInfo(bool is64Bit);
+    explicit PPCLinuxMCAsmInfo(bool is64Bit, const Triple&);
   };
 
 } // namespace llvm
