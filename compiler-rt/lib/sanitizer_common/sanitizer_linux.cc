@@ -101,11 +101,19 @@ uptr internal_close(fd_t fd) {
 }
 
 uptr internal_open(const char *filename, int flags) {
+#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  return internal_syscall(__NR_openat, AT_FDCWD, (uptr)filename, flags);
+#else
   return internal_syscall(__NR_open, (uptr)filename, flags);
+#endif
 }
 
 uptr internal_open(const char *filename, int flags, u32 mode) {
+#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  return internal_syscall(__NR_openat, AT_FDCWD, (uptr)filename, flags, mode);
+#else
   return internal_syscall(__NR_open, (uptr)filename, flags, mode);
+#endif
 }
 
 uptr OpenFile(const char *filename, bool write) {
@@ -146,7 +154,9 @@ static void stat64_to_stat(struct stat64 *in, struct stat *out) {
 #endif
 
 uptr internal_stat(const char *path, void *buf) {
-#if SANITIZER_LINUX_USES_64BIT_SYSCALLS
+#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  return internal_syscall(__NR_newfstatat, AT_FDCWD, (uptr)path, (uptr)buf, 0);
+#elif SANITIZER_LINUX_USES_64BIT_SYSCALLS
   return internal_syscall(__NR_stat, (uptr)path, (uptr)buf);
 #else
   struct stat64 buf64;
@@ -157,7 +167,10 @@ uptr internal_stat(const char *path, void *buf) {
 }
 
 uptr internal_lstat(const char *path, void *buf) {
-#if SANITIZER_LINUX_USES_64BIT_SYSCALLS
+#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  return internal_syscall(__NR_newfstatat, AT_FDCWD, (uptr)path,
+                         (uptr)buf, AT_SYMLINK_NOFOLLOW);
+#elif SANITIZER_LINUX_USES_64BIT_SYSCALLS
   return internal_syscall(__NR_lstat, (uptr)path, (uptr)buf);
 #else
   struct stat64 buf64;
@@ -186,15 +199,28 @@ uptr internal_filesize(fd_t fd) {
 }
 
 uptr internal_dup2(int oldfd, int newfd) {
+#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  return internal_syscall(__NR_dup3, oldfd, newfd, 0);
+#else
   return internal_syscall(__NR_dup2, oldfd, newfd);
+#endif
 }
 
 uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
+#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  return internal_syscall(__NR_readlinkat, AT_FDCWD,
+                               (uptr)path, (uptr)buf, bufsize);
+#else
   return internal_syscall(__NR_readlink, (uptr)path, (uptr)buf, bufsize);
+#endif
 }
 
 uptr internal_unlink(const char *path) {
+#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  return internal_syscall(__NR_unlinkat, AT_FDCWD, (uptr)path, 0);
+#else
   return internal_syscall(__NR_unlink, (uptr)path);
+#endif
 }
 
 uptr internal_sched_yield() {
@@ -213,11 +239,17 @@ uptr internal_execve(const char *filename, char *const argv[],
 
 // ----------------- sanitizer_common.h
 bool FileExists(const char *filename) {
+#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  struct stat st;
+  if (internal_syscall(__NR_newfstatat, AT_FDCWD, filename, &st, 0))
+    return false;
+#else
   struct stat st;
   if (internal_stat(filename, &st))
     return false;
   // Sanity check: filename is a regular file.
   return S_ISREG(st.st_mode);
+#endif
 }
 
 uptr GetTid() {
@@ -389,7 +421,11 @@ uptr internal_getppid() {
 }
 
 uptr internal_getdents(fd_t fd, struct linux_dirent *dirp, unsigned int count) {
+#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  return internal_syscall(__NR_getdents64, fd, (uptr)dirp, count);
+#else
   return internal_syscall(__NR_getdents, fd, (uptr)dirp, count);
+#endif
 }
 
 uptr internal_lseek(fd_t fd, OFF_T offset, int whence) {

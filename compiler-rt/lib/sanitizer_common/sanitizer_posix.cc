@@ -38,6 +38,8 @@ uptr GetMaxVirtualAddress() {
   // Note that with 'ulimit -s unlimited' the stack is moved away from the top
   // of the address space, so simply checking the stack address is not enough.
   return (1ULL << 44) - 1;  // 0x00000fffffffffffUL
+# elif defined(__aarch64__)
+  return (1ULL << 39) - 1;
 # else
   return (1ULL << 47) - 1;  // 0x00007fffffffffffUL;
 # endif

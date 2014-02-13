@@ -63,6 +63,10 @@ namespace __sanitizer {
   const unsigned struct___old_kernel_stat_sz = 32;
   const unsigned struct_kernel_stat_sz = 64;
   const unsigned struct_kernel_stat64_sz = 104;
+#elif defined(__aarch64__)
+  const unsigned struct___old_kernel_stat_sz = 32;
+  const unsigned struct_kernel_stat_sz = 128;
+  const unsigned struct_kernel_stat64_sz = 104;
 #elif defined(__powerpc__) && !defined(__powerpc64__)
   const unsigned struct___old_kernel_stat_sz = 32;
   const unsigned struct_kernel_stat_sz = 72;
@@ -343,7 +347,7 @@ namespace __sanitizer {
   typedef long __sanitizer___kernel_off_t;
 #endif
 
-#if defined(__powerpc__)
+#if defined(__powerpc__) || defined(__aarch64__)
   typedef unsigned int __sanitizer___kernel_old_uid_t;
   typedef unsigned int __sanitizer___kernel_old_gid_t;
 #else
