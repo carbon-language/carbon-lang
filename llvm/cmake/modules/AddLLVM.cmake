@@ -163,9 +163,12 @@ function(set_output_directory target bindir libdir)
 endfunction()
 
 # llvm_add_library(name sources...
-#   MODULE;SHARED;STATIC
+#   SHARED;STATIC
 #     STATIC by default w/o BUILD_SHARED_LIBS.
 #     SHARED by default w/  BUILD_SHARED_LIBS.
+#   MODULE
+#     Target ${name} might not be created on unsupported platforms.
+#     Check with "if(TARGET ${name})".
 #   OUTPUT_NAME name
 #     Corresponds to OUTPUT_NAME in target properties.
 #   DEPENDS targets...
@@ -193,6 +196,10 @@ function(llvm_add_library name)
   if(ARG_MODULE)
     if(ARG_SHARED OR ARG_STATIC)
       message(WARNING "MODULE with SHARED|STATIC doesn't make sense.")
+    endif()
+    if(NOT LLVM_ON_UNIX OR CYGWIN)
+      message(STATUS "${name} ignored -- Loadable modules not supported on this platform.")
+      return()
     endif()
   else()
     if(BUILD_SHARED_LIBS AND NOT ARG_STATIC)
@@ -281,14 +288,11 @@ macro(add_llvm_library name)
 endmacro(add_llvm_library name)
 
 macro(add_llvm_loadable_module name)
-  if( NOT LLVM_ON_UNIX OR CYGWIN )
-    message(STATUS "Loadable modules not supported on this platform.
-${name} ignored.")
+  llvm_add_library(${name} MODULE ${ARGN})
+  if(NOT TARGET ${name})
     # Add empty "phony" target
     add_custom_target(${name})
   else()
-    llvm_add_library(${name} MODULE ${ARGN})
-
     if( EXCLUDE_FROM_ALL )
       set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
     else()
