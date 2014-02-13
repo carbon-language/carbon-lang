@@ -146,6 +146,10 @@ the configuration (without a prefix: ``Auto``).
     Like ``Attach``, but break before function definitions.
   * ``BS_Allman`` (in configuration: ``Allman``)
     Always break before braces.
+  * ``BS_GNU`` (in configuration: ``GNU``)
+    Always break before braces and add an extra level of indentation to
+    braces of control statements, not to those of class, function
+    or other definitions.
 
 
 **BreakBeforeTernaryOperators** (``bool``)
@@ -161,6 +165,10 @@ the configuration (without a prefix: ``Auto``).
   A column limit of ``0`` means that there is no column limit. In this case,
   clang-format will respect the input's line breaking decisions within
   statements unless they contradict other rules.
+
+**CommentPragmas** (``std::string``)
+  A regular expression that describes comments with special meaning,
+  which should not be split into lines or otherwise changed.
 
 **ConstructorInitializerAllOnOneLineOrOnePerLine** (``bool``)
   If the constructor initializers don't fit on a line, put each
@@ -189,7 +197,8 @@ the configuration (without a prefix: ``Auto``).
   a zero-length name is assumed.
 
 **DerivePointerBinding** (``bool``)
-  If ``true``, analyze the formatted file for the most common binding.
+  If ``true``, analyze the formatted file for the most common binding
+  and use ``PointerBindsToType`` only as fallback.
 
 **ExperimentalAutoDetectBinPacking** (``bool``)
   If ``true``, clang-format detects whether function calls and
@@ -227,6 +236,9 @@ the configuration (without a prefix: ``Auto``).
     Should be used for C, C++, ObjectiveC, ObjectiveC++.
   * ``LK_JavaScript`` (in configuration: ``JavaScript``)
     Should be used for JavaScript.
+  * ``LK_Proto`` (in configuration: ``Proto``)
+    Should be used for Protocol Buffers
+    (https://developers.google.com/protocol-buffers/).
 
 
 **MaxEmptyLinesToKeep** (``unsigned``)
@@ -244,6 +256,10 @@ the configuration (without a prefix: ``Auto``).
   * ``NI_All`` (in configuration: ``All``)
     Indent in all namespaces.
 
+
+**ObjCSpaceAfterProperty** (``bool``)
+  Add a space after ``@property`` in Objective-C, i.e. use
+  ``@property (readonly)`` instead of ``@property(readonly)``.
 
 **ObjCSpaceBeforeProtocolList** (``bool``)
   Add a space in front of an Objective-C protocol list, i.e. use
@@ -292,7 +308,7 @@ the configuration (without a prefix: ``Auto``).
 
 
 **SpaceInEmptyParentheses** (``bool``)
-  If ``false``, spaces may be inserted into '()'.
+  If ``true``, spaces may be inserted into '()'.
 
 **SpacesBeforeTrailingComments** (``unsigned``)
   The number of spaces to before trailing line comments.
@@ -302,7 +318,11 @@ the configuration (without a prefix: ``Auto``).
   template argument lists
 
 **SpacesInCStyleCastParentheses** (``bool``)
-  If ``false``, spaces may be inserted into C style casts.
+  If ``true``, spaces may be inserted into C style casts.
+
+**SpacesInContainerLiterals** (``bool``)
+  If ``true``, spaces are inserted inside container literals (e.g.
+  ObjC and Javascript array and dict literals).
 
 **SpacesInParentheses** (``bool``)
   If ``true``, spaces will be inserted after '(' and before ')'.

@@ -76,7 +76,8 @@ struct FormatStyle {
   /// \brief Set whether & and * bind to the type as opposed to the variable.
   bool PointerBindsToType;
 
-  /// \brief If \c true, analyze the formatted file for the most common binding.
+  /// \brief If \c true, analyze the formatted file for the most common binding
+  /// and use \c PointerBindsToType only as fallback.
   bool DerivePointerBinding;
 
   /// \brief The extra indent or outdent of access modifiers, e.g. \c public:.
