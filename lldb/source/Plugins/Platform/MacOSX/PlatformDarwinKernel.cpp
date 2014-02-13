@@ -257,6 +257,8 @@ PlatformDarwinKernel::PlatformDarwinKernel (lldb_private::LazyBool is_ios_debug_
     {
         SearchForKexts ();
     }
+    m_trap_handlers.push_back(ConstString ("trap_from_kernel"));
+    m_trap_handlers.push_back(ConstString ("hndl_double_fault"));
 }
 
 //------------------------------------------------------------------

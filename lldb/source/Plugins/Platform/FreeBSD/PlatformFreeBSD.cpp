@@ -142,8 +142,10 @@ PlatformFreeBSD::Terminate ()
 /// Default Constructor
 //------------------------------------------------------------------
 PlatformFreeBSD::PlatformFreeBSD (bool is_host) :
-Platform(is_host)
+Platform(is_host),
+m_remote_platform_sp()
 {
+    m_trap_handlers.push_back (ConstString ("_sigtramp"));
 }
 
 //------------------------------------------------------------------

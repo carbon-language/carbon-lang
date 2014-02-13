@@ -135,6 +135,7 @@ PlatformRemoteGDBServer::PlatformRemoteGDBServer () :
     Platform(false), // This is a remote platform
     m_gdb_client(true)
 {
+    m_trap_handlers.push_back (ConstString ("_sigtramp"));
 }
 
 //------------------------------------------------------------------

@@ -835,6 +835,32 @@ namespace lldb_private {
             return LLDB_INVALID_QUEUE_ID;
         }
 
+        //------------------------------------------------------------------
+        /// Provide a list of trap handler function names for this platform
+        ///
+        /// The unwinder needs to treat trap handlers specially -- the stack
+        /// frame may not be aligned correctly for a trap handler (the kernel
+        /// often won't perturb the stack pointer, or won't re-align it properly,
+        /// in the process of calling the handler) and the frame above the handler
+        /// needs to be treated by the unwinder's "frame 0" rules instead of its
+        /// "middle of the stack frame" rules.
+        /// 
+        /// In a user process debugging scenario, the list of trap handlers is
+        /// typically just "_sigtramp".
+        ///
+        /// The Platform base class provides the m_trap_handlers ivar but it does
+        /// not populate it.  Subclasses should add the names of the asynchronous
+        /// signal handler routines as needed.  For most Unix platforms, add _sigtramp.
+        ///
+        /// @return
+        ///     A list of symbol names.  The list may be empty.
+        //------------------------------------------------------------------
+        virtual const std::vector<ConstString> &
+        GetTrapHandlerSymbolNames ()
+        {
+            return m_trap_handlers;
+        }
+
     protected:
         bool m_is_host;
         // Set to true when we are able to actually set the OS version while 
@@ -867,6 +893,7 @@ namespace lldb_private {
         std::string m_ssh_opts;
         bool m_ignores_remote_hostname;
         std::string m_local_cache_directory;
+        std::vector<ConstString> m_trap_handlers;
 
         const char *
         GetCachedUserName (uint32_t uid)
@@ -1115,7 +1142,9 @@ namespace lldb_private {
         
         bool m_ssh;
         std::string m_ssh_opts;
+
     private:
+
         DISALLOW_COPY_AND_ASSIGN(OptionGroupPlatformSSH);
     };
     

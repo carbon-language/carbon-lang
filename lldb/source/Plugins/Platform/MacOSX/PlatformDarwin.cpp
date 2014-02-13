@@ -40,6 +40,7 @@ PlatformDarwin::PlatformDarwin (bool is_host) :
     PlatformPOSIX(is_host),  // This is the local host platform
     m_developer_directory ()
 {
+    m_trap_handlers.push_back (ConstString ("_sigtramp"));
 }
 
 //------------------------------------------------------------------

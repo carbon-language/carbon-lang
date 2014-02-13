@@ -255,7 +255,8 @@ Platform::Platform (bool is_host) :
     m_rsync_prefix (),
     m_supports_ssh (false),
     m_ssh_opts (),
-    m_ignores_remote_hostname (false)
+    m_ignores_remote_hostname (false),
+    m_trap_handlers()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)

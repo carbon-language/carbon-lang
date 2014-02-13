@@ -73,7 +73,7 @@ public:
     IsValid () const;
 
     bool
-    IsSigtrampFrame () const;
+    IsTrapHandlerFrame () const;
 
     bool
     GetCFA (lldb::addr_t& cfa);
@@ -89,7 +89,7 @@ private:
     enum FrameType
     {
         eNormalFrame,
-        eSigtrampFrame,
+        eTrapHandlerFrame,
         eDebuggerFrame,  // a debugger inferior function call frame; we get caller's registers from debugger
         eSkipFrame,      // The unwind resulted in a bogus frame but may get back on track so we don't want to give up yet
         eNotAValidFrame  // this frame is invalid for some reason - most likely it is past the top (end) of the stack

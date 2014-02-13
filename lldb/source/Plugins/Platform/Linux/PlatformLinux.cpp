@@ -307,6 +307,7 @@ PlatformLinux::PlatformLinux (bool is_host) :
     Platform(is_host),  // This is the local host platform
     m_remote_platform_sp ()
 {
+    m_trap_handlers.push_back (ConstString ("_sigtramp"));
 }
 
 //------------------------------------------------------------------
