@@ -287,12 +287,6 @@ ${name} ignored.")
     llvm_add_library(${name} MODULE ${ARGN})
     set_target_properties( ${name} PROPERTIES PREFIX "" )
 
-    if (APPLE)
-      # Darwin-specific linker flags for loadable modules.
-      set_property(TARGET ${name} APPEND_STRING PROPERTY
-        LINK_FLAGS " -Wl,-flat_namespace -Wl,-undefined -Wl,suppress")
-    endif()
-
     if( EXCLUDE_FROM_ALL )
       set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
     else()
