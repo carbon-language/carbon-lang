@@ -31,8 +31,7 @@ Optional<std::pair<std::string, int> >
 LockFileManager::readLockFile(StringRef LockFileName) {
   // Check whether the lock file exists. If not, clearly there's nothing
   // to read, so we just return.
-  bool Exists = false;
-  if (sys::fs::exists(LockFileName, Exists) || !Exists)
+  if (!sys::fs::exists(LockFileName))
     return None;
 
   // Read the owning host and PID out of the lock file. If it appears that the
@@ -189,23 +188,22 @@ void LockFileManager::waitForUnlock() {
 #else
     nanosleep(&Interval, NULL);
 #endif
-    bool Exists = false;
     bool LockFileJustDisappeared = false;
 
     // If the lock file is still expected to be there, check whether it still
     // is.
     if (!LockFileGone) {
+      bool Exists;
       if (!sys::fs::exists(LockFileName.str(), Exists) && !Exists) {
         LockFileGone = true;
         LockFileJustDisappeared = true;
-        Exists = false;
       }
     }
 
     // If the lock file is no longer there, check if the original file is
     // available now.
     if (LockFileGone) {
-      if (!sys::fs::exists(FileName.str(), Exists) && Exists) {
+      if (sys::fs::exists(FileName.str())) {
         return;
       }
 
