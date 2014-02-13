@@ -43,9 +43,10 @@
 struct CovData {
   BlockingMutex mu;
   InternalMmapVector<uptr> v;
+  atomic_uint32_t guard;
 };
 
-static uptr cov_data_placeholder[sizeof(CovData) / sizeof(uptr)];
+static uptr cov_data_placeholder[(sizeof(CovData) / sizeof(uptr)) + 1];
 COMPILER_CHECK(sizeof(cov_data_placeholder) >= sizeof(CovData));
 static CovData *cov_data = reinterpret_cast<CovData*>(cov_data_placeholder);
 
@@ -65,6 +66,7 @@ static inline bool CompareLess(const uptr &a, const uptr &b) {
 // Dump the coverage on disk.
 void CovDump() {
 #if !SANITIZER_WINDOWS
+  if (atomic_fetch_add(&cov_data->guard, 1, memory_order_relaxed) != 0) return;
   BlockingMutexLock lock(&cov_data->mu);
   InternalMmapVector<uptr> &v = cov_data->v;
   InternalSort(&v, v.size(), CompareLess);

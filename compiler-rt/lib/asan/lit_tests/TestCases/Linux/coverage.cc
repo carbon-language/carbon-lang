@@ -6,6 +6,9 @@
 // RUN: %t bar 2>&1     | FileCheck %s --check-prefix=CHECK-bar
 // RUN: %t foo bar 2>&1 | FileCheck %s --check-prefix=CHECK-foo-bar
 // RUN: not %t foo bar 1 2  2>&1 | FileCheck %s --check-prefix=CHECK-report
+//
+// https://code.google.com/p/address-sanitizer/issues/detail?id=263
+// XFAIL: android
 
 #include <stdio.h>
 #include <string.h>
