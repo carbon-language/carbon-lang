@@ -1737,6 +1737,24 @@ static StringRef getArchNameForCompilerRTLib(const ToolChain &TC) {
     return TC.getArchName();
 }
 
+// This adds the static libclang_rt.arch.a directly to the command line
+// FIXME: Make sure we can also emit shared objects if they're requested
+// and available, check for possible errors, etc.
+static void addClangRTLinux(
+    const ToolChain &TC, const ArgList &Args, ArgStringList &CmdArgs) {
+  // The runtime is located in the Linux library directory and has name
+  // "libclang_rt.<ArchName>.a".
+  SmallString<128> LibProfile(TC.getDriver().ResourceDir);
+  llvm::sys::path::append(
+      LibProfile, "lib", "linux",
+      Twine("libclang_rt.") + getArchNameForCompilerRTLib(TC) + ".a");
+
+  CmdArgs.push_back(Args.MakeArgString(LibProfile));
+  CmdArgs.push_back("-lgcc_s");
+  if (TC.getDriver().CCCIsCXX())
+    CmdArgs.push_back("-lgcc_eh");
+}
+
 static void addProfileRTLinux(
     const ToolChain &TC, const ArgList &Args, ArgStringList &CmdArgs) {
   if (!(Args.hasArg(options::OPT_fprofile_arcs) ||
@@ -6534,6 +6552,23 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
     return "/lib64/ld-linux-x86-64.so.2";
 }
 
+static void AddRunTimeLibs(const ToolChain &TC, const Driver &D,
+                      ArgStringList &CmdArgs, const ArgList &Args) {
+  // Make use of compiler-rt if --rtlib option is used
+  ToolChain::RuntimeLibType RLT = TC.GetRuntimeLibType(Args);
+
+  switch(RLT) {
+  case ToolChain::RLT_CompilerRT:
+    addClangRTLinux(TC, Args, CmdArgs);
+    break;
+  case ToolChain::RLT_Libgcc:
+    AddLibgcc(TC.getTriple(), D, CmdArgs, Args);
+    break;
+  default:
+    llvm_unreachable("Unknown RT-Lib type");
+  }
+}
+
 void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                   const InputInfo &Output,
                                   const InputInfoList &Inputs,
@@ -6737,7 +6772,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back("-lrt");
       }
 
-      AddLibgcc(ToolChain.getTriple(), D, CmdArgs, Args);
+      AddRunTimeLibs(ToolChain, D, CmdArgs, Args);
 
       if (Args.hasArg(options::OPT_pthread) ||
           Args.hasArg(options::OPT_pthreads) || OpenMP)
@@ -6748,7 +6783,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
       if (Args.hasArg(options::OPT_static))
         CmdArgs.push_back("--end-group");
       else
-        AddLibgcc(ToolChain.getTriple(), D, CmdArgs, Args);
+        AddRunTimeLibs(ToolChain, D, CmdArgs, Args);
     }
 
     if (!Args.hasArg(options::OPT_nostartfiles)) {
