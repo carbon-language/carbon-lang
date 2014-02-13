@@ -56,6 +56,8 @@ class BasicBitVector {
     return bits_ != old;
   }
 
+  void copyFrom(const BasicBitVector &v) { bits_ = v.bits_; }
+
   // Returns true if 'this' intersects with 'v'.
   bool intersectsWith(const BasicBitVector &v) const { return bits_ & v.bits_; }
 
@@ -163,6 +165,11 @@ class TwoLevelBitVector {
       }
     }
     return res;
+  }
+
+  void copyFrom(const TwoLevelBitVector &v) {
+    clear();
+    setUnion(v);
   }
 
   // Returns true if 'this' intersects with 'v'.

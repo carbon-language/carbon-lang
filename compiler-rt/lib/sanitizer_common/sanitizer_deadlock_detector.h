@@ -59,6 +59,8 @@ class DeadlockDetectorTLS {
 // DeadlockDetector.
 // For deadlock detection to work we need one global DeadlockDetector object
 // and one DeadlockDetectorTLS object per evey thread.
+// This class is not thread safe, all concurrent accesses should be guarded
+// by an external lock.
 template <class BV>
 class DeadlockDetector {
  public:

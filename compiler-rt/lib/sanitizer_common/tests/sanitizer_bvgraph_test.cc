@@ -61,7 +61,16 @@ TEST(SanitizerCommon, BVGraph) {
       from = my_rand() % g.size();
       bool is_reachable = g.isReachable(from, target);
       if (is_reachable) {
-        // printf("reachable: %d %zd\n", it, from);
+        uptr path[BV::kSize];
+        uptr len;
+        for (len = 1; len < BV::kSize; len++) {
+          if (g.findPath(from, target, path, len) == len)
+            break;
+        }
+        EXPECT_LT(len, BV::kSize);
+        EXPECT_TRUE(target.getBit(path[len - 1]));
+        // fprintf(stderr, "reachable: %zd; path %zd {%zd %zd %zd}\n",
+        //        from, len, path[0], path[1], path[2]);
         num_reachable++;
       }
     }
@@ -71,6 +80,7 @@ TEST(SanitizerCommon, BVGraph) {
 
 TEST(SanitizerCommon, BVGraph_isReachable) {
   typedef TwoLevelBitVector<> BV;
+  uptr path[5];
   BVGraph<BV> g;
   g.clear();
   BV target;
@@ -103,6 +113,13 @@ TEST(SanitizerCommon, BVGraph_isReachable) {
   EXPECT_TRUE(g.isReachable(f1, target));
   EXPECT_FALSE(g.isReachable(f2, target));
   EXPECT_FALSE(g.isReachable(f3, target));
+  EXPECT_EQ(g.findPath(f0, target, path, ARRAY_SIZE(path)), 3U);
+  EXPECT_EQ(path[0], f0);
+  EXPECT_EQ(path[1], f1);
+  EXPECT_EQ(path[2], t0);
+  EXPECT_EQ(g.findPath(f1, target, path, ARRAY_SIZE(path)), 2U);
+  EXPECT_EQ(path[0], f1);
+  EXPECT_EQ(path[1], t0);
 
   g.addEdge(f3, t1);
   EXPECT_TRUE(g.isReachable(f0, target));
