@@ -69,10 +69,10 @@ bool SITypeRewriter::runOnFunction(Function &F) {
     StringRef Str = A.getValueAsString();
     Str.getAsInteger(0, ShaderType);
   }
-  if (ShaderType != ShaderType::COMPUTE) {
-    visit(F);
-  }
+  if (ShaderType == ShaderType::COMPUTE)
+    return false;
 
+  visit(F);
   visit(F);
 
   return false;
