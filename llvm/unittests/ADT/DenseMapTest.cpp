@@ -119,7 +119,7 @@ TYPED_TEST(DenseMapTest, EmptyIntMapTest) {
   // Lookup tests
   EXPECT_FALSE(this->Map.count(this->getKey()));
   EXPECT_TRUE(this->Map.find(this->getKey()) == this->Map.end());
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) || defined(__clang__)
   EXPECT_EQ(typename TypeParam::mapped_type(),
             this->Map.lookup(this->getKey()));
 #else
