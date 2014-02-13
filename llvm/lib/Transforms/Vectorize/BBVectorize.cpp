@@ -1043,22 +1043,13 @@ namespace {
           // of constants.
           Value *IOp = I->getOperand(1);
           Value *JOp = J->getOperand(1);
-          if (ConstantDataVector *CDVI = dyn_cast<ConstantDataVector>(IOp)) {
-            if (ConstantDataVector *CDVJ = dyn_cast<ConstantDataVector>(JOp)) {
-              Op2VK = TargetTransformInfo::OK_NonUniformConstantValue;
-              Constant *SplatValue = CDVI->getSplatValue();
-              if (SplatValue != NULL && SplatValue == CDVJ->getSplatValue())
-                Op2VK = TargetTransformInfo::OK_UniformConstantValue;
-            }
-          }
-
-          if (ConstantVector *CVI = dyn_cast<ConstantVector>(IOp)) {
-            if (ConstantVector *CVJ = dyn_cast<ConstantVector>(JOp)) {
-              Op2VK = TargetTransformInfo::OK_NonUniformConstantValue;
-              Constant *SplatValue = CVI->getSplatValue();
-              if (SplatValue != NULL && SplatValue == CVJ->getSplatValue())
-                Op2VK = TargetTransformInfo::OK_UniformConstantValue;
-            }
+          if ((isa<ConstantVector>(IOp) || isa<ConstantDataVector>(IOp)) &&
+              (isa<ConstantVector>(JOp) || isa<ConstantDataVector>(JOp))) {
+            Op2VK = TargetTransformInfo::OK_NonUniformConstantValue;
+            Constant *SplatValue = cast<Constant>(IOp)->getSplatValue();
+            if (SplatValue != NULL &&
+                SplatValue == cast<Constant>(JOp)->getSplatValue())
+              Op2VK = TargetTransformInfo::OK_UniformConstantValue;
           }
         }
       }

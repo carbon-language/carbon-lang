@@ -5496,13 +5496,9 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     // Check for a splat of a constant or for a non uniform vector of constants.
     if (isa<ConstantInt>(Op2))
       Op2VK = TargetTransformInfo::OK_UniformConstantValue;
-    else if (ConstantDataVector *CDV = dyn_cast<ConstantDataVector>(Op2)) {
+    else if (isa<ConstantVector>(Op2) || isa<ConstantDataVector>(Op2)) {
       Op2VK = TargetTransformInfo::OK_NonUniformConstantValue;
-      if (CDV->getSplatValue() != NULL)
-        Op2VK = TargetTransformInfo::OK_UniformConstantValue;
-    } else if (ConstantVector *CV = dyn_cast<ConstantVector>(Op2)) {
-      Op2VK = TargetTransformInfo::OK_NonUniformConstantValue;
-      if (CV->getSplatValue() != NULL)
+      if (cast<Constant>(Op2)->getSplatValue() != NULL)
         Op2VK = TargetTransformInfo::OK_UniformConstantValue;
     }
 
