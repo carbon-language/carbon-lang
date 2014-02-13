@@ -45,15 +45,6 @@ using llvm::sys::windows::UTF8ToUTF16;
 using llvm::sys::windows::UTF16ToUTF8;
 
 namespace {
-  typedef BOOLEAN (WINAPI *PtrCreateSymbolicLinkW)(
-    /*__in*/ LPCWSTR lpSymlinkFileName,
-    /*__in*/ LPCWSTR lpTargetFileName,
-    /*__in*/ DWORD dwFlags);
-
-  PtrCreateSymbolicLinkW create_symbolic_link_api =
-      PtrCreateSymbolicLinkW(::GetProcAddress(
-          ::GetModuleHandleW(L"Kernel32.dll"), "CreateSymbolicLinkW"));
-
   error_code TempDir(SmallVectorImpl<wchar_t> &result) {
   retry_temp_dir:
     DWORD len = ::GetTempPathW(result.capacity(), result.begin());
@@ -307,29 +298,6 @@ error_code create_hard_link(const Twine &to, const Twine &from) {
   if (error_code ec = UTF8ToUTF16(t, wide_to)) return ec;
 
   if (!::CreateHardLinkW(wide_from.begin(), wide_to.begin(), NULL))
-    return windows_error(::GetLastError());
-
-  return error_code::success();
-}
-
-error_code create_symlink(const Twine &to, const Twine &from) {
-  // Only do it if the function is available at runtime.
-  if (!create_symbolic_link_api)
-    return make_error_code(errc::function_not_supported);
-
-  // Get arguments.
-  SmallString<128> from_storage;
-  SmallString<128> to_storage;
-  StringRef f = from.toStringRef(from_storage);
-  StringRef t = to.toStringRef(to_storage);
-
-  // Convert to utf-16.
-  SmallVector<wchar_t, 128> wide_from;
-  SmallVector<wchar_t, 128> wide_to;
-  if (error_code ec = UTF8ToUTF16(f, wide_from)) return ec;
-  if (error_code ec = UTF8ToUTF16(t, wide_to)) return ec;
-
-  if (!create_symbolic_link_api(wide_from.begin(), wide_to.begin(), 0))
     return windows_error(::GetLastError());
 
   return error_code::success();

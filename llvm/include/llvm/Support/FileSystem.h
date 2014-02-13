@@ -308,14 +308,6 @@ inline error_code create_directory(const Twine &Path) {
 ///          , otherwise a platform specific error_code.
 error_code create_hard_link(const Twine &to, const Twine &from);
 
-/// @brief Create a symbolic link from \a from to \a to.
-///
-/// @param to The path to symbolically link to.
-/// @param from The path to symbolically link from. This is created.
-/// @returns errc::success if exists(to) && exists(from) && is_symlink(from),
-///          otherwise a platform specific error_code.
-error_code create_symlink(const Twine &to, const Twine &from);
-
 /// @brief Get the current path.
 ///
 /// @param result Holds the current path on return.
