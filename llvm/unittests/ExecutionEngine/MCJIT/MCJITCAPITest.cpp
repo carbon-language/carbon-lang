@@ -322,6 +322,6 @@ TEST_F(MCJITCAPITest, reserve_allocation_space) {
   EXPECT_LE(MM->UsedDataSizeRO, MM->ReservedDataSizeRO);
   EXPECT_LE(MM->UsedDataSizeRW, MM->ReservedDataSizeRW);
   EXPECT_TRUE(MM->UsedCodeSize > 0); 
-  EXPECT_TRUE(MM->UsedDataSizeRO > 0);
+  EXPECT_TRUE(MM->UsedDataSizeRO >= 0);
   EXPECT_TRUE(MM->UsedDataSizeRW > 0);
 }
