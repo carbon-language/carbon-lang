@@ -2826,8 +2826,12 @@ clang_parseTranslationUnit(CXIndex CIdx,
       CIdx, source_filename, command_line_args, num_command_line_args,
       unsaved_files, num_unsaved_files, options, &TU);
   (void)Result;
-  assert((TU && Result == CXError_Success) ||
-         (!TU && Result != CXError_Success));
+
+  // FIXME: This probably papers over a problem. If the result is not success,
+  // no TU should be set.
+  if (Result != CXError_Success)
+    return 0;
+
   return TU;
 }
 
