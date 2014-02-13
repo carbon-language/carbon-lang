@@ -153,7 +153,7 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
     (*I)->registerPPCallbacks(Compiler);
 
   SmallVector<ASTConsumer *, 2> Consumers;
-  if (CheckFactories->empty())
+  if (!CheckFactories->empty())
     Consumers.push_back(Finder.newASTConsumer());
 
   AnalyzerOptionsRef Options = Compiler.getAnalyzerOpts();
