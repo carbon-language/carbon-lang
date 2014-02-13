@@ -221,7 +221,10 @@ function(llvm_add_library name)
   endif()
 
   if(ARG_MODULE)
-    set_property(TARGET ${name} PROPERTY SUFFIX ${LLVM_PLUGIN_EXT})
+    set_target_properties(${name} PROPERTIES
+      PREFIX ""
+      SUFFIX ${LLVM_PLUGIN_EXT}
+      )
   endif()
 
   if(ARG_SHARED)
@@ -285,7 +288,6 @@ ${name} ignored.")
     add_custom_target(${name})
   else()
     llvm_add_library(${name} MODULE ${ARGN})
-    set_target_properties( ${name} PROPERTIES PREFIX "" )
 
     if( EXCLUDE_FROM_ALL )
       set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
