@@ -152,18 +152,24 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
        I != E; ++I)
     (*I)->registerPPCallbacks(Compiler);
 
+  SmallVector<ASTConsumer *, 2> Consumers;
+  if (CheckFactories->empty())
+    Consumers.push_back(Finder.newASTConsumer());
+
   AnalyzerOptionsRef Options = Compiler.getAnalyzerOpts();
   Options->CheckersControlList = getCheckersControlList();
-  Options->AnalysisStoreOpt = RegionStoreModel;
-  Options->AnalysisDiagOpt = PD_NONE;
-  Options->AnalyzeNestedBlocks = true;
-  Options->eagerlyAssumeBinOpBifurcation = true;
-  ento::AnalysisASTConsumer *AnalysisConsumer = ento::CreateAnalysisConsumer(
-      Compiler.getPreprocessor(), Compiler.getFrontendOpts().OutputFile,
-      Options, Compiler.getFrontendOpts().Plugins);
-  AnalysisConsumer->AddDiagnosticConsumer(
-      new AnalyzerDiagnosticConsumer(Context));
-  ASTConsumer *Consumers[] = { Finder.newASTConsumer(), AnalysisConsumer };
+  if (!Options->CheckersControlList.empty()) {
+    Options->AnalysisStoreOpt = RegionStoreModel;
+    Options->AnalysisDiagOpt = PD_NONE;
+    Options->AnalyzeNestedBlocks = true;
+    Options->eagerlyAssumeBinOpBifurcation = true;
+    ento::AnalysisASTConsumer *AnalysisConsumer = ento::CreateAnalysisConsumer(
+        Compiler.getPreprocessor(), Compiler.getFrontendOpts().OutputFile,
+        Options, Compiler.getFrontendOpts().Plugins);
+    AnalysisConsumer->AddDiagnosticConsumer(
+        new AnalyzerDiagnosticConsumer(Context));
+    Consumers.push_back(AnalysisConsumer);
+  }
   return new MultiplexConsumer(Consumers);
 }
 

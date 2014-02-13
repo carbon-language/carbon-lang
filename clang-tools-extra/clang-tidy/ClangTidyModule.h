@@ -90,6 +90,7 @@ public:
   typedef std::map<std::string, CheckFactoryBase *> FactoryMap;
   FactoryMap::const_iterator begin() const { return Factories.begin(); }
   FactoryMap::const_iterator end() const { return Factories.end(); }
+  bool empty() const { return Factories.empty(); }
 
 private:
   FactoryMap Factories;
