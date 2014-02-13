@@ -3018,7 +3018,8 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
       // Give the aliasee the name, linkage and other attributes of the alias.
       Target->takeName(J);
       Target->setLinkage(J->getLinkage());
-      Target->GlobalValue::copyAttributesFrom(J);
+      Target->setVisibility(J->getVisibility());
+      Target->setDLLStorageClass(J->getDLLStorageClass());
 
       if (Used.usedErase(J))
         Used.usedInsert(Target);

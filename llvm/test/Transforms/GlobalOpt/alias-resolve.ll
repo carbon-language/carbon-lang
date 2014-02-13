@@ -1,7 +1,4 @@
-; We use a temporary file so that the test fails when opt crashes.
-
-; RUN: opt < %s -globalopt -S > %t
-; RUN: FileCheck %s < %t
+; RUN: opt < %s -globalopt -S | FileCheck %s
 
 @foo1 = alias void ()* @foo2
 ; CHECK: @foo1 = alias void ()* @foo2
