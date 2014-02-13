@@ -666,22 +666,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // Check for constant LHS & RHS - in this case we just simplify.
     bool Zext = (II->getIntrinsicID() == Intrinsic::arm_neon_vmullu);
     VectorType *NewVT = cast<VectorType>(II->getType());
-    unsigned NewWidth = NewVT->getElementType()->getIntegerBitWidth();
-    if (ConstantDataVector *CV0 = dyn_cast<ConstantDataVector>(Arg0)) {
-      if (ConstantDataVector *CV1 = dyn_cast<ConstantDataVector>(Arg1)) {
-        VectorType* VT = cast<VectorType>(CV0->getType());
-        SmallVector<Constant*, 4> NewElems;
-        for (unsigned i = 0; i < VT->getNumElements(); ++i) {
-          APInt CV0E =
-            (cast<ConstantInt>(CV0->getAggregateElement(i)))->getValue();
-          CV0E = Zext ? CV0E.zext(NewWidth) : CV0E.sext(NewWidth);
-          APInt CV1E =
-            (cast<ConstantInt>(CV1->getAggregateElement(i)))->getValue();
-          CV1E = Zext ? CV1E.zext(NewWidth) : CV1E.sext(NewWidth);
-          NewElems.push_back(
-            ConstantInt::get(NewVT->getElementType(), CV0E * CV1E));
-        }
-        return ReplaceInstUsesWith(CI, ConstantVector::get(NewElems));
+    if (Constant *CV0 = dyn_cast<Constant>(Arg0)) {
+      if (Constant *CV1 = dyn_cast<Constant>(Arg1)) {
+        CV0 = ConstantExpr::getIntegerCast(CV0, NewVT, /*isSigned=*/!Zext);
+        CV1 = ConstantExpr::getIntegerCast(CV1, NewVT, /*isSigned=*/!Zext);
+
+        return ReplaceInstUsesWith(CI, ConstantExpr::getMul(CV0, CV1));
       }
 
       // Couldn't simplify - canonicalize constant to the RHS.
@@ -689,17 +679,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
 
     // Handle mul by one:
-    if (ConstantDataVector *CV1 = dyn_cast<ConstantDataVector>(Arg1)) {
+    if (Constant *CV1 = dyn_cast<Constant>(Arg1))
       if (ConstantInt *Splat =
-            dyn_cast_or_null<ConstantInt>(CV1->getSplatValue())) {
-        if (Splat->isOne()) {
-          if (Zext)
-            return CastInst::CreateZExtOrBitCast(Arg0, II->getType());
-          // else
-          return CastInst::CreateSExtOrBitCast(Arg0, II->getType());
-        }
-      }
-    }
+              dyn_cast_or_null<ConstantInt>(CV1->getSplatValue()))
+        if (Splat->isOne())
+          return CastInst::CreateIntegerCast(Arg0, II->getType(),
+                                             /*isSigned=*/!Zext);
 
     break;
   }
