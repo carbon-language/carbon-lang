@@ -5099,9 +5099,6 @@ def : Pat<(xor (v4i32 (NEONvshrs QPR:$src, (i32 31))),
                (v4i32 (add QPR:$src, (NEONvshrs QPR:$src, (i32 31))))),
           (VABSv4i32 QPR:$src)>;
 
-def : Pat<(v2f32 (int_arm_neon_vabs (v2f32 DPR:$src))), (VABSfd DPR:$src)>;
-def : Pat<(v4f32 (int_arm_neon_vabs (v4f32 QPR:$src))), (VABSfq QPR:$src)>;
-
 //   VQABS    : Vector Saturating Absolute Value
 defm VQABS    : N2VInt_QHS<0b11, 0b11, 0b00, 0b01110, 0,
                            IIC_VQUNAiD, IIC_VQUNAiQ, "vqabs", "s",
