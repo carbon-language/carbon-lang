@@ -958,7 +958,7 @@ void PragmaMSVtorDisp::HandlePragma(Preprocessor &PP,
   }
 
 
-  uint64_t Value;
+  uint64_t Value = 0;
   if (Kind == Sema::PVDK_Push || Kind == Sema::PVDK_Set) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
     if (II && II->isStr("off")) {
@@ -998,8 +998,8 @@ void PragmaMSVtorDisp::HandlePragma(Preprocessor &PP,
   AnnotTok.startToken();
   AnnotTok.setKind(tok::annot_pragma_ms_vtordisp);
   AnnotTok.setLocation(VtorDispLoc);
-  AnnotTok.setAnnotationValue(
-      reinterpret_cast<void *>(static_cast<uintptr_t>((Kind << 16) | Value)));
+  AnnotTok.setAnnotationValue(reinterpret_cast<void *>(
+      static_cast<uintptr_t>((Kind << 16) | (Value & 0xFFFF))));
   PP.EnterToken(AnnotTok);
 }
 
