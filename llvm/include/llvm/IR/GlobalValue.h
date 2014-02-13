@@ -112,8 +112,12 @@ public:
 
   bool hasSection() const { return !Section.empty(); }
   const std::string &getSection() const { return Section; }
-  void setSection(StringRef S) { Section = S; }
-  
+  void setSection(StringRef S) {
+    assert((getValueID() != Value::GlobalAliasVal || S.empty()) &&
+           "GlobalAlias should not have a section!");
+    Section = S;
+  }
+
   /// If the usage is empty (except transitively dead constants), then this
   /// global value can be safely deleted since the destructor will
   /// delete the dead constants as well.
