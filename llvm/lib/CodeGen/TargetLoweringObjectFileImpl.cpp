@@ -562,7 +562,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
       return FourByteConstantSection;
     if (Kind.isMergeableConst8())
       return EightByteConstantSection;
-    if (Kind.isMergeableConst16() && SixteenByteConstantSection)
+    if (Kind.isMergeableConst16())
       return SixteenByteConstantSection;
   }
 
@@ -601,7 +601,7 @@ TargetLoweringObjectFileMachO::getSectionForConstant(SectionKind Kind) const {
     return FourByteConstantSection;
   if (Kind.isMergeableConst8())
     return EightByteConstantSection;
-  if (Kind.isMergeableConst16() && SixteenByteConstantSection)
+  if (Kind.isMergeableConst16())
     return SixteenByteConstantSection;
   return ReadOnlySection;  // .const
 }
