@@ -751,20 +751,27 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
                    "occurred above!");
 }
 
-error_code create_directories(const Twine &path, bool &existed) {
-  SmallString<128> path_storage;
-  StringRef p = path.toStringRef(path_storage);
+error_code create_directories(const Twine &Path, bool &Existed) {
+  SmallString<128> PathStorage;
+  StringRef P = Path.toStringRef(PathStorage);
 
-  StringRef parent = path::parent_path(p);
-  if (!parent.empty()) {
-    bool parent_exists;
-    if (error_code ec = fs::exists(parent, parent_exists)) return ec;
+  // Be optimistic and try to create the directory
+  error_code EC = create_directory(P, Existed);
+  // If we succeeded, or had any error other than the parent not existing, just
+  // return it.
+  if (EC != errc::no_such_file_or_directory)
+    return EC;
 
-    if (!parent_exists)
-      if (error_code ec = create_directories(parent, existed)) return ec;
-  }
+  // We failed because of a no_such_file_or_directory, try to create the
+  // parent.
+  StringRef Parent = path::parent_path(P);
+  if (Parent.empty())
+    return EC;
 
-  return create_directory(p, existed);
+  if ((EC = create_directories(Parent)))
+      return EC;
+
+  return create_directory(P, Existed);
 }
 
 bool exists(file_status status) {
