@@ -108,25 +108,6 @@ private:
   ///
   /// @return - The context in which the instruction is valid.
   InstructionContext insnContext() const;
-  
-  enum filter_ret {
-    FILTER_STRONG,    // instruction has no place in the instruction tables
-    FILTER_WEAK,      // instruction may conflict, and should be eliminated if
-                      // it does
-    FILTER_NORMAL     // instruction should have high priority and generate an
-                      // error if it conflcits with any other FILTER_NORMAL
-                      // instruction
-  };
-      
-  /// filter - Determines whether the instruction should be decodable.  Some 
-  ///   instructions are pure intrinsics and use unencodable operands; many
-  ///   synthetic instructions are duplicates of other instructions; other
-  ///   instructions only differ in the logical way in which they are used, and
-  ///   have the same decoding.  Because these would cause decode conflicts,
-  ///   they must be filtered out.
-  ///
-  /// @return - The degree of filtering to be applied (see filter_ret).
-  filter_ret filter() const;
 
   /// hasFROperands - Returns true if any operand is a FR operand.
   bool hasFROperands() const;

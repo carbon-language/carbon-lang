@@ -796,9 +796,6 @@ void DisassemblerTables::setTableFields(ModRMDecision     &decision,
         InstructionSpecifier &previousInfo =
           InstructionSpecifiers[decision.instructionIDs[index]];
 
-        if(newInfo.filtered)
-          continue; // filtered instructions get lowest priority
-
         // Instructions such as MOV8ao8 and MOV8ao8_16 differ only in the
         // presence of the AdSize prefix. However, the disassembler doesn't
         // care about that difference in the instruction definition; it
@@ -817,8 +814,7 @@ void DisassemblerTables::setTableFields(ModRMDecision     &decision,
         if (outranks(previousInfo.insnContext, newInfo.insnContext))
           continue;
 
-        if (previousInfo.insnContext == newInfo.insnContext &&
-            !previousInfo.filtered) {
+        if (previousInfo.insnContext == newInfo.insnContext) {
           errs() << "Error: Primary decode conflict: ";
           errs() << newInfo.name << " would overwrite " << previousInfo.name;
           errs() << "\n";

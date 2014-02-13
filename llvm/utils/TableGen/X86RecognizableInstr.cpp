@@ -208,6 +208,17 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
     }
   }
 
+  if (Form == X86Local::Pseudo || (IsCodeGenOnly && !ForceDisassemble)) {
+    ShouldBeEmitted = false;
+    return;
+  }
+
+  // Special case since there is no attribute class for 64-bit and VEX
+  if (Name == "VMASKMOVDQU64") {
+    ShouldBeEmitted = false;
+    return;
+  }
+
   ShouldBeEmitted  = true;
 }
 
@@ -221,10 +232,10 @@ void RecognizableInstr::processInstr(DisassemblerTables &tables,
 
   RecognizableInstr recogInstr(tables, insn, uid);
 
-  recogInstr.emitInstructionSpecifier();
-
-  if (recogInstr.shouldBeEmitted())
+  if (recogInstr.shouldBeEmitted()) {
+    recogInstr.emitInstructionSpecifier();
     recogInstr.emitDecodePath(tables);
+  }
 }
 
 #define EVEX_KB(n) (HasEVEX_KZ && HasEVEX_B ? n##_KZ_B : \
@@ -380,36 +391,6 @@ InstructionContext RecognizableInstr::insnContext() const {
   return insnContext;
 }
 
-RecognizableInstr::filter_ret RecognizableInstr::filter() const {
-  ///////////////////
-  // FILTER_STRONG
-  //
-
-  // Filter out intrinsics
-
-  assert(Rec->isSubClassOf("X86Inst") && "Can only filter X86 instructions");
-
-  if (Form == X86Local::Pseudo || (IsCodeGenOnly && !ForceDisassemble))
-    return FILTER_STRONG;
-
-
-  // Filter out artificial instructions but leave in the LOCK_PREFIX so it is
-  // printed as a separate "instruction".
-
-
-  /////////////////
-  // FILTER_WEAK
-  //
-
-
-  // Special cases.
-
-  if (Name == "VMASKMOVDQU64")
-    return FILTER_WEAK;
-
-  return FILTER_NORMAL;
-}
-
 void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
                                       unsigned &physicalOperandIndex,
                                       unsigned &numPhysicalOperands,
@@ -444,20 +425,6 @@ void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
 
 void RecognizableInstr::emitInstructionSpecifier() {
   Spec->name       = Name;
-
-  if (!ShouldBeEmitted)
-    return;
-
-  switch (filter()) {
-  case FILTER_WEAK:
-    Spec->filtered = true;
-    break;
-  case FILTER_STRONG:
-    ShouldBeEmitted = false;
-    return;
-  case FILTER_NORMAL:
-    break;
-  }
 
   Spec->insnContext = insnContext();
 
