@@ -151,8 +151,6 @@ POSIXThread::GetRegisterContext()
         {
             case ArchSpec::eCore_mips64:
             {
-                RegisterInfoInterface *reg_interface = NULL;
-
                 switch (target_arch.GetTriple().getOS())
                 {
                     case llvm::Triple::FreeBSD:
