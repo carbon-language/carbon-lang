@@ -1552,8 +1552,8 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   // Remember the alignment we would have used if the field were not packed.
   unsigned UnpackedFieldAlign = FieldAlign;
 
-  // Ignore the field alignment if the field is packed.
-  if (!IsMsStruct && FieldPacked)
+  // Ignore the field alignment if the field is packed unless it has zero-size.
+  if (!IsMsStruct && FieldPacked && FieldSize != 0)
     FieldAlign = 1;
 
   // But, if there's an 'aligned' attribute on the field, honor that.

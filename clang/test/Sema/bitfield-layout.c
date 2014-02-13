@@ -9,6 +9,21 @@ struct a {char x; int : 0; char y;};
 CHECK_SIZE(struct, a, 5)
 CHECK_ALIGN(struct, a, 1)
 
+// Zero-width bit-fields with packed
+struct __attribute__((packed)) a2 { short x : 9; char : 0; int y : 17; };
+CHECK_SIZE(struct, a2, 5)
+CHECK_ALIGN(struct, a2, 1)
+
+// Zero-width bit-fields at the end of packed struct
+struct __attribute__((packed)) a3 { short x : 9; int : 0; };
+CHECK_SIZE(struct, a3, 4)
+CHECK_ALIGN(struct, a3, 1)
+
+// For comparison, non-zero-width bit-fields at the end of packed struct
+struct __attribute__((packed)) a4 { short x : 9; int : 1; };
+CHECK_SIZE(struct, a4, 2)
+CHECK_ALIGN(struct, a4, 1)
+
 union b {char x; int : 0; char y;};
 CHECK_SIZE(union, b, 1)
 CHECK_ALIGN(union, b, 1)
