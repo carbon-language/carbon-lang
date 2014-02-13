@@ -21,5 +21,10 @@ TEST_F(ExplicitConstructorCheckTest, DefaultParameters) {
             runCheckOn("class C { C(int i, int j = 0); };"));
 }
 
+TEST_F(ExplicitConstructorCheckTest, OutOfLineDefinitions) {
+  EXPECT_EQ("class C { explicit C(int i); }; C::C(int i) {}",
+            runCheckOn("class C { C(int i); }; C::C(int i) {}"));
+}
+
 } // namespace tidy
 } // namespace clang

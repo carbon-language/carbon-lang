@@ -24,20 +24,22 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace tidy {
 
-void
-ExplicitConstructorCheck::registerMatchers(ast_matchers::MatchFinder *Finder) {
-  Finder->addMatcher(constructorDecl().bind("construct"), this);
+void ExplicitConstructorCheck::registerMatchers(MatchFinder *Finder) {
+  Finder->addMatcher(constructorDecl().bind("ctor"), this);
 }
 
 void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
   const CXXConstructorDecl *Ctor =
-      Result.Nodes.getNodeAs<CXXConstructorDecl>("construct");
-  if (!Ctor->isExplicit() && !Ctor->isImplicit() && Ctor->getNumParams() >= 1 &&
-      Ctor->getMinRequiredArguments() <= 1) {
-    SourceLocation Loc = Ctor->getLocation();
-    diag(Loc, "Single-argument constructors must be explicit")
-        << FixItHint::CreateInsertion(Loc, "explicit ");
-  }
+      Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor");
+  // Do not be confused: isExplicit means 'explicit' keyword is present,
+  // isImplicit means that it's a compiler-generated constructor.
+  if (Ctor->isOutOfLine() || Ctor->isExplicit() || Ctor->isImplicit())
+    return;
+  if (Ctor->getNumParams() == 0 || Ctor->getMinRequiredArguments() > 1)
+    return;
+  SourceLocation Loc = Ctor->getLocation();
+  diag(Loc, "Single-argument constructors must be explicit")
+      << FixItHint::CreateInsertion(Loc, "explicit ");
 }
 
 class GoogleModule : public ClangTidyModule {
