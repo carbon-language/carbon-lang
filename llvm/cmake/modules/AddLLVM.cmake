@@ -174,17 +174,21 @@ endfunction()
 #     Same as the variable LLVM_LINK_COMPONENTS.
 #   LINK_LIBS lib_targets...
 #     Same semantics as target_link_libraries().
-#   ADDITIONAL_HEADERS (implemented in LLVMProcessSources)
+#   ADDITIONAL_HEADERS
 #     May specify header files for IDE generators.
 #   )
 function(llvm_add_library name)
   cmake_parse_arguments(ARG
     "MODULE;SHARED;STATIC"
     "OUTPUT_NAME"
-    "DEPENDS;LINK_COMPONENTS;LINK_LIBS"
+    "ADDITIONAL_HEADERS;DEPENDS;LINK_COMPONENTS;LINK_LIBS"
     ${ARGN})
   list(APPEND LLVM_COMMON_DEPENDS ${ARG_DEPENDS})
-  llvm_process_sources(ALL_FILES ${ARG_UNPARSED_ARGUMENTS})
+  if(ARG_ADDITIONAL_HEADERS)
+    # Pass through ADDITIONAL_HEADERS.
+    set(ARG_ADDITIONAL_HEADERS ADDITIONAL_HEADERS ${ARG_ADDITIONAL_HEADERS})
+  endif()
+  llvm_process_sources(ALL_FILES ${ARG_UNPARSED_ARGUMENTS} ${ARG_ADDITIONAL_HEADERS})
 
   if(ARG_MODULE)
     if(ARG_SHARED OR ARG_STATIC)
