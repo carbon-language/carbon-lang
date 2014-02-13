@@ -258,8 +258,10 @@ void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
   if (res < 0) return;
   CHECK((uptr)res <= kStackTraceMax);
 
+  // +2 compensate for libcorkscrew unwinder returning addresses of call
+  // instructions instead of raw return addresses.
   for (sptr i = 0; i < res; ++i)
-    trace[size++] = frames[i].absolute_pc;
+    trace[size++] = frames[i].absolute_pc + 2;
 }
 
 #endif  // !SANITIZER_GO
