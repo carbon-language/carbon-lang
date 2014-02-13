@@ -48,8 +48,7 @@ class BasicBitVector {
 
   uptr getAndClearFirstOne() {
     CHECK(!empty());
-    // FIXME: change to LeastSignificantSetBitIndex?
-    uptr idx = MostSignificantSetBitIndex(bits_);
+    uptr idx = LeastSignificantSetBitIndex(bits_);
     clearBit(idx);
     return idx;
   }

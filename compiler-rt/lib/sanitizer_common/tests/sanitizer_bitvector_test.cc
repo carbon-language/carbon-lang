@@ -25,13 +25,18 @@ using namespace __sanitizer;
 using namespace std;
 
 
+// Check the 'bv' == 's' and that the indexes go in increasing order.
 template <class BV>
-static void SameAs(const BV &bv, const set<uptr> &s) {
+static void CheckBV(const BV &bv, const set<uptr> &s) {
   BV t;
   t.copyFrom(bv);
   set<uptr> t_s(s);
+  uptr last_idx = bv.size();
   while (!t.empty()) {
     uptr idx = t.getAndClearFirstOne();
+    if (last_idx != bv.size())
+      EXPECT_LT(last_idx, idx);
+    last_idx = idx;
     EXPECT_TRUE(t_s.erase(idx));
   }
   EXPECT_TRUE(t_s.empty());
@@ -105,12 +110,12 @@ void TestBitVector(uptr expected_size) {
       bv.setBit(bits[i]);
       s.insert(bits[i]);
     }
-    SameAs(bv, s);
+    CheckBV(bv, s);
     for (uptr i = 0; i < n_bits1; i++) {
       bv1.setBit(bits[bv.size() / 2 + i]);
       s1.insert(bits[bv.size() / 2 + i]);
     }
-    SameAs(bv1, s1);
+    CheckBV(bv1, s1);
 
     vector<uptr> vec;
     set_intersection(s.begin(), s.end(), s1.begin(), s1.end(),
@@ -122,13 +127,13 @@ void TestBitVector(uptr expected_size) {
     t_bv.copyFrom(bv);
     t_s.insert(s1.begin(), s1.end());
     EXPECT_EQ(t_bv.setUnion(bv1), s.size() != t_s.size());
-    SameAs(t_bv, t_s);
+    CheckBV(t_bv, t_s);
 
     // setIntersection
     t_s = set<uptr>(vec.begin(), vec.end());
     t_bv.copyFrom(bv);
     EXPECT_EQ(t_bv.setIntersection(bv1), s.size() != t_s.size());
-    SameAs(t_bv, t_s);
+    CheckBV(t_bv, t_s);
   }
 }
 
