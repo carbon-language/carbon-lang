@@ -173,7 +173,7 @@ protected:
     
     LLVMSetTarget(Module, HostTriple.c_str());
     
-    // build a global variable initialized to "Hello World!"
+    // build a global int32 variable initialized to 42.
     LLVMValueRef GlobalVar = LLVMAddGlobal(Module, LLVMInt32Type(), "intVal");    
     LLVMSetInitializer(GlobalVar, LLVMConstInt(LLVMInt32Type(), 42, 0));
     
