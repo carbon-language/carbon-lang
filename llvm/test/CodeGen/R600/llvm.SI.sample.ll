@@ -17,7 +17,7 @@
 ;CHECK-DAG: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 14
 ;CHECK-DAG: IMAGE_SAMPLE {{v[0-9]+}}, 8
 
-define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
+define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) #0 {
    %v1 = insertelement <4 x i32> undef, i32 %a1, i32 0
    %v2 = insertelement <4 x i32> undef, i32 %a1, i32 1
    %v3 = insertelement <4 x i32> undef, i32 %a1, i32 2
@@ -137,7 +137,7 @@ define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
 
 ; CHECK: @v1
 ; CHECK: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 15
-define void @v1(i32 %a1) {
+define void @v1(i32 %a1) #0 {
 entry:
   %0 = insertelement <1 x i32> undef, i32 %a1, i32 0
   %1 = call <4 x float> @llvm.SI.sample.v1i32(<1 x i32> %0, <32 x i8> undef, <16 x i8> undef, i32 0)
@@ -155,3 +155,5 @@ declare <4 x float> @llvm.SI.sample.v1i32(<1 x i32>, <32 x i8>, <16 x i8>, i32) 
 declare <4 x float> @llvm.SI.sample.(<4 x i32>, <32 x i8>, <16 x i8>, i32) readnone
 
 declare void @llvm.SI.export(i32, i32, i32, i32, i32, float, float, float, float)
+
+attributes #0 = { "ShaderType"="0" }
