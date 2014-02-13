@@ -1939,6 +1939,10 @@ public:
 #include "clang/Basic/OpenMPKinds.def"
 };
 
+void OMPClauseEnqueue::VisitOMPIfClause(const OMPIfClause *C) {
+  Visitor->AddStmt(C->getCondition());
+}
+
 void OMPClauseEnqueue::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
 
 template<typename T>

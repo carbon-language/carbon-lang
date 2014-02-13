@@ -121,6 +121,60 @@ public:
   }
 };
 
+/// \brief This represents 'if' clause in the '#pragma omp ...' directive.
+///
+/// \code
+/// #pragma omp parallel if(a > 5)
+/// \endcode
+/// In this example directive '#pragma omp parallel' has simple 'if'
+/// clause with condition 'a > 5'.
+///
+class OMPIfClause : public OMPClause {
+  friend class OMPClauseReader;
+  /// \brief Location of '('.
+  SourceLocation LParenLoc;
+  /// \brief Condition of the 'if' clause.
+  Stmt *Condition;
+
+  /// \brief Set condition.
+  ///
+  void setCondition(Expr *Cond) { Condition = Cond; }
+public:
+  /// \brief Build 'if' clause with condition \a Cond.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param Cond Condition of the clause.
+  /// \param EndLoc Ending location of the clause.
+  ///
+  OMPIfClause(Expr *Cond, SourceLocation StartLoc,
+              SourceLocation LParenLoc, SourceLocation EndLoc)
+    : OMPClause(OMPC_if, StartLoc, EndLoc), LParenLoc(LParenLoc),
+      Condition(Cond) { }
+
+  /// \brief Build an empty clause.
+  ///
+  OMPIfClause()
+    : OMPClause(OMPC_if, SourceLocation(), SourceLocation()),
+      LParenLoc(SourceLocation()), Condition(0) { }
+
+  /// \brief Sets the location of '('.
+  void setLParenLoc(SourceLocation Loc) { LParenLoc = Loc; }
+  /// \brief Returns the location of '('.
+  SourceLocation getLParenLoc() const { return LParenLoc; }
+
+  /// \brief Returns condition.
+  Expr *getCondition() const { return cast_or_null<Expr>(Condition); }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_if;
+  }
+
+  StmtRange children() {
+    return StmtRange(&Condition, &Condition + 1);
+  }
+};
+
 /// \brief This represents 'default' clause in the '#pragma omp ...' directive.
 ///
 /// \code

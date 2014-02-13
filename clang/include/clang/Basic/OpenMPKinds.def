@@ -31,12 +31,14 @@ OPENMP_DIRECTIVE(parallel)
 OPENMP_DIRECTIVE(task)
 
 // OpenMP clauses.
+OPENMP_CLAUSE(if, OMPIfClause)
 OPENMP_CLAUSE(default, OMPDefaultClause)
 OPENMP_CLAUSE(private, OMPPrivateClause)
 OPENMP_CLAUSE(firstprivate, OMPFirstprivateClause)
 OPENMP_CLAUSE(shared,  OMPSharedClause)
 
 // Clauses allowed for OpenMP directives.
+OPENMP_PARALLEL_CLAUSE(if)
 OPENMP_PARALLEL_CLAUSE(default)
 OPENMP_PARALLEL_CLAUSE(private)
 OPENMP_PARALLEL_CLAUSE(firstprivate)

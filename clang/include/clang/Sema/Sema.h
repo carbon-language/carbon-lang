@@ -7125,6 +7125,16 @@ public:
                                           SourceLocation StartLoc,
                                           SourceLocation EndLoc);
 
+  OMPClause *ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
+                                         Expr *Expr,
+                                         SourceLocation StartLoc,
+                                         SourceLocation LParenLoc,
+                                         SourceLocation EndLoc);
+  /// \brief Called on well-formed 'if' clause.
+  OMPClause *ActOnOpenMPIfClause(Expr *Condition, SourceLocation StartLoc,
+                                 SourceLocation LParenLoc,
+                                 SourceLocation EndLoc);
+
   OMPClause *ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
                                      unsigned Argument,
                                      SourceLocation ArgumentLoc,

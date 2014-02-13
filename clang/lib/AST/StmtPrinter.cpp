@@ -593,15 +593,23 @@ void StmtPrinter::VisitSEHFinallyStmt(SEHFinallyStmt *Node) {
 namespace {
 class OMPClausePrinter : public OMPClauseVisitor<OMPClausePrinter> {
   raw_ostream &OS;
+  const PrintingPolicy &Policy;
   /// \brief Process clauses with list of variables.
   template <typename T>
   void VisitOMPClauseList(T *Node, char StartSym);
 public:
-  OMPClausePrinter(raw_ostream &OS) : OS(OS) { }
+  OMPClausePrinter(raw_ostream &OS, const PrintingPolicy &Policy)
+    : OS(OS), Policy(Policy) { }
 #define OPENMP_CLAUSE(Name, Class)                              \
   void Visit##Class(Class *S);
 #include "clang/Basic/OpenMPKinds.def"
 };
+
+void OMPClausePrinter::VisitOMPIfClause(OMPIfClause *Node) {
+  OS << "if(";
+  Node->getCondition()->printPretty(OS, 0, Policy, 0);
+  OS << ")";
+}
 
 void OMPClausePrinter::VisitOMPDefaultClause(OMPDefaultClause *Node) {
   OS << "default("
@@ -651,7 +659,7 @@ void OMPClausePrinter::VisitOMPSharedClause(OMPSharedClause *Node) {
 void StmtPrinter::VisitOMPParallelDirective(OMPParallelDirective *Node) {
   Indent() << "#pragma omp parallel ";
 
-  OMPClausePrinter Printer(OS);
+  OMPClausePrinter Printer(OS, Policy);
   ArrayRef<OMPClause *> Clauses = Node->clauses();
   for (ArrayRef<OMPClause *>::iterator I = Clauses.begin(), E = Clauses.end();
        I != E; ++I)

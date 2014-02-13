@@ -1673,6 +1673,9 @@ public:
 OMPClause *OMPClauseReader::readClause() {
   OMPClause *C;
   switch (Record[Idx++]) {
+  case OMPC_if:
+    C = new (Context) OMPIfClause();
+    break;
   case OMPC_default:
     C = new (Context) OMPDefaultClause();
     break;
@@ -1691,6 +1694,11 @@ OMPClause *OMPClauseReader::readClause() {
   C->setLocEnd(Reader->ReadSourceLocation(Record, Idx));
 
   return C;
+}
+
+void OMPClauseReader::VisitOMPIfClause(OMPIfClause *C) {
+  C->setCondition(Reader->Reader.ReadSubExpr());
+  C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
 }
 
 void OMPClauseReader::VisitOMPDefaultClause(OMPDefaultClause *C) {

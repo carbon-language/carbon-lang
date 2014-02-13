@@ -1679,6 +1679,11 @@ void OMPClauseWriter::writeClause(OMPClause *C) {
   Writer->Writer.AddSourceLocation(C->getLocEnd(), Record);
 }
 
+void OMPClauseWriter::VisitOMPIfClause(OMPIfClause *C) {
+  Writer->Writer.AddStmt(C->getCondition());
+  Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
+}
+
 void OMPClauseWriter::VisitOMPDefaultClause(OMPDefaultClause *C) {
   Record.push_back(C->getDefaultKind());
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);

@@ -265,6 +265,11 @@ public:
 #include "clang/Basic/OpenMPKinds.def"
 };
 
+void OMPClauseProfiler::VisitOMPIfClause(const OMPIfClause *C) {
+  if (C->getCondition())
+    Profiler->VisitStmt(C->getCondition());
+}
+
 void OMPClauseProfiler::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
 
 template<typename T>

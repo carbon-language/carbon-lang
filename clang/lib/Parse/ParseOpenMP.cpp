@@ -269,10 +269,20 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
   }
 
   switch (CKind) {
+  case OMPC_if:
+    // OpenMP [2.5, Restrictions]
+    //  At most one if clause can appear on the directive.
+    if (!FirstClause) {
+      Diag(Tok, diag::err_omp_more_one_clause)
+           << getOpenMPDirectiveName(DKind) << getOpenMPClauseName(CKind);
+    }
+
+    Clause = ParseOpenMPSingleExprClause(CKind);
+    break;
   case OMPC_default:
-    // OpenMP [2.9.3.1, Restrictions]
-    //  Only a single default clause may be specified on a parallel or task
-    //  directive.
+    // OpenMP [2.14.3.1, Restrictions]
+    //  Only a single default clause may be specified on a parallel, task or
+    //  teams directive.
     if (!FirstClause) {
       Diag(Tok, diag::err_omp_more_one_clause)
            << getOpenMPDirectiveName(DKind) << getOpenMPClauseName(CKind);
@@ -298,6 +308,39 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     break;
   }
   return ErrorFound ? 0 : Clause;
+}
+
+/// \brief Parsing of OpenMP clauses with single expressions like 'if',
+/// 'collapse', 'safelen', 'num_threads', 'simdlen', 'num_teams' or
+/// 'thread_limit'.
+///
+///    if-clause:
+///      'if' '(' expression ')'
+///
+OMPClause *Parser::ParseOpenMPSingleExprClause(OpenMPClauseKind Kind) {
+  SourceLocation Loc = ConsumeToken();
+
+  BalancedDelimiterTracker T(*this, tok::l_paren, tok::annot_pragma_openmp_end);
+  if (T.expectAndConsume(diag::err_expected_lparen_after,
+                         getOpenMPClauseName(Kind)))
+    return 0;
+
+  ExprResult LHS(ParseCastExpression(false, false, NotTypeCast));
+  ExprResult Val(ParseRHSOfBinaryExpression(LHS, prec::Conditional));
+
+  if (Tok.isNot(tok::r_paren) && Tok.isNot(tok::comma) &&
+      Tok.isNot(tok::annot_pragma_openmp_end))
+    ConsumeAnyToken();
+
+  // Parse ')'.
+  T.consumeClose();
+
+  if (Val.isInvalid())
+    return 0;
+
+  return Actions.ActOnOpenMPSingleExprClause(Kind, Val.take(), Loc,
+                                             T.getOpenLocation(),
+                                             T.getCloseLocation());
 }
 
 /// \brief Parsing of simple OpenMP clauses like 'default'.
