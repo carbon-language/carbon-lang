@@ -452,9 +452,11 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::LOAD: {
     LoadSDNode *Load = dyn_cast<LoadSDNode>(Op);
-    if ((Load->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS ||
-         Load->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS) &&
-        Op.getValueType().isVector()) {
+    if (Op.getValueType().isVector() &&
+        (Load->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS ||
+         Load->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS ||
+         (Load->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS &&
+          Op.getValueType().getVectorNumElements() > 4))) {
       SDValue MergedValues[2] = {
         SplitVectorLoad(Op, DAG),
         Load->getChain()
