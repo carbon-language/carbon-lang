@@ -135,7 +135,7 @@ class FoundationTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
 
         # Log any DWARF lookups
-        logfile = os.path.join(os.getcwd(), "dwarf-lookups.txt")
+        logfile = os.path.join(os.getcwd(), "dwarf-lookups-" + self.getArchitecture() + ".txt")
         self.runCmd("log enable -f %s dwarf lookups" % (logfile))
         self.runCmd("expr self")
         self.runCmd("log disable dwarf lookups")
