@@ -12,7 +12,6 @@ class AbbreviationsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @expectedFailureLinux('llvm.org/pr18816')
     def test_nonrunning_command_abbreviations (self):
         self.expect("ap script",
                     startstr = "The following built-in commands may relate to 'script':",
