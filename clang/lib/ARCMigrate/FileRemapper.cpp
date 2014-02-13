@@ -111,8 +111,7 @@ bool FileRemapper::initFromFile(StringRef filePath, DiagnosticsEngine &Diag,
 bool FileRemapper::flushToDisk(StringRef outputDir, DiagnosticsEngine &Diag) {
   using namespace llvm::sys;
 
-  bool existed;
-  if (fs::create_directory(outputDir, existed) != llvm::errc::success)
+  if (fs::create_directory(outputDir) != llvm::errc::success)
     return report("Could not create directory: " + outputDir, Diag);
 
   std::string infoFile = getRemapInfoFile(outputDir);
