@@ -7279,9 +7279,12 @@ void XCore::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   CmdArgs.push_back("-c");
 
-  if (Args.hasArg(options::OPT_g_Group)) {
+  if (Args.hasArg(options::OPT_v))
+    CmdArgs.push_back("-v");
+
+  if (Args.hasArg(options::OPT_g_Group))
     CmdArgs.push_back("-g");
-  }
+
   if (Args.hasFlag(options::OPT_fverbose_asm, options::OPT_fno_verbose_asm,
                    false))
     CmdArgs.push_back("-fverbose-asm");
@@ -7313,6 +7316,9 @@ void XCore::Link::ConstructJob(Compilation &C, const JobAction &JA,
   } else {
     assert(Output.isNothing() && "Invalid output.");
   }
+
+  if (Args.hasArg(options::OPT_v))
+    CmdArgs.push_back("-v");
 
   ExceptionSettings EH = exceptionSettings(Args, getToolChain().getTriple());
   if (EH.ShouldUseExceptionTables)
