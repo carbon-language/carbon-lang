@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+mmx
+; RUN: llc < %s -mtriple=i686-pc-linux -mattr=+mmx
 
 define i32 @t2() nounwind  {
 entry:
