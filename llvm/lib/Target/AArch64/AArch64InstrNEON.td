@@ -244,17 +244,68 @@ defm ADDvvv :  NeonI_3VSame_BHSD_sizes<0b0, 0b10000, "add", add, 1>;
 defm FADDvvv : NeonI_3VSame_SD_sizes<0b0, 0b0, 0b11010, "fadd", fadd,
                                      v2f32, v4f32, v2f64, 1>;
 
+// Patterns to match add of v1i8/v1i16/v1i32 types
+def : Pat<(v1i8 (add FPR8:$Rn, FPR8:$Rm)),
+          (EXTRACT_SUBREG
+              (ADDvvv_8B (SUBREG_TO_REG (i64 0), FPR8:$Rn, sub_8),
+                         (SUBREG_TO_REG (i64 0), FPR8:$Rm, sub_8)),
+              sub_8)>;
+def : Pat<(v1i16 (add FPR16:$Rn, FPR16:$Rm)),
+          (EXTRACT_SUBREG
+              (ADDvvv_4H (SUBREG_TO_REG (i64 0), FPR16:$Rn, sub_16),
+                         (SUBREG_TO_REG (i64 0), FPR16:$Rm, sub_16)),
+              sub_16)>;
+def : Pat<(v1i32 (add FPR32:$Rn, FPR32:$Rm)),
+          (EXTRACT_SUBREG
+              (ADDvvv_2S (SUBREG_TO_REG (i64 0), FPR32:$Rn, sub_32),
+                         (SUBREG_TO_REG (i64 0), FPR32:$Rm, sub_32)),
+              sub_32)>;
+
 // Vector Sub (Integer and Floating-Point)
 
 defm SUBvvv :  NeonI_3VSame_BHSD_sizes<0b1, 0b10000, "sub", sub, 0>;
 defm FSUBvvv : NeonI_3VSame_SD_sizes<0b0, 0b1, 0b11010, "fsub", fsub,
                                      v2f32, v4f32, v2f64, 0>;
 
+// Patterns to match sub of v1i8/v1i16/v1i32 types
+def : Pat<(v1i8 (sub FPR8:$Rn, FPR8:$Rm)),
+          (EXTRACT_SUBREG
+              (SUBvvv_8B (SUBREG_TO_REG (i64 0), FPR8:$Rn, sub_8),
+                         (SUBREG_TO_REG (i64 0), FPR8:$Rm, sub_8)),
+              sub_8)>;
+def : Pat<(v1i16 (sub FPR16:$Rn, FPR16:$Rm)),
+          (EXTRACT_SUBREG
+              (SUBvvv_4H (SUBREG_TO_REG (i64 0), FPR16:$Rn, sub_16),
+                         (SUBREG_TO_REG (i64 0), FPR16:$Rm, sub_16)),
+              sub_16)>;
+def : Pat<(v1i32 (sub FPR32:$Rn, FPR32:$Rm)),
+          (EXTRACT_SUBREG
+              (SUBvvv_2S (SUBREG_TO_REG (i64 0), FPR32:$Rn, sub_32),
+                         (SUBREG_TO_REG (i64 0), FPR32:$Rm, sub_32)),
+              sub_32)>;
+
 // Vector Multiply (Integer and Floating-Point)
 
 defm MULvvv :  NeonI_3VSame_BHS_sizes<0b0, 0b10011, "mul", mul, 1>;
 defm FMULvvv : NeonI_3VSame_SD_sizes<0b1, 0b0, 0b11011, "fmul", fmul,
                                      v2f32, v4f32, v2f64, 1>;
+
+// Patterns to match mul of v1i8/v1i16/v1i32 types
+def : Pat<(v1i8 (mul FPR8:$Rn, FPR8:$Rm)),
+          (EXTRACT_SUBREG 
+              (MULvvv_8B (SUBREG_TO_REG (i64 0), FPR8:$Rn, sub_8),
+                         (SUBREG_TO_REG (i64 0), FPR8:$Rm, sub_8)),
+              sub_8)>;
+def : Pat<(v1i16 (mul FPR16:$Rn, FPR16:$Rm)),
+          (EXTRACT_SUBREG 
+              (MULvvv_4H (SUBREG_TO_REG (i64 0), FPR16:$Rn, sub_16),
+                         (SUBREG_TO_REG (i64 0), FPR16:$Rm, sub_16)),
+              sub_16)>;
+def : Pat<(v1i32 (mul FPR32:$Rn, FPR32:$Rm)),
+          (EXTRACT_SUBREG
+              (MULvvv_2S (SUBREG_TO_REG (i64 0), FPR32:$Rn, sub_32),
+                         (SUBREG_TO_REG (i64 0), FPR32:$Rm, sub_32)),
+              sub_32)>;
 
 // Vector Multiply (Polynomial)
 
@@ -1573,10 +1624,6 @@ def FMOVvi_2D : NeonI_FMOV_impl<".2d", VPR128, v2f64, fmov64_operand, 0b1, 0b1>;
 }
 
 // Vector Shift (Immediate)
-// Immediate in [0, 63]
-def imm0_63 : Operand<i32> {
-  let ParserMatchClass = uimm6_asmoperand;
-}
 
 // Shift Right/Left Immediate - The immh:immb field of these shifts are encoded
 // as follows:
@@ -1717,11 +1764,72 @@ multiclass NeonI_N2VShR<bit u, bits<5> opcode, string asmop, SDNode OpNode> {
 }
 
 // Shift left
+
 defm SHLvvi : NeonI_N2VShL<0b0, 0b01010, "shl">;
+
+// Additional patterns to match vector shift left by immediate.
+// (v1i8/v1i16/v1i32 types)
+def : Pat<(v1i8 (shl (v1i8 FPR8:$Rn),
+                     (v1i8 (Neon_vdup (i32 (shl_imm8:$Imm)))))),
+          (EXTRACT_SUBREG
+              (SHLvvi_8B (SUBREG_TO_REG (i64 0), FPR8:$Rn, sub_8),
+                          shl_imm8:$Imm),
+              sub_8)>;
+def : Pat<(v1i16 (shl (v1i16 FPR16:$Rn),
+                      (v1i16 (Neon_vdup (i32 (shl_imm16:$Imm)))))),
+          (EXTRACT_SUBREG
+              (SHLvvi_4H (SUBREG_TO_REG (i64 0), FPR16:$Rn, sub_16),
+                          shl_imm16:$Imm),
+              sub_16)>;
+def : Pat<(v1i32 (shl (v1i32 FPR32:$Rn),
+                      (v1i32 (Neon_vdup (i32 (shl_imm32:$Imm)))))),
+          (EXTRACT_SUBREG
+              (SHLvvi_2S (SUBREG_TO_REG (i64 0), FPR32:$Rn, sub_32),
+                          shl_imm32:$Imm),
+              sub_32)>;
 
 // Shift right
 defm SSHRvvi : NeonI_N2VShR<0b0, 0b00000, "sshr", sra>;
 defm USHRvvi : NeonI_N2VShR<0b1, 0b00000, "ushr", srl>;
+
+// Additional patterns to match vector shift right by immediate.
+// (v1i8/v1i16/v1i32 types)
+def : Pat<(v1i8 (sra (v1i8 FPR8:$Rn),
+                     (v1i8 (Neon_vdup (i32 (shr_imm8:$Imm)))))),
+          (EXTRACT_SUBREG
+              (SSHRvvi_8B (SUBREG_TO_REG (i64 0), FPR8:$Rn, sub_8),
+                          shr_imm8:$Imm),
+              sub_8)>;
+def : Pat<(v1i16 (sra (v1i16 FPR16:$Rn),
+                      (v1i16 (Neon_vdup (i32 (shr_imm16:$Imm)))))),
+          (EXTRACT_SUBREG
+              (SSHRvvi_4H (SUBREG_TO_REG (i64 0), FPR16:$Rn, sub_16),
+                          shr_imm16:$Imm),
+              sub_16)>;
+def : Pat<(v1i32 (sra (v1i32 FPR32:$Rn),
+                      (v1i32 (Neon_vdup (i32 (shr_imm32:$Imm)))))),
+          (EXTRACT_SUBREG
+              (SSHRvvi_2S (SUBREG_TO_REG (i64 0), FPR32:$Rn, sub_32),
+                          shr_imm32:$Imm),
+              sub_32)>;
+def : Pat<(v1i8 (srl (v1i8 FPR8:$Rn),
+                     (v1i8 (Neon_vdup (i32 (shr_imm8:$Imm)))))),
+          (EXTRACT_SUBREG
+              (USHRvvi_8B (SUBREG_TO_REG (i64 0), FPR8:$Rn, sub_8),
+                          shr_imm8:$Imm),
+              sub_8)>;
+def : Pat<(v1i16 (srl (v1i16 FPR16:$Rn),
+                      (v1i16 (Neon_vdup (i32 (shr_imm16:$Imm)))))),
+          (EXTRACT_SUBREG
+              (USHRvvi_4H (SUBREG_TO_REG (i64 0), FPR16:$Rn, sub_16),
+                          shr_imm16:$Imm),
+              sub_16)>;
+def : Pat<(v1i32 (srl (v1i32 FPR32:$Rn),
+                      (v1i32 (Neon_vdup (i32 (shr_imm32:$Imm)))))),
+          (EXTRACT_SUBREG
+              (USHRvvi_2S (SUBREG_TO_REG (i64 0), FPR32:$Rn, sub_32),
+                          shr_imm32:$Imm),
+              sub_32)>;
 
 def Neon_High16B : PatFrag<(ops node:$in),
                            (extract_subvector (v16i8 node:$in), (iPTR 8))>;
@@ -8926,6 +9034,22 @@ def : Pat<(v4i32 (shl (v4i32 VPR128:$Rn), (v4i32 VPR128:$Rm))),
 def : Pat<(v2i64 (shl (v2i64 VPR128:$Rn), (v2i64 VPR128:$Rm))),
           (USHLvvv_2D $Rn, $Rm)>;
 
+def : Pat<(v1i8 (shl (v1i8 FPR8:$Rn), (v1i8 FPR8:$Rm))),
+          (EXTRACT_SUBREG
+              (USHLvvv_8B (SUBREG_TO_REG (i64 0), FPR8:$Rn, sub_8),
+                          (SUBREG_TO_REG (i64 0), FPR8:$Rm, sub_8)),
+              sub_8)>;
+def : Pat<(v1i16 (shl (v1i16 FPR16:$Rn), (v1i16 FPR16:$Rm))),
+          (EXTRACT_SUBREG
+              (USHLvvv_4H (SUBREG_TO_REG (i64 0), FPR16:$Rn, sub_16),
+                          (SUBREG_TO_REG (i64 0), FPR16:$Rm, sub_16)),
+              sub_16)>;
+def : Pat<(v1i32 (shl (v1i32 FPR32:$Rn), (v1i32 FPR32:$Rm))),
+          (EXTRACT_SUBREG
+              (USHLvvv_2S (SUBREG_TO_REG (i64 0), FPR32:$Rn, sub_32),
+                          (SUBREG_TO_REG (i64 0), FPR32:$Rm, sub_32)),
+              sub_32)>;
+
 // Additional patterns to match sra, srl.
 // For a vector right shift by vector, the shift amounts of SSHL/USHL are
 // negative. Negate the vector of shift amount first.
@@ -8946,6 +9070,22 @@ def : Pat<(v4i32 (srl (v4i32 VPR128:$Rn), (v4i32 VPR128:$Rm))),
 def : Pat<(v2i64 (srl (v2i64 VPR128:$Rn), (v2i64 VPR128:$Rm))),
           (USHLvvv_2D $Rn, (NEG2d $Rm))>;
 
+def : Pat<(v1i8 (srl (v1i8 FPR8:$Rn), (v1i8 FPR8:$Rm))),
+          (EXTRACT_SUBREG
+              (USHLvvv_8B (SUBREG_TO_REG (i64 0), FPR8:$Rn, sub_8),
+                          (NEG8b (SUBREG_TO_REG (i64 0), FPR8:$Rm, sub_8))),
+              sub_8)>;
+def : Pat<(v1i16 (srl (v1i16 FPR16:$Rn), (v1i16 FPR16:$Rm))),
+          (EXTRACT_SUBREG
+              (USHLvvv_4H (SUBREG_TO_REG (i64 0), FPR16:$Rn, sub_16),
+                          (NEG4h (SUBREG_TO_REG (i64 0), FPR16:$Rm, sub_16))),
+              sub_16)>;
+def : Pat<(v1i32 (srl (v1i32 FPR32:$Rn), (v1i32 FPR32:$Rm))),
+          (EXTRACT_SUBREG
+              (USHLvvv_2S (SUBREG_TO_REG (i64 0), FPR32:$Rn, sub_32),
+                          (NEG2s (SUBREG_TO_REG (i64 0), FPR32:$Rm, sub_32))),
+              sub_32)>;
+
 def : Pat<(v8i8 (sra (v8i8 VPR64:$Rn), (v8i8 VPR64:$Rm))),
           (SSHLvvv_8B $Rn, (NEG8b $Rm))>;
 def : Pat<(v4i16 (sra (v4i16 VPR64:$Rn), (v4i16 VPR64:$Rm))),
@@ -8962,6 +9102,22 @@ def : Pat<(v4i32 (sra (v4i32 VPR128:$Rn), (v4i32 VPR128:$Rm))),
           (SSHLvvv_4S $Rn, (NEG4s $Rm))>;
 def : Pat<(v2i64 (sra (v2i64 VPR128:$Rn), (v2i64 VPR128:$Rm))),
           (SSHLvvv_2D $Rn, (NEG2d $Rm))>;
+
+def : Pat<(v1i8 (sra (v1i8 FPR8:$Rn), (v1i8 FPR8:$Rm))),
+          (EXTRACT_SUBREG
+              (SSHLvvv_8B (SUBREG_TO_REG (i64 0), FPR8:$Rn, sub_8),
+                          (NEG8b (SUBREG_TO_REG (i64 0), FPR8:$Rm, sub_8))),
+              sub_8)>;
+def : Pat<(v1i16 (sra (v1i16 FPR16:$Rn), (v1i16 FPR16:$Rm))),
+          (EXTRACT_SUBREG
+              (SSHLvvv_4H (SUBREG_TO_REG (i64 0), FPR16:$Rn, sub_16),
+                          (NEG4h (SUBREG_TO_REG (i64 0), FPR16:$Rm, sub_16))),
+              sub_16)>;
+def : Pat<(v1i32 (sra (v1i32 FPR32:$Rn), (v1i32 FPR32:$Rm))),
+          (EXTRACT_SUBREG
+              (SSHLvvv_2S (SUBREG_TO_REG (i64 0), FPR32:$Rn, sub_32),
+                          (NEG2s (SUBREG_TO_REG (i64 0), FPR32:$Rm, sub_32))),
+              sub_32)>;
 
 //
 // Patterns for handling half-precision values

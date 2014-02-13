@@ -66,7 +66,7 @@ define <8 x i8> @lshr.v8i8(<8 x i8> %a, <8 x i8> %b) {
 
 define <4 x i16> @lshr.v4i16(<4 x i16> %a, <4 x i16> %b) {
 ; CHECK-LABEL: lshr.v4i16:
-; CHECK: neg v{{[0-9]+}}.4h, v{{[0-9]+}}.4
+; CHECK: neg v{{[0-9]+}}.4h, v{{[0-9]+}}.4h
 ; CHECK: ushl v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, v{{[0-9]+}}.4h
   %c = lshr <4 x i16> %a, %b
   ret <4 x i16> %c
@@ -130,7 +130,7 @@ define <8 x i8> @ashr.v8i8(<8 x i8> %a, <8 x i8> %b) {
 
 define <4 x i16> @ashr.v4i16(<4 x i16> %a, <4 x i16> %b) {
 ; CHECK-LABEL: ashr.v4i16:
-; CHECK: neg v{{[0-9]+}}.4h, v{{[0-9]+}}.4
+; CHECK: neg v{{[0-9]+}}.4h, v{{[0-9]+}}.4h
 ; CHECK: sshl v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, v{{[0-9]+}}.4h
   %c = ashr <4 x i16> %a, %b
   ret <4 x i16> %c
@@ -196,4 +196,138 @@ define <2 x i32> @shl.v2i32.0(<2 x i32> %a) {
 ; CHECK: shl v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #0
   %c = shl <2 x i32> %a, zeroinitializer
   ret <2 x i32> %c
+}
+
+; The following test cases test shl/ashr/lshr with v1i8/v1i16/v1i32 types
+
+define <1 x i8> @shl.v1i8(<1 x i8> %a, <1 x i8> %b) {
+; CHECK-LABEL: shl.v1i8:
+; CHECK: ushl v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+  %c = shl <1 x i8> %a, %b
+  ret <1 x i8> %c
+}
+
+define <1 x i16> @shl.v1i16(<1 x i16> %a, <1 x i16> %b) {
+; CHECK-LABEL: shl.v1i16:
+; CHECK: ushl v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, v{{[0-9]+}}.4h
+  %c = shl <1 x i16> %a, %b
+  ret <1 x i16> %c
+}
+
+define <1 x i32> @shl.v1i32(<1 x i32> %a, <1 x i32> %b) {
+; CHECK-LABEL: shl.v1i32:
+; CHECK: ushl v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, v{{[0-9]+}}.2s
+  %c = shl <1 x i32> %a, %b
+  ret <1 x i32> %c
+}
+
+define <1 x i8> @ashr.v1i8(<1 x i8> %a, <1 x i8> %b) {
+; CHECK-LABEL: ashr.v1i8:
+; CHECK: neg v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+; CHECK: sshl v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+  %c = ashr <1 x i8> %a, %b
+  ret <1 x i8> %c
+}
+
+define <1 x i16> @ashr.v1i16(<1 x i16> %a, <1 x i16> %b) {
+; CHECK-LABEL: ashr.v1i16:
+; CHECK: neg v{{[0-9]+}}.4h, v{{[0-9]+}}.4h
+; CHECK: sshl v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, v{{[0-9]+}}.4h
+  %c = ashr <1 x i16> %a, %b
+  ret <1 x i16> %c
+}
+
+define <1 x i32> @ashr.v1i32(<1 x i32> %a, <1 x i32> %b) {
+; CHECK-LABEL: ashr.v1i32:
+; CHECK: neg v{{[0-9]+}}.2s, v{{[0-9]+}}.2s
+; CHECK: sshl v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, v{{[0-9]+}}.2s
+  %c = ashr <1 x i32> %a, %b
+  ret <1 x i32> %c
+}
+
+define <1 x i8> @lshr.v1i8(<1 x i8> %a, <1 x i8> %b) {
+; CHECK-LABEL: lshr.v1i8:
+; CHECK: neg v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+; CHECK: ushl v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+  %c = lshr <1 x i8> %a, %b
+  ret <1 x i8> %c
+}
+
+define <1 x i16> @lshr.v1i16(<1 x i16> %a, <1 x i16> %b) {
+; CHECK-LABEL: lshr.v1i16:
+; CHECK: neg v{{[0-9]+}}.4h, v{{[0-9]+}}.4h
+; CHECK: ushl v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, v{{[0-9]+}}.4h
+  %c = lshr <1 x i16> %a, %b
+  ret <1 x i16> %c
+}
+
+define <1 x i32> @lshr.v1i32(<1 x i32> %a, <1 x i32> %b) {
+; CHECK-LABEL: lshr.v1i32:
+; CHECK: neg v{{[0-9]+}}.2s, v{{[0-9]+}}.2s
+; CHECK: ushl v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, v{{[0-9]+}}.2s
+  %c = lshr <1 x i32> %a, %b
+  ret <1 x i32> %c
+}
+
+define <1 x i8> @shl.v1i8.imm(<1 x i8> %a) {
+; CHECK-LABEL: shl.v1i8.imm:
+; CHECK: shl v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, #3
+  %c = shl <1 x i8> %a, <i8 3>
+  ret <1 x i8> %c
+}
+
+define <1 x i16> @shl.v1i16.imm(<1 x i16> %a) {
+; CHECK-LABEL: shl.v1i16.imm:
+; CHECK: shl v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, #5
+  %c = shl <1 x i16> %a, <i16 5>
+  ret <1 x i16> %c
+}
+
+define <1 x i32> @shl.v1i32.imm(<1 x i32> %a) {
+; CHECK-LABEL: shl.v1i32.imm:
+; CHECK: shl v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #0
+  %c = shl <1 x i32> %a, zeroinitializer
+  ret <1 x i32> %c
+}
+
+define <1 x i8> @ashr.v1i8.imm(<1 x i8> %a) {
+; CHECK-LABEL: ashr.v1i8.imm:
+; CHECK: sshr v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, #3
+  %c = ashr <1 x i8> %a, <i8 3>
+  ret <1 x i8> %c
+}
+
+define <1 x i16> @ashr.v1i16.imm(<1 x i16> %a) {
+; CHECK-LABEL: ashr.v1i16.imm:
+; CHECK: sshr v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, #10
+  %c = ashr <1 x i16> %a, <i16 10>
+  ret <1 x i16> %c
+}
+
+define <1 x i32> @ashr.v1i32.imm(<1 x i32> %a) {
+; CHECK-LABEL: ashr.v1i32.imm:
+; CHECK: sshr v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #32
+  %c = ashr <1 x i32> %a, <i32 32>
+  ret <1 x i32> %c
+}
+
+define <1 x i8> @lshr.v1i8.imm(<1 x i8> %a) {
+; CHECK-LABEL: lshr.v1i8.imm:
+; CHECK: ushr v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, #3
+  %c = lshr <1 x i8> %a, <i8 3>
+  ret <1 x i8> %c
+}
+
+define <1 x i16> @lshr.v1i16.imm(<1 x i16> %a) {
+; CHECK-LABEL: lshr.v1i16.imm:
+; CHECK: ushr v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, #10
+  %c = lshr <1 x i16> %a, <i16 10>
+  ret <1 x i16> %c
+}
+
+define <1 x i32> @lshr.v1i32.imm(<1 x i32> %a) {
+; CHECK-LABEL: lshr.v1i32.imm:
+; CHECK: ushr v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #32
+  %c = lshr <1 x i32> %a, <i32 32>
+  ret <1 x i32> %c
 }

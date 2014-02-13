@@ -731,3 +731,24 @@ define <2 x double> @fmulx_v2f64(<2 x double> %lhs, <2 x double> %rhs) {
         %val = call <2 x double> @llvm.aarch64.neon.vmulx.v2f64(<2 x double> %lhs, <2 x double> %rhs)
         ret <2 x double> %val
 }
+
+define <1 x i8> @test_mul_v1i8(<1 x i8> %a, <1 x i8> %b) {
+;CHECK-LABEL: test_mul_v1i8:
+;CHECK: mul {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %c = mul <1 x i8> %a, %b
+  ret <1 x i8> %c
+}
+
+define <1 x i16> @test_mul_v1i16(<1 x i16> %a, <1 x i16> %b) {
+;CHECK-LABEL: test_mul_v1i16:
+;CHECK: mul {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+  %c = mul <1 x i16> %a, %b
+  ret <1 x i16> %c
+}
+
+define <1 x i32> @test_mul_v1i32(<1 x i32> %a, <1 x i32> %b) {
+;CHECK-LABEL: test_mul_v1i32:
+;CHECK: mul {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+  %c = mul <1 x i32> %a, %b
+  ret <1 x i32> %c
+}
