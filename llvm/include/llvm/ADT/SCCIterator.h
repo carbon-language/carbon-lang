@@ -47,6 +47,22 @@ class scc_iterator
   typedef typename super::reference reference;
   typedef typename super::pointer pointer;
 
+  // Element of VisitStack during DFS.
+  struct StackElement {
+    NodeType *Node;       ///< The current node pointer.
+    ChildItTy NextChild;  ///< The next child, modified inplace during DFS.
+    unsigned MinVisited;  ///< Minimum uplink value of all children of Node.
+
+    StackElement(NodeType *Node, const ChildItTy &Child, unsigned Min)
+      : Node(Node), NextChild(Child), MinVisited(Min) {}
+
+    bool operator==(const StackElement &Other) const {
+      return Node == Other.Node &&
+             NextChild == Other.NextChild &&
+             MinVisited == Other.MinVisited;
+    }
+  };
+
   // The visit counters used to detect when a complete SCC is on the stack.
   // visitNum is the global counter.
   // nodeVisitNumbers are per-node visit numbers, also used as DFS flags.
@@ -59,22 +75,17 @@ class scc_iterator
   // The current SCC, retrieved using operator*().
   SccTy CurrentSCC;
 
-  // Used to maintain the ordering.  The top is the current block, the first
-  // element is basic block pointer, second is the 'next child' to visit.
-  std::vector<std::pair<NodeType *, ChildItTy> > VisitStack;
 
-  // Stack holding the "min" values for each node in the DFS. This is used to
-  // track the minimum uplink values for all children of the corresponding node
-  // on the VisitStack.
-  std::vector<unsigned> MinVisitNumStack;
+  // DFS stack, Used to maintain the ordering.  The top contains the current
+  // node, the next child to visit, and the minimum uplink value of all child
+  std::vector<StackElement> VisitStack;
 
   // A single "visit" within the non-recursive DFS traversal.
   void DFSVisitOne(NodeType *N) {
     ++visitNum;
     nodeVisitNumbers[N] = visitNum;
     SCCNodeStack.push_back(N);
-    MinVisitNumStack.push_back(visitNum);
-    VisitStack.push_back(std::make_pair(N, GT::child_begin(N)));
+    VisitStack.push_back(StackElement(N, GT::child_begin(N), visitNum));
 #if 0 // Enable if needed when debugging.
     dbgs() << "TarjanSCC: Node " << N <<
           " : visitNum = " << visitNum << "\n";
@@ -84,35 +95,39 @@ class scc_iterator
   // The stack-based DFS traversal; defined below.
   void DFSVisitChildren() {
     assert(!VisitStack.empty());
-    while (VisitStack.back().second != GT::child_end(VisitStack.back().first)) {
+    while (VisitStack.back().NextChild !=
+           GT::child_end(VisitStack.back().Node)) {
       // TOS has at least one more child so continue DFS
-      NodeType *childN = *VisitStack.back().second++;
-      if (!nodeVisitNumbers.count(childN)) {
+      NodeType *childN = *VisitStack.back().NextChild++;
+      typename DenseMap<NodeType *, unsigned>::iterator Visited =
+        nodeVisitNumbers.find(childN);
+      if (Visited == nodeVisitNumbers.end()) {
         // this node has never been seen.
         DFSVisitOne(childN);
         continue;
       }
 
-      unsigned childNum = nodeVisitNumbers[childN];
-      if (MinVisitNumStack.back() > childNum)
-        MinVisitNumStack.back() = childNum;
+      unsigned childNum = Visited->second;
+      if (VisitStack.back().MinVisited > childNum)
+        VisitStack.back().MinVisited = childNum;
     }
   }
 
   // Compute the next SCC using the DFS traversal.
   void GetNextSCC() {
-    assert(VisitStack.size() == MinVisitNumStack.size());
     CurrentSCC.clear(); // Prepare to compute the next SCC
     while (!VisitStack.empty()) {
       DFSVisitChildren();
-      assert(VisitStack.back().second ==
-             GT::child_end(VisitStack.back().first));
-      NodeType *visitingN = VisitStack.back().first;
-      unsigned minVisitNum = MinVisitNumStack.back();
+
+      // Pop the leaf on top of the VisitStack.
+      NodeType *visitingN = VisitStack.back().Node;
+      unsigned minVisitNum = VisitStack.back().MinVisited;
+      assert(VisitStack.back().NextChild == GT::child_end(visitingN));
       VisitStack.pop_back();
-      MinVisitNumStack.pop_back();
-      if (!MinVisitNumStack.empty() && MinVisitNumStack.back() > minVisitNum)
-        MinVisitNumStack.back() = minVisitNum;
+
+      // Propagate MinVisitNum to parent so we can detect the SCC starting node.
+      if (!VisitStack.empty() && VisitStack.back().MinVisited > minVisitNum)
+        VisitStack.back().MinVisited = minVisitNum;
 
 #if 0 // Enable if needed when debugging.
       dbgs() << "TarjanSCC: Popped node " << visitingN <<
