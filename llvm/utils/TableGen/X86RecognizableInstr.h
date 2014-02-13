@@ -109,9 +109,6 @@ private:
   /// @return - The context in which the instruction is valid.
   InstructionContext insnContext() const;
 
-  /// hasFROperands - Returns true if any operand is a FR operand.
-  bool hasFROperands() const;
-
   /// typeFromString - Translates an operand type from the string provided in
   ///   the LLVM tables to an OperandType for use in the operand specifier.
   ///
