@@ -2,6 +2,8 @@
 
 // RUN: %clang -target aarch64-linux-eabi -mfpu=neon %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NEON %s
+// RUN: %clang -target aarch64-linux-eabi %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NEON %s
 // CHECK-NEON: "-target-feature" "+neon"
 
 // RUN: %clang -target aarch64-linux-eabi -mfpu=fp-armv8 %s -### -o %t.o 2>&1 \
