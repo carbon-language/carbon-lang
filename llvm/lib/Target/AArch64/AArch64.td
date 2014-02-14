@@ -39,7 +39,7 @@ include "AArch64Schedule.td"
 class ProcNoItin<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
-def : Processor<"generic", GenericItineraries, [FeatureFPARMv8]>;
+def : Processor<"generic", GenericItineraries, [FeatureFPARMv8, FeatureNEON]>;
 
 def : ProcNoItin<"cortex-a53",      [FeatureFPARMv8,
                                     FeatureNEON,
