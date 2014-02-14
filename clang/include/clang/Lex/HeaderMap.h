@@ -55,6 +55,11 @@ public:
   /// "../../file.h".
   const FileEntry *LookupFile(StringRef Filename, FileManager &FM) const;
 
+  /// If the specified relative filename is located in this HeaderMap return
+  /// the filename it is mapped to, otherwise return an empty StringRef.
+  StringRef lookupFilename(StringRef Filename,
+                           SmallVectorImpl<char> &DestPath) const;
+
   /// getFileName - Return the filename of the headermap.
   const char *getFileName() const;
 

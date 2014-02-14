@@ -223,12 +223,13 @@ const char *DirectoryLookup::getName() const {
 /// LookupFile - Lookup the specified file in this search path, returning it
 /// if it exists or returning null if not.
 const FileEntry *DirectoryLookup::LookupFile(
-    StringRef Filename,
+    StringRef &Filename,
     HeaderSearch &HS,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
     ModuleMap::KnownHeader *SuggestedModule,
-    bool &InUserSpecifiedSystemFramework) const {
+    bool &InUserSpecifiedSystemFramework,
+    SmallVectorImpl<char> &MappedName) const {
   InUserSpecifiedSystemFramework = false;
 
   SmallString<1024> TmpDir;
@@ -271,8 +272,27 @@ const FileEntry *DirectoryLookup::LookupFile(
                              SuggestedModule, InUserSpecifiedSystemFramework);
 
   assert(isHeaderMap() && "Unknown directory lookup");
-  const FileEntry * const Result = getHeaderMap()->LookupFile(
-      Filename, HS.getFileMgr());
+  const HeaderMap *HM = getHeaderMap();
+  SmallString<1024> Path;
+  StringRef Dest = HM->lookupFilename(Filename, Path);
+  if (Dest.empty())
+    return 0;
+
+  const FileEntry *Result;
+
+  // Check if the headermap maps the filename to a framework include
+  // ("Foo.h" -> "Foo/Foo.h"), in which case continue header lookup using the
+  // framework include.
+  if (llvm::sys::path::is_relative(Dest)) {
+    MappedName.clear();
+    MappedName.append(Dest.begin(), Dest.end());
+    Filename = StringRef(MappedName.begin(), MappedName.size());
+    Result = HM->LookupFile(Filename, HS.getFileMgr());
+
+  } else {
+    Result = HS.getFileMgr().getFile(Dest);
+  }
+
   if (Result) {
     if (SearchPath != NULL) {
       StringRef SearchPathRef(getName());
@@ -620,12 +640,15 @@ const FileEntry *HeaderSearch::LookupFile(
     CacheLookup.first = i+1;
   }
 
+  SmallString<64> MappedName;
+
   // Check each directory in sequence to see if it contains this file.
   for (; i != SearchDirs.size(); ++i) {
     bool InUserSpecifiedSystemFramework = false;
     const FileEntry *FE =
       SearchDirs[i].LookupFile(Filename, *this, SearchPath, RelativePath,
-                               SuggestedModule, InUserSpecifiedSystemFramework);
+                               SuggestedModule, InUserSpecifiedSystemFramework,
+                               MappedName);
     if (!FE) continue;
 
     CurDir = &SearchDirs[i];
