@@ -62,6 +62,7 @@ void DWARFDebugLine::Row::reset(bool default_is_stmt) {
   Column = 0;
   File = 1;
   Isa = 0;
+  Discriminator = 0;
   IsStmt = default_is_stmt;
   BasicBlock = false;
   EndSequence = false;
@@ -71,7 +72,7 @@ void DWARFDebugLine::Row::reset(bool default_is_stmt) {
 
 void DWARFDebugLine::Row::dump(raw_ostream &OS) const {
   OS << format("0x%16.16" PRIx64 " %6u %6u", Address, Line, Column)
-     << format(" %6u %3u ", File, Isa)
+     << format(" %6u %3u %13u ", File, Isa, Discriminator)
      << (IsStmt ? " is_stmt" : "")
      << (BasicBlock ? " basic_block" : "")
      << (PrologueEnd ? " prologue_end" : "")
@@ -85,8 +86,9 @@ void DWARFDebugLine::LineTable::dump(raw_ostream &OS) const {
   OS << '\n';
 
   if (!Rows.empty()) {
-    OS << "Address            Line   Column File   ISA Flags\n"
-       << "------------------ ------ ------ ------ --- -------------\n";
+    OS << "Address            Line   Column File   ISA Discriminator Flags\n"
+       << "------------------ ------ ------ ------ --- ------------- "
+          "-------------\n";
     for (std::vector<Row>::const_iterator pos = Rows.begin(),
          end = Rows.end(); pos != end; ++pos)
       pos->dump(OS);
@@ -309,6 +311,10 @@ DWARFDebugLine::parseStatementTable(DataExtractor debug_line_data,
           fileEntry.Length = debug_line_data.getULEB128(offset_ptr);
           prologue->FileNames.push_back(fileEntry);
         }
+        break;
+
+      case DW_LNE_set_discriminator:
+        state.Discriminator = debug_line_data.getULEB128(offset_ptr);
         break;
 
       default:

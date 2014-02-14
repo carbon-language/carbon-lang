@@ -113,10 +113,10 @@ _x:	.long 1
 // CHECK:                 ---- ---------- ---------- ---------------------------
 // CHECK: file_names[  1]    1 0x00000000 0x00000000 gen-dwarf.s
 
-// CHECK: Address            Line   Column File   ISA Flags
-// CHECK: ------------------ ------ ------ ------ --- -------------
-// CHECK: 0x0000000000000000      6      0      1   0  is_stmt
-// CHECK: 0x0000000000000005      7      0      1   0  is_stmt
-// CHECK: 0x0000000000000006      8      0      1   0  is_stmt
-// CHECK: 0x0000000000000007     11      0      1   0  is_stmt
-// CHECK: 0x0000000000000008     11      0      1   0  is_stmt end_sequence
+// CHECK: Address            Line   Column File   ISA Discriminator Flags
+// CHECK: ------------------ ------ ------ ------ --- ------------- -------------
+// CHECK: 0x0000000000000000      6      0      1   0             0  is_stmt
+// CHECK: 0x0000000000000005      7      0      1   0             0  is_stmt
+// CHECK: 0x0000000000000006      8      0      1   0             0  is_stmt
+// CHECK: 0x0000000000000007     11      0      1   0             0  is_stmt
+// CHECK: 0x0000000000000008     11      0      1   0             0  is_stmt end_sequence

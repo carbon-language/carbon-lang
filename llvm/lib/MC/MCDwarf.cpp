@@ -137,6 +137,7 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
   unsigned Column = 0;
   unsigned Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
   unsigned Isa = 0;
+  unsigned Discriminator = 0;
   MCSymbol *LastLabel = NULL;
 
   // Loop through each MCLineEntry and encode the dwarf line number table.
@@ -153,6 +154,15 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
       Column = it->getColumn();
       MCOS->EmitIntValue(dwarf::DW_LNS_set_column, 1);
       MCOS->EmitULEB128IntValue(Column);
+    }
+    if (Discriminator != it->getDiscriminator()) {
+      Discriminator = it->getDiscriminator();
+      unsigned Size =
+          MCOS->getContext().getAsmInfo()->getULEB128Size(Discriminator);
+      MCOS->EmitIntValue(dwarf::DW_LNS_extended_op, 1);
+      MCOS->EmitULEB128IntValue(Size + 1);
+      MCOS->EmitIntValue(dwarf::DW_LNE_set_discriminator, 1);
+      MCOS->EmitULEB128IntValue(Discriminator);
     }
     if (Isa != it->getIsa()) {
       Isa = it->getIsa();

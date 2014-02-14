@@ -112,6 +112,9 @@ public:
     // An unsigned integer whose value encodes the applicable instruction set
     // architecture for the current instruction.
     uint8_t Isa;
+    // An unsigned integer representing the DWARF path discriminator value
+    // for this location.
+    uint32_t Discriminator;
     // A boolean indicating that the current instruction is the beginning of a
     // statement.
     uint8_t IsStmt:1,
