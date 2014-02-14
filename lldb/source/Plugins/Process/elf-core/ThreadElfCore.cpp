@@ -17,6 +17,7 @@
 #include "ThreadElfCore.h"
 #include "ProcessElfCore.h"
 #include "RegisterContextLinux_x86_64.h"
+#include "RegisterContextFreeBSD_i386.h"
 #include "RegisterContextFreeBSD_mips64.h"
 #include "RegisterContextFreeBSD_x86_64.h"
 #include "RegisterContextPOSIXCore_mips64.h"
@@ -101,6 +102,22 @@ ThreadElfCore::CreateRegisterContextForFrame (StackFrame *frame)
                         break;
                 }
                 break;
+
+            case llvm::Triple::x86:
+                switch (arch.GetTriple().getOS())
+                {
+                    case llvm::Triple::FreeBSD:
+                        m_thread_reg_ctx_sp.reset(new RegisterContextCorePOSIX_x86_64 (*this, new RegisterContextFreeBSD_i386(arch), m_gpregset_data, m_fpregset_data));
+                        break;
+                    default:
+                        if (log)
+                            log->Printf ("elf-core::%s:: OS(%d) not supported",
+                                         __FUNCTION__, arch.GetTriple().getOS());
+                        assert (false && "OS not supported");
+                        break;
+                }
+                break;
+
             case llvm::Triple::x86_64:
                 switch (arch.GetTriple().getOS())
                 {
