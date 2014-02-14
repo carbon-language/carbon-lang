@@ -50,6 +50,10 @@ endif()
 filter_available_targets(ASAN_SUPPORTED_ARCH
   x86_64 i386 powerpc64)
 
+set(ASAN_ASM_SOURCES asan_asm_instrumentation.S)
+set_source_files_properties(${ASAN_ASM_SOURCES} PROPERTIES LANGUAGE C)
+list(APPEND ASAN_SOURCES ${ASAN_ASM_SOURCES})
+
 # Compile ASan sources into an object library.
 if(APPLE)
   foreach(os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
