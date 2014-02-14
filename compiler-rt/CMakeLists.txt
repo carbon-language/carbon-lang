@@ -231,6 +231,8 @@ endif()
 # support only subset of these (e.g. TSan works on x86_64 only).
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
   x86_64 i386 powerpc64 arm)
+filter_available_targets(UBSAN_SUPPORTED_ARCH
+  x86_64 i386)
 
 add_subdirectory(include)
 

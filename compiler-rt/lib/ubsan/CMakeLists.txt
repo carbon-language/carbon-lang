@@ -15,10 +15,7 @@ include_directories(..)
 
 set(UBSAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 
-filter_available_targets(UBSAN_SUPPORTED_ARCH
-  x86_64 i386)
-
-set(UBSAN_RUNTIME_LIBRARIES)
+add_custom_target(ubsan)
 
 if(APPLE)
   # Build universal binary on APPLE.
@@ -27,7 +24,7 @@ if(APPLE)
     SOURCES ${UBSAN_SOURCES} ${UBSAN_CXX_SOURCES}
             $<TARGET_OBJECTS:RTSanitizerCommon.osx>
     CFLAGS ${UBSAN_CFLAGS})
-  list(APPEND UBSAN_RUNTIME_LIBRARIES clang_rt.ubsan_osx)
+  add_dependencies(ubsan clang_rt.ubsan_osx)
 else()
   # Build separate libraries for each target.
   foreach(arch ${UBSAN_SUPPORTED_ARCH})
@@ -39,20 +36,16 @@ else()
     add_compiler_rt_static_runtime(clang_rt.ubsan_cxx-${arch} ${arch}
       SOURCES ${UBSAN_CXX_SOURCES}
       CFLAGS ${UBSAN_CFLAGS})
-    list(APPEND UBSAN_RUNTIME_LIBRARIES
+    add_dependencies(ubsan
       clang_rt.san-${arch}
       clang_rt.ubsan-${arch}
       clang_rt.ubsan_cxx-${arch})
     if (UNIX AND NOT ${arch} STREQUAL "i386")
       add_sanitizer_rt_symbols(clang_rt.ubsan-${arch} ubsan.syms.extra)
       add_sanitizer_rt_symbols(clang_rt.ubsan_cxx-${arch} ubsan.syms.extra)
-      list(APPEND UBSAN_RUNTIME_LIBRARIES
+      add_dependencies(ubsan
         clang_rt.ubsan-${arch}-symbols
         clang_rt.ubsan_cxx-${arch}-symbols)
     endif()
   endforeach()
-endif()
-
-if(UBSAN_SUPPORTED_ARCH)
-  add_subdirectory(lit_tests)
 endif()
