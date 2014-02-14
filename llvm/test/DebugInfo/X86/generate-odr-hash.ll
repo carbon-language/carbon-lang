@@ -125,6 +125,14 @@
 ; CHECK: DW_TAG_member
 ; CHECK-NEXT: DW_AT_name{{.*}}"a"
 
+; CHECK-LABEL: .debug_line contents:
+; CHECK: Line table prologue
+; CHECK-NOT: file_names[
+; CHECK: file_names{{.*}} bar.h
+; CHECK: file_names{{.*}} bar.cpp
+; CHECK-NOT: file_names[
+; CHECK-LABEL: .debug_str contents:
+
 ; Use the unit size as a rough hash/identifier for the unit we're dealing with
 ; it happens to be unambiguous at the moment, but it's hardly ideal.
 ; CHECK-LABEL: .debug_pubtypes contents:
