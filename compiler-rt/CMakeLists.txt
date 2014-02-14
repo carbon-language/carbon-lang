@@ -232,6 +232,7 @@ endif()
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
   x86_64 i386 powerpc64 arm)
 filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
+filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386)
 
 add_subdirectory(include)

@@ -22,11 +22,7 @@ set(LSAN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 filter_available_targets(LSAN_COMMON_SUPPORTED_ARCH
   x86_64 i386 powerpc64 arm)
 
-# Architectures supported by the standalone LSan.
-filter_available_targets(LSAN_SUPPORTED_ARCH
-  x86_64)
-
-set(LSAN_RUNTIME_LIBRARIES)
+add_custom_target(lsan)
 
 if(APPLE)
   foreach(os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
@@ -50,8 +46,6 @@ elseif(NOT ANDROID)
               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
               $<TARGET_OBJECTS:RTLSanCommon.${arch}>
       CFLAGS ${LSAN_CFLAGS})
-    list(APPEND LSAN_RUNTIME_LIBRARIES clang_rt.lsan-${arch})
+    add_dependencies(lsan clang_rt.lsan-${arch})
   endforeach()
 endif()
-
-add_subdirectory(lit_tests)
