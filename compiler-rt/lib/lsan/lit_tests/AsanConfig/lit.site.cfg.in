@@ -1,5 +1,5 @@
 # Load common config for all compiler-rt lit tests.
-lit_config.load_config(config, "@COMPILER_RT_BINARY_DIR@/lib/lit.common.configured")
+lit_config.load_config(config, "@COMPILER_RT_BINARY_DIR@/test/lit.common.configured")
 
 # Tool-specific config options.
 config.lsan_lit_src_root = "@LSAN_LIT_SOURCE_DIR@"

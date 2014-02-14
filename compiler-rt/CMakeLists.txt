@@ -248,8 +248,6 @@ endif()
 add_subdirectory(lib)
 
 if(LLVM_INCLUDE_TESTS)
-  # Currently the tests have not been ported to CMake, so disable this
-  # directory.
-  #
-  #add_subdirectory(test)
+  add_subdirectory(test)
+  add_subdirectory(unittests)
 endif()

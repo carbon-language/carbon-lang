@@ -34,13 +34,3 @@ if(LLVM_USE_SANITIZER STREQUAL "")
 endif()
 
 add_subdirectory(builtins)
-
-# Generate configs for running lit and unit tests.
-configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/lit.common.configured.in
-  ${CMAKE_CURRENT_BINARY_DIR}/lit.common.configured)
-
-configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/lit.common.unit.configured.in
-  ${CMAKE_CURRENT_BINARY_DIR}/lit.common.unit.configured)
-

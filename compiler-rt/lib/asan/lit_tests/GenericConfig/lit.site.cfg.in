@@ -11,7 +11,7 @@ config.bits = "@ASAN_TEST_BITS@"
 config.android = "@CAN_TARGET_arm_android@"
 
 # Load common config for all compiler-rt lit tests.
-lit_config.load_config(config, "@COMPILER_RT_BINARY_DIR@/lib/lit.common.configured")
+lit_config.load_config(config, "@COMPILER_RT_BINARY_DIR@/test/lit.common.configured")
 
 # Load tool-specific config that would do the real work.
 lit_config.load_config(config, "@ASAN_SOURCE_DIR@/lit_tests/lit.cfg")

@@ -21,4 +21,4 @@ except KeyError,e:
   lit_config.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key, key))
 
 # Setup attributes common for all compiler-rt unit tests.
-lit_config.load_config(config, "@COMPILER_RT_SOURCE_DIR@/lib/lit.common.unit.cfg")
+lit_config.load_config(config, "@COMPILER_RT_SOURCE_DIR@/unittests/lit.common.unit.cfg")
