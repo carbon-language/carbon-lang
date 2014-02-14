@@ -42,7 +42,8 @@ class SanitizerArgs {
     NeedsLeakDetection = Leak,
     NeedsUbsanRt = Undefined | Integer,
     NotAllowedWithTrap = Vptr,
-    HasZeroBaseShadow = Thread | Memory | DataFlow
+    HasZeroBaseShadow = Thread | Memory | DataFlow,
+    NeedsUnwindTables = Address | Thread | Memory | DataFlow
   };
   unsigned Kind;
 
@@ -73,6 +74,7 @@ class SanitizerArgs {
   bool hasZeroBaseShadow() const {
     return (Kind & HasZeroBaseShadow) || AsanZeroBaseShadow;
   }
+  bool needsUnwindTables() const { return Kind & NeedsUnwindTables; }
   void addArgs(const llvm::opt::ArgList &Args,
                llvm::opt::ArgStringList &CmdArgs) const;
 

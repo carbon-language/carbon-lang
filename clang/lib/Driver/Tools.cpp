@@ -2536,10 +2536,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -fasynchronous-unwind-tables and -fnon-call-exceptions interact in more
   // complicated ways.
   bool AsynchronousUnwindTables =
-    Args.hasFlag(options::OPT_fasynchronous_unwind_tables,
-                 options::OPT_fno_asynchronous_unwind_tables,
-                 getToolChain().IsUnwindTablesDefault() &&
-                 !KernelOrKext);
+      Args.hasFlag(options::OPT_fasynchronous_unwind_tables,
+                   options::OPT_fno_asynchronous_unwind_tables,
+                   (getToolChain().IsUnwindTablesDefault() ||
+                    getToolChain().getSanitizerArgs().needsUnwindTables()) &&
+                       !KernelOrKext);
   if (Args.hasFlag(options::OPT_funwind_tables, options::OPT_fno_unwind_tables,
                    AsynchronousUnwindTables))
     CmdArgs.push_back("-munwind-tables");
