@@ -3006,6 +3006,20 @@ TEST(MemorySanitizer, getpwuid) {
   ASSERT_EQ(p->pw_uid, 0);
 }
 
+TEST(MemorySanitizer, getpwuid_r) {
+  struct passwd pwd;
+  struct passwd *pwdres;
+  char buf[10000];
+  int res = getpwuid_r(0, &pwd, buf, sizeof(buf), &pwdres);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(pwd.pw_name);
+  ASSERT_TRUE(pwd.pw_name != NULL);
+  EXPECT_NOT_POISONED(pwd.pw_name[0]);
+  EXPECT_NOT_POISONED(pwd.pw_uid);
+  ASSERT_EQ(pwd.pw_uid, 0);
+  EXPECT_NOT_POISONED(pwdres);
+}
+
 TEST(MemorySanitizer, getpwnam_r) {
   struct passwd pwd;
   struct passwd *pwdres;
@@ -3017,6 +3031,7 @@ TEST(MemorySanitizer, getpwnam_r) {
   EXPECT_NOT_POISONED(pwd.pw_name[0]);
   EXPECT_NOT_POISONED(pwd.pw_uid);
   ASSERT_EQ(pwd.pw_uid, 0);
+  EXPECT_NOT_POISONED(pwdres);
 }
 
 TEST(MemorySanitizer, getpwnam_r_positive) {
@@ -3040,6 +3055,7 @@ TEST(MemorySanitizer, getgrnam_r) {
   ASSERT_TRUE(grp.gr_name != NULL);
   EXPECT_NOT_POISONED(grp.gr_name[0]);
   EXPECT_NOT_POISONED(grp.gr_gid);
+  EXPECT_NOT_POISONED(grpres);
 }
 
 TEST(MemorySanitizer, getgroups) {

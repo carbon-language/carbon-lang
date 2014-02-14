@@ -917,6 +917,7 @@ INTERCEPTOR(int, getpwnam_r, const char *name, void *pwd, char *buf,
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwd, struct_passwd_sz);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
+  if (result) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
   return res;
 }
 INTERCEPTOR(int, getpwuid_r, u32 uid, void *pwd, char *buf, SIZE_T buflen,
@@ -928,6 +929,7 @@ INTERCEPTOR(int, getpwuid_r, u32 uid, void *pwd, char *buf, SIZE_T buflen,
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwd, struct_passwd_sz);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
+  if (result) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
   return res;
 }
 INTERCEPTOR(int, getgrnam_r, const char *name, void *grp, char *buf,
@@ -940,6 +942,7 @@ INTERCEPTOR(int, getgrnam_r, const char *name, void *grp, char *buf,
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, grp, struct_group_sz);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
+  if (result) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
   return res;
 }
 INTERCEPTOR(int, getgrgid_r, u32 gid, void *grp, char *buf, SIZE_T buflen,
@@ -951,6 +954,7 @@ INTERCEPTOR(int, getgrgid_r, u32 gid, void *grp, char *buf, SIZE_T buflen,
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, grp, struct_group_sz);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
+  if (result) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
   return res;
 }
 #define INIT_GETPWNAM_R_AND_FRIENDS      \
