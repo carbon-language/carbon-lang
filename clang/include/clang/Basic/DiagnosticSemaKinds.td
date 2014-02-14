@@ -1527,7 +1527,10 @@ def err_auto_var_init_multiple_expressions : Error<
 def err_auto_new_ctor_multiple_expressions : Error<
   "new expression for type %0 contains multiple constructor arguments">;
 def err_auto_missing_trailing_return : Error<
-  "'auto' return without trailing return type">;
+  "'auto' return without trailing return type; deduced return types are a "
+  "C++1y extension">;
+def err_deduced_return_type : Error<
+  "deduced return types are a C++1y extension">;
 def err_trailing_return_without_auto : Error<
   "function with trailing return type must specify return type 'auto', not %0">;
 def err_trailing_return_in_parens : Error<

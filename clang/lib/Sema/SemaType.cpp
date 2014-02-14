@@ -2678,11 +2678,13 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       if (!D.isInvalidType()) {
         // trailing-return-type is only required if we're declaring a function,
         // and not, for instance, a pointer to a function.
-        if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto &&
+        if (D.getDeclSpec().containsPlaceholderType() &&
             !FTI.hasTrailingReturnType() && chunkIndex == 0 &&
             !S.getLangOpts().CPlusPlus1y) {
           S.Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
-               diag::err_auto_missing_trailing_return);
+                 D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto
+                     ? diag::err_auto_missing_trailing_return
+                     : diag::err_deduced_return_type);
           T = Context.IntTy;
           D.setInvalidType(true);
         } else if (FTI.hasTrailingReturnType()) {

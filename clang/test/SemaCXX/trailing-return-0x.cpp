@@ -17,7 +17,9 @@ auto f() -> int
     return 0;
 }
 
-auto g(); // expected-error{{return without trailing return type}}
+auto g(); // expected-error{{return without trailing return type; deduced return types are a C++1y extension}}
+decltype(auto) g2(); // expected-warning{{extension}} expected-error-re{{{{^}}deduced return types are a C++1y extension}}
+auto badness = g2();
 
 int h() -> int; // expected-error{{trailing return type must specify return type 'auto', not 'int'}}
 
