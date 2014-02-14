@@ -1979,8 +1979,6 @@ void DwarfUnit::emitHeader(const MCSection *ASection,
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 }
 
-DwarfCompileUnit::~DwarfCompileUnit() {}
-
 void DwarfCompileUnit::initStmtList(MCSymbol *DwarfLineSectionSym) {
   // Define start line table label for each Compile Unit.
   MCSymbol *LineTableStartSym =
@@ -2006,8 +2004,6 @@ void DwarfCompileUnit::initStmtList(MCSymbol *DwarfLineSectionSym) {
     addSectionDelta(UnitDie.get(), dwarf::DW_AT_stmt_list, LineTableStartSym,
                     DwarfLineSectionSym);
 }
-
-DwarfTypeUnit::~DwarfTypeUnit() {}
 
 void DwarfTypeUnit::emitHeader(const MCSection *ASection,
                                const MCSymbol *ASectionSym) const {

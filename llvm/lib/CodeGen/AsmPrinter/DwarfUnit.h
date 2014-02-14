@@ -542,7 +542,6 @@ class DwarfCompileUnit : public DwarfUnit {
 public:
   DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
                    DwarfDebug *DW, DwarfFile *DWU);
-  virtual ~DwarfCompileUnit() LLVM_OVERRIDE;
 
   void initStmtList(MCSymbol *DwarfLineSectionSym);
 
@@ -565,7 +564,6 @@ private:
 public:
   DwarfTypeUnit(unsigned UID, DIE *D, DwarfCompileUnit &CU, AsmPrinter *A,
                 DwarfDebug *DW, DwarfFile *DWU);
-  virtual ~DwarfTypeUnit() LLVM_OVERRIDE;
 
   void setTypeSignature(uint64_t Signature) { TypeSignature = Signature; }
   uint64_t getTypeSignature() const { return TypeSignature; }
