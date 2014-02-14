@@ -19,6 +19,7 @@
 #include <link.h>
 
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_linux.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 
@@ -43,11 +44,11 @@ void InitializePlatformSpecificModules() {
     return;
   }
   if (num_matches == 0)
-    Report("LeakSanitizer: Dynamic linker not found. "
-           "TLS will not be handled correctly.\n");
+    VReport(1, "LeakSanitizer: Dynamic linker not found. "
+            "TLS will not be handled correctly.\n");
   else if (num_matches > 1)
-    Report("LeakSanitizer: Multiple modules match \"%s\". "
-           "TLS will not be handled correctly.\n", kLinkerName);
+    VReport(1, "LeakSanitizer: Multiple modules match \"%s\". "
+            "TLS will not be handled correctly.\n", kLinkerName);
   linker = 0;
 }
 
