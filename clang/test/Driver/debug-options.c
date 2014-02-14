@@ -50,6 +50,8 @@
 //
 // RUN: %clang -### -c -ggnu-pubnames %s 2>&1 | FileCheck -check-prefix=GOPT %s
 //
+// RUN: %clang -### -c -gdwarf-aranges %s 2>&1 | FileCheck -check-prefix=GARANGE %s
+//
 // RUN: %clang -### -fdebug-types-section %s 2>&1 \
 // RUN:        | FileCheck -check-prefix=FDTS %s
 //
@@ -62,7 +64,7 @@
 //
 // G_DARWIN: "-cc1"
 // G_DARWIN: "-gdwarf-2"
-// 
+//
 // G_D2: "-cc1"
 // G_D2: "-gdwarf-2"
 //
@@ -85,6 +87,8 @@
 // GIGNORE-NOT: "argument unused during compilation"
 //
 // GOPT: -generate-gnu-dwarf-pub-sections
+//
+// GARANGE: -generate-arange-section
 //
 // FDTS: "-backend-option" "-generate-type-units"
 //

@@ -2690,6 +2690,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-generate-gnu-dwarf-pub-sections");
   }
 
+  // -gdwarf-aranges turns on the emission of the aranges section in the
+  // backend.
+  if (Args.hasArg(options::OPT_gdwarf_aranges)) {
+    CmdArgs.push_back("-backend-option");
+    CmdArgs.push_back("-generate-arange-section");
+  }
+
   if (Args.hasFlag(options::OPT_fdebug_types_section,
                    options::OPT_fno_debug_types_section, false)) {
     CmdArgs.push_back("-backend-option");
