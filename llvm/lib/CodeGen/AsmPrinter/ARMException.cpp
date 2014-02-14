@@ -37,7 +37,8 @@
 using namespace llvm;
 
 ARMException::ARMException(AsmPrinter *A)
-  : DwarfException(A) {}
+  : DwarfException(A),
+    shouldEmitCFI(false) {}
 
 ARMException::~ARMException() {}
 
@@ -46,7 +47,11 @@ ARMTargetStreamer &ARMException::getTargetStreamer() {
   return static_cast<ARMTargetStreamer &>(TS);
 }
 
+/// endModule - Emit all exception information that should come after the
+/// content.
 void ARMException::endModule() {
+  if (shouldEmitCFI)
+    Asm->OutStreamer.EmitCFISections(false, true);
 }
 
 /// beginFunction - Gather pre-function exception information. Assumes it's
@@ -56,11 +61,22 @@ void ARMException::beginFunction(const MachineFunction *MF) {
   if (Asm->MF->getFunction()->needsUnwindTableEntry())
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
                                                   Asm->getFunctionNumber()));
+  // See if we need call frame info.
+  AsmPrinter::CFIMoveType MoveType = Asm->needsCFIMoves();
+  assert(MoveType != AsmPrinter::CFI_M_EH &&
+         "non-EH CFI not yet supported in prologue with EHABI lowering");
+  if (MoveType == AsmPrinter::CFI_M_Debug) {
+    shouldEmitCFI = true;
+    Asm->OutStreamer.EmitCFIStartProc(false);
+  }
 }
 
 /// endFunction - Gather and emit post-function exception information.
 ///
 void ARMException::endFunction(const MachineFunction *) {
+  if (shouldEmitCFI)
+    Asm->OutStreamer.EmitCFIEndProc();
+
   ARMTargetStreamer &ATS = getTargetStreamer();
   if (!Asm->MF->getFunction()->needsUnwindTableEntry())
     ATS.emitCantUnwind();

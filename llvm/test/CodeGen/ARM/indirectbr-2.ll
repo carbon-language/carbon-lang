@@ -9,7 +9,7 @@
 ; statement shouldn't be implicitly defined.
 
 ; CHECK-LABEL:      func:
-; CHECK:      Ltmp1:    @ Block address taken
+; CHECK:      Ltmp3:    @ Block address taken
 ; CHECK-NOT:            @ implicit-def: R0
 ; CHECK:                @ 4-byte Reload
 

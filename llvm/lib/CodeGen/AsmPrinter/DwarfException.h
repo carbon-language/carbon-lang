@@ -186,6 +186,10 @@ class ARMException : public DwarfException {
   void EmitTypeInfos(unsigned TTypeEncoding);
   ARMTargetStreamer &getTargetStreamer();
 
+  /// shouldEmitCFI - Per-function flag to indicate if frame CFI info
+  /// should be emitted.
+  bool shouldEmitCFI;
+
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.

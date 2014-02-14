@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
@@ -83,6 +84,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  MachineModuleInfo &MMI = MF.getMMI();
+  const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
   const Thumb1RegisterInfo *RegInfo =
     static_cast<const Thumb1RegisterInfo*>(MF.getTarget().getRegisterInfo());
   const Thumb1InstrInfo &TII =
@@ -95,6 +98,7 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
   unsigned BasePtr = RegInfo->getBaseRegister();
+  int CFAOffset = 0;
 
   // Thumb add/sub sp, imm8 instructions implicitly multiply the offset by 4.
   NumBytes = (NumBytes + 3) & ~3;
@@ -105,14 +109,28 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned GPRCS1Size = 0, GPRCS2Size = 0, DPRCSSize = 0;
   int FramePtrSpillFI = 0;
 
-  if (ArgRegsSaveSize)
+  if (ArgRegsSaveSize) {
     emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -ArgRegsSaveSize,
                  MachineInstr::FrameSetup);
+    MCSymbol *SPLabel = MMI.getContext().CreateTempSymbol();
+    BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL))
+        .addSym(SPLabel);
+    CFAOffset -= ArgRegsSaveSize;
+    MMI.addFrameInst(
+        MCCFIInstruction::createDefCfaOffset(SPLabel, CFAOffset));
+  }
 
   if (!AFI->hasStackFrame()) {
-    if (NumBytes != 0)
+    if (NumBytes != 0) {
       emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -NumBytes,
                    MachineInstr::FrameSetup);
+      MCSymbol *SPLabel = MMI.getContext().CreateTempSymbol();
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL))
+          .addSym(SPLabel);
+      CFAOffset -= NumBytes;
+      MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(SPLabel, CFAOffset));
+    }
     return;
   }
 
@@ -120,6 +138,15 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     unsigned Reg = CSI[i].getReg();
     int FI = CSI[i].getFrameIdx();
     switch (Reg) {
+    case ARM::R8:
+    case ARM::R9:
+    case ARM::R10:
+    case ARM::R11:
+      if (STI.isTargetMachO()) {
+        GPRCS2Size += 4;
+        break;
+      }
+      // fallthrough
     case ARM::R4:
     case ARM::R5:
     case ARM::R6:
@@ -128,17 +155,6 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
       if (Reg == FramePtr)
         FramePtrSpillFI = FI;
       GPRCS1Size += 4;
-      break;
-    case ARM::R8:
-    case ARM::R9:
-    case ARM::R10:
-    case ARM::R11:
-      if (Reg == FramePtr)
-        FramePtrSpillFI = FI;
-      if (STI.isTargetMachO())
-        GPRCS2Size += 4;
-      else
-        GPRCS1Size += 4;
       break;
     default:
       DPRCSSize += 8;
@@ -165,10 +181,49 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   NumBytes = DPRCSOffset;
 
   int FramePtrOffsetInBlock = 0;
+  unsigned adjustedGPRCS1Size = GPRCS1Size;
   if (tryFoldSPUpdateIntoPushPop(STI, MF, prior(MBBI), NumBytes)) {
     FramePtrOffsetInBlock = NumBytes;
+    adjustedGPRCS1Size += NumBytes;
     NumBytes = 0;
   }
+
+  MCSymbol *SPLabel = MMI.getContext().CreateTempSymbol();
+  BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL)).addSym(SPLabel);
+  if (adjustedGPRCS1Size) {
+    CFAOffset -= adjustedGPRCS1Size;
+    MMI.addFrameInst(
+        MCCFIInstruction::createDefCfaOffset(SPLabel, CFAOffset));
+  }
+  for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
+         E = CSI.end(); I != E; ++I) {
+    unsigned Reg = I->getReg();
+    int FI = I->getFrameIdx();
+    switch (Reg) {
+    case ARM::R8:
+    case ARM::R9:
+    case ARM::R10:
+    case ARM::R11:
+    case ARM::R12:
+      if (STI.isTargetMachO())
+        break;
+      // fallthough
+    case ARM::R0:
+    case ARM::R1:
+    case ARM::R2:
+    case ARM::R3:
+    case ARM::R4:
+    case ARM::R5:
+    case ARM::R6:
+    case ARM::R7:
+    case ARM::LR:
+      MMI.addFrameInst(MCCFIInstruction::createOffset(SPLabel,
+         MRI->getDwarfRegNum(Reg, true),
+         MFI->getObjectOffset(FI) - ArgRegsSaveSize));
+      break;
+    }
+  }
+
 
   // Adjust FP so it point to the stack slot that contains the previous FP.
   if (HasFP) {
@@ -176,16 +231,37 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
       .addReg(ARM::SP).addImm(FramePtrOffsetInBlock / 4)
       .setMIFlags(MachineInstr::FrameSetup));
+    MCSymbol *SPLabel = MMI.getContext().CreateTempSymbol();
+    BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL))
+        .addSym(SPLabel);
+    if(FramePtrOffsetInBlock) {
+      CFAOffset += FramePtrOffsetInBlock;
+      MMI.addFrameInst(
+          MCCFIInstruction::createDefCfa(SPLabel,
+              MRI->getDwarfRegNum(FramePtr, true), CFAOffset));
+    } else
+      MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaRegister(SPLabel,
+              MRI->getDwarfRegNum(FramePtr, true)));
     if (NumBytes > 508)
       // If offset is > 508 then sp cannot be adjusted in a single instruction,
       // try restoring from fp instead.
       AFI->setShouldRestoreSPFromFP(true);
   }
 
-  if (NumBytes)
+  if (NumBytes) {
     // Insert it after all the callee-save spills.
     emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -NumBytes,
                  MachineInstr::FrameSetup);
+    if (!HasFP) {
+      MCSymbol *SPLabel = MMI.getContext().CreateTempSymbol();
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL))
+          .addSym(SPLabel);
+      CFAOffset -= NumBytes;
+      MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(SPLabel, CFAOffset));
+    }
+  }
 
   if (STI.isTargetELF() && HasFP)
     MFI->setOffsetAdjustment(MFI->getOffsetAdjustment() -

@@ -23,8 +23,8 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
 
 ; CHECK-A-THUMB-LABEL: irq_fn:
 ; CHECK-A-THUMB: push.w {r0, r1, r2, r3, r4, r7, r12, lr}
-; CHECK-A-THUMB: mov r4, sp
 ; CHECK-A-THUMB: add r7, sp, #20
+; CHECK-A-THUMB: mov r4, sp
 ; CHECK-A-THUMB: bic r4, r4, #7
 ; CHECK-A-THUMB: bl bar
 ; CHECK-A-THUMB: sub.w r4, r7,  #20

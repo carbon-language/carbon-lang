@@ -697,7 +697,10 @@ bool AsmPrinter::needsSEHMoves() {
 void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
   const MCSymbol *Label = MI.getOperand(0).getMCSymbol();
 
-  if (MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI)
+  ExceptionHandling::ExceptionsType ExceptionHandlingType =
+      MAI->getExceptionHandlingType();
+  if (ExceptionHandlingType != ExceptionHandling::DwarfCFI &&
+      ExceptionHandlingType != ExceptionHandling::ARM)
     return;
 
   if (needsCFIMoves() == CFI_M_None)

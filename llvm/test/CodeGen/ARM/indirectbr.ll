@@ -69,7 +69,7 @@ L1:                                               ; preds = %L2, %bb2
   store i8* blockaddress(@foo, %L5), i8** @nextaddr, align 4
   ret i32 %res.3
 }
-; ARM: .long Ltmp0-(LPC{{.*}}+8)
-; THUMB: .long Ltmp0-(LPC{{.*}}+4)
+; ARM: .long Ltmp1-(LPC{{.*}}+8)
+; THUMB: .long Ltmp1-(LPC{{.*}}+4)
 ; THUMB: .long _nextaddr-([[NEXTADDR_PCBASE]]+4)
-; THUMB2: .long Ltmp0
+; THUMB2: .long Ltmp1
