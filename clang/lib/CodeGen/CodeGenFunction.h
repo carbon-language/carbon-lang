@@ -688,8 +688,8 @@ public:
       // act exactly like l-values but are formally required to be
       // r-values in C.
       return expr->isGLValue() ||
-             expr->getType()->isRecordType() ||
-             expr->getType()->isFunctionType();
+             expr->getType()->isFunctionType() ||
+             hasAggregateEvaluationKind(expr->getType());
     }
 
     static OpaqueValueMappingData bind(CodeGenFunction &CGF,
