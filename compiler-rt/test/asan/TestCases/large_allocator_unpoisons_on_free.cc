@@ -5,14 +5,13 @@
 // RUN: ASAN_OPTIONS=quarantine_size=1 %t
 
 #include <assert.h>
-#include <stdlib.h>
+#include <malloc.h>
 #include <string.h>
 #include <sys/mman.h>
 
 int main() {
   const int kPageSize = 4096;
-  void *p = NULL;
-  posix_memalign(&p, kPageSize, 1024 * 1024);
+  void *p = memalign(kPageSize, 1024 * 1024);
   free(p);
 
   char *q = (char *)mmap(p, kPageSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, 0, 0);
