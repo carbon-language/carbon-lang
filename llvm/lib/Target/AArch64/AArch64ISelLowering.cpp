@@ -3036,6 +3036,8 @@ static SDValue LowerVectorSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   SDValue RHS = Op.getOperand(1);
   SDValue IfTrue = Op.getOperand(2);
   SDValue IfFalse = Op.getOperand(3);
+  EVT IfTrueVT = IfTrue.getValueType();
+  EVT CondVT = IfTrueVT.changeVectorElementTypeToInteger();
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
 
   // If LHS & RHS are floating point and IfTrue & IfFalse are vectors, we will
@@ -3060,11 +3062,6 @@ static SDValue LowerVectorSELECT_CC(SDValue Op, SelectionDAG &DAG) {
 
     SDValue VSetCC = DAG.getSetCC(dl, CVT, LHS, RHS, CC);
     SDValue ResCC = LowerVectorSETCC(VSetCC, DAG);
-    EVT IfTrueVT = IfTrue.getValueType();
-    EVT CastEltT =
-        MVT::getIntegerVT(IfTrueVT.getVectorElementType().getSizeInBits());
-    EVT CastVT = EVT::getVectorVT(*DAG.getContext(), CastEltT,
-                                  IfTrueVT.getVectorNumElements());
     if (CEltT.getSizeInBits() < IfTrueVT.getSizeInBits()) {
       EVT DUPVT =
           EVT::getVectorVT(*DAG.getContext(), CEltT,
@@ -3072,7 +3069,7 @@ static SDValue LowerVectorSELECT_CC(SDValue Op, SelectionDAG &DAG) {
       ResCC = DAG.getNode(AArch64ISD::NEON_VDUPLANE, dl, DUPVT, ResCC,
                           DAG.getConstant(0, MVT::i64, false));
 
-      ResCC = DAG.getNode(ISD::BITCAST, dl, CastVT, ResCC);
+      ResCC = DAG.getNode(ISD::BITCAST, dl, CondVT, ResCC);
     } else {
       // FIXME: If IfTrue & IfFalse hold v1i8, v1i16 or v1i32, this function
       // can't handle them and will hit this assert.
@@ -3084,7 +3081,7 @@ static SDValue LowerVectorSELECT_CC(SDValue Op, SelectionDAG &DAG) {
       EVT ExVT = EVT::getVectorVT(*DAG.getContext(), CEltT, ExEltNum);
       ResCC = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ExVT, ResCC,
                           DAG.getConstant(0, MVT::i64, false));
-      ResCC = DAG.getNode(ISD::BITCAST, dl, CastVT, ResCC);
+      ResCC = DAG.getNode(ISD::BITCAST, dl, CondVT, ResCC);
     }
     SDValue VSelect = DAG.getNode(ISD::VSELECT, dl, IfTrue.getValueType(),
                                   ResCC, IfTrue, IfFalse);
@@ -3113,11 +3110,9 @@ static SDValue LowerVectorSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   }
   SDValue VDup;
   if (IfTrue.getValueType().getVectorNumElements() == 1)
-    VDup = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, IfTrue.getValueType(),
-                       A64SELECT_CC);
+    VDup = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, CondVT, A64SELECT_CC);
   else
-    VDup = DAG.getNode(AArch64ISD::NEON_VDUP, dl, IfTrue.getValueType(),
-                       A64SELECT_CC);
+    VDup = DAG.getNode(AArch64ISD::NEON_VDUP, dl, CondVT, A64SELECT_CC);
   SDValue VSelect = DAG.getNode(ISD::VSELECT, dl, IfTrue.getValueType(),
                                 VDup, IfTrue, IfFalse);
   return VSelect;

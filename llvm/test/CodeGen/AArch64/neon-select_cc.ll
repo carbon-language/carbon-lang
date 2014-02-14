@@ -160,11 +160,33 @@ define <4x float> @test_select_cc_v4f32(float %a, float %b, <4x float> %c, <4x f
   ret <4x float> %e
 }
 
+define <4x float> @test_select_cc_v4f32_icmp(i32 %a, i32 %b, <4x float> %c, <4x float> %d ) {
+; CHECK-LABEL: test_select_cc_v4f32_icmp:
+; CHECK: cmp	w0, w1, uxtw
+; CHECK: csinv	w0, wzr, wzr, ne
+; CHECK-NEXT: dup	v{{[0-9]+}}.4s, w0
+; CHECK-NEXT:	bsl	v{{[0-9]+}}.16b, v0.16b, v1.16b
+  %cmp31 = icmp eq i32 %a, %b
+  %e = select i1 %cmp31, <4x float> %c, <4x float> %d
+  ret <4x float> %e
+}
+
 define <1 x double> @test_select_cc_v1f64(double %a, double %b, <1 x double> %c, <1 x double> %d ) {
 ; CHECK-LABEL: test_select_cc_v1f64:
 ; CHECK: fcmeq	v{{[0-9]+}}.2d, v0.2d, v1.2d
 ; CHECK-NEXT:	bsl	v{{[0-9]+}}.8b, v2.8b, v3.8b
   %cmp31 = fcmp oeq double %a, %b
+  %e = select i1 %cmp31, <1 x double> %c, <1 x double> %d
+  ret <1 x double> %e
+}
+
+define <1 x double> @test_select_cc_v1f64_icmp(i64 %a, i64 %b, <1 x double> %c, <1 x double> %d ) {
+; CHECK-LABEL: test_select_cc_v1f64_icmp:
+; CHECK: cmp	 x0, x1
+; CHECK-NEXT: csinv	x0, xzr, xzr, ne
+; CHECK-NEXT: fmov	d{{[0-9]+}}, x0
+; CHECK-NEXT:	bsl	v{{[0-9]+}}.8b, v0.8b, v1.8b
+  %cmp31 = icmp eq i64 %a, %b
   %e = select i1 %cmp31, <1 x double> %c, <1 x double> %d
   ret <1 x double> %e
 }
