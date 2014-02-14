@@ -172,21 +172,15 @@ RegisterContextLLDB::InitializeZerothFrame()
     AddressRange addr_range;
     m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, addr_range);
 
-    m_frame_type = eNormalFrame;
-    PlatformSP platform_sp (process->GetTarget().GetPlatform());
-    if (platform_sp)
+    if (IsTrapHandlerSymbol (process, m_sym_ctx))
     {
-        const std::vector<ConstString> trap_handler_names (platform_sp->GetTrapHandlerSymbolNames());
-        for (ConstString name : trap_handler_names)
-        {
-            if ((m_sym_ctx.function && m_sym_ctx.function->GetName() == name) ||
-                (m_sym_ctx.symbol   && m_sym_ctx.symbol->GetName()   == name))
-            {
-                m_frame_type = eTrapHandlerFrame;
-            }
-        }
+        m_frame_type = eTrapHandlerFrame;
     }
-    // FIXME:  Detect eDebuggerFrame here.
+    else
+    {
+        // FIXME:  Detect eDebuggerFrame here.
+        m_frame_type = eNormalFrame;
+    }
 
     // If we were able to find a symbol/function, set addr_range to the bounds of that symbol/function.
     // else treat the current pc value as the start_pc and record no offset.
@@ -497,25 +491,18 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         m_current_offset_backed_up_one = -1;
     }
 
-    if (m_frame_type != eSkipFrame) // don't override eSkipFrame
+    if (IsTrapHandlerSymbol (process, m_sym_ctx))
     {
-        m_frame_type = eNormalFrame;
+        m_frame_type = eTrapHandlerFrame;
     }
-    PlatformSP platform_sp (process->GetTarget().GetPlatform());
-    if (platform_sp)
+    else
     {
-        const std::vector<ConstString> trap_handler_names (platform_sp->GetTrapHandlerSymbolNames());
-        for (ConstString name : trap_handler_names)
+        // FIXME:  Detect eDebuggerFrame here.
+        if (m_frame_type != eSkipFrame) // don't override eSkipFrame
         {
-            if ((m_sym_ctx.function && m_sym_ctx.function->GetName() == name) ||
-                (m_sym_ctx.symbol   && m_sym_ctx.symbol->GetName()   == name))
-            {
-                m_frame_type = eTrapHandlerFrame;
-            }
+            m_frame_type = eNormalFrame;
         }
     }
-    // FIXME:  Detect eDebuggerFrame here.
-
 
     // We've set m_frame_type and m_sym_ctx before this call.
     m_fast_unwind_plan_sp = GetFastUnwindPlanForFrame ();
@@ -1008,6 +995,35 @@ bool
 RegisterContextLLDB::IsSkipFrame () const
 {
     return m_frame_type == eSkipFrame;
+}
+
+bool
+RegisterContextLLDB::IsTrapHandlerSymbol (lldb_private::Process *process, const lldb_private::SymbolContext &m_sym_ctx) const
+{
+    PlatformSP platform_sp (process->GetTarget().GetPlatform());
+    if (platform_sp)
+    {
+        const std::vector<ConstString> trap_handler_names (platform_sp->GetTrapHandlerSymbolNames());
+        for (ConstString name : trap_handler_names)
+        {
+            if ((m_sym_ctx.function && m_sym_ctx.function->GetName() == name) ||
+                (m_sym_ctx.symbol   && m_sym_ctx.symbol->GetName()   == name))
+            {
+                return true;
+            }
+        }
+    }
+    const std::vector<ConstString> user_specified_trap_handler_names (m_parent_unwind.GetUserSpecifiedTrapHandlerFunctionNames());
+    for (ConstString name : user_specified_trap_handler_names)
+    {   
+        if ((m_sym_ctx.function && m_sym_ctx.function->GetName() == name) ||
+            (m_sym_ctx.symbol   && m_sym_ctx.symbol->GetName()   == name))
+        {   
+            return true;
+        }   
+    }   
+
+    return false;
 }
 
 // Answer the question: Where did THIS frame save the CALLER frame ("previous" frame)'s register value?
@@ -1632,4 +1648,5 @@ RegisterContextLLDB::UnwindLogMsgVerbose (const char *fmt, ...)
         free (logmsg);
     }
 }
+
 

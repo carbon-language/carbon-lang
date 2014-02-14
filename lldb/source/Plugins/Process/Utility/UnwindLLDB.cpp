@@ -26,8 +26,21 @@ using namespace lldb_private;
 UnwindLLDB::UnwindLLDB (Thread &thread) :
     Unwind (thread),
     m_frames(),
-    m_unwind_complete(false)
+    m_unwind_complete(false),
+    m_user_supplied_trap_handler_functions()
 {
+    ProcessSP process_sp(thread.GetProcess());
+    if (process_sp)
+    {
+        Args args;
+        process_sp->GetTarget().GetUserSpecifiedTrapHandlerNames (args);
+        size_t count = args.GetArgumentCount();
+        for (size_t i = 0; i < count; i++)
+        {
+            const char *func_name = args.GetArgumentAtIndex(i);
+            m_user_supplied_trap_handler_functions.push_back (ConstString (func_name));
+        }
+    }
 }
 
 uint32_t

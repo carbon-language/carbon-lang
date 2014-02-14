@@ -2638,6 +2638,7 @@ g_properties[] =
         "'partial' will load sections and attempt to find function bounds without downloading the symbol table (faster, still accurate, missing symbol names). "
         "'minimal' is the fastest setting and will load section data with no symbols, but should rarely be used as stack frames in these memory regions will be inaccurate and not provide any context (fastest). " },
     { "display-expression-in-crashlogs"    , OptionValue::eTypeBoolean   , false, false,                      NULL, NULL, "Expressions that crash will show up in crash logs if the host system supports executable specific crash log strings and this setting is set to true." },
+    { "trap-handler-names"                 , OptionValue::eTypeArray     , true,  OptionValue::eTypeString,   NULL, NULL, "A list of trap handler function names, e.g. a common Unix user process one is _sigtramp." },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
 enum
@@ -2670,7 +2671,8 @@ enum
     ePropertyUseFastStepping,
     ePropertyLoadScriptFromSymbolFile,
     ePropertyMemoryModuleLoadLevel,
-    ePropertyDisplayExpressionsInCrashlogs
+    ePropertyDisplayExpressionsInCrashlogs,
+    ePropertyTrapHandlerNames
 };
 
 
@@ -3077,7 +3079,19 @@ TargetProperties::GetMemoryModuleLoadLevel() const
     return (MemoryModuleLoadLevel)m_collection_sp->GetPropertyAtIndexAsEnumeration(NULL, idx, g_properties[idx].default_uint_value);
 }
 
+bool
+TargetProperties::GetUserSpecifiedTrapHandlerNames (Args &args) const
+{
+    const uint32_t idx = ePropertyTrapHandlerNames;
+    return m_collection_sp->GetPropertyAtIndexAsArgs (NULL, idx, args);
+}
 
+void
+TargetProperties::SetUserSpecifiedTrapHandlerNames (const Args &args)
+{
+    const uint32_t idx = ePropertyTrapHandlerNames;
+    m_collection_sp->SetPropertyAtIndexFromArgs (NULL, idx, args);
+}
 
 //----------------------------------------------------------------------
 // Target::TargetEventData

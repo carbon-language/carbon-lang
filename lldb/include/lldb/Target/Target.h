@@ -177,6 +177,11 @@ public:
     MemoryModuleLoadLevel
     GetMemoryModuleLoadLevel() const;
 
+    bool
+    GetUserSpecifiedTrapHandlerNames (Args &args) const;
+
+    void
+    SetUserSpecifiedTrapHandlerNames (const Args &args);
 };
 
 typedef std::shared_ptr<TargetProperties> TargetPropertiesSP;

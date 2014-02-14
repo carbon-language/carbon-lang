@@ -123,6 +123,19 @@ private:
     bool
     IsSkipFrame () const;
 
+
+    //------------------------------------------------------------------
+    /// Determines if a SymbolContext is a trap handler or not
+    ///
+    /// Given a SymbolContext, determines if this is a trap handler function
+    /// aka asynchronous signal handler.
+    ///
+    /// @return
+    ///     Returns true if the SymbolContext is a trap handler.
+    //------------------------------------------------------------------
+    bool
+    IsTrapHandlerSymbol (lldb_private::Process *process, const lldb_private::SymbolContext &m_sym_ctx) const;
+
     // Provide a location for where THIS function saved the CALLER's register value
     // Or a frame "below" this one saved it, i.e. a function called by this one, preserved a register that this
     // function didn't modify/use.
