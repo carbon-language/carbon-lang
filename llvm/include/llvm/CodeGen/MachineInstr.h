@@ -28,7 +28,6 @@
 #include "llvm/Support/ArrayRecycler.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Target/TargetOpcodes.h"
-#include <vector>
 
 namespace llvm {
 
