@@ -69,7 +69,6 @@ class LogTestCase(TestBase):
             "HandleCommand, revised_command_line: 'log disable lldb'\n",
             "HandleCommand, wants_raw_input:'False'\n",
             "HandleCommand, command line after removing command name(s): 'lldb'\n",
-            "HandleCommand, command succeeded\n"
             ]
 
         self.runCmd("log disable lldb")
