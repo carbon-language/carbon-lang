@@ -35,11 +35,10 @@ EXTERN_TEMPLATE_INSTANTIATION(class DomTreeNodeBase<BasicBlock>);
 EXTERN_TEMPLATE_INSTANTIATION(class DominatorTreeBase<BasicBlock>);
 
 #define LLVM_COMMA ,
-EXTERN_TEMPLATE_INSTANTIATION(
-    void llvm::Calculate<Function LLVM_COMMA BasicBlock *>(
-        DominatorTreeBase<typename GraphTraits<BasicBlock *>::NodeType> &DT
-            LLVM_COMMA Function &F));
-EXTERN_TEMPLATE_INSTANTIATION(void llvm::Calculate<
+EXTERN_TEMPLATE_INSTANTIATION(void Calculate<Function LLVM_COMMA BasicBlock *>(
+    DominatorTreeBase<typename GraphTraits<BasicBlock *>::NodeType> &DT
+        LLVM_COMMA Function &F));
+EXTERN_TEMPLATE_INSTANTIATION(void Calculate<
     Function LLVM_COMMA Inverse<BasicBlock *> >(DominatorTreeBase<
     typename GraphTraits<Inverse<BasicBlock *> >::NodeType> &DT LLVM_COMMA
                                                     Function &F));
