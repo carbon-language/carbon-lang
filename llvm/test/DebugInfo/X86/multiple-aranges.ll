@@ -1,4 +1,4 @@
-; RUN: llc < %s | FileCheck %s
+; RUN: llc -generate-arange-section < %s | FileCheck %s
 
 ; First CU
 ; CHECK:      .long   44                      # Length of ARange Set

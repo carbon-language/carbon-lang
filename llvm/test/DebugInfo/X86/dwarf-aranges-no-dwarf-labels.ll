@@ -1,4 +1,4 @@
-; RUN: llc < %s | FileCheck %s
+; RUN: llc -generate-arange-section < %s | FileCheck %s
 
 ; CHECK: .short  2 # DWARF Arange version number
 ; CHECK: # Segment Size

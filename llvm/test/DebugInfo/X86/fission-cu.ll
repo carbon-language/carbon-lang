@@ -110,7 +110,5 @@
 ; OBJ-NEXT: R_X86_64_32 .debug_addr
 ; OBJ-NEXT: R_X86_64_32 .debug_str
 ; OBJ-NEXT: }
-; OBJ: .debug_aranges
-; OBJ-NEXT: R_X86_64_32 .debug_info 0x0
 
 !9 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

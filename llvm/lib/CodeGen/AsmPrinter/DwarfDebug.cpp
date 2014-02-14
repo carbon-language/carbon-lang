@@ -67,6 +67,11 @@ GenerateGnuPubSections("generate-gnu-dwarf-pub-sections", cl::Hidden,
                        cl::desc("Generate GNU-style pubnames and pubtypes"),
                        cl::init(false));
 
+static cl::opt<bool> GenerateARangeSection("generate-arange-section",
+                                           cl::Hidden,
+                                           cl::desc("Generate dwarf aranges"),
+                                           cl::init(false));
+
 namespace {
 enum DefaultOnOff { Default, Enable, Disable };
 }
@@ -1154,7 +1159,8 @@ void DwarfDebug::endModule() {
   emitDebugLoc();
 
   // Emit info into a debug aranges section.
-  emitDebugARanges();
+  if (GenerateARangeSection)
+    emitDebugARanges();
 
   // Emit info into a debug ranges section.
   emitDebugRanges();
