@@ -9,8 +9,8 @@
 // RUN:   not %t 2>&1 | FileCheck %s
 // RUN: ASAN_OPTIONS=detect_stack_use_after_return=0 %t
 // Regression test for a CHECK failure with small stack size and large frame.
-// RUN: %clangxx_asan  -O3 %s -o %t -DkSize=10000 && \
-// RUN: (ulimit -s 65;  not %t) 2>&1 | FileCheck %s
+// RUN: %clangxx_asan  -O3 %s -o %t -DkSize=10000 -DUseThread -DkStackSize=65536 && \
+// RUN:   not %t 2>&1 | FileCheck --check-prefix=THREAD %s
 //
 // Test that we can find UAR in a thread other than main:
 // RUN: %clangxx_asan  -DUseThread -O2 %s -o %t && \
@@ -30,6 +30,10 @@
 
 #ifndef UseThread
 # define UseThread 0
+#endif
+
+#ifndef kStackSize
+# define kStackSize 0
 #endif
 
 __attribute__((noinline))
@@ -67,8 +71,13 @@ void *Thread(void *unused)  {
 
 int main(int argc, char **argv) {
 #if UseThread
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  if (kStackSize > 0)
+    pthread_attr_setstacksize(&attr, kStackSize);
   pthread_t t;
-  pthread_create(&t, 0, Thread, 0);
+  pthread_create(&t, &attr, Thread, 0);
+  pthread_attr_destroy(&attr);
   pthread_join(t, 0);
 #else
   Func2(Func1());
