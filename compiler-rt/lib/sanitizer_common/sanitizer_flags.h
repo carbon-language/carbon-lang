@@ -20,6 +20,7 @@ namespace __sanitizer {
 
 void ParseFlag(const char *env, bool *flag, const char *name);
 void ParseFlag(const char *env, int *flag, const char *name);
+void ParseFlag(const char *env, uptr *flag, const char *name);
 void ParseFlag(const char *env, const char **flag, const char *name);
 
 struct CommonFlags {
@@ -70,6 +71,9 @@ struct CommonFlags {
   bool allow_user_segv_handler;
   // If set, uses alternate stack for signal handling.
   bool use_sigaltstack;
+  // Large shadow regions are zero-filled using mmap(NORESERVE) instead of
+  // memset. This is the threshold size in bytes.
+  uptr clear_shadow_mmap_threshold;
 };
 
 inline CommonFlags *common_flags() {

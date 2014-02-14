@@ -15,6 +15,7 @@
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
+#include "sanitizer_common/sanitizer_flags.h"
 
 namespace __asan {
 
@@ -34,10 +35,29 @@ void PoisonShadowPartialRightRedzone(uptr addr,
 ALWAYS_INLINE void FastPoisonShadow(uptr aligned_beg, uptr aligned_size,
                                     u8 value) {
   DCHECK(flags()->poison_heap);
+  uptr PageSize = GetPageSizeCached();
   uptr shadow_beg = MEM_TO_SHADOW(aligned_beg);
   uptr shadow_end = MEM_TO_SHADOW(
       aligned_beg + aligned_size - SHADOW_GRANULARITY) + 1;
-  REAL(memset)((void*)shadow_beg, value, shadow_end - shadow_beg);
+  if (value ||
+      shadow_end - shadow_beg < common_flags()->clear_shadow_mmap_threshold) {
+    REAL(memset)((void*)shadow_beg, value, shadow_end - shadow_beg);
+  } else {
+    uptr page_beg = RoundUpTo(shadow_beg, PageSize);
+    uptr page_end = RoundDownTo(shadow_end, PageSize);
+
+    if (page_beg >= page_end) {
+      REAL(memset)((void *)shadow_beg, 0, shadow_end - shadow_beg);
+    } else {
+      if (page_beg != shadow_beg) {
+        REAL(memset)((void *)shadow_beg, 0, page_beg - shadow_beg);
+      }
+      if (page_end != shadow_end) {
+        REAL(memset)((void *)page_end, 0, shadow_end - page_end);
+      }
+      MmapFixedNoReserve(page_beg, page_end - page_beg);
+    }
+  }
 }
 
 ALWAYS_INLINE void FastPoisonShadowPartialRightRedzone(

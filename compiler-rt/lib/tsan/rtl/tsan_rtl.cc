@@ -618,7 +618,7 @@ static void MemoryRangeSet(ThreadState *thr, uptr pc, uptr addr, uptr size,
   size = (size + (kShadowCell - 1)) & ~(kShadowCell - 1);
   // UnmapOrDie/MmapFixedNoReserve does not work on Windows,
   // so we do it only for C/C++.
-  if (kGoMode || size < 64*1024) {
+  if (kGoMode || size < common_flags()->clear_shadow_mmap_threshold) {
     u64 *p = (u64*)MemToShadow(addr);
     CHECK(IsShadowMem((uptr)p));
     CHECK(IsShadowMem((uptr)(p + size * kShadowCnt / kShadowCell - 1)));

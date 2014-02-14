@@ -1279,28 +1279,53 @@ void *fast_memcpy(void *dst, const void *src, SIZE_T n) {
   return internal_memcpy(dst, src, n);
 }
 
+static void PoisonShadow(uptr ptr, uptr size, u8 value) {
+  uptr PageSize = GetPageSizeCached();
+  uptr shadow_beg = MEM_TO_SHADOW(ptr);
+  uptr shadow_end = MEM_TO_SHADOW(ptr + size);
+  if (value ||
+      shadow_end - shadow_beg < common_flags()->clear_shadow_mmap_threshold) {
+    fast_memset((void*)shadow_beg, value, shadow_end - shadow_beg);
+  } else {
+    uptr page_beg = RoundUpTo(shadow_beg, PageSize);
+    uptr page_end = RoundDownTo(shadow_end, PageSize);
+
+    if (page_beg >= page_end) {
+      fast_memset((void *)shadow_beg, 0, shadow_end - shadow_beg);
+    } else {
+      if (page_beg != shadow_beg) {
+        fast_memset((void *)shadow_beg, 0, page_beg - shadow_beg);
+      }
+      if (page_end != shadow_end) {
+        fast_memset((void *)page_end, 0, shadow_end - page_end);
+      }
+      MmapFixedNoReserve(page_beg, page_end - page_beg);
+    }
+  }
+}
+
 // These interface functions reside here so that they can use
 // fast_memset, etc.
 void __msan_unpoison(const void *a, uptr size) {
   if (!MEM_IS_APP(a)) return;
-  fast_memset((void*)MEM_TO_SHADOW((uptr)a), 0, size);
+  PoisonShadow((uptr)a, size, 0);
 }
 
 void __msan_poison(const void *a, uptr size) {
   if (!MEM_IS_APP(a)) return;
-  fast_memset((void*)MEM_TO_SHADOW((uptr)a),
-              __msan::flags()->poison_heap_with_zeroes ? 0 : -1, size);
+  PoisonShadow((uptr)a, size,
+               __msan::flags()->poison_heap_with_zeroes ? 0 : -1);
 }
 
 void __msan_poison_stack(void *a, uptr size) {
   if (!MEM_IS_APP(a)) return;
-  fast_memset((void*)MEM_TO_SHADOW((uptr)a),
-              __msan::flags()->poison_stack_with_zeroes ? 0 : -1, size);
+  PoisonShadow((uptr)a, size,
+               __msan::flags()->poison_stack_with_zeroes ? 0 : -1);
 }
 
 void __msan_clear_and_unpoison(void *a, uptr size) {
   fast_memset(a, 0, size);
-  fast_memset((void*)MEM_TO_SHADOW((uptr)a), 0, size);
+  PoisonShadow((uptr)a, size, 0);
 }
 
 u32 get_origin_if_poisoned(uptr a, uptr size) {
