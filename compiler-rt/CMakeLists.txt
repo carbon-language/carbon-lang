@@ -99,21 +99,25 @@ macro(test_target_arch arch)
   endif()
 endmacro()
 
-if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
-  if (NOT MSVC)
-    test_target_arch(x86_64 ${TARGET_64_BIT_CFLAGS})
+if(ANDROID_COMMON_FLAGS)
+  test_target_arch(arm_android "${ANDROID_COMMON_FLAGS}")
+else()
+  if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
+    if (NOT MSVC)
+      test_target_arch(x86_64 ${TARGET_64_BIT_CFLAGS})
+    endif()
+    test_target_arch(i386 ${TARGET_32_BIT_CFLAGS})
+  elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
+    test_target_arch(powerpc64 ${TARGET_64_BIT_CFLAGS})
+  elseif("${LLVM_NATIVE_ARCH}" STREQUAL "ARM")
+    test_target_arch(arm "")
   endif()
-  test_target_arch(i386 ${TARGET_32_BIT_CFLAGS})
-elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
-  test_target_arch(powerpc64 ${TARGET_64_BIT_CFLAGS})
-elseif("${LLVM_NATIVE_ARCH}" STREQUAL "ARM")
-  test_target_arch(arm "")
 endif()
 
 # We only support running instrumented tests when we're not cross compiling
-# and target a unix-like system. On Android we define the rules for building
-# unit tests, but don't execute them.
-if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID)
+# and target a unix-like system. We can run tests on Android even when we are
+# cross-compiling.
+if(("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX) OR ANDROID)
   option(COMPILER_RT_CAN_EXECUTE_TESTS "Can we execute instrumented tests" ON)
 else()
   option(COMPILER_RT_CAN_EXECUTE_TESTS "Can we execute instrumented tests" OFF)
@@ -230,12 +234,15 @@ filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
 
 add_subdirectory(include)
 
-set(SANITIZER_COMMON_LIT_TEST_DEPS
-  clang clang-headers FileCheck count not llvm-nm llvm-symbolizer
-  compiler-rt-headers)
-# Check code style when running lit tests for sanitizers.
-if(UNIX)
-  list(APPEND SANITIZER_COMMON_LIT_TEST_DEPS SanitizerLintCheck)
+# When ANDROID, we build tests with the host compiler (i.e. CMAKE_C_COMPILER),
+# and run tests with tools from the host toolchain.
+if (NOT ANDROID)
+  set(SANITIZER_COMMON_LIT_TEST_DEPS
+    clang clang-headers FileCheck count not llvm-nm llvm-symbolizer
+    compiler-rt-headers)
+  if(UNIX)
+    list(APPEND SANITIZER_COMMON_LIT_TEST_DEPS SanitizerLintCheck)
+  endif()
 endif()
 
 add_subdirectory(lib)
