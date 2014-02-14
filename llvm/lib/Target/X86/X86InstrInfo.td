@@ -1203,12 +1203,14 @@ def MOV16ri : Ii16<0xB8, AddRegFrm, (outs GR16:$dst), (ins i16imm:$src),
 def MOV32ri : Ii32<0xB8, AddRegFrm, (outs GR32:$dst), (ins i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, imm:$src)], IIC_MOV>, OpSize32;
-def MOV64ri : RIi64<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64imm:$src),
-                    "movabs{q}\t{$src, $dst|$dst, $src}",
-                    [(set GR64:$dst, imm:$src)], IIC_MOV>;
 def MOV64ri32 : RIi32S<0xC7, MRM0r, (outs GR64:$dst), (ins i64i32imm:$src),
                        "mov{q}\t{$src, $dst|$dst, $src}",
                        [(set GR64:$dst, i64immSExt32:$src)], IIC_MOV>;
+}
+let isReMaterializable = 1 in {
+def MOV64ri : RIi64<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64imm:$src),
+                    "movabs{q}\t{$src, $dst|$dst, $src}",
+                    [(set GR64:$dst, imm:$src)], IIC_MOV>;
 }
 } // SchedRW
 
