@@ -88,6 +88,8 @@ available_targets = {
                 {'gpu' : 'barts',   'aliases' : ['turks', 'caicos']},
                 {'gpu' : 'cayman',  'aliases' : ['aruba']},
                 {'gpu' : 'tahiti',  'aliases' : ['pitcairn', 'verde', 'oland', 'bonaire', 'kabini', 'kaveri', 'hawaii']}]},
+  'nvptx--'   : { 'devices' : [{'gpu' : '', 'aliases' : []}] },
+  'nvptx64--'   : { 'devices' : [{'gpu' : '', 'aliases' : []}] },
   'nvptx--nvidiacl'   : { 'devices' : [{'gpu' : '', 'aliases' : []}] },
   'nvptx64--nvidiacl' : { 'devices' : [{'gpu' : '', 'aliases' : []}] }
 }
