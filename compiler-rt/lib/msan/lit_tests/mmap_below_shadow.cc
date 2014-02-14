@@ -5,6 +5,8 @@
 
 // RUN: %clangxx_msan -m64 -O0 -DFIXED=0 %s -o %t && %t
 // RUN: %clangxx_msan -m64 -O0 -DFIXED=1 %s -o %t && %t
+// RUN: %clangxx_msan -m64 -O0 -DFIXED=0 -D_FILE_OFFSET_BITS=64 %s -o %t && %t
+// RUN: %clangxx_msan -m64 -O0 -DFIXED=1 -D_FILE_OFFSET_BITS=64 %s -o %t && %t
 
 #include <assert.h>
 #include <errno.h>
