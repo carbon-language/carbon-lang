@@ -3,8 +3,9 @@
 ulimit -s 8192
 set -e # fail on any error
 
-ROOTDIR=$(dirname $0)/..
-BLACKLIST=$ROOTDIR/lit_tests/Helpers/blacklist.txt
+HERE=$(dirname $0)
+TSAN_DIR=$(dirname $0)/../../lib/tsan
+BLACKLIST=$HERE/Helpers/blacklist.txt
 
 # Assume clang and clang++ are in path.
 : ${CC:=clang}
@@ -13,7 +14,7 @@ BLACKLIST=$ROOTDIR/lit_tests/Helpers/blacklist.txt
 
 # TODO: add testing for all of -O0...-O3
 CFLAGS="-fsanitize=thread -fsanitize-blacklist=$BLACKLIST -fPIE -O1 -g -Wall"
-LDFLAGS="-pie -lpthread -ldl -lrt -lm -Wl,--whole-archive $ROOTDIR/rtl/libtsan.a -Wl,--no-whole-archive"
+LDFLAGS="-pie -lpthread -ldl -lrt -lm -Wl,--whole-archive $TSAN_DIR/rtl/libtsan.a -Wl,--no-whole-archive"
 
 test_file() {
   SRC=$1
@@ -31,7 +32,7 @@ test_file() {
 }
 
 if [ "$1" == "" ]; then
-  for c in $ROOTDIR/lit_tests/*.{c,cc}; do
+  for c in $HERE/*.{c,cc}; do
     if [[ $c == */failing_* ]]; then
       echo SKIPPING FAILING TEST $c
       continue
@@ -54,5 +55,5 @@ if [ "$1" == "" ]; then
     wait $job || exit 1
   done
 else
-  test_file $ROOTDIR/lit_tests/$1 $CXX "DUMP"
+  test_file $HERE/$1 $CXX "DUMP"
 fi

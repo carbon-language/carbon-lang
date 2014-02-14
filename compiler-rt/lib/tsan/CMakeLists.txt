@@ -56,7 +56,7 @@ elseif(UNIX)
     rtl/tsan_platform_linux.cc)
 endif()
 
-set(TSAN_RUNTIME_LIBRARIES)
+add_custom_target(tsan)
 # TSan is currently supported on 64-bit Linux only.
 if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE)
   set(TSAN_ASM_SOURCES rtl/tsan_rtl_amd64.S)
@@ -72,11 +72,10 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE)
     CFLAGS ${TSAN_RTL_CFLAGS}
     DEFS ${TSAN_COMMON_DEFINITIONS})
   add_sanitizer_rt_symbols(clang_rt.tsan-${arch} rtl/tsan.syms.extra)
-  list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-${arch}
+  add_dependencies(tsan clang_rt.tsan-${arch}
     clang_rt.tsan-${arch}-symbols)
 endif()
 
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()
-add_subdirectory(lit_tests)

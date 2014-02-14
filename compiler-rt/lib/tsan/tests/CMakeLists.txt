@@ -18,7 +18,7 @@ macro(tsan_compile obj_list source arch)
   get_target_flags_for_arch(${arch} TARGET_CFLAGS)
   clang_compile(${output_obj} ${source}
           CFLAGS ${TSAN_UNITTEST_CFLAGS} ${TARGET_CFLAGS}
-          DEPS gtest ${TSAN_RUNTIME_LIBRARIES} ${ARGN})
+          DEPS gtest tsan ${ARGN})
   list(APPEND ${obj_list} ${output_obj})
 endmacro()
 
@@ -33,7 +33,7 @@ macro(add_tsan_unittest testname)
     get_target_flags_for_arch(${arch} TARGET_LINK_FLAGS)
     add_compiler_rt_test(TsanUnitTests ${testname}
             OBJECTS ${TEST_OBJECTS}
-            DEPS ${TSAN_RUNTIME_LIBRARIES} ${TEST_OBJECTS}
+            DEPS tsan ${TEST_OBJECTS}
             LINK_FLAGS ${TARGET_LINK_FLAGS}
                        -fsanitize=thread
                        -lstdc++ -lm)

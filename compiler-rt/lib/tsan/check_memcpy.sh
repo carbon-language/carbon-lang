@@ -5,12 +5,13 @@
 set -eu
 
 ROOTDIR=$(dirname $0)
+TEST_DIR=$ROOTDIR/../../test/tsan
 
 : ${CXX:=clang++}
 CFLAGS="-fsanitize=thread -fPIE -O1 -g"
 LDFLAGS="-pie -lpthread -ldl -lrt -lm -Wl,--whole-archive $ROOTDIR/rtl/libtsan.a -Wl,--no-whole-archive"
 
-SRC=$ROOTDIR/lit_tests/simple_race.cc
+SRC=$TEST_DIR/simple_race.cc
 OBJ=$SRC.o
 EXE=$SRC.exe
 $CXX $SRC $CFLAGS -c -o $OBJ

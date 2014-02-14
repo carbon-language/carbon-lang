@@ -235,6 +235,7 @@ filter_available_targets(ASAN_SUPPORTED_ARCH x86_64 i386 powerpc64)
 filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(MSAN_SUPPORTED_ARCH x86_64)
+filter_available_targets(TSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386)
 
 add_subdirectory(include)
