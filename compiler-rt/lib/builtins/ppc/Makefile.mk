@@ -1,4 +1,4 @@
-#===- lib/x86_64/Makefile.mk -------------------------------*- Makefile -*--===#
+#===- lib/builtins/ppc/Makefile.mk -------------------------*- Makefile -*--===#
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -9,7 +9,7 @@
 
 ModuleName := builtins
 SubDirs := 
-OnlyArchs := x86_64 x86_64h
+OnlyArchs := ppc
 
 AsmSources := $(foreach file,$(wildcard $(Dir)/*.S),$(notdir $(file)))
 Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))

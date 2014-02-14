@@ -1,4 +1,4 @@
-#===- lib/i386/Makefile.mk ---------------------------------*- Makefile -*--===#
+#===- lib/builtins/Makefile.mk -----------------------------*- Makefile -*--===#
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,13 +8,15 @@
 #===------------------------------------------------------------------------===#
 
 ModuleName := builtins
-SubDirs := 
-OnlyArchs := i386
+SubDirs :=
 
-AsmSources := $(foreach file,$(wildcard $(Dir)/*.S),$(notdir $(file)))
+# Add arch specific optimized implementations.
+SubDirs += i386 ppc x86_64 arm
+
+# Define the variables for this specific directory.
 Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))
-ObjNames := $(Sources:%.c=%.o) $(AsmSources:%.S=%.o)
-Implementation := Optimized
+ObjNames := $(Sources:%.c=%.o)
+Implementation := Generic
 
 # FIXME: use automatic dependencies?
-Dependencies := $(wildcard lib/*.h $(Dir)/*.h)
+Dependencies := $(wildcard $(Dir)/*.h)

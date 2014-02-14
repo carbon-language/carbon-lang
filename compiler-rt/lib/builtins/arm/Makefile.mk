@@ -1,4 +1,4 @@
-#===- lib/ppc/Makefile.mk ----------------------------------*- Makefile -*--===#
+#===- lib/builtins/arm/Makefile.mk -------------------------*- Makefile -*--===#
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -9,7 +9,7 @@
 
 ModuleName := builtins
 SubDirs := 
-OnlyArchs := ppc
+OnlyArchs := armv5 armv6 armv7 armv7k armv7m armv7em armv7s
 
 AsmSources := $(foreach file,$(wildcard $(Dir)/*.S),$(notdir $(file)))
 Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))

@@ -2,12 +2,13 @@
 #
 # Subdirectory makefiles must define:
 #   SubDirs - The subdirectories to traverse.
+#
+# Subdirectory makefiles may define:
+#   ModuleName - The library name for objects in that directory.
 #   ObjNames - The objects available in that directory.
 #   Implementation - The library configuration the objects should go in (Generic
 #                    or Optimized)
 #   Dependencies - Any dependences for the object files.
-#
-# Subdirectory makefiles may define:
 #   OnlyArchs - Only build the objects for the listed archs.
 #   OnlyConfigs - Only build the objects for the listed configurations.
 
@@ -20,9 +21,9 @@ endif
 
 # The list of variables which are intended to be overridden in a subdirectory
 # makefile.
-RequiredSubdirVariables := \
-	ModuleName SubDirs ObjNames Implementation Dependencies
-OptionalSubdirVariables := OnlyArchs OnlyConfigs
+RequiredSubdirVariables := SubDirs 
+OptionalSubdirVariables := ModuleName OnlyArchs OnlyConfigs \
+	ObjNames Implementation Dependencies
 
 # Template: subdir_traverse_template subdir
 define subdir_traverse_template

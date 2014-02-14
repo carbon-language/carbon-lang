@@ -1,4 +1,4 @@
-#===- lib/arm/Makefile.mk ----------------------------------*- Makefile -*--===#
+#===- lib/builtins/x86_64/Makefile.mk ----------------------*- Makefile -*--===#
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -9,7 +9,7 @@
 
 ModuleName := builtins
 SubDirs := 
-OnlyArchs := armv5 armv6 armv7 armv7k armv7m armv7em armv7s
+OnlyArchs := x86_64 x86_64h
 
 AsmSources := $(foreach file,$(wildcard $(Dir)/*.S),$(notdir $(file)))
 Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))
