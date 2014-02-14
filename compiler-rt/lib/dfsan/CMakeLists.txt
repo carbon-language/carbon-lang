@@ -10,10 +10,8 @@ set(DFSAN_RTL_CFLAGS
   # Prevent clang from generating libc calls.
   -ffreestanding)
 
-filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
-
 # Static runtime library.
-set(DFSAN_RUNTIME_LIBRARIES)
+add_custom_target(dfsan)
 set(arch "x86_64")
 if(CAN_TARGET_${arch})
   add_compiler_rt_static_runtime(clang_rt.dfsan-${arch} ${arch}
@@ -27,8 +25,9 @@ if(CAN_TARGET_${arch})
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             CFLAGS ${DFSAN_RTL_CFLAGS} -fPIC -DDFSAN_NOLIBC)
   add_sanitizer_rt_symbols(clang_rt.dfsan-${arch} dfsan.syms.extra)
-  list(APPEND DFSAN_RUNTIME_LIBRARIES clang_rt.dfsan-${arch}
-                                      clang_rt.dfsan-${arch}-symbols)
+  add_dependencies(dfsan
+    clang_rt.dfsan-${arch}
+    clang_rt.dfsan-${arch}-symbols)
 endif()
 
 add_custom_target(dfsan_abilist ALL
@@ -40,9 +39,6 @@ add_custom_command(OUTPUT ${CLANG_RESOURCE_DIR}/dfsan_abilist.txt
                          ${CMAKE_CURRENT_SOURCE_DIR}/libc_ubuntu1204_abilist.txt
                          > ${CLANG_RESOURCE_DIR}/dfsan_abilist.txt
                    DEPENDS done_abilist.txt libc_ubuntu1204_abilist.txt)
+add_dependencies(dfsan dfsan_abilist)
 install(FILES ${CLANG_RESOURCE_DIR}/dfsan_abilist.txt
         DESTINATION ${LIBCLANG_INSTALL_PATH})
-
-if(DFSAN_SUPPORTED_ARCH)
-  add_subdirectory(lit_tests)
-endif()

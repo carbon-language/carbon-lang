@@ -9,6 +9,9 @@ configure_lit_site_cfg(
 # Run sanitizer tests only if we're sure that clang would produce
 # working binaries.
 if(COMPILER_RT_CAN_EXECUTE_TESTS)
+  if(DFSAN_SUPPORTED_ARCH)
+    add_subdirectory(dfsan)
+  endif()
   if(UBSAN_SUPPORTED_ARCH)
     add_subdirectory(ubsan)
   endif()
