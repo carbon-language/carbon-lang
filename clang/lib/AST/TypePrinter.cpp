@@ -848,7 +848,7 @@ void TypePrinter::AppendScope(DeclContext *DC, raw_ostream &OS) {
     if (NS->getIdentifier())
       OS << NS->getName() << "::";
     else
-      OS << "<anonymous>::";
+      OS << "<anonymous namespace>::";
   } else if (ClassTemplateSpecializationDecl *Spec
                = dyn_cast<ClassTemplateSpecializationDecl>(DC)) {
     IncludeStrongLifetimeRAII Strong(Policy);
