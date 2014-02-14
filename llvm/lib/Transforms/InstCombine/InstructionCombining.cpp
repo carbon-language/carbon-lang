@@ -1220,9 +1220,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   if (!StrippedPtrTy)
     return 0;
 
-  if (StrippedPtr != PtrOp &&
-    StrippedPtrTy->getAddressSpace() == GEP.getPointerAddressSpace()) {
-
+  if (StrippedPtr != PtrOp) {
     bool HasZeroPointerIndex = false;
     if (ConstantInt *C = dyn_cast<ConstantInt>(GEP.getOperand(1)))
       HasZeroPointerIndex = C->isZero();
@@ -1276,8 +1274,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         Value *NewGEP = GEP.isInBounds() ?
           Builder->CreateInBoundsGEP(StrippedPtr, Idx, GEP.getName()) :
           Builder->CreateGEP(StrippedPtr, Idx, GEP.getName());
+
         // V and GEP are both pointer types --> BitCast
-        return new BitCastInst(NewGEP, GEP.getType());
+        if (StrippedPtrTy->getAddressSpace() == GEP.getPointerAddressSpace())
+          return new BitCastInst(NewGEP, GEP.getType());
+        return new AddrSpaceCastInst(NewGEP, GEP.getType());
       }
 
       // Transform things like:
@@ -1307,8 +1308,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             Value *NewGEP = GEP.isInBounds() && NSW ?
               Builder->CreateInBoundsGEP(StrippedPtr, NewIdx, GEP.getName()) :
               Builder->CreateGEP(StrippedPtr, NewIdx, GEP.getName());
+
             // The NewGEP must be pointer typed, so must the old one -> BitCast
-            return new BitCastInst(NewGEP, GEP.getType());
+            if (StrippedPtrTy->getAddressSpace() == GEP.getPointerAddressSpace())
+              return new BitCastInst(NewGEP, GEP.getType());
+            return new AddrSpaceCastInst(NewGEP, GEP.getType());
           }
         }
       }
@@ -1348,7 +1352,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
               Builder->CreateInBoundsGEP(StrippedPtr, Off, GEP.getName()) :
               Builder->CreateGEP(StrippedPtr, Off, GEP.getName());
             // The NewGEP must be pointer typed, so must the old one -> BitCast
-            return new BitCastInst(NewGEP, GEP.getType());
+            if (StrippedPtrTy->getAddressSpace() == GEP.getPointerAddressSpace())
+              return new BitCastInst(NewGEP, GEP.getType());
+            return new AddrSpaceCastInst(NewGEP, GEP.getType());
           }
         }
       }

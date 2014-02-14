@@ -1,6 +1,6 @@
 ; Tests to make sure elimination of casts is working correctly
 ; RUN: opt < %s -instcombine -S | FileCheck %s
-target datalayout = "E-p:64:64:64-p1:32:32:32-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128-n8:16:32:64"
+target datalayout = "E-p:64:64:64-p1:32:32:32-p2:64:64:64-p3:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128-n8:16:32:64"
 
 @inbuf = external global [32832 x i8]           ; <[32832 x i8]*> [#uses=1]
 
@@ -708,6 +708,34 @@ define %s @test68(%s *%p, i64 %i) {
 ; CHECK-NEXT: ret %s
 }
 
+; addrspacecasts should be eliminated.
+define %s @test68_addrspacecast(%s* %p, i64 %i) {
+; CHECK-LABEL: @test68_addrspacecast(
+; CHECK-NEXT: getelementptr %s*
+; CHECK-NEXT: load %s*
+; CHECK-NEXT: ret %s
+  %o = mul i64 %i, 12
+  %q = addrspacecast %s* %p to i8 addrspace(2)*
+  %pp = getelementptr inbounds i8 addrspace(2)* %q, i64 %o
+  %r = addrspacecast i8 addrspace(2)* %pp to %s*
+  %l = load %s* %r
+  ret %s %l
+}
+
+define %s @test68_addrspacecast_2(%s* %p, i64 %i) {
+; CHECK-LABEL: @test68_addrspacecast_2(
+; CHECK-NEXT: getelementptr %s* %p
+; CHECK-NEXT: addrspacecast
+; CHECK-NEXT: load %s addrspace(1)*
+; CHECK-NEXT: ret %s
+  %o = mul i64 %i, 12
+  %q = addrspacecast %s* %p to i8 addrspace(2)*
+  %pp = getelementptr inbounds i8 addrspace(2)* %q, i64 %o
+  %r = addrspacecast i8 addrspace(2)* %pp to %s addrspace(1)*
+  %l = load %s addrspace(1)* %r
+  ret %s %l
+}
+
 define %s @test68_as1(%s addrspace(1)* %p, i32 %i) {
 ; CHECK-LABEL: @test68_as1(
   %o = mul i32 %i, 12
@@ -901,6 +929,33 @@ define double @test80([100 x double]* %p, i32 %i) {
 ; CHECK-NEXT: load double*
   ret double %l
 ; CHECK-NEXT: ret double
+}
+
+define double @test80_addrspacecast([100 x double] addrspace(1)* %p, i32 %i) {
+; CHECK-LABEL: @test80_addrspacecast(
+; CHECK-NEXT: getelementptr [100 x double] addrspace(1)* %p
+; CHECK-NEXT: load double addrspace(1)*
+; CHECK-NEXT: ret double
+  %tmp = mul nsw i32 %i, 8
+  %q = addrspacecast [100 x double] addrspace(1)* %p to i8 addrspace(2)*
+  %pp = getelementptr i8 addrspace(2)* %q, i32 %tmp
+  %r = addrspacecast i8 addrspace(2)* %pp to double addrspace(1)*
+  %l = load double addrspace(1)* %r
+  ret double %l
+}
+
+define double @test80_addrspacecast_2([100 x double] addrspace(1)* %p, i32 %i) {
+; CHECK-LABEL: @test80_addrspacecast_2(
+; CHECK-NEXT: getelementptr [100 x double] addrspace(1)*
+; CHECK-NEXT: addrspacecast double addrspace(1)*
+; CHECK-NEXT: load double addrspace(3)*
+; CHECK-NEXT: ret double
+  %tmp = mul nsw i32 %i, 8
+  %q = addrspacecast [100 x double] addrspace(1)* %p to i8 addrspace(2)*
+  %pp = getelementptr i8 addrspace(2)* %q, i32 %tmp
+  %r = addrspacecast i8 addrspace(2)* %pp to double addrspace(3)*
+  %l = load double addrspace(3)* %r
+  ret double %l
 }
 
 define double @test80_as1([100 x double] addrspace(1)* %p, i16 %i) {

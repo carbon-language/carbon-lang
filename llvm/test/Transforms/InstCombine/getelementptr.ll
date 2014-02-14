@@ -1,6 +1,6 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
-target datalayout = "e-p:64:64-p1:16:16-p2:32:32:32"
+target datalayout = "e-p:64:64-p1:16:16-p2:32:32:32-p3:64:64:64"
 
 %intstruct = type { i32 }
 %pair = type { i32, i32 }
@@ -725,6 +725,19 @@ define i64 @test_gep_bitcast_array_same_size_element([100 x double]* %arr, i64 %
   %V = mul i64 %N, 8
   %t = getelementptr i64* %cast, i64 %V
   %x = load i64* %t
+  ret i64 %x
+}
+
+; gep should be done in the original address space.
+define i64 @test_gep_bitcast_array_same_size_element_addrspacecast([100 x double]* %arr, i64 %N) {
+; CHECK-LABEL: @test_gep_bitcast_array_same_size_element_addrspacecast(
+; CHECK: getelementptr [100 x double]* %arr, i64 0, i64 %V
+; CHECK-NEXT: %t = addrspacecast double*
+; CHECK: load i64 addrspace(3)* %t
+  %cast = addrspacecast [100 x double]* %arr to i64 addrspace(3)*
+  %V = mul i64 %N, 8
+  %t = getelementptr i64 addrspace(3)* %cast, i64 %V
+  %x = load i64 addrspace(3)* %t
   ret i64 %x
 }
 
