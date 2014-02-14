@@ -69,7 +69,7 @@ else()
 endif()
 
 # Build ASan runtimes shipped with Clang.
-set(ASAN_RUNTIME_LIBRARIES)
+add_custom_target(asan)
 if(APPLE)
   foreach (os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
     # Dynamic lookup is needed because shadow scale and offset are
@@ -85,7 +85,7 @@ if(APPLE)
       CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS}
       LINKFLAGS ${ASAN_RUNTIME_LDFLAGS})
-    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_${os}_dynamic)
+    add_dependencies(asan clang_rt.asan_${os}_dynamic)
   endforeach()
 
 elseif(ANDROID)
@@ -98,7 +98,7 @@ elseif(ANDROID)
   set_property(TARGET clang_rt.asan-arm-android APPEND PROPERTY
     COMPILE_DEFINITIONS ${ASAN_COMMON_DEFINITIONS})
   target_link_libraries(clang_rt.asan-arm-android dl log)
-  list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-arm-android)
+  add_dependencies(asan clang_rt.asan-arm-android)
 else()
   # Build separate libraries for each target.
   foreach(arch ${ASAN_SUPPORTED_ARCH})
@@ -116,10 +116,10 @@ else()
       SOURCES ${ASAN_RUNTIME_OBJECTS}
       CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS})
-    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch})
+    add_dependencies(asan clang_rt.asan-${arch})
     if (UNIX AND NOT ${arch} STREQUAL "i386")
       add_sanitizer_rt_symbols(clang_rt.asan-${arch} asan.syms.extra)
-      list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch}-symbols)
+      add_dependencies(asan clang_rt.asan-${arch}-symbols)
     endif()
 
     if (WIN32)
@@ -127,16 +127,13 @@ else()
       SOURCES asan_dll_thunk.cc
       CFLAGS ${ASAN_CFLAGS} -DASAN_DLL_THUNK
       DEFS ${ASAN_COMMON_DEFINITIONS})
-      list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_dll_thunk-${arch})
+      add_dependencies(asan clang_rt.asan_dll_thunk-${arch})
     endif()
   endforeach()
 endif()
 
 add_compiler_rt_resource_file(asan_blacklist asan_blacklist.txt)
-
-# All ASan runtime dependencies.
-add_custom_target(asan_runtime_libraries
-  DEPENDS asan_blacklist ${ASAN_RUNTIME_LIBRARIES})
+add_dependencies(asan asan_blacklist)
 
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)

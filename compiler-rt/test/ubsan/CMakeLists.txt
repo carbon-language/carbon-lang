@@ -11,7 +11,7 @@ configure_lit_site_cfg(
 set(UBSAN_TEST_DEPS
   ${SANITIZER_COMMON_LIT_TEST_DEPS}
   ubsan
-  asan_runtime_libraries)
+  asan)
 add_lit_testsuite(check-ubsan "Running UndefinedBehaviorSanitizer tests"
   ${CMAKE_CURRENT_BINARY_DIR}/UbsanConfig
   ${CMAKE_CURRENT_BINARY_DIR}/AsanConfig

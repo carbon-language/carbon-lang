@@ -49,7 +49,7 @@ endif()
 # Run ASan tests only if we're sure we may produce working binaries.
 set(ASAN_TEST_DEPS
   ${SANITIZER_COMMON_LIT_TEST_DEPS}
-  asan_runtime_libraries)
+  asan)
 set(ASAN_TEST_PARAMS
   asan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
 # FIXME: support unit test in the android test runner

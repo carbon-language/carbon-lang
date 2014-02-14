@@ -14,7 +14,7 @@ if(NOT APPLE AND NOT ANDROID)
   set(LSAN_TEST_DEPS
     ${SANITIZER_COMMON_LIT_TEST_DEPS}
     lsan
-    asan_runtime_libraries)
+    asan)
   add_lit_testsuite(check-lsan "Running the LeakSanitizer tests"
     ${CMAKE_CURRENT_BINARY_DIR}/LsanConfig
     ${CMAKE_CURRENT_BINARY_DIR}/AsanConfig
