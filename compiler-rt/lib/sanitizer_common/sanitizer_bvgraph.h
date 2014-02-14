@@ -21,6 +21,7 @@
 namespace __sanitizer {
 
 // Directed graph of fixed size implemented as an array of bit vectors.
+// Not thread-safe, all accesses should be protected by an external lock.
 template<class BV>
 class BVGraph {
  public:
@@ -46,7 +47,8 @@ class BVGraph {
   // Returns true if there is a path from the node 'from'
   // to any of the nodes in 'targets'.
   bool isReachable(uptr from, const BV &targets) {
-    BV to_visit, visited;
+    BV &to_visit = t1,
+       &visited = t2;
     to_visit.copyFrom(v[from]);
     visited.clear();
     visited.setBit(from);
@@ -67,10 +69,10 @@ class BVGraph {
     path[0] = from;
     if (targets.getBit(from))
       return 1;
-    BV t;
-    t.copyFrom(v[from]);
-    while (!t.empty()) {
-      uptr idx = t.getAndClearFirstOne();
+    // The function is recursive, so we don't want to create BV on stack.
+    // Instead of a getAndClearFirstOne loop we use the slower iterator.
+    for (typename BV::Iterator it(v[from]); it.hasNext(); ) {
+      uptr idx = it.next();
       if (uptr res = findPath(idx, targets, path + 1, path_size - 1))
         return res + 1;
     }
@@ -83,6 +85,8 @@ class BVGraph {
     CHECK_LT(idx2, size());
   }
   BV v[kSize];
+  // Keep temporary vectors here since we can not create large objects on stack.
+  BV t1, t2;
 };
 
 } // namespace __sanitizer

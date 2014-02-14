@@ -78,21 +78,21 @@ TEST(SanitizerCommon, BVGraph) {
   EXPECT_GT(num_reachable, 0);
 }
 
-TEST(SanitizerCommon, BVGraph_isReachable) {
-  typedef TwoLevelBitVector<> BV;
+template <class BV>
+void Test_isReachable() {
   uptr path[5];
   BVGraph<BV> g;
   g.clear();
   BV target;
   target.clear();
-  uptr t0 = 100;
+  uptr t0 = 0;
   uptr t1 = g.size() - 1;
   target.setBit(t0);
   target.setBit(t1);
 
-  uptr f0 = 0;
-  uptr f1 = 99;
-  uptr f2 = 200;
+  uptr f0 = 1;
+  uptr f1 = 2;
+  uptr f2 = g.size() / 2;
   uptr f3 = g.size() - 2;
 
   EXPECT_FALSE(g.isReachable(f0, target));
@@ -126,4 +126,11 @@ TEST(SanitizerCommon, BVGraph_isReachable) {
   EXPECT_TRUE(g.isReachable(f1, target));
   EXPECT_TRUE(g.isReachable(f2, target));
   EXPECT_TRUE(g.isReachable(f3, target));
+}
+
+TEST(SanitizerCommon, BVGraph_isReachable) {
+  Test_isReachable<BasicBitVector<u8> >();
+  Test_isReachable<BasicBitVector<> >();
+  Test_isReachable<TwoLevelBitVector<> >();
+  Test_isReachable<TwoLevelBitVector<3, BasicBitVector<u8> > >();
 }

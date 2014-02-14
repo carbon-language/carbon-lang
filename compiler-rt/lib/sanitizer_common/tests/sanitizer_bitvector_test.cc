@@ -26,12 +26,25 @@ using namespace std;
 
 
 // Check the 'bv' == 's' and that the indexes go in increasing order.
+// Also check the BV::Iterator
 template <class BV>
 static void CheckBV(const BV &bv, const set<uptr> &s) {
   BV t;
   t.copyFrom(bv);
   set<uptr> t_s(s);
   uptr last_idx = bv.size();
+  uptr count = 0;
+  for (typename BV::Iterator it(bv); it.hasNext();) {
+    uptr idx = it.next();
+    count++;
+    if (last_idx != bv.size())
+      EXPECT_LT(last_idx, idx);
+    last_idx = idx;
+    EXPECT_TRUE(s.count(idx));
+  }
+  EXPECT_EQ(count, s.size());
+
+  last_idx = bv.size();
   while (!t.empty()) {
     uptr idx = t.getAndClearFirstOne();
     if (last_idx != bv.size())

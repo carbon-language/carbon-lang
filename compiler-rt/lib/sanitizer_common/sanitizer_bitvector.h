@@ -72,6 +72,21 @@ class BasicBitVector {
   // Returns true if 'this' intersects with 'v'.
   bool intersectsWith(const BasicBitVector &v) const { return bits_ & v.bits_; }
 
+  // for (BasicBitVector<>::Iterator it(bv); it.hasNext();) {
+  //   uptr idx = it.next();
+  //   use(idx);
+  // }
+  class Iterator {
+   public:
+    Iterator() { }
+    explicit Iterator(const BasicBitVector &bv) : bv_(bv) {}
+    bool hasNext() const { return !bv_.empty(); }
+    uptr next() { return bv_.getAndClearFirstOne(); }
+    void clear() { bv_.clear(); }
+   private:
+    BasicBitVector bv_;
+  };
+
  private:
   basic_int_t mask(uptr idx) const {
     CHECK_LT(idx, size());
@@ -109,7 +124,7 @@ class TwoLevelBitVector {
     }
   }
 
-  bool empty() {
+  bool empty() const {
     for (uptr i = 0; i < kLevel1Size; i++)
       if (!l1_[i].empty())
         return false;
@@ -225,6 +240,60 @@ class TwoLevelBitVector {
     }
     return false;
   }
+
+  // for (TwoLevelBitVector<>::Iterator it(bv); it.hasNext();) {
+  //   uptr idx = it.next();
+  //   use(idx);
+  // }
+  class Iterator {
+   public:
+    Iterator() { }
+    explicit Iterator(const TwoLevelBitVector &bv) : bv_(bv), i0_(0), i1_(0) {
+      it1_.clear();
+      it2_.clear();
+    }
+
+    bool hasNext() const {
+      if (it1_.hasNext()) return true;
+      for (uptr i = i0_; i < kLevel1Size; i++)
+        if (!bv_.l1_[i].empty()) return true;
+      return false;
+    }
+
+    uptr next() {
+      // Printf("++++: %zd %zd; %d %d; size %zd\n", i0_, i1_, it1_.hasNext(),
+      //       it2_.hasNext(), kSize);
+      if (!it1_.hasNext() && !it2_.hasNext()) {
+        for (; i0_ < kLevel1Size; i0_++) {
+          if (bv_.l1_[i0_].empty()) continue;
+          it1_ = typename BV::Iterator(bv_.l1_[i0_]);
+          // Printf("+i0: %zd %zd; %d %d; size %zd\n", i0_, i1_, it1_.hasNext(),
+          //   it2_.hasNext(), kSize);
+          break;
+        }
+      }
+      if (!it2_.hasNext()) {
+        CHECK(it1_.hasNext());
+        i1_ = it1_.next();
+        it2_ = typename BV::Iterator(bv_.l2_[i0_][i1_]);
+        // Printf("++i1: %zd %zd; %d %d; size %zd\n", i0_, i1_, it1_.hasNext(),
+        //       it2_.hasNext(), kSize);
+      }
+      CHECK(it2_.hasNext());
+      uptr i2 = it2_.next();
+      uptr res = i0_ * BV::kSize * BV::kSize + i1_ * BV::kSize + i2;
+      // Printf("+ret: %zd %zd; %d %d; size %zd; res: %zd\n", i0_, i1_,
+      //       it1_.hasNext(), it2_.hasNext(), kSize, res);
+      if (!it1_.hasNext() && !it2_.hasNext())
+        i0_++;
+      return res;
+    }
+
+   private:
+    const TwoLevelBitVector &bv_;
+    uptr i0_, i1_;
+    typename BV::Iterator it1_, it2_;
+  };
 
  private:
   void check(uptr idx) const { CHECK_LE(idx, size()); }

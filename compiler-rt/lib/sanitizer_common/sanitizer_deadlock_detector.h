@@ -65,6 +65,7 @@ class DeadlockDetectorTLS {
 // and one DeadlockDetectorTLS object per evey thread.
 // This class is not thread safe, all concurrent accesses should be guarded
 // by an external lock.
+// Not thread-safe, all accesses should be protected by an external lock.
 template <class BV>
 class DeadlockDetector {
  public:
@@ -115,7 +116,7 @@ class DeadlockDetector {
   // Handle the lock event, return true if there is a cycle.
   // FIXME: handle RW locks, recusive locks, etc.
   bool onLock(DeadlockDetectorTLS *dtls, uptr cur_node) {
-    BV cur_locks;
+    BV &cur_locks = t1;
     cur_locks.clear();
     uptr cur_idx = nodeToIndex(cur_node);
     for (uptr i = 0, n = dtls->numLocks(); i < n; i++) {
@@ -163,6 +164,7 @@ class DeadlockDetector {
   BV recycled_nodes_;
   BVGraph<BV> g_;
   uptr data_[BV::kSize];
+  BV t1;  // Temporary object which we can not keep on stack.
 };
 
 } // namespace __sanitizer

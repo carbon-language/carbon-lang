@@ -40,6 +40,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->handle_segv = SANITIZER_NEEDS_SEGV;
   f->allow_user_segv_handler = false;
   f->use_sigaltstack = false;
+  f->detect_deadlocks = false;
   f->clear_shadow_mmap_threshold = 64 * 1024;
 }
 
@@ -62,6 +63,7 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   ParseFlag(str, &f->handle_segv, "handle_segv");
   ParseFlag(str, &f->allow_user_segv_handler, "allow_user_segv_handler");
   ParseFlag(str, &f->use_sigaltstack, "use_sigaltstack");
+  ParseFlag(str, &f->detect_deadlocks, "detect_deadlocks");
   ParseFlag(str, &f->clear_shadow_mmap_threshold,
             "clear_shadow_mmap_threshold");
 

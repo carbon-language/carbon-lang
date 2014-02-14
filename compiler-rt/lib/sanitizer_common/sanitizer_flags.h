@@ -71,6 +71,8 @@ struct CommonFlags {
   bool allow_user_segv_handler;
   // If set, uses alternate stack for signal handling.
   bool use_sigaltstack;
+  // If set, deadlock detection is enabled.
+  bool detect_deadlocks;
   // Large shadow regions are zero-filled using mmap(NORESERVE) instead of
   // memset. This is the threshold size in bytes.
   uptr clear_shadow_mmap_threshold;
