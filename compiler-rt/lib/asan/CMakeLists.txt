@@ -46,10 +46,6 @@ if(ANDROID)
     ASAN_LOW_MEMORY=1)
 endif()
 
-# Architectures supported by ASan.
-filter_available_targets(ASAN_SUPPORTED_ARCH
-  x86_64 i386 powerpc64)
-
 # Compile ASan sources into an object library.
 if(APPLE)
   foreach(os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
@@ -145,5 +141,3 @@ add_custom_target(asan_runtime_libraries
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()
-
-add_subdirectory(lit_tests)

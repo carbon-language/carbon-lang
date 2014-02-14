@@ -9,7 +9,8 @@ config.name = 'AddressSanitizer-Unit'
 
 # Setup test source and exec root. For unit tests, we define
 # it as build directory with ASan unit tests.
-config.test_exec_root = "@ASAN_BINARY_DIR@/tests"
+# FIXME: De-hardcode this path.
+config.test_exec_root = "@COMPILER_RT_BINARY_DIR@/lib/asan/tests"
 config.test_source_root = config.test_exec_root
 
 # Enable leak detection in ASan unit tests on x86_64-linux.

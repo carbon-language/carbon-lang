@@ -231,6 +231,7 @@ endif()
 # support only subset of these (e.g. TSan works on x86_64 only).
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
   x86_64 i386 powerpc64 arm)
+filter_available_targets(ASAN_SUPPORTED_ARCH x86_64 i386 powerpc64)
 filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(MSAN_SUPPORTED_ARCH x86_64)
@@ -259,6 +260,6 @@ endif()
 add_subdirectory(lib)
 
 if(LLVM_INCLUDE_TESTS)
-  add_subdirectory(test)
   add_subdirectory(unittests)
 endif()
+add_subdirectory(test)

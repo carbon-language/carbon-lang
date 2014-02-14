@@ -3,7 +3,7 @@
 
 # Tool-specific config options.
 config.name_suffix = "@ASAN_TEST_CONFIG_SUFFIX@"
-config.asan_source_dir = "@ASAN_SOURCE_DIR@"
+config.asan_lit_source_dir = "@ASAN_LIT_SOURCE_DIR@"
 config.target_cflags = "@ASAN_TEST_TARGET_CFLAGS@"
 config.clang = "@ASAN_TEST_TARGET_CC@"
 config.llvm_tools_dir = "@ASAN_TEST_LLVM_TOOLS_DIR@"
@@ -14,4 +14,4 @@ config.android = "@CAN_TARGET_arm_android@"
 lit_config.load_config(config, "@COMPILER_RT_BINARY_DIR@/test/lit.common.configured")
 
 # Load tool-specific config that would do the real work.
-lit_config.load_config(config, "@ASAN_SOURCE_DIR@/lit_tests/lit.cfg")
+lit_config.load_config(config, "@ASAN_LIT_SOURCE_DIR@/lit.cfg")
