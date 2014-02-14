@@ -1990,6 +1990,8 @@ void DwarfCompileUnit::initStmtList(MCSymbol *DwarfLineSectionSym) {
   bool UseTheFirstCU =
       Asm->OutStreamer.hasRawTextSupport() || (getUniqueID() == 0);
 
+  stmtListIndex = UnitDie->getValues().size();
+
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section. For split dwarf this is
   // left in the skeleton CU and so not included.
@@ -2003,6 +2005,12 @@ void DwarfCompileUnit::initStmtList(MCSymbol *DwarfLineSectionSym) {
   else
     addSectionDelta(UnitDie.get(), dwarf::DW_AT_stmt_list, LineTableStartSym,
                     DwarfLineSectionSym);
+}
+
+void DwarfCompileUnit::applyStmtList(DIE &D) {
+  D.addValue(dwarf::DW_AT_stmt_list,
+             UnitDie->getAbbrev().getData()[stmtListIndex].getForm(),
+             UnitDie->getValues()[stmtListIndex]);
 }
 
 void DwarfTypeUnit::emitHeader(const MCSection *ASection,

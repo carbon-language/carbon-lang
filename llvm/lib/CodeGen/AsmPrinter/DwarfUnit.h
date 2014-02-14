@@ -539,11 +539,18 @@ private:
 };
 
 class DwarfCompileUnit : public DwarfUnit {
+  /// The attribute index of DW_AT_stmt_list in the compile unit DIE, avoiding
+  /// the need to search for it in applyStmtList.
+  unsigned stmtListIndex;
+
 public:
   DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
                    DwarfDebug *DW, DwarfFile *DWU);
 
   void initStmtList(MCSymbol *DwarfLineSectionSym);
+
+  /// Apply the DW_AT_stmt_list from this compile unit to the specified DIE.
+  void applyStmtList(DIE &D);
 
   /// createGlobalVariableDIE - create global variable DIE.
   void createGlobalVariableDIE(DIGlobalVariable GV);

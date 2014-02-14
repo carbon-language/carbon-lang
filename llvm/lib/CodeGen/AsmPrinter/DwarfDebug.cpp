@@ -2944,14 +2944,17 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
 // This DIE has the following attributes: DW_AT_comp_dir, DW_AT_dwo_name,
 // DW_AT_addr_base.
 DwarfTypeUnit *DwarfDebug::constructSkeletonTU(DwarfTypeUnit *TU) {
+  DwarfCompileUnit &CU = static_cast<DwarfCompileUnit &>(
+      *SkeletonHolder.getUnits()[TU->getCU().getUniqueID()]);
 
   DIE *Die = new DIE(dwarf::DW_TAG_type_unit);
-  DwarfTypeUnit *NewTU = new DwarfTypeUnit(TU->getUniqueID(), Die, TU->getCU(),
-                                           Asm, this, &SkeletonHolder);
+  DwarfTypeUnit *NewTU =
+      new DwarfTypeUnit(TU->getUniqueID(), Die, CU, Asm, this, &SkeletonHolder);
   NewTU->setTypeSignature(TU->getTypeSignature());
   NewTU->setType(NULL);
   NewTU->initSection(
       Asm->getObjFileLowering().getDwarfTypesSection(TU->getTypeSignature()));
+  CU.applyStmtList(*Die);
 
   initSkeletonUnit(TU, Die, NewTU);
   return NewTU;
@@ -3020,6 +3023,8 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   NewTU->setTypeSignature(Signature);
   if (useSplitDwarf())
     NewTU->setSkeleton(constructSkeletonTU(NewTU));
+  else
+    CU.applyStmtList(*UnitDie);
 
   NewTU->setType(NewTU->createTypeDIE(CTy));
 
