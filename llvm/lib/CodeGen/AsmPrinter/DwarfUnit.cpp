@@ -58,7 +58,6 @@ DwarfCompileUnit::DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
 DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DIE *D, DwarfCompileUnit &CU,
                              AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU)
     : DwarfUnit(UID, D, CU.getCUNode(), A, DW, DWU), CU(CU) {
-  (void)CU;
 }
 
 /// ~Unit - Destructor for compile unit.
