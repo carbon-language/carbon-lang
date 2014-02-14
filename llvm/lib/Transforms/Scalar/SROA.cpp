@@ -2518,8 +2518,7 @@ private:
     }
 
     if (EmitMemCpy) {
-      Type *OtherPtrTy = IsDest ? II.getRawSource()->getType()
-                                : II.getRawDest()->getType();
+      Type *OtherPtrTy = OtherPtr->getType();
 
       // Compute the other pointer, folding as much as possible to produce
       // a single, simple GEP in most cases.
