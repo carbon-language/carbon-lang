@@ -1376,6 +1376,8 @@ private:
                                             ExtAddrMode &AMBefore,
                                             ExtAddrMode &AMAfter);
   bool ValueAlreadyLiveAtInst(Value *Val, Value *KnownLive1, Value *KnownLive2);
+  bool IsPromotionProfitable(unsigned MatchedSize, unsigned SizeWithPromotion,
+                             Value *PromotedOperand) const;
 };
 
 /// MatchScaledValue - Try adding ScaleReg*Scale to the current addressing mode.
@@ -1728,6 +1730,35 @@ TypePromotionHelper::promoteOperandForOther(Instruction *SExt,
   return SExtOpnd;
 }
 
+/// IsPromotionProfitable - Check whether or not promoting an instruction
+/// to a wider type was profitable.
+/// \p MatchedSize gives the number of instructions that have been matched
+/// in the addressing mode after the promotion was applied.
+/// \p SizeWithPromotion gives the number of created instructions for
+/// the promotion plus the number of instructions that have been
+/// matched in the addressing mode before the promotion.
+/// \p PromotedOperand is the value that has been promoted.
+/// \return True if the promotion is profitable, false otherwise.
+bool
+AddressingModeMatcher::IsPromotionProfitable(unsigned MatchedSize,
+                                             unsigned SizeWithPromotion,
+                                             Value *PromotedOperand) const {
+  // We folded less instructions than what we created to promote the operand.
+  // This is not profitable.
+  if (MatchedSize < SizeWithPromotion)
+    return false;
+  if (MatchedSize > SizeWithPromotion)
+    return true;
+  // The promotion is neutral but it may help folding the sign extension in
+  // loads for instance.
+  // Check that we did not create an illegal instruction.
+  Instruction *PromotedInst = dyn_cast<Instruction>(PromotedOperand);
+  if (!PromotedInst)
+    return false;
+  return TLI.isOperationLegalOrCustom(PromotedInst->getOpcode(),
+                                      EVT::getEVT(PromotedInst->getType()));
+}
+
 /// MatchOperationAddr - Given an instruction or constant expr, see if we can
 /// fold the operation into the addressing mode.  If so, update the addressing
 /// mode and return true, otherwise return false without modifying AddrMode.
@@ -1935,9 +1966,8 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     unsigned OldSize = AddrModeInsts.size();
 
     if (!MatchAddr(PromotedOperand, Depth) ||
-        // We fold less instructions than what we created.
-        // Undo at this point.
-        (OldSize + CreatedInsts > AddrModeInsts.size())) {
+        !IsPromotionProfitable(AddrModeInsts.size(), OldSize + CreatedInsts,
+                               PromotedOperand)) {
       AddrMode = BackupAddrMode;
       AddrModeInsts.resize(OldSize);
       DEBUG(dbgs() << "Sign extension does not pay off: rollback\n");
