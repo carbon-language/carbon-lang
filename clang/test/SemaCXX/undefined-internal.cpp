@@ -78,8 +78,8 @@ namespace test5 {
   }
 
   template <class N> struct B {
-    static int var; // expected-warning {{variable 'test5::B<test5::<anonymous>::A>::var' has internal linkage but is not defined}}
-    static void foo(); // expected-warning {{function 'test5::B<test5::<anonymous>::A>::foo' has internal linkage but is not defined}}
+    static int var; // expected-warning {{variable 'test5::B<test5::<anonymous namespace>::A>::var' has internal linkage but is not defined}}
+    static void foo(); // expected-warning {{function 'test5::B<test5::<anonymous namespace>::A>::foo' has internal linkage but is not defined}}
   };
 
   void test() {

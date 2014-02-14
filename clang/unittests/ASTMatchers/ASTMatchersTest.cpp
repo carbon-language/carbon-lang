@@ -1038,7 +1038,7 @@ TEST(HasType, MatchesAsString) {
   EXPECT_TRUE(matches("namespace ns { struct A {}; }  struct B { ns::A a; };",
       fieldDecl(hasType(asString("ns::A")))));
   EXPECT_TRUE(matches("namespace { struct A {}; }  struct B { A a; };",
-      fieldDecl(hasType(asString("struct <anonymous>::A")))));
+      fieldDecl(hasType(asString("struct <anonymous namespace>::A")))));
 }
 
 TEST(Matcher, OverloadedOperatorCall) {
