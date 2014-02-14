@@ -61,6 +61,7 @@ struct SyncVar {
   SyncClock read_clock;  // Used for rw mutexes only.
   u32 creation_stack_id;
   int owner_tid;  // Set only by exclusive owners.
+  uptr deadlock_detector_id;
   u64 last_lock;
   int recursion;
   bool is_rw;

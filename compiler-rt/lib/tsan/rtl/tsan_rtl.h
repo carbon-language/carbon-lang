@@ -30,6 +30,7 @@
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_asm.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_deadlock_detector.h"
 #include "sanitizer_common/sanitizer_libignore.h"
 #include "sanitizer_common/sanitizer_suppressions.h"
 #include "sanitizer_common/sanitizer_thread_registry.h"
@@ -449,7 +450,8 @@ struct ThreadState {
   const uptr tls_size;
   ThreadContext *tctx;
 
-  DeadlockDetector deadlock_detector;
+  InternalDeadlockDetector internal_deadlock_detector;
+  __sanitizer::DeadlockDetectorTLS deadlock_detector_tls;
 
   bool in_signal_handler;
   SignalContext *signal_ctx;

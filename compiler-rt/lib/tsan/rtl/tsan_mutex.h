@@ -65,9 +65,9 @@ class Mutex {
 typedef GenericScopedLock<Mutex> Lock;
 typedef GenericScopedReadLock<Mutex> ReadLock;
 
-class DeadlockDetector {
+class InternalDeadlockDetector {
  public:
-  DeadlockDetector();
+  InternalDeadlockDetector();
   void Lock(MutexType t);
   void Unlock(MutexType t);
  private:

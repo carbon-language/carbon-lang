@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sanitizer_common/sanitizer_deadlock_detector.h>
+
 #include "tsan_rtl.h"
 #include "tsan_flags.h"
 #include "tsan_sync.h"
@@ -19,6 +21,14 @@
 #include "tsan_platform.h"
 
 namespace __tsan {
+
+static __sanitizer::DeadlockDetector<TwoLevelBitVector<> > g_deadlock_detector;
+
+static void EnsureDeadlockDetectorID(ThreadState *thr, SyncVar *s) {
+  if (!s->deadlock_detector_id)
+    s->deadlock_detector_id =
+        g_deadlock_detector.newNode(reinterpret_cast<uptr>(s));
+}
 
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
                  bool rw, bool recursive, bool linker_init) {
@@ -35,6 +45,10 @@ void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
   s->is_rw = rw;
   s->is_recursive = recursive;
   s->is_linker_init = linker_init;
+  if (common_flags()->detect_deadlocks) {
+    EnsureDeadlockDetectorID(thr, s);
+    Printf("MutexCreate: %zx\n", s->deadlock_detector_id);
+  }
   s->mtx.Unlock();
 }
 
@@ -51,6 +65,10 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   SyncVar *s = ctx->synctab.GetAndRemove(thr, pc, addr);
   if (s == 0)
     return;
+  if (common_flags()->detect_deadlocks) {
+    EnsureDeadlockDetectorID(thr, s);
+    Printf("MutexDestroy: %zx\n", s->deadlock_detector_id);
+  }
   if (IsAppMem(addr)) {
     CHECK(!thr->is_freeing);
     thr->is_freeing = true;
@@ -104,6 +122,15 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
   }
   s->recursion += rec;
   thr->mset.Add(s->GetId(), true, thr->fast_state.epoch());
+  if (common_flags()->detect_deadlocks) {
+    EnsureDeadlockDetectorID(thr, s);
+    bool has_deadlock = g_deadlock_detector.onLock(&thr->deadlock_detector_tls,
+                                                   s->deadlock_detector_id);
+    Printf("MutexLock: %zx;%s\n", s->deadlock_detector_id,
+           has_deadlock
+               ? " ThreadSanitizer: lock-order-inversion (potential deadlock)"
+               : "");
+  }
   s->mtx.Unlock();
 }
 
@@ -140,6 +167,12 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
     }
   }
   thr->mset.Del(s->GetId(), true);
+  if (common_flags()->detect_deadlocks) {
+    EnsureDeadlockDetectorID(thr, s);
+    Printf("MutexUnlock: %zx\n", s->deadlock_detector_id);
+    g_deadlock_detector.onUnlock(&thr->deadlock_detector_tls,
+                                 s->deadlock_detector_id);
+  }
   s->mtx.Unlock();
   return rec;
 }

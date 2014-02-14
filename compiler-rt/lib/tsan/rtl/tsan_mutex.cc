@@ -123,12 +123,12 @@ void InitializeMutex() {
 #endif
 }
 
-DeadlockDetector::DeadlockDetector() {
+InternalDeadlockDetector::InternalDeadlockDetector() {
   // Rely on zero initialization because some mutexes can be locked before ctor.
 }
 
 #if TSAN_DEBUG && !TSAN_GO
-void DeadlockDetector::Lock(MutexType t) {
+void InternalDeadlockDetector::Lock(MutexType t) {
   // Printf("LOCK %d @%zu\n", t, seq_ + 1);
   CHECK_GT(t, MutexTypeInvalid);
   CHECK_LT(t, MutexTypeCount);
@@ -155,7 +155,7 @@ void DeadlockDetector::Lock(MutexType t) {
   }
 }
 
-void DeadlockDetector::Unlock(MutexType t) {
+void InternalDeadlockDetector::Unlock(MutexType t) {
   // Printf("UNLO %d @%zu #%zu\n", t, seq_, locked_[t]);
   CHECK(locked_[t]);
   locked_[t] = 0;
@@ -210,7 +210,7 @@ Mutex::~Mutex() {
 
 void Mutex::Lock() {
 #if TSAN_DEBUG && !TSAN_GO
-  cur_thread()->deadlock_detector.Lock(type_);
+  cur_thread()->internal_deadlock_detector.Lock(type_);
 #endif
   uptr cmp = kUnlocked;
   if (atomic_compare_exchange_strong(&state_, &cmp, kWriteLock,
@@ -235,13 +235,13 @@ void Mutex::Unlock() {
   (void)prev;
   DCHECK_NE(prev & kWriteLock, 0);
 #if TSAN_DEBUG && !TSAN_GO
-  cur_thread()->deadlock_detector.Unlock(type_);
+  cur_thread()->internal_deadlock_detector.Unlock(type_);
 #endif
 }
 
 void Mutex::ReadLock() {
 #if TSAN_DEBUG && !TSAN_GO
-  cur_thread()->deadlock_detector.Lock(type_);
+  cur_thread()->internal_deadlock_detector.Lock(type_);
 #endif
   uptr prev = atomic_fetch_add(&state_, kReadLock, memory_order_acquire);
   if ((prev & kWriteLock) == 0)
@@ -263,7 +263,7 @@ void Mutex::ReadUnlock() {
   DCHECK_EQ(prev & kWriteLock, 0);
   DCHECK_GT(prev & ~kWriteLock, 0);
 #if TSAN_DEBUG && !TSAN_GO
-  cur_thread()->deadlock_detector.Unlock(type_);
+  cur_thread()->internal_deadlock_detector.Unlock(type_);
 #endif
 }
 
