@@ -36,6 +36,15 @@ class AnsiColorDecorator {
  private:
   bool ansi_;
 };
+
+class SanitizerCommonDecorator: protected AnsiColorDecorator {
+ public:
+  SanitizerCommonDecorator()
+      : __sanitizer::AnsiColorDecorator(PrintsToTtyCached()) { }
+  const char *Warning()    { return Red(); }
+  const char *EndWarning() { return Default(); }
+};
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_REPORT_DECORATOR_H

@@ -45,11 +45,9 @@ void AppendToErrorMessageBuffer(const char *buffer) {
 }
 
 // ---------------------- Decorator ------------------------------ {{{1
-class Decorator: private __sanitizer::AnsiColorDecorator {
+class Decorator: public __sanitizer::SanitizerCommonDecorator {
  public:
-  Decorator() : __sanitizer::AnsiColorDecorator(PrintsToTtyCached()) { }
-  const char *Warning()    { return Red(); }
-  const char *EndWarning() { return Default(); }
+  Decorator() : SanitizerCommonDecorator() { }
   const char *Access()     { return Blue(); }
   const char *EndAccess()  { return Default(); }
   const char *Location()   { return Green(); }
