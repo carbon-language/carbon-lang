@@ -36,7 +36,9 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFStreamer.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ELF.h"
@@ -44,6 +46,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
+#include <string>
 
 using namespace llvm;
 
@@ -57,6 +60,17 @@ bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     const_cast<TargetLoweringObjectFile&>(getObjFileLowering())
       .Initialize(OutContext, TM);
   MipsFI = MF.getInfo<MipsFunctionInfo>();
+  if (Subtarget->inMips16Mode())
+    for (std::map<
+             const char *,
+             const llvm::Mips16HardFloatInfo::FuncSignature *>::const_iterator
+             it = MipsFI->StubsNeeded.begin();
+         it != MipsFI->StubsNeeded.end(); ++it) {
+      const char *Symbol = it->first;
+      const llvm::Mips16HardFloatInfo::FuncSignature *Signature = it->second;
+      if (StubsNeeded.find(Symbol) == StubsNeeded.end())
+        StubsNeeded[Symbol] = Signature;
+    }
   MCP = MF.getConstantPool();
   AsmPrinter::runOnMachineFunction(MF);
   return true;
@@ -616,7 +630,273 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
           OutContext.getELFSection(".gcc_compiled_long64", ELF::SHT_PROGBITS, 0,
                                    SectionKind::getDataRel()));
   }
+}
 
+void MipsAsmPrinter::EmitJal(MCSymbol *Symbol) {
+  MCInst I;
+  I.setOpcode(Mips::JAL);
+  I.addOperand(
+      MCOperand::CreateExpr(MCSymbolRefExpr::Create(Symbol, OutContext)));
+  OutStreamer.EmitInstruction(I, getSubtargetInfo());
+}
+
+void MipsAsmPrinter::EmitInstrReg(unsigned Opcode, unsigned Reg) {
+  MCInst I;
+  I.setOpcode(Opcode);
+  I.addOperand(MCOperand::CreateReg(Reg));
+  OutStreamer.EmitInstruction(I, getSubtargetInfo());
+}
+
+void MipsAsmPrinter::EmitInstrRegReg(unsigned Opcode, unsigned Reg1,
+                                     unsigned Reg2) {
+  MCInst I;
+  //
+  // Because of the current td files for Mips32, the operands for MTC1
+  // appear backwards from their normal assembly order. It's not a trivial
+  // change to fix this in the td file so we adjust for it here.
+  //
+  if (Opcode == Mips::MTC1) {
+    unsigned Temp = Reg1;
+    Reg1 = Reg2;
+    Reg2 = Temp;
+  }
+  I.setOpcode(Opcode);
+  I.addOperand(MCOperand::CreateReg(Reg1));
+  I.addOperand(MCOperand::CreateReg(Reg2));
+  OutStreamer.EmitInstruction(I, getSubtargetInfo());
+}
+
+void MipsAsmPrinter::EmitInstrRegRegReg(unsigned Opcode, unsigned Reg1,
+                                        unsigned Reg2, unsigned Reg3) {
+  MCInst I;
+  I.setOpcode(Opcode);
+  I.addOperand(MCOperand::CreateReg(Reg1));
+  I.addOperand(MCOperand::CreateReg(Reg2));
+  I.addOperand(MCOperand::CreateReg(Reg3));
+  OutStreamer.EmitInstruction(I, getSubtargetInfo());
+}
+
+void MipsAsmPrinter::EmitMovFPIntPair(unsigned MovOpc, unsigned Reg1,
+                                      unsigned Reg2, unsigned FPReg1,
+                                      unsigned FPReg2, bool LE) {
+  if (!LE) {
+    unsigned temp = Reg1;
+    Reg1 = Reg2;
+    Reg2 = temp;
+  }
+  EmitInstrRegReg(MovOpc, Reg1, FPReg1);
+  EmitInstrRegReg(MovOpc, Reg2, FPReg2);
+}
+
+void MipsAsmPrinter::EmitSwapFPIntParams(Mips16HardFloatInfo::FPParamVariant PV,
+                                         bool LE, bool ToFP) {
+  using namespace Mips16HardFloatInfo;
+  unsigned MovOpc = ToFP ? Mips::MTC1 : Mips::MFC1;
+  switch (PV) {
+  case FSig:
+    EmitInstrRegReg(MovOpc, Mips::A0, Mips::F12);
+    break;
+  case FFSig:
+    EmitMovFPIntPair(MovOpc, Mips::A0, Mips::A1, Mips::F12, Mips::F14, LE);
+    break;
+  case FDSig:
+    EmitInstrRegReg(MovOpc, Mips::A0, Mips::F12);
+    EmitMovFPIntPair(MovOpc, Mips::A2, Mips::A3, Mips::F14, Mips::F15, LE);
+    break;
+  case DSig:
+    EmitMovFPIntPair(MovOpc, Mips::A0, Mips::A1, Mips::F12, Mips::F13, LE);
+    break;
+  case DDSig:
+    EmitMovFPIntPair(MovOpc, Mips::A0, Mips::A1, Mips::F12, Mips::F13, LE);
+    EmitMovFPIntPair(MovOpc, Mips::A2, Mips::A3, Mips::F14, Mips::F15, LE);
+    break;
+  case DFSig:
+    EmitMovFPIntPair(MovOpc, Mips::A0, Mips::A1, Mips::F12, Mips::F13, LE);
+    EmitInstrRegReg(MovOpc, Mips::A2, Mips::F14);
+    break;
+  case NoSig:
+    return;
+  }
+}
+
+void
+MipsAsmPrinter::EmitSwapFPIntRetval(Mips16HardFloatInfo::FPReturnVariant RV,
+                                    bool LE) {
+  using namespace Mips16HardFloatInfo;
+  unsigned MovOpc = Mips::MFC1;
+  switch (RV) {
+  case FRet:
+    EmitInstrRegReg(MovOpc, Mips::V0, Mips::F0);
+    break;
+  case DRet:
+    EmitMovFPIntPair(MovOpc, Mips::V0, Mips::V1, Mips::F0, Mips::F1, LE);
+    break;
+  case CFRet:
+    EmitMovFPIntPair(MovOpc, Mips::V0, Mips::V1, Mips::F0, Mips::F1, LE);
+    break;
+  case CDRet:
+    EmitMovFPIntPair(MovOpc, Mips::V0, Mips::V1, Mips::F0, Mips::F1, LE);
+    EmitMovFPIntPair(MovOpc, Mips::A0, Mips::A1, Mips::F2, Mips::F3, LE);
+    break;
+  case NoFPRet:
+    break;
+  }
+}
+
+void MipsAsmPrinter::EmitFPCallStub(
+    const char *Symbol, const Mips16HardFloatInfo::FuncSignature *Signature) {
+  MCSymbol *MSymbol = OutContext.GetOrCreateSymbol(StringRef(Symbol));
+  using namespace Mips16HardFloatInfo;
+  bool LE = Subtarget->isLittle();
+  //
+  // .global xxxx
+  //
+  OutStreamer.EmitSymbolAttribute(MSymbol, MCSA_Global);
+  const char *RetType;
+  //
+  // make the comment field identifying the return and parameter
+  // types of the floating point stub
+  // # Stub function to call rettype xxxx (params)
+  //
+  switch (Signature->RetSig) {
+  case FRet:
+    RetType = "float";
+    break;
+  case DRet:
+    RetType = "double";
+    break;
+  case CFRet:
+    RetType = "complex";
+    break;
+  case CDRet:
+    RetType = "double complex";
+    break;
+  case NoFPRet:
+    RetType = "";
+    break;
+  }
+  const char *Parms;
+  switch (Signature->ParamSig) {
+  case FSig:
+    Parms = "float";
+    break;
+  case FFSig:
+    Parms = "float, float";
+    break;
+  case FDSig:
+    Parms = "float, double";
+    break;
+  case DSig:
+    Parms = "double";
+    break;
+  case DDSig:
+    Parms = "double, double";
+    break;
+  case DFSig:
+    Parms = "double, float";
+    break;
+  case NoSig:
+    Parms = "";
+    break;
+  }
+  OutStreamer.AddComment("\t# Stub function to call " + Twine(RetType) + " " +
+                         Twine(Symbol) + " (" + Twine(Parms) + ")");
+  //
+  // probably not necessary but we save and restore the current section state
+  //
+  OutStreamer.PushSection();
+  //
+  // .section mips16.call.fpxxxx,"ax",@progbits
+  //
+  const MCSectionELF *M = OutContext.getELFSection(
+      ".mips16.call.fp." + std::string(Symbol), ELF::SHT_PROGBITS,
+      ELF::SHF_ALLOC | ELF::SHF_EXECINSTR, SectionKind::getText());
+  OutStreamer.SwitchSection(M, 0);
+  //
+  // .align 2
+  //
+  OutStreamer.EmitValueToAlignment(4);
+  MipsTargetStreamer &TS = getTargetStreamer();
+  //
+  // .set nomips16
+  // .set nomicromips
+  //
+  TS.emitDirectiveSetNoMips16();
+  TS.emitDirectiveSetNoMicroMips();
+  //
+  // .ent __call_stub_fp_xxxx
+  // .type	__call_stub_fp_xxxx,@function
+  //  __call_stub_fp_xxxx:
+  //
+  std::string x = "__call_stub_fp_" + std::string(Symbol);
+  MCSymbol *Stub = OutContext.GetOrCreateSymbol(StringRef(x));
+  TS.emitDirectiveEnt(*Stub);
+  MCSymbol *MType =
+      OutContext.GetOrCreateSymbol("__call_stub_fp_" + Twine(Symbol));
+  OutStreamer.EmitSymbolAttribute(MType, MCSA_ELF_TypeFunction);
+  OutStreamer.EmitLabel(Stub);
+  //
+  // we just handle non pic for now. these function will not be
+  // called otherwise. when the full stub generation is moved here
+  // we need to deal with pic.
+  //
+  if (Subtarget->getRelocationModel() == Reloc::PIC_)
+    llvm_unreachable("should not be here if we are compiling pic");
+  TS.emitDirectiveSetReorder();
+  //
+  // We need to add a MipsMCExpr class to MCTargetDesc to fully implement
+  // stubs without raw text but this current patch is for compiler generated
+  // functions and they all return some value.
+  // The calling sequence for non pic is different in that case and we need
+  // to implement %lo and %hi in order to handle the case of no return value
+  // See the corresponding method in Mips16HardFloat for details.
+  //
+  // mov the return address to S2.
+  // we have no stack space to store it and we are about to make another call.
+  // We need to make sure that the enclosing function knows to save S2
+  // This should have already been handled.
+  //
+  // Mov $18, $31
+
+  EmitInstrRegRegReg(Mips::ADDu, Mips::S2, Mips::RA, Mips::ZERO);
+
+  EmitSwapFPIntParams(Signature->ParamSig, LE, true);
+
+  // Jal xxxx
+  //
+  EmitJal(MSymbol);
+
+  // fix return values
+  EmitSwapFPIntRetval(Signature->RetSig, LE);
+  //
+  // do the return
+  // if (Signature->RetSig == NoFPRet)
+  //  llvm_unreachable("should not be any stubs here with no return value");
+  // else
+  EmitInstrReg(Mips::JR, Mips::S2);
+
+  MCSymbol *Tmp = OutContext.CreateTempSymbol();
+  OutStreamer.EmitLabel(Tmp);
+  const MCSymbolRefExpr *E = MCSymbolRefExpr::Create(Stub, OutContext);
+  const MCSymbolRefExpr *T = MCSymbolRefExpr::Create(Tmp, OutContext);
+  const MCExpr *T_min_E = MCBinaryExpr::CreateSub(T, E, OutContext);
+  OutStreamer.EmitELFSize(Stub, T_min_E);
+  TS.emitDirectiveEnd(x);
+  OutStreamer.PopSection();
+}
+
+void MipsAsmPrinter::EmitEndOfAsmFile(Module &M) {
+  // Emit needed stubs
+  //
+  for (std::map<
+           const char *,
+           const llvm::Mips16HardFloatInfo::FuncSignature *>::const_iterator
+           it = StubsNeeded.begin();
+       it != StubsNeeded.end(); ++it) {
+    const char *Symbol = it->first;
+    const llvm::Mips16HardFloatInfo::FuncSignature *Signature = it->second;
+    EmitFPCallStub(Symbol, Signature);
+  }
   // return to the text section
   OutStreamer.SwitchSection(OutContext.getObjectFileInfo()->getTextSection());
 }

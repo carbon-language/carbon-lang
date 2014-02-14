@@ -187,11 +187,12 @@ getReservedRegs(const MachineFunction &MF) const {
 
   // Reserve RA if in mips16 mode.
   if (Subtarget.inMips16Mode()) {
+    const MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
     Reserved.set(Mips::RA);
     Reserved.set(Mips::RA_64);
     Reserved.set(Mips::T0);
     Reserved.set(Mips::T1);
-    if (MF.getFunction()->hasFnAttribute("saveS2"))
+    if (MF.getFunction()->hasFnAttribute("saveS2") || MipsFI->hasSaveS2())
       Reserved.set(Mips::S2);
   }
 

@@ -14,6 +14,7 @@
 #ifndef MIPSASMPRINTER_H
 #define MIPSASMPRINTER_H
 
+#include "Mips16HardFloatInfo.h"
 #include "MipsMCInstLower.h"
 #include "MipsMachineFunction.h"
 #include "MipsSubtarget.h"
@@ -50,6 +51,27 @@ private:
   /// pool entries so we can properly mark them as data regions.
   bool InConstantPool;
 
+  std::map<const char *, const llvm::Mips16HardFloatInfo::FuncSignature *>
+  StubsNeeded;
+
+  void EmitJal(MCSymbol *Symbol);
+
+  void EmitInstrReg(unsigned Opcode, unsigned Reg);
+
+  void EmitInstrRegReg(unsigned Opcode, unsigned Reg1, unsigned Reg2);
+
+  void EmitInstrRegRegReg(unsigned Opcode, unsigned Reg1, unsigned Reg2,
+                          unsigned Reg3);
+
+  void EmitMovFPIntPair(unsigned MovOpc, unsigned Reg1, unsigned Reg2,
+                        unsigned FPReg1, unsigned FPReg2, bool LE);
+
+  void EmitSwapFPIntParams(Mips16HardFloatInfo::FPParamVariant, bool LE,
+                           bool ToFP);
+
+  void EmitSwapFPIntRetval(Mips16HardFloatInfo::FPReturnVariant, bool LE);
+
+  void EmitFPCallStub(const char *, const Mips16HardFloatInfo::FuncSignature *);
 
 public:
 
@@ -100,6 +122,7 @@ public:
   void printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
                        const char *Modifier = 0);
   void EmitStartOfAsmFile(Module &M);
+  void EmitEndOfAsmFile(Module &M);
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
 };
 }

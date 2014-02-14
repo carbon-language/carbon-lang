@@ -245,8 +245,8 @@ static void swapFPIntParams
 // Make sure that we know we already need a stub for this function.
 // Having called needsFPHelperFromSig
 //
-static void assureFPCallStub(Function &F, Module *M,  
-                             const MipsSubtarget &Subtarget){
+static void assureFPCallStub(Function &F, Module *M,
+                             const MipsSubtarget &Subtarget) {
   // for now we only need them for static relocation
   if (Subtarget.getRelocationModel() == Reloc::PIC_)
     return;
@@ -500,8 +500,9 @@ namespace llvm {
 // declared via attributes as nomips16, we must:
 //    1) fixup all returns of float, double, single and double complex
 //       by calling a helper function before the actual return.
-//    2) generate helper functions (stubs) that can be called by mips32 functions
-//       that will move parameters passed normally passed in floating point
+//    2) generate helper functions (stubs) that can be called by mips32
+//       functions that will move parameters passed normally passed in
+//       floating point
 //       registers the soft float equivalents.
 //    3) in the case of static relocation, generate helper functions so that
 //       mips16 functions can call extern functions of unknown type (mips16 or
