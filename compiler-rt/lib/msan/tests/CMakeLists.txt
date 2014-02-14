@@ -6,9 +6,9 @@ include_directories(..)
 include_directories(../..)
 
 # Instrumented libcxx sources and build flags.
-file(GLOB MSAN_LIBCXX_SOURCES ${MSAN_LIBCXX_PATH}/src/*.cpp)
+file(GLOB MSAN_LIBCXX_SOURCES ${COMPILER_RT_LIBCXX_PATH}/src/*.cpp)
 set(MSAN_LIBCXX_CFLAGS
-  -I${MSAN_LIBCXX_PATH}/include
+  -I${COMPILER_RT_LIBCXX_PATH}/include
   -fsanitize=memory
   -fsanitize-memory-track-origins
   -fPIC
@@ -39,7 +39,7 @@ set(MSAN_UNITTEST_HEADERS
 )
 set(MSANDR_UNITTEST_SOURCE msandr_test_so.cc)
 set(MSAN_UNITTEST_COMMON_CFLAGS
-  -I${MSAN_LIBCXX_PATH}/include
+  -I${COMPILER_RT_LIBCXX_PATH}/include
   ${COMPILER_RT_GTEST_INCLUDE_CFLAGS}
   -I${COMPILER_RT_SOURCE_DIR}/include
   -I${COMPILER_RT_SOURCE_DIR}/lib
@@ -78,7 +78,7 @@ macro(msan_compile obj_list source arch)
   get_target_flags_for_arch(${arch} TARGET_CFLAGS)
   clang_compile(${output_obj} ${source}
                 CFLAGS ${ARGN} ${TARGET_CFLAGS}
-                DEPS gtest ${MSAN_RUNTIME_LIBRARIES} ${MSAN_UNITTEST_HEADERS})
+                DEPS gtest msan ${MSAN_UNITTEST_HEADERS})
   list(APPEND ${obj_list} ${output_obj})
 endmacro()
 
@@ -99,7 +99,7 @@ macro(add_msan_test test_suite test_name arch)
   get_target_flags_for_arch(${arch} TARGET_LINK_FLAGS)
   add_compiler_rt_test(${test_suite} ${test_name}
                        OBJECTS ${ARGN}
-                       DEPS ${MSAN_RUNTIME_LIBRARIES} ${ARGN}
+                       DEPS msan ${ARGN}
                             ${MSAN_LOADABLE_SO}
                        LINK_FLAGS ${MSAN_UNITTEST_LINK_FLAGS}
                                   ${TARGET_LINK_FLAGS}
@@ -128,7 +128,7 @@ macro(add_msan_tests_for_arch arch)
   msan_link_shared(MSAN_INST_LIBCXX "libcxx" ${arch}
                    OBJECTS ${MSAN_INST_LIBCXX_OBJECTS}
                    LINKFLAGS ${MSAN_LIBCXX_LINK_FLAGS}
-                   DEPS ${MSAN_INST_LIBCXX_OBJECTS} ${MSAN_RUNTIME_LIBRARIES})
+                   DEPS ${MSAN_INST_LIBCXX_OBJECTS} msan)
 
   # Instrumented tests.
   set(MSAN_INST_TEST_OBJECTS)
@@ -151,13 +151,13 @@ macro(add_msan_tests_for_arch arch)
   set(MSAN_LOADABLE_SO)
   msan_link_shared(MSAN_LOADABLE_SO "libmsan_loadable" ${arch}
                    OBJECTS ${MSAN_INST_LOADABLE_OBJECTS}
-                   DEPS ${MSAN_INST_LOADABLE_OBJECTS} ${MSAN_RUNTIME_LIBRARIES})
+                   DEPS ${MSAN_INST_LOADABLE_OBJECTS} msan)
 
   # Uninstrumented shared library tests.
   set(MSANDR_TEST_SO)
   msan_link_shared(MSANDR_TEST_SO "libmsandr_test" ${arch}
                    OBJECTS ${MSANDR_TEST_OBJECTS}
-                   DEPS ${MSANDR_TEST_OBJECTS} ${MSAN_RUNTIME_LIBRARIES})
+                   DEPS ${MSANDR_TEST_OBJECTS} msan)
 
   # Link everything together.
   add_msan_test(MsanUnitTests "Msan-${arch}-Test" ${arch}
@@ -165,7 +165,8 @@ macro(add_msan_tests_for_arch arch)
                 ${MSAN_INST_LIBCXX} ${MSANDR_TEST_SO})
 endmacro()
 
-if(COMPILER_RT_CAN_EXECUTE_TESTS AND MSAN_CAN_INSTRUMENT_LIBCXX)
+# We should only build MSan unit tests if we can build instrumented libcxx.
+if(COMPILER_RT_CAN_EXECUTE_TESTS AND COMPILER_RT_HAS_LIBCXX_SOURCES)
   if(CAN_TARGET_x86_64)
     add_msan_tests_for_arch(x86_64)
   endif()

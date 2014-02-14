@@ -233,6 +233,7 @@ filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
   x86_64 i386 powerpc64 arm)
 filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
+filter_available_targets(MSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386)
 
 add_subdirectory(include)
@@ -246,6 +247,13 @@ if (NOT ANDROID)
   if(UNIX)
     list(APPEND SANITIZER_COMMON_LIT_TEST_DEPS SanitizerLintCheck)
   endif()
+endif()
+
+set(COMPILER_RT_LIBCXX_PATH ${LLVM_MAIN_SRC_DIR}/projects/libcxx)
+if(EXISTS ${COMPILER_RT_LIBCXX_PATH}/)
+  set(COMPILER_RT_HAS_LIBCXX_SOURCES TRUE)
+else()
+  set(COMPILER_RT_HAS_LIBCXX_SOURCES FALSE)
 endif()
 
 add_subdirectory(lib)

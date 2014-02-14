@@ -17,7 +17,7 @@ set(MSAN_RTL_CFLAGS
   -ffreestanding)
 
 # Static runtime library.
-set(MSAN_RUNTIME_LIBRARIES)
+add_custom_target(msan)
 set(arch "x86_64")
 if(CAN_TARGET_${arch})
   add_compiler_rt_static_runtime(clang_rt.msan-${arch} ${arch}
@@ -26,25 +26,16 @@ if(CAN_TARGET_${arch})
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
     CFLAGS ${MSAN_RTL_CFLAGS})
-  list(APPEND MSAN_RUNTIME_LIBRARIES clang_rt.msan-${arch})
+  add_dependencies(msan clang_rt.msan-${arch})
   if(UNIX)
     add_sanitizer_rt_symbols(clang_rt.msan-${arch} msan.syms.extra)
-    list(APPEND MSAN_RUNTIME_LIBRARIES clang_rt.msan-${arch}-symbols)
+    add_dependencies(msan clang_rt.msan-${arch}-symbols)
   endif()
 endif()
 
 add_compiler_rt_resource_file(msan_blacklist msan_blacklist.txt)
-
-# We should only build MSan unit tests if we can build instrumented libcxx.
-set(MSAN_LIBCXX_PATH ${LLVM_MAIN_SRC_DIR}/projects/libcxx)
-if(EXISTS ${MSAN_LIBCXX_PATH}/)
-  set(MSAN_CAN_INSTRUMENT_LIBCXX TRUE)
-else()
-  set(MSAN_CAN_INSTRUMENT_LIBCXX FALSE)
-endif()
+add_dependencies(msan msan_blacklist)
 
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()
-
-add_subdirectory(lit_tests)
