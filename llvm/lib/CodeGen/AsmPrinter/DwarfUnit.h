@@ -544,6 +544,8 @@ public:
                    DwarfDebug *DW, DwarfFile *DWU);
   virtual ~DwarfCompileUnit() LLVM_OVERRIDE;
 
+  void initStmtList(MCSymbol *DwarfLineSectionSym);
+
   /// createGlobalVariableDIE - create global variable DIE.
   void createGlobalVariableDIE(DIGlobalVariable GV);
 

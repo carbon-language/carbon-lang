@@ -762,31 +762,9 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
                  DIUnit.getLanguage());
   NewCU->addString(Die, dwarf::DW_AT_name, FN);
 
-  // Define start line table label for each Compile Unit.
-  MCSymbol *LineTableStartSym =
-      Asm->GetTempSymbol("line_table_start", NewCU->getUniqueID());
-  Asm->OutStreamer.getContext().setMCLineTableSymbol(LineTableStartSym,
-                                                     NewCU->getUniqueID());
-
-  // Use a single line table if we are generating assembly.
-  bool UseTheFirstCU =
-      Asm->OutStreamer.hasRawTextSupport() || (NewCU->getUniqueID() == 0);
 
   if (!useSplitDwarf()) {
-    // DW_AT_stmt_list is a offset of line number information for this
-    // compile unit in debug_line section. For split dwarf this is
-    // left in the skeleton CU and so not included.
-    // The line table entries are not always emitted in assembly, so it
-    // is not okay to use line_table_start here.
-    if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-      NewCU->addSectionLabel(Die, dwarf::DW_AT_stmt_list,
-                             UseTheFirstCU ? DwarfLineSectionSym
-                                           : LineTableStartSym);
-    else if (UseTheFirstCU)
-      NewCU->addSectionOffset(Die, dwarf::DW_AT_stmt_list, 0);
-    else
-      NewCU->addSectionDelta(Die, dwarf::DW_AT_stmt_list, LineTableStartSym,
-                             DwarfLineSectionSym);
+    NewCU->initStmtList(DwarfLineSectionSym);
 
     // If we're using split dwarf the compilation dir is going to be in the
     // skeleton CU and so we don't need to duplicate it here.
@@ -2956,13 +2934,7 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
   NewCU->initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
                      DwarfInfoSectionSym);
 
-  // DW_AT_stmt_list is a offset of line number information for this
-  // compile unit in debug_line section.
-  // FIXME: Should handle multiple compile units.
-  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    NewCU->addSectionLabel(Die, dwarf::DW_AT_stmt_list, DwarfLineSectionSym);
-  else
-    NewCU->addSectionOffset(Die, dwarf::DW_AT_stmt_list, 0);
+  NewCU->initStmtList(DwarfLineSectionSym);
 
   initSkeletonUnit(CU, Die, NewCU);
 
