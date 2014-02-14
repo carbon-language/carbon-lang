@@ -1625,6 +1625,9 @@ TEST_F(FormatTest, FormatsClasses) {
   verifyFormat("struct aaaaaaaaaaaaaaaaaaaa\n"
                "    : public aaaaaaaaaaaaaaaaaaa<aaaaaaaaaaaaaaaaaaaaa,\n"
                "                                 aaaaaaaaaaaaaaaaaaaaaa> {};");
+  verifyFormat("template <class R, class C>\n"
+               "struct Aaaaaaaaaaaaaaaaa<R (C::*)(int) const>\n"
+               "    : Aaaaaaaaaaaaaaaaa<R (C::*)(int)> {};");
 }
 
 TEST_F(FormatTest, FormatsVariableDeclarationsAfterStructOrClass) {

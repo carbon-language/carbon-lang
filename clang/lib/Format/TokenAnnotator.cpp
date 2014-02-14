@@ -1503,6 +1503,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Right.is(tok::colon) &&
       (Right.Type == TT_DictLiteral || Right.Type == TT_ObjCMethodExpr))
     return false;
+  if (Right.Type == TT_InheritanceColon)
+    return true;
   if (Left.is(tok::colon) &&
       (Left.Type == TT_DictLiteral || Left.Type == TT_ObjCMethodExpr))
     return true;
