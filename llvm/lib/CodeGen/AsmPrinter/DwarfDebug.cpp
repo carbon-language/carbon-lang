@@ -2553,13 +2553,9 @@ void DwarfFile::emitAddresses(const MCSection *AddrSection) {
        I != E; ++I)
     Entries[I->second] = I->first;
 
-  for (unsigned i = 0, e = Entries.size(); i != e; ++i) {
-    // Emit an expression for reference from debug information entries.
-    if (const MCExpr *Expr = Entries[i])
-      Asm->OutStreamer.EmitValue(Expr, Asm->getDataLayout().getPointerSize());
-    else
-      Asm->OutStreamer.EmitIntValue(0, Asm->getDataLayout().getPointerSize());
-  }
+  for (unsigned i = 0, e = Entries.size(); i != e; ++i)
+    Asm->OutStreamer.EmitValue(Entries[i],
+                               Asm->getDataLayout().getPointerSize());
 }
 
 // Emit visible names into a debug str section.
