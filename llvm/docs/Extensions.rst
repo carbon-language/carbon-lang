@@ -144,8 +144,8 @@ MC supports passing the information in ``.linkonce`` at the end of
   .long 1
 
 Note that in the combined form the COMDAT symbol is explicit. This
-extension exits to support multiple sections with the same name in
-different comdats:
+extension exists to support multiple sections with the same name in
+different COMDATs:
 
 
 .. code-block:: gas
