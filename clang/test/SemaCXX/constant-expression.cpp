@@ -133,3 +133,11 @@ namespace test4 {
   // equivalent to "const int x = 42;" as per C++03 8.5/p13.
   typedef A<i> Ai; // ok
 }
+
+// rdar://16064952
+namespace rdar16064952 {
+  template < typename T > void fn1() {
+   T b;
+   unsigned w = ({int a = b.val[sizeof(0)]; 0; }); // expected-warning {{use of GNU statement expression extension}}
+  }
+}
