@@ -1212,6 +1212,16 @@ def MOV64ri : RIi64<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64imm:$src),
                     "movabs{q}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, imm:$src)], IIC_MOV>;
 }
+
+// Longer forms that use a ModR/M byte. Needed for disassembler
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in {
+def MOV8ri_alt  : Ii8 <0xC6, MRM0r, (outs GR8 :$dst), (ins i8imm :$src),
+                   "mov{b}\t{$src, $dst|$dst, $src}", [], IIC_MOV>;
+def MOV16ri_alt : Ii16<0xC7, MRM0r, (outs GR16:$dst), (ins i16imm:$src),
+                   "mov{w}\t{$src, $dst|$dst, $src}", [], IIC_MOV>, OpSize16;
+def MOV32ri_alt : Ii32<0xC7, MRM0r, (outs GR32:$dst), (ins i32imm:$src),
+                   "mov{l}\t{$src, $dst|$dst, $src}", [], IIC_MOV>, OpSize32;
+}
 } // SchedRW
 
 let SchedRW = [WriteStore] in {
