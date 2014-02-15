@@ -2889,7 +2889,6 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     break;
     // No code generation needed.
   case Decl::UsingShadow:
-  case Decl::Using:
   case Decl::ClassTemplate:
   case Decl::VarTemplate:
   case Decl::VarTemplatePartialSpecialization:
@@ -2898,6 +2897,10 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::Block:
   case Decl::Empty:
     break;
+  case Decl::Using:          // using X; [C++]
+    if (CGDebugInfo *DI = getModuleDebugInfo())
+        DI->EmitUsingDecl(cast<UsingDecl>(*D));
+    return;
   case Decl::NamespaceAlias:
     if (CGDebugInfo *DI = getModuleDebugInfo())
         DI->EmitNamespaceAlias(cast<NamespaceAliasDecl>(*D));
