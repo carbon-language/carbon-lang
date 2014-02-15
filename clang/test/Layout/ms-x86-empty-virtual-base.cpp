@@ -132,22 +132,22 @@ struct D {
 // CHECK:        32 |   int a
 // CHECK-NEXT:      | [sizeof=40, align=8
 // CHECK-NEXT:      |  nvsize=40, nvalign=8]
-// CHECK-64: *** Dumping AST Record Layout
-// CHECK-64: *** Dumping AST Record Layout
-// CHECK-64: *** Dumping AST Record Layout
-// CHECK-64: *** Dumping AST Record Layout
-// CHECK-64-NEXT:    0 | struct D
-// CHECK-64-NEXT:    0 |   struct B0 b0 (empty)
-// CHECK-64:         8 |   struct C0 c0
-// CHECK-64-NEXT:    8 |     int a
-// CHECK-64:        12 |   struct C1 c1
-// CHECK-64-NEXT:   12 |     int a
-// CHECK-64:        16 |   struct C2 c2
-// CHECK-64-NEXT:   16 |     int a
-// CHECK-64:        24 |   struct B1 b1 (empty)
-// CHECK-64:        32 |   int a
-// CHECK-64-NEXT:      | [sizeof=40, align=8
-// CHECK-64-NEXT:      |  nvsize=40, nvalign=8]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct D
+// CHECK-X64-NEXT:    0 |   struct B0 b0 (empty)
+// CHECK-X64:         8 |   struct C0 c0
+// CHECK-X64-NEXT:    8 |     int a
+// CHECK-X64:        12 |   struct C1 c1
+// CHECK-X64-NEXT:   12 |     int a
+// CHECK-X64:        16 |   struct C2 c2
+// CHECK-X64-NEXT:   16 |     int a
+// CHECK-X64:        24 |   struct B1 b1 (empty)
+// CHECK-X64:        32 |   int a
+// CHECK-X64-NEXT:      | [sizeof=40, align=8
+// CHECK-X64-NEXT:      |  nvsize=40, nvalign=8]
 
 struct E : virtual B0, virtual C0, virtual C1, virtual C2, virtual B1 {
 	int a;
@@ -168,10 +168,6 @@ struct E : virtual B0, virtual C0, virtual C1, virtual C2, virtual B1 {
 // CHECK-NEXT:   24 |   struct B1 (virtual base) (empty)
 // CHECK-NEXT:      | [sizeof=24, align=8
 // CHECK-NEXT:      |  nvsize=8, nvalign=8]
-// CHECK-X64: *** Dumping AST Record Layout
-// CHECK-X64: *** Dumping AST Record Layout
-// CHECK-X64: *** Dumping AST Record Layout
-// CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct E
 // CHECK-X64-NEXT:    0 |   (E vbtable pointer)
