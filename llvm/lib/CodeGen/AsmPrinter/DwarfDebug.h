@@ -244,10 +244,15 @@ class DwarfFile {
   unsigned NextStringPoolNumber;
   std::string StringPref;
 
+  struct AddressPoolEntry {
+    unsigned Number;
+    bool TLS;
+    AddressPoolEntry(unsigned Number, bool TLS) : Number(Number), TLS(TLS) {}
+  };
   // Collection of addresses for this unit and assorted labels.
   // A Symbol->unsigned mapping of addresses used by indirect
   // references.
-  typedef DenseMap<const MCExpr *, unsigned> AddrPool;
+  typedef DenseMap<const MCSymbol *, AddressPoolEntry> AddrPool;
   AddrPool AddressPool;
   unsigned NextAddrPoolNumber;
 
@@ -303,8 +308,7 @@ public:
 
   /// \brief Returns the index into the address pool with the given
   /// label/symbol.
-  unsigned getAddrPoolIndex(const MCExpr *Sym);
-  unsigned getAddrPoolIndex(const MCSymbol *Sym);
+  unsigned getAddrPoolIndex(const MCSymbol *Sym, bool TLS = false);
 
   /// \brief Returns the address pool.
   AddrPool *getAddrPool() { return &AddressPool; }

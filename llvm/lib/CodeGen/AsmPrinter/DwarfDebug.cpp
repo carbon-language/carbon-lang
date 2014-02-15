@@ -265,16 +265,12 @@ unsigned DwarfFile::getStringPoolIndex(StringRef Str) {
   return Entry.second;
 }
 
-unsigned DwarfFile::getAddrPoolIndex(const MCSymbol *Sym) {
-  return getAddrPoolIndex(MCSymbolRefExpr::Create(Sym, Asm->OutContext));
-}
-
-unsigned DwarfFile::getAddrPoolIndex(const MCExpr *Sym) {
-  std::pair<DenseMap<const MCExpr *, unsigned>::iterator, bool> P =
-      AddressPool.insert(std::make_pair(Sym, NextAddrPoolNumber));
+unsigned DwarfFile::getAddrPoolIndex(const MCSymbol *Sym, bool TLS) {
+  std::pair<AddrPool::iterator, bool> P = AddressPool.insert(
+      std::make_pair(Sym, AddressPoolEntry(NextAddrPoolNumber, TLS)));
   if (P.second)
     ++NextAddrPoolNumber;
-  return P.first->second;
+  return P.first->second.Number;
 }
 
 // Define a unique number for the abbreviation.
@@ -2548,10 +2544,12 @@ void DwarfFile::emitAddresses(const MCSection *AddrSection) {
   // Order the address pool entries by ID
   SmallVector<const MCExpr *, 64> Entries(AddressPool.size());
 
-  for (DenseMap<const MCExpr *, unsigned>::iterator I = AddressPool.begin(),
-                                                    E = AddressPool.end();
+  for (AddrPool::iterator I = AddressPool.begin(), E = AddressPool.end();
        I != E; ++I)
-    Entries[I->second] = I->first;
+    Entries[I->second.Number] =
+        I->second.TLS
+            ? Asm->getObjFileLowering().getDebugThreadLocalSymbol(I->first)
+            : MCSymbolRefExpr::Create(I->first, Asm->OutContext);
 
   for (unsigned i = 0, e = Entries.size(); i != e; ++i)
     Asm->OutStreamer.EmitValue(Entries[i],

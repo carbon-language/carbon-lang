@@ -1580,8 +1580,6 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
       unsigned PointerSize = Asm->getDataLayout().getPointerSize();
       assert((PointerSize == 4 || PointerSize == 8) &&
              "Add support for other sizes if necessary");
-      const MCExpr *Expr =
-          Asm->getObjFileLowering().getDebugThreadLocalSymbol(Sym);
       // Based on GCC's support for TLS:
       if (!DD->useSplitDwarf()) {
         // 1) Start with a constNu of the appropriate pointer size
@@ -1589,10 +1587,12 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
                 PointerSize == 4 ? dwarf::DW_OP_const4u : dwarf::DW_OP_const8u);
         // 2) containing the (relocated) offset of the TLS variable
         //    within the module's TLS block.
-        addExpr(Block, dwarf::DW_FORM_udata, Expr);
+        addExpr(Block, dwarf::DW_FORM_udata,
+                Asm->getObjFileLowering().getDebugThreadLocalSymbol(Sym));
       } else {
         addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_const_index);
-        addUInt(Block, dwarf::DW_FORM_udata, DU->getAddrPoolIndex(Expr));
+        addUInt(Block, dwarf::DW_FORM_udata,
+                DU->getAddrPoolIndex(Sym, /* TLS */ true));
       }
       // 3) followed by a custom OP to make the debugger do a TLS lookup.
       addUInt(Block, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_push_tls_address);

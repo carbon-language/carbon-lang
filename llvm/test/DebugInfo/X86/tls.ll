@@ -43,8 +43,7 @@
 ; FISSION: .byte 3 # DW_AT_location
 ; DW_OP_GNU_addr_index
 ; FISSION-NEXT: .byte 251
-; FIXME: This should be '1' to share the address table entry with the variable location above
-; FISSION-NEXT: .byte 2
+; FISSION-NEXT: .byte 1
 ; DW_OP_stack_value
 ; FISSION-NEXT: .byte 159
 
@@ -52,8 +51,7 @@
 ; FISSION: .section    .debug_addr
 ; FISSION-NEXT: .quad  tls@DTPOFF
 ; FISSION-NEXT: .quad  glbl
-; FIXME: Deduplicate the debug_addr list
-; FISSION-NEXT: .quad  glbl
+; FISSION-NOT: .quad  glbl
 
 ; Generated from:
 
