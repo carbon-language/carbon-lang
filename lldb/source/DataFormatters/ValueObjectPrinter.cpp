@@ -282,15 +282,17 @@ ValueObjectPrinter::GetValueSummaryError (std::string& value,
                                           std::string& summary,
                                           std::string& error)
 {
-    lldb::Format original_format;
-    bool custom_format = options.m_format != eFormatDefault && options.m_format != m_valobj->GetFormat();
-    if (custom_format)
+    if (options.m_format != eFormatDefault && options.m_format != m_valobj->GetFormat())
     {
-        original_format = m_valobj->GetFormat();
-        m_valobj->SetFormat(options.m_format);
+        m_valobj->GetValueAsCString(options.m_format,
+                                    value);
     }
-    const char* val_cstr = m_valobj->GetValueAsCString();
-    value.assign(val_cstr ? val_cstr : "");
+    else
+    {
+        const char* val_cstr = m_valobj->GetValueAsCString();
+        if (val_cstr)
+            value.assign(val_cstr);
+    }
     const char* err_cstr = m_valobj->GetError().AsCString();
     if (err_cstr)
         error.assign(err_cstr);
@@ -312,8 +314,6 @@ ValueObjectPrinter::GetValueSummaryError (std::string& value,
             }
         }
     }
-    if (custom_format)
-        m_valobj->SetFormat(original_format);
 }
 
 bool
