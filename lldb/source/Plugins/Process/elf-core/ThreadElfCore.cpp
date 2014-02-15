@@ -86,61 +86,66 @@ ThreadElfCore::CreateRegisterContextForFrame (StackFrame *frame)
 
         ProcessElfCore *process = static_cast<ProcessElfCore *>(GetProcess().get());
         ArchSpec arch = process->GetArchitecture();
+        RegisterInfoInterface *reg_interface = NULL;
+
+        switch (arch.GetTriple().getOS())
+        {
+            case llvm::Triple::FreeBSD:
+            {
+                switch (arch.GetMachine())
+                {
+                    case llvm::Triple::mips64:
+                        reg_interface = new RegisterContextFreeBSD_mips64(arch);
+                        break;
+                    case llvm::Triple::x86:
+                        reg_interface = new RegisterContextFreeBSD_i386(arch);
+                        break;
+                    case llvm::Triple::x86_64:
+                        reg_interface = new RegisterContextFreeBSD_x86_64(arch);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            }
+ 
+            case llvm::Triple::Linux:
+            {
+                switch (arch.GetMachine())
+                {
+                    case llvm::Triple::x86_64:
+                        reg_interface = new RegisterContextLinux_x86_64(arch);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+
+        if (!reg_interface) {
+            if (log)
+                log->Printf ("elf-core::%s:: Architecture(%d) or OS(%d) not supported",
+                             __FUNCTION__, arch.GetMachine(), arch.GetTriple().getOS());
+                assert (false && "Architecture or OS not supported");
+        }
+
         switch (arch.GetMachine())
         {
             case llvm::Triple::mips64:
-                switch (arch.GetTriple().getOS())
-                {
-                    case llvm::Triple::FreeBSD:
-                        m_thread_reg_ctx_sp.reset(new RegisterContextCorePOSIX_mips64 (*this, new RegisterContextFreeBSD_mips64(arch), m_gpregset_data, m_fpregset_data));
-                        break;
-                    default:
-                        if (log)
-                            log->Printf ("elf-core::%s:: OS(%d) not supported",
-                                         __FUNCTION__, arch.GetTriple().getOS());
-                        assert (false && "OS not supported");
-                        break;
-                }
+                m_thread_reg_ctx_sp.reset(new RegisterContextCorePOSIX_mips64 (*this, reg_interface, m_gpregset_data, m_fpregset_data));
                 break;
-
             case llvm::Triple::x86:
-                switch (arch.GetTriple().getOS())
-                {
-                    case llvm::Triple::FreeBSD:
-                        m_thread_reg_ctx_sp.reset(new RegisterContextCorePOSIX_x86_64 (*this, new RegisterContextFreeBSD_i386(arch), m_gpregset_data, m_fpregset_data));
-                        break;
-                    default:
-                        if (log)
-                            log->Printf ("elf-core::%s:: OS(%d) not supported",
-                                         __FUNCTION__, arch.GetTriple().getOS());
-                        assert (false && "OS not supported");
-                        break;
-                }
-                break;
-
             case llvm::Triple::x86_64:
-                switch (arch.GetTriple().getOS())
-                {
-                    case llvm::Triple::FreeBSD:
-                        m_thread_reg_ctx_sp.reset(new RegisterContextCorePOSIX_x86_64 (*this, new RegisterContextFreeBSD_x86_64(arch), m_gpregset_data, m_fpregset_data));
-                        break;
-                    case llvm::Triple::Linux:
-                        m_thread_reg_ctx_sp.reset(new RegisterContextCorePOSIX_x86_64 (*this, new RegisterContextLinux_x86_64(arch), m_gpregset_data, m_fpregset_data));
-                        break;
-                    default:
-                        if (log)
-                            log->Printf ("elf-core::%s:: OS(%d) not supported",
-                                         __FUNCTION__, arch.GetTriple().getOS());
-                        assert (false && "OS not supported");
-                        break;
-                }
+                m_thread_reg_ctx_sp.reset(new RegisterContextCorePOSIX_x86_64 (*this, reg_interface, m_gpregset_data, m_fpregset_data));
                 break;
             default:
-                if (log)
-                    log->Printf ("elf-core::%s:: Architecture(%d) not supported",
-                                 __FUNCTION__, arch.GetMachine());
-                assert (false && "Architecture not supported");
+                break;
         }
+
         reg_ctx_sp = m_thread_reg_ctx_sp;
     }
     else if (m_unwinder_ap.get())
