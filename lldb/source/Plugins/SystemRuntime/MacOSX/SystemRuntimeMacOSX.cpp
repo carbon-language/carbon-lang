@@ -279,6 +279,8 @@ SystemRuntimeMacOSX::GetExtendedBacktraceThread (ThreadSP real_thread, ConstStri
         {
             ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
             AppleGetThreadItemInfoHandler::GetThreadItemInfoReturnInfo ret = m_get_thread_item_info_handler.GetThreadItemInfo (*cur_thread_sp.get(), real_thread->GetID(), m_page_to_free, m_page_to_free_size, error);
+            m_page_to_free = LLDB_INVALID_ADDRESS;
+            m_page_to_free_size = 0;
             if (ret.item_buffer_ptr != 0 &&  ret.item_buffer_ptr != LLDB_INVALID_ADDRESS && ret.item_buffer_size > 0)
             {
                 DataBufferHeap data (ret.item_buffer_size, 0);
@@ -316,6 +318,8 @@ SystemRuntimeMacOSX::GetExtendedBacktraceFromItemRef (lldb::addr_t item_ref)
     ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
     Error error;
     ret = m_get_item_info_handler.GetItemInfo (*cur_thread_sp.get(), item_ref, m_page_to_free, m_page_to_free_size, error);
+    m_page_to_free = LLDB_INVALID_ADDRESS;
+    m_page_to_free_size = 0;
     if (ret.item_buffer_ptr != 0 &&  ret.item_buffer_ptr != LLDB_INVALID_ADDRESS && ret.item_buffer_size > 0)
     {
         DataBufferHeap data (ret.item_buffer_size, 0);
@@ -505,10 +509,10 @@ SystemRuntimeMacOSX::PopulateQueueList (lldb_private::QueueList &queue_list)
         { 
             Error error;
             queue_info_pointer = m_get_queues_handler.GetCurrentQueues (*cur_thread_sp.get(), m_page_to_free, m_page_to_free_size, error);
+            m_page_to_free = LLDB_INVALID_ADDRESS;
+            m_page_to_free_size = 0;
             if (error.Success())
             {
-                m_page_to_free = LLDB_INVALID_ADDRESS;
-                m_page_to_free_size = 0;
 
                 if (queue_info_pointer.count > 0 
                     && queue_info_pointer.queues_buffer_size > 0
@@ -534,6 +538,8 @@ SystemRuntimeMacOSX::PopulatePendingItemsForQueue (Queue *queue)
             ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
             Error error;
             ret = m_get_item_info_handler.GetItemInfo (*cur_thread_sp.get(), pending_item, m_page_to_free, m_page_to_free_size, error);
+            m_page_to_free = LLDB_INVALID_ADDRESS;
+            m_page_to_free_size = 0;
             if (ret.item_buffer_ptr != 0 &&  ret.item_buffer_ptr != LLDB_INVALID_ADDRESS && ret.item_buffer_size > 0)
             {
                 DataBufferHeap data (ret.item_buffer_size, 0);
@@ -560,8 +566,6 @@ SystemRuntimeMacOSX::PopulatePendingItemsForQueue (Queue *queue)
 
                     queue->PushPendingQueueItem (queue_item_sp);
                 }
-                m_page_to_free = ret.item_buffer_ptr;
-                m_page_to_free_size = ret.item_buffer_size;
             }
         }
     }
@@ -581,10 +585,10 @@ SystemRuntimeMacOSX::GetPendingItemRefsForQueue (lldb::addr_t queue)
     { 
         Error error;
         pending_items_pointer = m_get_pending_items_handler.GetPendingItems (*cur_thread_sp.get(), queue, m_page_to_free, m_page_to_free_size, error);
+        m_page_to_free = LLDB_INVALID_ADDRESS;
+        m_page_to_free_size = 0;
         if (error.Success())
         {
-            m_page_to_free = LLDB_INVALID_ADDRESS;
-            m_page_to_free_size = 0;
             if (pending_items_pointer.count > 0
                 && pending_items_pointer.items_buffer_size > 0
                 && pending_items_pointer.items_buffer_ptr != 0

@@ -397,5 +397,8 @@ AppleGetQueuesHandler::GetCurrentQueues (Thread &thread, addr_t page_to_free, ui
         return return_value;
     }
 
+    if (log)
+        log->Printf ("AppleGetQueuesHandler called __introspection_dispatch_get_queues (page_to_free == 0x%" PRIx64 ", size = %" PRId64 "), returned page is at 0x%" PRIx64 ", size %" PRId64 ", count = %" PRId64, page_to_free, page_to_free_size, return_value.queues_buffer_ptr, return_value.queues_buffer_size, return_value.count);
+
     return return_value;
 }

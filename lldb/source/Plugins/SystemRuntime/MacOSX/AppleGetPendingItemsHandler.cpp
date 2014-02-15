@@ -398,5 +398,8 @@ AppleGetPendingItemsHandler::GetPendingItems (Thread &thread, addr_t queue, addr
         return return_value;
     }
 
+    if (log)
+        log->Printf ("AppleGetPendingItemsHandler called __introspection_dispatch_queue_get_pending_items (page_to_free == 0x%" PRIx64 ", size = %" PRId64 "), returned page is at 0x%" PRIx64 ", size %" PRId64 ", count = %" PRId64, page_to_free, page_to_free_size, return_value.items_buffer_ptr, return_value.items_buffer_ptr, return_value.count);
+
     return return_value;
 }

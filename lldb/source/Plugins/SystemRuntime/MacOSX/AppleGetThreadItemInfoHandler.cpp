@@ -389,5 +389,8 @@ AppleGetThreadItemInfoHandler::GetThreadItemInfo (Thread &thread, tid_t thread_i
         return return_value;
     }
 
+    if (log)
+        log->Printf ("AppleGetThreadItemInfoHandler called __introspection_dispatch_thread_get_item_info (page_to_free == 0x%" PRIx64 ", size = %" PRId64 "), returned page is at 0x%" PRIx64 ", size %" PRId64, page_to_free, page_to_free_size, return_value.item_buffer_ptr, return_value.item_buffer_size);
+
     return return_value;
 }

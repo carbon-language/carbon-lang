@@ -385,6 +385,9 @@ AppleGetItemInfoHandler::GetItemInfo (Thread &thread, uint64_t item, addr_t page
         return_value.item_buffer_ptr = LLDB_INVALID_ADDRESS;
         return return_value;
     }
+    if (log)
+        log->Printf ("AppleGetItemInfoHandler called __introspection_dispatch_queue_item_get_info (page_to_free == 0x%" PRIx64 ", size = %" PRId64 "), returned page is at 0x%" PRIx64 ", size %" PRId64, page_to_free, page_to_free_size, return_value.item_buffer_ptr, return_value.item_buffer_size);
+
 
     return return_value;
 }
