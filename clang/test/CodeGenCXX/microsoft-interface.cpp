@@ -38,6 +38,3 @@ int fn() {
 
 // CHECK-LABEL: define linkonce_odr x86_thiscallcc void @_ZN1IC2Ev(%__interface.I* %this)
 // CHECK:   store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1I, i64 0, i64 2), i8*** %{{[.0-9A-Z_a-z]+}}
-
-// CHECK-NOT-LABEL: define linkonce_odr %__interface.I* @_ZN1IaSERKS_(%__interface.I* %this, %__interface.I*)
-// CHECK-NOT-LABEL: define linkonce_odr %__interface.I* @_ZN1IaSEOS_(%__interface.I* %this, %__interface.I*)
