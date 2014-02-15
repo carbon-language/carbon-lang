@@ -204,7 +204,8 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
     // For a class, compare the property against a property in our superclass.
     bool FoundInSuper = false;
-    if (ObjCInterfaceDecl *Super = IFace->getSuperClass()) {
+    ObjCInterfaceDecl *CurrentInterfaceDecl = IFace;
+    while (ObjCInterfaceDecl *Super = CurrentInterfaceDecl->getSuperClass()) {
       DeclContext::lookup_result R = Super->lookup(Res->getDeclName());
       for (unsigned I = 0, N = R.size(); I != N; ++I) {
         if (ObjCPropertyDecl *SuperProp = dyn_cast<ObjCPropertyDecl>(R[I])) {
@@ -213,12 +214,17 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
           break;
         }
       }
+      if (FoundInSuper)
+        break;
+      else
+        CurrentInterfaceDecl = Super;
     }
 
     if (FoundInSuper) {
       // Also compare the property against a property in our protocols.
-      for (ObjCInterfaceDecl::protocol_iterator P = IFace->protocol_begin(),
-                                             PEnd = IFace->protocol_end();
+      for (ObjCInterfaceDecl::protocol_iterator
+            P = CurrentInterfaceDecl->protocol_begin(),
+            PEnd = CurrentInterfaceDecl->protocol_end();
            P != PEnd; ++P) {
         CheckPropertyAgainstProtocol(*this, Res, *P, KnownProtos);
       }

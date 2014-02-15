@@ -44,3 +44,29 @@
 @property(assign) Data *p_base;	
 @property(assign) NSData *p_data;	// expected-warning{{property type 'NSData *' is incompatible with type 'NSMutableData *' inherited from 'Base'}}
 @end
+
+// rdar://15967517
+@protocol P1
+@property (nonatomic) void* selected;
+@end
+
+@protocol P2
+@property (nonatomic) void* selected; // expected-note {{property declared here}}
+@end
+
+@interface MKAnnotationView <P1>
+@property (nonatomic) void* selected; // expected-note {{property declared here}}
+@property (nonatomic) char selected2;
+@end
+
+@interface Parent : MKAnnotationView <P2>
+@property (nonatomic) void* selected1; // expected-note {{property declared here}}
+@property (nonatomic) char selected2;
+@end
+
+@interface Child : Parent
+@property (nonatomic) char selected; // expected-warning {{property type 'char' is incompatible with type 'void *' inherited from 'MKAnnotationView'}} \
+				     // expected-warning {{property type 'char' is incompatible with type 'void *' inherited from 'P2'}}
+@property (nonatomic) char selected1; // expected-warning {{property type 'char' is incompatible with type 'void *' inherited from 'Parent'}}
+@property (nonatomic) char selected2;
+@end
