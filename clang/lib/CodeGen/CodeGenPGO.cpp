@@ -72,7 +72,7 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
       ReportBadPGOData(CGM, "pgo-data file has bad count value");
       return;
     }
-    CurPtr = EndPtr + 1;
+    CurPtr = EndPtr; // Point to '\n'.
     FunctionCounts[MangledName] = Count;
     MaxCount = Count > MaxCount ? Count : MaxCount;
 
