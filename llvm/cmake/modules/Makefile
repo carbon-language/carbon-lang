@@ -71,7 +71,7 @@ $(PROJ_OBJ_DIR)/LLVMExports.cmake: $(LLVMBuildCMakeExportsFrag)
 	    echo 'set_property(TARGET '"$$lib"' PROPERTY IMPORTED_LOCATION "'"$(PROJ_libdir)/lib$$lib.a"'")' ; \
 	  done && \
 	  cat "$(LLVMBuildCMakeExportsFrag)" \
-	) > $@
+	) | grep -v gtest > $@
 
 all-local:: $(addprefix $(PROJ_OBJ_DIR)/, $(OBJMODS))
 
