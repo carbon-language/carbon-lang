@@ -1,4 +1,4 @@
-// RUN: %clang -arch i386 -fms-extensions -rewrite-objc %s -o %t-rw.cpp
+// RUN: %clang -target i386-unknown-unknown -fms-extensions -rewrite-objc %s -o %t-rw.cpp
 // RUN: FileCheck %s < %t-rw.cpp
 // rdar://12189793
 
