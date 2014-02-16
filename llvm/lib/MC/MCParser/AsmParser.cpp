@@ -3152,11 +3152,14 @@ bool AsmParser::parseDirectiveMacrosOnOff(StringRef Directive) {
 }
 
 /// parseDirectiveMacro
-/// ::= .macro name [parameters]
+/// ::= .macro name[,] [parameters]
 bool AsmParser::parseDirectiveMacro(SMLoc DirectiveLoc) {
   StringRef Name;
   if (parseIdentifier(Name))
     return TokError("expected identifier in '.macro' directive");
+
+  if (getLexer().is(AsmToken::Comma))
+    Lex();
 
   MCAsmMacroParameters Parameters;
   while (getLexer().isNot(AsmToken::EndOfStatement)) {
