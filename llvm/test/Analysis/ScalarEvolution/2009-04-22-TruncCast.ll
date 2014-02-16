@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution | grep "(trunc i" | not grep ext
+; RUN: opt < %s -analyze -scalar-evolution | FileCheck %s
 
 ; CHECK: Printing analysis 'Scalar Evolution Analysis' for function 'test1'
 ; CHECK-NOT: (trunc i{{.*}}ext
