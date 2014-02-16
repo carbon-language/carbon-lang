@@ -9,6 +9,6 @@
 // REQUIRES: crash-recovery
 
 // FIXME: Please investigate abnormal path in MemoryBuffer.
-// XFAIL: mingw32,win32
+// REQUIRES: can-remove-opened-file
 
 #warning parsing original file
