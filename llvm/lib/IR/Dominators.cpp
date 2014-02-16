@@ -66,12 +66,12 @@ TEMPLATE_INSTANTIATION(class llvm::DominatorTreeBase<BasicBlock>);
 
 #define LLVM_COMMA ,
 TEMPLATE_INSTANTIATION(void llvm::Calculate<Function LLVM_COMMA BasicBlock *>(
-    DominatorTreeBase<typename GraphTraits<BasicBlock *>::NodeType> &DT
-        LLVM_COMMA Function &F));
-TEMPLATE_INSTANTIATION(void llvm::Calculate<
-    Function LLVM_COMMA Inverse<BasicBlock *> >(DominatorTreeBase<
-    typename GraphTraits<Inverse<BasicBlock *> >::NodeType> &DT LLVM_COMMA
-                                                    Function &F));
+    DominatorTreeBase<GraphTraits<BasicBlock *>::NodeType> &DT LLVM_COMMA
+        Function &F));
+TEMPLATE_INSTANTIATION(
+    void llvm::Calculate<Function LLVM_COMMA Inverse<BasicBlock *> >(
+        DominatorTreeBase<GraphTraits<Inverse<BasicBlock *> >::NodeType> &DT
+            LLVM_COMMA Function &F));
 #undef LLVM_COMMA
 
 // dominates - Return true if Def dominates a use in User. This performs
