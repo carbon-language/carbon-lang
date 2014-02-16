@@ -260,7 +260,9 @@ namespace llvm {
     PHINode *getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
                                        const Loop *L,
                                        Type *ExpandTy,
-                                       Type *IntTy);
+                                       Type *IntTy,
+                                       Type *&TruncTy,
+                                       bool &InvertStep);
     Value *expandIVInc(PHINode *PN, Value *StepV, const Loop *L,
                        Type *ExpandTy, Type *IntTy, bool useSubtract);
   };
