@@ -102,9 +102,8 @@ define i32 @test10(<16 x i32> %x, i32 %ind) nounwind {
 ;CHECK: vpcmpltud
 ;CKECK: kshiftlw $11
 ;CKECK: kshiftrw $15
-;CHECK: kxorw
 ;CHECK: kortestw
-;CHECK: jne
+;CHECK: je
 ;CHECK: ret
 ;CHECK: ret
 define <16 x i32> @test11(<16 x i32>%a, <16 x i32>%b) {
@@ -132,5 +131,18 @@ define i64 @test12(<16 x i64>%a, <16 x i64>%b, i64 %a1, i64 %b1) {
   %res = select i1 %extract24vector_func.i, i64 %a1, i64 %b1
   ret i64 %res
 }
+
+;CHECK-LABEL: test13
+;CHECK: cmpl
+;CHECK: sbbl
+;CKECK: orl $65532
+;CHECK: ret
+define i16 @test13(i32 %a, i32 %b) {
+  %cmp_res = icmp ult i32 %a, %b
+  %maskv = insertelement <16 x i1> <i1 true, i1 false, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true>, i1 %cmp_res, i32 0
+  %res = bitcast <16 x i1> %maskv to i16
+  ret i16 %res
+}
+
 
 

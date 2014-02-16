@@ -1063,11 +1063,6 @@ def : Pat<(or VK1:$src1, VK1:$src2),
      (COPY_TO_REGCLASS (KORWrr (COPY_TO_REGCLASS VK1:$src1, VK16),
                                (COPY_TO_REGCLASS VK1:$src2, VK16)), VK1)>;
 
-def : Pat<(not VK1:$src),
-          (COPY_TO_REGCLASS (KXORWrr (COPY_TO_REGCLASS VK1:$src, VK16),
-           (COPY_TO_REGCLASS (VCMPSSZrr (f32 (IMPLICIT_DEF)),
-                              (f32 (IMPLICIT_DEF)), (i8 0)), VK16)), VK1)>;
-
 def : Pat<(and VK1:$src1, VK1:$src2),
      (COPY_TO_REGCLASS (KANDWrr (COPY_TO_REGCLASS VK1:$src1, VK16),
                                 (COPY_TO_REGCLASS VK1:$src2, VK16)), VK1)>;
