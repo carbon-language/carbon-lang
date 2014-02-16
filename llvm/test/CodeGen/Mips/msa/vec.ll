@@ -104,12 +104,12 @@ entry:
   ret void
 }
 
-; CHECK: and_v_b_test:
-; CHECK: ld.b
-; CHECK: ld.b
-; CHECK: and.v
-; CHECK: st.b
-; CHECK: .size and_v_b_test
+; ANYENDIAN: and_v_b_test:
+; ANYENDIAN: ld.b
+; ANYENDIAN: ld.b
+; ANYENDIAN: and.v
+; ANYENDIAN: st.b
+; ANYENDIAN: .size and_v_b_test
 ;
 define void @and_v_h_test() nounwind {
 entry:
@@ -120,12 +120,12 @@ entry:
   ret void
 }
 
-; CHECK: and_v_h_test:
-; CHECK: ld.h
-; CHECK: ld.h
-; CHECK: and.v
-; CHECK: st.h
-; CHECK: .size and_v_h_test
+; ANYENDIAN: and_v_h_test:
+; ANYENDIAN: ld.h
+; ANYENDIAN: ld.h
+; ANYENDIAN: and.v
+; ANYENDIAN: st.h
+; ANYENDIAN: .size and_v_h_test
 ;
 
 define void @and_v_w_test() nounwind {
@@ -137,12 +137,12 @@ entry:
   ret void
 }
 
-; CHECK: and_v_w_test:
-; CHECK: ld.w
-; CHECK: ld.w
-; CHECK: and.v
-; CHECK: st.w
-; CHECK: .size and_v_w_test
+; ANYENDIAN: and_v_w_test:
+; ANYENDIAN: ld.w
+; ANYENDIAN: ld.w
+; ANYENDIAN: and.v
+; ANYENDIAN: st.w
+; ANYENDIAN: .size and_v_w_test
 ;
 
 define void @and_v_d_test() nounwind {
@@ -154,12 +154,12 @@ entry:
   ret void
 }
 
-; CHECK: and_v_d_test:
-; CHECK: ld.d
-; CHECK: ld.d
-; CHECK: and.v
-; CHECK: st.d
-; CHECK: .size and_v_d_test
+; ANYENDIAN: and_v_d_test:
+; ANYENDIAN: ld.d
+; ANYENDIAN: ld.d
+; ANYENDIAN: and.v
+; ANYENDIAN: st.d
+; ANYENDIAN: .size and_v_d_test
 ;
 @llvm_mips_bmnz_v_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_bmnz_v_b_ARG2 = global <16 x i8> <i8 16, i8 17, i8 18, i8 19, i8 20, i8 21, i8 22, i8 23, i8 24, i8 25, i8 26, i8 27, i8 28, i8 29, i8 30, i8 31>, align 16
@@ -722,12 +722,12 @@ entry:
   ret void
 }
 
-; CHECK: or_v_b_test:
-; CHECK: ld.b
-; CHECK: ld.b
-; CHECK: or.v
-; CHECK: st.b
-; CHECK: .size or_v_b_test
+; ANYENDIAN: or_v_b_test:
+; ANYENDIAN: ld.b
+; ANYENDIAN: ld.b
+; ANYENDIAN: or.v
+; ANYENDIAN: st.b
+; ANYENDIAN: .size or_v_b_test
 ;
 define void @or_v_h_test() nounwind {
 entry:
@@ -738,12 +738,12 @@ entry:
   ret void
 }
 
-; CHECK: or_v_h_test:
-; CHECK: ld.h
-; CHECK: ld.h
-; CHECK: or.v
-; CHECK: st.h
-; CHECK: .size or_v_h_test
+; ANYENDIAN: or_v_h_test:
+; ANYENDIAN: ld.h
+; ANYENDIAN: ld.h
+; ANYENDIAN: or.v
+; ANYENDIAN: st.h
+; ANYENDIAN: .size or_v_h_test
 ;
 
 define void @or_v_w_test() nounwind {
@@ -755,12 +755,12 @@ entry:
   ret void
 }
 
-; CHECK: or_v_w_test:
-; CHECK: ld.w
-; CHECK: ld.w
-; CHECK: or.v
-; CHECK: st.w
-; CHECK: .size or_v_w_test
+; ANYENDIAN: or_v_w_test:
+; ANYENDIAN: ld.w
+; ANYENDIAN: ld.w
+; ANYENDIAN: or.v
+; ANYENDIAN: st.w
+; ANYENDIAN: .size or_v_w_test
 ;
 
 define void @or_v_d_test() nounwind {
@@ -772,12 +772,12 @@ entry:
   ret void
 }
 
-; CHECK: or_v_d_test:
-; CHECK: ld.d
-; CHECK: ld.d
-; CHECK: or.v
-; CHECK: st.d
-; CHECK: .size or_v_d_test
+; ANYENDIAN: or_v_d_test:
+; ANYENDIAN: ld.d
+; ANYENDIAN: ld.d
+; ANYENDIAN: or.v
+; ANYENDIAN: st.d
+; ANYENDIAN: .size or_v_d_test
 ;
 @llvm_mips_xor_v_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16
 @llvm_mips_xor_v_b_ARG2 = global <16 x i8> <i8 16, i8 17, i8 18, i8 19, i8 20, i8 21, i8 22, i8 23, i8 24, i8 25, i8 26, i8 27, i8 28, i8 29, i8 30, i8 31>, align 16
@@ -880,12 +880,12 @@ entry:
   ret void
 }
 
-; CHECK: xor_v_b_test:
-; CHECK: ld.b
-; CHECK: ld.b
-; CHECK: xor.v
-; CHECK: st.b
-; CHECK: .size xor_v_b_test
+; ANYENDIAN: xor_v_b_test:
+; ANYENDIAN: ld.b
+; ANYENDIAN: ld.b
+; ANYENDIAN: xor.v
+; ANYENDIAN: st.b
+; ANYENDIAN: .size xor_v_b_test
 ;
 define void @xor_v_h_test() nounwind {
 entry:
@@ -896,12 +896,12 @@ entry:
   ret void
 }
 
-; CHECK: xor_v_h_test:
-; CHECK: ld.h
-; CHECK: ld.h
-; CHECK: xor.v
-; CHECK: st.h
-; CHECK: .size xor_v_h_test
+; ANYENDIAN: xor_v_h_test:
+; ANYENDIAN: ld.h
+; ANYENDIAN: ld.h
+; ANYENDIAN: xor.v
+; ANYENDIAN: st.h
+; ANYENDIAN: .size xor_v_h_test
 ;
 
 define void @xor_v_w_test() nounwind {
@@ -913,12 +913,12 @@ entry:
   ret void
 }
 
-; CHECK: xor_v_w_test:
-; CHECK: ld.w
-; CHECK: ld.w
-; CHECK: xor.v
-; CHECK: st.w
-; CHECK: .size xor_v_w_test
+; ANYENDIAN: xor_v_w_test:
+; ANYENDIAN: ld.w
+; ANYENDIAN: ld.w
+; ANYENDIAN: xor.v
+; ANYENDIAN: st.w
+; ANYENDIAN: .size xor_v_w_test
 ;
 
 define void @xor_v_d_test() nounwind {
@@ -930,12 +930,12 @@ entry:
   ret void
 }
 
-; CHECK: xor_v_d_test:
-; CHECK: ld.d
-; CHECK: ld.d
-; CHECK: xor.v
-; CHECK: st.d
-; CHECK: .size xor_v_d_test
+; ANYENDIAN: xor_v_d_test:
+; ANYENDIAN: ld.d
+; ANYENDIAN: ld.d
+; ANYENDIAN: xor.v
+; ANYENDIAN: st.d
+; ANYENDIAN: .size xor_v_d_test
 ;
 declare <16 x i8> @llvm.mips.and.v(<16 x i8>, <16 x i8>) nounwind
 declare <16 x i8> @llvm.mips.bmnz.v(<16 x i8>, <16 x i8>, <16 x i8>) nounwind

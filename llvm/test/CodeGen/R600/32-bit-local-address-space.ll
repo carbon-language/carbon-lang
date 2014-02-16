@@ -80,8 +80,8 @@ define void @infer_ptr_alignment_global_offset(float addrspace(1)* %out, i32 %ti
 @ptr = addrspace(3) global i32 addrspace(3)* null
 @dst = addrspace(3) global [16384 x i32] zeroinitializer
 
-; SI-LABEL: @global_ptr:
-; SI-CHECK: DS_WRITE_B32
+; CHECK-LABEL: @global_ptr:
+; CHECK: DS_WRITE_B32
 define void @global_ptr() nounwind {
   store i32 addrspace(3)* getelementptr ([16384 x i32] addrspace(3)* @dst, i32 0, i32 16), i32 addrspace(3)* addrspace(3)* @ptr
   ret void

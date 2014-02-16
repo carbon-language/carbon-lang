@@ -9,7 +9,7 @@ target triple = "armv7-eabi"
 
 define arm_aapcs_vfpcc void @foo() nounwind {
 ; CHECK-LABEL: foo:
-; CHECK-FP6-LABEL: foo:
+; CHECK-FP16-LABEL: foo:
 entry:
   %0 = load i16* @x, align 2
   %1 = load i16* @y, align 2
