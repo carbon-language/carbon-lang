@@ -1814,7 +1814,7 @@ struct SLPVectorizer : public FunctionPass {
 
     DEBUG(dbgs() << "SLP: Analyzing blocks in " << F.getName() << ".\n");
 
-    // Use the bollom up slp vectorizer to construct chains that start with
+    // Use the bottom up slp vectorizer to construct chains that start with
     // he store instructions.
     BoUpSLP R(&F, SE, DL, TTI, AA, LI, DT);
 
