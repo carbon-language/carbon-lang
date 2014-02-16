@@ -283,8 +283,8 @@
 ; CORTEX-A9-MP:  .eabi_attribute 23, 3
 ; CORTEX-A9-MP:  .eabi_attribute 24, 1
 ; CORTEX-A9-MP:  .eabi_attribute 25, 1
-; CORTEX-A9-NOT:  .eabi_attribute 27
-; CORTEX-A9-NOT:  .eabi_attribute 28
+; CORTEX-A9-MP-NOT:  .eabi_attribute 27
+; CORTEX-A9-MP-NOT:  .eabi_attribute 28
 ; CORTEX-A9-MP:  .eabi_attribute 36, 1
 ; CORTEX-A9-MP:  .eabi_attribute 42, 1
 ; CORTEX-A9-MP:  .eabi_attribute 68, 1
@@ -401,7 +401,7 @@
 ; CORTEX-M4-HARD:  .eabi_attribute 36, 1
 ; CORTEX-M4-HARD-NOT:  .eabi_attribute 42
 ; CORTEX-M4-HARD-NOT:  .eabi_attribute 44
-; CORTEX-M4-HRAD-NOT:  .eabi_attribute 68
+; CORTEX-M4-HARD-NOT:  .eabi_attribute 68
 
 ; CORTEX-R5:  .cpu cortex-r5
 ; CORTEX-R5:  .eabi_attribute 6, 10

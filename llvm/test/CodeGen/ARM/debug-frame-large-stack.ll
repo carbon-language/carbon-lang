@@ -28,10 +28,10 @@ define void @test1() {
 ; CHECK-ARM: sub    sp, sp, #256
 ; CHECK-ARM: .cfi_endproc
 
-; CHECK-ARM-FP_ELIM-LABEL: test1:
-; CHECK-ARM-FP_ELIM: .cfi_startproc
-; CHECK-ARM-FP_ELIM: sub    sp, sp, #256
-; CHECK-ARM-FP_ELIM: .cfi_endproc
+; CHECK-ARM-FP-ELIM-LABEL: test1:
+; CHECK-ARM-FP-ELIM: .cfi_startproc
+; CHECK-ARM-FP-ELIM: sub    sp, sp, #256
+; CHECK-ARM-FP-ELIM: .cfi_endproc
 
 define void @test2() {
     %tmp = alloca [ 4168 x i8 ] , align 4

@@ -15,7 +15,7 @@ define arm_aapcs_vfpcc float @test_vmov_imm() {
 ; CHECK: vmov.i32 d0, #0
 
 ; CHECK-NONEON-LABEL: test_vmov_imm:
-; CHECK_NONEON: vldr s0, {{.?LCPI[0-9]+_[0-9]+}}
+; CHECK-NONEON: vldr s0, {{.?LCPI[0-9]+_[0-9]+}}
   ret float 0.0
 }
 
@@ -24,7 +24,7 @@ define arm_aapcs_vfpcc float @test_vmvn_imm() {
 ; CHECK: vmvn.i32 d0, #0xb0000000
 
 ; CHECK-NONEON-LABEL: test_vmvn_imm:
-; CHECK_NONEON: vldr s0, {{.?LCPI[0-9]+_[0-9]+}}
+; CHECK-NONEON: vldr s0, {{.?LCPI[0-9]+_[0-9]+}}
   ret float 8589934080.0
 }
 
@@ -33,7 +33,7 @@ define arm_aapcs_vfpcc double @test_vmov_f64() {
 ; CHECK: vmov.f64 d0, #1.0
 
 ; CHECK-NONEON-LABEL: test_vmov_f64:
-; CHECK_NONEON: vmov.f64 d0, #1.0
+; CHECK-NONEON: vmov.f64 d0, #1.0
 
   ret double 1.0
 }
@@ -43,7 +43,7 @@ define arm_aapcs_vfpcc double @test_vmov_double_imm() {
 ; CHECK: vmov.i32 d0, #0
 
 ; CHECK-NONEON-LABEL: test_vmov_double_imm:
-; CHECK_NONEON: vldr d0, {{.?LCPI[0-9]+_[0-9]+}}
+; CHECK-NONEON: vldr d0, {{.?LCPI[0-9]+_[0-9]+}}
   ret double 0.0
 }
 
@@ -52,7 +52,7 @@ define arm_aapcs_vfpcc double @test_vmvn_double_imm() {
 ; CHECK: vmvn.i32 d0, #0xb0000000
 
 ; CHECK-NONEON-LABEL: test_vmvn_double_imm:
-; CHECK_NONEON: vldr d0, {{.?LCPI[0-9]+_[0-9]+}}
+; CHECK-NONEON: vldr d0, {{.?LCPI[0-9]+_[0-9]+}}
   ret double 0x4fffffff4fffffff
 }
 
@@ -63,6 +63,6 @@ define arm_aapcs_vfpcc double @test_notvmvn_double_imm() {
 ; CHECK: vldr d0, {{.?LCPI[0-9]+_[0-9]+}}
 
 ; CHECK-NONEON-LABEL: test_notvmvn_double_imm:
-; CHECK_NONEON: vldr d0, {{.?LCPI[0-9]+_[0-9]+}}
+; CHECK-NONEON: vldr d0, {{.?LCPI[0-9]+_[0-9]+}}
   ret double 0x4fffffffffffffff
 }

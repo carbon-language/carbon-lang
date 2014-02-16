@@ -69,7 +69,7 @@ define float @test_i32tofloat(i32 %in) {
 ; CHECK-DAG: scvtf [[SIG:s[0-9]+]], {{w[0-9]+}}
 
   %res = fsub float %signed, %unsigned
-; CHECL: fsub {{s[0-9]+}}, [[SIG]], [[UNSIG]]
+; CHECK: fsub {{s[0-9]+}}, [[SIG]], [[UNSIG]]
   ret float %res
 ; CHECK: ret
 }

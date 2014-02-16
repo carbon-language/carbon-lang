@@ -34,7 +34,7 @@ declare i64 @llvm.x86.tbm.bextri.u64(i64, i64) nounwind readnone
 
 define i64 @test_x86_tbm_bextri_u64_m(i64* nocapture %a) nounwind readonly {
 entry:
-  ; CHECK-LABEl: test_x86_tbm_bextri_u64_m:
+  ; CHECK-LABEL: test_x86_tbm_bextri_u64_m:
   ; CHECK-NOT: mov
   ; CHECK: bextr $
   %tmp1 = load i64* %a, align 8

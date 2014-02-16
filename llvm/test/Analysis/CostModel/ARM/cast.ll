@@ -528,7 +528,7 @@ define i32 @casts() {
   %r242 = uitofp <16 x i8> undef to <16 x double>
   ; CHECK: cost of 64 {{.*}} sitofp
   %r243 = sitofp <16 x i8> undef to <16 x double>
-  ; C4ECK: cost of 64 {{.*}} uitofp
+  ; CHECK: cost of 64 {{.*}} uitofp
   %r244 = uitofp <16 x i16> undef to <16 x double>
   ; CHECK: cost of 64 {{.*}} sitofp
   %r245 = sitofp <16 x i16> undef to <16 x double>

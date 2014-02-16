@@ -12,7 +12,7 @@ target triple = "hexagon-unknown--elf"
 ;     }
 ; CHECK: cmp
 ; CHECK-NEXT: add
-; CHECH-NEXT: add
+; CHECK-NEXT: add
 define i32 @ifcnv_add(i32, i32, i32) nounwind readnone {
   %4 = icmp sgt i32 %2, %1
   br i1 %4, label %5, label %7
