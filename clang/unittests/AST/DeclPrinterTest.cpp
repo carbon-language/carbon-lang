@@ -143,6 +143,19 @@ public:
                             "input.cc");
 }
 
+::testing::AssertionResult PrintedDeclCXX11nonMSCMatches(
+                                  StringRef Code,
+                                  const DeclarationMatcher &NodeMatch,
+                                  StringRef ExpectedPrinted) {
+  std::vector<std::string> Args(1, "-std=c++11");
+  Args.push_back("-fno-delayed-template-parsing");
+  return PrintedDeclMatches(Code,
+                            Args,
+                            NodeMatch,
+                            ExpectedPrinted,
+                            "input.cc");
+}
+
 ::testing::AssertionResult PrintedDeclObjCMatches(
                                   StringRef Code,
                                   const DeclarationMatcher &NodeMatch,
@@ -499,9 +512,8 @@ TEST(DeclPrinter, TestCXXConstructorDecl10) {
     "A<T...>(const A<T...> &a)"));
 }
 
-#if !defined(_MSC_VER)
 TEST(DeclPrinter, TestCXXConstructorDecl11) {
-  ASSERT_TRUE(PrintedDeclCXX11Matches(
+  ASSERT_TRUE(PrintedDeclCXX11nonMSCMatches(
     "template<typename... T>"
     "struct A : public T... {"
     "  A(T&&... ts) : T(ts)... {}"
@@ -510,7 +522,6 @@ TEST(DeclPrinter, TestCXXConstructorDecl11) {
     "A<T...>(T &&ts...) : T(ts)"));
     // WRONG; Should be: "A(T&&... ts) : T(ts)..."
 }
-#endif
 
 TEST(DeclPrinter, TestCXXDestructorDecl1) {
   ASSERT_TRUE(PrintedDeclCXX98Matches(
