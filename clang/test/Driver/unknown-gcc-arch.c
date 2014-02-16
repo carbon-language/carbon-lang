@@ -3,7 +3,7 @@
 // X86_64: {{.*as.*--64}}
 
 // RUN: %clang -target x86_64-unknown-unknown -c -x assembler %s -### -m32 \
-// RUN -no-integrated-as 2>&1 | FileCheck -check-prefix=X86_64-M32 %s
+// RUN: -no-integrated-as 2>&1 | FileCheck -check-prefix=X86_64-M32 %s
 // X86_64-M32: {{.*as.*--32}}
 
 // RUN: %clang -target i386-unknown-unknown -c -x assembler %s -### \
