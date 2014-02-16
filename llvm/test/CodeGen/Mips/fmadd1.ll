@@ -1,7 +1,7 @@
-; RUN: llc < %s -march=mipsel -mcpu=mips32r2 -enable-no-nans-fp-math | FileCheck %s -check-prefix=32R2
-; RUN: llc < %s -march=mips64el -mcpu=mips64r2 -mattr=n64 -enable-no-nans-fp-math | FileCheck %s -check-prefix=64R2
-; RUN: llc < %s -march=mipsel -mcpu=mips32r2 | FileCheck %s -check-prefix=32R2NAN
-; RUN: llc < %s -march=mips64el -mcpu=mips64r2 -mattr=n64 | FileCheck %s -check-prefix=64R2NAN
+; RUN: llc < %s -march=mipsel -mcpu=mips32r2 -enable-no-nans-fp-math | FileCheck %s -check-prefix=32R2 -check-prefix=CHECK
+; RUN: llc < %s -march=mips64el -mcpu=mips64r2 -mattr=n64 -enable-no-nans-fp-math | FileCheck %s -check-prefix=64R2 -check-prefix=CHECK
+; RUN: llc < %s -march=mipsel -mcpu=mips32r2 | FileCheck %s -check-prefix=32R2NAN -check-prefix=CHECK
+; RUN: llc < %s -march=mips64el -mcpu=mips64r2 -mattr=n64 | FileCheck %s -check-prefix=64R2NAN -check-prefix=CHECK
 
 define float @FOO0float(float %a, float %b, float %c) nounwind readnone {
 entry:
