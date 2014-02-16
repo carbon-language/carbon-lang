@@ -227,6 +227,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveTLSDescSeq(SMLoc L);
   bool parseDirectiveMovSP(SMLoc L);
   bool parseDirectiveObjectArch(SMLoc L);
+  bool parseDirectiveArchExtension(SMLoc L);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -8016,6 +8017,8 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveMovSP(DirectiveID.getLoc());
   else if (IDVal == ".object_arch")
     return parseDirectiveObjectArch(DirectiveID.getLoc());
+  else if (IDVal == ".arch_extension")
+    return parseDirectiveArchExtension(DirectiveID.getLoc());
   return true;
 }
 
@@ -9063,6 +9066,85 @@ extern "C" void LLVMInitializeARMAsmParser() {
 #define GET_SUBTARGET_FEATURE_NAME
 #define GET_MATCHER_IMPLEMENTATION
 #include "ARMGenAsmMatcher.inc"
+
+static const struct ExtMapEntry {
+  const char *Extension;
+  const unsigned ArchCheck;
+  const uint64_t Features;
+} Extensions[] = {
+  { "crc", Feature_HasV8, ARM::FeatureCRC },
+  { "crypto",  Feature_HasV8,
+    ARM::FeatureCrypto | ARM::FeatureNEON | ARM::FeatureFPARMv8 },
+  { "fp", Feature_HasV8, ARM::FeatureFPARMv8 },
+  { "idiv", Feature_HasV7 | Feature_IsNotMClass,
+    ARM::FeatureHWDiv | ARM::FeatureHWDivARM },
+  // FIXME: iWMMXT not supported
+  { "iwmmxt", Feature_None, 0 },
+  // FIXME: iWMMXT2 not supported
+  { "iwmmxt2", Feature_None, 0 },
+  // FIXME: Maverick not supported
+  { "maverick", Feature_None, 0 },
+  { "mp", Feature_HasV7 | Feature_IsNotMClass, ARM::FeatureMP },
+  // FIXME: ARMv6-m OS Extensions feature not checked
+  { "os", Feature_None, 0 },
+  // FIXME: Also available in ARMv6-K
+  { "sec", Feature_HasV7, ARM::FeatureTrustZone },
+  { "simd", Feature_HasV8, ARM::FeatureNEON | ARM::FeatureFPARMv8 },
+  // FIXME: Only available in A-class, isel not predicated
+  { "virt", Feature_HasV7, ARM::FeatureVirtualization },
+  // FIXME: xscale not supported
+  { "xscale", Feature_None, 0 },
+};
+
+template <typename T, size_t N>
+size_t countof(const T (&)[N]) { return N; }
+
+/// parseDirectiveArchExtension
+///   ::= .arch_extension [no]feature
+bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
+  if (getLexer().isNot(AsmToken::Identifier)) {
+    Error(getLexer().getLoc(), "unexpected token");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  StringRef Extension = Parser.getTok().getString();
+  SMLoc ExtLoc = Parser.getTok().getLoc();
+  getLexer().Lex();
+
+  bool EnableFeature = true;
+  if (!Extension.lower().compare(0, 2, "no")) {
+    EnableFeature = false;
+    Extension = Extension.substr(2);
+  }
+
+  for (unsigned EI = 0, EE = countof(Extensions); EI != EE; ++EI) {
+    if (Extensions[EI].Extension != Extension)
+      continue;
+
+    unsigned FB = getAvailableFeatures();
+    if ((FB & Extensions[EI].ArchCheck) != Extensions[EI].ArchCheck) {
+      Error(ExtLoc, "architectural extension '" + Extension + "' is not "
+            "allowed for the current base architecture");
+      return false;
+    }
+
+    if (!Extensions[EI].Features)
+      report_fatal_error("unsupported architectural extension: " + Extension);
+
+    if (EnableFeature)
+      FB |= ComputeAvailableFeatures(Extensions[EI].Features);
+    else
+      FB &= ~ComputeAvailableFeatures(Extensions[EI].Features);
+
+    setAvailableFeatures(FB);
+    return false;
+  }
+
+  Error(ExtLoc, "unknown architectural extension: " + Extension);
+  Parser.eatToEndOfStatement();
+  return false;
+}
 
 // Define this matcher function after the auto-generated include so we
 // have the match class enum definitions.
