@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -std=c++11 -O1 -disable-llvm-optzns %s -o - | FileCheck %s
 
 namespace test1 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZN5test11fIZNS_1gEvE1SEEvT_(
+  // CHECK-DAG: define linkonce_odr void @_ZN5test11fIZNS_1gEvE1SEEvT_(
   template <typename T> void f(T) {}
   inline void *g() {
     struct S {
@@ -12,7 +12,7 @@ namespace test1 {
 }
 
 namespace test2 {
-  // CHECK-DAG-LABEL: define internal void @_ZN5test21fIZNS_L1gEvE1SEEvT_(
+  // CHECK-DAG: define internal void @_ZN5test21fIZNS_L1gEvE1SEEvT_(
   template <typename T> void f(T) {}
   static inline void *g() {
     struct S {
@@ -23,7 +23,7 @@ namespace test2 {
 }
 
 namespace test3 {
-  // CHECK-DAG-LABEL: define internal void @_ZN5test31fIZNS_1gEvE1SEEvT_(
+  // CHECK-DAG: define internal void @_ZN5test31fIZNS_1gEvE1SEEvT_(
   template <typename T> void f(T) {}
   void *g() {
     struct S {
@@ -34,7 +34,7 @@ namespace test3 {
 }
 
 namespace test4 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZN5test41fIZNS_1gILi1EEEPvvE1SEEvT_(
+  // CHECK-DAG: define linkonce_odr void @_ZN5test41fIZNS_1gILi1EEEPvvE1SEEvT_(
   template <typename T> void f(T) {}
   template <int N> inline void *g() {
     struct S {
@@ -46,7 +46,7 @@ namespace test4 {
 }
 
 namespace test5 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZN5test51fIZNS_1gILi1EEEPvvE1SEEvT_(
+  // CHECK-DAG: define linkonce_odr void @_ZN5test51fIZNS_1gILi1EEEPvvE1SEEvT_(
   template <typename T> void f(T) {}
   template <int N> inline void *g() {
     struct S {
@@ -58,7 +58,7 @@ namespace test5 {
 }
 
 namespace test6 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZN5test61fIZZNS_1gEvEN1S1hEvE1TEEvv(
+  // CHECK-DAG: define linkonce_odr void @_ZN5test61fIZZNS_1gEvEN1S1hEvE1TEEvv(
   template <typename T> void f() {}
 
   inline void *g() {
@@ -76,7 +76,7 @@ namespace test6 {
 }
 
 namespace test7 {
-  // CHECK-DAG-LABEL: define internal void @_ZN5test71fIZZNS_1gEvEN1S1hEvE1TEEvv(
+  // CHECK-DAG: define internal void @_ZN5test71fIZZNS_1gEvEN1S1hEvE1TEEvv(
   template <typename T> void f() {}
 
   void *g() {
@@ -94,7 +94,7 @@ namespace test7 {
 }
 
 namespace test8 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZN5test81fIZNS_1gEvE1SEEvT_(
+  // CHECK-DAG: define linkonce_odr void @_ZN5test81fIZNS_1gEvE1SEEvT_(
   template <typename T> void f(T) {}
   inline void *g() {
     enum S {
@@ -105,7 +105,7 @@ namespace test8 {
 }
 
 namespace test9 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZN5test91fIPZNS_1gEvE1SEEvT_(
+  // CHECK-DAG: define linkonce_odr void @_ZN5test91fIPZNS_1gEvE1SEEvT_(
   template <typename T> void f(T) {}
   inline void *g() {
     struct S {
@@ -116,7 +116,7 @@ namespace test9 {
 }
 
 namespace test10 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZN6test101fIPFZNS_1gEvE1SvEEEvT_(
+  // CHECK-DAG: define linkonce_odr void @_ZN6test101fIPFZNS_1gEvE1SvEEEvT_(
   template <typename T> void f(T) {}
   inline void *g() {
     struct S {
@@ -128,7 +128,7 @@ namespace test10 {
 }
 
 namespace test11 {
-  // CHECK-DAG-LABEL: define internal void @_ZN6test111fIPFZNS_1gEvE1SPNS_12_GLOBAL__N_11IEEEEvT_(
+  // CHECK-DAG: define internal void @_ZN6test111fIPFZNS_1gEvE1SPNS_12_GLOBAL__N_11IEEEEvT_(
   namespace {
     struct I {
     };
@@ -145,7 +145,7 @@ namespace test11 {
 }
 
 namespace test12 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZN6test123fooIZNS_3barIZNS_3zedEvE2S2EEPvvE2S1EEvv
+  // CHECK-DAG: define linkonce_odr void @_ZN6test123fooIZNS_3barIZNS_3zedEvE2S2EEPvvE2S1EEvv
   template <typename T> void foo() {}
   template <typename T> inline void *bar() {
     enum S1 {
@@ -161,7 +161,7 @@ namespace test12 {
 }
 
 namespace test13 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZZN6test133fooEvEN1S3barEv(
+  // CHECK-DAG: define linkonce_odr void @_ZZN6test133fooEvEN1S3barEv(
   inline void *foo() {
     struct S {
       static void bar() {}
@@ -172,7 +172,7 @@ namespace test13 {
 }
 
 namespace test14 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZN6test143fooIZNS_1fEvE1SE3barILPS1_0EEEvv(
+  // CHECK-DAG: define linkonce_odr void @_ZN6test143fooIZNS_1fEvE1SE3barILPS1_0EEEvv(
   template <typename T> struct foo {
     template <T *P> static void bar() {}
     static void *g() { return (void *)bar<nullptr>; }
@@ -186,7 +186,7 @@ namespace test14 {
 }
 
 namespace test15 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZN6test153zedIZNS_3fooIiEEPvvE3barEEvv(
+  // CHECK-DAG: define linkonce_odr void @_ZN6test153zedIZNS_3fooIiEEPvvE3barEEvv(
   template <class T> void zed() {}
   template <class T> void *foo() {
     class bar {
@@ -197,7 +197,7 @@ namespace test15 {
 }
 
 namespace test16 {
-  // CHECK-DAG-LABEL: define linkonce_odr void @_ZN6test163zedIZNS_3fooIiE3barEvE1SEEvv(
+  // CHECK-DAG: define linkonce_odr void @_ZN6test163zedIZNS_3fooIiE3barEvE1SEEvv(
   template <class T> void zed() {}
   template <class T> struct foo {
     static void *bar();
@@ -212,7 +212,7 @@ namespace test16 {
 
 namespace test17 {
   // CHECK-DAG: @_ZZN6test173fooILi42EEEPivE3bar = linkonce_odr
-  // CHECK-DAG-LABEL: define weak_odr i32* @_ZN6test173fooILi42EEEPiv(
+  // CHECK-DAG: define weak_odr i32* @_ZN6test173fooILi42EEEPiv(
   template<int I>
   int *foo() {
     static int bar;

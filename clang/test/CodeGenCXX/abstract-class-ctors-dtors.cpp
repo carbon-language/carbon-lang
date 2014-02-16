@@ -7,7 +7,7 @@ struct A {
   ~A();
 };
 
-// CHECK-NOT-LABEL: define void @_ZN1AC1Ev
+// CHECK-NOT: define void @_ZN1AC1Ev
 // CHECK-LABEL: define void @_ZN1AC2Ev
 // CHECK-LABEL: define void @_ZN1AD2Ev
 // CHECK-LABEL: define void @_ZN1AD1Ev

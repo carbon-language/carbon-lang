@@ -5,7 +5,7 @@ struct A {
     inline void f();
 };
 
-// CHECK-NOT-LABEL: define void @_ZN1A1fEv
+// CHECK-NOT: define void @_ZN1A1fEv
 void A::f() { }
 
 template<typename> struct B { };
