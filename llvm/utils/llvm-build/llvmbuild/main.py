@@ -599,6 +599,11 @@ set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)\n""" % (
             if ci.type_name != 'Library':
                 continue
 
+            # Skip disabled targets.
+            tg = ci.get_parent_target_group()
+            if tg and not tg.enabled:
+                continue
+
             f.write("""\
 set_property(TARGET %s PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES %s)\n""" % (
                 ci.get_prefixed_library_name(), " ".join(sorted(
