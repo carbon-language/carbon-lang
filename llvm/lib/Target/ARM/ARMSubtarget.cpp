@@ -210,6 +210,8 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
 
   if (isAAPCS_ABI())
     stackAlignment = 8;
+  if (isTargetNaCl())
+    stackAlignment = 16;
 
   UseMovt = hasV6T2Ops() && ArmUseMOVT;
 

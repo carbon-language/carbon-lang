@@ -2756,11 +2756,11 @@ ARMTargetLowering::computeRegArea(CCState &CCInfo, MachineFunction &MF,
   ArgRegsSize = NumGPRs * 4;
 
   // If parameter is split between stack and GPRs...
-  if (NumGPRs && Align == 8 &&
+  if (NumGPRs && Align > 4 &&
       (ArgRegsSize < ArgSize ||
         InRegsParamRecordIdx >= CCInfo.getInRegsParamsCount())) {
-    // Add padding for part of param recovered from GPRs, so
-    // its last byte must be at address K*8 - 1.
+    // Add padding for part of param recovered from GPRs.  For example,
+    // if Align == 8, its last byte must be at address K*8 - 1.
     // We need to do it, since remained (stack) part of parameter has
     // stack alignment, and we need to "attach" "GPRs head" without gaps
     // to it:
@@ -2770,8 +2770,7 @@ ARMTargetLowering::computeRegArea(CCState &CCInfo, MachineFunction &MF,
     //
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     unsigned Padding =
-        ((ArgRegsSize + AFI->getArgRegsSaveSize() + Align - 1) & ~(Align-1)) -
-        (ArgRegsSize + AFI->getArgRegsSaveSize());
+        OffsetToAlignment(ArgRegsSize + AFI->getArgRegsSaveSize(), Align);
     ArgRegsSaveSize = ArgRegsSize + Padding;
   } else
     // We don't need to extend regs save size for byval parameters if they

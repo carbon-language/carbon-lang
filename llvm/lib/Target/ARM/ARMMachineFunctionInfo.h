@@ -38,7 +38,7 @@ class ARMFunctionInfo : public MachineFunctionInfo {
 
   /// StByValParamsPadding - For parameter that is split between
   /// GPRs and memory; while recovering GPRs part, when
-  /// StackAlignment == 8, and GPRs-part-size mod 8 != 0,
+  /// StackAlignment > 4, and GPRs-part-size mod StackAlignment != 0,
   /// we need to insert gap before parameter start address. It allows to
   /// "attach" GPR-part to the part that was passed via stack.
   unsigned StByValParamsPadding;
