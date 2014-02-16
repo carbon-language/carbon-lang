@@ -23,4 +23,4 @@ int main() {
 // CHECK: static struct _class_ro_t _OBJC_CLASS_RO_$_MYINTF
 // CHECK-NEXT: 0, 0, 0,
 // CHECK-NEXT: 0,
-// CHECK-NEST: "MYINTF",
+// CHECK-NEXT: "MYINTF",

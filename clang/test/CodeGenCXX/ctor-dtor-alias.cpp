@@ -61,7 +61,7 @@ namespace test4 {
   // test that we don't do this optimization at -O0 so that the debugger can
   // see both destructors.
   // NOOPT-DAG: call i32 @__cxa_atexit{{.*}}@_ZN5test41BD2Ev
-  // NOOOPT-DAG: define linkonce_odr void @_ZN5test41BD2Ev
+  // NOOPT-DAG: define linkonce_odr void @_ZN5test41BD2Ev
   struct A {
     virtual ~A() {}
   };

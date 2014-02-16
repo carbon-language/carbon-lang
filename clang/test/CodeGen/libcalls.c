@@ -81,8 +81,8 @@ void test_fma(float a0, double a1, long double a2) {
 
 // Just checking to make sure these library functions are marked readnone
 void test_builtins(double d, float f, long double ld) {
-// CHEC-NO: @test_builtins
-// CHEC-YES: @test_builtins
+// CHECK-NO: @test_builtins
+// CHECK-YES: @test_builtins
   double atan_ = atan(d);
   long double atanl_ = atanl(ld);
   float atanf_ = atanf(f);

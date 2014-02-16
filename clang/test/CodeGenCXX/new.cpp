@@ -285,7 +285,7 @@ void *operator new(size_t, MyPlacementType);
 namespace N3664 {
   struct S { S() throw(int); };
 
-  // CHECK-LABEL-LABEL: define void @_ZN5N36641fEv
+  // CHECK-LABEL: define void @_ZN5N36641fEv
   void f() {
     // CHECK: call noalias i8* @_Znwm(i64 4) [[ATTR_BUILTIN_NEW:#[^ ]*]]
     int *p = new int;
@@ -307,7 +307,7 @@ namespace N3664 {
   // FIXME: Can we mark this noalias?
   // CHECK: declare i8* @_ZnamRKSt9nothrow_t(i64, {{.*}}) [[ATTR_NOBUILTIN_NOUNWIND]]
 
-  // CHECK-LABEL-LABEL: define void @_ZN5N36641gEv
+  // CHECK-LABEL: define void @_ZN5N36641gEv
   void g() {
     // It's OK for there to be attributes here, so long as we don't have a
     // 'builtin' attribute.

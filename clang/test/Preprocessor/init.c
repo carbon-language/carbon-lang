@@ -1592,7 +1592,7 @@
 //
 // MSP430:#define MSP430 1
 // MSP430-NOT:#define _LP64
-// MPS430:#define __ALIGNOF_MAX_ALIGN_T__ 4
+// MSP430:#define __ALIGNOF_MAX_ALIGN_T__ 2
 // MSP430:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // MSP430:#define __CHAR16_TYPE__ unsigned short
 // MSP430:#define __CHAR32_TYPE__ unsigned int

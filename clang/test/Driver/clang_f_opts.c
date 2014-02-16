@@ -6,8 +6,8 @@
 // CHECK-OPTIONS1: -fblocks
 // CHECK-OPTIONS1: -fpascal-strings
 
-// CHECK_OPTIONS2: -fno-gnu-keywords
 // CHECK-OPTIONS2: -fmath-errno
+// CHECK-OPTIONS2: -fno-gnu-keywords
 // CHECK-OPTIONS2: -fno-builtin
 // CHECK-OPTIONS2: -fshort-enums
 // CHECK-OPTIONS2: -fshort-wchar

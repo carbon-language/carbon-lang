@@ -45,4 +45,4 @@ __attribute__((weak_import)) @interface Root @end
 
 @implementation Root @end
 
-// CHECK-NOT-X86-64: OBJC_METACLASS_$_Root" = extern_weak global
+// CHECK-X86-64-NOT: OBJC_METACLASS_$_Root" = extern_weak global

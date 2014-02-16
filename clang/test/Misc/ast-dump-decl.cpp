@@ -273,7 +273,7 @@ namespace testCanonicalTemplate {
   // CHECK-NEXT:   FunctionDecl{{.*}} TestFunctionTemplate 'void (T)'
   // CHECK-NEXT:     ParmVarDecl{{.*}} 'T'
   // CHECK-NEXT:   Function{{.*}} 'TestFunctionTemplate'
-  // CHECK-NEXT-NOT: TemplateArgument
+  // CHECK-NOT:      TemplateArgument
 
   template<typename T1> class TestClassTemplate {
     template<typename T2> friend class TestClassTemplate;

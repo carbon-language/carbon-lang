@@ -8,7 +8,7 @@
 // CHECK-V7: __ARMEL__ 1
 // CHECK-V7: __ARM_ARCH 7
 // CHECK-V7: __ARM_ARCH_7A__ 1
-// CHECK-NOT-V7: __ARM_FEATURE_CRC32
+// CHECK-V7-NOT: __ARM_FEATURE_CRC32
 
 // RUN: %clang -target armv8a -mfloat-abi=hard -x c -E -dM %s | FileCheck --check-prefix=CHECK-V8-BAREHF %s
 // CHECK-V8-BAREHF: __ARMEL__ 1

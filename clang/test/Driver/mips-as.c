@@ -125,7 +125,7 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-NAN-LEGACY %s
 // MIPS-NAN-LEGACY: as{{(.exe)?}}"
-// MIPS-NAN_LEGACY-NOT: "-mnan={{.*}}"
+// MIPS-NAN-LEGACY-NOT: "-mnan={{.*}}"
 //
 // RUN: %clang -target mips-linux-gnu -mfp64 -mfp32 -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
