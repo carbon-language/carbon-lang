@@ -71,6 +71,8 @@ $(PROJ_OBJ_DIR)/LLVMExports.cmake: $(LLVMBuildCMakeExportsFrag)
 	    echo 'set_property(TARGET '"$$lib"' PROPERTY IMPORTED_LOCATION "'"$(PROJ_libdir)/lib$$lib.a"'")' ; \
 	  done && \
 	  cat "$(LLVMBuildCMakeExportsFrag)" \
+	  && echo '# System libs depend on LLVMSupport.' \
+	  && echo 'set_property(TARGET LLVMSupport PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES $(patsubst -l%,%,$(LIBS)))' \
 	) | grep -v gtest > $@
 
 all-local:: $(addprefix $(PROJ_OBJ_DIR)/, $(OBJMODS))
