@@ -370,7 +370,7 @@ enum {
 
 // Parse a FreeBSD NT_PRSTATUS note - see FreeBSD sys/procfs.h for details.
 static void
-ParseFreeBSDPrStatus(ThreadData *thread_data, DataExtractor &data,
+ParseFreeBSDPrStatus(ThreadData &thread_data, DataExtractor &data,
                      ArchSpec &arch)
 {
     lldb::offset_t offset = 0;
@@ -391,20 +391,20 @@ ParseFreeBSDPrStatus(ThreadData *thread_data, DataExtractor &data,
     else
         offset += 16;
 
-    thread_data->signo = data.GetU32(&offset); // pr_cursig
+    thread_data.signo = data.GetU32(&offset); // pr_cursig
     offset += 4;        // pr_pid
     if (lp64)
         offset += 4;
     
     size_t len = data.GetByteSize() - offset;
-    thread_data->gpregset = DataExtractor(data, offset, len);
+    thread_data.gpregset = DataExtractor(data, offset, len);
 }
 
 static void
-ParseFreeBSDThrMisc(ThreadData *thread_data, DataExtractor &data)
+ParseFreeBSDThrMisc(ThreadData &thread_data, DataExtractor &data)
 {
     lldb::offset_t offset = 0;
-    thread_data->name = data.GetCStr(&offset, 20);
+    thread_data.name = data.GetCStr(&offset, 20);
 }
 
 /// Parse Thread context from PT_NOTE segment and store it in the thread list
@@ -426,13 +426,13 @@ ParseFreeBSDThrMisc(ThreadData *thread_data, DataExtractor &data)
 ///    For case (b) there may be either one NT_PRPSINFO per thread, or a single
 ///    one that applies to all threads (depending on the platform type).
 void
-ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *segment_header, 
+ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *segment_header,
                                                    DataExtractor segment_data)
 {
     assert(segment_header && segment_header->p_type == llvm::ELF::PT_NOTE);
 
     lldb::offset_t offset = 0;
-    ThreadData *thread_data = new ThreadData();
+    std::unique_ptr<ThreadData> thread_data(new ThreadData);
     bool have_prstatus = false;
     bool have_prpsinfo = false;
 
@@ -455,7 +455,7 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
             assert(thread_data->gpregset.GetByteSize() > 0);
             // Add the new thread to thread list
             m_thread_data.push_back(*thread_data);
-            thread_data = new ThreadData();
+            *thread_data = ThreadData();
             have_prstatus = false;
             have_prpsinfo = false;
         }
@@ -472,7 +472,7 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
             {
                 case NT_FREEBSD_PRSTATUS:
                     have_prstatus = true;
-                    ParseFreeBSDPrStatus(thread_data, note_data, arch);
+                    ParseFreeBSDPrStatus(*thread_data, note_data, arch);
                     break;
                 case NT_FREEBSD_FPREGSET:
                     thread_data->fpregset = note_data;
@@ -481,7 +481,7 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
                     have_prpsinfo = true;
                     break;
                 case NT_FREEBSD_THRMISC:
-                    ParseFreeBSDThrMisc(thread_data, note_data);
+                    ParseFreeBSDThrMisc(*thread_data, note_data);
                     break;
                 case NT_FREEBSD_PROCSTAT_AUXV:
                     // FIXME: FreeBSD sticks an int at the beginning of the note
