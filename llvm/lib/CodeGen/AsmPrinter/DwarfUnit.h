@@ -113,6 +113,9 @@ protected:
 
   /// DIEBlocks - A list of all the DIEBlocks in use.
   std::vector<DIEBlock *> DIEBlocks;
+  
+  /// DIELocs - A list of all the DIELocs in use.
+  std::vector<DIELoc *> DIELocs;
 
   /// ContainingTypeMap - This map is used to keep track of subprogram DIEs that
   /// need DW_AT_containing_type attribute. This attribute points to a DIE that
@@ -288,8 +291,8 @@ public:
   /// kept in DwarfDebug.
   DIE *getDIE(DIDescriptor D) const;
 
-  /// getDIEBlock - Returns a fresh newly allocated DIEBlock.
-  DIEBlock *getDIEBlock() { return new (DIEValueAllocator) DIEBlock(); }
+  /// getDIELoc - Returns a fresh newly allocated DIELoc.
+  DIELoc *getDIELoc() { return new (DIEValueAllocator) DIELoc(); }
 
   /// insertDIE - Insert DIE into the map. We delegate the request to DwarfDebug
   /// when the MDNode can be part of the type system, since DIEs for
@@ -308,13 +311,13 @@ public:
   void addUInt(DIE *Die, dwarf::Attribute Attribute, Optional<dwarf::Form> Form,
                uint64_t Integer);
 
-  void addUInt(DIEBlock *Block, dwarf::Form Form, uint64_t Integer);
+  void addUInt(DIE *Block, dwarf::Form Form, uint64_t Integer);
 
   /// addSInt - Add an signed integer attribute data and value.
   void addSInt(DIE *Die, dwarf::Attribute Attribute, Optional<dwarf::Form> Form,
                int64_t Integer);
 
-  void addSInt(DIEBlock *Die, Optional<dwarf::Form> Form, int64_t Integer);
+  void addSInt(DIELoc *Die, Optional<dwarf::Form> Form, int64_t Integer);
 
   /// addString - Add a string attribute data and value.
   void addString(DIE *Die, dwarf::Attribute Attribute, const StringRef Str);
@@ -324,13 +327,13 @@ public:
                       const StringRef Str);
 
   /// addExpr - Add a Dwarf expression attribute data and value.
-  void addExpr(DIEBlock *Die, dwarf::Form Form, const MCExpr *Expr);
+  void addExpr(DIELoc *Die, dwarf::Form Form, const MCExpr *Expr);
 
   /// addLabel - Add a Dwarf label attribute data and value.
   void addLabel(DIE *Die, dwarf::Attribute Attribute, dwarf::Form Form,
                 const MCSymbol *Label);
 
-  void addLabel(DIEBlock *Die, dwarf::Form Form, const MCSymbol *Label);
+  void addLabel(DIELoc *Die, dwarf::Form Form, const MCSymbol *Label);
 
   /// addSectionLabel - Add a Dwarf section label attribute data and value.
   ///
@@ -343,7 +346,7 @@ public:
 
   /// addOpAddress - Add a dwarf op address data and value using the
   /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
-  void addOpAddress(DIEBlock *Die, const MCSymbol *Label);
+  void addOpAddress(DIELoc *Die, const MCSymbol *Label);
 
   /// addSectionDelta - Add a label delta attribute data and value.
   void addSectionDelta(DIE *Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
@@ -356,6 +359,9 @@ public:
   void addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIEEntry *Entry);
 
   void addDIETypeSignature(DIE *Die, const DwarfTypeUnit &Type);
+
+  /// addBlock - Add block data.
+  void addBlock(DIE *Die, dwarf::Attribute Attribute, DIELoc *Block);
 
   /// addBlock - Add block data.
   void addBlock(DIE *Die, dwarf::Attribute Attribute, DIEBlock *Block);
@@ -389,10 +395,10 @@ public:
   void addTemplateParams(DIE &Buffer, DIArray TParams);
 
   /// addRegisterOp - Add register operand.
-  void addRegisterOp(DIEBlock *TheDie, unsigned Reg);
+  void addRegisterOp(DIELoc *TheDie, unsigned Reg);
 
   /// addRegisterOffset - Add register offset.
-  void addRegisterOffset(DIEBlock *TheDie, unsigned Reg, int64_t Offset);
+  void addRegisterOffset(DIELoc *TheDie, unsigned Reg, int64_t Offset);
 
   /// addComplexAddress - Start with the address based on the location provided,
   /// and generate the DWARF information necessary to find the actual variable

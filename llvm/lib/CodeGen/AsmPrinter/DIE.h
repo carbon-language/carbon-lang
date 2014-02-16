@@ -197,7 +197,8 @@ namespace llvm {
       isDelta,
       isEntry,
       isTypeSignature,
-      isBlock
+      isBlock,
+      isLoc
     };
   protected:
     /// Type - Type of data stored in the value.
@@ -441,14 +442,53 @@ namespace llvm {
   };
 
   //===--------------------------------------------------------------------===//
-  /// DIEBlock - A block of values.  Primarily used for location expressions.
+  /// DIELoc - Represents an expression location.
+  //
+  class DIELoc : public DIEValue, public DIE {
+    unsigned Size;                // Size in bytes excluding size header.
+  public:
+    DIELoc() : DIEValue(isLoc), DIE(0), Size(0) {}
+
+    /// ComputeSize - Calculate the size of the location expression.
+    ///
+    unsigned ComputeSize(AsmPrinter *AP);
+
+    /// BestForm - Choose the best form for data.
+    ///
+    dwarf::Form BestForm(unsigned DwarfVersion) const {
+      if (DwarfVersion > 3) return dwarf::DW_FORM_exprloc;
+      // Pre-DWARF4 location expressions were blocks and not exprloc.
+      if ((unsigned char)Size == Size)  return dwarf::DW_FORM_block1;
+      if ((unsigned short)Size == Size) return dwarf::DW_FORM_block2;
+      if ((unsigned int)Size == Size)   return dwarf::DW_FORM_block4;
+      return dwarf::DW_FORM_block;
+    }
+
+    /// EmitValue - Emit location data.
+    ///
+    virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
+
+    /// SizeOf - Determine size of location data in bytes.
+    ///
+    virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const;
+
+    // Implement isa/cast/dyncast.
+    static bool classof(const DIEValue *E) { return E->getType() == isLoc; }
+
+#ifndef NDEBUG
+    virtual void print(raw_ostream &O) const;
+#endif
+  };
+
+  //===--------------------------------------------------------------------===//
+  /// DIEBlock - Represents a block of values.
   //
   class DIEBlock : public DIEValue, public DIE {
     unsigned Size;                // Size in bytes excluding size header.
   public:
     DIEBlock() : DIEValue(isBlock), DIE(0), Size(0) {}
 
-    /// ComputeSize - calculate the size of the block.
+    /// ComputeSize - Calculate the size of the location expression.
     ///
     unsigned ComputeSize(AsmPrinter *AP);
 
@@ -461,22 +501,21 @@ namespace llvm {
       return dwarf::DW_FORM_block;
     }
 
-    /// EmitValue - Emit block data.
+    /// EmitValue - Emit location data.
     ///
     virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
 
-    /// SizeOf - Determine size of block data in bytes.
+    /// SizeOf - Determine size of location data in bytes.
     ///
     virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const;
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEValue *E) { return E->getType() == isBlock; }
 
-#ifndef NDEBUG
+    #ifndef NDEBUG
     virtual void print(raw_ostream &O) const;
-#endif
+    #endif
   };
-
 } // end llvm namespace
 
 #endif

@@ -48,7 +48,7 @@
 ; CHECK: DW_AT_external  DW_FORM_flag_present
 ; CHECK: DW_AT_decl_file DW_FORM_data1
 ; CHECK: DW_AT_decl_line DW_FORM_data1
-; CHECK: DW_AT_location  DW_FORM_block1
+; CHECK: DW_AT_location  DW_FORM_exprloc
 
 ; CHECK: [3] DW_TAG_base_type    DW_CHILDREN_no
 ; CHECK: DW_AT_name      DW_FORM_GNU_str_index
@@ -80,7 +80,7 @@
 ; CHECK: DW_AT_external [DW_FORM_flag_present]   (true)
 ; CHECK: DW_AT_decl_file [DW_FORM_data1] (0x01)
 ; CHECK: DW_AT_decl_line [DW_FORM_data1] (0x01)
-; CHECK: DW_AT_location [DW_FORM_block1] (<0x02> fb 00 )
+; CHECK: DW_AT_location [DW_FORM_exprloc] (<0x2> fb 00 )
 ; CHECK: [[TYPE]]: DW_TAG_base_type
 ; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000003) string = "int")
 

@@ -43,7 +43,7 @@ class MCAsmInfo;
 class MCObjectFileInfo;
 class DIEAbbrev;
 class DIE;
-class DIEBlock;
+class DIELoc;
 class DIEEntry;
 
 //===----------------------------------------------------------------------===//

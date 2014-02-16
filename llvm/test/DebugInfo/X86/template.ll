@@ -35,7 +35,7 @@
 ; The address of the global 'glbl', followed by DW_OP_stack_value (9f), to use
 ; the value immediately, rather than indirecting through the address.
 
-; CHECK-NEXT: DW_AT_location [DW_FORM_block1]{{ *}}(<0x0a> 03 00 00 00 00 00 00 00 00 9f )
+; CHECK-NEXT: DW_AT_location [DW_FORM_exprloc]{{ *}}(<0xa> 03 00 00 00 00 00 00 00 00 9f )
 ; CHECK-NOT: NULL
 
 ; CHECK: DW_TAG_GNU_template_template_param
