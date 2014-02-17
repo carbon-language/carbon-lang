@@ -15,7 +15,7 @@ _Pragma("comment(lib, \"foo\"_bar)") // expected-error {{user-defined suffix can
 #elif __has_include("foo"_bar) // expected-error {{expected "FILENAME" or <FILENAME>}}
 #endif
 
-extern "C++"_x {} // expected-error {{user-defined suffix cannot be used here}} expected-error {{unknown linkage language}}
+extern "C++"_x {} // expected-error {{user-defined suffix cannot be used here}}
 
 int f() {
   asm("mov %eax, %rdx"_foo); // expected-error {{user-defined suffix cannot be used here}}

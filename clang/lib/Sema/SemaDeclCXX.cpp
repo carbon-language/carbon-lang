@@ -11071,29 +11071,36 @@ FinishedParams:
 
 /// ActOnStartLinkageSpecification - Parsed the beginning of a C++
 /// linkage specification, including the language and (if present)
-/// the '{'. ExternLoc is the location of the 'extern', LangLoc is
-/// the location of the language string literal, which is provided
-/// by Lang/StrSize. LBraceLoc, if valid, provides the location of
+/// the '{'. ExternLoc is the location of the 'extern', Lang is the
+/// language string literal. LBraceLoc, if valid, provides the location of
 /// the '{' brace. Otherwise, this linkage specification does not
 /// have any braces.
 Decl *Sema::ActOnStartLinkageSpecification(Scope *S, SourceLocation ExternLoc,
-                                           SourceLocation LangLoc,
-                                           StringRef Lang,
+                                           Expr *LangStr,
                                            SourceLocation LBraceLoc) {
+  StringLiteral *Lit = cast<StringLiteral>(LangStr);
+  if (!Lit->isAscii()) {
+    Diag(LangStr->getExprLoc(), diag::err_language_linkage_spec_not_ascii)
+      << LangStr->getSourceRange();
+    return 0;
+  }
+
+  StringRef Lang = Lit->getString();
   LinkageSpecDecl::LanguageIDs Language;
-  if (Lang == "\"C\"")
+  if (Lang == "C")
     Language = LinkageSpecDecl::lang_c;
-  else if (Lang == "\"C++\"")
+  else if (Lang == "C++")
     Language = LinkageSpecDecl::lang_cxx;
   else {
-    Diag(LangLoc, diag::err_bad_language);
+    Diag(LangStr->getExprLoc(), diag::err_language_linkage_spec_unknown)
+      << LangStr->getSourceRange();
     return 0;
   }
 
   // FIXME: Add all the various semantics of linkage specifications
 
-  LinkageSpecDecl *D = LinkageSpecDecl::Create(Context, CurContext,
-                                               ExternLoc, LangLoc, Language,
+  LinkageSpecDecl *D = LinkageSpecDecl::Create(Context, CurContext, ExternLoc,
+                                               LangStr->getExprLoc(), Language,
                                                LBraceLoc.isValid());
   CurContext->addDecl(D);
   PushDeclContext(S, D);
@@ -11107,13 +11114,11 @@ Decl *Sema::ActOnStartLinkageSpecification(Scope *S, SourceLocation ExternLoc,
 Decl *Sema::ActOnFinishLinkageSpecification(Scope *S,
                                             Decl *LinkageSpec,
                                             SourceLocation RBraceLoc) {
-  if (LinkageSpec) {
-    if (RBraceLoc.isValid()) {
-      LinkageSpecDecl* LSDecl = cast<LinkageSpecDecl>(LinkageSpec);
-      LSDecl->setRBraceLoc(RBraceLoc);
-    }
-    PopDeclContext();
+  if (RBraceLoc.isValid()) {
+    LinkageSpecDecl* LSDecl = cast<LinkageSpecDecl>(LinkageSpec);
+    LSDecl->setRBraceLoc(RBraceLoc);
   }
+  PopDeclContext();
   return LinkageSpec;
 }
 

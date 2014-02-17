@@ -222,7 +222,10 @@ def note_function_suggestion : Note<"did you mean %0?">;
 def err_ellipsis_first_arg : Error<
   "ISO C requires a named argument before '...'">;
 def err_declarator_need_ident : Error<"declarator requires an identifier">;
-def err_bad_language : Error<"unknown linkage language">;
+def err_language_linkage_spec_unknown : Error<"unknown linkage language">;
+def err_language_linkage_spec_not_ascii : Error<
+  "string literal in language linkage specifier cannot have an "
+  "encoding-prefix">;
 def warn_use_out_of_scope_declaration : Warning<
   "use of out-of-scope declaration of %0">;
 def err_inline_non_function : Error<
