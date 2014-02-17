@@ -8,3 +8,54 @@
 
 # CHECK: .long 1
 
+	.macro double first = -1, second = -1
+		# begin entry
+		.long \first
+		.long \second
+		# end entry
+	.endm
+
+	double
+# CHECK: .long -1
+# CHECK: .long -1
+
+	double 1
+# CHECK: .long 1
+# CHECK: .long -1
+
+	double 2, 3
+# CHECK: .long 2
+# CHECK: .long 3
+
+	double , 4
+# CHECK: .long -1
+# CHECK: .long 4
+
+	double 5, second = 6
+# CHECK: .long 5
+# CHECK: .long 6
+
+	double first = 7
+# CHECK: .long 7
+# CHECK: .long -1
+
+	double second = 8
+# CHECK: .long -1
+# CHECK: .long 8
+
+	double second = 9, first = 10
+# CHECK: .long 10
+# CHECK: .long 9
+
+	double second + 11
+# CHECK: .long second+11
+# CHECK: .long -1
+
+	double , second + 12
+# CHECK: .long -1
+# CHECK: .long second+12
+
+	double second
+# CHECK: .long second
+# CHECK: .long -1
+

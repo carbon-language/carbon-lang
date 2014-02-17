@@ -1937,39 +1937,80 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
                                     MCAsmMacroArguments &A) {
   const unsigned NParameters = M ? M->Parameters.size() : 0;
 
+  A.resize(NParameters);
+  for (unsigned PI = 0; PI < NParameters; ++PI)
+    if (!M->Parameters[PI].second.empty())
+      A[PI] = M->Parameters[PI].second;
+
+  bool NamedParametersFound = false;
+
   // Parse two kinds of macro invocations:
   // - macros defined without any parameters accept an arbitrary number of them
   // - macros defined with parameters accept at most that many of them
   for (unsigned Parameter = 0; !NParameters || Parameter < NParameters;
        ++Parameter) {
-    MCAsmMacroArgument MA;
+    MCAsmMacroParameter FA;
+    SMLoc L;
 
-    if (parseMacroArgument(MA))
+    if (Lexer.is(AsmToken::Identifier) && Lexer.peekTok().is(AsmToken::Equal)) {
+      L = Lexer.getLoc();
+      if (parseIdentifier(FA.first)) {
+        Error(L, "invalid argument identifier for formal argument");
+        eatToEndOfStatement();
+        return true;
+      }
+
+      if (!Lexer.is(AsmToken::Equal)) {
+        TokError("expected '=' after formal parameter identifier");
+        eatToEndOfStatement();
+        return true;
+      }
+      Lex();
+
+      NamedParametersFound = true;
+    }
+
+    if (NamedParametersFound && FA.first.empty()) {
+      Error(Lexer.getLoc(), "cannot mix positional and keyword arguments");
+      eatToEndOfStatement();
+      return true;
+    }
+
+    if (parseMacroArgument(FA.second))
       return true;
 
-    if (!MA.empty() || (!NParameters && !Lexer.is(AsmToken::EndOfStatement)))
-      A.push_back(MA);
-    else if (NParameters) {
-      if (!M->Parameters[Parameter].second.empty())
-        A.push_back(M->Parameters[Parameter].second);
-      else
-        A.push_back(MA);
+    unsigned PI = Parameter;
+    if (!FA.first.empty()) {
+      unsigned FAI = 0;
+      for (FAI = 0; FAI < NParameters; ++FAI)
+        if (M->Parameters[FAI].first == FA.first)
+          break;
+      if (FAI >= NParameters) {
+        Error(L,
+              "parameter named '" + FA.first + "' does not exist for macro '" +
+              M->Name + "'");
+        return true;
+      }
+      PI = FAI;
+    }
+
+    if (!FA.second.empty()) {
+      if (A.size() <= PI)
+        A.resize(PI + 1);
+      A[PI] = FA.second;
     }
 
     // At the end of the statement, fill in remaining arguments that have
     // default values. If there aren't any, then the next argument is
     // required but missing
-    if (Lexer.is(AsmToken::EndOfStatement)) {
-      if (NParameters && Parameter < NParameters - 1) {
-        continue;
-      }
+    if (Lexer.is(AsmToken::EndOfStatement))
       return false;
-    }
 
     if (Lexer.is(AsmToken::Comma))
       Lex();
   }
-  return TokError("Too many arguments");
+
+  return TokError("too many positional arguments");
 }
 
 const MCAsmMacro *AsmParser::lookupMacro(StringRef Name) {
