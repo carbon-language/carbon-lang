@@ -1727,6 +1727,21 @@ If additional functionality is desired for the semantic form of the attribute,
 the ``AdditionalMembers`` field specifies code to be copied verbatim into the 
 semantic attribute class object.
 
+All attributes must have one or more form of documentation, which is provided 
+in the ``Documentation`` list. Generally, the documentation for an attribute 
+is a stand-alone definition in `include/clang/Basic/AttrDocs.td 
+<http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Basic/AttdDocs.td?view=markup>`_
+that is named after the attribute being documented. Each documentation element 
+is given a ``Category`` (variable, function, or type) and ``Content``. A single 
+attribute may contain multiple documentation elements for distinct categories. 
+For instance, an attribute which can appertain to both function and types (such 
+as a calling convention attribute), should contain two documentation elements. 
+The ``Content`` for an attribute uses reStructuredText (RST) syntax.
+
+If an attribute is used internally by the compiler, but is not written by users 
+(such as attributes with an empty spelling list), it can use the 
+``Undocumented`` documentation element.
+
 Boilerplate
 ^^^^^^^^^^^
 

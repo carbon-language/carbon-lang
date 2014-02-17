@@ -2635,4 +2635,232 @@ void EmitClangAttrParserStringSwitches(RecordKeeper &Records,
   emitClangAttrLateParsedList(Records, OS);
 }
 
+class DocumentationData {
+public:
+  enum DocCategory {
+    Function,
+    Variable,
+    Type,
+    Undocumented
+  };
+
+  DocCategory Category;
+  const Record &Documentation;
+  const Record &Attribute;
+
+  DocumentationData(DocCategory Category, const Record &Documentation,
+                    const Record &Attribute)
+      : Category(Category), Documentation(Documentation), Attribute(Attribute) {
+  }
+};
+
+static void WriteCategoryHeader(DocumentationData::DocCategory Category,
+                                raw_ostream &OS) {
+  OS << "\n";
+  switch (Category) {
+    case DocumentationData::Undocumented:
+      assert(false && "Undocumented attributes are not documented!");
+      break;
+    case DocumentationData::Function:
+      OS << "Function Attributes\n";
+      OS << "===================\n";
+      break;
+    case DocumentationData::Variable:
+      OS << "Variable Attributes\n";
+      OS << "===================\n";
+      break;
+    case DocumentationData::Type:
+      OS << "Type Attributes\n";
+      OS << "===============\n";
+      break;
+  }
+  OS << "\n";
+}
+
+static void WriteDocumentation(const DocumentationData &Doc,
+                               raw_ostream &OS) {
+  // FIXME: there is no way to have a per-spelling category for the attribute
+  // documentation. This may not be a limiting factor since the spellings
+  // should generally be consistently applied across the category.
+
+  std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Doc.Attribute);
+
+  // Determine the heading to be used for this attribute.
+  std::string Heading = Doc.Documentation.getValueAsString("Heading");
+  if (Heading.empty()) {
+    // If there's only one spelling, we can simply use that.
+    if (Spellings.size() == 1)
+      Heading = Spellings.begin()->name();
+    else {
+      std::set<std::string> Uniques;
+      for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
+           E = Spellings.end(); I != E && Uniques.size() <= 1; ++I) {
+        std::string Spelling = NormalizeNameForSpellingComparison(I->name());
+        Uniques.insert(Spelling);
+      }
+      // If the semantic map has only one spelling, that is sufficient for our
+      // needs.
+      if (Uniques.size() == 1)
+        Heading = *Uniques.begin();
+    }
+  }
+
+  // If the heading is still empty, it is an error.
+  if (Heading.empty())
+    PrintFatalError(Doc.Attribute.getLoc(),
+                    "This attribute requires a heading to be specified");
+
+  // Gather a list of unique spellings; this is not the same as the semantic
+  // spelling for the attribute. Variations in underscores and other non-
+  // semantic characters are still acceptable.
+  std::vector<std::string> Names;
+
+  enum SpellingKind {
+    GNU = 1 << 0,
+    CXX11 = 1 << 1,
+    Declspec = 1 << 2,
+    Keyword = 1 << 3
+  };
+
+  unsigned SupportedSpellings = 0;
+  for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
+       E = Spellings.end(); I != E; ++I) {
+    SpellingKind Kind = StringSwitch<SpellingKind>(I->variety())
+      .Case("GNU", GNU)
+      .Case("CXX11", CXX11)
+      .Case("Declspec", Declspec)
+      .Case("Keyword", Keyword);
+
+    // Mask in the supported spelling.
+    SupportedSpellings |= Kind;
+
+    std::string Name;
+    if (Kind == CXX11 && !I->nameSpace().empty())
+      Name = I->nameSpace() + "::";
+    Name += I->name();
+
+    // If this name is the same as the heading, do not add it.
+    if (Name != Heading)
+      Names.push_back(Name);
+  }
+
+  // Print out the heading for the attribute. If there are alternate spellings,
+  // then display those after the heading.
+  if (!Names.empty()) {
+    Heading += " (";
+    for (std::vector<std::string>::const_iterator I = Names.begin(),
+         E = Names.end(); I != E; ++I) {
+      if (I != Names.begin())
+        Heading += ", ";
+      Heading += *I;
+    }
+    Heading += ")";
+  }
+  OS << Heading << "\n" << std::string(Heading.length(), '-') << "\n";
+
+  if (!SupportedSpellings)
+    PrintFatalError(Doc.Attribute.getLoc(),
+                    "Attribute has no supported spellings; cannot be "
+                    "documented");
+
+  // List what spelling syntaxes the attribute supports.
+  OS << ".. csv-table:: Supported Syntaxes\n";
+  OS << "   :header: \"GNU\", \"C++11\", \"__declspec\", \"Keyword\"\n\n";
+  OS << "   \"";
+  if (SupportedSpellings & GNU) OS << "X";
+  OS << "\",\"";
+  if (SupportedSpellings & CXX11) OS << "X";
+  OS << "\",\"";
+  if (SupportedSpellings & Declspec) OS << "X";
+  OS << "\",\"";
+  if (SupportedSpellings & Keyword) OS << "X";
+  OS << "\"\n\n";
+
+  // If the attribute is deprecated, print a message about it, and possibly
+  // provide a replacement attribute.
+  if (!Doc.Documentation.isValueUnset("Deprecated")) {
+    OS << "This attribute has been deprecated, and may be removed in a future "
+       << "version of Clang.";
+    const Record &Deprecated = *Doc.Documentation.getValueAsDef("Deprecated");
+    std::string Replacement = Deprecated.getValueAsString("Replacement");
+    if (!Replacement.empty())
+      OS << "  This attribute has been superseded by ``"
+         << Replacement << "``.";
+    OS << "\n\n";
+  }
+
+  std::string ContentStr = Doc.Documentation.getValueAsString("Content");
+  // Trim leading and trailing newlines and spaces.
+  StringRef Content(ContentStr);
+  while (Content.startswith("\r") || Content.startswith("\n") ||
+         Content.startswith(" ") || Content.startswith("\t"))
+    Content = Content.substr(1);
+  while (Content.endswith("\r") || Content.endswith("\n") ||
+         Content.endswith(" ") || Content.endswith("\t"))
+    Content = Content.substr(0, Content.size() - 1);
+  OS << Content;
+
+  OS << "\n\n\n";
+}
+
+void EmitClangAttrDocs(RecordKeeper &Records, raw_ostream &OS) {
+  // Get the documentation introduction paragraph.
+  const Record *Documentation = Records.getDef("GlobalDocumentation");
+  if (!Documentation) {
+    PrintFatalError("The Documentation top-level definition is missing, "
+                    "no documentation will be generated.");
+    return;
+  }
+
+  OS << Documentation->getValueAsString("Intro");
+
+  typedef std::map<DocumentationData::DocCategory,
+                   std::vector<DocumentationData> > CategoryMap;
+  CategoryMap SplitDocs;
+
+  // Gather the Documentation lists from each of the attributes, based on the
+  // category provided.
+  std::vector<Record *> Attrs = Records.getAllDerivedDefinitions("Attr");
+  for (std::vector<Record *>::const_iterator I = Attrs.begin(),
+       E = Attrs.end(); I != E; ++I) {
+    const Record &Attr = **I;
+    std::vector<Record *> Docs = Attr.getValueAsListOfDefs("Documentation");
+    for (std::vector<Record *>::const_iterator DI = Docs.begin(),
+         DE = Docs.end(); DI != DE; ++DI) {
+      const Record &Doc = **DI;
+      DocumentationData::DocCategory Cat =
+          StringSwitch<DocumentationData::DocCategory>(
+              Doc.getValueAsDef("Category")->getValueAsString("Name"))
+              .Case("Functions", DocumentationData::Function)
+              .Case("Variables", DocumentationData::Variable)
+              .Case("Types", DocumentationData::Type)
+              .Case("Undocumented", DocumentationData::Undocumented);
+
+      // If the category is "undocumented", then there cannot be any other
+      // documentation categories (otherwise, the attribute would become
+      // documented).
+      bool Undocumented = DocumentationData::Undocumented == Cat;
+      if (Undocumented && Docs.size() > 1)
+        PrintFatalError(Doc.getLoc(),
+                        "Attribute is \"Undocumented\", but has multiple "
+                        "documentation categories");      
+
+      if (!Undocumented)
+        SplitDocs[Cat].push_back(DocumentationData(Cat, Doc, Attr));
+    }
+  }
+
+  // Having split the attributes out based on what documentation goes where,
+  // we can begin to generate sections of documentation.
+  for (CategoryMap::const_iterator I = SplitDocs.begin(), E = SplitDocs.end();
+       I != E; ++I) {
+    WriteCategoryHeader(I->first, OS);
+
+    // Walk over each of the attributes in the category and write out their
+    // documentation.
+    for (auto D : I->second)
+      WriteDocumentation(D, OS);
+  }
+}
+
 } // end namespace clang

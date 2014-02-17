@@ -51,7 +51,8 @@ enum ActionType {
   GenClangCommentCommandList,
   GenArmNeon,
   GenArmNeonSema,
-  GenArmNeonTest
+  GenArmNeonTest,
+  GenAttrDocs
 };
 
 namespace {
@@ -129,6 +130,8 @@ cl::opt<ActionType> Action(
                    "Generate ARM NEON sema support for clang"),
         clEnumValN(GenArmNeonTest, "gen-arm-neon-test",
                    "Generate ARM NEON tests for clang"),
+        clEnumValN(GenAttrDocs, "gen-attr-docs",
+                   "Generate attribute documentation"),
         clEnumValEnd));
 
 cl::opt<std::string>
@@ -225,6 +228,9 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
     break;
   case GenArmNeonTest:
     EmitNeonTest(Records, OS);
+    break;
+  case GenAttrDocs:
+    EmitClangAttrDocs(Records, OS);
     break;
   }
 
