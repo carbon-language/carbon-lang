@@ -60,13 +60,14 @@ private:
   unsigned NumRegionCounters;
   llvm::GlobalVariable *RegionCounters;
   llvm::DenseMap<const Stmt*, unsigned> *RegionCounterMap;
+  llvm::DenseMap<const Stmt*, uint64_t> *StmtCountMap;
   std::vector<uint64_t> *RegionCounts;
   uint64_t CurrentRegionCount;
 
 public:
   CodeGenPGO(CodeGenModule &CGM)
     : CGM(CGM), NumRegionCounters(0), RegionCounters(0), RegionCounterMap(0),
-      RegionCounts(0), CurrentRegionCount(0) {}
+      StmtCountMap(0), RegionCounts(0), CurrentRegionCount(0) {}
   ~CodeGenPGO() {}
 
   /// Whether or not we have PGO region data for the current function. This is
@@ -76,22 +77,42 @@ public:
 
   /// Return the counter value of the current region.
   uint64_t getCurrentRegionCount() const { return CurrentRegionCount; }
-  /// Return the counter value of the current region, or \p Min if it is larger.
-  uint64_t getCurrentRegionCountWithMin(uint64_t Min) {
-    return std::max(Min, CurrentRegionCount);
-  }
+
   /// Set the counter value for the current region. This is used to keep track
   /// of changes to the most recent counter from control flow and non-local
   /// exits.
   void setCurrentRegionCount(uint64_t Count) { CurrentRegionCount = Count; }
+
   /// Indicate that the current region is never reached, and thus should have a
   /// counter value of zero. This is important so that subsequent regions can
   /// correctly track their parent counts.
   void setCurrentRegionUnreachable() { setCurrentRegionCount(0); }
 
+  /// Check if an execution count is known for a given statement. If so, return
+  /// true and put the value in Count; else return false.
+  bool getStmtCount(const Stmt *S, uint64_t &Count) {
+    if (!StmtCountMap)
+      return false;
+    llvm::DenseMap<const Stmt*, uint64_t>::const_iterator
+      I = StmtCountMap->find(S);
+    if (I == StmtCountMap->end())
+      return false;
+    Count = I->second;
+    return true;
+  }
+
+  /// If the execution count for the current statement is known, record that
+  /// as the current count.
+  void setCurrentStmt(const Stmt *S) {
+    uint64_t Count;
+    if (getStmtCount(S, Count))
+      setCurrentRegionCount(Count);
+  }
+
   /// Calculate branch weights appropriate for PGO data
   llvm::MDNode *createBranchWeights(uint64_t TrueCount, uint64_t FalseCount);
   llvm::MDNode *createBranchWeights(ArrayRef<uint64_t> Weights);
+  llvm::MDNode *createLoopWeights(const Stmt *Cond, RegionCounter &Cnt);
 
   /// Assign counters to regions and configure them for PGO of a given
   /// function. Does nothing if instrumentation is not enabled and either
@@ -109,6 +130,7 @@ public:
 
 private:
   void mapRegionCounters(const Decl *D);
+  void computeRegionCounts(const Decl *D);
   void loadRegionCounts(GlobalDecl &GD, PGOProfileData *PGOData);
   void emitCounterVariables();
 
@@ -157,6 +179,7 @@ public:
   /// the region of the counter was entered, but for switch labels it's the
   /// number of direct jumps to that label.
   uint64_t getCount() const { return Count; }
+
   /// Get the value of the counter with adjustments applied. Adjustments occur
   /// when control enters or leaves the region abnormally; i.e., if there is a
   /// jump to a label within the region, or if the function can return from
@@ -166,47 +189,37 @@ public:
     assert((Adjust > 0 || (uint64_t)(-Adjust) <= Count) && "Negative count");
     return Count + Adjust;
   }
+
   /// Get the value of the counter in this region's parent, i.e., the region
   /// that was active when this region began. This is useful for deriving
   /// counts in implicitly counted regions, like the false case of a condition
   /// or the normal exits of a loop.
   uint64_t getParentCount() const { return ParentCount; }
 
-  /// Get the number of times the condition of a loop will evaluate false. This
-  /// is the number of times we enter the loop, adjusted by the difference
-  /// between entering and exiting the loop body normally, excepting that
-  /// 'continue' statements also bring us back here.
-  ///
-  /// Undefined if this counter is not counting a loop.
-  uint64_t getLoopExitCount() const {
-    return getParentCount() + getContinueCounter().getCount() +
-      getAdjustedCount() - getCount();
-  }
-  /// Get the associated break counter. Undefined if this counter is not
-  /// counting a loop.
-  RegionCounter getBreakCounter() const {
-    return RegionCounter(*PGO, Counter + 1);
-  }
-  /// Get the associated continue counter. Undefined if this counter is not
-  /// counting a loop.
-  RegionCounter getContinueCounter() const {
-    return RegionCounter(*PGO, Counter + 2);
-  }
-
   /// Activate the counter by emitting an increment and starting to track
   /// adjustments. If AddIncomingFallThrough is true, the current region count
   /// will be added to the counter for the purposes of tracking the region.
   void beginRegion(CGBuilderTy &Builder, bool AddIncomingFallThrough=false) {
+    beginRegion(AddIncomingFallThrough);
+    PGO->emitCounterIncrement(Builder, Counter);
+  }
+  void beginRegion(bool AddIncomingFallThrough=false) {
     RegionCount = Count;
     if (AddIncomingFallThrough)
       RegionCount += PGO->getCurrentRegionCount();
     PGO->setCurrentRegionCount(RegionCount);
-    PGO->emitCounterIncrement(Builder, Counter);
   }
+
   /// For counters on boolean branches, begins tracking adjustments for the
   /// uncounted path.
   void beginElseRegion() {
     RegionCount = ParentCount - Count;
+    PGO->setCurrentRegionCount(RegionCount);
+  }
+
+  /// Reset the current region count.
+  void setCurrentRegionCount(uint64_t CurrentCount) {
+    RegionCount = CurrentCount;
     PGO->setCurrentRegionCount(RegionCount);
   }
 
@@ -216,11 +229,16 @@ public:
   /// correct in the code that follows.
   void adjustForControlFlow() {
     Adjust += PGO->getCurrentRegionCount() - RegionCount;
+    // Reset the region count in case this is called again later.
+    RegionCount = PGO->getCurrentRegionCount();
   }
-  /// Commit all adjustments to the current region. This should be called after
-  /// all blocks that adjust for control flow count have been emitted.
-  void applyAdjustmentsToRegion() {
-    PGO->setCurrentRegionCount(ParentCount + Adjust);
+
+  /// Commit all adjustments to the current region. If the region is a loop,
+  /// the LoopAdjust value should be the count of all the breaks and continues
+  /// from the loop, to compensate for those counts being deducted from the
+  /// adjustments for the body of the loop.
+  void applyAdjustmentsToRegion(uint64_t LoopAdjust) {
+    PGO->setCurrentRegionCount(ParentCount + Adjust + LoopAdjust);
   }
 };
 

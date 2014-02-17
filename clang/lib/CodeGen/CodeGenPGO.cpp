@@ -284,56 +284,43 @@ namespace {
       (*CounterMap)[S] = NextCounter++;
       Visit(S->getSubStmt());
     }
-    /// Assign three counters - one for the body of the loop, one for breaks
-    /// from the loop, and one for continues.
-    ///
-    /// The break and continue counters cover all such statements in this loop,
-    /// and are used in calculations to find the number of times the condition
-    /// and exit of the loop occur. They are needed so we can differentiate
-    /// these statements from non-local exits like return and goto.
+    /// Assign a counter for the body of a while loop.
     void VisitWhileStmt(const WhileStmt *S) {
-      (*CounterMap)[S] = NextCounter;
-      NextCounter += 3;
+      (*CounterMap)[S] = NextCounter++;
       Visit(S->getCond());
       Visit(S->getBody());
     }
-    /// Assign counters for the body of the loop, and for breaks and
-    /// continues. See VisitWhileStmt.
+    /// Assign a counter for the body of a do-while loop.
     void VisitDoStmt(const DoStmt *S) {
-      (*CounterMap)[S] = NextCounter;
-      NextCounter += 3;
+      (*CounterMap)[S] = NextCounter++;
       Visit(S->getBody());
       Visit(S->getCond());
     }
-    /// Assign counters for the body of the loop, and for breaks and
-    /// continues. See VisitWhileStmt.
+    /// Assign a counter for the body of a for loop.
     void VisitForStmt(const ForStmt *S) {
-      (*CounterMap)[S] = NextCounter;
-      NextCounter += 3;
+      (*CounterMap)[S] = NextCounter++;
+      if (S->getInit())
+        Visit(S->getInit());
       const Expr *E;
       if ((E = S->getCond()))
         Visit(E);
-      Visit(S->getBody());
       if ((E = S->getInc()))
         Visit(E);
+      Visit(S->getBody());
     }
-    /// Assign counters for the body of the loop, and for breaks and
-    /// continues. See VisitWhileStmt.
+    /// Assign a counter for the body of a for-range loop.
     void VisitCXXForRangeStmt(const CXXForRangeStmt *S) {
-      (*CounterMap)[S] = NextCounter;
-      NextCounter += 3;
-      const Expr *E;
-      if ((E = S->getCond()))
-        Visit(E);
+      (*CounterMap)[S] = NextCounter++;
+      Visit(S->getRangeStmt());
+      Visit(S->getBeginEndStmt());
+      Visit(S->getCond());
+      Visit(S->getLoopVarStmt());
       Visit(S->getBody());
-      if ((E = S->getInc()))
-        Visit(E);
+      Visit(S->getInc());
     }
-    /// Assign counters for the body of the loop, and for breaks and
-    /// continues. See VisitWhileStmt.
+    /// Assign a counter for the body of a for-collection loop.
     void VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S) {
-      (*CounterMap)[S] = NextCounter;
-      NextCounter += 3;
+      (*CounterMap)[S] = NextCounter++;
       Visit(S->getElement());
       Visit(S->getBody());
     }
@@ -402,6 +389,343 @@ namespace {
       Visit(E->getRHS());
     }
   };
+
+  /// A StmtVisitor that propagates the raw counts through the AST and
+  /// records the count at statements where the value may change.
+  struct ComputeRegionCounts : public ConstStmtVisitor<ComputeRegionCounts> {
+    /// PGO state.
+    CodeGenPGO &PGO;
+
+    /// A flag that is set when the current count should be recorded on the
+    /// next statement, such as at the exit of a loop.
+    bool RecordNextStmtCount;
+
+    /// The map of statements to count values.
+    llvm::DenseMap<const Stmt*, uint64_t> *CountMap;
+
+    /// BreakContinueStack - Keep counts of breaks and continues inside loops. 
+    struct BreakContinue {
+      uint64_t BreakCount;
+      uint64_t ContinueCount;
+      BreakContinue() : BreakCount(0), ContinueCount(0) {}
+    };
+    SmallVector<BreakContinue, 8> BreakContinueStack;
+
+    ComputeRegionCounts(llvm::DenseMap<const Stmt*, uint64_t> *CountMap,
+                        CodeGenPGO &PGO) :
+      PGO(PGO), RecordNextStmtCount(false), CountMap(CountMap) {
+    }
+
+    void RecordStmtCount(const Stmt *S) {
+      if (RecordNextStmtCount) {
+        (*CountMap)[S] = PGO.getCurrentRegionCount();
+        RecordNextStmtCount = false;
+      }
+    }
+
+    void VisitStmt(const Stmt *S) {
+      RecordStmtCount(S);
+      for (Stmt::const_child_range I = S->children(); I; ++I) {
+        if (*I)
+         this->Visit(*I);
+      }
+    }
+
+    void VisitFunctionDecl(const FunctionDecl *S) {
+      RegionCounter Cnt(PGO, S->getBody());
+      Cnt.beginRegion();
+      (*CountMap)[S->getBody()] = PGO.getCurrentRegionCount();
+      Visit(S->getBody());
+    }
+
+    void VisitReturnStmt(const ReturnStmt *S) {
+      RecordStmtCount(S);
+      if (S->getRetValue())
+        Visit(S->getRetValue());
+      PGO.setCurrentRegionUnreachable();
+      RecordNextStmtCount = true;
+    }
+
+    void VisitGotoStmt(const GotoStmt *S) {
+      RecordStmtCount(S);
+      PGO.setCurrentRegionUnreachable();
+      RecordNextStmtCount = true;
+    }
+
+    void VisitLabelStmt(const LabelStmt *S) {
+      RecordNextStmtCount = false;
+      RegionCounter Cnt(PGO, S);
+      Cnt.beginRegion();
+      (*CountMap)[S] = PGO.getCurrentRegionCount();
+      Visit(S->getSubStmt());
+    }
+
+    void VisitBreakStmt(const BreakStmt *S) {
+      RecordStmtCount(S);
+      assert(!BreakContinueStack.empty() && "break not in a loop or switch!");
+      BreakContinueStack.back().BreakCount += PGO.getCurrentRegionCount();
+      PGO.setCurrentRegionUnreachable();
+      RecordNextStmtCount = true;
+    }
+
+    void VisitContinueStmt(const ContinueStmt *S) {
+      RecordStmtCount(S);
+      assert(!BreakContinueStack.empty() && "continue stmt not in a loop!");
+      BreakContinueStack.back().ContinueCount += PGO.getCurrentRegionCount();
+      PGO.setCurrentRegionUnreachable();
+      RecordNextStmtCount = true;
+    }
+
+    void VisitWhileStmt(const WhileStmt *S) {
+      RecordStmtCount(S);
+      RegionCounter Cnt(PGO, S);
+      BreakContinueStack.push_back(BreakContinue());
+      // Visit the body region first so the break/continue adjustments can be
+      // included when visiting the condition.
+      Cnt.beginRegion();
+      (*CountMap)[S->getBody()] = PGO.getCurrentRegionCount();
+      Visit(S->getBody());
+      Cnt.adjustForControlFlow();
+
+      // ...then go back and propagate counts through the condition. The count
+      // at the start of the condition is the sum of the incoming edges,
+      // the backedge from the end of the loop body, and the edges from
+      // continue statements.
+      BreakContinue BC = BreakContinueStack.pop_back_val();
+      Cnt.setCurrentRegionCount(Cnt.getParentCount() +
+                                Cnt.getAdjustedCount() + BC.ContinueCount);
+      (*CountMap)[S->getCond()] = PGO.getCurrentRegionCount();
+      Visit(S->getCond());
+      Cnt.adjustForControlFlow();
+      Cnt.applyAdjustmentsToRegion(BC.BreakCount + BC.ContinueCount);
+      RecordNextStmtCount = true;
+    }
+
+    void VisitDoStmt(const DoStmt *S) {
+      RecordStmtCount(S);
+      RegionCounter Cnt(PGO, S);
+      BreakContinueStack.push_back(BreakContinue());
+      Cnt.beginRegion(/*AddIncomingFallThrough=*/true);
+      (*CountMap)[S->getBody()] = PGO.getCurrentRegionCount();
+      Visit(S->getBody());
+      Cnt.adjustForControlFlow();
+
+      BreakContinue BC = BreakContinueStack.pop_back_val();
+      // The count at the start of the condition is equal to the count at the
+      // end of the body. The adjusted count does not include either the
+      // fall-through count coming into the loop or the continue count, so add
+      // both of those separately. This is coincidentally the same equation as
+      // with while loops but for different reasons.
+      Cnt.setCurrentRegionCount(Cnt.getParentCount() +
+                                Cnt.getAdjustedCount() + BC.ContinueCount);
+      (*CountMap)[S->getCond()] = PGO.getCurrentRegionCount();
+      Visit(S->getCond());
+      Cnt.adjustForControlFlow();
+      Cnt.applyAdjustmentsToRegion(BC.BreakCount + BC.ContinueCount);
+      RecordNextStmtCount = true;
+    }
+
+    void VisitForStmt(const ForStmt *S) {
+      RecordStmtCount(S);
+      if (S->getInit())
+        Visit(S->getInit());
+      RegionCounter Cnt(PGO, S);
+      BreakContinueStack.push_back(BreakContinue());
+      // Visit the body region first. (This is basically the same as a while
+      // loop; see further comments in VisitWhileStmt.)
+      Cnt.beginRegion();
+      (*CountMap)[S->getBody()] = PGO.getCurrentRegionCount();
+      Visit(S->getBody());
+      Cnt.adjustForControlFlow();
+
+      // The increment is essentially part of the body but it needs to include
+      // the count for all the continue statements.
+      if (S->getInc()) {
+        Cnt.setCurrentRegionCount(PGO.getCurrentRegionCount() +
+                                  BreakContinueStack.back().ContinueCount);
+        (*CountMap)[S->getInc()] = PGO.getCurrentRegionCount();
+        Visit(S->getInc());
+        Cnt.adjustForControlFlow();
+      }
+
+      BreakContinue BC = BreakContinueStack.pop_back_val();
+
+      // ...then go back and propagate counts through the condition.
+      if (S->getCond()) {
+        Cnt.setCurrentRegionCount(Cnt.getParentCount() +
+                                  Cnt.getAdjustedCount() +
+                                  BC.ContinueCount);
+        (*CountMap)[S->getCond()] = PGO.getCurrentRegionCount();
+        Visit(S->getCond());
+        Cnt.adjustForControlFlow();
+      }
+      Cnt.applyAdjustmentsToRegion(BC.BreakCount + BC.ContinueCount);
+      RecordNextStmtCount = true;
+    }
+
+    void VisitCXXForRangeStmt(const CXXForRangeStmt *S) {
+      RecordStmtCount(S);
+      Visit(S->getRangeStmt());
+      Visit(S->getBeginEndStmt());
+      RegionCounter Cnt(PGO, S);
+      BreakContinueStack.push_back(BreakContinue());
+      // Visit the body region first. (This is basically the same as a while
+      // loop; see further comments in VisitWhileStmt.)
+      Cnt.beginRegion();
+      (*CountMap)[S->getLoopVarStmt()] = PGO.getCurrentRegionCount();
+      Visit(S->getLoopVarStmt());
+      Visit(S->getBody());
+      Cnt.adjustForControlFlow();
+
+      // The increment is essentially part of the body but it needs to include
+      // the count for all the continue statements.
+      Cnt.setCurrentRegionCount(PGO.getCurrentRegionCount() +
+                                BreakContinueStack.back().ContinueCount);
+      (*CountMap)[S->getInc()] = PGO.getCurrentRegionCount();
+      Visit(S->getInc());
+      Cnt.adjustForControlFlow();
+
+      BreakContinue BC = BreakContinueStack.pop_back_val();
+
+      // ...then go back and propagate counts through the condition.
+      Cnt.setCurrentRegionCount(Cnt.getParentCount() +
+                                Cnt.getAdjustedCount() +
+                                BC.ContinueCount);
+      (*CountMap)[S->getCond()] = PGO.getCurrentRegionCount();
+      Visit(S->getCond());
+      Cnt.adjustForControlFlow();
+      Cnt.applyAdjustmentsToRegion(BC.BreakCount + BC.ContinueCount);
+      RecordNextStmtCount = true;
+    }
+
+    void VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S) {
+      RecordStmtCount(S);
+      Visit(S->getElement());
+      RegionCounter Cnt(PGO, S);
+      BreakContinueStack.push_back(BreakContinue());
+      Cnt.beginRegion();
+      (*CountMap)[S->getBody()] = PGO.getCurrentRegionCount();
+      Visit(S->getBody());
+      BreakContinue BC = BreakContinueStack.pop_back_val();
+      Cnt.adjustForControlFlow();
+      Cnt.applyAdjustmentsToRegion(BC.BreakCount + BC.ContinueCount);
+      RecordNextStmtCount = true;
+    }
+
+    void VisitSwitchStmt(const SwitchStmt *S) {
+      RecordStmtCount(S);
+      Visit(S->getCond());
+      PGO.setCurrentRegionUnreachable();
+      BreakContinueStack.push_back(BreakContinue());
+      Visit(S->getBody());
+      // If the switch is inside a loop, add the continue counts.
+      BreakContinue BC = BreakContinueStack.pop_back_val();
+      if (!BreakContinueStack.empty())
+        BreakContinueStack.back().ContinueCount += BC.ContinueCount;
+      RegionCounter ExitCnt(PGO, S);
+      ExitCnt.beginRegion();
+      RecordNextStmtCount = true;
+    }
+
+    void VisitCaseStmt(const CaseStmt *S) {
+      RecordNextStmtCount = false;
+      RegionCounter Cnt(PGO, S);
+      Cnt.beginRegion(/*AddIncomingFallThrough=*/true);
+      (*CountMap)[S] = Cnt.getCount();
+      RecordNextStmtCount = true;
+      Visit(S->getSubStmt());
+    }
+
+    void VisitDefaultStmt(const DefaultStmt *S) {
+      RecordNextStmtCount = false;
+      RegionCounter Cnt(PGO, S);
+      Cnt.beginRegion(/*AddIncomingFallThrough=*/true);
+      (*CountMap)[S] = Cnt.getCount();
+      RecordNextStmtCount = true;
+      Visit(S->getSubStmt());
+    }
+
+    void VisitIfStmt(const IfStmt *S) {
+      RecordStmtCount(S);
+      RegionCounter Cnt(PGO, S);
+      Visit(S->getCond());
+
+      Cnt.beginRegion();
+      (*CountMap)[S->getThen()] = PGO.getCurrentRegionCount();
+      Visit(S->getThen());
+      Cnt.adjustForControlFlow();
+
+      if (S->getElse()) {
+        Cnt.beginElseRegion();
+        (*CountMap)[S->getElse()] = PGO.getCurrentRegionCount();
+        Visit(S->getElse());
+        Cnt.adjustForControlFlow();
+      }
+      Cnt.applyAdjustmentsToRegion(0);
+      RecordNextStmtCount = true;
+    }
+
+    void VisitCXXTryStmt(const CXXTryStmt *S) {
+      RecordStmtCount(S);
+      Visit(S->getTryBlock());
+      for (unsigned I = 0, E = S->getNumHandlers(); I < E; ++I)
+        Visit(S->getHandler(I));
+      RegionCounter Cnt(PGO, S);
+      Cnt.beginRegion();
+      RecordNextStmtCount = true;
+    }
+
+    void VisitCXXCatchStmt(const CXXCatchStmt *S) {
+      RecordNextStmtCount = false;
+      RegionCounter Cnt(PGO, S);
+      Cnt.beginRegion();
+      (*CountMap)[S] = PGO.getCurrentRegionCount();
+      Visit(S->getHandlerBlock());
+    }
+
+    void VisitConditionalOperator(const ConditionalOperator *E) {
+      RecordStmtCount(E);
+      RegionCounter Cnt(PGO, E);
+      Visit(E->getCond());
+
+      Cnt.beginRegion();
+      (*CountMap)[E->getTrueExpr()] = PGO.getCurrentRegionCount();
+      Visit(E->getTrueExpr());
+      Cnt.adjustForControlFlow();
+
+      Cnt.beginElseRegion();
+      (*CountMap)[E->getFalseExpr()] = PGO.getCurrentRegionCount();
+      Visit(E->getFalseExpr());
+      Cnt.adjustForControlFlow();
+
+      Cnt.applyAdjustmentsToRegion(0);
+      RecordNextStmtCount = true;
+    }
+
+    void VisitBinLAnd(const BinaryOperator *E) {
+      RecordStmtCount(E);
+      RegionCounter Cnt(PGO, E);
+      Visit(E->getLHS());
+      Cnt.beginRegion();
+      (*CountMap)[E->getRHS()] = PGO.getCurrentRegionCount();
+      Visit(E->getRHS());
+      Cnt.adjustForControlFlow();
+      Cnt.applyAdjustmentsToRegion(0);
+      RecordNextStmtCount = true;
+    }
+
+    void VisitBinLOr(const BinaryOperator *E) {
+      RecordStmtCount(E);
+      RegionCounter Cnt(PGO, E);
+      Visit(E->getLHS());
+      Cnt.beginRegion();
+      (*CountMap)[E->getRHS()] = PGO.getCurrentRegionCount();
+      Visit(E->getRHS());
+      Cnt.adjustForControlFlow();
+      Cnt.applyAdjustmentsToRegion(0);
+      RecordNextStmtCount = true;
+    }
+  };
 }
 
 void CodeGenPGO::assignRegionCounters(GlobalDecl &GD) {
@@ -415,8 +739,10 @@ void CodeGenPGO::assignRegionCounters(GlobalDecl &GD) {
   mapRegionCounters(D);
   if (InstrumentRegions)
     emitCounterVariables();
-  if (PGOData)
+  if (PGOData) {
     loadRegionCounts(GD, PGOData);
+    computeRegionCounts(D);
+  }
 }
 
 void CodeGenPGO::mapRegionCounters(const Decl *D) {
@@ -425,6 +751,13 @@ void CodeGenPGO::mapRegionCounters(const Decl *D) {
   if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
     Walker.VisitFunctionDecl(FD);
   NumRegionCounters = Walker.NextCounter;
+}
+
+void CodeGenPGO::computeRegionCounts(const Decl *D) {
+  StmtCountMap = new llvm::DenseMap<const Stmt*, uint64_t>();
+  ComputeRegionCounts Walker(StmtCountMap, *this);
+  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
+    Walker.VisitFunctionDecl(FD);
 }
 
 void CodeGenPGO::emitCounterVariables() {
@@ -464,6 +797,8 @@ void CodeGenPGO::loadRegionCounts(GlobalDecl &GD, PGOProfileData *PGOData) {
 void CodeGenPGO::destroyRegionCounters() {
   if (RegionCounterMap != 0)
     delete RegionCounterMap;
+  if (StmtCountMap != 0)
+    delete StmtCountMap;
   if (RegionCounts != 0)
     delete RegionCounts;
 }
@@ -492,4 +827,19 @@ llvm::MDNode *CodeGenPGO::createBranchWeights(ArrayRef<uint64_t> Weights) {
     ScaledWeights.push_back(*WI + 1);
   }
   return MDHelper.createBranchWeights(ScaledWeights);
+}
+
+llvm::MDNode *CodeGenPGO::createLoopWeights(const Stmt *Cond,
+                                            RegionCounter &Cnt) {
+  if (!haveRegionCounts())
+    return 0;
+  uint64_t LoopCount = Cnt.getCount();
+  uint64_t CondCount = 0;
+  bool Found = getStmtCount(Cond, CondCount);
+  assert(Found && "missing expected loop condition count");
+  (void)Found;
+  if (CondCount == 0)
+    return 0;
+  return createBranchWeights(LoopCount,
+                             std::max(CondCount, LoopCount) - LoopCount);
 }

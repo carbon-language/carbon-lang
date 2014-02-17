@@ -2934,7 +2934,6 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
   CGF.EmitBlock(RHSBlock);
   Cnt.beginRegion(Builder);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
-  Cnt.adjustForControlFlow();
   eval.end(CGF);
 
   // Reaquire the RHS block, as there may be subblocks inserted.
@@ -2947,7 +2946,6 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
     Builder.SetCurrentDebugLocation(llvm::DebugLoc());
   CGF.EmitBlock(ContBlock);
   PN->addIncoming(RHSCond, RHSBlock);
-  Cnt.applyAdjustmentsToRegion();
 
   // ZExt result to int.
   return Builder.CreateZExtOrBitCast(PN, ResTy, "land.ext");
@@ -3017,7 +3015,6 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
   CGF.EmitBlock(RHSBlock);
   Cnt.beginRegion(Builder);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
-  Cnt.adjustForControlFlow();
 
   eval.end(CGF);
 
@@ -3028,7 +3025,6 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
   // into the phi node for the edge with the value of RHSCond.
   CGF.EmitBlock(ContBlock);
   PN->addIncoming(RHSCond, RHSBlock);
-  Cnt.applyAdjustmentsToRegion();
 
   // ZExt result to int.
   return Builder.CreateZExtOrBitCast(PN, ResTy, "lor.ext");
@@ -3171,21 +3167,17 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   eval.begin(CGF);
   Value *LHS = Visit(lhsExpr);
   eval.end(CGF);
-  Cnt.adjustForControlFlow();
 
   LHSBlock = Builder.GetInsertBlock();
   Builder.CreateBr(ContBlock);
 
   CGF.EmitBlock(RHSBlock);
-  Cnt.beginElseRegion();
   eval.begin(CGF);
   Value *RHS = Visit(rhsExpr);
   eval.end(CGF);
-  Cnt.adjustForControlFlow();
 
   RHSBlock = Builder.GetInsertBlock();
   CGF.EmitBlock(ContBlock);
-  Cnt.applyAdjustmentsToRegion();
 
   // If the LHS or RHS is a throw expression, it will be legitimately null.
   if (!LHS)

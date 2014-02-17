@@ -1,20 +1,12 @@
-simple_loops 10
+simple_loops 4
 1
 100
-0
-0
 100
-0
-0
-76
-0
-0
+75
 
-conditionals 13
+conditionals 11
 1
 100
-0
-0
 50
 50
 33
@@ -25,7 +17,7 @@ conditionals 13
 99
 100
 
-early_exits 13
+early_exits 9
 1
 0
 51
@@ -34,21 +26,13 @@ early_exits 13
 1
 25
 1
-26
-0
-0
-1
 0
 
-jumps 30
+jumps 22
 1
 1
 0
-0
-0
 1
-0
-0
 0
 0
 1
@@ -57,8 +41,6 @@ jumps 30
 2
 3
 2
-0
-0
 0
 3
 0
@@ -66,23 +48,19 @@ jumps 30
 1
 1
 10
-0
-0
 0
 10
 9
 
-switches 21
+switches 19
 1
 1
 1
 15
-0
-7
 7
 1
 0
-3
+2
 2
 3
 3
@@ -95,15 +73,13 @@ switches 21
 1
 0
 
-big_switch 19
+big_switch 17
 1
 32
-0
-0
 32
 1
 0
-2
+1
 1
 11
 11
@@ -119,17 +95,26 @@ big_switch 19
 issue_with_one_counter 1
 0
 
-boolean_operators 10
+boolean_operators 8
 1
 100
-0
-0
 34
 66
 17
 34
 33
 50
+
+boolop_loops 9
+1
+50
+51
+50
+26
+50
+51
+50
+26
 
 no_usable_data 5
 1
@@ -140,3 +125,4 @@ no_usable_data 5
 
 main 1
 1
+

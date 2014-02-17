@@ -818,18 +818,13 @@ private:
   llvm::DenseMap<const LabelDecl*, JumpDest> LabelMap;
 
   // BreakContinueStack - This keeps track of where break and continue
-  // statements should jump to and the associated base counter for
-  // instrumentation.
+  // statements should jump to.
   struct BreakContinue {
-    BreakContinue(JumpDest Break, JumpDest Continue, RegionCounter *LoopCnt,
-                  bool CountBreak = true)
-      : BreakBlock(Break), ContinueBlock(Continue), LoopCnt(LoopCnt),
-        CountBreak(CountBreak) {}
+    BreakContinue(JumpDest Break, JumpDest Continue)
+      : BreakBlock(Break), ContinueBlock(Continue) {}
 
     JumpDest BreakBlock;
     JumpDest ContinueBlock;
-    RegionCounter *LoopCnt;
-    bool CountBreak;
   };
   SmallVector<BreakContinue, 8> BreakContinueStack;
 
@@ -1156,6 +1151,7 @@ public:
   void EmitDestructorBody(FunctionArgList &Args);
   void emitImplicitAssignmentOperatorBody(FunctionArgList &Args);
   void EmitFunctionBody(FunctionArgList &Args, const Stmt *Body);
+  void EmitBlockWithFallThrough(llvm::BasicBlock *BB, RegionCounter &Cnt);
 
   void EmitForwardingCallToLambda(const CXXMethodDecl *LambdaCallOperator,
                                   CallArgList &CallArgs);

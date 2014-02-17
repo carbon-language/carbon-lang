@@ -13,8 +13,8 @@
 // RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile-throws.pgodata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE %s
 // RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile-throws.pgodata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE-EXC %s
 
-// PGOGEN: @[[THC:__llvm_pgo_ctr[0-9]*]] = private global [11 x i64] zeroinitializer
-// PGOGEN-EXC: @[[THC:__llvm_pgo_ctr[0-9]*]] = private global [11 x i64] zeroinitializer
+// PGOGEN: @[[THC:__llvm_pgo_ctr[0-9]*]] = private global [9 x i64] zeroinitializer
+// PGOGEN-EXC: @[[THC:__llvm_pgo_ctr[0-9]*]] = private global [9 x i64] zeroinitializer
 
 // PGOGEN-LABEL: @_Z6throwsv()
 // PGOUSE-LABEL: @_Z6throwsv()
@@ -24,10 +24,10 @@ void throws() {
   // PGOUSE: br {{.*}} !prof ![[TH1:[0-9]+]]
   for (int i = 0; i < 100; ++i) {
     try {
-      // PGOGEN: store {{.*}} @[[THC]], i64 0, i64 5
+      // PGOGEN: store {{.*}} @[[THC]], i64 0, i64 3
       // PGOUSE: br {{.*}} !prof ![[TH2:[0-9]+]]
       if (i % 3) {
-        // PGOGEN: store {{.*}} @[[THC]], i64 0, i64 6
+        // PGOGEN: store {{.*}} @[[THC]], i64 0, i64 4
         // PGOUSE: br {{.*}} !prof ![[TH3:[0-9]+]]
         if (i < 50)
           throw 1;
@@ -38,7 +38,7 @@ void throws() {
         // PGOUSE: if.else{{.*}}:
         // PGOGEN: if.else{{.*}}:
 
-        // PGOGEN: store {{.*}} @[[THC]], i64 0, i64 7
+        // PGOGEN: store {{.*}} @[[THC]], i64 0, i64 5
         // PGOUSE: br {{.*}} !prof ![[TH4:[0-9]+]]
         if (i >= 50)
           throw 0;
@@ -47,14 +47,14 @@ void throws() {
       // PGOUSE-EXC: catch{{.*}}:
       // PGOGEN-EXC: catch{{.*}}:
 
-      // PGOGEN-EXC: store {{.*}} @[[THC]], i64 0, i64 8
-      // PGOGEN-EXC: store {{.*}} @[[THC]], i64 0, i64 9
+      // PGOGEN-EXC: store {{.*}} @[[THC]], i64 0, i64 6
+      // PGOGEN-EXC: store {{.*}} @[[THC]], i64 0, i64 7
       // PGOUSE-EXC: br {{.*}} !prof ![[TH5:[0-9]+]]
       if (e) {}
     }
-    // PGOGEN: store {{.*}} @[[THC]], i64 0, i64 4
+    // PGOGEN: store {{.*}} @[[THC]], i64 0, i64 2
 
-    // PGOGEN: store {{.*}} @[[THC]], i64 0, i64 10
+    // PGOGEN: store {{.*}} @[[THC]], i64 0, i64 8
     // PGOUSE: br {{.*}} !prof ![[TH6:[0-9]+]]
     if (i < 100) {}
   }
