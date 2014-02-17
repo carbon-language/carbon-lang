@@ -12,5 +12,5 @@
 
 // CHECK-WITHOUT-G-NOT: "-g"
 // CHECK-WITH-G: "-g"
-// CHECK-WITH-G-DARWIN: "-g"
+// CHECK-WITH-G-DARWIN: "-gdwarf-2"
 
