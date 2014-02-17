@@ -236,10 +236,10 @@ struct _LIBCPP_TYPE_VIS_ONLY integral_constant
     typedef _Tp               value_type;
     typedef integral_constant type;
     _LIBCPP_INLINE_VISIBILITY
-        _LIBCPP_CONSTEXPR operator value_type() const {return value;}
+        _LIBCPP_CONSTEXPR operator value_type() const _NOEXCEPT {return value;}
 #if _LIBCPP_STD_VER > 11
     _LIBCPP_INLINE_VISIBILITY
-         constexpr value_type operator ()() const {return value;}
+         constexpr value_type operator ()() const _NOEXCEPT {return value;}
 #endif
 };
 
