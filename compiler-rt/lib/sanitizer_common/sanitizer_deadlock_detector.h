@@ -36,6 +36,7 @@ class DeadlockDetectorTLS {
   }
 
   void addLock(uptr lock_id, uptr current_epoch) {
+    // Printf("addLock: %zx %zx\n", lock_id, current_epoch);
     if (current_epoch != epoch_)  {
       bv_.clear();
       epoch_ = current_epoch;
@@ -44,6 +45,7 @@ class DeadlockDetectorTLS {
   }
 
   void removeLock(uptr lock_id, uptr current_epoch) {
+    // Printf("remLock: %zx %zx\n", lock_id, current_epoch);
     if (current_epoch != epoch_)  {
       bv_.clear();
       epoch_ = current_epoch;
@@ -117,8 +119,8 @@ class DeadlockDetector {
   bool onLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
     uptr cur_idx = nodeToIndex(cur_node);
     bool is_reachable = g_.isReachable(cur_idx, dtls->getLocks());
-    dtls->addLock(cur_idx, current_epoch_);
     g_.addEdges(dtls->getLocks(), cur_idx);
+    dtls->addLock(cur_idx, current_epoch_);
     return is_reachable;
   }
 
@@ -128,6 +130,13 @@ class DeadlockDetector {
   }
 
   uptr testOnlyGetEpoch() const { return current_epoch_; }
+
+  void Print() {
+    for (uptr from = 0; from < size(); from++)
+      for (uptr to = 0; to < size(); to++)
+        if (g_.hasEdge(from, to))
+          Printf("  %zx => %zx\n", from, to);
+  }
 
  private:
   void check_idx(uptr idx) const { CHECK_LT(idx, size()); }

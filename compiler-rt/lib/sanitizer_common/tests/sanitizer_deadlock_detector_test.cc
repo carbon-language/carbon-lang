@@ -32,17 +32,21 @@ typedef TwoLevelBitVector<3, BasicBitVector<u8> > BV4;
 // Poor man's unique_ptr.
 template<class BV>
 struct ScopedDD {
-  ScopedDD() { dp = new DeadlockDetector<BV>; }
+  ScopedDD() {
+    dp = new DeadlockDetector<BV>;
+    dp->clear();
+    dtls.clear();
+  }
   ~ScopedDD() { delete dp; }
   DeadlockDetector<BV> *dp;
+  DeadlockDetectorTLS<BV> dtls;
 };
 
 template <class BV>
 void BasicTest() {
   ScopedDD<BV> sdd;
   DeadlockDetector<BV> &d = *sdd.dp;
-  DeadlockDetectorTLS<BV> dtls;
-  d.clear();
+  DeadlockDetectorTLS<BV> &dtls = sdd.dtls;
   set<uptr> s;
   for (size_t i = 0; i < d.size() * 3; i++) {
     uptr node = d.newNode(0);
@@ -118,8 +122,7 @@ template <class BV>
 void RemoveNodeTest() {
   ScopedDD<BV> sdd;
   DeadlockDetector<BV> &d = *sdd.dp;
-  DeadlockDetectorTLS<BV> dtls;
-  d.clear();
+  DeadlockDetectorTLS<BV> &dtls = sdd.dtls;
 
   uptr l0 = d.newNode(0);
   uptr l1 = d.newNode(1);
@@ -220,3 +223,46 @@ TEST(DeadlockDetector, RemoveNodeTest) {
   RemoveNodeTest<BV3>();
   RemoveNodeTest<BV4>();
 }
+
+template <class BV>
+void MultipleEpochsTest() {
+  ScopedDD<BV> sdd;
+  DeadlockDetector<BV> &d = *sdd.dp;
+  DeadlockDetectorTLS<BV> &dtls = sdd.dtls;
+
+  set<uptr> locks;
+  for (uptr i = 0; i < d.size(); i++) {
+    EXPECT_TRUE(locks.insert(d.newNode(i)).second);
+  }
+  EXPECT_EQ(d.testOnlyGetEpoch(), d.size());
+  for (uptr i = 0; i < d.size(); i++) {
+    EXPECT_TRUE(locks.insert(d.newNode(i)).second);
+    EXPECT_EQ(d.testOnlyGetEpoch(), d.size() * 2);
+  }
+  locks.clear();
+
+  uptr l0 = d.newNode(0);
+  uptr l1 = d.newNode(0);
+  d.onLock(&dtls, l0);
+  d.onLock(&dtls, l1);
+  d.onUnlock(&dtls, l0);
+  EXPECT_EQ(d.testOnlyGetEpoch(), 3 * d.size());
+  for (uptr i = 0; i < d.size(); i++) {
+    EXPECT_TRUE(locks.insert(d.newNode(i)).second);
+  }
+  EXPECT_EQ(d.testOnlyGetEpoch(), 4 * d.size());
+
+  // Can not handle the locks from the previous epoch.
+  // The user should update the lock id.
+  EXPECT_DEATH(d.onLock(&dtls, l0), "CHECK failed.*current_epoch_");
+  EXPECT_DEATH(d.onUnlock(&dtls, l1), "CHECK failed.*current_epoch_");
+}
+
+TEST(DeadlockDetector, MultipleEpochsTest) {
+  MultipleEpochsTest<BV1>();
+  MultipleEpochsTest<BV2>();
+  MultipleEpochsTest<BV3>();
+  MultipleEpochsTest<BV4>();
+}
+
+
