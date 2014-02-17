@@ -67,6 +67,13 @@ class BasicBitVector {
     return bits_ != old;
   }
 
+  // Do "this &= ~v" and return whether any bits have been removed.
+  bool setDifference(const BasicBitVector &v) {
+    basic_int_t old = bits_;
+    bits_ &= ~v.bits_;
+    return bits_ != old;
+  }
+
   void copyFrom(const BasicBitVector &v) { bits_ = v.bits_; }
 
   // Returns true if 'this' intersects with 'v'.
@@ -216,6 +223,23 @@ class TwoLevelBitVector {
           if (l2_[i0][i1].empty())
             l1_[i0].clearBit(i1);
         }
+      }
+    }
+    return res;
+  }
+
+  // Do "this &= ~v" and return whether any bits have been removed.
+  bool setDifference(const TwoLevelBitVector &v) {
+    bool res = false;
+    for (uptr i0 = 0; i0 < kLevel1Size; i0++) {
+      BV t = l1_[i0];
+      t.setIntersection(v.l1_[i0]);
+      while (!t.empty()) {
+        uptr i1 = t.getAndClearFirstOne();
+        if (l2_[i0][i1].setDifference(v.l2_[i0][i1]))
+          res = true;
+        if (l2_[i0][i1].empty())
+          l1_[i0].clearBit(i1);
       }
     }
     return res;

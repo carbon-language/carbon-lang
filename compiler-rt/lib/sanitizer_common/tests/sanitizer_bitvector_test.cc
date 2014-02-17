@@ -67,7 +67,7 @@ void Print(const BV &bv) {
 }
 
 void Print(const set<uptr> &s) {
-  for (set<uptr>::reverse_iterator it = s.rbegin(); it != s.rend(); ++it) {
+  for (set<uptr>::iterator it = s.begin(); it != s.end(); ++it) {
     fprintf(stderr, "%zd ", *it);
   }
   fprintf(stderr, "\n");
@@ -107,7 +107,8 @@ void TestBitVector(uptr expected_size) {
   }
 
   vector<uptr>bits(bv.size());
-  // Test setUnion, setIntersection, intersectsWith, and getAndClearFirstOne.
+  // Test setUnion, setIntersection, setDifference,
+  // intersectsWith, and getAndClearFirstOne.
   for (uptr it = 0; it < 30; it++) {
     // iota
     for (size_t j = 0; j < bits.size(); j++) bits[j] = j;
@@ -147,6 +148,15 @@ void TestBitVector(uptr expected_size) {
     t_bv.copyFrom(bv);
     EXPECT_EQ(t_bv.setIntersection(bv1), s.size() != t_s.size());
     CheckBV(t_bv, t_s);
+
+    // setDifference
+    vec.clear();
+    set_difference(s.begin(), s.end(), s1.begin(), s1.end(),
+                     back_insert_iterator<vector<uptr> >(vec));
+    t_s = set<uptr>(vec.begin(), vec.end());
+    t_bv.copyFrom(bv);
+    EXPECT_EQ(t_bv.setDifference(bv1), s.size() != t_s.size());
+    CheckBV(t_bv, t_s);
   }
 }
 
@@ -158,9 +168,9 @@ TEST(SanitizerCommon, BasicBitVector) {
 
 TEST(SanitizerCommon, TwoLevelBitVector) {
   uptr ws = SANITIZER_WORDSIZE;
+  TestBitVector<TwoLevelBitVector<1, BasicBitVector<u8> > >(8 * 8);
   TestBitVector<TwoLevelBitVector<> >(ws * ws);
   TestBitVector<TwoLevelBitVector<2> >(ws * ws * 2);
   TestBitVector<TwoLevelBitVector<3> >(ws * ws * 3);
-  TestBitVector<TwoLevelBitVector<3, BasicBitVector<u16> > >
-      (16 * 16 * 3);
+  TestBitVector<TwoLevelBitVector<3, BasicBitVector<u16> > >(16 * 16 * 3);
 }

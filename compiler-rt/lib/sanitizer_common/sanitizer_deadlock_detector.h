@@ -40,7 +40,7 @@ class DeadlockDetectorTLS {
       bv_.clear();
       epoch_ = current_epoch;
     }
-    bv_.setBit(lock_id);
+    CHECK(bv_.setBit(lock_id));
   }
 
   void removeLock(uptr lock_id, uptr current_epoch) {
@@ -48,7 +48,7 @@ class DeadlockDetectorTLS {
       bv_.clear();
       epoch_ = current_epoch;
     }
-    bv_.clearBit(lock_id);
+    CHECK(bv_.clearBit(lock_id));
   }
 
   const BV &getLocks() const { return bv_; }
@@ -88,9 +88,10 @@ class DeadlockDetector {
       return getAvailableNode(data);
     if (!recycled_nodes_.empty()) {
       CHECK(available_nodes_.empty());
+      // removeEdgesFrom was called in removeNode.
+      g_.removeEdgesTo(recycled_nodes_);
       available_nodes_.setUnion(recycled_nodes_);
       recycled_nodes_.clear();
-      // FIXME: actually recycle nodes in the graph.
       return getAvailableNode(data);
     }
     // We are out of vacant nodes. Flush and increment the current_epoch_.
@@ -108,7 +109,7 @@ class DeadlockDetector {
     uptr idx = nodeToIndex(node);
     CHECK(!available_nodes_.getBit(idx));
     CHECK(recycled_nodes_.setBit(idx));
-    // FIXME: also remove from the graph.
+    g_.removeEdgesFrom(idx);
   }
 
   // Handle the lock event, return true if there is a cycle.
@@ -125,6 +126,8 @@ class DeadlockDetector {
   void onUnlock(DeadlockDetectorTLS<BV> *dtls, uptr node) {
     dtls->removeLock(nodeToIndex(node), current_epoch_);
   }
+
+  uptr testOnlyGetEpoch() const { return current_epoch_; }
 
  private:
   void check_idx(uptr idx) const { CHECK_LT(idx, size()); }
