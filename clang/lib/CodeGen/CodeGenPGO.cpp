@@ -480,8 +480,7 @@ llvm::MDNode *CodeGenPGO::createBranchWeights(uint64_t TrueCount,
   return MDHelper.createBranchWeights(TrueCount + 1, FalseCount + 1);
 }
 
-llvm::MDNode *
-CodeGenPGO::createBranchWeights(ArrayRef<uint64_t> Weights) {
+llvm::MDNode *CodeGenPGO::createBranchWeights(ArrayRef<uint64_t> Weights) {
   llvm::MDBuilder MDHelper(CGM.getLLVMContext());
   // TODO: need to scale down to 32-bits, instead of just truncating.
   // According to Laplace's Rule of Succession, it is better to compute the

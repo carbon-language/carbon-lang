@@ -394,7 +394,7 @@ static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
       if (ty->isImageType())
         AddrSpc =
           CGM.getContext().getTargetAddressSpace(LangAS::opencl_global);
-      
+
       addressQuals.push_back(Builder.getInt32(AddrSpc));
 
       // Get argument type name.
