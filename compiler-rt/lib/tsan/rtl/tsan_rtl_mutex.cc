@@ -22,7 +22,7 @@
 
 namespace __tsan {
 
-static __sanitizer::DeadlockDetector<TwoLevelBitVector<> > g_deadlock_detector;
+static __sanitizer::DeadlockDetector<DDBV> g_deadlock_detector;
 
 static void EnsureDeadlockDetectorID(ThreadState *thr, SyncVar *s) {
   if (!s->deadlock_detector_id)

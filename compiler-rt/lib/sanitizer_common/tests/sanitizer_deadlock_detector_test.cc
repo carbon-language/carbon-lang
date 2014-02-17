@@ -36,7 +36,7 @@ template <class BV>
 void BasicTest() {
   ScopedDD<BV> sdd;
   DeadlockDetector<BV> &d = *sdd.dp;
-  DeadlockDetectorTLS dtls;
+  DeadlockDetectorTLS<BV> dtls;
   d.clear();
   set<uptr> s;
   for (size_t i = 0; i < d.size() * 3; i++) {

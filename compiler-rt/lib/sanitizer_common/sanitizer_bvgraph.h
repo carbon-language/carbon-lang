@@ -39,6 +39,16 @@ class BVGraph {
     return v[from].setBit(to);
   }
 
+  // Returns true if at least one new edge was added.
+  bool addEdges(const BV &from, uptr to) {
+    bool res = false;
+    t1.copyFrom(from);
+    while (!t1.empty())
+      if (v[t1.getAndClearFirstOne()].setBit(to))
+        res = true;
+    return res;
+  }
+
   bool hasEdge(uptr from, uptr to) const {
     check(from, to);
     return v[from].getBit(to);

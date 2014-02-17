@@ -390,6 +390,8 @@ class Shadow : public FastState {
 
 struct SignalContext;
 
+typedef TwoLevelBitVector<> DDBV;  // DeadlockDetector's bit vector.
+
 struct JmpBuf {
   uptr sp;
   uptr mangled_sp;
@@ -451,7 +453,7 @@ struct ThreadState {
   ThreadContext *tctx;
 
   InternalDeadlockDetector internal_deadlock_detector;
-  __sanitizer::DeadlockDetectorTLS deadlock_detector_tls;
+  __sanitizer::DeadlockDetectorTLS<DDBV> deadlock_detector_tls;
 
   bool in_signal_handler;
   SignalContext *signal_ctx;

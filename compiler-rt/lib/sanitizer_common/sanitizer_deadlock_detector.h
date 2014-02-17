@@ -26,38 +26,36 @@ namespace __sanitizer {
 
 // Thread-local state for DeadlockDetector.
 // It contains the locks currently held by the owning thread.
+template <class BV>
 class DeadlockDetectorTLS {
  public:
   // No CTOR.
-  void clear() { n_locks_ = 0; }
-
-  void addLock(uptr node) {
-    CHECK_LT(n_locks_, ARRAY_SIZE(locks_));
-    locks_[n_locks_++] = node;
+  void clear() {
+    bv_.clear();
+    epoch_ = 0;
   }
 
-  void removeLock(uptr node) {
-    CHECK_NE(n_locks_, 0U);
-    for (sptr i = n_locks_ - 1; i >= 0; i--) {
-      if (locks_[i] == node) {
-        locks_[i] = locks_[n_locks_ - 1];
-        n_locks_--;
-        return;
-      }
+  void addLock(uptr lock_id, uptr current_epoch) {
+    if (current_epoch != epoch_)  {
+      bv_.clear();
+      epoch_ = current_epoch;
     }
-    CHECK(0);
+    bv_.setBit(lock_id);
   }
 
-  uptr numLocks() const { return n_locks_; }
-
-  uptr getLock(uptr idx) const {
-    CHECK_LT(idx, n_locks_);
-    return locks_[idx];
+  void removeLock(uptr lock_id, uptr current_epoch) {
+    if (current_epoch != epoch_)  {
+      bv_.clear();
+      epoch_ = current_epoch;
+    }
+    bv_.clearBit(lock_id);
   }
+
+  const BV &getLocks() const { return bv_; }
 
  private:
-  uptr n_locks_;
-  uptr locks_[64];
+  BV bv_;
+  uptr epoch_;
 };
 
 // DeadlockDetector.
@@ -115,24 +113,17 @@ class DeadlockDetector {
 
   // Handle the lock event, return true if there is a cycle.
   // FIXME: handle RW locks, recusive locks, etc.
-  bool onLock(DeadlockDetectorTLS *dtls, uptr cur_node) {
-    BV &cur_locks = t1;
-    cur_locks.clear();
+  bool onLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
     uptr cur_idx = nodeToIndex(cur_node);
-    for (uptr i = 0, n = dtls->numLocks(); i < n; i++) {
-      uptr prev_node = dtls->getLock(i);
-      uptr prev_idx = nodeToIndex(prev_node);
-      g_.addEdge(prev_idx, cur_idx);
-      cur_locks.setBit(prev_idx);
-      // Printf("OnLock %zx; prev %zx\n", cur_node, dtls->getLock(i));
-    }
-    dtls->addLock(cur_node);
-    return g_.isReachable(cur_idx, cur_locks);
+    bool is_reachable = g_.isReachable(cur_idx, dtls->getLocks());
+    dtls->addLock(cur_idx, current_epoch_);
+    g_.addEdges(dtls->getLocks(), cur_idx);
+    return is_reachable;
   }
 
   // Handle the unlock event.
-  void onUnlock(DeadlockDetectorTLS *dtls, uptr node) {
-    dtls->removeLock(node);
+  void onUnlock(DeadlockDetectorTLS<BV> *dtls, uptr node) {
+    dtls->removeLock(nodeToIndex(node), current_epoch_);
   }
 
  private:
@@ -143,12 +134,12 @@ class DeadlockDetector {
     CHECK_EQ(current_epoch_, node / size() * size());
   }
 
-  uptr indexToNode(uptr idx) {
+  uptr indexToNode(uptr idx) const {
     check_idx(idx);
     return idx + current_epoch_;
   }
 
-  uptr nodeToIndex(uptr node) {
+  uptr nodeToIndex(uptr node) const {
     check_node(node);
     return node % size();
   }
@@ -164,7 +155,6 @@ class DeadlockDetector {
   BV recycled_nodes_;
   BVGraph<BV> g_;
   uptr data_[BV::kSize];
-  BV t1;  // Temporary object which we can not keep on stack.
 };
 
 } // namespace __sanitizer
