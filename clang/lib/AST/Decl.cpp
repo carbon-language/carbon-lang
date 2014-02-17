@@ -512,9 +512,9 @@ template <typename T> static bool isFirstInExternCContext(T *D) {
   return First->isInExternCContext();
 }
 
-static bool isSingleLineExternC(const Decl &D) {
+static bool isSingleLineLanguageLinkage(const Decl &D) {
   if (const LinkageSpecDecl *SD = dyn_cast<LinkageSpecDecl>(D.getDeclContext()))
-    if (SD->getLanguage() == LinkageSpecDecl::lang_c && !SD->hasBraces())
+    if (!SD->hasBraces())
       return true;
   return false;
 }
@@ -548,7 +548,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
 
       if (Var->getStorageClass() != SC_Extern &&
           Var->getStorageClass() != SC_PrivateExtern &&
-          !isSingleLineExternC(*Var))
+          !isSingleLineLanguageLinkage(*Var))
         return LinkageInfo::internal();
     }
 
@@ -1771,7 +1771,7 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition(
   //   A declaration directly contained in a linkage-specification is treated
   //   as if it contains the extern specifier for the purpose of determining
   //   the linkage of the declared name and whether it is a definition.
-  if (isSingleLineExternC(*this))
+  if (isSingleLineLanguageLinkage(*this))
     return DeclarationOnly;
 
   // C99 6.9.2p2:
