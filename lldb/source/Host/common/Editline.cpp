@@ -67,8 +67,13 @@ Editline::Editline (const char *prog,       // prog can't be NULL
 
     assert (m_editline);
     ::el_set (m_editline, EL_CLIENTDATA, this);
+
+    // only defined for newer versions of editline
 #ifdef EL_PROMPT_ESC
     ::el_set (m_editline, EL_PROMPT_ESC, GetPromptCallback, k_prompt_escape_char);
+#else
+    // fall back on old prompt setting code
+    ::el_set (m_editline, EL_PROMPT, GetPromptCallback);
 #endif
     ::el_set (m_editline, EL_EDITOR, "emacs");
     if (m_history)
