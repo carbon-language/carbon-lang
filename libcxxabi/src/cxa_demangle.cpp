@@ -352,6 +352,7 @@ parse_substitution(const char* first, const char* last, C& db)
 //                ::= Di   # char32_t
 //                ::= Ds   # char16_t
 //                ::= Da   # auto (in dependent new-expressions)
+//                ::= Dc   # decltype(auto)
 //                ::= Dn   # std::nullptr_t (i.e., decltype(nullptr))
 //                ::= u <source-name>    # vendor extended type
 
@@ -485,6 +486,10 @@ parse_builtin_type(const char* first, const char* last, C& db)
                     break;
                 case 'a':
                     db.names.push_back("auto");
+                    first += 2;
+                    break;
+                case 'c':
+                    db.names.push_back("decltype(auto)");
                     first += 2;
                     break;
                 case 'n':
