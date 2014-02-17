@@ -1167,6 +1167,7 @@ static int readSIB(struct InternalInstruction* insn) {
 
   switch (base) {
   case 0x5:
+  case 0xd:
     switch (modFromModRM(insn->modRM)) {
     case 0x0:
       insn->eaDisplacement = EA_DISP_32;
@@ -1174,13 +1175,11 @@ static int readSIB(struct InternalInstruction* insn) {
       break;
     case 0x1:
       insn->eaDisplacement = EA_DISP_8;
-      insn->sibBase = (insn->addressSize == 4 ?
-                       SIB_BASE_EBP : SIB_BASE_RBP);
+      insn->sibBase = (SIBBase)(sibBaseBase + base);
       break;
     case 0x2:
       insn->eaDisplacement = EA_DISP_32;
-      insn->sibBase = (insn->addressSize == 4 ?
-                       SIB_BASE_EBP : SIB_BASE_RBP);
+      insn->sibBase = (SIBBase)(sibBaseBase + base);
       break;
     case 0x3:
       debug("Cannot have Mod = 0b11 and a SIB byte");
