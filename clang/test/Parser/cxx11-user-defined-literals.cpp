@@ -111,3 +111,35 @@ void operator "" ""
 U"" // expected-error {{cannot have an encoding prefix}}
 "" _also_not_char(const char *);
 void operator "" u8"" "\u0123" "hello"_all_of_the_things ""(const char*); // expected-error {{must be '""'}}
+
+// Make sure we treat UCNs and UTF-8 as equivalent.
+int operator""_µs(unsigned long long) {} // expected-note {{previous}}
+int hundred_µs = 50_µs + 50_\u00b5s;
+int operator""_\u00b5s(unsigned long long) {} // expected-error {{redefinition of 'operator "" _µs'}}
+
+int operator""_\U0000212B(long double) {} // expected-note {{previous}}
+int hundred_Å = 50.0_Å + 50._\U0000212B;
+int operator""_Å(long double) {} // expected-error {{redefinition of 'operator "" _Å'}}
+
+int operator""_𐀀(char) {} // expected-note {{previous}}
+int 𐀀 = '4'_𐀀 + '2'_\U00010000;
+int operator""_\U00010000(char) {} // expected-error {{redefinition of 'operator "" _𐀀'}}
+
+// These all declare the same function.
+int operator""_℮""_\u212e""_\U0000212e""(const char*, size_t);
+int operator""_\u212e""_\U0000212e""_℮""(const char*, size_t);
+int operator""_\U0000212e""_℮""_\u212e""(const char*, size_t);
+int mix_ucn_utf8 = ""_℮""_\u212e""_\U0000212e"";
+
+void operator""_℮""_ℯ(unsigned long long) {} // expected-error {{differing user-defined suffixes ('_℮' and '_ℯ') in string literal concatenation}}
+void operator""_℮""_\u212f(unsigned long long) {} // expected-error {{differing user-defined suffixes ('_℮' and '_ℯ') in string literal concatenation}}
+void operator""_\u212e""_ℯ(unsigned long long) {} // expected-error {{differing user-defined suffixes ('_℮' and '_ℯ') in string literal concatenation}}
+void operator""_\u212e""_\u212f(unsigned long long) {} // expected-error {{differing user-defined suffixes ('_℮' and '_ℯ') in string literal concatenation}}
+
+void operator""_℮""_℮(unsigned long long) {} // expected-note {{previous}}
+void operator""_\u212e""_\u212e(unsigned long long) {} // expected-error {{redefinition}}
+
+#define ¢ *0.01 // expected-error {{macro names must be identifiers}}
+constexpr int operator""_¢(long double d) { return d * 100; } // expected-error {{non-ASCII}}
+constexpr int operator""_¢(unsigned long long n) { return n; } // expected-error {{non-ASCII}}
+static_assert(0.02_¢ == 2_¢, ""); // expected-error 2{{non-ASCII}}

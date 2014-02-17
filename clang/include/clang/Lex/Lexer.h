@@ -614,8 +614,28 @@ private:
   /// \return The Unicode codepoint specified by the UCN, or 0 if the UCN is
   ///         invalid.
   uint32_t tryReadUCN(const char *&CurPtr, const char *SlashLoc, Token *Tok);
-};
 
+  /// \brief Try to consume a UCN as part of an identifier at the current
+  /// location.
+  /// \param CurPtr Initially points to the range of characters in the source
+  ///               buffer containing the '\'. Updated to point past the end of
+  ///               the UCN on success.
+  /// \param Size The number of characters occupied by the '\' (including
+  ///             trigraphs and escaped newlines).
+  /// \param Result The token being produced. Marked as containing a UCN on
+  ///               success.
+  /// \return \c true if a UCN was lexed and it produced an acceptable
+  ///         identifier character, \c false otherwise.
+  bool tryConsumeIdentifierUCN(const char *&CurPtr, unsigned Size,
+                               Token &Result);
+
+  /// \brief Try to consume an identifier character encoded in UTF-8.
+  /// \param CurPtr Points to the start of the (potential) UTF-8 code unit
+  ///        sequence. On success, updated to point past the end of it.
+  /// \return \c true if a UTF-8 sequence mapping to an acceptable identifier
+  ///         character was lexed, \c false otherwise.
+  bool tryConsumeIdentifierUTF8Char(const char *&CurPtr);
+};
 
 }  // end namespace clang
 
