@@ -40,5 +40,5 @@ CINDEX_LINKAGE unsigned long long clang_getBuildSessionTimestamp(void);
 }
 #endif
 
-#endif // CLANG_BUILD_SYSTEM_H
+#endif /* CLANG_BUILD_SYSTEM_H */
 

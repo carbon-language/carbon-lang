@@ -79,7 +79,7 @@ static unsigned getDefaultParsingOptions() {
   return options;
 }
 
-/// \brief Returns 0 in case of success, non-zero in case of a failure.
+/** \brief Returns 0 in case of success, non-zero in case of a failure. */
 static int checkForErrors(CXTranslationUnit TU);
 
 static void describeLibclangFailure(enum CXErrorCode Err) {
