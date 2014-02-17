@@ -24,6 +24,17 @@
 using namespace __sanitizer;
 using namespace std;
 
+
+template<class G>
+void PrintGraph(const G &g) {
+  for (uptr i = 0; i < g.size(); i++) {
+    for (uptr j = 0; j < g.size(); j++) {
+      fprintf(stderr, "%d", g.hasEdge(i, j));
+    }
+    fprintf(stderr, "\n");
+  }
+}
+
 class SimpleGraph {
  public:
   bool addEdge(uptr from, uptr to) {
@@ -133,4 +144,48 @@ TEST(SanitizerCommon, BVGraph_isReachable) {
   Test_isReachable<BasicBitVector<> >();
   Test_isReachable<TwoLevelBitVector<> >();
   Test_isReachable<TwoLevelBitVector<3, BasicBitVector<u8> > >();
+}
+
+template <class BV>
+void LongCycle() {
+  BVGraph<BV> g;
+  g.clear();
+  vector<uptr> path_vec(g.size());
+  uptr *path = path_vec.data();
+  uptr start = 5;
+  for (uptr i = start; i < g.size() - 1; i++) {
+    g.addEdge(i, i + 1);
+    for (uptr j = 0; j < start; j++)
+      g.addEdge(i, j);
+  }
+  //  Bad graph that looks like this:
+  // 00000000000000
+  // 00000000000000
+  // 00000000000000
+  // 00000000000000
+  // 00000000000000
+  // 11111010000000
+  // 11111001000000
+  // 11111000100000
+  // 11111000010000
+  // 11111000001000
+  // 11111000000100
+  // 11111000000010
+  // 11111000000001
+  // if (g.size() <= 64) PrintGraph(g);
+  BV target;
+  for (uptr i = start + 1; i < g.size(); i += 11) {
+    // if ((i & (i - 1)) == 0) fprintf(stderr, "Path: : %zd\n", i);
+    target.clear();
+    target.setBit(i);
+    EXPECT_TRUE(g.isReachable(start, target));
+    EXPECT_EQ(g.findPath(start, target, path, g.size()), i - start + 1);
+  }
+}
+
+TEST(SanitizerCommon, BVGraph_LongCycle) {
+  LongCycle<BasicBitVector<u8> >();
+  LongCycle<BasicBitVector<> >();
+  LongCycle<TwoLevelBitVector<> >();
+  LongCycle<TwoLevelBitVector<2, BasicBitVector<u8> > >();
 }

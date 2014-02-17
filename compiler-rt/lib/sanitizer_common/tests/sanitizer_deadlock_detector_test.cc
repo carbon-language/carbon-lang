@@ -24,11 +24,18 @@
 using namespace __sanitizer;
 using namespace std;
 
+// Poor man's unique_ptr.
+template<class BV>
+struct ScopedDD {
+  ScopedDD() { dp = new DeadlockDetector<BV>; }
+  ~ScopedDD() { delete dp; }
+  DeadlockDetector<BV> *dp;
+};
+
 template <class BV>
-void TestDeadlockDetector() {
-  // Can't allocate on stack.
-  DeadlockDetector<BV> *dp = new DeadlockDetector<BV>;
-  DeadlockDetector<BV> &d = *dp;
+void BasicTest() {
+  ScopedDD<BV> sdd;
+  DeadlockDetector<BV> &d = *sdd.dp;
   DeadlockDetectorTLS dtls;
   d.clear();
   set<uptr> s;
@@ -93,13 +100,10 @@ void TestDeadlockDetector() {
     d.onUnlock(&dtls, n1);
     d.onUnlock(&dtls, n3);
   }
-
-  delete dp;
 }
 
-TEST(SanitizerCommon, DeadlockDetector) {
-  TestDeadlockDetector<BasicBitVector<> >();
-  TestDeadlockDetector<TwoLevelBitVector<2> >();
-  TestDeadlockDetector<TwoLevelBitVector<3,
-      BasicBitVector<unsigned short> > >();
+TEST(DeadlockDetector, BasicTest) {
+  BasicTest<BasicBitVector<> >();
+  BasicTest<TwoLevelBitVector<2> >();
+  BasicTest<TwoLevelBitVector<3, BasicBitVector<u16> > >();
 }
