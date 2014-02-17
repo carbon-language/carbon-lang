@@ -1383,6 +1383,17 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
   for (std::vector<Record*>::iterator i = Attrs.begin(), e = Attrs.end();
        i != e; ++i) {
     Record &R = **i;
+
+    // FIXME: Currently, documentation is generated as-needed due to the fact
+    // that there is no way to allow a generated project "reach into" the docs
+    // directory (for instance, it may be an out-of-tree build). However, we want
+    // to ensure that every attribute has a Documentation field, and produce an
+    // error if it has been neglected. Otherwise, the on-demand generation which
+    // happens server-side will fail. This code is ensuring that functionality,
+    // even though this Emitter doesn't technically need the documentation.
+    // When attribute documentation can be generated as part of the build
+    // itself, this code can be removed.
+    (void)R.getValueAsListOfDefs("Documentation");
     
     if (!R.getValueAsBit("ASTNode"))
       continue;
