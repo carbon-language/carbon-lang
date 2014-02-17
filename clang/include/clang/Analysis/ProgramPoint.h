@@ -658,11 +658,11 @@ protected:
 private:
   const void *TagKind;
 };
-  
+
 class SimpleProgramPointTag : public ProgramPointTag {
-  std::string desc;
+  std::string Desc;
 public:
-  SimpleProgramPointTag(StringRef description);
+  SimpleProgramPointTag(StringRef MsgProvider, StringRef Msg);
   StringRef getTagDescription() const;
 };
 

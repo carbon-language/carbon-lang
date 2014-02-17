@@ -1738,7 +1738,7 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   // Generate leak node.
   ExplodedNode *N = C.getPredecessor();
   if (!Errors.empty()) {
-    static SimpleProgramPointTag Tag("MallocChecker : DeadSymbolsLeak");
+    static CheckerProgramPointTag Tag("MallocChecker", "DeadSymbolsLeak");
     N = C.addTransition(C.getState(), C.getPredecessor(), &Tag);
     for (SmallVectorImpl<SymbolRef>::iterator
            I = Errors.begin(), E = Errors.end(); I != E; ++I) {
@@ -2251,11 +2251,17 @@ void MallocChecker::printState(raw_ostream &Out, ProgramStateRef State,
   RegionStateTy RS = State->get<RegionState>();
 
   if (!RS.isEmpty()) {
-    Out << Sep << "MallocChecker:" << NL;
+    Out << Sep << "MallocChecker :" << NL;
     for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
+      const RefState *RefS = State->get<RegionState>(I.getKey());
+      AllocationFamily Family = RefS->getAllocationFamily();
+      Optional<MallocChecker::CheckKind> CheckKind = getCheckIfTracked(Family);
+
       I.getKey()->dumpToStream(Out);
       Out << " : ";
       I.getData().dump(Out);
+      if (CheckKind.hasValue())
+        Out << " (" << CheckNames[*CheckKind].getName() << ")";
       Out << NL;
     }
   }
@@ -2269,11 +2275,8 @@ void ento::registerNewDeleteLeaksChecker(CheckerManager &mgr) {
       mgr.getCurrentCheckName();
   // We currently treat NewDeleteLeaks checker as a subchecker of NewDelete 
   // checker.
-  if (!checker->ChecksEnabled[MallocChecker::CK_NewDeleteChecker]) {
+  if (!checker->ChecksEnabled[MallocChecker::CK_NewDeleteChecker])
     checker->ChecksEnabled[MallocChecker::CK_NewDeleteChecker] = true;
-    checker->CheckNames[MallocChecker::CK_NewDeleteChecker] =
-        mgr.getCurrentCheckName();
-  }
 }
 
 #define REGISTER_CHECKER(name)                                                 \

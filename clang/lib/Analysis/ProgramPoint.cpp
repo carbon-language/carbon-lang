@@ -43,9 +43,10 @@ ProgramPoint ProgramPoint::getProgramPoint(const Stmt *S, ProgramPoint::Kind K,
   }
 }
 
-SimpleProgramPointTag::SimpleProgramPointTag(StringRef description)
-  : desc(description) {}
+SimpleProgramPointTag::SimpleProgramPointTag(StringRef MsgProvider, 
+                                             StringRef Msg)
+  : Desc((MsgProvider + " : " + Msg).str()) {}
 
 StringRef SimpleProgramPointTag::getTagDescription() const {
-  return desc;
+  return Desc;
 }

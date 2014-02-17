@@ -465,6 +465,17 @@ public:
                           const char *NL, const char *Sep) const { }
 };
 
+/// Dump checker name to stream.
+raw_ostream& operator<<(raw_ostream &Out, const CheckerBase &Checker);
+
+/// Tag that can use a checker name as a message provider 
+/// (see SimpleProgramPointTag).
+class CheckerProgramPointTag : public SimpleProgramPointTag {
+public:
+  CheckerProgramPointTag(StringRef CheckerName, StringRef Msg);
+  CheckerProgramPointTag(const CheckerBase *Checker, StringRef Msg);
+};
+
 template <typename CHECK1, typename CHECK2=check::_VoidCheck,
           typename CHECK3=check::_VoidCheck, typename CHECK4=check::_VoidCheck,
           typename CHECK5=check::_VoidCheck, typename CHECK6=check::_VoidCheck,

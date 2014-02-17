@@ -350,7 +350,7 @@ void ObjCSelfInitChecker::printState(raw_ostream &Out, ProgramStateRef State,
   if (FlagMap.isEmpty() && !DidCallInit && !PreCallFlags)
     return;
 
-  Out << Sep << NL << "ObjCSelfInitChecker:" << NL;
+  Out << Sep << NL << *this << " :" << NL;
 
   if (DidCallInit)
     Out << "  An init method has been called." << NL;
