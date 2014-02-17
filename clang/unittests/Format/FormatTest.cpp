@@ -3141,13 +3141,24 @@ TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
       "virtual void aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()\n"
       "    const override;");
 
-  // Unless this would lead to the first parameter being broken.
-  verifyFormat("void someLongFunction(int someLongParameter)\n"
-               "    const {}",
+  // Even if the first parameter has to be wrapped.
+  verifyFormat("void someLongFunction(\n"
+               "    int someLongParameter) const {}",
                getLLVMStyleWithColumns(46));
-  verifyFormat("void someLongFunction(int someLongParameter)\n"
-               "    const {}",
+  verifyFormat("void someLongFunction(\n"
+               "    int someLongParameter) const {}",
                Style);
+  verifyFormat("void someLongFunction(\n"
+               "    int someLongParameter) override {}",
+               Style);
+  verifyFormat("void someLongFunction(\n"
+               "    int someLongParameter) final {}",
+               Style);
+  verifyFormat("void someLongFunction(\n"
+               "    int parameter) const override {}",
+               Style);
+
+  // Unless these are unknown annotations.
   verifyFormat("void SomeFunction(aaaaaaaaaa aaaaaaaaaaaaaaa,\n"
                "                  aaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
                "    LONG_AND_UGLY_ANNOTATION;");
