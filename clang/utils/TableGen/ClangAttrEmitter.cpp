@@ -2858,8 +2858,9 @@ void EmitClangAttrDocs(RecordKeeper &Records, raw_ostream &OS) {
 
     // Walk over each of the attributes in the category and write out their
     // documentation.
-    for (auto D : I->second)
-      WriteDocumentation(D, OS);
+    for (std::vector<DocumentationData>::const_iterator D = I->second.begin(),
+         DE = I->second.end(); D != DE; ++D)
+      WriteDocumentation(*D, OS);
   }
 }
 
