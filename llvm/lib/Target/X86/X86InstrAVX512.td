@@ -969,7 +969,9 @@ let Predicates = [HasAVX512] in {
   def : Pat<(i64 (zext VK1:$src)),
             (SUBREG_TO_REG (i64 0),
              (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16)), sub_32bit)>;
-             
+  def : Pat<(i16 (zext VK1:$src)),
+            (EXTRACT_SUBREG
+             (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16)), sub_16bit)>;
 }
 // With AVX-512 only, 8-bit mask is promoted to 16-bit mask.
 let Predicates = [HasAVX512] in {

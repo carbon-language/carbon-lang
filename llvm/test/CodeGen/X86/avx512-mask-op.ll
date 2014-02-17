@@ -42,3 +42,39 @@ define i8 @shuf_test1(i16 %v) nounwind {
    %mask1 = bitcast <8 x i1> %mask to i8
    ret i8 %mask1
 }
+
+; CHECK: zext_test1
+; CHECK: kshiftlw
+; CHECK: kshiftrw
+; CHECK: kmovw
+; CHECK:ret
+define i32 @zext_test1(<16 x i32> %a, <16 x i32> %b) {
+  %cmp_res = icmp ugt <16 x i32> %a, %b
+  %cmp_res.i1 = extractelement <16 x i1> %cmp_res, i32 5
+  %res = zext i1 %cmp_res.i1 to i32
+  ret i32 %res
+}
+
+; CHECK: zext_test2
+; CHECK: kshiftlw
+; CHECK: kshiftrw
+; CHECK: kmovw
+; CHECK:ret
+define i16 @zext_test2(<16 x i32> %a, <16 x i32> %b) {
+  %cmp_res = icmp ugt <16 x i32> %a, %b
+  %cmp_res.i1 = extractelement <16 x i1> %cmp_res, i32 5
+  %res = zext i1 %cmp_res.i1 to i16
+  ret i16 %res
+}
+
+; CHECK: zext_test3
+; CHECK: kshiftlw
+; CHECK: kshiftrw
+; CHECK: kmovw
+; CHECK:ret
+define i8 @zext_test3(<16 x i32> %a, <16 x i32> %b) {
+  %cmp_res = icmp ugt <16 x i32> %a, %b
+  %cmp_res.i1 = extractelement <16 x i1> %cmp_res, i32 5
+  %res = zext i1 %cmp_res.i1 to i8
+  ret i8 %res
+}
