@@ -15,6 +15,7 @@ add_llvm_tool_subdirectory(llvm-nm)
 add_llvm_tool_subdirectory(llvm-size)
 
 add_llvm_tool_subdirectory(llvm-cov)
+add_llvm_tool_subdirectory(llvm-profdata)
 add_llvm_tool_subdirectory(llvm-link)
 add_llvm_tool_subdirectory(lli)
 

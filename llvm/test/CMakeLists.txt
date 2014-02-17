@@ -37,6 +37,7 @@ set(LLVM_TEST_DEPENDS
           llvm-mcmarkup
           llvm-nm
           llvm-objdump
+          llvm-profdata
           llvm-readobj
           llvm-rtdyld
           llvm-symbolizer

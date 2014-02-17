@@ -25,6 +25,7 @@ Basic Commands
    llvm-config
    llvm-diff
    llvm-cov
+   llvm-profdata
    llvm-stress
    llvm-symbolizer
 
