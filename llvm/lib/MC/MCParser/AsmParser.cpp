@@ -2119,12 +2119,6 @@ bool AsmParser::parseAssignment(StringRef Name, bool allow_redef,
   if (Lexer.isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in assignment");
 
-  // Error on assignment to '.'.
-  if (Name == ".") {
-    return Error(EqualLoc, ("assignment to pseudo-symbol '.' is unsupported "
-                            "(use '.space' or '.org').)"));
-  }
-
   // Eat the end of statement marker.
   Lex();
 
@@ -2152,10 +2146,14 @@ bool AsmParser::parseAssignment(StringRef Name, bool allow_redef,
 
     // Don't count these checks as uses.
     Sym->setUsed(false);
+  } else if (Name == ".") {
+    if (Out.EmitValueToOffset(Value, 0)) {
+      Error(EqualLoc, "expected absolute expression");
+      eatToEndOfStatement();
+    }
+    return false;
   } else
     Sym = getContext().GetOrCreateSymbol(Name);
-
-  // FIXME: Handle '.'.
 
   // Do the assignment.
   Out.EmitAssignment(Sym, Value);
