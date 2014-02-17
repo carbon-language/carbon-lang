@@ -2645,13 +2645,13 @@ public:
   };
 
   DocCategory Category;
-  const Record &Documentation;
-  const Record &Attribute;
+  const Record *Documentation;
+  const Record *Attribute;
 
   DocumentationData(DocCategory Category, const Record &Documentation,
                     const Record &Attribute)
-      : Category(Category), Documentation(Documentation), Attribute(Attribute) {
-  }
+      : Category(Category), Documentation(&Documentation),
+        Attribute(&Attribute) {}
 };
 
 static void WriteCategoryHeader(DocumentationData::DocCategory Category,
@@ -2690,10 +2690,10 @@ static void WriteDocumentation(const DocumentationData &Doc,
   // documentation. This may not be a limiting factor since the spellings
   // should generally be consistently applied across the category.
 
-  std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Doc.Attribute);
+  std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(*Doc.Attribute);
 
   // Determine the heading to be used for this attribute.
-  std::string Heading = Doc.Documentation.getValueAsString("Heading");
+  std::string Heading = Doc.Documentation->getValueAsString("Heading");
   if (Heading.empty()) {
     // If there's only one spelling, we can simply use that.
     if (Spellings.size() == 1)
@@ -2714,7 +2714,7 @@ static void WriteDocumentation(const DocumentationData &Doc,
 
   // If the heading is still empty, it is an error.
   if (Heading.empty())
-    PrintFatalError(Doc.Attribute.getLoc(),
+    PrintFatalError(Doc.Attribute->getLoc(),
                     "This attribute requires a heading to be specified");
 
   // Gather a list of unique spellings; this is not the same as the semantic
@@ -2759,7 +2759,7 @@ static void WriteDocumentation(const DocumentationData &Doc,
   OS << Heading << "\n" << std::string(Heading.length(), '-') << "\n";
 
   if (!SupportedSpellings)
-    PrintFatalError(Doc.Attribute.getLoc(),
+    PrintFatalError(Doc.Attribute->getLoc(),
                     "Attribute has no supported spellings; cannot be "
                     "documented");
 
@@ -2778,10 +2778,10 @@ static void WriteDocumentation(const DocumentationData &Doc,
 
   // If the attribute is deprecated, print a message about it, and possibly
   // provide a replacement attribute.
-  if (!Doc.Documentation.isValueUnset("Deprecated")) {
+  if (!Doc.Documentation->isValueUnset("Deprecated")) {
     OS << "This attribute has been deprecated, and may be removed in a future "
        << "version of Clang.";
-    const Record &Deprecated = *Doc.Documentation.getValueAsDef("Deprecated");
+    const Record &Deprecated = *Doc.Documentation->getValueAsDef("Deprecated");
     std::string Replacement = Deprecated.getValueAsString("Replacement");
     if (!Replacement.empty())
       OS << "  This attribute has been superseded by ``"
@@ -2789,7 +2789,7 @@ static void WriteDocumentation(const DocumentationData &Doc,
     OS << "\n\n";
   }
 
-  std::string ContentStr = Doc.Documentation.getValueAsString("Content");
+  std::string ContentStr = Doc.Documentation->getValueAsString("Content");
   // Trim leading and trailing newlines and spaces.
   StringRef Content(ContentStr);
   while (Content.startswith("\r") || Content.startswith("\n") ||
