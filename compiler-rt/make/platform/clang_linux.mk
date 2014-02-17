@@ -11,7 +11,7 @@ Configs :=
 # cross compilers). For now, we just find the target architecture of the
 # compiler and only define configurations we know that compiler can generate.
 CompilerTargetTriple := $(shell \
-	$(CC) -v 2>&1 | grep 'Target:' | cut -d' ' -f2)
+	LANG=C $(CC) -v 2>&1 | grep 'Target:' | cut -d' ' -f2)
 ifeq ($(CompilerTargetTriple),)
 $(error "unable to infer compiler target triple for $(CC)")
 endif
