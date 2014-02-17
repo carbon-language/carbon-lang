@@ -15,10 +15,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 
 #ifdef _WIN32
 #include "lldb/Host/windows/windows.h"
+#else
+#include <sys/ioctl.h>
 #endif
 
 #include "lldb/Core/DataBufferHeap.h"
@@ -886,6 +887,7 @@ File::CalculateInteractiveAndTerminal ()
     {
         m_is_interactive = eLazyBoolNo;
         m_is_real_terminal = eLazyBoolNo;
+#ifndef _MSC_VER
         if (isatty(fd))
         {
             m_is_interactive = eLazyBoolYes;
@@ -896,6 +898,7 @@ File::CalculateInteractiveAndTerminal ()
                     m_is_real_terminal = eLazyBoolYes;
             }
         }
+#endif
     }
 }
 
