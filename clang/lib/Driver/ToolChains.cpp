@@ -866,8 +866,6 @@ DerivedArgList *MachO::TranslateArgs(const DerivedArgList &Args,
     else if (Name == "armv7s")
       DAL->AddJoinedArg(0, MArch, "armv7s");
 
-    else
-      llvm_unreachable("invalid Darwin arch");
   }
 
   return DAL;
