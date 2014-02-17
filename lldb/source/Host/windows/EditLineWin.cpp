@@ -16,12 +16,9 @@
 #include <vector>
 #include <assert.h>
 
-// index one of the variable arguments
-//  presuming "(EditLine *el, ..." is first in the argument list
-#define GETARG( X ) ( (void* ) *( ( (int**) &el ) + ((X) + 2) ) )
-
 // edit line EL_ADDFN function pointer type
-typedef unsigned char (*el_addfn_func)(EditLine *e, int ch);
+typedef unsigned char(*el_addfn_func)(EditLine *e, int ch);
+typedef const char* (*el_prompt_func)(EditLine *);
 
 // edit line wrapper binding container
 struct el_binding
@@ -221,7 +218,8 @@ el_gets (EditLine *el, int *length)
 int
 el_set (EditLine *el, int code, ...)
 {
-    int **arg = (int**) &el;
+    va_list vl;
+    va_start(vl, code);
     //
     switch ( code )
     {
@@ -233,13 +231,29 @@ el_set (EditLine *el, int code, ...)
             //      contains the prompt.
 
             // get the function pointer from the arg list
-            void *func_vp = (void*) *(arg+2);
+            void *func_vp = (void*)va_arg(vl, el_prompt_func);
             // cast to suitable prototype
-            const char* (*func_fp)(EditLine*) = (const char*(*)(EditLine *)) func_vp;
+            el_prompt_func func_fp = (el_prompt_func)func_vp;
             // call to get the prompt as a string
             _prompt = func_fp( el );
         }
         break;
+
+    case (EL_PROMPT_ESC) :
+        {
+            // EL_PROMPT, char *(*f)( EditLine *)
+            //      define a prompt printing function as 'f', which is to return a string that
+            //      contains the prompt.
+
+            // get the function pointer from the arg list
+            void *func_vp = (void*)va_arg(vl, el_prompt_func);
+            char  escape = (char)va_arg(vl, char);
+            // call to get the prompt as a string
+            el_prompt_func func_fp = (el_prompt_func)func_vp;
+            const char *newPrompt = func_fp(el);
+        }
+        break;
+
     case ( EL_EDITOR ):
         {
             // EL_EDITOR, const char *mode
@@ -271,9 +285,9 @@ el_set (EditLine *el, int code, ...)
             //          CC_FATAL            fatal error, reset tty to known state.
 
             el_binding *binding = new el_binding;
-            binding->name = (const char *)  GETARG( 0 );
-            binding->help = (const char *)  GETARG( 1 );
-            binding->func = (el_addfn_func) GETARG( 2 );
+            binding->name = va_arg( vl, const char *);
+            binding->help = va_arg( vl, const char *);
+            binding->func = va_arg( vl, el_addfn_func );
             binding->key  = 0;
             // add this to the bindings list
             _bindings.push_back( binding );
@@ -284,14 +298,14 @@ el_set (EditLine *el, int code, ...)
             // EL_BIND, const char *, ..., NULL
             //      perform the BIND buildin command.  Refer to editrc(5) for more information.
 
-            const char *name = (const char*) GETARG( 1 );
+            const char *name = va_arg( vl, const char* );
 
             for ( int i=0; i<_bindings.size(); i++ )
             {
                 el_binding *bind = _bindings[i];
                 if ( strcmp( bind->name, name ) == 0 )
                 {
-                    bind->key = (const char *) GETARG( 0 );
+                    bind->key = va_arg( vl, const char * );
                     break;
                 }
             }
@@ -300,7 +314,7 @@ el_set (EditLine *el, int code, ...)
         break;
     case ( EL_CLIENTDATA ):
         {
-            clientData = GETARG( 0 );
+            clientData = va_arg(vl, void*);
         }
         break;
 //    default:
@@ -350,11 +364,14 @@ el_parse (EditLine *, int, const char **)
 int
 el_get (EditLine *el, int code, ...)
 {
+    va_list vl;
+    va_start( vl, code );
+
     switch ( code )
     {
     case ( EL_CLIENTDATA ):
         {
-            void **dout = (void**) GETARG( 0 );
+            void **dout = va_arg( vl, void** );
             *dout = clientData;
         }
         break;
@@ -388,7 +405,7 @@ el_line (EditLine *el)
 int
 el_insertstr (EditLine *, const char *)
 {
-    assert( !"Not implemented!" );
+//    assert( !"Not implemented!" );
     return 0;
 }
 
