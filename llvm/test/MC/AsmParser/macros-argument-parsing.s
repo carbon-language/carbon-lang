@@ -59,3 +59,33 @@
 # CHECK: .long second
 # CHECK: .long -1
 
+	.macro mixed arg0 = 0, arg1 = 1 arg2 = 2, arg3 = 3
+		# begin entry
+		.long \arg0
+		.long \arg1
+		.long \arg2
+		.long \arg3
+		# end entry
+	.endm
+
+mixed 1, 2 3
+
+# CHECK: .long 1
+# CHECK: .long 2
+# CHECK: .long 3
+# CHECK: .long 3
+
+mixed 1 2, 3
+
+# CHECK: .long 1
+# CHECK: .long 2
+# CHECK: .long 3
+# CHECK: .long 3
+
+mixed 1 2, 3 4
+
+# CHECK: .long 1
+# CHECK: .long 2
+# CHECK: .long 3
+# CHECK: .long 4
+
