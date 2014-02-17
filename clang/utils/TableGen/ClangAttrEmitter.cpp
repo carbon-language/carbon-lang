@@ -2677,6 +2677,13 @@ static void WriteCategoryHeader(DocumentationData::DocCategory Category,
   OS << "\n";
 }
 
+enum SpellingKind {
+  GNU = 1 << 0,
+  CXX11 = 1 << 1,
+  Declspec = 1 << 2,
+  Keyword = 1 << 3
+};
+
 static void WriteDocumentation(const DocumentationData &Doc,
                                raw_ostream &OS) {
   // FIXME: there is no way to have a per-spelling category for the attribute
@@ -2714,13 +2721,6 @@ static void WriteDocumentation(const DocumentationData &Doc,
   // spelling for the attribute. Variations in underscores and other non-
   // semantic characters are still acceptable.
   std::vector<std::string> Names;
-
-  enum SpellingKind {
-    GNU = 1 << 0,
-    CXX11 = 1 << 1,
-    Declspec = 1 << 2,
-    Keyword = 1 << 3
-  };
 
   unsigned SupportedSpellings = 0;
   for (std::vector<FlattenedSpelling>::const_iterator I = Spellings.begin(),
