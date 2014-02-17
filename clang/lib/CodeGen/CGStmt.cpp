@@ -1001,7 +1001,7 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
     unsigned NCases = Range.getZExtValue() + 1;
     // We only have one region counter for the entire set of cases here, so we
     // need to divide the weights evenly between the generated cases, ensuring
-    // that the total weight is preserved. Ie, a weight of 5 over three cases
+    // that the total weight is preserved. E.g., a weight of 5 over three cases
     // will be distributed as weights of 2, 2, and 1.
     uint64_t Weight = Total / NCases, Rem = Total % NCases;
     for (unsigned I = 0; I != NCases; ++I) {

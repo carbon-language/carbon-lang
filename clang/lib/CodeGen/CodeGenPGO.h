@@ -158,7 +158,7 @@ public:
   /// number of direct jumps to that label.
   uint64_t getCount() const { return Count; }
   /// Get the value of the counter with adjustments applied. Adjustments occur
-  /// when control enters or leaves the region abnormally, ie, if there is a
+  /// when control enters or leaves the region abnormally; i.e., if there is a
   /// jump to a label within the region, or if the function can return from
   /// within the region. The adjusted count, then, is the value of the counter
   /// at the end of the region.
@@ -166,10 +166,10 @@ public:
     assert((Adjust > 0 || (uint64_t)(-Adjust) <= Count) && "Negative count");
     return Count + Adjust;
   }
-  /// Get the value of the counter in this region's parent, ie, the region that
-  /// was active when this region began. This is useful for deriving counts in
-  /// implicitly counted regions, like the false case of a condition or the
-  /// normal exits of a loop.
+  /// Get the value of the counter in this region's parent, i.e., the region
+  /// that was active when this region began. This is useful for deriving
+  /// counts in implicitly counted regions, like the false case of a condition
+  /// or the normal exits of a loop.
   uint64_t getParentCount() const { return ParentCount; }
 
   /// Get the number of times the condition of a loop will evaluate false. This
