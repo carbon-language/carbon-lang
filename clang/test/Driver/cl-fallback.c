@@ -47,6 +47,6 @@
 
 // RUN: not %clang_cl /fallback /c -- %s 2>&1 | \
 // RUN:     FileCheck -check-prefix=ErrNote %s
-// ErrNote: note: falling back to cl.exe
+// ErrNote: note: falling back to {{.*}}cl.exe
 
 #error "This fails to compile."
