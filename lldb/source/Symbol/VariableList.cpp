@@ -115,6 +115,22 @@ VariableList::FindVariable(const ConstString& name)
     return var_sp;
 }
 
+VariableSP
+VariableList::FindVariable (const ConstString& name, lldb::ValueType value_type)
+{
+    VariableSP var_sp;
+    iterator pos, end = m_variables.end();
+    for (pos = m_variables.begin(); pos != end; ++pos)
+    {
+        if ((*pos)->NameMatches(name) && (*pos)->GetScope() == value_type)
+        {
+            var_sp = (*pos);
+            break;
+        }
+    }
+    return var_sp;
+}
+
 size_t
 VariableList::AppendVariablesIfUnique (const RegularExpression& regex, VariableList &var_list, size_t& total_matches)
 {

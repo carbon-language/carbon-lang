@@ -852,7 +852,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
                 case eValueTypeVariableArgument:    // function argument variables
                 case eValueTypeVariableLocal:       // function local variables
                     {
-                        VariableList *variable_list = frame->GetVariableList(true);
+                        VariableList variable_list;
 
                         SymbolContext sc (frame->GetSymbolContext (eSymbolContextBlock));
 
@@ -863,21 +863,15 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
                         if (sc.block && sc.block->AppendVariables (can_create, 
                                                                    get_parent_variables,
                                                                    stop_if_block_is_inlined_function,
-                                                                   variable_list))
+                                                                   &variable_list))
                         {
                             ConstString const_name(name);
-                            const uint32_t num_variables = variable_list->GetSize();
-                            for (uint32_t i = 0; i < num_variables; ++i)
+                            VariableSP variable_sp(variable_list.FindVariable(const_name,value_type));
+                            if (variable_sp)
                             {
-                                VariableSP variable_sp (variable_list->GetVariableAtIndex(i));
-                                if (variable_sp && 
-                                    variable_sp->GetScope() == value_type &&
-                                    variable_sp->GetName() == const_name)
-                                {
-                                    value_sp = frame->GetValueObjectForFrameVariable (variable_sp, eNoDynamicValues);
-                                    sb_value.SetSP (value_sp, use_dynamic);
-                                    break;
-                                }
+                                value_sp = frame->GetValueObjectForFrameVariable (variable_sp, eNoDynamicValues);
+                                sb_value.SetSP (value_sp, use_dynamic);
+                                break;
                             }
                         }
                     }

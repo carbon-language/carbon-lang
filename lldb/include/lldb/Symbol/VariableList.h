@@ -49,6 +49,9 @@ public:
     
     lldb::VariableSP
     FindVariable (const ConstString& name);
+    
+    lldb::VariableSP
+    FindVariable (const ConstString& name, lldb::ValueType value_type);
 
     uint32_t
     FindVariableIndex (const lldb::VariableSP &var_sp);
