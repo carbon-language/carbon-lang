@@ -20,6 +20,7 @@ Using Clang as a Compiler
    UsersManual
    LanguageExtensions
    CrossCompilation
+   ThreadSafetyAnalysis
    AddressSanitizer
    ThreadSanitizer
    MemorySanitizer

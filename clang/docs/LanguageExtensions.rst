@@ -12,7 +12,7 @@ Clang Language Extensions
    ObjectiveCLiterals
    BlockLanguageSpec
    Block-ABI-Apple
-   AutomaticReferenceCounting   
+   AutomaticReferenceCounting
 
 Introduction
 ============
@@ -2015,7 +2015,7 @@ ARM targets. This attribute may be attached to a function definition and
 instructs the backend to generate appropriate function entry/exit code so that
 it can be used directly as an interrupt service routine.
 
- The parameter passed to the interrupt attribute is optional, but if
+The parameter passed to the interrupt attribute is optional, but if
 provided it must be a string literal with one of the following values: "IRQ",
 "FIQ", "SWI", "ABORT", "UNDEF".
 
@@ -2099,159 +2099,21 @@ to specify that checks for uninitialized memory should not be inserted
 to avoid false positives in other places.
 
 
-Thread-Safety Annotation Checking
-=================================
+Thread Safety Analysis
+======================
 
-Clang supports additional attributes for checking basic locking policies in
-multithreaded programs.  Clang currently parses the following list of
-attributes, although **the implementation for these annotations is currently in
-development.** For more details, see the `GCC implementation
-<http://gcc.gnu.org/wiki/ThreadSafetyAnnotation>`_.
+Clang Thread Safety Analysis is a C++ language extension which warns about
+potential race conditions in code.  The analysis works very much like a type
+system for multi-threaded programs.  In addition to declaring the *type* of
+data (e.g. ``int``, ``float``, etc.), the programmer can (optionally) declare
+how access to that data is controlled in a multi-threaded environment.  The
+compiler will then issue warnings whenever code fails to follow obey the
+declared requirements.
 
-``no_thread_safety_analysis``
------------------------------
+The complete list of thread safety attributes, along with examples and
+frequently asked questions, can be found in the main documentation: see 
+:doc:`ThreadSafetyAnalysis`.
 
-Use ``__attribute__((no_thread_safety_analysis))`` on a function declaration to
-specify that the thread safety analysis should not be run on that function.
-This attribute provides an escape hatch (e.g. for situations when it is
-difficult to annotate the locking policy).
-
-``lockable``
-------------
-
-Use ``__attribute__((lockable))`` on a class definition to specify that it has
-a lockable type (e.g. a Mutex class).  This annotation is primarily used to
-check consistency.
-
-``scoped_lockable``
--------------------
-
-Use ``__attribute__((scoped_lockable))`` on a class definition to specify that
-it has a "scoped" lockable type.  Objects of this type will acquire the lock
-upon construction and release it upon going out of scope.  This annotation is
-primarily used to check consistency.
-
-``guarded_var``
----------------
-
-Use ``__attribute__((guarded_var))`` on a variable declaration to specify that
-the variable must be accessed while holding some lock.
-
-``pt_guarded_var``
-------------------
-
-Use ``__attribute__((pt_guarded_var))`` on a pointer declaration to specify
-that the pointer must be dereferenced while holding some lock.
-
-``guarded_by(l)``
------------------
-
-Use ``__attribute__((guarded_by(l)))`` on a variable declaration to specify
-that the variable must be accessed while holding lock ``l``.
-
-``pt_guarded_by(l)``
---------------------
-
-Use ``__attribute__((pt_guarded_by(l)))`` on a pointer declaration to specify
-that the pointer must be dereferenced while holding lock ``l``.
-
-``acquired_before(...)``
-------------------------
-
-Use ``__attribute__((acquired_before(...)))`` on a declaration of a lockable
-variable to specify that the lock must be acquired before all attribute
-arguments.  Arguments must be lockable type, and there must be at least one
-argument.
-
-``acquired_after(...)``
------------------------
-
-Use ``__attribute__((acquired_after(...)))`` on a declaration of a lockable
-variable to specify that the lock must be acquired after all attribute
-arguments.  Arguments must be lockable type, and there must be at least one
-argument.
-
-``exclusive_lock_function(...)``
---------------------------------
-
-Use ``__attribute__((exclusive_lock_function(...)))`` on a function declaration
-to specify that the function acquires all listed locks exclusively.  This
-attribute takes zero or more arguments: either of lockable type or integers
-indexing into function parameters of lockable type.  If no arguments are given,
-the acquired lock is implicitly ``this`` of the enclosing object.
-
-``shared_lock_function(...)``
------------------------------
-
-Use ``__attribute__((shared_lock_function(...)))`` on a function declaration to
-specify that the function acquires all listed locks, although the locks may be
-shared (e.g. read locks).  This attribute takes zero or more arguments: either
-of lockable type or integers indexing into function parameters of lockable
-type.  If no arguments are given, the acquired lock is implicitly ``this`` of
-the enclosing object.
-
-``exclusive_trylock_function(...)``
------------------------------------
-
-Use ``__attribute__((exclusive_lock_function(...)))`` on a function declaration
-to specify that the function will try (without blocking) to acquire all listed
-locks exclusively.  This attribute takes one or more arguments.  The first
-argument is an integer or boolean value specifying the return value of a
-successful lock acquisition.  The remaining arugments are either of lockable
-type or integers indexing into function parameters of lockable type.  If only
-one argument is given, the acquired lock is implicitly ``this`` of the
-enclosing object.
-
-``shared_trylock_function(...)``
---------------------------------
-
-Use ``__attribute__((shared_lock_function(...)))`` on a function declaration to
-specify that the function will try (without blocking) to acquire all listed
-locks, although the locks may be shared (e.g. read locks).  This attribute
-takes one or more arguments.  The first argument is an integer or boolean value
-specifying the return value of a successful lock acquisition.  The remaining
-arugments are either of lockable type or integers indexing into function
-parameters of lockable type.  If only one argument is given, the acquired lock
-is implicitly ``this`` of the enclosing object.
-
-``unlock_function(...)``
-------------------------
-
-Use ``__attribute__((unlock_function(...)))`` on a function declaration to
-specify that the function release all listed locks.  This attribute takes zero
-or more arguments: either of lockable type or integers indexing into function
-parameters of lockable type.  If no arguments are given, the acquired lock is
-implicitly ``this`` of the enclosing object.
-
-``lock_returned(l)``
---------------------
-
-Use ``__attribute__((lock_returned(l)))`` on a function declaration to specify
-that the function returns lock ``l`` (``l`` must be of lockable type).  This
-annotation is used to aid in resolving lock expressions.
-
-``locks_excluded(...)``
------------------------
-
-Use ``__attribute__((locks_excluded(...)))`` on a function declaration to
-specify that the function must not be called with the listed locks.  Arguments
-must be lockable type, and there must be at least one argument.
-
-``exclusive_locks_required(...)``
----------------------------------
-
-Use ``__attribute__((exclusive_locks_required(...)))`` on a function
-declaration to specify that the function must be called while holding the
-listed exclusive locks.  Arguments must be lockable type, and there must be at
-least one argument.
-
-``shared_locks_required(...)``
-------------------------------
-
-Use ``__attribute__((shared_locks_required(...)))`` on a function declaration
-to specify that the function must be called while holding the listed shared
-locks.  Arguments must be lockable type, and there must be at least one
-argument.
 
 Consumed Annotation Checking
 ============================
