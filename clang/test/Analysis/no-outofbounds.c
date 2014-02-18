@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core,alpha.unix,alpha.security.ArrayBound -analyzer-store=region -verify %s
+// expected-no-diagnostics
 
 //===----------------------------------------------------------------------===//
 // This file tests cases where we should not flag out-of-bounds warnings.
@@ -24,8 +25,7 @@ void free(void *);
 
 void field() {
   struct vec { size_t len; int data[0]; };
-  // FIXME: Not warn for this.
-  struct vec *a = malloc(sizeof(struct vec) + 10); // expected-warning {{Cast a region whose size is not a multiple of the destination type size}}
+  struct vec *a = malloc(sizeof(struct vec) + 10*sizeof(int));
   a->len = 10;
   a->data[1] = 5; // no-warning
   free(a);

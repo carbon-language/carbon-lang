@@ -29,6 +29,64 @@ public:
 };
 }
 
+/// Check if we are casting to a struct with a flexible array at the end.
+/// \code
+/// struct foo {
+///   size_t len;
+///   struct bar data[];
+/// };
+/// \endcode
+/// or
+/// \code
+/// struct foo {
+///   size_t len;
+///   struct bar data[0];
+/// }
+/// \endcode
+/// In these cases it is also valid to allocate size of struct foo + a multiple
+/// of struct bar.
+static bool evenFlexibleArraySize(ASTContext &Ctx, CharUnits RegionSize,
+                                  CharUnits TypeSize, QualType ToPointeeTy) {
+  const RecordType *RT = ToPointeeTy->getAs<RecordType>();
+  if (!RT)
+    return false;
+
+  const RecordDecl *RD = RT->getDecl();
+  RecordDecl::field_iterator Iter(RD->field_begin());
+  RecordDecl::field_iterator End(RD->field_end());
+  const FieldDecl *Last = 0;
+  for (; Iter != End; ++Iter)
+    Last = *Iter;
+  assert(Last && "empty structs should already be handled");
+
+  const Type *ElemType = Last->getType()->getArrayElementTypeNoTypeQual();
+  CharUnits FlexSize;
+  if (const ConstantArrayType *ArrayTy =
+        Ctx.getAsConstantArrayType(Last->getType())) {
+    FlexSize = Ctx.getTypeSizeInChars(ElemType);
+    if (ArrayTy->getSize() == 1 && TypeSize > FlexSize)
+      TypeSize -= FlexSize;
+    else if (ArrayTy->getSize() != 0)
+      return false;
+  } else if (RD->hasFlexibleArrayMember()) {
+    FlexSize = Ctx.getTypeSizeInChars(ElemType);
+  } else {
+    return false;
+  }
+
+  if (FlexSize.isZero())
+    return false;
+
+  CharUnits Left = RegionSize - TypeSize;
+  if (Left.isNegative())
+    return false;
+
+  if (Left % FlexSize == 0)
+    return true;
+
+  return false;
+}
+
 void CastSizeChecker::checkPreStmt(const CastExpr *CE,CheckerContext &C) const {
   const Expr *E = CE->getSubExpr();
   ASTContext &Ctx = C.getASTContext();
@@ -66,18 +124,20 @@ void CastSizeChecker::checkPreStmt(const CastExpr *CE,CheckerContext &C) const {
   if (typeSize.isZero())
     return;
 
-  if (regionSize % typeSize != 0) {
-    if (ExplodedNode *errorNode = C.generateSink()) {
-      if (!BT)
-        BT.reset(
-            new BuiltinBug(this, "Cast region with wrong size.",
-                           "Cast a region whose size is not a multiple of the"
-                           " destination type size."));
-      BugReport *R = new BugReport(*BT, BT->getDescription(),
-                                               errorNode);
-      R->addRange(CE->getSourceRange());
-      C.emitReport(R);
-    }
+  if (regionSize % typeSize == 0)
+    return;
+
+  if (evenFlexibleArraySize(Ctx, regionSize, typeSize, ToPointeeTy))
+    return;
+
+  if (ExplodedNode *errorNode = C.generateSink()) {
+    if (!BT)
+      BT.reset(new BuiltinBug(this, "Cast region with wrong size.",
+                                    "Cast a region whose size is not a multiple"
+                                    " of the destination type size."));
+    BugReport *R = new BugReport(*BT, BT->getDescription(), errorNode);
+    R->addRange(CE->getSourceRange());
+    C.emitReport(R);
   }
 }
 
