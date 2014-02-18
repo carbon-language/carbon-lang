@@ -709,7 +709,9 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
 
       section_iterator tsi(Obj.end_sections());
       check(TargetSymbol->getSection(tsi));
-      Rel.SectionID = findOrEmitSection(Obj, (*tsi), true, LocalSections);
+      bool IsCode = false;
+      tsi->isText(IsCode);
+      Rel.SectionID = findOrEmitSection(Obj, (*tsi), IsCode, LocalSections);
       Rel.Addend = (intptr_t)Addend;
       return;
     }
