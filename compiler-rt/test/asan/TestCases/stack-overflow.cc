@@ -22,7 +22,7 @@ void large_frame_func(char *p, int level) {
     large_frame_func(buf, level + 1);
   // CHECK: {{stack-overflow on address 0x.* \(pc 0x.* sp 0x.* bp 0x.* T.*\)}}
   // Frame 0 may be anywhere (in rand(), for example).
-  // CHECK: {{    #1 0x.* in large_frame_func.*stack-overflow.cc:}}[[@LINE-3]]
+  // CHECK: {{    #. 0x.* in large_frame_func.*stack-overflow.cc:}}[[@LINE-3]]
 }
 
 void *ThreadFn(void* unused) {
