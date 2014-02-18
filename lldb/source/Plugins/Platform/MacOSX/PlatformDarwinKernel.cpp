@@ -663,6 +663,7 @@ PlatformDarwinKernel::CalculateTrapHandlerSymbolNames ()
     m_trap_handlers.push_back(ConstString ("hndl_double_fault"));
     m_trap_handlers.push_back(ConstString ("hndl_allintrs"));
     m_trap_handlers.push_back(ConstString ("hndl_alltraps"));
+    m_trap_handlers.push_back(ConstString ("interrupt"));
 }
 
 #else  // __APPLE__
