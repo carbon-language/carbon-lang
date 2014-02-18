@@ -103,6 +103,16 @@ public:
         HasError = true;
         return RelocToApply();
       }
+    } else if (FileFormat == "ELF64-mips") {
+      switch (RelocType) {
+      case llvm::ELF::R_MIPS_32:
+        return visitELF_MIPS_32(R, Value);
+      case llvm::ELF::R_MIPS_64:
+        return visitELF_MIPS_64(R, Value);
+      default:
+        HasError = true;
+        return RelocToApply();
+      }
     } else if (FileFormat == "ELF64-aarch64") {
       switch (RelocType) {
       case llvm::ELF::R_AARCH64_ABS32:
@@ -258,6 +268,13 @@ private:
     getELFRelocationAddend(R, Addend);
     uint32_t Res = (Value + Addend) & 0xFFFFFFFF;
     return RelocToApply(Res, 4);
+  }
+
+  RelocToApply visitELF_MIPS_64(RelocationRef R, uint64_t Value) {
+    int64_t Addend;
+    getELFRelocationAddend(R, Addend);
+    uint64_t Res = (Value + Addend);
+    return RelocToApply(Res, 8);
   }
 
   // AArch64 ELF
