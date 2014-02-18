@@ -2,11 +2,10 @@
 
 include_directories(..)
 
+set(TSAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 # SANITIZER_COMMON_CFLAGS contains -fPIC, but it's performance-critical for
 # TSan runtime to be built with -fPIE to reduce the number of register spills.
-set(TSAN_CFLAGS
-  ${SANITIZER_COMMON_CFLAGS}
-  -fPIE)
+append_if(TSAN_CFLAGS COMPILER_RT_HAS_FPIE_FLAG -fPIE)
 append_no_rtti_flag(TSAN_CFLAGS)
 
 set(TSAN_RTL_CFLAGS ${TSAN_CFLAGS})
