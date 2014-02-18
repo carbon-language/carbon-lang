@@ -28,6 +28,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
@@ -99,30 +100,22 @@ static bool IsNullTerminatedString(const Constant *C) {
   return false;
 }
 
-/// Return the MCSymbol for the specified global value.  This
-/// symbol is the main label that is the address of the global.
-MCSymbol *TargetLoweringObjectFile::getSymbol(const GlobalValue *GV,
-                                              Mangler &M) const {
-  SmallString<60> NameStr;
-  M.getNameWithPrefix(NameStr, GV);
-  return Ctx->GetOrCreateSymbol(NameStr.str());
-}
-
 MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
-    const GlobalValue *GV, StringRef Suffix, Mangler &M) const {
+    const GlobalValue *GV, StringRef Suffix, Mangler &Mang,
+    const TargetMachine &TM) const {
   assert(!Suffix.empty());
 
   SmallString<60> NameStr;
   NameStr += DL->getPrivateGlobalPrefix();
-  M.getNameWithPrefix(NameStr, GV);
+  TM.getTargetLowering()->getNameWithPrefix(NameStr, GV, Mang);
   NameStr.append(Suffix.begin(), Suffix.end());
   return Ctx->GetOrCreateSymbol(NameStr.str());
 }
 
-MCSymbol *TargetLoweringObjectFile::
-getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
-                        MachineModuleInfo *MMI) const {
-  return getSymbol(GV, Mang);
+MCSymbol *TargetLoweringObjectFile::getCFIPersonalitySymbol(
+    const GlobalValue *GV, Mangler &Mang, const TargetMachine &TM,
+    MachineModuleInfo *MMI) const {
+  return TM.getTargetLowering()->getSymbol(GV, Mang);
 }
 
 void TargetLoweringObjectFile::emitPersonalityValue(MCStreamer &Streamer,
@@ -275,6 +268,10 @@ SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
   return SelectSectionForGlobal(GV, Kind, Mang, TM);
 }
 
+bool TargetLoweringObjectFile::isSectionAtomizableBySymbols(
+    const MCSection &Section) const {
+  return false;
+}
 
 // Lame default implementation. Calculate the section name for global.
 const MCSection *
@@ -312,9 +309,11 @@ TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
 /// handling information.
 const MCExpr *TargetLoweringObjectFile::getTTypeGlobalReference(
     const GlobalValue *GV, unsigned Encoding, Mangler &Mang,
-    MachineModuleInfo *MMI, MCStreamer &Streamer) const {
+    const TargetMachine &TM, MachineModuleInfo *MMI,
+    MCStreamer &Streamer) const {
   const MCSymbolRefExpr *Ref =
-      MCSymbolRefExpr::Create(getSymbol(GV, Mang), getContext());
+    MCSymbolRefExpr::Create(TM.getTargetLowering()->getSymbol(GV, Mang),
+                            getContext());
 
   return getTTypeReference(Ref, Encoding, Streamer);
 }

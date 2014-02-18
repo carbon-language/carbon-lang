@@ -28,10 +28,10 @@ public:
 
   void Initialize(MCContext &Ctx, const TargetMachine &TM) LLVM_OVERRIDE;
 
-  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV,
-                                        unsigned Encoding, Mangler &Mang,
-                                        MachineModuleInfo *MMI,
-                                        MCStreamer &Streamer) const
+  const MCExpr *
+  getTTypeGlobalReference(const GlobalValue *GV, unsigned Encoding,
+                          Mangler &Mang, const TargetMachine &TM,
+                          MachineModuleInfo *MMI, MCStreamer &Streamer) const
       LLVM_OVERRIDE;
 
   /// \brief Describe a TLS variable address within debug info.

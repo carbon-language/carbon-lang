@@ -101,7 +101,8 @@ void Win64Exception::endFunction(const MachineFunction *) {
   if (shouldEmitPersonality) {
     const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
     const Function *Per = MMI->getPersonalities()[MMI->getPersonalityIndex()];
-    const MCSymbol *Sym = TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, MMI);
+    const MCSymbol *Sym =
+        TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, Asm->TM, MMI);
 
     Asm->OutStreamer.PushSection();
     Asm->OutStreamer.EmitWin64EHHandlerData();

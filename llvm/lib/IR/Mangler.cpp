@@ -76,12 +76,18 @@ static void AddFastCallStdCallSuffix(raw_ostream &OS, const Function *F,
   OS << '@' << ArgWords;
 }
 
-void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV) const {
+void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
+                                bool CannotUsePrivateLabel) const {
   ManglerPrefixTy PrefixTy = Mangler::Default;
-  if (GV->hasPrivateLinkage())
-    PrefixTy = Mangler::Private;
-  else if (GV->hasLinkerPrivateLinkage() || GV->hasLinkerPrivateWeakLinkage())
+  if (GV->hasPrivateLinkage()) {
+    if (CannotUsePrivateLabel)
+      PrefixTy = Mangler::LinkerPrivate;
+    else
+      PrefixTy = Mangler::Private;
+  } else if (GV->hasLinkerPrivateLinkage() ||
+             GV->hasLinkerPrivateWeakLinkage()) {
     PrefixTy = Mangler::LinkerPrivate;
+  }
 
   if (!GV->hasName()) {
     // Get the ID for the global, assigning a new one if we haven't got one
@@ -134,7 +140,8 @@ void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV) const {
 }
 
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
-                                const GlobalValue *GV) const {
+                                const GlobalValue *GV,
+                                bool CannotUsePrivateLabel) const {
   raw_svector_ostream OS(OutName);
-  getNameWithPrefix(OS, GV);
+  getNameWithPrefix(OS, GV, CannotUsePrivateLabel);
 }

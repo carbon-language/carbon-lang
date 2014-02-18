@@ -7,22 +7,22 @@
 ; RUN: FileCheck --check-prefix=OSX %s
 
 ; LINUX: .Lfoo:
-; OSX: L_foo:
+; OSX: l_foo:
 define private void @foo() nounwind {
         ret void
 }
 
 define i32 @bar() nounwind {
 ; LINUX: bl{{.*}}.Lfoo
-; OSX: bl{{.*}}L_foo
+; OSX: bl{{.*}}l_foo
         call void @foo()
 
 ; LINUX: lis{{.*}}.Lbaz
-; OSX:  lis{{.*}}L_baz
+; OSX:  lis{{.*}}l_baz
 	%1 = load i32* @baz, align 4
         ret i32 %1
 }
 
 ; LINUX: .Lbaz:
-; OSX: L_baz:
+; OSX: l_baz:
 @baz = private global i32 4

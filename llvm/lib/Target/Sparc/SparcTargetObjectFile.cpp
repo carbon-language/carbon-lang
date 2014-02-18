@@ -11,23 +11,25 @@
 #include "MCTargetDesc/SparcMCExpr.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Target/TargetLowering.h"
 
 using namespace llvm;
 
 const MCExpr *SparcELFTargetObjectFile::getTTypeGlobalReference(
     const GlobalValue *GV, unsigned Encoding, Mangler &Mang,
-    MachineModuleInfo *MMI, MCStreamer &Streamer) const {
+    const TargetMachine &TM, MachineModuleInfo *MMI,
+    MCStreamer &Streamer) const {
 
   if (Encoding & dwarf::DW_EH_PE_pcrel) {
     MachineModuleInfoELF &ELFMMI = MMI->getObjFileInfo<MachineModuleInfoELF>();
 
-    MCSymbol *SSym = getSymbolWithGlobalValueBase(GV, ".DW.stub", Mang);
+    MCSymbol *SSym = getSymbolWithGlobalValueBase(GV, ".DW.stub", Mang, TM);
 
     // Add information about the stub reference to ELFMMI so that the stub
     // gets emitted by the asmprinter.
     MachineModuleInfoImpl::StubValueTy &StubSym = ELFMMI.getGVStubEntry(SSym);
     if (StubSym.getPointer() == 0) {
-      MCSymbol *Sym = getSymbol(GV, Mang);
+      MCSymbol *Sym = TM.getTargetLowering()->getSymbol(GV, Mang);
       StubSym = MachineModuleInfoImpl::StubValueTy(Sym, !GV->hasLocalLinkage());
     }
 
@@ -37,5 +39,5 @@ const MCExpr *SparcELFTargetObjectFile::getTTypeGlobalReference(
   }
 
   return TargetLoweringObjectFileELF::getTTypeGlobalReference(
-      GV, Encoding, Mang, MMI, Streamer);
+      GV, Encoding, Mang, TM, MMI, Streamer);
 }
