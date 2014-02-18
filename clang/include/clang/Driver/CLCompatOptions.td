@@ -192,6 +192,7 @@ def _SLASH_AI : CLJoined<"AI">;
 def _SLASH_arch : CLJoined<"arch:">;
 def _SLASH_bigobj : CLFlag<"bigobj">;
 def _SLASH_clr : CLJoined<"clr">;
+def _SLASH_d2Zi_PLUS : CLFlag<"d2Zi+">;
 def _SLASH_doc : CLJoined<"doc">;
 def _SLASH_EH : CLJoined<"EH">;
 def _SLASH_EP : CLFlag<"EP">;
