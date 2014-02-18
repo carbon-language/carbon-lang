@@ -811,7 +811,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		260157C41885F4FF00F875CF /* libpanel.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpanel.dylib; path = ../../../../../../../usr/lib/libpanel.dylib; sourceTree = "<group>"; };
+		260157C41885F4FF00F875CF /* libpanel.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpanel.dylib; path = /usr/lib/libpanel.dylib; sourceTree = "<absolute>"; };
 		260223E7115F06D500A601A2 /* SBCommunication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBCommunication.h; path = include/lldb/API/SBCommunication.h; sourceTree = "<group>"; };
 		260223E8115F06E500A601A2 /* SBCommunication.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBCommunication.cpp; path = source/API/SBCommunication.cpp; sourceTree = "<group>"; };
 		26022531115F27FA00A601A2 /* SBFileSpec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBFileSpec.h; path = include/lldb/API/SBFileSpec.h; sourceTree = "<group>"; };
@@ -1952,7 +1952,6 @@
 		08FB7794FE84155DC02AAC07 /* lldb */ = {
 			isa = PBXGroup;
 			children = (
-				260157C41885F4FF00F875CF /* libpanel.dylib */,
 				26F5C32810F3DF7D009D5894 /* Libraries */,
 				264E8576159BE51A00E9D7A2 /* Resources */,
 				08FB7795FE84155DC02AAC07 /* Source */,
@@ -3448,6 +3447,7 @@
 				2689FFCA13353D7A00698AC0 /* liblldb-core.a */,
 				2670F8111862B44A006B332C /* libncurses.dylib */,
 				26F5C37410F3F61B009D5894 /* libobjc.dylib */,
+				260157C41885F4FF00F875CF /* libpanel.dylib */,
 				26F5C32410F3DF23009D5894 /* libpython.dylib */,
 				26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */,
 				26D55234159A7DB100708D8D /* libxml2.dylib */,
