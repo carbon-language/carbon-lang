@@ -6,8 +6,8 @@ include_directories(..)
 # TSan runtime to be built with -fPIE to reduce the number of register spills.
 set(TSAN_CFLAGS
   ${SANITIZER_COMMON_CFLAGS}
-  -fPIE
-  -fno-rtti)
+  -fPIE)
+append_no_rtti_flag(TSAN_CFLAGS)
 
 set(TSAN_RTL_CFLAGS ${TSAN_CFLAGS})
 append_if(TSAN_RTL_CFLAGS COMPILER_RT_HAS_WFRAME_LARGER_THAN_FLAG -Wframe-larger-than=512)

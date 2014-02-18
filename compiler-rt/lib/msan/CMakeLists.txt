@@ -9,12 +9,13 @@ set(MSAN_RTL_SOURCES
   msan_new_delete.cc
   msan_report.cc
   )
+
 set(MSAN_RTL_CFLAGS
   ${SANITIZER_COMMON_CFLAGS}
-  -fno-rtti
   -fPIE
   # Prevent clang from generating libc calls.
   -ffreestanding)
+append_no_rtti_flag(MSAN_RTL_CFLAGS)
 
 # Static runtime library.
 add_custom_target(msan)

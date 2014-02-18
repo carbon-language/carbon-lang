@@ -6,6 +6,17 @@ configure_lit_site_cfg(
 # add_subdirectory(BlocksRuntime)
 # add_subdirectory(builtins)
 
+# When ANDROID, we build tests with the host compiler (i.e. CMAKE_C_COMPILER),
+# and run tests with tools from the host toolchain.
+if (NOT ANDROID)
+  set(SANITIZER_COMMON_LIT_TEST_DEPS
+    clang clang-headers FileCheck count not llvm-nm llvm-symbolizer
+    compiler-rt-headers)
+  if(UNIX)
+    list(APPEND SANITIZER_COMMON_LIT_TEST_DEPS SanitizerLintCheck)
+  endif()
+endif()
+
 # Run sanitizer tests only if we're sure that clang would produce
 # working binaries.
 if(COMPILER_RT_CAN_EXECUTE_TESTS)

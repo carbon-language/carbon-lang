@@ -144,12 +144,6 @@ pythonize_bool(COMPILER_RT_DEBUG)
 #================================
 include(config-ix)
 
-macro(append_if list condition var)
-  if (${condition})
-    list(APPEND ${list} ${var})
-  endif()
-endmacro()
-
 # Provide some common commmandline flags for Sanitizer runtimes.
 append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FPIC_FLAG -fPIC)
 append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FNO_BUILTIN_FLAG -fno-builtin)
@@ -228,17 +222,6 @@ filter_available_targets(TSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386)
 
 add_subdirectory(include)
-
-# When ANDROID, we build tests with the host compiler (i.e. CMAKE_C_COMPILER),
-# and run tests with tools from the host toolchain.
-if (NOT ANDROID)
-  set(SANITIZER_COMMON_LIT_TEST_DEPS
-    clang clang-headers FileCheck count not llvm-nm llvm-symbolizer
-    compiler-rt-headers)
-  if(UNIX)
-    list(APPEND SANITIZER_COMMON_LIT_TEST_DEPS SanitizerLintCheck)
-  endif()
-endif()
 
 set(COMPILER_RT_LIBCXX_PATH ${LLVM_MAIN_SRC_DIR}/projects/libcxx)
 if(EXISTS ${COMPILER_RT_LIBCXX_PATH}/)
