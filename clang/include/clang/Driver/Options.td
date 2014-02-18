@@ -1311,7 +1311,7 @@ def undef : Flag<["-"], "undef">, Group<u_Group>, Flags<[CC1Option]>,
   HelpText<"undef all system defines">;
 def unexported__symbols__list : Separate<["-"], "unexported_symbols_list">;
 def u : JoinedOrSeparate<["-"], "u">, Group<u_Group>;
-def v : Flag<["-"], "v">, Flags<[CC1Option]>,
+def v : Flag<["-"], "v">, Flags<[CC1Option, CoreOption]>,
   HelpText<"Show commands to run and use verbose output">;
 def verify_debug_info : Flag<["--"], "verify-debug-info">, Flags<[DriverOption]>,
   HelpText<"Verify the binary representation of debug output">;
