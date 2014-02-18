@@ -16,7 +16,7 @@ public:
     {
         if (PyErr_Occurred())
         {
-            if(m_print)
+            if(m_print && !PyErr_ExceptionMatches(PyExc_SystemExit))
                 PyErr_Print();
             PyErr_Clear();
         }
