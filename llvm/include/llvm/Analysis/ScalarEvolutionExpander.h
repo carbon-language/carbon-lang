@@ -94,7 +94,7 @@ namespace llvm {
     explicit SCEVExpander(ScalarEvolution &se, const char *name)
       : SE(se), IVName(name), IVIncInsertLoop(0), IVIncInsertPos(0),
         CanonicalMode(true), LSRMode(false),
-        Builder(se.getContext(), TargetFolder(se.TD)) {
+        Builder(se.getContext(), TargetFolder(se.DL)) {
 #ifndef NDEBUG
       DebugType = "";
 #endif

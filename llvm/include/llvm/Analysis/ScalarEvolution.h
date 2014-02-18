@@ -225,9 +225,9 @@ namespace llvm {
     ///
     LoopInfo *LI;
 
-    /// TD - The target data information for the target we are targeting.
+    /// The DataLayout information for the target we are targeting.
     ///
-    DataLayout *TD;
+    DataLayout *DL;
 
     /// TLI - The target library information for the target we are targeting.
     ///

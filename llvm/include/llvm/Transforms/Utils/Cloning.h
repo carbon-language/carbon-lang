@@ -151,7 +151,7 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                SmallVectorImpl<ReturnInst*> &Returns,
                                const char *NameSuffix = "", 
                                ClonedCodeInfo *CodeInfo = 0,
-                               const DataLayout *TD = 0,
+                               const DataLayout *DL = 0,
                                Instruction *TheCall = 0);
 
   
@@ -159,13 +159,13 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// InlineFunction call, and records the auxiliary results produced by it. 
 class InlineFunctionInfo {
 public:
-  explicit InlineFunctionInfo(CallGraph *cg = 0, const DataLayout *td = 0)
-    : CG(cg), TD(td) {}
+  explicit InlineFunctionInfo(CallGraph *cg = 0, const DataLayout *DL = 0)
+    : CG(cg), DL(DL) {}
   
   /// CG - If non-null, InlineFunction will update the callgraph to reflect the
   /// changes it makes.
   CallGraph *CG;
-  const DataLayout *TD;
+  const DataLayout *DL;
 
   /// StaticAllocas - InlineFunction fills this in with all static allocas that
   /// get copied into the caller.

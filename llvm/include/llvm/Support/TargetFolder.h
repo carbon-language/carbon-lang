@@ -30,18 +30,18 @@ class DataLayout;
 
 /// TargetFolder - Create constants with target dependent folding.
 class TargetFolder {
-  const DataLayout *TD;
+  const DataLayout *DL;
 
   /// Fold - Fold the constant using target specific information.
   Constant *Fold(Constant *C) const {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-      if (Constant *CF = ConstantFoldConstantExpression(CE, TD))
+      if (Constant *CF = ConstantFoldConstantExpression(CE, DL))
         return CF;
     return C;
   }
 
 public:
-  explicit TargetFolder(const DataLayout *TheTD) : TD(TheTD) {}
+  explicit TargetFolder(const DataLayout *DL) : DL(DL) {}
 
   //===--------------------------------------------------------------------===//
   // Binary Operators

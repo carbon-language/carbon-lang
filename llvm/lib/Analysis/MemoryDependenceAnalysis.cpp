@@ -87,7 +87,7 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool MemoryDependenceAnalysis::runOnFunction(Function &) {
   AA = &getAnalysis<AliasAnalysis>();
-  TD = getAnalysisIfAvailable<DataLayout>();
+  DL = getAnalysisIfAvailable<DataLayout>();
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : 0;
@@ -258,17 +258,17 @@ isLoadLoadClobberIfExtendedToFullWidth(const AliasAnalysis::Location &MemLoc,
                                        const Value *&MemLocBase,
                                        int64_t &MemLocOffs,
                                        const LoadInst *LI,
-                                       const DataLayout *TD) {
+                                       const DataLayout *DL) {
   // If we have no target data, we can't do this.
-  if (TD == 0) return false;
+  if (DL == 0) return false;
 
   // If we haven't already computed the base/offset of MemLoc, do so now.
   if (MemLocBase == 0)
-    MemLocBase = GetPointerBaseWithConstantOffset(MemLoc.Ptr, MemLocOffs, TD);
+    MemLocBase = GetPointerBaseWithConstantOffset(MemLoc.Ptr, MemLocOffs, DL);
 
   unsigned Size = MemoryDependenceAnalysis::
     getLoadLoadClobberFullWidthSize(MemLocBase, MemLocOffs, MemLoc.Size,
-                                    LI, *TD);
+                                    LI, *DL);
   return Size != 0;
 }
 
@@ -282,7 +282,7 @@ isLoadLoadClobberIfExtendedToFullWidth(const AliasAnalysis::Location &MemLoc,
 unsigned MemoryDependenceAnalysis::
 getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
                                 unsigned MemLocSize, const LoadInst *LI,
-                                const DataLayout &TD) {
+                                const DataLayout &DL) {
   // We can only extend simple integer loads.
   if (!isa<IntegerType>(LI->getType()) || !LI->isSimple()) return 0;
 
@@ -295,7 +295,7 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
   // Get the base of this load.
   int64_t LIOffs = 0;
   const Value *LIBase =
-    GetPointerBaseWithConstantOffset(LI->getPointerOperand(), LIOffs, &TD);
+    GetPointerBaseWithConstantOffset(LI->getPointerOperand(), LIOffs, &DL);
 
   // If the two pointers are not based on the same pointer, we can't tell that
   // they are related.
@@ -331,7 +331,7 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
     // If this load size is bigger than our known alignment or would not fit
     // into a native integer register, then we fail.
     if (NewLoadByteSize > LoadAlign ||
-        !TD.fitsInLegalInteger(NewLoadByteSize*8))
+        !DL.fitsInLegalInteger(NewLoadByteSize*8))
       return 0;
 
     if (LIOffs+NewLoadByteSize > MemLocEnd &&
@@ -424,7 +424,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
           if (IntegerType *ITy = dyn_cast<IntegerType>(LI->getType()))
             if (LI->getAlignment()*8 > ITy->getPrimitiveSizeInBits() &&
                 isLoadLoadClobberIfExtendedToFullWidth(MemLoc, MemLocBase,
-                                                       MemLocOffset, LI, TD))
+                                                       MemLocOffset, LI, DL))
               return MemDepResult::getClobber(Inst);
 
           continue;
@@ -500,7 +500,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     // need to continue scanning until the malloc call.
     const TargetLibraryInfo *TLI = AA->getTargetLibraryInfo();
     if (isa<AllocaInst>(Inst) || isNoAliasFn(Inst, TLI)) {
-      const Value *AccessPtr = GetUnderlyingObject(MemLoc.Ptr, TD);
+      const Value *AccessPtr = GetUnderlyingObject(MemLoc.Ptr, DL);
 
       if (AccessPtr == Inst || AA->isMustAlias(Inst, AccessPtr))
         return MemDepResult::getDef(Inst);
@@ -773,7 +773,7 @@ getNonLocalPointerDependency(const AliasAnalysis::Location &Loc, bool isLoad,
          "Can't get pointer deps of a non-pointer!");
   Result.clear();
 
-  PHITransAddr Address(const_cast<Value *>(Loc.Ptr), TD);
+  PHITransAddr Address(const_cast<Value *>(Loc.Ptr), DL);
 
   // This is the set of blocks we've inspected, and the pointer we consider in
   // each block.  Because of critical edges, we currently bail out if querying

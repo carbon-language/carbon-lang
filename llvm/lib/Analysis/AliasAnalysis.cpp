@@ -416,9 +416,9 @@ AliasAnalysis::ModRefResult
 AliasAnalysis::callCapturesBefore(const Instruction *I,
                                   const AliasAnalysis::Location &MemLoc,
                                   DominatorTree *DT) {
-  if (!DT || !TD) return AliasAnalysis::ModRef;
+  if (!DT || !DL) return AliasAnalysis::ModRef;
 
-  const Value *Object = GetUnderlyingObject(MemLoc.Ptr, TD);
+  const Value *Object = GetUnderlyingObject(MemLoc.Ptr, DL);
   if (!isIdentifiedObject(Object) || isa<GlobalValue>(Object) ||
       isa<Constant>(Object))
     return AliasAnalysis::ModRef;
@@ -472,7 +472,7 @@ AliasAnalysis::~AliasAnalysis() {}
 /// AliasAnalysis interface before any other methods are called.
 ///
 void AliasAnalysis::InitializeAliasAnalysis(Pass *P) {
-  TD = P->getAnalysisIfAvailable<DataLayout>();
+  DL = P->getAnalysisIfAvailable<DataLayout>();
   TLI = P->getAnalysisIfAvailable<TargetLibraryInfo>();
   AA = &P->getAnalysis<AliasAnalysis>();
 }
@@ -487,7 +487,7 @@ void AliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 /// if known, or a conservative value otherwise.
 ///
 uint64_t AliasAnalysis::getTypeStoreSize(Type *Ty) {
-  return TD ? TD->getTypeStoreSize(Ty) : UnknownSize;
+  return DL ? DL->getTypeStoreSize(Ty) : UnknownSize;
 }
 
 /// canBasicBlockModify - Return true if it is possible for execution of the

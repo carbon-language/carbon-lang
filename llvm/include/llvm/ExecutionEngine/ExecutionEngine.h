@@ -111,7 +111,7 @@ class ExecutionEngine {
   ExecutionEngineState EEState;
 
   /// The target data for the platform for which execution is being performed.
-  const DataLayout *TD;
+  const DataLayout *DL;
 
   /// Whether lazy JIT compilation is enabled.
   bool CompilingLazily;
@@ -130,7 +130,7 @@ protected:
   /// optimize for the case where there is only one module.
   SmallVector<Module*, 1> Modules;
 
-  void setDataLayout(const DataLayout *td) { TD = td; }
+  void setDataLayout(const DataLayout *Val) { DL = Val; }
 
   /// getMemoryforGV - Allocate memory for a global variable.
   virtual char *getMemoryForGV(const GlobalVariable *GV);
@@ -238,7 +238,7 @@ public:
 
   //===--------------------------------------------------------------------===//
 
-  const DataLayout *getDataLayout() const { return TD; }
+  const DataLayout *getDataLayout() const { return DL; }
 
   /// removeModule - Remove a Module from the list of modules.  Returns true if
   /// M is found.

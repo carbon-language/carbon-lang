@@ -2663,12 +2663,12 @@ const SCEV *ScalarEvolution::getSizeOfExpr(Type *IntTy, Type *AllocTy) {
   // If we have DataLayout, we can bypass creating a target-independent
   // constant expression and then folding it back into a ConstantInt.
   // This is just a compile-time optimization.
-  if (TD)
-    return getConstant(IntTy, TD->getTypeAllocSize(AllocTy));
+  if (DL)
+    return getConstant(IntTy, DL->getTypeAllocSize(AllocTy));
 
   Constant *C = ConstantExpr::getSizeOf(AllocTy);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD, TLI))
+    if (Constant *Folded = ConstantFoldConstantExpression(CE, DL, TLI))
       C = Folded;
   Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
   assert(Ty == IntTy && "Effective SCEV type doesn't match");
@@ -2681,14 +2681,14 @@ const SCEV *ScalarEvolution::getOffsetOfExpr(Type *IntTy,
   // If we have DataLayout, we can bypass creating a target-independent
   // constant expression and then folding it back into a ConstantInt.
   // This is just a compile-time optimization.
-  if (TD) {
+  if (DL) {
     return getConstant(IntTy,
-                       TD->getStructLayout(STy)->getElementOffset(FieldNo));
+                       DL->getStructLayout(STy)->getElementOffset(FieldNo));
   }
 
   Constant *C = ConstantExpr::getOffsetOf(STy, FieldNo);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD, TLI))
+    if (Constant *Folded = ConstantFoldConstantExpression(CE, DL, TLI))
       C = Folded;
 
   Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(STy));
@@ -2736,8 +2736,8 @@ uint64_t ScalarEvolution::getTypeSizeInBits(Type *Ty) const {
   assert(isSCEVable(Ty) && "Type is not SCEVable!");
 
   // If we have a DataLayout, use it!
-  if (TD)
-    return TD->getTypeSizeInBits(Ty);
+  if (DL)
+    return DL->getTypeSizeInBits(Ty);
 
   // Integer types have fixed sizes.
   if (Ty->isIntegerTy())
@@ -2763,8 +2763,8 @@ Type *ScalarEvolution::getEffectiveSCEVType(Type *Ty) const {
   // The only other support type is pointer.
   assert(Ty->isPointerTy() && "Unexpected non-pointer non-integer type!");
 
-  if (TD)
-    return TD->getIntPtrType(Ty);
+  if (DL)
+    return DL->getIntPtrType(Ty);
 
   // Without DataLayout, conservatively assume pointers are 64-bit.
   return Type::getInt64Ty(getContext());
@@ -3232,7 +3232,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
   // PHI's incoming blocks are in a different loop, in which case doing so
   // risks breaking LCSSA form. Instcombine would normally zap these, but
   // it doesn't have DominatorTree information, so it may miss cases.
-  if (Value *V = SimplifyInstruction(PN, TD, TLI, DT))
+  if (Value *V = SimplifyInstruction(PN, DL, TLI, DT))
     if (LI->replacementPreservesLCSSAForm(PN, V))
       return getSCEV(V);
 
@@ -3503,7 +3503,7 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     // For a SCEVUnknown, ask ValueTracking.
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
-    ComputeMaskedBits(U->getValue(), Zeros, Ones, TD);
+    ComputeMaskedBits(U->getValue(), Zeros, Ones, DL);
     if (Ones == ~Zeros + 1)
       return setUnsignedRange(U, ConservativeResult);
     return setUnsignedRange(U,
@@ -3653,9 +3653,9 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
 
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     // For a SCEVUnknown, ask ValueTracking.
-    if (!U->getValue()->getType()->isIntegerTy() && !TD)
+    if (!U->getValue()->getType()->isIntegerTy() && !DL)
       return setSignedRange(U, ConservativeResult);
-    unsigned NS = ComputeNumSignBits(U->getValue(), TD);
+    unsigned NS = ComputeNumSignBits(U->getValue(), DL);
     if (NS <= 1)
       return setSignedRange(U, ConservativeResult);
     return setSignedRange(U, ConservativeResult.intersectWith(
@@ -3762,7 +3762,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       unsigned TZ = A.countTrailingZeros();
       unsigned BitWidth = A.getBitWidth();
       APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-      ComputeMaskedBits(U->getOperand(0), KnownZero, KnownOne, TD);
+      ComputeMaskedBits(U->getOperand(0), KnownZero, KnownOne, DL);
 
       APInt EffectiveMask =
           APInt::getLowBitsSet(BitWidth, BitWidth - LZ - TZ).shl(TZ);
@@ -4956,7 +4956,7 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
 /// reason, return null.
 static Constant *EvaluateExpression(Value *V, const Loop *L,
                                     DenseMap<Instruction *, Constant *> &Vals,
-                                    const DataLayout *TD,
+                                    const DataLayout *DL,
                                     const TargetLibraryInfo *TLI) {
   // Convenient constant check, but redundant for recursive calls.
   if (Constant *C = dyn_cast<Constant>(V)) return C;
@@ -4983,7 +4983,7 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
       if (!Operands[i]) return 0;
       continue;
     }
-    Constant *C = EvaluateExpression(Operand, L, Vals, TD, TLI);
+    Constant *C = EvaluateExpression(Operand, L, Vals, DL, TLI);
     Vals[Operand] = C;
     if (!C) return 0;
     Operands[i] = C;
@@ -4991,12 +4991,12 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
 
   if (CmpInst *CI = dyn_cast<CmpInst>(I))
     return ConstantFoldCompareInstOperands(CI->getPredicate(), Operands[0],
-                                           Operands[1], TD, TLI);
+                                           Operands[1], DL, TLI);
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     if (!LI->isVolatile())
-      return ConstantFoldLoadFromConstPtr(Operands[0], TD);
+      return ConstantFoldLoadFromConstPtr(Operands[0], DL);
   }
-  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Operands, TD,
+  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Operands, DL,
                                   TLI);
 }
 
@@ -5052,7 +5052,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     // Compute the value of the PHIs for the next iteration.
     // EvaluateExpression adds non-phi values to the CurrentIterVals map.
     DenseMap<Instruction *, Constant *> NextIterVals;
-    Constant *NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD,
+    Constant *NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, DL,
                                            TLI);
     if (NextPHI == 0)
       return 0;        // Couldn't evaluate!
@@ -5078,7 +5078,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
       Constant *&NextPHI = NextIterVals[PHI];
       if (!NextPHI) {   // Not already computed.
         Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
-        NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD, TLI);
+        NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, DL, TLI);
       }
       if (NextPHI != I->second)
         StoppedEvolving = false;
@@ -5134,7 +5134,7 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
   for (unsigned IterationNum = 0; IterationNum != MaxIterations;++IterationNum){
     ConstantInt *CondVal =
       dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, L, CurrentIterVals,
-                                                       TD, TLI));
+                                                       DL, TLI));
 
     // Couldn't symbolically evaluate.
     if (!CondVal) return getCouldNotCompute();
@@ -5164,7 +5164,7 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
       if (NextPHI) continue;    // Already computed!
 
       Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
-      NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD, TLI);
+      NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, DL, TLI);
     }
     CurrentIterVals.swap(NextIterVals);
   }
@@ -5369,14 +5369,14 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
           Constant *C = 0;
           if (const CmpInst *CI = dyn_cast<CmpInst>(I))
             C = ConstantFoldCompareInstOperands(CI->getPredicate(),
-                                                Operands[0], Operands[1], TD,
+                                                Operands[0], Operands[1], DL,
                                                 TLI);
           else if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
             if (!LI->isVolatile())
-              C = ConstantFoldLoadFromConstPtr(Operands[0], TD);
+              C = ConstantFoldLoadFromConstPtr(Operands[0], DL);
           } else
             C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                         Operands, TD, TLI);
+                                         Operands, DL, TLI);
           if (!C) return V;
           return getSCEV(C);
         }
@@ -7385,7 +7385,7 @@ ScalarEvolution::ScalarEvolution()
 bool ScalarEvolution::runOnFunction(Function &F) {
   this->F = &F;
   LI = &getAnalysis<LoopInfo>();
-  TD = getAnalysisIfAvailable<DataLayout>();
+  DL = getAnalysisIfAvailable<DataLayout>();
   TLI = &getAnalysis<TargetLibraryInfo>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   return false;

@@ -55,7 +55,7 @@ class DominatorTree;
 
 class AliasAnalysis {
 protected:
-  const DataLayout *TD;
+  const DataLayout *DL;
   const TargetLibraryInfo *TLI;
 
 private:
@@ -75,7 +75,7 @@ protected:
 
 public:
   static char ID; // Class identification, replacement for typeinfo
-  AliasAnalysis() : TD(0), TLI(0), AA(0) {}
+  AliasAnalysis() : DL(0), TLI(0), AA(0) {}
   virtual ~AliasAnalysis();  // We want to be subclassed
 
   /// UnknownSize - This is a special value which can be used with the
@@ -86,7 +86,7 @@ public:
   /// getDataLayout - Return a pointer to the current DataLayout object, or
   /// null if no DataLayout object is available.
   ///
-  const DataLayout *getDataLayout() const { return TD; }
+  const DataLayout *getDataLayout() const { return DL; }
 
   /// getTargetLibraryInfo - Return a pointer to the current TargetLibraryInfo
   /// object, or null if no TargetLibraryInfo object is available.

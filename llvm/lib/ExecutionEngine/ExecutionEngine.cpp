@@ -590,8 +590,8 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     case Instruction::GetElementPtr: {
       // Compute the index
       GenericValue Result = getConstantValue(Op0);
-      APInt Offset(TD->getPointerSizeInBits(), 0);
-      cast<GEPOperator>(CE)->accumulateConstantOffset(*TD, Offset);
+      APInt Offset(DL->getPointerSizeInBits(), 0);
+      cast<GEPOperator>(CE)->accumulateConstantOffset(*DL, Offset);
 
       char* tmp = (char*) Result.PointerVal;
       Result = PTOGV(tmp + Offset.getSExtValue());
@@ -678,16 +678,16 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
     case Instruction::PtrToInt: {
       GenericValue GV = getConstantValue(Op0);
-      uint32_t PtrWidth = TD->getTypeSizeInBits(Op0->getType());
+      uint32_t PtrWidth = DL->getTypeSizeInBits(Op0->getType());
       assert(PtrWidth <= 64 && "Bad pointer width");
       GV.IntVal = APInt(PtrWidth, uintptr_t(GV.PointerVal));
-      uint32_t IntWidth = TD->getTypeSizeInBits(CE->getType());
+      uint32_t IntWidth = DL->getTypeSizeInBits(CE->getType());
       GV.IntVal = GV.IntVal.zextOrTrunc(IntWidth);
       return GV;
     }
     case Instruction::IntToPtr: {
       GenericValue GV = getConstantValue(Op0);
-      uint32_t PtrWidth = TD->getTypeSizeInBits(CE->getType());
+      uint32_t PtrWidth = DL->getTypeSizeInBits(CE->getType());
       GV.IntVal = GV.IntVal.zextOrTrunc(PtrWidth);
       assert(GV.IntVal.getBitWidth() <= 64 && "Bad pointer width");
       GV.PointerVal = PointerTy(uintptr_t(GV.IntVal.getZExtValue()));

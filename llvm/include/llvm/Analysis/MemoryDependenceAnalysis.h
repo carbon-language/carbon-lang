@@ -323,7 +323,7 @@ namespace llvm {
 
     /// Current AA implementation, just a cache.
     AliasAnalysis *AA;
-    DataLayout *TD;
+    DataLayout *DL;
     DominatorTree *DT;
     OwningPtr<PredIteratorCache> PredCache;
   public:
@@ -415,7 +415,7 @@ namespace llvm {
                                                     int64_t MemLocOffs,
                                                     unsigned MemLocSize,
                                                     const LoadInst *LI,
-                                                    const DataLayout &TD);
+                                                    const DataLayout &DL);
 
   private:
     MemDepResult getCallSiteDependencyFrom(CallSite C, bool isReadOnlyCall,

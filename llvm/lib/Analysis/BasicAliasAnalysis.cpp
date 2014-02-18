@@ -593,7 +593,7 @@ BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc, bool OrLocal) {
   SmallVector<const Value *, 16> Worklist;
   Worklist.push_back(Loc.Ptr);
   do {
-    const Value *V = GetUnderlyingObject(Worklist.pop_back_val(), TD);
+    const Value *V = GetUnderlyingObject(Worklist.pop_back_val(), DL);
     if (!Visited.insert(V)) {
       Visited.clear();
       return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
@@ -698,7 +698,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   assert(notDifferentParent(CS.getInstruction(), Loc.Ptr) &&
          "AliasAnalysis query involving multiple functions!");
 
-  const Value *Object = GetUnderlyingObject(Loc.Ptr, TD);
+  const Value *Object = GetUnderlyingObject(Loc.Ptr, DL);
 
   // If this is a tail call and Loc.Ptr points to a stack location, we know that
   // the tail call cannot access or modify the local stack.
@@ -805,7 +805,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       // LLVM's vld1 and vst1 intrinsics currently only support a single
       // vector register.
       uint64_t Size =
-        TD ? TD->getTypeStoreSize(II->getType()) : UnknownSize;
+        DL ? DL->getTypeStoreSize(II->getType()) : UnknownSize;
       if (isNoAlias(Location(II->getArgOperand(0), Size,
                              II->getMetadata(LLVMContext::MD_tbaa)),
                     Loc))
@@ -814,7 +814,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
     }
     case Intrinsic::arm_neon_vst1: {
       uint64_t Size =
-        TD ? TD->getTypeStoreSize(II->getArgOperand(1)->getType()) : UnknownSize;
+        DL ? DL->getTypeStoreSize(II->getArgOperand(1)->getType()) : UnknownSize;
       if (isNoAlias(Location(II->getArgOperand(0), Size,
                              II->getMetadata(LLVMContext::MD_tbaa)),
                     Loc))
@@ -877,7 +877,7 @@ static bool areVarIndicesEqual(SmallVectorImpl<VariableGEPIndex> &Indices1,
 
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
 /// against another pointer.  We know that V1 is a GEP, but we don't know
-/// anything about V2.  UnderlyingV1 is GetUnderlyingObject(GEP1, TD),
+/// anything about V2.  UnderlyingV1 is GetUnderlyingObject(GEP1, DL),
 /// UnderlyingV2 is the same for V2.
 ///
 AliasAnalysis::AliasResult
@@ -911,13 +911,13 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
         int64_t GEP2BaseOffset;
         SmallVector<VariableGEPIndex, 4> GEP2VariableIndices;
         const Value *GEP2BasePtr =
-          DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices, TD);
+          DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices, DL);
         const Value *GEP1BasePtr =
-          DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, TD);
+          DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, DL);
         // DecomposeGEPExpression and GetUnderlyingObject should return the
         // same result except when DecomposeGEPExpression has no DataLayout.
         if (GEP1BasePtr != UnderlyingV1 || GEP2BasePtr != UnderlyingV2) {
-          assert(TD == 0 &&
+          assert(DL == 0 &&
              "DecomposeGEPExpression and GetUnderlyingObject disagree!");
           return MayAlias;
         }
@@ -937,17 +937,17 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
     // exactly, see if the computed offset from the common pointer tells us
     // about the relation of the resulting pointer.
     const Value *GEP1BasePtr =
-      DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, TD);
+      DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, DL);
 
     int64_t GEP2BaseOffset;
     SmallVector<VariableGEPIndex, 4> GEP2VariableIndices;
     const Value *GEP2BasePtr =
-      DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices, TD);
+      DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices, DL);
 
     // DecomposeGEPExpression and GetUnderlyingObject should return the
     // same result except when DecomposeGEPExpression has no DataLayout.
     if (GEP1BasePtr != UnderlyingV1 || GEP2BasePtr != UnderlyingV2) {
-      assert(TD == 0 &&
+      assert(DL == 0 &&
              "DecomposeGEPExpression and GetUnderlyingObject disagree!");
       return MayAlias;
     }
@@ -977,12 +977,12 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
       return R;
 
     const Value *GEP1BasePtr =
-      DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, TD);
+      DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, DL);
 
     // DecomposeGEPExpression and GetUnderlyingObject should return the
     // same result except when DecomposeGEPExpression has no DataLayout.
     if (GEP1BasePtr != UnderlyingV1) {
-      assert(TD == 0 &&
+      assert(DL == 0 &&
              "DecomposeGEPExpression and GetUnderlyingObject disagree!");
       return MayAlias;
     }
@@ -1215,8 +1215,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
     return NoAlias;  // Scalars cannot alias each other
 
   // Figure out what objects these things are pointing to if we can.
-  const Value *O1 = GetUnderlyingObject(V1, TD);
-  const Value *O2 = GetUnderlyingObject(V2, TD);
+  const Value *O1 = GetUnderlyingObject(V1, DL);
+  const Value *O2 = GetUnderlyingObject(V2, DL);
 
   // Null values in the default address space don't point to any object, so they
   // don't alias any other pointer.
@@ -1265,9 +1265,9 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
 
   // If the size of one access is larger than the entire object on the other
   // side, then we know such behavior is undefined and can assume no alias.
-  if (TD)
-    if ((V1Size != UnknownSize && isObjectSmallerThan(O2, V1Size, *TD, *TLI)) ||
-        (V2Size != UnknownSize && isObjectSmallerThan(O1, V2Size, *TD, *TLI)))
+  if (DL)
+    if ((V1Size != UnknownSize && isObjectSmallerThan(O2, V1Size, *DL, *TLI)) ||
+        (V2Size != UnknownSize && isObjectSmallerThan(O1, V2Size, *DL, *TLI)))
       return NoAlias;
 
   // Check the cache before climbing up use-def chains. This also terminates
@@ -1319,9 +1319,9 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   // If both pointers are pointing into the same object and one of them
   // accesses is accessing the entire object, then the accesses must
   // overlap in some way.
-  if (TD && O1 == O2)
-    if ((V1Size != UnknownSize && isObjectSize(O1, V1Size, *TD, *TLI)) ||
-        (V2Size != UnknownSize && isObjectSize(O2, V2Size, *TD, *TLI)))
+  if (DL && O1 == O2)
+    if ((V1Size != UnknownSize && isObjectSize(O1, V1Size, *DL, *TLI)) ||
+        (V2Size != UnknownSize && isObjectSize(O2, V2Size, *DL, *TLI)))
       return AliasCache[Locs] = PartialAlias;
 
   AliasResult Result =

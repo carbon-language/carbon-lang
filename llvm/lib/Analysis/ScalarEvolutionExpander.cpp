@@ -210,7 +210,7 @@ static bool FactorOutConstant(const SCEV *&S,
                               const SCEV *&Remainder,
                               const SCEV *Factor,
                               ScalarEvolution &SE,
-                              const DataLayout *TD) {
+                              const DataLayout *DL) {
   // Everything is divisible by one.
   if (Factor->isOne())
     return true;
@@ -250,7 +250,7 @@ static bool FactorOutConstant(const SCEV *&S,
   // In a Mul, check if there is a constant operand which is a multiple
   // of the given factor.
   if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S)) {
-    if (TD) {
+    if (DL) {
       // With DataLayout, the size is known. Check if there is a constant
       // operand which is a multiple of the given factor. If so, we can
       // factor it.
@@ -270,7 +270,7 @@ static bool FactorOutConstant(const SCEV *&S,
       for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i) {
         const SCEV *SOp = M->getOperand(i);
         const SCEV *Remainder = SE.getConstant(SOp->getType(), 0);
-        if (FactorOutConstant(SOp, Remainder, Factor, SE, TD) &&
+        if (FactorOutConstant(SOp, Remainder, Factor, SE, DL) &&
             Remainder->isZero()) {
           SmallVector<const SCEV *, 4> NewMulOps(M->op_begin(), M->op_end());
           NewMulOps[i] = SOp;
@@ -285,12 +285,12 @@ static bool FactorOutConstant(const SCEV *&S,
   if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(S)) {
     const SCEV *Step = A->getStepRecurrence(SE);
     const SCEV *StepRem = SE.getConstant(Step->getType(), 0);
-    if (!FactorOutConstant(Step, StepRem, Factor, SE, TD))
+    if (!FactorOutConstant(Step, StepRem, Factor, SE, DL))
       return false;
     if (!StepRem->isZero())
       return false;
     const SCEV *Start = A->getStart();
-    if (!FactorOutConstant(Start, Remainder, Factor, SE, TD))
+    if (!FactorOutConstant(Start, Remainder, Factor, SE, DL))
       return false;
     S = SE.getAddRecExpr(Start, Step, A->getLoop(),
                          A->getNoWrapFlags(SCEV::FlagNW));
@@ -404,8 +404,8 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
   // without the other.
   SplitAddRecs(Ops, Ty, SE);
 
-  Type *IntPtrTy = SE.TD
-                 ? SE.TD->getIntPtrType(PTy)
+  Type *IntPtrTy = SE.DL
+                 ? SE.DL->getIntPtrType(PTy)
                  : Type::getInt64Ty(PTy->getContext());
 
   // Descend down the pointer's type and attempt to convert the other
@@ -424,7 +424,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
         for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
           const SCEV *Op = Ops[i];
           const SCEV *Remainder = SE.getConstant(Ty, 0);
-          if (FactorOutConstant(Op, Remainder, ElSize, SE, SE.TD)) {
+          if (FactorOutConstant(Op, Remainder, ElSize, SE, SE.DL)) {
             // Op now has ElSize factored out.
             ScaledOps.push_back(Op);
             if (!Remainder->isZero())
@@ -458,13 +458,13 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
       bool FoundFieldNo = false;
       // An empty struct has no fields.
       if (STy->getNumElements() == 0) break;
-      if (SE.TD) {
+      if (SE.DL) {
         // With DataLayout, field offsets are known. See if a constant offset
         // falls within any of the struct fields.
         if (Ops.empty()) break;
         if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[0]))
           if (SE.getTypeSizeInBits(C->getType()) <= 64) {
-            const StructLayout &SL = *SE.TD->getStructLayout(STy);
+            const StructLayout &SL = *SE.DL->getStructLayout(STy);
             uint64_t FullOffset = C->getValue()->getZExtValue();
             if (FullOffset < SL.getSizeInBytes()) {
               unsigned ElIdx = SL.getElementContainingOffset(FullOffset);

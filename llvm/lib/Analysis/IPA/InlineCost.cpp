@@ -1203,7 +1203,7 @@ INITIALIZE_PASS_END(InlineCostAnalysis, "inline-cost", "Inline Cost Analysis",
 
 char InlineCostAnalysis::ID = 0;
 
-InlineCostAnalysis::InlineCostAnalysis() : CallGraphSCCPass(ID), TD(0) {}
+InlineCostAnalysis::InlineCostAnalysis() : CallGraphSCCPass(ID), DL(0) {}
 
 InlineCostAnalysis::~InlineCostAnalysis() {}
 
@@ -1214,7 +1214,7 @@ void InlineCostAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool InlineCostAnalysis::runOnSCC(CallGraphSCC &SCC) {
-  TD = getAnalysisIfAvailable<DataLayout>();
+  DL = getAnalysisIfAvailable<DataLayout>();
   TTI = &getAnalysis<TargetTransformInfo>();
   return false;
 }
@@ -1272,7 +1272,7 @@ InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
   DEBUG(llvm::dbgs() << "      Analyzing call of " << Callee->getName()
         << "...\n");
 
-  CallAnalyzer CA(TD, *TTI, *Callee, Threshold);
+  CallAnalyzer CA(DL, *TTI, *Callee, Threshold);
   bool ShouldInline = CA.analyzeCall(CS);
 
   DEBUG(CA.dump());
