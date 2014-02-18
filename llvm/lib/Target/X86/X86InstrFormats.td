@@ -611,11 +611,11 @@ class SS3AI<bits<8> o, Format F, dag outs, dag ins, string asm,
         Requires<[UseSSSE3]>;
 class MMXSS38I<bits<8> o, Format F, dag outs, dag ins, string asm,
                list<dag> pattern, InstrItinClass itin = NoItinerary>
-      : I<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, T8,
+      : I<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, T8PS,
         Requires<[HasSSSE3]>;
 class MMXSS3AI<bits<8> o, Format F, dag outs, dag ins, string asm,
                list<dag> pattern, InstrItinClass itin = NoItinerary>
-      : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TA,
+      : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TAPS,
         Requires<[HasSSSE3]>;
 
 // SSE4.1 Instruction Templates:
