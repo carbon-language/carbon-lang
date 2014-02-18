@@ -1,6 +1,8 @@
 # First, add the subdirectories which contain feature-based runtime libraries
 # and several convenience helper libraries.
 
+include(AddCompilerRT)
+include(SanitizerUtils)
 # Don't build sanitizers in the bootstrap build.
 if(LLVM_USE_SANITIZER STREQUAL "")
   # AddressSanitizer is supported on Linux and Mac OS X.

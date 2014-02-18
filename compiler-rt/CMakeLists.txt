@@ -7,8 +7,6 @@
 # An important constraint of the build is that it only produces libraries
 # based on the ability of the host toolchain to target various platforms.
 
-include(LLVMParseArguments)
-
 # The CompilerRT build system requires CMake version 2.8.8 or higher in order
 # to use its support for building convenience "libraries" as a collection of
 # .o files. This is particularly useful in producing larger, more complex
@@ -19,7 +17,6 @@ else()
   # Version 2.8.12.1 is required to build with Visual Studion 2013.
   cmake_minimum_required(VERSION 2.8.12.1)
 endif()
-
 
 # Top level target used to build all compiler-rt libraries.
 add_custom_target(compiler-rt)
@@ -39,17 +36,17 @@ set(COMPILER_RT_LIBRARY_INSTALL_DIR
 
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
-  ${CMAKE_MODULE_PATH}
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules"
+  ${CMAKE_MODULE_PATH}
   )
-include(AddCompilerRT)
+include(CompilerRTUtils)
 
 set(COMPILER_RT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(COMPILER_RT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # Setup custom SDK sysroots.
 set(COMPILER_RT_DARWIN_SDK_SYSROOT ${COMPILER_RT_SOURCE_DIR}/SDKs/darwin)
 set(COMPILER_RT_LINUX_SDK_SYSROOT ${COMPILER_RT_SOURCE_DIR}/SDKs/linux)
-include(SanitizerUtils)
 
 set(COMPILER_RT_EXTRA_ANDROID_HEADERS ${COMPILER_RT_SOURCE_DIR}/third_party/android/include)
 
@@ -139,66 +136,58 @@ function(filter_available_targets out_var)
 endfunction()
 
 option(COMPILER_RT_DEBUG "Build runtimes with full debug info" OFF)
-
 # COMPILER_RT_DEBUG_PYBOOL is used by lit.common.configured.in.
 pythonize_bool(COMPILER_RT_DEBUG)
 
+#================================
+# Setup Compiler Flags
+#================================
+include(config-ix)
+
+macro(append_if list condition var)
+  if (${condition})
+    list(APPEND ${list} ${var})
+  endif()
+endmacro()
+
 # Provide some common commmandline flags for Sanitizer runtimes.
-if (NOT MSVC)
-  set(SANITIZER_COMMON_CFLAGS
-    -fPIC
-    -fno-builtin
-    -fno-exceptions
-    -fomit-frame-pointer
-    -funwind-tables
-    -fno-stack-protector
-    -Wno-gnu  # Variadic macros with 0 arguments for ...
-    -fvisibility=hidden)
-  if (NOT COMPILER_RT_DEBUG)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FPIC_FLAG -fPIC)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FNO_BUILTIN_FLAG -fno-builtin)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FNO_EXCEPTIONS_FLAG -fno-exceptions)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FOMIT_FRAME_POINTER_FLAG -fomit-frame-pointer)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FUNWIND_TABLES_FLAG -funwind-tables)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FNO_STACK_PROTECTOR_FLAG -fno-stack-protector)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FVISIBILITY_HIDDEN_FLAG -fvisibility=hidden)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FNO_FUNCTION_SECTIONS_FLAG -fno-function-sections)
+
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_MT_FLAG /MT)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_Oy_FLAG /Oy-)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_GS_FLAG /GS-)
+
+# Build with optimization, unless we're in debug mode.
+if(NOT COMPILER_RT_DEBUG)
+  if(MSVC)
+    list(APPEND SANITIZER_COMMON_CFLAGS /O2)
+  else()
     list(APPEND SANITIZER_COMMON_CFLAGS -O3)
   endif()
-else()
-  set(SANITIZER_COMMON_CFLAGS
-    /MT
-    /Zi
-    /Oy-
-    /GS-
-    /wd4722
-    )
 endif()
-# Build sanitizer runtimes with debug info. (MSVC gets /Zi above)
-if (NOT MSVC)
-  check_cxx_compiler_flag(-gline-tables-only SUPPORTS_GLINE_TABLES_ONLY_FLAG)
-  if(SUPPORTS_GLINE_TABLES_ONLY_FLAG AND NOT COMPILER_RT_DEBUG)
-    list(APPEND SANITIZER_COMMON_CFLAGS -gline-tables-only)
-  else()
-    list(APPEND SANITIZER_COMMON_CFLAGS -g)
-  endif()
+
+# Build sanitizer runtimes with debug info.
+if(COMPILER_RT_HAS_GLINE_TABLES_ONLY_FLAG)
+  list(APPEND SANITIZER_COMMON_CFLAGS -gline-tables-only)
+elseif(COMPILER_RT_HAS_G_FLAG)
+  list(APPEND SANITIZER_COMMON_CFLAGS -g)
+elseif(COMPILER_RT_HAS_Zi_FLAG)
+  list(APPEND SANITIZER_COMMON_CFLAGS /Zi)
 endif()
-# Build sanitizer runtimes with -fno-function-sections.
-check_cxx_compiler_flag("-Werror -fno-function-sections" SUPPORTS_FNO_FUNCTION_SECTIONS_FLAG)
-if(SUPPORTS_FNO_FUNCTION_SECTIONS_FLAG)
-  list(APPEND SANITIZER_COMMON_CFLAGS -fno-function-sections)
-endif()
-# Warnings suppressions.
-check_cxx_compiler_flag(-Wno-variadic-macros SUPPORTS_NO_VARIADIC_MACROS_FLAG)
-if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
-  list(APPEND SANITIZER_COMMON_CFLAGS -Wno-variadic-macros)
-endif()
-check_cxx_compiler_flag(-Wno-c99-extensions SUPPORTS_NO_C99_EXTENSIONS_FLAG)
-if(SUPPORTS_NO_C99_EXTENSIONS_FLAG)
-  list(APPEND SANITIZER_COMMON_CFLAGS -Wno-c99-extensions)
-endif()
-# Sanitizer may not have libstdc++, so we can have problems with virtual
-# destructors.
-check_cxx_compiler_flag(-Wno-non-virtual-dtor SUPPORTS_NO_NON_VIRTUAL_DTOR_FLAG)
-if (SUPPORTS_NO_NON_VIRTUAL_DTOR_FLAG)
-  list(APPEND SANITIZER_COMMON_CFLAGS -Wno-non-virtual-dtor)
-endif()
-check_cxx_compiler_flag(-Wglobal-constructors SUPPORTS_GLOBAL_CONSTRUCTORS_FLAG)
-# Not all sanitizers forbid global constructors.
-check_cxx_compiler_flag("-Werror -Wframe-larger-than=512"
-  SUPPORTS_FRAME_LARGER_THAN_FLAG)
+
+# Turn off several warnings.
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_WNO_GNU_FLAG -Wno-gnu)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_WNO_VARIADIC_MACROS_FLAG -Wno-variadic-macros)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_WNO_C99_EXTENSIONS_FLAG -Wno-c99-extensions)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_WNO_NON_VIRTUAL_DTOR_FLAG -Wno-non-virtual-dtor)
+append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_WD4722_FLAG /wd4722)
 
 if(APPLE)
   # Obtain the iOS Simulator SDK path from xcodebuild.

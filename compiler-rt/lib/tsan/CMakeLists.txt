@@ -10,12 +10,8 @@ set(TSAN_CFLAGS
   -fno-rtti)
 
 set(TSAN_RTL_CFLAGS ${TSAN_CFLAGS})
-if(SUPPORTS_FRAME_LARGER_THAN_FLAG)
-  list(APPEND TSAN_RTL_CFLAGS -Wframe-larger-than=512)
-endif()
-if(SUPPORTS_GLOBAL_CONSTRUCTORS_FLAG)
-  list(APPEND TSAN_RTL_CFLAGS -Wglobal-constructors)
-endif()
+append_if(TSAN_RTL_CFLAGS COMPILER_RT_HAS_WFRAME_LARGER_THAN_FLAG -Wframe-larger-than=512)
+append_if(TSAN_RTL_CFLAGS COMPILER_RT_HAS_WGLOBAL_CONSTRUCTORS_FLAG -Wglobal-constructors)
 # FIXME: Add support for --sysroot=. compile flag:
 
 if("${CMAKE_BUILD_TYPE}" EQUAL "Release")
