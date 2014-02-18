@@ -71,6 +71,11 @@
 using namespace llvm;
 
 static cl::opt<bool>
+EnableGlobalMerge("global-merge", cl::Hidden,
+                  cl::desc("Enable global merge pass"),
+                  cl::init(true));
+
+static cl::opt<bool>
 EnableGlobalMergeOnConst("global-merge-on-const", cl::Hidden,
                          cl::desc("Enable global merge pass on constants"),
                          cl::init(false));
@@ -231,6 +236,9 @@ void GlobalMerge::setMustKeepGlobalVariables(Module &M) {
 }
 
 bool GlobalMerge::doInitialization(Module &M) {
+  if (!EnableGlobalMerge)
+    return false;
+
   DenseMap<unsigned, SmallVector<GlobalVariable*, 16> > Globals, ConstGlobals,
                                                         BSSGlobals;
   const TargetLowering *TLI = TM->getTargetLowering();

@@ -24,11 +24,6 @@
 using namespace llvm;
 
 static cl::opt<bool>
-EnableGlobalMerge("global-merge", cl::Hidden,
-                  cl::desc("Enable global merge pass"),
-                  cl::init(true));
-
-static cl::opt<bool>
 DisableA15SDOptimization("disable-a15-sd-optimization", cl::Hidden,
                    cl::desc("Inhibit optimization of S->D register accesses on A15"),
                    cl::init(false));
@@ -184,7 +179,7 @@ TargetPassConfig *ARMBaseTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 bool ARMPassConfig::addPreISel() {
-  if (TM->getOptLevel() != CodeGenOpt::None && EnableGlobalMerge)
+  if (TM->getOptLevel() != CodeGenOpt::None)
     addPass(createGlobalMergePass(TM));
 
   return false;
