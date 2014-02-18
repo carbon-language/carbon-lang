@@ -7,7 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Driver/Driver.h"
+#include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Job.h"
+#include "clang/Driver/Tool.h"
+#include "clang/Driver/ToolChain.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -158,6 +162,10 @@ int FallbackCommand::Execute(const StringRef **Redirects, std::string *ErrMsg,
     ErrMsg->clear();
   if (ExecutionFailed)
     *ExecutionFailed = false;
+
+  const Driver &D = getCreator().getToolChain().getDriver();
+  D.Diag(diag::note_drv_invoking_fallback).setForceEmit()
+      << Fallback->getExecutable();
 
   int SecondaryStatus = Fallback->Execute(Redirects, ErrMsg, ExecutionFailed);
   return SecondaryStatus;

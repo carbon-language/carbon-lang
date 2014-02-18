@@ -88,6 +88,8 @@ public:
   /// getCreator - Return the Tool which caused the creation of this job.
   const Tool &getCreator() const { return Creator; }
 
+  const char *getExecutable() const { return Executable; }
+
   const llvm::opt::ArgStringList &getArguments() const { return Arguments; }
 
   static bool classof(const Job *J) {

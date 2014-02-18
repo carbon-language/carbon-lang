@@ -44,3 +44,9 @@
 // RUN: %clang_cl /fallback /P -### -- %s 2>&1 | FileCheck -check-prefix=P %s
 // P-NOT: ||
 // P-NOT: "cl.exe"
+
+// RUN: not %clang_cl /fallback /c -- %s 2>&1 | \
+// RUN:     FileCheck -check-prefix=ErrNote %s
+// ErrNote: note: falling back to cl.exe
+
+#error "This fails to compile."
