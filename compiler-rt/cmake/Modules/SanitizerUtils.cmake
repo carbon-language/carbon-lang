@@ -26,7 +26,6 @@ macro(add_sanitizer_rt_symbols name)
     DEPENDS ${symsfile}
     SOURCES ${SANITIZER_GEN_DYNAMIC_LIST} ${ARGN})
   install(FILES ${symsfile} DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
-  add_dependencies(compiler-rt ${name}-symbols)
 endmacro()
 
 # Add target to check code style for sanitizer runtimes.

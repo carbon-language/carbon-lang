@@ -44,3 +44,5 @@ add_custom_command(OUTPUT ${CLANG_RESOURCE_DIR}/dfsan_abilist.txt
 add_dependencies(dfsan dfsan_abilist)
 install(FILES ${CLANG_RESOURCE_DIR}/dfsan_abilist.txt
         DESTINATION ${LIBCLANG_INSTALL_PATH})
+
+add_dependencies(compiler-rt dfsan)

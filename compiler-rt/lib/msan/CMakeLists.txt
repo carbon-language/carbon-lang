@@ -35,6 +35,7 @@ endif()
 
 add_compiler_rt_resource_file(msan_blacklist msan_blacklist.txt)
 add_dependencies(msan msan_blacklist)
+add_dependencies(compiler-rt msan)
 
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)

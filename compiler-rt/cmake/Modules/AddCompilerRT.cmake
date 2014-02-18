@@ -58,7 +58,6 @@ macro(add_compiler_rt_static_runtime name arch)
     # Add installation command.
     install(TARGETS ${name}
       ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
-    add_dependencies(compiler-rt ${name})
   else()
     message(FATAL_ERROR "Archtecture ${arch} can't be targeted")
   endif()
@@ -81,7 +80,6 @@ macro(add_compiler_rt_osx_static_runtime name)
     ARCHIVE_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
   install(TARGETS ${name}
     ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
-  add_dependencies(compiler-rt ${name})
 endmacro()
 
 # Adds dynamic runtime library on osx/iossim, which supports multiple
@@ -104,7 +102,6 @@ macro(add_compiler_rt_darwin_dynamic_runtime name os)
     LIBRARY_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
   install(TARGETS ${name}
     LIBRARY DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
-  add_dependencies(compiler-rt ${name})
 endmacro()
 
 # Unittests support.

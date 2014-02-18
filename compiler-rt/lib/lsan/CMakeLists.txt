@@ -48,3 +48,5 @@ elseif(NOT ANDROID)
     add_dependencies(lsan clang_rt.lsan-${arch})
   endforeach()
 endif()
+
+add_dependencies(compiler-rt lsan)

@@ -49,3 +49,5 @@ else()
     endif()
   endforeach()
 endif()
+
+add_dependencies(compiler-rt ubsan)

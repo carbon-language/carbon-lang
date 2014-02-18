@@ -127,6 +127,7 @@ endif()
 
 add_compiler_rt_resource_file(asan_blacklist asan_blacklist.txt)
 add_dependencies(asan asan_blacklist)
+add_dependencies(compiler-rt asan)
 
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)

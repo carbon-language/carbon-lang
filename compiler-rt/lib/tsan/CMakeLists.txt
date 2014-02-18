@@ -71,6 +71,8 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE)
     clang_rt.tsan-${arch}-symbols)
 endif()
 
+add_dependencies(compiler-rt tsan)
+
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()
