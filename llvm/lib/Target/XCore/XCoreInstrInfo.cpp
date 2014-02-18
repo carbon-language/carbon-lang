@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/MC/MCContext.h"
@@ -374,10 +375,18 @@ void XCoreInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
+  MachineFunction *MF = MBB.getParent();
+  const MachineFrameInfo &MFI = *MF->getFrameInfo();
+  MachineMemOperand *MMO =
+    MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FrameIndex),
+                             MachineMemOperand::MOStore,
+                             MFI.getObjectSize(FrameIndex),
+                             MFI.getObjectAlignment(FrameIndex));
   BuildMI(MBB, I, DL, get(XCore::STWFI))
     .addReg(SrcReg, getKillRegState(isKill))
     .addFrameIndex(FrameIndex)
-    .addImm(0);
+    .addImm(0)
+    .addMemOperand(MMO);
 }
 
 void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -388,9 +397,17 @@ void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
+  MachineFunction *MF = MBB.getParent();
+  const MachineFrameInfo &MFI = *MF->getFrameInfo();
+  MachineMemOperand *MMO =
+    MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FrameIndex),
+                             MachineMemOperand::MOLoad,
+                             MFI.getObjectSize(FrameIndex),
+                             MFI.getObjectAlignment(FrameIndex));
   BuildMI(MBB, I, DL, get(XCore::LDWFI), DestReg)
     .addFrameIndex(FrameIndex)
-    .addImm(0);
+    .addImm(0)
+    .addMemOperand(MMO);
 }
 
 /// ReverseBranchCondition - Return the inverse opcode of the 

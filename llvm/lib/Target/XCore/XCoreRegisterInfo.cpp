@@ -67,13 +67,15 @@ static void InsertFPImmInst(MachineBasicBlock::iterator II,
   case XCore::LDWFI:
     BuildMI(MBB, II, dl, TII.get(XCore::LDW_2rus), Reg)
           .addReg(FrameReg)
-          .addImm(Offset);
+          .addImm(Offset)
+          .addMemOperand(*MI.memoperands_begin());
     break;
   case XCore::STWFI:
     BuildMI(MBB, II, dl, TII.get(XCore::STW_2rus))
           .addReg(Reg, getKillRegState(MI.getOperand(0).isKill()))
           .addReg(FrameReg)
-          .addImm(Offset);
+          .addImm(Offset)
+          .addMemOperand(*MI.memoperands_begin());
     break;
   case XCore::LDAWFI:
     BuildMI(MBB, II, dl, TII.get(XCore::LDAWF_l2rus), Reg)
@@ -93,7 +95,6 @@ static void InsertFPConstInst(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc dl = MI.getDebugLoc();
-
   unsigned ScratchOffset = RS->scavengeRegister(&XCore::GRRegsRegClass, II, 0);
   RS->setUsed(ScratchOffset);
   TII.loadImmediate(MBB, II, ScratchOffset, Offset);
@@ -102,13 +103,15 @@ static void InsertFPConstInst(MachineBasicBlock::iterator II,
   case XCore::LDWFI:
     BuildMI(MBB, II, dl, TII.get(XCore::LDW_3r), Reg)
           .addReg(FrameReg)
-          .addReg(ScratchOffset, RegState::Kill);
+          .addReg(ScratchOffset, RegState::Kill)
+          .addMemOperand(*MI.memoperands_begin());
     break;
   case XCore::STWFI:
     BuildMI(MBB, II, dl, TII.get(XCore::STW_l3r))
           .addReg(Reg, getKillRegState(MI.getOperand(0).isKill()))
           .addReg(FrameReg)
-          .addReg(ScratchOffset, RegState::Kill);
+          .addReg(ScratchOffset, RegState::Kill)
+          .addMemOperand(*MI.memoperands_begin());
     break;
   case XCore::LDAWFI:
     BuildMI(MBB, II, dl, TII.get(XCore::LDAWF_l3r), Reg)
@@ -127,18 +130,21 @@ static void InsertSPImmInst(MachineBasicBlock::iterator II,
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc dl = MI.getDebugLoc();
   bool isU6 = isImmU6(Offset);
+
   switch (MI.getOpcode()) {
   int NewOpcode;
   case XCore::LDWFI:
     NewOpcode = (isU6) ? XCore::LDWSP_ru6 : XCore::LDWSP_lru6;
     BuildMI(MBB, II, dl, TII.get(NewOpcode), Reg)
-          .addImm(Offset);
+          .addImm(Offset)
+          .addMemOperand(*MI.memoperands_begin());
     break;
   case XCore::STWFI:
     NewOpcode = (isU6) ? XCore::STWSP_ru6 : XCore::STWSP_lru6;
     BuildMI(MBB, II, dl, TII.get(NewOpcode))
           .addReg(Reg, getKillRegState(MI.getOperand(0).isKill()))
-          .addImm(Offset);
+          .addImm(Offset)
+          .addMemOperand(*MI.memoperands_begin());
     break;
   case XCore::LDAWFI:
     NewOpcode = (isU6) ? XCore::LDAWSP_ru6 : XCore::LDAWSP_lru6;
@@ -174,13 +180,15 @@ static void InsertSPConstInst(MachineBasicBlock::iterator II,
   case XCore::LDWFI:
     BuildMI(MBB, II, dl, TII.get(XCore::LDW_3r), Reg)
           .addReg(ScratchBase, RegState::Kill)
-          .addReg(ScratchOffset, RegState::Kill);
+          .addReg(ScratchOffset, RegState::Kill)
+          .addMemOperand(*MI.memoperands_begin());
     break;
   case XCore::STWFI:
     BuildMI(MBB, II, dl, TII.get(XCore::STW_l3r))
           .addReg(Reg, getKillRegState(MI.getOperand(0).isKill()))
           .addReg(ScratchBase, RegState::Kill)
-          .addReg(ScratchOffset, RegState::Kill);
+          .addReg(ScratchOffset, RegState::Kill)
+          .addMemOperand(*MI.memoperands_begin());
     break;
   case XCore::LDAWFI:
     BuildMI(MBB, II, dl, TII.get(XCore::LDAWF_l3r), Reg)
