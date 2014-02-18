@@ -5,5 +5,4 @@ lit_config.load_config(config, "@COMPILER_RT_BINARY_DIR@/test/lit.common.configu
 config.ubsan_lit_tests_dir = "@UBSAN_LIT_TESTS_DIR@"
 
 # Load tool-specific config that would do the real work.
-print config.ubsan_lit_tests_dir
 lit_config.load_config(config, "@UBSAN_LIT_TESTS_DIR@/AsanConfig/lit.cfg")
