@@ -25,8 +25,20 @@ define protected void @test_protected() {
 ; CHECK: .weak array
 @array = weak global [2 x i32] zeroinitializer
 
+; CHECK: .globl ac.globound
+; CHECK: ac.globound = 2
+; CHECK: .weak ac.globound
+; CHECK: .globl ac
+; CHECK: .weak ac
+@ac = common global [2 x i32] zeroinitializer
+
+; CHECK: .globl gd
 ; CHECK: .weak gd
 @gd = weak global i32 0
+
+; CHECK: .globl gc
+; CHECK: .weak gc
+@gc = common global i32 0
 
 ; CHECK-NOT: .hidden test_hidden_declaration
 

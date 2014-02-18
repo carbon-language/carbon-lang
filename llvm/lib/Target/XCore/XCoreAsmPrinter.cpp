@@ -87,9 +87,9 @@ XCoreTargetStreamer &XCoreAsmPrinter::getTargetStreamer() {
 }
 
 void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
-  assert(((GV->hasExternalLinkage() ||
-    GV->hasWeakLinkage()) ||
-    GV->hasLinkOnceLinkage()) && "Unexpected linkage");
+  assert( ( GV->hasExternalLinkage() || GV->hasWeakLinkage() ||
+            GV->hasLinkOnceLinkage() || GV->hasCommonLinkage() ) &&
+          "Unexpected linkage");
   if (ArrayType *ATy = dyn_cast<ArrayType>(
                         cast<PointerType>(GV->getType())->getElementType())) {
 
@@ -99,7 +99,8 @@ void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
     OutStreamer.EmitAssignment(SymGlob,
                                MCConstantExpr::Create(ATy->getNumElements(),
                                                       OutContext));
-    if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
+    if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
+        GV->hasCommonLinkage()) {
       // TODO Use COMDAT groups for LinkOnceLinkage
       OutStreamer.EmitSymbolAttribute(SymGlob, MCSA_Weak);
     }
@@ -131,11 +132,13 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::ExternalLinkage:
+  case GlobalValue::CommonLinkage:
     emitArrayBound(GVSym, GV);
     OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
 
     // TODO Use COMDAT groups for LinkOnceLinkage
-    if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage())
+    if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
+        GV->hasCommonLinkage())
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
     // FALL THROUGH
   case GlobalValue::InternalLinkage:
