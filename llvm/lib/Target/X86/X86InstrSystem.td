@@ -302,9 +302,11 @@ def PUSHGS32 : I<0xa8, RawFrm, (outs), (ins),
                  "push{l}\t{%gs|gs}", [], IIC_PUSH_SR>, TB,
                OpSize32, Requires<[Not64BitMode]>;
 def PUSHFS64 : I<0xa0, RawFrm, (outs), (ins),
-                 "push{q}\t{%fs|fs}", [], IIC_PUSH_SR>, TB, Requires<[In64BitMode]>;
+                 "push{q}\t{%fs|fs}", [], IIC_PUSH_SR>, TB,
+               OpSize32, Requires<[In64BitMode]>;
 def PUSHGS64 : I<0xa8, RawFrm, (outs), (ins),
-                 "push{q}\t{%gs|gs}", [], IIC_PUSH_SR>, TB, Requires<[In64BitMode]>;
+                 "push{q}\t{%gs|gs}", [], IIC_PUSH_SR>, TB,
+               OpSize32, Requires<[In64BitMode]>;
 
 // No "pop cs" instruction.
 def POPSS16 : I<0x17, RawFrm, (outs), (ins),
@@ -334,16 +336,18 @@ def POPFS32 : I<0xa1, RawFrm, (outs), (ins),
                 "pop{l}\t{%fs|fs}", [], IIC_POP_SR>, TB,
               OpSize32, Requires<[Not64BitMode]>;
 def POPFS64 : I<0xa1, RawFrm, (outs), (ins),
-                "pop{q}\t{%fs|fs}", [], IIC_POP_SR>, TB, Requires<[In64BitMode]>;
-                
+                "pop{q}\t{%fs|fs}", [], IIC_POP_SR>, TB,
+              OpSize32, Requires<[In64BitMode]>;
+
 def POPGS16 : I<0xa9, RawFrm, (outs), (ins),
                 "pop{w}\t{%gs|gs}", [], IIC_POP_SR>, OpSize16, TB;
 def POPGS32 : I<0xa9, RawFrm, (outs), (ins),
                 "pop{l}\t{%gs|gs}", [], IIC_POP_SR>, TB,
               OpSize32, Requires<[Not64BitMode]>;
 def POPGS64 : I<0xa9, RawFrm, (outs), (ins),
-                "pop{q}\t{%gs|gs}", [], IIC_POP_SR>, TB, Requires<[In64BitMode]>;
-                 
+                "pop{q}\t{%gs|gs}", [], IIC_POP_SR>, TB,
+              OpSize32, Requires<[In64BitMode]>;
+
 
 def LDS16rm : I<0xc5, MRMSrcMem, (outs GR16:$dst), (ins opaque32mem:$src),
                 "lds{w}\t{$src, $dst|$dst, $src}", [], IIC_LXS>, OpSize16;

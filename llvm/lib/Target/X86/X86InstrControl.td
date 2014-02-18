@@ -22,11 +22,11 @@
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, FPForm = SpecialFP, SchedRW = [WriteJumpLd] in {
   def RETL   : I   <0xC3, RawFrm, (outs), (ins variable_ops),
-                    "ret{l}",
-                    [(X86retflag 0)], IIC_RET>, OpSize32, Requires<[Not64BitMode]>;
+                    "ret{l}", [(X86retflag 0)], IIC_RET>, OpSize32,
+                    Requires<[Not64BitMode]>;
   def RETQ   : I   <0xC3, RawFrm, (outs), (ins variable_ops),
-                    "ret{q}",
-                    [(X86retflag 0)], IIC_RET>, Requires<[In64BitMode]>;
+                    "ret{q}", [(X86retflag 0)], IIC_RET>, OpSize32,
+                    Requires<[In64BitMode]>;
   def RETW   : I   <0xC3, RawFrm, (outs), (ins),
                     "ret{w}",
                     [], IIC_RET>, OpSize16;
@@ -36,7 +36,7 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
                Requires<[Not64BitMode]>;
   def RETIQ  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "ret{q}\t$amt",
-                    [(X86retflag timm:$amt)], IIC_RET_IMM>,
+                    [(X86retflag timm:$amt)], IIC_RET_IMM>, OpSize32,
                Requires<[In64BitMode]>;
   def RETIW  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt),
                     "ret{w}\t$amt",
@@ -265,7 +265,7 @@ let isCall = 1, Uses = [RSP], SchedRW = [WriteJump] in {
   // the 32-bit pcrel field that we have.
   def CALL64pcrel32 : Ii32PCRel<0xE8, RawFrm,
                         (outs), (ins i64i32imm_pcrel:$dst),
-                        "call{q}\t$dst", [], IIC_CALL_RI>,
+                        "call{q}\t$dst", [], IIC_CALL_RI>, OpSize32,
                       Requires<[In64BitMode]>;
   def CALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst),
                         "call{q}\t{*}$dst", [(X86call GR64:$dst)],
