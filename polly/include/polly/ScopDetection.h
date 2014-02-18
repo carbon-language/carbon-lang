@@ -141,6 +141,13 @@ class ScopDetection : public FunctionPass {
   /// @return True if R is a Scop, false otherwise.
   bool isValidRegion(DetectionContext &Context) const;
 
+  /// @brief Check if a region is a Scop.
+  ///
+  /// @param Context The context of scop detection.
+  ///
+  /// @return True if R is a Scop, false otherwise.
+  bool isValidRegion(Region &R) const;
+
   /// @brief Check if a call instruction can be part of a Scop.
   ///
   /// @param CI The call instruction to check.

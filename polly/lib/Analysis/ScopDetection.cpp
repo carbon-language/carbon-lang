@@ -613,11 +613,9 @@ void ScopDetection::findScops(Region &R) {
   if (!DetectRegionsWithoutLoops && regionWithoutLoops(R, LI))
     return;
 
-  DetectionContext Context(R, *AA, false /*verifying*/);
-
   LastFailure = "";
 
-  if (isValidRegion(Context)) {
+  if (isValidRegion(R)) {
     ++ValidRegion;
     ValidRegions.insert(&R);
     return;
@@ -702,6 +700,11 @@ bool ScopDetection::isValidExit(DetectionContext &Context) const {
   }
 
   return true;
+}
+
+bool ScopDetection::isValidRegion(Region &R) const {
+  DetectionContext Context(R, *AA, false /*verifying*/);
+  return isValidRegion(Context);
 }
 
 bool ScopDetection::isValidRegion(DetectionContext &Context) const {
