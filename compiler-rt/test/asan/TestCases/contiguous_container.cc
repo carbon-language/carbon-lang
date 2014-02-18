@@ -18,10 +18,9 @@ void TestContainer(size_t capacity) {
   char *end = beg + capacity;
   char *mid = beg + capacity;
   char *old_mid = 0;
-  unsigned seed = 0;
 
   for (int i = 0; i < 10000; i++) {
-    size_t size = rand_r(&seed) % (capacity + 1);
+    size_t size = rand() % (capacity + 1);
     assert(size <= capacity);
     old_mid = mid;
     mid = beg + size;
