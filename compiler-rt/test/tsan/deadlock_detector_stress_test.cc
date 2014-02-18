@@ -33,6 +33,7 @@ class LockTest {
     locks_[i].unlock();
   }
 
+  // Simple lock order onversion.
   void Test1() {
     fprintf(stderr, "Starting Test1\n");
     // CHECK: Starting Test1
@@ -42,6 +43,7 @@ class LockTest {
     // CHECK-NOT: ThreadSanitizer:
   }
 
+  // Simple lock order inversion with 3 locks.
   void Test2() {
     fprintf(stderr, "Starting Test2\n");
     // CHECK: Starting Test2
@@ -51,7 +53,24 @@ class LockTest {
     // CHECK-NOT: ThreadSanitizer:
   }
 
+  // Lock order inversion with lots of new locks created (but not used)
+  // between. Since the new locks are not used we should still detect the
+  // deadlock.
+  void Test3() {
+    fprintf(stderr, "Starting Test3\n");
+    // CHECK: Starting Test3
+    L(0); L(1); U(0); U(1);
+    CreateAndDestroyManyLocks();
+    L(1); L(0); U(0); U(1);
+    // CHECK: ThreadSanitizer: lock-order-inversion (potential deadlock)
+    // CHECK-NOT: ThreadSanitizer:
+  }
+
  private:
+  void CreateAndDestroyManyLocks() {
+    PaddedLock create_many_locks_but_never_acquire[kDeadlockGraphSize];
+  }
+  static const size_t kDeadlockGraphSize = 4096;
   size_t n_;
   PaddedLock *locks_;
 };
@@ -59,6 +78,7 @@ class LockTest {
 int main() {
   { LockTest t(5); t.Test1(); }
   { LockTest t(5); t.Test2(); }
+  { LockTest t(5); t.Test3(); }
   fprintf(stderr, "DONE\n");
   // CHECK: DONE
 }

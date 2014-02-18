@@ -45,10 +45,6 @@ void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
   s->is_rw = rw;
   s->is_recursive = recursive;
   s->is_linker_init = linker_init;
-  if (common_flags()->detect_deadlocks) {
-    EnsureDeadlockDetectorID(thr, s);
-    Printf("MutexCreate: %zx\n", s->deadlock_detector_id);
-  }
   s->mtx.Unlock();
 }
 
@@ -66,8 +62,9 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   if (s == 0)
     return;
   if (common_flags()->detect_deadlocks) {
-    EnsureDeadlockDetectorID(thr, s);
-    Printf("MutexDestroy: %zx\n", s->deadlock_detector_id);
+    if (s->deadlock_detector_id)
+      g_deadlock_detector.removeNode(s->deadlock_detector_id);
+    s->deadlock_detector_id = 0;
   }
   if (IsAppMem(addr)) {
     CHECK(!thr->is_freeing);
@@ -169,7 +166,7 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
   thr->mset.Del(s->GetId(), true);
   if (common_flags()->detect_deadlocks) {
     EnsureDeadlockDetectorID(thr, s);
-    Printf("MutexUnlock: %zx\n", s->deadlock_detector_id);
+    // Printf("MutexUnlock: %zx\n", s->deadlock_detector_id);
     g_deadlock_detector.onUnlock(&thr->deadlock_detector_tls,
                                  s->deadlock_detector_id);
   }
