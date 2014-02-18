@@ -1311,8 +1311,8 @@ multiclass bmi_andn<string mnemonic, RegisterClass RC, X86MemOperand x86memop,
 }
 
 let Predicates = [HasBMI], Defs = [EFLAGS] in {
-  defm ANDN32 : bmi_andn<"andn{l}", GR32, i32mem, loadi32>, T8, VEX_4V;
-  defm ANDN64 : bmi_andn<"andn{q}", GR64, i64mem, loadi64>, T8, VEX_4V, VEX_W;
+  defm ANDN32 : bmi_andn<"andn{l}", GR32, i32mem, loadi32>, T8PS, VEX_4V;
+  defm ANDN64 : bmi_andn<"andn{q}", GR64, i64mem, loadi64>, T8PS, VEX_4V, VEX_W;
 }
 
 let Predicates = [HasBMI] in {

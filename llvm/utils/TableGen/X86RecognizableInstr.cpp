@@ -84,7 +84,7 @@ namespace X86Local {
   };
 
   enum {
-    PD = 1, XS = 2, XD = 3
+    PS = 1, PD = 2, XS = 3, XD = 4
   };
 
   enum {
@@ -259,8 +259,12 @@ InstructionContext RecognizableInstr::insnContext() const {
         insnContext = EVEX_KB(IC_EVEX_L_W_XS);
       else if (OpPrefix == X86Local::XD)
         insnContext = EVEX_KB(IC_EVEX_L_W_XD);
-      else
+      else if (OpPrefix == X86Local::PS)
         insnContext = EVEX_KB(IC_EVEX_L_W);
+      else {
+        errs() << "Instruction does not use a prefix: " << Name << "\n";
+        llvm_unreachable("Invalid prefix");
+      }
     } else if (HasVEX_LPrefix) {
       // VEX_L
       if (OpPrefix == X86Local::PD)
@@ -269,8 +273,12 @@ InstructionContext RecognizableInstr::insnContext() const {
         insnContext = EVEX_KB(IC_EVEX_L_XS);
       else if (OpPrefix == X86Local::XD)
         insnContext = EVEX_KB(IC_EVEX_L_XD);
-      else
+      else if (OpPrefix == X86Local::PS)
         insnContext = EVEX_KB(IC_EVEX_L);
+      else {
+        errs() << "Instruction does not use a prefix: " << Name << "\n";
+        llvm_unreachable("Invalid prefix");
+      }
     }
     else if (HasEVEX_L2Prefix && HasVEX_WPrefix) {
       // EVEX_L2 & VEX_W
@@ -280,8 +288,12 @@ InstructionContext RecognizableInstr::insnContext() const {
         insnContext = EVEX_KB(IC_EVEX_L2_W_XS);
       else if (OpPrefix == X86Local::XD)
         insnContext = EVEX_KB(IC_EVEX_L2_W_XD);
-      else
+      else if (OpPrefix == X86Local::PS)
         insnContext = EVEX_KB(IC_EVEX_L2_W);
+      else {
+        errs() << "Instruction does not use a prefix: " << Name << "\n";
+        llvm_unreachable("Invalid prefix");
+      }
     } else if (HasEVEX_L2Prefix) {
       // EVEX_L2
       if (OpPrefix == X86Local::PD)
@@ -290,8 +302,12 @@ InstructionContext RecognizableInstr::insnContext() const {
         insnContext = EVEX_KB(IC_EVEX_L2_XD);
       else if (OpPrefix == X86Local::XS)
         insnContext = EVEX_KB(IC_EVEX_L2_XS);
-      else
+      else if (OpPrefix == X86Local::PS)
         insnContext = EVEX_KB(IC_EVEX_L2);
+      else {
+        errs() << "Instruction does not use a prefix: " << Name << "\n";
+        llvm_unreachable("Invalid prefix");
+      }
     }
     else if (HasVEX_WPrefix) {
       // VEX_W
@@ -301,8 +317,12 @@ InstructionContext RecognizableInstr::insnContext() const {
         insnContext = EVEX_KB(IC_EVEX_W_XS);
       else if (OpPrefix == X86Local::XD)
         insnContext = EVEX_KB(IC_EVEX_W_XD);
-      else
+      else if (OpPrefix == X86Local::PS)
         insnContext = EVEX_KB(IC_EVEX_W);
+      else {
+        errs() << "Instruction does not use a prefix: " << Name << "\n";
+        llvm_unreachable("Invalid prefix");
+      }
     }
     // No L, no W
     else if (OpPrefix == X86Local::PD)
@@ -322,8 +342,12 @@ InstructionContext RecognizableInstr::insnContext() const {
         insnContext = IC_VEX_L_W_XS;
       else if (OpPrefix == X86Local::XD)
         insnContext = IC_VEX_L_W_XD;
-      else
+      else if (OpPrefix == X86Local::PS)
         insnContext = IC_VEX_L_W;
+      else {
+        errs() << "Instruction does not use a prefix: " << Name << "\n";
+        llvm_unreachable("Invalid prefix");
+      }
     } else if (OpPrefix == X86Local::PD && HasVEX_LPrefix)
       insnContext = IC_VEX_L_OPSIZE;
     else if (OpPrefix == X86Local::PD && HasVEX_WPrefix)
@@ -338,16 +362,20 @@ InstructionContext RecognizableInstr::insnContext() const {
       insnContext = IC_VEX_W_XS;
     else if (HasVEX_WPrefix && OpPrefix == X86Local::XD)
       insnContext = IC_VEX_W_XD;
-    else if (HasVEX_WPrefix)
+    else if (HasVEX_WPrefix && OpPrefix == X86Local::PS)
       insnContext = IC_VEX_W;
-    else if (HasVEX_LPrefix)
+    else if (HasVEX_LPrefix && OpPrefix == X86Local::PS)
       insnContext = IC_VEX_L;
     else if (OpPrefix == X86Local::XD)
       insnContext = IC_VEX_XD;
     else if (OpPrefix == X86Local::XS)
       insnContext = IC_VEX_XS;
-    else
+    else if (OpPrefix == X86Local::PS)
       insnContext = IC_VEX;
+    else {
+      errs() << "Instruction does not use a prefix: " << Name << "\n";
+      llvm_unreachable("Invalid prefix");
+    }
   } else if (Is64Bit || HasREX_WPrefix) {
     if (HasREX_WPrefix && (OpSize == X86Local::OpSize16 || OpPrefix == X86Local::PD))
       insnContext = IC_64BIT_REXW_OPSIZE;
