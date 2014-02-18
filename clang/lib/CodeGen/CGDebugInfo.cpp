@@ -1476,10 +1476,9 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
         // If the class is dynamic, only emit a declaration. A definition will be
         // emitted whenever the vtable is emitted.
         (CXXDecl && CXXDecl->hasDefinition() && CXXDecl->isDynamicClass())))) {
-    llvm::DIDescriptor FDContext =
-      getContextDescriptor(cast<Decl>(RD->getDeclContext()));
     if (!T)
-      T = getOrCreateRecordFwdDecl(Ty, FDContext);
+      T = getOrCreateRecordFwdDecl(
+          Ty, getContextDescriptor(cast<Decl>(RD->getDeclContext())));
     return T;
   }
 
