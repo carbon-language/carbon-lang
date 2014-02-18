@@ -25,7 +25,7 @@ namespace __tsan {
 static __sanitizer::DeadlockDetector<DDBV> g_deadlock_detector;
 
 static void EnsureDeadlockDetectorID(ThreadState *thr, SyncVar *s) {
-  if (!s->deadlock_detector_id)
+  if (!g_deadlock_detector.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
     s->deadlock_detector_id =
         g_deadlock_detector.newNode(reinterpret_cast<uptr>(s));
 }
@@ -62,7 +62,7 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   if (s == 0)
     return;
   if (common_flags()->detect_deadlocks) {
-    if (s->deadlock_detector_id)
+    if (g_deadlock_detector.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
       g_deadlock_detector.removeNode(s->deadlock_detector_id);
     s->deadlock_detector_id = 0;
   }
@@ -121,12 +121,11 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
   thr->mset.Add(s->GetId(), true, thr->fast_state.epoch());
   if (common_flags()->detect_deadlocks) {
     EnsureDeadlockDetectorID(thr, s);
+    // Printf("MutexLock: %zx\n", s->deadlock_detector_id);
     bool has_deadlock = g_deadlock_detector.onLock(&thr->deadlock_detector_tls,
                                                    s->deadlock_detector_id);
-    Printf("MutexLock: %zx;%s\n", s->deadlock_detector_id,
-           has_deadlock
-               ? " ThreadSanitizer: lock-order-inversion (potential deadlock)"
-               : "");
+    if (has_deadlock)
+      Printf("ThreadSanitizer: lock-order-inversion (potential deadlock)\n");
   }
   s->mtx.Unlock();
 }

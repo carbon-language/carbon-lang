@@ -12,6 +12,13 @@
 // When a lock event happens, the detector checks if the locks already held by
 // the current thread are reachable from the newly acquired lock.
 //
+// The detector can handle only a fixed amount of simultaneously live locks
+// (a lock is alive if it has been locked at least once and has not been
+// destroyed). When the maximal number of locks is reached the entire graph
+// is flushed and the new lock epoch is started. The node ids from the old
+// epochs can not be used with any of the detector methods except for
+// nodeBelongsToCurrentEpoch().
+//
 // FIXME: this is work in progress, nothing really works yet.
 //
 //===----------------------------------------------------------------------===//
@@ -37,6 +44,7 @@ class DeadlockDetectorTLS {
 
   void addLock(uptr lock_id, uptr current_epoch) {
     // Printf("addLock: %zx %zx\n", lock_id, current_epoch);
+    CHECK_LE(epoch_, current_epoch);
     if (current_epoch != epoch_)  {
       bv_.clear();
       epoch_ = current_epoch;
@@ -46,11 +54,12 @@ class DeadlockDetectorTLS {
 
   void removeLock(uptr lock_id, uptr current_epoch) {
     // Printf("remLock: %zx %zx\n", lock_id, current_epoch);
+    CHECK_LE(epoch_, current_epoch);
     if (current_epoch != epoch_)  {
       bv_.clear();
       epoch_ = current_epoch;
     }
-    CHECK(bv_.clearBit(lock_id));
+    bv_.clearBit(lock_id);  // May already be cleared due to epoch update.
   }
 
   const BV &getLocks() const { return bv_; }
@@ -106,6 +115,10 @@ class DeadlockDetector {
 
   // Get data associated with the node created by newNode().
   uptr getData(uptr node) const { return data_[nodeToIndex(node)]; }
+
+  bool nodeBelongsToCurrentEpoch(uptr node) {
+    return node && (node / size() * size()) == current_epoch_;
+  }
 
   void removeNode(uptr node) {
     uptr idx = nodeToIndex(node);
