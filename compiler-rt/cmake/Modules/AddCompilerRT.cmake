@@ -133,10 +133,10 @@ endmacro()
 
 macro(add_compiler_rt_resource_file target_name file_name)
   set(src_file "${CMAKE_CURRENT_SOURCE_DIR}/${file_name}")
-  set(dst_file "${CLANG_RESOURCE_DIR}/${file_name}")
+  set(dst_file "${COMPILER_RT_OUTPUT_DIR}/${file_name}")
   add_custom_target(${target_name}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${src_file} ${dst_file}
     DEPENDS ${file_name})
   # Install in Clang resource directory.
-  install(FILES ${file_name} DESTINATION ${LIBCLANG_INSTALL_PATH})
+  install(FILES ${file_name} DESTINATION ${COMPILER_RT_INSTALL_PATH})
 endmacro()

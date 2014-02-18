@@ -32,17 +32,18 @@ if(CAN_TARGET_${arch})
     clang_rt.dfsan-${arch}-symbols)
 endif()
 
+set(dfsan_abilist_filename ${COMPILER_RT_OUTPUT_DIR}/dfsan_abilist.txt)
 add_custom_target(dfsan_abilist ALL
-                                SOURCES ${CLANG_RESOURCE_DIR}/dfsan_abilist.txt)
-add_custom_command(OUTPUT ${CLANG_RESOURCE_DIR}/dfsan_abilist.txt
+  SOURCES ${dfsan_abilist_filename})
+add_custom_command(OUTPUT ${dfsan_abilist_filename}
                    VERBATIM
                    COMMAND
                      cat ${CMAKE_CURRENT_SOURCE_DIR}/done_abilist.txt
                          ${CMAKE_CURRENT_SOURCE_DIR}/libc_ubuntu1204_abilist.txt
-                         > ${CLANG_RESOURCE_DIR}/dfsan_abilist.txt
+                         > ${dfsan_abilist_filename}
                    DEPENDS done_abilist.txt libc_ubuntu1204_abilist.txt)
 add_dependencies(dfsan dfsan_abilist)
-install(FILES ${CLANG_RESOURCE_DIR}/dfsan_abilist.txt
-        DESTINATION ${LIBCLANG_INSTALL_PATH})
+install(FILES ${dfsan_abilist_filename}
+        DESTINATION ${COMPILER_RT_INSTALL_PATH})
 
 add_dependencies(compiler-rt dfsan)
