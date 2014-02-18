@@ -509,6 +509,18 @@ void HeaderSearch::setTarget(const TargetInfo &Target) {
 // Header File Location.
 //===----------------------------------------------------------------------===//
 
+/// \brief Return true with a diagnostic if the file that MSVC would have found
+/// fails to match the one that Clang would have found with MSVC header search
+/// disabled.
+static bool checkMSVCHeaderSearch(DiagnosticsEngine &Diags,
+                                  const FileEntry *MSFE, const FileEntry *FE,
+                                  SourceLocation IncludeLoc) {
+  if (MSFE && FE != MSFE) {
+    Diags.Report(IncludeLoc, diag::ext_pp_include_search_ms) << MSFE->getName();
+    return true;
+  }
+  return false;
+}
 
 /// LookupFile - Given a "foo" or \<foo> reference, look up the indicated file,
 /// return null on failure.  isAngled indicates whether the file reference is
@@ -559,6 +571,9 @@ const FileEntry *HeaderSearch::LookupFile(
     return FileMgr.getFile(Filename, /*openFile=*/true);
   }
 
+  // This is the header that MSVC's header search would have found.
+  const FileEntry *MSFE = 0;
+
   // Unless disabled, check to see if the file is in the #includer's
   // directory.  This cannot be based on CurDir, because each includer could be
   // a #include of a subdirectory (#include "foo/bar.h") and a subsequent
@@ -566,8 +581,8 @@ const FileEntry *HeaderSearch::LookupFile(
   // This search is not done for <> headers.
   if (!Includers.empty() && !isAngled && !NoCurDirSearch) {
     SmallString<1024> TmpDir;
-    for (ArrayRef<const FileEntry *>::iterator I(Includers.begin()),
-         E(Includers.end());
+    for (ArrayRef<const FileEntry *>::iterator I = Includers.begin(),
+                                               E = Includers.end();
          I != E; ++I) {
       const FileEntry *Includer = *I;
       // Concatenate the requested file onto the directory.
@@ -602,10 +617,20 @@ const FileEntry *HeaderSearch::LookupFile(
           RelativePath->clear();
           RelativePath->append(Filename.begin(), Filename.end());
         }
-        if (I != Includers.begin())
-          Diags.Report(IncludeLoc, diag::ext_pp_include_search_ms)
-              << FE->getName();
-        return FE;
+        if (I == Includers.begin())
+          return FE;
+
+        // Otherwise, we found the path via MSVC header search rules.  If
+        // -Wmsvc-include is enabled, we have to keep searching to see if we
+        // would've found this header in -I or -isystem directories.
+        if (Diags.getDiagnosticLevel(diag::ext_pp_include_search_ms,
+                                     IncludeLoc) ==
+            DiagnosticsEngine::Ignored) {
+          return FE;
+        } else {
+          MSFE = FE;
+          break;
+        }
       }
     }
   }
@@ -683,7 +708,10 @@ const FileEntry *HeaderSearch::LookupFile(
                                                          SlashPos));
       }
     }
-    
+
+    if (checkMSVCHeaderSearch(Diags, MSFE, FE, IncludeLoc))
+      return MSFE;
+
     // Remember this location for the next lookup we do.
     CacheLookup.second = i;
     return FE;
@@ -702,16 +730,23 @@ const FileEntry *HeaderSearch::LookupFile(
       ScratchFilename += '/';
       ScratchFilename += Filename;
 
-      const FileEntry *Result = LookupFile(
+      const FileEntry *FE = LookupFile(
           ScratchFilename, IncludeLoc, /*isAngled=*/true, FromDir, CurDir,
           Includers.front(), SearchPath, RelativePath, SuggestedModule);
+
+      if (checkMSVCHeaderSearch(Diags, MSFE, FE, IncludeLoc))
+        return MSFE;
+
       std::pair<unsigned, unsigned> &CacheLookup 
         = LookupFileCache.GetOrCreateValue(Filename).getValue();
       CacheLookup.second
         = LookupFileCache.GetOrCreateValue(ScratchFilename).getValue().second;
-      return Result;
+      return FE;
     }
   }
+
+  if (checkMSVCHeaderSearch(Diags, MSFE, 0, IncludeLoc))
+    return MSFE;
 
   // Otherwise, didn't find it. Remember we didn't find this.
   CacheLookup.second = SearchDirs.size();
