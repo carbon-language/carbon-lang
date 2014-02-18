@@ -89,6 +89,8 @@ else
     LLVM_VERSION="$LLVM_SUBMIT_VERSION-$LLVM_SUBMIT_SUBVERSION"
 fi
 
+SDKROOT_PATH=`xcodebuild -version -sdk $SDKROOT Path`
+
 # Figure out how many make processes to run.
 SYSCTL=`sysctl -n hw.activecpu`
 # sysctl -n hw.* does not work when invoked via B&I chroot /BuildRoot.
@@ -109,7 +111,7 @@ COMMON_CONFIGURE_OPTS="\
 
 COMMON_MAKEFLAGS="\
   UNIVERSAL=1 \
-  UNIVERSAL_SDK_PATH=$SDKROOT \
+  UNIVERSAL_SDK_PATH=$SDKROOT_PATH \
   NO_RUNTIME_LIBS=1 \
   DISABLE_EDIS=1 \
   REQUIRES_RTTI=1 \
@@ -141,7 +143,7 @@ if [ "$ARM_HOSTED_BUILD" = yes ]; then
     T=`xcrun -sdk $SDKROOT -find ${prog}`
     ln -s $T $DIR/bin/$prog
     echo '#!/bin/sh' > $P || exit 1
-    echo 'exec '$T' -arch armv7 -isysroot '${SDKROOT}' "$@"' >> $P || exit 1
+    echo 'exec '$T' -arch armv7 -isysroot '${SDKROOT_PATH}' "$@"' >> $P || exit 1
     chmod a+x $P || exit 1
   done
 
@@ -193,8 +195,8 @@ else
     fi
   fi
 
-  if [ $SDKROOT ]; then
-    CPPFLAGS="$CPPFLAGS -isysroot $SDKROOT"
+  if [ $SDKROOT_PATH ]; then
+    CPPFLAGS="$CPPFLAGS -isysroot $SDKROOT_PATH"
   fi
   for host in $HOSTS; do :; done
   CPPFLAGS="$CPPFLAGS -arch $host"
