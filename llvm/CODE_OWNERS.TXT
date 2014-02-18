@@ -58,6 +58,10 @@ N: James Grosbach
 E: grosbach@apple.com
 D: MC layer
 
+N: Marshall Clow
+E: mclow.lists@gmail.com
+D: libc++
+
 N: Justin Holewinski
 E: jholewinski@nvidia.com
 D: NVPTX Target (lib/Target/NVPTX/*)
