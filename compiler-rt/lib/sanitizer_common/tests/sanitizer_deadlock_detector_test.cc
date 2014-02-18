@@ -43,7 +43,8 @@ struct ScopedDD {
 };
 
 template <class BV>
-void BasicTest() {
+void RunBasicTest() {
+  uptr path[10];
   ScopedDD<BV> sdd;
   DeadlockDetector<BV> &d = *sdd.dp;
   DeadlockDetectorTLS<BV> &dtls = sdd.dtls;
@@ -82,6 +83,13 @@ void BasicTest() {
 
     EXPECT_FALSE(d.onLock(&dtls, n2));
     EXPECT_TRUE(d.onLock(&dtls, n1));
+    EXPECT_EQ(0U, d.findPathToHeldLock(&dtls, n1, path, 1));
+    EXPECT_EQ(2U, d.findPathToHeldLock(&dtls, n1, path, 10));
+    EXPECT_EQ(2U, d.findPathToHeldLock(&dtls, n1, path, 2));
+    EXPECT_EQ(path[0], n1);
+    EXPECT_EQ(path[1], n2);
+    EXPECT_EQ(d.getData(n1), 1U);
+    EXPECT_EQ(d.getData(n2), 2U);
     d.onUnlock(&dtls, n1);
     d.onUnlock(&dtls, n2);
   }
@@ -106,20 +114,28 @@ void BasicTest() {
 
     EXPECT_FALSE(d.onLock(&dtls, n3));
     EXPECT_TRUE(d.onLock(&dtls, n1));
+    EXPECT_EQ(0U, d.findPathToHeldLock(&dtls, n1, path, 2));
+    EXPECT_EQ(3U, d.findPathToHeldLock(&dtls, n1, path, 10));
+    EXPECT_EQ(path[0], n1);
+    EXPECT_EQ(path[1], n2);
+    EXPECT_EQ(path[2], n3);
+    EXPECT_EQ(d.getData(n1), 1U);
+    EXPECT_EQ(d.getData(n2), 2U);
+    EXPECT_EQ(d.getData(n3), 3U);
     d.onUnlock(&dtls, n1);
     d.onUnlock(&dtls, n3);
   }
 }
 
 TEST(DeadlockDetector, BasicTest) {
-  BasicTest<BV1>();
-  BasicTest<BV2>();
-  BasicTest<BV3>();
-  BasicTest<BV4>();
+  RunBasicTest<BV1>();
+  RunBasicTest<BV2>();
+  RunBasicTest<BV3>();
+  RunBasicTest<BV4>();
 }
 
 template <class BV>
-void RemoveNodeTest() {
+void RunRemoveNodeTest() {
   ScopedDD<BV> sdd;
   DeadlockDetector<BV> &d = *sdd.dp;
   DeadlockDetectorTLS<BV> &dtls = sdd.dtls;
@@ -218,14 +234,14 @@ void RemoveNodeTest() {
 }
 
 TEST(DeadlockDetector, RemoveNodeTest) {
-  RemoveNodeTest<BV1>();
-  RemoveNodeTest<BV2>();
-  RemoveNodeTest<BV3>();
-  RemoveNodeTest<BV4>();
+  RunRemoveNodeTest<BV1>();
+  RunRemoveNodeTest<BV2>();
+  RunRemoveNodeTest<BV3>();
+  RunRemoveNodeTest<BV4>();
 }
 
 template <class BV>
-void MultipleEpochsTest() {
+void RunMultipleEpochsTest() {
   ScopedDD<BV> sdd;
   DeadlockDetector<BV> &d = *sdd.dp;
   DeadlockDetectorTLS<BV> &dtls = sdd.dtls;
@@ -259,10 +275,10 @@ void MultipleEpochsTest() {
 }
 
 TEST(DeadlockDetector, MultipleEpochsTest) {
-  MultipleEpochsTest<BV1>();
-  MultipleEpochsTest<BV2>();
-  MultipleEpochsTest<BV3>();
-  MultipleEpochsTest<BV4>();
+  RunMultipleEpochsTest<BV1>();
+  RunMultipleEpochsTest<BV2>();
+  RunMultipleEpochsTest<BV3>();
+  RunMultipleEpochsTest<BV4>();
 }
 
 

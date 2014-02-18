@@ -129,6 +129,15 @@ class BVGraph {
     return 0;
   }
 
+  // Same as findPath, but finds a shortest path.
+  uptr findShortestPath(uptr from, const BV &targets, uptr *path,
+                        uptr path_size) {
+    for (uptr p = 1; p <= path_size; p++)
+      if (findPath(from, targets, path, p) == p)
+        return p;
+    return 0;
+  }
+
  private:
   void check(uptr idx1, uptr idx2) const {
     CHECK_LT(idx1, size());

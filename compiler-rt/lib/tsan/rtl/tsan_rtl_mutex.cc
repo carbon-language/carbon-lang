@@ -22,12 +22,11 @@
 
 namespace __tsan {
 
-static __sanitizer::DeadlockDetector<DDBV> g_deadlock_detector;
+static __sanitizer::DeadlockDetector<DDBV> g_dd;
 
 static void EnsureDeadlockDetectorID(ThreadState *thr, SyncVar *s) {
-  if (!g_deadlock_detector.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
-    s->deadlock_detector_id =
-        g_deadlock_detector.newNode(reinterpret_cast<uptr>(s));
+  if (!g_dd.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
+    s->deadlock_detector_id = g_dd.newNode(reinterpret_cast<uptr>(s->addr));
 }
 
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
@@ -62,8 +61,8 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   if (s == 0)
     return;
   if (common_flags()->detect_deadlocks) {
-    if (g_deadlock_detector.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
-      g_deadlock_detector.removeNode(s->deadlock_detector_id);
+    if (g_dd.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
+      g_dd.removeNode(s->deadlock_detector_id);
     s->deadlock_detector_id = 0;
   }
   if (IsAppMem(addr)) {
@@ -121,11 +120,26 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
   thr->mset.Add(s->GetId(), true, thr->fast_state.epoch());
   if (common_flags()->detect_deadlocks) {
     EnsureDeadlockDetectorID(thr, s);
+    if (g_dd.isHeld(&thr->deadlock_detector_tls, s->deadlock_detector_id)) {
+      // FIXME: add tests, handle the real recursive locks.
+      Printf("ThreadSanitizer: reursive-lock\n");
+    }
     // Printf("MutexLock: %zx\n", s->deadlock_detector_id);
-    bool has_deadlock = g_deadlock_detector.onLock(&thr->deadlock_detector_tls,
-                                                   s->deadlock_detector_id);
-    if (has_deadlock)
+    bool has_deadlock =
+        g_dd.onLock(&thr->deadlock_detector_tls, s->deadlock_detector_id);
+    if (has_deadlock) {
       Printf("ThreadSanitizer: lock-order-inversion (potential deadlock)\n");
+      uptr path[10];
+      uptr len = g_dd.findPathToHeldLock(&thr->deadlock_detector_tls,
+                                         s->deadlock_detector_id, path,
+                                         ARRAY_SIZE(path));
+      CHECK_GT(len, 0U);  // Hm.. cycle of 10 locks? I'd like to see that.
+      Printf("  path: ");
+      for (uptr i = 0; i < len; i++) {
+        Printf("%p => ", g_dd.getData(path[i]));
+      }
+      Printf("%p\n", g_dd.getData(path[0]));
+    }
   }
   s->mtx.Unlock();
 }
@@ -166,7 +180,7 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
   if (common_flags()->detect_deadlocks) {
     EnsureDeadlockDetectorID(thr, s);
     // Printf("MutexUnlock: %zx\n", s->deadlock_detector_id);
-    g_deadlock_detector.onUnlock(&thr->deadlock_detector_tls,
+    g_dd.onUnlock(&thr->deadlock_detector_tls,
                                  s->deadlock_detector_id);
   }
   s->mtx.Unlock();

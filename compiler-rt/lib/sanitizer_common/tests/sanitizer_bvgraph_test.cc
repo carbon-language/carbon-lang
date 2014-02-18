@@ -212,10 +212,10 @@ void Test_isReachable() {
 }
 
 TEST(BVGraph, isReachable) {
-  Test_isReachable<BasicBitVector<u8> >();
-  Test_isReachable<BasicBitVector<> >();
-  Test_isReachable<TwoLevelBitVector<> >();
-  Test_isReachable<TwoLevelBitVector<3, BasicBitVector<u8> > >();
+  Test_isReachable<BV1>();
+  Test_isReachable<BV2>();
+  Test_isReachable<BV3>();
+  Test_isReachable<BV4>();
 }
 
 template <class BV>
@@ -256,8 +256,48 @@ void LongCycle() {
 }
 
 TEST(BVGraph, LongCycle) {
-  LongCycle<BasicBitVector<u8> >();
-  LongCycle<BasicBitVector<> >();
-  LongCycle<TwoLevelBitVector<> >();
-  LongCycle<TwoLevelBitVector<2, BasicBitVector<u8> > >();
+  LongCycle<BV1>();
+  LongCycle<BV2>();
+  LongCycle<BV3>();
+  LongCycle<BV4>();
+}
+
+template <class BV>
+void ShortestPath() {
+  uptr path[8];
+  BVGraph<BV> g;
+  g.clear();
+  BV t7;
+  t7.clear();
+  t7.setBit(7);
+  // 1=>2=>3=>4=>5=>6=>7
+  // 1=>7
+  g.addEdge(1, 2);
+  g.addEdge(2, 3);
+  g.addEdge(3, 4);
+  g.addEdge(4, 5);
+  g.addEdge(5, 6);
+  g.addEdge(6, 7);
+  g.addEdge(1, 7);
+  EXPECT_TRUE(g.isReachable(1, t7));
+  // No path of length 1.
+  EXPECT_EQ(0U, g.findPath(1, t7, path, 1));
+  // Trying to find a path of len 2..6 gives path of len 2.
+  EXPECT_EQ(2U, g.findPath(1, t7, path, 2));
+  EXPECT_EQ(2U, g.findPath(1, t7, path, 3));
+  EXPECT_EQ(2U, g.findPath(1, t7, path, 4));
+  EXPECT_EQ(2U, g.findPath(1, t7, path, 5));
+  EXPECT_EQ(2U, g.findPath(1, t7, path, 6));
+  // Trying to find a path of len 7 gives path of len 7, because this is DFS.
+  EXPECT_EQ(7U, g.findPath(1, t7, path, 7));
+  // But findShortestPath will find the shortest path.
+  EXPECT_EQ(2U, g.findShortestPath(1, t7, path, 2));
+  EXPECT_EQ(2U, g.findShortestPath(1, t7, path, 7));
+}
+
+TEST(BVGraph, ShortestPath) {
+  ShortestPath<BV1>();
+  ShortestPath<BV2>();
+  ShortestPath<BV3>();
+  ShortestPath<BV4>();
 }

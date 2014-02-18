@@ -33,13 +33,21 @@ class LockTest {
     locks_[i].unlock();
   }
 
+  void *A(size_t i) {
+    assert(i < n_);
+    return &locks_[i];
+  }
+
   // Simple lock order onversion.
   void Test1() {
     fprintf(stderr, "Starting Test1\n");
     // CHECK: Starting Test1
+    fprintf(stderr, "Expecting lock inversion: %p %p\n", A(0), A(1));
+    // CHECK: Expecting lock inversion: [[A1:0x[a-f0-9]*]] [[A2:0x[a-f0-9]*]]
     L(0); L(1); U(0); U(1);
     L(1); L(0); U(0); U(1);
     // CHECK: ThreadSanitizer: lock-order-inversion (potential deadlock)
+    // CHECK-NEXT: path: [[A1]] => [[A2]] => [[A1]]
     // CHECK-NOT: ThreadSanitizer:
   }
 

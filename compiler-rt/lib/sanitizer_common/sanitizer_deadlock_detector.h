@@ -137,9 +137,29 @@ class DeadlockDetector {
     return is_reachable;
   }
 
+  // Finds a path between the lock 'cur_node' (which is currently held in dtls)
+  // and some other currently held lock, returns the length of the path
+  // or 0 on failure.
+  uptr findPathToHeldLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node,
+                          uptr *path, uptr path_size) {
+    tmp_bv_.copyFrom(dtls->getLocks());
+    uptr idx = nodeToIndex(cur_node);
+    CHECK(tmp_bv_.clearBit(idx));
+    uptr res = g_.findShortestPath(idx, tmp_bv_, path, path_size);
+    for (uptr i = 0; i < res; i++)
+      path[i] = indexToNode(path[i]);
+    if (res)
+      CHECK_EQ(path[0], cur_node);
+    return res;
+  }
+
   // Handle the unlock event.
   void onUnlock(DeadlockDetectorTLS<BV> *dtls, uptr node) {
     dtls->removeLock(nodeToIndex(node), current_epoch_);
+  }
+
+  bool isHeld(DeadlockDetectorTLS<BV> *dtls, uptr node) const {
+    return dtls->getLocks().getBit(nodeToIndex(node));
   }
 
   uptr testOnlyGetEpoch() const { return current_epoch_; }
@@ -178,6 +198,7 @@ class DeadlockDetector {
   uptr current_epoch_;
   BV available_nodes_;
   BV recycled_nodes_;
+  BV tmp_bv_;
   BVGraph<BV> g_;
   uptr data_[BV::kSize];
 };
