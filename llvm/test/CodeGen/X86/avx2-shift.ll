@@ -266,3 +266,36 @@ define <8 x i32> @sext_v8i32(<8 x i32> %a) nounwind {
   %c = sext <8 x i16> %b to <8 x i32>
   ret <8 x i32> %c
 }
+
+define <8 x i16> @variable_shl16(<8 x i16> %lhs, <8  x i16> %rhs) {
+; CHECK-LABEL: variable_shl16:
+; CHECK-DAG: vpmovzxwd %xmm1, [[AMT:%ymm[0-9]+]]
+; CHECK-DAG: vpmovzxwd %xmm0, [[LHS:%ymm[0-9]+]]
+; CHECK: vpsllvd [[AMT]], [[LHS]], {{%ymm[0-9]+}}
+; CHECK: vpshufb
+; CHECK: vpermq
+  %res = shl <8 x i16> %lhs, %rhs
+  ret <8 x i16> %res
+}
+
+define <8 x i16> @variable_ashr16(<8 x i16> %lhs, <8  x i16> %rhs) {
+; CHECK-LABEL: variable_ashr16:
+; CHECK-DAG: vpmovzxwd %xmm1, [[AMT:%ymm[0-9]+]]
+; CHECK-DAG: vpmovsxwd %xmm0, [[LHS:%ymm[0-9]+]]
+; CHECK: vpsravd [[AMT]], [[LHS]], {{%ymm[0-9]+}}
+; CHECK: vpshufb
+; CHECK: vpermq
+  %res = ashr <8 x i16> %lhs, %rhs
+  ret <8 x i16> %res
+}
+
+define <8 x i16> @variable_lshr16(<8 x i16> %lhs, <8  x i16> %rhs) {
+; CHECK-LABEL: variable_lshr16:
+; CHECK-DAG: vpmovzxwd %xmm1, [[AMT:%ymm[0-9]+]]
+; CHECK-DAG: vpmovzxwd %xmm0, [[LHS:%ymm[0-9]+]]
+; CHECK: vpsrlvd [[AMT]], [[LHS]], {{%ymm[0-9]+}}
+; CHECK: vpshufb
+; CHECK: vpermq
+  %res = lshr <8 x i16> %lhs, %rhs
+  ret <8 x i16> %res
+}

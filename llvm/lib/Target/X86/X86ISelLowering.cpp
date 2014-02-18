@@ -13161,6 +13161,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
     Op = DAG.getNode(ISD::FP_TO_SINT, dl, VT, Op);
     return DAG.getNode(ISD::MUL, dl, VT, Op, R);
   }
+
   if (VT == MVT::v16i8 && Op->getOpcode() == ISD::SHL) {
     assert(Subtarget->hasSSE2() && "Need SSE2 for pslli/pcmpeq.");
 
@@ -13203,6 +13204,19 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
                     DAG.getNode(ISD::ADD, dl, VT, R, R), R);
     return R;
   }
+
+  // It's worth extending once and using the v8i32 shifts for 16-bit types, but
+  // the extra overheads to get from v16i8 to v8i32 make the existing SSE
+  // solution better.
+  if (Subtarget->hasInt256() && VT == MVT::v8i16) {
+    MVT NewVT = VT == MVT::v8i16 ? MVT::v8i32 : MVT::v16i16;
+    unsigned ExtOpc =
+        Op.getOpcode() == ISD::SRA ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+    R = DAG.getNode(ExtOpc, dl, NewVT, R);
+    Amt = DAG.getNode(ISD::ANY_EXTEND, dl, NewVT, Amt);
+    return DAG.getNode(ISD::TRUNCATE, dl, VT,
+                       DAG.getNode(Op.getOpcode(), dl, NewVT, R, Amt));
+    }
 
   // Decompose 256-bit shifts into smaller 128-bit shifts.
   if (VT.is256BitVector()) {
