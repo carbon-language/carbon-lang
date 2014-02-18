@@ -51,9 +51,9 @@ protected:
   MachineRegisterInfo &MRI;
   MachineFrameInfo &MFI;
   MachineConstantPool &MCP;
-  DebugLoc DL;
+  DebugLoc DbgLoc;
   const TargetMachine &TM;
-  const DataLayout &TD;
+  const DataLayout &DL;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
   const TargetRegisterInfo &TRI;
@@ -87,7 +87,7 @@ public:
   void startNewBlock();
 
   /// Return current debug location information.
-  DebugLoc getCurDebugLoc() const { return DL; }
+  DebugLoc getCurDebugLoc() const { return DbgLoc; }
   
   /// Do "fast" instruction selection for function arguments and append machine
   /// instructions to the current block. Return true if it is successful.
