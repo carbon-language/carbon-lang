@@ -58,3 +58,15 @@ int XCoreFunctionInfo::createFPSpillSlot(MachineFunction &MF) {
   return FPSpillSlot;
 }
 
+const int* XCoreFunctionInfo::createEHSpillSlot(MachineFunction &MF) {
+  if (EHSpillSlotSet) {
+    return EHSpillSlot;
+  }
+  const TargetRegisterClass *RC = &XCore::GRRegsRegClass;
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  EHSpillSlot[0] = MFI->CreateStackObject(RC->getSize(), RC->getAlignment(), true);
+  EHSpillSlot[1] = MFI->CreateStackObject(RC->getSize(), RC->getAlignment(), true);
+  EHSpillSlotSet = true;
+  return EHSpillSlot;
+}
+

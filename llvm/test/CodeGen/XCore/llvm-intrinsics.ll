@@ -77,11 +77,18 @@ entry:
 define i8* @EH0(i32 %offset, i8* %handler) {
 entry:
 ; CHECK-LABEL: EH0
-; CHECK: ldc r2, 0
+; CHECK: entsp 2
+; CHECK: .cfi_def_cfa_offset 8
+; CHECK: .cfi_offset 15, 0
+; CHECK: .cfi_offset 1, -8
+; CHECK: .cfi_offset 0, -4
+; CHECK: ldc r2, 8
 ; CHECK-NEXT: ldaw r3, sp[0]
 ; CHECK-NEXT: add r2, r3, r2
 ; CHECK-NEXT: add r2, r2, r0
 ; CHECK-NEXT: mov r3, r1
+; CHECK-NEXT: ldw r1, sp[0]
+; CHECK-NEXT: ldw r0, sp[1]
 ; CHECK-NEXT: set sp, r2
 ; CHECK-NEXT: bau r3
   call void @llvm.eh.return.i32(i32 %offset, i8* %handler)
@@ -92,19 +99,27 @@ declare void @foo(...)
 define i8* @EH1(i32 %offset, i8* %handler) {
 entry:
 ; CHECK-LABEL: EH1
-; CHECK: entsp 3
-; CHECK: stw r4, sp[2]
-; CHECK: stw r5, sp[1]
+; CHECK: entsp 5
+; CHECK: .cfi_def_cfa_offset 20
+; CHECK: .cfi_offset 15, 0
+; CHECK: .cfi_offset 1, -16
+; CHECK: .cfi_offset 0, -12
+; CHECK: stw r4, sp[4]
+; CHECK: .cfi_offset 4, -4
+; CHECK: stw r5, sp[3]
+; CHECK: .cfi_offset 5, -8
 ; CHECK: mov r4, r1
 ; CHECK-NEXT: mov r5, r0
 ; CHECK-NEXT: bl foo
-; CHECK-NEXT: ldc r0, 12
+; CHECK-NEXT: ldc r0, 20
 ; CHECK-NEXT: ldaw r1, sp[0]
 ; CHECK-NEXT: add r0, r1, r0
 ; CHECK-NEXT: add r2, r0, r5
 ; CHECK-NEXT: mov r3, r4
-; CHECK-NEXT: ldw r5, sp[1]
-; CHECK-NEXT: ldw r4, sp[2]
+; CHECK-NEXT: ldw r5, sp[3]
+; CHECK-NEXT: ldw r4, sp[4]
+; CHECK-NEXT: ldw r1, sp[1]
+; CHECK-NEXT: ldw r0, sp[2]
 ; CHECK-NEXT: set sp, r2
 ; CHECK-NEXT: bau r3
   call void (...)* @foo()
@@ -117,14 +132,16 @@ entry:
 define i8* @EH2(i32 %r0, i32 %r1, i32 %r2, i32 %r3) {
 entry:
 ; CHECK-LABEL: EH2
-; CHECK: entsp 1
+; CHECK: entsp 3
 ; CHECK: bl foo
 ; CHECK-NEXT: ldw r0, dp[offset]
-; CHECK-NEXT: ldc r1, 4
+; CHECK-NEXT: ldc r1, 12
 ; CHECK-NEXT: ldaw r2, sp[0]
 ; CHECK-NEXT: add r1, r2, r1
 ; CHECK-NEXT: add r2, r1, r0
 ; CHECK-NEXT: ldaw r3, dp[handler]
+; CHECK-NEXT: ldw r1, sp[1]
+; CHECK-NEXT: ldw r0, sp[2]
 ; CHECK-NEXT: set sp, r2
 ; CHECK-NEXT: bau r3
   call void (...)* @foo()
@@ -134,96 +151,213 @@ entry:
 }
 
 
-; FP: spill FP+SR+R4:9 = entsp 2 + 6
+; FP: spill FP+SR+R0:1+R4:9 = entsp 2+2+6
+; But we dont actually spill or restore R0:1
 ; CHECKFP-LABEL: Unwind0:
-; CHECKFP: entsp 8
+; CHECKFP: entsp 10
 ; CHECKFP: stw r10, sp[1]
 ; CHECKFP: ldaw r10, sp[0]
-; CHECKFP: stw r4, r10[7]
-; CHECKFP: stw r5, r10[6]
-; CHECKFP: stw r6, r10[5]
-; CHECKFP: stw r7, r10[4]
-; CHECKFP: stw r8, r10[3]
-; CHECKFP: stw r9, r10[2]
-; CHECKFP: ldw r9, r10[2]
-; CHECKFP: ldw r8, r10[3]
-; CHECKFP: ldw r7, r10[4]
-; CHECKFP: ldw r6, r10[5]
-; CHECKFP: ldw r5, r10[6]
-; CHECKFP: ldw r4, r10[7]
+; CHECKFP: stw r4, r10[9]
+; CHECKFP: stw r5, r10[8]
+; CHECKFP: stw r6, r10[7]
+; CHECKFP: stw r7, r10[6]
+; CHECKFP: stw r8, r10[5]
+; CHECKFP: stw r9, r10[4]
+; CHECKFP: ldw r9, r10[4]
+; CHECKFP: ldw r8, r10[5]
+; CHECKFP: ldw r7, r10[6]
+; CHECKFP: ldw r6, r10[7]
+; CHECKFP: ldw r5, r10[8]
+; CHECKFP: ldw r4, r10[9]
 ; CHECKFP: set sp, r10
 ; CHECKFP: ldw r10, sp[1]
-; CHECKFP: retsp 8
+; CHECKFP: retsp 10
 ;
-; !FP: spill R4:10 = entsp 7
+; !FP: spill R0:1+R4:10 = entsp 2+7
+; But we dont actually spill or restore R0:1
 ; CHECK-LABEL: Unwind0:
-; CHECK: entsp 7
-; CHECK: stw r4, sp[6]
-; CHECK: stw r5, sp[5]
-; CHECK: stw r6, sp[4]
-; CHECK: stw r7, sp[3]
-; CHECK: stw r8, sp[2]
-; CHECK: stw r9, sp[1]
-; CHECK: stw r10, sp[0]
-; CHECK: ldw r10, sp[0]
-; CHECK: ldw r9, sp[1]
-; CHECK: ldw r8, sp[2]
-; CHECK: ldw r7, sp[3]
-; CHECK: ldw r6, sp[4]
-; CHECK: ldw r5, sp[5]
-; CHECK: ldw r4, sp[6]
-; CHECK: retsp 7
+; CHECK: entsp 9
+; CHECK: stw r4, sp[8]
+; CHECK: stw r5, sp[7]
+; CHECK: stw r6, sp[6]
+; CHECK: stw r7, sp[5]
+; CHECK: stw r8, sp[4]
+; CHECK: stw r9, sp[3]
+; CHECK: stw r10, sp[2]
+; CHECK: ldw r10, sp[2]
+; CHECK: ldw r9, sp[3]
+; CHECK: ldw r8, sp[4]
+; CHECK: ldw r7, sp[5]
+; CHECK: ldw r6, sp[6]
+; CHECK: ldw r5, sp[7]
+; CHECK: ldw r4, sp[8]
+; CHECK: retsp 9
 define void @Unwind0() {
   call void @llvm.eh.unwind.init()
   ret void
 }
 
 
-; FP: spill FP+SR+R4:9+LR = entsp 2 + 6 + extsp 1
+; FP: spill FP+SR+R0:1+R4:9+LR = entsp 2+2+6 + extsp 1
+; But we dont actually spill or restore R0:1
 ; CHECKFP-LABEL: Unwind1:
-; CHECKFP: entsp 8
+; CHECKFP: entsp 10
 ; CHECKFP: stw r10, sp[1]
 ; CHECKFP: ldaw r10, sp[0]
-; CHECKFP: stw r4, r10[7]
-; CHECKFP: stw r5, r10[6]
-; CHECKFP: stw r6, r10[5]
-; CHECKFP: stw r7, r10[4]
-; CHECKFP: stw r8, r10[3]
-; CHECKFP: stw r9, r10[2]
+; CHECKFP: stw r4, r10[9]
+; CHECKFP: stw r5, r10[8]
+; CHECKFP: stw r6, r10[7]
+; CHECKFP: stw r7, r10[6]
+; CHECKFP: stw r8, r10[5]
+; CHECKFP: stw r9, r10[4]
 ; CHECKFP: extsp 1
 ; CHECKFP: bl foo
 ; CHECKFP: ldaw sp, sp[1]
-; CHECKFP: ldw r9, r10[2]
-; CHECKFP: ldw r8, r10[3]
-; CHECKFP: ldw r7, r10[4]
-; CHECKFP: ldw r6, r10[5]
-; CHECKFP: ldw r5, r10[6]
-; CHECKFP: ldw r4, r10[7]
+; CHECKFP: ldw r9, r10[4]
+; CHECKFP: ldw r8, r10[5]
+; CHECKFP: ldw r7, r10[6]
+; CHECKFP: ldw r6, r10[7]
+; CHECKFP: ldw r5, r10[8]
+; CHECKFP: ldw r4, r10[9]
 ; CHECKFP: set sp, r10
 ; CHECKFP: ldw r10, sp[1]
-; CHECKFP: retsp 8
+; CHECKFP: retsp 10
 ;
-; !FP: spill R4:10+LR = entsp 7 + 1
+; !FP: spill R0:1+R4:10+LR = entsp 2+7+1
+; But we dont actually spill or restore R0:1
 ; CHECK-LABEL: Unwind1:
-; CHECK: entsp 8
-; CHECK: stw r4, sp[7]
-; CHECK: stw r5, sp[6]
-; CHECK: stw r6, sp[5]
-; CHECK: stw r7, sp[4]
-; CHECK: stw r8, sp[3]
-; CHECK: stw r9, sp[2]
-; CHECK: stw r10, sp[1]
+; CHECK: entsp 10
+; CHECK: stw r4, sp[9]
+; CHECK: stw r5, sp[8]
+; CHECK: stw r6, sp[7]
+; CHECK: stw r7, sp[6]
+; CHECK: stw r8, sp[5]
+; CHECK: stw r9, sp[4]
+; CHECK: stw r10, sp[3]
 ; CHECK: bl foo
-; CHECK: ldw r10, sp[1]
-; CHECK: ldw r9, sp[2]
-; CHECK: ldw r8, sp[3]
-; CHECK: ldw r7, sp[4]
-; CHECK: ldw r6, sp[5]
-; CHECK: ldw r5, sp[6]
-; CHECK: ldw r4, sp[7]
-; CHECK: retsp 8
+; CHECK: ldw r10, sp[3]
+; CHECK: ldw r9, sp[4]
+; CHECK: ldw r8, sp[5]
+; CHECK: ldw r7, sp[6]
+; CHECK: ldw r6, sp[7]
+; CHECK: ldw r5, sp[8]
+; CHECK: ldw r4, sp[9]
+; CHECK: retsp 10
 define void @Unwind1() {
   call void (...)* @foo()
   call void @llvm.eh.unwind.init()
+  ret void
+}
+
+; FP: spill FP+SR+R0:1+R4:9 = entsp 2+2+6
+; We dont spill R0:1
+; We only restore R0:1 during eh.return
+; CHECKFP-LABEL: UnwindEH:
+; CHECKFP: entsp 10
+; CHECKFP: .cfi_def_cfa_offset 40
+; CHECKFP: .cfi_offset 15, 0
+; CHECKFP: stw r10, sp[1]
+; CHECKFP: .cfi_offset 10, -36
+; CHECKFP: ldaw r10, sp[0]
+; CHECKFP: .cfi_def_cfa_register 10
+; CHECKFP: .cfi_offset 1, -32
+; CHECKFP: .cfi_offset 0, -28
+; CHECKFP: stw r4, r10[9]
+; CHECKFP: .cfi_offset 4, -4
+; CHECKFP: stw r5, r10[8]
+; CHECKFP: .cfi_offset 5, -8
+; CHECKFP: stw r6, r10[7]
+; CHECKFP: .cfi_offset 6, -12
+; CHECKFP: stw r7, r10[6]
+; CHECKFP: .cfi_offset 7, -16
+; CHECKFP: stw r8, r10[5]
+; CHECKFP: .cfi_offset 8, -20
+; CHECKFP: stw r9, r10[4]
+; CHECKFP: .cfi_offset 9, -24
+; CHECKFP: bt r0, .LBB{{[0-9_]+}}
+; CHECKFP: ldw r9, r10[4]
+; CHECKFP-NEXT: ldw r8, r10[5]
+; CHECKFP-NEXT: ldw r7, r10[6]
+; CHECKFP-NEXT: ldw r6, r10[7]
+; CHECKFP-NEXT: ldw r5, r10[8]
+; CHECKFP-NEXT: ldw r4, r10[9]
+; CHECKFP-NEXT: set sp, r10
+; CHECKFP-NEXT: ldw r10, sp[1]
+; CHECKFP-NEXT: retsp 10
+; CHECKFP: .LBB{{[0-9_]+}}
+; CHECKFP-NEXT: ldc r2, 40
+; CHECKFP-NEXT: add r2, r10, r2
+; CHECKFP-NEXT: add r0, r2, r0
+; CHECKFP-NEXT: mov r3, r1
+; CHECKFP-NEXT: mov r2, r0
+; CHECKFP-NEXT: ldw r9, r10[4]
+; CHECKFP-NEXT: ldw r8, r10[5]
+; CHECKFP-NEXT: ldw r7, r10[6]
+; CHECKFP-NEXT: ldw r6, r10[7]
+; CHECKFP-NEXT: ldw r5, r10[8]
+; CHECKFP-NEXT: ldw r4, r10[9]
+; CHECKFP-NEXT: ldw r1, sp[2]
+; CHECKFP-NEXT: ldw r0, sp[3]
+; CHECKFP-NEXT: set sp, r2
+; CHECKFP-NEXT: bau r3
+;
+; !FP: spill R0:1+R4:10 = entsp 2+7
+; We dont spill R0:1
+; We only restore R0:1 during eh.return
+; CHECK-LABEL: UnwindEH:
+; CHECK: entsp 9
+; CHECK: .cfi_def_cfa_offset 36
+; CHECK: .cfi_offset 15, 0
+; CHECK: .cfi_offset 1, -36
+; CHECK: .cfi_offset 0, -32
+; CHECK: stw r4, sp[8]
+; CHECK: .cfi_offset 4, -4
+; CHECK: stw r5, sp[7]
+; CHECK: .cfi_offset 5, -8
+; CHECK: stw r6, sp[6]
+; CHECK: .cfi_offset 6, -12
+; CHECK: stw r7, sp[5]
+; CHECK: .cfi_offset 7, -16
+; CHECK: stw r8, sp[4]
+; CHECK: .cfi_offset 8, -20
+; CHECK: stw r9, sp[3]
+; CHECK: .cfi_offset 9, -24
+; CHECK: stw r10, sp[2]
+; CHECK: .cfi_offset 10, -28
+; CHECK: bt r0, .LBB{{[0-9_]+}}
+; CHECK: ldw r10, sp[2]
+; CHECK-NEXT: ldw r9, sp[3]
+; CHECK-NEXT: ldw r8, sp[4]
+; CHECK-NEXT: ldw r7, sp[5]
+; CHECK-NEXT: ldw r6, sp[6]
+; CHECK-NEXT: ldw r5, sp[7]
+; CHECK-NEXT: ldw r4, sp[8]
+; CHECK-NEXT: retsp 9
+; CHECK: .LBB{{[0-9_]+}}
+; CHECK-NEXT: ldc r2, 36
+; CHECK-NEXT: ldaw r3, sp[0]
+; CHECK-NEXT: add r2, r3, r2
+; CHECK-NEXT: add r0, r2, r0
+; CHECK-NEXT: mov r3, r1
+; CHECK-NEXT: mov r2, r0
+; CHECK-NEXT: ldw r10, sp[2]
+; CHECK-NEXT: ldw r9, sp[3]
+; CHECK-NEXT: ldw r8, sp[4]
+; CHECK-NEXT: ldw r7, sp[5]
+; CHECK-NEXT: ldw r6, sp[6]
+; CHECK-NEXT: ldw r5, sp[7]
+; CHECK-NEXT: ldw r4, sp[8]
+; CHECK-NEXT: ldw r1, sp[0]
+; CHECK-NEXT: ldw r0, sp[1]
+; CHECK-NEXT: set sp, r2
+; CHECK-NEXT: bau r3
+define void @UnwindEH(i32 %offset, i8* %handler) {
+  call void @llvm.eh.unwind.init()
+  %cmp = icmp eq i32 %offset, 0
+  br i1 %cmp, label %normal, label %eh
+eh:
+  call void @llvm.eh.return.i32(i32 %offset, i8* %handler)
+  unreachable
+normal:
   ret void
 }
