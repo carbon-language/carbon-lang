@@ -616,12 +616,11 @@ bool TokenLexer::PasteTokens(Token &Tok) {
           SourceLocation Loc =
             SM.createExpansionLoc(PasteOpLoc, ExpandLocStart, ExpandLocEnd, 2);
           // If we're in microsoft extensions mode, downgrade this from a hard
-          // error to a warning that defaults to an error.  This allows
+          // error to an extension that defaults to an error.  This allows
           // disabling it.
-          PP.Diag(Loc,
-                  PP.getLangOpts().MicrosoftExt ? diag::err_pp_bad_paste_ms 
-                                                   : diag::err_pp_bad_paste)
-            << Buffer.str();
+          PP.Diag(Loc, PP.getLangOpts().MicrosoftExt ? diag::ext_pp_bad_paste_ms
+                                                     : diag::err_pp_bad_paste)
+              << Buffer.str();
         }
 
         // An error has occurred so exit loop.
