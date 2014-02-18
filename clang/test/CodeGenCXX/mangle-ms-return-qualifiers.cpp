@@ -164,6 +164,12 @@ int S::* f8() { return 0; }
 int S::* const f9() { return 0; }
 // CHECK: "\01?f9@@YAQQS@@HXZ"
 
+int S::* __restrict f10() { return 0; }
+// CHECK: "\01?f10@@YAPIQS@@HXZ"
+
+int S::* const __restrict f11() { return 0; }
+// CHECK: "\01?f11@@YAQIQS@@HXZ"
+
 typedef int (*function_pointer)(int);
 
 function_pointer g1() { return 0; }

@@ -145,7 +145,8 @@ private:
   void mangleOperatorName(OverloadedOperatorKind OO, SourceLocation Loc);
   void mangleCXXDtorType(CXXDtorType T);
   void mangleQualifiers(Qualifiers Quals, bool IsMember);
-  void manglePointerQualifiers(Qualifiers Quals, const Type *PointeeType);
+  void manglePointerCVQualifiers(Qualifiers Quals);
+  void manglePointerExtQualifiers(Qualifiers Quals, const Type *PointeeType);
 
   void mangleUnscopedTemplateName(const TemplateDecl *ND);
   void mangleTemplateInstantiationName(const TemplateDecl *TD,
@@ -355,8 +356,8 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
   if (Ty->isPointerType() || Ty->isReferenceType() ||
       Ty->isMemberPointerType()) {
     mangleType(Ty, TL.getSourceRange(), QMM_Drop);
-    if (PointersAre64Bit)
-      Out << 'E';
+    manglePointerExtQualifiers(
+        Ty.getDesugaredType(getASTContext()).getLocalQualifiers(), 0);
     if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>()) {
       mangleQualifiers(MPT->getPointeeType().getQualifiers(), true);
       // Member pointers are suffixed with a back reference to the member
@@ -1213,15 +1214,24 @@ void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,
   // FIXME: For now, just drop all extension qualifiers on the floor.
 }
 
-void MicrosoftCXXNameMangler::manglePointerQualifiers(Qualifiers Quals,
-                                                      const Type *PointeeType) {
-  // <pointer-cvr-qualifiers> ::= P  # no qualifiers
-  //                          ::= Q  # const
-  //                          ::= R  # volatile
-  //                          ::= S  # const volatile
+void
+MicrosoftCXXNameMangler::manglePointerExtQualifiers(Qualifiers Quals,
+                                                    const Type *PointeeType) {
+  bool HasRestrict = Quals.hasRestrict();
+  if (PointersAre64Bit && (!PointeeType || !PointeeType->isFunctionType()))
+    Out << 'E';
+
+  if (HasRestrict)
+    Out << 'I';
+}
+
+void MicrosoftCXXNameMangler::manglePointerCVQualifiers(Qualifiers Quals) {
+  // <pointer-cv-qualifiers> ::= P  # no qualifiers
+  //                         ::= Q  # const
+  //                         ::= R  # volatile
+  //                         ::= S  # const volatile
   bool HasConst = Quals.hasConst(),
-       HasVolatile = Quals.hasVolatile(),
-       HasRestrict = Quals.hasRestrict();
+       HasVolatile = Quals.hasVolatile();
 
   if (HasConst && HasVolatile) {
     Out << 'S';
@@ -1232,12 +1242,6 @@ void MicrosoftCXXNameMangler::manglePointerQualifiers(Qualifiers Quals,
   } else {
     Out << 'P';
   }
-
-  if (PointersAre64Bit && PointeeType && !PointeeType->isFunctionType())
-    Out << 'E';
-
-  if (HasRestrict)
-    Out << 'I';
 }
 
 void MicrosoftCXXNameMangler::mangleArgumentType(QualType T,
@@ -1328,8 +1332,10 @@ void MicrosoftCXXNameMangler::mangleType(QualType T, SourceRange Range,
   }
 
   // We have to mangle these now, while we still have enough information.
-  if (IsPointer)
-    manglePointerQualifiers(Quals, T->getPointeeType().getTypePtr());
+  if (IsPointer) {
+    manglePointerCVQualifiers(Quals);
+    manglePointerExtQualifiers(Quals, T->getPointeeType().getTypePtr());
+  }
   const Type *ty = T.getTypePtr();
 
   switch (ty->getTypeClass()) {
@@ -1469,9 +1475,9 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
   // If this is a C++ instance method, mangle the CVR qualifiers for the
   // this pointer.
   if (IsInstMethod) {
-    if (PointersAre64Bit)
-      Out << 'E';
-    mangleQualifiers(Qualifiers::fromCVRMask(Proto->getTypeQuals()), false);
+    Qualifiers Quals = Qualifiers::fromCVRMask(Proto->getTypeQuals());
+    manglePointerExtQualifiers(Quals, 0);
+    mangleQualifiers(Quals, false);
   }
 
   mangleCallingConvention(T);
@@ -1665,7 +1671,7 @@ void MicrosoftCXXNameMangler::mangleType(const TagDecl *TD) {
 void MicrosoftCXXNameMangler::mangleDecayedArrayType(const ArrayType *T) {
   // This isn't a recursive mangling, so now we have to do it all in this
   // one call.
-  manglePointerQualifiers(T->getElementType().getQualifiers(), 0);
+  manglePointerCVQualifiers(T->getElementType().getQualifiers());
   mangleType(T->getElementType(), SourceRange());
 }
 void MicrosoftCXXNameMangler::mangleType(const ConstantArrayType *T,
@@ -1774,8 +1780,7 @@ void MicrosoftCXXNameMangler::mangleType(const ObjCObjectPointerType *T,
                                          SourceRange Range) {
   // Object pointers never have qualifiers.
   Out << 'A';
-  if (PointersAre64Bit && !T->getPointeeType()->isFunctionType())
-    Out << 'E';
+  manglePointerExtQualifiers(Qualifiers(), T->getPointeeType().getTypePtr());
   mangleType(T->getPointeeType(), Range);
 }
 
@@ -1785,8 +1790,7 @@ void MicrosoftCXXNameMangler::mangleType(const ObjCObjectPointerType *T,
 void MicrosoftCXXNameMangler::mangleType(const LValueReferenceType *T,
                                          SourceRange Range) {
   Out << 'A';
-  if (PointersAre64Bit && !T->getPointeeType()->isFunctionType())
-    Out << 'E';
+  manglePointerExtQualifiers(Qualifiers(), T->getPointeeType().getTypePtr());
   mangleType(T->getPointeeType(), Range);
 }
 
@@ -1796,8 +1800,7 @@ void MicrosoftCXXNameMangler::mangleType(const LValueReferenceType *T,
 void MicrosoftCXXNameMangler::mangleType(const RValueReferenceType *T,
                                          SourceRange Range) {
   Out << "$$Q";
-  if (PointersAre64Bit && !T->getPointeeType()->isFunctionType())
-    Out << 'E';
+  manglePointerExtQualifiers(Qualifiers(), T->getPointeeType().getTypePtr());
   mangleType(T->getPointeeType(), Range);
 }
 
