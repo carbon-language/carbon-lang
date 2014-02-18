@@ -14,6 +14,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/GCOV.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryObject.h"
@@ -43,9 +44,11 @@ static cl::opt<bool> FuncSummary("f", cl::init(false),
                                  cl::desc("Show coverage for each function"));
 static cl::alias FuncSummaryA("function-summaries", cl::aliasopt(FuncSummary));
 
-static cl::opt<std::string> ObjectDir("o", cl::value_desc("DIR"), cl::init(""),
-                                      cl::desc("Search for objects in DIR"));
+static cl::opt<std::string>
+ObjectDir("o", cl::value_desc("DIR|FILE"), cl::init(""),
+          cl::desc("Find objects in DIR or based on FILE's path"));
 static cl::alias ObjectDirA("object-directory", cl::aliasopt(ObjectDir));
+static cl::alias ObjectDirB("object-file", cl::aliasopt(ObjectDir));
 
 static cl::opt<bool> PreservePaths("p", cl::init(false),
                                    cl::desc("Preserve path components"));
@@ -75,9 +78,16 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "LLVM code coverage tool\n");
 
   SmallString<128> CoverageFileStem(ObjectDir);
-  if (CoverageFileStem.empty())
+  if (CoverageFileStem.empty()) {
+    // If no directory was specified with -o, look next to the source file.
     CoverageFileStem = sys::path::parent_path(SourceFile);
-  sys::path::append(CoverageFileStem, sys::path::stem(SourceFile));
+    sys::path::append(CoverageFileStem, sys::path::stem(SourceFile));
+  } else if (sys::fs::is_directory(ObjectDir))
+    // A directory name was given. Use it and the source file name.
+    sys::path::append(CoverageFileStem, sys::path::stem(SourceFile));
+  else
+    // A file was given. Ignore the source file and look next to this file.
+    sys::path::replace_extension(CoverageFileStem, "");
 
   if (InputGCNO.empty())
     InputGCNO = (CoverageFileStem.str() + ".gcno").str();

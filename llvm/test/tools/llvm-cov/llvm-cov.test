@@ -21,6 +21,16 @@ RUN: llvm-cov -o objdir test.c | diff -u test_no_options.output -
 RUN: diff -aub test_objdir.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_objdir.h.gcov test.h.gcov
 
+# Specifying an object file
+RUN: llvm-cov -o objdir/test.o test.c | diff -u test_no_options.output -
+RUN: diff -aub test_objdir.cpp.gcov test.cpp.gcov
+RUN: diff -aub test_objdir.h.gcov test.h.gcov
+
+# Specifying an object file that could be ambiguous with a directory
+RUN: llvm-cov -o objdir/test test.c | diff -u test_no_options.output -
+RUN: diff -aub test_objdir.cpp.gcov test.cpp.gcov
+RUN: diff -aub test_objdir.h.gcov test.h.gcov
+
 # Preserve paths. This mangles the output filenames.
 RUN: mkdir -p %t/srcdir/nested_dir
 RUN: cp test.cpp test.h %t/srcdir
