@@ -32,10 +32,18 @@
 // C++ demangling function, as required by Itanium C++ ABI. This is weak,
 // because we do not require a C++ ABI library to be linked to a program
 // using sanitizers; if it's not present, we'll just use the mangled name.
+//
+// On Android, this is not weak, because we are using shared runtime library
+// AND static libstdc++, and there is no good way to conditionally export
+// __cxa_demangle. By making this a non-weak symbol, we statically link
+// __cxa_demangle into ASan runtime library.
 namespace __cxxabiv1 {
-  extern "C" SANITIZER_WEAK_ATTRIBUTE
-  char *__cxa_demangle(const char *mangled, char *buffer,
-                                  size_t *length, int *status);
+  extern "C"
+#if !SANITIZER_ANDROID
+  SANITIZER_WEAK_ATTRIBUTE
+#endif
+  char *__cxa_demangle(const char *mangled, char *buffer, size_t *length,
+                       int *status);
 }
 
 namespace __sanitizer {
@@ -47,7 +55,7 @@ static const char *DemangleCXXABI(const char *name) {
   // own demangler (libc++abi's implementation could be adapted so that
   // it does not allocate). For now, we just call it anyway, and we leak
   // the returned value.
-  if (__cxxabiv1::__cxa_demangle)
+  if (SANITIZER_ANDROID || &__cxxabiv1::__cxa_demangle)
     if (const char *demangled_name =
           __cxxabiv1::__cxa_demangle(name, 0, 0, 0))
       return demangled_name;
