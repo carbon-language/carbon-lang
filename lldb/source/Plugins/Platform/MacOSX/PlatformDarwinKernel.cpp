@@ -661,7 +661,9 @@ PlatformDarwinKernel::CalculateTrapHandlerSymbolNames ()
 {   
     m_trap_handlers.push_back(ConstString ("trap_from_kernel"));
     m_trap_handlers.push_back(ConstString ("hndl_double_fault"));
-}   
+    m_trap_handlers.push_back(ConstString ("hndl_allintrs"));
+    m_trap_handlers.push_back(ConstString ("hndl_alltraps"));
+}
 
 #else  // __APPLE__
 
