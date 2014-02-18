@@ -10,7 +10,7 @@ th, table thead {
   text-align:center;
   font-weight: bold; font-family: Verdana;
   white-space:nowrap;
-} 
+}
 .W { font-size:0px }
 th, td { padding:5px; padding-left:8px; text-align:left }
 td.SUMM_DESC { padding-left:12px }
@@ -21,7 +21,7 @@ tbody.scrollContent { overflow:auto }
 
 table.form_group {
     background-color: #ccc;
-    border: 1px solid #333; 
+    border: 1px solid #333;
     padding: 2px;
 }
 
@@ -33,7 +33,7 @@ table.form_inner_group {
 
 table.form {
     background-color: #999;
-    border: 1px solid #333; 
+    border: 1px solid #333;
     padding: 2px;
 }
 

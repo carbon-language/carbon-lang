@@ -31,7 +31,7 @@ my $DefaultCCompiler;
 my $DefaultCXXCompiler;
 my $IsCXX;
 
-if (`uname -a` =~ m/Darwin/) { 
+if (`uname -a` =~ m/Darwin/) {
   $DefaultCCompiler = 'clang';
   $DefaultCXXCompiler = 'clang++';
 } else {
@@ -42,7 +42,7 @@ if (`uname -a` =~ m/Darwin/) {
 if ($FindBin::Script =~ /c\+\+-analyzer/) {
   $Compiler = $ENV{'CCC_CXX'};
   if (!defined $Compiler) { $Compiler = $DefaultCXXCompiler; }
-  
+
   $Clang = $ENV{'CLANG_CXX'};
   if (!defined $Clang) { $Clang = 'clang++'; }
 
@@ -69,7 +69,7 @@ my $CleanupFile;
 my $ResultFile;
 
 # Remove any stale files at exit.
-END { 
+END {
   if (defined $ResultFile && -z $ResultFile) {
     `rm -f $ResultFile`;
   }
@@ -100,7 +100,7 @@ sub ProcessClangFailure {
   my ($Clang, $Lang, $file, $Args, $HtmlDir, $ErrorType, $ofile) = @_;
   my $Dir = "$HtmlDir/failures";
   mkpath $Dir;
-  
+
   my $prefix = "clang_crash";
   if ($ErrorType eq $ParserRejects) {
     $prefix = "clang_parser_rejects";
@@ -118,7 +118,7 @@ sub ProcessClangFailure {
                                  DIR => $Dir);
   system $Clang, @$Args, "-E", "-o", $PPFile;
   close ($PPH);
-  
+
   # Create the info file.
   open (OUT, ">", "$PPFile.info.txt") or die "Cannot open $PPFile.info.txt\n";
   print OUT abs_path($file), "\n";
@@ -138,7 +138,7 @@ sub ProcessClangFailure {
 sub GetCCArgs {
   my $mode = shift;
   my $Args = shift;
-  
+
   pipe (FROM_CHILD, TO_PARENT);
   my $pid = fork();
   if ($pid == 0) {
@@ -146,7 +146,7 @@ sub GetCCArgs {
     open(STDOUT,">&", \*TO_PARENT);
     open(STDERR,">&", \*TO_PARENT);
     exec $Clang, "-###", $mode, @$Args;
-  }  
+  }
   close(TO_PARENT);
   my $line;
   while (<FROM_CHILD>) {
@@ -156,7 +156,7 @@ sub GetCCArgs {
 
   waitpid($pid,0);
   close(FROM_CHILD);
-  
+
   die "could not find clang line\n" if (!defined $line);
   # Strip leading and trailing whitespace characters.
   $line =~ s/^\s+|\s+$//g;
@@ -207,7 +207,7 @@ sub Analyze {
     }
 
     # Display Ubiviz graph?
-    if (defined $ENV{'CCC_UBI'}) {   
+    if (defined $ENV{'CCC_UBI'}) {
       push @Args, "-Xclang", "-analyzer-viz-egraph-ubigraph";
     }
 
@@ -228,7 +228,7 @@ sub Analyze {
   }
   if ($Verbose == 1) {
     # We MUST print to stderr.  Some clients use the stdout output of
-    # gcc for various purposes. 
+    # gcc for various purposes.
     print STDERR join(' ', @PrintArgs);
     print STDERR "\n";
   }
@@ -239,7 +239,7 @@ sub Analyze {
   # Capture the STDERR of clang and send it to a temporary file.
   # Capture the STDOUT of clang and reroute it to ccc-analyzer's STDERR.
   # We save the output file in the 'crashes' directory if clang encounters
-  # any problems with the file.  
+  # any problems with the file.
   pipe (FROM_CHILD, TO_PARENT);
   my $pid = fork();
   if ($pid == 0) {
@@ -251,7 +251,7 @@ sub Analyze {
 
   close TO_PARENT;
   my ($ofh, $ofile) = tempfile("clang_output_XXXXXX", DIR => $HtmlDir);
-  
+
   while (<FROM_CHILD>) {
     print $ofh $_;
     print STDERR $_;
@@ -293,15 +293,15 @@ sub Analyze {
           # Have we already spotted this unhandled attribute?
           next if (defined $attributes_not_handled{$1});
           $attributes_not_handled{$1} = 1;
-        
+
           # Get the name of the attribute file.
           my $dir = "$HtmlDir/failures";
           my $afile = "$dir/attribute_ignored_$1.txt";
-        
+
           # Only create another preprocessed file if the attribute file
           # doesn't exist yet.
           next if (-e $afile);
-        
+
           # Add this file to the list of files that contained this attribute.
           # Generate a preprocessed file if we haven't already.
           if (!(defined $ppfile)) {
@@ -319,7 +319,7 @@ sub Analyze {
       }
     }
   }
-  
+
   unlink($ofile);
 }
 
@@ -397,7 +397,7 @@ my %LangMap = (
 );
 
 my %UniqueOptions = (
-  '-isysroot' => 0  
+  '-isysroot' => 0
 );
 
 ##----------------------------------------------------------------------------##
@@ -466,7 +466,7 @@ my $HadArch = 0;
 
 # Process the arguments.
 foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
-  my $Arg = $ARGV[$i];  
+  my $Arg = $ARGV[$i];
   my ($ArgKey) = split /=/,$Arg,2;
 
   # Modes ccc-analyzer supports
@@ -510,7 +510,7 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
   # and the linker.
   if (defined $CompilerLinkerOptionMap{$ArgKey}) {
     my $Cnt = $CompilerLinkerOptionMap{$ArgKey};
-    
+
     # Check if this is an option that should have a unique value, and if so
     # determine if the value was checked before.
     if ($UniqueOptions{$Arg}) {
@@ -520,8 +520,8 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
       }
       $Uniqued{$Arg} = 1;
     }
-    
-    push @CompileOpts,$Arg;    
+
+    push @CompileOpts,$Arg;
     push @LinkOpts,$Arg;
 
     while ($Cnt > 0) {
@@ -531,7 +531,7 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     }
     next;
   }
-  
+
   # Ignored options.
   if (defined $IgnoredOptionMap{$ArgKey}) {
     my $Cnt = $IgnoredOptionMap{$ArgKey};
@@ -540,10 +540,10 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     }
     next;
   }
-  
+
   # Compile mode flags.
   if ($Arg =~ /^-[D,I,U](.*)$/) {
-    my $Tmp = $Arg;    
+    my $Tmp = $Arg;
     if ($1 eq '') {
       # FIXME: Check if we are going off the end.
       ++$i;
@@ -552,12 +552,12 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     push @CompileOpts,$Tmp;
     next;
   }
-  
+
   if ($Arg =~ /-m.*/) {
     push @CompileOpts,$Arg;
     next;
   }
-  
+
   # Language.
   if ($Arg eq '-x') {
     $Lang = $ARGV[$i+1];
@@ -570,7 +570,7 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     $Output = $ARGV[$i];
     next;
   }
-  
+
   # Get the link mode.
   if ($Arg =~ /^-[l,L,O]/) {
     if ($Arg eq '-O') { push @LinkOpts,'-O1'; }
@@ -581,12 +581,12 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     if ($Arg =~ /^-O/) { push @CompileOpts,$Arg; }
     next;
   }
-  
+
   if ($Arg =~ /^-std=/) {
     push @CompileOpts,$Arg;
     next;
   }
-  
+
   # Get the compiler/link mode.
   if ($Arg =~ /^-F(.+)$/) {
     my $Tmp = $Arg;
@@ -609,13 +609,13 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     ++$i;
     next;
   }
-  
+
   if ($Arg =~ /^-f/) {
     push @CompileOpts,$Arg;
     push @LinkOpts,$Arg;
     next;
   }
-  
+
   # Handle -Wno-.  We don't care about extra warnings, but
   # we should suppress ones that we don't want to see.
   if ($Arg =~ /^-Wno-/) {
@@ -644,7 +644,7 @@ if ($Action eq 'compile' or $Action eq 'link') {
         $FileLang = $LangMap{$1};
       }
     }
-    
+
     # FileLang still not defined?  Skip the file.
     next if (!defined $FileLang);
 
@@ -652,8 +652,8 @@ if ($Action eq 'compile' or $Action eq 'link') {
     next if (!defined $LangsAccepted{$FileLang});
 
     my @CmdArgs;
-    my @AnalyzeArgs;    
-    
+    my @AnalyzeArgs;
+
     if ($FileLang ne 'unknown') {
       push @CmdArgs, '-x', $FileLang;
     }
@@ -669,7 +669,7 @@ if ($Action eq 'compile' or $Action eq 'link') {
     if (defined $InternalStats) {
       push @AnalyzeArgs, "-analyzer-stats";
     }
-    
+
     if (defined $Analyses) {
       push @AnalyzeArgs, split '\s+', $Analyses;
     }
@@ -715,4 +715,3 @@ if ($Action eq 'compile' or $Action eq 'link') {
 }
 
 exit($Status >> 8);
-

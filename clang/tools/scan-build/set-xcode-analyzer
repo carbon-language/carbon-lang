@@ -8,7 +8,7 @@ import sys
 if sys.version_info < (2, 7):
     print "set-xcode-analyzer requires Python 2.7 or later"
     sys.exit(1)
-    
+
 import os
 import subprocess
 import re
@@ -65,7 +65,7 @@ def main():
   parser.set_description(__doc__)
   parser.add_option("--use-checker-build", dest="path",
                     help="Use the Clang located at the provided absolute path, e.g. /Users/foo/checker-1")
-  parser.add_option("--use-xcode-clang", action="store_const", 
+  parser.add_option("--use-xcode-clang", action="store_const",
                     const="$(CLANG)", dest="default",
                     help="Use the Clang bundled with Xcode")
   (options, args) = parser.parse_args()
@@ -91,7 +91,7 @@ def main():
     print "(+) Using the Clang bundled with Xcode"
     path = options.default
     isBuiltinAnalyzer = True
-  
+
   try:
     xcode_path = subprocess.check_output(["xcode-select", "-print-path"])
   except AttributeError:
@@ -101,15 +101,14 @@ def main():
     # Cut off the 'Developer' dir, as the xcspec lies in another part
     # of the Xcode.app subtree.
     xcode_path = os.path.dirname(xcode_path)
-  
+
   foundSpec = False
   for x in FindClangSpecs(xcode_path):
     foundSpec = True
     ModifySpec(x, isBuiltinAnalyzer, path)
-    
+
   if foundSpec == False:
       print "(-) No compiler configuration file was found.  Xcode's analyzer has not been updated."
 
 if __name__ == '__main__':
   main()
-
