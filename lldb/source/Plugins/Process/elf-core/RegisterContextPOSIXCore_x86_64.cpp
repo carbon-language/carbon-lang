@@ -63,8 +63,16 @@ RegisterContextCorePOSIX_x86_64::WriteFPR()
 bool
 RegisterContextCorePOSIX_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue &value)
 {
-    value = *(uint64_t *)(m_gpregset + reg_info->byte_offset);
-    return true;
+    switch (reg_info->byte_size)
+    {
+        case 4:
+            value = *(uint32_t *)(m_gpregset + reg_info->byte_offset);
+            return true;
+        case 8:
+            value = *(uint64_t *)(m_gpregset + reg_info->byte_offset);
+            return true;
+    }
+    return false;
 }
 
 bool
