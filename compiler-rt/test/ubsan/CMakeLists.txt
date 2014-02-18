@@ -1,11 +1,13 @@
 set(UBSAN_LIT_TESTS_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+set(UBSAN_LIT_TEST_MODE "Standalone")
 configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/UbsanConfig/lit.site.cfg.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/UbsanConfig/lit.site.cfg)
 
+set(UBSAN_LIT_TEST_MODE "AddressSanitizer")
 configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/AsanConfig/lit.site.cfg.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/AsanConfig/lit.site.cfg)
 
 set(UBSAN_TEST_DEPS

@@ -2,7 +2,7 @@
 lit_config.load_config(config, "@COMPILER_RT_BINARY_DIR@/test/lit.common.configured")
 
 # Tool-specific config options.
-config.ubsan_lit_tests_dir = "@UBSAN_LIT_TESTS_DIR@"
+config.lsan_lit_test_mode = "@LSAN_LIT_TEST_MODE@"
 
 # Load tool-specific config that would do the real work.
-lit_config.load_config(config, "@UBSAN_LIT_TESTS_DIR@/UbsanConfig/lit.cfg")
+lit_config.load_config(config, "@LSAN_LIT_SOURCE_DIR@/lit.common.cfg")

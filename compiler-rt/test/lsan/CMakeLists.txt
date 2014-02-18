@@ -1,14 +1,14 @@
 set(LSAN_LIT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+set(LSAN_LIT_TEST_MODE "Standalone")
 configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/LsanConfig/lit.site.cfg.in
-  ${CMAKE_CURRENT_BINARY_DIR}/LsanConfig/lit.site.cfg
-  )
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/LsanConfig/lit.site.cfg)
 
+set(LSAN_LIT_TEST_MODE "AddressSanitizer")
 configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/AsanConfig/lit.site.cfg.in
-  ${CMAKE_CURRENT_BINARY_DIR}/AsanConfig/lit.site.cfg
-  )
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/AsanConfig/lit.site.cfg)
 
 if(NOT APPLE AND NOT ANDROID)
   set(LSAN_TEST_DEPS
