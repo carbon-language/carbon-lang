@@ -367,7 +367,7 @@ static const RecordType *getRecordType(QualType QT) {
 static bool checkBaseClassIsLockableCallback(const CXXBaseSpecifier *Specifier,
                                              CXXBasePath &Path, void *Unused) {
   const RecordType *RT = Specifier->getType()->getAs<RecordType>();
-  return RT->getDecl()->hasAttr<LockableAttr>();
+  return RT->getDecl()->hasAttr<CapabilityAttr>();
 }
 
 
@@ -395,7 +395,7 @@ static void checkForLockableRecord(Sema &S, Decl *D, const AttributeList &Attr,
 
   // Check if the type is lockable.
   RecordDecl *RD = RT->getDecl();
-  if (RD->hasAttr<LockableAttr>())
+  if (RD->hasAttr<CapabilityAttr>())
     return;
 
   // Else check if any base classes are lockable.
@@ -548,7 +548,7 @@ static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
   QualType QT = cast<ValueDecl>(D)->getType();
   if (!QT->isDependentType()) {
     const RecordType *RT = getRecordType(QT);
-    if (!RT || !RT->getDecl()->hasAttr<LockableAttr>()) {
+    if (!RT || !RT->getDecl()->hasAttr<CapabilityAttr>()) {
       S.Diag(Attr.getLoc(), diag::warn_thread_attribute_decl_not_lockable)
         << Attr.getName();
       return false;
@@ -696,46 +696,6 @@ static void handleExclusiveTrylockFunctionAttr(Sema &S, Decl *D,
                                           Attr.getArgAsExpr(0),
                                           Args.data(), Args.size(),
                                           Attr.getAttributeSpellingListIndex()));
-}
-
-static bool checkLocksRequiredCommon(Sema &S, Decl *D,
-                                     const AttributeList &Attr,
-                                     SmallVectorImpl<Expr *> &Args) {
-  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
-    return false;
-
-  // check that all arguments are lockable objects
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
-  if (Args.empty())
-    return false;
-
-  return true;
-}
-
-static void handleExclusiveLocksRequiredAttr(Sema &S, Decl *D,
-                                             const AttributeList &Attr) {
-  SmallVector<Expr*, 1> Args;
-  if (!checkLocksRequiredCommon(S, D, Attr, Args))
-    return;
-
-  Expr **StartArg = &Args[0];
-  D->addAttr(::new (S.Context)
-             ExclusiveLocksRequiredAttr(Attr.getRange(), S.Context,
-                                        StartArg, Args.size(),
-                                        Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleSharedLocksRequiredAttr(Sema &S, Decl *D,
-                                          const AttributeList &Attr) {
-  SmallVector<Expr*, 1> Args;
-  if (!checkLocksRequiredCommon(S, D, Attr, Args))
-    return;
-
-  Expr **StartArg = &Args[0];
-  D->addAttr(::new (S.Context)
-             SharedLocksRequiredAttr(Attr.getRange(), S.Context,
-                                     StartArg, Args.size(),
-                                     Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleUnlockFunAttr(Sema &S, Decl *D,
@@ -3929,6 +3889,40 @@ Sema::mergeMSInheritanceAttr(Decl *D, SourceRange Range, bool BestCase,
       MSInheritanceAttr(Range, Context, BestCase, AttrSpellingListIndex);
 }
 
+static void handleCapabilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  // The capability attributes take a single string parameter for the name of
+  // the capability they represent. The lockable attribute does not take any
+  // parameters. However, semantically, both attributes represent the same
+  // concept, and so they use the same semantic attribute. Eventually, the
+  // lockable attribute will be removed.
+  StringRef N;
+  SourceLocation LiteralLoc;
+  if (Attr.getKind() == AttributeList::AT_Capability &&
+      !S.checkStringLiteralArgumentAttr(Attr, 0, N, &LiteralLoc))
+    return;
+
+  D->addAttr(::new (S.Context) CapabilityAttr(Attr.getRange(), S.Context, N,
+                                        Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleRequiresCapabilityAttr(Sema &S, Decl *D,
+                                         const AttributeList &Attr) {
+  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
+    return;
+
+  // check that all arguments are lockable objects
+  SmallVector<Expr*, 1> Args;
+  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
+  if (Args.empty())
+    return;
+
+  RequiresCapabilityAttr *RCA = ::new (S.Context)
+    RequiresCapabilityAttr(Attr.getRange(), S.Context, Args.data(),
+                           Args.size(), Attr.getAttributeSpellingListIndex());
+
+  D->addAttr(RCA);
+}
+
 /// Handles semantic checking for features that are common to all attributes,
 /// such as checking whether a parameter was properly specified, or the correct
 /// number of arguments were passed, etc.
@@ -4243,8 +4237,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_NoSanitizeMemory:
     handleSimpleAttribute<NoSanitizeMemoryAttr>(S, D, Attr);
     break;
-  case AttributeList::AT_Lockable:
-    handleSimpleAttribute<LockableAttr>(S, D, Attr); break;
   case AttributeList::AT_GuardedBy:
     handleGuardedByAttr(S, D, Attr);
     break;
@@ -4253,9 +4245,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_ExclusiveLockFunction:
     handleExclusiveLockFunctionAttr(S, D, Attr);
-    break;
-  case AttributeList::AT_ExclusiveLocksRequired:
-    handleExclusiveLocksRequiredAttr(S, D, Attr);
     break;
   case AttributeList::AT_ExclusiveTrylockFunction:
     handleExclusiveTrylockFunctionAttr(S, D, Attr);
@@ -4269,9 +4258,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_SharedLockFunction:
     handleSharedLockFunctionAttr(S, D, Attr);
     break;
-  case AttributeList::AT_SharedLocksRequired:
-    handleSharedLocksRequiredAttr(S, D, Attr);
-    break;
   case AttributeList::AT_SharedTrylockFunction:
     handleSharedTrylockFunctionAttr(S, D, Attr);
     break;
@@ -4284,6 +4270,13 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_AcquiredAfter:
     handleAcquiredAfterAttr(S, D, Attr);
     break;
+
+  // Capability analysis attributes.
+  case AttributeList::AT_Capability:
+  case AttributeList::AT_Lockable:
+    handleCapabilityAttr(S, D, Attr); break;
+  case AttributeList::AT_RequiresCapability:
+    handleRequiresCapabilityAttr(S, D, Attr); break;
 
   // Consumed analysis attributes.
   case AttributeList::AT_Consumable:

@@ -12749,12 +12749,9 @@ bool Sema::checkThisInStaticMemberFunctionAttributes(CXXMethodDecl *Method) {
       Arg = LR->getArg();
     else if (LocksExcludedAttr *LE = dyn_cast<LocksExcludedAttr>(*A))
       Args = ArrayRef<Expr *>(LE->args_begin(), LE->args_size());
-    else if (ExclusiveLocksRequiredAttr *ELR 
-               = dyn_cast<ExclusiveLocksRequiredAttr>(*A))
-      Args = ArrayRef<Expr *>(ELR->args_begin(), ELR->args_size());
-    else if (SharedLocksRequiredAttr *SLR 
-               = dyn_cast<SharedLocksRequiredAttr>(*A))
-      Args = ArrayRef<Expr *>(SLR->args_begin(), SLR->args_size());
+    else if (RequiresCapabilityAttr *RC
+               = dyn_cast<RequiresCapabilityAttr>(*A))
+      Args = ArrayRef<Expr *>(RC->args_begin(), RC->args_size());
 
     if (Arg && !Finder.TraverseStmt(Arg))
       return true;

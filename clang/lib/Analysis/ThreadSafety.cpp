@@ -2015,21 +2015,13 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
         break;
       }
 
-      case attr::ExclusiveLocksRequired: {
-        ExclusiveLocksRequiredAttr *A = cast<ExclusiveLocksRequiredAttr>(At);
+      case attr::RequiresCapability: {
+        RequiresCapabilityAttr *A = cast<RequiresCapabilityAttr>(At);
 
-        for (ExclusiveLocksRequiredAttr::args_iterator
-             I = A->args_begin(), E = A->args_end(); I != E; ++I)
-          warnIfMutexNotHeld(D, Exp, AK_Written, *I, POK_FunctionCall);
-        break;
-      }
-
-      case attr::SharedLocksRequired: {
-        SharedLocksRequiredAttr *A = cast<SharedLocksRequiredAttr>(At);
-
-        for (SharedLocksRequiredAttr::args_iterator I = A->args_begin(),
+        for (RequiresCapabilityAttr::args_iterator I = A->args_begin(),
              E = A->args_end(); I != E; ++I)
-          warnIfMutexNotHeld(D, Exp, AK_Read, *I, POK_FunctionCall);
+          warnIfMutexNotHeld(D, Exp, A->isShared() ? AK_Read : AK_Written, *I,
+                             POK_FunctionCall);
         break;
       }
 
@@ -2390,12 +2382,9 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
     for (unsigned i = 0; i < ArgAttrs.size(); ++i) {
       Attr *Attr = ArgAttrs[i];
       Loc = Attr->getLocation();
-      if (ExclusiveLocksRequiredAttr *A
-            = dyn_cast<ExclusiveLocksRequiredAttr>(Attr)) {
-        getMutexIDs(ExclusiveLocksToAdd, A, (Expr*) 0, D);
-      } else if (SharedLocksRequiredAttr *A
-                   = dyn_cast<SharedLocksRequiredAttr>(Attr)) {
-        getMutexIDs(SharedLocksToAdd, A, (Expr*) 0, D);
+      if (RequiresCapabilityAttr *A = dyn_cast<RequiresCapabilityAttr>(Attr)) {
+        getMutexIDs(A->isShared() ? SharedLocksToAdd : ExclusiveLocksToAdd, A,
+                    0, D);
       } else if (UnlockFunctionAttr *A = dyn_cast<UnlockFunctionAttr>(Attr)) {
         // UNLOCK_FUNCTION() is used to hide the underlying lock implementation.
         // We must ignore such methods.
