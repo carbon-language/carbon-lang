@@ -13,9 +13,8 @@ int c = 5;
 // CHECK-NOT: @_ZN3foo1dE
 extern "C" struct d;
 
-// CHECK-NOT: @e = global
-// CHECK-NOT: @_ZN3foo1eE = global
-extern "C++" int a2;
+// CHECK-NOT: should_not_appear
+extern "C++" int should_not_appear;
 
 }
 
