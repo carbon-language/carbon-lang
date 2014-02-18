@@ -5,13 +5,26 @@
 // RUN: ASAN_OPTIONS=quarantine_size=1 %t
 
 #include <assert.h>
-#include <malloc.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <stdlib.h>
+
+#ifdef __ANDROID__
+#include <malloc.h>
+void *my_memalign(size_t boundary, size_t size) {
+  return memalign(boundary, size);
+}
+#else
+void *my_memalign(size_t boundary, size_t size) {
+  void *p;
+  posix_memalign(&p, boundary, size);
+  return p;
+}
+#endif
 
 int main() {
   const int kPageSize = 4096;
-  void *p = memalign(kPageSize, 1024 * 1024);
+  void *p = my_memalign(kPageSize, 1024 * 1024);
   free(p);
 
   char *q = (char *)mmap(p, kPageSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, 0, 0);
