@@ -45,6 +45,16 @@ namespace PR16529 {
   U &r = S<int>::f();
 }
 
+namespace PR18876 {
+  struct A { ~A() = delete; }; // expected-note +{{here}}
+  A f();
+  decltype(f()) *a; // ok, function call
+  decltype(A()) *b; // expected-error {{attempt to use a deleted function}}
+  decltype(0, f()) *c; // ok, function call on RHS of comma
+  decltype(0, A()) *d; // expected-error {{attempt to use a deleted function}}
+  decltype(f(), 0) *e; // expected-error {{attempt to use a deleted function}}
+}
+
 template<typename>
 class conditional {
 };
