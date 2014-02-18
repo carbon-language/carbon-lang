@@ -3895,6 +3895,7 @@
 			buildPhases = (
 				26DC6A0D1337FE6900FF7998 /* Sources */,
 				26DC6A0E1337FE6900FF7998 /* Frameworks */,
+				4C3326CA18B2A2B800EB5DD7 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -4080,6 +4081,19 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "$SRCROOT/scripts/build-swig-wrapper-classes.sh $SRCROOT $TARGET_BUILD_DIR $CONFIGURATION_BUILD_DIR \"\"\n";
+		};
+		4C3326CA18B2A2B800EB5DD7 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"${CONFIGURATION}\" != BuildAndIntegration ]\nthen\n    codesign -f -s lldb_codesign \"${TARGET_BUILD_DIR}/${TARGET_NAME}\"\nfi\n";
 		};
 		9A19ACE2116563A700E0D453 /* Finish swig wrapper classes (lldb) */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -5688,7 +5702,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				DEAD_CODE_STRIPPING = YES;
 				EXPORTED_SYMBOLS_FILE = "tools/lldb-platform/exports";
 				FRAMEWORK_SEARCH_PATHS = (
@@ -5760,7 +5774,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				DEAD_CODE_STRIPPING = YES;
 				EXPORTED_SYMBOLS_FILE = "tools/lldb-platform/exports";
 				FRAMEWORK_SEARCH_PATHS = (
@@ -6189,7 +6203,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				DEAD_CODE_STRIPPING = YES;
 				EXPORTED_SYMBOLS_FILE = "tools/lldb-platform/exports";
 				FRAMEWORK_SEARCH_PATHS = (
