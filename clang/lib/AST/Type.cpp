@@ -422,6 +422,10 @@ QualType Type::getPointeeType() const {
     return BPT->getPointeeType();
   if (const ReferenceType *RT = getAs<ReferenceType>())
     return RT->getPointeeType();
+  if (const MemberPointerType *MPT = getAs<MemberPointerType>())
+    return MPT->getPointeeType();
+  if (const DecayedType *DT = getAs<DecayedType>())
+    return DT->getPointeeType();
   return QualType();
 }
 

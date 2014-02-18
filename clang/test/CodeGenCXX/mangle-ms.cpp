@@ -99,6 +99,11 @@ extern const int * const h2 = &a;
 int i[10][20];
 // CHECK-DAG: @"\01?i@@3PAY0BE@HA"
 
+typedef int (*FunT)(int, int);
+FunT FunArr[10][20];
+// CHECK-DAG: @"\01?FunArr@@3PAY0BE@P6AHHH@ZA"
+// X64-DAG: @"\01?FunArr@@3PAY0BE@P6AHHH@ZA"
+
 int (__stdcall *j)(signed char, unsigned char);
 // CHECK-DAG: @"\01?j@@3P6GHCE@ZA"
 

@@ -37,6 +37,22 @@ void foo_sad(char * const volatile x) {}
 // CHECK: "\01?foo_sad@@YAXSAD@Z"
 // X64: "\01?foo_sad@@YAXSEAD@Z"
 
+void foo_piad(char * __restrict x) {}
+// CHECK: "\01?foo_piad@@YAXPIAD@Z"
+// X64: "\01?foo_piad@@YAXPEIAD@Z"
+
+void foo_qiad(char * const __restrict x) {}
+// CHECK: "\01?foo_qiad@@YAXQIAD@Z"
+// X64: "\01?foo_qiad@@YAXQEIAD@Z"
+
+void foo_riad(char * volatile __restrict x) {}
+// CHECK: "\01?foo_riad@@YAXRIAD@Z"
+// X64: "\01?foo_riad@@YAXREIAD@Z"
+
+void foo_siad(char * const volatile __restrict x) {}
+// CHECK: "\01?foo_siad@@YAXSIAD@Z"
+// X64: "\01?foo_siad@@YAXSEIAD@Z"
+
 void foo_papad(char ** x) {}
 // CHECK: "\01?foo_papad@@YAXPAPAD@Z"
 // X64: "\01?foo_papad@@YAXPEAPEAD@Z"
@@ -238,3 +254,7 @@ void mangle_yes_backref2(fun_type *const[], ptr_to_fun_type const[]) {}
 void mangle_yes_backref3(ptr_to_fun_type *const, void (**const)(void)) {}
 // CHECK: "\01?mangle_yes_backref3@@YAXQAP6AXXZ0@Z"
 // X64:   "\01?mangle_yes_backref3@@YAXQEAP6AXXZ0@Z"
+
+void mangle_yes_backref4(int *const __restrict, int *const __restrict) {}
+// CHECK: "\01?mangle_yes_backref4@@YAXQIAH0@Z"
+// X64:   "\01?mangle_yes_backref4@@YAXQEIAH0@Z"
