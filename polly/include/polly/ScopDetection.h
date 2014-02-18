@@ -245,9 +245,11 @@ public:
   /// @brief Is the region is the maximum region of a Scop?
   ///
   /// @param R The Region to test if it is maximum.
+  /// @param Verify Rerun the scop detection to verify SCoP was not invalidated
+  ///               meanwhile.
   ///
   /// @return Return true if R is the maximum Region in a Scop, false otherwise.
-  bool isMaxRegionInScop(const Region &R) const;
+  bool isMaxRegionInScop(const Region &R, bool Verify = true) const;
 
   /// @brief Get a message why a region is invalid
   ///

@@ -341,6 +341,8 @@ bool TempScopInfo::runOnFunction(Function &F) {
   ZeroOffset = SE->getConstant(TD->getIntPtrType(F.getContext()), 0);
 
   for (ScopDetection::iterator I = SD->begin(), E = SD->end(); I != E; ++I) {
+    if (!SD->isMaxRegionInScop(**I))
+      continue;
     Region *R = const_cast<Region *>(*I);
     TempScops.insert(std::make_pair(R, buildTempScop(*R)));
   }

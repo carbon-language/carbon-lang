@@ -112,6 +112,11 @@ TrackFailures("polly-detect-track-failures",
               cl::location(PollyTrackFailures), cl::Hidden, cl::init(false),
               cl::cat(PollyCategory));
 
+static cl::opt<bool>
+VerifyScops("polly-detect-verify",
+            cl::desc("Verify the detected SCoPs after each transformation"),
+            cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+
 bool polly::PollyTrackFailures = false;
 
 //===----------------------------------------------------------------------===//
@@ -204,9 +209,14 @@ void DiagnosticScopFound::print(DiagnosticPrinter &DP) const {
 
 //===----------------------------------------------------------------------===//
 // ScopDetection.
-bool ScopDetection::isMaxRegionInScop(const Region &R) const {
-  // The Region is valid only if it could be found in the set.
-  return ValidRegions.count(&R);
+bool ScopDetection::isMaxRegionInScop(const Region &R, bool Verify) const {
+  if (!ValidRegions.count(&R))
+    return false;
+
+  if (Verify)
+    return isValidRegion(const_cast<Region &>(R));
+
+  return true;
 }
 
 std::string ScopDetection::regionIsInvalidBecause(const Region *R) const {
@@ -837,6 +847,9 @@ void polly::ScopDetection::verifyRegion(const Region &R) const {
 }
 
 void polly::ScopDetection::verifyAnalysis() const {
+  if (!VerifyScops)
+    return;
+
   for (RegionSet::const_iterator I = ValidRegions.begin(),
                                  E = ValidRegions.end();
        I != E; ++I)
