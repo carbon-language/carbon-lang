@@ -568,19 +568,42 @@ class ScopedInErrorReport {
   }
 };
 
+static bool IsStackOverflow(uptr addr, uptr sp) {
+  uptr stack_frame_bottom = sp;
+#ifdef __x86_64__
+  stack_frame_bottom -= 128; // x86_64 stack redzone
+#else
+  // call stores return value 1 word below SP.
+  stack_frame_bottom -= sizeof(uptr);
+#endif
+  // Access below sp (+ redzone on x86_64) is probably something else (like
+  // stack of another thread).
+  if (addr < stack_frame_bottom)
+    return false;
+
+  AsanThread *t = GetCurrentThread();
+  // Anything below stack_bottom, but not too far away is a stack overflow.
+  // Bottom 4k may be a guard page. Treat it as stack-overflow as well.
+  return addr < t->stack_bottom() + GetPageSizeCached() &&
+         addr > t->stack_bottom() - 0xFFFF;
+}
+
 void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, void *context, uptr addr) {
   ScopedInErrorReport in_report;
   Decorator d;
   Printf("%s", d.Warning());
-  Report("ERROR: AddressSanitizer: SEGV on unknown address %p"
-             " (pc %p sp %p bp %p T%d)\n",
-             (void*)addr, (void*)pc, (void*)sp, (void*)bp,
-             GetCurrentTidOrInvalid());
+  bool stack_overflow = IsStackOverflow(addr, sp);
+  Report(
+      "ERROR: AddressSanitizer: %s %p"
+      " (pc %p sp %p bp %p T%d)\n",
+      stack_overflow ? "stack-overflow on address" : "SEGV on unknown address",
+      (void *)addr, (void *)pc, (void *)sp, (void *)bp,
+      GetCurrentTidOrInvalid());
   Printf("%s", d.EndWarning());
   GET_STACK_TRACE_SIGNAL(pc, bp, context);
   stack.Print();
   Printf("AddressSanitizer can not provide additional info.\n");
-  ReportErrorSummary("SEGV", &stack);
+  ReportErrorSummary(stack_overflow ? "stack-overflow" : "SEGV", &stack);
 }
 
 void ReportDoubleFree(uptr addr, StackTrace *free_stack) {
