@@ -1152,12 +1152,18 @@ ClangASTContext::CreateRecordType (DeclContext *decl_ctx,
     // the CXXRecordDecl class since we often don't know from debug information
     // if something is struct or a class, so we default to always use the more
     // complete definition just in case.
+    
+    bool is_anonymous = (!name) || (!name[0]);
+    
     CXXRecordDecl *decl = CXXRecordDecl::Create (*ast,
                                                  (TagDecl::TagKind)kind,
                                                  decl_ctx,
                                                  SourceLocation(),
                                                  SourceLocation(),
-                                                 name && name[0] ? &ast->Idents.get(name) : NULL);
+                                                 is_anonymous ? NULL : &ast->Idents.get(name));
+    
+    if (is_anonymous)
+        decl->setAnonymousStructOrUnion(true);
     
     if (decl)
     {
