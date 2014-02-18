@@ -41,19 +41,19 @@ if (`uname -a` =~ m/Darwin/) {
 
 if ($FindBin::Script =~ /c\+\+-analyzer/) {
   $Compiler = $ENV{'CCC_CXX'};
-  if (!defined $Compiler) { $Compiler = $DefaultCXXCompiler; }
+  if (!defined $Compiler || ! -x $Compiler) { $Compiler = $DefaultCXXCompiler; }
 
   $Clang = $ENV{'CLANG_CXX'};
-  if (!defined $Clang) { $Clang = 'clang++'; }
+  if (!defined $Clang || ! -x $Clang) { $Clang = 'clang++'; }
 
   $IsCXX = 1
 }
 else {
   $Compiler = $ENV{'CCC_CC'};
-  if (!defined $Compiler) { $Compiler = $DefaultCCompiler; }
+  if (!defined $Compiler || ! -x $Compiler) { $Compiler = $DefaultCCompiler; }
 
   $Clang = $ENV{'CLANG'};
-  if (!defined $Clang) { $Clang = 'clang'; }
+  if (!defined $Clang || ! -x $Clang) { $Clang = 'clang'; }
 
   $IsCXX = 0
 }
