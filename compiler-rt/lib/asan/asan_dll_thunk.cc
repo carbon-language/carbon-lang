@@ -151,6 +151,12 @@ WRAP_V_WW(__asan_report_load_n)
 WRAP_V_WW(__asan_register_globals)
 WRAP_V_WW(__asan_unregister_globals)
 
+WRAP_V_W(__asan_before_dynamic_init)
+WRAP_V_V(__asan_after_dynamic_init)
+
+WRAP_V_WW(__asan_poison_stack_memory)
+WRAP_V_WW(__asan_unpoison_stack_memory)
+
 WRAP_V_WW(__asan_poison_memory_region)
 WRAP_V_WW(__asan_unpoison_memory_region)
 
