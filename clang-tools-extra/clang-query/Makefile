@@ -11,4 +11,6 @@ CLANG_LEVEL := ../../..
 LIBRARYNAME := clangQuery
 include $(CLANG_LEVEL)/../../Makefile.config
 
+DIRS = tool
+
 include $(CLANG_LEVEL)/Makefile

@@ -37,6 +37,7 @@ set(CLANG_TOOLS_TEST_DEPS
   # Individual tools we test.
   clang-apply-replacements
   clang-modernize
+  clang-query
   clang-tidy
   modularize
   module-map-checker
@@ -46,10 +47,6 @@ set(CLANG_TOOLS_TEST_DEPS
   # Unit tests
   ExtraToolsUnitTests
   )
-
-if(HAVE_LIBEDIT)
-  list(APPEND CLANG_TOOLS_TEST_DEPS clang-query)
-endif()
 
 add_lit_testsuite(check-clang-tools "Running the Clang extra tools' regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
