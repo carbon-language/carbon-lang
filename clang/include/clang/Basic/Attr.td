@@ -642,7 +642,7 @@ def ExtVectorType : Attr {
 def FallThrough : Attr {
   let Spellings = [CXX11<"clang", "fallthrough">];
 //  let Subjects = [NullStmt];
-  let Documentation = [Undocumented];
+  let Documentation = [FallthroughDocs];
 }
 
 def FastCall : InheritableAttr {

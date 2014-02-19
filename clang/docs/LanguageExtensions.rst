@@ -1570,51 +1570,6 @@ Non-standard C++11 Attributes
 Clang's non-standard C++11 attributes live in the ``clang`` attribute
 namespace.
 
-The ``clang::fallthrough`` attribute
-------------------------------------
-
-The ``clang::fallthrough`` attribute is used along with the
-``-Wimplicit-fallthrough`` argument to annotate intentional fall-through
-between switch labels.  It can only be applied to a null statement placed at a
-point of execution between any statement and the next switch label.  It is
-common to mark these places with a specific comment, but this attribute is
-meant to replace comments with a more strict annotation, which can be checked
-by the compiler.  This attribute doesn't change semantics of the code and can
-be used wherever an intended fall-through occurs.  It is designed to mimic
-control-flow statements like ``break;``, so it can be placed in most places
-where ``break;`` can, but only if there are no statements on the execution path
-between it and the next switch label.
-
-Here is an example:
-
-.. code-block:: c++
-
-  // compile with -Wimplicit-fallthrough
-  switch (n) {
-  case 22:
-  case 33:  // no warning: no statements between case labels
-    f();
-  case 44:  // warning: unannotated fall-through
-    g();
-    [[clang::fallthrough]];
-  case 55:  // no warning
-    if (x) {
-      h();
-      break;
-    }
-    else {
-      i();
-      [[clang::fallthrough]];
-    }
-  case 66:  // no warning
-    p();
-    [[clang::fallthrough]]; // warning: fallthrough annotation does not
-                            //          directly precede case label
-    q();
-  case 77:  // warning: unannotated fall-through
-    r();
-  }
-
 ``gnu::`` attributes
 --------------------
 
