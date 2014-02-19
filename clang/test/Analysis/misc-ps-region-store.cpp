@@ -588,6 +588,7 @@ void rdar11401827() {
   int x = int();
   if (!x) {
     clang_analyzer_warnIfReached();  // expected-warning{{REACHABLE}}
+    ; // Suppress warning that both branches are identical
   }
   else {
     clang_analyzer_warnIfReached();  // no-warning
