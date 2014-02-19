@@ -84,6 +84,12 @@ PythonObject::Str ()
     return PythonString(str);
 }
 
+bool
+PythonObject::IsNULLOrNone () const
+{
+    return ((m_py_obj == nullptr) || (m_py_obj == Py_None));
+}
+
 //----------------------------------------------------------------------
 // PythonString
 //----------------------------------------------------------------------
