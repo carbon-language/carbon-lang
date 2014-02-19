@@ -75,7 +75,8 @@ TEST(VirtualFileSystemTest, status_queries) {
   ErrorOr<vfs::Status> Status((error_code()));
 
   D->addRegularFile("/foo");
-  ASSERT_TRUE(Status = D->status("/foo"));
+  Status = D->status("/foo");
+  ASSERT_EQ(errc::success, Status.getError());
   EXPECT_TRUE(Status->isStatusKnown());
   EXPECT_FALSE(Status->isDirectory());
   EXPECT_TRUE(Status->isRegularFile());
@@ -84,7 +85,8 @@ TEST(VirtualFileSystemTest, status_queries) {
   EXPECT_TRUE(Status->exists());
 
   D->addDirectory("/bar");
-  ASSERT_TRUE(Status = D->status("/bar"));
+  Status = D->status("/bar");
+  ASSERT_EQ(errc::success, Status.getError());
   EXPECT_TRUE(Status->isStatusKnown());
   EXPECT_TRUE(Status->isDirectory());
   EXPECT_FALSE(Status->isRegularFile());
@@ -93,7 +95,8 @@ TEST(VirtualFileSystemTest, status_queries) {
   EXPECT_TRUE(Status->exists());
 
   D->addSymlink("/baz");
-  ASSERT_TRUE(Status = D->status("/baz"));
+  Status = D->status("/baz");
+  ASSERT_EQ(errc::success, Status.getError());
   EXPECT_TRUE(Status->isStatusKnown());
   EXPECT_FALSE(Status->isDirectory());
   EXPECT_FALSE(Status->isRegularFile());
@@ -102,8 +105,8 @@ TEST(VirtualFileSystemTest, status_queries) {
   EXPECT_TRUE(Status->exists());
 
   EXPECT_TRUE(Status->equivalent(*Status));
-  ErrorOr<vfs::Status> Status2((error_code()));
-  ASSERT_TRUE(Status2 = D->status("/foo"));
+  ErrorOr<vfs::Status> Status2 = D->status("/foo");
+  ASSERT_EQ(errc::success, Status2.getError());
   EXPECT_FALSE(Status->equivalent(*Status2));
 }
 
@@ -116,10 +119,12 @@ TEST(VirtualFileSystemTest, base_only_overlay) {
   EXPECT_FALSE(Status = O->status("/foo"));
 
   D->addRegularFile("/foo");
-  EXPECT_TRUE(Status = D->status("/foo"));
+  Status = D->status("/foo");
+  EXPECT_EQ(errc::success, Status.getError());
 
   ErrorOr<vfs::Status> Status2((error_code()));
-  EXPECT_TRUE(Status2 = O->status("/foo"));
+  Status2 = O->status("/foo");
+  EXPECT_EQ(errc::success, Status2.getError());
   EXPECT_TRUE(Status->equivalent(*Status2));
 }
 
@@ -136,14 +141,20 @@ TEST(VirtualFileSystemTest, overlay_files) {
                        StatusM((error_code())), StatusT((error_code()));
 
   Base->addRegularFile("/foo");
-  ASSERT_TRUE(StatusB = Base->status("/foo"));
-  ASSERT_TRUE(Status1 = O->status("/foo"));
+  StatusB = Base->status("/foo");
+  ASSERT_EQ(errc::success, StatusB.getError());
+  Status1 = O->status("/foo");
+  ASSERT_EQ(errc::success, Status1.getError());
   Middle->addRegularFile("/foo");
-  ASSERT_TRUE(StatusM = Middle->status("/foo"));
-  ASSERT_TRUE(Status2 = O->status("/foo"));
+  StatusM = Middle->status("/foo");
+  ASSERT_EQ(errc::success, StatusM.getError());
+  Status2 = O->status("/foo");
+  ASSERT_EQ(errc::success, Status2.getError());
   Top->addRegularFile("/foo");
-  ASSERT_TRUE(StatusT = Top->status("/foo"));
-  ASSERT_TRUE(Status3 = O->status("/foo"));
+  StatusT = Top->status("/foo");
+  ASSERT_EQ(errc::success, StatusT.getError());
+  Status3 = O->status("/foo");
+  ASSERT_EQ(errc::success, Status3.getError());
 
   EXPECT_TRUE(Status1->equivalent(*StatusB));
   EXPECT_TRUE(Status2->equivalent(*StatusM));
@@ -170,12 +181,16 @@ TEST(VirtualFileSystemTest, overlay_dirs) {
   Upper->addDirectory("/upper-only");
 
   // non-merged paths should be the same
-  ASSERT_TRUE(Status1 = Lower->status("/lower-only"));
-  ASSERT_TRUE(Status2 = O->status("/lower-only"));
+  Status1 = Lower->status("/lower-only");
+  ASSERT_EQ(errc::success, Status1.getError());
+  Status2 = O->status("/lower-only");
+  ASSERT_EQ(errc::success, Status2.getError());
   EXPECT_TRUE(Status1->equivalent(*Status2));
 
-  ASSERT_TRUE(Status1 = Lower->status("/lower-only"));
-  ASSERT_TRUE(Status2 = O->status("/lower-only"));
+  Status1 = Lower->status("/lower-only");
+  ASSERT_EQ(errc::success, Status1.getError());
+  Status2 = O->status("/lower-only");
+  ASSERT_EQ(errc::success, Status2.getError());
   EXPECT_TRUE(Status1->equivalent(*Status2));
 }
 
@@ -190,14 +205,17 @@ TEST(VirtualFileSystemTest, permissions) {
   ErrorOr<vfs::Status> Status((error_code()));
   Lower->addDirectory("/both", sys::fs::owner_read);
   Upper->addDirectory("/both", sys::fs::owner_all | sys::fs::group_read);
-  ASSERT_TRUE(Status = O->status("/both"));
+  Status = O->status("/both");
+  ASSERT_EQ(errc::success, Status.getError());
   EXPECT_EQ(0740, Status->getPermissions());
 
   // permissions (as usual) are not recursively applied
   Lower->addRegularFile("/both/foo", sys::fs::owner_read);
   Upper->addRegularFile("/both/bar", sys::fs::owner_write);
-  ASSERT_TRUE(Status = O->status("/both/foo"));
+  Status = O->status("/both/foo");
+  ASSERT_EQ(errc::success, Status.getError());
   EXPECT_EQ(0400, Status->getPermissions());
-  ASSERT_TRUE(Status = O->status("/both/bar"));
+  Status = O->status("/both/bar");
+  ASSERT_EQ(errc::success, Status.getError());
   EXPECT_EQ(0200, Status->getPermissions());
 }
