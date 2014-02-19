@@ -122,6 +122,42 @@ public:
 /// the operating system.
 llvm::IntrusiveRefCntPtr<FileSystem> getRealFileSystem();
 
+/// \brief A file system that allows overlaying one \p AbstractFileSystem on top
+/// of another.
+///
+/// Consists of a stack of >=1 \p FileSytem objects, which are treated as being
+/// one merged file system. When there is a directory that exists in more than
+/// one file system, the \p OverlayFileSystem contains a directory containing
+/// the union of their contents.  The attributes (permissions, etc.) of the
+/// top-most (most recently added) directory are used.  When there is a file
+/// that exists in more than one file system, the file in the top-most file
+/// system overrides the other(s).
+class OverlayFileSystem : public FileSystem {
+  typedef llvm::SmallVector<llvm::IntrusiveRefCntPtr<FileSystem>, 1>
+    FileSystemList;
+  typedef FileSystemList::reverse_iterator iterator;
+
+  /// \brief The stack of file systems, implemented as a list in order of
+  /// their addition.
+  FileSystemList FSList;
+
+  /// \brief Get an iterator pointing to the most recently added file system.
+  iterator overlays_begin() { return FSList.rbegin(); }
+
+  /// \brief Get an iterator pointing one-past the least recently added file
+  /// system.
+  iterator overlays_end() { return FSList.rend(); }
+
+public:
+  OverlayFileSystem(llvm::IntrusiveRefCntPtr<FileSystem> Base);
+  /// \brief Pushes a file system on top of the stack.
+  void pushOverlay(llvm::IntrusiveRefCntPtr<FileSystem> FS);
+
+  llvm::ErrorOr<Status> status(const llvm::Twine &Path) LLVM_OVERRIDE;
+  llvm::error_code openFileForRead(const llvm::Twine &Path,
+                                   llvm::OwningPtr<File> &Result) LLVM_OVERRIDE;
+};
+
 } // end namespace vfs
 } // end namespace clang
 #endif // LLVM_CLANG_BASIC_VIRTUAL_FILE_SYSTEM_H

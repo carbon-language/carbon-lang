@@ -160,3 +160,36 @@ IntrusiveRefCntPtr<FileSystem> vfs::getRealFileSystem() {
   static IntrusiveRefCntPtr<FileSystem> FS = new RealFileSystem();
   return FS;
 }
+
+//===-----------------------------------------------------------------------===/
+// OverlayFileSystem implementation
+//===-----------------------------------------------------------------------===/
+OverlayFileSystem::OverlayFileSystem(
+    IntrusiveRefCntPtr<FileSystem> BaseFS) {
+  pushOverlay(BaseFS);
+}
+
+void OverlayFileSystem::pushOverlay(IntrusiveRefCntPtr<FileSystem> FS) {
+  FSList.push_back(FS);
+}
+
+ErrorOr<Status> OverlayFileSystem::status(const Twine &Path) {
+  // FIXME: handle symlinks that cross file systems
+  for (iterator I = overlays_begin(), E = overlays_end(); I != E; ++I) {
+    ErrorOr<Status> Status = (*I)->status(Path);
+    if (Status || Status.getError() != errc::no_such_file_or_directory)
+      return Status;
+  }
+  return error_code(errc::no_such_file_or_directory, system_category());
+}
+
+error_code OverlayFileSystem::openFileForRead(const llvm::Twine &Path,
+                                              OwningPtr<File> &Result) {
+  // FIXME: handle symlinks that cross file systems
+  for (iterator I = overlays_begin(), E = overlays_end(); I != E; ++I) {
+    error_code EC = (*I)->openFileForRead(Path, Result);
+    if (!EC || EC != errc::no_such_file_or_directory)
+      return EC;
+  }
+  return error_code(errc::no_such_file_or_directory, system_category());
+}
