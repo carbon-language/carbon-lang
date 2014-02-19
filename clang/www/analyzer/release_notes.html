@@ -15,6 +15,18 @@
 
 <h1>Release notes for <tt>checker-XXX</tt> builds</h1>
 
+<h4 id="checker_276">checker-276</h4>
+<p><b>built:</b> February 19, 2014</br>
+	<b>download:</b> <a href="downloads/checker-276.tar.bz2">checker-276.tar.bz2</a></p>
+	<p><b>highlights:</b></p>
+	<ul>
+    <li>Includes about 9 months of change to Clang itself (improved C++11/14 support, etc.)</li>
+    <li>More precise modeling of Objective-C properties, which enables the analyzer to find more bugs.</li>
+    <li>Includes a new "missing call to <tt>super</tt>" warning, which looks for common pattern in iOS/OSX APIs that require chaining a call to a super class's implementation of a method.</li>
+    <li>Accepts <tt>-arch arm64</tt> (which may be passed by Xcode 5.0), but for the time being analyzes code in such cases as <tt>-arch armv7s</tt>.</li>
+    <li>Many sundry fixes, improvements to C++ support, etc.</li>
+	</ul>
+  
 <h4 id="checker_275">checker-275</h4>
 <p><b>built:</b> May 23, 2013</br>
 	<b>download:</b> <a href="downloads/checker-275.tar.bz2">checker-275.tar.bz2</a></p>
