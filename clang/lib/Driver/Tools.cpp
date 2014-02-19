@@ -639,8 +639,15 @@ StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
     }
 
     case llvm::Triple::FreeBSD:
-      // FreeBSD defaults to soft float
-      FloatABI = "soft";
+      switch(Triple.getEnvironment()) {
+      case llvm::Triple::GNUEABIHF:
+        FloatABI = "hard";
+        break;
+      default:
+        // FreeBSD defaults to soft float
+        FloatABI = "soft";
+        break;
+      }
       break;
 
     default:
@@ -5913,8 +5920,18 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     }
   } else if (getToolChain().getArch() == llvm::Triple::arm ||
              getToolChain().getArch() == llvm::Triple::thumb) {
-    CmdArgs.push_back("-mfpu=softvfp");
+    const Driver &D = getToolChain().getDriver();
+    llvm::Triple Triple = getToolChain().getTriple();
+    StringRef FloatABI = arm::getARMFloatABI(D, Args, Triple);
+
+    if (FloatABI == "hard") {
+      CmdArgs.push_back("-mfpu=vfp");
+    } else {
+      CmdArgs.push_back("-mfpu=softvfp");
+    }
+
     switch(getToolChain().getTriple().getEnvironment()) {
+    case llvm::Triple::GNUEABIHF:
     case llvm::Triple::GNUEABI:
     case llvm::Triple::EABI:
       CmdArgs.push_back("-meabi=5");

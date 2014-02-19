@@ -101,12 +101,21 @@
 // RUN:   | FileCheck --check-prefix=CHECK-ARM %s
 // CHECK-ARM: clang{{.*}}" "-cc1"{{.*}}" "-fsjlj-exceptions"
 // CHECK-ARM: as{{.*}}" "-mfpu=softvfp"{{.*}}"-matpcs"
+// CHECK-ARM-EABI-NOT: as{{.*}}" "-mfpu=vfp"
 
 // RUN: %clang %s -### -o %t.o -target arm-gnueabi-freebsd10.0 -no-integrated-as 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-ARM-EABI %s
 // CHECK-ARM-EABI-NOT: clang{{.*}}" "-cc1"{{.*}}" "-fsjlj-exceptions"
 // CHECK-ARM-EABI: as{{.*}}" "-mfpu=softvfp" "-meabi=5"
+// CHECK-ARM-EABI-NOT: as{{.*}}" "-mfpu=vfp"
 // CHECK-ARM-EABI-NOT: as{{.*}}" "-matpcs"
+
+// RUN: %clang %s -### -o %t.o -target arm-gnueabihf-freebsd10.0 -no-integrated-as 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-ARM-EABIHF %s
+// CHECK-ARM-EABIHF-NOT: clang{{.*}}" "-cc1"{{.*}}" "-fsjlj-exceptions"
+// CHECK-ARM-EABIHF: as{{.*}}" "-mfpu=vfp" "-meabi=5"
+// CHECK-ARM-EABIHF-NOT: as{{.*}}" "-mfpu=softvfp"
+// CHECK-ARM-EABIHF-NOT: as{{.*}}" "-matpcs"
 
 // RUN: %clang -target x86_64-pc-freebsd8 %s -### -flto -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-LTO %s
