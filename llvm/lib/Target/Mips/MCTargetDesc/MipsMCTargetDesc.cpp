@@ -39,27 +39,6 @@
 
 using namespace llvm;
 
-static std::string ParseMipsTriple(StringRef TT, StringRef CPU) {
-  std::string MipsArchFeature;
-  Triple TheTriple(TT);
-
-  if (TheTriple.getArch() == Triple::mips ||
-      TheTriple.getArch() == Triple::mipsel) {
-    if (CPU.empty() || CPU == "mips32") {
-      MipsArchFeature = "+mips32";
-    } else if (CPU == "mips32r2") {
-      MipsArchFeature = "+mips32r2";
-    }
-  } else {
-      if (CPU.empty() || CPU == "mips64") {
-        MipsArchFeature = "+mips64";
-      } else if (CPU == "mips64r2") {
-        MipsArchFeature = "+mips64r2";
-      }
-  }
-  return MipsArchFeature;
-}
-
 static MCInstrInfo *createMipsMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitMipsMCInstrInfo(X);
@@ -74,15 +53,17 @@ static MCRegisterInfo *createMipsMCRegisterInfo(StringRef TT) {
 
 static MCSubtargetInfo *createMipsMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                   StringRef FS) {
-  std::string ArchFS = ParseMipsTriple(TT,CPU);
-  if (!FS.empty()) {
-    if (!ArchFS.empty())
-      ArchFS = ArchFS + "," + FS.str();
+  if (CPU.empty()) {
+    Triple TheTriple(TT);
+    // FIXME: CodeGen picks mips32 in both cases.
+    if (TheTriple.getArch() == Triple::mips ||
+        TheTriple.getArch() == Triple::mipsel)
+      CPU = "mips32";
     else
-      ArchFS = FS;
+      CPU = "mips64";
   }
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitMipsMCSubtargetInfo(X, TT, CPU, ArchFS);
+  InitMipsMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 
