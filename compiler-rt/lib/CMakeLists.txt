@@ -4,7 +4,7 @@
 include(AddCompilerRT)
 include(SanitizerUtils)
 # Don't build sanitizers in the bootstrap build.
-if(LLVM_USE_SANITIZER STREQUAL "")
+if(NOT LLVM_USE_SANITIZER)
   # AddressSanitizer is supported on Linux and Mac OS X.
   # 32-bit Windows support is experimental.
   if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")

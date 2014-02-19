@@ -1,11 +1,19 @@
 # CMake build for CompilerRT.
 #
 # This build assumes that CompilerRT is checked out into the
-# 'projects/compiler-rt' inside of an LLVM tree, it is not a stand-alone build
-# system.
+# 'projects/compiler-rt' inside of an LLVM tree.
+# Standalone build system for CompilerRT is not yet ready.
 #
 # An important constraint of the build is that it only produces libraries
 # based on the ability of the host toolchain to target various platforms.
+
+# Check if compiler-rt is built as a standalone project.
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  project(CompilerRT)
+  set(COMPILER_RT_STANDALONE_BUILD TRUE)
+else()
+  set(COMPILER_RT_STANDALONE_BUILD FALSE)
+endif()
 
 # The CompilerRT build system requires CMake version 2.8.8 or higher in order
 # to use its support for building convenience "libraries" as a collection of
@@ -21,21 +29,47 @@ endif()
 # Top level target used to build all compiler-rt libraries.
 add_custom_target(compiler-rt)
 
-# Compute the Clang version from the LLVM version.
-# FIXME: We should be able to reuse CLANG_VERSION variable calculated
-#        in Clang cmake files, instead of copying the rules here.
-string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
-       ${PACKAGE_VERSION})
-# Setup the paths where compiler-rt runtimes and headers should be stored.
-set(COMPILER_RT_INSTALL_PATH lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION})
+if (NOT COMPILER_RT_STANDALONE_BUILD)
+  # Compute the Clang version from the LLVM version.
+  # FIXME: We should be able to reuse CLANG_VERSION variable calculated
+  #        in Clang cmake files, instead of copying the rules here.
+  string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
+         ${PACKAGE_VERSION})
+  # Setup the paths where compiler-rt runtimes and headers should be stored.
+  set(COMPILER_RT_OUTPUT_DIR ${LLVM_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION})
+  set(COMPILER_RT_INSTALL_PATH lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION})
+else()
+  # Take output dir and install path from the user.
+  set(COMPILER_RT_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH
+    "Path where built compiler-rt libraries should be stored.")
+  set(COMPILER_RT_INSTALL_PATH ${CMAKE_INSTALL_PREFIX} CACHE PATH
+    "Path where built compiler-rt libraries should be installed.")
+  # FIXME: Rely on llvm-config instead.
+  set(LLVM_BUILD_DIR "" CACHE PATH "Path to LLVM build tree.")
+  if (NOT LLVM_BUILD_DIR)
+    message(FATAL_ERROR "LLVM_BUILD_DIR must be specified.")
+  endif()
+  # Make use of LLVM CMake modules.
+  set(LLVM_CMAKE_PATH "${LLVM_BUILD_DIR}/share/llvm/cmake")
+  list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
+  # Get some LLVM variables from LLVMConfig.
+  include("${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
+
+  # Setup another LLVM variables.
+  # FIXME: get the following paths from llvm-config instead.
+  set(LLVM_TOOLS_BINARY_DIR "${LLVM_BUILD_DIR}/bin")
+  set(LLVM_LIBRARY_DIR "${LLVM_BUILD_DIR}/lib")
+
+  set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib)
+endif()
+
 string(TOLOWER ${CMAKE_SYSTEM_NAME} COMPILER_RT_OS_DIR)
-set(COMPILER_RT_OUTPUT_DIR ${LLVM_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION})
 set(COMPILER_RT_LIBRARY_OUTPUT_DIR
   ${COMPILER_RT_OUTPUT_DIR}/lib/${COMPILER_RT_OS_DIR})
 set(COMPILER_RT_LIBRARY_INSTALL_DIR
   ${COMPILER_RT_INSTALL_PATH}/lib/${COMPILER_RT_OS_DIR})
 
-# Add path for custom modules
+# Add path for custom compiler-rt modules.
 set(CMAKE_MODULE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules"
