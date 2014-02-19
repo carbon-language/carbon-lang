@@ -57,9 +57,16 @@ class LockTest {
   void Test2() {
     fprintf(stderr, "Starting Test2\n");
     // CHECK: Starting Test2
-    L(0); L(1); L(2); U(2); U(0); U(1);
+    fprintf(stderr, "Expecting lock inversion: %p %p %p\n", A(0), A(1), A(2));
+    // CHECK: Expecting lock inversion: [[A1:0x[a-f0-9]*]] [[A2:0x[a-f0-9]*]] [[A3:0x[a-f0-9]*]]
+    L(0); L(1); U(0); U(1);
+    L(1); L(2); U(1); U(2);
     L(2); L(0); U(0); U(2);
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
+    // CHECK: path: [[M1:M[0-9]+]] => [[M2:M[0-9]+]] => [[M3:M[0-9]+]] => [[M1]]
+    // CHECK: Mutex [[M1]] ([[A1]]) created at:
+    // CHECK: Mutex [[M2]] ([[A2]]) created at:
+    // CHECK: Mutex [[M3]] ([[A3]]) created at:
     // CHECK-NOT: WARNING: ThreadSanitizer:
   }
 
