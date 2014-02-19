@@ -70,7 +70,7 @@ public:
 };
 } // end anonymous namespace
 
-TEST(VirtualFileSystemTest, status_queries) {
+TEST(VirtualFileSystemTest, statusQueries) {
   IntrusiveRefCntPtr<DummyFileSystem> D(new DummyFileSystem());
   ErrorOr<vfs::Status> Status((error_code()));
 
@@ -110,7 +110,7 @@ TEST(VirtualFileSystemTest, status_queries) {
   EXPECT_FALSE(Status->equivalent(*Status2));
 }
 
-TEST(VirtualFileSystemTest, base_only_overlay) {
+TEST(VirtualFileSystemTest, baseOnlyOverlay) {
   IntrusiveRefCntPtr<DummyFileSystem> D(new DummyFileSystem());
   ErrorOr<vfs::Status> Status((error_code()));
   EXPECT_FALSE(Status = D->status("/foo"));
@@ -128,7 +128,7 @@ TEST(VirtualFileSystemTest, base_only_overlay) {
   EXPECT_TRUE(Status->equivalent(*Status2));
 }
 
-TEST(VirtualFileSystemTest, overlay_files) {
+TEST(VirtualFileSystemTest, overlayFiles) {
   IntrusiveRefCntPtr<DummyFileSystem> Base(new DummyFileSystem());
   IntrusiveRefCntPtr<DummyFileSystem> Middle(new DummyFileSystem());
   IntrusiveRefCntPtr<DummyFileSystem> Top(new DummyFileSystem());
@@ -165,36 +165,31 @@ TEST(VirtualFileSystemTest, overlay_files) {
   EXPECT_FALSE(Status1->equivalent(*Status3));
 }
 
-TEST(VirtualFileSystemTest, overlay_dirs) {
+TEST(VirtualFileSystemTest, overlayDirsNonMerged) {
   IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
   IntrusiveRefCntPtr<DummyFileSystem> Upper(new DummyFileSystem());
   IntrusiveRefCntPtr<vfs::OverlayFileSystem>
     O(new vfs::OverlayFileSystem(Lower));
   O->pushOverlay(Upper);
 
-  ErrorOr<vfs::Status> Status1((error_code())), Status2((error_code())),
-                       Status3((error_code()));
-
   Lower->addDirectory("/lower-only");
-  Lower->addDirectory("/both");
-  Upper->addDirectory("/both");
   Upper->addDirectory("/upper-only");
 
   // non-merged paths should be the same
-  Status1 = Lower->status("/lower-only");
+  ErrorOr<vfs::Status> Status1 = Lower->status("/lower-only");
   ASSERT_EQ(errc::success, Status1.getError());
-  Status2 = O->status("/lower-only");
+  ErrorOr<vfs::Status> Status2 = O->status("/lower-only");
   ASSERT_EQ(errc::success, Status2.getError());
   EXPECT_TRUE(Status1->equivalent(*Status2));
 
-  Status1 = Lower->status("/lower-only");
+  Status1 = Upper->status("/upper-only");
   ASSERT_EQ(errc::success, Status1.getError());
-  Status2 = O->status("/lower-only");
+  Status2 = O->status("/upper-only");
   ASSERT_EQ(errc::success, Status2.getError());
   EXPECT_TRUE(Status1->equivalent(*Status2));
 }
 
-TEST(VirtualFileSystemTest, permissions) {
+TEST(VirtualFileSystemTest, mergedDirPermissions) {
   // merged directories get the permissions of the upper dir
   IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
   IntrusiveRefCntPtr<DummyFileSystem> Upper(new DummyFileSystem());
