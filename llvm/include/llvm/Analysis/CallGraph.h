@@ -12,8 +12,8 @@
 /// which is a very useful tool for interprocedural optimization.
 ///
 /// Every function in a module is represented as a node in the call graph.  The
-/// callgraph node keeps track of which functions the are called by the
-/// function corresponding to the node.
+/// callgraph node keeps track of which functions are called by the function
+/// corresponding to the node.
 ///
 /// A call graph may contain nodes where the function that they correspond to
 /// is null.  These 'external' nodes are used to represent control flow that is
