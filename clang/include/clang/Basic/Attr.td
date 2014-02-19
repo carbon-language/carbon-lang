@@ -389,7 +389,7 @@ def ARMInterrupt : InheritableAttr, TargetSpecificAttr<TargetARM> {
                            1>];
   let ParseKind = "Interrupt";
   let HasCustomParsing = 1;
-  let Documentation = [Undocumented];
+  let Documentation = [ARMInterruptDocs];
 }
 
 def AsmLabel : InheritableAttr {

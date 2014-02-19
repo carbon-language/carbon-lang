@@ -1629,48 +1629,6 @@ Which compiles to (on X86-32):
           movl    %gs:(%eax), %eax
           ret
 
-ARM Language Extensions
------------------------
-
-Interrupt attribute
-^^^^^^^^^^^^^^^^^^^
-
-Clang supports the GNU style ``__attribute__((interrupt("TYPE")))`` attribute on
-ARM targets. This attribute may be attached to a function definition and
-instructs the backend to generate appropriate function entry/exit code so that
-it can be used directly as an interrupt service routine.
-
-The parameter passed to the interrupt attribute is optional, but if
-provided it must be a string literal with one of the following values: "IRQ",
-"FIQ", "SWI", "ABORT", "UNDEF".
-
-The semantics are as follows:
-
-- If the function is AAPCS, Clang instructs the backend to realign the stack to
-  8 bytes on entry. This is a general requirement of the AAPCS at public
-  interfaces, but may not hold when an exception is taken. Doing this allows
-  other AAPCS functions to be called.
-- If the CPU is M-class this is all that needs to be done since the architecture
-  itself is designed in such a way that functions obeying the normal AAPCS ABI
-  constraints are valid exception handlers.
-- If the CPU is not M-class, the prologue and epilogue are modified to save all
-  non-banked registers that are used, so that upon return the user-mode state
-  will not be corrupted. Note that to avoid unnecessary overhead, only
-  general-purpose (integer) registers are saved in this way. If VFP operations
-  are needed, that state must be saved manually.
-
-  Specifically, interrupt kinds other than "FIQ" will save all core registers
-  except "lr" and "sp". "FIQ" interrupts will save r0-r7.
-- If the CPU is not M-class, the return instruction is changed to one of the
-  canonical sequences permitted by the architecture for exception return. Where
-  possible the function itself will make the necessary "lr" adjustments so that
-  the "preferred return address" is selected.
-
-  Unfortunately the compiler is unable to make this guarantee for an "UNDEF"
-  handler, where the offset from "lr" to the preferred return address depends on
-  the execution state of the code which generated the exception. In this case
-  a sequence equivalent to "movs pc, lr" will be used.
-
 Extensions for Static Analysis
 ==============================
 
