@@ -46,6 +46,7 @@ class RegisterCommandsTestCase(TestBase):
         self.convenience_registers()
 
     @skipIfFreeBSD # llvm.org/pr16684
+    @expectedFailureFreeBSD("llvm.org/pr18200")
     def test_convenience_registers_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['amd64', 'x86_64']:
@@ -215,7 +216,7 @@ class RegisterCommandsTestCase(TestBase):
         self.expect("expr/x $eax",
             substrs = ['unsigned int', ' = 0x'])
 
-        if self.getArchitecture() in ['x86_64']:
+        if self.getArchitecture() in ['amd64', 'x86_64']:
             self.expect("expr -- ($rax & 0xffffffff) == $eax",
                 substrs = ['true'])
 
@@ -267,7 +268,7 @@ class RegisterCommandsTestCase(TestBase):
         # Check that "register read eax" works.
         self.runCmd("register read eax")
 
-        if self.getArchitecture() in ['x86_64']:
+        if self.getArchitecture() in ['amd64', 'x86_64']:
             self.expect("expr -- ($rax & 0xffffffff) == $eax",
                 substrs = ['true'])
 
