@@ -16,6 +16,7 @@ $ rm -f src/gtest_main.cc
 $ mv COPYING LICENSE.TXT
 
 Modified as follows:
+* Added support for FreeBSD.
 * To GTestStreamToHelper in include/gtest/internal/gtest-internal.h,
   added the ability to stream with raw_os_ostream.
 * To refresh Haiku support in include/gtest/internal/gtest-port.h,
