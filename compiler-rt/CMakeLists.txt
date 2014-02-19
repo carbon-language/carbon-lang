@@ -44,23 +44,50 @@ else()
     "Path where built compiler-rt libraries should be stored.")
   set(COMPILER_RT_INSTALL_PATH ${CMAKE_INSTALL_PREFIX} CACHE PATH
     "Path where built compiler-rt libraries should be installed.")
-  # FIXME: Rely on llvm-config instead.
-  set(LLVM_BUILD_DIR "" CACHE PATH "Path to LLVM build tree.")
-  if (NOT LLVM_BUILD_DIR)
-    message(FATAL_ERROR "LLVM_BUILD_DIR must be specified.")
+
+  set(LLVM_CONFIG_PATH "" CACHE PATH "Path to llvm-config binary")
+  if (NOT LLVM_CONFIG_PATH)
+    find_program(LLVM_CONFIG_PATH "llvm-config")
+    if (NOT LLVM_CONFIG_PATH)
+      message(FATAL_ERROR "llvm-config not found: specify LLVM_CONFIG_PATH")
+    endif()
   endif()
+  execute_process(
+    COMMAND ${LLVM_CONFIG_PATH} "--obj-root" "--bindir" "--libdir" "--src-root"
+    RESULT_VARIABLE HAD_ERROR
+    OUTPUT_VARIABLE CONFIG_OUTPUT)
+  if (HAD_ERROR)
+    message(FATAL_ERROR "llvm-config failed with status ${HAD_ERROR}")
+  endif()
+  string(REGEX REPLACE "[ \t]*[\r\n]+[ \t]*" ";" CONFIG_OUTPUT ${CONFIG_OUTPUT})
+  list(GET CONFIG_OUTPUT 0 LLVM_BINARY_DIR)
+  list(GET CONFIG_OUTPUT 1 LLVM_TOOLS_BINARY_DIR)
+  list(GET CONFIG_OUTPUT 2 LLVM_LIBRARY_DIR)
+  list(GET CONFIG_OUTPUT 3 LLVM_MAIN_SRC_DIR)
+
   # Make use of LLVM CMake modules.
-  set(LLVM_CMAKE_PATH "${LLVM_BUILD_DIR}/share/llvm/cmake")
+  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/share/llvm/cmake")
   list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
   # Get some LLVM variables from LLVMConfig.
   include("${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
 
-  # Setup another LLVM variables.
-  # FIXME: get the following paths from llvm-config instead.
-  set(LLVM_TOOLS_BINARY_DIR "${LLVM_BUILD_DIR}/bin")
-  set(LLVM_LIBRARY_DIR "${LLVM_BUILD_DIR}/lib")
-
   set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib)
+
+  # Find Python interpreter.
+  set(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5)
+  include(FindPythonInterp)
+  if(NOT PYTHONINTERP_FOUND)
+    message(FATAL_ERROR "
+      Unable to find Python interpreter required testing. Please install Python
+      or specify the PYTHON_EXECUTABLE CMake variable.")
+  endif()
+
+  # Define default arguments to lit.
+  set(LIT_ARGS_DEFAULT "-sv")
+  if (MSVC OR XCODE)
+    set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
+  endif()
+  set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
 endif()
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} COMPILER_RT_OS_DIR)
