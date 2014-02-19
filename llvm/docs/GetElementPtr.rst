@@ -77,7 +77,7 @@ therefore be indexed and requires an index operand. Consider this example:
   ...
   munge(Array);
 
-In this "C" example, the front end compiler (llvm-gcc) will generate three GEP
+In this "C" example, the front end compiler (Clang) will generate three GEP
 instructions for the three indices through "P" in the assignment statement.  The
 function argument ``P`` will be the first operand of each of these GEP
 instructions.  The second operand indexes through that pointer.  The third

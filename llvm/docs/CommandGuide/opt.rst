@@ -65,9 +65,8 @@ OPTIONS
 .. option:: -std-compile-opts
 
  This is short hand for a standard list of *compile time optimization* passes.
- This is typically used to optimize the output from the llvm-gcc front end.  It
- might be useful for other front end compilers as well.  To discover the full
- set of options available, use the following command:
+ It might be useful for other front end compilers as well.  To discover the
+ full set of options available, use the following command:
 
  .. code-block:: sh
 

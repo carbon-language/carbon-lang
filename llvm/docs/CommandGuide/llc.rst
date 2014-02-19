@@ -45,7 +45,7 @@ End-user Options
 
  Generate code at different optimization levels.  These correspond to the
  ``-O0``, ``-O1``, ``-O2``, and ``-O3`` optimization levels used by
- :program:`llvm-gcc` and :program:`clang`.
+ :program:`clang`.
 
 .. option:: -mtriple=<target triple>
 

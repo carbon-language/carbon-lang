@@ -212,13 +212,10 @@ features added.  Some tips for getting your testcase approved:
   directory. The appropriate sub-directory should be selected (see the
   :doc:`Testing Guide <TestingGuide>` for details).
 
-* Test cases should be written in `LLVM assembly language <LangRef.html>`_
-  unless the feature or regression being tested requires another language
-  (e.g. the bug being fixed or feature being implemented is in the llvm-gcc C++
-  front-end, in which case it must be written in C++).
+* Test cases should be written in :doc:`LLVM assembly language <LangRef>`.
 
 * Test cases, especially for regressions, should be reduced as much as possible,
-  by `bugpoint <Bugpoint.html>`_ or manually. It is unacceptable to place an
+  by :doc:`bugpoint <Bugpoint>` or manually. It is unacceptable to place an
   entire failing program into ``llvm/test`` as this creates a *time-to-test*
   burden on all developers. Please keep them short.
 
@@ -517,12 +514,12 @@ to move code from (e.g.)  libc++ to the LLVM core without concern, but that code
 cannot be moved from the LLVM core to libc++ without the copyright owner's
 permission.
 
-Note that the LLVM Project does distribute llvm-gcc and dragonegg, **which are
-GPL.** This means that anything "linked" into llvm-gcc must itself be compatible
+Note that the LLVM Project does distribute dragonegg, **which is
+GPL.** This means that anything "linked" into dragonegg must itself be compatible
 with the GPL, and must be releasable under the terms of the GPL.  This implies
-that **any code linked into llvm-gcc and distributed to others may be subject to
+that **any code linked into dragonegg and distributed to others may be subject to
 the viral aspects of the GPL** (for example, a proprietary code generator linked
-into llvm-gcc must be made available under the GPL).  This is not a problem for
+into dragonegg must be made available under the GPL).  This is not a problem for
 code already distributed under a more liberal license (like the UIUC license),
 and GPL-containing subprojects are kept in separate SVN repositories whose
 LICENSE.txt files specifically indicate that they contain GPL code.

@@ -72,7 +72,7 @@ For example, try adding:
    info <../SourceLevelDebugging.html>`_ which is understood by common
    debuggers like GDB. Adding support for debug info is fairly
    straightforward. The best way to understand it is to compile some
-   C/C++ code with "``llvm-gcc -g -O0``" and taking a look at what it
+   C/C++ code with "``clang -g -O0``" and taking a look at what it
    produces.
 -  **exception handling support** - LLVM supports generation of `zero
    cost exceptions <../ExceptionHandling.html>`_ which interoperate with

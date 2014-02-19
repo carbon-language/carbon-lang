@@ -237,7 +237,7 @@ strongly recommend that you use this technique for building SSA form,
 unless there is an extremely good reason not to. Using this technique
 is:
 
--  Proven and well tested: llvm-gcc and clang both use this technique
+-  Proven and well tested: clang uses this technique
    for local mutable variables. As such, the most common clients of LLVM
    are using this to handle a bulk of their variables. You can be sure
    that bugs are found fast and fixed early.
