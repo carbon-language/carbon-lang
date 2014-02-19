@@ -920,7 +920,7 @@ def ObjCMethodFamily : InheritableAttr {
                ["none", "alloc", "copy", "init", "mutableCopy", "new"],
                ["OMF_None", "OMF_alloc", "OMF_copy", "OMF_init",
                 "OMF_mutableCopy", "OMF_new"]>];
-  let Documentation = [Undocumented];
+  let Documentation = [ObjCMethodFamilyDocs];
 }
 
 def ObjCNSObject : InheritableAttr {

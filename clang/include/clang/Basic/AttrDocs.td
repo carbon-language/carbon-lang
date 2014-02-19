@@ -240,3 +240,30 @@ caveats to this use of name mangling:
 Query for this feature with ``__has_extension(attribute_overloadable)``.
   }];
 }
+
+def ObjCMethodFamilyDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Many methods in Objective-C have conventional meanings determined by their
+selectors. It is sometimes useful to be able to mark a method as having a
+particular conventional meaning despite not having the right selector, or as
+not having the conventional meaning that its selector would suggest. For these
+use cases, we provide an attribute to specifically describe the "method family"
+that a method belongs to.
+
+**Usage**: ``__attribute__((objc_method_family(X)))``, where ``X`` is one of
+``none``, ``alloc``, ``copy``, ``init``, ``mutableCopy``, or ``new``.  This
+attribute can only be placed at the end of a method declaration:
+
+.. code-block:: objc
+
+  - (NSString *)initMyStringValue __attribute__((objc_method_family(none)));
+
+Users who do not wish to change the conventional meaning of a method, and who
+merely want to document its non-standard retain and release semantics, should
+use the retaining behavior attributes (``ns_returns_retained``,
+``ns_returns_not_retained``, etc).
+
+Query for this feature with ``__has_attribute(objc_method_family)``.
+  }];
+}
