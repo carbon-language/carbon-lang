@@ -45,7 +45,7 @@ bool Status::isRegularFile() const {
   return Type == file_type::regular_file;
 }
 bool Status::isOther() const {
-  return Type == exists() && !isRegularFile() && !isDirectory() && !isSymlink();
+  return exists() && !isRegularFile() && !isDirectory() && !isSymlink();
 }
 bool Status::isSymlink() const {
   return Type == file_type::symlink_file;
