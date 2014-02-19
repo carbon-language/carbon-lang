@@ -372,13 +372,15 @@ public:
   void runTests(raw_ostream &o);
 
 private:
+  void emitGuardedIntrinsic(raw_ostream &OS, Record *R,
+                            std::string &CurrentGuard, bool &InGuard,
+                            StringMap<ClassKind> &EmittedMap);
   void emitIntrinsic(raw_ostream &OS, Record *R,
                      StringMap<ClassKind> &EmittedMap);
   void genBuiltinsDef(raw_ostream &OS);
   void genOverloadTypeCheckCode(raw_ostream &OS);
   void genIntrinsicRangeCheckCode(raw_ostream &OS);
-  void genTargetTest(raw_ostream &OS, StringMap<OpKind> &EmittedMap,
-                     bool isA64TestGen);
+  void genTargetTest(raw_ostream &OS);
 };
 } // end anonymous namespace
 
@@ -2731,78 +2733,57 @@ void NeonEmitter::run(raw_ostream &OS) {
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
 
   StringMap<ClassKind> EmittedMap;
+  std::string CurrentGuard = "";
+  bool InGuard = false;
 
-  // Emit vmovl, vmull and vabd intrinsics first so they can be used by other
-  // intrinsics.  (Some of the saturating multiply instructions are also
-  // used to implement the corresponding "_lane" variants, but tablegen
-  // sorts the records into alphabetical order so that the "_lane" variants
-  // come after the intrinsics they use.)
-  emitIntrinsic(OS, Records.getDef("VMOVL"), EmittedMap);
-  emitIntrinsic(OS, Records.getDef("VMULL"), EmittedMap);
-  emitIntrinsic(OS, Records.getDef("VABD"), EmittedMap);
-  emitIntrinsic(OS, Records.getDef("VABDL"), EmittedMap);
+  // Some intrinsics are used to express others. These need to be emitted near
+  // the beginning so that the declarations are present when needed. This is
+  // rather an ugly, arbitrary list, but probably simpler than actually tracking
+  // dependency info.
+  static const char *EarlyDefsArr[] =
+      { "VFMA",      "VQMOVN",    "VQMOVUN",  "VABD",    "VMOVL",
+        "VABDL",     "VGET_HIGH", "VCOMBINE", "VSHLL_N", "VMOVL_HIGH",
+        "VMULL",     "VMLAL_N",   "VMLSL_N",  "VMULL_N", "VMULL_P64",
+        "VQDMLAL_N", "VQDMLSL_N", "VQDMULL_N" };
+  ArrayRef<const char *> EarlyDefs(EarlyDefsArr);
 
-  // ARM intrinsics must be emitted before AArch64 intrinsics to ensure
-  // common intrinsics appear only once in the output stream.
-  // The check for uniquiness is done in emitIntrinsic.
-  // Emit ARM intrinsics.
-  for (unsigned i = 0, e = RV.size(); i != e; ++i) {
-    Record *R = RV[i];
-
-    // Skip AArch64 intrinsics; they will be emitted at the end.
-    bool isA64 = R->getValueAsBit("isA64");
-    if (isA64)
-      continue;
-
-    if (R->getName() != "VMOVL" && R->getName() != "VMULL" &&
-        R->getName() != "VABD")
-      emitIntrinsic(OS, R, EmittedMap);
+  for (unsigned i = 0; i < EarlyDefs.size(); ++i) {
+    Record *R = Records.getDef(EarlyDefs[i]);
+    emitGuardedIntrinsic(OS, R, CurrentGuard, InGuard, EmittedMap);
   }
-
-  // Emit AArch64-specific intrinsics.
-  OS << "#ifdef __aarch64__\n";
-
-  emitIntrinsic(OS, Records.getDef("VMULL_P64"), EmittedMap);
-  emitIntrinsic(OS, Records.getDef("VMOVL_HIGH"), EmittedMap);
-  emitIntrinsic(OS, Records.getDef("VMULL_HIGH"), EmittedMap);
-  emitIntrinsic(OS, Records.getDef("VABDL_HIGH"), EmittedMap);
 
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
-
-    // Skip ARM intrinsics already included above.
-    bool isA64 = R->getValueAsBit("isA64");
-    if (!isA64)
+    if (std::find(EarlyDefs.begin(), EarlyDefs.end(), R->getName()) !=
+        EarlyDefs.end())
       continue;
 
-    // Skip crypto temporarily, and will emit them all together at the end.
-    bool isCrypto = R->getValueAsBit("isCrypto");
-    if (isCrypto)
-      continue;
-
-    emitIntrinsic(OS, R, EmittedMap);
+    emitGuardedIntrinsic(OS, R, CurrentGuard, InGuard, EmittedMap);
   }
 
-  OS << "#endif\n\n";
-
-  // Now emit all the crypto intrinsics together
-  OS << "#ifdef __ARM_FEATURE_CRYPTO\n";
-
-  for (unsigned i = 0, e = RV.size(); i != e; ++i) {
-    Record *R = RV[i];
-
-    bool isCrypto = R->getValueAsBit("isCrypto");
-    if (!isCrypto)
-      continue;
-
-    emitIntrinsic(OS, R, EmittedMap);
-  }
-
-
-  OS << "#endif\n\n";
+  if (InGuard)
+    OS << "#endif\n\n";
 
   OS << "#undef __ai\n\n";
   OS << "#endif /* __ARM_NEON_H */\n";
+}
+
+void NeonEmitter::emitGuardedIntrinsic(raw_ostream &OS, Record *R,
+                                       std::string &CurrentGuard, bool &InGuard,
+                                       StringMap<ClassKind> &EmittedMap) {
+
+  std::string NewGuard = R->getValueAsString("ArchGuard");
+  if (NewGuard != CurrentGuard) {
+    if (InGuard)
+      OS << "#endif\n\n";
+    if (NewGuard.size())
+      OS << "#if " << NewGuard << '\n';
+
+    CurrentGuard = NewGuard;
+    InGuard = NewGuard.size() != 0;
+  }
+
+  emitIntrinsic(OS, R, EmittedMap);
 }
 
 /// emitIntrinsic - Write out the arm_neon.h header file definitions for the
@@ -2845,8 +2826,11 @@ void NeonEmitter::emitIntrinsic(raw_ostream &OS, Record *R,
     } else {
       std::string s =
           GenIntrinsic(name, Proto, TypeVec[ti], TypeVec[ti], kind, classKind);
-      if (EmittedMap.count(s))
+      if (EmittedMap.count(s)) {
+        errs() << "warning: duplicate definition: " << name
+               << " (type: " << TypeString('d', TypeVec[ti]) << ")\n";
         continue;
+      }
       EmittedMap[s] = classKind;
       OS << s;
     }
@@ -3329,10 +3313,10 @@ static std::string GenTest(const std::string &name,
 
 /// Write out all intrinsic tests for the specified target, checking
 /// for intrinsic test uniqueness.
-void NeonEmitter::genTargetTest(raw_ostream &OS, StringMap<OpKind> &EmittedMap,
-                                bool isA64GenTest) {
-  if (isA64GenTest)
-    OS << "#ifdef __aarch64__\n";
+void NeonEmitter::genTargetTest(raw_ostream &OS) {
+  StringMap<OpKind> EmittedMap;
+  std::string CurrentGuard = "";
+  bool InGuard = false;
 
   std::vector<Record *> RV = Records.getAllDerivedDefinitions("Inst");
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
@@ -3343,12 +3327,17 @@ void NeonEmitter::genTargetTest(raw_ostream &OS, StringMap<OpKind> &EmittedMap,
     bool isShift = R->getValueAsBit("isShift");
     std::string InstName = R->getValueAsString("InstName");
     bool isHiddenLOp = R->getValueAsBit("isHiddenLInst");
-    bool isA64 = R->getValueAsBit("isA64");
 
-    // do not include AArch64 intrinsic test if not generating
-    // code for AArch64
-    if (!isA64GenTest && isA64)
-      continue;
+    std::string NewGuard = R->getValueAsString("ArchGuard");
+    if (NewGuard != CurrentGuard) {
+      if (InGuard)
+        OS << "#endif\n\n";
+      if (NewGuard.size())
+        OS << "#if " << NewGuard << '\n';
+
+      CurrentGuard = NewGuard;
+      InGuard = NewGuard.size() != 0;
+    }
 
     SmallVector<StringRef, 16> TypeVec;
     ParseTypes(R, Types, TypeVec);
@@ -3370,8 +3359,8 @@ void NeonEmitter::genTargetTest(raw_ostream &OS, StringMap<OpKind> &EmittedMap,
             continue;
           std::string testFuncProto;
           std::string s = GenTest(name, Proto, TypeVec[ti], TypeVec[srcti],
-                                  isShift, isHiddenLOp, ck, InstName, isA64,
-                                  testFuncProto);
+                                  isShift, isHiddenLOp, ck, InstName,
+                                  CurrentGuard.size(), testFuncProto);
           if (EmittedMap.count(testFuncProto))
             continue;
           EmittedMap[testFuncProto] = kind;
@@ -3379,17 +3368,15 @@ void NeonEmitter::genTargetTest(raw_ostream &OS, StringMap<OpKind> &EmittedMap,
         }
       } else {
         std::string testFuncProto;
-        std::string s = GenTest(name, Proto, TypeVec[ti], TypeVec[ti], isShift,
-                                isHiddenLOp, ck, InstName, isA64, testFuncProto);
-        if (EmittedMap.count(testFuncProto))
-          continue;
-        EmittedMap[testFuncProto] = kind;
+        std::string s =
+            GenTest(name, Proto, TypeVec[ti], TypeVec[ti], isShift, isHiddenLOp,
+                    ck, InstName, CurrentGuard.size(), testFuncProto);
         OS << s << "\n";
       }
     }
   }
 
-  if (isA64GenTest)
+  if (InGuard)
     OS << "#endif\n";
 }
 /// runTests - Write out a complete set of tests for all of the Neon
@@ -3409,15 +3396,7 @@ void NeonEmitter::runTests(raw_ostream &OS) {
         "#include <arm_neon.h>\n"
         "\n";
 
-  // ARM tests must be emitted before AArch64 tests to ensure
-  // tests for intrinsics that are common to ARM and AArch64
-  // appear only once in the output stream.
-  // The check for uniqueness is done in genTargetTest.
-  StringMap<OpKind> EmittedMap;
-
-  genTargetTest(OS, EmittedMap, false);
-
-  genTargetTest(OS, EmittedMap, true);
+  genTargetTest(OS);
 }
 
 namespace clang {
