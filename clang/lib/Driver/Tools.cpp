@@ -7221,6 +7221,8 @@ Command *visualstudio::Compile::GetCommand(Compilation &C, const JobAction &JA,
                                                                    : "/GR-");
   if (Args.hasArg(options::OPT_fsyntax_only))
     CmdArgs.push_back("/Zs");
+  if (Args.hasArg(options::OPT_g_Flag, options::OPT_gline_tables_only))
+    CmdArgs.push_back("/Z7");
 
   std::vector<std::string> Includes = Args.getAllArgValues(options::OPT_include);
   for (size_t I = 0, E = Includes.size(); I != E; ++I)
