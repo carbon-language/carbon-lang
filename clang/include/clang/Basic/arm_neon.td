@@ -690,22 +690,6 @@ def FRINTZ : SInst<"vrnd", "dd", "fdQfQd">;
 def FRINTI : SInst<"vrndi", "dd", "fdQfQd">;
 def VCVT_S64 : SInst<"vcvt_s64", "xd",  "dQd">;
 def VCVT_U64 : SInst<"vcvt_u64", "ud",  "dQd">;
-def FCVTNS_S32 : SInst<"vcvtn_s32", "xd", "fQf">;
-def FCVTNS_S64 : SInst<"vcvtn_s64", "xd", "dQd">;
-def FCVTNU_S32 : SInst<"vcvtn_u32", "ud", "fQf">;
-def FCVTNU_S64 : SInst<"vcvtn_u64", "ud", "dQd">;
-def FCVTPS_S32 : SInst<"vcvtp_s32", "xd", "fQf">;
-def FCVTPS_S64 : SInst<"vcvtp_s64", "xd", "dQd">;
-def FCVTPU_S32 : SInst<"vcvtp_u32", "ud", "fQf">;
-def FCVTPU_S64 : SInst<"vcvtp_u64", "ud", "dQd">;
-def FCVTMS_S32 : SInst<"vcvtm_s32", "xd", "fQf">;
-def FCVTMS_S64 : SInst<"vcvtm_s64", "xd", "dQd">;
-def FCVTMU_S32 : SInst<"vcvtm_u32", "ud", "fQf">;
-def FCVTMU_S64 : SInst<"vcvtm_u64", "ud", "dQd">;
-def FCVTAS_S32 : SInst<"vcvta_s32", "xd", "fQf">;
-def FCVTAS_S64 : SInst<"vcvta_s64", "xd", "dQd">;
-def FCVTAU_S32 : SInst<"vcvta_u32", "ud", "fQf">;
-def FCVTAU_S64 : SInst<"vcvta_u64", "ud", "dQd">;
 def FRECPE  : SInst<"vrecpe", "dd", "dQd">;
 def FRSQRTE : SInst<"vrsqrte", "dd", "dQd">;
 def FSQRT   : SInst<"vsqrt", "dd", "fdQfQd">;
@@ -946,6 +930,31 @@ def SHA1SU0 : SInst<"vsha1su0", "dddd", "QUi">;
 def SHA256H : SInst<"vsha256h", "dddd", "QUi">;
 def SHA256H2 : SInst<"vsha256h2", "dddd", "QUi">;
 def SHA256SU1 : SInst<"vsha256su1", "dddd", "QUi">;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Float -> Int conversions with explicit rounding mode
+
+let ArchGuard = "__ARM_ARCH >= 8" in {
+def FCVTNS_S32 : SInst<"vcvtn_s32", "xd", "fQf">;
+def FCVTNU_S32 : SInst<"vcvtn_u32", "ud", "fQf">;
+def FCVTPS_S32 : SInst<"vcvtp_s32", "xd", "fQf">;
+def FCVTPU_S32 : SInst<"vcvtp_u32", "ud", "fQf">;
+def FCVTMS_S32 : SInst<"vcvtm_s32", "xd", "fQf">;
+def FCVTMU_S32 : SInst<"vcvtm_u32", "ud", "fQf">;
+def FCVTAS_S32 : SInst<"vcvta_s32", "xd", "fQf">;
+def FCVTAU_S32 : SInst<"vcvta_u32", "ud", "fQf">;
+}
+
+let ArchGuard = "__ARM_ARCH >= 8 && defined(__aarch64__)" in {
+def FCVTNS_S64 : SInst<"vcvtn_s64", "xd", "dQd">;
+def FCVTNU_S64 : SInst<"vcvtn_u64", "ud", "dQd">;
+def FCVTPS_S64 : SInst<"vcvtp_s64", "xd", "dQd">;
+def FCVTPU_S64 : SInst<"vcvtp_u64", "ud", "dQd">;
+def FCVTMS_S64 : SInst<"vcvtm_s64", "xd", "dQd">;
+def FCVTMU_S64 : SInst<"vcvtm_u64", "ud", "dQd">;
+def FCVTAS_S64 : SInst<"vcvta_s64", "xd", "dQd">;
+def FCVTAU_S64 : SInst<"vcvta_u64", "ud", "dQd">;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
