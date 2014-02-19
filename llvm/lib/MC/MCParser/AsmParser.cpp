@@ -51,11 +51,15 @@ FatalAssemblerWarnings("fatal-assembler-warnings",
 MCAsmParserSemaCallback::~MCAsmParserSemaCallback() {}
 
 namespace {
-
 /// \brief Helper types for tracking macro definitions.
 typedef std::vector<AsmToken> MCAsmMacroArgument;
 typedef std::vector<MCAsmMacroArgument> MCAsmMacroArguments;
-typedef std::pair<StringRef, MCAsmMacroArgument> MCAsmMacroParameter;
+
+struct MCAsmMacroParameter {
+  StringRef Name;
+  MCAsmMacroArgument Value;
+};
+
 typedef std::vector<MCAsmMacroParameter> MCAsmMacroParameters;
 
 struct MCAsmMacro {
@@ -1793,7 +1797,7 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
       StringRef Argument(Begin, I - (Pos + 1));
       unsigned Index = 0;
       for (; Index < NParameters; ++Index)
-        if (Parameters[Index].first == Argument)
+        if (Parameters[Index].Name == Argument)
           break;
 
       if (Index == NParameters) {
@@ -1939,8 +1943,8 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
 
   A.resize(NParameters);
   for (unsigned PI = 0; PI < NParameters; ++PI)
-    if (!M->Parameters[PI].second.empty())
-      A[PI] = M->Parameters[PI].second;
+    if (!M->Parameters[PI].Value.empty())
+      A[PI] = M->Parameters[PI].Value;
 
   bool NamedParametersFound = false;
 
@@ -1954,7 +1958,7 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
 
     if (Lexer.is(AsmToken::Identifier) && Lexer.peekTok().is(AsmToken::Equal)) {
       L = Lexer.getLoc();
-      if (parseIdentifier(FA.first)) {
+      if (parseIdentifier(FA.Name)) {
         Error(L, "invalid argument identifier for formal argument");
         eatToEndOfStatement();
         return true;
@@ -1970,34 +1974,34 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
       NamedParametersFound = true;
     }
 
-    if (NamedParametersFound && FA.first.empty()) {
+    if (NamedParametersFound && FA.Name.empty()) {
       Error(Lexer.getLoc(), "cannot mix positional and keyword arguments");
       eatToEndOfStatement();
       return true;
     }
 
-    if (parseMacroArgument(FA.second))
+    if (parseMacroArgument(FA.Value))
       return true;
 
     unsigned PI = Parameter;
-    if (!FA.first.empty()) {
+    if (!FA.Name.empty()) {
       unsigned FAI = 0;
       for (FAI = 0; FAI < NParameters; ++FAI)
-        if (M->Parameters[FAI].first == FA.first)
+        if (M->Parameters[FAI].Name == FA.Name)
           break;
       if (FAI >= NParameters) {
         Error(L,
-              "parameter named '" + FA.first + "' does not exist for macro '" +
+              "parameter named '" + FA.Name + "' does not exist for macro '" +
               M->Name + "'");
         return true;
       }
       PI = FAI;
     }
 
-    if (!FA.second.empty()) {
+    if (!FA.Value.empty()) {
       if (A.size() <= PI)
         A.resize(PI + 1);
-      A[PI] = FA.second;
+      A[PI] = FA.Value;
     }
 
     // At the end of the statement, fill in remaining arguments that have
@@ -3203,12 +3207,12 @@ bool AsmParser::parseDirectiveMacro(SMLoc DirectiveLoc) {
   MCAsmMacroParameters Parameters;
   while (getLexer().isNot(AsmToken::EndOfStatement)) {
     MCAsmMacroParameter Parameter;
-    if (parseIdentifier(Parameter.first))
+    if (parseIdentifier(Parameter.Name))
       return TokError("expected identifier in '.macro' directive");
 
     if (getLexer().is(AsmToken::Equal)) {
       Lex();
-      if (parseMacroArgument(Parameter.second))
+      if (parseMacroArgument(Parameter.Value))
         return true;
     }
 
@@ -3346,7 +3350,7 @@ void AsmParser::checkForBadMacro(SMLoc DirectiveLoc, StringRef Name,
       StringRef Argument(Begin, I - (Pos + 1));
       unsigned Index = 0;
       for (; Index < NParameters; ++Index)
-        if (Parameters[Index].first == Argument)
+        if (Parameters[Index].Name == Argument)
           break;
 
       if (Index == NParameters) {
@@ -4114,7 +4118,7 @@ bool AsmParser::parseDirectiveRept(SMLoc DirectiveLoc, StringRef Dir) {
 bool AsmParser::parseDirectiveIrp(SMLoc DirectiveLoc) {
   MCAsmMacroParameter Parameter;
 
-  if (parseIdentifier(Parameter.first))
+  if (parseIdentifier(Parameter.Name))
     return TokError("expected identifier in '.irp' directive");
 
   if (Lexer.isNot(AsmToken::Comma))
@@ -4154,7 +4158,7 @@ bool AsmParser::parseDirectiveIrp(SMLoc DirectiveLoc) {
 bool AsmParser::parseDirectiveIrpc(SMLoc DirectiveLoc) {
   MCAsmMacroParameter Parameter;
 
-  if (parseIdentifier(Parameter.first))
+  if (parseIdentifier(Parameter.Name))
     return TokError("expected identifier in '.irpc' directive");
 
   if (Lexer.isNot(AsmToken::Comma))
