@@ -113,8 +113,8 @@ set(COMPILER_RT_GTEST_INCLUDE_CFLAGS
   -I${COMPILER_RT_GTEST_PATH}
 )
 
-# Use Clang to link objects into a single executable with just-built
-# Clang, using specific link flags. Make executable a part of provided
+# Link objects into a single executable with COMPILER_RT_TEST_COMPILER,
+# using specified link flags. Make executable a part of provided
 # test_suite.
 # add_compiler_rt_test(<test_suite> <test_name>
 #                      OBJECTS <object files>
@@ -123,10 +123,14 @@ set(COMPILER_RT_GTEST_INCLUDE_CFLAGS
 macro(add_compiler_rt_test test_suite test_name)
   parse_arguments(TEST "OBJECTS;DEPS;LINK_FLAGS" "" ${ARGN})
   set(output_bin "${CMAKE_CURRENT_BINARY_DIR}/${test_name}")
+  # Use host compiler in a standalone build, and just-built Clang otherwise.
+  if(NOT COMPILER_RT_STANDALONE_BUILD)
+    list(APPEND TEST_DEPS clang)
+  endif()
   add_custom_target(${test_name}
-    COMMAND clang ${TEST_OBJECTS} -o "${output_bin}"
+    COMMAND ${COMPILER_RT_TEST_COMPILER} ${TEST_OBJECTS} -o "${output_bin}"
             ${TEST_LINK_FLAGS}
-    DEPENDS clang ${TEST_DEPS})
+    DEPENDS ${TEST_DEPS})
   # Make the test suite depend on the binary.
   add_dependencies(${test_suite} ${test_name})
 endmacro()
