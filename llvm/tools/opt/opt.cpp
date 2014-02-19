@@ -273,29 +273,6 @@ static void AddStandardLinkPasses(PassManagerBase &PM) {
 //===----------------------------------------------------------------------===//
 // CodeGen-related helper functions.
 //
-static TargetOptions GetTargetOptions() {
-  TargetOptions Options;
-  Options.LessPreciseFPMADOption = EnableFPMAD;
-  Options.NoFramePointerElim = DisableFPElim;
-  Options.AllowFPOpFusion = FuseFPOps;
-  Options.UnsafeFPMath = EnableUnsafeFPMath;
-  Options.NoInfsFPMath = EnableNoInfsFPMath;
-  Options.NoNaNsFPMath = EnableNoNaNsFPMath;
-  Options.HonorSignDependentRoundingFPMathOption =
-  EnableHonorSignDependentRoundingFPMath;
-  Options.UseSoftFloat = GenerateSoftFloatCalls;
-  if (FloatABIForCalls != FloatABI::Default)
-    Options.FloatABIType = FloatABIForCalls;
-  Options.NoZerosInBSS = DontPlaceZerosInBSS;
-  Options.GuaranteedTailCallOpt = EnableGuaranteedTailCallOpt;
-  Options.DisableTailCalls = DisableTailCalls;
-  Options.StackAlignmentOverride = OverrideStackAlignment;
-  Options.TrapFuncName = TrapFuncName;
-  Options.PositionIndependentExecutable = EnablePIE;
-  Options.EnableSegmentedStacks = SegmentedStacks;
-  Options.UseInitArray = UseInitArray;
-  return Options;
-}
 
 CodeGenOpt::Level GetCodeGenOptLevel() {
   if (OptLevelO1)
@@ -327,7 +304,8 @@ static TargetMachine* GetTargetMachine(Triple TheTriple) {
   }
 
   return TheTarget->createTargetMachine(TheTriple.getTriple(),
-                                        MCPU, FeaturesStr, GetTargetOptions(),
+                                        MCPU, FeaturesStr,
+                                        InitTargetOptionsFromCodeGenFlags(),
                                         RelocModel, CMModel,
                                         GetCodeGenOptLevel());
 }
