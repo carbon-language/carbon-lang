@@ -943,7 +943,7 @@ def ObjCReturnsInnerPointer : InheritableAttr {
 def ObjCRequiresSuper : InheritableAttr {
   let Spellings = [GNU<"objc_requires_super">];
   let Subjects = SubjectList<[ObjCMethod], ErrorDiag>;
-  let Documentation = [Undocumented];
+  let Documentation = [ObjCRequiresSuperDocs];
 }
 
 def ObjCRootClass : InheritableAttr {

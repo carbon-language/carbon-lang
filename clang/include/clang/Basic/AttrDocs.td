@@ -267,3 +267,48 @@ use the retaining behavior attributes (``ns_returns_retained``,
 Query for this feature with ``__has_attribute(objc_method_family)``.
   }];
 }
+
+def ObjCRequiresSuperDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Some Objective-C classes allow a subclass to override a particular method in a
+parent class but expect that the overriding method also calls the overridden
+method in the parent class. For these cases, we provide an attribute to
+designate that a method requires a "call to ``super``" in the overriding
+method in the subclass.
+
+**Usage**: ``__attribute__((objc_requires_super))``.  This attribute can only
+be placed at the end of a method declaration:
+
+.. code-block:: objc
+
+  - (void)foo __attribute__((objc_requires_super));
+
+This attribute can only be applied the method declarations within a class, and
+not a protocol.  Currently this attribute does not enforce any placement of
+where the call occurs in the overriding method (such as in the case of
+``-dealloc`` where the call must appear at the end).  It checks only that it
+exists.
+
+Note that on both OS X and iOS that the Foundation framework provides a
+convenience macro ``NS_REQUIRES_SUPER`` that provides syntactic sugar for this
+attribute:
+
+.. code-block:: objc
+
+  - (void)foo NS_REQUIRES_SUPER;
+
+This macro is conditionally defined depending on the compiler's support for
+this attribute.  If the compiler does not support the attribute the macro
+expands to nothing.
+
+Operationally, when a method has this annotation the compiler will warn if the
+implementation of an override in a subclass does not call super.  For example:
+
+.. code-block:: objc
+
+   warning: method possibly missing a [super AnnotMeth] call
+   - (void) AnnotMeth{};
+                      ^
+  }];
+}
