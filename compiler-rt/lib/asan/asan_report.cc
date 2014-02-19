@@ -570,14 +570,12 @@ class ScopedInErrorReport {
 
 static bool IsStackOverflow(uptr addr, uptr sp) {
   uptr stack_frame_bottom = sp;
-#ifdef __x86_64__
-  stack_frame_bottom -= 128; // x86_64 stack redzone
-#else
-  // call stores return value 1 word below SP.
-  stack_frame_bottom -= sizeof(uptr);
-#endif
-  // Access below sp (+ redzone on x86_64) is probably something else (like
-  // stack of another thread).
+  // x86_64 stack redzone: leaf functions can access up to 128 bytes below SP.
+  // ARM has push-multiple instruction that stores up to 64(?) bytes below SP.
+  stack_frame_bottom -= 128;
+
+  // Access below SP (minus redzone) is probably something else (like stack of
+  // another thread).
   if (addr < stack_frame_bottom)
     return false;
 
