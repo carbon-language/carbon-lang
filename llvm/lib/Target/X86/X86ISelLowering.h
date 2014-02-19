@@ -679,6 +679,9 @@ namespace llvm {
     /// the immediate into a register.
     virtual bool isLegalAddImmediate(int64_t Imm) const;
 
+
+    virtual bool isVectorShiftByScalarCheap(Type *Ty) const;
+
     /// isTruncateFree - Return true if it's free to truncate a value of
     /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
     /// register EAX to i16 by referencing its sub-register AX.

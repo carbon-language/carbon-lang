@@ -14172,6 +14172,24 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
   return true;
 }
 
+bool X86TargetLowering::isVectorShiftByScalarCheap(Type *Ty) const {
+  unsigned Bits = Ty->getScalarSizeInBits();
+
+  // 8-bit shifts are always expensive, but versions with a scalar amount aren't
+  // particularly cheaper than those without.
+  if (Bits == 8)
+    return false;
+
+  // On AVX2 there are new vpsllv[dq] instructions (and other shifts), that make
+  // variable shifts just as cheap as scalar ones.
+  if (Subtarget->hasInt256() && (Bits == 32 || Bits == 64))
+    return false;
+
+  // Otherwise, it's significantly cheaper to shift by a scalar amount than by a
+  // fully general vector.
+  return true;
+}
+
 bool X86TargetLowering::isTruncateFree(Type *Ty1, Type *Ty2) const {
   if (!Ty1->isIntegerTy() || !Ty2->isIntegerTy())
     return false;
