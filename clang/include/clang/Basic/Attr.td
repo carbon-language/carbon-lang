@@ -627,7 +627,7 @@ def EnableIf : InheritableAttr {
   let Subjects = SubjectList<[Function]>;
   let Args = [ExprArgument<"Cond">, StringArgument<"Message">];
   let TemplateDependent = 1;
-  let Documentation = [Undocumented];
+  let Documentation = [EnableIfDocs];
 }
 
 def ExtVectorType : Attr {
