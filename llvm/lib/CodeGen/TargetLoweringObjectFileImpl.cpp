@@ -248,12 +248,12 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     Prefix = getSectionPrefixForGlobal(Kind);
 
     SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
-    MCSymbol *Sym = TM.getTargetLowering()->getSymbol(GV, Mang);
-    Name.append(Sym->getName().begin(), Sym->getName().end());
+    TM.getTargetLowering()->getNameWithPrefix(Name, GV, Mang, true);
+
     StringRef Group = "";
     unsigned Flags = getELFSectionFlags(Kind);
     if (GV->isWeakForLinker()) {
-      Group = Sym->getName();
+      Group = Name.substr(strlen(Prefix));
       Flags |= ELF::SHF_GROUP;
     }
 

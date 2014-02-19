@@ -1431,8 +1431,9 @@ bool TargetLoweringBase::isLegalAddressingMode(const AddrMode &AM,
 
 void TargetLoweringBase::getNameWithPrefix(SmallVectorImpl<char> &Name,
                                            const GlobalValue *GV,
-                                           Mangler &Mang) const {
-  if (!GV->hasPrivateLinkage()) {
+                                           Mangler &Mang,
+                                           bool MayAlwaysUsePrivate) const {
+  if (MayAlwaysUsePrivate || !GV->hasPrivateLinkage()) {
     // Simple case: If GV is not private, it is not important to find out if
     // private labels are legal in this case or not.
     Mang.getNameWithPrefix(Name, GV, false);

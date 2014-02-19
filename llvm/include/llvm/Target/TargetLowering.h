@@ -1338,7 +1338,7 @@ public:
   }
 
   void getNameWithPrefix(SmallVectorImpl<char> &Name, const GlobalValue *GV,
-                         Mangler &Mang) const;
+                         Mangler &Mang, bool MayAlwaysUsePrivate = false) const;
   MCSymbol *getSymbol(const GlobalValue *GV, Mangler &Mang) const;
 
 private:
