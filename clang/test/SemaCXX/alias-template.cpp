@@ -136,7 +136,7 @@ namespace Access {
 namespace VoidArg {
   template<typename Z> using V = void;
   V<int> f(int); // ok
-  V<char> g(V<double>); // expected-error {{empty parameter list defined with a type alias of 'void' not allowed}}
+  V<char> g(V<double>); // ok (DR577)
 }
 
 namespace Curried {

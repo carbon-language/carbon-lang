@@ -901,7 +901,6 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
         cast<ParmVarDecl>(FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
       // Empty arg list, don't push any params.
-      checkVoidParamDecl(cast<ParmVarDecl>(FTI.ArgInfo[0].Param));
     } else {
       Params.reserve(FTI.NumArgs);
       for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)

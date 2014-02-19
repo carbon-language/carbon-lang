@@ -154,5 +154,5 @@ namespace Access {
 namespace VoidArg {
   using V = void;
   V f(int); // ok
-  V g(V); // expected-error {{empty parameter list defined with a type alias of 'void' not allowed}}
+  V g(V); // ok (DR577)
 }

@@ -194,10 +194,7 @@ namespace dr17 { // dr17: yes
   };
 }
 
-namespace dr18 { // dr18: yes
-  typedef void Void;
-  void f(Void); // expected-error {{empty parameter list defined with a typedef of 'void'}}
-}
+// dr18: sup 577
 
 namespace dr19 { // dr19: yes
   struct A {
