@@ -28,6 +28,12 @@
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd-eabihf \
 // RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=ARM-HF %s
+// RUN: %clang -no-canonical-prefixes -target sparc--netbsd \
+// RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=SPARC %s
+// RUN: %clang -no-canonical-prefixes -target sparc64--netbsd \
+// RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=SPARC64 %s
 
 // RUN: %clang -no-canonical-prefixes -target x86_64--netbsd -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
@@ -53,6 +59,12 @@
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd6.0.0-eabi -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=S-ARM-6 %s
+// RUN: %clang -no-canonical-prefixes -target sparc--netbsd -static \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=S-SPARC %s
+// RUN: %clang -no-canonical-prefixes -target sparc64--netbsd -static \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=S-SPARC64 %s
 
 // X86_64: clang{{.*}}" "-cc1" "-triple" "x86_64--netbsd"
 // X86_64: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
@@ -119,6 +131,22 @@
 // ARM-HF: clang{{.*}}" "-cc1" "-triple" "armv4t--netbsd-eabihf"
 // ARM-HF: ld{{.*}}" "-m" "armelf_nbsd_eabihf"
 
+// SPARC: clang{{.*}}" "-cc1" "-triple" "sparc--netbsd"
+// SPARC: as{{.*}}" "-32" "-o"
+// SPARC: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
+// SPARC: "-m" "elf32_sparc"
+// SPARC: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// SPARC: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// SPARC: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// SPARC64: clang{{.*}}" "-cc1" "-triple" "sparc64--netbsd"
+// SPARC64: as{{.*}}" "-64" "-Av9" "-o"
+// SPARC64: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
+// SPARC64: "-m" "elf64_sparc"
+// SPARC64: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// SPARC64: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// SPARC64: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
 // S-X86_64: clang{{.*}}" "-cc1" "-triple" "x86_64--netbsd"
 // S-X86_64: ld{{.*}}" "-Bstatic"
 // S-X86_64: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
@@ -174,3 +202,19 @@
 // S-ARM-6: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // S-ARM-6: "-lgcc_eh" "-lc" "-lgcc"
 // S-ARM-6: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// S-SPARC: clang{{.*}}" "-cc1" "-triple" "sparc--netbsd"
+// S-SPARC: ld{{.*}}" "-Bstatic"
+// S-SPARC: "-m" "elf32_sparc"
+// S-SPARC: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// S-SPARC: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// S-SPARC: "-lgcc_eh" "-lc" "-lgcc"
+// S-SPARC: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// S-SPARC64: clang{{.*}}" "-cc1" "-triple" "sparc64--netbsd"
+// S-SPARC64: ld{{.*}}" "-Bstatic"
+// S-SPARC64: "-m" "elf64_sparc"
+// S-SPARC64: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// S-SPARC64: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// S-SPARC64: "-lgcc_eh" "-lc" "-lgcc"
+// S-SPARC64: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"

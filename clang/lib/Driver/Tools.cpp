@@ -6179,6 +6179,18 @@ void netbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     addAssemblerKPIC(Args, CmdArgs);
     break;
   }
+
+  case llvm::Triple::sparc:
+    CmdArgs.push_back("-32");
+    addAssemblerKPIC(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::sparcv9:
+    CmdArgs.push_back("-64");
+    CmdArgs.push_back("-Av9");
+    addAssemblerKPIC(Args, CmdArgs);
+    break;
+
   default:
     break;  
   }
@@ -6264,6 +6276,17 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
        CmdArgs.push_back("elf64ltsmip");
    }
    break;
+
+  case llvm::Triple::sparc:
+    CmdArgs.push_back("-m");
+    CmdArgs.push_back("elf32_sparc");
+    break;
+
+  case llvm::Triple::sparcv9:
+    CmdArgs.push_back("-m");
+    CmdArgs.push_back("elf64_sparc");
+    break;
+
   default:
     break;
   }
