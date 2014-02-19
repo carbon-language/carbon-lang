@@ -168,8 +168,6 @@ def HasMips64r2  :    Predicate<"Subtarget.hasMips64r2()">,
                       AssemblerPredicate<"FeatureMips64r2">;
 def IsN64       :     Predicate<"Subtarget.isABI_N64()">,
                       AssemblerPredicate<"FeatureN64">;
-def NotN64      :     Predicate<"!Subtarget.isABI_N64()">,
-                      AssemblerPredicate<"!FeatureN64">;
 def InMips16Mode :    Predicate<"Subtarget.inMips16Mode()">,
                       AssemblerPredicate<"FeatureMips16">;
 def RelocStatic :     Predicate<"TM.getRelocationModel() == Reloc::Static">,
