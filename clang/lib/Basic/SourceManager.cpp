@@ -404,10 +404,7 @@ SourceManager::~SourceManager() {
   delete FakeBufferForRecovery;
   delete FakeContentCacheForRecovery;
 
-  for (llvm::DenseMap<FileID, MacroArgsMap *>::iterator
-         I = MacroArgsCacheMap.begin(),E = MacroArgsCacheMap.end(); I!=E; ++I) {
-    delete I->second;
-  }
+  llvm::DeleteContainerSeconds(MacroArgsCacheMap);
 }
 
 void SourceManager::clearIDTables() {

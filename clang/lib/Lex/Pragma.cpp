@@ -48,9 +48,7 @@ void EmptyPragmaHandler::HandlePragma(Preprocessor &PP,
 //===----------------------------------------------------------------------===//
 
 PragmaNamespace::~PragmaNamespace() {
-  for (llvm::StringMap<PragmaHandler*>::iterator
-         I = Handlers.begin(), E = Handlers.end(); I != E; ++I)
-    delete I->second;
+  llvm::DeleteContainerSeconds(Handlers);
 }
 
 /// FindHandler - Check to see if there is already a handler for the

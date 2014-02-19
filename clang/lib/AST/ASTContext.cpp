@@ -783,11 +783,7 @@ ASTContext::~ASTContext() {
        A != AEnd; ++A)
     A->second->~AttrVec();
 
-  for (llvm::DenseMap<const DeclContext *, MangleNumberingContext *>::iterator
-           I = MangleNumberingContexts.begin(),
-           E = MangleNumberingContexts.end();
-       I != E; ++I)
-    delete I->second;
+  llvm::DeleteContainerSeconds(MangleNumberingContexts);
 }
 
 void ASTContext::AddDeallocation(void (*Callback)(void*), void *Data) {

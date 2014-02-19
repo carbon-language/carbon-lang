@@ -81,9 +81,7 @@ AnalysisDeclContextManager::AnalysisDeclContextManager(bool useUnoptimizedCFG,
 }
 
 void AnalysisDeclContextManager::clear() {
-  for (ContextMap::iterator I = Contexts.begin(), E = Contexts.end(); I!=E; ++I)
-    delete I->second;
-  Contexts.clear();
+  llvm::DeleteContainerSeconds(Contexts);
 }
 
 static BodyFarm &getBodyFarm(ASTContext &C) {
@@ -557,15 +555,13 @@ AnalysisDeclContext::~AnalysisDeclContext() {
   // Release the managed analyses.
   if (ManagedAnalyses) {
     ManagedAnalysisMap *M = (ManagedAnalysisMap*) ManagedAnalyses;
-    for (ManagedAnalysisMap::iterator I = M->begin(), E = M->end(); I!=E; ++I)
-      delete I->second;  
+    llvm::DeleteContainerSeconds(*M);
     delete M;
   }
 }
 
 AnalysisDeclContextManager::~AnalysisDeclContextManager() {
-  for (ContextMap::iterator I = Contexts.begin(), E = Contexts.end(); I!=E; ++I)
-    delete I->second;
+  llvm::DeleteContainerSeconds(Contexts);
 }
 
 LocationContext::~LocationContext() {}

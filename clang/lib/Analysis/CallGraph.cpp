@@ -106,12 +106,7 @@ CallGraph::CallGraph() {
 }
 
 CallGraph::~CallGraph() {
-  if (!FunctionMap.empty()) {
-    for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
-        I != E; ++I)
-      delete I->second;
-    FunctionMap.clear();
-  }
+  llvm::DeleteContainerSeconds(FunctionMap);
 }
 
 bool CallGraph::includeInGraph(const Decl *D) {

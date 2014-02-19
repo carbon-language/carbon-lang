@@ -191,10 +191,7 @@ struct ASTUnit::ASTWriterData {
 };
 
 void ASTUnit::clearFileLevelDecls() {
-  for (FileDeclsTy::iterator
-         I = FileDecls.begin(), E = FileDecls.end(); I != E; ++I)
-    delete I->second;
-  FileDecls.clear();
+  llvm::DeleteContainerSeconds(FileDecls);
 }
 
 void ASTUnit::CleanTemporaryFiles() {
