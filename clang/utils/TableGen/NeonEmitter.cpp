@@ -3165,10 +3165,10 @@ NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS) {
 /// declaration of builtins, checking for unique builtin declarations.
 void NeonEmitter::genBuiltinsDef(raw_ostream &OS) {
   std::vector<Record *> RV = Records.getAllDerivedDefinitions("Inst");
-  StringMap<OpKind> EmittedMap;
 
-  // Generate BuiltinsNEON.
-  OS << "#ifdef GET_NEON_BUILTINS\n";
+  // We want to emit the intrinsics in alphabetical order, so use the more
+  // expensive std::map to gather them together first.
+  std::map<std::string, OpKind> EmittedMap;
 
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
@@ -3203,9 +3203,17 @@ void NeonEmitter::genBuiltinsDef(raw_ostream &OS) {
         continue;
 
       EmittedMap[bd] = OpNone;
-      OS << bd << "\n";
     }
   }
+
+  // Generate BuiltinsNEON.
+  OS << "#ifdef GET_NEON_BUILTINS\n";
+
+  for (std::map<std::string, OpKind>::iterator I = EmittedMap.begin(),
+                                               E = EmittedMap.end();
+       I != E; ++I)
+    OS << I->first << "\n";
+
   OS << "#endif\n\n";
 }
 

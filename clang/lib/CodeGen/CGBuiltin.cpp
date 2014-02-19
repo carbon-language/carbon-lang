@@ -2448,23 +2448,402 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(unsigned BuiltinID,
   return 0;
 }
 
-static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
-                                           unsigned BuiltinID,
-                                           const CallExpr *E) {
-  unsigned int Int = 0;
-  unsigned IntTypes = 0;
-  enum {
-    ScalarRet = (1 << 0),
-    VectorRet = (1 << 1),
-    ScalarArg0 = (1 << 2),
-    VectorGetArg0 = (1 << 3),
-    VectorCastArg0 = (1 << 4),
-    ScalarArg1 = (1 << 5),
-    VectorGetArg1 = (1 << 6),
-    VectorCastArg1 = (1 << 7),
-    ScalarFpCmpzArg1 = (1 << 8)
-  };
-  const char *s = NULL;
+enum NeonScalarTypeMod {
+  ScalarRet = (1 << 0),
+  VectorRet = (1 << 1),
+  ScalarArg0 = (1 << 2),
+  VectorGetArg0 = (1 << 3),
+  VectorCastArg0 = (1 << 4),
+  ScalarArg1 = (1 << 5),
+  VectorGetArg1 = (1 << 6),
+  VectorCastArg1 = (1 << 7),
+  ScalarFpCmpzArg1 = (1 << 8),
+
+  VectorRetGetArgs01 = VectorRet | VectorGetArg0 | VectorGetArg1,
+  FpCmpzModifiers = VectorRet | ScalarArg0 | ScalarFpCmpzArg1
+};
+
+struct NeonSISDIntrinsicInfo {
+  unsigned BuiltinID;
+  unsigned LLVMIntrinsic;
+  const char *NameHint;
+  unsigned TypeModifier;
+
+  bool operator<(unsigned RHSBuiltinID) const {
+    return BuiltinID < RHSBuiltinID;
+  }
+};
+
+#define SISDMAP0(NameBase, Type) \
+  { NEON::BI__builtin_neon_ ## NameBase ## _ ## Type, 0, #NameBase, 0 }
+
+#define SISDMAP1(NameBase, Type, LLVMIntrinsic, TypeModifier) \
+  { NEON:: BI__builtin_neon_ ## NameBase ## _ ## Type, \
+    Intrinsic::LLVMIntrinsic, #NameBase, TypeModifier }
+
+static const NeonSISDIntrinsicInfo AArch64SISDIntrinsicInfo[] = {
+  SISDMAP1(vabdd, f64, aarch64_neon_vabd, ScalarRet),
+  SISDMAP1(vabds, f32, aarch64_neon_vabd, ScalarRet),
+  SISDMAP1(vabsd, s64, aarch64_neon_vabs, 0),
+  SISDMAP1(vaddd, s64, aarch64_neon_vaddds, 0),
+  SISDMAP1(vaddd, u64, aarch64_neon_vadddu, 0),
+  SISDMAP1(vaddlv, s16, aarch64_neon_saddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddlv, s32, aarch64_neon_saddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddlv, s8, aarch64_neon_saddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddlv, u16, aarch64_neon_uaddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddlv, u32, aarch64_neon_uaddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddlv, u8, aarch64_neon_uaddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddlvq, s16, aarch64_neon_saddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddlvq, s32, aarch64_neon_saddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddlvq, s8, aarch64_neon_saddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddlvq, u16, aarch64_neon_uaddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddlvq, u32, aarch64_neon_uaddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddlvq, u8, aarch64_neon_uaddlv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddv, f32, aarch64_neon_vpfadd, ScalarRet | VectorCastArg0),
+  SISDMAP1(vaddv, s16, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddv, s32, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddv, s8, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddv, u16, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddv, u32, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddv, u8, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddvq, f32, aarch64_neon_vpfadd, ScalarRet | VectorCastArg0),
+  SISDMAP1(vaddvq, f64, aarch64_neon_vpfadd, ScalarRet | VectorCastArg0),
+  SISDMAP1(vaddvq, s16, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddvq, s32, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddvq, s64, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddvq, s8, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddvq, u16, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddvq, u32, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddvq, u64, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vaddvq, u8, aarch64_neon_vaddv, VectorRet | VectorCastArg1),
+  SISDMAP1(vcaged, f64, aarch64_neon_fcage, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcages, f32, aarch64_neon_fcage, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcagtd, f64, aarch64_neon_fcagt, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcagts, f32, aarch64_neon_fcagt, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcaled, f64, aarch64_neon_fcage, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcales, f32, aarch64_neon_fcage, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcaltd, f64, aarch64_neon_fcagt, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcalts, f32, aarch64_neon_fcagt, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vceqd, f64, aarch64_neon_fceq, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vceqd, s64, aarch64_neon_vceq, VectorRetGetArgs01),
+  SISDMAP1(vceqd, u64, aarch64_neon_vceq, VectorRetGetArgs01),
+  SISDMAP1(vceqs, f32, aarch64_neon_fceq, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vceqzd, f64, aarch64_neon_fceq, FpCmpzModifiers),
+  SISDMAP1(vceqzd, s64, aarch64_neon_vceq, VectorRetGetArgs01),
+  SISDMAP1(vceqzd, u64, aarch64_neon_vceq, VectorRetGetArgs01),
+  SISDMAP1(vceqzs, f32, aarch64_neon_fceq, FpCmpzModifiers),
+  SISDMAP1(vcged, f64, aarch64_neon_fcge, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcged, s64, aarch64_neon_vcge, VectorRetGetArgs01),
+  SISDMAP1(vcged, u64, aarch64_neon_vchs, VectorRetGetArgs01),
+  SISDMAP1(vcges, f32, aarch64_neon_fcge, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcgezd, f64, aarch64_neon_fcge, FpCmpzModifiers),
+  SISDMAP1(vcgezd, s64, aarch64_neon_vcge, VectorRetGetArgs01),
+  SISDMAP1(vcgezs, f32, aarch64_neon_fcge, FpCmpzModifiers),
+  SISDMAP1(vcgtd, f64, aarch64_neon_fcgt, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcgtd, s64, aarch64_neon_vcgt, VectorRetGetArgs01),
+  SISDMAP1(vcgtd, u64, aarch64_neon_vchi, VectorRetGetArgs01),
+  SISDMAP1(vcgts, f32, aarch64_neon_fcgt, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcgtzd, f64, aarch64_neon_fcgt, FpCmpzModifiers),
+  SISDMAP1(vcgtzd, s64, aarch64_neon_vcgt, VectorRetGetArgs01),
+  SISDMAP1(vcgtzs, f32, aarch64_neon_fcgt, FpCmpzModifiers),
+  SISDMAP1(vcled, f64, aarch64_neon_fcge, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcled, s64, aarch64_neon_vcge, VectorRetGetArgs01),
+  SISDMAP1(vcled, u64, aarch64_neon_vchs, VectorRetGetArgs01),
+  SISDMAP1(vcles, f32, aarch64_neon_fcge, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vclezd, f64, aarch64_neon_fclez, FpCmpzModifiers),
+  SISDMAP1(vclezd, s64, aarch64_neon_vclez, VectorRetGetArgs01),
+  SISDMAP1(vclezs, f32, aarch64_neon_fclez, FpCmpzModifiers),
+  SISDMAP1(vcltd, f64, aarch64_neon_fcgt, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcltd, s64, aarch64_neon_vcgt, VectorRetGetArgs01),
+  SISDMAP1(vcltd, u64, aarch64_neon_vchi, VectorRetGetArgs01),
+  SISDMAP1(vclts, f32, aarch64_neon_fcgt, VectorRet | ScalarArg0 | ScalarArg1),
+  SISDMAP1(vcltzd, f64, aarch64_neon_fcltz, FpCmpzModifiers),
+  SISDMAP1(vcltzd, s64, aarch64_neon_vcltz, VectorRetGetArgs01),
+  SISDMAP1(vcltzs, f32, aarch64_neon_fcltz, FpCmpzModifiers),
+  SISDMAP1(vcvtad_s64, f64, aarch64_neon_fcvtas, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtad_u64, f64, aarch64_neon_fcvtau, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtas_s32, f32, aarch64_neon_fcvtas, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtas_u32, f32, aarch64_neon_fcvtau, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtd_f64, s64, aarch64_neon_vcvtint2fps, ScalarRet | VectorGetArg0),
+  SISDMAP1(vcvtd_f64, u64, aarch64_neon_vcvtint2fpu, ScalarRet | VectorGetArg0),
+  SISDMAP1(vcvtd_n_f64, s64, aarch64_neon_vcvtfxs2fp_n, ScalarRet | VectorGetArg0),
+  SISDMAP1(vcvtd_n_f64, u64, aarch64_neon_vcvtfxu2fp_n, ScalarRet | VectorGetArg0),
+  SISDMAP1(vcvtd_n_s64, f64, aarch64_neon_vcvtfp2fxs_n, VectorRet | ScalarArg0),
+  SISDMAP1(vcvtd_n_u64, f64, aarch64_neon_vcvtfp2fxu_n, VectorRet | ScalarArg0),
+  SISDMAP1(vcvtd_s64, f64, aarch64_neon_fcvtzs, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtd_u64, f64, aarch64_neon_fcvtzu, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtmd_s64, f64, aarch64_neon_fcvtms, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtmd_u64, f64, aarch64_neon_fcvtmu, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtms_s32, f32, aarch64_neon_fcvtms, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtms_u32, f32, aarch64_neon_fcvtmu, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtnd_s64, f64, aarch64_neon_fcvtns, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtnd_u64, f64, aarch64_neon_fcvtnu, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtns_s32, f32, aarch64_neon_fcvtns, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtns_u32, f32, aarch64_neon_fcvtnu, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtpd_s64, f64, aarch64_neon_fcvtps, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtpd_u64, f64, aarch64_neon_fcvtpu, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtps_s32, f32, aarch64_neon_fcvtps, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtps_u32, f32, aarch64_neon_fcvtpu, VectorRet | ScalarArg1),
+  SISDMAP1(vcvts_f32, s32, aarch64_neon_vcvtint2fps, ScalarRet | VectorGetArg0),
+  SISDMAP1(vcvts_f32, u32, aarch64_neon_vcvtint2fpu, ScalarRet | VectorGetArg0),
+  SISDMAP1(vcvts_n_f32, s32, aarch64_neon_vcvtfxs2fp_n, ScalarRet | VectorGetArg0),
+  SISDMAP1(vcvts_n_f32, u32, aarch64_neon_vcvtfxu2fp_n, ScalarRet | VectorGetArg0),
+  SISDMAP1(vcvts_n_s32, f32, aarch64_neon_vcvtfp2fxs_n, VectorRet | ScalarArg0),
+  SISDMAP1(vcvts_n_u32, f32, aarch64_neon_vcvtfp2fxu_n, VectorRet | ScalarArg0),
+  SISDMAP1(vcvts_s32, f32, aarch64_neon_fcvtzs, VectorRet | ScalarArg1),
+  SISDMAP1(vcvts_u32, f32, aarch64_neon_fcvtzu, VectorRet | ScalarArg1),
+  SISDMAP1(vcvtxd_f32, f64, aarch64_neon_fcvtxn, 0),
+  SISDMAP0(vdupb_lane, i8),
+  SISDMAP0(vdupb_laneq, i8),
+  SISDMAP0(vdupd_lane, f64),
+  SISDMAP0(vdupd_lane, i64),
+  SISDMAP0(vdupd_laneq, f64),
+  SISDMAP0(vdupd_laneq, i64),
+  SISDMAP0(vduph_lane, i16),
+  SISDMAP0(vduph_laneq, i16),
+  SISDMAP0(vdups_lane, f32),
+  SISDMAP0(vdups_lane, i32),
+  SISDMAP0(vdups_laneq, f32),
+  SISDMAP0(vdups_laneq, i32),
+  SISDMAP0(vfmad_lane, f64),
+  SISDMAP0(vfmad_laneq, f64),
+  SISDMAP0(vfmas_lane, f32),
+  SISDMAP0(vfmas_laneq, f32),
+  SISDMAP0(vget_lane, f32),
+  SISDMAP0(vget_lane, f64),
+  SISDMAP0(vget_lane, i16),
+  SISDMAP0(vget_lane, i32),
+  SISDMAP0(vget_lane, i64),
+  SISDMAP0(vget_lane, i8),
+  SISDMAP0(vgetq_lane, f32),
+  SISDMAP0(vgetq_lane, f64),
+  SISDMAP0(vgetq_lane, i16),
+  SISDMAP0(vgetq_lane, i32),
+  SISDMAP0(vgetq_lane, i64),
+  SISDMAP0(vgetq_lane, i8),
+  SISDMAP1(vmaxnmv, f32, aarch64_neon_vpfmaxnm, ScalarRet | VectorCastArg0),
+  SISDMAP1(vmaxnmvq, f32, aarch64_neon_vmaxnmv, 0),
+  SISDMAP1(vmaxnmvq, f64, aarch64_neon_vpfmaxnm, ScalarRet | VectorCastArg0),
+  SISDMAP1(vmaxv, f32, aarch64_neon_vpmax, ScalarRet | VectorCastArg0),
+  SISDMAP1(vmaxv, s16, aarch64_neon_smaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vmaxv, s32, aarch64_neon_smaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vmaxv, s8, aarch64_neon_smaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vmaxv, u16, aarch64_neon_umaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vmaxv, u32, aarch64_neon_umaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vmaxv, u8, aarch64_neon_umaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vmaxvq, f32, aarch64_neon_vmaxv, 0),
+  SISDMAP1(vmaxvq, f64, aarch64_neon_vpmax, ScalarRet | VectorCastArg0),
+  SISDMAP1(vmaxvq, s16, aarch64_neon_smaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vmaxvq, s32, aarch64_neon_smaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vmaxvq, s8, aarch64_neon_smaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vmaxvq, u16, aarch64_neon_umaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vmaxvq, u32, aarch64_neon_umaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vmaxvq, u8, aarch64_neon_umaxv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminnmv, f32, aarch64_neon_vpfminnm, ScalarRet | VectorCastArg0),
+  SISDMAP1(vminnmvq, f32, aarch64_neon_vminnmv, 0),
+  SISDMAP1(vminnmvq, f64, aarch64_neon_vpfminnm, ScalarRet | VectorCastArg0),
+  SISDMAP1(vminv, f32, aarch64_neon_vpmin, ScalarRet | VectorCastArg0),
+  SISDMAP1(vminv, s16, aarch64_neon_sminv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminv, s32, aarch64_neon_sminv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminv, s8, aarch64_neon_sminv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminv, u16, aarch64_neon_uminv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminv, u32, aarch64_neon_uminv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminv, u8, aarch64_neon_uminv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminvq, f32, aarch64_neon_vminv, 0),
+  SISDMAP1(vminvq, f64, aarch64_neon_vpmin, ScalarRet | VectorCastArg0),
+  SISDMAP1(vminvq, s16, aarch64_neon_sminv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminvq, s32, aarch64_neon_sminv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminvq, s8, aarch64_neon_sminv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminvq, u16, aarch64_neon_uminv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminvq, u32, aarch64_neon_uminv, VectorRet | VectorCastArg1),
+  SISDMAP1(vminvq, u8, aarch64_neon_uminv, VectorRet | VectorCastArg1),
+  SISDMAP0(vmul_n, f64),
+  SISDMAP1(vmull, p64, aarch64_neon_vmull_p64, 0),
+  SISDMAP0(vmulxd, f64),
+  SISDMAP0(vmulxs, f32),
+  SISDMAP1(vnegd, s64, aarch64_neon_vneg, 0),
+  SISDMAP1(vpaddd, f64, aarch64_neon_vpfadd, ScalarRet | VectorCastArg0),
+  SISDMAP1(vpaddd, s64, aarch64_neon_vpadd, 0),
+  SISDMAP1(vpaddd, u64, aarch64_neon_vpadd, 0),
+  SISDMAP1(vpadds, f32, aarch64_neon_vpfadd, ScalarRet | VectorCastArg0),
+  SISDMAP1(vpmaxnmqd, f64, aarch64_neon_vpfmaxnm, ScalarRet | VectorCastArg0),
+  SISDMAP1(vpmaxnms, f32, aarch64_neon_vpfmaxnm, ScalarRet | VectorCastArg0),
+  SISDMAP1(vpmaxqd, f64, aarch64_neon_vpmax, ScalarRet | VectorCastArg0),
+  SISDMAP1(vpmaxs, f32, aarch64_neon_vpmax, ScalarRet | VectorCastArg0),
+  SISDMAP1(vpminnmqd, f64, aarch64_neon_vpfminnm, ScalarRet | VectorCastArg0),
+  SISDMAP1(vpminnms, f32, aarch64_neon_vpfminnm, ScalarRet | VectorCastArg0),
+  SISDMAP1(vpminqd, f64, aarch64_neon_vpmin, ScalarRet | VectorCastArg0),
+  SISDMAP1(vpmins, f32, aarch64_neon_vpmin, ScalarRet | VectorCastArg0),
+  SISDMAP1(vqabsb, s8, arm_neon_vqabs, VectorRet),
+  SISDMAP1(vqabsd, s64, arm_neon_vqabs, VectorRet),
+  SISDMAP1(vqabsh, s16, arm_neon_vqabs, VectorRet),
+  SISDMAP1(vqabss, s32, arm_neon_vqabs, VectorRet),
+  SISDMAP1(vqaddb, s8, arm_neon_vqadds, VectorRet),
+  SISDMAP1(vqaddb, u8, arm_neon_vqaddu, VectorRet),
+  SISDMAP1(vqaddd, s64, arm_neon_vqadds, VectorRet),
+  SISDMAP1(vqaddd, u64, arm_neon_vqaddu, VectorRet),
+  SISDMAP1(vqaddh, s16, arm_neon_vqadds, VectorRet),
+  SISDMAP1(vqaddh, u16, arm_neon_vqaddu, VectorRet),
+  SISDMAP1(vqadds, s32, arm_neon_vqadds, VectorRet),
+  SISDMAP1(vqadds, u32, arm_neon_vqaddu, VectorRet),
+  SISDMAP0(vqdmlalh_lane, s16),
+  SISDMAP0(vqdmlalh_laneq, s16),
+  SISDMAP1(vqdmlalh, s16, aarch64_neon_vqdmlal, VectorRet),
+  SISDMAP0(vqdmlals_lane, s32),
+  SISDMAP0(vqdmlals_laneq, s32),
+  SISDMAP1(vqdmlals, s32, aarch64_neon_vqdmlal, VectorRet),
+  SISDMAP0(vqdmlslh_lane, s16),
+  SISDMAP0(vqdmlslh_laneq, s16),
+  SISDMAP1(vqdmlslh, s16, aarch64_neon_vqdmlsl, VectorRet),
+  SISDMAP0(vqdmlsls_lane, s32),
+  SISDMAP0(vqdmlsls_laneq, s32),
+  SISDMAP1(vqdmlsls, s32, aarch64_neon_vqdmlsl, VectorRet),
+  SISDMAP1(vqdmulhh, s16, arm_neon_vqdmulh, VectorRet),
+  SISDMAP1(vqdmulhs, s32, arm_neon_vqdmulh, VectorRet),
+  SISDMAP1(vqdmullh, s16, arm_neon_vqdmull, VectorRet),
+  SISDMAP1(vqdmulls, s32, arm_neon_vqdmull, VectorRet),
+  SISDMAP1(vqmovnd, s64, arm_neon_vqmovns, VectorRet),
+  SISDMAP1(vqmovnd, u64, arm_neon_vqmovnu, VectorRet),
+  SISDMAP1(vqmovnh, s16, arm_neon_vqmovns, VectorRet),
+  SISDMAP1(vqmovnh, u16, arm_neon_vqmovnu, VectorRet),
+  SISDMAP1(vqmovns, s32, arm_neon_vqmovns, VectorRet),
+  SISDMAP1(vqmovns, u32, arm_neon_vqmovnu, VectorRet),
+  SISDMAP1(vqmovund, s64, arm_neon_vqmovnsu, VectorRet),
+  SISDMAP1(vqmovunh, s16, arm_neon_vqmovnsu, VectorRet),
+  SISDMAP1(vqmovuns, s32, arm_neon_vqmovnsu, VectorRet),
+  SISDMAP1(vqnegb, s8, arm_neon_vqneg, VectorRet),
+  SISDMAP1(vqnegd, s64, arm_neon_vqneg, VectorRet),
+  SISDMAP1(vqnegh, s16, arm_neon_vqneg, VectorRet),
+  SISDMAP1(vqnegs, s32, arm_neon_vqneg, VectorRet),
+  SISDMAP1(vqrdmulhh, s16, arm_neon_vqrdmulh, VectorRet),
+  SISDMAP1(vqrdmulhs, s32, arm_neon_vqrdmulh, VectorRet),
+  SISDMAP1(vqrshlb, s8, aarch64_neon_vqrshls, VectorRet),
+  SISDMAP1(vqrshlb, u8, aarch64_neon_vqrshlu, VectorRet),
+  SISDMAP1(vqrshld, s64, aarch64_neon_vqrshls, VectorRet),
+  SISDMAP1(vqrshld, u64, aarch64_neon_vqrshlu, VectorRet),
+  SISDMAP1(vqrshlh, s16, aarch64_neon_vqrshls, VectorRet),
+  SISDMAP1(vqrshlh, u16, aarch64_neon_vqrshlu, VectorRet),
+  SISDMAP1(vqrshls, s32, aarch64_neon_vqrshls, VectorRet),
+  SISDMAP1(vqrshls, u32, aarch64_neon_vqrshlu, VectorRet),
+  SISDMAP1(vqrshrnd_n, s64, aarch64_neon_vsqrshrn, VectorRet),
+  SISDMAP1(vqrshrnd_n, u64, aarch64_neon_vuqrshrn, VectorRet),
+  SISDMAP1(vqrshrnh_n, s16, aarch64_neon_vsqrshrn, VectorRet),
+  SISDMAP1(vqrshrnh_n, u16, aarch64_neon_vuqrshrn, VectorRet),
+  SISDMAP1(vqrshrns_n, s32, aarch64_neon_vsqrshrn, VectorRet),
+  SISDMAP1(vqrshrns_n, u32, aarch64_neon_vuqrshrn, VectorRet),
+  SISDMAP1(vqrshrund_n, s64, aarch64_neon_vsqrshrun, VectorRet),
+  SISDMAP1(vqrshrunh_n, s16, aarch64_neon_vsqrshrun, VectorRet),
+  SISDMAP1(vqrshruns_n, s32, aarch64_neon_vsqrshrun, VectorRet),
+  SISDMAP1(vqshlb_n, s8, aarch64_neon_vqshls_n, VectorRet),
+  SISDMAP1(vqshlb_n, u8, aarch64_neon_vqshlu_n, VectorRet),
+  SISDMAP1(vqshlb, s8, aarch64_neon_vqshls, VectorRet),
+  SISDMAP1(vqshlb, u8, aarch64_neon_vqshlu, VectorRet),
+  SISDMAP1(vqshld_n, s64, aarch64_neon_vqshls_n, VectorRet),
+  SISDMAP1(vqshld_n, u64, aarch64_neon_vqshlu_n, VectorRet),
+  SISDMAP1(vqshld, s64, aarch64_neon_vqshls, VectorRet),
+  SISDMAP1(vqshld, u64, aarch64_neon_vqshlu, VectorRet),
+  SISDMAP1(vqshlh_n, s16, aarch64_neon_vqshls_n, VectorRet),
+  SISDMAP1(vqshlh_n, u16, aarch64_neon_vqshlu_n, VectorRet),
+  SISDMAP1(vqshlh, s16, aarch64_neon_vqshls, VectorRet),
+  SISDMAP1(vqshlh, u16, aarch64_neon_vqshlu, VectorRet),
+  SISDMAP1(vqshls_n, s32, aarch64_neon_vqshls_n, VectorRet),
+  SISDMAP1(vqshls_n, u32, aarch64_neon_vqshlu_n, VectorRet),
+  SISDMAP1(vqshls, s32, aarch64_neon_vqshls, VectorRet),
+  SISDMAP1(vqshls, u32, aarch64_neon_vqshlu, VectorRet),
+  SISDMAP1(vqshlub_n, s8, aarch64_neon_vsqshlu, VectorRet),
+  SISDMAP1(vqshlud_n, s64, aarch64_neon_vsqshlu, VectorRet),
+  SISDMAP1(vqshluh_n, s16, aarch64_neon_vsqshlu, VectorRet),
+  SISDMAP1(vqshlus_n, s32, aarch64_neon_vsqshlu, VectorRet),
+  SISDMAP1(vqshrnd_n, s64, aarch64_neon_vsqshrn, VectorRet),
+  SISDMAP1(vqshrnd_n, u64, aarch64_neon_vuqshrn, VectorRet),
+  SISDMAP1(vqshrnh_n, s16, aarch64_neon_vsqshrn, VectorRet),
+  SISDMAP1(vqshrnh_n, u16, aarch64_neon_vuqshrn, VectorRet),
+  SISDMAP1(vqshrns_n, s32, aarch64_neon_vsqshrn, VectorRet),
+  SISDMAP1(vqshrns_n, u32, aarch64_neon_vuqshrn, VectorRet),
+  SISDMAP1(vqshrund_n, s64, aarch64_neon_vsqshrun, VectorRet),
+  SISDMAP1(vqshrunh_n, s16, aarch64_neon_vsqshrun, VectorRet),
+  SISDMAP1(vqshruns_n, s32, aarch64_neon_vsqshrun, VectorRet),
+  SISDMAP1(vqsubb, s8, arm_neon_vqsubs, VectorRet),
+  SISDMAP1(vqsubb, u8, arm_neon_vqsubu, VectorRet),
+  SISDMAP1(vqsubd, s64, arm_neon_vqsubs, VectorRet),
+  SISDMAP1(vqsubd, u64, arm_neon_vqsubu, VectorRet),
+  SISDMAP1(vqsubh, s16, arm_neon_vqsubs, VectorRet),
+  SISDMAP1(vqsubh, u16, arm_neon_vqsubu, VectorRet),
+  SISDMAP1(vqsubs, s32, arm_neon_vqsubs, VectorRet),
+  SISDMAP1(vqsubs, u32, arm_neon_vqsubu, VectorRet),
+  SISDMAP1(vrecped, f64, aarch64_neon_vrecpe, ScalarRet),
+  SISDMAP1(vrecpes, f32, aarch64_neon_vrecpe, ScalarRet),
+  SISDMAP1(vrecpsd, f64, aarch64_neon_vrecps, ScalarRet),
+  SISDMAP1(vrecpss, f32, aarch64_neon_vrecps, ScalarRet),
+  SISDMAP1(vrecpxd, f64, aarch64_neon_vrecpx, ScalarRet),
+  SISDMAP1(vrecpxs, f32, aarch64_neon_vrecpx, ScalarRet),
+  SISDMAP1(vrshld, s64, aarch64_neon_vrshlds, 0),
+  SISDMAP1(vrshld, u64, aarch64_neon_vrshldu, 0),
+  SISDMAP1(vrshrd_n, s64, aarch64_neon_vsrshr, VectorRet),
+  SISDMAP1(vrshrd_n, u64, aarch64_neon_vurshr, VectorRet),
+  SISDMAP1(vrsqrted, f64, aarch64_neon_vrsqrte, ScalarRet),
+  SISDMAP1(vrsqrtes, f32, aarch64_neon_vrsqrte, ScalarRet),
+  SISDMAP1(vrsqrtsd, f64, aarch64_neon_vrsqrts, ScalarRet),
+  SISDMAP1(vrsqrtss, f32, aarch64_neon_vrsqrts, ScalarRet),
+  SISDMAP1(vrsrad_n, s64, aarch64_neon_vrsrads_n, 0),
+  SISDMAP1(vrsrad_n, u64, aarch64_neon_vrsradu_n, 0),
+  SISDMAP0(vset_lane, f32),
+  SISDMAP0(vset_lane, f64),
+  SISDMAP0(vset_lane, i16),
+  SISDMAP0(vset_lane, i32),
+  SISDMAP0(vset_lane, i64),
+  SISDMAP0(vset_lane, i8),
+  SISDMAP0(vsetq_lane, f32),
+  SISDMAP0(vsetq_lane, f64),
+  SISDMAP0(vsetq_lane, i16),
+  SISDMAP0(vsetq_lane, i32),
+  SISDMAP0(vsetq_lane, i64),
+  SISDMAP0(vsetq_lane, i8),
+  SISDMAP1(vsha1cq, u32, arm_neon_sha1c, 0),
+  SISDMAP1(vsha1h, u32, arm_neon_sha1h, 0),
+  SISDMAP1(vsha1mq, u32, arm_neon_sha1m, 0),
+  SISDMAP1(vsha1pq, u32, arm_neon_sha1p, 0),
+  SISDMAP1(vshld_n, s64, aarch64_neon_vshld_n, 0),
+  SISDMAP1(vshld_n, u64, aarch64_neon_vshld_n, 0),
+  SISDMAP1(vshld, s64, aarch64_neon_vshlds, 0),
+  SISDMAP1(vshld, u64, aarch64_neon_vshldu, 0),
+  SISDMAP1(vshrd_n, s64, aarch64_neon_vshrds_n, 0),
+  SISDMAP1(vshrd_n, u64, aarch64_neon_vshrdu_n, 0),
+  SISDMAP1(vslid_n, s64, aarch64_neon_vsli, VectorRet),
+  SISDMAP1(vslid_n, u64, aarch64_neon_vsli, VectorRet),
+  SISDMAP1(vsqaddb, u8, aarch64_neon_vsqadd, VectorRet),
+  SISDMAP1(vsqaddd, u64, aarch64_neon_vsqadd, VectorRet),
+  SISDMAP1(vsqaddh, u16, aarch64_neon_vsqadd, VectorRet),
+  SISDMAP1(vsqadds, u32, aarch64_neon_vsqadd, VectorRet),
+  SISDMAP1(vsrad_n, s64, aarch64_neon_vsrads_n, 0),
+  SISDMAP1(vsrad_n, u64, aarch64_neon_vsradu_n, 0),
+  SISDMAP1(vsrid_n, s64, aarch64_neon_vsri, VectorRet),
+  SISDMAP1(vsrid_n, u64, aarch64_neon_vsri, VectorRet),
+  SISDMAP1(vsubd, s64, aarch64_neon_vsubds, 0),
+  SISDMAP1(vsubd, u64, aarch64_neon_vsubdu, 0),
+  SISDMAP1(vtstd, s64, aarch64_neon_vtstd, VectorRetGetArgs01),
+  SISDMAP1(vtstd, u64, aarch64_neon_vtstd, VectorRetGetArgs01),
+  SISDMAP1(vuqaddb, s8, aarch64_neon_vuqadd, VectorRet),
+  SISDMAP1(vuqaddd, s64, aarch64_neon_vuqadd, VectorRet),
+  SISDMAP1(vuqaddh, s16, aarch64_neon_vuqadd, VectorRet),
+  SISDMAP1(vuqadds, s32, aarch64_neon_vuqadd, VectorRet),
+};
+
+#undef SISDMAP0
+#undef SISDMAP1
+
+#ifndef NDEBUG
+static bool AArch64SISDIntrinsicInfoProvenSorted = false;
+#endif
+
+static Value *
+EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
+                             const NeonSISDIntrinsicInfo &SISDInfo,
+                             const CallExpr *E) {
+  unsigned BuiltinID = SISDInfo.BuiltinID;
+  unsigned int Int = SISDInfo.LLVMIntrinsic;
+  unsigned IntTypes = SISDInfo.TypeModifier;
+  const char *s = SISDInfo.NameHint;
 
   SmallVector<Value *, 4> Ops;
   for (unsigned i = 0, e = E->getNumArgs(); i != e; i++) {
@@ -2592,663 +2971,46 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case NEON::BI__builtin_neon_vsetq_lane_f32:
   case NEON::BI__builtin_neon_vsetq_lane_f64:
     return CGF.EmitARMBuiltinExpr(NEON::BI__builtin_neon_vset_lane_i8, E);
-  // Crypto
-  case NEON::BI__builtin_neon_vsha1h_u32:
-    Int = Intrinsic::arm_neon_sha1h;
-    s = "sha1h"; break;
-  case NEON::BI__builtin_neon_vsha1cq_u32:
-    Int = Intrinsic::arm_neon_sha1c;
-    s = "sha1c"; break;
-  case NEON::BI__builtin_neon_vsha1pq_u32:
-    Int = Intrinsic::arm_neon_sha1p;
-    s = "sha1p"; break;
-  case NEON::BI__builtin_neon_vsha1mq_u32:
-    Int = Intrinsic::arm_neon_sha1m;
-    s = "sha1m"; break;
-  // Scalar Add
-  case NEON::BI__builtin_neon_vaddd_s64:
-    Int = Intrinsic::aarch64_neon_vaddds;
-    s = "vaddds"; break;
-  case NEON::BI__builtin_neon_vaddd_u64:
-    Int = Intrinsic::aarch64_neon_vadddu;
-    s = "vadddu"; break;
-  // Scalar Sub
-  case NEON::BI__builtin_neon_vsubd_s64:
-    Int = Intrinsic::aarch64_neon_vsubds;
-    s = "vsubds"; break;
-  case NEON::BI__builtin_neon_vsubd_u64:
-    Int = Intrinsic::aarch64_neon_vsubdu;
-    s = "vsubdu"; break;
-  // Scalar Saturating Add
-  case NEON::BI__builtin_neon_vqaddb_s8:
-  case NEON::BI__builtin_neon_vqaddh_s16:
-  case NEON::BI__builtin_neon_vqadds_s32:
-  case NEON::BI__builtin_neon_vqaddd_s64:
-    Int = Intrinsic::arm_neon_vqadds;
-    s = "vqadds"; IntTypes = VectorRet; break;
-  case NEON::BI__builtin_neon_vqaddb_u8:
-  case NEON::BI__builtin_neon_vqaddh_u16:
-  case NEON::BI__builtin_neon_vqadds_u32:
-  case NEON::BI__builtin_neon_vqaddd_u64:
-    Int = Intrinsic::arm_neon_vqaddu;
-    s = "vqaddu"; IntTypes = VectorRet; break;
-  // Scalar Saturating Sub
-  case NEON::BI__builtin_neon_vqsubb_s8:
-  case NEON::BI__builtin_neon_vqsubh_s16:
-  case NEON::BI__builtin_neon_vqsubs_s32:
-  case NEON::BI__builtin_neon_vqsubd_s64:
-    Int = Intrinsic::arm_neon_vqsubs;
-    s = "vqsubs"; IntTypes = VectorRet; break;
-  case NEON::BI__builtin_neon_vqsubb_u8:
-  case NEON::BI__builtin_neon_vqsubh_u16:
-  case NEON::BI__builtin_neon_vqsubs_u32:
-  case NEON::BI__builtin_neon_vqsubd_u64:
-    Int = Intrinsic::arm_neon_vqsubu;
-    s = "vqsubu"; IntTypes = VectorRet; break;
-  // Scalar Shift Left
-  case NEON::BI__builtin_neon_vshld_s64:
-    Int = Intrinsic::aarch64_neon_vshlds;
-    s = "vshlds"; break;
-  case NEON::BI__builtin_neon_vshld_u64:
-    Int = Intrinsic::aarch64_neon_vshldu;
-    s = "vshldu"; break;
-  // Scalar Saturating Shift Left
-  case NEON::BI__builtin_neon_vqshlb_s8:
-  case NEON::BI__builtin_neon_vqshlh_s16:
-  case NEON::BI__builtin_neon_vqshls_s32:
-  case NEON::BI__builtin_neon_vqshld_s64:
-    Int = Intrinsic::aarch64_neon_vqshls;
-    s = "vqshls"; IntTypes = VectorRet; break;
-  case NEON::BI__builtin_neon_vqshlb_u8:
-  case NEON::BI__builtin_neon_vqshlh_u16:
-  case NEON::BI__builtin_neon_vqshls_u32:
-  case NEON::BI__builtin_neon_vqshld_u64:
-    Int = Intrinsic::aarch64_neon_vqshlu;
-    s = "vqshlu"; IntTypes = VectorRet; break;
-  // Scalar Rouding Shift Left
-  case NEON::BI__builtin_neon_vrshld_s64:
-    Int = Intrinsic::aarch64_neon_vrshlds;
-    s = "vrshlds"; break;
-  case NEON::BI__builtin_neon_vrshld_u64:
-    Int = Intrinsic::aarch64_neon_vrshldu;
-    s = "vrshldu"; break;
-  // Scalar Saturating Rouding Shift Left
-  case NEON::BI__builtin_neon_vqrshlb_s8:
-  case NEON::BI__builtin_neon_vqrshlh_s16:
-  case NEON::BI__builtin_neon_vqrshls_s32:
-  case NEON::BI__builtin_neon_vqrshld_s64:
-    Int = Intrinsic::aarch64_neon_vqrshls;
-    s = "vqrshls"; IntTypes = VectorRet; break;
-  case NEON::BI__builtin_neon_vqrshlb_u8:
-  case NEON::BI__builtin_neon_vqrshlh_u16:
-  case NEON::BI__builtin_neon_vqrshls_u32:
-  case NEON::BI__builtin_neon_vqrshld_u64:
-    Int = Intrinsic::aarch64_neon_vqrshlu;
-    s = "vqrshlu"; IntTypes = VectorRet; break;
-  // Scalar Reduce Pairwise Add
-  case NEON::BI__builtin_neon_vpaddd_s64:
-  case NEON::BI__builtin_neon_vpaddd_u64:
-    Int = Intrinsic::aarch64_neon_vpadd;
-    s = "vpadd"; break;
-  case NEON::BI__builtin_neon_vaddv_f32:
-  case NEON::BI__builtin_neon_vaddvq_f32:
-  case NEON::BI__builtin_neon_vaddvq_f64:
-  case NEON::BI__builtin_neon_vpadds_f32:
-  case NEON::BI__builtin_neon_vpaddd_f64:
-    Int = Intrinsic::aarch64_neon_vpfadd;
-    s = "vpfadd"; IntTypes = ScalarRet | VectorCastArg0; break;
-  // Scalar Reduce Pairwise Floating Point Max
-  case NEON::BI__builtin_neon_vmaxv_f32:
-  case NEON::BI__builtin_neon_vpmaxs_f32:
-  case NEON::BI__builtin_neon_vmaxvq_f64:
-  case NEON::BI__builtin_neon_vpmaxqd_f64:
-    Int = Intrinsic::aarch64_neon_vpmax;
-    s = "vpmax"; IntTypes = ScalarRet | VectorCastArg0; break;
-  // Scalar Reduce Pairwise Floating Point Min
-  case NEON::BI__builtin_neon_vminv_f32:
-  case NEON::BI__builtin_neon_vpmins_f32:
-  case NEON::BI__builtin_neon_vminvq_f64:
-  case NEON::BI__builtin_neon_vpminqd_f64:
-    Int = Intrinsic::aarch64_neon_vpmin;
-    s = "vpmin"; IntTypes = ScalarRet | VectorCastArg0; break;
-  // Scalar Reduce Pairwise Floating Point Maxnm
-  case NEON::BI__builtin_neon_vmaxnmv_f32:
-  case NEON::BI__builtin_neon_vpmaxnms_f32:
-  case NEON::BI__builtin_neon_vmaxnmvq_f64:
-  case NEON::BI__builtin_neon_vpmaxnmqd_f64:
-    Int = Intrinsic::aarch64_neon_vpfmaxnm;
-    s = "vpfmaxnm"; IntTypes = ScalarRet | VectorCastArg0; break;
-  // Scalar Reduce Pairwise Floating Point Minnm
-  case NEON::BI__builtin_neon_vminnmv_f32:
-  case NEON::BI__builtin_neon_vpminnms_f32:
-  case NEON::BI__builtin_neon_vminnmvq_f64:
-  case NEON::BI__builtin_neon_vpminnmqd_f64:
-    Int = Intrinsic::aarch64_neon_vpfminnm;
-    s = "vpfminnm"; IntTypes = ScalarRet | VectorCastArg0; break;
-  // The followings are intrinsics with scalar results generated AcrossVec vectors
-  case NEON::BI__builtin_neon_vaddlv_s8:
-  case NEON::BI__builtin_neon_vaddlv_s16:
-  case NEON::BI__builtin_neon_vaddlv_s32:
-  case NEON::BI__builtin_neon_vaddlvq_s8:
-  case NEON::BI__builtin_neon_vaddlvq_s16:
-  case NEON::BI__builtin_neon_vaddlvq_s32:
-    Int = Intrinsic::aarch64_neon_saddlv;
-    s = "saddlv"; IntTypes = VectorRet | VectorCastArg1; break;
-  case NEON::BI__builtin_neon_vaddlv_u8:
-  case NEON::BI__builtin_neon_vaddlv_u16:
-  case NEON::BI__builtin_neon_vaddlv_u32:
-  case NEON::BI__builtin_neon_vaddlvq_u8:
-  case NEON::BI__builtin_neon_vaddlvq_u16:
-  case NEON::BI__builtin_neon_vaddlvq_u32:
-    Int = Intrinsic::aarch64_neon_uaddlv;
-    s = "uaddlv"; IntTypes = VectorRet | VectorCastArg1; break;
-  case NEON::BI__builtin_neon_vmaxv_s8:
-  case NEON::BI__builtin_neon_vmaxv_s16:
-  case NEON::BI__builtin_neon_vmaxv_s32:
-  case NEON::BI__builtin_neon_vmaxvq_s8:
-  case NEON::BI__builtin_neon_vmaxvq_s16:
-  case NEON::BI__builtin_neon_vmaxvq_s32:
-    Int = Intrinsic::aarch64_neon_smaxv;
-    s = "smaxv"; IntTypes = VectorRet | VectorCastArg1; break;
-  case NEON::BI__builtin_neon_vmaxv_u8:
-  case NEON::BI__builtin_neon_vmaxv_u16:
-  case NEON::BI__builtin_neon_vmaxv_u32:
-  case NEON::BI__builtin_neon_vmaxvq_u8:
-  case NEON::BI__builtin_neon_vmaxvq_u16:
-  case NEON::BI__builtin_neon_vmaxvq_u32:
-    Int = Intrinsic::aarch64_neon_umaxv;
-    s = "umaxv"; IntTypes = VectorRet | VectorCastArg1; break;
-  case NEON::BI__builtin_neon_vminv_s8:
-  case NEON::BI__builtin_neon_vminv_s16:
-  case NEON::BI__builtin_neon_vminv_s32:
-  case NEON::BI__builtin_neon_vminvq_s8:
-  case NEON::BI__builtin_neon_vminvq_s16:
-  case NEON::BI__builtin_neon_vminvq_s32:
-    Int = Intrinsic::aarch64_neon_sminv;
-    s = "sminv"; IntTypes = VectorRet | VectorCastArg1; break;
-  case NEON::BI__builtin_neon_vminv_u8:
-  case NEON::BI__builtin_neon_vminv_u16:
-  case NEON::BI__builtin_neon_vminv_u32:
-  case NEON::BI__builtin_neon_vminvq_u8:
-  case NEON::BI__builtin_neon_vminvq_u16:
-  case NEON::BI__builtin_neon_vminvq_u32:
-    Int = Intrinsic::aarch64_neon_uminv;
-    s = "uminv"; IntTypes = VectorRet | VectorCastArg1; break;
-  case NEON::BI__builtin_neon_vaddv_s8:
-  case NEON::BI__builtin_neon_vaddv_s16:
-  case NEON::BI__builtin_neon_vaddv_s32:
-  case NEON::BI__builtin_neon_vaddvq_s8:
-  case NEON::BI__builtin_neon_vaddvq_s16:
-  case NEON::BI__builtin_neon_vaddvq_s32:
-  case NEON::BI__builtin_neon_vaddvq_s64:
-  case NEON::BI__builtin_neon_vaddv_u8:
-  case NEON::BI__builtin_neon_vaddv_u16:
-  case NEON::BI__builtin_neon_vaddv_u32:
-  case NEON::BI__builtin_neon_vaddvq_u8:
-  case NEON::BI__builtin_neon_vaddvq_u16:
-  case NEON::BI__builtin_neon_vaddvq_u32:
-  case NEON::BI__builtin_neon_vaddvq_u64:
-    Int = Intrinsic::aarch64_neon_vaddv;
-    s = "vaddv"; IntTypes = VectorRet | VectorCastArg1; break;
-  case NEON::BI__builtin_neon_vmaxvq_f32:
-    Int = Intrinsic::aarch64_neon_vmaxv;
-    s = "vmaxv"; break;
-  case NEON::BI__builtin_neon_vminvq_f32:
-    Int = Intrinsic::aarch64_neon_vminv;
-    s = "vminv"; break;
-  case NEON::BI__builtin_neon_vmaxnmvq_f32:
-    Int = Intrinsic::aarch64_neon_vmaxnmv;
-    s = "vmaxnmv"; break;
-  case NEON::BI__builtin_neon_vminnmvq_f32:
-    Int = Intrinsic::aarch64_neon_vminnmv;
-     s = "vminnmv"; break;
-  // Scalar Integer Saturating Doubling Multiply Half High
-  case NEON::BI__builtin_neon_vqdmulhh_s16:
-  case NEON::BI__builtin_neon_vqdmulhs_s32:
-    Int = Intrinsic::arm_neon_vqdmulh;
-    s = "vqdmulh"; IntTypes = VectorRet; break;
-  // Scalar Integer Saturating Rounding Doubling Multiply Half High
-  case NEON::BI__builtin_neon_vqrdmulhh_s16:
-  case NEON::BI__builtin_neon_vqrdmulhs_s32:
-    Int = Intrinsic::arm_neon_vqrdmulh;
-    s = "vqrdmulh"; IntTypes = VectorRet; break;
-  // Scalar Floating-point Reciprocal Step
-  case NEON::BI__builtin_neon_vrecpss_f32:
-  case NEON::BI__builtin_neon_vrecpsd_f64:
-    Int = Intrinsic::aarch64_neon_vrecps;
-    s = "vrecps"; IntTypes = ScalarRet; break;
-  // Scalar Floating-point Reciprocal Square Root Step
-  case NEON::BI__builtin_neon_vrsqrtss_f32:
-  case NEON::BI__builtin_neon_vrsqrtsd_f64:
-    Int = Intrinsic::aarch64_neon_vrsqrts;
-    s = "vrsqrts"; IntTypes = ScalarRet; break;
-  // Scalar Signed Integer Convert To Floating-point
-  case NEON::BI__builtin_neon_vcvts_f32_s32:
-  case NEON::BI__builtin_neon_vcvtd_f64_s64:
-    Int = Intrinsic::aarch64_neon_vcvtint2fps;
-    s = "vcvtf"; IntTypes = ScalarRet | VectorGetArg0; break;
-  // Scalar Unsigned Integer Convert To Floating-point
-  case NEON::BI__builtin_neon_vcvts_f32_u32:
-  case NEON::BI__builtin_neon_vcvtd_f64_u64:
-    Int = Intrinsic::aarch64_neon_vcvtint2fpu;
-    s = "vcvtf"; IntTypes = ScalarRet | VectorGetArg0; break;
-  // Scalar Floating-point Converts
-  case NEON::BI__builtin_neon_vcvtxd_f32_f64:
-    Int = Intrinsic::aarch64_neon_fcvtxn;
-    s = "vcvtxn"; break;
-  case NEON::BI__builtin_neon_vcvtas_s32_f32:
-  case NEON::BI__builtin_neon_vcvtad_s64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtas;
-    s = "vcvtas"; IntTypes = VectorRet | ScalarArg1; break;
-  case NEON::BI__builtin_neon_vcvtas_u32_f32:
-  case NEON::BI__builtin_neon_vcvtad_u64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtau;
-    s = "vcvtau"; IntTypes = VectorRet | ScalarArg1; break;
-  case NEON::BI__builtin_neon_vcvtms_s32_f32:
-  case NEON::BI__builtin_neon_vcvtmd_s64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtms;
-    s = "vcvtms"; IntTypes = VectorRet | ScalarArg1; break;
-  case NEON::BI__builtin_neon_vcvtms_u32_f32:
-  case NEON::BI__builtin_neon_vcvtmd_u64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtmu;
-    s = "vcvtmu"; IntTypes = VectorRet | ScalarArg1; break;
-  case NEON::BI__builtin_neon_vcvtns_s32_f32:
-  case NEON::BI__builtin_neon_vcvtnd_s64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtns;
-    s = "vcvtns"; IntTypes = VectorRet | ScalarArg1; break;
-  case NEON::BI__builtin_neon_vcvtns_u32_f32:
-  case NEON::BI__builtin_neon_vcvtnd_u64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtnu;
-    s = "vcvtnu"; IntTypes = VectorRet | ScalarArg1; break;
-  case NEON::BI__builtin_neon_vcvtps_s32_f32:
-  case NEON::BI__builtin_neon_vcvtpd_s64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtps;
-    s = "vcvtps"; IntTypes = VectorRet | ScalarArg1; break;
-  case NEON::BI__builtin_neon_vcvtps_u32_f32:
-  case NEON::BI__builtin_neon_vcvtpd_u64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtpu;
-    s = "vcvtpu"; IntTypes = VectorRet | ScalarArg1; break;
-  case NEON::BI__builtin_neon_vcvts_s32_f32:
-  case NEON::BI__builtin_neon_vcvtd_s64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtzs;
-    s = "vcvtzs"; IntTypes = VectorRet | ScalarArg1; break;
-  case NEON::BI__builtin_neon_vcvts_u32_f32:
-  case NEON::BI__builtin_neon_vcvtd_u64_f64:
-    Int = Intrinsic::aarch64_neon_fcvtzu;
-    s = "vcvtzu"; IntTypes = VectorRet | ScalarArg1; break;
-  // Scalar Floating-point Reciprocal Estimate
-  case NEON::BI__builtin_neon_vrecpes_f32:
-  case NEON::BI__builtin_neon_vrecped_f64:
-    Int = Intrinsic::aarch64_neon_vrecpe;
-    s = "vrecpe"; IntTypes = ScalarRet; break;
-  // Scalar Floating-point Reciprocal Exponent
-  case NEON::BI__builtin_neon_vrecpxs_f32:
-  case NEON::BI__builtin_neon_vrecpxd_f64:
-    Int = Intrinsic::aarch64_neon_vrecpx;
-    s = "vrecpx"; IntTypes = ScalarRet; break;
-  // Scalar Floating-point Reciprocal Square Root Estimate
-  case NEON::BI__builtin_neon_vrsqrtes_f32:
-  case NEON::BI__builtin_neon_vrsqrted_f64:
-    Int = Intrinsic::aarch64_neon_vrsqrte;
-    s = "vrsqrte"; IntTypes = ScalarRet; break;
-  // Scalar Compare Equal
-  case NEON::BI__builtin_neon_vceqd_s64:
-  case NEON::BI__builtin_neon_vceqd_u64:
-    Int = Intrinsic::aarch64_neon_vceq; s = "vceq";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  // Scalar Compare Equal To Zero
-  case NEON::BI__builtin_neon_vceqzd_s64:
-  case NEON::BI__builtin_neon_vceqzd_u64:
-    Int = Intrinsic::aarch64_neon_vceq; s = "vceq";
-    // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  // Scalar Compare Greater Than or Equal
-  case NEON::BI__builtin_neon_vcged_s64:
-    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  case NEON::BI__builtin_neon_vcged_u64:
-    Int = Intrinsic::aarch64_neon_vchs; s = "vcge";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  // Scalar Compare Greater Than or Equal To Zero
-  case NEON::BI__builtin_neon_vcgezd_s64:
-    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
-    // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  // Scalar Compare Greater Than
-  case NEON::BI__builtin_neon_vcgtd_s64:
-    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  case NEON::BI__builtin_neon_vcgtd_u64:
-    Int = Intrinsic::aarch64_neon_vchi; s = "vcgt";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  // Scalar Compare Greater Than Zero
-  case NEON::BI__builtin_neon_vcgtzd_s64:
-    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
-    // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  // Scalar Compare Less Than or Equal
+
   case NEON::BI__builtin_neon_vcled_s64:
-    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
-    std::swap(Ops[0], Ops[1]);
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   case NEON::BI__builtin_neon_vcled_u64:
-    Int = Intrinsic::aarch64_neon_vchs; s = "vchs";
-    std::swap(Ops[0], Ops[1]);
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  // Scalar Compare Less Than or Equal To Zero
-  case NEON::BI__builtin_neon_vclezd_s64:
-    Int = Intrinsic::aarch64_neon_vclez; s = "vcle";
-    // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  // Scalar Compare Less Than
-  case NEON::BI__builtin_neon_vcltd_s64:
-    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
-    std::swap(Ops[0], Ops[1]);
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  case NEON::BI__builtin_neon_vcltd_u64:
-    Int = Intrinsic::aarch64_neon_vchi; s = "vchi";
-    std::swap(Ops[0], Ops[1]);
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  // Scalar Compare Less Than Zero
-  case NEON::BI__builtin_neon_vcltzd_s64:
-    Int = Intrinsic::aarch64_neon_vcltz; s = "vclt";
-    // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  // Scalar Floating-point Compare Equal
-  case NEON::BI__builtin_neon_vceqs_f32:
-  case NEON::BI__builtin_neon_vceqd_f64:
-    Int = Intrinsic::aarch64_neon_fceq; s = "vceq";
-    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
-  // Scalar Floating-point Compare Equal To Zero
-  case NEON::BI__builtin_neon_vceqzs_f32:
-  case NEON::BI__builtin_neon_vceqzd_f64:
-    Int = Intrinsic::aarch64_neon_fceq; s = "vceq";
-    // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
-    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
-  // Scalar Floating-point Compare Greater Than Or Equal
-  case NEON::BI__builtin_neon_vcges_f32:
-  case NEON::BI__builtin_neon_vcged_f64:
-    Int = Intrinsic::aarch64_neon_fcge; s = "vcge";
-    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
-  // Scalar Floating-point Compare Greater Than Or Equal To Zero
-  case NEON::BI__builtin_neon_vcgezs_f32:
-  case NEON::BI__builtin_neon_vcgezd_f64:
-    Int = Intrinsic::aarch64_neon_fcge; s = "vcge";
-    // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
-    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
-  // Scalar Floating-point Compare Greather Than
-  case NEON::BI__builtin_neon_vcgts_f32:
-  case NEON::BI__builtin_neon_vcgtd_f64:
-    Int = Intrinsic::aarch64_neon_fcgt; s = "vcgt";
-    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
-  // Scalar Floating-point Compare Greather Than Zero
-  case NEON::BI__builtin_neon_vcgtzs_f32:
-  case NEON::BI__builtin_neon_vcgtzd_f64:
-    Int = Intrinsic::aarch64_neon_fcgt; s = "vcgt";
-    // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
-    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
-  // Scalar Floating-point Compare Less Than or Equal
   case NEON::BI__builtin_neon_vcles_f32:
   case NEON::BI__builtin_neon_vcled_f64:
-    Int = Intrinsic::aarch64_neon_fcge; s = "vcge";
-    std::swap(Ops[0], Ops[1]);
-    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
-  // Scalar Floating-point Compare Less Than Or Equal To Zero
-  case NEON::BI__builtin_neon_vclezs_f32:
-  case NEON::BI__builtin_neon_vclezd_f64:
-    Int = Intrinsic::aarch64_neon_fclez; s = "vcle";
-    // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
-    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
-  // Scalar Floating-point Compare Less Than Zero
+  case NEON::BI__builtin_neon_vcltd_s64:
+  case NEON::BI__builtin_neon_vcltd_u64:
   case NEON::BI__builtin_neon_vclts_f32:
   case NEON::BI__builtin_neon_vcltd_f64:
-    Int = Intrinsic::aarch64_neon_fcgt; s = "vcgt";
-    std::swap(Ops[0], Ops[1]);
-    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
-  // Scalar Floating-point Compare Less Than Zero
-  case NEON::BI__builtin_neon_vcltzs_f32:
-  case NEON::BI__builtin_neon_vcltzd_f64:
-    Int = Intrinsic::aarch64_neon_fcltz; s = "vclt";
-    // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
-    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
-  // Scalar Floating-point Absolute Compare Greater Than Or Equal
-  case NEON::BI__builtin_neon_vcages_f32:
-  case NEON::BI__builtin_neon_vcaged_f64:
-    Int = Intrinsic::aarch64_neon_fcage; s = "vcage";
-    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
-  // Scalar Floating-point Absolute Compare Greater Than
-  case NEON::BI__builtin_neon_vcagts_f32:
-  case NEON::BI__builtin_neon_vcagtd_f64:
-    Int = Intrinsic::aarch64_neon_fcagt; s = "vcagt";
-    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
-  // Scalar Floating-point Absolute Compare Less Than Or Equal
   case NEON::BI__builtin_neon_vcales_f32:
   case NEON::BI__builtin_neon_vcaled_f64:
-    Int = Intrinsic::aarch64_neon_fcage; s = "vcage";
-    std::swap(Ops[0], Ops[1]);
-    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
-  // Scalar Floating-point Absolute Compare Less Than
   case NEON::BI__builtin_neon_vcalts_f32:
   case NEON::BI__builtin_neon_vcaltd_f64:
-    Int = Intrinsic::aarch64_neon_fcagt; s = "vcalt";
+    // Only one direction of comparisons actually exist, cmle is actually a cmge
+    // with swapped operands. The table gives us the right intrinsic but we
+    // still need to do the swap.
     std::swap(Ops[0], Ops[1]);
-    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
-  // Scalar Compare Bitwise Test Bits
-  case NEON::BI__builtin_neon_vtstd_s64:
-  case NEON::BI__builtin_neon_vtstd_u64:
-    Int = Intrinsic::aarch64_neon_vtstd; s = "vtst";
-    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
-  // Scalar Absolute Value
-  case NEON::BI__builtin_neon_vabsd_s64:
-    Int = Intrinsic::aarch64_neon_vabs;
-    s = "vabs"; break;
-  // Scalar Absolute Difference
-  case NEON::BI__builtin_neon_vabds_f32:
-  case NEON::BI__builtin_neon_vabdd_f64:
-    Int = Intrinsic::aarch64_neon_vabd;
-    s = "vabd"; IntTypes = ScalarRet; break;
-  // Scalar Signed Saturating Absolute Value
-  case NEON::BI__builtin_neon_vqabsb_s8:
-  case NEON::BI__builtin_neon_vqabsh_s16:
-  case NEON::BI__builtin_neon_vqabss_s32:
-  case NEON::BI__builtin_neon_vqabsd_s64:
-    Int = Intrinsic::arm_neon_vqabs;
-    s = "vqabs"; IntTypes = VectorRet; break;
-  // Scalar Negate
-  case NEON::BI__builtin_neon_vnegd_s64:
-    Int = Intrinsic::aarch64_neon_vneg;
-    s = "vneg"; break;
-  // Scalar Signed Saturating Negate
-  case NEON::BI__builtin_neon_vqnegb_s8:
-  case NEON::BI__builtin_neon_vqnegh_s16:
-  case NEON::BI__builtin_neon_vqnegs_s32:
-  case NEON::BI__builtin_neon_vqnegd_s64:
-    Int = Intrinsic::arm_neon_vqneg;
-    s = "vqneg"; IntTypes = VectorRet; break;
-  // Scalar Signed Saturating Accumulated of Unsigned Value
-  case NEON::BI__builtin_neon_vuqaddb_s8:
-  case NEON::BI__builtin_neon_vuqaddh_s16:
-  case NEON::BI__builtin_neon_vuqadds_s32:
-  case NEON::BI__builtin_neon_vuqaddd_s64:
-    Int = Intrinsic::aarch64_neon_vuqadd;
-    s = "vuqadd"; IntTypes = VectorRet; break;
-  // Scalar Unsigned Saturating Accumulated of Signed Value
-  case NEON::BI__builtin_neon_vsqaddb_u8:
-  case NEON::BI__builtin_neon_vsqaddh_u16:
-  case NEON::BI__builtin_neon_vsqadds_u32:
-  case NEON::BI__builtin_neon_vsqaddd_u64:
-    Int = Intrinsic::aarch64_neon_vsqadd;
-    s = "vsqadd"; IntTypes = VectorRet; break;
-  // Signed Saturating Doubling Multiply-Add Long
-  case NEON::BI__builtin_neon_vqdmlalh_s16:
-  case NEON::BI__builtin_neon_vqdmlals_s32:
-    Int = Intrinsic::aarch64_neon_vqdmlal;
-    s = "vqdmlal"; IntTypes = VectorRet; break;
-  // Signed Saturating Doubling Multiply-Subtract Long
-  case NEON::BI__builtin_neon_vqdmlslh_s16:
-  case NEON::BI__builtin_neon_vqdmlsls_s32:
-    Int = Intrinsic::aarch64_neon_vqdmlsl;
-    s = "vqdmlsl"; IntTypes = VectorRet; break;
-  // Signed Saturating Doubling Multiply Long
-  case NEON::BI__builtin_neon_vqdmullh_s16:
-  case NEON::BI__builtin_neon_vqdmulls_s32:
-    Int = Intrinsic::arm_neon_vqdmull;
-    s = "vqdmull"; IntTypes = VectorRet; break;
-  // Scalar Signed Saturating Extract Unsigned Narrow
-  case NEON::BI__builtin_neon_vqmovunh_s16:
-  case NEON::BI__builtin_neon_vqmovuns_s32:
-  case NEON::BI__builtin_neon_vqmovund_s64:
-    Int = Intrinsic::arm_neon_vqmovnsu;
-    s = "vqmovun"; IntTypes = VectorRet; break;
-  // Scalar Signed Saturating Extract Narrow
-  case NEON::BI__builtin_neon_vqmovnh_s16:
-  case NEON::BI__builtin_neon_vqmovns_s32:
-  case NEON::BI__builtin_neon_vqmovnd_s64:
-    Int = Intrinsic::arm_neon_vqmovns;
-    s = "vqmovn"; IntTypes = VectorRet; break;
-  // Scalar Unsigned Saturating Extract Narrow
-  case NEON::BI__builtin_neon_vqmovnh_u16:
-  case NEON::BI__builtin_neon_vqmovns_u32:
-  case NEON::BI__builtin_neon_vqmovnd_u64:
-    Int = Intrinsic::arm_neon_vqmovnu;
-    s = "vqmovn"; IntTypes = VectorRet; break;
-  // Scalar Signed Shift Right (Immediate)
-  case NEON::BI__builtin_neon_vshrd_n_s64:
-    Int = Intrinsic::aarch64_neon_vshrds_n;
-    s = "vsshr"; break;
-  // Scalar Unsigned Shift Right (Immediate)
-  case NEON::BI__builtin_neon_vshrd_n_u64:
-    Int = Intrinsic::aarch64_neon_vshrdu_n;
-    s = "vushr"; break;
-  // Scalar Signed Rounding Shift Right (Immediate)
-  case NEON::BI__builtin_neon_vrshrd_n_s64:
-    Int = Intrinsic::aarch64_neon_vsrshr;
-    s = "vsrshr"; IntTypes = VectorRet; break;
-  // Scalar Unsigned Rounding Shift Right (Immediate)
-  case NEON::BI__builtin_neon_vrshrd_n_u64:
-    Int = Intrinsic::aarch64_neon_vurshr;
-    s = "vurshr"; IntTypes = VectorRet; break;
-  // Scalar Signed Shift Right and Accumulate (Immediate)
-  case NEON::BI__builtin_neon_vsrad_n_s64:
-    Int = Intrinsic::aarch64_neon_vsrads_n;
-    s = "vssra"; break;
-  // Scalar Unsigned Shift Right and Accumulate (Immediate)
-  case NEON::BI__builtin_neon_vsrad_n_u64:
-    Int = Intrinsic::aarch64_neon_vsradu_n;
-    s = "vusra"; break;
-  // Scalar Signed Rounding Shift Right and Accumulate (Immediate)
-  case NEON::BI__builtin_neon_vrsrad_n_s64:
-    Int = Intrinsic::aarch64_neon_vrsrads_n;
-    s = "vsrsra"; break;
-  // Scalar Unsigned Rounding Shift Right and Accumulate (Immediate)
-  case NEON::BI__builtin_neon_vrsrad_n_u64:
-    Int = Intrinsic::aarch64_neon_vrsradu_n;
-    s = "vursra"; break;
-  // Scalar Signed/Unsigned Shift Left (Immediate)
-  case NEON::BI__builtin_neon_vshld_n_s64:
-  case NEON::BI__builtin_neon_vshld_n_u64:
-    Int = Intrinsic::aarch64_neon_vshld_n;
-    s = "vshl"; break;
-  // Signed Saturating Shift Left (Immediate)
-  case NEON::BI__builtin_neon_vqshlb_n_s8:
-  case NEON::BI__builtin_neon_vqshlh_n_s16:
-  case NEON::BI__builtin_neon_vqshls_n_s32:
-  case NEON::BI__builtin_neon_vqshld_n_s64:
-    Int = Intrinsic::aarch64_neon_vqshls_n;
-    s = "vsqshl"; IntTypes = VectorRet; break;
-  // Unsigned Saturating Shift Left (Immediate)
-  case NEON::BI__builtin_neon_vqshlb_n_u8:
-  case NEON::BI__builtin_neon_vqshlh_n_u16:
-  case NEON::BI__builtin_neon_vqshls_n_u32:
-  case NEON::BI__builtin_neon_vqshld_n_u64:
-    Int = Intrinsic::aarch64_neon_vqshlu_n;
-    s = "vuqshl"; IntTypes = VectorRet; break;
-  // Signed Saturating Shift Left Unsigned (Immediate)
-  case NEON::BI__builtin_neon_vqshlub_n_s8:
-  case NEON::BI__builtin_neon_vqshluh_n_s16:
-  case NEON::BI__builtin_neon_vqshlus_n_s32:
-  case NEON::BI__builtin_neon_vqshlud_n_s64:
-    Int = Intrinsic::aarch64_neon_vsqshlu;
-    s = "vsqshlu"; IntTypes = VectorRet; break;
-  // Shift Right And Insert (Immediate)
-  case NEON::BI__builtin_neon_vsrid_n_s64:
-  case NEON::BI__builtin_neon_vsrid_n_u64:
-    Int = Intrinsic::aarch64_neon_vsri;
-    s = "vsri"; IntTypes = VectorRet; break;
-  // Shift Left And Insert (Immediate)
-  case NEON::BI__builtin_neon_vslid_n_s64:
-  case NEON::BI__builtin_neon_vslid_n_u64:
-    Int = Intrinsic::aarch64_neon_vsli;
-    s = "vsli"; IntTypes = VectorRet; break;
-  // Signed Saturating Shift Right Narrow (Immediate)
-  case NEON::BI__builtin_neon_vqshrnh_n_s16:
-  case NEON::BI__builtin_neon_vqshrns_n_s32:
-  case NEON::BI__builtin_neon_vqshrnd_n_s64:
-    Int = Intrinsic::aarch64_neon_vsqshrn;
-    s = "vsqshrn"; IntTypes = VectorRet; break;
-  // Unsigned Saturating Shift Right Narrow (Immediate)
-  case NEON::BI__builtin_neon_vqshrnh_n_u16:
-  case NEON::BI__builtin_neon_vqshrns_n_u32:
-  case NEON::BI__builtin_neon_vqshrnd_n_u64:
-    Int = Intrinsic::aarch64_neon_vuqshrn;
-    s = "vuqshrn"; IntTypes = VectorRet; break;
-  // Signed Saturating Rounded Shift Right Narrow (Immediate)
-  case NEON::BI__builtin_neon_vqrshrnh_n_s16:
-  case NEON::BI__builtin_neon_vqrshrns_n_s32:
-  case NEON::BI__builtin_neon_vqrshrnd_n_s64:
-    Int = Intrinsic::aarch64_neon_vsqrshrn;
-    s = "vsqrshrn"; IntTypes = VectorRet; break;
-  // Unsigned Saturating Rounded Shift Right Narrow (Immediate)
-  case NEON::BI__builtin_neon_vqrshrnh_n_u16:
-  case NEON::BI__builtin_neon_vqrshrns_n_u32:
-  case NEON::BI__builtin_neon_vqrshrnd_n_u64:
-    Int = Intrinsic::aarch64_neon_vuqrshrn;
-    s = "vuqrshrn"; IntTypes = VectorRet; break;
-  // Signed Saturating Shift Right Unsigned Narrow (Immediate)
-  case NEON::BI__builtin_neon_vqshrunh_n_s16:
-  case NEON::BI__builtin_neon_vqshruns_n_s32:
-  case NEON::BI__builtin_neon_vqshrund_n_s64:
-    Int = Intrinsic::aarch64_neon_vsqshrun;
-    s = "vsqshrun"; IntTypes = VectorRet; break;
-  // Signed Saturating Rounded Shift Right Unsigned Narrow (Immediate)
-  case NEON::BI__builtin_neon_vqrshrunh_n_s16:
-  case NEON::BI__builtin_neon_vqrshruns_n_s32:
-  case NEON::BI__builtin_neon_vqrshrund_n_s64:
-    Int = Intrinsic::aarch64_neon_vsqrshrun;
-    s = "vsqrshrun"; IntTypes = VectorRet; break;
-  // Scalar Signed Fixed-point Convert To Floating-Point (Immediate)
-  case NEON::BI__builtin_neon_vcvts_n_f32_s32:
-  case NEON::BI__builtin_neon_vcvtd_n_f64_s64:
-    Int = Intrinsic::aarch64_neon_vcvtfxs2fp_n;
-    s = "vcvtf"; IntTypes = ScalarRet | VectorGetArg0; break;
-  // Scalar Unsigned Fixed-point Convert To Floating-Point (Immediate)
-  case NEON::BI__builtin_neon_vcvts_n_f32_u32:
-  case NEON::BI__builtin_neon_vcvtd_n_f64_u64:
-    Int = Intrinsic::aarch64_neon_vcvtfxu2fp_n;
-    s = "vcvtf"; IntTypes = ScalarRet | VectorGetArg0; break;
-  // Scalar Floating-point Convert To Signed Fixed-point (Immediate)
-  case NEON::BI__builtin_neon_vcvts_n_s32_f32:
-  case NEON::BI__builtin_neon_vcvtd_n_s64_f64:
-    Int = Intrinsic::aarch64_neon_vcvtfp2fxs_n;
-    s = "fcvtzs"; IntTypes = VectorRet | ScalarArg0; break;
-  // Scalar Floating-point Convert To Unsigned Fixed-point (Immediate)
-  case NEON::BI__builtin_neon_vcvts_n_u32_f32:
-  case NEON::BI__builtin_neon_vcvtd_n_u64_f64:
-    Int = Intrinsic::aarch64_neon_vcvtfp2fxu_n;
-    s = "fcvtzu"; IntTypes = VectorRet | ScalarArg0; break;
-  case NEON::BI__builtin_neon_vmull_p64:
-    Int = Intrinsic::aarch64_neon_vmull_p64;
-    s = "vmull"; break;
+    break;
+  case NEON::BI__builtin_neon_vceqzd_s64:
+  case NEON::BI__builtin_neon_vceqzd_u64:
+  case NEON::BI__builtin_neon_vcgezd_s64:
+  case NEON::BI__builtin_neon_vcgtzd_s64:
+  case NEON::BI__builtin_neon_vclezd_s64:
+  case NEON::BI__builtin_neon_vcltzd_s64:
+    // Add implicit zero operand.
+    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
+    break;
+  case NEON::BI__builtin_neon_vceqzs_f32:
+  case NEON::BI__builtin_neon_vceqzd_f64:
+  case NEON::BI__builtin_neon_vcgezs_f32:
+  case NEON::BI__builtin_neon_vcgezd_f64:
+  case NEON::BI__builtin_neon_vcgtzs_f32:
+  case NEON::BI__builtin_neon_vcgtzd_f64:
+  case NEON::BI__builtin_neon_vclezs_f32:
+  case NEON::BI__builtin_neon_vclezd_f64:
+  case NEON::BI__builtin_neon_vcltzs_f32:
+  case NEON::BI__builtin_neon_vcltzd_f64:
+    // Add implicit zero operand.
+    Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
+    break;
   }
 
   if (!Int)
@@ -3561,9 +3323,26 @@ static Value *EmitAArch64TblBuiltinExpr(CodeGenFunction &CGF,
 
 Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
                                                const CallExpr *E) {
+
   // Process AArch64 scalar builtins
-  if (Value *Result = EmitAArch64ScalarBuiltinExpr(*this, BuiltinID, E))
+  llvm::ArrayRef<NeonSISDIntrinsicInfo> SISDInfo(AArch64SISDIntrinsicInfo);
+#ifndef NDEBUG
+  if (!AArch64SISDIntrinsicInfoProvenSorted) {
+    // FIXME: use std::is_sorted once C++11 is allowed
+    for (unsigned i = 0; i < SISDInfo.size() - 1; ++i)
+      assert(SISDInfo[i].BuiltinID <= SISDInfo[i + 1].BuiltinID);
+    AArch64SISDIntrinsicInfoProvenSorted = true;
+  }
+#endif
+
+  const NeonSISDIntrinsicInfo *SISDIntrin =
+      std::lower_bound(SISDInfo.begin(), SISDInfo.end(), BuiltinID);
+
+  if (SISDIntrin != SISDInfo.end() && SISDIntrin->BuiltinID == BuiltinID) {
+    Value *Result = EmitAArch64ScalarBuiltinExpr(*this, *SISDIntrin, E);
+    assert(Result && "SISD intrinsic should have been handled");
     return Result;
+  }
 
   // Process AArch64 table lookup builtins
   if (Value *Result = EmitAArch64TblBuiltinExpr(*this, BuiltinID, E))
