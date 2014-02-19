@@ -968,7 +968,7 @@ def ObjCDesignatedInitializer : Attr {
 def Overloadable : Attr {
   let Spellings = [GNU<"overloadable">];
   let Subjects = SubjectList<[Function], ErrorDiag>;
-  let Documentation = [Undocumented];
+  let Documentation = [OverloadableDocs];
 }
 
 def Override : InheritableAttr { 
