@@ -691,7 +691,7 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
       }
     }
   }
-  if (_context.isDynamic()) {
+  if (_context.isDynamic() && !_context.isDynamicLibrary()) {
     Segment<ELFT> *segment =
         new (_allocator) ProgramHeaderSegment<ELFT>(_context);
     _segments.push_back(segment);

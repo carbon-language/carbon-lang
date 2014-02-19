@@ -129,6 +129,11 @@ public:
   /// \brief Does the output have dynamic sections.
   virtual bool isDynamic() const;
 
+  /// \brief Are we creating a shared library ?
+  virtual bool isDynamicLibrary() const {
+    return _outputELFType == llvm::ELF::ET_DYN;
+  }
+
   /// \brief Is the relocation a relative relocation
   virtual bool isRelativeReloc(const Reference &r) const;
 

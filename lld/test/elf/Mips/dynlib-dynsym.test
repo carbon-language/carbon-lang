@@ -27,7 +27,7 @@
 # CHECK-DYN:   }
 # CHECK-DYN:   Symbol {
 # CHECK-DYN:     Name: bar@ (5)
-# CHECK-DYN:     Value: 0x178
+# CHECK-DYN:     Value: 0x158
 # CHECK-DYN:     Size: 4
 # CHECK-DYN:     Binding: Global (0x1)
 # CHECK-DYN:     Type: Function (0x2)
@@ -36,7 +36,7 @@
 # CHECK-DYN:   }
 # CHECK-DYN:   Symbol {
 # CHECK-DYN:     Name: foo@ (1)
-# CHECK-DYN:     Value: 0x160
+# CHECK-DYN:     Value: 0x140
 # CHECK-DYN:     Size: 24
 # CHECK-DYN:     Binding: Global (0x1)
 # CHECK-DYN:     Type: Function (0x2)

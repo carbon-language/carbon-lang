@@ -1,6 +1,7 @@
 RUN: lld -flavor gnu -target hexagon %p/Inputs/use-shared.hexagon -shared -o %t1
 RUN: llvm-readobj -dyn-symbols %t1 > %t2
 RUN: FileCheck -check-prefix=DYNSYMS %s < %t2
+RUN: llvm-readobj -program-headers %t1 | FileCheck %s
 
 DYNSYMS:      DynamicSymbols [
 DYNSYMS:        Symbol {
@@ -31,3 +32,5 @@ DYNSYMS-NEXT:     Other:
 DYNSYMS-NEXT:     Section: .text
 DYNSYMS-NEXT:   }
 DYNSYMS-NEXT: ]
+
+CHECK-NOT: PT_PHDR

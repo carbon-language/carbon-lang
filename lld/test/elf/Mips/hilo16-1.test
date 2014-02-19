@@ -5,22 +5,22 @@
 
 # CHECK: Disassembly of section .text:
 # CHECK: glob1:
-# CHECK-NEXT:   134:  01 00 01 8c  lw      $1, 1($zero)
-# CHECK-NEXT:   138:  01 00 02 8c  lw      $2, 1($zero)
-# CHECK-NEXT:   13c:  b8 8e 21 24  addiu   $1, $1, -29000
+# CHECK-NEXT:   114:  01 00 01 8c  lw      $1, 1($zero)
+# CHECK-NEXT:   118:  01 00 02 8c  lw      $2, 1($zero)
+# CHECK-NEXT:   11c:  d8 8e 21 24  addiu   $1, $1, -28968
 # CHECK: glob2:
-# CHECK-NEXT:   140:  01 00 01 8c  lw      $1, 1($zero)
-# CHECK-NEXT:   144:  01 00 02 8c  lw      $2, 1($zero)
-# CHECK-NEXT:   148:  ac 8e 21 24  addiu   $1, $1, -29012
+# CHECK-NEXT:   120:  01 00 01 8c  lw      $1, 1($zero)
+# CHECK-NEXT:   124:  01 00 02 8c  lw      $2, 1($zero)
+# CHECK-NEXT:   128:  cc 8e 21 24  addiu $1, $1, -28980
 
 # CHECK: Sections:
 # CHECK: Idx Name  Size      Address          Type
-# CHECK:   4 .text 00000018 0000000000000134 TEXT DATA
+# CHECK:   4 .text 00000018 0000000000000114 TEXT DATA
 # CHECK:   6 .got  00000008 0000000000001000 DATA
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 00000134 g F .text  0000000c glob1
-# CHECK: 00000140 g F .text  0000000c glob2
+# CHECK: 00000114 g F .text  0000000c glob1
+# CHECK: 00000120 g F .text  0000000c glob2
 # CHECK: 00001000 g   *ABS*  00000000 _GLOBAL_OFFSET_TABLE_
 # CHECK: 00008ff0 g   *ABS*  00000000 _gp_disp
 

@@ -22,7 +22,7 @@
 # CHECK:  Type: SharedObject (0x3)
 # CHECK:  Machine: EM_MIPS (0x8)
 # CHECK:  Version: 1
-# CHECK:  Entry: 0x110
+# CHECK:  Entry: 0xF0
 # CHECK:  ProgramHeaderOffset: 0x34
 # CHECK:  SectionHeaderOffset: 0x20E0
 # CHECK:  Flags [ (0x70001007)
@@ -35,7 +35,7 @@
 # CHECK:  ]
 # CHECK:  HeaderSize: 52
 # CHECK:  ProgramHeaderEntrySize: 32
-# CHECK:  ProgramHeaderCount: 5
+# CHECK:  ProgramHeaderCount: 4
 # CHECK:  SectionHeaderEntrySize: 40
 # CHECK:  SectionHeaderCount: 12
 # CHECK:  StringTableSectionIndex: 9

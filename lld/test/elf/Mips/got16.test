@@ -81,11 +81,11 @@
 
 # RAW: Disassembly of section .text:
 # RAW: glob:
-# RAW-NEXT:   168:  18 80 84 8f  lw      $4, -32744($gp)
-# RAW-NEXT:   16c:  00 20 84 24  addiu   $4, $4, 8192
-# RAW-NEXT:   170:  1c 80 84 8f  lw      $4, -32740($gp)
-# RAW-NEXT:   174:  20 80 84 8f  lw      $4, -32736($gp)
-# RAW-NEXT:   178:  24 80 84 8f  lw      $4, -32732($gp)
+# RAW-NEXT:   148:  18 80 84 8f  lw      $4, -32744($gp)
+# RAW-NEXT:   14c:  00 20 84 24  addiu   $4, $4, 8192
+# RAW-NEXT:   150:  1c 80 84 8f  lw      $4, -32740($gp)
+# RAW-NEXT:   154:  20 80 84 8f  lw      $4, -32736($gp)
+# RAW-NEXT:   158:  24 80 84 8f  lw      $4, -32732($gp)
 
 # RAW: SYMBOL TABLE:
 # RAW: 00000000       *UND*  00000000

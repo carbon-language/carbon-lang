@@ -3,5 +3,5 @@ RUN:   -o %t --noinhibit-exec -shared
 RUN: llvm-nm -n -s %t > %t1
 RUN: FileCheck -check-prefix=CHECKSYMS %s < %t1
 
-CHECKSYMS: 0000028c A _DYNAMIC
+CHECKSYMS: 0000026c A _DYNAMIC
 CHECKSYMS: 00001008 A _GLOBAL_OFFSET_TABLE_
