@@ -15,6 +15,7 @@
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MipsMCAsmInfo.h"
 #include "MipsTargetStreamer.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -40,21 +41,10 @@ using namespace llvm;
 
 static std::string ParseMipsTriple(StringRef TT, StringRef CPU) {
   std::string MipsArchFeature;
-  size_t DashPosition = 0;
-  StringRef TheTriple;
+  Triple TheTriple(TT);
 
-  // Let's see if there is a dash, like mips-unknown-linux.
-  DashPosition = TT.find('-');
-
-  if (DashPosition == StringRef::npos) {
-    // No dash, we check the string size.
-    TheTriple = TT.substr(0);
-  } else {
-    // We are only interested in substring before dash.
-    TheTriple = TT.substr(0,DashPosition);
-  }
-
-  if (TheTriple == "mips" || TheTriple == "mipsel") {
+  if (TheTriple.getArch() == Triple::mips ||
+      TheTriple.getArch() == Triple::mipsel) {
     if (CPU.empty() || CPU == "mips32") {
       MipsArchFeature = "+mips32";
     } else if (CPU == "mips32r2") {
