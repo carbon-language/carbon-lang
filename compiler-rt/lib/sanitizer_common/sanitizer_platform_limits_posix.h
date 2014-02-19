@@ -1054,6 +1054,9 @@ namespace __sanitizer {
 
   extern const int errno_EINVAL;
   extern const int errno_EOWNERDEAD;
+
+  extern const int si_SEGV_MAPERR;
+  extern const int si_SEGV_ACCERR;
 }  // namespace __sanitizer
 
 #define CHECK_TYPE_SIZE(TYPE) \

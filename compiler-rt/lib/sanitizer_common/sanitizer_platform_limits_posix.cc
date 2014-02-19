@@ -772,10 +772,13 @@ namespace __sanitizer {
   const int errno_EINVAL = EINVAL;
 // EOWNERDEAD is not present in some older platforms.
 #if defined(EOWNERDEAD)
-  extern const int errno_EOWNERDEAD = EOWNERDEAD;
+  const int errno_EOWNERDEAD = EOWNERDEAD;
 #else
-  extern const int errno_EOWNERDEAD = -1;
+  const int errno_EOWNERDEAD = -1;
 #endif
+
+  const int si_SEGV_MAPERR = SEGV_MAPERR;
+  const int si_SEGV_ACCERR = SEGV_ACCERR;
 }  // namespace __sanitizer
 
 COMPILER_CHECK(sizeof(__sanitizer_pthread_attr_t) >= sizeof(pthread_attr_t));

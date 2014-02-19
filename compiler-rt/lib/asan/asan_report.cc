@@ -568,40 +568,35 @@ class ScopedInErrorReport {
   }
 };
 
-static bool IsStackOverflow(uptr addr, uptr sp) {
-  uptr stack_frame_bottom = sp;
-  // x86_64 stack redzone: leaf functions can access up to 128 bytes below SP.
-  // ARM has push-multiple instruction that stores up to 64(?) bytes below SP.
-  stack_frame_bottom -= 128;
-
-  // Access below SP (minus redzone) is probably something else (like stack of
-  // another thread).
-  if (addr < stack_frame_bottom)
-    return false;
-
-  AsanThread *t = GetCurrentThread();
-  // Anything below stack_bottom, but not too far away is a stack overflow.
-  // Bottom 4k may be a guard page. Treat it as stack-overflow as well.
-  return addr < t->stack_bottom() + GetPageSizeCached() &&
-         addr > t->stack_bottom() - 0xFFFF;
+void ReportStackOverflow(uptr pc, uptr sp, uptr bp, void *context, uptr addr) {
+  ScopedInErrorReport in_report;
+  Decorator d;
+  Printf("%s", d.Warning());
+  Report(
+      "ERROR: AddressSanitizer: stack-overflow on address %p"
+      " (pc %p sp %p bp %p T%d)\n",
+      (void *)addr, (void *)pc, (void *)sp, (void *)bp,
+      GetCurrentTidOrInvalid());
+  Printf("%s", d.EndWarning());
+  GET_STACK_TRACE_SIGNAL(pc, bp, context);
+  stack.Print();
+  ReportErrorSummary("stack-overflow", &stack);
 }
 
 void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, void *context, uptr addr) {
   ScopedInErrorReport in_report;
   Decorator d;
   Printf("%s", d.Warning());
-  bool stack_overflow = IsStackOverflow(addr, sp);
   Report(
-      "ERROR: AddressSanitizer: %s %p"
+      "ERROR: AddressSanitizer: SEGV on unknown address %p"
       " (pc %p sp %p bp %p T%d)\n",
-      stack_overflow ? "stack-overflow on address" : "SEGV on unknown address",
       (void *)addr, (void *)pc, (void *)sp, (void *)bp,
       GetCurrentTidOrInvalid());
   Printf("%s", d.EndWarning());
   GET_STACK_TRACE_SIGNAL(pc, bp, context);
   stack.Print();
   Printf("AddressSanitizer can not provide additional info.\n");
-  ReportErrorSummary(stack_overflow ? "stack-overflow" : "SEGV", &stack);
+  ReportErrorSummary("SEGV", &stack);
 }
 
 void ReportDoubleFree(uptr addr, StackTrace *free_stack) {
