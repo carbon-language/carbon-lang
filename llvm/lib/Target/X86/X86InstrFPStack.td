@@ -251,29 +251,29 @@ def COM_FST0r   : FPST0rInst <MRM2r, "fcom\t$op">;
 def COMP_FST0r  : FPST0rInst <MRM3r, "fcomp\t$op">;
 
 // Unary operations.
-multiclass FPUnary<SDNode OpNode, bits<8> opcode, string asmstring> {
+multiclass FPUnary<SDNode OpNode, Format fp, string asmstring> {
 def _Fp32  : FpIf32<(outs RFP32:$dst), (ins RFP32:$src), OneArgFPRW,
                  [(set RFP32:$dst, (OpNode RFP32:$src))]>;
 def _Fp64  : FpIf64<(outs RFP64:$dst), (ins RFP64:$src), OneArgFPRW,
                  [(set RFP64:$dst, (OpNode RFP64:$src))]>;
 def _Fp80  : FpI_<(outs RFP80:$dst), (ins RFP80:$src), OneArgFPRW,
                  [(set RFP80:$dst, (OpNode RFP80:$src))]>;
-def _F     : FPI<opcode, RawFrm, (outs), (ins), asmstring>, D9;
+def _F     : FPI<0xD9, fp, (outs), (ins), asmstring>;
 }
 
 let Defs = [FPSW] in {
-defm CHS : FPUnary<fneg, 0xE0, "fchs">;
-defm ABS : FPUnary<fabs, 0xE1, "fabs">;
-defm SQRT: FPUnary<fsqrt,0xFA, "fsqrt">;
-defm SIN : FPUnary<fsin, 0xFE, "fsin">;
-defm COS : FPUnary<fcos, 0xFF, "fcos">;
+defm CHS : FPUnary<fneg, MRM_E0, "fchs">;
+defm ABS : FPUnary<fabs, MRM_E1, "fabs">;
+defm SQRT: FPUnary<fsqrt,MRM_FA, "fsqrt">;
+defm SIN : FPUnary<fsin, MRM_FE, "fsin">;
+defm COS : FPUnary<fcos, MRM_FF, "fcos">;
 
 let neverHasSideEffects = 1 in {
 def TST_Fp32  : FpIf32<(outs), (ins RFP32:$src), OneArgFP, []>;
 def TST_Fp64  : FpIf64<(outs), (ins RFP64:$src), OneArgFP, []>;
 def TST_Fp80  : FpI_<(outs), (ins RFP80:$src), OneArgFP, []>;
 }
-def TST_F  : FPI<0xE4, RawFrm, (outs), (ins), "ftst">, D9;
+def TST_F  : FPI<0xD9, MRM_E4, (outs), (ins), "ftst">;
 } // Defs = [FPSW]
 
 // Versions of FP instructions that take a single memory operand.  Added for the
@@ -515,8 +515,8 @@ def LD_Fp180 : FpI_<(outs RFP80:$dst), (ins), ZeroArgFP,
 }
 
 let SchedRW = [WriteZero] in {
-def LD_F0 : FPI<0xEE, RawFrm, (outs), (ins), "fldz", IIC_FLDZ>, D9;
-def LD_F1 : FPI<0xE8, RawFrm, (outs), (ins), "fld1", IIC_FIST>, D9;
+def LD_F0 : FPI<0xD9, MRM_EE, (outs), (ins), "fldz", IIC_FLDZ>;
+def LD_F1 : FPI<0xD9, MRM_E8, (outs), (ins), "fld1", IIC_FIST>;
 }
 
 // Floating point compares.
@@ -546,8 +546,8 @@ def UCOM_Fr    : FPI<0xDD, MRM4r,    // FPSW = cmp ST(0) with ST(i)
                     (outs), (ins RST:$reg), "fucom\t$reg", IIC_FUCOM>;
 def UCOM_FPr   : FPI<0xDD, MRM5r,    // FPSW = cmp ST(0) with ST(i), pop
                     (outs), (ins RST:$reg), "fucomp\t$reg", IIC_FUCOM>;
-def UCOM_FPPr  : FPI<0xE9, RawFrm,       // cmp ST(0) with ST(1), pop, pop
-                    (outs), (ins), "fucompp", IIC_FUCOM>, DA;
+def UCOM_FPPr  : FPI<0xDA, MRM_E9,       // cmp ST(0) with ST(1), pop, pop
+                    (outs), (ins), "fucompp", IIC_FUCOM>;
 }
 
 let Defs = [EFLAGS, FPSW], Uses = [ST0] in {
@@ -568,9 +568,9 @@ def COM_FIPr : FPI<0xDF, MRM6r, (outs), (ins RST:$reg),
 // Floating point flag ops.
 let SchedRW = [WriteALU] in {
 let Defs = [AX], Uses = [FPSW] in
-def FNSTSW16r : I<0xE0, RawFrm,                  // AX = fp flags
+def FNSTSW16r : I<0xDF, MRM_E0,                  // AX = fp flags
                   (outs), (ins), "fnstsw\t{%ax|ax}",
-                  [(set AX, (X86fp_stsw FPSW))], IIC_FNSTSW>, DF;
+                  [(set AX, (X86fp_stsw FPSW))], IIC_FNSTSW>;
 
 def FNSTCW16m : I<0xD9, MRM7m,                   // [mem16] = X87 control world
                   (outs), (ins i16mem:$dst), "fnstcw\t$dst",
@@ -584,40 +584,40 @@ def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
 // FPU control instructions
 let SchedRW = [WriteMicrocoded] in {
 let Defs = [FPSW] in
-def FNINIT : I<0xE3, RawFrm, (outs), (ins), "fninit", [], IIC_FNINIT>, DB;
+def FNINIT : I<0xDB, MRM_E3, (outs), (ins), "fninit", [], IIC_FNINIT>;
 def FFREE : FPI<0xDD, MRM0r, (outs), (ins RST:$reg),
                 "ffree\t$reg", IIC_FFREE>;
 // Clear exceptions
 
 let Defs = [FPSW] in
-def FNCLEX : I<0xE2, RawFrm, (outs), (ins), "fnclex", [], IIC_FNCLEX>, DB;
+def FNCLEX : I<0xDB, MRM_E2, (outs), (ins), "fnclex", [], IIC_FNCLEX>;
 } // SchedRW
 
 // Operandless floating-point instructions for the disassembler.
 let SchedRW = [WriteMicrocoded] in {
 def WAIT : I<0x9B, RawFrm, (outs), (ins), "wait", [], IIC_WAIT>;
 
-def FNOP : I<0xD0, RawFrm, (outs), (ins), "fnop", [], IIC_FNOP>, D9;
-def FXAM : I<0xE5, RawFrm, (outs), (ins), "fxam", [], IIC_FXAM>, D9;
-def FLDL2T : I<0xE9, RawFrm, (outs), (ins), "fldl2t", [], IIC_FLDL>, D9;
-def FLDL2E : I<0xEA, RawFrm, (outs), (ins), "fldl2e", [], IIC_FLDL>, D9;
-def FLDPI : I<0xEB, RawFrm, (outs), (ins), "fldpi", [], IIC_FLDL>, D9;
-def FLDLG2 : I<0xEC, RawFrm, (outs), (ins), "fldlg2", [], IIC_FLDL>, D9;
-def FLDLN2 : I<0xED, RawFrm, (outs), (ins), "fldln2", [], IIC_FLDL>, D9;
-def F2XM1 : I<0xF0, RawFrm, (outs), (ins), "f2xm1", [], IIC_F2XM1>, D9;
-def FYL2X : I<0xF1, RawFrm, (outs), (ins), "fyl2x", [], IIC_FYL2X>, D9;
-def FPTAN : I<0xF2, RawFrm, (outs), (ins), "fptan", [], IIC_FPTAN>, D9;
-def FPATAN : I<0xF3, RawFrm, (outs), (ins), "fpatan", [], IIC_FPATAN>, D9;
-def FXTRACT : I<0xF4, RawFrm, (outs), (ins), "fxtract", [], IIC_FXTRACT>, D9;
-def FPREM1 : I<0xF5, RawFrm, (outs), (ins), "fprem1", [], IIC_FPREM1>, D9;
-def FDECSTP : I<0xF6, RawFrm, (outs), (ins), "fdecstp", [], IIC_FPSTP>, D9;
-def FINCSTP : I<0xF7, RawFrm, (outs), (ins), "fincstp", [], IIC_FPSTP>, D9;
-def FPREM : I<0xF8, RawFrm, (outs), (ins), "fprem", [], IIC_FPREM>, D9;
-def FYL2XP1 : I<0xF9, RawFrm, (outs), (ins), "fyl2xp1", [], IIC_FYL2XP1>, D9;
-def FSINCOS : I<0xFB, RawFrm, (outs), (ins), "fsincos", [], IIC_FSINCOS>, D9;
-def FRNDINT : I<0xFC, RawFrm, (outs), (ins), "frndint", [], IIC_FRNDINT>, D9;
-def FSCALE : I<0xFD, RawFrm, (outs), (ins), "fscale", [], IIC_FSCALE>, D9;
-def FCOMPP : I<0xD9, RawFrm, (outs), (ins), "fcompp", [], IIC_FCOMPP>, DE;
+def FNOP : I<0xD9, MRM_D0, (outs), (ins), "fnop", [], IIC_FNOP>;
+def FXAM : I<0xD9, MRM_E5, (outs), (ins), "fxam", [], IIC_FXAM>;
+def FLDL2T : I<0xD9, MRM_E9, (outs), (ins), "fldl2t", [], IIC_FLDL>;
+def FLDL2E : I<0xD9, MRM_EA, (outs), (ins), "fldl2e", [], IIC_FLDL>;
+def FLDPI : I<0xD9, MRM_EB, (outs), (ins), "fldpi", [], IIC_FLDL>;
+def FLDLG2 : I<0xD9, MRM_EC, (outs), (ins), "fldlg2", [], IIC_FLDL>;
+def FLDLN2 : I<0xD9, MRM_ED, (outs), (ins), "fldln2", [], IIC_FLDL>;
+def F2XM1 : I<0xD9, MRM_F0, (outs), (ins), "f2xm1", [], IIC_F2XM1>;
+def FYL2X : I<0xD9, MRM_F1, (outs), (ins), "fyl2x", [], IIC_FYL2X>;
+def FPTAN : I<0xD9, MRM_F2, (outs), (ins), "fptan", [], IIC_FPTAN>;
+def FPATAN : I<0xD9, MRM_F3, (outs), (ins), "fpatan", [], IIC_FPATAN>;
+def FXTRACT : I<0xD9, MRM_F4, (outs), (ins), "fxtract", [], IIC_FXTRACT>;
+def FPREM1 : I<0xD9, MRM_F5, (outs), (ins), "fprem1", [], IIC_FPREM1>;
+def FDECSTP : I<0xD9, MRM_F6, (outs), (ins), "fdecstp", [], IIC_FPSTP>;
+def FINCSTP : I<0xD9, MRM_F7, (outs), (ins), "fincstp", [], IIC_FPSTP>;
+def FPREM : I<0xD9, MRM_F8, (outs), (ins), "fprem", [], IIC_FPREM>;
+def FYL2XP1 : I<0xD9, MRM_F9, (outs), (ins), "fyl2xp1", [], IIC_FYL2XP1>;
+def FSINCOS : I<0xD9, MRM_FB, (outs), (ins), "fsincos", [], IIC_FSINCOS>;
+def FRNDINT : I<0xD9, MRM_FC, (outs), (ins), "frndint", [], IIC_FRNDINT>;
+def FSCALE : I<0xD9, MRM_FD, (outs), (ins), "fscale", [], IIC_FSCALE>;
+def FCOMPP : I<0xDE, MRM_D9, (outs), (ins), "fcompp", [], IIC_FCOMPP>;
 
 def FXSAVE : I<0xAE, MRM0m, (outs opaque512mem:$dst), (ins),
                "fxsave\t$dst", [], IIC_FXSAVE>, TB;

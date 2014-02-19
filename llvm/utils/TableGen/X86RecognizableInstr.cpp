@@ -46,10 +46,34 @@ using namespace llvm;
   MAP(DE, 52)           \
   MAP(DF, 53)           \
   MAP(E0, 54)           \
-  MAP(E8, 55)           \
-  MAP(F0, 56)           \
-  MAP(F8, 57)           \
-  MAP(F9, 58)
+  MAP(E1, 55)           \
+  MAP(E2, 56)           \
+  MAP(E3, 57)           \
+  MAP(E4, 58)           \
+  MAP(E5, 59)           \
+  MAP(E8, 60)           \
+  MAP(E9, 61)           \
+  MAP(EA, 62)           \
+  MAP(EB, 63)           \
+  MAP(EC, 64)           \
+  MAP(ED, 65)           \
+  MAP(EE, 66)           \
+  MAP(F0, 67)           \
+  MAP(F1, 68)           \
+  MAP(F2, 69)           \
+  MAP(F3, 70)           \
+  MAP(F4, 71)           \
+  MAP(F5, 72)           \
+  MAP(F6, 73)           \
+  MAP(F7, 74)           \
+  MAP(F8, 75)           \
+  MAP(F9, 76)           \
+  MAP(FA, 77)           \
+  MAP(FB, 78)           \
+  MAP(FC, 79)           \
+  MAP(FD, 80)           \
+  MAP(FE, 81)           \
+  MAP(FF, 82)
 
 // A clone of X86 since we can't depend on something that is generated.
 namespace X86Local {
@@ -79,9 +103,7 @@ namespace X86Local {
   };
 
   enum {
-    OB = 0, TB = 1, T8 = 2, TA = 3, XOP8 = 4, XOP9 = 5, XOPA = 6,
-    D8 = 7,  D9 = 8,  DA = 9,  DB = 10,
-    DC = 11, DD = 12, DE = 13, DF = 14
+    OB = 0, TB = 1, T8 = 2, TA = 3, XOP8 = 4, XOP9 = 5, XOPA = 6
   };
 
   enum {
@@ -732,32 +754,23 @@ void RecognizableInstr::emitInstructionSpecifier() {
       HANDLE_OPERAND(relocation)
     }
     break;
-  case X86Local::MRM_C0:
-  case X86Local::MRM_C1:
-  case X86Local::MRM_C2:
-  case X86Local::MRM_C3:
-  case X86Local::MRM_C4:
-  case X86Local::MRM_C8:
-  case X86Local::MRM_C9:
-  case X86Local::MRM_CA:
-  case X86Local::MRM_CB:
-  case X86Local::MRM_E8:
-  case X86Local::MRM_F0:
-  case X86Local::MRM_F9:
-  case X86Local::MRM_D0:
-  case X86Local::MRM_D1:
-  case X86Local::MRM_D4:
-  case X86Local::MRM_D5:
-  case X86Local::MRM_D6:
-  case X86Local::MRM_D8:
-  case X86Local::MRM_D9:
-  case X86Local::MRM_DA:
-  case X86Local::MRM_DB:
-  case X86Local::MRM_DC:
-  case X86Local::MRM_DD:
-  case X86Local::MRM_DE:
-  case X86Local::MRM_DF:
-  case X86Local::MRM_E0:
+  case X86Local::MRM_C0: case X86Local::MRM_C1: case X86Local::MRM_C2:
+  case X86Local::MRM_C3: case X86Local::MRM_C4: case X86Local::MRM_C8:
+  case X86Local::MRM_C9: case X86Local::MRM_CA: case X86Local::MRM_CB:
+  case X86Local::MRM_D0: case X86Local::MRM_D1: case X86Local::MRM_D4:
+  case X86Local::MRM_D5: case X86Local::MRM_D6: case X86Local::MRM_D8:
+  case X86Local::MRM_D9: case X86Local::MRM_DA: case X86Local::MRM_DB:
+  case X86Local::MRM_DC: case X86Local::MRM_DD: case X86Local::MRM_DE:
+  case X86Local::MRM_DF: case X86Local::MRM_E0: case X86Local::MRM_E1:
+  case X86Local::MRM_E2: case X86Local::MRM_E3: case X86Local::MRM_E4:
+  case X86Local::MRM_E5: case X86Local::MRM_E8: case X86Local::MRM_E9:
+  case X86Local::MRM_EA: case X86Local::MRM_EB: case X86Local::MRM_EC:
+  case X86Local::MRM_ED: case X86Local::MRM_EE: case X86Local::MRM_F0:
+  case X86Local::MRM_F1: case X86Local::MRM_F2: case X86Local::MRM_F3:
+  case X86Local::MRM_F4: case X86Local::MRM_F5: case X86Local::MRM_F6:
+  case X86Local::MRM_F7: case X86Local::MRM_F9: case X86Local::MRM_FA:
+  case X86Local::MRM_FB: case X86Local::MRM_FC: case X86Local::MRM_FD:
+  case X86Local::MRM_FE: case X86Local::MRM_FF:
     // Ignored.
     break;
   }
@@ -824,20 +837,6 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     } // switch (Form)
 
     opcodeToSet = Opcode;
-    break;
-  case X86Local::D8:
-  case X86Local::D9:
-  case X86Local::DA:
-  case X86Local::DB:
-  case X86Local::DC:
-  case X86Local::DD:
-  case X86Local::DE:
-  case X86Local::DF:
-    assert(Opcode >= 0xc0 && "Unexpected opcode for an escape opcode");
-    assert(Form == X86Local::RawFrm);
-    opcodeType = ONEBYTE;
-    filter = new ExactFilter(Opcode);
-    opcodeToSet = 0xd8 + (OpMap - X86Local::D8);
     break;
   } // switch (OpMap)
 

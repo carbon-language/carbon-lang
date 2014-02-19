@@ -306,10 +306,16 @@ namespace X86II {
     MRM_CB = 40, MRM_D0 = 41, MRM_D1 = 42, MRM_D4 = 43,
     MRM_D5 = 44, MRM_D6 = 45, MRM_D8 = 46, MRM_D9 = 47,
     MRM_DA = 48, MRM_DB = 49, MRM_DC = 50, MRM_DD = 51,
-    MRM_DE = 52, MRM_DF = 53, MRM_E0 = 54, MRM_E8 = 55,
-    MRM_F0 = 56, MRM_F8 = 57, MRM_F9 = 58,
+    MRM_DE = 52, MRM_DF = 53, MRM_E0 = 54, MRM_E1 = 55,
+    MRM_E2 = 56, MRM_E3 = 57, MRM_E4 = 58, MRM_E5 = 59,
+    MRM_E8 = 60, MRM_E9 = 61, MRM_EA = 62, MRM_EB = 63,
+    MRM_EC = 64, MRM_ED = 65, MRM_EE = 66, MRM_F0 = 67,
+    MRM_F1 = 68, MRM_F2 = 69, MRM_F3 = 70, MRM_F4 = 71,
+    MRM_F5 = 72, MRM_F6 = 73, MRM_F7 = 74, MRM_F8 = 75,
+    MRM_F9 = 76, MRM_FA = 77, MRM_FB = 78, MRM_FC = 79,
+    MRM_FD = 80, MRM_FE = 81, MRM_FF = 82,
 
-    FormMask       = 63,
+    FormMask       = 127,
 
     //===------------------------------------------------------------------===//
     // Actual flags...
@@ -318,7 +324,7 @@ namespace X86II {
     // OpSize16 means this is a 16-bit instruction and needs 0x66 prefix in
     // 32-bit mode. OpSize32 means this is a 32-bit instruction needs a 0x66
     // prefix in 16-bit mode.
-    OpSizeShift = 6,
+    OpSizeShift = 7,
     OpSizeMask = 0x3 << OpSizeShift,
 
     OpSize16 = 1,
@@ -327,14 +333,15 @@ namespace X86II {
     // AsSize - Set if this instruction requires an operand size prefix (0x67),
     // which most often indicates that the instruction address 16 bit address
     // instead of 32 bit address (or 32 bit address in 64 bit mode).
-    AdSize      = 1 << 8,
+    AdSizeShift = OpSizeShift + 2,
+    AdSize      = 1 << AdSizeShift,
 
     //===------------------------------------------------------------------===//
     // OpPrefix - There are several prefix bytes that are used as opcode
     // extensions. These are 0x66, 0xF3, and 0xF2. If this field is 0 there is
     // no prefix.
     //
-    OpPrefixShift = 9,
+    OpPrefixShift = AdSizeShift + 1,
     OpPrefixMask  = 0x7 << OpPrefixShift,
 
     // PS, PD - Prefix code for packed single and double precision vector
@@ -350,7 +357,7 @@ namespace X86II {
     // belongs to. i.e. one-byte, two-byte, 0x0f 0x38, 0x0f 0x3a, etc.
     //
     OpMapShift = OpPrefixShift + 3,
-    OpMapMask  = 0xf << OpMapShift,
+    OpMapMask  = 0x7 << OpMapShift,
 
     // OB - OneByte - Set if this instruction has a one byte opcode.
     OB = 0 << OpMapShift,
@@ -371,20 +378,13 @@ namespace X86II {
     // XOPA - Prefix to encode 0xA in VEX.MMMM of XOP instructions.
     XOPA = 6 << OpMapShift,
 
-    // D8-DF - These escape opcodes are used by the floating point unit.  These
-    // values must remain sequential.
-    D8 =  7 << OpMapShift, D9 =  8 << OpMapShift,
-    DA =  9 << OpMapShift, DB = 10 << OpMapShift,
-    DC = 11 << OpMapShift, DD = 12 << OpMapShift,
-    DE = 13 << OpMapShift, DF = 14 << OpMapShift,
-
     //===------------------------------------------------------------------===//
     // REX_W - REX prefixes are instruction prefixes used in 64-bit mode.
     // They are used to specify GPRs and SSE registers, 64-bit operand size,
     // etc. We only cares about REX.W and REX.R bits and only the former is
     // statically determined.
     //
-    REXShift    = OpMapShift + 4,
+    REXShift    = OpMapShift + 3,
     REX_W       = 1 << REXShift,
 
     //===------------------------------------------------------------------===//
@@ -695,12 +695,20 @@ namespace X86II {
     case X86II::MRM_C0: case X86II::MRM_C1: case X86II::MRM_C2:
     case X86II::MRM_C3: case X86II::MRM_C4: case X86II::MRM_C8:
     case X86II::MRM_C9: case X86II::MRM_CA: case X86II::MRM_CB:
-    case X86II::MRM_E8: case X86II::MRM_F0: case X86II::MRM_F8:
-    case X86II::MRM_F9: case X86II::MRM_D0: case X86II::MRM_D1:
-    case X86II::MRM_D4: case X86II::MRM_D5: case X86II::MRM_D6:
-    case X86II::MRM_D8: case X86II::MRM_D9: case X86II::MRM_DA:
-    case X86II::MRM_DB: case X86II::MRM_DC: case X86II::MRM_DD:
-    case X86II::MRM_DE: case X86II::MRM_DF: case X86II::MRM_E0:
+    case X86II::MRM_D0: case X86II::MRM_D1: case X86II::MRM_D4:
+    case X86II::MRM_D5: case X86II::MRM_D6: case X86II::MRM_D8:
+    case X86II::MRM_D9: case X86II::MRM_DA: case X86II::MRM_DB:
+    case X86II::MRM_DC: case X86II::MRM_DD: case X86II::MRM_DE:
+    case X86II::MRM_DF: case X86II::MRM_E0: case X86II::MRM_E1:
+    case X86II::MRM_E2: case X86II::MRM_E3: case X86II::MRM_E4:
+    case X86II::MRM_E5: case X86II::MRM_E8: case X86II::MRM_E9:
+    case X86II::MRM_EA: case X86II::MRM_EB: case X86II::MRM_EC:
+    case X86II::MRM_ED: case X86II::MRM_EE: case X86II::MRM_F0:
+    case X86II::MRM_F1: case X86II::MRM_F2: case X86II::MRM_F3:
+    case X86II::MRM_F4: case X86II::MRM_F5: case X86II::MRM_F6:
+    case X86II::MRM_F7: case X86II::MRM_F8: case X86II::MRM_F9:
+    case X86II::MRM_FA: case X86II::MRM_FB: case X86II::MRM_FC:
+    case X86II::MRM_FD: case X86II::MRM_FE: case X86II::MRM_FF:
       return -1;
     }
   }

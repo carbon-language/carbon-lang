@@ -1152,11 +1152,6 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::TA:  // 0F 3A
     EmitByte(0x0F, CurByte, OS);
     break;
-  case X86II::D8: case X86II::D9: case X86II::DA: case X86II::DB:
-  case X86II::DC: case X86II::DD: case X86II::DE: case X86II::DF:
-    EmitByte(0xD8+(((TSFlags & X86II::OpMapMask) - X86II::D8) >>
-                   X86II::OpMapShift), CurByte, OS);
-    break;
   }
 
   switch (TSFlags & X86II::OpMapMask) {
@@ -1455,8 +1450,16 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRM_D5: case X86II::MRM_D6: case X86II::MRM_D8:
   case X86II::MRM_D9: case X86II::MRM_DA: case X86II::MRM_DB:
   case X86II::MRM_DC: case X86II::MRM_DD: case X86II::MRM_DE:
-  case X86II::MRM_DF: case X86II::MRM_E0: case X86II::MRM_E8:
-  case X86II::MRM_F0: case X86II::MRM_F8: case X86II::MRM_F9:
+  case X86II::MRM_DF: case X86II::MRM_E0: case X86II::MRM_E1:
+  case X86II::MRM_E2: case X86II::MRM_E3: case X86II::MRM_E4:
+  case X86II::MRM_E5: case X86II::MRM_E8: case X86II::MRM_E9:
+  case X86II::MRM_EA: case X86II::MRM_EB: case X86II::MRM_EC:
+  case X86II::MRM_ED: case X86II::MRM_EE: case X86II::MRM_F0:
+  case X86II::MRM_F1: case X86II::MRM_F2: case X86II::MRM_F3:
+  case X86II::MRM_F4: case X86II::MRM_F5: case X86II::MRM_F6:
+  case X86II::MRM_F7: case X86II::MRM_F8: case X86II::MRM_F9:
+  case X86II::MRM_FA: case X86II::MRM_FB: case X86II::MRM_FC:
+  case X86II::MRM_FD: case X86II::MRM_FE: case X86II::MRM_FF:
     EmitByte(BaseOpcode, CurByte, OS);
 
     unsigned char MRM;
@@ -1485,10 +1488,34 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case X86II::MRM_DE: MRM = 0xDE; break;
     case X86II::MRM_DF: MRM = 0xDF; break;
     case X86II::MRM_E0: MRM = 0xE0; break;
+    case X86II::MRM_E1: MRM = 0xE1; break;
+    case X86II::MRM_E2: MRM = 0xE2; break;
+    case X86II::MRM_E3: MRM = 0xE3; break;
+    case X86II::MRM_E4: MRM = 0xE4; break;
+    case X86II::MRM_E5: MRM = 0xE5; break;
     case X86II::MRM_E8: MRM = 0xE8; break;
+    case X86II::MRM_E9: MRM = 0xE9; break;
+    case X86II::MRM_EA: MRM = 0xEA; break;
+    case X86II::MRM_EB: MRM = 0xEB; break;
+    case X86II::MRM_EC: MRM = 0xEC; break;
+    case X86II::MRM_ED: MRM = 0xED; break;
+    case X86II::MRM_EE: MRM = 0xEE; break;
     case X86II::MRM_F0: MRM = 0xF0; break;
+    case X86II::MRM_F1: MRM = 0xF1; break;
+    case X86II::MRM_F2: MRM = 0xF2; break;
+    case X86II::MRM_F3: MRM = 0xF3; break;
+    case X86II::MRM_F4: MRM = 0xF4; break;
+    case X86II::MRM_F5: MRM = 0xF5; break;
+    case X86II::MRM_F6: MRM = 0xF6; break;
+    case X86II::MRM_F7: MRM = 0xF7; break;
     case X86II::MRM_F8: MRM = 0xF8; break;
     case X86II::MRM_F9: MRM = 0xF9; break;
+    case X86II::MRM_FA: MRM = 0xFA; break;
+    case X86II::MRM_FB: MRM = 0xFB; break;
+    case X86II::MRM_FC: MRM = 0xFC; break;
+    case X86II::MRM_FD: MRM = 0xFD; break;
+    case X86II::MRM_FE: MRM = 0xFE; break;
+    case X86II::MRM_FF: MRM = 0xFF; break;
     }
     EmitByte(MRM, CurByte, OS);
     break;
