@@ -164,8 +164,7 @@ int FallbackCommand::Execute(const StringRef **Redirects, std::string *ErrMsg,
     *ExecutionFailed = false;
 
   const Driver &D = getCreator().getToolChain().getDriver();
-  D.Diag(diag::note_drv_invoking_fallback).setForceEmit()
-      << Fallback->getExecutable();
+  D.Diag(diag::warn_drv_invoking_fallback) << Fallback->getExecutable();
 
   int SecondaryStatus = Fallback->Execute(Redirects, ErrMsg, ExecutionFailed);
   return SecondaryStatus;

@@ -171,5 +171,6 @@ def err_drv_modules_validate_once_requires_timestamp : Error<
   "option '-fmodules-validate-once-per-build-session' requires "
   "'-fbuild-session-timestamp=<seconds since Epoch>'">;
 
-def note_drv_invoking_fallback : Note<"falling back to %0">;
+def warn_drv_invoking_fallback : Warning<"falling back to %0">,
+  InGroup<DiagGroup<"fallback">>;
 }
