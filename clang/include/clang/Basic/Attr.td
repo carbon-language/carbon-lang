@@ -15,6 +15,7 @@ class DocumentationCategory<string name> {
 def DocCatFunction : DocumentationCategory<"Functions">;
 def DocCatVariable : DocumentationCategory<"Variables">;
 def DocCatType : DocumentationCategory<"Types">;
+def DocCatStmt : DocumentationCategory<"Statements">;
 // Attributes listed under the Undocumented category do not generate any public
 // documentation. Ideally, this category should be used for internal-only
 // attributes which contain no spellings.
