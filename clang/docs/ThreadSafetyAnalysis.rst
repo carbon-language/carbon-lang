@@ -80,7 +80,7 @@ as such (using ``LOCK``/``UNLOCK_FUNCTION``).
 
 
 Running The Analysis
----------------------
+--------------------
 
 To run the analysis, simply compile with the ``-Wthread-safety`` flag, e.g.
 
@@ -388,7 +388,7 @@ as ``(UN)LOCK_FUNCTION``.  See :ref:`mutexheader`, below, for example uses.
 
 
 ASSERT_EXCLUSIVE_LOCK(...) and ASSERT_SHARED_LOCK(...)
---------------------------------------------------
+------------------------------------------------------
 
 These are attributes on a function or method that does a run-time test to see
 whether the calling thread holds the given capability.  The function is assumed
@@ -437,7 +437,7 @@ Frequently Asked Questions
 .. _limitations:
 
 Known Limitations 
-==================
+=================
 
 Lexical scope
 -------------
