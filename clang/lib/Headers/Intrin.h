@@ -623,10 +623,6 @@ static __inline__ short __attribute__((__always_inline__, __nodebug__))
 _InterlockedExchangeAdd16(short volatile *_Addend, short _Value) {
   return __atomic_add_fetch(_Addend, _Value, 0) - _Value;
 }
-static __inline__ long __attribute__((__always_inline__, __nodebug__))
-_InterlockedExchangeAdd(long volatile *_Addend, long _Value) {
-  return __atomic_add_fetch(_Addend, _Value, 0) - _Value;
-}
 #ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedExchangeAdd64(__int64 volatile *_Addend, __int64 _Value) {
@@ -661,10 +657,6 @@ static __inline__ short __attribute__((__always_inline__, __nodebug__))
 _InterlockedIncrement16(short volatile *_Value) {
   return __atomic_add_fetch(_Value, 1, 0);
 }
-static __inline__ long __attribute__((__always_inline__, __nodebug__))
-_InterlockedIncrement(long volatile *_Value) {
-  return __atomic_add_fetch(_Value, 1, 0);
-}
 #ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedIncrement64(__int64 volatile *_Value) {
@@ -676,10 +668,6 @@ _InterlockedIncrement64(__int64 volatile *_Value) {
 \*----------------------------------------------------------------------------*/
 static __inline__ short __attribute__((__always_inline__, __nodebug__))
 _InterlockedDecrement16(short volatile *_Value) {
-  return __atomic_sub_fetch(_Value, 1, 0);
-}
-static __inline__ long __attribute__((__always_inline__, __nodebug__))
-_InterlockedDecrement(long volatile *_Value) {
   return __atomic_sub_fetch(_Value, 1, 0);
 }
 #ifdef __x86_64__
@@ -788,12 +776,6 @@ _InterlockedCompareExchange8(char volatile *_Destination,
 static __inline__ short __attribute__((__always_inline__, __nodebug__))
 _InterlockedCompareExchange16(short volatile *_Destination,
                               short _Exchange, short _Comparand) {
-  __atomic_compare_exchange(_Destination, &_Comparand, &_Exchange, 0, 0, 0);
-  return _Comparand;
-}
-static __inline__ long __attribute__((__always_inline__, __nodebug__))
-_InterlockedCompareExchange(long volatile *_Destination,
-                            long _Exchange, long _Comparand) {
   __atomic_compare_exchange(_Destination, &_Comparand, &_Exchange, 0, 0, 0);
   return _Comparand;
 }
