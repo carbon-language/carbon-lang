@@ -350,7 +350,7 @@ namespace X86II {
     // belongs to. i.e. one-byte, two-byte, 0x0f 0x38, 0x0f 0x3a, etc.
     //
     OpMapShift = OpPrefixShift + 3,
-    OpMapMask  = 0x1f << OpMapShift,
+    OpMapMask  = 0xf << OpMapShift,
 
     // OB - OneByte - Set if this instruction has a one byte opcode.
     OB = 0 << OpMapShift,
@@ -384,7 +384,7 @@ namespace X86II {
     // etc. We only cares about REX.W and REX.R bits and only the former is
     // statically determined.
     //
-    REXShift    = OpMapShift + 5,
+    REXShift    = OpMapShift + 4,
     REX_W       = 1 << REXShift,
 
     //===------------------------------------------------------------------===//

@@ -126,8 +126,8 @@ def XS     : Prefix<3>;
 def XD     : Prefix<4>;
 
 // Class specifying the opcode map.
-class Map<bits<5> val> {
-  bits<5> Value = val;
+class Map<bits<4> val> {
+  bits<4> Value = val;
 }
 def OB   : Map<0>;
 def TB   : Map<1>;
@@ -285,30 +285,30 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{7-6}   = OpSize.Value;
   let TSFlags{8}     = hasAdSizePrefix;
   let TSFlags{11-9}  = OpPrefix.Value;
-  let TSFlags{16-12} = OpMap.Value;
-  let TSFlags{17}    = hasREX_WPrefix;
-  let TSFlags{21-18} = ImmT.Value;
-  let TSFlags{24-22} = FPForm.Value;
-  let TSFlags{25}    = hasLockPrefix;
-  let TSFlags{26}    = hasREPPrefix;
-  let TSFlags{28-27} = ExeDomain.Value;
-  let TSFlags{30-29} = OpEnc.Value;
-  let TSFlags{38-31} = Opcode;
-  let TSFlags{39}    = hasVEX_WPrefix;
-  let TSFlags{40}    = hasVEX_4V;
-  let TSFlags{41}    = hasVEX_4VOp3;
-  let TSFlags{42}    = hasVEX_i8ImmReg;
-  let TSFlags{43}    = hasVEX_L;
-  let TSFlags{44}    = ignoresVEX_L;
-  let TSFlags{45}    = hasEVEX_K;
-  let TSFlags{46}    = hasEVEX_Z;
-  let TSFlags{47}    = hasEVEX_L2;
-  let TSFlags{48}    = hasEVEX_B;
-  let TSFlags{50-49} = EVEX_CD8E;
-  let TSFlags{53-51} = EVEX_CD8V;
-  let TSFlags{54}    = has3DNow0F0FOpcode;
-  let TSFlags{55}    = hasMemOp4Prefix;
-  let TSFlags{56}    = hasEVEX_RC;
+  let TSFlags{15-12} = OpMap.Value;
+  let TSFlags{16}    = hasREX_WPrefix;
+  let TSFlags{20-17} = ImmT.Value;
+  let TSFlags{23-21} = FPForm.Value;
+  let TSFlags{24}    = hasLockPrefix;
+  let TSFlags{25}    = hasREPPrefix;
+  let TSFlags{27-26} = ExeDomain.Value;
+  let TSFlags{29-28} = OpEnc.Value;
+  let TSFlags{37-30} = Opcode;
+  let TSFlags{38}    = hasVEX_WPrefix;
+  let TSFlags{39}    = hasVEX_4V;
+  let TSFlags{40}    = hasVEX_4VOp3;
+  let TSFlags{41}    = hasVEX_i8ImmReg;
+  let TSFlags{42}    = hasVEX_L;
+  let TSFlags{43}    = ignoresVEX_L;
+  let TSFlags{44}    = hasEVEX_K;
+  let TSFlags{45}    = hasEVEX_Z;
+  let TSFlags{46}    = hasEVEX_L2;
+  let TSFlags{47}    = hasEVEX_B;
+  let TSFlags{49-48} = EVEX_CD8E;
+  let TSFlags{52-50} = EVEX_CD8V;
+  let TSFlags{53}    = has3DNow0F0FOpcode;
+  let TSFlags{54}    = hasMemOp4Prefix;
+  let TSFlags{55}    = hasEVEX_RC;
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>
