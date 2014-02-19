@@ -123,6 +123,7 @@ set(ASAN_NOINST_TEST_SOURCES
 
 set(ASAN_INST_TEST_SOURCES
   ${COMPILER_RT_GTEST_SOURCE}
+  asan_asm_test.cc
   asan_globals_test.cc
   asan_interface_test.cc
   asan_test.cc

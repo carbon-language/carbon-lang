@@ -59,6 +59,7 @@ cat <<EOF
 // manually.
 EOF
 
+echo "#ifdef __linux__"
 echo ".section .text"
 
 echo "#if defined(__x86_64__) || defined(__i386__)"
@@ -255,8 +256,11 @@ done
 echo "#endif // defined(__x86_64__)"
 
 cat <<EOF
-#if defined(__linux__)
 /* We do not need executable stack. */
-.section        .note.GNU-stack,"",@progbits
-#endif // defined(__linux__)
+#if defined(__arm__)
+  .section .note.GNU-stack,"",%progbits
+#else
+  .section .note.GNU-stack,"",@progbits
+#endif // defined(__arm__)
+#endif // __linux__
 EOF
