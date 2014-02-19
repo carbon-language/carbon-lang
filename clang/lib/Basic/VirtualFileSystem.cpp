@@ -28,10 +28,9 @@ Status::Status(const file_status &Status)
       User(Status.getUser()), Group(Status.getGroup()), Size(Status.getSize()),
       Type(Status.type()), Perms(Status.permissions()) {}
 
-Status::Status(StringRef Name, StringRef ExternalName,
-               UniqueID UID, sys::TimeValue MTime,
-               uint32_t User, uint32_t Group, uint64_t Size,
-               file_type Type, perms Perms)
+Status::Status(StringRef Name, StringRef ExternalName, UniqueID UID,
+               sys::TimeValue MTime, uint32_t User, uint32_t Group,
+               uint64_t Size, file_type Type, perms Perms)
     : Name(Name), ExternalName(ExternalName), UID(UID), MTime(MTime),
       User(User), Group(Group), Size(Size), Type(Type), Perms(Perms) {}
 
@@ -133,8 +132,8 @@ error_code RealFile::close() {
 class RealFileSystem : public FileSystem {
 public:
   ErrorOr<Status> status(const Twine &Path) LLVM_OVERRIDE;
-  error_code openFileForRead(const Twine &Path, OwningPtr<File> &Result)
-    LLVM_OVERRIDE;
+  error_code openFileForRead(const Twine &Path,
+                             OwningPtr<File> &Result) LLVM_OVERRIDE;
 };
 
 ErrorOr<Status> RealFileSystem::status(const Twine &Path) {
@@ -164,8 +163,7 @@ IntrusiveRefCntPtr<FileSystem> vfs::getRealFileSystem() {
 //===-----------------------------------------------------------------------===/
 // OverlayFileSystem implementation
 //===-----------------------------------------------------------------------===/
-OverlayFileSystem::OverlayFileSystem(
-    IntrusiveRefCntPtr<FileSystem> BaseFS) {
+OverlayFileSystem::OverlayFileSystem(IntrusiveRefCntPtr<FileSystem> BaseFS) {
   pushOverlay(BaseFS);
 }
 

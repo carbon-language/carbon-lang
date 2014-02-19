@@ -183,7 +183,7 @@ class FileManager : public RefCountedBase<FileManager> {
 
 public:
   FileManager(const FileSystemOptions &FileSystemOpts,
-              llvm::IntrusiveRefCntPtr<vfs::FileSystem> FS = 0);
+              IntrusiveRefCntPtr<vfs::FileSystem> FS = 0);
   ~FileManager();
 
   /// \brief Installs the provided FileSystemStatCache object within
