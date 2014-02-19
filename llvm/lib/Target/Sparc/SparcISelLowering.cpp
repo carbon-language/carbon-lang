@@ -1556,6 +1556,10 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
     setOperationAction(ISD::UMULO,     MVT::i64, Custom);
     setOperationAction(ISD::SMULO,     MVT::i64, Custom);
+
+    setOperationAction(ISD::SHL_PARTS, MVT::i64, Expand);
+    setOperationAction(ISD::SRA_PARTS, MVT::i64, Expand);
+    setOperationAction(ISD::SRL_PARTS, MVT::i64, Expand);
   }
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex.
