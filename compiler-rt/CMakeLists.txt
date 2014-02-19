@@ -42,6 +42,7 @@ if (NOT COMPILER_RT_STANDALONE_BUILD)
          ${LLVM_INCLUDE_TESTS})
   # Use just-built Clang to compile/link tests.
   set(COMPILER_RT_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang)
+  set(COMPILER_RT_TEST_COMPILER_ID Clang)
 else()
   # Take output dir and install path from the user.
   set(COMPILER_RT_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH
@@ -51,6 +52,7 @@ else()
   option(COMPILER_RT_INCLUDE_TESTS "Generate and build compiler-rt unit tests." OFF)
   # Use a host compiler to compile/link tests.
   set(COMPILER_RT_TEST_COMPILER ${CMAKE_C_COMPILER})
+  set(COMPILER_RT_TEST_COMPILER_ID ${CMAKE_C_COMPILER_ID})
 
   set(LLVM_CONFIG_PATH "" CACHE PATH "Path to llvm-config binary")
   if (NOT LLVM_CONFIG_PATH)
