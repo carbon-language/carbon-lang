@@ -413,7 +413,7 @@ def Availability : InheritableAttr {
   let HasCustomParsing = 1;
   let DuplicatesAllowedWhileMerging = 1;
 //  let Subjects = SubjectList<[Named]>;
-  let Documentation = [Undocumented];
+  let Documentation = [AvailabilityDocs];
 }
 
 def Blocks : InheritableAttr {

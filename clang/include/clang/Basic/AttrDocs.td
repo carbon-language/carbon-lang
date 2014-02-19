@@ -312,3 +312,101 @@ implementation of an override in a subclass does not call super.  For example:
                       ^
   }];
 }
+
+def AvailabilityDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+The ``availability`` attribute can be placed on declarations to describe the
+lifecycle of that declaration relative to operating system versions.  Consider
+the function declaration for a hypothetical function ``f``:
+
+.. code-block:: c++
+
+  void f(void) __attribute__((availability(macosx,introduced=10.4,deprecated=10.6,obsoleted=10.7)));
+
+The availability attribute states that ``f`` was introduced in Mac OS X 10.4,
+deprecated in Mac OS X 10.6, and obsoleted in Mac OS X 10.7.  This information
+is used by Clang to determine when it is safe to use ``f``: for example, if
+Clang is instructed to compile code for Mac OS X 10.5, a call to ``f()``
+succeeds.  If Clang is instructed to compile code for Mac OS X 10.6, the call
+succeeds but Clang emits a warning specifying that the function is deprecated.
+Finally, if Clang is instructed to compile code for Mac OS X 10.7, the call
+fails because ``f()`` is no longer available.
+
+The availability attribute is a comma-separated list starting with the
+platform name and then including clauses specifying important milestones in the
+declaration's lifetime (in any order) along with additional information.  Those
+clauses can be:
+
+introduced=\ *version*
+  The first version in which this declaration was introduced.
+
+deprecated=\ *version*
+  The first version in which this declaration was deprecated, meaning that
+  users should migrate away from this API.
+
+obsoleted=\ *version*
+  The first version in which this declaration was obsoleted, meaning that it
+  was removed completely and can no longer be used.
+
+unavailable
+  This declaration is never available on this platform.
+
+message=\ *string-literal*
+  Additional message text that Clang will provide when emitting a warning or
+  error about use of a deprecated or obsoleted declaration.  Useful to direct
+  users to replacement APIs.
+
+Multiple availability attributes can be placed on a declaration, which may
+correspond to different platforms.  Only the availability attribute with the
+platform corresponding to the target platform will be used; any others will be
+ignored.  If no availability attribute specifies availability for the current
+target platform, the availability attributes are ignored.  Supported platforms
+are:
+
+``ios``
+  Apple's iOS operating system.  The minimum deployment target is specified by
+  the ``-mios-version-min=*version*`` or ``-miphoneos-version-min=*version*``
+  command-line arguments.
+
+``macosx``
+  Apple's Mac OS X operating system.  The minimum deployment target is
+  specified by the ``-mmacosx-version-min=*version*`` command-line argument.
+
+A declaration can be used even when deploying back to a platform version prior
+to when the declaration was introduced.  When this happens, the declaration is
+`weakly linked
+<https://developer.apple.com/library/mac/#documentation/MacOSX/Conceptual/BPFrameworks/Concepts/WeakLinking.html>`_,
+as if the ``weak_import`` attribute were added to the declaration.  A
+weakly-linked declaration may or may not be present a run-time, and a program
+can determine whether the declaration is present by checking whether the
+address of that declaration is non-NULL.
+
+If there are multiple declarations of the same entity, the availability
+attributes must either match on a per-platform basis or later
+declarations must not have availability attributes for that
+platform. For example:
+
+.. code-block:: c
+
+  void g(void) __attribute__((availability(macosx,introduced=10.4)));
+  void g(void) __attribute__((availability(macosx,introduced=10.4))); // okay, matches
+  void g(void) __attribute__((availability(ios,introduced=4.0))); // okay, adds a new platform
+  void g(void); // okay, inherits both macosx and ios availability from above.
+  void g(void) __attribute__((availability(macosx,introduced=10.5))); // error: mismatch
+
+When one method overrides another, the overriding method can be more widely available than the overridden method, e.g.,:
+
+.. code-block:: objc
+
+  @interface A
+  - (id)method __attribute__((availability(macosx,introduced=10.4)));
+  - (id)method2 __attribute__((availability(macosx,introduced=10.4)));
+  @end
+
+  @interface B : A
+  - (id)method __attribute__((availability(macosx,introduced=10.3))); // okay: method moved into base class later
+  - (id)method __attribute__((availability(macosx,introduced=10.5))); // error: this method was available via the base class in 10.4
+  @end
+  }];
+}
