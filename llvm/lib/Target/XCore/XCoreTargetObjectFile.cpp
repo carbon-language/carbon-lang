@@ -118,10 +118,9 @@ static unsigned getXCoreSectionFlags(SectionKind K, bool IsCPRel) {
   return Flags;
 }
 
-const MCSection *
-XCoreTargetObjectFile::getExplicitSectionGlobal(const GlobalValue *GV,
-                                                SectionKind Kind, Mangler &Mang,
-                                                const TargetMachine &TM) const {
+const MCSection *XCoreTargetObjectFile::
+getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
+                         Mangler &Mang, const TargetMachine &TM) const {
   StringRef SectionName = GV->getSection();
   // Infer section flags from the section name if we can.
   bool IsCPRel = SectionName.startswith(".cp.");

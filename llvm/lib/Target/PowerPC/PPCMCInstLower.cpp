@@ -25,8 +25,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 static MachineModuleInfoMachO &getMachOMMI(AsmPrinter &AP) {
@@ -35,9 +34,7 @@ static MachineModuleInfoMachO &getMachOMMI(AsmPrinter &AP) {
 
 
 static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
-  const TargetMachine &TM = AP.TM;
-  Mangler *Mang = AP.Mang;
-  const DataLayout *DL = TM.getDataLayout();
+  const DataLayout *DL = AP.TM.getDataLayout();
   MCContext &Ctx = AP.OutContext;
 
   SmallString<128> Name;
@@ -54,10 +51,10 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
 
   if (!MO.isGlobal()) {
     assert(MO.isSymbol() && "Isn't a symbol reference");
-    Mang->getNameWithPrefix(Name, MO.getSymbolName());
+    AP.Mang->getNameWithPrefix(Name, MO.getSymbolName());
   } else {
     const GlobalValue *GV = MO.getGlobal();
-    TM.getTargetLowering()->getNameWithPrefix(Name, GV, *Mang);
+    AP.Mang->getNameWithPrefix(Name, GV);
   }
 
   unsigned OrigLen = Name.size() - PrefixLen;

@@ -168,11 +168,3 @@
 ; DARWIN: .zerofill __DATA,__common,_G12,1,3
 ; DARWIN: .globl _G13
 ; DARWIN: .zerofill __DATA,__common,_G13,1,3
-
-@G14 = private unnamed_addr constant [4 x i8] c"foo\00", align 1
-
-; LINUX-SECTIONS:        .type   .LG14,@object           # @G14
-; LINUX-SECTIONS:        .section        .rodata..LG14,"aMS",@progbits,1
-; LINUX-SECTIONS: .LG14:
-; LINUX-SECTIONS:        .asciz  "foo"
-; LINUX-SECTIONS:        .size   .LG14, 4

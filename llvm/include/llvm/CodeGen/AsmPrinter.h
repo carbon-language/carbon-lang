@@ -161,9 +161,6 @@ namespace llvm {
     /// getCurrentSection() - Return the current section we are emitting to.
     const MCSection *getCurrentSection() const;
 
-    void getNameWithPrefix(SmallVectorImpl<char> &Name,
-                           const GlobalValue *GV) const;
-
     MCSymbol *getSymbol(const GlobalValue *GV) const;
 
     //===------------------------------------------------------------------===//

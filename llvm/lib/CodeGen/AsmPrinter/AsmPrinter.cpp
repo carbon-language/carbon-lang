@@ -311,13 +311,8 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
   llvm_unreachable("Unknown linkage type!");
 }
 
-void AsmPrinter::getNameWithPrefix(SmallVectorImpl<char> &Name,
-                                   const GlobalValue *GV) const {
-  TM.getTargetLowering()->getNameWithPrefix(Name, GV, *Mang);
-}
-
 MCSymbol *AsmPrinter::getSymbol(const GlobalValue *GV) const {
-  return TM.getTargetLowering()->getSymbol(GV, *Mang);
+  return getObjFileLowering().getSymbol(GV, *Mang);
 }
 
 /// EmitGlobalVariable - Emit the specified global variable to the .s file.
@@ -1374,7 +1369,7 @@ void AsmPrinter::EmitLLVMUsedList(const ConstantArray *InitList) {
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
     const GlobalValue *GV =
       dyn_cast<GlobalValue>(InitList->getOperand(i)->stripPointerCasts());
-    if (GV && getObjFileLowering().shouldEmitUsedDirectiveFor(GV, *Mang, TM))
+    if (GV && getObjFileLowering().shouldEmitUsedDirectiveFor(GV, *Mang))
       OutStreamer.EmitSymbolAttribute(getSymbol(GV), MCSA_NoDeadStrip);
   }
 }
@@ -1579,8 +1574,7 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
   }
 
   if (const MCExpr *RelocExpr =
-          AP.getObjFileLowering().getExecutableRelativeSymbol(CE, *AP.Mang,
-                                                              AP.TM))
+          AP.getObjFileLowering().getExecutableRelativeSymbol(CE, *AP.Mang))
     return RelocExpr;
 
   switch (CE->getOpcode()) {
@@ -2109,8 +2103,7 @@ MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
 
 MCSymbol *AsmPrinter::getSymbolWithGlobalValueBase(const GlobalValue *GV,
                                                    StringRef Suffix) const {
-  return getObjFileLowering().getSymbolWithGlobalValueBase(GV, Suffix, *Mang,
-                                                           TM);
+  return getObjFileLowering().getSymbolWithGlobalValueBase(GV, Suffix, *Mang);
 }
 
 /// GetExternalSymbolSymbol - Return the MCSymbol for the specified

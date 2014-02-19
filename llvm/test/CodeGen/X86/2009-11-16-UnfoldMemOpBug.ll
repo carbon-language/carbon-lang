@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7 | FileCheck %s
 ; rdar://7396984
 
-@str = private unnamed_addr constant [28 x i8] c"xxxxxxxxxxxxxxxxxxxxxxxxxxx\00", align 1
+@str = private constant [28 x i8] c"xxxxxxxxxxxxxxxxxxxxxxxxxxx\00", align 1
 
 define void @t(i32 %count) ssp nounwind {
 entry:

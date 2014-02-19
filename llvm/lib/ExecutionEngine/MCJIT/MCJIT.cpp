@@ -27,7 +27,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MutexGuard.h"
-#include "llvm/Target/TargetLowering.h"
 
 using namespace llvm;
 
@@ -372,7 +371,7 @@ void *MCJIT::getPointerToFunction(Function *F) {
   // load address of the symbol, not the local address.
   Mangler Mang(TM->getDataLayout());
   SmallString<128> Name;
-  TM->getTargetLowering()->getNameWithPrefix(Name, F, Mang);
+  Mang.getNameWithPrefix(Name, F);
   return (void*)Dyld.getSymbolLoadAddress(Name);
 }
 

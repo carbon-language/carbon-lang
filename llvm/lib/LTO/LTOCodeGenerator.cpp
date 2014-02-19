@@ -336,7 +336,7 @@ applyRestriction(GlobalValue &GV,
                  SmallPtrSet<GlobalValue*, 8> &AsmUsed,
                  Mangler &Mangler) {
   SmallString<64> Buffer;
-  TargetMach->getTargetLowering()->getNameWithPrefix(Buffer, &GV, Mangler);
+  Mangler.getNameWithPrefix(Buffer, &GV);
 
   if (GV.isDeclaration())
     return;

@@ -16,7 +16,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ELF.h"
-#include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 using namespace dwarf;
 
@@ -43,12 +43,12 @@ void ARMElfTargetObjectFile::Initialize(MCContext &Ctx,
 
 const MCExpr *ARMElfTargetObjectFile::getTTypeGlobalReference(
     const GlobalValue *GV, unsigned Encoding, Mangler &Mang,
-    const TargetMachine &TM, MachineModuleInfo *MMI,
-    MCStreamer &Streamer) const {
+    MachineModuleInfo *MMI, MCStreamer &Streamer) const {
   assert(Encoding == DW_EH_PE_absptr && "Can handle absptr encoding only");
 
-  return MCSymbolRefExpr::Create(TM.getTargetLowering()->getSymbol(GV, Mang),
-                                 MCSymbolRefExpr::VK_ARM_TARGET2, getContext());
+  return MCSymbolRefExpr::Create(getSymbol(GV, Mang),
+                                 MCSymbolRefExpr::VK_ARM_TARGET2,
+                                 getContext());
 }
 
 const MCExpr *ARMElfTargetObjectFile::
