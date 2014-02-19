@@ -224,6 +224,24 @@ define float @sqrtC(float %a) nounwind {
   ret float %b
 }
 
+; CHECK-LABEL: sqrtD
+; CHECK: vsqrtps {{.*}}
+; CHECK: ret
+declare <16 x float> @llvm.sqrt.v16f32(<16 x float>)
+define <16 x float> @sqrtD(<16 x float> %a) nounwind {
+  %b = call <16 x float> @llvm.sqrt.v16f32(<16 x float> %a)
+  ret <16 x float> %b
+}
+
+; CHECK-LABEL: sqrtE
+; CHECK: vsqrtpd {{.*}}
+; CHECK: ret
+declare <8 x double> @llvm.sqrt.v8f64(<8 x double>)
+define <8 x double> @sqrtE(<8 x double> %a) nounwind {
+  %b = call <8 x double> @llvm.sqrt.v8f64(<8 x double> %a)
+  ret <8 x double> %b
+}
+
 ; CHECK-LABEL: fadd_broadcast
 ; CHECK: LCP{{.*}}(%rip){1to16}, %zmm0, %zmm0
 ; CHECK: ret
