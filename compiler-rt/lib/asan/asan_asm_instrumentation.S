@@ -591,7 +591,12 @@ __sanitizer_sanitize_load16:
   addq $128, %rsp
   ret
 #endif // defined(__x86_64__)
+
 #if defined(__linux__)
 /* We do not need executable stack. */
-.section        .note.GNU-stack,"",@progbits
+#if defined(__arm__)
+  .section .note.GNU-stack,"",%progbits
+#else
+  .section .note.GNU-stack,"",@progbits
+#endif // defined(__arm__)
 #endif // defined(__linux__)
