@@ -561,19 +561,13 @@ static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
 static GlobalVariable *createPrivateGlobalForString(
     Module &M, StringRef Str, bool AllowMerging) {
   Constant *StrConst = ConstantDataArray::getString(M.getContext(), Str);
-  // For module-local strings that can be merged with another one we set the
-  // private linkage and the unnamed_addr attribute.
-  // Non-mergeable strings are made linker_private to remove them from the
-  // symbol table. "private" linkage doesn't work for Darwin, where the
-  // "L"-prefixed globals  end up in __TEXT,__const section
-  // (see http://llvm.org/bugs/show_bug.cgi?id=17976 for more info).
-  GlobalValue::LinkageTypes linkage =
-      AllowMerging ? GlobalValue::PrivateLinkage
-                   : GlobalValue::LinkerPrivateLinkage;
+  // We use private linkage for module-local strings. If they can be merged
+  // with another one, we set the unnamed_addr attribute.
   GlobalVariable *GV =
       new GlobalVariable(M, StrConst->getType(), true,
-                         linkage, StrConst, kAsanGenPrefix);
-  if (AllowMerging) GV->setUnnamedAddr(true);
+                         GlobalValue::PrivateLinkage, StrConst, kAsanGenPrefix);
+  if (AllowMerging)
+    GV->setUnnamedAddr(true);
   GV->setAlignment(1);  // Strings may not be merged w/o setting align 1.
   return GV;
 }
