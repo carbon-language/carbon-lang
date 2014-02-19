@@ -82,6 +82,10 @@ public:
   /// Check whether any of the 'against' flags contradict the 'for' flags.
   bool isValid() const;
 
+  /// Check whether the default is selected
+  bool isDefault() const
+  { return GCCSuffix.empty() && OSSuffix.empty() && IncludeSuffix.empty(); }
+
   bool operator==(const Multilib &Other) const;
 };
 
