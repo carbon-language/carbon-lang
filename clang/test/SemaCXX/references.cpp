@@ -85,8 +85,18 @@ void test8(int& const,// expected-error{{'const' qualifier may not be applied to
   typedef int& intref;
   typedef intref& intrefref; // C++ DR 106: reference collapsing
 
-  typedef intref const intref_c; // okay. FIXME: how do we verify that this is the same type as intref?
+  typedef intref const intref_c; // expected-warning {{'const' qualifier on reference type 'intref' (aka 'int &') has no effect}}
+  typedef intref_c intref; // ok, same type
+
+  typedef intref volatile intref; // expected-warning {{'volatile' qualifier on reference type 'intref' (aka 'int &') has no effect}}
+  typedef intref _Atomic intref; // expected-warning {{'_Atomic' qualifier on reference type 'intref' (aka 'int &') has no effect}}
+
+  void restrict_ref(__restrict intref); // ok
+  void restrict_ref(int &__restrict); // ok
 }
+
+template<typename T> int const_param(const T) {}
+int const_ref_param = const_param<int&>(const_ref_param); // no-warning
 
 
 class string {

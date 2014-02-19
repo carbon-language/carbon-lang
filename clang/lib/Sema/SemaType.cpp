@@ -1117,17 +1117,32 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       }
     }
 
-    // C++ [dcl.ref]p1:
+    // C++11 [dcl.ref]p1:
     //   Cv-qualified references are ill-formed except when the
-    //   cv-qualifiers are introduced through the use of a typedef
-    //   (7.1.3) or of a template type argument (14.3), in which
-    //   case the cv-qualifiers are ignored.
-    // FIXME: Shouldn't we be checking SCS_typedef here?
+    //   cv-qualifiers are introduced through the use of a typedef-name
+    //   or decltype-specifier, in which case the cv-qualifiers are ignored.
+    //
+    // There don't appear to be any other contexts in which a cv-qualified
+    // reference type could be formed, so the 'ill-formed' clause here appears
+    // to never happen.
     if (DS.getTypeSpecType() == DeclSpec::TST_typename &&
         TypeQuals && Result->isReferenceType()) {
-      TypeQuals &= ~DeclSpec::TQ_const;
-      TypeQuals &= ~DeclSpec::TQ_volatile;
-      TypeQuals &= ~DeclSpec::TQ_atomic;
+      // If this occurs outside a template instantiation, warn the user about
+      // it; they probably didn't mean to specify a redundant qualifier.
+      std::pair<DeclSpec::TQ, SourceLocation> Quals[] = {
+        { DeclSpec::TQ_const, DS.getConstSpecLoc() },
+        { DeclSpec::TQ_volatile, DS.getVolatileSpecLoc() },
+        { DeclSpec::TQ_atomic, DS.getAtomicSpecLoc() }
+      };
+      for (unsigned I = 0, N = llvm::array_lengthof(Quals); I != N; ++I) {
+        if (S.ActiveTemplateInstantiations.empty()) {
+          if (TypeQuals & Quals[I].first)
+            S.Diag(Quals[I].second, diag::warn_typecheck_reference_qualifiers)
+              << DeclSpec::getSpecifierName(Quals[I].first) << Result
+              << FixItHint::CreateRemoval(Quals[I].second);
+        }
+        TypeQuals &= ~Quals[I].first;
+      }
     }
 
     // C90 6.5.3 constraints: "The same type qualifier shall not appear more

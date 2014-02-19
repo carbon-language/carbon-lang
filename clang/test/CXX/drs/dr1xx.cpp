@@ -40,13 +40,13 @@ namespace dr102 { // dr102: yes
 namespace dr106 { // dr106: sup 540
   typedef int &r1;
   typedef r1 &r1;
-  typedef const r1 r1;
-  typedef const r1 &r1;
+  typedef const r1 r1; // expected-warning {{has no effect}}
+  typedef const r1 &r1; // expected-warning {{has no effect}}
 
   typedef const int &r2;
   typedef r2 &r2;
-  typedef const r2 r2;
-  typedef const r2 &r2;
+  typedef const r2 r2; // expected-warning {{has no effect}}
+  typedef const r2 &r2; // expected-warning {{has no effect}}
 }
 
 namespace dr107 { // dr107: yes

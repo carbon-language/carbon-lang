@@ -10,7 +10,7 @@ void foo(int &a) {
 
 typedef int & A;
 
-void g(const A aref) {
+void g(const A aref) { // expected-warning {{'const' qualifier on reference type 'A' (aka 'int &') has no effect}}
 }
 
 int & const X = val; // expected-error {{'const' qualifier may not be applied to a reference}}
