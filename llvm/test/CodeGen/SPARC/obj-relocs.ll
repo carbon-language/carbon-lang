@@ -19,8 +19,6 @@
 
 @AGlobalVar = global i64 0, align 8
 
-; CHECK-ASM: sethi %h44(AGlobalVar), [[R:%[goli][0-7]]]
-; CHECK-ASM: add   [[R]], %m44(AGlobalVar), [[R]]
 define i64 @foo(i64 %a) {
 entry:
   %0 = load i64* @AGlobalVar, align 4
