@@ -32,24 +32,24 @@ using namespace llvm;
   MAP(C9, 38)           \
   MAP(CA, 39)           \
   MAP(CB, 40)           \
-  MAP(E8, 41)           \
-  MAP(F0, 42)           \
-  MAP(F8, 45)           \
-  MAP(F9, 46)           \
-  MAP(D0, 47)           \
-  MAP(D1, 48)           \
-  MAP(D4, 49)           \
-  MAP(D5, 50)           \
-  MAP(D6, 51)           \
-  MAP(D8, 52)           \
-  MAP(D9, 53)           \
-  MAP(DA, 54)           \
-  MAP(DB, 55)           \
-  MAP(DC, 56)           \
-  MAP(DD, 57)           \
-  MAP(DE, 58)           \
-  MAP(DF, 59)           \
-  MAP(E0, 60)
+  MAP(D0, 41)           \
+  MAP(D1, 42)           \
+  MAP(D4, 43)           \
+  MAP(D5, 44)           \
+  MAP(D6, 45)           \
+  MAP(D8, 46)           \
+  MAP(D9, 47)           \
+  MAP(DA, 48)           \
+  MAP(DB, 49)           \
+  MAP(DC, 50)           \
+  MAP(DD, 51)           \
+  MAP(DE, 52)           \
+  MAP(DF, 53)           \
+  MAP(E0, 54)           \
+  MAP(E8, 55)           \
+  MAP(F0, 56)           \
+  MAP(F8, 57)           \
+  MAP(F9, 58)
 
 // A clone of X86 since we can't depend on something that is generated.
 namespace X86Local {
@@ -65,13 +65,13 @@ namespace X86Local {
     RawFrmSrc   = 8,
     RawFrmDst   = 9,
     RawFrmDstSrc = 10,
+    RawFrmImm8  = 11,
+    RawFrmImm16 = 12,
     MRMXr = 14, MRMXm = 15,
     MRM0r = 16, MRM1r = 17, MRM2r = 18, MRM3r = 19,
     MRM4r = 20, MRM5r = 21, MRM6r = 22, MRM7r = 23,
     MRM0m = 24, MRM1m = 25, MRM2m = 26, MRM3m = 27,
     MRM4m = 28, MRM5m = 29, MRM6m = 30, MRM7m = 31,
-    RawFrmImm8  = 43,
-    RawFrmImm16 = 44,
 #define MAP(from, to) MRM_##from = to,
     MRM_MAPPING
 #undef MAP

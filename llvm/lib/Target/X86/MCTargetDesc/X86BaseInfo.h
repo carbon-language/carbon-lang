@@ -272,6 +272,17 @@ namespace X86II {
     /// destination index register DI/ESI/RDI.
     RawFrmDstSrc   = 10,
 
+    /// RawFrmImm8 - This is used for the ENTER instruction, which has two
+    /// immediates, the first of which is a 16-bit immediate (specified by
+    /// the imm encoding) and the second is a 8-bit fixed value.
+    RawFrmImm8 = 11,
+
+    /// RawFrmImm16 - This is used for CALL FAR instructions, which have two
+    /// immediates, the first of which is a 16 or 32-bit immediate (specified by
+    /// the imm encoding) and the second is a 16-bit fixed value.  In the AMD
+    /// manual, this operand is described as pntr16:32 and pntr16:16
+    RawFrmImm16 = 12,
+
     /// MRMX[rm] - The forms are used to represent instructions that use a
     /// Mod/RM byte, and don't use the middle field for anything.
     MRMXr = 14, MRMXm = 15,
@@ -292,22 +303,11 @@ namespace X86II {
     //// MRM_XX - A mod/rm byte of exactly 0xXX.
     MRM_C0 = 32, MRM_C1 = 33, MRM_C2 = 34, MRM_C3 = 35,
     MRM_C4 = 36, MRM_C8 = 37, MRM_C9 = 38, MRM_CA = 39,
-    MRM_CB = 40, MRM_E8 = 41, MRM_F0 = 42, MRM_F8 = 45,
-    MRM_F9 = 46, MRM_D0 = 47, MRM_D1 = 48, MRM_D4 = 49,
-    MRM_D5 = 50, MRM_D6 = 51, MRM_D8 = 52, MRM_D9 = 53,
-    MRM_DA = 54, MRM_DB = 55, MRM_DC = 56, MRM_DD = 57,
-    MRM_DE = 58, MRM_DF = 59, MRM_E0 = 60,
-
-    /// RawFrmImm8 - This is used for the ENTER instruction, which has two
-    /// immediates, the first of which is a 16-bit immediate (specified by
-    /// the imm encoding) and the second is a 8-bit fixed value.
-    RawFrmImm8 = 43,
-
-    /// RawFrmImm16 - This is used for CALL FAR instructions, which have two
-    /// immediates, the first of which is a 16 or 32-bit immediate (specified by
-    /// the imm encoding) and the second is a 16-bit fixed value.  In the AMD
-    /// manual, this operand is described as pntr16:32 and pntr16:16
-    RawFrmImm16 = 44,
+    MRM_CB = 40, MRM_D0 = 41, MRM_D1 = 42, MRM_D4 = 43,
+    MRM_D5 = 44, MRM_D6 = 45, MRM_D8 = 46, MRM_D9 = 47,
+    MRM_DA = 48, MRM_DB = 49, MRM_DC = 50, MRM_DD = 51,
+    MRM_DE = 52, MRM_DF = 53, MRM_E0 = 54, MRM_E8 = 55,
+    MRM_F0 = 56, MRM_F8 = 57, MRM_F9 = 58,
 
     FormMask       = 63,
 
