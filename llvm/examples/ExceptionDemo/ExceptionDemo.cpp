@@ -915,7 +915,7 @@ void generateStringPrint(llvm::LLVMContext &context,
     new llvm::GlobalVariable(module,
                              stringConstant->getType(),
                              true,
-                             llvm::GlobalValue::PrivateLinkage,
+                             llvm::GlobalValue::LinkerPrivateLinkage,
                              stringConstant,
                              "");
   }
@@ -959,7 +959,7 @@ void generateIntegerPrint(llvm::LLVMContext &context,
     new llvm::GlobalVariable(module,
                              stringConstant->getType(),
                              true,
-                             llvm::GlobalValue::PrivateLinkage,
+                             llvm::GlobalValue::LinkerPrivateLinkage,
                              stringConstant,
                              "");
   }
