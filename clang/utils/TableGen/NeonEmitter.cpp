@@ -3029,6 +3029,11 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS) {
   OS << "#endif\n\n";
 }
 
+struct OverloadInfo {
+  uint64_t Mask;
+  int PtrArgNum;
+  bool HasConstPtr;
+};
 /// Generate the ARM and AArch64 overloaded type checking code for
 /// SemaChecking.cpp, checking for unique builtin declarations.
 void
@@ -3041,11 +3046,6 @@ NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS) {
   // We record each overload check line before emitting because subsequent Inst
   // definitions may extend the number of permitted types (i.e. augment the
   // Mask). Use std::map to avoid sorting the table by hash number.
-  struct OverloadInfo {
-    uint64_t Mask;
-    int PtrArgNum;
-    bool HasConstPtr;
-  };
   std::map<std::string, OverloadInfo> OverloadMap;
   typedef std::map<std::string, OverloadInfo>::iterator OverloadIterator;
 
