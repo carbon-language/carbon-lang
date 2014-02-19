@@ -1570,10 +1570,7 @@ Non-standard C++11 Attributes
 Clang's non-standard C++11 attributes live in the ``clang`` attribute
 namespace.
 
-``gnu::`` attributes
---------------------
-
-Clang also supports GCC's ``gnu`` attribute namespace. All GCC attributes which
+Clang supports GCC's ``gnu`` attribute namespace. All GCC attributes which
 are accepted with the ``__attribute__((foo))`` syntax are also accepted as
 ``[[gnu::foo]]``. This only extends to attributes which are specified by GCC
 (see the list of `GCC function attributes
