@@ -35,6 +35,9 @@ static bool isIdenticalStmt(const ASTContext &Ctx, const Stmt *Stmt1,
 namespace {
 class FindIdenticalExprVisitor
     : public RecursiveASTVisitor<FindIdenticalExprVisitor> {
+  BugReporter &BR;
+  const CheckerBase *Checker;
+  AnalysisDeclContext *AC;
 public:
   explicit FindIdenticalExprVisitor(BugReporter &B,
                                     const CheckerBase *Checker,
@@ -48,11 +51,58 @@ public:
   bool VisitConditionalOperator(const ConditionalOperator *C);
 
 private:
-  BugReporter &BR;
-  const CheckerBase *Checker;
-  AnalysisDeclContext *AC;
+  void reportIdenticalExpr(const BinaryOperator *B, bool CheckBitwise,
+                           ArrayRef<SourceRange> Sr);
+  void checkBitwiseOrLogicalOp(const BinaryOperator *B, bool CheckBitwise);
+  void checkComparisonOp(const BinaryOperator *B);
 };
 } // end anonymous namespace
+
+void FindIdenticalExprVisitor::reportIdenticalExpr(const BinaryOperator *B,
+                                                   bool CheckBitwise,
+                                                   ArrayRef<SourceRange> Sr) {
+  StringRef Message;
+  if (CheckBitwise)
+    Message = "identical expressions on both sides of bitwise operator";
+  else
+    Message = "identical expressions on both sides of logical operator";
+
+  PathDiagnosticLocation ELoc =
+      PathDiagnosticLocation::createOperatorLoc(B, BR.getSourceManager());
+  BR.EmitBasicReport(AC->getDecl(), Checker,
+                     "Use of identical expressions",
+                     categories::LogicError,
+                     Message, ELoc, Sr);
+}
+
+void FindIdenticalExprVisitor::checkBitwiseOrLogicalOp(const BinaryOperator *B,
+                                                       bool CheckBitwise) {
+  SourceRange Sr[2];
+
+  const Expr *LHS = B->getLHS();
+  const Expr *RHS = B->getRHS();
+
+  // Split operators as long as we still have operators to split on. We will
+  // get called for every binary operator in an expression so there is no need
+  // to check every one against each other here, just the right most one with
+  // the others.
+  while (const BinaryOperator *B2 = dyn_cast<BinaryOperator>(LHS)) {
+    if (B->getOpcode() != B2->getOpcode())
+      break;
+    if (isIdenticalStmt(AC->getASTContext(), RHS, B2->getRHS())) {
+      Sr[0] = RHS->getSourceRange();
+      Sr[1] = B2->getRHS()->getSourceRange();
+      reportIdenticalExpr(B, CheckBitwise, Sr);
+    }
+    LHS = B2->getLHS();
+  }
+  
+  if (isIdenticalStmt(AC->getASTContext(), RHS, LHS)) {
+    Sr[0] = RHS->getSourceRange();
+    Sr[1] = LHS->getSourceRange();
+    reportIdenticalExpr(B, CheckBitwise, Sr);
+  }
+}
 
 bool FindIdenticalExprVisitor::VisitIfStmt(const IfStmt *I) {
   const Stmt *Stmt1 = I->getThen();
@@ -89,8 +139,25 @@ bool FindIdenticalExprVisitor::VisitIfStmt(const IfStmt *I) {
 
 bool FindIdenticalExprVisitor::VisitBinaryOperator(const BinaryOperator *B) {
   BinaryOperator::Opcode Op = B->getOpcode();
-  if (!BinaryOperator::isComparisonOp(Op))
-    return true;
+
+  if (BinaryOperator::isBitwiseOp(Op))
+    checkBitwiseOrLogicalOp(B, true);
+
+  if (BinaryOperator::isLogicalOp(Op))
+    checkBitwiseOrLogicalOp(B, false);
+
+  if (BinaryOperator::isComparisonOp(Op))
+    checkComparisonOp(B);
+
+  // We want to visit ALL nodes (subexpressions of binary comparison
+  // expressions too) that contains comparison operators.
+  // True is always returned to traverse ALL nodes.
+  return true;
+}
+
+void FindIdenticalExprVisitor::checkComparisonOp(const BinaryOperator *B) {
+  BinaryOperator::Opcode Op = B->getOpcode();
+
   //
   // Special case for floating-point representation.
   //
@@ -123,21 +190,21 @@ bool FindIdenticalExprVisitor::VisitBinaryOperator(const BinaryOperator *B) {
         (DeclRef2->getType()->hasFloatingRepresentation())) {
       if (DeclRef1->getDecl() == DeclRef2->getDecl()) {
         if ((Op == BO_EQ) || (Op == BO_NE)) {
-          return true;
+          return;
         }
       }
     }
   } else if ((FloatLit1) && (FloatLit2)) {
     if (FloatLit1->getValue().bitwiseIsEqual(FloatLit2->getValue())) {
       if ((Op == BO_EQ) || (Op == BO_NE)) {
-        return true;
+        return;
       }
     }
   } else if (LHS->getType()->hasFloatingRepresentation()) {
     // If any side of comparison operator still has floating-point
     // representation, then it's an expression. Don't warn.
     // Here only LHS is checked since RHS will be implicit casted to float.
-    return true;
+    return;
   } else {
     // No special case with floating-point representation, report as usual.
   }
@@ -154,10 +221,6 @@ bool FindIdenticalExprVisitor::VisitBinaryOperator(const BinaryOperator *B) {
                        "Compare of identical expressions",
                        categories::LogicError, Message, ELoc);
   }
-  // We want to visit ALL nodes (subexpressions of binary comparison
-  // expressions too) that contains comparison operators.
-  // True is always returned to traverse ALL nodes.
-  return true;
 }
 
 bool FindIdenticalExprVisitor::VisitConditionalOperator(

@@ -1309,3 +1309,89 @@ void test_identical_branches_if(bool b, int i) {
       i += 10;
   }
 }
+
+void test_identical_bitwise1() {
+  int a = 5 | 5; // expected-warning {{identical expressions on both sides of bitwise operator}}
+}
+
+void test_identical_bitwise2() {
+  int a = 5;
+  int b = a | a; // expected-warning {{identical expressions on both sides of bitwise operator}}
+}
+
+void test_identical_bitwise3() {
+  int a = 5;
+  int b = (a | a); // expected-warning {{identical expressions on both sides of bitwise operator}}
+}
+
+void test_identical_bitwise4() {
+  int a = 4;
+  int b = a | 4; // no-warning
+}
+
+void test_identical_bitwise5() {
+  int a = 4;
+  int b = 4;
+  int c = a | b; // no-warning
+}
+
+void test_identical_bitwise6() {
+  int a = 5;
+  int b = a | 4 | a; // expected-warning {{identical expressions on both sides of bitwise operator}}
+}
+
+void test_identical_bitwise7() {
+  int a = 5;
+  int b = func() | func(); // no-warning
+}
+
+void test_identical_logical1(int a) {
+  if (a == 4 && a == 4) // expected-warning {{identical expressions on both sides of logical operator}}
+    ;
+}
+
+void test_identical_logical2(int a) {
+  if (a == 4 || a == 5 || a == 4) // expected-warning {{identical expressions on both sides of logical operator}}
+    ;
+}
+
+void test_identical_logical3(int a) {
+  if (a == 4 || a == 5 || a == 6) // no-warning
+    ;
+}
+
+void test_identical_logical4(int a) {
+  if (a == func() || a == func()) // no-warning
+    ;
+}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wlogical-op-parentheses"
+void test_identical_logical5(int x, int y) {
+  if (x == 4 && y == 5 || x == 4 && y == 6) // no-warning
+    ;
+}
+
+void test_identical_logical6(int x, int y) {
+  if (x == 4 && y == 5 || x == 4 && y == 5) // expected-warning {{identical expressions on both sides of logical operator}}
+    ;
+}
+
+void test_identical_logical7(int x, int y) {
+  // FIXME: We should warn here
+  if (x == 4 && y == 5 || x == 4)
+    ;
+}
+
+void test_identical_logical8(int x, int y) {
+  // FIXME: We should warn here
+  if (x == 4 || y == 5 && x == 4)
+    ;
+}
+
+void test_identical_logical9(int x, int y) {
+  // FIXME: We should warn here
+  if (x == 4 || x == 4 && y == 5)
+    ;
+}
+#pragma clang diagnostic pop
