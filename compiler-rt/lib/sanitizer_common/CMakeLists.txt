@@ -137,6 +137,6 @@ endif()
 add_dependencies(compiler-rt sanitizer_common)
 
 # Unit tests for common sanitizer runtime.
-if(LLVM_INCLUDE_TESTS)
+if(COMPILER_RT_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()

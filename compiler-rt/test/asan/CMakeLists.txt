@@ -39,7 +39,7 @@ if(CAN_TARGET_i386)
   list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig)
 endif()
 
-if(LLVM_INCLUDE_TESTS)
+if(COMPILER_RT_INCLUDE_TESTS)
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
@@ -53,7 +53,7 @@ set(ASAN_TEST_DEPS
 set(ASAN_TEST_PARAMS
   asan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
 # FIXME: support unit test in the android test runner
-if(LLVM_INCLUDE_TESTS AND NOT CAN_TARGET_arm_android)
+if(COMPILER_RT_INCLUDE_TESTS AND NOT CAN_TARGET_arm_android)
   list(APPEND ASAN_TEST_DEPS AsanUnitTests)
   list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/Unit)
 endif()
