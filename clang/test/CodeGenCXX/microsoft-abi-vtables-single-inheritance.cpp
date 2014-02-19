@@ -15,6 +15,8 @@
 // RUN: FileCheck --check-prefix=CHECK-M %s < %t
 // RUN: FileCheck --check-prefix=CHECK-N %s < %t
 // RUN: FileCheck --check-prefix=CHECK-O %s < %t
+// RUN: FileCheck --check-prefix=CHECK-Q %s < %t
+// RUN: FileCheck --check-prefix=CHECK-R %s < %t
 
 struct A {
   // CHECK-A: VFTable for 'A' (3 entries)
@@ -260,3 +262,28 @@ P p;
 
 // CHECK-O: VFTable for 'O' (1 entries)
 // CHECK-O-NEXT: 0 | A *O::f()
+
+struct Q {
+  // CHECK-Q: VFTable for 'Q' (2 entries)
+  // CHECK-Q-NEXT: 0 | void Q::foo(int)
+  // CHECK-Q-NEXT: 1 | void Q::bar(int)
+  void foo(short);
+  void bar(short);
+  virtual void bar(int);
+  virtual void foo(int);
+};
+
+Q q;
+
+// Inherited non-virtual overloads don't participate in the ordering.
+struct R : Q {
+  // CHECK-R: VFTable for 'Q' in 'R' (4 entries)
+  // CHECK-R-NEXT: 0 | void Q::foo(int)
+  // CHECK-R-NEXT: 1 | void Q::bar(int)
+  // CHECK-R-NEXT: 2 | void R::bar(long)
+  // CHECK-R-NEXT: 3 | void R::foo(long)
+  virtual void bar(long);
+  virtual void foo(long);
+};
+
+R r;

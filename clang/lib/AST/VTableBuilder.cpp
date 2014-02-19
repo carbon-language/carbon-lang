@@ -2789,7 +2789,7 @@ static void GroupNewVirtualOverloads(
   // Put the virtual methods into VirtualMethods in the proper order:
   // 1) Group overloads by declaration name. New groups are added to the
   //    vftable in the order of their first declarations in this class
-  //    (including overrides).
+  //    (including overrides and non-virtual methods).
   // 2) In each group, new overloads appear in the reverse order of declaration.
   typedef SmallVector<const CXXMethodDecl *, 1> MethodGroup;
   SmallVector<MethodGroup, 10> Groups;
@@ -2798,16 +2798,14 @@ static void GroupNewVirtualOverloads(
   for (CXXRecordDecl::method_iterator I = RD->method_begin(),
        E = RD->method_end(); I != E; ++I) {
     const CXXMethodDecl *MD = *I;
-    if (!MD->isVirtual())
-      continue;
 
     VisitedGroupIndicesTy::iterator J;
     bool Inserted;
     llvm::tie(J, Inserted) = VisitedGroupIndices.insert(
         std::make_pair(MD->getDeclName(), Groups.size()));
     if (Inserted)
-      Groups.push_back(MethodGroup(1, MD));
-    else
+      Groups.push_back(MethodGroup());
+    if (I->isVirtual())
       Groups[J->second].push_back(MD);
   }
 
