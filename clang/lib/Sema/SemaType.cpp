@@ -1129,10 +1129,11 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
         TypeQuals && Result->isReferenceType()) {
       // If this occurs outside a template instantiation, warn the user about
       // it; they probably didn't mean to specify a redundant qualifier.
-      std::pair<DeclSpec::TQ, SourceLocation> Quals[] = {
-        { DeclSpec::TQ_const, DS.getConstSpecLoc() },
-        { DeclSpec::TQ_volatile, DS.getVolatileSpecLoc() },
-        { DeclSpec::TQ_atomic, DS.getAtomicSpecLoc() }
+      typedef std::pair<DeclSpec::TQ, SourceLocation> QualLoc;
+      QualLoc Quals[] = {
+        QualLoc(DeclSpec::TQ_const, DS.getConstSpecLoc()),
+        QualLoc(DeclSpec::TQ_volatile, DS.getVolatileSpecLoc()),
+        QualLoc(DeclSpec::TQ_atomic, DS.getAtomicSpecLoc())
       };
       for (unsigned I = 0, N = llvm::array_lengthof(Quals); I != N; ++I) {
         if (S.ActiveTemplateInstantiations.empty()) {
