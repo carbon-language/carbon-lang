@@ -26,7 +26,7 @@ static __sanitizer::DeadlockDetector<DDBV> g_dd;
 
 static void EnsureDeadlockDetectorID(ThreadState *thr, SyncVar *s) {
   if (!g_dd.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
-    s->deadlock_detector_id = g_dd.newNode(reinterpret_cast<uptr>(s->addr));
+    s->deadlock_detector_id = g_dd.newNode(reinterpret_cast<uptr>(s));
 }
 
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
@@ -128,17 +128,19 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
     bool has_deadlock =
         g_dd.onLock(&thr->deadlock_detector_tls, s->deadlock_detector_id);
     if (has_deadlock) {
-      Printf("ThreadSanitizer: lock-order-inversion (potential deadlock)\n");
       uptr path[10];
       uptr len = g_dd.findPathToHeldLock(&thr->deadlock_detector_tls,
                                          s->deadlock_detector_id, path,
                                          ARRAY_SIZE(path));
       CHECK_GT(len, 0U);  // Hm.. cycle of 10 locks? I'd like to see that.
-      Printf("  path: ");
-      for (uptr i = 0; i < len; i++) {
-        Printf("%p => ", g_dd.getData(path[i]));
-      }
-      Printf("%p\n", g_dd.getData(path[0]));
+      ThreadRegistryLock l(CTX()->thread_registry);
+      ScopedReport rep(ReportTypeDeadlock);
+      for (uptr i = 0; i < len; i++)
+        rep.AddMutex(reinterpret_cast<SyncVar*>(g_dd.getData(path[i])));
+      StackTrace trace;
+      trace.ObtainCurrent(thr, pc);
+      rep.AddStack(&trace);
+      OutputReport(CTX(), rep);
     }
   }
   s->mtx.Unlock();

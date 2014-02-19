@@ -24,7 +24,7 @@ int main() {
   // CHECK:   Write of size 4 at {{.*}} by thread T2:
   // CHECK:   Previous write of size 4 at {{.*}} by thread T1
   // CHECK:                     (mutexes: write [[M1:M[0-9]+]]):
-  // CHECK:   Mutex [[M1]] created at:
+  // CHECK:   Mutex [[M1]] (0x{{.*}}) created at:
   // CHECK:     #0 pthread_mutex_init
   // CHECK:     #1 main {{.*}}/mutexset2.cc:[[@LINE+1]]
   pthread_mutex_init(&mtx, 0);

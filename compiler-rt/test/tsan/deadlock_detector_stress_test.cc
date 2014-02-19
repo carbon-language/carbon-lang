@@ -1,5 +1,5 @@
 // RUN: %clangxx_tsan %s -o %t
-// RUN: TSAN_OPTIONS=detect_deadlocks=1 %t 2>&1 | FileCheck %s
+// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #undef NDEBUG
 #include <assert.h>
@@ -46,9 +46,11 @@ class LockTest {
     // CHECK: Expecting lock inversion: [[A1:0x[a-f0-9]*]] [[A2:0x[a-f0-9]*]]
     L(0); L(1); U(0); U(1);
     L(1); L(0); U(0); U(1);
-    // CHECK: ThreadSanitizer: lock-order-inversion (potential deadlock)
-    // CHECK-NEXT: path: [[A1]] => [[A2]] => [[A1]]
-    // CHECK-NOT: ThreadSanitizer:
+    // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
+    // CHECK: path: [[M1:M[0-9]+]] => [[M2:M[0-9]+]] => [[M1]]
+    // CHECK: Mutex [[M1]] ([[A1]]) created at:
+    // CHECK: Mutex [[M2]] ([[A2]]) created at:
+    // CHECK-NOT: WARNING: ThreadSanitizer:
   }
 
   // Simple lock order inversion with 3 locks.
@@ -57,8 +59,8 @@ class LockTest {
     // CHECK: Starting Test2
     L(0); L(1); L(2); U(2); U(0); U(1);
     L(2); L(0); U(0); U(2);
-    // CHECK: ThreadSanitizer: lock-order-inversion (potential deadlock)
-    // CHECK-NOT: ThreadSanitizer:
+    // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
+    // CHECK-NOT: WARNING: ThreadSanitizer:
   }
 
   // Lock order inversion with lots of new locks created (but not used)
@@ -72,8 +74,8 @@ class LockTest {
     CreateAndDestroyManyLocks();
     U(2);
     L(1); L(0); U(0); U(1);
-    // CHECK: ThreadSanitizer: lock-order-inversion (potential deadlock)
-    // CHECK-NOT: ThreadSanitizer:
+    // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
+    // CHECK-NOT: WARNING: ThreadSanitizer:
   }
 
   // lock l0=>l1; then create and use lots of locks; then lock l1=>l0.
@@ -86,7 +88,7 @@ class LockTest {
     CreateLockUnlockAndDestroyManyLocks();
     U(2);
     L(1); L(0); U(0); U(1);
-    // CHECK-NOT: ThreadSanitizer:
+    // CHECK-NOT: WARNING: ThreadSanitizer:
   }
 
  private:

@@ -1,5 +1,5 @@
 // RUN: %clangxx_tsan %s -o %t
-// RUN: TSAN_OPTIONS=detect_deadlocks=1 %t 2>&1 | FileCheck %s
+// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s
 #include <pthread.h>
 
 int main() {

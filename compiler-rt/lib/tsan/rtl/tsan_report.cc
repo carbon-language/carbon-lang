@@ -77,6 +77,8 @@ static const char *ReportTypeString(ReportType typ) {
     return "signal-unsafe call inside of a signal";
   if (typ == ReportTypeErrnoInSignal)
     return "signal handler spoils errno";
+  if (typ == ReportTypeDeadlock)
+    return "lock-order-inversion (potential deadlock)";
   return "";
 }
 
@@ -155,6 +157,11 @@ static void PrintLocation(const ReportLocation *loc) {
     PrintStack(loc->stack);
 }
 
+static void PrintMutexShort(const ReportMutex *rm, const char *after) {
+  Decorator d;
+  Printf("%sM%zd%s%s", d.Mutex(), rm->id, d.EndMutex(), after);
+}
+
 static void PrintMutex(const ReportMutex *rm) {
   Decorator d;
   if (rm->destroyed) {
@@ -163,7 +170,7 @@ static void PrintMutex(const ReportMutex *rm) {
     Printf("%s", d.EndMutex());
   } else {
     Printf("%s", d.Mutex());
-    Printf("  Mutex M%llu created at:\n", rm->id);
+    Printf("  Mutex M%llu (%p) created at:\n", rm->id, rm->addr);
     Printf("%s", d.EndMutex());
     PrintStack(rm->stack);
   }
@@ -222,6 +229,14 @@ void PrintReport(const ReportDesc *rep) {
   Printf("WARNING: ThreadSanitizer: %s (pid=%d)\n", rep_typ_str,
          (int)internal_getpid());
   Printf("%s", d.EndWarning());
+
+  if (rep->typ == ReportTypeDeadlock) {
+    Printf("  path: ");
+    CHECK_GT(rep->mutexes.Size(), 0U);
+    for (uptr i = 0; i < rep->mutexes.Size(); i++)
+      PrintMutexShort(rep->mutexes[i], " => ");
+    PrintMutexShort(rep->mutexes[0], "\n");
+  }
 
   for (uptr i = 0; i < rep->stacks.Size(); i++) {
     if (i)

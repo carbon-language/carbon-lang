@@ -25,7 +25,8 @@ enum ReportType {
   ReportTypeThreadLeak,
   ReportTypeMutexDestroyLocked,
   ReportTypeSignalUnsafe,
-  ReportTypeErrnoInSignal
+  ReportTypeErrnoInSignal,
+  ReportTypeDeadlock
 };
 
 struct ReportStack {
@@ -89,6 +90,7 @@ struct ReportThread {
 
 struct ReportMutex {
   u64 id;
+  uptr addr;
   bool destroyed;
   ReportStack *stack;
 };
