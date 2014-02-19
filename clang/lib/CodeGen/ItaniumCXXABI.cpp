@@ -1542,8 +1542,6 @@ void ItaniumCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
 /// the wrapper emits a copy, and we want the linker to merge them.
 static llvm::GlobalValue::LinkageTypes getThreadLocalWrapperLinkage(
     llvm::GlobalValue::LinkageTypes VarLinkage) {
-  if (llvm::GlobalValue::isLinkerPrivateLinkage(VarLinkage))
-    return llvm::GlobalValue::LinkerPrivateWeakLinkage;
   // For internal linkage variables, we don't need an external or weak wrapper.
   if (llvm::GlobalValue::isLocalLinkage(VarLinkage))
     return VarLinkage;
