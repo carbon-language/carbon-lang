@@ -11,11 +11,12 @@
 // specific documentation that is collated within the larger document.
 class DocumentationCategory<string name> {
   string Name = name;
+  code Content = [{}];
 }
-def DocCatFunction : DocumentationCategory<"Functions">;
-def DocCatVariable : DocumentationCategory<"Variables">;
-def DocCatType : DocumentationCategory<"Types">;
-def DocCatStmt : DocumentationCategory<"Statements">;
+def DocCatFunction : DocumentationCategory<"Function Attributes">;
+def DocCatVariable : DocumentationCategory<"Variable Attributes">;
+def DocCatType : DocumentationCategory<"Type Attributes">;
+def DocCatStmt : DocumentationCategory<"Statement Attributes">;
 // Attributes listed under the Undocumented category do not generate any public
 // documentation. Ideally, this category should be used for internal-only
 // attributes which contain no spellings.
@@ -1484,7 +1485,7 @@ def Consumable : InheritableAttr {
   let Args = [EnumArgument<"DefaultState", "ConsumedState",
                            ["unknown", "consumed", "unconsumed"],
                            ["Unknown", "Consumed", "Unconsumed"]>];
-  let Documentation = [Undocumented];
+  let Documentation = [ConsumableDocs];
 }
 
 def ConsumableAutoCast : InheritableAttr {
@@ -1505,7 +1506,7 @@ def CallableWhen : InheritableAttr {
   let Args = [VariadicEnumArgument<"CallableState", "ConsumedState",
                                    ["unknown", "consumed", "unconsumed"],
                                    ["Unknown", "Consumed", "Unconsumed"]>];
-  let Documentation = [Undocumented];
+  let Documentation = [CallableWhenDocs];
 }
 
 def ParamTypestate : InheritableAttr {
@@ -1514,7 +1515,7 @@ def ParamTypestate : InheritableAttr {
   let Args = [EnumArgument<"ParamState", "ConsumedState",
                            ["unknown", "consumed", "unconsumed"],
                            ["Unknown", "Consumed", "Unconsumed"]>];
-  let Documentation = [Undocumented];
+  let Documentation = [ParamTypestateDocs];
 }
 
 def ReturnTypestate : InheritableAttr {
@@ -1523,7 +1524,7 @@ def ReturnTypestate : InheritableAttr {
   let Args = [EnumArgument<"State", "ConsumedState",
                            ["unknown", "consumed", "unconsumed"],
                            ["Unknown", "Consumed", "Unconsumed"]>];
-  let Documentation = [Undocumented];
+  let Documentation = [ReturnTypestateDocs];
 }
 
 def SetTypestate : InheritableAttr {
@@ -1532,7 +1533,7 @@ def SetTypestate : InheritableAttr {
   let Args = [EnumArgument<"NewState", "ConsumedState",
                            ["unknown", "consumed", "unconsumed"],
                            ["Unknown", "Consumed", "Unconsumed"]>];
-  let Documentation = [Undocumented];
+  let Documentation = [SetTypestateDocs];
 }
 
 def TestTypestate : InheritableAttr {
@@ -1541,7 +1542,7 @@ def TestTypestate : InheritableAttr {
   let Args = [EnumArgument<"TestState", "ConsumedState",
                            ["consumed", "unconsumed"],
                            ["Consumed", "Unconsumed"]>];
-  let Documentation = [Undocumented];
+  let Documentation = [TestTypestateDocs];
 }
 
 // Type safety attributes for `void *' pointers and type tags.

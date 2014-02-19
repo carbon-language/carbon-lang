@@ -498,3 +498,76 @@ The semantics are as follows:
   a sequence equivalent to "movs pc, lr" will be used.
   }];
 }
+
+def DocCatConsumed : DocumentationCategory<"Consumed Annotation Checking"> {
+  let Content = [{
+Clang supports additional attributes for checking basic resource management
+properties, specifically for unique objects that have a single owning reference.
+The following attributes are currently supported, although **the implementation
+for these annotations is currently in development and are subject to change.**
+  }];
+}
+
+def SetTypestateDocs : Documentation {
+  let Category = DocCatConsumed;
+  let Content = [{
+Annotate methods that transition an object into a new state with
+``__attribute__((set_typestate(new_state)))``.  The new new state must be
+unconsumed, consumed, or unknown.
+  }];
+}
+
+def CallableWhenDocs : Documentation {
+  let Category = DocCatConsumed;
+  let Content = [{
+Use ``__attribute__((callable_when(...)))`` to indicate what states a method
+may be called in.  Valid states are unconsumed, consumed, or unknown.  Each
+argument to this attribute must be a quoted string.  E.g.:
+
+``__attribute__((callable_when("unconsumed", "unknown")))``
+  }];
+}
+
+def TestTypestateDocs : Documentation {
+  let Category = DocCatConsumed;
+  let Content = [{
+Use ``__attribute__((test_typestate(tested_state)))`` to indicate that a method
+returns true if the object is in the specified state..
+  }];
+}
+
+def ParamTypestateDocs : Documentation {
+  let Category = DocCatConsumed;
+  let Content = [{
+This attribute specifies expectations about function parameters.  Calls to an
+function with annotated parameters will issue a warning if the corresponding
+argument isn't in the expected state.  The attribute is also used to set the
+initial state of the parameter when analyzing the function's body.
+  }];
+}
+
+def ReturnTypestateDocs : Documentation {
+  let Category = DocCatConsumed;
+  let Content = [{
+The ``return_typestate`` attribute can be applied to functions or parameters.
+When applied to a function the attribute specifies the state of the returned
+value.  The function's body is checked to ensure that it always returns a value
+in the specified state.  On the caller side, values returned by the annotated
+function are initialized to the given state.
+
+When applied to a function parameter it modifies the state of an argument after
+a call to the function returns.  The function's body is checked to ensure that
+the parameter is in the expected state before returning.
+  }];
+}
+
+def ConsumableDocs : Documentation {
+  let Category = DocCatConsumed;
+  let Content = [{
+Each ``class`` that uses any of the typestate annotations must first be marked
+using the ``consumable`` attribute.  Failure to do so will result in a warning.
+
+This attribute accepts a single parameter that must be one of the following:
+``unknown``, ``consumed``, or ``unconsumed``.
+  }];
+}
