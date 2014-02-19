@@ -58,6 +58,9 @@ typedef std::vector<MCAsmMacroArgument> MCAsmMacroArguments;
 struct MCAsmMacroParameter {
   StringRef Name;
   MCAsmMacroArgument Value;
+  bool Required;
+
+  MCAsmMacroParameter() : Required(false) { }
 };
 
 typedef std::vector<MCAsmMacroParameter> MCAsmMacroParameters;
@@ -1940,26 +1943,23 @@ bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA) {
 bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
                                     MCAsmMacroArguments &A) {
   const unsigned NParameters = M ? M->Parameters.size() : 0;
+  bool NamedParametersFound = false;
+  SmallVector<SMLoc, 4> FALocs;
 
   A.resize(NParameters);
-  for (unsigned PI = 0; PI < NParameters; ++PI)
-    if (!M->Parameters[PI].Value.empty())
-      A[PI] = M->Parameters[PI].Value;
-
-  bool NamedParametersFound = false;
+  FALocs.resize(NParameters);
 
   // Parse two kinds of macro invocations:
   // - macros defined without any parameters accept an arbitrary number of them
   // - macros defined with parameters accept at most that many of them
   for (unsigned Parameter = 0; !NParameters || Parameter < NParameters;
        ++Parameter) {
+    SMLoc IDLoc = Lexer.getLoc();
     MCAsmMacroParameter FA;
-    SMLoc L;
 
     if (Lexer.is(AsmToken::Identifier) && Lexer.peekTok().is(AsmToken::Equal)) {
-      L = Lexer.getLoc();
       if (parseIdentifier(FA.Name)) {
-        Error(L, "invalid argument identifier for formal argument");
+        Error(IDLoc, "invalid argument identifier for formal argument");
         eatToEndOfStatement();
         return true;
       }
@@ -1975,7 +1975,7 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
     }
 
     if (NamedParametersFound && FA.Name.empty()) {
-      Error(Lexer.getLoc(), "cannot mix positional and keyword arguments");
+      Error(IDLoc, "cannot mix positional and keyword arguments");
       eatToEndOfStatement();
       return true;
     }
@@ -1989,8 +1989,9 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
       for (FAI = 0; FAI < NParameters; ++FAI)
         if (M->Parameters[FAI].Name == FA.Name)
           break;
+
       if (FAI >= NParameters) {
-        Error(L,
+        Error(IDLoc,
               "parameter named '" + FA.Name + "' does not exist for macro '" +
               M->Name + "'");
         return true;
@@ -2002,13 +2003,33 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
       if (A.size() <= PI)
         A.resize(PI + 1);
       A[PI] = FA.Value;
+
+      if (FALocs.size() <= PI)
+        FALocs.resize(PI + 1);
+
+      FALocs[PI] = Lexer.getLoc();
     }
 
     // At the end of the statement, fill in remaining arguments that have
     // default values. If there aren't any, then the next argument is
     // required but missing
-    if (Lexer.is(AsmToken::EndOfStatement))
-      return false;
+    if (Lexer.is(AsmToken::EndOfStatement)) {
+      bool Failure = false;
+      for (unsigned FAI = 0; FAI < NParameters; ++FAI) {
+        if (A[FAI].empty()) {
+          if (M->Parameters[FAI].Required) {
+            Error(FALocs[FAI].isValid() ? FALocs[FAI] : Lexer.getLoc(),
+                  "missing value for required parameter "
+                  "'" + M->Parameters[FAI].Name + "' in macro '" + M->Name + "'");
+            Failure = true;
+          }
+
+          if (!M->Parameters[FAI].Value.empty())
+            A[FAI] = M->Parameters[FAI].Value;
+        }
+      }
+      return Failure;
+    }
 
     if (Lexer.is(AsmToken::Comma))
       Lex();
@@ -3210,10 +3231,36 @@ bool AsmParser::parseDirectiveMacro(SMLoc DirectiveLoc) {
     if (parseIdentifier(Parameter.Name))
       return TokError("expected identifier in '.macro' directive");
 
+    if (Lexer.is(AsmToken::Colon)) {
+      Lex();  // consume ':'
+
+      SMLoc QualLoc;
+      StringRef Qualifier;
+
+      QualLoc = Lexer.getLoc();
+      if (parseIdentifier(Qualifier))
+        return Error(QualLoc, "missing parameter qualifier for "
+                     "'" + Parameter.Name + "' in macro '" + Name + "'");
+
+      if (Qualifier == "req")
+        Parameter.Required = true;
+      else
+        return Error(QualLoc, Qualifier + " is not a valid parameter qualifier "
+                     "for '" + Parameter.Name + "' in macro '" + Name + "'");
+    }
+
     if (getLexer().is(AsmToken::Equal)) {
       Lex();
+
+      SMLoc ParamLoc;
+
+      ParamLoc = Lexer.getLoc();
       if (parseMacroArgument(Parameter.Value))
         return true;
+
+      if (Parameter.Required)
+        Warning(ParamLoc, "pointless default value for required parameter "
+                "'" + Parameter.Name + "' in macro '" + Name + "'");
     }
 
     Parameters.push_back(Parameter);
