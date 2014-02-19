@@ -2612,7 +2612,7 @@ void clang_toggleCrashRecovery(unsigned isEnabled) {
 
 CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
                                               const char *ast_filename) {
-  CXTranslationUnit TU = NULL;
+  CXTranslationUnit TU;
   enum CXErrorCode Result =
       clang_createTranslationUnit2(CIdx, ast_filename, &TU);
   (void)Result;
@@ -2624,6 +2624,9 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
 enum CXErrorCode clang_createTranslationUnit2(CXIndex CIdx,
                                               const char *ast_filename,
                                               CXTranslationUnit *out_TU) {
+  if (out_TU)
+    *out_TU = NULL;
+
   if (!CIdx || !ast_filename || !out_TU)
     return CXError_InvalidArguments;
 
