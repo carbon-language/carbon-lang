@@ -202,7 +202,7 @@ void CompilerInstance::createVirtualFileSystem() {
 
 void CompilerInstance::createFileManager() {
   assert(hasVirtualFileSystem() && "expected virtual file system");
-  FileMgr = new FileManager(getFileSystemOpts());
+  FileMgr = new FileManager(getFileSystemOpts(), VirtualFileSystem);
 }
 
 // Source Manager
