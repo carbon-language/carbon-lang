@@ -34,7 +34,6 @@ class WatchpointCommandsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.normal_read_write_watchpoint()
 
-    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
     def test_rw_watchpoint_with_dwarf(self):
         """Test read_write watchpoint and expect to stop two times."""
@@ -50,7 +49,6 @@ class WatchpointCommandsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.delete_read_write_watchpoint()
 
-    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
     def test_rw_watchpoint_delete_with_dwarf(self):
         """Test delete watchpoint and expect not to stop for watchpoint."""
@@ -66,7 +64,6 @@ class WatchpointCommandsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.ignore_read_write_watchpoint()
 
-    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
     def test_rw_watchpoint_set_ignore_count_with_dwarf(self):
         """Test watchpoint ignore count and expect to not to stop at all."""
@@ -82,7 +79,6 @@ class WatchpointCommandsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.read_write_watchpoint_disable_after_first_stop()
 
-    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
     def test_rw_disable_after_first_stop__with_dwarf(self):
         """Test read_write watchpoint but disable it after the first stop."""
@@ -98,7 +94,6 @@ class WatchpointCommandsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.read_write_watchpoint_disable_then_enable()
 
-    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
     def test_rw_disable_then_enable_with_dwarf(self):
         """Test read_write watchpoint, disable initially, then enable it."""

@@ -28,7 +28,6 @@ class WatchpointIgnoreCountTestCase(TestBase):
         self.buildDsym()
         self.do_watchpoint_ignore_count()
 
-    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @python_api_test
     @dwarf_test
     def test_set_watch_ignore_count_with_dwarf(self):

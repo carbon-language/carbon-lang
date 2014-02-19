@@ -34,10 +34,6 @@ public:
     // POSIXThread override
     virtual void
     RefreshStateAfterStop();
-
-protected:
-    virtual void
-    TraceNotify(const ProcessMessage &message);
 };
 
 #endif // #ifndef liblldb_LinuxThread_H_

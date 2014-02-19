@@ -101,8 +101,8 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data,
         log->Printf("ptrace() failed; errno=%d (%s)", errno, str);
     }
 
-#ifdef __amd64__
     if (log) {
+#ifdef __amd64__
         if (req == PT_GETREGS) {
             struct reg *r = (struct reg *) addr;
 
@@ -111,8 +111,15 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data,
             log->Printf("PT_GETREGS: bp=0x%lx", r->r_rbp);
             log->Printf("PT_GETREGS: ax=0x%lx", r->r_rax);
         }
-    }
 #endif
+        if (req == PT_GETDBREGS || req == PT_SETDBREGS) {
+            struct dbreg *r = (struct dbreg *) addr;
+            char setget = (req == PT_GETDBREGS) ? 'G' : 'S';
+
+            for (int i = 0; i <= 7; i++)
+                log->Printf("PT_%cETDBREGS: dr[%d]=0x%lx", setget, i, r->dr[i]);
+        }
+    }
      
     return result;
 }
@@ -342,6 +349,82 @@ WriteRegOperation::Execute(ProcessMonitor *monitor)
     }
     *(uintptr_t *)(((caddr_t)&regs) + m_offset) = (uintptr_t)m_value.GetAsUInt64();
     if (PTRACE(PT_SETREGS, m_tid, (caddr_t)&regs, 0) < 0)
+        m_result = false;
+    else
+        m_result = true;
+}
+
+//------------------------------------------------------------------------------
+/// @class ReadDebugRegOperation
+/// @brief Implements ProcessMonitor::ReadDebugRegisterValue.
+class ReadDebugRegOperation : public Operation
+{
+public:
+    ReadDebugRegOperation(lldb::tid_t tid, unsigned offset, unsigned size,
+                          RegisterValue &value, bool &result)
+        : m_tid(tid), m_offset(offset), m_size(size),
+          m_value(value), m_result(result)
+        { }
+
+    void Execute(ProcessMonitor *monitor);
+
+private:
+    lldb::tid_t m_tid;
+    unsigned m_offset;
+    unsigned m_size;
+    RegisterValue &m_value;
+    bool &m_result;
+};
+
+void
+ReadDebugRegOperation::Execute(ProcessMonitor *monitor)
+{
+    struct dbreg regs;
+    int rc;
+
+    if ((rc = PTRACE(PT_GETDBREGS, m_tid, (caddr_t)&regs, 0)) < 0) {
+        m_result = false;
+    } else {
+        if (m_size == sizeof(uintptr_t))
+            m_value = *(uintptr_t *)(((caddr_t)&regs) + m_offset);
+        else
+            memcpy(&m_value, (((caddr_t)&regs) + m_offset), m_size);
+        m_result = true;
+    }
+}
+
+//------------------------------------------------------------------------------
+/// @class WriteDebugRegOperation
+/// @brief Implements ProcessMonitor::WriteDebugRegisterValue.
+class WriteDebugRegOperation : public Operation
+{
+public:
+    WriteDebugRegOperation(lldb::tid_t tid, unsigned offset,
+                           const RegisterValue &value, bool &result)
+        : m_tid(tid), m_offset(offset),
+          m_value(value), m_result(result)
+        { }
+
+    void Execute(ProcessMonitor *monitor);
+
+private:
+    lldb::tid_t m_tid;
+    unsigned m_offset;
+    const RegisterValue &m_value;
+    bool &m_result;
+};
+
+void
+WriteDebugRegOperation::Execute(ProcessMonitor *monitor)
+{
+    struct dbreg regs;
+
+    if (PTRACE(PT_GETDBREGS, m_tid, (caddr_t)&regs, 0) < 0) {
+        m_result = false;
+        return;
+    }
+    *(uintptr_t *)(((caddr_t)&regs) + m_offset) = (uintptr_t)m_value.GetAsUInt64();
+    if (PTRACE(PT_SETDBREGS, m_tid, (caddr_t)&regs, 0) < 0)
         m_result = false;
     else
         m_result = true;
@@ -1175,7 +1258,7 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
     case 0:
     case TRAP_TRACE:
         if (log)
-            log->Printf ("ProcessMonitor::%s() received trace event, tid = %" PRIu64, __FUNCTION__, tid);
+            log->Printf ("ProcessMonitor::%s() received trace event, tid = %" PRIu64 "  : si_code = %d", __FUNCTION__, tid, info->si_code);
         message = ProcessMessage::Trace(tid);
         break;
 
@@ -1459,6 +1542,28 @@ ProcessMonitor::WriteRegisterValue(lldb::tid_t tid, unsigned offset,
 {
     bool result;
     WriteRegOperation op(tid, offset, value, result);
+    DoOperation(&op);
+    return result;
+}
+
+bool
+ProcessMonitor::ReadDebugRegisterValue(lldb::tid_t tid, unsigned offset,
+                                       const char *reg_name, unsigned size,
+                                       lldb_private::RegisterValue &value)
+{
+    bool result;
+    ReadDebugRegOperation op(tid, offset, size, value, result);
+    DoOperation(&op);
+    return result;
+}
+
+bool
+ProcessMonitor::WriteDebugRegisterValue(lldb::tid_t tid, unsigned offset,
+                                        const char *reg_name,
+                                        const lldb_private::RegisterValue &value)
+{
+    bool result;
+    WriteDebugRegOperation op(tid, offset, value, result);
     DoOperation(&op);
     return result;
 }

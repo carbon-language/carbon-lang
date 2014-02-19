@@ -37,8 +37,18 @@ struct GPR
     uint32_t gs;
 };
 
-#define DR_SIZE 0
-#define DR_OFFSET(reg_index) 0
+struct dbreg {
+    uint32_t  dr[8];     /* debug registers */
+                         /* Index 0-3: debug address registers */
+                         /* Index 4-5: reserved */
+                         /* Index 6: debug status */
+                         /* Index 7: debug control */
+};
+
+
+#define DR_SIZE sizeof(uint32_t)
+#define DR_OFFSET(reg_index) \
+    (LLVM_EXTENSION offsetof(dbreg, dr[reg_index]))
 
 //---------------------------------------------------------------------------
 // Include RegisterInfos_i386 to declare our g_register_infos_i386 structure.

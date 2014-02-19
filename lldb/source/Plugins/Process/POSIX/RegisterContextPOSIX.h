@@ -66,6 +66,10 @@ public:
     virtual uint32_t
     NumSupportedHardwareWatchpoints () = 0;
 
+    // Force m_watchpoints_initialized to TRUE
+    void
+    ForceWatchpointsInitialized () {m_watchpoints_initialized = true;}
+
 protected:
     bool m_watchpoints_initialized;
 };

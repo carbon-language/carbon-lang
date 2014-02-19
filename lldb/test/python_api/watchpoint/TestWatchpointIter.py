@@ -28,7 +28,6 @@ class WatchpointIteratorTestCase(TestBase):
         self.buildDsym()
         self.do_watchpoint_iter()
 
-    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @python_api_test
     @dwarf_test
     def test_watch_iter_with_dwarf(self):

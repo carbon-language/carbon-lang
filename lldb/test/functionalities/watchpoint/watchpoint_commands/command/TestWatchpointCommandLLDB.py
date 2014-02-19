@@ -33,7 +33,6 @@ class WatchpointLLDBCommandTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.watchpoint_command()
 
-    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
     def test_watchpoint_command_with_dwarf(self):
         """Test 'watchpoint command'."""
@@ -49,7 +48,6 @@ class WatchpointLLDBCommandTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.watchpoint_command_can_disable_a_watchpoint()
 
-    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
     def test_watchpoint_command_can_disable_a_watchpoint_with_dwarf(self):
         """Test that 'watchpoint command' action can disable a watchpoint after it is triggered."""

@@ -65,7 +65,16 @@ POSIXThread::POSIXThread(Process &process, lldb::tid_t tid)
         lldb::WatchpointSP wp = wp_list.GetByIndex(wp_idx);
         if (wp.get() && wp->IsEnabled())
         {
-            assert(EnableHardwareWatchpoint(wp.get()));
+            // This watchpoint as been enabled; obviously this "new" thread
+            // has been created since that watchpoint was enabled.  Since
+            // the POSIXBreakpointProtocol has yet to be initialized, its
+            // m_watchpoints_initialized member will be FALSE.  Attempting to
+            // read the debug status register to determine if a watchpoint
+            // has been hit would result in the zeroing of that register.
+            // Since the active debug registers would have been cloned when
+            // this thread was created, simply force the m_watchpoints_initized
+            // member to TRUE and avoid resetting dr6 and dr7.
+            GetPOSIXBreakpointProtocol()->ForceWatchpointsInitialized();
         }
     }
 }
@@ -509,6 +518,21 @@ POSIXThread::WatchNotify(const ProcessMessage &message)
 void
 POSIXThread::TraceNotify(const ProcessMessage &message)
 {
+    POSIXBreakpointProtocol* reg_ctx = GetPOSIXBreakpointProtocol();
+    if (reg_ctx)
+    {
+        uint32_t num_hw_wps = reg_ctx->NumSupportedHardwareWatchpoints();
+        uint32_t wp_idx;
+        for (wp_idx = 0; wp_idx < num_hw_wps; wp_idx++)
+        {
+            if (reg_ctx->IsWatchpointHit(wp_idx))
+            {
+                WatchNotify(message);
+                return;
+            }
+        }
+    }
+
     SetStopInfo (StopInfo::CreateStopReasonToTrace(*this));
 }
 

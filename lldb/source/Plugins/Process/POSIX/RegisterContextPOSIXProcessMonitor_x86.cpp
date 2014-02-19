@@ -109,6 +109,15 @@ RegisterContextPOSIXProcessMonitor_x86_64::ReadRegister(const unsigned reg,
                                                         RegisterValue &value)
 {
     ProcessMonitor &monitor = GetMonitor();
+
+#if defined(__FreeBSD__)
+    if (reg >= m_reg_info.first_dr)
+        return monitor.ReadDebugRegisterValue(m_thread.GetID(),
+                                              GetRegisterOffset(reg),
+                                              GetRegisterName(reg),
+                                              GetRegisterSize(reg),
+                                              value);
+#endif
     return monitor.ReadRegisterValue(m_thread.GetID(),
                                      GetRegisterOffset(reg),
                                      GetRegisterName(reg),
@@ -164,6 +173,13 @@ RegisterContextPOSIXProcessMonitor_x86_64::WriteRegister(const unsigned reg,
     }
 
     ProcessMonitor &monitor = GetMonitor();
+#if defined(__FreeBSD__)
+    if (reg >= m_reg_info.first_dr)
+        return monitor.WriteDebugRegisterValue(m_thread.GetID(),
+                                               GetRegisterOffset(reg_to_write),
+                                               GetRegisterName(reg_to_write),
+                                               value_to_write);
+#endif
     return monitor.WriteRegisterValue(m_thread.GetID(),
                                       GetRegisterOffset(reg_to_write),
                                       GetRegisterName(reg_to_write),

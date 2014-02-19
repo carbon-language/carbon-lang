@@ -40,24 +40,3 @@ LinuxThread::RefreshStateAfterStop()
 
     POSIXThread::RefreshStateAfterStop();
 }
-
-void
-LinuxThread::TraceNotify(const ProcessMessage &message)
-{
-    POSIXBreakpointProtocol* reg_ctx = GetPOSIXBreakpointProtocol();
-    if (reg_ctx)
-    {
-        uint32_t num_hw_wps = reg_ctx->NumSupportedHardwareWatchpoints();
-        uint32_t wp_idx;
-        for (wp_idx = 0; wp_idx < num_hw_wps; wp_idx++)
-        {
-            if (reg_ctx->IsWatchpointHit(wp_idx))
-            {
-                WatchNotify(message);
-                return;
-            }
-        }
-    }
-    
-    POSIXThread::TraceNotify (message);
-}

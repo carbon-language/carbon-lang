@@ -116,6 +116,23 @@ public:
     WriteRegisterValue(lldb::tid_t tid, unsigned offset, const char *reg_name,
                        const lldb_private::RegisterValue &value);
 
+    /// Reads the contents from the debug register identified by the given
+    /// (architecture dependent) offset.
+    ///
+    /// This method is provided for use by RegisterContextFreeBSD derivatives.
+    bool
+    ReadDebugRegisterValue(lldb::tid_t tid, unsigned offset,
+                           const char *reg_name, unsigned size,
+                           lldb_private::RegisterValue &value);
+
+    /// Writes the given value to the debug register identified by the given
+    /// (architecture dependent) offset.
+    ///
+    /// This method is provided for use by RegisterContextFreeBSD derivatives.
+    bool
+    WriteDebugRegisterValue(lldb::tid_t tid, unsigned offset,
+                            const char *reg_name,
+                            const lldb_private::RegisterValue &value);
     /// Reads all general purpose registers into the specified buffer.
     bool
     ReadGPR(lldb::tid_t tid, void *buf, size_t buf_size);
