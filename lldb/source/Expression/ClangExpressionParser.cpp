@@ -336,6 +336,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     if (!m_compiler->hasSourceManager())
         m_compiler->createSourceManager(*m_file_manager.get());
     
+    m_compiler->createVirtualFileSystem();
     m_compiler->createFileManager();
     m_compiler->createPreprocessor();
     
