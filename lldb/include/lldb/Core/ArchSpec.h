@@ -92,6 +92,10 @@ public:
         
         eCore_x86_64_x86_64,
         eCore_x86_64_x86_64h, // Haswell enabled x86_64
+        eCore_hexagon_generic,
+        eCore_hexagon_hexagonv4,
+        eCore_hexagon_hexagonv5,
+
         eCore_uknownMach32,
         eCore_uknownMach64,
         kNumCores,
@@ -103,6 +107,7 @@ public:
         kCore_ppc_any,
         kCore_ppc64_any,
         kCore_x86_32_any,
+        kCore_hexagon_any,
 
         kCore_arm_first     = eCore_arm_generic,
         kCore_arm_last      = eCore_arm_xscale,
@@ -117,7 +122,10 @@ public:
         kCore_ppc64_last    = eCore_ppc64_ppc970_64,
 
         kCore_x86_32_first  = eCore_x86_32_i386,
-        kCore_x86_32_last   = eCore_x86_32_i486sx
+        kCore_x86_32_last   = eCore_x86_32_i486sx,
+
+        kCore_hexagon_first  = eCore_hexagon_generic,
+        kCore_hexagon_last   = eCore_hexagon_hexagonv5
     };
 
     //------------------------------------------------------------------

@@ -291,6 +291,8 @@ PlatformWindows::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
         }
         break;
 
+    case ArchSpec::eCore_hexagon_generic:
+        return 0;
     default:
         llvm_unreachable("Unhandled architecture in PlatformWindows::GetSoftwareBreakpointTrapOpcode()");
         break;
