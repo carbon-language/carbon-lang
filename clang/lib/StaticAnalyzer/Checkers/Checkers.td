@@ -412,6 +412,10 @@ def ObjCNonNilReturnValueChecker : Checker<"NonNilReturnValue">,
   HelpText<"Model the APIs that are guaranteed to return a non-nil value">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
+def ObjCSuperCallChecker : Checker<"MissingSuperCall">,
+  HelpText<"Warn about Objective-C methods that lack a necessary call to super">,
+  DescFile<"ObjCMissingSuperCallChecker.cpp">;
+
 def NSErrorChecker : Checker<"NSError">,
   HelpText<"Check usage of NSError** parameters">,
   DescFile<"NSErrorChecker.cpp">;
@@ -443,10 +447,6 @@ def DirectIvarAssignment : Checker<"DirectIvarAssignment">,
 def DirectIvarAssignmentForAnnotatedFunctions : Checker<"DirectIvarAssignmentForAnnotatedFunctions">,
   HelpText<"Check for direct assignments to instance variables in the methods annotated with objc_no_direct_instance_variable_assignment">,
   DescFile<"DirectIvarAssignment.cpp">;
-
-def ObjCSuperCallChecker : Checker<"MissingSuperCall">,
-  HelpText<"Warn about Objective-C methods that lack a necessary call to super">,
-  DescFile<"ObjCMissingSuperCallChecker.cpp">;
 
 } // end "alpha.osx.cocoa"
 
