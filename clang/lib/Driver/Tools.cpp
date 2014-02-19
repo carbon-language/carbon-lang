@@ -44,6 +44,21 @@ using namespace clang::driver::tools;
 using namespace clang;
 using namespace llvm::opt;
 
+static void addAssemblerKPIC(const ArgList &Args, ArgStringList &CmdArgs) {
+  Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
+                                    options::OPT_fpic, options::OPT_fno_pic,
+                                    options::OPT_fPIE, options::OPT_fno_PIE,
+                                    options::OPT_fpie, options::OPT_fno_pie);
+  if (!LastPICArg)
+    return;
+  if (LastPICArg->getOption().matches(options::OPT_fPIC) ||
+      LastPICArg->getOption().matches(options::OPT_fpic) ||
+      LastPICArg->getOption().matches(options::OPT_fPIE) ||
+      LastPICArg->getOption().matches(options::OPT_fpie)) {
+    CmdArgs.push_back("-KPIC");
+  }
+}
+
 /// CheckPreprocessingOptions - Perform some validation of preprocessing
 /// arguments that is shared with gcc.
 static void CheckPreprocessingOptions(const Driver &D, const ArgList &Args) {
@@ -5576,13 +5591,7 @@ void openbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                       options::OPT_fpic, options::OPT_fno_pic,
                                       options::OPT_fPIE, options::OPT_fno_PIE,
                                       options::OPT_fpie, options::OPT_fno_pie);
-    if (LastPICArg &&
-        (LastPICArg->getOption().matches(options::OPT_fPIC) ||
-         LastPICArg->getOption().matches(options::OPT_fpic) ||
-         LastPICArg->getOption().matches(options::OPT_fPIE) ||
-         LastPICArg->getOption().matches(options::OPT_fpie))) {
-      CmdArgs.push_back("-KPIC");
-    }
+    addAssemblerKPIC(Args, CmdArgs);
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
@@ -5907,17 +5916,7 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("-EL");
 
-    Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
-                                      options::OPT_fpic, options::OPT_fno_pic,
-                                      options::OPT_fPIE, options::OPT_fno_PIE,
-                                      options::OPT_fpie, options::OPT_fno_pie);
-    if (LastPICArg &&
-        (LastPICArg->getOption().matches(options::OPT_fPIC) ||
-         LastPICArg->getOption().matches(options::OPT_fpic) ||
-         LastPICArg->getOption().matches(options::OPT_fPIE) ||
-         LastPICArg->getOption().matches(options::OPT_fpie))) {
-      CmdArgs.push_back("-KPIC");
-    }
+    addAssemblerKPIC(Args, CmdArgs);
   } else if (getToolChain().getArch() == llvm::Triple::arm ||
              getToolChain().getArch() == llvm::Triple::thumb) {
     const Driver &D = getToolChain().getDriver();
@@ -5942,17 +5941,7 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     }
   } else if (getToolChain().getArch() == llvm::Triple::sparc ||
              getToolChain().getArch() == llvm::Triple::sparcv9) {
-    Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
-                                      options::OPT_fpic, options::OPT_fno_pic,
-                                      options::OPT_fPIE, options::OPT_fno_PIE,
-                                      options::OPT_fpie, options::OPT_fno_pie);
-    if (LastPICArg &&
-        (LastPICArg->getOption().matches(options::OPT_fPIC) ||
-         LastPICArg->getOption().matches(options::OPT_fpic) ||
-         LastPICArg->getOption().matches(options::OPT_fPIE) ||
-         LastPICArg->getOption().matches(options::OPT_fpie))) {
-      CmdArgs.push_back("-KPIC");
-    }
+    addAssemblerKPIC(Args, CmdArgs);
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
@@ -6191,17 +6180,7 @@ void netbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("-EL");
 
-    Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
-                                      options::OPT_fpic, options::OPT_fno_pic,
-                                      options::OPT_fPIE, options::OPT_fno_PIE,
-                                      options::OPT_fpie, options::OPT_fno_pie);
-    if (LastPICArg &&
-        (LastPICArg->getOption().matches(options::OPT_fPIC) ||
-         LastPICArg->getOption().matches(options::OPT_fpic) ||
-         LastPICArg->getOption().matches(options::OPT_fPIE) ||
-         LastPICArg->getOption().matches(options::OPT_fpie))) {
-      CmdArgs.push_back("-KPIC");
-    }
+    addAssemblerKPIC(Args, CmdArgs);
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
@@ -6486,19 +6465,8 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString("-march=" + CPUName));
   }
 
-  if (NeedsKPIC) {
-    Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
-                                      options::OPT_fpic, options::OPT_fno_pic,
-                                      options::OPT_fPIE, options::OPT_fno_PIE,
-                                      options::OPT_fpie, options::OPT_fno_pie);
-    if (LastPICArg &&
-        (LastPICArg->getOption().matches(options::OPT_fPIC) ||
-         LastPICArg->getOption().matches(options::OPT_fpic) ||
-         LastPICArg->getOption().matches(options::OPT_fPIE) ||
-         LastPICArg->getOption().matches(options::OPT_fpie))) {
-      CmdArgs.push_back("-KPIC");
-    }
-  }
+  if (NeedsKPIC)
+    addAssemblerKPIC(Args, CmdArgs);
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
                        options::OPT_Xassembler);
