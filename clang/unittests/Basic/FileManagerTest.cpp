@@ -48,7 +48,7 @@ public:
 
   // Implement FileSystemStatCache::getStat().
   virtual LookupResult getStat(const char *Path, FileData &Data, bool isFile,
-                               int *FileDescriptor) {
+                               vfs::File **F, vfs::FileSystem &FS) {
     if (StatCalls.count(Path) != 0) {
       Data = StatCalls[Path];
       return CacheExists;

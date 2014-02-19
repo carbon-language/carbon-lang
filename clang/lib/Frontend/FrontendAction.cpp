@@ -159,7 +159,6 @@ ASTConsumer* FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
   return new MultiplexConsumer(Consumers);
 }
 
-
 bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                      const FrontendInputFile &Input) {
   assert(!Instance && "Already processing a source file!");
@@ -213,6 +212,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   }
 
   // Set up the file and source managers, if needed.
+  if (!CI.hasVirtualFileSystem())
+    CI.createVirtualFileSystem();
   if (!CI.hasFileManager())
     CI.createFileManager();
   if (!CI.hasSourceManager())

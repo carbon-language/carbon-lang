@@ -101,6 +101,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     Clang->setDiagnostics(Diags.getPtr());
     Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
                                                   &Clang->getTargetOpts()));
+    Clang->createVirtualFileSystem();
     Clang->createFileManager();
     Clang->createSourceManager(Clang->getFileManager());
     Clang->createPreprocessor();
