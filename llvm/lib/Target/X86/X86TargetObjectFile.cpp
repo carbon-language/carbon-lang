@@ -27,7 +27,7 @@ const MCExpr *X86_64MachoTargetObjectFile::getTTypeGlobalReference(
   // On Darwin/X86-64, we can reference dwarf symbols with foo@GOTPCREL+4, which
   // is an indirect pc-relative reference.
   if (Encoding & (DW_EH_PE_indirect | DW_EH_PE_pcrel)) {
-    const MCSymbol *Sym = TM.getTargetLowering()->getSymbol(GV, Mang);
+    const MCSymbol *Sym = TM.getSymbol(GV, Mang);
     const MCExpr *Res =
       MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, getContext());
     const MCExpr *Four = MCConstantExpr::Create(4, getContext());
@@ -41,7 +41,7 @@ const MCExpr *X86_64MachoTargetObjectFile::getTTypeGlobalReference(
 MCSymbol *X86_64MachoTargetObjectFile::getCFIPersonalitySymbol(
     const GlobalValue *GV, Mangler &Mang, const TargetMachine &TM,
     MachineModuleInfo *MMI) const {
-  return TM.getTargetLowering()->getSymbol(GV, Mang);
+  return TM.getSymbol(GV, Mang);
 }
 
 void
@@ -102,7 +102,7 @@ const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(
   if (GVLHS->isThreadLocal())
     return 0;
 
-  return MCSymbolRefExpr::Create(TM.getTargetLowering()->getSymbol(GVLHS, Mang),
+  return MCSymbolRefExpr::Create(TM.getSymbol(GVLHS, Mang),
                                  MCSymbolRefExpr::VK_COFF_IMGREL32,
                                  getContext());
 }

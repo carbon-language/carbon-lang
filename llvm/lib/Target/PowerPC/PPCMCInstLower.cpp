@@ -57,7 +57,7 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
     Mang->getNameWithPrefix(Name, MO.getSymbolName());
   } else {
     const GlobalValue *GV = MO.getGlobal();
-    TM.getTargetLowering()->getNameWithPrefix(Name, GV, *Mang);
+    TM.getNameWithPrefix(Name, GV, *Mang);
   }
 
   unsigned OrigLen = Name.size() - PrefixLen;

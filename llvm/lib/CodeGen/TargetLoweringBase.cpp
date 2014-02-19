@@ -1428,30 +1428,3 @@ bool TargetLoweringBase::isLegalAddressingMode(const AddrMode &AM,
 
   return true;
 }
-
-void TargetLoweringBase::getNameWithPrefix(SmallVectorImpl<char> &Name,
-                                           const GlobalValue *GV,
-                                           Mangler &Mang,
-                                           bool MayAlwaysUsePrivate) const {
-  if (MayAlwaysUsePrivate || !GV->hasPrivateLinkage()) {
-    // Simple case: If GV is not private, it is not important to find out if
-    // private labels are legal in this case or not.
-    Mang.getNameWithPrefix(Name, GV, false);
-    return;
-  }
-  SectionKind GVKind =
-    TargetLoweringObjectFile::getKindForGlobal(GV, getTargetMachine());
-  const TargetLoweringObjectFile &TLOF = getObjFileLowering();
-  const MCSection *TheSection =
-    TLOF.SectionForGlobal(GV, GVKind, Mang, getTargetMachine());
-  bool CannotUsePrivateLabel = TLOF.isSectionAtomizableBySymbols(*TheSection);
-  Mang.getNameWithPrefix(Name, GV, CannotUsePrivateLabel);
-}
-
-MCSymbol *TargetLoweringBase::getSymbol(const GlobalValue *GV,
-                                        Mangler &Mang) const {
-  SmallString<60> NameStr;
-  getNameWithPrefix(NameStr, GV, Mang);
-  const TargetLoweringObjectFile &TLOF = getObjFileLowering();
-  return TLOF.getContext().GetOrCreateSymbol(NameStr.str());
-}

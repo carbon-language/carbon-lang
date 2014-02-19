@@ -29,7 +29,7 @@ const MCExpr *SparcELFTargetObjectFile::getTTypeGlobalReference(
     // gets emitted by the asmprinter.
     MachineModuleInfoImpl::StubValueTy &StubSym = ELFMMI.getGVStubEntry(SSym);
     if (StubSym.getPointer() == 0) {
-      MCSymbol *Sym = TM.getTargetLowering()->getSymbol(GV, Mang);
+      MCSymbol *Sym = TM.getSymbol(GV, Mang);
       StubSym = MachineModuleInfoImpl::StubValueTy(Sym, !GV->hasLocalLinkage());
     }
 

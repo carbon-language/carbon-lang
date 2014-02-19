@@ -391,7 +391,7 @@ void LTOModule::addDefinedSymbol(const GlobalValue *def, bool isFunction) {
 
   // string is owned by _defines
   SmallString<64> Buffer;
-  _target->getTargetLowering()->getNameWithPrefix(Buffer, def, _mangler);
+  _target->getNameWithPrefix(Buffer, def, _mangler);
 
   // set alignment part log2() can have rounding errors
   uint32_t align = def->getAlignment();
@@ -527,7 +527,7 @@ LTOModule::addPotentialUndefinedSymbol(const GlobalValue *decl, bool isFunc) {
     return;
 
   SmallString<64> name;
-  _target->getTargetLowering()->getNameWithPrefix(name, decl, _mangler);
+  _target->getNameWithPrefix(name, decl, _mangler);
 
   StringMap<NameAndAttributes>::value_type &entry =
     _undefines.GetOrCreateValue(name);

@@ -313,11 +313,11 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
 
 void AsmPrinter::getNameWithPrefix(SmallVectorImpl<char> &Name,
                                    const GlobalValue *GV) const {
-  TM.getTargetLowering()->getNameWithPrefix(Name, GV, *Mang);
+  TM.getNameWithPrefix(Name, GV, *Mang);
 }
 
 MCSymbol *AsmPrinter::getSymbol(const GlobalValue *GV) const {
-  return TM.getTargetLowering()->getSymbol(GV, *Mang);
+  return TM.getSymbol(GV, *Mang);
 }
 
 /// EmitGlobalVariable - Emit the specified global variable to the .s file.

@@ -372,7 +372,7 @@ void *MCJIT::getPointerToFunction(Function *F) {
   // load address of the symbol, not the local address.
   Mangler Mang(TM->getDataLayout());
   SmallString<128> Name;
-  TM->getTargetLowering()->getNameWithPrefix(Name, F, Mang);
+  TM->getNameWithPrefix(Name, F, Mang);
   return (void*)Dyld.getSymbolLoadAddress(Name);
 }
 

@@ -344,7 +344,7 @@ applyRestriction(GlobalValue &GV,
     return;
 
   SmallString<64> Buffer;
-  TargetMach->getTargetLowering()->getNameWithPrefix(Buffer, &GV, Mangler);
+  TargetMach->getNameWithPrefix(Buffer, &GV, Mangler);
 
   if (MustPreserveSymbols.count(Buffer))
     MustPreserveList.push_back(GV.getName().data());

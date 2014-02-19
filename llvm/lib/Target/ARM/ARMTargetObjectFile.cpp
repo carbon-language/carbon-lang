@@ -47,7 +47,7 @@ const MCExpr *ARMElfTargetObjectFile::getTTypeGlobalReference(
     MCStreamer &Streamer) const {
   assert(Encoding == DW_EH_PE_absptr && "Can handle absptr encoding only");
 
-  return MCSymbolRefExpr::Create(TM.getTargetLowering()->getSymbol(GV, Mang),
+  return MCSymbolRefExpr::Create(TM.getSymbol(GV, Mang),
                                  MCSymbolRefExpr::VK_ARM_TARGET2, getContext());
 }
 

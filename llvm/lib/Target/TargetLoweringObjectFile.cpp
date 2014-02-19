@@ -107,7 +107,7 @@ MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
 
   SmallString<60> NameStr;
   NameStr += DL->getPrivateGlobalPrefix();
-  TM.getTargetLowering()->getNameWithPrefix(NameStr, GV, Mang);
+  TM.getNameWithPrefix(NameStr, GV, Mang);
   NameStr.append(Suffix.begin(), Suffix.end());
   return Ctx->GetOrCreateSymbol(NameStr.str());
 }
@@ -115,7 +115,7 @@ MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
 MCSymbol *TargetLoweringObjectFile::getCFIPersonalitySymbol(
     const GlobalValue *GV, Mangler &Mang, const TargetMachine &TM,
     MachineModuleInfo *MMI) const {
-  return TM.getTargetLowering()->getSymbol(GV, Mang);
+  return TM.getSymbol(GV, Mang);
 }
 
 void TargetLoweringObjectFile::emitPersonalityValue(MCStreamer &Streamer,
@@ -312,8 +312,7 @@ const MCExpr *TargetLoweringObjectFile::getTTypeGlobalReference(
     const TargetMachine &TM, MachineModuleInfo *MMI,
     MCStreamer &Streamer) const {
   const MCSymbolRefExpr *Ref =
-    MCSymbolRefExpr::Create(TM.getTargetLowering()->getSymbol(GV, Mang),
-                            getContext());
+      MCSymbolRefExpr::Create(TM.getSymbol(GV, Mang), getContext());
 
   return getTTypeReference(Ref, Encoding, Streamer);
 }

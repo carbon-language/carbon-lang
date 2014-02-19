@@ -52,10 +52,10 @@ MCSymbol *TargetLoweringObjectFileELF::getCFIPersonalitySymbol(
   default:
     report_fatal_error("We do not support this DWARF encoding yet!");
   case dwarf::DW_EH_PE_absptr:
-    return TM.getTargetLowering()->getSymbol(GV, Mang);
+    return TM.getSymbol(GV, Mang);
   case dwarf::DW_EH_PE_pcrel: {
     return getContext().GetOrCreateSymbol(StringRef("DW.ref.") +
-                        TM.getTargetLowering()->getSymbol(GV, Mang)->getName());
+                                          TM.getSymbol(GV, Mang)->getName());
   }
   }
 }
@@ -101,7 +101,7 @@ const MCExpr *TargetLoweringObjectFileELF::getTTypeGlobalReference(
     // gets emitted by the asmprinter.
     MachineModuleInfoImpl::StubValueTy &StubSym = ELFMMI.getGVStubEntry(SSym);
     if (StubSym.getPointer() == 0) {
-      MCSymbol *Sym = TM.getTargetLowering()->getSymbol(GV, Mang);
+      MCSymbol *Sym = TM.getSymbol(GV, Mang);
       StubSym = MachineModuleInfoImpl::StubValueTy(Sym, !GV->hasLocalLinkage());
     }
 
@@ -248,7 +248,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     Prefix = getSectionPrefixForGlobal(Kind);
 
     SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
-    TM.getTargetLowering()->getNameWithPrefix(Name, GV, Mang, true);
+    TM.getNameWithPrefix(Name, GV, Mang, true);
 
     StringRef Group = "";
     unsigned Flags = getELFSectionFlags(Kind);
@@ -651,7 +651,7 @@ bool TargetLoweringObjectFileMachO::shouldEmitUsedDirectiveFor(
     // FIXME: ObjC metadata is currently emitted as internal symbols that have
     // \1L and \0l prefixes on them.  Fix them to be Private/LinkerPrivate and
     // this horrible hack can go away.
-    MCSymbol *Sym = TM.getTargetLowering()->getSymbol(GV, Mang);
+    MCSymbol *Sym = TM.getSymbol(GV, Mang);
     if (Sym->getName()[0] == 'L' || Sym->getName()[0] == 'l')
       return false;
   }
@@ -678,7 +678,7 @@ const MCExpr *TargetLoweringObjectFileMachO::getTTypeGlobalReference(
       GV->hasHiddenVisibility() ? MachOMMI.getHiddenGVStubEntry(SSym) :
                                   MachOMMI.getGVStubEntry(SSym);
     if (StubSym.getPointer() == 0) {
-      MCSymbol *Sym = TM.getTargetLowering()->getSymbol(GV, Mang);
+      MCSymbol *Sym = TM.getSymbol(GV, Mang);
       StubSym = MachineModuleInfoImpl::StubValueTy(Sym, !GV->hasLocalLinkage());
     }
 
@@ -704,7 +704,7 @@ MCSymbol *TargetLoweringObjectFileMachO::getCFIPersonalitySymbol(
   // gets emitted by the asmprinter.
   MachineModuleInfoImpl::StubValueTy &StubSym = MachOMMI.getGVStubEntry(SSym);
   if (StubSym.getPointer() == 0) {
-    MCSymbol *Sym = TM.getTargetLowering()->getSymbol(GV, Mang);
+    MCSymbol *Sym = TM.getSymbol(GV, Mang);
     StubSym = MachineModuleInfoImpl::StubValueTy(Sym, !GV->hasLocalLinkage());
   }
 
@@ -760,7 +760,7 @@ const MCSection *TargetLoweringObjectFileCOFF::getExplicitSectionGlobal(
   if (GV->isWeakForLinker()) {
     Selection = COFF::IMAGE_COMDAT_SELECT_ANY;
     Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
-    MCSymbol *Sym = TM.getTargetLowering()->getSymbol(GV, Mang);
+    MCSymbol *Sym = TM.getSymbol(GV, Mang);
     COMDATSymName = Sym->getName();
   }
   return getContext().getCOFFSection(Name,
@@ -794,7 +794,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     unsigned Characteristics = getCOFFSectionFlags(Kind);
 
     Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
-    MCSymbol *Sym = TM.getTargetLowering()->getSymbol(GV, Mang);
+    MCSymbol *Sym = TM.getSymbol(GV, Mang);
     return getContext().getCOFFSection(Name, Characteristics,
                                        Kind, Sym->getName(),
                                        COFF::IMAGE_COMDAT_SELECT_ANY);
