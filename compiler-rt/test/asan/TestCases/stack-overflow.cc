@@ -17,6 +17,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 const int BS = 1024;
 volatile char x;
@@ -80,7 +83,22 @@ void *ThreadFn(void* unused) {
   return 0;
 }
 
+void LimitStackAndReexec(int argc, char **argv) {
+  struct rlimit rlim;
+  int res = getrlimit(RLIMIT_STACK, &rlim);
+  assert(res == 0);
+  if (rlim.rlim_cur == RLIM_INFINITY) {
+    rlim.rlim_cur = 128 * 1024;
+    res = setrlimit(RLIMIT_STACK, &rlim);
+    assert(res == 0);
+
+    execv(argv[0], argv);
+    assert(0 && "unreachable");
+  }
+}
+
 int main(int argc, char **argv) {
+  LimitStackAndReexec(argc, argv);
 #ifdef THREAD
   pthread_t t;
   pthread_create(&t, 0, ThreadFn, 0);
