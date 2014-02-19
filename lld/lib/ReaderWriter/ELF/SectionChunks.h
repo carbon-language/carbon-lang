@@ -913,13 +913,16 @@ public:
       : Section<ELFT>(context, str), _symbolTable(nullptr) {
     this->setOrder(order);
     this->_flags = SHF_ALLOC;
+    // Set the alignment properly depending on the target architecture
+    if (context.is64Bits())
+      this->_align2 = 8;
+    else
+      this->_align2 = 4;
     if (context.isRelaOutputFormat()) {
       this->_entSize = sizeof(Elf_Rela);
-      this->_align2 = llvm::alignOf<Elf_Rela>();
       this->_type = SHT_RELA;
     } else {
       this->_entSize = sizeof(Elf_Rel);
-      this->_align2 = llvm::alignOf<Elf_Rel>();
       this->_type = SHT_REL;
     }
   }
