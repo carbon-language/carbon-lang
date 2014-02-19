@@ -1428,6 +1428,10 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 
                 if (data_symbol)
                 {
+                    std::string warning("got name from symbols: ");
+                    warning.append(name.AsCString());
+                    const unsigned diag_id = m_ast_context->getDiagnostics().getCustomDiagID(clang::DiagnosticsEngine::Level::Warning, "%0");
+                    m_ast_context->getDiagnostics().Report(diag_id) << warning.c_str();
                     AddOneGenericVariable(context, *data_symbol, current_id);
                     context.m_found.variable = true;
                 }
