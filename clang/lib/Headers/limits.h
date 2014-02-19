@@ -33,8 +33,7 @@
 
 /* System headers include a number of constants from POSIX in <limits.h>.
    Include it if we're hosted. */
-#if __STDC_HOSTED__ && \
-    defined(__has_include_next) && __has_include_next(<limits.h>)
+#if __STDC_HOSTED__ && __has_include_next(<limits.h>)
 #include_next <limits.h>
 #endif
 

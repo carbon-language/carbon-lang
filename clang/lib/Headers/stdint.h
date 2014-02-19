@@ -28,8 +28,7 @@
 /* If we're hosted, fall back to the system's stdint.h, which might have
  * additional definitions.
  */
-#if __STDC_HOSTED__ && \
-    defined(__has_include_next) && __has_include_next(<stdint.h>)
+#if __STDC_HOSTED__ && __has_include_next(<stdint.h>)
 
 // C99 7.18.3 Limits of other integer types
 //
