@@ -103,6 +103,7 @@ public:
 
 private:
   typedef typename remove_reference<T>::type &reference;
+  typedef const typename remove_reference<T>::type &const_reference;
   typedef typename remove_reference<T>::type *pointer;
 
 public:
@@ -175,7 +176,7 @@ public:
   }
 
   reference get() { return *getStorage(); }
-  const reference get() const { return const_cast<ErrorOr<T> >(this)->get(); }
+  const_reference get() const { return const_cast<ErrorOr<T> >(this)->get(); }
 
   error_code getError() const {
     return HasError ? *getErrorStorage() : error_code::success();
