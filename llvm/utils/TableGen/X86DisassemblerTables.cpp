@@ -737,11 +737,9 @@ void DisassemblerTables::emitContextDecisions(raw_ostream &o1, raw_ostream &o2,
   emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[1], TWOBYTE_STR);
   emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[2], THREEBYTE38_STR);
   emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[3], THREEBYTE3A_STR);
-  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[4], THREEBYTEA6_STR);
-  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[5], THREEBYTEA7_STR);
-  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[6], XOP8_MAP_STR);
-  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[7], XOP9_MAP_STR);
-  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[8], XOPA_MAP_STR);
+  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[4], XOP8_MAP_STR);
+  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[5], XOP9_MAP_STR);
+  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[6], XOPA_MAP_STR);
 }
 
 void DisassemblerTables::emit(raw_ostream &o) const {

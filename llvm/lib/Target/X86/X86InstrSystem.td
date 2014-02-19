@@ -507,24 +507,24 @@ let Uses = [RDX, RAX] in {
 //===----------------------------------------------------------------------===//
 // VIA PadLock crypto instructions
 let Defs = [RAX, RDI], Uses = [RDX, RDI] in
-  def XSTORE : I<0xc0, RawFrm, (outs), (ins), "xstore", []>, A7;
+  def XSTORE : I<0xa7, MRM_C0, (outs), (ins), "xstore", []>, TB;
 
 def : InstAlias<"xstorerng", (XSTORE)>;
 
 let Defs = [RSI, RDI], Uses = [RBX, RDX, RSI, RDI] in {
-  def XCRYPTECB : I<0xc8, RawFrm, (outs), (ins), "xcryptecb", []>, A7;
-  def XCRYPTCBC : I<0xd0, RawFrm, (outs), (ins), "xcryptcbc", []>, A7;
-  def XCRYPTCTR : I<0xd8, RawFrm, (outs), (ins), "xcryptctr", []>, A7;
-  def XCRYPTCFB : I<0xe0, RawFrm, (outs), (ins), "xcryptcfb", []>, A7;
-  def XCRYPTOFB : I<0xe8, RawFrm, (outs), (ins), "xcryptofb", []>, A7;
+  def XCRYPTECB : I<0xa7, MRM_C8, (outs), (ins), "xcryptecb", []>, TB;
+  def XCRYPTCBC : I<0xa7, MRM_D0, (outs), (ins), "xcryptcbc", []>, TB;
+  def XCRYPTCTR : I<0xa7, MRM_D8, (outs), (ins), "xcryptctr", []>, TB;
+  def XCRYPTCFB : I<0xa7, MRM_E0, (outs), (ins), "xcryptcfb", []>, TB;
+  def XCRYPTOFB : I<0xa7, MRM_E8, (outs), (ins), "xcryptofb", []>, TB;
 }
 
 let Defs = [RAX, RSI, RDI], Uses = [RAX, RSI, RDI] in {
-  def XSHA1 : I<0xc8, RawFrm, (outs), (ins), "xsha1", []>, A6;
-  def XSHA256 : I<0xd0, RawFrm, (outs), (ins), "xsha256", []>, A6;
+  def XSHA1 : I<0xa6, MRM_C8, (outs), (ins), "xsha1", []>, TB;
+  def XSHA256 : I<0xa6, MRM_D0, (outs), (ins), "xsha256", []>, TB;
 }
 let Defs = [RAX, RDX, RSI], Uses = [RAX, RSI] in
-  def MONTMUL : I<0xc0, RawFrm, (outs), (ins), "montmul", []>, A6;
+  def MONTMUL : I<0xa6, MRM_C0, (outs), (ins), "montmul", []>, TB;
 
 //===----------------------------------------------------------------------===//
 // FS/GS Base Instructions

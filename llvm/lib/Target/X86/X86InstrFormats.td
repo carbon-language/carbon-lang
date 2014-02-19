@@ -31,6 +31,7 @@ def MRM6r  : Format<22>; def MRM7r  : Format<23>;
 def MRM0m  : Format<24>; def MRM1m  : Format<25>; def MRM2m  : Format<26>;
 def MRM3m  : Format<27>; def MRM4m  : Format<28>; def MRM5m  : Format<29>;
 def MRM6m  : Format<30>; def MRM7m  : Format<31>;
+def MRM_C0 : Format<32>;
 def MRM_C1 : Format<33>;
 def MRM_C2 : Format<34>;
 def MRM_C3 : Format<35>;
@@ -58,6 +59,7 @@ def MRM_DC : Format<56>;
 def MRM_DD : Format<57>;
 def MRM_DE : Format<58>;
 def MRM_DF : Format<59>;
+def MRM_E0 : Format<60>;
 
 // ImmType - This specifies the immediate type used by an instruction. This is
 // part of the ad-hoc solution used to emit machine instruction encodings by our
@@ -142,8 +144,6 @@ def DC   : Map<11>;
 def DD   : Map<12>;
 def DE   : Map<13>;
 def DF   : Map<14>;
-def A6   : Map<15>;
-def A7   : Map<16>;
 
 // Class specifying the encoding
 class Encoding<bits<2> val> {
@@ -181,8 +181,6 @@ class DE     { Map OpMap = DE; }
 class DF     { Map OpMap = DF; }
 class T8     { Map OpMap = T8; }
 class TA     { Map OpMap = TA; }
-class A6     { Map OpMap = A6; }
-class A7     { Map OpMap = A7; }
 class XOP8   { Map OpMap = XOP8; Prefix OpPrefix = PS; }
 class XOP9   { Map OpMap = XOP9; Prefix OpPrefix = PS; }
 class XOPA   { Map OpMap = XOPA; Prefix OpPrefix = PS; }

@@ -23,6 +23,7 @@
 using namespace llvm;
 
 #define MRM_MAPPING     \
+  MAP(C0, 32)           \
   MAP(C1, 33)           \
   MAP(C2, 34)           \
   MAP(C3, 35)           \
@@ -47,7 +48,8 @@ using namespace llvm;
   MAP(DC, 56)           \
   MAP(DD, 57)           \
   MAP(DE, 58)           \
-  MAP(DF, 59)
+  MAP(DF, 59)           \
+  MAP(E0, 60)
 
 // A clone of X86 since we can't depend on something that is generated.
 namespace X86Local {
@@ -79,8 +81,7 @@ namespace X86Local {
   enum {
     OB = 0, TB = 1, T8 = 2, TA = 3, XOP8 = 4, XOP9 = 5, XOPA = 6,
     D8 = 7,  D9 = 8,  DA = 9,  DB = 10,
-    DC = 11, DD = 12, DE = 13, DF = 14,
-    A6 = 15, A7 = 16
+    DC = 11, DD = 12, DE = 13, DF = 14
   };
 
   enum {
@@ -731,6 +732,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
       HANDLE_OPERAND(relocation)
     }
     break;
+  case X86Local::MRM_C0:
   case X86Local::MRM_C1:
   case X86Local::MRM_C2:
   case X86Local::MRM_C3:
@@ -755,6 +757,7 @@ void RecognizableInstr::emitInstructionSpecifier() {
   case X86Local::MRM_DD:
   case X86Local::MRM_DE:
   case X86Local::MRM_DF:
+  case X86Local::MRM_E0:
     // Ignored.
     break;
   }
@@ -782,8 +785,6 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::TB:
   case X86Local::T8:
   case X86Local::TA:
-  case X86Local::A6:
-  case X86Local::A7:
   case X86Local::XOP8:
   case X86Local::XOP9:
   case X86Local::XOPA:
@@ -793,8 +794,6 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     case X86Local::TB:   opcodeType = TWOBYTE;      break;
     case X86Local::T8:   opcodeType = THREEBYTE_38; break;
     case X86Local::TA:   opcodeType = THREEBYTE_3A; break;
-    case X86Local::A6:   opcodeType = THREEBYTE_A6; break;
-    case X86Local::A7:   opcodeType = THREEBYTE_A7; break;
     case X86Local::XOP8: opcodeType = XOP8_MAP;     break;
     case X86Local::XOP9: opcodeType = XOP9_MAP;     break;
     case X86Local::XOPA: opcodeType = XOPA_MAP;     break;

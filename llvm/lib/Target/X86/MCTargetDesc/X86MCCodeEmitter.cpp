@@ -1150,8 +1150,6 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::TB:  // Two-byte opcode map
   case X86II::T8:  // 0F 38
   case X86II::TA:  // 0F 3A
-  case X86II::A6:  // 0F A6
-  case X86II::A7:  // 0F A7
     EmitByte(0x0F, CurByte, OS);
     break;
   case X86II::D8: case X86II::D9: case X86II::DA: case X86II::DB:
@@ -1167,12 +1165,6 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     break;
   case X86II::TA:    // 0F 3A
     EmitByte(0x3A, CurByte, OS);
-    break;
-  case X86II::A6:    // 0F A6
-    EmitByte(0xA6, CurByte, OS);
-    break;
-  case X86II::A7:    // 0F A7
-    EmitByte(0xA7, CurByte, OS);
     break;
   }
 }
@@ -1456,20 +1448,21 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     CurOp += X86::AddrNumOperands;
     break;
   }
-  case X86II::MRM_C1: case X86II::MRM_C2: case X86II::MRM_C3:
-  case X86II::MRM_C4: case X86II::MRM_C8: case X86II::MRM_C9:
-  case X86II::MRM_CA: case X86II::MRM_CB: case X86II::MRM_D0:
-  case X86II::MRM_D1: case X86II::MRM_D4: case X86II::MRM_D5:
-  case X86II::MRM_D6: case X86II::MRM_D8: case X86II::MRM_D9:
-  case X86II::MRM_DA: case X86II::MRM_DB: case X86II::MRM_DC:
-  case X86II::MRM_DD: case X86II::MRM_DE: case X86II::MRM_DF:
-  case X86II::MRM_E8: case X86II::MRM_F0: case X86II::MRM_F8:
-  case X86II::MRM_F9:
+  case X86II::MRM_C0: case X86II::MRM_C1: case X86II::MRM_C2:
+  case X86II::MRM_C3: case X86II::MRM_C4: case X86II::MRM_C8:
+  case X86II::MRM_C9: case X86II::MRM_CA: case X86II::MRM_CB:
+  case X86II::MRM_D0: case X86II::MRM_D1: case X86II::MRM_D4:
+  case X86II::MRM_D5: case X86II::MRM_D6: case X86II::MRM_D8:
+  case X86II::MRM_D9: case X86II::MRM_DA: case X86II::MRM_DB:
+  case X86II::MRM_DC: case X86II::MRM_DD: case X86II::MRM_DE:
+  case X86II::MRM_DF: case X86II::MRM_E0: case X86II::MRM_E8:
+  case X86II::MRM_F0: case X86II::MRM_F8: case X86II::MRM_F9:
     EmitByte(BaseOpcode, CurByte, OS);
 
     unsigned char MRM;
     switch (TSFlags & X86II::FormMask) {
     default: llvm_unreachable("Invalid Form");
+    case X86II::MRM_C0: MRM = 0xC0; break;
     case X86II::MRM_C1: MRM = 0xC1; break;
     case X86II::MRM_C2: MRM = 0xC2; break;
     case X86II::MRM_C3: MRM = 0xC3; break;
@@ -1491,6 +1484,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case X86II::MRM_DD: MRM = 0xDD; break;
     case X86II::MRM_DE: MRM = 0xDE; break;
     case X86II::MRM_DF: MRM = 0xDF; break;
+    case X86II::MRM_E0: MRM = 0xE0; break;
     case X86II::MRM_E8: MRM = 0xE8; break;
     case X86II::MRM_F0: MRM = 0xF0; break;
     case X86II::MRM_F8: MRM = 0xF8; break;

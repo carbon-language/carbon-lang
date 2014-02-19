@@ -290,13 +290,13 @@ namespace X86II {
     MRM4m = 28,  MRM5m = 29,  MRM6m = 30,  MRM7m = 31, // Format /4 /5 /6 /7
 
     //// MRM_XX - A mod/rm byte of exactly 0xXX.
-    MRM_C1 = 33, MRM_C2 = 34, MRM_C3 = 35, MRM_C4 = 36,
-    MRM_C8 = 37, MRM_C9 = 38, MRM_CA = 39, MRM_CB = 40,
-    MRM_E8 = 41, MRM_F0 = 42, MRM_F8 = 45, MRM_F9 = 46,
-    MRM_D0 = 47, MRM_D1 = 48, MRM_D4 = 49, MRM_D5 = 50,
-    MRM_D6 = 51, MRM_D8 = 52, MRM_D9 = 53, MRM_DA = 54,
-    MRM_DB = 55, MRM_DC = 56, MRM_DD = 57, MRM_DE = 58,
-    MRM_DF = 59,
+    MRM_C0 = 32, MRM_C1 = 33, MRM_C2 = 34, MRM_C3 = 35,
+    MRM_C4 = 36, MRM_C8 = 37, MRM_C9 = 38, MRM_CA = 39,
+    MRM_CB = 40, MRM_E8 = 41, MRM_F0 = 42, MRM_F8 = 45,
+    MRM_F9 = 46, MRM_D0 = 47, MRM_D1 = 48, MRM_D4 = 49,
+    MRM_D5 = 50, MRM_D6 = 51, MRM_D8 = 52, MRM_D9 = 53,
+    MRM_DA = 54, MRM_DB = 55, MRM_DC = 56, MRM_DD = 57,
+    MRM_DE = 58, MRM_DF = 59, MRM_E0 = 60,
 
     /// RawFrmImm8 - This is used for the ENTER instruction, which has two
     /// immediates, the first of which is a 16-bit immediate (specified by
@@ -377,9 +377,6 @@ namespace X86II {
     DA =  9 << OpMapShift, DB = 10 << OpMapShift,
     DC = 11 << OpMapShift, DD = 12 << OpMapShift,
     DE = 13 << OpMapShift, DF = 14 << OpMapShift,
-
-    // A6, A7 - Prefix after the 0x0F prefix.
-    A6 = 15 << OpMapShift, A7 = 16 << OpMapShift,
 
     //===------------------------------------------------------------------===//
     // REX_W - REX prefixes are instruction prefixes used in 64-bit mode.
@@ -695,15 +692,15 @@ namespace X86II {
         ++FirstMemOp;// Skip the register dest (which is encoded in VEX_VVVV).
       return FirstMemOp;
     }
-    case X86II::MRM_C1: case X86II::MRM_C2: case X86II::MRM_C3:
-    case X86II::MRM_C4: case X86II::MRM_C8: case X86II::MRM_C9:
-    case X86II::MRM_CA: case X86II::MRM_CB: case X86II::MRM_E8:
-    case X86II::MRM_F0: case X86II::MRM_F8: case X86II::MRM_F9:
-    case X86II::MRM_D0: case X86II::MRM_D1: case X86II::MRM_D4:
-    case X86II::MRM_D5: case X86II::MRM_D6: case X86II::MRM_D8:
-    case X86II::MRM_D9: case X86II::MRM_DA: case X86II::MRM_DB:
-    case X86II::MRM_DC: case X86II::MRM_DD: case X86II::MRM_DE:
-    case X86II::MRM_DF:
+    case X86II::MRM_C0: case X86II::MRM_C1: case X86II::MRM_C2:
+    case X86II::MRM_C3: case X86II::MRM_C4: case X86II::MRM_C8:
+    case X86II::MRM_C9: case X86II::MRM_CA: case X86II::MRM_CB:
+    case X86II::MRM_E8: case X86II::MRM_F0: case X86II::MRM_F8:
+    case X86II::MRM_F9: case X86II::MRM_D0: case X86II::MRM_D1:
+    case X86II::MRM_D4: case X86II::MRM_D5: case X86II::MRM_D6:
+    case X86II::MRM_D8: case X86II::MRM_D9: case X86II::MRM_DA:
+    case X86II::MRM_DB: case X86II::MRM_DC: case X86II::MRM_DD:
+    case X86II::MRM_DE: case X86II::MRM_DF: case X86II::MRM_E0:
       return -1;
     }
   }
