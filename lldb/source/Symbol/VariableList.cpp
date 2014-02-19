@@ -132,6 +132,16 @@ VariableList::FindVariable (const ConstString& name, lldb::ValueType value_type)
 }
 
 size_t
+VariableList::AppendVariablesIfUnique(VariableList &var_list)
+{
+    const size_t initial_size = var_list.GetSize();
+    iterator pos, end = m_variables.end();
+    for (pos = m_variables.begin(); pos != end; ++pos)
+        var_list.AddVariableIfUnique(*pos);
+    return var_list.GetSize() - initial_size;
+}
+
+size_t
 VariableList::AppendVariablesIfUnique (const RegularExpression& regex, VariableList &var_list, size_t& total_matches)
 {
     const size_t initial_size = var_list.GetSize();

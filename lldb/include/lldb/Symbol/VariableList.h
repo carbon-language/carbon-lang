@@ -55,7 +55,10 @@ public:
 
     uint32_t
     FindVariableIndex (const lldb::VariableSP &var_sp);
-
+    
+    size_t
+    AppendVariablesIfUnique(VariableList &var_list);
+    
     // Returns the actual number of unique variables that were added to the
     // list. "total_matches" will get updated with the actualy number of
     // matches that were found regardless of whether they were unique or not
