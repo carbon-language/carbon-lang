@@ -14,7 +14,7 @@ define void @bar() {
        ret void;
 }
 
-; CHECK: L_foo:                                   ## @foo
+; CHECK: l_foo:                                   ## @foo
 ; CHECK-NEXT: Ltmp0:
 
 ; CHECK: _bar:                                   ## @bar
@@ -34,7 +34,7 @@ define void @bar() {
 ; CHECK-NEXT: {{.quad|.long}}   Ltmp[[NUM2]]
 
 
-; OLD: L_foo:                                   ## @foo
+; OLD: l_foo:                                   ## @foo
 ; OLD-NEXT: Ltmp0:
 
 ; OLD: _bar:                                   ## @bar

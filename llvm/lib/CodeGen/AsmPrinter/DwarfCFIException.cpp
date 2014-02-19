@@ -119,7 +119,8 @@ void DwarfCFIException::beginFunction(const MachineFunction *MF) {
   if (!shouldEmitPersonality)
     return;
 
-  const MCSymbol *Sym = TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, MMI);
+  const MCSymbol *Sym =
+      TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, Asm->TM, MMI);
   Asm->OutStreamer.EmitCFIPersonality(Sym, PerEncoding);
 
   Asm->OutStreamer.EmitDebugLabel

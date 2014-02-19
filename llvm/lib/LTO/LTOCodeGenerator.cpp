@@ -335,11 +335,17 @@ applyRestriction(GlobalValue &GV,
                  std::vector<const char*> &MustPreserveList,
                  SmallPtrSet<GlobalValue*, 8> &AsmUsed,
                  Mangler &Mangler) {
-  SmallString<64> Buffer;
-  Mangler.getNameWithPrefix(Buffer, &GV);
-
+  // There are no restrictions to apply to declarations.
   if (GV.isDeclaration())
     return;
+
+  // There is nothing more restrictive than private linkage.
+  if (GV.hasPrivateLinkage())
+    return;
+
+  SmallString<64> Buffer;
+  TargetMach->getTargetLowering()->getNameWithPrefix(Buffer, &GV, Mangler);
+
   if (MustPreserveSymbols.count(Buffer))
     MustPreserveList.push_back(GV.getName().data());
   if (AsmUndefinedRefs.count(Buffer))

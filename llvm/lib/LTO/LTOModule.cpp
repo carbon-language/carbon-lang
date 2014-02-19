@@ -176,6 +176,16 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
   m->materializeAllPermanently();
 
   LTOModule *Ret = new LTOModule(m.take(), target);
+
+  // We need a MCContext set up in order to get mangled names of private
+  // symbols. It is a bit odd that we need to report uses and definitions
+  // of private symbols, but it does look like ld64 expects to be informed
+  // of at least the ones with an 'l' prefix.
+  MCContext &Context = Ret->_context;
+  const TargetLoweringObjectFile &TLOF =
+      target->getTargetLowering()->getObjFileLowering();
+  const_cast<TargetLoweringObjectFile &>(TLOF).Initialize(Context, *target);
+
   if (Ret->parseSymbols(errMsg)) {
     delete Ret;
     return NULL;
@@ -381,7 +391,7 @@ void LTOModule::addDefinedSymbol(const GlobalValue *def, bool isFunction) {
 
   // string is owned by _defines
   SmallString<64> Buffer;
-  _mangler.getNameWithPrefix(Buffer, def);
+  _target->getTargetLowering()->getNameWithPrefix(Buffer, def, _mangler);
 
   // set alignment part log2() can have rounding errors
   uint32_t align = def->getAlignment();
@@ -517,7 +527,7 @@ LTOModule::addPotentialUndefinedSymbol(const GlobalValue *decl, bool isFunc) {
     return;
 
   SmallString<64> name;
-  _mangler.getNameWithPrefix(name, decl);
+  _target->getTargetLowering()->getNameWithPrefix(name, decl, _mangler);
 
   StringMap<NameAndAttributes>::value_type &entry =
     _undefines.GetOrCreateValue(name);

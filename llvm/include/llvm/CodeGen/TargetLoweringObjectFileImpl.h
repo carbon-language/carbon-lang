@@ -57,14 +57,15 @@ public:
 
   /// Return an MCExpr to use for a reference to the specified type info global
   /// variable from exception handling information.
-  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV,
-                                        unsigned Encoding, Mangler &Mang,
-                                        MachineModuleInfo *MMI,
-                                        MCStreamer &Streamer) const
+  const MCExpr *
+  getTTypeGlobalReference(const GlobalValue *GV, unsigned Encoding,
+                          Mangler &Mang, const TargetMachine &TM,
+                          MachineModuleInfo *MMI, MCStreamer &Streamer) const
       LLVM_OVERRIDE;
 
   // The symbol that gets passed to .cfi_personality.
   MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
+                                    const TargetMachine &TM,
                                     MachineModuleInfo *MMI) const LLVM_OVERRIDE;
 
   void InitializeELF(bool UseInitArray_);
@@ -90,6 +91,9 @@ public:
                        Mangler &Mang, const TargetMachine &TM) const
       LLVM_OVERRIDE;
 
+  bool isSectionAtomizableBySymbols(const MCSection &Section) const
+      LLVM_OVERRIDE;
+
   const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
                                           SectionKind Kind, Mangler &Mang,
                                           const TargetMachine &TM) const
@@ -105,18 +109,19 @@ public:
   /// This hook allows targets to selectively decide not to emit the
   /// UsedDirective for some symbols in llvm.used.
   /// FIXME: REMOVE this (rdar://7071300)
-  bool shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler &Mang) const
-      LLVM_OVERRIDE;
+  bool shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler &Mang,
+                                  TargetMachine &TM) const LLVM_OVERRIDE;
 
   /// The mach-o version of this method defaults to returning a stub reference.
-  const MCExpr *getTTypeGlobalReference(const GlobalValue *GV,
-                                        unsigned Encoding, Mangler &Mang,
-                                        MachineModuleInfo *MMI,
-                                        MCStreamer &Streamer) const
+  const MCExpr *
+  getTTypeGlobalReference(const GlobalValue *GV, unsigned Encoding,
+                          Mangler &Mang, const TargetMachine &TM,
+                          MachineModuleInfo *MMI, MCStreamer &Streamer) const
       LLVM_OVERRIDE;
 
   // The symbol that gets passed to .cfi_personality.
   MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
+                                    const TargetMachine &TM,
                                     MachineModuleInfo *MMI) const LLVM_OVERRIDE;
 };
 
