@@ -31,5 +31,12 @@ int main()
     assert(i == 1);
     i = std::min({1, 3, 2});
     assert(i == 1);
+#if _LIBCPP_STD_VER > 11
+    {
+    static_assert(std::min({1, 3, 2}) == 1, "");
+    static_assert(std::min({2, 1, 3}) == 1, "");
+    static_assert(std::min({3, 2, 1}) == 1, "");
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

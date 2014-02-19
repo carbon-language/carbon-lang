@@ -43,4 +43,12 @@ int main()
     test(x, y, x);
     test(y, x, x);
     }
+#if _LIBCPP_STD_VER > 11
+    {
+    constexpr int x = 1;
+    constexpr int y = 0;
+    static_assert(std::max(x, y) == x, "" );
+    static_assert(std::max(y, x) == x, "" );
+    }
+#endif
 }

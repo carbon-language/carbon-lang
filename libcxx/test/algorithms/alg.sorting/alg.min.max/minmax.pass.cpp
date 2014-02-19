@@ -45,4 +45,18 @@ int main()
     test(x, y, y, x);
     test(y, x, y, x);
     }
+#if _LIBCPP_STD_VER > 11
+    {
+//  Note that you can't take a reference to a local var, since 
+//  it's address is not a compile-time constant.
+    constexpr static int x = 1;
+    constexpr static int y = 0;
+    constexpr auto p1 = std::minmax (x, y);
+    static_assert(p1.first  == y, "");
+    static_assert(p1.second == x, "");
+    constexpr auto p2 = std::minmax (y, x);
+    static_assert(p2.first  == y, "");
+    static_assert(p2.second == x, "");
+    }
+#endif
 }
