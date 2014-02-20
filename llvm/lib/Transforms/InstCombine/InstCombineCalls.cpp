@@ -1212,6 +1212,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   if (!Caller->use_empty())
     ReplaceInstUsesWith(*Caller, NV);
+  else if (Caller->hasValueHandle())
+    ValueHandleBase::ValueIsRAUWd(Caller, NV);
 
   EraseInstFromFunction(*Caller);
   return true;
