@@ -91,7 +91,8 @@ TEST(DIEHashTest, TypeWithMember) {
   DIEString MemberStr(&Four, "member");
   Member->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemberStr);
   DIEInteger Zero(0);
-  Member->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
+  Member->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                   &Zero);
 
   Unnamed.addChild(Member);
 
@@ -121,14 +122,16 @@ TEST(DIEHashTest, ReusedType) {
   DIEString Mem1Str(&Four, "mem1");
   Mem1->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &Mem1Str);
   DIEInteger Zero(0);
-  Mem1->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
+  Mem1->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                 &Zero);
 
   Unnamed.addChild(Mem1);
 
   DIE *Mem2 = new DIE(dwarf::DW_TAG_member);
   DIEString Mem2Str(&Four, "mem2");
   Mem2->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &Mem2Str);
-  Mem2->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Four);
+  Mem2->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                 &Four);
 
   Unnamed.addChild(Mem2);
 
@@ -282,7 +285,8 @@ TEST(DIEHashTest, PtrToMember) {
   DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
   DIEEntry FooEntry(&Foo);
   PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooEntry);
-  PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, &FooEntry);
+  PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+                       &FooEntry);
 
   DIEEntry PtrToFooMemRef(&PtrToFooMem);
   Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
