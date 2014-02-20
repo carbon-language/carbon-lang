@@ -302,8 +302,8 @@ private:
 
   /// \brief Performs a full virtual base adjustment.  Used to dereference
   /// pointers to members of virtual bases.
-  llvm::Value *AdjustVirtualBase(CodeGenFunction &CGF, const CXXRecordDecl *RD,
-                                 llvm::Value *Base,
+  llvm::Value *AdjustVirtualBase(CodeGenFunction &CGF, const Expr *E,
+                                 const CXXRecordDecl *RD, llvm::Value *Base,
                                  llvm::Value *VirtualBaseAdjustmentOffset,
                                  llvm::Value *VBPtrOffset /* optional */);
 
@@ -353,10 +353,10 @@ public:
                                                   llvm::Value *MemPtr,
                                                   const MemberPointerType *MPT);
 
-  virtual llvm::Value *EmitMemberDataPointerAddress(CodeGenFunction &CGF,
-                                                    llvm::Value *Base,
-                                                    llvm::Value *MemPtr,
-                                                  const MemberPointerType *MPT);
+  virtual llvm::Value *
+  EmitMemberDataPointerAddress(CodeGenFunction &CGF, const Expr *E,
+                               llvm::Value *Base, llvm::Value *MemPtr,
+                               const MemberPointerType *MPT);
 
   virtual llvm::Value *EmitMemberPointerConversion(CodeGenFunction &CGF,
                                                    const CastExpr *E,
@@ -366,9 +366,8 @@ public:
                                                       llvm::Constant *Src);
 
   virtual llvm::Value *
-  EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
-                                  llvm::Value *&This,
-                                  llvm::Value *MemPtr,
+  EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF, const Expr *E,
+                                  llvm::Value *&This, llvm::Value *MemPtr,
                                   const MemberPointerType *MPT);
 
 private:
@@ -1687,11 +1686,9 @@ MicrosoftCXXABI::GetVBaseOffsetFromVBPtr(CodeGenFunction &CGF,
 
 // Returns an adjusted base cast to i8*, since we do more address arithmetic on
 // it.
-llvm::Value *
-MicrosoftCXXABI::AdjustVirtualBase(CodeGenFunction &CGF,
-                                   const CXXRecordDecl *RD, llvm::Value *Base,
-                                   llvm::Value *VBTableOffset,
-                                   llvm::Value *VBPtrOffset) {
+llvm::Value *MicrosoftCXXABI::AdjustVirtualBase(
+    CodeGenFunction &CGF, const Expr *E, const CXXRecordDecl *RD,
+    llvm::Value *Base, llvm::Value *VBTableOffset, llvm::Value *VBPtrOffset) {
   CGBuilderTy &Builder = CGF.Builder;
   Base = Builder.CreateBitCast(Base, CGM.Int8PtrTy);
   llvm::BasicBlock *OriginalBB = 0;
@@ -1717,7 +1714,14 @@ MicrosoftCXXABI::AdjustVirtualBase(CodeGenFunction &CGF,
   // know the vbptr offset.
   if (!VBPtrOffset) {
     CharUnits offs = CharUnits::Zero();
-    if (RD->getNumVBases())
+    if (!RD->hasDefinition()) {
+      DiagnosticsEngine &Diags = CGF.CGM.getDiags();
+      unsigned DiagID = Diags.getCustomDiagID(
+          DiagnosticsEngine::Error,
+          "member pointer representation requires a "
+          "complete class type for %0 to perform this expression");
+      Diags.Report(E->getExprLoc(), DiagID) << RD << E->getSourceRange();
+    } else if (RD->getNumVBases())
       offs = getContext().getASTRecordLayout(RD).getVBPtrOffset();
     VBPtrOffset = llvm::ConstantInt::get(CGM.IntTy, offs.getQuantity());
   }
@@ -1738,11 +1742,9 @@ MicrosoftCXXABI::AdjustVirtualBase(CodeGenFunction &CGF,
   return AdjustedBase;
 }
 
-llvm::Value *
-MicrosoftCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
-                                              llvm::Value *Base,
-                                              llvm::Value *MemPtr,
-                                              const MemberPointerType *MPT) {
+llvm::Value *MicrosoftCXXABI::EmitMemberDataPointerAddress(
+    CodeGenFunction &CGF, const Expr *E, llvm::Value *Base, llvm::Value *MemPtr,
+    const MemberPointerType *MPT) {
   assert(MPT->isMemberDataPointer());
   unsigned AS = Base->getType()->getPointerAddressSpace();
   llvm::Type *PType =
@@ -1767,7 +1769,7 @@ MicrosoftCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
   }
 
   if (VirtualBaseAdjustmentOffset) {
-    Base = AdjustVirtualBase(CGF, RD, Base, VirtualBaseAdjustmentOffset,
+    Base = AdjustVirtualBase(CGF, E, RD, Base, VirtualBaseAdjustmentOffset,
                              VBPtrOffset);
   }
 
@@ -1975,11 +1977,9 @@ MicrosoftCXXABI::EmitMemberPointerConversion(const CastExpr *E,
   return llvm::ConstantStruct::getAnon(Fields);
 }
 
-llvm::Value *
-MicrosoftCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
-                                                 llvm::Value *&This,
-                                                 llvm::Value *MemPtr,
-                                                 const MemberPointerType *MPT) {
+llvm::Value *MicrosoftCXXABI::EmitLoadOfMemberFunctionPointer(
+    CodeGenFunction &CGF, const Expr *E, llvm::Value *&This,
+    llvm::Value *MemPtr, const MemberPointerType *MPT) {
   assert(MPT->isMemberFunctionPointer());
   const FunctionProtoType *FPT =
     MPT->getPointeeType()->castAs<FunctionProtoType>();
@@ -2010,7 +2010,7 @@ MicrosoftCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   }
 
   if (VirtualBaseAdjustmentOffset) {
-    This = AdjustVirtualBase(CGF, RD, This, VirtualBaseAdjustmentOffset,
+    This = AdjustVirtualBase(CGF, E, RD, This, VirtualBaseAdjustmentOffset,
                              VBPtrOffset);
   }
 

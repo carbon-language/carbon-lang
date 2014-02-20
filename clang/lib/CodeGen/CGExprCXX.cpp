@@ -260,7 +260,7 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
 
   // Ask the ABI to load the callee.  Note that This is modified.
   llvm::Value *Callee =
-    CGM.getCXXABI().EmitLoadOfMemberFunctionPointer(*this, This, MemFnPtr, MPT);
+    CGM.getCXXABI().EmitLoadOfMemberFunctionPointer(*this, BO, This, MemFnPtr, MPT);
   
   CallArgList Args;
 

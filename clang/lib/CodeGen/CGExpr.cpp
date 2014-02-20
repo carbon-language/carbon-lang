@@ -390,7 +390,7 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
     case SubobjectAdjustment::MemberPointerAdjustment: {
       llvm::Value *Ptr = EmitScalarExpr(Adjustment.Ptr.RHS);
       Object = CGM.getCXXABI().EmitMemberDataPointerAddress(
-                    *this, Object, Ptr, Adjustment.Ptr.MPT);
+          *this, E, Object, Ptr, Adjustment.Ptr.MPT);
       break;
     }
     }
@@ -3239,8 +3239,8 @@ EmitPointerToDataMemberBinaryExpr(const BinaryOperator *E) {
   const MemberPointerType *MPT
     = E->getRHS()->getType()->getAs<MemberPointerType>();
 
-  llvm::Value *AddV =
-    CGM.getCXXABI().EmitMemberDataPointerAddress(*this, BaseV, OffsetV, MPT);
+  llvm::Value *AddV = CGM.getCXXABI().EmitMemberDataPointerAddress(
+      *this, E, BaseV, OffsetV, MPT);
 
   return MakeAddrLValue(AddV, MPT->getPointeeType());
 }

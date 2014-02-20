@@ -71,11 +71,12 @@ public:
   llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT);
 
   llvm::Value *EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
+                                               const Expr *E,
                                                llvm::Value *&This,
                                                llvm::Value *MemFnPtr,
                                                const MemberPointerType *MPT);
 
-  llvm::Value *EmitMemberDataPointerAddress(CodeGenFunction &CGF,
+  llvm::Value *EmitMemberDataPointerAddress(CodeGenFunction &CGF, const Expr *E,
                                             llvm::Value *Base,
                                             llvm::Value *MemPtr,
                                             const MemberPointerType *MPT);
@@ -300,11 +301,9 @@ ItaniumCXXABI::ConvertMemberPointerType(const MemberPointerType *MPT) {
 ///
 /// If the member is non-virtual, memptr.ptr is the address of
 /// the function to call.
-llvm::Value *
-ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
-                                               llvm::Value *&This,
-                                               llvm::Value *MemFnPtr,
-                                               const MemberPointerType *MPT) {
+llvm::Value *ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(
+    CodeGenFunction &CGF, const Expr *E, llvm::Value *&This,
+    llvm::Value *MemFnPtr, const MemberPointerType *MPT) {
   CGBuilderTy &Builder = CGF.Builder;
 
   const FunctionProtoType *FPT = 
@@ -386,10 +385,9 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
 
 /// Compute an l-value by applying the given pointer-to-member to a
 /// base object.
-llvm::Value *ItaniumCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
-                                                         llvm::Value *Base,
-                                                         llvm::Value *MemPtr,
-                                           const MemberPointerType *MPT) {
+llvm::Value *ItaniumCXXABI::EmitMemberDataPointerAddress(
+    CodeGenFunction &CGF, const Expr *E, llvm::Value *Base, llvm::Value *MemPtr,
+    const MemberPointerType *MPT) {
   assert(MemPtr->getType() == CGM.PtrDiffTy);
 
   CGBuilderTy &Builder = CGF.Builder;

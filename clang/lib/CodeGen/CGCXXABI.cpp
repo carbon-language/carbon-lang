@@ -37,10 +37,9 @@ CGCXXABI::ConvertMemberPointerType(const MemberPointerType *MPT) {
   return CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
 }
 
-llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
-                                                       llvm::Value *&This,
-                                                       llvm::Value *MemPtr,
-                                                 const MemberPointerType *MPT) {
+llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(
+    CodeGenFunction &CGF, const Expr *E, llvm::Value *&This,
+    llvm::Value *MemPtr, const MemberPointerType *MPT) {
   ErrorUnsupportedABI(CGF, "calls through member pointers");
 
   const FunctionProtoType *FPT = 
@@ -52,10 +51,10 @@ llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   return llvm::Constant::getNullValue(FTy->getPointerTo());
 }
 
-llvm::Value *CGCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
-                                                    llvm::Value *Base,
-                                                    llvm::Value *MemPtr,
-                                              const MemberPointerType *MPT) {
+llvm::Value *
+CGCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF, const Expr *E,
+                                       llvm::Value *Base, llvm::Value *MemPtr,
+                                       const MemberPointerType *MPT) {
   ErrorUnsupportedABI(CGF, "loads of member pointers");
   llvm::Type *Ty = CGF.ConvertType(MPT->getPointeeType())->getPointerTo();
   return llvm::Constant::getNullValue(Ty);

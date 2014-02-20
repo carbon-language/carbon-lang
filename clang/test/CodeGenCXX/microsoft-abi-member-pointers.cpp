@@ -1,7 +1,10 @@
 // RUN: %clang_cc1 -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 -DINCOMPLETE_VIRTUAL -fms-extensions -verify
+// RUN: %clang_cc1 -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 -DINCOMPLETE_VIRTUAL -DMEMFUN -fms-extensions -verify
 // FIXME: Test x86_64 member pointers when codegen no longer asserts on records
 // with virtual bases.
 
+#ifndef INCOMPLETE_VIRTUAL
 struct B1 {
   void foo();
   int b;
@@ -557,3 +560,15 @@ int *load_data(A *a, int A::*mp) {
 }
 
 }
+#else
+struct __virtual_inheritance A;
+#ifdef MEMFUN
+int foo(A *a, int (A::*mp)()) {
+    return (a->*mp)(); // expected-error{{requires a complete class type}}
+}
+#else
+int foo(A *a, int A::*mp) {
+    return a->*mp; // expected-error{{requires a complete class type}}
+}
+#endif
+#endif
