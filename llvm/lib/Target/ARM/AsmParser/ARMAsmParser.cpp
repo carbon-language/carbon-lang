@@ -9097,9 +9097,6 @@ static const struct ExtMapEntry {
   { "xscale", Feature_None, 0 },
 };
 
-template <typename T, size_t N>
-size_t countof(const T (&)[N]) { return N; }
-
 /// parseDirectiveArchExtension
 ///   ::= .arch_extension [no]feature
 bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
@@ -9114,12 +9111,12 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
   getLexer().Lex();
 
   bool EnableFeature = true;
-  if (!Extension.lower().compare(0, 2, "no")) {
+  if (Extension.startswith_lower("no")) {
     EnableFeature = false;
     Extension = Extension.substr(2);
   }
 
-  for (unsigned EI = 0, EE = countof(Extensions); EI != EE; ++EI) {
+  for (unsigned EI = 0, EE = array_lengthof(Extensions); EI != EE; ++EI) {
     if (Extensions[EI].Extension != Extension)
       continue;
 
